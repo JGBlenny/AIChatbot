@@ -487,6 +487,11 @@ def check_stop(project_dir: str) -> list:
         reasons.append(f"reweigh.cells_without_disposition={reweigh.get('cells_without_disposition')}（有格無去向，R3.1）")
     if int(reweigh.get("fines_without_sources") or 0) > 0:
         reasons.append(f"reweigh.fines_without_sources={reweigh.get('fines_without_sources')}（正本有細目無來源）")
+    # 步 5b（2026-09-07 業主裁）：有 not_available／owner_decision 格、已產 diff_report（＝要交業主）而未完成權威來源核對 ⇒ 擋。
+    if int(reweigh.get("needs_source_audit") or 0) > 0 and state.get("diff_report"):
+        sa = state.get("source_audit") or {}
+        if sa.get("unaudited") is None or int(sa.get("unaudited") or 0) > 0:
+            reasons.append(f"reweigh.needs_source_audit={reweigh.get('needs_source_audit')} 而 source_audit.unaudited={sa.get('unaudited')}（交業主前先盤查權威來源，步 5b）")
 
     return reasons
 

@@ -132,6 +132,11 @@ def test_deterministic_and_meta(tmp_path):
     assert meta["summary"]["cells_without_disposition"] == 0
     assert meta["fines_without_sources"] == []
     # see_also 互指且兩細目皆為正解 ⇒ 提案、⛔ 不合併
+    # 對碼標記：fixture 三細目都是 kb:／DECISIONS: 來源 ⇒ 全未對碼；換一個成帳本錨點 ⇒ 進 verified（正對照）
+    assert meta["fines_verified_against_code"] == [] and len(meta["fines_unverified"]) == 3
+    (tmp_path / "v").mkdir(exist_ok=True)
+    canon2, d2, m2, a2 = _materials(tmp_path / "v", canon_text=_CANON.replace("- sources: [kb:1]", "- sources: [kb:1, docs:knowledge/jgb-product-facts.md#x]"))
+    assert cm.build_coverage_map(canon2, d2, m2, a2)["_meta"]["fines_verified_against_code"] == ["prospect/A/one"]
     assert meta["merge_similar_candidates"] == [{"a": "prospect/A/one", "b": "prospect/A/two", "fix_type": "merge_similar", "status": "proposed"}]
 
 
@@ -203,7 +208,9 @@ def test_reweigh_script_envelope_and_state(tmp_path):
     assert env["step"] == "reweigh" and env["deterministic"] is True and len(env["payload"]["cells"]) == len(_ROWS)
     assert set(env["payload"]) == {"cells"}                                   # _meta 不進 envelope
     state = json.load(open(root / ".claude" / "hooks" / "state" / "outline-gate" / "session.json", encoding="utf-8"))
-    assert state["reweigh"] == {"path": os.path.relpath(out, root), "cells_without_disposition": 0, "fines_without_sources": 0}
+    # needs_source_audit＝not_available＋owner_decision 格數（fixture：C06 C07 C08 C09 C11）⇒ 步 5b 閘的輸入
+    assert state["reweigh"] == {"path": os.path.relpath(out, root), "cells_without_disposition": 0,
+                                "fines_without_sources": 0, "needs_source_audit": 5}
 
 
 def test_reweigh_script_needs_rubric_revision_exit2_positive_control(tmp_path):
@@ -225,3 +232,60 @@ def test_fine_without_sources_blocks_exit(tmp_path):
     out = cm.build_coverage_map(canon, d, m, a)
     assert out["_meta"]["fines_without_sources"] == ["prospect/A/two"]
     assert cm.main(["--canon", canon, "--demand", d, "--map", m, "--answerability", a, "--out", str(tmp_path / "o.json")]) == 2
+
+
+# --- 步 5b source_audit（2026-09-07 業主裁：交業主前先盤查權威來源） ---------------------
+
+_SA_SCRIPT = os.path.join(_REPO, ".claude", "skills", "outline-curation", "scripts", "source_audit.py")
+
+
+def _sa(tmp_path, *args, root=None):
+    env = dict(os.environ, CLAUDE_PROJECT_DIR=str(root or tmp_path))
+    return subprocess.run([sys.executable, _SA_SCRIPT, *args], capture_output=True, text=True, env=env)
+
+
+def test_source_audit_worklist_and_check_positive_controls(tmp_path):
+    if not os.path.isfile(_SA_SCRIPT):
+        pytest.skip(f"[env] 找不到 {_SA_SCRIPT}")
+    root = _fake_repo(tmp_path)
+    canon, d, m, a = _materials(tmp_path)
+    cov = tmp_path / "cm.json"
+    assert cm.main(["--canon", canon, "--demand", d, "--map", m, "--answerability", a, "--out", str(cov)]) == 0
+    wl = tmp_path / "wl.json"
+    assert _sa(tmp_path, "worklist", "--coverage", str(cov), "--out", str(wl), root=root).returncode == 0
+    items = json.load(open(wl, encoding="utf-8"))["items"]
+    assert sorted(i["cell_id"] for i in items) == ["C06", "C07", "C08", "C09", "C11"]      # 只列 not_available／owner_decision
+
+    ledger = tmp_path / "ledger.md"
+    _write(ledger, "# 帳本\n### 事實 {#fact-a}\n- x\n")
+    sha = hashlib.sha256(open(cov, "rb").read()).hexdigest()
+    def audit(records):
+        p = tmp_path / "sa.json"
+        _write(p, {"step": "source_audit", "coverage_map_sha": sha, "authority_sources": ["code:x"], "records": records})
+        return p
+    good = [
+        {"cell_id": "C06", "status": "verified_fact", "evidence": ["app/X.php:foo"], "ledger_anchor": "fact-a"},
+        {"cell_id": "C07", "status": "verified_absent", "evidence": ["app/Abstracts/AdminSetting.php:FUNCTIONS_SETTING 無此字樣"], "positive_control": "同掃描命中 Contract"},
+        {"cell_id": "C08", "status": "owner_needed", "why_unresolvable": "程式／docs／幫助中心皆無此詞"},
+        {"cell_id": "C09", "status": "owner_decided", "owner_decision": "列不足"},
+        {"cell_id": "C11", "status": "verified_fact", "evidence": ["config/plan.php:limit"], "ledger_anchor": "fact-a"},
+    ]
+    proc = _sa(tmp_path, "check", "--coverage", str(cov), "--audit", str(audit(good)), "--ledger", str(ledger), root=root)
+    assert proc.returncode == 0, proc.stderr
+    state = json.load(open(root / ".claude" / "hooks" / "state" / "outline-gate" / "session.json", encoding="utf-8"))
+    assert state["source_audit"]["unaudited"] == 0 and state["source_audit"]["owner_needed"] == 1
+
+    # 正對照四則：缺一格／verified_absent 無正對照／verified_fact 錨點不存在／證據形狀錯 ⇒ 各 exit 2
+    bad_cases = [
+        good[1:],
+        [dict(good[1], positive_control="")] + good[:1] + good[2:],
+        [dict(good[0], ledger_anchor="nope")] + good[1:],
+        [dict(good[0], evidence=["沒有路徑的自由文字"])] + good[1:],
+    ]
+    for recs in bad_cases:
+        proc = _sa(tmp_path, "check", "--coverage", str(cov), "--audit", str(audit(recs)), "--ledger", str(ledger), root=root)
+        assert proc.returncode == 2, proc.stdout
+    # sha 不符 ⇒ exit 2
+    p = tmp_path / "sa2.json"
+    _write(p, {"step": "source_audit", "coverage_map_sha": "0" * 64, "authority_sources": [], "records": good})
+    assert _sa(tmp_path, "check", "--coverage", str(cov), "--audit", str(p), "--ledger", str(ledger), root=root).returncode == 2

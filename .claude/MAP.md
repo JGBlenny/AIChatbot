@@ -202,6 +202,14 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 ⚠️ 三種身分形狀是**對外契約**,⛔ 不屬於任何單一對話面向 —— 帶錯 `mode` 即受眾錯位,
 而 `target_user` 漏帶時系統只依 mode 推導、`prospect` **不會**被自動推導。
 
+## JGB 產品事實帳本 {#jgb-product-facts}
+
+- 正本 | `docs/knowledge/jgb-product-facts.md` | 受眾中立的產品事實，逐條附 jgb2 程式引用（path:symbol＋查證日）；售前／業者正本各自從這裡改寫成自己的層級，⛔ 不直接開放另一受眾的細目
+- 消費者 | `rag-orchestrator/canon/README.md` | 正本細目以 `sources: [docs:knowledge/jgb-product-facts.md#<anchor>]` 引用帳本
+- 產生者 | `.kiro/specs/knowledge-outline-and-intent-architecture/inputs/coverage-map-20260907.json` | 哪些格因缺事實而列不足／待裁，帳本補的就是這些格
+
+⚠️ 帳本記的是「系統內有沒有這個機制」，⛔ 不記當前設定值（那走 API）、⛔ 不記價格（走 /pricing）。
+
 ## 專案層級索引 {#project-index}
 
 - 規格 | `docs/deployment-runbook.md` | 統一部署 runbook:§0–§10 依序執行,§11 為部署後掛帳

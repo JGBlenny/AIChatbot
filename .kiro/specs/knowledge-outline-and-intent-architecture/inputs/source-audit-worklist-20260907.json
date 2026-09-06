@@ -1,0 +1,124 @@
+{
+  "authority_sources": [
+    "code:/Users/lenny/jgb/project/jgb/jgb2 (master; git status 乾淨才算)",
+    "docs:/Users/lenny/jgb/project/jgb/jgb2/docs",
+    "help:/Users/lenny/jgb/幫助中心/JGB幫助中心_HTML_交付_20260818/*_zh-Hant.html",
+    "ledger:docs/knowledge/jgb-product-facts.md"
+  ],
+  "brief": "每格對權威來源盤查；否定結論必帶正對照（同一掃描必須命中一個已知存在的符號）；事實寫進帳本並回填 ledger_anchor；只有 owner_needed 才交業主。",
+  "count": 11,
+  "coverage_map_sha": "62633c7b46d273e32976eaa00a2b44e67114f731431c7422134cd7a49bb8bf00",
+  "items": [
+    {
+      "cause_state": "FALSE_HIT",
+      "cell_id": "C07",
+      "disposition": "owner_decision",
+      "fix_type": "add_knowledge",
+      "judge_label": "no_source",
+      "question": "免費方案可以建幾個物件",
+      "required": "verified_fact｜verified_absent（附正對照）｜owner_needed（附 why_unresolvable）",
+      "topic": "免費方案可建幾個物件"
+    },
+    {
+      "cause_state": "V",
+      "cell_id": "C15",
+      "disposition": "owner_decision",
+      "fix_type": "cross_audience_rewrite",
+      "judge_label": "no_source",
+      "question": "這個物件自訂標籤有什麼用途呢？",
+      "required": "verified_fact｜verified_absent（附正對照）｜owner_needed（附 why_unresolvable）",
+      "topic": "物件自訂標籤／Dashboard"
+    },
+    {
+      "cause_state": "UNCLASSIFIED(待G0)",
+      "cell_id": "C22",
+      "disposition": "not_available",
+      "fix_type": "list_not_available",
+      "judge_label": "no_source",
+      "question": "所以剛剛說的簽約要另外收費嗎",
+      "required": "verified_fact｜verified_absent（附正對照）｜owner_needed（附 why_unresolvable）",
+      "topic": "簽約另外收費嗎"
+    },
+    {
+      "cause_state": "S_OK",
+      "cell_id": "C24",
+      "disposition": "owner_decision",
+      "fix_type": "add_knowledge",
+      "judge_label": "no_source",
+      "question": "電子發票可以自動開嗎？還是要一張一張手動開",
+      "required": "verified_fact｜verified_absent（附正對照）｜owner_needed（附 why_unresolvable）",
+      "topic": "電子發票自動開立"
+    },
+    {
+      "cause_state": "V",
+      "cell_id": "C25",
+      "disposition": "owner_decision",
+      "fix_type": "cross_audience_rewrite",
+      "judge_label": "no_source",
+      "question": "差額發票的使用時機是什麼時候",
+      "required": "verified_fact｜verified_absent（附正對照）｜owner_needed（附 why_unresolvable）",
+      "topic": "差額發票使用時機"
+    },
+    {
+      "cause_state": "V",
+      "cell_id": "C29",
+      "disposition": "owner_decision",
+      "fix_type": "cross_audience_rewrite",
+      "judge_label": "no_source",
+      "question": "儲值金回充帳戶是什麼功能",
+      "required": "verified_fact｜verified_absent（附正對照）｜owner_needed（附 why_unresolvable）",
+      "topic": "儲值金回充帳戶"
+    },
+    {
+      "cause_state": "ADVICE",
+      "cell_id": "C31",
+      "disposition": "not_available",
+      "fix_type": "list_not_available",
+      "judge_label": "no_source",
+      "question": "水電費要怎麼分算比較公平？一個月大概多少錢",
+      "required": "verified_fact｜verified_absent（附正對照）｜owner_needed（附 why_unresolvable）",
+      "topic": "水電費分算／費用估算"
+    },
+    {
+      "cause_state": "UNCLASSIFIED(待G0)",
+      "cell_id": "C39",
+      "disposition": "not_available",
+      "fix_type": "list_not_available",
+      "judge_label": "no_source",
+      "question": "私人門鎖和共用門鎖到底有什麼差別",
+      "required": "verified_fact｜verified_absent（附正對照）｜owner_needed（附 why_unresolvable）",
+      "topic": "私人門鎖 vs 共用門鎖"
+    },
+    {
+      "cause_state": "FALSE_HIT",
+      "cell_id": "C52",
+      "disposition": "not_available",
+      "fix_type": "list_not_available",
+      "judge_label": "no_source",
+      "question": "系統管理模組裡有哪些功能？",
+      "required": "verified_fact｜verified_absent（附正對照）｜owner_needed（附 why_unresolvable）",
+      "topic": "系統管理模組有哪些功能"
+    },
+    {
+      "cause_state": "FALSE_HIT",
+      "cell_id": "C53",
+      "disposition": "not_available",
+      "fix_type": "list_not_available",
+      "judge_label": "no_source",
+      "question": "單合約與雙合約差別？",
+      "required": "verified_fact｜verified_absent（附正對照）｜owner_needed（附 why_unresolvable）",
+      "topic": "單合約 vs 雙合約差別"
+    },
+    {
+      "cause_state": "V",
+      "cell_id": "C54",
+      "disposition": "owner_decision",
+      "fix_type": "cross_audience_rewrite",
+      "judge_label": "no_source",
+      "question": "手機條碼載具可以用來付費嗎？",
+      "required": "verified_fact｜verified_absent（附正對照）｜owner_needed（附 why_unresolvable）",
+      "topic": "發票載具／手機條碼"
+    }
+  ],
+  "step": "source_audit_worklist"
+}

@@ -39,6 +39,8 @@ RETRIEVAL_GAP_STATES = frozenset({"S", "V", "FALSE_HIT"})
 UNSTABLE_PREFIX = "UNSTABLE"
 CONTENT_GAP_COVERAGE = frozenset({"未覆蓋(回答未含必含)", "已覆蓋⚠️"})
 CROSS_AUDIENCE_STATE = "V"
+#: 事實帳本來源前綴：細目 `sources` 含此前綴 ⇒ 該細目已對 jgb2 程式核對（docs/knowledge/jgb-product-facts.md）。
+LEDGER_SOURCE_PREFIX = "docs:knowledge/jgb-product-facts.md#"
 
 #: demand-v2 `g0.authority` 是自由文字、55 格無一空值，「沒有」用哨兵（plan-verifier 第 3 輪）。
 AUTHORITY_YES_PREFIXES = ("kb:", "help:")
@@ -222,6 +224,13 @@ def build_coverage_map(canon_path: str, demand_path: str, map_path: str, answera
     canon = parse_canon(canon_path)
     cells = reweigh(canon, demand_path, map_path, answerability_path)
     no_src = [f.id for f in canon.fines() if not f.sources]
+    # 對碼標記（2026-09-07 業主：確認過的事要標）：細目任一 source 指向事實帳本錨點 ＝ 已對 jgb2 程式核對過。
+    verified = sorted(f.id for f in canon.fines() if any(src.startswith(LEDGER_SOURCE_PREFIX) for src in f.sources))
+    kinds: dict = {}
+    for f in canon.fines():
+        for src in f.sources:
+            k = src.split(":", 1)[0] if ":" in src else "other"
+            kinds[k] = kinds.get(k, 0) + 1
     meta = {
         "step": "reweigh",
         "audience": canon.audience,
@@ -234,6 +243,9 @@ def build_coverage_map(canon_path: str, demand_path: str, map_path: str, answera
         "fines_total": len(canon.fines()),
         "fines_without_sources": no_src,
         "fines_referenced": sorted({c["fine_id"] for c in cells if c.get("fine_id")}),
+        "fines_verified_against_code": verified,
+        "fines_unverified": sorted(f.id for f in canon.fines() if f.id not in set(verified)),
+        "fines_source_kinds": dict(sorted(kinds.items())),
         "merge_similar_candidates": merge_similar_candidates(canon, cells),
         "summary": summarize(cells),
         "note": "cause_state／entry_state／coverage 來自 map-v2（對 kb 量測），不是對正本索引；add_phrasing 的最小驗證＝正本索引建好後重跑檢索（元件 10 步 1）。",

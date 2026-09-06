@@ -39,9 +39,25 @@
 - `schemas/coverage-reweigh.json` 的 `payload.cells.items` 只是 `{"type":"object"}`，假 disposition 只被工具自己的出口擋；待收緊 enum。
 - C24（電子發票自動開）判者 no_source 但 map-v2 `cause_state=S_OK`：Plan §9 停損形狀，僅 1 格（<5）不停；已落 owner_decision／add_knowledge（`kb:3601`），業主審時順帶看。
 
+## 4c. 步 5b 權威來源核對（2026-09-07 業主裁「先盤查再給我真的不確認的」）
+
+步 5 曾把 11 格 not_available／owner_decision 直接交業主；業主指正後派 4 個唯讀 scout 對 jgb2 master（2026-09-04，乾淨）＋docs（163）＋幫助中心（92）盤查，主 session 對決策關鍵事實親自對碼。結果：**11 格只有 0 格真的需要業主判事實**。
+
+| 狀態 | 格 | 去處 |
+|---|---|---|
+| verified_fact 7 | C22 簽章不收費、C39 私人／共用門鎖、C07 免費 5 物件、C24 發票自動開、C25 差額發票、C29 儲值金、C54 載具 | 帳本 `docs/knowledge/jgb-product-facts.md` 各錨點；步 6 依帳本寫售前層級句 |
+| verified_absent 1 | C52 沒有「系統管理」模組 | 可答邊界題＋掛講法 |
+| owner_decided 3 | C53 先不管；C31 列不足「系統支援按合約分算，金額看合約」；C15 寫一句 | 帳本已記 |
+
+⚠️ 一個 scout 的否定結論（「程式只有電錶沒門鎖」）被主 session 對碼推翻——它只掃了 Admin 控制器。否定結論必帶正對照，已寫進 `source_audit.py check` 的硬規則（verified_absent 缺 positive_control ⇒ exit 2）。
+
+**機制化**：skill 新增步 5b（`steps/05b-source-audit.md`、`scripts/source_audit.py worklist／check`、`schemas/source-audit.json`）；`reweigh.py` 寫 `needs_source_audit`；Stop hook：有待核對格、已產 diff_report 而 `source_audit.unaudited` 缺或 >0 ⇒ 擋。**對碼標記**：細目 `sources` 含 `docs:knowledge/jgb-product-facts.md#` ⇒ 已對碼；coverage-map `_meta.fines_verified_against_code／fines_unverified`，`status.py` 印「已對碼 x／37」（現況 0／37，步 6 回填後更新）。紀錄：`inputs/source-audit-20260907.json`、工作單 `inputs/source-audit-worklist-20260907.json`。
+
+**verifier CONFIRMED（步 5b）附帶已知債（P3，不擋）**：`source_audit.py check` 的證據只驗形狀（`path:symbol`）不解析路徑是否存在；`owner_decided` 只需 `owner_decision` 字串、不需證據——閘門證明「有紀錄」不證明「查過」，查過與否靠主 session 親自對碼的紀律；`diff_report` 用真值判斷（空 dict 會繞過，實務不會空）。
+
 ## 5. 下一步
 
-步 6 `diff_report.py`（`replacements[]` old kb id → fine id；用本檔 `fines_referenced` 與 kb 來源對照）→ `rag-orchestrator/canon/prospect.md` 草稿＋`export_json` → 交業主（⛔ 不 commit 正本、⛔ 不入庫）。業主待裁：not_available 5 格的 G 段一句說法；跨受眾 4 格是否改寫；C46 核句。
+步 6 `diff_report.py`（`replacements[]` old kb id → fine id；用本檔 `fines_referenced` 與 kb 來源對照）→ `rag-orchestrator/canon/prospect.md` 草稿＋`export_json` → 交業主（⛔ 不 commit 正本、⛔ 不入庫）。業主已裁（2026-09-07）：C53 不管、C31 一句說法、C15 寫；其餘 8 格依帳本改寫成售前層級。仍待：C46 核句（帳本無此條，why-choose-jgb 第 1 句含「6 國語系」）。
 
 ## 6. 查證指令
 

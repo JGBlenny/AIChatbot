@@ -68,12 +68,14 @@ def main() -> int:
     write_json(a.out, envelope)
 
     without = int(meta["summary"]["cells_without_disposition"])
+    needs_audit = sum(1 for c in cm["cells"] if c.get("disposition") in ("not_available", "owner_decision"))
     no_src = len(meta["fines_without_sources"])
     if repo_root:
         update_state(repo_root, {"reweigh": {
             "path": os.path.relpath(os.path.abspath(a.out), repo_root),
             "cells_without_disposition": without,
             "fines_without_sources": no_src,
+            "needs_source_audit": needs_audit,
         }})
     s = meta["summary"]
     print(f"[reweigh] total={s['total']} by_disposition={s['by_disposition']} by_fix_type={s['by_fix_type']} "
@@ -81,6 +83,8 @@ def main() -> int:
     if without or no_src:
         print("[reweigh] ⛔ 出口未達：無去向格或無來源細目 >0", file=sys.stderr)
         return 2
+    if needs_audit:
+        print(f"[reweigh] ⚠️ {needs_audit} 格 not_available／owner_decision ⇒ 先走步 5b source_audit.py（權威來源核對），⛔ 不得直接交業主", file=sys.stderr)
     return 0
 
 

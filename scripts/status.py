@@ -416,6 +416,8 @@ def print_coverage() -> None:
     print(f"  去向：{s['by_disposition']}")
     print(f"  補法：{s['by_fix_type']}")
     print(f"  缺口：{s['gap_classes']}｜合併提案 {len(m['merge_similar_candidates'])}")
+    v, u = m.get("fines_verified_against_code", []), m.get("fines_unverified", [])
+    print(f"  對碼標記：已對 jgb2 程式核對 {len(v)}／{m['fines_total']} 細目；未對碼 {len(u)}（sources 種類 {m.get('fines_source_kinds')}）")
 
 
 def main() -> int:

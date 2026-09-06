@@ -406,6 +406,23 @@ def test_gate5_stop_reweigh_exits_block_and_zero_allows(tmp_path):
     assert run_hook(repo, _stop_event()).returncode == 0
 
 
+def test_gate5_stop_source_audit_required_before_handoff(tmp_path):
+    """步 5b（2026-09-07 業主裁）：有 not_available／owner_decision 格（needs_source_audit>0）且已產 diff_report（＝要交業主）
+    而 source_audit 缺或 unaudited>0 ⇒ 擋；unaudited=0 ⇒ 放行；沒產 diff_report 時不擋（盤查進行中）。"""
+    repo = _mk_repo(tmp_path)
+    base = {"evals_ran": [], "answerability": {"path": "a.json", "needs_rubric_revision": False},
+            "cost": {"path": "c.json", "over_budget": False},
+            "reweigh": {"path": "r.json", "cells_without_disposition": 0, "fines_without_sources": 0, "needs_source_audit": 3}}
+    _write_session(repo, dict(base, diff_report={"path": "d.json"}))
+    proc = run_hook(repo, _stop_event()); assert proc.returncode == 2 and "source_audit" in json.loads(proc.stdout)["reason"]
+    _write_session(repo, dict(base, diff_report={"path": "d.json"}, source_audit={"path": "s.json", "unaudited": 2, "owner_needed": 0}))
+    assert run_hook(repo, _stop_event()).returncode == 2
+    _write_session(repo, dict(base, diff_report={"path": "d.json"}, source_audit={"path": "s.json", "unaudited": 0, "owner_needed": 1}))
+    assert run_hook(repo, _stop_event()).returncode == 0
+    _write_session(repo, base)                                            # 尚未產 diff_report ⇒ 不擋
+    assert run_hook(repo, _stop_event()).returncode == 0
+
+
 def test_gate5_stop_over_budget_blocks(tmp_path):
     """紅：cost.over_budget=true ⇒ exit 2（與 evals_ran 是否跑過無關）。"""
     repo = _mk_repo(tmp_path)

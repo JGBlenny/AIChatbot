@@ -1,0 +1,122 @@
+{
+  "step": "source_audit",
+  "coverage_map_sha": "62633c7b46d273e32976eaa00a2b44e67114f731431c7422134cd7a49bb8bf00",
+  "audited_at": "2026-09-07",
+  "authority_sources": [
+    "code:/Users/lenny/jgb/project/jgb/jgb2 (master 2026-09-04, clean)",
+    "docs:/Users/lenny/jgb/project/jgb/jgb2/docs (163 md)",
+    "help:/Users/lenny/jgb/幫助中心/JGB幫助中心_HTML_交付_20260818 (92 zh-Hant)",
+    "ledger:docs/knowledge/jgb-product-facts.md"
+  ],
+  "records": [
+    {
+      "cell_id": "C22",
+      "status": "verified_fact",
+      "evidence": [
+        "database/migrations/2026_06_17_000002_create_contract_esign_table.php:contract_esign",
+        "app/Contract.php:付款方式常數 vendor/cash/recharge_account",
+        "resources/views/contract/sign.blade.php:進行電子簽名"
+      ],
+      "ledger_anchor": "esign-no-fee",
+      "note": "系統內無簽章計費機制；方案內容走 /pricing"
+    },
+    {
+      "cell_id": "C31",
+      "status": "owner_decided",
+      "owner_decision": "列現有不足；對外說法：系統支援按合約分算，金額看合約",
+      "note": "一般建議題（map-v2 ADVICE），非產品事實"
+    },
+    {
+      "cell_id": "C39",
+      "status": "verified_fact",
+      "evidence": [
+        "resources/views/iot/doorlock/basic.blade.php:key_public 私人門鎖/共用門鎖 定義",
+        "resources/views/iot/doorlock/password.blade.php:key_public",
+        "app/Notification.php:iot_share_passcode"
+      ],
+      "ledger_anchor": "doorlock-types",
+      "positive_control": "scout 只掃 Admin/IotManagementController 曾回報「無門鎖」；主 session grep resources/ 命中兩檔",
+      "note": "scout 否定結論被主 session 對碼推翻"
+    },
+    {
+      "cell_id": "C52",
+      "status": "verified_absent",
+      "evidence": [
+        "app/Abstracts/AdminSetting.php:FUNCTIONS_SETTING（內部後台 15 組，無「系統管理」）"
+      ],
+      "positive_control": "grep 系統管理 於 resources/ 與 app/（排除 Admin）零命中；同一掃描「團隊管理」命中 resources/ 5 檔",
+      "ledger_anchor": "no-system-management-module",
+      "note": "可答邊界題：沒有此模組、掛「系統管理」講法指向團隊管理總覽"
+    },
+    {
+      "cell_id": "C53",
+      "status": "owner_decided",
+      "owner_decision": "先不管（2026-09-07）",
+      "evidence": [
+        "app/EntrustedContract.php:STATUS_INVITING_FIRST/STATUS_INVITING_NEXT",
+        "docs/:grep 雙合約 0 命中（正對照「合約」108 檔）"
+      ],
+      "note": "程式／docs／幫助中心皆無此詞；最接近＝委託合約＋租賃合約兩份"
+    },
+    {
+      "cell_id": "C07",
+      "status": "verified_fact",
+      "evidence": [
+        "config/defaultplan.php:estate_limit=5",
+        "app/User.php:plan_estate_limit 寫入",
+        "app/Role.php:remainEstatesCount"
+      ],
+      "ledger_anchor": "free-plan-quota",
+      "note": "程式預設 5；各角色實值在 roles.plan_estate_limit（DB），知識只說預設"
+    },
+    {
+      "cell_id": "C24",
+      "status": "verified_fact",
+      "evidence": [
+        "app/Console/Kernel.php:invoice:issue-pre-billing dailyAt 05:00",
+        "app/Console/Commands/IssuePreBillingInvoices.php:invoice_mode=preBillingIssue",
+        "help:einvoice"
+      ],
+      "ledger_anchor": "einvoice-auto"
+    },
+    {
+      "cell_id": "C15",
+      "status": "owner_decided",
+      "owner_decision": "為售前寫一句（2026-09-07 業主：好）",
+      "evidence": [
+        "app/Label.php:TARGET_MAP/DEFAULT_LABEL"
+      ],
+      "ledger_anchor": "estate-labels"
+    },
+    {
+      "cell_id": "C25",
+      "status": "verified_fact",
+      "evidence": [
+        "app/Models/BalanceInvoiceGroup.php:BalanceInvoiceGroup",
+        "app/Console/Kernel.php:差額發票群組開立排程"
+      ],
+      "ledger_anchor": "balance-invoice",
+      "note": "業者月結對帳；售前一句能力描述（跨受眾改寫）"
+    },
+    {
+      "cell_id": "C29",
+      "status": "verified_fact",
+      "evidence": [
+        "app/Bill.php:BILL_TYPE_TOPUP",
+        "app/EstateStoredValue.php:recharge/deduct",
+        "app/Console/Kernel.php:bill:recharge-account"
+      ],
+      "ledger_anchor": "stored-value",
+      "note": "物件層級預付帳戶；與電錶儲值不同（跨受眾改寫）"
+    },
+    {
+      "cell_id": "C54",
+      "status": "verified_fact",
+      "evidence": [
+        "app/Invoice.php:CARRIER_TYPE_PHONE"
+      ],
+      "ledger_anchor": "carrier-types",
+      "note": "載具只存發票不付款；可答邊界題"
+    }
+  ]
+}

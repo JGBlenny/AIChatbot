@@ -32,6 +32,8 @@ budgets:
    ↓                      → steps/04-answerability.md（answerability_agents.py：分組子代理；Workflow 版留參考）
 5 reweigh       腳本      呼叫 tools/gapmap/coverage_map.py 重量
    ↓
+5b source-audit 腳本+scout not_available／owner_decision 的格先對權威來源（jgb2 程式／docs／幫助中心）盤查，
+   ↓                      事實回填 docs/knowledge/jgb-product-facts.md；只有 owner_needed 才交業主 → steps/05b-source-audit.md
 6 diff          腳本      結構差異＋id 對應表＋取代對應表＋成本（G4 獨立驗證）
    ↓
 7 import        腳本      業主核可後：正本 commit → export_batch → import_facet_knowledge
@@ -47,6 +49,7 @@ budgets:
 | 3 | [`steps/03-phrasing.md`](steps/03-phrasing.md) | structure-proposal.json | `schemas/phrasing-map.json` | 腳本＋人審 |
 | 4 | [`steps/04-answerability.md`](steps/04-answerability.md) | phrasing-map.json | `schemas/answerability.json` | 腳本＋Claude Code 子代理（`answerability_agents.py`；業主 2026-09-06：API 只在真實對話） |
 | 5 | [`steps/05-reweigh.md`](steps/05-reweigh.md) | answerability.json | `schemas/coverage-reweigh.json` | 腳本 |
+| 5b | [`steps/05b-source-audit.md`](steps/05b-source-audit.md) | coverage-map.json | `schemas/source-audit.json` | 腳本＋唯讀 scout；⛔ 未核對不得交業主（2026-09-07 業主裁） |
 | 6 | [`steps/06-diff.md`](steps/06-diff.md) | 新舊正本＋id_map | `schemas/diff-report.json`＋`schemas/cost.json` | 腳本 |
 | 7 | [`steps/07-import.md`](steps/07-import.md) | 已核可正本 | rollback SQL | 腳本；⛔ 需業主授權（D1） |
 
@@ -57,7 +60,7 @@ budgets:
 - **G0 前提／權威來源核對**：見 [`../retrieval-improvement-loop/rules/`](../retrieval-improvement-loop/README.md)（步 1 intake 對齊）
 - **G2 量測管線自證**：見同上（步 5 reweigh 對齊）
 - **G4 獨立驗證**：宣稱療效／數字／尺一律派 fresh verifier（步 6 diff／cost_ledger 對齊）
-- **Stop 閘**：`.claude/hooks/outline_gate.py`——`object_under_test` 未核可、材料 sha 未凍結、或 `cost.json` 任一層超支 ⇒ 擋
+- **Stop 閘**：`.claude/hooks/outline_gate.py`——`object_under_test` 未核可、材料 sha 未凍結、或 `cost.json` 任一層超支 ⇒ 擋；步 5 有 not_available／owner_decision 格、已產 diff_report 而 `source_audit` 未核對 ⇒ 擋（步 5b）
 
 ## 成本表（初值，M-a 試作後由業主核定）
 
