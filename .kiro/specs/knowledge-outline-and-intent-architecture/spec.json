@@ -22,6 +22,6 @@
   "implementation": {
     "started": true,
     "completed": false,
-    "tasks_completed": ["1.1"]
+    "tasks_completed": ["1.1", "1.2", "1.3"]
   }
 }

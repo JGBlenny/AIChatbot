@@ -103,9 +103,11 @@ def _read_event() -> dict:
     if not raw or not raw.strip():
         return {}
     try:
-        return json.loads(raw)
+        ev = json.loads(raw)
     except json.JSONDecodeError:
         return {}
+    # verifier F3：合法 JSON 但非物件（如 [1,2]）也要靜默放行，⛔ 不得 traceback
+    return ev if isinstance(ev, dict) else {}
 
 
 def _rel_path(file_path: str, project_dir: str) -> str:
@@ -346,19 +348,43 @@ def check_frozen_overlap(abs_path: str, project_dir: str) -> list:
 # 判定 4：識別碼掃描
 # ---------------------------------------------------------------------------
 
-def check_identifiers(abs_path: str) -> list:
-    """回 (類別, 列號) 清單；空＝乾淨。"""
+def check_identifiers(abs_path: str, skip_front_matter: bool = False) -> list:
+    """回 (類別, 列號) 清單；空＝乾淨。
+
+    `skip_front_matter` 只對**正本**為 True（front matter 七鍵只有 version／budget 數字）；
+    `runs/` 產物一律全掃（verifier A1：豁免外溢到 runs/ 會在個資主面開盲區）。"""
     try:
         with open(abs_path, encoding="utf-8") as f:
             lines = f.read().split("\n")
     except OSError:
         return []
     hits: list = []
+    in_front_matter = False
     for i, line in enumerate(lines, start=1):
+        # verifier F1：front matter 只有 version／budget_tokens 這類數字，⛔ 不是識別碼面；整段跳過
+        if skip_front_matter and i == 1 and line.strip() == "---":
+            in_front_matter = True
+            continue
+        if in_front_matter:
+            if line.strip() == "---":
+                in_front_matter = False
+            continue
         for category, pattern in IDENTIFIER_CATEGORIES:
+            if category == "tax_id":
+                # verifier F1：8 位數若是合理日期（19xx／20xx＋合法月日，如 20260906）不算統編
+                if any(not _looks_like_date8(m.group(0)) for m in pattern.finditer(line)):
+                    hits.append((category, i))
+                continue
             if pattern.search(line):
                 hits.append((category, i))
     return hits
+
+
+def _looks_like_date8(s: str) -> bool:
+    if len(s) != 8 or s[:2] not in ("19", "20"):
+        return False
+    mm, dd = int(s[4:6]), int(s[6:8])
+    return 1 <= mm <= 12 and 1 <= dd <= 31
 
 
 # ---------------------------------------------------------------------------
@@ -423,6 +449,8 @@ def main() -> int:
         if reasons:
             payload = {"decision": "block", "reason": "；".join(reasons)}
             print(json.dumps(payload, ensure_ascii=False))
+            # verifier F4：exit 2 時 harness 回饋給模型的是 stderr；理由兩邊都寫，⛔ 不能只靠 stdout JSON
+            sys.stderr.write("[outline_gate] Stop 擋回合：" + "；".join(reasons) + "\n")
             return 2
         return 0
 
@@ -463,7 +491,7 @@ def main() -> int:
                     sys.stderr.write(f"  - {fid}\n")
                 return 2
 
-        id_hits = check_identifiers(abs_path)
+        id_hits = check_identifiers(abs_path, skip_front_matter=is_canon)
         if id_hits:
             sys.stderr.write("[outline_gate] PostToolUse 識別碼掃描命中（類別＋列號，⛔ 不印內容）：\n")
             for category, lineno in id_hits:

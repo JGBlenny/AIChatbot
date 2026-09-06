@@ -501,3 +501,88 @@ def test_negative_control_positive_control_target_path_does_hit(tmp_path):
 
     assert proc.returncode == 2
     assert proc.stderr != ""
+
+
+# ---------------------------------------------------------------------------
+# verifier 2026-09-06 回饋（F1／F3／F4）——修正後補的回歸鎖
+# ---------------------------------------------------------------------------
+
+import re as _re
+
+
+def test_f1_canon_date_and_budget_tokens_are_not_tax_id(tmp_path):
+    """綠：正本內文的 8 位日期（20260906）與 front matter 的 budget_tokens 大數字不得被當統編誤擋（F1，P2）。"""
+    repo = _mk_repo(tmp_path)
+    text = _re.sub(r"budget_tokens:.*", "budget_tokens: 12000000", _VALID_CANON)
+    text += "本版於 20260906 定案。\n"
+    target = repo / "rag-orchestrator" / "canon" / "prospect.md"
+    target.write_text(text, encoding="utf-8")
+
+    proc = run_hook(repo, _post_event(str(target)))
+
+    assert proc.returncode == 0, proc.stderr
+    assert proc.stderr == ""
+
+
+def test_f1_positive_control_real_tax_id_still_blocks(tmp_path):
+    """正對照：非日期形狀的 8 位數（12345678）仍以 tax_id 擋——證明上一條的綠不是把掃描關掉。"""
+    repo = _mk_repo(tmp_path)
+    target = repo / "rag-orchestrator" / "canon" / "prospect.md"
+    target.write_text(_VALID_CANON + "統編 12345678 開立發票。\n", encoding="utf-8")
+
+    proc = run_hook(repo, _post_event(str(target)))
+
+    assert proc.returncode == 2
+    assert "tax_id" in proc.stderr
+
+
+def test_f3_non_object_json_event_is_silent(tmp_path):
+    """綠：stdin 是合法 JSON 但非物件（[1,2]）⇒ exit 0、零輸出，與壞 JSON 同款（F3）。"""
+    repo = _mk_repo(tmp_path)
+    env = {**os.environ, "CLAUDE_PROJECT_DIR": str(repo)}
+    proc = subprocess.run([sys.executable, _HOOK_PATH], input="[1,2]",
+                          capture_output=True, text=True, env=env)
+    assert proc.returncode == 0
+    assert proc.stdout == "" and proc.stderr == ""
+
+
+def test_f4_stop_block_reason_also_on_stderr(tmp_path):
+    """Stop 擋回合時 exit 2 的 harness 契約是讀 stderr：理由必須同時寫到 stderr（F4）。"""
+    repo = _mk_repo(tmp_path)
+    _write_session(repo, {
+        "evals_ran": [],
+        "answerability": {"path": "a.json", "needs_rubric_revision": True},
+        "cost": {"path": "c.json", "over_budget": False},
+    })
+    proc = run_hook(repo, _stop_event())
+    assert proc.returncode == 2
+    assert "needs_rubric_revision" in proc.stderr
+    assert json.loads(proc.stdout)["decision"] == "block"
+
+
+def test_a1_runs_file_with_front_matter_still_scanned(tmp_path):
+    """紅→綠（verifier A1）：`runs/` 產物以 `---` 開頭時識別碼掃描不得跳過該區段——front matter 豁免只屬正本。"""
+    repo = _mk_repo(tmp_path)
+    runs = repo / ".claude" / "skills" / "outline-curation" / "runs"
+    runs.mkdir(parents=True, exist_ok=True)
+    target = runs / "note.md"
+    target.write_text("---\ncontact: abc@example.com\n---\n乾淨內文\n", encoding="utf-8")
+
+    proc = run_hook(repo, _post_event(str(target)))
+
+    assert proc.returncode == 2
+    assert "email" in proc.stderr
+
+
+def test_a1_runs_file_with_unclosed_front_matter_still_scanned(tmp_path):
+    """綠（verifier 第 3 輪指出無鎖）：`runs/` 檔首行 `---` 且從未閉合，其後識別碼仍要掃到——舊行為會整檔跳過。"""
+    repo = _mk_repo(tmp_path)
+    runs = repo / ".claude" / "skills" / "outline-curation" / "runs"
+    runs.mkdir(parents=True, exist_ok=True)
+    target = runs / "unclosed.md"
+    target.write_text("---\ntitle: x\nowner_email: bob@example.com\n", encoding="utf-8")
+
+    proc = run_hook(repo, _post_event(str(target)))
+
+    assert proc.returncode == 2
+    assert "email" in proc.stderr
