@@ -14,6 +14,7 @@
 ⚠️ 假事件 `file_path` 一律用**絕對路徑**（1.1 實測：Claude Code 事件的 file_path 是絕對路徑）。
 """
 import hashlib
+import importlib.util
 import json
 import os
 import subprocess
@@ -716,3 +717,36 @@ def test_b3_positive_control_real_number_labels_still_block(tmp_path, text):
 
     assert proc.returncode == 2
     assert "number_label" in proc.stderr
+
+
+# --- (4) phone：十六進位夾帶的 9 位數不是電話 -------------------------------
+
+@pytest.fixture
+def hook():
+    """把 `outline_gate.py` 當模組載入，直接對單條 regex 下斷言（其餘測試走 subprocess 驅動全流程）。"""
+    if not os.path.exists(_HOOK_PATH):
+        pytest.skip("outline_gate.py 不在掛載路徑")
+    spec = importlib.util.spec_from_file_location("outline_gate", _HOOK_PATH)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_gate4_phone_boundary_excludes_hex_not_all_alnum(hook):
+    """回歸鎖（2026-09-06 實測誤判）：sha256 摘要裡夾著的 9 位數 ⛔ 不是電話，
+    但邊界只排除**十六進位字元**——`TEL0912345678` 這種緊貼英文字的真號碼仍必須抓到
+    （`PHONE_RE` 同時被 `phrasing_map.deidentify` 用來遮蔽，那一側必須寧可多遮）。
+    每條「不該抓」都配同節的「必須抓」正對照。
+    """
+    # 正對照 1：一般語境的手機號碼（同 test_gate4_posttooluse_identifier_phone_blocks 的材料）
+    assert hook.PHONE_RE.search("請撥打 0912345678 聯繫") is not None
+    # 正對照 2：緊貼中日韓文字（前後都不是英數，邊界不得因此漏掉）
+    assert hook.PHONE_RE.search("電話0912345678轉123") is not None
+    # 正對照 3：緊貼英文字母 —— 釘住「排除十六進位」而非「排除全部英數」的選型
+    assert hook.PHONE_RE.search("TEL0912345678") is not None
+
+    # 回歸：sha256 摘要（…cf017929054d…）舊版會抓出 `017929054` 當電話
+    sha = "da786d73407b96d1d9c857ce51ebb5ef34efafb135ea7602cf017929054d1ba5"
+    assert hook.PHONE_RE.search(sha) is None, "sha256 摘要被誤判為電話"
+    # 純數字長串也不是電話 —— 證明綠不是「凡有數字一律放行」
+    assert hook.PHONE_RE.search("3260758702847") is None
