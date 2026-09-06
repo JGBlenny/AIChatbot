@@ -110,7 +110,10 @@
   - 需求：2.7
   - 執行：mech-executor／effort 中——照 `agent_boundary.py` 既有 checker 慣例＋正對照
   - 驗收：目標＝33／34 進 audit 且空跑不綠｜成果＝兩支 checker＋正對照｜做法＝照 agent_boundary 慣例｜驗證＝[自驗]
-- [ ] 3.6 決策 5 定案（3.4 後）：依三臂數字定線上匹配鍵（預設標題＋講法取最大）與講法密度目標；寫回 design 1.4 變更歷史；⛔ 不調 K。
+- [x] 3.6 決策 5 定案（3.4 後；**2026-09-07 業主裁 (a)**：線上匹配鍵改標題＋講法＋內文句取最大（內文臂 loo=article r@5 +9.1 點、講法臂 +3.9 點）；reranker 不接；講法密度目標每細目 approved ≥3（0 講法細目 2 個待業主補講法：`prospect/C/role-permission-granularity`、`prospect/D/subscription-change-renewal`）；design 決策 5 修訂＋變更歷史 1.14）：依三臂數字定線上匹配鍵（預設標題＋講法取最大）與講法密度目標；寫回 design 1.4 變更歷史；⛔ 不調 K。
+- [ ] 3.7 `FineIndex` 內文鍵（3.6 後、4.1 前；決策 5 修訂落地）：`KeyKind` 加 `content`；`prepare` 對每細目 `content_units` 每句一鍵（key id＝`ct:<sha8>`，⛔ 不記句文於 trace）；快取鍵 `canon_sha256` 已涵蓋內文、不加鍵；批次 ≤8 與三態不變；`Selection.winning_key_kind` 值域加 `content`；health `canon` 節加 `content_keys` 計數。測試：`index_eval` 內文臂與 `FineIndex` 同鍵集（鍵文字集合相等）；`visible_subset` 等價測試不變；突變控制（拿掉內文鍵 ⇒ 第二份材料 r@5 必降）。⛔ 不調 K、⛔ 不接 reranker。
+  - 需求：5.2, 5.6
+  - 執行：executor／effort 中；完成後派 fresh verifier
   - 需求：5.2
   - 執行：main／effort 低——判斷屬主 session
   - 驗收：目標＝匹配鍵定案｜成果＝design 1.4 變更歷史一行（同時記：步 1 gold 由「判者標」改為「文章→slug→細目 `sources` 決定性映射」，55 格判者材料降為第二份）｜做法＝讀 3.4 數字｜驗證＝[業主審核]（決策 5 由業主點頭）

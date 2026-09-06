@@ -10,7 +10,7 @@
 ### 設計目標
 把「知識怎麼被找到」從**程式讀 kb 列自動分類**改成**人審正本（粗目／細目／講法）→ 程式組裝與索引 → 模型只在被給的細目內判意圖與組話**，並讓建立與重切正本的流程由機制（hook 閘門＋隔離判者／schema 強制；原 Workflow，2026-09-06 改 API 判者＋子代理提議）而非叮嚀文保證一致。三個支柱各對一組元件：
 1. **完善大綱 skill**（元件 1–3）：每步 schema 輸出、四道閘門靠 hook、判者 fan-out 靠獨立 API 請求（原 Workflow）、可回放、記成本。[需求 1]
-2. **正本與索引**（元件 4–6）：Markdown 正本 → 決定性 JSON → `OutlineDoc`（沿用既有組裝器）＋ `FineIndex`（細目標題向量＋講法向量取最大）→ 回合前程式選候選細目注入。[需求 2, 5]
+2. **正本與索引**（元件 4–6）：Markdown 正本 → 決定性 JSON → `OutlineDoc`（沿用既有組裝器）＋ `FineIndex`（細目標題向量＋講法向量＋內文句向量取最大，決策 5 修訂）→ 回合前程式選候選細目注入。[需求 2, 5]
 3. **對話與驗證**（元件 7–11）：身分由程式預填、對話邏輯以定義搬入 agent、CTA／handoff 由程式與設定供給；每個變更先有受測物定義清單與假設表，免費的先做。[需求 4, 6, 7]
 
 ### 範圍與邊界
@@ -43,7 +43,7 @@ graph TD
     end
     CANON -->|parser 決定性導出| CJ[canon/&lt;audience&gt;.json<br/>canon_sha256]
     CJ --> ASM[元件 5 canon_assembler<br/>→ OutlineDoc（沿用 _build_doc／check_budget）]
-    CJ --> IDX[元件 6 FineIndex<br/>標題向量＋講法向量，取最大]
+    CJ --> IDX[元件 6 FineIndex<br/>標題／講法／內文句向量，取最大]
     CJ -->|export_batch| IMP[元件 8 import_facet_knowledge<br/>kb 衍生列＋approved_by／replaces]
     IMP --> KB[(knowledge_base)]
     subgraph RT["回合（rag-orchestrator）"]
@@ -349,8 +349,8 @@ class CandidateSelector:
         每細目分數＝max(cos(query, title), max cos(query, phrasing_i))；只在 visible_subset 內排序（R5.3）。
         回 None ⇒ runtime 走整份正本（降級，資訊更多不是更鬆）。⛔ 不 log 查詢字串。"""
 ```
-- **匹配鍵預設**＝標題＋講法取最大（R5.2）；內文向量作元件 10 步 1 第三臂，⛔ 不在線上啟用直到步 1 結論。
-- **講法治理** [需求 5.6]：trace 只記 `winning_key_kind ∈ {title, phrasing}`＋`fine_id`（F18：`ph:<sha8>` 對照表就在 repo，記它等於一次查表還原問句，解析度高於 Plan v3 P3-2 已接受的段落 id）；離線 SQL 聚合到**細目層**的 `hit_count`／`phrasing_hit_ratio`。講法層的命中與誤掛改由元件 10 的 `index_eval.py --report misrouted`（離線、材料凍結）計算，「勝出講法所屬細目 ≠ 判者正解」列為 `misrouted_phrasing[]` 待退役；零命中退役規則改為「該細目 phrasing 命中比 <5%（≥30 回合）且 index_eval 無該講法命中」。退役＝正本內 `status: retired`（可 revert）。**取捨**：線上失去單一講法的命中數，換取 trace 不可還原問句；記入收案取捨表。每細目講法上限 **12**、同細目講法兩兩去重（NFKC＋去空白相等即重複）。
+- **匹配鍵預設**＝標題＋講法＋內文句取最大（R5.2；**2026-09-07 決策 5 修訂**：步 1 內文臂 +9.1 點納入；task 3.7 落地前程式仍為標題＋講法）。
+- **講法治理** [需求 5.6]：trace 只記 `winning_key_kind ∈ {title, phrasing, content}`＋`fine_id`（F18：`ph:<sha8>` 對照表就在 repo，記它等於一次查表還原問句，解析度高於 Plan v3 P3-2 已接受的段落 id）；離線 SQL 聚合到**細目層**的 `hit_count`／`phrasing_hit_ratio`。講法層的命中與誤掛改由元件 10 的 `index_eval.py --report misrouted`（離線、材料凍結）計算，「勝出講法所屬細目 ≠ 判者正解」列為 `misrouted_phrasing[]` 待退役；零命中退役規則改為「該細目 phrasing 命中比 <5%（≥30 回合）且 index_eval 無該講法命中」。退役＝正本內 `status: retired`（可 revert）。**取捨**：線上失去單一講法的命中數，換取 trace 不可還原問句；記入收案取捨表。每細目講法上限 **12**、同細目講法兩兩去重（NFKC＋去空白相等即重複）。
 - **reranker** [需求 5.11]：⛔ 不接；步 1 後若 top-5 增益 ≥5 點且 p95 不退步才另立 slice。
 - **第二次機會** [需求 5.9]：目錄節 `outline:toc`（citable=False）＋ `kb.get("outline:<fine_id>")` 讀整細目（既有 resolver 依 section id 查）；`miss_kind` 分 `none_visible`（有細目但不可見）／`no_candidate`（可見但分數全低於 `MIN_SCORE=0.0`——⛔ 不設門檻，K 內全給，由模型與 Verifier 守）／`index_unavailable`。
 
@@ -542,8 +542,10 @@ flowchart LR
 ### 決策 4：格＝(受眾, 主題)、細目帶受眾維度、同受眾互斥、跨受眾同主題＝各自細目＋另見
 **決定**：`FineItem.id` 含 audience；`see_also` 表跨受眾關聯；同受眾相似由工具產待審、人裁。**理由**：R2.4／R3.2 覆蓋以受眾為單位；跨受眾同主題是不同層級（能力／操作／權益）不是重複（R2.5）。
 
-### 決策 5：匹配鍵預設＝標題向量＋講法向量取最大；內文向量為量測臂
+### 決策 5：匹配鍵預設＝標題向量＋講法向量取最大；內文向量為量測臂（**2026-09-07 修訂：內文句納入線上匹配鍵**）
 **決定**：線上不用內文向量直到 R6 步 1。**理由**：圖書館法（索引目錄不索引內容）；F10 的 86% 是內文代替品，⛔ 不得沿用為停損線。
+
+**修訂（2026-09-07，3.6 業主裁 (a)）：線上匹配鍵改為標題向量＋講法向量＋內文句向量三者取最大；內文句＝正本細目 `content_units` 每句一鍵（售前 38 細目 131 句）。** 依據＝3.4 步 1（`inputs/m-c-index-eval-20260907.md`）：真問法 153 句、剔同文章鍵後 r@5 title .582／+phrasing .621／+content .673——內文臂 +9.1 點（俗稱 +19、情境 +13、五型無退步），講法臂僅 +3.9 點（<10 點，觸發風險表「加內文臂或增講法密度」），reranker 無數字 ⛔ 不接、⛔ 不調 K。圖書館法的「不索引內容」改讀為「內容不切段落、不進 DB 檢索」，內文句作匹配鍵不改變細目＝檢索單位。**講法密度目標**：每細目 approved 講法 ≥3（現 0 講法細目 2 個：`prospect/C/role-permission-granularity`、`prospect/D/subscription-change-renewal`，補講法＝正本內容改動、業主核）、上限 12 不變；misrouted 81/153 交 5.6 治理。實作：`FineIndex` `KeyKind` 加 `content`（task 3.7，4.1 前）；`winning_key_kind` 值域同步加 `content`。
 
 **適用範圍（2026-09-06 補明，業主問）**：本決策的匹配鍵（標題向量＋講法向量取最大、細目＝檢索單位、top-K 候選、第二次機會）**只實作在 agent 路徑**（元件 6 `FineIndex`／`CandidateSelector`，M-c／M-d）。**舊鏈（`routers/chat.py`）不改檢索邏輯**：它只經元件 8 入庫拿到「一細目一列」（`question`＝標題、`answer`＝內容句），仍是一列一向量的既有檢索；講法首批不寫 `keywords`（F16），所以舊鏈得到更乾淨的知識、得不到講法匹配。⇒ 影子對照若只換知識不切路徑，量到的是知識品質不是本決策；本決策的效果以 M-c 步 1 三臂（標題／講法／內文）與 M-d 步 2 探針證明。
 
@@ -756,6 +758,7 @@ flowchart LR
 ### D. 變更歷史
 | 日期 | 版本 | 變更內容 | 修改者 |
 |---|---|---|---|
+| 2026-09-07 | 1.14 | 3.6 決策 5 修訂（業主裁 (a)）：線上匹配鍵＝標題＋講法＋內文句（`content_units` 每句一鍵）取最大；依 3.4 loo=article r@5 .582／.621／.673（內文 +9.1、講法 +3.9）；reranker 不接、K 不調；講法密度目標每細目 ≥3；`KeyKind` 加 `content`（task 3.7） | 業主／AI |
 | 2026-09-07 | 1.13 | 3.3 元件 6 回寫：`Selection.winning_key`→`winning_key_kind`（不記講法 id，F18）、`EmbeddingBackend` Protocol、不設 `MIN_SCORE`、`register_index`；匯入契約：正本空清單⇒NULL 不預設（tasks 7.1／3.5；業主 2026-09-07 照准） | 業主／AI |
 | 2026-09-07 | 1.12 | 大綱預算 10,000→**12,000**（正本 `budget_tokens` 與程式預設同步；實測整份售前正本 cl100k 10,336 tokens，中文≈1.1 字元/token，research 1.6 假設錯；本機影子模式因此啟動紅；業主裁 a）| 業主／AI |
 | 2026-09-07 | 1.11 | 3.2 落地偏離回寫（元件 5）：`build_canon_toc` 另名、`canon_visible` 規則＝元件 6 前身（分支判準同 SQL、刻意不套清單）、resolver per-call 接線、註冊表載體、`.json` 位元組同源、29b（業主 2026-09-07 照准） | 業主／AI |
