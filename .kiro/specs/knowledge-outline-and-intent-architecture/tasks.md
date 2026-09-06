@@ -73,7 +73,7 @@
   - 需求：1.1, 1.3, 1.5
   - 執行：executor／effort 高——結構提議是唯一「LLM 決定結構」的步，非決定性標記與 journal 保留要做對
   - 驗收：目標＝結構由三角度提議、人審合成、id 對應表強制｜成果＝Structure phase＋`apply_proposal.py`｜做法＝judge panel＋決定性套用｜驗證＝[自驗]
-- [ ] 2.4 售前首跑（2.1–2.3 後）：輸入＝F2 的 21 列 prospect（8 列 `IS NULL` 業者列 ⛔ 排除）＋18 筆草稿（`scripts/knowledge-batches/presales-gapmap-batch2-20260904.json`）＋缺口地圖 v2.1；**分兩段派工**：2.4a 步 1–3（intake、Structure 提議＋合成、講法掛載）→ 產結構草稿＋講法提案，主 session 檢視後才起 2.4b；2.4b 步 4–6（可答性判者＝`answerability_judge.py`，模型依附錄 H P1 裁定、重量、diff）→ `rag-orchestrator/canon/prospect.md` 草稿（**細目內容取自某幫助中心文章者，其 `sources` 必併入 `helpcenter:<slug>`——這是 3.4 gold 的唯一生產者**）（A–G；G「現有不足」每格一句對外說法＋出口、E 只用既有來源、缺者標不足）、`diff-report.json`（含 `replacements[]` old kb id → fine id）、`cost.json`；交業主審草稿（⛔ 不 commit 正本、⛔ 不入庫）。
+- [ ] 2.4 售前首跑（2.1–2.3 後）：輸入＝F2 的 21 列 prospect（8 列 `IS NULL` 業者列 ⛔ 排除）＋18 筆草稿（`scripts/knowledge-batches/presales-gapmap-batch2-20260904.json`）＋缺口地圖 v2.1；**分兩段派工**：2.4a 步 1–3（intake、Structure 提議＋合成、講法掛載）→ 產結構草稿＋講法提案，主 session 檢視後才起 2.4b；2.4b 步 4–6（可答性判者＝`answerability_judge.py --provider openai --model gpt-4o-mini`（H2）、重量、diff）→ `rag-orchestrator/canon/prospect.md` 草稿（**細目內容取自某幫助中心文章者，其 `sources` 必併入 `helpcenter:<slug>`——這是 3.4 gold 的唯一生產者**）（A–G；G「現有不足」每格一句對外說法＋出口、E 只用既有來源、缺者標不足）、`diff-report.json`（含 `replacements[]` old kb id → fine id）、`cost.json`；交業主審草稿（⛔ 不 commit 正本、⛔ 不入庫）。
   - 需求：1.9, 2.2, 2.10, 3.6, 3.7
   - 執行：main／effort 高——首跑的每一步輸出都是業主要審的東西，主 session 親跑並逐步檢視
   - 驗收：目標＝第一份售前正本草稿｜成果＝`prospect.md` 草稿＋diff-report＋replacements＋cost｜做法＝主 session 親跑步 1–6｜驗證＝[業主審核] 草稿逐粗目（⛔ 未審不 commit）

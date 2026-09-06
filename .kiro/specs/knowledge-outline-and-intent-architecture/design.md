@@ -726,11 +726,13 @@ flowchart LR
 | H5 | 決策 5 匹配鍵只在 agent 路徑；舊鏈不改檢索、只經入庫得一細目一列 | 決策 5 適用範圍 |
 | H6 | 先用售前大綱驗證有效（4.4 探針＋7.4 放量），業主點頭後才補其他受眾大綱 | 決策 10、tasks 6.2 前置 |
 
+**已定、⛔ 不再端上來（2026-09-06 業主指正）**：
+- M-a 試作（1.5 sonnet 44 格、1.6 gpt-4o-mini 55 格）的 verdict 皆 `provisional`，⛔ 不進正本、不進地圖、不需在兩者間擇一「為準」；2.4b 以正本細目為候選、用 H2 的判者（`gpt-4o-mini`）重跑。
+- 步 4 預算上限 $3 維持（API 判者實測 55 格 ≈$0.10 在內）；usd 依 OpenAI 公告牌價計，不另對帳。
+
 **待裁**：
 | # | 問題 | 影響 |
 |---|---|---|
-| P1 | 1.5／1.6 以哪把尺為準：sonnet 44 格（＋補 11 格需 Anthropic 金鑰）或 gpt-4o-mini 55 格（跨模型同 33／44，mini 較寬） | 2.4b 重跑用哪個判者模型；建議抽審 11 格差異後定 |
-| P2 | 步 4 預算數字：API 判者 55 格 ≈$0.10，步上限 $3 是否維持；usd 牌價待對帳單 | SKILL.md budgets |
 | P3 | design 元件 4 範例含 `- exit: handoff`，`ATTR_KEYS` 無 `exit`（verifier advisory）：範例過期或補鍵 | canon 格式 |
 | P4 | `.claude/workflows/outline-curation.js` 留參考或刪除（同一把尺兩個實作的維護風險） | repo 整潔 |
 | P5 | rubric 0.3.0（`partial` 子問題定義）是否補：門檻已降為可選 | 判者一致性 |
