@@ -52,6 +52,10 @@
   - 需求：1.5, 1.7
   - 執行：main／effort 中——收案判斷與預算呈核屬主 session；⚠️ 這裡的 verdict 全為 `provisional`，⛔ 不進正本、不進地圖
   - 驗收：目標＝量出試作成本／一致率，定預算初值｜成果＝`inputs/m-a-trial-20260906.md`＋done ①–⑦ 打勾表｜做法＝跑一次 55 格｜驗證＝[代理驗證]（claim：一致率與成本數字可由 journal 重算一致）；[業主親跑] 核定預算；[業主審核] 報告
+- [ ] 1.6 可答性判者改腳本直打 API（1.5 後；業主 2026-09-06 裁：硬體撐不住 Workflow、Workflow 留參考）：`scripts/answerability_judge.py`——system＝`promptHead+candidatesBlock` 掛 `cache_control`（rubric＋39 候選共用前綴）、user＝`cellBlock+cellTail`，system+user 逐位元等於 `build_judge_prompt`；每判者獨立請求（互不可見）；`output_config.format=json_schema`（VERDICT 同 JS）；judge1／judge2、不一致才 judge3；Reconcile 與 JS 逐條等價（門檻 0.80）；journal jsonl 以 prompt sha＋slot 為 key 續跑；usage 逐請求累加、usd 依牌價表；憑證由 SDK 零參數解析，⛔ 不讀 .env、不進 argv／transcript。**測試**（假 client、不需 SDK）：請求形狀＋prompt 等價、隔離與第 3 判者、三不同落 no_source、refusal 丟格、續跑零呼叫、成本算術、門檻同值。**實跑（業主 2026-09-06 裁：1.5 的 44 格結果不作廢）**：只補批 5（C45–C55）——用 `--layout workflow`（system+user 逐位元＝Workflow 判者 prompt、無共用快取，11 格約 30 請求估 <$0.5）跑完後 `merge_answerability_batches.py` 併成 55 格；`--layout cached`（共用快取前綴，段落順序不同＝另一版 prompt）留給日後整輪重跑，⛔ 不與 workflow 版面混算。業主在自己 shell 設 Anthropic 憑證後跑；`cost_ledger` 步 4 回到 $3 內（只計本次 API 花費）。
+  - 需求：1.5, 1.7
+  - 執行：main／effort 中——與 1.4 同一套 schema 與 Reconcile，換執行形態；實跑要業主憑證
+  - 驗收：目標＝同一把尺在 MB 級記憶體下補完 55 格、日後整輪 <$2｜成果＝`answerability_judge.py`＋unit＋55 格合併 envelope｜做法＝直打 API；批 5 用 workflow 版面、日後用 cached 版面｜驗證＝[自驗] unit；[業主親跑] 憑證與實跑；[代理驗證]（claim：system+user 與 Workflow 判者 prompt 逐位元相同、usd 可由 journal usage 重算）
 
 ## 2. M-b 售前正本：parser、講法、結構提議、首跑草稿（2.1 先做；2.2／2.3／2.5 平行；2.4 後 2.6）
 
@@ -65,7 +69,7 @@
   - 需求：1.8, 2.5, 5.5
   - 執行：executor／effort 中——D3 預設已定，識別碼類別封閉；⚠️ 個資觸發 ⇒ 完成後派 fresh verifier
   - 驗收：目標＝講法有出處、已去識別、相似細目只出待審｜成果＝兩支工具＋PII 掃描測試｜做法＝去識別先於任何 agent 呼叫｜驗證＝[代理驗證]（claim：塞入各類識別碼皆被擋、`raw/` 未進版控）
-- [ ] 2.3 (P) Workflow Structure phase＋`apply_proposal.py`：`parallel(3 角度：使用者提問路徑／內容邊界／受眾層級)` 各出 `structure-proposal` schema → 一個合成 agent（三份原提案留 journal）；`apply_proposal.py` 把提議決定性套成正本 Markdown 草稿＋id 對應表（拆／併／移／新增各有前後對照；未附對應表 ⇒ exit 2）。測試：合成輸出 schema 校驗；`apply_proposal` 同輸入兩次逐位元相等；缺對應表必擋。 **schema（定義不足已補）**：`structure-proposal.json`＝`{coarses:[{id,title}], fines:[{id, coarse_id, title, slug, merge_of:[kb id|draft n], split_from:[…], moved_from:[…], reason}], id_map:[{old, new, op∈{keep,split,merge,move,new}}], angle}`；合成 agent 輸出同 schema 外加 `rejected_alternatives[]`（每條一句理由）。
+- [ ] 2.3 (P) 結構提議（**形態改腳本直打 API**，決策 7 修訂 2026-09-06；Workflow 留參考）＋`apply_proposal.py`：3 角度（使用者提問路徑／內容邊界／受眾層級）＝3 個獨立請求各出 `structure-proposal` schema → 第 4 個請求合成（三份原提案留 journal）；`apply_proposal.py` 把提議決定性套成正本 Markdown 草稿＋id 對應表（拆／併／移／新增各有前後對照；未附對應表 ⇒ exit 2）。測試：合成輸出 schema 校驗；`apply_proposal` 同輸入兩次逐位元相等；缺對應表必擋。 **schema（定義不足已補）**：`structure-proposal.json`＝`{coarses:[{id,title}], fines:[{id, coarse_id, title, slug, merge_of:[kb id|draft n], split_from:[…], moved_from:[…], reason}], id_map:[{old, new, op∈{keep,split,merge,move,new}}], angle}`；合成 agent 輸出同 schema 外加 `rejected_alternatives[]`（每條一句理由）。
   - 需求：1.1, 1.3, 1.5
   - 執行：executor／effort 高——結構提議是唯一「LLM 決定結構」的步，非決定性標記與 journal 保留要做對
   - 驗收：目標＝結構由三角度提議、人審合成、id 對應表強制｜成果＝Structure phase＋`apply_proposal.py`｜做法＝judge panel＋決定性套用｜驗證＝[自驗]

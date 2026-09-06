@@ -534,6 +534,8 @@ flowchart LR
 ### 決策 7：skill＝hook（紀律）＋Workflow（判者／提議）＋腳本（其餘）；預算分步（初值，M-a 後核定）
 **決定**：只有兩步進 Workflow；四道閘門三個 hook 事件；最小試作先做可答性一步（以臨時細目集合跑，見附錄 C M-a）。**理由**：業主 2026-09-06 定向；Workflow 的價值在判者隔離與 schema 強制，決定性步驟進 Workflow 只增加成本；預算分步為初值、業主核。**參考**：research 主題 3。
 
+**修訂（2026-09-06，1.5 試作後業主裁）**：判者隔離與 schema 強制**不依賴 Workflow**——skill 改為腳本直打 Messages API（`answerability_judge.py`：每判者獨立請求＝互不可見；`output_config.format=json_schema`＝schema 強制；rubric＋候選當共用快取前綴 `cache_control`；journal jsonl 續跑）。理由：8 GB 機器跑 Workflow 多子代理三次整機重開；且 Workflow 子代理之間不共享快取前綴，每判者 ≈60k cache write，44 格 $15.84（步預算 $3 的 5 倍），直打 API 估 <$2。**1.5 的 44 格 Workflow 結果不作廢**（業主裁：只用腳本補批 5 C45–C55，`--layout workflow` 讓 prompt 逐位元相同才能合併）；`outline-curation.js` 留檔作參考、不再是 skill 的執行路徑（是否刪除待裁）；2.3 結構提議同樣改腳本直打 API（三角度＝三個獨立請求、合成＝第四個請求）。證據：`inputs/m-a-trial-20260906.md` §4–§5。
+
 ### 決策 8：審核狀態以既有欄位值域區分，不加欄位
 **決定**：`outline_approved_by ∈ {<reviewer>, "pool-marked-<date>"}`；`content_reviewed_predicate` 為第二單一來源。**理由**：零 migration；`help_center_pages` 已有「可引用必有人核可」先例；D1 執行時只是一筆 UPDATE 的值改變。
 
@@ -711,6 +713,7 @@ flowchart LR
 | 2026-09-06T10:13:36+0800 | 1.0 | 初始版本（需求 v2 核可、R1.5 定向後） | AI |
 | 2026-09-06 | 1.1 | security-reviewer 20 條處置（附錄 E）：sha 重算、匯入 fail-closed、白名單謂詞、可見性補洞、身分強制覆寫、hook 變數與接線測試、D3 落地、三軸欄位 | AI |
 | 2026-09-06 | 1.3 | plan-verifier r2 REVISE 6 條處置（附錄 G）：正本目錄全文統一為 `rag-orchestrator/canon/`、hook matcher 改完整相對路徑＋負對照、自證五種、done ⑤ 單次上限 | AI |
+| 2026-09-06 | 1.5 | 決策 7 修訂：判者改腳本直打 API（`answerability_judge.py`，共用快取前綴、structured outputs、journal 續跑）；Workflow 留參考；2.3 同改（業主裁：硬體撐不住 Workflow） | 業主／AI |
 | 2026-09-06 | 1.4 | 一致率門檻 0.90→**0.80**（業主裁：1.5 試作 44 格實測 0.841 可接受；`outline-curation.js`／`merge_answerability_batches.py` 同步；預算超支另裁，見 inputs/m-a-trial-20260906.md §7） | 業主／AI |
 | 2026-09-06 | 1.2 | plan-verifier r1 REVISE 11 條處置（附錄 F）：啟動呼叫鏈寫死、正本目錄移入 rag-orchestrator、不變量 33 收窄、判者候選程式列舉、預算分步、M-a 改臨時細目集合並補可證偽 done／rollback／stops | AI |
 
