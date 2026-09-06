@@ -4,7 +4,9 @@
 - 跨業者（`vendor_ids=[999]`）——vendor 1 租客身分應看不到。
 - 保留分類（`category='系統脈絡'`）——vendor_ids 為 NULL（否則會被業者過濾先擋掉，
   無法單獨證明是分類把它擋下）。
-- 正對照組：`vendor_ids IS NULL`、無保留分類——同一身分應命中
+- 正對照組：`vendor_ids IS NULL`、無保留分類、且 `outline_approved_by='reviewed:test'`
+  （2026-09-07 起 `fetch_visible_row` 還有第二道內容已審閘門，見
+  `services/agent/canon/review_state.py`）——同一身分應命中
   （若這列也 NO_MATCH，代表謂詞或連線本身壞了，不是「池外」本身在起作用）。
 
 無法連 DB → skip（非 fail）；連到非測試庫 → 大聲失敗（⛔ 不得寫入非測試資料）。
@@ -106,10 +108,10 @@ def db_pool():
             """
             INSERT INTO knowledge_base
                 (id, question_summary, answer, vendor_ids, business_types, target_user,
-                 is_active, category)
-            VALUES (%s, %s, %s, NULL, NULL, NULL, TRUE, NULL)
+                 is_active, category, outline_approved_by, outline_approved_at)
+            VALUES (%s, %s, %s, NULL, NULL, NULL, TRUE, NULL, %s, now())
             """,
-            (CONTROL_ID, "正對照知識", "一般知識，人人可見"),
+            (CONTROL_ID, "正對照知識", "一般知識，人人可見", "reviewed:test"),
         )
         cur.close()
         yield _SingleConnPool(conn)

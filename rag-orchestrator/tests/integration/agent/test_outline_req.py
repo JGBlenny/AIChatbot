@@ -1,7 +1,7 @@
 """integration：`OutlineAssembler`（spec agentic-mcp-orchestration 任務 3.2）。
 
 真測試庫。灌三列：
-- 已標記一般列（`outline_approved_by` 有值、`category IS NULL`）——prospect 大綱
+- 已審列（`outline_approved_by='reviewed:test'`、`category IS NULL`）——prospect 大綱
   應含它（`source_ids` 含它、`outline_sha` 隨它變）。
 - 未標記一般列（同形狀、`outline_approved_by IS NULL`）——正對照組的反面：
   它會被 `build_visibility_predicate(prospect)` 放行（形狀與已標記列相同），
@@ -94,7 +94,10 @@ def db_pool():
             """,
             (
                 APPROVED_ID, "修繕系統 線上報修", "可線上報修並追蹤進度。",
-                ["售前模組"], "owner-20260905",
+                # ⚠️ 2026-09-07 起「已審」＝ `reviewed:<who>`（值域見
+                # services/agent/canon/review_state.py）；⛔ 不能再用
+                # `owner-20260905`——那是值域外的舊標記，新謂詞視為未審。
+                ["售前模組"], "reviewed:test",
             ),
         )
         cur.execute(

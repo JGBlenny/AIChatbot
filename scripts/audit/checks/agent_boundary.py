@@ -16,11 +16,18 @@ design.md 附錄 B 稱這五條為「不變量 18–22」，但合併時發現
 | 29 | 20 | 可見性謂詞單一來源（`build_visibility_predicate`） |
 | 30 | 21 | `decision_snapshot.agent*` 無原文鍵 |
 | 31 | 22 | `/mcp` 每呼叫一列 `usage_events`（登記，見 1.7） |
+| 32 | —  | 內容已審謂詞單一來源（spec knowledge-outline-and-intent-architecture 3.1）|
+
+32 不屬於上表那條編號衝突：它來自另一個 spec，附錄 B 直接就叫「不變量 32」。
+31／32 都是**三態**（PASS／WARN・SKIP／FAIL），故與 27–30 一樣放在 `CHECKS` 之外，
+由 `main()` 各自印——放進 `CHECKS` 會讓 `ok is None` 被當成 FAIL。
 
 用法：python3 scripts/audit/checks/agent_boundary.py [--self-test]
 """
 import ast
+import importlib.util
 import os
+import subprocess
 import sys
 import tempfile
 
@@ -447,6 +454,225 @@ def check_31_mcp_usage_events_coverage(path="tests/integration/agent/test_mcp_fa
     return None, f"{path} 不存在——WARN：/mcp 每呼叫一列 usage_events 待任務 1.7 落地，尚無測試覆蓋"
 
 
+# ───────────────────────── 32 內容已審謂詞單一來源（spec knowledge-outline-and-intent-architecture 3.1）─────────────────────────
+#
+# 不變量：`outline_approved_by` 這個欄位名的**字串常數**只准出現在
+# `services/agent/canon/review_state.py`；掃描面＝`services/agent/**` ＋ `tools/**`
+# （排除 tests）。⛔ 無豁免表（業主 2026-09-07 裁 (a)）。
+#
+# ⚠️ **掃描範圍刻意界定為 AST 字串常數**（`ast.Constant(str)`，含 f-string 的
+# 字面片段），⛔ 不含 docstring、識別字（dataclass 欄位名、kwarg、屬性）、註解。
+# 理由：謂詞繞過只可能發生在**送進 DB 的 SQL 字串**——把 docstring 也算進來，
+# 只會逼人把說明刪掉，不會多擋任何一條繞過路徑。
+#
+# 三個子檢查，缺一不可：
+#   ① 字面越界 ⇒ FAIL（列出 file:line）
+#   ② `review_state` 使用命中 <1 ⇒ FAIL（空跑不得綠：掃描面搬家或接線斷了時，
+#      「沒有越界字面」這個結論是假的）
+#   ③ DB 側值域外列數（psql 不可達 ⇒ **FAIL，⛔ 不是 SKIP**）
+
+REVIEW_STATE_REL = "services/agent/canon/review_state.py"
+
+#: 32 專用的 review_state 符號（被 import 或被呼叫都算「使用」）。
+_REVIEW_STATE_SYMBOLS = ("content_reviewed_predicate", "COLUMN")
+
+#: D1 前預期的唯一值域外值（現況 29 列）。⛔ 不是豁免表——它只決定
+#: 「印 SKIP(pending-D1) 還是實紅」，任何**其他**值都直接 FAIL。
+_PENDING_D1_VALUE = "owner-20260905"
+
+
+def _load_review_state(rag_root=None):
+    """把 `review_state.py` 當獨立模組載進來（它只 import `re`／`typing`，無套件相依）。
+
+    ⛔ 不在本檔複製 `COLUMN`／`DOMAIN_REGEX`——那等於再開一個真值來源，
+    正是這條不變量要擋的事。載不到 ⇒ 讓呼叫端大聲失敗。
+    """
+    root = rag_root if rag_root is not None else RAG
+    path = os.path.join(root, REVIEW_STATE_REL)
+    spec = importlib.util.spec_from_file_location("_inv32_review_state", path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"{REVIEW_STATE_REL} 載不進來（路徑 {path}）")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def _review_state_paths(rag_root=None):
+    """**只供 32**：`services/agent/**/*.py` ＋ `tools/**/*.py`（排除任何 tests 目錄）。
+
+    ⛔ 不與 `_agent_py_paths()`（27／30 用）共用——那支只走 `services/agent/`，
+    改它會連帶動到另外兩條不變量的掃描面（design 附錄 B E7）。
+    """
+    root = rag_root if rag_root is not None else RAG
+    out = []
+    for sub in (os.path.join("services", "agent"), "tools"):
+        base = os.path.join(root, sub)
+        if not os.path.isdir(base):
+            continue
+        for cur, dirs, files in os.walk(base):
+            dirs[:] = sorted(d for d in dirs if d not in ("tests", "__pycache__"))
+            for fn in sorted(files):
+                if fn.endswith(".py"):
+                    out.append(os.path.relpath(os.path.join(cur, fn), root))
+    return sorted(out)
+
+
+def _docstring_constant_ids(tree):
+    """module／class／function body 首個 `Expr(Constant str)` 的節點 id 集合。"""
+    ids = set()
+    for node in ast.walk(tree):
+        if not isinstance(node, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+            continue
+        body = getattr(node, "body", None)
+        if not body:
+            continue
+        first = body[0]
+        if isinstance(first, ast.Expr) and isinstance(first.value, ast.Constant) \
+                and isinstance(first.value.value, str):
+            ids.add(id(first.value))
+    return ids
+
+
+def _non_docstring_str_constants(tree):
+    """`[(lineno, value)]`：所有字串常數（含 f-string 字面片段），**排除 docstring**。"""
+    docs = _docstring_constant_ids(tree)
+    out = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Constant) and isinstance(node.value, str) and id(node) not in docs:
+            out.append((getattr(node, "lineno", 0), node.value))
+    return out
+
+
+def _uses_review_state(tree):
+    """這個檔有沒有從 `review_state` 取用單一來源（import 符號或呼叫謂詞）。"""
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom) and node.module and node.module.endswith("review_state"):
+            for alias in node.names:
+                if alias.name in _REVIEW_STATE_SYMBOLS:
+                    return True
+        if isinstance(node, ast.Call):
+            f = node.func
+            if isinstance(f, ast.Name) and f.id == "content_reviewed_predicate":
+                return True
+            if isinstance(f, ast.Attribute) and f.attr == "content_reviewed_predicate":
+                return True
+    return False
+
+
+def scan_32_literals(paths=None, rag_root=None, column=None):
+    """回 `(bad, usage_files, scanned, errors)`。
+
+    `bad` = `[(rel, lineno)]` 越界字面；`usage_files` = 有使用 `review_state` 的檔；
+    `errors` = 硬錯誤（讀不到／語法錯，⛔ 一律大聲失敗不吞成空集合）。
+    """
+    root = rag_root if rag_root is not None else RAG
+    col = column if column is not None else _load_review_state(rag_root).COLUMN
+    rels = list(paths) if paths is not None else _review_state_paths(rag_root)
+    bad, usage_files, errors = [], [], []
+    scanned = 0
+    for rel in rels:
+        text = _read(os.path.join(root, rel))
+        if text is None:
+            errors.append(f"{rel} 讀不到——大聲失敗")
+            continue
+        tree = _parse(text)
+        if tree is None:
+            errors.append(f"{rel} 語法錯誤，無法 AST 掃描——大聲失敗")
+            continue
+        scanned += 1
+        norm = rel.replace(os.sep, "/")
+        if norm != REVIEW_STATE_REL:
+            for lineno, value in _non_docstring_str_constants(tree):
+                if col in value:
+                    bad.append((rel, lineno))
+        if _uses_review_state(tree):
+            usage_files.append(rel)
+    return bad, sorted(set(usage_files)), scanned, errors
+
+
+def psql_query_32(sql):
+    """`docker exec … psql -tAc`（比照 `scripts/audit/checks/retired_row_isolation.py`）。
+
+    ⛔ 失敗一律丟例外——psql 不可達時**不得**當成「沒有違規」（F5）。
+    """
+    out = subprocess.run(
+        ["docker", "exec", "aichatbot-postgres", "psql", "-U", "aichatbot",
+         "-d", "aichatbot_admin", "-t", "-A", "-c", sql],
+        capture_output=True, text=True, timeout=60)
+    if out.returncode != 0:
+        raise RuntimeError(f"psql 失敗：{out.stderr.strip() or out.stdout.strip()}")
+    return out.stdout
+
+
+def check_32_review_state_single_source(paths=None, rag_root=None, query=None):
+    """32：內容已審謂詞單一來源（三態：True／None＝SKIP(pending-D1)／False）。
+
+    `query` 只給自測用（注入假查詢函式，⛔ 不連 DB）；預設走 `psql_query_32`。
+    """
+    try:
+        rs = _load_review_state(rag_root)
+    except Exception as e:  # noqa: BLE001
+        return False, f"{REVIEW_STATE_REL} 載不進來（{e}）——單一來源不存在，大聲失敗"
+
+    bad, usage_files, scanned, errors = scan_32_literals(
+        paths=paths, rag_root=rag_root, column=rs.COLUMN)
+    if errors:
+        return False, "；".join(errors)
+    if bad:
+        listed = "、".join(f"{rel}:{lineno}" for rel, lineno in bad)
+        return False, (f"`{rs.COLUMN}` 字面出現在 {REVIEW_STATE_REL} 以外的字串常數："
+                       f"{listed}——⛔ 無豁免表，一律改用 review_state 的常數／謂詞")
+    if len(usage_files) < 1:
+        return False, (f"掃了 {scanned} 個檔，但 0 個檔使用 review_state"
+                       f"（import {'／'.join(_REVIEW_STATE_SYMBOLS)} 或呼叫謂詞）——"
+                       "大聲失敗：沒有任何消費端時「無越界字面」是空跑綠燈，"
+                       "只代表掃描面搬家了或接線斷了")
+
+    static_detail = (f"掃 {scanned} 個檔（services/agent/**＋tools/**，排除 tests）"
+                     f"無越界字面；{len(usage_files)} 個檔取用單一來源"
+                     f"（{'、'.join(usage_files)}）")
+
+    q = query if query is not None else psql_query_32
+    try:
+        total = int(q("SELECT count(*) FROM knowledge_base").strip())
+        raw = q("SELECT outline_approved_by || '|' || count(*)::text "
+                "FROM knowledge_base "
+                "WHERE outline_approved_by IS NOT NULL "
+                f"AND outline_approved_by !~ '{rs.DOMAIN_REGEX}' "
+                "GROUP BY outline_approved_by ORDER BY 1")
+        derived = int(q("SELECT count(*) FROM knowledge_base "
+                        "WHERE generation_metadata->>'canon_ref' IS NOT NULL").strip())
+    except Exception as e:  # noqa: BLE001
+        return False, (f"{static_detail}；但 DB 子檢查無法執行（{e}）——"
+                       "⛔ 大聲失敗，不當成「沒有值域外的列」")
+
+    # 正對照：knowledge_base 必然非空。它若為 0，上面的「值域外 0 列」是查詢
+    # 或環境壞了，不是真的沒有違規（CLAUDE.md 否定結論三要件）。
+    if total <= 0:
+        return False, (f"{static_detail}；DB 正對照失敗：knowledge_base 查到 {total} 列——"
+                       "⛔ 這是查詢或連線壞了，不是「值域外 0 列」")
+
+    out_of_domain = {}
+    for line in raw.strip().splitlines():
+        if not line.strip():
+            continue
+        value, _sep, count = line.rpartition("|")
+        out_of_domain[value] = int(count)
+
+    db_detail = f"DB：{total} 列，衍生列（canon_ref）{derived}"
+    if not out_of_domain:
+        return True, f"{static_detail}；{db_detail}，值域外 0 列"
+    if set(out_of_domain) == {_PENDING_D1_VALUE} and derived == 0:
+        return None, (f"SKIP(pending-D1)：{static_detail}；{db_detail}，"
+                      f"值域外只有 {_PENDING_D1_VALUE} {out_of_domain[_PENDING_D1_VALUE]} 列"
+                      "——D1（改寫成 pool-marked-<date> 後 VALIDATE CONSTRAINT）尚未執行，"
+                      "此子檢查在 D1 後轉硬失敗")
+    listed = "、".join(f"{v}×{n}" for v, n in sorted(out_of_domain.items()))
+    return False, (f"{static_detail}；{db_detail}，值域外列：{listed}"
+                   f"（衍生列 {derived}）——⛔ 只有「值域外全為 {_PENDING_D1_VALUE} "
+                   "且衍生列＝0」才算 pending-D1")
+
+
 CHECKS = [
     (27, "ToolSpec.input_schema 無身分鍵（design 18）", check_27_toolspec_identity_keys),
     (28, "/mcp 無條件 401（design 19）", check_28_mcp_auth_unconditional),
@@ -619,12 +845,105 @@ def _self_test_30():
     return cases
 
 
+def _self_test_32():
+    """32 的正反對照。⛔ 全部不連 DB（注入假查詢函式）。"""
+    clean_db = {
+        "SELECT count(*) FROM knowledge_base": "1048\n",
+        "!~": "",
+        "canon_ref": "0\n",
+    }
+
+    def _fake_query(mapping):
+        def q(sql):
+            if "canon_ref" in sql:
+                return mapping["canon_ref"]
+            if "!~" in sql:
+                return mapping["!~"]
+            return mapping["SELECT count(*) FROM knowledge_base"]
+        return q
+
+    def _unreachable(_sql):
+        raise RuntimeError("Cannot connect to the Docker daemon（自測模擬）")
+
+    real_ok, real_detail = check_32_review_state_single_source(query=_fake_query(clean_db))
+    _bad, real_usages, real_scanned, real_errors = scan_32_literals()
+
+    with tempfile.TemporaryDirectory() as td:
+        canon_dir = os.path.join(td, "services", "agent", "canon")
+        os.makedirs(canon_dir)
+        os.makedirs(os.path.join(td, "tools"))
+        # 假樹的 review_state（同名常數；⛔ 值不重要，重要的是掃描面界定）
+        with open(os.path.join(canon_dir, "review_state.py"), "w", encoding="utf-8") as f:
+            f.write('COLUMN = "outline_approved_by"\n'
+                    'DOMAIN_REGEX = r"^(reviewed:[^[:space:]]+|pool-marked-[0-9]{8})$"\n')
+        # ① 零使用命中
+        with open(os.path.join(td, "tools", "no_usage.py"), "w", encoding="utf-8") as f:
+            f.write("X = 1\n")
+        zero_ok, _d = check_32_review_state_single_source(
+            rag_root=td, query=_fake_query(clean_db))
+        # ② 使用命中（供 ③④ 當底），③ 越界 SQL 字面
+        with open(os.path.join(td, "tools", "consumer.py"), "w", encoding="utf-8") as f:
+            f.write("from services.agent.canon.review_state import COLUMN\n"
+                    "SQL = f'SELECT {COLUMN} FROM knowledge_base'\n")
+        usage_ok, _d = check_32_review_state_single_source(
+            rag_root=td, query=_fake_query(clean_db))
+        with open(os.path.join(td, "tools", "dirty.py"), "w", encoding="utf-8") as f:
+            f.write("from services.agent.canon.review_state import COLUMN\n"
+                    "SQL = 'SELECT id FROM knowledge_base "
+                    "WHERE outline_approved_by IS NOT NULL'\n")
+        literal_ok, literal_detail = check_32_review_state_single_source(
+            rag_root=td, query=_fake_query(clean_db))
+        os.remove(os.path.join(td, "tools", "dirty.py"))
+        # ④ 同一個字面只出現在 docstring ⇒ 不得誤報
+        with open(os.path.join(td, "tools", "documented.py"), "w", encoding="utf-8") as f:
+            f.write('"""說明：這裡談 outline_approved_by 這個欄位。"""\n'
+                    "def f():\n"
+                    '    """也談 outline_approved_by。"""\n'
+                    "    return 1\n")
+        docstring_ok, docstring_detail = check_32_review_state_single_source(
+            rag_root=td, query=_fake_query(clean_db))
+
+        # DB 三態（靜態面固定用假樹的乾淨狀態）
+        unreachable_ok, _d = check_32_review_state_single_source(
+            rag_root=td, query=_unreachable)
+        pending_ok, _d = check_32_review_state_single_source(
+            rag_root=td,
+            query=_fake_query({**clean_db, "!~": "owner-20260905|29\n"}))
+        other_value_ok, _d = check_32_review_state_single_source(
+            rag_root=td,
+            query=_fake_query({**clean_db, "!~": "owner-20260905|29\nreviewed:|1\n"}))
+        derived_ok, _d = check_32_review_state_single_source(
+            rag_root=td,
+            query=_fake_query({**clean_db, "!~": "owner-20260905|29\n", "canon_ref": "7\n"}))
+        empty_table_ok, _d = check_32_review_state_single_source(
+            rag_root=td,
+            query=_fake_query({**clean_db, "SELECT count(*) FROM knowledge_base": "0\n"}))
+
+    cases = [
+        ("正對照：現樹靜態面乾淨且 review_state 使用命中 ≥1",
+         real_ok in (True, None) and not real_errors and len(real_usages) >= 1),
+        (f"正對照：現樹真的掃到東西（{real_scanned} 個檔，⛔ 不是空跑）", real_scanned >= 5),
+        ("假樹：0 個使用命中 → 必須紅（空跑不得綠）", zero_ok is False),
+        ("假樹：有使用命中、無越界字面 → 通過", usage_ok is True),
+        ("假樹：review_state 以外出現 SQL 字面 → 必須紅", literal_ok is False),
+        ("假樹：同一字面只在 docstring → ⛔ 不得誤報",
+         docstring_ok is True),
+        ("DB 不可達 → 必須紅（⛔ 不是 SKIP、不是綠）", unreachable_ok is False),
+        ("DB 值域外只有 owner-20260905 且衍生列 0 → SKIP(pending-D1)", pending_ok is None),
+        ("DB 值域外出現其他值 → 必須紅", other_value_ok is False),
+        ("DB 衍生列 ≥1（D1 已動）→ 必須紅", derived_ok is False),
+        ("DB 正對照失敗（knowledge_base 0 列）→ 必須紅", empty_table_ok is False),
+    ]
+    return cases
+
+
 def self_test() -> int:
     all_cases = []
     all_cases += _self_test_27()
     all_cases += _self_test_28()
     all_cases += _self_test_29()
     all_cases += _self_test_30()
+    all_cases += _self_test_32()
     for name, ok in all_cases:
         print(f"{'✅' if ok else '❌'} {name}")
     ok31, detail31 = check_31_mcp_usage_events_coverage()
@@ -652,6 +971,16 @@ def main() -> int:
     else:
         print(f"{'✅' if ok31 else '❌'} 不變量 31：/mcp 每呼叫一列 usage_events（design 22）—— {detail31}")
         fail = fail or (not ok31)
+    try:
+        ok32, detail32 = check_32_review_state_single_source()
+    except Exception as e:  # noqa: BLE001
+        print(f"❌ 不變量 32：內容已審謂詞單一來源 —— 檢查無法執行（{e}）——大聲失敗")
+        return 1
+    if ok32 is None:
+        print(f"⚠️  不變量 32：內容已審謂詞單一來源（3.1）—— {detail32}")
+    else:
+        print(f"{'✅' if ok32 else '❌'} 不變量 32：內容已審謂詞單一來源（3.1）—— {detail32}")
+        fail = fail or (not ok32)
     return 1 if fail else 0
 
 

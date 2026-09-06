@@ -296,7 +296,8 @@ def content_reviewed_predicate() -> tuple[str, list]:
     """回 (" AND kb.outline_approved_by LIKE %s", [REVIEWED_PREFIX + "%"])——**正向白名單**：值域外任何值（含現況 29 列的
     `owner-20260905`、大小寫變體、前導空白）一律視為未審。⇒ D1 執行前 agent 路徑對整個池視為未審，這是預期行為、不是回歸。
     ⛔ 只在 agent 路徑拼接（fetch_visible_row、正本衍生列查詢）；⛔ 不併入 build_visibility_predicate。
-    值域由 migration `CHECK (outline_approved_by IS NULL OR outline_approved_by ~ '^(reviewed:|pool-marked-)')` 鎖（M-g，可選）。"""
+    值域由 migration `CHECK (outline_approved_by IS NULL OR outline_approved_by ~ '^(reviewed:[^[:space:]]+|pool-marked-[0-9]{8})$')` 鎖（3.1；`NOT VALID` 先加、D1 改寫 29 列後 `VALIDATE`）。
+    ⚠️ 謂詞用 `~ REVIEWED_REGEX`（`^reviewed:[^[:space:]]+$`）而非 `LIKE`——`LIKE` 的 `_` 會吃空白，`reviewed: alice` 會被放行（plan-verifier 2026-09-07）。"""
 ```
 - **呼叫鏈與失敗語義（寫死，E1）**：`app.py::_init_agent_runtime` → `build_prospect_outline(db_pool)` **首行** `doc = load_canon_or_die(canon_dir, "prospect")`（同時讀 `.md` 與 `.json`、由 `.md` 位元組重算 sha 比對 `.json.canon_sha256`）→ `build_outline(doc)` → `check_budget(default_token_limit)`。`.md` 缺檔／sha 不符／格式錯 ⇒ **raise**，與既有 `check_budget` 同一條例外路徑：`_agent_configured()` 為真時啟動紅、否則 agent 停用（既有語義，⛔ 不新增降級）。正本目錄＝`rag-orchestrator/canon/`（Dockerfile `COPY . .` 自然進映像 `/app/canon`；建置脈絡是 `./rag-orchestrator`，repo 根的 `canon/` 不會進映像），`AGENT_CANON_DIR` 預設＝`<rag root>/canon`；`SIX_MODULES`／`_classify_row`／`_CTA_TEXT`／`DSP009_DELIBERATE_GAPS`／`_extract_boundary_sentences` 退役（G／F 粗目承接，R2.6）。
 - `tools/kb.py::fetch_visible_row` 加 `content_reviewed_predicate()`（R8.4 票；不變量 32 掃）。**`kb.search` 刻意不套**（F6，ACCEPT）：它只回 `question_summary` 且 `citable=False`，事實句仍需 refs；殘留＝模型可讀到未審列摘要並改寫成非事實句，由 Verifier 步②／④ 守。
@@ -404,15 +405,17 @@ class CellRecord(TypedDict):
     cell_id: str; audience: Audience; topic: str
     cause_state: str; entry_state: str; coverage: str          # 沿 demand-v2 _meta.states
     disposition: Disposition; fine_id: str | None
-    fix_type: Literal["add_knowledge", "add_phrasing", "list_not_available", "cross_audience_rewrite", "merge_similar", "owner_decision"]
+    fix_type: Literal["add_knowledge", "add_phrasing", "list_not_available", "cross_audience_rewrite", "merge_similar", "owner_decision"] | None   # None＝已覆蓋／刻意不補無補法（2.6，業主 2026-09-07 核）
+    gap_classes: list[Literal["content_gap", "retrieval_gap"]]   # R3.5 兩類可並列（2.6）
     min_verification: dict                                       # {"phrasings": [...], "expected_fine_id": ...}
     judge_agreement: float | None
 
-def reweigh(canon: CanonDoc, demand_path: str, answerability_path: str) -> list[CellRecord]: ...
+def reweigh(canon: CanonDoc, demand_path: str, map_path: str, answerability_path: str) -> list[CellRecord]: ...   # map_path＝map-v2.json 量測層（cause/entry/coverage），2.6 新增：沒有它 R3.5 兩類分報無法決定性算
 ```
 - 判「已覆蓋」的正解細目來自元件 2 判者（⛔ 不用被驗系統排序，裁定 10）；`answered`／`answered_handoff` 的 entry 仍由 `agent_eval` 實跑回填。
 - 無去向格＝0 為元件 1 步 5 的出口條件（Stop hook 亦查）。
-- 跨受眾缺口：同 topic 在 Y 有細目、X 無 ⇒ `fix_type=cross_audience_rewrite`＋草稿路徑（改寫為 X 的層級；⛔ 不直接開放 Y 的列）。
+- 跨受眾缺口：同 topic 在 Y 有細目、X 無 ⇒ `fix_type=cross_audience_rewrite`＋草稿路徑（改寫為 X 的層級；⛔ 不直接開放 Y 的列）。**初版判準（2.6，只有一份正本時）**＝map-v2 `cause_state=="V"`（對題列只在 X 池外）；第二份正本出現後改為「Y 正本有細目」＝新 readiness epoch。
+- 步 5b 權威來源核對（2026-09-07 業主裁）：`not_available`／`owner_decision` 的格必須先對 jgb2 程式／docs／幫助中心盤查（`source_audit.py`），事實回填 `docs/knowledge/jgb-product-facts.md`；只有 `owner_needed` 交業主；Stop hook 擋未核對即交業主。
 
 ### 元件 10：`tools/canon/index_eval.py`＋`agent_eval.py` 擴充＋受測物定義清單 — 驗證邏輯
 **責任**：R6 四步各對一支工具；材料 sha 凍結；比較性結論 ≥30 題；盲標同批同判者。[需求 6.1–6.7]
@@ -454,7 +457,7 @@ rag-orchestrator/canon/<audience>.json  parser 導出（版控；CI unit 驗與 
 inputs/object-under-test.md  受測物定義清單（每次驗證一份）
 ```
 **個資落點（F13／F14）**：能進版控的只有「人改寫過的短主題詞」講法；真流量原句、去識別前候選、Workflow journal 一律 gitignored——「保留 90 天」在 git 歷史裡不可實現，故只對 `raw/` 生效。
-`knowledge_base` 只用既有欄位：`outline_approved_by`（值域：`<reviewer>` 或 `pool-marked-<date>`）、`generation_metadata.canon_ref`／`replaced_by`／`instance_applicability`、`keywords`（＝approved 講法，供舊鏈詞面路徑；⛔ 不進 embedding）。
+`knowledge_base` 只用既有欄位：`outline_approved_by`（值域：`reviewed:<reviewer>`（reviewer 非空、不含空白）或 `pool-marked-<YYYYMMDD>`；業主 2026-09-07 裁收嚴，3.1 CHECK 鎖）、`generation_metadata.canon_ref`／`replaced_by`／`instance_applicability`、`keywords`（＝approved 講法，供舊鏈詞面路徑；⛔ 不進 embedding）。
 
 ### API 設計
 對外 `POST /api/v1/message` 契約不變。內部新增：
@@ -546,7 +549,7 @@ flowchart LR
 **修訂 3（2026-09-06，同日業主再裁）**：**模型 API 只在真實對話（產品回合）使用，等同正式確認的最後一步；skill 流程絕大部分用 Claude Code 子代理。** 步 4 改 `answerability_agents.py`：格分組（預設 5 格一組、共用 rubric＋候選 prompt）、每組 2 個互不可見的子代理、不一致格第 3 個、主 session 控制 ≤4 並行（8 GB 實測 ≥10 並行整機重開）；事後驗證取代 schema 強制；API 判者 `answerability_judge.py` ⛔ 不留備援、已刪（1.6 的 gpt-4o-mini 55 格結果留 `inputs/m-a-trial-20260906.md` §8 作紀錄）。
 
 ### 決策 8：審核狀態以既有欄位值域區分，不加欄位
-**決定**：`outline_approved_by ∈ {<reviewer>, "pool-marked-<date>"}`；`content_reviewed_predicate` 為第二單一來源。**理由**：零 migration；`help_center_pages` 已有「可引用必有人核可」先例；D1 執行時只是一筆 UPDATE 的值改變。
+**決定**：`outline_approved_by ∈ {"reviewed:<reviewer>", "pool-marked-<YYYYMMDD>"}`（reviewer 非空、不含空白；業主 2026-09-07 裁收嚴，3.1 CHECK 鎖）；`content_reviewed_predicate` 為第二單一來源。**理由**：零 migration；`help_center_pages` 已有「可引用必有人核可」先例；D1 執行時只是一筆 UPDATE 的值改變。
 
 ### 決策 9：舊列退役＝標記不刪、舊鏈不受影響
 **決定**：`generation_metadata.replaced_by`＋`pool-marked`；`is_active` 不動。**理由**：舊鏈仍讀 kb（範圍外硬約束）；agent 路徑由謂詞排除。**參考**：research 開放問題 1。
@@ -744,6 +747,7 @@ flowchart LR
 ### D. 變更歷史
 | 日期 | 版本 | 變更內容 | 修改者 |
 |---|---|---|---|
+| 2026-09-07 | 1.10 | 3.1 值域收嚴（`reviewed:<reviewer>` 非空不含空白、`pool-marked-<YYYYMMDD>`；謂詞改 regex 非 LIKE）三處同步；元件 9 回寫 2.6 四點（`map_path`、`fix_type|None`、`gap_classes`、V 判準）＋步 5b 權威來源核對（業主 2026-09-07 裁） | 業主／AI |
 | 2026-09-06T10:13:36+0800 | 1.0 | 初始版本（需求 v2 核可、R1.5 定向後） | AI |
 | 2026-09-06 | 1.1 | security-reviewer 20 條處置（附錄 E）：sha 重算、匯入 fail-closed、白名單謂詞、可見性補洞、身分強制覆寫、hook 變數與接線測試、D3 落地、三軸欄位 | AI |
 | 2026-09-06 | 1.3 | plan-verifier r2 REVISE 6 條處置（附錄 G）：正本目錄全文統一為 `rag-orchestrator/canon/`、hook matcher 改完整相對路徑＋負對照、自證五種、done ⑤ 單次上限 | AI |

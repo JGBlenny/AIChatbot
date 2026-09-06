@@ -44,6 +44,7 @@ from typing import Optional
 
 from pydantic import BaseModel
 
+from services.agent.canon.review_state import content_reviewed_predicate
 from services.agent.identity import Audience, Identity
 from services.agent.tools.registry import Provenance, ToolResult
 from services.vendor_knowledge_retriever_v2 import (
@@ -171,29 +172,34 @@ def _count_tokens(text: str) -> tuple[int, bool]:
 
 
 def _fetch_prospect_pool_rows(db_pool, identity: Identity) -> list[tuple]:
-    """`(id, question_summary, answer, categories, updated_at)` 已審核售前池列。
+    """`(id, question_summary, answer, categories, updated_at)` **內容已審**售前池列。
 
-    **不變量 29**（`scripts/audit/checks/agent_boundary.py:check_29_predicate_single_source`）
-    只掃描 `services/agent/prompt_assembler.py:build_prospect_outline` 這個
-    `(檔案, 函式)` 對；`build_prospect_outline` 現落在本檔
-    `services/agent/outline.py`，不在該掃描清單內——**回報**：這條不變量目前
-    對本檔是「找不到此函式，略過」（`notes`，非 `bad`），空跑通過而非真的驗過。
-    ⛔ 依 brief 指示不改 checker；已在此處留痕供主 session 決定是否把
-    `services/agent/outline.py` 加進 3.2 定案時的目標清單。
-    本函式仍照不變量 29 的精神實作：不自行寫死 `vendor_ids`／`business_types`
-    字面 WHERE 條件，唯一謂詞來源是 `build_visibility_predicate()`。
+    兩道謂詞，各有各的單一來源，⛔ 不合併：
+
+    - **可見性**＝`build_visibility_predicate()`（不變量 29；本函式已列入
+      `check_29_predicate_single_source` 的掃描目標）——不自行寫死
+      `vendor_ids`／`business_types` 字面 WHERE 條件。
+    - **內容已審**＝`content_reviewed_predicate()`（不變量 32，spec
+      knowledge-outline-and-intent-architecture 任務 3.1）。
+
+    ⚠️ 2026-09-07 起條件是 `outline_approved_by ~ '^reviewed:<非空白>+$'`，
+    ⛔ **不再是 `IS NOT NULL`**（業主裁 (a)）：`IS NOT NULL` 會把現況 29 列
+    `owner-20260905`（值域外的舊標記）當成已審餵進售前大綱。正本細目匯入
+    寫進 `reviewed:<who>` 之前，本查詢回 0 列是**預期**行為——D1 把 29 列
+    改寫成 `pool-marked-<date>` 之後它們仍然不可見（池標記≠內容已審）。
     """
     predicate_sql, predicate_params = build_visibility_predicate(identity)
+    reviewed_sql, reviewed_params = content_reviewed_predicate()
     sql = (
         "SELECT kb.id, kb.question_summary, kb.answer, kb.categories, kb.updated_at "
         "FROM knowledge_base kb "
-        f"WHERE kb.outline_approved_by IS NOT NULL {predicate_sql} "
+        f"WHERE TRUE {predicate_sql}{reviewed_sql} "
         "ORDER BY kb.id"
     )
     conn = db_pool.getconn()
     try:
         cursor = conn.cursor()
-        cursor.execute(sql, list(predicate_params))
+        cursor.execute(sql, list(predicate_params) + list(reviewed_params))
         rows = cursor.fetchall()
         cursor.close()
         return rows
@@ -343,17 +349,23 @@ def _build_doc(
 
 
 async def build_prospect_outline(db_pool) -> OutlineDoc:
-    """R5.1／R5.4：售前池（已審核）→ 六模組主題頁＋邊界句＋DSP-009＋CTA。
+    """R5.1／R5.4：售前池（內容已審）→ 六模組主題頁＋邊界句＋DSP-009＋CTA。
 
-    ⛔ 無 LLM——純字串比對＋固定常數。同一批已審核列 ⇒ 同一份 `text`／`sha256`
+    ⛔ 無 LLM——純字串比對＋固定常數。同一批已審列 ⇒ 同一份 `text`／`sha256`
     （決定性，供 unit 測試「組裝決定性」與快取失效判斷用）。只有
-    `outline_approved_by IS NOT NULL` 的列進來（R11.6）；未審核列不影響
-    `kb.get` 整數 id 取回（那條路徑走 `tools/kb.py:fetch_visible_row`，
-    與本旗標無關，見 migration 檔頭註解）。
+    `content_reviewed_predicate()` 放行的列進來（R11.6；判準見
+    `services/agent/canon/review_state.py`）。
+
+    ⚠️ 已審列 0 筆時**不 raise、也不是「空大綱」**：`outline:deliberate-gaps`
+    （DSP-009）與 `outline:cta` 兩個固定節是常數文字、無資料來源，無論池內
+    幾列都會附上——⛔ 本任務不得移除或改動這兩節（退役屬 3.2）。
+
+    未審列仍可能透過 `kb.get` 整數 id 被取回嗎？⛔ 不會：那條路徑
+    （`tools/kb.py:fetch_visible_row`）自 2026-09-07 起同樣拼上本謂詞。
     """
     # prospect ＝ b2b ＋ 無 role_id（memory project_presales_target_user_routing；jgb2 面板送 prospect 時
     # mode=b2b；缺口地圖 POOL_PRED 亦為 business_types && ['system_provider']）。⛔ 勿改回 b2c：
-    # b2c 分支對**本函式**（母體已鎖 outline_approved_by IS NOT NULL）會用 vendor 1 業態濾掉 23/31 筆純 system_provider 列
+    # b2c 分支對**本函式**（母體已鎖內容已審謂詞，見 review_state.py）會用 vendor 1 業態濾掉 23/31 筆純 system_provider 列
     # ⇒ 大綱只剩 8 筆（recheck 突變實測）；對**標記 SQL** 則反向多掃 50 筆通用列（預覽 81≠31）。兩邊都錯，方向不同。
     identity = Identity(vendor_id=1, target_user="prospect", mode="b2b")
     rows = _fetch_prospect_pool_rows(db_pool, identity)

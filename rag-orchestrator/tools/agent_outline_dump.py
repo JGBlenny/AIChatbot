@@ -37,7 +37,9 @@ unknown}`）——**判準即程式常數，執行時原樣印在檔尾**，⛔ 
 其餘（有 `categories`、三判準皆未命中）⇒ `kind="topic"`。
 
 ## 決定性
-同一批 `outline_approved_by IS NOT NULL` 列 + 同一份講法批次檔 ⇒ 同一份
+同一批**內容已審**列（判準見 `services/agent/canon/review_state.py:
+content_reviewed_predicate`；⚠️ 2026-09-07 起 ⛔ 不再是 `IS NOT NULL`）
++ 同一份講法批次檔 ⇒ 同一份
 `sha256`（`OutlineDoc.sha256` 直接沿用 3.2 的組裝雜湊，未另外摻入 dump
 產出時間）。
 """
@@ -58,6 +60,7 @@ _REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
+from services.agent.canon.review_state import COLUMN  # noqa: E402
 from services.agent.mcp_facade import LazyPsycopg2Pool  # noqa: E402
 from services.agent.outline import OutlineDoc, build_prospect_outline  # noqa: E402
 
@@ -87,8 +90,9 @@ _ALIAS_METADATA_MARKER_KEYS: tuple[str, ...] = (
 _PREFIX_SIMILARITY_THRESHOLD = 0.9
 
 #: 取消標記建議 SQL 樣板（只印，⛔ 本檔不執行）。
+#: 欄位名由 `review_state.COLUMN` 組出——⛔ 不得在本檔寫死字面（不變量 32）。
 _UNMARK_SQL_TEMPLATE = (
-    "UPDATE knowledge_base SET outline_approved_by=NULL, outline_approved_at=NULL "
+    f"UPDATE knowledge_base SET {COLUMN}=NULL, outline_approved_at=NULL "
     "WHERE id IN ({ids});"
 )
 
@@ -116,7 +120,7 @@ def fetch_row_meta(db_pool, ids: list[int]) -> dict[int, RowMeta]:
         return {}
     sql = (
         "SELECT id, question_summary, answer, categories, target_user, "
-        "business_types, outline_approved_by, generation_metadata "
+        f"business_types, {COLUMN}, generation_metadata "
         "FROM knowledge_base WHERE id = ANY(%s) ORDER BY id"
     )
     conn = db_pool.getconn()
@@ -267,7 +271,7 @@ def render_markdown(
             lines.append(f"- categories: {meta.categories}")
             lines.append(f"- target_user: {meta.target_user}")
             lines.append(f"- business_types: {meta.business_types}")
-            lines.append(f"- outline_approved_by: {meta.outline_approved_by}")
+            lines.append(f"- {COLUMN}: {meta.outline_approved_by}")
             lines.append("")
             lines.append(meta.answer)
             lines.append("")

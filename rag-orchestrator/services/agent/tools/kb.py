@@ -9,6 +9,10 @@
 只能拼該函式的回傳，理由與 `build_visibility_predicate` docstring 同——
 單一謂詞來源，避免四份手抄各自漂移）。查無或落在池外（保留分類、跨業者、
 跨角色…）⇒ 同一個 `NO_MATCH`，⛔ 不對模型區分「不存在」與「無權限」。
+⚠️ 2026-09-07 起 `fetch_visible_row` 另有**第二道**閘門：內容已審謂詞
+`services/agent/canon/review_state.py:content_reviewed_predicate`（spec
+knowledge-outline-and-intent-architecture 任務 3.1，不變量 32）——未審列
+同樣回那個 `NO_MATCH`。可見性與審核狀態是兩條獨立閘門，各有各的單一來源。
 
 **`kb.search`**：薄包一層 `retriever.retrieve()`（含 reranker，照現況，
 design 決策 7），只回摘要（`id`／`question_summary`／`similarity`），
@@ -28,6 +32,7 @@ from __future__ import annotations
 import inspect
 from typing import Any, Awaitable, Callable, Optional, Union
 
+from services.agent.canon.review_state import content_reviewed_predicate
 from services.agent.identity import Identity
 from services.agent.tools.registry import Provenance, ToolResult, ToolSpec
 from services.decision_layer import DecisionConfig
@@ -67,16 +72,31 @@ KB_SEARCH_SPEC: ToolSpec = {
 
 
 def fetch_visible_row(db_pool, identity: Identity, kb_id: int) -> Optional[tuple]:
-    """`SELECT id, question_summary, answer` 加唯一可見性謂詞；查無回 `None`。
+    """`SELECT id, question_summary, answer` 加**兩道**謂詞；查無回 `None`。
 
     回傳欄位順序固定為 `(id, question_summary, answer)`（與 SELECT 列表同序）。
+
+    兩道謂詞各有各的單一來源，⛔ 不合併（spec
+    knowledge-outline-and-intent-architecture 任務 3.1，票 D／R8.4）：
+
+    1. **可見性**＝`build_visibility_predicate`（不變量 29）——這一列屬於
+       哪個業者／業態／角色的池。
+    2. **內容已審**＝`content_reviewed_predicate`（不變量 32）——這一列的
+       內容有沒有人核可過。
+
+    ⚠️ 兩者都是 fail-closed 的 AND：未審列一律回 `None` ⇒ `kb_get` 回同一個
+    `NO_MATCH`（⛔ 不對模型區分「不存在」／「無權限」／「未審核」）。
+    ⛔ 這裡**不包 try/except、不依欄位存在與否切換**——那是唯一會造成
+    fail-open 的寫法；欄位不存在時 psycopg2 丟 `UndefinedColumn`，由
+    `registry.py` 轉成 `NO_MATCH`（既有 fail-closed 路徑）。
     """
     predicate_sql, predicate_params = build_visibility_predicate(identity)
+    reviewed_sql, reviewed_params = content_reviewed_predicate()
     sql = (
         "SELECT id, question_summary, answer FROM knowledge_base kb "
-        f"WHERE kb.id = %s {predicate_sql}"
+        f"WHERE kb.id = %s {predicate_sql}{reviewed_sql}"
     )
-    params = [kb_id] + list(predicate_params)
+    params = [kb_id] + list(predicate_params) + list(reviewed_params)
     conn = db_pool.getconn()
     try:
         cursor = conn.cursor()

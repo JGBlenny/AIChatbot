@@ -13,6 +13,10 @@ checker，不必額外記得跑 `make audit`。⛔ 不重寫 checker 邏輯，�
 | check_29_predicate_single_source | 29 | 20 |
 | check_30_decision_snapshot_no_verbatim | 30 | 21 |
 | check_31_mcp_usage_events_coverage | 31 | 22（WARN-only 登記，1.7 落地） |
+| check_32_review_state_single_source | 32 | —（spec knowledge-outline-and-intent-architecture 3.1）|
+
+⚠️ 32 的 DB 子檢查走 `docker exec … psql`，測試容器內**沒有** docker——
+故本檔對 32 一律**注入假查詢函式**，⛔ 不連 DB（真 DB 側由 `make audit` 在 host 跑）。
 """
 import importlib.util
 import os
@@ -210,3 +214,130 @@ def test_31_reports_warn_not_fail_before_task_1_7(ab):
     """
     ok, detail = ab.check_31_mcp_usage_events_coverage()
     assert ok in (True, None), f"預期 WARN 或 PASS，實得 FAIL：{detail}"
+
+
+# ── 32 內容已審謂詞單一來源（spec knowledge-outline-and-intent-architecture 3.1）──
+
+_SPEC_32 = "knowledge-outline-and-intent-architecture:3.1"
+
+
+def _fake_db(total="1048\n", out_of_domain="", derived="0\n"):
+    """32 的假 psql：⛔ 不連 DB、⛔ 不呼叫 docker。"""
+    def query(sql):
+        if "canon_ref" in sql:
+            return derived
+        if "!~" in sql:
+            return out_of_domain
+        return total
+    return query
+
+
+@pytest.mark.req(_SPEC_32)
+def test_32_current_tree_has_no_stray_column_literal(ab):
+    """現樹：`outline_approved_by` 字面只在 `review_state.py`（DB 側用假查詢隔離）。"""
+    ok, detail = ab.check_32_review_state_single_source(query=_fake_db())
+    assert ok is True, detail
+
+
+@pytest.mark.req(_SPEC_32)
+def test_32_actually_scans_and_finds_consumers(ab):
+    """量尺自證：真的掃到檔案，且真的有檔案取用單一來源（⛔ 不是空跑綠燈）。"""
+    bad, usages, scanned, errors = ab.scan_32_literals()
+    assert not errors, errors
+    assert not bad, bad
+    assert scanned >= 5, f"只掃到 {scanned} 個檔——掃描面可能搬家了"
+    assert len(usages) >= 1, "0 個檔取用 review_state——接線斷了"
+    assert any(u.replace("\\", "/").endswith("tools/kb.py") for u in usages), usages
+
+
+@pytest.mark.req(_SPEC_32)
+def test_32_zero_usage_is_loud_failure(ab, tmp_path):
+    """空跑不得綠：假樹裡沒有任何消費端 ⇒ FAIL。"""
+    canon = tmp_path / "services" / "agent" / "canon"
+    canon.mkdir(parents=True)
+    (canon / "review_state.py").write_text(
+        'COLUMN = "outline_approved_by"\nDOMAIN_REGEX = r"^x$"\n', encoding="utf-8")
+    (tmp_path / "tools").mkdir()
+    (tmp_path / "tools" / "nothing.py").write_text("X = 1\n", encoding="utf-8")
+    ok, detail = ab.check_32_review_state_single_source(
+        rag_root=str(tmp_path), query=_fake_db())
+    assert ok is False, f"零使用命中仍印綠燈：{detail}"
+
+
+@pytest.mark.req(_SPEC_32)
+def test_32_planted_sql_literal_is_caught(ab, tmp_path):
+    """量尺自證：在 `review_state.py` 以外植入含欄位名的 SQL 字串常數必須被抓到。"""
+    canon = tmp_path / "services" / "agent" / "canon"
+    canon.mkdir(parents=True)
+    (canon / "review_state.py").write_text(
+        'COLUMN = "outline_approved_by"\nDOMAIN_REGEX = r"^x$"\n', encoding="utf-8")
+    (tmp_path / "tools").mkdir()
+    (tmp_path / "tools" / "dirty.py").write_text(
+        "from services.agent.canon.review_state import COLUMN\n"
+        "SQL = 'SELECT id FROM knowledge_base WHERE outline_approved_by IS NOT NULL'\n",
+        encoding="utf-8")
+    ok, detail = ab.check_32_review_state_single_source(
+        rag_root=str(tmp_path), query=_fake_db())
+    assert ok is False, f"植入的字面沒被抓到——checker 是瞎的：{detail}"
+    assert "dirty.py" in detail
+
+
+@pytest.mark.req(_SPEC_32)
+def test_32_docstring_mention_is_not_flagged(ab, tmp_path):
+    """界定自證：同一個字面只出現在 docstring ⇒ ⛔ 不得誤報（否則只是逼人刪說明）。"""
+    canon = tmp_path / "services" / "agent" / "canon"
+    canon.mkdir(parents=True)
+    (canon / "review_state.py").write_text(
+        'COLUMN = "outline_approved_by"\nDOMAIN_REGEX = r"^x$"\n', encoding="utf-8")
+    (tmp_path / "tools").mkdir()
+    (tmp_path / "tools" / "consumer.py").write_text(
+        '"""這個模組談 outline_approved_by 這個欄位。"""\n'
+        "from services.agent.canon.review_state import COLUMN\n"
+        "def f():\n"
+        '    """也談 outline_approved_by。"""\n'
+        "    return f'SELECT {COLUMN} FROM knowledge_base'\n",
+        encoding="utf-8")
+    ok, detail = ab.check_32_review_state_single_source(
+        rag_root=str(tmp_path), query=_fake_db())
+    assert ok is True, f"docstring 內的提及被誤判成違規：{detail}"
+
+
+@pytest.mark.req(_SPEC_32)
+def test_32_db_unreachable_is_fail_not_skip(ab):
+    """psql 不可達 ⇒ FAIL（⛔ 不是 SKIP、⛔ 不是綠）——F5。"""
+    def boom(_sql):
+        raise RuntimeError("Cannot connect to the Docker daemon（測試模擬）")
+    ok, detail = ab.check_32_review_state_single_source(query=boom)
+    assert ok is False, f"DB 不可達卻沒紅：{detail}"
+
+
+@pytest.mark.req(_SPEC_32)
+def test_32_pending_d1_is_skip(ab):
+    """值域外只有 `owner-20260905` 且衍生列 0 ⇒ 三態的 None（SKIP(pending-D1)）。"""
+    ok, detail = ab.check_32_review_state_single_source(
+        query=_fake_db(out_of_domain="owner-20260905|29\n"))
+    assert ok is None, f"預期 SKIP(pending-D1)，實得 {ok}：{detail}"
+    assert "SKIP(pending-D1)" in detail
+
+
+@pytest.mark.req(_SPEC_32)
+def test_32_other_out_of_domain_value_is_fail(ab):
+    """出現 `owner-20260905` 以外的值域外值 ⇒ FAIL（⛔ 這不是豁免表）。"""
+    ok, detail = ab.check_32_review_state_single_source(
+        query=_fake_db(out_of_domain="owner-20260905|29\nreviewed:|1\n"))
+    assert ok is False, detail
+
+
+@pytest.mark.req(_SPEC_32)
+def test_32_derived_rows_flip_skip_to_fail(ab):
+    """D1 已動（衍生列 ≥1）之後 SKIP 必須轉硬失敗。"""
+    ok, detail = ab.check_32_review_state_single_source(
+        query=_fake_db(out_of_domain="owner-20260905|29\n", derived="7\n"))
+    assert ok is False, detail
+
+
+@pytest.mark.req(_SPEC_32)
+def test_32_empty_table_is_positive_control_failure(ab):
+    """正對照：`knowledge_base` 查到 0 列 ⇒ FAIL（查詢或環境壞了，不是「沒有違規」）。"""
+    ok, detail = ab.check_32_review_state_single_source(query=_fake_db(total="0\n"))
+    assert ok is False, detail

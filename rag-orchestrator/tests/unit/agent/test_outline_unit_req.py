@@ -14,6 +14,7 @@ from datetime import datetime, timezone
 
 import pytest
 
+from services.agent.canon.review_state import content_reviewed_predicate
 from services.agent.identity import Identity
 from services.agent.outline import (
     DSP009_DELIBERATE_GAPS,
@@ -109,14 +110,23 @@ async def test_build_prospect_outline_deterministic_same_sha():
 
 
 @pytest.mark.req(_SPEC)
-async def test_build_prospect_outline_sql_filters_unapproved():
-    """SQL 本身即帶 `outline_approved_by IS NOT NULL`——未審核列在 DB 層就出不來，
-    ⛔ 不是本檔事後篩掉（R11.6：過濾點在查詢，未審核列的存在與否不影響
-    `kb.get` 整數 id 取回，那條路徑不查這個旗標）。"""
+async def test_build_prospect_outline_sql_filters_unreviewed():
+    """SQL 本身即帶內容已審謂詞——未審列在 DB 層就出不來，⛔ 不是本檔事後篩掉。
+
+    ⚠️ 2026-09-07（spec knowledge-outline-and-intent-architecture 任務 3.1）起
+    條件**不再是 `IS NOT NULL`**：`IS NOT NULL` 會把值域外的舊標記
+    （現況 29 列 `owner-20260905`）當成已審。謂詞的唯一來源是
+    `services/agent/canon/review_state.py:content_reviewed_predicate`。
+    """
     pool = _pool(list(_PROSPECT_ROWS))
     await build_prospect_outline(pool)
-    sql, _params = pool.conn.cursor_obj.executed
-    assert "outline_approved_by IS NOT NULL" in sql
+    sql, params = pool.conn.cursor_obj.executed
+    predicate_sql, predicate_params = content_reviewed_predicate()
+    assert predicate_sql in sql, f"SQL 沒拼上內容已審謂詞：{sql!r}"
+    assert "IS NOT NULL" not in sql.upper(), (
+        "SQL 仍帶 `IS NOT NULL`——那會把值域外的舊標記當成已審"
+    )
+    assert predicate_params[0] in params, "謂詞參數沒同序帶進 execute"
 
 
 @pytest.mark.req(_SPEC)
