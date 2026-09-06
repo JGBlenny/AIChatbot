@@ -1,8 +1,8 @@
-"""細目索引（spec knowledge-outline-and-intent-architecture 元件 6・任務 3.3a）。
+"""細目索引（spec knowledge-outline-and-intent-architecture 元件 6・任務 3.3a／3.7）。
 
-啟動時把每個細目的「標題向量＋**approved** 講法向量」建成記憶體索引（決定性、三態、
-**失敗不服務**）。本檔只交元件＋註冊點；`visible_subset`／`CandidateSelector`（3.3b）與
-runtime 接線（4.1）⛔ 不在此。
+啟動時把每個細目的「標題向量＋**approved** 講法向量＋`content_units` 內文句向量」建成記憶體索引
+（決定性、三態、**失敗不服務**）。本檔只交元件＋註冊點；`visible_subset`／`CandidateSelector`
+（3.3b／3.7）與 runtime 接線（4.1）⛔ 不在此。
 
 ## 為什麼要另包一層 `EmbeddingBackend`
 既有 `services/embedding_utils.py::EmbeddingClient`（⛔ 本片不改）有三個對啟動索引不安全的性質：
@@ -18,9 +18,9 @@ runtime 接線（4.1）⛔ 不在此。
 被 embed 的文字；要拿掉它得改 `embedding_utils.py`，不在本片範圍。
 
 ## 隱私（本檔的硬規則）
-⛔ 本模組任何 `logging`／`print` **一律不得帶入細目標題、講法文字、查詢字串**——只准印數量與狀態。
-內部鍵 id（`title`／`ph:<sha8>`）是**內部**識別，⛔ 不出現在任何回傳值／trace（F18：講法對照表就在
-repo，記 id 等於一次查表就還原問句）。
+⛔ 本模組任何 `logging`／`print` **一律不得帶入細目標題、講法文字、內文句、查詢字串**——只准印數量與
+狀態。內部鍵 id（`title`／`ph:<sha8>`／`ct:<sha8>`）是**內部**識別，⛔ 不出現在任何回傳值／trace
+（F18：講法對照表就在 repo，記 id 等於一次查表就還原問句；內文句是正本答案本文，同待遇）。
 
 ## 三態與「不以殘缺集合服務」
 - `absent`：從未 `prepare`。
@@ -56,12 +56,15 @@ MAX_BATCH: int = 8
 PREPARE_EMBED_TIMEOUT_S: float = 30.0
 
 IndexState = Literal["absent", "not_ready", "ready"]
-KeyKind = Literal["title", "phrasing"]
+KeyKind = Literal["title", "phrasing", "content"]
 
 #: 內部鍵 id（⛔ 不回傳、⛔ 不進 trace）。
 TITLE_KEY_ID = "title"
 PHRASING_KEY_PREFIX = "ph:"
 PHRASING_KEY_SHA_CHARS = 8
+#: 內文句鍵前綴（任務 3.7）：`content_units` 每句一鍵，id 產法與 `ph:` 同（NFKC → sha256 前 8 碼）。
+CONTENT_KEY_PREFIX = "ct:"
+CONTENT_KEY_SHA_CHARS = 8
 
 #: 講法只有 `approved` 才進索引（proposed／retired 不進）。
 INDEXED_PHRASING_STATUS = "approved"
@@ -139,11 +142,24 @@ def _clamp_batch(batch: int) -> int:
     return max(1, min(int(batch), MAX_BATCH))
 
 
-def _phrasing_key_id(text: str) -> str:
-    """內部鍵 id `ph:<sha8>`（NFKC 後取 sha256 前 8 碼）。⛔ 只作內部識別，不回傳、不進 trace。"""
+def _hashed_key_id(prefix: str, text: str, sha_chars: int) -> str:
+    """`<prefix><sha8>`（NFKC 後取 sha256 前 `sha_chars` 碼）。⛔ 只作內部識別，不回傳、不進 trace。"""
     normalized = unicodedata.normalize("NFKC", text)
     digest = hashlib.sha256(normalized.encode("utf-8")).hexdigest()
-    return f"{PHRASING_KEY_PREFIX}{digest[:PHRASING_KEY_SHA_CHARS]}"
+    return f"{prefix}{digest[:sha_chars]}"
+
+
+def _phrasing_key_id(text: str) -> str:
+    """內部鍵 id `ph:<sha8>`（NFKC 後取 sha256 前 8 碼）。⛔ 只作內部識別，不回傳、不進 trace。"""
+    return _hashed_key_id(PHRASING_KEY_PREFIX, text, PHRASING_KEY_SHA_CHARS)
+
+
+def _content_key_id(text: str) -> str:
+    """內部鍵 id `ct:<sha8>`（NFKC 後取 sha256 前 8 碼，與 `_phrasing_key_id` 同法）。
+
+    ⛔ 只作內部識別，不回傳、不進 trace（任務 3.7：內文句與講法同待遇）。
+    """
+    return _hashed_key_id(CONTENT_KEY_PREFIX, text, CONTENT_KEY_SHA_CHARS)
 
 
 def _normalize(vector: Sequence[float], dim: Optional[int]) -> Optional[tuple[float, ...]]:
@@ -172,7 +188,7 @@ def _normalize(vector: Sequence[float], dim: Optional[int]) -> Optional[tuple[fl
 
 
 class FineIndex:
-    """細目索引：`prepare(doc)` 後對每個細目給出「標題＋approved 講法」的正規化向量。
+    """細目索引：`prepare(doc)` 後對每個細目給出「標題＋approved 講法＋內文句」的正規化向量。
 
     ⛔ 本類別不查 DB、不看身分、不算分數——可見性與 top-K 是 3.3b 的事。
     """
@@ -220,6 +236,16 @@ class FineIndex:
     @property
     def entry_count(self) -> int:
         return sum(len(v) for v in self._entries.values())
+
+    @property
+    def content_key_count(self) -> int:
+        """`content` 鍵（`content_units` 每句一鍵）的總數；非 `ready` ⇒ 0（任務 3.7）。"""
+        if self._state != "ready":
+            return 0
+        return sum(
+            1 for entries in self._entries.values() for kind, _key_id, _vec in entries
+            if kind == "content"
+        )
 
     @property
     def fine_ids(self) -> tuple[str, ...]:
@@ -304,9 +330,12 @@ class FineIndex:
         )
 
     def _key_plan(self, doc: CanonDoc) -> list[tuple[str, KeyKind, str, str]]:
-        """決定性鍵順序 `[(fine_id, kind, key_id, text), …]`：細目序 → 標題、再依講法序取 `approved`。
+        """決定性鍵順序 `[(fine_id, kind, key_id, text), …]`：細目序 → 標題 → 講法序取 `approved`
+        → `content_units` 每句一鍵（正本序，任務 3.7）。
 
-        內部鍵 id（`title`／`ph:<sha8>`）只在索引**內部**存在，⛔ 不出現在任何回傳值／trace。
+        內部鍵 id（`title`／`ph:<sha8>`／`ct:<sha8>`）只在索引**內部**存在，⛔ 不出現在任何回傳值／trace。
+        ⛔ 內文句不去重、不過濾：`content_units` 已由 parser 保證非空（F8 保證屬性區塊不落入其中）；
+        跨細目或同細目內重複的句子各保留自己那把鍵（鍵 id 相同無妨，索引以位置存）。
         """
         plan: list[tuple[str, KeyKind, str, str]] = []
         for fine in doc.fines():
@@ -315,6 +344,8 @@ class FineIndex:
                 if phrasing.status != INDEXED_PHRASING_STATUS:
                     continue
                 plan.append((fine.id, "phrasing", _phrasing_key_id(phrasing.text), phrasing.text))
+            for content_unit in fine.content_units:
+                plan.append((fine.id, "content", _content_key_id(content_unit), content_unit))
         return plan
 
     async def _embed_all(self, texts: list[str]) -> Optional[list[Optional[list[float]]]]:
@@ -373,7 +404,7 @@ def reset_index_registry() -> None:
 
 
 def index_registry_states() -> dict:
-    """health 用的觀測值：`{audience: {state, prepared_sha, entries, dim}}`。
+    """health 用的觀測值：`{audience: {state, prepared_sha, entries, dim, content_keys}}`。
 
     三個受眾一律列出，未註冊 ⇒ `{"state": "absent", …}`（Plan §1.3「取不到 ⇒ absent」）。
     ⛔ 不重建索引、⛔ 不觸發任何 embedding；取值失敗只降級成 `absent`＋型別名，
@@ -385,7 +416,9 @@ def index_registry_states() -> dict:
     return out
 
 
-_ABSENT_STATE = {"state": "absent", "prepared_sha": None, "entries": 0, "dim": None}
+_ABSENT_STATE = {
+    "state": "absent", "prepared_sha": None, "entries": 0, "dim": None, "content_keys": 0,
+}
 
 
 def _observe(audience: str) -> dict:
@@ -398,6 +431,7 @@ def _observe(audience: str) -> dict:
             "prepared_sha": index.prepared_sha,
             "entries": index.entry_count,
             "dim": index.dim,
+            "content_keys": index.content_key_count,
         }
     except Exception as exc:  # noqa: BLE001 — 健檢不因取值失敗而崩
         return dict(_ABSENT_STATE, detail=f"{type(exc).__name__}")

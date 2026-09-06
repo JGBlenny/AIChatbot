@@ -58,14 +58,14 @@ def _fine_block(slug: str, title: str, phrasings: list[tuple[str, str]]) -> str:
         "- sources: [kb:1]",
         "- reviewed: {by: test, at: 2026-09-07}",
         "- instance_applicability: general",
-        f"內容句{slug}",
+        f"內容句{slug}ZZCONTENT{slug}",
         "",
     ]
     return "\n".join(lines)
 
 
 def _doc_three_statuses():
-    """3 細目，每細目 approved／proposed／retired 講法各一 ⇒ 鍵數＝3 標題＋3 approved＝6。"""
+    """3 細目，每細目 approved／proposed／retired 講法各一＋1 句內文 ⇒ 鍵數＝3 標題＋3 approved＋3 內文＝9。"""
     body = "".join(
         _fine_block(
             f"fine-{i}",
@@ -82,7 +82,7 @@ def _doc_three_statuses():
 
 
 def _doc_twelve_keys():
-    """3 細目 × (1 標題＋3 approved 講法)＝12 鍵 ⇒ 必然要分 2 批以上（≥9，§4.1）。"""
+    """3 細目 × (1 標題＋3 approved 講法＋1 內文)＝15 鍵 ⇒ 必然要分 2 批以上（≥9，§4.1）。"""
     body = "".join(
         _fine_block(
             f"fine-{i}",
@@ -94,12 +94,41 @@ def _doc_twelve_keys():
     return parse_canon_text(_FRONT_MATTER + body)
 
 
+def _doc_multi_content():
+    """3 細目，每細目 1 approved 講法＋3 句內文（用於辨序：title→phrasing→content）。"""
+    body = "".join(
+        _content_fine_block(
+            f"fine-{i}",
+            _TITLES[i],
+            [(f"講法核可ZZPHRASEOK{i}", "approved")],
+            [f"內容句{i}之{j}ZZCONTENT{i}{j}" for j in range(3)],
+        )
+        for i in range(3)
+    )
+    return parse_canon_text(_FRONT_MATTER + body)
+
+
+def _content_fine_block(slug: str, title: str, phrasings: list[tuple[str, str]], contents: list[str]) -> str:
+    lines = [f"### {title} {{#prospect/A/{slug}}}", "- phrasings:"]
+    for text, status in phrasings:
+        lines.append(f'  - {{text: "{text}", source: "question_summary:1", status: {status}}}')
+    lines += [
+        "- sources: [kb:1]",
+        "- reviewed: {by: test, at: 2026-09-07}",
+        "- instance_applicability: general",
+    ]
+    lines.extend(contents)
+    lines.append("")
+    return "\n".join(lines)
+
+
 def _secret_texts(doc) -> list[str]:
-    """這份合成正本裡「⛔ 不得外洩」的全部文字：細目標題＋所有講法（含未進索引的）。"""
+    """這份合成正本裡「⛔ 不得外洩」的全部文字：細目標題＋所有講法（含未進索引的）＋全部內文句。"""
     out = []
     for fine in doc.fines():
         out.append(fine.title)
         out.extend(p.text for p in fine.phrasings)
+        out.extend(fine.content_units)
     return out
 
 
@@ -167,11 +196,12 @@ async def test_keys_are_titles_plus_approved_phrasings_only():
     await index.prepare(doc)
 
     assert index.state == "ready"
-    assert index.entry_count == 6, index.entry_count          # 3 標題 ＋ 3 approved
+    assert index.entry_count == 9, index.entry_count          # 3 標題 ＋ 3 approved ＋ 3 內文
+    assert index.content_key_count == 3, index.content_key_count
     assert index.dim == 4
     for fine in doc.fines():
         kinds = [kind for kind, _v in index.entries_for(fine.id)]
-        assert kinds == ["title", "phrasing"], (fine.id, kinds)
+        assert kinds == ["title", "phrasing", "content"], (fine.id, kinds)
     # 正對照：proposed／retired 的文字**確實存在於正本**，只是沒被送去 embed
     assert any(p.status == "proposed" for f in doc.fines() for p in f.phrasings)
     embedded = set(backend.texts)
@@ -187,8 +217,8 @@ async def test_backend_is_called_in_batches_of_at_most_eight():
     index = FineIndex(backend)
     await index.prepare(doc)
 
-    assert index.entry_count == 12
-    assert sum(backend.calls) == 12
+    assert index.entry_count == 15
+    assert sum(backend.calls) == 15
     assert len(backend.calls) >= 2, backend.calls
     assert max(backend.calls) <= MAX_BATCH == 8, backend.calls
 
@@ -199,6 +229,31 @@ async def test_batch_ceiling_cannot_be_widened_by_constructor():
     backend = _FakeBackend()
     await FineIndex(backend, batch=100).prepare(doc)
     assert max(backend.calls) <= MAX_BATCH, backend.calls
+
+
+async def test_key_order_is_title_then_phrasing_then_content():
+    """每細目順序＝`title` → 講法（正本序）→ 內文句（正本序），§4.1-2。
+
+    每細目 3 句內文（`_doc_multi_content`）才能辨序——只 1 句時 title→phrasing→content
+    與其他順序在「內文句只有一個」的情況下無鑑別力。
+    """
+    doc = _doc_multi_content()
+    backend = _FakeBackend()
+    index = FineIndex(backend)
+    await index.prepare(doc)
+
+    assert index.state == "ready"
+    for fine in doc.fines():
+        kinds = [kind for kind, _v in index.entries_for(fine.id)]
+        assert kinds == ["title", "phrasing", "content", "content", "content"], (fine.id, kinds)
+
+    # 送去 embed 的文字序（backend.texts）也要與細目序＋鍵序一致（決定性建置，非事後排序）。
+    expected_order: list[str] = []
+    for fine in doc.fines():
+        expected_order.append(fine.title)
+        expected_order.extend(p.text for p in fine.phrasings if p.status == "approved")
+        expected_order.extend(fine.content_units)
+    assert backend.texts == expected_order
 
 
 async def test_prepare_is_deterministic_and_ordered_by_fine_then_phrasing():
@@ -232,7 +287,7 @@ async def test_vectors_are_l2_normalized():
 
 
 async def test_entries_for_never_exposes_internal_key_ids():
-    """內部鍵 id（`title`／`ph:<sha8>`）⛔ 不出現在任何回傳值（F18：記 id＝可還原問句）。"""
+    """內部鍵 id（`title`／`ph:<sha8>`／`ct:<sha8>`）⛔ 不出現在任何回傳值（F18：記 id＝可還原問句）。"""
     doc = _doc_twelve_keys()
     index = FineIndex(_FakeBackend())
     await index.prepare(doc)
@@ -240,9 +295,16 @@ async def test_entries_for_never_exposes_internal_key_ids():
         {fid: index.entries_for(fid) for fid in index.fine_ids}, ensure_ascii=False, default=list
     )
     assert "ph:" not in serialized
-    # 正對照：內部確實有算出 `ph:` 形狀的鍵 id（不是因為根本沒實作才找不到）
+    assert "ct:" not in serialized
+    # health 結果同樣不得帶出內部鍵 id
+    register_index("prospect", index)
+    health_serialized = json.dumps(FI.index_registry_states(), ensure_ascii=False, default=list)
+    assert "ph:" not in health_serialized and "ct:" not in health_serialized
+    # 正對照：內部確實有算出 `ph:`／`ct:` 形狀的鍵 id（不是因為根本沒實作才找不到）
     assert FI._phrasing_key_id("講法核可ZZPHRASEOK00").startswith("ph:")
     assert len(FI._phrasing_key_id("x")) == len("ph:") + 8
+    assert FI._content_key_id("內容句fine-0ZZCONTENTfine-0").startswith("ct:")
+    assert len(FI._content_key_id("x")) == len("ct:") + 8
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -263,6 +325,20 @@ async def test_ready_state_records_prepared_key():
     assert index.state == "ready"
     assert index.prepared_key == (doc.canon_sha256, doc.phrasing_set_sha256)
     assert index.prepared_sha == doc.canon_sha256
+
+
+async def test_none_content_vector_yields_not_ready_with_zero_content_key_count():
+    """任一**內文句**向量 `None` ⇒ `not_ready`、`entry_count == 0`、`content_key_count == 0`（§4.1-5）。"""
+    doc = _doc_three_statuses()
+    content_text = doc.fines()[1].content_units[0]
+    backend = _FakeBackend(none_for=(content_text,))
+    index = FineIndex(backend)
+    await index.prepare(doc)
+
+    assert index.state == "not_ready"
+    assert index.entry_count == 0
+    assert index.content_key_count == 0
+    assert index.prepared_key is None and index.prepared_sha is None and index.dim is None
 
 
 async def test_single_none_vector_yields_not_ready_with_no_partial_index():
@@ -407,8 +483,41 @@ async def test_flipping_one_phrasing_status_changes_sha_and_rebuilds():
 
     await index.prepare(flipped)
     assert len(backend.calls) > calls_after_first, "sha 變了卻沒重建"
-    assert index.entry_count == 7                       # 多了一條 approved
+    assert index.entry_count == 10                      # 多了一條 approved（9+1）
     assert index.prepared_sha == flipped.canon_sha256
+
+
+async def test_editing_one_content_sentence_changes_sha_and_rebuilds():
+    """改一句內文（講法不變）⇒ `canon_sha256` 變 ⇒ 重建；`phrasing_set_sha256` 不變也要重建
+    （§4.1-6：證明快取鍵靠的是 `canon_sha256`，不是 `phrasing_set_sha256`）。
+    """
+    doc = _doc_three_statuses()
+    edited_text = _FRONT_MATTER + "".join(
+        _fine_block(
+            f"fine-{i}",
+            _TITLES[i],
+            [
+                (f"講法核可ZZPHRASEOK{i}", "approved"),
+                (f"講法提案ZZPHRASEPROPOSED{i}", "proposed"),
+                (f"講法退役ZZPHRASERETIRED{i}", "retired"),
+            ],
+        )
+        for i in range(3)
+    ).replace("內容句fine-0ZZCONTENTfine-0", "內容句fine-0改ZZCONTENTfine-0EDITED")
+    edited = parse_canon_text(edited_text)
+    assert edited.canon_sha256 != doc.canon_sha256
+    assert edited.phrasing_set_sha256 == doc.phrasing_set_sha256, "正對照：講法沒動，講法集合 sha 不該變"
+
+    backend = _FakeBackend()
+    index = FineIndex(backend)
+    await index.prepare(doc)
+    calls_after_first = len(backend.calls)
+
+    await index.prepare(edited)
+    assert len(backend.calls) > calls_after_first, "改內文的 sha 變了卻沒重建"
+    assert index.state == "ready"
+    assert index.entry_count == 9
+    assert index.prepared_sha == edited.canon_sha256
 
 
 async def test_failed_prepare_is_not_cached_so_a_retry_can_recover():
@@ -428,7 +537,7 @@ async def test_failed_prepare_is_not_cached_so_a_retry_can_recover():
     backend.recover()                   # 同一份正本、後端恢復後再 prepare 一次
     await index.prepare(doc)
     assert len(backend.calls) > calls_after_failure, "失敗被快取了 ⇒ 後端根本沒再被呼叫"
-    assert index.state == "ready" and index.entry_count == 6
+    assert index.state == "ready" and index.entry_count == 9
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -488,12 +597,15 @@ async def test_health_reports_three_index_states_and_never_turns_red():
     idx = result["checks"]["canon"]["index"]
 
     assert idx["prospect"] == {
-        "state": "ready", "prepared_sha": doc.canon_sha256, "entries": 6, "dim": 4,
+        "state": "ready", "prepared_sha": doc.canon_sha256, "entries": 9, "dim": 4,
+        "content_keys": 3,
     }
     assert idx["property_manager"]["state"] == "not_ready"
     assert idx["property_manager"]["prepared_sha"] is None
     assert idx["property_manager"]["entries"] == 0
+    assert idx["property_manager"]["content_keys"] == 0
     assert idx["tenant"]["state"] == "absent"
+    assert idx["tenant"]["content_keys"] == 0
 
     # ⛔ 不致紅：三態註冊前後 status 與 red_flags 一模一樣
     assert result["status"] == baseline["status"]
@@ -507,6 +619,7 @@ async def test_health_reports_absent_for_every_unregistered_audience():
     idx = result["checks"]["canon"]["index"]
     assert set(idx) == {"prospect", "property_manager", "tenant"}
     assert all(v["state"] == "absent" for v in idx.values()), idx
+    assert all(v["content_keys"] == 0 for v in idx.values()), idx
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -529,7 +642,7 @@ async def test_no_title_or_phrasing_text_reaches_logs_or_stdout(caplog, capsys):
 
     doc = _doc_three_statuses()
     secrets = _secret_texts(doc)
-    assert len(secrets) == 3 + 9    # 3 標題 ＋ 每細目 3 講法
+    assert len(secrets) == 3 + 9 + 3    # 3 標題 ＋ 每細目 3 講法 ＋ 每細目 1 內文句
 
     # ① 正常路徑
     await FineIndex(_FakeBackend()).prepare(doc)
@@ -550,3 +663,4 @@ async def test_no_title_or_phrasing_text_reaches_logs_or_stdout(caplog, capsys):
     assert not leaked, f"文字外洩到 log／stdout：{leaked}"
     # 內部鍵 id 同樣不得外洩
     assert "ph:" not in haystack
+    assert "ct:" not in haystack

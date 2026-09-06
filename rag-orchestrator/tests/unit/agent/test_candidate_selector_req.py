@@ -258,13 +258,83 @@ async def test_winning_key_kind_prefers_phrasing_when_it_scores_higher_and_title
 
     assert sel["winning_key_kind"][fid("phr-wins")] == "phrasing"
     assert sel["winning_key_kind"][fid("tie-kind")] == "title"
-    assert set(sel["winning_key_kind"].values()) <= {"title", "phrasing"}
-    # 正對照：tie-kind 的標題與講法**確實**都在索引裡（同分不是因為只剩一個鍵）
-    assert [k for k, _v in index.entries_for(fid("tie-kind"))] == ["title", "phrasing"]
+    assert set(sel["winning_key_kind"].values()) <= {"title", "phrasing", "content"}
+    # 正對照：tie-kind 的標題／講法／內文句**確實**都在索引裡（同分不是因為只剩一個鍵）
+    assert [k for k, _v in index.entries_for(fid("tie-kind"))] == ["title", "phrasing", "content"]
+
+
+_T_CTW, _P_CTW = "標題ZZCTWINS", "講法ZZCTWINS"
+
+
+def _doc_ct():
+    """`ct-wins`：標題與講法正交，內文句 `_HIGH` ⇒ 勝出鍵應為 `content`。"""
+    return _doc(
+        _fine_block("ct-wins", _T_CTW, target_user=["prospect"],
+                    business_types=["system_provider"], phrasings=[(_P_CTW, "approved")]),
+    )
+
+
+async def test_winning_key_kind_can_be_content_when_it_scores_highest():
+    """§4.2-9：標題／講法正交，內文句 `_HIGH` ⇒ 進候選且 `winning_key_kind == "content"`，分數 1.0。"""
+    doc = _doc_ct()
+    content_text = doc.fines()[0].content_units[0]
+    vectors = {QUERY: _Q, _T_CTW: _ORTHOGONAL, _P_CTW: _ORTHOGONAL, content_text: _HIGH}
+    index = await _ready(doc, vectors)
+    sel = await CandidateSelector(index).select(doc, B2B_PROSPECT, QUERY)
+
+    assert sel["miss_kind"] == "hit"
+    assert fid("ct-wins") in sel["candidate_ids"]
+    assert sel["winning_key_kind"][fid("ct-wins")] == "content"
+    assert sel["scores"][fid("ct-wins")] == pytest.approx(1.0)
+
+
+_T_3TIE, _P_3TIE = "標題ZZ3TIE", "講法ZZ3TIE"
+_T_PCTIE, _P_PCTIE = "標題ZZPCTIE", "講法ZZPCTIE"
+
+
+def _doc_tie_kinds():
+    return _doc(
+        # 三鍵同向量 ⇒ 同分序取 title
+        _fine_block("tie-three", _T_3TIE, target_user=["prospect"],
+                    business_types=["system_provider"], phrasings=[(_P_3TIE, "approved")]),
+        # 標題較低、講法＝內文同分且較高 ⇒ 同分序在講法／內文之間取 phrasing（content 墊底）
+        _fine_block("tie-phrase-content", _T_PCTIE, target_user=["prospect"],
+                    business_types=["system_provider"], phrasings=[(_P_PCTIE, "approved")]),
+    )
+
+
+async def test_three_way_tie_prefers_title():
+    """§4.2-10：三鍵同向量 ⇒ `winning_key_kind == "title"`。"""
+    doc = _doc_tie_kinds()
+    content_3tie = [f for f in doc.fines() if f.id == fid("tie-three")][0].content_units[0]
+    content_pctie = [f for f in doc.fines() if f.id == fid("tie-phrase-content")][0].content_units[0]
+    vectors = {
+        QUERY: _Q,
+        _T_3TIE: _MID_LO, _P_3TIE: _MID_LO, content_3tie: _MID_LO,
+        _T_PCTIE: _ORTHOGONAL, _P_PCTIE: _ORTHOGONAL, content_pctie: _ORTHOGONAL,
+    }
+    index = await _ready(doc, vectors)
+    sel = await CandidateSelector(index).select(doc, B2B_PROSPECT, QUERY)
+    assert sel["winning_key_kind"][fid("tie-three")] == "title"
+
+
+async def test_phrasing_beats_content_on_a_tie():
+    """§4.2-10：講法＝內文同分＞標題 ⇒ 取 `phrasing`（`content` 墊底）。"""
+    doc = _doc_tie_kinds()
+    content_3tie = [f for f in doc.fines() if f.id == fid("tie-three")][0].content_units[0]
+    content_pctie = [f for f in doc.fines() if f.id == fid("tie-phrase-content")][0].content_units[0]
+    vectors = {
+        QUERY: _Q,
+        _T_3TIE: _ORTHOGONAL, _P_3TIE: _ORTHOGONAL, content_3tie: _ORTHOGONAL,
+        _T_PCTIE: _MID_LO, _P_PCTIE: _MID_HI, content_pctie: _MID_HI,
+    }
+    index = await _ready(doc, vectors)
+    sel = await CandidateSelector(index).select(doc, B2B_PROSPECT, QUERY)
+    assert sel["winning_key_kind"][fid("tie-phrase-content")] == "phrasing"
 
 
 async def test_serialized_selection_never_contains_a_phrasing_key_id():
-    """F18：trace ⛔ 不得帶 `ph:<sha8>`——講法對照表就在 repo，記 id 等於可還原問句。"""
+    """F18：trace ⛔ 不得帶 `ph:<sha8>`──講法對照表就在 repo，記 id 等於可還原問句。"""
     doc = _doc_w()
     index = await _ready(doc, _DOC_W_VECTORS)
     sel = await CandidateSelector(index).select(doc, B2B_PROSPECT, QUERY)
@@ -275,6 +345,22 @@ async def test_serialized_selection_never_contains_a_phrasing_key_id():
     assert _P_PHR not in serialized and _T_PHR not in serialized
     # 正對照：內部**確實**算得出 `ph:` 形狀的鍵 id（不是因為沒實作才找不到）
     assert FI._phrasing_key_id(_P_PHR).startswith("ph:")
+
+
+async def test_serialized_selection_never_contains_a_content_key_id_and_kinds_are_within_domain():
+    """§4.2-11：`Selection` JSON 序列化不含 `ct:`（亦不含 `ph:`）；`winning_key_kind` 值域 ⊆ 三值。"""
+    doc = _doc_ct()
+    content_text = doc.fines()[0].content_units[0]
+    vectors = {QUERY: _Q, _T_CTW: _ORTHOGONAL, _P_CTW: _ORTHOGONAL, content_text: _HIGH}
+    index = await _ready(doc, vectors)
+    sel = await CandidateSelector(index).select(doc, B2B_PROSPECT, QUERY)
+
+    serialized = json.dumps(sel, ensure_ascii=False)
+    assert "ct:" not in serialized and "ph:" not in serialized
+    assert content_text not in serialized
+    assert set(sel["winning_key_kind"].values()) <= {"title", "phrasing", "content"}
+    # 正對照：內部**確實**算得出 `ct:` 形狀的鍵 id（不是因為沒實作才找不到）
+    assert FI._content_key_id(content_text).startswith("ct:")
 
 
 # ── 情境 3：不服務一律 None（⛔ 不變寬）────────────────────────────────

@@ -336,7 +336,7 @@ class FineIndex:
 
 class Selection(TypedDict):
     candidate_ids: list[str]             # ≤K，依分數降冪、同分 id 字典序
-    winning_key_kind: dict[str, Literal["title", "phrasing"]]   # 3.3（業主 2026-09-07 裁 F18）：⛔ 不記 ph:<sha8>——對照表在 repo，記 id＝可還原問句；同分取 title
+    winning_key_kind: dict[str, Literal["title", "phrasing", "content"]]   # 3.3（業主 2026-09-07 裁 F18）：⛔ 不記 ph:<sha8>／ct:<sha8>——對照表在 repo，記 id＝可還原問句；同分序 title > phrasing > content（3.7）
     scores: dict[str, float]
     miss_kind: Literal["hit", "none_visible", "no_candidate", "index_unavailable"]   # no_candidate＝visible 非空但無索引項（ready 下不可達）；不設分數門檻、不定義 MIN_SCORE
 
@@ -759,6 +759,7 @@ flowchart LR
 | 日期 | 版本 | 變更內容 | 修改者 |
 |---|---|---|---|
 | 2026-09-07 | 1.14 | 3.6 決策 5 修訂（業主裁 (a)）：線上匹配鍵＝標題＋講法＋內文句（`content_units` 每句一鍵）取最大；依 3.4 loo=article r@5 .582／.621／.673（內文 +9.1、講法 +3.9）；reranker 不接、K 不調；講法密度目標每細目 ≥3；`KeyKind` 加 `content`（task 3.7） | 業主／AI |
+| 2026-09-07 | 1.15 | 3.7 收案：`FineIndex` 內文鍵落地（`KeyKind` 加 `content`、`ct:<sha8>` 內部 id、`_key_plan` 序 title→講法→內文句；快取鍵不變）；`winning_key_kind` 三值、同分序 title > phrasing > content（design 原只寫同分取 title，本片補明）；health `content_keys`；真正本 358 鍵＝index_eval 內文臂；第二份材料以 3.4 快取重放 r@5 47/49（有內文鍵）／44/49（拿掉），對照臂＝`second_material.article`（＝無 LOO；exact 對 title 臂有剔鍵）；**未驗命題**：內文句增益是否只是記住來源（3.4 內文鍵未做 LOO，article 恆 None）——留 4.4a 假設表以非來源改寫問句量三臂 | AI |
 | 2026-09-07 | 1.13 | 3.3 元件 6 回寫：`Selection.winning_key`→`winning_key_kind`（不記講法 id，F18）、`EmbeddingBackend` Protocol、不設 `MIN_SCORE`、`register_index`；匯入契約：正本空清單⇒NULL 不預設（tasks 7.1／3.5；業主 2026-09-07 照准） | 業主／AI |
 | 2026-09-07 | 1.12 | 大綱預算 10,000→**12,000**（正本 `budget_tokens` 與程式預設同步；實測整份售前正本 cl100k 10,336 tokens，中文≈1.1 字元/token，research 1.6 假設錯；本機影子模式因此啟動紅；業主裁 a）| 業主／AI |
 | 2026-09-07 | 1.11 | 3.2 落地偏離回寫（元件 5）：`build_canon_toc` 另名、`canon_visible` 規則＝元件 6 前身（分支判準同 SQL、刻意不套清單）、resolver per-call 接線、註冊表載體、`.json` 位元組同源、29b（業主 2026-09-07 照准） | 業主／AI |

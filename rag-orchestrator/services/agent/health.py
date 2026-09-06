@@ -132,7 +132,7 @@ def _outline_sha(get_runtime: Optional[Callable[[], Any]]) -> str:
 
 
 def _index_state() -> dict:
-    """`{audience: {state, prepared_sha, entries, dim}}`（3.3a｜元件 6 `FineIndex`）。
+    """`{audience: {state, prepared_sha, entries, dim, content_keys}}`（3.3a／3.7｜元件 6 `FineIndex`）。
 
     只讀**本行程已註冊**的索引（`fine_index.get_index`），⛔ 不重建、⛔ 不觸發任何 embedding。
     未註冊 ⇒ `absent`；取值失敗 ⇒ 同樣降級成觀測值。

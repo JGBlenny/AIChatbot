@@ -111,7 +111,7 @@
   - 執行：mech-executor／effort 中——照 `agent_boundary.py` 既有 checker 慣例＋正對照
   - 驗收：目標＝33／34 進 audit 且空跑不綠｜成果＝兩支 checker＋正對照｜做法＝照 agent_boundary 慣例｜驗證＝[自驗]
 - [x] 3.6 決策 5 定案（3.4 後；**2026-09-07 業主裁 (a)**：線上匹配鍵改標題＋講法＋內文句取最大（內文臂 loo=article r@5 +9.1 點、講法臂 +3.9 點）；reranker 不接；講法密度目標每細目 approved ≥3（0 講法細目 2 個待業主補講法：`prospect/C/role-permission-granularity`、`prospect/D/subscription-change-renewal`）；design 決策 5 修訂＋變更歷史 1.14）：依三臂數字定線上匹配鍵（預設標題＋講法取最大）與講法密度目標；寫回 design 1.4 變更歷史；⛔ 不調 K。
-- [ ] 3.7 `FineIndex` 內文鍵（3.6 後、4.1 前；決策 5 修訂落地）：`KeyKind` 加 `content`；`prepare` 對每細目 `content_units` 每句一鍵（key id＝`ct:<sha8>`，⛔ 不記句文於 trace）；快取鍵 `canon_sha256` 已涵蓋內文、不加鍵；批次 ≤8 與三態不變；`Selection.winning_key_kind` 值域加 `content`；health `canon` 節加 `content_keys` 計數。測試：`index_eval` 內文臂與 `FineIndex` 同鍵集（鍵文字集合相等）；`visible_subset` 等價測試不變；突變控制（拿掉內文鍵 ⇒ 第二份材料 r@5 必降）。⛔ 不調 K、⛔ 不接 reranker。
+- [x] 3.7 `FineIndex` 內文鍵（3.6 後、4.1 前；決策 5 修訂落地；**2026-09-07 收案**：Plan `inputs/plan-3.7-fine-index-content-keys-20260907.md` 第 1 輪 REVISE 3 P2 FIX→第 2 輪 READY→業主核（§8 照預設）；executor＋fresh verifier CONFIRMED（獨立重算 358 鍵、47/49 vs 44/49 對報告 article 臂 .9592／.898、sha 不符 SKIP、隱私與常數不變）；unit 1014／integration 210／`make audit` PASS；design 1.15；P4：`_best_entry` 未知 kind 落 -2、未驗「內文句只記住來源」命題交 4.4a）：`KeyKind` 加 `content`；`prepare` 對每細目 `content_units` 每句一鍵（key id＝`ct:<sha8>`，⛔ 不記句文於 trace）；快取鍵 `canon_sha256` 已涵蓋內文、不加鍵；批次 ≤8 與三態不變；`Selection.winning_key_kind` 值域加 `content`；health `canon` 節加 `content_keys` 計數。測試：`index_eval` 內文臂與 `FineIndex` 同鍵集（鍵文字集合相等）；`visible_subset` 等價測試不變；突變控制（拿掉內文鍵 ⇒ 第二份材料 r@5 必降）。⛔ 不調 K、⛔ 不接 reranker。
   - 需求：5.2, 5.6
   - 執行：executor／effort 中；完成後派 fresh verifier
   - 需求：5.2

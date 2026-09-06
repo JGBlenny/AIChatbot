@@ -14,10 +14,10 @@
    就切掉（`FineIndex.visible_subset` → `canon_assembler.canon_visible`，3.2 已與
    `build_visibility_predicate` 驗過零分歧），⛔ 不在排序後再過濾（那種寫法一旦
    有人動排序就會漏）。
-3. **⛔ 不記講法 id、⛔ 不 log 查詢**（F18／業主 2026-09-07 §8.1）：`Selection` 只帶
-   `winning_key_kind ∈ {"title","phrasing"}`。講法對照表就在 repo，記 `ph:<sha8>`
-   等於一次查表就還原出使用者問句。本模組 ⛔ 不得有 `print`；`logging` 只准帶
-   數量／狀態／例外型別名。
+3. **⛔ 不記講法 id、⛔ 不 log 查詢**（F18／業主 2026-09-07 §8.1；任務 3.7 擴及內文句）：
+   `Selection` 只帶 `winning_key_kind ∈ {"title","phrasing","content"}`。講法對照表就在
+   repo，記 `ph:<sha8>` 等於一次查表就還原出使用者問句；內文句是正本答案本文，
+   ⛔ 不記 `ct:*`，同待遇。本模組 ⛔ 不得有 `print`；`logging` 只准帶數量／狀態／例外型別名。
 
 ## 為什麼沒有分數門檻（⛔ 不要「順手」補一個）
 design 決議：K 名之內全給，該不該用由模型與 Verifier 守。餘弦可以是負的，
@@ -57,7 +57,8 @@ MissKind = Literal["hit", "none_visible", "no_candidate", "index_unavailable"]
 class Selection(TypedDict):
     """一回合的選取結果。
 
-    ⛔ **無 `winning_key`／無 `ph:*`**（業主 2026-09-07 §8.1 裁：trace 不記講法 id）。
+    ⛔ **無 `winning_key`／無 `ph:*`／無 `ct:*`**（業主 2026-09-07 §8.1 裁：trace 不記講法 id；
+    任務 3.7 擴及內文句鍵）。
     `winning_key_kind` 與 `scores` 只涵蓋 `candidate_ids` 內的細目——沒進候選的細目
     連分數都不外流。
     """
@@ -164,14 +165,17 @@ class CandidateSelector:
     def _best_entry(self, fine_id: str, query_vector) -> Optional[tuple[float, KeyKind]]:
         """該細目分數最高的索引項 `(score, kind)`；無索引項 ⇒ `None`。
 
-        同分取 `title`（Plan §1.6）——⚠️ 用明示的比較鍵，⛔ 不依賴 `entries_for` 的
-        回傳順序碰巧把標題排在前面（那是另一個檔的實作細節，改了這裡會靜默跟著變）。
+        同分序 `title > phrasing > content`（Plan §1.6／§1.2-7、業主 2026-09-07 §8.1 裁）——
+        ⚠️ 用明示的比較鍵，⛔ 不依賴 `entries_for` 的回傳順序碰巧把標題排在前面
+        （那是另一個檔的實作細節，改了這裡會靜默跟著變）。
         """
         best_key: Optional[tuple[float, int]] = None
         best: Optional[tuple[float, KeyKind]] = None
         for kind, vector in self._index.entries_for(fine_id):
             score = _dot(query_vector, vector)
-            key = (score, 0 if kind == "title" else -1)   # 同分：title(0) > phrasing(-1)
+            # 同分：title(0) > phrasing(-1) > content(-2)
+            tie_rank = 0 if kind == "title" else -1 if kind == "phrasing" else -2
+            key = (score, tie_rank)
             if best_key is None or key > best_key:
                 best_key, best = key, (score, kind)
         return best
