@@ -50,3 +50,16 @@
 - 業主審的東西（一次看完）：①37 細目結構與標題 ②split 重複句（kb:3600 三處、kb:5379 兩處）要刪 ③G 現有不足補內容 ④202 條講法留／改／刪（`source` 可追：question_summary／koyu／helpcenter） ⑤4 對相似細目要不要併 ⑥979 條 unassigned 要不要撈。
 - 審完的檔案放回 `rag-orchestrator/canon/prospect.md`（hook 會在 Edit／Write 時做結構與識別碼粗篩），並跑 `export_json` 產 `prospect.json`（同源測試守），才進 2.4b。
 - **建議版（業主 2026-09-06 同意先做 ⑤①）**：`raw/structure-20260906/prospect.draft.review.md`＝with-phrasings 版再加 5 條 `see_also`（3600 拆出的三目互指、data-migration↔migration-limits 互指）與 23 個複合標題縮短（去掉「／」另一半，保留與 slug 對應的那句）；parser／hook 零錯。與 with-phrasings 版的 diff 只在 `###` 標題行與 `- see_also:` 行。②③④ 仍由業主親手。
+
+## 6. 六件審點的分工結果（2026-09-07；業主問「哪三件真的需要我」）
+
+| # | 誰做 | 結果 |
+|---|---|---|
+| ② 拆分重複句 | **工具／主 session 已做**：kb 3600 依原句【】段落歸屬——流程目 13 句、範本目 4 句（取草稿 9 的版本）、修改目 2 句；5379：可匯入 3 句留 B、不支援 2 句留 G | `prospect.draft.review.md` |
+| ④ 202 條講法 | **主 session 已預分**：koyu 89 條中 30 條操作口吻（怎麼弄／在哪／要怎麼…）已從 review 版移除（清單 `raw/structure-20260906/koyu-removed-operation-tone.json`，可還原）；question_summary 99、helpcenter 14、koyu 其餘 59 留 | 172 條 proposed |
+| ⑤ 相似細目 | 已加 see_also（不併） | 5 條 |
+| ① 標題 | 已縮短 23 個 | — |
+| ⑥ 979 條未掛 | 不審，等其他受眾 | — |
+| ③ G 現有不足 | **只有這件真的要業主**，而且縮成兩小題：(a) 3 個沒有任何來源的問題各答一句（C22 簽約另外收費嗎、C39 私人門鎖 vs 共用門鎖差別、C53 單合約 vs 雙合約差別）；(b) 5 個「知識在庫、但不在售前池」的格（C25 差額發票 kb 3798 等、C29 儲值金回充 kb 3417、C46 多語系 kb 3798／4652、C54 發票載具 kb 3414／3423／3419）要不要把那些列開放給 prospect（可見性決定，屬 D1 範圍）或另寫售前版細目。C52「系統管理模組」是名稱問題（六大模組無此名），建議在 A 總覽加一句對照即可 | 待業主 |
+
+⇒ 真正要業主親手的是 ③(a) 三句話與 ③(b) 一個可見性決定；其餘已做成建議版，看 diff 即可。
