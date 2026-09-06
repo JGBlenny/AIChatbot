@@ -2,9 +2,10 @@
 """步 4 answerability 判者 args 組裝（knowledge-outline-and-intent-architecture 任務 1.4｜design 元件 2）。
 
 讀 55 格缺口地圖（`map-v2.json`）＋21 列 prospect kb rows＋18 筆草稿＋rubric →
-Workflow `outline-curation.js` `step:'answerability'` 用的 `args` JSON：候選＝程式列舉的
-臨時細目集合（kb 依 id 升冪、draft 依原序，⛔ 不經排序不篩選）、每格 judgePrompt（rubric 全文＋
-代表問句＋全部候選）、`fineIdEnum`（供 JS 端組 schema enum）。
+`args` JSON——現行：`answerability_agents.py prepare` 讀本檔輸出分組派子代理判者；
+Workflow `outline-curation.js` `step:'answerability'` 的 JS 端組 schema enum 用法留參考（歷史）。
+候選＝程式列舉的臨時細目集合（kb 依 id 升冪、draft 依原序，⛔ 不經排序不篩選）、每格 judgePrompt（rubric 全文＋
+代表問句＋全部候選）、`fineIdEnum`。
 
 ⛔ 不呼叫 LLM、不跑 Workflow（乾跑由主 session 做）。⛔ 不讀網路、不讀 `.env`。
 

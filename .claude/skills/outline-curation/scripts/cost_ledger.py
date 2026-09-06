@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """步 6 cost_ledger（knowledge-outline-and-intent-architecture 任務 1.3｜design 元件 1）。
 
-彙總 Workflow journal（目錄下 *.json）＋ SKILL.md front matter 的 budgets → cost.json。
+彙總 journal（目錄下 *.json）＋ SKILL.md front matter 的 budgets → cost.json。
 journal 檔案格式（本任務定義，1.4 對齊）：
     {"step": "structure"|"answerability", "run_id": "...",
      "agents": [{"prompt_tokens": int, "completion_tokens": int, "usd": float}, ...],
@@ -21,9 +21,10 @@ import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _envelope import find_repo_root, make_envelope, sha256_file, update_state, write_json  # noqa: E402
+from _envelope import find_repo_root, load_schema, make_envelope, sha256_file, update_state, validate, write_json  # noqa: E402
 
 SKILL_VERSION = "0.1.0"
+_SCHEMA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "schemas", "cost.json")
 
 _FRONT_MATTER_RE = re.compile(r'^---\s*\n(.*?)\n---\s*\n', re.DOTALL)
 
@@ -139,7 +140,7 @@ def check_budget(summary: dict, budgets: dict) -> tuple[bool, list]:
 
 
 def main() -> int:
-    p = argparse.ArgumentParser(description="彙總 Workflow journal＋provider usage → cost.json")
+    p = argparse.ArgumentParser(description="彙總 journal＋provider usage → cost.json")
     p.add_argument("--journal", required=True, help="journal 目錄（.claude/skills/outline-curation/journal/）")
     p.add_argument("--skill", required=True, help="SKILL.md 路徑（讀 budgets）")
     p.add_argument("--out", required=True)
@@ -172,6 +173,7 @@ def main() -> int:
         deterministic=True,
         payload=payload,
     )
+    validate(envelope, load_schema(_SCHEMA_PATH))
     write_json(args.out, envelope)
 
     try:

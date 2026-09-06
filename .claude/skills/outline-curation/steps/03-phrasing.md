@@ -6,6 +6,9 @@
 **出口條件**：`phrasings[]` 每筆狀態為 `proposed`；`similar_pairs[]` 待人審裁決前不得視為已解決；
 `unassigned[]` 每筆要有去向（掛哪個細目／不要）才進步 4。
 
+⚠️ **`unassigned[]`／`similar_pairs[]` 是人審，無機械閘門**：兩者只是待審清單，⛔ 沒有腳本或 Stop hook
+檢查「是否已審過」——出口條件是流程紀律（人記得看），不是被擋下來的機制。
+
 ## CLI
 
 ```bash

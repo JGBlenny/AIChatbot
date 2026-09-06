@@ -289,3 +289,21 @@ def test_source_audit_worklist_and_check_positive_controls(tmp_path):
     p = tmp_path / "sa2.json"
     _write(p, {"step": "source_audit", "coverage_map_sha": "0" * 64, "authority_sources": [], "records": good})
     assert _sa(tmp_path, "check", "--coverage", str(cov), "--audit", str(p), "--ledger", str(ledger), root=root).returncode == 2
+
+
+# --- F9（completeness audit）：coverage-reweigh.json 收緊後的 cells[] 每筆必要欄位／enum ------
+
+_REAL_RUN = os.path.join(_REPO, ".claude", "skills", "outline-curation", "runs", "2026-09-06T00-00-00Z", "coverage-reweigh-v3.json")
+
+
+def test_tightened_schema_validates_real_run_and_rejects_bogus_disposition():
+    sys.path.insert(0, os.path.join(_REPO, ".claude", "skills", "outline-curation", "scripts"))
+    from _envelope import SchemaError, load_schema, validate  # noqa: E402
+    if not os.path.isfile(_REAL_RUN):
+        pytest.skip(f"[env] 找不到 {_REAL_RUN}")
+    env = json.load(open(_REAL_RUN, encoding="utf-8"))
+    validate(env, load_schema(_SCHEMA))  # 真跑資料必須通過收緊後的 schema
+    bad = json.loads(json.dumps(env))
+    bad["payload"]["cells"][0]["disposition"] = "bogus"
+    with pytest.raises(SchemaError):
+        validate(bad, load_schema(_SCHEMA))

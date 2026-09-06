@@ -55,7 +55,9 @@ def needs_audit(coverage: dict) -> list[dict]:
     return [c for c in coverage["cells"] if c.get("disposition") in NEEDS_AUDIT]
 
 
-def build_worklist(coverage_path: str) -> dict:
+def build_worklist(coverage_path: str, authority_sources: list[str] | None = None) -> dict:
+    """`authority_sources`（F12，選填）：換受眾時權威來源清單可能不同（如 property_manager 沒有
+    jgb2 售前 docs 目錄）；缺省沿用 `DEFAULT_AUTHORITY`（行為不變）。"""
     cm = _load(coverage_path)
     items = []
     for c in needs_audit(cm):
@@ -66,7 +68,7 @@ def build_worklist(coverage_path: str) -> dict:
             "required": "verified_fact｜verified_absent（附正對照）｜owner_needed（附 why_unresolvable）",
         })
     return {"step": "source_audit_worklist", "coverage_map_sha": _sha(coverage_path),
-            "authority_sources": DEFAULT_AUTHORITY, "count": len(items), "items": items,
+            "authority_sources": authority_sources if authority_sources else DEFAULT_AUTHORITY, "count": len(items), "items": items,
             "brief": "每格對權威來源盤查；否定結論必帶正對照（同一掃描必須命中一個已知存在的符號）；"
                      "事實寫進帳本並回填 ledger_anchor；只有 owner_needed 才交業主。"}
 
@@ -128,16 +130,25 @@ def main(argv=None) -> int:
     p = argparse.ArgumentParser(description="步 5b 權威來源核對：worklist／check")
     sub = p.add_subparsers(dest="cmd", required=True)
     w = sub.add_parser("worklist"); w.add_argument("--coverage", required=True); w.add_argument("--out", required=True)
+    w.add_argument("--authority", action="append", default=None,
+                    help="權威來源（可重複；F12）。不給則沿用現行預設值："
+                         + "；".join(DEFAULT_AUTHORITY))
     c = sub.add_parser("check"); c.add_argument("--coverage", required=True); c.add_argument("--audit", required=True)
-    c.add_argument("--ledger", default=os.path.join("docs", "knowledge", "jgb-product-facts.md"))
+    c.add_argument("--ledger", default=None, help="事實帳本路徑（預設：repo 根 docs/knowledge/jgb-product-facts.md；F11 ⛔ 不相對 cwd）")
     a = p.parse_args(argv)
     if a.cmd == "worklist":
-        wl = build_worklist(a.coverage)
+        wl = build_worklist(a.coverage, a.authority)
         write_json(a.out, wl)
         print(f"[source_audit] 需核對 {wl['count']} 格 → {a.out}")
         return 0
+    ledger = a.ledger
+    if ledger is None:
+        try:
+            ledger = os.path.join(find_repo_root(), "docs", "knowledge", "jgb-product-facts.md")
+        except RuntimeError:
+            ledger = os.path.join("docs", "knowledge", "jgb-product-facts.md")
     try:
-        s = check(a.coverage, a.audit, a.ledger)
+        s = check(a.coverage, a.audit, ledger)
     except SourceAuditError as e:
         print(f"[source_audit] ⛔ {e}", file=sys.stderr); return 2
     try:

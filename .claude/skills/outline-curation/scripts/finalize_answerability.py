@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """步 4 answerability 收尾（knowledge-outline-and-intent-architecture 任務 1.4｜design 元件 2）。
 
-把 `.claude/workflows/outline-curation.js`（`step:'answerability'`）的回傳 JSON 包成
+把判者結果（`run_result` JSON：現行主要輸入是 `answerability_agents.py collect` 的輸出；
+`.claude/workflows/outline-curation.js` `step:'answerability'` 的回傳為 Workflow 版留參考、同形狀）包成
 `StepEnvelope`、通過 `schemas/answerability.json`；同時把原始輸出寫成 journal 檔
 （1.3 定義的格式）供 `cost_ledger.py` 彙總；並把狀態檔 `answerability` 鍵寫成
 `{"path": ..., "needs_rubric_revision": bool}`（元件 3 Stop hook 讀）。
@@ -78,8 +79,8 @@ def build_envelope(run_result: dict, journal_path: str) -> dict:
 
 
 def main() -> int:
-    p = argparse.ArgumentParser(description="把 Workflow answerability 回傳包成 StepEnvelope＋寫 journal")
-    p.add_argument("--run-result", required=True, help="Workflow 回傳 JSON 檔路徑")
+    p = argparse.ArgumentParser(description="把判者結果（answerability_agents.py collect 輸出；Workflow 回傳留參考同形狀）包成 StepEnvelope＋寫 journal")
+    p.add_argument("--run-result", required=True, help="判者結果 JSON 檔路徑（answerability_agents.py collect 輸出，或 Workflow 回傳）")
     p.add_argument("--out", required=True, help="輸出 answerability.json（StepEnvelope）路徑")
     p.add_argument("--journal-dir", required=False,
                     default=os.path.join(".claude", "skills", "outline-curation", "journal"))

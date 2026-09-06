@@ -21,9 +21,10 @@ import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _envelope import find_repo_root, make_envelope, sha256_file, update_state, write_json  # noqa: E402
+from _envelope import find_repo_root, load_schema, make_envelope, sha256_file, update_state, validate, write_json  # noqa: E402
 
 SKILL_VERSION = "0.1.0"
+_SCHEMA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "schemas", "diff-report.json")
 
 _H2_RE = re.compile(r'^##\s+(.*?)\s*\{#([^}]+)\}\s*$', re.MULTILINE)
 _H3_RE = re.compile(r'^###\s+(.*?)\s*\{#([^}]+)\}\s*$', re.MULTILINE)
@@ -134,6 +135,7 @@ def main() -> int:
         deterministic=True,
         payload=payload,
     )
+    validate(envelope, load_schema(_SCHEMA_PATH))
     write_json(args.out, envelope)
 
     try:

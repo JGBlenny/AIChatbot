@@ -23,7 +23,7 @@ cd rag-orchestrator && python3 -c "from services.agent.canon.canon_parser import
 2. **reviewer 名進 front matter**：核可時把 reviewer 加進 `reviewers: […]`，並在被改的細目加 `- reviewed: {by: <reviewer>, at: YYYY-MM-DD}`；沒有 reviewed 的細目視為草稿（`content_reviewed_predicate` 不放行入庫）。
 3. **講法規則**：`- phrasings:` 只收人改寫過的短主題詞；`source: traffic:*` 者 ≤20 字且不含 ≥4 位數字串（parser 強制）；真流量原句只在 `.claude/skills/outline-curation/raw/`（gitignored，90 天刪）。
 4. **內容變更＝新 `content_sha256`**：依賴該細目的講法與測試題進待審（步 3／步 5 工具計算），⛔ 不得靜默沿用。
-5. **入庫**：只有正本 commit 後，才由 `tools/canon/export_batch.py` → `import_facet_knowledge.py` 寫 DB（需業主授權 D1）；DB 不是來源。
+5. **入庫**：只有正本 commit 後，才由 `tools/canon/export_batch.py` → `import_facet_knowledge.py` 寫 DB（需業主授權 D1）；DB 不是來源。⚠️ **`export_batch.py` 與 `import_facet_knowledge.py` 的此擴充尚未實作**（knowledge-outline-and-intent-architecture 任務 7.1／7.2）——目前是設計，不是可執行的腳本。
 
 ## Review checklist（PR 模板 `.github/PULL_REQUEST_TEMPLATE.md` 同步）
 

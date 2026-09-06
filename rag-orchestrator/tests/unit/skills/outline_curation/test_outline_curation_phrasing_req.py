@@ -364,3 +364,25 @@ def test_norm_folds_trailing_punctuation_for_frozen_match():
     m = _load("phrasing_map")
     assert m.norm("簽約邀請有時效嗎？") == m.norm("簽約邀請有時效嗎") == m.norm("簽約邀請有時效嗎 ?")
     assert m.norm("A。B。") != m.norm("AB")  # 只折句尾，不折句中
+
+
+# ---------------------------------------------------------------------------
+# F12（completeness audit）：--koyu 選填，換受眾無問法正本時可省略
+# ---------------------------------------------------------------------------
+
+def test_koyu_optional_when_omitted_source_is_skipped(tmp_path):
+    struct, kb, hc, koyu, manifest = _fixtures(tmp_path)
+    out = tmp_path / "phrasing-map-no-koyu.json"
+    cmd = [sys.executable, os.path.join(_SCRIPTS, "phrasing_map.py"),
+           "--structure", struct, "--kb-rows", kb, "--helpcenter-dir", hc,
+           "--frozen-manifest", manifest, "--raw-dir", str(tmp_path / "raw-no-koyu"),
+           "--frozen-at", "2026-09-06T00:00:00Z", "--out", str(out)]
+    r = subprocess.run(cmd, capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr
+    env = json.loads(out.read_text(encoding="utf-8"))
+    assert env["inputs_sha"]["koyu"] is None
+    payload = env["payload"]
+    assert payload["counts"]["candidates_koyu"] == 0
+    assert payload["counts"]["koyu_excluded_by_type"] == {}
+    assert not any(str(p["source"]).startswith("koyu:") for p in payload["phrasings"])
+    assert not any(str(u["source"]).startswith("koyu:") for u in payload["unassigned"])

@@ -5,7 +5,8 @@
   question_summary  F2 的 21 列 prospect kb 列，`question_summary` 是**關鍵字串**：以空白切成短主題詞，
                     每詞一筆講法，來源 `question_summary:<kb_id>`；掛法＝細目 `merge_of` 含 `tmp:kb:<kb_id>`（⛔ 不算分）。
   helpcenter        幫助中心 HTML 的 `<title>`（缺則 `<h1>`），來源 `helpcenter:<slug>`（slug＝檔名去 `_zh-Hant.html`）。
-  koyu              問法正本 `koyu-v2-phrasings.json`，來源 `koyu:<slug>#<n>`；**只取 直接／口語／情境／俗稱**，
+  koyu              問法正本 `koyu-v2-phrasings.json`（**選填**，F12：售前限定材料，換受眾無此檔可省略 `--koyu`），
+                    來源 `koyu:<slug>#<n>`；**只取 直接／口語／情境／俗稱**，
                     ⛔ 不取 操作（找按鈕路徑，屬業者操作受眾）與 邊界（＝文章本來就沒寫的延伸問題，掛上去等於承諾沒有的內容）。
 
 helpcenter／koyu 以**字元 bigram Jaccard**（決定性、無模型）對細目 profile 算分，profile＝細目 title
@@ -413,7 +414,9 @@ def build(structure_path, kb_rows_path, helpcenter_dir, koyu_path, frozen_manife
     fines = load_fines(structure_path)
     kb_terms, term_too_long = load_kb_terms(kb_rows_path)
     hc, hc_files = load_helpcenter(helpcenter_dir)
-    koyu, koyu_excluded = load_koyu(koyu_path)
+    # `--koyu` 選填（F12）：問法正本是售前限定，property_manager／tenant 換受眾時沒有這份材料；
+    # 缺就跳過這個來源（⛔ 不當成缺輸入報錯），koyu 候選與排除統計皆為空。
+    koyu, koyu_excluded = load_koyu(koyu_path) if koyu_path else ([], {})
     frozen = load_frozen_questions(frozen_manifest)
 
     # 細目 profile＝title ＋ merge_of 所含 kb 列的 question_summary 詞
@@ -553,7 +556,8 @@ def main() -> int:
     p.add_argument("--structure", required=True, help="runs/<run>/structure-proposal.json")
     p.add_argument("--kb-rows", required=True, help="inputs/prospect-kb-rows-*.json")
     p.add_argument("--helpcenter-dir", required=True, help="幫助中心 HTML 扁平目錄（*_zh-Hant.html）")
-    p.add_argument("--koyu", required=True, help="koyu-v2-phrasings.json")
+    p.add_argument("--koyu", required=False, default=None,
+                   help="koyu-v2-phrasings.json（選填，F12：售前限定材料；換受眾無此檔時省略，該來源自動跳過）")
     p.add_argument("--frozen-manifest", required=True, help="eval/samples-manifest.json（凍結題）")
     p.add_argument("--raw-dir", required=True, help="原句落地目錄（gitignored；raw/phrasing-<YYYYMMDD>/）")
     p.add_argument("--frozen-at", required=True, help="ISO 時間戳，⛔ 不用 datetime.now()")
@@ -571,7 +575,7 @@ def main() -> int:
     inputs_sha = {
         "structure": _env.sha256_file(a.structure),
         "kb_rows": _env.sha256_file(a.kb_rows),
-        "koyu": _env.sha256_file(a.koyu),
+        "koyu": _env.sha256_file(a.koyu) if a.koyu else None,
         "frozen_manifest": _env.sha256_file(a.frozen_manifest),
         "helpcenter_dir": dir_digest(a.helpcenter_dir, HELPCENTER_SUFFIX),
     }

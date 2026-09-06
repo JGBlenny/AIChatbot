@@ -7,6 +7,9 @@
 - **未附對應表 ⇒ exit 2**：提議 `id_map` 缺、或有細目的來源不在 id_map ⇒ 拒套。
 - 內容句＝來源項目 `content` 依 `provenance_units.split_sentences` 切成一行一句；產出後以 `canon_parser.parse_canon_text` 回讀驗證（失敗 exit 2）。
 - 講法不在本步產（步 3）；`sources` 用 `kb:<id>`／`draft:batch#<n>`；`instance_applicability` 取來源項目（缺則 general）。
+
+`--cells <map-v2.json>`（選填，F1）：給了才在 `sources` 既有項目之後，依細目 `merge_of` 各來源項目
+衍生的 `helpcenter:<slug>`（排序去重）——不給則輸出與未加此參數前逐位元相同。
 """
 from __future__ import annotations
 
@@ -63,8 +66,60 @@ def source_ref(item_id: str) -> str:
     _fail(f"未知項目 id 形狀：{item_id!r}")
 
 
+def build_cells_lookups(cells_path: str, drafts_path: str | None = None) -> tuple[dict, dict]:
+    """讀 `--cells`（缺口地圖 map-v2.json）→ 兩個查表（F1）：
+
+    (a) `draft_hc`：`draft:batch#<n>` → 該草稿的 `help_center`。真資料的 cell id 是 `C01…`、⛔ 不會以
+        `draft:batch#` 開頭（verifier 2026-09-07 P4：舊分支在真資料恆空），正確的鏈是
+        **草稿檔第 n 筆（1 起算）的 `cell` 欄 → map-v2 該格的 `help_center`**（`--drafts` 給了才有）；
+        cell id 本身即參照的舊分支保留給 fixture。
+    (b) `kb_hc`：`kb:<id>` → 每個 `sources` 含該 `kb:<id>` 的 cell 之 `help_center` 聯集（排序去重）。
+    """
+    doc = _aa._load_json(cells_path)
+    cells = doc["cells"] if isinstance(doc, dict) else doc
+    draft_hc: dict = {}
+    kb_hc: dict = {}
+    hc_by_cell: dict = {}
+    for c in cells:
+        hc = c.get("help_center") or []
+        cid = c.get("id", "")
+        if isinstance(cid, str):
+            hc_by_cell[cid] = sorted(set(hc))
+            if cid.startswith("draft:batch#"):
+                draft_hc[cid] = sorted(set(draft_hc.get(cid, [])) | set(hc))
+        for s in c.get("sources") or []:
+            if isinstance(s, str) and s.startswith("kb:"):
+                kb_hc.setdefault(s, set())
+                kb_hc[s].update(hc)
+    if drafts_path:
+        ddoc = _aa._load_json(drafts_path)
+        items = ddoc.get("knowledge") if isinstance(ddoc, dict) else ddoc
+        for n, item in enumerate(items or [], 1):
+            cell = item.get("cell") if isinstance(item, dict) else None
+            if cell and cell in hc_by_cell:
+                key = f"draft:batch#{n}"
+                draft_hc[key] = sorted(set(draft_hc.get(key, [])) | set(hc_by_cell[cell]))
+    return draft_hc, {k: sorted(v) for k, v in kb_hc.items()}
+
+
+def helpcenter_slugs_for(srcs: list, draft_hc: dict, kb_hc: dict) -> list:
+    """細目來源項目（`tmp:kb:<id>`／`tmp:draft:<n>`）→ 透過 `source_ref` 轉成的參照，
+    查兩個表 → 聯集後排序去重的 `helpcenter:<slug>` 清單（無 `--cells` 或查無 ⇒ 空清單）。"""
+    slugs: set = set()
+    for s in srcs:
+        ref = source_ref(s)
+        if ref.startswith("draft:batch#"):
+            slugs.update(draft_hc.get(ref, []))
+        elif ref.startswith("kb:"):
+            slugs.update(kb_hc.get(ref, []))
+    return sorted(slugs)
+
+
 def render(proposal: dict, items_by_id: dict, meta_by_id: dict, *, audience: str, version: str, reviewers: list,
-           language: str, budget_tokens: int, target_user: list, business_types: list) -> tuple[str, dict]:
+           language: str, budget_tokens: int, target_user: list, business_types: list,
+           draft_hc: dict | None = None, kb_hc: dict | None = None) -> tuple[str, dict]:
+    draft_hc = draft_hc or {}
+    kb_hc = kb_hc or {}
     id_map = proposal.get("id_map")
     if not id_map:
         _fail("提議未附 id_map（對應表）⇒ 拒套")
@@ -94,7 +149,9 @@ def render(proposal: dict, items_by_id: dict, meta_by_id: dict, *, audience: str
             if f["id"] not in mapped_new:
                 _fail(f"細目 {f['id']} 不在 id_map.new ⇒ 拒套")
             lines.append(f"### {f['title']} {{#{f['id']}}}")
-            lines.append(f"- sources: [{', '.join(source_ref(s) for s in srcs)}]")
+            hc_slugs = helpcenter_slugs_for(srcs, draft_hc, kb_hc)
+            src_refs = [source_ref(s) for s in srcs] + [f"helpcenter:{slug}" for slug in hc_slugs]
+            lines.append(f"- sources: [{', '.join(src_refs)}]")
             metas = [meta_by_id.get(s, {}) for s in srcs]
             ia = {m.get("instance_applicability") for m in metas if m.get("instance_applicability")}
             lines.append(f"- instance_applicability: {sorted(ia)[0] if len(ia) == 1 else 'general'}")
@@ -116,11 +173,12 @@ def main() -> int:
     p.add_argument("--proposal", required=True, help="structure-proposal envelope 或裸提議 JSON")
     p.add_argument("--kb-rows", required=True)
     p.add_argument("--drafts", default=None)
+    p.add_argument("--cells", default=None, help="缺口地圖 map-v2.json（選填；給了才衍生 helpcenter 來源，F1）")
     p.add_argument("--audience", default="prospect")
     p.add_argument("--version", required=True, help="正本版本字串（如 2026-09-06.1）")
     p.add_argument("--reviewers", default="owner")
     p.add_argument("--language", default="zh-TW")
-    p.add_argument("--budget-tokens", type=int, default=10000)
+    p.add_argument("--budget-tokens", type=int, default=12000)   # 2026-09-07 業主裁：實測 cl100k 10,336 tokens
     p.add_argument("--target-user", default="prospect")
     p.add_argument("--business-types", default="system_provider")
     p.add_argument("--out-md", required=True)
@@ -141,10 +199,13 @@ def main() -> int:
         meta.update({f"tmp:draft:{i + 1}": d for i, d in enumerate(drafts)})
     items_by_id = {it["id"]: it for it in items}
 
+    draft_hc, kb_hc = build_cells_lookups(a.cells, a.drafts) if a.cells else ({}, {})
+
     md, idmap = render(proposal, items_by_id, meta, audience=a.audience, version=a.version,
                        reviewers=[x.strip() for x in a.reviewers.split(",")], language=a.language,
                        budget_tokens=a.budget_tokens, target_user=[x.strip() for x in a.target_user.split(",")],
-                       business_types=[x.strip() for x in a.business_types.split(",")])
+                       business_types=[x.strip() for x in a.business_types.split(",")],
+                       draft_hc=draft_hc, kb_hc=kb_hc)
     try:
         parsed = parse_canon_text(md)
     except CanonFormatError as exc:

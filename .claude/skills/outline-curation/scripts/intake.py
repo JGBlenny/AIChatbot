@@ -15,9 +15,10 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _envelope import make_envelope, sha256_file, write_json  # noqa: E402
+from _envelope import find_repo_root, load_schema, make_envelope, sha256_file, validate, write_json  # noqa: E402
 
 SKILL_VERSION = "0.1.0"
+_SCHEMA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "schemas", "intake.json")
 
 
 def _load_json(path: str):
@@ -27,6 +28,24 @@ def _load_json(path: str):
 
 def _truncate(s: str, n: int = 40) -> str:
     return s[:n]
+
+
+def _materials_relative_to_repo_root(paths: list[str | None]) -> list[str]:
+    """材料清單一律相對於 repo 根（F11：⛔ 不相對 cwd——`object_under_test.materials` 若跟著呼叫端 cwd
+    漂移，同一份材料在不同 cwd 下跑會被判定成不同物）。找不到 repo 根時退回舊行為（相對 cwd）。"""
+    try:
+        repo_root = find_repo_root()
+    except RuntimeError:
+        repo_root = None
+    out = []
+    for p in paths:
+        if not p:
+            continue
+        if repo_root:
+            out.append(os.path.relpath(os.path.abspath(p), repo_root))
+        else:
+            out.append(os.path.relpath(p) if os.path.isabs(p) else p)
+    return out
 
 
 def build_payload(kb_path: str, drafts_path: str | None, gapmap_path: str | None,
@@ -56,7 +75,7 @@ def build_payload(kb_path: str, drafts_path: str | None, gapmap_path: str | None
     else:
         gapmap_cells = 0
 
-    materials = [os.path.relpath(p) if os.path.isabs(p) else p for p in [kb_path, drafts_path, gapmap_path, canon_path] if p]
+    materials = _materials_relative_to_repo_root([kb_path, drafts_path, gapmap_path, canon_path])
 
     inputs_sha = {"kb": sha256_file(kb_path)}
     if drafts_path:
@@ -100,6 +119,7 @@ def main() -> int:
         deterministic=True,
         payload=payload,
     )
+    validate(envelope, load_schema(_SCHEMA_PATH))
     write_json(args.out, envelope)
     return 0
 
