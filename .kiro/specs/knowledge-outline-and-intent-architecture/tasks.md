@@ -161,7 +161,7 @@
   - 執行：main／effort 中——收案判斷屬主 session；劇本跑派 verifier 實跑
   - 驗收：目標＝流程正確性契約化｜成果＝六套劇本檔＋契約測試報告｜做法＝逐輪期望動作｜驗證＝[業主審核] 劇本；[代理驗證] 實跑
 
-## 6. M-f 閉環與 LINE：地圖重量、LINE 正本、可見性契約、skill 整合（6.1／6.2／6.4 平行；6.3 依 6.2）
+## 6. M-f 閉環與 LINE：地圖重量、LINE 正本、可見性契約、skill 整合（6.1／6.4 平行；**6.2 待售前驗證有效後才開**（業主 2026-09-06 裁）；6.3 依 6.2）
 
 > **階段目標**：覆蓋閉環工具化、LINE 受眾正本草稿、可見性契約。**成果**：coverage_map 完整版、`property_manager-line.md` 草稿、LINE 可見性測試。**驗證**：6.2 [業主審核]；6.3 [代理驗證]。
 
@@ -169,7 +169,7 @@
   - 需求：3.4, 3.6
   - 執行：executor／effort 中——2.6 的延伸
   - 驗收：目標＝閉環可重量、判者一致率可見｜成果＝完整版工具｜做法＝2.6 延伸｜驗證＝[自驗]
-- [ ] 6.2 (P) LINE 正本草稿 `rag-orchestrator/canon/property_manager-line.md`：粗目依 chatai 四文件（③損壞分類與判定／④語氣模板與禁止項／⑤帳單狀態語義與資料邊界／⑥什麼時候說不／⑦待裁與待驗）；API 實值以 `policy: not_available`＋`sources: [jgb2:<endpoint>]`，內容只寫邊界句；矛盾三項（emergency_status 值域、image_recognition 回傳、`status-overview` 過濾）列「待裁決／待驗」；21 案例知識類 5 案＋文件實際使用者輸入句 → `inputs/line-phrasings-20260906.json`（照抄、標情境與多輪、去識別）。走同一 skill 流程（步 1–6）產草稿交業主審。**分兩段派工**：6.2a 粗目與待驗清單、6.2b 口語材料檔。
+- [ ] 6.2 LINE 正本草稿（**前置：業主 2026-09-06 裁「先用售前大綱驗證，合理有效果才補其他大綱、開始切」——需 4.4 步 2 探針（翻轉率／無據率）與 7.4 放量門檻證明售前大綱有效，並由業主點頭；⛔ 不與 M-b～M-e 並行**）`rag-orchestrator/canon/property_manager-line.md`：粗目依 chatai 四文件（③損壞分類與判定／④語氣模板與禁止項／⑤帳單狀態語義與資料邊界／⑥什麼時候說不／⑦待裁與待驗）；API 實值以 `policy: not_available`＋`sources: [jgb2:<endpoint>]`，內容只寫邊界句；矛盾三項（emergency_status 值域、image_recognition 回傳、`status-overview` 過濾）列「待裁決／待驗」；21 案例知識類 5 案＋文件實際使用者輸入句 → `inputs/line-phrasings-20260906.json`（照抄、標情境與多輪、去識別）。走同一 skill 流程（步 1–6）產草稿交業主審。**分兩段派工**：6.2a 粗目與待驗清單、6.2b 口語材料檔。
   - 需求：7.1, 7.2, 7.3, 7.5, 7.6
   - 執行：executor／effort 中——材料在 `/Users/lenny/jgb/line-bot-platform/docs/chatai-*.md`；⛔ 不套售前切法（裁定 2）
   - 驗收：目標＝LINE 業務受眾知識層正本草稿｜成果＝`property_manager-line.md` 草稿＋口語材料檔｜做法＝同一 skill 流程｜驗證＝[業主審核] 草稿與待驗清單

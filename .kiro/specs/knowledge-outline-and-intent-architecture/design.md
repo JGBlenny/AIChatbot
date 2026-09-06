@@ -544,7 +544,7 @@ flowchart LR
 ### 決策 9：舊列退役＝標記不刪、舊鏈不受影響
 **決定**：`generation_metadata.replaced_by`＋`pool-marked`；`is_active` 不動。**理由**：舊鏈仍讀 kb（範圍外硬約束）；agent 路徑由謂詞排除。**參考**：research 開放問題 1。
 
-### 決策 10：LINE 受眾正本另立、粗目依 chatai 文件定
+### 決策 10：LINE 受眾正本另立、粗目依 chatai 文件定；**其他受眾大綱等售前驗證有效後才開**（業主 2026-09-06）
 **決定**：`canon/property_manager-line.md`；API 實值以 `policy: not_available` 標來源。**理由**：裁定 2（不套售前切法）、R7.1。
 
 ## 非功能性設計
@@ -715,6 +715,7 @@ flowchart LR
 | 2026-09-06T10:13:36+0800 | 1.0 | 初始版本（需求 v2 核可、R1.5 定向後） | AI |
 | 2026-09-06 | 1.1 | security-reviewer 20 條處置（附錄 E）：sha 重算、匯入 fail-closed、白名單謂詞、可見性補洞、身分強制覆寫、hook 變數與接線測試、D3 落地、三軸欄位 | AI |
 | 2026-09-06 | 1.3 | plan-verifier r2 REVISE 6 條處置（附錄 G）：正本目錄全文統一為 `rag-orchestrator/canon/`、hook matcher 改完整相對路徑＋負對照、自證五種、done ⑤ 單次上限 | AI |
+| 2026-09-06 | 1.7 | 決策 10 補時序：售前大綱先驗證（4.4 探針＋7.4 放量）有效，業主點頭後才補其他受眾大綱、開始切；tasks 6.2 加前置、不再與 M-b～M-e 並行 | 業主／AI |
 | 2026-09-06 | 1.6 | 決策 5 補「適用範圍」：講法向量匹配只在 agent 路徑；舊鏈只經入庫得一細目一列、不改檢索（業主問後補明） | AI |
 | 2026-09-06 | 1.5 | 決策 7 修訂：判者改腳本直打 API（`answerability_judge.py`，共用快取前綴、structured outputs、journal 續跑）；Workflow 留參考；2.3 同改（業主裁：硬體撐不住 Workflow） | 業主／AI |
 | 2026-09-06 | 1.4 | 一致率門檻 0.90→**0.80**（業主裁：1.5 試作 44 格實測 0.841 可接受；`outline-curation.js`／`merge_answerability_batches.py` 同步；預算超支另裁，見 inputs/m-a-trial-20260906.md §7） | 業主／AI |
