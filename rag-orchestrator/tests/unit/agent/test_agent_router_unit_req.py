@@ -200,6 +200,10 @@ async def test_health_pending_fields_do_not_cause_red(monkeypatch):
     （只有 `tools`／`premise` 兩類會致紅，見 `services/agent/health.py`）。
     """
     _bypass_key_and_vendor(monkeypatch)
+    # 任務 4.1：本測試不管候選索引，明講前提「agent 未啟用」──否則本容器
+    # `.env` 的 `AGENT_SHADOW_AUDIENCES` 會讓 `agent_configured()` 為真，
+    # 未註冊的 prospect 索引（`absent`）就會混進本測試無關的紅燈判定。
+    monkeypatch.setattr(F, "agent_configured", lambda: False)
 
     class _FakePool:
         def getconn(self):
@@ -275,6 +279,8 @@ async def test_health_green_when_only_internal_key_traffic(monkeypatch):
     _scope_cols_ready(monkeypatch)
     # 第四旗（enforce 關時仍有流量）與本測試無關——明講前提：enforce 是開的。
     monkeypatch.setenv("RAG_API_AUTH_ENFORCE", "1")
+    # 任務 4.1：候選索引與本測試無關，明講前提「agent 未啟用」（理由同上）。
+    monkeypatch.setattr(F, "agent_configured", lambda: False)
 
     class _FakePool:
         def getconn(self):
@@ -413,6 +419,8 @@ async def test_health_red_when_api_key_scope_cols_missing(monkeypatch,
     monkeypatch.setattr(_aka, "detect_agent_scope_cols", _fake_detect)
     # kb 探針走得通、前提乾淨 ⇒ 紅或不紅只由本項決定
     monkeypatch.setattr(F, "premise_stats", lambda: {})
+    # 任務 4.1：候選索引與本測試無關，明講前提「agent 未啟用」（理由同上）。
+    monkeypatch.setattr(F, "agent_configured", lambda: False)
 
     class _FakePool:
         def getconn(self):

@@ -59,6 +59,17 @@ def test_build_runtime_passes_through_runtime_kwargs():
     assert runtime.readonly_view is True
 
 
+def test_build_runtime_passes_through_candidate_selector():
+    """任務 4.1（Plan §2.4-7）：`candidate_selector=` 透傳到
+    `AgentRuntime._candidate_selector`（`**runtime_kwargs`，⛔ 不改 `build_runtime` 簽名）。
+    """
+    sentinel = object()
+    runtime = build_runtime(
+        None, _fake_provider(), _fake_registry(), candidate_selector=sentinel
+    )
+    assert runtime._candidate_selector is sentinel
+
+
 def test_build_runtime_default_does_not_set_attempt_sink():
     """tasks 4.3c：正式路徑 ⛔ 不設 `attempt_sink`——它是
     `tools/agent_eval.py --dump-texts` 專用的離線儀表化旁路，`build_runtime`

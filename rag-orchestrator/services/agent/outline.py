@@ -69,6 +69,78 @@ class OutlineDoc(BaseModel):
     token_count_approx: bool = False
 
 
+class CandidateOutlineDoc(BaseModel):
+    """一回合的候選子集大綱（任務 4.1｜Plan §2.1-1）。
+
+    與 `OutlineDoc` 同型別家族、滿足同一個 `OutlineDocLike` Protocol——`PromptAssembler`
+    只看結構型別，不在乎具體類別。兩個建構子（`from_selection`／`from_visible`）都
+    **複製 `full` 的 `audience`／`version`／`sha256`**（⛔ 不重算、不填
+    `identity.resolved_audience()`——否則 `test_outline_audience_mismatch_fails_closed`
+    會恆真），只有 `sections`／`text`／`token_count`／`token_count_approx` 是這一回合
+    當場重算的。
+
+    ⛔ 兩者都不含 `full` 自帶的 `outline:toc` 以外的非細目節——`sections` 一律是
+    候選／可見細目（來自 `full.sections`）＋呼叫端當回合算好的 `toc` 一節，
+    `full` 若自帶啟動期靜態 toc 不會被沿用（它從來不在候選／可見集合裡）。
+    """
+
+    audience: Audience
+    version: str
+    sha256: str
+    token_count: int
+    sections: list[OutlineSection]
+    text: str
+    token_count_approx: bool = False
+
+    @classmethod
+    def from_selection(cls, full: "OutlineDoc", sel, toc: OutlineSection) -> "CandidateOutlineDoc":
+        """`sel["candidate_ids"]` 順序從 `full.sections` 取；找不到的 id ⇒ `ValueError`
+        （⛔ 不靜默跳過——那會讓「候選 id 對不到大綱」的資料錯誤悄悄變成少一節）。
+        """
+        by_id = {section.id: section for section in full.sections}
+        picked: list[OutlineSection] = []
+        for fine_id in sel["candidate_ids"]:
+            section = by_id.get(fine_id)
+            if section is None:
+                raise ValueError(
+                    f"候選 id {fine_id!r} 不在 full.sections 內（sha256={full.sha256[:12]}）"
+                )
+            picked.append(section)
+        return cls._from_sections(full, picked, toc)
+
+    @classmethod
+    def from_visible(
+        cls, full: "OutlineDoc", visible_ids: "frozenset[str]", toc: OutlineSection
+    ) -> "CandidateOutlineDoc":
+        """降級用：`full.sections` 中 id ∈ `visible_ids` 者（正本序）＋`toc`。
+
+        這是 3.2 verifier P3 債的修補點：降級也只給可見細目，⛔ 不是未過濾整份。
+        """
+        picked = [section for section in full.sections if section.id in visible_ids]
+        return cls._from_sections(full, picked, toc)
+
+    @classmethod
+    def _from_sections(
+        cls, full: "OutlineDoc", picked: list[OutlineSection], toc: OutlineSection
+    ) -> "CandidateOutlineDoc":
+        # 重用 `_build_doc` 的組裝式（【id】title\ntext 接法）與 token 估算器，
+        # ⛔ 不在此重寫第二份公式；sha256 隨後被 full 的值覆蓋（⛔ 不採 `_build_doc`
+        # 自己算的那個——那個涵蓋的是候選子集的 text，語意是「這份子集的雜湊」，
+        # 我們要的是「這份子集出自哪一份完整正本」）。
+        assembled = _build_doc(
+            audience=full.audience, sections=list(picked) + [toc], version=full.version
+        )
+        return cls(
+            audience=full.audience,
+            version=full.version,
+            sha256=full.sha256,
+            token_count=assembled.token_count,
+            sections=assembled.sections,
+            text=assembled.text,
+            token_count_approx=assembled.token_count_approx,
+        )
+
+
 class OutlineBudgetExceeded(Exception):
     """R5.5：大綱／目錄超過 token 預算——啟動即紅，⛔ 不得靜默截斷。"""
 

@@ -533,6 +533,28 @@ def check_and_record_agent_turn(key: tuple, now: Optional[float] = None) -> bool
     return True
 
 
+#: `agent_configured()` 判準逐位元搬自 `app.py::_agent_configured`（任務 4.1／
+#: Plan §2.1-7）——`app.py` 之後改呼叫這裡的薄別名，名稱保留給既有測試。
+_AGENT_CONFIGURED_ENV_KEYS: tuple = (
+    "AGENT_AUDIENCES", "AGENT_SHADOW_AUDIENCES", "AGENT_TURN_ENABLED",
+)
+
+
+def agent_configured() -> bool:
+    """任一 agent 開關（`AGENT_AUDIENCES`／`AGENT_SHADOW_AUDIENCES`／
+    `AGENT_TURN_ENABLED`）`strip()` 後不在 `{"", "0", "false", "False"}` ⇒ 真。
+
+    ⚠️ 不是「任一有值」——`AGENT_TURN_ENABLED=0` 仍是未啟用（與 `app.py` 舊判準
+    逐位元相同）。`health.py` 以**模組屬性**呼叫本函式（`mcp_facade.agent_configured()`，
+    ⛔ 不 `from … import`）讓 monkeypatch 生效；`agent_turn_enabled()` 語義不等價
+    （只看 `AGENT_TURN_ENABLED`），⛔ 不可互相替代。
+    """
+    return any(
+        (os.getenv(k, "") or "").strip() not in ("", "0", "false", "False")
+        for k in _AGENT_CONFIGURED_ENV_KEYS
+    )
+
+
 def reset_agent_turn_cap() -> None:
     """測試用：清掉行程內的滑動視窗（⛔ 產品路徑不呼叫）。"""
     _agent_turn_calls.clear()

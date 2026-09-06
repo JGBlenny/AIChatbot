@@ -161,6 +161,9 @@ def _trace_to_dict(trace: TurnTrace) -> dict:
         "violations": list(trace.violations),
         "rules_sha": trace.rules_sha,
         "outline_sha": trace.outline_sha,
+        "candidate_ids": list(trace.candidate_ids),
+        "winning_key_kind": dict(trace.winning_key_kind),
+        "miss_kind": trace.miss_kind,
     }
 
 

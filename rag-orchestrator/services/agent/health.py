@@ -136,8 +136,11 @@ def _index_state() -> dict:
 
     只讀**本行程已註冊**的索引（`fine_index.get_index`），⛔ 不重建、⛔ 不觸發任何 embedding。
     未註冊 ⇒ `absent`；取值失敗 ⇒ 同樣降級成觀測值。
-    ⚠️ **⛔ 不致紅**：與 `canon`／`rules_sha` 同語義（「尚未建置」不是「建置後壞了」），
-    且索引 `not_ready` 的正確行為是 selector 回 `None`＝退回整份正本，服務並未壞掉。
+    ⚠️ **4.1 接線後：agent 開關任一開且非 ready ⇒ 紅**（`compute_agent_health` 的
+    `red` 條件另外判——本函式只負責回傳觀測值，⛔ 不在此自己判紅）。3.3a／3.7
+    時期「不致紅」僅限**尚未接線**那段期間：那時索引 `not_ready` 的正確行為是
+    selector 回 `None`＝退回整份正本，服務並未壞掉；接線後同一個 `not_ready`
+    代表產線正在用降級路徑服務，才需要在健檢上看得見。
     """
     try:
         from services.agent.canon.fine_index import index_registry_states
@@ -223,8 +226,20 @@ async def compute_agent_health(
     scope_ready, scope_detail = await _check_agent_scope_ready(get_api_key_pool)
 
     rules_sha = _rules_sha(get_runtime)
+    canon_state = _canon_state()
 
-    red = spec_count == 0 or not kb_reachable or bool(flags) or not scope_ready
+    # 任務 4.1／Plan §2.1-7：agent 任一開關開著、且 prospect 索引非 ready
+    # （`absent`／`not_ready`）⇒ 紅——「索引不在」在接線後代表產線正在降級服務。
+    # ⚠️ 以**模組屬性**呼叫（`mcp_facade.agent_configured()`），⛔ `from … import`——
+    # 讓 `monkeypatch.setattr(mcp_facade, "agent_configured", ...)` 生效。
+    prospect_index_state = (
+        canon_state.get("index", {}).get("prospect", {}).get("state")
+        if isinstance(canon_state.get("index"), dict)
+        else None
+    )
+    agent_index_red = mcp_facade.agent_configured() and prospect_index_state != "ready"
+
+    red = spec_count == 0 or not kb_reachable or bool(flags) or not scope_ready or agent_index_red
 
     return {
         "status": "red" if red else "ok",
@@ -235,7 +250,7 @@ async def compute_agent_health(
                 "detail": kb_detail,
             },
             "outline_version": _outline_sha(get_runtime),
-            "canon": _canon_state(),
+            "canon": canon_state,
             "rules_sha": rules_sha,
             "premise": {
                 "mcp_calls_by_api_key": stats.get("mcp_calls_by_api_key", {}),

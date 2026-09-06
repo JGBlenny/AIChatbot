@@ -623,6 +623,149 @@ async def test_health_reports_absent_for_every_unregistered_audience():
 
 
 # ══════════════════════════════════════════════════════════════════════
+# 任務 4.1（Plan §2.1-7／§2.4-8）：接線後 `agent_configured()` 為真時，
+# prospect 索引非 ready ⇒ health 紅；為假時三態仍不致紅（既有語義沿用）。
+# ══════════════════════════════════════════════════════════════════════
+
+async def _health_with_configured(monkeypatch, configured: bool):
+    from services.agent import mcp_facade as F
+
+    monkeypatch.setattr(F, "agent_configured", lambda: configured)
+    return await _health()
+
+
+class _FakeKbPool:
+    """kb 探針走得通用的假 pool（樣式沿 `test_agent_router_unit_req.py`）。"""
+
+    def getconn(self):
+        class _Conn:
+            def cursor(self):
+                class _Cur:
+                    def execute(self, *a, **k):
+                        pass
+
+                    def fetchone(self):
+                        return None
+
+                    def close(self):
+                        pass
+                return _Cur()
+        return _Conn()
+
+    def putconn(self, conn):
+        pass
+
+
+async def _health_isolated(monkeypatch, *, configured: bool):
+    """與 `_health()` 不同：這裡把「kb 可達」「api_keys scope 已建」兩個
+    與本片無關的紅燈成因都撥乾淨，讓 `status` 的絕對值只受 agent 索引這一項
+    影響——`_health()`／既有測試用差分斷言是因為它們**不需要**絕對值。
+    """
+    from services.agent import mcp_facade as F
+    from services.agent.health import compute_agent_health
+    import services.api_key_auth as api_key_auth
+
+    monkeypatch.setattr(F, "agent_configured", lambda: configured)
+    monkeypatch.setattr(F, "premise_stats", lambda: {})
+    monkeypatch.setattr(api_key_auth, "agent_scope_cols_state", lambda: True)
+
+    registry = F.build_registry(F.FacadeDeps(
+        get_db_pool=lambda: None, get_kb_pool=lambda: None, get_retriever=None))
+    return await compute_agent_health(
+        registry=registry, get_kb_pool=lambda: _FakeKbPool(), stage="M0",
+    )
+
+
+async def test_agent_configured_false_index_never_turns_red(monkeypatch):
+    """`agent_configured()` 假 ⇒ 三態（absent／not_ready／ready）都不致紅
+    （既有 3.3a／3.7 語義：agent 未接線期間，索引狀態不是 health 的判準）。"""
+    baseline = await _health_with_configured(monkeypatch, False)
+
+    doc = _doc_three_statuses()
+    not_ready = FineIndex(_FakeBackend(raises=True))
+    await not_ready.prepare(doc)
+    register_index("prospect", not_ready)
+
+    result = await _health_with_configured(monkeypatch, False)
+    assert result["checks"]["canon"]["index"]["prospect"]["state"] == "not_ready"
+    assert result["status"] == baseline["status"]   # 不因索引非 ready 而變紅
+
+
+async def test_agent_configured_true_not_ready_or_absent_turns_red_ready_does_not(monkeypatch):
+    """`agent_configured()` 真 ⇒ `not_ready`／`absent` 紅、`ready` 不紅（正對照
+    覆蓋三態，⛔ 只驗其中一態無法排除「本來就恆紅」的假陽性）。
+
+    ⚠️ 用 `_health_isolated`（⛔ 不是 `_health()`／`_health_with_configured`）——
+    後者的 `get_kb_pool=None`／`api_keys` 未偵測會讓 `status` 恆紅，絕對值斷言
+    在那個底盤上測不出東西；本測試要看的是**這一項**單獨的致紅效果。
+    """
+    # absent（未註冊）
+    absent_result = await _health_isolated(monkeypatch, configured=True)
+    assert absent_result["checks"]["canon"]["index"]["prospect"]["state"] == "absent"
+    assert absent_result["status"] == "red"
+
+    # not_ready
+    doc = _doc_three_statuses()
+    not_ready = FineIndex(_FakeBackend(raises=True))
+    await not_ready.prepare(doc)
+    register_index("prospect", not_ready)
+    not_ready_result = await _health_isolated(monkeypatch, configured=True)
+    assert not_ready_result["checks"]["canon"]["index"]["prospect"]["state"] == "not_ready"
+    assert not_ready_result["status"] == "red"
+
+    # ready（正對照：同一組其餘條件下，ready 不因本項而紅）
+    reset_index_registry()
+    ready = FineIndex(_FakeBackend())
+    await ready.prepare(doc)
+    register_index("prospect", ready)
+    ready_result = await _health_isolated(monkeypatch, configured=True)
+    assert ready_result["checks"]["canon"]["index"]["prospect"]["state"] == "ready"
+    assert ready_result["status"] != "red", ready_result["checks"]
+
+
+# ══════════════════════════════════════════════════════════════════════
+# `mcp_facade.agent_configured()` 本身：三個 env 各自單獨設值 ⇒ 真；
+# 全清 ⇒ 假；`AGENT_TURN_ENABLED=0`／`false` ⇒ 假（正對照，⛔ 不是「任一有值」）。
+# ══════════════════════════════════════════════════════════════════════
+
+
+def _clear_agent_env(monkeypatch):
+    for k in ("AGENT_AUDIENCES", "AGENT_SHADOW_AUDIENCES", "AGENT_TURN_ENABLED"):
+        monkeypatch.delenv(k, raising=False)
+
+
+def test_agent_configured_env_positive_controls(monkeypatch):
+    from services.agent import mcp_facade as F
+
+    _clear_agent_env(monkeypatch)
+    assert F.agent_configured() is False
+
+    monkeypatch.setenv("AGENT_AUDIENCES", "prospect")
+    assert F.agent_configured() is True
+    monkeypatch.delenv("AGENT_AUDIENCES")
+
+    monkeypatch.setenv("AGENT_SHADOW_AUDIENCES", "prospect")
+    assert F.agent_configured() is True
+    monkeypatch.delenv("AGENT_SHADOW_AUDIENCES")
+
+    monkeypatch.setenv("AGENT_TURN_ENABLED", "1")
+    assert F.agent_configured() is True
+    monkeypatch.delenv("AGENT_TURN_ENABLED")
+
+    assert F.agent_configured() is False   # 全清 ⇒ 假
+
+
+@pytest.mark.parametrize("value", ["0", "false", "False", ""])
+def test_agent_configured_turn_enabled_falsy_values_stay_false(monkeypatch, value):
+    """⚠️ 不是「任一有值」——`AGENT_TURN_ENABLED=0`／`false` 仍是未啟用。"""
+    from services.agent import mcp_facade as F
+
+    _clear_agent_env(monkeypatch)
+    monkeypatch.setenv("AGENT_TURN_ENABLED", value)
+    assert F.agent_configured() is False
+
+
+# ══════════════════════════════════════════════════════════════════════
 # §4.5 隱私：caplog＋capsys 皆無任何細目標題／講法文字（含失敗路徑）
 # ══════════════════════════════════════════════════════════════════════
 

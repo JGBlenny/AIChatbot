@@ -100,6 +100,13 @@ class CandidateSelector:
         self._backend = backend
         self._timeout_s = min(float(timeout_s), QUERY_EMBED_TIMEOUT_S)
 
+    @property
+    def index(self) -> FineIndex:
+        """唯讀存取底層索引（任務 4.1：降級路徑要用 `visible_subset`，比照
+        `FineIndex.backend` 的唯讀 property 先例）。⛔ 無 setter、不改任何邏輯。
+        """
+        return self._index
+
     async def select(
         self,
         doc: CanonDoc,

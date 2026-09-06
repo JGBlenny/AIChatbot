@@ -152,10 +152,12 @@ def test_top_level_key_set_is_closed():
     assert set(view) == {
         "trace_id", "at", "kind", "handoff_reason", "replayed_from",
         "steps", "verifier", "counts", "session", "rules_sha", "outline_sha",
+        "candidates",  # 任務 4.1：鏡射 TurnTrace 三鍵
     }
     assert set(view["counts"]) == {
         "llm_calls", "prompt_tokens", "completion_tokens", "latency_ms"
     }
+    assert set(view["candidates"]) == {"ids", "winning_key_kind", "miss_kind"}
     # DSP-029 r13 #7：多一個 `schema_cause`（封閉列舉值，⛔ 無原文）——
     # 只回 `SCHEMA` 時七種結構性失敗全擠成同一格，稽核看不出差別。
     assert set(view["verifier"][0]) == {"reason", "schema_cause", "sent", "rule"}

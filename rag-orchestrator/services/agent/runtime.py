@@ -49,6 +49,7 @@ import hashlib
 import json
 import logging
 import os
+import re
 import time
 import unicodedata
 import uuid
@@ -59,8 +60,12 @@ from pydantic import ValidationError
 
 from services import usage_metering
 from services.agent.budget import Budget, BudgetCounters
+from services.agent.canon.candidate_selector import CandidateSelector
+from services.agent.canon.candidate_selector import K as _CANDIDATE_K
+from services.agent.canon.canon_assembler import build_canon_toc, get_canon
 from services.agent.identity import Identity, Stage
 from services.agent.mcp_facade import current_stage
+from services.agent.outline import CandidateOutlineDoc
 from services.agent.output_schema import AgentOutput, VerifierVerdict
 from services.agent.prompt_assembler import new_nonce, wrap_provenance_data, wrap_tool_data
 from services.agent.provenance_units import (  # OUTLINE_TOOL_CALL_ID 下沉至葉模組（DSP-029 落地取捨④）
@@ -128,6 +133,44 @@ def _seed_outline_provenance(outline: Any) -> Optional[ToolResult]:
     return ToolResult(ok=True, data={"sections": len(provs)}, provenance=provs, text_for_model="")
 
 
+#: 候選細目 id 的形狀（任務 4.1／Plan §2.1-4）：`<audience>/<粗目字母>/<細目 slug>`。
+#: 形狀守門在 `_emit_agent_decision` 前，⛔ 不在此另外定義第二套形狀規則
+#: （唯一權威在 `canon_parser.py` 的細目 id 產法，這裡只驗形狀、不驗存在性）。
+_CANDIDATE_ID_RE = re.compile(r"[a-z_]+/[A-Z]/[a-z0-9-]+")
+
+#: `winning_key_kind` 值域（`services.agent.canon.fine_index.KeyKind` 的三個字面值）。
+_VALID_WINNING_KEY_KINDS = frozenset({"title", "phrasing", "content"})
+
+
+def _candidate_ids_shape_valid(candidate_ids: list, winning_key_kind: dict) -> bool:
+    """形狀守門（Plan §2.1-4）：任一 id 不 `fullmatch`、或 `len > K`、或
+    `winning_key_kind` 的鍵不在 `candidate_ids` 內、或值不在允許值域 ⇒ `False`。
+    """
+    if len(candidate_ids) > _CANDIDATE_K:
+        return False
+    if not all(isinstance(cid, str) and _CANDIDATE_ID_RE.fullmatch(cid) for cid in candidate_ids):
+        return False
+    id_set = set(candidate_ids)
+    for key, value in winning_key_kind.items():
+        if key not in id_set or value not in _VALID_WINNING_KEY_KINDS:
+            return False
+    return True
+
+
+def _candidate_query(user_message: str, dialog: list) -> str:
+    """查詢＝`user_message` ＋ `dialog` 中最後一則 `role=="user"` 的 `content`
+    （無則單句），單一空格連接（Plan §2.1-2 程式規則）。⛔ 不 log 這個字串。
+    """
+    last_user_content: Optional[str] = None
+    for msg in reversed(dialog or []):
+        if isinstance(msg, dict) and msg.get("role") == "user":
+            last_user_content = msg.get("content")
+            break
+    if last_user_content:
+        return f"{user_message} {last_user_content}"
+    return user_message
+
+
 class VerifierProtocol(Protocol):
     def verify(
         self,
@@ -187,6 +230,11 @@ class TurnTrace:
     violations: list[str] = field(default_factory=list)
     rules_sha: str = ""
     outline_sha: str = ""
+    #: 任務 4.1（Plan §2.1-3）：候選選取結果。重播路徑一律留預設
+    #: （`[]`／`{}`／`None`）——那條路根本沒跑過 `_select_outline`。
+    candidate_ids: list[str] = field(default_factory=list)
+    winning_key_kind: dict[str, str] = field(default_factory=dict)
+    miss_kind: Optional[str] = None
 
 
 _REASON_HINTS: dict[str, str] = {
@@ -482,7 +530,21 @@ def _emit_agent_decision(trace: TurnTrace) -> None:
     自己在保護什麼。⛔ 鍵集合是封閉白名單（任務 brief），多一鍵就是這條
     不變量要抓的事：無 `answer`／`quote`／`text`／`user_message`。
     `schema_cause`（DSP-029 r13 #7）是封閉列舉值，⛔ 不攜帶任何模型或來源文字。
+
+    任務 4.1（Plan §2.1-4）：寫入前先跑形狀守門——不合格 ⇒ `candidate_ids`／
+    `winning_key_kind` 落空、`trace.violations` 補一筆 `candidate_ids_shape_invalid`
+    （fail-closed，⛔ 不 raise 進熱路徑）。`trace` 是與 `TurnResult` 共用的同一個
+    物件，這裡的修正會反映到呼叫端讀到的 `result.trace` 上。
     """
+    candidate_ids = list(trace.candidate_ids)
+    winning_key_kind = dict(trace.winning_key_kind)
+    if not _candidate_ids_shape_valid(candidate_ids, winning_key_kind):
+        candidate_ids = []
+        winning_key_kind = {}
+        trace.candidate_ids = []
+        trace.winning_key_kind = {}
+        trace.violations.append("candidate_ids_shape_invalid")
+
     usage_metering.set_agent_decision(
         {
             "trace_id": trace.trace_id,
@@ -514,6 +576,9 @@ def _emit_agent_decision(trace: TurnTrace) -> None:
             "latency_ms": trace.latency_ms,
             "rules_sha": trace.rules_sha,
             "outline_sha": trace.outline_sha,
+            "candidate_ids": candidate_ids,
+            "winning_key_kind": winning_key_kind,
+            "miss_kind": trace.miss_kind,
             "violations": trace.violations,
             "replayed_from": _replayed_from(trace.violations),
         }
@@ -554,6 +619,7 @@ class AgentRuntime:
         tool_timeout_s: float = 3.0,
         status_interval_s: float = 5.0,
         attempt_sink: Optional[Callable[[dict], None]] = None,
+        candidate_selector: Optional[CandidateSelector] = None,
     ) -> None:
         self.provider = provider
         self.registry = registry
@@ -561,6 +627,10 @@ class AgentRuntime:
         self.assembler = assembler
         self.budget = budget
         self.readonly_view = readonly_view
+        # 任務 4.1（Plan §2.1-2）：`None` ⇒ 這條路沒有候選機制（例如評估工具
+        # `--candidates off` 或未接線的受眾）——`run_turn` 對此原樣使用整份 outline，
+        # ⛔ 這不是降級，見 `_select_outline` docstring。
+        self._candidate_selector = candidate_selector
         # tasks 4.3c（儀表化，非契約）：離線評估用的「被拒中間嘗試」旁路。
         # ⛔ 預設 None＝零行為改變；正式路徑 `bootstrap.build_runtime` 不設它
         # （見 `tests/unit/agent/test_bootstrap_req.py`）。`TurnTrace`／
@@ -589,6 +659,80 @@ class AgentRuntime:
             self._attempt_sink(record)
         except Exception:  # noqa: BLE001 — 儀表化，任何 sink 例外都不可外溢
             logger.warning("agent_attempt_sink_failed", exc_info=True)
+
+    # ------------------------------------------------------------------
+    async def _select_outline(
+        self,
+        identity: Identity,
+        outline: Any,
+        user_message: str,
+        dialog: list,
+        violations: list,
+    ) -> tuple[Any, Optional[dict]]:
+        """任務 4.1（Plan §2.1-2）：把整份 `outline` 換成這一回合的候選子集。
+
+        適用條件：`self._candidate_selector` 有設、`outline` 非 None、
+        `get_canon(outline.audience)` 已註冊、且 `outline.audience` 與
+        `identity.resolved_audience()` 相同；不適用 ⇒ 原 `outline` 原樣、
+        `sel_meta=None`（這**不是**降級——是這條路根本沒有候選機制）。
+
+        回傳 `(outline, sel_meta)`；`sel_meta` 為 `None` 或
+        `{"candidate_ids", "winning_key_kind", "miss_kind"}`。
+        """
+        selector = self._candidate_selector
+        if selector is None or outline is None:
+            return outline, None
+        audience = getattr(outline, "audience", None)
+        canon = get_canon(audience) if audience is not None else None
+        if canon is None or audience != identity.resolved_audience():
+            return outline, None
+
+        toc = build_canon_toc(canon, identity, vendor_business_types=frozenset())
+
+        def _fallback_visible() -> Any:
+            visible = selector.index.visible_subset(
+                identity, canon, vendor_business_types=frozenset()
+            )
+            return CandidateOutlineDoc.from_visible(outline, visible, toc)
+
+        try:
+            query = _candidate_query(user_message, dialog)
+            sel = await selector.select(canon, identity, query, vendor_business_types=frozenset())
+
+            if sel is None:
+                violations.append("candidate_fallback_full_outline")
+                return _fallback_visible(), {
+                    "candidate_ids": [], "winning_key_kind": {}, "miss_kind": "index_unavailable",
+                }
+
+            miss_kind = sel["miss_kind"]
+            if miss_kind == "none_visible":
+                violations.append("candidate_none_visible")
+                return CandidateOutlineDoc.from_visible(outline, frozenset(), toc), {
+                    "candidate_ids": [], "winning_key_kind": {}, "miss_kind": miss_kind,
+                }
+            if miss_kind == "no_candidate":
+                # `ready` 狀態下不可達（見 candidate_selector.py 模組 docstring），
+                # 保留於列舉是為了讓 trace 值域封閉；不記 violation（不是機制故障）。
+                return _fallback_visible(), {
+                    "candidate_ids": [], "winning_key_kind": {}, "miss_kind": miss_kind,
+                }
+
+            return CandidateOutlineDoc.from_selection(outline, sel, toc), {
+                "candidate_ids": sel["candidate_ids"],
+                "winning_key_kind": sel["winning_key_kind"],
+                "miss_kind": "hit",
+            }
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:  # noqa: BLE001 — 一回合內：選取失敗一律退回可見子集
+            logger.warning(
+                "agent_select_outline_failed reason=%s", type(exc).__name__
+            )
+            violations.append("candidate_selector_error")
+            return _fallback_visible(), {
+                "candidate_ids": [], "winning_key_kind": {}, "miss_kind": "index_unavailable",
+            }
 
     # ------------------------------------------------------------------
     async def run_turn(self, identity: Identity, user_message: str, state: dict) -> TurnResult:
@@ -637,6 +781,15 @@ class AgentRuntime:
         slots = _slots_for_prompt(state)
         dialog = agent_state.get("dialog", [])
         outline = agent_state.get("outline")
+        # 任務 4.1（Plan §2.1-2）：把整份 outline 換成這一回合的候選子集（或降級的
+        # 可見子集）；**同一個** outline 物件接著餵 `_seed_outline_provenance` 與
+        # `assembler.build_messages`（下方）。
+        outline, sel_meta = await self._select_outline(
+            identity, outline, user_message, dialog, violations
+        )
+        candidate_ids: list[str] = list(sel_meta["candidate_ids"]) if sel_meta else []
+        winning_key_kind: dict[str, str] = dict(sel_meta["winning_key_kind"]) if sel_meta else {}
+        miss_kind: Optional[str] = sel_meta["miss_kind"] if sel_meta else None
         seeded_outline = _seed_outline_provenance(outline)
         if seeded_outline is not None:
             tool_results_by_id[OUTLINE_TOOL_CALL_ID] = seeded_outline
@@ -678,6 +831,9 @@ class AgentRuntime:
                 violations=list(violations),
                 rules_sha=_rules_sha(),
                 outline_sha=_outline_sha(),
+                candidate_ids=list(candidate_ids),
+                winning_key_kind=dict(winning_key_kind),
+                miss_kind=miss_kind,
             )
             return TurnResult(
                 kind="handoff",
@@ -996,6 +1152,9 @@ class AgentRuntime:
                 violations=violations,
                 rules_sha=_rules_sha(),
                 outline_sha=_outline_sha(),
+                candidate_ids=list(candidate_ids),
+                winning_key_kind=dict(winning_key_kind),
+                miss_kind=miss_kind,
             )
             result = TurnResult(
                 kind=out.kind,

@@ -54,6 +54,11 @@ logger = logging.getLogger(__name__)
 MAX_BATCH: int = 8
 #: `EmbeddingUtilsBackend` 每批的逾時（Plan §1.1）。
 PREPARE_EMBED_TIMEOUT_S: float = 30.0
+#: 整份 `prepare(doc)` 的**硬上限**（任務 4.1／Plan §2.1-6，業主 2026-09-07 §5-5 裁 60.0）。
+#: 呼叫端（`app.py::_init_agent_runtime`）用 `asyncio.wait_for(index.prepare(canon),
+#: PREPARE_TOTAL_TIMEOUT_S)` 包住整次啟動索引；逾時取消協程、索引狀態停在 `absent`
+#: （`prepare` 只在完成或 `_discard` 時改狀態，取消不留半份）。⛔ 不因建構參數而放寬。
+PREPARE_TOTAL_TIMEOUT_S: float = 60.0
 
 IndexState = Literal["absent", "not_ready", "ready"]
 KeyKind = Literal["title", "phrasing", "content"]
@@ -407,8 +412,12 @@ def index_registry_states() -> dict:
     """health 用的觀測值：`{audience: {state, prepared_sha, entries, dim, content_keys}}`。
 
     三個受眾一律列出，未註冊 ⇒ `{"state": "absent", …}`（Plan §1.3「取不到 ⇒ absent」）。
-    ⛔ 不重建索引、⛔ 不觸發任何 embedding；取值失敗只降級成 `absent`＋型別名，
-    **⛔ 不致紅**（沿 `_canon_state` 語義：「尚未建置」不是「建置後壞了」）。
+    ⛔ 不重建索引、⛔ 不觸發任何 embedding；取值失敗只降級成 `absent`＋型別名。
+    ⚠️ **4.1 接線後**：本函式的回傳值本身仍只是觀測值、⛔ 不重建——但
+    `health.compute_agent_health` 在 `mcp_facade.agent_configured()` 為真時，
+    會拿這裡的 `state` 去判紅（`absent`／`not_ready` ⇒ 紅）。3.3a／3.7 時期
+    「不致紅」僅限**尚未接線**那段期間；接線後「索引不在」代表產線降級中，
+    不再是「尚未建置」。
     """
     out: dict = {}
     for audience in sorted(INDEX_AUDIENCES):

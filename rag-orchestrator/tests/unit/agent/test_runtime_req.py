@@ -248,7 +248,7 @@ def _identity(**overrides) -> Identity:
 
 
 def _runtime(*, provider, registry, verifier, assembler=None, budget=None, clock=None, stage="M1",
-             attempt_sink=None):
+             attempt_sink=None, candidate_selector=None):
     return AgentRuntime(
         provider,
         registry,
@@ -258,6 +258,7 @@ def _runtime(*, provider, registry, verifier, assembler=None, budget=None, clock
         stage=stage,
         clock=clock or FakeClock(),
         attempt_sink=attempt_sink,
+        candidate_selector=candidate_selector,
     )
 
 
@@ -610,6 +611,10 @@ _ALLOWED_AGENT_DECISION_KEYS = frozenset(
         "outline_sha",
         "violations",
         "replayed_from",
+        # 任務 4.1（Plan §2.1-4）：候選選取結果三鍵。
+        "candidate_ids",
+        "winning_key_kind",
+        "miss_kind",
     }
 )
 

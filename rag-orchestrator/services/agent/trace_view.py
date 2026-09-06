@@ -208,6 +208,11 @@ def render_trace(row: Any) -> dict:
         "session": mask_session(_field(row, "session_id")),
         "rules_sha": agent.get("rules_sha"),
         "outline_sha": agent.get("outline_sha"),
+        "candidates": {
+            "ids": agent.get("candidate_ids"),
+            "winning_key_kind": agent.get("winning_key_kind"),
+            "miss_kind": agent.get("miss_kind"),
+        },
     }
     _assert_no_verbatim(view)
     return view

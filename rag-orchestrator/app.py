@@ -39,9 +39,14 @@ sop_orchestrator: SOPOrchestrator = None
 
 
 def _agent_configured() -> bool:
-    """任一 agent 開關有值 ⇒ agent 路徯「被使用」⇒ 組裝失敗要啟動紅；否則 fail-soft 只警告。"""
-    return any(os.getenv(k, "").strip() not in ("", "0", "false", "False")
-               for k in ("AGENT_AUDIENCES", "AGENT_SHADOW_AUDIENCES", "AGENT_TURN_ENABLED"))
+    """任一 agent 開關有值 ⇒ agent 路徯「被使用」⇒ 組裝失敗要啟動紅；否則 fail-soft 只警告。
+
+    ⚠️ 薄別名（任務 4.1）：判準的**唯一權威**已搬到
+    `services.agent.mcp_facade.agent_configured()`（health 也讀那一份，
+    ⛔ 不在此重寫第二套判準）；名稱保留在此供既有測試沿用。
+    """
+    from services.agent.mcp_facade import agent_configured as _mcp_agent_configured
+    return _mcp_agent_configured()
 
 
 async def _init_agent_runtime(app: FastAPI) -> None:
@@ -56,14 +61,38 @@ async def _init_agent_runtime(app: FastAPI) -> None:
     app.state.outline_resolver = None
     app.state.shadow_runner = None
     try:
+        import asyncio
+
         from services.agent import bootstrap as _agent_bootstrap
         from services.agent import outline as _agent_outline_mod
+        from services.agent.canon.canon_assembler import get_canon as _get_canon
+        from services.agent.canon.candidate_selector import CandidateSelector as _CandidateSelector
+        from services.agent.canon.fine_index import EmbeddingUtilsBackend as _EmbeddingUtilsBackend
+        from services.agent.canon.fine_index import FineIndex as _FineIndex
+        from services.agent.canon.fine_index import PREPARE_TOTAL_TIMEOUT_S as _PREPARE_TOTAL_TIMEOUT_S
+        from services.agent.canon.fine_index import register_index as _register_index
         from services.llm_provider import get_llm_provider as _get_llm_provider
         outline_doc = await _agent_outline_mod.build_prospect_outline(_mcp_kb_pool)
         _agent_outline_mod.check_budget(outline_doc, _agent_outline_mod.default_token_limit("prospect"))
         provider = _get_llm_provider()
+
+        # 任務 4.1（Plan §2.1-6）：細目索引——`register_canon("prospect", …)` 已在
+        # `build_prospect_outline` 內完成，這裡只取已註冊的那份 `CanonDoc` 來 `prepare`。
+        # `wait_for` 逾時 ⇒ 索引停在 `absent`（`prepare` 只在完成或 `_discard` 時改狀態，
+        # 取消不留半份）；⛔ 不掛啟動、⛔ 不因此另加 API 把 `absent` 改寫成 `not_ready`——
+        # 兩者對 selector／health 是同一種待遇（非 ready）。
+        prospect_canon = _get_canon("prospect")
+        index = _FineIndex(_EmbeddingUtilsBackend())
+        try:
+            await asyncio.wait_for(index.prepare(prospect_canon), _PREPARE_TOTAL_TIMEOUT_S)
+        except Exception as e:  # noqa: BLE001 — 涵蓋 asyncio.TimeoutError 與其他失敗，皆 fail-soft
+            print(f"⚠️ [agent] 細目索引 prepare 失敗（state={index.state}）：{type(e).__name__}: {e}")
+        _register_index("prospect", index)
+        candidate_selector = _CandidateSelector(index)
+
         runtime = _agent_bootstrap.build_runtime(app.state.db_pool, provider, _mcp_registry,
-                                                 outline_doc=outline_doc)
+                                                 outline_doc=outline_doc,
+                                                 candidate_selector=candidate_selector)
         app.state.agent_outline = outline_doc
         app.state.outline_resolver = _agent_outline_mod.make_outline_resolver(
             {"prospect": outline_doc})
@@ -73,12 +102,13 @@ async def _init_agent_runtime(app: FastAPI) -> None:
             app.state.shadow_runner = _ShadowRunner(
                 lambda readonly_view: _agent_bootstrap.build_runtime(
                     app.state.db_pool, provider, _mcp_registry, outline_doc=outline_doc,
-                    readonly_view=readonly_view),
+                    candidate_selector=candidate_selector, readonly_view=readonly_view),
                 app.state.db_pool)
         except ImportError:
             print("ℹ️ [agent] ShadowRunner 尚未落地（4.1），影子模式停用")
         print(f"✅ agent runtime 已初始化（rules_sha={runtime.rules_sha[:12]} outline_sha={runtime.outline_sha[:12]} "
-              f"sections={len(outline_doc.sections)} tokens={outline_doc.token_count}）")
+              f"sections={len(outline_doc.sections)} tokens={outline_doc.token_count} "
+              f"index_state={index.state}）")
     except Exception as e:  # noqa: BLE001
         if _agent_configured():
             raise RuntimeError(f"agent 路徑已啟用但組裝失敗（啟動紅）：{type(e).__name__}: {e}") from e
