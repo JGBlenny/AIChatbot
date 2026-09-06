@@ -27,7 +27,7 @@ n=422｜articles_with_gold=31
 
 ## 結論（主 session 手寫，2026-09-07；⚠️ 上方報表由 `tools/canon/index_eval.py` 全跑產生，重跑會覆蓋本檔，本節要重貼）
 
-**受測物**：`inputs/object-under-test.md`（核可：owner 2026-09-07）——細目索引 `FineIndex` 三臂鍵集（標題／標題＋approved 講法／標題＋講法＋內文首段）對 `koyu` 真問法的細目召回；**不是**線上檢索、不是 reranker、不是 agent 對話。
+**受測物**：`inputs/object-under-test.md`（核可：owner 2026-09-07）——細目索引 `FineIndex` 三臂鍵集（標題／標題＋approved 講法／標題＋講法＋內文句（`content_units`，38 細目共 131 句，每句一鍵））對 `koyu` 真問法的細目召回；**不是**線上檢索、不是 reranker、不是 agent 對話。
 **材料凍結**：三項全等（規則檔宣告 422／五型計數／凍結題剔除 48）通過；`inputs_sha` 見 JSON。規則檔 sha 原計法未留（`rule_sha256_recomputed=null`），業主 2026-09-07 接受。
 **gold**：細目 `sources` 的 `helpcenter:<slug>` 決定性映射（`inputs/koyu-article-map.json`；alias 後 unresolved 0；31 篇文章有 gold）。422 句中 **153 句可對映**（俗稱 31／口語 31／情境 30／直接 31／邊界 30），五型皆 ≥30 ⇒ 無「結論受限」型；其餘 269 句所屬文章未被任何細目引用，**排除並計數、不入分母**。
 **主結果採 loo=article**（剔除與同篇文章同源的 90 個鍵、影響 45 句），避免講法臂拿自己文章的講法對自己文章的問法作弊。
