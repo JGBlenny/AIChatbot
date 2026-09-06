@@ -4,7 +4,7 @@
   "business_types": [
     "system_provider"
   ],
-  "canon_sha256": "bc14adedda4c1c42cdf4d672f6dce007935eb7309d9bc6c8338de0cc2a01b712",
+  "canon_sha256": "b08ef3fc832808fc41cd27634c1a3ccb8f0d384b7a4a7643b63b347e9593bfb0",
   "coarses": [
     {
       "fines": [
@@ -24,37 +24,37 @@
           "phrasings": [
             {
               "source": "question_summary:3585",
-              "status": "proposed",
+              "status": "approved",
               "text": "你們系統介紹"
             },
             {
               "source": "question_summary:3585",
-              "status": "proposed",
+              "status": "approved",
               "text": "合不合用"
             },
             {
               "source": "question_summary:3585",
-              "status": "proposed",
+              "status": "approved",
               "text": "怎麼用"
             },
             {
               "source": "question_summary:3585",
-              "status": "proposed",
+              "status": "approved",
               "text": "想了解金箍棒"
             },
             {
               "source": "question_summary:3585",
-              "status": "proposed",
+              "status": "approved",
               "text": "想看看你們"
             },
             {
               "source": "question_summary:3585",
-              "status": "proposed",
+              "status": "approved",
               "text": "物業管理"
             },
             {
               "source": "question_summary:3585",
-              "status": "proposed",
+              "status": "approved",
               "text": "適不適合我用"
             }
           ],
@@ -87,12 +87,12 @@
           "phrasings": [
             {
               "source": "question_summary:3606",
-              "status": "proposed",
+              "status": "approved",
               "text": "你們能解決什麼問題"
             },
             {
               "source": "question_summary:3606",
-              "status": "proposed",
+              "status": "approved",
               "text": "管理困擾"
             }
           ],
@@ -126,22 +126,22 @@
           "phrasings": [
             {
               "source": "question_summary:3608",
-              "status": "proposed",
+              "status": "approved",
               "text": "差異化"
             },
             {
               "source": "question_summary:3608",
-              "status": "proposed",
+              "status": "approved",
               "text": "為什麼選金箍棒"
             },
             {
               "source": "gapmap:C46",
-              "status": "proposed",
+              "status": "approved",
               "text": "有多語系介面嗎"
             },
             {
               "source": "gapmap:C46",
-              "status": "proposed",
+              "status": "approved",
               "text": "外籍租客能用嗎"
             }
           ],
@@ -174,7 +174,7 @@
           "phrasings": [
             {
               "source": "koyu:slug90#3",
-              "status": "proposed",
+              "status": "approved",
               "text": "對外首頁會顯示哪些物件"
             }
           ],
@@ -214,27 +214,27 @@
           "phrasings": [
             {
               "source": "question_summary:3584",
-              "status": "proposed",
+              "status": "approved",
               "text": "全模組"
             },
             {
               "source": "question_summary:3584",
-              "status": "proposed",
+              "status": "approved",
               "text": "公司團隊方案"
             },
             {
               "source": "question_summary:3584",
-              "status": "proposed",
+              "status": "approved",
               "text": "包租代管物管"
             },
             {
               "source": "question_summary:3584",
-              "status": "proposed",
+              "status": "approved",
               "text": "團隊權限"
             },
             {
               "source": "question_summary:3584",
-              "status": "proposed",
+              "status": "approved",
               "text": "大房東報表"
             }
           ],
@@ -274,57 +274,57 @@
           "phrasings": [
             {
               "source": "question_summary:3596",
-              "status": "proposed",
+              "status": "approved",
               "text": "個人房東"
             },
             {
               "source": "question_summary:3596",
-              "status": "proposed",
+              "status": "approved",
               "text": "免費試用"
             },
             {
               "source": "question_summary:3597",
-              "status": "proposed",
+              "status": "approved",
               "text": "多元金流"
             },
             {
               "source": "question_summary:3597",
-              "status": "proposed",
+              "status": "approved",
               "text": "帳務自動化"
             },
             {
               "source": "question_summary:3596",
-              "status": "proposed",
+              "status": "approved",
               "text": "收租對帳"
             },
             {
               "source": "question_summary:3596",
-              "status": "proposed",
+              "status": "approved",
               "text": "物件合約帳務"
             },
             {
               "source": "question_summary:3596",
-              "status": "proposed",
+              "status": "approved",
               "text": "約10戶"
             },
             {
               "source": "question_summary:3597",
-              "status": "proposed",
+              "status": "approved",
               "text": "約20戶"
             },
             {
               "source": "question_summary:3598",
-              "status": "proposed",
+              "status": "approved",
               "text": "約30戶"
             },
             {
               "source": "question_summary:3598",
-              "status": "proposed",
+              "status": "approved",
               "text": "規模化"
             },
             {
               "source": "question_summary:3598",
-              "status": "proposed",
+              "status": "approved",
               "text": "銜接團隊大房東報表"
             }
           ],
@@ -360,32 +360,32 @@
           "phrasings": [
             {
               "source": "question_summary:5379",
-              "status": "proposed",
+              "status": "approved",
               "text": "合約能不能匯"
             },
             {
               "source": "question_summary:5379",
-              "status": "proposed",
+              "status": "approved",
               "text": "哪些能匯"
             },
             {
               "source": "question_summary:5379",
-              "status": "proposed",
+              "status": "approved",
               "text": "房東租客合約帳單"
             },
             {
               "source": "question_summary:5379",
-              "status": "proposed",
+              "status": "approved",
               "text": "批次匯入"
             },
             {
               "source": "question_summary:5379",
-              "status": "proposed",
+              "status": "approved",
               "text": "搬資料"
             },
             {
               "source": "question_summary:5379",
-              "status": "proposed",
+              "status": "approved",
               "text": "舊系統資料可以匯進來嗎"
             }
           ],
@@ -429,32 +429,32 @@
           "phrasings": [
             {
               "source": "question_summary:3599",
-              "status": "proposed",
+              "status": "approved",
               "text": "VR看屋"
             },
             {
               "source": "question_summary:3599",
-              "status": "proposed",
+              "status": "approved",
               "text": "房源管理"
             },
             {
               "source": "question_summary:3599",
-              "status": "proposed",
+              "status": "approved",
               "text": "批次上傳"
             },
             {
               "source": "question_summary:3599",
-              "status": "proposed",
+              "status": "approved",
               "text": "物件集中"
             },
             {
               "source": "question_summary:3599",
-              "status": "proposed",
+              "status": "approved",
               "text": "社區歸戶"
             },
             {
               "source": "gapmap:C15",
-              "status": "proposed",
+              "status": "approved",
               "text": "物件自訂標籤有什麼用"
             }
           ],
@@ -489,17 +489,17 @@
           "phrasings": [
             {
               "source": "helpcenter:slug1",
-              "status": "proposed",
+              "status": "approved",
               "text": "如何新增物件?"
             },
             {
               "source": "helpcenter:qa01",
-              "status": "proposed",
+              "status": "approved",
               "text": "物件批次新增表格如何填寫?"
             },
             {
               "source": "koyu:property（原#7",
-              "status": "proposed",
+              "status": "approved",
               "text": "社區可以批次建立嗎"
             }
           ],
@@ -533,17 +533,17 @@
           "phrasings": [
             {
               "source": "helpcenter:slug90",
-              "status": "proposed",
+              "status": "approved",
               "text": "什麼是「房東對外首頁」(招租店舖)?"
             },
             {
               "source": "koyu:slug90#2",
-              "status": "proposed",
+              "status": "approved",
               "text": "招租店舖是什麼"
             },
             {
               "source": "koyu:slug90#8",
-              "status": "proposed",
+              "status": "approved",
               "text": "我改了大頭照對外首頁沒變"
             }
           ],
@@ -576,57 +576,57 @@
           "phrasings": [
             {
               "source": "koyu:slug10#15",
-              "status": "proposed",
+              "status": "approved",
               "text": "未刊登是什麼意思"
             },
             {
               "source": "koyu:slug20#3",
-              "status": "proposed",
+              "status": "approved",
               "text": "已失效是什麼意思"
             },
             {
               "source": "koyu:slug88#15",
-              "status": "proposed",
+              "status": "approved",
               "text": "已支出是什麼意思"
             },
             {
               "source": "helpcenter:billexpired",
-              "status": "proposed",
+              "status": "approved",
               "text": "帳單狀態顯示「已失效」是什麼意思?"
             },
             {
               "source": "koyu:slug66#6",
-              "status": "proposed",
+              "status": "approved",
               "text": "找補費用是什麼意思"
             },
             {
               "source": "koyu:slug28#14",
-              "status": "proposed",
+              "status": "approved",
               "text": "未退押金是什麼意思"
             },
             {
               "source": "koyu:slug39#6",
-              "status": "proposed",
+              "status": "approved",
               "text": "物件狀態有什麼差別"
             },
             {
               "source": "koyu:slug24#9",
-              "status": "proposed",
+              "status": "approved",
               "text": "紅色的字是什麼意思"
             },
             {
               "source": "koyu:slug75#15",
-              "status": "proposed",
+              "status": "approved",
               "text": "自動對帳是什麼意思"
             },
             {
               "source": "koyu:property（原#5",
-              "status": "proposed",
+              "status": "approved",
               "text": "洽談中的物件可以做什麼"
             },
             {
               "source": "koyu:slug29#14",
-              "status": "proposed",
+              "status": "approved",
               "text": "解約後30天是什麼意思"
             }
           ],
@@ -671,42 +671,42 @@
           "phrasings": [
             {
               "source": "question_summary:3600",
-              "status": "proposed",
+              "status": "approved",
               "text": "上傳既有合約"
             },
             {
               "source": "question_summary:3600",
-              "status": "proposed",
+              "status": "approved",
               "text": "修改合約"
             },
             {
               "source": "question_summary:3600",
-              "status": "proposed",
+              "status": "approved",
               "text": "合約範本"
             },
             {
               "source": "question_summary:3600",
-              "status": "proposed",
+              "status": "approved",
               "text": "建立合約"
             },
             {
               "source": "question_summary:3600",
-              "status": "proposed",
+              "status": "approved",
               "text": "簽約邀請"
             },
             {
               "source": "question_summary:3600",
-              "status": "proposed",
+              "status": "approved",
               "text": "線上電子簽約"
             },
             {
               "source": "gapmap:C22",
-              "status": "proposed",
+              "status": "approved",
               "text": "簽約要另外收費嗎"
             },
             {
               "source": "gapmap:C22",
-              "status": "proposed",
+              "status": "approved",
               "text": "電子簽章收費"
             }
           ],
@@ -746,42 +746,42 @@
           "phrasings": [
             {
               "source": "question_summary:3600",
-              "status": "proposed",
+              "status": "approved",
               "text": "上傳既有合約"
             },
             {
               "source": "question_summary:3600",
-              "status": "proposed",
+              "status": "approved",
               "text": "修改合約"
             },
             {
               "source": "question_summary:3600",
-              "status": "proposed",
+              "status": "approved",
               "text": "合約範本"
             },
             {
               "source": "question_summary:3600",
-              "status": "proposed",
+              "status": "approved",
               "text": "建立合約"
             },
             {
               "source": "question_summary:3600",
-              "status": "proposed",
+              "status": "approved",
               "text": "簽約邀請"
             },
             {
               "source": "question_summary:3600",
-              "status": "proposed",
+              "status": "approved",
               "text": "線上電子簽約"
             },
             {
               "source": "helpcenter:slug73",
-              "status": "proposed",
+              "status": "approved",
               "text": "電子合約的簽約邀請,有時效嗎?"
             },
             {
               "source": "gapmap:C03",
-              "status": "proposed",
+              "status": "approved",
               "text": "包租跟代管差在哪"
             }
           ],
@@ -819,32 +819,32 @@
           "phrasings": [
             {
               "source": "question_summary:3600",
-              "status": "proposed",
+              "status": "approved",
               "text": "上傳既有合約"
             },
             {
               "source": "question_summary:3600",
-              "status": "proposed",
+              "status": "approved",
               "text": "修改合約"
             },
             {
               "source": "question_summary:3600",
-              "status": "proposed",
+              "status": "approved",
               "text": "合約範本"
             },
             {
               "source": "question_summary:3600",
-              "status": "proposed",
+              "status": "approved",
               "text": "建立合約"
             },
             {
               "source": "question_summary:3600",
-              "status": "proposed",
+              "status": "approved",
               "text": "簽約邀請"
             },
             {
               "source": "question_summary:3600",
-              "status": "proposed",
+              "status": "approved",
               "text": "線上電子簽約"
             }
           ],
@@ -880,37 +880,37 @@
           "phrasings": [
             {
               "source": "helpcenter:slug15",
-              "status": "proposed",
+              "status": "approved",
               "text": "歷史合約是什麼?"
             },
             {
               "source": "koyu:qa06#3",
-              "status": "proposed",
+              "status": "approved",
               "text": "既存合約是什麼"
             },
             {
               "source": "koyu:qa06#14",
-              "status": "proposed",
+              "status": "approved",
               "text": "制式合約是什麼意思"
             },
             {
               "source": "koyu:slug15#16",
-              "status": "proposed",
+              "status": "approved",
               "text": "歷史合約裡面放什麼"
             },
             {
               "source": "koyu:slug15#8",
-              "status": "proposed",
+              "status": "approved",
               "text": "合約到期後就消失了"
             },
             {
               "source": "koyu:slug15#2",
-              "status": "proposed",
+              "status": "approved",
               "text": "歷史合約的狀態有哪些"
             },
             {
               "source": "koyu:slug86#9",
-              "status": "proposed",
+              "status": "approved",
               "text": "合約上寫線上智能整合收款是什麼"
             }
           ],
@@ -946,42 +946,42 @@
           "phrasings": [
             {
               "source": "question_summary:3601",
-              "status": "proposed",
+              "status": "approved",
               "text": "儲值金"
             },
             {
               "source": "question_summary:3601",
-              "status": "proposed",
+              "status": "approved",
               "text": "帳務管理"
             },
             {
               "source": "question_summary:3601",
-              "status": "proposed",
+              "status": "approved",
               "text": "收租對帳"
             },
             {
               "source": "question_summary:3601",
-              "status": "proposed",
+              "status": "approved",
               "text": "自動帳單"
             },
             {
               "source": "question_summary:3601",
-              "status": "proposed",
+              "status": "approved",
               "text": "金流代收"
             },
             {
               "source": "helpcenter:einvoice",
-              "status": "proposed",
+              "status": "approved",
               "text": "帳單可以自動開立電子發票嗎?"
             },
             {
               "source": "gapmap:C24",
-              "status": "proposed",
+              "status": "approved",
               "text": "電子發票可以自動開嗎"
             },
             {
               "source": "gapmap:C54",
-              "status": "proposed",
+              "status": "approved",
               "text": "手機條碼載具"
             }
           ],
@@ -1018,22 +1018,22 @@
           "phrasings": [
             {
               "source": "question_summary:5378",
-              "status": "proposed",
+              "status": "approved",
               "text": "租客不繳租金怎麼辦"
             },
             {
               "source": "koyu:Landlordonboarding06Finance#5",
-              "status": "proposed",
+              "status": "approved",
               "text": "不足月的租金怎麼算"
             },
             {
               "source": "koyu:rentallaw.pt2#6",
-              "status": "proposed",
+              "status": "approved",
               "text": "房客一直不繳錢怎麼辦"
             },
             {
               "source": "helpcenter:slug03",
-              "status": "proposed",
+              "status": "approved",
               "text": "租客教學:租金逾期篇"
             }
           ],
@@ -1066,22 +1066,22 @@
           "phrasings": [
             {
               "source": "koyu:slug78#1",
-              "status": "proposed",
+              "status": "approved",
               "text": "帳單裡面有哪些資訊"
             },
             {
               "source": "helpcenter:slug78",
-              "status": "proposed",
+              "status": "approved",
               "text": "帳單內有哪些資訊?"
             },
             {
               "source": "koyu:slug78#14",
-              "status": "proposed",
+              "status": "approved",
               "text": "帳單包含哪些資訊"
             },
             {
               "source": "helpcenter:slug79",
-              "status": "proposed",
+              "status": "approved",
               "text": "如何在帳單內添加臨時增收費用?"
             }
           ],
@@ -1116,27 +1116,27 @@
           "phrasings": [
             {
               "source": "question_summary:5380",
-              "status": "proposed",
+              "status": "approved",
               "text": "客製帳單"
             },
             {
               "source": "question_summary:5380",
-              "status": "proposed",
+              "status": "approved",
               "text": "帳單格式能不能自己設定"
             },
             {
               "source": "question_summary:5380",
-              "status": "proposed",
+              "status": "approved",
               "text": "帳單版面"
             },
             {
               "source": "question_summary:5380",
-              "status": "proposed",
+              "status": "approved",
               "text": "收據樣式"
             },
             {
               "source": "question_summary:5380",
-              "status": "proposed",
+              "status": "approved",
               "text": "自訂帳單"
             }
           ],
@@ -1173,17 +1173,17 @@
           "phrasings": [
             {
               "source": "helpcenter:paymentapply",
-              "status": "proposed",
+              "status": "approved",
               "text": "國泰、永豐、中信的金流要怎麼申請與提領?"
             },
             {
               "source": "gapmap:C29",
-              "status": "proposed",
+              "status": "approved",
               "text": "儲值金回充帳戶"
             },
             {
               "source": "gapmap:C29",
-              "status": "proposed",
+              "status": "approved",
               "text": "固定虛擬帳號"
             }
           ],
@@ -1217,47 +1217,47 @@
           "phrasings": [
             {
               "source": "helpcenter:slug86",
-              "status": "proposed",
+              "status": "approved",
               "text": "租客能用信用卡繳納房租嗎?"
             },
             {
               "source": "koyu:slug86#1",
-              "status": "proposed",
+              "status": "approved",
               "text": "租客可以用信用卡繳房租嗎"
             },
             {
               "source": "koyu:slug103#8",
-              "status": "proposed",
+              "status": "approved",
               "text": "我想改用信用卡但沒有選項"
             },
             {
               "source": "koyu:onboarding3#4",
-              "status": "proposed",
+              "status": "approved",
               "text": "我要繳房租"
             },
             {
               "source": "helpcenter:slug102",
-              "status": "proposed",
+              "status": "approved",
               "text": "租客繳費方式(藍新信用卡)"
             },
             {
               "source": "koyu:slug103#14",
-              "status": "proposed",
+              "status": "approved",
               "text": "ATM繳房租"
             },
             {
               "source": "koyu:onboarding3#14",
-              "status": "proposed",
+              "status": "approved",
               "text": "繳房租的方法"
             },
             {
               "source": "koyu:slug102#14",
-              "status": "proposed",
+              "status": "approved",
               "text": "信用卡付款流程"
             },
             {
               "source": "koyu:slug104#14",
-              "status": "proposed",
+              "status": "approved",
               "text": "轉帳繳房租流程"
             }
           ],
@@ -1292,32 +1292,32 @@
           "phrasings": [
             {
               "source": "question_summary:3602",
-              "status": "proposed",
+              "status": "approved",
               "text": "團隊管理"
             },
             {
               "source": "question_summary:3602",
-              "status": "proposed",
+              "status": "approved",
               "text": "多人協作"
             },
             {
               "source": "question_summary:3602",
-              "status": "proposed",
+              "status": "approved",
               "text": "大房東報表"
             },
             {
               "source": "question_summary:3602",
-              "status": "proposed",
+              "status": "approved",
               "text": "角色權限"
             },
             {
               "source": "gapmap:C52",
-              "status": "proposed",
+              "status": "approved",
               "text": "系統管理模組有哪些功能"
             },
             {
               "source": "gapmap:C52",
-              "status": "proposed",
+              "status": "approved",
               "text": "系統管理"
             }
           ],
@@ -1381,32 +1381,32 @@
           "phrasings": [
             {
               "source": "question_summary:3603",
-              "status": "proposed",
+              "status": "approved",
               "text": "IoT"
             },
             {
               "source": "question_summary:3603",
-              "status": "proposed",
+              "status": "approved",
               "text": "智慧門鎖"
             },
             {
               "source": "question_summary:3603",
-              "status": "proposed",
+              "status": "approved",
               "text": "智慧電錶"
             },
             {
               "source": "koyu:Landlordonboarding08Device#15",
-              "status": "proposed",
+              "status": "approved",
               "text": "智慧電表"
             },
             {
               "source": "koyu:Landlordonboarding08Device#14",
-              "status": "proposed",
+              "status": "approved",
               "text": "IOT設備"
             },
             {
               "source": "gapmap:C39",
-              "status": "proposed",
+              "status": "approved",
               "text": "私人門鎖和共用門鎖差別"
             }
           ],
@@ -1442,27 +1442,27 @@
           "phrasings": [
             {
               "source": "question_summary:3604",
-              "status": "proposed",
+              "status": "approved",
               "text": "代收代付"
             },
             {
               "source": "question_summary:3604",
-              "status": "proposed",
+              "status": "approved",
               "text": "大房東報表"
             },
             {
               "source": "question_summary:3604",
-              "status": "proposed",
+              "status": "approved",
               "text": "對業主交報表"
             },
             {
               "source": "question_summary:3604",
-              "status": "proposed",
+              "status": "approved",
               "text": "自動寄送"
             },
             {
               "source": "gapmap:C25",
-              "status": "proposed",
+              "status": "approved",
               "text": "差額發票什麼時候用"
             }
           ],
@@ -1499,47 +1499,47 @@
           "phrasings": [
             {
               "source": "koyu:slug90#1",
-              "status": "proposed",
+              "status": "approved",
               "text": "房東對外首頁是什麼"
             },
             {
               "source": "koyu:slug92#15",
-              "status": "proposed",
+              "status": "approved",
               "text": "經理人是什麼"
             },
             {
               "source": "koyu:slug01#15",
-              "status": "proposed",
+              "status": "approved",
               "text": "我的帳號是什麼"
             },
             {
               "source": "koyu:TOFILL-beike#3",
-              "status": "proposed",
+              "status": "approved",
               "text": "樓盤字典是什麼"
             },
             {
               "source": "koyu:slug39#14",
-              "status": "proposed",
+              "status": "approved",
               "text": "物件分類是什麼"
             },
             {
               "source": "koyu:rent3#1",
-              "status": "proposed",
+              "status": "approved",
               "text": "租約公證是什麼"
             },
             {
               "source": "koyu:rentallaw.pt1#1",
-              "status": "proposed",
+              "status": "approved",
               "text": "租賃專法是什麼"
             },
             {
               "source": "koyu:slug86#15",
-              "status": "proposed",
+              "status": "approved",
               "text": "線上金流是什麼"
             },
             {
               "source": "koyu:landlordonboarding05Paymentsettings#19",
-              "status": "proposed",
+              "status": "approved",
               "text": "虛擬帳號是什麼"
             }
           ],
@@ -1573,17 +1573,17 @@
           "phrasings": [
             {
               "source": "question_summary:3605",
-              "status": "proposed",
+              "status": "approved",
               "text": "修繕系統"
             },
             {
               "source": "question_summary:3605",
-              "status": "proposed",
+              "status": "approved",
               "text": "線上報修"
             },
             {
               "source": "question_summary:3605",
-              "status": "proposed",
+              "status": "approved",
               "text": "進度追蹤"
             }
           ],
@@ -1617,32 +1617,32 @@
           "phrasings": [
             {
               "source": "koyu:onboarding1#5",
-              "status": "proposed",
+              "status": "approved",
               "text": "註冊要用email還是手機"
             },
             {
               "source": "koyu:slug48#4",
-              "status": "proposed",
+              "status": "approved",
               "text": "簽約邀請是用簡訊還是email"
             },
             {
               "source": "koyu:slug95#4",
-              "status": "proposed",
+              "status": "approved",
               "text": "我要改我的email"
             },
             {
               "source": "koyu:slug00#10",
-              "status": "proposed",
+              "status": "approved",
               "text": "email打錯了怎麼辦"
             },
             {
               "source": "koyu:slug100#3",
-              "status": "proposed",
+              "status": "approved",
               "text": "可以從email直接繳嗎"
             },
             {
               "source": "koyu:slug13#9",
-              "status": "proposed",
+              "status": "approved",
               "text": "我只有租客的電話沒有email"
             }
           ],
@@ -1682,22 +1682,22 @@
           "phrasings": [
             {
               "source": "question_summary:3610",
-              "status": "proposed",
+              "status": "approved",
               "text": "多少錢"
             },
             {
               "source": "question_summary:3610",
-              "status": "proposed",
+              "status": "approved",
               "text": "怎麼收費"
             },
             {
               "source": "question_summary:3610",
-              "status": "proposed",
+              "status": "approved",
               "text": "金箍棒"
             },
             {
               "source": "koyu:Landlordonboarding02#20",
-              "status": "proposed",
+              "status": "approved",
               "text": "公司方案多少錢"
             }
           ],
@@ -1730,22 +1730,22 @@
           "phrasings": [
             {
               "source": "question_summary:3611",
-              "status": "proposed",
+              "status": "approved",
               "text": "可以免費試用嗎"
             },
             {
               "source": "question_summary:3611",
-              "status": "proposed",
+              "status": "approved",
               "text": "試用多久"
             },
             {
               "source": "koyu:advanced12#3",
-              "status": "proposed",
+              "status": "approved",
               "text": "多久可以提款"
             },
             {
               "source": "koyu:tenantintro.register#3",
-              "status": "proposed",
+              "status": "approved",
               "text": "驗證碼多久可以重發"
             }
           ],
@@ -1780,12 +1780,12 @@
           "phrasings": [
             {
               "source": "koyu:rentallaw.pt2#18",
-              "status": "proposed",
+              "status": "approved",
               "text": "凶宅怎麼辦"
             },
             {
               "source": "gapmap:C07",
-              "status": "proposed",
+              "status": "approved",
               "text": "免費方案可以建幾個物件"
             }
           ],
@@ -1848,37 +1848,37 @@
           "phrasings": [
             {
               "source": "koyu:onboarding1#14",
-              "status": "proposed",
+              "status": "approved",
               "text": "怎麼開帳號"
             },
             {
               "source": "koyu:Landlordonboarding00#15",
-              "status": "proposed",
+              "status": "approved",
               "text": "屋主帳號怎麼用"
             },
             {
               "source": "koyu:tenantintro.register#13",
-              "status": "proposed",
+              "status": "approved",
               "text": "租客怎麼開帳號"
             },
             {
               "source": "koyu:slug01#6",
-              "status": "proposed",
+              "status": "approved",
               "text": "帳號忘記了怎麼救"
             },
             {
               "source": "koyu:slug95#13",
-              "status": "proposed",
+              "status": "approved",
               "text": "帳號資訊怎麼變更"
             },
             {
               "source": "helpcenter:slug01",
-              "status": "proposed",
+              "status": "approved",
               "text": "我忘記帳號怎麼辦?"
             },
             {
               "source": "koyu:slug01#13",
-              "status": "proposed",
+              "status": "approved",
               "text": "登入帳號怎麼找回"
             }
           ],
@@ -1919,22 +1919,22 @@
           "phrasings": [
             {
               "source": "question_summary:3607",
-              "status": "proposed",
+              "status": "approved",
               "text": "Bananas"
             },
             {
               "source": "question_summary:3607",
-              "status": "proposed",
+              "status": "approved",
               "text": "屋我也"
             },
             {
               "source": "question_summary:3607",
-              "status": "proposed",
+              "status": "approved",
               "text": "租賃管理系統"
             },
             {
               "source": "question_summary:3607",
-              "status": "proposed",
+              "status": "approved",
               "text": "金箍棒"
             }
           ],
@@ -1967,17 +1967,17 @@
           "phrasings": [
             {
               "source": "question_summary:3609",
-              "status": "proposed",
+              "status": "approved",
               "text": "你們會評論競爭對手嗎"
             },
             {
               "source": "question_summary:3609",
-              "status": "proposed",
+              "status": "approved",
               "text": "怎麼看同業"
             },
             {
               "source": "question_summary:3609",
-              "status": "proposed",
+              "status": "approved",
               "text": "會說對手壞話嗎"
             }
           ],
@@ -2015,7 +2015,7 @@
           "phrasings": [
             {
               "source": "koyu:slug24#14",
-              "status": "proposed",
+              "status": "approved",
               "text": "欠租的房客怎麼找"
             }
           ],
@@ -2053,12 +2053,12 @@
           "phrasings": [
             {
               "source": "gapmap:C31",
-              "status": "proposed",
+              "status": "approved",
               "text": "水電費怎麼分算"
             },
             {
               "source": "gapmap:C31",
-              "status": "proposed",
+              "status": "approved",
               "text": "水電費一個月大概多少"
             }
           ],
@@ -2091,32 +2091,32 @@
           "phrasings": [
             {
               "source": "question_summary:5379",
-              "status": "proposed",
+              "status": "approved",
               "text": "合約能不能匯"
             },
             {
               "source": "question_summary:5379",
-              "status": "proposed",
+              "status": "approved",
               "text": "哪些能匯"
             },
             {
               "source": "question_summary:5379",
-              "status": "proposed",
+              "status": "approved",
               "text": "房東租客合約帳單"
             },
             {
               "source": "question_summary:5379",
-              "status": "proposed",
+              "status": "approved",
               "text": "批次匯入"
             },
             {
               "source": "question_summary:5379",
-              "status": "proposed",
+              "status": "approved",
               "text": "搬資料"
             },
             {
               "source": "question_summary:5379",
-              "status": "proposed",
+              "status": "approved",
               "text": "舊系統資料可以匯進來嗎"
             }
           ],
@@ -2141,12 +2141,12 @@
     }
   ],
   "language": "zh-TW",
-  "phrasing_set_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "phrasing_set_sha256": "f6df29cf8b7f8b68b48d55d19907121c90c375fe4f05d3b6212dcba8a7d3ca5d",
   "reviewers": [
     "owner"
   ],
   "target_user": [
     "prospect"
   ],
-  "version": "2026-09-07.1"
+  "version": "2026-09-07.2"
 }

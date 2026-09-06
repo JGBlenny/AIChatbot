@@ -1,6 +1,6 @@
 ---
 audience: prospect
-version: 2026-09-07.1
+version: 2026-09-07.2
 reviewers: [owner]
 language: zh-TW
 budget_tokens: 10000
@@ -10,13 +10,13 @@ business_types: [system_provider]
 ## A 產品基本盤 {#A}
 ### 系統總覽與適不適合我 {#prospect/A/product-overview}
 - phrasings:
-  - {text: "你們系統介紹", source: "question_summary:3585", status: proposed}
-  - {text: "合不合用", source: "question_summary:3585", status: proposed}
-  - {text: "怎麼用", source: "question_summary:3585", status: proposed}
-  - {text: "想了解金箍棒", source: "question_summary:3585", status: proposed}
-  - {text: "想看看你們", source: "question_summary:3585", status: proposed}
-  - {text: "物業管理", source: "question_summary:3585", status: proposed}
-  - {text: "適不適合我用", source: "question_summary:3585", status: proposed}
+  - {text: "你們系統介紹", source: "question_summary:3585", status: approved}
+  - {text: "合不合用", source: "question_summary:3585", status: approved}
+  - {text: "怎麼用", source: "question_summary:3585", status: approved}
+  - {text: "想了解金箍棒", source: "question_summary:3585", status: approved}
+  - {text: "想看看你們", source: "question_summary:3585", status: approved}
+  - {text: "物業管理", source: "question_summary:3585", status: approved}
+  - {text: "適不適合我用", source: "question_summary:3585", status: approved}
 - sources: [kb:3585]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
@@ -25,8 +25,8 @@ business_types: [system_provider]
 
 ### 你們能解決什麼問題（痛點對應模組） {#prospect/A/pain-points}
 - phrasings:
-  - {text: "你們能解決什麼問題", source: "question_summary:3606", status: proposed}
-  - {text: "管理困擾", source: "question_summary:3606", status: proposed}
+  - {text: "你們能解決什麼問題", source: "question_summary:3606", status: approved}
+  - {text: "管理困擾", source: "question_summary:3606", status: approved}
 - sources: [kb:3606, draft:batch#1]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
@@ -35,10 +35,10 @@ business_types: [system_provider]
 
 ### 為什麼選金箍棒 {#prospect/A/why-choose-jgb}
 - phrasings:
-  - {text: "差異化", source: "question_summary:3608", status: proposed}
-  - {text: "為什麼選金箍棒", source: "question_summary:3608", status: proposed}
-  - {text: "有多語系介面嗎", source: "gapmap:C46", status: proposed}
-  - {text: "外籍租客能用嗎", source: "gapmap:C46", status: proposed}
+  - {text: "差異化", source: "question_summary:3608", status: approved}
+  - {text: "為什麼選金箍棒", source: "question_summary:3608", status: approved}
+  - {text: "有多語系介面嗎", source: "gapmap:C46", status: approved}
+  - {text: "外籍租客能用嗎", source: "gapmap:C46", status: approved}
 - sources: [kb:3608]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
@@ -47,7 +47,7 @@ business_types: [system_provider]
 
 ### 首頁儀表板顯示哪些數據 {#prospect/A/dashboard-overview}
 - phrasings:
-  - {text: "對外首頁會顯示哪些物件", source: "koyu:slug90#3", status: proposed}
+  - {text: "對外首頁會顯示哪些物件", source: "koyu:slug90#3", status: approved}
 - sources: [draft:batch#8]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
@@ -57,11 +57,11 @@ business_types: [system_provider]
 ## B 適配 {#B}
 ### 公司或包租代管團隊適合嗎 {#prospect/B/team-company-fit}
 - phrasings:
-  - {text: "全模組", source: "question_summary:3584", status: proposed}
-  - {text: "公司團隊方案", source: "question_summary:3584", status: proposed}
-  - {text: "包租代管物管", source: "question_summary:3584", status: proposed}
-  - {text: "團隊權限", source: "question_summary:3584", status: proposed}
-  - {text: "大房東報表", source: "question_summary:3584", status: proposed}
+  - {text: "全模組", source: "question_summary:3584", status: approved}
+  - {text: "公司團隊方案", source: "question_summary:3584", status: approved}
+  - {text: "包租代管物管", source: "question_summary:3584", status: approved}
+  - {text: "團隊權限", source: "question_summary:3584", status: approved}
+  - {text: "大房東報表", source: "question_summary:3584", status: approved}
 - sources: [kb:3584]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
@@ -71,17 +71,17 @@ business_types: [system_provider]
 
 ### 個人房東（約 10～30 戶）適配與建議做法 {#prospect/B/individual-landlord-scale-fit}
 - phrasings:
-  - {text: "個人房東", source: "question_summary:3596", status: proposed}
-  - {text: "免費試用", source: "question_summary:3596", status: proposed}
-  - {text: "多元金流", source: "question_summary:3597", status: proposed}
-  - {text: "帳務自動化", source: "question_summary:3597", status: proposed}
-  - {text: "收租對帳", source: "question_summary:3596", status: proposed}
-  - {text: "物件合約帳務", source: "question_summary:3596", status: proposed}
-  - {text: "約10戶", source: "question_summary:3596", status: proposed}
-  - {text: "約20戶", source: "question_summary:3597", status: proposed}
-  - {text: "約30戶", source: "question_summary:3598", status: proposed}
-  - {text: "規模化", source: "question_summary:3598", status: proposed}
-  - {text: "銜接團隊大房東報表", source: "question_summary:3598", status: proposed}
+  - {text: "個人房東", source: "question_summary:3596", status: approved}
+  - {text: "免費試用", source: "question_summary:3596", status: approved}
+  - {text: "多元金流", source: "question_summary:3597", status: approved}
+  - {text: "帳務自動化", source: "question_summary:3597", status: approved}
+  - {text: "收租對帳", source: "question_summary:3596", status: approved}
+  - {text: "物件合約帳務", source: "question_summary:3596", status: approved}
+  - {text: "約10戶", source: "question_summary:3596", status: approved}
+  - {text: "約20戶", source: "question_summary:3597", status: approved}
+  - {text: "約30戶", source: "question_summary:3598", status: approved}
+  - {text: "規模化", source: "question_summary:3598", status: approved}
+  - {text: "銜接團隊大房東報表", source: "question_summary:3598", status: approved}
 - sources: [kb:3596, kb:3597, kb:3598]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
@@ -98,12 +98,12 @@ business_types: [system_provider]
 ### 舊系統資料能否匯入（可匯入範圍） {#prospect/B/data-migration}
 - see_also: [prospect/G/migration-limits]
 - phrasings:
-  - {text: "合約能不能匯", source: "question_summary:5379", status: proposed}
-  - {text: "哪些能匯", source: "question_summary:5379", status: proposed}
-  - {text: "房東租客合約帳單", source: "question_summary:5379", status: proposed}
-  - {text: "批次匯入", source: "question_summary:5379", status: proposed}
-  - {text: "搬資料", source: "question_summary:5379", status: proposed}
-  - {text: "舊系統資料可以匯進來嗎", source: "question_summary:5379", status: proposed}
+  - {text: "合約能不能匯", source: "question_summary:5379", status: approved}
+  - {text: "哪些能匯", source: "question_summary:5379", status: approved}
+  - {text: "房東租客合約帳單", source: "question_summary:5379", status: approved}
+  - {text: "批次匯入", source: "question_summary:5379", status: approved}
+  - {text: "搬資料", source: "question_summary:5379", status: approved}
+  - {text: "舊系統資料可以匯進來嗎", source: "question_summary:5379", status: approved}
 - sources: [kb:5379, docs:knowledge/jgb-product-facts.md#batch-import-scope]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
@@ -114,12 +114,12 @@ business_types: [system_provider]
 ## C 六大模組 {#C}
 ### 房源管理模組做什麼 {#prospect/C/property-management-overview}
 - phrasings:
-  - {text: "VR看屋", source: "question_summary:3599", status: proposed}
-  - {text: "房源管理", source: "question_summary:3599", status: proposed}
-  - {text: "批次上傳", source: "question_summary:3599", status: proposed}
-  - {text: "物件集中", source: "question_summary:3599", status: proposed}
-  - {text: "社區歸戶", source: "question_summary:3599", status: proposed}
-  - {text: "物件自訂標籤有什麼用", source: "gapmap:C15", status: proposed}
+  - {text: "VR看屋", source: "question_summary:3599", status: approved}
+  - {text: "房源管理", source: "question_summary:3599", status: approved}
+  - {text: "批次上傳", source: "question_summary:3599", status: approved}
+  - {text: "物件集中", source: "question_summary:3599", status: approved}
+  - {text: "社區歸戶", source: "question_summary:3599", status: approved}
+  - {text: "物件自訂標籤有什麼用", source: "gapmap:C15", status: approved}
 - sources: [kb:3599, docs:knowledge/jgb-product-facts.md#estate-labels]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
@@ -130,9 +130,9 @@ business_types: [system_provider]
 
 ### 社區建立與批次新增物件 {#prospect/C/community-batch-create}
 - phrasings:
-  - {text: "如何新增物件?", source: "helpcenter:slug1", status: proposed}
-  - {text: "物件批次新增表格如何填寫?", source: "helpcenter:qa01", status: proposed}
-  - {text: "社區可以批次建立嗎", source: "koyu:property（原#7", status: proposed}
+  - {text: "如何新增物件?", source: "helpcenter:slug1", status: approved}
+  - {text: "物件批次新增表格如何填寫?", source: "helpcenter:qa01", status: approved}
+  - {text: "社區可以批次建立嗎", source: "koyu:property（原#7", status: approved}
 - sources: [draft:batch#6]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
@@ -142,9 +142,9 @@ business_types: [system_provider]
 
 ### 招租店舖與 VR 看屋 {#prospect/C/rental-storefront-vr}
 - phrasings:
-  - {text: "什麼是「房東對外首頁」(招租店舖)?", source: "helpcenter:slug90", status: proposed}
-  - {text: "招租店舖是什麼", source: "koyu:slug90#2", status: proposed}
-  - {text: "我改了大頭照對外首頁沒變", source: "koyu:slug90#8", status: proposed}
+  - {text: "什麼是「房東對外首頁」(招租店舖)?", source: "helpcenter:slug90", status: approved}
+  - {text: "招租店舖是什麼", source: "koyu:slug90#2", status: approved}
+  - {text: "我改了大頭照對外首頁沒變", source: "koyu:slug90#8", status: approved}
 - sources: [draft:batch#7]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
@@ -154,17 +154,17 @@ business_types: [system_provider]
 
 ### 物件狀態是什麼意思 {#prospect/C/property-status-meaning}
 - phrasings:
-  - {text: "未刊登是什麼意思", source: "koyu:slug10#15", status: proposed}
-  - {text: "已失效是什麼意思", source: "koyu:slug20#3", status: proposed}
-  - {text: "已支出是什麼意思", source: "koyu:slug88#15", status: proposed}
-  - {text: "帳單狀態顯示「已失效」是什麼意思?", source: "helpcenter:billexpired", status: proposed}
-  - {text: "找補費用是什麼意思", source: "koyu:slug66#6", status: proposed}
-  - {text: "未退押金是什麼意思", source: "koyu:slug28#14", status: proposed}
-  - {text: "物件狀態有什麼差別", source: "koyu:slug39#6", status: proposed}
-  - {text: "紅色的字是什麼意思", source: "koyu:slug24#9", status: proposed}
-  - {text: "自動對帳是什麼意思", source: "koyu:slug75#15", status: proposed}
-  - {text: "洽談中的物件可以做什麼", source: "koyu:property（原#5", status: proposed}
-  - {text: "解約後30天是什麼意思", source: "koyu:slug29#14", status: proposed}
+  - {text: "未刊登是什麼意思", source: "koyu:slug10#15", status: approved}
+  - {text: "已失效是什麼意思", source: "koyu:slug20#3", status: approved}
+  - {text: "已支出是什麼意思", source: "koyu:slug88#15", status: approved}
+  - {text: "帳單狀態顯示「已失效」是什麼意思?", source: "helpcenter:billexpired", status: approved}
+  - {text: "找補費用是什麼意思", source: "koyu:slug66#6", status: approved}
+  - {text: "未退押金是什麼意思", source: "koyu:slug28#14", status: approved}
+  - {text: "物件狀態有什麼差別", source: "koyu:slug39#6", status: approved}
+  - {text: "紅色的字是什麼意思", source: "koyu:slug24#9", status: approved}
+  - {text: "自動對帳是什麼意思", source: "koyu:slug75#15", status: approved}
+  - {text: "洽談中的物件可以做什麼", source: "koyu:property（原#5", status: approved}
+  - {text: "解約後30天是什麼意思", source: "koyu:slug29#14", status: approved}
 - sources: [draft:batch#5]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
@@ -174,14 +174,14 @@ business_types: [system_provider]
 ### 建約方式與線上電子簽約流程（含時效、身分、社宅、批次續約） {#prospect/C/contract-esign-flow}
 - see_also: [prospect/C/contract-templates, prospect/C/contract-modify-after-sign]
 - phrasings:
-  - {text: "上傳既有合約", source: "question_summary:3600", status: proposed}
-  - {text: "修改合約", source: "question_summary:3600", status: proposed}
-  - {text: "合約範本", source: "question_summary:3600", status: proposed}
-  - {text: "建立合約", source: "question_summary:3600", status: proposed}
-  - {text: "簽約邀請", source: "question_summary:3600", status: proposed}
-  - {text: "線上電子簽約", source: "question_summary:3600", status: proposed}
-  - {text: "簽約要另外收費嗎", source: "gapmap:C22", status: proposed}
-  - {text: "電子簽章收費", source: "gapmap:C22", status: proposed}
+  - {text: "上傳既有合約", source: "question_summary:3600", status: approved}
+  - {text: "修改合約", source: "question_summary:3600", status: approved}
+  - {text: "合約範本", source: "question_summary:3600", status: approved}
+  - {text: "建立合約", source: "question_summary:3600", status: approved}
+  - {text: "簽約邀請", source: "question_summary:3600", status: approved}
+  - {text: "線上電子簽約", source: "question_summary:3600", status: approved}
+  - {text: "簽約要另外收費嗎", source: "gapmap:C22", status: approved}
+  - {text: "電子簽章收費", source: "gapmap:C22", status: approved}
 - sources: [kb:3600, docs:knowledge/jgb-product-facts.md#esign-no-fee]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
@@ -203,14 +203,14 @@ business_types: [system_provider]
 ### 合約範本有哪些可以選 {#prospect/C/contract-templates}
 - see_also: [prospect/C/contract-esign-flow, prospect/C/contract-modify-after-sign]
 - phrasings:
-  - {text: "上傳既有合約", source: "question_summary:3600", status: proposed}
-  - {text: "修改合約", source: "question_summary:3600", status: proposed}
-  - {text: "合約範本", source: "question_summary:3600", status: proposed}
-  - {text: "建立合約", source: "question_summary:3600", status: proposed}
-  - {text: "簽約邀請", source: "question_summary:3600", status: proposed}
-  - {text: "線上電子簽約", source: "question_summary:3600", status: proposed}
-  - {text: "電子合約的簽約邀請,有時效嗎?", source: "helpcenter:slug73", status: proposed}
-  - {text: "包租跟代管差在哪", source: "gapmap:C03", status: proposed}
+  - {text: "上傳既有合約", source: "question_summary:3600", status: approved}
+  - {text: "修改合約", source: "question_summary:3600", status: approved}
+  - {text: "合約範本", source: "question_summary:3600", status: approved}
+  - {text: "建立合約", source: "question_summary:3600", status: approved}
+  - {text: "簽約邀請", source: "question_summary:3600", status: approved}
+  - {text: "線上電子簽約", source: "question_summary:3600", status: approved}
+  - {text: "電子合約的簽約邀請,有時效嗎?", source: "helpcenter:slug73", status: approved}
+  - {text: "包租跟代管差在哪", source: "gapmap:C03", status: approved}
 - sources: [kb:3600, draft:batch#9, docs:knowledge/jgb-product-facts.md#charter-vs-management]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
@@ -223,12 +223,12 @@ business_types: [system_provider]
 ### 合約送出或簽完後能不能修改 {#prospect/C/contract-modify-after-sign}
 - see_also: [prospect/C/contract-esign-flow, prospect/C/contract-templates]
 - phrasings:
-  - {text: "上傳既有合約", source: "question_summary:3600", status: proposed}
-  - {text: "修改合約", source: "question_summary:3600", status: proposed}
-  - {text: "合約範本", source: "question_summary:3600", status: proposed}
-  - {text: "建立合約", source: "question_summary:3600", status: proposed}
-  - {text: "簽約邀請", source: "question_summary:3600", status: proposed}
-  - {text: "線上電子簽約", source: "question_summary:3600", status: proposed}
+  - {text: "上傳既有合約", source: "question_summary:3600", status: approved}
+  - {text: "修改合約", source: "question_summary:3600", status: approved}
+  - {text: "合約範本", source: "question_summary:3600", status: approved}
+  - {text: "建立合約", source: "question_summary:3600", status: approved}
+  - {text: "簽約邀請", source: "question_summary:3600", status: approved}
+  - {text: "線上電子簽約", source: "question_summary:3600", status: approved}
 - sources: [kb:3600]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
@@ -237,13 +237,13 @@ business_types: [system_provider]
 
 ### 歷史合約保留多久 {#prospect/C/contract-history-retention}
 - phrasings:
-  - {text: "歷史合約是什麼?", source: "helpcenter:slug15", status: proposed}
-  - {text: "既存合約是什麼", source: "koyu:qa06#3", status: proposed}
-  - {text: "制式合約是什麼意思", source: "koyu:qa06#14", status: proposed}
-  - {text: "歷史合約裡面放什麼", source: "koyu:slug15#16", status: proposed}
-  - {text: "合約到期後就消失了", source: "koyu:slug15#8", status: proposed}
-  - {text: "歷史合約的狀態有哪些", source: "koyu:slug15#2", status: proposed}
-  - {text: "合約上寫線上智能整合收款是什麼", source: "koyu:slug86#9", status: proposed}
+  - {text: "歷史合約是什麼?", source: "helpcenter:slug15", status: approved}
+  - {text: "既存合約是什麼", source: "koyu:qa06#3", status: approved}
+  - {text: "制式合約是什麼意思", source: "koyu:qa06#14", status: approved}
+  - {text: "歷史合約裡面放什麼", source: "koyu:slug15#16", status: approved}
+  - {text: "合約到期後就消失了", source: "koyu:slug15#8", status: approved}
+  - {text: "歷史合約的狀態有哪些", source: "koyu:slug15#2", status: approved}
+  - {text: "合約上寫線上智能整合收款是什麼", source: "koyu:slug86#9", status: approved}
 - sources: [draft:batch#10]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
@@ -252,14 +252,14 @@ business_types: [system_provider]
 
 ### 帳務管理模組做什麼 {#prospect/C/billing-overview}
 - phrasings:
-  - {text: "儲值金", source: "question_summary:3601", status: proposed}
-  - {text: "帳務管理", source: "question_summary:3601", status: proposed}
-  - {text: "收租對帳", source: "question_summary:3601", status: proposed}
-  - {text: "自動帳單", source: "question_summary:3601", status: proposed}
-  - {text: "金流代收", source: "question_summary:3601", status: proposed}
-  - {text: "帳單可以自動開立電子發票嗎?", source: "helpcenter:einvoice", status: proposed}
-  - {text: "電子發票可以自動開嗎", source: "gapmap:C24", status: proposed}
-  - {text: "手機條碼載具", source: "gapmap:C54", status: proposed}
+  - {text: "儲值金", source: "question_summary:3601", status: approved}
+  - {text: "帳務管理", source: "question_summary:3601", status: approved}
+  - {text: "收租對帳", source: "question_summary:3601", status: approved}
+  - {text: "自動帳單", source: "question_summary:3601", status: approved}
+  - {text: "金流代收", source: "question_summary:3601", status: approved}
+  - {text: "帳單可以自動開立電子發票嗎?", source: "helpcenter:einvoice", status: approved}
+  - {text: "電子發票可以自動開嗎", source: "gapmap:C24", status: approved}
+  - {text: "手機條碼載具", source: "gapmap:C54", status: approved}
 - sources: [kb:3601, docs:knowledge/jgb-product-facts.md#einvoice-auto, docs:knowledge/jgb-product-facts.md#carrier-types]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
@@ -271,10 +271,10 @@ business_types: [system_provider]
 
 ### 租客逾期未繳怎麼辦 {#prospect/C/overdue-reminder-late-fee}
 - phrasings:
-  - {text: "租客不繳租金怎麼辦", source: "question_summary:5378", status: proposed}
-  - {text: "不足月的租金怎麼算", source: "koyu:Landlordonboarding06Finance#5", status: proposed}
-  - {text: "房客一直不繳錢怎麼辦", source: "koyu:rentallaw.pt2#6", status: proposed}
-  - {text: "租客教學:租金逾期篇", source: "helpcenter:slug03", status: proposed}
+  - {text: "租客不繳租金怎麼辦", source: "question_summary:5378", status: approved}
+  - {text: "不足月的租金怎麼算", source: "koyu:Landlordonboarding06Finance#5", status: approved}
+  - {text: "房客一直不繳錢怎麼辦", source: "koyu:rentallaw.pt2#6", status: approved}
+  - {text: "租客教學:租金逾期篇", source: "helpcenter:slug03", status: approved}
 - sources: [kb:5378]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
@@ -285,10 +285,10 @@ business_types: [system_provider]
 
 ### 帳單內容與臨時加收費用 {#prospect/C/bill-contents-extra-fees}
 - phrasings:
-  - {text: "帳單裡面有哪些資訊", source: "koyu:slug78#1", status: proposed}
-  - {text: "帳單內有哪些資訊?", source: "helpcenter:slug78", status: proposed}
-  - {text: "帳單包含哪些資訊", source: "koyu:slug78#14", status: proposed}
-  - {text: "如何在帳單內添加臨時增收費用?", source: "helpcenter:slug79", status: proposed}
+  - {text: "帳單裡面有哪些資訊", source: "koyu:slug78#1", status: approved}
+  - {text: "帳單內有哪些資訊?", source: "helpcenter:slug78", status: approved}
+  - {text: "帳單包含哪些資訊", source: "koyu:slug78#14", status: approved}
+  - {text: "如何在帳單內添加臨時增收費用?", source: "helpcenter:slug79", status: approved}
 - sources: [draft:batch#11]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
@@ -297,11 +297,11 @@ business_types: [system_provider]
 
 ### 帳單版面能不能自訂 {#prospect/C/bill-format-customize}
 - phrasings:
-  - {text: "客製帳單", source: "question_summary:5380", status: proposed}
-  - {text: "帳單格式能不能自己設定", source: "question_summary:5380", status: proposed}
-  - {text: "帳單版面", source: "question_summary:5380", status: proposed}
-  - {text: "收據樣式", source: "question_summary:5380", status: proposed}
-  - {text: "自訂帳單", source: "question_summary:5380", status: proposed}
+  - {text: "客製帳單", source: "question_summary:5380", status: approved}
+  - {text: "帳單格式能不能自己設定", source: "question_summary:5380", status: approved}
+  - {text: "帳單版面", source: "question_summary:5380", status: approved}
+  - {text: "收據樣式", source: "question_summary:5380", status: approved}
+  - {text: "自訂帳單", source: "question_summary:5380", status: approved}
 - sources: [kb:5380]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
@@ -312,9 +312,9 @@ business_types: [system_provider]
 
 ### 金流廠商差別與申請條件 {#prospect/C/payment-gateway-options}
 - phrasings:
-  - {text: "國泰、永豐、中信的金流要怎麼申請與提領?", source: "helpcenter:paymentapply", status: proposed}
-  - {text: "儲值金回充帳戶", source: "gapmap:C29", status: proposed}
-  - {text: "固定虛擬帳號", source: "gapmap:C29", status: proposed}
+  - {text: "國泰、永豐、中信的金流要怎麼申請與提領?", source: "helpcenter:paymentapply", status: approved}
+  - {text: "儲值金回充帳戶", source: "gapmap:C29", status: approved}
+  - {text: "固定虛擬帳號", source: "gapmap:C29", status: approved}
 - sources: [draft:batch#12, docs:knowledge/jgb-product-facts.md#stored-value]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
@@ -327,15 +327,15 @@ business_types: [system_provider]
 
 ### 租客能不能用信用卡繳房租 {#prospect/C/credit-card-rent-payment}
 - phrasings:
-  - {text: "租客能用信用卡繳納房租嗎?", source: "helpcenter:slug86", status: proposed}
-  - {text: "租客可以用信用卡繳房租嗎", source: "koyu:slug86#1", status: proposed}
-  - {text: "我想改用信用卡但沒有選項", source: "koyu:slug103#8", status: proposed}
-  - {text: "我要繳房租", source: "koyu:onboarding3#4", status: proposed}
-  - {text: "租客繳費方式(藍新信用卡)", source: "helpcenter:slug102", status: proposed}
-  - {text: "ATM繳房租", source: "koyu:slug103#14", status: proposed}
-  - {text: "繳房租的方法", source: "koyu:onboarding3#14", status: proposed}
-  - {text: "信用卡付款流程", source: "koyu:slug102#14", status: proposed}
-  - {text: "轉帳繳房租流程", source: "koyu:slug104#14", status: proposed}
+  - {text: "租客能用信用卡繳納房租嗎?", source: "helpcenter:slug86", status: approved}
+  - {text: "租客可以用信用卡繳房租嗎", source: "koyu:slug86#1", status: approved}
+  - {text: "我想改用信用卡但沒有選項", source: "koyu:slug103#8", status: approved}
+  - {text: "我要繳房租", source: "koyu:onboarding3#4", status: approved}
+  - {text: "租客繳費方式(藍新信用卡)", source: "helpcenter:slug102", status: approved}
+  - {text: "ATM繳房租", source: "koyu:slug103#14", status: approved}
+  - {text: "繳房租的方法", source: "koyu:onboarding3#14", status: approved}
+  - {text: "信用卡付款流程", source: "koyu:slug102#14", status: approved}
+  - {text: "轉帳繳房租流程", source: "koyu:slug104#14", status: approved}
 - sources: [draft:batch#13]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
@@ -344,12 +344,12 @@ business_types: [system_provider]
 
 ### 團隊管理模組做什麼 {#prospect/C/team-management-overview}
 - phrasings:
-  - {text: "團隊管理", source: "question_summary:3602", status: proposed}
-  - {text: "多人協作", source: "question_summary:3602", status: proposed}
-  - {text: "大房東報表", source: "question_summary:3602", status: proposed}
-  - {text: "角色權限", source: "question_summary:3602", status: proposed}
-  - {text: "系統管理模組有哪些功能", source: "gapmap:C52", status: proposed}
-  - {text: "系統管理", source: "gapmap:C52", status: proposed}
+  - {text: "團隊管理", source: "question_summary:3602", status: approved}
+  - {text: "多人協作", source: "question_summary:3602", status: approved}
+  - {text: "大房東報表", source: "question_summary:3602", status: approved}
+  - {text: "角色權限", source: "question_summary:3602", status: approved}
+  - {text: "系統管理模組有哪些功能", source: "gapmap:C52", status: approved}
+  - {text: "系統管理", source: "gapmap:C52", status: approved}
 - sources: [kb:3602, docs:knowledge/jgb-product-facts.md#no-system-management-module]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
@@ -368,12 +368,12 @@ business_types: [system_provider]
 
 ### 智慧電錶與門鎖整合 {#prospect/C/smart-meter-lock-iot}
 - phrasings:
-  - {text: "IoT", source: "question_summary:3603", status: proposed}
-  - {text: "智慧門鎖", source: "question_summary:3603", status: proposed}
-  - {text: "智慧電錶", source: "question_summary:3603", status: proposed}
-  - {text: "智慧電表", source: "koyu:Landlordonboarding08Device#15", status: proposed}
-  - {text: "IOT設備", source: "koyu:Landlordonboarding08Device#14", status: proposed}
-  - {text: "私人門鎖和共用門鎖差別", source: "gapmap:C39", status: proposed}
+  - {text: "IoT", source: "question_summary:3603", status: approved}
+  - {text: "智慧門鎖", source: "question_summary:3603", status: approved}
+  - {text: "智慧電錶", source: "question_summary:3603", status: approved}
+  - {text: "智慧電表", source: "koyu:Landlordonboarding08Device#15", status: approved}
+  - {text: "IOT設備", source: "koyu:Landlordonboarding08Device#14", status: approved}
+  - {text: "私人門鎖和共用門鎖差別", source: "gapmap:C39", status: approved}
 - sources: [kb:3603, docs:knowledge/jgb-product-facts.md#doorlock-types]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
@@ -384,11 +384,11 @@ business_types: [system_provider]
 
 ### 大房東報表與代收代付 {#prospect/C/owner-report-collection-remit}
 - phrasings:
-  - {text: "代收代付", source: "question_summary:3604", status: proposed}
-  - {text: "大房東報表", source: "question_summary:3604", status: proposed}
-  - {text: "對業主交報表", source: "question_summary:3604", status: proposed}
-  - {text: "自動寄送", source: "question_summary:3604", status: proposed}
-  - {text: "差額發票什麼時候用", source: "gapmap:C25", status: proposed}
+  - {text: "代收代付", source: "question_summary:3604", status: approved}
+  - {text: "大房東報表", source: "question_summary:3604", status: approved}
+  - {text: "對業主交報表", source: "question_summary:3604", status: approved}
+  - {text: "自動寄送", source: "question_summary:3604", status: approved}
+  - {text: "差額發票什麼時候用", source: "gapmap:C25", status: approved}
 - sources: [kb:3604, draft:batch#18, docs:knowledge/jgb-product-facts.md#balance-invoice]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
@@ -399,15 +399,15 @@ business_types: [system_provider]
 
 ### 大房東是什麼 {#prospect/C/what-is-owner-landlord}
 - phrasings:
-  - {text: "房東對外首頁是什麼", source: "koyu:slug90#1", status: proposed}
-  - {text: "經理人是什麼", source: "koyu:slug92#15", status: proposed}
-  - {text: "我的帳號是什麼", source: "koyu:slug01#15", status: proposed}
-  - {text: "樓盤字典是什麼", source: "koyu:TOFILL-beike#3", status: proposed}
-  - {text: "物件分類是什麼", source: "koyu:slug39#14", status: proposed}
-  - {text: "租約公證是什麼", source: "koyu:rent3#1", status: proposed}
-  - {text: "租賃專法是什麼", source: "koyu:rentallaw.pt1#1", status: proposed}
-  - {text: "線上金流是什麼", source: "koyu:slug86#15", status: proposed}
-  - {text: "虛擬帳號是什麼", source: "koyu:landlordonboarding05Paymentsettings#19", status: proposed}
+  - {text: "房東對外首頁是什麼", source: "koyu:slug90#1", status: approved}
+  - {text: "經理人是什麼", source: "koyu:slug92#15", status: approved}
+  - {text: "我的帳號是什麼", source: "koyu:slug01#15", status: approved}
+  - {text: "樓盤字典是什麼", source: "koyu:TOFILL-beike#3", status: approved}
+  - {text: "物件分類是什麼", source: "koyu:slug39#14", status: approved}
+  - {text: "租約公證是什麼", source: "koyu:rent3#1", status: approved}
+  - {text: "租賃專法是什麼", source: "koyu:rentallaw.pt1#1", status: approved}
+  - {text: "線上金流是什麼", source: "koyu:slug86#15", status: approved}
+  - {text: "虛擬帳號是什麼", source: "koyu:landlordonboarding05Paymentsettings#19", status: approved}
 - sources: [draft:batch#2]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
@@ -418,9 +418,9 @@ business_types: [system_provider]
 
 ### 線上報修與進度追蹤 {#prospect/C/repair-system}
 - phrasings:
-  - {text: "修繕系統", source: "question_summary:3605", status: proposed}
-  - {text: "線上報修", source: "question_summary:3605", status: proposed}
-  - {text: "進度追蹤", source: "question_summary:3605", status: proposed}
+  - {text: "修繕系統", source: "question_summary:3605", status: approved}
+  - {text: "線上報修", source: "question_summary:3605", status: approved}
+  - {text: "進度追蹤", source: "question_summary:3605", status: approved}
 - sources: [kb:3605]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
@@ -430,12 +430,12 @@ business_types: [system_provider]
 
 ### 系統通知管道與時機 {#prospect/C/notification-channels}
 - phrasings:
-  - {text: "註冊要用email還是手機", source: "koyu:onboarding1#5", status: proposed}
-  - {text: "簽約邀請是用簡訊還是email", source: "koyu:slug48#4", status: proposed}
-  - {text: "我要改我的email", source: "koyu:slug95#4", status: proposed}
-  - {text: "email打錯了怎麼辦", source: "koyu:slug00#10", status: proposed}
-  - {text: "可以從email直接繳嗎", source: "koyu:slug100#3", status: proposed}
-  - {text: "我只有租客的電話沒有email", source: "koyu:slug13#9", status: proposed}
+  - {text: "註冊要用email還是手機", source: "koyu:onboarding1#5", status: approved}
+  - {text: "簽約邀請是用簡訊還是email", source: "koyu:slug48#4", status: approved}
+  - {text: "我要改我的email", source: "koyu:slug95#4", status: approved}
+  - {text: "email打錯了怎麼辦", source: "koyu:slug00#10", status: approved}
+  - {text: "可以從email直接繳嗎", source: "koyu:slug100#3", status: approved}
+  - {text: "我只有租客的電話沒有email", source: "koyu:slug13#9", status: approved}
 - sources: [draft:batch#15]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
@@ -446,10 +446,10 @@ business_types: [system_provider]
 ## D 方案試用 {#D}
 ### 怎麼收費 {#prospect/D/pricing-plans}
 - phrasings:
-  - {text: "多少錢", source: "question_summary:3610", status: proposed}
-  - {text: "怎麼收費", source: "question_summary:3610", status: proposed}
-  - {text: "金箍棒", source: "question_summary:3610", status: proposed}
-  - {text: "公司方案多少錢", source: "koyu:Landlordonboarding02#20", status: proposed}
+  - {text: "多少錢", source: "question_summary:3610", status: approved}
+  - {text: "怎麼收費", source: "question_summary:3610", status: approved}
+  - {text: "金箍棒", source: "question_summary:3610", status: approved}
+  - {text: "公司方案多少錢", source: "koyu:Landlordonboarding02#20", status: approved}
 - sources: [kb:3610]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
@@ -459,10 +459,10 @@ business_types: [system_provider]
 
 ### 可以免費試用嗎 {#prospect/D/free-trial}
 - phrasings:
-  - {text: "可以免費試用嗎", source: "question_summary:3611", status: proposed}
-  - {text: "試用多久", source: "question_summary:3611", status: proposed}
-  - {text: "多久可以提款", source: "koyu:advanced12#3", status: proposed}
-  - {text: "驗證碼多久可以重發", source: "koyu:tenantintro.register#3", status: proposed}
+  - {text: "可以免費試用嗎", source: "question_summary:3611", status: approved}
+  - {text: "試用多久", source: "question_summary:3611", status: approved}
+  - {text: "多久可以提款", source: "koyu:advanced12#3", status: approved}
+  - {text: "驗證碼多久可以重發", source: "koyu:tenantintro.register#3", status: approved}
 - sources: [kb:3611]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
@@ -471,8 +471,8 @@ business_types: [system_provider]
 
 ### 方案物件額度上限 {#prospect/D/property-quota-limit}
 - phrasings:
-  - {text: "凶宅怎麼辦", source: "koyu:rentallaw.pt2#18", status: proposed}
-  - {text: "免費方案可以建幾個物件", source: "gapmap:C07", status: proposed}
+  - {text: "凶宅怎麼辦", source: "koyu:rentallaw.pt2#18", status: approved}
+  - {text: "免費方案可以建幾個物件", source: "gapmap:C07", status: approved}
 - sources: [draft:batch#3, docs:knowledge/jgb-product-facts.md#free-plan-quota]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
@@ -491,13 +491,13 @@ business_types: [system_provider]
 
 ### 怎麼註冊帳號 {#prospect/D/account-registration}
 - phrasings:
-  - {text: "怎麼開帳號", source: "koyu:onboarding1#14", status: proposed}
-  - {text: "屋主帳號怎麼用", source: "koyu:Landlordonboarding00#15", status: proposed}
-  - {text: "租客怎麼開帳號", source: "koyu:tenantintro.register#13", status: proposed}
-  - {text: "帳號忘記了怎麼救", source: "koyu:slug01#6", status: proposed}
-  - {text: "帳號資訊怎麼變更", source: "koyu:slug95#13", status: proposed}
-  - {text: "我忘記帳號怎麼辦?", source: "helpcenter:slug01", status: proposed}
-  - {text: "登入帳號怎麼找回", source: "koyu:slug01#13", status: proposed}
+  - {text: "怎麼開帳號", source: "koyu:onboarding1#14", status: approved}
+  - {text: "屋主帳號怎麼用", source: "koyu:Landlordonboarding00#15", status: approved}
+  - {text: "租客怎麼開帳號", source: "koyu:tenantintro.register#13", status: approved}
+  - {text: "帳號忘記了怎麼救", source: "koyu:slug01#6", status: approved}
+  - {text: "帳號資訊怎麼變更", source: "koyu:slug95#13", status: approved}
+  - {text: "我忘記帳號怎麼辦?", source: "helpcenter:slug01", status: approved}
+  - {text: "登入帳號怎麼找回", source: "koyu:slug01#13", status: approved}
 - sources: [draft:batch#16]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
@@ -508,10 +508,10 @@ business_types: [system_provider]
 ## E 競品 {#E}
 ### 跟 Bananas、屋我也差在哪 {#prospect/E/competitor-comparison}
 - phrasings:
-  - {text: "Bananas", source: "question_summary:3607", status: proposed}
-  - {text: "屋我也", source: "question_summary:3607", status: proposed}
-  - {text: "租賃管理系統", source: "question_summary:3607", status: proposed}
-  - {text: "金箍棒", source: "question_summary:3607", status: proposed}
+  - {text: "Bananas", source: "question_summary:3607", status: approved}
+  - {text: "屋我也", source: "question_summary:3607", status: approved}
+  - {text: "租賃管理系統", source: "question_summary:3607", status: approved}
+  - {text: "金箍棒", source: "question_summary:3607", status: approved}
 - sources: [kb:3607]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
@@ -522,9 +522,9 @@ business_types: [system_provider]
 
 ### 會評論競爭對手嗎 {#prospect/E/competitor-neutrality}
 - phrasings:
-  - {text: "你們會評論競爭對手嗎", source: "question_summary:3609", status: proposed}
-  - {text: "怎麼看同業", source: "question_summary:3609", status: proposed}
-  - {text: "會說對手壞話嗎", source: "question_summary:3609", status: proposed}
+  - {text: "你們會評論競爭對手嗎", source: "question_summary:3609", status: approved}
+  - {text: "怎麼看同業", source: "question_summary:3609", status: approved}
+  - {text: "會說對手壞話嗎", source: "question_summary:3609", status: approved}
 - sources: [kb:3609]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
@@ -534,7 +534,7 @@ business_types: [system_provider]
 ## F 導流 {#F}
 ### 找真人或預約 demo {#prospect/F/contact-sales-demo}
 - phrasings:
-  - {text: "欠租的房客怎麼找", source: "koyu:slug24#14", status: proposed}
+  - {text: "欠租的房客怎麼找", source: "koyu:slug24#14", status: approved}
 - sources: [draft:batch#17]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
@@ -543,8 +543,8 @@ business_types: [system_provider]
 ## G 現有不足 {#G}
 ### 水電費怎麼分算與大概多少錢 {#prospect/G/utility-split-advice}
 - phrasings:
-  - {text: "水電費怎麼分算", source: "gapmap:C31", status: proposed}
-  - {text: "水電費一個月大概多少", source: "gapmap:C31", status: proposed}
+  - {text: "水電費怎麼分算", source: "gapmap:C31", status: approved}
+  - {text: "水電費一個月大概多少", source: "gapmap:C31", status: approved}
 - sources: [docs:knowledge/jgb-product-facts.md#utility-split-advice]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
@@ -553,12 +553,12 @@ business_types: [system_provider]
 ### 資料搬遷目前不支援的項目（合約與歷史帳單） {#prospect/G/migration-limits}
 - see_also: [prospect/B/data-migration]
 - phrasings:
-  - {text: "合約能不能匯", source: "question_summary:5379", status: proposed}
-  - {text: "哪些能匯", source: "question_summary:5379", status: proposed}
-  - {text: "房東租客合約帳單", source: "question_summary:5379", status: proposed}
-  - {text: "批次匯入", source: "question_summary:5379", status: proposed}
-  - {text: "搬資料", source: "question_summary:5379", status: proposed}
-  - {text: "舊系統資料可以匯進來嗎", source: "question_summary:5379", status: proposed}
+  - {text: "合約能不能匯", source: "question_summary:5379", status: approved}
+  - {text: "哪些能匯", source: "question_summary:5379", status: approved}
+  - {text: "房東租客合約帳單", source: "question_summary:5379", status: approved}
+  - {text: "批次匯入", source: "question_summary:5379", status: approved}
+  - {text: "搬資料", source: "question_summary:5379", status: approved}
+  - {text: "舊系統資料可以匯進來嗎", source: "question_summary:5379", status: approved}
 - sources: [kb:5379]
 - reviewed: {by: owner, at: 2026-09-07}
 - instance_applicability: general
