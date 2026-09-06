@@ -1,7 +1,7 @@
 {
   "feature_name": "knowledge-outline-and-intent-architecture",
   "created_at": "2026-09-06T09:01:45+08:00",
-  "updated_at": "2026-09-06T13:33:32+08:00",
+  "updated_at": "2026-09-06T18:05:00+08:00",
   "phase": "tasks-generated",
   "language": "zh-TW",
   "project_description": "知識大綱的建立與完善、口語多意圖下的對話架構、小量先於放量的驗證邏輯（業主 2026-09-06 定義；平台層 MCP／Runtime／Verifier 留在 agentic-mcp-orchestration，本 spec 只承接三支柱）。(1) 大綱怎麼建立完善：JGB 區分哪些區塊、各含哪些內容；用既有 skill（.claude/skills/retrieval-improvement-loop、缺口地圖工具 .kiro/specs/presales-grounding-gate/coverage-map、rag-orchestrator/tools/agent_eval.py）建立可重跑的回測閉環；優先補齊售前，與 LINE OA 四份文件（/Users/lenny/jgb/line-bot-platform/docs/chatai-requests.md、chatai-repair-capture-spec.md、chatai-digest-followup-spec.md、chatai-wire-examples.md）定義的情境。(2) 使用者口語化、多種意圖下什麼架構更適合更精準：候選段落檢索、多向量講法錨點、模型在小候選集判意圖、程式規則兜敏感、部分回答＋帶理由轉人並存的契約——以證據選，不預設。(3) 小量測試邏輯先於放量：每個命題最小材料與推翻條件、便宜的先做；沒定義完受測物不開跑；材料以業主正本為優先、不造題。已查證事實：現行「售前大綱」＝程式依六大模組重排 29 列已標記 kb（21 列 prospect＋8 列全域業者列）（outline_approved_by 標記來自 DB 寫入授權、非內容審核，業主不認其為售前大綱）；線上售前對話邏輯正本＝kb 3645「對話規則：售前顧問」（A/B 判斷、五欄位補問、先同理再問、CTA 規則、不報價、競品中立），agent 路徑未搬；缺口地圖 v2.1 55 格中 27 格未覆蓋、第二批 18 筆待業主放行；大綱段落層 top-5 召回 86%（round9-dsp033/README）；業主問法正本 85 篇 1,546 句（幫助中心受眾）。約束：⛔ 不 push；⛔ 不動線上；DB 寫入需業主授權；⛔ 54 句凍結測試題不入索引；禁止特例修改；先定標準再執行。區塊切法依受眾各自定案：售前＝原 presales-kb 的 A 產品基本盤／B 適配／C 六大模組／D 方案試用／E 競品／F 導流（加「現有不足」）；業者與 LINE OA 的大綱區塊依 chatai 四份文件與 27 列系統脈絡另定，⛔ 不套售前切法。",
@@ -22,6 +22,12 @@
   "implementation": {
     "started": true,
     "completed": false,
-    "tasks_completed": ["1.1", "1.2", "1.3", "1.4"]
+    "tasks_completed": [
+      "1.1",
+      "1.2",
+      "1.3",
+      "1.4",
+      "1.5"
+    ]
   }
 }

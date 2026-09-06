@@ -85,40 +85,55 @@ def _check_candidate_shape(c: dict) -> None:
         raise ForbiddenFieldError(f"candidate 缺必要欄位 {sorted(missing)}")
 
 
+def build_prompt_parts(cell: dict, candidates: list, rubric_text: str) -> dict:
+    """把判者 prompt 拆成四段（共用頭／每格待判塊／共用候選塊／每格輸出說明），供 Workflow 端純字串拼接。
+
+    拼接等式（測試守著）：promptHead + cellBlock + candidatesBlock + cellTail == build_judge_prompt(...)。
+    理由：55 格時 rubric 與 39 筆候選在每格重複，args 會膨脹到 500 KB；Workflow args 只能經工具參數傳，
+    拆段後整份 args 約 20 KB。白名單投影仍在本函式（cellBlock 由 Python 產），JS 只做拼接、⛔ 不碰欄位。
+    """
+    projected = project_cell(cell)
+    for c in candidates:
+        _check_candidate_shape(c)
+
+    head = rubric_text.strip() + "\n\n"
+
+    cell_lines = ["## 待判格",
+                  f"格 id：{projected['cellId']}",
+                  f"代表問句：{projected['question']}",
+                  f"policy：{projected['policy']}"]
+    if "policyRef" in projected:
+        cell_lines.append(f"policy_ref：{projected['policyRef']}")
+    cell_block = "\n".join(cell_lines) + "\n\n"
+
+    cand_lines = [f"## 候選（{len(candidates)} 筆，原序列舉，未排序未篩選）"]
+    for c in candidates:
+        cand_lines.append(f"### {c['id']}")
+        cand_lines.append(f"標題：{c['title']}")
+        cand_lines.append(f"內容：{c['content']}")
+        cand_lines.append("")
+    candidates_block = "\n".join(cand_lines) + "\n"
+
+    tail_lines = ["## 輸出欄位說明",
+                  f"cell_id：本格 id（{projected['cellId']}）。",
+                  "label：answerable｜partial｜no_source｜deliberate_no（依上方 rubric 判定）。",
+                  "fine_id：正解候選 id（answerable／partial 時必填、取候選 id；其餘為 null）。",
+                  "evidence_unit：候選內容第幾句可答該問句或子問題（no_source／deliberate_no 為 null）。",
+                  "confidence：high｜medium｜low。"]
+    cell_tail = "\n".join(tail_lines)
+    return {"promptHead": head, "cellBlock": cell_block, "candidatesBlock": candidates_block, "cellTail": cell_tail}
+
+
 def build_judge_prompt(cell: dict, candidates: list, rubric_text: str) -> str:
     """組裝單一格的判者 prompt：rubric 全文＋代表問句＋全部候選（id/title/content，原序，⛔ 不排序不篩選）。
 
     白名單投影：cell 只取 id/questions[0]/policy/policy_ref；候選只取 id/title/content。
     任何其他鍵（含 score／similarity／top3／coverage／cause_state／entry_state／g0／rubric／
     per_question，已知系統欄位除外）出現 ⇒ raise ForbiddenFieldError。決定性：同輸入兩次逐位元相同。
+    實作＝四段拼接（見 build_prompt_parts）。
     """
-    projected = project_cell(cell)
-    for c in candidates:
-        _check_candidate_shape(c)
-
-    lines = []
-    lines.append(rubric_text.strip())
-    lines.append("")
-    lines.append("## 待判格")
-    lines.append(f"格 id：{projected['cellId']}")
-    lines.append(f"代表問句：{projected['question']}")
-    lines.append(f"policy：{projected['policy']}")
-    if "policyRef" in projected:
-        lines.append(f"policy_ref：{projected['policyRef']}")
-    lines.append("")
-    lines.append(f"## 候選（{len(candidates)} 筆，原序列舉，未排序未篩選）")
-    for c in candidates:
-        lines.append(f"### {c['id']}")
-        lines.append(f"標題：{c['title']}")
-        lines.append(f"內容：{c['content']}")
-        lines.append("")
-    lines.append("## 輸出欄位說明")
-    lines.append(f"cell_id：本格 id（{projected['cellId']}）。")
-    lines.append("label：answerable｜partial｜no_source｜deliberate_no（依上方 rubric 判定）。")
-    lines.append("fine_id：正解候選 id（answerable／partial 時必填、取候選 id；其餘為 null）。")
-    lines.append("evidence_unit：候選內容第幾句可答該問句或子問題（no_source／deliberate_no 為 null）。")
-    lines.append("confidence：high｜medium｜low。")
-    return "\n".join(lines)
+    parts = build_prompt_parts(cell, candidates, rubric_text)
+    return parts["promptHead"] + parts["cellBlock"] + parts["candidatesBlock"] + parts["cellTail"]
 
 
 def _load_json(path: str):
@@ -127,7 +142,7 @@ def _load_json(path: str):
 
 
 def build_args(cells_path: str, kb_rows_path: str, drafts_path: str, rubric_path: str,
-                frozen_at: str, cell_ids_filter: set | None = None) -> dict:
+                frozen_at: str, cell_ids_filter: set | None = None, slim: bool = False) -> dict:
     cells_doc = _load_json(cells_path)
     all_cells = cells_doc["cells"] if isinstance(cells_doc, dict) else cells_doc
 
@@ -153,14 +168,21 @@ def build_args(cells_path: str, kb_rows_path: str, drafts_path: str, rubric_path
         selected_cells = all_cells
 
     cells_out = []
+    prompt_head = None
+    candidates_block = None
     for cell in selected_cells:
-        prompt = build_judge_prompt(cell, candidates, rubric_text)
+        parts = build_prompt_parts(cell, candidates, rubric_text)
+        prompt_head = parts["promptHead"]
+        candidates_block = parts["candidatesBlock"]
         entry = {
             "cellId": cell["id"],
             "question": cell["questions"][0],
             "policy": cell.get("policy"),
-            "judgePrompt": prompt,
+            "cellBlock": parts["cellBlock"],
+            "cellTail": parts["cellTail"],
         }
+        if not slim:
+            entry["judgePrompt"] = build_judge_prompt(cell, candidates, rubric_text)
         if cell.get("policy_ref") is not None:
             entry["policyRef"] = cell["policy_ref"]
         cells_out.append(entry)
@@ -177,9 +199,11 @@ def build_args(cells_path: str, kb_rows_path: str, drafts_path: str, rubric_path
         "frozenAt": frozen_at,
         "rubricSha": inputs_sha["rubric"],
         "inputsSha": inputs_sha,
-        "candidates": candidates,
+        "promptHead": prompt_head,
+        "candidatesBlock": candidates_block,
         "fineIdEnum": fine_id_enum,
         "cells": cells_out,
+        **({} if slim else {"candidates": candidates}),
     }
 
 
@@ -192,10 +216,11 @@ def main() -> int:
     p.add_argument("--frozen-at", required=True, help="ISO 時間戳，⛔ 不用 datetime.now()")
     p.add_argument("--out", required=True)
     p.add_argument("--cell-ids", required=False, default=None, help="逗號分隔的格 id 子集，用於乾跑（如 C01,C02）")
+    p.add_argument("--slim", action="store_true", help="省略 judgePrompt 與 candidates（Workflow 端以四段拼接；55 格 args 才傳得進工具參數）")
     args = p.parse_args()
 
     cell_ids_filter = set(x.strip() for x in args.cell_ids.split(",")) if args.cell_ids else None
-    payload = build_args(args.cells, args.kb_rows, args.drafts, args.rubric, args.frozen_at, cell_ids_filter)
+    payload = build_args(args.cells, args.kb_rows, args.drafts, args.rubric, args.frozen_at, cell_ids_filter, slim=args.slim)
     write_json(args.out, payload)
     return 0
 

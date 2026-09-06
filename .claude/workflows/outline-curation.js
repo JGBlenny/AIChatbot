@@ -32,17 +32,23 @@ const VERDICT_SCHEMA = {
   },
 }
 
+// 判者 prompt：完整 judgePrompt 優先；否則四段純字串拼接（⛔ 不讀任何其他欄位——白名單投影在 Python 端）
+const promptOf = c => c.judgePrompt || (args.promptHead + c.cellBlock + args.candidatesBlock + c.cellTail)
+// 分批：args.batch = {index, size} ⇒ 只跑 cells 的第 index 批（fresh run 分批取代 resume，見 inputs/m-a-dryrun-20260906.md §1）
+const CELLS = args.batch ? args.cells.slice(args.batch.index * args.batch.size, (args.batch.index + 1) * args.batch.size) : args.cells
+if (args.batch) log(`batch ${args.batch.index}: ${CELLS.map(c => c.cellId).join(',')}`)
+
 phase('Answerability')
 
 // 判者互不可見：每個 agent() 只拿 c.judgePrompt，⛔ 不把 v1 傳給 judge2、不把 v1/v2 傳給 judge3。
 const results = await pipeline(
-  args.cells,
-  c => agent(c.judgePrompt, { phase: 'Answerability', label: `judge1:${c.cellId}`, effort: 'low', schema: VERDICT_SCHEMA, ...JUDGE_OPTS }),
-  (v1, c) => agent(c.judgePrompt, { phase: 'Answerability', label: `judge2:${c.cellId}`, effort: 'low', schema: VERDICT_SCHEMA, ...JUDGE_OPTS })
+  CELLS,
+  c => agent(promptOf(c), { phase: 'Answerability', label: `judge1:${c.cellId}`, effort: 'low', schema: VERDICT_SCHEMA, ...JUDGE_OPTS }),
+  (v1, c) => agent(promptOf(c), { phase: 'Answerability', label: `judge2:${c.cellId}`, effort: 'low', schema: VERDICT_SCHEMA, ...JUDGE_OPTS })
     .then(v2 => ({ c, v1, v2 })),
   r => (r.v1 && r.v2 && r.v1.label === r.v2.label)
     ? r
-    : agent(r.c.judgePrompt, { phase: 'Answerability', label: `judge3:${r.c.cellId}`, effort: 'low', schema: VERDICT_SCHEMA, ...JUDGE_OPTS })
+    : agent(promptOf(r.c), { phase: 'Answerability', label: `judge3:${r.c.cellId}`, effort: 'low', schema: VERDICT_SCHEMA, ...JUDGE_OPTS })
       .then(v3 => ({ ...r, v3 })),
 )
 

@@ -1,0 +1,35 @@
+{
+  "cost": {
+    "agents": 0,
+    "completion_tokens": 0,
+    "prompt_tokens": 0,
+    "usd": 0.0,
+    "wall_s": 0.0
+  },
+  "deterministic": true,
+  "inputs_sha": {
+    "skill": "b6fd9757c1713a8e60d47fa5f9afda82ff4cf83b4b749d4cf0aa6b0899ea329e"
+  },
+  "payload": {
+    "by_step": {
+      "answerability": {
+        "agents": 101,
+        "completion_tokens": 48437,
+        "prompt_tokens": 11525555,
+        "usd": 15.84,
+        "wall_s": 3056.5
+      }
+    },
+    "over_budget": true,
+    "total": {
+      "agents": 101,
+      "completion_tokens": 48437,
+      "prompt_tokens": 11525555,
+      "usd": 15.84,
+      "wall_s": 3056.5
+    }
+  },
+  "raw_outputs_path": null,
+  "skill_version": "0.1.0",
+  "step": "diff"
+}

@@ -233,3 +233,16 @@ def test_output_passes_no_llm_and_json_serializable(tmp_path):
     data = _load(str(out))
     assert data["step"] == "answerability"
     assert isinstance(data["rubricSha"], str) and len(data["rubricSha"]) == 64
+
+
+def test_prompt_parts_concatenate_to_full_prompt(tmp_path):
+    """四段拼接（Workflow 端做法）必須逐位元等於 build_judge_prompt（白名單投影仍在 Python）。"""
+    import importlib.util, sys
+    spec = importlib.util.spec_from_file_location("aa", str(_SCRIPT))
+    mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
+    cell = {"id": "C09", "questions": ["測試問句"], "policy": "answer", "policy_ref": "ref-1"}
+    cands = [{"id": "tmp:kb:1", "title": "t1", "content": "c1"}, {"id": "tmp:draft:1", "title": "t2", "content": "c2"}]
+    parts = mod.build_prompt_parts(cell, cands, "---\nversion: x\n---\nrubric body")
+    full = mod.build_judge_prompt(cell, cands, "---\nversion: x\n---\nrubric body")
+    assert parts["promptHead"] + parts["cellBlock"] + parts["candidatesBlock"] + parts["cellTail"] == full
+    assert "policy_ref：ref-1" in parts["cellBlock"] and "C09" in parts["cellTail"]

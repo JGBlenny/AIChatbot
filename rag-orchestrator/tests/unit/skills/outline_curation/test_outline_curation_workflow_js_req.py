@@ -95,13 +95,18 @@ def test_verdict_schema_uses_fine_id_enum_from_args():
 
 
 def test_judges_do_not_see_each_others_verdicts():
-    """判者互不可見：judge2／judge3 的 agent() 呼叫只以 `c.judgePrompt` 或 `r.c.judgePrompt` 為 prompt，
-    ⛔ 不把 v1（或 v2）字面塞進 prompt 字串。"""
+    """判者互不可見：三個 agent() 呼叫的 prompt 只能是 `promptOf(c)`／`promptOf(r.c)`，
+    ⛔ 不把 v1（或 v2）字面塞進 prompt 字串。promptOf 本身只拼 judgePrompt 或四段
+    （promptHead／cellBlock／candidatesBlock／cellTail），⛔ 不讀其他欄位。"""
     _skip_if_missing()
     text = _text()
-    # 找每一個 agent( 呼叫的第一個引數（到第一個逗號或該行為止的簡單掃描已足夠：
-    # 本檔三次 agent() 呼叫皆以 c.judgePrompt 或 r.c.judgePrompt 開頭）
-    calls = re.findall(r"agent\(([\w.]+),", text)
+    calls = re.findall(r"agent\((promptOf\([\w.]+\)|[\w.]+),", text)
     assert len(calls) == 3, f"預期 3 個 agent() 呼叫，找到 {len(calls)}：{calls}"
     for c in calls:
-        assert c.strip() in ("c.judgePrompt", "r.c.judgePrompt")
+        assert c.strip() in ("promptOf(c)", "promptOf(r.c)")
+    m = re.search(r"const promptOf = c => (.+)", text)
+    assert m, "找不到 promptOf 定義"
+    body = m.group(1)
+    allowed = {"c.judgePrompt", "args.promptHead", "c.cellBlock", "args.candidatesBlock", "c.cellTail"}
+    refs = set(re.findall(r"\b(?:c|args)\.[\w]+", body))
+    assert refs == allowed, f"promptOf 只能拼白名單欄位：{refs}"
