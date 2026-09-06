@@ -1,0 +1,1933 @@
+{
+  "articles_with_gold": 31,
+  "by_type": {
+    "俗稱": 85,
+    "口語": 85,
+    "情境": 84,
+    "直接": 85,
+    "邊界": 83
+  },
+  "excluded_frozen_recomputed": 48,
+  "inputs_sha": {
+    "canon_sha256": "240e1a502a85621799bdd5f850c41ce6cb90784a2911ccc3f12a76decba2763c",
+    "helpcenter_dir_sha256": "8a040b783281f0eedf43fe1eb805d0f6e77b9b2396a5d9499fc8a4a43735661c",
+    "koyu_sha256": "1fc5bccd33726c9283d1b6d5daeeee97dec01818afa80a6d097c9e15bce8b25d",
+    "rule_file_declared_sha256": "b771a6e5c6c139d434e21c54f5a5c4fcade934aca6c50c104f2aaf7f4379a747",
+    "rule_file_sha256": "5fcb52b78ce29fa220c7d473a71160e7a9d94406c9430ccde060b31b16ef7d61",
+    "rule_sha256_note": "sha 原計法未留（raw/phrasing-20260906/ 下無計算腳本）",
+    "rule_sha256_recomputed": null,
+    "topics_v2_sha256": "f78344d65ebcdc7b9901c77b7bdf5a6b23b2548e2dea3729feba36ccb8868570"
+  },
+  "n": 422,
+  "results": {
+    "main": {
+      "article": {
+        "affected_sentences": 45,
+        "arms": {
+          "title": {
+            "俗稱": {
+              "limited": false,
+              "mappable": 31,
+              "recall_at_1": 0.2581,
+              "recall_at_3": 0.4839,
+              "recall_at_5": 0.5806,
+              "total": 85
+            },
+            "口語": {
+              "limited": false,
+              "mappable": 31,
+              "recall_at_1": 0.2258,
+              "recall_at_3": 0.5161,
+              "recall_at_5": 0.6129,
+              "total": 85
+            },
+            "情境": {
+              "limited": false,
+              "mappable": 30,
+              "recall_at_1": 0.2667,
+              "recall_at_3": 0.4333,
+              "recall_at_5": 0.6,
+              "total": 84
+            },
+            "直接": {
+              "limited": false,
+              "mappable": 31,
+              "recall_at_1": 0.3226,
+              "recall_at_3": 0.5161,
+              "recall_at_5": 0.6129,
+              "total": 85
+            },
+            "邊界": {
+              "limited": false,
+              "mappable": 30,
+              "recall_at_1": 0.2333,
+              "recall_at_3": 0.4333,
+              "recall_at_5": 0.5,
+              "total": 83
+            }
+          },
+          "title+phrasing": {
+            "俗稱": {
+              "limited": false,
+              "mappable": 31,
+              "recall_at_1": 0.1935,
+              "recall_at_3": 0.5484,
+              "recall_at_5": 0.6452,
+              "total": 85
+            },
+            "口語": {
+              "limited": false,
+              "mappable": 31,
+              "recall_at_1": 0.1613,
+              "recall_at_3": 0.4194,
+              "recall_at_5": 0.6129,
+              "total": 85
+            },
+            "情境": {
+              "limited": false,
+              "mappable": 30,
+              "recall_at_1": 0.1667,
+              "recall_at_3": 0.4333,
+              "recall_at_5": 0.6333,
+              "total": 84
+            },
+            "直接": {
+              "limited": false,
+              "mappable": 31,
+              "recall_at_1": 0.4516,
+              "recall_at_3": 0.6452,
+              "recall_at_5": 0.7097,
+              "total": 85
+            },
+            "邊界": {
+              "limited": false,
+              "mappable": 30,
+              "recall_at_1": 0.2667,
+              "recall_at_3": 0.3333,
+              "recall_at_5": 0.5,
+              "total": 83
+            }
+          },
+          "title+phrasing+content": {
+            "俗稱": {
+              "limited": false,
+              "mappable": 31,
+              "recall_at_1": 0.2258,
+              "recall_at_3": 0.6452,
+              "recall_at_5": 0.7742,
+              "total": 85
+            },
+            "口語": {
+              "limited": false,
+              "mappable": 31,
+              "recall_at_1": 0.1935,
+              "recall_at_3": 0.4839,
+              "recall_at_5": 0.6129,
+              "total": 85
+            },
+            "情境": {
+              "limited": false,
+              "mappable": 30,
+              "recall_at_1": 0.2,
+              "recall_at_3": 0.4333,
+              "recall_at_5": 0.7333,
+              "total": 84
+            },
+            "直接": {
+              "limited": false,
+              "mappable": 31,
+              "recall_at_1": 0.4839,
+              "recall_at_3": 0.6774,
+              "recall_at_5": 0.7419,
+              "total": 85
+            },
+            "邊界": {
+              "limited": false,
+              "mappable": 30,
+              "recall_at_1": 0.2667,
+              "recall_at_3": 0.3333,
+              "recall_at_5": 0.5,
+              "total": 83
+            }
+          }
+        },
+        "excluded_keys_total": 90,
+        "misrouted": [
+          {
+            "article": "Landlordonboarding00",
+            "gold": [
+              "prospect/A/dashboard-overview",
+              "prospect/C/owner-report-collection-remit",
+              "prospect/C/what-is-owner-landlord"
+            ],
+            "q": "我要看我的房子租出去沒",
+            "type": "口語",
+            "winning_fine_id": "prospect/F/contact-sales-demo"
+          },
+          {
+            "article": "Landlordonboarding00",
+            "gold": [
+              "prospect/A/dashboard-overview",
+              "prospect/C/owner-report-collection-remit",
+              "prospect/C/what-is-owner-landlord"
+            ],
+            "q": "我看不到帳務資料",
+            "type": "情境",
+            "winning_fine_id": "prospect/C/bill-contents-extra-fees"
+          },
+          {
+            "article": "Landlordonboarding00",
+            "gold": [
+              "prospect/A/dashboard-overview",
+              "prospect/C/owner-report-collection-remit",
+              "prospect/C/what-is-owner-landlord"
+            ],
+            "q": "屋主帳號怎麼用",
+            "type": "俗稱",
+            "winning_fine_id": "prospect/B/data-migration"
+          },
+          {
+            "article": "Landlordonboarding01",
+            "gold": [
+              "prospect/D/account-registration"
+            ],
+            "q": "我是個人房東不是公司",
+            "type": "口語",
+            "winning_fine_id": "prospect/B/individual-landlord-scale-fit"
+          },
+          {
+            "article": "Landlordonboarding01",
+            "gold": [
+              "prospect/D/account-registration"
+            ],
+            "q": "個人房東註冊流程",
+            "type": "俗稱",
+            "winning_fine_id": "prospect/B/individual-landlord-scale-fit"
+          },
+          {
+            "article": "Landlordonboarding01",
+            "gold": [
+              "prospect/D/account-registration"
+            ],
+            "q": "身分證照片會給誰看到",
+            "type": "邊界",
+            "winning_fine_id": "prospect/C/bill-contents-extra-fees"
+          },
+          {
+            "article": "Landlordonboarding02",
+            "gold": [
+              "prospect/D/subscription-change-renewal"
+            ],
+            "q": "團隊成員要怎麼邀請",
+            "type": "直接",
+            "winning_fine_id": "prospect/C/contract-esign-flow"
+          },
+          {
+            "article": "Landlordonboarding02",
+            "gold": [
+              "prospect/D/subscription-change-renewal"
+            ],
+            "q": "我要把同事加進來",
+            "type": "口語",
+            "winning_fine_id": "prospect/C/team-management-overview"
+          },
+          {
+            "article": "Landlordonboarding02",
+            "gold": [
+              "prospect/D/subscription-change-renewal"
+            ],
+            "q": "邀請同事但系統說找不到人",
+            "type": "情境",
+            "winning_fine_id": "prospect/C/contract-esign-flow"
+          },
+          {
+            "article": "Landlordonboarding02",
+            "gold": [
+              "prospect/D/subscription-change-renewal"
+            ],
+            "q": "屋主帳號",
+            "type": "俗稱",
+            "winning_fine_id": "prospect/D/account-registration"
+          },
+          {
+            "article": "Landlordonboarding02",
+            "gold": [
+              "prospect/D/subscription-change-renewal"
+            ],
+            "q": "可以把團隊轉移給別人嗎",
+            "type": "邊界",
+            "winning_fine_id": "prospect/C/team-management-overview"
+          },
+          {
+            "article": "Landlordonboarding06Finance",
+            "gold": [
+              "prospect/C/notification-channels"
+            ],
+            "q": "發出去的帳單可以取消嗎",
+            "type": "直接",
+            "winning_fine_id": "prospect/C/bill-format-customize"
+          },
+          {
+            "article": "Landlordonboarding06Finance",
+            "gold": [
+              "prospect/C/notification-channels"
+            ],
+            "q": "不足月的租金怎麼算",
+            "type": "口語",
+            "winning_fine_id": "prospect/B/individual-landlord-scale-fit"
+          },
+          {
+            "article": "Landlordonboarding06Finance",
+            "gold": [
+              "prospect/C/notification-channels"
+            ],
+            "q": "發錯帳單了想收回",
+            "type": "情境",
+            "winning_fine_id": "prospect/D/account-registration"
+          },
+          {
+            "article": "Landlordonboarding06Finance",
+            "gold": [
+              "prospect/C/notification-channels"
+            ],
+            "q": "取消帳單後租客會知道嗎",
+            "type": "邊界",
+            "winning_fine_id": "prospect/B/individual-landlord-scale-fit"
+          },
+          {
+            "article": "TOFILL-repair",
+            "gold": [
+              "prospect/C/repair-system"
+            ],
+            "q": "緊急的可以優先處理嗎",
+            "type": "口語",
+            "winning_fine_id": "prospect/A/pain-points"
+          },
+          {
+            "article": "TOFILL-repair",
+            "gold": [
+              "prospect/C/repair-system"
+            ],
+            "q": "修繕費用可以直接開帳單嗎",
+            "type": "邊界",
+            "winning_fine_id": "prospect/D/account-registration"
+          },
+          {
+            "article": "advanced12",
+            "gold": [
+              "prospect/C/payment-gateway-options"
+            ],
+            "q": "租客繳的錢在哪裡",
+            "type": "口語",
+            "winning_fine_id": "prospect/B/individual-landlord-scale-fit"
+          },
+          {
+            "article": "advanced12",
+            "gold": [
+              "prospect/C/payment-gateway-options"
+            ],
+            "q": "忘記藍新的密碼",
+            "type": "情境",
+            "winning_fine_id": "prospect/D/account-registration"
+          },
+          {
+            "article": "advanced12",
+            "gold": [
+              "prospect/C/payment-gateway-options"
+            ],
+            "q": "線上收的錢怎麼拿",
+            "type": "俗稱",
+            "winning_fine_id": "prospect/C/what-is-owner-landlord"
+          },
+          {
+            "article": "advanced12",
+            "gold": [
+              "prospect/C/payment-gateway-options"
+            ],
+            "q": "可以改預設密碼嗎",
+            "type": "邊界",
+            "winning_fine_id": "prospect/D/account-registration"
+          },
+          {
+            "article": "onboarding10",
+            "gold": [
+              "prospect/C/contract-esign-flow",
+              "prospect/C/contract-modify-after-sign",
+              "prospect/C/contract-templates"
+            ],
+            "q": "未繳的房租可以從押金扣嗎",
+            "type": "直接",
+            "winning_fine_id": "prospect/C/credit-card-rent-payment"
+          },
+          {
+            "article": "onboarding10",
+            "gold": [
+              "prospect/C/contract-esign-flow",
+              "prospect/C/contract-modify-after-sign",
+              "prospect/C/contract-templates"
+            ],
+            "q": "押金要退多少怎麼算",
+            "type": "口語",
+            "winning_fine_id": "prospect/C/property-status-meaning"
+          },
+          {
+            "article": "onboarding10",
+            "gold": [
+              "prospect/C/contract-esign-flow",
+              "prospect/C/contract-modify-after-sign",
+              "prospect/C/contract-templates"
+            ],
+            "q": "退租結算",
+            "type": "俗稱",
+            "winning_fine_id": "prospect/B/individual-landlord-scale-fit"
+          },
+          {
+            "article": "onboarding10",
+            "gold": [
+              "prospect/C/contract-esign-flow",
+              "prospect/C/contract-modify-after-sign",
+              "prospect/C/contract-templates"
+            ],
+            "q": "租客不同意點退清單怎麼辦",
+            "type": "邊界",
+            "winning_fine_id": "prospect/C/overdue-reminder-late-fee"
+          },
+          {
+            "article": "onboarding14",
+            "gold": [
+              "prospect/C/bill-format-customize"
+            ],
+            "q": "租客也可以下載收據嗎",
+            "type": "直接",
+            "winning_fine_id": "prospect/C/credit-card-rent-payment"
+          },
+          {
+            "article": "onboarding14",
+            "gold": [
+              "prospect/C/bill-format-customize"
+            ],
+            "q": "我要印收據",
+            "type": "口語",
+            "winning_fine_id": "prospect/C/credit-card-rent-payment"
+          },
+          {
+            "article": "onboarding14",
+            "gold": [
+              "prospect/C/bill-format-customize"
+            ],
+            "q": "以前收據在上面現在找不到",
+            "type": "情境",
+            "winning_fine_id": "prospect/C/bill-contents-extra-fees"
+          },
+          {
+            "article": "onboarding14",
+            "gold": [
+              "prospect/C/bill-format-customize"
+            ],
+            "q": "列印收據",
+            "type": "俗稱",
+            "winning_fine_id": "prospect/C/bill-contents-extra-fees"
+          },
+          {
+            "article": "onboarding4",
+            "gold": [
+              "prospect/C/community-batch-create"
+            ],
+            "q": "一次要建很多間",
+            "type": "口語",
+            "winning_fine_id": "prospect/D/property-quota-limit"
+          },
+          {
+            "article": "onboarding4",
+            "gold": [
+              "prospect/C/community-batch-create"
+            ],
+            "q": "批次上傳物件",
+            "type": "俗稱",
+            "winning_fine_id": "prospect/C/property-management-overview"
+          },
+          {
+            "article": "onboarding4",
+            "gold": [
+              "prospect/C/community-batch-create"
+            ],
+            "q": "VR怎麼製作",
+            "type": "邊界",
+            "winning_fine_id": "prospect/C/property-management-overview"
+          },
+          {
+            "article": "onboarding6",
+            "gold": [
+              "prospect/B/data-migration",
+              "prospect/G/migration-limits"
+            ],
+            "q": "公司自己的合約可以用嗎",
+            "type": "口語",
+            "winning_fine_id": "prospect/C/contract-history-retention"
+          },
+          {
+            "article": "onboarding6",
+            "gold": [
+              "prospect/B/data-migration",
+              "prospect/G/migration-limits"
+            ],
+            "q": "上傳完合約沒有成立",
+            "type": "情境",
+            "winning_fine_id": "prospect/C/contract-esign-flow"
+          },
+          {
+            "article": "onboarding6",
+            "gold": [
+              "prospect/B/data-migration",
+              "prospect/G/migration-limits"
+            ],
+            "q": "既存合約流程",
+            "type": "俗稱",
+            "winning_fine_id": "prospect/C/contract-history-retention"
+          },
+          {
+            "article": "onboarding6",
+            "gold": [
+              "prospect/B/data-migration",
+              "prospect/G/migration-limits"
+            ],
+            "q": "可以不用經過租客同意嗎",
+            "type": "邊界",
+            "winning_fine_id": "prospect/C/credit-card-rent-payment"
+          },
+          {
+            "article": "onboarding7",
+            "gold": [
+              "prospect/C/contract-esign-flow",
+              "prospect/C/contract-modify-after-sign",
+              "prospect/C/contract-templates"
+            ],
+            "q": "線上點交要怎麼做",
+            "type": "直接",
+            "winning_fine_id": "prospect/C/repair-system"
+          },
+          {
+            "article": "onboarding7",
+            "gold": [
+              "prospect/C/contract-esign-flow",
+              "prospect/C/contract-modify-after-sign",
+              "prospect/C/contract-templates"
+            ],
+            "q": "點交物件怎麼用",
+            "type": "俗稱",
+            "winning_fine_id": "prospect/C/property-status-meaning"
+          },
+          {
+            "article": "onboarding7",
+            "gold": [
+              "prospect/C/contract-esign-flow",
+              "prospect/C/contract-modify-after-sign",
+              "prospect/C/contract-templates"
+            ],
+            "q": "租客不同意點交怎麼辦",
+            "type": "邊界",
+            "winning_fine_id": "prospect/C/overdue-reminder-late-fee"
+          },
+          {
+            "article": "onboarding8",
+            "gold": [
+              "prospect/C/billing-overview"
+            ],
+            "q": "帳單要自己一張一張開嗎",
+            "type": "口語",
+            "winning_fine_id": "prospect/C/bill-format-customize"
+          },
+          {
+            "article": "onboarding8",
+            "gold": [
+              "prospect/C/billing-overview"
+            ],
+            "q": "租客說繳了但我這邊沒有待對帳",
+            "type": "情境",
+            "winning_fine_id": "prospect/B/individual-landlord-scale-fit"
+          },
+          {
+            "article": "onboarding8",
+            "gold": [
+              "prospect/C/billing-overview"
+            ],
+            "q": "收租怎麼操作",
+            "type": "俗稱",
+            "winning_fine_id": "prospect/B/individual-landlord-scale-fit"
+          },
+          {
+            "article": "onboarding8",
+            "gold": [
+              "prospect/C/billing-overview"
+            ],
+            "q": "可以一次發全部帳單嗎",
+            "type": "邊界",
+            "winning_fine_id": "prospect/C/bill-format-customize"
+          },
+          {
+            "article": "onboarding9-1",
+            "gold": [
+              "prospect/C/contract-esign-flow",
+              "prospect/C/contract-modify-after-sign",
+              "prospect/C/contract-templates"
+            ],
+            "q": "哪些合約不能提前解約",
+            "type": "直接",
+            "winning_fine_id": "prospect/C/contract-history-retention"
+          },
+          {
+            "article": "onboarding9-1",
+            "gold": [
+              "prospect/C/contract-esign-flow",
+              "prospect/C/contract-modify-after-sign",
+              "prospect/C/contract-templates"
+            ],
+            "q": "解約流程要多久",
+            "type": "口語",
+            "winning_fine_id": "prospect/C/property-status-meaning"
+          },
+          {
+            "article": "onboarding9-1",
+            "gold": [
+              "prospect/C/contract-esign-flow",
+              "prospect/C/contract-modify-after-sign",
+              "prospect/C/contract-templates"
+            ],
+            "q": "小齒輪裡面沒有提前解約",
+            "type": "情境",
+            "winning_fine_id": "prospect/C/contract-history-retention"
+          },
+          {
+            "article": "onboarding9-1",
+            "gold": [
+              "prospect/C/contract-esign-flow",
+              "prospect/C/contract-modify-after-sign",
+              "prospect/C/contract-templates"
+            ],
+            "q": "解約後押金怎麼處理",
+            "type": "邊界",
+            "winning_fine_id": "prospect/C/property-status-meaning"
+          },
+          {
+            "article": "onboarding9-2",
+            "gold": [
+              "prospect/C/contract-esign-flow",
+              "prospect/C/contract-modify-after-sign",
+              "prospect/C/contract-templates"
+            ],
+            "q": "解約之後多久生效",
+            "type": "口語",
+            "winning_fine_id": "prospect/C/property-status-meaning"
+          },
+          {
+            "article": "onboarding9-2",
+            "gold": [
+              "prospect/C/contract-esign-flow",
+              "prospect/C/contract-modify-after-sign",
+              "prospect/C/contract-templates"
+            ],
+            "q": "系統說我不能解約",
+            "type": "情境",
+            "winning_fine_id": "prospect/C/property-status-meaning"
+          },
+          {
+            "article": "onboarding9-2",
+            "gold": [
+              "prospect/C/contract-esign-flow",
+              "prospect/C/contract-modify-after-sign",
+              "prospect/C/contract-templates"
+            ],
+            "q": "七天審閱期",
+            "type": "俗稱",
+            "winning_fine_id": "prospect/D/free-trial"
+          },
+          {
+            "article": "onboarding9-2",
+            "gold": [
+              "prospect/C/contract-esign-flow",
+              "prospect/C/contract-modify-after-sign",
+              "prospect/C/contract-templates"
+            ],
+            "q": "解約可以取消嗎",
+            "type": "邊界",
+            "winning_fine_id": "prospect/C/property-status-meaning"
+          },
+          {
+            "article": "qa05",
+            "gold": [
+              "prospect/B/data-migration",
+              "prospect/G/migration-limits"
+            ],
+            "q": "上傳的合約有沒有法律效力",
+            "type": "直接",
+            "winning_fine_id": "prospect/C/contract-esign-flow"
+          },
+          {
+            "article": "qa05",
+            "gold": [
+              "prospect/B/data-migration",
+              "prospect/G/migration-limits"
+            ],
+            "q": "可以匯入我們公司的公版合約嗎",
+            "type": "口語",
+            "winning_fine_id": "prospect/C/contract-esign-flow"
+          },
+          {
+            "article": "qa06",
+            "gold": [
+              "prospect/B/data-migration",
+              "prospect/C/contract-templates",
+              "prospect/G/migration-limits"
+            ],
+            "q": "既存合約是什麼",
+            "type": "直接",
+            "winning_fine_id": "prospect/C/contract-esign-flow"
+          },
+          {
+            "article": "qa06",
+            "gold": [
+              "prospect/B/data-migration",
+              "prospect/C/contract-templates",
+              "prospect/G/migration-limits"
+            ],
+            "q": "制式合約是什麼意思",
+            "type": "俗稱",
+            "winning_fine_id": "prospect/C/contract-esign-flow"
+          },
+          {
+            "article": "qa21",
+            "gold": [
+              "prospect/C/bill-format-customize"
+            ],
+            "q": "關掉收據之後租客還看得到什麼",
+            "type": "邊界",
+            "winning_fine_id": "prospect/B/individual-landlord-scale-fit"
+          },
+          {
+            "article": "qa23",
+            "gold": [
+              "prospect/C/role-permission-granularity",
+              "prospect/C/team-management-overview"
+            ],
+            "q": "我想控管同事的權限",
+            "type": "口語",
+            "winning_fine_id": "prospect/B/team-company-fit"
+          },
+          {
+            "article": "qa23",
+            "gold": [
+              "prospect/C/role-permission-granularity",
+              "prospect/C/team-management-overview"
+            ],
+            "q": "怎麼開權限給員工",
+            "type": "俗稱",
+            "winning_fine_id": "prospect/B/team-company-fit"
+          },
+          {
+            "article": "qa23",
+            "gold": [
+              "prospect/C/role-permission-granularity",
+              "prospect/C/team-management-overview"
+            ],
+            "q": "權限可以事後修改嗎",
+            "type": "邊界",
+            "winning_fine_id": "prospect/B/team-company-fit"
+          },
+          {
+            "article": "qa27",
+            "gold": [
+              "prospect/C/billing-overview"
+            ],
+            "q": "藍新金流要怎麼設定",
+            "type": "直接",
+            "winning_fine_id": "prospect/C/what-is-owner-landlord"
+          },
+          {
+            "article": "qa27",
+            "gold": [
+              "prospect/C/billing-overview"
+            ],
+            "q": "線上金流怎麼開通",
+            "type": "口語",
+            "winning_fine_id": "prospect/C/what-is-owner-landlord"
+          },
+          {
+            "article": "qa27",
+            "gold": [
+              "prospect/C/billing-overview"
+            ],
+            "q": "我申請了藍新但系統沒有串到",
+            "type": "情境",
+            "winning_fine_id": "prospect/A/product-overview"
+          },
+          {
+            "article": "slug03",
+            "gold": [
+              "prospect/C/overdue-reminder-late-fee"
+            ],
+            "q": "逾期帳單在哪裡看",
+            "type": "直接",
+            "winning_fine_id": "prospect/C/bill-contents-extra-fees"
+          },
+          {
+            "article": "slug03",
+            "gold": [
+              "prospect/C/overdue-reminder-late-fee"
+            ],
+            "q": "逾期之後系統會做什麼",
+            "type": "口語",
+            "winning_fine_id": "prospect/C/repair-system"
+          },
+          {
+            "article": "slug102",
+            "gold": [
+              "prospect/C/credit-card-rent-payment"
+            ],
+            "q": "繳完帳單會顯示什麼",
+            "type": "直接",
+            "winning_fine_id": "prospect/C/bill-contents-extra-fees"
+          },
+          {
+            "article": "slug102",
+            "gold": [
+              "prospect/C/credit-card-rent-payment"
+            ],
+            "q": "刷了但帳單還是未繳",
+            "type": "情境",
+            "winning_fine_id": "prospect/C/overdue-reminder-late-fee"
+          },
+          {
+            "article": "slug39",
+            "gold": [
+              "prospect/C/property-status-meaning"
+            ],
+            "q": "空房跟出租中差在哪",
+            "type": "口語",
+            "winning_fine_id": "prospect/C/contract-templates"
+          },
+          {
+            "article": "slug39",
+            "gold": [
+              "prospect/C/property-status-meaning"
+            ],
+            "q": "想刪除物件但找不到刪除鍵",
+            "type": "情境",
+            "winning_fine_id": "prospect/C/community-batch-create"
+          },
+          {
+            "article": "slug76",
+            "gold": [
+              "prospect/C/billing-overview"
+            ],
+            "q": "帳單怎麼開跟怎麼發",
+            "type": "口語",
+            "winning_fine_id": "prospect/D/account-registration"
+          },
+          {
+            "article": "slug76",
+            "gold": [
+              "prospect/C/billing-overview"
+            ],
+            "q": "租客說沒收到這個月的帳單",
+            "type": "情境",
+            "winning_fine_id": "prospect/C/overdue-reminder-late-fee"
+          },
+          {
+            "article": "slug76",
+            "gold": [
+              "prospect/C/billing-overview"
+            ],
+            "q": "發錯的帳單可以收回嗎",
+            "type": "邊界",
+            "winning_fine_id": "prospect/D/account-registration"
+          },
+          {
+            "article": "slug78",
+            "gold": [
+              "prospect/C/bill-contents-extra-fees"
+            ],
+            "q": "房客收到的帳單會看到什麼",
+            "type": "口語",
+            "winning_fine_id": "prospect/B/data-migration"
+          },
+          {
+            "article": "slug78",
+            "gold": [
+              "prospect/C/bill-contents-extra-fees"
+            ],
+            "q": "不知道帳單現在到哪個階段",
+            "type": "情境",
+            "winning_fine_id": "prospect/C/what-is-owner-landlord"
+          },
+          {
+            "article": "slug78",
+            "gold": [
+              "prospect/C/bill-contents-extra-fees"
+            ],
+            "q": "水電費會在帳單裡嗎",
+            "type": "俗稱",
+            "winning_fine_id": "prospect/G/utility-split-advice"
+          },
+          {
+            "article": "slug78",
+            "gold": [
+              "prospect/C/bill-contents-extra-fees"
+            ],
+            "q": "帳單可以下載PDF嗎",
+            "type": "邊界",
+            "winning_fine_id": "prospect/C/bill-format-customize"
+          },
+          {
+            "article": "slug90",
+            "gold": [
+              "prospect/C/property-management-overview",
+              "prospect/C/rental-storefront-vr"
+            ],
+            "q": "可以把我的房子分享給別人看嗎",
+            "type": "口語",
+            "winning_fine_id": "prospect/B/individual-landlord-scale-fit"
+          },
+          {
+            "article": "slug90",
+            "gold": [
+              "prospect/C/property-management-overview",
+              "prospect/C/rental-storefront-vr"
+            ],
+            "q": "有些房子我不想公開",
+            "type": "情境",
+            "winning_fine_id": "prospect/B/individual-landlord-scale-fit"
+          },
+          {
+            "article": "slug90",
+            "gold": [
+              "prospect/C/property-management-overview",
+              "prospect/C/rental-storefront-vr"
+            ],
+            "q": "房東首頁是幹嘛的",
+            "type": "俗稱",
+            "winning_fine_id": "prospect/B/individual-landlord-scale-fit"
+          },
+          {
+            "article": "slug90",
+            "gold": [
+              "prospect/C/property-management-overview",
+              "prospect/C/rental-storefront-vr"
+            ],
+            "q": "可以隱藏聯絡電話嗎",
+            "type": "邊界",
+            "winning_fine_id": "prospect/C/notification-channels"
+          },
+          {
+            "article": "slug99",
+            "gold": [
+              "prospect/C/bill-format-customize"
+            ],
+            "q": "合約印出來沒有看到我們公司的章",
+            "type": "情境",
+            "winning_fine_id": "prospect/C/contract-esign-flow"
+          },
+          {
+            "article": "slug99",
+            "gold": [
+              "prospect/C/bill-format-customize"
+            ],
+            "q": "LOGO大小章怎麼用",
+            "type": "俗稱",
+            "winning_fine_id": "prospect/A/product-overview"
+          }
+        ]
+      },
+      "exact": {
+        "affected_sentences": 3,
+        "arms": {
+          "title": {
+            "俗稱": {
+              "limited": false,
+              "mappable": 31,
+              "recall_at_1": 0.2581,
+              "recall_at_3": 0.4839,
+              "recall_at_5": 0.5806,
+              "total": 85
+            },
+            "口語": {
+              "limited": false,
+              "mappable": 31,
+              "recall_at_1": 0.2258,
+              "recall_at_3": 0.5161,
+              "recall_at_5": 0.6129,
+              "total": 85
+            },
+            "情境": {
+              "limited": false,
+              "mappable": 30,
+              "recall_at_1": 0.2667,
+              "recall_at_3": 0.4333,
+              "recall_at_5": 0.6,
+              "total": 84
+            },
+            "直接": {
+              "limited": false,
+              "mappable": 31,
+              "recall_at_1": 0.3226,
+              "recall_at_3": 0.5161,
+              "recall_at_5": 0.6129,
+              "total": 85
+            },
+            "邊界": {
+              "limited": false,
+              "mappable": 30,
+              "recall_at_1": 0.2333,
+              "recall_at_3": 0.4333,
+              "recall_at_5": 0.5,
+              "total": 83
+            }
+          },
+          "title+phrasing": {
+            "俗稱": {
+              "limited": false,
+              "mappable": 31,
+              "recall_at_1": 0.1935,
+              "recall_at_3": 0.5484,
+              "recall_at_5": 0.6452,
+              "total": 85
+            },
+            "口語": {
+              "limited": false,
+              "mappable": 31,
+              "recall_at_1": 0.1613,
+              "recall_at_3": 0.3871,
+              "recall_at_5": 0.6452,
+              "total": 85
+            },
+            "情境": {
+              "limited": false,
+              "mappable": 30,
+              "recall_at_1": 0.2,
+              "recall_at_3": 0.4333,
+              "recall_at_5": 0.6333,
+              "total": 84
+            },
+            "直接": {
+              "limited": false,
+              "mappable": 31,
+              "recall_at_1": 0.4516,
+              "recall_at_3": 0.6452,
+              "recall_at_5": 0.7419,
+              "total": 85
+            },
+            "邊界": {
+              "limited": false,
+              "mappable": 30,
+              "recall_at_1": 0.2667,
+              "recall_at_3": 0.3667,
+              "recall_at_5": 0.5333,
+              "total": 83
+            }
+          },
+          "title+phrasing+content": {
+            "俗稱": {
+              "limited": false,
+              "mappable": 31,
+              "recall_at_1": 0.2258,
+              "recall_at_3": 0.6452,
+              "recall_at_5": 0.7742,
+              "total": 85
+            },
+            "口語": {
+              "limited": false,
+              "mappable": 31,
+              "recall_at_1": 0.1935,
+              "recall_at_3": 0.4839,
+              "recall_at_5": 0.6129,
+              "total": 85
+            },
+            "情境": {
+              "limited": false,
+              "mappable": 30,
+              "recall_at_1": 0.2333,
+              "recall_at_3": 0.4333,
+              "recall_at_5": 0.7333,
+              "total": 84
+            },
+            "直接": {
+              "limited": false,
+              "mappable": 31,
+              "recall_at_1": 0.4839,
+              "recall_at_3": 0.6452,
+              "recall_at_5": 0.7419,
+              "total": 85
+            },
+            "邊界": {
+              "limited": false,
+              "mappable": 30,
+              "recall_at_1": 0.2667,
+              "recall_at_3": 0.3667,
+              "recall_at_5": 0.5333,
+              "total": 83
+            }
+          }
+        },
+        "excluded_keys_total": 3,
+        "misrouted": [
+          {
+            "article": "Landlordonboarding00",
+            "gold": [
+              "prospect/A/dashboard-overview",
+              "prospect/C/owner-report-collection-remit",
+              "prospect/C/what-is-owner-landlord"
+            ],
+            "q": "我要看我的房子租出去沒",
+            "type": "口語",
+            "winning_fine_id": "prospect/F/contact-sales-demo"
+          },
+          {
+            "article": "Landlordonboarding00",
+            "gold": [
+              "prospect/A/dashboard-overview",
+              "prospect/C/owner-report-collection-remit",
+              "prospect/C/what-is-owner-landlord"
+            ],
+            "q": "我看不到帳務資料",
+            "type": "情境",
+            "winning_fine_id": "prospect/C/bill-contents-extra-fees"
+          },
+          {
+            "article": "Landlordonboarding00",
+            "gold": [
+              "prospect/A/dashboard-overview",
+              "prospect/C/owner-report-collection-remit",
+              "prospect/C/what-is-owner-landlord"
+            ],
+            "q": "屋主帳號怎麼用",
+            "type": "俗稱",
+            "winning_fine_id": "prospect/B/data-migration"
+          },
+          {
+            "article": "Landlordonboarding01",
+            "gold": [
+              "prospect/D/account-registration"
+            ],
+            "q": "我是個人房東不是公司",
+            "type": "口語",
+            "winning_fine_id": "prospect/B/individual-landlord-scale-fit"
+          },
+          {
+            "article": "Landlordonboarding01",
+            "gold": [
+              "prospect/D/account-registration"
+            ],
+            "q": "個人房東註冊流程",
+            "type": "俗稱",
+            "winning_fine_id": "prospect/B/individual-landlord-scale-fit"
+          },
+          {
+            "article": "Landlordonboarding01",
+            "gold": [
+              "prospect/D/account-registration"
+            ],
+            "q": "身分證照片會給誰看到",
+            "type": "邊界",
+            "winning_fine_id": "prospect/C/bill-contents-extra-fees"
+          },
+          {
+            "article": "Landlordonboarding02",
+            "gold": [
+              "prospect/D/subscription-change-renewal"
+            ],
+            "q": "團隊成員要怎麼邀請",
+            "type": "直接",
+            "winning_fine_id": "prospect/C/contract-esign-flow"
+          },
+          {
+            "article": "Landlordonboarding02",
+            "gold": [
+              "prospect/D/subscription-change-renewal"
+            ],
+            "q": "我要把同事加進來",
+            "type": "口語",
+            "winning_fine_id": "prospect/C/team-management-overview"
+          },
+          {
+            "article": "Landlordonboarding02",
+            "gold": [
+              "prospect/D/subscription-change-renewal"
+            ],
+            "q": "邀請同事但系統說找不到人",
+            "type": "情境",
+            "winning_fine_id": "prospect/C/contract-esign-flow"
+          },
+          {
+            "article": "Landlordonboarding02",
+            "gold": [
+              "prospect/D/subscription-change-renewal"
+            ],
+            "q": "屋主帳號",
+            "type": "俗稱",
+            "winning_fine_id": "prospect/D/account-registration"
+          },
+          {
+            "article": "Landlordonboarding02",
+            "gold": [
+              "prospect/D/subscription-change-renewal"
+            ],
+            "q": "可以把團隊轉移給別人嗎",
+            "type": "邊界",
+            "winning_fine_id": "prospect/C/team-management-overview"
+          },
+          {
+            "article": "Landlordonboarding06Finance",
+            "gold": [
+              "prospect/C/notification-channels"
+            ],
+            "q": "發出去的帳單可以取消嗎",
+            "type": "直接",
+            "winning_fine_id": "prospect/C/bill-format-customize"
+          },
+          {
+            "article": "Landlordonboarding06Finance",
+            "gold": [
+              "prospect/C/notification-channels"
+            ],
+            "q": "不足月的租金怎麼算",
+            "type": "口語",
+            "winning_fine_id": "prospect/B/individual-landlord-scale-fit"
+          },
+          {
+            "article": "Landlordonboarding06Finance",
+            "gold": [
+              "prospect/C/notification-channels"
+            ],
+            "q": "發錯帳單了想收回",
+            "type": "情境",
+            "winning_fine_id": "prospect/D/account-registration"
+          },
+          {
+            "article": "Landlordonboarding06Finance",
+            "gold": [
+              "prospect/C/notification-channels"
+            ],
+            "q": "取消帳單後租客會知道嗎",
+            "type": "邊界",
+            "winning_fine_id": "prospect/B/individual-landlord-scale-fit"
+          },
+          {
+            "article": "TOFILL-repair",
+            "gold": [
+              "prospect/C/repair-system"
+            ],
+            "q": "緊急的可以優先處理嗎",
+            "type": "口語",
+            "winning_fine_id": "prospect/A/pain-points"
+          },
+          {
+            "article": "TOFILL-repair",
+            "gold": [
+              "prospect/C/repair-system"
+            ],
+            "q": "修繕費用可以直接開帳單嗎",
+            "type": "邊界",
+            "winning_fine_id": "prospect/D/account-registration"
+          },
+          {
+            "article": "advanced12",
+            "gold": [
+              "prospect/C/payment-gateway-options"
+            ],
+            "q": "租客繳的錢在哪裡",
+            "type": "口語",
+            "winning_fine_id": "prospect/B/individual-landlord-scale-fit"
+          },
+          {
+            "article": "advanced12",
+            "gold": [
+              "prospect/C/payment-gateway-options"
+            ],
+            "q": "忘記藍新的密碼",
+            "type": "情境",
+            "winning_fine_id": "prospect/D/account-registration"
+          },
+          {
+            "article": "advanced12",
+            "gold": [
+              "prospect/C/payment-gateway-options"
+            ],
+            "q": "線上收的錢怎麼拿",
+            "type": "俗稱",
+            "winning_fine_id": "prospect/C/what-is-owner-landlord"
+          },
+          {
+            "article": "advanced12",
+            "gold": [
+              "prospect/C/payment-gateway-options"
+            ],
+            "q": "可以改預設密碼嗎",
+            "type": "邊界",
+            "winning_fine_id": "prospect/D/account-registration"
+          },
+          {
+            "article": "onboarding10",
+            "gold": [
+              "prospect/C/contract-esign-flow",
+              "prospect/C/contract-modify-after-sign",
+              "prospect/C/contract-templates"
+            ],
+            "q": "未繳的房租可以從押金扣嗎",
+            "type": "直接",
+            "winning_fine_id": "prospect/C/credit-card-rent-payment"
+          },
+          {
+            "article": "onboarding10",
+            "gold": [
+              "prospect/C/contract-esign-flow",
+              "prospect/C/contract-modify-after-sign",
+              "prospect/C/contract-templates"
+            ],
+            "q": "押金要退多少怎麼算",
+            "type": "口語",
+            "winning_fine_id": "prospect/C/property-status-meaning"
+          },
+          {
+            "article": "onboarding10",
+            "gold": [
+              "prospect/C/contract-esign-flow",
+              "prospect/C/contract-modify-after-sign",
+              "prospect/C/contract-templates"
+            ],
+            "q": "退租結算",
+            "type": "俗稱",
+            "winning_fine_id": "prospect/B/individual-landlord-scale-fit"
+          },
+          {
+            "article": "onboarding10",
+            "gold": [
+              "prospect/C/contract-esign-flow",
+              "prospect/C/contract-modify-after-sign",
+              "prospect/C/contract-templates"
+            ],
+            "q": "租客不同意點退清單怎麼辦",
+            "type": "邊界",
+            "winning_fine_id": "prospect/C/overdue-reminder-late-fee"
+          },
+          {
+            "article": "onboarding14",
+            "gold": [
+              "prospect/C/bill-format-customize"
+            ],
+            "q": "租客也可以下載收據嗎",
+            "type": "直接",
+            "winning_fine_id": "prospect/C/credit-card-rent-payment"
+          },
+          {
+            "article": "onboarding14",
+            "gold": [
+              "prospect/C/bill-format-customize"
+            ],
+            "q": "我要印收據",
+            "type": "口語",
+            "winning_fine_id": "prospect/C/credit-card-rent-payment"
+          },
+          {
+            "article": "onboarding14",
+            "gold": [
+              "prospect/C/bill-format-customize"
+            ],
+            "q": "以前收據在上面現在找不到",
+            "type": "情境",
+            "winning_fine_id": "prospect/C/bill-contents-extra-fees"
+          },
+          {
+            "article": "onboarding14",
+            "gold": [
+              "prospect/C/bill-format-customize"
+            ],
+            "q": "列印收據",
+            "type": "俗稱",
+            "winning_fine_id": "prospect/C/bill-contents-extra-fees"
+          },
+          {
+            "article": "onboarding4",
+            "gold": [
+              "prospect/C/community-batch-create"
+            ],
+            "q": "一次要建很多間",
+            "type": "口語",
+            "winning_fine_id": "prospect/D/property-quota-limit"
+          },
+          {
+            "article": "onboarding4",
+            "gold": [
+              "prospect/C/community-batch-create"
+            ],
+            "q": "批次上傳物件",
+            "type": "俗稱",
+            "winning_fine_id": "prospect/C/property-management-overview"
+          },
+          {
+            "article": "onboarding4",
+            "gold": [
+              "prospect/C/community-batch-create"
+            ],
+            "q": "VR怎麼製作",
+            "type": "邊界",
+            "winning_fine_id": "prospect/C/property-management-overview"
+          },
+          {
+            "article": "onboarding6",
+            "gold": [
+              "prospect/B/data-migration",
+              "prospect/G/migration-limits"
+            ],
+            "q": "公司自己的合約可以用嗎",
+            "type": "口語",
+            "winning_fine_id": "prospect/C/contract-history-retention"
+          },
+          {
+            "article": "onboarding6",
+            "gold": [
+              "prospect/B/data-migration",
+              "prospect/G/migration-limits"
+            ],
+            "q": "上傳完合約沒有成立",
+            "type": "情境",
+            "winning_fine_id": "prospect/C/contract-esign-flow"
+          },
+          {
+            "article": "onboarding6",
+            "gold": [
+              "prospect/B/data-migration",
+              "prospect/G/migration-limits"
+            ],
+            "q": "既存合約流程",
+            "type": "俗稱",
+            "winning_fine_id": "prospect/C/contract-history-retention"
+          },
+          {
+            "article": "onboarding6",
+            "gold": [
+              "prospect/B/data-migration",
+              "prospect/G/migration-limits"
+            ],
+            "q": "可以不用經過租客同意嗎",
+            "type": "邊界",
+            "winning_fine_id": "prospect/C/credit-card-rent-payment"
+          },
+          {
+            "article": "onboarding7",
+            "gold": [
+              "prospect/C/contract-esign-flow",
+              "prospect/C/contract-modify-after-sign",
+              "prospect/C/contract-templates"
+            ],
+            "q": "線上點交要怎麼做",
+            "type": "直接",
+            "winning_fine_id": "prospect/C/repair-system"
+          },
+          {
+            "article": "onboarding7",
+            "gold": [
+              "prospect/C/contract-esign-flow",
+              "prospect/C/contract-modify-after-sign",
+              "prospect/C/contract-templates"
+            ],
+            "q": "點交物件怎麼用",
+            "type": "俗稱",
+            "winning_fine_id": "prospect/C/property-status-meaning"
+          },
+          {
+            "article": "onboarding7",
+            "gold": [
+              "prospect/C/contract-esign-flow",
+              "prospect/C/contract-modify-after-sign",
+              "prospect/C/contract-templates"
+            ],
+            "q": "租客不同意點交怎麼辦",
+            "type": "邊界",
+            "winning_fine_id": "prospect/C/overdue-reminder-late-fee"
+          },
+          {
+            "article": "onboarding8",
+            "gold": [
+              "prospect/C/billing-overview"
+            ],
+            "q": "帳單要自己一張一張開嗎",
+            "type": "口語",
+            "winning_fine_id": "prospect/C/bill-format-customize"
+          },
+          {
+            "article": "onboarding8",
+            "gold": [
+              "prospect/C/billing-overview"
+            ],
+            "q": "租客說繳了但我這邊沒有待對帳",
+            "type": "情境",
+            "winning_fine_id": "prospect/B/individual-landlord-scale-fit"
+          },
+          {
+            "article": "onboarding8",
+            "gold": [
+              "prospect/C/billing-overview"
+            ],
+            "q": "收租怎麼操作",
+            "type": "俗稱",
+            "winning_fine_id": "prospect/B/individual-landlord-scale-fit"
+          },
+          {
+            "article": "onboarding8",
+            "gold": [
+              "prospect/C/billing-overview"
+            ],
+            "q": "可以一次發全部帳單嗎",
+            "type": "邊界",
+            "winning_fine_id": "prospect/C/bill-format-customize"
+          },
+          {
+            "article": "onboarding9-1",
+            "gold": [
+              "prospect/C/contract-esign-flow",
+              "prospect/C/contract-modify-after-sign",
+              "prospect/C/contract-templates"
+            ],
+            "q": "哪些合約不能提前解約",
+            "type": "直接",
+            "winning_fine_id": "prospect/C/contract-history-retention"
+          },
+          {
+            "article": "onboarding9-1",
+            "gold": [
+              "prospect/C/contract-esign-flow",
+              "prospect/C/contract-modify-after-sign",
+              "prospect/C/contract-templates"
+            ],
+            "q": "解約流程要多久",
+            "type": "口語",
+            "winning_fine_id": "prospect/C/property-status-meaning"
+          },
+          {
+            "article": "onboarding9-1",
+            "gold": [
+              "prospect/C/contract-esign-flow",
+              "prospect/C/contract-modify-after-sign",
+              "prospect/C/contract-templates"
+            ],
+            "q": "小齒輪裡面沒有提前解約",
+            "type": "情境",
+            "winning_fine_id": "prospect/C/contract-history-retention"
+          },
+          {
+            "article": "onboarding9-1",
+            "gold": [
+              "prospect/C/contract-esign-flow",
+              "prospect/C/contract-modify-after-sign",
+              "prospect/C/contract-templates"
+            ],
+            "q": "解約後押金怎麼處理",
+            "type": "邊界",
+            "winning_fine_id": "prospect/C/property-status-meaning"
+          },
+          {
+            "article": "onboarding9-2",
+            "gold": [
+              "prospect/C/contract-esign-flow",
+              "prospect/C/contract-modify-after-sign",
+              "prospect/C/contract-templates"
+            ],
+            "q": "解約之後多久生效",
+            "type": "口語",
+            "winning_fine_id": "prospect/C/property-status-meaning"
+          },
+          {
+            "article": "onboarding9-2",
+            "gold": [
+              "prospect/C/contract-esign-flow",
+              "prospect/C/contract-modify-after-sign",
+              "prospect/C/contract-templates"
+            ],
+            "q": "系統說我不能解約",
+            "type": "情境",
+            "winning_fine_id": "prospect/C/property-status-meaning"
+          },
+          {
+            "article": "onboarding9-2",
+            "gold": [
+              "prospect/C/contract-esign-flow",
+              "prospect/C/contract-modify-after-sign",
+              "prospect/C/contract-templates"
+            ],
+            "q": "七天審閱期",
+            "type": "俗稱",
+            "winning_fine_id": "prospect/D/free-trial"
+          },
+          {
+            "article": "onboarding9-2",
+            "gold": [
+              "prospect/C/contract-esign-flow",
+              "prospect/C/contract-modify-after-sign",
+              "prospect/C/contract-templates"
+            ],
+            "q": "解約可以取消嗎",
+            "type": "邊界",
+            "winning_fine_id": "prospect/C/property-status-meaning"
+          },
+          {
+            "article": "qa05",
+            "gold": [
+              "prospect/B/data-migration",
+              "prospect/G/migration-limits"
+            ],
+            "q": "上傳的合約有沒有法律效力",
+            "type": "直接",
+            "winning_fine_id": "prospect/C/contract-esign-flow"
+          },
+          {
+            "article": "qa05",
+            "gold": [
+              "prospect/B/data-migration",
+              "prospect/G/migration-limits"
+            ],
+            "q": "可以匯入我們公司的公版合約嗎",
+            "type": "口語",
+            "winning_fine_id": "prospect/C/contract-esign-flow"
+          },
+          {
+            "article": "qa06",
+            "gold": [
+              "prospect/B/data-migration",
+              "prospect/C/contract-templates",
+              "prospect/G/migration-limits"
+            ],
+            "q": "既存合約是什麼",
+            "type": "直接",
+            "winning_fine_id": "prospect/C/contract-esign-flow"
+          },
+          {
+            "article": "qa06",
+            "gold": [
+              "prospect/B/data-migration",
+              "prospect/C/contract-templates",
+              "prospect/G/migration-limits"
+            ],
+            "q": "制式合約是什麼意思",
+            "type": "俗稱",
+            "winning_fine_id": "prospect/C/contract-esign-flow"
+          },
+          {
+            "article": "qa21",
+            "gold": [
+              "prospect/C/bill-format-customize"
+            ],
+            "q": "關掉收據之後租客還看得到什麼",
+            "type": "邊界",
+            "winning_fine_id": "prospect/B/individual-landlord-scale-fit"
+          },
+          {
+            "article": "qa23",
+            "gold": [
+              "prospect/C/role-permission-granularity",
+              "prospect/C/team-management-overview"
+            ],
+            "q": "我想控管同事的權限",
+            "type": "口語",
+            "winning_fine_id": "prospect/B/team-company-fit"
+          },
+          {
+            "article": "qa23",
+            "gold": [
+              "prospect/C/role-permission-granularity",
+              "prospect/C/team-management-overview"
+            ],
+            "q": "怎麼開權限給員工",
+            "type": "俗稱",
+            "winning_fine_id": "prospect/B/team-company-fit"
+          },
+          {
+            "article": "qa23",
+            "gold": [
+              "prospect/C/role-permission-granularity",
+              "prospect/C/team-management-overview"
+            ],
+            "q": "權限可以事後修改嗎",
+            "type": "邊界",
+            "winning_fine_id": "prospect/B/team-company-fit"
+          },
+          {
+            "article": "qa27",
+            "gold": [
+              "prospect/C/billing-overview"
+            ],
+            "q": "藍新金流要怎麼設定",
+            "type": "直接",
+            "winning_fine_id": "prospect/C/what-is-owner-landlord"
+          },
+          {
+            "article": "qa27",
+            "gold": [
+              "prospect/C/billing-overview"
+            ],
+            "q": "線上金流怎麼開通",
+            "type": "口語",
+            "winning_fine_id": "prospect/C/what-is-owner-landlord"
+          },
+          {
+            "article": "qa27",
+            "gold": [
+              "prospect/C/billing-overview"
+            ],
+            "q": "我申請了藍新但系統沒有串到",
+            "type": "情境",
+            "winning_fine_id": "prospect/A/product-overview"
+          },
+          {
+            "article": "slug03",
+            "gold": [
+              "prospect/C/overdue-reminder-late-fee"
+            ],
+            "q": "逾期帳單在哪裡看",
+            "type": "直接",
+            "winning_fine_id": "prospect/C/bill-contents-extra-fees"
+          },
+          {
+            "article": "slug03",
+            "gold": [
+              "prospect/C/overdue-reminder-late-fee"
+            ],
+            "q": "逾期之後系統會做什麼",
+            "type": "口語",
+            "winning_fine_id": "prospect/C/repair-system"
+          },
+          {
+            "article": "slug102",
+            "gold": [
+              "prospect/C/credit-card-rent-payment"
+            ],
+            "q": "繳完帳單會顯示什麼",
+            "type": "直接",
+            "winning_fine_id": "prospect/C/bill-contents-extra-fees"
+          },
+          {
+            "article": "slug102",
+            "gold": [
+              "prospect/C/credit-card-rent-payment"
+            ],
+            "q": "刷了但帳單還是未繳",
+            "type": "情境",
+            "winning_fine_id": "prospect/C/overdue-reminder-late-fee"
+          },
+          {
+            "article": "slug39",
+            "gold": [
+              "prospect/C/property-status-meaning"
+            ],
+            "q": "空房跟出租中差在哪",
+            "type": "口語",
+            "winning_fine_id": "prospect/C/contract-templates"
+          },
+          {
+            "article": "slug39",
+            "gold": [
+              "prospect/C/property-status-meaning"
+            ],
+            "q": "想刪除物件但找不到刪除鍵",
+            "type": "情境",
+            "winning_fine_id": "prospect/C/community-batch-create"
+          },
+          {
+            "article": "slug76",
+            "gold": [
+              "prospect/C/billing-overview"
+            ],
+            "q": "帳單怎麼開跟怎麼發",
+            "type": "口語",
+            "winning_fine_id": "prospect/D/account-registration"
+          },
+          {
+            "article": "slug76",
+            "gold": [
+              "prospect/C/billing-overview"
+            ],
+            "q": "租客說沒收到這個月的帳單",
+            "type": "情境",
+            "winning_fine_id": "prospect/C/overdue-reminder-late-fee"
+          },
+          {
+            "article": "slug76",
+            "gold": [
+              "prospect/C/billing-overview"
+            ],
+            "q": "發錯的帳單可以收回嗎",
+            "type": "邊界",
+            "winning_fine_id": "prospect/D/account-registration"
+          },
+          {
+            "article": "slug78",
+            "gold": [
+              "prospect/C/bill-contents-extra-fees"
+            ],
+            "q": "房客收到的帳單會看到什麼",
+            "type": "口語",
+            "winning_fine_id": "prospect/B/data-migration"
+          },
+          {
+            "article": "slug78",
+            "gold": [
+              "prospect/C/bill-contents-extra-fees"
+            ],
+            "q": "水電費會在帳單裡嗎",
+            "type": "俗稱",
+            "winning_fine_id": "prospect/G/utility-split-advice"
+          },
+          {
+            "article": "slug78",
+            "gold": [
+              "prospect/C/bill-contents-extra-fees"
+            ],
+            "q": "帳單可以下載PDF嗎",
+            "type": "邊界",
+            "winning_fine_id": "prospect/C/bill-format-customize"
+          },
+          {
+            "article": "slug90",
+            "gold": [
+              "prospect/C/property-management-overview",
+              "prospect/C/rental-storefront-vr"
+            ],
+            "q": "可以把我的房子分享給別人看嗎",
+            "type": "口語",
+            "winning_fine_id": "prospect/B/individual-landlord-scale-fit"
+          },
+          {
+            "article": "slug90",
+            "gold": [
+              "prospect/C/property-management-overview",
+              "prospect/C/rental-storefront-vr"
+            ],
+            "q": "有些房子我不想公開",
+            "type": "情境",
+            "winning_fine_id": "prospect/B/individual-landlord-scale-fit"
+          },
+          {
+            "article": "slug90",
+            "gold": [
+              "prospect/C/property-management-overview",
+              "prospect/C/rental-storefront-vr"
+            ],
+            "q": "房東首頁是幹嘛的",
+            "type": "俗稱",
+            "winning_fine_id": "prospect/C/what-is-owner-landlord"
+          },
+          {
+            "article": "slug90",
+            "gold": [
+              "prospect/C/property-management-overview",
+              "prospect/C/rental-storefront-vr"
+            ],
+            "q": "可以隱藏聯絡電話嗎",
+            "type": "邊界",
+            "winning_fine_id": "prospect/C/notification-channels"
+          },
+          {
+            "article": "slug92",
+            "gold": [
+              "prospect/C/team-management-overview"
+            ],
+            "q": "經理人有哪些權限",
+            "type": "直接",
+            "winning_fine_id": "prospect/C/what-is-owner-landlord"
+          },
+          {
+            "article": "slug92",
+            "gold": [
+              "prospect/C/team-management-overview"
+            ],
+            "q": "經理人可以取消嗎",
+            "type": "邊界",
+            "winning_fine_id": "prospect/C/what-is-owner-landlord"
+          },
+          {
+            "article": "slug99",
+            "gold": [
+              "prospect/C/bill-format-customize"
+            ],
+            "q": "合約印出來沒有看到我們公司的章",
+            "type": "情境",
+            "winning_fine_id": "prospect/C/contract-esign-flow"
+          },
+          {
+            "article": "slug99",
+            "gold": [
+              "prospect/C/bill-format-customize"
+            ],
+            "q": "LOGO大小章怎麼用",
+            "type": "俗稱",
+            "winning_fine_id": "prospect/A/product-overview"
+          }
+        ]
+      }
+    },
+    "second_material": {
+      "article": {
+        "arms": {
+          "title": {
+            "limited": false,
+            "mappable": 49,
+            "recall_at_1": 0.5918,
+            "recall_at_3": 0.7959,
+            "recall_at_5": 0.8571,
+            "total": 49
+          },
+          "title+phrasing": {
+            "limited": false,
+            "mappable": 49,
+            "recall_at_1": 0.7551,
+            "recall_at_3": 0.8571,
+            "recall_at_5": 0.898,
+            "total": 49
+          },
+          "title+phrasing+content": {
+            "limited": false,
+            "mappable": 49,
+            "recall_at_1": 0.7755,
+            "recall_at_3": 0.9184,
+            "recall_at_5": 0.9592,
+            "total": 49
+          }
+        },
+        "excluded_deliberate": 6
+      },
+      "exact": {
+        "arms": {
+          "title": {
+            "limited": false,
+            "mappable": 49,
+            "recall_at_1": 0.5714,
+            "recall_at_3": 0.7755,
+            "recall_at_5": 0.8367,
+            "total": 49
+          },
+          "title+phrasing": {
+            "limited": false,
+            "mappable": 49,
+            "recall_at_1": 0.7347,
+            "recall_at_3": 0.8571,
+            "recall_at_5": 0.898,
+            "total": 49
+          },
+          "title+phrasing+content": {
+            "limited": false,
+            "mappable": 49,
+            "recall_at_1": 0.7551,
+            "recall_at_3": 0.9184,
+            "recall_at_5": 0.9592,
+            "total": 49
+          }
+        },
+        "excluded_deliberate": 6
+      }
+    }
+  },
+  "unresolved": [
+    "TOFILL-beike",
+    "TOFILL-repair",
+    "property（原"
+  ],
+  "unresolved_after_alias": []
+}

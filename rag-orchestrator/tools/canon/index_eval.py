@@ -690,9 +690,18 @@ def _load_fines(canon_path: str):
 # 主流程（全跑）
 # ---------------------------------------------------------------------------
 
+def _repo_relative(path: str, repo_root: str) -> str:
+    """狀態檔只寫 repo 相對路徑：絕對路徑（容器內常見）先對 repo_root 取 relpath；
+    相對路徑視為已相對 repo_root（與 Stop hook 的 join 語義一致）。逃出 repo 的路徑回空字串。"""
+    rel = os.path.relpath(path, repo_root) if os.path.isabs(path) else os.path.normpath(path)
+    if rel == os.curdir or rel.startswith(os.pardir):
+        return ""
+    return rel
+
+
 def run_full(args) -> int:
     repo_root = find_repo_root()
-    oud_rel = args.object_under_test
+    oud_rel = _repo_relative(args.object_under_test, repo_root)
     if not object_under_test_approved(repo_root, oud_rel):
         print(f"[index_eval] 全跑前置：{oud_rel} 不存在或核可欄為空 ⇒ 拒絕", file=sys.stderr)
         return 2
@@ -712,6 +721,12 @@ def run_full(args) -> int:
     fines = _load_fines(args.canon)
     aliases = dict(DEFAULT_ALIASES)
     article_map = build_koyu_article_map(args.koyu, args.helpcenter_dir, fines, aliases)
+
+    article_map_out = getattr(args, "article_map_out", None)
+    if article_map_out:
+        os.makedirs(os.path.dirname(os.path.abspath(article_map_out)), exist_ok=True)
+        with open(article_map_out, "w", encoding="utf-8") as f:
+            json.dump(article_map, f, ensure_ascii=False, indent=2, sort_keys=True)
 
     fine_keys = build_fine_keys(fines)
     index_texts = all_index_texts(fine_keys)

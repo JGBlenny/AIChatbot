@@ -550,3 +550,16 @@ def test_full_run_with_approval_writes_state_keys(tmp_path, monkeypatch):
     assert "index_eval" in state["evals_ran"]
     assert state["materials_frozen"] is True
     assert state["object_under_test_path"] == oud_rel
+
+
+def test_repo_relative_normalises_absolute_and_rejects_escape(tmp_path):
+    root = str(tmp_path / "repo")
+    os.makedirs(root, exist_ok=True)
+    rel = os.path.join(".kiro", "specs", "x", "inputs", "object-under-test.md")
+    # 容器內的絕對路徑（verifier 抓到的 P3：曾把 /.kiro/... 寫進 session.json）
+    assert ie._repo_relative(os.path.join(root, rel), root) == rel
+    # 已是相對路徑 ⇒ 原樣（normpath）
+    assert ie._repo_relative(rel, root) == rel
+    # 逃出 repo ⇒ 空字串（object_under_test_approved 會拒絕）
+    assert ie._repo_relative(os.path.join(root, "..", "outside.md"), root) == ""
+    assert ie._repo_relative("../outside.md", root) == ""

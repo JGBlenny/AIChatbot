@@ -49,6 +49,12 @@
 
 - 元件 10 步 1 寫 `--arms … --loo`：本 Plan 增 `--dry-run`、`--report misrouted`、embedding 快取；gold 來源明訂為細目 `sources` 的 `helpcenter:`（tasks 3.4 已寫，design 表格未寫）。
 
+## 6b. 全跑實況（2026-09-07）
+
+- 三次執行：前兩次因測試 compose 把 `.kiro`／`.claude` 掛唯讀（輸出、embedding 快取、session 狀態寫不進）失敗，非量測邏輯；第三次以可寫疊掛（`/out`、`/cache`、`/.claude/hooks/state`）完成。
+- **P4（待修）**：工具把 `object_under_test_path` 寫成容器絕對路徑 `/.kiro/...`，主機 Stop hook `os.path.join(project_dir, abs)` 取絕對路徑而找不到 ⇒ 擋回合；已手動改成 repo 相對路徑。修法：工具寫入前轉成相對 repo 根（容器內 repo 根＝`/`）。
+- 主材料可對映 153 句（五型 30–31）、第二份材料 49 格；LOO article 影響 45 句、剔除 90 鍵；misrouted 81–82 句（講法誤掛訊號，屬 5.6 治理）。
+
 ## 7. 待業主核
 
 1. `koyu-article-map.json` 的 `unresolved` 3 鍵各自是否視為同一篇：`TOFILL-beike`→`beike`（無影響）、`TOFILL-repair`→`repair`（**會讓 gold 文章 30→31**）、`property（原`→`property`（**再 +1**）。建議三個都合併（它們就是同一篇，只是鍵名髒），dry-run 以合併後的值為準。
