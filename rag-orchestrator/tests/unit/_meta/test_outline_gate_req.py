@@ -391,6 +391,21 @@ def test_gate5_stop_needs_rubric_revision_blocks(tmp_path):
     assert payload["reason"]
 
 
+def test_gate5_stop_reweigh_exits_block_and_zero_allows(tmp_path):
+    """任務 2.6 步 0／步 5 出口：reweigh.cells_without_disposition>0 或 fines_without_sources>0 ⇒ exit 2；
+    兩者皆 0 ⇒ 放行（正對照：同佈局只改數字）。"""
+    repo = _mk_repo(tmp_path)
+    base = {"evals_ran": [], "answerability": {"path": "a.json", "needs_rubric_revision": False},
+            "cost": {"path": "c.json", "over_budget": False}}
+    for key in ("cells_without_disposition", "fines_without_sources"):
+        _write_session(repo, dict(base, reweigh={"path": "r.json", "cells_without_disposition": 0, "fines_without_sources": 0, key: 1}))
+        proc = run_hook(repo, _stop_event())
+        assert proc.returncode == 2, key
+        assert key in json.loads(proc.stdout)["reason"]
+    _write_session(repo, dict(base, reweigh={"path": "r.json", "cells_without_disposition": 0, "fines_without_sources": 0}))
+    assert run_hook(repo, _stop_event()).returncode == 0
+
+
 def test_gate5_stop_over_budget_blocks(tmp_path):
     """紅：cost.over_budget=true ⇒ exit 2（與 evals_ran 是否跑過無關）。"""
     repo = _mk_repo(tmp_path)

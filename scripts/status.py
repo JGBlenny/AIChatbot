@@ -400,6 +400,24 @@ def print_worktree() -> None:
     print("   ⇒ 先 `git diff` 看清楚是什麼；不確定就**先 commit 再說**\n")
 
 
+def print_coverage() -> None:
+    """覆蓋閉環（任務 2.6）：讀最新 coverage-map-*.json（無 DB），印去向／補法分佈。找不到檔＝印「尚未產出」，⛔ 不猜。"""
+    d = ROOT / ".kiro" / "specs" / "knowledge-outline-and-intent-architecture" / "inputs"
+    files = sorted(d.glob("coverage-map-*.json"))
+    print("\n═══ 覆蓋閉環（格 → 去向；coverage_map.py）═══")
+    if not files:
+        print("  尚未產出（跑 .claude/skills/outline-curation/scripts/reweigh.py）")
+        return
+    f = files[-1]
+    m = json.loads(f.read_text("utf-8"))["_meta"]
+    s = m["summary"]
+    print(f"  檔：{f.relative_to(ROOT)}｜受眾 {m['audience']}｜正本 sha {m['inputs_sha']['canon'][:12]}…")
+    print(f"  格 {s['total']}｜無去向 {s['cells_without_disposition']}｜無來源細目 {len(m['fines_without_sources'])}｜判者一致率 {s['judge_agreement_global']:.3f}")
+    print(f"  去向：{s['by_disposition']}")
+    print(f"  補法：{s['by_fix_type']}")
+    print(f"  缺口：{s['gap_classes']}｜合併提案 {len(m['merge_similar_candidates'])}")
+
+
 def main() -> int:
     brief = "--brief" in sys.argv
     print_worktree()
@@ -411,6 +429,7 @@ def main() -> int:
         print_b2b_surface()
         print_scenarios()
         print_traffic()
+        print_coverage()
         print_env()
     except Exception as e:            # 大聲失敗：⛔ 不靜默跳過核心判斷
         print(f"\n⛔ 查詢失敗，本次輸出不完整：{e}")

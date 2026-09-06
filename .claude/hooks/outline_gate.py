@@ -481,6 +481,13 @@ def check_stop(project_dir: str) -> list:
     if cost.get("over_budget") is True:
         reasons.append("cost.over_budget=true（預算超支）")
 
+    # 步 0／步 5 出口（任務 2.6；R3.1）：無去向格＝0、無來源細目＝0。鍵由 scripts/reweigh.py 寫。
+    reweigh = state.get("reweigh") or {}
+    if int(reweigh.get("cells_without_disposition") or 0) > 0:
+        reasons.append(f"reweigh.cells_without_disposition={reweigh.get('cells_without_disposition')}（有格無去向，R3.1）")
+    if int(reweigh.get("fines_without_sources") or 0) > 0:
+        reasons.append(f"reweigh.fines_without_sources={reweigh.get('fines_without_sources')}（正本有細目無來源）")
+
     return reasons
 
 

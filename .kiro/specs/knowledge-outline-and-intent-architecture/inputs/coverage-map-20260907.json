@@ -1,0 +1,1343 @@
+{
+  "_meta": {
+    "audience": "prospect",
+    "fines_referenced": [
+      "prospect/A/product-overview",
+      "prospect/A/why-choose-jgb",
+      "prospect/B/data-migration",
+      "prospect/C/bill-contents-extra-fees",
+      "prospect/C/bill-format-customize",
+      "prospect/C/billing-overview",
+      "prospect/C/community-batch-create",
+      "prospect/C/contract-esign-flow",
+      "prospect/C/contract-history-retention",
+      "prospect/C/contract-templates",
+      "prospect/C/credit-card-rent-payment",
+      "prospect/C/notification-channels",
+      "prospect/C/overdue-reminder-late-fee",
+      "prospect/C/owner-report-collection-remit",
+      "prospect/C/payment-gateway-options",
+      "prospect/C/property-status-meaning",
+      "prospect/C/rental-storefront-vr",
+      "prospect/C/repair-system",
+      "prospect/C/role-permission-granularity",
+      "prospect/C/smart-meter-lock-iot",
+      "prospect/C/what-is-owner-landlord",
+      "prospect/D/account-registration",
+      "prospect/D/free-trial",
+      "prospect/D/pricing-plans",
+      "prospect/D/subscription-change-renewal",
+      "prospect/E/competitor-comparison",
+      "prospect/F/contact-sales-demo"
+    ],
+    "fines_total": 37,
+    "fines_without_sources": [],
+    "inputs_sha": {
+      "answerability": "db89f488ed9938055eff7defb26e42350ae2e2bcce500dc2bcf12303fbe0adad",
+      "canon": "da786d73407b96d1d9c857ce51ebb5ef34efafb135ea7602cf017929054d1ba5",
+      "demand": "7169785059bc9ceaf313025f6efef9bf7724b815ac57a79833203b9abd0e12e8",
+      "map": "32607587028474caf015e63024f6f31d8a07a166354d31dac4408b725756e669"
+    },
+    "merge_similar_candidates": [
+      {
+        "a": "prospect/C/contract-esign-flow",
+        "b": "prospect/C/contract-templates",
+        "fix_type": "merge_similar",
+        "status": "proposed"
+      }
+    ],
+    "note": "cause_state／entry_state／coverage 來自 map-v2（對 kb 量測），不是對正本索引；add_phrasing 的最小驗證＝正本索引建好後重跑檢索（元件 10 步 1）。",
+    "step": "reweigh",
+    "summary": {
+      "by_disposition": {
+        "deliberate_no": 5,
+        "fine": 39,
+        "not_available": 5,
+        "owner_decision": 6
+      },
+      "by_fix_type": {
+        "add_knowledge": 14,
+        "add_phrasing": 13,
+        "cross_audience_rewrite": 4,
+        "list_not_available": 5,
+        "null": 19
+      },
+      "cells_without_disposition": 0,
+      "gap_classes": {
+        "content_gap": 2,
+        "retrieval_gap": 15
+      },
+      "judge_agreement_global": 0.9454545454545454,
+      "judged_cells": 55,
+      "retrieval_gap_with_null_fix_type": 0,
+      "total": 55
+    }
+  },
+  "cells": [
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "UNSTABLE['S', 'S_OK']",
+      "cell_id": "C01",
+      "coverage": "已覆蓋",
+      "disposition": "fine",
+      "draft_path": null,
+      "entry_state": "ask_back",
+      "fine_id": "prospect/A/product-overview",
+      "fix_type": "add_knowledge",
+      "gap_classes": [
+        "retrieval_gap"
+      ],
+      "judge_agreement": 1.0,
+      "judge_label": "partial",
+      "min_verification": {
+        "expected_fine_id": "prospect/A/product-overview",
+        "phrasings": [
+          "你們系統適合我嗎",
+          "想了解你們產品",
+          "你們這個怎麼用",
+          "系統有哪些功能"
+        ]
+      },
+      "topic": "系統適不適合我／想了解產品"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "UNSTABLE['S', 'S_OK']",
+      "cell_id": "C02",
+      "coverage": "未覆蓋",
+      "disposition": "fine",
+      "draft_path": null,
+      "entry_state": "fixed",
+      "fine_id": "prospect/C/overdue-reminder-late-fee",
+      "fix_type": "add_phrasing",
+      "gap_classes": [
+        "retrieval_gap"
+      ],
+      "judge_agreement": 1.0,
+      "judge_label": "answerable",
+      "min_verification": {
+        "expected_fine_id": "prospect/C/overdue-reminder-late-fee",
+        "phrasings": [
+          "收租常常忘記，你們適合我嗎",
+          "你們能解決什麼問題"
+        ]
+      },
+      "topic": "你們能解決什麼問題／痛點"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "S_OK",
+      "cell_id": "C03",
+      "coverage": "已覆蓋",
+      "disposition": "fine",
+      "draft_path": null,
+      "entry_state": "answered_handoff",
+      "fine_id": "prospect/C/contract-templates",
+      "fix_type": "add_knowledge",
+      "gap_classes": [],
+      "judge_agreement": 1.0,
+      "judge_label": "partial",
+      "min_verification": {
+        "expected_fine_id": "prospect/C/contract-templates",
+        "phrasings": [
+          "包租跟代管在系統上有什麼差別"
+        ]
+      },
+      "topic": "包租 vs 代管在系統上的差別"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "S_OK",
+      "cell_id": "C04",
+      "coverage": "已覆蓋",
+      "disposition": "fine",
+      "draft_path": null,
+      "entry_state": "answered",
+      "fine_id": "prospect/C/what-is-owner-landlord",
+      "fix_type": null,
+      "gap_classes": [],
+      "judge_agreement": 1.0,
+      "judge_label": "answerable",
+      "min_verification": {
+        "expected_fine_id": "prospect/C/what-is-owner-landlord",
+        "phrasings": [
+          "大房東模式是什麼意思"
+        ]
+      },
+      "topic": "大房東模式是什麼"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "S_OK",
+      "cell_id": "C05",
+      "coverage": "已覆蓋",
+      "disposition": "fine",
+      "draft_path": null,
+      "entry_state": "answered_handoff",
+      "fine_id": "prospect/D/pricing-plans",
+      "fix_type": "add_knowledge",
+      "gap_classes": [],
+      "judge_agreement": 1.0,
+      "judge_label": "partial",
+      "min_verification": {
+        "expected_fine_id": "prospect/D/pricing-plans",
+        "phrasings": [
+          "你們怎麼收費 多少錢",
+          "費用怎麼算",
+          "一年費用怎麼算？180間房大概多少錢"
+        ]
+      },
+      "topic": "怎麼收費／多少錢"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "S_OK",
+      "cell_id": "C06",
+      "coverage": "已覆蓋",
+      "disposition": "fine",
+      "draft_path": null,
+      "entry_state": "answered_handoff",
+      "fine_id": "prospect/D/pricing-plans",
+      "fix_type": "add_knowledge",
+      "gap_classes": [],
+      "judge_agreement": 1.0,
+      "judge_label": "partial",
+      "min_verification": {
+        "expected_fine_id": "prospect/D/pricing-plans",
+        "phrasings": [
+          "目前有幾種訂閱方案，差別在哪裡呢？"
+        ]
+      },
+      "topic": "訂閱方案幾種／差在哪"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "FALSE_HIT",
+      "cell_id": "C07",
+      "coverage": "未覆蓋",
+      "disposition": "owner_decision",
+      "draft_path": null,
+      "entry_state": "answered_handoff",
+      "fine_id": null,
+      "fix_type": "add_knowledge",
+      "gap_classes": [],
+      "judge_agreement": 1.0,
+      "judge_label": "no_source",
+      "min_verification": {
+        "expected_fine_id": null,
+        "phrasings": [
+          "免費方案可以建幾個物件"
+        ]
+      },
+      "topic": "免費方案可建幾個物件"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "V",
+      "cell_id": "C08",
+      "coverage": "未覆蓋",
+      "disposition": "fine",
+      "draft_path": null,
+      "entry_state": "fixed",
+      "fine_id": "prospect/D/subscription-change-renewal",
+      "fix_type": "add_phrasing",
+      "gap_classes": [
+        "retrieval_gap"
+      ],
+      "judge_agreement": 1.0,
+      "judge_label": "answerable",
+      "min_verification": {
+        "expected_fine_id": "prospect/D/subscription-change-renewal",
+        "phrasings": [
+          "怎麼升級訂閱方案",
+          "訂閱到期會自動續嗎"
+        ]
+      },
+      "topic": "升級方案／到期自動續約"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "S_OK",
+      "cell_id": "C09",
+      "coverage": "已覆蓋",
+      "disposition": "fine",
+      "draft_path": null,
+      "entry_state": "answered_handoff",
+      "fine_id": "prospect/D/free-trial",
+      "fix_type": null,
+      "gap_classes": [],
+      "judge_agreement": 1.0,
+      "judge_label": "answerable",
+      "min_verification": {
+        "expected_fine_id": "prospect/D/free-trial",
+        "phrasings": [
+          "可以免費試用嗎"
+        ]
+      },
+      "topic": "免費試用"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "DELIBERATE_NO",
+      "cell_id": "C10",
+      "coverage": "符合(刻意不補)",
+      "disposition": "deliberate_no",
+      "draft_path": null,
+      "entry_state": "fixed",
+      "fine_id": null,
+      "fix_type": null,
+      "gap_classes": [],
+      "judge_agreement": 1.0,
+      "judge_label": "deliberate_no",
+      "min_verification": {
+        "expected_fine_id": null,
+        "phrasings": [
+          "可以客製開發嗎？怎麼計價"
+        ]
+      },
+      "topic": "客製開發／怎麼計價"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "S_OK",
+      "cell_id": "C11",
+      "coverage": "已覆蓋",
+      "disposition": "fine",
+      "draft_path": null,
+      "entry_state": "answered",
+      "fine_id": "prospect/C/community-batch-create",
+      "fix_type": null,
+      "gap_classes": [],
+      "judge_agreement": 1.0,
+      "judge_label": "answerable",
+      "min_verification": {
+        "expected_fine_id": "prospect/C/community-batch-create",
+        "phrasings": [
+          "物件可以批次上傳嗎",
+          "如何新增物件"
+        ]
+      },
+      "topic": "新增物件／批次上傳"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "V",
+      "cell_id": "C12",
+      "coverage": "未覆蓋",
+      "disposition": "fine",
+      "draft_path": null,
+      "entry_state": "fixed",
+      "fine_id": "prospect/C/property-status-meaning",
+      "fix_type": "add_phrasing",
+      "gap_classes": [
+        "retrieval_gap"
+      ],
+      "judge_agreement": 1.0,
+      "judge_label": "answerable",
+      "min_verification": {
+        "expected_fine_id": "prospect/C/property-status-meaning",
+        "phrasings": [
+          "物件狀態「未刊登」「刊登中」「洽談中」「租約中」分別是什麼"
+        ]
+      },
+      "topic": "物件狀態四態是什麼"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "N_CAND",
+      "cell_id": "C13",
+      "coverage": "未覆蓋",
+      "disposition": "fine",
+      "draft_path": null,
+      "entry_state": "fixed",
+      "fine_id": "prospect/C/community-batch-create",
+      "fix_type": "add_knowledge",
+      "gap_classes": [],
+      "judge_agreement": 1.0,
+      "judge_label": "partial",
+      "min_verification": {
+        "expected_fine_id": "prospect/C/community-batch-create",
+        "phrasings": [
+          "建立社區的流程是什麼樣的？",
+          "社區的公開頁面是用來幹嘛的？"
+        ]
+      },
+      "topic": "社區建立與公開頁面"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "UNSTABLE['S', 'S_OK']",
+      "cell_id": "C14",
+      "coverage": "未覆蓋",
+      "disposition": "fine",
+      "draft_path": null,
+      "entry_state": "fixed",
+      "fine_id": "prospect/C/rental-storefront-vr",
+      "fix_type": "add_phrasing",
+      "gap_classes": [
+        "retrieval_gap"
+      ],
+      "judge_agreement": 1.0,
+      "judge_label": "answerable",
+      "min_verification": {
+        "expected_fine_id": "prospect/C/rental-storefront-vr",
+        "phrasings": [
+          "什麼是房東對外首頁",
+          "如何設置 VR 虛擬導覽呢？"
+        ]
+      },
+      "topic": "招租店舖／對外首頁／VR 看屋"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "V",
+      "cell_id": "C15",
+      "coverage": "未覆蓋",
+      "disposition": "owner_decision",
+      "draft_path": "canon/drafts/cross-audience/C15.md",
+      "entry_state": "fixed",
+      "fine_id": null,
+      "fix_type": "cross_audience_rewrite",
+      "gap_classes": [],
+      "judge_agreement": 1.0,
+      "judge_label": "no_source",
+      "min_verification": {
+        "expected_fine_id": null,
+        "phrasings": [
+          "這個物件自訂標籤有什麼用途呢？",
+          "物件的 Dashboard 裡面顯示了哪些數據"
+        ]
+      },
+      "topic": "物件自訂標籤／Dashboard"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "S_OK",
+      "cell_id": "C16",
+      "coverage": "已覆蓋",
+      "disposition": "fine",
+      "draft_path": null,
+      "entry_state": "answered",
+      "fine_id": "prospect/C/contract-esign-flow",
+      "fix_type": null,
+      "gap_classes": [],
+      "judge_agreement": 1.0,
+      "judge_label": "answerable",
+      "min_verification": {
+        "expected_fine_id": "prospect/C/contract-esign-flow",
+        "phrasings": [
+          "可不可以線上簽約"
+        ]
+      },
+      "topic": "線上簽約／電子簽章"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "FALSE_HIT",
+      "cell_id": "C17",
+      "coverage": "未覆蓋",
+      "disposition": "fine",
+      "draft_path": null,
+      "entry_state": "answered_handoff",
+      "fine_id": "prospect/C/contract-templates",
+      "fix_type": "add_phrasing",
+      "gap_classes": [
+        "retrieval_gap"
+      ],
+      "judge_agreement": 1.0,
+      "judge_label": "answerable",
+      "min_verification": {
+        "expected_fine_id": "prospect/C/contract-templates",
+        "phrasings": [
+          "合約範本可以選哪些"
+        ]
+      },
+      "topic": "合約範本可以選哪些"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "S_OK",
+      "cell_id": "C18",
+      "coverage": "已覆蓋",
+      "disposition": "fine",
+      "draft_path": null,
+      "entry_state": "answered",
+      "fine_id": "prospect/C/contract-esign-flow",
+      "fix_type": null,
+      "gap_classes": [],
+      "judge_agreement": 1.0,
+      "judge_label": "answerable",
+      "min_verification": {
+        "expected_fine_id": "prospect/C/contract-esign-flow",
+        "phrasings": [
+          "可以上傳自己原有的合約嗎"
+        ]
+      },
+      "topic": "上傳既有／紙本合約"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "S_OK",
+      "cell_id": "C19",
+      "coverage": "已覆蓋",
+      "disposition": "fine",
+      "draft_path": null,
+      "entry_state": "answered",
+      "fine_id": "prospect/C/contract-history-retention",
+      "fix_type": "add_knowledge",
+      "gap_classes": [],
+      "judge_agreement": 1.0,
+      "judge_label": "partial",
+      "min_verification": {
+        "expected_fine_id": "prospect/C/contract-history-retention",
+        "phrasings": [
+          "點交點退怎麼做",
+          "租客提前解約怎麼處理"
+        ]
+      },
+      "topic": "點交點退／續約／提前解約"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "S_OK",
+      "cell_id": "C20",
+      "coverage": "已覆蓋",
+      "disposition": "fine",
+      "draft_path": null,
+      "entry_state": "answered",
+      "fine_id": "prospect/C/contract-esign-flow",
+      "fix_type": null,
+      "gap_classes": [],
+      "judge_agreement": 1.0,
+      "judge_label": "answerable",
+      "min_verification": {
+        "expected_fine_id": "prospect/C/contract-esign-flow",
+        "phrasings": [
+          "有支援社會住宅的合約嗎"
+        ]
+      },
+      "topic": "社會住宅／委託合約"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "V",
+      "cell_id": "C21",
+      "coverage": "未覆蓋",
+      "disposition": "fine",
+      "draft_path": null,
+      "entry_state": "fixed",
+      "fine_id": "prospect/C/contract-history-retention",
+      "fix_type": "add_knowledge",
+      "gap_classes": [
+        "retrieval_gap"
+      ],
+      "judge_agreement": 1.0,
+      "judge_label": "partial",
+      "min_verification": {
+        "expected_fine_id": "prospect/C/contract-history-retention",
+        "phrasings": [
+          "歷史合約和結案合約之間的差異在哪裡"
+        ]
+      },
+      "topic": "歷史合約 vs 結案合約"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "UNCLASSIFIED(待G0)",
+      "cell_id": "C22",
+      "coverage": "未覆蓋",
+      "disposition": "not_available",
+      "draft_path": null,
+      "entry_state": "fixed",
+      "fine_id": null,
+      "fix_type": "list_not_available",
+      "gap_classes": [],
+      "judge_agreement": 1.0,
+      "judge_label": "no_source",
+      "min_verification": {
+        "expected_fine_id": null,
+        "phrasings": [
+          "所以剛剛說的簽約要另外收費嗎"
+        ]
+      },
+      "topic": "簽約另外收費嗎"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "S_OK",
+      "cell_id": "C23",
+      "coverage": "已覆蓋",
+      "disposition": "fine",
+      "draft_path": null,
+      "entry_state": "answered_handoff",
+      "fine_id": "prospect/C/billing-overview",
+      "fix_type": null,
+      "gap_classes": [],
+      "judge_agreement": 1.0,
+      "judge_label": "answerable",
+      "min_verification": {
+        "expected_fine_id": "prospect/C/billing-overview",
+        "phrasings": [
+          "帳單可以自動產生嗎",
+          "收租對帳怎麼做"
+        ]
+      },
+      "topic": "自動帳單／收租對帳"
+    },
+    {
+      "all_verdicts_agree": false,
+      "audience": "prospect",
+      "cause_state": "S_OK",
+      "cell_id": "C24",
+      "coverage": "已覆蓋⚠️",
+      "disposition": "owner_decision",
+      "draft_path": null,
+      "entry_state": "answered",
+      "fine_id": null,
+      "fix_type": "add_knowledge",
+      "gap_classes": [],
+      "judge_agreement": 0.6666666666666666,
+      "judge_label": "no_source",
+      "min_verification": {
+        "expected_fine_id": null,
+        "phrasings": [
+          "電子發票可以自動開嗎？還是要一張一張手動開"
+        ]
+      },
+      "topic": "電子發票自動開立"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "V",
+      "cell_id": "C25",
+      "coverage": "未覆蓋",
+      "disposition": "owner_decision",
+      "draft_path": "canon/drafts/cross-audience/C25.md",
+      "entry_state": "fixed",
+      "fine_id": null,
+      "fix_type": "cross_audience_rewrite",
+      "gap_classes": [],
+      "judge_agreement": 1.0,
+      "judge_label": "no_source",
+      "min_verification": {
+        "expected_fine_id": null,
+        "phrasings": [
+          "差額發票的使用時機是什麼時候"
+        ]
+      },
+      "topic": "差額發票使用時機"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "S_OK",
+      "cell_id": "C26",
+      "coverage": "已覆蓋",
+      "disposition": "fine",
+      "draft_path": null,
+      "entry_state": "answered_handoff",
+      "fine_id": "prospect/C/bill-format-customize",
+      "fix_type": null,
+      "gap_classes": [],
+      "judge_agreement": 1.0,
+      "judge_label": "answerable",
+      "min_verification": {
+        "expected_fine_id": "prospect/C/bill-format-customize",
+        "phrasings": [
+          "房東對帳單格式能不能自己設定"
+        ]
+      },
+      "topic": "帳單格式／收據樣式"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "UNSTABLE['FALSE_HIT', 'S_OK']",
+      "cell_id": "C27",
+      "coverage": "未覆蓋",
+      "disposition": "fine",
+      "draft_path": null,
+      "entry_state": "answered_handoff",
+      "fine_id": "prospect/C/bill-contents-extra-fees",
+      "fix_type": "add_phrasing",
+      "gap_classes": [
+        "retrieval_gap"
+      ],
+      "judge_agreement": 1.0,
+      "judge_label": "answerable",
+      "min_verification": {
+        "expected_fine_id": "prospect/C/bill-contents-extra-fees",
+        "phrasings": [
+          "帳單內有哪些資訊",
+          "如何在帳單內添加臨時增收費用"
+        ]
+      },
+      "topic": "帳單內有哪些資訊／臨時增收"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "S_OK",
+      "cell_id": "C28",
+      "coverage": "已覆蓋",
+      "disposition": "fine",
+      "draft_path": null,
+      "entry_state": "answered",
+      "fine_id": "prospect/C/overdue-reminder-late-fee",
+      "fix_type": null,
+      "gap_classes": [],
+      "judge_agreement": 1.0,
+      "judge_label": "answerable",
+      "min_verification": {
+        "expected_fine_id": "prospect/C/overdue-reminder-late-fee",
+        "phrasings": [
+          "那租客不繳怎麼辦"
+        ]
+      },
+      "topic": "逾期催繳／滯納金"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "V",
+      "cell_id": "C29",
+      "coverage": "未覆蓋",
+      "disposition": "owner_decision",
+      "draft_path": "canon/drafts/cross-audience/C29.md",
+      "entry_state": "fixed",
+      "fine_id": null,
+      "fix_type": "cross_audience_rewrite",
+      "gap_classes": [],
+      "judge_agreement": 1.0,
+      "judge_label": "no_source",
+      "min_verification": {
+        "expected_fine_id": null,
+        "phrasings": [
+          "儲值金回充帳戶是什麼功能"
+        ]
+      },
+      "topic": "儲值金回充帳戶"
+    },
+    {
+      "all_verdicts_agree": false,
+      "audience": "prospect",
+      "cause_state": "S_OK",
+      "cell_id": "C30",
+      "coverage": "已覆蓋",
+      "disposition": "fine",
+      "draft_path": null,
+      "entry_state": "answered",
+      "fine_id": "prospect/C/owner-report-collection-remit",
+      "fix_type": "add_knowledge",
+      "gap_classes": [],
+      "judge_agreement": 0.6666666666666666,
+      "judge_label": "partial",
+      "min_verification": {
+        "expected_fine_id": "prospect/C/owner-report-collection-remit",
+        "phrasings": [
+          "帳單代收代付的運作方式是什麼",
+          "大房東報表長什麼樣"
+        ]
+      },
+      "topic": "代收代付／大房東報表"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "ADVICE",
+      "cell_id": "C31",
+      "coverage": "n/a(一般建議)",
+      "disposition": "not_available",
+      "draft_path": null,
+      "entry_state": "answered_handoff",
+      "fine_id": null,
+      "fix_type": "list_not_available",
+      "gap_classes": [],
+      "judge_agreement": 1.0,
+      "judge_label": "no_source",
+      "min_verification": {
+        "expected_fine_id": null,
+        "phrasings": [
+          "水電費要怎麼分算比較公平？一個月大概多少錢"
+        ]
+      },
+      "topic": "水電費分算／費用估算"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "S_OK",
+      "cell_id": "C32",
+      "coverage": "已覆蓋",
+      "disposition": "fine",
+      "draft_path": null,
+      "entry_state": "answered",
+      "fine_id": "prospect/C/payment-gateway-options",
+      "fix_type": null,
+      "gap_classes": [],
+      "judge_agreement": 1.0,
+      "judge_label": "answerable",
+      "min_verification": {
+        "expected_fine_id": "prospect/C/payment-gateway-options",
+        "phrasings": [
+          "系統支援哪些金流廠商"
+        ]
+      },
+      "topic": "支援哪些金流廠商"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "V",
+      "cell_id": "C33",
+      "coverage": "未覆蓋",
+      "disposition": "fine",
+      "draft_path": null,
+      "entry_state": "fixed",
+      "fine_id": "prospect/C/payment-gateway-options",
+      "fix_type": "add_phrasing",
+      "gap_classes": [
+        "retrieval_gap"
+      ],
+      "judge_agreement": 1.0,
+      "judge_label": "answerable",
+      "min_verification": {
+        "expected_fine_id": "prospect/C/payment-gateway-options",
+        "phrasings": [
+          "藍新跟國泰的差別在哪"
+        ]
+      },
+      "topic": "藍新 vs 國泰差別"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "V",
+      "cell_id": "C34",
+      "coverage": "未覆蓋",
+      "disposition": "fine",
+      "draft_path": null,
+      "entry_state": "fixed",
+      "fine_id": "prospect/C/credit-card-rent-payment",
+      "fix_type": "add_phrasing",
+      "gap_classes": [
+        "retrieval_gap"
+      ],
+      "judge_agreement": 1.0,
+      "judge_label": "answerable",
+      "min_verification": {
+        "expected_fine_id": "prospect/C/credit-card-rent-payment",
+        "phrasings": [
+          "租客能用信用卡繳納房租嗎"
+        ]
+      },
+      "topic": "租客能用信用卡繳租嗎"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "S_OK",
+      "cell_id": "C35",
+      "coverage": "已覆蓋",
+      "disposition": "fine",
+      "draft_path": null,
+      "entry_state": "answered_handoff",
+      "fine_id": "prospect/C/payment-gateway-options",
+      "fix_type": "add_knowledge",
+      "gap_classes": [],
+      "judge_agreement": 1.0,
+      "judge_label": "partial",
+      "min_verification": {
+        "expected_fine_id": "prospect/C/payment-gateway-options",
+        "phrasings": [
+          "線上金流要收多少費用"
+        ]
+      },
+      "topic": "金流手續費"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "S_OK",
+      "cell_id": "C36",
+      "coverage": "已覆蓋",
+      "disposition": "fine",
+      "draft_path": null,
+      "entry_state": "answered_handoff",
+      "fine_id": "prospect/C/role-permission-granularity",
+      "fix_type": null,
+      "gap_classes": [],
+      "judge_agreement": 1.0,
+      "judge_label": "answerable",
+      "min_verification": {
+        "expected_fine_id": "prospect/C/role-permission-granularity",
+        "phrasings": [
+          "團隊多人權限怎麼分"
+        ]
+      },
+      "topic": "多人權限／角色分工"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "V",
+      "cell_id": "C37",
+      "coverage": "未覆蓋",
+      "disposition": "fine",
+      "draft_path": null,
+      "entry_state": "fixed",
+      "fine_id": "prospect/C/role-permission-granularity",
+      "fix_type": "add_phrasing",
+      "gap_classes": [
+        "retrieval_gap"
+      ],
+      "judge_agreement": 1.0,
+      "judge_label": "answerable",
+      "min_verification": {
+        "expected_fine_id": "prospect/C/role-permission-granularity",
+        "phrasings": [
+          "收租組可以看不到財務數字嗎？"
+        ]
+      },
+      "topic": "收租組看不到財務數字（權限題）"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "S_OK",
+      "cell_id": "C38",
+      "coverage": "已覆蓋",
+      "disposition": "fine",
+      "draft_path": null,
+      "entry_state": "answered_handoff",
+      "fine_id": "prospect/C/smart-meter-lock-iot",
+      "fix_type": null,
+      "gap_classes": [],
+      "judge_agreement": 1.0,
+      "judge_label": "answerable",
+      "min_verification": {
+        "expected_fine_id": "prospect/C/smart-meter-lock-iot",
+        "phrasings": [
+          "有沒有智慧電表或門鎖",
+          "儲值電表怎麼運作"
+        ]
+      },
+      "topic": "智慧電表／門鎖／儲值電表"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "UNCLASSIFIED(待G0)",
+      "cell_id": "C39",
+      "coverage": "未覆蓋",
+      "disposition": "not_available",
+      "draft_path": null,
+      "entry_state": "fixed",
+      "fine_id": null,
+      "fix_type": "list_not_available",
+      "gap_classes": [],
+      "judge_agreement": 1.0,
+      "judge_label": "no_source",
+      "min_verification": {
+        "expected_fine_id": null,
+        "phrasings": [
+          "私人門鎖和共用門鎖到底有什麼差別"
+        ]
+      },
+      "topic": "私人門鎖 vs 共用門鎖"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "S_OK",
+      "cell_id": "C40",
+      "coverage": "已覆蓋",
+      "disposition": "fine",
+      "draft_path": null,
+      "entry_state": "answered",
+      "fine_id": "prospect/C/repair-system",
+      "fix_type": null,
+      "gap_classes": [],
+      "judge_agreement": 1.0,
+      "judge_label": "answerable",
+      "min_verification": {
+        "expected_fine_id": "prospect/C/repair-system",
+        "phrasings": [
+          "租客報修怎麼處理"
+        ]
+      },
+      "topic": "線上報修／進度追蹤"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "S",
+      "cell_id": "C41",
+      "coverage": "未覆蓋",
+      "disposition": "fine",
+      "draft_path": null,
+      "entry_state": "fixed",
+      "fine_id": "prospect/C/notification-channels",
+      "fix_type": "add_phrasing",
+      "gap_classes": [
+        "retrieval_gap"
+      ],
+      "judge_agreement": 1.0,
+      "judge_label": "answerable",
+      "min_verification": {
+        "expected_fine_id": "prospect/C/notification-channels",
+        "phrasings": [
+          "系統通知是用 email 還是簡訊發的"
+        ]
+      },
+      "topic": "系統通知用 email 還是簡訊／LINE"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "S",
+      "cell_id": "C42",
+      "coverage": "未覆蓋",
+      "disposition": "fine",
+      "draft_path": null,
+      "entry_state": "fixed",
+      "fine_id": "prospect/C/notification-channels",
+      "fix_type": "add_phrasing",
+      "gap_classes": [
+        "retrieval_gap"
+      ],
+      "judge_agreement": 1.0,
+      "judge_label": "answerable",
+      "min_verification": {
+        "expected_fine_id": "prospect/C/notification-channels",
+        "phrasings": [
+          "哪些動作會造成系統通知的發送"
+        ]
+      },
+      "topic": "哪些動作會觸發通知"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "S_OK",
+      "cell_id": "C43",
+      "coverage": "未覆蓋(回答未含必含)",
+      "disposition": "fine",
+      "draft_path": null,
+      "entry_state": "answered_handoff",
+      "fine_id": "prospect/B/data-migration",
+      "fix_type": "add_knowledge",
+      "gap_classes": [
+        "content_gap"
+      ],
+      "judge_agreement": 1.0,
+      "judge_label": "partial",
+      "min_verification": {
+        "expected_fine_id": "prospect/B/data-migration",
+        "phrasings": [
+          "現在用的舊系統資料可以匯進來嗎？包含房東、租客、合約、歷史帳單",
+          "所以合約也能匯？"
+        ]
+      },
+      "topic": "舊系統資料匯入／哪些能匯"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "V",
+      "cell_id": "C44",
+      "coverage": "未覆蓋",
+      "disposition": "fine",
+      "draft_path": null,
+      "entry_state": "fixed",
+      "fine_id": "prospect/D/account-registration",
+      "fix_type": "add_phrasing",
+      "gap_classes": [
+        "retrieval_gap"
+      ],
+      "judge_agreement": 1.0,
+      "judge_label": "answerable",
+      "min_verification": {
+        "expected_fine_id": "prospect/D/account-registration",
+        "phrasings": [
+          "怎麼註冊 JGB 帳號"
+        ]
+      },
+      "topic": "怎麼註冊 JGB 帳號"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "S_OK",
+      "cell_id": "C45",
+      "coverage": "已覆蓋⚠️",
+      "disposition": "fine",
+      "draft_path": null,
+      "entry_state": "answered_handoff",
+      "fine_id": "prospect/E/competitor-comparison",
+      "fix_type": "add_knowledge",
+      "gap_classes": [
+        "content_gap"
+      ],
+      "judge_agreement": 1.0,
+      "judge_label": "answerable",
+      "min_verification": {
+        "expected_fine_id": "prospect/E/competitor-comparison",
+        "phrasings": [
+          "跟Bananas差在哪",
+          "你們跟屋我也差在哪"
+        ]
+      },
+      "topic": "跟 Bananas／屋我也差在哪"
+    },
+    {
+      "all_verdicts_agree": false,
+      "audience": "prospect",
+      "cause_state": "V",
+      "cell_id": "C46",
+      "coverage": "未覆蓋",
+      "disposition": "fine",
+      "draft_path": null,
+      "entry_state": "fixed",
+      "fine_id": "prospect/A/why-choose-jgb",
+      "fix_type": "add_phrasing",
+      "gap_classes": [
+        "retrieval_gap"
+      ],
+      "judge_agreement": 0.6666666666666666,
+      "judge_label": "answerable",
+      "min_verification": {
+        "expected_fine_id": "prospect/A/why-choose-jgb",
+        "phrasings": [
+          "有多語系介面嗎？外籍租客能用嗎"
+        ]
+      },
+      "topic": "外籍租客／多語系介面"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "CTA",
+      "cell_id": "C47",
+      "coverage": "未覆蓋",
+      "disposition": "fine",
+      "draft_path": null,
+      "entry_state": "fixed",
+      "fine_id": "prospect/F/contact-sales-demo",
+      "fix_type": null,
+      "gap_classes": [],
+      "judge_agreement": 1.0,
+      "judge_label": "answerable",
+      "min_verification": {
+        "expected_fine_id": "prospect/F/contact-sales-demo",
+        "phrasings": [
+          "好，那我要怎麼找你們的人談"
+        ]
+      },
+      "topic": "怎麼找你們的人談／預約 demo"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "DELIBERATE_NO",
+      "cell_id": "C48",
+      "coverage": "符合(刻意不補)",
+      "disposition": "deliberate_no",
+      "draft_path": null,
+      "entry_state": "fixed",
+      "fine_id": null,
+      "fix_type": null,
+      "gap_classes": [],
+      "judge_agreement": 1.0,
+      "judge_label": "deliberate_no",
+      "min_verification": {
+        "expected_fine_id": null,
+        "phrasings": [
+          "有沒有600戶以上的客戶",
+          "你們有幾個像我這樣的客戶"
+        ]
+      },
+      "topic": "客戶案例／規模／有幾個像我這樣的客戶"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "DELIBERATE_NO",
+      "cell_id": "C49",
+      "coverage": "符合(刻意不補)",
+      "disposition": "deliberate_no",
+      "draft_path": null,
+      "entry_state": "fixed",
+      "fine_id": null,
+      "fix_type": null,
+      "gap_classes": [],
+      "judge_agreement": 1.0,
+      "judge_label": "deliberate_no",
+      "min_verification": {
+        "expected_fine_id": null,
+        "phrasings": [
+          "有沒有SLA？當機賠不賠"
+        ]
+      },
+      "topic": "SLA／當機賠償"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "DELIBERATE_NO",
+      "cell_id": "C50",
+      "coverage": "符合(刻意不補)",
+      "disposition": "deliberate_no",
+      "draft_path": null,
+      "entry_state": "fixed",
+      "fine_id": null,
+      "fix_type": null,
+      "gap_classes": [],
+      "judge_agreement": 1.0,
+      "judge_label": "deliberate_no",
+      "min_verification": {
+        "expected_fine_id": null,
+        "phrasings": [
+          "資料放在哪裡？有沒有資安認證"
+        ]
+      },
+      "topic": "資安認證／資料放哪"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "DELIBERATE_NO",
+      "cell_id": "C51",
+      "coverage": "符合(刻意不補)",
+      "disposition": "deliberate_no",
+      "draft_path": null,
+      "entry_state": "fixed",
+      "fine_id": null,
+      "fix_type": null,
+      "gap_classes": [],
+      "judge_agreement": 1.0,
+      "judge_label": "deliberate_no",
+      "min_verification": {
+        "expected_fine_id": null,
+        "phrasings": [
+          "有沒有符合個資法"
+        ]
+      },
+      "topic": "個資法合規"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "FALSE_HIT",
+      "cell_id": "C52",
+      "coverage": "未覆蓋",
+      "disposition": "not_available",
+      "draft_path": null,
+      "entry_state": "answered",
+      "fine_id": null,
+      "fix_type": "list_not_available",
+      "gap_classes": [],
+      "judge_agreement": 1.0,
+      "judge_label": "no_source",
+      "min_verification": {
+        "expected_fine_id": null,
+        "phrasings": [
+          "系統管理模組裡有哪些功能？",
+          "系統管理模組有哪些功能"
+        ]
+      },
+      "topic": "系統管理模組有哪些功能"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "FALSE_HIT",
+      "cell_id": "C53",
+      "coverage": "未覆蓋",
+      "disposition": "not_available",
+      "draft_path": null,
+      "entry_state": "answered_handoff",
+      "fine_id": null,
+      "fix_type": "list_not_available",
+      "gap_classes": [],
+      "judge_agreement": 1.0,
+      "judge_label": "no_source",
+      "min_verification": {
+        "expected_fine_id": null,
+        "phrasings": [
+          "單合約與雙合約差別？"
+        ]
+      },
+      "topic": "單合約 vs 雙合約差別"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "V",
+      "cell_id": "C54",
+      "coverage": "未覆蓋",
+      "disposition": "owner_decision",
+      "draft_path": "canon/drafts/cross-audience/C54.md",
+      "entry_state": "fixed",
+      "fine_id": null,
+      "fix_type": "cross_audience_rewrite",
+      "gap_classes": [],
+      "judge_agreement": 1.0,
+      "judge_label": "no_source",
+      "min_verification": {
+        "expected_fine_id": null,
+        "phrasings": [
+          "手機條碼載具可以用來付費嗎？"
+        ]
+      },
+      "topic": "發票載具／手機條碼"
+    },
+    {
+      "all_verdicts_agree": true,
+      "audience": "prospect",
+      "cause_state": "N_CAND",
+      "cell_id": "C55",
+      "coverage": "未覆蓋",
+      "disposition": "fine",
+      "draft_path": null,
+      "entry_state": "fixed",
+      "fine_id": "prospect/C/property-status-meaning",
+      "fix_type": "add_knowledge",
+      "gap_classes": [],
+      "judge_agreement": 1.0,
+      "judge_label": "partial",
+      "min_verification": {
+        "expected_fine_id": "prospect/C/property-status-meaning",
+        "phrasings": [
+          "畫面上顯示「很抱歉，這個物件已經有合約了」，這是怎麼回事？",
+          "系統說「您的訂閱方案不包含此功能」，這是什麼意思？"
+        ]
+      },
+      "topic": "系統錯誤訊息解讀（已有合約／方案不包含）"
+    }
+  ]
+}

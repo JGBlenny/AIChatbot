@@ -81,7 +81,7 @@
   - 需求：2.9
   - 執行：mech-executor／effort 低——規格齊全
   - 驗收：目標＝JSON 永遠是 Markdown 的衍生物｜成果＝CI unit 硬把關＋README 審核流程｜做法＝逐位元比對測試｜驗證＝[自驗]
-- [ ] 2.6 `tools/gapmap/coverage_map.py` 初版與步 0 出口（2.4 後）：讀正本＋`demand-v2.json`＋`answerability.json` → `CellRecord`（去向 ∈ {fine, not_available, deliberate_no, owner_decision}、`fix_type`、`min_verification`）；跨受眾缺口列 `cross_audience_rewrite`＋草稿路徑（⛔ 不直接開放 Y 的列）；「回答未含必含」與「有知識但撈不到」分開報；輸出 `coverage-map.json`＋摘要進 `scripts/status.py`；**skill 步 5 腳本 `reweigh.py`**（design 元件 1；E6）：呼叫本工具重量，讀到 `answerability.json.needs_rubric_revision=true` ⇒ exit 2（正對照 unit：旗標 true 必擋、false 必過）。出口：無去向格＝0、無來源細目＝0（Stop hook 亦查）。
+- [x] 2.6 `tools/gapmap/coverage_map.py` 初版與步 0 出口（2.4 後；**2026-09-07 主 session 親做**：Plan `inputs/plan-2.6-coverage-map-20260907.md` 三輪 plan-verifier P2 全 FIX→業主核 (a)；fresh verifier CONFIRMED；容器 272 綠；真材料 55／55 有去向，報告 `inputs/m-b-reweigh-20260907.md`；偏離 design 四點見 Plan §8）：讀正本＋`demand-v2.json`＋`answerability.json` → `CellRecord`（去向 ∈ {fine, not_available, deliberate_no, owner_decision}、`fix_type`、`min_verification`）；跨受眾缺口列 `cross_audience_rewrite`＋草稿路徑（⛔ 不直接開放 Y 的列）；「回答未含必含」與「有知識但撈不到」分開報；輸出 `coverage-map.json`＋摘要進 `scripts/status.py`；**skill 步 5 腳本 `reweigh.py`**（design 元件 1；E6）：呼叫本工具重量，讀到 `answerability.json.needs_rubric_revision=true` ⇒ exit 2（正對照 unit：旗標 true 必擋、false 必過）。出口：無去向格＝0、無來源細目＝0（Stop hook 亦查）。
   - 需求：2.4, 3.1, 3.2, 3.3, 3.5, 3.7
   - 執行：executor／effort 中——狀態機沿 demand-v2 `_meta.states`，去向欄與「一格對一細目」對應為新增
   - 驗收：目標＝每格有去向｜成果＝`coverage-map.json`＋status 摘要＋無去向格＝0｜做法＝讀正本＋demand＋answerability｜驗證＝[業主審核] 去向表（`owner_decision` 格由業主裁）
