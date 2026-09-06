@@ -205,3 +205,59 @@ def test_apply_merge_concatenates_sources_in_order(tmp_path):
     body = md.read_text(encoding="utf-8").split("{#prospect/A/all}\n", 1)[1]
     assert body.index("可先免費試用一個月。") < body.index("金箍棒把物件") < body.index("帳單自動產生。")
     assert "- sources: [draft:batch#1, kb:1, kb:2]" in md.read_text(encoding="utf-8")
+
+
+# ---------------------------------------------------------------------------
+# attach_phrasings（2.4a：講法掛進草稿；決定性、只掛 proposed、回讀過 parser、講法不得進內容行）
+# ---------------------------------------------------------------------------
+
+def _pm(phrasings):
+    return {"step": "phrasing", "payload": {"phrasings": phrasings, "similar_pairs": []}}
+
+
+def test_attach_phrasings_deterministic_and_parsed(tmp_path):
+    kb, dr, _ = _inputs(tmp_path)
+    prop = tmp_path / "syn.json"; prop.write_text(json.dumps(_synthesis(), ensure_ascii=False), encoding="utf-8")
+    md = tmp_path / "c.md"
+    r = _run(["apply_proposal.py", "--proposal", str(prop), "--kb-rows", kb, "--drafts", dr, "--version", "v", "--out-md", str(md), "--out-idmap", str(tmp_path / "i.json")])
+    assert r.returncode == 0, r.stderr
+    pm = tmp_path / "pm.json"
+    pm.write_text(json.dumps(_pm([
+        {"fine_id": "prospect/A/positioning", "text": "你們系統適合我嗎", "source": "question_summary:1", "status": "proposed", "score": 1.0},
+        {"fine_id": "prospect/A/positioning", "text": "適不適合小房東", "source": "koyu:03#12", "status": "proposed", "score": 0.3},
+        {"fine_id": "prospect/A/positioning", "text": "已核可的不掛", "source": "koyu:03#13", "status": "approved", "score": 0.9},
+        {"fine_id": "prospect/D/trial", "text": "可以先試用嗎", "source": "helpcenter:trial", "status": "proposed", "score": 0.5},
+    ]), ensure_ascii=False), encoding="utf-8")
+    outs = []
+    for i in (1, 2):
+        o = tmp_path / f"o{i}.md"; rep = tmp_path / f"r{i}.json"
+        r = _run(["attach_phrasings.py", "--canon", str(md), "--phrasing-map", str(pm), "--out", str(o), "--report", str(rep)])
+        assert r.returncode == 0, r.stderr
+        outs.append(o.read_bytes())
+    assert outs[0] == outs[1]
+    text = outs[0].decode("utf-8")
+    assert '- phrasings:\n  - {text: "你們系統適合我嗎", source: "question_summary:1", status: proposed}\n  - {text: "適不適合小房東", source: "koyu:03#12", status: proposed}' in text
+    assert "已核可的不掛" not in text
+    from services.agent.canon.canon_parser import parse_canon_text, phrasing_leaks
+    doc = parse_canon_text(text)
+    assert phrasing_leaks(doc) == []
+    by = {f.id: f for f in doc.fines()}
+    assert [p.text for p in by["prospect/A/positioning"].phrasings] == ["你們系統適合我嗎", "適不適合小房東"]
+    assert by["prospect/C/rent-collection"].phrasings == ()
+    rep = json.loads((tmp_path / "r1.json").read_text(encoding="utf-8"))
+    assert rep["attached_phrasings"] == 3 and rep["fines_without_phrasings"] == ["prospect/C/rent-collection"]
+
+
+def test_attach_phrasings_rejects_unknown_fine_and_content_leak(tmp_path):
+    kb, dr, _ = _inputs(tmp_path)
+    prop = tmp_path / "syn.json"; prop.write_text(json.dumps(_synthesis(), ensure_ascii=False), encoding="utf-8")
+    md = tmp_path / "c.md"
+    assert _run(["apply_proposal.py", "--proposal", str(prop), "--kb-rows", kb, "--drafts", dr, "--version", "v", "--out-md", str(md), "--out-idmap", str(tmp_path / "i.json")]).returncode == 0
+    pm = tmp_path / "pm.json"
+    pm.write_text(json.dumps(_pm([{"fine_id": "prospect/Z/nope", "text": "x", "source": "s", "status": "proposed", "score": 1}]), ensure_ascii=False), encoding="utf-8")
+    r = _run(["attach_phrasings.py", "--canon", str(md), "--phrasing-map", str(pm), "--out", str(tmp_path / "o.md")])
+    assert r.returncode == 2 and "沒有的細目" in r.stderr and not (tmp_path / "o.md").exists()
+    # 講法＝內容句 ⇒ 注入面守門必擋
+    pm.write_text(json.dumps(_pm([{"fine_id": "prospect/D/trial", "text": "可先免費試用一個月。", "source": "s", "status": "proposed", "score": 1}]), ensure_ascii=False), encoding="utf-8")
+    r = _run(["attach_phrasings.py", "--canon", str(md), "--phrasing-map", str(pm), "--out", str(tmp_path / "o2.md")])
+    assert r.returncode == 2 and "注入面" in r.stderr

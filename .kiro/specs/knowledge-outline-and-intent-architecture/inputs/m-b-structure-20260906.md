@@ -40,3 +40,11 @@
 ## 4. 下一步
 
 2.2（講法工具＋PII 掃描）→ 講法掛回這 37 細目 → 2.4a 交業主審草稿（`prospect.draft.md`）→ 核可後才進 2.4b（可答性判者以正本細目為候選重跑、reweigh、diff）。
+
+## 5. 2.4a 交件（2026-09-06 晚）：講法已掛進草稿
+
+- 步 3 首跑（`phrasing_map.py`，去識別修正後重產）：候選 1,270、掛上 **229 條**到 35 細目、待審 984（`runs/2026-09-06T00-00-00Z/phrasing-map.json` `payload.unassigned`）、凍結題排除 41、相似細目對 4（`similar-items.json`；最高分 data-migration ↔ migration-limits 0.56，⛔ 未合併）。
+- `attach_phrasings.py` 把 229 條 `proposed` 講法掛進草稿 ⇒ **`raw/structure-20260906/prospect.draft.with-phrasings.md`**（hook 結構與識別碼掃描零錯；parser 回讀通過；`phrasing_leaks` 空；兩次掛載逐位元相同）。掛載報告 `raw/structure-20260906/attach-report.json`。
+- 沒有講法的 2 細目：見 `attach-report.json` `fines_without_phrasings`。
+- 業主審的東西（一次看完）：①37 細目結構與標題 ②split 重複句（kb:3600 三處、kb:5379 兩處）要刪 ③G 現有不足補內容 ④229 條講法留／改／刪（多為 question_summary 關鍵字與口語問法，`source` 可追） ⑤4 對相似細目要不要併 ⑥984 條 unassigned 要不要撈。
+- 審完的檔案放回 `rag-orchestrator/canon/prospect.md`（hook 會在 Edit／Write 時做結構與識別碼粗篩），並跑 `export_json` 產 `prospect.json`（同源測試守），才進 2.4b。
