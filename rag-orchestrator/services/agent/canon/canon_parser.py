@@ -428,13 +428,27 @@ def content_text(doc: CanonDoc) -> str:
     return "\n".join(u for f in doc.fines() for u in f.content_units)
 
 
+LEAK_CONTAINS_MIN_CHARS = 10  # 主題詞組（「大房東報表」「Bananas」）本來就會出現在內容句裡；只有整句長度的講法才用包含比對
+
+
 def phrasing_leaks(doc: CanonDoc, text: Optional[str] = None) -> list[str]:
-    """守門：講法（NFKC）出現在可引用文字中 ⇒ 列出；空清單＝乾淨。text 省略時檢查 content_text(doc)。"""
-    hay = _nfkc(text if text is not None else content_text(doc))
+    """守門：講法進了可引用文字 ⇒ 列出；空清單＝乾淨。
+
+    判準（NFKC＋去空白後）：①講法與某一內容句**整句相等**；或②講法長度 ≥ LEAK_CONTAINS_MIN_CHARS 且**包含**於可引用文字。
+    主題詞組（「合約」「大房東報表」）本來就會是內容句的子字串，子字串比對對它們恆誤判，故 ② 設長度下限；
+    真流量原句（≥10 字的完整問句）被塞進內容行、或任何講法整句成為一個內容行，仍抓得到。text 省略時檢查 content_text(doc)。"""
+    if text is not None:
+        units = [text]
+    else:
+        units = [u for f in doc.fines() for u in f.content_units]
+    hay_units = [_nfkc(u) for u in units]
+    hay = "\n".join(hay_units)
     leaks = []
     for f in doc.fines():
         for p in f.phrasings:
             needle = _nfkc(p.text)
-            if needle and needle in hay:
+            if not needle:
+                continue
+            if needle in hay_units or (len(needle) >= LEAK_CONTAINS_MIN_CHARS and needle in hay):
                 leaks.append(f"{f.id}: {p.text}")
     return leaks

@@ -8,7 +8,7 @@
   },
   "deterministic": true,
   "inputs_sha": {
-    "phrasing_map": "910410a30c59cf16de82612e5a124e7917429a7bfd7cf01c16de15bc54b9df70",
+    "phrasing_map": "741c0d013588baeb3525cceb9842ac0a25ff6546a8ecaf14e7d72a6be23eb8b9",
     "structure": "fd967be5578d703456e509617a3fc1111224757d2d0355062ae63492b0bcfeb3"
   },
   "payload": {
@@ -38,41 +38,6 @@
         "score": 1.0,
         "source": "question_summary:3606",
         "status": "proposed",
-        "text": "合約"
-      },
-      {
-        "fine_id": "prospect/A/pain-points",
-        "score": 1.0,
-        "source": "question_summary:3606",
-        "status": "proposed",
-        "text": "團隊"
-      },
-      {
-        "fine_id": "prospect/A/pain-points",
-        "score": 1.0,
-        "source": "question_summary:3606",
-        "status": "proposed",
-        "text": "報修"
-      },
-      {
-        "fine_id": "prospect/A/pain-points",
-        "score": 1.0,
-        "source": "question_summary:3606",
-        "status": "proposed",
-        "text": "收租"
-      },
-      {
-        "fine_id": "prospect/A/pain-points",
-        "score": 1.0,
-        "source": "question_summary:3606",
-        "status": "proposed",
-        "text": "痛點"
-      },
-      {
-        "fine_id": "prospect/A/pain-points",
-        "score": 1.0,
-        "source": "question_summary:3606",
-        "status": "proposed",
         "text": "管理困擾"
       },
       {
@@ -88,13 +53,6 @@
         "source": "question_summary:3585",
         "status": "proposed",
         "text": "合不合用"
-      },
-      {
-        "fine_id": "prospect/A/product-overview",
-        "score": 1.0,
-        "source": "question_summary:3585",
-        "status": "proposed",
-        "text": "售前"
       },
       {
         "fine_id": "prospect/A/product-overview",
@@ -136,28 +94,7 @@
         "score": 1.0,
         "source": "question_summary:3608",
         "status": "proposed",
-        "text": "優勢"
-      },
-      {
-        "fine_id": "prospect/A/why-choose-jgb",
-        "score": 1.0,
-        "source": "question_summary:3608",
-        "status": "proposed",
-        "text": "好處"
-      },
-      {
-        "fine_id": "prospect/A/why-choose-jgb",
-        "score": 1.0,
-        "source": "question_summary:3608",
-        "status": "proposed",
         "text": "差異化"
-      },
-      {
-        "fine_id": "prospect/A/why-choose-jgb",
-        "score": 1.0,
-        "source": "question_summary:3608",
-        "status": "proposed",
-        "text": "強項"
       },
       {
         "fine_id": "prospect/A/why-choose-jgb",
@@ -228,13 +165,6 @@
         "source": "question_summary:3596",
         "status": "proposed",
         "text": "收租對帳"
-      },
-      {
-        "fine_id": "prospect/B/individual-landlord-scale-fit",
-        "score": 1.0,
-        "source": "question_summary:3596",
-        "status": "proposed",
-        "text": "方案"
       },
       {
         "fine_id": "prospect/B/individual-landlord-scale-fit",
@@ -328,13 +258,6 @@
         "text": "大房東報表"
       },
       {
-        "fine_id": "prospect/B/team-company-fit",
-        "score": 1.0,
-        "source": "question_summary:3584",
-        "status": "proposed",
-        "text": "適合"
-      },
-      {
         "fine_id": "prospect/C/bill-contents-extra-fees",
         "score": 0.375,
         "source": "koyu:slug78#1",
@@ -381,13 +304,6 @@
         "score": 1.0,
         "source": "question_summary:5380",
         "status": "proposed",
-        "text": "品項"
-      },
-      {
-        "fine_id": "prospect/C/bill-format-customize",
-        "score": 1.0,
-        "source": "question_summary:5380",
-        "status": "proposed",
         "text": "客製帳單"
       },
       {
@@ -403,13 +319,6 @@
         "source": "question_summary:5380",
         "status": "proposed",
         "text": "帳單版面"
-      },
-      {
-        "fine_id": "prospect/C/bill-format-customize",
-        "score": 1.0,
-        "source": "question_summary:5380",
-        "status": "proposed",
-        "text": "抬頭"
       },
       {
         "fine_id": "prospect/C/bill-format-customize",
@@ -892,49 +801,35 @@
         "score": 1.0,
         "source": "question_summary:5378",
         "status": "proposed",
-        "text": "催繳"
-      },
-      {
-        "fine_id": "prospect/C/overdue-reminder-late-fee",
-        "score": 1.0,
-        "source": "question_summary:5378",
-        "status": "proposed",
-        "text": "拖欠"
-      },
-      {
-        "fine_id": "prospect/C/overdue-reminder-late-fee",
-        "score": 1.0,
-        "source": "question_summary:5378",
-        "status": "proposed",
-        "text": "提醒"
-      },
-      {
-        "fine_id": "prospect/C/overdue-reminder-late-fee",
-        "score": 1.0,
-        "source": "question_summary:5378",
-        "status": "proposed",
         "text": "租客不繳租金怎麼辦"
       },
       {
         "fine_id": "prospect/C/overdue-reminder-late-fee",
-        "score": 1.0,
-        "source": "question_summary:5378",
-        "status": "proposed",
-        "text": "逾期"
-      },
-      {
-        "fine_id": "prospect/C/overdue-reminder-late-fee",
-        "score": 1.0,
-        "source": "question_summary:5378",
-        "status": "proposed",
-        "text": "遲繳"
-      },
-      {
-        "fine_id": "prospect/C/overdue-reminder-late-fee",
-        "score": 0.1333,
+        "score": 0.1818,
         "source": "koyu:slug03#16",
         "status": "proposed",
         "text": "逾期提醒怎麼設定"
+      },
+      {
+        "fine_id": "prospect/C/overdue-reminder-late-fee",
+        "score": 0.125,
+        "source": "koyu:Landlordonboarding06Finance#5",
+        "status": "proposed",
+        "text": "不足月的租金怎麼算"
+      },
+      {
+        "fine_id": "prospect/C/overdue-reminder-late-fee",
+        "score": 0.12,
+        "source": "helpcenter:slug03",
+        "status": "proposed",
+        "text": "租客教學:租金逾期篇"
+      },
+      {
+        "fine_id": "prospect/C/overdue-reminder-late-fee",
+        "score": 0.12,
+        "source": "koyu:rentallaw.pt2#6",
+        "status": "proposed",
+        "text": "房客一直不繳錢怎麼辦"
       },
       {
         "fine_id": "prospect/C/owner-report-collection-remit",
@@ -956,13 +851,6 @@
         "source": "question_summary:3604",
         "status": "proposed",
         "text": "對業主交報表"
-      },
-      {
-        "fine_id": "prospect/C/owner-report-collection-remit",
-        "score": 1.0,
-        "source": "question_summary:3604",
-        "status": "proposed",
-        "text": "月結"
       },
       {
         "fine_id": "prospect/C/owner-report-collection-remit",
@@ -1165,20 +1053,6 @@
         "score": 1.0,
         "source": "question_summary:3603",
         "status": "proposed",
-        "text": "抄表"
-      },
-      {
-        "fine_id": "prospect/C/smart-meter-lock-iot",
-        "score": 1.0,
-        "source": "question_summary:3603",
-        "status": "proposed",
-        "text": "換鎖"
-      },
-      {
-        "fine_id": "prospect/C/smart-meter-lock-iot",
-        "score": 1.0,
-        "source": "question_summary:3603",
-        "status": "proposed",
         "text": "智慧門鎖"
       },
       {
@@ -1190,17 +1064,24 @@
       },
       {
         "fine_id": "prospect/C/smart-meter-lock-iot",
-        "score": 1.0,
-        "source": "question_summary:3603",
-        "status": "proposed",
-        "text": "硬體"
-      },
-      {
-        "fine_id": "prospect/C/smart-meter-lock-iot",
-        "score": 0.12,
+        "score": 0.1579,
         "source": "koyu:Landlordonboarding08Device#1",
         "status": "proposed",
         "text": "智慧電錶要怎麼綁定"
+      },
+      {
+        "fine_id": "prospect/C/smart-meter-lock-iot",
+        "score": 0.1333,
+        "source": "koyu:Landlordonboarding08Device#15",
+        "status": "proposed",
+        "text": "智慧電表"
+      },
+      {
+        "fine_id": "prospect/C/smart-meter-lock-iot",
+        "score": 0.125,
+        "source": "koyu:Landlordonboarding08Device#14",
+        "status": "proposed",
+        "text": "IOT設備"
       },
       {
         "fine_id": "prospect/C/team-management-overview",
@@ -1389,21 +1270,7 @@
         "score": 1.0,
         "source": "question_summary:3611",
         "status": "proposed",
-        "text": "免費"
-      },
-      {
-        "fine_id": "prospect/D/free-trial",
-        "score": 1.0,
-        "source": "question_summary:3611",
-        "status": "proposed",
         "text": "可以免費試用嗎"
-      },
-      {
-        "fine_id": "prospect/D/free-trial",
-        "score": 1.0,
-        "source": "question_summary:3611",
-        "status": "proposed",
-        "text": "試用"
       },
       {
         "fine_id": "prospect/D/free-trial",
@@ -1414,38 +1281,24 @@
       },
       {
         "fine_id": "prospect/D/free-trial",
-        "score": 0.2,
+        "score": 0.2143,
         "source": "koyu:advanced12#3",
         "status": "proposed",
         "text": "多久可以提款"
       },
       {
         "fine_id": "prospect/D/free-trial",
-        "score": 0.1667,
+        "score": 0.1765,
         "source": "koyu:tenantintro.register#3",
         "status": "proposed",
         "text": "驗證碼多久可以重發"
       },
       {
         "fine_id": "prospect/D/free-trial",
-        "score": 0.15,
+        "score": 0.1579,
         "source": "koyu:slug29#1",
         "status": "proposed",
         "text": "提前解約後多久可以點退"
-      },
-      {
-        "fine_id": "prospect/D/pricing-plans",
-        "score": 1.0,
-        "source": "question_summary:3610",
-        "status": "proposed",
-        "text": "價格"
-      },
-      {
-        "fine_id": "prospect/D/pricing-plans",
-        "score": 1.0,
-        "source": "question_summary:3610",
-        "status": "proposed",
-        "text": "報價"
       },
       {
         "fine_id": "prospect/D/pricing-plans",
@@ -1466,25 +1319,11 @@
         "score": 1.0,
         "source": "question_summary:3610",
         "status": "proposed",
-        "text": "方案"
-      },
-      {
-        "fine_id": "prospect/D/pricing-plans",
-        "score": 1.0,
-        "source": "question_summary:3610",
-        "status": "proposed",
-        "text": "費用"
-      },
-      {
-        "fine_id": "prospect/D/pricing-plans",
-        "score": 1.0,
-        "source": "question_summary:3610",
-        "status": "proposed",
         "text": "金箍棒"
       },
       {
         "fine_id": "prospect/D/pricing-plans",
-        "score": 0.125,
+        "score": 0.1667,
         "source": "koyu:Landlordonboarding02#20",
         "status": "proposed",
         "text": "公司方案多少錢"
@@ -1515,20 +1354,6 @@
         "score": 1.0,
         "source": "question_summary:3607",
         "status": "proposed",
-        "text": "差異"
-      },
-      {
-        "fine_id": "prospect/E/competitor-comparison",
-        "score": 1.0,
-        "source": "question_summary:3607",
-        "status": "proposed",
-        "text": "比較"
-      },
-      {
-        "fine_id": "prospect/E/competitor-comparison",
-        "score": 1.0,
-        "source": "question_summary:3607",
-        "status": "proposed",
         "text": "租賃管理系統"
       },
       {
@@ -1536,21 +1361,7 @@
         "score": 1.0,
         "source": "question_summary:3607",
         "status": "proposed",
-        "text": "競品"
-      },
-      {
-        "fine_id": "prospect/E/competitor-comparison",
-        "score": 1.0,
-        "source": "question_summary:3607",
-        "status": "proposed",
         "text": "金箍棒"
-      },
-      {
-        "fine_id": "prospect/E/competitor-neutrality",
-        "score": 1.0,
-        "source": "question_summary:3609",
-        "status": "proposed",
-        "text": "中立"
       },
       {
         "fine_id": "prospect/E/competitor-neutrality",

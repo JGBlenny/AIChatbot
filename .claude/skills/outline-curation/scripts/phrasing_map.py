@@ -285,8 +285,13 @@ def load_fines(structure_path: str):
     return sorted(fines, key=lambda f: f["id"])
 
 
+MIN_TERM_CHARS = 3
+
+
 def load_kb_terms(kb_rows_path: str):
-    """kb 列 → {kb_id: [關鍵詞]}；question_summary 是關鍵字串，以空白切詞、每詞 ≤20 字、≥2 字。"""
+    """kb 列 → {kb_id: [關鍵詞]}；question_summary 是關鍵字串，以空白切詞、每詞 ≤20 字、≥ MIN_TERM_CHARS 字。
+    MIN_TERM_CHARS=3（2026-09-06）：2 字詞（「合約」「收租」）是主題名不是問法，掛成講法會讓向量匹配到處命中、
+    也必然是內容句的子字串（洩漏守門恆誤判）；3 字起（「收租對帳」「電子簽約」）才有辨識力。"""
     doc = _load_json(kb_rows_path)
     rows = doc["rows"] if isinstance(doc, dict) else doc
     terms = {}
@@ -295,7 +300,7 @@ def load_kb_terms(kb_rows_path: str):
         picked = []
         for t in str(r["question_summary"]).split():
             t = t.strip()
-            if len(t) < 2:
+            if len(t) < MIN_TERM_CHARS:
                 continue
             if len(t) > 20:
                 too_long += 1

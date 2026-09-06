@@ -43,8 +43,9 @@
 
 ## 5. 2.4a 交件（2026-09-06 晚）：講法已掛進草稿
 
-- 步 3 首跑（`phrasing_map.py`，去識別修正後重產）：候選 1,270、掛上 **229 條**到 35 細目、待審 984（`runs/2026-09-06T00-00-00Z/phrasing-map.json` `payload.unassigned`）、凍結題排除 41、相似細目對 4（`similar-items.json`；最高分 data-migration ↔ migration-limits 0.56，⛔ 未合併）。
-- `attach_phrasings.py` 把 229 條 `proposed` 講法掛進草稿 ⇒ **`raw/structure-20260906/prospect.draft.with-phrasings.md`**（hook 結構與識別碼掃描零錯；parser 回讀通過；`phrasing_leaks` 空；兩次掛載逐位元相同）。掛載報告 `raw/structure-20260906/attach-report.json`。
-- 沒有講法的 2 細目：見 `attach-report.json` `fines_without_phrasings`。
-- 業主審的東西（一次看完）：①37 細目結構與標題 ②split 重複句（kb:3600 三處、kb:5379 兩處）要刪 ③G 現有不足補內容 ④229 條講法留／改／刪（多為 question_summary 關鍵字與口語問法，`source` 可追） ⑤4 對相似細目要不要併 ⑥984 條 unassigned 要不要撈。
+- 步 3 首跑（`phrasing_map.py`；去識別先 NFKC、question_summary 詞 ≥3 字）：候選 1,236、掛上 **202 條**到 35 細目、待審 979（`runs/2026-09-06T00-00-00Z/phrasing-map.json` `payload.unassigned`）、凍結題排除 41、相似細目對 4（`similar-items.json`；最高分 data-migration ↔ migration-limits 0.56，⛔ 未合併）。
+- `attach_phrasings.py` 把 202 條 `proposed` 講法掛進草稿 ⇒ **`raw/structure-20260906/prospect.draft.with-phrasings.md`**（hook 結構與識別碼掃描零錯；parser 回讀通過；`phrasing_leaks` 空；兩次掛載逐位元相同；`canon_sha256 dda8ea42…`）。掛載報告 `raw/structure-20260906/attach-report.json`。
+- 沒有講法的 2 細目：`prospect/C/role-permission-granularity`、`prospect/D/subscription-change-renewal`（來源是草稿、無 question_summary 詞，口語問法也沒配上）。
+- 過程中兩個工具判斷（記入程式與測試）：①`phrasing_leaks` 守門改「整句相等，或 ≥10 字才做包含比對」——主題詞組（「大房東報表」「Bananas」）本來就在內容句裡，子字串比對恆誤判；②question_summary 的 2 字詞（「合約」「收租」）不成講法。
+- 業主審的東西（一次看完）：①37 細目結構與標題 ②split 重複句（kb:3600 三處、kb:5379 兩處）要刪 ③G 現有不足補內容 ④202 條講法留／改／刪（`source` 可追：question_summary／koyu／helpcenter） ⑤4 對相似細目要不要併 ⑥979 條 unassigned 要不要撈。
 - 審完的檔案放回 `rag-orchestrator/canon/prospect.md`（hook 會在 Edit／Write 時做結構與識別碼粗篩），並跑 `export_json` 產 `prospect.json`（同源測試守），才進 2.4b。

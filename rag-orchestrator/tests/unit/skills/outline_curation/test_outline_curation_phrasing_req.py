@@ -94,7 +94,7 @@ KB_ROWS = {"rows": [
     {"kb_id": 1, "question_summary": "系統定位 適用對象 適不適合我 想了解", "answer": "a",
      "business_types": ["system_provider"], "categories": ["售前顧問"], "target_user": ["prospect"]},
     # 15 個詞 ⇒ 超過每細目上限 12
-    {"kb_id": 2, "question_summary": "收租 對帳 帳單 自動 金流 代收 發票 儲值 逾期 提醒 催繳 月結 報表 匯出 明細",
+    {"kb_id": 2, "question_summary": "收租對帳 帳單自動 多元金流 金流代收 電子發票 儲值金額 逾期提醒 自動催繳 月結報表 報表匯出 帳單明細 對帳流程 繳費提醒 滯納金額 收據樣式",
      "answer": "b", "business_types": ["system_provider"], "categories": ["售前顧問"], "target_user": ["prospect"]},
 ]}
 
@@ -195,6 +195,12 @@ def test_koyu_operation_and_boundary_types_are_excluded(tmp_path):
     assert payload["counts"]["koyu_excluded_by_type"] == {"操作": 1, "邊界": 1}
     assert not any(c["source"] in ("koyu:art01#2", "koyu:art01#3") for c in raw["candidates"]), \
         "操作／邊界在列舉階段就排除，連 raw/ 也不落"
+
+
+def test_min_term_chars_drops_two_char_topic_words(tmp_path):
+    """2 字主題詞（「合約」）不成講法：MIN_TERM_CHARS=3。"""
+    m = _load("phrasing_map")
+    assert m.MIN_TERM_CHARS == 3
 
 
 def test_cap_12_per_fine(tmp_path):

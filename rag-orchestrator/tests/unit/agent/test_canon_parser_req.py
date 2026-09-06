@@ -158,7 +158,8 @@ def test_phrasings_never_in_content_text_and_positive_control():
     doc2 = parse_canon_text(injected)
     assert phrasing_leaks(doc2) == ["prospect/A/trial: 可以先試用嗎"]
     # NFKC：全形／空白變體也抓得到
-    assert phrasing_leaks(doc, text="…　可以先試用嗎　…") == ["prospect/A/trial: 可以先試用嗎"]
+    assert phrasing_leaks(doc, text="　可以先試用嗎　") == ["prospect/A/trial: 可以先試用嗎"]  # 全形空白變體＝整句相等
+    assert phrasing_leaks(doc, text="說明：可以先試用嗎，細節另議") == []  # 短講法被包含在長句裡不算（<10 字）
 
 
 # ---------------------------------------------------------------------------
@@ -248,5 +249,23 @@ def test_attr_shaped_line_without_dash_is_rejected_not_content(bad_line):
 
 def test_phrasing_leak_check_ignores_inserted_whitespace():
     doc = parse_canon_text(SAMPLE)
-    assert phrasing_leaks(doc, text="…你們系統 適合我嗎…") == ["prospect/A/positioning: 你們系統適合我嗎"]
-    assert phrasing_leaks(doc, text="…你們系統\u3000適合我　嗎…") == ["prospect/A/positioning: 你們系統適合我嗎"]
+    assert phrasing_leaks(doc, text="你們系統 適合我嗎") == ["prospect/A/positioning: 你們系統適合我嗎"]
+    assert phrasing_leaks(doc, text="你們系統\u3000適合我　嗎") == ["prospect/A/positioning: 你們系統適合我嗎"]
+
+
+def test_phrasing_leak_short_topic_terms_are_not_false_positives():
+    """短主題詞（<5 字）是內容句的子字串屬正常，不算洩漏；整句相等仍抓。"""
+    md = SAMPLE.replace('- phrasings:\n  - {text: "可以先試用嗎", source: "traffic:202609#1", status: approved}',
+                        '- phrasings:\n  - {text: "可以先試用嗎", source: "traffic:202609#1", status: approved}\n  - {text: "試用", source: "question_summary:3596", status: proposed}')
+    doc = parse_canon_text(md)
+    assert phrasing_leaks(doc) == []  # 「試用」是「可先免費試用一個月。」的子字串，不算
+    injected = md.replace("可先免費試用一個月。", "可先免費試用一個月。\n試用")
+    assert phrasing_leaks(parse_canon_text(injected)) == ["prospect/A/trial: 試用"]  # 整句相等 ⇒ 抓
+
+
+def test_phrasing_leak_long_sentence_contained_is_flagged():
+    """≥10 字的講法（真流量原句形狀）被包在內容行裡也要抓。"""
+    md = SAMPLE.replace('{text: "適不適合小房東", source: "koyu:03#12", status: proposed}',
+                        '{text: "我管十間套房用你們系統合適嗎", source: "koyu:03#12", status: proposed}')
+    doc = parse_canon_text(md)
+    assert phrasing_leaks(doc, text="客戶問：我管十間套房用你們系統合適嗎？我們答…") == ["prospect/A/positioning: 我管十間套房用你們系統合適嗎"]
