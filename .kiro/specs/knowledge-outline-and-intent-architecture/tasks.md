@@ -77,7 +77,7 @@
   - 需求：1.9, 2.2, 2.10, 3.6, 3.7
   - 執行：main／effort 高——首跑的每一步輸出都是業主要審的東西，主 session 親跑並逐步檢視
   - 驗收：目標＝第一份售前正本草稿｜成果＝`prospect.md` 草稿＋diff-report＋replacements＋cost｜做法＝主 session 親跑步 1–6｜驗證＝[業主審核] 草稿逐粗目（⛔ 未審不 commit）
-- [ ] 2.5 (P) 正本同源與治理測試：CI unit 硬把關 `export_json(parse_canon("rag-orchestrator/canon/<a>.md"))` 與版控 `.json` 逐位元相等（竄改一位元必紅）；`canon/README.md` 寫審核流程（PR review＝寫入權、reviewer 名進 front matter）；review checklist 標 `.claude/settings.json`／`.claude/hooks/` 為高風險 diff。
+- [x] 2.5 (P) 正本同源與治理測試（2026-09-06 主 session；同源測試在尚無正本時 skip 標示、竄改正對照綠；README 審核流程＋PR 模板高風險 diff）：CI unit 硬把關 `export_json(parse_canon("rag-orchestrator/canon/<a>.md"))` 與版控 `.json` 逐位元相等（竄改一位元必紅）；`canon/README.md` 寫審核流程（PR review＝寫入權、reviewer 名進 front matter）；review checklist 標 `.claude/settings.json`／`.claude/hooks/` 為高風險 diff。
   - 需求：2.9
   - 執行：mech-executor／effort 低——規格齊全
   - 驗收：目標＝JSON 永遠是 Markdown 的衍生物｜成果＝CI unit 硬把關＋README 審核流程｜做法＝逐位元比對測試｜驗證＝[自驗]
