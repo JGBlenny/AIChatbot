@@ -534,7 +534,7 @@ flowchart LR
 **問題**：人審與機器讀取要同一份真相。**選項**：A 純 Markdown／B 純 JSON／C 混合單向。**決定**：C。**理由**：R2.9 把寫入權等同 prompt 寫入權，審核必須在 diff 可讀介面；JSON 為衍生物並帶同一 `canon_sha256`，CI 驗兩者同源。**參考**：research 選型 1。
 
 ### 決策 2：細目索引在記憶體、啟動 prepare、三態降級
-**決定**：沿 DSP-035 Plan v3 P1-3；快取鍵＝正本 sha＋講法集 sha。**理由**：≤2k 向量、零 migration、決定性；失敗方向是「整份正本」（資訊更多）。**參考**：research 選型 2、主題 2。
+**決定**：沿 agentic-mcp tasks 4.6 S1 候選段落提案 v3 P1-3（`reviews/plan-dsp035-s1-candidate-paragraphs-v3-WITHDRAWN.md`；⚠️ 與 `.claude/DECISIONS.md` 的 DSP-035「模型組態定案」是不同東西）；快取鍵＝正本 sha＋講法集 sha。**理由**：≤2k 向量、零 migration、決定性；失敗方向是「可見細目全集＋toc」（1.16 修訂：⛔ 不是未過濾整份正本）。**參考**：research 選型 2、主題 2。
 
 ### 決策 3：講法存正本、命中數走 trace
 **決定**：tasks 4.7 的新表改為升級路徑。**理由**：治理走 review；退役可 revert；命中數是觀測值，不是正本的一部分。**參考**：research 選型 3。
@@ -572,7 +572,7 @@ flowchart LR
 
 ### 效能考量
 - `run_turn` p95 ≤ 6 s（每回合多一次查詢 embedding，本機 50–100 ms）；上下文由整份 3,078 tokens 降至 K=5 細目≈500–800 字＋toc ≤300 字。
-- 啟動 prepare ≤ 2k 句、每批 8；失敗 ⇒ `not_ready`、回合走整份正本；health 紅。
+- 啟動 prepare ≤ 2k 句、每批 8；失敗 ⇒ `not_ready`、回合走可見細目全集＋toc（`CandidateOutlineDoc.from_visible`）；health 紅。
 - 判者：55 格×2 判者≈110 個獨立 API 請求（實測 gpt-4o-mini 107 請求 ≈$0.10）；原 Workflow 估 110 子代理 16 併發≈7 輪已作廢（實測 44 格 $15.84、整機重開）。
 
 ### 安全性設計
@@ -590,8 +590,8 @@ flowchart LR
 | 情況 | 行為 |
 |---|---|
 | 正本格式錯 | `CanonFormatError`（列號＋原因）；PostToolUse hook 擋；啟動 `check_budget` 同款「即紅」 |
-| 索引未就緒／sha 不符／查詢逾時 | `select` 回 None ⇒ 整份正本＋violation；health `not_ready`／`absent` 紅 |
-| selector 例外 | `except Exception` ⇒ 整份正本＋`candidate_selector_error`（與 fallback 分開） |
+| 索引未就緒／sha 不符／查詢逾時 | `select` 回 None ⇒ 可見細目全集＋toc＋violation；health `not_ready`／`absent` 紅 |
+| selector 例外 | `except Exception` ⇒ 可見細目全集＋toc＋`candidate_selector_error`（與 fallback 分開） |
 | 未審細目被引用 | `citable=False` ⇒ Verifier `SOURCE_NOT_CITABLE`（既有） |
 | 判者不一致 | 第 3 判者；一致率 <0.80 ⇒ `needs_rubric_revision` 停下回主 session（R6.2） |
 | 預算超支 | `cost_ledger` exit 2；Stop hook 擋 |
@@ -621,7 +621,8 @@ flowchart LR
 
 ## 部署考量
 ### 環境需求
-- `AGENT_CANON_DIR`（預設 `<rag root>/canon`，容器內 `/app/canon`）；映像**同時含** `canon/*.md` 與 `canon/*.json`（既有 `COPY . .` 涵蓋；E1）；embedding-api 啟動時可達（否則 index `not_ready` 紅、回合走整份正本）。
+- `AGENT_CANON_DIR`（預設 `<rag root>/canon`，容器內 `/app/canon`）；映像**同時含** `canon/*.md` 與 `canon/*.json`（既有 `COPY . .` 涵蓋；E1）；embedding-api 啟動時可達（否則 index `not_ready` 紅、回合走可見細目全集）。
+- `AGENT_REASONING_EFFORT`（未設不送；封閉值域 minimal／low／medium／high，經 `extra_body` 送出）、`OPENAI_TIMEOUT_S`（未設維持 SDK 預設 600 s）、`AGENT_BUDGET_REWRITES`（允許 0＝第一次輸出為準）——DSP-035 開發基線＝gpt-5-mini＋`low`＋0＋60（2026-09-07）。
 ### 部署步驟（給業主逐條；⛔ 本 spec 不代跑）
 1. `git pull` → 重建 `rag-orchestrator`（含 `canon/`）。
 2. `python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/knowledge-batches/canon-prospect-<date>.json --dry-run`（預期輸出：`canon_sha256 ✅ 相符`、逐筆 `✅ content match`、`knowledge N 筆／updates M 筆`）→ 核對 N＝正本已審細目數、M＝取代對應表列數 → **不帶 `--dry-run` 重跑即套用**（工具無 `--apply` 旗標，F17；D1 授權）→ `make audit`（預期不變量 10 對本批列有反應，runbook 標明）；runbook §17 記帳。

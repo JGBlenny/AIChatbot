@@ -111,12 +111,12 @@
   - 執行：mech-executor／effort 中——照 `agent_boundary.py` 既有 checker 慣例＋正對照
   - 驗收：目標＝33／34 進 audit 且空跑不綠｜成果＝兩支 checker＋正對照｜做法＝照 agent_boundary 慣例｜驗證＝[自驗]
 - [x] 3.6 決策 5 定案（3.4 後；**2026-09-07 業主裁 (a)**：線上匹配鍵改標題＋講法＋內文句取最大（內文臂 loo=article r@5 +9.1 點、講法臂 +3.9 點）；reranker 不接；講法密度目標每細目 approved ≥3（0 講法細目 2 個待業主補講法：`prospect/C/role-permission-granularity`、`prospect/D/subscription-change-renewal`）；design 決策 5 修訂＋變更歷史 1.14）：依三臂數字定線上匹配鍵（預設標題＋講法取最大）與講法密度目標；寫回 design 1.4 變更歷史；⛔ 不調 K。
-- [x] 3.7 `FineIndex` 內文鍵（3.6 後、4.1 前；決策 5 修訂落地；**2026-09-07 收案**：Plan `inputs/plan-3.7-fine-index-content-keys-20260907.md` 第 1 輪 REVISE 3 P2 FIX→第 2 輪 READY→業主核（§8 照預設）；executor＋fresh verifier CONFIRMED（獨立重算 358 鍵、47/49 vs 44/49 對報告 article 臂 .9592／.898、sha 不符 SKIP、隱私與常數不變）；unit 1014／integration 210／`make audit` PASS；design 1.15；P4：`_best_entry` 未知 kind 落 -2、未驗「內文句只記住來源」命題交 4.4a）：`KeyKind` 加 `content`；`prepare` 對每細目 `content_units` 每句一鍵（key id＝`ct:<sha8>`，⛔ 不記句文於 trace）；快取鍵 `canon_sha256` 已涵蓋內文、不加鍵；批次 ≤8 與三態不變；`Selection.winning_key_kind` 值域加 `content`；health `canon` 節加 `content_keys` 計數。測試：`index_eval` 內文臂與 `FineIndex` 同鍵集（鍵文字集合相等）；`visible_subset` 等價測試不變；突變控制（拿掉內文鍵 ⇒ 第二份材料 r@5 必降）。⛔ 不調 K、⛔ 不接 reranker。
-  - 需求：5.2, 5.6
-  - 執行：executor／effort 中；完成後派 fresh verifier
   - 需求：5.2
   - 執行：main／effort 低——判斷屬主 session
   - 驗收：目標＝匹配鍵定案｜成果＝design 1.4 變更歷史一行（同時記：步 1 gold 由「判者標」改為「文章→slug→細目 `sources` 決定性映射」，55 格判者材料降為第二份）｜做法＝讀 3.4 數字｜驗證＝[業主審核]（決策 5 由業主點頭）
+- [x] 3.7 `FineIndex` 內文鍵（3.6 後、4.1 前；決策 5 修訂落地；**2026-09-07 收案**：Plan `inputs/plan-3.7-fine-index-content-keys-20260907.md` 第 1 輪 REVISE 3 P2 FIX→第 2 輪 READY→業主核（§8 照預設）；executor＋fresh verifier CONFIRMED（獨立重算 358 鍵、47/49 vs 44/49 對報告 article 臂 .9592／.898、sha 不符 SKIP、隱私與常數不變）；unit 1014／integration 210／`make audit` PASS；design 1.15；P4：`_best_entry` 未知 kind 落 -2、未驗「內文句只記住來源」命題交 4.4a）：`KeyKind` 加 `content`；`prepare` 對每細目 `content_units` 每句一鍵（key id＝`ct:<sha8>`，⛔ 不記句文於 trace）；快取鍵 `canon_sha256` 已涵蓋內文、不加鍵；批次 ≤8 與三態不變；`Selection.winning_key_kind` 值域加 `content`；health `canon` 節加 `content_keys` 計數。測試：`index_eval` 內文臂與 `FineIndex` 同鍵集（鍵文字集合相等）；`visible_subset` 等價測試不變；突變控制（拿掉內文鍵 ⇒ 第二份材料 r@5 必降）。⛔ 不調 K、⛔ 不接 reranker。
+  - 需求：5.2, 5.6
+  - 執行：executor／effort 中；完成後派 fresh verifier
 
 ## 4. M-d 回合接線：候選注入、身分槽位、評估工具、步 2 探針（4.1／4.2／4.3 平行；4.4 後）
 
@@ -143,7 +143,7 @@
 
 > **階段目標**：售前對話邏輯以定義搬進 agent，CTA／轉人由程式與設定供給。**成果**：`agent_rules.py` 定義版、CTA／handoff 接線、步 3 劇本契約全綠。**驗證**：劇本 [代理驗證]；5.4 待 D2 [業主親跑]。
 
-- [ ] 5.1 `agent_rules.py` 定義搬遷（TDD）：`_POLICY_TEXT` 改三段定義（判準：A 事實題直答／B 推薦題補問，補問欄位封閉集合、一次一題、已知不重問、基本資訊門檻 identity＋(scale 或 pain)；已推薦後三態；fact_class 七值＋「句形不是判準」）；「入口已帶身分者不得反問身分」定義句；`persona_provider(identity)` 依 `resolved_audience()` 三分支；⛔ 不寫例子（裁定 13）。測試：prompt 快照測試（三分支）；R1.3 回歸鎖（`kb_search=None` 路徑逐字不變）不適用 agent 路徑但 `test_prompt_assembler_req` 白名單測試須綠。
+- [ ] 5.1 `agent_rules.py` 定義搬遷（TDD；**程式已落 `7059bdfa`（2026-09-07）、單元綠；打勾綁 4.4 出路裁決，見 HANDOFF-20260907.md §2**）：`_POLICY_TEXT` 改三段定義（判準：A 事實題直答／B 推薦題補問，補問欄位封閉集合、一次一題、已知不重問、基本資訊門檻 identity＋(scale 或 pain)；已推薦後三態；fact_class 七值＋「句形不是判準」）；「入口已帶身分者不得反問身分」定義句；`persona_provider(identity)` 依 `resolved_audience()` 三分支；⛔ 不寫例子（裁定 13）。測試：prompt 快照測試（三分支）；R1.3 回歸鎖（`kb_search=None` 路徑逐字不變）不適用 agent 路徑但 `test_prompt_assembler_req` 白名單測試須綠。
   - 需求：4.4, 4.7
   - 執行：executor／effort 中——來源＝kb 3645 原文（`inputs/kb3645-…md`），改寫為定義需判斷
   - 驗收：目標＝對話邏輯以定義搬入、persona 分支｜成果＝`agent_rules.py` 定義版＋快照測試｜做法＝從 kb 3645 改寫為定義句｜驗證＝[業主審核] 定義文（它就是 prompt）
@@ -172,7 +172,7 @@
   - 需求：3.4, 3.6
   - 執行：executor／effort 中——2.6 的延伸
   - 驗收：目標＝閉環可重量、判者一致率可見｜成果＝完整版工具｜做法＝2.6 延伸｜驗證＝[自驗]
-- [ ] 6.2 LINE 正本草稿（**前置：業主 2026-09-06 裁「先用售前大綱驗證，合理有效果才補其他大綱、開始切」——需 4.4 步 2 探針（翻轉率／無據率）與 7.4 放量門檻證明售前大綱有效，並由業主點頭；⛔ 不與 M-b～M-e 並行**）`rag-orchestrator/canon/property_manager-line.md`：粗目依 chatai 四文件（③損壞分類與判定／④語氣模板與禁止項／⑤帳單狀態語義與資料邊界／⑥什麼時候說不／⑦待裁與待驗）；API 實值以 `policy: not_available`＋`sources: [jgb2:<endpoint>]`，內容只寫邊界句；矛盾三項（emergency_status 值域、image_recognition 回傳、`status-overview` 過濾）列「待裁決／待驗」；21 案例知識類 5 案＋文件實際使用者輸入句 → `inputs/line-phrasings-20260906.json`（照抄、標情境與多輪、去識別）。走同一 skill 流程（步 1–6）產草稿交業主審。**分兩段派工**：6.2a 粗目與待驗清單、6.2b 口語材料檔。
+- [ ] 6.2 LINE 正本草稿（**前置 P3-b（2026-09-07 稽核）**：`runtime._select_outline` 與 `outline.make_outline_resolver` 目前硬寫 `vendor_business_types=frozenset()`，design 元件 6 要求呼叫端以 `VendorParameterResolver.get_vendor_info` 解析後傳入；prospect 走 b2b 分支不看該集合故現無效應，接 b2c 正本前必補；**前置：業主 2026-09-06 裁「先用售前大綱驗證，合理有效果才補其他大綱、開始切」——需 4.4 步 2 探針（翻轉率／無據率）與 7.4 放量門檻證明售前大綱有效，並由業主點頭；⛔ 不與 M-b～M-e 並行**）`rag-orchestrator/canon/property_manager-line.md`：粗目依 chatai 四文件（③損壞分類與判定／④語氣模板與禁止項／⑤帳單狀態語義與資料邊界／⑥什麼時候說不／⑦待裁與待驗）；API 實值以 `policy: not_available`＋`sources: [jgb2:<endpoint>]`，內容只寫邊界句；矛盾三項（emergency_status 值域、image_recognition 回傳、`status-overview` 過濾）列「待裁決／待驗」；21 案例知識類 5 案＋文件實際使用者輸入句 → `inputs/line-phrasings-20260906.json`（照抄、標情境與多輪、去識別）。走同一 skill 流程（步 1–6）產草稿交業主審。**分兩段派工**：6.2a 粗目與待驗清單、6.2b 口語材料檔。
   - 需求：7.1, 7.2, 7.3, 7.5, 7.6
   - 執行：executor／effort 中——材料在 `/Users/lenny/jgb/line-bot-platform/docs/chatai-*.md`；⛔ 不套售前切法（裁定 2）
   - 驗收：目標＝LINE 業務受眾知識層正本草稿｜成果＝`property_manager-line.md` 草稿＋口語材料檔｜做法＝同一 skill 流程｜驗證＝[業主審核] 草稿與待驗清單
@@ -197,7 +197,7 @@
   - 需求：2.7
   - 執行：security-executor／effort 高——這是「內容已審」標記的唯一寫入口；完成後派 fresh verifier
   - 驗收：目標＝「內容已審」唯一寫入口 fail-closed｜成果＝匯入擴充＋dry-run 比對｜做法＝sha＋逐筆＋現值比對｜驗證＝[代理驗證]（claim：改一字必紅、dry-run 列數＝已審細目數、rollback 逆轉）
-- [ ] 7.3 D1 執行包（業主跑；7.2 後、正本已 commit）：逐條指令＋預期輸出：① `make audit`（前）；② `python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/knowledge-batches/canon-prospect-<date>.json --dry-run`（預期 `canon_sha256 ✅ 相符`、逐筆 `✅ content match`、`knowledge N／updates M`）；③ 不帶 `--dry-run` 重跑（無 `--apply` 旗標）；④ migration `20260906_outline_approved_by_domain.sql` 經 `database/migrate.sh`（dry-run → apply）；⑤ `make audit`（後；預期：不變量 10 對本批列有反應（runbook 標明）；不變量 32／33 由 `SKIP(pending-D1)` 轉為實跑且 PASS）；⑥ `GET /api/v1/agent/health` 核 `canon.canon_sha256`＝版控、`index_state=ready`；⑦ semantic-model 重建（舊鏈仍讀衍生列）。rollback 檔路徑同列。
+- [ ] 7.3 D1 執行包（業主跑；7.2 後、正本已 commit）：逐條指令＋預期輸出：① `make audit`（前）；② `python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/knowledge-batches/canon-prospect-<date>.json --dry-run`（預期 `canon_sha256 ✅ 相符`、逐筆 `✅ content match`、`knowledge N／updates M`）；③ 不帶 `--dry-run` 重跑（無 `--apply` 旗標）；④ migration `20260907_outline_approved_by_domain.sql` 經 `database/migrate.sh`（dry-run → apply）；⑤ `make audit`（後；預期：不變量 10 對本批列有反應（runbook 標明）；不變量 32／33 由 `SKIP(pending-D1)` 轉為實跑且 PASS）；⑥ `GET /api/v1/agent/health` 核 `canon.canon_sha256`＝版控、`index_state=ready`；⑦ semantic-model 重建（舊鏈仍讀衍生列）。rollback 檔路徑同列。
   - 需求：2.7
   - 執行：main／effort 中——prod 破壞性操作不代跑、不打包腳本（記憶 `feedback_prod_ops_self_run`／`feedback_no_deploy_scripts`）
   - 驗收：目標＝D1 安全落地｜成果＝七步指令＋預期輸出＋rollback 路徑｜做法＝逐條、不打包｜驗證＝[業主親跑] 全部；[業主審核] health 三值
