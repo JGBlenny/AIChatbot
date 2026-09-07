@@ -42,6 +42,17 @@ class ProbeFailure(SystemExit):
         super().__init__(EXIT_FAIL)
 
 
+
+def _unwrap_sub_map(raw):
+    """同 `outline_probe_select._unwrap_table`：收平面 `{sub: [...]}` 或帶 `_meta` 的 `{"_meta", "sub_map"}`；
+    帶 `_meta` 者必須 `status == "approved"`（H7 只用業主核可的 gold）。"""
+    if isinstance(raw, dict) and "_meta" in raw and "sub_map" in raw:
+        status = (raw.get("_meta") or {}).get("status")
+        if status != "approved":
+            raise SystemExit(f"[probe_three_arm] sub-map _meta.status={status!r}，⛔ 只有 approved 才准跑")
+        return raw["sub_map"]
+    return raw
+
 def _load_json(path: str) -> Any:
     if not os.path.isfile(path):
         raise ProbeFailure(f"輸入檔缺失：{path}")
@@ -120,6 +131,9 @@ def compute_embeddings_never_overwrite_primary(
 def compute_three_arm_recall(phrasings: list, fine_keys: dict, key_vecs: dict, *, loo_mode: str) -> dict:
     """`phrasings`：`[{"q","gold"}]`；只算 `gold` 非空（可對映）的句子。回
     `{arm: {"recall_at_1":..,"recall_at_3":..,"recall_at_5":..,"mappable":..}}`。"""
+    # `ie.rank_fines`／`ie.score_fine_for_query` 只讀 index_eval 的模組全域 `_KEY_VECS`（同 `run_full`）——
+    # 不賦值就每把鍵 0 分、三臂全 0（2026-09-07 首跑實際踩到）。
+    ie._KEY_VECS = key_vecs
     mappable = [p for p in phrasings if p.get("gold")]
     out = {}
     for arm in ie.ARMS:
@@ -157,7 +171,7 @@ def run(args) -> int:
             f"等於無 LOO）：收到 {args.loo!r}"
         )
 
-    sub_map = _load_json(args.sub_map)
+    sub_map = _unwrap_sub_map(_load_json(args.sub_map))
     phrasings = load_phrasings_with_gold(args.topics, sub_map)
 
     fines = ie._load_fines(args.canon)
@@ -178,6 +192,8 @@ def run(args) -> int:
     )
 
     arms_report = compute_three_arm_recall(phrasings, fine_keys, key_vecs, loo_mode=args.loo)
+    if any(p.get("gold") for p in phrasings) and all(a["recall_at_5"] == 0.0 for a in arms_report.values()):
+        raise SystemExit("[probe_three_arm] 三臂 r@5 全 0 而 mappable>0 ⇒ 尺壞了（向量未接上或 gold id 對不上），⛔ 不輸出")
 
     n_mappable = sum(1 for p in phrasings if p.get("gold"))
     report = {

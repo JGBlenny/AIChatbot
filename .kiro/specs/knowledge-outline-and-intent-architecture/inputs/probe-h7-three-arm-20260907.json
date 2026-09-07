@@ -1,0 +1,30 @@
+{
+  "arms": {
+    "title": {
+      "mappable": 46,
+      "recall_at_1": 0.6087,
+      "recall_at_3": 0.8696,
+      "recall_at_5": 0.8696
+    },
+    "title+phrasing": {
+      "mappable": 46,
+      "recall_at_1": 0.7174,
+      "recall_at_3": 0.8696,
+      "recall_at_5": 0.8696
+    },
+    "title+phrasing+content": {
+      "mappable": 46,
+      "recall_at_1": 0.7391,
+      "recall_at_3": 0.8913,
+      "recall_at_5": 0.913
+    }
+  },
+  "canon_sha256": "240e1a502a85621799bdd5f850c41ce6cb90784a2911ccc3f12a76decba2763c",
+  "inputs_sha256": {
+    "sub_map": "48393873efa3d2a8f4d076dabec7a22bc0d1e509c2b1019c4e35ca6907923a21",
+    "topics": "f78344d65ebcdc7b9901c77b7bdf5a6b23b2548e2dea3729feba36ccb8868570"
+  },
+  "loo_mode": "exact",
+  "mappable": 46,
+  "n": 46
+}
