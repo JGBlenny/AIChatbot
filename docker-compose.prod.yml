@@ -278,6 +278,16 @@ services:
       AGENT_SHADOW_AUDIENCES: ${AGENT_SHADOW_AUDIENCES:-}
       AGENT_SHADOW_MONTHLY_USD_CAP: ${AGENT_SHADOW_MONTHLY_USD_CAP:-50}
       AGENT_TURN_ENABLED: ${AGENT_TURN_ENABLED:-false}
+      # ── LINE OA demo／agent 路徑（2026-09-08；預設＝程式預設，不設即現行行為）──
+      UVICORN_WORKERS: ${UVICORN_WORKERS:-4}                       # /mcp 用 agent.turn 須 1（MCP session 行程內；W1）
+      AGENT_WRITE_TOOLS_ENABLED: ${AGENT_WRITE_TOOLS_ENABLED:-false} # jgb2.action.* 可見＝此旗 AND stage（DSP-038）
+      AGENT_VERIFIER_OBSERVE_ONLY: ${AGENT_VERIFIER_OBSERVE_ONLY:-false} # R8 demo 期：Verifier 只觀察不擋；只准配 USE_MOCK_JGB_API=true
+      AGENT_BUDGET_DEADLINE_S: ${AGENT_BUDGET_DEADLINE_S:-20}       # demo 建議 45（rewrites=2 路徑 >20 s）
+      AGENT_TURN_TIMEOUT_S: ${AGENT_TURN_TIMEOUT_S:-30}             # demo 建議 60；line-bot 逾時 ≥60
+      AGENT_BUDGET_REWRITES: ${AGENT_BUDGET_REWRITES:-2}            # ⛔ demo 不設 0（探針量測組態）
+      AGENT_MODEL: ${AGENT_MODEL:-}                                # 空＝退回 OPENAI_MODEL；demo gpt-5-mini
+      AGENT_REASONING_EFFORT: ${AGENT_REASONING_EFFORT:-}          # 空＝不送；demo low
+      AGENT_ATTEMPT_LOG_PATH: ${AGENT_ATTEMPT_LOG_PATH:-}          # 開發量測用；正式⛔不設
       # agentic-mcp-orchestration 其餘新 env（runbook §19-5 逐一 grep 核對名稱／預設值）——
       # 全部維持不宣告＝吃程式內建預設；里程碑推進時才在 .env 加對應鍵覆寫，⛔ 不在此處預先宣告：
       #   AGENT_STAGE（預設 M0；部署里程碑，M0-M5）
