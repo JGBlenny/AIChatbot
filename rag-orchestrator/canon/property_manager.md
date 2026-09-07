@@ -1,14 +1,14 @@
 ---
 audience: property_manager
-version: 2026-09-08.2
+version: 2026-09-08.3
 reviewers: [owner]
 language: zh-TW
 budget_tokens: 8000
 target_user: [property_manager]
 business_types: [system_provider]
 ---
-## A 拍照開修繕單（線③） {#A}
-### 拍照開修繕單基本流程與確認機制 {#property_manager/A/repair-ticket-photo-flow}
+## A 開修繕單（線③；拍照或文字） {#A}
+### 開修繕單基本流程與確認機制（拍照進場／文字口述） {#property_manager/A/repair-ticket-photo-flow}
 - phrasings:
   - {text: "浴室天花板漏水報修", source: "line-doc:③#A", status: proposed}
   - {text: "確認送出", source: "line-doc:③#A", status: proposed}

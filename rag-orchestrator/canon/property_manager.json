@@ -4,7 +4,7 @@
   "business_types": [
     "system_provider"
   ],
-  "canon_sha256": "84fb60a84ebd99d2687c429a423c4a6117b1cc451b11d762a1411a64d9c98803",
+  "canon_sha256": "b3e7bc85d51e6e79e5697c8ccb9997b4d2796e6bfe295b63ebcd949568b9d1b3",
   "coarses": [
     {
       "fines": [
@@ -53,7 +53,7 @@
           "target_user": [
             "property_manager"
           ],
-          "title": "拍照開修繕單基本流程與確認機制"
+          "title": "開修繕單基本流程與確認機制（拍照進場／文字口述）"
         },
         {
           "business_types": [
@@ -342,7 +342,7 @@
         }
       ],
       "id": "A",
-      "title": "A 拍照開修繕單（線③）"
+      "title": "A 開修繕單（線③；拍照或文字）"
     },
     {
       "fines": [
@@ -1349,5 +1349,5 @@
   "target_user": [
     "property_manager"
   ],
-  "version": "2026-09-08.2"
+  "version": "2026-09-08.3"
 }
