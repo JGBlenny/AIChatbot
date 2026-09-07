@@ -1121,3 +1121,68 @@ python3 rag-orchestrator/tools/import_facet_knowledge.py scripts/knowledge-batch
 # 3388 untag／3402、3530 question 重嵌（需 EMBEDDING_API_URL 與 DB 環境變數）
 python3 scripts/knowledge-batches/tune_routing.py
 ```
+
+## 20. LINE OA demo 版部署（2026-09-08；業主：正式站直接換成 demo 版、目前無線上使用者、DB 直接取代）
+
+> 前提：`feat/agentic-mcp` 已 push 到 origin（業主決定）；正式站 DB 已由本機 dev DB dump 取代（含 `20260908_agent_confirmation_tokens_pending_id`、pm 正本知識；dump 前 dev key id 98 已停用）。demo 期間整站跑替身（`USE_MOCK_JGB_API=true`），網頁客服也會看到替身資料。逐條跑、每步看預期輸出，⛔ 任一步不符即停。
+
+### 20-1 碼
+```bash
+cd /home/ec2-user/AIChatbot && git fetch origin && git checkout feat/agentic-mcp && git pull
+git log --oneline -1          # 預期：demo 版 HEAD（帳本 §0 記錄的 hash）
+```
+
+### 20-2 env（`.env`，只加／改這幾行；其餘不動）
+```
+USE_MOCK_JGB_API=true
+UVICORN_WORKERS=1
+AGENT_STAGE=M1
+AGENT_TURN_ENABLED=true
+AGENT_WRITE_TOOLS_ENABLED=true
+AGENT_VERIFIER_OBSERVE_ONLY=true
+AGENT_BUDGET_DEADLINE_S=45
+AGENT_TURN_TIMEOUT_S=60
+AGENT_MODEL=gpt-5-mini
+AGENT_REASONING_EFFORT=low
+USE_SEMANTIC_RERANK=false
+RAG_API_AUTH_ENFORCE=true        # 應已是 true
+```
+⛔ 不設 `AGENT_BUDGET_REWRITES=0`、不設 `AGENT_ATTEMPT_LOG_PATH`。`MCP_ALLOWED_ORIGINS` 照 §19-3（伺服器對伺服器不送 Origin 即可）。
+
+### 20-3 重建＋起
+```bash
+docker compose -f docker-compose.prod.yml build rag-orchestrator
+docker compose -f docker-compose.prod.yml up -d rag-orchestrator
+docker compose -f docker-compose.prod.yml logs --since 2m rag-orchestrator | grep -E "agent runtime 已初始化|OBSERVE_ONLY|Uvicorn running"
+```
+預期：`✅ agent runtime 已初始化（… audiences=['property_manager', 'prospect']）`、`ℹ️ [agent] AGENT_VERIFIER_OBSERVE_ONLY=1：Verifier 只觀察不擋（…）`、Uvicorn 單 worker。
+
+### 20-4 demo 用 MCP key（§19-2 手工 SQL，`is_internal`＋`vendor_ids`）
+照 §19-2；⛔ 不重用本機測試的 `line-bot-oa-demo-local`（已停用）。明文只交 line-bot。
+
+### 20-5 煙囪（帶 key；⛔ 明文不進 argv：用 `-K` 檔或 `--data @`）
+```bash
+# health（需 X-API-Key 與 X-JGB-Identity）
+curl -s -K /root/.curl-mcp-key -H 'X-JGB-Identity: {"mode":"b2b","target_user":"property_manager","vendor_id":4,"role_id":"20151","user_id":"12291","session_id":"smoke-1"}' http://localhost:8100/api/v1/agent/health | python3 -c 'import sys,json;d=json.load(sys.stdin);print(d["status"],{k:d["checks"].get(k) for k in ("write_tools_enabled","use_mock_jgb_api","verifier_observe_only")})'
+```
+預期：`ok {'write_tools_enabled': True, 'use_mock_jgb_api': True, 'verifier_observe_only': True}`。
+MCP `tools/list` 由 line-bot 端第一次串接時確認含 `agent.turn`、`jgb2.action.bill_due_extend`、`jgb2.action.repair_create`。
+
+### 20-6 稽核（§10）
+```bash
+make audit    # 預期 OVERALL: PASS
+```
+
+### 20-7 回切
+`.env` 把 §20-2 那幾行拿掉或改回（`AGENT_TURN_ENABLED=false`、`AGENT_WRITE_TOOLS_ENABLED=false`、`AGENT_VERIFIER_OBSERVE_ONLY=false`、`USE_MOCK_JGB_API=false`＋`JGB_API_KEY` 必須在，否則啟動直接 raise——S-5 刻意）→ `up -d rag-orchestrator`。替身狀態在行程記憶體，重啟即歸零。
+
+### 20-8 env 一覽補充（接 §19-5）
+| 名稱 | 預設 | 作用 | demo 值 |
+|---|---|---|---|
+| `UVICORN_WORKERS` | 4 | worker 數；`/mcp` 需 1 | 1 |
+| `AGENT_WRITE_TOOLS_ENABLED` | false | `jgb2.action.*` 可見（AND stage） | true |
+| `AGENT_VERIFIER_OBSERVE_ONLY` | false | Verifier 只觀察（僅 mock 可開） | true |
+| `AGENT_BUDGET_DEADLINE_S`／`AGENT_TURN_TIMEOUT_S` | 20／30 | 回合預算／門面逾時 | 45／60 |
+| `AGENT_MODEL`／`AGENT_REASONING_EFFORT` | 空（退 `OPENAI_MODEL`）／空（不送） | 模型與推理等級 | gpt-5-mini／low |
+| `USE_SEMANTIC_RERANK` | true | 舊鏈 reranker | false（demo 不用） |
+| `AGENT_ATTEMPT_LOG_PATH` | 空 | 開發量測草稿落檔 | 不設 |
