@@ -237,6 +237,9 @@ class TurnTrace:
     miss_kind: Optional[str] = None
 
 
+#: `reasoning_effort` 允許值（OpenAI gpt-5 系列）；封閉集合，⛔ 不在程式內以字串推導。
+REASONING_EFFORT_VALUES: frozenset = frozenset({"minimal", "low", "medium", "high"})
+
 _REASON_HINTS: dict[str, str] = {
     # DSP-028 後續（2026-09-05 回歸集重跑）：拒一次就改轉人的回合佔 no_grounding 的 11/127，
     # 且 116/127 是第一次就轉人——拒因回饋要明說「修那一筆」而不是「放棄」。
@@ -628,6 +631,7 @@ class AgentRuntime:
         stage: Optional[Stage] = None,
         clock: Callable[[], float] = time.monotonic,
         model: Optional[str] = None,
+        reasoning_effort: Optional[str] = None,
         tool_timeout_s: float = 3.0,
         status_interval_s: float = 5.0,
         attempt_sink: Optional[Callable[[dict], None]] = None,
@@ -659,6 +663,16 @@ class AgentRuntime:
         self._model = model or os.environ.get("AGENT_MODEL") or os.environ.get(
             "OPENAI_MODEL", "gpt-4o-mini"
         )
+        # 5.x 探針（2026-09-07，`inputs/probe-report-52-20260907.md` §3-3）：gpt-5 系列預設推理，
+        # p95 延遲 38 s。`AGENT_REASONING_EFFORT` 設了才送 `reasoning_effort`（值域封閉）；
+        # 未設 ⛔ 不送——gpt-4o-mini 等不接受此參數，送了會 400。非法值在建構期就炸（fail loud）。
+        effort = reasoning_effort if reasoning_effort is not None else os.environ.get("AGENT_REASONING_EFFORT", "")
+        effort = (effort or "").strip()
+        if effort and effort not in REASONING_EFFORT_VALUES:
+            raise ValueError(
+                f"AGENT_REASONING_EFFORT={effort!r} 不在允許值域 {sorted(REASONING_EFFORT_VALUES)}"
+            )
+        self._reasoning_effort: Optional[str] = effort or None
         self._tool_timeout_s = tool_timeout_s
         self._status_interval_s = status_interval_s
 
@@ -882,13 +896,18 @@ class AgentRuntime:
                 return _finalize(_build_fixed("budget_exhausted"), is_fixed=True)
 
             llm_calls += 1
-            response = await self.provider.async_client.chat.completions.create(
+            create_kwargs = dict(
                 model=self._model,
                 messages=messages,
                 tools=tool_specs,
                 parallel_tool_calls=False,
                 response_format=_agent_output_response_format(),
             )
+            if self._reasoning_effort is not None:
+                # openai SDK 1.54（requirements）尚無 `reasoning_effort` 具名參數，走 `extra_body`
+                # 直接進 JSON body（各版本皆收）；⛔ 不升 SDK 換參數名（那是另一個變因）。
+                create_kwargs["extra_body"] = {"reasoning_effort": self._reasoning_effort}
+            response = await self.provider.async_client.chat.completions.create(**create_kwargs)
             usage = getattr(response, "usage", None)
             turn_pt = int(getattr(usage, "prompt_tokens", 0) or 0)
             turn_ct = int(getattr(usage, "completion_tokens", 0) or 0)
