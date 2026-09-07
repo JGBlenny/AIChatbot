@@ -15,9 +15,9 @@
 | 輸入 | `{"message": "<1–2000 字>"}`，⛔ 沒有 `dialog_ref`（刻意移除） | `AGENT_TURN_SPEC["input_schema"]` |
 | 輸出（`ok=true`） | `{"answer": str, "kind": str, "handoff": dict\|null, "quick_replies": list, "trace_id": str}` | `class AgentTurnOutput` |
 | `kind` 值域 | 依 runtime 輸出契約（`answer`／`ask`／`handoff`…）；**待核**：demo 前以 `trace_id` 對 `/api/v1/agent/trace/{id}` 抽樣確認 | `services/agent/output_contract.py` |
-| `quick_replies[]` 形狀 | **待核**（runtime 現行輸出；請以實跑一次的回應為準，⛔ 不先寫死欄位名） | `output_contract.py` `quick_replies` |
+| `quick_replies[]` 形狀 | 一般回合：現行 runtime 輸出（實跑為準）。**確認回合（寫入工具，DSP-038）**：`[{"label": "確認送出", "value": "confirm_submit:<pending_id>"}, {"label": "我要修改", "value": "confirm_edit:<pending_id>"}, {"label": "取消", "value": "confirm_cancel:<pending_id>"}]`——按鈕送出時把 `value` **原字串**當下一回合 `message` 送回（⛔ 不改寫、不加字）；`answer` 即確認卡文字 | `output_contract.py` `quick_replies`；Plan W2／W3 |
 | `handoff` | 轉人時非空，含 `handoff_reason`（如 `sensitive_no_grounding`、`budget_exhausted`、`no_grounding`）；呼叫端只要「非 null ⇒ 顯示固定轉人句＋提供真人入口」 | `output_contract.py` `handoff_reason` |
-| 逾時 | 服務端 `AGENT_TURN_TIMEOUT_S`（預設 30 s），逾時回工具錯 `TOOL_TIMEOUT`；呼叫端逾時請 ≥35 s，逾時後**同一 `session_id` 可重送** | `mcp_facade.py` `agent_turn_timeout_s` |
+| 逾時 | 服務端 `AGENT_TURN_TIMEOUT_S`（預設 30 s），逾時回工具錯 `TOOL_TIMEOUT`；呼叫端逾時請 ≥ 60 s，逾時後**同一 `session_id` 可重送** | `mcp_facade.py` `agent_turn_timeout_s` |
 | 每小時上限 | `AGENT_TURN_CAP`（預設 120／(api_key_id, vendor_id)，行程內計數）⇒ 超過回 `RATE_LIMITED` | `mcp_facade.py` `check_and_record_agent_turn` |
 
 ## 2. 請求 header
@@ -64,7 +64,7 @@ G7（隱私）：`session_id` 裸值會落 `usage_events.session_id`（保存 18
 
 1. webhook 收到文字 → 依綁定推出 `role_id`／`user_id`／`vendor_id`（⛔ 不接受前端帶進來的值，與既有 §5 規則同）→ 組 `X-JGB-Identity` → `tools/call agent.turn {message}`。
 2. `answer` 畫成泡泡；`quick_replies` 畫成按鈕（形狀待核，先以實跑回應為準）；`handoff` 非 null ⇒ 固定轉人句＋真人入口；`ok=false` 依 §3 對照。
-3. 逾時 ≥35 s；`session_id` 一個 LINE 使用者一條（假名）；日誌 ⛔ 不記整包回應（`answer` 可能含個資）、只記 `trace_id`／狀態碼。
+3. 逾時 ≥ 60 s；`session_id` 一個 LINE 使用者一條（假名）；日誌 ⛔ 不記整包回應（`answer` 可能含個資）、只記 `trace_id`／狀態碼。
 4. 第一次串接前先用 `tools/list` 確認 `agent.turn` 在清單裡（不在＝§4 的 1 或 2 未開）。
 
 ## 6. 查證指令

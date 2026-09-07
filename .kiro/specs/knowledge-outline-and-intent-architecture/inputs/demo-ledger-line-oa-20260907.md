@@ -7,7 +7,7 @@
 | 項 | 值 |
 |---|---|
 | 程式 | HEAD 見各輪紀錄；S1a／S1b（DSP-037）由 security-executor 落地 |
-| 實例 | **最終起法（2026-09-08）**：`docker compose -f docker-compose.prod.yml run -d --build --name smoke-rag -p 8101:8100 -e UVICORN_WORKERS=1 -e AGENT_STAGE=M1 -e AGENT_TURN_ENABLED=true -e USE_MOCK_JGB_API=true -e AGENT_MODEL=gpt-5-mini -e AGENT_REASONING_EFFORT=low -e RAG_API_AUTH_ENFORCE=true rag-orchestrator`。⛔ **不要帶 `AGENT_BUDGET_REWRITES=0`**（那是探針 55 的量測組態；帶了 Verifier 拒一次即 `budget_exhausted` 轉人——W4）。常駐容器與 `.env` 不動 |
+| 實例 | **最終起法（2026-09-08）**：`docker compose -f docker-compose.prod.yml run -d --build --name smoke-rag -p 8101:8100 -e UVICORN_WORKERS=1 -e AGENT_STAGE=M1 -e AGENT_TURN_ENABLED=true -e USE_MOCK_JGB_API=true -e AGENT_MODEL=gpt-5-mini -e AGENT_REASONING_EFFORT=low -e RAG_API_AUTH_ENFORCE=true -e AGENT_BUDGET_DEADLINE_S=45 -e AGENT_TURN_TIMEOUT_S=60 rag-orchestrator`。⛔ **不要帶 `AGENT_BUDGET_REWRITES=0`**（那是探針 55 的量測組態；帶了 Verifier 拒一次即 `budget_exhausted` 轉人——W4）。常駐容器與 `.env` 不動 |
 | key | dev DB `api_keys` id 98 `line-bot-oa-demo-local`（internal、`vendor_ids={4}`）；明文只在 scratchpad 600 檔；跑完 `is_active=false` |
 | 身分 | `b2b／property_manager／vendor 4／role 20151／user 12291`；`session_id` 每劇本一條 |
 | JGB | mock：`JGBMockTransport` 已遷移 bills／bill_detail／contracts（900001 未繳到期 8/15、900002 已繳、900003；合約 678 到 2026-12-31、租客電話 0912345678 是個資陷阱）；estates／meters 未遷移 ⇒ 工具錯 |
@@ -46,6 +46,8 @@
 | R2 | **替身必須完整且可運作：讀＋寫都在一份 JSON 狀態上**（「讀取和寫入在一份 JSON 都行，沒理由做不到」） | 替身從 3 讀／0 寫擴到 agent 工具用到的全部讀（bills／bill_detail／contracts／estates／meters／team_members／member_permissions／repairs）＋寫（`POST /repairs`、`POST /agent/v1/{bills,contracts,estates}`、`PATCH /agent/v1/bills/{id}` 只准 due_date）＋冪等；viewer 圈定改為「fixture 明確宣告可見性 ⇒ 照宣告過濾；未宣告仍 raise」（executor 進行中） |
 | R3 | 寫入工具（`jgb2.action.*`）**升為 demo 必做**（演「逾期→延 3 天→寫入」） | 走安全路徑：security-reviewer（唯讀，進行中）→ Plan → 業主核 → security-executor；L1 從「後面要改」升「demo 處理」 |
 | R4 | 三鍵處置：L11 已解（D-BLOCK-2＋W4）、health 以 demo 起法開 enforce（H1）、寫入工具依 R3 | — |
+| R5 | **完成度要能應付真實用戶操作**（口語、換話題、反問、收尾）——超出 9/7「展示功能非準確度」定位，排進 Plan **W6 口語穩定度**（先量再修、規則層、通過標準先定） | 5.3／5.5 提前；W6 通過標準待裁（建議：可答題轉人率 ≤20%、資料事實答錯 0、明確 ref 反問率 ≤10%、p50 ≤20 s） |
+| R6 | **JGB 端需新增的規格（`update` 權限、`PATCH bills`、冪等 header 等）由業主親自溝通，預設會有**——需求文照列、不當阻擋、⛔ 不為其缺席另設計繞路；替身先照需求文形狀實作 | `jgb-api-needs` §B′／§E 各條狀態＝「待 JGB 開（業主溝通中）」 |
 
 **16 回合最終實跑（最終起法、D-BLOCK-2 修後、預設 rewrites；`run_final4.jsonl`）：12／16 符合期望、0 不安全、4 題「該答卻轉人」（S1#3 滯納金、S1#5「好了」收尾、S2#2 照片拍不清楚、S5#2 續約意願）——同題不同輪結果不同（單獨探針 S1#3 會答、上一輪 S5#2 答「JGB 無此欄」），屬答案層穩定度，非機制。**
 
@@ -64,6 +66,8 @@
 | W3 | 容器 stdout 非 utf-8（LANG=C） | 測試腳本處理 | 測試輸出中文用 `ensure_ascii=True`；與產品無關 |
 | **D-BLOCK-2** | **strict 對稱缺口：模型依 OpenAI strict 規則把選填鍵以 `null` 送來，`registry.call()` 用原 schema 驗 ⇒ `INVALID_INPUT`**（L11 的真根因） | **done**（程式；待 commit） | 實跑 trace：`jgb2.query.bills` 有 ref、0 ms `status=error` ×4 ⇒ 工具預算耗盡 ⇒ `handoff_reason=budget_exhausted`；容器內直呼 `query_bills(ref=900001)` 三個 face 全成功 ⇒ 差在參數形狀；`_validate_against_schema(…, {"keyword": null})` 實得 `$.keyword: expected string, got NoneType`。修：`registry._drop_null_optionals`（非 required 的 null 還原成省略、每層、純函式）掛在 `call()` ④ 之前；required 的 null 仍 INVALID_INPUT。單元 +3（68 綠）。修後 S1#1 一次工具呼叫即答「900001 待繳費、NT$18,000、期限 2026/08/15」。⛔ **提示詞一字未動**——scout「提示詞不引導／face 說明不足」假說被 trace 推翻（模型本來就會帶 ref＋face 查） |
 | W4 | demo 起法沿用探針 55 的 `AGENT_BUDGET_REWRITES=0` | done（起法改） | 預設 `max_rewrites=2`（`bootstrap.py`）；=0 時 Verifier 任一拒（UNCITED_ASSERTION／SCHEMA／HANDOFF_WORD_NO_HANDOFF）即固定句轉人。改用預設後 S5#1「合約 678 到 2026/12/31、剩 114 天」、S1#3「滯納金依合約設定而定」皆由 jgb2 事實作答（其中一題拒一次、改寫一次即過） |
+| W5 | 回合 deadline 20 s 撐不起 rewrites=2（gpt-5-mini low 每次 LLM 呼叫 8–14 s；3 次即 >20 s ⇒ `budget_exhausted`；>30 s facade `AGENT_TURN_TIMEOUT_S` ⇒ `TOOL_TIMEOUT`，R-讀 S1#4 實測） | done（起法改） | demo 起法加 `AGENT_BUDGET_DEADLINE_S=45`、`AGENT_TURN_TIMEOUT_S=60`；line-bot 契約 B4 逾時改 ≥60 s |
+| **D-BLOCK-3** | **替身擴充後 R-讀 20 回合 10 轉人：fixture 跨域不連貫＋缺修繕讀工具**（`run_read5.jsonl`、`probe_read5.jsonl`） | **修中（W0b）** | 替身層 0 例外；缺口＝① fixture 各域各自為政（bills→estate 800001、contract 678→estate 456「信義區套房A」、estates 是 54126/54200/54305、meters 掛 9001/9002 且無「B10」、repairs 掛 456）⇒ 任何「這戶的 X」都對不上；② 帳單／合約／物件可見性未宣告 demo 用戶 12291 ⇒ 清單型 `NO_MATCH`；③ 沒有 `jgb2.query.repairs` 讀工具（design 五域無 repairs）⇒「有沒有修繕單」不可答；④ 正本 C 電錶細目「項目以 id 直接進槽位，不靠關鍵字檢索」是 LIFF 進場機制描述，聊天路徑模型讀了就反問 id、不呼叫工具（先修 ①②③ 再看是否要改定義句）。⛔ 非 W0 實作錯，是「替身完整」的定義少了「跨域連貫＋demo 用戶可見」 |
 | H1 | health 紅 `enforce_off_with_mcp_traffic`（業主三鍵之②） | **done**（起法改） | 旗標＝`RAG_API_AUTH_ENFORCE` 未開且有 MCP 流量（`mcp_facade._record_call`）。prod 已開（runbook §0-3「應為已開」）；demo 實例加 `-e RAG_API_AUTH_ENFORCE=true`：MCP 帶 key 照常、`/api/v1/health` 豁免、`/api/v1/agent/health`（需 `X-API-Key`＋`X-JGB-Identity`）實得 `status=ok`、`red_flags=None`。⛔ 不改豁免清單（不變量 28：`/mcp` 不得豁免） |
 
 ## 3. 後面要改（demo 不擋，記下不忘）
@@ -71,7 +75,7 @@
 | # | 事 | 觸發 | 等級 |
 |---|---|---|---|
 | ~~L1~~ | agent 路徑無寫入工具 → **R3 升 demo 必做**（替身後端） | 業主 2026-09-08 | 子 spec `agent-write-tools`，安全路徑進行中 |
-| L2 | 催繳草稿（`dunning_draft` 模板＋語氣等級）、`session_expired`／`scope_exit` 訊號、`facet_context`——③④⑤ LIFF 線 | 業主裁併入 | 舊鏈 |
+| L2 | 催繳草稿（`dunning_draft` 模板＋語氣等級）、`session_expired`／`scope_exit` 訊號、`facet_context`——③④⑤ LIFF 線；**line-bot 2026-09-08 增補 M–Q／I–K 見 `inputs/line-bot-scenarios-delta-20260908.md`**（其中 O 值域結案、Q 併入 W4 驗收、I 本輪 R-讀 檢、N 留欄位） | 業主裁併入 | 舊鏈 |
 | L3 | `get_vendor_info` 無快取＋同步連線，pm 每回合 1+N 次（verifier A） | S1b 後量 | P3 |
 | L4 | runtime 回合級 provider 逾時降級（第三刀，HANDOFF 防護③） | demo 前建議 | P2 |
 | L5 | reranker 崩潰時 audit／unit 照樣綠——立健檢 | 上線前 | P2 |
@@ -89,7 +93,7 @@
 | B1 | webhook／liff-routes 的 MCP client（`tools/call agent.turn`），`X-API-Key`＋`X-JGB-Identity`（後端推身分） |
 | B2 | `session_id` 用 HMAC 假名（G7） |
 | B3 | 渲染：`answer`→泡泡、`quick_replies`→按鈕（形狀以本檔 §1 實跑為準）、`handoff` 非 null→固定轉人句 |
-| B4 | 逾時 ≥35 s；⛔ 日誌不記整包回應 |
+| B4 | 逾時 **≥60 s**（2026-09-08 改：rewrites=2 路徑實測可達 30 s 以上；AIChatbot 端 `AGENT_TURN_TIMEOUT_S=60`）；⛔ 日誌不記整包回應 |
 
 ## 5. JGB 要開（`inputs/jgb-api-needs-line-oa-demo-20260907.md`）
 

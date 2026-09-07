@@ -156,7 +156,7 @@ class ToolRegistry:
 | `jgb2.query.*` | — | M0 | M0 | 唯讀，M0 起對 MCP 內部呼叫者可用；pm／tenant **agent** 何時開由 `AGENT_AUDIENCES` 決定（M4／M5），與工具 stage 無關 |
 | `session.slots.*` | M1 | M1 | M1 | |
 | `confirm.request`／`handoff.request` | M1 | M1 | M1 | |
-| `jgb2.action.*` | — | M5 | M4 | scope=write |
+| `jgb2.action.*` | — | M1 | M4 | scope=write；`mcp_only=True`；可見另需 `AGENT_WRITE_TOOLS_ENABLED`（DSP-038-1，2026-09-08：pm 由 M5 改 M1，安全靠旗標） |
 表格值即 `ToolSpec.stage` 的內容；`specs_for(identity, stage, readonly_view, for_model=True)` 唯一規則：`name` 可見 ⇔ `audience ∈ stage and stage[audience] <= AGENT_STAGE and (not readonly_view or scope=="read") and not (facade_only and (for_model or readonly_view))`。`PromptAssembler` 只拿 `for_model=True` 的清單；MCP 門面拿 `for_model=False`。
 不變量 18：`ToolSpec.input_schema` 不得含 `vendor_id／role_id／user_id／target_user／mode／viewer_user_id`。[需求 2.2, 3.6]
 
@@ -167,8 +167,8 @@ class ToolRegistry:
 | `kb.get` | `{kb_id: str}`（整數 id 以數字字串傳，strict schema 單一型別） | `{id, question_summary, answer, provenance}` | 兩種 id：`outline:<section>` 由 OutlineAssembler 供給（server 端組裝、自有命名空間，⛔ 不查 knowledge_base）；整數 id 走 `fetch_visible_row(identity, id)`＝`SELECT … WHERE id=$1 AND <build_visibility_predicate(identity)>`，保留分類（`SYSTEM_DOC_CATEGORY`／`RULES_DOC_CATEGORY`）永遠排除；池外 ⇒ 對模型 `NO_MATCH`、trace 記 `FORBIDDEN` |
 | `help.read` | `{slug: str}` | `{slug, title, text, version, citable}` | `help_center_pages`；`citable=false` 可讀但 Verifier 不接受為引用（元件 6 步⑤） |
 | `jgb2.query.<domain>` | `{face: <domain 的封閉 enum>, ref?: str, keyword?: str}` | `{facts: str, candidates?: [...], candidate_cap, skip_refine: bool}` | domain→(API 方法, 註冊表, secondary) 見下方**域映射表**（⛔ 不用 `get_<domain>` 推導）；`face` 由模型在封閉 enum 中選（取代 categories 提名）；`ref`／`keyword` 只能在 session 已確立的 slot 範圍內縮小；無 slot 時 keyword 查詢回傳 ≤ `CANDIDATE_CAP`（預設 5）候選，候選數 ≤ cap ⇒ `skip_refine=true` 全列供 `confirm`，否則要求縮小（承接 R3.3）；圈定實際邊界逐域見映射表（DSP-011）；標籤讀回應 `mapping`，⛔ 不用 `bills.STATUS_LABELS`（缺口 7） |
-| `jgb2.action.<x>` | `{payload: dict, confirmation_token: str}` | `{receipt}` | 兌現＝`UPDATE agent_confirmation_tokens SET redeemed=true WHERE token=$1 AND session_id=$2 AND redeemed=false AND expires_at>now() RETURNING payload_sha256, summary_sha256`，再重算 `sha256(canonical_json(payload))` 比對，不符 ⇒ `CONFIRMATION_REQUIRED`；下游 idempotency key＝token；M4 前不註冊 |
-| `confirm.request` | `{summary: str, payload: dict}` | `{quick_replies: 三顆機器值, pending_id}` | 寫 `agent_confirmation_tokens`（token=secrets.token_urlsafe(32)，`payload_sha256`、`summary_sha256`、`expires_at=now()+10min`）；使用者回 `_QR_SUBMIT` 時 Runtime 才把 token 交給模型 |
+| `jgb2.action.<x>` | `{payload: dict, confirmation_token: str}` | `{receipt}` | DSP-038（2026-09-08）：兌現由 **Runtime** 在使用者回 `confirm_submit:<pending_id>` 機器值時執行——`redeem_pending`：`UPDATE agent_confirmation_tokens SET redeemed=true WHERE pending_id=$1 AND session_id=$2 AND redeemed=false AND expires_at>now() RETURNING token, payload_sha256, summary_sha256`（先燒後比對），比對狀態內 payload／卡雜湊，不符 ⇒ `CONFIRMATION_REQUIRED`；token 只在 `run_turn` 內存活、行程內交工具，工具 wrapper 以 `assert_redeemed(token, session_id)` 守門（`registry.register` 對 `scope=="write"` 強制包）；重送同 `pending_id` ⇒ 狀態內 receipt 原樣回（R4.3）；下游 idempotency key＝token；`mcp_only=True`；Runtime 兌現段守門：`identity.entry!="mcp"` 或 `readonly_view` ⇒ 整段不執行 |
+| `confirm.request` | `{summary: str, payload: dict}`（`payload.action` 必填、封閉 enum） | `{pending_id, action, payload, card, quick_replies}`（⛔ 不含 token） | DSP-038-2：卡文字 `card` 由 `confirm_card.render(action, payload)` 決定性產出，Runtime 令該回合 `TurnResult.answer` 逐字＝`card`（模型輸出丟棄、Verifier 不跑）；寫 `agent_confirmation_tokens`（token=secrets.token_urlsafe(32)、`pending_id=sha256(token)[:16]`、`payload_sha256`、`summary_sha256=sha256(card)`、`expires_at=now()+10min`）；`quick_replies` 值＝`confirm_submit:<pending_id>`／`confirm_edit:<pending_id>`／`confirm_cancel:<pending_id>`（label 沿用引擎常數）；Runtime 把 `{action, payload, card_sha256}` 存 `agent_state["pending_confirm"][pending_id]`（DSP-038-4）；⛔ token 永不交給模型 |
 | `handoff.request` | `{reason, fact_class}` | `{message, handoff}` | `effective_handoff_message(cfg)`；reason 值域＝現行＋`tool_unavailable`／`budget_exhausted` |
 | `session.slots.get/set` | `{key: SlotKey}`／`{key: SlotKey, value: str≤120}` | `{slots}` | `SlotKey` 封閉 enum（`contract_ref`、`bill_ref`、`estate_ref`、`repair_ref`、`unit_count`、`business_type`）；value 去換行與標記字元；進 prompt 一律經 `wrap_tool_data` |
 
@@ -298,7 +298,7 @@ class ToolCallRecord(BaseModel): id: str; name: str; args_summary: dict  # {face
     ms: int; status: Literal["ok","error","timeout","rejected"]; n_items: int
 class Provenance(BaseModel): source: str; text: str; citable: bool = True
 class SlotValue(BaseModel): value: str; source: Literal["user","tool"]; confirmed: bool
-# 新表 agent_confirmation_tokens(token PK, session_id, payload_sha256, summary_sha256, expires_at, redeemed bool, created_at)
+# 新表 agent_confirmation_tokens(token PK, session_id, pending_id（sha256(token)[:16]，索引；DSP-038-3）, payload_sha256, summary_sha256（DSP-038-2 起＝確認卡文字雜湊）, expires_at, redeemed bool, created_at)——⛔ 仍不存 payload／summary／receipt 原文（那些在 session 狀態 pending_confirm）
 # 新表 help_center_pages(slug PK, title, text, version, source_url, content_sha256, citable bool, approved_by, imported_at)   ← citable=true 需 approved_by（D3 未裁前全 false）
 # 改表 knowledge_base 新增 outline_approved_by / outline_approved_at（DSP-012 選項 A、R11.6）
 #      ← 只有 outline_approved_by IS NOT NULL 的列得進 prospect 大綱；⚠️ 不影響 kb.get 取回當引用來源
