@@ -1,0 +1,47 @@
+{
+  "_meta": {
+    "status": "draft-awaiting-owner",
+    "date": "2026-09-07",
+    "source": "topics-v2 sub × canon/prospect.md（version 2026-09-07.6）"
+  },
+  "sub_map": {
+    "上傳既有": [
+      "prospect/C/contract-esign-flow",
+      "prospect/C/contract-templates",
+      "prospect/C/contract-modify-after-sign"
+    ],
+    "範本": [
+      "prospect/C/contract-templates",
+      "prospect/C/contract-esign-flow"
+    ],
+    "流程": [
+      "prospect/C/contract-esign-flow",
+      "prospect/C/property-status-meaning"
+    ],
+    "修改": [
+      "prospect/C/contract-modify-after-sign"
+    ],
+    "邀請": [
+      "prospect/C/contract-esign-flow"
+    ],
+    "簽署": [
+      "prospect/C/contract-esign-flow"
+    ],
+    "簽章": [
+      "prospect/C/contract-esign-flow"
+    ],
+    "社宅委託": [
+      "prospect/C/contract-esign-flow"
+    ],
+    "費用": [
+      "prospect/C/contract-esign-flow",
+      "prospect/D/pricing-plans"
+    ],
+    "複製": [
+      "prospect/C/contract-modify-after-sign"
+    ],
+    "身分": [
+      "prospect/C/contract-esign-flow"
+    ]
+  }
+}

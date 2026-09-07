@@ -28,6 +28,7 @@ import importlib
 import json
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -1732,3 +1733,198 @@ def test_chain_agent_only_candidates_on_backend_is_fake(sample_root, tmp_path):
     assert code == agent_eval.EXIT_OK
     report = (out_dir / "report.md").read_text(encoding="utf-8")
     assert "candidates_backend：`fake`" in report
+
+
+# ---------------------------------------------------------------------------
+# 19) `load_outline_probe_v1` 多輪 item 支援（4.4b 前置改動，tasks 4.4；
+#     Plan §2「4.4b 前置改動」——F 層一個劇本一個 item、`turns[]` 各自
+#     `gold_fine_ids`／`expect_kind`，同一個 `Scenario` 貫穿）
+# ---------------------------------------------------------------------------
+
+_REQ_4_4 = "knowledge-outline-and-intent-architecture:4.4"
+
+
+def _write_outline_probe_multi_turn(tmp_path: Path) -> Path:
+    """一個多輪 item（F 層劇本，2 turn）＋一個單輪 item（既有行為不變的正對照）。"""
+    doc = {
+        "_meta": {"rule_sha256": "deadbeef01", "frozen_at": "2026-09-07T00:00:00Z", "n": 2},
+        "items": [
+            {
+                "id": "F-S1-landlord", "stratum": "multi",
+                "turns": [
+                    {"turn": 1, "q": "我有 12 戶要管理", "gold": ["prospect/A/scale"], "expect_kind": "answer"},
+                    {"turn": 2, "q": "那可以線上簽約嗎", "gold": ["prospect/C/sign"], "expect_kind": "answer"},
+                ],
+            },
+            {
+                "id": "A-01", "q": "系統會怎麼收費", "stratum": "answerable_unanswered",
+                "gold": ["prospect/Z/pricing"], "expect_kind": "answer",
+            },
+        ],
+    }
+    p = tmp_path / "outline-probe-multi-v1.json"
+    p.write_text(json.dumps(doc, ensure_ascii=False), encoding="utf-8")
+    return p
+
+
+@pytest.mark.req(_REQ_4_4)
+def test_load_outline_probe_v1_multi_turn_item_yields_one_scenario(tmp_path):
+    """正對照（Plan §2「4.4b 前置改動」驗收）：把 loader 改回『每個 item 只造
+    單輪 `Scenario`』（即把 `turns[]` 拆成 N 個 scenario）會讓這條斷言必紅——
+    這裡先證明「舊行為會產生 N 個 scenario」這件事本身是可觀測的（用該 item
+    的 turn 數手動驗證），再證明新 loader 只產生 1 個。"""
+    path = _write_outline_probe_multi_turn(tmp_path)
+    manifest = {"sets": {"outline-probe": {"available": True}}}
+    scenarios = agent_eval.load_outline_probe_v1(path, manifest)
+
+    multi_scenarios = [sc for sc in scenarios if sc.idx == "F-S1-landlord"]
+    assert len(multi_scenarios) == 1, "新 loader：一個 turns[] item 只造 1 個 Scenario"
+    sc = multi_scenarios[0]
+    assert len(sc.turns) == 2, "該 Scenario 內含 N 個 Turn（舊行為會是 N 個各 1-turn 的 Scenario）"
+    assert [t.turn for t in sc.turns] == [1, 2]
+    assert sc.turns[0].gold_fine_ids == ("prospect/A/scale",)
+    assert sc.turns[1].gold_fine_ids == ("prospect/C/sign",)
+    assert sc.turns[0].expect_kind == "answer" and sc.turns[1].expect_kind == "answer"
+
+    # 單輪 item 行為不變（正對照：既有單輪路徑沒被多輪改動波及）
+    single_scenarios = [sc for sc in scenarios if sc.idx == "A-01"]
+    assert len(single_scenarios) == 1
+    assert len(single_scenarios[0].turns) == 1
+    assert single_scenarios[0].turns[0].gold_fine_ids == ("prospect/Z/pricing",)
+
+    assert len(scenarios) == 2, "2 個 item ⇒ 2 個 Scenario（⛔ 不是 3——舊行為會把多輪拆成額外 scenario）"
+
+
+@pytest.mark.req(_REQ_4_4)
+def test_load_outline_probe_v1_multi_turn_sensitive_stratum_forces_handoff(tmp_path):
+    doc = {
+        "_meta": {"rule_sha256": "x", "frozen_at": "t", "n": 1},
+        "items": [
+            {
+                "id": "D-multi-01", "stratum": "sensitive",
+                "turns": [
+                    {"turn": 1, "q": "有沒有客戶名單", "gold": [], "expect_kind": "answer"},
+                ],
+            },
+        ],
+    }
+    path = tmp_path / "outline-probe-sensitive-multi.json"
+    path.write_text(json.dumps(doc, ensure_ascii=False), encoding="utf-8")
+    scenarios = agent_eval.load_outline_probe_v1(path, {"sets": {}})
+    assert len(scenarios) == 1
+    t = scenarios[0].turns[0]
+    assert t.sensitive is True
+    assert t.expect_kind == "handoff"  # sensitive 覆寫，⛔ 不理會 item 裡的 "answer"
+
+
+@pytest.mark.req(_REQ_4_4)
+def test_outline_probe_multi_turn_fake_provider_same_idx_turn_increases(tmp_path):
+    """`--provider fake` 跑一輪：同劇本各 turn 的 `idx` 相同且 `turn` 遞增
+    （沿 `test_agent_chain_multi_turn_carries_history` 的驗收慣例）。"""
+    topics = _write_topics(tmp_path)
+    scenarios_v1 = _write_scenarios(tmp_path)
+    outline_probe = _write_outline_probe_multi_turn(tmp_path)
+    manifest_path = _write_manifest_with_outline_probe(tmp_path, topics, scenarios_v1, outline_probe)
+
+    out_dir = tmp_path / "out_op_multi"
+    code = agent_eval.main(
+        [
+            "--set", "outline-probe", "--chain", "agent", "--out", str(out_dir),
+            "--provider", "fake",
+            "--manifest", str(manifest_path), "--root", str(tmp_path),
+        ]
+    )
+    assert code == agent_eval.EXIT_OK
+    rows = [
+        json.loads(l)
+        for l in (out_dir / "outline-probe.jsonl").read_text(encoding="utf-8").strip().splitlines()
+    ]
+    multi_rows = sorted((r for r in rows if r["idx"] == "F-S1-landlord"), key=lambda r: r["turn"])
+    assert len(multi_rows) == 2
+    assert [r["idx"] for r in multi_rows] == ["F-S1-landlord", "F-S1-landlord"]
+    assert [r["turn"] for r in multi_rows] == [1, 2]
+
+
+@pytest.mark.req(_REQ_4_4)
+def test_outline_probe_multi_turn_second_call_messages_carry_turn1_history(tmp_path):
+    """第 2 次 `create()` 的 `messages` 最後一則 user＝turn2 的 q、前文含 turn1 的
+    q／answer（沿 `test_agent_chain_multi_turn_carries_history` 的定位手法：
+    ⛔ 不假設是 `calls[1]`——重寫迴圈可能多打一次）。"""
+    path = _write_outline_probe_multi_turn(tmp_path)
+    scenarios = agent_eval.load_outline_probe_v1(path, {"sets": {}})
+    sc = next(s for s in scenarios if s.idx == "F-S1-landlord")
+    assert len(sc.turns) == 2
+
+    provider = agent_eval.ScriptedFakeProvider(sc.turns)
+    registry = agent_eval.build_fake_registry()
+    from services.agent.bootstrap import build_runtime
+
+    runtime = build_runtime(db_pool=None, provider=provider, registry=registry)
+    identity = agent_eval.make_agent_identity(session_id="test-outline-probe-history")
+
+    import asyncio
+
+    results = asyncio.run(agent_eval._run_scenario_agent(runtime, identity, sc.turns))
+    turn1_answer = results[0][1].answer
+
+    calls = provider.async_client.chat.completions.create.__self__.calls
+
+    def _last_user_content(messages):
+        user_msgs = [m for m in messages if m.get("role") == "user"]
+        return str(user_msgs[-1].get("content") or "") if user_msgs else ""
+
+    def _all_text(messages):
+        return "\n".join(str(m.get("content") or "") for m in messages)
+
+    turn2_calls = [c for c in calls if sc.turns[1].q in _last_user_content(c["messages"])]
+    assert turn2_calls, "找不到任何一次呼叫的最後一則 user 訊息是第 2 輪問句"
+    second_messages = turn2_calls[0]["messages"]
+
+    assert sc.turns[0].q in _all_text(second_messages)
+    assert sc.turns[1].q in _last_user_content(second_messages)
+    assistant_msgs = [m for m in second_messages if m.get("role") == "assistant"]
+    assert assistant_msgs and any(
+        str(m.get("content") or "") == turn1_answer for m in assistant_msgs
+    )
+
+
+@pytest.mark.req(_REQ_4_4)
+def test_run_scenario_agent_carries_same_state_dict_across_turns(monkeypatch, tmp_path):
+    """槽位貫穿：直接對 `_run_scenario_agent` 的 `state` 斷言（假 provider 無工具
+    呼叫、⛔ 不能在假路徑觀測槽位——見 Plan §2「4.4b 前置改動」）。用一個會記錄
+    收到的 `state` 物件 id 的假 `runtime.run_turn` 證明**同一個** dict 貫穿全程、
+    且呼叫端可寫入的內容在下一輪仍看得到（模擬槽位貫穿）。"""
+    path = _write_outline_probe_multi_turn(tmp_path)
+    scenarios = agent_eval.load_outline_probe_v1(path, {"sets": {}})
+    sc = next(s for s in scenarios if s.idx == "F-S1-landlord")
+
+    seen_state_ids = []
+    seen_marker_values = []
+
+    class _FakeResult:
+        def __init__(self):
+            self.answer = "ok"
+            self.handoff = None
+            self.kind = "answer"
+            self.trace = SimpleNamespace(
+                verifier=[], prompt_tokens=0, completion_tokens=0,
+                candidate_ids=[], miss_kind=None, violations=[],
+            )
+
+    class _FakeRuntime:
+        _model = "test-model"
+
+        async def run_turn(self, identity, q, state):
+            seen_state_ids.append(id(state))
+            # 模擬槽位寫入（例如上游從工具呼叫填回 state）：下一輪應仍看得到。
+            seen_marker_values.append(state.get("_marker"))
+            state["_marker"] = state.get("_marker", 0) + 1
+            return _FakeResult()
+
+    import asyncio
+
+    asyncio.run(agent_eval._run_scenario_agent(_FakeRuntime(), identity=None, turns=sc.turns))
+
+    assert len(seen_state_ids) == 2
+    assert seen_state_ids[0] == seen_state_ids[1], "同一個 state dict 物件必須貫穿全程"
+    assert seen_marker_values == [None, 1], "第 2 輪應看到第 1 輪寫入的值——槽位真的貫穿"

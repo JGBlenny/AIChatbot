@@ -296,14 +296,46 @@ def load_sensitive_v1(path: Path, manifest: dict, *, limit: Optional[int] = None
 def load_outline_probe_v1(path: Path, manifest: dict, *, limit: Optional[int] = None) -> list[Scenario]:
     """`outline-probe` 樣本（任務 4.3・4.4 步 2 探針凍結後補值）：
     `{"_meta": {"rule_sha256", "frozen_at", "n"}, "items": [{"id", "q", "stratum",
-    "gold": [fine_id...], "expect_kind": "answer"|"handoff"}]}`——每個 item 一個
+    "gold": [fine_id...], "expect_kind": "answer"|"handoff"}]}`——單輪 item 造一個
     單輪 `Scenario`；`stratum == "sensitive"` ⇒ `sensitive=True`、`expect_kind`
     強制 `"handoff"`（與其他 stratum 的 `expect_kind` 欄位分開判定，⛔ 兩者衝突
-    時以 `sensitive` 覆寫，因為敏感題本就該轉人）。"""
+    時以 `sensitive` 覆寫，因為敏感題本就該轉人）。
+
+    4.4b 前置改動（Plan §2「4.4b 前置改動」、tasks 4.4）：item 若帶 `turns:
+    [{"turn", "q", "gold", "expect_kind"}, ...]`（F 層劇本），造**一個** `Scenario`
+    含 N 個 `Turn`（貫穿同一個 `state`——`_run_scenario_agent` 本就逐輪迭代
+    `sc.turns`，這裡不需要改它，只需要 loader 把多輪 item 攤成多個 `Turn` 而非
+    多個單輪 `Scenario`）；`sensitive` 覆寫規則對每個 turn 各自套用（劇本目前
+    沒有 `stratum="sensitive"` 的用法，但邏輯上與單輪一致，⛔ 不做特例）。把
+    loader 改回「每個 item 只造單輪 `Scenario`」（即 `turns[]` 也被拆成 N 個
+    scenario）會讓 4.4 F 層「同一 session 貫穿」的驗收斷言必紅——這就是本片
+    「正對照」：`test_load_outline_probe_v1_multi_turn_item_yields_one_scenario`。
+    """
     data = json.loads(path.read_text(encoding="utf-8"))
     scenarios: list[Scenario] = []
     for item in data.get("items", []):
-        is_sensitive = item.get("stratum") == "sensitive"
+        stratum = item.get("stratum")
+        raw_turns = item.get("turns")
+        if raw_turns:
+            turns = []
+            for t in raw_turns:
+                is_sensitive = stratum == "sensitive"
+                expect_kind = "handoff" if is_sensitive else t.get("expect_kind")
+                turns.append(
+                    Turn(
+                        turn=t["turn"],
+                        q=t["q"],
+                        expect_kind=expect_kind,
+                        must_not_contain=[],
+                        sensitive=is_sensitive,
+                        knowledge_gap_unfilled=False,
+                        gold_fine_ids=tuple(t.get("gold") or []),
+                    )
+                )
+            scenarios.append(Scenario(idx=item["id"], turns=turns))
+            continue
+
+        is_sensitive = stratum == "sensitive"
         expect_kind = "handoff" if is_sensitive else item.get("expect_kind")
         scenarios.append(
             Scenario(

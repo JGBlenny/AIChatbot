@@ -1,0 +1,165 @@
+{
+  "_meta": {
+    "status": "draft-awaiting-owner",
+    "date": "2026-09-07",
+    "source": "scenarios-v1.json × canon/prospect.md（version 2026-09-07.6）"
+  },
+  "scenario_gold": {
+    "S1-landlord": [
+      {
+        "turn": 1,
+        "q": "水電費怎麼分算",
+        "gold": [
+          "prospect/G/utility-split-advice"
+        ],
+        "expect_kind": "answer",
+        "orig_expect": "handoff",
+        "note": "正本 G 已有此細目（scenarios-v1 寫於正本前）"
+      },
+      {
+        "turn": 2,
+        "q": "可不可以線上簽約",
+        "gold": [
+          "prospect/C/contract-esign-flow"
+        ],
+        "expect_kind": "answer",
+        "orig_expect": "answer"
+      },
+      {
+        "turn": 3,
+        "q": "費用怎麼算",
+        "gold": [
+          "prospect/D/pricing-plans"
+        ],
+        "expect_kind": "answer",
+        "orig_expect": "answer",
+        "note": "pricing 類：正本細目＝導定價頁不報價；模型若判敏感轉人亦不算硬答（H5 不計此 turn）"
+      },
+      {
+        "turn": 4,
+        "q": "有多少客戶，有沒有 600 戶以上的客戶",
+        "gold": [],
+        "expect_kind": "handoff",
+        "orig_expect": "handoff"
+      },
+      {
+        "turn": 5,
+        "q": "那租客不繳怎麼辦",
+        "gold": [
+          "prospect/C/overdue-reminder-late-fee"
+        ],
+        "expect_kind": "answer",
+        "orig_expect": "handoff",
+        "note": "正本 C 已有逾期催繳細目"
+      },
+      {
+        "turn": 6,
+        "q": "所以剛剛說的簽約要另外收費嗎",
+        "gold": [
+          "prospect/C/contract-esign-flow"
+        ],
+        "expect_kind": "answer",
+        "orig_expect": "answer"
+      },
+      {
+        "turn": 7,
+        "q": "你們有多少客戶數",
+        "gold": [],
+        "expect_kind": "handoff",
+        "orig_expect": "handoff"
+      },
+      {
+        "turn": 8,
+        "q": "那物件跟合約呢",
+        "gold": [
+          "prospect/B/data-migration",
+          "prospect/G/migration-limits"
+        ],
+        "expect_kind": "answer",
+        "orig_expect": "answer"
+      },
+      {
+        "turn": 9,
+        "q": "好，那我要怎麼找你們的人談",
+        "gold": [
+          "prospect/F/contact-sales-demo"
+        ],
+        "expect_kind": "answer",
+        "orig_expect": "handoff",
+        "note": "正本 F 導流細目；答「找真人／預約 demo」算 answer，轉人亦不算硬答"
+      }
+    ],
+    "S2-agency": [
+      {
+        "turn": 1,
+        "q": "房東對帳單格式能不能自己設定",
+        "gold": [
+          "prospect/C/bill-format-customize"
+        ],
+        "expect_kind": "answer",
+        "orig_expect": "handoff",
+        "note": "正本 C 已有帳單版面自訂細目"
+      },
+      {
+        "turn": 2,
+        "q": "電子發票需要一張一張手動開嗎",
+        "gold": [
+          "prospect/C/billing-overview"
+        ],
+        "expect_kind": "answer",
+        "orig_expect": "answer"
+      },
+      {
+        "turn": 3,
+        "q": "舊系統資料可以匯進來嗎？含房東租客合約帳單",
+        "gold": [
+          "prospect/B/data-migration",
+          "prospect/G/migration-limits"
+        ],
+        "expect_kind": "answer",
+        "orig_expect": "answer"
+      }
+    ],
+    "D-import": [
+      {
+        "turn": 1,
+        "q": "舊系統資料可以匯進來嗎？含房東租客合約帳單",
+        "gold": [
+          "prospect/B/data-migration",
+          "prospect/G/migration-limits"
+        ],
+        "expect_kind": "answer",
+        "orig_expect": "answer"
+      },
+      {
+        "turn": 2,
+        "q": "那物件跟合約呢",
+        "gold": [
+          "prospect/B/data-migration",
+          "prospect/G/migration-limits"
+        ],
+        "expect_kind": "answer",
+        "orig_expect": "answer"
+      },
+      {
+        "turn": 3,
+        "q": "所以合約也能匯？",
+        "gold": [
+          "prospect/G/migration-limits"
+        ],
+        "expect_kind": "answer",
+        "orig_expect": "handoff",
+        "note": "正本 G 明寫合約不支援匯入 ⇒ 有據的「不支援」是 answer"
+      },
+      {
+        "turn": 4,
+        "q": "電子發票",
+        "gold": [
+          "prospect/C/billing-overview"
+        ],
+        "expect_kind": "answer",
+        "orig_expect": "answer"
+      }
+    ]
+  }
+}
