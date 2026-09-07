@@ -290,8 +290,8 @@ def test_agent_turn_hidden_from_model_and_shadow_but_visible_to_facade():
 
 
 @pytest.mark.req(_SPEC)
-def test_agent_turn_stage_is_prospect_only():
-    """tenant／pm **缺鍵＝永不可見**（design 元件 2）；prospect 也要 stage ≥ M1。"""
+def test_agent_turn_stage_is_prospect_and_pm_only():
+    """DSP-037（業主 2026-09-07）：prospect ＋ pm 於 M1 開；**tenant 缺鍵＝永不可見**。"""
     deps = _deps(_app())
     registry = _registry_with_agent_turn(deps)
 
@@ -303,7 +303,9 @@ def test_agent_turn_stage_is_prospect_only():
     assert visible(_identity(), "M1") is True                      # 正對照組
     assert visible(_identity(), "M0") is False                     # stage 未到
     assert visible(_identity(target_user="tenant"), "M5") is False  # 缺鍵
-    assert visible(_identity(target_user="property_manager", mode="b2b"), "M5") is False
+    # DSP-037：pm 從 M1 起可見（S1a）；M0 仍未到
+    assert visible(_identity(target_user="property_manager", mode="b2b"), "M1") is True
+    assert visible(_identity(target_user="property_manager", mode="b2b"), "M0") is False
 
 
 @pytest.mark.req(_SPEC)
@@ -316,7 +318,7 @@ def test_agent_turn_input_schema_only_takes_message():
     assert F.AGENT_TURN_SPEC["facade_only"] is True
     assert F.AGENT_TURN_SPEC["mutates_session"] is True
     assert F.AGENT_TURN_SPEC["scope"] == "read"
-    assert F.AGENT_TURN_SPEC["stage"] == {"prospect": "M1"}
+    assert F.AGENT_TURN_SPEC["stage"] == {"prospect": "M1", "property_manager": "M1"}  # DSP-037
 
 
 @pytest.mark.req(_SPEC)

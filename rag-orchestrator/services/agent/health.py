@@ -228,16 +228,26 @@ async def compute_agent_health(
     rules_sha = _rules_sha(get_runtime)
     canon_state = _canon_state()
 
-    # 任務 4.1／Plan §2.1-7：agent 任一開關開著、且 prospect 索引非 ready
+    # 任務 4.1／Plan §2.1-7：agent 任一開關開著、且**任一受檢受眾**的索引非 ready
     # （`absent`／`not_ready`）⇒ 紅——「索引不在」在接線後代表產線正在降級服務。
+    # DSP-037／S1b：受檢集合＝`prospect`（基準受眾，永遠檢；⛔ 不因註冊表是空的就
+    # 變綠——「不知道」不是 ready）∪ **本行程已註冊正本**的受眾（pm 正本上線後就會
+    # 多它一個）。tenant 沒有正本、也不會被註冊 ⇒ 不在集合內，語義與 S1b 前相同。
     # ⚠️ 以**模組屬性**呼叫（`mcp_facade.agent_configured()`），⛔ `from … import`——
     # 讓 `monkeypatch.setattr(mcp_facade, "agent_configured", ...)` 生效。
-    prospect_index_state = (
-        canon_state.get("index", {}).get("prospect", {}).get("state")
-        if isinstance(canon_state.get("index"), dict)
-        else None
+    index_states = canon_state.get("index")
+    index_states = index_states if isinstance(index_states, dict) else {}
+    registered_shas = canon_state.get("sha256")
+    checked_audiences = {"prospect"} | set(
+        registered_shas if isinstance(registered_shas, dict) else {}
     )
-    agent_index_red = mcp_facade.agent_configured() and prospect_index_state != "ready"
+
+    def _state_of(audience: str):
+        observed = index_states.get(audience)
+        return observed.get("state") if isinstance(observed, dict) else None
+
+    not_ready = sorted(a for a in checked_audiences if _state_of(a) != "ready")
+    agent_index_red = mcp_facade.agent_configured() and bool(not_ready)
 
     red = spec_count == 0 or not kb_reachable or bool(flags) or not scope_ready or agent_index_red
 

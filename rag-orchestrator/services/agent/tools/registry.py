@@ -183,6 +183,85 @@ def _validate_value(schema: dict, value: Any, *, path: str) -> Optional[str]:
     return None
 
 
+def _make_nullable(subschema: dict) -> dict:
+    """把一個「選填鍵」的子 schema 改成「可為 null」，保持 strict 合法。
+
+    ⛔ 不是把鍵變非必填——strict function calling 沒有非必填這回事，
+    選填語義只能靠「型別多收一個 null」表達（呼叫端仍可傳 `None` 代表
+    「不填」，`call()` 端的 `_validate_against_schema` 用的是另一份原始
+    schema，選填鍵真正可以整個省略，見 `to_openai_tools` 呼叫處註解）。
+    """
+    sub = dict(subschema)
+    sub.pop("default", None)
+    if "enum" in sub:
+        if None in sub["enum"]:
+            return sub
+        return {"anyOf": [sub, {"type": "null"}]}
+    for union_key in ("anyOf", "oneOf", "allOf"):
+        if union_key in sub:
+            branches = sub[union_key]
+            if not any(
+                isinstance(b, dict) and b.get("type") == "null" for b in branches
+            ):
+                sub[union_key] = list(branches) + [{"type": "null"}]
+            return sub
+    expected_type = sub.get("type")
+    if expected_type is None:
+        return {"anyOf": [sub, {"type": "null"}]}
+    if isinstance(expected_type, list):
+        if "null" not in expected_type:
+            sub["type"] = list(expected_type) + ["null"]
+    else:
+        sub["type"] = [expected_type, "null"]
+    return sub
+
+
+def _walk_strict(node: Any) -> Any:
+    """遞迴把 JSON Schema 轉成 OpenAI strict function-calling 合法形：
+    每一層 object（`type=="object"` 或帶 `properties`）都補
+    `additionalProperties: False` 且 `required` ＝該層 properties 全部鍵；
+    原本不在 `required` 的鍵型別改為可為 null（`_make_nullable`）；移除
+    strict 不接受的 `default`。`items`／`anyOf`／`oneOf`／`allOf` 遞迴處理。
+    """
+    if not isinstance(node, dict):
+        return node
+    node.pop("default", None)
+    if node.get("type") == "object" or "properties" in node:
+        properties = node.get("properties") or {}
+        required_orig = set(node.get("required") or [])
+        new_properties: dict[str, Any] = {}
+        for key, sub_schema in properties.items():
+            walked = _walk_strict(sub_schema)
+            if key not in required_orig:
+                walked = _make_nullable(walked)
+            new_properties[key] = walked
+        node["properties"] = new_properties
+        node["additionalProperties"] = False
+        node["required"] = list(new_properties.keys())
+    if "items" in node:
+        node["items"] = _walk_strict(node["items"])
+    for union_key in ("anyOf", "oneOf", "allOf"):
+        if isinstance(node.get(union_key), list):
+            node[union_key] = [_walk_strict(v) for v in node[union_key]]
+    return node
+
+
+def _openai_strict_parameters(input_schema: dict) -> dict:
+    """`ToolSpec.input_schema` → OpenAI strict function-calling 合法的
+    `parameters`（純函式，回新 dict，⛔ 不改入參）。
+
+    每一層 object 都 `additionalProperties: False` 且 `required` ＝該層
+    properties 全部鍵；原本選填的鍵型別改為可為 null，保留「可不填」的
+    語義給模型（strict 沒有非必填，只能靠 nullable 表達）。⚠️ 這份
+    `required` 只給模型看的 `parameters` 用——`call()` 端的
+    `_validate_against_schema` 走的是 spec 原始 `input_schema`（原始
+    `required`），選填鍵在真正呼叫時仍可整個省略，語義不變。
+    """
+    import copy
+
+    return _walk_strict(copy.deepcopy(input_schema))
+
+
 _OPENAI_NAME_SEP = "__"   # OpenAI function name 只准 ^[a-zA-Z0-9_-]+$（真線路 2026-09-05 400 抓到）；MCP 工具名有 "."
 
 
@@ -444,17 +523,19 @@ class ToolRegistry:
     ) -> list[dict]:
         """Chat Completions `tools[]`（`for_model=True`，模型視角）。
 
-        每筆 `strict: true`，`parameters` 即 `input_schema` 且強制
-        `additionalProperties: false`（若原 schema 未設，這裡補上——
-        strict function calling 的硬性要求，不影響 `call()` 端另跑一次
-        `_validate_against_schema` 的驗證邏輯）。
+        每筆 `strict: true`，`parameters` 由 `_openai_strict_parameters` 從
+        `input_schema` 轉出：每一層 object 都 `additionalProperties: false`
+        且 `required` 涵蓋該層 properties 全部鍵（OpenAI strict function
+        calling 的硬性要求——`required` 缺一個 properties 的鍵就 400），
+        選填鍵改為可為 null 以保留「可不填」語義。⛔ 不影響 `call()` 端
+        另跑一次 `_validate_against_schema`——那邊用的是 spec 原始
+        `input_schema`（原始 `required`），選填鍵在真正呼叫時仍可省略。
         """
         tools: list[dict] = []
         for spec in self.specs_for(
             identity, stage, readonly_view=readonly_view, for_model=True
         ):
-            parameters = dict(spec.get("input_schema", {}))
-            parameters.setdefault("additionalProperties", False)
+            parameters = _openai_strict_parameters(spec.get("input_schema", {}))
             tools.append(
                 {
                     "type": "function",

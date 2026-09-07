@@ -93,7 +93,20 @@ def resolve_vendor_business_types(identity: Identity, resolver=None) -> frozense
     raw_types = info.get("business_types") if isinstance(info, dict) else None
     if not raw_types:
         return frozenset()
-    return frozenset(str(t) for t in raw_types)
+    try:
+        # ⚠️ `business_types` 是 DB 來的值：非可迭代純量（例如整數）或含不可轉字串的
+        # 元素會在這裡炸，而本函式的契約是 **fail-closed 回空集合、⛔ 不外溢**
+        # （verifier P4）——⛔ 不要拿掉這層 try，讓一筆髒資料把整個回合掀掉。
+        # str 本身可迭代，但逐字元切開不是業態 ⇒ 同樣視為髒資料。
+        if isinstance(raw_types, (str, bytes)):
+            raise TypeError("business_types 是純量字串，不是列表")
+        return frozenset(str(t) for t in raw_types)
+    except Exception:  # noqa: BLE001 — fail-closed，⛔ 不外溢
+        logger.warning(
+            "resolve_vendor_business_types_bad_shape vendor_id=%s type=%s",
+            vendor_id, type(raw_types).__name__,
+        )
+        return frozenset()
 
 
 # ---------------------------------------------------------------------------
@@ -322,35 +335,62 @@ def _build_doc(
     )
 
 
-async def build_prospect_outline(db_pool) -> OutlineDoc:
-    """R2.6／R5.4：git 正本（`canon/prospect.md`）→ 逐細目章節 ＋ `outline:toc`。
+#: 啟動期組 `outline:toc` 用的**靜態身分**（受眾 → `Identity` 欄位）。
+#: ⛔ 只列有 git 正本的受眾：tenant 沒有正本，且 b2c 靜態身分在啟動時解析不出
+#: 業態（`vendor_id=0` 只是佔位）⇒ 缺鍵＝不可組裝，`build_audience_outline` 直接 raise。
+#: prospect 那一列的三個值 ⛔ 不得更動——它是 3.2 起 `build_prospect_outline` 逐位元
+#: 相同輸出的一部分（售前＝b2b ＋ 無 role_id；勿改回 b2c，見下方 `build_audience_outline`）。
+_STATIC_TOC_IDENTITY: dict[str, dict] = {
+    "prospect": {"vendor_id": 0, "target_user": "prospect", "mode": "b2b"},
+    # DSP-037（業主 2026-09-07）：pm 正本上線。pm 走 b2b 分支（正本 front matter
+    # `business_types: [system_provider]`／`target_user: [property_manager]`），
+    # 故 `mode="b2b"`＋`target_user="property_manager"` ⇒ `canon_visible` 兩條件都成立。
+    "property_manager": {
+        "vendor_id": 0, "target_user": "property_manager", "mode": "b2b",
+    },
+}
+
+
+async def build_audience_outline(audience: Audience, db_pool=None) -> OutlineDoc:
+    """R2.6／R5.4：git 正本（`canon/<audience>.md`）→ 逐細目章節 ＋ `outline:toc`。
 
     ⚠️ **`db_pool` 保留於簽名但不再使用**（`app.py` 不改；3.2 起大綱不讀 DB）。
     步驟（design 元件 5「呼叫鏈與失敗語義」）：
 
-    1. `load_canon_or_die(resolve_canon_dir(), "prospect")`——`.md` 解析＋`.json`
-       逐位元組同源比對；缺檔／不同源／格式錯 ⇒ raise（`_agent_configured()` 為真
-       時由 `app.py` 升成啟動紅，否則 agent 停用；⛔ 不新增降級路徑）。
-    2. `register_canon("prospect", doc)`——`make_outline_resolver` 每回合要用同一份
+    1. `load_canon_or_die(resolve_canon_dir(), audience)`——`.md` 解析＋`.json`
+       逐位元組同源比對；缺檔／不同源／格式錯 ⇒ raise（呼叫端決定升成啟動紅或跳過）。
+    2. `register_canon(audience, doc)`——`make_outline_resolver` 每回合要用同一份
        `CanonDoc` 套可見性（`OutlineDoc` 是 pydantic，⛔ 不掛在它身上）。
-    3. `build_outline(doc)` ＋ 附 `outline:toc` 節（**啟動時**以售前**靜態身分**算一次：
-       prospect 正本單一受眾、走 b2b 分支、不依 vendor ⇒ 啟動時算得出來。
-       ⚠️ 每回合的候選子集與動態 toc 是 4.1 `CandidateOutlineDoc`，⛔ 不在本片）。
+    3. `build_outline(doc)` ＋ 附 `outline:toc` 節（**啟動時**以該受眾的**靜態身分**
+       算一次，見 `_STATIC_TOC_IDENTITY`。⚠️ 每回合的候選子集與動態 toc 是 4.1
+       `CandidateOutlineDoc`，⛔ 不在本片）。
     4. `check_budget(min(env 上限, 正本 budget_tokens))`——正本自帶的預算是上限之一，
        ⛔ 不讓 env 單方面把上限開大（security-reviewer P2-3）。
+
+    ⚠️ **本函式是 `build_prospect_outline` 的泛化**（DSP-037／S1b）：prospect 的
+    輸出必須逐位元不變（`test_build_prospect_outline_registers_same_doc_and_leaves_sha_unchanged`
+    是那條線的釘子），故步驟、順序、靜態身分、`_build_doc` 參數一字未動。
     """
     from services.agent.canon.canon_assembler import (  # 循環相依 ⇒ 函式內 import
         build_canon_toc, build_outline, load_canon_or_die, register_canon, resolve_canon_dir,
     )
 
-    canon = load_canon_or_die(resolve_canon_dir(), "prospect")
-    register_canon("prospect", canon)
+    identity_fields = _STATIC_TOC_IDENTITY.get(audience)
+    if identity_fields is None:
+        raise ValueError(
+            f"audience={audience!r} 沒有 git 正本靜態身分"
+            f"（合法值 {sorted(_STATIC_TOC_IDENTITY)}；tenant 走 build_toc 的 DB 目錄）"
+        )
+
+    canon = load_canon_or_die(resolve_canon_dir(), audience)
+    register_canon(audience, canon)
 
     doc = build_outline(canon)
-    # 售前靜態身分：prospect ＝ b2b ＋ 無 role_id（memory project_presales_target_user_routing；
-    # jgb2 面板送 prospect 時 mode=b2b）。⛔ 勿改回 b2c——那會走 vendor 業態分支，
-    # 而啟動時沒有真實 vendor 可解析（vendor_id=0 只是佔位）。
-    static_identity = Identity(vendor_id=0, target_user="prospect", mode="b2b")
+    # 靜態身分見 `_STATIC_TOC_IDENTITY`：兩個受眾都是 b2b ＋ 無 role_id
+    # （售前 memory project_presales_target_user_routing；jgb2 面板送 prospect 時 mode=b2b）。
+    # ⛔ 勿改回 b2c——那會走 vendor 業態分支，而啟動時沒有真實 vendor 可解析
+    # （`vendor_id=0` 只是佔位，`resolve_vendor_business_types` 對它回空集合且不查 DB）。
+    static_identity = Identity(**identity_fields)
     toc = build_canon_toc(
         canon,
         static_identity,
@@ -361,8 +401,17 @@ async def build_prospect_outline(db_pool) -> OutlineDoc:
         sections=list(doc.sections) + [toc],
         version=canon.version,
     )
-    check_budget(doc, min(default_token_limit("prospect"), canon.budget_tokens))
+    check_budget(doc, min(default_token_limit(audience), canon.budget_tokens))
     return doc
+
+
+async def build_prospect_outline(db_pool) -> OutlineDoc:
+    """`build_audience_outline("prospect", …)` 的**薄別名**（DSP-037／S1b 前的唯一入口）。
+
+    ⛔ 不在此重寫第二份組裝式——輸出必須與泛化前逐位元相同。既有呼叫端
+    （`scripts/`、測試、`app.py` 舊路徑）保留這個名字。
+    """
+    return await build_audience_outline("prospect", db_pool)
 
 
 def _clip_first_paragraph(answer: str, limit: int = 120) -> str:

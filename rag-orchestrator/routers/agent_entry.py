@@ -111,6 +111,19 @@ def _resolve(app, name: str, override):
     return getattr(app.state, name, None)
 
 
+def _outline_for(app, audience: Optional[str]):
+    """該受眾的行程級大綱（DSP-037／S1b）；沒有 ⇒ `None`（維持現況＝不塞）。
+
+    `app.state.agent_outlines`（複數）是權威對照表——查無該受眾 ⇒ `None`，
+    ⛔ 不回退到 prospect 那一份（把售前正本餵給 pm／tenant 回合正是 S1b 修掉的洞）。
+    沒有複數對照表的舊形狀 ⇒ 只有 prospect 讀得到單數 `app.state.agent_outline`。
+    """
+    outlines = getattr(app.state, "agent_outlines", None)
+    if isinstance(outlines, dict) and outlines:
+        return outlines.get(audience)
+    return getattr(app.state, "agent_outline", None) if audience == "prospect" else None
+
+
 async def handle_agent_entry(request, req, ctx, *, runtime=None, store=None,
                              sse_event=None, metered=None, to_response=None):
     """回最終 Response（stream 或 JSON），或 `None`（不啟用／回退／runtime 缺）。
@@ -140,7 +153,7 @@ async def handle_agent_entry(request, req, ctx, *, runtime=None, store=None,
         return None
     # 大綱只在記憶體：runtime 從 state["agent"]["outline"] 讀（2.1 做法），
     # ⛔ 不得序列化進 form_sessions —— `_persist` 存檔前 pop。
-    outline = getattr(app.state, "agent_outline", None) if identity.audience == "prospect" else None
+    outline = _outline_for(app, identity.audience)
     if outline is not None:
         agent_state["outline"] = outline
 
@@ -207,7 +220,7 @@ def schedule_shadow(app, request, state_snapshot: Optional[dict], old_answer: st
             # DSP-022 附帶：影子回合也要看得到大綱（與 handle_agent_entry 同一份
             # `app.state.agent_outline`、同樣只在記憶體）。真線路 2026-09-05：影子
             # prompt_tokens 只有 2.4k、每題 no_grounding，就是這裡沒塞。
-            outline = getattr(app.state, "agent_outline", None) if identity.audience == "prospect" else None
+            outline = _outline_for(app, identity.audience)
             if outline is not None:
                 agent_state = dict(state.get("agent") or {})
                 agent_state["outline"] = outline

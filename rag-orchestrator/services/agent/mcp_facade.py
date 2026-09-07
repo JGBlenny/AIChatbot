@@ -710,8 +710,13 @@ AGENT_TURN_SPEC: ToolSpec = {
     # 門面專屬：⛔ 不進模型工具清單（`for_model=True` 不可見 ⇒ 模型捏造這個名字
     # 只會拿到 NO_MATCH，沒有自呼遞迴）、⛔ 不進影子視圖。
     "facade_only": True,
-    # 本 spec 的對話對象只有 prospect（範圍聲明）；tenant／pm **缺鍵＝永不可見**。
-    "stage": {"prospect": "M1"},
+    # 本 spec 的對話對象＝有 git 正本的兩個受眾（範圍聲明）；**tenant 缺鍵＝永不可見**
+    # （它沒有正本，⛔ 不得順手補鍵）。
+    # DSP-037（業主 2026-09-07 裁）：`property_manager` 於 M1 開放——pm 正本
+    # （`canon/property_manager.md`，36 細目全 reviewed）已上線，門面依受眾取
+    # `app.state.agent_outlines[audience]`，取不到一律 `AGENT_UNAVAILABLE`，
+    # ⛔ 不塞 prospect 大綱（見 `_make_agent_turn`／`_agent_turn_preflight`）。
+    "stage": {"prospect": "M1", "property_manager": "M1"},
 }
 
 
@@ -722,6 +727,29 @@ def _app_state(deps: FacadeDeps, name: str) -> Any:
     app = deps.get_app()
     state = getattr(app, "state", None)
     return getattr(state, name, None) if state is not None else None
+
+
+#: `_outline_for_audience` 的第三種回答：「這個受眾沒有大綱」——與「這台機器根本
+#: 沒接大綱」（回 `None`，維持 3.2 以來的既有行為：不塞、照跑）區分開。
+_OUTLINE_UNAVAILABLE = object()
+
+
+def _outline_for_audience(deps: FacadeDeps, audience: str) -> Any:
+    """該受眾的行程級大綱（DSP-037／S1b）。
+
+    - `app.state.agent_outlines`（複數）是**權威對照表**：非空 ⇒ 查無該受眾一律
+      `_OUTLINE_UNAVAILABLE`（fail-closed，⛔ 不回退到 prospect）。
+    - 沒有複數對照表（3.2～S1b 前的舊形狀、以及只塞單數的測試替身）⇒ 只有
+      prospect 讀得到 `app.state.agent_outline`；其餘受眾一律 `_OUTLINE_UNAVAILABLE`
+      ——⚠️ 這正是 S1b 修掉的洞：舊碼對**任何**受眾都塞那份售前大綱。
+    """
+    outlines = _app_state(deps, "agent_outlines")
+    if isinstance(outlines, dict) and outlines:
+        doc = outlines.get(audience)
+        return doc if doc is not None else _OUTLINE_UNAVAILABLE
+    if audience == "prospect":
+        return _app_state(deps, "agent_outline")
+    return _OUTLINE_UNAVAILABLE
 
 
 def _open_state_store(deps: FacadeDeps, identity: Identity) -> NamespacedStateStore:
@@ -784,6 +812,19 @@ def _make_agent_turn(deps: FacadeDeps) -> Callable:
             # 代表有人繞過門面直接呼 `registry.call()` ⇒ 用封閉錯誤值域裡的
             # `NO_MATCH`，⛔ 不在對模型可見的值域上多開一個碼。
             return ToolResult(ok=False, error="NO_MATCH")
+        # 大綱是**行程級共用物件**（`app.state.agent_outlines[audience]`），**依受眾取**
+        # （DSP-037／S1b）：取不到一律 fail-closed，⛔ 不塞別的受眾（尤其 prospect）
+        # 的大綱——那等於把售前正本餵給 pm 回合。
+        # ⚠️ 這一關刻意排在 `store.load`／`store.start` **之前**：判不通過的回合
+        # ⛔ 不該先在 `form_sessions` 留下一列半開的 session。
+        # 錯誤碼用 `NO_MATCH`：`ToolError` 是封閉值域，`AGENT_UNAVAILABLE` 不在其中，
+        # 且 ⛔ 不在對模型可見的值域上多開一個碼（同上方 runtime 缺席的處置）。
+        # 呼叫端看到的 `AGENT_UNAVAILABLE` 由 `_agent_turn_preflight` 給——
+        # 這裡是繞過門面直呼 `registry.call()` 時的第二道網。
+        outline = _outline_for_audience(deps, identity.resolved_audience())
+        if outline is _OUTLINE_UNAVAILABLE:
+            return ToolResult(ok=False, error="NO_MATCH")
+
         try:
             store = _open_state_store(deps, identity)
             # Runtime 收到的身分**就是命名空間身分**（任務 2.9）：回合內模型呼叫
@@ -807,12 +848,10 @@ def _make_agent_turn(deps: FacadeDeps) -> Callable:
             )
 
         agent_state = state.setdefault("agent", {})
-        # 大綱是**行程級共用物件**（`app.state.agent_outline`）。Runtime 從
-        # `state["agent"]["outline"]` 取，故這裡進場前塞、存檔前 pop——
+        # Runtime 從 `state["agent"]["outline"]` 取，故這裡進場前塞、存檔前 pop——
         # ⛔ 不得讓它被序列化進 `form_sessions.collected_data`（每個 session 存一份
         # 幾千字的大綱，而且會就此凍結在舊版本）。與 `routers/agent_entry.py`
         # 的 REST 路徑同一個處置。
-        outline = _app_state(deps, "agent_outline")
         if outline is not None:
             agent_state["outline"] = outline
         try:
@@ -1087,6 +1126,14 @@ def _agent_turn_preflight(deps: FacadeDeps, identity: Identity) -> Optional[str]
     if _app_state(deps, "agent_runtime") is None or _app_state(
         deps, "conversational_engine"
     ) is None:
+        return ERR_AGENT_UNAVAILABLE
+    # DSP-037／S1b：`agent.turn` 已對 pm 可見，但 pm 正本可能沒上線（`app.py` 只跳過
+    # 該受眾、⛔ 不掛啟動）⇒ 沒有這個受眾的大綱＝服務對他沒接好，回 ① 同一個碼。
+    # ⚠️ 判準見 `_outline_for_audience`：prospect 在舊形狀（只有單數 `agent_outline`、
+    # 或兩者皆無）下**永遠不會**落到這一條 ⇒ 既有 prospect 語義逐字不變，⛔ 不新增
+    # 外顯失敗；會落到這裡的只有「有對照表卻缺該受眾」與「舊形狀下的非 prospect」，
+    # 兩者都是 fail-closed 的正確答案（⛔ 不得改成放行後塞 prospect 大綱）。
+    if _outline_for_audience(deps, identity.resolved_audience()) is _OUTLINE_UNAVAILABLE:
         return ERR_AGENT_UNAVAILABLE
     try:
         _open_state_store(deps, identity)

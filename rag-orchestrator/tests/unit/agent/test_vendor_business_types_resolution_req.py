@@ -256,6 +256,9 @@ async def test_select_outline_forwards_resolved_vendor_business_types_to_all_thr
     selector = _FakeSelector()
     runtime = runtime_mod.AgentRuntime.__new__(runtime_mod.AgentRuntime)
     runtime._candidate_selector = selector
+    # ⚠️ 這裡走 `__new__` 繞過 `__init__`，欄位得自己補齊：DSP-037／S1b 起
+    # `_select_outline` 經 `_selector_for()` 取 selector，對照表空 ⇒ 沿用單數那一個。
+    runtime._candidate_selectors = {}
 
     identity = Identity(vendor_id=7, target_user="property_manager", mode="b2c")
     violations: list[str] = []

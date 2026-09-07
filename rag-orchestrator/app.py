@@ -49,15 +49,30 @@ def _agent_configured() -> bool:
     return _mcp_agent_configured()
 
 
+#: 啟動時要組大綱＋索引的受眾，**依序**（DSP-037／S1b）。
+#: ⚠️ `prospect` 是**基準受眾**：它失敗＝整條 agent 路徑組不起來（啟動紅或 fail-soft
+#: 停用，語義見 `_init_agent_runtime` 的外層 except，⛔ 不變）。其餘受眾失敗只跳過自己。
+#: tenant 缺席是刻意的——它沒有 git 正本（`canon/` 只有 prospect／property_manager），
+#: `AGENT_TURN_SPEC` 也永不對它開鍵。
+_AGENT_BASELINE_AUDIENCE = "prospect"
+_AGENT_OUTLINE_AUDIENCES = (_AGENT_BASELINE_AUDIENCE, "property_manager")
+
+
 async def _init_agent_runtime(app: FastAPI) -> None:
-    """建 `app.state.agent_runtime`／`agent_outline`／`outline_resolver`／`shadow_runner`。
+    """建 `app.state.agent_runtime`／`agent_outlines`／`agent_indexes`／`outline_resolver`／`shadow_runner`。
 
     design 元件 5：大綱超出 token 預算 ⇒ 啟動紅；Verifier 自證失敗 ⇒ 啟動紅（bootstrap）。
     但 agent 路徑在業主未跑 migration（`knowledge_base.outline_approved_by`）前組不起來，
     ⛔ 不能因此讓舊鏈也起不來 ⇒ 只在 `_agent_configured()` 為真時才把失敗升成啟動紅。
+
+    DSP-037／S1b：**逐受眾**組（`_AGENT_OUTLINE_AUDIENCES`）。非基準受眾（pm）的正本
+    缺檔／載入失敗 ⇒ **只跳過它**、記 warning，⛔ 不影響 prospect、⛔ 不 raise；
+    它的 `agent.turn` 隨後由門面 fail-closed 成 `AGENT_UNAVAILABLE`（⛔ 不改塞 prospect 大綱）。
     """
     app.state.agent_runtime = None
     app.state.agent_outline = None
+    app.state.agent_outlines = {}
+    app.state.agent_indexes = {}
     app.state.outline_resolver = None
     app.state.shadow_runner = None
     try:
@@ -72,43 +87,69 @@ async def _init_agent_runtime(app: FastAPI) -> None:
         from services.agent.canon.fine_index import PREPARE_TOTAL_TIMEOUT_S as _PREPARE_TOTAL_TIMEOUT_S
         from services.agent.canon.fine_index import register_index as _register_index
         from services.llm_provider import get_llm_provider as _get_llm_provider
-        outline_doc = await _agent_outline_mod.build_prospect_outline(_mcp_kb_pool)
-        _agent_outline_mod.check_budget(outline_doc, _agent_outline_mod.default_token_limit("prospect"))
-        provider = _get_llm_provider()
 
-        # 任務 4.1（Plan §2.1-6）：細目索引——`register_canon("prospect", …)` 已在
-        # `build_prospect_outline` 內完成，這裡只取已註冊的那份 `CanonDoc` 來 `prepare`。
-        # `wait_for` 逾時 ⇒ 索引停在 `absent`（`prepare` 只在完成或 `_discard` 時改狀態，
-        # 取消不留半份）；⛔ 不掛啟動、⛔ 不因此另加 API 把 `absent` 改寫成 `not_ready`——
-        # 兩者對 selector／health 是同一種待遇（非 ready）。
-        prospect_canon = _get_canon("prospect")
-        index = _FineIndex(_EmbeddingUtilsBackend())
-        try:
-            await asyncio.wait_for(index.prepare(prospect_canon), _PREPARE_TOTAL_TIMEOUT_S)
-        except Exception as e:  # noqa: BLE001 — 涵蓋 asyncio.TimeoutError 與其他失敗，皆 fail-soft
-            print(f"⚠️ [agent] 細目索引 prepare 失敗（state={index.state}）：{type(e).__name__}: {e}")
-        _register_index("prospect", index)
-        candidate_selector = _CandidateSelector(index)
+        outlines: dict = {}
+        indexes: dict = {}
+        selectors: dict = {}
+        for _audience in _AGENT_OUTLINE_AUDIENCES:
+            try:
+                _doc = await _agent_outline_mod.build_audience_outline(_audience, _mcp_kb_pool)
+                _agent_outline_mod.check_budget(
+                    _doc, _agent_outline_mod.default_token_limit(_audience))
+            except Exception as e:  # noqa: BLE001
+                if _audience == _AGENT_BASELINE_AUDIENCE:
+                    raise           # 基準受眾失敗 ⇒ 交外層決定啟動紅／fail-soft（語義不變）
+                print(f"⚠️ [agent] {_audience} 大綱未組成，跳過該受眾"
+                      f"（agent.turn 對它回 AGENT_UNAVAILABLE）：{type(e).__name__}: {e}")
+                continue
+
+            # 任務 4.1（Plan §2.1-6）：細目索引——`register_canon(<audience>, …)` 已在
+            # `build_audience_outline` 內完成，這裡只取已註冊的那份 `CanonDoc` 來 `prepare`。
+            # `wait_for` 逾時 ⇒ 索引停在 `absent`（`prepare` 只在完成或 `_discard` 時改狀態，
+            # 取消不留半份）；⛔ 不掛啟動、⛔ 不因此另加 API 把 `absent` 改寫成 `not_ready`——
+            # 兩者對 selector／health 是同一種待遇（非 ready）。
+            _canon = _get_canon(_audience)
+            _index = _FineIndex(_EmbeddingUtilsBackend())
+            try:
+                await asyncio.wait_for(_index.prepare(_canon), _PREPARE_TOTAL_TIMEOUT_S)
+            except Exception as e:  # noqa: BLE001 — 涵蓋 asyncio.TimeoutError 與其他失敗，皆 fail-soft
+                print(f"⚠️ [agent] {_audience} 細目索引 prepare 失敗"
+                      f"（state={_index.state}）：{type(e).__name__}: {e}")
+            _register_index(_audience, _index)
+            outlines[_audience] = _doc
+            indexes[_audience] = _index
+            selectors[_audience] = _CandidateSelector(_index)
+
+        outline_doc = outlines[_AGENT_BASELINE_AUDIENCE]
+        index = indexes[_AGENT_BASELINE_AUDIENCE]
+        # ⚠️ `candidate_selector=`（單數）留給既有的單一受眾接線與影子工廠；
+        #    `candidate_selectors=`（複數）是**依受眾取用**的權威對照表
+        #    （`AgentRuntime._selector_for`：對照表非空時它說了算，⛔ 不跨受眾回退）。
+        candidate_selector = selectors[_AGENT_BASELINE_AUDIENCE]
+        provider = _get_llm_provider()
 
         runtime = _agent_bootstrap.build_runtime(app.state.db_pool, provider, _mcp_registry,
                                                  outline_doc=outline_doc,
-                                                 candidate_selector=candidate_selector)
-        app.state.agent_outline = outline_doc
-        app.state.outline_resolver = _agent_outline_mod.make_outline_resolver(
-            {"prospect": outline_doc})
+                                                 candidate_selector=candidate_selector,
+                                                 candidate_selectors=selectors)
+        app.state.agent_outline = outline_doc       # 相容：舊呼叫端仍讀單數＝prospect
+        app.state.agent_outlines = outlines
+        app.state.agent_indexes = indexes
+        app.state.outline_resolver = _agent_outline_mod.make_outline_resolver(dict(outlines))
         app.state.agent_runtime = runtime
         try:
             from services.agent.shadow import ShadowRunner as _ShadowRunner   # 任務 4.1
             app.state.shadow_runner = _ShadowRunner(
                 lambda readonly_view: _agent_bootstrap.build_runtime(
                     app.state.db_pool, provider, _mcp_registry, outline_doc=outline_doc,
-                    candidate_selector=candidate_selector, readonly_view=readonly_view),
+                    candidate_selector=candidate_selector, candidate_selectors=selectors,
+                    readonly_view=readonly_view),
                 app.state.db_pool)
         except ImportError:
             print("ℹ️ [agent] ShadowRunner 尚未落地（4.1），影子模式停用")
         print(f"✅ agent runtime 已初始化（rules_sha={runtime.rules_sha[:12]} outline_sha={runtime.outline_sha[:12]} "
               f"sections={len(outline_doc.sections)} tokens={outline_doc.token_count} "
-              f"index_state={index.state}）")
+              f"index_state={index.state} audiences={sorted(outlines)}）")
     except Exception as e:  # noqa: BLE001
         if _agent_configured():
             raise RuntimeError(f"agent 路徑已啟用但組裝失敗（啟動紅）：{type(e).__name__}: {e}") from e

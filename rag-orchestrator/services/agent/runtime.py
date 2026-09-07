@@ -62,7 +62,7 @@ from services import usage_metering
 from services.agent.budget import Budget, BudgetCounters
 from services.agent.canon.candidate_selector import CandidateSelector
 from services.agent.canon.candidate_selector import K as _CANDIDATE_K
-from services.agent.canon.canon_assembler import build_canon_toc, get_canon
+from services.agent.canon.canon_assembler import build_canon_toc, canon_visible, get_canon
 from services.agent.identity import Identity, Stage, derive_identity_source
 from services.agent.mcp_facade import current_stage
 from services.agent.outline import CandidateOutlineDoc, resolve_vendor_business_types
@@ -636,6 +636,7 @@ class AgentRuntime:
         status_interval_s: float = 5.0,
         attempt_sink: Optional[Callable[[dict], None]] = None,
         candidate_selector: Optional[CandidateSelector] = None,
+        candidate_selectors: Optional[dict] = None,
     ) -> None:
         self.provider = provider
         self.registry = registry
@@ -647,6 +648,12 @@ class AgentRuntime:
         # `--candidates off` 或未接線的受眾）——`run_turn` 對此原樣使用整份 outline，
         # ⛔ 這不是降級，見 `_select_outline` docstring。
         self._candidate_selector = candidate_selector
+        # DSP-037／S1b：**依受眾**的 selector 對照表（`{audience: CandidateSelector}`）。
+        # 非空時它是唯一權威——查無該受眾 ⇒ `None`，⛔ 不回退到單數
+        # `candidate_selector`（那會拿甲受眾的索引去服務乙受眾的正本；
+        # `CandidateSelector.select` 雖然會被 `canon_sha256 != prepared_sha` 擋成
+        # 不服務，但那是最後一道網，⛔ 不該當第一道）。空 ⇒ 沿用單數（既有接線）。
+        self._candidate_selectors: dict = dict(candidate_selectors or {})
         # tasks 4.3c（儀表化，非契約）：離線評估用的「被拒中間嘗試」旁路。
         # ⛔ 預設 None＝零行為改變；正式路徑 `bootstrap.build_runtime` 不設它
         # （見 `tests/unit/agent/test_bootstrap_req.py`）。`TurnTrace`／
@@ -686,6 +693,17 @@ class AgentRuntime:
         except Exception:  # noqa: BLE001 — 儀表化，任何 sink 例外都不可外溢
             logger.warning("agent_attempt_sink_failed", exc_info=True)
 
+    def _selector_for(self, audience) -> Optional[CandidateSelector]:
+        """該受眾的 `CandidateSelector`（DSP-037／S1b）。
+
+        對照表非空 ⇒ 只認對照表（查無回 `None`，⛔ 不跨受眾回退）；
+        對照表空 ⇒ 沿用單數 `candidate_selector`（3.3b／4.1 的既有單一受眾接線，
+        prospect 逐位元不變）。
+        """
+        if self._candidate_selectors:
+            return self._candidate_selectors.get(audience)
+        return self._candidate_selector
+
     # ------------------------------------------------------------------
     async def _select_outline(
         self,
@@ -697,20 +715,27 @@ class AgentRuntime:
     ) -> tuple[Any, Optional[dict]]:
         """任務 4.1（Plan §2.1-2）：把整份 `outline` 換成這一回合的候選子集。
 
-        適用條件：`self._candidate_selector` 有設、`outline` 非 None、
-        `get_canon(outline.audience)` 已註冊、且 `outline.audience` 與
-        `identity.resolved_audience()` 相同；不適用 ⇒ 原 `outline` 原樣、
+        適用條件：`outline` 非 None、`get_canon(outline.audience)` 已註冊、
+        `outline.audience` 與 `identity.resolved_audience()` 相同，且
+        `_selector_for(audience)` 取得到 selector；不適用 ⇒ 原 `outline` 原樣、
         `sel_meta=None`（這**不是**降級——是這條路根本沒有候選機制）。
+
+        ⚠️ DSP-037／S1b 的例外：對照表（`candidate_selectors`）**有設但缺這個受眾**
+        ⇒ 那是降級（可見細目全集＋toc）＋`candidate_fallback_full_outline`，
+        ⛔ 不與「根本沒有候選機制」混為一談。
 
         回傳 `(outline, sel_meta)`；`sel_meta` 為 `None` 或
         `{"candidate_ids", "winning_key_kind", "miss_kind"}`。
         """
-        selector = self._candidate_selector
-        if selector is None or outline is None:
+        if outline is None:
             return outline, None
         audience = getattr(outline, "audience", None)
         canon = get_canon(audience) if audience is not None else None
         if canon is None or audience != identity.resolved_audience():
+            return outline, None
+        selector = self._selector_for(audience)
+        if selector is None and not self._candidate_selectors:
+            # 這條路根本沒有候選機制（單數與複數都沒設）⇒ 原樣，⛔ 不記 violation。
             return outline, None
 
         # `vendor_business_types` 每回合最多解析一次（元件 6，tasks 6.2 前置 P3-b），
@@ -719,10 +744,29 @@ class AgentRuntime:
         toc = build_canon_toc(canon, identity, vendor_business_types=vendor_business_types)
 
         def _fallback_visible() -> Any:
-            visible = selector.index.visible_subset(
-                identity, canon, vendor_business_types=vendor_business_types
-            )
+            if selector is not None:
+                visible = selector.index.visible_subset(
+                    identity, canon, vendor_business_types=vendor_business_types
+                )
+            else:
+                # 沒有該受眾的索引 ⇒ 直接問 3.2 的 `canon_visible`（`visible_subset`
+                # 本身就是它的薄集合包裝，⛔ 這不是第二份可見性真相）。
+                visible = frozenset(
+                    fine.id
+                    for fine in canon.fines()
+                    if canon_visible(
+                        identity, fine, vendor_business_types=vendor_business_types
+                    )
+                )
             return CandidateOutlineDoc.from_visible(outline, visible, toc)
+
+        if selector is None:
+            # 有對照表、卻缺這個受眾 ⇒ 產線正在降級服務（可見細目全集＋toc），
+            # 與「索引不可用」同一個 trace 值域，⛔ 不靜默當成「沒有候選機制」。
+            violations.append("candidate_fallback_full_outline")
+            return _fallback_visible(), {
+                "candidate_ids": [], "winning_key_kind": {}, "miss_kind": "index_unavailable",
+            }
 
         try:
             query = _candidate_query(user_message, dialog)
