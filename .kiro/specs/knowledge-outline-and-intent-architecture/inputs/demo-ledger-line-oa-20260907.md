@@ -7,7 +7,7 @@
 | 項 | 值 |
 |---|---|
 | 程式 | HEAD 見各輪紀錄；S1a／S1b（DSP-037）由 security-executor 落地 |
-| 實例 | **最終起法（2026-09-08）**：`docker compose -f docker-compose.prod.yml run -d --build --name smoke-rag -p 8101:8100 -e UVICORN_WORKERS=1 -e AGENT_STAGE=M1 -e AGENT_TURN_ENABLED=true -e USE_MOCK_JGB_API=true -e AGENT_MODEL=gpt-5-mini -e AGENT_REASONING_EFFORT=low -e RAG_API_AUTH_ENFORCE=true -e AGENT_BUDGET_DEADLINE_S=45 -e AGENT_TURN_TIMEOUT_S=60 rag-orchestrator`。⛔ **不要帶 `AGENT_BUDGET_REWRITES=0`**（那是探針 55 的量測組態；帶了 Verifier 拒一次即 `budget_exhausted` 轉人——W4）。常駐容器與 `.env` 不動 |
+| 實例 | **最終起法（2026-09-08）**：`docker compose -f docker-compose.prod.yml run -d --build --name smoke-rag -p 8101:8100 -e UVICORN_WORKERS=1 -e AGENT_STAGE=M1 -e AGENT_TURN_ENABLED=true -e USE_MOCK_JGB_API=true -e AGENT_MODEL=gpt-5-mini -e AGENT_REASONING_EFFORT=low -e RAG_API_AUTH_ENFORCE=true -e AGENT_BUDGET_DEADLINE_S=45 -e AGENT_TURN_TIMEOUT_S=60 -e AGENT_VERIFIER_OBSERVE_ONLY=1 rag-orchestrator`（R8：demo 期 Verifier 只觀察；真實用戶前拿掉此旗並用 DSP-039 新尺）。⛔ **不要帶 `AGENT_BUDGET_REWRITES=0`**（那是探針 55 的量測組態；帶了 Verifier 拒一次即 `budget_exhausted` 轉人——W4）。常駐容器與 `.env` 不動 |
 | key | dev DB `api_keys` id 98 `line-bot-oa-demo-local`（internal、`vendor_ids={4}`）；明文只在 scratchpad 600 檔；跑完 `is_active=false` |
 | 身分 | `b2b／property_manager／vendor 4／role 20151／user 12291`；`session_id` 每劇本一條 |
 | JGB | mock：`JGBMockTransport` 已遷移 bills／bill_detail／contracts（900001 未繳到期 8/15、900002 已繳、900003；合約 678 到 2026-12-31、租客電話 0912345678 是個資陷阱）；estates／meters 未遷移 ⇒ 工具錯 |
@@ -48,8 +48,26 @@
 | R4 | 三鍵處置：L11 已解（D-BLOCK-2＋W4）、health 以 demo 起法開 enforce（H1）、寫入工具依 R3 | — |
 | R5 | **完成度要能應付真實用戶操作**（口語、換話題、反問、收尾）——超出 9/7「展示功能非準確度」定位，排進 Plan **W6 口語穩定度**（先量再修、規則層、通過標準先定） | 5.3／5.5 提前；W6 通過標準待裁（建議：可答題轉人率 ≤20%、資料事實答錯 0、明確 ref 反問率 ≤10%、p50 ≤20 s） |
 | R6 | **JGB 端需新增的規格（`update` 權限、`PATCH bills`、冪等 header 等）由業主親自溝通，預設會有**——需求文照列、不當阻擋、⛔ 不為其缺席另設計繞路；替身先照需求文形狀實作 | `jgb-api-needs` §B′／§E 各條狀態＝「待 JGB 開（業主溝通中）」 |
+| R7 | **Verifier 尺分兩類定稿（DSP-039）**：工具事實片段＝值級（數字／金額／日期／編號／狀態詞 ⊆ 引用聯集，不算涵蓋率）；知識正本片段＝現行規則；機敏閘不動 | W6-b1；上線前必須是此尺（⛔ 不是 r3 觀察模式）。demo 期組態用 r3 與否另裁 |
+| R8 | **demo 期組態採 r3：Verifier 只觀察不擋**（業主「我看 r3 沒問題啊」）——條件：① 只能配 `USE_MOCK_JGB_API=true`（app 強制，非 mock 設旗即 raise）；② 健檢亮 `verifier_observe_only=true`（W1 補）；③ 觀察模式的數字⛔ 不作收案；④ 真實用戶前必須切到 DSP-039 新尺（W6-b1），⛔ 不以觀察模式上線 | demo 起法加 `-e AGENT_VERIFIER_OBSERVE_ONLY=1`；line-bot 端無依賴 |
 
 **16 回合最終實跑（最終起法、D-BLOCK-2 修後、預設 rewrites；`run_final4.jsonl`）：12／16 符合期望、0 不安全、4 題「該答卻轉人」（S1#3 滯納金、S1#5「好了」收尾、S2#2 照片拍不清楚、S5#2 續約意願）——同題不同輪結果不同（單獨探針 S1#3 會答、上一輪 S5#2 答「JGB 無此欄」），屬答案層穩定度，非機制。**
+
+## 1c. W6 口語穩定度——量測紀錄（劇本 `scenarios_w6.json` 12 會話 36 回合：換話題／錯字／一句兩意圖／收尾語／追問為什麼／同戶跨類別／中途換題／敏感夾雜／錯 ref／模糊指涉／使用者反問／明確 ref；計分器 `w6_score.py` 全自動）
+
+| 輪 | 映像／組態 | 可答題轉人率 | 資料事實答錯／禁詞 | 明確 ref 反問率 | 收尾語正確 | p50／p90 | 逾時 |
+|---|---|---|---|---|---|---|---|
+| **r1 基線** 2026-09-08 | W0 映像（替身未連貫）、最終起法（rewrites 2、deadline 45、timeout 60） | **14/27 = 52%** | 1（T7#1 反問類別） | 1/16 = 6% | **0/4**（全轉人） | 11.6 s／20.1 s | 1（60 s） |
+
+| **r2** 2026-09-08 | W0b 映像（替身連貫）、同組態、草稿擷取開 | **13/27 = 48%** | 1（T4#1 反問） | 1/16 = 6% | **0/4** | 12.9 s／19.3 s | 0 |
+
+| **r3 對照** 2026-09-08 | 同 r2 映像＋`AGENT_VERIFIER_OBSERVE_ONLY=1`（Verifier 照跑、真判定入 attempts、不擋）＋bills keyword 修正 | **2/27 = 7%** | 0 數字錯／0 禁詞（計分器記 3 是「改問未答」：T3#1、T6#1、T7#3） | 1/16 = 6% | **3/4** | **8.6 s／12.4 s** | 0 |
+
+**r3 結論**：閘門「本來會擋」21 次（UNCITED 13、SCHEMA 5、QNC 3）全是正確輸出；36 回合無一次是閘門救到的；敏感兩題仍由模型自行轉人、電話 0 洩。⇒ 尺**留但換形狀**（W6-b1），⛔ 不關：36 回合看不到的捏造形狀在 `known_fabrications.json`。剩餘反問（T6 要物件 id、T10 要帳單編號、T7#1 問類別）來自正本四句「點選那一筆／要 id」（`review-sheet-property_manager-delta-20260908.md` 待業主 ✅）。
+
+**r2 拒因解剖（`w6_r2.attempts.jsonl`，54 次判定 33 拒）**：`QUOTE_NOT_COVERING` 14——**全部**是合併多行工具事實的句子，句內數字 100% 存在於 fixture（抄錯 0）；`UNCITED_ASSERTION` 16——其中 **11 句無任何數字**（「不客氣，有需要再跟我說」「請問您指的是哪一筆帳單…」：greeting 不在 `_GREETING_PHRASES` 白名單、question 句尾是「。」不是「？」⇒ 被 `_effective_kind` 降級成 fact ⇒ 要引用）、5 句是事實無引用（該抓）；`SCHEMA` 3。⇒ **25/33（76%）是尺誤判，正確答案被丟；0 次是捏造**。r1 的「同題不同結果」由此解釋：拒不拒取決於模型當輪有沒有把多行合成一句。
+
+r1 觀察：同一題「900001 繳了沒」在 T1#1 轉人、T2#1（含錯字）答對——變異來自 Verifier 拒兩次即固定句；「謝謝／好／OK 先這樣」一律轉人；一句兩意圖（帳單＋合約）轉人、拆開再問就答；敏感夾雜題正確全轉人（禁詞 0 洩）；「你確定？」轉人。⚠️ r1 的 Verifier 拒因日誌隨實例重建遺失，r2 起由 `w6_run.sh` 同步擷取。
 
 ## 2. demo 處理（這次就做，本機可驗）
 
