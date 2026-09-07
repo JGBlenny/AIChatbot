@@ -9,7 +9,7 @@
 3. **token 表只加一欄**（migration，可逆）：`agent_confirmation_tokens` 加 `pending_id text`（= `sha256(token)[:16]`，索引；⛔ 仍不存 payload／summary 原文，表的「只存雜湊」決定不變）。
 4. **待確認的 `action`／`payload`／`receipt` 存 session 狀態**（`agent_state["pending_confirm"][pending_id]`，經既有 `state_store` 落 `form_sessions.collected_data`——與既有 `bill_ref`／`contract_ref` 槽位同一敏感等級與同一保留期；⛔ 不存 token）。R4.3「同一 token 重送回同一結果」以狀態內 `receipt` 實現。保留／清理：隨 session 既有 TTL；demo 期不另清理（取捨明列）。
 
-## 0b. 前置：DSP-042（待業主裁，⛔ 未裁不開工 W8）
+## 0b. 前置：DSP-042（**業主 2026-09-08 裁：三件都採**；W-D 已落檔）
 一次裁三件（都是正本變更，程式⛔不得先行；落檔在 W-D、擁有者＝主 session）：
 1. **`AgentTurnOutput` 加選填鍵 `session_expired: bool`**（預設 false；只在「同 `session_id` 超過 30 分鐘再進」的那一回合為 true）。鍵序依實際落地順序：§3 先後 W8 在 W7 之前 ⇒ `session_expired` 是**第六鍵**、W7 的 `transcript` 順延為第七鍵（DSP-041 文字同步改「第七鍵」）；requirements R3.7 措辭改為「五鍵固定＋依落地順序加的選填鍵（`session_expired`、`transcript`）」；design 元件 4 回應表同步。
 2. **清單點選機器值 `select:<type>:<id>` 成為對外契約**（R10-c）：第一版值域 `type ∈ {bill, contract, repair}`、`id` `^[A-Za-z0-9_-]{1,32}$`；由 line-bot 契約 v1 「select 列」承載；`estate`／`meter` 待工具層 ref 語義補齊後另裁開放。
@@ -49,7 +49,7 @@
 先後（業主 2026-09-08「先完成主功能」）：W0 ✓ → W0b ✓ → DSP-038 ✓ → W-D ✓ → W1a＋W2＋W3 ✓（verifier 中）→ **W1b＋W4** → **W5 R-寫** → **W8 LIFF 線經 /mcp**（R10；審查可與 W7 並行）→ W7 語音 → W6-b3 → W6-b2 → W6-b1（備援）。
 
 ## 4. 已裁與待裁
-- 待裁：DSP-038 三件（§0）。建議全採。**DSP-042 三件（§0b）**：建議全採；未裁 W8 不開工。
+- 待裁：DSP-038 三件（§0）。建議全採。**DSP-042 三件（§0b）：已裁全採（2026-09-08），W-D 落檔完成 ⇒ W8 (1)(3)(5) 可派。**
 - 已裁：R1–R3（帳本 §1b）。
 
 ## 5. security-reviewer 發現處置

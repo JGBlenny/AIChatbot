@@ -55,6 +55,7 @@
 | R10 | **LIFF 線（③④⑤）只提供入口與配合回應，能力全在 AIChatbot 經 `/mcp`**（業主 2026-09-08「這是有的共識」）；舊鏈 REST 面向的 G1–G6 缺口⛔ 不做 | Plan **W8**：`agent.turn` 加 `facet_context`／`image_urls`、`dunning.draft` 工具、`session_expired` 訊號、出卡前未結單提示；line-bot 30 個驗收案例改經 `/mcp` 實跑；缺口表 `liff-28-scenarios-gap-map-20260908.md` 改為「MCP 對照」 |
 | R10-b | **點清單那一筆也是以文字送進 `agent.turn`**（帶編號／物件名的一句話），⛔ 不需 `facet_context` 結構欄位 | W8 (1) 移除；劇本「帶編號進場」＝真實入口非模擬；缺口 G1 作廢 |
 | R10-c | **清單點選改為機器值 `select:<type>:<id>`**（取代 R10-b「純文字」）：Runtime 進模型前決定性攔截、走既有工具以 `role_id` 收口、不在範圍＝查無（不洩存在性）；`select:repair:` 保留；真人可打列已知取捨；line-bot 零改動（同 B3／B4） | W8 (1)；契約「清單點選」列；DSP-042 草案 |
+| R11 | **DSP-042 三件都採**（2026-09-08）：`session_expired` 第六鍵、`select:<type>:<id>` 契約值域 bill／contract／repair、正本先行由主 session 落檔（W-D） | W8 (1)(3)(5) 開工（Plan r4 READY）；`DECISIONS.md` DSP-042；R3.7／design 元件 3、4 已改 |
 
 **16 回合最終實跑（最終起法、D-BLOCK-2 修後、預設 rewrites；`run_final4.jsonl`）：12／16 符合期望、0 不安全、4 題「該答卻轉人」（S1#3 滯納金、S1#5「好了」收尾、S2#2 照片拍不清楚、S5#2 續約意願）——同題不同輪結果不同（單獨探針 S1#3 會答、上一輪 S5#2 答「JGB 無此欄」），屬答案層穩定度，非機制。**
 
