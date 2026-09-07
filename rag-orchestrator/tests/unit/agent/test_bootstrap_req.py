@@ -165,3 +165,25 @@ def test_budget_from_env_reads_three_keys_and_falls_back(monkeypatch):
     monkeypatch.setenv("AGENT_BUDGET_DEADLINE_S", "-3")     # 越界 ⇒ 預設
     e = budget_from_env()
     assert (e.max_tool_calls, e.max_rewrites, e.deadline_s) == (6, 2, 20.0)
+
+
+def test_budget_rewrites_env_zero_is_accepted(monkeypatch):
+    """DSP-035：`AGENT_BUDGET_REWRITES=0`（第一次輸出為準）必須被接受，⛔ 不退回預設 2。
+    正對照：`-1` 仍退回預設；`AGENT_BUDGET_TOOL_CALLS=0` 仍退回預設（只有 REWRITES 放行 0）。"""
+    from services.agent.bootstrap import budget_from_env
+
+    monkeypatch.setenv("AGENT_BUDGET_REWRITES", "0")
+    assert budget_from_env().max_rewrites == 0
+    monkeypatch.setenv("AGENT_BUDGET_REWRITES", "-1")
+    assert budget_from_env().max_rewrites == 2
+    monkeypatch.delenv("AGENT_BUDGET_REWRITES")
+    monkeypatch.setenv("AGENT_BUDGET_TOOL_CALLS", "0")
+    assert budget_from_env().max_tool_calls == 4
+
+
+def test_budget_rewrites_zero_exhausts_on_first_reject():
+    from services.agent.budget import Budget, BudgetCounters
+
+    c = BudgetCounters()
+    c.rewrites += 1
+    assert c.rewrite_exhausted(Budget(max_rewrites=0))
