@@ -30,6 +30,7 @@ Union[ToolResult, Awaitable[ToolResult]]]`——`kb_get()` 對 `outline:*` 直�
 from __future__ import annotations
 
 import hashlib
+import logging
 import os
 import re
 from datetime import datetime, timezone
@@ -40,6 +41,60 @@ from pydantic import BaseModel
 from services.agent.identity import Audience, Identity
 from services.agent.tools.registry import Provenance, ToolResult
 from services.vendor_knowledge_retriever_v2 import VendorKnowledgeRetrieverV2
+
+logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# vendor_business_types 單一來源解析（design 元件 6；tasks 6.2 前置 P3-b）
+# ---------------------------------------------------------------------------
+
+_default_vendor_resolver = None  # 模組級延遲單例，同 routers/chat.py 的 get_vendor_param_resolver 慣例
+
+
+def _get_default_vendor_resolver():
+    global _default_vendor_resolver
+    if _default_vendor_resolver is None:
+        from services.vendor_parameter_resolver import VendorParameterResolver
+
+        _default_vendor_resolver = VendorParameterResolver()
+    return _default_vendor_resolver
+
+
+def resolve_vendor_business_types(identity: Identity, resolver=None) -> frozenset:
+    """`vendor_business_types` 單一來源（design 元件 6）——每回合最多呼叫一次，
+
+    結果交呼叫端傳給 `build_canon_toc`／`candidate_outline`（`visible_subset`）／
+    `selector.select`／`resolve_canon_section` 三＋二個呼叫點，⛔ 不在
+    `FineIndex`／`canon_visible` 內部查 DB。
+
+    - `identity.vendor_id` 為 `None`／`0`，或受眾為 `prospect`（prospect 走 b2b
+      分支，`canon_visible` 不看這個集合——見 `canon_assembler.canon_visible`）
+      ⇒ 回 `frozenset()`，且**不呼叫 resolver**（維持與 3.2 現況逐位元相同的
+      空集合輸入）。
+    - 否則以 `VendorParameterResolver.get_vendor_info(vendor_id)` 取
+      `business_types` 正規化成 `frozenset[str]`。
+    - resolver 例外、查無業者、或 `business_types` 缺漏 ⇒ **fail-closed**回
+      `frozenset()`（業態限定細目不可見）——⛔ 不 raise、⛔ 不放行。
+    """
+    vendor_id = identity.vendor_id
+    if not vendor_id or identity.resolved_audience() == "prospect":
+        return frozenset()
+
+    active_resolver = resolver if resolver is not None else _get_default_vendor_resolver()
+    try:
+        info = active_resolver.get_vendor_info(vendor_id)
+    except Exception:  # noqa: BLE001 — fail-closed，⛔ 不外溢
+        logger.warning("resolve_vendor_business_types_failed vendor_id=%s", vendor_id, exc_info=True)
+        return frozenset()
+
+    if not info:
+        return frozenset()
+
+    raw_types = info.get("business_types") if isinstance(info, dict) else None
+    if not raw_types:
+        return frozenset()
+    return frozenset(str(t) for t in raw_types)
+
 
 # ---------------------------------------------------------------------------
 # 資料模型（對齊 prompt_assembler.py 的 OutlineDocLike／OutlineSectionLike）
@@ -295,10 +350,11 @@ async def build_prospect_outline(db_pool) -> OutlineDoc:
     # 售前靜態身分：prospect ＝ b2b ＋ 無 role_id（memory project_presales_target_user_routing；
     # jgb2 面板送 prospect 時 mode=b2b）。⛔ 勿改回 b2c——那會走 vendor 業態分支，
     # 而啟動時沒有真實 vendor 可解析（vendor_id=0 只是佔位）。
+    static_identity = Identity(vendor_id=0, target_user="prospect", mode="b2b")
     toc = build_canon_toc(
         canon,
-        Identity(vendor_id=0, target_user="prospect", mode="b2b"),
-        vendor_business_types=frozenset(),
+        static_identity,
+        vendor_business_types=resolve_vendor_business_types(static_identity),
     )
     doc = _build_doc(
         audience=canon.audience,
@@ -411,10 +467,14 @@ def make_outline_resolver(cache: dict):
         if canon is not None:
             # F7 修補的產線接線點：目錄與 `outline:<fine id>` 都**每回合**套可見性，
             # identity 逐次傳入（⛔ 不綁在工廠——工廠只建一次，身分每回合不同）。
-            # `vendor_business_types` 在 3.2 固定空集合（prospect＝b2b 分支不看它）；
-            # b2c 受眾接上正本時由呼叫端解析後傳入（元件 6）。
+            # `vendor_business_types` 每回合最多解析一次（元件 6，tasks 6.2 前置
+            # P3-b）：prospect／vendor_id 缺 ⇒ `resolve_vendor_business_types`
+            # 回空集合且不呼叫 resolver；b2c 受眾解析真實業態。
             return resolve_canon_section(
-                canon, identity, kb_id, vendor_business_types=frozenset()
+                canon,
+                identity,
+                kb_id,
+                vendor_business_types=resolve_vendor_business_types(identity),
             )
         doc = cache.get(audience)
         if doc is None:

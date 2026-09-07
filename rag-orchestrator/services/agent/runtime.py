@@ -65,7 +65,7 @@ from services.agent.canon.candidate_selector import K as _CANDIDATE_K
 from services.agent.canon.canon_assembler import build_canon_toc, get_canon
 from services.agent.identity import Identity, Stage, derive_identity_source
 from services.agent.mcp_facade import current_stage
-from services.agent.outline import CandidateOutlineDoc
+from services.agent.outline import CandidateOutlineDoc, resolve_vendor_business_types
 from services.agent.output_schema import AgentOutput, VerifierVerdict
 from services.agent.prompt_assembler import new_nonce, wrap_provenance_data, wrap_tool_data
 from services.agent.provenance_units import (  # OUTLINE_TOOL_CALL_ID 下沉至葉模組（DSP-029 落地取捨④）
@@ -713,17 +713,22 @@ class AgentRuntime:
         if canon is None or audience != identity.resolved_audience():
             return outline, None
 
-        toc = build_canon_toc(canon, identity, vendor_business_types=frozenset())
+        # `vendor_business_types` 每回合最多解析一次（元件 6，tasks 6.2 前置 P3-b），
+        # 結果傳給下面三個呼叫點——⛔ 不在 FineIndex／canon_visible 內部查 DB。
+        vendor_business_types = resolve_vendor_business_types(identity)
+        toc = build_canon_toc(canon, identity, vendor_business_types=vendor_business_types)
 
         def _fallback_visible() -> Any:
             visible = selector.index.visible_subset(
-                identity, canon, vendor_business_types=frozenset()
+                identity, canon, vendor_business_types=vendor_business_types
             )
             return CandidateOutlineDoc.from_visible(outline, visible, toc)
 
         try:
             query = _candidate_query(user_message, dialog)
-            sel = await selector.select(canon, identity, query, vendor_business_types=frozenset())
+            sel = await selector.select(
+                canon, identity, query, vendor_business_types=vendor_business_types
+            )
 
             if sel is None:
                 violations.append("candidate_fallback_full_outline")
