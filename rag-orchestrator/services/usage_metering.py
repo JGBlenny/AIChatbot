@@ -64,6 +64,8 @@ DEFAULT_PRICING: Dict[str, tuple] = {
     "gpt-3.5-turbo": (0.50, 1.50),
     "gpt-4.1-mini": (0.40, 1.60),
     "gpt-4.1": (2.00, 8.00),
+    # 2026-09-07 依 OpenAI 官方價目（developers.openai.com/api/docs/pricing）補入，供 5.x 探針換模型量測
+    "gpt-5-mini": (0.25, 2.00),
 }
 
 

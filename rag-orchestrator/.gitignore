@@ -2,3 +2,4 @@
 # 4.4b 探針本機輸出（含 texts 原文旁路，⛔ 不進版控）
 .probe-run/
 .probe-run-51/
+.probe-run-52/
