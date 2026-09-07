@@ -51,8 +51,15 @@ def test_contract_filter_uses_fixture_matrix(mt):
 
 
 def test_status_and_type_filters_are_computed(mt):
+    """⚠️ 真資料子集併入後 `type=1` 不再是合成三筆的專屬值（多筆真實帳單同為 type=1）——
+    改驗「900001 必在結果內、900002／900003 必不在」，仍證明過濾真的依 `type` 計算，
+    而不斷言封閉集合。`status=8` 在真資料子集裡無同值列，精確集合仍成立。
+    """
     assert _ids(_run(mt.send("GET", BILLS, params={**ROLE, "status": 8}))) == {900003}
-    assert _ids(_run(mt.send("GET", BILLS, params={**ROLE, "type": 1}))) == {900001}
+    type_ids = _ids(_run(mt.send("GET", BILLS, params={**ROLE, "type": 1})))
+    assert 900001 in type_ids
+    assert 900002 not in type_ids
+    assert 900003 not in type_ids
 
 
 def test_bill_id_filter_converges_to_single_row(mt):
@@ -62,10 +69,17 @@ def test_bill_id_filter_converges_to_single_row(mt):
 
 # ── month：真的算區間，不是查表 ───────────────────────────────────────────
 def test_month_filter_is_derived_not_hardcoded(mt):
+    """⚠️ 真資料子集併入後 8 月／9 月區間可能各再多出其他真實帳單——
+    不再斷言精確集合，改驗合成三筆仍落在原設計月份且彼此不重疊（分辨力仍在）。
+    """
     aug = _run(mt.send("GET", BILLS, params={**ROLE, "month": "2026-08"}))
     sep = _run(mt.send("GET", BILLS, params={**ROLE, "month": "2026-09"}))
-    assert _ids(aug) == {900001}
-    assert _ids(sep) == {900002, 900003}
+    aug_ids, sep_ids = _ids(aug), _ids(sep)
+    assert 900001 in aug_ids
+    assert 900002 not in aug_ids and 900003 not in aug_ids
+    assert {900002, 900003} <= sep_ids
+    assert 900001 not in sep_ids
+    assert not (aug_ids & sep_ids)
 
 
 def test_month_with_no_data_returns_empty_not_error(mt):
@@ -78,9 +92,14 @@ def test_month_with_no_data_returns_empty_not_error(mt):
 @pytest.mark.parametrize("bad", ["2026-8", "202608", "2026/08", "abc", "2026-08-15"])
 def test_invalid_month_is_silently_ignored(mt, bad):
     """⚠️ production 只在 `preg_match` 命中時才加條件（BillApiController:78-85）——
-    非法格式**不報錯、不過濾**。mock 照抄此行為，不得「改成比較合理的」400。"""
+    非法格式**不報錯、不過濾**。mock 照抄此行為，不得「改成比較合理的」400。
+
+    ⚠️ 真資料子集併入後「不過濾」代表回傳**全部** fixture 帳單（不再只有合成三筆），
+    改驗回傳集合等於 `table.rows()` 的完整 id 集合，仍是「未過濾」這個原本要驗的性質。
+    """
+    all_ids = {r["id"] for r in BillFixtureTable().rows()}
     resp = _run(mt.send("GET", BILLS, params={**ROLE, "month": bad}))
-    assert _ids(resp) == {900001, 900002, 900003}
+    assert _ids(resp) == all_ids
     assert resp["success"] is True
 
 
@@ -125,11 +144,16 @@ def test_per_page_is_capped_at_200(mt):
 
 
 def test_pagination_shape_and_has_more(mt):
+    """⚠️ `total` 不再斷言固定為合成筆數——真資料子集併入後總筆數會隨 fixture 增減；
+    改以 `table.rows()` 的實際筆數推導期望值，仍驗「分頁形狀與 has_more 語義正確」。
+    """
+    total_rows = len(BillFixtureTable().rows())
     resp = _run(mt.send("GET", BILLS, params={**ROLE, "per_page": 2, "page": 1}))
     assert len(resp["data"]) == 2
     p = resp["pagination"]
-    assert p == {"current_page": 1, "per_page": 2, "total": 3,
-                 "total_pages": 2, "has_more": True}
+    expected_total_pages = -(-total_rows // 2)
+    assert p == {"current_page": 1, "per_page": 2, "total": total_rows,
+                 "total_pages": expected_total_pages, "has_more": expected_total_pages > 1}
 
 
 def test_default_per_page_is_50(mt):

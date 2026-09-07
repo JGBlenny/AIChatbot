@@ -69,10 +69,17 @@ def test_ids_are_unique(table):
 
 
 def test_rows_returns_a_copy(table):
-    """`rows()` 回傳副本——測試改動不得污染後續測試。"""
+    """`rows()` 回傳副本——測試改動不得污染後續測試。
+
+    ⚠️ 不再斷言固定筆數（真資料子集併入後 `rows()` 不止 3 筆）；
+    改驗「對回傳值的變動不影響內部狀態」這個原本要驗的性質本身。
+    """
+    before_ids = {r["id"] for r in table.rows()}
     rows = table.rows()
     rows.append({"id": -1})
-    assert len(table.rows()) == 3
+    after_ids = {r["id"] for r in table.rows()}
+    assert after_ids == before_ids
+    assert -1 not in after_ids
 
 
 # ── 3. 差異足以咬到過濾 ───────────────────────────────────────────────────
@@ -116,12 +123,20 @@ def test_each_pair_shares_exactly_one_dimension(table):
 
 
 def test_month_filter_is_observable(table):
-    """`month` 過濾（YYYYMM 比對 `date_expire` 區間）亦須能分辨。"""
+    """`month` 過濾（YYYYMM 比對 `date_expire` 區間）亦須能分辨。
+
+    ⚠️ 真資料子集併入後 8 月／9 月區間可能各再多出其他真實列，
+    不再斷言精確集合——只驗核心合成三筆仍落在原設計的月份、
+    且兩個月份彼此不重疊（分辨力仍在）。
+    """
     rows = table.rows()
     aug = {r["id"] for r in rows if 20260801 <= r["date_expire"] <= 20260831}
     sep = {r["id"] for r in rows if 20260901 <= r["date_expire"] <= 20260931}
-    assert aug == {900001}
-    assert sep == {900002, 900003}
+    assert {900001} <= aug
+    assert {900002, 900003} <= sep
+    assert not (aug & sep)
+    assert 900002 not in aug and 900003 not in aug
+    assert 900001 not in sep
 
 
 # ── 合成資料 ─────────────────────────────────────────────────────────────
@@ -133,6 +148,17 @@ def test_ids_are_synthetic_ranges(table):
     指向既有 contract（678／600）／estate（456／400）fixture 的真實 id，
     使三個 fixture 宇宙相連（見 fixture_data 頂端註解）；孤立區段是舊設計，
     與「跨域可查得到同一戶」的新要求互斥，此處放寬為只驗帳單自身 id。
+
+    ⚠️ 真資料子集（role_id=20151/user_id=12291 可見）併入後不再是「全部 ≥900000」——
+    合成三筆（900001-900003）仍須落在合成區段；真資料列改用
+    `bill_visibility` 對 12291 的宣告來認定，不硬寫死其 id 集合。
     """
+    synthetic_ids = {900001, 900002, 900003}
     for row in table.rows():
-        assert row["id"] >= 900000
+        if row["id"] in synthetic_ids:
+            assert row["id"] >= 900000
+        else:
+            # 非合成列必須是真資料子集：對 12291 宣告可見。
+            assert 12291 in (table.visible_to(row["id"]) or []), \
+                f"bill {row['id']} 既非合成範圍也未對 12291 宣告可見——不明列"
+    assert synthetic_ids <= {r["id"] for r in table.rows()}

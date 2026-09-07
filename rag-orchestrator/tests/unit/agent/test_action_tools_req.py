@@ -29,9 +29,9 @@ pytestmark = pytest.mark.unit
 _REQ = "agentic-mcp-orchestration:R4.2"
 
 #: demo fixture 的既有資料（`services/jgb/fixture_data/demo_vendor4.json`）：
-#: 帳單 900001 到期日 20260815、宣告可見於 user 12291；物件 456 title「信義區套房A」。
+#: 帳單 900001 到期日 20260815、宣告可見於 user 9001（合成凍結鏈；demo 用戶 12291 只看真資料列）；物件 456 title「信義區套房A」。
 _ROLE = "20151"
-_USER = "12291"
+_USER = "9001"
 _BILL = "900001"
 _BILL_DUE = 20260815
 _ESTATE_NAME = "信義區套房A"
@@ -306,8 +306,12 @@ async def test_repair_create_accepts_parent_category_and_empty_description(api):
     assert receipt["repair_id"]
     assert _repair_count(api) == before + 1
     row = api._mock_transport.repair_fixtures.by_id(int(receipt["repair_id"]))
-    # 父節點分類 ⇒ category_id 是大類、item_id **未指定**（⛔ 不編葉節點）
-    assert row["category_id"] == 1 and row["item_id"] is None
+    # 父節點分類 ⇒ category_id 是該大類在分類樹裡的 id（依名稱查，⛔ 不寫死——分類樹是替身資料）、
+    # item_id **未指定**（⛔ 不編葉節點）
+    from services.jgb.repair_fixtures import repair_categories
+    parent_ids = [c["id"] for c in repair_categories() if c.get("name") == _PARENT_CATEGORY]
+    assert parent_ids, f"分類樹找不到大類 {_PARENT_CATEGORY!r}"
+    assert row["category_id"] == parent_ids[0] and row["item_id"] is None
 
 
 @pytest.mark.req(_REQ)

@@ -843,7 +843,7 @@ async def test_token_never_leaves_the_process(pool, caplog):
 
 
 def _mcp_identity_with_viewer(session_id: str) -> Identity:
-    """demo fixture 的 pm 身分：`user_id=12291` 在 `bill_visibility` 裡宣告可見。
+    """demo fixture 的 pm 身分：`user_id=9001` 在 `bill_visibility` 裡宣告可見（合成凍結鏈；demo 用戶 12291 只看真資料列）。
 
     ⚠️ 與上面的 `_mcp_identity`（`user_id="1"`）刻意不同：真 handler 會做**範圍讀**
     （`get_bills(viewer_user_id=...)`），`user_id="1"` 對 900001 未宣告可見 ⇒ 會被
@@ -851,7 +851,7 @@ def _mcp_identity_with_viewer(session_id: str) -> Identity:
     """
     return Identity(
         vendor_id=4, target_user="property_manager", mode="b2b",
-        role_id="20151", user_id="12291", session_id=session_id, api_key_id=1,
+        role_id="20151", user_id="9001", session_id=session_id, api_key_id=1,
         entry="mcp",
     )
 

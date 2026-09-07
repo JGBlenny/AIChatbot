@@ -52,7 +52,11 @@ def test_estates_index_returns_only_published():
     assert r["success"] is True
     # 456／400 為跨域連貫修正新增（分別對齊 contract 678／600 與 repairs 3001/3002）；
     # 54305 未刊登（is_open=0），不出現。
-    assert sorted(e["id"] for e in r["data"]) == [400, 456, 54126, 54200]
+    # ⚠️ 真資料子集併入後另有已刊登物件（同 role_id=20151／is_open=1）一併出現，
+    # 不再斷言封閉集合——只驗合成四筆仍在其中、54305 不在其中。
+    ids = {e["id"] for e in r["data"]}
+    assert {400, 456, 54126, 54200} <= ids
+    assert 54305 not in ids
 
 
 def test_estate_detail_found_and_not_found():
@@ -69,7 +73,10 @@ def test_meters_index_and_estate_filter():
     mt = _full_transport()
     r = _run(mt.send("GET", "/api/external/v1/meters", params=ROLE))
     # 601（B10，estate 456）為跨域連貫修正新增。
-    assert {m["id"] for m in r["data"]} == {501, 502, 503, 601}
+    # ⚠️ 真資料子集併入後另有電表（1061）一併出現，不再斷言封閉集合——
+    # 只驗合成四筆仍在其中。
+    ids = {m["id"] for m in r["data"]}
+    assert {501, 502, 503, 601} <= ids
 
     scoped = _run(mt.send("GET", "/api/external/v1/meters",
                           params={**ROLE, "estate_id": 9001}))
@@ -111,9 +118,13 @@ def test_member_permissions_owner_vs_member_vs_unknown():
 
 
 def test_repairs_index_filters_and_categories():
+    """⚠️ 真資料子集併入後 repairs／repair_categories 皆不再是封閉的合成集合——
+    修繕改驗合成兩筆為子集；分類樹已換成真 11 類樹（`repair_categories` 頂層
+    改由擷取檔取代舊 3 類佔位），改依名稱取 id、⛔ 不寫死 id。
+    """
     mt = _full_transport()
     all_rows = _run(mt.send("GET", "/api/external/v1/repairs", params=ROLE))["data"]
-    assert {r["id"] for r in all_rows} == {3001, 3002}
+    assert {3001, 3002} <= {r["id"] for r in all_rows}
 
     urgent = _run(mt.send("GET", "/api/external/v1/repairs",
                           params={**ROLE, "is_urgent": 2}))["data"]
@@ -121,7 +132,10 @@ def test_repairs_index_filters_and_categories():
 
     cats = _run(mt.send("GET", "/api/external/v1/repairs/categories"))
     assert cats["success"] is True
-    assert {c["id"] for c in cats["data"]} == {1, 2, 3}
+    names = {c["name"] for c in cats["data"]}
+    assert {"電路", "水路衛浴", "房屋結構", "門鎖", "通訊網路",
+            "家電維修", "家具", "家居品", "家電清洗", "管道疏通", "其他"} == names
+    assert len(cats["data"]) == len({c["id"] for c in cats["data"]})   # id 無重複
 
 
 # ── viewer 圈定：有宣告／無宣告兩態（bills）──────────────────────────────
@@ -312,11 +326,22 @@ _PHONE_RE = re.compile(r"09\d{2}[- ]?\d{3}[- ]?\d{3}|0\d{1,2}-\d{4}-\d{4}")
 _EMAIL_RE = re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+")
 
 
+#: 真資料子集遮罩後的合成樣式（見 `test_demo_fixture_pii_req.py`
+#: 與 `scripts/fixtures/build_demo_fixture_from_capture.py` 的遮罩規則）——
+#: `09NN-000-0NN` 電話、`userN@example.com` email，皆為遮罩產生的佔位值，非真實個資。
+_MASKED_PHONE_RE = re.compile(r"^09\d{2}-000-0\d{2}$")
+_MASKED_EMAIL_RE = re.compile(r"^user\d+@example\.com$")
+
+
 def test_fixture_contains_no_undeclared_real_contacts():
-    """掃 fixture JSON 全文的電話／email 字面值，逐一核對是否在允許清單內——
+    """掃 fixture JSON 全文的電話／email 字面值，逐一核對是否為既知合成樣式——
 
     正對照組：0912345678 這個既有陷阱**必須**被掃到且在允許清單內，
     證明本掃描確實會咬到電話號碼格式，而不是規則寫錯導致「什麼都掃不到」。
+
+    ⚠️ 真資料子集遮罩後的合成值（`09NN-000-0NN`／`userN@example.com`）不在舊白名單裡，
+    改為「命中值必須落在既有白名單，或符合遮罩後的合成樣式」——
+    仍然抓得到任何真實格式的號碼／信箱（不符合兩者皆非，直接判定未登記）。
     """
     path = (Path(__file__).resolve().parents[3]
             / "services" / "jgb" / "fixture_data" / "demo_vendor4.json")
@@ -327,7 +352,11 @@ def test_fixture_contains_no_undeclared_real_contacts():
 
     assert "0912345678" in phones, "正對照組未命中——掃描規則本身可能壞了"
 
-    undeclared = (phones | emails) - _ALLOWED_CONTACTS
+    def _undeclared(values, masked_re):
+        return {v for v in values
+                if v not in _ALLOWED_CONTACTS and not masked_re.match(v)}
+
+    undeclared = _undeclared(phones, _MASKED_PHONE_RE) | _undeclared(emails, _MASKED_EMAIL_RE)
     assert not undeclared, f"fixture 含未登記的聯絡方式（可能是真實個資混入）：{undeclared}"
 
 

@@ -22,11 +22,15 @@ from services.jgb.estate_fixtures import (
 
 pytestmark = pytest.mark.unit
 
-ROLE = "20151"          # fixture 五列的 role_id
+ROLE = "20151"          # fixture 列的 role_id
 #: 跨域連貫修正（transport-agent-mcp-orchestration 收案修正 4）後新增 456／400——
 #: 兩戶分別是 contract 678／600 與 repairs 3001/3002 對齊的物件，見 fixture_data
 #: `demo_vendor4.json` 頂端註解。
 OPEN_IDS = [400, 456, 54126, 54200]
+#: 真資料子集（role_id=20151/user_id=12291 擷取）新增的已刊登物件——
+#: 與 OPEN_IDS 同樣 active=1／is_open=1／role_id=20151，一併會出現在
+#: 未帶篩選條件的查詢結果裡；不併入 OPEN_IDS 是為了保留「合成矩陣」原意可獨立辨識。
+REAL_OPEN_IDS = [45728, 67649, 67651, 67652, 68926]
 CLOSED_ID = 54305       # is_open=0
 
 
@@ -45,9 +49,13 @@ def api(monkeypatch):
 
 @pytest.mark.req("face-exit-before-grounding:1")
 def test_only_published_estates_are_visible(api):
+    """⚠️ 真資料子集併入後不再是封閉四筆——改驗合成／真實兩批已刊登物件皆在內、
+    已下架物件（54305）不在內。"""
     r = _run(api.get_estates(role_id=ROLE))
-    assert sorted(e["id"] for e in r["data"]) == OPEN_IDS
-    assert CLOSED_ID not in [e["id"] for e in r["data"]]
+    ids = {e["id"] for e in r["data"]}
+    assert set(OPEN_IDS) <= ids
+    assert set(REAL_OPEN_IDS) <= ids
+    assert CLOSED_ID not in ids
 
 
 @pytest.mark.req("face-exit-before-grounding:1")
@@ -82,7 +90,9 @@ def test_role_id_is_a_filter_not_an_echo(api):
 def test_use_for_outside_whitelist_is_silently_ignored(api):
     """production 只在三個合法值時才加條件（:149-155）——非法值**不報錯也不過濾**。"""
     kept = _run(api.get_estates(role_id=ROLE, per_page=50, use_for="不存在的用途"))
-    assert sorted(e["id"] for e in kept["data"]) == OPEN_IDS
+    kept_ids = {e["id"] for e in kept["data"]}
+    assert set(OPEN_IDS) <= kept_ids
+    assert set(REAL_OPEN_IDS) <= kept_ids
     narrowed = _run(api.get_estates(role_id=ROLE, per_page=50, use_for="business"))
     assert narrowed["data"] == []
 
@@ -103,11 +113,14 @@ def test_sort_by_outside_whitelist_falls_back_to_updated_at(api):
 
 @pytest.mark.req("face-exit-before-grounding:1")
 def test_pagination_bounds_match_production(api):
+    """⚠️ `total` 不再斷言固定為合成四筆——改以 `EstateFixtureTable().visible_rows()`
+    的實際已刊登筆數推導期望值。"""
+    total_open = len(EstateFixtureTable().visible_rows())
     capped = _run(api.get_estates(role_id=ROLE, per_page=9999))
     assert capped["pagination"]["per_page"] == 200          # MAX_PER_PAGE
     one = _run(api.get_estates(role_id=ROLE, per_page=1))
-    assert one["pagination"] == {"current_page": 1, "per_page": 1, "total": 4,
-                                 "total_pages": 4, "has_more": True}
+    assert one["pagination"] == {"current_page": 1, "per_page": 1, "total": total_open,
+                                 "total_pages": total_open, "has_more": total_open > 1}
     empty = _run(api.get_estates(role_id="99999", per_page=50))
     assert empty["pagination"]["total_pages"] == 0 and empty["pagination"]["has_more"] is False
 
@@ -146,8 +159,11 @@ def test_contract_required_fields_shape_matches_production(api):
 
 @pytest.mark.req("face-exit-before-grounding:1")
 def test_estate_status_mock_shares_the_same_visible_set(api):
+    """⚠️ 同 `test_only_published_estates_are_visible`：不再斷言封閉集合。"""
     rows = _run(api.get_estate_status(role_id=ROLE))["data"]
-    assert sorted(e["id"] for e in rows) == OPEN_IDS
+    ids = {e["id"] for e in rows}
+    assert set(OPEN_IDS) <= ids
+    assert set(REAL_OPEN_IDS) <= ids
     assert all("status_zh" in e for e in rows)
 
 
@@ -166,7 +182,11 @@ def test_accessor_shaped_empty_values(api):
     **永遠不是 null**；而 `gallery`／`floor_plan` 由 controller `formatGallery()` 收尾，
     空值回 **null**（:429-432）。兩者方向相反，是這一層最容易抄錯的地方。
     """
-    row = _run(api.get_estates(role_id=ROLE))["data"][0]   # 任一列皆可（三列同型）
+    # ⚠️ 真資料子集併入後預設排序（updated_at desc）可能把真實列排到 [0]，
+    # 真實列的 facilities/fees 反映實際擷取值（非空）——故改指定合成列（456）驗，
+    # 不再取 [0]（原意是「任一同型列皆可」，合成列即該同型代表）。
+    rows = _run(api.get_estates(role_id=ROLE))["data"]
+    row = next(e for e in rows if e["id"] == 456)
     assert row["facilities"] == [] and row["fees"] == []
     assert row["gallery"] is None and row["floor_plan"] is None
 
@@ -190,6 +210,11 @@ def test_uncast_json_columns_stay_strings(api):
 
 @pytest.mark.req("face-exit-before-grounding:1")
 def test_fixture_rows_declare_the_closed_case():
+    """⚠️ 真資料子集併入後總筆數不再固定為 5——改驗「已刊登筆數 = 全部筆數 - 1」
+    （54305 是唯一 is_open=0 的列，這才是本測試原本要鎖的性質：關閉個案存在且被排除）。
+    """
     table = EstateFixtureTable()
-    assert len(table.rows()) == 5 and len(table.visible_rows()) == 4
+    assert len(table.rows()) == len(table.visible_rows()) + 1
     assert table.by_id(CLOSED_ID) is None
+    assert set(OPEN_IDS) <= {r["id"] for r in table.visible_rows()}
+    assert set(REAL_OPEN_IDS) <= {r["id"] for r in table.visible_rows()}

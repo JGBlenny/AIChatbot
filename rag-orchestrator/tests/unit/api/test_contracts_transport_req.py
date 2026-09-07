@@ -38,8 +38,15 @@ def test_route_and_admission():
 
 @pytest.mark.req("face-exit-before-grounding:1")
 async def test_no_identifier_returns_all():
+    """⚠️ 真資料子集併入後（同為 active=1／is_newest=1）不再是封閉的兩筆——
+    改驗「678／600 仍在結果內、相對順序不變、整體仍是 id desc」。
+    """
     r = await _t().send("GET", PATH, params={"role_id": "20151"})
-    assert r["success"] and [x["id"] for x in r["data"]] == [678, 600]
+    ids = [x["id"] for x in r["data"]]
+    assert r["success"]
+    assert 678 in ids and 600 in ids
+    assert ids.index(678) < ids.index(600)
+    assert ids == sorted(ids, reverse=True)
 
 
 @pytest.mark.req("face-exit-before-grounding:1")
@@ -88,13 +95,21 @@ def test_projection_guard_bites():
 
 @pytest.mark.req("face-exit-before-grounding:1")
 def test_envelope_shape_matches_adapter_expectations():
-    """adapter 讀 data 清單與 mapping；envelope 形狀不得漂。"""
+    """adapter 讀 data 清單與 mapping；envelope 形狀不得漂。
+
+    ⚠️ `total`／確切集合不再斷言固定為合成兩筆——真資料子集併入後全部
+    active／is_newest 合約都會出現；改以 `ContractFixtureTable().rows()`
+    的實際筆數推導期望值，並驗 678／600 仍在其中、順序仍是 id desc。
+    """
+    total_rows = len(ContractFixtureTable().rows())
     t = _t()
     r = t._contracts_index({"role_id": "20151"})
     assert set(r) == {"success", "mapping", "data", "pagination"}
-    assert "bit_status" in r["mapping"] and r["pagination"]["total"] == 2
+    assert "bit_status" in r["mapping"] and r["pagination"]["total"] == total_rows
     assert r["pagination"]["total_pages"] == 1 and r["pagination"]["has_more"] is False
-    assert [x["id"] for x in r["data"]] == [678, 600]        # orderBy id desc
+    ids = [x["id"] for x in r["data"]]
+    assert ids == sorted(ids, reverse=True)          # orderBy id desc
+    assert 678 in ids and 600 in ids
 
 
 @pytest.mark.req("face-exit-before-grounding:1")

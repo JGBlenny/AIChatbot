@@ -92,6 +92,8 @@ BILL_DUE_EXTEND_SPEC: ToolSpec = _action_spec(
     "bill_id＝要調整的帳單編號；"
     "date_expire_before＝這張帳單目前的到期日，八位數字的年月日，"
     "必須取自系統查到的帳單資料，⛔ 不要向使用者索取、也不要憑印象填；"
+    "取得方式＝出示確認之前先以 jgb2.query.bills（ref 填帳單編號）查這張帳單，"
+    "從回傳的繳費期限取值；查不到這張帳單就不能出確認；"
     "days＝往後延的天數，正整數；"
     "date_expire_after＝調整後的到期日，八位數字的年月日，"
     "必須等於 date_expire_before 往後加上 days 天，不一致一律拒絕。"
@@ -108,7 +110,9 @@ REPAIR_CREATE_SPEC: ToolSpec = _action_spec(
     "category_name＝修繕分類名稱，取自系統的修繕分類樹，"
     "分類樹涵蓋不到時可以填該分類的上層大類，⛔ 不得自行編造分類名稱；"
     "description＝問題描述，允許是空字串，但這個欄位一定要存在；"
-    "emergency_status＝急迫程度，1 代表非緊急，2 代表緊急。"
+    "使用者沒有描述就填空字串，⛔ 不要為了補描述反問或代寫；"
+    "emergency_status＝急迫程度，1 代表非緊急，2 代表緊急；"
+    "使用者沒有表明急迫時填 1（非緊急），⛔ 不要為了問急迫程度延後出示確認。"
     "四個欄位都必填。",
 )
 
