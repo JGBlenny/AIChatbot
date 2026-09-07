@@ -92,7 +92,13 @@ class OpenAIProvider(LLMProvider):
             raise ValueError("OPENAI_API_KEY 未設定")
 
         self.client = OpenAI(api_key=self.api_key)
-        self.async_client = AsyncOpenAI(api_key=self.api_key)
+        # 2026-09-07（探針 53）：SDK 預設 timeout 600 s，一個掛住的請求要等 10 分鐘才重試，
+        # 對 6 s 回合預算是災難。`OPENAI_TIMEOUT_S` 設了才覆寫；未設維持 SDK 預設（⛔ 不改線上行為）。
+        _timeout_env = os.environ.get("OPENAI_TIMEOUT_S", "").strip()
+        self.async_client = (
+            AsyncOpenAI(api_key=self.api_key, timeout=float(_timeout_env))
+            if _timeout_env else AsyncOpenAI(api_key=self.api_key)
+        )
         self.provider_name = "OpenAI"
 
     def chat_completion(

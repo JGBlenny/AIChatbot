@@ -1,6 +1,6 @@
 # 受測物定義清單——步 2 探針（gpt-5-mini＋`reasoning_effort=minimal`；業主 2026-09-07 裁「做 (a)」）
 
-> 與 5.1 重跑同題集、同尺、同臂、同 `agent_rules.py`（sha `5e392c00c57253fd…`），**與 52 同模型 gpt-5-mini，只加 `AGENT_REASONING_EFFORT=minimal`**（runtime 新參數，經 `extra_body` 送出；未設不送）。基線＝`inputs/probe-report-52-20260907.md`（gpt-5-mini 預設推理）。相容性探針 3 題：延遲 2.6／5.5／2.6 s（52 為 14–24 s）、單回合 $0.0023。相容性探針：2 題一次答出、引用合法；⚠️ 延遲 13.9 s／23.5 s（gpt-5 預設推理），p95 ≤6 s 門檻預期不過，列為觀察與待裁（`reasoning_effort` 參數需程式改動、本輪不動）。**核可欄非空後才准起 4.4b**（真模型、打 API）。
+> 與 5.1 重跑同題集、同尺、同臂、同 `agent_rules.py`（sha `5e392c00c57253fd…`），**與 52 同模型 gpt-5-mini，只加 `AGENT_REASONING_EFFORT=minimal`**（runtime 新參數，經 `extra_body` 送出；未設不送）。基線＝`inputs/probe-report-52-20260907.md`（gpt-5-mini 預設推理）。相容性探針 3 題：延遲 2.6／5.5／2.6 s（52 為 14–24 s）、單回合 $0.0023。⚠️ 第一次全跑在 29 回合內兩度撞到 OpenAI 端掛住請求（SDK 預設逾時 600 s 才重試）；改加 `OPENAI_TIMEOUT_S=60`（`llm_provider` 新 env，未設維持預設）重啟——只影響掛住請求的等待時間，不影響回答。相容性探針：2 題一次答出、引用合法；⚠️ 延遲 13.9 s／23.5 s（gpt-5 預設推理），p95 ≤6 s 門檻預期不過，列為觀察與待裁（`reasoning_effort` 參數需程式改動、本輪不動）。**核可欄非空後才准起 4.4b**（真模型、打 API）。
 > 3.4 的清單 `inputs/object-under-test.md` 是步 1（離線召回）的，⛔ 本檔不覆蓋它、也不沿用它的核可。
 
 核可：業主（2026-09-07「做 (a)」口頭核可，主 session 代填）
