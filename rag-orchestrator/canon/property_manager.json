@@ -4,7 +4,7 @@
   "business_types": [
     "system_provider"
   ],
-  "canon_sha256": "3273e1c1c8210caed828a538bebd72d99adc6ca675cd55102eda0e37e447b4a7",
+  "canon_sha256": "5b4e6c40cdaffc23cf1b8244332f8bebcfdb125d672393fbf32d93ad051965ab",
   "coarses": [
     {
       "fines": [
@@ -44,8 +44,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-07",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "draft:batch#1"
@@ -81,8 +81,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-07",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "draft:batch#2"
@@ -118,8 +118,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-07",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "draft:batch#3"
@@ -155,8 +155,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-07",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "draft:batch#4"
@@ -181,8 +181,8 @@
           "phrasings": [],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-07",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "draft:batch#5"
@@ -207,8 +207,8 @@
           "phrasings": [],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-07",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "draft:batch#6"
@@ -233,8 +233,8 @@
           "phrasings": [],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-07",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "draft:batch#7"
@@ -265,8 +265,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-07",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "draft:batch#8"
@@ -297,8 +297,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-07",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "draft:batch#9"
@@ -329,8 +329,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-07",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "draft:batch#10"
@@ -367,8 +367,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-07",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "draft:batch#11"
@@ -393,8 +393,8 @@
           "phrasings": [],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-07",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "draft:batch#12"
@@ -419,8 +419,8 @@
           "phrasings": [],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-07",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "draft:batch#13"
@@ -474,8 +474,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-07",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "draft:batch#14",
@@ -513,8 +513,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-07",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "draft:batch#15"
@@ -545,8 +545,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-07",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "draft:batch#16"
@@ -599,8 +599,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-07",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "draft:batch#17",
@@ -633,8 +633,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-07",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "draft:batch#18"
@@ -682,8 +682,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-07",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "draft:batch#19",
@@ -721,8 +721,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-07",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "draft:batch#20"
@@ -753,8 +753,8 @@
           "phrasings": [],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-07",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "draft:batch#21"
@@ -779,8 +779,8 @@
           "phrasings": [],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-07",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "draft:batch#22"
@@ -811,8 +811,8 @@
           "phrasings": [],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-07",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "draft:batch#23"
@@ -837,8 +837,8 @@
           "phrasings": [],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-07",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "draft:batch#24"
@@ -863,8 +863,8 @@
           "phrasings": [],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-07",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "draft:batch#25"
@@ -889,8 +889,8 @@
           "phrasings": [],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-07",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "draft:batch#26"
@@ -921,8 +921,8 @@
           "phrasings": [],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-07",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "draft:batch#27"
@@ -947,8 +947,8 @@
           "phrasings": [],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-07",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "draft:batch#28"
@@ -973,8 +973,8 @@
           "phrasings": [],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-07",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "draft:batch#29"
@@ -999,8 +999,8 @@
           "phrasings": [],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-07",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "draft:batch#30"
@@ -1077,8 +1077,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-07",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "kb:3800",
@@ -1149,8 +1149,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-07",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "kb:3910",
@@ -1210,8 +1210,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-07",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "kb:3952",
@@ -1247,8 +1247,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-07",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "kb:4088"
@@ -1290,8 +1290,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-07",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "kb:4132",
@@ -1325,8 +1325,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-07",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "kb:5373"
@@ -1349,5 +1349,5 @@
   "target_user": [
     "property_manager"
   ],
-  "version": "2026-09-07.1"
+  "version": "2026-09-07.2"
 }
