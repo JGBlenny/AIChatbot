@@ -1,4 +1,4 @@
-# 給 line-bot-platform：LINE OA 對話經 `/mcp` `agent.turn` 的接入契約（草案 v0，2026-09-07）
+# 給 line-bot-platform：LINE OA 對話經 `/mcp` `agent.turn` 的接入契約（v1，2026-09-08；工作清單見 `line-bot-worklist-demo-20260908.md`）
 
 > 用途：demo（展示對話與 MCP 功能，非上線準確度）。受眾 `property_manager`（b2b，系統內代管業務／房東）。本檔只寫 AIChatbot 側**現行程式**的契約與**尚未就緒**的前置；⛔ 不含任何金鑰值。每條附可 grep 的符號；標「待核」者表示程式尚未支援或形狀未定，⛔ 呼叫端不要先寫死。
 
@@ -48,13 +48,13 @@ X-JGB-Identity: {
 | 429 `QUOTA_EXCEEDED`；`METERING_UNAVAILABLE` | 額度（`is_internal` key 不計額度，實務上不會撞）；計量服務不可用 | 「稍後再試」 |
 | 工具層 `ok=false`：`INVALID_INPUT`／`NO_MATCH`／`TOOL_TIMEOUT`／`AGENT_UNAVAILABLE`／`RATE_LIMITED` | message 空或超長／工具不可見（旗標或 stage 未開）／逾時／runtime 未建／每小時上限 | `NO_MATCH`＝AIChatbot 側前置未開（§4），不是呼叫端錯 |
 
-## 4. AIChatbot 側尚未就緒的前置（呼叫端別等錯地方）
+## 4. AIChatbot 側前置（2026-09-08 更新：1–3 已就緒，4–6 為部署／業主）
 
 | # | 前置 | 現況 | 誰動 |
 |---|---|---|---|
-| 1 | `AGENT_TURN_ENABLED=true`（現 false ⇒ 工具根本不註冊 ⇒ `NO_MATCH`） | 未開；⚠️ 開了之後 agent 組裝失敗會讓整個服務啟動 raise（`app.py` `_init_agent_runtime`） | AIChatbot，security Plan 後 |
-| 2 | `agent.turn` 的 `stage` 對照表加 `property_manager`（現只有 `{"prospect": "M1"}`，缺鍵永不可見） | 設計變更，需 DSP | AIChatbot，業主裁 |
-| 3 | `property_manager` 正本 `rag-orchestrator/canon/property_manager.md`（tasks 6.2）＋P3-b 業態解析 | 6.2 進行中（步 2）；P3-b executor 進行中 | AIChatbot |
+| 1 | `AGENT_TURN_ENABLED=true` | **✅ demo 起法已含**；⚠️ 開了之後 agent 組裝失敗會讓整個服務啟動 raise（`app.py` `_init_agent_runtime`） | AIChatbot，security Plan 後 |
+| 2 | `agent.turn` 的 `stage` 對照表加 `property_manager` | **✅ DSP-037 落地（`4687701f`）** | AIChatbot，業主裁 |
+| 3 | `property_manager` 正本＋P3-b | **✅ 36 細目 reviewed、四句事實修正（`8b2485f0`）** | AIChatbot |
 | 4 | `is_internal` key（runbook §19-2 手工 SQL；後台 UI 發的 key 缺 `is_internal` 會踩 DSP-011 紅旗） | 未發 | AIChatbot 業主親跑 |
 | 5 | `RAG_API_AUTH_ENFORCE=true`（否則第一筆 `/mcp` 流量讓 `/api/v1/agent/health` 轉紅：`enforce_off_with_mcp_traffic`） | prod 現值未讀 | AIChatbot 部署 |
 | 6 | `/mcp` 不對公網開（缺 Origin 一律放行是刻意的 server-to-server 設計；程式層無 IP 白名單） | 部署層，本 repo 查無 line-bot 入口 | 部署 |
