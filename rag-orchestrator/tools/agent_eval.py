@@ -868,6 +868,24 @@ def _estimate_cost_usd(model: str, prompt_tokens: int, completion_tokens: int) -
     return _shadow_estimate(model, prompt_tokens, completion_tokens)
 
 
+def _provider_error_result(exc: BaseException):
+    """單回合 provider 例外的替身 `TurnResult`（`kind=handoff`、`handoff_reason="provider_error"`、
+    violations 記 `provider_error:<ExcType>`；⛔ 無原文）。讓一次 API 逾時不再炸掉整輪量測。"""
+    from services.agent.runtime import TurnResult, TurnTrace
+
+    trace = TurnTrace(
+        trace_id="provider-error",
+        final_kind="handoff",
+        handoff_reason="provider_error",
+        violations=[f"provider_error:{type(exc).__name__}"],
+    )
+    return TurnResult(
+        kind="handoff", answer="", handoff={"reason": "provider_error", "fact_class": "other",
+                                           "channel": "", "message": ""},
+        quick_replies=[], trace=trace,
+    )
+
+
 async def _run_scenario_agent(
     runtime: Any,
     identity: Any,
@@ -889,7 +907,12 @@ async def _run_scenario_agent(
         if attempts_buffer is not None:
             attempts_buffer.clear()
         t0 = time.monotonic()
-        result = await runtime.run_turn(identity, t.q, state)
+        try:
+            result = await runtime.run_turn(identity, t.q, state)
+        except Exception as exc:  # noqa: BLE001 — 探針 53：provider 逾時炸出整輪 147 回合（49 回合白跑）
+            # 量測工具的韌性：單回合的 provider 例外記成一列 `provider_error`、繼續跑；
+            # ⛔ 不吞 CancelledError（BaseException）。列上無原文、只有例外型別名。
+            result = _provider_error_result(exc)
         latency_ms = int((time.monotonic() - t0) * 1000)
         state.setdefault("agent", {}).pop("outline", None)
         attempts = list(attempts_buffer) if attempts_buffer is not None else []
