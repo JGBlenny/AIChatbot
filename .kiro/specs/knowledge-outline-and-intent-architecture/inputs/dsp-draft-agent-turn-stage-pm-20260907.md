@@ -1,6 +1,6 @@
 # DSP 草案（待業主裁）：`agent.turn` 對 `property_manager` 受眾開放（demo 範圍）——2026-09-07
 
-> 狀態：**草案，未裁**。裁定後由主 session 寫進 `.claude/DECISIONS.md`（下一個編號）並回寫 agentic-mcp-orchestration design 元件 4／決策 15 與本 spec design。
+> 狀態：**已裁（業主 2026-09-07「裁 DSP，先改 S1a 做 S1b，用 pm 跑」）→ DSP-037 已落 `.claude/DECISIONS.md`**；S1a／S1b 派 security-executor；agentic-mcp design 元件 4／決策 15 回寫待 S1 收案一併做。以下保留裁決當時的草案原文。
 
 ## 決定（擬）
 
