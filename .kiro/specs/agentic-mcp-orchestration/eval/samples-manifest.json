@@ -46,10 +46,18 @@
       "note": "⛔ 尚未凍結：需業主從線上 usage_events 匯出 prospect 問句、本機去識別（剝除人名／電話／地址）後才能凍結 sha256。本任務（4.2）不得代為生成或臆造此樣本；--set traffic 在此檔未補值前一律視為「樣本已變動/未就緒」而拒跑（見 tools/agent_eval.py 的 UNAVAILABLE 分支，退出碼 3）。"
     },
     "outline-probe": {
-      "available": false,
-      "path": null,
-      "sha256": null,
-      "note": "4.4a 凍結後補值（knowledge-outline-and-intent-architecture 4.3）"
+      "available": true,
+      "path": ".kiro/specs/agentic-mcp-orchestration/eval/outline-probe-20260907.json",
+      "sha256": "22aa2c10fa0b788045a126061e2cffe63f75a024a322e822bcbce52f21acf80c",
+      "how_to_verify": "python3 -c \"import hashlib;print(hashlib.sha256(open('.kiro/specs/agentic-mcp-orchestration/eval/outline-probe-20260907.json','rb').read()).hexdigest())\"",
+      "shape": "{_meta:{rule_sha256,frozen_at,n,seed_prefix,inputs_sha256}, items:[{id,q,stratum,gold,expect_kind} | {id,stratum:'multi',turns:[{turn,q,gold,expect_kind}]}]}",
+      "count": {
+        "items": 36,
+        "single": 33,
+        "scenarios": 3,
+        "turns_total": 49
+      },
+      "note": "knowledge-outline-and-intent-architecture 4.4a 凍結（2026-09-07；規則 inputs/outline-probe-selection-rule.json；業主核 gold 表）。⛔ 抽完不得改（R6.2）。"
     }
   },
   "baseline": {

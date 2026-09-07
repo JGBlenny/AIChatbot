@@ -1,0 +1,141 @@
+{
+  "agent_rules_sha256": "5c14ec238ba2d238de2609157a999adf0e86011972396f6baef1aee578fa6fd5",
+  "canon_sha256": "240e1a502a85621799bdd5f850c41ce6cb90784a2911ccc3f12a76decba2763c",
+  "frozen_at": "2026-09-07T04:58:53Z",
+  "inputs_sha256": {
+    "/Users/lenny/jgb/AIChatbot/.claude/skills/outline-curation/runs/2026-09-06T00-00-00Z/answerability-canon-v3.json": "0da46de97243ba362af61b92a440b016ac4da580d51723f89d2c5310638ff574",
+    "/Users/lenny/jgb/AIChatbot/.kiro/specs/agentic-mcp-orchestration/eval/perf-agent-regression-20260905/round9-dsp033/r9a/topics.jsonl": "757438e593162304adae0fa4aa0c8d2676e0a6fe3b927e73f909fd9f5b30d7b4",
+    "/Users/lenny/jgb/AIChatbot/.kiro/specs/agentic-mcp-orchestration/eval/perf-agent-regression-20260905/round9-dsp033/r9b/topics.jsonl": "5ca9ebdb666c11d9118abdacaede553d812491026b1a79f8df605b4613f4471d",
+    "/Users/lenny/jgb/AIChatbot/.kiro/specs/agentic-mcp-orchestration/eval/scenarios-v1.json": "2b40e26fb22d1eefae758447742a882088abe92e0e8fea6ad310f762821f5135",
+    "/Users/lenny/jgb/AIChatbot/.kiro/specs/agentic-mcp-orchestration/eval/sensitive-v1.json": "b8ff58eaf3e37210c436065c4c5c8964baa8014fe5983b6fccd9830c2e3a42e8",
+    "/Users/lenny/jgb/AIChatbot/.kiro/specs/knowledge-outline-and-intent-architecture/inputs/koyu-article-map.json": "ec8adeba3470726b21ebf482478b94b29c79aa234088c6e80c5ec349eb1f91d0",
+    "/Users/lenny/jgb/AIChatbot/.kiro/specs/knowledge-outline-and-intent-architecture/inputs/outline-probe-scenario-gold-20260907.json": "36dfb8446871b8e034eba168691aaf2aaac36f3dc815badd2996525df14ddc04",
+    "/Users/lenny/jgb/AIChatbot/.kiro/specs/knowledge-outline-and-intent-architecture/inputs/outline-probe-sub-map-20260907.json": "48393873efa3d2a8f4d076dabec7a22bc0d1e509c2b1019c4e35ca6907923a21",
+    "/Users/lenny/jgb/AIChatbot/.kiro/specs/knowledge-outline-and-intent-architecture/inputs/phrasing-selection-rule-20260906.json": "5fcb52b78ce29fa220c7d473a71160e7a9d94406c9430ccde060b31b16ef7d61",
+    "/Users/lenny/jgb/AIChatbot/.kiro/specs/presales-grounding-gate/coverage-map/map-v2.json": "32607587028474caf015e63024f6f31d8a07a166354d31dac4408b725756e669",
+    "/Users/lenny/jgb/AIChatbot/.kiro/specs/presales-grounding-gate/coverage-map/sources/koyu-v2-phrasings.json": "1fc5bccd33726c9283d1b6d5daeeee97dec01818afa80a6d097c9e15bce8b25d",
+    "/Users/lenny/jgb/AIChatbot/.kiro/specs/presales-grounding-gate/coverage-map/topics-v2.json": "f78344d65ebcdc7b9901c77b7bdf5a6b23b2548e2dea3729feba36ccb8868570"
+  },
+  "md5_normalization": "none",
+  "seed_prefix": "outline-probe-20260906:",
+  "strata": [
+    {
+      "definition": "round9 topics 46 問法中 agent 兩輪 6 rep 0/6 答到、且 sub 可對映到正本粗目 C 細目",
+      "id": "A",
+      "insufficient": false,
+      "population_n": 17,
+      "source_paths": [
+        "/Users/lenny/jgb/AIChatbot/.kiro/specs/presales-grounding-gate/coverage-map/topics-v2.json",
+        "/Users/lenny/jgb/AIChatbot/.kiro/specs/agentic-mcp-orchestration/eval/perf-agent-regression-20260905/round9-dsp033/r9a/topics.jsonl",
+        "/Users/lenny/jgb/AIChatbot/.kiro/specs/agentic-mcp-orchestration/eval/perf-agent-regression-20260905/round9-dsp033/r9b/topics.jsonl",
+        "/Users/lenny/jgb/AIChatbot/.kiro/specs/knowledge-outline-and-intent-architecture/inputs/outline-probe-sub-map-20260907.json"
+      ],
+      "source_sha256": {
+        "/Users/lenny/jgb/AIChatbot/.kiro/specs/agentic-mcp-orchestration/eval/perf-agent-regression-20260905/round9-dsp033/r9a/topics.jsonl": "757438e593162304adae0fa4aa0c8d2676e0a6fe3b927e73f909fd9f5b30d7b4",
+        "/Users/lenny/jgb/AIChatbot/.kiro/specs/agentic-mcp-orchestration/eval/perf-agent-regression-20260905/round9-dsp033/r9b/topics.jsonl": "5ca9ebdb666c11d9118abdacaede553d812491026b1a79f8df605b4613f4471d",
+        "/Users/lenny/jgb/AIChatbot/.kiro/specs/knowledge-outline-and-intent-architecture/inputs/outline-probe-sub-map-20260907.json": "48393873efa3d2a8f4d076dabec7a22bc0d1e509c2b1019c4e35ca6907923a21",
+        "/Users/lenny/jgb/AIChatbot/.kiro/specs/presales-grounding-gate/coverage-map/topics-v2.json": "f78344d65ebcdc7b9901c77b7bdf5a6b23b2548e2dea3729feba36ccb8868570"
+      },
+      "stratum_literal": "answerable_unanswered",
+      "take_n": 10
+    },
+    {
+      "definition": "map-v2 55 格中標籤 ∈ {deliberate_no, no_source} 的代表問句（questions[0]）",
+      "id": "B",
+      "insufficient": false,
+      "population_n": 6,
+      "source_paths": [
+        "/Users/lenny/jgb/AIChatbot/.kiro/specs/presales-grounding-gate/coverage-map/map-v2.json",
+        "/Users/lenny/jgb/AIChatbot/.claude/skills/outline-curation/runs/2026-09-06T00-00-00Z/answerability-canon-v3.json"
+      ],
+      "source_sha256": {
+        "/Users/lenny/jgb/AIChatbot/.claude/skills/outline-curation/runs/2026-09-06T00-00-00Z/answerability-canon-v3.json": "0da46de97243ba362af61b92a440b016ac4da580d51723f89d2c5310638ff574",
+        "/Users/lenny/jgb/AIChatbot/.kiro/specs/presales-grounding-gate/coverage-map/map-v2.json": "32607587028474caf015e63024f6f31d8a07a166354d31dac4408b725756e669"
+      },
+      "stratum_literal": "gold_absent",
+      "take_n": 5
+    },
+    {
+      "definition": "round9 46 問法中 ≥4/6 答到",
+      "id": "C",
+      "insufficient": false,
+      "population_n": 10,
+      "source_paths": [
+        "/Users/lenny/jgb/AIChatbot/.kiro/specs/presales-grounding-gate/coverage-map/topics-v2.json",
+        "/Users/lenny/jgb/AIChatbot/.kiro/specs/agentic-mcp-orchestration/eval/perf-agent-regression-20260905/round9-dsp033/r9a/topics.jsonl",
+        "/Users/lenny/jgb/AIChatbot/.kiro/specs/agentic-mcp-orchestration/eval/perf-agent-regression-20260905/round9-dsp033/r9b/topics.jsonl",
+        "/Users/lenny/jgb/AIChatbot/.kiro/specs/knowledge-outline-and-intent-architecture/inputs/outline-probe-sub-map-20260907.json"
+      ],
+      "source_sha256": {
+        "/Users/lenny/jgb/AIChatbot/.kiro/specs/agentic-mcp-orchestration/eval/perf-agent-regression-20260905/round9-dsp033/r9a/topics.jsonl": "757438e593162304adae0fa4aa0c8d2676e0a6fe3b927e73f909fd9f5b30d7b4",
+        "/Users/lenny/jgb/AIChatbot/.kiro/specs/agentic-mcp-orchestration/eval/perf-agent-regression-20260905/round9-dsp033/r9b/topics.jsonl": "5ca9ebdb666c11d9118abdacaede553d812491026b1a79f8df605b4613f4471d",
+        "/Users/lenny/jgb/AIChatbot/.kiro/specs/knowledge-outline-and-intent-architecture/inputs/outline-probe-sub-map-20260907.json": "48393873efa3d2a8f4d076dabec7a22bc0d1e509c2b1019c4e35ca6907923a21",
+        "/Users/lenny/jgb/AIChatbot/.kiro/specs/presales-grounding-gate/coverage-map/topics-v2.json": "f78344d65ebcdc7b9901c77b7bdf5a6b23b2548e2dea3729feba36ccb8868570"
+      },
+      "stratum_literal": "answerable_answered",
+      "take_n": 5
+    },
+    {
+      "definition": "sensitive-v1 30 題，五類各至少 1（每類 md5 最小者先取滿五類，再依 md5 補到 5）",
+      "id": "D",
+      "insufficient": false,
+      "population_n": 30,
+      "source_paths": [
+        "/Users/lenny/jgb/AIChatbot/.kiro/specs/agentic-mcp-orchestration/eval/sensitive-v1.json"
+      ],
+      "source_sha256": {
+        "/Users/lenny/jgb/AIChatbot/.kiro/specs/agentic-mcp-orchestration/eval/sensitive-v1.json": "b8ff58eaf3e37210c436065c4c5c8964baa8014fe5983b6fccd9830c2e3a42e8"
+      },
+      "stratum_literal": "sensitive",
+      "take_n": 5
+    },
+    {
+      "definition": "topics-v2 boundary 8（不硬答型）",
+      "id": "E",
+      "insufficient": false,
+      "population_n": 8,
+      "source_paths": [
+        "/Users/lenny/jgb/AIChatbot/.kiro/specs/presales-grounding-gate/coverage-map/topics-v2.json"
+      ],
+      "source_sha256": {
+        "/Users/lenny/jgb/AIChatbot/.kiro/specs/presales-grounding-gate/coverage-map/topics-v2.json": "f78344d65ebcdc7b9901c77b7bdf5a6b23b2548e2dea3729feba36ccb8868570"
+      },
+      "stratum_literal": "boundary",
+      "take_n": 5
+    },
+    {
+      "definition": "scenarios-v1 中 turn≥3 的劇本 {S1-landlord, S2-agency, D-import}（一個劇本一個 item）",
+      "id": "F",
+      "insufficient": false,
+      "population_n": 3,
+      "source_paths": [
+        "/Users/lenny/jgb/AIChatbot/.kiro/specs/agentic-mcp-orchestration/eval/scenarios-v1.json",
+        "/Users/lenny/jgb/AIChatbot/.kiro/specs/knowledge-outline-and-intent-architecture/inputs/outline-probe-scenario-gold-20260907.json"
+      ],
+      "source_sha256": {
+        "/Users/lenny/jgb/AIChatbot/.kiro/specs/agentic-mcp-orchestration/eval/scenarios-v1.json": "2b40e26fb22d1eefae758447742a882088abe92e0e8fea6ad310f762821f5135",
+        "/Users/lenny/jgb/AIChatbot/.kiro/specs/knowledge-outline-and-intent-architecture/inputs/outline-probe-scenario-gold-20260907.json": "36dfb8446871b8e034eba168691aaf2aaac36f3dc815badd2996525df14ddc04"
+      },
+      "stratum_literal": "multi",
+      "take_n": 3
+    },
+    {
+      "definition": "koyu 422 中 article ∈ {Landlordonboarding00, onboarding6, qa05, qa06}",
+      "id": "G",
+      "insufficient": false,
+      "population_n": 18,
+      "source_paths": [
+        "/Users/lenny/jgb/AIChatbot/.kiro/specs/presales-grounding-gate/coverage-map/sources/koyu-v2-phrasings.json",
+        "/Users/lenny/jgb/AIChatbot/.kiro/specs/presales-grounding-gate/coverage-map/topics-v2.json",
+        "/Users/lenny/jgb/AIChatbot/.kiro/specs/knowledge-outline-and-intent-architecture/inputs/koyu-article-map.json"
+      ],
+      "source_sha256": {
+        "/Users/lenny/jgb/AIChatbot/.kiro/specs/knowledge-outline-and-intent-architecture/inputs/koyu-article-map.json": "ec8adeba3470726b21ebf482478b94b29c79aa234088c6e80c5ec349eb1f91d0",
+        "/Users/lenny/jgb/AIChatbot/.kiro/specs/presales-grounding-gate/coverage-map/sources/koyu-v2-phrasings.json": "1fc5bccd33726c9283d1b6d5daeeee97dec01818afa80a6d097c9e15bce8b25d",
+        "/Users/lenny/jgb/AIChatbot/.kiro/specs/presales-grounding-gate/coverage-map/topics-v2.json": "f78344d65ebcdc7b9901c77b7bdf5a6b23b2548e2dea3729feba36ccb8868570"
+      },
+      "stratum_literal": "cross_coarse",
+      "take_n": 3
+    }
+  ]
+}

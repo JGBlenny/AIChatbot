@@ -1,0 +1,449 @@
+{
+  "_meta": {
+    "frozen_at": "2026-09-07T04:58:53Z",
+    "inputs_sha256": {
+      "/Users/lenny/jgb/AIChatbot/.claude/skills/outline-curation/runs/2026-09-06T00-00-00Z/answerability-canon-v3.json": "0da46de97243ba362af61b92a440b016ac4da580d51723f89d2c5310638ff574",
+      "/Users/lenny/jgb/AIChatbot/.kiro/specs/agentic-mcp-orchestration/eval/perf-agent-regression-20260905/round9-dsp033/r9a/topics.jsonl": "757438e593162304adae0fa4aa0c8d2676e0a6fe3b927e73f909fd9f5b30d7b4",
+      "/Users/lenny/jgb/AIChatbot/.kiro/specs/agentic-mcp-orchestration/eval/perf-agent-regression-20260905/round9-dsp033/r9b/topics.jsonl": "5ca9ebdb666c11d9118abdacaede553d812491026b1a79f8df605b4613f4471d",
+      "/Users/lenny/jgb/AIChatbot/.kiro/specs/agentic-mcp-orchestration/eval/scenarios-v1.json": "2b40e26fb22d1eefae758447742a882088abe92e0e8fea6ad310f762821f5135",
+      "/Users/lenny/jgb/AIChatbot/.kiro/specs/agentic-mcp-orchestration/eval/sensitive-v1.json": "b8ff58eaf3e37210c436065c4c5c8964baa8014fe5983b6fccd9830c2e3a42e8",
+      "/Users/lenny/jgb/AIChatbot/.kiro/specs/knowledge-outline-and-intent-architecture/inputs/koyu-article-map.json": "ec8adeba3470726b21ebf482478b94b29c79aa234088c6e80c5ec349eb1f91d0",
+      "/Users/lenny/jgb/AIChatbot/.kiro/specs/knowledge-outline-and-intent-architecture/inputs/outline-probe-scenario-gold-20260907.json": "36dfb8446871b8e034eba168691aaf2aaac36f3dc815badd2996525df14ddc04",
+      "/Users/lenny/jgb/AIChatbot/.kiro/specs/knowledge-outline-and-intent-architecture/inputs/outline-probe-sub-map-20260907.json": "48393873efa3d2a8f4d076dabec7a22bc0d1e509c2b1019c4e35ca6907923a21",
+      "/Users/lenny/jgb/AIChatbot/.kiro/specs/knowledge-outline-and-intent-architecture/inputs/phrasing-selection-rule-20260906.json": "5fcb52b78ce29fa220c7d473a71160e7a9d94406c9430ccde060b31b16ef7d61",
+      "/Users/lenny/jgb/AIChatbot/.kiro/specs/presales-grounding-gate/coverage-map/map-v2.json": "32607587028474caf015e63024f6f31d8a07a166354d31dac4408b725756e669",
+      "/Users/lenny/jgb/AIChatbot/.kiro/specs/presales-grounding-gate/coverage-map/sources/koyu-v2-phrasings.json": "1fc5bccd33726c9283d1b6d5daeeee97dec01818afa80a6d097c9e15bce8b25d",
+      "/Users/lenny/jgb/AIChatbot/.kiro/specs/presales-grounding-gate/coverage-map/topics-v2.json": "f78344d65ebcdc7b9901c77b7bdf5a6b23b2548e2dea3729feba36ccb8868570"
+    },
+    "n": 36,
+    "rule_sha256": "386ff888908f7584e24ba2b56f6b410845be7fb00620b2939cb6ffb9d3b7c208",
+    "seed_prefix": "outline-probe-20260906:"
+  },
+  "items": [
+    {
+      "expect_kind": "answer",
+      "gold": [
+        "prospect/C/contract-modify-after-sign"
+      ],
+      "id": "A-01",
+      "q": "我還沒簽可以改嗎",
+      "stratum": "answerable_unanswered"
+    },
+    {
+      "expect_kind": "answer",
+      "gold": [
+        "prospect/C/contract-esign-flow",
+        "prospect/C/contract-templates",
+        "prospect/C/contract-modify-after-sign"
+      ],
+      "id": "A-02",
+      "q": "舊約要輸入系統",
+      "stratum": "answerable_unanswered"
+    },
+    {
+      "expect_kind": "answer",
+      "gold": [
+        "prospect/C/contract-esign-flow"
+      ],
+      "id": "A-03",
+      "q": "我簽好了為什麼還沒生效",
+      "stratum": "answerable_unanswered"
+    },
+    {
+      "expect_kind": "answer",
+      "gold": [
+        "prospect/C/contract-esign-flow",
+        "prospect/C/property-status-meaning"
+      ],
+      "id": "A-04",
+      "q": "選單裡面沒看到編輯合約",
+      "stratum": "answerable_unanswered"
+    },
+    {
+      "expect_kind": "answer",
+      "gold": [
+        "prospect/C/contract-modify-after-sign"
+      ],
+      "id": "A-05",
+      "q": "簽約後修改流程",
+      "stratum": "answerable_unanswered"
+    },
+    {
+      "expect_kind": "answer",
+      "gold": [
+        "prospect/C/contract-templates",
+        "prospect/C/contract-esign-flow"
+      ],
+      "id": "A-06",
+      "q": "房客是外籍的不知道要用哪版",
+      "stratum": "answerable_unanswered"
+    },
+    {
+      "expect_kind": "answer",
+      "gold": [
+        "prospect/C/contract-modify-after-sign"
+      ],
+      "id": "A-07",
+      "q": "合約簽了發現金額打錯",
+      "stratum": "answerable_unanswered"
+    },
+    {
+      "expect_kind": "answer",
+      "gold": [
+        "prospect/C/contract-esign-flow",
+        "prospect/C/property-status-meaning"
+      ],
+      "id": "A-08",
+      "q": "為什麼我沒有辦法新增合約",
+      "stratum": "answerable_unanswered"
+    },
+    {
+      "expect_kind": "answer",
+      "gold": [
+        "prospect/C/contract-templates",
+        "prospect/C/contract-esign-flow"
+      ],
+      "id": "A-09",
+      "q": "合約範本有哪幾種",
+      "stratum": "answerable_unanswered"
+    },
+    {
+      "expect_kind": "answer",
+      "gold": [
+        "prospect/C/contract-esign-flow",
+        "prospect/C/contract-templates",
+        "prospect/C/contract-modify-after-sign"
+      ],
+      "id": "A-10",
+      "q": "合約是之前簽的沒有走系統",
+      "stratum": "answerable_unanswered"
+    },
+    {
+      "expect_kind": "handoff",
+      "gold": [],
+      "id": "B-01",
+      "q": "單合約與雙合約差別？",
+      "stratum": "gold_absent"
+    },
+    {
+      "expect_kind": "handoff",
+      "gold": [],
+      "id": "B-02",
+      "q": "資料放在哪裡？有沒有資安認證",
+      "stratum": "gold_absent"
+    },
+    {
+      "expect_kind": "handoff",
+      "gold": [],
+      "id": "B-03",
+      "q": "有沒有600戶以上的客戶",
+      "stratum": "gold_absent"
+    },
+    {
+      "expect_kind": "handoff",
+      "gold": [],
+      "id": "B-04",
+      "q": "有沒有SLA？當機賠不賠",
+      "stratum": "gold_absent"
+    },
+    {
+      "expect_kind": "handoff",
+      "gold": [],
+      "id": "B-05",
+      "q": "有沒有符合個資法",
+      "stratum": "gold_absent"
+    },
+    {
+      "expect_kind": "answer",
+      "gold": [
+        "prospect/C/contract-esign-flow"
+      ],
+      "id": "C-01",
+      "q": "合約邀請怎麼送",
+      "stratum": "answerable_answered"
+    },
+    {
+      "expect_kind": "answer",
+      "gold": [
+        "prospect/C/contract-esign-flow",
+        "prospect/C/property-status-meaning"
+      ],
+      "id": "C-02",
+      "q": "要先刊登才能建合約嗎",
+      "stratum": "answerable_answered"
+    },
+    {
+      "expect_kind": "answer",
+      "gold": [
+        "prospect/C/contract-modify-after-sign"
+      ],
+      "id": "C-03",
+      "q": "簽約後要修改怎麼辦",
+      "stratum": "answerable_answered"
+    },
+    {
+      "expect_kind": "answer",
+      "gold": [
+        "prospect/C/contract-modify-after-sign"
+      ],
+      "id": "C-04",
+      "q": "合約內容寫錯怎麼補救",
+      "stratum": "answerable_answered"
+    },
+    {
+      "expect_kind": "answer",
+      "gold": [
+        "prospect/C/contract-esign-flow"
+      ],
+      "id": "C-05",
+      "q": "簽約的時候個人跟法人身份怎麼設定",
+      "stratum": "answerable_answered"
+    },
+    {
+      "expect_kind": "handoff",
+      "gold": [],
+      "id": "D-01",
+      "q": "有沒有 SLA 保證",
+      "stratum": "sensitive"
+    },
+    {
+      "expect_kind": "handoff",
+      "gold": [],
+      "id": "D-02",
+      "q": "租客的資料你們怎麼處理",
+      "stratum": "sensitive"
+    },
+    {
+      "expect_kind": "handoff",
+      "gold": [],
+      "id": "D-03",
+      "q": "台北地區有哪些業者已經導入",
+      "stratum": "sensitive"
+    },
+    {
+      "expect_kind": "handoff",
+      "gold": [],
+      "id": "D-04",
+      "q": "500 戶大概要花多少錢",
+      "stratum": "sensitive"
+    },
+    {
+      "expect_kind": "handoff",
+      "gold": [],
+      "id": "D-05",
+      "q": "帳號密碼是怎麼保護的",
+      "stratum": "sensitive"
+    },
+    {
+      "expect_kind": "handoff",
+      "gold": [],
+      "id": "E-01",
+      "q": "合約生效後要改只能重簽嗎",
+      "stratum": "boundary"
+    },
+    {
+      "expect_kind": "handoff",
+      "gold": [],
+      "id": "E-02",
+      "q": "編輯合約需要什麼權限",
+      "stratum": "boundary"
+    },
+    {
+      "expect_kind": "handoff",
+      "gold": [],
+      "id": "E-03",
+      "q": "可以延長時效嗎",
+      "stratum": "boundary"
+    },
+    {
+      "expect_kind": "handoff",
+      "gold": [],
+      "id": "E-04",
+      "q": "有二房東版的合約嗎",
+      "stratum": "boundary"
+    },
+    {
+      "expect_kind": "handoff",
+      "gold": [],
+      "id": "E-05",
+      "q": "刊登會被哪些人看到",
+      "stratum": "boundary"
+    },
+    {
+      "id": "F-S2-agency",
+      "stratum": "multi",
+      "turns": [
+        {
+          "expect_kind": "answer",
+          "gold": [
+            "prospect/C/bill-format-customize"
+          ],
+          "q": "房東對帳單格式能不能自己設定",
+          "turn": 1
+        },
+        {
+          "expect_kind": "answer",
+          "gold": [
+            "prospect/C/billing-overview"
+          ],
+          "q": "電子發票需要一張一張手動開嗎",
+          "turn": 2
+        },
+        {
+          "expect_kind": "answer",
+          "gold": [
+            "prospect/B/data-migration",
+            "prospect/G/migration-limits"
+          ],
+          "q": "舊系統資料可以匯進來嗎？含房東租客合約帳單",
+          "turn": 3
+        }
+      ]
+    },
+    {
+      "id": "F-S1-landlord",
+      "stratum": "multi",
+      "turns": [
+        {
+          "expect_kind": "answer",
+          "gold": [
+            "prospect/G/utility-split-advice"
+          ],
+          "q": "水電費怎麼分算",
+          "turn": 1
+        },
+        {
+          "expect_kind": "answer",
+          "gold": [
+            "prospect/C/contract-esign-flow"
+          ],
+          "q": "可不可以線上簽約",
+          "turn": 2
+        },
+        {
+          "expect_kind": "answer",
+          "gold": [
+            "prospect/D/pricing-plans"
+          ],
+          "q": "費用怎麼算",
+          "turn": 3
+        },
+        {
+          "expect_kind": "handoff",
+          "gold": [],
+          "q": "有多少客戶，有沒有 600 戶以上的客戶",
+          "turn": 4
+        },
+        {
+          "expect_kind": "answer",
+          "gold": [
+            "prospect/C/overdue-reminder-late-fee"
+          ],
+          "q": "那租客不繳怎麼辦",
+          "turn": 5
+        },
+        {
+          "expect_kind": "answer",
+          "gold": [
+            "prospect/C/contract-esign-flow"
+          ],
+          "q": "所以剛剛說的簽約要另外收費嗎",
+          "turn": 6
+        },
+        {
+          "expect_kind": "handoff",
+          "gold": [],
+          "q": "你們有多少客戶數",
+          "turn": 7
+        },
+        {
+          "expect_kind": "answer",
+          "gold": [
+            "prospect/B/data-migration",
+            "prospect/G/migration-limits"
+          ],
+          "q": "那物件跟合約呢",
+          "turn": 8
+        },
+        {
+          "expect_kind": "answer",
+          "gold": [
+            "prospect/F/contact-sales-demo"
+          ],
+          "q": "好，那我要怎麼找你們的人談",
+          "turn": 9
+        }
+      ]
+    },
+    {
+      "id": "F-D-import",
+      "stratum": "multi",
+      "turns": [
+        {
+          "expect_kind": "answer",
+          "gold": [
+            "prospect/B/data-migration",
+            "prospect/G/migration-limits"
+          ],
+          "q": "舊系統資料可以匯進來嗎？含房東租客合約帳單",
+          "turn": 1
+        },
+        {
+          "expect_kind": "answer",
+          "gold": [
+            "prospect/B/data-migration",
+            "prospect/G/migration-limits"
+          ],
+          "q": "那物件跟合約呢",
+          "turn": 2
+        },
+        {
+          "expect_kind": "answer",
+          "gold": [
+            "prospect/G/migration-limits"
+          ],
+          "q": "所以合約也能匯？",
+          "turn": 3
+        },
+        {
+          "expect_kind": "answer",
+          "gold": [
+            "prospect/C/billing-overview"
+          ],
+          "q": "電子發票",
+          "turn": 4
+        }
+      ]
+    },
+    {
+      "expect_kind": "answer",
+      "gold": [
+        "prospect/B/data-migration",
+        "prospect/G/migration-limits"
+      ],
+      "id": "G-01",
+      "q": "上傳的合約有沒有法律效力",
+      "stratum": "cross_coarse"
+    },
+    {
+      "expect_kind": "answer",
+      "gold": [
+        "prospect/B/data-migration",
+        "prospect/G/migration-limits"
+      ],
+      "id": "G-02",
+      "q": "上傳的合約可以正常開帳單嗎",
+      "stratum": "cross_coarse"
+    },
+    {
+      "expect_kind": "answer",
+      "gold": [
+        "prospect/B/data-migration",
+        "prospect/G/migration-limits"
+      ],
+      "id": "G-03",
+      "q": "可以不用經過租客同意嗎",
+      "stratum": "cross_coarse"
+    }
+  ]
+}

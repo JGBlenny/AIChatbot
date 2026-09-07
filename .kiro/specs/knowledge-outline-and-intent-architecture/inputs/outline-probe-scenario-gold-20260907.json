@@ -1,8 +1,9 @@
 {
   "_meta": {
-    "status": "draft-awaiting-owner",
+    "status": "approved",
     "date": "2026-09-07",
-    "source": "scenarios-v1.json × canon/prospect.md（version 2026-09-07.6）"
+    "source": "scenarios-v1.json × canon/prospect.md（version 2026-09-07.6）",
+    "approved_by": "業主 2026-09-07（兩項照建議）"
   },
   "scenario_gold": {
     "S1-landlord": [

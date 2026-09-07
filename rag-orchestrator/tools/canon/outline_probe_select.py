@@ -65,6 +65,25 @@ def _load_json(path: str) -> Any:
         return json.load(f)
 
 
+def _unwrap_table(raw: Any, key: str) -> dict:
+    """gold 表兩種形狀都收：平面 `{sub: [...]}`，或帶出處的 `{"_meta": {...}, "<key>": {...}}`。
+
+    帶 `_meta` 的形狀是業主核可狀態的載體（`_meta.status`），⛔ 不是 approved 就拒跑——
+    凍結只能用核可過的表；平面形狀（無 `_meta`）視為測試／dry-run 用，不查狀態。
+    """
+    if not isinstance(raw, dict):
+        raise SelectorFailure(f"{key} 表不是 JSON 物件")
+    if "_meta" in raw and key in raw:
+        status = (raw.get("_meta") or {}).get("status")
+        if status != "approved":
+            raise SelectorFailure(f"{key} 表 _meta.status={status!r}，⛔ 只有 approved 才准凍結")
+        inner = raw[key]
+        if not isinstance(inner, dict):
+            raise SelectorFailure(f"{key} 表的 {key} 欄不是 JSON 物件")
+        return inner
+    return raw
+
+
 def _sha256_file(path: str) -> str:
     if not os.path.isfile(path):
         raise SelectorFailure(f"輸入檔缺失（無法計算 sha256）：{path}")
@@ -391,7 +410,7 @@ def run(args) -> int:
 
     topics_index = load_topics_index(args.topics)
     round9_counts = load_round9_answered_counts(args.round9_dir)
-    sub_map = _load_json(args.sub_map)  # `_load_json` 本身已對缺檔 fail loud
+    sub_map = _unwrap_table(_load_json(args.sub_map), "sub_map")  # `_load_json` 本身已對缺檔 fail loud
 
     pop_a = population_a(topics_index, round9_counts, sub_map)
     pop_b = population_b(args.map_v2, args.answerability_canon)
@@ -449,7 +468,7 @@ def run(args) -> int:
             )
         return EXIT_OK
 
-    scenario_gold = _load_json(args.scenario_gold)
+    scenario_gold = _unwrap_table(_load_json(args.scenario_gold), "scenario_gold")
 
     items = []
     items += build_single_turn_items("A", picked_a, "answerable_unanswered")
