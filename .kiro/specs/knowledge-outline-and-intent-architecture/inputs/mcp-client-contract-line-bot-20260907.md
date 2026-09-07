@@ -53,7 +53,7 @@ X-JGB-Identity: {
 |---|---|---|---|
 | 1 | `AGENT_TURN_ENABLED=true`（現 false ⇒ 工具根本不註冊 ⇒ `NO_MATCH`） | 未開；⚠️ 開了之後 agent 組裝失敗會讓整個服務啟動 raise（`app.py` `_init_agent_runtime`） | AIChatbot，security Plan 後 |
 | 2 | `agent.turn` 的 `stage` 對照表加 `property_manager`（現只有 `{"prospect": "M1"}`，缺鍵永不可見） | 設計變更，需 DSP | AIChatbot，業主裁 |
-| 3 | `property_manager` 正本 `rag-orchestrator/canon/property_manager-line.md`（tasks 6.2）＋P3-b 業態解析 | 6.2 進行中（步 2）；P3-b executor 進行中 | AIChatbot |
+| 3 | `property_manager` 正本 `rag-orchestrator/canon/property_manager.md`（tasks 6.2）＋P3-b 業態解析 | 6.2 進行中（步 2）；P3-b executor 進行中 | AIChatbot |
 | 4 | `is_internal` key（runbook §19-2 手工 SQL；後台 UI 發的 key 缺 `is_internal` 會踩 DSP-011 紅旗） | 未發 | AIChatbot 業主親跑 |
 | 5 | `RAG_API_AUTH_ENFORCE=true`（否則第一筆 `/mcp` 流量讓 `/api/v1/agent/health` 轉紅：`enforce_off_with_mcp_traffic`） | prod 現值未讀 | AIChatbot 部署 |
 | 6 | `/mcp` 不對公網開（缺 Origin 一律放行是刻意的 server-to-server 設計；程式層無 IP 白名單） | 部署層，本 repo 查無 line-bot 入口 | 部署 |

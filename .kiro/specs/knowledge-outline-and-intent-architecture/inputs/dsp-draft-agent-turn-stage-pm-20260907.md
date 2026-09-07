@@ -14,7 +14,7 @@
 
 ## 前置（缺一不得開）
 
-1. **pm 正本**：`rag-orchestrator/canon/property_manager-line.md`（tasks 6.2，進行中）＋ **P3-b** `vendor_business_types` 由 `VendorParameterResolver` 解析（進行中）。沒有正本時 `_select_outline` 對 pm 會退到什麼——**待核**（`app.state.agent_outline` 只在 `identity.audience == "prospect"` 時注入，見 `routers/agent_entry.py`；`agent.turn` 路徑對 pm 的大綱注入需查 `mcp_facade._agent_turn`）。
+1. **pm 正本**：`rag-orchestrator/canon/property_manager.md`（tasks 6.2，進行中）＋ **P3-b** `vendor_business_types` 由 `VendorParameterResolver` 解析（進行中）。沒有正本時 `_select_outline` 對 pm 會退到什麼——**待核**（`app.state.agent_outline` 只在 `identity.audience == "prospect"` 時注入，見 `routers/agent_entry.py`；`agent.turn` 路徑對 pm 的大綱注入需查 `mcp_facade._agent_turn`）。
 2. `AGENT_TURN_ENABLED=true`（另見 security Plan；G1 啟動 raise 風險）。
 3. `is_internal` key 的 `vendor_ids` 收斂到 demo 業者（G4：持 key 者改 `target_user` 可開 `jgb2.query.*` 五支個資工具——demo 語境下這是需求，但範圍必須靠 `vendor_ids` 收到單一業者）。
 
