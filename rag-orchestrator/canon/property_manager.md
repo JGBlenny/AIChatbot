@@ -1,6 +1,6 @@
 ---
 audience: property_manager
-version: 2026-09-08.1
+version: 2026-09-08.2
 reviewers: [owner]
 language: zh-TW
 budget_tokens: 8000
@@ -16,8 +16,8 @@ business_types: [system_provider]
   - {text: "敦南", source: "line-doc:③#A", status: proposed}
 - sources: [draft:batch#1]
 - instance_applicability: general
-- reviewed: {by: owner, at: 2026-09-07}
-業務在現場上傳損壞照片後，系統先辨識損壞類別與急迫程度，進場第一輪就出確認摘要與三顆按鈕（確認送出／我要修改／取消）；只有按下「確認送出」才建單，任何未經確認的自動建單視為重大錯誤。
+- reviewed: {by: owner, at: 2026-09-08}
+由拍照進場時，系統先辨識損壞類別與急迫程度，進場第一輪就出確認摘要與三顆按鈕（確認送出／我要修改／取消）；聊天以文字口述時，以口述的物件、問題描述與分類直接出確認摘要與三顆按鈕，不要求照片；兩者都只有按下「確認送出」才建單，任何未經確認的自動建單視為重大錯誤。
 
 ### 分類辨識結果錯誤時如何修改 {#property_manager/A/repair-ticket-reclassify}
 - phrasings:
@@ -61,8 +61,8 @@ business_types: [system_provider]
 ### 修繕單急迫程度的判斷來源 {#property_manager/A/repair-ticket-urgency-judgment}
 - sources: [draft:batch#7]
 - instance_applicability: general
-- reviewed: {by: owner, at: 2026-09-07}
-急迫與非急迫由辨識建議，缺值時不得預設為急迫；值域以 JGB 資料庫為準（待裁：程式註解與舊表單的值域相反）。
+- reviewed: {by: owner, at: 2026-09-08}
+急迫與非急迫由辨識建議或業務口述；未表明時以非緊急建單，不得預設為急迫、也不為此反問；值域以 JGB 資料庫為準：2＝緊急、1＝非緊急。
 
 ### 建單失敗時的處理與重試規則 {#property_manager/A/repair-ticket-submit-failure}
 - phrasings:
@@ -181,8 +181,8 @@ JGB 帳單只有已繳／未繳，沒有入帳日期；問到沒有的欄位就�
   - {text: "結束", source: "line-doc:⑤#G", status: proposed}
 - sources: [draft:batch#20]
 - instance_applicability: general
-- reviewed: {by: owner, at: 2026-09-07}
-業務說結束（結束鈕送「結束」）即關閉這筆項目的會話並回清單；30 分鐘沒動作會話過期，過期後同一會話再進來要回可辨識的過期訊號並重新進場。
+- reviewed: {by: owner, at: 2026-09-08}
+由清單進場時，業務說結束（結束鈕送「結束」）即關閉這筆項目的會話並回清單；聊天直接進場時，業務說結束、好了、謝謝等收尾語即簡短收尾，不提結束鈕、不回清單；30 分鐘沒動作會話過期的規則兩者相同，過期後同一會話再進來要回可辨識的過期訊號並重新進場。
 
 ## D 語氣模板與禁止項 {#D}
 ### 回覆語氣與介面原則 {#property_manager/D/reply-tone-principles}

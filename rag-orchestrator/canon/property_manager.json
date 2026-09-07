@@ -4,7 +4,7 @@
   "business_types": [
     "system_provider"
   ],
-  "canon_sha256": "81bfe3b0559aa39cf06ce91147669e5db2becca065a1770eec262d439c59e635",
+  "canon_sha256": "84fb60a84ebd99d2687c429a423c4a6117b1cc451b11d762a1411a64d9c98803",
   "coarses": [
     {
       "fines": [
@@ -14,9 +14,9 @@
           ],
           "categories": [],
           "coarse_id": "A",
-          "content_sha256": "78300128d585eff6dbd03a319f1610b8903a47c4e9022912790fce0bdccbf91c",
+          "content_sha256": "9af9d8d0bdaa7461260e8a6b417709734a347232d640c6760ce573ccdc9f81d4",
           "content_units": [
-            "業務在現場上傳損壞照片後，系統先辨識損壞類別與急迫程度，進場第一輪就出確認摘要與三顆按鈕（確認送出／我要修改／取消）；只有按下「確認送出」才建單，任何未經確認的自動建單視為重大錯誤。"
+            "由拍照進場時，系統先辨識損壞類別與急迫程度，進場第一輪就出確認摘要與三顆按鈕（確認送出／我要修改／取消）；聊天以文字口述時，以口述的物件、問題描述與分類直接出確認摘要與三顆按鈕，不要求照片；兩者都只有按下「確認送出」才建單，任何未經確認的自動建單視為重大錯誤。"
           ],
           "id": "property_manager/A/repair-ticket-photo-flow",
           "instance_applicability": "general",
@@ -44,7 +44,7 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-07",
+          "reviewed_at": "2026-09-08",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
@@ -224,16 +224,16 @@
           ],
           "categories": [],
           "coarse_id": "A",
-          "content_sha256": "2be9298e4dceb590c4af1471812972c83f21e6a8609e62199b63cebd176093f5",
+          "content_sha256": "cc18b75bab6f9505683437f06357e9a8f1334534d003288b3e3bccff565f1e19",
           "content_units": [
-            "急迫與非急迫由辨識建議，缺值時不得預設為急迫；值域以 JGB 資料庫為準（待裁：程式註解與舊表單的值域相反）。"
+            "急迫與非急迫由辨識建議或業務口述；未表明時以非緊急建單，不得預設為急迫、也不為此反問；值域以 JGB 資料庫為準：2＝緊急、1＝非緊急。"
           ],
           "id": "property_manager/A/repair-ticket-urgency-judgment",
           "instance_applicability": "general",
           "phrasings": [],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-07",
+          "reviewed_at": "2026-09-08",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
@@ -701,9 +701,9 @@
           ],
           "categories": [],
           "coarse_id": "C",
-          "content_sha256": "466058ce3fc4a57e098a17d42445bf0e2241879ad56d57fbb63e9519bb0b69c1",
+          "content_sha256": "b5283e811bed3028f11e903869308d9c09ff9efc3d19d0cbb266f6cdaefd01c2",
           "content_units": [
-            "業務說結束（結束鈕送「結束」）即關閉這筆項目的會話並回清單；30 分鐘沒動作會話過期，過期後同一會話再進來要回可辨識的過期訊號並重新進場。"
+            "由清單進場時，業務說結束（結束鈕送「結束」）即關閉這筆項目的會話並回清單；聊天直接進場時，業務說結束、好了、謝謝等收尾語即簡短收尾，不提結束鈕、不回清單；30 分鐘沒動作會話過期的規則兩者相同，過期後同一會話再進來要回可辨識的過期訊號並重新進場。"
           ],
           "id": "property_manager/C/followup-session-end",
           "instance_applicability": "general",
@@ -721,7 +721,7 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-07",
+          "reviewed_at": "2026-09-08",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
@@ -1349,5 +1349,5 @@
   "target_user": [
     "property_manager"
   ],
-  "version": "2026-09-08.1"
+  "version": "2026-09-08.2"
 }
