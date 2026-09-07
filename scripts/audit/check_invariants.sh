@@ -213,10 +213,14 @@ echo "═══ 不變量 7：JGB 金額欄位一律走語義層（20260810 真�
 # ⚠️ 但**不是**整檔豁免：本不變量管的是「讀值繞過語義層」，
 #    所以 fixtures.py 內只放行型別／資料宣告，**讀值形式照樣違反**
 #    （`.get(`／`["final_total"]`／`.final_total`）——否則消費端只要搬進 fixtures.py 就隱形了。
+# 2026-09-08 修正誤報（transport-extension-full-coverage）：`fixture_data/*.json` 是
+# `fixtures.py` 的**唯一資料來源**遷移目標（同一份帳單資料，換成 JSON 宣告而非 Python 字面值）——
+# 純資料宣告（`"final_total": 18000.0,`），不是任何程式碼路徑的讀值，整檔豁免（無讀值形式可談）。
 AMOUNT_VIOL=$(grep -rn 'final_total' rag-orchestrator/services/jgb/ 2>/dev/null \
   | awk -F: '{ body = $0; sub(/^[^:]*:[0-9]+:/, "", body);
                if (body ~ /^[[:space:]]*#/) next;
                if ($1 ~ /bills\.py$/ && body ~ /^[[:space:]]*v = bill\.get\("final_total"\)$/) next;
+               if ($1 ~ /fixture_data\/.*\.json$/) next;
                if ($1 ~ /fixtures\.py$/) {
                  if (body ~ /get\(|\.final_total|\[[[:space:]]*"final_total"/) print;
                  next; }

@@ -99,14 +99,19 @@ def test_payments_empty_filter_zeroes_pagination(api):
 
 @pytest.mark.req("face-exit-before-grounding:1")
 def test_repairs_filters(api):
-    """`is_urgent` 對映 **emergency_status**（:64）——語義曾反轉，不可望文生義。"""
-    all_rows = api._mock_get_repairs(ROLE)["data"]
+    """`is_urgent` 對映 **emergency_status**（:64）——語義曾反轉，不可望文生義。
+
+    單一來源徹底（transport-agent-mcp-orchestration 收案修正 2）：`get_repairs`
+    已改走 `_send`→`JGBMockTransport`（共用 `RepairFixtureTable`），
+    ⛔ 不再有方法級 `_mock_get_repairs` 分支可直呼——經公開方法驗同樣的保真性。
+    """
+    all_rows = _run(api.get_repairs(ROLE, "1001"))["data"]
     first = all_rows[0]
-    by_status = api._mock_get_repairs(ROLE, status=first["status"])["data"]
+    by_status = _run(api.get_repairs(ROLE, "1001", status=first["status"]))["data"]
     assert all(r["status"] == first["status"] for r in by_status)
-    by_estate = api._mock_get_repairs(ROLE, estate_id=first["estate_id"])["data"]
+    by_estate = _run(api.get_repairs(ROLE, "1001", estate_id=first["estate_id"]))["data"]
     assert all(r["estate_id"] == first["estate_id"] for r in by_estate)
-    assert api._mock_get_repairs(ROLE, estate_id=999999)["data"] == []
+    assert _run(api.get_repairs(ROLE, "1001", estate_id=999999))["data"] == []
 
 
 # ── /repairs/categories、/roles/{id}/subscription、/iot-manufacturers、

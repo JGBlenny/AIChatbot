@@ -22,8 +22,11 @@ from services.jgb.estate_fixtures import (
 
 pytestmark = pytest.mark.unit
 
-ROLE = "20151"          # fixture 三列的 role_id
-OPEN_IDS = [54126, 54200]
+ROLE = "20151"          # fixture 五列的 role_id
+#: 跨域連貫修正（transport-agent-mcp-orchestration 收案修正 4）後新增 456／400——
+#: 兩戶分別是 contract 678／600 與 repairs 3001/3002 對齊的物件，見 fixture_data
+#: `demo_vendor4.json` 頂端註解。
+OPEN_IDS = [400, 456, 54126, 54200]
 CLOSED_ID = 54305       # is_open=0
 
 
@@ -78,19 +81,20 @@ def test_role_id_is_a_filter_not_an_echo(api):
 @pytest.mark.req("face-exit-before-grounding:1")
 def test_use_for_outside_whitelist_is_silently_ignored(api):
     """production 只在三個合法值時才加條件（:149-155）——非法值**不報錯也不過濾**。"""
-    kept = api._mock_get_estates(ROLE, "", 50, use_for="不存在的用途")
+    kept = _run(api.get_estates(role_id=ROLE, per_page=50, use_for="不存在的用途"))
     assert sorted(e["id"] for e in kept["data"]) == OPEN_IDS
-    narrowed = api._mock_get_estates(ROLE, "", 50, use_for="business")
+    narrowed = _run(api.get_estates(role_id=ROLE, per_page=50, use_for="business"))
     assert narrowed["data"] == []
 
 
 @pytest.mark.req("face-exit-before-grounding:1")
 def test_sort_by_outside_whitelist_falls_back_to_updated_at(api):
     """白名單外回退 `updated_at desc`（:60-66），非拒絕。"""
-    bogus = api._mock_get_estates(ROLE, "", 50, sort_by="rent; DROP TABLE")
-    fallback = api._mock_get_estates(ROLE, "", 50, sort_by="updated_at")
+    bogus = _run(api.get_estates(role_id=ROLE, per_page=50, sort_by="rent; DROP TABLE"))
+    fallback = _run(api.get_estates(role_id=ROLE, per_page=50, sort_by="updated_at"))
     assert [e["id"] for e in bogus["data"]] == [e["id"] for e in fallback["data"]]
-    ascending = api._mock_get_estates(ROLE, "", 50, sort_by="rent", sort_direction="asc")
+    ascending = _run(api.get_estates(role_id=ROLE, per_page=50,
+                                     sort_by="rent", sort_direction="asc"))
     assert [e["rent"] for e in ascending["data"]] == sorted(
         e["rent"] for e in ascending["data"])
 
@@ -99,12 +103,12 @@ def test_sort_by_outside_whitelist_falls_back_to_updated_at(api):
 
 @pytest.mark.req("face-exit-before-grounding:1")
 def test_pagination_bounds_match_production(api):
-    capped = api._mock_get_estates(ROLE, "", 9999)
+    capped = _run(api.get_estates(role_id=ROLE, per_page=9999))
     assert capped["pagination"]["per_page"] == 200          # MAX_PER_PAGE
-    one = api._mock_get_estates(ROLE, "", 1)
-    assert one["pagination"] == {"current_page": 1, "per_page": 1, "total": 2,
-                                 "total_pages": 2, "has_more": True}
-    empty = api._mock_get_estates("99999", "", 50)
+    one = _run(api.get_estates(role_id=ROLE, per_page=1))
+    assert one["pagination"] == {"current_page": 1, "per_page": 1, "total": 4,
+                                 "total_pages": 4, "has_more": True}
+    empty = _run(api.get_estates(role_id="99999", per_page=50))
     assert empty["pagination"]["total_pages"] == 0 and empty["pagination"]["has_more"] is False
 
 
@@ -187,5 +191,5 @@ def test_uncast_json_columns_stay_strings(api):
 @pytest.mark.req("face-exit-before-grounding:1")
 def test_fixture_rows_declare_the_closed_case():
     table = EstateFixtureTable()
-    assert len(table.rows()) == 3 and len(table.visible_rows()) == 2
+    assert len(table.rows()) == 5 and len(table.visible_rows()) == 4
     assert table.by_id(CLOSED_ID) is None

@@ -919,6 +919,7 @@ def build_registry(deps: FacadeDeps, registry: Optional[ToolRegistry] = None) ->
     from services.jgb.contracts import FACE_BUILDERS as CONTRACT_FACE_BUILDERS
     from services.jgb.estates import ESTATE_FACE_BUILDERS
     from services.jgb.iot import METER_FACE_BUILDERS
+    from services.jgb.repairs import REPAIR_FACE_BUILDERS
 
     reg = registry if registry is not None else ToolRegistry()
 
@@ -985,6 +986,7 @@ def build_registry(deps: FacadeDeps, registry: Optional[ToolRegistry] = None) ->
         ("accounts", ACCOUNT_FACE_BUILDERS, jgb2_tools.query_accounts),
         ("meters", METER_FACE_BUILDERS, jgb2_tools.query_meters),
         ("estates", ESTATE_FACE_BUILDERS, jgb2_tools.query_estates),
+        ("repairs", REPAIR_FACE_BUILDERS, jgb2_tools.query_repairs),
     )
     for domain, builders, fn in domains:
 

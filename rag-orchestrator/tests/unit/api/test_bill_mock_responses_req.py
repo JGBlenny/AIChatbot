@@ -45,7 +45,8 @@ def test_missing_role_id_is_400(mt):
 
 
 def test_contract_filter_uses_fixture_matrix(mt):
-    resp = _run(mt.send("GET", BILLS, params={**ROLE, "contract_id": 700100}))
+    # 跨域連貫修正後帳單指向既有 contract fixture 的真實 id（678，非孤立合成值）。
+    resp = _run(mt.send("GET", BILLS, params={**ROLE, "contract_id": 678}))
     assert _ids(resp) == {900001, 900002}
 
 

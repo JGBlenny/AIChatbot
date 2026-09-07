@@ -12,6 +12,8 @@
 
 from typing import Any, Optional
 
+from services.jgb.fixture_store import demo_rows, demo_visibility
+
 # ⚠️ **值的形狀由三層決定，控制器只是最後一層**：
 #    ① DDL（型別／nullable／預設）② Eloquent $casts ③ Model accessor。
 #    `formatEstate()` 多數欄位是 `$estate->x` 直通，故 accessor 會改寫真正輸出：
@@ -117,187 +119,32 @@ class EstateFixtureTable:
     在替身上永遠不會被走到。
     """
 
-    _ROWS: "tuple[dict[str, Any], ...]" = (
-        {
-            "id": 54126,
-            "active": 1,
-            "is_open": 1,
-            "url": "https://www.jgbsmart.com/house/AABBCC?living=1",
-            "user_id": 1001,
-            "role_id": 20151,
-            "role_id_comment": "房東編號",
-            "team_id": 20151,
-            "team_id_comment": "團隊編號（同 role_id）",
-            "team_name": "好租管理",
-            "team_name_comment": "物件歸屬",
-            "serial_id": None,
-            "title": "信義區精緻套房",
-            "status": 2,
-            "country": "TW",
-            "country_id": 1,
-            "city": "台北市",
-            "city_id": 2,
-            "district": "信義區",
-            "district_id": 10,
-            "address": "信義路五段7號",
-            "full_address": "台北市信義區信義路五段7號3樓",
-            "display_address": "信義路五段7號",
-            "full_display_address": "台北市信義區信義路五段7號3樓",
-            "latitude": "25.03360000",
-            "longitude": "121.56480000",
-            "use_for": "residential",
-            "space_type": "flat",
-            "building": "condo",
-            "room_count": 1,
-            "size": 15,
-            "size_data": "{\"size\": {\"m2\": 15, \"sqm\": 4.54, \"sq_ft\": 161.46}}",
-            "direction": "south",
-            "floor": "3",
-            "total_floor": "12",
-            "rent": 25000,
-            "currency": "TWD",
-            "deposit": 2,
-            "deposit_type": 0,
-            "deposit_amount": 50000,
-            "fees": [],
-            "management_fee": 0,
-            "facilities": [],
-            "labels_fees": "{\"電費\": \"電費\", \"水費\": \"水費\", \"瓦斯費\": \"瓦斯費\", \"網路費\": \"網路費\", \"第四台\": \"第四台\", \"管理費\": \"管理費\", \"車位管理費\": \"車位管理費\", \"清潔費\": \"清潔費\", \"押金設算息\": \"押金設算息\"}",
-            "avatar": None,
-            "gallery": None,
-            "floor_plan": None,
-            "vr_url": None,
-            "community_id": None,
-            "community_name": None,
-            "property_purpose_key": 1,
-            "bit_status": 1026,
-            "created_at": "2025-01-15 10:30:00",
-            "updated_at": "2025-03-20 14:25:00",
-        },
-        {
-            "id": 54200,
-            "active": 1,
-            "is_open": 1,
-            "url": "https://www.jgbsmart.com/house/DDEEFF?living=1",
-            "user_id": 1001,
-            "role_id": 20151,
-            "role_id_comment": "房東編號",
-            "team_id": 20151,
-            "team_id_comment": "團隊編號（同 role_id）",
-            "team_name": "好租管理",
-            "team_name_comment": "物件歸屬",
-            "serial_id": None,
-            "title": "中山區溫馨雅房",
-            "status": 2,
-            "country": "TW",
-            "country_id": 1,
-            "city": "台北市",
-            "city_id": 2,
-            "district": "中山區",
-            "district_id": 4,
-            "address": "中山北路二段10號",
-            "full_address": "台北市中山區中山北路二段10號5樓",
-            "display_address": "中山北路二段10號",
-            "full_display_address": "台北市中山區中山北路二段10號5樓",
-            "latitude": "25.06120000",
-            "longitude": "121.52250000",
-            "use_for": "residential",
-            "space_type": "flat",
-            "building": "apartment",
-            "room_count": 1,
-            "size": 8,
-            "size_data": "{\"size\": {\"m2\": 8, \"sqm\": 2.42, \"sq_ft\": 86.11}}",
-            "direction": "east",
-            "floor": "5",
-            "total_floor": "7",
-            "rent": 12000,
-            "currency": "TWD",
-            "deposit": 2,
-            "deposit_type": 0,
-            "deposit_amount": 24000,
-            "fees": [],
-            "management_fee": 0,
-            "facilities": [],
-            "labels_fees": "{\"電費\": \"電費\", \"水費\": \"水費\", \"瓦斯費\": \"瓦斯費\", \"網路費\": \"網路費\", \"第四台\": \"第四台\", \"管理費\": \"管理費\", \"車位管理費\": \"車位管理費\", \"清潔費\": \"清潔費\", \"押金設算息\": \"押金設算息\"}",
-            "avatar": None,
-            "gallery": None,
-            "floor_plan": None,
-            "vr_url": None,
-            "community_id": None,
-            "community_name": None,
-            "property_purpose_key": 1,
-            "bit_status": 1026,
-            "created_at": "2025-02-01 09:00:00",
-            "updated_at": "2025-04-10 11:00:00",
-        },
-        {
-            "id": 54305,
-            "active": 1,
-            "is_open": 0,
-            "url": "https://www.jgbsmart.com/house/GGHHII?living=1",
-            "user_id": 1001,
-            "role_id": 20151,
-            "role_id_comment": "房東編號",
-            "team_id": 20151,
-            "team_id_comment": "團隊編號（同 role_id）",
-            "team_name": "好租管理",
-            "team_name_comment": "物件歸屬",
-            "serial_id": None,
-            "title": "大安區景觀兩房",
-            "status": 2,
-            "country": "TW",
-            "country_id": 1,
-            "city": "台北市",
-            "city_id": 2,
-            "district": "大安區",
-            "district_id": 6,
-            "address": "敦化南路一段100號",
-            "full_address": "台北市大安區敦化南路一段100號12樓",
-            "display_address": "敦化南路一段100號",
-            "full_display_address": "台北市大安區敦化南路一段100號12樓",
-            "latitude": "25.04210000",
-            "longitude": "121.54920000",
-            "use_for": "residential",
-            "space_type": "flat",
-            "building": "condo",
-            "room_count": 2,
-            "size": 25,
-            "size_data": "{\"size\": {\"m2\": 25, \"sqm\": 7.56, \"sq_ft\": 269.1}}",
-            "direction": "west",
-            "floor": "12",
-            "total_floor": "15",
-            "rent": 35000,
-            "currency": "TWD",
-            "deposit": 2,
-            "deposit_type": 0,
-            "deposit_amount": 70000,
-            "fees": [],
-            "management_fee": 2000,
-            "facilities": [],
-            "labels_fees": "{\"電費\": \"電費\", \"水費\": \"水費\", \"瓦斯費\": \"瓦斯費\", \"網路費\": \"網路費\", \"第四台\": \"第四台\", \"管理費\": \"管理費\", \"車位管理費\": \"車位管理費\", \"清潔費\": \"清潔費\", \"押金設算息\": \"押金設算息\"}",
-            "avatar": None,
-            "gallery": None,
-            "floor_plan": None,
-            "vr_url": None,
-            "community_id": None,
-            "community_name": None,
-            "property_purpose_key": 1,
-            "bit_status": 1026,
-            "created_at": "2025-03-10 14:00:00",
-            "updated_at": "2025-05-01 16:30:00",
-        },
-    )
 
     def __init__(self) -> None:
-        for row in self._ROWS:
+        #: 資料來源：`services/jgb/fixture_data/demo_vendor4.json`（唯一來源）——
+        #: 每個實例各自持有一份可變列表，寫入不外溢到其他實例。
+        self._rows: "list[dict[str, Any]]" = list(demo_rows("estates"))
+        for row in self._rows:
             assert_estate_projection(row)
+        #: `{str(estate_id): [user_id, ...]}`——目前僅宣告，未接上過濾邏輯。
+        self._visibility: "dict[str, list[int]]" = demo_visibility("estate")
 
     def rows(self) -> "list[dict[str, Any]]":
-        return [dict(r) for r in self._ROWS]
+        return [dict(r) for r in self._rows]
 
     def visible_rows(self) -> "list[dict[str, Any]]":
         """`index()`／`show()` 的恆定 where：`active=1` 且 `is_open=1`（:52-53、:121-124）。"""
         return [r for r in self.rows() if r.get("active") == 1 and r.get("is_open") == 1]
+
+    def visible_to(self, estate_id: int) -> Optional["list[int]"]:
+        return self._visibility.get(str(estate_id))
+
+    def create(self, overrides: "dict[str, Any]") -> "dict[str, Any]":
+        """寫入路徑（`POST /agent/v1/estates`）：驗投影後附加一筆（預設刊登中）。"""
+        row = {"active": 1, "is_open": 1, **overrides}
+        assert_estate_projection(row)
+        self._rows.append(row)
+        return dict(row)
 
     def by_id(self, estate_id: int) -> Optional["dict[str, Any]"]:
         """`show()` 語義：不在 `active=1 且 is_open=1` 之內就是 404。"""

@@ -12,6 +12,8 @@
 
 from typing import Any, Optional, TypedDict
 
+from services.jgb.fixture_store import demo_rows, demo_visibility
+
 #: External 白名單投影（`formatBill` 逐鍵，33 欄）。
 #: ⚠️ `archive_at` **不在**投影內——真 API 輸出的是衍生的 `is_archived`（:163）。
 EXTERNAL_BILL_FIELDS: "frozenset[str]" = frozenset({
@@ -104,17 +106,24 @@ def _bill(**overrides: Any) -> BillFixture:
 
 
 class BillFixtureTable:
-    """多筆、可依 `bill_id` 收斂到唯一列的固定資料集（R4.2）。
+    """多筆、可依 `bill_id` 收斂到唯一列的**可變**資料集（R4.2；transport-extension-full-coverage 起可寫）。
 
-    **差異矩陣**（刻意設計，使複合過濾可觀測）：
+    資料來源：`services/jgb/fixture_data/demo_vendor4.json`（唯一來源，見 `fixture_store`）——
+    本類**不再**硬編碼列值，只負責投影守衛、identity 存取與寫入語義。
+
+    **差異矩陣**（fixture 檔刻意設計，使複合過濾可觀測）：
 
     ==========  ============  ============  ================  ============
     bill_id     contract_id   bit_status    invoice_status    date_expire
     ==========  ============  ============  ================  ============
-    900001      700100        3             0                 20260815
-    900002      700100        19            1                 20260915
-    900003      700200        3             1                 20260915
+    900001      678           3             0                 20260815
+    900002      678           19            1                 20260915
+    900003      600           3             1                 20260915
     ==========  ============  ============  ================  ============
+
+    ⚠️ `contract_id` **跨域連貫修正（2026-09-08）後**指向既有 `ContractFixtureTable`
+    的真實 id（678／600，非孤立合成值）——使帳單／合約／物件三個 fixture 宇宙相連
+    （見 `fixture_data/demo_vendor4.json` 頂端註解）。
 
     ⚠️ **每一對只共用一個維度**：900001／900002 同 contract、900001／900003 同 bit_status、
     900002／900003 同 invoice_status 與同月。
@@ -124,43 +133,44 @@ class BillFixtureTable:
 
     ⚠️ **identity 靠 `bill_id`，不靠 list position**——
     `by_id()` 是唯一的取用方式，日後加第四筆不會改變既有測試的語義。
+
+    ⚠️ **每個實例各自持有一份可變列表**（`self._rows`）：`by_id()` 回傳的是該實例內部的
+    dict 參照，就地修改（PATCH 用）會被後續 `rows()`／`by_id()` 看見——這是刻意設計，
+    使「寫入後的讀反映」不需要額外的同步機制；但也代表**不得**跨實例共用同一個
+    `BillFixtureTable`，否則一個 transport 的寫入會外溢到另一個。
     """
 
-    _ROWS: "tuple[BillFixture, ...]" = (
-        _bill(
-            id=900001, contract_id=700100, estate_id=800001,
-            type=1, status=2, bit_status=3, invoice_status=0,
-            title="2026年8月租金", sub_title="測試用合成資料",
-            total=18000.0, final_total=18000.0,
-            date_start=20260801, date_end=20260831, date_expire=20260815,
-            ready_at="2026-08-01 10:00:00",
-        ),
-        _bill(
-            id=900002, contract_id=700100, estate_id=800001,
-            type=3, status=16, bit_status=19, invoice_status=1,
-            title="2026年9月管理費", sub_title="測試用合成資料",
-            total=1200.0, final_total=1200.0,
-            date_start=20260901, date_end=20260930, date_expire=20260915,
-            ready_at="2026-09-01 10:00:00", pay_at="2026-09-03 14:20:00",
-            complete_at="2026-09-03 14:25:00", invoice_number="AB-90000002",
-            is_paid_on_time=1, payment_id=910002,
-        ),
-        _bill(
-            id=900003, contract_id=700200, estate_id=800002,
-            type=2, status=8, bit_status=3, invoice_status=1,
-            title="2026年9月點退結算", sub_title="測試用合成資料",
-            total=7500.0, final_total=7500.0,
-            date_start=20260901, date_end=20260930, date_expire=20260915,
-            ready_at="2026-09-01 11:00:00", pay_at="2026-09-10 09:05:00",
-            invoice_number="AB-90000003", payment_id=910003,
-        ),
-    )
+    def __init__(self) -> None:
+        self._rows: "list[BillFixture]" = [
+            _bill(**row) for row in demo_rows("bills")
+        ]
+        #: `{str(bill_id): [user_id, ...]}`——缺 key＝未宣告，見 `visible_to()`。
+        self._visibility: "dict[str, list[int]]" = demo_visibility("bill")
 
     def rows(self) -> "list[BillFixture]":
-        return list(self._ROWS)
+        return list(self._rows)
 
     def by_id(self, bill_id: int) -> Optional[BillFixture]:
-        for row in self._ROWS:
+        for row in self._rows:
             if row["id"] == bill_id:
                 return row
         return None
+
+    def visible_to(self, bill_id: int) -> Optional["list[int]"]:
+        """回傳這筆帳單宣告的可見 user_id 清單；**未宣告**回 `None`（非空清單）。
+
+        呼叫端必須能區分「未宣告」（`None`，替身不可信地回答可見性）與
+        「宣告為空清單」（`[]`，明確宣告誰都看不到）——兩者是不同事實。
+        """
+        return self._visibility.get(str(bill_id))
+
+    def create(self, overrides: "dict[str, Any]") -> BillFixture:
+        """寫入路徑（`POST /agent/v1/bills`）：以 `_bill()` 補滿預設欄位後附加一筆。
+
+        回傳的是**存入 `self._rows` 的同一個 dict 參照**，供呼叫端立刻取用新列
+        （例如 receipt 需要的 `created_at`），且該參照的後續就地修改
+        （PATCH）仍會反映在 `rows()`／`by_id()`。
+        """
+        row = _bill(**overrides)
+        self._rows.append(row)
+        return row

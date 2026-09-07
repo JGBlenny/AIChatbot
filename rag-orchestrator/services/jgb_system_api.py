@@ -21,10 +21,12 @@ from services.jgb.estate_fixtures import (
     DEFAULT_PER_PAGE as ESTATE_DEFAULT_PER_PAGE,
     MAX_PER_PAGE as ESTATE_MAX_PER_PAGE,
     EstateFixtureTable,
-    build_contract_required_fields,
     project_estate,
 )
 from services.jgb.fixtures import BillFixtureTable
+from services.jgb.meter_fixtures import MeterFixtureTable
+from services.jgb.repair_fixtures import RepairFixtureTable
+from services.jgb.team_fixtures import TeamMemberFixtureTable
 from services.jgb.transport import (  # noqa: F401  (FALLBACK_MESSAGE 對外沿用)
     FALLBACK_MESSAGE,
     JGBMockTransport,
@@ -60,14 +62,25 @@ class JGBSystemAPI:
         )
         #: 4.3：mock 模式裝配替身；fixture 表由 4.4 提供，未裝配前「已遷移」端點
         #: 一律 MissingFixtureError——**任何失敗都不會退回 real transport**。
-        #: 4.6：裝配 fixture 表，使 bills／bill_detail／contracts 三個**已遷移**端點
-        #: 能依契約回應；其餘端點仍走方法級 mock——逐端點現況與稽核成本見
-        #: `.kiro/specs/conversational-routing-execution/transport-migration-inventory.md`。
-        #: estates 尚未遷入 transport（見 transport-migration-inventory.md），
-        #: 但替身資料已對照 EstateApiController 逐鍵，改由 fixture 表供應。
+        #: transport-extension-full-coverage：唯一資料來源是
+        #: `services/jgb/fixture_data/demo_vendor4.json`（見 `services/jgb/fixture_store.py`）；
+        #: bills／bill_detail／contracts／estates／estate_detail／meters／team_members／
+        #: member_permissions／repairs／repair_categories／四個寫入路徑皆已遷入 transport
+        #: （見 `services/jgb/transport.py` 的 `MIGRATED_ENDPOINTS`）。
+        #: ⚠️ `self._estate_fixtures` 是**唯一** EstateFixtureTable 實例，同時供
+        #: estates／estate_detail 端點共用——避免同一份物件資料出現兩份互不同步的拷貝。
         self._estate_fixtures = EstateFixtureTable()
+        self._meter_fixtures = MeterFixtureTable()
+        self._team_fixtures = TeamMemberFixtureTable()
+        self._repair_fixtures = RepairFixtureTable()
         self._mock_transport: Optional[Transport] = (
-            JGBMockTransport(BillFixtureTable(), ContractFixtureTable())
+            JGBMockTransport(
+                BillFixtureTable(), ContractFixtureTable(),
+                estate_fixtures=self._estate_fixtures,
+                meter_fixtures=self._meter_fixtures,
+                team_fixtures=self._team_fixtures,
+                repair_fixtures=self._repair_fixtures,
+            )
             if self.use_mock else None
         )
 
@@ -133,6 +146,12 @@ class JGBSystemAPI:
     ) -> dict[str, Any]:
         """Send POST request to JGB API with JSON body."""
         return await self._send("POST", path, data=data)
+
+    async def _patch_request(
+        self, path: str, data: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Send PATCH request to JGB API with JSON body（agent 寫入路徑，任務 transport-extension-full-coverage）。"""
+        return await self._send("PATCH", path, data=data)
 
     # ------------------------------------------------------------------
     # Public methods
@@ -361,18 +380,30 @@ class JGBSystemAPI:
         role_id: str,
         user_id: str,
         status: Optional[str] = None,
+        estate_id: Optional[str] = None,
+        category_id: Optional[str] = None,
+        is_urgent: Optional[str] = None,
+        keyword: Optional[str] = None,
         **kwargs,
     ) -> dict[str, Any]:
         """查詢修繕進度"""
         if not self._validate_identity(role_id, user_id):
             return self._degraded_response()
 
-        if self.use_mock:
-            return self._mock_get_repairs(role_id, user_id, status)
-
+        # transport-extension-full-coverage（單一來源徹底）：已移除方法級
+        # `_mock_get_repairs` 分支——mock 改由 `_send` 派發至 `JGBMockTransport`
+        # （`repairs` 已遷入 `MIGRATED_ENDPOINTS`，資料來源為共用 `RepairFixtureTable`）。
         params: dict[str, Any] = {"role_id": role_id, "user_id": user_id}
         if status:
             params["status"] = status
+        if estate_id:
+            params["estate_id"] = estate_id
+        if category_id:
+            params["category_id"] = category_id
+        if is_urgent:
+            params["is_urgent"] = is_urgent
+        if keyword:
+            params["keyword"] = keyword
         return await self._request("/api/external/v1/repairs", params)
 
     async def get_tenant_summary(
@@ -404,14 +435,20 @@ class JGBSystemAPI:
         if not role_id:
             return self._degraded_response()
 
-        if self.use_mock:
-            return self._mock_get_estates(role_id, keyword, per_page)
-
+        # transport-extension-full-coverage（單一來源徹底）：已移除方法級
+        # （`estates` 已遷入 `MIGRATED_ENDPOINTS`，與 `get_estate_status`／
+        # `get_estate_detail` 共用同一個 `self._estate_fixtures` 實例）。
         params: dict[str, Any] = {
             "role_id": role_id,
             "keyword": keyword,
             "per_page": per_page,
         }
+        # `applyFilters()` 其餘參數（use_for／sort_by／sort_direction／status／
+        # city_id／district_id／rent_min／rent_max／page／user_id 等）原樣透傳——
+        # transport 端 `_estates_index` 自行判斷合法值，本層不重複做白名單。
+        for k, v in kwargs.items():
+            if v is not None:
+                params[k] = v
         return await self._request("/api/external/v1/estates", params)
 
     async def get_repair_categories(
@@ -419,9 +456,9 @@ class JGBSystemAPI:
         **kwargs,
     ) -> dict[str, Any]:
         """取得修繕分類樹（不需要 role_id）"""
-        if self.use_mock:
-            return self._mock_get_repair_categories()
-
+        # transport-extension-full-coverage（單一來源徹底）：已移除方法級
+        # `_mock_get_repair_categories` 分支——mock 改由 `_send` 派發至
+        # `JGBMockTransport`（`repair_categories` 已遷入 `MIGRATED_ENDPOINTS`）。
         return await self._request(
             "/api/external/v1/repairs/categories", {}
         )
@@ -439,15 +476,15 @@ class JGBSystemAPI:
         broken_photos: Optional[list] = None,
         **kwargs,
     ) -> dict[str, Any]:
-        """建立修繕單"""
+        """建立修繕單
+
+        transport-extension-full-coverage：**已移除** `if self.use_mock:
+        return self._mock_create_repair(...)` 短路——mock 改由 `_send` 依
+        `use_mock` 派發至 `JGBMockTransport`（`create_repair` 已遷入
+        `MIGRATED_ENDPOINTS`，資料來源為共用 `RepairFixtureTable`）。
+        """
         if not role_id:
             return self._degraded_response()
-
-        if self.use_mock:
-            return self._mock_create_repair(
-                role_id, estate_id, category_id, item_id,
-                broken_reason, broken_note, emergency_status
-            )
 
         data: dict[str, Any] = {
             "role_id": role_id,
@@ -608,8 +645,9 @@ class JGBSystemAPI:
         keyword = str(keyword).strip() if keyword is not None else ""   # 候選 refine 帶 int id 容錯
         if not role_id or not keyword:
             return self._degraded_response()
-        if self.use_mock:
-            return self._mock_team_members(role_id, keyword)
+        # transport-extension-full-coverage：已移除 `if self.use_mock: return
+        # self._mock_team_members(...)` 短路——mock 改由 `_send` 派發至
+        # `JGBMockTransport`（`team_members` 已遷入 `MIGRATED_ENDPOINTS`）。
         raw = await self._request(
             f"/api/external/v1/roles/{role_id}/members", {"keyword": keyword})
         data = (raw or {}).get("data")
@@ -629,92 +667,19 @@ class JGBSystemAPI:
         """
         if not role_id or not user_id:
             return self._degraded_response()
-        if self.use_mock:
-            return self._mock_member_permissions(role_id, user_id)
+        # transport-extension-full-coverage：已移除 `if self.use_mock: return
+        # self._mock_member_permissions(...)` 短路——理由同 `get_team_members`。
         raw = await self._request(
             f"/api/external/v1/roles/{role_id}/members/{user_id}/permissions", {})
         data = (raw or {}).get("data")
         return {"success": bool((raw or {}).get("success")),
                 "data": [data] if isinstance(data, dict) else []}
 
-    #: `TeamMemberApiController::ABILITY_WHITELIST`（:17-32）逐鍵 **32 個**。
-    #: production 一律回滿 32 鍵（成員取 `Role::getPermissionByCharacter` 的值，
-    #: 擁有者全 true）——舊 mock 只回 6 鍵，是 production 產不出來的形狀。
-    _ABILITY_WHITELIST: "tuple[str, ...]" = (
-        "show_estate", "show_owner_estate", "add_estate", "edit_estate",
-        "assign_estate", "export_estate",
-        "show_contract", "show_owner_contract", "add_contract", "edit_contract",
-        "send_contract_invitation", "sign_contract", "assign_contract", "export_contract",
-        "show_bill", "show_owner_bill", "add_bill", "receive_bill", "pay_bill", "export_bill",
-        "show_role", "edit_role", "show_role_team", "edit_role_team",
-        "edit_role_payment", "edit_role_subscription",
-        "show_repair", "show_owner_repair", "edit_repair", "export_repair",
-        "show_recharge_account", "edit_recharge_account",
-    )
-
-    #: 團隊成員替身（`members()`:113-183）。三種形狀刻意併存：
-    #: 擁有者（character_id=0、character_name='團隊擁有者'）／一般成員／
-    #: **character_name 為 None** 的成員（pivot 無 character_id，:135-137 的 null 分支）。
-    _TEAM_MEMBERS: "tuple[dict[str, Any], ...]" = (
-        {"member_user_id": 100, "character_id": 0, "character_name": "團隊擁有者",
-         "is_owner": True, "_email": "owner@example.com", "_name": "王小明"},
-        {"member_user_id": 292, "character_id": 1151, "character_name": "檢視者",
-         "is_owner": False, "_email": "viewer@example.com", "_name": "陳小美"},
-        {"member_user_id": 305, "character_id": None, "character_name": None,
-         "is_owner": False, "_email": "nochar@example.com", "_name": "李小華"},
-    )
-
-    def _mock_team_members(self, role_id: str, keyword: str) -> dict[str, Any]:
-        """`GET /roles/{role_id}/members`（`TeamMemberApiController@members`）。
-
-        照抄：`keyword` 必填（缺→400，adapter 已擋）；對 **email 與 name** 做
-        **不分大小寫的 contains** 比對，email 先判、命中即 `match_field='email'`，
-        否則才比 name（:161-170）；同一人只回一次；**不回 email／phone 明文**（:112）。
-        ⚠️ 舊 mock 不論 keyword 一律回同一列 ⇒ 「查無此成員」分支在替身上測不到。
-        """
-        kw = str(keyword).lower()
-        data = []
-        for m in self._TEAM_MEMBERS:
-            if kw in m["_email"].lower():
-                field = "email"
-            elif kw in m["_name"].lower():
-                field = "name"
-            else:
-                continue
-            data.append({"member_user_id": m["member_user_id"],
-                         "character_id": m["character_id"],
-                         "character_name": m["character_name"],
-                         "is_owner": m["is_owner"], "match_field": field})
-        return {"success": True, "data": data}
-
-    def _mock_member_permissions(self, role_id: str, user_id: str) -> dict[str, Any]:
-        """`GET /roles/{id}/members/{uid}/permissions`（同檔 `permissions()`:42-98）。
-
-        照抄回應形狀：`data = {role_id, user_id, is_member, is_owner, character, abilities}`
-        ——`character` 是 **{id, name, display} 物件**，production **沒有** `character_name` 這個鍵
-        （舊 mock 憑空給了它）；`abilities` 一律 32 鍵。
-        擁有者 → 全 true（:64-69）；查無此成員 → 404（我方折疊為 success:False）。
-        """
-        member = next((m for m in self._TEAM_MEMBERS
-                       if str(m["member_user_id"]) == str(user_id)), None)
-        if member is None:
-            return {"success": False, "data": []}
-
-        if member["is_owner"]:
-            abilities = {k: True for k in self._ABILITY_WHITELIST}
-            character = {"id": 0, "name": "團隊擁有者", "display": None}
-        else:
-            granted = {"show_owner_bill", "show_owner_contract", "show_owner_estate",
-                       "show_repair", "show_owner_repair"}
-            abilities = {k: (k in granted) for k in self._ABILITY_WHITELIST}
-            character = ({"id": member["character_id"], "name": member["character_name"],
-                          "display": None} if member["character_id"] else None)
-        return {"success": True, "data": [{
-            "role_id": int(role_id) if str(role_id).isdigit() else role_id,
-            "user_id": int(user_id) if str(user_id).isdigit() else user_id,
-            "is_member": True, "is_owner": member["is_owner"],
-            "character": character, "abilities": abilities,
-        }]}
+    # ⚠️ `_ABILITY_WHITELIST`／`_TEAM_MEMBERS`／`_mock_team_members`／
+    #    `_mock_member_permissions` 已移除（transport-extension-full-coverage）：
+    #    `get_team_members`／`get_member_permissions` 現一律經 `_send` →
+    #    `JGBMockTransport`，資料與能力白名單改由共用 `services/jgb/team_fixtures.py`
+    #    （`TeamMemberFixtureTable`／`ABILITY_WHITELIST`）供應，唯一來源見 fixture_store。
 
     async def get_bill_visibility(
         self,
@@ -783,45 +748,18 @@ class JGBSystemAPI:
         if not role_id:
             return self._degraded_response()
 
-        if self.use_mock:
-            # `formatMeter()` 逐鍵 15 欄（MeterApiController:152-172）。三列刻意涵蓋
-            # production 的兩個衍生規則：
-            #   · meter_type = manufacturer ∈ {Miezo, DAE, SkyWatch} ? cloud : manual（:157/:162）
-            #   · is_poweron 的**三態**：-1（從未連線）→ **null**，0/1 → false/true（:167）
-            #     ——舊 mock 只有 True，null 這一態在替身上從來測不到。
-            rows = [
-                {"id": 501, "estate_id": 9001, "estate_name": "海大質感獨立套房",
-                 "name": "3F 分電表", "manufacturer": "DAE", "meter_type": "cloud",
-                 "is_online": True, "is_topup": True, "enable_topup": True,
-                 "balance": 350.0, "available_meter": 87.5, "current_reading": 1234.5,
-                 "is_poweron": True, "is_low_battery": False,
-                 "synced_at": "2026-07-04 10:35:00"},
-                {"id": 502, "estate_id": 9002, "estate_name": "新北新莊-富貴500-14B05",
-                 "name": "總電表", "manufacturer": "Panasonic", "meter_type": "manual",
-                 "is_online": False, "is_topup": False, "enable_topup": False,
-                 "balance": 0.0, "available_meter": 0.0, "current_reading": 8890.0,
-                 "is_poweron": None, "is_low_battery": True,
-                 "synced_at": "2026-06-30 08:00:00"},
-                {"id": 503, "estate_id": None, "estate_name": None,
-                 "name": "未綁定物件的電表", "manufacturer": "SkyWatch",
-                 "meter_type": "cloud",
-                 "is_online": True, "is_topup": False, "enable_topup": True,
-                 "balance": 12.5, "available_meter": 3.0, "current_reading": 42.0,
-                 "is_poweron": False, "is_low_battery": False,
-                 "synced_at": "2026-07-04 10:30:00"},
-            ]
-            # production 以 iot_estate 中間表過濾 estate_id（:31-39）——未綁定者查不到。
-            if estate_id:
-                rows = [m for m in rows if str(m.get("estate_id")) == str(estate_id)]
-        else:
-            params: dict[str, Any] = {"role_id": role_id, "per_page": 200}
-            if estate_id:
-                params["estate_id"] = estate_id
-            raw = await self._request("/api/external/v1/meters", params)
-            if not (raw or {}).get("success"):
-                return {"success": False, "data": []}
-            data = raw.get("data")
-            rows = data if isinstance(data, list) else []
+        # transport-extension-full-coverage：已移除 `if self.use_mock: rows = [...]`
+        # 硬編分支——mock 改由 `_send` 派發至 `JGBMockTransport`（`meters` 已遷入
+        # `MIGRATED_ENDPOINTS`，資料來源為共用 `MeterFixtureTable`，三列涵蓋
+        # `meter_type`／`is_poweron` 三態等既有保真斷言）。
+        params: dict[str, Any] = {"role_id": role_id, "per_page": 200}
+        if estate_id:
+            params["estate_id"] = estate_id
+        raw = await self._request("/api/external/v1/meters", params)
+        if not (raw or {}).get("success"):
+            return {"success": False, "data": []}
+        data = raw.get("data")
+        rows = data if isinstance(data, list) else []
 
         kw = str(keyword).strip() if keyword is not None else ""   # 候選 refine 帶 int id 容錯
         if kw:
@@ -861,19 +799,17 @@ class JGBSystemAPI:
         """
         from services.jgb.estates import estate_status_zh   # 延遲匯入（分層慣例）
 
-        if self.use_mock:
-            # 與 get_estates 共用同一份 fixture（含 is_open=1 硬過濾）——
-            # 舊版是一列寫死的手抄資料，永遠有結果，sentinel 分支測不到。
-            rows = [project_estate(e) for e in self._estate_fixtures.visible_rows()]
-        else:
-            params: dict[str, Any] = {"per_page": 200}
-            if role_id:
-                params["role_id"] = role_id
-            raw = await self._request("/api/external/v1/estates", params)
-            if not (raw or {}).get("success"):
-                return {"success": False, "data": []}
-            data = raw.get("data")
-            rows = data if isinstance(data, list) else []
+        # transport-extension-full-coverage：已移除 `if self.use_mock: rows = [...]`
+        # 分支——mock 改由 `_send` 派發至 `JGBMockTransport`（`estates` 已遷入
+        # `self._estate_fixtures` 實例，非兩份互不同步的拷貝）。
+        params: dict[str, Any] = {"per_page": 200}
+        if role_id:
+            params["role_id"] = role_id
+        raw = await self._request("/api/external/v1/estates", params)
+        if not (raw or {}).get("success"):
+            return {"success": False, "data": []}
+        data = raw.get("data")
+        rows = data if isinstance(data, list) else []
 
         kw = str(keyword).strip() if keyword is not None else ""   # int 容錯（候選 refine 先例）
         if kw:
@@ -908,21 +844,10 @@ class JGBSystemAPI:
         if not eid or eid == "None" or not eid.isdigit():
             return {"success": False, "data": []}
 
-        if self.use_mock:
-            # `show()` 同樣硬過濾 active=1／is_open=1，不在其中即 404（:121-128）。
-            row = self._estate_fixtures.by_id(int(eid))
-            if row is None:
-                return {"success": False, "data": []}
-            detail = project_estate(row)
-            # `formatEstate($estate, true)` 才有的四個欄位（:280-286）；
-            # fixture 未賦值故為 None（皆為可空欄位），不假造內容。
-            detail.update({"description": None, "traffic": None,
-                           "nearby": None, "notes": None})
-            # ⚠️ production **一律列出 16 個必填欄位**；舊 mock 的 `fields: []`
-            #    是 production 產不出來的形狀。
-            detail["contract_required_fields"] = build_contract_required_fields()
-            return {"success": True, "data": [detail]}
-
+        # transport-extension-full-coverage：已移除 `if self.use_mock: ...` 分支——
+        # mock 改由 `_send` 派發至 `JGBMockTransport`（`estate_detail` 已遷入
+        # `MIGRATED_ENDPOINTS`，`show()` 語義（is_open=1 硬過濾、16 欄
+        # contract_required_fields）現由 `JGBMockTransport._estates_show` 提供）。
         raw = await self._request(f"/api/external/v1/estates/{eid}", {})
         if not (raw or {}).get("success"):
             return {"success": False, "data": []}
@@ -1013,147 +938,6 @@ class JGBSystemAPI:
     # ------------------------------------------------------------------
     # Mock implementations — 對齊 jgb2 External API 真實回應結構
     # ------------------------------------------------------------------
-
-    def _mock_get_bills(
-        self,
-        role_id: str,
-        user_id: str,
-        month: Optional[str] = None,
-        status: Optional[str] = None,
-    ) -> dict[str, Any]:
-        """對齊 BillApiController@index"""
-        logger.info(f"[MOCK] get_bills: role_id={role_id}, user_id={user_id}")
-        return {
-            "success": True,
-            "mapping": {
-                "status": {
-                    "1": "待發送",
-                    "2": "待繳費",
-                    "8": "待對帳",
-                    "16": "已繳費",
-                    "32": "排定發送",
-                    "64": "已失效",
-                },
-                "invoice_status": {
-                    "0": "未開發票",
-                    "1": "已開發票",
-                    "2": "發票異常",
-                },
-                "type": {
-                    "1": "一般租金",
-                    "2": "點退",
-                    "3": "新增帳單",
-                    "4": "罰款",
-                    "5": "儲值",
-                    "6": "押金設算息",
-                },
-            },
-            "data": [
-                {
-                    "id": 12345,
-                    "contract_id": 678,
-                    "estate_id": 456,
-                    "type": 1,
-                    "category": 3,
-                    "bit_status": 2,
-                    "title": "2026年4月租金",
-                    "sub_title": "2026/04/01 ~ 2026/04/30",
-                    "currency": "TWD",
-                    "total": 25000.00,
-                    "final_total": 25000.00,
-                    "rate": 1.0,
-                    "date_start": 20260401,
-                    "date_end": 20260430,
-                    "date_expire": 20260405,
-                    "date_expire_note": None,
-                    "cycle": 1,
-                    "days": 30,
-                    "is_auto_pay": False,
-                    "is_paid_on_time": None,
-                    "online_payment_method": "newebpay",
-                    "online_payment_action": "atm",
-                    "payment_id": None,
-                    "invoice_status": 0,
-                    "invoice_number": None,
-                    "ready_at": "2026-03-25 10:30:00",
-                    "pay_at": None,
-                    "complete_at": None,
-                    "created_at": "2026-03-25 10:30:00",
-                    "updated_at": "2026-04-01 00:00:00",
-                },
-                {
-                    "id": 12340,
-                    "contract_id": 678,
-                    "estate_id": 456,
-                    "type": 1,
-                    "category": 3,
-                    "bit_status": 16,
-                    "title": "2026年3月租金",
-                    "sub_title": "2026/03/01 ~ 2026/03/31",
-                    "currency": "TWD",
-                    "total": 25000.00,
-                    "final_total": 25000.00,
-                    "rate": 1.0,
-                    "date_start": 20260301,
-                    "date_end": 20260331,
-                    "date_expire": 20260305,
-                    "date_expire_note": None,
-                    "cycle": 1,
-                    "days": 31,
-                    "is_auto_pay": False,
-                    "is_paid_on_time": 1,
-                    "online_payment_method": "newebpay",
-                    "online_payment_action": "credit_card",
-                    "payment_id": 9876,
-                    "invoice_status": 1,
-                    "invoice_number": "AZ00000120",
-                    "ready_at": "2026-02-25 10:30:00",
-                    "pay_at": "2026-03-03 14:00:00",
-                    "complete_at": "2026-03-03 15:00:00",
-                    "created_at": "2026-02-25 10:30:00",
-                    "updated_at": "2026-03-03 15:00:00",
-                },
-                {
-                    "id": 12350,
-                    "contract_id": 678,
-                    "estate_id": 456,
-                    "type": 1,
-                    "category": 3,
-                    "bit_status": 64,
-                    "title": "2025年12月租金",
-                    "sub_title": "2025/12/01 ~ 2025/12/31",
-                    "currency": "TWD",
-                    "total": 25000.00,
-                    "final_total": 25000.00,
-                    "rate": 1.0,
-                    "date_start": 20251201,
-                    "date_end": 20251231,
-                    "date_expire": 20251205,
-                    "date_expire_note": None,
-                    "cycle": 1,
-                    "days": 31,
-                    "is_auto_pay": False,
-                    "is_paid_on_time": None,
-                    "online_payment_method": "newebpay",
-                    "online_payment_action": "atm",
-                    "payment_id": None,
-                    "invoice_status": 0,
-                    "invoice_number": None,
-                    "ready_at": "2025-11-25 10:30:00",
-                    "pay_at": None,
-                    "complete_at": None,
-                    "created_at": "2025-11-25 10:30:00",
-                    "updated_at": "2025-12-06 00:00:00",
-                },
-            ],
-            "pagination": {
-                "current_page": 1,
-                "per_page": 50,
-                "total": 3,
-                "total_pages": 1,
-                "has_more": False,
-            },
-        }
 
     #: 發票 fixture（`formatInvoice` 逐鍵，26 欄）——**已對照 jgb2 原始碼**（2026-08-25）。
     #: `App\Invoice` **無 $casts、無 accessor**，故所有欄位都是原始欄位值；
@@ -1273,113 +1057,6 @@ class JGBSystemAPI:
             "pagination": {
                 "current_page": page, "per_page": size, "total": total,
                 "total_pages": total_pages, "has_more": page < total_pages,
-            },
-        }
-
-    def _mock_get_contracts(
-        self,
-        role_id: str,
-        user_id: str,
-        status: Optional[str] = None,
-    ) -> dict[str, Any]:
-        """對齊 ContractApiController@index（含 d2b0117 診斷欄位）"""
-        logger.info(f"[MOCK] get_contracts: role_id={role_id}, user_id={user_id}")
-        return {
-            "success": True,
-            "mapping": {
-                "bit_status": {
-                    "1": "已建立", "2": "已發送簽約邀請",
-                    "4": "租客已簽名", "8": "雙方簽名完成",
-                    "16": "已發送點交", "32": "租客同意點交",
-                    "64": "已發送點退", "128": "租客同意點退",
-                    "256": "提前解約中", "512": "提前解約已確認",
-                    "1024": "歷史合約", "2048": "歷史完成",
-                },
-            },
-            "data": [
-                {
-                    "id": 678,
-                    "status": 5,
-                    "bit_status": 47,
-                    "active": 1,
-                    "is_history": 0,
-                    "is_history_done": 0,
-                    "estate_id": 456,
-                    "title": "信義區套房A",
-                    "city": "台北市",
-                    "district": "信義區",
-                    "address": "信義路五段7號",
-                    "currency": "TWD",
-                    "rent": 25000.00,
-                    "deposit_amount": 50000.00,
-                    "date_start": 20260101,
-                    "date_end": 20261231,
-                    "allow_early_termination": True,
-                    "early_termination_days": 30,
-                    "is_auto_generate_invoice": 0,
-                    "to_user_connect": True,
-                    "is_tenant_registered": True,
-                    "to_user_phone": "0912345678",
-                    "to_user_email": "tenant@example.com",
-                    "property_purpose_key": 1,
-                    "father_id": None,
-                    "early_termination_wish_date_end": None,
-                    # 診斷用：滯納金設定
-                    "enable_late_fee": 1,
-                    "calc_late_fee_buffer_days": 7,
-                    "late_fee_percent": 5.0,
-                    # 診斷用：提前解約違約金設定
-                    "early_termination_penalty_type": 1,
-                    "early_termination_penalty": 1.0,
-                    "early_termination_penalty_amount": 25000.00,
-                    "early_termination_notice_date": None,
-                    "created_at": "2025-12-10 09:00:00",
-                    "updated_at": "2026-01-01 00:00:00",
-                },
-                {
-                    "id": 600,
-                    "status": 10,
-                    "bit_status": 3087,
-                    "active": 1,
-                    "is_history": 1,
-                    "is_history_done": 1,
-                    "estate_id": 400,
-                    "title": "中山區雅房B",
-                    "city": "台北市",
-                    "district": "中山區",
-                    "address": "中山北路二段10號",
-                    "currency": "TWD",
-                    "rent": 18000.00,
-                    "deposit_amount": 36000.00,
-                    "date_start": 20250101,
-                    "date_end": 20251231,
-                    "allow_early_termination": False,
-                    "early_termination_days": 0,
-                    "is_auto_generate_invoice": 0,
-                    "to_user_connect": True,
-                    "is_tenant_registered": True,
-                    "to_user_phone": "0923456789",
-                    "to_user_email": "tenant2@example.com",
-                    "property_purpose_key": 1,
-                    "father_id": None,
-                    "early_termination_wish_date_end": None,
-                    "enable_late_fee": 0,
-                    "calc_late_fee_buffer_days": 0,
-                    "late_fee_percent": 0.0,
-                    "early_termination_penalty_type": None,
-                    "early_termination_penalty": 0.0,
-                    "early_termination_penalty_amount": 0.0,
-                    "early_termination_notice_date": None,
-                    "created_at": "2024-12-05 09:00:00",
-                    "updated_at": "2025-12-31 23:59:59",
-                },
-            ],
-            "pagination": {
-                "current_page": 1,
-                "per_page": 50,
-                "total": 2,
-                "total_pages": 1,
-                "has_more": False,
             },
         }
 
@@ -1552,144 +1229,6 @@ class JGBSystemAPI:
             },
         }
 
-    def _mock_get_repairs(
-        self,
-        role_id: str,
-        user_id: str = None,
-        status: Optional[int] = None,
-        estate_id: Optional[int] = None,
-        category_id: Optional[int] = None,
-        is_urgent: Optional[int] = None,
-        keyword: Optional[str] = None,
-    ) -> dict[str, Any]:
-        """`GET /repairs`（`RepairApiController@index`）——**已對照 jgb2 原始碼**。
-
-        照抄：`role_id` 必填（:25）；恆定 `role_id` 與 `active=1`（:47-48）；
-        篩選 `status`／`estate_id`／`category_id`／`is_urgent`（→ **emergency_status**，:64）／
-        `keyword`（`estate_title` 等欄位 LIKE，:67-75）；分頁 50／200。
-        ⚠️ 舊 mock **所有篩選參數都忽略**、pagination 寫死。投影 38 鍵（formatRepair）本來就對。
-        ⚠️ `is_urgent` 對映的是 `emergency_status`——**這個欄位的語義曾經反轉過**
-        （見 conversational-repair 的地雷紀錄），不可望文生義。
-        """
-        logger.info(f"[MOCK] get_repairs: role_id={role_id}, user_id={user_id}")
-        rows = [
-
-            {
-                "id": 3001,
-                "status": 16,
-                "emergency_status": 1,  # 非緊急（漏水已完成修繕）
-                "estate_id": 456,
-                "estate_title": "信義區套房A",
-                "estate_full_address": "台北市信義區信義路五段7號3樓",
-                "estate_room_number": "3F-1",
-                "contract_id": 678,
-                "category_id": 2,
-                "category_name": "衛浴維修",
-                "item_id": 202,
-                "item_name": "水龍頭",
-                "broken_reason": "漏水",
-                "broken_note": "廚房水龍頭持續滴水",
-                "broken_photos": [],
-                "currency": "TWD",
-                "total": 3500.00,
-                "manufacturer_name": "信義水電行",
-                "manufacturer_phone": "02-2345-6789",
-                "user_id": 1001,
-                "user_name": "張管理",
-                "user_phone": "0911-111-111",
-                "user_email": "manager@example.com",
-                "to_user_id": int(user_id) if user_id else 2001,
-                "to_user_name": "王小明",
-                "to_user_phone": "0912-345-678",
-                "to_user_email": "tenant@example.com",
-                "agent_user_id": None,
-                "agent_name": None,
-                "user_note": "已完成修繕",
-                "to_user_note": None,
-                "apply_at": "20260405090000",
-                "assign_at": "20260407100000",
-                "complete_at": "20260412140000",
-                "finish_at": None,
-                "archive_at": None,
-                "created_at": "2026-04-05 09:00:00",
-                "updated_at": "2026-04-12 14:00:00",
-            },
-            {
-                "id": 3002,
-                "status": 1,
-                "emergency_status": 2,  # 緊急（冷氣不冷、天氣熱盼盡快）
-                "estate_id": 456,
-                "estate_title": "信義區套房A",
-                "estate_full_address": "台北市信義區信義路五段7號3樓",
-                "estate_room_number": "3F-1",
-                "contract_id": 678,
-                "category_id": 1,
-                "category_name": "家電維修",
-                "item_id": 101,
-                "item_name": "冷氣機",
-                "broken_reason": "不冷",
-                "broken_note": "開機後完全沒有冷風，已檢查過濾網",
-                "broken_photos": [],
-                "currency": "TWD",
-                "total": None,
-                "manufacturer_name": None,
-                "manufacturer_phone": None,
-                "user_id": 1001,
-                "user_name": "張管理",
-                "user_phone": "0911-111-111",
-                "user_email": "manager@example.com",
-                "to_user_id": int(user_id) if user_id else 2001,
-                "to_user_name": "王小明",
-                "to_user_phone": "0912-345-678",
-                "to_user_email": "tenant@example.com",
-                "agent_user_id": None,
-                "agent_name": None,
-                "user_note": None,
-                "to_user_note": "希望能盡快處理，天氣很熱",
-                "apply_at": "20260415140000",
-                "assign_at": None,
-                "complete_at": None,
-                "finish_at": None,
-                "archive_at": None,
-                "created_at": "2026-04-15 14:00:00",
-                "updated_at": "2026-04-15 14:00:00",
-            },
-        ]
-        if status not in (None, ""):
-            rows = [r for r in rows if r["status"] == int(status)]
-        if estate_id not in (None, ""):
-            rows = [r for r in rows if r["estate_id"] == int(estate_id)]
-        if category_id not in (None, ""):
-            rows = [r for r in rows if r["category_id"] == int(category_id)]
-        if is_urgent not in (None, ""):
-            rows = [r for r in rows if r["emergency_status"] == int(is_urgent)]
-        if keyword:
-            kw = str(keyword)
-            rows = [r for r in rows if kw in str(r.get("estate_title") or "")]
-        total = len(rows)
-        return {
-            "success": True,
-            "mapping": {
-                "status": {
-                    "1": "申請中",
-                    "2": "安排修繕",
-                    "16": "完成修繕",
-                    "32": "結單",
-                    "64": "封存",
-                },
-                "emergency_status": {
-                    "1": "非緊急",
-                    "2": "緊急",
-                },
-            },
-            "data": rows,
-            "pagination": {
-                "current_page": 1, "per_page": 50, "total": total,
-                "total_pages": -(-total // 50) if total > 0 else 0,
-                "has_more": False,
-            },
-        }
-
     def _mock_get_tenant_summary(
         self,
         role_id: str,
@@ -1754,298 +1293,6 @@ class JGBSystemAPI:
             },
         }
 
-    def _mock_get_estates(
-        self,
-        role_id: str,
-        keyword: str = "",
-        per_page: int = 10,
-        **params: Any,
-    ) -> dict[str, Any]:
-        """`GET /estates`（`EstateApiController@index`）——**已對照 jgb2 原始碼**（2026-08-25）。
-
-        逐條照抄 production，包含它的怪癖：
-
-        * 恆定 where `active=1` **且 `is_open=1`**（:52-53）——只回**招租刊登中**的物件。
-          舊版 mock 沒有這道過濾 ⇒ 會回 production 根本查不到的物件；
-          「查無＝非刊登中」那條 sentinel 口徑因此在替身上從未被走到。
-        * `role_id` 是 **applyFilters 的一般篩選**（:184-186），不是授權——寫錯就換一組結果集。
-          舊版 mock 把 role_id 直接寫進每一列 ⇒ **任何 role 都命中**（過度寬鬆）。
-        * `keyword` 只比 `title`（:189-192），**不含 address**；production 先跳脫
-          `%`／`_` 再 LIKE，故使用者輸入的萬用字元是字面值——Python 的 `in` 同語義。
-        * `use_for` 不在 residential／business／parking_space 三者內 → **靜默忽略**（:149-155）。
-        * 排序白名單 id／created_at／updated_at／rent／size，其餘**回退 `updated_at`**（:60-66）；
-          方向非 asc 一律 desc。
-        * 分頁：預設 50、上限 200；`total_pages = ceil(total/per_page)`（**不特判 total=0**，
-          結果同為 0）；`has_more = page < total_pages`。
-        * `mapping`：production 回 `{countries, building}`，`countries` 由 countrys／citys／
-          districts 三張表組出（:490-536）。**本替身不模擬**，故不輸出該鍵（沿用舊行為，
-          消費端目前無人讀取——見 estates-source-audit.md「未涵蓋」）。
-        """
-        logger.info(f"[MOCK] get_estates: role_id={role_id}, keyword={keyword}")
-        rows = self._estate_fixtures.visible_rows()
-
-        if role_id:
-            rows = [e for e in rows if e.get("role_id") == int(role_id)]
-        if params.get("user_id"):
-            rows = [e for e in rows if e.get("user_id") == int(params["user_id"])]
-        if params.get("status") not in (None, ""):
-            rows = [e for e in rows if e.get("status") == int(params["status"])]
-        use_for = params.get("use_for")
-        if use_for in ("residential", "business", "parking_space"):
-            rows = [e for e in rows if e.get("use_for") == use_for]
-        for key in ("city_id", "district_id"):
-            if params.get(key) not in (None, ""):
-                rows = [e for e in rows if e.get(key) == int(params[key])]
-        if params.get("rent_min") not in (None, ""):
-            rows = [e for e in rows if (e.get("rent") or 0) >= int(params["rent_min"])]
-        if params.get("rent_max") not in (None, ""):
-            rows = [e for e in rows if (e.get("rent") or 0) <= int(params["rent_max"])]
-        if keyword:
-            rows = [e for e in rows if str(keyword) in str(e.get("title") or "")]
-
-        sort_by = params.get("sort_by")
-        if sort_by not in ALLOWED_SORT_FIELDS:
-            sort_by = "updated_at"
-        descending = str(params.get("sort_direction", "desc")).lower() != "asc"
-        rows.sort(key=lambda e: (e.get(sort_by) is None, e.get(sort_by)),
-                  reverse=descending)
-
-        page = max(1, int(params.get("page", 1) or 1))
-        size = min(ESTATE_MAX_PER_PAGE, max(1, int(per_page or ESTATE_DEFAULT_PER_PAGE)))
-        total = len(rows)
-        total_pages = -(-total // size)
-        offset = (page - 1) * size
-        return {
-            "success": True,
-            "data": [project_estate(e) for e in rows[offset:offset + size]],
-            "pagination": {
-                "current_page": page, "per_page": size, "total": total,
-                "total_pages": total_pages, "has_more": page < total_pages,
-            },
-        }
-
-    def _mock_get_repair_categories(self) -> dict[str, Any]:
-        """對齊 RepairApiController@categories"""
-        logger.info("[MOCK] get_repair_categories")
-        return {
-            "success": True,
-            "data": [
-                {
-                    "id": 1,
-                    "name": "家電維修",
-                    "items": [
-                        {
-                            "id": 101,
-                            "name": "冷氣機",
-                            "broken_reasons": ["不冷", "漏水", "異音", "無法開機"],
-                        },
-                        {
-                            "id": 102,
-                            "name": "洗衣機",
-                            "broken_reasons": ["不轉", "漏水", "異音"],
-                        },
-                        {
-                            "id": 103,
-                            "name": "冰箱",
-                            "broken_reasons": ["不冷", "異音", "結霜"],
-                        },
-                    ],
-                },
-                {
-                    "id": 2,
-                    "name": "衛浴維修",
-                    "items": [
-                        {
-                            "id": 201,
-                            "name": "馬桶",
-                            "broken_reasons": ["堵塞", "漏水", "沖水異常"],
-                        },
-                        {
-                            "id": 202,
-                            "name": "水龍頭",
-                            "broken_reasons": ["漏水", "無法關閉", "水量不足"],
-                        },
-                    ],
-                },
-                {
-                    "id": 3,
-                    "name": "結構修繕",
-                    "items": [
-                        {
-                            "id": 301,
-                            "name": "牆壁",
-                            "broken_reasons": ["裂縫", "滲水", "壁癌"],
-                        },
-                        {
-                            "id": 302,
-                            "name": "地板",
-                            "broken_reasons": ["隆起", "破損", "漏水"],
-                        },
-                        {
-                            "id": 303,
-                            "name": "門窗",
-                            "broken_reasons": ["無法關閉", "玻璃破損", "鎖具故障"],
-                        },
-                    ],
-                },
-            ],
-        }
-
-    def _mock_create_repair(
-        self,
-        role_id: str,
-        estate_id: int,
-        category_id: int,
-        item_id: int,
-        broken_reason: str,
-        broken_note: str = "",
-        emergency_status: int = 1,
-    ) -> dict[str, Any]:
-        """對齊 RepairApiController@store"""
-        logger.info(
-            f"[MOCK] create_repair: role_id={role_id}, estate_id={estate_id}, "
-            f"category_id={category_id}, item_id={item_id}"
-        )
-        return {
-            "success": True,
-            "data": {
-                "id": 12346,
-                "status": 1,
-                "emergency_status": emergency_status,
-                "estate_id": estate_id,
-                "estate_title": "信義區精緻套房",
-                "estate_full_address": "台北市信義區信義路五段7號3樓",
-                "estate_room_number": "3F-1",
-                "contract_id": None,
-                "category_id": category_id,
-                "category_name": "家電維修",
-                "item_id": item_id,
-                "item_name": "冷氣機",
-                "broken_reason": broken_reason,
-                "broken_note": broken_note,
-                "broken_photos": [],
-                "currency": "TWD",
-                "total": None,
-                "manufacturer_name": None,
-                "manufacturer_phone": None,
-                "user_id": 1001,
-                "user_name": "張管理",
-                "user_phone": "0911-111-111",
-                "user_email": "manager@example.com",
-                "to_user_id": None,
-                "to_user_name": None,
-                "to_user_phone": None,
-                "to_user_email": None,
-                "agent_user_id": None,
-                "agent_name": None,
-                "user_note": None,
-                "to_user_note": None,
-                "apply_at": "20260422190000",
-                "assign_at": None,
-                "complete_at": None,
-                "finish_at": None,
-                "archive_at": None,
-                "created_at": "2026-04-22 19:00:00",
-                "updated_at": "2026-04-22 19:00:00",
-            },
-        }
-
-    # ------------------------------------------------------------------
-    # v1.1 Mock implementations
-    # ------------------------------------------------------------------
-
-    def _mock_get_bill_detail(
-        self, role_id: str, bill_id: int
-    ) -> dict[str, Any]:
-        """對齊 BillApiController@show"""
-        logger.info(f"[MOCK] get_bill_detail: role_id={role_id}, bill_id={bill_id}")
-        return {
-            "success": True,
-            "mapping": {
-                "status": {
-                    "1": "待發送", "2": "待繳費", "8": "待對帳",
-                    "16": "已繳費", "32": "排定發送", "64": "已失效",
-                },
-                "type": {
-                    "1": "一般租金", "2": "點退", "3": "新增帳單",
-                    "4": "罰款", "5": "儲值", "6": "押金設算息",
-                },
-                "unit_type": {
-                    "": "無單位",
-                    "degree": "度",
-                    "day": "日",
-                    "month": "月",
-                },
-            },
-            "data": {
-                "id": bill_id,
-                "contract_id": 678,
-                "estate_id": 456,
-                "type": 1,
-                "category": 3,
-                "bit_status": 2,
-                "title": "2026年4月租金",
-                "sub_title": "2026/04/01 ~ 2026/04/30",
-                "currency": "TWD",
-                "total": 25000.00,
-                "final_total": 25000.00,
-                "rate": 1.0,
-                "date_start": 20260401,
-                "date_end": 20260430,
-                "date_expire": 20260405,
-                "date_expire_note": None,
-                "cycle": 1,
-                "days": 30,
-                "is_auto_pay": False,
-                "is_paid_on_time": None,
-                "online_payment_method": "newebpay",
-                "online_payment_action": "atm",
-                "payment_id": None,
-                "invoice_status": 0,
-                "invoice_number": None,
-                "ready_at": "2026-03-25 10:30:00",
-                "pay_at": None,
-                "complete_at": None,
-                "pay_info": {
-                    "type": "online",
-                    "manufacturer": "newebpay",
-                    "action": "atm",
-                    "expire_ymd": "2026/04/10",
-                    "atm_info": {
-                        "bank_code": "004",
-                        "bank_name": "台灣銀行",
-                        "atm": "9103522178643201",
-                        "expire": "2026-04-10",
-                    },
-                },
-                "details": [
-                    {
-                        "id": 101,
-                        "label": "租金",
-                        "unit_price": 25000.00,
-                        "unit_type": None,
-                        "unit_count": 1.00,
-                        "measurement_before": None,
-                        "measurement_after": None,
-                        "total_price": 25000.00,
-                        "active": 1,
-                    },
-                    {
-                        "id": 102,
-                        "label": "電費",
-                        "unit_price": 5.50,
-                        "unit_type": "degree",
-                        "unit_count": 120.00,
-                        "measurement_before": 1000.00,
-                        "measurement_after": 1120.00,
-                        "total_price": 660.00,
-                        "active": 1,
-                    },
-                ],
-                "created_at": "2026-03-25T10:30:00+08:00",
-                "updated_at": "2026-04-01T00:00:00+08:00",
-            },
-        }
 
     def _mock_get_payment_logs(
         self, role_id: str, payment_id: Optional[int] = None,

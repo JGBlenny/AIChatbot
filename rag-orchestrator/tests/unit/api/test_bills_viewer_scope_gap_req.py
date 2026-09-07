@@ -30,11 +30,52 @@ def _transport():
 
 
 @pytest.mark.req("face-exit-before-grounding:1")
-def test_viewer_user_id_is_refused_not_ignored():
-    """替身模擬不了權限圈定 → raise；**不得**忽略參數後回一組看起來像答案的資料。"""
+def test_viewer_user_id_is_refused_when_malformed():
+    """`viewer_user_id` 非合法整數 → raise（不得忽略後回資料）。"""
     with pytest.raises(UnsupportedMockParameterError):
         _run(_transport().send("GET", PATH,
                                params={"role_id": "R1", "viewer_user_id": "U9", "bill_id": "900001"}))
+
+
+@pytest.mark.req("face-exit-before-grounding:1")
+def test_viewer_user_id_filters_by_fixture_declared_visibility():
+    """transport-extension-full-coverage（2026-09-08）：fixture 宣告過可見性後，
+    `viewer_user_id` 從「一律 raise」改為**依宣告過濾**——900001 宣告可見 [9001, 100]，
+    9001 看得到、9002 看不到（過濾後空集，非例外）。
+    """
+    r_visible = _run(_transport().send(
+        "GET", PATH, params={"role_id": "R1", "viewer_user_id": "9001", "bill_id": "900001"}))
+    assert r_visible["success"] is True
+    assert [r["id"] for r in r_visible["data"]] == [900001]
+
+    r_hidden = _run(_transport().send(
+        "GET", PATH, params={"role_id": "R1", "viewer_user_id": "9002", "bill_id": "900001"}))
+    assert r_hidden["success"] is True
+    assert r_hidden["data"] == []
+
+
+@pytest.mark.req("face-exit-before-grounding:1")
+def test_viewer_user_id_raises_for_undeclared_bill():
+    """**未宣告**可見性的帳單仍 raise——不得因為其他帳單已宣告就放寬誠實紀律。
+
+    以本測試自建的 fixture 表模擬「有一筆未宣告」的狀態，
+    不動 `demo_vendor4.json`（三筆現行帳單皆已宣告，是刻意的 demo 資料決策）。
+    """
+    class _PartiallyDeclaredBills:
+        def rows(self):
+            return [
+                {**BillFixtureTable().by_id(900001)},          # type: ignore[dict-item]
+            ]
+
+        def by_id(self, bill_id):
+            return self.rows()[0] if bill_id == 900001 else None
+
+        def visible_to(self, bill_id):
+            return None   # 刻意：未宣告
+
+    with pytest.raises(UnsupportedMockParameterError):
+        _run(JGBMockTransport(_PartiallyDeclaredBills()).send(
+            "GET", PATH, params={"role_id": "R1", "viewer_user_id": "9001"}))
 
 
 @pytest.mark.req("face-exit-before-grounding:1")
@@ -64,8 +105,11 @@ def test_gap_b1_user_id_is_not_filtered_yet():
     """**GAP-B1（已登記缺口，非已證行為）**：`user_id` 目前不過濾。
 
     production：`whereHas('belongContract', to_user_id = user_id AND active = 1)`。
-    替身的帳單掛在合約 700100／700200，合約 fixture 只有 678／600，兩個宇宙不連通；
-    忠實實作會讓所有租客情境變 0 筆，而修法必須動 C4a 已凍結的 fixture 值。
+    ⚠️ **跨域連貫修正（2026-09-08）後現況更新**：帳單已改指向既有 contract
+    fixture 的真實 id（678／600，見 `demo_vendor4.json`），三個 fixture 宇宙
+    不再互不連通——但這**只解了資料連貫**，`_bills_index`／`get_bills` 本身
+    仍未實作 `to_user_id` 過濾邏輯，`user_id` 參數依舊被忽略（GAP-B1 本體，
+    邏輯缺口，非資料缺口，屬另一個需要授權的 slice）。
     故此處鎖住**現況**並標明它是缺口——任何人讀到這條測試綠燈，
     **不得**推論「帳單的租客過濾已驗」。
     """

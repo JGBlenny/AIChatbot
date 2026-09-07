@@ -116,11 +116,13 @@ def test_resolver_does_not_consult_migration_state(monkeypatch):
     ⚠️ 4.3 加入 `MIGRATED_ENDPOINTS` 後，本測試由「該常數尚未存在」改為
     **行為證明**：未列入 admission set 的 endpoint 仍必須能被正確 resolve。
     （同一條 invariant 在 `test_transport_migration_gate_req.py` 亦有對應斷言。）
+    sentinel 端點改用 `invoices`（2026-09-08 transport-extension-full-coverage：
+    `repairs` 已遷入 `MIGRATED_ENDPOINTS`，不再是「刻意不入」的樣本）。
     """
     import services.jgb.transport as t
 
     monkeypatch.setattr(t, "ROUTES", (
-        ("GET", "/api/external/v1/repairs", "repairs"),
+        ("GET", "/api/external/v1/invoices", "invoices"),
     ))
-    assert "repairs" not in t.MIGRATED_ENDPOINTS
-    assert t.resolve_endpoint("GET", "/api/external/v1/repairs") == "repairs"
+    assert "invoices" not in t.MIGRATED_ENDPOINTS
+    assert t.resolve_endpoint("GET", "/api/external/v1/invoices") == "invoices"

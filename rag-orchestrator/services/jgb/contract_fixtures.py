@@ -12,6 +12,8 @@
 
 from typing import Any, Optional
 
+from services.jgb.fixture_store import demo_rows, demo_visibility
+
 #: 現行方法級 mock 所使用的欄位集（見上方保真度聲明）
 EXTERNAL_CONTRACT_FIELDS: "frozenset[str]" = frozenset({
     "id", "status", "bit_status", "active", "is_history", "is_history_done",
@@ -64,55 +66,6 @@ class ContractFixtureTable:
     釘住的 `[678, 600]` 差異矩陣）。
     """
 
-    _ROWS: "tuple[dict[str, Any], ...]" = (
-        {
-            "id": 678, "to_user_id": 9001, "status": 5, "bit_status": 47, "active": 1,
-            "is_history": 0, "is_history_done": 0, "estate_id": 456,
-            "title": "信義區套房A", "city": "台北市", "district": "信義區",
-            "address": "信義路五段7號", "currency": "TWD",
-            "rent": 25000.00, "deposit_amount": 50000.00,
-            "date_start": 20260101, "date_end": 20261231,
-            "allow_early_termination": True, "early_termination_days": 30,
-            "is_auto_generate_invoice": 0, "to_user_connect": True,
-            "is_tenant_registered": True, "to_user_phone": "0912345678",
-            "to_user_email": "tenant@example.com", "property_purpose_key": 1,
-            "father_id": None, "early_termination_wish_date_end": None,
-            "enable_late_fee": 1, "calc_late_fee_buffer_days": 7, "late_fee_percent": 5.0,
-            "early_termination_penalty_type": 1, "early_termination_penalty": 1.0,
-            "early_termination_penalty_amount": 25000.00,
-            "early_termination_notice_date": None,
-            "contract_inviting_at": "2025-12-10 10:00:00",
-            "contract_inviting_expire_at": "2026-01-09 10:00:00",
-            "contract_inviting_sign_at": "2025-12-12 11:00:00",
-            "contract_finish_sign_at": "2025-12-13 09:30:00",
-            "to_user_login_email": "tenant@example.com", "is_newest": 1,
-            "created_at": "2025-12-10 09:00:00", "updated_at": "2026-01-01 00:00:00",
-        },
-        {
-            "id": 600, "to_user_id": 9002, "status": 10, "bit_status": 3087, "active": 1,
-            "is_history": 1, "is_history_done": 1, "estate_id": 400,
-            "title": "中山區雅房B", "city": "台北市", "district": "中山區",
-            "address": "中山北路二段10號", "currency": "TWD",
-            "rent": 18000.00, "deposit_amount": 36000.00,
-            "date_start": 20250101, "date_end": 20251231,
-            "allow_early_termination": False, "early_termination_days": 0,
-            "is_auto_generate_invoice": 0, "to_user_connect": True,
-            "is_tenant_registered": True, "to_user_phone": "0923456789",
-            "to_user_email": "tenant2@example.com", "property_purpose_key": 1,
-            "father_id": None, "early_termination_wish_date_end": None,
-            "enable_late_fee": 0, "calc_late_fee_buffer_days": 0, "late_fee_percent": 0.0,
-            "early_termination_penalty_type": None, "early_termination_penalty": 0.0,
-            "early_termination_penalty_amount": 0.0,
-            "early_termination_notice_date": None,
-            "contract_inviting_at": "2024-12-05 10:00:00",
-            "contract_inviting_expire_at": "2025-01-04 10:00:00",
-            "contract_inviting_sign_at": "2024-12-06 11:00:00",
-            "contract_finish_sign_at": "2024-12-07 09:30:00",
-            "to_user_login_email": "tenant2@example.com", "is_newest": 1,
-            "created_at": "2024-12-05 09:00:00", "updated_at": "2025-12-31 23:59:59",
-        },
-    )
-
     #: `getMapping()` 的 bit_status 標籤（沿用方法級 mock 原文）
     MAPPING: "dict[str, dict[str, str]]" = {
         "bit_status": {
@@ -124,14 +77,34 @@ class ContractFixtureTable:
     }
 
     def __init__(self) -> None:
-        for row in self._ROWS:
+        #: 資料來源：`services/jgb/fixture_data/demo_vendor4.json`（唯一來源）——
+        #: 本類不再硬編碼列值，每個實例各自持有一份可變列表（寫入不外溢到其他實例）。
+        self._rows: "list[dict[str, Any]]" = list(demo_rows("contracts"))
+        for row in self._rows:
             assert_contract_projection(row)
+        #: `{str(contract_id): [user_id, ...]}`——目前僅宣告，未接上 `_contracts_index` 的過濾。
+        self._visibility: "dict[str, list[int]]" = demo_visibility("contract")
 
     def rows(self) -> "list[dict[str, Any]]":
-        return [dict(r) for r in self._ROWS]
+        return [dict(r) for r in self._rows]
 
     def by_id(self, contract_id: int) -> Optional["dict[str, Any]"]:
-        for row in self._ROWS:
+        for row in self._rows:
             if row["id"] == contract_id:
                 return dict(row)
         return None
+
+    def visible_to(self, contract_id: int) -> Optional["list[int]"]:
+        return self._visibility.get(str(contract_id))
+
+    def create(self, overrides: "dict[str, Any]") -> "dict[str, Any]":
+        """寫入路徑（`POST /agent/v1/contracts`）：驗投影後附加一筆。
+
+        預設 `active=1`／`is_newest=1`——`_contracts_index` 的恆定 where 條件
+        （對齊 `ContractApiController@index:51-52`），未帶這兩鍵的新建合約
+        在 index 查詢中會被恆定條件濾掉，等於「建了卻查不到」。
+        """
+        row = {"active": 1, "is_newest": 1, **overrides}
+        assert_contract_projection(row)
+        self._rows.append(row)
+        return dict(row)

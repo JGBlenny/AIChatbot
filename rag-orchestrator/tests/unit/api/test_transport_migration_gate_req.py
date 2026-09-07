@@ -60,15 +60,19 @@ def test_unresolvable_endpoint_fails_loudly(mock_transport):
 
 
 def test_resolved_but_unmigrated_endpoint_fails_loudly(monkeypatch, mock_transport):
-    """2. 可 resolve、但不在 MIGRATED_ENDPOINTS → UnmigratedMockEndpointError。"""
+    """2. 可 resolve、但不在 MIGRATED_ENDPOINTS → UnmigratedMockEndpointError。
+
+    ⚠️ sentinel 端點改用 `invoices`（2026-09-08 transport-extension-full-coverage：
+    `repairs` 已於本次遷入 `MIGRATED_ENDPOINTS`，不再是「刻意不入」的樣本）。
+    """
     import services.jgb.transport as t
 
     monkeypatch.setattr(t, "ROUTES", (
-        ("GET", "/api/external/v1/repairs", "repairs"),   # 刻意不入 admission set
+        ("GET", "/api/external/v1/invoices", "invoices"),   # 刻意不入 admission set
     ))
-    assert "repairs" not in MIGRATED_ENDPOINTS
+    assert "invoices" not in MIGRATED_ENDPOINTS
     with pytest.raises(UnmigratedMockEndpointError):
-        _run(mock_transport.send("GET", "/api/external/v1/repairs"))
+        _run(mock_transport.send("GET", "/api/external/v1/invoices"))
 
 
 def test_migrated_but_missing_fixture_fails_loudly(mock_transport):
@@ -123,26 +127,35 @@ def test_resolver_still_ignores_migration_state(monkeypatch):
     """4.2 的守衛，改寫成**行為證明**：未遷移的 endpoint 仍能被正確 resolve。
 
     （原 `test_resolver_does_not_consult_migration_state` 以 `hasattr` 判定；
-    4.3 定義 `MIGRATED_ENDPOINTS` 後，改由行為直接證明 resolver 未消費它。）
+    4.3 定義 `MIGRATED_ENDPOINTS` 後，改由行為直接證明 resolver 未消費它。
+    sentinel 端點改用 `invoices`，理由同上一條。）
     """
     import services.jgb.transport as t
 
     monkeypatch.setattr(t, "ROUTES", (
-        ("GET", "/api/external/v1/repairs", "repairs"),
+        ("GET", "/api/external/v1/invoices", "invoices"),
     ))
-    assert "repairs" not in MIGRATED_ENDPOINTS
-    assert t.resolve_endpoint("GET", "/api/external/v1/repairs") == "repairs"
+    assert "invoices" not in MIGRATED_ENDPOINTS
+    assert t.resolve_endpoint("GET", "/api/external/v1/invoices") == "invoices"
 
 
 def test_migrated_endpoints_holds_identities_not_paths():
     """admission set 只放 endpoint identity，不得放 concrete path／樣板。
 
     ⚠️ 這是**遷移進度的帳本**：新增條目必須是被明確授權的遷移，不得為了讓別的測試變綠而加。
-    `contracts` 於 2026-08-25 經業主裁定 (i) 遷入（transport-extension），
-    理由：方法級 mock 不吃 contract_ids/keyword，吃掉了「依識別重查並收斂」這段
-    正在被驗的 execution 行為。
+    `contracts` 於 2026-08-25 經業主裁定 (i) 遷入（transport-extension）；
+    2026-09-08（transport-extension-full-coverage，業主核可「讀取和寫入在一份 JSON 都行」）
+    再遷入 estates／estate_detail／meters／team_members／member_permissions／
+    repairs／repair_categories／create_repair 與四個新設的 agent 寫入端點
+    （create_bill／create_contract／create_estate／patch_bill）。
     """
-    assert MIGRATED_ENDPOINTS == frozenset({"bills", "bill_detail", "contracts"})
+    assert MIGRATED_ENDPOINTS == frozenset({
+        "bills", "bill_detail", "contracts",
+        "estates", "estate_detail", "meters",
+        "team_members", "member_permissions",
+        "repairs", "repair_categories", "create_repair",
+        "create_bill", "create_contract", "create_estate", "patch_bill",
+    })
     assert not any("/" in key for key in MIGRATED_ENDPOINTS)
 
 

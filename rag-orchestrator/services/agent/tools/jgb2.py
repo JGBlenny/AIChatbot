@@ -49,6 +49,7 @@ from services.jgb.contracts import FACE_BUILDERS as CONTRACT_FACE_BUILDERS
 from services.jgb.accounts import ACCOUNT_FACE_BUILDERS
 from services.jgb.iot import METER_FACE_BUILDERS
 from services.jgb.estates import ESTATE_FACE_BUILDERS
+from services.jgb.repairs import REPAIR_FACE_BUILDERS
 
 _DEFAULT_CANDIDATE_CAP = 5
 
@@ -364,3 +365,48 @@ async def query_estates(identity: Any, args: dict[str, Any]) -> dict[str, Any]:
     if len(rows) <= cap:
         return _ok_candidates("estates", face, rows, cap, True)
     return _ok_candidates("estates", face, rows[:cap], cap, False)
+
+
+# ── repairs（收案修正 5：新讀工具，pm 單證身分閘同 bills）───────────────────
+#: `RepairApiController@index` mapping.status──32＝結單、64＝封存視為「已結」，
+#: 其餘（申請中／安排修繕／完成修繕）算「未結」，無 ref/keyword 時的預設列表口徑。
+_CLOSED_REPAIR_STATUSES: frozenset = frozenset({32, 64})
+
+
+async def query_repairs(identity: Any, args: dict[str, Any]) -> dict[str, Any]:
+    face = args.get("face")
+    builder = REPAIR_FACE_BUILDERS.get(face) if isinstance(face, str) else None
+    if builder is None:
+        return _invalid_input()
+
+    role_id = getattr(identity, "role_id", None)
+    user_id = getattr(identity, "user_id", None)
+    if not _identity_gate_ok(identity, role_id, user_id):
+        return _no_match()
+    api = _get_api()
+
+    async def fetch_all() -> list[dict[str, Any]]:
+        resp = await api.get_repairs(role_id=role_id, user_id=user_id)
+        return _rows_of(resp)
+
+    async def fetch_ref(r: str) -> list[dict[str, Any]]:
+        rows = await fetch_all()
+        return [row for row in rows if str(row.get("id")) == str(r)]
+
+    async def fetch_keyword(k: str) -> list[dict[str, Any]]:
+        rows = await fetch_all()
+        kw = str(k)
+        return [row for row in rows
+                if kw in str(row.get("estate_title") or "")
+                or kw in str(row.get("broken_reason") or "")
+                or kw in str(row.get("broken_note") or "")]
+
+    async def fetch_default(_: Optional[str]) -> list[dict[str, Any]]:
+        rows = await fetch_all()
+        return [row for row in rows if row.get("status") not in _CLOSED_REPAIR_STATUSES]
+
+    cap = _candidate_cap()
+    ref, keyword = args.get("ref"), args.get("keyword")
+    status, rows = await _resolve(ref, keyword, cap, fetch_ref=fetch_ref,
+                                  fetch_keyword=fetch_keyword, fetch_default=fetch_default)
+    return _finish_generic("repairs", face, builder, status, rows, cap)

@@ -53,6 +53,9 @@ class _FakeApi:
     async def get_estate_detail(self, **kwargs):
         return self._resp("get_estate_detail", **kwargs)
 
+    async def get_repairs(self, **kwargs):
+        return self._resp("get_repairs", **kwargs)
+
 
 @pytest.fixture()
 def fake_api(monkeypatch):
@@ -76,6 +79,7 @@ def _set_canned(fake_api, name, value):
     (jgb2.query_accounts, dict(role_id="1", user_id="1")),
     (jgb2.query_meters, dict(role_id="1", user_id="1")),
     (jgb2.query_estates, dict(role_id="1", user_id="1")),
+    (jgb2.query_repairs, dict(role_id="1", user_id="1")),
 ])
 async def test_invalid_face_rejected(fn, identity_kwargs, fake_api):
     result = await fn(_identity(**identity_kwargs), {"face": "不存在的面向"})
@@ -365,6 +369,78 @@ async def test_estates_keyword_multi_candidates(monkeypatch, fake_api):
 async def test_estates_no_ref_no_keyword_no_match(fake_api):
     result = await jgb2.query_estates(
         _identity(role_id="1", user_id="9"), {"face": "物件現況診斷"})
+    assert result == {"ok": False, "error": "NO_MATCH"}
+
+
+# ══════════════════════════════════════════════════════════════════════
+# repairs（收案修正 5：新讀工具，ref/keyword/預設列表三態，pm 單證身分閘同 bills）
+# ══════════════════════════════════════════════════════════════════════
+
+async def test_repairs_missing_role_id_no_match(fake_api):
+    result = await jgb2.query_repairs(
+        _identity(role_id=None, user_id="9"), {"face": "修繕進度", "ref": "3001"})
+    assert result == {"ok": False, "error": "NO_MATCH"}
+
+
+async def test_repairs_ref_single_hit_calls_builder(monkeypatch, fake_api):
+    monkeypatch.setitem(jgb2.REPAIR_FACE_BUILDERS, "__test_face__",
+                        lambda r, q: f"R:{r['id']}")
+    rows = [{"id": 3001, "status": 16}, {"id": 3002, "status": 1}]
+    _set_canned(fake_api, "get_repairs", {"success": True, "data": rows})
+
+    result = await jgb2.query_repairs(
+        _identity(role_id="1", user_id="9"), {"face": "__test_face__", "ref": "3001"})
+
+    assert result["ok"] is True
+    assert result["data"]["facts"] == "R:3001"
+    assert result["data"]["candidates"] is None
+    assert result["data"]["skip_refine"] is True
+    assert result["provenance"][0]["source"] == "jgb2:repairs#3001"
+
+
+async def test_repairs_keyword_matches_estate_title_or_reason(monkeypatch, fake_api):
+    monkeypatch.setitem(jgb2.REPAIR_FACE_BUILDERS, "__test_face__", lambda r, q: "x")
+    rows = [
+        {"id": 3001, "estate_title": "信義區套房A", "broken_reason": "漏水"},
+        {"id": 3002, "estate_title": "中山區雅房B", "broken_reason": "不冷"},
+    ]
+    _set_canned(fake_api, "get_repairs", {"success": True, "data": rows})
+
+    result = await jgb2.query_repairs(
+        _identity(role_id="1", user_id="9"),
+        {"face": "__test_face__", "keyword": "信義區套房A"})
+
+    assert result["ok"] is True
+    assert [r["id"] for r in result["data"]["candidates"]] == [3001]
+
+
+async def test_repairs_no_ref_no_keyword_returns_open_ticket_default_list(
+        monkeypatch, fake_api):
+    """無 ref/keyword ⇒ 回該 role 的未結單列表（`fetch_default`）——
+    status 32（結單）／64（封存）視為已結，過濾掉；其餘算未結。"""
+    monkeypatch.setitem(jgb2.REPAIR_FACE_BUILDERS, "__test_face__", lambda r, q: "x")
+    rows = [
+        {"id": 3001, "status": 16},   # 完成修繕：未結
+        {"id": 3002, "status": 1},    # 申請中：未結
+        {"id": 3003, "status": 32},   # 結單：已結，應被濾掉
+        {"id": 3004, "status": 64},   # 封存：已結，應被濾掉
+    ]
+    _set_canned(fake_api, "get_repairs", {"success": True, "data": rows})
+
+    result = await jgb2.query_repairs(
+        _identity(role_id="1", user_id="9"), {"face": "__test_face__"})
+
+    assert result["ok"] is True
+    assert {r["id"] for r in result["data"]["candidates"]} == {3001, 3002}
+    assert result["data"]["skip_refine"] is True
+
+
+async def test_repairs_zero_hit_no_match(monkeypatch, fake_api):
+    monkeypatch.setitem(jgb2.REPAIR_FACE_BUILDERS, "__test_face__", lambda r, q: "x")
+    _set_canned(fake_api, "get_repairs", {"success": True, "data": []})
+
+    result = await jgb2.query_repairs(
+        _identity(role_id="1", user_id="9"), {"face": "__test_face__", "ref": "999"})
     assert result == {"ok": False, "error": "NO_MATCH"}
 
 

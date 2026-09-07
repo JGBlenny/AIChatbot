@@ -53,8 +53,10 @@ def test_all_rows_share_the_same_key_set(table):
 
 # ── 2. identity 穩定 ──────────────────────────────────────────────────────
 def test_lookup_is_by_id_not_position(table):
-    assert table.by_id(900001)["contract_id"] == 700100
-    assert table.by_id(900003)["contract_id"] == 700200
+    # 跨域連貫修正（transport-agent-mcp-orchestration 收案修正 4）：帳單改指向
+    # 既有 contract fixture 的真實 id（678／600），不再是孤立的合成 id。
+    assert table.by_id(900001)["contract_id"] == 678
+    assert table.by_id(900003)["contract_id"] == 600
 
 
 def test_unknown_id_returns_none(table):
@@ -93,7 +95,7 @@ def test_no_single_filter_reproduces_another_filters_result(table):
     若三筆只是 id 不同，任何 filter 寫錯都會剛好得到相同集合——那種 fixture 驗不出東西。
     """
     rows = table.rows()
-    by_contract = _ids(rows, contract_id=700100)
+    by_contract = _ids(rows, contract_id=678)
     by_bit = _ids(rows, bit_status=3)
     by_invoice = _ids(rows, invoice_status=1)
 
@@ -124,8 +126,13 @@ def test_month_filter_is_observable(table):
 
 # ── 合成資料 ─────────────────────────────────────────────────────────────
 def test_ids_are_synthetic_ranges(table):
-    """合成識別碼：刻意落在明顯非 production 的區段，避免與真資料混淆。"""
+    """帳單自身 id 落在明顯非 production 的區段，避免與真資料混淆。
+
+    ⚠️ `contract_id`／`estate_id` **不再**斷言落在 700000／800000 以上——
+    跨域連貫修正（transport-agent-mcp-orchestration 收案修正 4）刻意讓帳單
+    指向既有 contract（678／600）／estate（456／400）fixture 的真實 id，
+    使三個 fixture 宇宙相連（見 fixture_data 頂端註解）；孤立區段是舊設計，
+    與「跨域可查得到同一戶」的新要求互斥，此處放寬為只驗帳單自身 id。
+    """
     for row in table.rows():
         assert row["id"] >= 900000
-        assert row["contract_id"] >= 700000
-        assert row["estate_id"] >= 800000
