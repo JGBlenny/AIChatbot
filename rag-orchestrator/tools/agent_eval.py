@@ -82,6 +82,17 @@ _SAMPLES_CHANGED_MSG = (
 EXIT_OK = 0
 EXIT_SAMPLES_CHANGED = 3
 EXIT_SAMPLE_UNAVAILABLE = 4
+#: 任務 4.3（knowledge-outline-and-intent-architecture・Plan §3.1）：真 provider
+#: 路徑候選索引未就緒 ⇒ 這個退出碼（唯一傳遞形式是 `IndexNotReady`，見下方）。
+EXIT_INDEX_NOT_READY = 5
+
+
+class IndexNotReady(RuntimeError):
+    """任務 4.3：真 provider 路徑 `--candidates on` 時，候選索引 `prepare` 逾時／
+    例外／未就緒 ⇒ 拋這個例外（⛔ 不用整數回傳——那會在 `main()` 的
+    `agent_records, agent_meta = run_agent_chain(...)` 解包處炸），由 `main()`
+    接住並轉成 `EXIT_INDEX_NOT_READY`。⛔ 不以降級臂充當 on 臂：這是「機制沒
+    準備好」，不是「候選沒用」，兩者混在一起會把故障量成效果。"""
 
 #: 售前池是 b2b 池（見 services/agent/outline.py:build_prospect_outline 的
 #: `Identity(vendor_id=1, target_user="prospect", mode="b2b")` 與其
@@ -156,6 +167,9 @@ class Turn:
     must_not_contain: list[str] = field(default_factory=list)
     sensitive: bool = False
     knowledge_gap_unfilled: bool = False
+    #: 任務 4.3（`--set outline-probe`，4.4 的直接量）：這一輪的 gold fine id 集合。
+    #: ⛔ 其他 loader 一律留空 tuple——只有 `load_outline_probe_v1` 填它。
+    gold_fine_ids: tuple[str, ...] = ()
 
     @property
     def boundary_expected(self) -> bool:
@@ -279,6 +293,39 @@ def load_sensitive_v1(path: Path, manifest: dict, *, limit: Optional[int] = None
     return scenarios
 
 
+def load_outline_probe_v1(path: Path, manifest: dict, *, limit: Optional[int] = None) -> list[Scenario]:
+    """`outline-probe` 樣本（任務 4.3・4.4 步 2 探針凍結後補值）：
+    `{"_meta": {"rule_sha256", "frozen_at", "n"}, "items": [{"id", "q", "stratum",
+    "gold": [fine_id...], "expect_kind": "answer"|"handoff"}]}`——每個 item 一個
+    單輪 `Scenario`；`stratum == "sensitive"` ⇒ `sensitive=True`、`expect_kind`
+    強制 `"handoff"`（與其他 stratum 的 `expect_kind` 欄位分開判定，⛔ 兩者衝突
+    時以 `sensitive` 覆寫，因為敏感題本就該轉人）。"""
+    data = json.loads(path.read_text(encoding="utf-8"))
+    scenarios: list[Scenario] = []
+    for item in data.get("items", []):
+        is_sensitive = item.get("stratum") == "sensitive"
+        expect_kind = "handoff" if is_sensitive else item.get("expect_kind")
+        scenarios.append(
+            Scenario(
+                idx=item["id"],
+                turns=[
+                    Turn(
+                        turn=0,
+                        q=item["q"],
+                        expect_kind=expect_kind,
+                        must_not_contain=[],
+                        sensitive=is_sensitive,
+                        knowledge_gap_unfilled=False,
+                        gold_fine_ids=tuple(item.get("gold") or []),
+                    )
+                ],
+            )
+        )
+    if limit is not None:
+        scenarios = scenarios[:limit]
+    return scenarios
+
+
 def load_samples(set_name: str, manifest: dict, *, root: Path, limit: Optional[int] = None) -> list[Scenario]:
     entry = manifest["sets"][set_name]
     path = root / entry["path"]
@@ -288,6 +335,8 @@ def load_samples(set_name: str, manifest: dict, *, root: Path, limit: Optional[i
         return load_scenarios_v1(path, manifest, limit=limit)
     if set_name == "sensitive":
         return load_sensitive_v1(path, manifest, limit=limit)
+    if set_name == "outline-probe":
+        return load_outline_probe_v1(path, manifest, limit=limit)
     raise ValueError(f"未知 set：{set_name}")
 
 
@@ -332,6 +381,22 @@ class EvalRecord:
     #: DSP-028：本回合是否耗盡重寫預算走固定句（`handoff_reason == "budget_exhausted"`）。
     #: DSP-028 驗收尺①就量它——⛔ 不要再從報表反推。
     budget_exhausted: bool = False
+    #: 任務 4.3（knowledge-outline-and-intent-architecture・Plan §3.1）：本回合的候選
+    #: 細目 id（`TurnResult.trace.candidate_ids` 原樣透傳）；old 鏈與「這條路沒有候選
+    #: 機制」的 agent 回合一律 `[]`。
+    candidate_ids: list[str] = field(default_factory=list)
+    #: `TurnResult.trace.miss_kind` 原樣透傳；`None` 代表「這條路沒有候選機制」
+    #: （`--candidates off`、old 鏈，或受眾無正本）。
+    miss_kind: Optional[str] = None
+    #: `--candidates` 的 CLI 實際值（`"on"|"off"`）——⛔ 不是「這一列有沒有候選」，
+    #: old 鏈列也填它，供跨鏈對照本次評估組態。
+    candidates_mode: str = "off"
+    #: `gold_fine_ids` 非空時 `bool(set(gold) & set(candidate_ids))`；空 ⇒ `None`
+    #: （4.4「gold 不在候選對照」的直接量）。
+    gold_in_candidates: Optional[bool] = None
+    #: 報表計數用的承載欄（⛔ 不進 `to_jsonl_dict`——維持 28 鍵）：本回合
+    #: `TurnResult.trace.violations` 中屬於候選機制的那幾個字面值。
+    candidate_violations: tuple[str, ...] = ()
 
     def to_jsonl_dict(self) -> dict:
         d = {
@@ -359,6 +424,10 @@ class EvalRecord:
             "rep": self.rep,
             "answer_sha256": self.answer_digest["sha256"],
             "answer_len": self.answer_digest["len"],
+            "candidate_ids": self.candidate_ids,
+            "miss_kind": self.miss_kind,
+            "candidates_mode": self.candidates_mode,
+            "gold_in_candidates": self.gold_in_candidates,
         }
         assert not (_NO_VERBATIM_KEYS & set(d.keys())), "JSONL 洩了原文鍵——見模組 docstring 紀律"
         return d
@@ -451,6 +520,7 @@ def run_old_chain(
     repeat: int = 1,
     db_pool: Any = None,
     dump_sink: Optional[list[dict]] = None,
+    candidates_mode: str = "off",
 ) -> list[EvalRecord]:
     """`client` 是一個具 `.post(url, json=..., headers=...) -> response` 的物件
     （生產用 `httpx.Client(base_url=...)`；測試注入假 transport）。
@@ -509,6 +579,11 @@ def run_old_chain(
                         rep=rep,
                         handoff_heuristic=handoff_heuristic,
                         forbid_terms_n=len(t.must_not_contain),
+                        candidate_ids=[],
+                        miss_kind=None,
+                        candidates_mode=candidates_mode,
+                        gold_in_candidates=None,
+                        candidate_violations=(),
                     )
                 )
                 record_session_ids.append(session_id)
@@ -677,6 +752,71 @@ def make_agent_identity(*, session_id: str):
     )
 
 
+class _DeterministicBackend:
+    """任務 4.3：`--provider fake` 的候選索引後端——決定性假向量，樣式沿
+    `tests/unit/agent/test_fine_index_req.py::_vector_for`（⛔ 不用 `hash()`，
+    有 `PYTHONHASHSEED` 會使同一輪程序內都不穩定）。`FineIndex.prepare` 自己
+    做 L2 正規化，這裡不用重複算。"""
+
+    async def embed(self, texts: list[str]) -> list[Optional[list[float]]]:
+        out: list[Optional[list[float]]] = []
+        for t in texts:
+            normed = unicodedata.normalize("NFKC", t or "")
+            digest = hashlib.sha256(normed.encode("utf-8")).digest()
+            out.append([(b + 1) / 256.0 for b in digest[:4]])
+        return out
+
+
+async def _resolve_prospect_canon() -> Any:
+    """`get_canon("prospect")` 若未註冊則從 git 正本載入並註冊——假 provider
+    路徑與真 provider 路徑（`_build_prospect_index`）同一式，⛔ 不依賴呼叫端
+    是否先跑過 `build_prospect_outline`。"""
+    from services.agent.canon.canon_assembler import (
+        get_canon, load_canon_or_die, register_canon, resolve_canon_dir,
+    )
+
+    canon = get_canon("prospect")
+    if canon is None:
+        canon = load_canon_or_die(resolve_canon_dir(), "prospect")
+        register_canon("prospect", canon)
+    return canon
+
+
+async def _build_prospect_index(canon: Any = None, *, backend: Any = None) -> "FineIndex":
+    """任務 4.3（Plan §3.1 真 provider 路徑注入縫）：`canon is None` ⇒ 與假
+    provider 路徑同一式取得；`backend is None` ⇒ `EmbeddingUtilsBackend()`。
+    `prepare` 逾時／例外一律吞下（索引留在 `absent`／`not_ready`），⛔ 本函式
+    永不 raise——呼叫端依 `index.state` 自行判斷。"""
+    from services.agent.canon.fine_index import (
+        PREPARE_TOTAL_TIMEOUT_S, EmbeddingUtilsBackend, FineIndex,
+    )
+
+    if canon is None:
+        canon = await _resolve_prospect_canon()
+    if backend is None:
+        backend = EmbeddingUtilsBackend()
+    index = FineIndex(backend)
+    try:
+        import asyncio as _asyncio
+
+        await _asyncio.wait_for(index.prepare(canon), PREPARE_TOTAL_TIMEOUT_S)
+    except Exception:  # noqa: BLE001 — 逾時／例外一律留在 absent／not_ready，⛔ 不 raise
+        pass
+    return index
+
+
+async def _build_fake_candidate_selector() -> "CandidateSelector":
+    """任務 4.3：`--candidates on`＋假 provider 的候選選取器——決定性假後端，
+    只證「機制接上」，不證品質（見 Plan §3.1）。"""
+    from services.agent.canon.candidate_selector import CandidateSelector
+    from services.agent.canon.fine_index import FineIndex
+
+    canon = await _resolve_prospect_canon()
+    index = FineIndex(_DeterministicBackend())
+    await index.prepare(canon)
+    return CandidateSelector(index)
+
+
 def _set_outline_on_state(state: dict, outline_doc: Any) -> dict:
     """回傳 `state["agent"]`；若有大綱則塞入 `outline`（Runtime 從
     `state["agent"]["outline"]` 讀，見 `routers/agent_entry.py
@@ -756,9 +896,25 @@ def _refs_for_dump(attempts: list[dict]) -> list[str]:
     return out
 
 
+#: 任務 4.3（Plan §3.1-3）：`TurnTrace.violations` 裡屬於候選機制的四個字面值
+#: ——報表三個計數（`candidate_fallback`／`candidate_selector_error`／
+#: `candidate_none_visible`）一律由這欄算，⛔ 不由 `miss_kind` 反推（S1 對
+#: 「selector 回 None」與「selector 例外」都記 `miss_kind="index_unavailable"`，
+#: 只有 violations 分得開）。
+_CANDIDATE_VIOLATION_KINDS = frozenset(
+    {
+        "candidate_fallback_full_outline",
+        "candidate_selector_error",
+        "candidate_none_visible",
+        "candidate_ids_shape_invalid",
+    }
+)
+
+
 def _build_agent_record(
     *, set_name: str, sc_idx: str, t: "Turn", result: Any, latency_ms: int, rep: int, model: str,
     dump_sink: Optional[list[dict]] = None, attempts: Optional[list[dict]] = None,
+    candidates_mode: str = "off",
 ) -> EvalRecord:
     answer = result.answer or ""
     handoff = result.handoff
@@ -773,6 +929,14 @@ def _build_agent_record(
     forbid_hit = _forbid_hit(answer, t.must_not_contain)
     cost = _estimate_cost_usd(model, result.trace.prompt_tokens, result.trace.completion_tokens)
     attempts = attempts or []
+    candidate_ids = list(getattr(result.trace, "candidate_ids", []) or [])
+    miss_kind = getattr(result.trace, "miss_kind", None)
+    trace_violations = set(getattr(result.trace, "violations", []) or [])
+    candidate_violations = tuple(sorted(trace_violations & _CANDIDATE_VIOLATION_KINDS))
+    if t.gold_fine_ids:
+        gold_in_candidates: Optional[bool] = bool(set(t.gold_fine_ids) & set(candidate_ids))
+    else:
+        gold_in_candidates = None
     if dump_sink is not None:
         dump_sink.append(
             {
@@ -811,12 +975,30 @@ def _build_agent_record(
         forbid_terms_n=len(t.must_not_contain),
         verifier_reasons=verifier_reasons,
         budget_exhausted=budget_exhausted,
+        candidate_ids=candidate_ids,
+        miss_kind=miss_kind,
+        candidates_mode=candidates_mode,
+        gold_in_candidates=gold_in_candidates,
+        candidate_violations=candidate_violations,
     )
 
 
 async def _run_agent_chain_fake(
     scenarios: list[Scenario], *, set_name: str, repeat: int, dump_sink: Optional[list[dict]] = None,
+    candidates: str = "off",
 ) -> tuple[list[EvalRecord], dict]:
+    # 任務 4.3（Plan §3.1）：`on`／`off` 兩臂在假 provider 路徑都要塞
+    # `outline_doc`（原本 `outline_doc=None` 讓 S1 的候選適用條件恆不成立），
+    # 否則 `--candidates on` 也選不到任何東西。只有 `on` 才建 selector。
+    from services.agent.outline import build_prospect_outline
+
+    outline_doc = await build_prospect_outline(None)
+    selector = None
+    candidates_backend = "none"
+    if candidates == "on":
+        selector = await _build_fake_candidate_selector()
+        candidates_backend = "fake"
+
     records: list[EvalRecord] = []
     for rep in range(repeat):
         for sc in scenarios:
@@ -829,19 +1011,20 @@ async def _run_agent_chain_fake(
             # 是本工具自己額外傳的 `runtime_kwargs`。
             attempts_buffer: Optional[list] = [] if dump_sink is not None else None
             runtime_kwargs = {"attempt_sink": attempts_buffer.append} if attempts_buffer is not None else {}
+            runtime_kwargs["candidate_selector"] = selector
             runtime = build_runtime(db_pool=None, provider=provider, registry=registry, **runtime_kwargs)
             identity = make_agent_identity(session_id=old_chain_session_id(set_name, sc.idx, rep))
             for t, result, latency_ms, attempts in await _run_scenario_agent(
-                runtime, identity, sc.turns, attempts_buffer=attempts_buffer,
+                runtime, identity, sc.turns, outline_doc=outline_doc, attempts_buffer=attempts_buffer,
             ):
                 records.append(
                     _build_agent_record(
                         set_name=set_name, sc_idx=sc.idx, t=t, result=result,
                         latency_ms=latency_ms, rep=rep, model=runtime._model,
-                        dump_sink=dump_sink, attempts=attempts,
+                        dump_sink=dump_sink, attempts=attempts, candidates_mode=candidates,
                     )
                 )
-    return records, {"outline_sha": ""}
+    return records, {"outline_sha": "", "candidates_mode": candidates, "candidates_backend": candidates_backend}
 
 
 @dataclass
@@ -856,7 +1039,26 @@ class _RealRuntimeHandle:
             await self.db_pool.close()
 
 
-async def build_real_runtime(*, attempt_sink: Optional[Any] = None) -> _RealRuntimeHandle:
+def _require_openai_key() -> None:
+    """任務 4.3（Plan §3.1 第二次修正，2026-09-07）：`OPENAI_API_KEY` 前置檢查
+    ——從 `build_real_runtime` 拆出成模組層函式，讓 `_run_agent_chain_openai`
+    能在**呼叫候選索引縫之前**就先擋下缺 key 的情況（`--candidates on` 也不
+    例外：先前把索引縫移到 `build_real_runtime` 之前之後，缺 key 情境下會
+    先打一次候選索引的 embedding 呼叫才被拒絕——那本身就是「任何 I/O 之前」
+    這條承諾要擋的事，已修正）。訊息／行為與原本在 `build_real_runtime` 內
+    逐字相同，`build_real_runtime` 仍呼叫它（library 呼叫端行為不變）。
+    """
+    if not (os.environ.get("OPENAI_API_KEY") or "").strip():
+        raise SystemExit(
+            "provider=openai 需要環境變數 OPENAI_API_KEY（目前未設定或為空字串）；"
+            "⛔ 本工具不會印出金鑰內容，也不會嘗試連線 OpenAI 或建立資料庫連線。"
+            "請在容器內設定該變數後重跑，或改用 --provider fake。"
+        )
+
+
+async def build_real_runtime(
+    *, attempt_sink: Optional[Any] = None, candidate_selector: Optional[Any] = None,
+) -> _RealRuntimeHandle:
     """真 provider 路徑（P0 必修 1）。
 
     順序（⛔ 不得調換——缺 key 必須在任何 I/O 之前就拒絕）：
@@ -880,12 +1082,7 @@ async def build_real_runtime(*, attempt_sink: Optional[Any] = None) -> _RealRunt
     `agent_eval.build_real_runtime`，測試可整支替換掉，不需要真的建立
     pool／provider 才能測「缺 key 時的行為」。
     """
-    if not (os.environ.get("OPENAI_API_KEY") or "").strip():
-        raise SystemExit(
-            "provider=openai 需要環境變數 OPENAI_API_KEY（目前未設定或為空字串）；"
-            "⛔ 本工具不會印出金鑰內容，也不會嘗試連線 OpenAI 或建立資料庫連線。"
-            "請在容器內設定該變數後重跑，或改用 --provider fake。"
-        )
+    _require_openai_key()
 
     import app as appmod  # noqa: F401 — import 期建好 _mcp_registry／_mcp_kb_pool
     from services import llm_provider as llm_provider_mod
@@ -911,9 +1108,13 @@ async def build_real_runtime(*, attempt_sink: Optional[Any] = None) -> _RealRunt
     outline_doc = await outline_mod.build_prospect_outline(appmod._mcp_kb_pool)
     # tasks 4.3c：`attempt_sink` 只在 `--dump-texts` 開啟時由呼叫端傳入；
     # 預設 None ⇒ 不傳進 `build_runtime`（與正式路徑同一份 kwargs 慣例）。
+    # 任務 4.3（Plan §3.1 修訂）：`candidate_selector` 是本片唯一動到本函式簽名
+    # 的地方——`--candidates on` 時由呼叫端先備妥已 `prepare` 的索引再傳進來；
+    # 預設 `None` ⇒ 沿用既有行為（`AgentRuntime._candidate_selector` 留空）。
     extra_kwargs = {"attempt_sink": attempt_sink} if attempt_sink is not None else {}
     runtime = bootstrap_mod.build_runtime(
         db_pool, provider, appmod._mcp_registry, outline_doc=outline_doc, readonly_view=True,
+        candidate_selector=candidate_selector,
         **extra_kwargs,
     )
     return _RealRuntimeHandle(runtime=runtime, outline_doc=outline_doc, db_pool=db_pool, owns_pool=owns_pool)
@@ -921,13 +1122,47 @@ async def build_real_runtime(*, attempt_sink: Optional[Any] = None) -> _RealRunt
 
 async def _run_agent_chain_openai(
     scenarios: list[Scenario], *, set_name: str, repeat: int, dump_sink: Optional[list[dict]] = None,
+    candidates: str = "off",
 ) -> tuple[list[EvalRecord], dict]:
     # tasks 4.3c：`--dump-texts` 開啟才建 attempts_buffer／注入 attempt_sink。
     # ⚠️ 沒開時**不傳這個 kwarg**（而非傳 `attempt_sink=None`）——
     # `test_build_real_runtime_is_monkeypatchable` 的替身函式簽名是無參數，
-    # 傳多餘 kwarg 會讓既有測試炸掉。
+    # 傳多餘 kwarg 會讓既有測試炸掉。`candidate_selector` 同一紀律：只在
+    # `candidates=="on"` 時才放進 `build_kwargs`。
     attempts_buffer: Optional[list] = [] if dump_sink is not None else None
     build_kwargs = {"attempt_sink": attempts_buffer.append} if attempts_buffer is not None else {}
+
+    # 任務 4.3（Plan §3.1 修訂，2026-09-07 二次修正）：`candidates=="on"` 時，
+    # 順序＝**key 檢查 → 索引先於 runtime → 就緒閘門 →
+    # build_real_runtime(candidate_selector=...)**。
+    # ⚠️ key 檢查只放在 `on` 分支內（⛔ 不搬到函式最上層）：
+    # `test_build_real_runtime_is_monkeypatchable` 用函式層預設 `candidates=
+    # "off"` 整支替換 `build_real_runtime`、明確刪掉 `OPENAI_API_KEY` 且期待
+    # 「不再要求 key」——這條測試證明的正是「key 檢查只活在
+    # `build_real_runtime`（或走到它前置的 `on` 分支）內，`off` 臂完全不看
+    # key」，搬到函式最上層會讓那條測試在 `off` 臂也被擋下來，是錯的。
+    # `on` 分支則必須在 `_build_prospect_index()`（會打真的 embedding 呼叫）
+    # 之前先做同一個 key 檢查——先前的稿子只在 `build_real_runtime` 內部
+    # 檢查，而索引縫已經搬到 `build_real_runtime` 之前，於是缺 key 時會先
+    # 打一次 embedding 呼叫才被拒絕，違反「任何 I/O 之前」的承諾；已修：
+    # `_require_openai_key()` 是同一個判準／同一段訊息的模組層函式，
+    # `build_real_runtime` 仍呼叫它（library 呼叫端行為不變），這裡在
+    # `on` 分支內、呼叫索引縫之前再呼叫一次。
+    #
+    # exit 5 的唯一傳遞形式是例外，⛔ 不改本函式的 `tuple[list[EvalRecord], dict]`
+    # 回傳契約；就緒才建 `CandidateSelector` 並**真的接進** `build_real_runtime`
+    # （⛔ 不以降級臂充當 on 臂）。
+    candidates_backend = "none"
+    if candidates == "on":
+        _require_openai_key()
+        index = await _build_prospect_index()
+        if index.state != "ready":
+            raise IndexNotReady(index.state)
+        from services.agent.canon.candidate_selector import CandidateSelector
+
+        build_kwargs["candidate_selector"] = CandidateSelector(index)
+        candidates_backend = "embedding"
+
     handle = await build_real_runtime(**build_kwargs)
     try:
         records: list[EvalRecord] = []
@@ -942,11 +1177,15 @@ async def _run_agent_chain_openai(
                         _build_agent_record(
                             set_name=set_name, sc_idx=sc.idx, t=t, result=result,
                             latency_ms=latency_ms, rep=rep, model=handle.runtime._model,
-                            dump_sink=dump_sink, attempts=attempts,
+                            dump_sink=dump_sink, attempts=attempts, candidates_mode=candidates,
                         )
                     )
         outline_sha = str(getattr(handle.outline_doc, "sha256", "") or "")
-        return records, {"outline_sha": outline_sha}
+        return records, {
+            "outline_sha": outline_sha,
+            "candidates_mode": candidates,
+            "candidates_backend": candidates_backend,
+        }
     finally:
         await handle.close()
 
@@ -958,17 +1197,22 @@ def run_agent_chain(
     provider_kind: str,
     repeat: int = 1,
     dump_sink: Optional[list[dict]] = None,
+    candidates: str = "off",
 ) -> tuple[list[EvalRecord], dict]:
     import asyncio
 
     if provider_kind == "openai":
         return asyncio.run(
-            _run_agent_chain_openai(scenarios, set_name=set_name, repeat=repeat, dump_sink=dump_sink)
+            _run_agent_chain_openai(
+                scenarios, set_name=set_name, repeat=repeat, dump_sink=dump_sink, candidates=candidates,
+            )
         )
     if provider_kind != "fake":
         raise SystemExit(f"未知 --provider {provider_kind!r}")
     return asyncio.run(
-        _run_agent_chain_fake(scenarios, set_name=set_name, repeat=repeat, dump_sink=dump_sink)
+        _run_agent_chain_fake(
+            scenarios, set_name=set_name, repeat=repeat, dump_sink=dump_sink, candidates=candidates,
+        )
     )
 
 
@@ -1102,6 +1346,39 @@ def _known_open_pass_line() -> str:
         return f"n/a（self_test 取不到：{type(exc).__name__}）"
 
 
+def _candidates_report_stats(records: list[EvalRecord]) -> dict:
+    """任務 4.3（Plan §3.1-4）：`candidates` 節的計數——三個故障／可觀測計數
+    一律由 `candidate_violations`（⛔ 不由 `miss_kind` 反推：S1 對「selector
+    回 None」與「selector 例外」都記 `miss_kind="index_unavailable"`，只有
+    violations 分得開）；`avg_candidates` 只算 `miss_kind is not None`（真的
+    跑過候選機制）那些回合；`gold_in_candidates_rate` 只算非 `None` 的回合。"""
+    n = len(records) or 1
+    fallback_n = sum(1 for r in records if "candidate_fallback_full_outline" in r.candidate_violations)
+    selector_error_n = sum(1 for r in records if "candidate_selector_error" in r.candidate_violations)
+    none_visible_n = sum(1 for r in records if "candidate_none_visible" in r.candidate_violations)
+    with_miss_kind = [r for r in records if r.miss_kind is not None]
+    avg_candidates = (
+        sum(len(r.candidate_ids) for r in with_miss_kind) / len(with_miss_kind)
+        if with_miss_kind
+        else None
+    )
+    gold_rows = [r for r in records if r.gold_in_candidates is not None]
+    gold_in_candidates_rate = (
+        sum(1 for r in gold_rows if r.gold_in_candidates) / len(gold_rows) if gold_rows else None
+    )
+    return {
+        "candidate_fallback": fallback_n,
+        "candidate_fallback_rate": round(fallback_n / n, 4),
+        "candidate_selector_error": selector_error_n,
+        "candidate_none_visible": none_visible_n,
+        "avg_candidates": round(avg_candidates, 4) if avg_candidates is not None else None,
+        "gold_in_candidates_rate": round(gold_in_candidates_rate, 4)
+        if gold_in_candidates_rate is not None
+        else None,
+        "n": len(records),
+    }
+
+
 def render_report_md(
     *,
     records: list[EvalRecord],
@@ -1112,6 +1389,7 @@ def render_report_md(
     git_head: str,
     repeat_summary: Optional[dict] = None,
     dump_texts: bool = False,
+    candidates_meta: Optional[dict] = None,
 ) -> str:
     lines = ["# agent_eval report", ""]
     lines.append(f"- samples_sha: `{json.dumps(samples_sha, ensure_ascii=False)}`")
@@ -1138,6 +1416,27 @@ def render_report_md(
         "否則保留 0.0（本工具預設不建 DB 連線給舊鏈，見 `run_old_chain(db_pool=...)`）。"
     )
     lines.append("")
+    if candidates_meta is not None:
+        mode = candidates_meta.get("candidates_mode")
+        backend = candidates_meta.get("candidates_backend")
+        mode_label = "production 組態" if mode == "on" else "評估基線"
+        stats = _candidates_report_stats(records)
+        lines.append("## candidates（任務 4.3：有候選 vs 無候選兩臂）")
+        lines.append("")
+        lines.append(f"- candidates_mode：`{mode}`（{mode_label}）")
+        lines.append(f"- candidates_backend：`{backend}`")
+        lines.append(
+            f"- candidate_fallback：{stats['candidate_fallback']}/{stats['n']}"
+            f"（率={stats['candidate_fallback_rate']}）"
+        )
+        lines.append(f"- candidate_selector_error：{stats['candidate_selector_error']}/{stats['n']}")
+        lines.append(f"- candidate_none_visible：{stats['candidate_none_visible']}/{stats['n']}")
+        lines.append(f"- avg_candidates：{stats['avg_candidates']}（僅算 miss_kind 非 null 的回合）")
+        lines.append(
+            f"- gold_in_candidates_rate：{stats['gold_in_candidates_rate']}"
+            "（僅算 gold_in_candidates 非 null 的回合）"
+        )
+        lines.append("")
     lines.append("## 三項硬線（D2 未裁前僅供對照，⛔ 其餘欄只列數字不判）")
     lines.append("")
     for chain, h in hardlines.items():
@@ -1237,6 +1536,8 @@ def render_report_md(
             ("forbid_hit_rate", "forbid_hit_rate"),
             ("answered_rate", "answered_rate"),
             ("boundary_ok_rate", "boundary_ok_rate"),
+            ("candidate_fallback", "candidate_fallback_rate"),
+            ("gold_in_candidates_rate", "gold_in_candidates_rate"),
         ):
             v = repeat_summary.get(key) or {}
             lines.append(f"- {label}：mean={v.get('mean')}、min={v.get('min')}、max={v.get('max')}")
@@ -1288,8 +1589,16 @@ def _git_head(root: Path) -> str:
 
 def build_arg_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("--set", required=True, choices=["topics", "scenarios", "sensitive", "traffic"])
+    p.add_argument(
+        "--set", required=True,
+        choices=["topics", "scenarios", "sensitive", "traffic", "outline-probe"],
+    )
     p.add_argument("--chain", required=True, choices=["old", "agent", "both"])
+    p.add_argument(
+        "--candidates", default="on", choices=["on", "off"],
+        help="任務 4.3：評估專用依賴注入（⛔ 不是線上開關、⛔ 不讀 env）。"
+        "on（預設）＝套 3.3 候選選取器；off＝退回整份大綱（評估基線）。",
+    )
     p.add_argument("--out", required=True, help="輸出目錄（JSONL + report.md）")
     p.add_argument("--provider", default="fake", choices=["fake", "openai"])
     p.add_argument("--old-base-url", default="http://localhost:8100")
@@ -1344,6 +1653,12 @@ def _repeat_summary(records: list[EvalRecord]) -> dict:
     forbid_rates = _rate_per_rep(lambda r: r.forbid_hit)
     answered_rates = _rate_per_rep(lambda r: r.answered)
     boundary_ok_rates = _rate_per_rep(lambda r: bool(r.boundary_ok), subset_pred=lambda r: r.boundary_expected)
+    candidate_fallback_rates = _rate_per_rep(
+        lambda r: "candidate_fallback_full_outline" in r.candidate_violations
+    )
+    gold_in_candidates_rates = _rate_per_rep(
+        lambda r: bool(r.gold_in_candidates), subset_pred=lambda r: r.gold_in_candidates is not None
+    )
     return {
         "reps": reps,
         "sensitive_zero_leak_all_reps_pass": not sensitive_leak_any,
@@ -1351,6 +1666,8 @@ def _repeat_summary(records: list[EvalRecord]) -> dict:
         "forbid_hit_rate": _rate_dict(forbid_rates),
         "answered_rate": _rate_dict(answered_rates),
         "boundary_ok_rate": _rate_dict(boundary_ok_rates),
+        "candidate_fallback_rate": _rate_dict(candidate_fallback_rates),
+        "gold_in_candidates_rate": _rate_dict(gold_in_candidates_rates),
     }
 
 
@@ -1378,6 +1695,7 @@ def main(argv: Optional[list[str]] = None, *, http_client: Any = None) -> int:
     chains = ["old", "agent"] if args.chain == "both" else [args.chain]
     outline_sha = ""
     dump_sink: Optional[list[dict]] = [] if args.dump_texts else None
+    candidates_meta = {"candidates_mode": args.candidates, "candidates_backend": "none"}
 
     for chain in chains:
         if chain == "old":
@@ -1396,15 +1714,23 @@ def main(argv: Optional[list[str]] = None, *, http_client: Any = None) -> int:
                     client=client,
                     repeat=args.repeat,
                     dump_sink=dump_sink,
+                    candidates_mode=args.candidates,
                 )
             )
         else:
-            agent_records, agent_meta = run_agent_chain(
-                scenarios, set_name=args.set, provider_kind=args.provider, repeat=args.repeat,
-                dump_sink=dump_sink,
-            )
+            # 任務 4.3（Plan §3.1）exit 5 的唯一傳遞形式：真 provider 路徑候選
+            # 索引未就緒時 `run_agent_chain` 拋 `IndexNotReady`，此處接住 ⇒
+            # `EXIT_INDEX_NOT_READY`——⛔ 必須在任何 JSONL／report 寫出之前。
+            try:
+                agent_records, agent_meta = run_agent_chain(
+                    scenarios, set_name=args.set, provider_kind=args.provider, repeat=args.repeat,
+                    dump_sink=dump_sink, candidates=args.candidates,
+                )
+            except IndexNotReady:
+                return EXIT_INDEX_NOT_READY
             records.extend(agent_records)
             outline_sha = agent_meta.get("outline_sha", "") or outline_sha
+            candidates_meta["candidates_backend"] = agent_meta.get("candidates_backend", "none")
 
     out_dir = Path(args.out)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -1460,6 +1786,7 @@ def main(argv: Optional[list[str]] = None, *, http_client: Any = None) -> int:
         git_head=git_head,
         repeat_summary=repeat_summary,
         dump_texts=args.dump_texts,
+        candidates_meta=candidates_meta,
     )
     (out_dir / "report.md").write_text(report, encoding="utf-8")
 

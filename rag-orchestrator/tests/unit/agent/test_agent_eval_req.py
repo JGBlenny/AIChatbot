@@ -218,6 +218,9 @@ _EXPECTED_JSONL_KEYS = {
     "answer_sha256", "answer_len",
     # DSP-028 新增
     "verifier_reasons", "budget_exhausted",
+    # 任務 4.3（knowledge-outline-and-intent-architecture・Plan §3.1）新增：
+    # `agent_eval` 有候選 vs 無候選兩臂。
+    "candidate_ids", "miss_kind", "candidates_mode", "gold_in_candidates",
 }
 
 
@@ -306,6 +309,82 @@ def test_provider_openai_without_key_refused_before_any_network(monkeypatch, sam
                 "--manifest", str(manifest_path), "--root", str(root),
             ]
         )
+
+
+@pytest.mark.req("knowledge-outline-and-intent-architecture:4.3")
+def test_provider_openai_without_key_refused_before_index_build_too(monkeypatch, sample_root, tmp_path):
+    """任務 4.3（Plan §3.1 第二次修正，2026-09-07）：`test_provider_openai_
+    without_key_refused_before_any_network`（前一條，逐字未改）只證明
+    `SystemExit` 被拋出；本測試是它的姊妹測試，額外用 monkeypatch 計數器證明
+    ——CLI 預設 `--candidates on` 缺 key 時，`_build_prospect_index`（會打真的
+    embedding 呼叫）**完全沒被呼叫**，key 檢查真的搬到了索引縫之前，⛔ 不是
+    「索引先跑完才被 `build_real_runtime` 內部的 key 檢查擋下來」。
+
+    正對照：同一計數器在「有 key＋`--candidates on`」情境下確實是 1
+    （為避免真的打 embedding 呼叫，同時把 `_build_prospect_index` 的行為換成
+    決定性假後端；`build_real_runtime` 也整支替換掉以免真的連 DB／provider——
+    這條分支的重點只在於「key 存在時，索引縫真的會被進到」，不在於驗證
+    `build_real_runtime` 本身）。
+    """
+    real_index_fn = agent_eval._build_prospect_index
+    calls = {"n": 0}
+
+    async def _counting(canon=None, *, backend=None):
+        calls["n"] += 1
+        if backend is None:
+            backend = agent_eval._DeterministicBackend()
+        return await real_index_fn(canon, backend=backend)
+
+    monkeypatch.setattr(agent_eval, "_build_prospect_index", _counting)
+
+    root, manifest_path = sample_root
+
+    # ── 缺 key：SystemExit 之前，索引縫完全沒被呼叫 ──
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    out_dir = tmp_path / "out_openai_no_key"
+    with pytest.raises(SystemExit, match="OPENAI_API_KEY"):
+        agent_eval.main(
+            [
+                "--set", "topics", "--chain", "agent", "--out", str(out_dir),
+                "--provider", "openai",
+                "--manifest", str(manifest_path), "--root", str(root),
+            ]
+        )
+    assert calls["n"] == 0, "缺 key 時 candidates=on 也不該先打候選索引的 embedding 呼叫"
+
+    # ── 正對照：有 key ⇒ 索引縫確實會被呼叫一次 ──
+    calls["n"] = 0
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test-not-real")
+
+    manifest = agent_eval.load_manifest(manifest_path)
+    scenarios = agent_eval.load_samples("scenarios", manifest, root=root, limit=1)
+
+    class _FakeHandle:
+        def __init__(self, runtime):
+            self.runtime = runtime
+            self.outline_doc = None
+
+        async def close(self):
+            pass
+
+    async def _fake_build_real_runtime(**kwargs):
+        # 這條分支只證「key 存在 ⇒ 索引縫會被呼叫」，不驗證 `build_real_runtime`
+        # 本身——整支替換掉，避免真的連 DB／真 provider；仍給一個能真的跑完
+        # 一輪的假 runtime，免得後續 `_run_scenario_agent` 對著 `None` 呼叫。
+        from services.agent.bootstrap import build_runtime
+
+        provider = agent_eval.ScriptedFakeProvider(scenarios[0].turns)
+        registry = agent_eval.build_fake_registry()
+        runtime = build_runtime(db_pool=None, provider=provider, registry=registry)
+        return _FakeHandle(runtime)
+
+    monkeypatch.setattr(agent_eval, "build_real_runtime", _fake_build_real_runtime)
+
+    records, meta = agent_eval.run_agent_chain(
+        scenarios, set_name="scenarios", provider_kind="openai", candidates="on",
+    )
+    assert calls["n"] == 1
+    assert meta["candidates_backend"] == "embedding"
 
 
 def test_build_real_runtime_is_monkeypatchable(monkeypatch, sample_root, tmp_path):
@@ -1084,3 +1163,572 @@ def test_main_falls_back_to_repo_root_git_head_when_root_not_a_repo(monkeypatch,
     report = (out_dir / "report.md").read_text(encoding="utf-8")
     assert agent_eval._git_head(root) == "", "前提不成立：root 這次應該模擬成非 repo"
     assert expected_head in report
+
+
+# ---------------------------------------------------------------------------
+# 15) 任務 4.3（knowledge-outline-and-intent-architecture・Plan §3.4）：
+#     `agent_eval` 有候選 vs 無候選兩臂
+# ---------------------------------------------------------------------------
+
+_REQ_4_3 = "knowledge-outline-and-intent-architecture:4.3"
+
+
+@pytest.mark.req(_REQ_4_3)
+def test_candidates_off_every_row_has_no_candidate_mechanism(sample_root, tmp_path):
+    root, manifest_path = sample_root
+    out_dir = tmp_path / "out_cand_off"
+    code = agent_eval.main(
+        [
+            "--set", "topics", "--chain", "agent", "--out", str(out_dir),
+            "--provider", "fake", "--candidates", "off", "--limit", "3",
+            "--manifest", str(manifest_path), "--root", str(root),
+        ]
+    )
+    assert code == agent_eval.EXIT_OK
+    rows = [json.loads(l) for l in (out_dir / "topics.jsonl").read_text(encoding="utf-8").strip().splitlines()]
+    assert rows
+    for row in rows:
+        assert row["candidates_mode"] == "off"
+        assert row["miss_kind"] is None
+        assert row["candidate_ids"] == []
+
+
+@pytest.mark.req(_REQ_4_3)
+def test_candidates_on_hit_rows_have_bounded_candidate_ids_and_clean_report(sample_root, tmp_path):
+    root, manifest_path = sample_root
+    out_dir = tmp_path / "out_cand_on"
+    code = agent_eval.main(
+        [
+            "--set", "topics", "--chain", "agent", "--out", str(out_dir),
+            "--provider", "fake", "--candidates", "on", "--limit", "3",
+            "--manifest", str(manifest_path), "--root", str(root),
+        ]
+    )
+    assert code == agent_eval.EXIT_OK
+    rows = [json.loads(l) for l in (out_dir / "topics.jsonl").read_text(encoding="utf-8").strip().splitlines()]
+    assert rows
+    for row in rows:
+        assert row["candidates_mode"] == "on"
+        assert row["miss_kind"] in {"hit", "none_visible", "index_unavailable"}
+    hit_rows = [r for r in rows if r["miss_kind"] == "hit"]
+    assert hit_rows, "prospect 身分下應至少一列 hit（真正本應有可見已審細目）"
+    for r in hit_rows:
+        assert 1 <= len(r["candidate_ids"]) <= 5
+
+    report = (out_dir / "report.md").read_text(encoding="utf-8")
+    assert "## candidates" in report
+    assert "candidates_mode：`on`（production 組態）" in report
+    assert f"candidate_fallback：0/{len(rows)}" in report
+    assert f"candidate_selector_error：0/{len(rows)}" in report
+
+
+class _RaisingQueryBackend:
+    """任務 4.3 §3.4-1 正對照 (a)：索引已 `prepare` 成功，但**查詢時**的後端
+    呼叫一律 raise——`CandidateSelector._embed_query` 會接住並回 `None`，
+    走 `sel is None` 的降級路徑（`candidate_fallback_full_outline`）。"""
+
+    async def embed(self, texts):
+        raise RuntimeError("query embed failure（測試用，模擬後端在查詢時故障）")
+
+
+@pytest.mark.req(_REQ_4_3)
+def test_candidates_on_query_backend_raise_marks_fallback_not_selector_error(monkeypatch, sample_root, tmp_path):
+    real_build_selector = agent_eval._build_fake_candidate_selector
+
+    async def _selector_with_raising_query_backend():
+        selector = await real_build_selector()
+        # `CandidateSelector.select` 對查詢用後端有獨立覆寫欄位（`backend=`
+        # 建構參數），索引本身已用可用的決定性後端 prepare 過——只有查詢這一步
+        # 之後會故障，模擬「索引沒事、embedding 服務這次掛了」。
+        selector._backend = _RaisingQueryBackend()
+        return selector
+
+    monkeypatch.setattr(agent_eval, "_build_fake_candidate_selector", _selector_with_raising_query_backend)
+
+    root, manifest_path = sample_root
+    out_dir = tmp_path / "out_cand_backend_raise"
+    code = agent_eval.main(
+        [
+            "--set", "topics", "--chain", "agent", "--out", str(out_dir),
+            "--provider", "fake", "--candidates", "on", "--limit", "3",
+            "--manifest", str(manifest_path), "--root", str(root),
+        ]
+    )
+    assert code == agent_eval.EXIT_OK
+    rows = [json.loads(l) for l in (out_dir / "topics.jsonl").read_text(encoding="utf-8").strip().splitlines()]
+    n = len(rows)
+    for row in rows:
+        assert row["miss_kind"] == "index_unavailable"
+        assert row["candidate_ids"] == []
+    report = (out_dir / "report.md").read_text(encoding="utf-8")
+    assert f"candidate_fallback：{n}/{n}" in report
+    assert f"candidate_selector_error：0/{n}" in report
+
+
+@pytest.mark.req(_REQ_4_3)
+def test_candidates_on_selector_select_raise_marks_selector_error_not_fallback(monkeypatch, sample_root, tmp_path):
+    from services.agent.canon.candidate_selector import CandidateSelector
+
+    async def _raise_select(self, doc, identity, query, *, vendor_business_types=frozenset()):
+        raise RuntimeError("selector.select 故障（測試用）")
+
+    monkeypatch.setattr(CandidateSelector, "select", _raise_select)
+
+    root, manifest_path = sample_root
+    out_dir = tmp_path / "out_cand_selector_raise"
+    code = agent_eval.main(
+        [
+            "--set", "topics", "--chain", "agent", "--out", str(out_dir),
+            "--provider", "fake", "--candidates", "on", "--limit", "3",
+            "--manifest", str(manifest_path), "--root", str(root),
+        ]
+    )
+    assert code == agent_eval.EXIT_OK
+    rows = [json.loads(l) for l in (out_dir / "topics.jsonl").read_text(encoding="utf-8").strip().splitlines()]
+    n = len(rows)
+    for row in rows:
+        assert row["miss_kind"] == "index_unavailable"
+        assert row["candidate_ids"] == []
+    report = (out_dir / "report.md").read_text(encoding="utf-8")
+    assert f"candidate_selector_error：{n}/{n}" in report
+    assert f"candidate_fallback：0/{n}" in report
+
+
+# ---------------------------------------------------------------------------
+# 16) --set outline-probe（4.4 步 2 探針凍結前佔位；本片只接 loader＋manifest）
+# ---------------------------------------------------------------------------
+
+
+def _write_outline_probe(tmp_path: Path) -> Path:
+    doc = {
+        "_meta": {"rule_sha256": "deadbeef00", "frozen_at": "2026-09-07T00:00:00Z", "n": 2},
+        "items": [
+            {
+                "id": "op:1", "q": "系統會怎麼收費", "stratum": "general",
+                "gold": ["prospect/Z/does-not-exist"], "expect_kind": "answer",
+            },
+            {
+                "id": "op:2", "q": "有沒有客戶名單可以看", "stratum": "sensitive",
+                "gold": [], "expect_kind": "handoff",
+            },
+        ],
+    }
+    p = tmp_path / "outline-probe-v1.json"
+    p.write_text(json.dumps(doc, ensure_ascii=False), encoding="utf-8")
+    return p
+
+
+def _write_manifest_with_outline_probe(
+    tmp_path: Path, topics_path: Path, scenarios_path: Path, outline_probe_path: Path,
+) -> Path:
+    manifest_path = _write_manifest(tmp_path, topics_path, scenarios_path)
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["sets"]["outline-probe"] = {
+        "available": True,
+        "path": str(outline_probe_path.relative_to(tmp_path)),
+        "sha256": _sha(outline_probe_path),
+    }
+    manifest_path.write_text(json.dumps(manifest, ensure_ascii=False), encoding="utf-8")
+    return manifest_path
+
+
+@pytest.mark.req(_REQ_4_3)
+def test_outline_probe_manifest_unavailable_exits_4(sample_root, tmp_path):
+    """預設 `sample_root` 夾具的 manifest 未登記 `outline-probe`（等同
+    `available=false`）——與正式 `samples-manifest.json` 的實際佔位一致。"""
+    root, manifest_path = sample_root
+    out_dir = tmp_path / "out_op_unavail"
+    code = agent_eval.main(
+        [
+            "--set", "outline-probe", "--chain", "agent", "--out", str(out_dir),
+            "--manifest", str(manifest_path), "--root", str(root),
+        ]
+    )
+    assert code == agent_eval.EXIT_SAMPLE_UNAVAILABLE
+
+
+@pytest.mark.req(_REQ_4_3)
+def test_outline_probe_runs_and_gold_in_candidates_is_bool(tmp_path):
+    topics = _write_topics(tmp_path)
+    scenarios = _write_scenarios(tmp_path)
+    outline_probe = _write_outline_probe(tmp_path)
+    manifest_path = _write_manifest_with_outline_probe(tmp_path, topics, scenarios, outline_probe)
+
+    out_dir = tmp_path / "out_op_run"
+    code = agent_eval.main(
+        [
+            "--set", "outline-probe", "--chain", "agent", "--out", str(out_dir),
+            "--provider", "fake", "--candidates", "on",
+            "--manifest", str(manifest_path), "--root", str(tmp_path),
+        ]
+    )
+    assert code == agent_eval.EXIT_OK
+    rows = [
+        json.loads(l)
+        for l in (out_dir / "outline-probe.jsonl").read_text(encoding="utf-8").strip().splitlines()
+    ]
+    assert len(rows) == 2
+    with_gold = [r for r in rows if r["idx"] == "op:1"]
+    assert with_gold and isinstance(with_gold[0]["gold_in_candidates"], bool)
+    without_gold = [r for r in rows if r["idx"] == "op:2"]
+    assert without_gold and without_gold[0]["gold_in_candidates"] is None
+
+
+@pytest.mark.req(_REQ_4_3)
+def test_outline_probe_sha_mismatch_exits_3(tmp_path):
+    topics = _write_topics(tmp_path)
+    scenarios = _write_scenarios(tmp_path)
+    outline_probe = _write_outline_probe(tmp_path)
+    manifest_path = _write_manifest_with_outline_probe(tmp_path, topics, scenarios, outline_probe)
+
+    # 竄改樣本內容（模擬「看過結果後改樣本」）——sha 與 manifest 記錄的不再相符。
+    doc = json.loads(outline_probe.read_text(encoding="utf-8"))
+    doc["items"].append(
+        {"id": "op:3", "q": "額外題", "stratum": "general", "gold": [], "expect_kind": "answer"}
+    )
+    outline_probe.write_text(json.dumps(doc, ensure_ascii=False), encoding="utf-8")
+
+    out_dir = tmp_path / "out_op_sha"
+    code = agent_eval.main(
+        [
+            "--set", "outline-probe", "--chain", "agent", "--out", str(out_dir),
+            "--provider", "fake",
+            "--manifest", str(manifest_path), "--root", str(tmp_path),
+        ]
+    )
+    assert code == agent_eval.EXIT_SAMPLES_CHANGED
+
+
+# ---------------------------------------------------------------------------
+# 17) 真 provider 路徑：`--candidates on` 索引未就緒 ⇒ exit 5；正對照 ⇒ 0
+# ---------------------------------------------------------------------------
+
+
+class _AlwaysNoneQueryEmbedBackend:
+    """`FineIndex.prepare` 對每個文字都拿到 `None` ⇒ 索引整份丟成 `not_ready`
+    （見 `services/agent/canon/fine_index.py` 模組層行為：任一鍵失敗就整份丟）。"""
+
+    async def embed(self, texts):
+        return [None for _ in texts]
+
+
+class _FakeRealRuntimeHandle:
+    def __init__(self, runtime):
+        self.runtime = runtime
+        self.outline_doc = None
+
+    async def close(self) -> None:
+        pass
+
+
+def _install_fake_build_real_runtime(monkeypatch, scenarios):
+    # ⚠️ 接受 `**kwargs`（而非零參數）：`candidates=="on"` 時
+    # `_run_agent_chain_openai` 會以 `candidate_selector=...` 呼叫
+    # `build_real_runtime`（Plan §3.1 修訂——selector 必須真的接進 runtime）。
+    async def _fake_build_real_runtime(**kwargs):
+        from services.agent.bootstrap import build_runtime
+
+        provider = agent_eval.ScriptedFakeProvider(scenarios[0].turns)
+        registry = agent_eval.build_fake_registry()
+        runtime = build_runtime(db_pool=None, provider=provider, registry=registry)
+        return _FakeRealRuntimeHandle(runtime)
+
+    # 2026-09-07 二次修正：`candidates=="on"` 分支在呼叫候選索引縫之前會先過
+    # `_require_openai_key()`——這個助手函式的呼叫端是在測候選索引／selector
+    # 接線，不是在測 key 檢查本身，給一個假 key 讓它過關（`build_real_runtime`
+    # 本身整支被替換掉，不會真的用這個 key 連線）。
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test-not-real")
+    monkeypatch.setattr(agent_eval, "build_real_runtime", _fake_build_real_runtime)
+
+
+@pytest.mark.req(_REQ_4_3)
+def test_real_provider_candidates_on_index_not_ready_exits_5_no_jsonl(monkeypatch, sample_root, tmp_path):
+    """§3.4-4：不設 `OPENAI_API_KEY`、不觸網、不觸 DB——`build_real_runtime` 替身
+    只為越過 key 檢查／pool，⛔ 不發 exit、⛔ 不登記 canon；exit 由受測的
+    `_run_agent_chain_openai`／`main` 發出。注入永遠回 `None` 的假後端 ⇒
+    候選索引 `prepare` 後留在 `not_ready` ⇒ `IndexNotReady` ⇒ exit 5、無 JSONL。"""
+    root, manifest_path = sample_root
+    manifest = agent_eval.load_manifest(manifest_path)
+    scenarios = agent_eval.load_samples("scenarios", manifest, root=root, limit=1)
+    _install_fake_build_real_runtime(monkeypatch, scenarios)
+
+    real_build_index = agent_eval._build_prospect_index
+
+    async def _stub_index_not_ready(canon=None, *, backend=None):
+        return await real_build_index(canon, backend=_AlwaysNoneQueryEmbedBackend())
+
+    monkeypatch.setattr(agent_eval, "_build_prospect_index", _stub_index_not_ready)
+
+    out_dir = tmp_path / "out_real_notready"
+    code = agent_eval.main(
+        [
+            "--set", "scenarios", "--chain", "agent", "--out", str(out_dir),
+            "--provider", "openai", "--candidates", "on",
+            "--manifest", str(manifest_path), "--root", str(root),
+        ]
+    )
+    assert code == agent_eval.EXIT_INDEX_NOT_READY
+    assert code == 5
+    assert not (out_dir / "scenarios.jsonl").exists()
+    assert not (out_dir / "report.md").exists()
+
+
+@pytest.mark.req(_REQ_4_3)
+def test_real_provider_candidates_on_index_ready_exits_0_writes_jsonl(monkeypatch, sample_root, tmp_path):
+    """正對照：同一注入點（`_build_prospect_index`）換一個可用的決定性假後端
+    ⇒ 索引 `ready` ⇒ 正常跑完、回傳 0、JSONL 寫出、report 標
+    `candidates_backend` 為 `embedding`（真 provider 路徑值域）。"""
+    root, manifest_path = sample_root
+    manifest = agent_eval.load_manifest(manifest_path)
+    scenarios = agent_eval.load_samples("scenarios", manifest, root=root, limit=1)
+    _install_fake_build_real_runtime(monkeypatch, scenarios)
+
+    real_build_index = agent_eval._build_prospect_index
+
+    async def _stub_index_ready(canon=None, *, backend=None):
+        return await real_build_index(canon, backend=agent_eval._DeterministicBackend())
+
+    monkeypatch.setattr(agent_eval, "_build_prospect_index", _stub_index_ready)
+
+    out_dir = tmp_path / "out_real_ready"
+    code = agent_eval.main(
+        [
+            "--set", "scenarios", "--chain", "agent", "--out", str(out_dir),
+            "--provider", "openai", "--candidates", "on",
+            "--manifest", str(manifest_path), "--root", str(root),
+        ]
+    )
+    assert code == agent_eval.EXIT_OK
+    assert (out_dir / "scenarios.jsonl").is_file()
+    report = (out_dir / "report.md").read_text(encoding="utf-8")
+    assert "candidates_backend：`embedding`" in report
+
+
+@pytest.mark.req(_REQ_4_3)
+def test_real_provider_on_arm_actually_wires_candidate_selector_into_runtime(monkeypatch, sample_root, tmp_path):
+    """Plan §3.4-4b（2026-09-07 修正）：真 provider `on` 臂必須真的把
+    `CandidateSelector` 接進 `build_real_runtime`，⛔ 不能只做就緒閘門。
+
+    - `on`：替身捕捉到的 `candidate_selector` 是 `CandidateSelector`，其 `.index`
+      與縫（`_build_prospect_index`）回傳的索引物件是同一個（`is`）。
+    - `off`：替身捕捉到的 `candidate_selector` 為 `None`。
+    - 索引未就緒：`IndexNotReady` 在 `build_real_runtime` **被呼叫之前**拋出
+      ——替身呼叫次數為 0（正對照：就緒時替身確實被呼叫一次）。
+    """
+    from services.agent.canon.candidate_selector import CandidateSelector
+
+    root, manifest_path = sample_root
+    manifest = agent_eval.load_manifest(manifest_path)
+    scenarios = agent_eval.load_samples("scenarios", manifest, root=root, limit=1)
+
+    real_build_index = agent_eval._build_prospect_index
+    captured_index: dict = {}
+
+    async def _stub_index_ready(canon=None, *, backend=None):
+        index = await real_build_index(canon, backend=agent_eval._DeterministicBackend())
+        captured_index["index"] = index
+        return index
+
+    async def _stub_index_not_ready(canon=None, *, backend=None):
+        class _AlwaysNoneBackend:
+            async def embed(self, texts):
+                return [None for _ in texts]
+
+        return await real_build_index(canon, backend=_AlwaysNoneBackend())
+
+    build_calls: list[dict] = []
+
+    def _install_capturing_stub():
+        async def _capturing_build_real_runtime(**kwargs):
+            build_calls.append(kwargs)
+            from services.agent.bootstrap import build_runtime
+
+            provider = agent_eval.ScriptedFakeProvider(scenarios[0].turns)
+            registry = agent_eval.build_fake_registry()
+            handle = _FakeRealRuntimeHandle(
+                build_runtime(
+                    db_pool=None, provider=provider, registry=registry,
+                    candidate_selector=kwargs.get("candidate_selector"),
+                )
+            )
+            return handle
+
+        # 2026-09-07 二次修正：`candidates=="on"` 分支呼叫索引縫之前會先過
+        # `_require_openai_key()`——這裡測的是 selector 接線，不是 key 檢查，
+        # 給假 key 讓它過關（`build_real_runtime` 整支被替換，不會真的連線）。
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-test-not-real")
+        monkeypatch.setattr(agent_eval, "build_real_runtime", _capturing_build_real_runtime)
+
+    # ── on：selector 真的接進去，且 .index 是縫回傳的同一物件 ──
+    _install_capturing_stub()
+    monkeypatch.setattr(agent_eval, "_build_prospect_index", _stub_index_ready)
+    build_calls.clear()
+    records_on, meta_on = agent_eval.run_agent_chain(
+        scenarios, set_name="scenarios", provider_kind="openai", candidates="on",
+    )
+    assert len(build_calls) == 1
+    selector = build_calls[0].get("candidate_selector")
+    assert isinstance(selector, CandidateSelector)
+    assert selector.index is captured_index["index"]
+    assert meta_on["candidates_backend"] == "embedding"
+
+    # ── off：candidate_selector 為 None（或未傳，等同 None）──
+    build_calls.clear()
+    records_off, meta_off = agent_eval.run_agent_chain(
+        scenarios, set_name="scenarios", provider_kind="openai", candidates="off",
+    )
+    assert len(build_calls) == 1
+    assert build_calls[0].get("candidate_selector") is None
+
+    # ── 索引未就緒：build_real_runtime 完全不被呼叫（計數 0）──
+    monkeypatch.setattr(agent_eval, "_build_prospect_index", _stub_index_not_ready)
+    build_calls.clear()
+    with pytest.raises(agent_eval.IndexNotReady):
+        agent_eval.run_agent_chain(
+            scenarios, set_name="scenarios", provider_kind="openai", candidates="on",
+        )
+    assert len(build_calls) == 0
+
+
+@pytest.mark.req(_REQ_4_3)
+def test_no_candidates_related_env_reads_in_agent_eval():
+    """§3.4-5：`tools/agent_eval.py` 不得有任何讀取 candidates 相關 `os.environ`
+    的程式碼（⛔ 這是評估專用依賴注入，不是線上開關）。"""
+    src = Path(agent_eval.__file__).read_text(encoding="utf-8")
+    for lineno, line in enumerate(src.splitlines(), start=1):
+        if "os.environ" in line or "os.getenv" in line:
+            assert "candidate" not in line.lower(), f"line {lineno}: {line}"
+
+
+@pytest.mark.req(_REQ_4_3)
+def test_build_prospect_index_not_called_when_candidates_off(monkeypatch, sample_root, tmp_path):
+    """§3.4-6（2026-09-07 修正版）：`_build_prospect_index` 只在
+    `candidates=="on"` 時被呼叫——`off` 臂（無論走 `main()` 的 `--candidates off`
+    或函式層直呼不帶 `candidates` 參數的預設值）一律不建索引；正對照：
+    `on` 路徑（無論走哪個入口）確實會呼叫恰好一次。
+
+    ⚠️ 與本測試上一版的差異（記在這裡，供下一個 session 對照）：Plan §3.1
+    2026-09-07 執行中修正之前，`_run_agent_chain_openai` 是「先呼叫
+    `build_real_runtime`（含 OPENAI_API_KEY 檢查），之後才呼叫候選索引縫」，
+    所以 `--provider openai` 不給 `--candidates`（CLI 預設 `on`）＋缺 key 的
+    `test_provider_openai_without_key_refused_before_any_network` 情境下，
+    索引縫從未被呼叫。修正後索引縫**先於** `build_real_runtime`（selector
+    才接得進 runtime，見 §3.4-4b），於是同一情境下 `_build_prospect_index`
+    **會**被呼叫一次（本機環境有可連得到的 embedding 服務，索引順利建成
+    `ready`，接著才進 `build_real_runtime` 因缺 key 拋出預期的
+    `SystemExit`）——這是修正後的預期行為、⛔ 不是迴歸：`build_real_runtime`
+    自身「缺 key 之前不連 OpenAI／不建 DB」的承諾不受影響（那兩件事仍然
+    在其函式內部、在任何 I/O 之前就檢查），只是「有沒有先做候選索引縫」
+    這件事本身就是 `--candidates on` 的定義。真正該守住的不變量因此改寫成
+    「`off` 臂／函式層預設一律不建索引」，見下方斷言。"""
+    calls = {"n": 0}
+    real_index_fn = agent_eval._build_prospect_index
+
+    async def _counting(canon=None, *, backend=None):
+        calls["n"] += 1
+        if backend is None:
+            # 正對照分支才會真的走到這裡——注入決定性假後端，⛔ 不連真 embedding 服務。
+            backend = agent_eval._DeterministicBackend()
+        return await real_index_fn(canon, backend=backend)
+
+    monkeypatch.setattr(agent_eval, "_build_prospect_index", _counting)
+
+    root, manifest_path = sample_root
+
+    # ── main()：明確 `--candidates off`（無論 key 有沒有設）一律不建索引 ──
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    calls["n"] = 0
+    with pytest.raises(SystemExit, match="OPENAI_API_KEY"):
+        agent_eval.main(
+            [
+                "--set", "topics", "--chain", "agent", "--out", str(tmp_path / "o1"),
+                "--provider", "openai", "--candidates", "off",
+                "--manifest", str(manifest_path), "--root", str(root),
+            ]
+        )
+    assert calls["n"] == 0, "--candidates off ⇒ 缺 key 拒絕前不該建候選索引"
+
+    # ── 函式層直呼（等價於 test_build_real_runtime_is_monkeypatchable）：
+    #    `run_agent_chain(provider_kind="openai")` 不帶 `candidates` ⇒
+    #    函式層預設 "off" ⇒ 不建索引。
+    manifest = agent_eval.load_manifest(manifest_path)
+    scenarios = agent_eval.load_samples("scenarios", manifest, root=root, limit=1)
+
+    class _FakeHandle:
+        def __init__(self):
+            self.runtime = None
+            self.outline_doc = None
+
+        async def close(self):
+            pass
+
+    async def _fake_build_real_runtime(**kwargs):
+        from services.agent.bootstrap import build_runtime
+
+        provider = agent_eval.ScriptedFakeProvider(scenarios[0].turns)
+        registry = agent_eval.build_fake_registry()
+        handle = _FakeHandle()
+        handle.runtime = build_runtime(db_pool=None, provider=provider, registry=registry)
+        return handle
+
+    monkeypatch.setattr(agent_eval, "build_real_runtime", _fake_build_real_runtime)
+    calls["n"] = 0
+    records, _meta = agent_eval.run_agent_chain(scenarios, set_name="scenarios", provider_kind="openai")
+    assert calls["n"] == 0, "函式層預設 off ⇒ 不該呼叫 _build_prospect_index"
+
+    # ── 正對照：`candidates="on"` 路徑（無論哪個入口）確實會呼叫恰好一次 ──
+    # （`on` 分支現在會先過 `_require_openai_key()` 才呼叫索引縫——見
+    # 2026-09-07 二次修正——這裡不是測 key 檢查本身，故給一個假 key 讓它過關。）
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test-not-real")
+    calls["n"] = 0
+    records2, meta2 = agent_eval.run_agent_chain(
+        scenarios, set_name="scenarios", provider_kind="openai", candidates="on",
+    )
+    assert calls["n"] == 1
+    assert meta2["candidates_backend"] == "embedding"
+
+
+# ---------------------------------------------------------------------------
+# 18) `--chain both --candidates off`：old 鏈列也是 28 鍵、candidates_mode="off"
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.req(_REQ_4_3)
+def test_chain_both_candidates_off_old_rows_28_keys_backend_none(sample_root, tmp_path):
+    root, manifest_path = sample_root
+    out_dir = tmp_path / "out_both_off"
+    client = _RecordingClient()
+    code = agent_eval.main(
+        [
+            "--set", "topics", "--chain", "both", "--out", str(out_dir),
+            "--provider", "fake", "--candidates", "off", "--limit", "2",
+            "--manifest", str(manifest_path), "--root", str(root),
+        ],
+        http_client=client,
+    )
+    assert code == agent_eval.EXIT_OK
+    rows = [json.loads(l) for l in (out_dir / "topics.jsonl").read_text(encoding="utf-8").strip().splitlines()]
+    assert rows
+    old_rows = [r for r in rows if r["chain"] == "old"]
+    assert old_rows
+    for row in rows:
+        assert set(row.keys()) == _EXPECTED_JSONL_KEYS
+        assert row["candidates_mode"] == "off"
+    report = (out_dir / "report.md").read_text(encoding="utf-8")
+    assert "candidates_backend：`none`" in report
+
+
+@pytest.mark.req(_REQ_4_3)
+def test_chain_agent_only_candidates_on_backend_is_fake(sample_root, tmp_path):
+    root, manifest_path = sample_root
+    out_dir = tmp_path / "out_on_fake_backend"
+    code = agent_eval.main(
+        [
+            "--set", "topics", "--chain", "agent", "--out", str(out_dir),
+            "--provider", "fake", "--candidates", "on", "--limit", "1",
+            "--manifest", str(manifest_path), "--root", str(root),
+        ]
+    )
+    assert code == agent_eval.EXIT_OK
+    report = (out_dir / "report.md").read_text(encoding="utf-8")
+    assert "candidates_backend：`fake`" in report

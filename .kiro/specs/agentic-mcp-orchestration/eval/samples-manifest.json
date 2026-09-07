@@ -44,6 +44,12 @@
       "path": null,
       "sha256": null,
       "note": "⛔ 尚未凍結：需業主從線上 usage_events 匯出 prospect 問句、本機去識別（剝除人名／電話／地址）後才能凍結 sha256。本任務（4.2）不得代為生成或臆造此樣本；--set traffic 在此檔未補值前一律視為「樣本已變動/未就緒」而拒跑（見 tools/agent_eval.py 的 UNAVAILABLE 分支，退出碼 3）。"
+    },
+    "outline-probe": {
+      "available": false,
+      "path": null,
+      "sha256": null,
+      "note": "4.4a 凍結後補值（knowledge-outline-and-intent-architecture 4.3）"
     }
   },
   "baseline": {
