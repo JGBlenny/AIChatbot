@@ -1,0 +1,518 @@
+[
+ {
+  "session": "L3-A",
+  "title": "標準路：描述損壞＋物件→確認→開單",
+  "runnable_now": true,
+  "needs": [],
+  "turns": [
+   {
+    "q": "基隆溫馨一人宅套房 浴室天花板漏水，幫我開單",
+    "expect": "第 1 輪直接出確認摘要（分類＋急迫度＋物件名）＋三顆按鈕；尚未建單",
+    "facts": ["基隆溫馨一人宅套房"]
+   },
+   {
+    "reply": "confirm_submit",
+    "expect": "建立成功，回覆含單號，且不再出現需要重新確認的按鈕"
+   }
+  ]
+ },
+ {
+  "session": "L3-B",
+  "title": "分類猜錯→修改→重新確認（只重確認分類）",
+  "runnable_now": true,
+  "needs": [],
+  "turns": [
+   {
+    "q": "基隆溫馨一人宅套房 浴室天花板漏水，幫我開單",
+    "expect": "出確認摘要＋三顆按鈕",
+    "facts": ["基隆溫馨一人宅套房"]
+   },
+   {
+    "reply": "confirm_edit",
+    "expect": "問要改哪一項"
+   },
+   {
+    "q": "不是天花板，是馬桶後面的水管",
+    "expect": "改為新分類的確認摘要（含「馬桶」字樣），物件與急迫度不重問",
+    "facts": ["馬桶"],
+    "forbid": ["哪一戶", "是哪一間"]
+   }
+  ]
+ },
+ {
+  "session": "L3-C",
+  "title": "信心不足→2–3 候選→選一→確認",
+  "runnable_now": false,
+  "needs": ["W8:image_urls"],
+  "note": "斷言依附在真實圖片的 image_recognition.confidence<0.7 分支；文字描述無法保證命中同一信心門檻，無法用文字模擬",
+  "turns": [
+   {
+    "q": "（模糊牆角照，看不出是哪一種損壞）",
+    "expect": "quick_replies 出 2–3 個候選（例：牆面滲水／壁癌／油漆剝落）"
+   },
+   {
+    "reply": "牆面滲水",
+    "expect": "出確認摘要（土木類／牆面／滲水，非緊急）＋三顆按鈕"
+   }
+  ]
+ },
+ {
+  "session": "L3-D",
+  "title": "照片看不出損壞→不編描述",
+  "runnable_now": false,
+  "needs": ["W8:image_urls"],
+  "note": "image_recognition.is_damage=false 與 description==\"\" 是圖片辨識管線的行為，純文字沒有『照片』輸入無法觸發同一分支",
+  "turns": [
+   {
+    "q": "（只有地板的照片，看不出哪裡壞）",
+    "expect": "image_recognition.description 為空字串；改問一句「請說一下是哪裡壞了」，不出現「疑似…」字樣",
+    "forbid": ["疑似"]
+   },
+   {
+    "q": "熱水器不出熱水",
+    "expect": "出確認摘要（設備類／熱水器／故障）＋三顆按鈕"
+   }
+  ]
+ },
+ {
+  "session": "L3-F",
+  "title": "超過 3 張照片（5 張）",
+  "runnable_now": false,
+  "needs": ["W8:image_urls"],
+  "note": "斷言是『修繕單照片數＝5』，需要真實上傳 5 張並比對 JGB 端存了幾張，純文字無此輸入",
+  "turns": [
+   {
+    "q": "（5 張同一處漏水的照片）＋基隆溫馨一人宅套房 浴室漏水",
+    "expect": "只送 3 張進辨識不觸發 422；出確認摘要"
+   },
+   {
+    "reply": "confirm_submit",
+    "expect": "JGB 修繕單照片數＝5（非只存前 3 張）"
+   }
+  ]
+ },
+ {
+  "session": "L3-G",
+  "title": "中途取消",
+  "runnable_now": true,
+  "needs": [],
+  "turns": [
+   {
+    "q": "基隆溫馨一人宅套房 浴室天花板漏水，幫我開單",
+    "expect": "出確認摘要＋三顆按鈕",
+    "facts": ["基隆溫馨一人宅套房"]
+   },
+   {
+    "reply": "confirm_cancel",
+    "expect": "form_cancelled：已結束此次諮詢，未建單，不留殘單"
+   }
+  ]
+ },
+ {
+  "session": "L3-H",
+  "title": "確認摘要後等 31 分鐘再確認",
+  "runnable_now": false,
+  "needs": ["W8:session_expired"],
+  "note": "需要真實等待 30 分鐘讓 cleanup_expired_sessions 觸發，或有可控的時間快轉機制；純文字腳本無法在單次 turn 序列裡讓時間流逝",
+  "turns": [
+   {
+    "q": "基隆溫馨一人宅套房 浴室天花板漏水，幫我開單",
+    "expect": "出確認摘要＋三顆按鈕",
+    "facts": ["基隆溫馨一人宅套房"]
+   },
+   {
+    "reply": "confirm_submit",
+    "expect": "（等待 31 分鐘後才送出）回可辨識的過期訊號，不是把「查不到您名下的有效租約」當正常回答；JGB 沒有新單"
+   }
+  ]
+ },
+ {
+  "session": "L3-I",
+  "title": "建單 API 失敗→誠實告知→再試一次成功",
+  "runnable_now": true,
+  "needs": [],
+  "note": "能否真的命中 JGB 500 取決於環境／替身是否有故障注入，不是文字模擬的限制；若這輪替身照常成功，代表沒有命中失敗分支，需另外標記",
+  "turns": [
+   {
+    "q": "台北中正-小南門單身貴族分租套房B 冷氣不冷，幫我開單",
+    "expect": "出確認摘要＋三顆按鈕",
+    "facts": ["台北中正-小南門單身貴族分租套房B"]
+   },
+   {
+    "reply": "confirm_submit",
+    "expect": "若建單失敗：answer 明講尚未建立＋「🔄 再試一次」按鈕；不得假裝成功"
+   },
+   {
+    "reply": "confirm_submit",
+    "expect": "再試一次後建立成功"
+   }
+  ]
+ },
+ {
+  "session": "L3-J",
+  "title": "連按兩次確認送出，不重複建單",
+  "runnable_now": true,
+  "needs": [],
+  "turns": [
+   {
+    "q": "基隆溫馨一人宅套房 浴室天花板漏水，幫我開單",
+    "expect": "出確認摘要＋三顆按鈕",
+    "facts": ["基隆溫馨一人宅套房"]
+   },
+   {
+    "reply": "confirm_submit",
+    "expect": "建立成功，回覆含單號"
+   },
+   {
+    "reply": "confirm_submit",
+    "expect": "回覆與上一輪相同單號，JGB 只有一張單，不得重複建立"
+   }
+  ]
+ },
+ {
+  "session": "L3-K",
+  "title": "空屋物件（無租約）也能開單",
+  "runnable_now": true,
+  "needs": [],
+  "note": "替身合約表（89481／85894／84921／88247）沒有對應到『台北中正-小南門單身貴族分租套房B』（45728），是替身裡最接近『無租約空屋』的真實資料",
+  "turns": [
+   {
+    "q": "台北中正-小南門單身貴族分租套房B 浴室排水管漏水，幫我開單",
+    "expect": "出確認摘要＋三顆按鈕，不因無租約而擋在門口",
+    "facts": ["台北中正-小南門單身貴族分租套房B"]
+   },
+   {
+    "reply": "confirm_submit",
+    "expect": "建立成功，contract_id 留空亦可建單"
+   }
+  ]
+ },
+ {
+  "session": "L3-R7",
+  "title": "急迫值域：顯示「急迫」時 emergency_status=2",
+  "runnable_now": true,
+  "needs": [],
+  "turns": [
+   {
+    "q": "基隆溫馨一人宅套房 浴室天花板漏水很嚴重一直滴，幫我開單",
+    "expect": "確認摘要顯示「急迫」",
+    "facts": ["急迫"]
+   },
+   {
+    "reply": "confirm_submit",
+    "expect": "JGB 單上的 emergency_status＝2，與畫面文字一致"
+   }
+  ]
+ },
+ {
+  "session": "L3-R7b",
+  "title": "辨識不出急不急時不得預設緊急",
+  "runnable_now": false,
+  "needs": ["W8:image_urls"],
+  "note": "suggested_emergency 缺失時的預設值邏輯掛在圖片辨識管線（int(result.get(\"suggested_emergency\", 2))），需要真實圖片且辨識不到嚴重度才會落到這個預設分支，純文字無法觸發同一路徑",
+  "turns": [
+   {
+    "q": "（一張看不出嚴重程度的損壞照片）＋信箱鎖壞了",
+    "expect": "確認摘要顯示「非緊急」或留空讓人選，⛔ 不得預設為「急迫」",
+    "forbid": ["急迫"]
+   }
+  ]
+ },
+ {
+  "session": "L3-identity",
+  "title": "業務身分進場不查租約（不出現查不到租約）",
+  "runnable_now": true,
+  "needs": [],
+  "turns": [
+   {
+    "q": "測試物件 熱水器不出熱水，幫我開單",
+    "expect": "不出現「查不到您名下的有效租約」，正常進入分類確認摘要",
+    "facts": ["測試物件"],
+    "forbid": ["查不到您名下的有效租約"]
+   }
+  ]
+ },
+ {
+  "session": "L3-M",
+  "title": "物件槽已由文字帶入單一物件，不再追問哪一戶",
+  "runnable_now": true,
+  "needs": ["W8:facet_context"],
+  "note": "替身只有 5 個不重名的物件，沒有『同名多戶』情境；改驗證等價斷言——文字裡直接帶完整物件名稱時，面向不會再問一次「哪一戶」。正式環境走 R5（facet_context 結構化欄位）時效果相同，本腳本用文字替代驗證同一斷言",
+  "turns": [
+   {
+    "q": "基隆獨立共生公寓雅房 窗戶關不緊會漏風，幫我開單",
+    "expect": "確認摘要直接顯示該物件，面向不再詢問「哪一戶／是哪一間」",
+    "facts": ["基隆獨立共生公寓雅房"],
+    "forbid": ["哪一戶", "是哪一間"]
+   }
+  ]
+ },
+ {
+  "session": "L3-N",
+  "title": "該戶已有未結同類單，選「開一張新的」",
+  "runnable_now": true,
+  "needs": ["W8:open_repair_hint"],
+  "note": "『併到那張』分支在 line-bot 端就攔截、不會呼叫 chatai，無法用 turn 腳本表示，只驗『開一張新的』分支；確認摘要是否要額外顯示『這戶另有未結單 8591』尚未定案（規格 ❓），本腳本只驗『照常開得成』這條，不強求出現提示句",
+  "turns": [
+   {
+    "q": "基隆溫馨一人宅套房 電路又跳電了，幫我開一張新單",
+    "expect": "照常走標準路出確認摘要，不因既有 8591（電路／申請中）而卡住",
+    "facts": ["基隆溫馨一人宅套房"]
+   },
+   {
+    "reply": "confirm_submit",
+    "expect": "建立成功，與既有 8591 是兩張不同的單"
+   }
+  ]
+ },
+ {
+  "session": "L3-O",
+  "title": "確認摘要後只改急迫性，分類與物件不重問",
+  "runnable_now": true,
+  "needs": [],
+  "turns": [
+   {
+    "q": "基隆溫馨一人宅套房 浴室天花板漏水，幫我開單",
+    "expect": "出確認摘要（分類＋急迫度）＋三顆按鈕",
+    "facts": ["基隆溫馨一人宅套房"]
+   },
+   {
+    "reply": "confirm_edit",
+    "expect": "問要改哪一項"
+   },
+   {
+    "q": "分類對，是急件",
+    "expect": "摘要只把急迫性改為「急迫」，分類與物件不重問",
+    "facts": ["急迫"],
+    "forbid": ["哪一戶", "是哪一間"]
+   },
+   {
+    "reply": "confirm_submit",
+    "expect": "建立成功，emergency_status 與畫面上「急迫」一致（依賴 R7）"
+   }
+  ]
+ },
+ {
+  "session": "L3-P",
+  "title": "一組照片裡有兩個問題，不得靜默只認一個",
+  "runnable_now": false,
+  "needs": ["W8:image_urls"],
+  "note": "任務指名的無法文字模擬案例之一：兩張漏水＋一張壁癌需要真實三張照片讓辨識管線同時看到兩種損壞，純文字描述無法還原『一組照片』的辨識行為",
+  "turns": [
+   {
+    "q": "（兩張浴室天花板漏水照＋一張客廳壁癌照）＋基隆溫馨一人宅套房",
+    "expect": "行為與規格 §1 P 的裁決一致（全部歸一類 / 回候選 / 回兩組建議三者之一，待業主定案）；⛔ 不得靜默只認一個問題把另一個吃掉"
+   }
+  ]
+ },
+ {
+  "session": "L3-Q",
+  "title": "分類樹涵蓋不到的東西→給大類、開得成單",
+  "runnable_now": true,
+  "needs": [],
+  "turns": [
+   {
+    "q": "基隆溫馨一人宅套房 信箱鎖壞了，幫我開單",
+    "expect": "給大類選單（土木類／水電類／其他），不編一個聽起來對的葉節點"
+   },
+   {
+    "reply": "其他",
+    "expect": "確認摘要顯示「其他」，非緊急，描述留空，不出現編造的分類",
+    "facts": ["其他"]
+   },
+   {
+    "reply": "confirm_submit",
+    "expect": "建立成功"
+   }
+  ]
+ },
+ {
+  "session": "L5-A",
+  "title": "逾期帳單追問：之前都準時嗎",
+  "runnable_now": true,
+  "needs": [],
+  "note": "替身沒有『近一年逾期次數明細』的完整歷史資料，只知本期 756248 待繳逾期；只驗『不假裝有沒有的資料、不出現查不到租約』，不強求近一年明細內容",
+  "turns": [
+   {
+    "q": "756248 這張逾期帳單，他之前都準時嗎",
+    "expect": "回答依 JGB 實際資料作答，不出現「查不到您名下的有效租約」",
+    "forbid": ["查不到您名下的有效租約", "09"]
+   }
+  ]
+ },
+ {
+  "session": "L5-C",
+  "title": "離題問別戶→退出不答",
+  "runnable_now": true,
+  "needs": [],
+  "turns": [
+   {
+    "q": "756248 這張帳單逾期幾天了",
+    "expect": "answer",
+    "facts": ["待繳"]
+   },
+   {
+    "q": "那 769249 呢",
+    "expect": "面向退出，提示回清單點 769249，不回答 769249 的內容",
+    "forbid": ["09/14", "2026-09-14"]
+   }
+  ]
+ },
+ {
+  "session": "L5-D",
+  "title": "問 JGB 沒有的資料（入帳日）",
+  "runnable_now": true,
+  "needs": [],
+  "turns": [
+   {
+    "q": "756248 是幾號入帳的",
+    "expect": "明講 JGB 帳單資料沒有入帳日欄位，不推算、不用 updated_at 冒充"
+   }
+  ]
+ },
+ {
+  "session": "L5-G",
+  "title": "結束追問",
+  "runnable_now": true,
+  "needs": [],
+  "turns": [
+   {
+    "q": "756248 這張帳單逾期幾天了",
+    "expect": "answer",
+    "facts": ["待繳"]
+   },
+   {
+    "q": "好了",
+    "expect": "form_cancelled 或等價的結束訊號"
+   }
+  ]
+ },
+ {
+  "session": "L5-H",
+  "title": "31 分鐘後回來→過期訊號",
+  "runnable_now": false,
+  "needs": ["W8:session_expired"],
+  "note": "同 L3-H：需要真實等待 30 分鐘讓會話過期，純文字腳本無法讓時間流逝",
+  "turns": [
+   {
+    "q": "756248 這張逾期帳單，逾期幾天了",
+    "expect": "answer",
+    "facts": ["待繳"]
+   },
+   {
+    "q": "（等待 31 分鐘後）這期含滯納金是多少",
+    "expect": "回可辨識的過期訊號，不當成正常回答"
+   }
+  ]
+ },
+ {
+  "session": "L5-R3",
+  "title": "bill_id 帶錯（不存在）",
+  "runnable_now": true,
+  "needs": [],
+  "turns": [
+   {
+    "q": "999999 這筆帳單逾期多久了",
+    "expect": "誠實回查無此帳單，不猜別筆",
+    "forbid": ["756248", "769249", "750524"]
+   }
+  ]
+ },
+ {
+  "session": "L5-perf",
+  "title": "延遲量測：10 次追問",
+  "runnable_now": true,
+  "needs": [],
+  "note": "本質是效能量測（p95 ≤ R8 約定值），不是行為斷言；用 10 個真實項目的提問跑過，延遲由呼叫端（/mcp agent.turn）的實際耗時量測，不是靠 expect 字串判斷",
+  "turns": [
+   { "q": "756248 這張帳單逾期幾天了", "expect": "answer" },
+   { "q": "769249 到期哪天", "expect": "answer" },
+   { "q": "769258 到期哪天", "expect": "answer" },
+   { "q": "750524 到期哪天", "expect": "answer" },
+   { "q": "769246 繳了沒", "expect": "answer" },
+   { "q": "756242 繳了沒", "expect": "answer" },
+   { "q": "727606 繳了沒", "expect": "answer" },
+   { "q": "89481 合約什麼時候到期", "expect": "answer" },
+   { "q": "1061 這個電錶餘額還有多少", "expect": "answer" },
+   { "q": "基隆溫馨一人宅套房 有沒有修繕單在處理", "expect": "answer" }
+  ]
+ },
+ {
+  "session": "L5-I",
+  "title": "電錶追問：用電是不是變兇了",
+  "runnable_now": true,
+  "needs": [],
+  "turns": [
+   {
+    "q": "1061 這個電錶用電是不是變兇了，餘額還可以用多久",
+    "expect": "以 meter_id 唯一命中該電錶，回答含餘額；用電天數若是推算需標明是推算",
+    "facts": ["4249"]
+   }
+  ]
+ },
+ {
+  "session": "L5-J",
+  "title": "清單快照與現況不一致，以現況為準",
+  "runnable_now": true,
+  "needs": ["W8:facet_context"],
+  "note": "情境本質是 facet_context 快照與現況衝突；目前 API 沒有結構化 facet_context 欄位，改用文字直接聲稱一個與現況（756242 已繳）不符的舊快照數字，驗證面向會不會照抄使用者聲稱的舊數字",
+  "turns": [
+   {
+    "q": "清單顯示 756242 逾期 12 天，這戶現在逾期多久了",
+    "expect": "以現況回答（756242 其實已繳、非逾期）並明講與使用者提供的資訊不一致，⛔ 不沿用聲稱的逾期天數",
+    "facts": ["已繳"],
+    "forbid": ["逾期 12 天"]
+   }
+  ]
+ },
+ {
+  "session": "L5-K",
+  "title": "同一戶問別類別（逾期＋合約到期）",
+  "runnable_now": true,
+  "needs": [],
+  "note": "改用替身裡『同一物件同時有逾期帳單與合約』的組合：756248（逾期）與合約 85894 都屬基隆獨立共生公寓雅房",
+  "turns": [
+   {
+    "q": "756248 這戶逾期多久？順便看一下這戶合約什麼時候到期",
+    "expect": "答得出來的先答（756248 逾期天數），合約到期問題指路回清單點『合約到期』；⛔ 不觸發整條會話退出（scope_exit）",
+    "facts": ["待繳"]
+   }
+  ]
+ },
+ {
+  "session": "L4-B",
+  "title": "接催繳草稿（近一年第 4 次→三級語氣）",
+  "runnable_now": false,
+  "needs": ["W8:dunning.draft"],
+  "note": "規格 R6 已盤查確認 bill_diagnosis 沒有 execute_endpoint、沒有任何『產生草稿』動作，這是尚未實作的新功能，無法實跑；替身也沒有近一年逾期次數=4 的真實資料，語氣分級只能是假設值",
+  "turns": [
+   {
+    "q": "756248 這張逾期帳單，他之前都準時嗎",
+    "expect": "answer",
+    "facts": ["待繳"]
+   },
+   {
+    "q": "產生催繳草稿",
+    "expect": "回 dunning_draft（tone_level 對應近一年第 4 次→3），template 不得出現阿拉伯數字（佔位符除外）"
+   }
+  ]
+ },
+ {
+  "session": "L4-B2",
+  "title": "接催繳草稿（近一年第 1 次→一級語氣）",
+  "runnable_now": false,
+  "needs": ["W8:dunning.draft"],
+  "note": "同 L4-B：功能未實作無法實跑；替身沒有『近一年第 1 次逾期』的真實標記資料，僅能假設",
+  "turns": [
+   {
+    "q": "756248 這張逾期帳單，他之前都準時嗎",
+    "expect": "answer",
+    "facts": ["待繳"]
+   },
+   {
+    "q": "產生催繳草稿",
+    "expect": "回 dunning_draft（tone_level=1），措辭不出現滯納金字樣"
+   }
+  ]
+ }
+]
