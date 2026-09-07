@@ -8,6 +8,7 @@
 |---|---|
 | 程式 | HEAD 見各輪紀錄；S1a／S1b（DSP-037）由 security-executor 落地 |
 | 實例 | **最終起法（2026-09-08）**：`docker compose -f docker-compose.prod.yml run -d --build --name smoke-rag -p 8101:8100 -e UVICORN_WORKERS=1 -e AGENT_STAGE=M1 -e AGENT_TURN_ENABLED=true -e USE_MOCK_JGB_API=true -e AGENT_MODEL=gpt-5-mini -e AGENT_REASONING_EFFORT=low -e RAG_API_AUTH_ENFORCE=true -e AGENT_BUDGET_DEADLINE_S=45 -e AGENT_TURN_TIMEOUT_S=60 -e AGENT_VERIFIER_OBSERVE_ONLY=1 rag-orchestrator`（R8：W6-b3 落地前用此實驗旗；落地後改 `AGENT_VERIFIER_MODE=grounding_observe` 預設、無需帶旗）。⛔ **不要帶 `AGENT_BUDGET_REWRITES=0`**（那是探針 55 的量測組態；帶了 Verifier 拒一次即 `budget_exhausted` 轉人——W4）。常駐容器與 `.env` 不動 |
+| 服務 | demo 需要：`rag-orchestrator`（單 worker）、`postgres`、`embedding-api`（`FineIndex` 大綱候選索引啟動即需）；**`semantic-model` 不需要**（只服務舊鏈／`kb.search` 的 reranker；demo 14 個探針回合 0 次 `kb.search`；缺席靜默退化）——demo 起法明設 `USE_SEMANTIC_RERANK=false`；`redis` 僅 compose 依賴；後台兩個容器不用 |
 | key | dev DB `api_keys` id 98 `line-bot-oa-demo-local`（internal、`vendor_ids={4}`）；明文只在 scratchpad 600 檔；跑完 `is_active=false` |
 | 身分 | `b2b／property_manager／vendor 4／role 20151／user 12291`；`session_id` 每劇本一條 |
 | JGB | mock：`JGBMockTransport` 已遷移 bills／bill_detail／contracts（900001 未繳到期 8/15、900002 已繳、900003；合約 678 到 2026-12-31、租客電話 0912345678 是個資陷阱）；estates／meters 未遷移 ⇒ 工具錯 |
@@ -71,6 +72,29 @@
 **r2 拒因解剖（`w6_r2.attempts.jsonl`，54 次判定 33 拒）**：`QUOTE_NOT_COVERING` 14——**全部**是合併多行工具事實的句子，句內數字 100% 存在於 fixture（抄錯 0）；`UNCITED_ASSERTION` 16——其中 **11 句無任何數字**（「不客氣，有需要再跟我說」「請問您指的是哪一筆帳單…」：greeting 不在 `_GREETING_PHRASES` 白名單、question 句尾是「。」不是「？」⇒ 被 `_effective_kind` 降級成 fact ⇒ 要引用）、5 句是事實無引用（該抓）；`SCHEMA` 3。⇒ **25/33（76%）是尺誤判，正確答案被丟；0 次是捏造**。r1 的「同題不同結果」由此解釋：拒不拒取決於模型當輪有沒有把多行合成一句。
 
 r1 觀察：同一題「900001 繳了沒」在 T1#1 轉人、T2#1（含錯字）答對——變異來自 Verifier 拒兩次即固定句；「謝謝／好／OK 先這樣」一律轉人；一句兩意圖（帳單＋合約）轉人、拆開再問就答；敏感夾雜題正確全轉人（禁詞 0 洩）；「你確定？」轉人。⚠️ r1 的 Verifier 拒因日誌隨實例重建遺失，r2 起由 `w6_run.sh` 同步擷取。
+
+## 1d. R-寫 首輪實跑（2026-09-08，W1b＋W4 落地、`pending_id` migration 套 dev DB、觀察模式、`AGENT_WRITE_TOOLS_ENABLED=true`；`smoke/write_a.jsonl`／`write_b.jsonl`）
+
+| 條 | 實得 | 判 |
+|---|---|---|
+| **W1 延 3 天** | 程式確認卡（帳單 900001／原 2026/08/15／延 3 天／新 2026/08/18）＋三顆 `confirm_*:<pid>` → 按「確認送出」**0.0 s**（Runtime 兌現、`llm_calls=0`）回「已將帳單 900001 的到期日延至 2026/08/18。（單號 900001）」→「900001 現在到期哪天」讀到 **2026/08/18** | ✅ 整條通 |
+| W5 自由文字 | 「好，送出」不觸發寫入（模型另出一張新卡）；8/18 未變 | ✅ |
+| W2 開單 | 模型反問急迫程度／描述／照片、未出卡 | 工具定義缺預設（急迫未提供＝1 非緊急；描述可空）→ **W4b** |
+| W3 取消 | 模型未先 `query_bills` 取原到期日、未出卡 ⇒ 取消無卡可取 | 出卡前置（先查帳單）寫進 `confirm.request`／`bill_due_extend` 定義 → **W4b**；非決定性（W1 有先查） |
+| W4 重送 | 900002 已繳，模型拒延（正確） | 劇本改用未繳帳單 |
+| W6 失敗注入 | 同 W3 未出卡，未到寫入 | 同 W4b；重跑 |
+
+W4b（定義層、⛔ 不寫例子）：`jgb2.action.bill_due_extend` description 註明「payload 需 `date_expire_before`，⛔ 不得臆測，先以 `jgb2.query.bills` 取得」；`jgb2.action.repair_create`／`confirm.request` 註明「`emergency_status` 未提供＝1（非緊急，正本 A：缺值不得預設急迫）；`description` 可空字串」。劇本：W4 換未繳帳單；W3／W6 問句改「先看 900003 到期日，然後延 5 天」避免模型跳過查詢。
+
+## 1e. 最終回測（2026-09-08 收案；HEAD 程式 `d94bd6ac`；真資料替身、正式組態＝r3 觀察模式、`AGENT_WRITE_TOOLS_ENABLED=true`；劇本快照 `inputs/demo-scenarios-20260908/`；原始 `smoke/final_*.jsonl`）
+
+| 套 | 結果 |
+|---|---|
+| **R-讀 20** | 20 回合、**1 轉人（S4#2 租客電話，應轉）**、0 錯誤。逾期天數「已逾期 6 天（依繳費期限 2026/09/01 推算，實際以 JGB 為準）」標明推算；合約 89481「2026/12/15、剩 98 天」；物件「租約中／刊登中／租金 12000」；「好了」正確收尾 |
+| **W6 36（口語）** | 可答題轉人率 **4/27＝15%**（門檻 ≤20%）；明確 ref 反問率 **1/16＝6%**（≤10%）；收尾語 **4/4**；p50 **8.7 s**／p90 15.8 s（≤20 s）；計分器記事實缺 2 為「改問未答」（T3#1 一句兩意圖、T11#2「你確定」）、0 數字錯、0 禁詞 |
+| **R-寫 6** | W1 延 3 天：程式卡（09/01→09/04）→按鈕 **0.0 s** 兌現→讀回 09/04 ✅；W3 取消：0.0 s「這筆操作沒有送出」、日期不變 ✅；W4：首送寫入 ✅、裸 `confirm_submit` 不觸發（同 pid 重送＝同 receipt 由 integration 釘住）✅；W5 自由文字不寫 ✅；W6 失敗注入：0.0 s「這筆操作目前無法執行」、無殘留 ✅；W2 開單：卡在第 2 回合才出（急迫預設非緊急、描述沿用口述——W4b 生效），劇本第 2 回合送早了，機制無誤 |
+
+殘留（答案層，記 L12–L14，不擋 demo）：L12 S4#1「租金調高 5%」模型反問合約編號而非轉人（觀察模式下 SENSITIVE 不擋；無此寫入工具故不會發生，但措辭暗示可做）；L13 電錶關鍵字「台科電錶」模型反問名稱而非直接查（工具可查）；L14 S8#3／W5#3「要我查嗎」式確認多一回合。
 
 ## 2. demo 處理（這次就做，本機可驗）
 

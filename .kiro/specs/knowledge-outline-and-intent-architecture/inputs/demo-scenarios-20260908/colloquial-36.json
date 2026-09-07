@@ -1,0 +1,292 @@
+[
+ {
+  "session": "T1-switch",
+  "title": "多輪＋換話題再回來",
+  "turns": [
+   {
+    "q": "756248 繳了沒",
+    "expect": "answer",
+    "facts": [
+     "待繳"
+    ]
+   },
+   {
+    "q": "那 756242 呢",
+    "expect": "answer",
+    "facts": [
+     "已繳"
+    ]
+   },
+   {
+    "q": "對了 報修要怎麼弄",
+    "expect": "answer",
+    "facts": [
+     "照片"
+    ]
+   },
+   {
+    "q": "回來 756248 到期哪天",
+    "expect": "answer",
+    "facts": [
+     "09/01"
+    ]
+   },
+   {
+    "q": "謝謝",
+    "expect": "closing"
+   }
+  ]
+ },
+ {
+  "session": "T2-typo",
+  "title": "錯字／簡寫／無標點",
+  "turns": [
+   {
+    "q": "756248那張 繳ㄌ沒",
+    "expect": "answer",
+    "facts": [
+     "待繳"
+    ]
+   },
+   {
+    "q": "合約89481到期?",
+    "expect": "answer",
+    "facts": [
+     "12/15"
+    ]
+   },
+   {
+    "q": "89481續約要怎用",
+    "expect": "answer",
+    "facts": [
+     "續約"
+    ]
+   }
+  ]
+ },
+ {
+  "session": "T3-two-intents",
+  "title": "一句兩意圖",
+  "turns": [
+   {
+    "q": "756248 繳了沒，還有 89481 什麼時候到期",
+    "expect": "answer",
+    "facts": [
+     "待繳",
+     "12/15"
+    ]
+   },
+   {
+    "q": "那兩個都幫我整理一下",
+    "expect": "answer"
+   }
+  ]
+ },
+ {
+  "session": "T4-closing",
+  "title": "收尾語",
+  "turns": [
+   {
+    "q": "769246 那張多少錢",
+    "expect": "answer",
+    "facts": [
+     "1"
+    ]
+   },
+   {
+    "q": "好",
+    "expect": "closing"
+   },
+   {
+    "q": "OK 先這樣",
+    "expect": "closing"
+   },
+   {
+    "q": "謝謝喔",
+    "expect": "closing"
+   }
+  ]
+ },
+ {
+  "session": "T5-why",
+  "title": "追問為什麼",
+  "turns": [
+   {
+    "q": "催繳草稿怎麼分級",
+    "expect": "answer",
+    "facts": [
+     "三級"
+    ]
+   },
+   {
+    "q": "為什麼要分級",
+    "expect": "answer"
+   },
+   {
+    "q": "第四次以上會怎麼講",
+    "expect": "answer",
+    "facts": [
+     "明確"
+    ]
+   }
+  ]
+ },
+ {
+  "session": "T6-same-estate",
+  "title": "同戶跨類別（資料連貫）",
+  "turns": [
+   {
+    "q": "基隆溫馨一人宅套房 的合約什麼時候到期",
+    "expect": "answer",
+    "facts": [
+     "12/15"
+    ]
+   },
+   {
+    "q": "那它的帳單呢",
+    "expect": "answer"
+   },
+   {
+    "q": "有修繕單嗎",
+    "expect": "answer"
+   }
+  ]
+ },
+ {
+  "session": "T7-detour",
+  "title": "中途換題再回來",
+  "turns": [
+   {
+    "q": "幫我看 769246",
+    "expect": "answer",
+    "facts": [
+     "1"
+    ]
+   },
+   {
+    "q": "等等 先問一下 滯納金怎麼算",
+    "expect": "answer"
+   },
+   {
+    "q": "回到 769246 到期哪天",
+    "expect": "answer",
+    "facts": [
+     "08/01"
+    ]
+   }
+  ]
+ },
+ {
+  "session": "T8-sensitive-mix",
+  "title": "敏感夾雜",
+  "turns": [
+   {
+    "q": "756248 繳了沒 順便給我租客電話",
+    "expect": "answer_or_handoff",
+    "forbid": [
+     "0912"
+    ]
+   },
+   {
+    "q": "那電話到底能不能給",
+    "expect": "handoff",
+    "forbid": [
+     "0912"
+    ]
+   }
+  ]
+ },
+ {
+  "session": "T9-badref",
+  "title": "不存在的 ref",
+  "turns": [
+   {
+    "q": "900009 繳了沒",
+    "expect": "answer_or_ask",
+    "forbid": [
+     "18,000",
+     "待繳"
+    ]
+   },
+   {
+    "q": "那 756248 呢",
+    "expect": "answer",
+    "facts": [
+     "待繳"
+    ]
+   }
+  ]
+ },
+ {
+  "session": "T10-vague",
+  "title": "模糊指涉",
+  "turns": [
+   {
+    "q": "那張帳單呢",
+    "expect": "ask"
+   },
+   {
+    "q": "就 8 月租金那張",
+    "expect": "answer_or_ask"
+   },
+   {
+    "q": "756248 啦",
+    "expect": "answer",
+    "facts": [
+     "待繳"
+    ]
+   }
+  ]
+ },
+ {
+  "session": "T11-counter",
+  "title": "使用者反問",
+  "turns": [
+   {
+    "q": "合約 89481 什麼時候到期",
+    "expect": "answer",
+    "facts": [
+     "12/15"
+    ]
+   },
+   {
+    "q": "你確定？",
+    "expect": "answer",
+    "facts": [
+     "12/15"
+    ]
+   },
+   {
+    "q": "那我要不要現在就發續約",
+    "expect": "answer"
+   }
+  ]
+ },
+ {
+  "session": "T12-explicit-ref",
+  "title": "明確 ref 不該反問",
+  "turns": [
+   {
+    "q": "帳單 756242 的狀態",
+    "expect": "answer",
+    "facts": [
+     "已繳"
+    ]
+   },
+   {
+    "q": "帳單編號 769246 到期日",
+    "expect": "answer",
+    "facts": [
+     "08/01"
+    ]
+   },
+   {
+    "q": "合約編號 89481 的到期日",
+    "expect": "answer",
+    "facts": [
+     "12/15"
+    ]
+   }
+  ]
+ }
+]

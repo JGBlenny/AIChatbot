@@ -1,0 +1,106 @@
+[
+ {
+  "session": "W1-extend",
+  "title": "延 3 天正向",
+  "turns": [
+   {
+    "q": "756248 逾期了，幫我延 3 天",
+    "expect": "程式確認卡：原 2026/09/01→新 2026/09/04＋三顆機器值；未寫"
+   },
+   {
+    "reply": "confirm_submit",
+    "expect": "Runtime 兌現→PATCH→已延至 2026/09/04"
+   },
+   {
+    "q": "756248 現在到期哪天？",
+    "expect": "讀到 2026/09/04"
+   }
+  ]
+ },
+ {
+  "session": "W2-repair",
+  "title": "開單正向",
+  "turns": [
+   {
+    "q": "基隆溫馨一人宅套房 熱水器壞了，直接幫我開單",
+    "expect": "確認卡（急迫預設非緊急、描述可空）＋三顆；未建"
+   },
+   {
+    "reply": "confirm_submit",
+    "expect": "repair_create→修繕單 id"
+   },
+   {
+    "q": "基隆溫馨一人宅套房 有沒有修繕單在處理？",
+    "expect": "查得到剛建的＋既有 8591"
+   }
+  ]
+ },
+ {
+  "session": "W3-cancel",
+  "title": "取消不寫",
+  "turns": [
+   {
+    "q": "769249 那張帳單幫我延 5 天",
+    "expect": "確認卡（原 2026/09/14→2026/09/19）"
+   },
+   {
+    "reply": "confirm_cancel",
+    "expect": "不寫、token 燒掉"
+   },
+   {
+    "q": "769249 到期哪天？",
+    "expect": "仍 2026/09/14"
+   }
+  ]
+ },
+ {
+  "session": "W4-resend",
+  "title": "重送不重複",
+  "turns": [
+   {
+    "q": "750524 延 2 天",
+    "expect": "確認卡（原 2027/08/01→2027/08/03）"
+   },
+   {
+    "reply": "confirm_submit",
+    "expect": "receipt A"
+   },
+   {
+    "reply": "confirm_submit",
+    "expect": "同 receipt A；⛔ 不得第二次寫"
+   }
+  ]
+ },
+ {
+  "session": "W5-freetext",
+  "title": "自由文字不觸發",
+  "turns": [
+   {
+    "q": "756248 再延 1 天",
+    "expect": "確認卡"
+   },
+   {
+    "q": "好，送出",
+    "expect": "⛔ 不寫；提示用按鈕"
+   },
+   {
+    "q": "756248 到期哪天？",
+    "expect": "仍 W1 後的 2026/09/04"
+   }
+  ]
+ },
+ {
+  "session": "W6-failinject",
+  "title": "替身失敗誠實回錯",
+  "turns": [
+   {
+    "q": "769258 延 3 天",
+    "expect": "確認卡（原 2027/06/14→2027/06/17）"
+   },
+   {
+    "reply": "confirm_submit",
+    "expect": "誠實回錯、不留殘單、須重新確認"
+   }
+  ]
+ }
+]
