@@ -208,4 +208,4 @@
 | 範圍欄殘句「confirm.py 出卡時 `_resolve_estate`」與 (3) r2 裁定矛盾 | FIX（文字）：範圍欄改為 confirm.py 只收 `open_repairs`／出 `hint`，`_resolve_estate` 唯一呼叫點＝`mcp_facade` 閉包 |
 | 閉包 `get_estate_status` 缺 `role_id` ⇒ 跨 role 解析 | FIX（文字）：接線句加 `role_id=identity.role_id`，取不到回 `None`；驗收 (xi) 補閉包 unit＋正對照 |
 
-兩條皆已改字；依「兩輪自動 REVISE＋一次關閉審查」規則不再自動重送。W8 開工前置不變：DSP-042 業主裁 → W-D 落檔 → 業主指示後開最後一次 fresh review → security-executor。
+兩條皆已改字；業主 2026-09-08「等你指示再開下一輪?」⇒ 開 r4（業主指示續審）：**READY**。W8 (1)(3)(5) 開工前置只剩：DSP-042 業主裁（§0b 三件）→ W-D 落檔 → security-executor。(2) image_urls 仍待 security-reviewer 專審；(4) dunning 序列化在後。
