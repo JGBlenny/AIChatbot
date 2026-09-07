@@ -208,9 +208,16 @@ async def query_bills(identity: Any, args: dict[str, Any]) -> dict[str, Any]:
                                     viewer_user_id=user_id, bill_ref=q)
         return _rows_of(resp)
 
+    async def fetch_keyword(k: str) -> list[dict[str, Any]]:
+        # 口語指涉（「8 月租金」「信義區那戶」）走 keyword（jgb2 `title LIKE`），⛔ 不當 bill_ref 送
+        resp = await api.get_bills(role_id=role_id, user_id=user_id,
+                                    viewer_user_id=user_id, keyword=k)
+        return _rows_of(resp)
+
     cap = _candidate_cap()
     ref, keyword = args.get("ref"), args.get("keyword")
-    status, rows = await _resolve(ref, keyword, cap, fetch_ref=fetch, fetch_default=fetch)
+    status, rows = await _resolve(ref, keyword, cap, fetch_ref=fetch,
+                                  fetch_keyword=fetch_keyword, fetch_default=fetch)
     return _finish_generic("bills", face, builder, status, rows, cap)
 
 

@@ -3,6 +3,7 @@ RAG Orchestrator 主服務
 整合意圖分類、RAG 檢索、信心度評估和未釐清問題管理
 """
 import os
+import sys
 from contextlib import AsyncExitStack, asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -57,6 +58,39 @@ def _agent_configured() -> bool:
 _AGENT_BASELINE_AUDIENCE = "prospect"
 _AGENT_OUTLINE_AUDIENCES = (_AGENT_BASELINE_AUDIENCE, "property_manager")
 
+
+def _make_attempt_sink(path):
+    """`AGENT_ATTEMPT_LOG_PATH` → 每筆 attempt 追加一行 JSON（加 `ts`）；未設回 None。
+    寫檔失敗只 warning（runtime 端本來就吞 sink 例外），⛔ 不影響回合。"""
+    if not path:
+        return None
+    import json as _json, time as _time
+    def _sink(record):
+        try:
+            with open(path, "a", encoding="utf-8") as fh:
+                fh.write(_json.dumps({"ts": round(_time.time(), 3), **record}, ensure_ascii=False) + "\n")
+        except Exception:  # noqa: BLE001
+            print("⚠️ [agent] attempt sink 寫檔失敗", file=sys.stderr)
+    return _sink
+
+def _wrap_verifier_observe_only(runtime, attempt_sink):
+    """見 `_init_agent_runtime` 內註解。非 mock 組態下設了旗直接 raise（fail loud）。"""
+    if (os.getenv("AGENT_VERIFIER_OBSERVE_ONLY") or "").strip().lower() not in ("1", "true", "yes", "on"):
+        return
+    if (os.getenv("USE_MOCK_JGB_API") or "").strip().lower() not in ("1", "true", "yes", "on"):
+        raise RuntimeError("AGENT_VERIFIER_OBSERVE_ONLY 只准在 USE_MOCK_JGB_API=true 下使用")
+    from services.agent.verifier import VerifierVerdict as _VV
+    real_verify = runtime.verifier.verify
+    def _observe(*args, **kwargs):
+        verdict = real_verify(*args, **kwargs)
+        if attempt_sink is not None:
+            try:
+                attempt_sink({"observe_real_verdict": verdict.model_dump()})
+            except Exception:  # noqa: BLE001
+                pass
+        return verdict if verdict.ok else _VV(ok=True)
+    runtime.verifier.verify = _observe
+    print("⚠️ [agent] AGENT_VERIFIER_OBSERVE_ONLY=1：Verifier 只觀察不擋（對照實驗，⛔ 非正式組態）", file=sys.stderr)
 
 async def _init_agent_runtime(app: FastAPI) -> None:
     """建 `app.state.agent_runtime`／`agent_outlines`／`agent_indexes`／`outline_resolver`／`shadow_runner`。
@@ -128,10 +162,19 @@ async def _init_agent_runtime(app: FastAPI) -> None:
         candidate_selector = selectors[_AGENT_BASELINE_AUDIENCE]
         provider = _get_llm_provider()
 
+        # 開發用：`AGENT_ATTEMPT_LOG_PATH` 設了就把每次嘗試（草稿句＋refs＋Verifier 判定＋解析錯誤）
+        # 追加寫成 JSONL——W6 口語穩定度量測要看「什麼被拒」。預設不設＝關；⛔ 正式環境不設
+        # （被拒草稿可能含錯誤的個資陳述，設計上不進 trace／不外送，見 runtime._emit_attempt）。
+        attempt_sink = _make_attempt_sink(os.getenv("AGENT_ATTEMPT_LOG_PATH"))
         runtime = _agent_bootstrap.build_runtime(app.state.db_pool, provider, _mcp_registry,
                                                  outline_doc=outline_doc,
                                                  candidate_selector=candidate_selector,
-                                                 candidate_selectors=selectors)
+                                                 candidate_selectors=selectors,
+                                                 attempt_sink=attempt_sink)
+        # 開發用對照實驗（W6 (a)）：`AGENT_VERIFIER_OBSERVE_ONLY=1` ⇒ Verifier 照常跑、真判定另記一筆
+        # `observe_real_verdict` 進 attempt log，但回給 Runtime 的一律 ok=True（不擋、不改寫、不轉人）。
+        # ⛔ 只准配 `USE_MOCK_JGB_API=true`；正式環境絕不可設——這是量「閘門擋掉多少」的尺，不是功能。
+        _wrap_verifier_observe_only(runtime, attempt_sink)
         app.state.agent_outline = outline_doc       # 相容：舊呼叫端仍讀單數＝prospect
         app.state.agent_outlines = outlines
         app.state.agent_indexes = indexes

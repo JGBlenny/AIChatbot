@@ -166,6 +166,7 @@ class JGBSystemAPI:
         contract_ids: Optional[str] = None,
         bill_ref: Optional[str] = None,
         viewer_user_id: Optional[str] = None,
+        keyword: Optional[str] = None,
         **kwargs,
     ) -> dict[str, Any]:
         """查詢帳單列表。
@@ -230,6 +231,8 @@ class JGBSystemAPI:
             params["status"] = status
         if viewer_user_id:
             params["viewer_user_id"] = viewer_user_id
+        if keyword not in (None, ""):
+            params["keyword"] = str(keyword)
         resp = await self._request("/api/external/v1/bills", params)
         # client 端防衛過濾（上游再無視參數也擋得住；沿 get_contracts 過濾先例）：
         # 只在列上帶 contract_id 時啟動，舊形狀列不受影響。
