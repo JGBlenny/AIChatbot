@@ -261,6 +261,46 @@ def _openai_strict_parameters(input_schema: dict) -> dict:
 
     return _walk_strict(copy.deepcopy(input_schema))
 
+def _drop_null_optionals(schema: dict, args: Any) -> Any:
+    """`_openai_strict_parameters` 的逆向：OpenAI strict function calling 強制模型送出
+    properties 的**每一個**鍵，選填鍵「沒填」只能以 `null` 表示；而 `call()` 驗的是
+    spec 原始 `input_schema`（選填鍵不接受 null）⇒ 先把「非 required 的 null」還原成
+    「省略」再驗，工具函式看到的參數形狀與 strict 之前一致。required 鍵的 null 原樣
+    保留（仍 INVALID_INPUT）；**未宣告鍵**的 null 也原樣保留（交 `additionalProperties:false`
+    擋，⛔ 不得成為繞過口）。每層 object、陣列元素、union 分支同樣處理（與 `_walk_strict`
+    對稱）；回新物件、不改入參。
+    真線路 2026-09-08 pm 煙霧抓到：模型送 `{"face": …, "ref": "900001", "keyword": null}`
+    ⇒ INVALID_INPUT ×4 ⇒ 工具預算耗盡 ⇒ `budget_exhausted` 轉人（demo 帳本 D-BLOCK-2）。
+    """
+    if not isinstance(schema, dict):
+        return args
+    if isinstance(args, list):
+        # 陣列：逐元素套 items（與 `_walk_strict` 的 items 走訪對稱）
+        items = schema.get("items")
+        return [_drop_null_optionals(items, v) for v in args] if isinstance(items, dict) else args
+    if not isinstance(args, dict):
+        return args
+    if "properties" not in schema:
+        # union 分支（anyOf／oneOf／allOf）：套第一個 object 形狀的分支；都不是就原樣
+        for key in ("anyOf", "oneOf", "allOf"):
+            for branch in schema.get(key) or []:
+                if isinstance(branch, dict) and "properties" in branch:
+                    return _drop_null_optionals(branch, args)
+        return args
+    props = schema.get("properties") or {}
+    required = set(schema.get("required") or [])
+    out: dict = {}
+    for key, value in args.items():
+        sub = props.get(key)
+        # ⛔ 只還原「宣告過的選填鍵」：未宣告鍵的 null 原樣留給 additionalProperties:false 去擋
+        if value is None and sub is not None and key not in required:
+            continue
+        if isinstance(sub, dict) and isinstance(value, (dict, list)):
+            value = _drop_null_optionals(sub, value)
+        out[key] = value
+    return out
+
+
 
 _OPENAI_NAME_SEP = "__"   # OpenAI function name 只准 ^[a-zA-Z0-9_-]+$（真線路 2026-09-05 400 抓到）；MCP 工具名有 "."
 
@@ -472,7 +512,8 @@ class ToolRegistry:
         if name == "kb.get" and not self._check_and_record_kb_get_cap(rate_key, now):
             return ToolResult(ok=False, error="RATE_LIMITED")
 
-        # ④ input_schema 驗證
+        # ④ input_schema 驗證（先把 strict 模型送來的「選填 null」還原成省略——見 _drop_null_optionals）
+        args = _drop_null_optionals(spec.get("input_schema", {}), args)
         schema_error = _validate_against_schema(spec.get("input_schema", {}), args)
         if schema_error is not None:
             return ToolResult(ok=False, error="INVALID_INPUT")

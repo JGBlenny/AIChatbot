@@ -20,7 +20,12 @@ array including every key in properties`。
 import pytest
 
 from services.agent.identity import Identity
-from services.agent.tools.registry import ToolRegistry, ToolResult, _openai_strict_parameters
+from services.agent.tools.registry import (
+    ToolRegistry,
+    ToolResult,
+    _drop_null_optionals,
+    _openai_strict_parameters,
+)
 
 pytestmark = pytest.mark.unit
 
@@ -230,3 +235,92 @@ def test_openai_strict_parameters_does_not_mutate_input():
     snapshot = copy.deepcopy(original)
     _openai_strict_parameters(original)
     assert original == snapshot
+
+
+# ---------------------------------------------------------------------------
+# (f)(g)(h) strict 對稱：模型依 strict 規則把選填鍵以 null 送來 ⇒ call() 還原成省略
+# （真線路 2026-09-08：`keyword: null` ⇒ INVALID_INPUT ×4 ⇒ budget_exhausted；D-BLOCK-2）
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_call_drops_null_for_optional_keys_sent_by_strict_model():
+    reg = _registry_with(_jgb2_bills_spec())
+    result = await reg.call(
+        _identity(),
+        "jgb2.query.bills",
+        {"face": "current", "ref": "900001", "keyword": None},
+        timeout_s=1.0,
+        stage="M0",
+    )
+    assert result.ok is True, result.error
+    # 工具函式收到的參數不含被還原的選填鍵
+    assert result.data["echo"] == {"face": "current", "ref": "900001"}
+
+
+@pytest.mark.asyncio
+async def test_call_null_on_required_key_is_still_invalid_input():
+    reg = _registry_with(_jgb2_bills_spec())
+    result = await reg.call(
+        _identity(),
+        "jgb2.query.bills",
+        {"face": None, "ref": None, "keyword": None},
+        timeout_s=1.0,
+        stage="M0",
+    )
+    assert result.ok is False
+    assert result.error == "INVALID_INPUT"
+
+
+def test_drop_null_optionals_recurses_into_nested_objects_and_is_pure():
+    schema = {
+        "type": "object",
+        "properties": {
+            "a": {"type": "string"},
+            "opt": {"type": "string"},
+            "nest": {
+                "type": "object",
+                "properties": {"x": {"type": "string"}, "y": {"type": "string"}},
+                "required": ["x"],
+            },
+        },
+        "required": ["a", "nest"],
+    }
+    args = {"a": "1", "opt": None, "nest": {"x": None, "y": None}}
+    before = {"a": "1", "opt": None, "nest": {"x": None, "y": None}}
+    out = _drop_null_optionals(schema, args)
+    assert out == {"a": "1", "nest": {"x": None}}  # required 的 null 保留、選填 null 移除（每層）
+    assert args == before  # 不改入參
+
+
+# (i)(j)(k) verifier F1／F2：未宣告鍵的 null 不得被吞；陣列元素與 union 分支也要還原
+
+
+@pytest.mark.asyncio
+async def test_call_undeclared_key_with_null_is_still_rejected_by_additional_properties():
+    reg = _registry_with(_jgb2_bills_spec())
+    result = await reg.call(
+        _identity(),
+        "jgb2.query.bills",
+        {"face": "current", "extra": None},
+        timeout_s=1.0,
+        stage="M0",
+    )
+    assert result.ok is False
+    assert result.error == "INVALID_INPUT"
+
+
+def test_drop_null_optionals_recurses_into_array_items_and_union_branches():
+    item = {"type": "object", "properties": {"a": {"type": "string"}, "o": {"type": "string"}}, "required": ["a"]}
+    schema = {
+        "type": "object",
+        "properties": {
+            "arr": {"type": "array", "items": item},
+            "u": {"anyOf": [{"type": "null"}, item]},
+        },
+        "required": ["arr", "u"],
+    }
+    args = {"arr": [{"a": "1", "o": None}, {"a": "2", "o": "x"}], "u": {"a": "3", "o": None}}
+    out = _drop_null_optionals(schema, args)
+    assert out == {"arr": [{"a": "1"}, {"a": "2", "o": "x"}], "u": {"a": "3"}}
+    assert args["arr"][0] == {"a": "1", "o": None}  # 純函式
