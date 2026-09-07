@@ -7,12 +7,12 @@
 | 項 | 值 |
 |---|---|
 | 程式 | HEAD 見各輪紀錄；S1a／S1b（DSP-037）由 security-executor 落地 |
-| 實例 | **最終起法（2026-09-08）**：`docker compose -f docker-compose.prod.yml run -d --build --name smoke-rag -p 8101:8100 -e UVICORN_WORKERS=1 -e AGENT_STAGE=M1 -e AGENT_TURN_ENABLED=true -e USE_MOCK_JGB_API=true -e AGENT_MODEL=gpt-5-mini -e AGENT_REASONING_EFFORT=low -e RAG_API_AUTH_ENFORCE=true -e AGENT_BUDGET_DEADLINE_S=45 -e AGENT_TURN_TIMEOUT_S=60 -e AGENT_VERIFIER_OBSERVE_ONLY=1 rag-orchestrator`（R8：W6-b3 落地前用此實驗旗；落地後改 `AGENT_VERIFIER_MODE=grounding_observe` 預設、無需帶旗）。⛔ **不要帶 `AGENT_BUDGET_REWRITES=0`**（那是探針 55 的量測組態；帶了 Verifier 拒一次即 `budget_exhausted` 轉人——W4）。常駐容器與 `.env` 不動 |
+| 實例 | **最終起法（2026-09-08）**：`docker compose -f docker-compose.prod.yml run -d --build --name smoke-rag -p 8101:8100 -e UVICORN_WORKERS=1 -e AGENT_STAGE=M1 -e AGENT_TURN_ENABLED=true -e USE_MOCK_JGB_API=true -e AGENT_MODEL=gpt-5-mini -e AGENT_REASONING_EFFORT=low -e RAG_API_AUTH_ENFORCE=true -e AGENT_BUDGET_DEADLINE_S=45 -e AGENT_TURN_TIMEOUT_S=60 -e AGENT_VERIFIER_OBSERVE_ONLY=1 **-e AGENT_WRITE_TOOLS_ENABLED=true -e USE_SEMANTIC_RERANK=false** rag-orchestrator`（R8：W6-b3 落地前用此實驗旗——⚠️ 過渡旗連機敏類判定也不擋、敏感題由模型自行轉人；落地後改 `AGENT_VERIFIER_MODE=grounding_observe` 預設）；正式站見 runbook §20-2。⛔ **不要帶 `AGENT_BUDGET_REWRITES=0`**（那是探針 55 的量測組態；帶了 Verifier 拒一次即 `budget_exhausted` 轉人——W4）。常駐容器與 `.env` 不動 |
 | 服務 | demo 需要：`rag-orchestrator`（單 worker）、`postgres`、`embedding-api`（`FineIndex` 大綱候選索引啟動即需）；**`semantic-model` 不需要**（只服務舊鏈／`kb.search` 的 reranker；demo 14 個探針回合 0 次 `kb.search`；缺席靜默退化）——demo 起法明設 `USE_SEMANTIC_RERANK=false`；`redis` 僅 compose 依賴；後台兩個容器不用 |
 | key | dev DB `api_keys` id 98 `line-bot-oa-demo-local`（internal、`vendor_ids={4}`）；明文只在 scratchpad 600 檔；跑完 `is_active=false` |
 | 身分 | `b2b／property_manager／vendor 4／role 20151／user 12291`；`session_id` 每劇本一條 |
-| JGB | mock：`JGBMockTransport` 已遷移 bills／bill_detail／contracts（900001 未繳到期 8/15、900002 已繳、900003；合約 678 到 2026-12-31、租客電話 0912345678 是個資陷阱）；estates／meters 未遷移 ⇒ 工具錯 |
-| 正本 | `canon/property_manager.md` v2026-09-07.2，36 細目全 reviewed，`build_outline` 4,772 token |
+| JGB | 替身（2026-09-08 終版）：15 端點讀＋4 路徑寫、一份 JSON；**role 20151 真資料子集（遮罩）對 demo 用戶 12291 可見**（見 `demo-data-sheet-line-oa-20260908.md`）；合成鏈 900001–3／678／信義區套房A 保留給凍結回歸測試、對 12291 不可見 |
+| 正本 | `rag-orchestrator/canon/property_manager.md` v2026-09-08.1，36 細目全 reviewed（四句事實修正 `8b2485f0`） |
 
 ## 1. 劇本（口語，7 條會話 16 回合）——結果逐輪回填
 

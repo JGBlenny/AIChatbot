@@ -21,5 +21,5 @@
 | K 同一戶問別類別 | 答得出來先答、答不出指路回清單；⛔ 不觸發 `scope_exit` | ⑤ `scope_exit` 只在「別戶」觸發；同戶跨類別走面向切換（design「中途切換」） |
 
 ## 查證
-- C1 兩源：`rg -n "2=緊急|EMERGENCY_NON_STATUS|suggested_emergency" rag-orchestrator/services/image_recognition_service.py`；jgb2 `rg -n "EMERGENCY_NON_STATUS" app/Models/Repair.php`（待 JGB）。
+- C1 兩源：`rg -n "2=緊急|EMERGENCY_NON_STATUS|suggested_emergency" rag-orchestrator/services/image_recognition_service.py`；jgb2 `rg -n "EMERGENCY_NON_STATUS" app/Repair.php`（待 JGB）。
 - 推算標明規則：`rg -n "number-data-provenance-rule|推算" rag-orchestrator/canon/property_manager.md`。

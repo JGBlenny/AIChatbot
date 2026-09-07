@@ -86,7 +86,7 @@ rg -n "api\.get_(bills|contracts|meters)\(" rag-orchestrator/services/agent/tool
 | B1 IP 白名單 | 已有 | `app/Http/Middleware/InternalApiIp.php` `allowlist()`，讀 `config('jgb.internal_api_allowed_ips')`，支援 CIDR，不分環境 | — |
 | B2 `agent_auth` | 已有 | `app/Http/Middleware/AgentAuth.php`：header `X-Agent-Key`／`X-Agent-Sig`／`X-Agent-Ts`／`X-Agent-Nonce`（簽章制）；`AgentManageController@store/@setPermissions/@setActive` | 真 client 要做簽章（demo 後切片）；**權限值域 `PERMS = ['read','create','codebase','manage']`，⛔ 無 `update`** |
 | B3 from-transcript 欄位 | 已有 | `EstateTranscriptWriteController@store`：必填 `role_id`／`title`，可選 `fields`／`building_registration_transcript`；`ALLOWED_FIELDS` 白名單、省略不補值 | 替身 `create_estate` 欄位對齊白名單 |
-| B4 contracts／bills 建立欄位 | 已有 | `ContractWriteController@store` validator；`@storeBill`：必填 `contract_id`、可選 `count`；**帳單到期日欄位＝`date_expire`** | 替身 `PATCH` 已用 `date_expire`（對上） |
+| B4 contracts／bills 建立欄位 | 已有 | `ContractWriteController@store` validator；`@storeBill`：必填 `contract_id`、可選 `count`；**帳單到期日欄位＝`date_expire`（證據在 `External/BillApiController.php`：帳單投影／排序／月份篩選欄，⛔ 不在 `ContractWriteController`）** | 替身 `PATCH` 已用 `date_expire`（對上） |
 | B5 `internal_api_guard` | 已有 | `InternalApiQueryGuard@handle`：`config('jgb.internal_api.max_concurrent', 4)`、slot TTL 30 s；限 `agent/v1`＋`internal/v1` | demo 併發 ≤4 |
 | B′1 帳單修改端點 | **沒有** | `routes/api.php` 無 PATCH／PUT／DELETE `/bills`（正對照 GET 命中 3 支；POST 建立 1 支） | JGB 新開 `PATCH /agent/v1/bills/{id}`，只收 `date_expire`（或 `date_expire_shift_days`） |
 | B′2 `update` 權限 | **沒有** | `app/AgentIdentity.php` `const PERMS` 四值 | JGB 加 `update` |

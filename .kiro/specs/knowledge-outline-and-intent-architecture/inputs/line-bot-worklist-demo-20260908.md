@@ -25,7 +25,7 @@ LINE 使用者 ──文字──▶ line-bot webhook
 | **B1** MCP client | MCP SDK streamable HTTP 連 `POST /mcp`；每個 LINE 使用者一條 session（`initialize` 一次，之後 `tools/call`）；⛔ 不要每則訊息重新 initialize（每回合多 1 次往返） | `tools/list` 看得到 `agent.turn`（含 `jgb2.query.*` 不必理會，那是模型用的） |
 | **B2** 身分與 session | `X-JGB-Identity`：`{"mode":"b2b","target_user":"property_manager","vendor_id":<int>,"role_id":"<str>","user_id":"<str>","session_id":"<假名>"}`；`session_id`＝`HMAC(secret, lineUserId)` 的穩定假名（⛔ 不放 LINE userId）；`role_id`／`user_id` 由綁定推出 | 缺 vendor_id／session_id ⇒ 400 `IDENTITY_*`（設定錯，不是使用者錯） |
 | **B3** 渲染 | `answer` → 文字泡泡（可多段，保留換行）；`quick_replies[]` → LINE quick reply 按鈕，`label` 顯示、`value` 送回；`handoff` 非 null → 固定句「這題我幫您轉專人」＋真人入口（⛔ 不顯示 `handoff_reason`）；`kind` 只作記錄 | 六條劇本（§3）畫面正確 |
-| **B4** 確認流程（寫入） | 模型回確認卡時 `quick_replies` 固定三顆：`{"label":"確認送出","value":"confirm_submit:<16hex>"}`、`我要修改/confirm_edit:<16hex>`、`取消/confirm_cancel:<16hex>`；使用者按下 ⇒ **把 value 原字串當 message 送回**（⛔ 不改寫、不加字、不用 label）；使用者若改打字（「好」「送出」）⇒ 照一般文字送，服務端不會當確認（會回提示用按鈕） | 延 3 天／開單兩條正向：按「確認送出」後回答含新到期日／單號；按「取消」不寫 |
+| **B4** 確認流程（寫入） | 模型回確認卡時 `quick_replies` 固定三顆：`{"label":"✅ 確認送出","value":"confirm_submit:<16hex>"}`、`✏️ 我要修改/confirm_edit:<16hex>`、`❌ 取消/confirm_cancel:<16hex>`（label 含 emoji 前綴，照顯示）；使用者按下 ⇒ **把 value 原字串當 message 送回**（⛔ 不改寫、不加字、不用 label）；使用者若改打字（「好」「送出」）⇒ 照一般文字送，服務端不會當確認（會回提示用按鈕） | 延 3 天／開單兩條正向：按「確認送出」後回答含新到期日／單號；按「取消」不寫 |
 | **B5** 逾時與錯誤 | 呼叫端逾時 **≥60 s**；等待期間送 LINE typing／loading 指示；`ok=false` 依契約 §3 碼對照（`RATE_LIMITED`／`TOOL_TIMEOUT` ⇒「稍後再試」；`NO_MATCH`／`AGENT_UNAVAILABLE` ⇒ 服務端未就緒、記 log）；逾時後同一 session 可重送同一句 | 人工拔線測一次 |
 | **B6** 日誌與個資 | ⛔ 不記整包回應（`answer` 含租客資料）；只記 `trace_id`、狀態碼、耗時；`session_id` 假名；金鑰只在 line-bot 伺服器環境變數 | code review |
 
