@@ -108,7 +108,7 @@
 4. `help.read(slug)` SHALL 回幫助中心正文（去標籤）、版本戳與 slug；WHEN D3 裁定不引用，THE SYSTEM SHALL 仍提供但標 `citable=false`，Verifier 不接受其為引用來源。
 5. THE SYSTEM SHALL 對每個唯讀工具設逾時（預設 3 秒）與單回合呼叫上限；逾時回 `TOOL_TIMEOUT`，由 Runtime 依 R1.2 處理。
 6. THE SYSTEM SHALL 提供 OpenAPI 描述作為同一組工具的 REST 面（同源 schema），供非 MCP 消費者與轉接使用。
-7. THE SYSTEM SHALL 在 `/mcp` 提供 `agent.turn(message, dialog_ref?)` 整回合工具（業主 2026-09-04 裁，r5 目標驗證）：內部走與 `/api/v1/message` 同一個 Runtime＋Verifier＋固定句，回 `{answer, kind, handoff, quick_replies, trace_id}`；一次性回傳（不逐字串流）；僅 prospect 身分可用；SHALL 為門面專屬工具，⛔ 不進模型工具清單、⛔ 不進影子視圖。`session_id` 由呼叫端產生且跨回合穩定，對話歷史與 slots 由服務端保存。
+7. THE SYSTEM SHALL 在 `/mcp` 提供 `agent.turn(message, dialog_ref?)` 整回合工具（業主 2026-09-04 裁，r5 目標驗證）：內部走與 `/api/v1/message` 同一個 Runtime＋Verifier＋固定句，回 `{answer, kind, handoff, quick_replies, trace_id}（DSP-041：加第六鍵 `transcript: str|null`——語音進場時的轉錄原文，不經 Verifier；輸入另加選填 `audio_urls`，`message` 可為空但兩者不得皆空）`；一次性回傳（不逐字串流）；僅 prospect 身分可用；SHALL 為門面專屬工具，⛔ 不進模型工具清單、⛔ 不進影子視圖。`session_id` 由呼叫端產生且跨回合穩定，對話歷史與 slots 由服務端保存。
 
 ### Requirement 4：寫入工具與確認契約
 

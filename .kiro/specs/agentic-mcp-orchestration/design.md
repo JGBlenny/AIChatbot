@@ -3,7 +3,7 @@
 > 建立時間：2026-09-04（1.0）　本版：2026-09-04T18:15:02+0800（1.1）
 > 需求文件：requirements.md（v1）　研究記錄：research.md　落差分析：validation_gap.md　jgb2 事實來源：jgb2-source-index.md
 > 發現流程：full。設計提案母本：`docs/design/agentic-tool-selection-design-20260904.md` v2。
-> 1.4 變更（2026-09-04T20:02:56+08:00）：r5 目標驗證（JGB 相關服務經 MCP 對話／語音）後，業主裁：`agent.turn` 進 M1（元件 4、API、決策 15）；本 spec 對話對象僅 prospect，tenant 與語音各立子 spec（roadmap）。
+> 1.4 變更（2026-09-04T20:02:56+08:00）：r5 目標驗證（JGB 相關服務經 MCP 對話／語音）後，業主裁：`agent.turn` 進 M1（元件 4、API、決策 15）；本 spec 對話對象僅 prospect，tenant 另立子 spec（roadmap）；語音（STT）依 DSP-041 併入本 spec（`agent.turn` `audio_urls`／`transcript`，見 Plan W7）。
 > 1.3 變更（2026-09-04T18:38:25+08:00）：收尾審查（r3）2 條 P1 修正——謂詞第 4 條 `target_user` 語義（`IS NULL OR &&`）＋矩陣加維；mock 保留大聲失敗、只驗轉發；8 條 P2 進附錄 C3 tasks 備註。⚠️ 1.3 未經 fresh 審查，規約上收尾審查已用罄，是否再審由業主定。
 > 1.2 變更（2026-09-04T18:30:37+08:00）：第二輪雙審查 REVISE 全處置（pv 1 P1＋6 P2；sec 7 P1＋5 P2）；審查正本落 `reviews/`；DSP-012 登記。處置明細見附錄 C2。
 > 1.1 變更：依 plan-verifier（REVISE，17 條）與 security-reviewer（3 P0／11 P1／7 P2／3 P3）全數處置；納入業主 2026-09-04 裁決 **DSP-011「權限由 jgb2 API 全權處理，本系統只管額度」**；納入 `jgb2-source-index.md`。處置明細見附錄 C。
