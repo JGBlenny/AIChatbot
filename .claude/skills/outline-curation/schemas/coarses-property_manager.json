@@ -1,0 +1,12 @@
+{
+  "_note": "LINE OA「JGB 房東管家」受眾（property_manager，b2b，系統內代管業務／自管房東）粗目切法草案——依 tasks 6.2 與 line-bot-platform/docs/chatai-{requests,repair-capture-spec,digest-followup-spec,wire-examples}.md 的線③④⑤與其邊界句擬定；⛔ 不套售前 A–G 切法（裁定 2）。粗目由業主審核後定案；步 2 結構提議只提細目與歸屬，⛔ 不改粗目。API 實值一律 policy: not_available＋sources: [jgb2:<endpoint>]，內容只寫邊界句。",
+  "audience": "property_manager",
+  "coarses": [
+    {"id": "A", "title": "拍照開修繕單（線③）"},
+    {"id": "B", "title": "催繳草稿（線④）"},
+    {"id": "C", "title": "今天要顧的追問（線⑤：逾期帳單／合約到期／緊急修繕／電錶）"},
+    {"id": "D", "title": "語氣模板與禁止項"},
+    {"id": "E", "title": "資料邊界與什麼時候說不"},
+    {"id": "F", "title": "待裁與待驗"}
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "audience": "property_manager",
+  "coarses": ".claude/skills/outline-curation/schemas/coarses-property_manager.json",
+  "drafts": ".claude/skills/outline-curation/raw/drafts-property_manager-20260907.json",
+  "inputs_sha": {
+    "coarses": "a21cf7d0aa96918910b7e5e1096ec1dd5c9064026d63e3e22711de4ef9f18ecd",
+    "drafts": "e858194f162ddfb5a8a8623cdf2f6f008d4a2eb998cd619f144dc050d7190ea4",
+    "kb": "c29a752c24e65640ae9c619dc441dddbabf1ff4b22b46d33a6a1f62ace045b0c"
+  },
+  "items": 77,
+  "kb_rows": ".claude/skills/outline-curation/raw/kb-property_manager-20260907.rows.json",
+  "prompts": {
+    "audience_level": {
+      "chars": 37392,
+      "path": ".claude/skills/outline-curation/runs/property_manager-20260907/structure/angle-audience_level.prompt.md",
+      "sha256": "026f017e95d9c8a09db26ed02dcc24e46b904f187fbb94b0a20c0331ecc6277e"
+    },
+    "content_boundary": {
+      "chars": 37396,
+      "path": ".claude/skills/outline-curation/runs/property_manager-20260907/structure/angle-content_boundary.prompt.md",
+      "sha256": "b30aeff043436a0674782d1798f497c59254767927b0b19e54afddbe3437e8fc"
+    },
+    "user_question_path": {
+      "chars": 37394,
+      "path": ".claude/skills/outline-curation/runs/property_manager-20260907/structure/angle-user_question_path.prompt.md",
+      "sha256": "3353437d04f0b0b97985c6233d1c3e27218033e26b7e9ebc0b9914d99b7f2189"
+    }
+  }
+}
