@@ -6,11 +6,20 @@
 `TransactionState.slots` **同一個位置、同一個形狀**，⛔ 不另開一張表或另一個鍵，
 否則 agent 路徑與舊鏈會各記一份槽位、切換時互看不見。
 
-**`SlotKey` 是封閉 enum**：六值（`contract_ref`／`bill_ref`／`estate_ref`／
-`repair_ref`／`unit_count`／`business_type`）進 `input_schema.enum`，非法 key
-在 registry 第④步就被擋成 `INVALID_INPUT`，⛔ 不讓模型自創槽位名——槽位名是
-`jgb2.query` 圈定範圍的依據（design 元件 3：「`ref`／`keyword` 只能在 session
-已確立的 slot 範圍內縮小」），開放槽位名等於開放圈定範圍。
+**`SlotKey` 是封閉 enum**：十值——六個識別／數量槽位（`contract_ref`／
+`bill_ref`／`estate_ref`／`repair_ref`／`unit_count`／`business_type`）＋
+任務 4.2 加的四個售前對話槽位（`identity_detail`／`team`／`pain`／
+`interested`）——進 `input_schema.enum`，非法 key 在 registry 第④步就被擋成
+`INVALID_INPUT`，⛔ 不讓模型自創槽位名——槽位名是 `jgb2.query` 圈定範圍的依據
+（design 元件 3：「`ref`／`keyword` 只能在 session 已確立的 slot 範圍內縮小」），
+開放槽位名等於開放圈定範圍。
+
+**⛔ `identity`／`identity_source` 不在本 enum 內**（任務 4.2／Plan §4.1-3）：
+那兩個鍵是 `runtime._slots_for_prompt` 之後由**入口身分**現算的派生值，模型與
+儲存側都不得寫。`parse_slot_key("identity")` 回 `None` ⇒ `INVALID_INPUT`；
+`write_slot` 首行另有一道封閉值域自驗（它是 `collected_data.slots` 唯一 DB 寫入點）。
+⚠️ `identity_detail` 只是**角色子類**的自由文字，⛔ 不是身分本身、⛔ 不影響 prompt
+的 `identity` 段。
 
 **value 清洗**（`sanitize_slot_value`）：
 - **≤ 120 字**（`SLOT_VALUE_MAX_CHARS`）——schema 的 `maxLength` 先擋一次，
@@ -42,7 +51,12 @@ from services.conversational_engine import CONVERSATIONAL_FORM_ID
 
 
 class SlotKey(str, Enum):
-    """封閉槽位鍵（design 元件 3）。值域改動＝改設計，⛔ 不在程式內以關鍵字推導。"""
+    """封閉槽位鍵（design 元件 3）。值域改動＝改設計，⛔ 不在程式內以關鍵字推導。
+
+    任務 4.2（票 B）加四值：`identity_detail`（角色子類）／`team`／`pain`／
+    `interested`——售前對話要記住的答案，避免每回合重問。
+    ⛔ `identity`／`identity_source` **不得加進來**（見模組 docstring）。
+    """
 
     contract_ref = "contract_ref"
     bill_ref = "bill_ref"
@@ -50,6 +64,10 @@ class SlotKey(str, Enum):
     repair_ref = "repair_ref"
     unit_count = "unit_count"
     business_type = "business_type"
+    identity_detail = "identity_detail"
+    team = "team"
+    pain = "pain"
+    interested = "interested"
 
 
 #: `input_schema.enum` 的唯一來源（由 enum 反射，⛔ 不手抄）。
@@ -210,7 +228,20 @@ UPDATE form_sessions
 
 
 async def write_slot(db_pool, session_id: str, key: str, value: str) -> bool:
-    """把一個槽位寫進 `collected_data.slots`；找不到對話會話回 `False`（⛔ 不建列）。"""
+    """把一個槽位寫進 `collected_data.slots`；找不到對話會話回 `False`（⛔ 不建列）。
+
+    首行是**封閉值域自驗**（任務 4.2／Plan §4.1-3 第 (2) 道守門）：本函式是
+    `collected_data.slots` 的唯一 DB 寫入點，而 `SLOT_KEYS` 之外的鍵——尤其
+    `identity`／`identity_source`——一旦落地就會在下一回合被當成槽位讀回。
+    現行呼叫端（`slots_set`）已先過 `parse_slot_key`，這道是**給未來的直呼者**
+    的自驗，⛔ 不因為「現在沒有壞的呼叫端」而省略。
+
+    Raises:
+        ValueError: `key` 不在 `SLOT_KEYS` 封閉值域內（⛔ 訊息不帶 key 值本身——
+            它是模型／呼叫端自由字串）。
+    """
+    if key not in SLOT_KEYS:
+        raise ValueError("write_slot: key 不在 SLOT_KEYS 封閉值域內")
     import json
 
     slot_value = {

@@ -182,7 +182,14 @@ def test_existing_build_handoff_behaviour_unchanged_by_new_reasons():
 
 
 @pytest.mark.req(_REQ)
-def test_slot_key_enum_is_closed_six_values():
+def test_slot_key_enum_is_closed_ten_values():
+    """封閉值域**恰好相等**（⛔ 不得改成子集斷言）。
+
+    任務 4.2（knowledge-outline-and-intent-architecture:4.2）加四值：
+    `identity_detail`／`team`／`pain`／`interested`。
+    ⛔ `identity`／`identity_source` 不在其中——那是 runtime 依入口身分現算的
+    派生鍵，進 enum 等於讓模型寫得進去。
+    """
     assert SLOT_KEYS == (
         "contract_ref",
         "bill_ref",
@@ -190,7 +197,12 @@ def test_slot_key_enum_is_closed_six_values():
         "repair_ref",
         "unit_count",
         "business_type",
+        "identity_detail",
+        "team",
+        "pain",
+        "interested",
     )
+    assert "identity" not in SLOT_KEYS and "identity_source" not in SLOT_KEYS
     assert SLOTS_GET_SPEC["input_schema"]["properties"]["key"]["enum"] == list(SLOT_KEYS)
     assert SLOTS_SET_SPEC["input_schema"]["properties"]["key"]["enum"] == list(SLOT_KEYS)
     assert SLOTS_SET_SPEC["input_schema"]["properties"]["value"]["maxLength"] == 120

@@ -20,12 +20,21 @@ agent 會話的 `config_key='agent:<audience>'`。回退：`state["agent"]["fixe
 from __future__ import annotations
 
 import asyncio
+import logging
 import os
 from typing import Any, Optional, Protocol
 
 from fastapi.responses import StreamingResponse
 
-from services.agent.identity import Identity, audience_of
+from services.agent.identity import (
+    DEFAULT_ENTRY_MODE,
+    ENTRY_MODES,
+    Identity,
+    audience_of,
+    normalize_entry_mode,
+)
+
+logger = logging.getLogger(__name__)
 
 CONVERSATIONAL_FORM_ID = "conversational"
 KEEPALIVE_INTERVAL_S = 5.0          # R1.4：連線靜默 ≤10 秒；5 秒一則註解行
@@ -38,10 +47,29 @@ def agent_audiences() -> frozenset[str]:
 
 
 def build_identity(request) -> Identity:
-    """從 `/api/v1/message` 的請求欄位組 Identity——上游信任輸入（DSP-011），⛔ 不驗真偽。"""
+    """從 `/api/v1/message` 的請求欄位組 Identity——上游信任輸入（DSP-011），⛔ 不驗真偽。
+
+    任務 4.2（Plan §4.1-1）：mode 由 `identity.normalize_entry_mode` 決定——
+    prospect **一律 b2b**（售前池是 b2b 池：`business_types && ['system_provider']`）。
+    ⚠️ 這修掉的是 `VendorChatRequest.mode` 的 pydantic 預設 `'b2c'`：舊式
+    `mode or ("b2b" if prospect …)` 只在明送 null／空字串才觸發，**沒帶 mode 的
+    prospect 會落 b2c**、進而在候選選取變成靜默零內容。
+    ⚠️ REST 入口沒有 `_STATS`（那是 `/mcp` 的前提偵測計數器）⇒ 這裡**只 log 不計數**
+    （明列取捨，Plan §4.1-1）。
+    """
     target_user = getattr(request, "target_user", None) or "tenant"
-    # prospect 缺 mode 時預設 b2b（售前池是 b2b 池：business_types && ['system_provider']，見 outline.py 註解）
-    mode = getattr(request, "mode", None) or ("b2b" if target_user == "prospect" else "b2c")
+    raw_mode = getattr(request, "mode", None)
+    # 正規化前的基準＝值域守門後的值（合法原樣、其餘落預設）——⛔ 不印 `raw_mode`
+    # 本身：它是呼叫端自由字串，印出去就是把 payload 帶進 log。
+    mode_before = raw_mode if raw_mode in ENTRY_MODES else DEFAULT_ENTRY_MODE
+    mode = normalize_entry_mode(target_user, raw_mode)
+    if mode != mode_before:
+        # ⚠️ 進到這裡代表正規化真的改寫了 mode ⇒ `target_user` 必為字面值
+        # `prospect`（唯一會改寫的分支），印它不等於印 payload。
+        logger.info(
+            "[agent] 入口 mode 正規化：target_user=%s mode %s -> %s",
+            target_user, mode_before, mode,
+        )
     role_id = getattr(request, "role_id", None)
     return Identity(
         vendor_id=getattr(request, "vendor_id", None) or 0,

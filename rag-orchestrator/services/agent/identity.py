@@ -17,9 +17,17 @@ from typing import Any, Literal, Optional
 
 Audience = Literal["prospect", "property_manager", "tenant"]
 Stage = Literal["M0", "M1", "M2", "M3", "M4", "M5"]
+IdentitySource = Literal["entry", "anonymous"]
 
 # Stage 全序（元件 2 `specs_for`／`ToolRegistry.call` 比較用）；⛔ 唯一定義來源。
 STAGE_ORDER: tuple[Stage, ...] = ("M0", "M1", "M2", "M3", "M4", "M5")
+
+#: `mode` 的封閉值域（唯一定義來源；`mcp_facade._VALID_MODES` 是本常數的別名，
+#: ⛔ 不另抄第二份）。
+ENTRY_MODES: tuple[str, ...] = ("b2b", "b2c")
+
+#: 缺漏／非法 `mode` 的預設值（同上，唯一定義來源）。
+DEFAULT_ENTRY_MODE: str = "b2c"
 
 
 def audience_of(
@@ -45,6 +53,47 @@ def audience_of(
     if target_user in ("property_manager", "system_admin") or mode == "b2b":
         return "property_manager"
     return "tenant"
+
+
+def normalize_entry_mode(target_user: Any, mode: Any) -> str:
+    """入口 `mode` 正規化（任務 4.2／Plan §4.1-1，業主 2026-09-07 裁 (a)）。
+
+    `target_user == 'prospect'` ⇒ **一律 `'b2b'`**——含缺漏、非法值、以及
+    **明送 `'b2c'`**。理由：售前池是 b2b 池（`build_visibility_predicate` 的
+    `business_types && ['system_provider']`），而 `audience_of` 對 prospect
+    根本不看 mode ⇒ 放著會變成「受眾說 prospect、可見性謂詞說 b2c」的分裂身分，
+    其失敗形狀是**靜默零內容**（候選選取 `none_visible`），⛔ 不是大聲的錯誤。
+    ⛔ 不 400：入口是上游可信輸入（DSP-011），不在線上端點新增外顯失敗。
+
+    其餘 `target_user`：合法 `mode` 原樣，缺漏／非法 ⇒ `DEFAULT_ENTRY_MODE`。
+
+    ⚠️ 呼叫端必須**先**把 `target_user` 正規化（`_normalize_target_user`／
+    `_effective_target_user`）再呼叫本函式——payload 的合法形狀含 list
+    （`["prospect"]`），拿原值比 `== "prospect"` 會是 False。
+
+    純函式、決定性；⛔ 不看 role_id／user_id／vendor_id。
+    """
+    if target_user == "prospect":
+        return "b2b"
+    return mode if mode in ENTRY_MODES else DEFAULT_ENTRY_MODE
+
+
+def derive_identity_source(identity: "Identity") -> IdentitySource:
+    """對話控制用的身分來源（任務 4.2／Plan §4.1-2）。
+
+    規則＝`entry` ⇔ `role_id` 或 `user_id` 任一非 None；否則 `anonymous`
+    （契約見 `docs/jgb2-chat-integration.md` §3／§4／§8）。
+
+    ⛔ **不看 `vendor_id`**：MCP 的 `vendor_id` 是 API key 所屬業者，不是使用者
+    身分；照它判會把每個帶 key 的匿名 prospect 判成 `entry`。
+
+    ⚠️ **不是認證訊號**：呼叫端可以送任意 `role_id` 把值翻成 `entry`
+    （DSP-011：`role_id` 的信任由上游承擔）。本值只餵 prompt 的對話控制
+    （不再重問身分），⛔ 不進任何可見性謂詞、⛔ 不進 DB。
+    """
+    if identity.role_id is not None or identity.user_id is not None:
+        return "entry"
+    return "anonymous"
 
 
 @dataclass(frozen=True)

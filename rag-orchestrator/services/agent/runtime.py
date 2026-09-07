@@ -63,7 +63,7 @@ from services.agent.budget import Budget, BudgetCounters
 from services.agent.canon.candidate_selector import CandidateSelector
 from services.agent.canon.candidate_selector import K as _CANDIDATE_K
 from services.agent.canon.canon_assembler import build_canon_toc, get_canon
-from services.agent.identity import Identity, Stage
+from services.agent.identity import Identity, Stage, derive_identity_source
 from services.agent.mcp_facade import current_stage
 from services.agent.outline import CandidateOutlineDoc
 from services.agent.output_schema import AgentOutput, VerifierVerdict
@@ -356,6 +356,13 @@ SLOTS_SET_TOOL_NAME = "session.slots.set"
 #: collected_data`）為準取**頂層**。⛔ 別改回 `state["agent"]["slots"]`。
 SLOTS_STATE_KEY = "slots"
 
+#: **派生**槽位鍵（任務 4.2／Plan §4.1-2、§4.1-3 第 (1) 道守門）。
+#: 這兩個鍵每回合由 `run_turn` 依**入口身分**現算後覆寫進 prompt 槽位，
+#: ⛔ 不是 `SlotKey` 的成員（模型寫不進來）、⛔ 不回寫 state、⛔ 不落 DB。
+#: 儲存側（jsonb）若出現同名鍵——舊資料、或任何繞過 `write_slot` 的寫入——
+#: 一律**丟棄**：留著會讓「儲存的身分」蓋掉「入口的身分」，那正是身分偽造的形狀。
+DERIVED_SLOT_KEYS: tuple[str, ...] = ("identity", "identity_source")
+
 
 def _slots_for_prompt(state: dict) -> dict:
     """從 state 取槽位表，並把 `SlotValue` 攤平成純量給 PromptAssembler。
@@ -381,6 +388,11 @@ def _slots_for_prompt(state: dict) -> dict:
         return {}
     flat: dict = {}
     for key, value in raw.items():
+        if key in DERIVED_SLOT_KEYS:
+            # 儲存側的同名鍵一律丟棄（見 `DERIVED_SLOT_KEYS`）。
+            # ⛔ log 只有鍵名（封閉值域），不印值。
+            logger.warning("[agent] 丟棄儲存側的派生槽位鍵：%s", key)
+            continue
         if isinstance(value, dict):
             # `SlotValue`：只取 `value`；沒有 `value` 鍵的異常列直接跳過
             # （⛔ 不塞 `None` 佔位——那會讓 prompt 出現一個「已設定為空」的槽位）。
@@ -779,6 +791,12 @@ class AgentRuntime:
         nonce = new_nonce()
         # 2.9 路徑對齊：槽位在 **`collected_data` 頂層**（見 `_slots_for_prompt`）。
         slots = _slots_for_prompt(state)
+        # 任務 4.2（Plan §4.1-2）：身分槽位一律由**入口身分**現算後覆寫。
+        # ⛔ 不用 `setdefault`（那等於讓儲存側／模型寫的值贏）；⛔ 不回寫
+        # `state`（`_slots_for_prompt` 回的是新 dict，覆寫只影響本回合 prompt）；
+        # ⛔ 不落 DB。模型能寫的是 `identity_detail`（角色子類），它動不到這兩鍵。
+        slots["identity"] = identity.resolved_audience()
+        slots["identity_source"] = derive_identity_source(identity)
         dialog = agent_state.get("dialog", [])
         outline = agent_state.get("outline")
         # 任務 4.1（Plan §2.1-2）：把整份 outline 換成這一回合的候選子集（或降級的

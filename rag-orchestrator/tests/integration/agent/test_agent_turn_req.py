@@ -349,7 +349,12 @@ async def test_same_session_id_different_vendor_is_isolated(pool, env):
         {"message": "第二句"})
 
     # ⓵ B ⛔ 讀不到 A 的 slots
-    assert seen_slots["slots"] == {}, f"跨業者讀到了 slots：{seen_slots['slots']}"
+    # ⚠️ 任務 4.2（knowledge-outline-and-intent-architecture:4.2）：每回合的 prompt
+    #    槽位一定多兩個**派生**鍵（`identity`／`identity_source`，依**入口身分**現算、
+    #    ⛔ 不來自儲存側），所以「讀不到 A 的槽位」的形狀＝**恰好只有這兩鍵**。
+    #    ⛔ 不得改成子集斷言：`unit_count` 一旦漏過來就必須紅。
+    assert set(seen_slots["slots"]) == {"identity", "identity_source"}, \
+        f"跨業者讀到了 slots：{sorted(seen_slots['slots'])}"
     # ⓶ B 走的是自己的列
     assert await _row(pool, row_key_b) is not None
     # ⓷ A 的**原列不改**
@@ -401,7 +406,10 @@ async def test_two_turns_second_sees_first_turn_state(pool, env):
     runtime.provider.script.append(_fake_response(_agent_output(answer="您好。")))
     await invoke(F.AGENT_TURN_NAME, ctx, {"message": "第二句"})
 
-    assert seen["slots"] == {"unit_count": "600"}, "第二回合沒讀到第一回合的 slots"
+    # 任務 4.2：儲存側槽位＋兩個派生身分鍵（⛔ 不改成子集斷言）
+    assert seen["slots"] == {"unit_count": "600", "identity": "prospect",
+                             "identity_source": "anonymous"}, \
+        "第二回合沒讀到第一回合的 slots"
     # 兩回合、兩列事件（不變量 31：一次呼叫一列）
     assert await _wait_for_events(pool, session_id, 2) == 2
 
@@ -555,7 +563,9 @@ async def test_real_mcp_client_two_turn_conversation(pool, env):
                 assert second.is_error is False
             await http.aclose()
 
-            assert seen["slots"] == {"unit_count": "600"}, \
+            # 任務 4.2：儲存側槽位＋兩個派生身分鍵（⛔ 不改成子集斷言）
+            assert seen["slots"] == {"unit_count": "600", "identity": "prospect",
+                                     "identity_source": "anonymous"}, \
                 "第二回合沒看到第一回合的 slots"
             assert await _wait_for_events(pool, session_id, 2) == 2
         finally:

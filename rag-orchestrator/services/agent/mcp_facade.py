@@ -120,7 +120,13 @@ from typing import Any, Callable, Mapping, Optional
 
 from pydantic import BaseModel
 
-from services.agent.identity import Identity, Stage
+from services.agent.identity import (
+    DEFAULT_ENTRY_MODE,
+    ENTRY_MODES,
+    Identity,
+    Stage,
+    normalize_entry_mode,
+)
 from services.agent.state_store import NamespacedStateStore
 from services.agent.tools.registry import (
     Provenance,
@@ -143,8 +149,11 @@ EMPTY_ORIGIN_SET = "-"
 _IDENTITY_HEADER = "x-jgb-identity"
 _API_KEY_HEADER = "x-api-key"
 
-_VALID_MODES = ("b2b", "b2c")
-_DEFAULT_MODE = "b2c"
+#: `mode` 值域與預設值——**別名**，唯一定義來源在
+#: `services/agent/identity.py`（`ENTRY_MODES`／`DEFAULT_ENTRY_MODE`），
+#: 名稱保留給既有測試與呼叫端；⛔ 不在本檔另抄一份字面值。
+_VALID_MODES = ENTRY_MODES
+_DEFAULT_MODE = DEFAULT_ENTRY_MODE
 
 _DEFAULT_STAGE: Stage = "M0"
 _DEFAULT_TOOL_TIMEOUT_S = 3.0
@@ -199,6 +208,9 @@ class _PremiseStats:
     origin_not_allowed: int = 0
     enforce_off_with_mcp_traffic: bool = False
     metering_unavailable: int = 0
+    #: 任務 4.2（Plan §4.1-1）：入口 `mode` 被正規化改寫的次數——**觀測值**，
+    #: ⛔ 不進 `premise.red_flags`、⛔ 不致紅（正規化是刻意行為，不是前提破裂）。
+    identity_mode_normalized: int = 0
 
 
 _STATS = _PremiseStats()
@@ -246,6 +258,7 @@ def premise_stats() -> dict:
         "origin_not_allowed": _STATS.origin_not_allowed,
         "enforce_off_with_mcp_traffic": _STATS.enforce_off_with_mcp_traffic,
         "metering_unavailable": _STATS.metering_unavailable,
+        "identity_mode_normalized": _STATS.identity_mode_normalized,
     }
 
 
@@ -378,9 +391,25 @@ async def parse_identity(
     if not isinstance(session_id, str) or not session_id.strip():
         raise McpRequestError(400, ERR_IDENTITY_NO_SESSION)
 
+    # 任務 4.2（Plan §4.1-1 收尾審查 P2）：**先**正規化 `target_user` 再決 mode。
+    # payload 的合法形狀含 list（`["prospect"]`）——拿原值餵
+    # `normalize_entry_mode` 會比不到 prospect，留下「受眾說 prospect、可見性
+    # 謂詞說 b2c」的分裂身分（正是本次要消滅的東西）。⛔ 不得對調順序。
+    target_user = _normalize_target_user(payload.get("target_user"))
     mode = payload.get("mode")
     if mode not in _VALID_MODES:
         mode = _DEFAULT_MODE
+    normalized_mode = normalize_entry_mode(target_user, mode)
+    if normalized_mode != mode:
+        _STATS.identity_mode_normalized += 1
+        # ⛔ 只印 target_user 與前後 mode（皆為封閉值域的列舉值），不印 payload。
+        # ⚠️ 進到這裡代表正規化真的改寫了 mode ⇒ `target_user` 必為字面值
+        # `prospect`（唯一會改寫的分支），印它不等於印 payload。
+        logger.info(
+            "[mcp] 入口 mode 正規化：target_user=%s mode %s -> %s",
+            target_user, mode, normalized_mode,
+        )
+    mode = normalized_mode
 
     exists = vendor_check(vendor_id)
     if inspect.isawaitable(exists):
@@ -399,7 +428,7 @@ async def parse_identity(
 
     return Identity(
         vendor_id=vendor_id,
-        target_user=_normalize_target_user(payload.get("target_user")),
+        target_user=target_user,
         mode=mode,
         role_id=_opt_str(payload.get("role_id")),
         user_id=_opt_str(payload.get("user_id")),

@@ -263,6 +263,10 @@ async def compute_agent_health(
                     "enforce_off_with_mcp_traffic", False
                 ),
                 "metering_unavailable": stats.get("metering_unavailable", 0),
+                # 任務 4.2（Plan §4.1-1／§4.3-9）：入口 mode 正規化次數——
+                # **純觀測值**，⛔ 不進 `red_flags`、⛔ 不致紅：正規化是刻意的
+                # 入口行為（prospect ⇒ b2b），不是 DSP-011 前提破裂。
+                "identity_mode_normalized": stats.get("identity_mode_normalized", 0),
                 "red_flags": flags,
             },
             "mcp_sdk": "ok" if sdk_ok else "unavailable (DSP-014)",

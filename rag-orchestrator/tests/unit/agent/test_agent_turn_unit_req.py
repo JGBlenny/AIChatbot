@@ -1019,4 +1019,13 @@ async def test_next_turn_reads_the_slot_written_by_the_tool():
     result = await _call_agent_turn(_registry_with_agent_turn(deps), _identity(), "第二句")
 
     assert result.ok is True, result.error
-    assert seen["slots"] == {"unit_count": "600"}, "槽位沒被讀回來（或沒攤平）"
+    # 任務 4.2：`run_turn` 在 `_slots_for_prompt` 之後覆寫兩個**派生**身分鍵 ⇒
+    # 本回合 prompt 槽位恰為「攤平後的儲存槽位＋兩個派生鍵」。
+    # ⛔ 不改成子集斷言：多出來的鍵必須被看見。
+    assert set(seen["slots"]) == {"unit_count", "identity", "identity_source"}
+    # 正對照組保留：`unit_count` 仍是**純量**——拿掉 `_slots_for_prompt` 的攤平
+    # 就會變成 `{"value": "600", ...}` 而必紅。
+    assert seen["slots"]["unit_count"] == "600", "槽位沒被讀回來（或沒攤平）"
+    # 派生值依入口身分（`_identity()` 是 prospect、無 role_id／user_id）現算。
+    assert seen["slots"]["identity"] == "prospect"
+    assert seen["slots"]["identity_source"] == "anonymous"
