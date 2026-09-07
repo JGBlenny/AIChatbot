@@ -16,7 +16,11 @@ import os
 from services.agent.output_schema import VerifierRules
 from services.agent.prompt_assembler import PromptAssembler
 from services.agent.runtime import AgentRuntime
-from services.agent.tools.registry import ToolRegistry
+from services.agent.tools.registry import (
+    AGENT_WRITE_TOOLS_ENV,
+    ToolRegistry,
+    write_tools_enabled,
+)
 from services.agent.verifier import OutputVerifier
 
 #: `services/agent/bootstrap.py` → parents[0]=agent, [1]=services, [2]=rag-orchestrator。
@@ -53,9 +57,12 @@ def build_runtime(
     不是 `AgentRuntime.__init__` 的正式參數，是本函式組裝完成後外掛的唯讀
     快照值，供健康檢查或其他觀測端讀取；`AgentRuntime` 本體邏輯不依賴它們。
 
-    `db_pool` 目前未被任何組裝步驟消費——`OutlineAssembler`（任務 3.2）尚未
-    接線，大綱／目錄的 DB 讀取還沒有落地。保留這個參數是讓呼叫端一次把
-    未來要接的依賴準備好，⛔ 不是這裡偷偷用了卻沒說。
+    `db_pool` 自 DSP-038／W3 起**真的被消費**：交給 `AgentRuntime`，那一段
+    確認兌現（`redeem_pending` 單述句）是 Runtime 自己下的 SQL，⛔ 不經模型、
+    ⛔ 不經工具 registry（那條路會把 token 交出去）。呼叫端沒給 pool ⇒ Runtime
+    的兌現段一律回「這筆確認已失效」（fail-closed）。
+    ⚠️ 呼叫端若自己在 `runtime_kwargs` 裡帶了 `db_pool`，以呼叫端的為準
+    （⛔ 不重複傳同名參數而 TypeError）。
     """
     rules = VerifierRules.load(rules_path)
     verifier = OutputVerifier(rules)
@@ -63,6 +70,7 @@ def build_runtime(
 
     assembler = PromptAssembler(persona_provider, policy_provider)
 
+    runtime_kwargs.setdefault("db_pool", db_pool)
     runtime = AgentRuntime(
         provider,
         registry,
@@ -72,11 +80,26 @@ def build_runtime(
         **runtime_kwargs,
     )
     runtime.rules_sha = rules.sha256
+    # DSP-038-1：把**這個行程實際採用的**寫入工具旗標值釘在 runtime 上，
+    # 供健檢／觀測讀（與 `rules_sha`／`outline_sha` 同慣例：⛔ 不重讀 env 重算，
+    # 重算量到的是「現在 env 是什麼」，不是「這個行程啟動時帶的是什麼」）。
+    runtime.write_tools_enabled = write_tools_enabled()
     runtime.outline_sha = str(getattr(outline_doc, "sha256", "") or "") if outline_doc is not None else ""
     return runtime
 
 
-__all__ = ["build_runtime", "DEFAULT_RULES_PATH", "DEFAULT_FIXTURES_DIR"]
+#: DSP-038-1：`AGENT_WRITE_TOOLS_ENABLED` 的讀值點。**實作在
+#: `services/agent/tools/registry.py`**（閘門執行在那一層，且本模組反向 import
+#: 它 ⇒ 讀值點放這裡會造成環狀 import）；這裡只是**同一個函式物件的別名**，
+#: ⛔ 不是第二份解析。
+__all__ = [
+    "build_runtime",
+    "budget_from_env",
+    "write_tools_enabled",
+    "AGENT_WRITE_TOOLS_ENV",
+    "DEFAULT_RULES_PATH",
+    "DEFAULT_FIXTURES_DIR",
+]
 
 
 def budget_from_env() -> Budget:

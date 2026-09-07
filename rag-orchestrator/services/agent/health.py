@@ -30,6 +30,11 @@
 4. **MCP SDK 是否可匯入**（`mcp_sdk_available()`）：DSP-014 A 之後 SDK 已是正式
    相依，這裡只是防禦性守衛；否 ⇒ `"unavailable (DSP-014)"`，⛔ 不算紅
    （`/mcp` 服務層閘仍生效，只是工具面未掛載）。
+5b. **三支旗標（DSP-038-1／S-5／R8，皆為觀測值、⛔ 不致紅）**：
+   `verifier_observe_only`＝`AGENT_VERIFIER_OBSERVE_ONLY`（見 `verifier_observe_only()`）；
+   `write_tools_enabled`＝這個 registry 這一刻採用的 `AGENT_WRITE_TOOLS_ENABLED`
+   （建構時釘住的值優先於 env）；`use_mock_jgb_api`＝`USE_MOCK_JGB_API`（**預設 true**，
+   故「true」不代表有人刻意打開替身，見 `_use_mock_jgb_api`）。
 5. **`api_keys` 的 agent 作用域兩欄是否已建**（`api_keys_agent_scope_ready`，1.10 P2）：
    否 ⇒ **紅**。理由：`is_internal`／`vendor_ids` 缺欄時 `verify_api_key` 會降級成
    `vendor_ids=None`，而那個值的語義是「**不限業者**」——migration 沒套等於每一把 key
@@ -45,12 +50,14 @@ HTTP 一律 200（健檢 API 慣例，見任務 brief）；紅以 `status` 欄�
 """
 from __future__ import annotations
 
+import os
 from typing import Any, Callable, Optional
 
 from services import api_key_auth
 from services.agent import mcp_facade
 from services.agent.identity import Identity, Stage
 from services.agent.tools.kb import kb_get
+from services.agent.tools.registry import write_tools_enabled
 
 #: 健康探針用的固定假身分——不落地任何真實呼叫方資料。
 #: ⚠️ `mode="b2b"` 是刻意的：`build_visibility_predicate` 的 b2c 分支會另外
@@ -63,6 +70,46 @@ _PROBE_IDENTITY = Identity(
 )
 #: 必然不存在的數字 kb_id（`fetch_visible_row` 對它一律回 `None` ⇒ `NO_MATCH`）。
 _PROBE_KB_ID = "0"
+
+#: 替身開關的 env 名（DSP-038／S-5）。⚠️ **只讀 env、⛔ 不 import
+#: `services.jgb_system_api`**：那支在 import 期就會把 mock transport 那一整條
+#: 分支拉進健檢行程（`JGBSystemAPI.__init__` 讀同一個 env 並裝配 transport），
+#: 健檢只需要回答「這台機器現在設成打替身還是打真 API」。
+#: 解析式**逐字對齊** `services/jgb_system_api.py` 的
+#: `os.getenv("USE_MOCK_JGB_API", "true").lower() == "true"`（含「預設 true」
+#: 這一點）——⛔ 兩邊語義不得分岔：健檢說 false、實際卻在打替身，比沒有這個
+#: 旗更糟。
+USE_MOCK_JGB_API_ENV = "USE_MOCK_JGB_API"
+
+
+#: Verifier「只觀察不擋」對照實驗旗（R8）。⚠️ **⛔ 非正式組態**：開著代表引用類
+#: 拒因只被記錄、不觸發改寫／轉人，⇒ 這台機器輸出的答案沒有經過完整的尺。
+#: `app.py:_wrap_verifier_observe_only` 讀的就是本函式（**唯一讀值點**，
+#: ⛔ 不在兩邊各寫一份 truthy 解析——健檢說 false、實際卻在觀察模式，比沒有這個旗更糟）。
+AGENT_VERIFIER_OBSERVE_ONLY_ENV = "AGENT_VERIFIER_OBSERVE_ONLY"
+_OBSERVE_TRUTHY = frozenset({"1", "true", "yes", "on"})
+
+
+def verifier_observe_only() -> bool:
+    """`AGENT_VERIFIER_OBSERVE_ONLY` ∈ {1,true,yes,on}（不分大小寫）⇒ True；
+    未設或其他值 ⇒ **False**（fail-closed＝尺照常擋）。
+
+    ⚠️ 與 `entry`／`write_tools_enabled` 無關：它是 Verifier 的行為旗，
+    ⛔ 不參與任何可見性或授權判定。
+    """
+    return (os.getenv(AGENT_VERIFIER_OBSERVE_ONLY_ENV) or "").strip().lower() in (
+        _OBSERVE_TRUTHY
+    )
+
+
+def _use_mock_jgb_api() -> bool:
+    """`USE_MOCK_JGB_API`（預設 **true**）——觀測值，⛔ 不致紅。
+
+    ⚠️ 這一旗預設為真，所以「它是 true」不代表有人刻意打開了替身；
+    要判「這台機器是不是接到真 JGB」必須看它是 **false**。S-5 的處置是讓它
+    **看得見**，⛔ 不是讓它變成閘門。
+    """
+    return os.getenv(USE_MOCK_JGB_API_ENV, "true").lower() == "true"
 
 
 async def _check_kb_reachable(get_kb_pool: Optional[Callable[[], Any]]) -> tuple:
@@ -279,6 +326,22 @@ async def compute_agent_health(
                 "identity_mode_normalized": stats.get("identity_mode_normalized", 0),
                 "red_flags": flags,
             },
+            # DSP-038-1／S-5：兩支旗標**看得見**。⛔ 兩者皆不致紅——
+            # `write_tools_enabled` 關著是預設也是安全狀態；`use_mock_jgb_api`
+            # 是「打替身或打真 API」的事實，不是故障。
+            # `write_tools_enabled` 取自 **registry 這一刻實際採用的值**
+            # （建構時釘住的值優先），⛔ 不在此另讀一次 env——那會在 registry
+            # 被明示釘住時印出與實際不符的綠字。
+            "write_tools_enabled": (
+                registry.write_tools_enabled()
+                if hasattr(registry, "write_tools_enabled")
+                else write_tools_enabled()
+            ),
+            "use_mock_jgb_api": _use_mock_jgb_api(),
+            # R8：Verifier 對照實驗旗——**觀測值、⛔ 不致紅**（它不是故障，
+            # 是一個刻意的非正式組態）；但它必須看得見，否則「這台機器的答案
+            # 有沒有經過尺」從外面完全問不出來。
+            "verifier_observe_only": verifier_observe_only(),
             "mcp_sdk": "ok" if sdk_ok else "unavailable (DSP-014)",
             "api_keys_agent_scope_ready": scope_ready,
             "api_keys_agent_scope_detail": scope_detail,

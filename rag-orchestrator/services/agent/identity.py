@@ -19,6 +19,17 @@ Audience = Literal["prospect", "property_manager", "tenant"]
 Stage = Literal["M0", "M1", "M2", "M3", "M4", "M5"]
 IdentitySource = Literal["entry", "anonymous"]
 
+#: 呼叫入口（DSP-038-1／子 spec `agent-write-tools` W1）。⛔ **不是認證訊號**，
+#: 也不是 `IdentitySource`（那是「有沒有帶 role_id／user_id」的對話控制值）——
+#: 這一欄回答的是「這個身分是從哪一道門進來的」，唯一用途是
+#: `ToolRegistry.specs_for` 的 `mcp_only` 閘與 Runtime 的確認兌現段守門。
+EntryChannel = Literal["mcp", "rest"]
+
+#: `Identity.entry` 的預設值＝**fail-closed**：任何沒有明示自己是 `/mcp` 的
+#: 建構點一律算 `rest`，於是 `mcp_only=True` 的寫入型工具對它永遠不可見。
+#: ⛔ 不得改成 `"mcp"`——那會讓「忘了設」變成「預設拿到寫入權」。
+DEFAULT_ENTRY_CHANNEL: EntryChannel = "rest"
+
 # Stage 全序（元件 2 `specs_for`／`ToolRegistry.call` 比較用）；⛔ 唯一定義來源。
 STAGE_ORDER: tuple[Stage, ...] = ("M0", "M1", "M2", "M3", "M4", "M5")
 
@@ -117,6 +128,13 @@ class Identity:
         audience: 若上游已算好可直接帶入；預設 `None`，由
             `resolved_audience()` 依 `audience_of` 即時推導，⛔ 不在
             建構時強制計算（避免與未來欄位變動時的推導時機耦合）。
+        entry: 呼叫入口（DSP-038-1）。預設 `"rest"`＝fail-closed——只有
+            `/mcp` 門面自己的身分解析（`mcp_facade.parse_identity`／
+            `union_specs` 的探針，屬子切片 W1b）才把它設成 `"mcp"`；
+            `routers/agent_entry.build_identity`、`health._PROBE_IDENTITY`、
+            `outline.py`、`tools/agent_eval.py` 一律**不帶** ⇒ 落 `"rest"`
+            ⇒ `mcp_only=True` 的寫入型工具對它們永遠不可見、也呼叫不到。
+            ⛔ 不是認證欄位：它由建構點決定，不由呼叫端 payload 決定。
     """
 
     vendor_id: Optional[int]
@@ -127,6 +145,8 @@ class Identity:
     session_id: str = ""
     api_key_id: Optional[int] = None
     audience: Optional[Audience] = None
+    # ⚠️ 新欄位一律**加在有預設值的欄位之後**（見模組 docstring 的向後相容約束）。
+    entry: EntryChannel = DEFAULT_ENTRY_CHANNEL
 
     def resolved_audience(self) -> Audience:
         """`self.audience` 有值即回傳；否則以 `audience_of` 即時推導。"""

@@ -159,14 +159,33 @@ class RecordingTransport:
         return await self.inner.send(method, path, params=params, data=data)
 
 
+class MissingCredentialError(TransportError):
+    """真 API transport 建構時憑證為空（agent-write-tools W1b／S-5）。
+
+    ⚠️ 這是**大聲失敗**，不是降級：`X-API-Key` 空字串送出去只會被 jgb2 拒，
+    但那個 401 會被 `_fallback_response()` 折成一句「暫時無法取得資料」——
+    於是「這台機器沒帶憑證」看起來和「jgb2 剛好掛了」一模一樣，⛔ 不可接受。
+    """
+
+
 class RealHttpTransport:
     """真 HTTP 實作：只負責送出請求與把傳輸層失敗轉成契約外殼。
 
     ⚠️ 本類**不承擔任何 rag 端邏輯**（不做參數推導、不做結果過濾）——
     那些屬於 `JGBSystemAPI` 與各面向 formatter。
+
+    ⚠️ **建構期就要有憑證**（S-5）：`api_key` 空／全空白 ⇒ `MissingCredentialError`。
+    ⛔ 這不是改憑證來源，也不是改 header 邏輯（`_headers` 一字未動）——只是把
+    「沒有憑證」從一個到執行期才靜默降級的狀態，提早成一個開不起來的狀態。
     """
 
     def __init__(self, base_url: str, api_key: str, timeout: float) -> None:
+        if not isinstance(api_key, str) or not api_key.strip():
+            # ⛔ 訊息不含任何憑證片段（連長度都不印）。
+            raise MissingCredentialError(
+                "RealHttpTransport 建構失敗：JGB API 憑證為空"
+                "（USE_MOCK_JGB_API=false 時必須提供 JGB_API_KEY）"
+            )
         self.base_url = base_url
         self.api_key = api_key
         self.timeout = timeout

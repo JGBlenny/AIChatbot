@@ -46,6 +46,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import hmac
 import json
 import logging
 import os
@@ -60,10 +61,23 @@ from pydantic import ValidationError
 
 from services import usage_metering
 from services.agent.budget import Budget, BudgetCounters
+from services.agent.confirm_card import (
+    ACTION_FAILED_TEXT,
+    CANCELLED_TEXT,
+    CONFIRMATION_REQUIRED_TEXT,
+    CONFIRM_ACTIONS,
+    receipt_id_of,
+    render_receipt,
+)
 from services.agent.canon.candidate_selector import CandidateSelector
 from services.agent.canon.candidate_selector import K as _CANDIDATE_K
 from services.agent.canon.canon_assembler import build_canon_toc, canon_visible, get_canon
-from services.agent.identity import Identity, Stage, derive_identity_source
+from services.agent.identity import (
+    DEFAULT_ENTRY_CHANNEL,
+    Identity,
+    Stage,
+    derive_identity_source,
+)
 from services.agent.mcp_facade import current_stage
 from services.agent.outline import CandidateOutlineDoc, resolve_vendor_business_types
 from services.agent.output_schema import AgentOutput, VerifierVerdict
@@ -72,6 +86,14 @@ from services.agent.provenance_units import (  # OUTLINE_TOOL_CALL_ID 下沉至�
     OUTLINE_TOOL_CALL_ID,
     provenance_units,
     resolve_refs,
+)
+from services.agent.tools.confirm import (
+    CONFIRM_QUICK_REPLY_VALUES,
+    CONFIRM_SPEC,
+    CONFIRM_VALUE_SEP,
+    payload_digest,
+    redeem_pending,
+    sha256_hex,
 )
 from services.agent.tools.registry import Provenance, ToolRegistry, ToolResult, tool_name_from_openai
 from services.conversational_config import (
@@ -216,6 +238,46 @@ class ToolCallRecord:
     n_items: int
 
 
+#: DSP-038／W3：待確認動作的 session 狀態鍵。
+#: `agent_state["pending_confirm"][pending_id] = {action, payload, card_sha256, receipt?}`
+#: ——經既有 `state_store` 落 `form_sessions.collected_data`，與既有 `bill_ref`／
+#: `contract_ref` 槽位同一敏感等級與同一保留期（DSP-038-4）。
+#: ⛔ **token 不在其中**（r1 B2 的 P1 處置：token 落 session 狀態＝一份靜態憑證面）。
+PENDING_CONFIRM_KEY = "pending_confirm"
+
+#: 每 session 保留的待確認筆數上限（比照 `HANDOFF_CACHE_MAX` 的理由：這份狀態
+#: 跟著 `collected_data` 一起序列化，無上限等於讓呼叫端把單一 jsonb 列撐大）。
+#: 超過即 **FIFO** 擠掉最早插入的一筆（dict 保序）。
+PENDING_CONFIRM_MAX = 20
+
+#: `confirm.request` 的工具名（⛔ 不抄字面量，值域由 `CONFIRM_SPEC` 持有）。
+CONFIRM_TOOL_NAME = CONFIRM_SPEC["name"]
+
+#: 使用者按下按鈕送回來的機器值：`^confirm_(submit|edit|cancel):<16 位十六進位>$`。
+#: ⚠️ **等值**比對（`fullmatch`、無前後綴）——⛔ 不做子字串比對：那會讓
+#: 「confirm_submit:abcd… 這是什麼意思？」這種自由文字誤觸發一次真實寫入。
+#: 三個前綴**由 `CONFIRM_QUICK_REPLY_VALUES` 組出來**（那組常數又轉引
+#: `conversational_engine._QR_*`），⛔ 不在此另抄字面量。
+_CONFIRM_VALUE_RE = re.compile(
+    r"^(?:%s)%s([0-9a-f]{16})$"
+    % (
+        "|".join(re.escape(v) for v in CONFIRM_QUICK_REPLY_VALUES),
+        re.escape(CONFIRM_VALUE_SEP),
+    )
+)
+
+
+def _parse_confirm_value(message: Any) -> Optional[tuple]:
+    """`"confirm_submit:0123456789abcdef"` → `("confirm_submit", "0123…")`；不是機器值 ⇒ `None`。"""
+    if not isinstance(message, str):
+        return None
+    m = _CONFIRM_VALUE_RE.match(message)
+    if m is None:
+        return None
+    verb, pending_id = message.split(CONFIRM_VALUE_SEP, 1)
+    return verb, pending_id
+
+
 @dataclass
 class TurnTrace:
     trace_id: str
@@ -235,6 +297,12 @@ class TurnTrace:
     candidate_ids: list[str] = field(default_factory=list)
     winning_key_kind: dict[str, str] = field(default_factory=dict)
     miss_kind: Optional[str] = None
+    #: DSP-038／S-11（稽核落點）：確認回合與兌現回合各記一個 `pending_id`；
+    #: 兌現成功時另記 receipt 的識別碼。⛔ 兩者都**不是原文**——`pending_id` 是
+    #: token 的單向摘要，`receipt_id` 經 `confirm_card.receipt_id_of` 過形狀
+    #: （`[A-Za-z0-9_.:-]{1,64}`），下游回來的自由文字進不了這裡。
+    pending_id: Optional[str] = None
+    receipt_id: Optional[str] = None
 
 
 #: `reasoning_effort` 允許值（OpenAI gpt-5 系列）；封閉集合，⛔ 不在程式內以字串推導。
@@ -594,6 +662,9 @@ def _emit_agent_decision(trace: TurnTrace) -> None:
             "candidate_ids": candidate_ids,
             "winning_key_kind": winning_key_kind,
             "miss_kind": trace.miss_kind,
+            # DSP-038／S-11：確認鏈的稽核兩鍵（⛔ 皆非原文，見 `TurnTrace` 註記）。
+            "pending_id": trace.pending_id,
+            "receipt_id": trace.receipt_id,
             "violations": trace.violations,
             "replayed_from": _replayed_from(trace.violations),
         }
@@ -637,6 +708,7 @@ class AgentRuntime:
         attempt_sink: Optional[Callable[[dict], None]] = None,
         candidate_selector: Optional[CandidateSelector] = None,
         candidate_selectors: Optional[dict] = None,
+        db_pool: Any = None,
     ) -> None:
         self.provider = provider
         self.registry = registry
@@ -682,6 +754,11 @@ class AgentRuntime:
         self._reasoning_effort: Optional[str] = effort or None
         self._tool_timeout_s = tool_timeout_s
         self._status_interval_s = status_interval_s
+        # DSP-038／W3：確認兌現段要下的那句 `redeem_pending` 是 Runtime 自己的
+        # DB 存取（⛔ 不經模型、⛔ 不經工具 registry——那條路會把 token 交出去）。
+        # `None` ⇒ 兌現段**一律回「這筆確認已失效」**（fail-closed），
+        # ⛔ 不「先呼叫工具再說」。
+        self._db_pool = db_pool
 
     def _emit_attempt(self, record: dict) -> None:
         """呼叫 `attempt_sink`（若有），任何例外一律吞掉＋`logger.warning`——
@@ -810,10 +887,280 @@ class AgentRuntime:
             }
 
     # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # DSP-038／W3：確認段（機器值 → 兌現 → 寫入工具 → receipt）
+    # ------------------------------------------------------------------
+    def _finish_confirm_turn(
+        self,
+        *,
+        agent_state: dict,
+        user_message: str,
+        trace_id: str,
+        start: float,
+        kind: str,
+        answer: str,
+        pending_id: Optional[str],
+        quick_replies: Optional[list] = None,
+        tool_calls: Optional[list] = None,
+        violations: Optional[list] = None,
+        receipt_id: str = "",
+        llm_calls: int = 0,
+        prompt_tokens: int = 0,
+        completion_tokens: int = 0,
+    ) -> TurnResult:
+        """確認段各出口共用的收尾：組 trace → 落 decision snapshot → 寫回 dialog。
+
+        ⚠️ 這條路徑**不進 `handoff_cache`**：確認與兌現是一次性的狀態轉移，
+        重播它等於「同一句話再送出一次」。⛔ 不要為了「統一」而套 `_finalize`。
+        """
+        trace = TurnTrace(
+            trace_id=trace_id,
+            tool_calls=list(tool_calls or []),
+            # 兌現回合 `llm_calls=0`（⛔ 模型不在迴圈裡，design 元件 3 `jgb2.action` 列）；
+            # 確認回合則是模型呼叫 `confirm.request` 之後才走到這裡，⇒ 由呼叫端把
+            # 實際次數帶進來。⛔ 不在此硬填 0——計量會少算。
+            llm_calls=llm_calls,
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
+            final_kind=kind,
+            latency_ms=int((self._clock() - start) * 1000),
+            violations=list(violations or []),
+            rules_sha=str(getattr(self.verifier, "rules_sha", "") or ""),
+            pending_id=pending_id,
+            receipt_id=receipt_id or None,
+        )
+        agent_state["fixed_streak"] = 0
+        _append_dialog(agent_state, user_message, answer)
+        _emit_agent_decision(trace)
+        return TurnResult(
+            kind=kind,
+            answer=answer,
+            handoff=None,
+            quick_replies=list(quick_replies or []),
+            trace=trace,
+        )
+
+    async def _run_confirm_segment(
+        self, identity: Identity, user_message: str, agent_state: dict,
+        trace_id: str, start: float,
+    ) -> Optional[TurnResult]:
+        """使用者按下三顆按鈕之一時的整段處理；不是這種回合 ⇒ `None`（照常進模型）。
+
+        **守門順序固定，⛔ 不得調換**（Plan W3）：
+          ① `identity.entry != "mcp"` ⇒ 整段不執行。REST 入口永遠兌現不了——
+             它的 session 沒有命名空間、token 表也沒有 vendor 欄（S-6／S-7），
+             這個 `entry` 判斷就是那兩條 DEFER 的緩解本身。
+          ② `self.readonly_view` ⇒ 整段不執行。影子回合與正式回合**共用
+             session_id**（DSP-016），影子若兌現，正式那一張 token 就沒了，
+             而使用者根本沒按過任何按鈕。
+          ③ 訊息**等值**匹配機器值，且該 `pending_id` 在 session 狀態裡有一筆
+             待確認 ⇒ 不進模型。三個條件缺一就照常走模型（自由文字「好，送出」、
+             裸 `confirm_submit`、錯 pid ⇒ ⛔ 不觸發任何寫入）。
+
+        **模型不在迴圈裡**：這一段從頭到尾沒有一次 `chat.completions.create`。
+        使用者按的是機器值，該執行什麼由狀態決定，⛔ 不由模型判讀同意詞（R4.2）。
+        """
+        if getattr(identity, "entry", DEFAULT_ENTRY_CHANNEL) != "mcp":
+            return None
+        if self.readonly_view:
+            return None
+        parsed = _parse_confirm_value(user_message)
+        if parsed is None:
+            return None
+        verb, pending_id = parsed
+        pending_all = agent_state.get(PENDING_CONFIRM_KEY)
+        pending = pending_all.get(pending_id) if isinstance(pending_all, dict) else None
+        if not isinstance(pending, dict):
+            # 錯 pid／狀態已清 ⇒ ⛔ 不在此偽造一次「已失效」回覆：這條訊息對本
+            # session 沒有任何意義，照常交給模型（它會問使用者要做什麼）。
+            return None
+
+        def _finish(answer: str, *, receipt_id: str = "", tool_calls=None, violations=None):
+            return self._finish_confirm_turn(
+                agent_state=agent_state, user_message=user_message, trace_id=trace_id,
+                start=start, kind="answer", answer=answer, pending_id=pending_id,
+                tool_calls=tool_calls, violations=violations, receipt_id=receipt_id,
+            )
+
+        submit = verb == CONFIRM_QUICK_REPLY_VALUES[0]
+        if not submit:
+            # 修改／取消：**一律先燒 token**（⛔ 不留著讓「取消完再送出」還能通），
+            # 不呼叫任何寫入工具。
+            if self._db_pool is not None:
+                await redeem_pending(self._db_pool, identity.session_id, pending_id)
+            # ⚠️ ⛔ 不覆蓋既有 receipt：這一筆若已經執行過（使用者先送出、再按取消），
+            #    把 receipt 換成 `{"cancelled": true}` 會讓 R4.3 的「重送回同一結果」
+            #    變成謊報「沒有送出」。
+            if not isinstance(pending.get("receipt"), dict):
+                pending["receipt"] = {"cancelled": True}
+            return _finish(CANCELLED_TEXT)
+
+        existing = pending.get("receipt")
+        if self._db_pool is None:
+            # fail-closed：沒有 DB 就兌現不了，⛔ 不「先呼叫工具再說」。
+            return _finish(CONFIRMATION_REQUIRED_TEXT)
+
+        redemption = await redeem_pending(self._db_pool, identity.session_id, pending_id)
+        if redemption is None:
+            # 沒中＝不存在／已兌現／過期／不是這個 session 的（四者不細分）。
+            # R4.3：已經執行過 ⇒ 回**同一個 receipt**，⛔ 不重複建單。
+            if isinstance(existing, dict):
+                return self._answer_for_receipt(pending, existing, _finish)
+            return _finish(CONFIRMATION_REQUIRED_TEXT)
+
+        action = pending.get("action")
+        payload = pending.get("payload")
+        card_sha = pending.get("card_sha256")
+        # ⚠️ `action` 先過封閉值域再拿去組工具名：`agent_state` 是會被序列化進 DB 的
+        #    資料，⛔ 不讓其中的字串直接決定要呼叫哪一支工具。
+        if action not in CONFIRM_ACTIONS or not isinstance(payload, dict):
+            return _finish(CONFIRMATION_REQUIRED_TEXT)
+        try:
+            payload_sha = payload_digest(payload)
+        except (TypeError, ValueError):
+            return _finish(CONFIRMATION_REQUIRED_TEXT)
+        # 兩把雜湊都要對：payload 對的是「將被執行的參數」，卡對的是「使用者
+        # 看到的字」。⛔ 只對其中一把等於留下另一半可以被換掉。
+        if not hmac.compare_digest(payload_sha, redemption.payload_sha256):
+            return _finish(CONFIRMATION_REQUIRED_TEXT)
+        if not isinstance(card_sha, str) or not hmac.compare_digest(
+            card_sha, redemption.summary_sha256
+        ):
+            return _finish(CONFIRMATION_REQUIRED_TEXT)
+
+        violations: list[str] = []
+        call_start = self._clock()
+        tool_name = f"jgb2.action.{action}"
+        try:
+            # ⚠️ token 只在這一格行程內出現：從 `redemption` 直接進參數，
+            #    ⛔ 不寫回 `pending`、⛔ 不進 trace／log／模型上下文。
+            tool_result = await self.registry.call(
+                identity,
+                tool_name,
+                {"payload": payload, "confirmation_token": redemption.token},
+                self._tool_timeout_s,
+                stage=self._stage,
+                readonly_view=False,
+                for_model=True,
+            )
+        except Exception as exc:  # noqa: BLE001 — registry 不可用
+            violations.append(f"REGISTRY_EXC:{type(exc).__name__}")
+            tool_result = ToolResult(ok=False, error="NO_MATCH")
+        records = [
+            ToolCallRecord(
+                id=f"confirm:{pending_id}",
+                name=tool_name,
+                args_summary={},   # ⛔ payload 不進 trace（`_args_summary` 的同一條紀律）
+                ms=int((self._clock() - call_start) * 1000),
+                status=_tool_result_status(tool_result),
+                n_items=_tool_result_n_items(tool_result),
+            )
+        ]
+
+        if not tool_result.ok:
+            # 誠實回錯（S-12：token 已燒是刻意的——要再做一次就要重新確認）。
+            pending["receipt"] = {"error": tool_result.error or "TOOL_FAILED"}
+            return _finish(ACTION_FAILED_TEXT, tool_calls=records, violations=violations)
+
+        data = tool_result.data if isinstance(tool_result.data, dict) else {}
+        receipt = data.get("receipt")
+        if not isinstance(receipt, dict):
+            receipt = data
+        pending["receipt"] = receipt
+        return self._answer_for_receipt(
+            pending, receipt, _finish, tool_calls=records, violations=violations
+        )
+
+    @staticmethod
+    def _answer_for_receipt(pending: dict, receipt: dict, finish, **kwargs) -> TurnResult:
+        """receipt → 使用者看到的句子（決定性 formatter，模型不在迴圈）。
+
+        取消過的那一筆重送 ⇒ 回同一句「沒有送出」；失敗過的那一筆重送 ⇒ 回同一句
+        「無法執行」——**同一個 `pending_id` 永遠得到同一個結果**（R4.3）。
+        """
+        if receipt.get("cancelled"):
+            return finish(CANCELLED_TEXT, **kwargs)
+        if receipt.get("error"):
+            return finish(ACTION_FAILED_TEXT, **kwargs)
+        return finish(
+            render_receipt(pending.get("action"), pending.get("payload"), receipt),
+            receipt_id=receipt_id_of(receipt),
+            **kwargs,
+        )
+
+    def _begin_pending_confirm(
+        self, agent_state: dict, data: Any, *, trace_id: str, start: float,
+        user_message: str, tool_calls: list, violations: list,
+        llm_calls: int = 0, prompt_tokens: int = 0, completion_tokens: int = 0,
+    ) -> Optional[TurnResult]:
+        """`confirm.request` 成功 ⇒ 把待確認動作存進 session 狀態並結束回合。
+
+        `data` 形狀不符（缺 `card`／`action` 不在值域／`payload` 不是物件）⇒ 回
+        `None` 讓回合照常走下去：⛔ 不在這裡硬印一張半成品的卡。
+
+        存進狀態的是 `{action, payload, card_sha256}`——**⛔ 沒有 token**
+        （r1 B2）也**⛔ 沒有卡的原文**（原文每次都重算得出來，存它只是多一份
+        會跟著 `collected_data` 落 DB 的副本）。
+        """
+        if not isinstance(data, dict):
+            return None
+        pending_id = data.get("pending_id")
+        card = data.get("card")
+        action = data.get("action")
+        payload = data.get("payload")
+        quick_replies = data.get("quick_replies")
+        if (
+            not isinstance(pending_id, str)
+            or not pending_id
+            or not isinstance(card, str)
+            or not card
+            or action not in CONFIRM_ACTIONS
+            or not isinstance(payload, dict)
+        ):
+            violations.append("confirm_request_data_shape_invalid")
+            return None
+        pending_all = agent_state.setdefault(PENDING_CONFIRM_KEY, {})
+        if not isinstance(pending_all, dict):
+            pending_all = {}
+            agent_state[PENDING_CONFIRM_KEY] = pending_all
+        pending_all[pending_id] = {
+            "action": action,
+            "payload": payload,
+            # ＝ `agent_confirmation_tokens.summary_sha256`（DSP-038-2）。兌現時
+            # 兩邊比對，任一邊被換掉都對不上。
+            "card_sha256": sha256_hex(card),
+        }
+        # FIFO 上限（dict 保序）；⛔ 不是 LRU——重送命中時不重排，那會讓一筆被
+        # 反覆重送的確認永遠擠不掉別人的。
+        while len(pending_all) > PENDING_CONFIRM_MAX:
+            pending_all.pop(next(iter(pending_all)))
+        return self._finish_confirm_turn(
+            agent_state=agent_state,
+            user_message=user_message,
+            trace_id=trace_id,
+            start=start,
+            kind="ask",
+            answer=card,                      # 逐字，⛔ 不經模型、不經 Verifier
+            pending_id=pending_id,
+            quick_replies=list(quick_replies or []),
+            tool_calls=tool_calls,
+            violations=violations,
+            llm_calls=llm_calls,
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
+        )
+
     async def run_turn(self, identity: Identity, user_message: str, state: dict) -> TurnResult:
         start = self._clock()
         trace_id = uuid.uuid4().hex
         agent_state = state.setdefault("agent", {})
+        # DSP-038／W3：⚠️ **排在同題重問快取之前**——機器值不是「一題」，
+        # 它是一次狀態轉移；讓它先落進快取比對只會多一次無謂的字串雜湊。
+        confirmed = await self._run_confirm_segment(
+            identity, user_message, agent_state, trace_id, start
+        )
+        if confirmed is not None:
+            return confirmed
         cache = agent_state.setdefault("handoff_cache", {})
         cache_key = _cache_key(user_message)
 
@@ -1055,6 +1402,26 @@ class AgentRuntime:
                         violations.append("tool_call_id_collides_with_outline")
                     else:
                         tool_results_by_id[tc.id] = tool_result
+                    # DSP-038-2／W3「確認回合」：`confirm.request` 一成功，這一回合
+                    # **立刻結束**——`TurnResult.answer` 逐字＝程式產出的確認卡，
+                    # 模型當回合的輸出丟棄、Verifier 不跑（卡不是模型寫的，沒有可
+                    # 驗的引用）。⛔ 不把卡交回模型讓它「潤飾一下」：那一潤，
+                    # 使用者看到的字就不再等於 `summary_sha256` 綁住的那一份。
+                    if name == CONFIRM_TOOL_NAME and tool_result.ok:
+                        confirm_turn = self._begin_pending_confirm(
+                            agent_state,
+                            tool_result.data,
+                            trace_id=trace_id,
+                            start=start,
+                            user_message=user_message,
+                            tool_calls=tool_call_records,
+                            violations=violations,
+                            llm_calls=llm_calls,
+                            prompt_tokens=prompt_tokens,
+                            completion_tokens=completion_tokens,
+                        )
+                        if confirm_turn is not None:
+                            return confirm_turn
                     # ⚠️ **槽位寫回 state（2.9，⛔ 勿刪）**：`session.slots.set` 是
                     #    以 `jsonb_set` 直接改 `form_sessions.collected_data.slots`
                     #    的，但回合結束時呼叫端（`mcp_facade._agent_turn`／

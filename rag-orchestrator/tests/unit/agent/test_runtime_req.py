@@ -615,6 +615,11 @@ _ALLOWED_AGENT_DECISION_KEYS = frozenset(
         "candidate_ids",
         "winning_key_kind",
         "miss_kind",
+        # DSP-038／S-11（子 spec agent-write-tools W3）：確認鏈的稽核兩鍵。
+        # ⛔ 皆非原文——`pending_id` 是 token 的單向摘要，`receipt_id` 經
+        # `confirm_card.receipt_id_of` 過形狀（`[A-Za-z0-9_.:-]{1,64}`）。
+        "pending_id",
+        "receipt_id",
     }
 )
 

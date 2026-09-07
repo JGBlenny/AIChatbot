@@ -74,8 +74,14 @@ def _make_attempt_sink(path):
     return _sink
 
 def _wrap_verifier_observe_only(runtime, attempt_sink):
-    """見 `_init_agent_runtime` 內註解。非 mock 組態下設了旗直接 raise（fail loud）。"""
-    if (os.getenv("AGENT_VERIFIER_OBSERVE_ONLY") or "").strip().lower() not in ("1", "true", "yes", "on"):
+    """見 `_init_agent_runtime` 內註解。非 mock 組態下設了旗直接 raise（fail loud）。
+
+    ⚠️ 旗的解析走 `services.agent.health.verifier_observe_only()`（**唯一讀值點**）
+    ——健檢印的與這裡判的必須是同一個答案，⛔ 不各寫一份 truthy 解析。
+    """
+    from services.agent.health import verifier_observe_only
+
+    if not verifier_observe_only():
         return
     if (os.getenv("USE_MOCK_JGB_API") or "").strip().lower() not in ("1", "true", "yes", "on"):
         raise RuntimeError("AGENT_VERIFIER_OBSERVE_ONLY 只准在 USE_MOCK_JGB_API=true 下使用")

@@ -33,9 +33,12 @@ pytestmark = [
 # ---------------------------------------------------------------------------
 
 
-def test_allowed_keys_is_exactly_sixteen_and_includes_candidate_trio():
-    assert len(_ALLOWED_AGENT_DECISION_KEYS) == 16
+def test_allowed_keys_is_exactly_eighteen_and_includes_candidate_trio():
+    """16 → 18：DSP-038／W3 加了 `pending_id`／`receipt_id` 兩個稽核鍵
+    （子 spec agent-write-tools；⛔ 皆非原文，見 `runtime.TurnTrace` 註記）。"""
+    assert len(_ALLOWED_AGENT_DECISION_KEYS) == 18
     assert {"candidate_ids", "winning_key_kind", "miss_kind"} <= _ALLOWED_AGENT_DECISION_KEYS
+    assert {"pending_id", "receipt_id"} <= _ALLOWED_AGENT_DECISION_KEYS
 
 
 # ---------------------------------------------------------------------------

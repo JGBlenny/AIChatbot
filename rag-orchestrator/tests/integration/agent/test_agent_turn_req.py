@@ -49,6 +49,12 @@ _MIGRATION_TOKENS = os.path.join(
     os.path.dirname(__file__), "..", "..", "..", "database", "migrations",
     "20260905_agent_confirmation_tokens.sql",
 )
+#: DSP-038-3：`pending_id` 欄（`confirm.request` 的 INSERT 現在會寫它）。
+#: ⚠️ 必須排在 `_MIGRATION_TOKENS` **之後**——它 ALTER 的是那支建的表。
+_MIGRATION_TOKENS_PENDING_ID = os.path.join(
+    os.path.dirname(__file__), "..", "..", "..", "database", "migrations",
+    "20260908_agent_confirmation_tokens_pending_id.sql",
+)
 
 _KEY_NAME_A = "test-agent-turn-2-6-vendor1"
 _KEY_NAME_B = "test-agent-turn-2-6-vendor2"
@@ -84,7 +90,7 @@ async def pool():
         pytest.skip(f"測試 DB 不可達（{type(e).__name__}）→ agent.turn 整合測試未驗")
         return
 
-    for migration in (_MIGRATION, _MIGRATION_TOKENS):
+    for migration in (_MIGRATION, _MIGRATION_TOKENS, _MIGRATION_TOKENS_PENDING_ID):
         with open(migration, encoding="utf-8") as f:
             await p.execute(f.read())
     _reset_agent_scope_detection()
@@ -195,10 +201,27 @@ def _make_runtime(pool, script):
     return build_runtime(pool, FakeProvider(script), ToolRegistry(), budget=None)
 
 
-def _app(pool, runtime):
+def _app(pool, runtime, *, outlines=None):
+    """`outlines`（DSP-037）：`app.state.agent_outlines` 的受眾對照表。
+
+    ⚠️ 預設 `None` ＝**不設**這個屬性：`_outline_for_audience` 於是走舊形狀
+    （只有 prospect 讀得到單數 `agent_outline`，其餘受眾一律
+    `_OUTLINE_UNAVAILABLE`）——本檔多數案例是 prospect，維持原樣。
+    pm 的案例要自己帶一份，⛔ 不得由本函式偷偷補一個回退大綱給所有受眾。
+    """
     state = SimpleNamespace(agent_runtime=runtime, conversational_engine=_engine(pool),
                             db_pool=pool)
+    if outlines is not None:
+        state.agent_outlines = outlines
     return SimpleNamespace(state=state)
+
+
+def _stub_outline(audience):
+    """最小可用的大綱替身：`assembler.build_messages` 只讀 `audience`／`sections`／
+    `sha256`／`version`／`token_count` 四類屬性（`sections` 空 ⇒ 不預載任何引文）。
+    ⛔ 不用真正本大綱——那需要註冊 canon 與候選索引，不屬本檔的受測物。"""
+    return SimpleNamespace(audience=audience, sections=[], sha256="stub-outline-sha",
+                           version="stub", token_count=0)
 
 
 def _deps(app, pool):
@@ -420,7 +443,6 @@ async def test_two_turns_second_sees_first_turn_state(pool, env):
 @pytest.mark.req(_SPEC)
 @pytest.mark.parametrize("target_user,mode", [
     ("tenant", "b2c"),
-    ("property_manager", "b2b"),
     ("who-am-i", "b2c"),          # 未知 ⇒ 正規化為 tenant
 ])
 async def test_non_prospect_identity_is_no_match(pool, env, target_user, mode):
@@ -436,6 +458,41 @@ async def test_non_prospect_identity_is_no_match(pool, env, target_user, mode):
     assert str(e.value) == "NO_MATCH", "⛔ 錯誤訊息只能含業務代碼"
     # ⛔ 不得留下任何會話列
     assert await _wait_for_events(pool, session_id, 1) == 1   # 但事件仍留一列（不變量 31）
+
+
+@pytest.mark.req(_SPEC)
+async def test_property_manager_identity_is_visible_and_callable(pool, env):
+    """DSP-037（業主 2026-09-07 裁）：`AGENT_TURN_SPEC["stage"]` 對 pm 開 M1 ⇒
+    pm **不再** `NO_MATCH`；有自己的大綱就跑得完一整個回合。
+
+    ⚠️ 這一條原本掛在 `test_non_prospect_identity_is_no_match` 的參數表裡，
+    DSP-037 之後預期整個翻面，故獨立成一條、⛔ 不留在那張「應該被擋」的表裡。
+    ⚠️ tenant 仍 `NO_MATCH`（`AGENT_TURN_SPEC` 的 stage 表**缺 tenant 鍵**＝永不可見，
+    ⛔ 不得順手補鍵）——由上面那條參數化守著。
+    """
+    session_id = _session()
+    runtime = _make_runtime(pool, [_fake_response(_agent_output(answer="您好。"))])
+    app = _app(pool, runtime,
+               outlines={"property_manager": _stub_outline("property_manager")})
+    deps = _deps(app, pool)
+    invoke = F._make_invoke(_registry(deps), deps)
+    ctx = _FakeCtx({"x-api-key": _PLAIN_KEY_A,
+                    "x-jgb-identity": _ident(VENDOR_A, session_id,
+                                             "property_manager", "b2b")})
+
+    out = await invoke(F.AGENT_TURN_NAME, ctx, {"message": "你好"})
+
+    assert out["kind"] == "answer" and out["answer"] == "您好。"
+    # 反向對照：**同一組接線**下抽掉 pm 大綱 ⇒ `AGENT_UNAVAILABLE`（fail-closed，
+    # ⛔ 不回退到 prospect 的售前大綱）——證明上面的成功不是因為門面根本沒判受眾。
+    deps_no_outline = _deps(_app(pool, _make_runtime(pool, [])), pool)
+    invoke2 = F._make_invoke(_registry(deps_no_outline), deps_no_outline)
+    with pytest.raises(Exception) as e:
+        await invoke2(F.AGENT_TURN_NAME, _FakeCtx(
+            {"x-api-key": _PLAIN_KEY_A,
+             "x-jgb-identity": _ident(VENDOR_A, _session(), "property_manager", "b2b")}),
+            {"message": "你好"})
+    assert str(e.value) == "AGENT_UNAVAILABLE"
 
 
 @pytest.mark.req(_SPEC)
@@ -657,7 +714,11 @@ async def test_confirm_token_is_bound_to_the_namespaced_session(pool, env):
 
     deps = _deps(_app(pool, _make_runtime(pool, [])), pool)
     invoke = F._make_invoke(_full_registry(deps), deps)
-    payload = {"action": "create_repair", "estate_id": 7}
+    # DSP-038-2：`payload.action` 必填且在封閉值域 `confirm_card.CONFIRM_ACTIONS` 內，
+    # 且該 action 的欄位要齊（確認卡由程式依 action＋payload 決定性產出）。
+    payload = {"action": "repair_create", "estate_name": "松江路一段 5 號 3F",
+               "category_name": "水電", "description": "熱水器沒有熱水",
+               "emergency_status": 2}
 
     out = await invoke("confirm.request", _FakeCtx(
         {"x-api-key": _PLAIN_KEY_A, "x-jgb-identity": _ident(VENDOR_A, session_id)}),

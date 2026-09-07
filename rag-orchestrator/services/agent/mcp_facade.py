@@ -434,6 +434,14 @@ async def parse_identity(
         user_id=_opt_str(payload.get("user_id")),
         session_id=session_id.strip(),
         api_key_id=(key or {}).get("id"),
+        # DSP-038-1／W1b：**唯一**把 `entry` 設成 `"mcp"` 的真身分建構點。
+        # ⛔ 不是由 payload 決定——`entry` 回答的是「從哪一道門進來」，這一行
+        # 之所以能寫 `"mcp"`，是因為本函式只被 `/mcp` 的請求層（`resolve_call`）
+        # 呼叫。`namespaced_identity` 走 `dataclasses.replace` ⇒ 自動繼承；
+        # `_ToolListFilter` 用的也是本函式的結果（經 `resolve_call`）。
+        # 其餘建構點（`routers/agent_entry.build_identity`／`health._PROBE_IDENTITY`
+        # ／`outline.py`／`agent_eval.py`）一律不帶 ⇒ 落 `"rest"`（fail-closed）。
+        entry="mcp",
     )
 
 
@@ -903,9 +911,14 @@ def build_registry(deps: FacadeDeps, registry: Optional[ToolRegistry] = None) ->
     每個 spec 都過 `registry.register()`，因此不變量 27（input_schema 無身分鍵）
     在註冊當下就會擋下違規 spec。
     """
+    from services.agent.tools import action as action_tools
     from services.agent.tools import help as help_tool
     from services.agent.tools import jgb2 as jgb2_tools
-    from services.agent.tools.confirm import CONFIRM_SPEC, confirm_request
+    from services.agent.tools.confirm import (
+        CONFIRM_SPEC,
+        assert_redeemed,
+        confirm_request,
+    )
     from services.agent.tools.handoff import HANDOFF_SPEC, handoff_request
     from services.agent.tools.kb import KB_GET_SPEC, KB_SEARCH_SPEC, kb_get, kb_search
     from services.agent.tools.session import (
@@ -921,7 +934,24 @@ def build_registry(deps: FacadeDeps, registry: Optional[ToolRegistry] = None) ->
     from services.jgb.iot import METER_FACE_BUILDERS
     from services.jgb.repairs import REPAIR_FACE_BUILDERS
 
+    # ⚠️ `write_tools_enabled` **不在此釘住**：預設 `None` ＝ 每次判可見性現讀 env
+    # （registry 模組 docstring 的既定慣例）。理由是健檢印的
+    # （`registry.write_tools_enabled()`）與閘門判的必須是**同一個值**，釘住會讓
+    # 「這個行程啟動時的 env」與「現在的 env」在兩處各說各話。兩種來源都 fail-closed
+    # （未設 ⇒ False），⛔ 不因此放寬任何一道閘。
     reg = registry if registry is not None else ToolRegistry()
+
+    # ── 寫入型工具的確認兌現查核（S-9）：set-once 綁在 registry 上 ──────────
+    # ⚠️ pool 走 **getter**（同 `_kb_get`／`_help_read` 的理由：pool 要到 lifespan
+    #    才存在）。**pool 缺席 ⇒ 回 False ⇒ `CONFIRMATION_REQUIRED`**（fail-closed）：
+    #    ⛔ 不得在拿不到 DB 時「當作已確認」放行一次寫入。
+    async def _assert_redeemed(token: str, session_id: str) -> bool:
+        pool = deps.get_db_pool() if deps.get_db_pool else None
+        if pool is None:
+            return False
+        return await assert_redeemed(pool, token, session_id)
+
+    reg.bind_redeem_checker(_assert_redeemed)
 
     async def _kb_get(identity: Identity, args: dict) -> ToolResult:
         pool = deps.get_kb_pool() if deps.get_kb_pool else None
@@ -997,6 +1027,15 @@ def build_registry(deps: FacadeDeps, registry: Optional[ToolRegistry] = None) ->
             return _query
 
         reg.register(_jgb2_spec(domain, sorted(builders.keys())), _make())
+
+    # ── W4：寫入型工具 `jgb2.action.*` ────────────────────────────────────
+    # ⚠️ **一律註冊**，可見性交給 `specs_for` 的兩道閘（入口 `entry=="mcp"` ＋
+    #    旗標 `AGENT_WRITE_TOOLS_ENABLED`）。⛔ 不學 `agent.turn` 那樣「旗標關就
+    #    不註冊」——那條路的旗是**回切開關**（整條路徑消失），這裡的旗是**可見性
+    #    閘**，兩者語義不同：不註冊會讓「旗標翻面不必重建 registry」這條慣例失效，
+    #    而閘本身已經 fail-closed。
+    for action_spec, action_fn in action_tools.ACTION_SPECS:
+        reg.register(action_spec, action_fn)
 
     # `agent.turn`：**受 env 回切開關管**（任務 2.6）。關閉 ⇒ 根本不註冊，
     # 於是 `union_specs`／`tools/list`／`registry.call` 三處同時看不到它——
@@ -1352,6 +1391,8 @@ def build_mcp_server(registry: ToolRegistry, deps: FacadeDeps):
 
 
 #: `specs_for` 的探針身分（三個 audience 各一），用來取「本階段任一身分可見」的聯集。
+#: ⚠️ 實際建構在 `union_specs` 內，並帶 `entry="mcp"`（DSP-038-1／W1b）——
+#: 本表只列 `(target_user, mode)` 兩軸，⛔ 不在此另存第三軸。
 _PROBE_IDENTITIES = (
     ("prospect", "b2c"),
     ("property_manager", "b2b"),
@@ -1370,7 +1411,12 @@ def union_specs(registry: ToolRegistry, stage: Stage) -> list:
     """
     seen: dict = {}
     for target_user, mode in _PROBE_IDENTITIES:
-        probe = Identity(vendor_id=None, target_user=target_user, mode=mode)
+        # DSP-038-1／W1b：探針帶 `entry="mcp"`——這份聯集決定的是 **`/mcp` 的
+        # `mcp.add_tool` 清單**（建構期一次），本來就只描述 MCP 入口看得到什麼。
+        # ⛔ 不帶就等於「寫入型工具永遠不會被註冊到 MCP server 上」，
+        # per-identity 的真閘仍在 `_ToolListFilter`（列表）與 `registry.call`（呼叫）。
+        probe = Identity(vendor_id=None, target_user=target_user, mode=mode,
+                         entry="mcp")
         for spec in registry.specs_for(probe, stage, for_model=False):
             seen[spec["name"]] = spec
     return list(seen.values())

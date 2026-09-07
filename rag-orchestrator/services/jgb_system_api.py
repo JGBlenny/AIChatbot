@@ -30,6 +30,7 @@ from services.jgb.team_fixtures import TeamMemberFixtureTable
 from services.jgb.transport import (  # noqa: F401  (FALLBACK_MESSAGE 對外沿用)
     FALLBACK_MESSAGE,
     JGBMockTransport,
+    MissingCredentialError,
     RealHttpTransport,
     Transport,
     TransportResponse,
@@ -57,8 +58,16 @@ class JGBSystemAPI:
         # mock transport 於 4.2–4.5 裝配；在那之前 mock 模式**不會**走到 _send
         # （22 個公開方法皆有 `if self.use_mock` 前置短路），
         # 故此處留 None，並由 _send 對「mock 模式卻走到真實網路」fail loudly。
-        self._real_transport: Transport = RealHttpTransport(
-            self.api_base_url, self.api_key, self.timeout
+        #
+        # ⚠️ **agent-write-tools W1b／S-5：real transport 只在 `use_mock=False`
+        # 時才建構**，而它的建構期會對空憑證 `raise MissingCredentialError`。
+        # 於是「接真 API 卻沒帶 `JGB_API_KEY`」在**建構當下**就炸，⛔ 不會變成
+        # 每一次呼叫都被 `_fallback_response()` 折成「暫時無法取得資料」的靜默降級。
+        # mock 模式留 `None`：那條路本來就不該有 real transport（`_send` 的
+        # `use_mock` 分支根本不碰它），⛔ 不為了「欄位總是有值」而先建一個。
+        self._real_transport: Optional[Transport] = (
+            None if self.use_mock
+            else RealHttpTransport(self.api_base_url, self.api_key, self.timeout)
         )
         #: 4.3：mock 模式裝配替身；fixture 表由 4.4 提供，未裝配前「已遷移」端點
         #: 一律 MissingFixtureError——**任何失敗都不會退回 real transport**。
@@ -130,6 +139,12 @@ class JGBSystemAPI:
                 )
             return await self._mock_transport.send(
                 method, path, params=params, data=data
+            )
+        if self._real_transport is None:
+            # 只有「建構時是 mock、事後被改成 real」才會走到這裡（測試替身）。
+            # ⛔ 不在此臨時建一個 real transport——那等於繞過建構期的憑證守門。
+            raise UnexpectedRealNetworkError(
+                f"use_mock=False 但未裝配 real transport：{method} {path}"
             )
         return await self._real_transport.send(
             method, path, params=params, data=data
@@ -477,6 +492,7 @@ class JGBSystemAPI:
         emergency_status: int = 1,
         contract_id: Optional[int] = None,
         broken_photos: Optional[list] = None,
+        idempotency_key: Optional[str] = None,
         **kwargs,
     ) -> dict[str, Any]:
         """建立修繕單
@@ -485,6 +501,12 @@ class JGBSystemAPI:
         return self._mock_create_repair(...)` 短路——mock 改由 `_send` 依
         `use_mock` 派發至 `JGBMockTransport`（`create_repair` 已遷入
         `MIGRATED_ENDPOINTS`，資料來源為共用 `RepairFixtureTable`）。
+
+        `idempotency_key`（agent-write-tools W4）：非空才放進 body——同一把 key
+        重送 ⇒ 下游回同一份 receipt、不重複建單（替身端見
+        `services/jgb/transport.py:_with_idempotency`）。⚠️ `Transport.send()`
+        沒有 header 通道，`Idempotency-Key` 因此走 body，這是協定本身的限制，
+        ⛔ 不是把冪等鍵當成一般業務欄位。
         """
         if not role_id:
             return self._degraded_response()
@@ -502,7 +524,34 @@ class JGBSystemAPI:
             data["contract_id"] = contract_id
         if broken_photos:
             data["broken_photos"] = broken_photos
+        if idempotency_key:
+            data["idempotency_key"] = idempotency_key
         return await self._post_request("/api/external/v1/repairs", data)
+
+    async def agent_patch_bill_due_date(
+        self,
+        bill_id: Any,
+        date_expire: str,
+        *,
+        idempotency_key: Optional[str] = None,
+    ) -> dict[str, Any]:
+        """`PATCH /agent/v1/bills/{id}`：**只改到期日**（agent-write-tools W4）。
+
+        ⚠️ 這支端點刻意只收 `due_date`：`PATCH` 一個帳單資源本身可以改很多欄位，
+        但 agent 這條路只被授權改一件事，於是**能送出去的形狀本身**就把授權範圍
+        表達出來（替身端 `_patch_bill` 對投影外欄位一律 422）。
+        ⛔ 不在此加第二個可寫欄位——加欄位是正本（design 元件 3）的事。
+
+        `date_expire`：`YYYY-MM-DD`。⛔ 不接受位移天數：使用者確認的是一個確定的
+        日期，位移在下游重算一次就多一個「算出不同結果」的機會。
+
+        ⚠️ **demo 期只有替身 transport 走得通**（`USE_MOCK_JGB_API=true`）；
+        真 `agent/v1` 的簽章 client 與憑證不在本切片（Plan §2 非目標／S-3 DEFER）。
+        """
+        data: dict[str, Any] = {"due_date": date_expire}
+        if idempotency_key:
+            data["idempotency_key"] = idempotency_key
+        return await self._patch_request(f"/agent/v1/bills/{bill_id}", data)
 
     # ------------------------------------------------------------------
     # v1.1 診斷用端點

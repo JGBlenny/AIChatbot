@@ -56,6 +56,13 @@ def build_identity(request) -> Identity:
     prospect 會落 b2c**、進而在候選選取變成靜默零內容。
     ⚠️ REST 入口沒有 `_STATS`（那是 `/mcp` 的前提偵測計數器）⇒ 這裡**只 log 不計數**
     （明列取捨，Plan §4.1-1）。
+
+    ⚠️ **`entry` 刻意不帶**（DSP-038-1，⛔ 勿「補齊」）：`Identity.entry` 預設
+    `"rest"`＝fail-closed，於是 `mcp_only=True` 的寫入型工具對 REST 入口
+    **看不到也呼叫不到**（`ToolRegistry.specs_for`／`call` 同一條規則），
+    `AgentRuntime.run_turn` 的確認兌現段也整段不執行。這是 S-6／S-7 的緩解：
+    REST 目前沒有 session 命名空間、token 表也沒有 vendor 欄，唯一的隔離就靠
+    這個預設值。⛔ 不得在此改成 `"mcp"`，也不得讓呼叫端 payload 決定它。
     """
     target_user = getattr(request, "target_user", None) or "tenant"
     raw_mode = getattr(request, "mode", None)

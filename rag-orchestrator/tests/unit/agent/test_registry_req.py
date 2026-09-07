@@ -23,13 +23,20 @@ async def _ok_fn(identity, args):
     return ToolResult(ok=True, data={"echo": args}, text_for_model="ok")
 
 
-def _identity(target_user, *, mode="b2c", api_key_id=1, vendor_id=1, session_id="s1"):
+def _identity(target_user, *, mode="b2c", api_key_id=1, vendor_id=1, session_id="s1",
+              entry="mcp"):
+    """⚠️ `entry` **預設 `"mcp"`**（DSP-038-1／W1b）：本檔驗的是 audience×stage
+    白名單矩陣，而寫入型工具（`scope="write"`，強制 `mcp_only=True`）在 REST 入口
+    一律不可見 ⇒ 用預設的 `"rest"` 會讓矩陣裡每一條 write 列都因為**入口**而落空，
+    stage 判斷根本沒被驗到。**入口隔離本身**（REST 看不見／呼叫不到）的專責檔是
+    `tests/unit/agent/test_mcp_only_write_tools_req.py`，⛔ 不在這裡重複一份。"""
     return Identity(
         vendor_id=vendor_id,
         target_user=target_user,
         mode=mode,
         api_key_id=api_key_id,
         session_id=session_id,
+        entry=entry,
     )
 
 
@@ -38,8 +45,17 @@ def _identity(target_user, *, mode="b2c", api_key_id=1, vendor_id=1, session_id=
 # ---------------------------------------------------------------------------
 
 
+async def _always_redeemed(token, session_id):
+    """本檔驗的是 registry 的守門四步，⛔ 不驗確認兌現本身（那是
+    `test_confirmation_tokens_req.py`／`test_action_tools_req.py` 的事）⇒
+    這裡給一個恆真的 checker，讓 write 工具**真的**走進 handler。"""
+    return True
+
+
 def _matrix_registry() -> ToolRegistry:
-    reg = ToolRegistry()
+    # DSP-038-1／W1b：write 工具的可見性另需旗標；這裡**釘住 True**，
+    # ⛔ 不讓白名單矩陣的結論取決於跑測試那台機器的 env。
+    reg = ToolRegistry(write_tools_enabled=True, redeem_checker=_always_redeemed)
     reg.register(
         {
             "name": "kb.get",
@@ -115,6 +131,9 @@ def _matrix_registry() -> ToolRegistry:
                 },
             },
             "scope": "write",
+            # DSP-038-1／W1b：`scope="write"` **必須**同時 `mcp_only=True`，
+            # 否則 `register()` 直接 raise（見 test_action_tools_req.py 的守測）。
+            "mcp_only": True,
             "stage": {"property_manager": "M5", "tenant": "M4"},  # prospect 永不可見
         },
         _ok_fn,

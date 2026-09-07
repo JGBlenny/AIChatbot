@@ -247,7 +247,7 @@ def test_build_registry_registers_expected_tools():
     assert names == {
         "kb.get", "kb.search", "help.read",
         "jgb2.query.bills", "jgb2.query.contracts", "jgb2.query.accounts",
-        "jgb2.query.meters", "jgb2.query.estates",
+        "jgb2.query.meters", "jgb2.query.estates", "jgb2.query.repairs",
     }
 
 
@@ -400,13 +400,22 @@ def test_as_tool_result_wraps_1_5_1_6_dict_shapes():
 
 
 @pytest.mark.req(_SPEC)
-def test_union_specs_respects_stage_ceiling():
-    """`union_specs` 用 `specs_for` ⇒ stage 上限自動生效（M4/M5 工具在 M0 不註冊）。"""
+def test_union_specs_respects_stage_ceiling(monkeypatch):
+    """`union_specs` 用 `specs_for` ⇒ stage 上限自動生效（M4/M5 工具在 M0 不註冊）。
+
+    ⚠️ DSP-038-1／W1b：假 write 工具改成 W4 的合法形狀——`mcp_only=True`
+    （`register()` 對 `scope="write"` 缺它會 raise）＋ `confirmation_token` 在
+    `properties` 裡；旗標打開，`union_specs` 的探針自帶 `entry="mcp"`。
+    ⛔ 旗標不開的話兩個斷言都會「不可見」而變成恆真，stage 上限根本沒被驗到。
+    """
+    monkeypatch.setenv("AGENT_WRITE_TOOLS_ENABLED", "true")
     reg = F.build_registry(_deps())
     reg.register(
         {"name": "jgb2.action.demo", "description": "d",
-         "input_schema": {"type": "object", "properties": {}},
-         "scope": "write", "stage": {"tenant": "M4"}},
+         "input_schema": {"type": "object",
+                          "properties": {"payload": {"type": "object"},
+                                         "confirmation_token": {"type": "string"}}},
+         "scope": "write", "mcp_only": True, "stage": {"tenant": "M4"}},
         lambda *_a, **_k: None,
     )
     assert "jgb2.action.demo" not in {s["name"] for s in F.union_specs(reg, "M0")}

@@ -17,10 +17,13 @@ from unittest.mock import AsyncMock
 import pytest
 
 from services.agent.identity import Identity
+from services.agent.confirm_card import CONFIRM_ACTIONS
+from services.agent.confirm_card import render as render_card
 from services.agent.tools.confirm import (
     CONFIRM_QUICK_REPLY_VALUES,
     CONFIRM_SPEC,
     canonical_json,
+    confirm_quick_replies,
     confirm_request,
     payload_digest,
     pending_id_for,
@@ -53,6 +56,17 @@ from services.presales_gate import FactClass, HandoffReason, build_handoff
 pytestmark = pytest.mark.unit
 
 _REQ = "agentic-mcp-orchestration:2.4"
+
+#: DSP-038-2：`payload` 必含 `action`（封閉值域）＋該 action 的完整欄位——
+#: 確認卡由 `confirm_card.render(action, payload)` 決定性產出，缺欄位即
+#: `INVALID_INPUT`。本檔所有「形狀正確」的 payload 一律用這一份。
+_VALID_PAYLOAD = {
+    "action": "bill_due_extend",
+    "bill_id": "900001",
+    "date_expire_before": "20260815",
+    "days": 3,
+    "date_expire_after": "20260818",
+}
 
 #: 2.4 新增的兩個 reason。
 _NEW_REASONS = ("tool_unavailable", "budget_exhausted")
@@ -329,24 +343,90 @@ def _confirm_pool():
 
 @pytest.mark.req(_REQ)
 async def test_confirm_request_returns_three_machine_values_reusing_engine_constants():
-    from services.conversational_engine import _QR_CANCEL, _QR_EDIT, _QR_SUBMIT
+    """DSP-038：`value` 改成 `<引擎前綴>:<pending_id>`，label 沿用引擎常數。"""
+    from services.conversational_engine import _DEFAULT_QR_LABELS, _QR_CANCEL, _QR_EDIT, _QR_SUBMIT
 
     assert CONFIRM_QUICK_REPLY_VALUES == (_QR_SUBMIT, _QR_EDIT, _QR_CANCEL)
 
     pool = _confirm_pool()
     result = await confirm_request(
-        _identity(), {"summary": "要送出修繕單嗎？", "payload": json.dumps({"a": 1})},
+        _identity(), {"summary": "要送出修繕單嗎？", "payload": json.dumps(_VALID_PAYLOAD)},
         db_pool=pool,
     )
     assert result.ok is True
-    assert result.data["quick_replies"] == ["confirm_submit", "confirm_edit", "confirm_cancel"]
+    pid = result.data["pending_id"]
+    assert result.data["quick_replies"] == [
+        {"label": _DEFAULT_QR_LABELS[_QR_SUBMIT], "value": f"confirm_submit:{pid}"},
+        {"label": _DEFAULT_QR_LABELS[_QR_EDIT], "value": f"confirm_edit:{pid}"},
+        {"label": _DEFAULT_QR_LABELS[_QR_CANCEL], "value": f"confirm_cancel:{pid}"},
+    ]
+    assert result.data["quick_replies"] == confirm_quick_replies(pid)
+    # label ⛔ 不在本檔另抄字面量：與引擎常數逐值對帳（改值時兩邊一起紅）
+    assert [q["label"] for q in result.data["quick_replies"]] == [
+        _DEFAULT_QR_LABELS[v] for v in (_QR_SUBMIT, _QR_EDIT, _QR_CANCEL)
+    ]
+
+
+@pytest.mark.req(_REQ)
+async def test_confirm_request_data_carries_card_action_payload_but_never_token():
+    """DSP-038-2：`data` ＝ `{pending_id, action, payload, card, quick_replies}`；
+    `card` 逐字等於 `confirm_card.render(action, payload)`，`summary_sha256` 是它的雜湊。"""
+    pool = _confirm_pool()
+    result = await confirm_request(
+        _identity(), {"summary": "模型自己寫的摘要（⛔ 不會成為卡）",
+                      "payload": json.dumps(_VALID_PAYLOAD)},
+        db_pool=pool,
+    )
+    assert result.ok is True
+    assert set(result.data) == {"pending_id", "action", "payload", "card", "quick_replies"}
+    assert result.data["action"] == "bill_due_extend"
+    assert result.data["payload"] == _VALID_PAYLOAD
+    assert result.data["card"] == render_card("bill_due_extend", _VALID_PAYLOAD)
+    # 表裡的 summary_sha256 ＝ 卡文字的雜湊，⛔ 不是模型 summary 的雜湊
+    insert_args = pool.execute.await_args.args
+    assert insert_args[4] == sha256_hex(result.data["card"])
+    assert insert_args[4] != sha256_hex("模型自己寫的摘要（⛔ 不會成為卡）")
+    # pending_id 落表（$6）
+    assert insert_args[6] == result.data["pending_id"] == pending_id_for(insert_args[1])
+
+
+@pytest.mark.req(_REQ)
+async def test_confirm_request_rejects_payload_without_valid_action():
+    """`payload.action` 必填且在封閉值域內；缺欄位／不認得的 action ⇒ INVALID_INPUT。"""
+    pool = _confirm_pool()
+    bad_payloads = [
+        {k: v for k, v in _VALID_PAYLOAD.items() if k != "action"},   # 沒有 action
+        {**_VALID_PAYLOAD, "action": "delete_everything"},            # 值域外
+        {**_VALID_PAYLOAD, "action": None},
+        {k: v for k, v in _VALID_PAYLOAD.items() if k != "days"},     # action 對、欄位缺
+    ]
+    for payload in bad_payloads:
+        result = await confirm_request(
+            _identity(), {"summary": "s", "payload": json.dumps(payload)}, db_pool=pool
+        )
+        assert result.ok is False and result.error == "INVALID_INPUT", payload
+    pool.execute.assert_not_awaited()   # ⛔ 一列都不得寫進表
+    # 正對照組：同一支 pool、形狀正確就會過
+    ok = await confirm_request(
+        _identity(), {"summary": "s", "payload": json.dumps(_VALID_PAYLOAD)}, db_pool=pool
+    )
+    assert ok.ok is True
+
+
+@pytest.mark.req(_REQ)
+def test_confirm_action_enum_is_closed_and_documented_to_the_model():
+    """值域封閉，且**逐字寫進工具 description**——`payload` 是 JSON 字串，
+    schema 表達不了字串內部的 enum，模型只能從 description 得知值域。"""
+    assert CONFIRM_ACTIONS == ("bill_due_extend", "repair_create")
+    for action in CONFIRM_ACTIONS:
+        assert action in CONFIRM_SPEC["description"]
 
 
 @pytest.mark.req(_REQ)
 async def test_confirm_request_never_returns_the_token():
     """token ⛔ 不進 `ToolResult` 的任何欄位；`pending_id` 是它的單向短摘要。"""
     pool = _confirm_pool()
-    payload = {"repair_id": 12, "note": "水管漏水"}
+    payload = dict(_VALID_PAYLOAD)
     result = await confirm_request(
         _identity(), {"summary": "確認送出", "payload": json.dumps(payload)}, db_pool=pool
     )
@@ -357,8 +437,10 @@ async def test_confirm_request_never_returns_the_token():
     assert isinstance(token, str) and len(token) >= 40
     assert insert_args[2] == "backtest_session_unit_2_4"
     assert insert_args[3] == payload_digest(payload)
-    assert insert_args[4] == sha256_hex("確認送出")
+    # DSP-038-2：$4 改成**卡文字**的雜湊（⛔ 不再是模型 summary 的雜湊）
+    assert insert_args[4] == sha256_hex(render_card("bill_due_extend", payload))
     assert insert_args[5] == 600   # 10 分鐘
+    assert insert_args[6] == pending_id_for(token)
 
     serialized = result.model_dump_json()
     assert token not in serialized
@@ -372,20 +454,22 @@ async def test_confirm_request_rejects_malformed_input():
     """2.6 處置⑧：`payload` 已改成 **JSON 字串**（strict function calling 不吃
     開放 object）——非字串、非法 JSON、以及「合法 JSON 但不是物件」三型都要拒。"""
     pool = _confirm_pool()
+    valid = json.dumps(_VALID_PAYLOAD)
     for args in (
-        {"summary": "", "payload": "{}"},
-        {"summary": "   ", "payload": "{}"},
-        {"summary": 1, "payload": "{}"},
-        {"summary": "ok", "payload": {"a": 1}},           # 舊形狀：dict ⇒ 不再收
+        {"summary": "", "payload": valid},
+        {"summary": "   ", "payload": valid},
+        {"summary": 1, "payload": valid},
+        {"summary": "ok", "payload": _VALID_PAYLOAD},     # 舊形狀：dict ⇒ 不再收
         {"summary": "ok", "payload": "not-json"},         # 非法 JSON
         {"summary": "ok", "payload": "[1, 2]"},           # 合法 JSON 但不是物件
         {"summary": "ok", "payload": JSON_SCALAR},        # 同上（純量）
         {"summary": "ok", "payload": OVERSIZED_PAYLOAD},  # 超過 CONFIRM_PAYLOAD_MAX_CHARS
+        {"summary": "ok", "payload": "{}"},               # DSP-038-2：沒有 action
     ):
         result = await confirm_request(_identity(), args, db_pool=pool)
         assert result.ok is False and result.error == "INVALID_INPUT", args
     # 正對照組：形狀正確就會過
-    ok = await confirm_request(_identity(), {"summary": "ok", "payload": "{}"}, db_pool=pool)
+    ok = await confirm_request(_identity(), {"summary": "ok", "payload": valid}, db_pool=pool)
     assert ok.ok is True
 
 
@@ -412,19 +496,21 @@ async def test_confirm_request_digest_matches_redeem_side_object_digest():
     對原始字串取雜湊，鍵順序或空白差一點就永遠兌現不了。
     """
     pool = _confirm_pool()
-    payload = {"b": 2, "a": 1}
+    payload = dict(reversed(list(_VALID_PAYLOAD.items())))   # 鍵順序相反、同一份內容
     # 故意用「鍵順序相反、帶空白」的序列化字串
     await confirm_request(
         _identity(), {"summary": "s", "payload": json.dumps(payload, indent=1)}, db_pool=pool
     )
-    assert pool.execute.await_args.args[3] == payload_digest(payload)
+    assert pool.execute.await_args.args[3] == payload_digest(_VALID_PAYLOAD)
 
 
 @pytest.mark.req(_REQ)
 async def test_confirm_request_requires_session_id():
     pool = _confirm_pool()
     result = await confirm_request(
-        _identity(session_id=""), {"summary": "ok", "payload": "{}"}, db_pool=pool
+        _identity(session_id=""),
+        {"summary": "ok", "payload": json.dumps(_VALID_PAYLOAD)},
+        db_pool=pool,
     )
     assert result.ok is False and result.error == "INVALID_INPUT"
     pool.execute.assert_not_awaited()
@@ -477,6 +563,9 @@ _FAKE_WRITE_SPEC: ToolSpec = {
         "required": ["payload", "confirmation_token"],
     },
     "scope": "write",
+    # DSP-038-1／W1b：`scope="write"` **必須**同時 `mcp_only=True`（`register()` 期
+    # raise），且寫入面另受 `AGENT_WRITE_TOOLS_ENABLED` 與入口 `entry=="mcp"` 兩道閘。
+    "mcp_only": True,
     "stage": {"tenant": "M4", "property_manager": "M5"},
 }
 
@@ -488,7 +577,10 @@ async def _noop_fn(identity, args):
 
 
 def _registry_with_2_4_tools():
-    registry = ToolRegistry()
+    # 旗標**釘住 True**：本檔驗的是 stage 判斷（M0–M3 看不到 write 工具），
+    # ⛔ 不讓結論取決於跑測試那台機器的 env——旗標關著的話 M4 那條反向對照
+    # 也會落空，整個測試就變成恆真。
+    registry = ToolRegistry(write_tools_enabled=True)
     registry.register(HANDOFF_SPEC, _noop_fn)
     registry.register(SLOTS_GET_SPEC, _noop_fn)
     registry.register(SLOTS_SET_SPEC, _noop_fn)
@@ -501,7 +593,9 @@ def test_no_write_tool_visible_before_m3():
     """M0–M3 任一 stage 下 `specs_for` 都拿不到 write 工具；同一次呼叫拿得到 read 工具（正對照組）。"""
     registry = _registry_with_2_4_tools()
     registry.register(_FAKE_WRITE_SPEC, _noop_fn)
-    identity = _identity(target_user="tenant", mode="b2c")
+    # `entry="mcp"`：⛔ 不用預設的 `"rest"`——那樣「看不見」會是**入口**擋的，
+    # stage 判斷就沒被驗到（下面 M4 的反向對照也會一起落空、變成恆真）。
+    identity = _identity(target_user="tenant", mode="b2c", entry="mcp")
 
     for stage in ("M0", "M1", "M2", "M3"):
         visible = registry.specs_for(identity, stage, for_model=True)

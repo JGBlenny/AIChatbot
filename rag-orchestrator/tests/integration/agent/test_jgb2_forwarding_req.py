@@ -4,8 +4,13 @@
 **有沒有轉發** `viewer_user_id`，不是圈定語義本身（那本機不可驗，見域映射表）。
 
 ⚠️ bills 對 `viewer_user_id` 的 `UnsupportedMockParameterError` 是**刻意保留的大聲
-失敗**（`services/jgb/transport.py:_bills_index`）——本測試斷言它「有記到參數且
-例外正是這一種」，不是把它當 bug 修掉。⛔ 不放寬 mock。
+失敗**（`services/jgb/transport.py:_bills_index`），只是**觸發條件已經變窄**
+（transport-extension-full-coverage）：fixture 現在用 `bill_visibility` 逐筆**宣告**
+可見的 user_id ⇒ 宣告過的列改成依宣告過濾，**未宣告的列**才照樣 raise。
+本檔因此把原本那條「送了 viewer_user_id 必 raise」拆成兩條、⛔ 不刪測試目的：
+  ① 轉發真的發生 **且** 依宣告過濾（`test_bills_forwards_viewer_user_id_and_filters`）；
+  ② 未宣告的列仍**大聲失敗**（`test_bills_undeclared_visibility_still_raises`）——
+     這一條才是「⛔ 不放寬 mock」的證據。
 """
 import types
 
@@ -14,7 +19,11 @@ import pytest
 from services.agent.identity import Identity
 from services.agent.tools import jgb2
 from services.jgb.contract_fixtures import ContractFixtureTable
+from services.jgb.estate_fixtures import EstateFixtureTable
 from services.jgb.fixtures import BillFixtureTable
+from services.jgb.meter_fixtures import MeterFixtureTable
+from services.jgb.repair_fixtures import RepairFixtureTable
+from services.jgb.team_fixtures import TeamMemberFixtureTable
 from services.jgb.transport import JGBMockTransport, RecordingTransport, UnsupportedMockParameterError
 from services.jgb_system_api import JGBSystemAPI
 
@@ -34,11 +43,29 @@ def _pm_identity(role_id=None, user_id=None):
 
 @pytest.fixture()
 def recorded_api(monkeypatch):
-    """真 `JGBSystemAPI`＋mock transport，外包一層 `RecordingTransport`。"""
+    """真 `JGBSystemAPI`＋mock transport，外包一層 `RecordingTransport`。
+
+    ⚠️ **六張 fixture 表全部裝配**（transport-extension-full-coverage）：
+    estates／meters／team_members／member_permissions／repairs 已遷入
+    `MIGRATED_ENDPOINTS`，少裝一張表的失效形狀是 `MissingFixtureError`
+    （替身的誠實紀律：⛔ 不靜默降級），而不是「這條路本來就查不到」。
+    ⛔ 不得為了讓測試變綠而改回只裝兩張——那會讓下面三域的正對照組永遠是紅的。
+    """
     monkeypatch.setenv("USE_MOCK_JGB_API", "true")
     api = JGBSystemAPI()
-    recording = RecordingTransport(JGBMockTransport(BillFixtureTable(), ContractFixtureTable()))
+    estate_fixtures = EstateFixtureTable()
+    recording = RecordingTransport(JGBMockTransport(
+        BillFixtureTable(), ContractFixtureTable(),
+        estate_fixtures=estate_fixtures,
+        meter_fixtures=MeterFixtureTable(),
+        team_fixtures=TeamMemberFixtureTable(),
+        repair_fixtures=RepairFixtureTable(),
+    ))
     api._mock_transport = recording
+    # `get_estate_detail` 走 `self._estate_fixtures`（見 `JGBSystemAPI.__init__` 註解：
+    # estates／estate_detail 共用**同一個**實例）⇒ 這裡也換成同一份，
+    # ⛔ 不留兩份互不同步的拷貝。
+    api._estate_fixtures = estate_fixtures
     monkeypatch.setattr(jgb2, "_api_singleton", api)
     return api, recording
 
@@ -47,19 +74,43 @@ def recorded_api(monkeypatch):
 # bills：viewer_user_id 有轉發，mock 依契約 raise（不放寬的證據）
 # ══════════════════════════════════════════════════════════════════════
 
-async def test_bills_forwards_viewer_user_id_and_mock_raises(recorded_api):
+async def test_bills_forwards_viewer_user_id_and_filters(recorded_api):
+    """轉發真的發生，**且**替身依 fixture 宣告的可見性過濾（不是忽略該參數）。"""
     api, recording = recorded_api
 
-    with pytest.raises(UnsupportedMockParameterError):
-        await jgb2.query_bills(
-            _identity(role_id="1", user_id="9001"), {"face": "帳單異常"})
+    result = await jgb2.query_bills(
+        _identity(role_id="1", user_id="9001"), {"face": "帳單異常"})
 
-    # 例外前 RecordingTransport 已記到這通呼叫——證明轉發真的發生，不是被吞掉。
     assert recording.calls, "沒有任何出向呼叫被記錄——轉發沒有發生"
     method, path, params = recording.calls[-1]
     assert method == "GET"
     assert path == "/api/external/v1/bills"
     assert params.get("viewer_user_id") == "9001"
+
+    # 依 `bill_visibility` 宣告：9001 看得到 900001／900002，看不到 900003。
+    # ⛔ 不只斷言「有回東西」——那樣把 viewer_user_id 整個忽略掉也會過。
+    fixtures = recording.inner.fixtures
+    visible_ids = {r["id"] for r in fixtures.rows() if 9001 in (fixtures.visible_to(r["id"]) or [])}
+    hidden_ids = {r["id"] for r in fixtures.rows()} - visible_ids
+    assert hidden_ids, "fixture 沒有任何一列對 9001 不可見 ⇒ 這條對照組驗不到過濾"
+    assert result["ok"] is True
+    returned = {str(row.get("id")) for row in (result["data"]["candidates"] or [])}
+    assert returned, "沒有任何候選列 ⇒ 這條斷言驗不到過濾（⛔ 不得以空集合當通過）"
+    assert returned == {str(i) for i in visible_ids}
+    assert not (returned & {str(i) for i in hidden_ids})
+
+
+async def test_bills_undeclared_visibility_still_raises(recorded_api):
+    """⛔ **不放寬 mock**：`bill_visibility` 未宣告的列，帶 viewer_user_id 一律
+    大聲失敗——替身算不出可見性時不得以「忽略該參數的結果」回答可見性問題。"""
+    api, recording = recorded_api
+    fixtures = recording.inner.fixtures
+    fixtures._visibility.pop("900001", None)      # noqa: SLF001 — 刻意製造未宣告列
+    assert fixtures.visible_to(900001) is None, "正對照：這一列現在確實是未宣告"
+
+    with pytest.raises(UnsupportedMockParameterError):
+        await jgb2.query_bills(
+            _identity(role_id="1", user_id="9001"), {"face": "帳單異常"})
 
 
 async def test_bills_without_viewer_user_id_does_not_raise(recorded_api):
@@ -134,12 +185,11 @@ async def test_contracts_ref_uses_contract_ids_and_forwards_viewer(recorded_api)
 # ══════════════════════════════════════════════════════════════════════
 # 其餘三域缺 user_id ⇒ NO_MATCH（雙證閘門在工具層擋下）
 #
-# ⚠️ accounts／meters／estates 的三個 API（get_member_permissions／get_meters／
-# get_estate_status／get_estate_detail）**尚未遷入** `Transport`（`MIGRATED_
-# ENDPOINTS` 只有 `bills`／`bill_detail`／`contracts`，見 transport.py:240）——
-# 它們在 mock 模式走方法級 `if self.use_mock:` 短路，根本不經 `_send`／
-# `RecordingTransport`。故這裡不能用「recording.calls 有沒有紀錄」當正對照組，
-# 改用「補上 user_id 後是否真的取得 fixture 資料」證明 gate 不是恆假陰性。
+# ⚠️ **現況更新（transport-extension-full-coverage）**：accounts／meters／estates
+# 的四個 API（get_member_permissions／get_meters／get_estate_status／
+# get_estate_detail）**都已遷入** `MIGRATED_ENDPOINTS`，改走 `_send` ⇒
+# `RecordingTransport` 會記到它們。正對照組仍維持「補上 user_id 後是否真的取得
+# fixture 資料」——它比「有沒有紀錄」更強（能同時證明 fixture 表真的裝配了）。
 # ══════════════════════════════════════════════════════════════════════
 
 @pytest.mark.parametrize("fn,face,args_extra", [
