@@ -101,7 +101,18 @@ def _extract_questions(shape_key: str, data: dict) -> list[str]:
         return qs
     if shape_key == "sensitive":
         return [it["q"] for it in data.get("items", []) if isinstance(it.get("q"), str)]
-    raise RuntimeError(f"未知的 manifest set 名稱 {shape_key!r}——本檢查只認得 topics／scenarios／sensitive"
+    if shape_key == "outline-probe":
+        # 4.4a 凍結題集（knowledge-outline-and-intent-architecture）：單題 `items[].q`；
+        # 劇本 item `stratum="multi"` 帶 `turns[].q`（一劇本一 item、同 session 貫穿）。
+        qs = []
+        for it in data.get("items", []):
+            if isinstance(it.get("q"), str):
+                qs.append(it["q"])
+            for t in it.get("turns", []) or []:
+                if isinstance(t.get("q"), str):
+                    qs.append(t["q"])
+        return qs
+    raise RuntimeError(f"未知的 manifest set 名稱 {shape_key!r}——本檢查只認得 topics／scenarios／sensitive／outline-probe"
                        "（shape 與抽取規則須同步擴充，⛔ 不可默默略過新 set）")
 
 
