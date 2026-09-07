@@ -1,6 +1,6 @@
 ---
 audience: property_manager
-version: 2026-09-07.2
+version: 2026-09-08.1
 reviewers: [owner]
 language: zh-TW
 budget_tokens: 8000
@@ -118,8 +118,8 @@ business_types: [system_provider]
   - {text: "租客過去繳款紀錄", source: "line-doc:⑤#-", status: proposed}
 - sources: [draft:batch#14, kb:3909, kb:3913]
 - instance_applicability: general
-- reviewed: {by: owner, at: 2026-09-07}
-針對業務點選的那一筆帳單，可回近一年逾期明細（哪幾期、逾期幾天、是否補繳），數字全部來自 JGB 帳單資料；滯納金若依合約條款推算必須標明是推算、實際以 JGB 為準。
+- reviewed: {by: owner, at: 2026-09-08}
+可回業務權限內任一筆帳單（以帳單編號指定，或先列出可見帳單再指定）的狀態、金額、到期日與近一年逾期明細（哪幾期、逾期幾天、是否補繳），數字全部來自 JGB 帳單資料；滯納金若依合約條款推算必須標明是推算、實際以 JGB 為準。
 本細目涵蓋的系統機制目錄：帳務領域-系統帳務(母共用)；帳務領域-滯納金(子面向)
 機制正文在知識庫，需要時以 kb.get 取原文；數字一律以 JGB 資料為準
 
@@ -129,8 +129,8 @@ business_types: [system_provider]
   - {text: "追問其他租客的帳單", source: "line-doc:⑤#C", status: proposed}
 - sources: [draft:batch#15]
 - instance_applicability: general
-- reviewed: {by: owner, at: 2026-09-07}
-每筆清單項目是獨立會話，只看被點選的那一筆；問到別戶時退出並提示回清單點該戶，不回答別戶的內容。
+- reviewed: {by: owner, at: 2026-09-08}
+由清單進場（帶進場脈絡）時，每筆清單項目是獨立會話、只看被點選的那一筆，問到別戶時退出並提示回清單點該戶；聊天直接進場時沒有點選項目，同一業務權限內的帳單、合約、物件、修繕可依編號或名稱切換，不視為離題。
 
 ### 追問遇到 JGB 沒有的資料時怎麼回 {#property_manager/C/followup-missing-data-in-jgb}
 - phrasings:
@@ -159,8 +159,8 @@ JGB 帳單只有已繳／未繳，沒有入帳日期；問到沒有的欄位就�
   - {text: "熱水器維修歷史查詢", source: "line-doc:⑤#F", status: proposed}
 - sources: [draft:batch#18]
 - instance_applicability: general
-- reviewed: {by: owner, at: 2026-09-07}
-目前沒有修繕歷史／進度面向，只有開單面向；緊急修繕在清單上照列，但第一版不開追問。
+- reviewed: {by: owner, at: 2026-09-08}
+修繕進度可查：單號、物件、分類、狀態、急迫程度、建單時間、指派；開單仍走拍照確認流程。
 
 ### 電錶項目追問（導向電表排障面向） {#property_manager/C/meter-item-followup-scope}
 - phrasings:
@@ -170,8 +170,8 @@ JGB 帳單只有已繳／未繳，沒有入帳日期；問到沒有的欄位就�
   - {text: "電表餘額與斷電時間查詢", source: "line-doc:⑤#-", status: proposed}
 - sources: [draft:batch#19, kb:4021, kb:4091]
 - instance_applicability: general
-- reviewed: {by: owner, at: 2026-09-07}
-電錶餘額不足走電表排障面向；項目以 id 直接進槽位，不靠關鍵字檢索。
+- reviewed: {by: owner, at: 2026-09-08}
+電錶餘額不足走電表排障面向；電錶可依名稱或 id 指定，餘額、可用度數、是否供電來自 JGB；「還能用幾天」是推算，必須標明是推算。
 本細目涵蓋的系統機制目錄：IoT領域-智慧設備(母共用)；IoT領域-電表排障(子面向)
 機制正文在知識庫，需要時以 kb.get 取原文；數字一律以 JGB 資料為準
 
@@ -229,11 +229,11 @@ JGB 帳單只有已繳／未繳，沒有入帳日期；問到沒有的欄位就�
 - reviewed: {by: owner, at: 2026-09-07}
 急迫程度的數值定義程式註解與舊表單相反，且缺值時預設為急迫；需以 JGB 資料庫為準裁定並改預設為非急迫或留空。
 
-### 修繕歷史／進度面向是否新建（待裁） {#property_manager/F/repair-history-facet-pending}
+### 修繕歷史／進度面向（已建） {#property_manager/F/repair-history-facet-pending}
 - sources: [draft:batch#28]
 - instance_applicability: general
-- reviewed: {by: owner, at: 2026-09-07}
-修繕歷史／進度追問沒有對應面向，是否新建屬待裁；第一版不開。
+- reviewed: {by: owner, at: 2026-09-08}
+修繕進度面向已建（2026-09-08），查詢範圍見 C 的修繕進度細目；修繕歷史（已結案單的完整紀錄）仍不在範圍。
 
 ### 催繳草稿端點形式（待裁） {#property_manager/F/dunning-endpoint-form}
 - sources: [draft:batch#29]

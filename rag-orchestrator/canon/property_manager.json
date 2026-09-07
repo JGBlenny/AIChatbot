@@ -4,7 +4,7 @@
   "business_types": [
     "system_provider"
   ],
-  "canon_sha256": "5b4e6c40cdaffc23cf1b8244332f8bebcfdb125d672393fbf32d93ad051965ab",
+  "canon_sha256": "81bfe3b0559aa39cf06ce91147669e5db2becca065a1770eec262d439c59e635",
   "coarses": [
     {
       "fines": [
@@ -442,9 +442,9 @@
           ],
           "categories": [],
           "coarse_id": "C",
-          "content_sha256": "9ac75403660eb31fc8fc0688fd1695a41ff3fe1a872bcfffdc59464eaad112d2",
+          "content_sha256": "b05f78f31bbc2b4ddb7390c43e5d2b1059ce04245c70d219bcca4599055f0ae2",
           "content_units": [
-            "針對業務點選的那一筆帳單，可回近一年逾期明細（哪幾期、逾期幾天、是否補繳），數字全部來自 JGB 帳單資料；滯納金若依合約條款推算必須標明是推算、實際以 JGB 為準。",
+            "可回業務權限內任一筆帳單（以帳單編號指定，或先列出可見帳單再指定）的狀態、金額、到期日與近一年逾期明細（哪幾期、逾期幾天、是否補繳），數字全部來自 JGB 帳單資料；滯納金若依合約條款推算必須標明是推算、實際以 JGB 為準。",
             "本細目涵蓋的系統機制目錄：帳務領域-系統帳務(母共用)；帳務領域-滯納金(子面向)",
             "機制正文在知識庫，需要時以 kb.get 取原文；數字一律以 JGB 資料為準"
           ],
@@ -474,7 +474,7 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-07",
+          "reviewed_at": "2026-09-08",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
@@ -493,9 +493,9 @@
           ],
           "categories": [],
           "coarse_id": "C",
-          "content_sha256": "e872c0e62d50ae1c3d9a95618e6c11a7fb20a38201fbb6173c78efeeda036e40",
+          "content_sha256": "37ccbb3e71b09ca929c26f166d37b63db190a532273ccc28cab3fad8cd6be3d6",
           "content_units": [
-            "每筆清單項目是獨立會話，只看被點選的那一筆；問到別戶時退出並提示回清單點該戶，不回答別戶的內容。"
+            "由清單進場（帶進場脈絡）時，每筆清單項目是獨立會話、只看被點選的那一筆，問到別戶時退出並提示回清單點該戶；聊天直接進場時沒有點選項目，同一業務權限內的帳單、合約、物件、修繕可依編號或名稱切換，不視為離題。"
           ],
           "id": "property_manager/C/followup-session-single-item-boundary",
           "instance_applicability": "general",
@@ -513,7 +513,7 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-07",
+          "reviewed_at": "2026-09-08",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
@@ -618,9 +618,9 @@
           ],
           "categories": [],
           "coarse_id": "C",
-          "content_sha256": "7a5309896422166a52485cb99fcc5588cc05ff2d2e731c92b4378570ee27be06",
+          "content_sha256": "d79688dfd51cdbc7311642195649b5dfd74a35de747788606be7af9e894ffe50",
           "content_units": [
-            "目前沒有修繕歷史／進度面向，只有開單面向；緊急修繕在清單上照列，但第一版不開追問。"
+            "修繕進度可查：單號、物件、分類、狀態、急迫程度、建單時間、指派；開單仍走拍照確認流程。"
           ],
           "id": "property_manager/C/urgent-repair-followup-scope",
           "instance_applicability": "general",
@@ -633,7 +633,7 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-07",
+          "reviewed_at": "2026-09-08",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
@@ -650,9 +650,9 @@
           ],
           "categories": [],
           "coarse_id": "C",
-          "content_sha256": "f4e65c34520bb5e6887535d77c166a15d96c0e711ab7e7192e0a3e35ae2d55dc",
+          "content_sha256": "c3124a75171f5e0b730c627c3ff679be64a732623b389a7f6d809cf99823fbb5",
           "content_units": [
-            "電錶餘額不足走電表排障面向；項目以 id 直接進槽位，不靠關鍵字檢索。",
+            "電錶餘額不足走電表排障面向；電錶可依名稱或 id 指定，餘額、可用度數、是否供電來自 JGB；「還能用幾天」是推算，必須標明是推算。",
             "本細目涵蓋的系統機制目錄：IoT領域-智慧設備(母共用)；IoT領域-電表排障(子面向)",
             "機制正文在知識庫，需要時以 kb.get 取原文；數字一律以 JGB 資料為準"
           ],
@@ -682,7 +682,7 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-07",
+          "reviewed_at": "2026-09-08",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
@@ -938,16 +938,16 @@
           ],
           "categories": [],
           "coarse_id": "F",
-          "content_sha256": "41c6063744100f27b7df1b8aad42cf718760e88960be7a22551749f944da3058",
+          "content_sha256": "bf57303705e3a92707cd016a00d8ffeb39a33b7238d08ca8a612ee67efe36b60",
           "content_units": [
-            "修繕歷史／進度追問沒有對應面向，是否新建屬待裁；第一版不開。"
+            "修繕進度面向已建（2026-09-08），查詢範圍見 C 的修繕進度細目；修繕歷史（已結案單的完整紀錄）仍不在範圍。"
           ],
           "id": "property_manager/F/repair-history-facet-pending",
           "instance_applicability": "general",
           "phrasings": [],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-07",
+          "reviewed_at": "2026-09-08",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
@@ -956,7 +956,7 @@
           "target_user": [
             "property_manager"
           ],
-          "title": "修繕歷史／進度面向是否新建（待裁）"
+          "title": "修繕歷史／進度面向（已建）"
         },
         {
           "business_types": [
@@ -1349,5 +1349,5 @@
   "target_user": [
     "property_manager"
   ],
-  "version": "2026-09-07.2"
+  "version": "2026-09-08.1"
 }
