@@ -21,7 +21,7 @@
 
 ### 心智模型（業主 2026-09-04 問答定稿；給讀 spec 的人先對齊用詞）
 1. **對話是模型完成的，MCP 是工具的插座。** 聽懂、決定查或問或答、把 facts 組成回話，都在 `AgentRuntime` 的模型迴圈；MCP 協定本身沒有模型、沒有對話。「後面的任務由 MCP 完成」＝查資料、送報修由 MCP 定義的工具做，做不做與怎麼說仍是模型，且在牆內。
-2. **形狀與 Claude Code 對話相同，差兩處。** 都是「模型 → tool call → 看結果 → 再決定」；差別是客服模型的工具少而窄（七類、參數封閉、身分由程式注入），以及出口多一道 Verifier（每個事實句指回工具回傳原文，否則重寫，兩次仍拒 ⇒ 固定句轉人）。
+2. **形狀與 Claude Code 對話相同，差兩處。** 都是「模型 → tool call → 看結果 → 再決定」；差別是客服模型的工具少而窄（七類、參數封閉、身分由程式注入），以及出口多一道 Verifier（每個事實句指回工具回傳原文；**DSP-040（2026-09-08）起分兩類**：機敏類拒因（敏感主題、導流／個資）拒則重寫、兩次仍拒 ⇒ 固定句轉人；引用類拒因（未引用、涵蓋、極性、形狀、不可引用來源）**只記錄不擋**——`AGENT_VERIFIER_MODE=grounding_observe` 預設，`strict` 為舊行為）。
 3. **「找帳單」怎麼對到 API：** 模型讀工具描述選 `jgb2.query.bills`＋封閉 `face`；registry 注入身分、守白名單／scope／速率；jgb2 依 `viewer_user_id` 圈定；facts 由 face builder 決定性算；多筆候選由模型反問、程式限量。匹配不再由關鍵字或分類規則決定。
 4. **引導對話的是 OpenAI 模型（Chat Completions function calling，D1 預設），迴圈是本系統的 `AgentRuntime`。** 不用 OpenAI Agents SDK／Responses 內建 MCP（需公網 URL）；provider 抽象保留可換模型。
 5. **兩層「過 MCP」：** 決策層已是 MCP 形態（同一份 `ToolSpec` 同時是模型的 function 清單與 `/mcp` 的工具清單）；傳輸層 Runtime 直接呼叫 registry、不經 MCP 線路（決策 1，熱路徑零跳）。若要連自己都走線路，2.1 可加 env 切成 loopback MCP client，M2 影子比延遲後定預設。

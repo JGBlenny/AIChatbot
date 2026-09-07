@@ -90,7 +90,7 @@ def _wrap_verifier_observe_only(runtime, attempt_sink):
                 pass
         return verdict if verdict.ok else _VV(ok=True)
     runtime.verifier.verify = _observe
-    print("⚠️ [agent] AGENT_VERIFIER_OBSERVE_ONLY=1：Verifier 只觀察不擋（對照實驗，⛔ 非正式組態）", file=sys.stderr)
+    print("ℹ️ [agent] AGENT_VERIFIER_OBSERVE_ONLY=1：Verifier 只觀察不擋（DSP-040／R8 過渡旗：demo 期用；正式參數 AGENT_VERIFIER_MODE 由 W6-b3 落地後取代，屆時機敏類恢復照擋）", file=sys.stderr)
 
 async def _init_agent_runtime(app: FastAPI) -> None:
     """建 `app.state.agent_runtime`／`agent_outlines`／`agent_indexes`／`outline_resolver`／`shadow_runner`。

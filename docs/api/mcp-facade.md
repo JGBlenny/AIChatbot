@@ -360,4 +360,4 @@ DSP-011 成立的前提是「`/mcp` 只有上游／內部呼叫者」。以下�
 | `AGENT_TRACE_WINDOW_DAYS` | `7` | `agent_trace` 查詢時間窗（`services/agent/trace_view.py`） |
 | `JGB2_CANDIDATE_CAP` | `5` | `jgb2.query.*` 候選列筆數上限（`services/agent/tools/jgb2.py`） |
 
-`AGENT_BUDGET_TOOL_CALLS`／`AGENT_BUDGET_REWRITES`／`AGENT_BUDGET_DEADLINE_S`（預設 4／2／20.0）：由 `services/agent/bootstrap.py:budget_from_env` 讀取（2026-09-05 補上；5.3 查證時發現 design 列了但程式沒讀），壞值／≤0 退回預設。
+`AGENT_BUDGET_TOOL_CALLS`／`AGENT_BUDGET_REWRITES`／`AGENT_BUDGET_DEADLINE_S`（預設 4／2／20.0；DSP-040 起 `REWRITES` 只對**機敏類**拒因計數，引用類拒因只記錄不重寫——`AGENT_VERIFIER_MODE=grounding_observe`；demo 起法另設 `DEADLINE_S=45`）：由 `services/agent/bootstrap.py:budget_from_env` 讀取（2026-09-05 補上；5.3 查證時發現 design 列了但程式沒讀），壞值／≤0 退回預設。

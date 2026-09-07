@@ -10,7 +10,7 @@
 使用者訊息 → Agent Runtime（模型迴圈：思考 → 呼叫工具 → 讀結果 → 再呼叫或作答）
              工具全部經 MCP server；server 依 session 身分注入範圍，模型不得自選身分
              最終回答走引用契約 {answer, citations[{source, quote}], kind}
-             Output Verifier（程式）：敏感五類主題拒答 → 逐句引用逐字驗 → 禁止詞 → 拒則重寫一次或固定句轉人
+             Output Verifier（程式）：敏感五類主題拒答 → 逐句引用逐字驗 → 禁止詞 → **機敏類**拒則重寫一次或固定句轉人；**引用類**拒因只記錄不擋（DSP-040，`AGENT_VERIFIER_MODE=grounding_observe` 預設）
 售前：JGB 基礎大綱（31 筆整池整理成 6–8K token）進上下文，不用向量檢索
 業者／租客：27 列系統脈絡當目錄進上下文，細節按章節 kb.get／help.read；kb.search 降為找章節
 個人資料只走 jgb2.query.*（role_id／user_id 由 server 帶）
