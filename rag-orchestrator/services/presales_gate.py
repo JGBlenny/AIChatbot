@@ -16,9 +16,11 @@ from __future__ import annotations
 
 import math
 import os
+import unicodedata
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, Final, FrozenSet, Optional, Tuple
+from types import MappingProxyType
+from typing import Any, Dict, Final, FrozenSet, Iterable, Mapping, Optional, Tuple
 
 from services.decision_layer import DecisionConfig
 
@@ -242,10 +244,114 @@ def scan_handoff_mentions(text: Optional[str]) -> bool:
     return any(w in text for w in HANDOFF_WORDS)
 
 
+# ---------------------------------------------------------------------------
+# 身分反問句型表（Plan `.kiro/specs/knowledge-outline-and-intent-architecture/inputs/
+# plan-m-d-runtime-wiring-20260907.md` §4.1-7／-8；業主 2026-09-07 核：30 句全收、
+# 第 4 節三條誤殺風險走 (b)「先留著量」、主張縮為「**agent 路徑內**不重問」）
+# ---------------------------------------------------------------------------
+
+#: 售前五欄位（identity／scale／team／pain／interested，來源
+#: `inputs/kb3645-presales-dialogue-rules-20260906.md`）的「模型正在向對方**索取**這個
+#: 欄位」句型片段。內容＝業主核可的
+#: `inputs/identity-reask-patterns-draft-20260907.md` 三十列**逐字**（測試對該檔逐列對帳）。
+#:
+#: ⛔ **只給測試與掃描用**（`tests/unit/agent/test_identity_no_reask_req.py`；4.4b 對真
+#: 輸出量「一次一題、已知不重問」）。**⛔ 一個字都不得被渲染進任何 prompt**：
+#: `services/agent/agent_rules.py`／`prompt_assembler.py`／`outline.py`／`runtime.py`
+#: ⛔ 不得引用本符號或 `reask_hits`——把「不要講這些句子」寫給模型看，只會教它換句話問，
+#: 而 `SENSITIVE` 被 `agent_rules._SENSITIVE_LINE` 反射進政策文的先例 ⛔ 不得在這裡重演
+#: （那條先例是刻意保留的，⛔ 不動它）。回歸鎖在同名測試的「不進 prompt 掃描」。
+#:
+#: 比對規則（`reask_hits`）：**兩側都 NFKC** ＋ **子字串**，⛔ 不用正則。下表句型**已是
+#: NFKC 形式**、且一律**不含標點**——標點是最容易漂的部分（`?`／`嗎?`／`呢`），
+#: 寫進句型只會降低召回；全形括號／問號寫了更等於埋一顆 NFKC 後永遠比不到的地雷。
+#:
+#: ⛔ **任何欄位都不得清空**：空 tuple 會讓「不得匹配」這種否定斷言恆真（＝一把瞎尺）。
+#: 非空守門與「清空必紅」的正對照都在同名測試的第一節。
+#:
+#: ⚠️ 它 ⛔ 不是「這句有沒有禮貌／該不該收斂」的尺；它只回答一件事：這句在問對方
+#: **是誰／多大／幾人／痛在哪／想看什麼**嗎。已知誤殺（業主裁定先留著量、⛔ 不加個案
+#: 例外分支；要改就以「一類」為單位收窄或整條拿掉）：`interested` 的「有興趣的功能」
+#: 也可能出現在陳述句、`pain` 的「有什麼困擾」也可能出現在同理句、`scale` 的
+#: 「大概幾間」／「多少間房」可能被 CTA 文案掃到。
+IDENTITY_REASK_PATTERNS: Final[Mapping[str, Tuple[str, ...]]] = MappingProxyType({
+    "identity": (
+        "您是個人房東",
+        "是個人房東還是",
+        "包租代管還是",
+        "請問您的身分",
+        "您是房東還是",
+        "您是自己收租",
+    ),
+    "scale": (
+        "管理多少戶",
+        "您有幾戶",
+        "大概幾間",
+        "目前管理的戶數",
+        "多少間房",
+        "規模大概多少",
+    ),
+    "team": (
+        "有沒有團隊",
+        "團隊有幾位",
+        "是自己一個人管",
+        "幾個人一起",
+        "有其他同事",
+        "多人協作",
+    ),
+    "pain": (
+        "主要的痛點",
+        "最困擾您的",
+        "目前遇到什麼問題",
+        "最想解決的",
+        "哪個環節最花時間",
+        "有什麼困擾",
+    ),
+    "interested": (
+        "對哪些功能有興趣",
+        "想先了解哪個功能",
+        "有興趣的功能",
+        "最想看哪一塊",
+        "哪個部分比較需要",
+        "想優先導入",
+    ),
+})
+
+
+def reask_hits(text: Optional[str], fields: Iterable[str]) -> Dict[str, Tuple[str, ...]]:
+    """`text` 命中了 `fields` 這些欄位的哪些反問句型（**兩側 NFKC ＋ 子字串**）。
+
+    回傳只含**有命中**的欄位 ⇒ 空 dict ＝「這句沒有在索取這些欄位」；純函式、無 I/O。
+
+    ⛔ 未知欄位名一律 `ValueError`：打錯欄位名會讓「不得命中」的否定斷言恆真，
+    那正是靜默失敗的形狀（同理，⛔ 不對未知欄位回空 dict）。
+    ⚠️ 值域內的欄位若被清成空 tuple，本函式**照樣**回不命中——守門是常數那邊的
+    非空斷言，⛔ 不在這裡補救（補救了就看不出表被清空）。
+    ⛔ 這支與 `IDENTITY_REASK_PATTERNS` 都不得被 prompt 組裝路徑引用（見常數說明）。
+    """
+    requested = tuple(fields)
+    unknown = sorted({f for f in requested if f not in IDENTITY_REASK_PATTERNS})
+    if unknown:
+        raise ValueError(
+            f"未知的反問欄位 {unknown}；值域＝{sorted(IDENTITY_REASK_PATTERNS)}"
+        )
+    normalized = unicodedata.normalize("NFKC", text or "")
+    hits: Dict[str, Tuple[str, ...]] = {}
+    for field in requested:
+        matched = tuple(
+            pattern for pattern in IDENTITY_REASK_PATTERNS[field]
+            if unicodedata.normalize("NFKC", pattern) in normalized
+        )
+        if matched:
+            hits[field] = matched
+    return hits
+
+
 __all__ = [
     "THRESHOLD_ENV", "EXTRACTIVE_ENV", "extractive_enabled", "FactClass", "SENSITIVE", "HANDOFF_WORDS", "MULTI_ITEM_SEPARATORS", "HandoffReason", "Handoff",
     "presales_threshold", "parse_fact_class", "build_handoff", "build_llm_mention_handoff", "build_partial_handoff",
     "scan_handoff_mentions", "is_multi_item_question",
     "QUESTION_MARKERS", "ASK_DECLARATIVE_MIN_CHARS", "looks_like_question", "split_declaratives", "ask_is_answering",
     "strip_declarative_clauses", "analyze_ask",
+    "IDENTITY_REASK_PATTERNS", "reask_hits",
 ]
