@@ -9,7 +9,7 @@ JGB 帳單診斷引擎
 - P04：虛擬帳號過期
 """
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any, Callable, Optional
 
 # 點退帳單 selection contract（⚠️ 只管 type=2，⛔ 不是通用 bill selector）
@@ -66,15 +66,42 @@ def _money(v) -> str:
     return f"NT$ {v:,.0f}"
 
 
+def _today() -> date:
+    """今日日期；⚠️ 測試以 monkeypatch 本函式注入固定值，⛔ 不在呼叫端各自算。"""
+    return date.today()
+
+
+def _overdue_days(date_expire, today: date) -> Optional[int]:
+    """`date_expire`（`YYYYMMDD` int）早於 `today` 幾天；算不出或未逾期回 `None`。"""
+    if not isinstance(date_expire, int):
+        return None
+    s = str(date_expire)
+    if len(s) != 8:
+        return None
+    try:
+        expire = date(int(s[:4]), int(s[4:6]), int(s[6:]))
+    except ValueError:
+        return None
+    delta = (today - expire).days
+    return delta if delta > 0 else None
+
+
 def _bill_head(bill: dict) -> list:
-    """共同開頭 facts：名稱/編號/狀態/金額（系統存值）/期限。"""
+    """共同開頭 facts：名稱/編號/狀態/金額（系統存值）/期限（逾期天數程式算、非模型猜）。"""
     title = bill.get("title", f"帳單 {bill.get('id', '?')}")
     lines = [f"帳單「{title}」（編號 {bill.get('id', '?')}）狀態：{_get_status_label(_bill_status(bill))}。"]
     total = _bill_amount_due(bill)
     if total is not None:
         lines.append(f"帳單金額 {_money(total)}（系統存值）。")
-    if bill.get("date_expire"):
-        lines.append(f"繳費期限：{_format_date_int(bill.get('date_expire'))}。")
+    date_expire = bill.get("date_expire")
+    if date_expire:
+        lines.append(f"繳費期限：{_format_date_int(date_expire)}。")
+    # 收案 5：待繳費且已過繳費期限才印逾期天數；天數由程式算，⛔ 不交模型判斷。
+    if _bill_status(bill) == 2:
+        today = _today()
+        overdue = _overdue_days(date_expire, today)
+        if overdue is not None:
+            lines.append(f"已逾期 {overdue} 天（以今日 {today.strftime('%Y/%m/%d')} 計）。")
     return lines
 
 

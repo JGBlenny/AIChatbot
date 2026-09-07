@@ -239,6 +239,37 @@ def test_bill_status_falls_back_to_bit_status_for_legacy_rows():
     assert "查無" in out and "未知" not in out
 
 
+# ════════ 收案 5：待繳費且逾期印天數（今日程式算、可 monkeypatch 注入） ════════
+
+def test_overdue_days_printed_for_pending_payment_past_expiry(monkeypatch):
+    import datetime
+    from services.jgb import bills as bills_mod
+    monkeypatch.setattr(bills_mod, "_today", lambda: datetime.date(2026, 9, 8))
+    row = _bill(status=2, date_expire=20260901)
+    out = build_payment_flow_facts(row, "為什麼還沒繳")
+    assert "已逾期 7 天（以今日 2026/09/08 計）" in out
+
+
+def test_no_overdue_line_when_not_yet_expired(monkeypatch):
+    """正對照：同一狀態但期限還沒到 ⇒ 不印逾期天數（證明上一條真的是算出來的，不是恆印）。"""
+    import datetime
+    from services.jgb import bills as bills_mod
+    monkeypatch.setattr(bills_mod, "_today", lambda: datetime.date(2026, 9, 8))
+    row = _bill(status=2, date_expire=20260910)
+    out = build_payment_flow_facts(row, "為什麼還沒繳")
+    assert "已逾期" not in out
+
+
+def test_no_overdue_line_when_already_paid(monkeypatch):
+    """非待繳費狀態（例如已繳費）即使日期已過也不印逾期——逾期只對待繳費有意義。"""
+    import datetime
+    from services.jgb import bills as bills_mod
+    monkeypatch.setattr(bills_mod, "_today", lambda: datetime.date(2026, 9, 8))
+    row = _bill(status=16, date_expire=20260901, complete_at="2026-08-30 10:00:00")
+    out = build_payment_flow_facts(row, "帳單狀態")
+    assert "已逾期" not in out
+
+
 def test_all_four_registered():
     assert BILL_FACE_BUILDERS.get("繳費金流排障") is build_payment_flow_facts
     assert BILL_FACE_BUILDERS.get("帳單異常") is build_bill_anomaly_facts

@@ -112,6 +112,21 @@ def test_offline_dae_snapshot_wording_and_account_cause():
         assert verdict not in out                            # 離線不下供電結論（J-I1）
 
 
+def test_offline_with_topup_prints_balance_snapshot():
+    """收案 4：離線也要印儲值餘額（系統存值，最後同步值）——之前離線分支
+    在算餘額之前就 return，儲值戶離線時完全看不到餘額資訊。"""
+    out = _build(is_online=False, enable_topup=True, balance=4249, available_meter=849.89)
+    assert "4249" in out
+    assert "849.89" in out
+    assert "系統存值" in out and "最後同步值" in out
+
+
+def test_offline_without_topup_has_no_balance_line():
+    """正對照：非儲值電表離線時不印餘額（沒有餘額概念）。"""
+    out = _build(is_online=False, enable_topup=False)
+    assert "儲值餘額" not in out
+
+
 def test_offline_miezo_no_synced_at_degrades_wording():
     out = _build(is_online=False, manufacturer="Miezo", meter_type="cloud",
                  synced_at=None, enable_topup=False, is_topup=False)

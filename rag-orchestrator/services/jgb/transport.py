@@ -613,6 +613,13 @@ class JGBMockTransport:
             start, end = ym * 100 + 1, ym * 100 + 31
             rows = [r for r in rows if start <= r["date_expire"] <= end]
 
+        # `keyword`：同 `_contracts_index`，`title LIKE '%kw%'`（只比 title，收案 3
+        # 恢復——W0b 重寫時遺失，與 viewer 圈定並存，過濾順序不影響結果）。
+        keyword = params.get("keyword")
+        if keyword not in (None, ""):
+            kw = str(keyword)
+            rows = [r for r in rows if kw in str(r.get("title") or "")]
+
         # ⚠️ viewer_user_id 在其他過濾**之後**才判定：只對「已經是候選」的列
         # 要求宣告過可見性，不因為 fixture 裡某筆不相干的列未宣告就整批拒答。
         viewer_user_id = params.get("viewer_user_id")

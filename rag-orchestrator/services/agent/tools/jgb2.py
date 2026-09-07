@@ -44,12 +44,26 @@ import os
 from typing import Any, Awaitable, Callable, Optional
 
 from services.jgb_system_api import JGBSystemAPI
-from services.jgb.bills import BILL_FACE_BUILDERS
-from services.jgb.contracts import FACE_BUILDERS as CONTRACT_FACE_BUILDERS
+from services.jgb.bills import (
+    BILL_FACE_BUILDERS,
+    _bill_amount_due as _bill_amount,
+    _bill_status as _bill_status_of,
+    _format_date_int as _bill_format_date,
+    _get_status_label as _bill_status_label,
+    _money as _bill_money,
+)
+from services.jgb.contracts import (
+    FACE_BUILDERS as CONTRACT_FACE_BUILDERS,
+    _format_date_int as _contract_format_date,
+)
 from services.jgb.accounts import ACCOUNT_FACE_BUILDERS
 from services.jgb.iot import METER_FACE_BUILDERS
-from services.jgb.estates import ESTATE_FACE_BUILDERS
-from services.jgb.repairs import REPAIR_FACE_BUILDERS
+from services.jgb.estates import ESTATE_FACE_BUILDERS, estate_status_zh
+from services.jgb.repairs import (
+    REPAIR_FACE_BUILDERS,
+    _status_zh as _repair_status_zh,
+    build_repair_category_tree_facts,
+)
 
 _DEFAULT_CANDIDATE_CAP = 5
 
@@ -93,14 +107,86 @@ def _ok_single(domain: str, tag: str, facts: str, cap: int) -> dict[str, Any]:
     }
 
 
+# ── 候選清單文字（收案 1：候選結果要有文字）───────────────────────────────
+#
+# 依域投影一行摘要；狀態詞一律引用各域既有標籤表（`_bill_status_label`／
+# `estate_status_zh`／`_repair_status_zh`），⛔ 不在本檔手抄一份新的狀態對照。
+
+def _project_bill_row(row: dict) -> str:
+    parts = [f"編號 {row.get('id', '?')}", str(row.get("title") or "")]
+    parts.append(f"狀態 {_bill_status_label(_bill_status_of(row))}")
+    if row.get("date_expire"):
+        parts.append(f"到期日 {_bill_format_date(row.get('date_expire'))}")
+    amount = _bill_amount(row)
+    if amount is not None:
+        parts.append(f"金額 {_bill_money(amount)}")
+    return "、".join(parts)
+
+
+def _project_contract_row(row: dict) -> str:
+    parts = [f"編號 {row.get('id', '?')}", str(row.get("title") or "")]
+    if row.get("date_end"):
+        parts.append(f"到期日 {_contract_format_date(row.get('date_end'))}")
+    return "、".join(parts)
+
+
+def _project_estate_row(row: dict) -> str:
+    parts = [f"編號 {row.get('id', '?')}", str(row.get("title") or "")]
+    parts.append(f"狀態 {estate_status_zh(row.get('status'))}")
+    return "、".join(parts)
+
+
+def _project_meter_row(row: dict) -> str:
+    parts = [f"編號 {row.get('id', '?')}", str(row.get("name") or "")]
+    estate = row.get("estate_name")
+    if estate:
+        parts.append(f"所在物件 {estate}")
+    return "、".join(parts)
+
+
+def _project_repair_row(row: dict) -> str:
+    parts = [f"單號 {row.get('id', '?')}", str(row.get("category_name") or "")]
+    estate = row.get("estate_title")
+    if estate:
+        parts.append(f"物件 {estate}")
+    parts.append(f"狀態 {_repair_status_zh(row.get('status'))}")
+    return "、".join(parts)
+
+
+def _project_generic_row(row: dict) -> str:
+    """未列名域（如 accounts）的保底投影——不因缺表而印不出候選清單。"""
+    label = row.get("title") or row.get("name") or row.get("id") or "?"
+    return f"編號 {row.get('id', '?')}、{label}"
+
+
+_ROW_PROJECTORS: dict[str, Callable[[dict], str]] = {
+    "bills": _project_bill_row,
+    "contracts": _project_contract_row,
+    "estates": _project_estate_row,
+    "meters": _project_meter_row,
+    "repairs": _project_repair_row,
+}
+
+
+def _candidates_text(domain: str, query: Optional[str], rows: list) -> str:
+    q = query if query else "無"
+    lines = [f"查詢條件：{q}；符合 {len(rows)} 筆"
+             "（以下為可見清單，⛔ 不是使用者指定編號的資料）"]
+    projector = _ROW_PROJECTORS.get(domain, _project_generic_row)
+    lines.extend(projector(row) for row in rows)
+    lines.append("要取得某一筆的完整事實，請以 ref 指定該編號再查一次。")
+    return "\n".join(lines)
+
+
 def _ok_candidates(domain: str, tag: str, rows: list, cap: int,
-                    skip_refine: bool) -> dict[str, Any]:
+                    skip_refine: bool, query: Optional[str] = None) -> dict[str, Any]:
+    text = _candidates_text(domain, query, rows)
     return {
         "ok": True,
         "data": {"facts": "", "candidates": rows,
                  "candidate_cap": cap, "skip_refine": skip_refine},
-        "provenance": [{"source": f"jgb2:{domain}#{tag}", "text": "", "citable": True}],
-        "text_for_model": "",
+        "provenance": [{"source": f"jgb2:{domain}#{tag}", "text": text, "citable": True}],
+        "text_for_model": text,
     }
 
 
@@ -166,6 +252,9 @@ async def _resolve(
         rows = await (fetch_keyword or fetch_ref)(keyword)
         if not rows:
             return ("empty", [])
+        if len(rows) == 1:
+            # 收案 2：關鍵字命中恰一筆 ⇒ 不必再讓使用者從候選清單裡選，直接當單筆算。
+            return ("single", rows)
         if len(rows) <= cap:
             return ("candidates_all", rows)
         return ("candidates_more", rows[:cap])
@@ -178,7 +267,8 @@ async def _resolve(
 
 
 def _finish_generic(domain: str, tag_hint: str, builder: Callable[[dict, str], str],
-                    status: str, rows: list[dict[str, Any]], cap: int) -> dict[str, Any]:
+                    status: str, rows: list[dict[str, Any]], cap: int,
+                    query: Optional[str] = None) -> dict[str, Any]:
     if status == "empty":
         return _no_match()
     if status == "single":
@@ -187,7 +277,7 @@ def _finish_generic(domain: str, tag_hint: str, builder: Callable[[dict, str], s
         tag = str(row.get("id") or row.get("member_user_id") or tag_hint)
         return _ok_single(domain, tag, facts, cap)
     skip_refine = status == "candidates_all"
-    return _ok_candidates(domain, tag_hint, rows, cap, skip_refine)
+    return _ok_candidates(domain, tag_hint, rows, cap, skip_refine, query=query)
 
 
 # ── bills ───────────────────────────────────────────────────────────────────
@@ -218,7 +308,7 @@ async def query_bills(identity: Any, args: dict[str, Any]) -> dict[str, Any]:
     ref, keyword = args.get("ref"), args.get("keyword")
     status, rows = await _resolve(ref, keyword, cap, fetch_ref=fetch,
                                   fetch_keyword=fetch_keyword, fetch_default=fetch)
-    return _finish_generic("bills", face, builder, status, rows, cap)
+    return _finish_generic("bills", face, builder, status, rows, cap, query=ref or keyword)
 
 
 # ── contracts ────────────────────────────────────────────────────────────────
@@ -252,7 +342,7 @@ async def query_contracts(identity: Any, args: dict[str, Any]) -> dict[str, Any]
     ref, keyword = args.get("ref"), args.get("keyword")
     status, rows = await _resolve(ref, keyword, cap, fetch_ref=fetch_ref,
                                   fetch_keyword=fetch_keyword, fetch_default=fetch_default)
-    return _finish_generic("contracts", face, builder, status, rows, cap)
+    return _finish_generic("contracts", face, builder, status, rows, cap, query=ref or keyword)
 
 
 # ── meters ───────────────────────────────────────────────────────────────────
@@ -275,7 +365,7 @@ async def query_meters(identity: Any, args: dict[str, Any]) -> dict[str, Any]:
     cap = _candidate_cap()
     ref, keyword = args.get("ref"), args.get("keyword")
     status, rows = await _resolve(ref, keyword, cap, fetch_ref=fetch)
-    return _finish_generic("meters", face, builder, status, rows, cap)
+    return _finish_generic("meters", face, builder, status, rows, cap, query=ref or keyword)
 
 
 # ── accounts（成員候選 vs. 已知 user_id 直查權限，兩條路徑不共用 _resolve）──
@@ -317,8 +407,8 @@ async def query_accounts(identity: Any, args: dict[str, Any]) -> dict[str, Any]:
         if not rows:
             return _no_match()
         if len(rows) <= cap:
-            return _ok_candidates("accounts", face, rows, cap, True)
-        return _ok_candidates("accounts", face, rows[:cap], cap, False)
+            return _ok_candidates("accounts", face, rows, cap, True, query=keyword)
+        return _ok_candidates("accounts", face, rows[:cap], cap, False, query=keyword)
 
     # accounts 無預設列表（域映射表：ref／keyword 皆無 ⇒ NO_MATCH，僅 bills／contracts 例外）
     return _no_match()
@@ -355,8 +445,9 @@ async def query_estates(identity: Any, args: dict[str, Any]) -> dict[str, Any]:
     # 視為單筆直接算 facts，⛔ 不落入候選 cap 邏輯（那是給「多筆待縮小」用的）。
     sentinel = rows[0].get("found") is False
 
-    if ref or sentinel:
-        # ref 為 session slot 已確立值 → 單筆；sentinel 亦視為單筆（決定性說明零命中）。
+    if ref or sentinel or (keyword and len(rows) == 1):
+        # ref 為 session slot 已確立值 → 單筆；sentinel 亦視為單筆（決定性說明零命中）；
+        # 收案 2：keyword 命中恰一筆同樣不必再讓使用者從候選清單選，直接當單筆算。
         row = rows[0]
         estate_id = row.get("id")
         detail = None
@@ -370,8 +461,8 @@ async def query_estates(identity: Any, args: dict[str, Any]) -> dict[str, Any]:
 
     # keyword-only、非 sentinel：可能多筆待縮小，套候選 cap 邏輯（同其餘四域）。
     if len(rows) <= cap:
-        return _ok_candidates("estates", face, rows, cap, True)
-    return _ok_candidates("estates", face, rows[:cap], cap, False)
+        return _ok_candidates("estates", face, rows, cap, True, query=q)
+    return _ok_candidates("estates", face, rows[:cap], cap, False, query=q)
 
 
 # ── repairs（收案修正 5：新讀工具，pm 單證身分閘同 bills）───────────────────
@@ -382,6 +473,12 @@ _CLOSED_REPAIR_STATUSES: frozenset = frozenset({32, 64})
 
 async def query_repairs(identity: Any, args: dict[str, Any]) -> dict[str, Any]:
     face = args.get("face")
+    # 收案 6：分類樹是靜態參考資料（同分類設定，非個資、不分業者），
+    # `confirm.request` 驗 category_name 前模型要有地方查得到合法名稱——
+    # 同 `query_accounts` 對「登入排障」的既有 face-bypass 寫法。
+    if face == "修繕分類":
+        return _ok_single("repairs", "categories",
+                          build_repair_category_tree_facts(), _candidate_cap())
     builder = REPAIR_FACE_BUILDERS.get(face) if isinstance(face, str) else None
     if builder is None:
         return _invalid_input()
@@ -416,4 +513,4 @@ async def query_repairs(identity: Any, args: dict[str, Any]) -> dict[str, Any]:
     ref, keyword = args.get("ref"), args.get("keyword")
     status, rows = await _resolve(ref, keyword, cap, fetch_ref=fetch_ref,
                                   fetch_keyword=fetch_keyword, fetch_default=fetch_default)
-    return _finish_generic("repairs", face, builder, status, rows, cap)
+    return _finish_generic("repairs", face, builder, status, rows, cap, query=ref or keyword)

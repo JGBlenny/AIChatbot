@@ -55,6 +55,10 @@ def build_meter_facts(meter: dict, user_question: str = "") -> str:
                          "重新驗證廠商帳號密碼；另請確認設備電源與網路正常後等下一次同步。")
         else:
             lines.append("請確認設備電源與網路正常（可嘗試重啟設備），等下一次同步再確認。")
+        balance = meter.get("balance")
+        if meter.get("enable_topup") and balance is not None:
+            available = meter.get("available_meter")
+            lines.append(f"儲值餘額 {balance} 元、可用 {available} 度（系統存值，最後同步值）。")
         lines.append(f"若仍持續離線，請聯繫{vendor}處理，並提供電表名稱與所在物件資訊。")
         return "\n".join(lines)
 

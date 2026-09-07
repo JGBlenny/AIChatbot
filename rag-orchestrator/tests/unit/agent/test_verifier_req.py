@@ -276,6 +276,19 @@ def test_self_test_raises_when_expected_reason_drifts(verifier, tmp_path):
         verifier.self_test(tmp_path)
 
 
+def test_forbid_terms_cover_internal_identifier_names():
+    """收案 7b：`forbid_terms` 的「內部識別名」一類——系統欄位名／槽位鍵／英文
+    代碼／受眾代號不得出現在回覆裡（見 agent_rules.py 政策文【回覆用語】句）。"""
+    rules = VerifierRules.load(_RULES_PATH)
+    expected = {
+        "estate_ref", "bill_ref", "contract_ref", "repair_ref",
+        "estate_id", "bill_id", "contract_id", "repair_id",
+        "user_id", "role_id", "vendor_id", "session_id", "pending_id",
+        "facet_context", "trigger_facet_key", "target_user", "property_manager",
+    }
+    assert expected <= set(rules.forbid_terms)
+
+
 def test_assertion_terms_cover_the_product_capability_verbs_and_not_the_over_broad_ones():
     """r11 安全審 F-2：補的是**產品能力動詞**這個封閉子集；
     「有／是／已／將」刻意 OPEN（會把「您有幾間？」降成 fact，推高誤殺）。"""

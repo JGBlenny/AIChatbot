@@ -59,6 +59,8 @@ from typing import Any, Final, Optional, Tuple
 
 from services.agent.confirm_card import CONFIRM_ACTIONS, ConfirmCardError, render
 from services.agent.identity import Identity
+from services.agent.tools import jgb2 as jgb2_tools
+from services.agent.tools.action import _resolve_category
 from services.agent.tools.registry import ToolResult, ToolSpec
 
 # 三顆確認 quick reply 的穩定機器值——**沿用引擎的常數，⛔ 不在此另抄字面量**。
@@ -130,6 +132,8 @@ CONFIRM_SPEC: ToolSpec = {
         f"值只能是 {list(CONFIRM_ACTIONS)} 其中之一。"
         "使用者實際看到的確認卡由系統依 action 與 payload 產生，"
         "summary 只進紀錄、不會直接出示給使用者。"
+        "repair_create 的 category_name 必須是系統分類樹裡的大類或項目名稱；"
+        "先以 jgb2.query.repairs（face 修繕分類）或既有分類資料取得名稱。"
     ),
     "input_schema": {
         "type": "object",
@@ -247,6 +251,21 @@ SELECT 1
 _PENDING_ID_RE: Final = re.compile(r"^[0-9a-f]{16}$")
 
 
+async def _is_valid_repair_category(category_name: Any) -> bool:
+    """category_name 是否落在封閉分類樹內（父節點或葉節點皆可，收案 6）。
+
+    ⛔ 不另抄一份分類清單——與 `action.repair_create` 執行時的判定共用同一個
+    `_resolve_category`（父／葉皆合法命中）與同一個資料源
+    （`jgb2.action`/`get_repair_categories`），差別只在**時機**：這裡在出確認卡
+    「之前」擋，執行時那道閘仍在（雙保險，資料源同一份不會分岔）。
+    """
+    if not isinstance(category_name, str) or not category_name.strip():
+        return False
+    api = jgb2_tools._get_api()
+    tree = jgb2_tools._rows_of(await api.get_repair_categories())
+    return _resolve_category(tree, category_name) is not None
+
+
 async def confirm_request(
     identity: Identity,
     args: dict,
@@ -289,6 +308,11 @@ async def confirm_request(
     # DSP-038-2：`action` 必填、封閉值域；確認卡由程式依 action＋payload 決定性
     # 產出。⛔ 缺欄位／不認得的 action ⇒ `INVALID_INPUT`，不「盡力而為」印半張卡。
     action = payload.get("action")
+    # 收案 6：`repair_create` 的 `category_name` 必須落在封閉的修繕分類樹內
+    # （父節點或葉節點皆可）——⛔ 不模糊比對、不代選；render() 只驗形狀不驗值域，
+    # 這道閘必須在呼叫它之前。
+    if action == "repair_create" and not await _is_valid_repair_category(payload.get("category_name")):
+        return ToolResult(ok=False, error="INVALID_INPUT")
     try:
         card = render(action, payload)
     except ConfirmCardError:

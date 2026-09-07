@@ -173,9 +173,24 @@ def test_example_marker_planted_text_fails_positive_control():
 # §1.2-9：長度上限
 # ---------------------------------------------------------------------------
 def test_prospect_policy_length_and_ban_symbol_cap():
-    """上限來源：2026-09-07 附錄 A 實測 len()==1511、`⛔` 計數==8（Plan §1.2-9）。"""
-    assert len(agent_rules._POLICY_TEXT) <= 1511
+    """上限來源：2026-09-08 業主追加【回覆用語】句後的實測值（agent_rules.py
+    模組 docstring「2026-09-08 業主追加」段）；`⛔` 計數不變（新句不含 `⛔`）。"""
+    assert len(agent_rules._POLICY_TEXT) <= 1584
     assert agent_rules._POLICY_TEXT.count("⛔") <= 8
+
+
+# ---------------------------------------------------------------------------
+# 收案 7a：內部識別名不得外洩——政策文各加一句定義，不寫例子
+# ---------------------------------------------------------------------------
+def test_policy_texts_define_no_internal_identifier_leak():
+    expected = (
+        "回覆使用者時不得出現系統內部識別名（欄位名、槽位鍵、英文代碼、受眾代號）；"
+        "指涉物件、帳單、合約、修繕單、電錶時用名稱或編號。"
+    )
+    assert expected in agent_rules._POLICY_TEXT
+    assert expected in agent_rules._POLICY_TEXT_NON_PROSPECT
+    for marker in _EXAMPLE_MARKERS:
+        assert marker not in expected
 
 
 def test_persona_length_caps():

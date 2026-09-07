@@ -22,6 +22,11 @@ property_manager／tenant 不含【補問規則】、B 判準改為轉真人一�
 的回歸實測顯示提示詞越長，模型越傾向先轉人而不嘗試作答（見下方
 `_PERSONA_TEXT` 旁的歷史記錄），所以本檔刻意把上限釘在「這次審過的草稿」而
 非留空間繼續加長。
+
+⚠️ **2026-09-08 業主追加**：兩份政策文各加一句【回覆用語】定義（禁止內部識別名
+外洩，見七項收案任務項 7），把上限從 1,511 字**上調至實測新值**（`⛔` 計數不變，
+新句不含 `⛔`）——這是本檔第二次、也是唯一一次動這個上限，不是放棄「越長越傾向
+轉人」的結論，是這句話本身是業主明確要求的新鐵則，長度代價已知且接受。
 """
 from __future__ import annotations
 
@@ -103,7 +108,10 @@ _POLICY_TEXT = (
     "security（只在問客戶名單、報價數字、合約責任條款、法規遵循聲明、資安認證時落入）；敏感值一律 `kind=handoff`、"
     "`handoff_reason=sensitive_no_grounding`，⛔ 不要改講功能來迴避。\n"
     "- 需要轉真人時：`kind=handoff`、`fact_class` 填實際類別、`handoff_reason` 填 `sensitive_no_grounding`"
-    "（敏感五類）或 `no_grounding`（資料段與工具都查無）；`sentences` 留空即可，系統會換成固定的轉人句。"
+    "（敏感五類）或 `no_grounding`（資料段與工具都查無）；`sentences` 留空即可，系統會換成固定的轉人句。\n\n"
+    "【回覆用語】\n"
+    "- 回覆使用者時不得出現系統內部識別名（欄位名、槽位鍵、英文代碼、受眾代號）；"
+    "指涉物件、帳單、合約、修繕單、電錶時用名稱或編號。"
 )
 
 #: pm／tenant 版政策文（附錄 A「pm／tenant 版差異」，2026-09-07 定案）：
@@ -138,7 +146,10 @@ _POLICY_TEXT_NON_PROSPECT = (
     "- 需要轉真人時：`kind=handoff`、`fact_class` 填實際類別、`handoff_reason` 填 `sensitive_no_grounding`"
     "（敏感五類）或 `no_grounding`（資料段與工具都查無）；`sentences` 留空即可，系統會換成固定的轉人句。\n"
     "- `identity` 槽位由系統依入口填入、代表對方受眾，`identity_source=entry` 時不得再詢問對方身分；"
-    "`identity_detail` 只填角色子類，⛔ 不填姓名、公司名、聯絡方式。"
+    "`identity_detail` 只填角色子類，⛔ 不填姓名、公司名、聯絡方式。\n\n"
+    "【回覆用語】\n"
+    "- 回覆使用者時不得出現系統內部識別名（欄位名、槽位鍵、英文代碼、受眾代號）；"
+    "指涉物件、帳單、合約、修繕單、電錶時用名稱或編號。"
 )
 
 

@@ -213,3 +213,16 @@ def test_mapping_matches_production_labels(mt):
     assert resp["mapping"]["status"][8] == "待對帳"
     assert resp["mapping"]["invoice_status"][2] == "發票異常"
     assert resp["mapping"]["type"][2] == "點退"
+
+
+# ── 收案 3：`keyword` 過濾（`title LIKE '%kw%'`，W0b 重寫遺失後恢復）───────
+def test_keyword_filters_by_title_substring(mt):
+    resp = _run(mt.send("GET", BILLS, params={**ROLE, "keyword": "基隆獨立共生公寓雅房"}))
+    assert {r["id"] for r in resp["data"]} == {756248, 756242}
+
+
+def test_keyword_no_hit_on_title_returns_empty():
+    """正對照：字面不在任何 `title` 裡 ⇒ 空（證明上一條真的是過濾在跑，不是恆真）。"""
+    mt2 = JGBMockTransport(BillFixtureTable())
+    resp = _run(mt2.send("GET", BILLS, params={**ROLE, "keyword": "房租"}))
+    assert resp["data"] == []

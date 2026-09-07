@@ -411,7 +411,9 @@ async def test_repairs_keyword_matches_estate_title_or_reason(monkeypatch, fake_
         {"face": "__test_face__", "keyword": "信義區套房A"})
 
     assert result["ok"] is True
-    assert [r["id"] for r in result["data"]["candidates"]] == [3001]
+    # 收案 2：keyword 命中恰一筆 ⇒ 直接當單筆算 facts（不再落候選清單）。
+    assert result["data"]["candidates"] is None
+    assert result["data"]["facts"] == "x"
 
 
 async def test_repairs_no_ref_no_keyword_returns_open_ticket_default_list(
@@ -602,3 +604,81 @@ def test_audience_of_is_fail_closed_on_unknown_identity():
         resolved_audience=lambda: "")) == "tenant"                      # 回空字串
     assert jgb2._audience_of(_real_identity(
         target_user="property_manager")) == "property_manager"          # 正對照
+
+
+# ══════════════════════════════════════════════════════════════════════
+# 收案 1：候選結果要有文字（text_for_model／provenance[0].text 決定性列出候選）
+# ══════════════════════════════════════════════════════════════════════
+
+async def test_bills_candidates_text_lists_query_and_rows(monkeypatch, fake_api):
+    monkeypatch.setitem(jgb2.BILL_FACE_BUILDERS, "__test_face__", lambda r, q: "x")
+    rows = [
+        {"id": 756248, "title": "基隆獨立共生公寓雅房", "status": 2,
+         "date_expire": 20260901, "total": 7500},
+        {"id": 756242, "title": "基隆獨立共生公寓雅房", "status": 16,
+         "date_expire": 20260601, "total": 21500},
+    ]
+    _set_canned(fake_api, "get_bills", {"success": True, "data": rows})
+
+    result = await jgb2.query_bills(
+        _identity(role_id="1", user_id="9"),
+        {"face": "__test_face__", "keyword": "基隆獨立共生公寓雅房"})
+
+    text = result["text_for_model"]
+    assert "符合 2 筆" in text
+    assert "756248" in text and "756242" in text
+    assert text == result["provenance"][0]["text"]
+
+
+async def test_contracts_candidates_text_lists_rows(monkeypatch, fake_api):
+    monkeypatch.setitem(jgb2.CONTRACT_FACE_BUILDERS, "__test_face__", lambda r, q: "x")
+    rows = [{"id": 1, "title": "A約", "date_end": 20270101},
+            {"id": 2, "title": "B約", "date_end": 20270201}]
+    _set_canned(fake_api, "get_contracts", {"success": True, "data": rows})
+
+    result = await jgb2.query_contracts(
+        _identity(role_id="1", user_id="9"), {"face": "__test_face__", "keyword": "重慶北"})
+
+    text = result["text_for_model"]
+    assert "符合 2 筆" in text and "1" in text and "2" in text
+
+
+async def test_estates_candidates_text_lists_rows(monkeypatch, fake_api):
+    monkeypatch.setitem(jgb2.ESTATE_FACE_BUILDERS, "__test_face__", lambda e, d, q: "x")
+    rows = [{"id": 1, "title": "物件A", "status": 2}, {"id": 2, "title": "物件B", "status": 1}]
+    _set_canned(fake_api, "get_estate_status", {"success": True, "data": rows})
+
+    result = await jgb2.query_estates(
+        _identity(role_id="1", user_id="9"), {"face": "__test_face__", "keyword": "台北"})
+
+    text = result["text_for_model"]
+    assert "符合 2 筆" in text and "物件A" in text and "物件B" in text
+
+
+async def test_meters_candidates_text_lists_rows(monkeypatch, fake_api):
+    monkeypatch.setitem(jgb2.METER_FACE_BUILDERS, "__test_face__", lambda m, q: "x")
+    rows = [{"id": i, "name": f"電表{i}", "estate_name": "測試物件"} for i in range(6)]
+    _set_canned(fake_api, "get_meters", {"success": True, "data": rows})
+
+    result = await jgb2.query_meters(
+        _identity(role_id="1", user_id="9"), {"face": "__test_face__", "keyword": "電表"})
+
+    text = result["text_for_model"]
+    assert "符合 5 筆" in text  # over cap → 只列前 5 筆
+    assert "電表0" in text
+
+
+async def test_repairs_candidates_text_lists_rows(monkeypatch, fake_api):
+    monkeypatch.setitem(jgb2.REPAIR_FACE_BUILDERS, "__test_face__", lambda r, q: "x")
+    rows = [
+        {"id": 3001, "estate_title": "信義區套房A", "category_name": "電路", "status": 1},
+        {"id": 3002, "estate_title": "中山區雅房B", "category_name": "水路衛浴", "status": 2},
+    ]
+    _set_canned(fake_api, "get_repairs", {"success": True, "data": rows})
+
+    result = await jgb2.query_repairs(
+        _identity(role_id="1", user_id="9"), {"face": "__test_face__"})
+
+    text = result["text_for_model"]
+    assert "符合 2 筆" in text and "3001" in text and "3002" in text
+    assert "查詢條件：無" in text

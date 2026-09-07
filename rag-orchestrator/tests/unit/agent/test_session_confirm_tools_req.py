@@ -413,6 +413,48 @@ async def test_confirm_request_rejects_payload_without_valid_action():
     assert ok.ok is True
 
 
+#: 收案 6：`repair_create` payload——分類名稱可換父／葉節點測 category_name 驗證。
+def _repair_confirm_payload(**over) -> dict:
+    base = {
+        "action": "repair_create",
+        "estate_name": "信義區套房A",
+        "category_name": "家電維修",
+        "description": "冷氣不冷",
+        "emergency_status": 1,
+    }
+    base.update(over)
+    return base
+
+
+@pytest.mark.req(_REQ)
+async def test_confirm_request_rejects_repair_create_with_category_outside_tree():
+    """收案 6：`category_name` 不在系統分類樹裡 ⇒ 出卡前就擋，⛔ 不模糊比對。"""
+    pool = _confirm_pool()
+    result = await confirm_request(
+        _identity(),
+        {"summary": "要建修繕單嗎？",
+         "payload": json.dumps(_repair_confirm_payload(category_name="熱水器"))},
+        db_pool=pool,
+    )
+    assert result.ok is False and result.error == "INVALID_INPUT"
+    pool.execute.assert_not_awaited()
+
+
+@pytest.mark.req(_REQ)
+async def test_confirm_request_accepts_repair_create_with_parent_or_leaf_category():
+    """正對照：父節點（家電維修）與葉節點（電熱水器）皆合法命中 ⇒ 正常出卡。"""
+    for category in ("家電維修", "電熱水器"):
+        pool = _confirm_pool()
+        result = await confirm_request(
+            _identity(),
+            {"summary": "要建修繕單嗎？",
+             "payload": json.dumps(_repair_confirm_payload(category_name=category))},
+            db_pool=pool,
+        )
+        assert result.ok is True, (category, result)
+        assert category in result.data["card"]
+
+
 @pytest.mark.req(_REQ)
 def test_confirm_action_enum_is_closed_and_documented_to_the_model():
     """值域封閉，且**逐字寫進工具 description**——`payload` 是 JSON 字串，

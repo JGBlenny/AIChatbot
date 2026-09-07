@@ -1176,5 +1176,40 @@
       }
     },
     "handoff": null
+  },
+  {
+    "id": "forbidden_term_internal_identifier",
+    "nonce": "FIXTURE0000000000",
+    "note": "收案 7b：內部識別名（estate_ref）不得出現在回覆——與 forbidden_term 案共用同一拒因，測的是新加的一類詞表",
+    "expected_reason": "FORBIDDEN_TERM",
+    "user_message": "這間房子的狀態是什麼？",
+    "agent_output": {
+      "kind": "answer",
+      "sentences": [
+        {
+          "text": "物件 estate_ref=9002 目前狀態為刊登中。",
+          "kind": "fact",
+          "refs": [
+            "[FIXTURE0000000000:t1:kb:9002§0]"
+          ]
+        }
+      ],
+      "fact_class": "feature",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "t1": {
+        "ok": true,
+        "provenance": [
+          {
+            "source": "kb:9002",
+            "text": "物件 estate_ref=9002 目前狀態為刊登中。",
+            "citable": true
+          }
+        ],
+        "text_for_model": ""
+      }
+    },
+    "handoff": null
   }
 ]
