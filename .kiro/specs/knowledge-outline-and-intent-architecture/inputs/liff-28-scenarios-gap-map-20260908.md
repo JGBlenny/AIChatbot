@@ -1,4 +1,4 @@
-# LIFF 線③④⑤ 28 情境 → AIChatbot 能力缺口表（2026-09-08，scout 盤查；排程時逐條核）
+# LIFF 線③④⑤ 28 情境 → AIChatbot 能力缺口表（2026-09-08，scout 盤查；**R10 後承接入口改為 `/mcp`，本表舊鏈落點僅供對照；G1 作廢**）
 
 > 來源：line-bot `docs/chatai-repair-capture-spec.md`（③ A–Q，驗收 17）、`docs/chatai-digest-followup-spec.md`（⑤ A–K＋④ 催繳，驗收 12）。入口＝REST 面向（`trigger_facet_key`＋`facet_context`），⛔ 不是 demo 的 `/mcp`。**28 個中 0 個以其入口實跑過**（demo 收案時未對，業主 2026-09-08 指正）。
 
@@ -39,7 +39,7 @@
 
 | # | 類 | 情境 | 落點 |
 |---|---|---|---|
-| G1 | **`facet_context` 進場欄位**（estate_id／bill_id／contract_id／meter_id／repair_id） | ③M、⑤A／E／I、③N | `routers/chat.py` `VendorChatRequest`＋面向進場 |
+| ~~G1~~ | ~~`facet_context` 進場欄位~~ **作廢（R10-b：清單點選以文字帶編號／名稱送入 `agent.turn`）** | ③M、⑤A／E／I、③N 以文字進場即為真實入口 | — |
 | G2 | **業務身分進場被租約查詢擋** | ③A、③K | `repair_prefill.get_tenant_contracts` 改為可缺 |
 | G3 | **會話過期訊號** `session_expired` | ③H、⑤H | `form_manager`／回應形狀 |
 | G4 | **缺面向／動作**：修繕進度（⑤F）、未結單判定（③N）、兩問題（③P，待裁） | 舊鏈面向 |

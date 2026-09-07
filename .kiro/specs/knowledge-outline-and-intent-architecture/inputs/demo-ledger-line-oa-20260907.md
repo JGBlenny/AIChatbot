@@ -53,6 +53,7 @@
 | R8（改） | **業主「我看不出不停掉 r2 的理由」⇒ r3 為正式組態（demo 與上線）**：Verifier 引用類判定（UNCITED_ASSERTION／QUOTE_NOT_COVERING／POLARITY_MISMATCH／SCHEMA／SOURCE_NOT_CITABLE）**只記錄不擋**；機敏類（SENSITIVE_TOPIC、導流／個資 `_verify_routes`）**照擋**；拒兩次轉人只對機敏類生效。落地＝正式參數 `AGENT_VERIFIER_MODE=grounding_observe`（預設），取代實驗開關 `AGENT_VERIFIER_OBSERVE_ONLY`（拿掉「只能配替身」限制）；健檢顯示模式；絆線＝觀察紀錄中「若擋會擋且屬真該擋」計數，是日後重開引用類的唯一依據。DSP-039 新尺降為**備援**（不排程、不啟用） | W6-b3（security-executor，runtime／verifier；排在 W1a–W3 之後）；帳本 §1c 絆線計數 |
 | R9 | **開 W7 語音進場，先用 `gpt-4o-mini-transcribe`**（$0.003／分；帳號實列模型無 `gpt-5-mini-transcribe`；`gpt-transcribe` $0.0045 留待 20 則實測比繁中錯字率） | Plan W7：白名單只收 relay 簽章 URL、≤3 段／60 秒／5 MB、音訊不落地；`agent.turn` 加 `audio_urls`、回應加 `transcript`；`STT_PROVIDER` 可切本地 |
 | R10 | **LIFF 線（③④⑤）只提供入口與配合回應，能力全在 AIChatbot 經 `/mcp`**（業主 2026-09-08「這是有的共識」）；舊鏈 REST 面向的 G1–G6 缺口⛔ 不做 | Plan **W8**：`agent.turn` 加 `facet_context`／`image_urls`、`dunning.draft` 工具、`session_expired` 訊號、出卡前未結單提示；line-bot 30 個驗收案例改經 `/mcp` 實跑；缺口表 `liff-28-scenarios-gap-map-20260908.md` 改為「MCP 對照」 |
+| R10-b | **點清單那一筆也是以文字送進 `agent.turn`**（帶編號／物件名的一句話），⛔ 不需 `facet_context` 結構欄位 | W8 (1) 移除；劇本「帶編號進場」＝真實入口非模擬；缺口 G1 作廢 |
 
 **16 回合最終實跑（最終起法、D-BLOCK-2 修後、預設 rewrites；`run_final4.jsonl`）：12／16 符合期望、0 不安全、4 題「該答卻轉人」（S1#3 滯納金、S1#5「好了」收尾、S2#2 照片拍不清楚、S5#2 續約意願）——同題不同輪結果不同（單獨探針 S1#3 會答、上一輪 S5#2 答「JGB 無此欄」），屬答案層穩定度，非機制。**
 
