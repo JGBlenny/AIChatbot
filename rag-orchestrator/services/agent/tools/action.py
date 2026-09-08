@@ -31,7 +31,13 @@ import logging
 from datetime import date
 from typing import Any, Final, Optional
 
-from services.agent.confirm_card import ConfirmCardError, render
+from services.agent.confirm_card import (
+    DEFAULT_CATEGORY_NAME,
+    ConfirmCardError,
+    category_name_of,
+    emergency_status_of,
+    render,
+)
 from services.agent.identity import Identity
 from services.agent.tools import jgb2 as jgb2_tools
 from services.agent.tools.registry import ToolResult, ToolSpec
@@ -107,13 +113,14 @@ REPAIR_CREATE_SPEC: ToolSpec = _action_spec(
     "要發動它，必須先用 confirm.request 出示確認，payload 的 action 填 repair_create。"
     "payload 欄位定義："
     "estate_name＝業務口述的物件名稱，照原話填入，由系統比對；⛔ 不要為了核對名稱反問業務；"
-    "category_name＝修繕分類名稱，取自系統的修繕分類樹，"
-    "分類樹涵蓋不到時可以填該分類的上層大類，⛔ 不得自行編造分類名稱；"
+    "category_name＝修繕分類名稱（選填）：業務有講分類才照講的填、取自系統的修繕分類樹，"
+    "分類樹涵蓋不到時填該分類的上層大類；業務沒講就不要填，系統會歸到「其他」，"
+    "⛔ 不得為了分類反問業務、⛔ 不得自行編造分類名稱；"
     "description＝問題描述，允許是空字串，但這個欄位一定要存在；"
     "使用者沒有描述就填空字串，⛔ 不要為了補描述反問或代寫；"
-    "emergency_status＝急迫程度的系統值，是內部值、⛔ 不得對業務顯示數字："
-    "業務說緊急填 2，其餘一律填 1；⛔ 不要為了問急迫程度延後出示確認或反問。"
-    "四個欄位都必填。",
+    "emergency_status＝急迫程度的系統值（選填），是內部值、⛔ 不得對業務顯示數字："
+    "業務說緊急才填 2，其餘不填（系統以非緊急建單）；⛔ 不要為了問急迫程度延後出示確認或反問。"
+    "estate_name 與 description 必填（description 可為空字串），其餘兩欄缺值由系統補。",
 )
 
 
@@ -298,9 +305,10 @@ async def repair_create(identity: Identity, args: dict) -> ToolResult:
     if payload is None:
         return _invalid_input()
     estate_name = str(payload["estate_name"]).strip()
-    category_name = str(payload["category_name"]).strip()
+    # delta4：分類缺值 ⇒ 歸「其他」大類（依名稱在分類樹裡解，⛔ 不寫死 id）；急迫缺值 ⇒ 非緊急。
+    category_name = category_name_of(payload) or DEFAULT_CATEGORY_NAME
     description = str(payload["description"])
-    emergency_status = payload["emergency_status"]
+    emergency_status = emergency_status_of(payload)
 
     role_id, user_id = _identity_pair(identity)
     if not role_id or not user_id:

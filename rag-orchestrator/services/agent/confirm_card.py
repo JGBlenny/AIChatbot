@@ -32,7 +32,7 @@
 from __future__ import annotations
 
 from datetime import date, timedelta
-from typing import Any, Final, Mapping, Tuple
+from typing import Any, Final, Mapping, Tuple, Optional
 
 #: `payload.action` 的**封閉值域**（DSP-038-2）。⛔ 不在此之外接受任何 action——
 #: 沒有 render 分支的 action 等於「使用者看到的卡由誰決定」沒有答案。
@@ -44,6 +44,38 @@ _EMERGENCY_ZH: Final[dict[int, str]] = {1: "非緊急", 2: "緊急"}
 
 #: 描述留空時卡上顯示的字（⛔ 不是推測出來的內容，是「這一欄使用者沒填」的明示）。
 EMPTY_DESCRIPTION_ZH: Final[str] = "（未填寫）"
+
+#: delta4（業主 2026-09-08「delta4 採」）：分類與急迫**缺值由程式補、模型不反問**。
+#: 分類缺值 ⇒ 歸到分類樹的「其他」大類（`DEFAULT_CATEGORY_NAME`，`repair_create` 依名稱在
+#: 分類樹裡解出 id，⛔ 不寫死 id）；卡上明示「（未指定，歸其他）」，⛔ 不假裝是使用者選的。
+#: 急迫缺值 ⇒ `DEFAULT_EMERGENCY_STATUS`＝1（非緊急；正本 A/repair-ticket-urgency-judgment）。
+#: 「缺值」＝鍵不存在、`None`、或去空白後為空字串——三者對這兩欄同義（與 `description`
+#: 「鍵必須存在」的紀律不同：那一欄的空字串是使用者的內容，這兩欄的空值是「交給系統」）。
+DEFAULT_CATEGORY_NAME: Final[str] = "其他"
+UNSPECIFIED_CATEGORY_ZH: Final[str] = f"{DEFAULT_CATEGORY_NAME}（未指定，歸其他）"
+DEFAULT_EMERGENCY_STATUS: Final[int] = 1
+
+
+def category_name_of(payload: Mapping[str, Any]) -> Optional[str]:
+    """payload 裡的分類名稱；缺值（無鍵／None／空白）⇒ `None`＝交給系統歸「其他」。"""
+    value = payload.get("category_name")
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        raise ConfirmCardError("repair_create: 欄位 'category_name' 必須是字串或不填")
+    return value.strip() or None
+
+
+def emergency_status_of(payload: Mapping[str, Any]) -> int:
+    """payload 裡的急迫值；缺值 ⇒ `DEFAULT_EMERGENCY_STATUS`；給了就必須在值域內。"""
+    value = payload.get("emergency_status")
+    if value is None or (isinstance(value, str) and not value.strip()):
+        return DEFAULT_EMERGENCY_STATUS
+    if isinstance(value, bool) or value not in _EMERGENCY_ZH:
+        raise ConfirmCardError(
+            "repair_create: 欄位 'emergency_status' 必須是 1（非緊急）或 2（緊急）或不填"
+        )
+    return int(value)
 
 #: 每張卡的收尾句。⛔ 不在此複述三顆按鈕的文案——按鈕 label 的唯一來源是
 #: `conversational_engine._DEFAULT_QR_LABELS`（`confirm.confirm_quick_replies` 取用），
@@ -150,19 +182,15 @@ def _render_repair_create(payload: Mapping[str, Any]) -> str:
     action = "repair_create"
     estate = _require_text(payload, "estate_name", action)
     # 分類**允許父節點**（line-bot 線③：分類樹涵蓋不到時退回大類，
-    # ⛔ 不編一個不存在的葉節點）——本檔只要求它是非空字串，
-    # ⛔ 不在此驗它是不是葉節點。
-    category = _require_text(payload, "category_name", action)
+    # ⛔ 不編一個不存在的葉節點）；**允許缺值**（delta4）⇒ 卡上明示歸「其他」。
+    # 本檔不驗它是不是分類樹裡的節點——那是 `repair_create` 範圍讀的事。
+    category = category_name_of(payload) or UNSPECIFIED_CATEGORY_ZH
     # 描述**允許空字串**，但鍵必須存在：「沒填」與「忘了帶這個欄位」是兩件事，
     # 後者代表呼叫端的 payload 形狀有問題，⛔ 不得靜默當成前者。
     description = _require(payload, "description", action)
     if not isinstance(description, str):
         raise ConfirmCardError(f"{action}: 欄位 'description' 必須是字串（可為空字串）")
-    emergency = _require(payload, "emergency_status", action)
-    if isinstance(emergency, bool) or emergency not in _EMERGENCY_ZH:
-        raise ConfirmCardError(
-            "repair_create: 欄位 'emergency_status' 必須是 1（非緊急）或 2（緊急）"
-        )
+    emergency = emergency_status_of(payload)   # 缺值 ⇒ 非緊急（delta4）
     return _lines_to_card(
         "即將建立修繕單，請確認：",
         [

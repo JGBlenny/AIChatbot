@@ -315,6 +315,33 @@ async def test_repair_create_accepts_parent_category_and_empty_description(api):
 
 
 @pytest.mark.req(_REQ)
+async def test_repair_create_fills_missing_category_and_urgency(api):
+    """delta4（業主 2026-09-08 採）：分類缺值 ⇒ 歸分類樹的「其他」大類（依名稱解、item 未指定）；
+    急迫缺值 ⇒ 1（非緊急）。⛔ 不寫死 id——分類樹是替身資料。"""
+    reg = _registry(_Calls(ok=True))
+    payload = _repair_payload()
+    del payload["category_name"]
+    del payload["emergency_status"]
+    before = _repair_count(api)
+    result = await _call(reg, action_tools.REPAIR_CREATE_NAME, payload)
+    assert result.ok is True, result
+    row = api._mock_transport.repair_fixtures.by_id(int(result.data["receipt"]["repair_id"]))
+    from services.jgb.repair_fixtures import repair_categories
+    other_ids = [c["id"] for c in repair_categories() if c.get("name") == "其他"]
+    assert other_ids, "分類樹找不到「其他」大類（delta4 的落點不存在）"
+    assert row["category_id"] == other_ids[0] and row["item_id"] is None
+    assert row["emergency_status"] == 1
+    assert _repair_count(api) == before + 1
+    # 正對照：有給分類就照給的（父節點測試另有覆蓋），給 2 就是 2
+    # ⚠️ 換 token：同 token＝冪等重送會回第一張單（test_same_token_twice_creates_only_one_repair）
+    result2 = await _call(reg, action_tools.REPAIR_CREATE_NAME,
+                          _repair_payload(emergency_status=2), token="tok-delta4-2")
+    assert result2.ok is True, result2
+    row2 = api._mock_transport.repair_fixtures.by_id(int(result2.data["receipt"]["repair_id"]))
+    assert row2["emergency_status"] == 2
+
+
+@pytest.mark.req(_REQ)
 async def test_receipt_id_is_shape_safe(api):
     """receipt 的識別碼必須過 `confirm_card.receipt_id_of` 的形狀閘
     （否則回覆句會靜默省掉單號）。"""

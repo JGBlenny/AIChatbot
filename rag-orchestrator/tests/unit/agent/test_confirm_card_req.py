@@ -11,6 +11,7 @@ from services.agent.confirm_card import (
     CARD_FOOTER,
     CONFIRM_ACTIONS,
     EMPTY_DESCRIPTION_ZH,
+    UNSPECIFIED_CATEGORY_ZH,
     ACTION_FAILED_TEXT,
     ConfirmCardError,
     receipt_id_of,
@@ -122,11 +123,28 @@ def test_bill_missing_any_field_raises(missing):
 
 
 @pytest.mark.req(_REQ)
-@pytest.mark.parametrize("missing", sorted(set(_REPAIR) - {"action"}))
-def test_repair_missing_any_field_raises(missing):
+@pytest.mark.parametrize("missing", ["estate_name", "description"])
+def test_repair_missing_required_field_raises(missing):
+    """物件與描述仍是硬必填（描述可空字串但鍵必須在）。"""
     payload = {k: v for k, v in _REPAIR.items() if k != missing}
     with pytest.raises(ConfirmCardError):
         render("repair_create", payload)
+
+
+@pytest.mark.req(_REQ)
+def test_repair_missing_category_and_urgency_are_filled_by_program():
+    """delta4（業主 2026-09-08）：分類與急迫**缺值由程式補、模型不反問**——
+    無鍵／None／空白三者同義：分類卡上明示歸「其他」、急迫＝非緊急。"""
+    base = {k: v for k, v in _REPAIR.items() if k not in ("category_name", "emergency_status")}
+    card = render("repair_create", base)
+    assert f"・修繕分類：{UNSPECIFIED_CATEGORY_ZH}" in card
+    assert "・急迫程度：非緊急" in card
+    for variant in ({"category_name": None, "emergency_status": None},
+                    {"category_name": "  ", "emergency_status": ""}):
+        assert render("repair_create", {**base, **variant}) == card, variant
+    # 正對照：有給就照給的（同 payload 同卡的紀律不變）
+    assert "・修繕分類：水電" in render("repair_create", _REPAIR)
+    assert "・急迫程度：緊急" in render("repair_create", _REPAIR)
 
 
 @pytest.mark.req(_REQ)
@@ -158,7 +176,9 @@ def test_bill_bad_field_shapes_raise(bad):
 
 @pytest.mark.req(_REQ)
 def test_repair_rejects_out_of_range_emergency_status():
-    for bad in (0, 3, "2", True, None):
+    # ⚠️ `None` 不在這裡：delta4 起 None／空白＝缺值 ⇒ 由程式補 1（見
+    #    test_repair_missing_category_and_urgency_are_filled_by_program）；字串 "2" 仍拒。
+    for bad in (0, 3, "2", True):
         with pytest.raises(ConfirmCardError):
             render("repair_create", {**_REPAIR, "emergency_status": bad})
 
