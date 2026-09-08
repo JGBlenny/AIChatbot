@@ -56,6 +56,32 @@ server {
         proxy_set_header Authorization $http_authorization;
     }
 
+    # MCP 門面（2026-09-08，LINE bot 串接）：/rag-api/mcp -> 後端 /mcp
+    # ⚠️ 不能走下面 /rag-api/ 的 rewrite（它把 /rag-api/(.*) 改成 /api/$1，/mcp 掛在根、不在 /api 下 ⇒ 404）。
+    #   最長前綴優先：此 location 先於 /rag-api/ 命中。呼叫端一律自帶 X-API-Key（map 原樣沿用），
+    #   auth_request 與 /rag-api/ 相同（API 金鑰呼叫者放行）。MCP streamable HTTP 需 HTTP/1.1 與不緩衝。
+    location /rag-api/mcp {
+        auth_request /_admin_auth;
+
+        set $rag_api http://rag-orchestrator:8100;
+        rewrite ^/rag-api/mcp(.*)$ /mcp$1 break;
+        proxy_pass $rag_api;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-API-Key $rag_api_key;
+
+        proxy_buffering off;
+        proxy_cache off;
+        chunked_transfer_encoding off;
+        proxy_connect_timeout 300s;
+        proxy_send_timeout 300s;
+        proxy_read_timeout 300s;
+    }
+
     # RAG Orchestrator API 代理 (Phase 1: Multi-Vendor)
     # 前端請求 /rag-api/v1/xxx -> 後端 /api/v1/xxx
     # 2026-07-22：RAG_API_AUTH_ENFORCE 上線後補的管理後台通道——
