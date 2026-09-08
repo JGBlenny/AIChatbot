@@ -4,6 +4,7 @@
 - MCP（streamable HTTP）：`POST https://chatai.jgbsmart.com/rag-api/mcp`（方法 `tools/list`、`tools/call`）
 - 伺服器對伺服器。⛔ 不要送 `Origin` header（送了必須在白名單內，否則 403）。
 - 無 key 或 key 錯 ⇒ HTTP 401 `{"detail":"Invalid or missing API key"}`。
+- 無 key ⇒ nginx 403；key 錯 ⇒ 401。**MCP 協定要先 `initialize`**（回 200＋`mcp-session-id` header，之後每個請求帶 `Mcp-Session-Id`）；直接打 `tools/list` 會回 400「Missing session ID」，那是協定不是路由問題。（2026-09-08 晚：`/rag-api/mcp` 曾 404，nginx 已加直通 location，已驗通。）
 
 ## Header（每個請求都帶）
 ```
