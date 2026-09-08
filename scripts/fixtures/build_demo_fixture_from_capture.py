@@ -350,7 +350,8 @@ def build_all_bills(capture: "dict[str, Any]") -> "list[dict[str, Any]]":
 
 
 def build_all_contracts(capture: "dict[str, Any]") -> "list[dict[str, Any]]":
-    """`contracts_by_ids` 的 8 筆真實合約列——只遮罩 `to_user_*` 三個個資欄，
+    """`contracts_by_ids` 的真實合約列（2026-09-09 起＝`status-overview` 以 `user_id` 圈定後、
+    `estate_id` 落在本 role 物件集的列；8 → 27）——只遮罩 `to_user_*` 三個個資欄，
     其餘（含 `status`／`bit_status`／`date_start`／`date_end`／`estate_id`／
     `title`／`address`）原樣保留真實值。"""
     out = []

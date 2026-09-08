@@ -100,7 +100,8 @@ def test_demo_fixture_visibility_is_12291_only(demo_fixture):
 def test_demo_fixture_counts(demo_fixture):
     assert len(demo_fixture["bills"]) == 61
     assert len(demo_fixture["repairs"]) == 119
-    assert len(demo_fixture["contracts"]) == 8
+    # 2026-09-09：status-overview 以 user_id 圈定後取 27 筆（原 8 筆＝帳單引用）
+    assert len(demo_fixture["contracts"]) == 27
     assert len(demo_fixture["estates"]) >= 46
     assert len(demo_fixture["meters"]) == 7
 
