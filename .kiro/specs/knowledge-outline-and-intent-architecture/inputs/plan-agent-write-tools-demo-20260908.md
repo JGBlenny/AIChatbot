@@ -211,3 +211,20 @@
 兩條皆已改字；業主 2026-09-08「等你指示再開下一輪?」⇒ 開 r4（業主指示續審）：**READY**。W8 (1)(3)(5) 開工前置只剩：DSP-042 業主裁（§0b 三件）→ W-D 落檔 → security-executor。(2) image_urls 仍待 security-reviewer 專審；(4) dunning 序列化在後。
 
 **W8 (1)(3)(5) 完成（2026-09-08）**：DSP-042 裁＋W-D `ace24b46` → security-executor 交件 `b86e7fde`（第一次派工停擺 600 s 重派）→ verifier **CONFIRMED**（unit 1341／integration 35／audit 只紅不變量 3；A1–A4 見帳本 §1h）→ 後續修正 `3bf28e79`（未知 pid 固定句，實跑 L3-H 發現）→ 窄範圍 verifier r2。取捨（執行者列）：unit 檔名 `test_select_entry_unit_req.py`（basename 撞 integration）；`slot_written` 進快照白名單 18→21；`_verify_routes` 缺席 fail-closed；缺 `user_id` 記 violation 交下游閘；hint 張數受 `JGB2_CANDIDATE_CAP`；ref id 進 dialog 摘要不進 trace。剩：(2) image_urls（security-reviewer 專審 → security-executor）、(4) dunning.draft（executor，序列化在後）。
+
+## 16. 切片 L15：答案層會話邊界三分（業主 2026-09-08「先做 L15」；帳本 §1h／§3 L15）
+
+**結果**：line-bot 線⑤ L5-C／L5-J／L5-A／L5-K 四案改判「答到／正確處理」，W6 36 回合與 R-讀 20 回合不退；線③ 12/12 出卡不退。
+
+**三件，各自一層，⛔ 不寫例子只寫定義**：
+
+| # | 病灶 | 層 | 做法 | 驗收（正對照） |
+|---|---|---|---|---|
+| (a) 別戶邊界 | 由清單進場（`select:` 命中）後問別戶，模型整包回答（L5-C）；正本 C/followup-session-single-item-boundary：清單進場只看那一戶、問別戶退出並指路；聊天直接進場可切換（⛔ 不動） | **程式判定，⛔ 不交模型**（`feedback_no_llm_mechanical_decode`）：戶＝`estate_id` 等值（bills／contracts／repairs 列都有 `estate_id`，封閉集合） | ① `tools/jgb2.py` `_ok_single` 的 `data` 加 `scope: {estate_id: <row.estate_id 或 None>}`（bills／contracts／repairs 三域；estates／meters 不加，None）；② `runtime.py` `_run_select_segment` 命中時存 `agent_state["select_scope"] = {type, estate_id}`（`estate_id` None ⇒ 不存、不設限）；③ 模型迴圈每次 `jgb2.query.*` 工具回傳後，程式比對 `data.scope.estate_id`：有 `select_scope` 且回傳 `estate_id` 非 None 且 ≠ scope ⇒ **該回合立即結束**於固定句 `SCOPE_EXIT_TEXT`（受眾固定句，pm：「這個對話只看你點選的那一戶；要查別戶請回清單點那一戶。」）、`kind=answer`、trace 記 `scope_exit=true`＋`violations+=["select_scope_exit"]`、⛔ 該筆 facts 不進 dialog／不回模型；同戶（等值）或回傳無 `estate_id`（候選清單、estates／meters）⇒ 照常。④ 換一筆 `select:` ⇒ scope 覆蓋（既有作廢邏輯不變）；會話過期 ⇒ scope 隨舊列消失。⛔ 不改 canon、不改契約（line-bot 零改動） | unit `tests/unit/agent/test_select_scope_req.py`：(i) select bill A（estate E1）→ 模型查 bill B（estate E2）⇒ 固定句、facts 不在 answer／dialog、trace `scope_exit`；正對照＝查同戶 contract（E1）⇒ 正常答；(ii) 聊天進場（無 select）查 E2 ⇒ 正常答（正本「可切換」）；(iii) 回傳無 estate_id（候選清單）⇒ 不觸發；(iv) 再 select bill B ⇒ scope 改 E2、查 E1 ⇒ 固定句；`_ok_single` 三域 `scope.estate_id` 等於列值、estates 為 None |
+| (b) 同戶跨類指路 | 一句兩題（帳單＋合約）答了帳單就反問或漏（L5-K）；合約以帳單編號當 keyword 查不到 | 契約層（工具描述＝定義）＋規則層（定義句） | ① `mcp_facade._jgb2_spec` description 依域補一句定義：contracts「keyword 是物件名稱或承租人名；帳單編號查不到合約，同戶合約先用該帳單的物件名稱查」；bills「keyword 是物件名稱」（其餘域不動）；② `agent_rules._POLICY_TEXT_NON_PROSPECT`【判準】加一條：「一句多題：能查到的先答完，查不到的那一題明說查不到並指路，⛔ 不因一題查不到而整句反問」 | unit：description 含該句（契約守測）；規則文本含該句；L5-K 實跑答到合約到期日；W6「一句兩意圖」既有案不退 |
+| (c) 自述數字以現查為準 | 「清單寫 12 天」被反問（L5-J，原始輪照抄） | 規則層（定義句） | `_POLICY_TEXT_NON_PROSPECT`【判準】加一條：「使用者自述的數字（清單上看到的天數、金額、日期）不是查詢條件也不是答案；一律以工具現查為準，不一致時明講兩者」 | unit 規則文本含該句；L5-J 實跑算出 78 天並明講與 12 天不一致；`known_fabrications` 不退 |
+
+**範圍（檔案）**：`services/agent/tools/jgb2.py`（`_ok_single` scope）、`services/agent/runtime.py`（`select_scope`、迴圈後比對、`SCOPE_EXIT_TEXT` 取受眾固定句）、`services/agent/agent_rules.py`（兩定義句）、`services/agent/mcp_facade.py`（兩域 description）、受眾固定句所在檔（`conversational_engine` 的固定句表或 `agent_rules`，以現況為準）、新 `tests/unit/agent/test_select_scope_req.py`、既有 rules／spec 守測。
+**非目標**：聊天進場的別戶限制（正本說可切換）；tenant；模型判「同戶」。
+**擁有者**：(a) security-executor（跨戶資料邊界）；(b)(c) 同一交付（同檔 `runtime.py`／`mcp_facade.py` 單一擁有者）。
+**回退**：移除 `select_scope` 存取與比對段即回退；description／規則句為文字。**預算**：security-reviewer 1、plan-verifier ≤2、security-executor ≤2 次交付、verifier 1。**停止**：(a) 若必須讓模型判戶才能達成 ⇒ 停下交裁；L5-C 仍答別戶且 (a) 已落地 ⇒ 查 `estate_id` 來源而非放寬。
