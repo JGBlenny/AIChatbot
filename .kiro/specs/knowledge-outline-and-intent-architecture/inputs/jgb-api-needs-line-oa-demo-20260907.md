@@ -59,6 +59,8 @@ AIChatbot 側對應：`jgb2.action.bill_due_extend`（`{payload, confirmation_to
 - 請 JGB：`ContractApiController@index` 依 `role_id`（owner／管理 role）圈定，同 `BillApiController@index` 的 `owner_role_id` 做法；`contract_ids` 參數保留。查證：jgb2 `rg -n "role_id" app/Http/Controllers/External/ContractApiController.php`（scout 2026-09-08 讀該檔未見 role 過濾，正對照＝`BillApiController` 有 `where('owner_role_id', $roleId)`）。
 - AIChatbot 端過渡：`get_contracts` 只在 `contract_ids`（由本 role 帳單引用）或 `keyword` 時呼叫；上線真 API 前加「回列 `estate_id` 不在本 role 物件集合即丟棄」的客戶端保險（列 §3 L16）。
 
+**⚠️ 更正（2026-09-09 線上實查）**：同一支端點改帶 **`user_id=12291`**（不帶 `viewer_user_id`）⇒ `pagination.total=28`、單頁；28 筆中 27 筆 `estate_id` 落在本 role 83 個物件（46 真＋37 最小列）內，帳單引用的 8 筆全在其中（正對照）。結論：**圈定是有的，但鍵是 `user_id`（成員觀看者身分，對應 jgb2 `Contract::queryThisUser`），不是 `role_id` 也不是 `viewer_user_id`**；B′7 由「無圈定」改判為「**AIChatbot 客戶端沒送對鍵**」——`jgb2.query.contracts` 目前只送 `role_id`＋`viewer_user_id`（`grep -n "get_contracts(role_id=role_id, viewer_user_id=user_id)" rag-orchestrator/services/agent/tools/jgb2.py`），真 API 下仍會撈平台全量。修法（通用、客戶端）：`get_contracts` 與 `get_bills` 同形，`user_id` 一律轉送；L16 的「回列 `estate_id` 不在本 role 物件集即丟棄」保險仍保留。請 JGB 確認 `status-overview` 的 `user_id` 語義是「觀看者」而非「承租人」（preview 分支 `ContractApiController@index` 的 `user_id` 是 `to_user_id` 過濾，兩支語義不同，需文件寫清）。落在 28 筆之外的第 28 筆（`estate_id` 不在本 role 物件集）未納入替身。
+
 **分頁事實（同日）**：`page`／`per_page`（上限 200）、`has_more`；AIChatbot 客戶端 `get_bills`／`get_contracts`／`get_repairs` 把 `page`／`per_page` 吞進 `**kwargs` 沒轉送（只有 `get_estates` 轉送）——本次抓取改走 `_request` 明送；限流＝每把 key 每分鐘 `rate_limit_per_minute`、429 帶 `Retry-After: 60`；120 次請求間隔 2 s 全程 0 次 429。
 
 ## C. 待 JGB 確認（不擋 demo；③④⑤ LIFF 線用，業主裁先不併）

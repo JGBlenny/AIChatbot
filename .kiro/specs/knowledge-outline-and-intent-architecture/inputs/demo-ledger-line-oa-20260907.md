@@ -244,6 +244,13 @@ W4b（定義層、⛔ 不寫例子）：`jgb2.action.bill_due_extend` descriptio
 3. 正本：A 節標題「拍照開修繕單」仍把 L3-O 帶回「請上傳照片」（2 回合）——標題去「拍照」限定為 delta3 候選。
 4. 機制（W8）：裸 `confirm_*` 無卡的落點、`select:` 進場、L5-C 別戶邊界——W8 Plan r1 REVISE 七條已修訂（Plan §13），待 r2。
 
+## 1i. 合約補齊 27 筆＋走查回修 Plan（2026-09-09）
+
+- **合約 8 → 27**（業主「合約 8？」→「先用本地資料」→「或是你用 api」）：bastion 00:20 起不通（DB 讀不到；jgb2 `contracts` 表無 `owner_role_id` 欄，歸屬鍵是 `contracts.role_id`——`grep -n "'owner_role_id' => \$contract->role_id" app/Services/ContractService.php`）。改走 API：`status-overview` 帶 **`user_id=12291`** ⇒ total 28、27 筆落在本 role 物件集、帳單引用的 8 筆全在（正對照）。B′7 改判為「客戶端沒送對鍵」（需求文 B′7 更正段）。替身以 `build_demo_fixture_from_capture.py --mode all` 重產（capture v3 只在 scratchpad `real/capture_20151_v3.json`，600），byte 可重現（兩次 sha 相同）、遮罩掃描 0 命中；`test_demo_fixture_counts` 合約數 8→27。
+- **line-bot 三線走查**（他們 main `0c0f235`；Playwright 開真 LIFF 打線上 `/mcp`，37 屏）：介面三件他們已修；給我們 H1（P0 過去日期寫入，三次重現）、H2 零查詢就轉人、H3 建單後單號答不出、H4 送出後仍念「我要修改」、H5–H7。業主 00:44 截圖另抓：「75628」查無→轉人（應追問）、9/04 已過期答「尚未逾期」（逾期天數程式算、模型無視事實行——待本地重現）。
+- **Plan `plan-walkthrough-fixes-20260909.md`**（H1–H4，通用層：確認卡日期屬性 `not_before_today`／完成動作會話記憶／正本 delta5／零查詢轉人出口降級＋Verifier 敏感配對）：security-reviewer r1 REVISE 10 條（F1 敏感類未保護、F2 降級漏改 handoff 欄位 …）全數處置進第 2 稿；plan-verifier 審中。劇本 `smoke/scenarios_walkthrough.json`（三線 24 回合）備好。
+- 陷阱：`run-tests.sh`／pytest 路徑打錯 ⇒ 0 收集但 exit 0；看到 `passed=0` 一律視為沒跑。
+
 ## 2. demo 處理（這次就做，本機可驗）
 
 | # | 事 | 狀態 | 證據 |
