@@ -143,3 +143,4 @@ docs/backtest/corpus-20260810/*.tar.gz
 .claude/skills/outline-curation/raw/
 .claude/skills/outline-curation/journal/
 rag-orchestrator/tmp_outline_judge/
+.claude/settings.local.json

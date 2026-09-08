@@ -225,6 +225,8 @@ W4b（定義層、⛔ 不寫例子）：`jgb2.action.bill_due_extend` descriptio
 
 急迫建議兩模型全為 1（非緊急）；分類全落在封閉樹內；無一張觸發低信心候選（信心皆 ≥0.6）。**兩個真線路才抓到的坑**（unit 假辨識器看不到）：gpt-5 系列 `max_completion_tokens=500` 被推理 token 吃光 ⇒ 六張全回空字串；`reasoning_effort` 在 SDK 1.54 要走 `extra_body`（具名傳 TypeError）。**模型選擇**：demo 先用 gpt-4o（6/6、2 秒）；gpt-5-mini 便宜十倍但慢 2–3 倍且跳電那張漏判，1/6 樣本不足以定案，列 §3 待更多素材再比。未跑：LIFF 五個照片案例經 `/mcp` 端到端（白名單主機 `relay.jgbsmart.com` 本機不存在，需 line-bot relay 或本機 https 替身＋`IMAGE_URL_ALLOWLIST` 覆寫）——列待辦。
 
+**線上部署（2026-09-08 15:2x，業主「幫我處理」；jgb2-ai-chatbot，根目錄 30 GB 剩 12 GB、RAM 3.7 GB）**：push `5eb9cbb6`（main＝feat）→ 舊庫備份 `backups/pre_demo_20260908_0721.dump`（15 MB）→ dev dump 17 MB 取代（migration 1、知識 1048）→ `.env` 11 行＋`IMAGE_RECOGNITION_MODEL=gpt-4o`（R12，蓋過 compose 預設 mini）→ `docker-compose` build 548 MB → 啟動約 60 s（fine_index prospect 38／pm 36）→ 無 key 401、帶 key `ok`（mock／write／observe／image gpt-4o 全對）→ 線上 `make audit` OVERALL PASS。demo key `line-bot-oa-demo`（前綴 `rgk_AEHV`，明文只在伺服器 `/home/ec2-user/.curl-mcp-key`，交 line-bot）；dev 內部 key 97 已停用。⚠️ 換庫第一次失敗（伺服器無 `docker compose`、`;` 接的刪檔把 dump 刪了、`schema_migrations` 欄名是 `migration_name`）——runbook §20 已補實跑修正。磁碟部署後仍剩 12 GB。
+
 **還壞的三類（按層）**：
 1. 答案層（工具契約）：`repair_create` 描述「estate_name 必須是系統查得到的物件」⇒ 模型向業務要「系統內的物件名稱或編號」（L3-A／B／M／N 都問了，物件名早在句內）；描述「1 代表非緊急，2 代表緊急」被逐字念給業務 ⇒ 急迫值外洩 8 回合（觀察模式只記不擋）。修法＝描述改定義（口述名稱即可、系統比對；值只給程式）——**待裁 delta3**。
 2. 答案層（行為）：其他槽位缺時仍順帶反問急迫（L3-identity／M／Q T1）；L5-G T1 主動提議延期、T2「好了」被當同意 ⇒ 反問；L5-K 同戶合約查不到就要合約編號（85894 可查）。

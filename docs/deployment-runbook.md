@@ -1126,9 +1126,18 @@ python3 scripts/knowledge-batches/tune_routing.py
 
 > 前提：`feat/agentic-mcp` 已 push 到 origin（業主決定）；正式站 DB 已由本機 dev DB dump 取代（含 `20260908_agent_confirmation_tokens_pending_id`、pm 正本知識；dump 前 dev key id 98 已停用）。demo 期間整站跑替身（`USE_MOCK_JGB_API=true`），網頁客服也會看到替身資料。逐條跑、每步看預期輸出，⛔ 任一步不符即停。
 
+> ⚠️ **2026-09-08 實跑修正（jgb2-ai-chatbot）**：(1) 這台伺服器只有獨立二進位 `docker-compose`（v2.40），`docker compose` 會把 `-f` 當 docker 本體參數報錯——本節所有 `docker compose` 讀成 `docker-compose`；(2) ssh 使用者是 `ec2-user`，key 檔放 `/home/ec2-user/.curl-mcp-key`（600）而非 `/root`；(3) `schema_migrations` 的欄位是 `migration_name`；(4) 換庫指令一律 `set -e` 串接、驗證通過才刪 dump——⛔ 不要用 `;` 接刪檔（第一次跑 compose 失敗後仍把 dump 刪了）；(5) prod compose 預設 `IMAGE_RECOGNITION_MODEL=gpt-4o-mini`（08-26「統一 mini」），demo 依 R12 在 `.env` 加 `IMAGE_RECOGNITION_MODEL=gpt-4o` 覆寫，其餘 mini 不動；(6) dev dump 帶進來的 `mcp-internal-local`（id 97）已在線上停用，demo key 名 `line-bot-oa-demo`（id 依序）。
+### 20-0 換庫（本次實跑順序；舊庫先備 `backups/pre_demo_<ts>.dump`，pg_dump -Fc -Z 6 約 15 MB）
+```bash
+# 本機
+docker exec aichatbot-postgres pg_dump -U aichatbot -d aichatbot_admin -Fc -Z 6 -f /tmp/dev.dump && docker cp aichatbot-postgres:/tmp/dev.dump /tmp/dev.dump && scp /tmp/dev.dump jgb2-ai-chatbot:/home/ec2-user/
+# 伺服器（set -e：任一步失敗即停、dump 留著）
+ssh jgb2-ai-chatbot 'set -e; cd /home/ec2-user/AIChatbot; mkdir -p backups; docker exec aichatbot-postgres pg_dump -U aichatbot -d aichatbot_admin -Fc -Z 6 > backups/pre_demo_$(date +%Y%m%d_%H%M).dump; docker-compose -f docker-compose.prod.yml stop rag-orchestrator; docker cp /home/ec2-user/dev.dump aichatbot-postgres:/tmp/dev.dump; docker exec aichatbot-postgres psql -U aichatbot -d postgres -c "DROP DATABASE aichatbot_admin;" -c "CREATE DATABASE aichatbot_admin OWNER aichatbot;"; docker exec aichatbot-postgres pg_restore -U aichatbot -d aichatbot_admin --no-owner /tmp/dev.dump 2>&1 | grep -ci error || true; docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -At -c "select count(*) from schema_migrations where migration_name like '"'"'%pending_id%'"'"';"; docker exec aichatbot-postgres rm -f /tmp/dev.dump; rm -f /home/ec2-user/dev.dump'
+```
+預期：error 計數 `0`、migration 計數 `1`。回復：`pg_restore -U aichatbot -d aichatbot_admin --clean --no-owner backups/pre_demo_<ts>.dump`。
 ### 20-1 碼
 ```bash
-cd /home/ec2-user/AIChatbot && git fetch origin && git checkout feat/agentic-mcp && git pull
+cd /home/ec2-user/AIChatbot && git fetch origin && git checkout main && git pull   # main 已 fast-forward＝feat/agentic-mcp
 git log --oneline -1          # 預期：demo 版 HEAD（帳本 §0 記錄的 hash）
 ```
 
