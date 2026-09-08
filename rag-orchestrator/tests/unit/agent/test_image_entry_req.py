@@ -1062,8 +1062,9 @@ async def test_turn_without_image_urls_is_unchanged(monkeypatch, tree_fn):
     result = await _call_turn(registry, _identity(), "純文字問題")
     assert result.ok is True
     assert set(result.data) == {
-        "answer", "kind", "handoff", "quick_replies", "trace_id", "session_expired",
+        "answer", "kind", "handoff", "quick_replies", "trace_id", "session_expired", "outcome",
     }
+    assert result.data["outcome"] == {"state": "answered", "expects": "text", "action": None, "ref": None}
     assert result.data["answer"] == "一般回答"
     assert fetcher.urls == [] and recognizer.batches == [] and tree_fn.calls == []
     seen = json.dumps(provider.calls[0]["messages"], ensure_ascii=False)

@@ -465,6 +465,7 @@ def _apply_scope_exit(result: TurnResult, *, scope_in: int, scope_out: int) -> T
         result.handoff = None
         result.trace.final_kind = "answer"
         result.trace.handoff_reason = None
+        result.outcome = make_outcome("out_of_scope", expects="none")
         return result
     result.answer = result.answer.rstrip() + "\n" + SCOPE_EXIT_TEXT
     return result
@@ -600,6 +601,66 @@ class TurnResult:
     handoff: Optional[dict]
     quick_replies: list
     trace: TurnTrace
+    #: DSP-043（2026-09-08）：機器可讀的回合結果（第七鍵 `outcome`）。`None` ⇒
+    #: 由 `default_outcome()` 依 `kind`／`quick_replies` 導出；確認鏈、清單點選、
+    #: 範圍外、照片終止路徑在各自出口**以程式**明設。⛔ 不由模型、不由字串判。
+    outcome: Optional[dict] = None
+
+
+# ════════════════════════════════════════════════════════════════════
+# DSP-043：`outcome`——回合結果的封閉描述（與畫面無關，任何呼叫端共用）
+# ════════════════════════════════════════════════════════════════════
+#: `state`：這回合發生了什麼（封閉八值）。
+OUTCOME_STATES: tuple = (
+    "answered",         # 一般回答（含清單點選直答、查無此筆）
+    "clarifying",       # 反問／請選分類（等使用者補一句或選一個）
+    "confirm_pending",  # 出了確認卡，等三顆按鈕
+    "confirmed",        # 兌現成功（含 R4.3 重送同一 receipt）
+    "cancelled",        # 按了取消／修改而燒掉卡（含重送已取消那一筆）
+    "failed",           # 寫入失敗、確認已失效、照片處理失敗／逾時
+    "handoff",          # 轉專人固定句
+    "out_of_scope",     # 清單點選後問別戶／別戶寫入被擋
+)
+#: `expects`：接下來等使用者什麼（封閉四值）。
+OUTCOME_EXPECTS: tuple = ("text", "choice", "button", "none")
+#: `ref.type` 封閉值域（與 `select:<type>` 同源）。
+OUTCOME_REF_TYPES: tuple = ("repair", "bill", "contract")
+
+
+def make_outcome(state: str, *, expects: str, action: Optional[str] = None,
+                 ref: Optional[dict] = None) -> dict:
+    """組 `outcome`；值域外一律 ValueError（⛔ 不靜默降級成別的狀態）。"""
+    if state not in OUTCOME_STATES:
+        raise ValueError(f"outcome.state 不在值域: {state!r}")
+    if expects not in OUTCOME_EXPECTS:
+        raise ValueError(f"outcome.expects 不在值域: {expects!r}")
+    if ref is not None:
+        if not isinstance(ref, dict) or ref.get("type") not in OUTCOME_REF_TYPES \
+                or not isinstance(ref.get("id"), str) or not ref["id"]:
+            raise ValueError("outcome.ref 形狀不合")
+        ref = {"type": ref["type"], "id": ref["id"]}
+    return {"state": state, "expects": expects, "action": action, "ref": ref}
+
+
+def default_outcome(result: "TurnResult") -> dict:
+    """沒有明設時由 `kind`／`quick_replies` 決定性導出（模型迴圈的一般出口）。"""
+    has_choice = bool(result.quick_replies)
+    if result.kind == "handoff":
+        return make_outcome("handoff", expects="none")
+    if result.kind == "ask":
+        return make_outcome("clarifying", expects="choice" if has_choice else "text")
+    return make_outcome("answered", expects="choice" if has_choice else "text")
+
+
+def receipt_ref(action: Optional[str], receipt: Any) -> Optional[dict]:
+    """receipt → `outcome.ref`（決定性；只認識兩個寫入動作的識別碼欄位）。"""
+    if not isinstance(receipt, dict):
+        return None
+    if action == "repair_create" and receipt.get("repair_id"):
+        return {"type": "repair", "id": str(receipt["repair_id"])}
+    if action == "bill_due_extend" and receipt.get("bill_id"):
+        return {"type": "bill", "id": str(receipt["bill_id"])}
+    return None
 
 
 # ════════════════════════════════════════════════════════════════════
@@ -1196,6 +1257,7 @@ class AgentRuntime:
         select_type: Optional[str] = None,
         has_ref: Optional[bool] = None,
         slot_written: Optional[bool] = None,
+        outcome: Optional[dict] = None,
     ) -> TurnResult:
         """確認段各出口共用的收尾：組 trace → 落 decision snapshot → 寫回 dialog。
 
@@ -1231,13 +1293,17 @@ class AgentRuntime:
             agent_state, user_message, answer if dialog_answer is None else dialog_answer
         )
         _emit_agent_decision(trace)
-        return TurnResult(
+        result = TurnResult(
             kind=kind,
             answer=answer,
             handoff=None,
             quick_replies=list(quick_replies or []),
             trace=trace,
+            outcome=outcome,
         )
+        if result.outcome is None:
+            result.outcome = default_outcome(result)
+        return result
 
     # ------------------------------------------------------------------
     # W8 (1)：清單點選段（機器值 `select:<type>:<id>` → 工具 → facts）
@@ -1430,13 +1496,19 @@ class AgentRuntime:
                 start=start, kind="answer", answer=CONFIRMATION_REQUIRED_TEXT,
                 pending_id=pending_id, tool_calls=None,
                 violations=["confirm_unknown_pending_id"], receipt_id="",
+                outcome=make_outcome("failed", expects="none"),
             )
 
-        def _finish(answer: str, *, receipt_id: str = "", tool_calls=None, violations=None):
+        def _finish(answer: str, *, receipt_id: str = "", tool_calls=None, violations=None,
+                    outcome: Optional[dict] = None):
+            if outcome is None:
+                # 沒明設的確認段出口（CONFIRMATION_REQUIRED 各分支）＝確認已失效 ⇒ failed
+                outcome = make_outcome("failed", expects="none", action=pending.get("action"))
             return self._finish_confirm_turn(
                 agent_state=agent_state, user_message=user_message, trace_id=trace_id,
                 start=start, kind="answer", answer=answer, pending_id=pending_id,
                 tool_calls=tool_calls, violations=violations, receipt_id=receipt_id,
+                outcome=outcome,
             )
 
         # W8 (1)：被清單點選作廢掉的待確認筆 ⇒ **視同不存在**，回固定句。
@@ -1460,7 +1532,9 @@ class AgentRuntime:
             #    變成謊報「沒有送出」。
             if not isinstance(pending.get("receipt"), dict):
                 pending["receipt"] = {"cancelled": True}
-            return _finish(CANCELLED_TEXT)
+            return _finish(CANCELLED_TEXT,
+                           outcome=make_outcome("cancelled", expects="none",
+                                                action=pending.get("action")))
 
         existing = pending.get("receipt")
         if self._db_pool is None:
@@ -1527,7 +1601,9 @@ class AgentRuntime:
         if not tool_result.ok:
             # 誠實回錯（S-12：token 已燒是刻意的——要再做一次就要重新確認）。
             pending["receipt"] = {"error": tool_result.error or "TOOL_FAILED"}
-            return _finish(ACTION_FAILED_TEXT, tool_calls=records, violations=violations)
+            return _finish(ACTION_FAILED_TEXT, tool_calls=records, violations=violations,
+                           outcome=make_outcome("failed", expects="none",
+                                                action=pending.get("action")))
 
         data = tool_result.data if isinstance(tool_result.data, dict) else {}
         receipt = data.get("receipt")
@@ -1545,13 +1621,20 @@ class AgentRuntime:
         取消過的那一筆重送 ⇒ 回同一句「沒有送出」；失敗過的那一筆重送 ⇒ 回同一句
         「無法執行」——**同一個 `pending_id` 永遠得到同一個結果**（R4.3）。
         """
+        action = pending.get("action")
         if receipt.get("cancelled"):
-            return finish(CANCELLED_TEXT, **kwargs)
+            return finish(CANCELLED_TEXT,
+                          outcome=make_outcome("cancelled", expects="none", action=action),
+                          **kwargs)
         if receipt.get("error"):
-            return finish(ACTION_FAILED_TEXT, **kwargs)
+            return finish(ACTION_FAILED_TEXT,
+                          outcome=make_outcome("failed", expects="none", action=action),
+                          **kwargs)
         return finish(
-            render_receipt(pending.get("action"), pending.get("payload"), receipt),
+            render_receipt(action, pending.get("payload"), receipt),
             receipt_id=receipt_id_of(receipt),
+            outcome=make_outcome("confirmed", expects="none", action=action,
+                                 ref=receipt_ref(action, receipt)),
             **kwargs,
         )
 
@@ -1626,6 +1709,7 @@ class AgentRuntime:
             start=start,
             kind="answer",
             answer=SCOPE_EXIT_TEXT,
+            outcome=make_outcome("out_of_scope", expects="none"),
             pending_id=None,
             tool_calls=tool_calls,
             violations=violations,
@@ -1694,6 +1778,7 @@ class AgentRuntime:
             trace_id=trace_id,
             start=start,
             kind="ask",
+            outcome=make_outcome("confirm_pending", expects="button", action=action),
             # 逐字＝卡文字，⛔ 不經模型、不經 Verifier。W8 (3)：卡外提示行只接
             # 在**這裡**（`TurnResult.answer`），⛔ 不進 `card`／`card_sha256`／
             # dialog（下方 `dialog_answer=card`）。
@@ -1729,6 +1814,7 @@ class AgentRuntime:
                 trace_id=trace_id, start=start, kind="answer",
                 answer=IMAGE_FAILED_TEXT, pending_id=None,
                 violations=["image_recognition_failed"],
+                outcome=make_outcome("failed", expects="none"),
             )
         if image.status == "timeout":
             return self._finish_confirm_turn(
@@ -1736,6 +1822,7 @@ class AgentRuntime:
                 trace_id=trace_id, start=start, kind="answer",
                 answer=IMAGE_TIMEOUT_TEXT, pending_id=None,
                 violations=["image_timeout"],
+                outcome=make_outcome("failed", expects="none"),
             )
         candidates = [c for c in (image.candidates or []) if isinstance(c, str) and c.strip()]
         if not candidates:
@@ -1964,6 +2051,8 @@ class AgentRuntime:
             agent_state["fixed_streak"] = (
                 agent_state.get("fixed_streak", 0) + 1 if is_fixed else 0
             )
+            if result.outcome is None:
+                result.outcome = default_outcome(result)
             _append_dialog(agent_state, user_message, result.answer)
             _emit_agent_decision(result.trace)
             return result

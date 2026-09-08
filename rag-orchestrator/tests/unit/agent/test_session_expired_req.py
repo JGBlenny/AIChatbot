@@ -226,8 +226,9 @@ async def test_expired_turn_drops_pending_confirm_with_the_old_row():
 def test_session_expired_is_the_sixth_key_and_defaults_to_false():
     keys = list(F.AgentTurnOutput.model_fields)
     assert keys == ["answer", "kind", "handoff", "quick_replies", "trace_id",
-                    "session_expired"]
+                    "session_expired", "outcome"]          # 第七鍵 outcome（DSP-043）
     assert keys[5] == "session_expired"
     assert F.AgentTurnOutput.model_fields["session_expired"].default is False
     dumped = F.AgentTurnOutput(answer="a", kind="answer", trace_id="t").model_dump()
     assert list(dumped) == keys and dumped["session_expired"] is False
+    assert dumped["outcome"] == {"state": "answered", "expects": "text", "action": None, "ref": None}

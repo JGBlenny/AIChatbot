@@ -474,6 +474,7 @@ async def test_out_of_scope_single_row_is_replaced_and_the_answer_gets_the_fixed
     result = await rt.run_turn(_identity(), "那 222 那戶的帳單呢？", state)   # (x) 聊天式問別戶
 
     assert result.answer == SCOPE_EXIT_TEXT          # 整回合都在範圍外 ⇒ 只剩固定句
+    assert result.outcome == {"state": "out_of_scope", "expects": "none", "action": None, "ref": None}   # DSP-043
     assert "select_scope_exit" in result.trace.violations
     # facts ⛔ 不進 messages（(xii)）——工具訊息只剩程式固定句
     tool_msgs = _tool_messages(provider)

@@ -236,10 +236,13 @@ async def test_agent_turn_matches_direct_run_turn():
     # ⛔ 回傳形狀＝R3.7 的五個固定鍵＋依落地順序加的選填鍵（DSP-042）——
     #    不多不少（無引用、無被拒文字）。`session_expired` 是第六鍵。
     assert set(result.data) == {
-        "answer", "kind", "handoff", "quick_replies", "trace_id", "session_expired",
+        "answer", "kind", "handoff", "quick_replies", "trace_id", "session_expired", "outcome",
     }
     # 非過期回合：其餘欄位與直呼 `run_turn` 逐值相同，多出來的那一鍵為 false
     assert result.data["session_expired"] is False
+    # DSP-043：一般回答的 outcome 由 kind／quick_replies 導出
+    assert result.data["outcome"]["state"] in ("answered", "clarifying", "handoff")
+    assert result.data["outcome"]["expects"] in ("text", "choice", "button", "none")
 
 
 # ═══════════════════════════════════════════════════════════════════

@@ -987,6 +987,28 @@ async def prepare_image_turn(
 # ════════════════════════════════════════════════════════════════════
 # `agent.turn`：整回合工具（任務 2.6｜design 元件 4「agent.turn 工具」段、決策 15、R3.7）
 # ════════════════════════════════════════════════════════════════════
+class TurnOutcome(BaseModel):
+    """DSP-043：機器可讀的回合結果（第七鍵 `outcome`；值域封閉、由 Runtime 程式設）。
+
+    `state` 八值／`expects` 四值／`ref.type` 三值與 `runtime.OUTCOME_*` 同源；
+    呼叫端（LINE 聊天、LIFF、之後的網頁）只看這個物件決定畫面，⛔ 不解析 `answer` 字串。
+    """
+
+    state: str
+    expects: str
+    action: Optional[str] = None
+    ref: Optional[dict] = None
+
+
+def _outcome_of(result: Any) -> dict:
+    """`TurnResult.outcome`；未設（舊 fake runtime）⇒ 依 kind／quick_replies 導出。"""
+    out = getattr(result, "outcome", None)
+    if isinstance(out, dict) and out.get("state"):
+        return out
+    from services.agent.runtime import default_outcome   # 延遲載入：避免循環 import
+    return default_outcome(result)
+
+
 class AgentTurnOutput(BaseModel):
     """`agent.turn` 的回傳形狀（R3.7：五鍵固定＋依落地順序加的選填鍵）。
 
@@ -1008,6 +1030,8 @@ class AgentTurnOutput(BaseModel):
     #: ⛔ 不是錯誤、⛔ 不改變 `answer`／`kind` 的語義。
     #: 鍵序＝落地順序（§0b）：W7 的 `transcript` 之後才會排到第七鍵。
     session_expired: bool = False
+    #: DSP-043（2026-09-08）：**第七鍵** `outcome`（永遠有值；見 `TurnOutcome`）。
+    outcome: TurnOutcome = TurnOutcome(state="answered", expects="text")
 
 
 AGENT_TURN_SPEC: ToolSpec = {
@@ -1278,6 +1302,7 @@ def _make_agent_turn(
                 quick_replies=list(result.quick_replies or []),
                 trace_id=result.trace.trace_id,
                 session_expired=session_expired,
+                outcome=TurnOutcome(**_outcome_of(result)),
             ).model_dump(),
             provenance=[],
             text_for_model="",

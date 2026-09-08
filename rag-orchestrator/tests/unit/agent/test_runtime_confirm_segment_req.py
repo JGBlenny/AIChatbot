@@ -215,6 +215,8 @@ async def test_confirm_request_ends_the_turn_with_the_card_verbatim():
     result = await rt.run_turn(_identity(), "900001 逾期了，幫我延 3 天", state)
 
     assert result.kind == "ask"
+    assert result.outcome == {"state": "confirm_pending", "expects": "button",
+                              "action": "bill_due_extend", "ref": None}     # DSP-043 出卡回合
     assert result.answer == _CARD                      # 逐字
     assert result.quick_replies == confirm_result.data["quick_replies"]
     assert verifier.calls == [], "確認回合 ⛔ 不跑 Verifier（卡不是模型寫的）"
@@ -425,3 +427,60 @@ async def test_unknown_action_in_state_never_builds_a_tool_name():
     result = await rt.run_turn(_identity(), f"confirm_submit:{_PID}", state)
     assert result.answer == CONFIRMATION_REQUIRED_TEXT
     assert registry.call_args == []
+
+
+# ═══════════════════════════════════════════════════════════════════
+# DSP-043：`outcome`——確認鏈三個出口以程式明設（⛔ 不由字串判）
+# ═══════════════════════════════════════════════════════════════════
+@pytest.mark.req(_REQ)
+async def test_outcome_confirmed_on_submit_with_action():
+    pool = FakePool([_redeem_row()])
+    rt = _runtime(registry=_receipt_registry(), pool=pool)
+    result = await rt.run_turn(_identity(), f"confirm_submit:{_PID}", _state_with_pending())
+    assert result.outcome == {"state": "confirmed", "expects": "none",
+                              "action": "bill_due_extend", "ref": None}   # fake receipt 無 bill_id
+
+
+@pytest.mark.req(_REQ)
+@pytest.mark.parametrize("verb", ["confirm_cancel", "confirm_edit"])
+async def test_outcome_cancelled_on_cancel_or_edit(verb):
+    pool = FakePool([_redeem_row()])
+    rt = _runtime(registry=_receipt_registry(), pool=pool)
+    result = await rt.run_turn(_identity(), f"{verb}:{_PID}", _state_with_pending())
+    assert result.outcome["state"] == "cancelled" and result.outcome["expects"] == "none"
+    assert result.outcome["action"] == "bill_due_extend"
+
+
+@pytest.mark.req(_REQ)
+async def test_outcome_failed_on_unknown_pending_id_and_on_no_pool():
+    rt = _runtime(registry=_receipt_registry(), pool=FakePool([_redeem_row()]))
+    state = _state_with_pending(); state["agent"]["pending_confirm"] = {}
+    result = await rt.run_turn(_identity(), f"confirm_submit:{_PID}", state)
+    assert result.outcome["state"] == "failed" and result.outcome["expects"] == "none"
+    rt2 = _runtime(registry=_receipt_registry(), pool=None)
+    result2 = await rt2.run_turn(_identity(), f"confirm_submit:{_PID}", _state_with_pending())
+    assert result2.outcome["state"] == "failed"
+
+
+@pytest.mark.req(_REQ)
+def test_outcome_helpers_closed_domain_and_receipt_ref():
+    from services.agent import runtime as R
+    assert R.make_outcome("answered", expects="text") == {
+        "state": "answered", "expects": "text", "action": None, "ref": None}
+    for bad in ({"state": "done", "expects": "text"}, {"state": "answered", "expects": "form"}):
+        with pytest.raises(ValueError):
+            R.make_outcome(bad["state"], expects=bad["expects"])
+    with pytest.raises(ValueError):
+        R.make_outcome("confirmed", expects="none", ref={"type": "estate", "id": "1"})
+    # receipt → ref：兩個寫入動作各自的識別碼欄位；其餘 None（正對照）
+    assert R.receipt_ref("repair_create", {"repair_id": 12346}) == {"type": "repair", "id": "12346"}
+    assert R.receipt_ref("bill_due_extend", {"bill_id": "756248", "after": "2026-08-18"}) == {"type": "bill", "id": "756248"}
+    assert R.receipt_ref("bill_due_extend", {"id": "BILL-77"}) is None
+    assert R.receipt_ref("repair_create", {"cancelled": True}) is None
+    # 一般出口的導出規則
+    class _T:  # 最小 TurnResult 形狀
+        def __init__(self, kind, qr): self.kind, self.quick_replies = kind, qr
+    assert R.default_outcome(_T("handoff", [])) == R.make_outcome("handoff", expects="none")
+    assert R.default_outcome(_T("ask", [{"label": "a", "value": "a"}]))["expects"] == "choice"
+    assert R.default_outcome(_T("ask", []))["expects"] == "text"
+    assert R.default_outcome(_T("answer", []))["state"] == "answered"
