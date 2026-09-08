@@ -5,6 +5,8 @@
 > 讀者：要從**伺服器端**接上 JGB 工具面的工程（jgb2 後端、LINE bot 後端、回測工具、
 > 內部操作者的 Claude Code）。
 
+> ⚠️ **2026-09-08 demo 上線後對碼修正**（本檔其餘段落寫於 2026-09-04）：`agent.turn` 對 `prospect` 與 `property_manager` 都是 M1；輸入 `message` `minLength 0`（可空）＋選填 `image_urls`（≤10 張 relay 簽章網址；兩者皆空才 `INVALID_INPUT`）；輸出**六鍵**＝五鍵＋`session_expired: bool`（DSP-042；`transcript` 第七鍵屬 W7 語音，**尚未落地**）；機器值 `confirm_*:<pending_id>` 與 `select:<type>:<id>` 由 Runtime 在模型前處理。串接方請以 `.kiro/specs/knowledge-outline-and-intent-architecture/inputs/line-bot-integration-sheet-20260908.md` 為準；架構見 `docs/architecture/AGENTIC_MCP_ARCHITECTURE.md`。
+
 ## 0. 一句話
 
 `/mcp` 是 **server-to-server 的工具插座**，不是公開認證面。
@@ -18,7 +20,7 @@
 | 服務層閘（X-API-Key／Origin／X-JGB-Identity） | **已上線可用**，且已有整合測試 |
 | 額度計量（一次工具呼叫一列 `usage_events`） | **已實作並實測** |
 | MCP 工具面（`tools/list`／`tools/call`） | **SDK 已為正式相依**（DSP-014 裁 A）——`requirements.txt` 已升 web stack 承載 `mcp==2.1.1` |
-| 整回合工具 `agent.turn`（§7.1） | **已實作**（任務 2.6）；預設 **關閉**，要 `AGENT_TURN_ENABLED=true` ＋ `AGENT_STAGE=M1` 才註冊。僅 prospect |
+| 整回合工具 `agent.turn`（§7.1） | **已實作**（任務 2.6）；預設 **關閉**，要 `AGENT_TURN_ENABLED=true` ＋ `AGENT_STAGE=M1` 才註冊。prospect 與 property_manager 皆 M1（DSP-037，2026-09-07） |
 
 > **DSP-014（2026-09-04 裁 A）**：原本的 `fastapi==0.104.1` × `mcp==2.1.1` 相依
 > 衝突（fastapi 要 `anyio<4.0.0`、mcp 要 `anyio>=4.9`）已藉由升級 web stack 解除：
@@ -228,7 +230,7 @@ M1 階段另加一支**整回合**工具（見 §7.1）：
 
 ```jsonc
 // tools/call → name: "agent.turn"
-{ "message": "我有 600 戶，你們的合約怎麼建立？" }   // 1–2000 字，必填
+{ "message": "我有 600 戶，你們的合約怎麼建立？", "image_urls": [] }   // message 0–2000 字（可空）；image_urls 選填 ≤10；兩者不得皆空
 ```
 
 **只有 `message` 這一個參數**。⛔ 沒有 `dialog_ref`、⛔ 不能帶對話歷史、
