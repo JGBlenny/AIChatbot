@@ -602,6 +602,72 @@ class TurnResult:
     trace: TurnTrace
 
 
+# ════════════════════════════════════════════════════════════════════
+# W8 (2)：照片進場（`/mcp` `agent.turn` 的 `image_urls`）
+# ════════════════════════════════════════════════════════════════════
+#: 只看了前 N 張的**卡外附加段**（同 W8 (3) `hint`：⛔ 不進 `card`／`card_sha256`／
+#: dialog；⛔ 不靜默截斷——使用者必須知道有幾張沒看）。
+IMAGE_PARTIAL_TEXT = "只看了前 {n} 張照片（共 {m} 張）。"
+
+#: vision 失敗／逾時／低信心的三句固定句。⛔ 全部**不進模型**：這三條路徑的
+#: `answer` 逐字＝這裡的常數，Verifier 不跑（沒有可驗的引用）。
+IMAGE_FAILED_TEXT = "照片處理失敗，請改用文字描述，或稍後再試。"
+IMAGE_TIMEOUT_TEXT = "照片處理逾時，請少傳幾張或改用文字描述。"
+IMAGE_PICK_CATEGORY_TEXT = "照片看起來可能是下列分類，請選一個："
+
+#: 低信心門檻：`confidence <` 此值且樹內候選 ≥2 ⇒ 出卡前先問一個分類（不建 pending）。
+IMAGE_CONFIDENCE_MIN = 0.6
+
+#: 低信心 ask 回合的 `quick_replies` 顆數上限（⛔ 不含三顆確認鍵）。
+IMAGE_CANDIDATE_MAX = 3
+
+#: 影像事實在本回合資料段裡的來源代碼。⚠️ 一回合只有**一筆**影像事實（多張照片
+#: 的辨識結果在門面就已合併成一段程式組的句子），故序號固定 1；⛔ 不隨張數變動，
+#: 那會讓模型抄回來的標記與解析側對不上。
+IMAGE_PROVENANCE_SOURCE = "image:recognition#1"
+
+#: 影像事實資料段的工具標籤（`wrap_provenance_data` 的第一段）。
+IMAGE_DATA_LABEL = "image.recognition"
+
+#: `ImageTurnInput.status` 的封閉值域。
+IMAGE_STATUSES: frozenset = frozenset({"ok", "partial", "failed", "timeout"})
+
+
+@dataclass(frozen=True)
+class ImageTurnInput:
+    """門面交給 Runtime 的**照片回合輸入**——**全封閉值**（Plan W8 (2)／r2 裁 (a)）。
+
+    ⛔⛔ **沒有 bytes、沒有網址、沒有 vision 自由文字**：照片的原始 bytes 只在
+    `mcp_facade` 的記憶體裡活過抓檔→縮圖→辨識那一段；`description` 這個欄位
+    **刻意不存在**——照片裡的文字是提示詞注入的唯一出口（S9-11），它連進到
+    Runtime 的資格都沒有，遑論上卡或進 `broken_reason`。
+
+    - `status`：`ok`／`partial`（預算用罄但已完成 ≥1 批辨識）／`failed`／`timeout`。
+    - `facts`：**程式組的句子**（分類、看不看得出損壞、張數），進模型迴圈時包成
+      可引用的資料段（`wrap_provenance_data`）。
+    - `candidates`：低信心時的分類樹節點名（≥2 才給），⇒ Runtime 出 ask 回合。
+    - `suggested_category`／`suggested_emergency`：已過分類樹封閉映射／值域檢查的
+      建議值（對不上 ⇒ `None`＝缺值）。⚠️ 急迫的**卡值唯一決定者仍是**
+      `confirm_card.emergency_status_of`（缺值＝1），vision 的預設 2 ⛔ 不得傳播。
+    """
+
+    status: str
+    facts: str = ""
+    processed: int = 0
+    total: int = 0
+    candidates: tuple = ()
+    suggested_category: Optional[str] = None
+    suggested_emergency: Optional[int] = None
+
+    def __post_init__(self) -> None:
+        # 值域**當場驗**（fail loud）：`status` 一旦漂出封閉四值，下方三條終止
+        # 路徑會安靜地全部不觸發＝帶圖回合默默當成沒帶圖，⛔ 那是最糟的失敗方向。
+        if self.status not in IMAGE_STATUSES:
+            raise ValueError(
+                f"ImageTurnInput.status 只允許 {sorted(IMAGE_STATUSES)}，得到 {self.status!r}"
+            )
+
+
 SSEEvent = dict
 
 
@@ -1642,10 +1708,88 @@ class AgentRuntime:
             completion_tokens=completion_tokens,
         )
 
-    async def run_turn(self, identity: Identity, user_message: str, state: dict) -> TurnResult:
+    # ------------------------------------------------------------------
+    # W8 (2)：照片回合的三條**程式終止路徑**（⛔ 一律由 Runtime 產出）
+    # ------------------------------------------------------------------
+    def _image_program_turn(
+        self, image: Optional[ImageTurnInput], *, agent_state: dict,
+        user_message: str, trace_id: str, start: float,
+    ) -> Optional[TurnResult]:
+        """`failed`／`timeout`／低信心候選 ⇒ 直接收尾；其餘 ⇒ `None`（回合照常跑）。
+
+        三條路徑都走 `_finish_confirm_turn`（既有的 trace 發射＋`_append_dialog`）：
+        ⛔ 不在門面直接產 `TurnResult`（S9-14：那會繞過寫入閘與 dialog 紀律），
+        ⛔ 不進模型（沒有可驗的引用，Verifier 不跑）。
+        """
+        if image is None:
+            return None
+        if image.status == "failed":
+            return self._finish_confirm_turn(
+                agent_state=agent_state, user_message=user_message,
+                trace_id=trace_id, start=start, kind="answer",
+                answer=IMAGE_FAILED_TEXT, pending_id=None,
+                violations=["image_recognition_failed"],
+            )
+        if image.status == "timeout":
+            return self._finish_confirm_turn(
+                agent_state=agent_state, user_message=user_message,
+                trace_id=trace_id, start=start, kind="answer",
+                answer=IMAGE_TIMEOUT_TEXT, pending_id=None,
+                violations=["image_timeout"],
+            )
+        candidates = [c for c in (image.candidates or []) if isinstance(c, str) and c.strip()]
+        if not candidates:
+            return None
+        picks = candidates[:IMAGE_CANDIDATE_MAX]
+        # `label` 與 `value` **皆為分類樹節點名逐字**——⛔ 不另立機器值文法：
+        # line-bot 把原字串送回來，下一回合它就是使用者打的分類名。
+        # ⛔ 不含三顆確認鍵（那是出卡回合的事），⛔ 不建 pending。
+        return self._finish_confirm_turn(
+            agent_state=agent_state, user_message=user_message,
+            trace_id=trace_id, start=start, kind="ask",
+            answer=IMAGE_PICK_CATEGORY_TEXT, pending_id=None,
+            quick_replies=[{"label": name, "value": name} for name in picks],
+            # dialog 末則要帶候選名，下一回合模型才看得懂使用者回的那個詞是什麼。
+            dialog_answer=IMAGE_PICK_CATEGORY_TEXT + "、".join(picks),
+        )
+
+    async def run_turn(
+        self, identity: Identity, user_message: str, state: dict,
+        *, image: Optional[ImageTurnInput] = None,
+    ) -> TurnResult:
+        """一個回合。`image`（W8 (2)）＝門面已抓檔／縮圖／辨識完的**封閉值**輸入。
+
+        ⚠️ 本層只做一件本體外的事：`status=="partial"` 時把「只看了前 N 張」接在
+        `TurnResult.answer` **最後**——時機在 `_append_dialog`／`card_sha256`／trace
+        都定案之後，故那三者逐位元不受影響（同 W8 (3) `hint` 的紀律）。
+        """
+        result = await self._run_turn_body(identity, user_message, state, image=image)
+        if (
+            image is not None
+            and image.status == "partial"
+            and image.total > image.processed
+        ):
+            result.answer = (
+                f"{result.answer}\n"
+                + IMAGE_PARTIAL_TEXT.format(n=image.processed, m=image.total)
+            )
+        return result
+
+    async def _run_turn_body(
+        self, identity: Identity, user_message: str, state: dict,
+        *, image: Optional[ImageTurnInput] = None,
+    ) -> TurnResult:
         start = self._clock()
         trace_id = uuid.uuid4().hex
         agent_state = state.setdefault("agent", {})
+        # W8 (2)：照片的三條程式終止路徑**排在最前**——失敗／逾時／要先問分類的
+        # 回合根本不該進確認段、快取或模型。
+        image_turn = self._image_program_turn(
+            image, agent_state=agent_state, user_message=user_message,
+            trace_id=trace_id, start=start,
+        )
+        if image_turn is not None:
+            return image_turn
         # DSP-038／W3：⚠️ **排在同題重問快取之前**——機器值不是「一題」，
         # 它是一次狀態轉移；讓它先落進快取比對只會多一次無謂的字串雜湊。
         confirmed = await self._run_confirm_segment(
@@ -1734,6 +1878,33 @@ class AgentRuntime:
         messages = self.assembler.build_messages(identity, outline, slots, dialog, tool_specs, nonce)
         # DSP-022：當前這句一定是最後一則 user 訊息（歷史由 assembler 從 `dialog` 放前面）。
         messages.append({"role": "user", "content": user_message})
+        # W8 (2)：影像事實以**可引用的工具事實**進場（r1 裁定接線）——包法與工具
+        # 回傳完全相同（`wrap_provenance_data` ＋ 同回合 nonce），故模型引用它的
+        # 句子解析得出來、過得了 Verifier（驗收 (xii)）。
+        # ⛔ 不併進 `message`（那會變成使用者說的話）、⛔ 不經 `agent_state`。
+        if image is not None and image.status in ("ok", "partial") and image.facts.strip():
+            image_call_id = f"img-{nonce[:8]}"
+            tool_results_by_id[image_call_id] = ToolResult(
+                ok=True,
+                data={"processed": image.processed, "total": image.total},
+                provenance=[
+                    Provenance(
+                        source=IMAGE_PROVENANCE_SOURCE, text=image.facts, citable=True
+                    )
+                ],
+                text_for_model="",
+            )
+            messages.append(
+                {
+                    "role": "user",
+                    "content": wrap_provenance_data(
+                        IMAGE_DATA_LABEL,
+                        image_call_id,
+                        [(IMAGE_PROVENANCE_SOURCE, provenance_units(image.facts))],
+                        nonce,
+                    ),
+                }
+            )
 
         def _outline_sha() -> str:
             return getattr(outline, "sha256", "") if outline is not None else ""

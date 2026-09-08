@@ -140,6 +140,22 @@ def build_prompt(category_names: Optional[List[str]] = None, categories_tree: Op
     return _BASE_PROMPT.format(category_instruction=instruction)
 
 
+#: gpt-5 系列的參數不相容（S9-16）：`max_tokens` 被拒、`temperature` 只收預設值。
+#: ⛔ 不在呼叫點各寫一次 if——分歧一定會發生在只改了其中一處的那天。
+_MAX_OUTPUT_TOKENS = 500
+
+
+def _completion_params(model: str) -> dict:
+    """依模型回 `chat.completions.create` 的輸出長度／取樣參數。
+
+    gpt-5 系列 ⇒ `max_completion_tokens`、**不傳 `temperature`**；
+    其餘（gpt-4o／4o-mini…）⇒ `max_tokens` ＋ `temperature=0.2`（逐值同舊版）。
+    """
+    if str(model or "").startswith("gpt-5"):
+        return {"max_completion_tokens": _MAX_OUTPUT_TOKENS}
+    return {"max_tokens": _MAX_OUTPUT_TOKENS, "temperature": 0.2}
+
+
 # ============================================================
 # 辨識服務
 # ============================================================
@@ -152,12 +168,20 @@ class ImageRecognitionService:
         model: Optional[str] = None,
         detail: Optional[str] = None,
         timeout: int = 15,
+        max_retries: Optional[int] = None,
     ):
         self.model = model or os.getenv("IMAGE_RECOGNITION_MODEL", "gpt-4o")
         self.detail = detail or os.getenv("IMAGE_RECOGNITION_DETAIL", "low")
         self.timeout = timeout
 
-        self.client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        # `max_retries`（Plan W8 (2)／S9-7）：`/mcp` 路徑**顯式傳 1**——帶圖回合
+        # 有時間預算（`image_budget`），SDK 預設的重試次數會把預算悄悄吃掉。
+        # ⛔ 不改預設值：REST 路徑（`routers/chat.py`）不在本項範圍，
+        # 沒傳就維持 SDK 既有行為。
+        client_kwargs: dict = {"api_key": os.getenv("OPENAI_API_KEY")}
+        if max_retries is not None:
+            client_kwargs["max_retries"] = int(max_retries)
+        self.client = AsyncOpenAI(**client_kwargs)
 
     async def analyze_image(
         self,
@@ -197,6 +221,9 @@ class ImageRecognitionService:
         categories_tree: Optional[list] = None,
         db_pool=None,
         image_id: Optional[int] = None,
+        *,
+        max_images: Optional[int] = 3,
+        detail: Optional[str] = None,
     ) -> RecognitionResult:
         """
         分析多張圖片（同一損壞情境），最多 3 張。
@@ -215,7 +242,12 @@ class ImageRecognitionService:
         if not image_urls:
             return dict(_NOT_DAMAGE_RESULT)
 
-        urls = image_urls[:3]
+        # `max_images=None` ⇒ **不截斷**（Plan W8 (2)／S9-6：`/mcp` 路徑一次可到
+        # 10 張，由呼叫端每 5 張一批送進來；⛔ 不在這裡再截一次）。
+        # 預設 3＝REST 路徑既有行為，⛔ 不變。
+        urls = list(image_urls) if max_images is None else list(image_urls[:max_images])
+        # `detail` 具名參數優先於建構值（`/mcp` 路徑程式釘 `low`，⛔ 不由 env，S9-8）。
+        image_detail = detail or self.detail
 
         # 組裝 prompt
         prompt_text = build_prompt(category_names, categories_tree)
@@ -227,7 +259,7 @@ class ImageRecognitionService:
         for url in urls:
             content.append({
                 "type": "image_url",
-                "image_url": {"url": url, "detail": self.detail},
+                "image_url": {"url": url, "detail": image_detail},
             })
 
         messages = [{"role": "user", "content": content}]
@@ -239,8 +271,7 @@ class ImageRecognitionService:
                     model=self.model,
                     messages=messages,
                     response_format={"type": "json_object"},
-                    max_tokens=500,
-                    temperature=0.2,
+                    **_completion_params(self.model),
                 ),
                 timeout=self.timeout,
             )
@@ -248,7 +279,9 @@ class ImageRecognitionService:
             logger.warning(f"Vision API 逾時 ({self.timeout}s)，降級為文字流程")
             raise
         except Exception as e:
-            logger.error(f"Vision API 呼叫失敗: {e}")
+            # ⛔⛔ **只記例外類別名**（S9-10／10b）：bytes 模型下 `str(e)` 可能把
+            #     整串 base64 data URL（＝照片本身）寫進 log。
+            logger.error("Vision API 呼叫失敗: %s", type(e).__name__)
             raise
 
         # 解析結果
@@ -258,7 +291,9 @@ class ImageRecognitionService:
         try:
             result = json.loads(raw_text)
         except json.JSONDecodeError:
-            logger.error(f"Vision API 回傳非 JSON: {raw_text[:200]}")
+            # ⛔ 不印回傳原文：那是**照片內容衍生的自由文字**（照片裡的字也在內），
+            #    S9-10 的同一條紀律。只留長度。
+            logger.error("Vision API 回傳非 JSON（長度 %d）", len(raw_text or ""))
             return dict(_NOT_DAMAGE_RESULT)
 
         # 正規化欄位
@@ -277,13 +312,18 @@ class ImageRecognitionService:
 
         # 成本追蹤
         total_tokens = usage.total_tokens if usage else 0
-        cost_usd = self._estimate_cost(total_tokens)
+        cost_usd = self._estimate_cost(
+            getattr(usage, "prompt_tokens", 0) if usage else 0,
+            getattr(usage, "completion_tokens", 0) if usage else 0,
+        )
 
+        # ⛔ 不印 `description`／`suggested_item`／`suggested_reason` 等**自由文字**
+        #    （模型從照片讀出來的字會原樣進 log，S9-10 的同一條紀律）；
+        #    只留封閉值域欄位與計數。
         logger.info(
-            f"圖像辨識完成 | damage={recognition['is_damage']} "
-            f"type={recognition['damage_type']} conf={recognition['confidence']:.2f} "
-            f"item={recognition['suggested_item']} reason={recognition['suggested_reason']} "
-            f"tokens={total_tokens} cost=${cost_usd:.6f}"
+            "圖像辨識完成 | damage=%s type=%s conf=%.2f tokens=%d cost=$%.6f",
+            recognition["is_damage"], recognition["damage_type"],
+            recognition["confidence"], total_tokens, cost_usd,
         )
 
         # 寫入 DB：openai_cost_tracking + image_uploads
@@ -294,11 +334,22 @@ class ImageRecognitionService:
 
         return recognition
 
-    def _estimate_cost(self, total_tokens: int) -> float:
-        """根據 token 數估算成本（USD）"""
-        # GPT-4o vision pricing: $2.50/1M prompt + $10/1M completion
-        # 簡化為混合費率（大部分是 prompt tokens）
-        return (total_tokens / 1_000_000) * 5.0  # 平均 $5/1M tokens
+    def _estimate_cost(self, prompt_tokens: int, completion_tokens: int) -> float:
+        """依**模型價目表**估成本（USD）；表裡沒有這個模型 ⇒ 回退舊的平頭費率。
+
+        S9-9：舊版對每個模型都用 `$5/1M` 的混合費率，換模型（gpt-5-mini 便宜一個
+        數量級）後那個數字就只是個好看的假值。價目表的唯一來源是
+        `services.usage_metering.DEFAULT_PRICING`（USD／1M tokens，`(prompt, completion)`），
+        ⛔ 不在本檔另抄一份費率。
+        """
+        from services.usage_metering import DEFAULT_PRICING
+
+        price = DEFAULT_PRICING.get(self.model)
+        if price is None:
+            return ((int(prompt_tokens) + int(completion_tokens)) / 1_000_000) * 5.0
+        return (int(prompt_tokens) / 1_000_000) * price[0] + (
+            int(completion_tokens) / 1_000_000
+        ) * price[1]
 
     async def _record_cost(
         self, db_pool, recognition, total_tokens, cost_usd, image_id, usage
@@ -335,5 +386,5 @@ class ImageRecognitionService:
                         self.model, total_tokens, cost_usd, image_id,
                     )
         except Exception as e:
-            logger.error(f"成本記錄寫入失敗: {e}")
+            logger.error("成本記錄寫入失敗: %s", type(e).__name__)
             # 不阻塞主流程

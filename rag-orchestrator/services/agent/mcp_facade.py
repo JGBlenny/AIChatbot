@@ -110,6 +110,7 @@
 from __future__ import annotations
 
 import asyncio
+import base64
 import inspect
 import json
 import logging
@@ -120,6 +121,7 @@ from typing import Any, Callable, Mapping, Optional
 
 from pydantic import BaseModel
 
+from services.agent import image_fetch
 from services.agent.identity import (
     DEFAULT_ENTRY_MODE,
     ENTRY_MODES,
@@ -702,6 +704,287 @@ def _jgb2_spec(domain: str, faces: list, extra_properties: Optional[dict] = None
 
 
 # ════════════════════════════════════════════════════════════════════
+# W8 (2)：照片進場（`image_urls`）——抓檔／縮圖／辨識的**編排**住在門面
+# ════════════════════════════════════════════════════════════════════
+#: 抓檔＋縮圖＋辨識的**總**時間預算上限（秒）。實際預算見 `image_budget_s()`。
+IMAGE_MAX_BUDGET_S = 15.0
+
+#: 縮圖後的長邊上限（去 EXIF 是同一個 `downscale_image` 的副作用）。
+IMAGE_MAX_PX = 1024
+
+#: `/mcp` 路徑的 vision `detail`——**程式釘死**（S9-8：⛔ 不由 env，
+#: 那會讓「一張照片要花多少錢」變成部署者可調的東西）。
+IMAGE_DETAIL = "low"
+
+
+def image_budget_s() -> float:
+    """`min(IMAGE_MAX_BUDGET_S, agent_turn_timeout_s() / 2)`（S9-7）。
+
+    上界是回合逾時的一半——照片吃掉的每一秒都是模型迴圈少掉的一秒，
+    ⛔ 不讓照片把整個回合的預算吃光。
+    """
+    return min(IMAGE_MAX_BUDGET_S, agent_turn_timeout_s() / 2)
+
+
+async def _image_fetch_one(url: str, *, timeout_s: float):
+    """抓一張（六道閘全在 `image_fetch` 裡）。**測試的注入點就是這個模組屬性**。"""
+    return await image_fetch.fetch_image(url, timeout_s=timeout_s)
+
+
+def _image_validate_and_downscale(data: bytes, content_type: str) -> tuple:
+    """`validate_format`（MIME＋magic bytes）→ `downscale_image`（≤1024px、去 EXIF）。
+
+    ⚠️ 兩支都是**模組級／staticmethod**，⛔ 不需要 `S3ImageService` 實例
+    （那支建構時缺 `S3_BUCKET_NAME` 會直接 `ValueError`，而這條路根本不上傳 S3；
+    驗收 (xiii)）。格式不符 ⇒ `ValueError` ⇒ 呼叫端丟棄該張。
+    """
+    from services.s3_image_service import S3ImageService, downscale_image
+
+    fmt = S3ImageService.validate_format(data, content_type)
+    return downscale_image(data, IMAGE_MAX_PX), fmt
+
+
+async def _image_recognize_batch(
+    data_urls: list, *, category_names: Optional[list], categories_tree: Optional[list],
+    db_pool, timeout_s: float,
+) -> dict:
+    """一批（≤5 張）送 vision。**測試的注入點就是這個模組屬性**。
+
+    - `detail` 程式釘 `low`、`max_retries=1` 顯式（S9-7／S9-8）；
+    - `max_images=None` ⇒ ⛔ 不套 REST 的 `[:3]` 截斷（S9-6）；
+    - 模型名走 `IMAGE_RECOGNITION_MODEL`（gpt-5 系列的參數差異由
+      `image_recognition_service._completion_params` 處理，S9-16）；
+    - `db_pool` 有給 ⇒ 成本進 `openai_cost_tracking`（`operation='image_recognition'`，
+      ⛔ 不進 `model_breakdown`＝額度看不到 vision 成本，S9-9 明列取捨）。
+    """
+    from services.image_recognition_service import ImageRecognitionService
+
+    service = ImageRecognitionService(
+        detail=IMAGE_DETAIL, timeout=max(1, int(timeout_s)), max_retries=1
+    )
+    return await service.analyze_images(
+        data_urls, None, category_names, categories_tree, db_pool, None,
+        max_images=None, detail=IMAGE_DETAIL,
+    )
+
+
+def _tree_names(tree: Optional[list]) -> list:
+    """分類樹的**大類名稱**串（餵 `build_prompt(category_names=…)`）。"""
+    names = []
+    for node in tree or []:
+        if isinstance(node, dict):
+            name = str(node.get("name") or "").strip()
+            if name:
+                names.append(name)
+    return names
+
+
+def _resolve_tree_name(tree: Optional[list], name: Any) -> Optional[str]:
+    """名稱在分類樹裡（大類或細項，**完全相同**）⇒ 回該名稱；否則 `None`。
+
+    ⚠️ 判定沿用 `action._resolve_category` 的**同一支**（S9-12：卡上分類必須是
+    封閉值域裡的名字）——⛔ 不在此另寫一套模糊比對：猜錯分類的代價是一張
+    看起來完全正常、實際上分類錯誤的工單。
+    """
+    from services.agent.tools import action as action_tools
+
+    if not isinstance(name, str) or not name.strip():
+        return None
+    cleaned = name.strip()
+    return cleaned if action_tools._resolve_category(tree or [], cleaned) is not None else None
+
+
+def _clamp_confidence(value: Any) -> float:
+    try:
+        conf = float(value)
+    except (TypeError, ValueError):
+        return 0.0
+    if conf != conf:            # NaN
+        return 0.0
+    return max(0.0, min(1.0, conf))
+
+
+def _normalize_recognition(raw: Any, tree: Optional[list]) -> dict:
+    """vision 回傳 ⇒ **決定性驗證後的封閉值**（S9-11／12／13）。
+
+    ⛔ `description`／`suggested_item`／`suggested_reason` 一律**丟棄**——照片內
+    文字注入的唯一出口就在這幾欄；它們連 `ImageTurnInput` 都進不去。
+    `suggested_emergency` 不在 `{1,2}` ⇒ 缺值（卡值由
+    `confirm_card.emergency_status_of` 決定，缺值＝1，vision 的預設 2 ⛔ 不傳播）。
+    """
+    data = raw if isinstance(raw, dict) else {}
+    category = _resolve_tree_name(tree, data.get("suggested_category"))
+    others = []
+    for name in data.get("secondary_damages") or []:
+        resolved = _resolve_tree_name(tree, name)
+        if resolved is not None:
+            others.append(resolved)
+    emergency = data.get("suggested_emergency")
+    if isinstance(emergency, bool) or emergency not in (1, 2):
+        emergency = None
+    return {
+        "damage_visible": bool(data.get("is_damage")),
+        "confidence": _clamp_confidence(data.get("confidence")),
+        "category": category,
+        "others": others,
+        "emergency": emergency,
+    }
+
+
+def _image_facts(
+    *, processed: int, total: int, damage_visible: bool, category: Optional[str],
+) -> str:
+    """影像事實＝**程式組的句子**（⛔ 無任何模型自由文字）。
+
+    每一句都要是完整句（`provenance_units` 依句末標點切片；切不出片段的字串
+    等於一段不可引用的資料）。
+    """
+    lines = [f"使用者本回合傳了 {total} 張照片，系統已辨識其中 {processed} 張。"]
+    if not damage_visible:
+        lines.append("照片看不出損壞。")
+    elif category:
+        lines.append(f"照片辨識到的修繕分類是「{category}」。")
+    else:
+        lines.append("照片辨識不出對應的修繕分類。")
+    # ⛔ 照片的文字描述**不提供**（S9-11）：明講一句，模型才不會自己編一段。
+    lines.append("照片的文字描述不提供，需要問題描述請向使用者確認。")
+    return "\n".join(lines)
+
+
+async def prepare_image_turn(
+    image_urls: list,
+    *,
+    category_tree: Optional[list],
+    db_pool=None,
+    budget_s: Optional[float] = None,
+    clock: Callable[[], float] = time.monotonic,
+) -> tuple:
+    """抓檔 → 縮圖 → 分批辨識 ⇒ `(ImageTurnInput, 已耗秒數)`。
+
+    **順序與預算（Plan W8 (2)／S9-7／S9-21）**：
+      逐張抓檔→縮圖→**丟原 bytes**（任一時刻記憶體只有一張原檔＋已縮圖集）；
+      滿 5 張送一批辨識；抓完後把不足 5 張的尾批送出。
+      每次抓檔前、每次送辨識前各檢查一次預算——**預算一到就停**，
+      ⛔ 不送半批（那會讓「0 批完成 ⇒ timeout」這條唯一映射失效）。
+
+    **預算用罄的唯一映射（r3）**：已完成辨識批次 ≥1 ⇒ `partial`；0 批 ⇒ `timeout`。
+    一張都沒處理成功、且預算沒用完（全被閘門擋掉／全部辨識失敗）⇒ `failed`。
+
+    ⛔ bytes 不落地、不進任何紀錄；本函式只回封閉值。
+    """
+    from services.agent.runtime import IMAGE_CANDIDATE_MAX, IMAGE_CONFIDENCE_MIN, ImageTurnInput
+
+    started = clock()
+    budget = image_budget_s() if budget_s is None else budget_s
+    total = len(image_urls)
+    names = _tree_names(category_tree)
+
+    def _elapsed() -> float:
+        return clock() - started
+
+    pending: list = []          # 已縮圖的 base64 data URL（⛔ 不留原檔 bytes）
+    batches_done = 0
+    processed = 0
+    failed = False
+    merged: list = []
+    exhausted = False
+
+    async def _flush() -> None:
+        nonlocal batches_done, processed, failed, pending
+        batch, pending = pending, []
+        if not batch:
+            return
+        try:
+            raw = await _image_recognize_batch(
+                batch, category_names=names, categories_tree=category_tree,
+                db_pool=db_pool, timeout_s=max(1.0, budget - _elapsed()),
+            )
+        except Exception:
+            # ⛔ 例外物件不外流（訊息可能含 base64）；失敗一律可見：健檢＋violation。
+            image_fetch.record_image_failure()
+            failed = True
+            return
+        batches_done += 1
+        processed += len(batch)
+        merged.append(_normalize_recognition(raw, category_tree))
+
+    for url in image_urls:
+        if _elapsed() >= budget:
+            exhausted = True
+            break
+        try:
+            fetched = await _image_fetch_one(url, timeout_s=max(1.0, budget - _elapsed()))
+            downscaled, fmt = _image_validate_and_downscale(fetched.data, fetched.content_type)
+        except image_fetch.ImageFetchError:
+            continue            # 閘門擋下／抓不到 ⇒ **丟棄該張**，回合照跑
+        except Exception:
+            continue            # 格式不符（`validate_format` 的 ValueError）等
+        pending.append(
+            "data:image/" + fmt + ";base64," + base64.b64encode(downscaled).decode("ascii")
+        )
+        del downscaled
+        if len(pending) >= image_fetch.IMAGE_BATCH_SIZE:
+            if _elapsed() >= budget:
+                exhausted = True
+                pending = []            # ⛔ 不送半批
+                break
+            await _flush()
+            if failed:
+                break
+    if pending and not failed and not exhausted:
+        if _elapsed() >= budget:
+            exhausted = True
+            pending = []
+        else:
+            await _flush()
+
+    elapsed = _elapsed()
+    if failed:
+        return (
+            ImageTurnInput(status="failed", processed=processed, total=total),
+            elapsed,
+        )
+    if processed == 0:
+        # 預算用完 ⇒ `timeout`；否則（全被閘門擋掉）⇒ `failed`，兩者都有固定句與
+        # violation，⛔ 沒有「安靜地當作沒帶照片」這個選項。
+        status = "timeout" if (exhausted or elapsed >= budget) else "failed"
+        if status == "failed":
+            image_fetch.record_image_failure()
+        return ImageTurnInput(status=status, processed=0, total=total), elapsed
+
+    # ── 多批合併：分類取信心最高者、`damage_visible` 任一為真即真、候選去重 ──
+    best = max(merged, key=lambda m: m["confidence"])
+    damage_visible = any(m["damage_visible"] for m in merged)
+    confidence = best["confidence"]
+    category = best["category"]
+    emergency = best["emergency"]
+    pool: list = []
+    for m in merged:
+        for name in ([m["category"]] if m["category"] else []) + m["others"]:
+            if name not in pool:
+                pool.append(name)
+    candidates: tuple = ()
+    if damage_visible and confidence < IMAGE_CONFIDENCE_MIN and len(pool) >= 2:
+        candidates = tuple(pool[:IMAGE_CANDIDATE_MAX])
+    status = "ok" if processed >= total else "partial"
+    return (
+        ImageTurnInput(
+            status=status,
+            facts=_image_facts(
+                processed=processed, total=total,
+                damage_visible=damage_visible, category=category,
+            ),
+            processed=processed,
+            total=total,
+            candidates=candidates,
+            suggested_category=category,
+            suggested_emergency=emergency,
+        ),
+        elapsed,
+    )
+
+
+# ════════════════════════════════════════════════════════════════════
 # `agent.turn`：整回合工具（任務 2.6｜design 元件 4「agent.turn 工具」段、決策 15、R3.7）
 # ════════════════════════════════════════════════════════════════════
 class AgentTurnOutput(BaseModel):
@@ -739,7 +1022,19 @@ AGENT_TURN_SPEC: ToolSpec = {
         #    原 design 的 `dialog_ref` 查無任何實作、也沒有語義，留著只會變成
         #    「呼叫端可以指定要接哪一段歷史」的洞。歷史一律由服務端依
         #    `X-JGB-Identity.session_id` 取（見 `NamespacedStateStore`）。
-        "properties": {"message": {"type": "string", "minLength": 1, "maxLength": 2000}},
+        # W8 (2)：`minLength` 由 1 改 **0**（仍 required）——**純照片回合**
+        # （只傳照片、不打字）是 LIFF 線的常態；早退改判「`message.strip()` 空
+        # **且** `image_urls` 空 ⇒ `INVALID_INPUT`」，見 `_agent_turn`。
+        # ⛔ `image_urls` **不寫 `maxItems`／`pattern`**：`registry._validate_value`
+        #    兩者都不認（S9-5：寫了等於掛一張看起來有守、實際靜默無效的牌）。
+        #    張數在 `_agent_turn` 程式層檢查；白名單在 `image_fetch`。
+        "properties": {
+            "message": {"type": "string", "minLength": 0, "maxLength": 2000},
+            "image_urls": {
+                "type": "array",
+                "items": {"type": "string", "maxLength": 2048},
+            },
+        },
         "required": ["message"],
         "additionalProperties": False,
     },
@@ -836,16 +1131,35 @@ def namespaced_identity(identity: Identity) -> Identity:
     return dataclass_replace(identity, session_id=store.key(identity.session_id))
 
 
-def _make_agent_turn(deps: FacadeDeps) -> Callable:
-    """`agent.turn` 的 `ToolFn`：載入命名空間狀態 → `run_turn` → 存回。
+def _make_agent_turn(
+    deps: FacadeDeps, repair_category_tree: Optional[Callable] = None
+) -> Callable:
+    """`agent.turn` 的 `ToolFn`：載入命名空間狀態 →（照片）→ `run_turn` → 存回。
 
     ⛔ **不另寫第二條回合邏輯**（R3.7）：Verifier、固定句、預算、計量全都在
     `AgentRuntime.run_turn` 裡，這裡只負責狀態的載入與存回。
+
+    `repair_category_tree`（W8 (2)）：`build_registry` 注入的閉包（形狀同
+    `open_repairs`），回修繕分類樹或 `None`。⛔ 影像段不得直呼 `JGBSystemAPI`；
+    沒注入／取不到 ⇒ 分類一律缺值（卡上 `UNSPECIFIED_CATEGORY_ZH`）、不回候選。
     """
 
     async def _agent_turn(identity: Identity, args: dict) -> ToolResult:
         message = args.get("message")
-        if not isinstance(message, str) or not message.strip():
+        # ── W8 (2)：照片進場的三道程式層檢查（schema 管不到的那三件事）──
+        image_urls = args.get("image_urls")
+        if image_urls is None:
+            image_urls = []
+        if not isinstance(image_urls, list) or not all(
+            isinstance(u, str) for u in image_urls
+        ):
+            return ToolResult(ok=False, error="INVALID_INPUT")
+        # ① 張數上限 10（第 11 張起整回合拒；registry 不認 `maxItems`，S9-5）。
+        #    ⛔ 不截斷後照跑——那是靜默降級。
+        if len(image_urls) > image_fetch.IMAGE_MAX_COUNT:
+            return ToolResult(ok=False, error="INVALID_INPUT")
+        # ② 早退：兩者皆空才 `INVALID_INPUT`（純照片回合合法）。
+        if not isinstance(message, str) or (not message.strip() and not image_urls):
             return ToolResult(ok=False, error="INVALID_INPUT")
 
         runtime = _app_state(deps, "agent_runtime")
@@ -866,6 +1180,13 @@ def _make_agent_turn(deps: FacadeDeps) -> Callable:
         outline = _outline_for_audience(deps, identity.resolved_audience())
         if outline is _OUTLINE_UNAVAILABLE:
             return ToolResult(ok=False, error="NO_MATCH")
+
+        # ③ 張數配額（`IMAGE_COUNT_CAP_PER_HOUR`／`(api_key_id, vendor_id)`／
+        #    行程內滑動窗）——**排在抓檔之前**：超過 ⇒ `RATE_LIMITED`、一張都不抓。
+        if image_urls and not image_fetch.check_and_record_image_count(
+            (identity.api_key_id, identity.vendor_id), len(image_urls)
+        ):
+            return ToolResult(ok=False, error="RATE_LIMITED")
 
         try:
             store = _open_state_store(deps, identity)
@@ -910,12 +1231,35 @@ def _make_agent_turn(deps: FacadeDeps) -> Callable:
         # 的 REST 路徑同一個處置。
         if outline is not None:
             agent_state["outline"] = outline
+
+        # ── W8 (2)：照片（抓檔→縮圖→辨識）在**進 run_turn 之前**跑完 ──
+        # 交給 Runtime 的是 `ImageTurnInput`（全封閉值）；bytes 到這一行為止
+        # 就只活在 `prepare_image_turn` 的區域變數裡，⛔ 不進 `state`／trace／log。
+        image_input = None
+        image_elapsed = 0.0
+        if image_urls:
+            tree = None
+            if repair_category_tree is not None:
+                try:
+                    tree = await repair_category_tree(identity)
+                except Exception as exc:      # 取不到樹 ⇒ 分類缺值，⛔ 不讓回合炸掉
+                    logger.warning("repair_category_tree 取不到：%s", type(exc).__name__)
+                    tree = None
+            image_input, image_elapsed = await prepare_image_turn(
+                image_urls, category_tree=tree, db_pool=deps.get_db_pool(),
+            )
         try:
             # 逾時**只包住 run_turn**（2.6 前置 security review P2／處置③）：
             # 逾時或被取消 ⇒ 直接跳出，`store.save` ⛔ 不執行，落不了半寫狀態。
+            # W8 (2)：帶圖回合**扣掉照片已耗的秒數**（外層 margin 不動）——
+            # ⛔ 不扣的話內層就不再是先炸的那一個，「逾時不 save」會失效。
+            # ⚠️ `image=` **只在有照片時才傳**（⛔ 不無條件傳 `None`）：
+            #    `run_turn` 的舊三參數簽名是 REST／影子／回測共用的介面，
+            #    多傳一個具名參數會讓每一個既有替身都得跟著改。
+            image_kwargs = {"image": image_input} if image_input is not None else {}
             result = await asyncio.wait_for(
-                runtime.run_turn(turn_identity, message, state),
-                timeout=agent_turn_timeout_s(),
+                runtime.run_turn(turn_identity, message, state, **image_kwargs),
+                timeout=max(0.1, agent_turn_timeout_s() - image_elapsed),
             )
         except asyncio.TimeoutError:
             return ToolResult(ok=False, error="TOOL_TIMEOUT")
@@ -1100,6 +1444,16 @@ def build_registry(deps: FacadeDeps, registry: Optional[ToolRegistry] = None) ->
         ids = [str(r.get("id")) for r in rows if isinstance(r, dict) and r.get("id") is not None]
         return {"estate_id": estate_id, "count": len(rows), "ids": ids}
 
+    # ── W8 (2)：影像段要用的修繕分類樹 ─────────────────────────────────
+    #
+    # ⚠️ **形狀同 `_open_repairs`**：影像段（`prepare_image_turn`）⛔ 不得直呼
+    #    `JGBSystemAPI`——那會繞過 registry 的四步閘，也會讓 `mcp_facade` 以外
+    #    多一個 API 的呼叫點。取不到（例外／空）⇒ 回 `None` ⇒ 分類一律缺值、
+    #    ⛔ 不回候選（卡上 `UNSPECIFIED_CATEGORY_ZH`）。
+    async def _repair_category_tree(identity: Identity) -> Optional[list]:
+        rows = jgb2_tools._rows_of(await jgb2_tools._get_api().get_repair_categories())
+        return rows or None
+
     async def _confirm_request(identity: Identity, args: dict) -> ToolResult:
         pool = deps.get_db_pool()
         if pool is None:
@@ -1154,7 +1508,9 @@ def build_registry(deps: FacadeDeps, registry: Optional[ToolRegistry] = None) ->
     # 於是 `union_specs`／`tools/list`／`registry.call` 三處同時看不到它——
     # ⛔ 不是「註冊了但呼叫時才拒」，回切要的是整條路徑消失。
     if agent_turn_enabled():
-        reg.register(AGENT_TURN_SPEC, _make_agent_turn(deps))
+        reg.register(
+            AGENT_TURN_SPEC, _make_agent_turn(deps, repair_category_tree=_repair_category_tree)
+        )
 
     return reg
 

@@ -34,6 +34,63 @@ MAGIC_BYTES = {
 
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 
+#: `compress_image`／`downscale_image` 的預設值——**與 env 預設逐字相同**
+#: （`IMAGE_MAX_DIMENSION`／`IMAGE_COMPRESS_QUALITY`）。⛔ 不在兩處各寫一個字面量。
+DEFAULT_MAX_DIMENSION = 1024
+DEFAULT_COMPRESS_QUALITY = 85
+
+
+def downscale_image(
+    data: bytes,
+    max_px: int = DEFAULT_MAX_DIMENSION,
+    quality: int = DEFAULT_COMPRESS_QUALITY,
+) -> bytes:
+    """縮圖成 **≤`max_px` 長邊**的 bytes（**模組級純函式**，⛔ 不需要任何 S3 組態）。
+
+    Plan W8 (2)：`/mcp` 的照片進場要在**沒有 `S3_BUCKET_NAME`／沒有 AWS 憑證**的
+    行程裡縮圖（那條路不上傳 S3），而 `S3ImageService.__init__` 缺 bucket 就直接
+    `ValueError` ⇒ 縮圖不能綁在實例上。本函式是自 `S3ImageService.compress_image`
+    抽出的同一段實作，`compress_image` 改為呼叫它（REST 路徑輸出 bytes 逐位元不變）。
+
+    ⚠️ **副作用即安全性質**：PIL 的 `save()` 不帶 `exif=` 就不會把 EXIF 寫回去
+    ⇒ 輸出**沒有 EXIF、也就沒有 GPS**（W8 (2) 明示驗收 (iii)）。⛔ 不得為了
+    「保留方向」而改成 `img.save(..., exif=img.info["exif"])`——方向已由
+    `ImageOps.exif_transpose` 烘進像素。
+    """
+    img = Image.open(BytesIO(data))
+    original_format = img.format  # JPEG / PNG / WEBP
+
+    # EXIF 旋轉修正
+    try:
+        from PIL import ImageOps
+        img = ImageOps.exif_transpose(img)
+    except Exception:
+        pass
+
+    # 縮放：讓最長邊不超過 max_px
+    w, h = img.size
+    if max(w, h) > max_px:
+        ratio = max_px / max(w, h)
+        img = img.resize((int(w * ratio), int(h * ratio)), Image.LANCZOS)
+
+    # 輸出格式保持與原始相同
+    out_format = original_format or "JPEG"
+    buf = BytesIO()
+    save_kwargs: dict = {}
+
+    if out_format.upper() in ("JPEG", "JPG"):
+        out_format = "JPEG"
+        if img.mode in ("RGBA", "P"):
+            img = img.convert("RGB")
+        save_kwargs["quality"] = quality
+        save_kwargs["optimize"] = True
+    elif out_format.upper() == "WEBP":
+        save_kwargs["quality"] = quality
+    # PNG 使用無損壓縮，不設 quality
+
+    img.save(buf, format=out_format, **save_kwargs)
+    return buf.getvalue()
+
 
 class S3ImageService:
     """AWS S3 圖片服務 — 壓縮、上傳、presigned URL"""
@@ -132,47 +189,14 @@ class S3ImageService:
         max_dim = max_dimension or self.max_dimension
         qual = quality or self.compress_quality
 
-        img = Image.open(BytesIO(file_content))
-        original_format = img.format  # JPEG / PNG / WEBP
-
-        # EXIF 旋轉修正
-        try:
-            from PIL import ImageOps
-            img = ImageOps.exif_transpose(img)
-        except Exception:
-            pass
-
-        # 縮放：讓最長邊不超過 max_dim
-        w, h = img.size
-        if max(w, h) > max_dim:
-            ratio = max_dim / max(w, h)
-            new_w = int(w * ratio)
-            new_h = int(h * ratio)
-            img = img.resize((new_w, new_h), Image.LANCZOS)
-
-        w, h = img.size
-
-        # 輸出格式保持與原始相同
-        out_format = original_format or "JPEG"
-        buf = BytesIO()
-        save_kwargs: dict = {}
-
-        if out_format.upper() in ("JPEG", "JPG"):
-            out_format = "JPEG"
-            if img.mode in ("RGBA", "P"):
-                img = img.convert("RGB")
-            save_kwargs["quality"] = qual
-            save_kwargs["optimize"] = True
-        elif out_format.upper() == "WEBP":
-            save_kwargs["quality"] = qual
-        # PNG 使用無損壓縮，不設 quality
-
-        img.save(buf, format=out_format, **save_kwargs)
-        compressed = buf.getvalue()
-
-        fmt_lower = out_format.lower()
-        if fmt_lower == "jpeg":
-            fmt_lower = "jpeg"
+        # ⚠️ 縮圖本體已抽成**模組級** `downscale_image`（Plan W8 (2)）——`/mcp` 的
+        # 照片進場沒有 S3 組態也要縮圖。這裡只是把它的輸出補上呼叫端要的
+        # `(width, height, format)`：值由**縮圖後的 bytes 本身**讀回，
+        # ⛔ 不在兩處各算一次尺寸（那正是會漂的地方）。
+        compressed = downscale_image(file_content, max_dim, qual)
+        with Image.open(BytesIO(compressed)) as out_img:
+            w, h = out_img.size
+            fmt_lower = (out_img.format or "JPEG").lower()
 
         return compressed, w, h, fmt_lower
 

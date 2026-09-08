@@ -54,7 +54,7 @@ import os
 from typing import Any, Callable, Optional
 
 from services import api_key_auth
-from services.agent import mcp_facade
+from services.agent import image_fetch, mcp_facade
 from services.agent.identity import Identity, Stage
 from services.agent.tools.kb import kb_get
 from services.agent.tools.registry import write_tools_enabled
@@ -236,6 +236,21 @@ def _premise_flags(stats: dict) -> list:
     return flags
 
 
+def _image_recognition_state() -> dict:
+    """`image_recognition` 四欄（W8 (2)）。
+
+    ⚠️ 以**模組**呼叫 `image_fetch.*`，⛔ 不 `from … import`——測試要能
+    monkeypatch 這幾支（同 `mcp_facade.agent_configured` 的理由）。
+    """
+    stats = image_fetch.image_failure_stats()
+    return {
+        "enabled": image_fetch.image_entry_enabled(),
+        "model": os.getenv("IMAGE_RECOGNITION_MODEL", "gpt-4o"),
+        "failures_1h": stats["failures_1h"],
+        "last_failure_at": stats["last_failure_at"],
+    }
+
+
 async def compute_agent_health(
     *,
     registry,
@@ -338,6 +353,12 @@ async def compute_agent_health(
                 else write_tools_enabled()
             ),
             "use_mock_jgb_api": _use_mock_jgb_api(),
+            # W8 (2)：照片進場的可觀測性——**vision 失敗必須看得見**，
+            # ⛔ 不沿用 REST 路徑的靜默降級。四欄皆為**觀測值、⛔ 不致紅**
+            # （一次辨識失敗不是這台機器壞了；連續失敗要靠 `failures_1h` 看出來）。
+            # `enabled` ＝ `image_fetch.image_entry_enabled()`＝白名單非空
+            # （⛔ 不是 REST 的 `ENABLE_IMAGE_RECOGNITION`，那是另一條信任模型）。
+            "image_recognition": _image_recognition_state(),
             # R8：Verifier 對照實驗旗——**觀測值、⛔ 不致紅**（它不是故障，
             # 是一個刻意的非正式組態）；但它必須看得見，否則「這台機器的答案
             # 有沒有經過尺」從外面完全問不出來。
