@@ -227,6 +227,8 @@ W4b（定義層、⛔ 不寫例子）：`jgb2.action.bill_due_extend` descriptio
 
 **線上部署（2026-09-08 15:2x，業主「幫我處理」；jgb2-ai-chatbot，根目錄 30 GB 剩 12 GB、RAM 3.7 GB）**：push `5eb9cbb6`（main＝feat）→ 舊庫備份 `backups/pre_demo_20260908_0721.dump`（15 MB）→ dev dump 17 MB 取代（migration 1、知識 1048）→ `.env` 11 行＋`IMAGE_RECOGNITION_MODEL=gpt-4o`（R12，蓋過 compose 預設 mini）→ `docker-compose` build 548 MB → 啟動約 60 s（fine_index prospect 38／pm 36）→ 無 key 401、帶 key `ok`（mock／write／observe／image gpt-4o 全對）→ 線上 `make audit` OVERALL PASS。demo key `line-bot-oa-demo`（前綴 `rgk_AEHV`，明文只在伺服器 `/home/ec2-user/.curl-mcp-key`，交 line-bot）；dev 內部 key 97 已停用。⚠️ 換庫第一次失敗（伺服器無 `docker compose`、`;` 接的刪檔把 dump 刪了、`schema_migrations` 欄名是 `migration_name`）——runbook §20 已補實跑修正。磁碟部署後仍剩 12 GB。
 
+**公開路由修正（2026-09-08 晚，line-bot 回報 `/rag-api/mcp` 404）**：根因＝nginx `location /rag-api/` 的 `rewrite ^/rag-api/(.*)$ /api/$1` 把 `/mcp` 改成 `/api/mcp`（不存在）；先前以假 key 探到的 401 是金鑰中介層在路由前擋的，⛔ 不能當「路徑通」的證據。修＝`knowledge-admin/frontend/nginx.conf.template` 加 `location /rag-api/mcp` 直通 `/mcp`（HTTP/1.1、不緩衝、同 auth_request 與 key map），`91c26fee`；線上 `--force-recreate knowledge-admin-web`、`nginx -t` OK；公開 `initialize` 200＋`mcp-session-id`、MCP client 經公開網址 tools/list 16、一段真對話 12.1 s 答對、select 0.0 s 直答。教訓：驗端點要走到協定層（MCP 先 `initialize`），401 只證明 key 閘在。
+
 **還壞的三類（按層）**：
 1. 答案層（工具契約）：`repair_create` 描述「estate_name 必須是系統查得到的物件」⇒ 模型向業務要「系統內的物件名稱或編號」（L3-A／B／M／N 都問了，物件名早在句內）；描述「1 代表非緊急，2 代表緊急」被逐字念給業務 ⇒ 急迫值外洩 8 回合（觀察模式只記不擋）。修法＝描述改定義（口述名稱即可、系統比對；值只給程式）——**待裁 delta3**。
 2. 答案層（行為）：其他槽位缺時仍順帶反問急迫（L3-identity／M／Q T1）；L5-G T1 主動提議延期、T2「好了」被當同意 ⇒ 反問；L5-K 同戶合約查不到就要合約編號（85894 可查）。
