@@ -142,4 +142,4 @@ def test_g5_absent_identity_with_current_output():
         assert build_change_exit_facts(_contract(status), "改合約") == \
             build_change_exit_facts(_contract(status), "改合約")
         base = build_change_exit_facts(_contract(status), "改合約")
-        assert "權限" not in base.split("出口判定")[0]        # 未啟用不憑空談權限
+        assert "權限" not in base.split("可以怎麼處理")[0]        # 未啟用不憑空談權限

@@ -361,23 +361,25 @@ def build_change_exit_facts(contract: dict, user_question: str = "") -> str:
         lines.append("如需調整歷史合約資料，請填寫資料異動申請書，由客服於後台處理。")
         return "\n".join(lines)
 
+    # 2026-09-08：區段標籤由「出口判定：」改「可以怎麼處理：」——前者是內部術語，模型會逐字念給
+    # 業務（LIFF 實測）；facts 的標籤也是使用者會看到的字，⛔ 不用程式用語。
     if status == ContractStatus.READY:
-        lines.append("出口判定：合約尚未發送簽約邀請，可直接編輯。")
+        lines.append("可以怎麼處理：合約尚未發送簽約邀請，可直接編輯。")
         lines.append("操作路徑：進入該合約的編輯頁修改後儲存即可；此狀態下也可直接刪除合約。")
     elif status in (ContractStatus.INVITING, ContractStatus.INVITING_NEXT):
-        lines.append("出口判定：合約已送出簽約邀請（簽署流程中），不可直接編輯。")
+        lines.append("可以怎麼處理：合約已送出簽約邀請（簽署流程中），不可直接編輯。")
         lines.append("處理方式：先取消簽約、退回「待發送」狀態，修改後重新發送邀請。")
         lines.append("管理者主動取消會保留已填的租客資料；"
                      "但若是租客按「不同意」或邀請逾期自動退回，租客資料會被清空、需重新填寫。")
     elif isinstance(status, int) and status >= ContractStatus.SIGNED:
-        lines.append("出口判定：合約已完成雙方簽署，不可直接修改。")
+        lines.append("可以怎麼處理：合約已完成雙方簽署，不可直接修改。")
         lines.append("兩條出口：一、複製合約重建新約重新簽署（可分區塊複製既有內容）；"
                      "二、填寫資料異動申請書，由客服於後台調整資料。")
         lines.append("藍字區分：合約上的藍字參數（簽署後印在 PDF 上的內容，如租金、電價、租期）"
                      "簽後不可改；資料異動申請書調整的是系統資料庫（DB）中的資料。"
                      "若僅調整系統資料而未重簽，PDF 藍字與實際收款內容將不一致，此風險需由申請人自行承擔。")
     else:
-        lines.append("出口判定：無法辨識此合約的狀態，請聯繫客服確認。")
+        lines.append("可以怎麼處理：這筆合約的狀態系統無法判定（狀態碼不在已知清單），需由客服確認後才能告訴你能不能改。")
 
     # G5 權限層（requester_permissions 附掛：jgb_member_permissions，user_id={session.user_id}）——
     # 權限擋 vs 狀態擋分流。存在性驅動：未附掛/查無（G5 未啟用、發問者非 jgb2 成員）→ 不加行（恆等）。
