@@ -4,7 +4,7 @@
   "business_types": [
     "system_provider"
   ],
-  "canon_sha256": "b3e7bc85d51e6e79e5697c8ccb9997b4d2796e6bfe295b63ebcd949568b9d1b3",
+  "canon_sha256": "36c53fb9185dd7229a2fcda50ff236e133df12107056766dc7a19d614f3f109c",
   "coarses": [
     {
       "fines": [
@@ -493,9 +493,9 @@
           ],
           "categories": [],
           "coarse_id": "C",
-          "content_sha256": "37ccbb3e71b09ca929c26f166d37b63db190a532273ccc28cab3fad8cd6be3d6",
+          "content_sha256": "5d4d89d564275ef809416d754a277876789af8af1b792d81c98eabe00bf50615",
           "content_units": [
-            "由清單進場（帶進場脈絡）時，每筆清單項目是獨立會話、只看被點選的那一筆，問到別戶時退出並提示回清單點該戶；聊天直接進場時沒有點選項目，同一業務權限內的帳單、合約、物件、修繕可依編號或名稱切換，不視為離題。"
+            "由清單進場（帶進場脈絡）時，每筆清單項目是獨立會話、只看被點選的那一戶（戶＝該筆所屬的物件；同一物件的帳單、合約、修繕都可追問），問到別戶時退出並提示回清單點該戶，這段對話裡之後用文字問別戶也一樣退出；聊天直接進場時沒有點選項目，同一業務權限內的帳單、合約、物件、修繕可依編號或名稱切換，不視為離題。"
           ],
           "id": "property_manager/C/followup-session-single-item-boundary",
           "instance_applicability": "general",
@@ -1349,5 +1349,5 @@
   "target_user": [
     "property_manager"
   ],
-  "version": "2026-09-08.3"
+  "version": "2026-09-08.4"
 }

@@ -1,6 +1,6 @@
 ---
 audience: property_manager
-version: 2026-09-08.3
+version: 2026-09-08.4
 reviewers: [owner]
 language: zh-TW
 budget_tokens: 8000
@@ -130,7 +130,7 @@ business_types: [system_provider]
 - sources: [draft:batch#15]
 - instance_applicability: general
 - reviewed: {by: owner, at: 2026-09-08}
-由清單進場（帶進場脈絡）時，每筆清單項目是獨立會話、只看被點選的那一筆，問到別戶時退出並提示回清單點該戶；聊天直接進場時沒有點選項目，同一業務權限內的帳單、合約、物件、修繕可依編號或名稱切換，不視為離題。
+由清單進場（帶進場脈絡）時，每筆清單項目是獨立會話、只看被點選的那一戶（戶＝該筆所屬的物件；同一物件的帳單、合約、修繕都可追問），問到別戶時退出並提示回清單點該戶，這段對話裡之後用文字問別戶也一樣退出；聊天直接進場時沒有點選項目，同一業務權限內的帳單、合約、物件、修繕可依編號或名稱切換，不視為離題。
 
 ### 追問遇到 JGB 沒有的資料時怎麼回 {#property_manager/C/followup-missing-data-in-jgb}
 - phrasings:
