@@ -236,11 +236,11 @@
 | L15-01 | P2 | 候選清單路徑（無 ref／keyword 的 `fetch_default`）不帶 scope，整個 role 的列連金額進 `text_for_model`——正是 L5-C 的漏 | FIX：有 `select_scope` 時，bills／contracts／repairs 的候選列**先以 `estate_id` 等值過濾再組文字**；過濾後為空 ⇒ 視同範圍外（同 (a)③ 替換規則） | (a)①③ |
 | L15-02 | P2 | estates／meters 不在邊界 ⇒ 由清單進場可讀別戶物件／電錶 | FIX：estates 以列 `id`、meters 以列 `estate_id` 進 `scope`（兩處 `_ok_single` 呼叫點都有值） | (a)① |
 | L15-03 | P2 | 寫入路徑繞過：`_open_repairs` 解任意 `estate_name`、提示行洩別戶未結單；`bill_due_extend` 可延別戶帳單 | FIX：Runtime `_begin_pending_confirm` 有 `select_scope` 時——`repair_create` 比對 `data.estate_id`、`bill_due_extend` 比對 `bill_ref` 槽位＝payload `bill_id`；不等 ⇒ 不建 pending、回範圍固定句 | (a)⑤（新） |
-| L15-04 | P2 | scope 釘住整段對話（`session_id` 契約＝整段對話），select 之後聊天式切換別戶也被擋，與正本「聊天進場可切換」在同一 session 內衝突 | **待業主裁**：建議 (A) 接受 session 級釘住（line-bot 零改動；再點清單即覆蓋 scope；聊天要換戶＝回清單點），驗收加「select 後聊天問別戶 ⇒ 固定句」；否決 (B) 每筆清單新 `session_id`（line-bot 要改） | §4 待裁 |
+| L15-04 | P2 | scope 釘住整段對話（`session_id` 契約＝整段對話），select 之後聊天式切換別戶也被擋，與正本「聊天進場可切換」在同一 session 內衝突 | **已裁（業主 2026-09-08）(A)**：session 級釘住（line-bot 零改動；再點清單即覆蓋 scope；聊天要換戶＝回清單點）；驗收加「select 後聊天問別戶 ⇒ 範圍固定句」；否決 (B) 每筆清單新 `session_id` | (a)④、驗收 |
 | L15-05 | P2 | select 失敗／回傳無 estate_id 時舊 scope 殘留 | FIX：每一個 `select:` 回合**先**寫 `select_scope`（失敗＝None）再走任何早退 | (a)②④ |
 | L15-06 | P2 | 列缺 `estate_id` 時靜默 fail-open | FIX：有 scope 而單列無 `estate_id` ⇒ **fail-closed**（視同範圍外）＋violation `select_scope_unknown`；停止條件：demo 資料若合法缺值 ⇒ 停下交裁 | (a)③ |
 | L15-07 | P3 | int／str 不等值；`_ok_single` 拿不到列 | FIX：兩側 `str()`；`_ok_single(..., estate_id: str|None=None)` 明確參數；unit 混 int／str | (a)① |
-| L15-08 | P3 | 邊界＝物件（estate）而正本說「那一筆／其他租客」；同物件歷史合約仍可讀；`簽署排障` face 在模型迴圈可達 | **待業主裁**：建議第一版邊界＝物件，正本 C/followup-session-single-item-boundary 補「戶＝物件」一語（review sheet）；`簽署排障` 另列 S8-1 已知面 | §4 待裁 |
+| L15-08 | P3 | 邊界＝物件（estate）而正本說「那一筆／其他租客」；同物件歷史合約仍可讀；`簽署排障` face 在模型迴圈可達 | **已裁（業主 2026-09-08）邊界＝物件**：同一物件的帳單／合約／修繕（含歷史）都可追問；正本 C/followup-session-single-item-boundary 補「戶＝物件」（version 2026-09-08.4）；`簽署排障` 列 S8-1 已知面 | (a)、正本 |
 | L15-09 | P3 | (a)「立即結束」與 (b)「能答的先答」相衝；contracts keyword 放寬重查會把鄰戶單列命中變整回合退出 | FIX：範圍外工具結果**不結束回合**，改以程式固定工具訊息「（該筆不在本會話範圍）」替換（無 facts）、記 violation；回合結束時若有任一替換 ⇒ 程式在答案末尾接指路固定句；整回合全為範圍外 ⇒ 只剩固定句。unit 兩方向各一 | (a)③ 改寫 |
 | L15-10 | P3 | (c) 句禁止用自述數字當查詢條件，連編號也被禁 | FIX 措辭：識別碼（帳單／合約／修繕／物件編號）可當 ref／keyword；數值（天數、金額、日期）不是證據、一律現查 | (c) |
 | L15-11 | P3 | 新 trace 鍵 `scope_exit` 撞白名單守測（兩檔不在範圍） | FIX：不加新鍵，只用 `violations += ["select_scope_exit"]` | (a)③ |
@@ -250,4 +250,4 @@
 | L15-15 | P4 | 替身 `_bills_show` 只看 role_id ⇒ 本地測不到跨 role 隔離 | 驗收註明：只證物件邊界，不證跨 role | 驗收 |
 | L15-16 | P3 | (b)(c) 規則句與 5.1 定義文（另一視窗、`_POLICY_TEXT_NON_PROSPECT` 凍結＋字數上限）同檔衝突 | DEFER：(b)(c) 的**規則句**移交 5.1 定義文擁有者（帳本 L15 註記）；L15 只留 (a)＋(b) 的工具描述句 | 範圍縮 |
 
-**§16 修訂後範圍**：(a) select_scope（含候選過濾、estates／meters、寫入路徑、失敗寫 None、fail-closed、str 正規化、替換不結束回合）＋(b) 兩域 description 定義句。(b)(c) 規則句 → 5.1。待裁：L15-04、L15-08。
+**§16 修訂後範圍**：(a) select_scope（含候選過濾、estates／meters、寫入路徑、失敗寫 None、fail-closed、str 正規化、替換不結束回合）＋(b) 兩域 description 定義句。(b)(c) 規則句 → 5.1。L15-04／L15-08 已裁（A／物件）。**擁有者**：security-executor 一次交付（`runtime.py`、`tools/jgb2.py`、`mcp_facade.py` 兩域 description、新 `tests/unit/agent/test_select_scope_req.py`、`test_session_confirm_tools_req.py` 增案）。**驗收（確定性，各附正對照）**：(i) select bill(E1) → 模型查 bill(E2) 單列 ⇒ 該工具結果被替換為固定工具訊息、答案末尾接範圍固定句、violation `select_scope_exit`、facts 不在 answer／dialog／trace；正對照＝查同物件 contract(E1) ⇒ 正常；(ii) 無 select（聊天進場）查 E2 ⇒ 正常；(iii) 候選清單含 E1／E2 列 ⇒ 只剩 E1 列進文字；全 E2 ⇒ 視同範圍外；(iv) select 失敗（NO_MATCH）⇒ `select_scope=None`、之後查 E2 正常（舊 scope 不殘留）；(v) 單列缺 `estate_id` ⇒ 範圍外＋`select_scope_unknown`；(vi) estates／meters 別戶 ⇒ 範圍外；(vii) `confirm.request(repair_create)` 別戶 estate ⇒ 不建 pending、固定句；`bill_due_extend` payload `bill_id` ≠ `bill_ref` ⇒ 同；正對照＝同戶照常出卡；(viii) int／str estate id 混用等值；(ix) 範圍固定句為常數、無插值；(x) select 後聊天問別戶 ⇒ 固定句（L15-04 (A)）；(xi) description 含定義句；既有 select／confirm／W6 suites 不退。實跑：L5-C 改「退出＋指路」、L5-K 答到合約、線③ 12/12 不退。
