@@ -251,6 +251,23 @@ W4b（定義層、⛔ 不寫例子）：`jgb2.action.bill_due_extend` descriptio
 - **Plan `plan-walkthrough-fixes-20260909.md`**（H1–H4，通用層：確認卡日期屬性 `not_before_today`／完成動作會話記憶／正本 delta5／零查詢轉人出口降級＋Verifier 敏感配對）：security-reviewer r1 REVISE 10 條（F1 敏感類未保護、F2 降級漏改 handoff 欄位 …）全數處置進第 2 稿；plan-verifier 審中。劇本 `smoke/scenarios_walkthrough.json`（三線 24 回合）備好。
 - 陷阱：`run-tests.sh`／pytest 路徑打錯 ⇒ 0 收集但 exit 0；看到 `passed=0` 一律視為沒跑。
 
+## 1j. 走查回修第一批落地與三輪量測（2026-09-09 凌晨；HEAD `1326696a`；smoke-rag 線上同組態＋`AGENT_VERIFIER_OBSERVE_ONLY=true`、每輪重起替身；劇本 `smoke/scenarios_walkthrough.json` 24 回合、計分 `smoke/wt_score.py`）
+
+| 項 | 修前基準 | 修後 r1 | r2 | r3 | 判讀 |
+|---|---|---|---|---|---|
+| H1 延三天不出過去日期的卡（bill／short） | ✗／✗ | ✓／✓ | ✓／✓ | ✓／✓ | **閘門 6/6**；r3 wt-bill#3 模型忘了前文的 756248 反問編號（非閘門） |
+| H1 延到今天+2 出卡 | ✓ | ✓ | ✓ | ✗（同上前文遺失） | 2/3 |
+| H3 建單後問單號答得出 | ✗（反問要不要查） | ✓ | ✓ | ✓ | **3/3**（S2 記憶段） |
+| H4 改描述不念「我要修改」 | ✗ | ✓ | ✓ | ✓ | **3/3**（delta5） |
+| H4 第二件同戶開新卡 | ✗ | ✓ | ✗ | ✗ | 1/3：r2／r3 模型用**文字**問「是否送出」沒呼叫 `confirm.request`（假確認）⇒ 第二批 T3 |
+| H2 三句短句追問不轉人 | ✓（基準也是） | ✓ | ✓ | ✓ | 3/3 |
+| H2 查無編號追問不轉人 | ✗（轉人） | ✓ | ✓ | ✓ | **3/3**（政策句「查無先確認編號」） |
+| H2 該先處理哪件（有前文）不轉人 | ✗ | ✗ | ✗ | ✓ | 1/3 ⇒ H6 第二批 T2 |
+| (H6) 有前文「要不要催他」不轉人 | ✗ | ✗ | ✓（S4 降級成追問） | ✗ | 1/3 ⇒ T2 |
+
+線③ 21 案例回歸（`smoke/liff_s1s4.jsonl`）：出卡 12/12、外洩 0、轉人 0、p50 8.7 s／p95 13.6 s。verifier（S1＋S4，fresh）：**CONFIRMED**，自寫 24 探針全過、agent 測試 1461；兩條 P3（閘門回合 outcome 標 answered；有前文判斷題轉人）→ 第二批 T1／T2。S2＋S3 的 verifier 待變形集跑完派。
+發現：`AGENT_VERIFIER_OBSERVE_ONLY` 把 Verifier **所有**不通過判定改成通過（含機敏類）——與帳本 R8「機敏類照擋」衝突，R8 講的 `AGENT_VERIFIER_MODE`（W6-b3）未落地；已寫入架構文件 §4b，待業主裁。
+
 ## 2. demo 處理（這次就做，本機可驗）
 
 | # | 事 | 狀態 | 證據 |
