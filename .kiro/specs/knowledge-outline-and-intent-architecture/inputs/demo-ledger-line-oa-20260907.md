@@ -268,6 +268,8 @@ W4b（定義層、⛔ 不寫例子）：`jgb2.action.bill_due_extend` descriptio
 線③ 21 案例回歸（`smoke/liff_s1s4.jsonl`）：出卡 12/12、外洩 0、轉人 0、p50 8.7 s／p95 13.6 s。verifier（S1＋S4，fresh）：**CONFIRMED**，自寫 24 探針全過、agent 測試 1461；兩條 P3（閘門回合 outcome 標 answered；有前文判斷題轉人）→ 第二批 T1／T2。S2＋S3 的 verifier 待變形集跑完派。
 發現：`AGENT_VERIFIER_OBSERVE_ONLY` 把 Verifier **所有**不通過判定改成通過（含機敏類）——與帳本 R8「機敏類照擋」衝突，R8 講的 `AGENT_VERIFIER_MODE`（W6-b3）未落地；已寫入架構文件 §4b，待業主裁。
 
+**變形集（`smoke/scenarios_walkthrough_variants.json` 22 回合，`smoke/wv_r1.jsonl`，同組態一輪）**：H1 5/5（往後延一週＝過去 ⇒ 不出卡問日期；明講 9/05 被擋；下個月 5 號 ⇒ 10/05 出卡；原到期日在未來的 769249 延三天 ⇒ 9/17 正常出卡）；H3／H4 4/4（「剛剛開的那張」「幫我再看一下剛才那張」「描述打錯了」「另外同一戶陽台排水孔」）；H2 6/8——「756248 你建議我怎麼做」反問編號類型、「7562480」沒先查就要人確認 ⇒ 第二批 T1「只有名稱或編號先查」。新抓 H7：「物件 67652」內部 id 外洩（wv-h3#4）、「嗎？。」（wv-h2b#1）⇒ 第二批 T4。
+
 ## 2. demo 處理（這次就做，本機可驗）
 
 | # | 事 | 狀態 | 證據 |
