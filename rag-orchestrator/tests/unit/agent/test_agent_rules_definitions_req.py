@@ -231,3 +231,13 @@ def test_agent_rules_source_does_not_reference_reask_pattern_table():
     for symbol in banned:
         assert symbol not in names, f"agent_rules.py 引用了 {symbol}"
         assert symbol not in source, f"agent_rules.py 出現了 {symbol} 字面"
+
+
+def test_non_prospect_policy_has_multi_question_and_user_stated_number_definitions():
+    """L15 (b)(c)（業主 2026-09-08「5.1 兩句採，上限可調」）：兩句定義只在 pm／tenant 政策文；
+    prospect 政策文不動（5.1 凍結、1,511 字）。⛔ 定義不帶例子（沿用 _EXAMPLE_MARKERS 檢查）。"""
+    multi = "一句多題：查得到的先答完，查不到的那一題明說查不到並指路，⛔ 不因一題查不到而整句反問。"
+    numbers = "使用者自述的數值（天數、金額、日期）不是證據也不是答案，一律以工具現查為準，不一致時明講兩者；編號可當查詢條件。"
+    assert multi in agent_rules._POLICY_TEXT_NON_PROSPECT
+    assert numbers in agent_rules._POLICY_TEXT_NON_PROSPECT
+    assert multi not in agent_rules._POLICY_TEXT and numbers not in agent_rules._POLICY_TEXT
