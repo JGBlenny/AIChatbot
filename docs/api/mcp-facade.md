@@ -5,7 +5,7 @@
 > 讀者：要從**伺服器端**接上 JGB 工具面的工程（jgb2 後端、LINE bot 後端、回測工具、
 > 內部操作者的 Claude Code）。
 
-> ⚠️ **2026-09-08 demo 上線後對碼修正**（本檔其餘段落寫於 2026-09-04）：`agent.turn` 對 `prospect` 與 `property_manager` 都是 M1；輸入 `message` `minLength 0`（可空）＋選填 `image_urls`（≤10 張 relay 簽章網址；兩者皆空才 `INVALID_INPUT`）；輸出**六鍵**＝五鍵＋`session_expired: bool`（DSP-042；`transcript` 第七鍵屬 W7 語音，**尚未落地**）；機器值 `confirm_*:<pending_id>` 與 `select:<type>:<id>` 由 Runtime 在模型前處理。串接方請以 `.kiro/specs/knowledge-outline-and-intent-architecture/inputs/line-bot-integration-sheet-20260908.md` 為準；架構見 `docs/architecture/AGENTIC_MCP_ARCHITECTURE.md`。
+> ⚠️ **2026-09-08 demo 上線後對碼修正**（本檔其餘段落寫於 2026-09-04）：`agent.turn` 對 `prospect` 與 `property_manager` 都是 M1；輸入 `message` `minLength 0`（可空）＋選填 `image_urls`（≤10 張 relay 簽章網址；兩者皆空才 `INVALID_INPUT`）；輸出**七鍵**＝五鍵＋`session_expired: bool`（DSP-042）＋`outcome{state, expects, action, ref}`（DSP-043：回合結果的封閉描述，呼叫端只看它決定畫面、⛔ 不解析 `answer` 字串；`transcript` 第八鍵屬 W7 語音，**尚未落地**）；機器值 `confirm_*:<pending_id>` 與 `select:<type>:<id>` 由 Runtime 在模型前處理。串接方請以 `.kiro/specs/knowledge-outline-and-intent-architecture/inputs/line-bot-integration-sheet-20260908.md` 為準；架構見 `docs/architecture/AGENTIC_MCP_ARCHITECTURE.md`。
 
 ## 0. 一句話
 

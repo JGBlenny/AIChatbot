@@ -24,10 +24,14 @@ LINE 使用者 ──文字──▶ line-bot webhook
 |---|---|---|---|
 | **B1** MCP client | MCP SDK streamable HTTP 連 `POST /mcp`；每個 LINE 使用者一條 session（`initialize` 一次，之後 `tools/call`）；⛔ 不要每則訊息重新 initialize（每回合多 1 次往返） | `tools/list` 看得到 `agent.turn`（含 `jgb2.query.*` 不必理會，那是模型用的） |
 | **B2** 身分與 session | `X-JGB-Identity`：`{"mode":"b2b","target_user":"property_manager","vendor_id":<int>,"role_id":"<str>","user_id":"<str>","session_id":"<假名>"}`；`session_id`＝`HMAC(secret, lineUserId)` 的穩定假名（⛔ 不放 LINE userId）；`role_id`／`user_id` 由綁定推出 | 缺 vendor_id／session_id ⇒ 400 `IDENTITY_*`（設定錯，不是使用者錯） |
-| **B3** 渲染 | `answer` → 文字泡泡（可多段，保留換行）；`quick_replies[]` → LINE quick reply 按鈕，`label` 顯示、`value` 送回；`handoff` 非 null → 固定句「這題我幫您轉專人」＋真人入口（⛔ 不顯示 `handoff_reason`）；`kind` 只作記錄 | 六條劇本（§3）畫面正確 |
+| **B3** 渲染 | `answer` → 文字泡泡（可多段，保留換行）；`quick_replies[]` → LINE quick reply 按鈕，`label` 顯示、`value` 送回；`handoff` 非 null → 固定句「這題我幫您轉專人」＋真人入口（⛔ 不顯示 `handoff_reason`）；`kind` 只作記錄；**畫面狀態改看 `outcome`（B7）** | 六條劇本（§3）畫面正確 |
 | **B4** 確認流程（寫入） | 模型回確認卡時 `quick_replies` 固定三顆：`{"label":"✅ 確認送出","value":"confirm_submit:<16hex>"}`、`✏️ 我要修改/confirm_edit:<16hex>`、`❌ 取消/confirm_cancel:<16hex>`（label 含 emoji 前綴，照顯示）；使用者按下 ⇒ **把 value 原字串當 message 送回**（⛔ 不改寫、不加字、不用 label）；使用者若改打字（「好」「送出」）⇒ 照一般文字送，服務端不會當確認（會回提示用按鈕） | 延 3 天／開單兩條正向：按「確認送出」後回答含新到期日／單號；按「取消」不寫 |
 | **B5** 逾時與錯誤 | 呼叫端逾時 **≥60 s**；等待期間送 LINE typing／loading 指示；`ok=false` 依契約 §3 碼對照（`RATE_LIMITED`／`TOOL_TIMEOUT` ⇒「稍後再試」；`NO_MATCH`／`AGENT_UNAVAILABLE` ⇒ 服務端未就緒、記 log）；逾時後同一 session 可重送同一句 | 人工拔線測一次 |
 | **B6** 日誌與個資 | ⛔ 不記整包回應（`answer` 含租客資料）；只記 `trace_id`、狀態碼、耗時；`session_id` 假名；金鑰只在 line-bot 伺服器環境變數 | code review |
+
+| **B7** 依 `outcome` 決定畫面（DSP-043，2026-09-08 新增） | 回應第七鍵 `outcome{state, expects, action, ref}`：`confirmed` ⇒ 任務完成（`ref` 是單號／帳單編號，LIFF 收畫面）、`confirm_pending` ⇒ 顯示三顆確認鍵、`clarifying` ⇒ 等文字或選項（看 `expects`）、`handoff` ⇒ 真人、`out_of_scope` ⇒ 指路回清單、`failed` ⇒ 顯示 `answer` 固定句、`cancelled`／`answered` 照字面。⛔ 不解析 `answer` 判狀態 | 六條劇本每回合印 `outcome`，與畫面一致 |
+| **B8** 照片緩衝 3 秒（業主 2026-09-08 裁） | LINE 一張照片一個事件 ⇒ 同一使用者 **3 秒內**的照片（與文字）合成**一次** `agent.turn`：`image_urls` ≤10 張 relay 簽章網址（900 s、≤5,000,000 bytes／張）、`message` 可空；⛔ 不拆成兩個回合；3 秒後才到的算下一回合 | 連傳 3 張 ⇒ 只有一次 `agent.turn`、一張確認卡 |
+| **B9** LIFF 走 MCP（業主 2026-09-08 裁；取代示範大腦） | LIFF 六格：前端 → 你們 relay 後端 → 同一把 key 打 `agent.turn`（文字、清單點選 `select:<type>:<id>`、照片 `image_urls` 同一條）；⛔ 不接舊鏈 REST `/rag-api/v1/message`（無寫入、無點選、無本次正本），⛔ 不另開 HTTP 端點 | LIFF 六格各跑一次，畫面依 `outcome` 收放 |
 
 ## 2. 你們會拿到什麼
 
