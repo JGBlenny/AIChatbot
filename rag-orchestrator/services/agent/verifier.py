@@ -147,6 +147,11 @@ class OutputVerifier:
             if out.handoff_reason not in {r.value for r in HandoffReason}:
                 return VerifierVerdict(
                     ok=False, reason="SCHEMA", schema_cause="handoff_reason_invalid")
+            # F1：敏感五類必須配 sensitive_no_grounding——把「敏感類配敏感原因」從
+            # 提示詞承諾升格為 schema 驗證，對所有回合一體適用（S4 §5）。
+            if fact_class in SENSITIVE and out.handoff_reason != "sensitive_no_grounding":
+                return VerifierVerdict(
+                    ok=False, reason="SCHEMA", schema_cause="handoff_reason_mismatch")
             return VerifierVerdict(ok=True)
         if fact_class in SENSITIVE:
             return VerifierVerdict(ok=False, reason="SENSITIVE_TOPIC")

@@ -141,6 +141,7 @@ class VerifierVerdict(BaseModel):
             "unit_out_of_range",
             "marker_in_answer",
             "handoff_reason_invalid",
+            "handoff_reason_mismatch",
         ]
     ] = None
 

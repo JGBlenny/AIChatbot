@@ -102,7 +102,7 @@ from services.conversational_config import (
     effective_handoff_channel,
     effective_handoff_message,
 )
-from services.presales_gate import FactClass, HandoffReason
+from services.presales_gate import SENSITIVE, FactClass, HandoffReason
 
 logger = logging.getLogger(__name__)
 
@@ -471,6 +471,50 @@ def _apply_scope_exit(result: TurnResult, *, scope_in: int, scope_out: int) -> T
     return result
 
 
+#: S4 §5：零查詢轉人的追問固定句。單一句、⛔ 無任何插值（同 `SCOPE_EXIT_TEXT`
+#: 的紀律——帶物件名稱等於用回話的差別揭露存在性）。
+ASK_TARGET_TEXT = "想處理哪一戶或哪一筆？講物件名稱、帳單編號或修繕單號。"
+
+
+def _apply_handoff_without_lookup(result: TurnResult, agent_state: dict) -> TurnResult:
+    """S4 §5：零查詢的 `no_grounding` 轉人降級成追問（與 `_apply_scope_exit` 同層）。
+
+    條件全為封閉欄位（缺任一 ⇒ 不降級）：
+    - `result.kind == "handoff"`
+    - `result.trace.handoff_reason == "no_grounding"`
+    - `fact_class` 不在敏感五類（敏感類一律不動，仍轉人）
+    - 本回合沒有任何工具呼叫（`trace.tool_calls` 為空）
+    - 沒有釘住的 select 範圍（`SELECT_SCOPE_KEY` 為 `None`）
+
+    降級時**五欄一起改**（mirrors `_apply_scope_exit`）：`answer`／`kind`／
+    `handoff`／`trace.final_kind`／`trace.handoff_reason`，另設
+    `outcome=clarifying` 並記一筆 `violations`。
+    """
+    if result.kind != "handoff":
+        return result
+    if result.trace.handoff_reason != "no_grounding":
+        return result
+    fact_class_value = (result.handoff or {}).get("fact_class")
+    try:
+        fact_class = FactClass(fact_class_value)
+    except ValueError:
+        fact_class = None
+    if fact_class in SENSITIVE:
+        return result
+    if len(result.trace.tool_calls) != 0:
+        return result
+    if agent_state.get(SELECT_SCOPE_KEY) is not None:
+        return result
+    result.answer = ASK_TARGET_TEXT
+    result.kind = "answer"
+    result.handoff = None
+    result.trace.final_kind = "answer"
+    result.trace.handoff_reason = None
+    result.outcome = make_outcome("clarifying", expects="text")
+    result.trace.violations.append("handoff_without_lookup")
+    return result
+
+
 def _parse_select_value(message: Any) -> Optional[tuple]:
     """`"select:bill:12345"` → `("bill", "12345")`；不是機器值 ⇒ `None`。
 
@@ -572,6 +616,7 @@ _SCHEMA_CAUSE_HINTS: dict[str, str] = {
     "marker_in_answer": ("回覆文字裡出現了資料段的行首標記：標記只放進 `refs`，"
                          "⛔ 不得抄進 `sentences` 的 `text`。"),
     "handoff_reason_invalid": "`handoff_reason` 不在允許值域內，請改填允許的值。",
+    "handoff_reason_mismatch": "`fact_class` 屬敏感五類時 `handoff_reason` 必須是 `sensitive_no_grounding`，請改填。",
 }
 
 
@@ -2040,6 +2085,7 @@ class AgentRuntime:
             result = _apply_scope_exit(
                 result, scope_in=scope_counts["in"], scope_out=scope_counts["out"]
             )
+            result = _apply_handoff_without_lookup(result, agent_state)
             if result.trace.final_kind == "handoff":
                 cache[cache_key] = {
                     "answer": result.answer,

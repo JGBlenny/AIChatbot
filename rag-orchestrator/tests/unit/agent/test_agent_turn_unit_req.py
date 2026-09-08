@@ -633,11 +633,16 @@ def test_cap_window_slides(monkeypatch):
 # ═══════════════════════════════════════════════════════════════════
 @pytest.mark.req(_SPEC)
 async def test_handoff_cache_evicts_oldest_beyond_fifty():
-    """處置⑦：第 51 筆進來時擠掉第 1 筆（FIFO），⛔ 不是無上限地長。"""
+    """處置⑦：第 51 筆進來時擠掉第 1 筆（FIFO），⛔ 不是無上限地長。
+
+    S4 §5：`fact_class=other`＋`no_grounding` 的零查詢轉人會被出口閘降級成
+    追問、⛔ 不再進快取——本測試改用敏感類＋`sensitive_no_grounding`，那條
+    handoff 不受降級影響，快取行為與本測試主張無關、維持原本驗的東西。
+    """
     total = HANDOFF_CACHE_MAX + 1
     runtime = _runtime(
         FakeProvider([_final_response(kind="handoff", answer="轉人",
-                                      fact_class="other", handoff_reason="no_grounding")
+                                      fact_class="pricing", handoff_reason="sensitive_no_grounding")
                       for _ in range(total)])
     )
     state: dict = {}
