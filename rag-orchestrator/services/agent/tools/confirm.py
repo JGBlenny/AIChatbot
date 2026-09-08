@@ -132,8 +132,10 @@ CONFIRM_SPEC: ToolSpec = {
         f"值只能是 {list(CONFIRM_ACTIONS)} 其中之一。"
         "使用者實際看到的確認卡由系統依 action 與 payload 產生，"
         "summary 只進紀錄、不會直接出示給使用者。"
-        "repair_create 的 category_name 必須是系統分類樹裡的大類或項目名稱；"
-        "先以 jgb2.query.repairs（face 修繕分類）或既有分類資料取得名稱。"
+        "repair_create 的 category_name 選填：業務有講分類才填，且必須是系統分類樹裡的大類或項目名稱"
+        "（先以 jgb2.query.repairs（face 修繕分類）或既有分類資料取得名稱）；"
+        "業務沒講就不要填，系統會歸到「其他」，⛔ 不得為了分類反問；"
+        "emergency_status 同樣選填，業務說緊急才填 2，否則不填。"
     ),
     "input_schema": {
         "type": "object",
@@ -246,6 +248,19 @@ SELECT 1
    AND redeemed = true
 """
 
+#: W8 (3)：出卡前未結單提示行的**唯一**文字來源。⛔ 不在別處另抄字面量。
+#: ⚠️ 這一行**在卡外**（plan-verifier W8 r2 裁定 (b)）：`render()` 與
+#: `card_sha256` 逐位元不變（DSP-038-2「同 payload 同卡」不動），提示行由
+#: `ToolResult.data["hint"]` 帶出，Runtime 只把它接在 `TurnResult.answer`
+#: 的卡文字之後——⛔ 不進 `card`、⛔ 不進雜湊、⛔ 不進 dialog。
+#: 取捨（明列）：使用者看到的整段比雜湊涵蓋範圍多一行資訊性文字；該行
+#: **不含任何可兌現內容**（沒有 token、沒有 pending_id、沒有按鈕）。
+OPEN_REPAIRS_HINT_TEMPLATE: Final[str] = "此物件另有未結單 {count} 張（單號 {ids}）"
+
+#: 提示行裡單號的分隔字元。
+OPEN_REPAIRS_ID_SEP: Final[str] = "、"
+
+
 #: `pending_id` 的合法形狀（`sha256(token)[:16]`）。查詢前先擋形狀＝
 #: fail-closed，⛔ 不把任意字串送進 WHERE 當作「反正查不到」。
 _PENDING_ID_RE: Final = re.compile(r"^[0-9a-f]{16}$")
@@ -259,11 +274,51 @@ async def _is_valid_repair_category(category_name: Any) -> bool:
     （`jgb2.action`/`get_repair_categories`），差別只在**時機**：這裡在出確認卡
     「之前」擋，執行時那道閘仍在（雙保險，資料源同一份不會分岔）。
     """
-    if not isinstance(category_name, str) or not category_name.strip():
+    # delta4（業主 2026-09-08 採）：**缺值放行**——無鍵／None／空白＝交給系統歸「其他」
+    # （`confirm_card.category_name_of` 同一判定；`action.repair_create` 執行時補值）。
+    # 有給才驗樹：給了不在樹內仍擋（⛔ 不模糊比對、不代選）。非字串 ⇒ 擋。
+    if category_name is None:
+        return True
+    if not isinstance(category_name, str):
         return False
+    if not category_name.strip():
+        return True
     api = jgb2_tools._get_api()
     tree = jgb2_tools._rows_of(await api.get_repair_categories())
     return _resolve_category(tree, category_name) is not None
+
+
+async def _open_repairs_hint(
+    open_repairs, identity: Identity, action: Any, payload: dict
+) -> Tuple[str, Optional[str]]:
+    """`(hint, estate_id)`——查不到／不適用／注入缺席一律 `("", None)`。
+
+    ⛔ **本函式不呼叫 `_resolve_estate`、不呼叫 `JGBSystemAPI`、不持有 registry**
+    （plan-verifier W8 r2／r3）：那三件事全在 `mcp_facade` 的 `open_repairs`
+    閉包裡，這裡只認一個 callable。理由見該閉包的註解。
+
+    ⚠️ **fail-soft**：注入的 callable 炸了 ⇒ 沒有提示行、**卡照出**。
+    提示行是資訊性文字，⛔ 不該讓它擋掉一次使用者已經走到出卡這一步的動作。
+    """
+    if open_repairs is None or action != "repair_create":
+        return "", None
+    try:
+        info = await open_repairs(identity, payload.get("estate_name"))
+    except Exception:  # noqa: BLE001 — 見 docstring：提示行 fail-soft
+        logger.info("[agent] confirm.request 未結單查詢失敗 ⇒ 不加提示行、卡照出")
+        return "", None
+    if not isinstance(info, dict):
+        return "", None
+    estate_id = info.get("estate_id")
+    estate_id = estate_id if isinstance(estate_id, str) and estate_id else None
+    count = info.get("count")
+    if not isinstance(count, int) or isinstance(count, bool) or count <= 0:
+        return "", estate_id
+    ids = [str(i) for i in (info.get("ids") or []) if i is not None]
+    hint = OPEN_REPAIRS_HINT_TEMPLATE.format(
+        count=count, ids=OPEN_REPAIRS_ID_SEP.join(ids)
+    )
+    return hint, estate_id
 
 
 async def confirm_request(
@@ -272,6 +327,7 @@ async def confirm_request(
     *,
     db_pool,
     ttl_s: int = CONFIRM_TOKEN_TTL_S,
+    open_repairs=None,
 ) -> ToolResult:
     """`confirm.request` 入口。
 
@@ -281,6 +337,10 @@ async def confirm_request(
             開放 object）。本函式 `json.loads` 後必須是 dict，否則 `INVALID_INPUT`。
         db_pool: asyncpg pool（寫 `agent_confirmation_tokens`）。
         ttl_s: token 存活秒數，預設 600（10 分鐘）。
+        open_repairs: W8 (3) 的具名注入（形狀同 `db_pool`），
+            `async (identity, estate_name) -> {"estate_id", "count", "ids"} | None`。
+            `None`／回 `None` ⇒ **不加提示行、卡照出**，兌現時走既有的
+            「找不到物件」錯誤路徑。實作在 `mcp_facade.build_registry`。
 
     Returns:
         `ToolResult(ok=True, data={"pending_id", "action", "payload", "card",
@@ -335,6 +395,11 @@ async def confirm_request(
     # 的雜湊。兌現時比對它 ⇒「使用者看到的那張卡」與「表裡那一列」綁死。
     s_sha = sha256_hex(card)
 
+    # ⚠️ 提示行**刻意排在 `render`／`sha256_hex(card)` 之後**：這樣「卡與雜湊
+    #    不受未結單影響」在程式順序上就看得出來，⛔ 不要為了少一次縮排而搬到
+    #    render 之前。
+    hint, estate_id = await _open_repairs_hint(open_repairs, identity, action, payload)
+
     token = secrets.token_urlsafe(CONFIRM_TOKEN_BYTES)
     pending_id = pending_id_for(token)
     await db_pool.execute(
@@ -349,6 +414,10 @@ async def confirm_request(
             "payload": payload,
             "card": card,
             "quick_replies": confirm_quick_replies(pending_id),
+            # W8 (3)：卡外提示行與物件 id。`hint` 空字串＝沒有未結單／查不到；
+            # `estate_id` 由 Runtime 存進 `pending_confirm[pid]["estate_id"]`。
+            "hint": hint,
+            "estate_id": estate_id,
         },
         provenance=[],
         text_for_model=CONFIRM_TEXT_FOR_MODEL,
@@ -479,6 +548,8 @@ async def redeem_token(
 
 __all__ = [
     "CONFIRM_SPEC",
+    "OPEN_REPAIRS_HINT_TEMPLATE",
+    "OPEN_REPAIRS_ID_SEP",
     "CONFIRM_QUICK_REPLY_VALUES",
     "CONFIRM_VALUE_SEP",
     "PendingRedemption",

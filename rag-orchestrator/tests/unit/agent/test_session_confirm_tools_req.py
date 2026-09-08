@@ -378,7 +378,12 @@ async def test_confirm_request_data_carries_card_action_payload_but_never_token(
         db_pool=pool,
     )
     assert result.ok is True
-    assert set(result.data) == {"pending_id", "action", "payload", "card", "quick_replies"}
+    # W8 (3)：`hint`／`estate_id` 是卡**外**的兩個欄位（plan-verifier W8 r2 裁定 (b)）
+    assert set(result.data) == {
+        "pending_id", "action", "payload", "card", "quick_replies", "hint", "estate_id",
+    }
+    # 沒有注入 `open_repairs` ⇒ 沒有提示行、卡照出（回退面：這兩鍵可為空）
+    assert result.data["hint"] == "" and result.data["estate_id"] is None
     assert result.data["action"] == "bill_due_extend"
     assert result.data["payload"] == _VALID_PAYLOAD
     assert result.data["card"] == render_card("bill_due_extend", _VALID_PAYLOAD)
@@ -453,6 +458,38 @@ async def test_confirm_request_accepts_repair_create_with_parent_or_leaf_categor
         )
         assert result.ok is True, (category, result)
         assert category in result.data["card"]
+
+
+@pytest.mark.req(_REQ)
+async def test_confirm_request_accepts_repair_create_without_category_or_urgency():
+    """delta4（業主 2026-09-08 採）：分類與急迫**缺值放行**（無鍵／None／空白同義）⇒ 正常出卡，
+    卡上明示歸「其他」、急迫非緊急；正對照＝給了不在樹內的名稱仍擋（收案 6 不變）。"""
+    from services.agent.confirm_card import UNSPECIFIED_CATEGORY_ZH
+    base = _repair_confirm_payload()
+    del base["category_name"]
+    del base["emergency_status"]
+    cards = []
+    for variant in ({}, {"category_name": None, "emergency_status": None},
+                    {"category_name": "  ", "emergency_status": ""}):
+        pool = _confirm_pool()
+        result = await confirm_request(
+            _identity(),
+            {"summary": "要建修繕單嗎？", "payload": json.dumps({**base, **variant})},
+            db_pool=pool,
+        )
+        assert result.ok is True, (variant, result)
+        assert UNSPECIFIED_CATEGORY_ZH in result.data["card"]
+        assert "急迫程度：非緊急" in result.data["card"]
+        cards.append(result.data["card"])
+    assert len(set(cards)) == 1   # 三種缺值寫法 ⇒ 同一張卡
+    pool = _confirm_pool()
+    bad = await confirm_request(
+        _identity(),
+        {"summary": "要建修繕單嗎？",
+         "payload": json.dumps({**base, "category_name": "宇宙維修"})},
+        db_pool=pool,
+    )
+    assert bad.ok is False and bad.error == "INVALID_INPUT"
 
 
 @pytest.mark.req(_REQ)
@@ -901,3 +938,289 @@ def test_slots_set_tool_name_constant_matches_the_spec():
 
     assert SLOTS_SET_TOOL_NAME == SLOTS_SET_SPEC["name"]
     assert SLOTS_STATE_KEY == TOOL_SLOTS_KEY == "slots"
+
+
+# ════════════════════════════════════════════════════════════════════
+# W8 (3)：`estate_id` 透傳、`open_repairs` 具名注入、卡外提示行
+# （Plan W8 驗收 (ix)(xi)(xii)；子 spec `agent-write-tools`）
+# ════════════════════════════════════════════════════════════════════
+from types import SimpleNamespace  # noqa: E402
+
+from services.agent import mcp_facade as F  # noqa: E402
+from services.agent.tools import jgb2 as jgb2_tools  # noqa: E402
+from services.agent.tools.confirm import (  # noqa: E402
+    OPEN_REPAIRS_HINT_TEMPLATE,
+    OPEN_REPAIRS_ID_SEP,
+)
+
+_W8_REQ = "agentic-mcp-orchestration:R10-c"
+
+#: 兩個物件、各自的未結單數不同——(ix) 就靠「N 只算該 estate_id」。
+_ESTATE_A = {"id": 111, "title": "信義區套房A"}
+_ESTATE_B = {"id": 222, "title": "大安區套房B"}
+_OPEN_REPAIRS = {
+    "111": [
+        {"id": 5001, "estate_id": 111, "estate_title": "信義區套房A", "status": 1},
+        {"id": 5002, "estate_id": 111, "estate_title": "信義區套房A", "status": 4},
+    ],
+    "222": [
+        {"id": 6001, "estate_id": 222, "estate_title": "大安區套房B", "status": 1},
+        {"id": 6002, "estate_id": 222, "estate_title": "大安區套房B", "status": 1},
+        {"id": 6003, "estate_id": 222, "estate_title": "大安區套房B", "status": 4},
+    ],
+}
+#: 已結單（32＝結單）——⛔ 不得被算進 N。
+_CLOSED_REPAIR = {"id": 5999, "estate_id": 111, "estate_title": "信義區套房A", "status": 32}
+
+_REPAIR_CATEGORY_TREE = [
+    {"id": 1, "name": "家電維修", "items": [{"id": 11, "name": "電熱水器"}]},
+]
+
+
+class _W8FakeApi:
+    """假 `JGBSystemAPI`：`get_estate_status` 依 keyword 解析、`get_repairs` **honours
+    `estate_id`**——(ix) 的「N 只算該物件」要有東西可以算錯才有意義。"""
+
+    def __init__(self, *, honour_estate_id=True):
+        self.honour_estate_id = honour_estate_id
+        self.estate_status_calls: list[dict] = []
+        self.repairs_calls: list[dict] = []
+
+    async def get_repair_categories(self, **kw):
+        return {"success": True, "data": _REPAIR_CATEGORY_TREE}
+
+    async def get_estate_status(self, **kw):
+        self.estate_status_calls.append(dict(kw))
+        keyword = kw.get("keyword")
+        rows = [e for e in (_ESTATE_A, _ESTATE_B) if e["title"] == keyword]
+        return {"success": True, "data": rows or [{"found": False, "keyword": keyword}]}
+
+    async def get_repairs(self, **kw):
+        self.repairs_calls.append(dict(kw))
+        estate_id = kw.get("estate_id")
+        rows = [_CLOSED_REPAIR] + _OPEN_REPAIRS["111"] + _OPEN_REPAIRS["222"]
+        if estate_id and self.honour_estate_id:
+            rows = [r for r in rows if str(r["estate_id"]) == str(estate_id)]
+        return {"success": True, "data": rows}
+
+
+@pytest.fixture()
+def w8_api(monkeypatch):
+    api = _W8FakeApi()
+    monkeypatch.setattr(jgb2_tools, "_api_singleton", api)
+    return api
+
+
+def _repair_payload(**over) -> dict:
+    base = {
+        "action": "repair_create",
+        "estate_name": _ESTATE_A["title"],
+        "category_name": "家電維修",
+        "description": "冷氣不冷",
+        "emergency_status": 1,
+    }
+    base.update(over)
+    return base
+
+
+def _w8_identity(**over) -> Identity:
+    base = dict(vendor_id=1, target_user="property_manager", mode="b2b",
+                role_id="20151", user_id="88", api_key_id=7,
+                session_id="mcp:7:1:s1", entry="mcp")
+    base.update(over)
+    return Identity(**base)
+
+
+def _w8_deps(pool):
+    return F.FacadeDeps(get_db_pool=lambda: pool, get_kb_pool=lambda: None,
+                        get_app=lambda: SimpleNamespace(state=SimpleNamespace()),
+                        stage="M1")
+
+
+async def _confirm_through_registry(pool, identity, payload):
+    """一律經 `registry.call` ⇒ 走的是門面接線的**同一條路**（含 `open_repairs` 閉包）。"""
+    reg = F.build_registry(_w8_deps(pool))
+    return await reg.call(
+        identity, "confirm.request",
+        {"summary": "要建修繕單嗎？", "payload": json.dumps(payload)},
+        3.0, stage="M1",
+    )
+
+
+# ── (3) schema：只有 repairs 多 `estate_id`，其餘域逐位元不變 ──────────────
+@pytest.mark.req(_W8_REQ)
+def test_only_repairs_spec_gains_estate_id_and_other_domains_are_byte_identical():
+    faces = ["甲", "乙"]
+    base = _jgb2_spec_ref = F._jgb2_spec("bills", faces)
+    assert base == F._jgb2_spec("bills", faces, extra_properties=None)   # 預設不變
+
+    repairs = F._jgb2_spec("repairs", faces, extra_properties=F.JGB2_EXTRA_PROPERTIES["repairs"])
+    props = repairs["input_schema"]["properties"]
+    assert props["estate_id"] == {"type": "string", "maxLength": 32}
+    assert repairs["input_schema"]["additionalProperties"] is False
+    # 正對照：同一支工廠、不傳 extra ⇒ 沒有 `estate_id`（證明多出來的鍵來自參數）
+    assert "estate_id" not in F._jgb2_spec("repairs", faces)["input_schema"]["properties"]
+    # 只有 repairs 在表裡
+    assert set(F.JGB2_EXTRA_PROPERTIES) == {"repairs"}
+    for domain in ("bills", "contracts", "accounts", "meters", "estates"):
+        assert "estate_id" not in F._jgb2_spec(
+            domain, faces, extra_properties=F.JGB2_EXTRA_PROPERTIES.get(domain)
+        )["input_schema"]["properties"]
+
+
+@pytest.mark.req(_W8_REQ)
+async def test_query_repairs_passes_estate_id_through_to_the_api(w8_api):
+    """⛔ 只改 schema 不透傳＝靜默無效：假 API 必須**收到** `estate_id`。
+
+    正對照組：不帶 `estate_id` 的同一支查詢就收不到這個參數。
+    """
+    identity = _w8_identity()
+    await jgb2_tools.query_repairs(identity, {"face": "修繕進度", "estate_id": "111"})
+    assert w8_api.repairs_calls[-1].get("estate_id") == "111"
+
+    await jgb2_tools.query_repairs(identity, {"face": "修繕進度"})
+    assert w8_api.repairs_calls[-1].get("estate_id") is None
+
+
+# ── (xi) `open_repairs` 具名注入：恰 1 次、hint 非空；正對照＝None ────────
+@pytest.mark.req(_W8_REQ)
+async def test_injected_open_repairs_is_called_exactly_once_and_yields_a_hint(w8_api):
+    calls: list[tuple] = []
+
+    async def fake_open_repairs(identity, estate_name):
+        calls.append((identity, estate_name))
+        return {"estate_id": "111", "count": 2, "ids": ["5001", "5002"]}
+
+    pool = _confirm_pool()
+    result = await confirm_request(
+        _w8_identity(), {"summary": "要建修繕單嗎？", "payload": json.dumps(_repair_payload())},
+        db_pool=pool, open_repairs=fake_open_repairs,
+    )
+    assert result.ok is True
+    assert len(calls) == 1 and calls[0][1] == _ESTATE_A["title"]
+    assert result.data["hint"] == OPEN_REPAIRS_HINT_TEMPLATE.format(
+        count=2, ids=OPEN_REPAIRS_ID_SEP.join(["5001", "5002"])
+    )
+    assert result.data["estate_id"] == "111"
+
+
+@pytest.mark.req(_W8_REQ)
+async def test_open_repairs_none_still_renders_the_card_and_never_queries_repairs(w8_api):
+    """正對照組：`open_repairs=None` ⇒ 沒有提示行、**卡照出**、假 API 的
+    `get_repairs` **0 次**（⛔ confirm.py 不得自己繞過注入去查）。"""
+    pool = _confirm_pool()
+    result = await confirm_request(
+        _w8_identity(), {"summary": "要建修繕單嗎？", "payload": json.dumps(_repair_payload())},
+        db_pool=pool, open_repairs=None,
+    )
+    assert result.ok is True
+    assert result.data["hint"] == "" and result.data["estate_id"] is None
+    assert result.data["card"] == render_card("repair_create", _repair_payload())
+    assert w8_api.repairs_calls == []
+    assert w8_api.estate_status_calls == []
+
+
+@pytest.mark.req(_W8_REQ)
+async def test_open_repairs_failure_is_fail_soft_and_the_card_still_comes_out(w8_api):
+    """注入的 callable 炸了 ⇒ 沒有提示行、卡照出（提示行 ⛔ 不得擋掉出卡）。"""
+
+    async def boom(identity, estate_name):
+        raise RuntimeError("下游炸了")
+
+    pool = _confirm_pool()
+    result = await confirm_request(
+        _w8_identity(), {"summary": "s", "payload": json.dumps(_repair_payload())},
+        db_pool=pool, open_repairs=boom,
+    )
+    assert result.ok is True and result.data["hint"] == ""
+    assert result.data["card"] == render_card("repair_create", _repair_payload())
+
+
+# ── (xi) 閉包 unit：`get_estate_status` 必帶 role_id；無 role_id ⇒ None ───
+@pytest.mark.req(_W8_REQ)
+async def test_closure_passes_role_id_to_get_estate_status_and_queries_by_estate_id(w8_api):
+    pool = _confirm_pool()
+    result = await _confirm_through_registry(pool, _w8_identity(), _repair_payload())
+
+    assert result.ok is True, result.error
+    assert w8_api.estate_status_calls, "⛔ 閉包沒有查物件——提示行不可能算對"
+    assert w8_api.estate_status_calls[-1].get("role_id") == "20151"
+    assert w8_api.estate_status_calls[-1].get("keyword") == _ESTATE_A["title"]
+    # 走 registry 查未結單，且**帶了 estate_id**（S8-11：⛔ 不直呼 JGBSystemAPI）
+    assert w8_api.repairs_calls[-1].get("estate_id") == str(_ESTATE_A["id"])
+    assert result.data["estate_id"] == str(_ESTATE_A["id"])
+
+
+@pytest.mark.req(_W8_REQ)
+async def test_closure_without_role_id_returns_none_and_never_queries(w8_api):
+    """正對照組（plan-verifier W8 r3）：`role_id` 取不到 ⇒ 直接回 `None`——
+    ⛔ 不加提示行、⛔ 不發那一次會跨 role 的 `get_estate_status`、
+    假 `get_repairs` **0 次**；卡照出。"""
+    pool = _confirm_pool()
+    identity = _w8_identity(role_id=None, target_user="tenant", mode="b2c")
+    result = await _confirm_through_registry(pool, identity, _repair_payload())
+
+    assert result.ok is True, result.error
+    assert result.data["hint"] == "" and result.data["estate_id"] is None
+    assert result.data["card"] == render_card("repair_create", _repair_payload())
+    assert w8_api.estate_status_calls == []
+    assert w8_api.repairs_calls == []
+
+
+# ── (ix) N 只算該 estate_id ───────────────────────────────────────────────
+@pytest.mark.req(_W8_REQ)
+async def test_open_repairs_count_is_scoped_to_the_resolved_estate(w8_api):
+    """同一個 role 底下兩個物件各有未結單 ⇒ N 只算解析出來的那一個。
+
+    正對照組：兩個物件的未結單數**本來就不同**（2 vs 3）、且全域總數（5）
+    也不同 ⇒ 若 `estate_id` 沒透傳，這個斷言會紅（不是恆真）。
+    """
+    pool = _confirm_pool()
+    a = await _confirm_through_registry(pool, _w8_identity(), _repair_payload())
+    assert a.data["hint"] == OPEN_REPAIRS_HINT_TEMPLATE.format(
+        count=2, ids=OPEN_REPAIRS_ID_SEP.join(["5001", "5002"])
+    )
+    assert "5999" not in a.data["hint"]        # ⛔ 已結單不算
+
+    b = await _confirm_through_registry(
+        pool, _w8_identity(), _repair_payload(estate_name=_ESTATE_B["title"])
+    )
+    assert b.data["hint"] == OPEN_REPAIRS_HINT_TEMPLATE.format(
+        count=3, ids=OPEN_REPAIRS_ID_SEP.join(["6001", "6002", "6003"])
+    )
+    # 尺的自證：兩個物件的 N 不同，且都不等於「不圈定物件」時的總數 5
+    assert a.data["hint"] != b.data["hint"]
+
+
+# ── (xii) 未結單 0 張與 N 張 ⇒ card 與 card_sha256 逐位元相同 ─────────────
+@pytest.mark.req(_W8_REQ)
+async def test_card_and_card_sha256_are_byte_identical_with_or_without_open_repairs(w8_api):
+    """DSP-038-2「同 payload 同卡」不動：提示行只在卡外。"""
+    payload = _repair_payload()
+
+    async def two(identity, estate_name):
+        return {"estate_id": "111", "count": 2, "ids": ["5001", "5002"]}
+
+    async def zero(identity, estate_name):
+        return {"estate_id": "111", "count": 0, "ids": []}
+
+    cards = {}
+    hashes = {}
+    for label, injected in (("with", two), ("without", zero), ("none", None)):
+        pool = _confirm_pool()
+        result = await confirm_request(
+            _w8_identity(), {"summary": "s", "payload": json.dumps(payload)},
+            db_pool=pool, open_repairs=injected,
+        )
+        assert result.ok is True
+        cards[label] = result.data["card"]
+        hashes[label] = pool.execute.await_args.args[4]     # summary_sha256 ＝ 卡雜湊
+        # 提示行 ⛔ 不在卡裡
+        assert "未結單" not in result.data["card"]
+
+    assert cards["with"] == cards["without"] == cards["none"]
+    assert hashes["with"] == hashes["without"] == hashes["none"]
+    assert hashes["with"] == sha256_hex(render_card("repair_create", payload))
+    # 正對照：這把尺看得見差異——換一份 payload，卡與雜湊就真的不同
+    other = _repair_payload(description="馬桶漏水")
+    assert sha256_hex(render_card("repair_create", other)) != hashes["with"]

@@ -489,8 +489,16 @@ async def query_repairs(identity: Any, args: dict[str, Any]) -> dict[str, Any]:
         return _no_match()
     api = _get_api()
 
+    # W8 (3)：`estate_id` **透傳**給 API（`JGBSystemAPI.get_repairs` 本就支援）。
+    # ⚠️ 只改 schema 不透傳＝靜默無效（S7-11 同型）：schema 收了參數、查詢卻沒帶，
+    # 呼叫端會以為自己圈定了物件，實際拿到的是整個 role 的修繕單。
+    # ⛔ 不在本檔用 Python 端過濾代替——那是第二份圈定邏輯，且 cap 截斷在過濾之前。
+    estate_id = args.get("estate_id")
+    if estate_id is not None and not isinstance(estate_id, str):
+        return _invalid_input()
+
     async def fetch_all() -> list[dict[str, Any]]:
-        resp = await api.get_repairs(role_id=role_id, user_id=user_id)
+        resp = await api.get_repairs(role_id=role_id, user_id=user_id, estate_id=estate_id)
         return _rows_of(resp)
 
     async def fetch_ref(r: str) -> list[dict[str, Any]]:

@@ -233,8 +233,13 @@ async def test_agent_turn_matches_direct_run_turn():
     assert result.data["quick_replies"] == list(direct.quick_replies)
     assert isinstance(result.data["trace_id"], str) and result.data["trace_id"]
 
-    # ⛔ 回傳形狀就是 R3.7 的五個鍵——不多不少（無引用、無被拒文字）
-    assert set(result.data) == {"answer", "kind", "handoff", "quick_replies", "trace_id"}
+    # ⛔ 回傳形狀＝R3.7 的五個固定鍵＋依落地順序加的選填鍵（DSP-042）——
+    #    不多不少（無引用、無被拒文字）。`session_expired` 是第六鍵。
+    assert set(result.data) == {
+        "answer", "kind", "handoff", "quick_replies", "trace_id", "session_expired",
+    }
+    # 非過期回合：其餘欄位與直呼 `run_turn` 逐值相同，多出來的那一鍵為 false
+    assert result.data["session_expired"] is False
 
 
 # ═══════════════════════════════════════════════════════════════════

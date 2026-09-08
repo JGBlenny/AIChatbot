@@ -31,6 +31,7 @@ REST 路徑（`routers/agent_entry.py:EngineStateStore`）維持裸 `session_id`
 """
 from __future__ import annotations
 
+import time
 from typing import Any, Optional
 
 #: `form_sessions.session_id` 的欄位長度（實查測試庫 information_schema，2026-09-05）。
@@ -42,6 +43,50 @@ DEFAULT_CONFIG_KEY = "agent:prospect"
 
 #: 命名空間前綴，⛔ 不得省略（見模組 docstring）。
 NAMESPACE = "mcp"
+
+#: W8 (5)／DSP-042：同一個 `session_id` 隔多久再進算「新的一段對話」。
+#: 30 分鐘（Plan W8 (5)），⛔ 不從 env 讀——這是對外契約的一部分
+#: （`AgentTurnOutput.session_expired` 何時為 true），可調等於呼叫端無從預期。
+SESSION_IDLE_TTL_S = 1800
+
+#: 過期戳在 `state["agent"]` 裡的鍵。
+#: ⚠️ **為什麼不看 `form_sessions.updated_at`**（security-reviewer S8-7）：
+#: 那個欄位**不存在**（實查 `services/conversational_engine.py` 的 `_save`：
+#: 它更新的是 `last_activity_at`，而 `get_state` 也不回這一欄）。照字面實作
+#: 只會得到一個永遠不過期的閘。故過期戳存進 state JSON，跟著既有
+#: `collected_data` 一起落地，⛔ 不新增 DB 欄位、⛔ 不另寫第二份 SQL。
+LAST_TURN_AT_KEY = "last_turn_at"
+
+
+def stamp_last_turn(agent_state: dict, now: Optional[float] = None) -> float:
+    """把「這一回合結束的時刻」寫進 `agent_state`；回傳寫進去的值。
+
+    ⛔ 呼叫端不得自己 `agent_state["last_turn_at"] = …`——鍵名只有這裡知道。
+    """
+    ts = time.time() if now is None else float(now)
+    agent_state[LAST_TURN_AT_KEY] = ts
+    return ts
+
+
+def is_expired(state: Any, now: Optional[float] = None, ttl_s: float = SESSION_IDLE_TTL_S) -> bool:
+    """這一列 state 是不是「上一回合結束後超過 `ttl_s` 才再進來」。
+
+    **⛔ 沒有戳＝不算過期**（fail-open，刻意）：戳是 W8 (5) 才加的，既有的
+    session 列一律沒有它。把「沒有戳」當成過期，等於在部署當下把所有進行中的
+    對話一次砍掉——而這個閘保護的是「久未使用的對話不該續」，不是任何安全邊界
+    （真正的隔離在 `NamespacedStateStore` 的命名空間鍵）。同理，戳是壞型別、
+    或時鐘回跳導致 `now < 戳` ⇒ 也不算過期。
+    """
+    if not isinstance(state, dict):
+        return False
+    agent_state = state.get("agent")
+    if not isinstance(agent_state, dict):
+        return False
+    stamp = agent_state.get(LAST_TURN_AT_KEY)
+    if not isinstance(stamp, (int, float)) or isinstance(stamp, bool):
+        return False
+    current = time.time() if now is None else float(now)
+    return (current - float(stamp)) > ttl_s
 
 
 class NamespacedStateStore:
@@ -94,5 +139,23 @@ class NamespacedStateStore:
     async def save(self, session_id: str, state: dict) -> None:
         await self._engine._save(self.key(session_id), state)
 
+    async def close(self, session_id: str) -> None:
+        """把這把鍵目前那列 `COLLECTING` 關掉（W8 (5) 過期換新）。
 
-__all__ = ["NamespacedStateStore", "SESSION_ID_MAX_LEN", "DEFAULT_CONFIG_KEY", "NAMESPACE"]
+        ⚠️ 轉呼 `ConversationalEngine._close`（同 `load`／`start`／`save` 的紀律：
+        ⛔ 不在本檔寫第二份 SQL）。`_close` 是 `state='COMPLETED'`，**不可逆**——
+        Plan §6 W8 回退欄已明列這個取捨（過期列本就不該再續）。
+        """
+        await self._engine._close(self.key(session_id))
+
+
+__all__ = [
+    "NamespacedStateStore",
+    "SESSION_ID_MAX_LEN",
+    "DEFAULT_CONFIG_KEY",
+    "NAMESPACE",
+    "SESSION_IDLE_TTL_S",
+    "LAST_TURN_AT_KEY",
+    "stamp_last_turn",
+    "is_expired",
+]

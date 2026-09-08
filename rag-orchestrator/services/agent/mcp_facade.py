@@ -127,7 +127,11 @@ from services.agent.identity import (
     Stage,
     normalize_entry_mode,
 )
-from services.agent.state_store import NamespacedStateStore
+from services.agent.state_store import (
+    NamespacedStateStore,
+    is_expired as _session_is_expired,
+    stamp_last_turn,
+)
 from services.agent.tools.registry import (
     Provenance,
     ToolResult,
@@ -646,11 +650,25 @@ HELP_READ_SPEC: ToolSpec = {
 }
 
 
-def _jgb2_spec(domain: str, faces: list) -> ToolSpec:
+#: W8 (3)／DSP-042（design 元件 3）：**只有 `repairs` 域**多收一個 `estate_id`。
+#: ⚠️ 這張表是 `_jgb2_spec(extra_properties=…)` 的唯一來源——⛔ 不在 `build_registry`
+#: 裡臨時組一份字典字面量，那會讓「哪個域多了哪個參數」散成兩處。
+#: ⛔ 值域不得放進任何身分鍵（不變量 27 會擋，但這裡先講清楚為什麼不該試）。
+JGB2_EXTRA_PROPERTIES: dict[str, dict] = {
+    "repairs": {"estate_id": {"type": "string", "maxLength": 32}},
+}
+
+
+def _jgb2_spec(domain: str, faces: list, extra_properties: Optional[dict] = None) -> ToolSpec:
     """`jgb2.query.<domain>` 的 ToolSpec（`face` ＝該域註冊表鍵的封閉 enum）。
 
     `stage` 依 design 元件 2 矩陣：`{property_manager: M0, tenant: M0}`；
     **prospect 缺鍵＝永不可見**（售前不查 jgb2 個資）。
+
+    `extra_properties`（W8 (3)）：某一域專屬的額外選填參數。**預設 `None` ⇒
+    其餘五域逐位元不變**（回退面：這個參數拔掉即回到 W8 之前的 schema）。
+    ⛔ `additionalProperties: False` 一律保留——多開的參數只能經這張表進來，
+    ⛔ 不得改成開放物件讓呼叫端自由夾帶。
     """
     return {
         "name": f"jgb2.query.{domain}",
@@ -664,6 +682,7 @@ def _jgb2_spec(domain: str, faces: list) -> ToolSpec:
                 "face": {"type": "string", "enum": list(faces)},
                 "ref": {"type": "string"},
                 "keyword": {"type": "string"},
+                **(extra_properties or {}),
             },
             "required": ["face"],
             "additionalProperties": False,
@@ -677,7 +696,7 @@ def _jgb2_spec(domain: str, faces: list) -> ToolSpec:
 # `agent.turn`：整回合工具（任務 2.6｜design 元件 4「agent.turn 工具」段、決策 15、R3.7）
 # ════════════════════════════════════════════════════════════════════
 class AgentTurnOutput(BaseModel):
-    """`agent.turn` 的回傳形狀（R3.7 明列的五個鍵）。
+    """`agent.turn` 的回傳形狀（R3.7：五鍵固定＋依落地順序加的選填鍵）。
 
     ⛔ **不含 `citations`**：引用是 Verifier 的內部證據，對呼叫端沒有用途，
     卻會把「我們從哪一列知識取的哪一段字」外送。
@@ -691,6 +710,12 @@ class AgentTurnOutput(BaseModel):
     handoff: Optional[dict] = None
     quick_replies: list = []
     trace_id: str
+    #: W8 (5)／DSP-042：**第六鍵**（選填，預設 false）。只有「同一個
+    #: `session_id` 隔超過 `SESSION_IDLE_TTL_S` 才再進來」的**那一回合**為 true
+    #: ——它是給呼叫端（LIFF／line-bot）用來知道「上一段對話已經收掉了」，
+    #: ⛔ 不是錯誤、⛔ 不改變 `answer`／`kind` 的語義。
+    #: 鍵序＝落地順序（§0b）：W7 的 `transcript` 之後才會排到第七鍵。
+    session_expired: bool = False
 
 
 AGENT_TURN_SPEC: ToolSpec = {
@@ -847,6 +872,20 @@ def _make_agent_turn(deps: FacadeDeps) -> Callable:
         #    那會變成 `mcp:k:v:mcp:k:v:sid`（雙前綴，且超長時直接 ValueError）。
         session_id = identity.session_id
         state = await store.load(session_id)
+        # W8 (5)／DSP-042：同一把鍵隔太久再進 ⇒ **先把舊列關掉再開新列**。
+        # ⚠️ 順序不得顛倒（S8-7）：先 `_start` 再 `_close` 會把剛開的新列一起
+        # 關掉（`_close` 的 WHERE 只認 `session_id`＋`state='COLLECTING'`，
+        # 認不得是哪一列）；不 `_close` 就 `_start` 則會留下兩列 COLLECTING，
+        # 而 `get_state` 取 `ORDER BY id DESC LIMIT 1`＝舊列變成永遠讀不到卻
+        # 還開著的殘列。
+        # 舊列一關，掛在它 `collected_data` 上的 `pending_confirm` 也隨之作廢
+        # （下一回合讀到的是新列的空狀態），⛔ 不另外清 token 表——那些 token
+        # 本來就會過期，且 `redeem_pending` 找不到對應的 pending 就回固定句。
+        session_expired = False
+        if state is not None and _session_is_expired(state):
+            await store.close(session_id)
+            state = None
+            session_expired = True
         if state is None:
             state = await store.start(
                 session_id,
@@ -872,6 +911,9 @@ def _make_agent_turn(deps: FacadeDeps) -> Callable:
         except asyncio.TimeoutError:
             return ToolResult(ok=False, error="TOOL_TIMEOUT")
         agent_state.pop("outline", None)
+        # W8 (5)：過期戳**在存檔前才蓋**——逾時／取消的回合走不到這裡，
+        # 那一列的戳因此停在上一個真正跑完的回合，⛔ 不會被一次失敗的呼叫續命。
+        stamp_last_turn(agent_state)
         await store.save(session_id, state)
 
         return ToolResult(
@@ -882,6 +924,7 @@ def _make_agent_turn(deps: FacadeDeps) -> Callable:
                 handoff=result.handoff,
                 quick_replies=list(result.quick_replies or []),
                 trace_id=result.trace.trace_id,
+                session_expired=session_expired,
             ).model_dump(),
             provenance=[],
             text_for_model="",
@@ -996,11 +1039,62 @@ def build_registry(deps: FacadeDeps, registry: Optional[ToolRegistry] = None) ->
             return ToolResult(ok=False, error="NO_MATCH")
         return await slots_set(identity, args, db_pool=pool)
 
+    # ── W8 (3)：出卡前的「這個物件還有幾張未結單」查詢 ─────────────────
+    #
+    # ⚠️ **為什麼住在這個閉包、而不是 `confirm.py` 裡**（plan-verifier W8 r2／r3）：
+    #    `confirm.py` 是工具函式，它手上沒有 registry、沒有 `stage`、沒有工具逾時，
+    #    照 S8-11 的字面「走 registry」在那裡根本接不出來；而讓它自己 `import`
+    #    `JGBSystemAPI` 就等於繞過 registry 的四步閘（可見性／速率／schema／
+    #    身分鍵剝除）。故：**`_resolve_estate` 的唯一呼叫點在這裡**，
+    #    `confirm.py` 只收一個具名注入的 callable（形狀同 `db_pool`）。
+    #
+    # ⛔ 取不到 `role_id` ⇒ 直接回 `None`（**不加提示行**，卡照出）：
+    #    少了 `role_id` 的 `get_estate_status` 會跨 role 撈物件（r3 那一條），
+    #    寧可沒有提示行，也不要一行算錯物件的提示。
+    async def _open_repairs(identity: Identity, estate_name: Any) -> Optional[dict]:
+        role_id = getattr(identity, "role_id", None)
+        if not role_id:
+            return None
+        if not isinstance(estate_name, str) or not estate_name.strip():
+            return None
+        api = jgb2_tools._get_api()
+        rows = jgb2_tools._rows_of(
+            await api.get_estate_status(role_id=role_id, keyword=estate_name)
+        )
+        # 與 `action.repair_create` **逐字同形**：判不出唯一一列就回 None，
+        # ⛔ 不挑第一筆（挑錯物件的提示行比沒有提示行更糟）。
+        estate = action_tools._resolve_estate(rows, estate_name)
+        if estate is None or estate.get("id") is None:
+            return None
+        estate_id = str(estate["id"])
+        result = await reg.call(
+            identity,
+            "jgb2.query.repairs",
+            {"face": "修繕進度", "estate_id": estate_id},
+            deps.tool_timeout_s,
+            stage=current_stage(),
+            for_model=False,
+        )
+        if not result.ok:
+            return None
+        data = result.data if isinstance(result.data, dict) else {}
+        # `query_repairs` 無 `ref`／`keyword` 時走 `fetch_default`＝**已濾掉結單／
+        # 封存**（`_CLOSED_REPAIR_STATUSES`）的未結列，⛔ 不在此另抄一份狀態表。
+        # ⚠️ 已知取捨：列數受 `JGB2_CANDIDATE_CAP`（預設 5）截斷 ⇒ 超過 5 張時
+        #    N 只會顯示 5。提示行是資訊性文字、不含可兌現內容，接受。
+        rows = data.get("candidates")
+        if not isinstance(rows, list) or not rows:
+            return None
+        ids = [str(r.get("id")) for r in rows if isinstance(r, dict) and r.get("id") is not None]
+        return {"estate_id": estate_id, "count": len(rows), "ids": ids}
+
     async def _confirm_request(identity: Identity, args: dict) -> ToolResult:
         pool = deps.get_db_pool()
         if pool is None:
             return ToolResult(ok=False, error="NO_MATCH")
-        return await confirm_request(identity, args, db_pool=pool)
+        return await confirm_request(
+            identity, args, db_pool=pool, open_repairs=_open_repairs
+        )
 
     reg.register(KB_GET_SPEC, _kb_get)
     reg.register(KB_SEARCH_SPEC, _kb_search)
@@ -1026,7 +1120,14 @@ def build_registry(deps: FacadeDeps, registry: Optional[ToolRegistry] = None) ->
 
             return _query
 
-        reg.register(_jgb2_spec(domain, sorted(builders.keys())), _make())
+        reg.register(
+            _jgb2_spec(
+                domain,
+                sorted(builders.keys()),
+                extra_properties=JGB2_EXTRA_PROPERTIES.get(domain),
+            ),
+            _make(),
+        )
 
     # ── W4：寫入型工具 `jgb2.action.*` ────────────────────────────────────
     # ⚠️ **一律註冊**，可見性交給 `specs_for` 的兩道閘（入口 `entry=="mcp"` ＋

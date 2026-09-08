@@ -96,6 +96,7 @@ from services.agent.tools.confirm import (
     sha256_hex,
 )
 from services.agent.tools.registry import Provenance, ToolRegistry, ToolResult, tool_name_from_openai
+from services.agent.tools.session import write_slot
 from services.conversational_config import (
     effective_handoff_channel,
     effective_handoff_message,
@@ -278,6 +279,73 @@ def _parse_confirm_value(message: Any) -> Optional[tuple]:
     return verb, pending_id
 
 
+# ════════════════════════════════════════════════════════════════════
+# W8 (1)：LIFF 清單點選的機器值 `select:<type>:<id>`（R10-c／DSP-042）
+# ════════════════════════════════════════════════════════════════════
+#
+# ⚠️ **這一段的存在理由**：LIFF 只做入口與呈現，使用者從清單點一列時送回來的是
+#    機器值，不是自由文字。既然目標那一列已經確定，就 ⛔ 不該再讓模型去猜要查
+#    哪一筆——這一段從頭到尾沒有一次 `chat.completions.create`。
+#
+# ⚠️ **已知取捨（契約措辭，S8-10）**：機器值真人也打得出來。最壞情況＝查到
+#    **整個 role 範圍內**（含其他租客）的資料——這在 pm 單證的既有身分閘下本
+#    來就成立（`jgb2.py:_identity_gate_ok`），並非本段新增的揭露面。
+#    ⛔ 日後若對 tenant 開 `agent.turn`，`select:` 必須另加雙證＋viewer 圈定。
+
+#: `<type>` → 工具名。**封閉表**（S8-4：工具名複數、`<type>` 單數，兩者不對應，
+#: ⛔ 不得用字串拼接推導出工具名）。
+#: 第一版只開 bill／contract／repair（S8-13）：`estate`／`meter` 的 `ref` 在工具層
+#: 是 keyword 語義，開了會把使用者點的那一列當成模糊字串去搜。
+_SELECT_TYPE_TO_TOOL: dict[str, str] = {
+    "bill": "jgb2.query.bills",
+    "contract": "jgb2.query.contracts",
+    "repair": "jgb2.query.repairs",
+}
+
+#: `<type>` → 該域的**最小揭露** face（S8-1／S8-2）。
+#: ⛔⛔ **這張表是 email 面的唯一控制**：`_verify_routes` 只認 URL／電話／導流，
+#:     **沒有 email 樣式**。contracts 的「簽署排障」face 的 facts 含租客
+#:     email／電話明文，繞過模型即沒有 Verifier 會擋 ⇒ ⛔ 不得把任何一個值
+#:     換成揭露面更大的 face。`tests/unit/agent/test_select_entry_req.py`
+#:     釘住「三個 face 的 facts 不含 `@`」，並以「簽署排障」當正對照。
+_SELECT_DEFAULT_FACE: dict[str, str] = {
+    "bill": "帳單異常",
+    "contract": "續約",
+    "repair": "修繕進度",
+}
+
+#: 使用者從清單點一列時送回來的機器值：`select:<type>:<id>`。
+#: `<type>` 由 `_SELECT_TYPE_TO_TOOL` 的鍵**組出來**（⛔ 不另抄字面量，兩張表
+#: 與這條正則的值域因此不可能分岔）；`<id>` `^[A-Za-z0-9_-]{1,32}$`。
+_SELECT_VALUE_RE = re.compile(
+    r"select:(%s):([A-Za-z0-9_-]{1,32})"
+    % "|".join(re.escape(t) for t in _SELECT_TYPE_TO_TOOL)
+)
+
+#: 查無／不在範圍／降級 一律回**同一句**（⛔ 不細分——細分等於用回話的差別
+#: 告訴呼叫端「這筆存在但你看不到」）。
+SELECT_NOT_FOUND_TEXT = "查無此筆"
+
+#: 進 dialog 的**程式摘要**（S8-3：第三方 facts 原文 ⛔ 不以 assistant 身分
+#: 進歷史——那等於把下游系統的自由文字餵回下一回合的模型上下文）。
+SELECT_DIALOG_SUMMARY = "已提供 {select_type} {ref} 的資料"
+
+
+def _parse_select_value(message: Any) -> Optional[tuple]:
+    """`"select:bill:12345"` → `("bill", "12345")`；不是機器值 ⇒ `None`。
+
+    **`fullmatch`、⛔ 不 NFKC、⛔ 不 strip**（S8-8）：整句等值才算。前後多一個
+    空白、或用全形冒號寫成「select：bill：12345」的，都是自由文字——那該進模型，
+    ⛔ 不該觸發一次繞過模型的資料查詢。
+    """
+    if not isinstance(message, str):
+        return None
+    m = _SELECT_VALUE_RE.fullmatch(message)
+    if m is None:
+        return None
+    return m.group(1), m.group(2)
+
+
 @dataclass
 class TurnTrace:
     trace_id: str
@@ -303,6 +371,14 @@ class TurnTrace:
     #: （`[A-Za-z0-9_.:-]{1,64}`），下游回來的自由文字進不了這裡。
     pending_id: Optional[str] = None
     receipt_id: Optional[str] = None
+    #: W8 (1)／S8-6：清單點選回合的稽核三鍵。
+    #: ⛔⛔ **`ref` 原值不得進來**——`has_ref` 只記「有沒有」，`select_type` 是
+    #:     封閉表的鍵。trace 與 `usage_events` 都會被序列化落地，把使用者點的
+    #:     那張帳單／合約編號寫進去，等於把識別碼從對話狀態外溢到計量表。
+    select_type: Optional[str] = None
+    has_ref: Optional[bool] = None
+    #: 槽位有沒有真的寫進去（找不到 COLLECTING 列 ⇒ False，回合照樣回 facts）。
+    slot_written: Optional[bool] = None
 
 
 #: `reasoning_effort` 允許值（OpenAI gpt-5 系列）；封閉集合，⛔ 不在程式內以字串推導。
@@ -665,6 +741,10 @@ def _emit_agent_decision(trace: TurnTrace) -> None:
             # DSP-038／S-11：確認鏈的稽核兩鍵（⛔ 皆非原文，見 `TurnTrace` 註記）。
             "pending_id": trace.pending_id,
             "receipt_id": trace.receipt_id,
+            # W8 (1)／S8-6：⛔ 只有型別與「有沒有 ref」，**沒有 ref 原值**。
+            "select_type": trace.select_type,
+            "has_ref": trace.has_ref,
+            "slot_written": trace.slot_written,
             "violations": trace.violations,
             "replayed_from": _replayed_from(trace.violations),
         }
@@ -907,11 +987,20 @@ class AgentRuntime:
         llm_calls: int = 0,
         prompt_tokens: int = 0,
         completion_tokens: int = 0,
+        dialog_answer: Optional[str] = None,
+        select_type: Optional[str] = None,
+        has_ref: Optional[bool] = None,
+        slot_written: Optional[bool] = None,
     ) -> TurnResult:
         """確認段各出口共用的收尾：組 trace → 落 decision snapshot → 寫回 dialog。
 
         ⚠️ 這條路徑**不進 `handoff_cache`**：確認與兌現是一次性的狀態轉移，
         重播它等於「同一句話再送出一次」。⛔ 不要為了「統一」而套 `_finalize`。
+
+        `dialog_answer`（W8）：進 dialog 的文字與 `TurnResult.answer` **不同**時
+        用它。兩個用途：(1) 清單點選回合 dialog 只寫程式摘要（S8-3，facts 原文
+        ⛔ 不進歷史）；(2) 出卡回合 dialog 只寫卡文字，卡外提示行 ⛔ 不進歷史。
+        `None` ⇒ 兩者相同（既有行為，⛔ 不變）。
         """
         trace = TurnTrace(
             trace_id=trace_id,
@@ -928,9 +1017,14 @@ class AgentRuntime:
             rules_sha=str(getattr(self.verifier, "rules_sha", "") or ""),
             pending_id=pending_id,
             receipt_id=receipt_id or None,
+            select_type=select_type,
+            has_ref=has_ref,
+            slot_written=slot_written,
         )
         agent_state["fixed_streak"] = 0
-        _append_dialog(agent_state, user_message, answer)
+        _append_dialog(
+            agent_state, user_message, answer if dialog_answer is None else dialog_answer
+        )
         _emit_agent_decision(trace)
         return TurnResult(
             kind=kind,
@@ -938,6 +1032,139 @@ class AgentRuntime:
             handoff=None,
             quick_replies=list(quick_replies or []),
             trace=trace,
+        )
+
+    # ------------------------------------------------------------------
+    # W8 (1)：清單點選段（機器值 `select:<type>:<id>` → 工具 → facts）
+    # ------------------------------------------------------------------
+    async def _run_select_segment(
+        self, identity: Identity, user_message: str, agent_state: dict,
+        trace_id: str, start: float,
+    ) -> Optional[TurnResult]:
+        """使用者從 LIFF 清單點一列時的整段處理；不是這種回合 ⇒ `None`（照常進模型）。
+
+        **守門順序與確認段完全相同，⛔ 不得調換**（Plan W8）：
+          ① `identity.entry != "mcp"` ⇒ 整段不執行（REST 入口沒有清單點選）。
+          ② `self.readonly_view` ⇒ 整段不執行。影子回合與正式回合共用
+             `session_id`（DSP-016），影子若寫槽位／作廢待確認筆，正式那一邊
+             就被影子改掉了，而使用者根本沒點過任何東西。
+          ③ 訊息**等值**匹配機器值（`fullmatch`、⛔ 不 NFKC、⛔ 不 strip）。
+
+        **模型不在迴圈裡、Verifier 也不跑**：`answer` 逐字＝該域 face builder 的
+        程式產出。⛔ 這不代表沒有出口檢查——facts 出去之前還要再過一次
+        `_verify_routes`（見下方），而 email 面由 `_SELECT_DEFAULT_FACE` 封閉表擋。
+        """
+        if getattr(identity, "entry", DEFAULT_ENTRY_CHANNEL) != "mcp":
+            return None
+        if self.readonly_view:
+            return None
+        parsed = _parse_select_value(user_message)
+        if parsed is None:
+            return None
+        select_type, ref = parsed
+
+        violations: list[str] = []
+
+        def _finish(answer: str, *, dialog_answer=None, tool_calls=None, slot_written=None):
+            return self._finish_confirm_turn(
+                agent_state=agent_state, user_message=user_message, trace_id=trace_id,
+                start=start, kind="answer", answer=answer, pending_id=None,
+                tool_calls=tool_calls, violations=violations,
+                dialog_answer=dialog_answer,
+                select_type=select_type, has_ref=bool(ref), slot_written=slot_written,
+            )
+
+        # S8-12：缺 `user_id` 時下游會**靜默降級成空**（`JGBSystemAPI.
+        # _degraded_response`），使用者只看到「查無此筆」而稽核上完全無聲。
+        # ⛔ 不在此擋掉整段（pm 單證是既有身分閘的刻意設計，見
+        # `jgb2.py:_identity_gate_ok`）——只把這個事實記進 trace。
+        if not getattr(identity, "user_id", None):
+            violations.append("select_missing_user_id")
+
+        tool_name = _SELECT_TYPE_TO_TOOL[select_type]
+        face = _SELECT_DEFAULT_FACE[select_type]
+        call_start = self._clock()
+        try:
+            # 走既有 registry 四步（可見性、速率、schema、身分鍵剝除）；
+            # 授權由 jgb2 API 全權裁（DSP-011）。⛔ 不直呼工具函式。
+            tool_result = await self.registry.call(
+                identity,
+                tool_name,
+                {"face": face, "ref": ref},
+                self._tool_timeout_s,
+                stage=self._stage,
+                readonly_view=False,
+                for_model=True,
+            )
+        except Exception as exc:  # noqa: BLE001 — registry 不可用
+            violations.append(f"REGISTRY_EXC:{type(exc).__name__}")
+            tool_result = ToolResult(ok=False, error="NO_MATCH")
+        records = [
+            ToolCallRecord(
+                id=f"select:{select_type}",
+                name=tool_name,
+                # ⛔ `ref` 原值不進 trace（S8-6，同 `_args_summary` 的紀律）。
+                args_summary={"face": face},
+                ms=int((self._clock() - call_start) * 1000),
+                status=_tool_result_status(tool_result),
+                n_items=_tool_result_n_items(tool_result),
+            )
+        ]
+
+        if not tool_result.ok:
+            return _finish(SELECT_NOT_FOUND_TEXT, tool_calls=records)
+        data = tool_result.data if isinstance(tool_result.data, dict) else {}
+        facts = data.get("facts")
+        if not isinstance(facts, str) or not facts.strip():
+            # 空／不在範圍：與「查不到」**同一句**（⛔ 不洩存在性）。
+            return _finish(SELECT_NOT_FOUND_TEXT, tool_calls=records)
+
+        # facts 出口再過一次 `_verify_routes`（S8-1）：這條路沒有模型、也就沒有
+        # Verifier，而 facts 是下游系統的字串。⛔ 命中不遮罩後送——遮罩等於承認
+        # 「這一段可以只挑掉壞的部分」，而我們並不知道還有什麼沒被樣式認出來。
+        # ⚠️ **拿不到這道檢查一律當成命中**（fail-closed）：Verifier 是注入的，
+        #    換了一個沒有 `_verify_routes` 的實作時，正確的行為是不出這段 facts，
+        #    ⛔ 不是「沒得檢查就放行」。
+        verify_routes = getattr(self.verifier, "_verify_routes", None)
+        if not callable(verify_routes):
+            violations.append("select_route_check_unavailable")
+            return _finish(SELECT_NOT_FOUND_TEXT, tool_calls=records)
+        if verify_routes(unicodedata.normalize("NFKC", facts)) is not None:
+            violations.append("select_route_not_allowed")
+            return _finish(SELECT_NOT_FOUND_TEXT, tool_calls=records)
+
+        # 槽位：`<type>_ref`（`bill_ref`／`contract_ref`／`repair_ref` 都在
+        # `SlotKey` 封閉值域內；`meter` 第一版不開正是因為 `meter_ref` 不在，S8-5）。
+        # ⚠️ 找不到 COLLECTING 列 ⇒ **仍回 facts**、trace 記 `slot_written=false`
+        #    （⛔ 不因為記不住而不回答；也 ⛔ 不建列——`write_slot` 的既有紀律）。
+        slot_written = False
+        if self._db_pool is not None:
+            try:
+                slot_written = bool(
+                    await write_slot(
+                        self._db_pool, identity.session_id, f"{select_type}_ref", ref
+                    )
+                )
+            except Exception as exc:  # noqa: BLE001 — 寫不進去不該吃掉這次回答
+                violations.append(f"SLOT_WRITE_EXC:{type(exc).__name__}")
+                slot_written = False
+
+        # 使用者換了要談的那一筆 ⇒ 尚未兌現的待確認筆一律**作廢**。
+        # ⛔ **不刪已有 `receipt` 的筆**：R4.3「同一個 pending_id 重送回同一個
+        #    receipt」與「不覆蓋既有 receipt」的紀律不變，刪掉會讓已經送出的
+        #    動作被謊報成沒送出。
+        # ⛔ 也不刪 dict 本身、只標記——標記可回復（Plan §6 W8 回退欄）。
+        pending_all = agent_state.get(PENDING_CONFIRM_KEY)
+        if isinstance(pending_all, dict):
+            for entry in pending_all.values():
+                if isinstance(entry, dict) and not isinstance(entry.get("receipt"), dict):
+                    entry["invalidated"] = True
+
+        return _finish(
+            facts,
+            dialog_answer=SELECT_DIALOG_SUMMARY.format(select_type=select_type, ref=ref),
+            tool_calls=records,
+            slot_written=slot_written,
         )
 
     async def _run_confirm_segment(
@@ -981,6 +1208,16 @@ class AgentRuntime:
                 start=start, kind="answer", answer=answer, pending_id=pending_id,
                 tool_calls=tool_calls, violations=violations, receipt_id=receipt_id,
             )
+
+        # W8 (1)：被清單點選作廢掉的待確認筆 ⇒ **視同不存在**，回固定句。
+        # ⚠️ 已經有 `receipt` 的筆 ⛔ 不受影響（`_run_select_segment` 根本不標
+        #    記它們）——R4.3「重送回同一 receipt」的紀律不變。
+        # ⛔ 不在此靜靜放行：使用者換了要談的那一筆之後，舊卡上的參數已經不是
+        #    他現在要做的事；token 順手燒掉，避免「作廢後又被別的路徑兌現」。
+        if pending.get("invalidated") is True and not isinstance(pending.get("receipt"), dict):
+            if self._db_pool is not None:
+                await redeem_pending(self._db_pool, identity.session_id, pending_id)
+            return _finish(CONFIRMATION_REQUIRED_TEXT)
 
         submit = verb == CONFIRM_QUICK_REPLY_VALUES[0]
         if not submit:
@@ -1109,6 +1346,9 @@ class AgentRuntime:
         action = data.get("action")
         payload = data.get("payload")
         quick_replies = data.get("quick_replies")
+        # W8 (3)：卡外提示行與物件 id（`confirm.request` 回的兩個新欄位）。
+        hint = data.get("hint")
+        estate_id = data.get("estate_id")
         if (
             not isinstance(pending_id, str)
             or not pending_id
@@ -1128,8 +1368,13 @@ class AgentRuntime:
             "payload": payload,
             # ＝ `agent_confirmation_tokens.summary_sha256`（DSP-038-2）。兌現時
             # 兩邊比對，任一邊被換掉都對不上。
+            # ⚠️ **逐字＝卡文字的雜湊**：W8 (3) 的提示行在卡外，⛔ 不進這個雜湊
+            #    （DSP-038-2「同 payload 同卡」不動）。
             "card_sha256": sha256_hex(card),
         }
+        # W8 (3)：物件 id 存進待確認筆（兌現時用；⛔ 不進卡、不進雜湊）。
+        if isinstance(estate_id, str) and estate_id:
+            pending_all[pending_id]["estate_id"] = estate_id
         # FIFO 上限（dict 保序）；⛔ 不是 LRU——重送命中時不重排，那會讓一筆被
         # 反覆重送的確認永遠擠不掉別人的。
         while len(pending_all) > PENDING_CONFIRM_MAX:
@@ -1140,7 +1385,11 @@ class AgentRuntime:
             trace_id=trace_id,
             start=start,
             kind="ask",
-            answer=card,                      # 逐字，⛔ 不經模型、不經 Verifier
+            # 逐字＝卡文字，⛔ 不經模型、不經 Verifier。W8 (3)：卡外提示行只接
+            # 在**這裡**（`TurnResult.answer`），⛔ 不進 `card`／`card_sha256`／
+            # dialog（下方 `dialog_answer=card`）。
+            answer=card if not (isinstance(hint, str) and hint.strip()) else f"{card}\n{hint}",
+            dialog_answer=card,
             pending_id=pending_id,
             quick_replies=list(quick_replies or []),
             tool_calls=tool_calls,
@@ -1161,6 +1410,14 @@ class AgentRuntime:
         )
         if confirmed is not None:
             return confirmed
+        # W8 (1)：清單點選機器值同樣**排在同題重問快取之前**（理由同上：它是
+        # 一次狀態轉移，不是「一題」）。兩段的正則值域互斥（`confirm_*:` vs
+        # `select:`），⛔ 順序不影響結果，排在後面只是讓既有的確認鏈先判。
+        selected = await self._run_select_segment(
+            identity, user_message, agent_state, trace_id, start
+        )
+        if selected is not None:
+            return selected
         cache = agent_state.setdefault("handoff_cache", {})
         cache_key = _cache_key(user_message)
 

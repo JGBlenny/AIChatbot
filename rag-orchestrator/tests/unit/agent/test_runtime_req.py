@@ -620,6 +620,12 @@ _ALLOWED_AGENT_DECISION_KEYS = frozenset(
         # `confirm_card.receipt_id_of` 過形狀（`[A-Za-z0-9_.:-]{1,64}`）。
         "pending_id",
         "receipt_id",
+        # W8 (1)／S8-6（子 spec agent-write-tools）：清單點選回合的稽核三鍵。
+        # ⛔ **`ref` 原值不在其中**——`has_ref` 只記「有沒有」，`select_type`
+        # 是 `_SELECT_TYPE_TO_TOOL` 封閉表的鍵，`slot_written` 是 bool。
+        "select_type",
+        "has_ref",
+        "slot_written",
     }
 )
 
