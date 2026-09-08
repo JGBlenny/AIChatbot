@@ -96,10 +96,47 @@ sequenceDiagram
 | 授權 | 不在本系統；查詢帶呼叫者 `role_id`／`user_id` 交 JGB API 收口；不存在與不在範圍同一句「查無此筆」 | DSP-011；`SELECT_NOT_FOUND_TEXT` |
 | 別戶 | 清單點選後以 `estate_id` 等值程式判定；候選過濾、單列替換、寫入閘；聊天進場不設限（正本） | `_enforce_tool_scope`、`SCOPE_EXIT_TEXT`、`_SELECT_DEFAULT_FACE`（最小揭露 face，⛔ 無 email／電話） |
 | 寫入 | 旗標×stage 可見；`mcp_only`；token 單次、雜湊綁卡、冪等鍵 | `registry.register` 強制、`redeem_pending`、`assert_redeemed` |
-| 機敏 | URL／電話導流仍擋；`forbid_terms` 內部識別名（觀察模式只記） | `verifier._verify_routes`、`config/agent_verifier_rules.json` |
+| 機敏 | ⚠️ **觀察模式下（demo 線上值 `AGENT_VERIFIER_OBSERVE_ONLY=true`）Verifier 的所有不通過判定一律改成通過**，含 `SENSITIVE_TOPIC` 與 `ROUTE_NOT_ALLOWED`——`app._wrap_verifier_observe_only` 對 `verify()` 的回傳做 `verdict if verdict.ok else ok=True`，而 `_verify_routes` 就在 `verify()` 裡面（`grep -n "_verify_routes(answer_nfkc)" rag-orchestrator/services/agent/verifier.py`）。**只有清單點選的 facts 出口**另外直接呼叫 `_verify_routes`（`grep -n "verify_routes = getattr" rag-orchestrator/services/agent/runtime.py`），那條仍擋。⛔ 帳本 R8「機敏類照擋」描述的是 W6-b3 要做的 `AGENT_VERIFIER_MODE=grounding_observe`，**尚未落地**——文件與程式衝突，2026-09-09 交業主裁（見 §4b） | `app._wrap_verifier_observe_only`、`verifier._verify_routes`、`config/agent_verifier_rules.json` |
 | 照片 | 白名單等值主機、https、不跟轉址、私網 IP 拒、5 MB 串流硬閘、型別驗證、去 EXIF、bytes 不落地、描述硬留空 | `image_fetch.validate_image_url`／`fetch_image`、`downscale_image` |
 | 額度 | 每呼叫一列 `usage_events`（內部 key 不計額度）；`RATE_PER_MIN` 60、`AGENT_TURN_CAP` 120／時、照片 200 張／時（皆行程內） | `_check_and_record_rate`、`check_and_record_agent_turn`、`check_and_record_image_count` |
 | 紀錄 | trace／決策快照只有結構化欄位（白名單守測 21 鍵）；dialog 只寫程式摘要或卡文字；token、照片、ref 原值不進 trace | `_emit_agent_decision`、`DECISION_BANNED_KEYS`、不變量 27–31 |
+
+## 4b. 回合出口與「為什麼轉人」——對碼事實表（2026-09-09）
+
+> 動機：2026-09-09 我把「答案被 Verifier 打回所以轉人」講成線上原因，業主指出線上是觀察模式。這一節把「誰決定轉人」寫死，每句附查證指令；⛔ 引用時先跑指令再說。
+
+**A. 轉人是誰決定的（四個來源）**
+
+| 來源 | 觸發 | 使用者看到 | 查證 |
+|---|---|---|---|
+| 模型自報 | 模型輸出 `kind=handoff`＋`handoff_reason=no_grounding`／`sensitive_no_grounding`（值域見 `HandoffReason`） | `PRESALES_HANDOFF_MESSAGE`（「這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。」，`effective_handoff_message(None)`） | `grep -n "class HandoffReason" rag-orchestrator/services/presales_gate.py`；`grep -n "PRESALES_HANDOFF_MESSAGE" rag-orchestrator/services/conversational_config.py rag-orchestrator/services/agent/tools/handoff.py` |
+| 預算耗盡 | Verifier **擋**（非觀察模式）兩次改寫仍不過 ⇒ `handoff_reason=budget_exhausted` | 同上固定句 | log 行 `agent_turn trace_id=… kind=handoff handoff_reason=budget_exhausted … verifier_rejects=2` |
+| 範圍退出 | 清單點選會話問別戶（L15） | `SCOPE_EXIT_TEXT` | `grep -n "def _apply_scope_exit" rag-orchestrator/services/agent/runtime.py` |
+| 程式降級（S4，2026-09-09） | 模型自報 `no_grounding` 但零工具呼叫、無範圍、非敏感類 ⇒ **不轉人**，改追問 `ASK_TARGET_TEXT` | 「想處理哪一戶或哪一筆？…」 | `grep -n "def _apply_handoff_without_lookup" rag-orchestrator/services/agent/runtime.py` |
+
+**B. 線上（demo）到底擋不擋：`AGENT_VERIFIER_OBSERVE_ONLY=true`（runbook §20-2）**
+
+- 讀值點唯一：`health.verifier_observe_only()`；只准配 `USE_MOCK_JGB_API=true`（否則 raise）。查證：`grep -n "def verifier_observe_only" rag-orchestrator/services/agent/health.py`。
+- 效果：`verify()` 回的**任何**不通過判定都被換成通過，真實判定只記到 attempt sink（`observe_real_verdict`）。查證：`grep -n "return verdict if verdict.ok else" rag-orchestrator/app.py`。
+- 因此線上不會出現 `budget_exhausted` 轉人；線上的轉人＝模型自報（來源 A 第 1 列）。實證：2026-09-09 本地以線上同組態跑走查劇本 24 回合，`agent_verifier_reject` 0 次、轉人 3 次全為 `no_grounding`（scratchpad `smoke/wt_base.log`）。
+- ⛔ **衝突待裁**：帳本 R8 寫「機敏類（`SENSITIVE_TOPIC`、`_verify_routes`）照擋」，但那是 W6-b3 的 `AGENT_VERIFIER_MODE=grounding_observe` 設計，**程式裡沒有**；現行旗把機敏類也放行（只剩清單點選 facts 出口直呼 `_verify_routes` 那一道）。
+
+**C. 模型為什麼傾向轉人（提示詞層，觀察模式改變不了）**
+
+- 鐵則：「只講工具回傳內容裡能引用的事實；沒有工具佐證的事實一律不說」、「`kind=fact` 的句子要有 `refs`」。查證：`grep -n "沒有工具佐證的事實一律不說\|要有 \`refs\`" rag-orchestrator/services/agent/agent_rules.py`。判斷題沒有可引用事實 ⇒ 依規則不說 ⇒ 剩轉人。
+- 2026-09-09 前【判準】只定義「資料段與工具都查無 ⇒ `no_grounding`」，沒有「缺對象先問」「判斷題依資料段給建議」「查無先確認編號」；S4 補了這三句定義。查證：`grep -n "判斷句與指令句先確定對象" rag-orchestrator/services/agent/agent_rules.py`。
+- 已知：提示詞越長模型越傾向先轉人（`agent_rules.py` 檔頭註解的回歸實測）。
+
+**D. 尺的版本（r2／r3／DSP-039）是 Verifier 的事，不是提示詞的事**
+
+| 名稱 | 意思 | 現況 |
+|---|---|---|
+| r2 | Verifier 引用類判定照擋（`UNCITED_ASSERTION`／`QUOTE_NOT_COVERING`…） | 業主 R8 停用 |
+| r3 觀察模式 | 引用類只記不擋 | **線上 demo 組態**＝現行 `AGENT_VERIFIER_OBSERVE_ONLY`（全部放行，見 B） |
+| DSP-039 值級尺 | 工具事實片段以值級比對 | 備援，未啟用 |
+| W6-b3 `AGENT_VERIFIER_MODE` | 引用類觀察＋機敏類照擋的正式參數 | 未落地 |
+
+**E. 怎麼判讀一回合**：看 log 行 `agent_turn trace_id=<id> kind=<kind> handoff_reason=<reason> tool_calls=<n> verifier_rejects=<n> llm_calls=<n>`——`kind=handoff` 且 `verifier_rejects=0` ⇒ 模型自選；`tool_calls=0` ⇒ 它一個查詢都沒做；`handoff_reason=budget_exhausted` ⇒ 是 Verifier 擋出來的（觀察模式下不會出現）。
 
 ## 5. 資料落點
 
