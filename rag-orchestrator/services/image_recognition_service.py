@@ -145,6 +145,10 @@ def build_prompt(category_names: Optional[List[str]] = None, categories_tree: Op
 _MAX_OUTPUT_TOKENS = 500
 
 
+_GPT5_MAX_COMPLETION_TOKENS = 1500
+_GPT5_REASONING_EFFORT = "low"
+
+
 def _completion_params(model: str) -> dict:
     """依模型回 `chat.completions.create` 的輸出長度／取樣參數。
 
@@ -152,7 +156,12 @@ def _completion_params(model: str) -> dict:
     其餘（gpt-4o／4o-mini…）⇒ `max_tokens` ＋ `temperature=0.2`（逐值同舊版）。
     """
     if str(model or "").startswith("gpt-5"):
-        return {"max_completion_tokens": _MAX_OUTPUT_TOKENS}
+        # ⚠️ gpt-5 系列的推理 token 計入 completion：500 會被推理吃光、可見輸出為空
+        #    （真線路實測 2026-09-08：六張全回長度 0）。上限拉高並把推理力道釘低。
+        # openai SDK 1.54（requirements）尚無 `reasoning_effort` 具名參數 ⇒ 走 `extra_body`
+        # （同 runtime 的做法；具名傳會 TypeError——真線路實測 2026-09-08）。
+        return {"max_completion_tokens": _GPT5_MAX_COMPLETION_TOKENS,
+                "extra_body": {"reasoning_effort": _GPT5_REASONING_EFFORT}}
     return {"max_tokens": _MAX_OUTPUT_TOKENS, "temperature": 0.2}
 
 
