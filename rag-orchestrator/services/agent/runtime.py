@@ -1180,9 +1180,11 @@ class AgentRuntime:
           ② `self.readonly_view` ⇒ 整段不執行。影子回合與正式回合**共用
              session_id**（DSP-016），影子若兌現，正式那一張 token 就沒了，
              而使用者根本沒按過任何按鈕。
-          ③ 訊息**等值**匹配機器值，且該 `pending_id` 在 session 狀態裡有一筆
-             待確認 ⇒ 不進模型。三個條件缺一就照常走模型（自由文字「好，送出」、
-             裸 `confirm_submit`、錯 pid ⇒ ⛔ 不觸發任何寫入）。
+          ③ 訊息**等值**匹配機器值 ⇒ 不進模型：該 `pending_id` 在 session 狀態裡
+             有一筆待確認就走兌現；**不在**（錯 pid、會話過期後按舊卡）⇒ 固定句
+             `CONFIRMATION_REQUIRED_TEXT`（`3bf28e79`：機器值不承載意圖，進模型只會
+             把 pid 念回去）。①②不成立或不是機器值（自由文字「好，送出」、裸
+             `confirm_submit`、前後綴）⇒ 照常走模型，⛔ 不觸發任何寫入。
 
         **模型不在迴圈裡**：這一段從頭到尾沒有一次 `chat.completions.create`。
         使用者按的是機器值，該執行什麼由狀態決定，⛔ 不由模型判讀同意詞（R4.2）。
