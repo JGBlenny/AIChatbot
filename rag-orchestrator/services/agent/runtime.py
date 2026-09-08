@@ -1198,9 +1198,16 @@ class AgentRuntime:
         pending_all = agent_state.get(PENDING_CONFIRM_KEY)
         pending = pending_all.get(pending_id) if isinstance(pending_all, dict) else None
         if not isinstance(pending, dict):
-            # 錯 pid／狀態已清 ⇒ ⛔ 不在此偽造一次「已失效」回覆：這條訊息對本
-            # session 沒有任何意義，照常交給模型（它會問使用者要做什麼）。
-            return None
+            # 錯 pid／狀態已清（含 W8 (5) 會話過期後按到舊卡按鈕）⇒ 回固定句
+            # `CONFIRMATION_REQUIRED_TEXT`，⛔ 不交給模型：機器值不承載使用者意圖，
+            # 進模型只會把 pid（內部識別名）念回給使用者（實測 L3-H：「確認碼 de34…」）。
+            # 沒有 token 可燒（本 session 從未持有它），也⛔ 不試著去兌現別的 session 的 pid。
+            return self._finish_confirm_turn(
+                agent_state=agent_state, user_message=user_message, trace_id=trace_id,
+                start=start, kind="answer", answer=CONFIRMATION_REQUIRED_TEXT,
+                pending_id=pending_id, tool_calls=None,
+                violations=["confirm_unknown_pending_id"], receipt_id="",
+            )
 
         def _finish(answer: str, *, receipt_id: str = "", tool_calls=None, violations=None):
             return self._finish_confirm_turn(

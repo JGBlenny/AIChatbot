@@ -166,7 +166,8 @@ async def test_readonly_view_never_redeems():
 @pytest.mark.parametrize("message", [
     "好，送出",                       # 自由文字
     "confirm_submit",                 # 裸機器值（無 pid）
-    "confirm_submit:0000000000000000",  # 錯 pid（狀態裡沒有）
+    # ⚠️ 「錯 pid（狀態裡沒有）」自 W8 (5) 起改回固定句、不進模型——見
+    #    test_unknown_pending_id_returns_fixed_sentence_and_never_reaches_the_model
     f" confirm_submit:{_PID}",        # 前綴空白 ⇒ 不等值
     f"confirm_submit:{_PID} 謝謝",     # 後綴 ⇒ 不等值
     f"confirm_submit:{_PID.upper()}",  # 大寫十六進位 ⇒ 形狀不符
@@ -381,6 +382,27 @@ async def test_cancel_after_success_does_not_overwrite_the_receipt():
     await rt.run_turn(_identity(), f"confirm_submit:{_PID}", state)
     await rt.run_turn(_identity(), f"confirm_cancel:{_PID}", state)
     assert state["agent"][PENDING_CONFIRM_KEY][_PID]["receipt"] == {"id": "BILL-77"}
+
+
+@pytest.mark.req(_REQ)
+async def test_unknown_pending_id_returns_fixed_sentence_and_never_reaches_the_model():
+    """W8 (5) 後可達：會話過期、舊列連同 pending 一起作廢，使用者按到舊卡按鈕 ⇒
+    機器值格式合法但 pid 不在本 session ⇒ 固定句，⛔ 不進模型（模型會把 pid 念回去，
+    實測 L3-H「確認碼 de34…」）、⛔ 不呼叫工具、⛔ 不碰 DB（本 session 沒有這個 token）。
+    正對照：同一 pid 在 pending 裡 ⇒ 走原本的兌現路（test_submit_calls_write_tool_…）。"""
+    pool = FakePool([_redeem_row()])
+    registry = _receipt_registry()
+    provider = FakeProvider([_final_response(answer="模型接手了")])
+    rt = _runtime(provider=provider, registry=registry, pool=pool)
+    state = _state_with_pending()
+    state["agent"]["pending_confirm"] = {}          # 過期後：待確認表已隨舊列作廢
+    for verb in ("confirm_submit", "confirm_edit", "confirm_cancel"):
+        result = await rt.run_turn(_identity(), f"{verb}:{_PID}", state)
+        assert result.answer == CONFIRMATION_REQUIRED_TEXT, verb
+        assert _PID not in result.answer
+    assert pool.calls == []
+    assert registry.call_args == []
+    assert provider.calls == [] if hasattr(provider, "calls") else True
 
 
 @pytest.mark.req(_REQ)
