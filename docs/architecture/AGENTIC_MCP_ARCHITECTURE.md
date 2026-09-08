@@ -73,8 +73,10 @@ sequenceDiagram
   R->>R: Verifier（觀察）、_apply_scope_exit、partial 照片附加句
   R-->>F: TurnResult{answer, kind, quick_replies, trace}
   F->>F: 存 state、stamp_last_turn、trace 快照
-  F-->>L: {answer, kind, handoff, quick_replies, trace_id, session_expired}
+  F-->>L: {answer, kind, handoff, quick_replies, trace_id, session_expired, outcome}
 ```
+
+**`outcome`（DSP-043）**：第七鍵 `{state, expects, action, ref}`，`state` 八態（answered／clarifying／confirm_pending／confirmed／cancelled／failed／handoff／out_of_scope）由各出口程式設、一般出口依 `kind`／`quick_replies` 導出（`runtime.make_outcome`／`default_outcome`／`receipt_ref`）；呼叫端只看它決定畫面。
 
 **三個程式段永遠先於模型**（`run_turn` 內順序：confirm → select → image 終止路徑 → 模型迴圈），這是「機器值不承載意圖」的實作：按鈕與點選不需要模型理解，也不讓模型看到 pid／id 原值。
 

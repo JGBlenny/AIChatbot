@@ -56,6 +56,7 @@
 | R10-b | **點清單那一筆也是以文字送進 `agent.turn`**（帶編號／物件名的一句話），⛔ 不需 `facet_context` 結構欄位 | W8 (1) 移除；劇本「帶編號進場」＝真實入口非模擬；缺口 G1 作廢 |
 | R10-c | **清單點選改為機器值 `select:<type>:<id>`**（取代 R10-b「純文字」）：Runtime 進模型前決定性攔截、走既有工具以 `role_id` 收口、不在範圍＝查無（不洩存在性）；`select:repair:` 保留；真人可打列已知取捨；line-bot 零改動（同 B3／B4） | W8 (1)；契約「清單點選」列；DSP-042 草案 |
 | R12 | **照片辨識 demo 用 gpt-4o**（2026-09-08「好 4o」）：真線路六張 gpt-4o 6/6、約 2 s／張、約 US$0.003／張；gpt-5-mini 5/6、慢 2–3 倍、實務省 2–3 倍（推理 token 計入輸出）；demo 量級月費差 <US$1 ⇒ 準確度與延遲優先。`IMAGE_RECOGNITION_MODEL` 維持預設 gpt-4o，⛔ 不改組態；正式上線後以 `openai_cost_tracking`（operation image_recognition）實測再比 | W8 (2)；§3 待更多素材再比 |
+| R13 | **DSP-043 `outcome` 採**（2026-09-08，否決三布林）：回合結果封閉描述為第七鍵；**照片緩衝 3 秒**（line-bot 端）；**LIFF 走 MCP**（不另開 HTTP、不接舊鏈） | `a365f64e`；契約 outcome 列；串接單 |
 | R11 | **DSP-042 三件都採**（2026-09-08）：`session_expired` 第六鍵、`select:<type>:<id>` 契約值域 bill／contract／repair、正本先行由主 session 落檔（W-D） | W8 (1)(3)(5) 開工（Plan r4 READY）；`DECISIONS.md` DSP-042；R3.7／design 元件 3、4 已改 |
 
 **16 回合最終實跑（最終起法、D-BLOCK-2 修後、預設 rewrites；`run_final4.jsonl`）：12／16 符合期望、0 不安全、4 題「該答卻轉人」（S1#3 滯納金、S1#5「好了」收尾、S2#2 照片拍不清楚、S5#2 續約意願）——同題不同輪結果不同（單獨探針 S1#3 會答、上一輪 S5#2 答「JGB 無此欄」），屬答案層穩定度，非機制。**
@@ -228,6 +229,8 @@ W4b（定義層、⛔ 不寫例子）：`jgb2.action.bill_due_extend` descriptio
 **線上部署（2026-09-08 15:2x，業主「幫我處理」；jgb2-ai-chatbot，根目錄 30 GB 剩 12 GB、RAM 3.7 GB）**：push `5eb9cbb6`（main＝feat）→ 舊庫備份 `backups/pre_demo_20260908_0721.dump`（15 MB）→ dev dump 17 MB 取代（migration 1、知識 1048）→ `.env` 11 行＋`IMAGE_RECOGNITION_MODEL=gpt-4o`（R12，蓋過 compose 預設 mini）→ `docker-compose` build 548 MB → 啟動約 60 s（fine_index prospect 38／pm 36）→ 無 key 401、帶 key `ok`（mock／write／observe／image gpt-4o 全對）→ 線上 `make audit` OVERALL PASS。demo key `line-bot-oa-demo`（前綴 `rgk_AEHV`，明文只在伺服器 `/home/ec2-user/.curl-mcp-key`，交 line-bot）；dev 內部 key 97 已停用。⚠️ 換庫第一次失敗（伺服器無 `docker compose`、`;` 接的刪檔把 dump 刪了、`schema_migrations` 欄名是 `migration_name`）——runbook §20 已補實跑修正。磁碟部署後仍剩 12 GB。
 
 **公開路由修正（2026-09-08 晚，line-bot 回報 `/rag-api/mcp` 404）**：根因＝nginx `location /rag-api/` 的 `rewrite ^/rag-api/(.*)$ /api/$1` 把 `/mcp` 改成 `/api/mcp`（不存在）；先前以假 key 探到的 401 是金鑰中介層在路由前擋的，⛔ 不能當「路徑通」的證據。修＝`knowledge-admin/frontend/nginx.conf.template` 加 `location /rag-api/mcp` 直通 `/mcp`（HTTP/1.1、不緩衝、同 auth_request 與 key map），`91c26fee`；線上 `--force-recreate knowledge-admin-web`、`nginx -t` OK；公開 `initialize` 200＋`mcp-session-id`、MCP client 經公開網址 tools/list 16、一段真對話 12.1 s 答對、select 0.0 s 直答。教訓：驗端點要走到協定層（MCP 先 `initialize`），401 只證明 key 閘在。
+
+**DSP-043 `outcome` 上線（2026-09-08 晚；業主先否決三布林「有點針對客製、應該更通用」→「outcome 採」；`a365f64e`＋docs `0b8ee6f7`）**：第七鍵 `{state, expects, action, ref}`，八態封閉、程式設。unit 1424；線上重建後公開網址實跑：開單 → `confirm_pending/button/repair_create` → 送出 `confirmed/none/ref repair 12346`；取消 → `cancelled`；`select:` → `answered/text`；點選後問別戶 → `out_of_scope/none`；一般查詢 → `answered/text`。同日裁：LINE 照片緩衝 3 秒（line-bot 端合成一回合）、LIFF 一律走 MCP（不接舊鏈 REST）。
 
 **還壞的三類（按層）**：
 1. 答案層（工具契約）：`repair_create` 描述「estate_name 必須是系統查得到的物件」⇒ 模型向業務要「系統內的物件名稱或編號」（L3-A／B／M／N 都問了，物件名早在句內）；描述「1 代表非緊急，2 代表緊急」被逐字念給業務 ⇒ 急迫值外洩 8 回合（觀察模式只記不擋）。修法＝描述改定義（口述名稱即可、系統比對；值只給程式）——**待裁 delta3**。
