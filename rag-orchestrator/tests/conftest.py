@@ -21,6 +21,15 @@ for _p in (_ROOT, _SERVICES):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
+# ── 替身 fixture（2026-09-08）：測試一律吃凍結的回歸宇宙，⛔ 不吃 demo 檔 ──
+# demo 檔（services/jgb/fixture_data/demo_vendor4.json）只放遮罩後的真資料子集，
+# 合成鏈（bills 900001-3／contracts 678,600／estates 456,400…）住在這裡；
+# 45 個測試檔引用那些 id，搬檔不改測試。⚠️ 必須在任何 `services.jgb` import 之前設。
+os.environ.setdefault(
+    "JGB_MOCK_FIXTURE",
+    os.path.join(_ROOT, "tests", "fixtures", "jgb", "regression_vendor4.json"),
+)
+
 
 # ── skip 型別前綴（spec conversational-routing-execution 任務 1.3｜R1.3）──
 # 兩類略過必須在輸出上可分辨：

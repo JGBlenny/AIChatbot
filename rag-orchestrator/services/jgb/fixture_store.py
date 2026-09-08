@@ -12,10 +12,19 @@
 
 import copy
 import json
+import os
 from pathlib import Path
 from typing import Any
 
-_FIXTURE_PATH = Path(__file__).parent / "fixture_data" / "demo_vendor4.json"
+#: 預設＝demo 替身（真資料子集，遮罩後，全部對 demo 使用者可見）。
+#: 環境變數 `JGB_MOCK_FIXTURE` 可指到別的 JSON——測試套件在 `tests/conftest.py` 以它指向
+#: `tests/fixtures/jgb/regression_vendor4.json`（凍結的回歸宇宙：含合成鏈 900001／678／456…），
+#: 所以合成測試列 ⛔ 不再放進 demo 檔（2026-09-08 業主「清掉測試資料」：demo 業務用關鍵字
+#: 會撈到同 role 的合成合約，狀態碼還是不合法的 5）。⚠️ 在 import 時讀一次，之後不可換。
+_FIXTURE_PATH = Path(
+    os.environ.get("JGB_MOCK_FIXTURE")
+    or (Path(__file__).parent / "fixture_data" / "demo_vendor4.json")
+)
 
 
 def _load() -> "dict[str, Any]":
@@ -25,6 +34,21 @@ def _load() -> "dict[str, Any]":
 
 #: 行程內只讀一次磁碟；後續呼叫皆對這份記憶體副本做深拷貝。
 _DATA: "dict[str, Any]" = _load()
+
+
+def load_from(path: "str | Path") -> None:
+    """**測試專用 seam**：就地換掉行程內的 `_DATA`，改讀 `path` 指的 JSON。
+
+    ⚠️ 正式流程的 fixture 路徑（`_FIXTURE_PATH`）只在模組 import 時依
+    `JGB_MOCK_FIXTURE` 決定一次，不應在執行期改道；本函式只給需要驗證
+    「某一份 fixture 檔本身、繞過 `JGB_MOCK_FIXTURE` 覆寫」的測試使用
+    （例如驗證 `demo_vendor4.json`——測試套件平常吃的是 `regression_vendor4.json`）。
+    呼叫端負責在測試結束後把 `_DATA` 復原（`monkeypatch.setattr` 或
+    `try/finally` 存回舊值），否則會汙染同一行程內後續建構的 `*FixtureTable`。
+    """
+    global _DATA
+    with open(path, encoding="utf-8") as f:
+        _DATA = json.load(f)
 
 
 def demo_rows(domain: str) -> "list[dict[str, Any]]":

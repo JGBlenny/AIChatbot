@@ -336,6 +336,15 @@ _MASKED_EMAIL_RE = re.compile(r"^user\d+@example\.com$")
 def test_fixture_contains_no_undeclared_real_contacts():
     """掃 fixture JSON 全文的電話／email 字面值，逐一核對是否為既知合成樣式——
 
+    ⚠️ 掃描標的（2026-09-08 改點）：`services/jgb/fixture_data/demo_vendor4.json`
+    已重建為「role_id=20151/user_id=12291 團隊真實資料的 PII 遮罩子集」（見
+    `scripts/fixtures/build_demo_fixture_from_capture.py --mode all`），**不再含**
+    `0912345678`／`tenant@example.com` 等既有合成陷阱——那條防線已由專屬的
+    `test_demo_fixture_real_only_req.py` 取代（掃合成 trap id／trap 值必須「不存在」）。
+    本測試改掃**測試套件實際吃的檔**：`tests/fixtures/jgb/regression_vendor4.json`
+    （`tests/conftest.py` 的 `JGB_MOCK_FIXTURE`），那份才是凍結合成宇宙、
+    正對照組陷阱值仍住在裡面。
+
     正對照組：0912345678 這個既有陷阱**必須**被掃到且在允許清單內，
     證明本掃描確實會咬到電話號碼格式，而不是規則寫錯導致「什麼都掃不到」。
 
@@ -344,7 +353,7 @@ def test_fixture_contains_no_undeclared_real_contacts():
     仍然抓得到任何真實格式的號碼／信箱（不符合兩者皆非，直接判定未登記）。
     """
     path = (Path(__file__).resolve().parents[3]
-            / "services" / "jgb" / "fixture_data" / "demo_vendor4.json")
+            / "tests" / "fixtures" / "jgb" / "regression_vendor4.json")
     text = path.read_text(encoding="utf-8")
 
     phones = set(_PHONE_RE.findall(text))

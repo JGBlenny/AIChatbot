@@ -1,0 +1,3412 @@
+{
+ "_comment": "vendor4 demo fixture（transport-extension-full-coverage，2026-09-08）——單一 JSON 為 mock transport 的可變記憶體狀態來源；全為合成資料。0912345678／tenant@example.com 為刻意保留的個資陷阱（既有 16 回合劇本依賴，勿清除）。 ｜真資料子集（role_id=20151/user_id=12291 擷取，遮罩後）：estates [68926, 67649, 67651, 67652, 45728]、bills [769258, 769246, 769249, 756248, 756242, 727606, 750524]、contracts [84921, 85894, 88247, 89481]（建構，非逐鍵真實）、meters [1061]、repairs [8591, 7628]；對 12291 可見，既有合成列對 12291 改不可見。",
+ "bills": [
+  {
+   "id": 900001,
+   "contract_id": 678,
+   "estate_id": 456,
+   "type": 1,
+   "category": 3,
+   "status": 2,
+   "bit_status": 3,
+   "title": "2026年8月租金",
+   "sub_title": "測試用合成資料",
+   "currency": "TWD",
+   "total": 18000.0,
+   "final_total": 18000.0,
+   "rate": 1.0,
+   "date_start": 20260801,
+   "date_end": 20260831,
+   "date_expire": 20260815,
+   "date_expire_note": null,
+   "cycle": 1,
+   "days": 31,
+   "is_auto_pay": false,
+   "is_paid_on_time": null,
+   "online_payment_method": null,
+   "online_payment_action": null,
+   "payment_id": null,
+   "invoice_status": 0,
+   "invoice_number": null,
+   "ready_at": "2026-08-01 10:00:00",
+   "pay_at": null,
+   "complete_at": null,
+   "is_archived": false,
+   "archive_ymd": null,
+   "created_at": "2026-08-01 09:00:00",
+   "updated_at": "2026-08-01 09:00:00"
+  },
+  {
+   "id": 900002,
+   "contract_id": 678,
+   "estate_id": 456,
+   "type": 3,
+   "category": 3,
+   "status": 16,
+   "bit_status": 19,
+   "title": "2026年9月管理費",
+   "sub_title": "測試用合成資料",
+   "currency": "TWD",
+   "total": 1200.0,
+   "final_total": 1200.0,
+   "rate": 1.0,
+   "date_start": 20260901,
+   "date_end": 20260930,
+   "date_expire": 20260915,
+   "date_expire_note": null,
+   "cycle": 1,
+   "days": 31,
+   "is_auto_pay": false,
+   "is_paid_on_time": 1,
+   "online_payment_method": null,
+   "online_payment_action": null,
+   "payment_id": 910002,
+   "invoice_status": 1,
+   "invoice_number": "AB-90000002",
+   "ready_at": "2026-09-01 10:00:00",
+   "pay_at": "2026-09-03 14:20:00",
+   "complete_at": "2026-09-03 14:25:00",
+   "is_archived": false,
+   "archive_ymd": null,
+   "created_at": "2026-08-01 09:00:00",
+   "updated_at": "2026-08-01 09:00:00"
+  },
+  {
+   "id": 900003,
+   "contract_id": 600,
+   "estate_id": 400,
+   "type": 2,
+   "category": 3,
+   "status": 8,
+   "bit_status": 3,
+   "title": "2026年9月點退結算",
+   "sub_title": "測試用合成資料",
+   "currency": "TWD",
+   "total": 7500.0,
+   "final_total": 7500.0,
+   "rate": 1.0,
+   "date_start": 20260901,
+   "date_end": 20260930,
+   "date_expire": 20260915,
+   "date_expire_note": null,
+   "cycle": 1,
+   "days": 31,
+   "is_auto_pay": false,
+   "is_paid_on_time": null,
+   "online_payment_method": null,
+   "online_payment_action": null,
+   "payment_id": 910003,
+   "invoice_status": 1,
+   "invoice_number": "AB-90000003",
+   "ready_at": "2026-09-01 11:00:00",
+   "pay_at": "2026-09-10 09:05:00",
+   "complete_at": null,
+   "is_archived": false,
+   "archive_ymd": null,
+   "created_at": "2026-08-01 09:00:00",
+   "updated_at": "2026-08-01 09:00:00"
+  },
+  {
+   "id": 769258,
+   "contract_id": 89481,
+   "estate_id": 68926,
+   "type": 1,
+   "category": 3,
+   "status": 1,
+   "bit_status": 1,
+   "title": "測試物件",
+   "sub_title": "TW台北市信義區合成路1段10號",
+   "currency": "TWD",
+   "total": 6452,
+   "final_total": 0,
+   "rate": 0.64516,
+   "date_start": 20270712,
+   "date_end": 20270731,
+   "date_expire": 20270614,
+   "date_expire_note": {
+    "note": "[s1]-[s2]",
+    "s1": "2027/07",
+    "s2": "帳單"
+   },
+   "cycle": 1,
+   "days": 19,
+   "is_auto_pay": false,
+   "is_paid_on_time": 0,
+   "online_payment_method": null,
+   "online_payment_action": null,
+   "payment_id": null,
+   "invoice_status": 0,
+   "invoice_number": null,
+   "ready_at": null,
+   "pay_at": null,
+   "complete_at": null,
+   "is_archived": false,
+   "archive_ymd": null,
+   "created_at": "2026-09-01 10:54:16",
+   "updated_at": "2026-09-01 10:54:19"
+  },
+  {
+   "id": 769246,
+   "contract_id": 89481,
+   "estate_id": 68926,
+   "type": 1,
+   "category": 3,
+   "status": 16,
+   "bit_status": 27,
+   "title": "測試物件",
+   "sub_title": "TW台北市信義區合成路1段10號",
+   "currency": "TWD",
+   "total": 1,
+   "final_total": 0,
+   "rate": 0.35484,
+   "date_start": 20260801,
+   "date_end": 20260811,
+   "date_expire": 20260801,
+   "date_expire_note": {
+    "note": "[s1]-[s2]",
+    "s1": "2026/08",
+    "s2": "帳單"
+   },
+   "cycle": 1,
+   "days": 10,
+   "is_auto_pay": false,
+   "is_paid_on_time": 0,
+   "online_payment_method": null,
+   "online_payment_action": null,
+   "payment_id": null,
+   "invoice_status": 0,
+   "invoice_number": null,
+   "ready_at": "2026-09-01 14:00:33",
+   "pay_at": "2026-09-01 14:05:04",
+   "complete_at": "2026-09-01 14:05:04",
+   "is_archived": false,
+   "archive_ymd": null,
+   "created_at": "2026-09-01 10:54:15",
+   "updated_at": "2026-09-01 14:05:05"
+  },
+  {
+   "id": 769249,
+   "contract_id": 89481,
+   "estate_id": 68926,
+   "type": 1,
+   "category": 3,
+   "status": 1,
+   "bit_status": 1,
+   "title": "測試物件",
+   "sub_title": "TW台北市信義區合成路1段10號",
+   "currency": "TWD",
+   "total": 10000,
+   "final_total": 0,
+   "rate": 1,
+   "date_start": 20261012,
+   "date_end": 20261111,
+   "date_expire": 20260914,
+   "date_expire_note": {
+    "note": "[s1]-[s2]",
+    "s1": "2026/10",
+    "s2": "帳單"
+   },
+   "cycle": 1,
+   "days": 30,
+   "is_auto_pay": false,
+   "is_paid_on_time": 0,
+   "online_payment_method": null,
+   "online_payment_action": null,
+   "payment_id": null,
+   "invoice_status": 0,
+   "invoice_number": null,
+   "ready_at": null,
+   "pay_at": null,
+   "complete_at": null,
+   "is_archived": false,
+   "archive_ymd": null,
+   "created_at": "2026-09-01 10:54:16",
+   "updated_at": "2026-09-01 10:54:17"
+  },
+  {
+   "id": 756248,
+   "contract_id": 85894,
+   "estate_id": 67649,
+   "type": 1,
+   "category": 3,
+   "status": 2,
+   "bit_status": 35,
+   "title": "基隆獨立共生公寓雅房",
+   "sub_title": "TW基隆市中正區合成路2段20號",
+   "currency": "TWD",
+   "total": 7500,
+   "final_total": 0,
+   "rate": 1,
+   "date_start": 20260901,
+   "date_end": 20260930,
+   "date_expire": 20260901,
+   "date_expire_note": {
+    "note": "[s1]-[s2]",
+    "s1": "2026/09",
+    "s2": "帳單"
+   },
+   "cycle": 1,
+   "days": 29,
+   "is_auto_pay": false,
+   "is_paid_on_time": 0,
+   "online_payment_method": null,
+   "online_payment_action": null,
+   "payment_id": null,
+   "invoice_status": 0,
+   "invoice_number": null,
+   "ready_at": "2026-08-27 12:05:41",
+   "pay_at": null,
+   "complete_at": null,
+   "is_archived": false,
+   "archive_ymd": null,
+   "created_at": "2026-08-18 11:37:07",
+   "updated_at": "2026-08-31 07:07:37"
+  },
+  {
+   "id": 756242,
+   "contract_id": 85894,
+   "estate_id": 67649,
+   "type": 1,
+   "category": 3,
+   "status": 16,
+   "bit_status": 25,
+   "title": "基隆獨立共生公寓雅房",
+   "sub_title": "TW基隆市中正區合成路2段20號",
+   "currency": "TWD",
+   "total": 21500,
+   "final_total": 0,
+   "rate": 1,
+   "date_start": 20260601,
+   "date_end": 20260630,
+   "date_expire": 20260601,
+   "date_expire_note": {
+    "note": "[s1]-[s2]",
+    "s1": "2026/06",
+    "s2": "帳單"
+   },
+   "cycle": 1,
+   "days": 29,
+   "is_auto_pay": false,
+   "is_paid_on_time": 0,
+   "online_payment_method": null,
+   "online_payment_action": null,
+   "payment_id": null,
+   "invoice_status": 0,
+   "invoice_number": null,
+   "ready_at": null,
+   "pay_at": "2026-08-18 11:38:01",
+   "complete_at": "2026-08-18 11:38:02",
+   "is_archived": false,
+   "archive_ymd": null,
+   "created_at": "2026-08-18 11:37:06",
+   "updated_at": "2026-08-18 11:38:23"
+  },
+  {
+   "id": 727606,
+   "contract_id": 84921,
+   "estate_id": 67651,
+   "type": 2,
+   "category": 3,
+   "status": 16,
+   "bit_status": 27,
+   "title": "海大質感獨立套房高級廚房可租補",
+   "sub_title": "TW基隆市中正區合成路2段20號",
+   "currency": "TWD",
+   "total": 32410,
+   "final_total": 0,
+   "rate": 1,
+   "date_start": null,
+   "date_end": null,
+   "date_expire": 20260630,
+   "date_expire_note": {
+    "note": "[s1]-[s2]",
+    "s1": "2026/07",
+    "s2": "點退押金"
+   },
+   "cycle": null,
+   "days": null,
+   "is_auto_pay": false,
+   "is_paid_on_time": 0,
+   "online_payment_method": null,
+   "online_payment_action": null,
+   "payment_id": null,
+   "invoice_status": 0,
+   "invoice_number": null,
+   "ready_at": "2026-07-13 16:06:42",
+   "pay_at": "2026-07-13 16:13:33",
+   "complete_at": "2026-07-13 16:13:33",
+   "is_archived": false,
+   "archive_ymd": null,
+   "created_at": "2026-07-13 15:58:25",
+   "updated_at": "2026-07-13 16:13:33"
+  },
+  {
+   "id": 750524,
+   "contract_id": 88247,
+   "estate_id": 67652,
+   "type": 1,
+   "category": 3,
+   "status": 1,
+   "bit_status": 1,
+   "title": "基隆溫馨一人宅套房",
+   "sub_title": "TW基隆市中正區合成路2段20號",
+   "currency": "TWD",
+   "total": 12000,
+   "final_total": 0,
+   "rate": 1,
+   "date_start": 20270801,
+   "date_end": 20270831,
+   "date_expire": 20270801,
+   "date_expire_note": {
+    "note": "[s1]-[s2]",
+    "s1": "2027/08",
+    "s2": "帳單"
+   },
+   "cycle": 1,
+   "days": 30,
+   "is_auto_pay": false,
+   "is_paid_on_time": 0,
+   "online_payment_method": "sinopac",
+   "online_payment_action": "atm",
+   "payment_id": null,
+   "invoice_status": 0,
+   "invoice_number": null,
+   "ready_at": null,
+   "pay_at": null,
+   "complete_at": null,
+   "is_archived": false,
+   "archive_ymd": null,
+   "created_at": "2026-08-10 14:47:35",
+   "updated_at": "2026-08-10 14:47:36"
+  }
+ ],
+ "bill_visibility": {
+  "900001": [
+   100,
+   9001
+  ],
+  "900002": [
+   100,
+   9001
+  ],
+  "900003": [
+   100,
+   9002
+  ],
+  "769258": [
+   12291
+  ],
+  "769246": [
+   12291
+  ],
+  "769249": [
+   12291
+  ],
+  "756248": [
+   12291
+  ],
+  "756242": [
+   12291
+  ],
+  "727606": [
+   12291
+  ],
+  "750524": [
+   12291
+  ]
+ },
+ "contracts": [
+  {
+   "id": 678,
+   "to_user_id": 9001,
+   "status": 5,
+   "bit_status": 47,
+   "active": 1,
+   "is_history": 0,
+   "is_history_done": 0,
+   "estate_id": 456,
+   "title": "信義區套房A",
+   "city": "台北市",
+   "district": "信義區",
+   "address": "信義路五段7號",
+   "currency": "TWD",
+   "rent": 25000.0,
+   "deposit_amount": 50000.0,
+   "date_start": 20260101,
+   "date_end": 20261231,
+   "allow_early_termination": true,
+   "early_termination_days": 30,
+   "is_auto_generate_invoice": 0,
+   "to_user_connect": true,
+   "is_tenant_registered": true,
+   "to_user_phone": "0912345678",
+   "to_user_email": "tenant@example.com",
+   "property_purpose_key": 1,
+   "father_id": null,
+   "early_termination_wish_date_end": null,
+   "enable_late_fee": 1,
+   "calc_late_fee_buffer_days": 7,
+   "late_fee_percent": 5.0,
+   "early_termination_penalty_type": 1,
+   "early_termination_penalty": 1.0,
+   "early_termination_penalty_amount": 25000.0,
+   "early_termination_notice_date": null,
+   "contract_inviting_at": "2025-12-10 10:00:00",
+   "contract_inviting_expire_at": "2026-01-09 10:00:00",
+   "contract_inviting_sign_at": "2025-12-12 11:00:00",
+   "contract_finish_sign_at": "2025-12-13 09:30:00",
+   "to_user_login_email": "tenant@example.com",
+   "is_newest": 1,
+   "created_at": "2025-12-10 09:00:00",
+   "updated_at": "2026-01-01 00:00:00"
+  },
+  {
+   "id": 600,
+   "to_user_id": 9002,
+   "status": 10,
+   "bit_status": 3087,
+   "active": 1,
+   "is_history": 1,
+   "is_history_done": 1,
+   "estate_id": 400,
+   "title": "中山區雅房B",
+   "city": "台北市",
+   "district": "中山區",
+   "address": "中山北路二段10號",
+   "currency": "TWD",
+   "rent": 18000.0,
+   "deposit_amount": 36000.0,
+   "date_start": 20250101,
+   "date_end": 20251231,
+   "allow_early_termination": false,
+   "early_termination_days": 0,
+   "is_auto_generate_invoice": 0,
+   "to_user_connect": true,
+   "is_tenant_registered": true,
+   "to_user_phone": "0923456789",
+   "to_user_email": "tenant2@example.com",
+   "property_purpose_key": 1,
+   "father_id": null,
+   "early_termination_wish_date_end": null,
+   "enable_late_fee": 0,
+   "calc_late_fee_buffer_days": 0,
+   "late_fee_percent": 0.0,
+   "early_termination_penalty_type": null,
+   "early_termination_penalty": 0.0,
+   "early_termination_penalty_amount": 0.0,
+   "early_termination_notice_date": null,
+   "contract_inviting_at": "2024-12-05 10:00:00",
+   "contract_inviting_expire_at": "2025-01-04 10:00:00",
+   "contract_inviting_sign_at": "2024-12-06 11:00:00",
+   "contract_finish_sign_at": "2024-12-07 09:30:00",
+   "to_user_login_email": "tenant2@example.com",
+   "is_newest": 1,
+   "created_at": "2024-12-05 09:00:00",
+   "updated_at": "2025-12-31 23:59:59"
+  },
+  {
+   "id": 89481,
+   "status": 32,
+   "bit_status": 63,
+   "active": 1,
+   "is_history": 0,
+   "is_history_done": 0,
+   "estate_id": 68926,
+   "title": "測試物件",
+   "city": "台北市",
+   "district": "信義區",
+   "address": "合成路1段10號",
+   "currency": "TWD",
+   "rent": 1000,
+   "deposit_amount": 1000,
+   "date_start": 20260101,
+   "date_end": 20261215,
+   "allow_early_termination": false,
+   "early_termination_days": null,
+   "is_auto_generate_invoice": 1,
+   "to_user_connect": true,
+   "is_tenant_registered": true,
+   "to_user_phone": "",
+   "to_user_email": "",
+   "property_purpose_key": 1,
+   "father_id": 89481,
+   "early_termination_wish_date_end": null,
+   "enable_late_fee": 0,
+   "calc_late_fee_buffer_days": 0,
+   "late_fee_percent": 0.0,
+   "early_termination_penalty_type": null,
+   "early_termination_penalty": 0.0,
+   "early_termination_penalty_amount": 0.0,
+   "early_termination_notice_date": null,
+   "contract_inviting_at": null,
+   "contract_inviting_expire_at": null,
+   "contract_inviting_sign_at": null,
+   "contract_finish_sign_at": null,
+   "to_user_login_email": null,
+   "is_newest": 1,
+   "created_at": "2026-01-01 09:00:00",
+   "updated_at": "2026-08-01 09:00:00"
+  },
+  {
+   "id": 85894,
+   "status": 32,
+   "bit_status": 63,
+   "active": 1,
+   "is_history": 0,
+   "is_history_done": 0,
+   "estate_id": 67649,
+   "title": "基隆獨立共生公寓雅房",
+   "city": "基隆市",
+   "district": "中正區",
+   "address": "合成路2段20號",
+   "currency": "TWD",
+   "rent": 7000,
+   "deposit_amount": 14000,
+   "date_start": 20260101,
+   "date_end": 20270228,
+   "allow_early_termination": false,
+   "early_termination_days": null,
+   "is_auto_generate_invoice": 1,
+   "to_user_connect": true,
+   "is_tenant_registered": true,
+   "to_user_phone": "",
+   "to_user_email": "",
+   "property_purpose_key": 1,
+   "father_id": 85894,
+   "early_termination_wish_date_end": null,
+   "enable_late_fee": 0,
+   "calc_late_fee_buffer_days": 0,
+   "late_fee_percent": 0.0,
+   "early_termination_penalty_type": null,
+   "early_termination_penalty": 0.0,
+   "early_termination_penalty_amount": 0.0,
+   "early_termination_notice_date": null,
+   "contract_inviting_at": null,
+   "contract_inviting_expire_at": null,
+   "contract_inviting_sign_at": null,
+   "contract_finish_sign_at": null,
+   "to_user_login_email": null,
+   "is_newest": 1,
+   "created_at": "2026-01-01 09:00:00",
+   "updated_at": "2026-08-01 09:00:00"
+  },
+  {
+   "id": 84921,
+   "status": 32,
+   "bit_status": 63,
+   "active": 1,
+   "is_history": 0,
+   "is_history_done": 0,
+   "estate_id": 67651,
+   "title": "海大質感獨立套房高級廚房可租補",
+   "city": "基隆市",
+   "district": "中正區",
+   "address": "合成路2段20號",
+   "currency": "TWD",
+   "rent": 16500,
+   "deposit_amount": 33000,
+   "date_start": 20260101,
+   "date_end": 20270228,
+   "allow_early_termination": false,
+   "early_termination_days": null,
+   "is_auto_generate_invoice": 1,
+   "to_user_connect": true,
+   "is_tenant_registered": true,
+   "to_user_phone": "",
+   "to_user_email": "",
+   "property_purpose_key": 1,
+   "father_id": 84921,
+   "early_termination_wish_date_end": null,
+   "enable_late_fee": 0,
+   "calc_late_fee_buffer_days": 0,
+   "late_fee_percent": 0.0,
+   "early_termination_penalty_type": null,
+   "early_termination_penalty": 0.0,
+   "early_termination_penalty_amount": 0.0,
+   "early_termination_notice_date": null,
+   "contract_inviting_at": null,
+   "contract_inviting_expire_at": null,
+   "contract_inviting_sign_at": null,
+   "contract_finish_sign_at": null,
+   "to_user_login_email": null,
+   "is_newest": 1,
+   "created_at": "2026-01-01 09:00:00",
+   "updated_at": "2026-08-01 09:00:00"
+  },
+  {
+   "id": 88247,
+   "status": 32,
+   "bit_status": 63,
+   "active": 1,
+   "is_history": 0,
+   "is_history_done": 0,
+   "estate_id": 67652,
+   "title": "基隆溫馨一人宅套房",
+   "city": "基隆市",
+   "district": "中正區",
+   "address": "合成路2段20號",
+   "currency": "TWD",
+   "rent": 12000,
+   "deposit_amount": 24000,
+   "date_start": 20260101,
+   "date_end": 20270228,
+   "allow_early_termination": false,
+   "early_termination_days": null,
+   "is_auto_generate_invoice": 1,
+   "to_user_connect": true,
+   "is_tenant_registered": true,
+   "to_user_phone": "",
+   "to_user_email": "",
+   "property_purpose_key": 1,
+   "father_id": 88247,
+   "early_termination_wish_date_end": null,
+   "enable_late_fee": 0,
+   "calc_late_fee_buffer_days": 0,
+   "late_fee_percent": 0.0,
+   "early_termination_penalty_type": null,
+   "early_termination_penalty": 0.0,
+   "early_termination_penalty_amount": 0.0,
+   "early_termination_notice_date": null,
+   "contract_inviting_at": null,
+   "contract_inviting_expire_at": null,
+   "contract_inviting_sign_at": null,
+   "contract_finish_sign_at": null,
+   "to_user_login_email": null,
+   "is_newest": 1,
+   "created_at": "2026-01-01 09:00:00",
+   "updated_at": "2026-08-01 09:00:00"
+  }
+ ],
+ "contract_visibility": {
+  "678": [
+   100,
+   9001
+  ],
+  "600": [
+   100,
+   9002
+  ],
+  "89481": [
+   12291
+  ],
+  "85894": [
+   12291
+  ],
+  "84921": [
+   12291
+  ],
+  "88247": [
+   12291
+  ]
+ },
+ "estates": [
+  {
+   "id": 54126,
+   "active": 1,
+   "is_open": 1,
+   "url": "https://www.jgbsmart.com/house/AABBCC?living=1",
+   "user_id": 1001,
+   "role_id": 20151,
+   "role_id_comment": "房東編號",
+   "team_id": 20151,
+   "team_id_comment": "團隊編號（同 role_id）",
+   "team_name": "好租管理",
+   "team_name_comment": "物件歸屬",
+   "serial_id": null,
+   "title": "信義區精緻套房",
+   "status": 2,
+   "country": "TW",
+   "country_id": 1,
+   "city": "台北市",
+   "city_id": 2,
+   "district": "信義區",
+   "district_id": 10,
+   "address": "信義路五段7號",
+   "full_address": "台北市信義區信義路五段7號3樓",
+   "display_address": "信義路五段7號",
+   "full_display_address": "台北市信義區信義路五段7號3樓",
+   "latitude": "25.03360000",
+   "longitude": "121.56480000",
+   "use_for": "residential",
+   "space_type": "flat",
+   "building": "condo",
+   "room_count": 1,
+   "size": 15,
+   "size_data": "{\"size\": {\"m2\": 15, \"sqm\": 4.54, \"sq_ft\": 161.46}}",
+   "direction": "south",
+   "floor": "3",
+   "total_floor": "12",
+   "rent": 25000,
+   "currency": "TWD",
+   "deposit": 2,
+   "deposit_type": 0,
+   "deposit_amount": 50000,
+   "fees": [],
+   "management_fee": 0,
+   "facilities": [],
+   "labels_fees": "{\"電費\": \"電費\", \"水費\": \"水費\", \"瓦斯費\": \"瓦斯費\", \"網路費\": \"網路費\", \"第四台\": \"第四台\", \"管理費\": \"管理費\", \"車位管理費\": \"車位管理費\", \"清潔費\": \"清潔費\", \"押金設算息\": \"押金設算息\"}",
+   "avatar": null,
+   "gallery": null,
+   "floor_plan": null,
+   "vr_url": null,
+   "community_id": null,
+   "community_name": null,
+   "property_purpose_key": 1,
+   "bit_status": 1026,
+   "created_at": "2025-01-15 10:30:00",
+   "updated_at": "2025-03-20 14:25:00"
+  },
+  {
+   "id": 54200,
+   "active": 1,
+   "is_open": 1,
+   "url": "https://www.jgbsmart.com/house/DDEEFF?living=1",
+   "user_id": 1001,
+   "role_id": 20151,
+   "role_id_comment": "房東編號",
+   "team_id": 20151,
+   "team_id_comment": "團隊編號（同 role_id）",
+   "team_name": "好租管理",
+   "team_name_comment": "物件歸屬",
+   "serial_id": null,
+   "title": "中山區溫馨雅房",
+   "status": 2,
+   "country": "TW",
+   "country_id": 1,
+   "city": "台北市",
+   "city_id": 2,
+   "district": "中山區",
+   "district_id": 4,
+   "address": "中山北路二段10號",
+   "full_address": "台北市中山區中山北路二段10號5樓",
+   "display_address": "中山北路二段10號",
+   "full_display_address": "台北市中山區中山北路二段10號5樓",
+   "latitude": "25.06120000",
+   "longitude": "121.52250000",
+   "use_for": "residential",
+   "space_type": "flat",
+   "building": "apartment",
+   "room_count": 1,
+   "size": 8,
+   "size_data": "{\"size\": {\"m2\": 8, \"sqm\": 2.42, \"sq_ft\": 86.11}}",
+   "direction": "east",
+   "floor": "5",
+   "total_floor": "7",
+   "rent": 12000,
+   "currency": "TWD",
+   "deposit": 2,
+   "deposit_type": 0,
+   "deposit_amount": 24000,
+   "fees": [],
+   "management_fee": 0,
+   "facilities": [],
+   "labels_fees": "{\"電費\": \"電費\", \"水費\": \"水費\", \"瓦斯費\": \"瓦斯費\", \"網路費\": \"網路費\", \"第四台\": \"第四台\", \"管理費\": \"管理費\", \"車位管理費\": \"車位管理費\", \"清潔費\": \"清潔費\", \"押金設算息\": \"押金設算息\"}",
+   "avatar": null,
+   "gallery": null,
+   "floor_plan": null,
+   "vr_url": null,
+   "community_id": null,
+   "community_name": null,
+   "property_purpose_key": 1,
+   "bit_status": 1026,
+   "created_at": "2025-02-01 09:00:00",
+   "updated_at": "2025-04-10 11:00:00"
+  },
+  {
+   "id": 54305,
+   "active": 1,
+   "is_open": 0,
+   "url": "https://www.jgbsmart.com/house/GGHHII?living=1",
+   "user_id": 1001,
+   "role_id": 20151,
+   "role_id_comment": "房東編號",
+   "team_id": 20151,
+   "team_id_comment": "團隊編號（同 role_id）",
+   "team_name": "好租管理",
+   "team_name_comment": "物件歸屬",
+   "serial_id": null,
+   "title": "大安區景觀兩房",
+   "status": 2,
+   "country": "TW",
+   "country_id": 1,
+   "city": "台北市",
+   "city_id": 2,
+   "district": "大安區",
+   "district_id": 6,
+   "address": "敦化南路一段100號",
+   "full_address": "台北市大安區敦化南路一段100號12樓",
+   "display_address": "敦化南路一段100號",
+   "full_display_address": "台北市大安區敦化南路一段100號12樓",
+   "latitude": "25.04210000",
+   "longitude": "121.54920000",
+   "use_for": "residential",
+   "space_type": "flat",
+   "building": "condo",
+   "room_count": 2,
+   "size": 25,
+   "size_data": "{\"size\": {\"m2\": 25, \"sqm\": 7.56, \"sq_ft\": 269.1}}",
+   "direction": "west",
+   "floor": "12",
+   "total_floor": "15",
+   "rent": 35000,
+   "currency": "TWD",
+   "deposit": 2,
+   "deposit_type": 0,
+   "deposit_amount": 70000,
+   "fees": [],
+   "management_fee": 2000,
+   "facilities": [],
+   "labels_fees": "{\"電費\": \"電費\", \"水費\": \"水費\", \"瓦斯費\": \"瓦斯費\", \"網路費\": \"網路費\", \"第四台\": \"第四台\", \"管理費\": \"管理費\", \"車位管理費\": \"車位管理費\", \"清潔費\": \"清潔費\", \"押金設算息\": \"押金設算息\"}",
+   "avatar": null,
+   "gallery": null,
+   "floor_plan": null,
+   "vr_url": null,
+   "community_id": null,
+   "community_name": null,
+   "property_purpose_key": 1,
+   "bit_status": 1026,
+   "created_at": "2025-03-10 14:00:00",
+   "updated_at": "2025-05-01 16:30:00"
+  },
+  {
+   "id": 456,
+   "active": 1,
+   "is_open": 1,
+   "url": "https://www.jgbsmart.com/house/JJKKLL?living=1",
+   "user_id": 1001,
+   "role_id": 20151,
+   "role_id_comment": "房東編號",
+   "team_id": 20151,
+   "team_id_comment": "團隊編號（同 role_id）",
+   "team_name": "好租管理",
+   "team_name_comment": "物件歸屬",
+   "serial_id": null,
+   "title": "信義區套房A",
+   "status": 2,
+   "country": "TW",
+   "country_id": 1,
+   "city": "台北市",
+   "city_id": 2,
+   "district": "信義區",
+   "district_id": 10,
+   "address": "信義路五段7號",
+   "full_address": "台北市信義區信義路五段7號3樓",
+   "display_address": "信義路五段7號",
+   "full_display_address": "台北市信義區信義路五段7號3樓",
+   "latitude": "25.03360000",
+   "longitude": "121.56480000",
+   "use_for": "residential",
+   "space_type": "flat",
+   "building": "condo",
+   "room_count": 1,
+   "size": 15,
+   "size_data": "{\"size\": {\"m2\": 15, \"sqm\": 4.54, \"sq_ft\": 161.46}}",
+   "direction": "south",
+   "floor": "3",
+   "total_floor": "12",
+   "rent": 25000,
+   "currency": "TWD",
+   "deposit": 2,
+   "deposit_type": 0,
+   "deposit_amount": 50000,
+   "fees": [],
+   "management_fee": 0,
+   "facilities": [],
+   "labels_fees": "{\"電費\": \"電費\", \"水費\": \"水費\", \"瓦斯費\": \"瓦斯費\", \"網路費\": \"網路費\", \"第四台\": \"第四台\", \"管理費\": \"管理費\", \"車位管理費\": \"車位管理費\", \"清潔費\": \"清潔費\", \"押金設算息\": \"押金設算息\"}",
+   "avatar": null,
+   "gallery": null,
+   "floor_plan": null,
+   "vr_url": null,
+   "community_id": null,
+   "community_name": null,
+   "property_purpose_key": 1,
+   "bit_status": 1026,
+   "created_at": "2025-12-10 09:00:00",
+   "updated_at": "2026-01-01 00:00:00"
+  },
+  {
+   "id": 400,
+   "active": 1,
+   "is_open": 1,
+   "url": "https://www.jgbsmart.com/house/MMNNOO?living=1",
+   "user_id": 1001,
+   "role_id": 20151,
+   "role_id_comment": "房東編號",
+   "team_id": 20151,
+   "team_id_comment": "團隊編號（同 role_id）",
+   "team_name": "好租管理",
+   "team_name_comment": "物件歸屬",
+   "serial_id": null,
+   "title": "中山區雅房B",
+   "status": 8,
+   "country": "TW",
+   "country_id": 1,
+   "city": "台北市",
+   "city_id": 2,
+   "district": "中山區",
+   "district_id": 4,
+   "address": "中山北路二段10號",
+   "full_address": "台北市中山區中山北路二段10號5樓",
+   "display_address": "中山北路二段10號",
+   "full_display_address": "台北市中山區中山北路二段10號5樓",
+   "latitude": "25.06120000",
+   "longitude": "121.52250000",
+   "use_for": "residential",
+   "space_type": "flat",
+   "building": "apartment",
+   "room_count": 1,
+   "size": 8,
+   "size_data": "{\"size\": {\"m2\": 8, \"sqm\": 2.42, \"sq_ft\": 86.11}}",
+   "direction": "east",
+   "floor": "5",
+   "total_floor": "7",
+   "rent": 18000,
+   "currency": "TWD",
+   "deposit": 2,
+   "deposit_type": 0,
+   "deposit_amount": 36000,
+   "fees": [],
+   "management_fee": 0,
+   "facilities": [],
+   "labels_fees": "{\"電費\": \"電費\", \"水費\": \"水費\", \"瓦斯費\": \"瓦斯費\", \"網路費\": \"網路費\", \"第四台\": \"第四台\", \"管理費\": \"管理費\", \"車位管理費\": \"車位管理費\", \"清潔費\": \"清潔費\", \"押金設算息\": \"押金設算息\"}",
+   "avatar": null,
+   "gallery": null,
+   "floor_plan": null,
+   "vr_url": null,
+   "community_id": null,
+   "community_name": null,
+   "property_purpose_key": 1,
+   "bit_status": 1026,
+   "created_at": "2024-12-05 09:00:00",
+   "updated_at": "2025-12-31 23:59:59"
+  },
+  {
+   "id": 68926,
+   "url": "https://www.jgbsmart.com/house/003NP0?living=1",
+   "user_id": 12291,
+   "role_id": 20151,
+   "role_id_comment": "房東編號",
+   "team_id": 20151,
+   "team_id_comment": "團隊編號（同 role_id）",
+   "team_name": "JGB TW-住宅",
+   "team_name_comment": "物件歸屬",
+   "serial_id": null,
+   "title": "測試物件",
+   "status": 8,
+   "country": "TW",
+   "country_id": 1,
+   "city": "台北市",
+   "city_id": 2,
+   "district": "信義區",
+   "district_id": 14,
+   "address": "合成路1段10號",
+   "full_address": "台北市信義區合成路1段10號",
+   "display_address": "合成路1段10號",
+   "full_display_address": "台北市信義區合成路1段10號",
+   "latitude": "",
+   "longitude": "",
+   "use_for": "residential",
+   "space_type": "flat",
+   "building": "condo",
+   "room_count": 0,
+   "size": 10,
+   "size_data": "{\"size\": {\"m2\": 10, \"sqm\": 3.03, \"sq_ft\": 107.64}, \"sell_size\": {\"m2\": null, \"sqm\": null, \"sq_ft\": null}, \"sell_land_size\": {\"m2\": null, \"sqm\": null, \"sq_ft\": null}}",
+   "direction": null,
+   "floor": "1樓",
+   "total_floor": null,
+   "rent": 1000,
+   "currency": "TWD",
+   "deposit": 1,
+   "deposit_type": 0,
+   "deposit_amount": 0,
+   "fees": {
+    "電費": {
+     "unit": "meter",
+     "amount": null,
+     "summer_amount": null,
+     "self": false,
+     "rent_include": false,
+     "is_taxable": false,
+     "average_price": "0",
+     "topup_meter": false
+    },
+    "水費": {
+     "unit": null,
+     "amount": null,
+     "self": false,
+     "rent_include": false,
+     "is_taxable": false,
+     "average_price": "0"
+    },
+    "瓦斯費": {
+     "unit": null,
+     "amount": null,
+     "self": false,
+     "rent_include": false,
+     "is_taxable": false,
+     "average_price": "0"
+    },
+    "網路費": {
+     "unit": null,
+     "amount": null,
+     "self": false,
+     "rent_include": false,
+     "is_taxable": false,
+     "average_price": "0"
+    },
+    "第四台": {
+     "unit": null,
+     "amount": null,
+     "self": false,
+     "rent_include": false,
+     "is_taxable": false,
+     "average_price": "0"
+    },
+    "管理費": {
+     "unit": null,
+     "amount": null,
+     "self": false,
+     "rent_include": false,
+     "is_taxable": false,
+     "average_price": "0"
+    },
+    "車位管理費": {
+     "unit": null,
+     "amount": null,
+     "self": false,
+     "rent_include": false,
+     "is_taxable": false,
+     "average_price": "0"
+    },
+    "清潔費": {
+     "unit": null,
+     "amount": null,
+     "self": false,
+     "rent_include": false,
+     "is_taxable": false,
+     "average_price": "0"
+    }
+   },
+   "management_fee": null,
+   "facilities": {
+    "seats": 0,
+    "pattern": {
+     "room": [],
+     "living_room": [],
+     "office": [],
+     "kitchen": [],
+     "bathroom": [],
+     "balcony": [],
+     "household_item": []
+    },
+    "share_facilities": {
+     "furniture": {
+      "table": "0",
+      "chair": "0",
+      "cabinet": "0",
+      "sofa": "0",
+      "kitchen_fitment": "0",
+      "kitchen_table": "0",
+      "bathtub": "0",
+      "seperate_bathroom_toilet": "0",
+      "clothes_rack": "0",
+      "sitting_toilet": "0",
+      "squatty_potty": "0",
+      "washstand": "0"
+     },
+     "appliance": {
+      "TV": "0",
+      "air_conditioner": "0",
+      "internet": "0",
+      "cableTV": "0",
+      "range_hood": "0",
+      "gas_cooktop": "0",
+      "induction_cooktop": "0",
+      "refrigerator": "0",
+      "microwave": "0",
+      "oven": "0",
+      "water_filter": "0",
+      "dish_dryer": "0",
+      "exhaust_fan": "0",
+      "warm_air_dryer": "0",
+      "washing_machine": "0",
+      "dryer_machine": "0",
+      "gas_operated_hot_water_heater": "0",
+      "electricity_operated_hot_water_heater": "0",
+      "heater": "0",
+      "hand_shower": "0",
+      "mini_storage_water_heater": "0",
+      "storage_water_heater": "0",
+      "instant_water_heater": "0",
+      "solar_water_heater": "0"
+     },
+     "customs": []
+    },
+    "retail_shop_facilities": {
+     "furniture": {
+      "desk": "0",
+      "desk_chairs": "0",
+      "chest_of_drawers": "0",
+      "locker": "0",
+      "whiteboard": "0"
+     },
+     "appliance": {
+      "telephone": "0",
+      "lamp": "0",
+      "internet": "0",
+      "air_conditioner": "0",
+      "projector": "0",
+      "monitor": "0",
+      "projection_screen": "0",
+      "heater": "0"
+     },
+     "customs": []
+    },
+    "office_facilities": {
+     "furniture": {
+      "desk": "0",
+      "desk_chairs": "0",
+      "chest_of_drawers": "0",
+      "locker": "0",
+      "whiteboard": "0"
+     },
+     "appliance": {
+      "telephone": "0",
+      "lamp": "0",
+      "internet": "0",
+      "air_conditioner": "0",
+      "projector": "0",
+      "monitor": "0",
+      "projection_screen": "0",
+      "heater": "0"
+     },
+     "customs": []
+    },
+    "community_facilities": {
+     "common": {
+      "lift": false,
+      "dump": false,
+      "parking_space": false,
+      "parking_space_for_scooter": false,
+      "gym": false,
+      "swimming_pool": false,
+      "karaoke": false,
+      "table_tennis_table": false,
+      "meeting_room": false,
+      "children_playground": false,
+      "pool_table": false,
+      "theater_room": false,
+      "package_receiving_services": false,
+      "charging_station": false,
+      "library": false,
+      "yoga_room": false,
+      "spa": false,
+      "party_room": false,
+      "bbq_area": false
+     },
+     "safety": {
+      "fire_extinguisher": false,
+      "emergency_ladder": false,
+      "smoke_detector": false,
+      "sprinkler": false
+     }
+    }
+   },
+   "labels_fees": "{\"\\u96fb\\u8cbb\":\"\\u96fb\\u8cbb\",\"\\u6c34\\u8cbb\":\"\\u6c34\\u8cbb\",\"\\u74e6\\u65af\\u8cbb\":\"\\u74e6\\u65af\\u8cbb\",\"\\u7db2\\u8def\\u8cbb\":\"\\u7db2\\u8def\\u8cbb\",\"\\u7b2c\\u56db\\u53f0\":\"\\u7b2c\\u56db\\u53f0\",\"\\u7ba1\\u7406\\u8cbb\":\"\\u7ba1\\u7406\\u8cbb\",\"\\u8eca\\u4f4d\\u7ba1\\u7406\\u8cbb\":\"\\u8eca\\u4f4d\\u7ba1\\u7406\\u8cbb\",\"\\u6e05\\u6f54\\u8cbb\":\"\\u6e05\\u6f54\\u8cbb\",\"\\u62bc\\u91d1\\u8a2d\\u7b97\\u606f\":\"\\u62bc\\u91d1\\u8a2d\\u7b97\\u606f\"}",
+   "avatar": null,
+   "gallery": null,
+   "floor_plan": null,
+   "vr_url": null,
+   "community_id": 11956,
+   "community_name": null,
+   "property_purpose_key": 1,
+   "bit_status": 3,
+   "created_at": "2026-08-21 13:16:21",
+   "updated_at": "2026-09-08 02:09:37",
+   "active": 1,
+   "is_open": 1
+  },
+  {
+   "id": 67649,
+   "url": "https://www.jgbsmart.com/house/003M1N?living=1",
+   "user_id": 12291,
+   "role_id": 20151,
+   "role_id_comment": "房東編號",
+   "team_id": 20151,
+   "team_id_comment": "團隊編號（同 role_id）",
+   "team_name": "JGB TW-住宅",
+   "team_name_comment": "物件歸屬",
+   "serial_id": null,
+   "title": "基隆獨立共生公寓雅房",
+   "status": 8,
+   "country": "TW",
+   "country_id": 1,
+   "city": "基隆市",
+   "city_id": 1,
+   "district": "中正區",
+   "district_id": 3,
+   "address": "合成路2段20號",
+   "full_address": "基隆市中正區合成路2段20號",
+   "display_address": "合成路2段20號",
+   "full_display_address": "基隆市中正區合成路2段20號",
+   "latitude": "",
+   "longitude": "",
+   "use_for": "residential",
+   "space_type": "room",
+   "building": "condo",
+   "room_count": 1,
+   "size": 20,
+   "size_data": "{\"size\": {\"m2\": 20, \"sqm\": 6.05, \"sq_ft\": 215.28}, \"sell_size\": {\"m2\": null, \"sqm\": null, \"sq_ft\": null}, \"sell_land_size\": {\"m2\": null, \"sqm\": null, \"sq_ft\": null}}",
+   "direction": null,
+   "floor": "2樓",
+   "total_floor": null,
+   "rent": 7000,
+   "currency": "TWD",
+   "deposit": 2,
+   "deposit_type": 0,
+   "deposit_amount": 0,
+   "fees": {
+    "電費": {
+     "unit": "meter",
+     "amount": null,
+     "summer_amount": null,
+     "self": false,
+     "rent_include": false,
+     "topup_meter": false,
+     "is_taxable": false,
+     "average_price": "0"
+    },
+    "水費": {
+     "unit": null,
+     "amount": null,
+     "self": false,
+     "rent_include": false,
+     "is_taxable": false,
+     "average_price": "0"
+    },
+    "瓦斯費": {
+     "unit": null,
+     "amount": null,
+     "self": false,
+     "rent_include": false,
+     "is_taxable": false,
+     "average_price": "0"
+    },
+    "網路費": {
+     "unit": null,
+     "amount": null,
+     "self": false,
+     "rent_include": false,
+     "is_taxable": false,
+     "average_price": "0"
+    },
+    "第四台": {
+     "unit": null,
+     "amount": null,
+     "self": false,
+     "rent_include": false,
+     "is_taxable": false,
+     "average_price": "0"
+    },
+    "管理費": {
+     "unit": null,
+     "amount": null,
+     "self": false,
+     "rent_include": false,
+     "is_taxable": false,
+     "average_price": "0"
+    },
+    "車位管理費": {
+     "unit": null,
+     "amount": null,
+     "self": false,
+     "rent_include": false,
+     "is_taxable": false,
+     "average_price": "0"
+    },
+    "清潔費": {
+     "unit": null,
+     "amount": null,
+     "self": false,
+     "rent_include": false,
+     "is_taxable": false,
+     "average_price": "0"
+    }
+   },
+   "management_fee": null,
+   "facilities": {
+    "seats": 0,
+    "pattern": {
+     "room": [
+      {
+       "furniture": {
+        "single_bed": "0",
+        "double_bed": "0",
+        "bedside_table": "0",
+        "closet": "0",
+        "table": "0",
+        "chair": "0",
+        "cabinet": "0",
+        "sofa": "0",
+        "kitchen_fitment": "0",
+        "kitchen_table": "0",
+        "curtain": "0"
+       },
+       "appliance": {
+        "TV": "0",
+        "air_conditioner": "0",
+        "heater": "0",
+        "internet": "0",
+        "cableTV": "0",
+        "refrigerator": "0",
+        "range_hood": "0",
+        "gas_cooktop": "0",
+        "induction_cooktop": "0",
+        "microwave": "0",
+        "oven": "0",
+        "water_filter": "0",
+        "dish_dryer": "0",
+        "intercom": "0",
+        "remote_control": "0"
+       },
+       "customs": []
+      }
+     ],
+     "living_room": [],
+     "office": [],
+     "kitchen": [],
+     "bathroom": [],
+     "balcony": [],
+     "household_item": []
+    },
+    "share_facilities": {
+     "furniture": {
+      "table": "0",
+      "chair": "0",
+      "cabinet": "0",
+      "sofa": "0",
+      "kitchen_fitment": "0",
+      "kitchen_table": "0",
+      "bathtub": "0",
+      "seperate_bathroom_toilet": "0",
+      "clothes_rack": "0",
+      "sitting_toilet": "0",
+      "squatty_potty": "0",
+      "washstand": "0"
+     },
+     "appliance": {
+      "TV": "0",
+      "air_conditioner": "0",
+      "internet": "0",
+      "cableTV": "0",
+      "range_hood": "0",
+      "gas_cooktop": "0",
+      "induction_cooktop": "0",
+      "refrigerator": "0",
+      "microwave": "0",
+      "oven": "0",
+      "water_filter": "0",
+      "dish_dryer": "0",
+      "exhaust_fan": "0",
+      "warm_air_dryer": "0",
+      "washing_machine": "0",
+      "dryer_machine": "0",
+      "gas_operated_hot_water_heater": "0",
+      "electricity_operated_hot_water_heater": "0",
+      "heater": "0",
+      "hand_shower": "0",
+      "mini_storage_water_heater": "0",
+      "storage_water_heater": "0",
+      "instant_water_heater": "0",
+      "solar_water_heater": "0"
+     },
+     "customs": []
+    },
+    "retail_shop_facilities": {
+     "furniture": {
+      "desk": "0",
+      "desk_chairs": "0",
+      "chest_of_drawers": "0",
+      "locker": "0",
+      "whiteboard": "0"
+     },
+     "appliance": {
+      "telephone": "0",
+      "lamp": "0",
+      "internet": "0",
+      "air_conditioner": "0",
+      "projector": "0",
+      "monitor": "0",
+      "projection_screen": "0",
+      "heater": "0"
+     },
+     "customs": []
+    },
+    "office_facilities": {
+     "furniture": {
+      "desk": "0",
+      "desk_chairs": "0",
+      "chest_of_drawers": "0",
+      "locker": "0",
+      "whiteboard": "0"
+     },
+     "appliance": {
+      "telephone": "0",
+      "lamp": "0",
+      "internet": "0",
+      "air_conditioner": "0",
+      "projector": "0",
+      "monitor": "0",
+      "projection_screen": "0",
+      "heater": "0"
+     },
+     "customs": []
+    },
+    "community_facilities": {
+     "common": {
+      "lift": false,
+      "dump": false,
+      "parking_space": false,
+      "parking_space_for_scooter": false,
+      "gym": false,
+      "swimming_pool": false,
+      "karaoke": false,
+      "table_tennis_table": false,
+      "meeting_room": false,
+      "children_playground": false,
+      "pool_table": false,
+      "theater_room": false,
+      "package_receiving_services": false,
+      "charging_station": false,
+      "library": false,
+      "yoga_room": false,
+      "spa": false,
+      "party_room": false,
+      "bbq_area": false
+     },
+     "safety": {
+      "fire_extinguisher": false,
+      "emergency_ladder": false,
+      "smoke_detector": false,
+      "sprinkler": false
+     }
+    }
+   },
+   "labels_fees": "{\"\\u96fb\\u8cbb\":\"\\u96fb\\u8cbb\",\"\\u6c34\\u8cbb\":\"\\u6c34\\u8cbb\",\"\\u74e6\\u65af\\u8cbb\":\"\\u74e6\\u65af\\u8cbb\",\"\\u7db2\\u8def\\u8cbb\":\"\\u7db2\\u8def\\u8cbb\",\"\\u7b2c\\u56db\\u53f0\":\"\\u7b2c\\u56db\\u53f0\",\"\\u7ba1\\u7406\\u8cbb\":\"\\u7ba1\\u7406\\u8cbb\",\"\\u8eca\\u4f4d\\u7ba1\\u7406\\u8cbb\":\"\\u8eca\\u4f4d\\u7ba1\\u7406\\u8cbb\",\"\\u6e05\\u6f54\\u8cbb\":\"\\u6e05\\u6f54\\u8cbb\",\"\\u62bc\\u91d1\\u8a2d\\u7b97\\u606f\":\"\\u62bc\\u91d1\\u8a2d\\u7b97\\u606f\"}",
+   "avatar": null,
+   "gallery": null,
+   "floor_plan": null,
+   "vr_url": null,
+   "community_id": 11684,
+   "community_name": null,
+   "property_purpose_key": 1,
+   "bit_status": 3,
+   "created_at": "2026-06-25 17:43:12",
+   "updated_at": "2026-09-08 02:08:27",
+   "active": 1,
+   "is_open": 1
+  },
+  {
+   "id": 67651,
+   "url": "https://www.jgbsmart.com/house/003M1P?living=1",
+   "user_id": 12291,
+   "role_id": 20151,
+   "role_id_comment": "房東編號",
+   "team_id": 20151,
+   "team_id_comment": "團隊編號（同 role_id）",
+   "team_name": "JGB TW-住宅",
+   "team_name_comment": "物件歸屬",
+   "serial_id": null,
+   "title": "海大質感獨立套房高級廚房可租補",
+   "status": 8,
+   "country": "TW",
+   "country_id": 1,
+   "city": "基隆市",
+   "city_id": 1,
+   "district": "中正區",
+   "district_id": 3,
+   "address": "合成路2段20號",
+   "full_address": "基隆市中正區合成路2段20號",
+   "display_address": "合成路2段20號",
+   "full_display_address": "基隆市中正區合成路2段20號",
+   "latitude": "",
+   "longitude": "",
+   "use_for": "residential",
+   "space_type": "studio",
+   "building": "condo",
+   "room_count": 1,
+   "size": 33.06,
+   "size_data": "{\"size\": {\"m2\": 33.06, \"sqm\": 10, \"sq_ft\": 355.85}, \"sell_size\": {\"m2\": null, \"sqm\": null, \"sq_ft\": null}, \"sell_land_size\": {\"m2\": null, \"sqm\": null, \"sq_ft\": null}}",
+   "direction": null,
+   "floor": "2樓",
+   "total_floor": null,
+   "rent": 16500,
+   "currency": "TWD",
+   "deposit": 2,
+   "deposit_type": 0,
+   "deposit_amount": 0,
+   "fees": {
+    "電費": {
+     "unit": "meter",
+     "amount": "5",
+     "summer_amount": "5",
+     "self": false,
+     "rent_include": false,
+     "topup_meter": false,
+     "is_taxable": false,
+     "average_price": "0"
+    },
+    "水費": {
+     "unit": null,
+     "amount": null,
+     "self": false,
+     "rent_include": false,
+     "is_taxable": false,
+     "average_price": "0"
+    },
+    "瓦斯費": {
+     "unit": null,
+     "amount": null,
+     "self": false,
+     "rent_include": false,
+     "is_taxable": false,
+     "average_price": "0"
+    },
+    "網路費": {
+     "unit": null,
+     "amount": null,
+     "self": false,
+     "rent_include": false,
+     "is_taxable": false,
+     "average_price": "0"
+    },
+    "第四台": {
+     "unit": null,
+     "amount": null,
+     "self": false,
+     "rent_include": false,
+     "is_taxable": false,
+     "average_price": "0"
+    },
+    "管理費": {
+     "unit": null,
+     "amount": null,
+     "self": false,
+     "rent_include": false,
+     "is_taxable": false,
+     "average_price": "0"
+    },
+    "車位管理費": {
+     "unit": null,
+     "amount": null,
+     "self": false,
+     "rent_include": false,
+     "is_taxable": false,
+     "average_price": "0"
+    },
+    "清潔費": {
+     "unit": null,
+     "amount": null,
+     "self": false,
+     "rent_include": false,
+     "is_taxable": false,
+     "average_price": "0"
+    }
+   },
+   "management_fee": null,
+   "facilities": {
+    "seats": 0,
+    "pattern": {
+     "room": [
+      {
+       "furniture": {
+        "single_bed": "0",
+        "double_bed": "1",
+        "bedside_table": "1",
+        "closet": "1",
+        "table": "1",
+        "chair": "1",
+        "cabinet": "0",
+        "sofa": "0",
+        "kitchen_fitment": "1",
+        "kitchen_table": "1",
+        "curtain": "1"
+       },
+       "appliance": {
+        "TV": "1",
+        "air_conditioner": "1",
+        "heater": "0",
+        "internet": "0",
+        "cableTV": "0",
+        "refrigerator": "1",
+        "range_hood": "1",
+        "gas_cooktop": "1",
+        "induction_cooktop": "0",
+        "microwave": "0",
+        "oven": "0",
+        "water_filter": "1",
+        "dish_dryer": "0",
+        "intercom": "0",
+        "remote_control": "0"
+       },
+       "customs": []
+      }
+     ],
+     "living_room": [],
+     "office": [],
+     "kitchen": [
+      {
+       "furniture": {
+        "kitchen_fitment": "1",
+        "kitchen_table": "1"
+       },
+       "appliance": {
+        "range_hood": "1",
+        "gas_cooktop": "1",
+        "induction_cooktop": "0",
+        "refrigerator": "1",
+        "microwave": "1",
+        "oven": "0",
+        "water_filter": "0",
+        "dish_dryer": "0"
+       },
+       "customs": []
+      }
+     ],
+     "bathroom": [
+      {
+       "furniture": {
+        "bathtub": "0",
+        "seperate_bathroom_toilet": "1",
+        "sitting_toilet": "0",
+        "squatty_potty": "0",
+        "washstand": "0"
+       },
+       "appliance": {
+        "exhaust_fan": "1",
+        "warm_air_dryer": "0",
+        "washing_machine": "0",
+        "dryer_machine": "0",
+        "gas_operated_hot_water_heater": "0",
+        "electricity_operated_hot_water_heater": "1",
+        "hand_shower": "0",
+        "mini_storage_water_heater": "0",
+        "storage_water_heater": "0",
+        "instant_water_heater": "0",
+        "solar_water_heater": "0"
+       },
+       "customs": []
+      }
+     ],
+     "balcony": [],
+     "household_item": []
+    },
+    "share_facilities": {
+     "furniture": {
+      "table": "0",
+      "chair": "0",
+      "cabinet": "0",
+      "sofa": "0",
+      "kitchen_fitment": "0",
+      "kitchen_table": "0",
+      "bathtub": "0",
+      "seperate_bathroom_toilet": "0",
+      "clothes_rack": "0",
+      "sitting_toilet": "0",
+      "squatty_potty": "0",
+      "washstand": "0"
+     },
+     "appliance": {
+      "TV": "0",
+      "air_conditioner": "0",
+      "internet": "0",
+      "cableTV": "0",
+      "range_hood": "0",
+      "gas_cooktop": "0",
+      "induction_cooktop": "0",
+      "refrigerator": "0",
+      "microwave": "0",
+      "oven": "0",
+      "water_filter": "0",
+      "dish_dryer": "0",
+      "exhaust_fan": "0",
+      "warm_air_dryer": "0",
+      "washing_machine": "0",
+      "dryer_machine": "0",
+      "gas_operated_hot_water_heater": "0",
+      "electricity_operated_hot_water_heater": "0",
+      "heater": "0",
+      "hand_shower": "0",
+      "mini_storage_water_heater": "0",
+      "storage_water_heater": "0",
+      "instant_water_heater": "0",
+      "solar_water_heater": "0"
+     },
+     "customs": []
+    },
+    "retail_shop_facilities": {
+     "furniture": {
+      "desk": "0",
+      "desk_chairs": "0",
+      "chest_of_drawers": "0",
+      "locker": "0",
+      "whiteboard": "0"
+     },
+     "appliance": {
+      "telephone": "0",
+      "lamp": "0",
+      "internet": "0",
+      "air_conditioner": "0",
+      "projector": "0",
+      "monitor": "0",
+      "projection_screen": "0",
+      "heater": "0"
+     },
+     "customs": []
+    },
+    "office_facilities": {
+     "furniture": {
+      "desk": "0",
+      "desk_chairs": "0",
+      "chest_of_drawers": "0",
+      "locker": "0",
+      "whiteboard": "0"
+     },
+     "appliance": {
+      "telephone": "0",
+      "lamp": "0",
+      "internet": "0",
+      "air_conditioner": "0",
+      "projector": "0",
+      "monitor": "0",
+      "projection_screen": "0",
+      "heater": "0"
+     },
+     "customs": []
+    },
+    "community_facilities": {
+     "common": {
+      "lift": true,
+      "dump": true,
+      "parking_space": false,
+      "parking_space_for_scooter": false,
+      "gym": false,
+      "swimming_pool": false,
+      "karaoke": false,
+      "table_tennis_table": false,
+      "meeting_room": false,
+      "children_playground": false,
+      "pool_table": false,
+      "theater_room": false,
+      "package_receiving_services": false,
+      "charging_station": false,
+      "library": false,
+      "yoga_room": false,
+      "spa": false,
+      "party_room": false,
+      "bbq_area": false
+     },
+     "safety": {
+      "fire_extinguisher": true,
+      "emergency_ladder": true,
+      "smoke_detector": true,
+      "sprinkler": true
+     }
+    }
+   },
+   "labels_fees": "{\"\\u96fb\\u8cbb\":\"\\u96fb\\u8cbb\",\"\\u6c34\\u8cbb\":\"\\u6c34\\u8cbb\",\"\\u74e6\\u65af\\u8cbb\":\"\\u74e6\\u65af\\u8cbb\",\"\\u7db2\\u8def\\u8cbb\":\"\\u7db2\\u8def\\u8cbb\",\"\\u7b2c\\u56db\\u53f0\":\"\\u7b2c\\u56db\\u53f0\",\"\\u7ba1\\u7406\\u8cbb\":\"\\u7ba1\\u7406\\u8cbb\",\"\\u8eca\\u4f4d\\u7ba1\\u7406\\u8cbb\":\"\\u8eca\\u4f4d\\u7ba1\\u7406\\u8cbb\",\"\\u6e05\\u6f54\\u8cbb\":\"\\u6e05\\u6f54\\u8cbb\",\"\\u62bc\\u91d1\\u8a2d\\u7b97\\u606f\":\"\\u62bc\\u91d1\\u8a2d\\u7b97\\u606f\"}",
+   "avatar": null,
+   "gallery": null,
+   "floor_plan": null,
+   "vr_url": null,
+   "community_id": 11684,
+   "community_name": null,
+   "property_purpose_key": 1,
+   "bit_status": 3,
+   "created_at": "2026-06-25 17:48:45",
+   "updated_at": "2026-09-08 02:08:27",
+   "active": 1,
+   "is_open": 1
+  },
+  {
+   "id": 67652,
+   "url": "https://www.jgbsmart.com/house/003M20?living=1",
+   "user_id": 12291,
+   "role_id": 20151,
+   "role_id_comment": "房東編號",
+   "team_id": 20151,
+   "team_id_comment": "團隊編號（同 role_id）",
+   "team_name": "JGB TW-住宅",
+   "team_name_comment": "物件歸屬",
+   "serial_id": null,
+   "title": "基隆溫馨一人宅套房",
+   "status": 8,
+   "country": "TW",
+   "country_id": 1,
+   "city": "基隆市",
+   "city_id": 1,
+   "district": "中正區",
+   "district_id": 3,
+   "address": "合成路2段20號",
+   "full_address": "基隆市中正區合成路2段20號",
+   "display_address": "合成路2段20號",
+   "full_display_address": "基隆市中正區合成路2段20號",
+   "latitude": "",
+   "longitude": "",
+   "use_for": "residential",
+   "space_type": "studio",
+   "building": "condo",
+   "room_count": 1,
+   "size": 26,
+   "size_data": "{\"size\": {\"m2\": 26, \"sqm\": 7.87, \"sq_ft\": 279.86}, \"sell_size\": {\"m2\": null, \"sqm\": null, \"sq_ft\": null}, \"sell_land_size\": {\"m2\": null, \"sqm\": null, \"sq_ft\": null}}",
+   "direction": null,
+   "floor": "2樓",
+   "total_floor": null,
+   "rent": 12000,
+   "currency": "TWD",
+   "deposit": 2,
+   "deposit_type": 0,
+   "deposit_amount": 0,
+   "fees": {
+    "電費": {
+     "unit": "meter",
+     "amount": null,
+     "summer_amount": null,
+     "self": false,
+     "rent_include": false,
+     "topup_meter": false,
+     "is_taxable": false,
+     "average_price": "0"
+    },
+    "水費": {
+     "unit": null,
+     "amount": null,
+     "self": false,
+     "rent_include": false,
+     "is_taxable": false,
+     "average_price": "0"
+    },
+    "瓦斯費": {
+     "unit": null,
+     "amount": null,
+     "self": false,
+     "rent_include": false,
+     "is_taxable": false,
+     "average_price": "0"
+    },
+    "網路費": {
+     "unit": null,
+     "amount": null,
+     "self": false,
+     "rent_include": false,
+     "is_taxable": false,
+     "average_price": "0"
+    },
+    "第四台": {
+     "unit": null,
+     "amount": null,
+     "self": false,
+     "rent_include": false,
+     "is_taxable": false,
+     "average_price": "0"
+    },
+    "管理費": {
+     "unit": null,
+     "amount": null,
+     "self": false,
+     "rent_include": false,
+     "is_taxable": false,
+     "average_price": "0"
+    },
+    "車位管理費": {
+     "unit": null,
+     "amount": null,
+     "self": false,
+     "rent_include": false,
+     "is_taxable": false,
+     "average_price": "0"
+    },
+    "清潔費": {
+     "unit": null,
+     "amount": null,
+     "self": false,
+     "rent_include": false,
+     "is_taxable": false,
+     "average_price": "0"
+    }
+   },
+   "management_fee": null,
+   "facilities": {
+    "seats": 0,
+    "pattern": {
+     "room": [
+      {
+       "furniture": {
+        "single_bed": "1",
+        "double_bed": "0",
+        "bedside_table": "1",
+        "closet": "1",
+        "table": "1",
+        "chair": "0",
+        "cabinet": "0",
+        "sofa": "0",
+        "kitchen_fitment": "0",
+        "kitchen_table": "1",
+        "curtain": "1"
+       },
+       "appliance": {
+        "TV": "0",
+        "air_conditioner": "1",
+        "heater": "0",
+        "internet": "1",
+        "cableTV": "0",
+        "refrigerator": "1",
+        "range_hood": "0",
+        "gas_cooktop": "0",
+        "induction_cooktop": "1",
+        "microwave": "0",
+        "oven": "0",
+        "water_filter": "0",
+        "dish_dryer": "0",
+        "intercom": "0",
+        "remote_control": "0"
+       },
+       "customs": []
+      }
+     ],
+     "living_room": [],
+     "office": [],
+     "kitchen": [],
+     "bathroom": [
+      {
+       "furniture": {
+        "bathtub": "0",
+        "seperate_bathroom_toilet": "1",
+        "sitting_toilet": "1",
+        "squatty_potty": "0",
+        "washstand": "0"
+       },
+       "appliance": {
+        "exhaust_fan": "0",
+        "warm_air_dryer": "1",
+        "washing_machine": "1",
+        "dryer_machine": "0",
+        "gas_operated_hot_water_heater": "0",
+        "electricity_operated_hot_water_heater": "0",
+        "hand_shower": "0",
+        "mini_storage_water_heater": "0",
+        "storage_water_heater": "1",
+        "instant_water_heater": "0",
+        "solar_water_heater": "0"
+       },
+       "customs": []
+      }
+     ],
+     "balcony": [],
+     "household_item": []
+    },
+    "share_facilities": {
+     "furniture": {
+      "table": "0",
+      "chair": "0",
+      "cabinet": "0",
+      "sofa": "0",
+      "kitchen_fitment": "0",
+      "kitchen_table": "0",
+      "bathtub": "0",
+      "seperate_bathroom_toilet": "0",
+      "clothes_rack": "0",
+      "sitting_toilet": "0",
+      "squatty_potty": "0",
+      "washstand": "0"
+     },
+     "appliance": {
+      "TV": "0",
+      "air_conditioner": "0",
+      "internet": "0",
+      "cableTV": "0",
+      "range_hood": "0",
+      "gas_cooktop": "0",
+      "induction_cooktop": "0",
+      "refrigerator": "0",
+      "microwave": "0",
+      "oven": "0",
+      "water_filter": "0",
+      "dish_dryer": "0",
+      "exhaust_fan": "0",
+      "warm_air_dryer": "0",
+      "washing_machine": "0",
+      "dryer_machine": "0",
+      "gas_operated_hot_water_heater": "0",
+      "electricity_operated_hot_water_heater": "0",
+      "heater": "0",
+      "hand_shower": "0",
+      "mini_storage_water_heater": "0",
+      "storage_water_heater": "0",
+      "instant_water_heater": "0",
+      "solar_water_heater": "0"
+     },
+     "customs": []
+    },
+    "retail_shop_facilities": {
+     "furniture": {
+      "desk": "0",
+      "desk_chairs": "0",
+      "chest_of_drawers": "0",
+      "locker": "0",
+      "whiteboard": "0"
+     },
+     "appliance": {
+      "telephone": "0",
+      "lamp": "0",
+      "internet": "0",
+      "air_conditioner": "0",
+      "projector": "0",
+      "monitor": "0",
+      "projection_screen": "0",
+      "heater": "0"
+     },
+     "customs": []
+    },
+    "office_facilities": {
+     "furniture": {
+      "desk": "0",
+      "desk_chairs": "0",
+      "chest_of_drawers": "0",
+      "locker": "0",
+      "whiteboard": "0"
+     },
+     "appliance": {
+      "telephone": "0",
+      "lamp": "0",
+      "internet": "0",
+      "air_conditioner": "0",
+      "projector": "0",
+      "monitor": "0",
+      "projection_screen": "0",
+      "heater": "0"
+     },
+     "customs": []
+    },
+    "community_facilities": {
+     "common": {
+      "lift": true,
+      "dump": true,
+      "parking_space": false,
+      "parking_space_for_scooter": false,
+      "gym": false,
+      "swimming_pool": false,
+      "karaoke": false,
+      "table_tennis_table": false,
+      "meeting_room": false,
+      "children_playground": false,
+      "pool_table": false,
+      "theater_room": false,
+      "package_receiving_services": true,
+      "charging_station": false,
+      "library": false,
+      "yoga_room": false,
+      "spa": false,
+      "party_room": false,
+      "bbq_area": false
+     },
+     "safety": {
+      "fire_extinguisher": true,
+      "emergency_ladder": true,
+      "smoke_detector": true,
+      "sprinkler": true
+     }
+    }
+   },
+   "labels_fees": "{\"\\u96fb\\u8cbb\":\"\\u96fb\\u8cbb\",\"\\u6c34\\u8cbb\":\"\\u6c34\\u8cbb\",\"\\u74e6\\u65af\\u8cbb\":\"\\u74e6\\u65af\\u8cbb\",\"\\u7db2\\u8def\\u8cbb\":\"\\u7db2\\u8def\\u8cbb\",\"\\u7b2c\\u56db\\u53f0\":\"\\u7b2c\\u56db\\u53f0\",\"\\u7ba1\\u7406\\u8cbb\":\"\\u7ba1\\u7406\\u8cbb\",\"\\u8eca\\u4f4d\\u7ba1\\u7406\\u8cbb\":\"\\u8eca\\u4f4d\\u7ba1\\u7406\\u8cbb\",\"\\u6e05\\u6f54\\u8cbb\":\"\\u6e05\\u6f54\\u8cbb\",\"\\u62bc\\u91d1\\u8a2d\\u7b97\\u606f\":\"\\u62bc\\u91d1\\u8a2d\\u7b97\\u606f\"}",
+   "avatar": null,
+   "gallery": null,
+   "floor_plan": null,
+   "vr_url": null,
+   "community_id": 11684,
+   "community_name": null,
+   "property_purpose_key": 1,
+   "bit_status": 3,
+   "created_at": "2026-06-25 17:48:47",
+   "updated_at": "2026-09-08 02:08:27",
+   "active": 1,
+   "is_open": 1
+  },
+  {
+   "id": 45728,
+   "url": "https://www.jgbsmart.com/house/002FGK?living=1",
+   "user_id": 12291,
+   "role_id": 20151,
+   "role_id_comment": "房東編號",
+   "team_id": 20151,
+   "team_id_comment": "團隊編號（同 role_id）",
+   "team_name": "JGB TW-住宅",
+   "team_name_comment": "物件歸屬",
+   "serial_id": null,
+   "title": "台北中正-小南門單身貴族分租套房B",
+   "status": 8,
+   "country": "TW",
+   "country_id": 1,
+   "city": "台北市",
+   "city_id": 2,
+   "district": "中正區",
+   "district_id": 8,
+   "address": "合成路3段30號",
+   "full_address": "台北市中正區合成路3段30號",
+   "display_address": "合成路3段30號",
+   "full_display_address": "台北市中正區合成路3段30號",
+   "latitude": "",
+   "longitude": "",
+   "use_for": "residential",
+   "space_type": "studio",
+   "building": "condo",
+   "room_count": 1,
+   "size": 21.5,
+   "size_data": "{\"size\": {\"m2\": 21.5, \"sqm\": 6.5, \"sq_ft\": 231.42}, \"sell_size\": {\"m2\": 21.5, \"sqm\": 6.5, \"sq_ft\": 231.42}, \"sell_land_size\": {\"m2\": 0.7, \"sqm\": 0.21, \"sq_ft\": 7.53}}",
+   "direction": "d",
+   "floor": "3樓",
+   "total_floor": null,
+   "rent": 14000,
+   "currency": "TWD",
+   "deposit": 2,
+   "deposit_type": 0,
+   "deposit_amount": 0,
+   "fees": {
+    "電費": {
+     "unit": "meter",
+     "amount": null,
+     "summer_amount": null,
+     "self": true,
+     "rent_include": false,
+     "topup_meter": false,
+     "is_taxable": false,
+     "average_price": "0"
+    },
+    "水費": {
+     "unit": "month",
+     "amount": "150",
+     "self": false,
+     "rent_include": false,
+     "is_taxable": false,
+     "average_price": "0"
+    },
+    "瓦斯費": {
+     "unit": "meter",
+     "amount": null,
+     "self": true,
+     "rent_include": false,
+     "is_taxable": false,
+     "average_price": "0"
+    },
+    "網路費": {
+     "unit": "month",
+     "amount": null,
+     "self": false,
+     "rent_include": true,
+     "is_taxable": false,
+     "average_price": "0"
+    },
+    "第四台": {
+     "unit": "month",
+     "amount": null,
+     "self": false,
+     "rent_include": true,
+     "is_taxable": false,
+     "average_price": "0"
+    },
+    "管理費": {
+     "unit": "month",
+     "amount": "1000",
+     "self": false,
+     "rent_include": false,
+     "is_taxable": false,
+     "average_price": "0"
+    },
+    "車位管理費": {
+     "unit": "month",
+     "amount": null,
+     "self": false,
+     "rent_include": false,
+     "is_taxable": false,
+     "average_price": "0"
+    },
+    "清潔費": {
+     "unit": "month",
+     "amount": null,
+     "self": false,
+     "rent_include": false,
+     "is_taxable": false,
+     "average_price": "0"
+    }
+   },
+   "management_fee": null,
+   "facilities": {
+    "seats": 0,
+    "pattern": {
+     "room": [
+      {
+       "furniture": {
+        "single_bed": "0",
+        "double_bed": "1",
+        "closet": "1",
+        "table": "0",
+        "chair": "0",
+        "cabinet": "1",
+        "sofa": "0",
+        "kitchen_fitment": "0",
+        "kitchen_table": "0",
+        "curtain": "1"
+       },
+       "appliance": {
+        "TV": "0",
+        "air_conditioner": "1",
+        "internet": "0",
+        "cableTV": "0",
+        "refrigerator": "0",
+        "range_hood": "0",
+        "gas_cooktop": "0",
+        "induction_cooktop": "0",
+        "microwave": "0",
+        "oven": "0",
+        "water_filter": "0",
+        "dish_dryer": "0",
+        "intercom": "0",
+        "remote_control": "0"
+       },
+       "customs": []
+      }
+     ],
+     "living_room": [],
+     "office": [],
+     "kitchen": [],
+     "bathroom": [
+      {
+       "furniture": {
+        "bathtub": "0",
+        "seperate_bathroom_toilet": "1"
+       },
+       "appliance": {
+        "exhaust_fan": "0",
+        "warm_air_dryer": "0",
+        "washing_machine": "0",
+        "dryer_machine": "0",
+        "gas_operated_hot_water_heater": "0",
+        "electricity_operated_hot_water_heater": "0"
+       },
+       "customs": []
+      }
+     ],
+     "balcony": [],
+     "household_item": []
+    },
+    "share_facilities": {
+     "furniture": {
+      "table": "1",
+      "chair": "1",
+      "cabinet": "1",
+      "sofa": "1",
+      "kitchen_fitment": "0",
+      "kitchen_table": "1",
+      "bathtub": "0",
+      "seperate_bathroom_toilet": "0",
+      "clothes_rack": "0",
+      "sitting_toilet": "0",
+      "squatty_potty": "0",
+      "washstand": "0"
+     },
+     "appliance": {
+      "TV": "0",
+      "air_conditioner": "0",
+      "internet": "0",
+      "cableTV": "0",
+      "range_hood": "0",
+      "gas_cooktop": "0",
+      "induction_cooktop": "1",
+      "refrigerator": "0",
+      "microwave": "0",
+      "oven": "0",
+      "water_filter": "0",
+      "dish_dryer": "0",
+      "exhaust_fan": "0",
+      "warm_air_dryer": "0",
+      "washing_machine": "0",
+      "dryer_machine": "1",
+      "gas_operated_hot_water_heater": "0",
+      "electricity_operated_hot_water_heater": "0",
+      "heater": "0",
+      "hand_shower": "0",
+      "mini_storage_water_heater": "0",
+      "storage_water_heater": "0",
+      "instant_water_heater": "0",
+      "solar_water_heater": "0"
+     },
+     "customs": [
+      {
+       "label": "中島",
+       "count": "1"
+      }
+     ]
+    },
+    "retail_shop_facilities": {
+     "furniture": {
+      "desk": "0",
+      "desk_chairs": "0",
+      "chest_of_drawers": "0",
+      "locker": "0",
+      "whiteboard": "0"
+     },
+     "appliance": {
+      "telephone": "0",
+      "lamp": "0",
+      "internet": "0",
+      "air_conditioner": "0",
+      "projector": "0",
+      "monitor": "0",
+      "projection_screen": "0",
+      "heater": "0"
+     },
+     "customs": []
+    },
+    "office_facilities": {
+     "furniture": {
+      "desk": "0",
+      "desk_chairs": "0",
+      "chest_of_drawers": "0",
+      "locker": "0",
+      "whiteboard": "0"
+     },
+     "appliance": {
+      "telephone": "0",
+      "lamp": "0",
+      "internet": "0",
+      "air_conditioner": "0",
+      "projector": "0",
+      "monitor": "0",
+      "projection_screen": "0",
+      "heater": "0"
+     },
+     "customs": []
+    },
+    "community_facilities": {
+     "common": {
+      "lift": true,
+      "dump": true,
+      "parking_space": false,
+      "parking_space_for_scooter": false,
+      "gym": true,
+      "swimming_pool": false,
+      "karaoke": false,
+      "table_tennis_table": false,
+      "meeting_room": false,
+      "children_playground": false,
+      "pool_table": false,
+      "theater_room": false,
+      "package_receiving_services": false,
+      "charging_station": false,
+      "library": false,
+      "yoga_room": false,
+      "spa": false,
+      "party_room": false,
+      "bbq_area": false
+     },
+     "safety": {
+      "fire_extinguisher": true,
+      "emergency_ladder": true,
+      "smoke_detector": true,
+      "sprinkler": false
+     }
+    }
+   },
+   "labels_fees": "{\"\\u96fb\\u8cbb\":\"\\u96fb\\u8cbb\",\"\\u6c34\\u8cbb\":\"\\u6c34\\u8cbb\",\"\\u74e6\\u65af\\u8cbb\":\"\\u74e6\\u65af\\u8cbb\",\"\\u7db2\\u8def\\u8cbb\":\"\\u7db2\\u8def\\u8cbb\",\"\\u7b2c\\u56db\\u53f0\":\"\\u7b2c\\u56db\\u53f0\",\"\\u7ba1\\u7406\\u8cbb\":\"\\u7ba1\\u7406\\u8cbb\",\"\\u8eca\\u4f4d\\u7ba1\\u7406\\u8cbb\":\"\\u8eca\\u4f4d\\u7ba1\\u7406\\u8cbb\",\"\\u6e05\\u6f54\\u8cbb\":\"\\u6e05\\u6f54\\u8cbb\",\"\\u62bc\\u91d1\\u8a2d\\u7b97\\u606f\":\"\\u62bc\\u91d1\\u8a2d\\u7b97\\u606f\"}",
+   "avatar": null,
+   "gallery": null,
+   "floor_plan": null,
+   "vr_url": null,
+   "community_id": 2969,
+   "community_name": null,
+   "property_purpose_key": 1,
+   "bit_status": 1,
+   "created_at": "2024-11-13 16:17:05",
+   "updated_at": "2026-09-08 01:49:07",
+   "active": 1,
+   "is_open": 1
+  }
+ ],
+ "estate_visibility": {
+  "54126": [
+   1001,
+   100
+  ],
+  "54200": [
+   1001,
+   100
+  ],
+  "54305": [
+   1001,
+   100
+  ],
+  "456": [
+   1001
+  ],
+  "400": [
+   1001
+  ],
+  "68926": [
+   12291
+  ],
+  "67649": [
+   12291
+  ],
+  "67651": [
+   12291
+  ],
+  "67652": [
+   12291
+  ],
+  "45728": [
+   12291
+  ]
+ },
+ "meters": [
+  {
+   "id": 501,
+   "estate_id": 9001,
+   "estate_name": "海大質感獨立套房",
+   "name": "3F 分電表",
+   "manufacturer": "DAE",
+   "meter_type": "cloud",
+   "is_online": true,
+   "is_topup": true,
+   "enable_topup": true,
+   "balance": 350.0,
+   "available_meter": 87.5,
+   "current_reading": 1234.5,
+   "is_poweron": true,
+   "is_low_battery": false,
+   "synced_at": "2026-07-04 10:35:00"
+  },
+  {
+   "id": 502,
+   "estate_id": 9002,
+   "estate_name": "新北新莊-富貴500-14B05",
+   "name": "總電表",
+   "manufacturer": "Panasonic",
+   "meter_type": "manual",
+   "is_online": false,
+   "is_topup": false,
+   "enable_topup": false,
+   "balance": 0.0,
+   "available_meter": 0.0,
+   "current_reading": 8890.0,
+   "is_poweron": null,
+   "is_low_battery": true,
+   "synced_at": "2026-06-30 08:00:00"
+  },
+  {
+   "id": 503,
+   "estate_id": null,
+   "estate_name": null,
+   "name": "未綁定物件的電表",
+   "manufacturer": "SkyWatch",
+   "meter_type": "cloud",
+   "is_online": true,
+   "is_topup": false,
+   "enable_topup": true,
+   "balance": 12.5,
+   "available_meter": 3.0,
+   "current_reading": 42.0,
+   "is_poweron": false,
+   "is_low_battery": false,
+   "synced_at": "2026-07-04 10:30:00"
+  },
+  {
+   "id": 601,
+   "estate_id": 456,
+   "estate_name": "信義區套房A",
+   "name": "B10",
+   "manufacturer": "DAE",
+   "meter_type": "cloud",
+   "is_online": true,
+   "is_topup": true,
+   "enable_topup": true,
+   "balance": 320.0,
+   "available_meter": 80.0,
+   "current_reading": 999.5,
+   "is_poweron": true,
+   "is_low_battery": false,
+   "synced_at": "2026-09-08 10:00:00"
+  },
+  {
+   "id": 1061,
+   "estate_id": 45728,
+   "estate_name": "台北中正-小南門單身貴族分租套房B",
+   "name": "JGB辦公室的台科電錶",
+   "manufacturer": "DAE",
+   "meter_type": "cloud",
+   "is_online": false,
+   "is_topup": true,
+   "enable_topup": true,
+   "balance": 4249,
+   "available_meter": 849.89,
+   "current_reading": 201.25,
+   "is_poweron": true,
+   "is_low_battery": false,
+   "synced_at": "2026-09-08 04:36:44"
+  }
+ ],
+ "team_members": [
+  {
+   "member_user_id": 100,
+   "character_id": 0,
+   "character_name": "團隊擁有者",
+   "is_owner": true,
+   "email": "owner@example.com",
+   "name": "王小明"
+  },
+  {
+   "member_user_id": 292,
+   "character_id": 1151,
+   "character_name": "檢視者",
+   "is_owner": false,
+   "email": "viewer@example.com",
+   "name": "陳小美"
+  },
+  {
+   "member_user_id": 305,
+   "character_id": null,
+   "character_name": null,
+   "is_owner": false,
+   "email": "nochar@example.com",
+   "name": "李小華"
+  },
+  {
+   "member_user_id": 12291,
+   "character_id": 1151,
+   "character_name": "業務",
+   "is_owner": false,
+   "email": "sales12291@example.com",
+   "name": "林業務"
+  }
+ ],
+ "repairs": [
+  {
+   "id": 3001,
+   "status": 16,
+   "emergency_status": 1,
+   "estate_id": 456,
+   "estate_title": "信義區套房A",
+   "estate_full_address": "台北市信義區信義路五段7號3樓",
+   "estate_room_number": "3F-1",
+   "contract_id": 678,
+   "category_id": 2,
+   "category_name": "衛浴維修",
+   "item_id": 202,
+   "item_name": "水龍頭",
+   "broken_reason": "漏水",
+   "broken_note": "廚房水龍頭持續滴水",
+   "broken_photos": [],
+   "currency": "TWD",
+   "total": 3500.0,
+   "manufacturer_name": "信義水電行",
+   "manufacturer_phone": "02-2345-6789",
+   "user_id": 1001,
+   "user_name": "張管理",
+   "user_phone": "0911-111-111",
+   "user_email": "manager@example.com",
+   "to_user_id": 2001,
+   "to_user_name": "王小明",
+   "to_user_phone": "0912-345-678",
+   "to_user_email": "tenant@example.com",
+   "agent_user_id": null,
+   "agent_name": null,
+   "user_note": "已完成修繕",
+   "to_user_note": null,
+   "apply_at": "20260405090000",
+   "assign_at": "20260407100000",
+   "complete_at": "20260412140000",
+   "finish_at": null,
+   "archive_at": null,
+   "created_at": "2026-04-05 09:00:00",
+   "updated_at": "2026-04-12 14:00:00"
+  },
+  {
+   "id": 3002,
+   "status": 1,
+   "emergency_status": 2,
+   "estate_id": 456,
+   "estate_title": "信義區套房A",
+   "estate_full_address": "台北市信義區信義路五段7號3樓",
+   "estate_room_number": "3F-1",
+   "contract_id": 678,
+   "category_id": 1,
+   "category_name": "家電維修",
+   "item_id": 101,
+   "item_name": "冷氣機",
+   "broken_reason": "不冷",
+   "broken_note": "開機後完全沒有冷風，已檢查過濾網",
+   "broken_photos": [],
+   "currency": "TWD",
+   "total": null,
+   "manufacturer_name": null,
+   "manufacturer_phone": null,
+   "user_id": 1001,
+   "user_name": "張管理",
+   "user_phone": "0911-111-111",
+   "user_email": "manager@example.com",
+   "to_user_id": 2001,
+   "to_user_name": "王小明",
+   "to_user_phone": "0912-345-678",
+   "to_user_email": "tenant@example.com",
+   "agent_user_id": null,
+   "agent_name": null,
+   "user_note": null,
+   "to_user_note": "希望能盡快處理，天氣很熱",
+   "apply_at": "20260415140000",
+   "assign_at": null,
+   "complete_at": null,
+   "finish_at": null,
+   "archive_at": null,
+   "created_at": "2026-04-15 14:00:00",
+   "updated_at": "2026-04-15 14:00:00"
+  },
+  {
+   "id": 8591,
+   "status": 1,
+   "emergency_status": 1,
+   "estate_id": 67652,
+   "estate_title": "基隆溫馨一人宅套房",
+   "estate_full_address": "基隆市中正區合成路2段20號",
+   "estate_room_number": "2",
+   "contract_id": null,
+   "category_id": 1,
+   "category_name": "電路",
+   "item_id": 5,
+   "item_name": "燈具",
+   "broken_reason": "不亮",
+   "broken_note": null,
+   "broken_photos": [],
+   "currency": "TWD",
+   "total": null,
+   "manufacturer_name": null,
+   "manufacturer_phone": null,
+   "user_id": 12291,
+   "user_name": "陳志明",
+   "user_phone": "0901-000-001",
+   "user_email": "user1@example.com",
+   "to_user_id": null,
+   "to_user_name": "",
+   "to_user_phone": null,
+   "to_user_email": null,
+   "agent_user_id": 12291,
+   "agent_name": "陳志明",
+   "user_note": null,
+   "to_user_note": null,
+   "apply_at": "2026-07-17 14:54:55",
+   "assign_at": null,
+   "complete_at": null,
+   "finish_at": "2026-07-17 15:15:52",
+   "archive_at": null,
+   "created_at": "2026-07-17 14:54:55",
+   "updated_at": "2026-07-17 15:40:04"
+  },
+  {
+   "id": 7628,
+   "status": 16,
+   "emergency_status": 1,
+   "estate_id": 45728,
+   "estate_title": "台北中正-小南門單身貴族分租套房B",
+   "estate_full_address": "台北市中正區合成路3段30號",
+   "estate_room_number": null,
+   "contract_id": null,
+   "category_id": 2,
+   "category_name": "水路衛浴",
+   "item_id": 8,
+   "item_name": "馬桶",
+   "broken_reason": "馬桶漏水",
+   "broken_note": "ABC",
+   "broken_photos": [],
+   "currency": "TWD",
+   "total": null,
+   "manufacturer_name": null,
+   "manufacturer_phone": null,
+   "user_id": 12291,
+   "user_name": "陳志明",
+   "user_phone": "0901-000-001",
+   "user_email": "user1@example.com",
+   "to_user_id": null,
+   "to_user_name": "",
+   "to_user_phone": null,
+   "to_user_email": null,
+   "agent_user_id": 12291,
+   "agent_name": "陳志明",
+   "user_note": null,
+   "to_user_note": null,
+   "apply_at": "2026-03-05 10:53:47",
+   "assign_at": null,
+   "complete_at": "2026-03-10 11:12:50",
+   "finish_at": null,
+   "archive_at": null,
+   "created_at": "2026-03-05 10:53:47",
+   "updated_at": "2026-03-10 11:12:50"
+  }
+ ],
+ "repair_categories": [
+  {
+   "id": 1,
+   "name": "電路",
+   "items": [
+    {
+     "id": 1,
+     "name": "電線",
+     "broken_reasons": [
+      "斷裂",
+      "漏電",
+      "燒斷",
+      "老化"
+     ]
+    },
+    {
+     "id": 2,
+     "name": "開關",
+     "broken_reasons": [
+      "鬆脫",
+      "無法切換",
+      "故障",
+      "燒毀"
+     ]
+    },
+    {
+     "id": 3,
+     "name": "插座",
+     "broken_reasons": [
+      "鬆脫",
+      "沒電",
+      "破裂",
+      "燒毀"
+     ]
+    },
+    {
+     "id": 4,
+     "name": "總電源",
+     "broken_reasons": [
+      "跳電",
+      "無法復歸",
+      "欠相",
+      "燒毀"
+     ]
+    },
+    {
+     "id": 5,
+     "name": "燈具",
+     "broken_reasons": [
+      "昏暗",
+      "閃爍",
+      "不亮",
+      "破損"
+     ]
+    }
+   ]
+  },
+  {
+   "id": 2,
+   "name": "水路衛浴",
+   "items": [
+    {
+     "id": 6,
+     "name": "流理槽",
+     "broken_reasons": [
+      "排水孔不通",
+      "流理槽破裂",
+      "流理槽漏水"
+     ]
+    },
+    {
+     "id": 7,
+     "name": "洗手台",
+     "broken_reasons": [
+      "冷水沒水",
+      "熱水沒水",
+      "熱水不熱",
+      "排水孔不通",
+      "洗手台破裂"
+     ]
+    },
+    {
+     "id": 8,
+     "name": "馬桶",
+     "broken_reasons": [
+      "馬桶不通",
+      "馬桶破裂",
+      "馬桶漏水",
+      "儲水槽無法沖水",
+      "儲水槽無法蓄水"
+     ]
+    },
+    {
+     "id": 9,
+     "name": "浴缸",
+     "broken_reasons": [
+      "冷水沒水",
+      "熱水沒水",
+      "熱水不熱",
+      "排水孔不通",
+      "浴缸破裂"
+     ]
+    },
+    {
+     "id": 10,
+     "name": "排水孔",
+     "broken_reasons": [
+      "排水孔不通",
+      "有異音",
+      "有異味",
+      "有蟑螂",
+      "有老鼠"
+     ]
+    },
+    {
+     "id": 11,
+     "name": "水管",
+     "broken_reasons": [
+      "水管不通",
+      "水管破裂",
+      "水管漏水",
+      "水管有異音"
+     ]
+    },
+    {
+     "id": 12,
+     "name": "水龍頭",
+     "broken_reasons": [
+      "冷水沒水",
+      "熱水沒水",
+      "熱水不熱",
+      "水龍頭鬆脫",
+      "水龍頭漏水"
+     ]
+    },
+    {
+     "id": 13,
+     "name": "蓮蓬頭",
+     "broken_reasons": [
+      "水壓過小",
+      "水壓過大",
+      "無水",
+      "破裂",
+      "功能異常"
+     ]
+    },
+    {
+     "id": 14,
+     "name": "門",
+     "broken_reasons": [
+      "無法開啟",
+      "鬆脫",
+      "卡死",
+      "有異音",
+      "門板損毀"
+     ]
+    },
+    {
+     "id": 60,
+     "name": "置物架",
+     "broken_reasons": [
+      "層架斷掉",
+      "螺絲脫落",
+      "生鏽",
+      "搖晃"
+     ]
+    }
+   ]
+  },
+  {
+   "id": 3,
+   "name": "房屋結構",
+   "items": [
+    {
+     "id": 15,
+     "name": "窗戶",
+     "broken_reasons": [
+      "無法開啟",
+      "鬆脫",
+      "卡死",
+      "有異音",
+      "玻璃破裂",
+      "門框損壞",
+      "紗窗故障",
+      "紗窗破裂"
+     ]
+    },
+    {
+     "id": 16,
+     "name": "地板",
+     "broken_reasons": [
+      "翹起",
+      "漏水",
+      "損壞",
+      "髒污"
+     ]
+    },
+    {
+     "id": 17,
+     "name": "牆面",
+     "broken_reasons": [
+      "剝落",
+      "漏水",
+      "損壞",
+      "髒污"
+     ]
+    },
+    {
+     "id": 18,
+     "name": "天花板",
+     "broken_reasons": [
+      "剝落",
+      "漏水",
+      "損壞",
+      "髒污"
+     ]
+    },
+    {
+     "id": 19,
+     "name": "護欄、欄杆",
+     "broken_reasons": [
+      "鬆動",
+      "斷裂",
+      "鏽蝕",
+      "損壞"
+     ]
+    }
+   ]
+  },
+  {
+   "id": 4,
+   "name": "門鎖",
+   "items": [
+    {
+     "id": 20,
+     "name": "傳統鎖",
+     "broken_reasons": [
+      "無法開啟",
+      "鎖主體鬆脫",
+      "反鎖",
+      "卡死",
+      "外力損毀"
+     ]
+    },
+    {
+     "id": 21,
+     "name": "電子鎖",
+     "broken_reasons": [
+      "無法開啟",
+      "鎖主體鬆脫",
+      "反鎖",
+      "卡死",
+      "密碼鎖故障",
+      "感應扣失效",
+      "指紋辨識失效",
+      "沒電",
+      "外力損毀"
+     ]
+    },
+    {
+     "id": 61,
+     "name": "門鈴",
+     "broken_reasons": [
+      "無聲響",
+      "持續響",
+      "按鈕損壞",
+      "按鈕卡住"
+     ]
+    }
+   ]
+  },
+  {
+   "id": 5,
+   "name": "通訊網路",
+   "items": [
+    {
+     "id": 22,
+     "name": "Wifi 分享器",
+     "broken_reasons": [
+      "開關損壞",
+      "沒有動作",
+      "加熱效果不佳",
+      "外觀損壞",
+      "上網速度慢",
+      "網路時常斷線",
+      "無線密碼設定失敗"
+     ]
+    },
+    {
+     "id": 23,
+     "name": "路由器",
+     "broken_reasons": [
+      "電源不亮",
+      "網路不通",
+      "過熱燒毀",
+      "外觀損壞",
+      "接觸不良",
+      "上網速度慢",
+      "網路時常斷線"
+     ]
+    },
+    {
+     "id": 24,
+     "name": "網路孔",
+     "broken_reasons": [
+      "網路線斷裂",
+      "網路孔接頭鬆脫",
+      "接頭斷裂",
+      "接觸不良"
+     ]
+    },
+    {
+     "id": 25,
+     "name": "市話",
+     "broken_reasons": [
+      "電話線斷裂",
+      "電話孔接頭鬆脫",
+      "接頭斷裂",
+      "接觸不良",
+      "電話有雜音",
+      "不法撥打"
+     ]
+    }
+   ]
+  },
+  {
+   "id": 6,
+   "name": "家電維修",
+   "items": [
+    {
+     "id": 26,
+     "name": "電視",
+     "broken_reasons": [
+      "沒訊號",
+      "無法開啟",
+      "屏幕損壞",
+      "外觀損壞"
+     ]
+    },
+    {
+     "id": 27,
+     "name": "冷氣機",
+     "broken_reasons": [
+      "不冷",
+      "漏水",
+      "噪音吵雜",
+      "無法運作",
+      "無法控制",
+      "跳電"
+     ]
+    },
+    {
+     "id": 28,
+     "name": "中央空調",
+     "broken_reasons": [
+      "不冷",
+      "漏水",
+      "噪音吵雜",
+      "無法運作",
+      "無法控制",
+      "跳電"
+     ]
+    },
+    {
+     "id": 29,
+     "name": "冰箱",
+     "broken_reasons": [
+      "噪音過大",
+      "不冷",
+      "外壁流汗",
+      "內燈不亮"
+     ]
+    },
+    {
+     "id": 30,
+     "name": "微波爐",
+     "broken_reasons": [
+      "開關損壞",
+      "無法微波",
+      "加熱效果不佳",
+      "玻璃蓋損毀"
+     ]
+    },
+    {
+     "id": 31,
+     "name": "抽油煙機",
+     "broken_reasons": [
+      "開關損壞",
+      "沒有動作",
+      "沒有抽煙效果",
+      "噪音過大"
+     ]
+    },
+    {
+     "id": 32,
+     "name": "電子感應爐",
+     "broken_reasons": [
+      "開關損壞",
+      "沒有動作",
+      "加熱效果不佳",
+      "外觀損壞"
+     ]
+    },
+    {
+     "id": 33,
+     "name": "電熱水器",
+     "broken_reasons": [
+      "無法加熱",
+      "水量過小",
+      "跳電",
+      "漏電"
+     ]
+    },
+    {
+     "id": 34,
+     "name": "洗衣機",
+     "broken_reasons": [
+      "開關損壞",
+      "沒有動作",
+      "轉動噪音過大",
+      "異常漏水，外觀損壞"
+     ]
+    },
+    {
+     "id": 62,
+     "name": "瓦斯熱水器",
+     "broken_reasons": [
+      "無法加熱",
+      "水量過小"
+     ]
+    }
+   ]
+  },
+  {
+   "id": 7,
+   "name": "家具",
+   "items": [
+    {
+     "id": 35,
+     "name": "椅子",
+     "broken_reasons": [
+      "椅腳斷裂",
+      "椅面損壞",
+      "椅背損壞",
+      "鬆脫"
+     ]
+    },
+    {
+     "id": 36,
+     "name": "沙發",
+     "broken_reasons": [
+      "破損",
+      "髒汙",
+      "桌腳斷裂",
+      "老舊不堪"
+     ]
+    },
+    {
+     "id": 37,
+     "name": "電視櫃",
+     "broken_reasons": [
+      "櫃腳斷裂",
+      "櫃面損壞",
+      "鬆脫",
+      "抽屜櫃損壞"
+     ]
+    },
+    {
+     "id": 38,
+     "name": "衣櫃",
+     "broken_reasons": [
+      "櫃面損壞",
+      "櫃門鬆脫",
+      "抽屜櫃損壞",
+      "衣架毀損"
+     ]
+    },
+    {
+     "id": 39,
+     "name": "書櫃",
+     "broken_reasons": [
+      "櫃面損壞",
+      "櫃門鬆脫",
+      "抽屜櫃損壞",
+      "板面毀損"
+     ]
+    },
+    {
+     "id": 40,
+     "name": "櫥櫃",
+     "broken_reasons": [
+      "櫃面損壞",
+      "櫃門鬆脫",
+      "抽屜櫃損壞",
+      "板面毀損"
+     ]
+    },
+    {
+     "id": 41,
+     "name": "置物架",
+     "broken_reasons": [
+      "損壞斷裂",
+      "支架鬆脫"
+     ]
+    },
+    {
+     "id": 42,
+     "name": "書桌",
+     "broken_reasons": [
+      "桌腳斷裂",
+      "桌面損壞",
+      "抽屜櫃損壞",
+      "板面鬆脫"
+     ]
+    },
+    {
+     "id": 43,
+     "name": "餐桌",
+     "broken_reasons": [
+      "桌腳斷裂",
+      "桌面損壞",
+      "支架鬆脫"
+     ]
+    },
+    {
+     "id": 44,
+     "name": "茶几",
+     "broken_reasons": [
+      "桌腳斷裂",
+      "桌面損壞",
+      "支架鬆脫"
+     ]
+    },
+    {
+     "id": 45,
+     "name": "床",
+     "broken_reasons": [
+      "床腳斷裂",
+      "抽屜櫃損壞",
+      "床板毀損",
+      "鬆脫有異音"
+     ]
+    }
+   ]
+  },
+  {
+   "id": 8,
+   "name": "家居品",
+   "items": [
+    {
+     "id": 46,
+     "name": "衛浴鏡",
+     "broken_reasons": [
+      "破裂損毀",
+      "除霧功能失效"
+     ]
+    },
+    {
+     "id": 47,
+     "name": "曬衣桿",
+     "broken_reasons": [
+      "桿子不牢",
+      "桿子斷裂"
+     ]
+    },
+    {
+     "id": 48,
+     "name": "浴簾",
+     "broken_reasons": [
+      "破損",
+      "髒汙",
+      "無法遮蔽"
+     ]
+    },
+    {
+     "id": 49,
+     "name": "窗簾",
+     "broken_reasons": [
+      "破損",
+      "髒汙",
+      "無法開關"
+     ]
+    }
+   ]
+  },
+  {
+   "id": 9,
+   "name": "家電清洗",
+   "items": [
+    {
+     "id": 50,
+     "name": "冷氣機清洗",
+     "broken_reasons": []
+    },
+    {
+     "id": 51,
+     "name": "中央空調清洗",
+     "broken_reasons": []
+    },
+    {
+     "id": 52,
+     "name": "排油煙機清洗",
+     "broken_reasons": []
+    },
+    {
+     "id": 53,
+     "name": "冰箱清洗",
+     "broken_reasons": []
+    },
+    {
+     "id": 54,
+     "name": "洗衣槽清洗",
+     "broken_reasons": []
+    },
+    {
+     "id": 55,
+     "name": "熱水器清洗",
+     "broken_reasons": []
+    }
+   ]
+  },
+  {
+   "id": 10,
+   "name": "管道疏通",
+   "items": [
+    {
+     "id": 56,
+     "name": "流理槽疏通",
+     "broken_reasons": []
+    },
+    {
+     "id": 57,
+     "name": "洗手台疏通",
+     "broken_reasons": []
+    },
+    {
+     "id": 58,
+     "name": "馬桶疏通",
+     "broken_reasons": []
+    },
+    {
+     "id": 59,
+     "name": "排水孔疏通",
+     "broken_reasons": []
+    }
+   ]
+  },
+  {
+   "id": 11,
+   "name": "其他",
+   "items": [
+    {
+     "id": 63,
+     "name": "自定義",
+     "broken_reasons": []
+    }
+   ]
+  }
+ ]
+}
