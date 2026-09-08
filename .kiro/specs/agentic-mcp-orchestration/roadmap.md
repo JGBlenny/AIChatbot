@@ -9,7 +9,7 @@
 |---|---|---|---|---|---|
 | 0 | `agentic-mcp-orchestration`（母） | M0 單一謂詞＋不變量 18–21、M1 Runtime＋Verifier＋影子、M2 影子評估、M3 prospect 切換 | DSP-011；D1–D3 | 不捏造／敏感零漏／邊界題不硬答／p95 | design 1.1 收案審查中 |
 | 1 | `help-center-source` | `help_center_pages` 匯入、`source_url`＋`content_sha256`、`citable` 人工核可、jgb2 觸發式同步（source-index §8） | D3 裁定 | 匯入完整性；引用來源可追 | 待 D3 |
-| 2 | `agent-write-tools` | `jgb2.action.*`、`agent_confirmation_tokens` 表、修繕面向（tenant）；M4 | 母 M3 收案；D4 | 重放／TOCTOU／跨 session 零通過；獨立 security review | 未開 |
+| 2 | `agent-write-tools` | `jgb2.action.*`、`agent_confirmation_tokens` 表、修繕面向（tenant）；M4 | 母 M3 收案；D4 | 重放／TOCTOU／跨 session 零通過；獨立 security review | **demo 切片已落地並上線（2026-09-08）**：`jgb2.action.{bill_due_extend,repair_create}`＋確認鏈＋`pending_id` 走 **pm／`property_manager`**、旗標 `AGENT_WRITE_TOOLS_ENABLED`＋stage M1（DSP-038），Plan 正本＝`knowledge-outline-and-intent-architecture/inputs/plan-agent-write-tools-demo-20260908.md`（W1–W4、W8）、security-reviewer 13 條＋plan-verifier 三輪＋verifier CONFIRMED。⛔ **未做**：tenant 修繕面向、真 `agent/v1` 簽章 client（demo 全走替身）。本子 spec 正式開案時以該 Plan 為輸入 |
 | 2 | `agent-pm-diagnosis` | 五張 builder 表全接 `jgb2.query.<domain>`、`face` enum、pm 身分切換；M5 | 母 M3 收案 | 五域 face 各一 e2e；pm 影子收案線另定 | 未開 |
 | 3 | `agent-user-memory` | 跨 session 個人偏好與互動指標（`memory.get/set`，封閉 key、provenance 可引用、保存期限、使用者可清、跨業者隔離）；⛔ 不存 jgb2 事實、不做行為側寫 | 母 M3 收案；業者／租客 user_id | 回合數下降、留存；個資責任需求另列 | 業主 2026-09-04 提出，待裁 D6 |
 | 2 | `agent-tenant-audience`（M4） | tenant 身分的 agent 對話（LINE 租客、語音來電者）：`AGENT_AUDIENCES` 加 tenant、tenant 目錄、`role_id=null` 組合的 e2e；含 LINE bot 承接 `handoff{channel,message}` | 母 M3 收案；D4 部分 | tenant 影子收案線另定 | r5 目標驗證後立案 2026-09-04 |
