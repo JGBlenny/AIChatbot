@@ -4,7 +4,7 @@
   "business_types": [
     "system_provider"
   ],
-  "canon_sha256": "36c53fb9185dd7229a2fcda50ff236e133df12107056766dc7a19d614f3f109c",
+  "canon_sha256": "cd41e812d072716369e3d12270f4b5d59435a28f2adf7b8412aee4fbd5a150aa",
   "coarses": [
     {
       "fines": [
@@ -61,9 +61,9 @@
           ],
           "categories": [],
           "coarse_id": "A",
-          "content_sha256": "4517172a1f4b5a44f072dcdba80f53c6756d819c8cb168d558533be813fc38b6",
+          "content_sha256": "8c9651b022e5a09845b109cfcd2b8eaafc42d3838a964f9b2d97f248059a2983",
           "content_units": [
-            "按「我要修改」後只重新確認被改的項目（例如把「天花板」改成「馬桶後面的水管」），物件與急迫性不重問、不重跑辨識。"
+            "**確認卡尚在時**按「我要修改」只重新確認被改的項目（例如把「天花板」改成「馬桶後面的水管」），物件與急迫性不重問、不重跑辨識。"
           ],
           "id": "property_manager/A/repair-ticket-reclassify",
           "instance_applicability": "general",
@@ -91,6 +91,44 @@
             "property_manager"
           ],
           "title": "分類辨識結果錯誤時如何修改"
+        },
+        {
+          "business_types": [
+            "system_provider"
+          ],
+          "categories": [],
+          "coarse_id": "A",
+          "content_sha256": "7af93c3e5794cd45afa3c1d9a8080805e85f84a37975905c347a6ad7895a0f25",
+          "content_units": [
+            "確認送出後，這張單不在對話裡修改：業務要改內容時，說明這張單已送出，並指到 JGB 的修繕單頁面處理。",
+            "送出後再描述同一戶的另一個問題，視為另一張新單：物件不重問，依口述描述出新的確認摘要，仍只有按「確認送出」才建單。"
+          ],
+          "id": "property_manager/A/repair-ticket-after-submit",
+          "instance_applicability": "general",
+          "phrasings": [
+            {
+              "source": "line-doc:③#H4",
+              "status": "proposed",
+              "text": "我要改一下描述"
+            },
+            {
+              "source": "line-doc:③#H4",
+              "status": "proposed",
+              "text": "廚房抽風機不會轉 同一戶"
+            }
+          ],
+          "policy": "answerable",
+          "policy_ref": null,
+          "reviewed_at": "2026-09-09",
+          "reviewed_by": "owner",
+          "see_also": [],
+          "sources": [
+            "draft:batch#31"
+          ],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "確認送出後的單如何處理"
         },
         {
           "business_types": [
@@ -1349,5 +1387,5 @@
   "target_user": [
     "property_manager"
   ],
-  "version": "2026-09-08.4"
+  "version": "2026-09-09.1"
 }

@@ -1,6 +1,6 @@
 ---
 audience: property_manager
-version: 2026-09-08.4
+version: 2026-09-09.1
 reviewers: [owner]
 language: zh-TW
 budget_tokens: 8000
@@ -26,7 +26,17 @@ business_types: [system_provider]
 - sources: [draft:batch#2]
 - instance_applicability: general
 - reviewed: {by: owner, at: 2026-09-07}
-按「我要修改」後只重新確認被改的項目（例如把「天花板」改成「馬桶後面的水管」），物件與急迫性不重問、不重跑辨識。
+**確認卡尚在時**按「我要修改」只重新確認被改的項目（例如把「天花板」改成「馬桶後面的水管」），物件與急迫性不重問、不重跑辨識。
+
+### 確認送出後的單如何處理 {#property_manager/A/repair-ticket-after-submit}
+- phrasings:
+  - {text: "我要改一下描述", source: "line-doc:③#H4", status: proposed}
+  - {text: "廚房抽風機不會轉 同一戶", source: "line-doc:③#H4", status: proposed}
+- sources: [draft:batch#31]
+- instance_applicability: general
+- reviewed: {by: owner, at: 2026-09-09}
+確認送出後，這張單不在對話裡修改：業務要改內容時，說明這張單已送出，並指到 JGB 的修繕單頁面處理。
+送出後再描述同一戶的另一個問題，視為另一張新單：物件不重問，依口述描述出新的確認摘要，仍只有按「確認送出」才建單。
 
 ### 照片辨識信心不足時的候選類別流程 {#property_manager/A/repair-ticket-low-confidence-candidates}
 - phrasings:

@@ -363,6 +363,27 @@ async def test_resend_returns_the_same_receipt_without_calling_the_tool_again():
 
 
 @pytest.mark.req(_REQ)
+async def test_resend_after_success_keeps_confirmed_outcome_and_receipt_id():
+    """canon(pm) delta5 前置事實：兌現後同一會話重送 `confirm_submit:<pid>`
+    ⇒ R4.3 既有行為（`outcome.state == "confirmed"`、同一 `receipt_id`、
+    ⛔ 不回 `CONFIRMATION_REQUIRED_TEXT`）——delta5 的「送出後不在對話裡改」
+    正本句仰賴這條既有行為未退步（本測試不改行為，只補斷言）。"""
+    pool = FakePool([_redeem_row(), None])
+    registry = _receipt_registry()
+    rt = _runtime(registry=registry, pool=pool)
+    state = _state_with_pending()
+
+    first = await rt.run_turn(_identity(), f"confirm_submit:{_PID}", state)
+    second = await rt.run_turn(_identity(), f"confirm_submit:{_PID}", state)
+
+    assert first.answer != CONFIRMATION_REQUIRED_TEXT
+    assert second.answer != CONFIRMATION_REQUIRED_TEXT
+    assert first.outcome["state"] == "confirmed"
+    assert second.outcome["state"] == "confirmed"
+    assert second.trace.receipt_id == first.trace.receipt_id == "BILL-77"
+
+
+@pytest.mark.req(_REQ)
 async def test_tool_failure_is_reported_honestly_and_recorded():
     pool = FakePool([_redeem_row()])
     registry = FakeRegistry(call_results=[ToolResult(ok=False, error="NO_MATCH")])
