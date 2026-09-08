@@ -336,3 +336,5 @@
 | 驗收 (iv) 照抄 W7「run_turn 0 次」與 (x) 相衝 | FIX（文字）：(iv-a)(iv-b) 改為本切片自有兩案，與 (x) 一致 |
 
 依業主先例「文字層修正直接續審」⇒ 開 r4。
+
+**r4：READY**（2026-09-08）。待業主核可後派 security-executor（一次交付；真線路用 scratchpad `photos/` 六張、gpt-4o 與 gpt-5-mini 並排）。
