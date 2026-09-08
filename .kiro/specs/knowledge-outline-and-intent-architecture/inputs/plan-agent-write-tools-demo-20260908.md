@@ -278,3 +278,5 @@
 業主先前指示「文字層修正直接續審」⇒ 開 r4。
 
 **r4：READY**（2026-09-08）。待業主核可後派 security-executor（一次交付）。
+
+**L15 完成（2026-09-08）**：業主「派」→ security-executor `95b511c0`（unit 1372／integration 35／audit 27–31 PASS）→ verifier **CONFIRMED**（8 子宣稱＋12 探針；附帶 A1 P4：confirm 卡回合走 `_finish_confirm_turn` 不經 `_finalize` ⇒ 該回合不接指路句、邊界不受影響，列後續；A2 handoff cache 回放為固定句、無風險）。實跑兩輪見帳本 §1h。取捨：寫入閘另立 `_scope_gate_confirm_request`；`_apply_scope_exit` 放 `_finalize` 首句；全範圍外同步清 `handoff_reason`。剩：(b)(c) 規則句 → 5.1；`scope_exit` 輸出鍵另切片；A1。
