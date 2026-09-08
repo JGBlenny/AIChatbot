@@ -95,6 +95,7 @@ from services.agent.tools.confirm import (
     redeem_pending,
     sha256_hex,
 )
+from services.agent.tools.jgb2 import _candidates_text as _jgb2_candidates_text
 from services.agent.tools.registry import Provenance, ToolRegistry, ToolResult, tool_name_from_openai
 from services.agent.tools.session import write_slot
 from services.conversational_config import (
@@ -329,6 +330,144 @@ SELECT_NOT_FOUND_TEXT = "查無此筆"
 #: 進 dialog 的**程式摘要**（S8-3：第三方 facts 原文 ⛔ 不以 assistant 身分
 #: 進歷史——那等於把下游系統的自由文字餵回下一回合的模型上下文）。
 SELECT_DIALOG_SUMMARY = "已提供 {select_type} {ref} 的資料"
+
+
+# ════════════════════════════════════════════════════════════════════
+# L15 (a)：清單進場後的**會話範圍**（戶＝物件 `estate_id`；業主 2026-09-08 裁）
+# ════════════════════════════════════════════════════════════════════
+#
+# ⚠️ **程式判定、⛔ 不交模型**（`feedback_no_llm_mechanical_decode`）：「是不是
+#    同一戶」是 `estate_id` 等值，封閉可算；讓模型判等於把資料邊界交給一個會
+#    被說服的東西。
+# ⚠️ **fail-closed**：有範圍而某一筆算不出 `estate_id`（缺欄位／`None`）一律
+#    當成範圍外，⛔ 不放行——放行的失敗方向是別戶資料進答案。
+
+#: `state["agent"]` 底下的會話範圍鍵：`{"type": <select_type>, "estate_id": str}`
+#: 或 `None`。**每個 `select:` 回合都會覆寫它**（含失敗回合寫 `None`，L15-05：
+#: ⛔ 舊範圍不得殘留到下一次點選）。
+SELECT_SCOPE_KEY = "select_scope"
+
+#: L15 (a)⑤：範圍外時使用者看到的**指路固定句**。單一句、對所有受眾一體適用；
+#: ⛔ 無任何插值（L15-13：帶 id／名稱等於用回話的差別揭露存在性）。
+SCOPE_EXIT_TEXT = "這個對話只看你點選的那一戶；要查別戶請回清單點那一戶。"
+
+#: L15 (a)③：範圍外的工具結果替換成的**工具訊息**（模型看到的那一份）。
+#: ⛔ 原 facts 不進 messages／provenance；⛔ 這一段不結束回合（L15-09：模型還要
+#: 能把同一句裡查得到的那一題答完）。
+SCOPE_TOOL_TEXT = "（這一筆不在本對話的範圍內）"
+
+_JGB2_QUERY_PREFIX = "jgb2.query."
+
+#: L15-01／L15-02：**候選清單**要過濾的封閉域表 → 該域列上代表「戶」的欄位。
+#: ⛔ 表外的域（accounts）不過濾、不比對——它的列根本沒有物件維度，套過濾＝
+#: 必空＝把整個域誤判成範圍外（plan-verifier r2）。
+_SCOPE_CANDIDATE_ROW_KEY: dict[str, str] = {
+    "jgb2.query.bills": "estate_id",
+    "jgb2.query.contracts": "estate_id",
+    "jgb2.query.repairs": "estate_id",
+    "jgb2.query.meters": "estate_id",
+    "jgb2.query.estates": "id",
+}
+
+
+def _scope_estate_id(agent_state: dict) -> Optional[str]:
+    """本回合的會話範圍物件 id；沒有範圍（聊天進場／select 失敗）⇒ `None`。"""
+    scope = agent_state.get(SELECT_SCOPE_KEY)
+    if not isinstance(scope, dict):
+        return None
+    estate_id = scope.get("estate_id")
+    return str(estate_id) if estate_id is not None and estate_id != "" else None
+
+
+def _scope_replace_result(result: ToolResult) -> None:
+    """把**同一個** `ToolResult` 物件改成「不在範圍內」的空殼。
+
+    ⚠️ 三份都要換（plan-verifier r1）：`text_for_model` 是無 provenance 時模型看
+    到的字，`provenance` 是有 provenance 時模型**實際**看到的字，`data` 是引用
+    解析與下游計數看的那一份。只換其中一份＝fail-open。
+    """
+    result.ok = True
+    result.error = None
+    result.data = {"facts": "", "candidates": None, "skip_refine": True}
+    result.provenance = []
+    result.text_for_model = SCOPE_TOOL_TEXT
+
+
+def _enforce_tool_scope(
+    name: str, result: ToolResult, scope_estate_id: str,
+    query: Optional[str], violations: list,
+) -> Optional[str]:
+    """L15 (a)③：把一次 `jgb2.query.*` 的結果對齊會話範圍。
+
+    回傳 `"in"`（同戶）／`"out"`（範圍外，`result` 已就地替換）／`None`（不比對：
+    非 jgb2 查詢、無物件維度的回傳、表外域的候選）。
+    """
+    if not name.startswith(_JGB2_QUERY_PREFIX):
+        return None
+    data = result.data if isinstance(result.data, dict) else {}
+
+    # (3a) 單筆：`_ok_single(scoped=True)` 帶的 `scope` 鍵。
+    scope = data.get("scope")
+    if isinstance(scope, dict):
+        row_estate = scope.get("estate_id")
+        if row_estate is None:
+            # L15-06：有範圍而列上算不出戶 ⇒ fail-closed，且要在 trace 看得見。
+            violations.append("select_scope_unknown")
+            _scope_replace_result(result)
+            violations.append("select_scope_exit")
+            return "out"
+        if str(row_estate) != scope_estate_id:
+            _scope_replace_result(result)
+            violations.append("select_scope_exit")
+            return "out"
+        return "in"
+
+    # (3b) 候選清單：封閉五域先過濾再重繪；⛔ 表外域不動。
+    row_key = _SCOPE_CANDIDATE_ROW_KEY.get(name)
+    candidates = data.get("candidates")
+    if row_key is not None and isinstance(candidates, list):
+        kept = [
+            row for row in candidates
+            if isinstance(row, dict)
+            and row.get(row_key) is not None
+            and str(row.get(row_key)) == scope_estate_id
+        ]
+        if not kept:
+            _scope_replace_result(result)
+            violations.append("select_scope_exit")
+            return "out"
+        domain = name[len(_JGB2_QUERY_PREFIX):]
+        text = _jgb2_candidates_text(domain, query, kept)
+        data["candidates"] = kept
+        result.text_for_model = text
+        if result.provenance:
+            result.provenance[0].text = text
+        return "in"
+
+    # (3c) 無 scope 鍵、也不是要過濾的候選（分類樹／accounts／NO_MATCH）⇒ 不比對。
+    return None
+
+
+def _apply_scope_exit(result: TurnResult, *, scope_in: int, scope_out: int) -> TurnResult:
+    """L15 (a)④：**唯一接句點**——模型迴圈產出的每一個 `TurnResult` 都經這裡。
+
+    - 全部範圍外（`scope_out>0 and scope_in==0`）⇒ 整個答案換成固定句、
+      `kind="answer"`、`handoff=None`（⛔ 不進 handoff cache：`_finalize` 只對
+      `trace.final_kind == "handoff"` 寫快取，故這裡連 `final_kind` 一起改）。
+    - 部分範圍外 ⇒ 答案末尾接一行固定句。
+    - 沒有範圍外 ⇒ 逐字不動。
+    """
+    if scope_out <= 0:
+        return result
+    if scope_in == 0:
+        result.answer = SCOPE_EXIT_TEXT
+        result.kind = "answer"
+        result.handoff = None
+        result.trace.final_kind = "answer"
+        result.trace.handoff_reason = None
+        return result
+    result.answer = result.answer.rstrip() + "\n" + SCOPE_EXIT_TEXT
+    return result
 
 
 def _parse_select_value(message: Any) -> Optional[tuple]:
@@ -1063,6 +1202,11 @@ class AgentRuntime:
             return None
         select_type, ref = parsed
 
+        # L15 (a)②／L15-05：**先寫再走任何早退**。這一行的存在理由就是「上一次
+        # 點選的範圍 ⛔ 不得殘留」——下面每一個早退（NO_MATCH／空 facts／路由
+        # 檢查不過）都代表這一次沒有確立任何一戶，範圍必須是 `None`。
+        agent_state[SELECT_SCOPE_KEY] = None
+
         violations: list[str] = []
 
         def _finish(answer: str, *, dialog_answer=None, tool_calls=None, slot_written=None):
@@ -1159,6 +1303,17 @@ class AgentRuntime:
             for entry in pending_all.values():
                 if isinstance(entry, dict) and not isinstance(entry.get("receipt"), dict):
                     entry["invalidated"] = True
+
+        # L15 (a)②：命中 ⇒ 這一段對話的範圍＝該列的物件（`_ok_single(scoped=True)`
+        # 放進 `data["scope"]`）。⛔ 列上算不出 `estate_id` 就維持 `None`——沒有
+        # 範圍等於「這一段不受限」，而不是「擋掉所有東西」；擋不擋由 (a)③ 在有
+        # 範圍時才做，這裡少寫一個猜出來的值。
+        scope = data.get("scope")
+        row_estate = scope.get("estate_id") if isinstance(scope, dict) else None
+        if row_estate is not None and str(row_estate):
+            agent_state[SELECT_SCOPE_KEY] = {
+                "type": select_type, "estate_id": str(row_estate),
+            }
 
         return _finish(
             facts,
@@ -1334,6 +1489,85 @@ class AgentRuntime:
             **kwargs,
         )
 
+    async def _scope_gate_confirm_request(
+        self, identity: Identity, agent_state: dict, data: Any, *,
+        trace_id: str, start: float, user_message: str, tool_calls: list,
+        violations: list, llm_calls: int = 0, prompt_tokens: int = 0,
+        completion_tokens: int = 0,
+    ) -> Optional[TurnResult]:
+        """L15 (a)⑥／L15-03：**寫入路徑的會話邊界**。
+
+        回 `None` ⇒ 照常出卡；回 `TurnResult` ⇒ **不建 pending**、整回合就是
+        `SCOPE_EXIT_TEXT`。
+
+        兩個 action 的邊界維度都是**物件**（L15-08 業主裁）：
+        - `repair_create`：比 `confirm.request` 回的 `estate_id`（＝
+          `mcp_facade._open_repairs` 解析出的那一個物件）。**解析不出（`None`）⇒
+          放行**——`jgb2.action.repair_create` 執行時走的是同一支 `_resolve_estate`，
+          解析不出就必 `NO_MATCH`，跨戶寫入不可能發生（plan-verifier r1）。
+        - `bill_due_extend`：payload 只有帳單編號，故**現查一次那張帳單的物件**
+          （`for_model=False` ⇒ 結果 ⛔ 不進 messages、只讀 `data.scope.estate_id`）。
+          查不到／查不出物件 ⇒ **fail-closed**（不出卡）：拿不到證據時放行等於
+          讓「查不到的帳單」變成繞過邊界的方法。同物件的**不同帳單**照常出卡。
+        """
+        scope_estate_id = _scope_estate_id(agent_state)
+        if scope_estate_id is None or not isinstance(data, dict):
+            return None
+
+        action = data.get("action")
+        payload = data.get("payload")
+
+        if action == "repair_create":
+            estate_id = data.get("estate_id")
+            if estate_id is None or not str(estate_id):
+                return None
+            if str(estate_id) == scope_estate_id:
+                return None
+        elif action == "bill_due_extend":
+            bill_id = payload.get("bill_id") if isinstance(payload, dict) else None
+            row_estate: Optional[str] = None
+            if bill_id is not None and str(bill_id).strip():
+                try:
+                    probe = await self.registry.call(
+                        identity,
+                        "jgb2.query.bills",
+                        {"face": _SELECT_DEFAULT_FACE["bill"], "ref": str(bill_id)},
+                        self._tool_timeout_s,
+                        stage=self._stage,
+                        readonly_view=self.readonly_view,
+                        for_model=False,
+                    )
+                except Exception as exc:  # noqa: BLE001 — registry 不可用＝拿不到證據
+                    violations.append(f"REGISTRY_EXC:{type(exc).__name__}")
+                    probe = None
+                probe_data = probe.data if (probe is not None and probe.ok
+                                            and isinstance(probe.data, dict)) else {}
+                scope = probe_data.get("scope")
+                if isinstance(scope, dict) and scope.get("estate_id") is not None:
+                    row_estate = str(scope["estate_id"])
+            if row_estate is not None and row_estate == scope_estate_id:
+                return None
+        else:
+            # 值域外的 action：形狀檢查是 `_begin_pending_confirm` 的事，這裡
+            # ⛔ 不代它判（`CONFIRM_ACTIONS` 之外的值那邊會記 shape_invalid）。
+            return None
+
+        violations.append("select_scope_exit")
+        return self._finish_confirm_turn(
+            agent_state=agent_state,
+            user_message=user_message,
+            trace_id=trace_id,
+            start=start,
+            kind="answer",
+            answer=SCOPE_EXIT_TEXT,
+            pending_id=None,
+            tool_calls=tool_calls,
+            violations=violations,
+            llm_calls=llm_calls,
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
+        )
+
     def _begin_pending_confirm(
         self, agent_state: dict, data: Any, *, trace_id: str, start: float,
         user_message: str, tool_calls: list, violations: list,
@@ -1451,6 +1685,10 @@ class AgentRuntime:
             )
 
         counters = BudgetCounters()
+        # L15 (a)③④：本回合的會話範圍（`select:` 段寫的），與範圍內／外的工具
+        # 結果計數。⛔ 不進 trace 新鍵（L15-11：只用既有的 `violations`）。
+        scope_estate_id = _scope_estate_id(agent_state)
+        scope_counts = {"in": 0, "out": 0}
         violations: list[str] = []
         tool_call_records: list[ToolCallRecord] = []
         verifier_verdicts: list[VerifierVerdict] = []
@@ -1538,6 +1776,12 @@ class AgentRuntime:
             )
 
         def _finalize(result: TurnResult, *, is_fixed: bool) -> TurnResult:
+            # L15 (a)④：**唯一接句點**，排在 handoff cache 與 dialog 之前——
+            # 全範圍外的回合在這裡就已經是 `kind="answer"`，故 ⛔ 不會進快取，
+            # dialog 存的也是使用者看到的那一句（含接句）。
+            result = _apply_scope_exit(
+                result, scope_in=scope_counts["in"], scope_out=scope_counts["out"]
+            )
             if result.trace.final_kind == "handoff":
                 cache[cache_key] = {
                     "answer": result.answer,
@@ -1648,6 +1892,22 @@ class AgentRuntime:
                                 _build_fixed("tool_unavailable"), is_fixed=True
                             )
 
+                    # L15 (a)③：**範圍比對排在這裡**——`registry.call` 一回來、
+                    # 進 trace／`tool_results_by_id`／`_wrap`／messages 之前。
+                    # 替換是就地改同一個 `ToolResult` 物件 ⇒ 底下每一個下游拿到
+                    # 的都是替換後那一份（⛔ 原 facts 不進 messages／provenance）。
+                    if scope_estate_id is not None:
+                        _q = raw_args.get("ref") or raw_args.get("keyword")
+                        _outcome = _enforce_tool_scope(
+                            name, tool_result, scope_estate_id,
+                            _q if _q is None or isinstance(_q, str) else str(_q),
+                            violations,
+                        )
+                        if _outcome == "in":
+                            scope_counts["in"] += 1
+                        elif _outcome == "out":
+                            scope_counts["out"] += 1
+
                     ms = int((self._clock() - call_start) * 1000)
                     tool_call_records.append(
                         ToolCallRecord(
@@ -1674,6 +1934,26 @@ class AgentRuntime:
                     # 驗的引用）。⛔ 不把卡交回模型讓它「潤飾一下」：那一潤，
                     # 使用者看到的字就不再等於 `summary_sha256` 綁住的那一份。
                     if name == CONFIRM_TOOL_NAME and tool_result.ok:
+                        # L15 (a)⑥／L15-03：**寫入路徑的邊界**。⛔ 不靠讀路徑
+                        # 的比對——`confirm.request` 的 payload 是模型自己填的，
+                        # 它可以完全不查就直接出一張別戶的卡。
+                        # ⚠️ 閘門放在**呼叫點**而非 `_begin_pending_confirm` 內：
+                        #    那支是同步函式，而 `bill_due_extend` 的邊界要現查一次
+                        #    帳單（await registry.call）。兩者相鄰、同一個出口，
+                        #    行為等同「有範圍且別戶 ⇒ 不建 pending、回固定句」。
+                        scope_turn = await self._scope_gate_confirm_request(
+                            identity, agent_state, tool_result.data,
+                            trace_id=trace_id,
+                            start=start,
+                            user_message=user_message,
+                            tool_calls=tool_call_records,
+                            violations=violations,
+                            llm_calls=llm_calls,
+                            prompt_tokens=prompt_tokens,
+                            completion_tokens=completion_tokens,
+                        )
+                        if scope_turn is not None:
+                            return scope_turn
                         confirm_turn = self._begin_pending_confirm(
                             agent_state,
                             tool_result.data,

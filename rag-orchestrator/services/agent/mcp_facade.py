@@ -658,6 +658,14 @@ JGB2_EXTRA_PROPERTIES: dict[str, dict] = {
     "repairs": {"estate_id": {"type": "string", "maxLength": 32}},
 }
 
+#: L15 (b)：**契約層的定義句**——`keyword` 在該域是什麼、查不到時往哪走。
+#: ⛔ 只寫定義、⛔ 不寫例子（`feedback_no_special_case_fixes`）；表裡沒有的域
+#: description 逐位元不變（回退面＝把該域從這張表拿掉）。
+JGB2_DOMAIN_HINTS: dict[str, str] = {
+    "contracts": "keyword 是物件名稱或承租人名；帳單編號查不到合約，同戶合約先用該帳單的物件名稱查。",
+    "bills": "keyword 是物件名稱。",
+}
+
 
 def _jgb2_spec(domain: str, faces: list, extra_properties: Optional[dict] = None) -> ToolSpec:
     """`jgb2.query.<domain>` 的 ToolSpec（`face` ＝該域註冊表鍵的封閉 enum）。
@@ -675,6 +683,7 @@ def _jgb2_spec(domain: str, faces: list, extra_properties: Optional[dict] = None
         "description": (
             f"查詢 {domain} 領域的決定性事實；face 決定回傳哪一組 facts，"
             "ref／keyword 只能在已確立的範圍內縮小。"
+            + JGB2_DOMAIN_HINTS.get(domain, "")
         ),
         "input_schema": {
             "type": "object",
@@ -1067,6 +1076,11 @@ def build_registry(deps: FacadeDeps, registry: Optional[ToolRegistry] = None) ->
         if estate is None or estate.get("id") is None:
             return None
         estate_id = str(estate["id"])
+        # L15 (a)⑥：**物件解析成功之後一律回 dict**（`count` 可為 0）——
+        # `estate_id` 是 Runtime 判「這張卡是不是別戶」的唯一憑據，⛔ 不得因為
+        # 「這一戶沒有未結單」就回 `None`：那會讓別戶的 `repair_create` 因為查無
+        # 未結單而被當成「解析不出物件」放行出卡。提示行本身仍然只在 count>0 時
+        # 出現（`confirm._open_repairs_hint` 判 `count <= 0`），⛔ 不在此重複判。
         result = await reg.call(
             identity,
             "jgb2.query.repairs",
@@ -1075,16 +1089,14 @@ def build_registry(deps: FacadeDeps, registry: Optional[ToolRegistry] = None) ->
             stage=current_stage(),
             for_model=False,
         )
-        if not result.ok:
-            return None
         data = result.data if isinstance(result.data, dict) else {}
         # `query_repairs` 無 `ref`／`keyword` 時走 `fetch_default`＝**已濾掉結單／
         # 封存**（`_CLOSED_REPAIR_STATUSES`）的未結列，⛔ 不在此另抄一份狀態表。
         # ⚠️ 已知取捨：列數受 `JGB2_CANDIDATE_CAP`（預設 5）截斷 ⇒ 超過 5 張時
         #    N 只會顯示 5。提示行是資訊性文字、不含可兌現內容，接受。
-        rows = data.get("candidates")
-        if not isinstance(rows, list) or not rows:
-            return None
+        rows = data.get("candidates") if result.ok else None
+        if not isinstance(rows, list):
+            rows = []
         ids = [str(r.get("id")) for r in rows if isinstance(r, dict) and r.get("id") is not None]
         return {"estate_id": estate_id, "count": len(rows), "ids": ids}
 

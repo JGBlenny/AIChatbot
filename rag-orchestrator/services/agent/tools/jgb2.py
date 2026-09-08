@@ -97,11 +97,26 @@ def _invalid_input() -> dict[str, Any]:
     return {"ok": False, "error": "INVALID_INPUT"}
 
 
-def _ok_single(domain: str, tag: str, facts: str, cap: int) -> dict[str, Any]:
+def _ok_single(domain: str, tag: str, facts: str, cap: int, *,
+               estate_id: Optional[str] = None, scoped: bool = False) -> dict[str, Any]:
+    """單筆事實。
+
+    L15 (a)①：`scoped=True` ⇒ `data["scope"] = {"estate_id": <str|None>}`——
+    **只有實體列**的呼叫點會傳（bills／contracts／repairs／meters 的資料列、
+    estates 的 `id`）。⛔ **無物件維度的回傳一律不帶 `scope` 鍵**（`repairs`
+    的 `face="修繕分類"` 靜態樹、`accounts` 域、`estates` 的 sentinel）：Runtime
+    對「有 scope 鍵」的結果是 fail-closed 比對（缺值＝範圍外），沒有物件維度的
+    東西掛上這個鍵等於把分類樹也擋掉。
+    `estate_id` 一律 `str`（L15-07：int／str 不等值），列上缺值 ⇒ `None`
+    ⇒ Runtime 記 `select_scope_unknown` 並視為範圍外（fail-closed）。
+    """
+    data: dict[str, Any] = {"facts": facts, "candidates": None,
+                            "candidate_cap": cap, "skip_refine": True}
+    if scoped:
+        data["scope"] = {"estate_id": str(estate_id) if estate_id is not None else None}
     return {
         "ok": True,
-        "data": {"facts": facts, "candidates": None,
-                 "candidate_cap": cap, "skip_refine": True},
+        "data": data,
         "provenance": [{"source": f"jgb2:{domain}#{tag}", "text": facts, "citable": True}],
         "text_for_model": facts,
     }
@@ -275,7 +290,13 @@ def _finish_generic(domain: str, tag_hint: str, builder: Callable[[dict, str], s
         row = rows[0]
         facts = builder(row, "")
         tag = str(row.get("id") or row.get("member_user_id") or tag_hint)
-        return _ok_single(domain, tag, facts, cap)
+        # L15 (a)①：本函式只被 bills／contracts／meters／repairs 四域呼叫，
+        # 四域的單筆都是**實體列**（列上有 `estate_id`）⇒ 一律帶 scope。
+        # ⛔ 缺值不補猜（`None` 交 Runtime fail-closed），⛔ 不改成「有值才帶」
+        # ——那會讓缺 `estate_id` 的列變成「無物件維度」而被放行。
+        estate_id = row.get("estate_id")
+        return _ok_single(domain, tag, facts, cap, scoped=True,
+                          estate_id=None if estate_id is None else str(estate_id))
     skip_refine = status == "candidates_all"
     return _ok_candidates(domain, tag_hint, rows, cap, skip_refine, query=query)
 
@@ -457,7 +478,12 @@ async def query_estates(identity: Any, args: dict[str, Any]) -> dict[str, Any]:
             detail = detail_rows[0] if detail_rows else None
         facts = builder(row, detail, "")
         tag = str(estate_id) if estate_id is not None else q
-        return _ok_single("estates", tag, facts, cap)
+        if sentinel:
+            # L15 (a)①：sentinel（`found=False`）沒有物件維度 ⇒ ⛔ 不帶 scope 鍵。
+            return _ok_single("estates", tag, facts, cap)
+        # L15-02：estates 的「戶」＝列 `id`（⛔ 不是 `estate_id`，這一域沒有那個欄位）。
+        return _ok_single("estates", tag, facts, cap, scoped=True,
+                          estate_id=None if estate_id is None else str(estate_id))
 
     # keyword-only、非 sentinel：可能多筆待縮小，套候選 cap 邏輯（同其餘四域）。
     if len(rows) <= cap:

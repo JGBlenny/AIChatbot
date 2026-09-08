@@ -1224,3 +1224,53 @@ async def test_card_and_card_sha256_are_byte_identical_with_or_without_open_repa
     # 正對照：這把尺看得見差異——換一份 payload，卡與雜湊就真的不同
     other = _repair_payload(description="馬桶漏水")
     assert sha256_hex(render_card("repair_create", other)) != hashes["with"]
+
+
+# ── L15 (a)⑥：物件解析成功即回 estate_id（`count` 可為 0）──────────────────
+#
+# ⚠️ 為什麼這件事重要：`estate_id` 是 Runtime 判「這張卡是不是別戶」的**唯一**
+#    憑據（`runtime._scope_gate_confirm_request`）。舊行為在「查無未結單」時回
+#    `None`，等於讓「這一戶剛好沒有未結單」變成繞過會話邊界的方法。
+
+@pytest.mark.req(_W8_REQ)
+async def test_open_repairs_returns_the_estate_id_even_when_there_are_no_open_repairs(
+    w8_api, monkeypatch
+):
+    """0 張未結單 ⇒ **仍回 `estate_id`**、提示行為空、卡照出。
+
+    正對照組就在同一條裡：先跑一次「有未結單」的同一支路徑（提示行非空、
+    `estate_id` 有值），再把未結單清成 0——若 0 張時 `estate_id` 掉成 `None`，
+    下半段會紅；若提示行在 0 張時還出現，也會紅。
+    """
+    pool = _confirm_pool()
+    before = await _confirm_through_registry(pool, _w8_identity(), _repair_payload())
+    assert before.data["estate_id"] == str(_ESTATE_A["id"])
+    assert before.data["hint"] != ""            # 正對照：有未結單時提示行在
+
+    async def no_open_repairs(**kw):
+        w8_api.repairs_calls.append(dict(kw))
+        return {"success": True, "data": []}
+
+    monkeypatch.setattr(w8_api, "get_repairs", no_open_repairs)
+    pool2 = _confirm_pool()
+    after = await _confirm_through_registry(pool2, _w8_identity(), _repair_payload())
+
+    assert after.ok is True, after.error
+    assert after.data["estate_id"] == str(_ESTATE_A["id"])   # ⛔ 不再是 None
+    assert after.data["hint"] == ""                          # 0 張 ⇒ 無提示行
+    assert after.data["card"] == render_card("repair_create", _repair_payload())
+    assert w8_api.repairs_calls, "⛔ 沒查未結單就回 0，那是另一種假綠"
+
+
+@pytest.mark.req(_W8_REQ)
+async def test_open_repairs_returns_none_only_when_the_estate_cannot_be_resolved(w8_api):
+    """解析不出物件（`get_estate_status` 零命中）⇒ `estate_id` 為 `None`、
+    ⛔ 不發那一次未結單查詢；卡照出（Runtime 端據此放行，見 (xv)）。"""
+    pool = _confirm_pool()
+    result = await _confirm_through_registry(
+        pool, _w8_identity(), _repair_payload(estate_name="查無此物件XYZ")
+    )
+    assert result.ok is True, result.error
+    assert result.data["estate_id"] is None and result.data["hint"] == ""
+    assert w8_api.estate_status_calls, "尺的自證：物件解析這一步真的跑過"
+    assert w8_api.repairs_calls == []
