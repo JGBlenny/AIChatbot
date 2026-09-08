@@ -232,6 +232,8 @@ W4b（定義層、⛔ 不寫例子）：`jgb2.action.bill_due_extend` descriptio
 
 **DSP-043 `outcome` 上線（2026-09-08 晚；業主先否決三布林「有點針對客製、應該更通用」→「outcome 採」；`a365f64e`＋docs `0b8ee6f7`）**：第七鍵 `{state, expects, action, ref}`，八態封閉、程式設。unit 1424；線上重建後公開網址實跑：開單 → `confirm_pending/button/repair_create` → 送出 `confirmed/none/ref repair 12346`；取消 → `cancelled`；`select:` → `answered/text`；點選後問別戶 → `out_of_scope/none`；一般查詢 → `answered/text`。同日裁：LINE 照片緩衝 3 秒（line-bot 端合成一回合）、LIFF 一律走 MCP（不接舊鏈 REST）。
 
+**替身換成 role 20151 全量真資料（2026-09-08 晚；業主「清掉測試資料 並 慢慢地抓取此團隊的資料」）**：LIFF 實測「信義」撈到合成合約 678（狀態碼 5 不合法 ⇒ 解碼器保底句「出口判定：無法辨識…」被模型照抄）⇒ 合成鏈搬到 `tests/fixtures/jgb/regression_vendor4.json`（`JGB_MOCK_FIXTURE`，45 個測試檔不改），demo 檔改為真資料全量。抓取：在 chatai 容器內以 `USE_MOCK_JGB_API=false` 單行程、每請求 2 s、429 依 `Retry-After`；v1 106 次＋v2 14 次、0 次 429、0 錯誤；帳單 61／修繕 119／合約 8（帳單引用）／物件 46＋明細／電錶 7；37 個被引用但不在金鑰白名單的物件以最小列補。**發現 B′7**：合約總覽端點 role 圈定無效（平台全量 46,991）。原始抓取檔只在 scratchpad `real/capture_20151_full.json`（600，⛔ 不進 repo）。
+
 **還壞的三類（按層）**：
 1. 答案層（工具契約）：`repair_create` 描述「estate_name 必須是系統查得到的物件」⇒ 模型向業務要「系統內的物件名稱或編號」（L3-A／B／M／N 都問了，物件名早在句內）；描述「1 代表非緊急，2 代表緊急」被逐字念給業務 ⇒ 急迫值外洩 8 回合（觀察模式只記不擋）。修法＝描述改定義（口述名稱即可、系統比對；值只給程式）——**待裁 delta3**。
 2. 答案層（行為）：其他槽位缺時仍順帶反問急迫（L3-identity／M／Q T1）；L5-G T1 主動提議延期、T2「好了」被當同意 ⇒ 反問；L5-K 同戶合約查不到就要合約編號（85894 可查）。
@@ -274,6 +276,8 @@ W4b（定義層、⛔ 不寫例子）：`jgb2.action.bill_due_extend` descriptio
 | ~~L11~~ | ~~資料型問題模型傾向 handoff 而非呼叫 `jgb2.query.*`~~ → **誤判，已解**：真根因是 D-BLOCK-2（工具因 null 選填被拒）＋W4（rewrites=0）；模型一直有在帶 ref＋face 查。多輪 ref（S1#2）見 §1 最終實跑 | 機制層（已修） | — |
 
 - **L15（2026-09-08 夜）答案層會話邊界三分**：別戶（退出＋指路，⛔ 不答）／同戶跨類（答得出的先答、另一類指路）／同戶同類續答；「好了／謝謝」在系統主動提議之後仍是收尾語；使用者自述數字（「清單寫 12 天」）以現查為準並明講不一致。落點＝`agent_rules.py` 定義句＋`conversational_config.py` 受眾固定句（規則層，⛔ 不寫例子）；驗收＝L5-C／J／A／K 四案＋W6 36 回合不退。
+
+- **L16（2026-09-08）合約端點 role 圈定客戶端保險**：真 API 上線前 `get_contracts` 回列若 `estate_id` 不在本 role 物件集合即丟棄（需求文 B′7）；`get_bills`／`get_contracts`／`get_repairs` 顯式轉送 `page`／`per_page`。
 
 ## 4. line-bot 要做（契約 `inputs/mcp-client-contract-line-bot-20260907.md`）
 

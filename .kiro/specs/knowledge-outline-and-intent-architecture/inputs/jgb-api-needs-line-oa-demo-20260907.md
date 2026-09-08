@@ -53,6 +53,14 @@ jgb2 `bills` 只有 `POST`（建立）與 10 支 `GET`；全檔 19 支 `PATCH` �
 
 AIChatbot 側對應：`jgb2.action.bill_due_extend`（`{payload, confirmation_token}` → `{receipt}`，design 元件 3 形狀，子 spec `agent-write-tools` 未立）＋ `agent/v1` client。
 
+### B′7（新，2026-09-08 線上實查，**P1 請 JGB 修**）：`GET /external/v1/contracts/status-overview` 帶 `role_id`＋`viewer_user_id` 仍回**平台全量**
+- 實查：以 role 20151／viewer 12291 打第一頁 50 筆，`pagination.total=46991`，50 筆的 `estate_id` **沒有一筆**屬於該 role 的 46 個物件；同一組參數打 `/bills`（61 筆）與 `/repairs`（119 筆）都正確圈在 role 內（正對照）。
+- 影響：真 API 模式下，業務用關鍵字查合約會撈到別家業者的合約（AIChatbot 的合約查詢走這支＋`keyword`）；demo 走替身不受影響，但**切真 API 前必須修好**，否則 `jgb2.query.contracts` 要停用。
+- 請 JGB：`ContractApiController@index` 依 `role_id`（owner／管理 role）圈定，同 `BillApiController@index` 的 `owner_role_id` 做法；`contract_ids` 參數保留。查證：jgb2 `rg -n "role_id" app/Http/Controllers/External/ContractApiController.php`（scout 2026-09-08 讀該檔未見 role 過濾，正對照＝`BillApiController` 有 `where('owner_role_id', $roleId)`）。
+- AIChatbot 端過渡：`get_contracts` 只在 `contract_ids`（由本 role 帳單引用）或 `keyword` 時呼叫；上線真 API 前加「回列 `estate_id` 不在本 role 物件集合即丟棄」的客戶端保險（列 §3 L16）。
+
+**分頁事實（同日）**：`page`／`per_page`（上限 200）、`has_more`；AIChatbot 客戶端 `get_bills`／`get_contracts`／`get_repairs` 把 `page`／`per_page` 吞進 `**kwargs` 沒轉送（只有 `get_estates` 轉送）——本次抓取改走 `_request` 明送；限流＝每把 key 每分鐘 `rate_limit_per_minute`、429 帶 `Retry-After: 60`；120 次請求間隔 2 s 全程 0 次 429。
+
 ## C. 待 JGB 確認（不擋 demo；③④⑤ LIFF 線用，業主裁先不併）
 
 | # | 問題 | 證據 |
