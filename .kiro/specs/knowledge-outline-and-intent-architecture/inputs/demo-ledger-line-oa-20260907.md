@@ -234,6 +234,8 @@ W4b（定義層、⛔ 不寫例子）：`jgb2.action.bill_due_extend` descriptio
 
 **替身換成 role 20151 全量真資料（2026-09-08 晚；業主「清掉測試資料 並 慢慢地抓取此團隊的資料」）**：LIFF 實測「信義」撈到合成合約 678（狀態碼 5 不合法 ⇒ 解碼器保底句「出口判定：無法辨識…」被模型照抄）⇒ 合成鏈搬到 `tests/fixtures/jgb/regression_vendor4.json`（`JGB_MOCK_FIXTURE`，45 個測試檔不改），demo 檔改為真資料全量。抓取：在 chatai 容器內以 `USE_MOCK_JGB_API=false` 單行程、每請求 2 s、429 依 `Retry-After`；v1 106 次＋v2 14 次、0 次 429、0 錯誤；帳單 61／修繕 119／合約 8（帳單引用）／物件 46＋明細／電錶 7；37 個被引用但不在金鑰白名單的物件以最小列補。**發現 B′7**：合約總覽端點 role 圈定無效（平台全量 46,991）。原始抓取檔只在 scratchpad `real/capture_20151_full.json`（600，⛔ 不進 repo）。
 
+**替身真資料全量落地（`81c03e1e`；verifier 三輪 r1 REFUTED（修繕／合約地址逐字出檔、閘無地址類）→ r2 REFUTED（電錶名稱門牌）→ r3 CONFIRMED）**：demo 檔 bills 61／repairs 119／contracts 8／estates 83（46＋37 stub，頂層 `estate_stubs`）／meters 7；合成鏈凍結到 `tests/fixtures/jgb/regression_vendor4.json`（`JGB_MOCK_FIXTURE`，與舊 demo 檔逐位元同）；重產逐位元可重現。教訓（入 builder 註解與門牌回歸測試）：**個資閘必須逐類正對照**——舊閘只掃電話／email／座標，地址類整個沒掃、閘卻綠；自由文字（修繕備註）會有人手打電話；名稱欄（物件名、電錶名）會帶門牌。A1 待辦：無「號」的街級字串（路名＋段＋數字）依政策保留路名。另修 `contracts.py` 標籤「出口判定：」→「可以怎麼處理：」（LIFF 實測模型逐字念出）。
+
 **還壞的三類（按層）**：
 1. 答案層（工具契約）：`repair_create` 描述「estate_name 必須是系統查得到的物件」⇒ 模型向業務要「系統內的物件名稱或編號」（L3-A／B／M／N 都問了，物件名早在句內）；描述「1 代表非緊急，2 代表緊急」被逐字念給業務 ⇒ 急迫值外洩 8 回合（觀察模式只記不擋）。修法＝描述改定義（口述名稱即可、系統比對；值只給程式）——**待裁 delta3**。
 2. 答案層（行為）：其他槽位缺時仍順帶反問急迫（L3-identity／M／Q T1）；L5-G T1 主動提議延期、T2「好了」被當同意 ⇒ 反問；L5-K 同戶合約查不到就要合約編號（85894 可查）。
