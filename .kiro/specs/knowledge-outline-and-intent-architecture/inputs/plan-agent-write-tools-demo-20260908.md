@@ -245,7 +245,7 @@
 | L15-09 | P3 | (a)「立即結束」與 (b)「能答的先答」相衝；contracts keyword 放寬重查會把鄰戶單列命中變整回合退出 | FIX：範圍外工具結果**不結束回合**，改以程式固定工具訊息「（該筆不在本會話範圍）」替換（無 facts）、記 violation；回合結束時若有任一替換 ⇒ 程式在答案末尾接指路固定句；整回合全為範圍外 ⇒ 只剩固定句。unit 兩方向各一 | (a)③ 改寫 |
 | L15-10 | P3 | (c) 句禁止用自述數字當查詢條件，連編號也被禁 | FIX 措辭：識別碼（帳單／合約／修繕／物件編號）可當 ref／keyword；數值（天數、金額、日期）不是證據、一律現查 | (c) |
 | L15-11 | P3 | 新 trace 鍵 `scope_exit` 撞白名單守測（兩檔不在範圍） | FIX：不加新鍵，只用 `violations += ["select_scope_exit"]` | (a)③ |
-| L15-12 | P3 | 呼叫方要機器可讀 `scope_exit` 回合狀態鍵 | DEFER：輸出鍵另切片（第八鍵，依 §0b 序）；本切片只有固定句＋trace | §2 非目標補列 |
+| L15-12 | P3 | 呼叫方要機器可讀 `scope_exit` 回合狀態鍵 | ~~DEFER~~ **已解（2026-09-08 DSP-043）**：改由第七鍵 `outcome.state == "out_of_scope"` 表達（通用八態，⛔ 不另加 `scope_exit` 專屬鍵） | `mcp_facade.TurnOutcome` |
 | L15-13 | P4 | 範圍固定句 ≠「查無此筆」＝同 role 內存在性揭露 | ACCEPT：同憑證本可讀；unit 釘固定句為常數、無 id／名稱插值 | 驗收 |
 | L15-14 | P4 | `select_scope.estate_id` 落 state、violation 無 id | ACCEPT | — |
 | L15-15 | P4 | 替身 `_bills_show` 只看 role_id ⇒ 本地測不到跨 role 隔離 | 驗收註明：只證物件邊界，不證跨 role | 驗收 |
@@ -280,7 +280,7 @@
 
 **r4：READY**（2026-09-08）。待業主核可後派 security-executor（一次交付）。
 
-**L15 完成（2026-09-08）**：業主「派」→ security-executor `95b511c0`（unit 1372／integration 35／audit 27–31 PASS）→ verifier **CONFIRMED**（8 子宣稱＋12 探針；附帶 A1 P4：confirm 卡回合走 `_finish_confirm_turn` 不經 `_finalize` ⇒ 該回合不接指路句、邊界不受影響，列後續；A2 handoff cache 回放為固定句、無風險）。實跑兩輪見帳本 §1h。取捨：寫入閘另立 `_scope_gate_confirm_request`；`_apply_scope_exit` 放 `_finalize` 首句；全範圍外同步清 `handoff_reason`。剩：(b)(c) 規則句 → 5.1；`scope_exit` 輸出鍵另切片；A1。
+**L15 完成（2026-09-08）**：業主「派」→ security-executor `95b511c0`（unit 1372／integration 35／audit 27–31 PASS）→ verifier **CONFIRMED**（8 子宣稱＋12 探針；附帶 A1 P4：confirm 卡回合走 `_finish_confirm_turn` 不經 `_finalize` ⇒ 該回合不接指路句、邊界不受影響，列後續；A2 handoff cache 回放為固定句、無風險）。實跑兩輪見帳本 §1h。取捨：寫入閘另立 `_scope_gate_confirm_request`；`_apply_scope_exit` 放 `_finalize` 首句；全範圍外同步清 `handoff_reason`。剩：(b)(c) 規則句 → 5.1（**已於 2026-09-08 落地 `84f7b0ce`**）；`scope_exit` 輸出鍵 → **已由 DSP-043 `outcome.state=out_of_scope` 取代**；A1（confirm 卡回合不接指路句，P4）。
 
 ### §5e security-reviewer 對 W8 (2) 照片線的發現與處置（2026-09-08；兩輪：第二輪依 line-bot「chatai 自己下載」契約改向）
 
