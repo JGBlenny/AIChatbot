@@ -1,0 +1,67 @@
+# LINE bot 串接資訊（demo 版，2026-09-08 上線）
+
+## 端點
+- MCP（streamable HTTP）：`POST https://chatai.jgbsmart.com/rag-api/mcp`（方法 `tools/list`、`tools/call`）
+- 伺服器對伺服器。⛔ 不要送 `Origin` header（送了必須在白名單內，否則 403）。
+- 無 key 或 key 錯 ⇒ HTTP 401 `{"detail":"Invalid or missing API key"}`。
+
+## Header（每個請求都帶）
+```
+X-API-Key: <demo key；名稱 line-bot-oa-demo，前綴 rgk_AEHV；由業主另行交付，⛔ 不進版控、不進日誌>
+Content-Type: application/json
+Accept: application/json, text/event-stream
+X-JGB-Identity: {"mode":"b2b","target_user":"property_manager","vendor_id":4,"role_id":"20151","user_id":"12291","session_id":"<穩定假名>"}
+```
+- `vendor_id` 4＝demo 業者（替身資料）；`role_id`／`user_id` demo 固定 20151／12291。
+- `session_id`：每段 LINE 對話一個穩定假名（⛔ 不要直接放 LINE userId）。同一 `session_id` 超過 30 分鐘沒動作 ⇒ 下一回合回應 `session_expired: true`，會話重新開始。
+
+## 工具 `agent.turn`
+輸入：
+```json
+{"message": "<0–2000 字>", "image_urls": ["https://relay.jgbsmart.com/...簽章網址", "..."]}
+```
+- `message` 可為空字串（只傳照片）；兩者皆空 ⇒ `INVALID_INPUT`。
+- `image_urls` 選填，最多 10 張，第 11 張起整回合 `INVALID_INPUT`；每張 ≤5,000,000 bytes；只收 `https://relay.jgbsmart.com` 的簽章網址（帶 `exp` 到期戳）；超過 5 張 chatai 內部分批辨識，時間不夠會明講「只看了前 N 張」。⛔ 不要把多張拆成兩個回合。
+
+輸出（`tools/call` 結果的文字內容是 JSON）：
+```json
+{"answer": "<給使用者看的文字>", "kind": "answer|ask|handoff", "handoff": null, "quick_replies": [{"label": "...", "value": "..."}], "trace_id": "<hex>", "session_expired": false}
+```
+- `answer` 直接顯示。`kind=handoff` ⇒ `answer` 是固定的轉專人句，請掛「找真人」動作。
+- `quick_replies` 有值就渲染成按鈕；使用者點了，把 `value` **原字串**當下一回合的 `message` 送回，⛔ 不要改寫。
+
+## 機器值（`value` 會出現的形狀）
+| 形狀 | 意義 |
+|---|---|
+| `confirm_submit:<16 hex>` | 確認卡「✅ 確認送出」 |
+| `confirm_edit:<16 hex>` | 「✏️ 我要修改」 |
+| `confirm_cancel:<16 hex>` | 「❌ 取消」 |
+| `<修繕分類名>` | 照片辨識信心低時的分類候選（≤3 顆，label＝value） |
+
+確認卡回合：`kind=ask`、`answer` 是卡文字（物件／修繕分類／急迫程度／問題描述，可能多一行「另有未結單 N 張」）、`quick_replies` 三顆確認鍵。按送出 ⇒ 下一回合 `answer` 含單號；重按同一鍵不重複建單；過期後按舊鍵 ⇒ 固定句「這筆確認已失效，請重新確認一次。」
+
+## 清單點選
+使用者點清單那一筆時，把 `select:<type>:<id>` 當 `message` 送入：`type ∈ bill | contract | repair`，`id` 為 JGB 編號。回應是程式直答的該筆事實（`kind=answer`），之後追問用文字即可。不存在或不在範圍 ⇒ 「查無此筆」。點選後同一段對話只看那一戶，問別戶會回「這個對話只看你點選的那一戶；要查別戶請回清單點那一戶。」；要換戶就再點清單。
+
+## 限制與錯誤
+- 速率：每分鐘 60、每小時 120 回合（全體共用一把 key）；照片每小時 200 張。
+- 工具層錯誤（`ok=false`）只有五碼：`INVALID_INPUT`／`NO_MATCH`／`TOOL_TIMEOUT`／`CONFIRMATION_REQUIRED`／`RATE_LIMITED`。
+- HTTP：401 key；403 Origin／vendor 不在 key 範圍；400 `IDENTITY_*`（header JSON 壞、缺 vendor_id／session_id）。
+- 單回合逾時 60 秒（帶照片時照片處理最多佔 15 秒）。
+
+## demo 資料（替身）
+帳單 756248（逾期 7 天）、756242（已繳）、769249（未到期）；合約 89481；電錶 1061；物件「基隆溫馨一人宅套房」（有未結單 8591）、「台北中正-小南門單身貴族分租套房B」。全表見 `inputs/demo-data-sheet-line-oa-20260908.md`。替身寫入只在記憶體，服務重啟歸零。
+
+## 自測
+```bash
+curl -s -X POST https://chatai.jgbsmart.com/rag-api/mcp -K ./mcp-key.txt \
+  -H "Content-Type: application/json" -H "Accept: application/json, text/event-stream" \
+  -H 'X-JGB-Identity: {"mode":"b2b","target_user":"property_manager","vendor_id":4,"role_id":"20151","user_id":"12291","session_id":"linebot-test-1"}' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+```
+（`mcp-key.txt` 內容一行：`header = "X-API-Key: <key>"`，600 權限。）預期 16 個工具，含 `agent.turn`、`jgb2.action.bill_due_extend`、`jgb2.action.repair_create`。
+
+## 相關文件
+- 契約細節：`inputs/mcp-client-contract-line-bot-20260907.md`
+- 工作列：`inputs/line-bot-worklist-demo-20260908.md`
+- 30 個驗收案例對照：`inputs/demo-scenarios-20260908/liff-30.json`
