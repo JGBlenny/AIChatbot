@@ -209,3 +209,5 @@
 | 閉包 `get_estate_status` 缺 `role_id` ⇒ 跨 role 解析 | FIX（文字）：接線句加 `role_id=identity.role_id`，取不到回 `None`；驗收 (xi) 補閉包 unit＋正對照 |
 
 兩條皆已改字；業主 2026-09-08「等你指示再開下一輪?」⇒ 開 r4（業主指示續審）：**READY**。W8 (1)(3)(5) 開工前置只剩：DSP-042 業主裁（§0b 三件）→ W-D 落檔 → security-executor。(2) image_urls 仍待 security-reviewer 專審；(4) dunning 序列化在後。
+
+**W8 (1)(3)(5) 完成（2026-09-08）**：DSP-042 裁＋W-D `ace24b46` → security-executor 交件 `b86e7fde`（第一次派工停擺 600 s 重派）→ verifier **CONFIRMED**（unit 1341／integration 35／audit 只紅不變量 3；A1–A4 見帳本 §1h）→ 後續修正 `3bf28e79`（未知 pid 固定句，實跑 L3-H 發現）→ 窄範圍 verifier r2。取捨（執行者列）：unit 檔名 `test_select_entry_unit_req.py`（basename 撞 integration）；`slot_written` 進快照白名單 18→21；`_verify_routes` 缺席 fail-closed；缺 `user_id` 記 violation 交下游閘；hint 張數受 `JGB2_CANDIDATE_CAP`；ref id 進 dialog 摘要不進 trace。剩：(2) image_urls（security-reviewer 專審 → security-executor）、(4) dunning.draft（executor，序列化在後）。

@@ -147,6 +147,27 @@ W4b（定義層、⛔ 不寫例子）：`jgb2.action.bill_due_extend` descriptio
 
 同輪退步（非 delta3 所致，改的檔案不在帳單路徑；正對照＝同輪 L5-C／L5-G／L5-K 帳單數字全對）：L5-perf T1 撞 60 s `TOOL_TIMEOUT`（OpenAI 端），T2／T3 隨之 `no_grounding` 轉人，T4–T10 全對；L5-J 把問句裡的「逾期 12 天」照抄（原始輪算出 78 天）——答案層信任使用者自述數字，列 §3 待修。**delta2 與 delta3 兩輪出卡的會話各 4 個但不同組**（I/J/K/Q vs B/J/identity/O）⇒ 出卡率 ≈1/3 是模型變異，不再是正本問題；剩餘 8 案停在「反問修繕分類」（模型不知分類樹、不主動查）與「反問急迫」（描述已寫 ⛔ 仍問），要在契約層解（分類缺值由系統落上層大類／「其他」、或出卡前程式先查分類樹）——**待裁 delta4**。
 
+**delta4（業主 2026-09-08「delta4 採」；`17621359`：`confirm_card.py`／`action.py` 分類與急迫缺值由程式補、描述改兩欄選填）線③重跑 `smoke/l3_delta4.jsonl`**：模型確實不再填分類（反問分類 0 次、急迫值外洩 8→3），但**出卡 0/12**——`tools/confirm.py` 出卡前閘 `_is_valid_repair_category` 把缺值當無效 ⇒ `confirm.request` 回 `INVALID_INPUT`（L3-A T2 模型照實轉述）。該檔當時由 W8 security-executor 獨佔 ⇒ 待其交件後補兩處（缺值放行、`confirm.request` 描述同步）再量。⚠️ 教訓：改 payload 契約要同時對「出卡前閘」與「執行時閘」兩處（雙保險共用 `_resolve_category` 但缺值判定各自寫）。
+
+**delta4 補閘＋W8 落地後（`b86e7fde`；`smoke/l3_delta4b.jsonl` 線③ 12 會話＋L5-G／K）**：
+
+| 指標 | 原始 | delta2 | delta4b |
+|---|---|---|---|
+| 線③ 出真卡的會話 | 2/12 | 4/12 | **11/12**（10 個在第 1 輪；L3-G 第 1 輪仍用講的） |
+| 建單成功（新單號） | 1 | 4 | **8**（12346–12353；R7 急迫＝緊急 ✓、O 改急迫重出卡 ✓、identity 不查租約 ✓、M 不重問物件 ✓） |
+| 索取照片 | 8 回合 | 2 | **0** |
+| 內部值外洩 | 9 回合 | 8 | **0** |
+| 出卡前未結單提示 | — | — | 每張卡帶「此物件另有未結單 N 張（單號…）」，N 隨本輪建單遞增 ✓（W8 (3)） |
+| p50／p95 | 11.2／21.6 s | 11.3／23.0 | **6.0／12.2 s** |
+
+還沒過的：L3-G（第 1 輪講「接著會出示確認卡」而不出卡，第 2 輪 `confirm_cancel` 無卡 ⇒ 反問）、L3-I T3／L3-J T3 裸 `confirm_submit`（⚠️ 劇本 artifact：真 LINE 重按的是帶 pid 的原按鈕 ⇒ 走 R4.3 回同一 receipt；劇本只送裸字，harness 上一輪無卡就無 pid 可映射）、L5-G「好了」在 T1 主動提議延期後被當「做完了什麼」反問、L5-K 同戶合約查不到轉人（答案層，§3）。卡上分類顯示「其他（未指定，歸其他）」＝業務沒講分類時的明示，⛔ 不是辨識結果。
+
+**W8 (1)(3)(5) 落地實跑（`b86e7fde`＋`3bf28e79`；verifier 對 `b86e7fde` CONFIRMED：unit 1341、integration 35、audit 只紅不變量 3＝常駐容器過期）**：
+- **select 進場**（`smoke/l5sel_w8.jsonl`，線⑤ 8 會話改以 `select:bill:<id>` 進場＋負向 3 回合）：命中 8/8 全部 **0.0 s 程式直答**（不經模型）、`select:bill:999999`／`999999999` 回「查無此筆」、`select:estate:` 與尾端空白不攔截落模型（設計如此）。帶著 select 脈絡的追問：L5-J「清單寫 12 天」改答「已於 2026-08-18 繳清、不在逾期」✓（原始輪照抄 12 天）、L5-K 同戶合約查到 2027/02/28 ✓（原始輪反問編號）、L5-D 無入帳日 ✓、L5-perf 8/10 對（合約 89481 轉人、物件名反問各 1）。
+- **會話過期**（`smoke/exp_h3*`／`exp_h5*`：固定 session_id、turn 1 後把 DB `agent.last_turn_at` 調舊 2000 s 再 turn 2）：過期回合 `session_expired=true`、舊列 `COMPLETED`、只剩一列 `COLLECTING`、下一回合 `false`、重新進場再出卡 ✓（L3-H／L5-H 機制達）。**抓到並修掉**：過期後按舊卡按鈕（pid 已不在 pending）原設計交模型 ⇒ 模型把 pid 念回使用者「確認碼 de34…」（內部識別名外洩）⇒ `3bf28e79` 改為固定句「這筆確認已失效，請重新確認一次」、不進模型、不碰 DB；實跑複驗 0.0 s 固定句、`session_expired` 只在過期那一回合 true。舊「錯 pid 交模型」測試案例改列此契約。
+- verifier 附帶：A1 常駐容器 `aichatbot-rag-orchestrator` 停在 `17621359`／`ace24b46`（不變量 3 紅＝部署狀態非契約退步，重建即綠）；A2 「唯一呼叫點」措辭過寬（`action.repair_create` 執行時本就呼叫 `_resolve_estate`，實質要求＝confirm.py 不呼叫）；A3 `tests/unit/backtest/test_verdict_ruler_req.py` 早已壞（找已封存 spec 的絕對路徑）；A4 (5) 只有假引擎 unit ⇒ 已由上述真 DB 探針補實證。
+- 30 案覆蓋現況：21 可跑案全跑（§1h 各輪）；W8 (5) 2 案（L3-H／L5-H）以探針達；**未跑 7 案**＝W8 (2) `image_urls` 5 案（L3-C／D／F／R7b／P）＋W8 (4) `dunning.draft` 2 案（L4-B／B2）——(2) 等 security-reviewer 專審、(4) 序列化在後。
+
 **還壞的三類（按層）**：
 1. 答案層（工具契約）：`repair_create` 描述「estate_name 必須是系統查得到的物件」⇒ 模型向業務要「系統內的物件名稱或編號」（L3-A／B／M／N 都問了，物件名早在句內）；描述「1 代表非緊急，2 代表緊急」被逐字念給業務 ⇒ 急迫值外洩 8 回合（觀察模式只記不擋）。修法＝描述改定義（口述名稱即可、系統比對；值只給程式）——**待裁 delta3**。
 2. 答案層（行為）：其他槽位缺時仍順帶反問急迫（L3-identity／M／Q T1）；L5-G T1 主動提議延期、T2「好了」被當同意 ⇒ 反問；L5-K 同戶合約查不到就要合約編號（85894 可查）。
