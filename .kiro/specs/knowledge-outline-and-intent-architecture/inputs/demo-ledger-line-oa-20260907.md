@@ -168,6 +168,20 @@ W4b（定義層、⛔ 不寫例子）：`jgb2.action.bill_due_extend` descriptio
 - verifier 附帶：A1 常駐容器 `aichatbot-rag-orchestrator` 停在 `17621359`／`ace24b46`（不變量 3 紅＝部署狀態非契約退步，重建即綠）；A2 「唯一呼叫點」措辭過寬（`action.repair_create` 執行時本就呼叫 `_resolve_estate`，實質要求＝confirm.py 不呼叫）；A3 `tests/unit/backtest/test_verdict_ruler_req.py` 早已壞（找已封存 spec 的絕對路徑）；A4 (5) 只有假引擎 unit ⇒ 已由上述真 DB 探針補實證。
 - 30 案覆蓋現況：21 可跑案全跑（§1h 各輪）；W8 (5) 2 案（L3-H／L5-H）以探針達；**未跑 7 案**＝W8 (2) `image_urls` 5 案（L3-C／D／F／R7b／P）＋W8 (4) `dunning.draft` 2 案（L4-B／B2）——(2) 等 security-reviewer 專審、(4) 序列化在後。
 
+**最終全 21 案（`3bf28e79`＋docstring `3100c781`；`smoke/liff_final.jsonl` 48 回合）**：
+
+| 指標 | 原始（改前） | 最終 |
+|---|---|---|
+| 線③ 出真卡的會話 | 2/12 | **12/12** |
+| 建單成功（新單號） | 1 | **8**（12346–12352；G／B 取消、Q 修改流程照規） |
+| 內部識別名外洩 | 9 回合 | **0** |
+| 文字進場索取照片 | 8 回合 | **0** |
+| 線⑤ perf 10 題 | 9 對 1 轉人 | **10/10**（合約 89481、未結單 8591 都答到） |
+| 轉人 | L5-R3（應轉）＋L5-perf | 只剩 L5-R3（應轉） |
+| p50／p95 | 11.2／21.6 s | **8.8／13.0 s** |
+
+還沒過（都在答案層，⛔ 非正本、非機制）：L5-C 仍整包回答別戶（規格「退出／指路」未落規則）、L5-J「清單寫 12 天」反問而不算（select 進場時會算對）、L5-A／L5-K 答了帳單半題後反問或漏合約半題。列 §3 L15。
+
 **還壞的三類（按層）**：
 1. 答案層（工具契約）：`repair_create` 描述「estate_name 必須是系統查得到的物件」⇒ 模型向業務要「系統內的物件名稱或編號」（L3-A／B／M／N 都問了，物件名早在句內）；描述「1 代表非緊急，2 代表緊急」被逐字念給業務 ⇒ 急迫值外洩 8 回合（觀察模式只記不擋）。修法＝描述改定義（口述名稱即可、系統比對；值只給程式）——**待裁 delta3**。
 2. 答案層（行為）：其他槽位缺時仍順帶反問急迫（L3-identity／M／Q T1）；L5-G T1 主動提議延期、T2「好了」被當同意 ⇒ 反問；L5-K 同戶合約查不到就要合約編號（85894 可查）。
@@ -208,6 +222,8 @@ W4b（定義層、⛔ 不寫例子）：`jgb2.action.bill_due_extend` descriptio
 | L9 | REST 入口 `agent_entry` 取不到大綱只是 outline=None 照跑、不 fail-closed（與門面不對稱；`AGENT_AUDIENCES` 預設空故未開） | S1b verifier 附帶觀察 | P3 |
 | L10 | `runtime.outline_sha` 行程級欄位是 prospect 值（逐回合 trace 取當回合正確，僅命名易誤讀） | 觀測性 | P4 |
 | ~~L11~~ | ~~資料型問題模型傾向 handoff 而非呼叫 `jgb2.query.*`~~ → **誤判，已解**：真根因是 D-BLOCK-2（工具因 null 選填被拒）＋W4（rewrites=0）；模型一直有在帶 ref＋face 查。多輪 ref（S1#2）見 §1 最終實跑 | 機制層（已修） | — |
+
+- **L15（2026-09-08 夜）答案層會話邊界三分**：別戶（退出＋指路，⛔ 不答）／同戶跨類（答得出的先答、另一類指路）／同戶同類續答；「好了／謝謝」在系統主動提議之後仍是收尾語；使用者自述數字（「清單寫 12 天」）以現查為準並明講不一致。落點＝`agent_rules.py` 定義句＋`conversational_config.py` 受眾固定句（規則層，⛔ 不寫例子）；驗收＝L5-C／J／A／K 四案＋W6 36 回合不退。
 
 ## 4. line-bot 要做（契約 `inputs/mcp-client-contract-line-bot-20260907.md`）
 
