@@ -211,6 +211,19 @@ W4b（定義層、⛔ 不寫例子）：`jgb2.action.bill_due_extend` descriptio
 - L15 六情境（`l15_rules.jsonl`）：機制 5/5 同前；一句兩題（select／聊天）2/2 全答（三個 build 合計 4/5）。
 - 結論：兩句留。線⑤剩餘不穩＝模型自判 no_grounding 轉人（L5-C-sel T3 這輪轉人、上兩輪反問），屬 5.1 主驗收未過的同一病灶，不在本線。
 
+**W8 (2) 照片線落地（`56331d51`＋gpt-5 參數 `HEAD`；security-reviewer 24 條、plan-verifier 四輪；素材＝Wikimedia Commons CC 六張，scratchpad `photos/`，⛔ 不進 repo）**：unit 1419（新 44）、integration 35、audit 27–31 PASS。**真線路並排（六張 × gpt-4o／gpt-5-mini，12 次，費用 <US$0.05）**：
+
+| 照片 | gpt-4o | gpt-5-mini |
+|---|---|---|
+| 浴室天花板漏水 | 水電類 2.5 s | 水電類 5.3 s |
+| 配電箱一顆跳脫 | 水電類 2.0 s | **看不出損壞** 2.8 s |
+| 門鎖壞 | 門窗類 2.5 s | 門窗類 6.5 s |
+| 空房白牆 | 看不出損壞 1.7 s ✓ | 看不出損壞 2.7 s ✓ |
+| 壁癌 | 土木類 2.2 s | 土木類 6.8 s |
+| 漏水＋壁癌並排 | 水電類 2.2 s | 水電類 5.3 s |
+
+急迫建議兩模型全為 1（非緊急）；分類全落在封閉樹內；無一張觸發低信心候選（信心皆 ≥0.6）。**兩個真線路才抓到的坑**（unit 假辨識器看不到）：gpt-5 系列 `max_completion_tokens=500` 被推理 token 吃光 ⇒ 六張全回空字串；`reasoning_effort` 在 SDK 1.54 要走 `extra_body`（具名傳 TypeError）。**模型選擇**：demo 先用 gpt-4o（6/6、2 秒）；gpt-5-mini 便宜十倍但慢 2–3 倍且跳電那張漏判，1/6 樣本不足以定案，列 §3 待更多素材再比。未跑：LIFF 五個照片案例經 `/mcp` 端到端（白名單主機 `relay.jgbsmart.com` 本機不存在，需 line-bot relay 或本機 https 替身＋`IMAGE_URL_ALLOWLIST` 覆寫）——列待辦。
+
 **還壞的三類（按層）**：
 1. 答案層（工具契約）：`repair_create` 描述「estate_name 必須是系統查得到的物件」⇒ 模型向業務要「系統內的物件名稱或編號」（L3-A／B／M／N 都問了，物件名早在句內）；描述「1 代表非緊急，2 代表緊急」被逐字念給業務 ⇒ 急迫值外洩 8 回合（觀察模式只記不擋）。修法＝描述改定義（口述名稱即可、系統比對；值只給程式）——**待裁 delta3**。
 2. 答案層（行為）：其他槽位缺時仍順帶反問急迫（L3-identity／M／Q T1）；L5-G T1 主動提議延期、T2「好了」被當同意 ⇒ 反問；L5-K 同戶合約查不到就要合約編號（85894 可查）。
