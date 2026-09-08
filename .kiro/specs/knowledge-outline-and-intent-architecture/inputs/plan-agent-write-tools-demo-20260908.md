@@ -338,3 +338,5 @@
 依業主先例「文字層修正直接續審」⇒ 開 r4。
 
 **r4：READY**（2026-09-08）。待業主核可後派 security-executor（一次交付；真線路用 scratchpad `photos/` 六張、gpt-4o 與 gpt-5-mini 並排）。
+
+**W8 (2) 完成（2026-09-08）**：業主「派」→ security-executor `56331d51`（unit 1419／新 44、integration 35、audit 27–31 PASS）→ 真線路六張×兩模型 12 次 passed（兩坑：gpt-5 `max_completion_tokens` 500 回空、`reasoning_effort` 走 `extra_body`，`123fd6cc`）→ verifier **CONFIRMED**（含 `ba02609a` 重驗；P4 四條：HEAD 漂移、`failures_1h` 含閘擋、REST 成本估算改價目表、配額先扣／DNS 殘窗皆已載明）。業主 R12：demo 用 gpt-4o。剩：LIFF 五個照片案例經 `/mcp` 端到端（待 relay 或本機 https 替身＋`IMAGE_URL_ALLOWLIST` 覆寫）；(4) dunning.draft 等模板內容。
