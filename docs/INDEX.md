@@ -137,3 +137,8 @@ docs/
 ├── maintenance/                # 維護記錄
 └── archive/                    # 歷史歸檔（依日期分批，如 2026-06/）
 ```
+
+## Agentic MCP（2026-09-08 demo 上線）
+- [Agentic MCP 對話線架構（demo 版）](architecture/AGENTIC_MCP_ARCHITECTURE.md) — `/mcp` `agent.turn`：門面→Runtime 三個程式段→工具註冊→替身；寫入鏈、別戶邊界、照片線、組態、已知限制（2026-09-08 上線）
+- [LINE bot 串接資訊單](../.kiro/specs/knowledge-outline-and-intent-architecture/inputs/line-bot-integration-sheet-20260908.md) — 端點 `/rag-api/mcp`、header、機器值、select、照片、限制、自測
+- [HANDOFF 2026-09-09（agentic-mcp 大改版收案）](../.kiro/specs/knowledge-outline-and-intent-architecture/HANDOFF-20260909.md)

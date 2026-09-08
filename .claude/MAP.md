@@ -167,6 +167,8 @@ repo 內另有約 250 份非資料文件尚未指派角色,⛔ 未列於此**不
 
 ## 對話邏輯與路由執行(主線) {#dialogue-logic}
 
+- 架構 | `docs/architecture/AGENTIC_MCP_ARCHITECTURE.md` | **agentic MCP 對話線總覽（2026-09-08 demo 上線）**：`/mcp` `agent.turn` 的門面→Runtime 三個程式段（confirm／select／image）→工具註冊→替身；寫入鏈、別戶邊界、照片硬邊界、組態、已知限制。改這條線先讀它，再讀 `HANDOFF-20260909.md` 與 demo 帳本
+
 ⚠️ 測對話邏輯之前用 `/canon-audit dialogue-logic` 起盤查——下列每一份**整檔讀完**才算數,
 Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必讀清單時,測試會反覆漏掉已裁決的前提。
 
