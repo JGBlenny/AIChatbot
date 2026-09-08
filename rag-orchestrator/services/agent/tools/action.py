@@ -102,7 +102,8 @@ BILL_DUE_EXTEND_SPEC: ToolSpec = _action_spec(
     "從回傳的繳費期限取值；查不到這張帳單就不能出確認；"
     "days＝往後延的天數，正整數；"
     "date_expire_after＝調整後的到期日，八位數字的年月日，"
-    "必須等於 date_expire_before 往後加上 days 天，不一致一律拒絕。"
+    "必須等於 date_expire_before 往後加上 days 天，不一致一律拒絕；"
+    "這個日期不得早於今天；算出來早於今天時不要送確認，先問要改到哪一天。"
     "四個欄位都必填，系統不會替你推算任何一個。",
 )
 

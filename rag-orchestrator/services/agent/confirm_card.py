@@ -39,6 +39,32 @@ from typing import Any, Final, Mapping, Tuple, Optional
 #: 新增動作＝新增一個 render 分支＋一組欄位契約，⛔ 不是在這裡加一個字串。
 CONFIRM_ACTIONS: Final[Tuple[str, ...]] = ("bill_due_extend", "repair_create")
 
+#: 欄位屬性的**已知值域**（S1）。⛔ 新屬性要先進這個集合才准出現在下面那張表裡，
+#: 否則「表裡寫了一個沒有人實作的屬性」會靜默地什麼都不擋。
+CONFIRM_FIELD_ATTR_NAMES: Final[frozenset] = frozenset({"not_before_today"})
+
+#: 屬性名常數：兩道閘與表都只認這個符號，⛔ 不在別處抄字面量。
+NOT_BEFORE_TODAY: Final[str] = "not_before_today"
+
+#: **欄位屬性表**（S1｜H1）：`action → {欄位 → {屬性…}}`。
+#: `not_before_today`＝這一欄的語義是「今天或以後的日期」——⛔ 不是
+#: `bill_due_extend` 的特例：兩道閘一律**以屬性迭代這張表**（見
+#: `fields_before_today`），未來任何帶未來日期語義的動作**只加表項、不加程式**，
+#: ⛔ 任何地方都不得出現以 action 名為條件的分支。
+#: ⚠️ 被標記的欄位必須是該 action 的 render 真的會解析的日期欄位——
+#: `tests/unit/agent/test_confirm_date_gate_req.py` 以「缺值必拋 `ConfirmCardError`、
+#: 給合法日期 render 成功」逐欄證明，⛔ 不靠人工對照。
+CONFIRM_FIELD_ATTRS: Final[dict[str, dict[str, frozenset]]] = {
+    "bill_due_extend": {"date_expire_after": frozenset({NOT_BEFORE_TODAY})},
+}
+# 值域與分支表必須同步（啟動期就炸，同 `_RENDERERS` 的紀律）
+assert set(CONFIRM_FIELD_ATTRS) <= set(CONFIRM_ACTIONS)
+assert all(
+    attrs <= CONFIRM_FIELD_ATTR_NAMES
+    for fields in CONFIRM_FIELD_ATTRS.values()
+    for attrs in fields.values()
+)
+
 #: `emergency_status` 的中文（jgb2 DB 真值；見模組 docstring 的地雷說明）。
 _EMERGENCY_ZH: Final[dict[int, str]] = {1: "非緊急", 2: "緊急"}
 
@@ -224,6 +250,62 @@ def render(action: Any, payload: Any) -> str:
 
 
 # ---------------------------------------------------------------------------
+# 日期有效性（S1｜H1）：**一個判定、一個時鐘、兩個呼叫點**
+#
+# 為什麼判定在這一層：`render()` 只驗形狀與 `before + days == after`，三個數字
+# 彼此自洽的一組**過去**日期照樣出得了卡、兌現得了（H1 走查實測）。「不得早於
+# 今天」是這一欄的**語義**，語義屬於契約層，⛔ 不是某支工具的 if。
+#
+# 為什麼 `today` 由呼叫端傳進來：本檔的硬約束是決定性（見模組 docstring
+# 「⛔ 不讀時鐘」）。時鐘的唯一來源是 `services.jgb.bills._today()`，由兩個呼叫點
+# （`tools/confirm.confirm_request`、`runtime._run_confirm_segment` 兌現分支）
+# 在**呼叫點**取值，⛔ 不在此 import 它——那會讓本檔變成不決定性的，
+# 也會讓測試的 monkeypatch 失效。
+# ---------------------------------------------------------------------------
+
+#: 閘一（出卡前）回給**模型**的訊息（⛔ 無插值、⛔ 不舉例、⛔ 不回顯日期值）。
+DATE_BEFORE_TODAY_TEXT: Final[str] = (
+    "這個日期早於今天，不能以它出確認卡；請改問使用者要用今天以後的哪一天，再重新提出確認。"
+)
+
+
+def date_not_before_today(value: Any, today: date) -> bool:
+    """`value`（`YYYYMMDD`）是不是**今天或以後**。純函式、⛔ 不讀時鐘。
+
+    Raises:
+        ConfirmCardError: `value` 不是 `YYYYMMDD` 形狀／不是合法日期
+            （沿用 `_parse_date` 的唯一解析規則，⛔ 不另立第二套）。
+            呼叫端 `fields_before_today` 把它折成「擋下」，見該函式。
+    """
+    return _parse_date(value, "date", "date_not_before_today") >= today
+
+
+def fields_before_today(action: Any, payload: Any, today: date) -> list:
+    """規格裡標了 `not_before_today` 而**實際早於今天**的欄位名（沒有 ⇒ `[]`）。
+
+    ⚠️ **以屬性迭代 `CONFIRM_FIELD_ATTRS`**，⛔ 不看 action 叫什麼名字：表裡沒有
+    這個 action、或它沒有被標記的欄位 ⇒ 空清單＝行為完全不變。
+
+    ⚠️ **讀不出來的值一律算擋下**（fail-closed）：缺鍵、`None`、形狀不對的值都
+    無法證明它「是今天或以後」，⛔ 不得因為解析不了就放行。兩個呼叫點在正常路徑上
+    都已經確認過形狀（閘一在 `render()` 之後、閘二在兩把雜湊比對之後），所以這條
+    路只在契約被破壞時才會走到——那時候擋下才是對的。
+    """
+    offenders: list = []
+    for field, attrs in CONFIRM_FIELD_ATTRS.get(action, {}).items():
+        if NOT_BEFORE_TODAY not in attrs:
+            continue
+        value = payload.get(field) if isinstance(payload, Mapping) else None
+        try:
+            ok = date_not_before_today(value, today)
+        except ConfirmCardError:
+            ok = False
+        if not ok:
+            offenders.append(field)
+    return offenders
+
+
+# ---------------------------------------------------------------------------
 # 執行後的回覆句（W3 用；同樣決定性、同樣不經模型）
 # ---------------------------------------------------------------------------
 
@@ -298,6 +380,12 @@ def render_receipt(action: Any, payload: Any, receipt: Any) -> str:
 
 __all__ = [
     "CONFIRM_ACTIONS",
+    "CONFIRM_FIELD_ATTRS",
+    "CONFIRM_FIELD_ATTR_NAMES",
+    "NOT_BEFORE_TODAY",
+    "DATE_BEFORE_TODAY_TEXT",
+    "date_not_before_today",
+    "fields_before_today",
     "CARD_FOOTER",
     "EMPTY_DESCRIPTION_ZH",
     "ACTION_FAILED_TEXT",

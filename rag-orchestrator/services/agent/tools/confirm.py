@@ -57,11 +57,20 @@ import secrets
 from dataclasses import dataclass
 from typing import Any, Final, Optional, Tuple
 
-from services.agent.confirm_card import CONFIRM_ACTIONS, ConfirmCardError, render
+from services.agent.confirm_card import (
+    CONFIRM_ACTIONS,
+    DATE_BEFORE_TODAY_TEXT,
+    ConfirmCardError,
+    fields_before_today,
+    render,
+)
 from services.agent.identity import Identity
 from services.agent.tools import jgb2 as jgb2_tools
 from services.agent.tools.action import _resolve_category
 from services.agent.tools.registry import ToolResult, ToolSpec
+# ⚠️ **import 模組、⛔ 不 `from … import _today`**：時鐘要在呼叫點取值，
+# 綁死函式物件會讓測試（與 smoke 的凍結時鐘）monkeypatch 不到。
+from services.jgb import bills
 
 # 三顆確認 quick reply 的穩定機器值——**沿用引擎的常數，⛔ 不在此另抄字面量**。
 # 前後端契約由 `conversational_engine` 持有；抄一份等於讓 agent 路徑與舊鏈
@@ -381,6 +390,19 @@ async def confirm_request(
         #    `ConfirmCardError` 本身就不帶欄位值）。
         logger.info("[agent] confirm.request 卡片 render 失敗（payload 形狀不符）")
         return ToolResult(ok=False, error="INVALID_INPUT")
+
+    # S1／H1 **閘一：日期有效性**（⛔ 通用屬性表，不是某個 action 的 if）。
+    # ⚠️ 位置刻意在 `render()` **之後**：render 已保證欄位齊全且日期解析得動，
+    #    在它之前判等於對一個還沒驗過形狀的字串下語義判斷。
+    # ⚠️ 時鐘在**呼叫點**取（`bills._today()`，與逾期天數同一個時鐘），
+    #    判定本身在 `confirm_card`（純函式）。⛔ 不落 pending、⛔ 不出卡、
+    #    ⛔ 不新增錯誤碼——沿用封閉的 `ToolError` 值域，與 render 失敗的差別
+    #    只在 `text_for_model`（那一支是空字串，模型分得出來）。
+    if fields_before_today(action, payload, bills._today()):
+        logger.info("[agent] confirm.request 日期早於今天 ⇒ 不出卡（⛔ 不記日期值）")
+        return ToolResult(
+            ok=False, error="INVALID_INPUT", text_for_model=DATE_BEFORE_TODAY_TEXT
+        )
 
     session_id = getattr(identity, "session_id", None)
     if not isinstance(session_id, str) or not session_id.strip():

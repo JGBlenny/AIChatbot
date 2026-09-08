@@ -66,6 +66,7 @@ from services.agent.confirm_card import (
     CANCELLED_TEXT,
     CONFIRMATION_REQUIRED_TEXT,
     CONFIRM_ACTIONS,
+    fields_before_today,
     receipt_id_of,
     render_receipt,
 )
@@ -103,6 +104,9 @@ from services.conversational_config import (
     effective_handoff_message,
 )
 from services.presales_gate import SENSITIVE, FactClass, HandoffReason
+# ⚠️ **import 模組、⛔ 不 `from … import _today`**：兌現閘要在呼叫點取時鐘，
+# 與 `tools/confirm` 的閘一同一支函式、同一個時鐘（S1）。
+from services.jgb import bills
 
 logger = logging.getLogger(__name__)
 
@@ -1613,6 +1617,25 @@ class AgentRuntime:
             card_sha, redemption.summary_sha256
         ):
             return _finish(CONFIRMATION_REQUIRED_TEXT)
+
+        # S1／H1 **閘二：兌現前的日期有效性**。與閘一（`confirm.request`）是
+        # **同一個純函式、同一個時鐘**（`bills._today()` 在呼叫點取值），
+        # ⛔ `action.py` 不再加第二套判定——一個判定、一個時鐘、兩個呼叫點。
+        # 為什麼兌現時要再判一次：出卡與按下確認之間可以跨過午夜，也可以在
+        # 表被人為改動後才兌現；「使用者按過確認」證明不了「這個日期還沒過」。
+        # ⚠️ token 在上面 `redeem_pending` 已經燒掉（刻意，S-12）⇒ 使用者要重新
+        #    確認一次；此處**不呼叫任何寫入工具**，pending 以「這一筆失敗了」關掉
+        #    （與工具回 `ok=False` 同一條路：重送回同一句 `ACTION_FAILED_TEXT`，R4.3）。
+        # 稽核出口＝`trace.violations` 的 `date_before_today_at_redeem`（F9）。
+        if fields_before_today(action, payload, bills._today()):
+            logger.info("[agent] 兌現閘：日期早於今天 ⇒ ⛔ 不呼叫寫入工具（⛔ 不記日期值）")
+            pending["receipt"] = {"error": "INVALID_INPUT"}
+            return _finish(
+                ACTION_FAILED_TEXT,
+                violations=["date_before_today_at_redeem"],
+                outcome=make_outcome("failed", expects="none",
+                                     action=pending.get("action")),
+            )
 
         violations: list[str] = []
         call_start = self._clock()

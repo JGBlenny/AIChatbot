@@ -45,6 +45,21 @@ from tests.unit.agent.test_runtime_req import (
 
 pytestmark = pytest.mark.unit
 
+from datetime import date as _date  # noqa: E402  — 見下方 `_freeze_today`
+
+from services.jgb import bills as _bills  # noqa: E402  — 時鐘凍結的唯一注入點
+
+
+#: **模組層凍結時鐘**（S1／H1 起）：`confirm.request` 與兌現路徑都會拿
+#: `bills._today()` 去比對標了 `not_before_today` 的日期欄位
+#: （`confirm_card.CONFIRM_FIELD_ATTRS`）。本檔的凍結 payload 是 2026-08 的日期，
+#: 若跟著真實時鐘走，這些案例會在 2026-08-18 之後集體轉紅——而它們驗的是**兌現與
+#: 雜湊語義**，⛔ 不是日期政策（日期閘門本身由 `test_confirm_date_gate_req.py` 驗）。
+#: ⛔ 不改 payload 的日期：那些日期同時被寫進斷言字串與雜湊。
+@pytest.fixture(autouse=True)
+def _freeze_today(monkeypatch):
+    monkeypatch.setattr(_bills, "_today", lambda: _date(2026, 8, 15))
+
 _REQ = "agentic-mcp-orchestration:R4.2"
 
 _PAYLOAD = {
