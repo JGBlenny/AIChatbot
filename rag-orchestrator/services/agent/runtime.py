@@ -55,12 +55,18 @@ import time
 import unicodedata
 import uuid
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from typing import Any, Callable, Literal, Optional, Protocol
 
 from pydantic import ValidationError
 
 from services import usage_metering
 from services.agent.budget import Budget, BudgetCounters
+from services.agent.completed_actions import (
+    COMPLETED_ACTIONS_KEY,
+    completed_actions_line,
+    record_completed_action,
+)
 from services.agent.confirm_card import (
     ACTION_FAILED_TEXT,
     CANCELLED_TEXT,
@@ -739,6 +745,12 @@ IMAGE_PROVENANCE_SOURCE = "image:recognition#1"
 #: 影像事實資料段的工具標籤（`wrap_provenance_data` 的第一段）。
 IMAGE_DATA_LABEL = "image.recognition"
 
+#: S2／H3：完成動作記憶行在本回合資料段裡的來源代碼與工具標籤——
+#: 同影像事實**同一套**注入紀律（見 `_run_turn_body` 的注入區塊）。一回合
+#: 只有一行（`completed_actions_line` 決定性合成成單行），序號固定 1。
+COMPLETED_ACTIONS_PROVENANCE_SOURCE = "session:completed_actions#1"
+COMPLETED_ACTIONS_LABEL = "session.completed_actions"
+
 #: `ImageTurnInput.status` 的封閉值域。
 IMAGE_STATUSES: frozenset = frozenset({"ok", "partial", "failed", "timeout"})
 
@@ -1307,6 +1319,8 @@ class AgentRuntime:
         has_ref: Optional[bool] = None,
         slot_written: Optional[bool] = None,
         outcome: Optional[dict] = None,
+        completed_action_estate_id: Optional[str] = None,
+        completed_action_receipt: Optional[dict] = None,
     ) -> TurnResult:
         """確認段各出口共用的收尾：組 trace → 落 decision snapshot → 寫回 dialog。
 
@@ -1317,6 +1331,13 @@ class AgentRuntime:
         用它。兩個用途：(1) 清單點選回合 dialog 只寫程式摘要（S8-3，facts 原文
         ⛔ 不進歷史）；(2) 出卡回合 dialog 只寫卡文字，卡外提示行 ⛔ 不進歷史。
         `None` ⇒ 兩者相同（既有行為，⛔ 不變）。
+
+        `completed_action_estate_id`／`completed_action_receipt`（S2／H3）：
+        只在 `outcome.state == "confirmed"` 且 `outcome.ref` 存在時用得到——
+        這是本函式**唯一**寫 `agent_state["completed_actions"]` 的地方（見下方），
+        ⛔ 呼叫端不得自己另外寫這個鍵。兩者都是呼叫端已經手上有的封閉值
+        （`select_scope`／pending 的 `estate_id`、redeem 回來的 receipt），
+        本函式不猜、不另外查。
         """
         trace = TurnTrace(
             trace_id=trace_id,
@@ -1341,6 +1362,22 @@ class AgentRuntime:
         _append_dialog(
             agent_state, user_message, answer if dialog_answer is None else dialog_answer
         )
+        # S2／H3：兌現成功 ⇒ 記進會話記憶（下一句「剛剛那張單號多少」答得出來）。
+        # ⚠️ **只看 `outcome`**（模型不在兌現路徑的迴圈裡，`outcome` 全是程式組的
+        #    封閉值）；`state != "confirmed"` 或沒有 `ref`（取消／失敗／清單點選）
+        #    ⇒ 什麼都不寫。
+        if outcome is not None and outcome.get("state") == "confirmed":
+            ref = outcome.get("ref")
+            if isinstance(ref, dict):
+                record_completed_action(
+                    agent_state,
+                    action=outcome.get("action"),
+                    ref_type=ref.get("type"),
+                    ref_id=ref.get("id"),
+                    estate_id=completed_action_estate_id,
+                    at_iso=datetime.fromtimestamp(self._clock(), tz=timezone.utc).isoformat(),
+                    receipt=completed_action_receipt,
+                )
         _emit_agent_decision(trace)
         result = TurnResult(
             kind=kind,
@@ -1549,15 +1586,28 @@ class AgentRuntime:
             )
 
         def _finish(answer: str, *, receipt_id: str = "", tool_calls=None, violations=None,
-                    outcome: Optional[dict] = None):
+                    outcome: Optional[dict] = None, receipt: Optional[dict] = None):
             if outcome is None:
                 # 沒明設的確認段出口（CONFIRMATION_REQUIRED 各分支）＝確認已失效 ⇒ failed
                 outcome = make_outcome("failed", expects="none", action=pending.get("action"))
+            # S2／H3：兌現成功這一格才需要——`estate_id` 兩層來源都是封閉值
+            # （L15 的會話範圍優先；沒有範圍時退回 `_begin_pending_confirm` 存進
+            # `pending` 的那一格，見 `confirm.py:_open_repairs_hint`）。
+            scope = agent_state.get(SELECT_SCOPE_KEY)
+            completed_estate_id = None
+            if isinstance(scope, dict) and scope.get("estate_id"):
+                completed_estate_id = str(scope["estate_id"])
+            else:
+                pending_estate = pending.get("estate_id")
+                if isinstance(pending_estate, str) and pending_estate:
+                    completed_estate_id = pending_estate
             return self._finish_confirm_turn(
                 agent_state=agent_state, user_message=user_message, trace_id=trace_id,
                 start=start, kind="answer", answer=answer, pending_id=pending_id,
                 tool_calls=tool_calls, violations=violations, receipt_id=receipt_id,
                 outcome=outcome,
+                completed_action_estate_id=completed_estate_id,
+                completed_action_receipt=receipt,
             )
 
         # W8 (1)：被清單點選作廢掉的待確認筆 ⇒ **視同不存在**，回固定句。
@@ -1703,6 +1753,7 @@ class AgentRuntime:
             receipt_id=receipt_id_of(receipt),
             outcome=make_outcome("confirmed", expects="none", action=action,
                                  ref=receipt_ref(action, receipt)),
+            receipt=receipt,   # S2／H3：只有這一格 `_finish` 會拿去記完成動作記憶
             **kwargs,
         )
 
@@ -2002,6 +2053,18 @@ class AgentRuntime:
         # ⛔ 不用 `secrets.token_urlsafe`——它會產出 `-`／`_`，被 `_require_nonce`
         # 的 `^[0-9A-Za-z]{8,64}$` 擋下（2.5 接線時發現，見任務回報）。
         nonce = new_nonce()
+        # S2 §3（plan-verifier r2 #3／r3 #1）：**保留 tool_call id 集合**——本回合
+        # 程式會產出的資料段 id 一律由 nonce 導出、在回合最開始就固定下來，
+        # ⛔ 不等到「這回合真的有影像／完成動作」才算出來：模型能不能偽造一個
+        # 同名 id 不該取決於這回合是否真的用到它（那會讓「沒有影像時 img-… 可以
+        # 被模型自己造」這種邊界情況變成漏洞）。`OUTLINE_TOOL_CALL_ID` 是固定字串，
+        # 另外兩個當回合才算得出來，故三者都在這裡收斂成同一個集合，下面的工具
+        # 迴圈只認這一個集合（見 `tool_call_id_collides_with_reserved`）。
+        image_call_id = f"img-{nonce[:8]}"
+        completed_call_id = f"done-{nonce[:8]}"
+        reserved_ids: frozenset[str] = frozenset(
+            {OUTLINE_TOOL_CALL_ID, image_call_id, completed_call_id}
+        )
         # 2.9 路徑對齊：槽位在 **`collected_data` 頂層**（見 `_slots_for_prompt`）。
         slots = _slots_for_prompt(state)
         # 任務 4.2（Plan §4.1-2）：身分槽位一律由**入口身分**現算後覆寫。
@@ -2038,7 +2101,6 @@ class AgentRuntime:
         # 句子解析得出來、過得了 Verifier（驗收 (xii)）。
         # ⛔ 不併進 `message`（那會變成使用者說的話）、⛔ 不經 `agent_state`。
         if image is not None and image.status in ("ok", "partial") and image.facts.strip():
-            image_call_id = f"img-{nonce[:8]}"
             tool_results_by_id[image_call_id] = ToolResult(
                 ok=True,
                 data={"processed": image.processed, "total": image.total},
@@ -2056,6 +2118,38 @@ class AgentRuntime:
                         IMAGE_DATA_LABEL,
                         image_call_id,
                         [(IMAGE_PROVENANCE_SOURCE, provenance_units(image.facts))],
+                        nonce,
+                    ),
+                }
+            )
+
+        # S2／H3：完成動作記憶——與影像事實**同一套**注入紀律（可引用資料段、
+        # 同回合 nonce、⛔ 不進 dialog、⛔ 不經 `agent_state` 以外的任何管道）。
+        # 只有非空且（有釘範圍時）有同戶項目才真的注入——沒有東西可引用時
+        # 不佔一段 messages。
+        completed_line = completed_actions_line(
+            agent_state.get(COMPLETED_ACTIONS_KEY), scope_estate_id
+        )
+        if completed_line:
+            tool_results_by_id[completed_call_id] = ToolResult(
+                ok=True,
+                data={},
+                provenance=[
+                    Provenance(
+                        source=COMPLETED_ACTIONS_PROVENANCE_SOURCE,
+                        text=completed_line,
+                        citable=True,
+                    )
+                ],
+                text_for_model="",
+            )
+            messages.append(
+                {
+                    "role": "user",
+                    "content": wrap_provenance_data(
+                        COMPLETED_ACTIONS_LABEL,
+                        completed_call_id,
+                        [(COMPLETED_ACTIONS_PROVENANCE_SOURCE, provenance_units(completed_line))],
                         nonce,
                     ),
                 }
@@ -2248,13 +2342,16 @@ class AgentRuntime:
                             n_items=_tool_result_n_items(tool_result),
                         )
                     )
-                    # DSP-029 r13 #3：`OUTLINE_TOOL_CALL_ID` 是**保留字**，模型送來同名
-                    # tool_call id 一律拒收 ＋ 記 violation——⛔ 不再加
-                    # `and seeded_outline is not None` 這個條件：沒有大綱時放行等於
+                    # DSP-029 r13 #3／S2 §3（plan-verifier r2 #3、r3 #1）：**保留
+                    # tool_call id 集合**，模型送來同名 tool_call 一律拒收 ＋ 記
+                    # violation——⛔ 不論這回合是否真的有影像／完成動作／大綱都要
+                    # 拒（見上方 `reserved_ids` 的建構理由）：沒有大綱時放行等於
                     # 讓模型自己造一個叫 `outline` 的來源，之後所有 `outline:*` 引用
-                    # 都會解析到它自己塞進來的文字（自證變成自說自話）。
-                    if tc.id == OUTLINE_TOOL_CALL_ID:
-                        violations.append("tool_call_id_collides_with_outline")
+                    # 都會解析到它自己塞進來的文字（自證變成自說自話）；影像／完成
+                    # 動作同理。原本只防 `OUTLINE_TOOL_CALL_ID` 一個保留字，
+                    # 現在以集合迭代，⛔ 不分三個 if 各自處理。
+                    if tc.id in reserved_ids:
+                        violations.append("tool_call_id_collides_with_reserved")
                     else:
                         tool_results_by_id[tc.id] = tool_result
                     # DSP-038-2／W3「確認回合」：`confirm.request` 一成功，這一回合

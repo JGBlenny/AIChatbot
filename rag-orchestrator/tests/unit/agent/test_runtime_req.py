@@ -834,12 +834,12 @@ async def test_forged_outline_tool_call_id_is_rejected_even_without_an_outline()
 
     provider, verifier, runtime = _run("outline")
     result = await runtime.run_turn(_identity(), "q", {})          # state 裡沒有 outline
-    assert "tool_call_id_collides_with_outline" in result.trace.violations
+    assert "tool_call_id_collides_with_reserved" in result.trace.violations
     assert "outline" not in verifier.calls[0]["tool_results"]
 
     provider, verifier, runtime = _run("call_1")                   # 正對照
     result = await runtime.run_turn(_identity(), "q", {})
-    assert "tool_call_id_collides_with_outline" not in result.trace.violations
+    assert "tool_call_id_collides_with_reserved" not in result.trace.violations
     assert "call_1" in verifier.calls[0]["tool_results"]
 
 

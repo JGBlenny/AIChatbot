@@ -156,7 +156,7 @@ async def test_model_forged_tool_call_id_outline_does_not_overwrite_seed():
 
     seen = verifier.calls[0]["tool_results"]
     assert seen[OUTLINE_TOOL_CALL_ID].provenance[0].source == "outline:lease"   # 種子沒被蓋
-    assert "tool_call_id_collides_with_outline" in result.trace.violations
+    assert "tool_call_id_collides_with_reserved" in result.trace.violations
 
 
 def _verify(verifier, out, tool_results, msg="q", handoff=None, nonce=_FIXTURE_NONCE):
