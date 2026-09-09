@@ -493,6 +493,12 @@ def _apply_scope_exit(result: TurnResult, *, scope_in: int, scope_out: int) -> T
 
 #: S4 §5：零查詢轉人的追問固定句。單一句、⛔ 無任何插值（同 `SCOPE_EXIT_TEXT`
 #: 的紀律——帶物件名稱等於用回話的差別揭露存在性）。
+#: 非敏感的轉人原因（封閉集合）：兩道降級閘與 T2 改寫提示都只認這一組——
+#: `no_grounding`（模型自報查無）與 `llm_mentioned_handoff`（模型在文字裡自己寫了轉人
+#: 詞、後掃描補的訊號）。2026-09-09 verifier F1：模型用後者繞過兩出口 ⇒ 併入同一組；
+#: 敏感類（`sensitive_no_grounding`）與預算耗盡一律不在此列。
+NON_SENSITIVE_HANDOFF_REASONS: frozenset = frozenset({"no_grounding", "llm_mentioned_handoff"})
+
 #: 各受眾共用（prospect 也會經過同一道閘），措辭不帶任何一條線的名詞。
 ASK_TARGET_TEXT = "想處理哪一件事？講名稱或編號就可以。"
 
@@ -513,7 +519,7 @@ def _apply_handoff_without_lookup(result: TurnResult, agent_state: dict) -> Turn
     """
     if result.kind != "handoff":
         return result
-    if result.trace.handoff_reason != "no_grounding":
+    if result.trace.handoff_reason not in NON_SENSITIVE_HANDOFF_REASONS:
         return result
     fact_class_value = (result.handoff or {}).get("fact_class")
     try:
@@ -629,7 +635,7 @@ def _apply_handoff_data_exits(result: TurnResult) -> TurnResult:
     """
     if result.kind != "handoff":
         return result
-    if result.trace.handoff_reason != "no_grounding":
+    if result.trace.handoff_reason not in NON_SENSITIVE_HANDOFF_REASONS:
         return result
     fact_class_value = (result.handoff or {}).get("fact_class")
     try:
@@ -2918,7 +2924,7 @@ class AgentRuntime:
             # 那條，否則 `handoff_reason` 會變成 `budget_exhausted`，T2 出口閘
             # 永遠到不了——plan-verifier r1 #6），讓輸出照常往下走進 Verifier，
             # 最終落到 `_apply_handoff_data_exits` 換成 `NO_JUDGEMENT_TEXT`。
-            if out.kind == "handoff" and out.handoff_reason == "no_grounding":
+            if out.kind == "handoff" and out.handoff_reason in NON_SENSITIVE_HANDOFF_REASONS:
                 try:
                     rewrite_fact_class = FactClass(out.fact_class)
                 except ValueError:

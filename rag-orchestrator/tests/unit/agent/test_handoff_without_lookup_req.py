@@ -127,14 +127,15 @@ def test_not_downgraded_when_select_scope_pinned():
     assert "handoff_without_lookup" not in out.trace.violations
 
 
-def test_downgrade_leaves_llm_mentioned_handoff_untouched():
-    """`llm_mentioned_handoff` 不是本函式管的 handoff_reason 值——不在 no_grounding
-    的降級範圍內，理應不動（正對照：reason 不合 ⇒ 上面的專用測試已覆蓋這條邏輯，
-    這裡用實際會出現的另一個合法 reason 值再證一次）。"""
+def test_downgrade_also_covers_llm_mentioned_handoff():
+    """2026-09-09 verifier F1：模型用 `llm_mentioned_handoff`（文字裡自己寫轉人詞）
+    繞過降級——非敏感轉人原因是封閉集合 `NON_SENSITIVE_HANDOFF_REASONS`，兩個值
+    同樣待遇；敏感類仍不動（見上一個測試）。"""
     result = _handoff_result(handoff_reason="llm_mentioned_handoff")
     out = _apply_handoff_without_lookup(result, agent_state={})
-    assert out.kind == "handoff"
-    assert "handoff_without_lookup" not in out.trace.violations
+    assert out.kind == "answer"
+    assert out.answer == ASK_TARGET_TEXT
+    assert "handoff_without_lookup" in out.trace.violations
 
 
 # ---------------------------------------------------------------------------

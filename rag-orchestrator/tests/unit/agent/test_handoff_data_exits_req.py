@@ -206,6 +206,16 @@ def test_untouched_when_reason_is_not_no_grounding():
 
 
 @pytest.mark.req(_REQ)
+def test_llm_mentioned_handoff_with_data_takes_no_judgement_exit():
+    """verifier F1（2026-09-09）：`llm_mentioned_handoff` 與 `no_grounding` 同屬非敏感
+    轉人原因，有資料時一樣走 NO_JUDGEMENT 出口。"""
+    result = _handoff_result(handoff_reason="llm_mentioned_handoff", tool_calls=[_record(empty=False)])
+    out = _apply_handoff_data_exits(result)
+    assert out.kind == "answer"
+    assert "handoff_no_judgement" in out.trace.violations
+
+
+@pytest.mark.req(_REQ)
 def test_untouched_when_fact_class_is_sensitive():
     result = _handoff_result(
         handoff_reason="sensitive_no_grounding",
@@ -256,11 +266,13 @@ def test_untouched_when_reserved_id_collision_present():
 
 
 @pytest.mark.req(_REQ)
-def test_llm_mentioned_handoff_untouched():
+def test_llm_mentioned_handoff_all_empty_takes_no_data_exit():
+    """verifier F1（2026-09-09）：`llm_mentioned_handoff` 與 `no_grounding` 同組
+    （`NON_SENSITIVE_HANDOFF_REASONS`）——全部查無時走 NO_DATA 出口，不再放行。"""
     result = _handoff_result(handoff_reason="llm_mentioned_handoff", tool_calls=[_record(empty=True)])
     out = _apply_handoff_data_exits(result)
-    assert out.kind == "handoff"
-    assert out.handoff is not None
+    assert out.kind == "answer"
+    assert "handoff_no_data" in out.trace.violations
 
 
 @pytest.mark.req(_REQ)
