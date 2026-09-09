@@ -166,7 +166,7 @@ def test_line_is_deterministic_single_line_and_newline_free():
     assert first == second, "同一份 items ⇒ 同一個字串（決定性）"
     assert "\n" not in first
     assert first == (
-        "本對話已完成的動作：修繕單 R-1（物件 88）／帳單 900001 到期日已延至 2026/08/20"
+        "本對話已完成的動作：修繕單 R-1／帳單 900001 到期日已延至 2026/08/20"
     )
 
 
@@ -181,12 +181,13 @@ def test_line_scope_filter_only_same_estate_when_pinned():
          "estate_id": None, "at_iso": "t2"},   # 算不出物件
     ]
     assert completed_actions_line(items, None) == (
-        "本對話已完成的動作：修繕單 R-1（物件 88）／修繕單 R-2（物件 99）"
+        "本對話已完成的動作：修繕單 R-1／修繕單 R-2"
         "／修繕單 R-3"
     )
     # 有釘範圍時：只留同戶；「算不出物件」也 ⛔ 不算同戶（F8）
     pinned = completed_actions_line(items, "88")
-    assert pinned == "本對話已完成的動作：修繕單 R-1（物件 88）"
+    assert pinned == "本對話已完成的動作：修繕單 R-1"
+    assert "88" not in pinned and "物件" not in pinned  # 內部 id 不進文字
 
 
 @pytest.mark.req(_REQ)

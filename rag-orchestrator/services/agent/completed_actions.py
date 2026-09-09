@@ -144,9 +144,9 @@ def completed_actions_line(items: Any, scope_estate_id: Optional[str]) -> str:
         if isinstance(due_date, str) and due_date:
             piece = f"{label} {ref_id} 到期日已延至 {_slash_date(due_date)}"
         else:
+            # 只講使用者看得到的編號；`estate_id` 是內部值，只用於範圍過濾，
+            # ⛔ 不進使用者面文字（2026-09-09 verifier P3：「物件 67652」外洩）。
             piece = f"{label} {ref_id}"
-            if estate_id:
-                piece += f"（物件 {estate_id}）"
         parts.append(_sanitize_piece(piece))
     if not parts:
         return ""
