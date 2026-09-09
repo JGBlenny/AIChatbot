@@ -117,7 +117,7 @@ sequenceDiagram
 **B. 線上（demo）到底擋不擋：`AGENT_VERIFIER_MODE=grounding_observe`（runbook §20-2；W6-b3 於 2026-09-09 落地）**
 
 - 讀值點唯一：`health.verifier_mode()`（含相容舊旗 `AGENT_VERIFIER_OBSERVE_ONLY` ⇒ `observe_only`，一版後移除）。查證：`grep -n "def verifier_mode" rag-orchestrator/services/agent/health.py`。
-- 效果：**引用解析與涵蓋類只記錄**（記進 `VerifierVerdict.observed`，評估繼續往下跑），**極性類與機敏類照擋**。查證：`grep -n "_GROUNDING_OBSERVE_REASONS\|_GROUNDING_OBSERVE_SCHEMA_CAUSES" rag-orchestrator/services/agent/verifier.py`。
+- 效果：**引用解析與涵蓋類只記錄**（記進 `VerifierVerdict.observed`，評估繼續往下跑），**主題錨定極性（`polarity_source=pair`，「尚未逾期」對「已逾期 8 天」）與機敏類照擋**；**裸否定詞表極性（`polarity_source=term`）只記錄**——2026-09-09 誤殺量測：裸詞表對稱整段比對在 98 句裡命中 12、幾乎全假陽性（引文側含否定詞、多 ref 一側缺否定詞），曾造成 7 回合預算耗盡轉人。查證：`grep -n "polarity_source" rag-orchestrator/services/agent/verifier.py`。查證：`grep -n "_GROUNDING_OBSERVE_REASONS\|_GROUNDING_OBSERVE_SCHEMA_CAUSES" rag-orchestrator/services/agent/verifier.py`。
 - `app._wrap_verifier_observe_only` 只剩**相容層**：交模式、守 `observe_only` 只准配替身，⛔ 不再包 `verify()`、不再翻判定。查證：`grep -n "def _wrap_verifier_observe_only" rag-orchestrator/app.py`。
 - 因此線上**可能**出現 `budget_exhausted` 轉人了（極性／機敏類擋兩次）——這是刻意的：那正是「尺在守什麼」看得見的地方。B 段 2026-09-09 之前的實證（24 回合 `agent_verifier_reject` 0 次）是**舊組態**的數字，⛔ 不得再引用為現況。
 - 前一版的「衝突待裁」（帳本 R8 說機敏類照擋、程式卻全放行）**已由本次落地消解**：現在程式與帳本一致。
