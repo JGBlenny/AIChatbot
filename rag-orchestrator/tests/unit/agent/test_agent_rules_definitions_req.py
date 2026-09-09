@@ -233,6 +233,21 @@ def test_agent_rules_source_does_not_reference_reask_pattern_table():
         assert symbol not in source, f"agent_rules.py 出現了 {symbol} 字面"
 
 
+# ---------------------------------------------------------------------------
+# T4（`plan-walkthrough-fixes-batch2-20260909.md` §5）：內部編號不對使用者說
+# ---------------------------------------------------------------------------
+def test_non_prospect_policy_defines_no_internal_id_disclosure():
+    """只加在 pm／tenant 的【判準】段；prospect 政策文（`_POLICY_TEXT`）不動。"""
+    expected = (
+        "內部編號（物件 id、角色 id）不對使用者說，只說名稱或使用者看得到的編號"
+        "（帳單、修繕單、合約）。"
+    )
+    assert expected in agent_rules._POLICY_TEXT_NON_PROSPECT
+    assert expected not in agent_rules._POLICY_TEXT
+    for marker in _EXAMPLE_MARKERS:
+        assert marker not in expected
+
+
 def test_non_prospect_policy_has_multi_question_and_user_stated_number_definitions():
     """L15 (b)(c)（業主 2026-09-08「5.1 兩句採，上限可調」）：兩句定義只在 pm／tenant 政策文；
     prospect 政策文不動（5.1 凍結、1,511 字）。⛔ 定義不帶例子（沿用 _EXAMPLE_MARKERS 檢查）。"""

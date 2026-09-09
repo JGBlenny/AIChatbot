@@ -94,6 +94,7 @@ from services.agent.provenance_units import (  # OUTLINE_TOOL_CALL_ID 下沉至�
     provenance_units,
     resolve_refs,
 )
+from services.agent.text_norm import normalize_terminal_punctuation
 from services.agent.tools.confirm import (
     CONFIRM_QUICK_REPLY_VALUES,
     CONFIRM_SPEC,
@@ -1321,6 +1322,7 @@ class AgentRuntime:
         outcome: Optional[dict] = None,
         completed_action_estate_id: Optional[str] = None,
         completed_action_receipt: Optional[dict] = None,
+        completed_action_estate_name: Optional[str] = None,
     ) -> TurnResult:
         """確認段各出口共用的收尾：組 trace → 落 decision snapshot → 寫回 dialog。
 
@@ -1338,6 +1340,11 @@ class AgentRuntime:
         ⛔ 呼叫端不得自己另外寫這個鍵。兩者都是呼叫端已經手上有的封閉值
         （`select_scope`／pending 的 `estate_id`、redeem 回來的 receipt），
         本函式不猜、不另外查。
+
+        `completed_action_estate_name`（T4）：同樣是呼叫端手上已有的封閉值——
+        釘住範圍時的清單標題，或待確認 payload 的物件名稱欄位（`confirm_card`
+        對外揭露為「物件」的那一欄）；⛔ 不是模型自由文字。缺值就是 `None`，
+        記憶行照舊只印編號。
         """
         trace = TurnTrace(
             trace_id=trace_id,
@@ -1377,6 +1384,7 @@ class AgentRuntime:
                     estate_id=completed_action_estate_id,
                     at_iso=datetime.fromtimestamp(self._clock(), tz=timezone.utc).isoformat(),
                     receipt=completed_action_receipt,
+                    estate_name=completed_action_estate_name,
                 )
         _emit_agent_decision(trace)
         result = TurnResult(
@@ -1595,12 +1603,29 @@ class AgentRuntime:
             # `pending` 的那一格，見 `confirm.py:_open_repairs_hint`）。
             scope = agent_state.get(SELECT_SCOPE_KEY)
             completed_estate_id = None
+            completed_estate_name = None
             if isinstance(scope, dict) and scope.get("estate_id"):
                 completed_estate_id = str(scope["estate_id"])
+                # T4：釘住範圍時，清單面若帶了標題（封閉來源，非模型自由文字）
+                # 優先當物件名稱；目前開放的三個 select 面都還沒帶這一格，
+                # 缺值時退回下面的 pending payload 來源。
+                scope_title = scope.get("title")
+                if isinstance(scope_title, str) and scope_title.strip():
+                    completed_estate_name = scope_title.strip()
             else:
                 pending_estate = pending.get("estate_id")
                 if isinstance(pending_estate, str) and pending_estate:
                     completed_estate_id = pending_estate
+            if completed_estate_name is None:
+                # T4：待確認 payload 的物件名稱欄位——同一欄 `confirm_card.render()`
+                # 對外揭露為「物件」那一行（見 `confirm_card.py::_require_text(...,
+                # "estate_name", ...)`）；`bill_due_extend` 的 payload 沒有這一欄，
+                # 這裡就維持 `None`，記憶行照舊只印帳單編號。
+                pending_payload = pending.get("payload")
+                if isinstance(pending_payload, dict):
+                    payload_estate_name = pending_payload.get("estate_name")
+                    if isinstance(payload_estate_name, str) and payload_estate_name.strip():
+                        completed_estate_name = payload_estate_name.strip()
             return self._finish_confirm_turn(
                 agent_state=agent_state, user_message=user_message, trace_id=trace_id,
                 start=start, kind="answer", answer=answer, pending_id=pending_id,
@@ -1608,6 +1633,7 @@ class AgentRuntime:
                 outcome=outcome,
                 completed_action_estate_id=completed_estate_id,
                 completed_action_receipt=receipt,
+                completed_action_estate_name=completed_estate_name,
             )
 
         # W8 (1)：被清單點選作廢掉的待確認筆 ⇒ **視同不存在**，回固定句。
@@ -2589,7 +2615,12 @@ class AgentRuntime:
                 # DSP-028：`out.answer` 是 `"".join(s.text for s in out.sentences)` 這個
                 # 純 property 導出的字串（⛔ 模型不再輸出 `answer` 欄）——Verifier 步①⑤⑥⑦
                 # 掃的就是同一個導出點，「掃的字串＝送出的字串」因此是定義而非巧合。
-                answer=handoff_dict["message"] if handoff_dict is not None else out.answer,
+                # T4（walkthrough batch2 §5）：句末標點正規化只在這個唯一組裝點套，
+                # ⛔ 不動卡片文字／固定句／對話歷史。
+                answer=(
+                    handoff_dict["message"] if handoff_dict is not None
+                    else normalize_terminal_punctuation(out.answer)
+                ),
                 handoff=handoff_dict,
                 quick_replies=[],
                 trace=trace,

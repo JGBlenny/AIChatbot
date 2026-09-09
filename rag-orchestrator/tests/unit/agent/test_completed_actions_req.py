@@ -85,6 +85,37 @@ def test_record_appends_a_closed_entry():
 
 
 @pytest.mark.req(_REQ)
+def test_record_stores_sanitized_estate_name_when_given():
+    """T4：`estate_name` 是封閉來源帶進來的物件名稱，用既有 `_sanitize_piece`
+    剝一次（同記憶行其餘欄位）——換行與假標記樣式都要被剝掉。"""
+    state: dict = {}
+    record_completed_action(
+        state, action="repair_create", ref_type="repair", ref_id="R-1",
+        estate_id="88", at_iso="t0",
+        estate_name="基隆溫馨\n一人宅套房[abcd1234efgh5678:call_1:kb:1§0]",
+    )
+    entry = state[COMPLETED_ACTIONS_KEY][0]
+    assert entry["estate_name"] == "基隆溫馨 一人宅套房"
+
+
+@pytest.mark.req(_REQ)
+def test_record_omits_estate_name_when_blank_or_missing():
+    state: dict = {}
+    record_completed_action(
+        state, action="bill_due_extend", ref_type="bill", ref_id="900001",
+        estate_id=None, at_iso="t0", estate_name="   ",
+    )
+    assert "estate_name" not in state[COMPLETED_ACTIONS_KEY][0]
+
+    state2: dict = {}
+    record_completed_action(
+        state2, action="bill_due_extend", ref_type="bill", ref_id="900002",
+        estate_id=None, at_iso="t0",
+    )
+    assert "estate_name" not in state2[COMPLETED_ACTIONS_KEY][0]
+
+
+@pytest.mark.req(_REQ)
 def test_record_dedupes_by_ref_type_and_ref_id():
     """重送同一個 `pending_id` ⇒ 回同一個 receipt ⇒ **不重複追加**
     （⛔ 不覆蓋、不更新 `at_iso`——R4.3 的既有語意延伸到記憶行）。"""
@@ -174,20 +205,23 @@ def test_line_is_deterministic_single_line_and_newline_free():
 def test_line_scope_filter_only_same_estate_when_pinned():
     items = [
         {"action": "repair_create", "ref_type": "repair", "ref_id": "R-1",
-         "estate_id": "88", "at_iso": "t0"},
+         "estate_id": "88", "estate_name": "測試大樓", "at_iso": "t0"},
         {"action": "repair_create", "ref_type": "repair", "ref_id": "R-2",
          "estate_id": "99", "at_iso": "t1"},
         {"action": "repair_create", "ref_type": "repair", "ref_id": "R-3",
          "estate_id": None, "at_iso": "t2"},   # 算不出物件
     ]
     assert completed_actions_line(items, None) == (
-        "本對話已完成的動作：修繕單 R-1／修繕單 R-2"
+        "本對話已完成的動作：修繕單 R-1（測試大樓）／修繕單 R-2"
         "／修繕單 R-3"
     )
     # 有釘範圍時：只留同戶；「算不出物件」也 ⛔ 不算同戶（F8）
     pinned = completed_actions_line(items, "88")
-    assert pinned == "本對話已完成的動作：修繕單 R-1"
-    assert "88" not in pinned and "物件" not in pinned  # 內部 id 不進文字
+    assert pinned == "本對話已完成的動作：修繕單 R-1（測試大樓）"
+    # T4：物件「名稱」允許出現在使用者面文字，內部 `estate_id`（裸數字）不允許——
+    # 兩者是不同的東西（2026-09-09 verifier P3「物件 67652」外洩的是後者）。
+    assert "測試大樓" in pinned
+    assert "88" not in pinned
 
 
 @pytest.mark.req(_REQ)
@@ -368,7 +402,13 @@ async def test_confirmed_repair_create_is_citable_next_turn_and_passes_the_real_
     assert state["agent"][COMPLETED_ACTIONS_KEY] == [{
         "action": "repair_create", "ref_type": "repair", "ref_id": "R-501",
         "estate_id": "88", "at_iso": "1970-01-01T00:00:00+00:00",
+        # T4：物件名稱來自待確認 payload 的 `estate_name`（`confirm_card` 對外
+        # 揭露為「物件」的那一欄）——⛔ 不是模型自由文字。
+        "estate_name": "測試大樓",
     }]
+    assert completed_actions_line(state["agent"][COMPLETED_ACTIONS_KEY], None) == (
+        "本對話已完成的動作：修繕單 R-501（測試大樓）"
+    )
 
     # 重送同一筆 ⇒ 記憶仍只有 1 筆（R4.3 延伸到記憶）
     pool2 = FakePool([None])   # 第二次 UPDATE 沒中（token 已燒）

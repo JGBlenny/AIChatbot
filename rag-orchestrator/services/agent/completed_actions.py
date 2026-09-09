@@ -63,6 +63,7 @@ def record_completed_action(
     estate_id: Optional[str],
     at_iso: str,
     receipt: Optional[dict] = None,
+    estate_name: Optional[str] = None,
 ) -> None:
     """把一次成功兌現寫進 `agent_state[COMPLETED_ACTIONS_KEY]`。
 
@@ -70,6 +71,11 @@ def record_completed_action(
     `outcome.state == "confirmed"` 且 `outcome.ref` 存在——本函式不重驗這件事，
     只管記憶行本身的形狀：去重＋上限＋封閉值。`ref_type`／`ref_id` 缺一 ⇒
     不寫（沒有可引用的識別碼，寫進去也組不出一行）。
+
+    `estate_name`（T4｜Plan `plan-walkthrough-fixes-batch2-20260909.md` §5）：
+    呼叫端只能從封閉來源帶進來（待確認 payload 的物件名稱欄位、或釘住範圍時
+    的清單標題）——⛔ 不得是模型自由文字。這裡用既有的 `_sanitize_piece`
+    剝一次（同記憶行其餘欄位的紀律），剝完是空字串就當沒有這個值。
     """
     if not ref_type or not ref_id:
         return
@@ -89,6 +95,10 @@ def record_completed_action(
         "estate_id": estate_id,
         "at_iso": at_iso,
     }
+    if isinstance(estate_name, str):
+        cleaned_name = _sanitize_piece(estate_name).strip()
+        if cleaned_name:
+            entry["estate_name"] = cleaned_name
     date_key = _DUE_DATE_RECEIPT_KEY.get(action or "")
     if date_key and isinstance(receipt, dict):
         value = receipt.get(date_key)
@@ -147,6 +157,11 @@ def completed_actions_line(items: Any, scope_estate_id: Optional[str]) -> str:
             # 只講使用者看得到的編號；`estate_id` 是內部值，只用於範圍過濾，
             # ⛔ 不進使用者面文字（2026-09-09 verifier P3：「物件 67652」外洩）。
             piece = f"{label} {ref_id}"
+        estate_name = item.get("estate_name")
+        if isinstance(estate_name, str) and estate_name:
+            # 物件「名稱」允許出現在使用者面文字；`estate_id`（內部值）不允許——
+            # 兩者是不同的東西，寫入時已用 `_sanitize_piece` 剝過一次。
+            piece = f"{piece}（{estate_name}）"
         parts.append(_sanitize_piece(piece))
     if not parts:
         return ""
