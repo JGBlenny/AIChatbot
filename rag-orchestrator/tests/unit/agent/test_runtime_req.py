@@ -633,6 +633,9 @@ _ALLOWED_AGENT_DECISION_KEYS = frozenset(
         # U3（Plan `inputs/plan-walkthrough-fixes-batch3-20260909.md` §4）：
         # ⛔ **原 ref／關鍵字不在其中**——只記 `{"kind","hits"}`。
         "pre_lookup",
+        # V2（Plan `inputs/plan-walkthrough-fixes-batch4-20260909.md` §3）：
+        # 最近編號資料段**只記有沒有注入**。⛔ **編號原值不在其中**。
+        "has_recent_refs",
     }
 )
 

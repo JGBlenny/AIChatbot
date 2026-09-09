@@ -406,6 +406,74 @@ _PRE_LOOKUP_ID_TOOL_ORDER: tuple[str, ...] = ("bill", "repair", "contract")
 _PRE_LOOKUP_ESTATE_TOOL = "jgb2.query.estates"
 _PRE_LOOKUP_ESTATE_FACE = "物件現況診斷"
 
+# ════════════════════════════════════════════════════════════════════
+# V2（Plan `plan-walkthrough-fixes-batch4-20260909.md` §3）：有前文的零查詢
+# ════════════════════════════════════════════════════════════════════
+#
+# 「本對話最近出現的數字編號」——**不可引用**的資料段，供模型判斷「對象不明
+# 但最近提過某個編號」時先當它是那一筆，⛔ 不是可引用的事實來源（編號本身不是
+# 一筆查證過的事實，只是「這串數字最近出現過」這件事）。
+
+#: 切詞用的分隔字集：既有的空白／標點字集（`_PRE_LOOKUP_TRIM_CHARS`）加上
+#: 一般空白——⛔ 這是切詞用的分隔規則，不是又一條 id 判定規則；id 判定仍只
+#: 靠下面重用的 `_PRE_LOOKUP_ID_RE.match`（整詞比對，同 U3 trigger A）。
+_RECENT_REFS_SPLIT_RE = re.compile(r"[\s" + re.escape(_PRE_LOOKUP_TRIM_CHARS) + r"]+")
+
+#: 掃描 dialog 的視窗（最近 6 則，user／assistant 各算一則）與去重後上限。
+_RECENT_REFS_DIALOG_WINDOW = 6
+_RECENT_REFS_MAX = 5
+
+RECENT_REFS_PROVENANCE_SOURCE = "session:recent_refs#1"
+RECENT_REFS_LABEL = "session.recent_refs"
+
+#: security r1 #6：8 位數字同時涵蓋日期／金額，刻意照單全收（封閉值域無法
+#: 分辨「這串數字是編號還是日期」）——標籤如實講清楚，⛔ 不假裝只有編號。
+RECENT_REFS_TEXT_PREFIX = "本對話最近出現的數字編號（可能含日期或金額）："
+
+#: T2 改寫分支專用的固定定義句——無插值、⛔ 不編造範例名稱／編號。
+RECENT_REFS_REWRITE_HINT = (
+    "對象不明但本對話最近提到編號時，先當它是那一筆："
+    "依資料段回答或先查詢，⛔ 不反問哪一戶。"
+)
+
+
+def _recent_ref_ids_from_text(text: Any) -> list[str]:
+    """從一段自由文字裡切出整詞為 4–9 位數字的 token（重用 `_PRE_LOOKUP_ID_RE`，
+    ⛔ 不另開一條 id 判定正則）。非字串／空字串 ⇒ 空列表。"""
+    if not isinstance(text, str) or not text:
+        return []
+    return [tok for tok in _RECENT_REFS_SPLIT_RE.split(text) if _PRE_LOOKUP_ID_RE.match(tok)]
+
+
+def _recent_ref_ids(agent_state: dict, dialog: list) -> list[str]:
+    """V2（§3）：本對話最近出現過的編號——來源＝`dialog` 最近 6 則（user／
+    assistant 皆掃）＋ `completed_actions` 的 `ref_id`；由近到遠去重、上限 5。
+
+    ⚠️ dialog 由近到遠先掃（新的優先），`completed_actions` 接在後面補（同一
+    筆通常已經在 dialog 的助理回覆文字裡出現過，這裡只是補漏，⛔ 不是另一套
+    優先序判定）。
+    """
+    ordered: list[str] = []
+    seen: set = set()
+
+    def _add(token: str) -> None:
+        if token not in seen:
+            seen.add(token)
+            ordered.append(token)
+
+    recent_dialog = dialog[-_RECENT_REFS_DIALOG_WINDOW:] if dialog else []
+    for row in reversed(recent_dialog):
+        content = row.get("content") if isinstance(row, dict) else None
+        for token in _recent_ref_ids_from_text(content):
+            _add(token)
+    for item in reversed(agent_state.get(COMPLETED_ACTIONS_KEY) or []):
+        if not isinstance(item, dict):
+            continue
+        ref_id = item.get("ref_id")
+        if isinstance(ref_id, str) and _PRE_LOOKUP_ID_RE.match(ref_id):
+            _add(ref_id)
+    return ordered[:_RECENT_REFS_MAX]
+
 
 def _pre_lookup_strip_ws_punct(text: str) -> str:
     """去頭尾空白與標點（封閉字集），交替去除到穩定——處理「標點＋空白」交錯
@@ -874,6 +942,9 @@ class TurnTrace:
     #: 觸發純編號／短名詞前置查詢。⛔⛔ **原 ref／關鍵字不得進來**——只記
     #: `{"kind": "id"|"keyword", "hits": <int>}`；未觸發 ⇒ `None`。
     pre_lookup: Optional[dict] = None
+    #: V2（Plan batch4 §3）：本回合有沒有注入「最近出現的編號」資料段。
+    #: ⛔⛔ **編號原值不得進來**——同 `has_context`／`has_ref` 一套紀律，只記 bool。
+    has_recent_refs: bool = False
 
 
 #: `reasoning_effort` 允許值（OpenAI gpt-5 系列）；封閉集合，⛔ 不在程式內以字串推導。
@@ -1072,6 +1143,12 @@ COMPLETED_ACTIONS_LABEL = "session.completed_actions"
 CALLER_CONTEXT_PROVENANCE_SOURCE = "caller:context#1"
 CALLER_CONTEXT_LABEL = "caller.context"
 
+#: V4（Plan batch4 §5）：常數前綴，讓模型分得清「呼叫端畫面上印給使用者看的
+#: 字」跟「使用者自己說的話」——⛔ 不含任何呼叫端輸入（純常數字串），加在
+#: `sanitize_data_piece(context)` **之後**（先清乾淨再貼前綴，前綴本身不需要
+#: 再清一次）。
+CALLER_CONTEXT_PREFIX = "畫面提示（呼叫端顯示給使用者的，不是使用者說的話）："
+
 #: T3（Plan §4）：**肯定語＝授權**的程式資料段——同進場句一套注入紀律
 #: （`citable=False`、真的登記進 `tool_results_by_id`、id 在 `reserved_ids`
 #: 裡）。文字固定、無插值；⛔ 不代模型執行工具、⛔ 不寫 `PENDING_CONFIRM_KEY`、
@@ -1086,7 +1163,7 @@ AFFIRMATIVE_CARRY_TEXT = "使用者已肯定上一句的提議，直接執行。
 #: 注入紀律；文字固定、無插值。
 CONTEXT_EMPTY_SESSION_PROVENANCE_SOURCE = "caller:empty_session#1"
 CONTEXT_EMPTY_SESSION_LABEL = "caller.empty_session"
-EMPTY_SESSION_TEXT = "本會話沒有先前訊息。"
+EMPTY_SESSION_TEXT = "這段對話裡使用者還沒有說過話。"
 
 #: `ImageTurnInput.status` 的封閉值域。
 IMAGE_STATUSES: frozenset = frozenset({"ok", "partial", "failed", "timeout"})
@@ -1445,6 +1522,8 @@ def _emit_agent_decision(trace: TurnTrace) -> None:
             "has_context": trace.has_context,
             # U3：⛔ 只有種類與命中數，**沒有 ref／關鍵字原文**。
             "pre_lookup": trace.pre_lookup,
+            # V2：⛔ 只有 bool，**沒有編號原值**。
+            "has_recent_refs": trace.has_recent_refs,
             "violations": trace.violations,
             "replayed_from": _replayed_from(trace.violations),
         }
@@ -2585,10 +2664,15 @@ class AgentRuntime:
         # 算出並加入 `reserved_ids`**——理由同 `entry_call_id`：模型能不能偽造
         # 一個 `pre-…` 不該取決於這一回合是否真的觸發了前置查詢。
         pre_lookup_call_id = f"pre-{nonce[:8]}"
+        # V2（Plan batch4 §3）：最近編號資料段的 id 同樣**在回合最開始就無條件
+        # 算出並加入 `reserved_ids`**——理由同 `pre_lookup_call_id`：模型能不能
+        # 偽造一個 `ref-…` 不該取決於這一回合是否真的有最近編號可注入。
+        recent_refs_call_id = f"ref-{nonce[:8]}"
         reserved_ids: frozenset[str] = frozenset(
             {
                 OUTLINE_TOOL_CALL_ID, image_call_id, completed_call_id,
                 entry_call_id, aff_call_id, ctx_call_id, pre_lookup_call_id,
+                recent_refs_call_id,
             }
         )
         # T1：正規化與記憶行走**同一支** `sanitize_data_piece`（控制字元／零寬／
@@ -2747,6 +2831,42 @@ class AgentRuntime:
                         }
                     )
 
+        # V2（Plan batch4 §3）：**有前文的零查詢**——釘住範圍時不注入（同
+        # `completed_actions_line`／前置查詢那一套 L15 紀律：範圍內的對話不該
+        # 再讓「最近提過的編號」跨戶漏出去）；非空時以不可引用資料段注入，
+        # 供模型在對象不明時先當它是那一筆（見下方 T2 迴圈內改寫分支）。
+        recent_refs_ids: list[str] = []
+        if agent_state.get(SELECT_SCOPE_KEY) is None:
+            recent_refs_ids = _recent_ref_ids(agent_state, dialog)
+        has_recent_refs = bool(recent_refs_ids)
+        if has_recent_refs:
+            recent_refs_text = sanitize_data_piece(
+                RECENT_REFS_TEXT_PREFIX + "、".join(recent_refs_ids)
+            )
+            tool_results_by_id[recent_refs_call_id] = ToolResult(
+                ok=True,
+                data={},
+                provenance=[
+                    Provenance(
+                        source=RECENT_REFS_PROVENANCE_SOURCE,
+                        text=recent_refs_text,
+                        citable=False,
+                    )
+                ],
+                text_for_model="",
+            )
+            messages.append(
+                {
+                    "role": "user",
+                    "content": wrap_provenance_data(
+                        RECENT_REFS_LABEL,
+                        recent_refs_call_id,
+                        [(RECENT_REFS_PROVENANCE_SOURCE, provenance_units(recent_refs_text))],
+                        nonce,
+                    ),
+                }
+            )
+
         # DSP-022：當前這句一定是最後一則 user 訊息（歷史由 assembler 從 `dialog` 放前面）。
         messages.append({"role": "user", "content": user_message})
         # W8 (2)：影像事實以**可引用的工具事實**進場（r1 裁定接線）——包法與工具
@@ -2816,13 +2936,17 @@ class AgentRuntime:
         # ⚠️ **一定要登記進 `tool_results_by_id`**：不登記的話模型引用它會落
         #    `ref_source_not_found`，而正確的訊號是 `SOURCE_NOT_CITABLE`。
         if entry_text:
+            # V4（Plan batch4 §5）：**先 sanitize 再加常數前綴**——前綴不含任何
+            # 呼叫端輸入，不需要也不應該再過一次 `sanitize_data_piece`；
+            # `has_context`／空值判斷仍以未加前綴的 `entry_text` 為準。
+            entry_display_text = CALLER_CONTEXT_PREFIX + entry_text
             tool_results_by_id[entry_call_id] = ToolResult(
                 ok=True,
                 data={},
                 provenance=[
                     Provenance(
                         source=CALLER_CONTEXT_PROVENANCE_SOURCE,
-                        text=entry_text,
+                        text=entry_display_text,
                         citable=False,
                     )
                 ],
@@ -2834,7 +2958,7 @@ class AgentRuntime:
                     "content": wrap_provenance_data(
                         CALLER_CONTEXT_LABEL,
                         entry_call_id,
-                        [(CALLER_CONTEXT_PROVENANCE_SOURCE, provenance_units(entry_text))],
+                        [(CALLER_CONTEXT_PROVENANCE_SOURCE, provenance_units(entry_display_text))],
                         nonce,
                     ),
                 }
@@ -2872,6 +2996,7 @@ class AgentRuntime:
                 winning_key_kind=dict(winning_key_kind),
                 miss_kind=miss_kind,
                 has_context=bool(entry_text),
+                has_recent_refs=has_recent_refs,
                 pre_lookup=pre_lookup_trace,
             )
             return TurnResult(
@@ -3251,6 +3376,38 @@ class AgentRuntime:
                     )
                     continue
 
+            # V2（Plan batch4 §3）：**有前文的零查詢**——與上面那條 T2 改寫分支
+            # 互斥（上面要求 `tool_call_records` 非空，這裡要求為空），⛔ 不會
+            # 同回合觸發兩次改寫。條件全為封閉欄位：`out.kind=="handoff"`、
+            # `handoff_reason` 非敏感、`fact_class` 不在敏感五類、本回合完全沒
+            # 呼叫工具、且本回合真的注入過「最近編號」資料段。命中且改寫預算
+            # 未耗盡 ⇒ 消耗一次 `max_rewrites`、帶固定定義句重回模型；
+            # **預算已耗盡 ⇒ 直接跳過改寫**（同上一條分支的坑：⛔ 不走
+            # `counters.rewrite_exhausted` ⇒ `_build_fixed("budget_exhausted")`
+            # 那條，否則 `handoff_reason` 會變成 `budget_exhausted`，到不了
+            # `_apply_handoff_without_lookup` 的 `ASK_TARGET_TEXT` 出口），讓輸出
+            # 照常往下走，最終落到 `_apply_handoff_without_lookup` 的既有行為。
+            if (
+                out.kind == "handoff"
+                and out.handoff_reason in NON_SENSITIVE_HANDOFF_REASONS
+                and not tool_call_records
+                and has_recent_refs
+            ):
+                try:
+                    zero_lookup_fact_class = FactClass(out.fact_class)
+                except ValueError:
+                    zero_lookup_fact_class = None
+                if (
+                    zero_lookup_fact_class not in SENSITIVE
+                    and not counters.rewrite_exhausted(self.budget)
+                ):
+                    counters.rewrites += 1
+                    messages.append({"role": "assistant", "content": content})
+                    messages.append(
+                        {"role": "user", "content": RECENT_REFS_REWRITE_HINT}
+                    )
+                    continue
+
             # DSP-029 F-A：引用解析在 Runtime 做，結果**另傳**給 Verifier——
             # ⛔ 不寫回 `out`／`Sentence` 任何欄位（解析後的原文一旦掛在 AgentOutput
             # 上，就會跟著 `decision_snapshot`／trace 外流）。
@@ -3362,6 +3519,7 @@ class AgentRuntime:
                 winning_key_kind=dict(winning_key_kind),
                 miss_kind=miss_kind,
                 has_context=bool(entry_text),
+                has_recent_refs=has_recent_refs,
                 pre_lookup=pre_lookup_trace,
             )
             result = TurnResult(

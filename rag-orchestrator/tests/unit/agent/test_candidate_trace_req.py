@@ -34,18 +34,20 @@ pytestmark = [
 
 
 def test_allowed_keys_is_exactly_twentyone_and_includes_candidate_trio():
-    """16 → 18 → 21 → 22 → 23：DSP-038／W3 加了 `pending_id`／`receipt_id`；
+    """16 → 18 → 21 → 22 → 23 → 24：DSP-038／W3 加了 `pending_id`／`receipt_id`；
     W8 (1)／S8-6 再加 `select_type`／`has_ref`／`slot_written`
     （子 spec agent-write-tools；⛔ 皆非原文，見 `runtime.TurnTrace` 註記——
     尤其 ⛔ **沒有 `select_ref`**，點選的那筆識別碼不進計量）；
     T1 加 `has_context`（⛔ 只有 bool，**沒有進場句原文**）；
-    U3 加 `pre_lookup`（⛔ 只有 `{"kind","hits"}`，**沒有 ref／關鍵字原文**）。"""
-    assert len(_ALLOWED_AGENT_DECISION_KEYS) == 23
+    U3 加 `pre_lookup`（⛔ 只有 `{"kind","hits"}`，**沒有 ref／關鍵字原文**）；
+    V2 加 `has_recent_refs`（⛔ 只有 bool，**沒有編號原值**）。"""
+    assert len(_ALLOWED_AGENT_DECISION_KEYS) == 24
     assert {"candidate_ids", "winning_key_kind", "miss_kind"} <= _ALLOWED_AGENT_DECISION_KEYS
     assert {"pending_id", "receipt_id"} <= _ALLOWED_AGENT_DECISION_KEYS
     assert {"select_type", "has_ref", "slot_written"} <= _ALLOWED_AGENT_DECISION_KEYS
     assert "has_context" in _ALLOWED_AGENT_DECISION_KEYS
     assert "pre_lookup" in _ALLOWED_AGENT_DECISION_KEYS
+    assert "has_recent_refs" in _ALLOWED_AGENT_DECISION_KEYS
     # 正對照：白名單裡真的沒有 ref 原值這一鍵（尺不是恆真——上一行證明它看得見新鍵）
     assert "select_ref" not in _ALLOWED_AGENT_DECISION_KEYS
     # T1 正對照：⛔ 沒有進場句原文那一鍵
