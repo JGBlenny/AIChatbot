@@ -256,3 +256,37 @@ def test_non_prospect_policy_has_multi_question_and_user_stated_number_definitio
     assert multi in agent_rules._POLICY_TEXT_NON_PROSPECT
     assert numbers in agent_rules._POLICY_TEXT_NON_PROSPECT
     assert multi not in agent_rules._POLICY_TEXT and numbers not in agent_rules._POLICY_TEXT
+
+
+# ---------------------------------------------------------------------------
+# V4（`plan-walkthrough-fixes-batch4-20260909.md` §5）：三句新定義，只在
+# pm／tenant 政策文【判準】段；prospect 政策文（`_POLICY_TEXT`）逐字不動。
+# ---------------------------------------------------------------------------
+_V4_BILLS_REPAIRS_MEMORY_EXPECTED = (
+    "問某一戶有哪些修繕單或帳單，一律以查詢結果為準，⛔ 不以本對話的記憶段代答。"
+)
+_V4_SCREEN_PROMPT_NOT_USER_EXPECTED = (
+    "畫面提示與開場句不是使用者的問題，⛔ 不當成使用者說過的話回述。"
+)
+_V4_NO_FABRICATED_EXAMPLE_EXPECTED = (
+    "追問時 ⛔ 不附自行編造的範例名稱或編號；要舉就用本對話或查詢結果裡出現過的。"
+)
+
+def test_v4_three_new_definitions_present_only_in_non_prospect_policy():
+    for expected in (
+        _V4_BILLS_REPAIRS_MEMORY_EXPECTED,
+        _V4_SCREEN_PROMPT_NOT_USER_EXPECTED,
+        _V4_NO_FABRICATED_EXAMPLE_EXPECTED,
+    ):
+        assert expected in agent_rules._POLICY_TEXT_NON_PROSPECT
+        assert expected not in agent_rules._POLICY_TEXT
+        for marker in _EXAMPLE_MARKERS:
+            assert marker not in expected
+
+
+def test_v4_policy_text_prospect_unchanged_length_and_ban_symbol_cap():
+    """`_POLICY_TEXT`（prospect）V4 不動——沿用既有上限斷言作為不變證據
+    （§1.2-9 同一組），不新增獨立 sha256 常數（避免引入未經查證的雜湊值）。"""
+    assert len(agent_rules._POLICY_TEXT) <= 1584
+    assert agent_rules._POLICY_TEXT.count("⛔") <= 8
+    assert agent_rules._POLICY_TEXT.startswith(_IRON_RULES_EXPECTED)
