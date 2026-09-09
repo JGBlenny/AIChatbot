@@ -1,4 +1,4 @@
-# Plan：走查回修第三批（U1–U3）— 2026-09-09（第 4 稿＝收尾稿：security-reviewer r1 十一條＋plan-verifier r1 四條＋r2 兩條全數 FIX；本稿開唯一一輪收尾審查）
+# Plan：走查回修第三批（U1–U3）— 2026-09-09（第 5 稿：security-reviewer r1 十一條＋plan-verifier r1 四條＋r2 兩條＋r3 收尾一條全數 FIX；r3 P1 改變了詞表設計（主題錨定極性），審查回合已達上限，是否再審由業主裁）
 
 > 來源：第二批回測抓到的三個結構性缺口——(a)「尚未逾期」：事實段印「已逾期 8 天」模型答「尚未逾期」，本地 35 句中 3 句（≈9%），業主 00:44 截圖同型；Verifier 極性詞表沒有「尚未／未／還沒」，且線上觀察模式全放行。(b) 模型可把任何題自報成敏感類（`sensitive_no_grounding`）逃過兩出口（第二批 r2「要不要催他」）。(c) 純編號／純名詞的一句（「756248 你建議我怎麼做」「信仰」）定義句治不了，3/3 反問類型。
 > 紀律同前兩批：契約／schema／狀態機／出口閘門／正本定義層，⛔ 不寫特例；詞表以「一類」維護並量誤殺；提示詞只寫定義。
@@ -29,15 +29,17 @@
 - 觀察類**不遞增** `counters.rewrites`（security F4 前提）；`_build_fixed("budget_exhausted")` 的 reason 不在 `NON_SENSITIVE_HANDOFF_REASONS`，引用類單獨失敗不會多一條到轉人的路（F4 已對碼）。
 - **自證釘死 enforce**（security F2）：`bootstrap.build_runtime` 的 `verifier.self_test`（`known_fabrications.json` 全拒）以 `enforce` 模式跑，⛔ 不受環境旗影響。
 - **守衛看解析後的 mode**（security F3）：`observe_only` 且非 mock ⇒ 啟動 raise（同現行）；`grounding_observe` 且 `USE_MOCK_JGB_API=false` ⇒ `premise.red_flags` 記紅（健檢可見，不阻起）——這是第一個能在真 API 上關掉引用檢查的組態，runbook §20-7 回切段要寫明。
-- 否定詞表一類補齊：`negation_terms` += 「尚未」「未逾期」「還沒」「沒有逾期」「不在逾期」「並未」「未曾」（以「否定＋狀態」一類維護；⛔ 不加單字「未」）；極性比對維持詞組層級。⚠️ 極性是對稱判定，主要誤殺來自**引文側**含否定詞（security F5）——量測必須看到引文。
+- **極性規則改成主題錨定**（plan-verifier r3 #1：加裸「尚未」會讓 `known_open.json` 的 `r4_edit_contract_requires_admin_role` 翻紅——句子「編輯合約需要管理者權限」沒否定詞，引文段落含「管理方尚未回簽」，整段比對就誤殺；這正是 security F5 的引文側誤殺）：`negation_terms` 既有十項（能力詞，裸字）不動；新增一類 **`negation_status_pairs`**（`VerifierRules` 新欄位，形狀 `[{"neg": "尚未", "status": "逾期"}, …]`，以否定詞 {尚未／未／還沒／沒有／不在／並未} × 狀態詞 {逾期／繳費／到帳／發送／回簽／簽署／指派／完成} 兩個封閉集合的笛卡兒積維護），比對規則：pair 的 `neg+status` 出現在句子且 `status` 出現在引文 ⇒ 句子側否定；`neg+status` 出現在引文且 `status` 出現在句子 ⇒ 引文側否定；兩側否定與否不一致 ⇒ `POLARITY_MISMATCH`。**不在同一主題（狀態詞）上的否定詞不算**——`known_open` 那案句子不含「回簽」⇒ 不命中。⛔ 不加裸「尚未」「未」。
 - 誤殺量測（列入驗收；security F5：現行 `_emit_attempt` 不記引文，重放算不出）：U1 在 `AGENT_ATTEMPT_LOG_PATH` 有設時（dev 專用旗，⛔ 線上不設）把每句的 `resolved_unit`（引文原文）一併記進 attempt；量測＝smoke-rag 以 `grounding_observe`＋attempt log 重跑走查／變形集／第二批劇本各一輪，統計 `POLARITY_MISMATCH` 命中，逐句人看（句子＋引文並列）；產出三個絕對值：命中 N、人判誤殺 M、全部重放句數 T；**分母＝N**，M÷N ≤ 10% 才上（同時報 M÷T）；命中的「尚未逾期」對「已逾期 8 天」為正對照。
-- 驗收：單元（模式三態；`grounding_observe` 下極性類 `ok=False`、引用類 `ok=True` 且 verdict 帶 `observed`；**多 ref 混合 fixture**：ref A 覆蓋不足＋極性一致、ref B 覆蓋足＋極性不符 ⇒ `ok=False`、`reason=POLARITY_MISMATCH`；**同時違反引用類與 `forbid_terms` 的 fixture 在 `grounding_observe` 下 `ok=False`**（F1 的短路證明）；`grounding_observe` 下 `marker_in_answer` 與 `handoff_reason_mismatch` 各一案 ⇒ `ok=False`、正對照 `ref_source_not_found` 一案 ⇒ `ok=True` 且 `observed` 含之；`enforce` 下「ref A 覆蓋不足＋ref B 全過」⇒ `ok=True`（既有語義不變）、「ref A 極性一致＋ref B 極性不符」⇒ `ok=False`；`observe_only`＋非 mock ⇒ 啟動 raise；`grounding_observe`＋非 mock ⇒ `premise.red_flags`；self_test 在任何 mode 旗下皆綠）；「尚未逾期」句對「已逾期 8 天」引文 ⇒ `POLARITY_MISMATCH`（正對照：「已逾期 8 天」通過）；三輪回測「未逾期」0 次；線③ 12/12；runbook §20-2／§20-7 改旗與回切說明。
+- **詞表變更的驗收面＝三份自檢 fixture 全綠**（`known_fabrications`／`known_good`／`known_open`，`bootstrap.build_runtime` 起得來）；`r4_edit_contract_requires_admin_role` 維持在 `known_open`（正確句，⛔ 不搬檔）。
+- 驗收：單元（模式三態；`grounding_observe` 下極性類 `ok=False`、引用類 `ok=True` 且 verdict 帶 `observed`；`ref_*` 解析失敗的 ref 在後續跑時跳過（`resolved[(i,j)]` 不存在；r3 註記③）；**多 ref 混合 fixture**：ref A 覆蓋不足＋極性一致、ref B 覆蓋足＋極性不符 ⇒ `ok=False`、`reason=POLARITY_MISMATCH`；**同時違反引用類與 `forbid_terms` 的 fixture 在 `grounding_observe` 下 `ok=False`**（F1 的短路證明）；`grounding_observe` 下 `marker_in_answer` 與 `handoff_reason_mismatch` 各一案 ⇒ `ok=False`、正對照 `ref_source_not_found` 一案 ⇒ `ok=True` 且 `observed` 含之；`enforce` 下「ref A 覆蓋不足＋ref B 全過」⇒ `ok=True`（既有語義不變）、「ref A 極性一致＋ref B 極性不符」⇒ `ok=False`；`observe_only`＋非 mock ⇒ 啟動 raise；`grounding_observe`＋非 mock ⇒ `premise.red_flags`；self_test 在任何 mode 旗下皆綠）；「尚未逾期」句對「已逾期 8 天」引文 ⇒ `POLARITY_MISMATCH`（正對照：「已逾期 8 天」通過）；三輪回測「未逾期」0 次；線③ 12/12；runbook §20-2／§20-7 改旗與回切說明。
 
 ## 3. U2 — 程式側敏感判定（security-executor）
 
 - **新建**問句側封閉樣式分類 `question_sensitive(message) -> bool`（security F6：沒有既有分類器可重用）：樣式表放 `config/agent_verifier_rules.json` 新鍵 `question_sensitive_patterns`（以 SENSITIVE 五類各一組正則維護，同 `sensitive_patterns` 的形狀），**`VerifierRules` 新增欄位 `question_sensitive_patterns: list[str]`（預設空表）**（plan-verifier r1 #2：pydantic 白名單會靜默忽略未宣告鍵）＋正對照測試「`VerifierRules.load(出貨規則檔).question_sensitive_patterns` 筆數＝檔內筆數、非空」；⛔ 不寫字串特例；附誤判量測（對本機所有劇本的使用者訊息跑一次，命中逐句人看）。
 - **只改閘的資格、⛔ 不改寫 `out.fact_class`**（security F7）：兩道閘各自的**准入守衛行**（plan-verifier r1 #1：現行第一道守衛 `handoff_reason not in NON_SENSITIVE_HANDOFF_REASONS ⇒ return`，而模型自報敏感時 Verifier 強制 `handoff_reason=sensitive_no_grounding`，光改 fact_class 豁免到不了）改為封閉條件：「`handoff_reason ∈ NON_SENSITIVE_HANDOFF_REASONS`」**或**「`handoff_reason == "sensitive_no_grounding"` 且 `fact_class ∈ SENSITIVE` 且 `question_sensitive(message) is False`」可進閘；後者進閘後不再享 `fact_class` 豁免（走兩出口固定句，⛔ 不會吐敏感內容）、trace `violations += ["sensitive_self_report_overridden"]`。⛔ 不改 `NON_SENSITIVE_HANDOFF_REASONS` 集合本身（§2 F4 前提依賴它）。程式判敏感（`question_sensitive True`）⇒ 一律不進閘、仍轉人。答案側 `SENSITIVE_TOPIC` 掃描在 enforce 與 grounding_observe 下都保留（縱深）；程式判敏感而模型未報 ⇒ 既有擋法不變。
 - 記錄（security F8）：NO_JUDGEMENT 分支寫 `ask_target=confirm_intent` 會成為 T3 肯定語訊號；降級後多的回合只會擴大「授權執行查詢」的面，寫入仍需 `confirm_submit` 兌現。DSP-011：⛔ 不拿分類結果改工具可見性。
+- 兩道閘簽章補傳 `message`（現行 `_apply_handoff_without_lookup(result, agent_state)`／`_apply_handoff_data_exits(result)` 取不到問句；plan-verifier r3 註記②）。
 - 驗收：單元真值表含「`fact_class=SENSITIVE`＋`handoff_reason=sensitive_no_grounding`＋程式判非敏感 ⇒ 走 NO_JUDGEMENT／追問」與正對照「程式判敏感 ⇒ 仍轉人」；規則檔載入正對照；「要不要催他」（程式非敏感、模型自報敏感）⇒ 走兩出口；「你們抽成幾成」（程式敏感）⇒ 仍轉人；三輪 3/3。
 
 ## 4. U3 — 程式前置查詢（executor）
@@ -69,3 +71,4 @@
 
 plan-verifier r1（四條）：#1 P1 兩道閘准入守衛加「自報敏感且程式判非敏感」條件、不改集合（§3）；#2 `VerifierRules.question_sensitive_patterns` 欄位＋載入正對照（§3）；#3 多 ref 聚合＝照擋類任一命中即擋、`VerifierVerdict.observed`（§2）；#4 誤殺率分母＝N、報 N／M／T（§0／§2）。U3 對碼可行：`registry.call(identity, name, args, timeout_s, stage=…)` 需帶 `stage`；`reserved_ids` 加 `pre-` 無條件成立。
 plan-verifier r2（兩條）：#1 P1 觀察類以子成因界定，`SCHEMA` 的安全子成因照擋（§2）；#2 P2 任一命中即擋只限極性與機敏類，引用類維持既有聚合（§2）。
+plan-verifier r3（收尾，一條 P1）：裸「尚未」翻紅 `known_open` ⇒ 極性改主題錨定 `negation_status_pairs`（§2）、三份 fixture 全綠列驗收；註記②③ 已寫進 §3／§2。
