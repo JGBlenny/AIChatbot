@@ -371,10 +371,10 @@ _ENFORCED_CASES = {
         _out(sentences=[{"text": "   ", "kind": "greeting", "refs": []}]),
         {}, None, "SCHEMA", "empty_text",
     ),
-    "POLARITY_MISMATCH": (
-        _out(sentences=[_fact("系統目前的帳單格式是固定的，無法自訂設定。",
+    "POLARITY_MISMATCH": (   # 主題錨定 pair（照擋）；裸詞表極性在 grounding_observe 為觀察類，見下方專用測試
+        _out(sentences=[_fact("帳單 756248 尚未逾期。",
                               [_marker("t1", "kb:1000")])]),
-        _tool_results(_prov("帳單格式可以彈性調整，依需求自訂欄位，聯繫客服協助設定。")),
+        _tool_results(_prov("帳單 756248 已逾期 8 天（以今日 2026/09/09 計）。")),
         None, "POLARITY_MISMATCH", None,
     ),
     "SENSITIVE_TOPIC": (
@@ -493,11 +493,13 @@ def test_polarity_mismatch_on_any_ref_blocks_even_if_another_ref_passes(rules):
     verdict = _verify(_verifier(rules, "enforce"), out_dict, tool_results)
     assert verdict.ok is False
     assert verdict.reason == "POLARITY_MISMATCH"
+    assert verdict.polarity_source == "term"
 
-    # `grounding_observe` 下同樣照擋（極性類不是觀察類）。
+    # `grounding_observe` 下**裸詞表**極性降為觀察類（2026-09-09 誤殺量測：12 命中幾乎全假陽性）；
+    # pair 極性仍照擋（見 test_pair_polarity_still_blocks_in_grounding_observe）。
     verdict = _verify(_verifier(rules, "grounding_observe"), out_dict, tool_results)
-    assert verdict.ok is False
-    assert verdict.reason == "POLARITY_MISMATCH"
+    assert verdict.ok is True
+    assert "POLARITY_MISMATCH:term" in verdict.observed
 
 
 def test_coverage_failure_no_longer_swallows_the_polarity_verdict(rules):
@@ -505,9 +507,20 @@ def test_coverage_failure_no_longer_swallows_the_polarity_verdict(rules):
     out_dict = _out(sentences=[_fact("這個功能無法使用。", [_marker("t1", "kb:1000")])])
     tool_results = _tool_results(_prov("匯入排程於每日凌晨自動執行，成功後寄出通知信。"))
     verdict = _verify(_verifier(rules, "grounding_observe"), out_dict, tool_results)
+    # 裸詞極性（無法）在 grounding_observe 為觀察類：兩個觀察都要記到、都不擋
+    assert verdict.ok is True
+    assert "QUOTE_NOT_COVERING" in verdict.observed
+    assert "POLARITY_MISMATCH:term" in verdict.observed
+
+
+def test_pair_polarity_still_blocks_in_grounding_observe(rules):
+    """主題錨定 pair 極性（狀態詞兩側都在）在 `grounding_observe` 照擋——這是「尚未逾期」病灶的閘。"""
+    out_dict = _out(sentences=[_fact("帳單 756248 尚未逾期。", [_marker("t1", "kb:1000")])])
+    tool_results = _tool_results(_prov("帳單 756248 已逾期 8 天（以今日 2026/09/09 計）。"))
+    verdict = _verify(_verifier(rules, "grounding_observe"), out_dict, tool_results)
     assert verdict.ok is False
     assert verdict.reason == "POLARITY_MISMATCH"
-    assert "QUOTE_NOT_COVERING" in verdict.observed
+    assert verdict.polarity_source == "pair"
 
 
 # ============================================================ 5. self_test 釘死 enforce

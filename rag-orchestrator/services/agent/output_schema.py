@@ -167,6 +167,10 @@ class VerifierVerdict(BaseModel):
     #: 正常輸出，呼叫端 ⛔ 不得據此遞增 `counters.rewrites`（見 `runtime.py` 的
     #: `if not verdict.ok` 分支）。
     observed: list[str] = Field(default_factory=list)
+    #: `POLARITY_MISMATCH` 的來源表（W6-b3 誤殺量測後分流）：`term`＝裸否定詞表 `negation_terms`
+    #: （對稱整段比對，引文側含否定詞即誤殺——`grounding_observe` 下降為觀察類）；
+    #: `pair`＝主題錨定 `negation_status_pairs`（狀態詞兩側都在才算，照擋）。其他拒因為 None。
+    polarity_source: Optional[Literal["term", "pair"]] = None
     #: DSP-028：**筆索引**（`AgentOutput.sentences` 的 index），⛔ 不是切片段後的片段序號——
     #: 一筆裡若含多個片段，任一片段違規都記在該筆的索引上（`trace_view` 顯示為「筆次」）。
     sent: Optional[int] = None

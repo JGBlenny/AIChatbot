@@ -182,6 +182,11 @@ class OutputVerifier:
             return True
         if verdict.reason in _GROUNDING_OBSERVE_REASONS:
             return True
+        # 2026-09-09 誤殺量測（smoke-rag 一輪 98 句）：裸詞表極性命中 12、幾乎全是引文側
+        # 含否定詞或多 ref 一側缺否定詞的假陽性 ⇒ `grounding_observe` 下裸詞極性降為
+        # 觀察類；主題錨定 pair（兩側都有狀態詞才算）沒有誤殺，照擋。
+        if verdict.reason == "POLARITY_MISMATCH" and verdict.polarity_source == "term":
+            return True
         return (
             verdict.reason == "SCHEMA"
             and verdict.schema_cause in _GROUNDING_OBSERVE_SCHEMA_CAUSES
@@ -191,6 +196,8 @@ class OutputVerifier:
     def _observed_key(verdict: VerifierVerdict) -> str:
         if verdict.reason == "SCHEMA" and verdict.schema_cause:
             return f"SCHEMA:{verdict.schema_cause}"
+        if verdict.reason == "POLARITY_MISMATCH" and verdict.polarity_source:
+            return f"POLARITY_MISMATCH:{verdict.polarity_source}"
         return verdict.reason or "UNKNOWN"
 
     # ------------------------------------------------------------------
@@ -526,7 +533,7 @@ class OutputVerifier:
         if bool(sent_hits) != bool(unit_hits):
             failures.append(VerifierVerdict(
                 ok=False, reason="POLARITY_MISMATCH", sent=sent,
-                term_id=_rule_id((sent_hits or unit_hits)[0])))
+                term_id=_rule_id((sent_hits or unit_hits)[0]), polarity_source="term"))
         else:
             # W6-b3（plan-verifier r3 #1）：**主題錨定**極性——裸「尚未」「未」⛔ 不進
             # `negation_terms`（整段引文比對會誤殺「句子沒提到該主題、引文另一段落有
@@ -552,7 +559,7 @@ class OutputVerifier:
                 if sent_negated != unit_negated:
                     failures.append(VerifierVerdict(
                         ok=False, reason="POLARITY_MISMATCH", sent=sent,
-                        term_id=_pair_rule_id(idx)))
+                        term_id=_pair_rule_id(idx), polarity_source="pair"))
                     break
 
         # DSP-029a：`citable` 隨解析結果一起傳進來，⛔ 不在此二次查 `tool_results`。
