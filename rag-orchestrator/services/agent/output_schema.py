@@ -221,6 +221,15 @@ class VerifierRules(BaseModel):
     #: 有意義字元中，至少這個比例要出現在解析出來的來源片段裡。絕對下限
     #: `min_coverage_chars` 仍在（`max(...)`），兩者是「取嚴的那個」而非二選一。
     min_coverage_ratio: float = 0.5
+    #: U2（Plan `plan-walkthrough-fixes-batch3-20260909.md` §3）：**問句側**敏感樣式，
+    #: `presales_gate.SENSITIVE` 五類各一組正則（順序＝customer_reference／pricing／
+    #: contract_sla／compliance／security）。用途只有一個：
+    #: `services/agent/question_sensitivity.question_sensitive()`——判「模型自報的
+    #: 敏感類站不站得住」。⚠️ 與答案側的 `sensitive_patterns` 是**兩件事**，⛔ 不合併：
+    #: 那一組掃的是模型寫出來的答案（縱深防禦，維持原樣）。
+    #: 預設空表＝這一側一律判非敏感（pydantic 白名單會靜默忽略未宣告鍵，故此欄位
+    #: 必須宣告，否則規則檔加了鍵也讀不到——載入正對照測試釘住這件事）。
+    question_sensitive_patterns: list[str] = []
 
     @classmethod
     def load(cls, path: str | Path) -> "VerifierRules":

@@ -92,6 +92,7 @@ from services.agent.mcp_facade import current_stage
 from services.agent.outline import CandidateOutlineDoc, resolve_vendor_business_types
 from services.agent.output_schema import ASK_TARGETS, AgentOutput, VerifierVerdict
 from services.agent.prompt_assembler import new_nonce, wrap_provenance_data, wrap_tool_data
+from services.agent.question_sensitivity import question_sensitive
 from services.agent.provenance_units import (  # OUTLINE_TOOL_CALL_ID 下沉至葉模組（DSP-029 落地取捨④）
     OUTLINE_TOOL_CALL_ID,
     provenance_units,
@@ -603,13 +604,53 @@ NON_SENSITIVE_HANDOFF_REASONS: frozenset = frozenset({"no_grounding", "llm_menti
 ASK_TARGET_TEXT = "想處理哪一件事？講名稱或編號就可以。"
 
 
-def _apply_handoff_without_lookup(result: TurnResult, agent_state: dict) -> TurnResult:
+def _handoff_fact_class(result: TurnResult) -> Optional[FactClass]:
+    """`result.handoff["fact_class"]` 解析成封閉值域；缺值／值域外 ⇒ `None`。"""
+    try:
+        return FactClass((result.handoff or {}).get("fact_class"))
+    except ValueError:
+        return None
+
+
+def _sensitive_self_report_overridden(
+    result: TurnResult, message: str, rules: Any
+) -> bool:
+    """U2（Plan `plan-walkthrough-fixes-batch3-20260909.md` §3）：模型**自報**敏感，
+    但程式側判這一句不是敏感題 ⇒ 這次自報不算准入豁免，本回合照走兩道降級閘。
+
+    三個條件全成立才算（缺任一 ⇒ `False`＝維持現狀轉人）：
+    - `trace.handoff_reason == "sensitive_no_grounding"`（模型自報敏感時 Verifier
+      強制的原因值；⛔ 不改 `NON_SENSITIVE_HANDOFF_REASONS` 集合本身）
+    - `fact_class ∈ SENSITIVE`
+    - `question_sensitive(message, rules) is False`（程式側第二意見）
+
+    ⚠️ **`rules` 拿不到 ⇒ 一律 `False`**：判不出來的時候要往「維持轉人」錯，
+    ⛔ 不能往「降級成固定句」錯（feedback「規則只能治封閉集合」：非用規則不可時
+    刻意往可回復的方向錯）。
+    ⛔ 本函式**不改任何欄位**——不改寫 `out.fact_class`、不動 `result.handoff`
+    （security r1 F7：改寫 fact_class 會反轉答案側的 `SENSITIVE_TOPIC` 擋法）。
+    """
+    if result.trace.handoff_reason != "sensitive_no_grounding":
+        return False
+    if _handoff_fact_class(result) not in SENSITIVE:
+        return False
+    if rules is None:
+        return False
+    return question_sensitive(message, rules) is False
+
+
+def _apply_handoff_without_lookup(
+    result: TurnResult, agent_state: dict, message: str = "", rules: Any = None
+) -> TurnResult:
     """S4 §5：零查詢的 `no_grounding` 轉人降級成追問（與 `_apply_scope_exit` 同層）。
 
     條件全為封閉欄位（缺任一 ⇒ 不降級）：
     - `result.kind == "handoff"`
-    - `result.trace.handoff_reason == "no_grounding"`
-    - `fact_class` 不在敏感五類（敏感類一律不動，仍轉人）
+    - `result.trace.handoff_reason ∈ NON_SENSITIVE_HANDOFF_REASONS`
+      **或**（U2）`_sensitive_self_report_overridden` 成立
+    - `fact_class` 不在敏感五類（敏感類一律不動，仍轉人）；U2 那條路例外——
+      自報敏感被程式推翻時 ⛔ 不享這道豁免，並多記一筆
+      `sensitive_self_report_overridden`
     - 本回合沒有任何工具呼叫（`trace.tool_calls` 為空）
     - 沒有釘住的 select 範圍（`SELECT_SCOPE_KEY` 為 `None`）
 
@@ -619,14 +660,12 @@ def _apply_handoff_without_lookup(result: TurnResult, agent_state: dict) -> Turn
     """
     if result.kind != "handoff":
         return result
-    if result.trace.handoff_reason not in NON_SENSITIVE_HANDOFF_REASONS:
+    overridden = _sensitive_self_report_overridden(result, message, rules)
+    if result.trace.handoff_reason not in NON_SENSITIVE_HANDOFF_REASONS and not overridden:
         return result
-    fact_class_value = (result.handoff or {}).get("fact_class")
-    try:
-        fact_class = FactClass(fact_class_value)
-    except ValueError:
-        fact_class = None
-    if fact_class in SENSITIVE:
+    # U2：自報敏感被程式推翻的那條路，⛔ 不再享 `fact_class ∈ SENSITIVE` 的豁免
+    # ——它走的是同一組固定句出口（`ASK_TARGET_TEXT`），⛔ 不會吐敏感內容。
+    if _handoff_fact_class(result) in SENSITIVE and not overridden:
         return result
     if len(result.trace.tool_calls) != 0:
         return result
@@ -639,6 +678,8 @@ def _apply_handoff_without_lookup(result: TurnResult, agent_state: dict) -> Turn
     result.trace.handoff_reason = None
     result.outcome = make_outcome("clarifying", expects="text")
     result.trace.violations.append("handoff_without_lookup")
+    if overridden:
+        result.trace.violations.append("sensitive_self_report_overridden")
     return result
 
 
@@ -699,14 +740,17 @@ NO_JUDGEMENT_TEXT = "這題要看你的判斷；我這邊能給的是系統資�
 HANDOFF_DATA_REWRITE_HINT = "資料段有內容；判斷題依資料段給建議並引用，⛔ 不轉人。"
 
 
-def _apply_handoff_data_exits(result: TurnResult) -> TurnResult:
+def _apply_handoff_data_exits(
+    result: TurnResult, message: str = "", rules: Any = None
+) -> TurnResult:
     """T2：`no_grounding` 轉人依工具結果是否有資料分成兩個出口（與
     `_apply_ask_target_gate` 同層、在其之後）。
 
     條件全為封閉欄位（缺任一 ⇒ 不動）：
     - `result.kind == "handoff"`
-    - `result.trace.handoff_reason == "no_grounding"`
-    - `fact_class` 不在敏感五類（敏感類一律不動，仍轉人）
+    - `result.trace.handoff_reason ∈ NON_SENSITIVE_HANDOFF_REASONS`
+      **或**（U2）`_sensitive_self_report_overridden` 成立
+    - `fact_class` 不在敏感五類（敏感類一律不動，仍轉人）；U2 那條路例外，同上
     - `result.trace.tool_calls` 非空
 
     命中後先看有沒有「不能拿 `ToolCallRecord.empty` 判定」的筆——任一筆
@@ -735,14 +779,12 @@ def _apply_handoff_data_exits(result: TurnResult) -> TurnResult:
     """
     if result.kind != "handoff":
         return result
-    if result.trace.handoff_reason not in NON_SENSITIVE_HANDOFF_REASONS:
+    overridden = _sensitive_self_report_overridden(result, message, rules)
+    if result.trace.handoff_reason not in NON_SENSITIVE_HANDOFF_REASONS and not overridden:
         return result
-    fact_class_value = (result.handoff or {}).get("fact_class")
-    try:
-        fact_class = FactClass(fact_class_value)
-    except ValueError:
-        fact_class = None
-    if fact_class in SENSITIVE:
+    # U2：理由同 `_apply_handoff_without_lookup`——被推翻的自報敏感 ⛔ 不享豁免，
+    # 走同一組固定句出口（`NO_DATA_TEXT`／`NO_JUDGEMENT_TEXT`）。
+    if _handoff_fact_class(result) in SENSITIVE and not overridden:
         return result
     tool_calls = result.trace.tool_calls
     if not tool_calls:
@@ -759,6 +801,8 @@ def _apply_handoff_data_exits(result: TurnResult) -> TurnResult:
         result.trace.handoff_reason = None
         result.outcome = make_outcome("answered", expects="text")
         result.trace.violations.append("handoff_no_data")
+        if overridden:
+            result.trace.violations.append("sensitive_self_report_overridden")
         return result
     result.answer = NO_JUDGEMENT_TEXT
     result.kind = "answer"
@@ -768,6 +812,8 @@ def _apply_handoff_data_exits(result: TurnResult) -> TurnResult:
     result.ask_target = "confirm_intent"
     result.outcome = make_outcome("clarifying", expects="text")
     result.trace.violations.append("handoff_no_judgement")
+    if overridden:
+        result.trace.violations.append("sensitive_self_report_overridden")
     return result
 
 
@@ -2837,7 +2883,12 @@ class AgentRuntime:
             result = _apply_scope_exit(
                 result, scope_in=scope_counts["in"], scope_out=scope_counts["out"]
             )
-            result = _apply_handoff_without_lookup(result, agent_state)
+            # U2：兩道閘要拿得到**使用者這一句**與規則集，才能判「模型自報的敏感
+            # 站不站得住」（Plan §3；⛔ 規則拿不到就一律當敏感、維持轉人）。
+            _qs_rules = getattr(self.verifier, "rules", None)
+            result = _apply_handoff_without_lookup(
+                result, agent_state, user_message, _qs_rules
+            )
             # T1（security r1 #3）：新閘一律排在 `_apply_scope_exit` **之後**——
             # 範圍外的回合在上面已經被換成固定句，不該再被當成一次追問來判。
             result = _apply_ask_target_gate(result)
@@ -2845,7 +2896,7 @@ class AgentRuntime:
             # 會把 `kind` 從 `handoff` 換成 `answer` 並另設 `ask_target=
             # "confirm_intent"`；排在 ask_target 閘之後，才不會被那道只認
             # `kind=="ask"` 的閘動到。
-            result = _apply_handoff_data_exits(result)
+            result = _apply_handoff_data_exits(result, user_message, _qs_rules)
             # T1：三個寫點之一（模型迴圈的一般出口與所有固定句出口都經這裡）。
             # ⚠️ 讀的是**過完所有出口閘之後**的 `ask_target`：閘門可能把一個
             #    `kind=ask` 的追問對象歸零，殘留舊值等於讓下一回合的程式判定
