@@ -578,5 +578,40 @@
       }
     },
     "handoff": null
+  },
+  {
+    "id": "good_audience_pm_amount_passes",
+    "nonce": "FIXTURE0000000000",
+    "note": "U3：pm 受眾——同一句金額在 sensitive_patterns_audiences=['prospect'] 下不被樣式表擋。⚠️ 這一句仍走完引用／覆蓋／極性／可引用全部檢查（refs 有效），⛔ 不是整回合豁免；對照組（同句換 prospect／缺 audience 皆擋）在 known_fabrications.json。",
+    "audience": "property_manager",
+    "user_message": "這張電費單幫我看一下。",
+    "agent_output": {
+      "kind": "answer",
+      "sentences": [
+        {
+          "text": "本期電費金額為 4,249 元。",
+          "kind": "fact",
+          "refs": [
+            "[FIXTURE0000000000:t1:kb:9101§0]"
+          ]
+        }
+      ],
+      "fact_class": "other",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "t1": {
+        "ok": true,
+        "provenance": [
+          {
+            "source": "kb:9101",
+            "text": "本期電費金額為 4,249 元，計費期間 2026/07/01 至 2026/08/31。",
+            "citable": true
+          }
+        ],
+        "text_for_model": ""
+      }
+    },
+    "handoff": null
   }
 ]

@@ -7,6 +7,10 @@
 **DSP-028：②③④的量測單位是「筆」與「片段」，①⑤⑥⑦的量測單位是拼接後的 `answer`**
 ——後者是安全側（掃的字串就是送出去的字串），跨筆拆數字／拆禁詞的規避靠它擋。
 
+**受眾（U3）**：`verify(..., audience=)` 只決定①的**後半**（`sensitive_patterns`
+那張樣式表）要不要掃——規則檔的 `sensitive_patterns_audiences` 宣告它對哪些受眾生效，
+缺值一律照擋。①的**前半**（`fact_class in SENSITIVE` 敏感五類）與②～⑦⛔ 不受受眾影響。
+
 **模式（W6-b3）**：`OutputVerifier.mode` 決定每一類違規是「照擋」還是「只記錄到
 `VerifierVerdict.observed`、繼續往下跑」——⛔ 模式感知只在本檔，外層⛔ 不得翻判定。
 
@@ -173,6 +177,35 @@ class OutputVerifier:
             )
         self._mode = value
 
+    def _sensitive_patterns_apply(self, audience: Optional[str]) -> bool:
+        """這一回合要不要跑 `sensitive_patterns`（U3／W9-11、W9-12）。
+
+        三個 **套用**（＝照擋）條件，任一成立即掃：
+        1. `rules.sensitive_patterns_audiences is None`——規則檔沒宣告受眾，
+           語義是**全受眾**（本欄位出現以前的行為），⛔ 不是「沒宣告就關掉」；
+        2. `audience is None`——呼叫端沒給受眾。`OutputVerifier` 是行程級單例、
+           呼叫點不只一處，任何一處忘了傳都不得**靜默**關掉售前守門，
+           故缺值的方向是照擋而不是放行；
+        3. `audience` 在規則檔宣告的清單內。
+
+        只有「規則檔有宣告清單 **且** `audience` 有值 **且** 不在清單內」才跳過。
+
+        ⚠️ 這裡放寬的是**整張樣式表**對該受眾的效力，⛔ 不是逐條豁免，也⛔ 不看
+        這一句有沒有引用資料段——豁免若由引用行為決定，等於把開關交給模型的引用，
+        而引用標記正是文件線可被誘導的東西（W9-17）。
+        ⚠️ 敏感五類（`fact_class in SENSITIVE`）與問句側 `question_sensitive_patterns`
+        ⛔ 不受本判定影響：那是另外兩道閘，各自有各自的值域。
+        ⚠️ `audience` 的值域來自 `identity.Audience` 的決定性推導（封閉三值），
+        ⛔ 本檔不另抄一份那個集合，也因此不對值域外的字串另立第四種語義——
+        呼叫端要嘛給推導出來的受眾、要嘛什麼都不給（照擋）。
+        """
+        declared = self.rules.sensitive_patterns_audiences
+        if declared is None:
+            return True
+        if audience is None:
+            return True
+        return audience in declared
+
     def _is_observed(self, verdict: VerifierVerdict) -> bool:
         """這個違規在目前模式下是「只記錄」還是「照擋」。⛔ 以**拒因＋子成因**界定，
         不是整個 `SCHEMA` 一起（見 `_GROUNDING_OBSERVE_SCHEMA_CAUSES`）。"""
@@ -210,6 +243,7 @@ class OutputVerifier:
         *,
         resolved: dict[tuple[int, int], ResolvedRef],
         resolve_errors: dict[tuple[int, int], str],
+        audience: Optional[str] = None,
     ) -> VerifierVerdict:
         """`resolved`／`resolve_errors` 由**呼叫端**（Runtime／`self_test`）以
         `services.agent.provenance_units.resolve_refs` 算好傳進來，鍵是
@@ -218,6 +252,12 @@ class OutputVerifier:
         ⚠️ 兩者刻意是**必填關鍵字參數、⛔ 無預設值**（r13 F-A）：解析後的引文
         ⛔ 不掛在 `AgentOutput`／`Sentence` 上，所以 Verifier 沒有別的地方拿得到它；
         給預設值等於允許「忘了傳 ⇒ 引用檢查靜靜失去比對對象」，而那個失敗方向是放行。
+
+        `audience`（U3）：本回合的受眾（`identity.resolved_audience()` 的值）。
+        **只影響 `sensitive_patterns` 這一張表要不要掃**（見
+        `_sensitive_patterns_apply`），⛔ 不影響敏感五類、極性、引用、導流、禁詞、
+        handoff 任何一步。⚠️ 刻意**有預設值 `None`**、且 `None` 的方向是**照擋**：
+        呼叫點不只一處，忘了傳的失敗方向必須是「多擋」而不是「少擋」。
 
         ⚠️ `tool_results` 在 DSP-029a 之後**本方法已不再讀它**——來源的 `citable`
         旗標隨 `ResolvedRef` 一起傳進來，⛔ 不再於此二次查表（兩處各查一次就會出現
@@ -278,13 +318,16 @@ class OutputVerifier:
             if hit is not None:
                 return hit
         answer_nfkc = _nfkc(out.answer)
-        for i, pattern in enumerate(self._sensitive_patterns):
-            if pattern.search(answer_nfkc):
-                hit = _hit(VerifierVerdict(
-                    ok=False, reason="SENSITIVE_TOPIC", term_id=_rule_id(i)))
-                if hit is not None:
-                    return hit
-                break  # 觀察：同一類記一次就夠，⛔ 不把整張敏感樣式表逐條掃出來
+        # U3：這張表只對規則檔宣告的受眾生效（缺值＝照擋，見 `_sensitive_patterns_apply`）。
+        # ⚠️ 上面那條 `fact_class in SENSITIVE` 在**這個判定之外**，⛔ 不受受眾影響。
+        if self._sensitive_patterns_apply(audience):
+            for i, pattern in enumerate(self._sensitive_patterns):
+                if pattern.search(answer_nfkc):
+                    hit = _hit(VerifierVerdict(
+                        ok=False, reason="SENSITIVE_TOPIC", term_id=_rule_id(i)))
+                    if hit is not None:
+                        return hit
+                    break  # 觀察：同一類記一次就夠，⛔ 不把整張敏感樣式表逐條掃出來
 
         # ①' DSP-029 r13 #2：答案裡出現片段標記樣式 ⇒ SCHEMA(marker_in_answer)。
         # 契約寫「步⑥前」，這裡取**最早**的合法位置（①之後、②之前），⛔ 不是放寬：
@@ -597,6 +640,12 @@ class OutputVerifier:
         假綠）；等 DSP-030 的新資訊規則真的擋住它們，再整案搬檔。
         回傳 `known_open.json` 的案例數（＝目前仍放行的已知捏造句數），供驗收單列。
 
+        **U3 受眾三組**：fixture 案可選填 `audience`（`_assert_all` 原樣交給
+        `verify()`）。缺鍵＝`None`＝照擋，故既有案例判定不變；新增的三組是
+        「pm 受眾含金額 ⇒ 放」「prospect 同句 ⇒ 擋」「缺 audience 同句 ⇒ 擋」，
+        自證因此同時是**放寬有沒有溢出到別的受眾**的正反對照。
+        ⚠️ 自證釘 `enforce`（見下），⛔ 受眾放寬不得靠模式差異來假綠。
+
         ⚠️ `known_open.json` **不存在時視為 0 筆**——`tests/unit/agent/test_bootstrap_req.py`
         會用只有兩個檔的臨時目錄跑自證。出貨那份 fixture 目錄一定要有它，由
         `test_verifier_req.py::test_shipped_fixtures_include_known_open` 當正對照守住。
@@ -632,9 +681,12 @@ class OutputVerifier:
 
             nonce = case.get("nonce") or _FIXTURE_NONCE
             resolved, resolve_errors = resolve_refs(out, tool_results, nonce)
+            # U3：案內 `audience` 是**選填**——沒寫就是 `None`＝照擋，既有每一個案例
+            # 的判定因此一字不變（新增的三組受眾案例自己填）。
             verdict = self.verify(
                 out, tool_results, case.get("user_message", ""), case.get("handoff"),
-                resolved=resolved, resolve_errors=resolve_errors)
+                resolved=resolved, resolve_errors=resolve_errors,
+                audience=case.get("audience"))
             if verdict.ok != expect_ok:
                 raise RuntimeError(
                     f"OutputVerifier self_test 失敗：{path.name} 案例 {case.get('id')} "

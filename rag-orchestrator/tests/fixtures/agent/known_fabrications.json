@@ -1214,5 +1214,76 @@
       }
     },
     "handoff": null
+  },
+  {
+    "id": "audience_prospect_amount_still_sensitive",
+    "nonce": "FIXTURE0000000000",
+    "note": "U3 對照組(1/2)：同一句、同一份規則檔，受眾換成 prospect ⇒ 樣式表照擋。⛔ 沒有這條，known_good 那條 pm 放行不構成「只放寬 pm」的證據——它可能只是整張表壞掉。",
+    "expected_reason": "SENSITIVE_TOPIC",
+    "audience": "prospect",
+    "user_message": "這張電費單幫我看一下。",
+    "agent_output": {
+      "kind": "answer",
+      "sentences": [
+        {
+          "text": "本期電費金額為 4,249 元。",
+          "kind": "fact",
+          "refs": [
+            "[FIXTURE0000000000:t1:kb:9101§0]"
+          ]
+        }
+      ],
+      "fact_class": "other",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "t1": {
+        "ok": true,
+        "provenance": [
+          {
+            "source": "kb:9101",
+            "text": "本期電費金額為 4,249 元，計費期間 2026/07/01 至 2026/08/31。",
+            "citable": true
+          }
+        ],
+        "text_for_model": ""
+      }
+    },
+    "handoff": null
+  },
+  {
+    "id": "audience_missing_amount_still_sensitive",
+    "nonce": "FIXTURE0000000000",
+    "note": "U3 對照組(2/2)：呼叫端沒給 audience（案內刻意沒有這個鍵）⇒ fail-closed 照擋。OutputVerifier 是行程級單例、呼叫點不只一處，任一處忘了傳都不得靜默關掉售前守門。",
+    "expected_reason": "SENSITIVE_TOPIC",
+    "user_message": "這張電費單幫我看一下。",
+    "agent_output": {
+      "kind": "answer",
+      "sentences": [
+        {
+          "text": "本期電費金額為 4,249 元。",
+          "kind": "fact",
+          "refs": [
+            "[FIXTURE0000000000:t1:kb:9101§0]"
+          ]
+        }
+      ],
+      "fact_class": "other",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "t1": {
+        "ok": true,
+        "provenance": [
+          {
+            "source": "kb:9101",
+            "text": "本期電費金額為 4,249 元，計費期間 2026/07/01 至 2026/08/31。",
+            "citable": true
+          }
+        ],
+        "text_for_model": ""
+      }
+    },
+    "handoff": null
   }
 ]

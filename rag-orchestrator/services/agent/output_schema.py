@@ -207,6 +207,18 @@ class VerifierRules(BaseModel):
     version: str
     sha256: str
     sensitive_patterns: list[str]
+    #: U3（Plan `inputs/plan-document-summary-demo-20260909.md` §U3／W9-11／W9-12）：
+    #: 上面那張 `sensitive_patterns` **對哪些受眾生效**。
+    #: * `None`（規則檔沒有這個鍵）＝**全受眾**＝本欄位出現以前的行為，⛔ 不是「不生效」；
+    #: * 有清單時，只有清單內的受眾會被這張表掃到。
+    #: ⚠️ 缺值方向刻意是**照擋**：這一欄一旦被誤讀成「沒宣告＝關掉」，售前守門會在
+    #: 沒有人發現的情況下整張消失。判定在 `verifier.OutputVerifier._sensitive_patterns_apply`，
+    #: ⛔ 不在這裡展開語義。
+    #: ⚠️ 與 `question_sensitive_patterns`（問句側）無關，⛔ 不共用這張受眾清單。
+    #: 預設 `None` 而非 `[]`：pydantic 白名單會**靜默忽略未宣告鍵**，所以這個欄位
+    #: 必須宣告，否則規則檔加了鍵也讀不到（載入正對照測試釘住這件事）；而 `[]`
+    #: 與「沒宣告」是兩件事——前者是明寫「沒有任何受眾要掃」，後者是舊規則檔。
+    sensitive_patterns_audiences: Optional[list[str]] = None
     negation_terms: list[str]
     #: W6-b3（plan-verifier r3 #1）：**主題錨定**極性詞表——`[{"neg": "尚未", "status": "逾期"}, …]`，
     #: 以否定詞與狀態詞兩個**封閉集合的笛卡兒積**維護（規則檔內逐筆寫出，⛔ 不在程式裡展開，

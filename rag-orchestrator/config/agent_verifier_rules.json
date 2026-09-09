@@ -1,5 +1,8 @@
 {
-  "version": "1.4.1",
+  "version": "1.5.0",
+  "sensitive_patterns_audiences": [
+    "prospect"
+  ],
   "sensitive_patterns": [
     "\\d+(?:\\.\\d+)?\\s*(?:元|塊|萬|億|折)",
     "\\d+(?:\\.\\d+)?\\s*%",

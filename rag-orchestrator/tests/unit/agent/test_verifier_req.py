@@ -39,7 +39,10 @@ def _run(verifier: OutputVerifier, case: dict):
 
     ⚠️ `resolved`／`resolve_errors` ⛔ 不在這裡另寫一套算法——那樣測到的就是本檔
     自己的解析，不是系統的解析。nonce 取案內的值（缺省與 `self_test` 同一個），
-    測「nonce 不符」的案例靠案內 nonce 與標記裡的 nonce 不同來造。"""
+    測「nonce 不符」的案例靠案內 nonce 與標記裡的 nonce 不同來造。
+
+    U3：`audience` 同樣取案內的值、**與 `self_test` 走同一條路**（`case.get`）——
+    缺鍵＝`None`＝照擋，既有每一個案例的判定因此一字不變。"""
     out = AgentOutput.model_validate(case["agent_output"])
     tool_results = {
         tid: ToolResult.model_validate(tr) for tid, tr in case.get("tool_results", {}).items()
@@ -48,7 +51,8 @@ def _run(verifier: OutputVerifier, case: dict):
         out, tool_results, case.get("nonce") or _FIXTURE_NONCE)
     return verifier.verify(
         out, tool_results, case.get("user_message", ""), case.get("handoff"),
-        resolved=resolved, resolve_errors=resolve_errors)
+        resolved=resolved, resolve_errors=resolve_errors,
+        audience=case.get("audience"))
 
 
 @pytest.fixture(scope="module")
@@ -296,7 +300,8 @@ def test_assertion_terms_cover_the_product_capability_verbs_and_not_the_over_bro
     assert {"支持", "包含", "內建", "整合", "自動"} <= set(rules.assertion_terms)
     assert {"有", "是", "已", "將"}.isdisjoint(set(rules.assertion_terms))
     # W6-b3：詞表多一張 `negation_status_pairs`（主題錨定極性）⇒ 版本升 1.4.0。
-    assert rules.version == "1.4.1"   # 第四批：pairs 加「待」（7×8＝56）
+    # U3：規則檔多一個 `sensitive_patterns_audiences` 鍵（敏感樣式表的受眾範圍）⇒ 1.5.0。
+    assert rules.version == "1.5.0"
     # DSP-029：相對覆蓋率進規則集（版本化，才跟得上 `rules_sha`）。
     assert rules.min_coverage_ratio == 0.5
 
