@@ -287,7 +287,18 @@ CONFIRM_TOOL_NAME = CONFIRM_SPEC["name"]
 #: 描述沒人講時填 `IMAGE_DESCRIPTION_TEMPLATE`（只含分類樹名稱，⛔ 不含任何 vision
 #: 自由文字——S9-11 的「照片內文字不進修繕單」不變）。出卡成功即清掉；新照片覆寫。
 IMAGE_SUGGESTION_KEY = "image_suggestion"
-IMAGE_DESCRIPTION_TEMPLATE = "照片辨識：{category}"
+IMAGE_DESCRIPTION_TEMPLATE = "照片辨識：{label}"
+
+
+def _image_description_label(suggestion: dict) -> str:
+    """描述用的文字：辨識描述優先（業主 2026-09-10）；缺 ⇒ 部位＋原因；都缺 ⇒ 分類名。"""
+    desc = suggestion.get("description")
+    if isinstance(desc, str) and desc.strip():
+        return desc.strip()
+    item = suggestion.get("item") if isinstance(suggestion.get("item"), str) else ""
+    reason = suggestion.get("reason") if isinstance(suggestion.get("reason"), str) else ""
+    label = f"{item}{reason}".strip()
+    return label or str(suggestion.get("category_name") or "").strip()
 
 
 def _apply_image_suggestion_to_confirm_args(raw_args: Any, suggestion: Any) -> tuple:
@@ -317,7 +328,7 @@ def _apply_image_suggestion_to_confirm_args(raw_args: Any, suggestion: Any) -> t
         payload["category_name"] = category.strip()
         applied.append("category_name")
     if _blank(payload.get("description")):
-        payload["description"] = IMAGE_DESCRIPTION_TEMPLATE.format(category=category.strip())
+        payload["description"] = IMAGE_DESCRIPTION_TEMPLATE.format(label=_image_description_label(suggestion))
         applied.append("description")
     if not applied:
         return raw_args, []
@@ -1266,10 +1277,10 @@ IMAGE_STATUSES: frozenset = frozenset({"ok", "partial", "failed", "timeout"})
 class ImageTurnInput:
     """門面交給 Runtime 的**照片回合輸入**——**全封閉值**（Plan W8 (2)／r2 裁 (a)）。
 
-    ⛔⛔ **沒有 bytes、沒有網址、沒有 vision 自由文字**：照片的原始 bytes 只在
-    `mcp_facade` 的記憶體裡活過抓檔→縮圖→辨識那一段；`description` 這個欄位
-    **刻意不存在**——照片裡的文字是提示詞注入的唯一出口（S9-11），它連進到
-    Runtime 的資格都沒有，遑論上卡或進 `broken_reason`。
+    ⛔ **沒有 bytes、沒有網址**：照片的原始 bytes 只在 `mcp_facade` 的記憶體裡活過
+    抓檔→縮圖→辨識那一段。vision 自由文字（`suggested_description`／部位／原因）
+    **只走修繕單描述**（業主 2026-09-10 撤銷 S9-11「照片內文字不進修繕單」），
+    ⛔ 不進模型資料段——模型看到的 `facts` 仍是程式組句。
 
     - `status`：`ok`／`partial`（預算用罄但已完成 ≥1 批辨識）／`failed`／`timeout`。
     - `facts`：**程式組的句子**（分類、看不看得出損壞、張數），進模型迴圈時包成
@@ -1287,6 +1298,12 @@ class ImageTurnInput:
     candidates: tuple = ()
     suggested_category: Optional[str] = None
     suggested_emergency: Optional[int] = None
+    #: 業主 2026-09-10 裁：辨識的部位／原因**短標籤**（門面 `_short_label` 過濾：只留中英字母、
+    #: ≤12 字）；只用來組修繕單描述「照片辨識：{部位}{原因}」，⛔ 不進模型資料段。
+    suggested_item: Optional[str] = None
+    suggested_reason: Optional[str] = None
+    #: 業主 2026-09-10 撤銷 S9-11：辨識描述（淨化、≤200 字）可進修繕單描述；⛔ 不進模型資料段。
+    suggested_description: Optional[str] = None
 
     def __post_init__(self) -> None:
         # 值域**當場驗**（fail loud）：`status` 一旦漂出封閉四值，下方三條終止
@@ -3138,7 +3155,12 @@ class AgentRuntime:
             # 照片建議（封閉值）進 session：給之後回合的 `confirm.request` 補分類用。
             # 新照片一律覆寫（沒辨識出分類就寫 None，⛔ 不讓上一張的分類殘留到這張）。
             agent_state[IMAGE_SUGGESTION_KEY] = (
-                {"category_name": image.suggested_category}
+                {
+                    "category_name": image.suggested_category,
+                    "item": image.suggested_item,
+                    "reason": image.suggested_reason,
+                    "description": image.suggested_description,
+                }
                 if isinstance(image.suggested_category, str) and image.suggested_category.strip()
                 else None
             )

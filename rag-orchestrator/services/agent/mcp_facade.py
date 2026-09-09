@@ -113,6 +113,7 @@ import asyncio
 import base64
 import inspect
 import json
+import re
 import logging
 import os
 import time
@@ -804,11 +805,41 @@ def _clamp_confidence(value: Any) -> float:
     return max(0.0, min(1.0, conf))
 
 
+#: 業主 2026-09-10 裁：**「照片裡的文字一律不進修繕單」（S9-11）撤銷**——辨識出的描述
+#: （`description`）直接當修繕單問題描述（前綴「照片辨識：」由 runtime 加）；部位／原因短標籤
+#: 為退路。描述經 `sanitize_data_piece`（單行、去不可見字元、去假標記）＋長度上限；
+#: 短標籤只留中英字母、≤ `IMAGE_LABEL_MAX_CHARS` 字。修繕單描述是給師傅看的人讀文字，
+#: ⛔ 不進模型資料段（模型看到的仍只有程式組的 facts）。
+IMAGE_LABEL_MAX_CHARS = 12
+IMAGE_DESCRIPTION_MAX_CHARS = 200
+
+
+def _short_description(value: Any) -> Optional[str]:
+    """vision 的描述 ⇒ 淨化＋截長；空 ⇒ None。"""
+    from services.agent.completed_actions import sanitize_data_piece
+    cleaned = sanitize_data_piece(value).strip()
+    if not cleaned:
+        return None
+    return cleaned[:IMAGE_DESCRIPTION_MAX_CHARS]
+_IMAGE_LABEL_KEEP_RE = re.compile(r"[^A-Za-z\u4e00-\u9fff]")
+
+
+def _short_label(value: Any) -> Optional[str]:
+    """vision 的短標籤 ⇒ 只留中英字母、上限 12 字；不合 ⇒ None（缺值）。"""
+    if not isinstance(value, str):
+        return None
+    cleaned = _IMAGE_LABEL_KEEP_RE.sub("", value)
+    if not cleaned or len(cleaned) > IMAGE_LABEL_MAX_CHARS:
+        return None
+    return cleaned
+
+
 def _normalize_recognition(raw: Any, tree: Optional[list]) -> dict:
     """vision 回傳 ⇒ **決定性驗證後的封閉值**（S9-11／12／13）。
 
-    ⛔ `description`／`suggested_item`／`suggested_reason` 一律**丟棄**——照片內
-    文字注入的唯一出口就在這幾欄；它們連 `ImageTurnInput` 都進不去。
+    `description` 經 `_short_description`（淨化＋≤200 字）收進 `ImageTurnInput.suggested_description`
+    ——業主 2026-09-10 撤銷 S9-11「照片內文字不進修繕單」；它只用來組修繕單描述，
+    ⛔ 不進模型資料段。`suggested_item`／`suggested_reason` 經 `_short_label` 才收。
     `suggested_emergency` 不在 `{1,2}` ⇒ 缺值（卡值由
     `confirm_card.emergency_status_of` 決定，缺值＝1，vision 的預設 2 ⛔ 不傳播）。
     """
@@ -828,6 +859,9 @@ def _normalize_recognition(raw: Any, tree: Optional[list]) -> dict:
         "category": category,
         "others": others,
         "emergency": emergency,
+        "item": _short_label(data.get("suggested_item")),
+        "reason": _short_label(data.get("suggested_reason")),
+        "description": _short_description(data.get("description")),
     }
 
 
@@ -979,6 +1013,9 @@ async def prepare_image_turn(
             candidates=candidates,
             suggested_category=category,
             suggested_emergency=emergency,
+            suggested_item=best.get("item"),
+            suggested_reason=best.get("reason"),
+            suggested_description=best.get("description"),
         ),
         elapsed,
     )
