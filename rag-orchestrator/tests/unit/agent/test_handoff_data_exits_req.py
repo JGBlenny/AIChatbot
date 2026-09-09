@@ -319,7 +319,7 @@ async def test_rewrite_consumes_one_and_original_handoff_attempt_skips_verifier(
     budget = Budget(max_rewrites=1)
     runtime = _runtime(provider=provider, registry=registry, verifier=verifier, budget=budget)
 
-    result = await runtime.run_turn(_identity(), "押金會退嗎", {})
+    result = await runtime.run_turn(_identity(), "我的押金到底會不會退", {})
 
     # 第一次 no_grounding 被改寫掉、⛔ 未進 Verifier；第二次改寫預算已耗盡，
     # 落到出口閘 ⇒ 這才是第一次真正呼叫 Verifier 的一次。
@@ -350,7 +350,7 @@ async def test_retried_output_answers_and_goes_through_verifier_normally():
     budget = Budget(max_rewrites=2)
     runtime = _runtime(provider=provider, registry=registry, verifier=verifier, budget=budget)
 
-    result = await runtime.run_turn(_identity(), "押金會退嗎", {})
+    result = await runtime.run_turn(_identity(), "我的押金到底會不會退", {})
 
     assert result.kind == "answer"
     assert result.answer == "依系統資料，押金全額退還。"
@@ -385,7 +385,7 @@ async def test_sensitive_pattern_retry_output_still_blocked_by_verifier():
     budget = Budget(max_rewrites=1)
     runtime = _runtime(provider=provider, registry=registry, verifier=verifier, budget=budget)
 
-    result = await runtime.run_turn(_identity(), "押金會退嗎", {})
+    result = await runtime.run_turn(_identity(), "我的押金到底會不會退", {})
 
     # T2 改寫用掉唯一一次預算；敏感樣式那次是 Verifier 真的拒（第二次
     # rewrite），budget 隨即耗盡 ⇒ 固定句收場，⛔ 敏感文字沒有送出去。
@@ -414,7 +414,7 @@ async def test_budget_already_exhausted_skips_rewrite_and_falls_to_no_judgement(
     budget = Budget(max_rewrites=0)
     runtime = _runtime(provider=provider, registry=registry, verifier=verifier, budget=budget)
 
-    result = await runtime.run_turn(_identity(), "押金會退嗎", {})
+    result = await runtime.run_turn(_identity(), "我的押金到底會不會退", {})
 
     assert result.kind == "answer"
     assert result.answer == NO_JUDGEMENT_TEXT

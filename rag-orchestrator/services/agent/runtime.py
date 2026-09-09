@@ -51,6 +51,7 @@ import json
 import logging
 import os
 import re
+import string
 import time
 import unicodedata
 import uuid
@@ -350,6 +351,105 @@ SELECT_NOT_FOUND_TEXT = "查無此筆"
 #: 進 dialog 的**程式摘要**（S8-3：第三方 facts 原文 ⛔ 不以 assistant 身分
 #: 進歷史——那等於把下游系統的自由文字餵回下一回合的模型上下文）。
 SELECT_DIALOG_SUMMARY = "已提供 {select_type} {ref} 的資料"
+
+
+# ════════════════════════════════════════════════════════════════════
+# U3：純編號／短名詞一句的程式前置查詢
+#（Plan `inputs/plan-walkthrough-fixes-batch3-20260909.md` §4）
+# ════════════════════════════════════════════════════════════════════
+#
+# ⚠️ **存在理由**：使用者整句只打一個編號或短名詞（「756248」「信仰」）時，
+#    模型手上沒有既有的定義句可用，唯一合理反應是反問「哪一種類型」
+#    （第二批 r1–r3 3/3 實測）。這一段在模型迴圈**之前**先用同一套 registry
+#    四步紀律試著查一次，把結果當可引用資料段注入——模型仍自己決定怎麼答，
+#    只是不必再猜要查哪一域。
+# ⛔ 不代模型作答、不改變 outcome；⛔ 不直呼 `tools/jgb2.py`。
+
+#: 觸發字集的**封閉標點集合**（ASCII `string.punctuation` ＋常見全形／CJK
+#: 標點）。⛔ 不用開放語義的「非字母數字就當標點」——那會把合法短名詞用到的
+#: 任何符號都算進去，值域必須看得見全部成員。
+_PRE_LOOKUP_PUNCTUATION: frozenset = frozenset(string.punctuation) | frozenset(
+    "，。！？、；：「」『』（）【】《》〈〉—…～·"
+    "＂＇｀＾＿｜～｛｝［］＜＞＠＃＄％＆＊＋－／＝｡､"
+)
+_PRE_LOOKUP_TRIM_CHARS = "".join(sorted(_PRE_LOOKUP_PUNCTUATION))
+
+#: 純數字觸發（trigger A）：4–9 位 ASCII 數字。
+_PRE_LOOKUP_ID_RE = re.compile(r"^[0-9]{4,9}$")
+
+#: `ref` 過封閉字集（security F9／S8-6：同 `_SELECT_VALUE_RE` 的 `<id>` 值域）。
+_PRE_LOOKUP_REF_CHARSET_RE = re.compile(r"^[A-Za-z0-9_-]{1,32}$")
+
+#: 查無／範圍外一律回**同一句**（L15-13：不細分——細分等於用回話的差別揭露
+#: 「這筆存在但你看不到」）。
+PRE_LOOKUP_NOT_FOUND_TEXT = "系統裡查不到這個編號或名稱。"
+
+#: `ToolResult.error` 裡唯一算「真的查過、確定沒有」的值——工具層 `_no_match()`
+#: 固定回這個字串（`tools/jgb2.py`）。其餘錯誤碼（`TOOL_TIMEOUT`／
+#: `RATE_LIMITED`／`INVALID_INPUT`）與例外一律是「沒查成」，⛔ 不得也講成
+#: 「查不到」——那是把「沒查」講成「查過沒有」，一樣是假話。
+_PRE_LOOKUP_NOT_FOUND_ERROR = "NO_MATCH"
+
+#: 前置查詢資料段的來源代碼與工具標籤——同影像事實／完成動作記憶行／進場句
+#: 同一套注入紀律。一回合只有一段，序號固定 1。
+PRE_LOOKUP_PROVENANCE_SOURCE = "pre_lookup:query#1"
+PRE_LOOKUP_LABEL = "pre_lookup.query"
+
+#: trigger A 依序嘗試的域（brief 逐字順序：帳單／修繕單／合約）；
+#: `_SELECT_TYPE_TO_TOOL`／`_SELECT_DEFAULT_FACE` 是唯一的工具名／face 來源，
+#: ⛔ 不另抄字面量。
+_PRE_LOOKUP_ID_TOOL_ORDER: tuple[str, ...] = ("bill", "repair", "contract")
+
+#: trigger B 唯一開放的域（S8-13：⛔ 不開 `estate`／`meter` 的新 `ref` 語義，
+#: 這裡走的是既有的 keyword 查詢，不是 `select:` 那套 ref 語義）。
+_PRE_LOOKUP_ESTATE_TOOL = "jgb2.query.estates"
+_PRE_LOOKUP_ESTATE_FACE = "物件現況診斷"
+
+
+def _pre_lookup_strip_ws_punct(text: str) -> str:
+    """去頭尾空白與標點（封閉字集），交替去除到穩定——處理「標點＋空白」交錯
+    夾在頭尾的情形（例：「 ，756248。 」）。"""
+    prev = None
+    current = text
+    while current != prev:
+        prev = current
+        current = current.strip()
+        current = current.strip(_PRE_LOOKUP_TRIM_CHARS)
+    return current
+
+
+def _pre_lookup_trigger(message: str) -> Optional[tuple[str, str]]:
+    """U3 觸發判定。回傳 `(kind, candidate)`；不觸發 ⇒ `None`。
+
+    `kind` ∈ `{"id", "keyword"}`；`candidate` 已去頭尾空白與標點，⛔ 尚未過
+    後續字集檢查——`id` 走 `_PRE_LOOKUP_REF_CHARSET_RE`、`keyword` 走
+    `sanitize_data_piece`，兩者都在查詢那一步做。
+
+    ⚠️ **`AFFIRMATIVE_WORDS` 整句一律不觸發**（重用 T3 既有的凍結集合，⛔ 不是
+    另開一組詞表特例）：「對」「好」這類單字肯定語本身就落在 trigger B 的
+    字集裡（短、無標點數字空白），但它們的既有語意是回應上一句提議
+    （`is_affirmative`／`CALLER_AFFIRMATIVE_*`），不是使用者在打一個編號或
+    名稱——兩段各自的資料段互不相干，讓肯定語又觸發一次查詢只是白打一次
+    API 並注入一段無關的「查無」句。
+    """
+    if not isinstance(message, str):
+        return None
+    if is_affirmative(message):
+        return None
+    core = _pre_lookup_strip_ws_punct(message)
+    if not core:
+        return None
+    if _PRE_LOOKUP_ID_RE.match(core):
+        return "id", core
+    if len(core) <= 6:
+        if any(ch.isdigit() for ch in core):
+            return None
+        if any(ch in _PRE_LOOKUP_PUNCTUATION for ch in core):
+            return None
+        if any(ch.isspace() for ch in core):
+            return None
+        return "keyword", core
+    return None
 
 
 # ════════════════════════════════════════════════════════════════════
@@ -724,6 +824,10 @@ class TurnTrace:
     #:     `usage_events.decision_snapshot` 都會被序列化落地，記文字等於把外部
     #:     輸入原封不動抄進計量表。只記一個 bool。
     has_entry_line: bool = False
+    #: U3（Plan `plan-walkthrough-fixes-batch3-20260909.md` §4）：本回合有沒有
+    #: 觸發純編號／短名詞前置查詢。⛔⛔ **原 ref／關鍵字不得進來**——只記
+    #: `{"kind": "id"|"keyword", "hits": <int>}`；未觸發 ⇒ `None`。
+    pre_lookup: Optional[dict] = None
 
 
 #: `reasoning_effort` 允許值（OpenAI gpt-5 系列）；封閉集合，⛔ 不在程式內以字串推導。
@@ -1293,6 +1397,8 @@ def _emit_agent_decision(trace: TurnTrace) -> None:
             "slot_written": trace.slot_written,
             # T1／security r1 #7：⛔ 只有 bool，**沒有進場句原文**。
             "has_entry_line": trace.has_entry_line,
+            # U3：⛔ 只有種類與命中數，**沒有 ref／關鍵字原文**。
+            "pre_lookup": trace.pre_lookup,
             "violations": trace.violations,
             "replayed_from": _replayed_from(trace.violations),
         }
@@ -1626,6 +1732,92 @@ class AgentRuntime:
         if result.outcome is None:
             result.outcome = default_outcome(result)
         return result
+
+    # ------------------------------------------------------------------
+    # U3：純編號／短名詞前置查詢——一律走 registry 四步（可見性／速率／schema／
+    # 身分鍵剝除），⛔ 不直呼 `tools/jgb2.py`（同 `_run_select_segment` 的紀律）。
+    # ------------------------------------------------------------------
+    async def _pre_lookup_id_result(
+        self, identity: Identity, ref: str, scope_estate_id: Optional[str],
+        violations: list,
+    ) -> tuple[str, Optional[str]]:
+        """trigger A：依序試帳單／修繕單／合約，第一個查到就停。
+
+        回傳 `(outcome, facts)`：`outcome` ∈
+        `{"found","not_found","out_of_scope","error"}`；非 `"found"` 時
+        `facts` 為 `None`。
+
+        ⚠️ **`"not_found"` 與 `"error"` 分開**（⛔ 不得合流）：`NO_MATCH`
+        是工具真的查過、確定沒有這筆／看不到——這才配得上「系統裡查不到」
+        那句話；逾時／速率限制／例外是**沒查成**，講「查不到」等於講假話
+        （L15-13 那句的前提是「真的查過」）。遇到後者**立刻整段放棄**、
+        ⛔ 不再試下一個域——連哪一域失敗都不該影響「這回合有沒有東西可信」
+        這個結論。
+        """
+        if not _PRE_LOOKUP_REF_CHARSET_RE.match(ref):
+            return "not_found", None
+        for select_type in _PRE_LOOKUP_ID_TOOL_ORDER:
+            tool_name = _SELECT_TYPE_TO_TOOL[select_type]
+            face = _SELECT_DEFAULT_FACE[select_type]
+            try:
+                tool_result = await self.registry.call(
+                    identity, tool_name, {"face": face, "ref": ref},
+                    self._tool_timeout_s, stage=self._stage,
+                    readonly_view=self.readonly_view, for_model=True,
+                )
+            except Exception:  # noqa: BLE001 — registry 不可用 ⇒ 沒查成，⛔ 不是查無
+                return "error", None
+            if not tool_result.ok:
+                if tool_result.error == _PRE_LOOKUP_NOT_FOUND_ERROR:
+                    continue
+                return "error", None
+            data = tool_result.data if isinstance(tool_result.data, dict) else {}
+            facts = data.get("facts")
+            if not isinstance(facts, str) or not facts.strip():
+                continue
+            if scope_estate_id is not None:
+                scope_outcome = _enforce_tool_scope(
+                    tool_name, tool_result, scope_estate_id, ref, violations
+                )
+                if scope_outcome == "out":
+                    return "out_of_scope", None
+            return "found", facts
+        return "not_found", None
+
+    async def _pre_lookup_keyword_result(
+        self, identity: Identity, keyword: str, scope_estate_id: Optional[str],
+        violations: list,
+    ) -> tuple[str, Optional[str]]:
+        """trigger B：只開既有的 estates keyword 查詢（S8-13：⛔ 不開
+        `estate`／`meter` 的新 `ref` 語義）。回傳形狀同 `_pre_lookup_id_result`。
+        """
+        clean = sanitize_data_piece(keyword).strip()
+        if not clean:
+            return "not_found", None
+        try:
+            tool_result = await self.registry.call(
+                identity, _PRE_LOOKUP_ESTATE_TOOL,
+                {"face": _PRE_LOOKUP_ESTATE_FACE, "keyword": clean},
+                self._tool_timeout_s, stage=self._stage,
+                readonly_view=self.readonly_view, for_model=True,
+            )
+        except Exception:  # noqa: BLE001 — 沒查成，⛔ 不是查無
+            return "error", None
+        if not tool_result.ok:
+            if tool_result.error == _PRE_LOOKUP_NOT_FOUND_ERROR:
+                return "not_found", None
+            return "error", None
+        data = tool_result.data if isinstance(tool_result.data, dict) else {}
+        facts = data.get("facts")
+        if not isinstance(facts, str) or not facts.strip():
+            return "not_found", None
+        if scope_estate_id is not None:
+            scope_outcome = _enforce_tool_scope(
+                _PRE_LOOKUP_ESTATE_TOOL, tool_result, scope_estate_id, clean, violations
+            )
+            if scope_outcome == "out":
+                return "out_of_scope", None
+        return "found", facts
 
     # ------------------------------------------------------------------
     # W8 (1)：清單點選段（機器值 `select:<type>:<id>` → 工具 → facts）
@@ -2337,10 +2529,14 @@ class AgentRuntime:
         # 這一回合是否真的會注入那一段。
         aff_call_id = f"aff-{nonce[:8]}"
         ctx_call_id = f"ctx-{nonce[:8]}"
+        # U3（security F10）：前置查詢資料段的 id 同樣**在回合最開始就無條件
+        # 算出並加入 `reserved_ids`**——理由同 `entry_call_id`：模型能不能偽造
+        # 一個 `pre-…` 不該取決於這一回合是否真的觸發了前置查詢。
+        pre_lookup_call_id = f"pre-{nonce[:8]}"
         reserved_ids: frozenset[str] = frozenset(
             {
                 OUTLINE_TOOL_CALL_ID, image_call_id, completed_call_id,
-                entry_call_id, aff_call_id, ctx_call_id,
+                entry_call_id, aff_call_id, ctx_call_id, pre_lookup_call_id,
             }
         )
         # T1：正規化與記憶行走**同一支** `sanitize_data_piece`（控制字元／零寬／
@@ -2443,6 +2639,57 @@ class AgentRuntime:
                     ),
                 }
             )
+
+        # U3（Plan `plan-walkthrough-fixes-batch3-20260909.md` §4）：純編號／
+        # 短名詞一句 ⇒ 程式先查一次，把結果當可引用資料段注入——模型才不會反問
+        #「哪一種類型」。⛔ 不代模型作答、不改變 outcome；⛔ 原 ref／關鍵字不進
+        # trace／決策快照（只記 `pre_lookup_trace`，見下方）。⚠️ 同 T3 兩段的排法：
+        # 排在 DSP-022 那句**之前**——這是使用者這句之前的背景資料。
+        pre_lookup_trace: Optional[dict] = None
+        pre_trigger = _pre_lookup_trigger(user_message)
+        if pre_trigger is not None:
+            pre_kind, pre_candidate = pre_trigger
+            if pre_kind == "id":
+                pre_outcome, pre_facts = await self._pre_lookup_id_result(
+                    identity, pre_candidate, scope_estate_id, violations
+                )
+            else:
+                pre_outcome, pre_facts = await self._pre_lookup_keyword_result(
+                    identity, pre_candidate, scope_estate_id, violations
+                )
+            pre_lookup_trace = {"kind": pre_kind, "hits": 1 if pre_outcome == "found" else 0}
+            # L15：範圍外 ⇒ **完全不注入**（連查無固定句也不印——範圍檢查本身
+            # 就已經在別的路徑上有指路句，這裡多印一句等於多一個揭露面）。
+            # `"error"`（逾時／速率限制／例外）同樣**完全不注入**——這種情況
+            # 是「沒查成」，⛔ 不得講成「查不到」（那是把沒查講成查過沒有）；
+            # 也 ⛔ 不把工具錯誤碼露給使用者，直接讓這一回合當成沒觸發過。
+            if pre_outcome not in ("out_of_scope", "error"):
+                inject_text = pre_facts if pre_outcome == "found" else PRE_LOOKUP_NOT_FOUND_TEXT
+                inject_text = sanitize_data_piece(inject_text)
+                if inject_text:
+                    tool_results_by_id[pre_lookup_call_id] = ToolResult(
+                        ok=True,
+                        data={},
+                        provenance=[
+                            Provenance(
+                                source=PRE_LOOKUP_PROVENANCE_SOURCE,
+                                text=inject_text,
+                                citable=True,
+                            )
+                        ],
+                        text_for_model="",
+                    )
+                    messages.append(
+                        {
+                            "role": "user",
+                            "content": wrap_provenance_data(
+                                PRE_LOOKUP_LABEL,
+                                pre_lookup_call_id,
+                                [(PRE_LOOKUP_PROVENANCE_SOURCE, provenance_units(inject_text))],
+                                nonce,
+                            ),
+                        }
+                    )
 
         # DSP-022：當前這句一定是最後一則 user 訊息（歷史由 assembler 從 `dialog` 放前面）。
         messages.append({"role": "user", "content": user_message})
@@ -2569,6 +2816,7 @@ class AgentRuntime:
                 winning_key_kind=dict(winning_key_kind),
                 miss_kind=miss_kind,
                 has_entry_line=bool(entry_text),
+                pre_lookup=pre_lookup_trace,
             )
             return TurnResult(
                 kind="handoff",
@@ -3053,6 +3301,7 @@ class AgentRuntime:
                 winning_key_kind=dict(winning_key_kind),
                 miss_kind=miss_kind,
                 has_entry_line=bool(entry_text),
+                pre_lookup=pre_lookup_trace,
             )
             result = TurnResult(
                 kind=out.kind,

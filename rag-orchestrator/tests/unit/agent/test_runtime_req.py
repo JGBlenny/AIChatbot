@@ -280,7 +280,7 @@ async def test_tool_call_then_final_answer():
     verifier = FakeVerifier([VerifierVerdict(ok=True)])
     runtime = _runtime(provider=provider, registry=registry, verifier=verifier)
 
-    result = await runtime.run_turn(_identity(), "我要找帳單", {})
+    result = await runtime.run_turn(_identity(), "我要找一下帳單", {})
 
     assert result.kind == "answer"
     assert result.answer == "帳單在這裡"
@@ -314,7 +314,7 @@ async def test_budget_tool_call_cap_triggers_handoff():
     budget = Budget(max_tool_calls=4)
     runtime = _runtime(provider=provider, registry=registry, verifier=verifier, budget=budget)
 
-    result = await runtime.run_turn(_identity(), "查詢", {})
+    result = await runtime.run_turn(_identity(), "查詢一下謝謝你", {})
 
     assert result.kind == "handoff"
     assert result.handoff["reason"] == "budget_exhausted"
@@ -409,7 +409,7 @@ async def test_tool_timeout_retry_counts_toward_budget():
     budget = Budget(max_tool_calls=2)
     runtime = _runtime(provider=provider, registry=registry, verifier=verifier, budget=budget)
 
-    result = await runtime.run_turn(_identity(), "查詢", {})
+    result = await runtime.run_turn(_identity(), "查詢一下謝謝你", {})
 
     # 兩次 registry.call（逾時＋重試）已經把額度用完，第二個 model tool_call 被直接擋下。
     assert len(registry.call_args) == 2
@@ -430,7 +430,7 @@ async def test_tool_timeout_retry_fails_again_yields_tool_unavailable():
     verifier = FakeVerifier()
     runtime = _runtime(provider=provider, registry=registry, verifier=verifier)
 
-    result = await runtime.run_turn(_identity(), "查詢", {})
+    result = await runtime.run_turn(_identity(), "查詢一下謝謝你", {})
 
     assert len(registry.call_args) == 2  # 逾時＋重試皆已嘗試
     assert result.kind == "handoff"
@@ -477,7 +477,7 @@ async def test_invisible_tool_name_recorded_as_forbidden():
     verifier = FakeVerifier()
     runtime = _runtime(provider=provider, registry=registry, verifier=verifier)
 
-    result = await runtime.run_turn(_identity(), "查詢", {})
+    result = await runtime.run_turn(_identity(), "查詢一下謝謝你", {})
 
     assert "FORBIDDEN:agent.turn" in result.trace.violations
     assert registry.call_args[0]["name"] == "agent.turn"
@@ -630,6 +630,9 @@ _ALLOWED_AGENT_DECISION_KEYS = frozenset(
         # security r1 #7）：呼叫端進場句**只記有沒有**。
         # ⛔ **進場句原文不在其中**——它是外部輸入的自由文字。
         "has_entry_line",
+        # U3（Plan `inputs/plan-walkthrough-fixes-batch3-20260909.md` §4）：
+        # ⛔ **原 ref／關鍵字不在其中**——只記 `{"kind","hits"}`。
+        "pre_lookup",
     }
 )
 
@@ -767,7 +770,7 @@ async def test_tool_message_content_is_wrapped_with_wrap_tool_data():
     verifier = FakeVerifier([VerifierVerdict(ok=True)])
     runtime = _runtime(provider=provider, registry=registry, verifier=verifier)
 
-    await runtime.run_turn(_identity(), "我要找帳單", {})
+    await runtime.run_turn(_identity(), "我要找一下帳單", {})
 
     # 第二次呼叫 provider 時，messages 裡應該有一則 role=tool，內容經
     # wrap_tool_data 包裝（含分隔標記與資料段前綴），⛔ 不是原樣塞 text_for_model。
@@ -809,7 +812,7 @@ async def test_tool_message_with_provenance_is_numbered_per_unit():
     verifier = FakeVerifier([VerifierVerdict(ok=True)])
     runtime = _runtime(provider=provider, registry=registry, verifier=verifier)
 
-    await runtime.run_turn(_identity(), "我要找帳單", {})
+    await runtime.run_turn(_identity(), "我要找一下帳單", {})
 
     content = [m for m in provider.calls[1]["messages"] if m.get("role") == "tool"][0]["content"]
     assert content.startswith("<<data:")
