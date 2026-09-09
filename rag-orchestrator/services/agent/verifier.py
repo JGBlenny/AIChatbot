@@ -25,8 +25,9 @@ import math
 import re
 import unicodedata
 from pathlib import Path
-from typing import Optional
+from typing import Optional, get_args
 
+from services.agent.identity import Audience as _Audience
 from services.agent.output_schema import (
     ASK_TARGETS,
     AgentOutput,
@@ -42,6 +43,11 @@ from services.agent.provenance_units import (  # 葉模組：切句與 refs 解�
 )
 from services.agent.tools.registry import ToolResult
 from services.presales_gate import FactClass, HANDOFF_WORDS, HandoffReason, SENSITIVE, scan_handoff_mentions
+
+#: U3／W9-11：`verify(audience=)` 的**封閉值域**——直接讀 `identity.Audience`
+#: 那份 `Literal`，⛔ 不在本檔另抄一份字串集合。值域外的字串一律視同缺值
+#: （＝照擋，見 `_sensitive_patterns_apply`）。
+KNOWN_AUDIENCES: frozenset = frozenset(get_args(_Audience))
 
 #: 「純」條件切子句用的封閉分隔詞（design：逗號／頓號／分號）。
 _CLAUSE_SEPS: tuple[str, ...] = ("，", ",", "、", "；", ";")
@@ -180,29 +186,41 @@ class OutputVerifier:
     def _sensitive_patterns_apply(self, audience: Optional[str]) -> bool:
         """這一回合要不要跑 `sensitive_patterns`（U3／W9-11、W9-12）。
 
-        三個 **套用**（＝照擋）條件，任一成立即掃：
+        四個 **套用**（＝照擋）條件，任一成立即掃：
         1. `rules.sensitive_patterns_audiences is None`——規則檔沒宣告受眾，
            語義是**全受眾**（本欄位出現以前的行為），⛔ 不是「沒宣告就關掉」；
         2. `audience is None`——呼叫端沒給受眾。`OutputVerifier` 是行程級單例、
            呼叫點不只一處，任何一處忘了傳都不得**靜默**關掉售前守門，
            故缺值的方向是照擋而不是放行；
-        3. `audience` 在規則檔宣告的清單內。
+        3. `audience` **不在 `identity.Audience` 的封閉值域內**——「未知」與
+           「缺值」是同一件事（W9-11 逐字：缺／未知 ⇒ 照擋）。⚠️ 少了這一條，
+           呼叫端傳一個沒推導過的字串（例如 `target_user` 原值 `"system_admin"`、
+           或任何打錯的字）會落進「有值但不在清單內」⇒ **跳過整張樣式表**，
+           而那正是 fail-open：守門被一個拼字錯誤關掉，且沒有任何徵兆；
+        4. `audience` 在規則檔宣告的清單內。
 
-        只有「規則檔有宣告清單 **且** `audience` 有值 **且** 不在清單內」才跳過。
+        只有「規則檔有宣告清單 **且** `audience` 是封閉值域內的值 **且** 不在
+        清單內」才跳過。
 
         ⚠️ 這裡放寬的是**整張樣式表**對該受眾的效力，⛔ 不是逐條豁免，也⛔ 不看
         這一句有沒有引用資料段——豁免若由引用行為決定，等於把開關交給模型的引用，
         而引用標記正是文件線可被誘導的東西（W9-17）。
         ⚠️ 敏感五類（`fact_class in SENSITIVE`）與問句側 `question_sensitive_patterns`
         ⛔ 不受本判定影響：那是另外兩道閘，各自有各自的值域。
-        ⚠️ `audience` 的值域來自 `identity.Audience` 的決定性推導（封閉三值），
-        ⛔ 本檔不另抄一份那個集合，也因此不對值域外的字串另立第四種語義——
-        呼叫端要嘛給推導出來的受眾、要嘛什麼都不給（照擋）。
+        ⚠️ `audience` 的值域來自 `identity.Audience` 的決定性推導（封閉三值）。
+        本檔以 `typing.get_args(identity.Audience)` **讀那一份**，⛔ 不另抄一份
+        集合——抄一份的失敗方向是「那邊加了受眾、這邊沒跟上」，而症狀是新受眾
+        被當成未知值一路照擋（或反過來，取決於誰先漂），兩者都不會有徵兆。
+        `services.agent.identity` 只 import `dataclasses`／`typing`，⛔ 不會與
+        本檔既有的 `presales_gate`／`output_schema` 形成循環。
         """
         declared = self.rules.sensitive_patterns_audiences
         if declared is None:
             return True
         if audience is None:
+            return True
+        # W9-11（U3 收尾）：值域外＝未知 ⇒ 視同缺值＝照擋。
+        if audience not in KNOWN_AUDIENCES:
             return True
         return audience in declared
 

@@ -191,9 +191,12 @@ class FakeVerifier:
         self.calls: list[dict] = []
         self.rules_sha = rules_sha
 
-    def verify(self, out, tool_results, user_message, handoff, *, resolved, resolve_errors):
+    def verify(self, out, tool_results, user_message, handoff, *, resolved,
+               resolve_errors, audience):
         # DSP-029 F-A：`resolved`／`resolve_errors` 是**必填關鍵字**，替身照收——
         # 替身若還停在舊簽名，Runtime 換新簽名時這裡會炸，而不是靜靜地少驗一層。
+        # W9 U2／U3：`audience` 同上（⛔ 不給預設值）——Runtime 忘了傳時要當場
+        # 炸，而不是讓 fail-closed 那條路靜靜地變成「總是照擋」。
         self.calls.append(
             {
                 "out": out,
@@ -202,6 +205,7 @@ class FakeVerifier:
                 "handoff": handoff,
                 "resolved": dict(resolved),
                 "resolve_errors": dict(resolve_errors),
+                "audience": audience,
             }
         )
         if not self._results:

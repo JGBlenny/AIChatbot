@@ -985,6 +985,239 @@ async def prepare_image_turn(
 
 
 # ════════════════════════════════════════════════════════════════════
+# W9 U1：文件進場（`attachment_purpose="document"` ＋ `file_urls`）
+# ════════════════════════════════════════════════════════════════════
+#: `attachment_purpose` 的封閉值域與預設值（**唯一定義來源**——`AGENT_TURN_SPEC`
+#: 的 `enum` 由這裡導出，⛔ 不在兩處各抄一份）。缺鍵／顯式 `null` ⇒ `repair`
+#: ＝現行行為逐位不變。
+ATTACHMENT_PURPOSES: tuple = ("repair", "document")
+DEFAULT_ATTACHMENT_PURPOSE = "repair"
+
+#: 文件回合單頁渲染的時限上界（實際值再取「剩餘預算」的較小者）。
+#: ⛔ 不由 env——它是 DoS 防線的一部分，不是效能旋鈕。
+DOCUMENT_PAGE_TIMEOUT_S = 8.0
+
+
+async def _document_fetch_one(url: str, *, timeout_s: float):
+    """抓一份文件——**同一支 `fetch_image`、只換 bytes 上限**（W9-5）。
+
+    ⛔ 不得改成另一支抓檔函式：六道閘（https／等值白名單／userinfo／IP／`exp`／
+    不跟轉址／串流 bytes）全在那一支裡，第二支必定漏掉其中一道。
+    **測試的注入點就是這個模組屬性**（同 `_image_fetch_one`）。
+    """
+    return await image_fetch.fetch_image(
+        url, timeout_s=timeout_s, max_bytes=image_fetch.file_max_bytes()
+    )
+
+
+async def _document_extract_pages(data_urls: list, *, timeout_s: float) -> tuple:
+    """一次擷取（≤`DOC_TOTAL_PAGES_MAX` 頁）⇒ `(驗過的 dict, usage, 模型名)`。
+
+    **測試的注入點就是這個模組屬性**（同 `_image_recognize_batch`）。
+    ⛔ **不收 `db_pool`**：成本由 `prepare_document_turn` 依回傳的 usage 自寫
+    （W9-9：⛔ 不呼叫 `ImageRecognitionService._record_cost`，那支在 `image_id`
+    非空時會把整包 JSON 寫進 `image_uploads.recognition_result`）。收一個用不到
+    的 `db_pool` 會讓下一個讀這段的人以為成本已經在這裡記過了。
+    """
+    from services.agent.document_extract import DocumentExtractionService
+
+    service = DocumentExtractionService(timeout_s=timeout_s, max_retries=1)
+    result = await service.extract(data_urls, timeout_s=timeout_s, max_retries=1)
+    return result, service.last_usage, service.model
+
+
+async def _record_document_cost(db_pool, model: str, usage: Optional[dict]) -> None:
+    """文件線**自寫**一列 `openai_cost_tracking`（W9-9）。
+
+    ⛔⛔ **不碰 `image_uploads`**：`ImageRecognitionService._record_cost` 在
+    `image_id` 非空時會 `UPDATE image_uploads SET recognition_result = <整包 JSON>`
+    ——文件線的擷取結果 ⛔ 不得落地。這條路的 `image_id` 恆等於「沒有」，
+    所以這裡**根本沒有那一段 SQL**（驗收：文件回合後 `image_uploads` 零新列／
+    零 UPDATE，以假 pool 斷言呼叫面）。
+
+    寫檔失敗只 warning，⛔ 不阻塞回合（同 `_record_cost` 的既有處置）。
+    """
+    if db_pool is None or not isinstance(usage, dict):
+        return
+    from services.usage_metering import DEFAULT_PRICING
+
+    prompt_tokens = int(usage.get("prompt_tokens") or 0)
+    completion_tokens = int(usage.get("completion_tokens") or 0)
+    price = DEFAULT_PRICING.get(model)
+    if price is None:
+        # 價目表沒有這個模型 ⇒ 沿用舊的平頭費率（同 `_estimate_cost` 的退路）。
+        cost_usd = ((prompt_tokens + completion_tokens) / 1_000_000) * 5.0
+    else:
+        cost_usd = (prompt_tokens / 1_000_000) * price[0] + (
+            completion_tokens / 1_000_000
+        ) * price[1]
+    try:
+        async with db_pool.acquire() as conn:
+            await conn.execute(
+                """
+                INSERT INTO openai_cost_tracking
+                    (operation, model, prompt_tokens, completion_tokens, cost_usd)
+                VALUES ($1, $2, $3, $4, $5)
+                """,
+                "document_extraction", model,
+                prompt_tokens, completion_tokens, cost_usd,
+            )
+    except Exception as exc:      # noqa: BLE001 — ⛔ 只印例外類別名
+        logger.warning("文件成本記錄寫入失敗：%s", type(exc).__name__)
+
+
+async def prepare_document_turn(
+    image_urls: list,
+    file_urls: list,
+    *,
+    db_pool=None,
+    budget_s: Optional[float] = None,
+    clock: Callable[[], float] = time.monotonic,
+) -> tuple:
+    """抓檔 →（PDF ⇒ 頁圖）→ 擷取 ⇒ `(DocumentTurnInput, 已耗秒數)`。
+
+    **形狀比照 `prepare_image_turn`**（Plan §3b 介面凍結），差別只有三處：
+      ① PDF 多一段 `rasterize_pdf`（頁級／總時限、逐頁像素上限、只 render）；
+      ② 照片頁＋PDF 頁**合計** > `DOC_TOTAL_PAGES_MAX` ⇒ `DocumentPageLimitExceeded`
+         ⇒ 門面轉成整回合 `INVALID_INPUT`（W9-15；⛔ 不截斷後照跑）。
+         ⚠️ 判斷點在**抓完 PDF、知道頁數之後**——2 頁的 PDF 配 8 張照片是合法的，
+         早退用 `len(file_urls) × DOC_MAX_PAGES` 預估會誤殺它（那個最壞值只用在
+         配額預扣，不用在拒絕）。
+      ③ 成本自寫 `operation='document_extraction'`（W9-9）。
+
+    **預算用罄的映射與照片線同一條**（⛔ 不另立第二套語義）：已完成擷取 ≥1 批
+    ⇒ `partial`／`ok`；0 批 ⇒ 預算用完＝`timeout`、否則＝`failed`。
+
+    ⛔ bytes 與擷取 JSON 不落地、不進任何紀錄；本函式只回封閉值。
+    """
+    from services.agent.document_extract import (
+        DocumentPageLimitExceeded,
+        DocumentTurnInput,
+        build_document_facts,
+        rasterize_pdf,
+    )
+
+    started = clock()
+    budget = image_budget_s() if budget_s is None else budget_s
+
+    def _elapsed() -> float:
+        return clock() - started
+
+    pages: list = []            # 已縮圖／已渲染的 base64 data URL（⛔ 不留原 bytes）
+    photo_requested = len(image_urls or [])
+    pdf_pages_total = 0
+    pdf_pages_kept = 0
+    pdf_timed_out = False
+    exhausted = False
+
+    # ── ① 照片頁：與報修線**同一支**縮圖／格式檢查（含 `Image.MAX_IMAGE_PIXELS`）──
+    for url in image_urls or []:
+        if _elapsed() >= budget:
+            exhausted = True
+            break
+        try:
+            fetched = await _image_fetch_one(url, timeout_s=max(1.0, budget - _elapsed()))
+            downscaled, fmt = _image_validate_and_downscale(fetched.data, fetched.content_type)
+        except image_fetch.ImageFetchError:
+            continue            # 閘門擋下／抓不到 ⇒ **丟棄該張**，回合照跑
+        except Exception:
+            continue            # 格式不符／解壓縮炸彈（`DecompressionBombError`）等
+        pages.append(
+            "data:image/" + fmt + ";base64," + base64.b64encode(downscaled).decode("ascii")
+        )
+        del downscaled
+
+    # ── ② PDF 頁：抓檔 → 雙檢 → rasterize ──
+    for url in file_urls or []:
+        if _elapsed() >= budget:
+            exhausted = True
+            break
+        try:
+            fetched = await _document_fetch_one(url, timeout_s=max(1.0, budget - _elapsed()))
+            image_fetch.validate_pdf_bytes(fetched.data, fetched.content_type)
+        except image_fetch.ImageFetchError:
+            continue            # 閘門擋下／非 PDF ⇒ **丟棄該份**
+        except Exception:
+            continue
+        try:
+            rasterized = await rasterize_pdf(
+                fetched.data,
+                max_pages=image_fetch.doc_max_pages(),
+                max_px=IMAGE_MAX_PX,
+                page_timeout_s=min(DOCUMENT_PAGE_TIMEOUT_S, max(1.0, budget - _elapsed())),
+                total_timeout_s=max(1.0, budget - _elapsed()),
+            )
+        except Exception:       # `DocumentRasterizeError` 等 ⇒ 丟棄該份
+            continue
+        del fetched
+        pdf_pages_total += rasterized.pages_total
+        pdf_timed_out = pdf_timed_out or rasterized.timed_out
+        # W9-15：合計判在**知道頁數之後**。用「請求的照片張數」而不是「成功縮圖的
+        # 張數」——被閘門擋掉的那幾張仍然是使用者這回合送進來的頁，用實際成功數
+        # 會讓「多送幾張壞圖」變成繞過總頁數上限的方法（fail-closed 方向）。
+        kept = min(rasterized.pages_total, image_fetch.doc_max_pages())
+        if photo_requested + pdf_pages_kept + kept > image_fetch.doc_total_pages_max():
+            raise DocumentPageLimitExceeded()
+        pdf_pages_kept += kept
+        for png in rasterized.pages:
+            pages.append(
+                "data:image/png;base64," + base64.b64encode(png).decode("ascii")
+            )
+        del rasterized
+
+    pages_total = photo_requested + pdf_pages_total
+    if not pages:
+        elapsed = _elapsed()
+        # PDF 的頁級／總時限命中而一頁都沒渲染出來 ⇒ 那是**逾時**，⛔ 不是
+        # 「這份檔壞掉」——把逾時講成失敗會讓使用者以為換一份檔就好。
+        status = (
+            "timeout" if (exhausted or pdf_timed_out or elapsed >= budget) else "failed"
+        )
+        if status == "failed":
+            image_fetch.record_image_failure()
+        return (
+            DocumentTurnInput(status=status, pages_seen=0, pages_total=pages_total),
+            elapsed,
+        )
+    if _elapsed() >= budget:
+        # 頁圖備妥但預算已盡 ⇒ 0 批完成＝`timeout`（⛔ 不送半批，同照片線）。
+        return (
+            DocumentTurnInput(status="timeout", pages_seen=0, pages_total=pages_total),
+            _elapsed(),
+        )
+
+    # ── ③ 擷取 ──
+    try:
+        result, usage, model = await _document_extract_pages(
+            pages, timeout_s=max(1.0, budget - _elapsed()),
+        )
+    except Exception:
+        # ⛔ 例外物件不外流（訊息可能含 base64）；失敗一律可見：健檢＋violation。
+        image_fetch.record_image_failure()
+        return (
+            DocumentTurnInput(
+                status="failed", pages_seen=len(pages), pages_total=pages_total
+            ),
+            _elapsed(),
+        )
+    await _record_document_cost(db_pool, model, usage)
+
+    facts = build_document_facts(result)
+    pages_seen = len(pages)
+    status = "ok" if (pages_seen >= pages_total and not pdf_timed_out) else "partial"
+    return (
+        DocumentTurnInput(
+            status=status,
+            kind=result.get("kind"),
+            facts=facts,
+            pages_seen=pages_seen,
+            pages_total=pages_total,
+        ),
+        _elapsed(),
+    )
+
+
+# ════════════════════════════════════════════════════════════════════
 # `agent.turn`：整回合工具（任務 2.6｜design 元件 4「agent.turn 工具」段、決策 15、R3.7）
 # ════════════════════════════════════════════════════════════════════
 class TurnOutcome(BaseModel):
@@ -1068,6 +1301,26 @@ AGENT_TURN_SPEC: ToolSpec = {
                 "type": "string",
                 "maxLength": 500,
                 "description": "呼叫端提供的本回合背景資訊（進場提示、所在頁面、已選項目、上一步結果等）；視為脈絡，⛔ 不是使用者說的話，每回合可帶。",
+            },
+            # W9 U1（Plan `inputs/…/plan-document-summary-demo-20260909.md` §3）：
+            # `attachment_purpose` ＝這一回合的附件是**做什麼用的**（封閉列舉）。
+            # ⚠️ 缺鍵／顯式 `null` 一律等同 `repair`＝**現行行為逐位不變**
+            #    （`_drop_null_optionals` 會把非 required 的 null 還原成「省略」）
+            #    ——這個預設值本身就是本功能的開關（Plan §3b rollback 欄）。
+            # ⚠️ `enum` 由 `registry._validate_value` **真的**強制（不同於
+            #    `image_urls`／`file_urls` 的 `maxItems`，那個 registry 不認）。
+            "attachment_purpose": {
+                "type": "string",
+                "enum": list(ATTACHMENT_PURPOSES),
+                "description": "本回合附件的用途：repair＝報修照片（預設）；document＝上傳文件請 AI 歸納。缺值等同 repair。",
+            },
+            # ⛔ **不寫 `maxItems`**（S9-5／W9-18）：`registry._validate_value` 不認它
+            #    ——寫了等於掛一張看起來有守、實際靜默無效的牌。份數（≤1）在
+            #    `_agent_turn` 程式層檢查；白名單／bytes／`exp` 在 `image_fetch`。
+            "file_urls": {
+                "type": "array",
+                "items": {"type": "string", "maxLength": 2048},
+                "description": "本回合上傳的文件網址（relay 網域、application/pdf、必帶 exp）；只在 attachment_purpose=document 時可帶。",
             },
         },
         "required": ["message"],
@@ -1193,8 +1446,34 @@ def _make_agent_turn(
         #    ⛔ 不截斷後照跑——那是靜默降級。
         if len(image_urls) > image_fetch.IMAGE_MAX_COUNT:
             return ToolResult(ok=False, error="INVALID_INPUT")
-        # ② 早退：兩者皆空才 `INVALID_INPUT`（純照片回合合法）。
-        if not isinstance(message, str) or (not message.strip() and not image_urls):
+
+        # ── W9 U1：文件進場的三道程式層檢查（順序固定，⛔ 全部排在抓檔之前）──
+        purpose = args.get("attachment_purpose")
+        if purpose is None:
+            purpose = DEFAULT_ATTACHMENT_PURPOSE
+        if purpose not in ATTACHMENT_PURPOSES:
+            # registry 的 `enum` 已經擋過（`_validate_value` 真的認 enum）；走到
+            # 這裡代表有人繞過門面直呼 `registry.call()` 之外的路 ⇒ 第二道網。
+            return ToolResult(ok=False, error="INVALID_INPUT")
+        file_urls = args.get("file_urls")
+        if file_urls is None:
+            file_urls = []
+        if not isinstance(file_urls, list) or not all(
+            isinstance(u, str) for u in file_urls
+        ):
+            return ToolResult(ok=False, error="INVALID_INPUT")
+        # ⓐ 修繕線 ⛔ 不收 PDF——`repair` 帶 `file_urls` 是呼叫端搞錯了用途，
+        #    靜默忽略等於讓使用者以為文件送出去了。
+        if purpose != "document" and file_urls:
+            return ToolResult(ok=False, error="INVALID_INPUT")
+        # ⓑ 份數上限（demo ≤1；registry 不認 `maxItems`，S9-5／W9-18）。
+        #    ⛔ 不截斷後照跑——那是靜默降級。
+        if len(file_urls) > image_fetch.FILE_MAX_COUNT:
+            return ToolResult(ok=False, error="INVALID_INPUT")
+        # ② 早退：三者皆空才 `INVALID_INPUT`（純照片／純文件回合都合法）。
+        if not isinstance(message, str) or (
+            not message.strip() and not image_urls and not file_urls
+        ):
             return ToolResult(ok=False, error="INVALID_INPUT")
 
         runtime = _app_state(deps, "agent_runtime")
@@ -1218,8 +1497,20 @@ def _make_agent_turn(
 
         # ③ 張數配額（`IMAGE_COUNT_CAP_PER_HOUR`／`(api_key_id, vendor_id)`／
         #    行程內滑動窗）——**排在抓檔之前**：超過 ⇒ `RATE_LIMITED`、一張都不抓。
-        if image_urls and not image_fetch.check_and_record_image_count(
-            (identity.api_key_id, identity.vendor_id), len(image_urls)
+        #    W9-6：文件回合以**最壞值預扣**——一份 PDF 最多會變成 `DOC_MAX_PAGES`
+        #    張頁圖，配額必須按那個最壞值先扣，⛔ 不能等抓完才知道扣多少
+        #    （那時候檔已經下載完了，配額擋不到下載這件事本身）。
+        quota_key = (identity.api_key_id, identity.vendor_id)
+        page_charge = len(image_urls) + (
+            len(file_urls) * image_fetch.doc_max_pages()
+            if purpose == "document" else 0
+        )
+        if page_charge and not image_fetch.check_and_record_image_count(
+            quota_key, page_charge
+        ):
+            return ToolResult(ok=False, error="RATE_LIMITED")
+        if file_urls and not image_fetch.check_and_record_file_count(
+            quota_key, len(file_urls)
         ):
             return ToolResult(ok=False, error="RATE_LIMITED")
 
@@ -1271,8 +1562,23 @@ def _make_agent_turn(
         # 交給 Runtime 的是 `ImageTurnInput`（全封閉值）；bytes 到這一行為止
         # 就只活在 `prepare_image_turn` 的區域變數裡，⛔ 不進 `state`／trace／log。
         image_input = None
+        document_input = None
         image_elapsed = 0.0
-        if image_urls:
+        if purpose == "document" and (image_urls or file_urls):
+            # W9 U1／U2：文件回合走**另一條**準備函式（形狀同 `prepare_image_turn`）。
+            # ⛔ 不與照片線混跑：`repair` 回合的行為必須逐位不變
+            # （`tests/unit/agent/test_image_entry_req.py` 全綠即證）。
+            from services.agent.document_extract import DocumentPageLimitExceeded
+
+            try:
+                document_input, image_elapsed = await prepare_document_turn(
+                    image_urls, file_urls, db_pool=deps.get_db_pool(),
+                )
+            except DocumentPageLimitExceeded:
+                # W9-15：照片頁＋PDF 頁合計超過上限 ⇒ **整回合拒**，
+                # ⛔ 不截斷後照跑（那是靜默降級，使用者不會知道少看了幾頁）。
+                return ToolResult(ok=False, error="INVALID_INPUT")
+        elif image_urls:
             tree = None
             if repair_category_tree is not None:
                 try:
@@ -1292,6 +1598,11 @@ def _make_agent_turn(
             #    `run_turn` 的舊三參數簽名是 REST／影子／回測共用的介面，
             #    多傳一個具名參數會讓每一個既有替身都得跟著改。
             image_kwargs = {"image": image_input} if image_input is not None else {}
+            # W9 U2：`document=` 同 `image=` 的慣例——**只在有值時才傳**
+            # （`run_turn` 的舊簽名是 REST／影子／回測共用的介面，無條件多塞一個
+            # 具名參數會讓每一個既有替身都得跟著改）。
+            if document_input is not None:
+                image_kwargs["document"] = document_input
             # T1：同 `image=` 的理由——**只在真的有值時才傳**，⛔ 不無條件多塞一個
             # 具名參數（`run_turn` 的舊簽名是 REST／影子／回測共用的介面）。
             # 正規化（控制字元／零寬／雙向／假標記）由 Runtime 端的

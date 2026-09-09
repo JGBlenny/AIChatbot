@@ -82,6 +82,7 @@ from services.agent.confirm_card import (
 from services.agent.canon.candidate_selector import CandidateSelector
 from services.agent.canon.candidate_selector import K as _CANDIDATE_K
 from services.agent.canon.canon_assembler import build_canon_toc, canon_visible, get_canon
+from services.agent.document_extract import DocumentTurnInput
 from services.agent.identity import (
     DEFAULT_ENTRY_CHANNEL,
     Identity,
@@ -962,6 +963,15 @@ class TurnTrace:
     #: V2（Plan batch4 §3）：本回合有沒有注入「最近出現的編號」資料段。
     #: ⛔⛔ **編號原值不得進來**——同 `has_context`／`has_ref` 一套紀律，只記 bool。
     has_recent_refs: bool = False
+    #: W9 U2：文件回合的稽核四鍵。
+    #: ⛔⛔ **任何欄位值都不得進來**——`document_status`／`document_kind` 都是
+    #:     封閉值域裡的標籤（`DOCUMENT_STATUSES`／`DOCUMENT_KINDS`），`pages_seen`
+    #:     是計數。trace 與 `usage_events.decision_snapshot` 都會被序列化落地，
+    #:     記一個金額或一個地址進去，等於把使用者上傳的文件內容抄進計量表。
+    has_document: bool = False
+    document_status: Optional[str] = None
+    document_kind: Optional[str] = None
+    pages_seen: Optional[int] = None
 
 
 #: `reasoning_effort` 允許值（OpenAI gpt-5 系列）；封閉集合，⛔ 不在程式內以字串推導。
@@ -1181,6 +1191,25 @@ AFFIRMATIVE_CARRY_TEXT = "使用者已肯定上一句的提議，直接執行。
 CONTEXT_EMPTY_SESSION_PROVENANCE_SOURCE = "caller:empty_session#1"
 CONTEXT_EMPTY_SESSION_LABEL = "caller.empty_session"
 EMPTY_SESSION_TEXT = "這段對話裡使用者還沒有說過話。"
+
+#: W9 U2：文件事實在本回合資料段裡的來源代碼與工具標籤——同影像事實**同一套**
+#: 注入紀律。一回合只有**一段**文件事實（多頁的擷取結果在門面就已合併成一段
+#: 程式組的句子），故序號固定 1。
+#: ⚠️ `citable=True`（與 T1 的 `context` **不是同一個處置**）：歸納必須引用它。
+#:    這個代價由兩件事承擔——W9-1（文件回合關寫入面）與 W9-2（欄位值不得自成
+#:    一個可引用 unit）。S9-11 封閉值原則在文件回合的可接受條件＝「文字只能被
+#:    引用、不能被執行、不能進任何寫入 payload」。
+DOCUMENT_PROVENANCE_SOURCE = "document:extraction#1"
+DOCUMENT_DATA_LABEL = "document.extraction"
+
+#: W9 U2：擷取不到任何欄位（`unreadable`／全 null／`failed`）時的固定句。
+#: ⛔ **不進模型**（同 `IMAGE_FAILED_TEXT` 三句的紀律）：沒有可引用的東西時
+#: 讓模型講話，講出來的只會是它自己編的。
+DOC_UNREADABLE_TEXT = "這份文件我讀不出可用的欄位；換一張清楚一點的，或直接把重點打字給我。"
+
+#: W9-1：文件回合碰到寫入面時的固定句。文件回合的**非目標**就是寫回 JGB，
+#: 這道閘是邊界層的封閉（⛔ 不靠模型自律、⛔ 不靠正本的指示）。
+DOC_NO_WRITE_TEXT = "這一回合只做文件歸納，沒辦法在這裡送出申請或異動；要辦的話請回 JGB 平台操作。"
 
 #: `ImageTurnInput.status` 的封閉值域。
 IMAGE_STATUSES: frozenset = frozenset({"ok", "partial", "failed", "timeout"})
@@ -1791,6 +1820,7 @@ class AgentRuntime:
         completed_action_estate_id: Optional[str] = None,
         completed_action_receipt: Optional[dict] = None,
         completed_action_estate_name: Optional[str] = None,
+        document_trace: Optional[dict] = None,
     ) -> TurnResult:
         """確認段各出口共用的收尾：組 trace → 落 decision snapshot → 寫回 dialog。
 
@@ -1840,6 +1870,8 @@ class AgentRuntime:
             select_type=select_type,
             has_ref=has_ref,
             slot_written=slot_written,
+            # W9 U2：文件回合的四鍵（⛔ 無任何欄位值，見 `TurnTrace` 的說明）。
+            **(document_trace or {}),
         )
         agent_state["fixed_streak"] = 0
         _append_dialog(
@@ -2558,10 +2590,83 @@ class AgentRuntime:
             dialog_answer=IMAGE_PICK_CATEGORY_TEXT + "、".join(picks),
         )
 
+    # ------------------------------------------------------------------
+    # W9 U2：文件回合的程式路徑（⛔ 一律由 Runtime 產出）
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _document_trace(document: Optional[DocumentTurnInput]) -> dict:
+        """文件回合的 trace 四鍵。⛔ **只有封閉標籤與計數，無任何欄位值**。"""
+        if document is None:
+            return {}
+        return {
+            "has_document": True,
+            "document_status": document.status,
+            "document_kind": document.kind,
+            "pages_seen": document.pages_seen,
+        }
+
+    def _document_program_turn(
+        self, document: Optional[DocumentTurnInput], *, agent_state: dict,
+        user_message: str, trace_id: str, start: float,
+    ) -> Optional[TurnResult]:
+        """擷取不出可用欄位 ⇒ 固定句收尾；其餘 ⇒ `None`（回合照常跑）。
+
+        命中條件＝`facts` 為空：`unreadable`、全欄 null、`failed`、`timeout`
+        四種情況在 `prepare_document_turn`／`build_document_facts` 都收斂成
+        「沒有可引用的資料段」這一件事，⛔ 這裡不再分四條路各給一句
+        （分四條路的失敗方向是「其中一條忘了收」＝帶文件的回合默默進模型，
+        而模型手上沒有任何文件事實 ⇒ 它只能編）。
+
+        ⛔ **不進模型**（`llm_calls == 0`）、⛔ Verifier 不跑（沒有可驗的引用）；
+        走既有的 `_finish_confirm_turn`（S9-14：⛔ 不在門面直接產 `TurnResult`，
+        那會繞過寫入閘與 dialog 紀律）。
+        """
+        if document is None or document.facts.strip():
+            return None
+        return self._finish_confirm_turn(
+            agent_state=agent_state, user_message=user_message,
+            trace_id=trace_id, start=start, kind="answer",
+            answer=DOC_UNREADABLE_TEXT, pending_id=None,
+            violations=[f"document_{document.status}"],
+            outcome=make_outcome("answered", expects="text"),
+            document_trace=self._document_trace(document),
+        )
+
+    def _document_turn_no_write(
+        self, document: Optional[DocumentTurnInput], *, agent_state: dict,
+        user_message: str, trace_id: str, start: float,
+        violations: Optional[list] = None, tool_calls: Optional[list] = None,
+        llm_calls: int = 0, prompt_tokens: int = 0, completion_tokens: int = 0,
+    ) -> TurnResult:
+        """W9-1：文件回合的**寫入面 per-turn 閘**——⛔ 不出確認卡、⛔ 不兌現。
+
+        形狀與落點比照 `_scope_gate_confirm_request`：**不建 pending**、整回合就是
+        一句固定句。兩個落點——
+          ① `confirm_submit:<pid>` 機器值（排在確認段之前，⇒ ⛔ 不接受兌現）；
+          ② 模型仍然呼到 `confirm.request`（第二道網；第一道是工具規格列表過濾）。
+
+        ⚠️ 這是**邊界層**的封閉，⛔ 不靠模型自律、⛔ 不靠正本寫「不要送出」：
+        文件段是本系統唯一「攻擊者可控的長文字＋`citable=True`」的組合，
+        它與寫入面之間必須有一道與模型無關的閘。
+        """
+        vs = list(violations or [])
+        vs.append("document_turn_no_write")
+        return self._finish_confirm_turn(
+            agent_state=agent_state, user_message=user_message,
+            trace_id=trace_id, start=start, kind="answer",
+            answer=DOC_NO_WRITE_TEXT, pending_id=None,
+            tool_calls=tool_calls, violations=vs,
+            llm_calls=llm_calls, prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
+            outcome=make_outcome("failed", expects="none"),
+            document_trace=self._document_trace(document),
+        )
+
     async def run_turn(
         self, identity: Identity, user_message: str, state: dict,
         *, image: Optional[ImageTurnInput] = None,
         context: Optional[str] = None,
+        document: Optional[DocumentTurnInput] = None,
     ) -> TurnResult:
         """一個回合。`image`（W8 (2)）＝門面已抓檔／縮圖／辨識完的**封閉值**輸入。
 
@@ -2574,7 +2679,8 @@ class AgentRuntime:
         都定案之後，故那三者逐位元不受影響（同 W8 (3) `hint` 的紀律）。
         """
         result = await self._run_turn_body(
-            identity, user_message, state, image=image, context=context
+            identity, user_message, state, image=image, context=context,
+            document=document,
         )
         if (
             image is not None
@@ -2591,10 +2697,27 @@ class AgentRuntime:
         self, identity: Identity, user_message: str, state: dict,
         *, image: Optional[ImageTurnInput] = None,
         context: Optional[str] = None,
+        document: Optional[DocumentTurnInput] = None,
     ) -> TurnResult:
         start = self._clock()
         trace_id = uuid.uuid4().hex
         agent_state = state.setdefault("agent", {})
+        # W9 U2：文件回合的四鍵，一次算好餵給本函式裡的每一個 trace 建構點。
+        doc_trace = self._document_trace(document)
+        # W9-1 落點①：文件回合 ⛔ 不接受 `confirm_submit`——排在確認段**之前**
+        # （確認段一進去就會兌現，那時候再擋已經來不及）。
+        if document is not None and _parse_confirm_value(user_message) is not None:
+            return self._document_turn_no_write(
+                document, agent_state=agent_state, user_message=user_message,
+                trace_id=trace_id, start=start,
+            )
+        # W9 U2：擷取不出可用欄位 ⇒ 固定句，⛔ 不進模型（排在最前，同影像三條）。
+        document_turn = self._document_program_turn(
+            document, agent_state=agent_state, user_message=user_message,
+            trace_id=trace_id, start=start,
+        )
+        if document_turn is not None:
+            return document_turn
         # W8 (2)：照片的三條程式終止路徑**排在最前**——失敗／逾時／要先問分類的
         # 回合根本不該進確認段、快取或模型。
         image_turn = self._image_program_turn(
@@ -2630,6 +2753,9 @@ class AgentRuntime:
                 handoff_reason=(cached.get("handoff") or {}).get("reason"),
                 latency_ms=int((self._clock() - start) * 1000),
                 violations=[f"replayed_from:{cached.get('trace_id', '')}"],
+                # W9 U2：重播出口同樣標明「這一回合帶了文件」——⛔ 不留預設值
+                # 假裝沒帶（稽核上「有帶文件卻走重播」正是要看得見的事）。
+                **doc_trace,
             )
             _emit_agent_decision(trace)
             _append_dialog(agent_state, user_message, cached.get("answer", ""))
@@ -2690,11 +2816,16 @@ class AgentRuntime:
         # 算出並加入 `reserved_ids`**——理由同 `pre_lookup_call_id`：模型能不能
         # 偽造一個 `ref-…` 不該取決於這一回合是否真的有最近編號可注入。
         recent_refs_call_id = f"ref-{nonce[:8]}"
+        # W9 U2：文件事實資料段的 id 同樣**在回合最開始就無條件算出並加入
+        # `reserved_ids`**——理由同上：模型能不能偽造一個 `doc-…` 不該取決於這一
+        # 回合是否真的帶了文件（否則「沒帶文件時 doc-… 可以被模型自己造」就成了
+        # 洞，而文件段是 `citable=True` 的，偽造它等於偽造一份可引用的事實）。
+        document_call_id = f"doc-{nonce[:8]}"
         reserved_ids: frozenset[str] = frozenset(
             {
                 OUTLINE_TOOL_CALL_ID, image_call_id, completed_call_id,
                 entry_call_id, aff_call_id, ctx_call_id, pre_lookup_call_id,
-                recent_refs_call_id,
+                recent_refs_call_id, document_call_id,
             }
         )
         # T1：正規化與記憶行走**同一支** `sanitize_data_piece`（控制字元／零寬／
@@ -2731,6 +2862,25 @@ class AgentRuntime:
         tool_specs = self.registry.to_openai_tools(
             identity, self._stage, readonly_view=self.readonly_view
         )
+        # W9-1 落點②：**文件回合的寫入面對模型不可見**。判準逐字沿用
+        # `registry.specs_for` 的寫入面聯集（`scope == "write"` **或** `mcp_only`）
+        # ——⛔ 不在此另列一張工具名單：名單會漏掉之後新加的寫入工具，而漏掉的
+        # 那一支不會有任何徵兆。第二道網在下方工具迴圈（模型硬造名字時擋執行），
+        # 第三道在 `_document_turn_no_write`（⛔ 三道都不得單獨拿掉）。
+        doc_write_face: frozenset = frozenset()
+        if document is not None:
+            doc_write_face = frozenset(
+                s["name"]
+                for s in self.registry.specs_for(
+                    identity, self._stage,
+                    readonly_view=self.readonly_view, for_model=True,
+                )
+                if s.get("scope") == "write" or s.get("mcp_only")
+            )
+            tool_specs = [
+                t for t in tool_specs
+                if tool_name_from_openai(t["function"]["name"]) not in doc_write_face
+            ]
         visible_names = {tool_name_from_openai(t["function"]["name"]) for t in tool_specs}   # 解回 registry 名
 
         messages = self.assembler.build_messages(identity, outline, slots, dialog, tool_specs, nonce)
@@ -2889,6 +3039,40 @@ class AgentRuntime:
                 }
             )
 
+        # W9 U2／W9-22：**文件事實排在使用者訊息之前**。
+        # ⚠️ 這是本回合最大的一段「不可信文字」，⛔ 不得是模型看到的最後一則訊息
+        #    ——最後一則的位置在既有紀律裡屬於使用者這一句（DSP-022）。
+        # ⚠️ 既有的影像／完成動作／進場句三段排在使用者訊息**之後**，與 T3 兩段
+        #    的紀律不一致；那是既有債（Plan 列後續 L-W9-a），⛔ 不在本單元一併改
+        #    ——動它會改變照片線送給模型的訊息順序，而「照片線逐位不變」是本
+        #    單元的回退證明。
+        # ⛔ 不併進 `user_message`（那會變成使用者說的話）、⛔ 不進 dialog
+        #    （`_append_dialog` 不動）、⛔ 不進 `agent_state`、⛔ 不進 trace 欄位值。
+        if document is not None and document.facts.strip():
+            tool_results_by_id[document_call_id] = ToolResult(
+                ok=True,
+                data={"pages_seen": document.pages_seen, "pages_total": document.pages_total},
+                provenance=[
+                    Provenance(
+                        source=DOCUMENT_PROVENANCE_SOURCE,
+                        text=document.facts,
+                        citable=True,
+                    )
+                ],
+                text_for_model="",
+            )
+            messages.append(
+                {
+                    "role": "user",
+                    "content": wrap_provenance_data(
+                        DOCUMENT_DATA_LABEL,
+                        document_call_id,
+                        [(DOCUMENT_PROVENANCE_SOURCE, provenance_units(document.facts))],
+                        nonce,
+                    ),
+                }
+            )
+
         # DSP-022：當前這句一定是最後一則 user 訊息（歷史由 assembler 從 `dialog` 放前面）。
         messages.append({"role": "user", "content": user_message})
         # W8 (2)：影像事實以**可引用的工具事實**進場（r1 裁定接線）——包法與工具
@@ -3020,6 +3204,8 @@ class AgentRuntime:
                 has_context=bool(entry_text),
                 has_recent_refs=has_recent_refs,
                 pre_lookup=pre_lookup_trace,
+                # W9 U2：文件回合四鍵（⛔ 無任何欄位值）。
+                **doc_trace,
             )
             return TurnResult(
                 kind="handoff",
@@ -3135,6 +3321,37 @@ class AgentRuntime:
                     if name not in visible_names:
                         violations.append(f"FORBIDDEN:{name}")
 
+                    # W9-1 第二道網：文件回合的寫入面**不得執行**。
+                    # ⚠️ 只把它從 `tool_specs` 拿掉是不夠的——`registry.call` 的
+                    #    可見性判斷不知道這一回合帶了文件，模型硬打那個名字仍然
+                    #    會真的執行（`FORBIDDEN:` 只是記一筆 violation，⛔ 不擋）。
+                    #    ⇒ 這裡直接回一個封閉錯誤、⛔ 不呼叫 registry。
+                    if name in doc_write_face:
+                        violations.append(f"DOCUMENT_TURN_WRITE_BLOCKED:{name}")
+                        counters.tool_calls += 1
+                        tool_call_records.append(
+                            ToolCallRecord(
+                                id=tc.id, name=name,
+                                args_summary=_args_summary(raw_args),
+                                ms=0, status="error", n_items=0, empty=False,
+                            )
+                        )
+                        messages.append(
+                            {
+                                "role": "tool",
+                                "tool_call_id": tc.id,
+                                "content": wrap_tool_data(
+                                    "tool",
+                                    json.dumps(
+                                        {"ok": False, "error": "NO_MATCH"},
+                                        ensure_ascii=False,
+                                    ),
+                                    nonce,
+                                ),
+                            }
+                        )
+                        continue
+
                     counters.tool_calls += 1
                     call_start = self._clock()
                     try:
@@ -3227,6 +3444,20 @@ class AgentRuntime:
                     # 驗的引用）。⛔ 不把卡交回模型讓它「潤飾一下」：那一潤，
                     # 使用者看到的字就不再等於 `summary_sha256` 綁住的那一份。
                     if name == CONFIRM_TOOL_NAME and tool_result.ok:
+                        # W9-1 第三道網：文件回合 ⛔ 不出確認卡。排在
+                        # `_scope_gate_confirm_request` **之前**（形狀與落點比照
+                        # 它）——`confirm.request` 已經在上面被擋掉執行，走到這裡
+                        # 代表 `doc_write_face` 算漏了（例如某支寫入工具兩個旗標
+                        # 都沒設），這一道是那種情況下的最後一擋。
+                        if document is not None:
+                            return self._document_turn_no_write(
+                                document, agent_state=agent_state,
+                                user_message=user_message, trace_id=trace_id,
+                                start=start, violations=violations,
+                                tool_calls=tool_call_records, llm_calls=llm_calls,
+                                prompt_tokens=prompt_tokens,
+                                completion_tokens=completion_tokens,
+                            )
                         # L15 (a)⑥／L15-03：**寫入路徑的邊界**。⛔ 不靠讀路徑
                         # 的比對——`confirm.request` 的 payload 是模型自己填的，
                         # 它可以完全不查就直接出一張別戶的卡。
@@ -3437,9 +3668,14 @@ class AgentRuntime:
             # 否則 `ref_invalid`。這是「這串標記真的出自本回合資料段」的唯一憑據，
             # ⛔ 不得改成不檢查或用固定值。
             resolved, resolve_errors = resolve_refs(out, tool_results_by_id, nonce)
+            # U3／W9-11：`audience` 傳的是 `identity.resolved_audience()` 的
+            # **解析後封閉值**（`identity.Audience` 三值），⛔ 不傳 `target_user`
+            # 原字串——那是上游可控的自由文字，Verifier 端對值域外一律照擋
+            # （fail-closed），傳原字串只會讓「pm 放寬」在某些寫法下靜靜失效。
             verdict = self.verifier.verify(
                 out, tool_results_by_id, user_message, handoff_dict,
-                resolved=resolved, resolve_errors=resolve_errors)
+                resolved=resolved, resolve_errors=resolve_errors,
+                audience=identity.resolved_audience())
             verifier_verdicts.append(verdict)
             if self._attempt_sink is not None:
                 self._emit_attempt(
@@ -3543,6 +3779,8 @@ class AgentRuntime:
                 has_context=bool(entry_text),
                 has_recent_refs=has_recent_refs,
                 pre_lookup=pre_lookup_trace,
+                # W9 U2：文件回合四鍵（⛔ 無任何欄位值）。
+                **doc_trace,
             )
             result = TurnResult(
                 kind=out.kind,

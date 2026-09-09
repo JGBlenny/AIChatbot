@@ -106,9 +106,14 @@ class FakeVerifier:
         self._results = list(results) if results is not None else []
         self.rules_sha = rules_sha
 
-    def verify(self, out, tool_results, user_message, handoff, *, resolved, resolve_errors):
+    def verify(self, out, tool_results, user_message, handoff, *, resolved,
+               resolve_errors, audience):
         # DSP-029 F-A：替身也要收 `resolved`／`resolve_errors`（必填關鍵字）——
         # 停在舊簽名的話 Runtime 換簽名時會靜靜地少驗一層。
+        # W9 U2／U3：`audience` 同樣是**必填關鍵字**（⛔ 不寫成有預設值）：
+        # Runtime 忘了傳的話這裡要當場炸，而不是讓 fail-closed 的那條路靜靜地
+        # 變成「總是照擋」（症狀是 pm 金額突然又被擋，而沒人知道為什麼）。
+        self.last_audience = audience
         if not self._results:
             return VerifierVerdict(ok=True)
         return self._results.pop(0)
@@ -327,7 +332,11 @@ def test_agent_turn_input_schema_only_takes_message():
     schema = F.AGENT_TURN_SPEC["input_schema"]
     # T1：`context` 是第三個鍵（選填；`context` 的專用測試見
     # `test_context_req.py`）。⛔ 仍無 `dialog_ref`。
-    assert set(schema["properties"]) == {"message", "image_urls", "context"}
+    # W9 U1：`attachment_purpose`／`file_urls` 是第四、五個鍵（選填；專用測試見
+    # `test_document_turn_req.py`）。屬性集合是**封閉的**，⛔ 不得只加不對帳。
+    assert set(schema["properties"]) == {
+        "message", "image_urls", "context", "attachment_purpose", "file_urls",
+    }
     assert schema["required"] == ["message"]
     assert schema["properties"]["message"]["maxLength"] == 2000
     assert schema["properties"]["message"]["minLength"] == 0

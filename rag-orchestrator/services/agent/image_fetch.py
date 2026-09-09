@@ -52,6 +52,39 @@ IMAGE_MAX_BYTES = 5_000_000
 #: 一回合最多幾張（第 11 張起整回合 `INVALID_INPUT`，業主 2026-09-08 裁）。
 IMAGE_MAX_COUNT = 10
 
+# ── W9 U1：文件線（`file_urls`）的量級常數 ──────────────────────────
+# ⚠️ **同一條抓檔路徑、不同的量級旋鈕**：文件走的是 `fetch_image(max_bytes=…)`
+#    這一支（W9-5：⛔ 不得新增第二支抓檔函式——第二支就是第二套閘門，而第二套
+#    永遠會少一道）。下面四個常數是「文件比照片多出來的那幾個上限」。
+#: 單份 PDF 的 bytes 硬上限（與照片同值 5,000,000，W9-7）。
+FILE_MAX_BYTES = 5_000_000
+
+#: 一回合最多幾份檔（demo ≤1；第 2 份起整回合 `INVALID_INPUT`）。
+#: ⛔ 不寫進 `AGENT_TURN_SPEC` 的 `maxItems`——`registry._validate_value` 不認它
+#:    （S9-5／W9-18：寫了等於掛一張看起來有守、實際靜默無效的牌）。
+FILE_MAX_COUNT = 1
+
+#: 每小時每 `(api_key_id, vendor_id)` 的份數上限。
+FILE_COUNT_CAP_PER_HOUR = 20
+
+#: 單份 PDF 最多看前幾頁（超過只看前 N 頁**並明講**，⛔ 不靜默截斷）。
+DOC_MAX_PAGES = 5
+
+#: 照片頁＋PDF 頁的**合計**上限；超過 ⇒ 整回合 `INVALID_INPUT`（W9-15，
+#: 沿用「超過即拒、⛔ 不截斷後照跑」的紀律）。
+DOC_TOTAL_PAGES_MAX = 10
+
+_FILE_MAX_BYTES_ENV = "FILE_MAX_BYTES"
+_FILE_COUNT_CAP_ENV = "FILE_COUNT_CAP_PER_HOUR"
+_DOC_MAX_PAGES_ENV = "DOC_MAX_PAGES"
+_DOC_TOTAL_PAGES_MAX_ENV = "DOC_TOTAL_PAGES_MAX"
+
+#: PDF 的宣告 MIME（**逐字等值**，⛔ 不前綴比對）與 magic bytes。
+#: ⚠️ magic 只**防誤派**（W9-14）：它證明「這不是被叫成 PDF 的別種東西」，
+#:    ⛔ 不是解析面的緩解——解析面的防線在 `document_extract.rasterize_pdf`。
+PDF_CONTENT_TYPE = "application/pdf"
+PDF_MAGIC = b"%PDF-"
+
 #: 每批送辨識的張數（>5 張時 chatai **內部**分批，⛔ 不讓 line-bot 拆回合）。
 IMAGE_BATCH_SIZE = 5
 
@@ -67,6 +100,8 @@ IMAGE_URL_EXPIRED = "IMAGE_URL_EXPIRED"
 IMAGE_FETCH_FAILED = "IMAGE_FETCH_FAILED"
 IMAGE_TOO_LARGE = "IMAGE_TOO_LARGE"
 IMAGE_FORMAT_INVALID = "IMAGE_FORMAT_INVALID"
+#: W9 U1：宣告 MIME 或 magic 不是 PDF（⇒ 該檔丟棄）。
+FILE_FORMAT_INVALID = "FILE_FORMAT_INVALID"
 
 
 class ImageFetchError(Exception):
@@ -140,6 +175,90 @@ def check_and_record_image_count(key: tuple, count: int, now: Optional[float] = 
 def reset_image_count_cap() -> None:
     """測試用：清掉行程內的滑動窗（⛔ 產品路徑不呼叫）。"""
     _image_counts.clear()
+
+
+# ════════════════════════════════════════════════════════════════════
+# W9 U1：文件線的旋鈕、配額與 PDF 形狀檢查
+# ════════════════════════════════════════════════════════════════════
+def _int_env(name: str, default: int, *, minimum: int = 0) -> int:
+    """`name` 的整數 env；未設／非整數／小於 `minimum` ⇒ **回預設**（⛔ 不炸）。
+
+    ⚠️ 壞值退預設而不是退 0：把「打錯字」變成「這條路整個關掉」是靜默的行為
+    改變，而部署者只會看到功能突然不見、看不到原因。
+    """
+    raw = (os.getenv(name) or "").strip()
+    if not raw:
+        return default
+    try:
+        value = int(raw)
+    except ValueError:
+        return default
+    return value if value >= minimum else default
+
+
+def file_max_bytes() -> int:
+    """`FILE_MAX_BYTES`（預設 5,000,000）；非法值回預設。"""
+    return _int_env(_FILE_MAX_BYTES_ENV, FILE_MAX_BYTES, minimum=1)
+
+
+def file_count_cap_per_hour() -> int:
+    """`FILE_COUNT_CAP_PER_HOUR`（預設 20）；非法值回預設。"""
+    return _int_env(_FILE_COUNT_CAP_ENV, FILE_COUNT_CAP_PER_HOUR)
+
+
+def doc_max_pages() -> int:
+    """`DOC_MAX_PAGES`（預設 5）；非法值回預設。"""
+    return _int_env(_DOC_MAX_PAGES_ENV, DOC_MAX_PAGES, minimum=1)
+
+
+def doc_total_pages_max() -> int:
+    """`DOC_TOTAL_PAGES_MAX`（預設 10）；非法值回預設。"""
+    return _int_env(_DOC_TOTAL_PAGES_MAX_ENV, DOC_TOTAL_PAGES_MAX, minimum=1)
+
+
+#: `(api_key_id, vendor_id) -> [(時戳, 份數)]`。⚠️ **行程內記憶體**，多 worker
+#: 各一份——與 `_image_counts` 同一個已知限制（契約照實寫，見 U5 契約表）。
+_file_counts: dict = {}
+
+
+def check_and_record_file_count(key: tuple, count: int, now: Optional[float] = None) -> bool:
+    """滑動窗記 `count` 份；**這一回合會超過上限 ⇒ `False` 且⛔ 不記**（全有全無）。
+
+    形狀逐位比照 `check_and_record_image_count`——⛔ 不另立第二套語義：兩個配額
+    在 `_agent_turn` 是**並列**檢查的，語義一旦分歧，「用罄」在兩條線上會是兩件
+    不同的事。
+    """
+    now = time.monotonic() if now is None else now
+    cap = file_count_cap_per_hour()
+    entries = _file_counts.setdefault(key, [])
+    cutoff = now - _IMAGE_COUNT_WINDOW_S
+    while entries and entries[0][0] <= cutoff:
+        entries.pop(0)
+    used = sum(n for _, n in entries)
+    if used + count > cap:
+        return False
+    entries.append((now, count))
+    return True
+
+
+def reset_file_count_cap() -> None:
+    """測試用：清掉行程內的檔案滑動窗（⛔ 產品路徑不呼叫）。"""
+    _file_counts.clear()
+
+
+def validate_pdf_bytes(data: bytes, content_type: str) -> None:
+    """PDF 的**雙檢**：宣告 MIME 逐字等值 ＋ magic `%PDF-`；不符 ⇒ `ImageFetchError`。
+
+    ⚠️ **逐字等值、⛔ 不前綴比對、⛔ 不接受 `octet-stream`**：relay 對 PDF
+    必須回 `Content-Type: application/pdf`（U5 契約要求，W9-14）。回別的值時整
+    條線 fail-closed——這是刻意的：「猜它大概是 PDF」等於讓宣告型別失去意義。
+    ⚠️ magic 只防誤派，⛔ 不是解析面的緩解（解析面在 `rasterize_pdf`）。
+    """
+    declared = str(content_type or "").split(";")[0].strip().lower()
+    if declared != PDF_CONTENT_TYPE:
+        raise ImageFetchError(FILE_FORMAT_INVALID)
+    if not isinstance(data, (bytes, bytearray)) or not bytes(data).startswith(PDF_MAGIC):
+        raise ImageFetchError(FILE_FORMAT_INVALID)
 
 
 # ════════════════════════════════════════════════════════════════════
@@ -289,8 +408,17 @@ async def fetch_image(
     timeout_s: float = 10.0,
     now: Optional[float] = None,
     client_factory: Optional[Callable[[], httpx.AsyncClient]] = None,
+    max_bytes: int = IMAGE_MAX_BYTES,
 ) -> FetchedImage:
-    """跑完六道閘抓一張照片；任一關失敗 ⇒ `ImageFetchError`（帶內部碼）。"""
+    """跑完六道閘抓一個檔；任一關失敗 ⇒ `ImageFetchError`（帶內部碼）。
+
+    `max_bytes`（W9 U1／W9-5）：第⑥道 bytes 硬閘的量級。⛔⛔ **文件線就是走這
+    一支、只換這一個參數**——⛔ 不得為 PDF 新增第二支抓檔函式：第二支就是第二
+    套閘門，而第二套永遠會漏掉其中一道（白名單／https／userinfo／IP／`exp`／
+    轉址／串流上限，這六道少任何一道都是一個獨立的 SSRF 或 DoS）。
+    ⚠️ 函式名維持 `fetch_image` 也是刻意的：改名會讓「這條路只有一個抓檔閘」
+       這件事在 grep 上斷掉。
+    """
     validate_image_url(url, now=now)
     factory = client_factory or (lambda: _new_client(timeout_s))
     total = 0
@@ -304,7 +432,7 @@ async def fetch_image(
                 content_type = str(response.headers.get("content-type") or "").split(";")[0].strip()
                 async for chunk in response.aiter_bytes():
                     total += len(chunk)
-                    if total > IMAGE_MAX_BYTES:
+                    if total > max_bytes:
                         # ⚠️ 邊讀邊判、當場中止連線——`Content-Length` 不可信
                         #    （對方大可少報，S9-21）。
                         raise ImageFetchError(IMAGE_TOO_LARGE)
@@ -319,6 +447,14 @@ async def fetch_image(
 
 __all__ = [
     "DEFAULT_IMAGE_URL_ALLOWLIST",
+    "DOC_MAX_PAGES",
+    "DOC_TOTAL_PAGES_MAX",
+    "FILE_COUNT_CAP_PER_HOUR",
+    "FILE_FORMAT_INVALID",
+    "FILE_MAX_BYTES",
+    "FILE_MAX_COUNT",
+    "PDF_CONTENT_TYPE",
+    "PDF_MAGIC",
     "FetchedImage",
     "IMAGE_BATCH_SIZE",
     "IMAGE_FETCH_FAILED",
@@ -329,15 +465,22 @@ __all__ = [
     "IMAGE_URL_EXPIRED",
     "IMAGE_URL_NOT_ALLOWED",
     "ImageFetchError",
+    "check_and_record_file_count",
     "check_and_record_image_count",
+    "doc_max_pages",
+    "doc_total_pages_max",
     "fetch_image",
+    "file_count_cap_per_hour",
+    "file_max_bytes",
     "image_count_cap_per_hour",
     "image_entry_enabled",
     "image_failure_stats",
     "image_url_allowlist",
     "record_image_failure",
+    "reset_file_count_cap",
     "reset_image_count_cap",
     "reset_image_failures",
     "resolve_host",
     "validate_image_url",
+    "validate_pdf_bytes",
 ]
