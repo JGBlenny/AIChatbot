@@ -156,3 +156,23 @@ def test_all_three_shipped_fixtures_stay_green(verifier):
     ids = [c["id"] for c in json.loads(
         (_FIXTURES_DIR / "known_open.json").read_text(encoding="utf-8"))]
     assert "r4_edit_contract_requires_admin_role" in ids
+
+
+def test_compound_word_anchor_is_not_a_false_positive(verifier):
+    """2026-09-09 第四批回測誤殺：「繳費期限」裡的「繳費」不是狀態詞——句子「待繳費」對引文
+    「• 繳費期限：2026/09/01」不得判成否定對肯定（錨定改成對面要有「已＋狀態詞」）。"""
+    verdict = _verify(verifier, "帳單目前狀態為「待繳費」，繳費期限 2026/09/01。", "• 繳費期限：2026/09/01\n")
+    assert verdict.ok is True, verdict.model_dump()
+
+
+def test_pending_state_and_not_yet_are_the_same_polarity(verifier):
+    """「待發送」與「尚未發送給租客」同為否定形（都不是「已發送」）⇒ 放行。"""
+    verdict = _verify(verifier, "該帳單目前狀態為「待發送」，尚未發送給租客。", "• 狀態：待發送\n")
+    assert verdict.reason != "POLARITY_MISMATCH", verdict.model_dump()   # 覆蓋率另計，這條只看極性
+
+
+def test_pending_state_against_explicit_already_sent_is_blocked(verifier):
+    """正對照：句子「待發送」對引文明寫「已發送」⇒ 擋（肯定形錨定看得見）。"""
+    verdict = _verify(verifier, "該帳單目前狀態為「待發送」。", "此帳單已發送，租客端應可見。")
+    assert verdict.ok is False
+    assert verdict.reason == "POLARITY_MISMATCH"

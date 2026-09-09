@@ -553,9 +553,13 @@ class OutputVerifier:
                 if not neg or not status:
                     continue
                 combo = _nfkc(neg + status)
-                status_n = _nfkc(status)
-                sent_negated = combo in sentence_nfkc and status_n in unit_nfkc
-                unit_negated = combo in unit_nfkc and status_n in sentence_nfkc
+                # 2026-09-09 第四批回測：錨定改成「對面要有**肯定形** `已＋狀態詞`」——
+                # 裸狀態詞會撞複合詞（「繳費期限」裡的「繳費」讓「待繳費」被判成否定對肯定，
+                # 5 次誤殺、2 回合預算耗盡轉人）。只有一側否定、另一側明寫「已＋狀態」才是衝突；
+                # 「待繳費」對「繳費期限」／「待發送」對「尚未發送」都不算。
+                affirmed = _nfkc("已" + status)
+                sent_negated = combo in sentence_nfkc and affirmed in unit_nfkc
+                unit_negated = combo in unit_nfkc and affirmed in sentence_nfkc
                 if sent_negated != unit_negated:
                     failures.append(VerifierVerdict(
                         ok=False, reason="POLARITY_MISMATCH", sent=sent,
