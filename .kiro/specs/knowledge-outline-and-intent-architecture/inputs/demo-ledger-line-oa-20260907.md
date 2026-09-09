@@ -284,7 +284,10 @@ W4b（定義層、⛔ 不寫例子）：`jgb2.action.bill_due_extend` descriptio
 - 替身：37 個最小列物件補成完整 54 鍵列——bastion 白天恢復，jgb2 production DB 唯讀（tinker），對齊 API 投影後走同一套 builder 遮罩；`estate_stubs` 0；capture v4 只在 scratchpad（600）。
 - DB 事實（role 20151）：合約 1,380 筆（含歷史）、物件 390；API 以 user 12291 只看到 28 合約／83 物件——**圈定鍵是成員可視範圍**。要更豐富的替身得換一個可視範圍完整的成員身分（待業主給 user id）。⚠️ production tinker 啟動變慢（90 s 內跑不完，要 `timeout 300+`）。
 - 陷阱：smoke-rag 熱換必須 cp **自映像基準 commit 以來**所有變更檔（不是自上次熱換），否則舊檔 import 新符號啟動紅（`fields_before_today` 那次）。
-- 回測（`grounding_observe`＋attempt log 一輪：第二批劇本／走查／變形集／線③＋極性誤殺量測）：跑中。
+- 回測（`grounding_observe`＋attempt log，每輪：第二批劇本／走查／變形集／線③＋極性誤殺量測）三輪：
+  - r1（舊 app.py 沒 cp、模式未交接）：作廢——10 回合 `budget_exhausted` 轉人是舊 app.py 造成。
+  - r2（模式生效）：第二批 12/13、走查 10/12、線③ 12/12 外洩 0；**極性誤殺**：命中 12、幾乎全假陽性（裸詞表對稱整段比對；「無法改到 9/05」對「繳費期限 9/01」），7 回合預算耗盡轉人、p95 13→17 s ⇒ 停止條件命中 ⇒ **分流**：`VerifierVerdict.polarity_source` term（觀察）／pair（照擋）`bb437dd4`。另抓 U3 keyword 把 estates 查無哨兵當「有查到」注入（「延三天」被答成查無物件）⇒ `c81779bb`。
+  - r3（HEAD `c81779bb`）：第二批 12/13（紅＝無進場句「信仰」，已縮小宣稱）、走查 10/12（紅＝一回合 60 s 門面逾時、第二件報修問急迫）、變形集 22 回合、線③ **12/12、外洩 0、轉人 0、p50 6.1／p95 11.9 s**；四組 log **0 次轉人**；attempt 73 筆阻擋只有 `SENSITIVE_TOPIC` 2（敏感探針，正確）、觀察類 UNCITED 36／QUOTE_NOT_COVERING 52／POLARITY:term 18；756248 逾期回答 7/7 正確、「未逾期」0（唯一一句是 769249 待發送，屬實）。verifier（第三批）派出中。
 
 ## 2. demo 處理（這次就做，本機可驗）
 
