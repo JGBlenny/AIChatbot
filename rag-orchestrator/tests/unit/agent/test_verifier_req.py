@@ -296,7 +296,7 @@ def test_assertion_terms_cover_the_product_capability_verbs_and_not_the_over_bro
     assert {"支持", "包含", "內建", "整合", "自動"} <= set(rules.assertion_terms)
     assert {"有", "是", "已", "將"}.isdisjoint(set(rules.assertion_terms))
     # W6-b3：詞表多一張 `negation_status_pairs`（主題錨定極性）⇒ 版本升 1.4.0。
-    assert rules.version == "1.4.0"
+    assert rules.version == "1.4.1"   # 第四批：pairs 加「待」（7×8＝56）
     # DSP-029：相對覆蓋率進規則集（版本化，才跟得上 `rules_sha`）。
     assert rules.min_coverage_ratio == 0.5
 

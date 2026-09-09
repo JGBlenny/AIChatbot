@@ -9,7 +9,7 @@
 `(否定詞, 狀態詞)` 配對——兩側必須談到**同一個狀態詞**才算數。
 
 覆蓋：
-- 載入正對照（規則檔筆數＝載入筆數＝6×8＝48，且兩個集合就是規則檔寫的那兩個）；
+- 載入正對照（規則檔筆數＝載入筆數＝7×8＝56，且兩個集合就是規則檔寫的那兩個）；
 - 「尚未逾期」對「已逾期 8 天（以今日 2026/09/09 計）」⇒ `POLARITY_MISMATCH`；
 - 正對照「已逾期 8 天」對同一段引文 ⇒ 放行；
 - `known_open` 那個案的形狀（句子不含「回簽」、引文含「尚未回簽」）⇒ 放行；
@@ -76,20 +76,20 @@ def _verify(verifier: OutputVerifier, sentence_text: str, unit_text: str):
 
 def test_pairs_are_loaded_from_the_shipped_rules_file(rules):
     """正對照（plan-verifier r1 #2 同型）：pydantic 白名單會**靜默忽略**未宣告的鍵——
-    沒有這條，規則檔寫了 48 筆而程式一筆都沒讀到，測試照樣全綠。"""
+    沒有這條，規則檔寫了 56 筆而程式一筆都沒讀到，測試照樣全綠。"""
     raw = json.loads(_RULES_PATH.read_text(encoding="utf-8"))
-    assert len(raw["negation_status_pairs"]) == 48
+    assert len(raw["negation_status_pairs"]) == 56
     assert len(rules.negation_status_pairs) == len(raw["negation_status_pairs"])
     assert rules.negation_status_pairs, "載入結果是空表＝這條規則等於沒開"
 
 
 def test_pairs_are_the_cartesian_product_of_two_closed_sets(rules):
     """詞表以**兩個封閉集合的笛卡兒積**維護（⛔ 不是逐案加詞）。"""
-    negs = ["尚未", "未", "還沒", "沒有", "不在", "並未"]
+    negs = ["尚未", "未", "還沒", "沒有", "不在", "並未", "待"]   # 「待」＝尚未（待發送／待繳費），2026-09-09 第四批回測誤殺後加入
     statuses = ["逾期", "繳費", "到帳", "發送", "回簽", "簽署", "指派", "完成"]
     got = {(p["neg"], p["status"]) for p in rules.negation_status_pairs}
     assert got == {(n, s) for n in negs for s in statuses}
-    assert len(got) == len(negs) * len(statuses) == 48
+    assert len(got) == len(negs) * len(statuses) == 56
 
 
 def test_bare_negation_terms_are_untouched(rules):
