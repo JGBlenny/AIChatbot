@@ -208,7 +208,11 @@ def completed_actions_line(items: Any, scope_estate_id: Optional[str]) -> str:
         parts.append(_sanitize_piece(piece))
     if not parts:
         return ""
-    return "本對話已完成的動作：" + "／".join(parts)
+    return (
+        "本對話裡建立或修改過的："
+        + "／".join(parts)
+        + "（只是這段對話做過的事，⛔ 不是該戶的全部紀錄）"
+    )
 
 
 __all__ = [

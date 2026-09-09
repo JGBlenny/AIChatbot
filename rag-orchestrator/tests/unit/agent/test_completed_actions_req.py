@@ -197,8 +197,27 @@ def test_line_is_deterministic_single_line_and_newline_free():
     assert first == second, "同一份 items ⇒ 同一個字串（決定性）"
     assert "\n" not in first
     assert first == (
-        "本對話已完成的動作：修繕單 R-1／帳單 900001 到期日已延至 2026/08/20"
+        "本對話裡建立或修改過的：修繕單 R-1／帳單 900001 到期日已延至 2026/08/20"
+        "（只是這段對話做過的事，⛔ 不是該戶的全部紀錄）"
     )
+
+
+@pytest.mark.req(_REQ)
+def test_line_carries_the_not_full_record_definition_iff_non_empty():
+    """V1（Plan `inputs/plan-walkthrough-fixes-batch4-20260909.md` §2）：治
+    「記憶段被當成該戶全部紀錄」——非空時句尾一定帶這句定義（模型每回合看得到）；
+    空字串（沒有可渲染項目）時 ⛔ 不該平白多出這句（該戶根本沒有記憶行可講）。"""
+    definition = "只是這段對話做過的事，⛔ 不是該戶的全部紀錄"
+    items = [
+        {"action": "repair_create", "ref_type": "repair", "ref_id": "R-1",
+         "estate_id": None, "at_iso": "t0"},
+    ]
+    non_empty = completed_actions_line(items, None)
+    assert non_empty and definition in non_empty
+    assert "\n" not in non_empty
+
+    empty = completed_actions_line([], None)
+    assert empty == "" and definition not in empty
 
 
 @pytest.mark.req(_REQ)
@@ -212,12 +231,15 @@ def test_line_scope_filter_only_same_estate_when_pinned():
          "estate_id": None, "at_iso": "t2"},   # 算不出物件
     ]
     assert completed_actions_line(items, None) == (
-        "本對話已完成的動作：修繕單 R-1（測試大樓）／修繕單 R-2"
-        "／修繕單 R-3"
+        "本對話裡建立或修改過的：修繕單 R-1（測試大樓）／修繕單 R-2"
+        "／修繕單 R-3（只是這段對話做過的事，⛔ 不是該戶的全部紀錄）"
     )
     # 有釘範圍時：只留同戶；「算不出物件」也 ⛔ 不算同戶（F8）
     pinned = completed_actions_line(items, "88")
-    assert pinned == "本對話已完成的動作：修繕單 R-1（測試大樓）"
+    assert pinned == (
+        "本對話裡建立或修改過的：修繕單 R-1（測試大樓）"
+        "（只是這段對話做過的事，⛔ 不是該戶的全部紀錄）"
+    )
     # T4：物件「名稱」允許出現在使用者面文字，內部 `estate_id`（裸數字）不允許——
     # 兩者是不同的東西（2026-09-09 verifier P3「物件 67652」外洩的是後者）。
     assert "測試大樓" in pinned
@@ -246,7 +268,10 @@ def test_unknown_ref_type_is_not_rendered():
         {"action": "x", "ref_type": "contract", "ref_id": "C-1", "estate_id": None, "at_iso": "t0"},
         {"action": "repair_create", "ref_type": "repair", "ref_id": "R-1", "estate_id": None, "at_iso": "t1"},
     ]
-    assert completed_actions_line(items, None) == "本對話已完成的動作：修繕單 R-1"
+    assert completed_actions_line(items, None) == (
+        "本對話裡建立或修改過的：修繕單 R-1"
+        "（只是這段對話做過的事，⛔ 不是該戶的全部紀錄）"
+    )
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -407,7 +432,8 @@ async def test_confirmed_repair_create_is_citable_next_turn_and_passes_the_real_
         "estate_name": "測試大樓",
     }]
     assert completed_actions_line(state["agent"][COMPLETED_ACTIONS_KEY], None) == (
-        "本對話已完成的動作：修繕單 R-501（測試大樓）"
+        "本對話裡建立或修改過的：修繕單 R-501（測試大樓）"
+        "（只是這段對話做過的事，⛔ 不是該戶的全部紀錄）"
     )
 
     # 重送同一筆 ⇒ 記憶仍只有 1 筆（R4.3 延伸到記憶）
@@ -486,5 +512,6 @@ async def test_confirmed_bill_due_extend_records_due_date_from_receipt(monkeypat
         "due_date": "2026-08-20",
     }]
     assert completed_actions_line(state["agent"][COMPLETED_ACTIONS_KEY], None) == (
-        "本對話已完成的動作：帳單 900001 到期日已延至 2026/08/20"
+        "本對話裡建立或修改過的：帳單 900001 到期日已延至 2026/08/20"
+        "（只是這段對話做過的事，⛔ 不是該戶的全部紀錄）"
     )
