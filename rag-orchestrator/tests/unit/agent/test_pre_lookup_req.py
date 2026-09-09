@@ -417,9 +417,11 @@ async def test_keyword_not_found_injects_nothing():
     """短名詞查無**不注入**（主線 2026-09-09 收緊：「怎麼辦」「取消」這類 ≤6 字短句也會觸發
     keyword 查詢，印「查不到這個編號或名稱」會誤導模型）；trace 仍記 hits=0（正對照：
     純編號查無仍注入固定句，見 test_not_found_injects_the_fixed_line）。"""
-    registry = FakeRegistry(call_results=[_not_found_result()])
-    runtime, provider = _runtime(registry)
+    registry = FakeRegistry(call_results=[ToolResult(ok=False, error="NO_MATCH")])
+    provider = FakeProvider([_final_response(answer="好的。")])
+    runtime = _runtime(provider=provider, registry=registry)
     result = await runtime.run_turn(_identity(), "怎麼辦", {})
-    injected = _injected_texts(provider)
-    assert PRE_LOOKUP_NOT_FOUND_TEXT not in injected
+    blocks = _user_contents(provider)
+    assert not any(PRE_LOOKUP_LABEL in b for b in blocks)  # 沒有注入段
+    assert not any(PRE_LOOKUP_NOT_FOUND_TEXT in b for b in blocks)
     assert result.trace.pre_lookup == {"kind": "keyword", "hits": 0}
