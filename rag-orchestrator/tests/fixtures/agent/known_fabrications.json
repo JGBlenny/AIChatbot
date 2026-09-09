@@ -1285,5 +1285,76 @@
       }
     },
     "handoff": null
+  },
+  {
+    "id": "audience_prospect_route_token_still_blocked",
+    "nonce": "FIXTURE0000000000",
+    "note": "W9 情境①對照：同句 prospect 仍 ROUTE_NOT_ALLOWED。",
+    "user_message": "這張憑證幫我歸納。",
+    "agent_output": {
+      "kind": "answer",
+      "sentences": [
+        {
+          "text": "交易序號為 R2026081500042。",
+          "kind": "fact",
+          "refs": [
+            "[FIXTURE0000000000:t1:kb:9102§0]"
+          ]
+        }
+      ],
+      "fact_class": "other",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "t1": {
+        "ok": true,
+        "provenance": [
+          {
+            "source": "kb:9102",
+            "text": "交易序號：R2026081500042。付款方式：轉帳。",
+            "citable": true
+          }
+        ],
+        "text_for_model": ""
+      }
+    },
+    "handoff": null,
+    "audience": "prospect",
+    "expected_reason": "ROUTE_NOT_ALLOWED"
+  },
+  {
+    "id": "audience_missing_route_token_still_blocked",
+    "nonce": "FIXTURE0000000000",
+    "note": "W9 情境①對照：同句缺 audience 仍擋（fail-closed）。",
+    "user_message": "這張憑證幫我歸納。",
+    "agent_output": {
+      "kind": "answer",
+      "sentences": [
+        {
+          "text": "交易序號為 R2026081500042。",
+          "kind": "fact",
+          "refs": [
+            "[FIXTURE0000000000:t1:kb:9102§0]"
+          ]
+        }
+      ],
+      "fact_class": "other",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "t1": {
+        "ok": true,
+        "provenance": [
+          {
+            "source": "kb:9102",
+            "text": "交易序號：R2026081500042。付款方式：轉帳。",
+            "citable": true
+          }
+        ],
+        "text_for_model": ""
+      }
+    },
+    "handoff": null,
+    "expected_reason": "ROUTE_NOT_ALLOWED"
   }
 ]

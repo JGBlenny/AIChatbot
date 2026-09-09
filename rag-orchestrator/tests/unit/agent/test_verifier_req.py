@@ -301,7 +301,7 @@ def test_assertion_terms_cover_the_product_capability_verbs_and_not_the_over_bro
     assert {"有", "是", "已", "將"}.isdisjoint(set(rules.assertion_terms))
     # W6-b3：詞表多一張 `negation_status_pairs`（主題錨定極性）⇒ 版本升 1.4.0。
     # U3：規則檔多一個 `sensitive_patterns_audiences` 鍵（敏感樣式表的受眾範圍）⇒ 1.5.0。
-    assert rules.version == "1.5.0"
+    assert rules.version == "1.5.1"
     # DSP-029：相對覆蓋率進規則集（版本化，才跟得上 `rules_sha`）。
     assert rules.min_coverage_ratio == 0.5
 

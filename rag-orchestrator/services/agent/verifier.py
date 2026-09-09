@@ -214,7 +214,17 @@ class OutputVerifier:
         `services.agent.identity` 只 import `dataclasses`／`typing`，⛔ 不會與
         本檔既有的 `presales_gate`／`output_schema` 形成循環。
         """
-        declared = self.rules.sensitive_patterns_audiences
+        return self._audience_scope_applies(self.rules.sensitive_patterns_audiences, audience)
+
+    def _route_check_apply(self, audience: Optional[str]) -> bool:
+        """這一回合要不要跑 ⑤ 導流白名單（`ROUTE_NOT_ALLOWED`）——語義與
+        `_sensitive_patterns_apply` 完全相同（W9 情境①：售前 CTA 守門對 pm 引資料段的
+        交易序號誤殺），規則鍵 `route_check_audiences`。"""
+        return self._audience_scope_applies(self.rules.route_check_audiences, audience)
+
+    @staticmethod
+    def _audience_scope_applies(declared: Optional[list], audience: Optional[str]) -> bool:
+        """受眾範圍制的共用判定（四個套用條件見 `_sensitive_patterns_apply` docstring）。"""
         if declared is None:
             return True
         if audience is None:
@@ -474,8 +484,8 @@ class OutputVerifier:
                     polarity_failure.observed = list(observed)
                     return polarity_failure
 
-        # ⑤ 導流白名單
-        route_verdict = self._verify_routes(answer_nfkc)
+        # ⑤ 導流白名單（受眾範圍制，同 ①；pm 引資料段的序號／編號不再被電話正則咬）
+        route_verdict = self._verify_routes(answer_nfkc) if self._route_check_apply(audience) else None
         if route_verdict is not None:
             hit = _hit(route_verdict)
             if hit is not None:

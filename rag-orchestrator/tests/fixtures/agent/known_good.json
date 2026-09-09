@@ -613,5 +613,40 @@
       }
     },
     "handoff": null
+  },
+  {
+    "id": "good_audience_pm_route_token_passes",
+    "nonce": "FIXTURE0000000000",
+    "note": "W9 情境①：pm 引資料段的交易序號含 9 位以 0 開頭數字串，電話正則會命中；route_check_audiences=['prospect'] 下 pm 不擋。對照組在 known_fabrications.json。",
+    "user_message": "這張憑證幫我歸納。",
+    "agent_output": {
+      "kind": "answer",
+      "sentences": [
+        {
+          "text": "交易序號為 R2026081500042。",
+          "kind": "fact",
+          "refs": [
+            "[FIXTURE0000000000:t1:kb:9102§0]"
+          ]
+        }
+      ],
+      "fact_class": "other",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "t1": {
+        "ok": true,
+        "provenance": [
+          {
+            "source": "kb:9102",
+            "text": "交易序號：R2026081500042。付款方式：轉帳。",
+            "citable": true
+          }
+        ],
+        "text_for_model": ""
+      }
+    },
+    "handoff": null,
+    "audience": "property_manager"
   }
 ]

@@ -219,6 +219,11 @@ class VerifierRules(BaseModel):
     #: 必須宣告，否則規則檔加了鍵也讀不到（載入正對照測試釘住這件事）；而 `[]`
     #: 與「沒宣告」是兩件事——前者是明寫「沒有任何受眾要掃」，後者是舊規則檔。
     sensitive_patterns_audiences: Optional[list[str]] = None
+    #: W9 情境①（2026-09-09）：`allowed_routes` 的電話／網址白名單檢查（`ROUTE_NOT_ALLOWED`）
+    #: 也是售前 CTA 守門——pm 引資料段的交易序號會被電話正則咬到（`R2026081500042`
+    #: 的 `081500042` 命中 `0\d{1,2}\d{3,4}\d{4}`）。同 `sensitive_patterns_audiences`
+    #: 的語義：缺鍵＝全受眾＝舊行為；缺 audience／未知 ⇒ 照擋。
+    route_check_audiences: Optional[list[str]] = None
     negation_terms: list[str]
     #: W6-b3（plan-verifier r3 #1）：**主題錨定**極性詞表——`[{"neg": "尚未", "status": "逾期"}, …]`，
     #: 以否定詞與狀態詞兩個**封閉集合的笛卡兒積**維護（規則檔內逐筆寫出，⛔ 不在程式裡展開，
