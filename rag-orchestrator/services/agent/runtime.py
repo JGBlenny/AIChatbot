@@ -278,6 +278,53 @@ PENDING_CONFIRM_MAX = 20
 #: `confirm.request` 的工具名（⛔ 不抄字面量，值域由 `CONFIRM_SPEC` 持有）。
 CONFIRM_TOOL_NAME = CONFIRM_SPEC["name"]
 
+#: line-bot 2026-09-10 回報（單號 12357／12358 vs 對照 12356）：照片辨識出的分類（已過分類樹
+#: 封閉映射的 `ImageTurnInput.suggested_category`）沒接到建單參數——`CONFIRM_SPEC` 要模型
+#: 「業務沒講分類就不要填」，模型照做，卡就落回「其他（未指定）」、描述「（未填寫）」。
+#: 修法在程式層、⛔ 不改提示詞：照片回合把**封閉值**（分類樹名稱）存進 `agent_state[
+#: IMAGE_SUGGESTION_KEY]`（照片與出卡常常不同回合：照片→問急不急→答「不急」→出卡），
+#: `confirm.request`（`repair_create`）執行前由程式補進 payload 缺的 `category_name`；
+#: 描述沒人講時填 `IMAGE_DESCRIPTION_TEMPLATE`（只含分類樹名稱，⛔ 不含任何 vision
+#: 自由文字——S9-11 的「照片內文字不進修繕單」不變）。出卡成功即清掉；新照片覆寫。
+IMAGE_SUGGESTION_KEY = "image_suggestion"
+IMAGE_DESCRIPTION_TEMPLATE = "照片辨識：{category}"
+
+
+def _apply_image_suggestion_to_confirm_args(raw_args: Any, suggestion: Any) -> tuple:
+    """`confirm.request`／`repair_create` 的 payload 缺 `category_name`／`description`
+    時由照片建議補上。回 `(new_args, applied)`；`applied` 是補了哪些欄位的清單
+    （空＝原樣）。任何形狀不對（非 dict、payload 非 JSON 物件、action 非
+    repair_create、建議缺值）一律原樣回傳，⛔ 不在此 raise——形狀由 confirm 工具自己驗。
+    只補**缺值**（鍵不存在、None、去空白為空）；模型有給就不動。"""
+    if not isinstance(raw_args, dict) or not isinstance(suggestion, dict):
+        return raw_args, []
+    category = suggestion.get("category_name")
+    if not isinstance(category, str) or not category.strip():
+        return raw_args, []
+    payload_raw = raw_args.get("payload")
+    if not isinstance(payload_raw, str):
+        return raw_args, []
+    try:
+        payload = json.loads(payload_raw)
+    except (TypeError, ValueError):
+        return raw_args, []
+    if not isinstance(payload, dict) or payload.get("action") != "repair_create":
+        return raw_args, []
+    applied: list = []
+    def _blank(v: Any) -> bool:
+        return v is None or (isinstance(v, str) and not v.strip())
+    if _blank(payload.get("category_name")):
+        payload["category_name"] = category.strip()
+        applied.append("category_name")
+    if _blank(payload.get("description")):
+        payload["description"] = IMAGE_DESCRIPTION_TEMPLATE.format(category=category.strip())
+        applied.append("description")
+    if not applied:
+        return raw_args, []
+    new_args = dict(raw_args)
+    new_args["payload"] = json.dumps(payload, ensure_ascii=False)
+    return new_args, applied
+
 #: 使用者按下按鈕送回來的機器值：`^confirm_(submit|edit|cancel):<16 位十六進位>$`。
 #: ⚠️ **等值**比對（`fullmatch`、無前後綴）——⛔ 不做子字串比對：那會讓
 #: 「confirm_submit:abcd… 這是什麼意思？」這種自由文字誤觸發一次真實寫入。
@@ -2506,6 +2553,8 @@ class AgentRuntime:
         if not isinstance(pending_all, dict):
             pending_all = {}
             agent_state[PENDING_CONFIRM_KEY] = pending_all
+        # 出卡成功 ⇒ 照片建議用掉了，清掉（⛔ 不讓它再補到下一張無關的單）。
+        agent_state.pop(IMAGE_SUGGESTION_KEY, None)
         pending_all[pending_id] = {
             "action": action,
             "payload": payload,
@@ -3085,6 +3134,14 @@ class AgentRuntime:
         # 回傳完全相同（`wrap_provenance_data` ＋ 同回合 nonce），故模型引用它的
         # 句子解析得出來、過得了 Verifier（驗收 (xii)）。
         # ⛔ 不併進 `message`（那會變成使用者說的話）、⛔ 不經 `agent_state`。
+        if image is not None and image.status in ("ok", "partial"):
+            # 照片建議（封閉值）進 session：給之後回合的 `confirm.request` 補分類用。
+            # 新照片一律覆寫（沒辨識出分類就寫 None，⛔ 不讓上一張的分類殘留到這張）。
+            agent_state[IMAGE_SUGGESTION_KEY] = (
+                {"category_name": image.suggested_category}
+                if isinstance(image.suggested_category, str) and image.suggested_category.strip()
+                else None
+            )
         if image is not None and image.status in ("ok", "partial") and image.facts.strip():
             tool_results_by_id[image_call_id] = ToolResult(
                 ok=True,
@@ -3359,6 +3416,15 @@ class AgentRuntime:
                         continue
 
                     counters.tool_calls += 1
+                    if name == CONFIRM_TOOL_NAME:
+                        raw_args, _applied = _apply_image_suggestion_to_confirm_args(
+                            raw_args, agent_state.get(IMAGE_SUGGESTION_KEY)
+                        )
+                        for _field in _applied:
+                            violations.append(f"image_suggestion_applied:{_field}")
+                        # 一次性：任何 `confirm.request` 呼叫（不論成敗）都把照片建議用掉，
+                        # ⛔ 不讓上一張照片的分類補到之後另一張無關的單。
+                        agent_state.pop(IMAGE_SUGGESTION_KEY, None)
                     call_start = self._clock()
                     try:
                         tool_result = await self.registry.call(
