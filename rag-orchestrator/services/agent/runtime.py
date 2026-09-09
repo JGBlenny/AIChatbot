@@ -62,6 +62,7 @@ from pydantic import ValidationError
 
 from services import usage_metering
 from services.agent.budget import Budget, BudgetCounters
+from services.agent.affirmative import is_affirmative
 from services.agent.completed_actions import (
     COMPLETED_ACTIONS_KEY,
     completed_actions_line,
@@ -914,6 +915,22 @@ COMPLETED_ACTIONS_LABEL = "session.completed_actions"
 #:    比照 `IMAGE_DATA_LABEL`／`IMAGE_PROVENANCE_SOURCE`。
 CALLER_ENTRY_PROVENANCE_SOURCE = "caller:entry_line#1"
 CALLER_ENTRY_LABEL = "caller.entry_line"
+
+#: T3（Plan §4）：**肯定語＝授權**的程式資料段——同進場句一套注入紀律
+#: （`citable=False`、真的登記進 `tool_results_by_id`、id 在 `reserved_ids`
+#: 裡）。文字固定、無插值；⛔ 不代模型執行工具、⛔ 不寫 `PENDING_CONFIRM_KEY`、
+#: ⛔ 不產生 token——這一段只是把「上一句提議已獲授權」交給模型當事實依據，
+#: 寫入仍只經 `confirm_submit:<pid>` 的確認鏈兌現。
+CALLER_AFFIRMATIVE_PROVENANCE_SOURCE = "caller:affirmative_carry#1"
+CALLER_AFFIRMATIVE_LABEL = "caller.affirmative_carry"
+AFFIRMATIVE_CARRY_TEXT = "使用者已肯定上一句的提議，直接執行。"
+
+#: T3（Plan §4）：**空會話註記**——dialog 長度為 0 時注入，讓模型能誠實回答
+#: 「你剛剛問了我什麼」這類問題，而不是在沒有歷史時憑印象幻覺。同一套
+#: 注入紀律；文字固定、無插值。
+CONTEXT_EMPTY_SESSION_PROVENANCE_SOURCE = "caller:empty_session#1"
+CONTEXT_EMPTY_SESSION_LABEL = "caller.empty_session"
+EMPTY_SESSION_TEXT = "本會話沒有先前訊息。"
 
 #: `ImageTurnInput.status` 的封閉值域。
 IMAGE_STATUSES: frozenset = frozenset({"ok", "partial", "failed", "timeout"})
@@ -2309,12 +2326,25 @@ class AgentRuntime:
         # 有 entry_line」才算——模型能不能偽造一個 `entry-…` 不該取決於呼叫端這次
         # 有沒有帶進場句（否則「沒帶進場句時 entry-… 可以被模型自己造」就成了洞）。
         entry_call_id = f"entry-{nonce[:8]}"
+        # T3：肯定語承接段／空會話註記段的 id 同樣**在回合最開始就固定**——
+        # 理由同 `entry_call_id`：模型能不能偽造 `aff-…`／`ctx-…` 不該取決於
+        # 這一回合是否真的會注入那一段。
+        aff_call_id = f"aff-{nonce[:8]}"
+        ctx_call_id = f"ctx-{nonce[:8]}"
         reserved_ids: frozenset[str] = frozenset(
-            {OUTLINE_TOOL_CALL_ID, image_call_id, completed_call_id, entry_call_id}
+            {
+                OUTLINE_TOOL_CALL_ID, image_call_id, completed_call_id,
+                entry_call_id, aff_call_id, ctx_call_id,
+            }
         )
         # T1：正規化與記憶行走**同一支** `sanitize_data_piece`（控制字元／零寬／
         # 雙向／換行／假標記逐類剝除）。非字串或剝完為空 ⇒ 空字串＝不注入。
         entry_text = sanitize_data_piece(entry_line).strip()
+        # T3（Plan §4）：讀「緊鄰上一回合出口寫入之值」——T1 保證每一個回合出口
+        # （`_finalize`／`_finish_confirm_turn`／`handoff_cache` 重播）都會寫
+        # `agent_state[LAST_ASK_TARGET_KEY]`，故這裡讀到的必是上一回合的值，
+        # ⛔ 不會讀到更早以前殘留的舊訊號。
+        last_ask_target = agent_state.get(LAST_ASK_TARGET_KEY)
         # 2.9 路徑對齊：槽位在 **`collected_data` 頂層**（見 `_slots_for_prompt`）。
         slots = _slots_for_prompt(state)
         # 任務 4.2（Plan §4.1-2）：身分槽位一律由**入口身分**現算後覆寫。
@@ -2344,6 +2374,70 @@ class AgentRuntime:
         visible_names = {tool_name_from_openai(t["function"]["name"]) for t in tool_specs}   # 解回 registry 名
 
         messages = self.assembler.build_messages(identity, outline, slots, dialog, tool_specs, nonce)
+
+        # T3（Plan §4）：**肯定語＝授權**——本回合訊息整句屬 `AFFIRMATIVE_WORDS`
+        # 且緊鄰上一回合出口寫入的 `last_ask_target == "confirm_intent"` ⇒ 以
+        # 程式資料段注入「上一句提議已獲授權」，供模型直接執行（⛔ 不代模型執行
+        # 工具、⛔ 不寫 `PENDING_CONFIRM_KEY`、⛔ 不產生 token——寫入仍只經
+        # `confirm_submit:<pid>` 兌現）。`violations` 只記一個統計旗標。
+        # ⚠️ 排在 DSP-022 那句**之前**——這一段是這一輪使用者訊息之前的背景資料，
+        #    ⛔ 不得排在使用者訊息之後（那會破壞「使用者這句一定是送給模型的
+        #    最後一則訊息」這個既有不變量，見
+        #    `test_outline_citation_seed_req.test_current_user_message_is_last_message_sent_to_model`）。
+        if last_ask_target == "confirm_intent" and is_affirmative(user_message):
+            violations.append("affirmative_carry")
+            tool_results_by_id[aff_call_id] = ToolResult(
+                ok=True,
+                data={},
+                provenance=[
+                    Provenance(
+                        source=CALLER_AFFIRMATIVE_PROVENANCE_SOURCE,
+                        text=AFFIRMATIVE_CARRY_TEXT,
+                        citable=False,
+                    )
+                ],
+                text_for_model="",
+            )
+            messages.append(
+                {
+                    "role": "user",
+                    "content": wrap_provenance_data(
+                        CALLER_AFFIRMATIVE_LABEL,
+                        aff_call_id,
+                        [(CALLER_AFFIRMATIVE_PROVENANCE_SOURCE, provenance_units(AFFIRMATIVE_CARRY_TEXT))],
+                        nonce,
+                    ),
+                }
+            )
+
+        # T3（Plan §4）：**空會話註記**——dialog 長度 0（封閉條件）⇒ 注入固定句，
+        # 讓模型能誠實回答「你剛剛問了我什麼」這類問題，而不是在沒有歷史時
+        # 憑印象幻覺。同樣排在 DSP-022 那句之前，理由同上。
+        if not dialog:
+            tool_results_by_id[ctx_call_id] = ToolResult(
+                ok=True,
+                data={},
+                provenance=[
+                    Provenance(
+                        source=CONTEXT_EMPTY_SESSION_PROVENANCE_SOURCE,
+                        text=EMPTY_SESSION_TEXT,
+                        citable=False,
+                    )
+                ],
+                text_for_model="",
+            )
+            messages.append(
+                {
+                    "role": "user",
+                    "content": wrap_provenance_data(
+                        CONTEXT_EMPTY_SESSION_LABEL,
+                        ctx_call_id,
+                        [(CONTEXT_EMPTY_SESSION_PROVENANCE_SOURCE, provenance_units(EMPTY_SESSION_TEXT))],
+                        nonce,
+                    ),
+                }
+            )
+
         # DSP-022：當前這句一定是最後一則 user 訊息（歷史由 assembler 從 `dialog` 放前面）。
         messages.append({"role": "user", "content": user_message})
         # W8 (2)：影像事實以**可引用的工具事實**進場（r1 裁定接線）——包法與工具
@@ -2907,6 +3001,17 @@ class AgentRuntime:
                     }
                 )
                 continue
+
+            # T3（Plan §4）：**文字假確認**——只做統計，⛔ 不改寫、⛔ 不改文字。
+            # 三個封閉條件都成立（`kind=ask` ∧ `ask_target=confirm_intent` ∧ 本回合
+            # 沒有 `confirm.request` 呼叫）才記一個旗標；第四個條件（模型散文是否
+            # 真的在問「要不要送出」）是開放語義，Plan 明講⛔ 不做，故不判。
+            if (
+                out.kind == "ask"
+                and out.ask_target == "confirm_intent"
+                and not any(tc.name == CONFIRM_TOOL_NAME for tc in tool_call_records)
+            ):
+                violations.append("prose_confirm_suspect")
 
             trace = TurnTrace(
                 trace_id=trace_id,
