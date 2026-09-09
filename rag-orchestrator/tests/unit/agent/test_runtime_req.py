@@ -1026,7 +1026,11 @@ async def test_attempt_sink_called_once_per_model_final_attempt():
     assert first["kind"] == "answer"
     assert first["fact_class"] == "feature"
     assert first["handoff_reason"] is None
-    assert first["sentences"] == [{"text": "第一句話。", "kind": "fact", "refs": ["not-a-real-marker"]}]
+    # U1：`resolved_unit`＝該筆各 ref **解析成功**的引文原文；這個案的標記格式不合
+    # （`ref_invalid`）⇒ `resolved` 裡沒有它 ⇒ 空表（⛔ 不是缺鍵）。
+    assert first["sentences"] == [{
+        "text": "第一句話。", "kind": "fact", "refs": ["not-a-real-marker"], "resolved_unit": [],
+    }]
     assert first["verdict"] == VerifierVerdict(ok=False, reason="QUOTE_NOT_COVERING", sent=0).model_dump()
     # `resolve_refs` 對格式不合的標記判 `ref_invalid`——鍵格式必須是 "<句索引>:<ref索引>"。
     assert first["resolve_errors"] == {"0:0": "ref_invalid"}
@@ -1038,9 +1042,16 @@ async def test_attempt_sink_called_once_per_model_final_attempt():
 
 @pytest.mark.asyncio
 @pytest.mark.unit
-async def test_attempt_sink_record_keys_are_closed_and_carry_no_verbatim_source():
-    """record 鍵集合封閉，且不含任何來源原文／`resolved` quote／`text_for_model`
-    —— `sentences[*].text` 是**模型自己生成的文字**（本來就會進 `TurnResult.answer`
+async def test_attempt_sink_record_keys_are_closed():
+    """record 鍵集合**封閉**（⛔ 不得隨手長出新鍵），且不含 `text_for_model`。
+
+    ⚠️ U1（security-reviewer r1 F5）**刻意改了這條的範圍**：引文原文現在允許出現在
+    `sentences[*].resolved_unit`——極性誤殺量測要「句子＋引文並列」逐句人看，沒有它
+    重放算不出來。邊界仍在、⛔ 沒有放寬：
+      * 通道只有 **attempt sink**（`AGENT_ATTEMPT_LOG_PATH`，dev 專用旗，⛔ 線上不設）；
+      * `TurnResult`／`TurnTrace` 這一側**仍然一個字都不放**（正對照見
+        `test_attempt_sink_records_resolved_unit_but_turn_result_does_not`）。
+    `sentences[*].text` 是**模型自己生成的文字**（本來就會進 `TurnResult.answer`
     送給使用者），⛔ 不是來源原文，兩者不是同一件事。"""
     provider = FakeProvider([_final_response(kind="answer", answer="您好，這是回覆。")])
     sink_calls: list[dict] = []
@@ -1050,13 +1061,51 @@ async def test_attempt_sink_record_keys_are_closed_and_carry_no_verbatim_source(
     assert len(sink_calls) == 1
     record = sink_calls[0]
     assert set(record.keys()) == {
-        "attempt", "kind", "fact_class", "handoff_reason", "sentences", "verdict", "resolve_errors",
+        "attempt", "kind", "fact_class", "handoff_reason", "sentences", "verdict",
+        "resolve_errors", "observed",
     }
-    assert "quote" not in record
-    assert "resolved" not in record
     assert "text_for_model" not in record
     for sentence in record["sentences"]:
-        assert set(sentence.keys()) == {"text", "kind", "refs"}
+        assert set(sentence.keys()) == {"text", "kind", "refs", "resolved_unit"}
+
+
+async def test_attempt_sink_records_resolved_unit_but_turn_result_does_not(monkeypatch):
+    """U1 正對照：引文原文**進得了** attempt log（不然誤殺量測沒有材料，整條斷言會在
+    「兩邊都空」時假綠），**進不了** `TurnResult`／`TurnTrace`——後者會落
+    `usage_events.decision_snapshot.agent` 並由 trace 端點印出（2.6 security review P2）。"""
+    import services.agent.runtime as runtime_mod
+
+    nonce = "abcdef0123456789"
+    monkeypatch.setattr(runtime_mod, "new_nonce", lambda: nonce)
+    marker = f"[{nonce}:call_1:kb:3600§0]"
+    quote = "本期帳單已逾期 8 天。"
+    payload = {
+        "kind": "answer",
+        "sentences": [{"text": "您的帳單已逾期 8 天。", "kind": "fact", "refs": [marker]}],
+        "fact_class": "feature", "handoff_reason": None,
+    }
+    provider = FakeProvider([
+        _tool_call_response("kb.get", {"kb_id": "3600"}),
+        _fake_response(_fake_message(content=json.dumps(payload, ensure_ascii=False))),
+    ])
+    registry = FakeRegistry(call_results=[ToolResult(
+        ok=True, data={"id": 3600},
+        provenance=[{"source": "kb:3600", "text": quote, "citable": True}],
+        text_for_model=quote,
+    )])
+    sink_calls: list[dict] = []
+    runtime = _runtime(provider=provider, registry=registry,
+                       verifier=FakeVerifier([VerifierVerdict(ok=True)]),
+                       attempt_sink=sink_calls.append)
+    result = await runtime.run_turn(_identity(), "我的帳單逾期了嗎", {})
+
+    assert sink_calls, "attempt sink 沒被呼叫＝這條測試沒量到東西"
+    assert sink_calls[-1]["sentences"][0]["resolved_unit"] == [quote]
+    assert sink_calls[-1]["observed"] == []
+    import dataclasses
+    dumped = json.dumps(dataclasses.asdict(result), ensure_ascii=False, default=str)
+    assert quote not in dumped
+    assert "已逾期 8 天" in dumped  # 正對照：模型自己寫的那句在，⛔ 引文原文不在
 
 
 @pytest.mark.asyncio

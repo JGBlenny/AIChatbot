@@ -2960,11 +2960,28 @@ class AgentRuntime:
                         "kind": out.kind,
                         "fact_class": out.fact_class,
                         "handoff_reason": out.handoff_reason,
+                        # U1（security-reviewer r1 F5）：`resolved_unit`＝這一筆各 ref
+                        # **解析出來的引文原文**。極性誤殺量測要「句子＋引文並列」逐句
+                        # 人看，沒有它重放算不出來。
+                        # ⚠️ **只走 attempt sink**（`AGENT_ATTEMPT_LOG_PATH`，dev 專用旗，
+                        # ⛔ 線上不設）——引文原文 ⛔ 不進 `TurnTrace`／`TurnResult`／
+                        # `decision_snapshot`（那是 2.6 security review P2 擋掉的事）。
                         "sentences": [
-                            {"text": s.text, "kind": s.kind, "refs": list(s.refs)}
-                            for s in out.sentences
+                            {
+                                "text": s.text,
+                                "kind": s.kind,
+                                "refs": list(s.refs),
+                                "resolved_unit": [
+                                    resolved[(si, sj)].quote
+                                    for sj in range(len(s.refs))
+                                    if (si, sj) in resolved
+                                ],
+                            }
+                            for si, s in enumerate(out.sentences)
                         ],
                         "verdict": verdict.model_dump(),
+                        # 觀察模式下「本來會擋、這次只記錄」的類別（`ok=True` 也可能非空）。
+                        "observed": list(verdict.observed),
                         "resolve_errors": {
                             f"{i}:{j}": cause for (i, j), cause in resolve_errors.items()
                         },

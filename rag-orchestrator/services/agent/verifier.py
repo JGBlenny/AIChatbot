@@ -7,6 +7,9 @@
 **DSP-028：②③④的量測單位是「筆」與「片段」，①⑤⑥⑦的量測單位是拼接後的 `answer`**
 ——後者是安全側（掃的字串就是送出去的字串），跨筆拆數字／拆禁詞的規避靠它擋。
 
+**模式（W6-b3）**：`OutputVerifier.mode` 決定每一類違規是「照擋」還是「只記錄到
+`VerifierVerdict.observed`、繼續往下跑」——⛔ 模式感知只在本檔，外層⛔ 不得翻判定。
+
 **只 import `presales_gate`／`conversational_config`**（design 元件 6 收尾一句）：
 `SENSITIVE`、`FactClass`、`HANDOFF_WORDS`、`scan_handoff_mentions` 來自 `services.presales_gate`，
 ⛔ 不複製這些封閉集合到本檔——那樣兩處會各自演化、對不上。
@@ -99,6 +102,36 @@ def _rule_id(index: int) -> str:
     return f"rule#{index}"
 
 
+#: W6-b3：`AGENT_VERIFIER_MODE` 的值域。**解析（含相容舊旗）唯一在
+#: `services.agent.health.verifier_mode()`**，⛔ 本檔不讀 env——尺不自己決定要不要開；
+#: 模式由組裝端（`app._wrap_verifier_observe_only`）交進來。
+VERIFIER_MODES: tuple[str, ...] = ("enforce", "grounding_observe", "observe_only")
+DEFAULT_VERIFIER_MODE = "enforce"
+
+#: `grounding_observe` 的**觀察類**（DSP-040／W6-b3）＝「引用解析與涵蓋」這一族。
+_GROUNDING_OBSERVE_REASONS: frozenset[str] = frozenset({
+    "UNCITED_ASSERTION", "QUOTE_TOO_SHORT", "QUOTE_NOT_COVERING", "SOURCE_NOT_CITABLE",
+})
+#: ⚠️ `SCHEMA` 是**共用拒因**，⛔ 不得整類觀察（plan-verifier r2 #1）：只有這四個
+#: 「引用解析失敗」子成因觀察；`marker_in_answer`（標記外洩）／`handoff_reason_invalid`
+#: ／`handoff_reason_mismatch`（S4 敏感配對，U2 的准入建立在它之上）／`ask_target_invalid`
+#: ／`empty_*` 都是安全或契約子成因，**照擋**。
+_GROUNDING_OBSERVE_SCHEMA_CAUSES: frozenset[str] = frozenset({
+    "ref_invalid", "ref_source_not_found", "ref_ambiguous", "unit_out_of_range",
+})
+
+#: `negation_status_pairs` 的 `term_id` 基底。`TERM_ID_PATTERN` 只認 `rule#<十進位>`，
+#: 而 `POLARITY_MISMATCH` 現在有**兩張表**（裸詞 `negation_terms`／主題錨定 pairs），
+#: 索引不加基底就會撞在一起（`rule#3` 指不出是哪一張）。⛔ 不改 `TERM_ID_PATTERN`：
+#: 那會讓既有 trace 的 term_id 形狀多一種，消費端要一起改。
+_PAIR_TERM_ID_BASE = 1000
+
+
+def _pair_rule_id(index: int) -> str:
+    """`negation_status_pairs` 第 `index` 筆的 `term_id`（＝`rule#{1000+index}`）。"""
+    return _rule_id(_PAIR_TERM_ID_BASE + index)
+
+
 #: fixture 案內未指定 `nonce` 時的缺省值（`_assert_all` 用）。⛔ 只給 fixture／自證用，
 #: 產線 nonce 一律來自 `prompt_assembler.new_nonce()`——固定值在真線路上等於沒有 nonce。
 _FIXTURE_NONCE = "FIXTURE0000000000"
@@ -109,9 +142,56 @@ def _is_legal_fact_class(value: Optional[str]) -> bool:
 
 
 class OutputVerifier:
-    def __init__(self, rules: VerifierRules):
+    """`mode`（W6-b3）：`enforce`（預設、全部照擋）／`grounding_observe`（引用解析與
+    涵蓋類只記錄、其餘照擋）／`observe_only`（全部只記錄＝舊 `AGENT_VERIFIER_OBSERVE_ONLY`
+    的語義）。
+
+    ⚠️ **模式感知在 `verify()` 內部**（security-reviewer r1 F1）：外層包一層把
+    `ok=False` 翻成 `ok=True` 的作法會讓短路後的機敏類**根本沒跑**——先命中的引用類
+    直接 return，`SENSITIVE_TOPIC`／`ROUTE_NOT_ALLOWED`／`FORBIDDEN_TERM` 連看都沒看過，
+    翻完的 `ok=True` 因此不代表「機敏類通過」。
+    """
+
+    def __init__(self, rules: VerifierRules, *, mode: str = DEFAULT_VERIFIER_MODE):
         self.rules = rules
         self._sensitive_patterns = [re.compile(p) for p in rules.sensitive_patterns]
+        self._mode = DEFAULT_VERIFIER_MODE
+        self.mode = mode
+
+    @property
+    def mode(self) -> str:
+        return self._mode
+
+    @mode.setter
+    def mode(self, value: str) -> None:
+        """⛔ 值域外一律 raise（fail loud）：打錯字若靜默落回某個模式，可能是**整把尺
+        關掉**，而那個失敗方向沒有人會發現。env 端的容錯（未知值 ⇒ enforce）在
+        `health.verifier_mode()`，那是**解析**；這裡是**設定**。"""
+        if value not in VERIFIER_MODES:
+            raise ValueError(
+                f"OutputVerifier.mode 只認 {VERIFIER_MODES}，收到 {value!r}"
+            )
+        self._mode = value
+
+    def _is_observed(self, verdict: VerifierVerdict) -> bool:
+        """這個違規在目前模式下是「只記錄」還是「照擋」。⛔ 以**拒因＋子成因**界定，
+        不是整個 `SCHEMA` 一起（見 `_GROUNDING_OBSERVE_SCHEMA_CAUSES`）。"""
+        if self._mode == "enforce":
+            return False
+        if self._mode == "observe_only":
+            return True
+        if verdict.reason in _GROUNDING_OBSERVE_REASONS:
+            return True
+        return (
+            verdict.reason == "SCHEMA"
+            and verdict.schema_cause in _GROUNDING_OBSERVE_SCHEMA_CAUSES
+        )
+
+    @staticmethod
+    def _observed_key(verdict: VerifierVerdict) -> str:
+        if verdict.reason == "SCHEMA" and verdict.schema_cause:
+            return f"SCHEMA:{verdict.schema_cause}"
+        return verdict.reason or "UNKNOWN"
 
     # ------------------------------------------------------------------
     def verify(
@@ -137,9 +217,31 @@ class OutputVerifier:
         「解析用 A 筆 provenance、可引用旗標讀到 B 筆」的分歧）。參數保留是刻意的：
         它是 design 元件 6 的介面契約，Runtime／測試都以這個形狀對接。
         """
+        observed: list[str] = []
+
+        def _hit(verdict: VerifierVerdict):
+            """一次違規的**去向**：觀察類 ⇒ 記進 `observed`、回 `None`（呼叫端**繼續**跑
+            後面的類）；照擋類 ⇒ 回傳該 verdict（呼叫端立刻 return）。
+            ⛔ 呼叫端不得忽略回傳值——忽略＝把照擋類降級成觀察類。"""
+            if self._is_observed(verdict):
+                key = self._observed_key(verdict)
+                if key not in observed:
+                    observed.append(key)
+                return None
+            verdict.observed = list(observed)
+            return verdict
+
+        def _pass() -> VerifierVerdict:
+            return VerifierVerdict(ok=True, observed=list(observed))
+
         # ① 敏感五類（fail-closed：缺／非法一律視為敏感）
         if not _is_legal_fact_class(out.fact_class):
-            return VerifierVerdict(ok=False, reason="SENSITIVE_TOPIC")
+            hit = _hit(VerifierVerdict(ok=False, reason="SENSITIVE_TOPIC"))
+            if hit is not None:
+                return hit
+            # 觀察（只可能是 `observe_only`）：`fact_class` 不合法時後面每一步都沒有依據
+            # 可跑（`FactClass(...)` 會丟 ValueError）⇒ 就地放行，語義與舊外層旗相同。
+            return _pass()
         fact_class = FactClass(out.fact_class)
         # DSP-021：`kind=handoff` 是敏感五類**應走**的出口——fact_class ∈ SENSITIVE 在
         # 這裡是正確標記，⛔ 不拒；`handoff_reason` 必須在 `HandoffReason` 值域內
@@ -151,21 +253,31 @@ class OutputVerifier:
         # ——那段文字不會到使用者手上，②(a) 的空陣列 SCHEMA 因此只對非 handoff 生效。
         if out.kind == "handoff":
             if out.handoff_reason not in {r.value for r in HandoffReason}:
-                return VerifierVerdict(
-                    ok=False, reason="SCHEMA", schema_cause="handoff_reason_invalid")
+                hit = _hit(VerifierVerdict(
+                    ok=False, reason="SCHEMA", schema_cause="handoff_reason_invalid"))
+                if hit is not None:
+                    return hit
             # F1：敏感五類必須配 sensitive_no_grounding——把「敏感類配敏感原因」從
             # 提示詞承諾升格為 schema 驗證，對所有回合一體適用（S4 §5）。
-            if fact_class in SENSITIVE and out.handoff_reason != "sensitive_no_grounding":
-                return VerifierVerdict(
-                    ok=False, reason="SCHEMA", schema_cause="handoff_reason_mismatch")
-            return VerifierVerdict(ok=True)
+            # ⚠️ `elif`：`handoff_reason` 不合法時這條沒有依據可判（維持舊順序）。
+            elif fact_class in SENSITIVE and out.handoff_reason != "sensitive_no_grounding":
+                hit = _hit(VerifierVerdict(
+                    ok=False, reason="SCHEMA", schema_cause="handoff_reason_mismatch"))
+                if hit is not None:
+                    return hit
+            return _pass()
         if fact_class in SENSITIVE:
-            return VerifierVerdict(ok=False, reason="SENSITIVE_TOPIC")
+            hit = _hit(VerifierVerdict(ok=False, reason="SENSITIVE_TOPIC"))
+            if hit is not None:
+                return hit
         answer_nfkc = _nfkc(out.answer)
         for i, pattern in enumerate(self._sensitive_patterns):
             if pattern.search(answer_nfkc):
-                return VerifierVerdict(
-                    ok=False, reason="SENSITIVE_TOPIC", term_id=_rule_id(i))
+                hit = _hit(VerifierVerdict(
+                    ok=False, reason="SENSITIVE_TOPIC", term_id=_rule_id(i)))
+                if hit is not None:
+                    return hit
+                break  # 觀察：同一類記一次就夠，⛔ 不把整張敏感樣式表逐條掃出來
 
         # ①' DSP-029 r13 #2：答案裡出現片段標記樣式 ⇒ SCHEMA(marker_in_answer)。
         # 契約寫「步⑥前」，這裡取**最早**的合法位置（①之後、②之前），⛔ 不是放寬：
@@ -175,8 +287,10 @@ class OutputVerifier:
         # 檢查比沒有更糟（它讓人以為這個出口被守著）。量測單位與①⑤⑥⑦同為拼接後的
         # `answer`——掃的字串就是送出去的字串。
         if _UNIT_MARKER_RE.search(answer_nfkc):
-            return VerifierVerdict(
-                ok=False, reason="SCHEMA", schema_cause="marker_in_answer")
+            hit = _hit(VerifierVerdict(
+                ok=False, reason="SCHEMA", schema_cause="marker_in_answer"))
+            if hit is not None:
+                return hit
 
         # ①-b T1（Plan `inputs/plan-walkthrough-fixes-batch2-20260909.md` §2）：
         # 追問契約——`kind=ask` 的**追問對象**必須是 `ASK_TARGETS` 值域內的一項。
@@ -186,21 +300,28 @@ class OutputVerifier:
         # ⚠️ `ask_target` 缺（None）與填了值域外的字串是**同一種病**（追問對象不明），
         #    ⛔ 不分兩個成因：模型端的修法完全一樣（改填值域內的一項）。
         if out.kind == "ask" and out.ask_target not in ASK_TARGETS:
-            return VerifierVerdict(
-                ok=False, reason="SCHEMA", schema_cause="ask_target_invalid")
+            hit = _hit(VerifierVerdict(
+                ok=False, reason="SCHEMA", schema_cause="ask_target_invalid"))
+            if hit is not None:
+                return hit
 
         # ② 逐筆 schema 檢查（DSP-028 (a)(b)(c)）——⛔ 不再比對「句數＝標籤數」：
         # 文字與標籤同筆攜帶後，拼接相等是定義，不是要靠檢查維持的巧合。
         # (a) 非 handoff 卻沒有任何一筆 ⇒ 沒有東西可以驗，一律 SCHEMA
         #     （handoff 在上面已 return，走不到這裡）。
         if not out.sentences:
-            return VerifierVerdict(
-                ok=False, reason="SCHEMA", schema_cause="empty_sentences")
+            hit = _hit(VerifierVerdict(
+                ok=False, reason="SCHEMA", schema_cause="empty_sentences"))
+            if hit is not None:
+                return hit
+            return _pass()  # 觀察：沒有筆 ⇒ 逐筆檢查無物可跑
         # (b) 任一筆 text 全空白 ⇒ SCHEMA（空筆會讓「每個字都屬於某一筆」失去意義）。
         for i, sentence in enumerate(out.sentences):
             if sentence.text.strip() == "":
-                return VerifierVerdict(
-                    ok=False, reason="SCHEMA", schema_cause="empty_text", sent=i)
+                hit = _hit(VerifierVerdict(
+                    ok=False, reason="SCHEMA", schema_cause="empty_text", sent=i))
+                if hit is not None:
+                    return hit
         # ②～④ 逐筆 → 逐片段：型別複核（「純」條件降級）→ fact 需 refs → 覆蓋／極性／可引用
         # ⚠️ 一筆可能被模型塞進多個句子（「您好！我們支援批次匯入。」標成 greeting）。
         # 片段**只繼承 `kind`／`refs` 這兩個標籤，⛔ 不繼承驗證結果**——每個非空片段
@@ -216,16 +337,26 @@ class OutputVerifier:
                 if self._effective_kind(fragment, sentence) != "fact":
                     continue
                 if not sentence.refs:
-                    return VerifierVerdict(ok=False, reason="UNCITED_ASSERTION", sent=i)
+                    hit = _hit(VerifierVerdict(
+                        ok=False, reason="UNCITED_ASSERTION", sent=i))
+                    if hit is not None:
+                        return hit
+                    continue  # 觀察：沒有引文可比對，③④對這個片段無物可跑
                 # DSP-029a（r15 #4）：標記解析失敗**只在這裡**致命——被降級為 fact 的
                 # 片段所在那一筆。非 fact 筆的 refs 解析失敗 ⛔ 不影響 verdict，維持
                 # v4「只看被引用到的」決策：讓模型多寫的裝飾性引用決定整回合生死，
                 # 只會憑空推高拒絕率，而真正的風險一定出現在某個事實句的 refs 裡。
+                usable: list[int] = []
                 for j in range(len(sentence.refs)):
                     cause = resolve_errors.get((i, j))
                     if cause is not None:
-                        return VerifierVerdict(
-                            ok=False, reason="SCHEMA", schema_cause=cause, sent=i)
+                        hit = _hit(VerifierVerdict(
+                            ok=False, reason="SCHEMA", schema_cause=cause, sent=i))
+                        if hit is not None:
+                            return hit
+                        # 觀察（Plan §2 r3 註記③）：解析失敗的 ref **後續逐 ref 檢查
+                        # 跳過它**——`resolved[(i, j)]` 根本不存在，拿不到引文。
+                        continue
                     # 正對照：既不在 `resolve_errors` 也不在 `resolved`，代表呼叫端傳
                     # 進來的兩個 dict 本身不完整（例如自己算了一半）⇒ ⛔ 不得靜默放行。
                     if (i, j) not in resolved:
@@ -234,35 +365,70 @@ class OutputVerifier:
                             "既不在 resolved 也不在 resolve_errors——請用 "
                             "services.agent.provenance_units.resolve_refs 產生這兩個 dict"
                         )
+                    usable.append(j)
+                if not usable:
+                    continue  # 觀察：這一筆的 refs 全部解析失敗 ⇒ 沒有引文可比對
                 # r11 安全審 F-1（量詞寫死）：這個片段必須在**該筆 `refs` 之中**
-                # 至少有一個解析結果完整通過③④（長度＋覆蓋＋極性＋citable）。
+                # 至少有一個解析結果完整通過③④（長度＋覆蓋＋citable）。
                 # ⛔ 不得以「同筆的別的片段已經通過」代替——那正是跨片段夾帶捏造的出口。
+                #
+                # **多 ref 聚合**（plan-verifier r1 #3／r2 #2）：
+                #  * 引用類（`QUOTE_TOO_SHORT`／`QUOTE_NOT_COVERING`／`SOURCE_NOT_CITABLE`）
+                #    維持既有語義：至少一個 ref 完整通過即通過，否則回 `last_failure`；
+                #  * 極性類（`POLARITY_MISMATCH`）**任一 ref 命中即擋**——⛔ 不得被
+                #    另一個通過的 ref 洗掉。
+                # ⚠️ 極性先記著、⛔ 不立刻 return：引用類的 `last_failure` 優先回報，
+                #    這樣 `enforce` 下既有拒因與拒絕率一字不變（只有「別的 ref 洗掉
+                #    極性」那一種情況會多擋，那正是 r1 #3 要收的洞）。
                 last_failure: Optional[VerifierVerdict] = None
-                for j in range(len(sentence.refs)):
-                    failure = self._verify_ref(i, fragment, resolved[(i, j)])
-                    if failure is None:
-                        last_failure = None
-                        break
-                    last_failure = failure
-                if last_failure is not None:
+                polarity_failure: Optional[VerifierVerdict] = None
+                citation_ok = False
+                for j in usable:
+                    ref_failure: Optional[VerifierVerdict] = None
+                    for failure in self._ref_failures(i, fragment, resolved[(i, j)]):
+                        if self._is_observed(failure):
+                            _hit(failure)  # 只記錄（必回 None）
+                            continue
+                        if failure.reason == "POLARITY_MISMATCH":
+                            if polarity_failure is None:
+                                polarity_failure = failure
+                            continue
+                        if ref_failure is None:
+                            ref_failure = failure
+                    if ref_failure is None:
+                        citation_ok = True
+                    else:
+                        last_failure = ref_failure
+                if not citation_ok and last_failure is not None:
+                    last_failure.observed = list(observed)
                     return last_failure
+                if polarity_failure is not None:
+                    polarity_failure.observed = list(observed)
+                    return polarity_failure
 
         # ⑤ 導流白名單
         route_verdict = self._verify_routes(answer_nfkc)
         if route_verdict is not None:
-            return route_verdict
+            hit = _hit(route_verdict)
+            if hit is not None:
+                return hit
 
         # ⑥ 禁詞
         for i, term in enumerate(self.rules.forbid_terms):
             if term in answer_nfkc:
-                return VerifierVerdict(
-                    ok=False, reason="FORBIDDEN_TERM", term_id=_rule_id(i))
+                hit = _hit(VerifierVerdict(
+                    ok=False, reason="FORBIDDEN_TERM", term_id=_rule_id(i)))
+                if hit is not None:
+                    return hit
+                break  # 觀察：同一類記一次就夠
 
         # ⑦ handoff 詞後置掃描
         if scan_handoff_mentions(out.answer) and not handoff:
-            return VerifierVerdict(ok=False, reason="HANDOFF_WORD_NO_HANDOFF")
+            hit = _hit(VerifierVerdict(ok=False, reason="HANDOFF_WORD_NO_HANDOFF"))
+            if hit is not None:
+                return hit
 
-        return VerifierVerdict(ok=True)
+        return _pass()
 
     # ------------------------------------------------------------------
     def _effective_kind(self, sentence_text: str, sentence: Sentence) -> str:
@@ -303,13 +469,34 @@ class OutputVerifier:
         sentence_text: str,  # DSP-028：**片段本文**（⛔ 不是整筆、⛔ 不是拼接後的 answer）
         ref: ResolvedRef,    # DSP-029a：**解析後**的來源片段（⛔ 不取自模型輸出）
     ) -> Optional[VerifierVerdict]:
+        """相容介面：回這個 ref 的**第一個**違規（沒有 ⇒ `None`）。
+        ⚠️ `verify()` ⛔ 不走這條——它要的是**全部**違規（見 `_ref_failures`）。"""
+        failures = self._ref_failures(sent, sentence_text, ref)
+        return failures[0] if failures else None
+
+    def _ref_failures(
+        self,
+        sent: int,
+        sentence_text: str,
+        ref: ResolvedRef,
+    ) -> list[VerifierVerdict]:
+        """這個 ref 的**全部**違規，順序固定：
+        `QUOTE_TOO_SHORT` → `QUOTE_NOT_COVERING` → `POLARITY_MISMATCH` → `SOURCE_NOT_CITABLE`。
+
+        ⚠️ **⛔ 不短路**（security-reviewer r1 F1 的同一個病）：短路在這裡會讓
+        「先掛掉的引用類」把後面的極性類吃掉——`grounding_observe` 下引用類只是觀察，
+        覆蓋率不足的句子仍然必須拿得到極性判定。要不要擋是 `verify()` 依模式決定的，
+        本函式只負責**把違規全部找出來**。
+        """
+        failures: list[VerifierVerdict] = []
         source_unit = ref.quote
         unit_nfkc = _nfkc(source_unit)
         if len(unit_nfkc) < self.rules.min_quote_len:
             # DSP-029：模型不再抄字，這條量的是**來源片段本身太短**（例如只有
             # 「【範本】」這種標籤行）——太短的片段撐不起一個事實斷言。⛔ 不因為
             # 「不是模型的錯」就取消它：短片段仍然是不足的依據。
-            return VerifierVerdict(ok=False, reason="QUOTE_TOO_SHORT", sent=sent, quote_len=len(unit_nfkc))
+            failures.append(VerifierVerdict(
+                ok=False, reason="QUOTE_TOO_SHORT", sent=sent, quote_len=len(unit_nfkc)))
 
         # `QUOTE_NOT_VERBATIM` 在模型端已不可達（引文是系統從原文切出來的）。
         # 這裡不再有對應分支——拒因列舉仍保留該值（trace 相容），由
@@ -327,7 +514,8 @@ class OutputVerifier:
             math.ceil(self.rules.min_coverage_ratio * len(fragment_chars)),
         )
         if len(overlap) < need:
-            return VerifierVerdict(ok=False, reason="QUOTE_NOT_COVERING", sent=sent, quote_len=len(unit_nfkc))
+            failures.append(VerifierVerdict(
+                ok=False, reason="QUOTE_NOT_COVERING", sent=sent, quote_len=len(unit_nfkc)))
 
         sentence_nfkc = _nfkc(sentence_text)
         # DSP-021：極性在**詞組層級**比對——句子與引文「有沒有否定詞」須一致，⛔ 不逐詞
@@ -336,15 +524,43 @@ class OutputVerifier:
         sent_hits = [i for i, t in enumerate(self.rules.negation_terms) if t in sentence_nfkc]
         unit_hits = [i for i, t in enumerate(self.rules.negation_terms) if t in unit_nfkc]  # 解析後片段側
         if bool(sent_hits) != bool(unit_hits):
-            return VerifierVerdict(
+            failures.append(VerifierVerdict(
                 ok=False, reason="POLARITY_MISMATCH", sent=sent,
-                term_id=_rule_id((sent_hits or unit_hits)[0]))
+                term_id=_rule_id((sent_hits or unit_hits)[0])))
+        else:
+            # W6-b3（plan-verifier r3 #1）：**主題錨定**極性——裸「尚未」「未」⛔ 不進
+            # `negation_terms`（整段引文比對會誤殺「句子沒提到該主題、引文另一段落有
+            # 否定」的正確句）。改以 `(否定詞, 狀態詞)` 配對比對，兩側都必須談到
+            # **同一個狀態詞**才算數：
+            #   * `neg+status` 在句子、`status` 在引文 ⇒ 句子側否定；
+            #   * `neg+status` 在引文、`status` 在句子 ⇒ 引文側否定；
+            #   * 兩者不一致 ⇒ `POLARITY_MISMATCH`。
+            # 正例：句「尚未逾期」對引文「已逾期 8 天」⇒ 擋；
+            # 反例（`known_open` 的 `r4_edit_contract_requires_admin_role`）：句子不含
+            # 「回簽」、引文含「管理方尚未回簽」⇒ **不**命中。
+            # ⚠️ 只在裸詞那條沒命中時才判（`else`）：同一個片段回兩筆 POLARITY 沒有
+            # 額外資訊，term_id 反而會挑到後面那張表、對不回既有 trace 的解讀方式。
+            for idx, pair in enumerate(self.rules.negation_status_pairs):
+                neg = (pair or {}).get("neg") or ""
+                status = (pair or {}).get("status") or ""
+                if not neg or not status:
+                    continue
+                combo = _nfkc(neg + status)
+                status_n = _nfkc(status)
+                sent_negated = combo in sentence_nfkc and status_n in unit_nfkc
+                unit_negated = combo in unit_nfkc and status_n in sentence_nfkc
+                if sent_negated != unit_negated:
+                    failures.append(VerifierVerdict(
+                        ok=False, reason="POLARITY_MISMATCH", sent=sent,
+                        term_id=_pair_rule_id(idx)))
+                    break
 
         # DSP-029a：`citable` 隨解析結果一起傳進來，⛔ 不在此二次查 `tool_results`。
         if not ref.citable:
-            return VerifierVerdict(ok=False, reason="SOURCE_NOT_CITABLE", sent=sent)
+            failures.append(VerifierVerdict(
+                ok=False, reason="SOURCE_NOT_CITABLE", sent=sent))
 
-        return None
+        return failures
 
     def _verify_routes(self, answer_nfkc: str) -> Optional[VerifierVerdict]:
         compact = re.sub(r"\s+", "", answer_nfkc)
@@ -375,12 +591,20 @@ class OutputVerifier:
         `test_verifier_req.py::test_shipped_fixtures_include_known_open` 當正對照守住。
         """
         fixtures_dir = Path(fixtures_dir)
-        self._assert_all(fixtures_dir / "known_fabrications.json", expect_ok=False)
-        self._assert_all(fixtures_dir / "known_good.json", expect_ok=True)
-        known_open = fixtures_dir / "known_open.json"
-        if not known_open.exists():
-            return 0
-        return self._assert_all(known_open, expect_ok=True)
+        # security-reviewer r1 F2：**自證一律以 `enforce` 跑**，⛔ 不受 `mode` 影響——
+        # 觀察模式下「捏造句全被放行」會讓 `known_fabrications` 全綠，尺自己失效卻
+        # 印出綠燈，而這把尺正是啟動紅的唯一憑據。
+        prev_mode = self._mode
+        self._mode = DEFAULT_VERIFIER_MODE
+        try:
+            self._assert_all(fixtures_dir / "known_fabrications.json", expect_ok=False)
+            self._assert_all(fixtures_dir / "known_good.json", expect_ok=True)
+            known_open = fixtures_dir / "known_open.json"
+            if not known_open.exists():
+                return 0
+            return self._assert_all(known_open, expect_ok=True)
+        finally:
+            self._mode = prev_mode
 
     def _assert_all(self, path: Path, *, expect_ok: bool) -> int:
         cases = json.loads(path.read_text(encoding="utf-8"))
@@ -427,4 +651,4 @@ class OutputVerifier:
 
 
 
-__all__ = ["OutputVerifier", "split_sentences"]
+__all__ = ["OutputVerifier", "split_sentences", "VERIFIER_MODES", "DEFAULT_VERIFIER_MODE"]

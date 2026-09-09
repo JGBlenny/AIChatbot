@@ -1148,7 +1148,7 @@ UVICORN_WORKERS=1
 AGENT_STAGE=M1
 AGENT_TURN_ENABLED=true
 AGENT_WRITE_TOOLS_ENABLED=true
-AGENT_VERIFIER_OBSERVE_ONLY=true
+AGENT_VERIFIER_MODE=grounding_observe
 AGENT_BUDGET_DEADLINE_S=45
 AGENT_TURN_TIMEOUT_S=60
 AGENT_MODEL=gpt-5-mini
@@ -1156,15 +1156,21 @@ AGENT_REASONING_EFFORT=low
 USE_SEMANTIC_RERANK=false
 RAG_API_AUTH_ENFORCE=true        # 應已是 true
 ```
-⛔ 不設 `AGENT_BUDGET_REWRITES=0`、不設 `AGENT_ATTEMPT_LOG_PATH`。`MCP_ALLOWED_ORIGINS` 照 §19-3（伺服器對伺服器不送 Origin 即可）。
+⛔ 不設 `AGENT_BUDGET_REWRITES=0`、不設 `AGENT_ATTEMPT_LOG_PATH`（W6-b3 起 attempt log 會多記引文原文 `resolved_unit`，供極性誤殺量測用；**線上一律不設**）。`MCP_ALLOWED_ORIGINS` 照 §19-3（伺服器對伺服器不送 Origin 即可）。
+
+⚠️ **W6-b3（DSP-040 正式參數）**：`AGENT_VERIFIER_MODE` 取代 `AGENT_VERIFIER_OBSERVE_ONLY`。
+- `grounding_observe`＝**引用解析與涵蓋類只記錄**（`UNCITED_ASSERTION`／`QUOTE_TOO_SHORT`／`QUOTE_NOT_COVERING`／`SOURCE_NOT_CITABLE`＋`SCHEMA` 的 `ref_*`／`unit_out_of_range`），**極性類與機敏類（`POLARITY_MISMATCH`／`SENSITIVE_TOPIC`／`ROUTE_NOT_ALLOWED`／`FORBIDDEN_TERM`／`SCHEMA` 的 `marker_in_answer`／`handoff_reason_*`／`ask_target_invalid`／`empty_*`）照擋**——這是 demo 線上值。
+- `enforce`＝全部照擋（預設，⛔ 沒設就是它）。
+- `observe_only`＝全部只記錄（＝舊旗語義，連機敏類都不擋），**只准配 `USE_MOCK_JGB_API=true`，否則啟動直接 raise**。
+- 舊旗 `AGENT_VERIFIER_OBSERVE_ONLY=true` **仍被接受一版**（解析成 `observe_only`），下一版移除；兩旗同時設以 `AGENT_VERIFIER_MODE` 為準，⛔ 打錯字一律退回 `enforce`。
 
 ### 20-3 重建＋起
 ```bash
 docker compose -f docker-compose.prod.yml build rag-orchestrator
 docker compose -f docker-compose.prod.yml up -d rag-orchestrator
-docker compose -f docker-compose.prod.yml logs --since 2m rag-orchestrator | grep -E "agent runtime 已初始化|OBSERVE_ONLY|Uvicorn running"
+docker compose -f docker-compose.prod.yml logs --since 2m rag-orchestrator | grep -E "agent runtime 已初始化|AGENT_VERIFIER_MODE|Uvicorn running"
 ```
-預期：`✅ agent runtime 已初始化（… audiences=['property_manager', 'prospect']）`、`ℹ️ [agent] AGENT_VERIFIER_OBSERVE_ONLY=1：Verifier 只觀察不擋（…）`、Uvicorn 單 worker。
+預期：`✅ agent runtime 已初始化（… audiences=['property_manager', 'prospect']）`、`ℹ️ [agent] AGENT_VERIFIER_MODE=grounding_observe：引用解析與涵蓋類只記錄…（DSP-040 正式組態）`、Uvicorn 單 worker。
 
 ### 20-4 demo 用 MCP key（§19-2 手工 SQL，`is_internal`＋`vendor_ids`）
 照 §19-2；⛔ 不重用本機測試的 `line-bot-oa-demo-local`（已停用）。明文只交 line-bot。
@@ -1172,9 +1178,10 @@ docker compose -f docker-compose.prod.yml logs --since 2m rag-orchestrator | gre
 ### 20-5 煙囪（帶 key；⛔ 明文不進 argv：用 `-K` 檔或 `--data @`）
 ```bash
 # health（需 X-API-Key 與 X-JGB-Identity）
-curl -s -K /root/.curl-mcp-key -H 'X-JGB-Identity: {"mode":"b2b","target_user":"property_manager","vendor_id":4,"role_id":"20151","user_id":"12291","session_id":"smoke-1"}' http://localhost:8100/api/v1/agent/health | python3 -c 'import sys,json;d=json.load(sys.stdin);print(d["status"],{k:d["checks"].get(k) for k in ("write_tools_enabled","use_mock_jgb_api","verifier_observe_only")})'
+curl -s -K /root/.curl-mcp-key -H 'X-JGB-Identity: {"mode":"b2b","target_user":"property_manager","vendor_id":4,"role_id":"20151","user_id":"12291","session_id":"smoke-1"}' http://localhost:8100/api/v1/agent/health | python3 -c 'import sys,json;d=json.load(sys.stdin);print(d["status"],{k:d["checks"].get(k) for k in ("write_tools_enabled","use_mock_jgb_api","verifier_observe_only","verifier_mode")})'
 ```
-預期：`ok {'write_tools_enabled': True, 'use_mock_jgb_api': True, 'verifier_observe_only': True}`。
+預期：`ok {'write_tools_enabled': True, 'use_mock_jgb_api': True, 'verifier_observe_only': False, 'verifier_mode': 'grounding_observe'}`。
+⚠️ `verifier_observe_only` 在 `grounding_observe` 下是 **False**（這個鍵的語義是「整把尺是不是關掉」，⛔ 不是「有沒有在觀察」）——要看模式一律讀 `verifier_mode`。舊鍵**保留一版**供既有斷言相容。
 MCP `tools/list` 由 line-bot 端第一次串接時確認含 `agent.turn`、`jgb2.action.bill_due_extend`、`jgb2.action.repair_create`。
 
 ### 20-6 稽核（§10）
@@ -1183,15 +1190,19 @@ make audit    # 預期 OVERALL: PASS
 ```
 
 ### 20-7 回切
-`.env` 把 §20-2 那幾行拿掉或改回（`AGENT_TURN_ENABLED=false`、`AGENT_WRITE_TOOLS_ENABLED=false`、`AGENT_VERIFIER_OBSERVE_ONLY=false`、`USE_MOCK_JGB_API=false`＋`JGB_API_KEY` 必須在，否則啟動直接 raise——S-5 刻意）→ `up -d rag-orchestrator`。替身狀態在行程記憶體，重啟即歸零。
+`.env` 把 §20-2 那幾行拿掉或改回（`AGENT_TURN_ENABLED=false`、`AGENT_WRITE_TOOLS_ENABLED=false`、`AGENT_VERIFIER_MODE=enforce`（或整行刪掉，預設就是 `enforce`）、`USE_MOCK_JGB_API=false`＋`JGB_API_KEY` 必須在，否則啟動直接 raise——S-5 刻意）→ `up -d rag-orchestrator`。替身狀態在行程記憶體，重啟即歸零。
+
+⚠️ **`grounding_observe` × 真 JGB API 是刻意但危險的組合**（W6-b3／security-reviewer r1 F3）：它是第一個**能在真 API 上把引用檢查關掉**的組態——那時模型講的事實不再被要求對得上引文（機敏類與極性類仍擋）。程式**不阻止**這個組合起來，但健檢會在 `checks.premise.red_flags` 記一支 `verifier_grounding_observe_on_real_api` 並讓 `status` 轉 `red`。所以回切時 `USE_MOCK_JGB_API=false` 與 `AGENT_VERIFIER_MODE` **要一起改**：只改替身、忘了改模式 ⇒ 健檢紅、且線上答案沒有引用檢查。
+⚠️ `observe_only` 配非 mock 是**啟動 raise**（連機敏類都不擋，⛔ 不給它上真 API 的機會）——回切時若沿用舊旗 `AGENT_VERIFIER_OBSERVE_ONLY=true` 又把替身關掉，服務會起不來，這是刻意的失敗方向。
 
 ### 20-8 env 一覽補充（接 §19-5）
 | 名稱 | 預設 | 作用 | demo 值 |
 |---|---|---|---|
 | `UVICORN_WORKERS` | 4 | worker 數；`/mcp` 需 1 | 1 |
 | `AGENT_WRITE_TOOLS_ENABLED` | false | `jgb2.action.*` 可見（AND stage） | true |
-| `AGENT_VERIFIER_OBSERVE_ONLY` | false | Verifier 只觀察（僅 mock 可開） | true |
+| `AGENT_VERIFIER_MODE` | enforce | Verifier 模式：`enforce`／`grounding_observe`（引用類只記錄、極性與機敏類照擋）／`observe_only`（全部只記錄，僅 mock 可開，否則啟動 raise） | grounding_observe |
+| `AGENT_VERIFIER_OBSERVE_ONLY` | false | **相容旗（一版後移除）**：truthy ⇒ 解析成 `observe_only`；`AGENT_VERIFIER_MODE` 有設時它說了不算 | 不設 |
 | `AGENT_BUDGET_DEADLINE_S`／`AGENT_TURN_TIMEOUT_S` | 20／30 | 回合預算／門面逾時 | 45／60 |
 | `AGENT_MODEL`／`AGENT_REASONING_EFFORT` | 空（退 `OPENAI_MODEL`）／空（不送） | 模型與推理等級 | gpt-5-mini／low |
 | `USE_SEMANTIC_RERANK` | true | 舊鏈 reranker | false（demo 不用） |
-| `AGENT_ATTEMPT_LOG_PATH` | 空 | 開發量測草稿落檔 | 不設 |
+| `AGENT_ATTEMPT_LOG_PATH` | 空 | 開發量測草稿落檔（W6-b3 起每句多記 `resolved_unit`＝引文原文與 `observed`＝被觀察而未擋的類別；⛔ 線上不設） | 不設 |

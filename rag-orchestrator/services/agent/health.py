@@ -31,7 +31,10 @@
    相依，這裡只是防禦性守衛；否 ⇒ `"unavailable (DSP-014)"`，⛔ 不算紅
    （`/mcp` 服務層閘仍生效，只是工具面未掛載）。
 5b. **三支旗標（DSP-038-1／S-5／R8，皆為觀測值、⛔ 不致紅）**：
-   `verifier_observe_only`＝`AGENT_VERIFIER_OBSERVE_ONLY`（見 `verifier_observe_only()`）；
+   `verifier_mode`＝`AGENT_VERIFIER_MODE`（見 `verifier_mode()`，含相容舊旗的解析）、
+   `verifier_observe_only`＝`verifier_mode() == "observe_only"`（**保留鍵**，煙囪 §20-5 有斷言）；
+   ⚠️ `grounding_observe` 配非 mock ⇒ `premise.red_flags` 多一支
+   `verifier_grounding_observe_on_real_api`（**致紅**、⛔ 不阻起）；
    `write_tools_enabled`＝這個 registry 這一刻採用的 `AGENT_WRITE_TOOLS_ENABLED`
    （建構時釘住的值優先於 env）；`use_mock_jgb_api`＝`USE_MOCK_JGB_API`（**預設 true**，
    故「true」不代表有人刻意打開替身，見 `_use_mock_jgb_api`）。
@@ -51,6 +54,7 @@ HTTP 一律 200（健檢 API 慣例，見任務 brief）；紅以 `status` 欄�
 from __future__ import annotations
 
 import os
+import sys
 from typing import Any, Callable, Optional
 
 from services import api_key_auth
@@ -94,12 +98,57 @@ def verifier_observe_only() -> bool:
     """`AGENT_VERIFIER_OBSERVE_ONLY` ∈ {1,true,yes,on}（不分大小寫）⇒ True；
     未設或其他值 ⇒ **False**（fail-closed＝尺照常擋）。
 
+    ⚠️ 這是**相容旗**的原始解析（W6-b3 起只被 `verifier_mode()` 讀）——要判「這台
+    機器實際跑在哪個模式」一律問 `verifier_mode()`，⛔ 不要直接讀這一支：
+    `AGENT_VERIFIER_MODE` 明示時它說了不算。
+
     ⚠️ 與 `entry`／`write_tools_enabled` 無關：它是 Verifier 的行為旗，
     ⛔ 不參與任何可見性或授權判定。
     """
     return (os.getenv(AGENT_VERIFIER_OBSERVE_ONLY_ENV) or "").strip().lower() in (
         _OBSERVE_TRUTHY
     )
+
+
+#: W6-b3（DSP-040 正式參數）：Verifier 模式旗。**唯一讀值點＝`verifier_mode()`**——
+#: 健檢印的、`app` 組裝時判的、Verifier 實際跑的必須是同一個答案，
+#: ⛔ 不在三個地方各寫一份解析。
+AGENT_VERIFIER_MODE_ENV = "AGENT_VERIFIER_MODE"
+#: ⚠️ 與 `services.agent.verifier.VERIFIER_MODES` 是**同一個封閉集合的兩個用途**
+#: （這裡解析、那裡執行）；`tests/unit/agent/test_verifier_mode_req.py` 有兩側對齊測試。
+VERIFIER_MODES: tuple = ("enforce", "grounding_observe", "observe_only")
+DEFAULT_VERIFIER_MODE = "enforce"
+
+
+def verifier_mode() -> str:
+    """`AGENT_VERIFIER_MODE` ∈ {enforce, grounding_observe, observe_only}（預設 `enforce`）。
+
+    優先序（⛔ 不可對調）：
+      1. `AGENT_VERIFIER_MODE` 明示且在值域內 ⇒ 用它；
+      2. 值域外的字（打錯字）⇒ **`enforce`**＋stderr 警告：失敗方向必須是「尺照常擋」，
+         ⛔ 不得靜默落回某個觀察模式；
+      3. 沒設 ⇒ 相容舊旗 `AGENT_VERIFIER_OBSERVE_ONLY` truthy ⇒ `observe_only`；
+      4. 都沒有 ⇒ `enforce`。
+
+    ⚠️ 相容旗**一版後移除**（runbook §20-2）。兩個旗同時設而互相矛盾時以
+    `AGENT_VERIFIER_MODE` 為準——它是正式參數。
+    """
+    raw = (os.getenv(AGENT_VERIFIER_MODE_ENV) or "").strip().lower()
+    if raw in VERIFIER_MODES:
+        return raw
+    if raw:
+        # 打錯字 ⇒ `enforce`，且**⛔ 不再往下看相容旗**：有人明示過這個參數，
+        # 只是打錯——此時讓舊旗接手會把「我想開 grounding_observe」變成比它更寬的
+        # `observe_only`（連機敏類都不擋）。失敗方向必須是尺照常擋。
+        print(
+            f"⚠️ [agent] {AGENT_VERIFIER_MODE_ENV}={raw!r} 不在 {VERIFIER_MODES}，"
+            f"退回 {DEFAULT_VERIFIER_MODE}（fail-closed；⛔ 不落回相容旗）",
+            file=sys.stderr,
+        )
+        return DEFAULT_VERIFIER_MODE
+    if verifier_observe_only():
+        return "observe_only"
+    return DEFAULT_VERIFIER_MODE
 
 
 def _use_mock_jgb_api() -> bool:
@@ -127,6 +176,9 @@ async def _check_kb_reachable(get_kb_pool: Optional[Callable[[], Any]]) -> tuple
         return False, f"{type(e).__name__}: {e}"
     return True, "ok"
 
+
+#: `premise.red_flags` 的旗名（W6-b3）：觀察引用類 × 真 JGB API。
+VERIFIER_GROUNDING_OBSERVE_ON_REAL_API_FLAG = "verifier_grounding_observe_on_real_api"
 
 _SCOPE_NOT_READY = (
     "api_keys 缺 is_internal／vendor_ids（migration "
@@ -284,6 +336,11 @@ async def compute_agent_health(
 
     stats = mcp_facade.premise_stats()
     flags = _premise_flags(stats)
+    # W6-b3／security-reviewer r1 F3：`grounding_observe` 是**第一個能在真 API 上把引用
+    # 檢查關掉**的組態 ⇒ 非 mock 時記一支紅旗（健檢看得見）。⛔ 不阻起——阻起的是
+    # `observe_only`（`app._wrap_verifier_observe_only` 直接 raise），那一支連機敏類都不擋。
+    if verifier_mode() == "grounding_observe" and not _use_mock_jgb_api():
+        flags.append(VERIFIER_GROUNDING_OBSERVE_ON_REAL_API_FLAG)
 
     scope_ready, scope_detail = await _check_agent_scope_ready(get_api_key_pool)
 
@@ -362,7 +419,11 @@ async def compute_agent_health(
             # R8：Verifier 對照實驗旗——**觀測值、⛔ 不致紅**（它不是故障，
             # 是一個刻意的非正式組態）；但它必須看得見，否則「這台機器的答案
             # 有沒有經過尺」從外面完全問不出來。
-            "verifier_observe_only": verifier_observe_only(),
+            # `verifier_observe_only` **保留**（煙囪 §20-5 有斷言；相容一版）——
+            # 但語義改讀**解析後的模式**：這個鍵回答的是「這台機器的尺是不是整把關掉」，
+            # ⛔ 不是「舊旗的字面值是什麼」（兩者在 `AGENT_VERIFIER_MODE` 明示時會分岔）。
+            "verifier_observe_only": verifier_mode() == "observe_only",
+            "verifier_mode": verifier_mode(),
             "mcp_sdk": "ok" if sdk_ok else "unavailable (DSP-014)",
             "api_keys_agent_scope_ready": scope_ready,
             "api_keys_agent_scope_detail": scope_detail,

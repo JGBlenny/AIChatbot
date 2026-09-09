@@ -74,29 +74,42 @@ def _make_attempt_sink(path):
     return _sink
 
 def _wrap_verifier_observe_only(runtime, attempt_sink):
-    """見 `_init_agent_runtime` 內註解。非 mock 組態下設了旗直接 raise（fail loud）。
+    """把解析後的 `AGENT_VERIFIER_MODE` **交給 Verifier**，並守住只准配 mock 的組態。
 
-    ⚠️ 旗的解析走 `services.agent.health.verifier_observe_only()`（**唯一讀值點**）
-    ——健檢印的與這裡判的必須是同一個答案，⛔ 不各寫一份 truthy 解析。
+    ⚠️ W6-b3 之後這裡只是**相容層**：⛔ 不再包 `verify()`、⛔ 不再翻判定
+    （security-reviewer r1 F1——`verify()` 是短路的，外層翻 `ok=False`⇒`ok=True` 會讓
+    先命中的引用類把機敏類整段跳過，翻出來的 `ok=True` 不代表機敏類看過）。
+    模式感知在 `OutputVerifier.verify()` 內部。
+
+    ⚠️ 旗的解析走 `services.agent.health.verifier_mode()`（**唯一讀值點**，含相容舊旗
+    `AGENT_VERIFIER_OBSERVE_ONLY`）——健檢印的與這裡判的必須是同一個答案，
+    ⛔ 不各寫一份解析。
+
+    守衛（F3，看**解析後**的 mode，⛔ 不綁舊 env 字面）：
+      * `observe_only`（連機敏類都不擋）配非 mock ⇒ 啟動 raise；
+      * `grounding_observe`（引用類觀察、機敏類照擋）配非 mock ⇒ **不阻起**，
+        由健檢 `premise.red_flags` 記紅（`health.compute_agent_health`）。
     """
-    from services.agent.health import verifier_observe_only
+    from services.agent.health import verifier_mode
 
-    if not verifier_observe_only():
+    mode = verifier_mode()
+    runtime.verifier.mode = mode   # 值域外會 raise（`OutputVerifier.mode` setter）
+    if mode == "enforce":
         return
-    if (os.getenv("USE_MOCK_JGB_API") or "").strip().lower() not in ("1", "true", "yes", "on"):
-        raise RuntimeError("AGENT_VERIFIER_OBSERVE_ONLY 只准在 USE_MOCK_JGB_API=true 下使用")
-    from services.agent.verifier import VerifierVerdict as _VV
-    real_verify = runtime.verifier.verify
-    def _observe(*args, **kwargs):
-        verdict = real_verify(*args, **kwargs)
-        if attempt_sink is not None:
-            try:
-                attempt_sink({"observe_real_verdict": verdict.model_dump()})
-            except Exception:  # noqa: BLE001
-                pass
-        return verdict if verdict.ok else _VV(ok=True)
-    runtime.verifier.verify = _observe
-    print("ℹ️ [agent] AGENT_VERIFIER_OBSERVE_ONLY=1：Verifier 只觀察不擋（DSP-040／R8 過渡旗：demo 期用；正式參數 AGENT_VERIFIER_MODE 由 W6-b3 落地後取代，屆時機敏類恢復照擋）", file=sys.stderr)
+    mock_on = (os.getenv("USE_MOCK_JGB_API") or "").strip().lower() in ("1", "true", "yes", "on")
+    if mode == "observe_only":
+        if not mock_on:
+            raise RuntimeError(
+                "AGENT_VERIFIER_MODE=observe_only（含相容旗 AGENT_VERIFIER_OBSERVE_ONLY）"
+                "只准在 USE_MOCK_JGB_API=true 下使用"
+            )
+        print("ℹ️ [agent] AGENT_VERIFIER_MODE=observe_only：Verifier 全類只觀察不擋"
+              "（含機敏類；DSP-040 相容旗語義，只准配替身）", file=sys.stderr)
+        return
+    print("ℹ️ [agent] AGENT_VERIFIER_MODE=grounding_observe：引用解析與涵蓋類只記錄到 "
+          "verdict.observed，極性類與機敏類照擋（DSP-040 正式組態）"
+          + ("" if mock_on else "　⚠️ 非 mock：健檢 premise.red_flags 會記紅"),
+          file=sys.stderr)
 
 async def _init_agent_runtime(app: FastAPI) -> None:
     """建 `app.state.agent_runtime`／`agent_outlines`／`agent_indexes`／`outline_resolver`／`shadow_runner`。
@@ -177,9 +190,10 @@ async def _init_agent_runtime(app: FastAPI) -> None:
                                                  candidate_selector=candidate_selector,
                                                  candidate_selectors=selectors,
                                                  attempt_sink=attempt_sink)
-        # 開發用對照實驗（W6 (a)）：`AGENT_VERIFIER_OBSERVE_ONLY=1` ⇒ Verifier 照常跑、真判定另記一筆
-        # `observe_real_verdict` 進 attempt log，但回給 Runtime 的一律 ok=True（不擋、不改寫、不轉人）。
-        # ⛔ 只准配 `USE_MOCK_JGB_API=true`；正式環境絕不可設——這是量「閘門擋掉多少」的尺，不是功能。
+        # W6-b3：把解析後的 `AGENT_VERIFIER_MODE` 交給 Verifier（模式感知在 `verify()` 內部）；
+        # `observe_only` 只准配 `USE_MOCK_JGB_API=true`（否則 raise），`grounding_observe`
+        # 配真 API 不阻起、由健檢 `premise.red_flags` 記紅。被觀察而未擋的類別記在
+        # `verdict.observed`，隨 attempt log 落地（`AGENT_ATTEMPT_LOG_PATH` 有設時）。
         _wrap_verifier_observe_only(runtime, attempt_sink)
         app.state.agent_outline = outline_doc       # 相容：舊呼叫端仍讀單數＝prospect
         app.state.agent_outlines = outlines

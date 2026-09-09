@@ -159,6 +159,14 @@ class VerifierVerdict(BaseModel):
     """
     ok: bool
     reason: Optional[VerdictReason] = None
+    #: W6-b3（`AGENT_VERIFIER_MODE=grounding_observe`）：本回合**被觀察而未擋**的違規類別，
+    #: 形狀 `"<reason>"` 或 `"SCHEMA:<schema_cause>"`（去重、依命中順序）。
+    #: ⛔ 只放列舉值，**不攜帶任何模型文字或來源原文**——與 `schema_cause` 同一條紀律
+    #: （它會落 `usage_events.decision_snapshot.agent`，也會被 trace 端點印出來）。
+    #: ⚠️ `observed` 非空 **≠ 這回合被拒**：`ok=True` 且 `observed` 非空是觀察模式的
+    #: 正常輸出，呼叫端 ⛔ 不得據此遞增 `counters.rewrites`（見 `runtime.py` 的
+    #: `if not verdict.ok` 分支）。
+    observed: list[str] = Field(default_factory=list)
     #: DSP-028：**筆索引**（`AgentOutput.sentences` 的 index），⛔ 不是切片段後的片段序號——
     #: 一筆裡若含多個片段，任一片段違規都記在該筆的索引上（`trace_view` 顯示為「筆次」）。
     sent: Optional[int] = None
@@ -196,6 +204,14 @@ class VerifierRules(BaseModel):
     sha256: str
     sensitive_patterns: list[str]
     negation_terms: list[str]
+    #: W6-b3（plan-verifier r3 #1）：**主題錨定**極性詞表——`[{"neg": "尚未", "status": "逾期"}, …]`，
+    #: 以否定詞與狀態詞兩個**封閉集合的笛卡兒積**維護（規則檔內逐筆寫出，⛔ 不在程式裡展開，
+    #: 那樣 `rules_sha` 就管不到詞表內容）。裸「尚未」「未」⛔ 不進 `negation_terms`：
+    #: 整段引文比對會把「句子沒提到該主題、引文另一段落有否定」誤殺（`known_open.json`
+    #: 的 `r4_edit_contract_requires_admin_role` 是實例）。
+    #: 預設空表——舊規則檔（與只給部分欄位的測試用 `VerifierRules(**dict)`）照樣載得起來，
+    #: 效果等同「這條規則沒開」。
+    negation_status_pairs: list[dict[str, str]] = Field(default_factory=list)
     forbid_terms: list[str]
     allowed_routes: list[str]
     assertion_terms: list[str]
