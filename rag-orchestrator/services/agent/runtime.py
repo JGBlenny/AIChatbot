@@ -2663,7 +2663,11 @@ class AgentRuntime:
             # `"error"`（逾時／速率限制／例外）同樣**完全不注入**——這種情況
             # 是「沒查成」，⛔ 不得講成「查不到」（那是把沒查講成查過沒有）；
             # 也 ⛔ 不把工具錯誤碼露給使用者，直接讓這一回合當成沒觸發過。
-            if pre_outcome not in ("out_of_scope", "error"):
+            # 短名詞（keyword）查無**不注入**：≤6 字無標點的短句大多不是名詞（「怎麼辦」
+            # 「取消」「延三天」），對它們印「查不到這個編號或名稱」會誤導模型；只有
+            # 純編號（id）查無才有意義（編號一定是在指一筆資料）。名詞查到才注入。
+            keyword_miss = pre_kind == "keyword" and pre_outcome == "not_found"
+            if pre_outcome not in ("out_of_scope", "error") and not keyword_miss:
                 inject_text = pre_facts if pre_outcome == "found" else PRE_LOOKUP_NOT_FOUND_TEXT
                 inject_text = sanitize_data_piece(inject_text)
                 if inject_text:

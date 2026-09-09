@@ -410,3 +410,16 @@ async def test_pre_lookup_segment_precedes_the_user_message():
     )
     assert pre_idx < user_idx
     assert result.kind == "answer"
+
+
+@pytest.mark.req(_REQ)
+async def test_keyword_not_found_injects_nothing():
+    """短名詞查無**不注入**（主線 2026-09-09 收緊：「怎麼辦」「取消」這類 ≤6 字短句也會觸發
+    keyword 查詢，印「查不到這個編號或名稱」會誤導模型）；trace 仍記 hits=0（正對照：
+    純編號查無仍注入固定句，見 test_not_found_injects_the_fixed_line）。"""
+    registry = FakeRegistry(call_results=[_not_found_result()])
+    runtime, provider = _runtime(registry)
+    result = await runtime.run_turn(_identity(), "怎麼辦", {})
+    injected = _injected_texts(provider)
+    assert PRE_LOOKUP_NOT_FOUND_TEXT not in injected
+    assert result.trace.pre_lookup == {"kind": "keyword", "hits": 0}
