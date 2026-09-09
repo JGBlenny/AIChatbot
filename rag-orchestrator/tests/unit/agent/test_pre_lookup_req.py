@@ -425,3 +425,25 @@ async def test_keyword_not_found_injects_nothing():
     assert not any(PRE_LOOKUP_LABEL in b for b in blocks)  # 沒有注入段
     assert not any(PRE_LOOKUP_NOT_FOUND_TEXT in b for b in blocks)
     assert result.trace.pre_lookup == {"kind": "keyword", "hits": 0}
+
+
+@pytest.mark.req(_REQ)
+async def test_keyword_sentinel_single_counts_as_not_found():
+    """estates 工具的查無哨兵（`ok=True`、facts=「在對外刊登清單中找不到…」、無 `scope` 鍵、
+    無 candidates）⇒ 視為查無、不注入（2026-09-09 實測「延三天」誤注入）。正對照：帶
+    `scope` 的單筆 ⇒ found ⇒ 注入。"""
+    sentinel = ToolResult(ok=True, data={"facts": "在對外刊登清單中找不到「延三天」。", "candidates": None})
+    registry = FakeRegistry(call_results=[sentinel])
+    provider = FakeProvider([_final_response(answer="好的。")])
+    runtime = _runtime(provider=provider, registry=registry)
+    result = await runtime.run_turn(_identity(), "延三天", {})
+    assert not any(PRE_LOOKUP_LABEL in b for b in _user_contents(provider))
+    assert result.trace.pre_lookup == {"kind": "keyword", "hits": 0}
+
+    hit = ToolResult(ok=True, data={"facts": "物件「信仰」目前狀態：刊登中。", "candidates": None, "scope": {"estate_id": "77"}})
+    registry2 = FakeRegistry(call_results=[hit])
+    provider2 = FakeProvider([_final_response(answer="好的。")])
+    runtime2 = _runtime(provider=provider2, registry=registry2)
+    result2 = await runtime2.run_turn(_identity(), "信仰", {})
+    assert any(PRE_LOOKUP_LABEL in b for b in _user_contents(provider2))
+    assert result2.trace.pre_lookup == {"kind": "keyword", "hits": 1}

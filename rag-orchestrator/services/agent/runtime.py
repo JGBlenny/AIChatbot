@@ -1857,6 +1857,12 @@ class AgentRuntime:
         facts = data.get("facts")
         if not isinstance(facts, str) or not facts.strip():
             return "not_found", None
+        # estates 工具對「查無」回的是 `found=False` 哨兵單筆：`ok=True`、facts 是
+        # 「在對外刊登清單中找不到…」的決定性說明、**不帶 `scope` 鍵**（L15 (a)①）。
+        # 封閉判定：真的命中恰一筆 ⇒ 帶 `scope`；多筆 ⇒ `candidates` 非空；兩者皆無
+        # ⇒ 視為查無（2026-09-09 實測：「延三天」被注入「找不到物件」誤導模型答查無）。
+        if "scope" not in data and not data.get("candidates"):
+            return "not_found", None
         if scope_estate_id is not None:
             scope_outcome = _enforce_tool_scope(
                 _PRE_LOOKUP_ESTATE_TOOL, tool_result, scope_estate_id, clean, violations
