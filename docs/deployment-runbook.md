@@ -1172,6 +1172,9 @@ docker compose -f docker-compose.prod.yml logs --since 2m rag-orchestrator | gre
 ```
 預期：`✅ agent runtime 已初始化（… audiences=['property_manager', 'prospect']）`、`ℹ️ [agent] AGENT_VERIFIER_MODE=grounding_observe：引用解析與涵蓋類只記錄…（DSP-040 正式組態）`、Uvicorn 單 worker。
 
+
+**20-3b 暖機（2026-09-09 加；第四批 V5）**：`up -d` 後容器要建細目索引並首呼模型，**第一則模型回合會撞 60 s 門面逾時**（line-bot 第二輪首句 `TOOL_TIMEOUT` 就是重部署後第一回合）。起服務後由部署者先打一回合暖機（任一查詢題，例如用 `.curl-mcp-key` 的 harness 打「756248」），確認 log 出現 `agent_turn trace_id=…` 後再通知呼叫端；首回合延遲另計，不算 p95。⚠️ `/home/ec2-user/.curl-mcp-key` 是 **curl 設定檔格式**（`header = "X-API-Key: …"`），不是裸 key——管進 harness 前要先擷取。
+
 ### 20-4 demo 用 MCP key（§19-2 手工 SQL，`is_internal`＋`vendor_ids`）
 照 §19-2；⛔ 不重用本機測試的 `line-bot-oa-demo-local`（已停用）。明文只交 line-bot。
 
