@@ -866,10 +866,10 @@ class TurnTrace:
     #: 槽位有沒有真的寫進去（找不到 COLLECTING 列 ⇒ False，回合照樣回 facts）。
     slot_written: Optional[bool] = None
     #: T1／security r1 #7：本回合**有沒有注入呼叫端進場句資料段**。
-    #: ⛔⛔ **進場句的文字不得進來**——`entry_line` 是呼叫端送的自由文字，trace 與
+    #: ⛔⛔ **進場句的文字不得進來**——`context` 是呼叫端送的自由文字，trace 與
     #:     `usage_events.decision_snapshot` 都會被序列化落地，記文字等於把外部
     #:     輸入原封不動抄進計量表。只記一個 bool。
-    has_entry_line: bool = False
+    has_context: bool = False
     #: U3（Plan `plan-walkthrough-fixes-batch3-20260909.md` §4）：本回合有沒有
     #: 觸發純編號／短名詞前置查詢。⛔⛔ **原 ref／關鍵字不得進來**——只記
     #: `{"kind": "id"|"keyword", "hits": <int>}`；未觸發 ⇒ `None`。
@@ -1058,7 +1058,7 @@ IMAGE_DATA_LABEL = "image.recognition"
 COMPLETED_ACTIONS_PROVENANCE_SOURCE = "session:completed_actions#1"
 COMPLETED_ACTIONS_LABEL = "session.completed_actions"
 
-#: T1（Plan §2）：**呼叫端進場句** `entry_line` 在本回合資料段裡的來源代碼與工具
+#: T1（Plan §2）：**呼叫端進場句** `context` 在本回合資料段裡的來源代碼與工具
 #: 標籤——同影像事實／完成動作記憶行**同一套**注入紀律。一回合只有一句，序號固定 1。
 #:
 #: ⚠️ **`citable=False`**（security r1 #6）：進場句是呼叫端自己印給使用者的字，
@@ -1069,8 +1069,8 @@ COMPLETED_ACTIONS_LABEL = "session.completed_actions"
 #: ⚠️ 標籤形狀受 `prompt_assembler._TOOL_NAME_RE`（`[A-Za-z0-9._-]{1,64}`）管，
 #:    來源代碼不受限（它進標記的第三段，允許 `:`）——兩者刻意分開兩個常數，
 #:    比照 `IMAGE_DATA_LABEL`／`IMAGE_PROVENANCE_SOURCE`。
-CALLER_ENTRY_PROVENANCE_SOURCE = "caller:entry_line#1"
-CALLER_ENTRY_LABEL = "caller.entry_line"
+CALLER_CONTEXT_PROVENANCE_SOURCE = "caller:context#1"
+CALLER_CONTEXT_LABEL = "caller.context"
 
 #: T3（Plan §4）：**肯定語＝授權**的程式資料段——同進場句一套注入紀律
 #: （`citable=False`、真的登記進 `tool_results_by_id`、id 在 `reserved_ids`
@@ -1442,7 +1442,7 @@ def _emit_agent_decision(trace: TurnTrace) -> None:
             "has_ref": trace.has_ref,
             "slot_written": trace.slot_written,
             # T1／security r1 #7：⛔ 只有 bool，**沒有進場句原文**。
-            "has_entry_line": trace.has_entry_line,
+            "has_context": trace.has_context,
             # U3：⛔ 只有種類與命中數，**沒有 ref／關鍵字原文**。
             "pre_lookup": trace.pre_lookup,
             "violations": trace.violations,
@@ -2460,11 +2460,11 @@ class AgentRuntime:
     async def run_turn(
         self, identity: Identity, user_message: str, state: dict,
         *, image: Optional[ImageTurnInput] = None,
-        entry_line: Optional[str] = None,
+        context: Optional[str] = None,
     ) -> TurnResult:
         """一個回合。`image`（W8 (2)）＝門面已抓檔／縮圖／辨識完的**封閉值**輸入。
 
-        `entry_line`（T1）＝呼叫端**進場時印給使用者的那一句**（選填）。⛔ 它不是
+        `context`（T1）＝呼叫端**進場時印給使用者的那一句**（選填）。⛔ 它不是
         使用者說的話：不併進 `user_message`、不進 dialog 歷史，只以一段
         **不可引用**的程式資料段進場（見 `_run_turn_body` 的注入區塊）。
 
@@ -2473,7 +2473,7 @@ class AgentRuntime:
         都定案之後，故那三者逐位元不受影響（同 W8 (3) `hint` 的紀律）。
         """
         result = await self._run_turn_body(
-            identity, user_message, state, image=image, entry_line=entry_line
+            identity, user_message, state, image=image, context=context
         )
         if (
             image is not None
@@ -2489,7 +2489,7 @@ class AgentRuntime:
     async def _run_turn_body(
         self, identity: Identity, user_message: str, state: dict,
         *, image: Optional[ImageTurnInput] = None,
-        entry_line: Optional[str] = None,
+        context: Optional[str] = None,
     ) -> TurnResult:
         start = self._clock()
         trace_id = uuid.uuid4().hex
@@ -2573,7 +2573,7 @@ class AgentRuntime:
         image_call_id = f"img-{nonce[:8]}"
         completed_call_id = f"done-{nonce[:8]}"
         # T1：進場句資料段的 id 同樣**在回合最開始就固定**、⛔ 不等到「這回合真的
-        # 有 entry_line」才算——模型能不能偽造一個 `entry-…` 不該取決於呼叫端這次
+        # 有 context」才算——模型能不能偽造一個 `entry-…` 不該取決於呼叫端這次
         # 有沒有帶進場句（否則「沒帶進場句時 entry-… 可以被模型自己造」就成了洞）。
         entry_call_id = f"entry-{nonce[:8]}"
         # T3：肯定語承接段／空會話註記段的 id 同樣**在回合最開始就固定**——
@@ -2593,7 +2593,7 @@ class AgentRuntime:
         )
         # T1：正規化與記憶行走**同一支** `sanitize_data_piece`（控制字元／零寬／
         # 雙向／換行／假標記逐類剝除）。非字串或剝完為空 ⇒ 空字串＝不注入。
-        entry_text = sanitize_data_piece(entry_line).strip()
+        entry_text = sanitize_data_piece(context).strip()
         # T3（Plan §4）：讀「緊鄰上一回合出口寫入之值」——T1 保證每一個回合出口
         # （`_finalize`／`_finish_confirm_turn`／`handoff_cache` 重播）都會寫
         # `agent_state[LAST_ASK_TARGET_KEY]`，故這裡讀到的必是上一回合的值，
@@ -2821,7 +2821,7 @@ class AgentRuntime:
                 data={},
                 provenance=[
                     Provenance(
-                        source=CALLER_ENTRY_PROVENANCE_SOURCE,
+                        source=CALLER_CONTEXT_PROVENANCE_SOURCE,
                         text=entry_text,
                         citable=False,
                     )
@@ -2832,9 +2832,9 @@ class AgentRuntime:
                 {
                     "role": "user",
                     "content": wrap_provenance_data(
-                        CALLER_ENTRY_LABEL,
+                        CALLER_CONTEXT_LABEL,
                         entry_call_id,
-                        [(CALLER_ENTRY_PROVENANCE_SOURCE, provenance_units(entry_text))],
+                        [(CALLER_CONTEXT_PROVENANCE_SOURCE, provenance_units(entry_text))],
                         nonce,
                     ),
                 }
@@ -2871,7 +2871,7 @@ class AgentRuntime:
                 candidate_ids=list(candidate_ids),
                 winning_key_kind=dict(winning_key_kind),
                 miss_kind=miss_kind,
-                has_entry_line=bool(entry_text),
+                has_context=bool(entry_text),
                 pre_lookup=pre_lookup_trace,
             )
             return TurnResult(
@@ -3361,7 +3361,7 @@ class AgentRuntime:
                 candidate_ids=list(candidate_ids),
                 winning_key_kind=dict(winning_key_kind),
                 miss_kind=miss_kind,
-                has_entry_line=bool(entry_text),
+                has_context=bool(entry_text),
                 pre_lookup=pre_lookup_trace,
             )
             result = TurnResult(

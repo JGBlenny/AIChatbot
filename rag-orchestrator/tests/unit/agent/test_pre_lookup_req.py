@@ -35,7 +35,7 @@ from services.agent.runtime import (
 )
 from services.agent.tools.registry import ToolResult
 
-from tests.unit.agent.test_entry_line_req import _collision_provider
+from tests.unit.agent.test_context_req import _collision_provider
 from tests.unit.agent.test_runtime_req import (
     FakeAssembler,
     FakeClock,

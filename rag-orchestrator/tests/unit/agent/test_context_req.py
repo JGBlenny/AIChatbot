@@ -1,7 +1,7 @@
-"""unit：T1 進場句 `entry_line`（Plan
+"""unit：T1 進場句 `context`（Plan
 `inputs/plan-walkthrough-fixes-batch2-20260909.md` §2）。
 
-`entry_line` ＝呼叫端**進場時印給使用者的那一句**。它是這條線上**新開的一個
+`context` ＝呼叫端**進場時印給使用者的那一句**。它是這條線上**新開的一個
 外部輸入面**，故本檔守的全是那個面的邊界：
 
 1. **正規化**（security r1 #5）：控制字元／零寬／雙向／換行／假標記逐類剝除，
@@ -12,8 +12,8 @@
 3. **保留 id**：`entry-{nonce[:8]}` 進 `reserved_ids`——模型送同名 tool_call
    一律拒收（三個既有保留 id 當正對照）。
 4. **不進歷史、不進 trace**：`_append_dialog` 不動；trace／決策快照只記
-   `has_entry_line: bool`，⛔ 無文字（security r1 #7）。
-5. **長度由 registry 真的擋**（`maxLength` 200）。
+   `has_context: bool`，⛔ 無文字（security r1 #7）。
+5. **長度由 registry 真的擋**（`maxLength` 500）。
 
 ⛔ 不接真 OpenAI、不接真 DB。
 """
@@ -30,8 +30,8 @@ from services.agent.completed_actions import _sanitize_piece, sanitize_data_piec
 from services.agent.output_schema import AgentOutput, VerifierRules
 from services.agent.provenance_units import OUTLINE_TOOL_CALL_ID, resolve_refs
 from services.agent.runtime import (
-    CALLER_ENTRY_LABEL,
-    CALLER_ENTRY_PROVENANCE_SOURCE,
+    CALLER_CONTEXT_LABEL,
+    CALLER_CONTEXT_PROVENANCE_SOURCE,
     AgentRuntime,
 )
 from services.agent.tools.registry import ToolResult
@@ -94,7 +94,7 @@ def _data_blocks(provider) -> list[str]:
 def _entry_marker(provider) -> str:
     """從實際送出的資料段裡撈出進場句那一行的行首標記（⛔ 不自己拼一個）。"""
     for content in _data_blocks(provider):
-        if CALLER_ENTRY_LABEL not in content:
+        if CALLER_CONTEXT_LABEL not in content:
             continue
         for line in content.split("\n"):
             m = _UNIT_MARKER_RE.search(line)
@@ -169,15 +169,15 @@ def test_sanitize_ruler_is_not_a_no_op_positive_control():
 # 2. 注入：資料段裡有、dialog 與 trace 裡沒有
 # ---------------------------------------------------------------------------
 @pytest.mark.req(_REQ)
-async def test_entry_line_enters_as_a_data_block_not_as_the_user_message():
+async def test_context_enters_as_a_data_block_not_as_the_user_message():
     provider = FakeProvider([_final_response(answer="好的。")])
     state: dict = {}
     result = await _runtime(provider=provider).run_turn(
-        _identity(), "信仰", state, entry_line=_ENTRY
+        _identity(), "信仰", state, context=_ENTRY
     )
 
     blocks = _data_blocks(provider)
-    entry_block = next(b for b in blocks if CALLER_ENTRY_LABEL in b)
+    entry_block = next(b for b in blocks if CALLER_CONTEXT_LABEL in b)
     for unit in _ENTRY_UNITS:
         assert unit in entry_block, entry_block
     # ⛔ 不併進使用者訊息：那一則的內容逐字仍是「信仰」
@@ -187,7 +187,7 @@ async def test_entry_line_enters_as_a_data_block_not_as_the_user_message():
     assert _ENTRY not in dialog_text
     assert "信仰" in dialog_text          # 正對照：dialog 真的有寫東西
     # ⛔ 不進 trace（只有 bool）
-    assert result.trace.has_entry_line is True
+    assert result.trace.has_context is True
     assert _ENTRY not in json.dumps(result.trace.violations, ensure_ascii=False)
 
 
@@ -201,9 +201,9 @@ async def test_sanitization_applies_on_the_way_into_the_data_block():
     )
     provider = FakeProvider([_final_response(answer="好的。")])
     await _runtime(provider=provider).run_turn(
-        _identity(), "信仰", {}, entry_line=dirty
+        _identity(), "信仰", {}, context=dirty
     )
-    block = next(b for b in _data_blocks(provider) if CALLER_ENTRY_LABEL in b)
+    block = next(b for b in _data_blocks(provider) if CALLER_CONTEXT_LABEL in b)
     # ⚠️ 先把**系統自己貼的真標記**拿掉再驗——真標記本身就含 `§`，不拿掉的話
     #    這條斷言量到的是系統的標記，不是進場句的內容（尺會量錯東西）。
     body = _UNIT_MARKER_RE.sub("", block)
@@ -216,27 +216,27 @@ async def test_sanitization_applies_on_the_way_into_the_data_block():
 
 @pytest.mark.req(_REQ)
 @pytest.mark.parametrize("value", [None, "", "   ", "​​", 123])
-async def test_empty_or_invisible_only_entry_line_injects_nothing(value):
-    """剝完為空 ⇒ 不佔一段 messages、`has_entry_line` 為 False。"""
+async def test_empty_or_invisible_only_context_injects_nothing(value):
+    """剝完為空 ⇒ 不佔一段 messages、`has_context` 為 False。"""
     provider = FakeProvider([_final_response(answer="好的。")])
     result = await _runtime(provider=provider).run_turn(
-        _identity(), "信仰", {}, entry_line=value
+        _identity(), "信仰", {}, context=value
     )
-    assert all(CALLER_ENTRY_LABEL not in b for b in _data_blocks(provider))
-    assert result.trace.has_entry_line is False
+    assert all(CALLER_CONTEXT_LABEL not in b for b in _data_blocks(provider))
+    assert result.trace.has_context is False
 
 
 @pytest.mark.req(_REQ)
 async def test_decision_snapshot_records_only_the_boolean(monkeypatch):
-    """security r1 #7：決策快照有 `has_entry_line`、⛔ 沒有進場句原文。"""
+    """security r1 #7：決策快照有 `has_context`、⛔ 沒有進場句原文。"""
     captured: list[dict] = []
     monkeypatch.setattr(
         runtime_mod.usage_metering, "set_agent_decision", lambda d: captured.append(d)
     )
-    await _runtime().run_turn(_identity(), "信仰", {}, entry_line=_ENTRY)
+    await _runtime().run_turn(_identity(), "信仰", {}, context=_ENTRY)
     assert len(captured) == 1
-    assert captured[0]["has_entry_line"] is True
-    assert "entry_line" not in captured[0]
+    assert captured[0]["has_context"] is True
+    assert "context" not in captured[0]
     assert _ENTRY not in json.dumps(captured[0], ensure_ascii=False)
 
 
@@ -244,7 +244,7 @@ async def test_decision_snapshot_records_only_the_boolean(monkeypatch):
 # 3. 不可引用：SOURCE_NOT_CITABLE（⛔ 不是 ref_source_not_found）
 # ---------------------------------------------------------------------------
 @pytest.mark.req(_REQ)
-async def test_model_citing_the_entry_line_gets_source_not_citable():
+async def test_model_citing_the_context_gets_source_not_citable():
     """security r1 #6 的整條理由就在這裡：進場句必須**真的登記**進
     `tool_results_by_id` 且 id 在保留集合裡，否則引用會落
     `ref_source_not_found`（「查無此來源」），而真話是「這個來源不可引用」。
@@ -253,7 +253,7 @@ async def test_model_citing_the_entry_line_gets_source_not_citable():
     """
     provider = FakeProvider([_final_response(answer="好的。")])
     await _runtime(provider=provider).run_turn(
-        _identity(), "信仰", {}, entry_line=_ENTRY
+        _identity(), "信仰", {}, context=_ENTRY
     )
     marker = _entry_marker(provider)
     # nonce 與 tool_call_id 都從**實際送出的標記**拆出來，⛔ 不自己拼一個
@@ -264,7 +264,7 @@ async def test_model_citing_the_entry_line_gets_source_not_citable():
         data={},
         provenance=[
             runtime_mod.Provenance(
-                source=CALLER_ENTRY_PROVENANCE_SOURCE, text=_ENTRY, citable=False
+                source=CALLER_CONTEXT_PROVENANCE_SOURCE, text=_ENTRY, citable=False
             )
         ],
         text_for_model="",
@@ -299,7 +299,7 @@ def test_unregistered_entry_source_would_be_ref_source_not_found_negative_contro
     `ref_source_not_found`——這正是 security r1 #6 要避免的誤判，也證明上面那個
     `SOURCE_NOT_CITABLE` 是真的由「登記＋citable=False」造成的。"""
     nonce = "abcd1234efgh5678"
-    marker = f"[{nonce}:entry-abcd1234:{CALLER_ENTRY_PROVENANCE_SOURCE}§0]"
+    marker = f"[{nonce}:entry-abcd1234:{CALLER_CONTEXT_PROVENANCE_SOURCE}§0]"
     out = AgentOutput.model_validate(
         {
             "kind": "answer",
@@ -348,7 +348,7 @@ def _collision_provider(assembler, make_id) -> FakeProvider:
 async def test_reserved_id_collision_is_rejected_for_all_four_ids(make_id):
     """四個保留 id（`outline`／`img-`／`done-` 既有＋T1 新加的 `entry-`）都要拒收。
 
-    ⚠️ 本回合**沒有帶 `entry_line`**（也沒有影像、沒有完成動作）——`entry-…`
+    ⚠️ 本回合**沒有帶 `context`**（也沒有影像、沒有完成動作）——`entry-…`
     仍必須是保留字：模型能不能偽造一個同名 id，⛔ 不該取決於這回合是否真的用到它。
     前三個是正對照（既有行為），第四個是 T1 新加的那一格。
     """
@@ -375,11 +375,11 @@ async def test_non_reserved_tool_call_id_is_not_rejected_positive_control():
 # 5. 對外面：schema 形狀與 `maxLength` 由 registry 真的擋
 # ---------------------------------------------------------------------------
 @pytest.mark.req(_REQ)
-def test_agent_turn_spec_declares_entry_line_as_optional_bounded_string():
+def test_agent_turn_spec_declares_context_as_optional_bounded_string():
     schema = F.AGENT_TURN_SPEC["input_schema"]
-    assert schema["properties"]["entry_line"]["type"] == "string"
-    assert schema["properties"]["entry_line"]["maxLength"] == 200
-    assert "entry_line" not in schema["required"]      # 選填
+    assert schema["properties"]["context"]["type"] == "string"
+    assert schema["properties"]["context"]["maxLength"] == 500
+    assert "context" not in schema["required"]      # 選填
     # ⛔ 不叫 `entry`（security r1 #4：`Identity.entry` 是安全欄位，同名招致誤併）
     assert "entry" not in schema["properties"]
 
@@ -394,34 +394,34 @@ async def test_registry_enforces_the_max_length():
 
     too_long = await registry.call(
         _facade_identity(session_id="s-long"), F.AGENT_TURN_NAME,
-        {"message": "嗨", "entry_line": "字" * 201}, 30.0, stage="M1",
+        {"message": "嗨", "context": "字" * 501}, 30.0, stage="M1",
     )
     assert too_long.ok is False and too_long.error == "INVALID_INPUT"
     assert engine.started == [], "被 schema 擋下的呼叫 ⛔ 不得先開一列 session"
 
-    # 正對照：200 字整剛好收（證明上面那條不是「有 entry_line 就擋」）
+    # 正對照：500 字整剛好收（證明上面那條不是「有 context 就擋」）
     ok = await registry.call(
         _facade_identity(session_id="s-ok"), F.AGENT_TURN_NAME,
-        {"message": "嗨", "entry_line": "字" * 200}, 30.0, stage="M1",
+        {"message": "嗨", "context": "字" * 500}, 30.0, stage="M1",
     )
     assert ok.ok is True, ok.error
 
 
 @pytest.mark.req(_REQ)
-async def test_facade_passes_entry_line_through_to_run_turn():
-    """門面把 `entry_line` 交給 `run_turn`，且 `/mcp` 輸出契約仍七鍵。"""
+async def test_facade_passes_context_through_to_run_turn():
+    """門面把 `context` 交給 `run_turn`，且 `/mcp` 輸出契約仍七鍵。"""
     engine = FakeEngine()
     provider = FakeProvider([_final_response(answer="好的。")])
     deps = _deps(_app(runtime=_runtime(provider=provider), engine=engine))
     result = await _registry_with_agent_turn(deps).call(
         _facade_identity(session_id="s-entry"), F.AGENT_TURN_NAME,
-        {"message": "信仰", "entry_line": _ENTRY}, 30.0, stage="M1",
+        {"message": "信仰", "context": _ENTRY}, 30.0, stage="M1",
     )
     assert result.ok is True, result.error
     assert set(result.data) == {
         "answer", "kind", "handoff", "quick_replies", "trace_id", "session_expired", "outcome",
     }
-    entry_block = next(b for b in _data_blocks(provider) if CALLER_ENTRY_LABEL in b)
+    entry_block = next(b for b in _data_blocks(provider) if CALLER_CONTEXT_LABEL in b)
     for unit in _ENTRY_UNITS:
         assert unit in entry_block
     # ⛔ 進場句不得出現在對呼叫端的回覆裡

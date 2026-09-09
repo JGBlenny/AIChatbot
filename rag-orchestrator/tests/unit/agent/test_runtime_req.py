@@ -629,7 +629,7 @@ _ALLOWED_AGENT_DECISION_KEYS = frozenset(
         # T1（Plan `inputs/plan-walkthrough-fixes-batch2-20260909.md` §2／
         # security r1 #7）：呼叫端進場句**只記有沒有**。
         # ⛔ **進場句原文不在其中**——它是外部輸入的自由文字。
-        "has_entry_line",
+        "has_context",
         # U3（Plan `inputs/plan-walkthrough-fixes-batch3-20260909.md` §4）：
         # ⛔ **原 ref／關鍵字不在其中**——只記 `{"kind","hits"}`。
         "pre_lookup",

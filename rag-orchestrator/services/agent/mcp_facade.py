@@ -1053,7 +1053,7 @@ AGENT_TURN_SPEC: ToolSpec = {
         #    兩者都不認（S9-5：寫了等於掛一張看起來有守、實際靜默無效的牌）。
         #    張數在 `_agent_turn` 程式層檢查；白名單在 `image_fetch`。
         # T1（Plan `inputs/…/plan-walkthrough-fixes-batch2-20260909.md` §2）：
-        # `entry_line` ＝呼叫端**進場時印給使用者的那一句**（選填）。
+        # `context` ＝呼叫端提供的**本回合背景資訊**（進場提示、頁面、已選項目、上一步結果；選填、每回合可帶）。2026-09-09 業主：欄位要通用的「背景資訊」，不是「進場句」。
         # ⛔ **不叫 `entry`**（security r1 #4）：`Identity.entry` 是確認兌現與工具
         #    可見性的安全欄位，同名招致日後誤併。
         # ⚠️ `maxLength` 由 `registry._validate_value` **真的**強制（不同於
@@ -1064,10 +1064,10 @@ AGENT_TURN_SPEC: ToolSpec = {
                 "type": "array",
                 "items": {"type": "string", "maxLength": 2048},
             },
-            "entry_line": {
+            "context": {
                 "type": "string",
-                "maxLength": 200,
-                "description": "呼叫端進場時印給使用者的那一句；視為脈絡，⛔ 不是使用者說的話。",
+                "maxLength": 500,
+                "description": "呼叫端提供的本回合背景資訊（進場提示、所在頁面、已選項目、上一步結果等）；視為脈絡，⛔ 不是使用者說的話，每回合可帶。",
             },
         },
         "required": ["message"],
@@ -1297,10 +1297,10 @@ def _make_agent_turn(
             # 正規化（控制字元／零寬／雙向／假標記）由 Runtime 端的
             # `sanitize_data_piece` 一手包辦，⛔ 不在門面先剝一次（兩處各剝一半
             # 的失敗方向是「以為對方剝過了」）。
-            entry_line = args.get("entry_line")
+            context = args.get("context")
             entry_kwargs = (
-                {"entry_line": entry_line}
-                if isinstance(entry_line, str) and entry_line.strip()
+                {"context": context}
+                if isinstance(context, str) and context.strip()
                 else {}
             )
             result = await asyncio.wait_for(
