@@ -250,6 +250,13 @@ class ToolCallRecord:
     ms: int
     status: Literal["ok", "error", "timeout", "rejected"]
     n_items: int
+    #: T2（Plan `inputs/plan-walkthrough-fixes-batch2-20260909.md` §3）：這一筆
+    #: 工具結果是不是「查了、但查無資料」。⚠️ **只有 `status=="ok"` 時才可能為
+    #: `True`**——`error`／`timeout`／`rejected` 一律 `False`（plan-verifier r2 #1：
+    #: 「沒查成」⛔ 不得講成「不存在」）；由主模型迴圈在 `tool_results_by_id`
+    #: 登記處以程式算出。select／confirm 兩段建構點只用預設值 `False`
+    #: （那兩段本來就不會走 T2 的兩出口分流）。
+    empty: bool = False
 
 
 #: DSP-038／W3：待確認動作的 session 狀態鍵。
@@ -565,6 +572,95 @@ def _apply_ask_target_gate(result: TurnResult) -> TurnResult:
     result.ask_target = None
     result.outcome = make_outcome("clarifying", expects="text")
     result.trace.violations.append("ask_target_invalid")
+    return result
+
+
+# ════════════════════════════════════════════════════════════════════
+# T2：兩出口——資料裡沒有 vs 不做判斷（Plan `inputs/plan-walkthrough-fixes-batch2-20260909.md` §3）
+# ════════════════════════════════════════════════════════════════════
+
+#: 全部工具結果為空（`status=="ok"` 且 `empty`）時的固定句。⛔ 無插值——
+#: 帶物件名稱等於用回話的差別揭露存在性（同 `SCOPE_EXIT_TEXT`／`ASK_TARGET_TEXT`）。
+NO_DATA_TEXT = "系統裡查不到這一筆或這一類資料；請確認名稱或編號，或換一個查法。"
+
+#: 至少一筆工具結果有資料、但模型改寫後仍轉人（或改寫預算已耗盡）時的固定句。
+#: ⛔ 無插值。
+NO_JUDGEMENT_TEXT = "這題要看你的判斷；我這邊能給的是系統資料，要我列出來嗎？"
+
+#: 迴圈內改寫提示的固定句（定義，⛔ 無插值）——與 `_REASON_HINTS`／
+#: `_SCHEMA_CAUSE_HINTS` 同一條紀律：只有方法，無原文。
+HANDOFF_DATA_REWRITE_HINT = "資料段有內容；判斷題依資料段給建議並引用，⛔ 不轉人。"
+
+
+def _apply_handoff_data_exits(result: TurnResult) -> TurnResult:
+    """T2：`no_grounding` 轉人依工具結果是否有資料分成兩個出口（與
+    `_apply_ask_target_gate` 同層、在其之後）。
+
+    條件全為封閉欄位（缺任一 ⇒ 不動）：
+    - `result.kind == "handoff"`
+    - `result.trace.handoff_reason == "no_grounding"`
+    - `fact_class` 不在敏感五類（敏感類一律不動，仍轉人）
+    - `result.trace.tool_calls` 非空
+
+    命中後先看有沒有「不能拿 `ToolCallRecord.empty` 判定」的筆——任一筆
+    `status != "ok"`（`error`／`timeout`／`rejected`），或本回合有
+    `tool_call_id_collides_with_reserved`（撞名保留 id）⇒ **整段不動**，
+    維持既有出口（`sensitive_no_grounding`／`llm_mentioned_handoff`／
+    `budget_exhausted` 也在這條路上，本函式對它們同樣不動）。
+
+    剩下的情況（全部工具結果 `status=="ok"`）依 `empty` 分流：
+    - 全部 `empty` ⇒ `kind=answer`、`answer=NO_DATA_TEXT`、
+      `outcome=answered`、`violations += ["handoff_no_data"]`。
+    - 至少一筆非 `empty` ⇒ `kind=answer`、`answer=NO_JUDGEMENT_TEXT`、
+      `ask_target=confirm_intent`、`outcome=clarifying`、
+      `violations += ["handoff_no_judgement"]`（此路只有在模型迴圈內的
+      改寫提示——§3 的「迴圈內改寫」——已經重試過仍轉人，或改寫預算已耗盡
+      時才會走到這裡；本函式本身 ⛔ 不呼叫模型）。
+
+    五欄一起改（mirrors `_apply_scope_exit`／`_apply_handoff_without_lookup`）：
+    `answer`／`kind`／`handoff`／`trace.final_kind`／`trace.handoff_reason`，
+    另設 `outcome` 並記一筆 `violations`；NO_JUDGEMENT 分支另外設
+    `result.ask_target = "confirm_intent"`——`_finalize` 把
+    `agent_state[LAST_ASK_TARGET_KEY]` 寫成「本回合 `ask_target` 是否落在
+    `ASK_TARGETS` 值域內」（見 `_finalize` 的寫點，⛔ 不再只認 `kind=="ask"`），
+    使這個 `kind=="answer"` 的回合一樣能把 `confirm_intent` 帶進下一回合，供
+    T3 的肯定語＝授權判定使用。
+    """
+    if result.kind != "handoff":
+        return result
+    if result.trace.handoff_reason != "no_grounding":
+        return result
+    fact_class_value = (result.handoff or {}).get("fact_class")
+    try:
+        fact_class = FactClass(fact_class_value)
+    except ValueError:
+        fact_class = None
+    if fact_class in SENSITIVE:
+        return result
+    tool_calls = result.trace.tool_calls
+    if not tool_calls:
+        return result
+    if "tool_call_id_collides_with_reserved" in result.trace.violations:
+        return result
+    if any(r.status != "ok" for r in tool_calls):
+        return result
+    if all(r.empty for r in tool_calls):
+        result.answer = NO_DATA_TEXT
+        result.kind = "answer"
+        result.handoff = None
+        result.trace.final_kind = "answer"
+        result.trace.handoff_reason = None
+        result.outcome = make_outcome("answered", expects="text")
+        result.trace.violations.append("handoff_no_data")
+        return result
+    result.answer = NO_JUDGEMENT_TEXT
+    result.kind = "answer"
+    result.handoff = None
+    result.trace.final_kind = "answer"
+    result.trace.handoff_reason = None
+    result.ask_target = "confirm_intent"
+    result.outcome = make_outcome("clarifying", expects="text")
+    result.trace.violations.append("handoff_no_judgement")
     return result
 
 
@@ -1048,6 +1144,27 @@ def _tool_result_n_items(result: ToolResult) -> int:
     if isinstance(candidates, list):
         return len(candidates)
     return 1 if result.data else 0
+
+
+def _tool_result_empty(result: ToolResult, status: Literal["ok", "error", "timeout", "rejected"]) -> bool:
+    """T2：`ToolCallRecord.empty` 的計算——⚠️ 只有 `status=="ok"` 才可能為
+    `True`（plan-verifier r2 #1：`error`／`timeout`／`rejected` ⛔ 一律 `False`，
+    「沒查成」不得講成「不存在」）。`True` 條件（封閉三則）：`data` 為空（`None`
+    或空 dict）、`data.get("facts")` 是空字串、或 `data.get("found") is False`。
+    """
+    if status != "ok":
+        return False
+    data = result.data
+    if not data:
+        return True
+    if not isinstance(data, dict):
+        return False
+    facts = data.get("facts")
+    if isinstance(facts, str) and facts == "":
+        return True
+    if data.get("found") is False:
+        return True
+    return False
 
 
 def _tool_result_status(result: ToolResult) -> Literal["ok", "error", "timeout", "rejected"]:
@@ -2372,12 +2489,22 @@ class AgentRuntime:
             # T1（security r1 #3）：新閘一律排在 `_apply_scope_exit` **之後**——
             # 範圍外的回合在上面已經被換成固定句，不該再被當成一次追問來判。
             result = _apply_ask_target_gate(result)
+            # T2：新閘在 `_apply_ask_target_gate` **之後**——NO_JUDGEMENT 分支
+            # 會把 `kind` 從 `handoff` 換成 `answer` 並另設 `ask_target=
+            # "confirm_intent"`；排在 ask_target 閘之後，才不會被那道只認
+            # `kind=="ask"` 的閘動到。
+            result = _apply_handoff_data_exits(result)
             # T1：三個寫點之一（模型迴圈的一般出口與所有固定句出口都經這裡）。
-            # ⚠️ 讀的是**過完所有出口閘之後**的 `kind`／`ask_target`：閘門可能把
-            #    一個 `kind=ask` 的追問對象歸零，殘留舊值等於讓下一回合的程式
-            #    判定拿到一個這一回合根本沒有出去的授權訊號。
+            # ⚠️ 讀的是**過完所有出口閘之後**的 `ask_target`：閘門可能把一個
+            #    `kind=ask` 的追問對象歸零，殘留舊值等於讓下一回合的程式判定
+            #    拿到一個這一回合根本沒有出去的授權訊號。T2（NO_JUDGEMENT）把
+            #    `kind` 換成 `answer` 但仍設了合法的 `ask_target=
+            #    "confirm_intent"`——⛔ 不再只認 `kind=="ask"`，改認
+            #    `ask_target` 是否落在 `ASK_TARGETS` 值域內：其他 `kind` 的
+            #    `ask_target` 一律是模型依 schema 填的 `None`，這條件對它們
+            #    等價於原本的 `kind=="ask"` 判定。
             agent_state[LAST_ASK_TARGET_KEY] = (
-                result.ask_target if result.kind == "ask" else None
+                result.ask_target if result.ask_target in ASK_TARGETS else None
             )
             if result.trace.final_kind == "handoff":
                 cache[cache_key] = {
@@ -2508,14 +2635,22 @@ class AgentRuntime:
                             scope_counts["out"] += 1
 
                     ms = int((self._clock() - call_start) * 1000)
+                    status_value = _tool_result_status(tool_result)
+                    # T2：撞名保留 id 的那筆沒有真的登記進 `tool_results_by_id`——
+                    # 它不是「查了、查無資料」，`empty` 一律 `False`（§2）。
+                    is_reserved_collision = tc.id in reserved_ids
                     tool_call_records.append(
                         ToolCallRecord(
                             id=tc.id,
                             name=name,
                             args_summary=_args_summary(raw_args),
                             ms=ms,
-                            status=_tool_result_status(tool_result),
+                            status=status_value,
                             n_items=_tool_result_n_items(tool_result),
+                            empty=(
+                                False if is_reserved_collision
+                                else _tool_result_empty(tool_result, status_value)
+                            ),
                         )
                     )
                     # DSP-029 r13 #3／S2 §3（plan-verifier r2 #3、r3 #1）：**保留
@@ -2526,7 +2661,7 @@ class AgentRuntime:
                     # 都會解析到它自己塞進來的文字（自證變成自說自話）；影像／完成
                     # 動作同理。原本只防 `OUTLINE_TOOL_CALL_ID` 一個保留字，
                     # 現在以集合迭代，⛔ 不分三個 if 各自處理。
-                    if tc.id in reserved_ids:
+                    if is_reserved_collision:
                         violations.append("tool_call_id_collides_with_reserved")
                     else:
                         tool_results_by_id[tc.id] = tool_result
@@ -2673,6 +2808,39 @@ class AgentRuntime:
                     "channel": effective_handoff_channel(None),
                     "message": effective_handoff_message(None),
                 }
+
+            # T2（Plan `inputs/plan-walkthrough-fixes-batch2-20260909.md` §3）：
+            # 迴圈內改寫提示——與 `_reason_hint`／`_schema_reject_hint` 同形，
+            # 介於模型輸出與 Verifier 之間。⛔ **不在出口閘另開一次模型呼叫**
+            # （security r1 #1：那條路會跳過 Verifier 全部檢查且沒有 deadline
+            # 檢查，正式站觀察模式不可用）。條件全為封閉欄位：`out.kind==
+            # "handoff"` 且 `out.handoff_reason=="no_grounding"`（字面值，⛔ 不看
+            # `handoff_dict` 那個已經套過 fallback 的版本）、`fact_class` 不在
+            # 敏感五類、本回合工具結果非空、且不是「每一筆都 `status=="ok"` 且
+            # `empty`」（那種情況本來就該轉走 T2 的 NO_DATA 出口，⛔ 不該被改寫
+            # 成瞎編）。命中且改寫預算未耗盡 ⇒ 消耗一次 `max_rewrites`、帶固定
+            # 修法句重回模型；**預算已耗盡 ⇒ 直接跳過改寫**（⛔ 不走
+            # `counters.rewrite_exhausted` ⇒ `_build_fixed("budget_exhausted")`
+            # 那條，否則 `handoff_reason` 會變成 `budget_exhausted`，T2 出口閘
+            # 永遠到不了——plan-verifier r1 #6），讓輸出照常往下走進 Verifier，
+            # 最終落到 `_apply_handoff_data_exits` 換成 `NO_JUDGEMENT_TEXT`。
+            if out.kind == "handoff" and out.handoff_reason == "no_grounding":
+                try:
+                    rewrite_fact_class = FactClass(out.fact_class)
+                except ValueError:
+                    rewrite_fact_class = None
+                if (
+                    rewrite_fact_class not in SENSITIVE
+                    and tool_call_records
+                    and not all(r.status == "ok" and r.empty for r in tool_call_records)
+                    and not counters.rewrite_exhausted(self.budget)
+                ):
+                    counters.rewrites += 1
+                    messages.append({"role": "assistant", "content": content})
+                    messages.append(
+                        {"role": "user", "content": HANDOFF_DATA_REWRITE_HINT}
+                    )
+                    continue
 
             # DSP-029 F-A：引用解析在 Runtime 做，結果**另傳**給 Verifier——
             # ⛔ 不寫回 `out`／`Sentence` 任何欄位（解析後的原文一旦掛在 AgentOutput
