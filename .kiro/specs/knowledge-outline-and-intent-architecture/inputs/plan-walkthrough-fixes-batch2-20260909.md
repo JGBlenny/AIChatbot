@@ -38,7 +38,7 @@
 
 **驗收**
 - 單元：schema 必填／值域（含 `anyOf[enum,null]` 覆寫後 strict schema 可產）；Verifier 成因；出口閘真值表；`kind=ask` 回合把 `ask_target` 寫進 `agent_state["last_ask_target"]`、`agent.turn` 輸出鍵集合不變；`entry_line` 注入為不可引用資料段、撞名拒收（三個保留 id 正對照＋新的第四個）、超長由 registry `maxLength` 擋、含控制字元／標記樣式剝除、模型引用 entry 段 ⇒ Verifier 回 `SOURCE_NOT_CITABLE`（⛔ 不是 `ref_source_not_found`）、trace 無 entry 文字、dialog 無 entry 文字。
-- 情境（smoke-rag）：`entry_line`＝「要建立哪個社區的物件？講社區名稱或地址。」＋「信仰」⇒ 先查物件（trace 有 `jgb2.query.estates`）、查無 ⇒ `ask_target=address`、答句含「地址」、不含宗教；無 `entry_line` 的「信仰」⇒ 同樣先查再問；變形集 wv-h2b 三題；3 輪 3/3。
+- 情境（smoke-rag）：`entry_line`＝「要建立哪個社區的物件？講社區名稱或地址。」＋「信仰」⇒ 領域內追問（`ask_target` 值域內、不含宗教）3 輪 3/3（**宣稱縮小**：verifier r1 F2——無 `entry_line` 的「信仰」2/3、「756248 你建議」反問類型 3/3 紅，定義句治不了模型對純名詞／純編號的處理 ⇒ 移交第三批「程式前置查詢」：純編號／短名詞先由程式查帳單／修繕單／物件再進模型）。
 
 ## 3. T2 — 兩出口：資料裡沒有 vs 不做判斷（H6）
 
@@ -47,7 +47,7 @@
 - 程式出口閘（同層、在 `_apply_scope_exit` 之後）：`kind=handoff` ∧ `handoff_reason=no_grounding` ∧ `fact_class ∉ SENSITIVE` ∧ `tool_calls` 非空 ⇒ 依 `ToolCallRecord.empty` 分流：
   - **全部工具結果為空**（每筆 `data.facts` 空或哨兵 `found: False`）⇒ `kind=answer`、`answer=NO_DATA_TEXT`（「系統裡查不到這一筆或這一類資料；請確認名稱或編號，或換一個查法。」）、outcome `answered`、`violations += ["handoff_no_data"]`。
   - **至少一筆有資料** ⇒ 這是「不做判斷」：**以模型迴圈內既有的改寫提示機制處理**（security r1 #1／#2：⛔ 不在出口閘層另開一次模型呼叫——那條路會跳過 Verifier 全部檢查（敏感樣式、標記、未引用）且沒有 deadline 檢查；正式站觀察模式不可用，Verifier 是擋的）。作法：在迴圈的「模型輸出 → Verifier」之間加一個**程式判定**（與 `_reason_hint`／`_schema_reject_hint` 同形）：輸出為 `handoff/no_grounding`、非敏感、工具結果有資料 ⇒ 消耗一次 `budget.max_rewrites`，帶固定修法句（定義）：「資料段有內容；判斷題依資料段給建議並引用，⛔ 不轉人。」重回模型；重試輸出照常進 Verifier 與所有出口閘（含 `_apply_scope_exit`）。**預算已為 0 時程式判定直接跳過改寫**（plan-verifier r1 #6：⛔ 不走 `counters.rewrite_exhausted` ⇒ `_build_fixed("budget_exhausted")` 那條，否則 `handoff_reason` 變成 `budget_exhausted`、閘門永遠到不了），讓輸出落到出口閘；改寫後仍轉人或預算為 0 ⇒ 出口閘換 `answer=NO_JUDGEMENT_TEXT`（「這題要看你的判斷；我這邊能給的是系統資料，要我列出來嗎？」，無插值）、`ask_target=confirm_intent`、outcome `clarifying`、`violations += ["handoff_no_judgement"]`。`fact_class ∉ SENSITIVE`（模型自填）不是唯一控制：模型散文只會經 Verifier 驗過才出去，否則只有固定句。
-- 敏感類、`llm_mentioned_handoff`、`budget_exhausted` 不動。
+- 敏感類、`budget_exhausted` 不動。**`llm_mentioned_handoff` 併入同一組**（封閉集合 `NON_SENSITIVE_HANDOFF_REASONS`＝{no_grounding, llm_mentioned_handoff}；verifier r1 F1：模型在文字裡自己寫轉人詞就能繞過兩出口，2/3 輪出現）——S4 的零查詢閘與 T2 改寫提示同組。
 - 非目標：判斷型工具（催繳草稿）。
 
 **驗收**
