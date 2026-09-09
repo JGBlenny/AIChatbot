@@ -221,7 +221,7 @@ class VerifierRules(BaseModel):
     sensitive_patterns_audiences: Optional[list[str]] = None
     #: W9 情境①（2026-09-09）：`allowed_routes` 的電話／網址白名單檢查（`ROUTE_NOT_ALLOWED`）
     #: 也是售前 CTA 守門——pm 引資料段的交易序號會被電話正則咬到（`R2026081500042`
-    #: 的 `081500042` 命中 `0\d{1,2}\d{3,4}\d{4}`）。同 `sensitive_patterns_audiences`
+    #: 的 `02608150004` 命中 `_PHONE_RE` 第二支）。同 `sensitive_patterns_audiences`
     #: 的語義：缺鍵＝全受眾＝舊行為；缺 audience／未知 ⇒ 照擋。
     route_check_audiences: Optional[list[str]] = None
     negation_terms: list[str]
