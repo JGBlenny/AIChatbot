@@ -1163,6 +1163,7 @@ RAG_API_AUTH_ENFORCE=true        # 應已是 true
 - `FILE_MAX_BYTES`（預設 `5000000`）——單檔下載位元組上限。
 - `FILE_COUNT_CAP_PER_HOUR`（預設 `20`）——每 (key,vendor)/worker 每小時檔案數上限。
 - `DOCUMENT_EXTRACTION_MODEL`（預設 `gpt-5.6-luna`）——文件擷取所用 vision 模型。
+- `OPENAI_TIMEOUT_S=25`（2026-09-10 第六批 #11：agent 回合每次模型呼叫的 SDK 逾時；未設＝SDK 預設 600 s，一個掛住的請求只能等門面 60 s 逾時。25 s＋SDK 預設 2 次重試讓卡住的呼叫在 60 s 內自救；影像／文件擷取各自帶 timeout 不受此影響）
 
 ⚠️ **W6-b3（DSP-040 正式參數）**：`AGENT_VERIFIER_MODE` 取代 `AGENT_VERIFIER_OBSERVE_ONLY`。
 - `grounding_observe`＝**引用解析與涵蓋類只記錄**（`UNCITED_ASSERTION`／`QUOTE_TOO_SHORT`／`QUOTE_NOT_COVERING`／`SOURCE_NOT_CITABLE`＋`SCHEMA` 的 `ref_*`／`unit_out_of_range`），**極性類與機敏類（`POLARITY_MISMATCH`／`SENSITIVE_TOPIC`／`ROUTE_NOT_ALLOWED`／`FORBIDDEN_TERM`／`SCHEMA` 的 `marker_in_answer`／`handoff_reason_*`／`ask_target_invalid`／`empty_*`）照擋**——這是 demo 線上值。

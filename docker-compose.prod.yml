@@ -289,6 +289,7 @@ services:
       AGENT_MODEL: ${AGENT_MODEL:-}                                # 空＝退回 OPENAI_MODEL；demo gpt-5-mini
       AGENT_REASONING_EFFORT: ${AGENT_REASONING_EFFORT:-}          # 空＝不送；demo low
       AGENT_ATTEMPT_LOG_PATH: ${AGENT_ATTEMPT_LOG_PATH:-}          # 開發量測用；正式⛔不設
+      OPENAI_TIMEOUT_S: ${OPENAI_TIMEOUT_S:-}                      # agent 每次模型呼叫 SDK 逾時秒數；空＝SDK 預設 600（第六批 #11 建議 25）
       # agentic-mcp-orchestration 其餘新 env（runbook §19-5 逐一 grep 核對名稱／預設值）——
       # 全部維持不宣告＝吃程式內建預設；里程碑推進時才在 .env 加對應鍵覆寫，⛔ 不在此處預先宣告：
       #   AGENT_STAGE（預設 M0；部署里程碑，M0-M5）
