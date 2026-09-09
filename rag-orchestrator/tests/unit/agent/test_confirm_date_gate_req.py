@@ -83,6 +83,21 @@ def _bill_due_extend_payload(base: date, *, days: int = 3) -> dict:
     }
 
 
+def _v3_payload(before: date, *, today: date = _TODAY, days: int = 3) -> dict:
+    """V3 的正確 payload：`date_expire_after` ＝ **起算日**（原到期日與今天較晚者）＋ days。
+
+    ⚠️ 與 `_bill_due_extend_payload` 的差別就是 V3 改掉的那一條：後者以原到期日
+    起算（`today` 缺省時的舊行為），本函式以起算日起算。
+    """
+    return {
+        "action": "bill_due_extend",
+        "bill_id": "900001",
+        "date_expire_before": _ymd(before),
+        "days": days,
+        "date_expire_after": _ymd(max(before, today) + timedelta(days=days)),
+    }
+
+
 def _repair_create_payload(base: date) -> dict:
     """⛔ 不填 `category_name`：缺值放行（delta4），因此不會去打分類樹 API。"""
     return {"action": "repair_create", "estate_name": "信義好宅", "description": ""}
@@ -211,9 +226,18 @@ def test_helper_iterates_the_table_and_ignores_unlisted_actions():
 
 
 @pytest.mark.req(_REQ)
-async def test_confirm_request_rejects_a_past_date_and_writes_no_pending_row(monkeypatch):
+async def test_confirm_request_rejects_a_past_new_due_date_and_writes_no_pending_row(monkeypatch):
+    """**過去的新到期日出不了卡**——V3 之後改由 render 的驗算擋（⛔ 不是閘一）。
+
+    ⚠️ V3 起閘一對 `bill_due_extend` 是**結構上到不了**的：起算日＝max(原到期日,
+    今天)、`days` 必為正整數 ⇒ `date_expire_after` 恆 > 今天，沒有任何 payload 能
+    同時「驗算過」且「新到期日在過去」。所以這一題的擋點往前移到驗算，
+    `text_for_model` 是空字串而不是 `DATE_BEFORE_TODAY_TEXT`。
+    閘一本身沒有被刪（縱深，表裡未來的 action 仍走它），它仍在兌現端開火——
+    見 `test_redeem_with_a_past_date_never_calls_the_write_tool`。
+    """
     monkeypatch.setattr(bills, "_today", lambda: _TODAY)
-    payload = _bill_due_extend_payload(_TODAY - timedelta(days=10))   # after ＝ 今天−7
+    payload = _bill_due_extend_payload(_TODAY - timedelta(days=10))   # 舊算法：after ＝ 今天−7
     pool = _confirm_pool()
 
     result = await confirm_request(
@@ -222,9 +246,26 @@ async def test_confirm_request_rejects_a_past_date_and_writes_no_pending_row(mon
 
     assert result.ok is False
     assert result.error == "INVALID_INPUT"          # ⛔ 沿用封閉值域，不新增錯誤碼
-    assert result.text_for_model == DATE_BEFORE_TODAY_TEXT
+    assert result.text_for_model == ""              # 驗算不過（⛔ 不是閘一那一支）
     assert result.data is None
     assert pool.execute.await_count == 0, "⛔ 不落 pending 列（沒有 token 可兌現）"
+
+    # 正對照組①：同一張逾期帳單，改用 V3 的起算日算 ⇒ 出得了卡（證明擋的是算式不是帳單）
+    ok_pool = _confirm_pool()
+    ok = await confirm_request(
+        _identity(),
+        {"summary": "延三天",
+         "payload": json.dumps(_v3_payload(_TODAY - timedelta(days=10)))},
+        db_pool=ok_pool,
+    )
+    assert ok.ok is True and ok_pool.execute.await_count == 1
+
+    # 正對照組②：閘一的判定本身還活著（純函式層），⛔ 不是被 V3 拿掉了
+    assert fields_before_today(
+        "bill_due_extend",
+        {**payload, "date_expire_after": _ymd(_TODAY - timedelta(days=1))},
+        _TODAY,
+    ) == ["date_expire_after"]
 
 
 @pytest.mark.req(_REQ)
@@ -245,14 +286,14 @@ async def test_today_or_later_still_issues_the_card(monkeypatch, delta):
 
 
 @pytest.mark.req(_REQ)
-async def test_the_gate_boundary_is_the_marked_field_not_the_other_dates(monkeypatch):
-    """`date_expire_before` 在過去、但新到期日 ＝ 今天 ⇒ **照常出卡**。
+async def test_an_overdue_original_due_date_is_not_a_reason_to_refuse(monkeypatch):
+    """`date_expire_before` 在過去 ⇒ **照常出卡**，新到期日以今天起算（V3）。
 
-    這正是走查那一題的正解：原到期日已逾期不是拒絕的理由，⛔ 不改「延 N 天以哪天
-    為基準」的算法（Plan §2 非目標）。
+    走查病灶：原到期日已逾期時，舊算法算出的新到期日仍在過去，使用者只看到
+    「不能延」。V3 起 `days` 從「原到期日與今天較晚者」起算 ⇒ 延三天就是今天＋3。
     """
     monkeypatch.setattr(bills, "_today", lambda: _TODAY)
-    payload = _bill_due_extend_payload(_TODAY - timedelta(days=3), days=3)  # after ＝ 今天
+    payload = _v3_payload(_TODAY - timedelta(days=3), days=3)   # after ＝ 今天＋3
     pool = _confirm_pool()
 
     result = await confirm_request(
@@ -260,11 +301,20 @@ async def test_the_gate_boundary_is_the_marked_field_not_the_other_dates(monkeyp
     )
 
     assert result.ok is True and pool.execute.await_count == 1
+    assert payload["date_expire_after"] == _ymd(_TODAY + timedelta(days=3))
+    assert f"・起算日：{_TODAY.year:04d}/{_TODAY.month:02d}/{_TODAY.day:02d}" in result.data["card"]
 
 
 @pytest.mark.req(_REQ)
 async def test_render_failure_is_distinguishable_from_the_date_gate(monkeypatch):
-    """兩支都是 `INVALID_INPUT`，差別只在 `text_for_model`（render 失敗是空字串）。"""
+    """兩支都是 `INVALID_INPUT`，差別只在 `text_for_model`（render 失敗是空字串）。
+
+    ⚠️ 正對照組**不再用 `bill_due_extend` 的過去日期**：V3 之後那組 payload 連
+    驗算都過不了、到不了閘一（見
+    `test_confirm_request_rejects_a_past_new_due_date_and_writes_no_pending_row`）。
+    改直接對閘一的注入點（`confirm_request` 呼叫的 `fields_before_today`）下手，
+    證明那一支確實帶著固定句，⛔ 兩支不得混為一談。
+    """
     monkeypatch.setattr(bills, "_today", lambda: _TODAY)
     broken = {k: v for k, v in _bill_due_extend_payload(_TODAY).items() if k != "bill_id"}
     pool = _confirm_pool()
@@ -276,14 +326,21 @@ async def test_render_failure_is_distinguishable_from_the_date_gate(monkeypatch)
     assert result.ok is False and result.error == "INVALID_INPUT"
     assert result.text_for_model == ""
     assert pool.execute.await_count == 0
-    # 正對照組：日期閘那一支帶著固定句（⛔ 兩支不得混為一談）
-    past = await confirm_request(
+
+    # 正對照組：把閘一的判定換成「一律擋」⇒ 同一組**驗算過得了**的 payload 走到
+    # 閘一那一支，帶著固定句、且 ⛔ 不落 pending 列。
+    import services.agent.tools.confirm as confirm_mod
+    monkeypatch.setattr(confirm_mod, "fields_before_today",
+                        lambda action, payload, today: ["date_expire_after"])
+    gate_pool = _confirm_pool()
+    gated = await confirm_request(
         _identity(),
-        {"summary": "延三天",
-         "payload": json.dumps(_bill_due_extend_payload(_TODAY - timedelta(days=10)))},
-        db_pool=_confirm_pool(),
+        {"summary": "延三天", "payload": json.dumps(_v3_payload(_TODAY))},
+        db_pool=gate_pool,
     )
-    assert past.text_for_model == DATE_BEFORE_TODAY_TEXT
+    assert gated.ok is False and gated.error == "INVALID_INPUT"
+    assert gated.text_for_model == DATE_BEFORE_TODAY_TEXT
+    assert gate_pool.execute.await_count == 0
 
 
 @pytest.mark.req(_REQ)
@@ -302,13 +359,23 @@ async def test_unmarked_action_is_completely_unaffected(monkeypatch):
     assert result.data["card"] == render("repair_create", payload)
     assert pool.execute.await_count == 1
     assert fields_before_today("repair_create", payload, far_future) == []
-    # 同一個時鐘下，被標記的那個 action 會被擋（證明時鐘真的被換掉了）
+    # 同一個時鐘下，`bill_due_extend` 會被擋（證明時鐘真的被換掉了）：以 `_TODAY`
+    # 為起算日算出來的 payload，在 2099 的時鐘下起算日變成 2099 ⇒ 驗算不一致。
     blocked = await confirm_request(
         _identity(),
-        {"summary": "延三天", "payload": json.dumps(_bill_due_extend_payload(_TODAY))},
+        {"summary": "延三天", "payload": json.dumps(_v3_payload(_TODAY))},
         db_pool=_confirm_pool(),
     )
-    assert blocked.ok is False and blocked.text_for_model == DATE_BEFORE_TODAY_TEXT
+    assert blocked.ok is False and blocked.error == "INVALID_INPUT"
+    # 反向正對照組：把時鐘調回 `_TODAY`，同一份 payload 就出得了卡
+    monkeypatch.setattr(bills, "_today", lambda: _TODAY)
+    ok_pool = _confirm_pool()
+    unblocked = await confirm_request(
+        _identity(),
+        {"summary": "延三天", "payload": json.dumps(_v3_payload(_TODAY))},
+        db_pool=ok_pool,
+    )
+    assert unblocked.ok is True and ok_pool.execute.await_count == 1
 
 
 # ---------------------------------------------------------------------------

@@ -28,7 +28,7 @@ demo 只走替身 transport（`USE_MOCK_JGB_API=true`）。真 `agent/v1` 的簽
 from __future__ import annotations
 
 import logging
-from datetime import date
+from datetime import date, timedelta
 from typing import Any, Final, Optional
 
 from services.agent.confirm_card import (
@@ -41,6 +41,9 @@ from services.agent.confirm_card import (
 from services.agent.identity import Identity
 from services.agent.tools import jgb2 as jgb2_tools
 from services.agent.tools.registry import ToolResult, ToolSpec
+# ⚠️ **import 模組、⛔ 不 `from … import _today`**：時鐘要在呼叫點取值
+# （與 `tools/confirm.py`、`runtime.py` 同法），這樣測試 monkeypatch 才蓋得到。
+from services.jgb import bills
 
 logger = logging.getLogger(__name__)
 
@@ -102,7 +105,8 @@ BILL_DUE_EXTEND_SPEC: ToolSpec = _action_spec(
     "從回傳的繳費期限取值；查不到這張帳單就不能出確認；"
     "days＝往後延的天數，正整數；"
     "date_expire_after＝調整後的到期日，八位數字的年月日，"
-    "必須等於 date_expire_before 往後加上 days 天，不一致一律拒絕；"
+    "延後天數從原到期日或今天較晚的一天起算；算出來的新到期日一定在今天之後，"
+    "不一致一律拒絕；"
     "這個日期不得早於今天；算出來早於今天時不要送確認，先問要改到哪一天。"
     "四個欄位都必填，系統不會替你推算任何一個。",
 )
@@ -158,22 +162,40 @@ def _scalar(value: Any, *, max_len: int = 64) -> str:
     return text if 0 < len(text) <= max_len else ""
 
 
-def _validated_payload(action: str, args: dict) -> Optional[dict]:
+def _validated_payload(action: str, args: dict, *,
+                       today: Optional[date] = None) -> Optional[dict]:
     """`args["payload"]` 過**與確認卡同一套**的形狀檢查；不合 ⇒ `None`。
 
     ⛔ 不另立第二套規則：`render()` 就是「使用者看到的那張卡認不認得這份 payload」的
     唯一判準，這裡只是丟掉它的輸出、留下它的驗證。
+
+    Args:
+        today: 驗算基準（`bill_due_extend` 的起算日）。**關鍵字參數**，由呼叫點以
+            `bills._today()` 取值；⛔ 不從 `payload` 讀（render 對保留鍵一律拋）。
+            缺省 `None` ⇒ 舊行為（沒有日期語義的動作用這條）。
+
+    ⚠️ **跨午夜規則**（帶 `today` 時）：等式對 `today` **或 `today − 1 天`** 任一
+    成立即通過。理由是決定性的、⛔ 不是特例分支：確認 token 的 TTL 是 600 s
+    （`confirm.CONFIRM_TOKEN_TTL_S`）＜ 24 h ⇒ 出卡日只可能是兌現當日或前一天，
+    兩者之外的日期本來就兌現不了。若只用兌現當日做嚴格等式，一張 23:59 出的卡在
+    00:01 兌現就會 `INVALID_INPUT`，而那時 token 已經燒掉、使用者無從補救。
+    ⚠️ 這是**驗算**的容忍度，⛔ 不是閘門的：`runtime` 的兌現閘仍以兌現當日的新
+    時鐘檢查 `fields_before_today`（縱深），所以 `today − 1` 這條路徑救不了一張
+    新到期日已經過去的卡。
     """
     payload = args.get("payload")
     if not isinstance(payload, dict):
         return None
-    try:
-        render(action, payload)
-    except ConfirmCardError:
-        # ⛔ 例外訊息不外流（裡面有欄位名）；除錯落在這一行的 log，⛔ 不印欄位值。
-        logger.info("[agent] %s：payload 形狀不符確認卡契約", action)
-        return None
-    return payload
+    candidates = [today] if today is None else [today, today - timedelta(days=1)]
+    for base in candidates:
+        try:
+            render(action, payload, today=base)
+        except ConfirmCardError:
+            continue
+        return payload
+    # ⛔ 例外訊息不外流（裡面有欄位名）；除錯落在這一行的 log，⛔ 不印欄位值。
+    logger.info("[agent] %s：payload 形狀不符確認卡契約", action)
+    return None
 
 
 def _iso_date(yyyymmdd: Any) -> str:
@@ -212,7 +234,10 @@ async def bill_due_extend(identity: Identity, args: dict) -> ToolResult:
     ⚠️ 送出的是**絕對日期**（`date_expire_after`），⛔ 不是位移天數：使用者確認的
     是一個確定的日期，位移在下游重算一次就多一個「算出不同結果」的機會。
     """
-    payload = _validated_payload(BILL_DUE_EXTEND_ACTION, args)
+    # ⚠️ 時鐘在**呼叫點**取（第三個呼叫點；見 `confirm_card` 檔尾「日期有效性」）：
+    #    起算日＝原到期日與今天較晚者，兌現端不帶 today 就會把每一張逾期帳單的卡
+    #    在 token 已經燒掉之後判成 `INVALID_INPUT`。
+    payload = _validated_payload(BILL_DUE_EXTEND_ACTION, args, today=bills._today())
     if payload is None:
         return _invalid_input()
     bill_id = str(payload["bill_id"]).strip()

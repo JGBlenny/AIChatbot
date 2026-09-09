@@ -383,7 +383,14 @@ async def confirm_request(
     if action == "repair_create" and not await _is_valid_repair_category(payload.get("category_name")):
         return ToolResult(ok=False, error="INVALID_INPUT")
     try:
-        card = render(action, payload)
+        # ⚠️ **出卡端的時鐘**（V3）：`days` 的起算日＝原到期日與今天較晚者，
+        #    所以 render 的驗算要拿到今天。時鐘在**呼叫點**取（同下方閘一、同
+        #    逾期天數），⛔ 不讓 `confirm_card` 自己去讀——它必須維持決定性。
+        #    ⛔ 也不從 `payload` 讀 `today`：payload 是模型控制的（render 對保留鍵
+        #    一律拋 `ConfirmCardError` ⇒ 這裡翻成 `INVALID_INPUT`）。
+        #    出卡端是**嚴格等式**（只有一個 today）；跨午夜的容忍度在兌現端
+        #    （`action._validated_payload`），⛔ 不在這裡放寬。
+        card = render(action, payload, today=bills._today())
     except ConfirmCardError:
         # ⚠️ ⛔ 不把例外訊息回給模型也不入 `ToolResult`：訊息裡有欄位名，
         #    對模型只需要「這個形狀不收」。除錯落在下方的 logger（只有欄位名，

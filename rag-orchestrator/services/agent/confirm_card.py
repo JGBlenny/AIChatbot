@@ -20,7 +20,10 @@
   `INVALID_INPUT`。⛔ 不用預設值補、⛔ 不「盡力而為」印半張卡——半張卡會讓使用者
   對著一個他沒看到的欄位按下確認。
 - **不推測**：`date_expire_after` 必須由呼叫端明給，本檔只**驗算**它等於
-  `date_expire_before + days`；⛔ 不在缺值時自己算出來當成使用者確認過的事實。
+  `起算日 + days`（起算日＝原到期日與 `today` 較晚者；`today` 缺省時就是原到期日，
+  見檔尾「日期有效性」段）；⛔ 不在缺值時自己算出來當成使用者確認過的事實。
+  ⚠️ `today` 一律是**關鍵字參數**、由呼叫點傳入，⛔ 不從 payload 讀——payload 是
+  模型控制的資料，讓它決定起算基準等於把驗算交回給被驗的那一方。
 
 ## `emergency_status` 是已知地雷（⛔ 不可望文生義）
 `1＝非緊急、2＝緊急`（jgb2 DB 真值）。jgb2 對外 `mapping` 曾把它標反，
@@ -103,6 +106,13 @@ def emergency_status_of(payload: Mapping[str, Any]) -> int:
         )
     return int(value)
 
+#: **保留鍵**：這些名字是 `render()` 自己的關鍵字參數，⛔ payload 裡出現一律
+#: `ConfirmCardError`（呼叫端翻成 `INVALID_INPUT`）。理由：`today` 是驗算的**基準**，
+#: 基準若能由 payload 帶進來，模型就能自訂「延 N 天從哪一天起算」——那等於把驗算
+#: 交回給被驗的那一方。⚠️ 二擇一固定為**拒絕**（⛔ 不是靜默忽略）：靜默忽略會讓
+#: 一份帶著 `today` 的 payload 看起來被接受了，使用者無從得知它沒有生效。
+RESERVED_PAYLOAD_KEYS: Final[frozenset] = frozenset({"today"})
+
 #: 每張卡的收尾句。⛔ 不在此複述三顆按鈕的文案——按鈕 label 的唯一來源是
 #: `conversational_engine._DEFAULT_QR_LABELS`（`confirm.confirm_quick_replies` 取用），
 #: 在卡文字裡抄一份等於多一處會各自演化的字面量。
@@ -178,7 +188,7 @@ def _lines_to_card(title: str, rows: list[tuple[str, str]]) -> str:
     return f"{title}\n{body}\n{CARD_FOOTER}"
 
 
-def _render_bill_due_extend(payload: Mapping[str, Any]) -> str:
+def _render_bill_due_extend(payload: Mapping[str, Any], today: Optional[date]) -> str:
     action = "bill_due_extend"
     bill_id = _require_ref(payload, "bill_id", action)
     before = _parse_date(_require(payload, "date_expire_before", action),
@@ -186,25 +196,39 @@ def _render_bill_due_extend(payload: Mapping[str, Any]) -> str:
     days = _require_days(payload, "days", action)
     after = _parse_date(_require(payload, "date_expire_after", action),
                         "date_expire_after", action)
+    # ⚠️ **起算日＝原到期日與今天較晚者**（V3）。走查病灶：原到期日已逾期時，
+    #    「延三天」以原到期日起算會算出一個**仍在過去**的新到期日，S1 閘門把它
+    #    擋掉，使用者只看到「不能延」。語義上「延三天」是從今天起再給三天。
+    #    ⚠️ `today` 缺省（`None`）⇒ 起算日就是原到期日＝**舊行為逐字不變**，
+    #    留給沒有時鐘的呼叫端與純形狀測試用。
+    base = max(before, today) if today else before
     # ⚠️ **驗算而不是代算**（見模組 docstring「不推測」）：新到期日必須是呼叫端
-    #    明給的那一個，且必須等於 原到期 + 天數。三個數字彼此矛盾時 ⛔ 不挑一個
+    #    明給的那一個，且必須等於 起算日 + 天數。三個數字彼此矛盾時 ⛔ 不挑一個
     #    來印——那等於替使用者決定他同意的是哪一個。
-    if before + timedelta(days=days) != after:
+    #    ⛔ 不得以「放寬 days 驗算」來解決逾期帳單：這條等式與 `payload_digest`
+    #    一起構成卡↔payload 的綁定，放寬它就是把綁定拆開。
+    if base + timedelta(days=days) != after:
         raise ConfirmCardError(
-            f"{action}: date_expire_before + days 與 date_expire_after 不一致"
+            f"{action}: 起算日 + days 與 date_expire_after 不一致"
         )
     return _lines_to_card(
         "即將調整帳單到期日，請確認：",
         [
             ("帳單編號", bill_id),
             ("原到期日", _fmt_date(before)),
+            # 起算日**印在卡上**：「原到期日 8/15、延 3 天、新到期日 9/12」單看
+            # 三個數字對不起來，使用者會遲疑。⛔ 不靠模型在 summary 裡解釋。
+            ("起算日", _fmt_date(base)),
             ("延後天數", f"{days} 天"),
             ("新到期日", _fmt_date(after)),
         ],
     )
 
 
-def _render_repair_create(payload: Mapping[str, Any]) -> str:
+def _render_repair_create(payload: Mapping[str, Any], today: Optional[date]) -> str:
+    # ⚠️ 簽章與 `_render_bill_due_extend` 一致（`_RENDERERS` 統一傳 `today`），
+    #    ⛔ 不在 `render()` 裡按 action 名決定要不要傳——本 action 沒有日期語義，
+    #    單純不用它。
     action = "repair_create"
     estate = _require_text(payload, "estate_name", action)
     # 分類**允許父節點**（line-bot 線③：分類樹涵蓋不到時退回大類，
@@ -235,32 +259,54 @@ _RENDERERS: Final[dict] = {
 assert set(_RENDERERS) == set(CONFIRM_ACTIONS)   # 值域與分支表必須同步（啟動期就炸）
 
 
-def render(action: Any, payload: Any) -> str:
-    """`(action, payload) → 確認卡文字`。純函式、決定性、無副作用。
+def render(action: Any, payload: Any, *, today: Optional[date] = None) -> str:
+    """`(action, payload[, today]) → 確認卡文字`。純函式、決定性、無副作用。
+
+    Args:
+        today: 驗算的**基準日**（`bill_due_extend` 的起算日＝原到期日與它較晚者）。
+            **關鍵字參數**，由呼叫點以 `bills._today()` 取值傳入；⛔ 本檔不讀時鐘
+            （見模組 docstring 的決定性硬約束），⛔ 也不從 `payload` 讀。
+            缺省 `None` ⇒ 起算日就是原到期日＝舊行為逐字不變。
 
     Raises:
-        ConfirmCardError: `action` 不在 `CONFIRM_ACTIONS` 內，或 payload 缺欄位／
-            型別不符／三個日期數字彼此矛盾。呼叫端一律翻成 `INVALID_INPUT`。
+        ConfirmCardError: `action` 不在 `CONFIRM_ACTIONS` 內、payload 不是物件、
+            payload 帶了 `RESERVED_PAYLOAD_KEYS` 裡的鍵、或缺欄位／型別不符／
+            日期數字彼此矛盾。呼叫端一律翻成 `INVALID_INPUT`。
     """
     if action not in _RENDERERS:
         raise ConfirmCardError(f"未知的 action：{action!r}（值域 {list(CONFIRM_ACTIONS)}）")
     if not isinstance(payload, Mapping):
         raise ConfirmCardError(f"{action}: payload 必須是物件")
-    return _RENDERERS[action](payload)
+    # ⚠️ 保留鍵檢查在**所有 action 之前**（通用規則，⛔ 不是某一支的 if）：
+    #    payload 是模型控制的，它 ⛔ 不得攜帶任何會改寫驗算基準的鍵。
+    reserved = RESERVED_PAYLOAD_KEYS & set(payload)
+    if reserved:
+        raise ConfirmCardError(
+            f"{action}: payload ⛔ 不得含保留鍵 {sorted(reserved)}"
+        )
+    return _RENDERERS[action](payload, today)
 
 
 # ---------------------------------------------------------------------------
-# 日期有效性（S1｜H1）：**一個判定、一個時鐘、兩個呼叫點**
+# 日期有效性（S1｜H1｜V3）：**一個時鐘（`bills._today()`）、三個呼叫點**
 #
-# 為什麼判定在這一層：`render()` 只驗形狀與 `before + days == after`，三個數字
-# 彼此自洽的一組**過去**日期照樣出得了卡、兌現得了（H1 走查實測）。「不得早於
-# 今天」是這一欄的**語義**，語義屬於契約層，⛔ 不是某支工具的 if。
+#   出卡          `tools/confirm.confirm_request`
+#   兌現閘        `runtime._run_confirm_segment`（兌現分支）
+#   寫入形狀驗算  `tools/action._validated_payload`
 #
-# 為什麼 `today` 由呼叫端傳進來：本檔的硬約束是決定性（見模組 docstring
-# 「⛔ 不讀時鐘」）。時鐘的唯一來源是 `services.jgb.bills._today()`，由兩個呼叫點
-# （`tools/confirm.confirm_request`、`runtime._run_confirm_segment` 兌現分支）
-# 在**呼叫點**取值，⛔ 不在此 import 它——那會讓本檔變成不決定性的，
-# 也會讓測試的 monkeypatch 失效。
+# 三處各自在**呼叫點**取 `bills._today()`，把它當關鍵字參數傳進本檔的純函式
+# （`render(..., today=)`／`fields_before_today(..., today)`）。⛔ 本檔不 import
+# 時鐘——那會讓本檔變成不決定性的，也會讓測試的 monkeypatch 失效。
+#
+# 為什麼判定在這一層：`render()` 只驗形狀與那條等式，三個數字彼此自洽的一組
+# **過去**日期照樣出得了卡、兌現得了（H1 走查實測）。「不得早於今天」是這一欄的
+# **語義**，語義屬於契約層，⛔ 不是某支工具的 if。
+#
+# ⚠️ 三個呼叫點的時鐘語義不完全相同，這是刻意的：出卡端是嚴格等式（只有一個
+# `today`）；兌現端的 `_validated_payload` 允許等式對 `today` 或 `today − 1 天`
+# 任一成立——token TTL 600 s 最多跨一個午夜，出卡日只可能是兌現日或前一天。
+# 那是**驗算**的容忍度，⛔ 不是閘門的：`fields_before_today` 在兌現端仍以當日
+# 新時鐘嚴格檢查（縱深）。
 # ---------------------------------------------------------------------------
 
 #: 閘一（出卡前）回給**模型**的訊息（⛔ 無插值、⛔ 不舉例、⛔ 不回顯日期值）。
@@ -287,9 +333,9 @@ def fields_before_today(action: Any, payload: Any, today: date) -> list:
     這個 action、或它沒有被標記的欄位 ⇒ 空清單＝行為完全不變。
 
     ⚠️ **讀不出來的值一律算擋下**（fail-closed）：缺鍵、`None`、形狀不對的值都
-    無法證明它「是今天或以後」，⛔ 不得因為解析不了就放行。兩個呼叫點在正常路徑上
-    都已經確認過形狀（閘一在 `render()` 之後、閘二在兩把雜湊比對之後），所以這條
-    路只在契約被破壞時才會走到——那時候擋下才是對的。
+    無法證明它「是今天或以後」，⛔ 不得因為解析不了就放行。呼叫本函式的兩道閘
+    （閘一在 `render()` 之後、閘二在兩把雜湊比對之後）在正常路徑上都已經確認過
+    形狀，所以這條路只在契約被破壞時才會走到——那時候擋下才是對的。
     """
     offenders: list = []
     for field, attrs in CONFIRM_FIELD_ATTRS.get(action, {}).items():
@@ -383,6 +429,7 @@ __all__ = [
     "CONFIRM_FIELD_ATTRS",
     "CONFIRM_FIELD_ATTR_NAMES",
     "NOT_BEFORE_TODAY",
+    "RESERVED_PAYLOAD_KEYS",
     "DATE_BEFORE_TODAY_TEXT",
     "date_not_before_today",
     "fields_before_today",

@@ -16,6 +16,8 @@
 """
 from __future__ import annotations
 
+from datetime import date as _date
+
 import pytest
 
 from services.agent.identity import Identity
@@ -25,6 +27,21 @@ from services.agent.tools.registry import ToolRegistry, ToolResult
 from services.jgb_system_api import JGBSystemAPI
 
 pytestmark = pytest.mark.unit
+
+from services.jgb import bills as _bills  # noqa: E402  — 時鐘凍結的唯一注入點
+
+
+#: **模組層凍結時鐘**（V3 起）：`bill_due_extend` 的形狀驗算改為
+#: 「起算日＝原到期日與今天較晚者」（`confirm_card._render_bill_due_extend`），
+#: 兌現端在**呼叫點**取 `bills._today()`。本檔的 fixture 帳單到期日是 20260815、
+#: payload 的 `date_expire_after` 是 20260818——跟著真實時鐘走的話，這些案例會在
+#: 2026-08-18 之後集體被判成 `INVALID_INPUT`，而它們驗的是**守門、範圍讀、冪等**，
+#: ⛔ 不是日期政策（那由 `test_confirm_date_gate_req.py`／`test_due_extend_base_req.py` 驗）。
+#: ⛔ 不改 payload 的日期：它們與 fixture 的 `date_expire` 綁在一起。
+@pytest.fixture(autouse=True)
+def _freeze_today(monkeypatch):
+    monkeypatch.setattr(_bills, "_today", lambda: _date(2026, 8, 15))
+
 
 _REQ = "agentic-mcp-orchestration:R4.2"
 

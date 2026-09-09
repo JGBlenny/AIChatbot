@@ -2246,8 +2246,13 @@ class AgentRuntime:
             return _finish(CONFIRMATION_REQUIRED_TEXT)
 
         # S1／H1 **閘二：兌現前的日期有效性**。與閘一（`confirm.request`）是
-        # **同一個純函式、同一個時鐘**（`bills._today()` 在呼叫點取值），
-        # ⛔ `action.py` 不再加第二套判定——一個判定、一個時鐘、兩個呼叫點。
+        # **同一個純函式、同一個時鐘**（`bills._today()` 在呼叫點取值）。
+        # ⚠️ **一個時鐘（`bills._today()`）、三個呼叫點**（V3）：出卡
+        # （`confirm.request`）、兌現閘（本處）、寫入形狀驗算
+        # （`action._validated_payload`）。三處各自在呼叫點取同一個時鐘，
+        # ⛔ 沒有任何一處自己讀 `date.today()`、⛔ 也沒有第二套判定：
+        # 本處判的是**日期語義**（`fields_before_today`），`action.py` 那一處
+        # 只是把同一個時鐘餵給 render 的**形狀驗算**（起算日基準）。
         # 為什麼兌現時要再判一次：出卡與按下確認之間可以跨過午夜，也可以在
         # 表被人為改動後才兌現；「使用者按過確認」證明不了「這個日期還沒過」。
         # ⚠️ token 在上面 `redeem_pending` 已經燒掉（刻意，S-12）⇒ 使用者要重新
