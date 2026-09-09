@@ -55,8 +55,10 @@ import logging
 import re
 import secrets
 from dataclasses import dataclass
-from typing import Any, Final, Optional, Tuple
+from datetime import date, timedelta
+from typing import Any, Final, List, Optional, Tuple
 
+from services.agent.bill_period import PeriodSpec, parse_period
 from services.agent.confirm_card import (
     CONFIRM_ACTIONS,
     DATE_BEFORE_TODAY_TEXT,
@@ -64,9 +66,13 @@ from services.agent.confirm_card import (
     fields_before_today,
     render,
 )
+# ⚠️ `_parse_date` 是 `confirm_card` 的私有解析器，這裡刻意重用而**⛔ 不另寫一套**
+#    `YYYYMMDD` 解析：卡上印的日期與這裡對到的日期必須出自同一條規則，兩套規則
+#    遲早會分岔成「對得到帳單、印不出卡」。
+from services.agent.confirm_card import _parse_date as _parse_ymd
 from services.agent.identity import Identity
 from services.agent.tools import jgb2 as jgb2_tools
-from services.agent.tools.action import _resolve_category
+from services.agent.tools.action import BILL_DUE_EXTEND_ACTION, _resolve_category
 from services.agent.tools.registry import ToolResult, ToolSpec
 # ⚠️ **import 模組、⛔ 不 `from … import _today`**：時鐘要在呼叫點取值，
 # 綁死函式物件會讓測試（與 smoke 的凍結時鐘）monkeypatch 不到。
@@ -269,6 +275,23 @@ OPEN_REPAIRS_HINT_TEMPLATE: Final[str] = "此物件另有未結單 {count} 張�
 #: 提示行裡單號的分隔字元。
 OPEN_REPAIRS_ID_SEP: Final[str] = "、"
 
+#: 第六批 A（line-bot #2）：`bill_due_extend` 缺帳單編號、由程式以物件＋期別對到
+#: 帳單時，卡外多的那一行。**與未結單提示行同一個機制**（`ToolResult.data["hint"]`
+#: → Runtime 接在卡文字之後）：⛔ 不進 `card`、⛔ 不進 `card_sha256`、⛔ 不進 dialog。
+#: 兩者互斥（一支 action 只可能命中其中一種），故共用同一個 `hint` 欄位。
+BILL_MATCH_HINT: Final[str] = "帳單來源：依物件與期別對到"
+
+#: 「未繳」對到的狀態——**由既有的 bills 狀態表反查**（`services/jgb/bills.STATUS_LABELS`），
+#: ⛔ 不在本檔另抄一份狀態碼。標籤改名／整表被搬走時下面那行 assert 會在 import 期
+#: 就炸（大聲失敗），⛔ 不讓它靜默退化成「一張未繳帳單都篩不出來」。
+UNPAID_STATUS_LABEL: Final[str] = "待繳費"
+_UNPAID_STATUS_VALUES: Final[frozenset] = frozenset(
+    code for code, label in bills.STATUS_LABELS.items() if label == UNPAID_STATUS_LABEL
+)
+assert _UNPAID_STATUS_VALUES, (
+    "bills.STATUS_LABELS 裡找不到「待繳費」——未繳篩選會靜默失效"
+)
+
 
 #: `pending_id` 的合法形狀（`sha256(token)[:16]`）。查詢前先擋形狀＝
 #: fail-closed，⛔ 不把任意字串送進 WHERE 當作「反正查不到」。
@@ -295,6 +318,212 @@ async def _is_valid_repair_category(category_name: Any) -> bool:
     api = jgb2_tools._get_api()
     tree = jgb2_tools._rows_of(await api.get_repair_categories())
     return _resolve_category(tree, category_name) is not None
+
+
+# ---------------------------------------------------------------------------
+# 第六批 A（line-bot #2）：缺帳單編號時以**物件名稱＋期別**決定性對到帳單
+#
+# ⚠️ **為什麼是程式而不是模型**：編號是系統識別碼，業務講的是「哪一戶、哪一期」。
+#    模型手上沒有編號時唯一合理的反應就是反問，而房東不會講編號（走查 #2 三輪）。
+#    這一段把「口述期別 → 年月／未繳 → 唯一一張帳單」整條路徑做成決定性的：
+#    模型只負責把使用者的原話填進 `estate_name`／`period`，⛔ 不判是哪一張。
+#
+# ⚠️ **三個出口都是既有形狀，⛔ 不新增第四種**：
+#      唯一   ⇒ 填 `bill_id`／`date_expire_before`／`date_expire_after` 後照常出卡；
+#      多筆   ⇒ `jgb2._ok_candidates` 的候選形狀（`data["candidates"]`＋候選清單
+#               provenance），與 `jgb2.query.bills` 命中多筆時模型看到的那一份逐字同形；
+#      零筆   ⇒ `NO_MATCH`（Runtime 走既有的查無路徑）。
+#
+# ⚠️ **候選形狀刻意帶著 `action`／`payload`**（不只是候選列）：`runtime.
+#    _scope_gate_confirm_request` 認的是 `data["action"]`——`bill_due_extend` 而
+#    payload 沒有 `bill_id` 時它**fail-closed 收掉整個回合**（`SCOPE_EXIT`）。
+#    帶著這兩個鍵，等於讓「有會話範圍時，別戶（乃至本戶）的候選清單不得進模型
+#    上下文」由既有那道閘負責。⛔ 不得為了讓候選在範圍內也出得來而拿掉它們：
+#    `confirm.request` 的結果**不經** `_enforce_tool_scope`（那支只認
+#    `jgb2.query.*`），拿掉就等於在 L15 邊界上開一個沒有人守的洞。
+# ---------------------------------------------------------------------------
+
+
+def _missing(value: Any) -> bool:
+    """「缺值」＝鍵不存在（呼叫端以 `.get` 取到 `None`）／`None`／空白字串。"""
+    if value is None:
+        return True
+    return isinstance(value, str) and not value.strip()
+
+
+def _ym_of(value: Any) -> Optional[int]:
+    """`YYYYMMDD`（int／str）→ `YYYYMM` int；形狀不合 ⇒ `None`。"""
+    try:
+        parsed = _parse_ymd(value, "date", "bill_period")
+    except ConfirmCardError:
+        return None
+    return parsed.year * 100 + parsed.month
+
+
+def _row_in_month(row: dict, year: int, month: int) -> bool:
+    """這一列算不算「那個月的帳單」。
+
+    封閉的兩種算法（⛔ 不再多一種）：
+      ① **繳費期限**（`date_expire`）落在該月——jgb2 `GET /bills` 的 `month`
+         參數就是這個語義（`transport._bills_index`）；
+      ② **計費期間**（`date_start`–`date_end`）涵蓋該月。⚠️ 這一條不可省：
+         替身與線上資料都有「九月的房租、八月就到期」的列（帳單先發、期限在前），
+         只比繳費期限會把業務口中的「九月房租」對到別張。
+    兩者任一成立即算命中；期間只有單邊有值時只比那一邊。
+    """
+    target = year * 100 + month
+    if _ym_of(row.get("date_expire")) == target:
+        return True
+    start = _ym_of(row.get("date_start"))
+    end = _ym_of(row.get("date_end"))
+    if start is not None and end is not None:
+        return start <= target <= end
+    if start is not None:
+        return start == target
+    if end is not None:
+        return end == target
+    return False
+
+
+def _row_unpaid(row: dict) -> bool:
+    """狀態是不是「待繳費」——狀態值一律經 `bills._bill_status()` 讀
+    （`status` 優先、無鍵才退 `bit_status`），⛔ 不在此直接讀欄位。"""
+    return bills._bill_status(row) in _UNPAID_STATUS_VALUES
+
+
+def _filter_bills(rows: List[dict], spec: Optional[PeriodSpec]) -> List[dict]:
+    """依期別規格篩選；`spec` 為 `None`（使用者沒講期別／講的話解析不到）⇒ 不篩。"""
+    kept = [row for row in rows if isinstance(row, dict)]
+    if spec is None:
+        return kept
+    if spec.has_month:
+        kept = [row for row in kept if _row_in_month(row, spec.year, spec.month)]
+    if spec.unpaid_only:
+        kept = [row for row in kept if _row_unpaid(row)]
+    return kept
+
+
+async def _bills_of_estate(identity: Identity, estate_name: str) -> List[dict]:
+    """該物件名稱查得到的帳單列（查不到／身分不足 ⇒ 空列）。
+
+    ⚠️ **與 `jgb2.query_bills` 的 keyword 路徑逐字同形**（`get_bills(role_id,
+    user_id, viewer_user_id=user_id, keyword=…)`，`title LIKE`）：同一條可見性
+    路徑、同一組身分參數，⛔ 不另開一條揭露面更大的查法。
+    ⚠️ **雙證**：`role_id` 與 `user_id` 缺一即空列——這是寫入面的既有要求
+    （`action._identity_pair`／S-8），對到帳單是寫入的前一步，⛔ 不比它寬。
+    身分閘另外過一次 `jgb2._identity_gate_ok`（受眾決定要幾張證），⛔ 不重寫判定。
+    """
+    role_id = getattr(identity, "role_id", None)
+    user_id = getattr(identity, "user_id", None)
+    if not role_id or not user_id:
+        return []
+    if not jgb2_tools._identity_gate_ok(identity, role_id, user_id):
+        return []
+    api = jgb2_tools._get_api()
+    return jgb2_tools._rows_of(
+        await api.get_bills(
+            role_id=role_id, user_id=user_id, viewer_user_id=user_id,
+            keyword=estate_name,
+        )
+    )
+
+
+def _fill_bill_fields(payload: dict, row: dict, *, today: date) -> bool:
+    """把對到的那一列寫回 payload 的三個欄位；寫不成 ⇒ `False`（不出卡）。
+
+    ⚠️ **三個欄位都由系統值導出，⛔ 不留模型填的版本**：
+      `bill_id`＝該列的 id；
+      `date_expire_before`＝該列的 `date_expire`（**系統存值**，⛔ 不信模型印象）；
+      `date_expire_after`＝起算日＋`days`，起算日＝原到期日與今天較晚者
+      （與 `confirm_card._render_bill_due_extend` 的等式**同一條**——那裡驗算、
+      這裡算，算完仍要過那一關，⛔ 不是把驗算繞過去）。
+    ⚠️ 使用者唯一貢獻的數字是 `days`（他講的「晚三天」）：缺值／非正整數 ⇒
+    ⛔ 不代填、不代猜，直接不出卡（回 `False` ⇒ 走既有 `INVALID_INPUT`）。
+    """
+    bill_id = row.get("id")
+    if bill_id is None or isinstance(bill_id, bool):
+        return False
+    days = payload.get("days")
+    if isinstance(days, bool) or not isinstance(days, int) or days <= 0:
+        return False
+    try:
+        before = _parse_ymd(row.get("date_expire"), "date_expire", BILL_DUE_EXTEND_ACTION)
+    except ConfirmCardError:
+        # 列上沒有繳費期限（或形狀不合）⇒ 算不出起算日 ⇒ ⛔ 不出卡。
+        return False
+    after = max(before, today) + timedelta(days=days)
+    payload["bill_id"] = str(bill_id)
+    payload["date_expire_before"] = _ymd_text(before)
+    payload["date_expire_after"] = _ymd_text(after)
+    return True
+
+
+def _ymd_text(value: date) -> str:
+    """`date` → `YYYYMMDD`（`confirm_card._parse_date` 收的唯一形狀）。"""
+    return f"{value.year:04d}{value.month:02d}{value.day:02d}"
+
+
+def _bill_candidates_result(action: Any, payload: dict, rows: List[dict],
+                            query: str) -> ToolResult:
+    """多筆 ⇒ **既有候選形狀**（`jgb2._ok_candidates`），外加 `action`／`payload`。
+
+    ⛔ 候選清單文字與投影一律由 `jgb2` 產（`_candidates_text`／`_project_bill_row`），
+    本檔不另寫一份——那張投影表同時是最小揭露面的界線。
+    """
+    cap = jgb2_tools._candidate_cap()
+    kept = rows[:cap]
+    raw = jgb2_tools._ok_candidates(
+        "bills", str(action), kept, cap, len(rows) <= cap, query=query
+    )
+    data = dict(raw["data"])
+    # 見本節註解：這兩個鍵是 `_scope_gate_confirm_request` 的 fail-closed 依據。
+    data["action"] = action
+    data["payload"] = payload
+    return ToolResult(
+        ok=True, data=data, provenance=raw["provenance"],
+        text_for_model=raw["text_for_model"],
+    )
+
+
+async def _resolve_bill_by_period(
+    identity: Identity, action: Any, payload: dict, *, today: date
+) -> Tuple[bool, Optional[ToolResult]]:
+    """`(已填好可以出卡, 提早收尾的 ToolResult)`。
+
+    只在 `action == "bill_due_extend"`、`bill_id` 缺值、且 `estate_name` 有值時
+    動作；其餘一律 `(False, None)`＝**行為逐字不變**（⛔ 不是某支 action 的特例
+    分支，是「這個 action 的 payload 契約有替代必填」這件事的實作）。
+    """
+    if action != BILL_DUE_EXTEND_ACTION:
+        return False, None
+    if not _missing(payload.get("bill_id")):
+        # 有編號 ⇒ **完全不走這一段**（正對照組：既有路徑一步不變）。
+        return False, None
+    estate_name = payload.get("estate_name")
+    if not isinstance(estate_name, str) or not estate_name.strip():
+        return False, None
+
+    rows = await _bills_of_estate(identity, estate_name.strip())
+    spec = parse_period(payload.get("period"), today)
+    kept = _filter_bills(rows, spec)
+
+    if len(kept) == 1:
+        if _fill_bill_fields(payload, kept[0], today=today):
+            return True, None
+        # 對到了、但算不出卡（`days` 缺值／非正整數，或列上沒有繳費期限）⇒
+        # **交回既有路徑**：`render()` 會因為缺欄位拋 `ConfirmCardError` ⇒
+        # `INVALID_INPUT`。⛔ 不在這裡回 `NO_MATCH`——那是把「payload 形狀不對」
+        # 講成「查無這張帳單」，一樣是假話。
+        return False, None
+    if len(kept) > 1:
+        period_text = payload.get("period")
+        query = estate_name.strip()
+        if isinstance(period_text, str) and period_text.strip():
+            query = f"{query} {period_text.strip()}"
+        return False, _bill_candidates_result(action, payload, kept, query)
+    # 零筆 ⇒ 既有 `NO_MATCH`（Runtime 走既有的查無路徑）。
+    logger.info("[agent] bill_due_extend 依物件與期別對不到唯一帳單（⛔ 不記名稱與期別）")
+    return False, ToolResult(ok=False, error="NO_MATCH")
 
 
 async def _open_repairs_hint(
@@ -356,6 +585,12 @@ async def confirm_request(
         "quick_replies"})`。⛔ `data`／`text_for_model`／`provenance` 一律不含
         token——`data` 是要交給 Runtime 存進 `agent_state["pending_confirm"]` 的，
         token 一旦進去就變成一份躺在 `form_sessions.collected_data` 裡的靜態憑證。
+
+        ⚠️ **第六批 A 的第二種成功形狀**：`bill_due_extend` 缺帳單編號、以物件＋
+        期別對到**多筆**時回的是**候選形狀**（`data={"candidates", "action",
+        "payload", …}`，⛔ 無 `card`／`pending_id` ⇒ Runtime 不建 pending），
+        零筆則是 `NO_MATCH`。三個出口都是既有形狀，見
+        `_resolve_bill_by_period` 上方的分節註解。
     """
     summary = args.get("summary")
     raw_payload = args.get("payload")
@@ -382,6 +617,19 @@ async def confirm_request(
     # 這道閘必須在呼叫它之前。
     if action == "repair_create" and not await _is_valid_repair_category(payload.get("category_name")):
         return ToolResult(ok=False, error="INVALID_INPUT")
+
+    # ⚠️ **一次取值、三處共用的時鐘**（V3 的三個呼叫點之一）：對帳單、render 的
+    #    起算日、日期閘門必須是同一個「今天」，⛔ 不各自再呼叫一次
+    #    ——那會讓一次跨午夜的回合用兩個不同的今天算出彼此矛盾的卡。
+    today = bills._today()
+    # 第六批 A（line-bot #2）：缺帳單編號 ⇒ 以物件名稱＋期別對帳單（見上方分節註解）。
+    # 排在 `render()` **之前**：render 是「這份 payload 印不印得出卡」的判準，
+    # 而這一段正是在補齊它要的欄位。⛔ 不在 render 之後補（那等於印完卡再改內容）。
+    matched_by_period, early = await _resolve_bill_by_period(
+        identity, action, payload, today=today
+    )
+    if early is not None:
+        return early
     try:
         # ⚠️ **出卡端的時鐘**（V3）：`days` 的起算日＝原到期日與今天較晚者，
         #    所以 render 的驗算要拿到今天。時鐘在**呼叫點**取（同下方閘一、同
@@ -390,7 +638,7 @@ async def confirm_request(
         #    一律拋 `ConfirmCardError` ⇒ 這裡翻成 `INVALID_INPUT`）。
         #    出卡端是**嚴格等式**（只有一個 today）；跨午夜的容忍度在兌現端
         #    （`action._validated_payload`），⛔ 不在這裡放寬。
-        card = render(action, payload, today=bills._today())
+        card = render(action, payload, today=today)
     except ConfirmCardError:
         # ⚠️ ⛔ 不把例外訊息回給模型也不入 `ToolResult`：訊息裡有欄位名，
         #    對模型只需要「這個形狀不收」。除錯落在下方的 logger（只有欄位名，
@@ -405,7 +653,7 @@ async def confirm_request(
     #    判定本身在 `confirm_card`（純函式）。⛔ 不落 pending、⛔ 不出卡、
     #    ⛔ 不新增錯誤碼——沿用封閉的 `ToolError` 值域，與 render 失敗的差別
     #    只在 `text_for_model`（那一支是空字串，模型分得出來）。
-    if fields_before_today(action, payload, bills._today()):
+    if fields_before_today(action, payload, today):
         logger.info("[agent] confirm.request 日期早於今天 ⇒ 不出卡（⛔ 不記日期值）")
         return ToolResult(
             ok=False, error="INVALID_INPUT", text_for_model=DATE_BEFORE_TODAY_TEXT
@@ -428,6 +676,10 @@ async def confirm_request(
     #    不受未結單影響」在程式順序上就看得出來，⛔ 不要為了少一次縮排而搬到
     #    render 之前。
     hint, estate_id = await _open_repairs_hint(open_repairs, identity, action, payload)
+    # 第六批 A：帳單由程式對到時，卡外多一行說明來源（與未結單提示行同一個機制、
+    # 同一個欄位；兩者互斥於 action，故 ⛔ 不需要第二個欄位）。
+    if matched_by_period and not hint:
+        hint = BILL_MATCH_HINT
 
     token = secrets.token_urlsafe(CONFIRM_TOKEN_BYTES)
     pending_id = pending_id_for(token)
@@ -576,6 +828,7 @@ async def redeem_token(
 
 
 __all__ = [
+    "BILL_MATCH_HINT",
     "CONFIRM_SPEC",
     "OPEN_REPAIRS_HINT_TEMPLATE",
     "OPEN_REPAIRS_ID_SEP",
@@ -589,6 +842,7 @@ __all__ = [
     "CONFIRM_TOKEN_BYTES",
     "CONFIRM_TEXT_FOR_MODEL",
     "PENDING_ID_CHARS",
+    "UNPAID_STATUS_LABEL",
     "RedeemResult",
     "canonical_json",
     "sha256_hex",

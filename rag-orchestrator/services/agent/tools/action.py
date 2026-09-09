@@ -98,18 +98,23 @@ BILL_DUE_EXTEND_SPEC: ToolSpec = _action_spec(
     "本工具只能在使用者按下確認按鈕之後由系統執行；"
     "要發動它，必須先用 confirm.request 出示確認，payload 的 action 填 bill_due_extend。"
     "payload 欄位定義："
-    "bill_id＝要調整的帳單編號；"
-    "date_expire_before＝這張帳單目前的到期日，八位數字的年月日，"
-    "必須取自系統查到的帳單資料，⛔ 不要向使用者索取、也不要憑印象填；"
+    "days＝往後延的天數，正整數，一律必填；"
+    "bill_id＝要調整的帳單編號，選填：手上已經有編號才填；"
+    "estate_name＝使用者口述的物件名稱，照原話填入；"
+    "period＝使用者口述的期別原話，照原話填入；"
+    "缺帳單編號時 estate_name 與 period 兩欄代替它必填，系統會以物件與期別對到帳單，"
+    "⛔ 不為了取得帳單編號反問使用者；"
+    "date_expire_before＝這張帳單目前的到期日，八位數字的年月日；"
+    "date_expire_after＝調整後的到期日，八位數字的年月日；"
+    "這兩個日期欄位只在你已經填了 bill_id 時才填，值必須取自系統查到的帳單資料，"
+    "⛔ 不要向使用者索取、也不要憑印象填；"
     "取得方式＝出示確認之前先以 jgb2.query.bills（ref 填帳單編號）查這張帳單，"
-    "從回傳的繳費期限取值；查不到這張帳單就不能出確認；"
-    "days＝往後延的天數，正整數；"
-    "date_expire_after＝調整後的到期日，八位數字的年月日，"
+    "從回傳的繳費期限取值；填了編號卻查不到這張帳單就不能出確認；"
+    "缺帳單編號時這兩欄不要填，系統對到帳單之後會依帳單的繳費期限與 days 算；"
     "延後天數從原到期日或今天較晚的一天起算；算出來的新到期日一定在今天之後，"
     "不一致一律拒絕；"
     "這個日期不得早於今天；由起算日加上天數算出來就一定在今天之後，"
-    "⛔ 不因原到期日已過而反問要改到哪一天，直接提出確認。"
-    "四個欄位都必填，系統不會替你推算任何一個。",
+    "⛔ 不因原到期日已過而反問要改到哪一天，直接提出確認。",
 )
 
 REPAIR_CREATE_SPEC: ToolSpec = _action_spec(
@@ -234,6 +239,13 @@ async def bill_due_extend(identity: Identity, args: dict) -> ToolResult:
 
     ⚠️ 送出的是**絕對日期**（`date_expire_after`），⛔ 不是位移天數：使用者確認的
     是一個確定的日期，位移在下游重算一次就多一個「算出不同結果」的機會。
+
+    ⚠️ **兌現端不做期別對帳**（第六批 A｜line-bot #2）：`estate_name`／`period`
+    只是**出卡前**的替代輸入，`confirm.request` 在出卡當下就已經把對到的
+    `bill_id`／`date_expire_before`／`date_expire_after` 填進 payload，並與卡文字
+    的雜湊綁死。缺 `bill_id` 的 payload 在這裡一律 `INVALID_INPUT`
+    （`_validated_payload` → `render()` 缺欄位即拋）——⛔ 不得在兌現端再對一次帳：
+    那等於讓「使用者按下確認時看到的那一張」與「實際被改的那一張」可以是兩張。
     """
     # ⚠️ 時鐘在**呼叫點**取（第三個呼叫點；見 `confirm_card` 檔尾「日期有效性」）：
     #    起算日＝原到期日與今天較晚者，兌現端不帶 today 就會把每一張逾期帳單的卡
