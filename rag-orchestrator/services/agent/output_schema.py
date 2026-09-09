@@ -19,6 +19,28 @@ from typing import Literal, Optional
 from pydantic import BaseModel, Field
 
 
+#: T1（Plan `inputs/plan-walkthrough-fixes-batch2-20260909.md` §2）：`kind=ask` 時
+#: **追問對象**的封閉值域。⚠️ 值是**機器值**（英文），⛔ 不是給使用者看的字——
+#: 使用者看到的措辭由既有面向決定，兩者分開才不會為了改一句話而動到契約。
+#: ⚠️ 它同時是三個地方的唯一值域來源：`AgentOutput.ask_target` 的 schema 覆寫
+#: （`runtime._agent_output_response_format`）、Verifier 的 `ask_target_invalid`、
+#: 以及出口閘 `runtime._apply_ask_target_gate`。⛔ 不得在任一處另抄一份字面表。
+ASK_TARGETS: tuple[str, ...] = (
+    "estate",
+    "community",
+    "address",
+    "bill_id",
+    "repair_id",
+    "contract_id",
+    "meter",
+    "date",
+    "description",
+    "urgency",
+    "confirm_intent",
+    "choice",
+)
+
+
 class Sentence(BaseModel):
     """模型逐句輸出的**一筆**：文字、分類與依據標記同筆攜帶（DSP-028／DSP-029a）。
 
@@ -69,6 +91,17 @@ class AgentOutput(BaseModel):
     )
     fact_class: Optional[str] = None  # 見檔案頂端說明：刻意不是 FactClass 型別
     handoff_reason: Optional[str] = None
+    #: T1：追問對象。**刻意型別為 `Optional[str]`、⛔ 不是 `Literal[ASK_TARGETS]`**
+    #: ——理由同 `fact_class`（見檔案頂端）：型別若收成封閉列舉，非法值在建構
+    #: `AgentOutput` 這一步就 raise，Verifier 永遠看不到「填錯」這個狀態，
+    #: `ask_target_invalid` 這條 fail-closed 分支也就測不到。給模型的 strict
+    #: schema 仍是封閉列舉（`runtime._agent_output_response_format` 的覆寫）。
+    ask_target: Optional[str] = Field(
+        default=None,
+        description=(
+            "kind=ask 時必填，且必須是值域內的一項；其他 kind 一律填 null。"
+        ),
+    )
 
     @property
     def answer(self) -> str:
@@ -142,6 +175,8 @@ class VerifierVerdict(BaseModel):
             "marker_in_answer",
             "handoff_reason_invalid",
             "handoff_reason_mismatch",
+            # T1：`kind=ask` 卻沒填／填了值域外的 `ask_target`。
+            "ask_target_invalid",
         ]
     ] = None
 
@@ -173,5 +208,5 @@ class VerifierRules(BaseModel):
         return cls.model_validate(data)
 
 
-__all__ = ["Sentence", "AgentOutput", "VerdictReason", "VerifierVerdict",
+__all__ = ["Sentence", "AgentOutput", "ASK_TARGETS", "VerdictReason", "VerifierVerdict",
            "VerifierRules", "TERM_ID_PATTERN"]

@@ -20,7 +20,13 @@ import unicodedata
 from pathlib import Path
 from typing import Optional
 
-from services.agent.output_schema import AgentOutput, Sentence, VerifierRules, VerifierVerdict
+from services.agent.output_schema import (
+    ASK_TARGETS,
+    AgentOutput,
+    Sentence,
+    VerifierRules,
+    VerifierVerdict,
+)
 from services.agent.provenance_units import (  # 葉模組：切句與 refs 解析（DSP-029 落地取捨④）
     _SENTENCE_ENDS,
     ResolvedRef,
@@ -171,6 +177,17 @@ class OutputVerifier:
         if _UNIT_MARKER_RE.search(answer_nfkc):
             return VerifierVerdict(
                 ok=False, reason="SCHEMA", schema_cause="marker_in_answer")
+
+        # ①-b T1（Plan `inputs/plan-walkthrough-fixes-batch2-20260909.md` §2）：
+        # 追問契約——`kind=ask` 的**追問對象**必須是 `ASK_TARGETS` 值域內的一項。
+        # ⚠️ 排在敏感三關（①fact_class／敏感樣式）**之後**：敏感題就算 `ask_target`
+        #    也填錯，該回的仍是 `SENSITIVE_TOPIC`——把它降級成 SCHEMA 等於用一個
+        #    格式問題蓋掉一個內容問題，失敗方向不對。
+        # ⚠️ `ask_target` 缺（None）與填了值域外的字串是**同一種病**（追問對象不明），
+        #    ⛔ 不分兩個成因：模型端的修法完全一樣（改填值域內的一項）。
+        if out.kind == "ask" and out.ask_target not in ASK_TARGETS:
+            return VerifierVerdict(
+                ok=False, reason="SCHEMA", schema_cause="ask_target_invalid")
 
         # ② 逐筆 schema 檢查（DSP-028 (a)(b)(c)）——⛔ 不再比對「句數＝標籤數」：
         # 文字與標籤同筆攜帶後，拼接相等是定義，不是要靠檢查維持的巧合。

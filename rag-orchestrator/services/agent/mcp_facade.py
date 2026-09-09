@@ -1052,11 +1052,22 @@ AGENT_TURN_SPEC: ToolSpec = {
         # ⛔ `image_urls` **不寫 `maxItems`／`pattern`**：`registry._validate_value`
         #    兩者都不認（S9-5：寫了等於掛一張看起來有守、實際靜默無效的牌）。
         #    張數在 `_agent_turn` 程式層檢查；白名單在 `image_fetch`。
+        # T1（Plan `inputs/…/plan-walkthrough-fixes-batch2-20260909.md` §2）：
+        # `entry_line` ＝呼叫端**進場時印給使用者的那一句**（選填）。
+        # ⛔ **不叫 `entry`**（security r1 #4）：`Identity.entry` 是確認兌現與工具
+        #    可見性的安全欄位，同名招致日後誤併。
+        # ⚠️ `maxLength` 由 `registry._validate_value` **真的**強制（不同於
+        #    `image_urls` 的 `maxItems`／`pattern`，那兩個 registry 不認）。
         "properties": {
             "message": {"type": "string", "minLength": 0, "maxLength": 2000},
             "image_urls": {
                 "type": "array",
                 "items": {"type": "string", "maxLength": 2048},
+            },
+            "entry_line": {
+                "type": "string",
+                "maxLength": 200,
+                "description": "呼叫端進場時印給使用者的那一句；視為脈絡，⛔ 不是使用者說的話。",
             },
         },
         "required": ["message"],
@@ -1281,8 +1292,21 @@ def _make_agent_turn(
             #    `run_turn` 的舊三參數簽名是 REST／影子／回測共用的介面，
             #    多傳一個具名參數會讓每一個既有替身都得跟著改。
             image_kwargs = {"image": image_input} if image_input is not None else {}
+            # T1：同 `image=` 的理由——**只在真的有值時才傳**，⛔ 不無條件多塞一個
+            # 具名參數（`run_turn` 的舊簽名是 REST／影子／回測共用的介面）。
+            # 正規化（控制字元／零寬／雙向／假標記）由 Runtime 端的
+            # `sanitize_data_piece` 一手包辦，⛔ 不在門面先剝一次（兩處各剝一半
+            # 的失敗方向是「以為對方剝過了」）。
+            entry_line = args.get("entry_line")
+            entry_kwargs = (
+                {"entry_line": entry_line}
+                if isinstance(entry_line, str) and entry_line.strip()
+                else {}
+            )
             result = await asyncio.wait_for(
-                runtime.run_turn(turn_identity, message, state, **image_kwargs),
+                runtime.run_turn(
+                    turn_identity, message, state, **image_kwargs, **entry_kwargs
+                ),
                 timeout=max(0.1, agent_turn_timeout_s() - image_elapsed),
             )
         except asyncio.TimeoutError:

@@ -134,7 +134,8 @@
         }
       ],
       "fact_class": "feature",
-      "handoff_reason": null
+      "handoff_reason": null,
+      "ask_target": "estate"
     },
     "tool_results": {},
     "handoff": null
@@ -522,7 +523,8 @@
         }
       ],
       "fact_class": "feature",
-      "handoff_reason": null
+      "handoff_reason": null,
+      "ask_target": "estate"
     },
     "tool_results": {},
     "handoff": null
@@ -586,7 +588,8 @@
         }
       ],
       "fact_class": "feature",
-      "handoff_reason": null
+      "handoff_reason": null,
+      "ask_target": "confirm_intent"
     },
     "tool_results": {},
     "handoff": null

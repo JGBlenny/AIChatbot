@@ -29,6 +29,7 @@ H3 走查實測：建單成功之後下一句問「剛剛那張單號多少」�
 """
 from __future__ import annotations
 
+import re
 from typing import Any, Optional
 
 from services.agent.verifier import _UNIT_MARKER_RE
@@ -120,12 +121,54 @@ def _slash_date(value: str) -> str:
     return str(value).strip()
 
 
-def _sanitize_piece(text: str) -> str:
-    """剝除換行與任何長得像真標記的字串（F7c）——記憶行是程式產的可引用
-    資料，⛔ 讓它裡面意外帶出一個能被誤判成真標記的子字串。
+#: T1（Plan `inputs/plan-walkthrough-fixes-batch2-20260909.md` §2）：
+#: **一律剝除**的不可見字元，逐類列舉（⛔ 不用「非可列印就砍」那種開放判定——
+#: 那會連中文標點與表情符號一起吃掉）：
+#:   - C0 控制字元 `U+0000–U+001F`（換行三種在下方先換成空白，故此處不含）
+#:     與 DEL `U+007F`、C1 控制字元 `U+0080–U+009F`；
+#:   - 行／段分隔 `U+2028`／`U+2029`（它們在很多渲染器裡等同換行）；
+#:   - 零寬 `U+200B–U+200F`、`U+FEFF`（零寬字元可以把一個字串切成模型看不見
+#:     的兩半，繞過任何以字面比對為基礎的檢查）；
+#:   - 雙向控制 `U+202A–U+202E`、`U+2066–U+2069`（視覺上可以把一行字反轉，
+#:     讓使用者看到的與資料段實際內容不同）。
+_INVISIBLE_CHARS_RE = re.compile(
+    "["
+    "\u0000-\u0008\u000b-\u001f\u007f-\u009f"
+    "\u2028\u2029"
+    "\u200b-\u200f\ufeff"
+    "\u202a-\u202e\u2066-\u2069"
+    "]"
+)
+
+
+def sanitize_data_piece(text: Any) -> str:
+    """把一段**程式產的**可引用文字正規化成單行、無不可見字元、無假標記的字串。
+
+    T1 起這是「程式資料段」的共用正規化落點（記憶行與呼叫端進場句 `entry_line`
+    都走它），⛔ 不各寫一份：兩處各寫一份的失敗方向是「其中一處忘了剝某一類」，
+    而那一處剛好是新開的外部輸入面。
+
+    逐類處理，⛔ 不做開放語義的「看起來怪就砍」：
+      1. 換行三種（CR LF／LF／CR）→ **空白**（沿用 F7c 既有行為：記憶行
+         的既有測試斷言的是「結果不含換行」，不是「換行處的字被黏起來」）；
+      2. `_INVISIBLE_CHARS_RE` 逐類剝除（見該常數的說明）；
+      3. `_UNIT_MARKER_RE` 同形字串剝除——程式產的資料段 ⛔ 不得夾帶一個會被
+         解析側誤判成真標記的子字串（真標記的不可偽造性靠 nonce，但「長得像」
+         本身就足以讓模型抄一個解析不到的東西回來）。
+
+    非字串（`None`／數字）一律回空字串：呼叫端據此判斷「沒有東西可注入」，
+    ⛔ 不 raise 進熱路徑。
     """
+    if not isinstance(text, str):
+        return ""
     cleaned = text.replace("\r\n", " ").replace("\n", " ").replace("\r", " ")
+    cleaned = _INVISIBLE_CHARS_RE.sub("", cleaned)
     return _UNIT_MARKER_RE.sub("", cleaned)
+
+
+#: F7c 時期的舊名。⛔ 不刪：`completed_actions` 既有測試與呼叫點都用它，
+#: 而 T1 只是把同一支函式擴充成共用版本，不是換一支新語義。
+_sanitize_piece = sanitize_data_piece
 
 
 def completed_actions_line(items: Any, scope_estate_id: Optional[str]) -> str:
@@ -173,4 +216,5 @@ __all__ = [
     "MAX_COMPLETED_ACTIONS",
     "record_completed_action",
     "completed_actions_line",
+    "sanitize_data_piece",
 ]

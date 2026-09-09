@@ -19,9 +19,12 @@ X-JGB-Identity: {"mode":"b2b","target_user":"property_manager","vendor_id":4,"ro
 ## 工具 `agent.turn`
 輸入：
 ```json
-{"message": "<0–2000 字>", "image_urls": ["https://relay.jgbsmart.com/...簽章網址", "..."]}
+{"message": "<0–2000 字>", "image_urls": ["https://relay.jgbsmart.com/...簽章網址", "..."], "entry_line": "<≤200 字>"}
 ```
 - `message` 可為空字串（只傳照片）；兩者皆空 ⇒ `INVALID_INPUT`。
+- `entry_line` 選填，≤200 字（超過整回合 `INVALID_INPUT`）：**呼叫端進場時印給使用者的那一句**。chatai 把它當**脈絡**看，⛔ 不當成使用者說的話——所以 ⛔ 不要把它併進 `message`，也不要為它多送一個回合。它不會被引用成事實，也不進對話歷史。
+- **入口清單須對能力表**：`entry_line` 帶進來的入口必須對得上 chatai 現有的能力（查帳單、查合約、查修繕、報修、延期…）；沒有對應能力的入口（例如「建立物件」）會得到 `out_of_scope`，⛔ 不要期待它被答出來。
+  > ⚠️ **對碼註記（2026-09-09，T1）**：`outcome.state == "out_of_scope"` 目前**只有清單點選釘住那一戶之後問別戶／別戶寫入被擋**這條路徑會產生（`grep -n '"out_of_scope"' rag-orchestrator/services/agent/runtime.py` → `_apply_scope_exit` 與 `_scope_gate_confirm_request` 兩處）。「無對應能力的入口」今天實際落到的是追問或轉真人，**不是** `out_of_scope`。上面那一句是**目標行為**，⛔ 尚未有程式保證；呼叫端請先依 `outcome` 的實際值分支，⛔ 不要在這一格上寫死。
 - `image_urls` 選填，最多 10 張，第 11 張起整回合 `INVALID_INPUT`；每張 ≤5,000,000 bytes；只收 `https://relay.jgbsmart.com` 的簽章網址（帶 `exp` 到期戳）；超過 5 張 chatai 內部分批辨識，時間不夠會明講「只看了前 N 張」。⛔ 不要把多張拆成兩個回合。
 
 輸出（`tools/call` 結果的文字內容是 JSON）：

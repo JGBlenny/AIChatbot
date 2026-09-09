@@ -626,6 +626,10 @@ _ALLOWED_AGENT_DECISION_KEYS = frozenset(
         "select_type",
         "has_ref",
         "slot_written",
+        # T1（Plan `inputs/plan-walkthrough-fixes-batch2-20260909.md` §2／
+        # security r1 #7）：呼叫端進場句**只記有沒有**。
+        # ⛔ **進場句原文不在其中**——它是外部輸入的自由文字。
+        "has_entry_line",
     }
 )
 
@@ -896,12 +900,21 @@ def test_response_format_properties_are_exactly_the_dsp028_contract():
     若它被寫成 pydantic `computed_field`，`model_json_schema()` 會把 `answer` 列進
     properties，而 `strict_json_schema` 把每一層 `required` 設成全部 properties
     ⇒ OpenAI strict schema 會**回頭要求模型輸出 `answer`**，剛拆掉的雙軌契約原封裝回。
-    這條就是那個回歸的守門：欄位集合必須恰好是這四個（DSP-029a 刪掉 `citations`）。"""
+    這條就是那個回歸的守門：欄位集合必須恰好是這五個（DSP-029a 刪掉 `citations`；
+    T1 加 `ask_target`）。"""
+    from services.agent.output_schema import ASK_TARGETS
     from services.agent.runtime import _agent_output_response_format
 
     schema = _agent_output_response_format()["json_schema"]["schema"]
     assert set(schema["properties"]) == {
-        "kind", "sentences", "fact_class", "handoff_reason"}
+        "kind", "sentences", "fact_class", "handoff_reason", "ask_target"}
+    # T1：`ask_target` 比照 `handoff_reason` 的 `anyOf[封閉列舉, null]` 覆寫——
+    # strict schema 把每個屬性都列進 `required`，選填只能這樣表達。
+    assert schema["properties"]["ask_target"]["anyOf"] == [
+        {"type": "string", "enum": list(ASK_TARGETS)},
+        {"type": "null"},
+    ]
+    assert "ask_target" in schema["required"]
 
 
 @pytest.mark.unit

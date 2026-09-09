@@ -66,6 +66,7 @@ from services.agent.completed_actions import (
     COMPLETED_ACTIONS_KEY,
     completed_actions_line,
     record_completed_action,
+    sanitize_data_piece,
 )
 from services.agent.confirm_card import (
     ACTION_FAILED_TEXT,
@@ -87,7 +88,7 @@ from services.agent.identity import (
 )
 from services.agent.mcp_facade import current_stage
 from services.agent.outline import CandidateOutlineDoc, resolve_vendor_business_types
-from services.agent.output_schema import AgentOutput, VerifierVerdict
+from services.agent.output_schema import ASK_TARGETS, AgentOutput, VerifierVerdict
 from services.agent.prompt_assembler import new_nonce, wrap_provenance_data, wrap_tool_data
 from services.agent.provenance_units import (  # OUTLINE_TOOL_CALL_ID 下沉至葉模組（DSP-029 落地取捨④）
     OUTLINE_TOOL_CALL_ID,
@@ -526,6 +527,46 @@ def _apply_handoff_without_lookup(result: TurnResult, agent_state: dict) -> Turn
     return result
 
 
+# ════════════════════════════════════════════════════════════════════
+# T1：追問契約 `ask_target`（Plan `inputs/plan-walkthrough-fixes-batch2-20260909.md` §2）
+# ════════════════════════════════════════════════════════════════════
+#: `state["agent"]` 底下的**上一回合追問對象**。⚠️ 與 `SELECT_SCOPE_KEY` 同一條
+#: 鐵則：**每一個回合出口都要寫**（`_finalize`／`_finish_confirm_turn`／
+#: `handoff_cache` 重播共三個寫點），不寫就會殘留上一回合的授權訊號——下游
+#: （T3 的肯定語＝授權）讀的是「緊鄰上一回合出口寫入之值」，殘留等於讓一句
+#: 「對」去授權一個早就結束的提議。
+LAST_ASK_TARGET_KEY = "last_ask_target"
+
+
+def _apply_ask_target_gate(result: TurnResult) -> TurnResult:
+    """T1：最終輸出是 `kind=ask` 卻沒有合法追問對象 ⇒ 換成指路固定句。
+
+    ⚠️ 這是**保底閘**，不是主檢查：主檢查在 Verifier
+    （`SCHEMA/ask_target_invalid`），但正式站的觀察模式
+    （`AGENT_VERIFIER_OBSERVE_ONLY`）下 Verifier 不擋，所以出口這一層必須自己
+    再判一次——⛔ 不得假設「Verifier 過了就一定合法」。
+
+    條件全為封閉欄位：`kind == "ask"` 且 `ask_target ∉ ASK_TARGETS`
+    （缺值與值域外同一條）。命中時四欄一起改（mirrors `_apply_handoff_without_lookup`）：
+    `answer`／`outcome`／`trace.violations`，外加把 `ask_target` 歸零——
+    ⚠️ **歸零是刻意的**：一個值域外的字串若留在 `TurnResult.ask_target` 上，
+    `_finalize` 就會把它寫進 `agent_state[LAST_ASK_TARGET_KEY]`，讓「本會話的
+    上一個追問對象」這個封閉欄位變成模型可以塞任意字串的地方。
+
+    ⛔ **不改 `kind`**：這一回合仍然是在追問（`outcome=clarifying/expects=text`），
+    改成 `answer` 會讓呼叫端以為問題已經答完。
+    """
+    if result.kind != "ask":
+        return result
+    if result.ask_target in ASK_TARGETS:
+        return result
+    result.answer = ASK_TARGET_TEXT
+    result.ask_target = None
+    result.outcome = make_outcome("clarifying", expects="text")
+    result.trace.violations.append("ask_target_invalid")
+    return result
+
+
 def _parse_select_value(message: Any) -> Optional[tuple]:
     """`"select:bill:12345"` → `("bill", "12345")`；不是機器值 ⇒ `None`。
 
@@ -574,6 +615,11 @@ class TurnTrace:
     has_ref: Optional[bool] = None
     #: 槽位有沒有真的寫進去（找不到 COLLECTING 列 ⇒ False，回合照樣回 facts）。
     slot_written: Optional[bool] = None
+    #: T1／security r1 #7：本回合**有沒有注入呼叫端進場句資料段**。
+    #: ⛔⛔ **進場句的文字不得進來**——`entry_line` 是呼叫端送的自由文字，trace 與
+    #:     `usage_events.decision_snapshot` 都會被序列化落地，記文字等於把外部
+    #:     輸入原封不動抄進計量表。只記一個 bool。
+    has_entry_line: bool = False
 
 
 #: `reasoning_effort` 允許值（OpenAI gpt-5 系列）；封閉集合，⛔ 不在程式內以字串推導。
@@ -628,6 +674,7 @@ _SCHEMA_CAUSE_HINTS: dict[str, str] = {
                          "⛔ 不得抄進 `sentences` 的 `text`。"),
     "handoff_reason_invalid": "`handoff_reason` 不在允許值域內，請改填允許的值。",
     "handoff_reason_mismatch": "`fact_class` 屬敏感五類時 `handoff_reason` 必須是 `sensitive_no_grounding`，請改填。",
+    "ask_target_invalid": "`kind=ask` 時 `ask_target` 必填且必須是值域內的項目，請改填。",
 }
 
 
@@ -657,6 +704,11 @@ class TurnResult:
     handoff: Optional[dict]
     quick_replies: list
     trace: TurnTrace
+    #: T1：本回合的**追問對象**（`AgentOutput.ask_target` 帶進來的封閉值）。
+    #: ⚠️ **內部欄位**：`/mcp` `agent.turn` 的輸出契約仍是七鍵，`ask_target`
+    #:     ⛔ 不對外——它的用途是寫進 `agent_state[LAST_ASK_TARGET_KEY]` 給
+    #:     下一回合的程式判定讀，不是給呼叫端畫面用的。
+    ask_target: Optional[str] = None
     #: DSP-043（2026-09-08）：機器可讀的回合結果（第七鍵 `outcome`）。`None` ⇒
     #: 由 `default_outcome()` 依 `kind`／`quick_replies` 導出；確認鏈、清單點選、
     #: 範圍外、照片終止路徑在各自出口**以程式**明設。⛔ 不由模型、不由字串判。
@@ -751,6 +803,20 @@ IMAGE_DATA_LABEL = "image.recognition"
 #: 只有一行（`completed_actions_line` 決定性合成成單行），序號固定 1。
 COMPLETED_ACTIONS_PROVENANCE_SOURCE = "session:completed_actions#1"
 COMPLETED_ACTIONS_LABEL = "session.completed_actions"
+
+#: T1（Plan §2）：**呼叫端進場句** `entry_line` 在本回合資料段裡的來源代碼與工具
+#: 標籤——同影像事實／完成動作記憶行**同一套**注入紀律。一回合只有一句，序號固定 1。
+#:
+#: ⚠️ **`citable=False`**（security r1 #6）：進場句是呼叫端自己印給使用者的字，
+#:    ⛔ 不是可引用的事實來源。它必須**真的登記進 `tool_results_by_id`、且 id 在
+#:    `reserved_ids` 裡**——只有這樣模型引用它才會落在 `SOURCE_NOT_CITABLE`
+#:    （「這個來源不可引用」），而不是 `ref_source_not_found`（「查無此來源」）。
+#:    後者會誤導模型去改標記，前者才是真話。
+#: ⚠️ 標籤形狀受 `prompt_assembler._TOOL_NAME_RE`（`[A-Za-z0-9._-]{1,64}`）管，
+#:    來源代碼不受限（它進標記的第三段，允許 `:`）——兩者刻意分開兩個常數，
+#:    比照 `IMAGE_DATA_LABEL`／`IMAGE_PROVENANCE_SOURCE`。
+CALLER_ENTRY_PROVENANCE_SOURCE = "caller:entry_line#1"
+CALLER_ENTRY_LABEL = "caller.entry_line"
 
 #: `ImageTurnInput.status` 的封閉值域。
 IMAGE_STATUSES: frozenset = frozenset({"ok", "partial", "failed", "timeout"})
@@ -941,6 +1007,17 @@ def _agent_output_response_format() -> dict:
         ],
         "description": "kind=handoff 時必填：敏感五類 sensitive_no_grounding、查無資料 no_grounding；其他 kind 填 null。",
     }
+    # T1：`ask_target` 比照 `handoff_reason`——`strict_json_schema` 把每個屬性都列
+    # 進 `required`，所以「選填」在 strict schema 裡的表達方式是
+    # `anyOf[封閉列舉, null]`，⛔ 不是把它從 `required` 拿掉（OpenAI strict 不收）。
+    # 值域來源是 `output_schema.ASK_TARGETS`，⛔ 不在此另抄一份字面表。
+    props["ask_target"] = {
+        "anyOf": [
+            {"type": "string", "enum": list(ASK_TARGETS)},
+            {"type": "null"},
+        ],
+        "description": "kind=ask 時必填：這一句要問使用者的東西；其他 kind 填 null。",
+    }
     return {
         "type": "json_schema",
         "json_schema": {"name": "AgentOutput", "strict": True, "schema": schema},
@@ -1073,6 +1150,8 @@ def _emit_agent_decision(trace: TurnTrace) -> None:
             "select_type": trace.select_type,
             "has_ref": trace.has_ref,
             "slot_written": trace.slot_written,
+            # T1／security r1 #7：⛔ 只有 bool，**沒有進場句原文**。
+            "has_entry_line": trace.has_entry_line,
             "violations": trace.violations,
             "replayed_from": _replayed_from(trace.violations),
         }
@@ -1345,7 +1424,15 @@ class AgentRuntime:
         釘住範圍時的清單標題，或待確認 payload 的物件名稱欄位（`confirm_card`
         對外揭露為「物件」的那一欄）；⛔ 不是模型自由文字。缺值就是 `None`，
         記憶行照舊只印編號。
+
+        T1：本函式是確認段／清單點選段／照片程式段**各出口的共用收尾**，故
+        `agent_state[LAST_ASK_TARGET_KEY]` 一律在這裡寫 `None`——這條路徑不經
+        `_finalize`，不寫就會殘留上一回合的追問對象（plan-verifier r2 #2：點選
+        與確認兌現都走這裡）。⚠️ 寫在**組 trace 之前**，與 `SELECT_SCOPE_KEY`
+        「先寫再走任何早退」同一鐵則。
         """
+        # T1：三個寫點之一（⛔ 不得移到函式尾端）。
+        agent_state[LAST_ASK_TARGET_KEY] = None
         trace = TurnTrace(
             trace_id=trace_id,
             tool_calls=list(tool_calls or []),
@@ -1988,14 +2075,21 @@ class AgentRuntime:
     async def run_turn(
         self, identity: Identity, user_message: str, state: dict,
         *, image: Optional[ImageTurnInput] = None,
+        entry_line: Optional[str] = None,
     ) -> TurnResult:
         """一個回合。`image`（W8 (2)）＝門面已抓檔／縮圖／辨識完的**封閉值**輸入。
+
+        `entry_line`（T1）＝呼叫端**進場時印給使用者的那一句**（選填）。⛔ 它不是
+        使用者說的話：不併進 `user_message`、不進 dialog 歷史，只以一段
+        **不可引用**的程式資料段進場（見 `_run_turn_body` 的注入區塊）。
 
         ⚠️ 本層只做一件本體外的事：`status=="partial"` 時把「只看了前 N 張」接在
         `TurnResult.answer` **最後**——時機在 `_append_dialog`／`card_sha256`／trace
         都定案之後，故那三者逐位元不受影響（同 W8 (3) `hint` 的紀律）。
         """
-        result = await self._run_turn_body(identity, user_message, state, image=image)
+        result = await self._run_turn_body(
+            identity, user_message, state, image=image, entry_line=entry_line
+        )
         if (
             image is not None
             and image.status == "partial"
@@ -2010,6 +2104,7 @@ class AgentRuntime:
     async def _run_turn_body(
         self, identity: Identity, user_message: str, state: dict,
         *, image: Optional[ImageTurnInput] = None,
+        entry_line: Optional[str] = None,
     ) -> TurnResult:
         start = self._clock()
         trace_id = uuid.uuid4().hex
@@ -2052,6 +2147,10 @@ class AgentRuntime:
             )
             _emit_agent_decision(trace)
             _append_dialog(agent_state, user_message, cached.get("answer", ""))
+            # T1：三個寫點之三（plan-verifier r3 #1）——重播出口既不經
+            # `_finalize` 也不經 `_finish_confirm_turn`，⛔ 不寫就會讓上一回合的
+            # 追問對象跨過一個完整回合殘留下來。
+            agent_state[LAST_ASK_TARGET_KEY] = None
             return TurnResult(
                 kind="handoff",
                 answer=cached.get("answer", ""),
@@ -2088,9 +2187,16 @@ class AgentRuntime:
         # 迴圈只認這一個集合（見 `tool_call_id_collides_with_reserved`）。
         image_call_id = f"img-{nonce[:8]}"
         completed_call_id = f"done-{nonce[:8]}"
+        # T1：進場句資料段的 id 同樣**在回合最開始就固定**、⛔ 不等到「這回合真的
+        # 有 entry_line」才算——模型能不能偽造一個 `entry-…` 不該取決於呼叫端這次
+        # 有沒有帶進場句（否則「沒帶進場句時 entry-… 可以被模型自己造」就成了洞）。
+        entry_call_id = f"entry-{nonce[:8]}"
         reserved_ids: frozenset[str] = frozenset(
-            {OUTLINE_TOOL_CALL_ID, image_call_id, completed_call_id}
+            {OUTLINE_TOOL_CALL_ID, image_call_id, completed_call_id, entry_call_id}
         )
+        # T1：正規化與記憶行走**同一支** `sanitize_data_piece`（控制字元／零寬／
+        # 雙向／換行／假標記逐類剝除）。非字串或剝完為空 ⇒ 空字串＝不注入。
+        entry_text = sanitize_data_piece(entry_line).strip()
         # 2.9 路徑對齊：槽位在 **`collected_data` 頂層**（見 `_slots_for_prompt`）。
         slots = _slots_for_prompt(state)
         # 任務 4.2（Plan §4.1-2）：身分槽位一律由**入口身分**現算後覆寫。
@@ -2181,6 +2287,38 @@ class AgentRuntime:
                 }
             )
 
+        # T1（Plan §2）：**呼叫端進場句**——與影像事實／完成動作記憶行同一套注入
+        # 紀律，只差一個旗標：`citable=False`（進場句是呼叫端印的字，⛔ 不是可
+        # 引用的事實來源）。
+        # ⛔ 不併進 `user_message`（那會變成使用者說的話）、⛔ 不進 dialog 歷史
+        #    （`_append_dialog` 不動）、⛔ 不進 trace／決策快照（只記 bool）。
+        # ⚠️ **一定要登記進 `tool_results_by_id`**：不登記的話模型引用它會落
+        #    `ref_source_not_found`，而正確的訊號是 `SOURCE_NOT_CITABLE`。
+        if entry_text:
+            tool_results_by_id[entry_call_id] = ToolResult(
+                ok=True,
+                data={},
+                provenance=[
+                    Provenance(
+                        source=CALLER_ENTRY_PROVENANCE_SOURCE,
+                        text=entry_text,
+                        citable=False,
+                    )
+                ],
+                text_for_model="",
+            )
+            messages.append(
+                {
+                    "role": "user",
+                    "content": wrap_provenance_data(
+                        CALLER_ENTRY_LABEL,
+                        entry_call_id,
+                        [(CALLER_ENTRY_PROVENANCE_SOURCE, provenance_units(entry_text))],
+                        nonce,
+                    ),
+                }
+            )
+
         def _outline_sha() -> str:
             return getattr(outline, "sha256", "") if outline is not None else ""
 
@@ -2212,6 +2350,7 @@ class AgentRuntime:
                 candidate_ids=list(candidate_ids),
                 winning_key_kind=dict(winning_key_kind),
                 miss_kind=miss_kind,
+                has_entry_line=bool(entry_text),
             )
             return TurnResult(
                 kind="handoff",
@@ -2229,6 +2368,16 @@ class AgentRuntime:
                 result, scope_in=scope_counts["in"], scope_out=scope_counts["out"]
             )
             result = _apply_handoff_without_lookup(result, agent_state)
+            # T1（security r1 #3）：新閘一律排在 `_apply_scope_exit` **之後**——
+            # 範圍外的回合在上面已經被換成固定句，不該再被當成一次追問來判。
+            result = _apply_ask_target_gate(result)
+            # T1：三個寫點之一（模型迴圈的一般出口與所有固定句出口都經這裡）。
+            # ⚠️ 讀的是**過完所有出口閘之後**的 `kind`／`ask_target`：閘門可能把
+            #    一個 `kind=ask` 的追問對象歸零，殘留舊值等於讓下一回合的程式
+            #    判定拿到一個這一回合根本沒有出去的授權訊號。
+            agent_state[LAST_ASK_TARGET_KEY] = (
+                result.ask_target if result.kind == "ask" else None
+            )
             if result.trace.final_kind == "handoff":
                 cache[cache_key] = {
                     "answer": result.answer,
@@ -2606,6 +2755,7 @@ class AgentRuntime:
                 candidate_ids=list(candidate_ids),
                 winning_key_kind=dict(winning_key_kind),
                 miss_kind=miss_kind,
+                has_entry_line=bool(entry_text),
             )
             result = TurnResult(
                 kind=out.kind,
@@ -2624,6 +2774,9 @@ class AgentRuntime:
                 handoff=handoff_dict,
                 quick_replies=[],
                 trace=trace,
+                # T1：模型輸出的追問對象原樣帶進載體；正規化（值域外歸零）與
+                # 寫進 `agent_state` 都由 `_finalize` 一手包辦，⛔ 不在這裡分兩處判。
+                ask_target=out.ask_target,
             )
             return _finalize(result, is_fixed=False)
 

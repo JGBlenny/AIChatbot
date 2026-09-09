@@ -318,14 +318,16 @@ def test_agent_turn_stage_is_prospect_and_pm_only():
 
 @pytest.mark.req(_SPEC)
 def test_agent_turn_input_schema_only_takes_message():
-    """處置②：屬性集合 == {message, image_urls}，⛔ 無 `dialog_ref`。
+    """處置②：屬性集合 == {message, image_urls, entry_line}，⛔ 無 `dialog_ref`。
 
     W8 (2)：`image_urls` 是**唯一**新增的鍵，且 `message` 改 `minLength 0`
     （仍 required）——純照片回合合法，早退改判「兩者皆空」（見
     `tests/unit/agent/test_image_entry_req.py`）。
     """
     schema = F.AGENT_TURN_SPEC["input_schema"]
-    assert set(schema["properties"]) == {"message", "image_urls"}
+    # T1：`entry_line` 是第三個鍵（選填；`entry_line` 的專用測試見
+    # `test_entry_line_req.py`）。⛔ 仍無 `dialog_ref`。
+    assert set(schema["properties"]) == {"message", "image_urls", "entry_line"}
     assert schema["required"] == ["message"]
     assert schema["properties"]["message"]["maxLength"] == 2000
     assert schema["properties"]["message"]["minLength"] == 0
