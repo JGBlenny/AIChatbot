@@ -53,6 +53,7 @@ boto3==1.34.0
 
 # Image Processing (圖片壓縮)
 Pillow>=10.0.0
+pypdfium2==5.13.0
 
 # Reranker：透過 semantic-model 容器（HTTP API）呼叫，本服務不需要 sentence-transformers/torch
 

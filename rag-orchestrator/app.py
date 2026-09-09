@@ -9,6 +9,14 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import asyncpg
 from asyncpg.pool import Pool
+from PIL import Image
+
+# W9-4（解壓縮炸彈防線）：行程啟動最早處釘 Image.MAX_IMAGE_PIXELS，照片線（s3_image_service.
+# downscale_image）與文件頁圖線共用同一道防線——全 repo 原本沒有此防線，Image.open 對不可信
+# bytes 直接開啟。40M 級：照片線 downscale 目標 ≤1024px，文件頁圖同級，40M 已足夠餘裕。
+# 回退：刪除本常數與下一行賦值即可。
+IMAGE_MAX_PIXELS = 40_000_000
+Image.MAX_IMAGE_PIXELS = IMAGE_MAX_PIXELS
 
 # 導入服務
 from services.intent_classifier import IntentClassifier

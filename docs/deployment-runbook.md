@@ -1158,6 +1158,12 @@ RAG_API_AUTH_ENFORCE=true        # 應已是 true
 ```
 ⛔ 不設 `AGENT_BUDGET_REWRITES=0`、不設 `AGENT_ATTEMPT_LOG_PATH`（W6-b3 起 attempt log 會多記引文原文 `resolved_unit`，供極性誤殺量測用；**線上一律不設**）。`MCP_ALLOWED_ORIGINS` 照 §19-3（伺服器對伺服器不送 Origin 即可）。
 
+文件回合相關環境變數（Plan W9 U12；皆有程式預設，不設即預設；U12 落地後生效）：
+- `DOC_MAX_PAGES`（預設 `5`）——單份 PDF 最多 rasterize 前幾頁。
+- `FILE_MAX_BYTES`（預設 `5000000`）——單檔下載位元組上限。
+- `FILE_COUNT_CAP_PER_HOUR`（預設 `20`）——每 (key,vendor)/worker 每小時檔案數上限。
+- `DOCUMENT_EXTRACTION_MODEL`（預設 `gpt-5.6-luna`）——文件擷取所用 vision 模型。
+
 ⚠️ **W6-b3（DSP-040 正式參數）**：`AGENT_VERIFIER_MODE` 取代 `AGENT_VERIFIER_OBSERVE_ONLY`。
 - `grounding_observe`＝**引用解析與涵蓋類只記錄**（`UNCITED_ASSERTION`／`QUOTE_TOO_SHORT`／`QUOTE_NOT_COVERING`／`SOURCE_NOT_CITABLE`＋`SCHEMA` 的 `ref_*`／`unit_out_of_range`），**極性類與機敏類（`POLARITY_MISMATCH`／`SENSITIVE_TOPIC`／`ROUTE_NOT_ALLOWED`／`FORBIDDEN_TERM`／`SCHEMA` 的 `marker_in_answer`／`handoff_reason_*`／`ask_target_invalid`／`empty_*`）照擋**——這是 demo 線上值。
 - `enforce`＝全部照擋（預設，⛔ 沒設就是它）。
