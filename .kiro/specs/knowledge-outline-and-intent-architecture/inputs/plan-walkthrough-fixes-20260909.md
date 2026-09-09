@@ -71,7 +71,7 @@
 - **Verifier 通用契約（F1）**：`verifier.py` 對 `kind=handoff`：`fact_class in SENSITIVE` ⇒ `handoff_reason` 必須是 `sensitive_no_grounding`，否則 `SCHEMA/handoff_reason_mismatch`（重試一次，既有機制）。**同時**：`output_schema.py` `VerifierVerdict.schema_cause` 的 `Literal` 新增 `handoff_reason_mismatch`，`runtime.py` `_SCHEMA_CAUSE_HINTS` 新增對應修法句（定義不舉例：「`fact_class` 屬敏感五類時 `handoff_reason` 必須是 `sensitive_no_grounding`，請改填。」），`tests/unit/agent/test_runtime_req.py` 的鍵集合等值測試維持全綠（plan-verifier r1 #3）。這是把「敏感類配敏感原因」從提示詞承諾升格為 schema 驗證，對所有回合一體適用。
 - 政策文（`agent_rules.py` 【判準】，定義不舉例，兩句；F3 加豁免片語）：「判斷句與指令句先確定對象：對象不明就問是哪一戶或哪一筆，⛔ 不轉人；對象明確就依資料段給建議，⛔ 不因為是判斷題而轉人；敏感五類不在此列、仍轉人。」「工具回查無時，先確認使用者給的編號或名稱是否有誤，⛔ 不直接轉人。」（非 prospect 版無長度上限、⛔ 計數只綁 prospect 版；但 `test_no_example_markers_in_policy_or_persona_texts` 綁兩版——新句 ⛔ 不得含「例如」「（如」等舉例標記；plan-verifier r1 已對碼。）
 - **程式出口閘**（`runtime.py`，與 `_apply_scope_exit` 同層、在 handoff cache 與 `_append_dialog` **之前**）：條件全為封閉欄位——`kind == "handoff"` ∧ `handoff_reason == "no_grounding"` ∧ `fact_class ∉ SENSITIVE` ∧ `trace.tool_calls` 為空 ∧ `select_scope is None` ⇒ **五欄一起改**（F2）：`answer = ASK_TARGET_TEXT`、`kind = "answer"`、`handoff = None`、`trace.final_kind = "answer"`、`trace.handoff_reason = None`；`outcome = clarifying/expects=text`；`violations += ["handoff_without_lookup"]`。斷言：降級後 `result.handoff is None and trace.final_kind == "answer"`（不進 handoff cache）。
-- `ASK_TARGET_TEXT`＝「想處理哪一戶或哪一筆？講物件名稱、帳單編號或修繕單號。」（無插值；L15-13）。
+- `ASK_TARGET_TEXT`＝「想處理哪一件事？講名稱或編號就可以。」（無插值；L15-13）。
 - 有做過查詢（含查無）的轉人 **不動**（H6 第二批）；`sensitive_no_grounding`／`llm_mentioned_handoff` 不動。
 
 **驗收**
