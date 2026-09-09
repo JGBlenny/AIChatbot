@@ -1,4 +1,4 @@
-# Plan：走查回修第三批（U1–U3）— 2026-09-09（第 1 稿；業主未核，先備）
+# Plan：走查回修第三批（U1–U3）— 2026-09-09（第 2 稿：業主「派、部署前做」；security-reviewer r1 十一條已處置）
 
 > 來源：第二批回測抓到的三個結構性缺口——(a)「尚未逾期」：事實段印「已逾期 8 天」模型答「尚未逾期」，本地 35 句中 3 句（≈9%），業主 00:44 截圖同型；Verifier 極性詞表沒有「尚未／未／還沒」，且線上觀察模式全放行。(b) 模型可把任何題自報成敏感類（`sensitive_no_grounding`）逃過兩出口（第二批 r2「要不要催他」）。(c) 純編號／純名詞的一句（「756248 你建議我怎麼做」「信仰」）定義句治不了，3/3 反問類型。
 > 紀律同前兩批：契約／schema／狀態機／出口閘門／正本定義層，⛔ 不寫特例；詞表以「一類」維護並量誤殺；提示詞只寫定義。
@@ -18,26 +18,51 @@
 
 - 觀察模式：`app._wrap_verifier_observe_only` 把 `verify()` 所有不通過改成通過（`grep -n "return verdict if verdict.ok else" rag-orchestrator/app.py`）；只准配 mock。R8 設計的 `AGENT_VERIFIER_MODE=grounding_observe`（引用類觀察、機敏類照擋）**未落地**（`grep -rn AGENT_VERIFIER_MODE rag-orchestrator/services` → 0）。
 - 極性檢查在 `verifier.py`「句子與引文有沒有否定詞須一致」（`grep -n POLARITY_MISMATCH rag-orchestrator/services/agent/verifier.py`），詞表 `config/agent_verifier_rules.json` `negation_terms` 十項，無「尚未／未／還沒／沒有逾期／不在逾期」。
-- 敏感分類：`fact_class` 由模型自填（`output_schema.AgentOutput.fact_class`）；Verifier 只驗「敏感類配敏感原因」（第一批 S4），不驗「模型說敏感是否真敏感」。程式側有 `sensitive_patterns`（掃答案）與 presales_gate 的分類器（`grep -n "def _classify_fact_class" rag-orchestrator/services/agent/verifier.py`）。
-- 純編號句：模型先問類型（第二批 r1–r3 3/3）；清單點選 `select:<type>:<id>` 已有程式直答路徑（`_run_select_segment`），可重用其查詢面。
+- 敏感分類：`fact_class` 由模型自填（`output_schema.AgentOutput.fact_class`）；Verifier 只驗「敏感類配敏感原因」（第一批 S4），不驗「模型說敏感是否真敏感」。程式側**沒有問句分類器**（security r1 F6：`_classify_fact_class` 全 repo 無定義，只剩 docstring 殘留；presales_gate 只有 `parse_fact_class`／`scan_handoff_mentions`／`looks_like_question`）；現有的是答案側 `sensitive_patterns` 掃描（`config/agent_verifier_rules.json`）。
+- 純編號句：模型先問類型（第二批 r1–r3 3/3）；清單點選 `select:<type>:<id>` 已有程式直答路徑（`_run_select_segment`），其四步紀律（可見性／速率／schema／身分鍵剝除）走 `registry.call(identity, …)`，工具內另有身分閘 `_identity_gate_ok`——前置查詢必須走同一條，⛔ 不直呼 `tools/jgb2.py` 的函式。
+- `verify()` 是**短路**的（`SENSITIVE_TOPIC` → marker → `UNCITED`/`SCHEMA` → `QUOTE_*`/`POLARITY`/`SOURCE_NOT_CITABLE` → `ROUTE` → `FORBIDDEN_TERM`），外層翻判定的作法會讓先命中的引用類把後面的機敏類與極性類**根本沒跑**（security r1 F1）。
 
 ## 2. U1 — Verifier 模式（W6-b3）＋否定詞表一類（security-executor）
 
-- 新參數 `AGENT_VERIFIER_MODE ∈ {enforce, grounding_observe, observe_only}`（預設 `enforce`；demo 線上改 `grounding_observe`；`AGENT_VERIFIER_OBSERVE_ONLY=true` 視為 `observe_only` 相容一版後移除）。`grounding_observe`＝引用類（`UNCITED_ASSERTION`／`QUOTE_NOT_COVERING`／`SCHEMA`／`SOURCE_NOT_CITABLE`）只記錄，**極性類（`POLARITY_MISMATCH`）與機敏類（`SENSITIVE_TOPIC`／`ROUTE_NOT_ALLOWED`／`FORBIDDEN_TERM`）照擋**；拒兩次轉人只對照擋的類生效。讀值點唯一（`health.verifier_mode()`），健檢顯示；`observe_only` 仍只准配 mock。
-- 否定詞表一類補齊：`negation_terms` += 「尚未」「未逾期」「還沒」「沒有逾期」「不在逾期」「並未」「未曾」（以「否定＋狀態」一類維護；⛔ 不加單字「未」——誤殺面太大，先量再說）；極性比對維持詞組層級。
-- 誤殺量測（列入驗收）：對本機所有 `smoke/*.jsonl` 的回答句重放 Verifier（離線腳本，不進 repo），列出因新詞表或模式改變而「會被擋」的句子，逐句人看；誤殺率 ≤ 2% 才上。
-- 驗收：單元（模式三態；極性類在 `grounding_observe` 下 `ok=False`；引用類 `ok=True` 並記錄）；「尚未逾期」句對「已逾期 8 天」引文 ⇒ `POLARITY_MISMATCH`（正對照：「已逾期 8 天」對同引文通過）；三輪回測「未逾期」0 次；線③ 12/12；runbook §20-2 改旗。
+- 新參數 `AGENT_VERIFIER_MODE ∈ {enforce, grounding_observe, observe_only}`（預設 `enforce`；demo 線上改 `grounding_observe`；`AGENT_VERIFIER_OBSERVE_ONLY=true` 解析成 `observe_only`，相容一版後移除）。讀值點唯一 `health.verifier_mode()`；健檢輸出 `verifier_mode`（**保留** `verifier_observe_only` 鍵，煙囪 §20-5 有斷言；security F3）。
+- **模式感知放在 `OutputVerifier.verify()` 內部**（security F1）：`verify()` 改為「逐類檢查，觀察類命中只記到 verdict 的 `observed` 清單、⛔ 不 return，繼續跑後面的類；照擋類命中才 return `ok=False`」；引用類（`UNCITED_ASSERTION`／`QUOTE_TOO_SHORT`／`QUOTE_NOT_COVERING`／`SCHEMA`／`SOURCE_NOT_CITABLE`）在 `grounding_observe` 為觀察類；極性類（`POLARITY_MISMATCH`）與機敏類（`SENSITIVE_TOPIC`／`ROUTE_NOT_ALLOWED`／`FORBIDDEN_TERM`）照擋；`enforce`＝全部照擋；`observe_only`＝全部觀察（維持現行語義）。`_verify_ref` 內 `QUOTE_TOO_SHORT`→`QUOTE_NOT_COVERING`→`POLARITY_MISMATCH` 的短路同樣改成「觀察類記錄後續跑」，讓覆蓋率先掛的句子仍拿得到極性判定。外層 `app._wrap_verifier_observe_only` 只留相容層（讀解析後的 mode）。
+- 觀察類**不遞增** `counters.rewrites`（security F4 前提）；`_build_fixed("budget_exhausted")` 的 reason 不在 `NON_SENSITIVE_HANDOFF_REASONS`，引用類單獨失敗不會多一條到轉人的路（F4 已對碼）。
+- **自證釘死 enforce**（security F2）：`bootstrap.build_runtime` 的 `verifier.self_test`（`known_fabrications.json` 全拒）以 `enforce` 模式跑，⛔ 不受環境旗影響。
+- **守衛看解析後的 mode**（security F3）：`observe_only` 且非 mock ⇒ 啟動 raise（同現行）；`grounding_observe` 且 `USE_MOCK_JGB_API=false` ⇒ `premise.red_flags` 記紅（健檢可見，不阻起）——這是第一個能在真 API 上關掉引用檢查的組態，runbook §20-7 回切段要寫明。
+- 否定詞表一類補齊：`negation_terms` += 「尚未」「未逾期」「還沒」「沒有逾期」「不在逾期」「並未」「未曾」（以「否定＋狀態」一類維護；⛔ 不加單字「未」）；極性比對維持詞組層級。⚠️ 極性是對稱判定，主要誤殺來自**引文側**含否定詞（security F5）——量測必須看到引文。
+- 誤殺量測（列入驗收；security F5：現行 `_emit_attempt` 不記引文，重放算不出）：U1 在 `AGENT_ATTEMPT_LOG_PATH` 有設時（dev 專用旗，⛔ 線上不設）把每句的 `resolved_unit`（引文原文）一併記進 attempt；量測＝smoke-rag 以 `grounding_observe`＋attempt log 重跑走查／變形集／第二批劇本各一輪，統計 `POLARITY_MISMATCH` 命中，逐句人看（句子＋引文並列），誤殺率 ≤ 2% 才上；命中的「尚未逾期」對「已逾期 8 天」為正對照。
+- 驗收：單元（模式三態；`grounding_observe` 下極性類 `ok=False`、引用類 `ok=True` 且 verdict 帶 `observed`；**同時違反引用類與 `forbid_terms` 的 fixture 在 `grounding_observe` 下 `ok=False`**（F1 的短路證明）；`observe_only`＋非 mock ⇒ 啟動 raise；`grounding_observe`＋非 mock ⇒ `premise.red_flags`；self_test 在任何 mode 旗下皆綠）；「尚未逾期」句對「已逾期 8 天」引文 ⇒ `POLARITY_MISMATCH`（正對照：「已逾期 8 天」通過）；三輪回測「未逾期」0 次；線③ 12/12；runbook §20-2／§20-7 改旗與回切說明。
 
 ## 3. U2 — 程式側敏感判定（security-executor）
 
-- 對**問句**跑既有 `sensitive_patterns`／presales_gate 分類（封閉樣式），得 `program_fact_class ∈ {sensitive, non_sensitive}`；模型自報敏感而程式判非敏感 ⇒ 不再豁免兩道降級閘（以程式判定為準），trace 記 `violations += ["sensitive_self_report_overridden"]`；程式判敏感而模型未報 ⇒ 既有 `SENSITIVE_TOPIC` 擋（不變）。
+- **新建**問句側封閉樣式分類 `question_sensitive(message) -> bool`（security F6：沒有既有分類器可重用）：樣式表放 `config/agent_verifier_rules.json` 新鍵 `question_sensitive_patterns`（以 SENSITIVE 五類各一組正則維護，同 `sensitive_patterns` 的形狀），⛔ 不寫字串特例；附誤判量測（對本機所有劇本的使用者訊息跑一次，命中逐句人看）。
+- **只改閘的資格、⛔ 不改寫 `out.fact_class`**（security F7）：`_apply_handoff_without_lookup`／`_apply_handoff_data_exits` 的 `fact_class in SENSITIVE` 豁免改為「模型自報敏感 **且** 程式問句判敏感」才豁免；模型自報敏感、程式判非敏感 ⇒ 不豁免（走兩出口固定句，⛔ 不會吐敏感內容）、trace `violations += ["sensitive_self_report_overridden"]`。答案側 `SENSITIVE_TOPIC` 掃描在 enforce 與 grounding_observe 下都保留（縱深）；程式判敏感而模型未報 ⇒ 既有擋法不變。
+- 記錄（security F8）：NO_JUDGEMENT 分支寫 `ask_target=confirm_intent` 會成為 T3 肯定語訊號；降級後多的回合只會擴大「授權執行查詢」的面，寫入仍需 `confirm_submit` 兌現。DSP-011：⛔ 不拿分類結果改工具可見性。
 - 驗收：單元真值表；「要不要催他」（程式非敏感、模型自報敏感）⇒ 走兩出口；「你們抽成幾成」（程式敏感）⇒ 仍轉人；三輪 3/3。
 
 ## 4. U3 — 程式前置查詢（executor）
 
-- 封閉條件：去標點後訊息為純數字（4–9 位）或 ≤ 6 字且無標點的短名詞；程式先以既有查詢面（帳單／修繕單／合約 by id；物件／社區 by keyword）查一次，結果（含查無）以可引用資料段注入（同記憶段通道，保留 id `pre-{nonce}`），再進模型；⛔ 不代模型作答、不改變 outcome。
+- 封閉條件：去標點後訊息為純數字（4–9 位）或 ≤ 6 字且無標點的短名詞；`ref` 先過封閉字集 `^[A-Za-z0-9_-]{1,32}$`（security F9），原值 ⛔ 不進 trace（S8-6）。
+- 查詢**一律走 `self.registry.call(identity, …)`**（與 `_run_select_segment` 同四步：可見性／速率／schema／身分鍵剝除；工具內身分閘 `_identity_gate_ok` 照跑），⛔ 不直呼 `tools/jgb2.py`；範圍＝呼叫者 role／user 原本就能查的同一組工具（不擴大授權面）。純數字：帳單／修繕單／合約 by id；短名詞：物件 keyword 查詢，只開視域內查詢、⛔ 不開 `select` 未開的 `estate`／`meter` ref 語義（S8-13）。
+- 結果（含查無）經 `sanitize_data_piece`＋`wrap_provenance_data` 同通道注入為可引用資料段；保留 id `pre-{nonce[:8]}` **在回合最開始無條件算出並加入 `reserved_ids`**（security F10），⛔ 不是「有前置查詢才算」；查無與無權限同一句（L15-13）。⛔ 不代模型作答、不改變 outcome。
 - 驗收：「756248 你建議我怎麼做」⇒ 依帳單資料答／建議，不反問類型 3/3；「信仰」（無進場句）⇒ 查無 ⇒ 領域內追問 3/3；純數字非本 role 的 id ⇒ 查無句；線③不退步。
 
 ## 5. 驗證順序
 
 同第二批 §6；U1 的誤殺量測先於三輪。
+
+## 6. 安全／信任面（security-reviewer r1 處置）
+
+| # | 發現 | 處置 |
+|---|---|---|
+| F1 P1 | 外層翻判定會讓短路後的機敏類沒跑 | FIX：模式感知進 `verify()` 內部、觀察類記錄後續跑（§2） |
+| F2 P2 | self_test 受模式旗影響會啟動紅 | FIX：自證釘 enforce（§2） |
+| F3 P2 | 守衛綁舊 env；grounding_observe 可在真 API 關引用檢查 | FIX：守衛看解析後 mode；非 mock 進 red_flags；健檢保留舊鍵（§2） |
+| F4 P3 | 拒兩次轉人互動 | 已對碼無新洞；觀察類不遞增 rewrites（§2） |
+| F5 P2 | 誤殺來自引文側；重放缺引文 | FIX：attempt 記 `resolved_unit`（dev 旗）＋觀察模式重跑量測（§2） |
+| F6 P1 | 引用的分類器不存在 | FIX：新建問句側封閉樣式表＋誤判量測（§3） |
+| F7 P1 | 改寫 fact_class 會反轉答案側擋法 | FIX：只改閘資格、不改 fact_class；答案側掃描保留（§3） |
+| F8 P2 | NO_JUDGEMENT 的 confirm_intent 擴大 T3 訊號面 | 記錄（§3） |
+| F9 P2 | 前置查詢須走 registry 帶身分；id 枚舉 | FIX：registry.call、封閉字集、ref 不進 trace、查無同句（§4） |
+| F10 P2 | 保留 id 必須無條件算 | FIX（§4） |
+| F11 P3 | 第三方 facts 注入通道；keyword 模糊搜尋 | FIX：同通道 sanitize；只開視域內查詢、不開新 ref 語義（§4） |
