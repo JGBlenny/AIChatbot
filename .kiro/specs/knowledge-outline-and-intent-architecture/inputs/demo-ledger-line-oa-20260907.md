@@ -278,6 +278,14 @@ W4b（定義層、⛔ 不寫例子）：`jgb2.action.bill_due_extend` descriptio
 - **「尚未逾期」病灶本地重現**（業主 00:44 截圖同型）：事實段有「已逾期 8 天（以今日 2026/09/09 計）」，模型答「尚未逾期」——全部本地跑次中 756248 逾期相關回答 35 句，說未逾期 3 句（b2_r1 b2-affirm#1、wt_r1 wt-short#5、wv_b2r1 wv-h2b#3）≈ 9%。Verifier 極性表沒有「尚未／未／還沒」（`config/agent_verifier_rules.json` `negation_terms`），且線上觀察模式不擋 ⇒ 第三批：否定詞表一類補齊＋量誤殺、`AGENT_VERIFIER_MODE`（W6-b3：極性＋機敏類照擋、引用類觀察）。
 - verifier（第二批 T1–T4，fresh）：派出中。
 
+## 1l. 第三批 U1–U3 落地＋替身物件補齊（2026-09-09 下午；程式 HEAD `0ea29280`）
+
+- 第三批：U1 `AGENT_VERIFIER_MODE`（`fcdc3b33`：模式感知在 `verify()` 內、觀察類只放引用解析子成因、極性主題錨定 `negation_status_pairs` 6×8、attempt 記引文、prod compose 宣告新旗）；U3 前置查詢（`0fc4b97c`＋主線收緊：短名詞查無不注入，只有純編號查無才注入）；U2 問句側敏感判定（`0c1aa155`：五類封閉樣式、124 句語料 0 誤判、正對照六句全中；兩道閘准入加「自報敏感但程式判非敏感」）。整合單元 1823（agent）／3283（全套）過。
+- 替身：37 個最小列物件補成完整 54 鍵列——bastion 白天恢復，jgb2 production DB 唯讀（tinker），對齊 API 投影後走同一套 builder 遮罩；`estate_stubs` 0；capture v4 只在 scratchpad（600）。
+- DB 事實（role 20151）：合約 1,380 筆（含歷史）、物件 390；API 以 user 12291 只看到 28 合約／83 物件——**圈定鍵是成員可視範圍**。要更豐富的替身得換一個可視範圍完整的成員身分（待業主給 user id）。⚠️ production tinker 啟動變慢（90 s 內跑不完，要 `timeout 300+`）。
+- 陷阱：smoke-rag 熱換必須 cp **自映像基準 commit 以來**所有變更檔（不是自上次熱換），否則舊檔 import 新符號啟動紅（`fields_before_today` 那次）。
+- 回測（`grounding_observe`＋attempt log 一輪：第二批劇本／走查／變形集／線③＋極性誤殺量測）：跑中。
+
 ## 2. demo 處理（這次就做，本機可驗）
 
 | # | 事 | 狀態 | 證據 |
