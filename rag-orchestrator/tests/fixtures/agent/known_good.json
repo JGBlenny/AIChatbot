@@ -648,5 +648,76 @@
     },
     "handoff": null,
     "audience": "property_manager"
+  },
+  {
+    "id": "doc_turn_neutral_summary_passes",
+    "nonce": "FIXTURE0000000000",
+    "note": "單元 E 正對照：文件回合的**中性歸納句**照樣放行——⑥' 擋的是寫入宣稱與提議寫入，⛔ 不是「文件回合一律不准講話」。",
+    "user_message": "這是我的繳費收據",
+    "agent_output": {
+      "kind": "answer",
+      "sentences": [
+        {
+          "text": "付款方式為轉帳。",
+          "kind": "fact",
+          "refs": [
+            "[FIXTURE0000000000:t1:doc:receipt§0]"
+          ]
+        }
+      ],
+      "fact_class": "other",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "t1": {
+        "ok": true,
+        "provenance": [
+          {
+            "source": "doc:receipt",
+            "text": "本張收據記載付款方式為轉帳。",
+            "citable": true
+          }
+        ],
+        "text_for_model": ""
+      }
+    },
+    "handoff": null,
+    "expected_reason": null,
+    "document_turn": true
+  },
+  {
+    "id": "write_claim_outside_document_turn_passes",
+    "nonce": "FIXTURE0000000000",
+    "note": "單元 E 反向對照：**同一句**「已把憑證掛到該戶既有的帳單上。」在**非**文件回合（缺 `document_turn` 鍵＝False）⛔ 不因 ⑥' 被拒。少了這一案，⑥' 就可能是「對所有回合都擋」而沒有人發現——那會誤殺確認卡與修繕建單的正常回覆。",
+    "user_message": "我剛剛請你把收據掛上去",
+    "agent_output": {
+      "kind": "answer",
+      "sentences": [
+        {
+          "text": "已把憑證掛到該戶既有的帳單上。",
+          "kind": "fact",
+          "refs": [
+            "[FIXTURE0000000000:t1:doc:receipt§0]"
+          ]
+        }
+      ],
+      "fact_class": "other",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "t1": {
+        "ok": true,
+        "provenance": [
+          {
+            "source": "doc:receipt",
+            "text": "業者於後台核對後，才由專員把憑證掛到該戶既有的帳單上。",
+            "citable": true
+          }
+        ],
+        "text_for_model": ""
+      }
+    },
+    "handoff": null,
+    "expected_reason": null
   }
 ]

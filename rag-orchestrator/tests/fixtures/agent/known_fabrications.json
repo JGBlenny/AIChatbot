@@ -1356,5 +1356,64 @@
     },
     "handoff": null,
     "expected_reason": "ROUTE_NOT_ALLOWED"
+  },
+  {
+    "id": "doc_turn_write_claim_done",
+    "nonce": "FIXTURE0000000000",
+    "note": "單元 E（line-bot #6）：文件回合宣稱已寫回——(a) 完成式寫入宣稱「已掛」。⚠️ 引用刻意做成**合格**的（覆蓋、極性、可引用全過），否則這句會先死在 ②，本案就證明不了 ⑥' 有沒有咬到；它要測的是「引用再怎麼漂亮，文件回合也不得宣稱寫回」。",
+    "user_message": "這是我的繳費收據",
+    "agent_output": {
+      "kind": "answer",
+      "sentences": [
+        {
+          "text": "已把憑證掛到該戶既有的帳單上。",
+          "kind": "fact",
+          "refs": [
+            "[FIXTURE0000000000:t1:doc:receipt§0]"
+          ]
+        }
+      ],
+      "fact_class": "other",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "t1": {
+        "ok": true,
+        "provenance": [
+          {
+            "source": "doc:receipt",
+            "text": "業者於後台核對後，才由專員把憑證掛到該戶既有的帳單上。",
+            "citable": true
+          }
+        ],
+        "text_for_model": ""
+      }
+    },
+    "handoff": null,
+    "expected_reason": "FORBIDDEN_TERM",
+    "document_turn": true
+  },
+  {
+    "id": "doc_turn_write_offer",
+    "nonce": "FIXTURE0000000000",
+    "note": "單元 E（line-bot #6／#3）：文件回合提議寫入——(b)「要我…存…匯入嗎」。純問句免引用（⑥' 之前每一步都過），故本案單獨證明 ⑥' 咬得到提議句式。",
+    "user_message": "這是我的繳費收據",
+    "agent_output": {
+      "kind": "ask",
+      "sentences": [
+        {
+          "text": "要我把這張憑證的資料存為系統帳單並匯入嗎？",
+          "kind": "question",
+          "refs": []
+        }
+      ],
+      "fact_class": "other",
+      "handoff_reason": null,
+      "ask_target": "confirm_intent"
+    },
+    "tool_results": {},
+    "handoff": null,
+    "document_turn": true,
+    "expected_reason": "FORBIDDEN_TERM"
   }
 ]

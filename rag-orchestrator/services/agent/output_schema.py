@@ -234,6 +234,21 @@ class VerifierRules(BaseModel):
     #: 效果等同「這條規則沒開」。
     negation_status_pairs: list[dict[str, str]] = Field(default_factory=list)
     forbid_terms: list[str]
+    #: 第六批單元 E（line-bot #6／#3）：**文件回合專用**禁用樣式（正則陣列，
+    #: NFKC 後比對），兩類——(a) 完成式寫入宣稱（「已掛／已存／已建立／已匯入…」）、
+    #: (b) 提議寫入（「要我…匯入嗎」「要不要…建單」）。文件歸納回合 ⛔ 不寫回、
+    #: ⛔ 不建單，所以這兩種句子在該回合一律是**承諾做不到的事**。
+    #: ⚠️ 與 `forbid_terms` 是**兩張表**，⛔ 不合併：那張是字面子字串、對**所有**
+    #: 回合生效；這張是正則、只在 `verify(document_turn=True)` 時生效。合併會讓
+    #: 「已掛」這類在正常寫入回合是**正確**的句子被整條線誤殺。
+    #: 預設 `None`（規則檔沒有這個鍵）＝**不啟用**——本欄位是新增的閘，缺鍵時
+    #: 舊規則檔的行為必須一字不變；⚠️ 這與 `sensitive_patterns_audiences` 的
+    #: 「缺鍵＝全受眾＝照擋」方向**相反**，理由是那一欄的缺鍵代表舊行為是「掃」，
+    #: 這一欄的缺鍵代表舊行為是「沒有這張表」。判定在
+    #: `verifier.OutputVerifier.verify`，⛔ 不在這裡展開語義。
+    #: ⚠️ pydantic 白名單會**靜默忽略未宣告鍵**，故此欄位必須宣告，否則規則檔
+    #: 加了鍵也讀不到（`test_document_turn_forbid_req.py` 的載入正對照釘住這件事）。
+    document_turn_forbid_terms: Optional[list[str]] = None
     allowed_routes: list[str]
     assertion_terms: list[str]
     min_quote_len: int = 6

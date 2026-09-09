@@ -2,7 +2,12 @@
 
 七步順序（全部通過才放行；第一個踩到的違規決定 `VerifierVerdict.reason`）：
 ①敏感五類 ②白名單句型（逐筆結構檢查＋逐片段「純」條件降級） ③覆蓋＋極性
-④來源可引用 ⑤導流白名單 ⑥禁詞 ⑦handoff 詞後置掃描。
+④來源可引用 ⑤導流白名單 ⑥禁詞 ⑥'文件回合禁用樣式 ⑦handoff 詞後置掃描。
+
+**文件回合（第六批單元 E）**：`verify(..., document_turn=True)` 才多跑 ⑥'——
+文件歸納回合 ⛔ 不寫回、⛔ 不建單，故「已把憑證掛到帳單上」（完成式寫入宣稱）與
+「要我存成系統帳單並匯入嗎？」（提議寫入）在該回合一律是承諾做不到的事。
+預設 `False`＝**逐位不變**；⛔ 不在此改既有 `forbid_terms` 的語義。
 
 **DSP-028：②③④的量測單位是「筆」與「片段」，①⑤⑥⑦的量測單位是拼接後的 `answer`**
 ——後者是安全側（掃的字串就是送出去的字串），跨筆拆數字／拆禁詞的規避靠它擋。
@@ -108,6 +113,10 @@ def _rule_id(index: int) -> str:
     的 0-based 索引；再配上同一份 trace 裡的 `rules_sha` 才對得回具體規則集
     版本。⛔ 索引**不跨表全域編號**：那需要固定表的串接順序，規則集加一張表
     就會讓歷史 trace 的編號整批漂掉。
+
+    ⚠️ 一個 `reason` 對到**不只一張表**時，第二張起要加**基底**（同
+    `_PAIR_TERM_ID_BASE` 的作法）——`FORBIDDEN_TERM` 現在有 `forbid_terms`
+    與 `document_turn_forbid_terms` 兩張，不加基底的話 `rule#0` 指不出是哪一張。
     """
     return f"rule#{index}"
 
@@ -142,6 +151,18 @@ def _pair_rule_id(index: int) -> str:
     return _rule_id(_PAIR_TERM_ID_BASE + index)
 
 
+#: `document_turn_forbid_terms` 的 `term_id` 基底（同 `_PAIR_TERM_ID_BASE` 的理由）：
+#: `FORBIDDEN_TERM` 現在有兩張表（全回合字面表 `forbid_terms`／文件回合正則表），
+#: 索引不加基底 `rule#0` 會撞在一起，trace 反查不出被擋的是哪一條規則。
+#: ⛔ 不改 `TERM_ID_PATTERN`：形狀仍是 `rule#<十進位>`，消費端不用動。
+_DOC_TURN_TERM_ID_BASE = 2000
+
+
+def _doc_turn_rule_id(index: int) -> str:
+    """`document_turn_forbid_terms` 第 `index` 筆的 `term_id`（＝`rule#{2000+index}`）。"""
+    return _rule_id(_DOC_TURN_TERM_ID_BASE + index)
+
+
 #: fixture 案內未指定 `nonce` 時的缺省值（`_assert_all` 用）。⛔ 只給 fixture／自證用，
 #: 產線 nonce 一律來自 `prompt_assembler.new_nonce()`——固定值在真線路上等於沒有 nonce。
 _FIXTURE_NONCE = "FIXTURE0000000000"
@@ -165,6 +186,12 @@ class OutputVerifier:
     def __init__(self, rules: VerifierRules, *, mode: str = DEFAULT_VERIFIER_MODE):
         self.rules = rules
         self._sensitive_patterns = [re.compile(p) for p in rules.sensitive_patterns]
+        #: 文件回合禁用樣式（單元 E）。規則檔缺鍵 ⇒ `None` ⇒ 空表 ⇒ ⑥' 整步不跑。
+        #: ⚠️ 樣式在**建構當下**編譯：規則檔寫壞的正則要在啟動就炸（fail loud），
+        #: ⛔ 不做「編譯失敗就跳過這條」的容錯——那個失敗方向是**閘悄悄少一條**。
+        self._document_turn_forbid = [
+            re.compile(p) for p in (rules.document_turn_forbid_terms or [])
+        ]
         self._mode = DEFAULT_VERIFIER_MODE
         self.mode = mode
 
@@ -272,6 +299,7 @@ class OutputVerifier:
         resolved: dict[tuple[int, int], ResolvedRef],
         resolve_errors: dict[tuple[int, int], str],
         audience: Optional[str] = None,
+        document_turn: bool = False,
     ) -> VerifierVerdict:
         """`resolved`／`resolve_errors` 由**呼叫端**（Runtime／`self_test`）以
         `services.agent.provenance_units.resolve_refs` 算好傳進來，鍵是
@@ -291,6 +319,14 @@ class OutputVerifier:
         旗標隨 `ResolvedRef` 一起傳進來，⛔ 不再於此二次查表（兩處各查一次就會出現
         「解析用 A 筆 provenance、可引用旗標讀到 B 筆」的分歧）。參數保留是刻意的：
         它是 design 元件 6 的介面契約，Runtime／測試都以這個形狀對接。
+
+        `document_turn`（單元 E）：本回合是不是**文件歸納回合**（使用者傳了文件、
+        系統只做擷取與歸納）。⛔ 只加開步 ⑥'（`document_turn_forbid_terms`），
+        ⛔ 不影響其他任何一步、也 ⛔ 不改 `forbid_terms` 的語義。
+        ⚠️ 預設 `False` 的方向是**少擋**——與 `audience` 相反，理由是這張表的內容
+        （「已建立」「要我匯入嗎」）在**一般寫入回合是正確的話**，缺值就照擋會把
+        確認卡與修繕建單的正常回覆整批誤殺。判「這回合是不是文件回合」的責任因此
+        在呼叫端（Runtime／第二波 B 接線），⛔ 不由這把尺自己猜。
         """
         observed: list[str] = []
 
@@ -500,6 +536,22 @@ class OutputVerifier:
                     return hit
                 break  # 觀察：同一類記一次就夠
 
+        # ⑥' 文件回合禁用樣式（單元 E｜line-bot #6／#3）
+        # 文件歸納回合 ⛔ 不寫回、⛔ 不建單 ⇒ 完成式寫入宣稱與提議寫入都是承諾做不到的事。
+        # ⚠️ 掃的是 **NFKC 後的整段 `answer`**（同 ①⑤⑥⑦）：跨筆拆字的規避靠它擋。
+        # ⚠️ 拒因刻意沿用 `FORBIDDEN_TERM`（⛔ 不新增拒因）：它屬**機敏類**，
+        # `_GROUNDING_OBSERVE_REASONS` 不含它 ⇒ `grounding_observe` 下**照擋**。
+        # 這一點是本閘的重點——真線上的這種句子多半同時引用失敗，若降成觀察類，
+        # 引用類被觀察放過之後就沒有人擋得住「已把憑證掛到帳單上」了。
+        if document_turn:
+            for i, pattern in enumerate(self._document_turn_forbid):
+                if pattern.search(answer_nfkc):
+                    hit = _hit(VerifierVerdict(
+                        ok=False, reason="FORBIDDEN_TERM", term_id=_doc_turn_rule_id(i)))
+                    if hit is not None:
+                        return hit
+                    break  # 觀察：同一類記一次就夠
+
         # ⑦ handoff 詞後置掃描
         if scan_handoff_mentions(out.answer) and not handoff:
             hit = _hit(VerifierVerdict(ok=False, reason="HANDOFF_WORD_NO_HANDOFF"))
@@ -674,6 +726,11 @@ class OutputVerifier:
         自證因此同時是**放寬有沒有溢出到別的受眾**的正反對照。
         ⚠️ 自證釘 `enforce`（見下），⛔ 受眾放寬不得靠模式差異來假綠。
 
+        **文件回合（單元 E）**：fixture 案可選填 `document_turn`（同樣原樣交給
+        `verify()`）。缺鍵＝`False`＝⑥' 不跑，故既有案例判定不變；新增的三組是
+        「文件回合『已把憑證掛到帳單上』⇒ 擋」「同句非文件回合 ⇒ 不因此擋」
+        「文件回合中性句 ⇒ 放」，自證因此同時是**新閘有沒有溢出到一般回合**的正反對照。
+
         ⚠️ `known_open.json` **不存在時視為 0 筆**——`tests/unit/agent/test_bootstrap_req.py`
         會用只有兩個檔的臨時目錄跑自證。出貨那份 fixture 目錄一定要有它，由
         `test_verifier_req.py::test_shipped_fixtures_include_known_open` 當正對照守住。
@@ -711,10 +768,13 @@ class OutputVerifier:
             resolved, resolve_errors = resolve_refs(out, tool_results, nonce)
             # U3：案內 `audience` 是**選填**——沒寫就是 `None`＝照擋，既有每一個案例
             # 的判定因此一字不變（新增的三組受眾案例自己填）。
+            # 單元 E：案內 `document_turn` 是**選填**——缺鍵＝`False`＝⑥' 不跑，
+            # 既有每一個案例的判定因此一字不變（新增的文件回合案例自己填 true）。
             verdict = self.verify(
                 out, tool_results, case.get("user_message", ""), case.get("handoff"),
                 resolved=resolved, resolve_errors=resolve_errors,
-                audience=case.get("audience"))
+                audience=case.get("audience"),
+                document_turn=bool(case.get("document_turn", False)))
             if verdict.ok != expect_ok:
                 raise RuntimeError(
                     f"OutputVerifier self_test 失敗：{path.name} 案例 {case.get('id')} "
