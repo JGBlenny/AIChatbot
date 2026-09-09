@@ -1,4 +1,4 @@
-# Plan：走查回修第四批（V1–V5）— 2026-09-09（第 2 稿：security-reviewer r1 八條已處置）
+# Plan：走查回修第四批（V1–V5）— 2026-09-09（第 3 稿：security-reviewer r1 八條＋plan-verifier r1 兩條已處置）
 
 > 來源：line-bot 第二輪走查驗收（帳本 §1n；39 屏 0 轉人）——好了 H3／H4，半好 H1／H5，H2 變形（退回開場白），新冒出三件：記憶段被當該戶全部紀錄、`context` 開場白被當使用者的話、首句 60 s 逾時。
 > 紀律同前三批：契約／schema／狀態機／出口閘門／正本定義層，⛔ 不寫特例；提示詞只寫定義不舉例；程式一筆、文件一筆；⛔ 不 push。
@@ -9,9 +9,9 @@
 |---|---|
 | 結果 | line-bot 第二輪劇本重放（現場報修 11 步、逾期帳單 10 步、連續對話 14 步；帶 `context`）：「這戶還有沒有別的單」查修繕單並含 8591（3/3）；「要不要打電話」「上次報修修好了沒」有前文時依前文答或查、⛔ 不退回開場白（3/3）；「延三天」原到期日已過 ⇒ 卡上新到期日＝今天＋3（3/3）；restart 後「我剛剛問了什麼」⇒ 說使用者還沒說過話、⛔ 不把畫面提示當使用者的話（3/3）；追問不附捏造的範例名稱；線③ 12/12；0 轉人。 |
 | 非目標 | 催繳草稿工具；「建立帳單」格名與能力不對稱（line-bot 側）；換成員身分抓全量替身；極性回合層級比對（另列 V6 候選）。 |
-| 切片 | V1 記憶段語義（executor）→ V2 有前文的零查詢（executor）→ V3 延 N 天基準（security-executor）→ V4 畫面提示措辭（executor）→ V5 冷啟逾時（runbook）。V1／V3／V4 互不相依可並行；V2 依賴 V1 的記憶段標題。 |
+| 切片 | V1 記憶段語義（executor；只動 `completed_actions.py`）→ V2 有前文的零查詢（executor；`runtime.py`）→ V3 延 N 天基準（security-executor；`confirm_card.py`／`tools/confirm.py`／`tools/action.py`）→ V4 畫面提示措辭＋**全部政策句**（executor；`agent_rules.py` **獨佔**，含 V1 那一句；plan-verifier r1 #1）→ V5 冷啟逾時（runbook）。V1／V3／V4 檔案互斥可並行；V2 依賴 V1 的記憶段標題。 |
 | 驗收 | §6：單元 → smoke-rag（`grounding_observe`）第二輪劇本 3 輪＋線③ → fresh verifier → 部署。 |
-| 回滾 | 各切片單一 commit revert。 |
+| 回滾 | 各切片單一 commit revert；`agent_rules.py` 只由 V4 動，revert V4 即回復全部第四批政策句。 |
 | 停止條件 | 線③ < 12/12；轉人 > 0（非敏感）；p95 > 15 s。 |
 
 ## 1. 事實（對碼）
@@ -25,7 +25,7 @@
 ## 2. V1 — 記憶段語義（executor）
 
 - `completed_actions_line` 標題改為「本對話裡建立或修改過的：…（只是這段對話做過的事，⛔ 不是該戶的全部紀錄）」（定義句放在資料段內，模型每回合看得到）。
-- 政策定義一句（`_POLICY_TEXT_NON_PROSPECT`【判準】）：「問某一戶有哪些修繕單或帳單，一律以查詢結果為準，⛔ 不以本對話的記憶段代答。」
+- 政策定義一句「問某一戶有哪些修繕單或帳單，一律以查詢結果為準，⛔ 不以本對話的記憶段代答。」——**由 V4 一併寫入** `_POLICY_TEXT_NON_PROSPECT`（V1 ⛔ 不動 `agent_rules.py`）。
 - 驗收：單元（標題文字、記憶段仍可引用）；情境：建單後「這戶還有沒有別的單」⇒ 走 `jgb2.query.repairs`（trace tool_calls ≥ 1）且答案含 8591；3/3。
 
 ## 3. V2 — 有前文的零查詢（executor）
@@ -38,7 +38,9 @@
 
 - 定義：`days` 的基準＝「原到期日與今天較晚者」；`confirm_card.render(action, payload, *, today: Optional[date] = None)`——**關鍵字參數、⛔ 不從 payload／args 讀任何 `today` 鍵**（security r1 #2：payload 是模型控制的）；驗算改為 `max(before, today) + days == after`；**兩個呼叫點都要傳 `bills._today()`**：`confirm.request`（出卡）與 `action._validated_payload`（兌現，security r1 #1：兌現端沒帶 today 會在 token 已燒之後 `_invalid_input()`，每張 V3 卡都兌現不了）；`today` 缺省只給測試與舊呼叫端用（維持舊驗算）；⛔ 不得以放寬 `days` 驗算來「解決」（它與 `payload_digest` 一起是卡↔payload 的綁定）。工具描述同步定義：「延後天數從原到期日或今天較晚的一天起算；算出來的新到期日一定在今天之後。」（並改掉舊句「必須等於 date_expire_before 往後加上 days 天」）；S1 的 `not_before_today` 閘不變（縱深）；起算日那一行只在既有 `_render_bill_due_extend` 分支內加，⛔ 不在外面加 action 名判斷。
 - 卡上加一行「起算日：YYYY/MM/DD」（決定性，讓「延後 11 天」那種數字不再讓人遲疑）。
-- 驗收：單元（before < today ⇒ 基準 today；before ≥ today ⇒ 基準 before；缺 today ⇒ 舊行為；閘門仍擋 after < today；**出卡→兌現整鏈**：before 9/01、today 9/09、days 3、after 9/12 的卡在 `confirm.request` 出卡且在兌現端通過 `_validated_payload`、寫入成功；payload 帶 `today` 鍵 ⇒ 被忽略／INVALID_INPUT）；情境：756248（到期 9/01、今天 9/09）「延三天」⇒ 出卡、新到期日＝今天＋3、起算日＝今天；3/3。
+- **跨午夜規則**（plan-verifier r1 #2：token TTL 600 s 可能跨一個午夜，兌現端若用當日時鐘做嚴格等式會 `_invalid_input()`）：兌現端 `_validated_payload(today=兌現日)` 的驗算改為「等式對 `today` **或 `today − 1 天`** 任一成立即通過」（單一決定性規則：TTL < 24 h ⇒ 出卡日只可能是兌現日或前一天；⛔ 不是特例分支）；S1 `not_before_today` 閘仍以兌現當日新時鐘檢查（縱深）。出卡端維持嚴格等式（只有一個 today）。
+- payload 若帶 `today` 鍵 ⇒ **一律 `INVALID_INPUT`**（render 拒未知鍵；plan-verifier 註記：二擇一固定為拒絕）。
+- 驗收：單元（before < today ⇒ 基準 today；before ≥ today ⇒ 基準 before；缺 today ⇒ 舊行為；閘門仍擋 after < today；**出卡→兌現整鏈**：before 9/01、today 9/09、days 3、after 9/12 的卡在 `confirm.request` 出卡且在兌現端通過 `_validated_payload`、寫入成功；**跨日案例**：同一張卡、兌現日 9/10 ⇒ 通過（today−1 成立）；兌現日 9/11 ⇒ `_invalid_input()`（已超過 TTL 語義，正對照）；payload 帶 `today` 鍵 ⇒ `INVALID_INPUT`）；情境：756248（到期 9/01、今天 9/09）「延三天」⇒ 出卡、新到期日＝今天＋3、起算日＝今天；3/3。
 
 ## 5. V4 — 畫面提示與空會話措辭（executor）
 
@@ -68,9 +70,11 @@
 |---|---|---|
 | 1 P1 | V3 兌現端 `_validated_payload` 沒帶 today ⇒ 卡出得來兌現不了（token 已燒） | FIX：兩個呼叫點都傳 `bills._today()`；⛔ 不放寬 days 驗算（§4） |
 | 2 P2 | `today` 若從 payload 讀，模型可控基準 | FIX：關鍵字參數、不讀 payload（§4） |
-| 3 — | 卡雜湊一致性、跨午夜 | 已對碼安全（同一次 render；閘二用新時鐘） |
+| 3 — | 卡雜湊一致性、跨午夜 | 雜湊：同一次 render、安全；跨午夜：#1 處置後兌現端有時鐘 ⇒ 改為「today 或 today−1 任一成立」規則（plan-verifier r1 #2，§4） |
 | 4 P2 | V2 recent refs 繞過 L15 範圍 | FIX：釘住範圍不注入（§3） |
 | 5 P2 | V2 改寫不得在迴圈外呼叫模型；預算耗盡的坑 | FIX：迴圈內分支、耗盡跳過（§3） |
 | 6 P3 | 編號正則重用；日期／金額混入 | FIX：重用 `_PRE_LOOKUP_ID_RE`、標籤改寫（§3） |
 | 7 — | V4 前綴無注入面 | FIX 措辭：先 sanitize 再加常數前綴（§5） |
 | 8 — | 通用規則 | 起算日只在既有 render 分支內；`CONFIRM_FIELD_ATTRS` 不動（§4） |
+
+plan-verifier r1（兩條 P2）：#1 `agent_rules.py` 由 V4 獨佔、V1 政策句併入 V4（§0／§2）；#2 兌現端跨午夜規則「today 或 today−1」＋跨日測試（§4／§9 #3）。
