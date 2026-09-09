@@ -485,7 +485,8 @@ def _apply_scope_exit(result: TurnResult, *, scope_in: int, scope_out: int) -> T
 
 #: S4 §5：零查詢轉人的追問固定句。單一句、⛔ 無任何插值（同 `SCOPE_EXIT_TEXT`
 #: 的紀律——帶物件名稱等於用回話的差別揭露存在性）。
-ASK_TARGET_TEXT = "想處理哪一戶或哪一筆？講物件名稱、帳單編號或修繕單號。"
+#: 各受眾共用（prospect 也會經過同一道閘），措辭不帶任何一條線的名詞。
+ASK_TARGET_TEXT = "想處理哪一件事？講名稱或編號就可以。"
 
 
 def _apply_handoff_without_lookup(result: TurnResult, agent_state: dict) -> TurnResult:

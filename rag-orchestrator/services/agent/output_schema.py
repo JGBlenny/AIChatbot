@@ -38,6 +38,13 @@ ASK_TARGETS: tuple[str, ...] = (
     "urgency",
     "confirm_intent",
     "choice",
+    # 售前線（prospect）補問對象——與 `_POLICY_TEXT` 的可補問欄位同名（identity／scale／team／pain／interested）；
+    # schema 與 Verifier 是各受眾共用的，值域必須是各受眾的聯集（2026-09-09 T1 執行代理 P1 裁定）。
+    "identity",
+    "scale",
+    "team",
+    "pain",
+    "interested",
 )
 
 

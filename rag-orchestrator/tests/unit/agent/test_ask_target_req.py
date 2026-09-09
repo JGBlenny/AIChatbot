@@ -73,6 +73,11 @@ def test_ask_targets_is_the_frozen_plan_tuple_verbatim():
         "urgency",
         "confirm_intent",
         "choice",
+        "identity",
+        "scale",
+        "team",
+        "pain",
+        "interested",
     )
     assert len(set(ASK_TARGETS)) == len(ASK_TARGETS)  # 無重複
 
