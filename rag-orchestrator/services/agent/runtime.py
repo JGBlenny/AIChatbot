@@ -1033,7 +1033,10 @@ class TurnTrace:
 
 
 #: `reasoning_effort` 允許值（OpenAI gpt-5 系列）；封閉集合，⛔ 不在程式內以字串推導。
-REASONING_EFFORT_VALUES: frozenset = frozenset({"minimal", "low", "medium", "high"})
+#: 2026-09-10 加 `none`：gpt-5.6 系列在 chat.completions 帶 function tools 時只接受
+#: `reasoning_effort="none"`（其餘值回 400「use /v1/responses or set reasoning_effort to 'none'」）；
+#: `minimal` 對它反而不支援。值域仍封閉，實際能用哪個由模型決定、由啟動實測守。
+REASONING_EFFORT_VALUES: frozenset = frozenset({"none", "minimal", "low", "medium", "high"})
 
 _REASON_HINTS: dict[str, str] = {
     # DSP-028 後續（2026-09-05 回歸集重跑）：拒一次就改轉人的回合佔 no_grounding 的 11/127，

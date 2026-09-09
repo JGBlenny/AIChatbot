@@ -1158,3 +1158,10 @@ async def test_attempt_sink_schema_parse_failure_has_no_raw_content():
         "verdict": {"reason": "SCHEMA_PARSE"},
     }
     assert bad_content not in json.dumps(first, ensure_ascii=False)
+
+
+def test_reasoning_effort_values_include_none_for_gpt56_tool_calls():
+    """2026-09-10：gpt-5.6 系列在 chat.completions 帶 function tools 只接受 `reasoning_effort="none"`
+    （其餘值 400）；值域仍封閉，`none` 必須在內、`minimal` 仍保留給舊模型。"""
+    from services.agent.runtime import REASONING_EFFORT_VALUES
+    assert {"none", "minimal", "low", "medium", "high"} == set(REASONING_EFFORT_VALUES)
