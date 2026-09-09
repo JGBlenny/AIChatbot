@@ -294,7 +294,8 @@ W4b（定義層、⛔ 不寫例子）：`jgb2.action.bill_due_extend` descriptio
 - 步驟：本地 ff main → push（業主跑）→ 線上 pull → `.env` 加 `AGENT_VERIFIER_MODE=grounding_observe`、`AGENT_VERIFIER_OBSERVE_ONLY=false` → `docker-compose build/up` → log 見 `AGENT_VERIFIER_MODE=grounding_observe`、`Application startup complete`；磁碟 13 GB 剩。⚠️ `✅ agent runtime 已初始化` 那行這次沒出現在 docker logs（fine_index ready 兩行有、`/mcp` 正常服務）——疑 stdout 緩衝，runbook §20-3 的預期行改以 `/mcp` 實打為準。
 - 公開 MCP 實打（線上 key 由伺服器 `/home/ec2-user/.curl-mcp-key`——⚠️ 是 curl 設定檔格式 `header = "X-API-Key: …"`，不是裸 key——經 stdin 管進 harness，不落地）：H1「延三天」⇒ 不出卡、問要延到哪天 ✓；「75628」⇒ 請確認編號、不轉人 ✓；建單→「剛剛那張單號」⇒ 12346 ✓→「改描述」⇒ 已送出指路 ✓；「你們抽成幾成」⇒ 轉人 ✓。冷啟第一回合 16.6 s，其餘 3–11 s。殘留：第一題「是不是逾期」答了狀態與期限但沒講「已逾期 8 天」（模型漏引那行；不算講反）。
 - 第四批候選：極性 pair 改回合層級比對（verifier F1：模型引別行時抓不到「尚未逾期」）；純編號嵌在句中的前置查詢（「756248 你建議」）；「結束上一個版」＝業主用語待釐清。
-- 給 line-bot：`entry_line` 欄位可接（串接單已更新）；請重跑 Playwright 三線；`.env` 新旗已上。
+- 給 line-bot：`context` 欄位可接（串接單已更新）；請重跑 Playwright 三線；`.env` 新旗已上。
+- **改名重部署（同日稍後，main `04f53e32`）**：業主「entry_line 應該是前言／背景資訊之類的欄位」⇒ `agent.turn` 欄位改 `context`（本回合背景資訊：進場提示、頁面、已選項目、上一步結果；≤500 字、每回合可帶；機制不變）。線上實打：`context`＝「要建立哪個社區的物件？講社區名稱或地址。」＋「信仰」⇒ 領域內追問、不談宗教 ✓；「756248」⇒ 直答含「已逾期 8 天」✓。
 
 ## 2. demo 處理（這次就做，本機可驗）
 
