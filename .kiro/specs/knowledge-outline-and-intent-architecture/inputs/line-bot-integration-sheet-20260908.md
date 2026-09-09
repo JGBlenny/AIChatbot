@@ -26,6 +26,11 @@ X-JGB-Identity: {"mode":"b2b","target_user":"property_manager","vendor_id":4,"ro
 - **入口清單須對能力表**：`context` 帶進來的入口必須對得上 chatai 現有的能力（查帳單、查合約、查修繕、報修、延期…）；沒有對應能力的入口（例如「建立物件」）會得到 `out_of_scope`，⛔ 不要期待它被答出來。
   > ⚠️ **對碼註記（2026-09-09，T1）**：`outcome.state == "out_of_scope"` 目前**只有清單點選釘住那一戶之後問別戶／別戶寫入被擋**這條路徑會產生（`grep -n '"out_of_scope"' rag-orchestrator/services/agent/runtime.py` → `_apply_scope_exit` 與 `_scope_gate_confirm_request` 兩處）。「無對應能力的入口」今天實際落到的是追問或轉真人，**不是** `out_of_scope`。上面那一句是**目標行為**，⛔ 尚未有程式保證；呼叫端請先依 `outcome` 的實際值分支，⛔ 不要在這一格上寫死。
 - `image_urls` 選填，最多 10 張，第 11 張起整回合 `INVALID_INPUT`；每張 ≤5,000,000 bytes；只收 `https://relay.jgbsmart.com` 的簽章網址（帶 `exp` 到期戳）；超過 5 張 chatai 內部分批辨識，時間不夠會明講「只看了前 N 張」。⛔ 不要把多張拆成兩個回合。
+- `attachment_purpose` 選填，封閉兩值：`repair`（預設；缺或顯式 `null` 皆＝現行行為，⛔ 現有呼叫端零改動）／`document`（文件歸納回合：該回合寫入工具與確認卡一律關閉，只回歸納文字，⛔ 不建單、不寫回）。
+- `file_urls` 選填，只在 `attachment_purpose=document` 時可帶；`repair` 回合帶 `file_urls` ⇒ 整回合 `INVALID_INPUT`（修繕線不收 PDF）；demo **≤1 份**，第 2 份起整回合 `INVALID_INPUT`；只收 `https://relay.jgbsmart.com` 的簽章網址、**必帶 `exp`**（缺 `exp` 視為未簽章、擋）；relay 對 PDF **必須回 `Content-Type: application/pdf`**（回 `application/octet-stream` 整回合 fail-closed 拒收，⛔ 不當成一般二進位放行）；每份 ≤5,000,000 bytes；chatai 只讀該份 PDF 的前 5 頁並在回覆中明講「只看了前 N 頁」；照片頁與 PDF 轉出的頁圖合計 >10 頁 ⇒ 整回合 `INVALID_INPUT`（沿用「超過即拒、⛔ 不截斷後照跑」）；擷取結果**不回顯原文**、只回歸納文字。
+- 文件檔案配額：每小時每把 key **20 份**（`file_urls` 消耗這個配額，PDF 轉出的頁圖計入既有照片配額）；用罄 ⇒ `RATE_LIMITED`。計數器行程內、多 worker 各一份（實際上限＝cap × worker 數）。
+- LIFF 另有兩個文件歸納入口（帳單憑證歸納／合約同本歸納），各自帶 `attachment_purpose=document` 與各自的 `context`；照片與檔案比照既有規則，同一使用者 3 秒內合成一次 `agent.turn`，不要拆回合。
+- ⚠️ **對碼註記（2026-09-09）**：`attachment_purpose`／`file_urls` 兩鍵待 U12（`services/agent/mcp_facade.py`／`services/agent/tools/registry.py` 的 `agent.turn` input_schema）落地後才生效；**落地前**送這兩鍵，`registry` 的 `input_schema` 對 `agent.turn` 設 `additionalProperties: False`，未宣告鍵一律判為 schema 違反 ⇒ 整回合 `INVALID_INPUT`（查證：`grep -n "additionalProperties" rag-orchestrator/services/agent/tools/registry.py`），⛔ 不是靜默忽略。
 
 輸出（`tools/call` 結果的文字內容是 JSON）：
 ```json
