@@ -2862,11 +2862,17 @@ class AgentRuntime:
         tool_specs = self.registry.to_openai_tools(
             identity, self._stage, readonly_view=self.readonly_view
         )
-        # W9-1 落點②：**文件回合的寫入面對模型不可見**。判準逐字沿用
-        # `registry.specs_for` 的寫入面聯集（`scope == "write"` **或** `mcp_only`）
-        # ——⛔ 不在此另列一張工具名單：名單會漏掉之後新加的寫入工具，而漏掉的
-        # 那一支不會有任何徵兆。第二道網在下方工具迴圈（模型硬造名字時擋執行），
-        # 第三道在 `_document_turn_no_write`（⛔ 三道都不得單獨拿掉）。
+        # W9-1 落點②：**文件回合的寫入面對模型不可見**。判準沿用 registry 對
+        # 「會改狀態的工具」的三個旗標聯集：`scope == "write"` **或** `mcp_only`
+        # **或** `mutates_session`——第三個旗標是 verifier 2026-09-09 F1 補的：
+        # `confirm.request` 的正本規格是 `scope=read, mcp_only=None,
+        # mutates_session=True`（見 `tools/confirm.py::CONFIRM_SPEC`），只看前兩個
+        # 旗標會漏掉它，文件回合就會多執行一次確認登記、留一列孤兒 token（不可兌現，
+        # 但不該發生）。與 `registry.specs_for` 的 `readonly_view` 判準（`scope=="write"
+        # or mutates_session`）同一族，⛔ 不在此另列一張工具名單：名單會漏掉之後
+        # 新加的寫入工具，而漏掉的那一支不會有任何徵兆。第二道網在下方工具迴圈
+        # （模型硬造名字時擋執行），第三道在 `_document_turn_no_write`
+        # （⛔ 三道都不得單獨拿掉）。
         doc_write_face: frozenset = frozenset()
         if document is not None:
             doc_write_face = frozenset(
@@ -2875,7 +2881,7 @@ class AgentRuntime:
                     identity, self._stage,
                     readonly_view=self.readonly_view, for_model=True,
                 )
-                if s.get("scope") == "write" or s.get("mcp_only")
+                if s.get("scope") == "write" or s.get("mcp_only") or s.get("mutates_session")
             )
             tool_specs = [
                 t for t in tool_specs

@@ -1213,15 +1213,27 @@ _WRITE_SPEC = {
     "mcp_only": True,
     "stage": {"prospect": "M0", "property_manager": "M0"},
 }
+# ⚠️ verifier 2026-09-09 F1：這裡曾自備一份 `mcp_only: True` 的假規格，讓「寫入面
+# 對模型不可見」兩條測試假綠——正本 `confirm.request` 是 `scope=read, mcp_only=None,
+# mutates_session=True`。改為**直接沿用正本規格**（只換 stage 讓 M0 可見），
+# 測的才是生產判準。
+from services.agent.tools.confirm import CONFIRM_SPEC as _PROD_CONFIRM_SPEC
+
+# 只沿用正本的**三個旗標**（scope／mcp_only／mutates_session＝寫入面判準的輸入）；
+# input_schema 換成空殼（正本要求 action／payload，空參數會在 registry 驗證就被拒，
+# 正對照組就量不到「有沒有執行」）、stage 開到 M0。
 _CONFIRM_SPEC = {
-    "name": "confirm.request",
+    "name": _PROD_CONFIRM_SPEC["name"],
     "description": "請使用者確認",
     "input_schema": {"type": "object", "properties": {}, "required": [],
                      "additionalProperties": False},
-    "scope": "read",
-    "mcp_only": True,
+    "scope": _PROD_CONFIRM_SPEC.get("scope"),
+    "mcp_only": _PROD_CONFIRM_SPEC.get("mcp_only"),
+    "mutates_session": _PROD_CONFIRM_SPEC.get("mutates_session"),
     "stage": {"prospect": "M0", "property_manager": "M0"},
 }
+assert _CONFIRM_SPEC["scope"] == "read" and not _CONFIRM_SPEC["mcp_only"] \
+    and _CONFIRM_SPEC["mutates_session"] is True, _CONFIRM_SPEC  # 正對照：正本形狀沒變
 _READ_SPEC = {
     "name": "kb.get",
     "description": "查知識",
