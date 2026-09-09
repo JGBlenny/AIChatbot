@@ -60,4 +60,4 @@ def test_invalid_value_fails_loud_at_construction(monkeypatch, bad):
 
 
 def test_value_domain_is_closed():
-    assert runtime_mod.REASONING_EFFORT_VALUES == frozenset({"minimal", "low", "medium", "high"})
+    assert runtime_mod.REASONING_EFFORT_VALUES == frozenset({"none", "minimal", "low", "medium", "high"})  # 2026-09-10 加 none（gpt-5.6 帶工具只接受 none）
