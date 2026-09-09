@@ -1,16 +1,16 @@
 # Plan：走查回修第二批（H5–H8）— 2026-09-09（第 5 稿：security-reviewer r1 九條＋plan-verifier r1 六條＋r2 兩條＋r3 收尾一條全數 FIX；r3 已對碼確認其餘八條落實。審查回合到上限，是否再審由業主裁）
 
 > 來源：line-bot 走查 H5／H6／H7（第一批 Plan §9 移交）＋ 業主 02:14 截圖 IMG_8935（「建立物件」進場打「信仰」，模型追問宗教信仰）＋ 第一批 verifier 兩條 P3（閘門回合 outcome 標 `answered`；有前文的「要不要催他」仍轉人）。
-> 業主裁示（2026-09-09）：「追問的方向不對」——追問要被契約管住，不靠進場句；進場句用 `entry_line` 欄位帶、不塞進使用者訊息。
+> 業主裁示（2026-09-09）：「追問的方向不對」——追問要被契約管住，不靠進場句；進場句用 `context` 欄位帶、不塞進使用者訊息。
 > 紀律同第一批：契約／schema／狀態機／出口閘門／正本定義層，⛔ 不寫 action 名或句型的特例；提示詞只寫定義不舉例；程式一筆、文件一筆；⛔ 不 push。
 
 ## 0. 程序封套 P-WT2
 
 | 欄 | 內容 |
 |---|---|
-| 結果 | 變形集 `smoke/scenarios_walkthrough_variants.json`（22 回合）＋走查劇本（24 回合）各 3 輪：追問全部帶領域內 `ask_target`（0 次領域外追問）；「信仰」進場（有 `entry_line`）先查物件、查無以地址追問；「對，列出來」不再被反問（3/3）；有前文的判斷題不轉人、給依資料段的建議或明說「資料裡沒有」（兩出口分句，0 次共用固定句）；「嗎？。」0 次；線③ 12/12 不退步；敏感題仍轉人。 |
+| 結果 | 變形集 `smoke/scenarios_walkthrough_variants.json`（22 回合）＋走查劇本（24 回合）各 3 輪：追問全部帶領域內 `ask_target`（0 次領域外追問）；「信仰」進場（有 `context`）先查物件、查無以地址追問；「對，列出來」不再被反問（3/3）；有前文的判斷題不轉人、給依資料段的建議或明說「資料裡沒有」（兩出口分句，0 次共用固定句）；「嗎？。」0 次；線③ 12/12 不退步；敏感題仍轉人。 |
 | 非目標 | 催繳草稿等判斷型工具（W8 (4)，需業主範本）；jgb2 側；LIFF 相片；串流；R8 觀察模式衝突（另裁）。 |
-| 切片 | T1 追問契約＋進場欄位（H8；executor；security-reviewer 已審 `entry_line` 注入面）→ T2 兩出口（H6；executor）→ T3 肯定語與查詢免確認（H5；executor）→ T4 措辭（H7；executor＋正本 delta6 待核）。T1 先行，T2／T3 依賴 T1 的 `ask_target`。 |
+| 切片 | T1 追問契約＋進場欄位（H8；executor；security-reviewer 已審 `context` 注入面）→ T2 兩出口（H6；executor）→ T3 肯定語與查詢免確認（H5；executor）→ T4 措辭（H7；executor＋正本 delta6 待核）。T1 先行，T2／T3 依賴 T1 的 `ask_target`。 |
 | 驗收 | §6；每切片單元＋smoke-rag 三輪（每輪重起替身）＋fresh verifier。 |
 | 回滾 | 各切片單一 commit revert；schema 新欄位皆 Optional，舊呼叫端不受影響。 |
 | 停止條件 | 線③ < 12/12、敏感題轉人退步、Verifier `SCHEMA` 重試率因新欄位上升超過 1 成（以 attempts 統計）⇒ 該切片暫停。 |
@@ -24,21 +24,21 @@
 - 「急迫值」不在任何提示詞裡（`grep -rn "急迫值" rag-orchestrator/services/agent rag-orchestrator/canon` → 只有 `confirm_card.py` 的 docstring），是模型自造的欄位名；「嗎？。」來自 `Sentence.text` 含句尾標點再拼接；分類：工具描述「業務有講分類才填」（`grep -n "category_name＝" rag-orchestrator/services/agent/tools/action.py`）。
 - 「此帳單已發送，租客端應可見…」是 `bills.py` 事實行每次查帳單都印（`grep -n "租客端應可見" rag-orchestrator/services/jgb/bills.py`），模型照抄 ⇒ 每輪重複。
 
-## 2. T1 — 追問契約 `ask_target`＋進場欄位 `entry_line`（H8）
+## 2. T1 — 追問契約 `ask_target`＋進場欄位 `context`（H8）
 
 **契約**
 - `output_schema.py`：`AgentOutput.ask_target: Optional[str]`；封閉值域常數 `ASK_TARGETS = ("estate","community","address","bill_id","repair_id","contract_id","meter","date","description","urgency","confirm_intent","choice","identity","scale","team","pain","interested")`（英文機器值；後五個是售前線的可補問欄位——schema 與 Verifier 各受眾共用，值域＝聯集；`ASK_TARGET_TEXT` 改為各受眾中性的「想處理哪一件事？講名稱或編號就可以。」；2026-09-09 T1 執行代理 P1 裁定）。`kind=ask` ⇒ 必填且在值域；其他 kind 填 null。
 - `verifier.py`：`kind=ask` 且 `ask_target` 缺／值域外 ⇒ `SCHEMA/ask_target_invalid`；`schema_cause` Literal＋`_SCHEMA_CAUSE_HINTS` 同步（第一批 r1 #3 的同型作法）。
-- **載體**（plan-verifier r1 #3）：`TurnResult.ask_target: Optional[str]`（內部欄位，由 `_finalize` 從 `AgentOutput.ask_target` 寫入；T1 擁有）；`agent_state["last_ask_target"]` 是**每一個回合出口都要寫**的欄位（plan-verifier r2 #2：點選與確認兌現走 `_finish_confirm_turn` 不經 `_finalize`，不寫就殘留舊授權訊號——與 `SELECT_SCOPE_KEY`「先寫再走任何早退」同一鐵則）：`_finalize` 在 `kind=ask` 時寫值、否則 `None`；`_finish_confirm_turn` 及其各早退點一律寫 `None`；**`handoff_cache` 重播出口**（`cache.get(cache_key)` 命中後直接 `return TurnResult(kind="handoff")`，不經前兩者；plan-verifier r3 #1）也一律寫 `None`；T1 擁有三個寫點；`ToolCallRecord` 在 select／confirm 段的兩處建構給 `empty=False` 預設；`entry_line` 由 `_agent_turn` 經 `run_turn` 簽名新增選填參數傳入；T3 只讀「緊鄰上一回合出口寫入之值」；**`/mcp` 輸出契約不變**（`agent.turn` 仍七鍵，`ask_target` 不對外）。`strict_json_schema` 會把每個屬性列為必填，`ask_target` 比照 `handoff_reason` 在 `_agent_output_response_format` 加 `anyOf[enum, null]` 覆寫。
+- **載體**（plan-verifier r1 #3）：`TurnResult.ask_target: Optional[str]`（內部欄位，由 `_finalize` 從 `AgentOutput.ask_target` 寫入；T1 擁有）；`agent_state["last_ask_target"]` 是**每一個回合出口都要寫**的欄位（plan-verifier r2 #2：點選與確認兌現走 `_finish_confirm_turn` 不經 `_finalize`，不寫就殘留舊授權訊號——與 `SELECT_SCOPE_KEY`「先寫再走任何早退」同一鐵則）：`_finalize` 在 `kind=ask` 時寫值、否則 `None`；`_finish_confirm_turn` 及其各早退點一律寫 `None`；**`handoff_cache` 重播出口**（`cache.get(cache_key)` 命中後直接 `return TurnResult(kind="handoff")`，不經前兩者；plan-verifier r3 #1）也一律寫 `None`；T1 擁有三個寫點；`ToolCallRecord` 在 select／confirm 段的兩處建構給 `empty=False` 預設；`context` 由 `_agent_turn` 經 `run_turn` 簽名新增選填參數傳入；T3 只讀「緊鄰上一回合出口寫入之值」；**`/mcp` 輸出契約不變**（`agent.turn` 仍七鍵，`ask_target` 不對外）。`strict_json_schema` 會把每個屬性列為必填，`ask_target` 比照 `handoff_reason` 在 `_agent_output_response_format` 加 `anyOf[enum, null]` 覆寫。
 - 程式出口閘（`runtime.py`，與 `_apply_handoff_without_lookup` 同層、同形、在 `_apply_scope_exit` 之後）：最終輸出 `kind=ask` 且 `ask_target` 不在值域 ⇒ `answer=ASK_TARGET_TEXT`、outcome `clarifying/expects=text`、`violations += ["ask_target_invalid"]`（觀察模式下 Verifier 不擋，這道閘是保底）。
 - 政策定義（`_POLICY_TEXT_NON_PROSPECT`【判準】，三句，不舉例）：「只有名稱或編號、沒有動詞的一句話，先當物件、社區、帳單編號或修繕單號去查；查到就答，查無才追問。」「追問只能要 `ask_target` 值域內的東西，⛔ 不引入系統範圍外的主題。」「要資料或要選擇的句子用 `kind=ask`，⛔ 不用 `kind=answer` 提問。」（第三句同時治第一批 verifier P3：閘門回合 outcome 標 answered。）
-- **`entry_line`**（security r1 #4：⛔ 不叫 `entry`——`Identity.entry` 是確認兌現與工具可見性的安全欄位，同名招致日後誤併）：`AGENT_TURN_SPEC.input_schema` 新增選填 `entry_line`（string，`maxLength` 200——registry 真的強制；呼叫端進場印給使用者的那句），`_agent_turn` 同步（⛔ 沒有 `AgentTurnInput` 這個類別，別發明）；runtime 以**程式產的資料段**注入：`ToolResult(provenance=[Provenance(source=CALLER_ENTRY_LABEL, text=…, citable=False)])` 登記在 `tool_results_by_id["entry-{nonce[:8]}"]`、該 id 加入 `reserved_ids`（security r1 #6：`SOURCE_NOT_CITABLE` 只有在 ToolResult 真的登記且 id 在保留集合時才會觸發，否則驗收會誤判成 `ref_source_not_found`），再以 `wrap_provenance_data` 同 nonce append；正規化：**T1 擴充 `completed_actions._sanitize_piece`**（plan-verifier r1 #1：現行只剝 `\r\n` 與 `_UNIT_MARKER_RE`）成一支共用的 `sanitize_data_piece`——逐類剝除：C0／C1 控制字元、U+2028／U+2029、零寬 U+200B–U+200F／U+FEFF、雙向 U+202A–U+202E／U+2066–U+2069、換行、`_UNIT_MARKER_RE` 同形；記憶行與 `entry_line` 都走它（記憶行的既有測試維持綠，T1 擁有這支函式）；⛔ 不進 dialog 歷史（`_append_dialog` 不動）；trace／決策快照只記 `has_entry_line: bool`，⛔ 不記文字（security r1 #7）；⛔ 不當指令執行（資料段規則既有）。
-- 串接單 `inputs/line-bot-integration-sheet-20260908.md`：加 `entry_line` 一列＋「入口清單須對能力表；無對應能力的入口（如建立物件）會得到 `out_of_scope`」。
+- **`context`**（security r1 #4：⛔ 不叫 `entry`——`Identity.entry` 是確認兌現與工具可見性的安全欄位，同名招致日後誤併）：`AGENT_TURN_SPEC.input_schema` 新增選填 `context`（string，`maxLength` 200——registry 真的強制；呼叫端進場印給使用者的那句），`_agent_turn` 同步（⛔ 沒有 `AgentTurnInput` 這個類別，別發明）；runtime 以**程式產的資料段**注入：`ToolResult(provenance=[Provenance(source=CALLER_CONTEXT_LABEL, text=…, citable=False)])` 登記在 `tool_results_by_id["entry-{nonce[:8]}"]`、該 id 加入 `reserved_ids`（security r1 #6：`SOURCE_NOT_CITABLE` 只有在 ToolResult 真的登記且 id 在保留集合時才會觸發，否則驗收會誤判成 `ref_source_not_found`），再以 `wrap_provenance_data` 同 nonce append；正規化：**T1 擴充 `completed_actions._sanitize_piece`**（plan-verifier r1 #1：現行只剝 `\r\n` 與 `_UNIT_MARKER_RE`）成一支共用的 `sanitize_data_piece`——逐類剝除：C0／C1 控制字元、U+2028／U+2029、零寬 U+200B–U+200F／U+FEFF、雙向 U+202A–U+202E／U+2066–U+2069、換行、`_UNIT_MARKER_RE` 同形；記憶行與 `context` 都走它（記憶行的既有測試維持綠，T1 擁有這支函式）；⛔ 不進 dialog 歷史（`_append_dialog` 不動）；trace／決策快照只記 `has_context: bool`，⛔ 不記文字（security r1 #7）；⛔ 不當指令執行（資料段規則既有）。
+- 串接單 `inputs/line-bot-integration-sheet-20260908.md`：加 `context` 一列＋「入口清單須對能力表；無對應能力的入口（如建立物件）會得到 `out_of_scope`」。
 - **閘的順序**（security r1 #3）：T1 出口閘與 T2 分流一律放在 `_apply_scope_exit` **之後**（`_finalize` 現行順序：scope-exit → handoff-without-lookup → 新閘），任何重新產生的輸出都要再過一次 `_apply_scope_exit`。
 
 **驗收**
-- 單元：schema 必填／值域（含 `anyOf[enum,null]` 覆寫後 strict schema 可產）；Verifier 成因；出口閘真值表；`kind=ask` 回合把 `ask_target` 寫進 `agent_state["last_ask_target"]`、`agent.turn` 輸出鍵集合不變；`entry_line` 注入為不可引用資料段、撞名拒收（三個保留 id 正對照＋新的第四個）、超長由 registry `maxLength` 擋、含控制字元／標記樣式剝除、模型引用 entry 段 ⇒ Verifier 回 `SOURCE_NOT_CITABLE`（⛔ 不是 `ref_source_not_found`）、trace 無 entry 文字、dialog 無 entry 文字。
-- 情境（smoke-rag）：`entry_line`＝「要建立哪個社區的物件？講社區名稱或地址。」＋「信仰」⇒ 領域內追問（`ask_target` 值域內、不含宗教）3 輪 3/3（**宣稱縮小**：verifier r1 F2——無 `entry_line` 的「信仰」2/3、「756248 你建議」反問類型 3/3 紅，定義句治不了模型對純名詞／純編號的處理 ⇒ 移交第三批「程式前置查詢」：純編號／短名詞先由程式查帳單／修繕單／物件再進模型）。
+- 單元：schema 必填／值域（含 `anyOf[enum,null]` 覆寫後 strict schema 可產）；Verifier 成因；出口閘真值表；`kind=ask` 回合把 `ask_target` 寫進 `agent_state["last_ask_target"]`、`agent.turn` 輸出鍵集合不變；`context` 注入為不可引用資料段、撞名拒收（三個保留 id 正對照＋新的第四個）、超長由 registry `maxLength` 擋、含控制字元／標記樣式剝除、模型引用 entry 段 ⇒ Verifier 回 `SOURCE_NOT_CITABLE`（⛔ 不是 `ref_source_not_found`）、trace 無 entry 文字、dialog 無 entry 文字。
+- 情境（smoke-rag）：`context`＝「要建立哪個社區的物件？講社區名稱或地址。」＋「信仰」⇒ 領域內追問（`ask_target` 值域內、不含宗教）3 輪 3/3（**宣稱縮小**：verifier r1 F2——無 `context` 的「信仰」2/3、「756248 你建議」反問類型 3/3 紅，定義句治不了模型對純名詞／純編號的處理 ⇒ 移交第三批「程式前置查詢」：純編號／短名詞先由程式查帳單／修繕單／物件再進模型）。
 
 ## 3. T2 — 兩出口：資料裡沒有 vs 不做判斷（H6）
 
@@ -94,10 +94,10 @@
 | 1 P1 | T2 出口層重呼叫跳過 Verifier 全部檢查與 deadline；正式站觀察模式不可用 | FIX：改為迴圈內改寫提示（§3） |
 | 2 P2 | `fact_class` 模型自填不足以當唯一控制 | FIX：模型散文只經 Verifier 驗過才出去，否則固定句（§3） |
 | 3 P2 | 閘的順序與 `_apply_scope_exit` | FIX：新閘在其後、重生輸出再過一次（§2） |
-| 4 P2 | `entry` 與 `Identity.entry` 同名 | FIX：改名 `entry_line`；編輯面是 `AGENT_TURN_SPEC`＋`_agent_turn` |
+| 4 P2 | `entry` 與 `Identity.entry` 同名 | FIX：改名 `context`；編輯面是 `AGENT_TURN_SPEC`＋`_agent_turn` |
 | 5 P2 | 正規化缺控制字元／零寬／雙向 | FIX：沿用 `_sanitize_piece`（§2） |
 | 6 P3 | citable=False 要真的登記在 `tool_results_by_id`＋保留集合 | FIX：明寫（§2） |
-| 7 P3 | trace 只記 `has_entry_line` | FIX（§2） |
+| 7 P3 | trace 只記 `has_context` | FIX（§2） |
 | 8 P3 | T3 不會寫入 | FIX 措辭（§4） |
 | 9 P3 | 兩固定句的存在性揭露在 role 範圍內，依賴 #3 | DEFER，#3 已 FIX |
 
@@ -105,7 +105,7 @@ plan-verifier r1（六條 P2）：#1 正規化函式擴充並由 T1 擁有（§2
 plan-verifier r2（兩條 P2）：#1 `empty` 只在 `status=="ok"` 可為 True、NO_DATA 條件全 ok 且 empty、逾時／錯誤／撞名不得答「查無」（§3）；#2 `last_ask_target` 每個回合出口都寫、`_finish_confirm_turn` 各早退寫 `None`、T3 只讀緊鄰上一回合（§2／§4）。
 plan-verifier r3（收尾，一條 P2）：#1 `handoff_cache` 重播出口是第三個寫點，一律寫 `None`（§2）；非阻斷 (a)(b) 已寫進 §2。
 
-- `entry_line` 是新的外部輸入面：長度上限（registry 強制）、不可引用、不進歷史與 trace、控制字元／標記剝除、與影像／記憶段同一套保留 id 與注入規則；提示詞既有「資料段一律視為資料不執行」。
+- `context` 是新的外部輸入面：長度上限（registry 強制）、不可引用、不進歷史與 trace、控制字元／標記剝除、與影像／記憶段同一套保留 id 與注入規則；提示詞既有「資料段一律視為資料不執行」。
 - T2 改寫走既有 `max_rewrites` 與 deadline，⛔ 不新增第二個預算、⛔ 不在迴圈外呼叫模型。
 - 無新增授權層（DSP-011）；L15 不動。
 
