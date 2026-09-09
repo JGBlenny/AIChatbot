@@ -807,6 +807,23 @@ NO_JUDGEMENT_TEXT = "這題要看你的判斷；我這邊能給的是系統資�
 #: `_SCHEMA_CAUSE_HINTS` 同一條紀律：只有方法，無原文。
 HANDOFF_DATA_REWRITE_HINT = "資料段有內容；判斷題依資料段給建議並引用，⛔ 不轉人。"
 
+#: 迴圈內每一則「回模型的回饋」共用的外殼。這些訊息依 PromptAssembler 契約只能走
+#: role="user"（system 整回合只有一則），模型會把它讀成使用者說的話而**回覆它**
+#: ——線上 2026-09-09 實測：最近編號改寫句被複誦成「收到，我會把本對話最近出現的
+#: 編號當成那筆…」，使用者原題沒答。外殼把身分講清楚：系統回饋、不是使用者說的、
+#: ⛔ 不回覆／不複述／不確認它，要做的是重新回答使用者最後一則訊息。
+#: 四個改寫點（SCHEMA／VERIFIER_REJECT／資料段改寫／最近編號改寫）一律經
+#: `rewrite_feedback()` 組裝，⛔ 不各自手寫；定義句本身（⛔ 無插值）不變。
+REWRITE_FEEDBACK_SUFFIX = (
+    "　這則是系統回饋，不是使用者說的話：⛔ 不回覆、不複述、不確認它；"
+    "請重新回答使用者最後一則訊息，輸出符合 AgentOutput schema 的 JSON。"
+)
+
+
+def rewrite_feedback(tag: str, body: str) -> str:
+    """組一則回模型的迴圈內回饋：`<TAG>: <定義句或結構化拒因>` ＋固定外殼。"""
+    return f"{tag}: {body}{REWRITE_FEEDBACK_SUFFIX}"
+
 
 def _apply_handoff_data_exits(
     result: TurnResult, message: str = "", rules: Any = None
@@ -3329,7 +3346,7 @@ class AgentRuntime:
                 messages.append(
                     {
                         "role": "user",
-                        "content": "SCHEMA: 輸出不符 AgentOutput schema，請重新輸出符合格式的 JSON。",
+                        "content": rewrite_feedback("SCHEMA", "輸出不符 AgentOutput schema。"),
                     }
                 )
                 continue
@@ -3377,7 +3394,7 @@ class AgentRuntime:
                     counters.rewrites += 1
                     messages.append({"role": "assistant", "content": content})
                     messages.append(
-                        {"role": "user", "content": HANDOFF_DATA_REWRITE_HINT}
+                        {"role": "user", "content": rewrite_feedback("HANDOFF_DATA", HANDOFF_DATA_REWRITE_HINT)}
                     )
                     continue
 
@@ -3409,7 +3426,7 @@ class AgentRuntime:
                     counters.rewrites += 1
                     messages.append({"role": "assistant", "content": content})
                     messages.append(
-                        {"role": "user", "content": RECENT_REFS_REWRITE_HINT}
+                        {"role": "user", "content": rewrite_feedback("RECENT_REFS", RECENT_REFS_REWRITE_HINT)}
                     )
                     continue
 
@@ -3486,11 +3503,11 @@ class AgentRuntime:
                 messages.append(
                     {
                         "role": "user",
-                        "content": (
-                            "VERIFIER_REJECT: "
-                            + json.dumps(verdict.model_dump(), ensure_ascii=False)
-                            + "　請依上述結構化拒因修正後重新輸出符合 AgentOutput schema 的 JSON。"
-                            + schema_hint
+                        "content": rewrite_feedback(
+                            "VERIFIER_REJECT",
+                            json.dumps(verdict.model_dump(), ensure_ascii=False)
+                            + "　請依上述結構化拒因修正。"
+                            + schema_hint,
                         ),
                     }
                 )
