@@ -335,6 +335,21 @@ line-bot 側：拍照鍵每回合保留（部署中）；「建立帳單」格�
   - 緊急度二選一用打字問：契約層——`ask` 回合目前沒有 `quick_replies` 選項形狀（只有確認卡），line-bot 要按鈕需加 `expects=choice`＋選項（業主裁）。
 - **建議（第五批候選，未立 Plan）**：(a) 環境：`OPENAI_TIMEOUT_S=25`（SDK 逾時＋預設 2 次重試，讓掛住的呼叫在 60 s 內自救；runbook §20-2 加一行）＋ `agent_turn` log 加逐次模型呼叫毫秒（觀測性）；(b) `sensitive_patterns` 按受眾／引用豁免（pm 引資料段金額不擋）並量誤殺；(c) 資料在手轉人的出口改「列資料」而非「判斷」模板；(d) 有最近編號的零查詢回合先預查；(e) `ask` 回合的選項契約。
 
+## 1q. 照片線模型 gpt-4o → gpt-5.6-terra（2026-09-09 晚；業主裁「讀圖 4o 換 gpt-5.6-terra」）
+
+- 依據：gpt-4o 是 REST 影像辨識服務的程式預設被 W8 照片線繼承，從無量測（compose 預設甚至是 `gpt-4o-mini`）。實測：四張真實報修照走真實 `ImageRecognitionService`（gpt-5 參數路徑），terra 與 4o 分類逐張相同（漏水／門鎖／牆面；配電箱兩者皆判無損壞），信心 0.93–0.98 vs 0.0–0.9，延遲 2.4–5.8 s；線③ 21 會話 48 回合在 `IMAGE_RECOGNITION_MODEL=gpt-5.6-terra` 下 12/12 出卡、0 逾時、0 轉人（⚠️ 該劇本沒有帶照片的回合，只證明文字流不受影響；照片路徑證據＝上述四張）。
+- 線上：`.env` 一行（備份 `.env.bak-20260909`）、`up -d`、容器 `printenv` 確認 `gpt-5.6-terra`、暖機回合 6.8 s。程式仍是 `e0fbc6e4`（W9 未部署）。回退＝把備份蓋回再 `up -d`。
+- 文件歸納線（W9）另用 `DOCUMENT_EXTRACTION_MODEL` 預設 `gpt-5.6-luna`（合成收據／合約實測全對、抗注入、模糊圖全 null；每千頁 $1.76 vs 4o $17.3）。
+
+## 1r. W9 文件歸納（帳單憑證／合約副本）落地（2026-09-09 深夜；程式 HEAD `af85644b`，未部署）
+
+- 由來：業主「有帳單憑證歸納跟合約同本歸納嗎」→ 四層盤查皆無 →「幫我建」「我需要展示」→ 裁「上傳文件 AI 歸納；照片與 PDF」。Plan `inputs/plan-document-summary-demo-20260909.md` 第 5 稿（security-reviewer 23 條、plan-verifier 三輪 9 條全處置）→ 業主「派」。
+- 落地：U5 契約文件 `6d1d5de6`；U4 delta7 審核單 `b15fe2ab`（正本由 hook 擋、留單）→ 業主「五條採」→ 正本 `59e175e1`（G 兩細目＋D／E 三條例外句，version 2026-09-09.2；經 outline_gate 的 diff_report 閘）；U6 `7809101d`（pypdfium2==5.13.0、`Image.MAX_IMAGE_PIXELS`）；U3 `e9e20be3`（`sensitive_patterns` 受眾範圍制，規則 1.5.0）；U12 `fee4d09c`（`attachment_purpose`／`file_urls`、`fetch_image(max_bytes=)`、`prepare_document_turn`、`document_extract.py`、`doc-` 資料段排在使用者訊息前、W9-1 三道網、`verify(audience=)`）。fresh verifier CONFIRMED，F1（`confirm.request` 正本 `mutates_session=True` 漏在前兩道網、測試自備 spec 假綠）→ `f39214db` 判準併入 `mutates_session`＋負向對照。
+- 情境（smoke-rag＝本機 HEAD 映像＋`sitecustomize` 把 `files.local` 抓檔改讀本機合成件；真 luna 擷取＋真 gpt-5-mini 回合；`grounding_observe`）：② 合約 2 頁 PDF ✓（雙方／地址／租期／租金／押金／付款日／特約／簽署）；③ 注入圖 ✓（只抄欄位、無 `ZZ-INJECT-OK`、無工具無卡；正對照：同句當使用者訊息送出 ⇒ 答案含該字串）；④ 模糊圖 ✓ 固定句、`llm_calls=0`；⑤ 修繕照片線不受影響 ✓；**① 收據第一輪轉人**：trace 兩次 `ROUTE_NOT_ALLOWED`——售前導流白名單的電話正則咬到「交易序號 R2026081500042」→ `af85644b` 導流檢查同樣改受眾範圍制（規則 1.5.1 `route_check_audiences=["prospect"]`，缺鍵／缺值／未知照擋）→ 重跑 ① ✓ 14.5 s 欄位全對、未載明有標；追問「誰付的」請重傳（欄位不留會話，設計取捨）。agent+audit 2064。
+- 已知債（明列）：(a) `openai_cost_tracking.loop_id` NOT NULL＋FK `knowledge_completion_loops` ⇒ 照片線（W8 起）與文件線的成本 row **都寫不進去**（log「成本記錄寫入失敗：NotNullViolationError」，fail-soft）——S9-9 當時沒發現；要另立表或 nullable 遷移，另案；(b) 文件回合 `DocumentPageLimitExceeded` 在 `store.start()` 之後 ⇒ 留半開 session 列（同 TOOL_TIMEOUT 既有性質）；(c) 影像／完成動作／進場句三段仍在使用者訊息之後（L-W9-a）；(d) Pillow 浮動版（L-W9-b）；(e) 合成合約頁 luna 把「不得轉租」條款標 `instructions_found=true`——該旗標只做觀測不做控制。
+- 小範圍 verifier（`af85644b`）CONFIRMED：真值表 5 受眾狀態 × 3 句、缺鍵正對照六格全擋、反證 monkeypatch 兩測試紅、self_test 三新案吃到。附帶：**tenant 受眾同時被兩張表放寬**（`sensitive_patterns_audiences`／`route_check_audiences` 都只列 prospect，tenant 在封閉值域內 ⇒ 跳過）——tenant 目前不是 agent 路徑的啟用受眾（啟動 `audiences=[property_manager, prospect]`），先記待業主裁：要不要把 tenant 加進兩張清單。
+- 待部署：業主 push → 線上 pull → **build（新依賴）** → up → 暖機 → tools/list 見兩新鍵；line-bot 兩個 LIFF 入口帶 `attachment_purpose=document`（契約表已列）。
+
 ## 2. demo 處理（這次就做，本機可驗）
 
 | # | 事 | 狀態 | 證據 |
