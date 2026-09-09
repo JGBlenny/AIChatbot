@@ -289,6 +289,13 @@ W4b（定義層、⛔ 不寫例子）：`jgb2.action.bill_due_extend` descriptio
   - r2（模式生效）：第二批 12/13、走查 10/12、線③ 12/12 外洩 0；**極性誤殺**：命中 12、幾乎全假陽性（裸詞表對稱整段比對；「無法改到 9/05」對「繳費期限 9/01」），7 回合預算耗盡轉人、p95 13→17 s ⇒ 停止條件命中 ⇒ **分流**：`VerifierVerdict.polarity_source` term（觀察）／pair（照擋）`bb437dd4`。另抓 U3 keyword 把 estates 查無哨兵當「有查到」注入（「延三天」被答成查無物件）⇒ `c81779bb`。
   - r3（HEAD `c81779bb`）：第二批 12/13（紅＝無進場句「信仰」，已縮小宣稱）、走查 10/12（紅＝一回合 60 s 門面逾時、第二件報修問急迫）、變形集 22 回合、線③ **12/12、外洩 0、轉人 0、p50 6.1／p95 11.9 s**；四組 log **0 次轉人**；attempt 73 筆阻擋只有 `SENSITIVE_TOPIC` 2（敏感探針，正確）、觀察類 UNCITED 36／QUOTE_NOT_COVERING 52／POLARITY:term 18；756248 逾期回答 7/7 正確、「未逾期」0（唯一一句是 769249 待發送，屬實）。verifier（第三批）派出中。
 
+## 1m. 部署（2026-09-09 16:xx；main＝feat/agentic-mcp＝`943cec20`，程式 HEAD `c81779bb`；三批全部）
+
+- 步驟：本地 ff main → push（業主跑）→ 線上 pull → `.env` 加 `AGENT_VERIFIER_MODE=grounding_observe`、`AGENT_VERIFIER_OBSERVE_ONLY=false` → `docker-compose build/up` → log 見 `AGENT_VERIFIER_MODE=grounding_observe`、`Application startup complete`；磁碟 13 GB 剩。⚠️ `✅ agent runtime 已初始化` 那行這次沒出現在 docker logs（fine_index ready 兩行有、`/mcp` 正常服務）——疑 stdout 緩衝，runbook §20-3 的預期行改以 `/mcp` 實打為準。
+- 公開 MCP 實打（線上 key 由伺服器 `/home/ec2-user/.curl-mcp-key`——⚠️ 是 curl 設定檔格式 `header = "X-API-Key: …"`，不是裸 key——經 stdin 管進 harness，不落地）：H1「延三天」⇒ 不出卡、問要延到哪天 ✓；「75628」⇒ 請確認編號、不轉人 ✓；建單→「剛剛那張單號」⇒ 12346 ✓→「改描述」⇒ 已送出指路 ✓；「你們抽成幾成」⇒ 轉人 ✓。冷啟第一回合 16.6 s，其餘 3–11 s。殘留：第一題「是不是逾期」答了狀態與期限但沒講「已逾期 8 天」（模型漏引那行；不算講反）。
+- 第四批候選：極性 pair 改回合層級比對（verifier F1：模型引別行時抓不到「尚未逾期」）；純編號嵌在句中的前置查詢（「756248 你建議」）；「結束上一個版」＝業主用語待釐清。
+- 給 line-bot：`entry_line` 欄位可接（串接單已更新）；請重跑 Playwright 三線；`.env` 新旗已上。
+
 ## 2. demo 處理（這次就做，本機可驗）
 
 | # | 事 | 狀態 | 證據 |
