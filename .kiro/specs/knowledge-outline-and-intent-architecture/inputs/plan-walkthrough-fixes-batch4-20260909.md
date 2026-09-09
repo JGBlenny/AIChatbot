@@ -1,4 +1,4 @@
-# Plan：走查回修第四批（V1–V5）— 2026-09-09（第 3 稿：security-reviewer r1 八條＋plan-verifier r1 兩條已處置）
+# Plan：走查回修第四批（V1–V5）— 2026-09-09（第 4 稿：security-reviewer r1 八條＋plan-verifier r1 兩條＋r2 收尾兩條全數 FIX；審查回合已達上限）
 
 > 來源：line-bot 第二輪走查驗收（帳本 §1n；39 屏 0 轉人）——好了 H3／H4，半好 H1／H5，H2 變形（退回開場白），新冒出三件：記憶段被當該戶全部紀錄、`context` 開場白被當使用者的話、首句 60 s 逾時。
 > 紀律同前三批：契約／schema／狀態機／出口閘門／正本定義層，⛔ 不寫特例；提示詞只寫定義不舉例；程式一筆、文件一筆；⛔ 不 push。
@@ -9,9 +9,9 @@
 |---|---|
 | 結果 | line-bot 第二輪劇本重放（現場報修 11 步、逾期帳單 10 步、連續對話 14 步；帶 `context`）：「這戶還有沒有別的單」查修繕單並含 8591（3/3）；「要不要打電話」「上次報修修好了沒」有前文時依前文答或查、⛔ 不退回開場白（3/3）；「延三天」原到期日已過 ⇒ 卡上新到期日＝今天＋3（3/3）；restart 後「我剛剛問了什麼」⇒ 說使用者還沒說過話、⛔ 不把畫面提示當使用者的話（3/3）；追問不附捏造的範例名稱；線③ 12/12；0 轉人。 |
 | 非目標 | 催繳草稿工具；「建立帳單」格名與能力不對稱（line-bot 側）；換成員身分抓全量替身；極性回合層級比對（另列 V6 候選）。 |
-| 切片 | V1 記憶段語義（executor；只動 `completed_actions.py`）→ V2 有前文的零查詢（executor；`runtime.py`）→ V3 延 N 天基準（security-executor；`confirm_card.py`／`tools/confirm.py`／`tools/action.py`）→ V4 畫面提示措辭＋**全部政策句**（executor；`agent_rules.py` **獨佔**，含 V1 那一句；plan-verifier r1 #1）→ V5 冷啟逾時（runbook）。V1／V3／V4 檔案互斥可並行；V2 依賴 V1 的記憶段標題。 |
+| 切片 | V1 記憶段語義（executor；只動 `completed_actions.py`＋其測試）；V2 有前文的零查詢＋**畫面提示／空會話措辭**（executor；`runtime.py` **獨佔**，含 §5 的前綴與 `EMPTY_SESSION_TEXT`；plan-verifier r2 #1）；V3 延 N 天基準（security-executor；`confirm_card.py`／`tools/confirm.py`／`tools/action.py`＋`runtime.py` **只改一段註解**，見 §4）；V4 全部政策句（executor；`agent_rules.py` **獨佔**，含 V1／V2 的定義句）；V5 冷啟逾時（runbook）。檔案兩兩無交集者可並行：V1 ∥ V3 ∥ V4；V2 在 V1 併回後、V3 併回後再派（V3 動 `runtime.py` 一段註解）。 |
 | 驗收 | §6：單元 → smoke-rag（`grounding_observe`）第二輪劇本 3 輪＋線③ → fresh verifier → 部署。 |
-| 回滾 | 各切片單一 commit revert；`agent_rules.py` 只由 V4 動，revert V4 即回復全部第四批政策句。 |
+| 回滾 | 各切片單一 commit revert；`agent_rules.py` 只由 V4 動、`runtime.py` 程式只由 V2 動（V3 只改註解），revert 一片即回復該片全部改動。 |
 | 停止條件 | 線③ < 12/12；轉人 > 0（非敏感）；p95 > 15 s。 |
 
 ## 1. 事實（對碼）
@@ -36,13 +36,14 @@
 
 ## 4. V3 — 延 N 天基準（security-executor）
 
+- **不變量改寫**（plan-verifier r2 #2）：`confirm_card.py` 檔頭「一個判定、一個時鐘、兩個呼叫點」與 `runtime.py` 兌現閘註解「⛔ `action.py` 不再加第二套判定」是 S1 時的敘述；V3 把它擴為「**一個時鐘（`bills._today()`）、三個呼叫點**：出卡（`confirm.request`）、兌現閘（runtime）、寫入形狀驗算（`action._validated_payload`）」——同一 commit 內改掉這兩段註解，⛔ 不留舊敘述；`action.py` 以 `from services.jgb import bills` 在呼叫點取 `bills._today()`（S1 同法）。
 - 定義：`days` 的基準＝「原到期日與今天較晚者」；`confirm_card.render(action, payload, *, today: Optional[date] = None)`——**關鍵字參數、⛔ 不從 payload／args 讀任何 `today` 鍵**（security r1 #2：payload 是模型控制的）；驗算改為 `max(before, today) + days == after`；**兩個呼叫點都要傳 `bills._today()`**：`confirm.request`（出卡）與 `action._validated_payload`（兌現，security r1 #1：兌現端沒帶 today 會在 token 已燒之後 `_invalid_input()`，每張 V3 卡都兌現不了）；`today` 缺省只給測試與舊呼叫端用（維持舊驗算）；⛔ 不得以放寬 `days` 驗算來「解決」（它與 `payload_digest` 一起是卡↔payload 的綁定）。工具描述同步定義：「延後天數從原到期日或今天較晚的一天起算；算出來的新到期日一定在今天之後。」（並改掉舊句「必須等於 date_expire_before 往後加上 days 天」）；S1 的 `not_before_today` 閘不變（縱深）；起算日那一行只在既有 `_render_bill_due_extend` 分支內加，⛔ 不在外面加 action 名判斷。
 - 卡上加一行「起算日：YYYY/MM/DD」（決定性，讓「延後 11 天」那種數字不再讓人遲疑）。
 - **跨午夜規則**（plan-verifier r1 #2：token TTL 600 s 可能跨一個午夜，兌現端若用當日時鐘做嚴格等式會 `_invalid_input()`）：兌現端 `_validated_payload(today=兌現日)` 的驗算改為「等式對 `today` **或 `today − 1 天`** 任一成立即通過」（單一決定性規則：TTL < 24 h ⇒ 出卡日只可能是兌現日或前一天；⛔ 不是特例分支）；S1 `not_before_today` 閘仍以兌現當日新時鐘檢查（縱深）。出卡端維持嚴格等式（只有一個 today）。
 - payload 若帶 `today` 鍵 ⇒ **一律 `INVALID_INPUT`**（render 拒未知鍵；plan-verifier 註記：二擇一固定為拒絕）。
 - 驗收：單元（before < today ⇒ 基準 today；before ≥ today ⇒ 基準 before；缺 today ⇒ 舊行為；閘門仍擋 after < today；**出卡→兌現整鏈**：before 9/01、today 9/09、days 3、after 9/12 的卡在 `confirm.request` 出卡且在兌現端通過 `_validated_payload`、寫入成功；**跨日案例**：同一張卡、兌現日 9/10 ⇒ 通過（today−1 成立）；兌現日 9/11 ⇒ `_invalid_input()`（已超過 TTL 語義，正對照）；payload 帶 `today` 鍵 ⇒ `INVALID_INPUT`）；情境：756248（到期 9/01、今天 9/09）「延三天」⇒ 出卡、新到期日＝今天＋3、起算日＝今天；3/3。
 
-## 5. V4 — 畫面提示與空會話措辭（executor）
+## 5. V4 — 畫面提示與空會話措辭（**程式部分歸 V2**、政策句歸 V4；plan-verifier r2 #1）
 
 - `context` 資料段文字加固定前綴「畫面提示（呼叫端顯示給使用者的，不是使用者說的話）：」——**先 `sanitize_data_piece` 再加前綴**，前綴是常數、不含任何呼叫端輸入（security r1 #7）；`EMPTY_SESSION_TEXT` 改「這段對話裡使用者還沒有說過話。」；政策定義兩句：「畫面提示與開場句不是使用者的問題，⛔ 不當成使用者說過的話回述。」「追問時 ⛔ 不附自行編造的範例名稱或編號；要舉就用本對話或查詢結果裡出現過的。」
 - 驗收：單元（前綴、非引用）；情境：restart 後「我剛剛問了什麼」⇒ 說使用者還沒說過話；「基隆溫馨一人宅套房」單獨一句 ⇒ 認作物件（走查詢或出卡），追問不出現「A棟302」類捏造例；3/3。
@@ -78,3 +79,4 @@
 | 8 — | 通用規則 | 起算日只在既有 render 分支內；`CONFIRM_FIELD_ATTRS` 不動（§4） |
 
 plan-verifier r1（兩條 P2）：#1 `agent_rules.py` 由 V4 獨佔、V1 政策句併入 V4（§0／§2）；#2 兌現端跨午夜規則「today 或 today−1」＋跨日測試（§4／§9 #3）。
+plan-verifier r2（收尾，兩條 P2）：#1 V4 的 `runtime.py` 改動（前綴、空會話句）併入 V2、V4 只留 `agent_rules.py`（§0／§5）；#2 V3 同 commit 改寫「一個時鐘、兩個呼叫點」為三個呼叫點的註解（§4）。
