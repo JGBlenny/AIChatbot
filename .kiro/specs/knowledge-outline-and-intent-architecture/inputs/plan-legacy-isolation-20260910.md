@@ -1,7 +1,8 @@
-# Plan：舊鏈隔離與共用詞彙歸位（2026-09-10；第 3 稿）
+# Plan：舊鏈隔離與共用詞彙歸位（2026-09-10；第 4 稿）
 
 **審查歷程**：第 1 稿 → security-reviewer 八條（處置見 §7）→ 第 2 稿 → plan-verifier **REVISE** 八條
-（2 BLOCKER／4 MAJOR／2 MINOR，處置見 §8）→ 本稿。
+（2 BLOCKER／4 MAJOR／2 MINOR，處置見 §8）→ 第 3 稿 → 收尾複審再判 **REVISE**
+（1 BLOCKER／2 MAJOR／3 MINOR，處置見 §9）→ 本稿。**⛔ 已達兩輪 REVISE 上限，不再送審；§9 逐條處置後交業主裁決。**
 **基準 HEAD**：`1ef9b68e`（main＝feat；⛔ 第 2 稿誤寫 `d1e46afb`，已更正）。**分支**：`feat/agentic-mcp`。
 **上位 spec**：`.kiro/specs/agentic-mcp-orchestration`（需求 12.1「agent 路徑不呼叫的舊鏈符號」）。
 **⛔ 本 Plan 只含 S1a／S1b／S2；砍舊鏈（S3）不在範圍**，理由見 §5。
@@ -35,14 +36,32 @@ scratchpad 的腳本，且用的分桶算法本身有缺陷（見 §8 B1）。**
 
 ```
 新線集合   := services/agent/**  ∪  {routers/agent_entry.py}          # 宣告
-新線閉包   := reach(新線集合)                                          # 不變量 35 的左邊
+新線閉包   := reach(新線集合)
 舊線進入點 := {routers/chat.py, routers/platform_sop.py, routers/intents.py,
               routers/suggested_intents.py, services/sop_orchestrator.py}
 舊線可達   := reach(舊線進入點)
 第四桶     := 執行期耦合帳（見 1.3），人工維護、獨立檔
-舊線獨有   := 舊線可達 − 新線集合 − 新線閉包 − 第四桶                  # 不變量 35 的右邊，也是上檔頭的集合
+舊線獨有   := 舊線可達 − 新線集合 − 新線閉包 − 第四桶                  # S1a 產清單時用
 共用       := 舊線可達 ∩ 新線閉包 − 第四桶
 ```
+
+### ⛔ 不變量 35 的兩邊（BLOCKER 1 的處置，第 3 稿的致命缺陷）
+
+第 3 稿把兩邊寫成同一次計算的兩個輸出，而右邊已顯式扣掉左邊
+⇒ `新線閉包 ∩ 舊線獨有 ≡ ∅`，**恆真**。正對照在該定義下也永遠跑不出 FAIL：
+植入的 `sop_orchestrator` 會被吸進左邊、同時從右邊扣掉。這與 §3.4 指出的
+不變量 29「綠但瞎」是同型病灶，只是發生在我自己的檢查器上。
+
+**修正後的定義**：
+
+```
+不變量 35 的左邊 := reach(新線集合)                        # audit 當下即時算
+不變量 35 的右邊 := scripts/audit/data/legacy_only.txt      # S1a 產出、主執行緒核可、⛔ 進版控凍結
+不變量 35        := 左邊 ∩ 右邊 = ∅
+```
+
+**⛔ audit 模式只比對、不改寫凍結清單。** 重算清單需另一個顯式旗標
+（`--regenerate`）且必須重走 §1.5 的核可流程。⛔ 檢查器不得在 audit 路徑上自我對帳。
 
 `reach()` 的解析規則：`ast.walk` 整棵樹（函式內 import 大量存在，`mcp_facade` 約 30 處）；
 處理 `from <套件> import <子模組>`（如 `from services.agent.tools import action as action_tools`、
@@ -54,8 +73,9 @@ scratchpad 的腳本，且用的分桶算法本身有缺陷（見 §8 B1）。**
 - 檔案：`scripts/audit/checks/agent_import_closure.py`（⛔ 不是 `scripts/audit/` 根，比照既有 13 支 checks）。
 - 註冊進 `scripts/audit/check_invariants.sh`，比照不變量 33／34 的寫法：
   先跑 `--self-test`，自測不過即印「檢查器本身失效，其 PASS 不可信」並 FAIL。
-- 輸出四份清單到 `scripts/audit/data/`：`legacy_only.txt`、`shared.txt`、`agent_line.txt`、
-  `runtime_coupled.txt`，各檔一行一模組、排序固定。
+- 四份清單落 `scripts/audit/data/`：`legacy_only.txt`、`shared.txt`、`agent_line.txt`、
+  `runtime_coupled.txt`，各檔一行一模組、排序固定、**進版控**。
+  ⛔ 只有 `--regenerate` 會寫這些檔；audit 路徑一律唯讀比對。
 
 ### 1.3 第四桶＝執行期耦合帳（BLOCKER 2 的處置）
 
@@ -79,12 +99,19 @@ scratchpad 的腳本，且用的分桶算法本身有缺陷（見 §8 B1）。**
 1. 檢查器 `--self-test` 通過。
 2. **負對照（BLOCKER 1 的處置）**：`legacy_only.txt` 中 ⛔ 不得出現任何 `services/agent/**`
    或 `routers/agent_entry.py`；出現即 FAIL。
-3. **正對照**：`legacy_only.txt` 必須含 `services/sop_orchestrator.py`（已知必然的舊線模組）；
-   它若沒中，就是算法或路徑壞了，不是「舊線很乾淨」。
+3. **正對照兩條**（MINOR 5 的處置：只驗進入點種子測不到遞移與解析形狀）：
+   - ① `legacy_only.txt` 必須含 `services/sop_orchestrator.py`（進入點種子；驗路徑正規化沒壞）。
+   - ② 必須含一個**只能經遞移邊到達、且其中一段是函式內 import 或 `from <套件> import <子模組>`**
+     的已知舊線模組（執行者從 S1a 的實算輸出裡挑一個，記進 commit message）。
+     **反向自測**：把 `reach()` 改回只走 `tree.body` 時該模組必須從清單消失。
+   它們若沒中，就是算法或解析壞了，不是「舊線很乾淨」。
 4. **清單交主執行緒核可才進 S1b。** 差異處置門檻：清單若含任何我判斷不該在裡面的模組 ⇒
    停下改算法，⛔ 不得先上檔頭再說。
 
-**S1a 非範圍**：⛔ 不加任何檔頭、⛔ 不改任何既有檔（只新增檢查器、清單、`check_invariants.sh` 註冊行）。
+5. **`make audit` OVERALL PASS**（MINOR 6 的處置：S1a 若動了共用 audit 閘門，收案就得證明閘門沒壞）。
+
+**S1a 非範圍**：⛔ 不加任何檔頭、⛔ 不改任何既有檔。只新增檢查器與四份清單；
+`check_invariants.sh` 的註冊行**留到 S1b**（S1a 併回後 audit 閘門維持原狀，⛔ 不進未定義狀態）。
 
 ---
 
@@ -104,6 +131,10 @@ scratchpad 的腳本，且用的分桶算法本身有缺陷（見 §8 B1）。**
   `from services.sop_orchestrator import SOPOrchestrator`；② 暫時在 `routers/agent_entry.py` 加同一行。
   兩條都必須 FAIL 並印出違規邊；還原後回綠。⛔ 少跑任一條，S1b 不得收案。
 - golden 28 條逐位相同。
+- **檔頭覆蓋率判定（MAJOR 3 的處置：S1b 的主交付原本無人驗）**：逐列讀 `legacy_only.txt`，
+  每個檔案都必須含統一檔頭字串與 `.claude/MAP.md#legacy-rest-chat` 指標，**命中數＝清單行數、缺 0**。
+  **負對照**：清單外的檔案不得帶該檔頭。
+  **反向自測**：刻意移除任一檔頭，該判定必須 FAIL。
 
 ---
 
@@ -146,14 +177,30 @@ scratchpad 的腳本，且用的分桶算法本身有缺陷（見 §8 B1）。**
 
 ### 3.3 引用同步集合（MAJOR 3 的處置）
 
-**定義**（可重跑）：
+**⚠️ 第 3 稿此節寫「32 處逐一改」是錯的**（MAJOR 2）：那個集合掃進了不能動的東西——
+`services/agent/mcp_facade.py` 的 `_app_state(deps, "conversational_engine")` 是
+**`app.state` 屬性名的字串字面量**（由 `app.py` 掛上去），改它＝執行期 AttributeError；
+同檔還有 `app.state.conversational_engine` 的散文兩處；`state_store.py` 的散文指的是
+`get_state`／`_save` 等**沒有被搬走**的方法。`presales_gate` 側同理有大量指向**留在原地**符號
+（三支 `build_*`、`extractive_enabled` 等）的散文，它們沒有「新出處」。
+
+**修正後的集合定義**（可重跑）：
 ```
 grep -rn "presales_gate\|conversational_engine" rag-orchestrator/services/agent rag-orchestrator/routers/agent_entry.py
 ```
-扣掉 import 述句後的散文命中（現況 32 處，含 `agent_rules.py`、`question_sensitivity.py`、
-`output_schema.py`、`confirm_card.py`、`runtime.py`、`tools/handoff.py`、`tools/registry.py`、
-`verifier.py` 檔頭那句「只 import `presales_gate`／`conversational_config`」），**逐一改成新出處**。
+的命中中，**只有指涉本片實際搬走的符號者才改**——即 §3.1 的 7 個與 §3.2 的 5 個。
+
+**⛔ 明列不動的排除項**：
+- `app.state` 的鍵字串（`_app_state(deps, "conversational_engine")`）與 `app.state.conversational_engine`。
+- 指涉未搬符號的散文（三支 `build_*`、`extractive_enabled`、`presales_threshold`、
+  `get_state`／`_save`／`_start`／`_close` 等引擎方法）。
+
+**必改的**：`services/agent/verifier.py` 檔頭那句「只 import `presales_gate`／`conversational_config`」
+（S2 後字面為假），以及其他確實指涉那 12 個符號出處的散文。
 `.kiro/specs/agentic-mcp-orchestration/design.md` 的紅線清單同步。
+
+**驗收**：`git diff` 中 `mcp_facade.py`／`state_store.py` **不得出現任何
+`"conversational_engine"` 字串字面量的變更**；golden 28 條逐位相同。
 
 **舊線側的具名例外**：`routers/chat.py` 那句
 「⚠️ 本 Literal 的值域必須與 `services/presales_gate.py:HandoffReason` 逐值相同」
@@ -175,9 +222,14 @@ grep -rn "presales_gate\|conversational_engine" rag-orchestrator/services/agent 
 
 ### 3.5 清單更新（BLOCKER 2 的處置）
 
-S2 拆掉 `tools/confirm.py`／`session.py` 對 `conversational_engine` 的兩條 import 邊後，
-它會從「共用」掉出來。**處置寫死：把它加進 `runtime_coupled.txt`（第四桶），
-⛔ 不得加進 `legacy_only.txt`、⛔ 不得上檔頭。** 檢查器的「同一模組不得出現在兩份清單」自我一致性判定會擋住做錯。
+⚠️ 第 3 稿此節說「它會從共用掉出來 ⇒ 加進第四桶」是第 2 稿的殘留敘述（MINOR 4）：
+依 §1.1 的 `共用 := 舊線可達 ∩ 新線閉包 − 第四桶`，`conversational_engine` 在 S1a 當下
+就**只出現在 `runtime_coupled.txt`**，從來不在 `shared.txt` 裡。照字面執行會重複登記。
+
+**修正後的處置**：S2 拆掉 `tools/confirm.py`／`session.py` 那兩條 import 邊之後，
+`shared.txt` 不再出現該模組屬**預期**；`runtime_coupled.txt` 的首筆登記**維持不變、⛔ 不重複登記**。
+**驗收**：S2 後 `runtime_coupled.txt` 中 `services/conversational_engine.py` 恰一列。
+檢查器的「同一模組不得出現在兩份清單」自我一致性判定仍在，擋住把它誤加進 `legacy_only.txt`。
 
 ### 3.6 S2 驗收
 
@@ -204,8 +256,10 @@ S2 拆掉 `tools/confirm.py`／`session.py` 對 `conversational_engine` 的兩�
 | S1b | 同 A（S1a 核可後續作） | worktree A | **S1a 清單經主執行緒核可** |
 | S2 | `executor` | worktree B | **S1a＋S1b 併回** |
 
-⛔ 派工 brief 必含：不得 `git stash`；不得讀 `.env`；不得 push；不得改 `services/agent/runtime.py`
-以外的舊線邏輯。
+⛔ 派工 brief 必含：不得 `git stash`；不得讀 `.env`；不得 push；
+**只准動 §3.1／§3.2 列出的 import 與 re-export，⛔ 不得改任何舊線邏輯**
+（第 3 稿此處誤寫成「不得改 `services/agent/runtime.py` 以外的舊線邏輯」——`runtime.py` 是新線，
+照字面讀反而像是允許改它裡面的邏輯，MINOR 6）。
 
 **停止門檻**（觸發即停下交主執行緒，並**記錄已排除的假設**）：
 - golden 出現任何位元差異且 30 分鐘內無法歸因為「搬家以外的行為改變」。
@@ -287,3 +341,23 @@ S2 拆掉 `tools/confirm.py`／`session.py` 對 `conversational_engine` 的兩�
 `routers.agent_entry` 確在 legacy-only、`services.agent.shadow` 等四個在「兩邊皆不可達」桶）；
 F4-a 的 `state_store.py` 轉呼四個引擎方法；F2 的三支 `build_*` 在 `services/agent/**` 零 import
 （正對照：`FactClass` 同一支 grep 命中三檔以上）；F3 的 `CONVERSATIONAL_FORM_ID` 零使用點。
+
+## 9. 收尾複審處置表（第 3 稿 → 第 4 稿；⛔ 已達兩輪 REVISE 上限，本稿不再送審）
+
+| 編號 | 嚴重度 | 內容 | 處置 |
+|---|---|---|---|
+| C1 | **BLOCKER** | 不變量 35 兩邊出自同一次計算、右邊已扣掉左邊 ⇒ **恆真**；兩條正對照在數學上跑不出 FAIL | **FIX**：§1.1 新增「不變量 35 的兩邊」——右邊改為 S1a 核可後**進版控凍結**的 `legacy_only.txt`；audit 路徑只比對、重算需 `--regenerate` 並重走核可。⚠️ 我自行複核過此推導成立，是我自己的缺陷 |
+| C2 | MAJOR | §3.3「32 處逐一改」掃進 `_app_state(deps, "conversational_engine")` 字串字面量（改了＝執行期 AttributeError）與指涉未搬符號的散文 | **FIX**：§3.3 集合收斂為「只改指涉本片實際搬走的 12 個符號者」＋明列排除項＋加 diff 驗收。⚠️ 我自行重驗 `mcp_facade.py` 確有該字面量 |
+| C3 | MAJOR | S1b 主交付（上檔頭）無任何驗收條款證明做完 | **FIX**：§2 驗收加檔頭覆蓋率判定（命中數＝清單行數、缺 0）＋負對照＋反向自測 |
+| C4 | MINOR | §3.5 殘留第 2 稿敘述，照字面會重複登記 | **FIX**：§3.5 改寫，首筆登記維持不變 |
+| C5 | MINOR | 正對照選了進入點種子，測不到遞移與解析形狀 | **FIX**：§1.5 第 3 點加第二條正對照（遞移＋函式內／子模組 import）＋反向自測 |
+| C6 | MINOR | 派工約束把 `runtime.py` 寫成舊線；S1a 動 audit 閘門卻無 `make audit` 驗收 | **FIX**：§4 改寫約束；§1.5 加第 5 條驗收，註冊行改留到 S1b |
+
+**收尾複審獨立核可、⛔ 不列缺陷的兩點**：
+① §3.3 對 `routers/chat.py` 那句註解「不動」的判斷**正確**——逐名 re-export 後
+`presales_gate.HandoffReason` 是模組屬性、綁到同一個 enum 物件，值域命題仍為真。
+② 擁有權與工作樹可操作，S1a→S1b 同 worktree 續作、S2 另一 worktree，無並行寫入重疊；
+§3.6 第 4／5 點的判準與正對照皆成立。
+
+**現況**：六條全部 FIX 完畢，但**本稿未經任何獨立審查者蓋章**（兩輪上限已達，依規矩不自動再送）。
+⇒ 交業主裁決：(a) 就這樣派工；(b) 授權再跑一輪收尾複審；(c) 縮小範圍（例如只做 S1a＋S1b、S2 另案）。
