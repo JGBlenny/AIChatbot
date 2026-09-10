@@ -641,8 +641,8 @@ def _full_registry(deps):
 
 async def _seed_conversation_row(pool, row_key):
     """`session.slots.set` ⛔ 不建列 ⇒ 先以引擎開一列 COLLECTING 會話。"""
-    await _engine(pool)._start(row_key, "anonymous", VENDOR_A, "agent:prospect",
-                               role_id=None)
+    await _engine(pool).start(row_key, "anonymous", VENDOR_A, "agent:prospect",
+                              role_id=None)
 
 
 @pytest.mark.req(_REQ_29)

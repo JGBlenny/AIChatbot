@@ -198,55 +198,12 @@ EMPTY_IOT_MANUFACTURERS_FACTS = (
     "請先至「IoT 裝置」頁面綁定廠商帳號。")
 
 
-def payment_not_reflected_facts_adapter(resolved_logs, context: Mapping[str, Any]
-                                        ) -> Dict[str, Any]:
-    """R-12 的 proposed adapter —— **EMPTY_ADAPTER_REQUIRED**。
-
-    ⚠️ 實證：`_diagnose_payment_not_reflected([])` → 「以下是此帳單的付款交易紀錄：\n」
-    （**退化**：只剩空標題）⇒ 空態必須由 binding 攔下。
-    ⛔ **不得**改呼叫 `diagnose_payment_logs(logs, question)` 來重用空態文字（違反 F-C1）。
-    """
-    logs = resolved_logs or []
-    if not logs:
-        return {"outcome": "FACTS", "grounding_facts": EMPTY_PAYMENT_LOGS_FACTS,
-                "empty_input": True}
-    from services.jgb.payments import _diagnose_payment_not_reflected
-    return {"outcome": "FACTS", "grounding_facts": _diagnose_payment_not_reflected(logs),
-            "empty_input": False}
+# ⚠️ 2026-09-11 舊鏈退役：`payment_not_reflected_facts_adapter` 與
+# `auto_pay_failure_facts_adapter` 已刪。兩者都**從未 register()**，且其唯一依賴
+# `services/jgb/payments.py` 隨舊 REST 對話鏈一併移除 ⇒ 留著就是指向不存在模組的死碼。
+# ⛔ 若日後要復活這兩條診斷，先確認 jgb2 付款診斷邏輯的新出處，不要照抄舊實作。
 
 
-def auto_pay_failure_facts_adapter(resolved_logs, context: Mapping[str, Any]
-                                   ) -> Dict[str, Any]:
-    """R-16 的 proposed adapter —— **EMPTY_ADAPTER_REQUIRED**（業主裁定 2026-08-31）。
-
-    ## 為什麼需要它（實測，⛔ 不憑印象）
-
-    ```text
-    _diagnose_auto_pay_failure([]) →
-      「自動扣款相關紀錄：\n\n\n自動扣款失敗可能原因：\n• 信用卡授權已過期…」
-    ```
-    ⚠️ **零筆紀錄卻列出失敗原因** ⇒ 在沒有事件的前提下宣告事件成因，比 R-12 的退化
-    （只剩空標題、⛔ 未做因果斷言）更重。
-
-    ## F-C22 — EMPTY ADAPTER EXTENDS REVIEWED BRANCH DOMAIN
-
-    legacy `diagnose_payment_logs` 的 `if not logs:` 在 keyword 分支**之前** ⇒ 該具名分支的
-    實際 domain 一直被上游限制為「已有 logs 後的診斷」。responsibility binding 依 F-C1 必須
-    繞過 dispatcher ⇒ **由 reviewed binding adapter 補足空態 domain**。
-    ⚠️ 這 ⛔ 不改變 underlying capability identity，⛔ 也不構成 semantic reroute
-    ⇒ 定性 **RESPONSIBILITY_BINDING_DOMAIN_GAP**，⛔ 不是 production defect。
-
-    ⚠️ 空態文字**沿用** `EMPTY_PAYMENT_LOGS_FACTS`（與 R-12 同一個 input contract 的
-    reviewed 空態）——⛔ 不重新發明文字、⛔ 不呼叫 `diagnose_payment_logs()` 取得
-    （那會把 user_question 帶回來，違反 F-C1）。文字與 legacy 是否漂移由既有 drift guard 比對。
-    """
-    logs = resolved_logs or []
-    if not logs:
-        return {"outcome": "FACTS", "grounding_facts": EMPTY_PAYMENT_LOGS_FACTS,
-                "empty_input": True}
-    from services.jgb.payments import _diagnose_auto_pay_failure
-    return {"outcome": "FACTS", "grounding_facts": _diagnose_auto_pay_failure(logs),
-            "empty_input": False}
 
 
 def iot_binding_failure_facts_adapter(resolved_manufacturers, context: Mapping[str, Any]
