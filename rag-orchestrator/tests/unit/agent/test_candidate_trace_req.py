@@ -40,8 +40,9 @@ def test_allowed_keys_is_exactly_twentyone_and_includes_candidate_trio():
     尤其 ⛔ **沒有 `select_ref`**，點選的那筆識別碼不進計量）；
     T1 加 `has_context`（⛔ 只有 bool，**沒有進場句原文**）；
     U3 加 `pre_lookup`（⛔ 只有 `{"kind","hits"}`，**沒有 ref／關鍵字原文**）；
-    V2 加 `has_recent_refs`（⛔ 只有 bool，**沒有編號原值**）。"""
-    assert len(_ALLOWED_AGENT_DECISION_KEYS) == 24
+    V2 加 `has_recent_refs`（⛔ 只有 bool，**沒有編號原值**）；
+    R1b 加 `verifier_observed_counts`（⛔ 只有類別名→整數，**沒有模型文字／來源原文**）。"""
+    assert len(_ALLOWED_AGENT_DECISION_KEYS) == 25
     assert {"candidate_ids", "winning_key_kind", "miss_kind"} <= _ALLOWED_AGENT_DECISION_KEYS
     assert {"pending_id", "receipt_id"} <= _ALLOWED_AGENT_DECISION_KEYS
     assert {"select_type", "has_ref", "slot_written"} <= _ALLOWED_AGENT_DECISION_KEYS
@@ -52,6 +53,11 @@ def test_allowed_keys_is_exactly_twentyone_and_includes_candidate_trio():
     assert "select_ref" not in _ALLOWED_AGENT_DECISION_KEYS
     # T1 正對照：⛔ 沒有進場句原文那一鍵
     assert "context" not in _ALLOWED_AGENT_DECISION_KEYS
+    # R1b：新鍵名（24→25 的那一鍵就是它，⛔ 不是別的東西悄悄擠進來）
+    assert "verifier_observed_counts" in _ALLOWED_AGENT_DECISION_KEYS
+    # R1b 正對照：白名單**仍然沒有**任何原文鍵（新鍵不得夾帶原文出口）
+    assert not ({"answer", "quote", "text", "user_message", "observed_quotes"}
+                & _ALLOWED_AGENT_DECISION_KEYS)
 
 
 # ---------------------------------------------------------------------------

@@ -81,6 +81,7 @@
           "term_id": null
         }
       ],
+      "verifier_observed_counts": {},
       "violations": [
         "affirmative_carry"
       ],
@@ -181,6 +182,7 @@
       ],
       "trace_id": "ffffffffffffffffffffffffffffffff",
       "verifier": [],
+      "verifier_observed_counts": {},
       "violations": [],
       "winning_key_kind": {}
     }
@@ -274,6 +276,7 @@
           "term_id": null
         }
       ],
+      "verifier_observed_counts": {},
       "violations": [],
       "winning_key_kind": {}
     }
@@ -360,6 +363,7 @@
       "tool_calls": [],
       "trace_id": "ffffffffffffffffffffffffffffffff",
       "verifier": [],
+      "verifier_observed_counts": {},
       "violations": [],
       "winning_key_kind": {}
     }
@@ -462,6 +466,7 @@
       ],
       "trace_id": "ffffffffffffffffffffffffffffffff",
       "verifier": [],
+      "verifier_observed_counts": {},
       "violations": [],
       "winning_key_kind": {}
     }
@@ -558,6 +563,7 @@
       ],
       "trace_id": "ffffffffffffffffffffffffffffffff",
       "verifier": [],
+      "verifier_observed_counts": {},
       "violations": [],
       "winning_key_kind": {}
     }
@@ -625,6 +631,7 @@
       "tool_calls": [],
       "trace_id": "ffffffffffffffffffffffffffffffff",
       "verifier": [],
+      "verifier_observed_counts": {},
       "violations": [
         "confirm_unknown_pending_id"
       ],
@@ -710,6 +717,7 @@
           "term_id": null
         }
       ],
+      "verifier_observed_counts": {},
       "violations": [],
       "winning_key_kind": {}
     }
@@ -777,6 +785,7 @@
       "tool_calls": [],
       "trace_id": "ffffffffffffffffffffffffffffffff",
       "verifier": [],
+      "verifier_observed_counts": {},
       "violations": [
         "document_failed"
       ],
@@ -861,6 +870,7 @@
           "term_id": null
         }
       ],
+      "verifier_observed_counts": {},
       "violations": [],
       "winning_key_kind": {}
     }
@@ -944,6 +954,7 @@
           "term_id": null
         }
       ],
+      "verifier_observed_counts": {},
       "violations": [],
       "winning_key_kind": {}
     }
@@ -1028,6 +1039,7 @@
           "term_id": null
         }
       ],
+      "verifier_observed_counts": {},
       "violations": [
         "ask_target_invalid"
       ],
@@ -1126,6 +1138,7 @@
           "term_id": null
         }
       ],
+      "verifier_observed_counts": {},
       "violations": [
         "handoff_no_data"
       ],
@@ -1222,6 +1235,7 @@
           "term_id": null
         }
       ],
+      "verifier_observed_counts": {},
       "violations": [
         "handoff_no_judgement"
       ],
@@ -1308,6 +1322,7 @@
           "term_id": null
         }
       ],
+      "verifier_observed_counts": {},
       "violations": [
         "handoff_without_lookup"
       ],
@@ -1411,6 +1426,7 @@
           "term_id": null
         }
       ],
+      "verifier_observed_counts": {},
       "violations": [
         "select_scope_exit"
       ],
@@ -1494,6 +1510,7 @@
       "tool_calls": [],
       "trace_id": "ffffffffffffffffffffffffffffffff",
       "verifier": [],
+      "verifier_observed_counts": {},
       "violations": [
         "replayed_from:<id>"
       ],
@@ -1589,6 +1606,7 @@
           "term_id": null
         }
       ],
+      "verifier_observed_counts": {},
       "violations": [],
       "winning_key_kind": {}
     }
@@ -1680,6 +1698,7 @@
           "term_id": null
         }
       ],
+      "verifier_observed_counts": {},
       "violations": [],
       "winning_key_kind": {}
     }
@@ -1762,6 +1781,7 @@
           "term_id": null
         }
       ],
+      "verifier_observed_counts": {},
       "violations": [],
       "winning_key_kind": {}
     }
@@ -1848,6 +1868,7 @@
           "term_id": null
         }
       ],
+      "verifier_observed_counts": {},
       "violations": [],
       "winning_key_kind": {}
     }
@@ -1939,6 +1960,7 @@
           "term_id": null
         }
       ],
+      "verifier_observed_counts": {},
       "violations": [
         "estate_carry_set"
       ],
@@ -2031,6 +2053,7 @@
           "term_id": null
         }
       ],
+      "verifier_observed_counts": {},
       "violations": [],
       "winning_key_kind": {}
     }
@@ -2117,6 +2140,7 @@
       ],
       "trace_id": "ffffffffffffffffffffffffffffffff",
       "verifier": [],
+      "verifier_observed_counts": {},
       "violations": [],
       "winning_key_kind": {}
     }
@@ -2200,6 +2224,7 @@
       ],
       "trace_id": "ffffffffffffffffffffffffffffffff",
       "verifier": [],
+      "verifier_observed_counts": {},
       "violations": [],
       "winning_key_kind": {}
     }
@@ -2292,6 +2317,98 @@
           "term_id": null
         }
       ],
+      "verifier_observed_counts": {},
+      "violations": [],
+      "winning_key_kind": {}
+    }
+  },
+  "verifier_observe_counts": {
+    "agent_state": {
+      "dialog": [
+        {
+          "content": "觀察模式這題會怎麼判呢",
+          "role": "user"
+        },
+        {
+          "content": "觀察模式照樣出去的答案",
+          "role": "assistant"
+        }
+      ],
+      "fixed_streak": 0,
+      "handoff_cache": {},
+      "last_ask_target": null
+    },
+    "agent_state_keys": [
+      "dialog",
+      "fixed_streak",
+      "handoff_cache",
+      "last_ask_target"
+    ],
+    "answer": "觀察模式照樣出去的答案",
+    "ask_target": null,
+    "covers": {
+      "flows": [
+        "verifier_observed_counts"
+      ],
+      "gates": [],
+      "reserved_ids": [
+        "ctx-"
+      ]
+    },
+    "handoff": null,
+    "kind": "answer",
+    "outcome": {
+      "action": null,
+      "expects": "text",
+      "ref": null,
+      "state": "answered"
+    },
+    "quick_replies": [],
+    "trace": {
+      "attachment_purpose_ignored": false,
+      "candidate_ids": [],
+      "completion_tokens": 5,
+      "document_kind": null,
+      "document_status": null,
+      "final_kind": "answer",
+      "handoff_reason": null,
+      "has_context": false,
+      "has_document": false,
+      "has_recent_refs": false,
+      "has_ref": null,
+      "latency_ms": 0,
+      "llm_calls": 1,
+      "miss_kind": null,
+      "outline_sha": "",
+      "pages_seen": null,
+      "pending_id": null,
+      "pre_lookup": null,
+      "prompt_tokens": 10,
+      "receipt_id": null,
+      "rules_sha": "fake-rules-sha",
+      "select_type": null,
+      "slot_written": null,
+      "tool_calls": [],
+      "trace_id": "ffffffffffffffffffffffffffffffff",
+      "verifier": [
+        {
+          "observed": [
+            "UNCITED_ASSERTION",
+            "POLARITY_MISMATCH"
+          ],
+          "ok": true,
+          "polarity_source": null,
+          "quote_len": null,
+          "reason": null,
+          "schema_cause": null,
+          "sent": null,
+          "term_id": null
+        }
+      ],
+      "verifier_observed_counts": {
+        "POLARITY_MISMATCH": 1,
+        "UNCITED_ASSERTION": 1
+      },
       "violations": [],
       "winning_key_kind": {}
     }
@@ -2401,6 +2518,7 @@
           "term_id": null
         }
       ],
+      "verifier_observed_counts": {},
       "violations": [],
       "winning_key_kind": {}
     }

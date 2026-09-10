@@ -55,6 +55,7 @@ import string
 import time
 import unicodedata
 import uuid
+from collections import Counter
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Callable, Literal, Optional, Protocol
@@ -3274,6 +3275,14 @@ class AgentRuntime:
                 audience=identity.resolved_audience(),
                 document_turn=bool(document is not None and document.facts.strip()))
             acc.verifier_verdicts.append(verdict)
+            # R1b（Plan R §0b／DSP-040 絆線）：**觀察模式下「本來會擋、這次只記錄」的
+            # 類別要看得見**——`verdict.observed` 是封閉列舉（`"<reason>"` 或
+            # `"SCHEMA:<cause>"`），⛔ 不攜帶任何模型文字或來源原文。就地累加：一個
+            # 回合可能跑好幾次 Verifier（被拒→重寫→再驗），⛔ 不得只留最後一次。
+            # ⛔ 不依賴 R2 的 `VerifierVerdict.observed_counts`（那一片還沒進來）。
+            acc.verifier_observed_counts.update(
+                Counter(acc.verifier_observed_counts) + Counter(verdict.observed)
+            )
             if self._attempt_sink is not None:
                 self._emit_attempt(
                     {
@@ -3361,6 +3370,9 @@ class AgentRuntime:
                 final_kind=out.kind,
                 handoff_reason=(handoff_dict or {}).get("reason"),
                 clock=self._clock,
+                # R1b：**只有這個出口**寫實值（Plan §0b）；其餘三個 `TurnTrace(`
+                # 建構點一律取 `default_factory=dict` 的空 dict。
+                observed_counts=acc.verifier_observed_counts,
                 # 一般出口：`tool_calls`／`verifier`／`violations` 傳**同一個物件**
                 # ——`_emit_agent_decision` 的形狀守門會就地改 `trace.candidate_ids`
                 # 與 `trace.violations`，那個修正必須反映到呼叫端讀到的 `result.trace`

@@ -130,6 +130,16 @@ class TurnTrace:
     #: ⛔ 只有 bool，無任何附件資訊。寫入點是 `mcp_facade._agent_turn`（門面才
     #: 知道 `attachment_purpose`），⛔ 不由 Runtime 猜。
     attachment_purpose_ignored: bool = False
+    #: R1b（Plan R §0b／DSP-040 絆線）：本回合 Verifier **觀察到而未擋**的違規
+    #: 類別 → 次數（`Counter(VerifierVerdict.observed)` 逐次累加）。
+    #: ⛔⛔ **只有列舉的類別名與整數**——`observed` 本身就 ⛔ 不攜帶任何模型文字或
+    #:     來源原文（見 `output_schema.VerifierVerdict.observed`），這一格同一條紀律。
+    #: ⚠️ `default_factory=dict`：三個 `TurnTrace(` 建構點（確認／清單／照片段的共用
+    #:    收尾、handoff 快取重播、固定句出口）一律取空 dict——**只有取得 verdict 的
+    #:    一般出口寫入實值**（Plan §0b 明列）。⛔ 不用 `None` 假裝這一格不存在：
+    #:    觀察模式下「這回合沒有被觀察到的違規」與「這回合根本沒跑 Verifier」在
+    #:    稽核上都要看得見，前者是 `{}`、後者也是 `{}`，差別由 `llm_calls` 分辨。
+    verifier_observed_counts: dict = field(default_factory=dict)
 
 
 @dataclass
@@ -379,6 +389,8 @@ def _emit_agent_decision(trace: TurnTrace) -> None:
             "pre_lookup": trace.pre_lookup,
             # V2：⛔ 只有 bool，**沒有編號原值**。
             "has_recent_refs": trace.has_recent_refs,
+            # R1b：⛔ 只有類別名→整數，**沒有任何原文**（見 `TurnTrace` 該欄註記）。
+            "verifier_observed_counts": trace.verifier_observed_counts,
             "violations": trace.violations,
             "replayed_from": _replayed_from(trace.violations),
         }
@@ -493,6 +505,9 @@ class TurnAccumulator:
     nonce: str = ""
     trace_id: str = ""
     start: float = 0.0
+    #: R1b：Verifier **觀察到而未擋**的類別 → 次數，逐次 verdict 就地累加
+    #: （⛔ 不重新綁定；同 §0c 的整數計數紀律）。只有一般出口的 trace 讀它。
+    verifier_observed_counts: dict = field(default_factory=dict)
     snapshot: TurnInputsSnapshot = field(default_factory=TurnInputsSnapshot)
 
     @property
@@ -535,6 +550,7 @@ class TurnAccumulator:
     def build_trace(
         self, *, final_kind: str, handoff_reason: Optional[str],
         clock: Callable[[], float], copy_lists: bool,
+        observed_counts: Optional[dict] = None,
     ) -> TurnTrace:
         """本回合的 `TurnTrace`。
 
@@ -563,6 +579,8 @@ class TurnAccumulator:
             has_context=snap.has_context,
             has_recent_refs=snap.has_recent_refs,
             pre_lookup=snap.pre_lookup_trace,
+            # R1b：⛔ 只有取得 verdict 的一般出口傳實值（Plan §0b）；其餘出口留空 dict。
+            verifier_observed_counts=dict(observed_counts or {}),
             # W9 U2：文件回合四鍵（⛔ 無任何欄位值）。
             **snap.doc_trace,
         )

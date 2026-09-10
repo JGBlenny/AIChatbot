@@ -477,6 +477,20 @@ def _s_document_unreadable():
     return _runtime(), _identity(), "這份檔案幫我看", {}, {"document": doc}
 
 
+def _s_verifier_observe_counts():
+    """R1b：觀察模式（`verdict.ok=True` 且 `observed` 非空）⇒ trace 記類別計數。
+
+    ⚠️ 正對照用途：其餘 27 條的 `verifier_observed_counts` 都是 `{}`，沒有這一條
+    的話「這一欄永遠是空的」與「這一欄根本沒接線」在 golden 上分不出來。
+    """
+    rt = _runtime(
+        provider=FakeProvider([_final(text="觀察模式照樣出去的答案")]),
+        verifier=GoldenVerifier([VerifierVerdict(
+            ok=True, observed=["UNCITED_ASSERTION", "POLARITY_MISMATCH"])]),
+    )
+    return rt, _identity(), "觀察模式這題會怎麼判呢", {}, {}
+
+
 def _s_verifier_reject_then_fixed():
     rt = _runtime(
         provider=FakeProvider([_final(text="被拒的答案一"), _final(text="被拒的答案二")]),
@@ -515,6 +529,7 @@ SCENARIOS: dict = {
     "select_not_found": _s_select_not_found,
     "document_unreadable": _s_document_unreadable,
     "verifier_reject_then_fixed": _s_verifier_reject_then_fixed,
+    "verifier_observe_counts": _s_verifier_observe_counts,
 }
 
 
@@ -605,6 +620,9 @@ def _covers(result, provider) -> dict:
         flows.append("confirm_redeem")
     if (result.outcome or {}).get("state") == "confirm_pending":
         flows.append("confirm_card")
+    # R1b：觀察模式的類別計數真的落進 trace（⛔ 由實際值導出，不由情境自報）
+    if result.trace.verifier_observed_counts:
+        flows.append("verifier_observed_counts")
     return {"reserved_ids": reserved, "gates": gates, "flows": flows}
 
 
@@ -619,7 +637,8 @@ def _matrix(snapshots: dict) -> dict:
     gates: dict = {g: [] for g in ("scope_exit", "handoff_without_lookup",
                                    "ask_target_gate", "handoff_data_exits")}
     flows: dict = {f: [] for f in ("cache_replay", "select", "confirm_cancel",
-                                   "confirm_redeem", "confirm_card")}
+                                   "confirm_redeem", "confirm_card",
+                                   "verifier_observed_counts")}
     for name, snap in snapshots.items():
         covers = snap["covers"]
         for p in covers["reserved_ids"]:

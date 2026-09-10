@@ -637,6 +637,10 @@ _ALLOWED_AGENT_DECISION_KEYS = frozenset(
         # security r1 #7）：呼叫端進場句**只記有沒有**。
         # ⛔ **進場句原文不在其中**——它是外部輸入的自由文字。
         "has_context",
+        # R1b（Plan R §0b／DSP-040 絆線）：觀察模式下「本來會擋、這次只記錄」的
+        # 類別 → 次數。⛔ **只有列舉的類別名與整數**，無任何模型文字或來源原文
+        # （值域見 `output_schema.VerifierVerdict.observed`）。
+        "verifier_observed_counts",
         # U3（Plan `inputs/plan-walkthrough-fixes-batch3-20260909.md` §4）：
         # ⛔ **原 ref／關鍵字不在其中**——只記 `{"kind","hits"}`。
         "pre_lookup",
