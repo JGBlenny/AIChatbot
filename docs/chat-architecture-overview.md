@@ -3,6 +3,15 @@
 > 版本：v2（2026-07-10）
 > 性質：對碼查實的「實然」＋定案的「應然」＋設計方向判定。關鍵事實均附 file:line；與既有記錄矛盾處（option-routing、pending_question）已親自核實以碼為準。
 > ⚠️ **行號僅供參考，以符號為準**——行號會隨 commit 漂移，引用前以檔名＋可 grep 的符號重新對碼。
+>
+> ⚠️ **2026-09-11 更新**：本文描述的舊 REST 對話鏈生產程式碼（`routers/chat.py`／
+> `services/conversational_engine.py`／`services/api_call_handler.py`／
+> `services/form_manager.py`／`services/sop_orchestrator.py`／
+> `services/sop_trigger_handler.py`／`services/digression_detector.py`）已於
+> 2026-09-11 隨 commit `7c905408`／`10116570` 整批砍除，見 `.claude/DECISIONS.md`
+> DSP-046。本文架構圖與對碼結論是**該鏈存在時**的實然記錄，下方逐處標記已退役
+> 的模組；知識／lookup／業者 SOP 資料管理等仍活的子系統不受影響。現行唯一活線
+> 架構見 `docs/architecture/AGENTIC_MCP_ARCHITECTURE.md`。
 
 ## 全景架構圖（實然＋終態，狀態標記：✅ 生產/已收案　🚧 已規劃有案　⬜ 未立案/待建）
 
@@ -11,7 +20,7 @@
 ```mermaid
 flowchart TB
     subgraph CH["通路層"]
-        WEB["Web 內嵌（jgb2）✅"]
+        WEB["Web 內嵌（jgb2）⚠️ 舊鏈端點已退役，見檔頭 2026-09-11 註記"]
         LINE["LINE Bot 🚧 line-bot-integration-plan"]
     end
 
@@ -84,6 +93,8 @@ flowchart TB
 ```
 
 **遷移進度尺**：P0 觸發語彙還債 ✅收案（18f64a4，待部署）→ P1 引擎調表單 ⬜ → P2 租客反轉 ⬜（前置：視角補全＋多輪基準＋灰帶數據）→ P3 表單機收斂 ⬜；並行：LINE Phase 1 🚧（等三拍板＋E2/E3）、修繕通用化 ⬜（零依賴可開）、E1 真 API＝上線 gate。
+
+⚠️ **以下 §0–§5 出現的 `chat.py`／`conversational_engine.py`／`api_call_handler.py`／`form_manager.py`／`sop_orchestrator.py`／`sop_trigger_handler.py`／`digression_detector.py`（含所有 `:行號` 引用）全部指向已隨舊鏈於 2026-09-11 退役的檔案**（見檔頭註記），逐行不再重覆標記；行號本身依既有鐵則本就僅供歷史對照、不當事實。
 
 ## 0. 入口 × 角色矩陣
 

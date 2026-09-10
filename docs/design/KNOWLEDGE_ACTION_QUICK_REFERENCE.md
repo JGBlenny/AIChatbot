@@ -1,6 +1,8 @@
 # 知識庫動作系統 - 快速參考
 
-> 快速參考指南，完整文檔請見 [KNOWLEDGE_ACTION_SYSTEM_DESIGN.md](./KNOWLEDGE_ACTION_SYSTEM_DESIGN.md)
+> 快速參考指南，完整文檔請見 [KNOWLEDGE_ACTION_SYSTEM_DESIGN.md](./KNOWLEDGE_ACTION_SYSTEM_DESIGN.md)（該檔 2026-09-11 已加註：動作**執行**機制已隨舊鏈退役，`action_type`／`api_config`欄位寫得進去但新線不會執行，詳見該檔檔頭）
+
+> ⚠️ **2026-09-11**：下方 `action_type` 選擇指南與 SQL 配置範例描述的是**資料庫欄位**，欄位本身仍存在；但文末「程式碼修改」checklist 提到的 `chat.py`／`form_manager.py`／`api_call_handler.py` 已隨舊 REST 對話鏈於 2026-09-11 砍除（見 `.claude/DECISIONS.md` DSP-046），agentic-MCP 新線不讀 `action_type` 觸發任何行為——照本文配置 SQL 寫得進去，但不會有對應的表單／API 呼叫發生。
 
 ---
 

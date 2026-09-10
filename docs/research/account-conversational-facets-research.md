@@ -1,5 +1,7 @@
 # 研究記錄：account-conversational-facets
 
+> ⚠️ 本文為 2026-07-03 的紀錄；文中的舊 REST 對話鏈相關模組（`conversational_engine.py`／`routers/chat.py` 等）已於 2026-09-11 退役，見 `.claude/DECISIONS.md` DSP-046。
+
 > 建立時間：2026-07-03
 > 目的：jgb2 帳號真碼盤查（五路平行）＋本站 b2c 機制盤查＋33 案歸類——design 的 ground truth 依據
 > jgb2 盤查基準：`/Users/lenny/jgb/project/jgb/jgb2`（branch ticket_12405815624；帳號核心屬穩定舊碼，分支敏感度低）

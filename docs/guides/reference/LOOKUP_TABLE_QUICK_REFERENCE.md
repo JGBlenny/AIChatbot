@@ -376,8 +376,8 @@ AIChatbot/
 │   ├── routers/
 │   │   └── lookup.py                      # Lookup API 實現
 │   └── services/
-│       ├── api_call_handler.py            # API 調用處理器
-│       └── universal_api_handler.py       # 通用 API 處理器
+│       ├── api_call_handler.py            # API 調用處理器（⚠️ 已隨舊鏈於 2026-09-11 退役，見 `.claude/DECISIONS.md` DSP-046；`routers/lookup.py` 本身未受影響，仍可直接查詢）
+│       └── universal_api_handler.py       # 通用 API 處理器（⚠️ 已隨舊鏈於 2026-09-11 退役，同上）
 ├── scripts/
 │   └── data_import/
 │       └── import_billing_intervals.py    # 數據導入腳本

@@ -1153,7 +1153,7 @@ WHERE keywords @> ARRAY['租金', '繳費'];
 - **檢查範圍**: knowledge_base + ai_generated_knowledge_candidates + test_scenarios
 
 #### 系統 2：Unclear Question 去重
-- **位置**: `chat.py` 的 `_record_unclear_question`
+- **位置**: `chat.py` 的 `_record_unclear_question`（⚠️ `chat.py` 已隨舊 REST 對話鏈於 2026-09-11 退役，見 `.claude/DECISIONS.md` DSP-046；去重機制本體在 `services/unclear_question_manager.py`〔仍活著〕，但 `grep -rln "unclear_question" rag-orchestrator/services/agent/` 命中 0——agentic-MCP 新線目前沒有呼叫點觸發此去重記錄，這是能力落差非搬家）
 - **閾值**: 0.80
 - **檢查範圍**: test_scenarios（僅測試場景庫）
 

@@ -1,5 +1,7 @@
 # 研究記錄：sop-audience-isolation
 
+> ⚠️ 本文為 2026-07-04 的紀錄；文中的舊 REST 對話鏈相關模組（`routers/chat.py`／`services/sop_orchestrator.py`／`services/vendor_sop_retriever_v2.py` 等）已於 2026-09-11 退役，見 `.claude/DECISIONS.md` DSP-046。
+
 > 日期：2026-07-04　方法：AIChatbot 檢索鏈實測（file:line）＋jgb2 真碼平行盤查（agent）
 > 定位：設計與補位知識產製的唯一事實來源。
 

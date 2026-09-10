@@ -257,12 +257,14 @@
 
 **技術架構：**
 
+> ⚠️ **2026-09-11 更新**：下列目錄樹是舊 REST 對話鏈砍除前的專案結構快照。標記「❌ 已隨舊鏈於 2026-09-11 退役」的 17 個檔案已刪除，見 `.claude/DECISIONS.md` DSP-046；未標記的檔案不受影響、仍是現行結構的一部分。
+
 ```
 rag-orchestrator/
 ├── app.py                           # FastAPI 應用入口
 ├── routers/
-│   ├── chat.py                      # Chat API 路由（核心）
-│   ├── chat_shared.py               # Chat 共用工具
+│   ├── chat.py                      # Chat API 路由（核心）  ❌ 已隨舊鏈於 2026-09-11 退役
+│   ├── chat_shared.py               # Chat 共用工具  ❌ 已隨舊鏈於 2026-09-11 退役
 │   ├── vendors.py                   # 業者管理 API
 │   ├── knowledge.py                 # 知識庫 CRUD API
 │   ├── knowledge_generation.py      # 知識生成 API
@@ -270,7 +272,7 @@ rag-orchestrator/
 │   ├── knowledge_export.py          # 知識匯出 API
 │   ├── forms.py                     # 表單管理 API
 │   ├── cache.py                     # 緩存管理 API
-│   ├── intents.py                   # 意圖管理 API
+│   ├── intents.py                   # 意圖管理 API  ❌ 已隨舊鏈於 2026-09-11 退役
 │   ├── loops.py                     # 知識完善迴圈 API
 │   ├── loop_knowledge.py            # 迴圈知識 API
 │   ├── lookup.py                    # 查表 API
@@ -279,8 +281,8 @@ rag-orchestrator/
 │   ├── document_converter.py        # 文件轉換 API
 │   ├── business_types.py            # 業態管理 API
 │   ├── target_user_config.py        # 使用者角色配置 API
-│   ├── platform_sop.py              # 平台 SOP API
-│   ├── suggested_intents.py         # 建議意圖 API
+│   ├── platform_sop.py              # 平台 SOP API  ❌ 已隨舊鏈於 2026-09-11 退役
+│   ├── suggested_intents.py         # 建議意圖 API  ❌ 已隨舊鏈於 2026-09-11 退役
 │   ├── api_endpoints.py             # API 端點配置
 │   ├── system_health.py             # 系統健康檢查 API
 │   └── error_middleware.py          # 錯誤處理中介
@@ -289,24 +291,24 @@ rag-orchestrator/
 │   ├── rag_engine.py                # RAG 檢索服務
 │   ├── base_retriever.py            # 檢索管線基底
 │   ├── semantic_reranker.py         # Reranker 重排序
-│   ├── llm_answer_optimizer.py      # LLM 優化服務
+│   ├── llm_answer_optimizer.py      # LLM 優化服務  ❌ 已隨舊鏈於 2026-09-11 退役
 │   ├── llm_provider.py              # LLM 呼叫統一介面
-│   ├── answer_formatter.py          # 答案格式化
+│   ├── answer_formatter.py          # 答案格式化（⚠️ 已隨舊 REST 對話鏈於 2026-09-11 退役，見 `.claude/DECISIONS.md` DSP-046）
 │   ├── confidence_evaluator.py      # 信心度評估
 │   ├── cache_service.py             # 三層緩存服務
 │   ├── query_rewriter.py            # 查詢改寫
 │   ├── vendor_parameter_resolver.py # 業者參數解析
-│   ├── vendor_config_service.py     # 業者配置服務
+│   ├── vendor_config_service.py     # 業者配置服務  ❌ 已隨舊鏈於 2026-09-11 退役
 │   ├── vendor_knowledge_retriever_v2.py # 業者知識檢索
-│   ├── vendor_sop_retriever_v2.py   # SOP 檢索服務
-│   ├── sop_orchestrator.py          # SOP 協調器
-│   ├── sop_trigger_handler.py       # SOP 觸發處理
-│   ├── sop_next_action_handler.py   # SOP 後續動作
+│   ├── vendor_sop_retriever_v2.py   # SOP 檢索服務  ❌ 已隨舊鏈於 2026-09-11 退役
+│   ├── sop_orchestrator.py          # SOP 協調器  ❌ 已隨舊鏈於 2026-09-11 退役
+│   ├── sop_trigger_handler.py       # SOP 觸發處理  ❌ 已隨舊鏈於 2026-09-11 退役
+│   ├── sop_next_action_handler.py   # SOP 後續動作  ❌ 已隨舊鏈於 2026-09-11 退役
 │   ├── sop_utils.py                 # SOP 工具函式
-│   ├── form_manager.py              # 表單管理器
-│   ├── form_validator.py            # 表單驗證
-│   ├── digression_detector.py       # 離題偵測
-│   ├── keyword_matcher.py           # 關鍵字匹配
+│   ├── form_manager.py              # 表單管理器  ❌ 已隨舊鏈於 2026-09-11 退役
+│   ├── form_validator.py            # 表單驗證  ❌ 已隨舊鏈於 2026-09-11 退役
+│   ├── digression_detector.py       # 離題偵測  ❌ 已隨舊鏈於 2026-09-11 退役
+│   ├── keyword_matcher.py           # 關鍵字匹配  ❌ 已隨舊鏈於 2026-09-11 退役
 │   ├── knowledge_generator.py       # 知識生成
 │   ├── knowledge_import_service.py  # 知識匯入
 │   ├── knowledge_export_service.py  # 知識匯出
@@ -319,9 +321,9 @@ rag-orchestrator/
 │   ├── intent_manager.py            # 意圖管理
 │   ├── intent_suggestion_engine.py  # 意圖建議引擎
 │   ├── unclear_question_manager.py  # 不明確問題管理
-│   ├── universal_api_handler.py     # 通用 API 呼叫
+│   ├── universal_api_handler.py     # 通用 API 呼叫  ❌ 已隨舊鏈於 2026-09-11 退役
 │   ├── jgb_system_api.py            # JGB 系統 API
-│   ├── jgb_response_formatter.py    # JGB 回應格式化
+│   ├── jgb_response_formatter.py    # JGB 回應格式化  ❌ 已隨舊鏈於 2026-09-11 退役
 │   ├── pipeline_health_service.py   # 管線健康檢查
 │   ├── unified_job_service.py       # 統一背景任務
 │   ├── db_utils.py                  # 資料庫工具

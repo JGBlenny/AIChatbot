@@ -1,5 +1,7 @@
 # Research：quota-management
 
+> ⚠️ 本文為 2026-07-06 的紀錄；文中的舊 REST 對話鏈相關模組（`routers/chat.py` 等）已於 2026-09-11 退役，見 `.claude/DECISIONS.md` DSP-046。
+
 > 產出：2026-07-06　方法：codebase 實查（usage-metering 剛收案，整合點皆為熱知識）
 
 ## 摘要

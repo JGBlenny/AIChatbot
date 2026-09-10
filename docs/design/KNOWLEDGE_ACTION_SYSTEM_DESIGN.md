@@ -5,6 +5,24 @@
 **狀態**: 已實現
 **作者**: 系統架構團隊
 
+> ⚠️ **2026-09-11 重大更新：本文描述的動作「執行」機制已隨舊 REST 對話鏈整批退役，
+> 但資料庫欄位本身還在。**
+>
+> 查證：`knowledge_base.action_type`／`api_config` 欄位仍存在、仍被
+> `services/vendor_knowledge_retriever_v2.py`（現行、agentic-MCP 經 `kb.search` 使用）
+> `SELECT` 出來（`grep -n "action_type" rag-orchestrator/services/vendor_knowledge_retriever_v2.py`
+> 有命中），**但** `grep -rn "action_type" rag-orchestrator/services/agent/` 命中 0——
+> 新線完全不讀這個欄位去觸發任何行為。本文 §處理邏輯／§實作指南／§測試建議描述的
+> `routers/chat.py`（`_build_knowledge_response` 等）／`services/form_manager.py`／
+> `services/api_call_handler.py` 已於 2026-09-11 隨 commit `7c905408`／`10116570`
+> 整批砍除，見 `.claude/DECISIONS.md` DSP-046。
+>
+> **後果**：即使今天在 `knowledge_base` 寫入 `action_type='form_fill'` 或
+> `'api_call'`＋`api_config`，agentic-MCP 新線也**不會**因此觸發表單或 API
+> 呼叫——資料寫得進去，行為不會發生，這是最容易誤判成「還能用」的一種死亡狀態。
+> §資料庫設計／§配置範例的欄位定義本身沒有變（表結構仍在），但配置後的預期行為
+> 已不成立。
+
 ---
 
 ## 📋 目錄

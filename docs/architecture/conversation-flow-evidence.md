@@ -5,6 +5,18 @@
 > 結果：42 ✅ 屬實、4 ⚠️ 偏差（已據實修圖或列入文件漂移待辦）。
 > ⚠️ **行號僅供參考，以符號為準**——行號會隨 commit 漂移，引用前以檔名＋可 grep 的符號重新對碼。
 
+> ⚠️ **2026-09-11 更新**：本文全文（含以下第一節起每一條「證據」欄）是舊 REST
+> 對話鏈存在時的對碼驗證紀錄——`chat.py`／`conversational_engine.py`／
+> `api_call_handler.py`／`form_manager.py`／`form_validator.py`／
+> `sop_orchestrator.py`／`sop_trigger_handler.py`／`digression_detector.py`／
+> `system_context.py`／`llm_answer_optimizer.py`／`repair_prefill.py`／
+> `jgb_response_formatter.py` 皆已於 2026-09-11 隨 commit `7c905408`／`10116570`
+> 整批砍除，見 `.claude/DECISIONS.md` DSP-046。以下逐條「✅ 屬實」是
+> **2026-07-16 當時對照該鏈原始碼**的驗證結果，不是現況——現在重跑這些
+> `file:line` 全部會落空。本文對業務版流程圖（`conversation-flow-business.*`）
+> 的歷史驗證價值保留（記錄了當時圖與碼確實一致），但**不能**再拿來當現況查證
+> 依據；agentic-MCP 新線是否有對應的業務流程圖與逐條驗證，本輪未查，留待下一輪。
+
 ## 一、入口與管線（10 條，chat.py）
 
 | 斷言 | 判定 | 證據 |
@@ -67,7 +79,7 @@
 | 每則訊息計量 usage_events | ✅ | usage_metering.py:1-116（額度警示寄信在另檔／middleware，quota spec 已收案，prod 待設 SMTP） |
 | 知識觸發欄位透傳（P0 修後） | ✅ | vendor_knowledge_retriever_v2.py:106-108, 338-340 |
 | JGB API 雙證＋formatter 決定性解碼（五領域 FACE_BUILDERS） | ✅ | jgb_system_api.py:48-50、jgb_response_formatter.py:176-217 |
-| api_call_handler 註冊表＋params_from_form | ✅ | api_call_handler.py:49-143 |
+| api_call_handler 註冊表＋params_from_form | ✅（2026-07-16 當時） | api_call_handler.py:49-143（已刪，⛔ 行號僅供歷史對照，見檔頭 2026-09-11 註記） |
 | 查詢數字不經 LLM 改寫 | ✅ | jgb_response_formatter.py:297-372、chat.py:3586-3624 |
 | USE_MOCK_JGB_API 開關 | ✅ | jgb_system_api.py:35, 134 |
 

@@ -4,6 +4,22 @@
 > 範圍：LINE bot 串接修繕（優先場景），架構同時涵蓋帳單/合約等後續面向
 > 前提決策：業者 bot 統一開在 JGB LINE Provider 底下（JGB 代管）；功能分流用 rich menu，不拆功能 bot
 
+> ⚠️ **2026-09-11 更新：LINE bot 串接本身是現況且活著，⛔ 不要因為本文提到已刪模組就當整份退役。**
+>
+> 本文（v1，2026-07-10）提出的技術路徑是「新增 LINE Gateway，`chat` 管線零改動」
+> ——把 LINE 流量正規化後打進既有的 `POST /api/v1/message`（`routers/chat.py`）。
+> 這條路徑**已被實際上線的做法取代**：LINE OA 房東管家改走 `/mcp`
+> （agentic-MCP，2026-09-08 demo 上線，見 `docs/architecture/AGENTIC_MCP_ARCHITECTURE.md`
+> 與 `.claude/MAP.md` 〈agentic-MCP（LINE OA 房東管家）〉一節），而不是本文設想的
+> 「LINE Gateway → 舊 chat 管線」。舊 chat 管線（`routers/chat.py`／
+> `services/conversational_engine.py`／`services/form_manager.py`／
+> `services/sop_orchestrator.py`／`services/vendor_sop_retriever_v2.py`）已於
+> 2026-09-11 隨 commit `7c905408`／`10116570` 整批砍除，見 `.claude/DECISIONS.md`
+> DSP-046。下文提到這些模組之處是**v1 規劃當時的技術假設**，不是現況；本文的
+> 身份正規化模型、綁定流程、UID 值域政策、差距評估等內容是否仍對應
+> `/mcp` 實作，本輪未逐項核對，留待下一次盤查——這是文件與實作的落差，交裁決，
+> ⛔ 本輪不代為判斷 v1 規劃哪些段落仍適用。
+
 ## 1. 總體架構
 
 核心原則：**新增 LINE Gateway 做「通道與身份正規化」，chat 管線零改動**。JGB 官方 bot 與各業者 bot 的 webhook 全部進同一個 gateway，正規化成現行 `VendorChatRequest` 後打 `/api/v1/message`，之後與 jgb2 Web 完全同路——SOP、表單、API 呼叫、知識隔離、計量額度全部照舊。

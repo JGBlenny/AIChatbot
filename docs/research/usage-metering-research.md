@@ -1,5 +1,7 @@
 # Research：usage-metering
 
+> ⚠️ 本文為 2026-07-06 的紀錄；文中的舊 REST 對話鏈相關模組（`services/conversational_engine.py`／`routers/chat.py` 等）已於 2026-09-11 退役，見 `.claude/DECISIONS.md` DSP-046。
+
 > 產出：2026-07-06　方法：codebase／jgb2 原始碼實查　所有結論附出處
 
 ## 摘要

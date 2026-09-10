@@ -1,5 +1,7 @@
 # 研究記錄：estate-conversational-facets
 
+> ⚠️ 本文為 2026-07-04 的紀錄；文中的舊 REST 對話鏈相關模組（`services/api_call_handler.py` 等）已於 2026-09-11 退役，見 `.claude/DECISIONS.md` DSP-046。
+
 > 日期：2026-07-04　方法：jgb2 真碼平行盤查（gap 級一輪＋設計級兩輪）＋AIChatbot 現況盤點＋幫助中心 14 篇素材
 > 定位：本文件為設計依據的唯一事實來源；與 help 文章/客服口徑衝突處一律以此為準。
 

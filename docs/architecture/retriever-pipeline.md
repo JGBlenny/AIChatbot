@@ -100,15 +100,17 @@ else:
 
 ## 下游消費者欄位語意
 
+⚠️ **2026-09-11 更新**：下表 `chat.py`／`chat_shared.py`／`llm_answer_optimizer` 三個消費者已隨舊 REST 對話鏈退役（⚠️ 已隨舊 REST 對話鏈於 2026-09-11 退役，見 `.claude/DECISIONS.md` DSP-046）；score 欄位（`vector_similarity`／`similarity`／`score_source`）的計算來源（上方門檻表引用的 retriever 本體）未受影響，agentic-MCP 新線經 `services/agent/tools/kb.py` 的 `kb.search` 消費同一組欄位，但目前沒有等價的 debug_info 呈現層，這是能力落差非搬家。
+
 | 檔案 / 位置 | 欄位 | 對應來源 |
 |-----------|------|---------|
-| `chat.py` debug_info.sop_candidates[].base_similarity | 純向量分數 | `vector_similarity` |
-| `chat.py` debug_info.knowledge_candidates[].base_similarity | 純向量分數 | `vector_similarity` |
-| `chat.py` debug_info.sop_candidates[].boosted_similarity | final 分數 | `similarity` |
-| `chat.py` debug_info.*.score_source | 計算來源 | `score_source` |
-| `chat_shared.has_sop_results` | SOP 檢測 | `scope == 'vendor_sop'`（不再依賴 similarity == 1.0） |
-| `llm_answer_optimizer` perfect_match | 純向量分數 | `vector_similarity` |
-| `llm_answer_optimizer._should_synthesize` | final 分數 | `similarity` |
+| `chat.py` debug_info.sop_candidates[].base_similarity （⚠️ 已隨舊 REST 對話鏈於 2026-09-11 退役，見 `.claude/DECISIONS.md` DSP-046） | 純向量分數 | `vector_similarity` |
+| `chat.py` debug_info.knowledge_candidates[].base_similarity （⚠️ 已隨舊 REST 對話鏈於 2026-09-11 退役，見 `.claude/DECISIONS.md` DSP-046） | 純向量分數 | `vector_similarity` |
+| `chat.py` debug_info.sop_candidates[].boosted_similarity （⚠️ 已隨舊 REST 對話鏈於 2026-09-11 退役，見 `.claude/DECISIONS.md` DSP-046） | final 分數 | `similarity` |
+| `chat.py` debug_info.*.score_source （⚠️ 已隨舊 REST 對話鏈於 2026-09-11 退役，見 `.claude/DECISIONS.md` DSP-046） | 計算來源 | `score_source` |
+| `chat_shared.has_sop_results` （⚠️ 已隨舊 REST 對話鏈於 2026-09-11 退役，見 `.claude/DECISIONS.md` DSP-046） | SOP 檢測 | `scope == 'vendor_sop'`（不再依賴 similarity == 1.0） |
+| `llm_answer_optimizer` perfect_match （⚠️ 已隨舊 REST 對話鏈於 2026-09-11 退役，見 `.claude/DECISIONS.md` DSP-046） | 純向量分數 | `vector_similarity` |
+| `llm_answer_optimizer._should_synthesize` （⚠️ 已隨舊 REST 對話鏈於 2026-09-11 退役，見 `.claude/DECISIONS.md` DSP-046） | final 分數 | `similarity` |
 | `backtest_framework_async` sources 注入 | final + 純向量 | `similarity` (主) + `vector_similarity`（輔助） |
 
 ---
