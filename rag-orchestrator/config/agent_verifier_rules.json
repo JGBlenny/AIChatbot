@@ -1,5 +1,5 @@
 {
-  "version": "1.6.2",
+  "version": "2.0.0",
   "sensitive_patterns_audiences": [
     "prospect"
   ],
@@ -313,5 +313,1633 @@
     "SLA|服務水準|服務等級|保證(?:可用|不中斷|回應|修復|時效)|可用性|上線率|uptime|履約|賠償責任|責任歸屬|(?:合約|契約)(?:條款|內容|範本|期間|怎麼簽|要簽)|簽約(?:條件|流程|要準備)|終止條款|違約責任|綁約",
     "個資法|個人資料保護|個資保護|GDPR|法遵|法規遵循|合規|符合[^。？?]{0,8}法規|稽核(?:軌跡|紀錄|報告)|資料保存(?:年限|期限)|隱私權政策|洗錢防制|金管會|主管機關",
     "資安|資訊安全|加密|ISO\\s?27001|SOC\\s?2|滲透測試|弱點掃描|漏洞|權限控管|存取控制|備援|異地備份|災難復原|資料外洩|防火牆|雙因素|兩階段驗證|2FA|SSO|單一登入"
+  ],
+  "rules": [
+    {
+      "id": "sensitive:0",
+      "pattern": "\\d+(?:\\.\\d+)?\\s*(?:元|塊|萬|億|折)",
+      "class": "safety",
+      "audiences": [
+        "prospect"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "sensitive:1",
+      "pattern": "\\d+(?:\\.\\d+)?\\s*%",
+      "class": "safety",
+      "audiences": [
+        "prospect"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "sensitive:2",
+      "pattern": "百分之\\d+",
+      "class": "safety",
+      "audiences": [
+        "prospect"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "sensitive:3",
+      "pattern": "保證",
+      "class": "safety",
+      "audiences": [
+        "prospect"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "sensitive:4",
+      "pattern": "個資法",
+      "class": "safety",
+      "audiences": [
+        "prospect"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "sensitive:5",
+      "pattern": "GDPR",
+      "class": "safety",
+      "audiences": [
+        "prospect"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "sensitive:6",
+      "pattern": "ISO\\s?27001",
+      "class": "safety",
+      "audiences": [
+        "prospect"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "sensitive:7",
+      "pattern": "SOC\\s?2",
+      "class": "safety",
+      "audiences": [
+        "prospect"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "sensitive:8",
+      "pattern": "金管會",
+      "class": "safety",
+      "audiences": [
+        "prospect"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "sensitive:9",
+      "pattern": "資安法",
+      "class": "safety",
+      "audiences": [
+        "prospect"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "negation:0",
+      "pattern": "不支援",
+      "class": "grounding",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "negation:1",
+      "pattern": "不可以",
+      "class": "grounding",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "negation:2",
+      "pattern": "不能",
+      "class": "grounding",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "negation:3",
+      "pattern": "無法",
+      "class": "grounding",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "negation:4",
+      "pattern": "不會",
+      "class": "grounding",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "negation:5",
+      "pattern": "沒有",
+      "class": "grounding",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "negation:6",
+      "pattern": "未支援",
+      "class": "grounding",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "negation:7",
+      "pattern": "不提供",
+      "class": "grounding",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "negation:8",
+      "pattern": "不支持",
+      "class": "grounding",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "negation:9",
+      "pattern": "不行",
+      "class": "grounding",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:0",
+      "pattern": {
+        "neg": "尚未",
+        "status": "逾期"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:1",
+      "pattern": {
+        "neg": "尚未",
+        "status": "繳費"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:2",
+      "pattern": {
+        "neg": "尚未",
+        "status": "到帳"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:3",
+      "pattern": {
+        "neg": "尚未",
+        "status": "發送"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:4",
+      "pattern": {
+        "neg": "尚未",
+        "status": "回簽"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:5",
+      "pattern": {
+        "neg": "尚未",
+        "status": "簽署"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:6",
+      "pattern": {
+        "neg": "尚未",
+        "status": "指派"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:7",
+      "pattern": {
+        "neg": "尚未",
+        "status": "完成"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:8",
+      "pattern": {
+        "neg": "未",
+        "status": "逾期"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:9",
+      "pattern": {
+        "neg": "未",
+        "status": "繳費"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:10",
+      "pattern": {
+        "neg": "未",
+        "status": "到帳"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:11",
+      "pattern": {
+        "neg": "未",
+        "status": "發送"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:12",
+      "pattern": {
+        "neg": "未",
+        "status": "回簽"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:13",
+      "pattern": {
+        "neg": "未",
+        "status": "簽署"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:14",
+      "pattern": {
+        "neg": "未",
+        "status": "指派"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:15",
+      "pattern": {
+        "neg": "未",
+        "status": "完成"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:16",
+      "pattern": {
+        "neg": "還沒",
+        "status": "逾期"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:17",
+      "pattern": {
+        "neg": "還沒",
+        "status": "繳費"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:18",
+      "pattern": {
+        "neg": "還沒",
+        "status": "到帳"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:19",
+      "pattern": {
+        "neg": "還沒",
+        "status": "發送"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:20",
+      "pattern": {
+        "neg": "還沒",
+        "status": "回簽"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:21",
+      "pattern": {
+        "neg": "還沒",
+        "status": "簽署"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:22",
+      "pattern": {
+        "neg": "還沒",
+        "status": "指派"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:23",
+      "pattern": {
+        "neg": "還沒",
+        "status": "完成"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:24",
+      "pattern": {
+        "neg": "沒有",
+        "status": "逾期"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:25",
+      "pattern": {
+        "neg": "沒有",
+        "status": "繳費"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:26",
+      "pattern": {
+        "neg": "沒有",
+        "status": "到帳"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:27",
+      "pattern": {
+        "neg": "沒有",
+        "status": "發送"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:28",
+      "pattern": {
+        "neg": "沒有",
+        "status": "回簽"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:29",
+      "pattern": {
+        "neg": "沒有",
+        "status": "簽署"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:30",
+      "pattern": {
+        "neg": "沒有",
+        "status": "指派"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:31",
+      "pattern": {
+        "neg": "沒有",
+        "status": "完成"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:32",
+      "pattern": {
+        "neg": "不在",
+        "status": "逾期"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:33",
+      "pattern": {
+        "neg": "不在",
+        "status": "繳費"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:34",
+      "pattern": {
+        "neg": "不在",
+        "status": "到帳"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:35",
+      "pattern": {
+        "neg": "不在",
+        "status": "發送"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:36",
+      "pattern": {
+        "neg": "不在",
+        "status": "回簽"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:37",
+      "pattern": {
+        "neg": "不在",
+        "status": "簽署"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:38",
+      "pattern": {
+        "neg": "不在",
+        "status": "指派"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:39",
+      "pattern": {
+        "neg": "不在",
+        "status": "完成"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:40",
+      "pattern": {
+        "neg": "並未",
+        "status": "逾期"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:41",
+      "pattern": {
+        "neg": "並未",
+        "status": "繳費"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:42",
+      "pattern": {
+        "neg": "並未",
+        "status": "到帳"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:43",
+      "pattern": {
+        "neg": "並未",
+        "status": "發送"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:44",
+      "pattern": {
+        "neg": "並未",
+        "status": "回簽"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:45",
+      "pattern": {
+        "neg": "並未",
+        "status": "簽署"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:46",
+      "pattern": {
+        "neg": "並未",
+        "status": "指派"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:47",
+      "pattern": {
+        "neg": "並未",
+        "status": "完成"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:48",
+      "pattern": {
+        "neg": "待",
+        "status": "逾期"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:49",
+      "pattern": {
+        "neg": "待",
+        "status": "繳費"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:50",
+      "pattern": {
+        "neg": "待",
+        "status": "到帳"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:51",
+      "pattern": {
+        "neg": "待",
+        "status": "發送"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:52",
+      "pattern": {
+        "neg": "待",
+        "status": "回簽"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:53",
+      "pattern": {
+        "neg": "待",
+        "status": "簽署"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:54",
+      "pattern": {
+        "neg": "待",
+        "status": "指派"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "pair:55",
+      "pattern": {
+        "neg": "待",
+        "status": "完成"
+      },
+      "class": "contract",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "forbid:0",
+      "pattern": "終身保固",
+      "class": "safety",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "forbid:1",
+      "pattern": "永久免費",
+      "class": "safety",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "forbid:2",
+      "pattern": "業界唯一",
+      "class": "safety",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "forbid:3",
+      "pattern": "全台最便宜",
+      "class": "safety",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "forbid:4",
+      "pattern": "estate_ref",
+      "class": "safety",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "forbid:5",
+      "pattern": "bill_ref",
+      "class": "safety",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "forbid:6",
+      "pattern": "contract_ref",
+      "class": "safety",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "forbid:7",
+      "pattern": "repair_ref",
+      "class": "safety",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "forbid:8",
+      "pattern": "estate_id",
+      "class": "safety",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "forbid:9",
+      "pattern": "bill_id",
+      "class": "safety",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "forbid:10",
+      "pattern": "contract_id",
+      "class": "safety",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "forbid:11",
+      "pattern": "repair_id",
+      "class": "safety",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "forbid:12",
+      "pattern": "user_id",
+      "class": "safety",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "forbid:13",
+      "pattern": "role_id",
+      "class": "safety",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "forbid:14",
+      "pattern": "vendor_id",
+      "class": "safety",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "forbid:15",
+      "pattern": "session_id",
+      "class": "safety",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "forbid:16",
+      "pattern": "pending_id",
+      "class": "safety",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "forbid:17",
+      "pattern": "facet_context",
+      "class": "safety",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "forbid:18",
+      "pattern": "trigger_facet_key",
+      "class": "safety",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "forbid:19",
+      "pattern": "target_user",
+      "class": "safety",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "forbid:20",
+      "pattern": "property_manager",
+      "class": "safety",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "docturn:0",
+      "pattern": "已(?:經)?(?:(?:把|將)[^。！？，、；]{0,12})?(?:掛|存|建立|建單|匯入|上傳|附加|寫入|更新|送出)",
+      "class": "safety",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "document"
+      ]
+    },
+    {
+      "id": "docturn:1",
+      "pattern": "(要我|要不要|需要我|我可以|我就|我會|幫您|幫你).{0,8}(存|匯入|建立|建單|上傳|附加|掛|寫入|送出)",
+      "class": "safety",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "document"
+      ]
+    },
+    {
+      "id": "route:0",
+      "pattern": "https://www.jgbsmart.com/demo-form",
+      "class": "safety",
+      "audiences": [
+        "prospect"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "route:1",
+      "pattern": "https://www.jgbsmart.com/pricing",
+      "class": "safety",
+      "audiences": [
+        "prospect"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "qsensitive:0",
+      "pattern": "(?:哪些|有哪些|有沒有)[^。？?]{0,8}(?:客戶|業者|同業|公司)[^。？?]{0,8}(?:在用|有用|用過|導入|合作)|(?:客戶|導入|成功|使用|標竿)案例|案例(?:分享|參考)|參考客戶|客戶名單|使用者見證|推薦(?:客戶|名單)",
+      "class": "safety",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "qsensitive:1",
+      "pattern": "抽成|拆帳|佣金|成數|幾成|費率|報價|收費(?:標準|方式|模式)|怎麼收費|如何收費|價目|價格表|月費|年費|授權費|訂閱費|方案價|(?:你們|貴司|貴公司|平台|系統|軟體|服務|一個月|每個月|每月|一年|每年|一季|每季|每人|每戶|每間|每案)[^。？?]{0,8}(?:多少錢|收多少|要多少|價格|費用)",
+      "class": "safety",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "qsensitive:2",
+      "pattern": "SLA|服務水準|服務等級|保證(?:可用|不中斷|回應|修復|時效)|可用性|上線率|uptime|履約|賠償責任|責任歸屬|(?:合約|契約)(?:條款|內容|範本|期間|怎麼簽|要簽)|簽約(?:條件|流程|要準備)|終止條款|違約責任|綁約",
+      "class": "safety",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "qsensitive:3",
+      "pattern": "個資法|個人資料保護|個資保護|GDPR|法遵|法規遵循|合規|符合[^。？?]{0,8}法規|稽核(?:軌跡|紀錄|報告)|資料保存(?:年限|期限)|隱私權政策|洗錢防制|金管會|主管機關",
+      "class": "safety",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    },
+    {
+      "id": "qsensitive:4",
+      "pattern": "資安|資訊安全|加密|ISO\\s?27001|SOC\\s?2|滲透測試|弱點掃描|漏洞|權限控管|存取控制|備援|異地備份|災難復原|資料外洩|防火牆|雙因素|兩階段驗證|2FA|SSO|單一登入",
+      "class": "safety",
+      "audiences": [
+        "property_manager",
+        "prospect",
+        "tenant"
+      ],
+      "turn_types": [
+        "general",
+        "document"
+      ]
+    }
   ]
 }

@@ -119,7 +119,7 @@ def test_rules_file_declares_both_classes():
     加了鍵也讀不到，而那個失敗方向是「閘悄悄沒開」。這條把「表在不在」與「表咬不咬」
     分開報，不然第 1 節全紅時看不出是規則沒載到還是判定寫錯。"""
     rules = VerifierRules.load(_RULES_PATH)
-    assert rules.version == "1.6.2"
+    assert rules.version == "2.0.0"   # R2：規則自帶屬性 ⇒ 大版本 2.0.0
     assert rules.document_turn_forbid_terms is not None, (
         "規則檔缺 `document_turn_forbid_terms`，或 `VerifierRules` 沒宣告這個欄位"
     )
@@ -177,10 +177,15 @@ def test_write_offers_are_blocked_in_document_turn(verifier, case):
 
 def test_term_id_distinguishes_the_two_forbid_tables(verifier):
     """`FORBIDDEN_TERM` 現在有**兩張表**（全回合字面表 `forbid_terms`／文件回合正則表
-    `document_turn_forbid_terms`）。term_id 不加基底的話 `rule#0` 指不出是哪一張，
-    trace 反查就斷了（同 `_PAIR_TERM_ID_BASE` 的理由）。"""
-    assert _run(verifier, _DONE_CLAIMS[0], document_turn=True).term_id == "rule#2000"
-    assert _run(verifier, _WRITE_OFFERS[0], document_turn=True).term_id == "rule#2001"
+    `document_turn_forbid_terms`）。兩張表的 term_id 撞號的話 `rule#0` 指不出是哪一張，
+    trace 反查就斷了。
+
+    **R2**：舊解是全域基底 `_DOC_TURN_TERM_ID_BASE = 2000`（`rule#2000`／`rule#2001`）
+    ——加一張表就得再挑一個沒人用過的基底。改成 namespace id `docturn:<表內索引>`，
+    基底就此廢除（舊 `rule#2000+i` ↔ 新 `docturn:i` 的一一對應由
+    `test_rule_attributes_req.py` (e) 對 `tests/fixtures/agent/rules_1_6_2.json` 逐條守）。"""
+    assert _run(verifier, _DONE_CLAIMS[0], document_turn=True).term_id == "docturn:0"
+    assert _run(verifier, _WRITE_OFFERS[0], document_turn=True).term_id == "docturn:1"
     # 正對照：既有 `forbid_terms` 的編號**沒有**被推走（同 reason、不同表）。
     legacy = _run(verifier, ("終身保固嗎？", None), document_turn=True)
     assert legacy.reason == "FORBIDDEN_TERM" and legacy.term_id == "rule#0"

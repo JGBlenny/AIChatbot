@@ -52,7 +52,9 @@ def test_key_is_loaded_from_file(rules):
     assert rules.route_check_audiences == ["prospect"]
     raw = json.loads(_RULES_PATH.read_text(encoding="utf-8"))
     # 單元 E（第六批）：規則檔多一張 `document_turn_forbid_terms` ⇒ 版本升 1.6.0。
-    assert raw["route_check_audiences"] == ["prospect"] and raw["version"] == "1.6.2"
+    # R2：規則自帶屬性 ⇒ 大版本 2.0.0（⛔ `route_check_audiences` 這個頂層鍵**沒有**
+    # 被搬走——受眾作用域的權威仍是它，見 `verifier._TABLE_DEFAULTS`）。
+    assert raw["route_check_audiences"] == ["prospect"] and raw["version"] == "2.0.0"
 
 
 @pytest.mark.parametrize("sentence", [_PHONEISH, _URLISH])

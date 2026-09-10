@@ -29,16 +29,22 @@ import json
 import math
 import re
 import unicodedata
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, get_args
 
 from services.agent.identity import Audience as _Audience
 from services.agent.output_schema import (
     ASK_TARGETS,
+    RULE_CLASSES,
+    TURN_TYPES,
     AgentOutput,
+    RuleClass,
+    RuleSpec,
     Sentence,
     VerifierRules,
     VerifierVerdict,
+    VerifyContext,
 )
 from services.agent.provenance_units import (  # 葉模組：切句與 refs 解析（DSP-029 落地取捨④）
     _SENTENCE_ENDS,
@@ -139,28 +145,217 @@ _GROUNDING_OBSERVE_SCHEMA_CAUSES: frozenset[str] = frozenset({
     "ref_invalid", "ref_source_not_found", "ref_ambiguous", "unit_out_of_range",
 })
 
-#: `negation_status_pairs` 的 `term_id` 基底。`TERM_ID_PATTERN` 只認 `rule#<十進位>`，
-#: 而 `POLARITY_MISMATCH` 現在有**兩張表**（裸詞 `negation_terms`／主題錨定 pairs），
-#: 索引不加基底就會撞在一起（`rule#3` 指不出是哪一張）。⛔ 不改 `TERM_ID_PATTERN`：
-#: 那會讓既有 trace 的 term_id 形狀多一種，消費端要一起改。
-_PAIR_TERM_ID_BASE = 1000
+# ════════════════════════════════════════════════════════════════════
+# R2：規則自帶屬性 —— 一張表取代「受眾鍵／document_turn 布林／模式集合」三套機制
+# ════════════════════════════════════════════════════════════════════
+#: `class × mode` 觀察表（R2 目標形態 1）。⚠️ 這張表是**唯一**決定「這一類違規在
+#: 目前模式下只記錄還是照擋」的地方，⛔ 不得再有第二處特例。
+#: * `enforce`——空集合＝全部照擋；
+#: * `grounding_observe`——只有 `grounding` 類觀察；
+#: * `observe_only`——全部觀察（＝舊 `AGENT_VERIFIER_OBSERVE_ONLY` 的語義）。
+_OBSERVED_CLASSES_BY_MODE: dict[str, frozenset[str]] = {
+    "enforce": frozenset(),
+    "grounding_observe": frozenset({"grounding"}),
+    "observe_only": frozenset(RULE_CLASSES),
+}
+
+#: 拒因 → `class`。⚠️ 這張表與下面兩張**共同**取代 R2 前的
+#: `_GROUNDING_OBSERVE_REASONS`／`_GROUNDING_OBSERVE_SCHEMA_CAUSES`／
+#: `polarity_source == "term"` 三處特例，且必須與它們**逐位相同**
+#: （`tests/unit/agent/test_rule_attributes_req.py` 以那三個常數當對照組逐格比對）。
+#: ⚠️ `.get(..., "safety")` 的缺值方向是**照擋**：新增拒因忘了進表時，
+#: 症狀必須是「多擋一類」而不是「這一類在觀察模式下靜靜被放行」。
+_REASON_CLASS: dict[str, RuleClass] = {
+    # 安全側（掃的字串就是送出去的字串）
+    "SENSITIVE_TOPIC": "safety",
+    "FORBIDDEN_TERM": "safety",
+    "ROUTE_NOT_ALLOWED": "safety",
+    "HANDOFF_WORD_NO_HANDOFF": "safety",
+    # 引用解析與涵蓋（DSP-040／W6-b3 的「觀察類」）
+    "UNCITED_ASSERTION": "grounding",
+    "QUOTE_TOO_SHORT": "grounding",
+    "QUOTE_NOT_COVERING": "grounding",
+    "SOURCE_NOT_CITABLE": "grounding",
+    # ⚠️ `QUOTE_NOT_VERBATIM` 在模型端已不可達（引文由系統切出），但拒因列舉仍保留
+    #    它（trace 相容）。R2 前它**不在** `_GROUNDING_OBSERVE_REASONS` 裡 ⇒ 照擋，
+    #    這裡因此歸 `contract`（⛔ 不是 grounding，否則與舊行為差一格）。
+    "QUOTE_NOT_VERBATIM": "contract",
+    # `POLARITY_MISMATCH`／`SCHEMA` 由子維度決定，見下兩張表。
+}
+
+#: `SCHEMA` 的**子成因** → `class`。⚠️ `SCHEMA` 是共用拒因，⛔ 不得整類觀察
+#: （plan-verifier r2 #1）：只有「引用解析失敗」那四個子成因是 `grounding`。
+_SCHEMA_CAUSE_CLASS: dict[Optional[str], RuleClass] = {
+    "ref_invalid": "grounding",
+    "ref_source_not_found": "grounding",
+    "ref_ambiguous": "grounding",
+    "unit_out_of_range": "grounding",
+    # 標記外洩＝把系統內部標記漏給使用者，且是「引文由系統解析」這條契約被繞過的訊號
+    "marker_in_answer": "safety",
+    # S4 敏感配對（U2 的准入建立在它之上）
+    "handoff_reason_mismatch": "safety",
+    "handoff_reason_invalid": "contract",
+    "empty_sentences": "contract",
+    "empty_text": "contract",
+    "ask_target_invalid": "contract",
+}
+
+#: `POLARITY_MISMATCH` 的來源表 → `class`。
+#: ⚠️ 裸詞表（`term`）是 `grounding` **不是** `contract`：2026-09-09 誤殺量測
+#: （smoke-rag 一輪 98 句）裡它命中 12 次、幾乎全是「引文側含否定詞」的假陽性，
+#: 已定案在 `grounding_observe` 下降為觀察類。主題錨定 pair 沒有誤殺 ⇒ `contract`＝照擋。
+#: ⛔ 這一格若寫成 `contract`，`grounding_observe` 下的拒絕率會回到 2026-09-09 之前。
+_POLARITY_SOURCE_CLASS: dict[Optional[str], RuleClass] = {
+    "term": "grounding",
+    "pair": "contract",
+}
 
 
-def _pair_rule_id(index: int) -> str:
-    """`negation_status_pairs` 第 `index` 筆的 `term_id`（＝`rule#{1000+index}`）。"""
-    return _rule_id(_PAIR_TERM_ID_BASE + index)
+def verdict_class(verdict: VerifierVerdict) -> RuleClass:
+    """一個 verdict 的 `class`（`_OBSERVED_CLASSES_BY_MODE` 的查表鍵）。
+
+    ⚠️ 刻意由**拒因／子成因**決定，⛔ 不讀規則檔宣告的 `RuleSpec.rule_class`：
+    規則檔是可改的組態，讓它決定「這一類要不要照擋」等於把安全開關交給組態
+    ——改一個字就能把 `SENSITIVE_TOPIC` 降級成觀察類，且沒有任何徵兆。
+    規則檔那一欄是**宣告**（給人看、給對帳測試咬），這裡是**判定**。
+    兩者必須一致，由 `test_rule_attributes_req.py` 逐條對帳。
+    """
+    reason = verdict.reason
+    if reason == "SCHEMA":
+        return _SCHEMA_CAUSE_CLASS.get(verdict.schema_cause, "safety")
+    if reason == "POLARITY_MISMATCH":
+        return _POLARITY_SOURCE_CLASS.get(verdict.polarity_source, "contract")
+    return _REASON_CLASS.get(reason or "", "safety")
 
 
-#: `document_turn_forbid_terms` 的 `term_id` 基底（同 `_PAIR_TERM_ID_BASE` 的理由）：
-#: `FORBIDDEN_TERM` 現在有兩張表（全回合字面表 `forbid_terms`／文件回合正則表），
-#: 索引不加基底 `rule#0` 會撞在一起，trace 反查不出被擋的是哪一條規則。
-#: ⛔ 不改 `TERM_ID_PATTERN`：形狀仍是 `rule#<十進位>`，消費端不用動。
-_DOC_TURN_TERM_ID_BASE = 2000
+#: 受眾封閉值域的**全集**（＝「這條規則對所有受眾生效」）。
+#: ⚠️ 與 `sensitive_patterns_audiences is None` **行為等價**：`_audience_scope_applies`
+#: 對全集的三個分支（缺值／值域外／值域內）一律回 True。改成明列而不是 `None`，
+#: 是為了讓 `RuleSpec.audiences` 永遠是封閉值域的清單（可對帳、可變異）。
+_ALL_AUDIENCES: tuple[str, ...] = tuple(sorted(KNOWN_AUDIENCES))
 
 
-def _doc_turn_rule_id(index: int) -> str:
-    """`document_turn_forbid_terms` 第 `index` 筆的 `term_id`（＝`rule#{2000+index}`）。"""
-    return _rule_id(_DOC_TURN_TERM_ID_BASE + index)
+@dataclass(frozen=True)
+class _TableDefault:
+    """一張表的**程式端預設屬性**（規則檔沒宣告時用；`rules` 空表＝R2 前行為）。"""
+    rule_class: RuleClass
+    turn_types: tuple[str, ...]
+    #: 受眾作用域的權威**頂層鍵名**（`None`＝這張表沒有受眾維度＝全受眾）。
+    #: ⚠️ 受眾一律讀頂層鍵、⛔ 不讀規則檔條目上的 `audiences`：既有測試
+    #: （`test_sensitive_patterns_audience_req.py`）以「改／拿掉頂層鍵」做變異，
+    #: 條目若能覆寫它，「缺鍵＝全受眾＝照擋」這個方向就會被組態悄悄反轉。
+    audience_field: Optional[str]
+    #: 這張表的 `pattern` 要不要在建構當下編譯（fail loud）。⛔ 只有 R2 前就會編的
+    #: 兩張表為 True——多編一張等於新增一個「規則檔寫壞就起不來」的表面。
+    compile_regex: bool = False
+
+
+#: 七張表的預設屬性。⚠️ `docturn` 的 `turn_types` 只有 `document` ——這一格就是
+#: R2 前 `verify(document_turn=True)` 那個布林；⛔ 改成全回合會讓「已建立／要我匯入嗎」
+#: 在確認卡與修繕建單的正常回覆上整批誤殺。
+_TABLE_DEFAULTS: dict[str, _TableDefault] = {
+    "sensitive": _TableDefault("safety", TURN_TYPES, "sensitive_patterns_audiences", True),
+    "negation": _TableDefault("grounding", TURN_TYPES, None),
+    "pair": _TableDefault("contract", TURN_TYPES, None),
+    "forbid": _TableDefault("safety", TURN_TYPES, None),
+    "docturn": _TableDefault("safety", ("document",), None, True),
+    "route": _TableDefault("safety", TURN_TYPES, "route_check_audiences"),
+    "qsensitive": _TableDefault("safety", TURN_TYPES, None),
+}
+
+#: 每張表在 `VerifierRules` 上的來源欄位（＝「有哪些規則」的唯一權威）。
+_TABLE_SOURCE_FIELD: dict[str, str] = {
+    "sensitive": "sensitive_patterns",
+    "negation": "negation_terms",
+    "pair": "negation_status_pairs",
+    "forbid": "forbid_terms",
+    "docturn": "document_turn_forbid_terms",
+    "route": "allowed_routes",
+    "qsensitive": "question_sensitive_patterns",
+}
+
+#: wire `term_id` 仍用舊 `rule#<表內索引>` 的三張表。
+#: ⚠️ ⛔ 不是「還沒改完」，是**刻意不動**：`tests/unit/agent/test_agent_turn_unit_req.py`
+#: （R2 範圍外）逐字釘住 `rule#0`／`rule#1`，而 `trace_view.rule_index` 只放行
+#: `rule#<n>`、其餘一律 `redacted`。三表改用 namespace id 與 `trace_view` 同步是 **R2b**。
+#: ⚠️ `pair`／`docturn` 兩表**已改**用 namespace id ⇒ `_PAIR_TERM_ID_BASE=1000`／
+#: `_DOC_TURN_TERM_ID_BASE=2000` 兩個基底就此廢除（R2 目標形態 3）。
+_LEGACY_WIRE_NAMESPACES: frozenset[str] = frozenset({"sensitive", "negation", "forbid"})
+
+
+def _wire_term_id(namespace: str, index: int) -> Optional[str]:
+    """`VerifierVerdict.term_id` 的 wire 值。`route`／`qsensitive` 不填 term_id
+    （前者的 verdict 本來就沒有 term，後者根本不經 `verify()`）。"""
+    if namespace in _LEGACY_WIRE_NAMESPACES:
+        return _rule_id(index)
+    if namespace in ("pair", "docturn"):
+        return f"{namespace}:{index}"
+    return None
+
+
+@dataclass(frozen=True)
+class _CompiledRule:
+    """判定期的一條規則＝屬性（`spec`）＋可直接使用的比對物。"""
+    spec: RuleSpec
+    term_id: Optional[str]
+    #: `sensitive`／`docturn`：建構當下編好的正則（⛔ 不做「編不過就跳過」的容錯）。
+    regex: Optional[re.Pattern] = None
+    #: `negation`／`forbid`／`route`：字面子字串。
+    literal: Optional[str] = None
+    #: `pair`：`(neg, status)`。
+    pair: tuple[str, str] = ("", "")
+
+    @property
+    def namespace(self) -> str:
+        return self.spec.namespace
+
+    @property
+    def index(self) -> int:
+        return self.spec.index
+
+
+def _build_rule_set(rules: VerifierRules) -> list[_CompiledRule]:
+    """把七張扁平表**原樣**攤成帶屬性的條目（R2 目標形態 1）。
+
+    權威分工（⛔ 不得互換）：
+    * **有哪些規則、規則長什麼樣** ← 扁平表（`sensitive_patterns`／…）。既有測試以
+      它們做變異（清空、塞壞正則、換清單），所以它們必須是唯一權威；
+    * **受眾作用域** ← 頂層 `sensitive_patterns_audiences`／`route_check_audiences`
+      （缺鍵＝全受眾＝照擋，這個方向 ⛔ 不得反轉）；
+    * **class／turn_types** ← 規則檔 `rules[]` 的宣告；沒宣告 ⇒ `_TABLE_DEFAULTS`。
+
+    ⚠️ ⛔ 不對「宣告與扁平表對不上」raise：`test_document_turn_forbid_req.py` 會刻意
+    讓兩邊長度不同（`[]`／壞正則），raise 會把那些測試的失敗方向從「閘不啟用」
+    改成「載不起來」。對帳改由 `test_rule_attributes_req.py` 對出貨規則檔做。
+    """
+    declared: dict[str, RuleSpec] = {spec.id: spec for spec in rules.rules}
+    built: list[_CompiledRule] = []
+    for namespace, field in _TABLE_SOURCE_FIELD.items():
+        default = _TABLE_DEFAULTS[namespace]
+        scope = getattr(rules, default.audience_field) if default.audience_field else None
+        audiences = list(scope) if scope is not None else list(_ALL_AUDIENCES)
+        for index, value in enumerate(getattr(rules, field, None) or []):
+            rule_id = f"{namespace}:{index}"
+            spec_decl = declared.get(rule_id)
+            spec = RuleSpec.model_validate({
+                "id": rule_id,
+                "pattern": value,
+                "class": spec_decl.rule_class if spec_decl else default.rule_class,
+                "audiences": audiences,
+                "turn_types": (list(spec_decl.turn_types) if spec_decl
+                               else list(default.turn_types)),
+            })
+            built.append(_CompiledRule(
+                spec=spec,
+                term_id=_wire_term_id(namespace, index),
+                # ⚠️ 樣式在**建構當下**編譯：規則檔寫壞的正則要在啟動就炸（fail loud），
+                #   ⛔ 不做「編譯失敗就跳過這條」的容錯——那個失敗方向是**閘悄悄少一條**。
+                regex=re.compile(value) if default.compile_regex else None,
+                literal=value if isinstance(value, str) and not default.compile_regex else None,
+                pair=((value or {}).get("neg") or "", (value or {}).get("status") or "")
+                if namespace == "pair" else ("", ""),
+            ))
+    return built
 
 
 #: fixture 案內未指定 `nonce` 時的缺省值（`_assert_all` 用）。⛔ 只給 fixture／自證用，
@@ -185,15 +380,25 @@ class OutputVerifier:
 
     def __init__(self, rules: VerifierRules, *, mode: str = DEFAULT_VERIFIER_MODE):
         self.rules = rules
-        self._sensitive_patterns = [re.compile(p) for p in rules.sensitive_patterns]
-        #: 文件回合禁用樣式（單元 E）。規則檔缺鍵 ⇒ `None` ⇒ 空表 ⇒ ⑥' 整步不跑。
-        #: ⚠️ 樣式在**建構當下**編譯：規則檔寫壞的正則要在啟動就炸（fail loud），
-        #: ⛔ 不做「編譯失敗就跳過這條」的容錯——那個失敗方向是**閘悄悄少一條**。
-        self._document_turn_forbid = [
-            re.compile(p) for p in (rules.document_turn_forbid_terms or [])
-        ]
+        #: R2：七張表攤成帶屬性的條目（`{id, pattern, class, audiences, turn_types}`）。
+        #: ⚠️ 在 **`__init__`** 建、⛔ 不在 `VerifierRules` 的 validator 建：
+        #: `rules.model_copy(update={...})` ⛔ 不跑 validator（`test_route_check_audience_req.py`
+        #: 就是這樣造「舊規則檔」的），屬性若在 model 上快取就會與 copy 後的值不同步。
+        self._rule_set: list[_CompiledRule] = _build_rule_set(rules)
+        self._by_namespace: dict[str, list[_CompiledRule]] = {ns: [] for ns in _TABLE_DEFAULTS}
+        for rule in self._rule_set:
+            self._by_namespace[rule.namespace].append(rule)
         self._mode = DEFAULT_VERIFIER_MODE
         self.mode = mode
+
+    def rules_for(self, namespace: str, ctx: VerifyContext) -> list[_CompiledRule]:
+        """這一回合**這張表裡真正生效**的規則——受眾與回合型態兩個維度用
+        同一套屬性過濾（R2：取代「受眾鍵」與「`document_turn` 布林」兩套機制）。"""
+        return [
+            rule for rule in self._by_namespace.get(namespace, ())
+            if ctx.turn_type in rule.spec.turn_types
+            and self._audience_scope_applies(rule.spec.audiences, ctx.audience)
+        ]
 
     @property
     def mode(self) -> str:
@@ -240,6 +445,12 @@ class OutputVerifier:
         被當成未知值一路照擋（或反過來，取決於誰先漂），兩者都不會有徵兆。
         `services.agent.identity` 只 import `dataclasses`／`typing`，⛔ 不會與
         本檔既有的 `presales_gate`／`output_schema` 形成循環。
+
+        ⚠️ **R2 之後這裡不再是判定路徑**——判定走 `rules_for("sensitive", ctx)`
+        （受眾寫在每條規則的 `audiences` 屬性上）。本方法保留為這段語義的**單一
+        說明處**，並且是對照測試的入口：`test_rule_attributes_req.py` 拿它當 oracle，
+        逐受眾比對 `rules_for` 的結果，兩者不一致即紅。⛔ 不得刪掉它只留註解——
+        註解不會在語義漂掉時變紅。
         """
         return self._audience_scope_applies(self.rules.sensitive_patterns_audiences, audience)
 
@@ -262,23 +473,15 @@ class OutputVerifier:
         return audience in declared
 
     def _is_observed(self, verdict: VerifierVerdict) -> bool:
-        """這個違規在目前模式下是「只記錄」還是「照擋」。⛔ 以**拒因＋子成因**界定，
-        不是整個 `SCHEMA` 一起（見 `_GROUNDING_OBSERVE_SCHEMA_CAUSES`）。"""
-        if self._mode == "enforce":
-            return False
-        if self._mode == "observe_only":
-            return True
-        if verdict.reason in _GROUNDING_OBSERVE_REASONS:
-            return True
-        # 2026-09-09 誤殺量測（smoke-rag 一輪 98 句）：裸詞表極性命中 12、幾乎全是引文側
-        # 含否定詞或多 ref 一側缺否定詞的假陽性 ⇒ `grounding_observe` 下裸詞極性降為
-        # 觀察類；主題錨定 pair（兩側都有狀態詞才算）沒有誤殺，照擋。
-        if verdict.reason == "POLARITY_MISMATCH" and verdict.polarity_source == "term":
-            return True
-        return (
-            verdict.reason == "SCHEMA"
-            and verdict.schema_cause in _GROUNDING_OBSERVE_SCHEMA_CAUSES
-        )
+        """這個違規在目前模式下是「只記錄」還是「照擋」——**`class × mode` 一次查表**
+        （R2）。R2 前這裡是三段各自為政的特例（拒因集合／SCHEMA 子成因集合／
+        `polarity_source == "term"`），三者必須逐位等價，由
+        `tests/unit/agent/test_rule_attributes_req.py` 拿舊常數當對照組逐格比對。
+
+        ⚠️ `class` 由 `verdict_class()` 從拒因／子成因算，⛔ 不讀規則檔的宣告——
+        規則檔可改，讓它決定「要不要照擋」等於把安全開關交給組態。
+        """
+        return verdict_class(verdict) in _OBSERVED_CLASSES_BY_MODE[self._mode]
 
     @staticmethod
     def _observed_key(verdict: VerifierVerdict) -> str:
@@ -298,6 +501,7 @@ class OutputVerifier:
         *,
         resolved: dict[tuple[int, int], ResolvedRef],
         resolve_errors: dict[tuple[int, int], str],
+        ctx: Optional[VerifyContext] = None,
         audience: Optional[str] = None,
         document_turn: bool = False,
     ) -> VerifierVerdict:
@@ -327,7 +531,19 @@ class OutputVerifier:
         （「已建立」「要我匯入嗎」）在**一般寫入回合是正確的話**，缺值就照擋會把
         確認卡與修繕建單的正常回覆整批誤殺。判「這回合是不是文件回合」的責任因此
         在呼叫端（Runtime／第二波 B 接線），⛔ 不由這把尺自己猜。
+
+        **R2：`ctx`（`VerifyContext`）是這三個維度的新入口**——`ctx` 有值以它為準，
+        否則由舊 kwarg 轉接（`document_turn=True ⇒ turn_type="document"`）。
+        ⚠️ 這是**加法**：`audience=`／`document_turn=` 原樣保留、語義不變，
+        `runtime.py` 的呼叫點 ⛔ 不需要改（廢除舊 kwarg 是 R2b 的事）。
+        ⚠️ 兩者同時給時 `ctx` 贏、⛔ 不合併也不 raise——合併會出現「ctx 說一般回合、
+        kwarg 說文件回合」這種沒有正確答案的狀態，raise 則會把一個呼叫端的疏忽
+        變成產線 500。
         """
+        ctx = ctx if ctx is not None else VerifyContext(
+            audience=audience,
+            turn_type="document" if document_turn else "general",
+        )
         observed: list[str] = []
 
         def _hit(verdict: VerifierVerdict):
@@ -384,14 +600,15 @@ class OutputVerifier:
         answer_nfkc = _nfkc(out.answer)
         # U3：這張表只對規則檔宣告的受眾生效（缺值＝照擋，見 `_sensitive_patterns_apply`）。
         # ⚠️ 上面那條 `fact_class in SENSITIVE` 在**這個判定之外**，⛔ 不受受眾影響。
-        if self._sensitive_patterns_apply(audience):
-            for i, pattern in enumerate(self._sensitive_patterns):
-                if pattern.search(answer_nfkc):
-                    hit = _hit(VerifierVerdict(
-                        ok=False, reason="SENSITIVE_TOPIC", term_id=_rule_id(i)))
-                    if hit is not None:
-                        return hit
-                    break  # 觀察：同一類記一次就夠，⛔ 不把整張敏感樣式表逐條掃出來
+        # R2：受眾過濾改由條目屬性做（`rules_for`），語義與舊 `_sensitive_patterns_apply`
+        # 逐位相同——同一張表的每一條都帶同一份 `audiences`。
+        for rule in self.rules_for("sensitive", ctx):
+            if rule.regex.search(answer_nfkc):
+                hit = _hit(VerifierVerdict(
+                    ok=False, reason="SENSITIVE_TOPIC", term_id=rule.term_id))
+                if hit is not None:
+                    return hit
+                break  # 觀察：同一類記一次就夠，⛔ 不把整張敏感樣式表逐條掃出來
 
         # ①' DSP-029 r13 #2：答案裡出現片段標記樣式 ⇒ SCHEMA(marker_in_answer)。
         # 契約寫「步⑥前」，這裡取**最早**的合法位置（①之後、②之前），⛔ 不是放寬：
@@ -521,17 +738,20 @@ class OutputVerifier:
                     return polarity_failure
 
         # ⑤ 導流白名單（受眾範圍制，同 ①；pm 引資料段的序號／編號不再被電話正則咬）
-        route_verdict = self._verify_routes(answer_nfkc) if self._route_check_apply(audience) else None
+        route_verdict = (
+            self._verify_routes(answer_nfkc)
+            if self._route_check_apply(ctx.audience) else None
+        )
         if route_verdict is not None:
             hit = _hit(route_verdict)
             if hit is not None:
                 return hit
 
         # ⑥ 禁詞
-        for i, term in enumerate(self.rules.forbid_terms):
-            if term in answer_nfkc:
+        for rule in self.rules_for("forbid", ctx):
+            if rule.literal in answer_nfkc:
                 hit = _hit(VerifierVerdict(
-                    ok=False, reason="FORBIDDEN_TERM", term_id=_rule_id(i)))
+                    ok=False, reason="FORBIDDEN_TERM", term_id=rule.term_id))
                 if hit is not None:
                     return hit
                 break  # 觀察：同一類記一次就夠
@@ -543,14 +763,15 @@ class OutputVerifier:
         # `_GROUNDING_OBSERVE_REASONS` 不含它 ⇒ `grounding_observe` 下**照擋**。
         # 這一點是本閘的重點——真線上的這種句子多半同時引用失敗，若降成觀察類，
         # 引用類被觀察放過之後就沒有人擋得住「已把憑證掛到帳單上」了。
-        if document_turn:
-            for i, pattern in enumerate(self._document_turn_forbid):
-                if pattern.search(answer_nfkc):
-                    hit = _hit(VerifierVerdict(
-                        ok=False, reason="FORBIDDEN_TERM", term_id=_doc_turn_rule_id(i)))
-                    if hit is not None:
-                        return hit
-                    break  # 觀察：同一類記一次就夠
+        # R2：`document_turn` 布林改由條目屬性 `turn_types=["document"]` 表達
+        # （`rules_for` 在一般回合回空表 ⇒ 整步不跑，與舊 `if document_turn:` 逐位相同）。
+        for rule in self.rules_for("docturn", ctx):
+            if rule.regex.search(answer_nfkc):
+                hit = _hit(VerifierVerdict(
+                    ok=False, reason="FORBIDDEN_TERM", term_id=rule.term_id))
+                if hit is not None:
+                    return hit
+                break  # 觀察：同一類記一次就夠
 
         # ⑦ handoff 詞後置掃描
         if scan_handoff_mentions(out.answer) and not handoff:
@@ -651,12 +872,16 @@ class OutputVerifier:
         # DSP-021：極性在**詞組層級**比對——句子與引文「有沒有否定詞」須一致，⛔ 不逐詞
         # 要求同一個字面（真線路 2026-09-05：句子「不支持」、引文「不支援」被判不一致，
         # 兩邊其實同為否定）。term_id 記的是句子側（或引文側）第一個命中的否定詞索引。
-        sent_hits = [i for i, t in enumerate(self.rules.negation_terms) if t in sentence_nfkc]
-        unit_hits = [i for i, t in enumerate(self.rules.negation_terms) if t in unit_nfkc]  # 解析後片段側
+        # R2：詞表改走屬性化條目（`negation:<i>`）。⚠️ 這兩張表的 `audiences`／
+        # `turn_types` 是全集，故不吃 ctx 過濾——真的縮了作用域時，這裡要一起改成
+        # `rules_for("negation", ctx)`，⛔ 不得只改規則檔就以為生效。
+        negation_rules = self._by_namespace["negation"]
+        sent_hits = [r for r in negation_rules if r.literal in sentence_nfkc]
+        unit_hits = [r for r in negation_rules if r.literal in unit_nfkc]  # 解析後片段側
         if bool(sent_hits) != bool(unit_hits):
             failures.append(VerifierVerdict(
                 ok=False, reason="POLARITY_MISMATCH", sent=sent,
-                term_id=_rule_id((sent_hits or unit_hits)[0]), polarity_source="term"))
+                term_id=(sent_hits or unit_hits)[0].term_id, polarity_source="term"))
         else:
             # W6-b3（plan-verifier r3 #1）：**主題錨定**極性——裸「尚未」「未」⛔ 不進
             # `negation_terms`（整段引文比對會誤殺「句子沒提到該主題、引文另一段落有
@@ -670,9 +895,8 @@ class OutputVerifier:
             # 「回簽」、引文含「管理方尚未回簽」⇒ **不**命中。
             # ⚠️ 只在裸詞那條沒命中時才判（`else`）：同一個片段回兩筆 POLARITY 沒有
             # 額外資訊，term_id 反而會挑到後面那張表、對不回既有 trace 的解讀方式。
-            for idx, pair in enumerate(self.rules.negation_status_pairs):
-                neg = (pair or {}).get("neg") or ""
-                status = (pair or {}).get("status") or ""
+            for pair_rule in self._by_namespace["pair"]:
+                neg, status = pair_rule.pair
                 if not neg or not status:
                     continue
                 combo = _nfkc(neg + status)
@@ -686,7 +910,7 @@ class OutputVerifier:
                 if sent_negated != unit_negated:
                     failures.append(VerifierVerdict(
                         ok=False, reason="POLARITY_MISMATCH", sent=sent,
-                        term_id=_pair_rule_id(idx), polarity_source="pair"))
+                        term_id=pair_rule.term_id, polarity_source="pair"))
                     break
 
         # DSP-029a：`citable` 隨解析結果一起傳進來，⛔ 不在此二次查 `tool_results`。
@@ -770,11 +994,18 @@ class OutputVerifier:
             # 的判定因此一字不變（新增的三組受眾案例自己填）。
             # 單元 E：案內 `document_turn` 是**選填**——缺鍵＝`False`＝⑥' 不跑，
             # 既有每一個案例的判定因此一字不變（新增的文件回合案例自己填 true）。
+            # R2：自證走**新入口** `ctx=`（案內鍵不變：`audience`／`document_turn`
+            # 照舊可用）。產線呼叫點仍走舊 kwarg，兩條路徑的等價由
+            # `test_rule_attributes_req.py` 的 (c) 逐案比對。
             verdict = self.verify(
                 out, tool_results, case.get("user_message", ""), case.get("handoff"),
                 resolved=resolved, resolve_errors=resolve_errors,
-                audience=case.get("audience"),
-                document_turn=bool(case.get("document_turn", False)))
+                ctx=VerifyContext(
+                    audience=case.get("audience"),
+                    turn_type=("document" if bool(case.get("document_turn", False))
+                               else "general"),
+                    nonce=nonce,
+                ))
             if verdict.ok != expect_ok:
                 raise RuntimeError(
                     f"OutputVerifier self_test 失敗：{path.name} 案例 {case.get('id')} "
@@ -802,4 +1033,5 @@ class OutputVerifier:
 
 
 
-__all__ = ["OutputVerifier", "split_sentences", "VERIFIER_MODES", "DEFAULT_VERIFIER_MODE"]
+__all__ = ["OutputVerifier", "split_sentences", "VERIFIER_MODES", "DEFAULT_VERIFIER_MODE",
+           "VerifyContext", "verdict_class"]

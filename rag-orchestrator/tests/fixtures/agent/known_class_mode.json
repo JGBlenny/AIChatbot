@@ -1,0 +1,188 @@
+[
+  {
+    "id": "grounding_uncited_enforce",
+    "note": "grounding 類（UNCITED_ASSERTION）在 enforce 下照擋——三向的第一向",
+    "mode": "enforce",
+    "expect_ok": false,
+    "expected_reason": "UNCITED_ASSERTION",
+    "expected_observed": [],
+    "user_message": "你們支援批次匯入嗎？",
+    "agent_output": {
+      "kind": "answer",
+      "sentences": [{"text": "我們支援批次匯入合約。", "kind": "fact", "refs": []}],
+      "fact_class": "feature",
+      "handoff_reason": null
+    },
+    "tool_results": {},
+    "handoff": null
+  },
+  {
+    "id": "grounding_uncited_observed",
+    "note": "同一句在 grounding_observe 下只記錄——class=grounding × mode=grounding_observe",
+    "mode": "grounding_observe",
+    "expect_ok": true,
+    "expected_reason": null,
+    "expected_observed": ["UNCITED_ASSERTION"],
+    "user_message": "你們支援批次匯入嗎？",
+    "agent_output": {
+      "kind": "answer",
+      "sentences": [{"text": "我們支援批次匯入合約。", "kind": "fact", "refs": []}],
+      "fact_class": "feature",
+      "handoff_reason": null
+    },
+    "tool_results": {},
+    "handoff": null
+  },
+  {
+    "id": "grounding_ref_invalid_observed",
+    "note": "SCHEMA 的引用解析子成因（ref_invalid：標記帶的是別的回合的 nonce）屬 grounding",
+    "mode": "grounding_observe",
+    "nonce": "FIXTURE0000000000",
+    "expect_ok": true,
+    "expected_reason": null,
+    "expected_observed": ["SCHEMA:ref_invalid"],
+    "user_message": "你們支援批次匯入嗎？",
+    "agent_output": {
+      "kind": "answer",
+      "sentences": [{"text": "我們支援批次匯入合約。", "kind": "fact",
+                     "refs": ["[OTHERNONCE000000:t1:kb:9001§0]"]}],
+      "fact_class": "feature",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "t1": {"ok": true, "text_for_model": "",
+             "provenance": [{"source": "kb:9001", "text": "本平台支援批次匯入合約。", "citable": true}]}
+    },
+    "handoff": null
+  },
+  {
+    "id": "grounding_term_polarity_observed",
+    "note": "裸詞表極性（polarity_source=term）屬 grounding——2026-09-09 誤殺量測後定案",
+    "mode": "grounding_observe",
+    "nonce": "FIXTURE0000000000",
+    "expect_ok": true,
+    "expected_reason": null,
+    "expected_observed": ["POLARITY_MISMATCH:term"],
+    "user_message": "你們支援批次匯入嗎？",
+    "agent_output": {
+      "kind": "answer",
+      "sentences": [{"text": "本平台不支援批次匯入合約。", "kind": "fact",
+                     "refs": ["[FIXTURE0000000000:t1:kb:9001§0]"]}],
+      "fact_class": "feature",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "t1": {"ok": true, "text_for_model": "",
+             "provenance": [{"source": "kb:9001", "text": "本平台支援批次匯入合約。", "citable": true}]}
+    },
+    "handoff": null
+  },
+  {
+    "id": "contract_pair_polarity_still_blocks",
+    "note": "主題錨定 pair（polarity_source=pair）屬 contract ⇒ grounding_observe 下照擋",
+    "mode": "grounding_observe",
+    "nonce": "FIXTURE0000000000",
+    "expect_ok": false,
+    "expected_reason": "POLARITY_MISMATCH",
+    "expected_observed": [],
+    "user_message": "我這期帳單逾期了嗎？",
+    "agent_output": {
+      "kind": "answer",
+      "sentences": [{"text": "您的這期帳單尚未逾期。", "kind": "fact",
+                     "refs": ["[FIXTURE0000000000:t1:jgb:bills§0]"]}],
+      "fact_class": "other",
+      "handoff_reason": null
+    },
+    "tool_results": {
+      "t1": {"ok": true, "text_for_model": "",
+             "provenance": [{"source": "jgb:bills",
+                             "text": "本期帳單已逾期 8 天（以今日 2026/09/09 計）。",
+                             "citable": true}]}
+    },
+    "handoff": null
+  },
+  {
+    "id": "contract_empty_sentences_still_blocks",
+    "note": "SCHEMA 的結構子成因（empty_sentences）屬 contract ⇒ grounding_observe 下照擋",
+    "mode": "grounding_observe",
+    "expect_ok": false,
+    "expected_reason": "SCHEMA",
+    "expected_schema_cause": "empty_sentences",
+    "expected_observed": [],
+    "user_message": "你們支援批次匯入嗎？",
+    "agent_output": {
+      "kind": "answer", "sentences": [], "fact_class": "feature", "handoff_reason": null
+    },
+    "tool_results": {},
+    "handoff": null
+  },
+  {
+    "id": "safety_forbid_still_blocks_under_grounding_observe",
+    "note": "FORBIDDEN_TERM 屬 safety ⇒ grounding_observe 下照擋（⛔ 不得因引用類被觀察就一起放行）",
+    "mode": "grounding_observe",
+    "expect_ok": false,
+    "expected_reason": "FORBIDDEN_TERM",
+    "expected_observed": [],
+    "user_message": "有終身保固嗎？",
+    "agent_output": {
+      "kind": "ask",
+      "sentences": [{"text": "請問您問的是終身保固嗎？", "kind": "question", "refs": []}],
+      "fact_class": "feature",
+      "ask_target": "choice",
+      "handoff_reason": null
+    },
+    "tool_results": {},
+    "handoff": null
+  },
+  {
+    "id": "safety_forbid_observed_only_under_observe_only",
+    "note": "observe_only＝三個 class 全觀察（舊 AGENT_VERIFIER_OBSERVE_ONLY 的語義）",
+    "mode": "observe_only",
+    "expect_ok": true,
+    "expected_reason": null,
+    "expected_observed": ["FORBIDDEN_TERM"],
+    "user_message": "有終身保固嗎？",
+    "agent_output": {
+      "kind": "ask",
+      "sentences": [{"text": "請問您問的是終身保固嗎？", "kind": "question", "refs": []}],
+      "fact_class": "feature",
+      "ask_target": "choice",
+      "handoff_reason": null
+    },
+    "tool_results": {},
+    "handoff": null
+  },
+  {
+    "id": "missing_audience_is_still_blocked_under_grounding_observe",
+    "note": "缺值方向：案內沒有 audience 鍵（＝None）⇒ 敏感樣式照掃，且 safety ⛔ 不被觀察降級",
+    "mode": "grounding_observe",
+    "expect_ok": false,
+    "expected_reason": "SENSITIVE_TOPIC",
+    "expected_observed": [],
+    "user_message": "月費怎麼算？",
+    "agent_output": {
+      "kind": "answer",
+      "sentences": [{"text": "月租費是3000元。", "kind": "fact", "refs": []}],
+      "fact_class": "feature",
+      "handoff_reason": null
+    },
+    "tool_results": {},
+    "handoff": null
+  },
+  {
+    "id": "missing_mode_key_defaults_to_enforce",
+    "note": "缺值方向：案內沒有 mode 鍵 ⇒ 尺以預設 enforce 跑（⛔ 缺值不得靜默變觀察）",
+    "expect_ok": false,
+    "expected_reason": "UNCITED_ASSERTION",
+    "expected_observed": [],
+    "user_message": "你們支援批次匯入嗎？",
+    "agent_output": {
+      "kind": "answer",
+      "sentences": [{"text": "我們支援批次匯入合約。", "kind": "fact", "refs": []}],
+      "fact_class": "feature",
+      "handoff_reason": null
+    },
+    "tool_results": {},
+    "handoff": null
+  }
+]

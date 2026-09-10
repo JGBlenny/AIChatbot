@@ -14,9 +14,11 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
-from typing import Literal, Optional
+from typing import ClassVar, Literal, Optional, Union, get_args
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
+
+from services.agent.identity import Audience as _Audience
 
 
 #: T1（Plan `inputs/plan-walkthrough-fixes-batch2-20260909.md` §2）：`kind=ask` 時
@@ -146,13 +148,108 @@ VerdictReason = Literal[
 ]
 
 
+# ════════════════════════════════════════════════════════════════════
+# R2：規則自帶屬性（Plan `inputs/plan-structural-refactor-20260910.md` §0 R2）
+# ════════════════════════════════════════════════════════════════════
+#: 規則的**類別**。R2 之前，「這一類違規在哪個模式下只記錄」是三個各自為政的字面
+#: 集合（`_GROUNDING_OBSERVE_REASONS`／`_GROUNDING_OBSERVE_SCHEMA_CAUSES`／
+#: `polarity_source == "term"` 這個特例）；R2 把它收成**一個維度**：
+#: `class × mode`（見 `verifier._OBSERVED_CLASSES_BY_MODE`）。
+#: * `safety`——機敏／禁詞／導流／標記外洩／敏感配對：任何模式下都 ⛔ 不得降級成觀察
+#:   （`observe_only` 例外，那是明寫「整把尺只記錄」的旗）；
+#: * `contract`——結構契約（空筆、追問對象、主題錨定極性）：照擋；
+#: * `grounding`——引用解析與涵蓋（含裸詞極性）：`grounding_observe` 下只記錄。
+RuleClass = Literal["safety", "contract", "grounding"]
+RULE_CLASSES: tuple[str, ...] = get_args(RuleClass)
+
+#: 回合型態的**封閉值域**。`document` 就是舊 `verify(document_turn=True)`，
+#: `general` 是它的預設 `False`。⛔ 不新增第三種而不同步 `VerifyContext`。
+TurnType = Literal["general", "document"]
+TURN_TYPES: tuple[str, ...] = get_args(TurnType)
+
+#: `RuleSpec.id` 的 namespace 封閉集合＝現行**七張表**各一個名字。
+#: ⚠️ 名字即語義：`sensitive` 是答案側敏感樣式、`qsensitive` 是問句側；兩者
+#: ⛔ 不合併（見 `VerifierRules.question_sensitive_patterns`）。
+RULE_NAMESPACES: tuple[str, ...] = (
+    "sensitive", "negation", "pair", "forbid", "docturn", "route", "qsensitive",
+)
+#: `RuleSpec.id` 的唯一合法形式：`<namespace>:<表內 0-based 索引>`。
+#: **穩定**的意思是：id 由「哪一張表」＋「表內第幾條」兩件事決定，⛔ 不再靠
+#: `_PAIR_TERM_ID_BASE=1000`／`_DOC_TURN_TERM_ID_BASE=2000` 這種全域基底
+#: ——加一張表就得再挑一個沒人用過的基底，而挑錯的症狀是歷史 trace 整批對錯規則。
+RULE_ID_PATTERN = r"^(?:" + "|".join(RULE_NAMESPACES) + r"):\d+$"
+
+
+class RuleSpec(BaseModel):
+    """一條規則**自帶**的屬性（R2 目標形態 1）。
+
+    ⚠️ `pattern` 在這裡是**宣告用的鏡像**，⛔ 不是判定時真正被編譯的那一份——
+    判定一律讀扁平表（`sensitive_patterns`／`forbid_terms`／…），理由見
+    `verifier._build_rule_set` 的 docstring（既有測試以扁平表為權威做變異）。
+    兩邊漂掉由 `tests/unit/agent/test_rule_attributes_req.py` 的對帳測試咬。
+
+    ⚠️ `audiences`／`turn_types` 的**執行期解析**同樣在 `verifier._build_rule_set`：
+    受眾作用域的權威仍是頂層 `sensitive_patterns_audiences`／`route_check_audiences`
+    兩個鍵（缺鍵＝全受眾＝照擋，這個方向 ⛔ 不得反轉）。
+    """
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str = Field(pattern=RULE_ID_PATTERN)
+    #: 字面詞／正則字串；`pair` 那張表是 `{"neg": …, "status": …}`。
+    pattern: Union[str, dict[str, str]]
+    #: JSON 鍵是 `class`（Python 保留字，故欄位名 `rule_class`＋alias）。
+    rule_class: RuleClass = Field(alias="class")
+    #: ⚠️ 值域是 `identity.Audience` 的**封閉三值**——規則檔把受眾打錯字時要在
+    #: 建構當下就炸。⛔ 不放寬成 `list[str]`：打錯的受眾（例如 `"prospekt"`）會落進
+    #: `_audience_scope_applies` 的「值域內但不在清單」分支 ⇒ **整張表被跳過**，
+    #: 那是 fail-open——售前守門被一個拼字錯誤關掉，且沒有任何徵兆（W9-11 同一個病）。
+    audiences: list[_Audience]
+    turn_types: list[TurnType]
+
+    @property
+    def namespace(self) -> str:
+        return self.id.split(":", 1)[0]
+
+    @property
+    def index(self) -> int:
+        return int(self.id.split(":", 1)[1])
+
+
+class VerifyContext(BaseModel):
+    """`verify()` 的**回合脈絡**（R2 目標形態 2）——把原本三個散落的關鍵字參數
+    （`audience`／`document_turn`／未來的 `nonce`）收成一個值。
+
+    ⚠️ `audience` 刻意是 `Optional[str]` 而不是 `Audience`：值域外的字串必須
+    **進得來**才輪得到 `_audience_scope_applies` 判「未知＝缺值＝照擋」；收成封閉
+    列舉會讓呼叫端在建構 `VerifyContext` 這一步就炸，fail-closed 分支反而測不到。
+    ⚠️ `turn_type` 相反，是封閉值域（打錯字就炸）——它的缺值方向是**少擋**
+    （`general` 不跑文件回合那張表），所以不能讓打錯的字靜默落回預設。
+    ⚠️ `nonce` 目前 `verify()` **不讀**：引用解析（`resolve_refs`）仍由呼叫端先算好
+    傳 `resolved`／`resolve_errors` 進來。這一欄是給 R2b 把解析收進來時用的落點，
+    ⛔ 現在不得有任何判定依賴它。
+    """
+    model_config = ConfigDict(frozen=True)
+
+    audience: Optional[str] = None
+    turn_type: TurnType = "general"
+    nonce: Optional[str] = None
+
+
 #: `term_id` 的唯一合法形式（2.6 前置 security review P2）：`rule#<規則集內索引>`。
 #: ⛔ **不得填字面詞／regex 本身**——verdict 會落進
 #: `usage_events.decision_snapshot.agent`，也會被 2.7 的 trace 端點印出來，
 #: 填字面值等於把敏感樣式表／禁詞表／否定詞表逐字外洩。
 #: 產生點是 `services/agent/verifier.py:_rule_id()`；這裡用 pydantic `pattern`
 #: 把契約釘在型別上，任何想塞字面詞的呼叫端會在建構當下就炸。
-TERM_ID_PATTERN = r"^rule#\d+$"
+#:
+#: **R2**：值域擴成「舊 `rule#<n>` ∪ `<namespace>:<n>`」兩種形狀。
+#: ⚠️ 這是**放寬形狀、⛔ 不放寬性質**——兩邊都只認「namespace＋十進位索引」，
+#: 字面詞／regex 一個字都塞不進來（`test_agent_turn_unit_req.py` 的
+#: `test_verdict_model_rejects_a_literal_term_id` 是正對照）。
+#: ⚠️ `sensitive`／`forbid`／`negation` 三表的 wire 值**仍是 `rule#<表內索引>`**：
+#: 它們被 `test_agent_turn_unit_req.py`（R2 範圍外、⛔ 不得改）逐字釘住。
+#: 全面改用 namespace id 是 **R2b** 的事（連同 `trace_view.rule_index`）。
+TERM_ID_PATTERN = r"^(?:rule#\d+|(?:" + "|".join(RULE_NAMESPACES) + r"):\d+)$"
 
 
 class VerifierVerdict(BaseModel):
@@ -204,6 +301,25 @@ class VerifierVerdict(BaseModel):
             "ask_target_invalid",
         ]
     ] = None
+
+    @property
+    def observed_counts(self) -> dict[str, int]:
+        """R2 目標形態 4：`observed` 的**類別→次數**投影（只列舉值，⛔ 無原文）。
+
+        **刻意用純 `@property`、⛔ 不用 pydantic `computed_field`**（同
+        `AgentOutput.answer` 的 r11 安全審 F-4）：`computed_field` 會把它列進
+        `model_json_schema()` 與 `model_dump()`，而 verdict 的 dump 是
+        `decision_snapshot`／trace 的輸入形狀——多一個鍵就等於在沒有人審過白名單的
+        情況下改了外流面。純 property 只在讀的人明講要它時才算。
+
+        ⚠️ `observed` 是**去重**清單（`verify()` 的 `_hit` 只在 key 不存在時 append），
+        所以現行每一格的值恆為 1。這裡照樣算次數而不是寫死 1：去重是 `_hit` 的
+        政策，⛔ 不是本投影的前提，哪天去重放寬這裡不必跟著改。
+        """
+        counts: dict[str, int] = {}
+        for key in self.observed:
+            counts[key] = counts.get(key, 0) + 1
+        return counts
 
 
 class VerifierRules(BaseModel):
@@ -272,15 +388,43 @@ class VerifierRules(BaseModel):
     #: 預設空表＝這一側一律判非敏感（pydantic 白名單會靜默忽略未宣告鍵，故此欄位
     #: 必須宣告，否則規則檔加了鍵也讀不到——載入正對照測試釘住這件事）。
     question_sensitive_patterns: list[str] = []
+    #: R2：**每條規則自帶的屬性**（`{id, pattern, class, audiences, turn_types}`）。
+    #: 上面那些扁平表仍是「有哪些規則、規則長什麼樣」的唯一權威（既有測試以它們
+    #: 做變異：清空、塞壞正則、換受眾清單）；這一欄補的是**屬性**——哪一類
+    #: （`class`，決定 `class × mode` 的觀察歸屬）、對哪些受眾、在哪些回合型態生效。
+    #: 空表＝沒有宣告 ⇒ 每一張表退回**程式端預設屬性**（見
+    #: `verifier._TABLE_DEFAULTS`），行為與 R2 前逐位相同——舊規則檔與只給部分
+    #: 欄位的測試用 `VerifierRules(**dict)` 因此照樣載得起來。
+    #: ⚠️ ⛔ 不做「宣告與扁平表對不上就 raise」的交叉檢核：既有測試會刻意讓兩邊
+    #: 長度不同（`document_turn_forbid_terms=[]`／壞正則），raise 會把那些測試的
+    #: 失敗方向從「閘不啟用」改成「載不起來」。對帳改由
+    #: `tests/unit/agent/test_rule_attributes_req.py` 對**出貨規則檔**做。
+    rules: list[RuleSpec] = Field(default_factory=list)
+
+    #: R2：`load()` 只認的規則檔大版本。1.x（R2 前的形狀）一律**拒載**——
+    #: ⚠️ 失敗方向刻意是「起不來」而不是「照舊載」：舊檔沒有 `rules` 宣告，
+    #: 載得起來的話每條規則都退回程式端預設屬性，於是「規則檔換了一版、
+    #: 屬性宣告整份消失」這件事**不會有任何徵兆**。
+    REQUIRED_MAJOR_VERSION: ClassVar[str] = "2"
 
     @classmethod
     def load(cls, path: str | Path) -> "VerifierRules":
         raw = Path(path).read_bytes()
         sha = hashlib.sha256(raw).hexdigest()
         data = json.loads(raw)
+        version = str(data.get("version") or "")
+        if version.split(".")[0] != cls.REQUIRED_MAJOR_VERSION:
+            raise ValueError(
+                f"規則檔版本不符：{path} 的 version={version!r}，"
+                f"本程式只載 {cls.REQUIRED_MAJOR_VERSION}.x（目前出貨版 2.0.0）"
+                "——R2 起每條規則自帶 {id, pattern, class, audiences, turn_types}，"
+                "1.x 沒有這份宣告，載進來等於整份屬性靜默消失"
+            )
         data["sha256"] = sha
         return cls.model_validate(data)
 
 
 __all__ = ["Sentence", "AgentOutput", "ASK_TARGETS", "VerdictReason", "VerifierVerdict",
-           "VerifierRules", "TERM_ID_PATTERN"]
+           "VerifierRules", "TERM_ID_PATTERN",
+           "RuleClass", "RULE_CLASSES", "TurnType", "TURN_TYPES",
+           "RULE_NAMESPACES", "RULE_ID_PATTERN", "RuleSpec", "VerifyContext"]

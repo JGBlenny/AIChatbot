@@ -137,11 +137,20 @@ def test_same_polarity_on_the_same_topic_passes(verifier):
 
 
 def test_pair_term_id_does_not_collide_with_bare_negation_terms(verifier, rules):
-    """`term_id` 是 `(reason, 索引)` 的索引：兩張表撞號就對不回是哪一條規則。"""
+    """`term_id` 要能對回**是哪一張表的第幾條**：兩張表撞號就對不回是哪一條規則。
+
+    **R2**：舊解是全域基底 `_PAIR_TERM_ID_BASE = 1000`（`rule#1000+i`）。改成
+    namespace id `pair:<表內索引>` 之後，「不撞號」不再靠挑一個夠大的基底，而是靠
+    namespace 本身——裸詞表出 `rule#<i>`、pair 表出 `pair:<i>`，形狀就分得開。"""
     verdict = _verify(verifier, "您的這期帳單尚未逾期，可以再等等。", OVERDUE_UNIT)
     assert verdict.term_id is not None
-    index = int(verdict.term_id.split("#")[1])
-    assert index >= 1000 > len(rules.negation_terms)
+    assert verdict.polarity_source == "pair"
+    namespace, _, index = verdict.term_id.partition(":")
+    assert namespace == "pair" and 0 <= int(index) < len(rules.negation_status_pairs)
+    # 正對照：裸詞表的 term_id 是**另一種形狀**（⛔ 不可能被誤讀成 pair 的索引）。
+    bare = _verify(verifier, "這期帳單沒有逾期。", OVERDUE_UNIT)
+    assert bare.polarity_source == "term" and bare.term_id.startswith("rule#")
+    assert int(bare.term_id.split("#")[1]) < len(rules.negation_terms)
 
 
 # ---------------------------------------------------------------- 詞表變更的驗收面
