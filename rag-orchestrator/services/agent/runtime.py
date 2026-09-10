@@ -120,6 +120,57 @@ from services.presales_gate import SENSITIVE, FactClass, HandoffReason
 # ⚠️ **import 模組、⛔ 不 `from … import _today`**：兌現閘要在呼叫點取時鐘，
 # 與 `tools/confirm` 的閘一同一支函式、同一個時鐘（S1）。
 from services.jgb import bills
+# ---------------------------------------------------------------------------
+# R1 四段管線（Plan `inputs/plan-structural-refactor-20260910.md` §0）：
+# 回合資料契約與狀態容器住 `turn_context`、模型前程式段住 `turn_segments`、
+# 四道出口閘與 `finalize` 住 `exit_gates`。⛔ 三者都**不 import 本檔**（那會成環）。
+#
+# ⚠️ 下面這一串 re-export **不是為了好看**：`TurnResult`／`TurnTrace`／
+#    `ToolCallRecord`／`make_outcome`／四道閘等名字有 30 幾個既有測試檔與
+#    `shadow.py`／`trace_view.py`／`mcp_facade.py` 以 `from services.agent.runtime
+#    import …` 取用。R1 是**行為不變的結構整理**，⛔ 不得順手要求那些呼叫端改
+#    import——名字留在這裡，搬的只有定義的位置。
+# ---------------------------------------------------------------------------
+from services.agent import exit_gates
+from services.agent.exit_gates import (  # noqa: F401  — re-export（見上方註記）
+    ASK_TARGET_TEXT,
+    NO_DATA_TEXT,
+    NO_JUDGEMENT_TEXT,
+    NON_SENSITIVE_HANDOFF_REASONS,
+    SCOPE_EXIT_TEXT,
+    _apply_ask_target_gate,
+    _apply_handoff_data_exits,
+    _apply_handoff_without_lookup,
+    _apply_scope_exit,
+    _handoff_fact_class,
+    _sensitive_self_report_overridden,
+)
+from services.agent.turn_context import (  # noqa: F401  — re-export（見上方註記）
+    DIALOG_MAX_MESSAGES,
+    ESTATE_CARRY_KEY,
+    HANDOFF_CACHE_MAX,
+    LAST_ASK_TARGET_KEY,
+    OUTCOME_EXPECTS,
+    OUTCOME_REF_TYPES,
+    OUTCOME_STATES,
+    SELECT_SCOPE_KEY,
+    _ASK_TARGET_EXPECTS,
+    ReservedCallIds,
+    ToolCallRecord,
+    TurnAccumulator,
+    TurnInputsSnapshot,
+    TurnResult,
+    TurnTrace,
+    _append_dialog,
+    _candidate_ids_shape_valid,
+    _emit_agent_decision,
+    _replayed_from,
+    _trim_handoff_cache,
+    default_outcome,
+    make_outcome,
+    receipt_ref,
+)
+from services.agent.turn_segments import run_program_segments
 
 logger = logging.getLogger(__name__)
 
@@ -130,30 +181,12 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 
-
 #: DSP-020：大綱章節在回合開始即以這個保留 `tool_call_id` 預載成一筆 provenance，
 #: 模型引用大綱時照抄的標記裡第二段就是它、第三段是章節 id（`outline:*`），
 #: 不必先呼叫 `kb.get("outline:*")` 多花一輪。⚠️ 影子 2026-09-05 第一筆真流量
 #: 就是因為缺這條——模型照鐵則引用大綱、Verifier 卻只認工具回傳 ⇒ 兩次
 #: QUOTE_NOT_VERBATIM → budget_exhausted。OpenAI 的 tool_call id 一律 `call_…`，
 #: 若模型偽造同名 id，下方以 `_seed_outline_provenance` 的結果為準、⛔ 不覆寫。
-
-#: DSP-022：`state["agent"]["dialog"]` 保留的訊息數上限（user＋assistant 各一則算 2）。
-#: 10 輪對話；超過丟最舊——歷史全靠這裡，⛔ 不另存工具訊息（design 元件 5：dialog 只有 user／assistant）。
-DIALOG_MAX_MESSAGES = 20
-
-
-def _append_dialog(agent_state: dict, user_message: str, answer: str) -> None:
-    """DSP-022：回合收尾把「使用者這句＋助理回覆（使用者實際看到的字，固定句亦然）」
-    寫回 `dialog`，下一回合 `PromptAssembler._normalized_dialog` 才有歷史可放。
-    ⚠️ 真線路 2026-09-05 才發現：run_turn 先前**從未**把當前 `user_message` 放進 messages、
-    也從未寫回歷史——模型只看到 system prompt，五題全在對著大綱自由發揮。"""
-    dialog = agent_state.setdefault("dialog", [])
-    dialog.append({"role": "user", "content": user_message})
-    dialog.append({"role": "assistant", "content": answer})
-    if len(dialog) > DIALOG_MAX_MESSAGES:
-        del dialog[: len(dialog) - DIALOG_MAX_MESSAGES]
-
 
 
 def _seed_outline_provenance(outline: Any) -> Optional[ToolResult]:
@@ -172,30 +205,6 @@ def _seed_outline_provenance(outline: Any) -> Optional[ToolResult]:
         for sec in sections
     ]
     return ToolResult(ok=True, data={"sections": len(provs)}, provenance=provs, text_for_model="")
-
-
-#: 候選細目 id 的形狀（任務 4.1／Plan §2.1-4）：`<audience>/<粗目字母>/<細目 slug>`。
-#: 形狀守門在 `_emit_agent_decision` 前，⛔ 不在此另外定義第二套形狀規則
-#: （唯一權威在 `canon_parser.py` 的細目 id 產法，這裡只驗形狀、不驗存在性）。
-_CANDIDATE_ID_RE = re.compile(r"[a-z_]+/[A-Z]/[a-z0-9-]+")
-
-#: `winning_key_kind` 值域（`services.agent.canon.fine_index.KeyKind` 的三個字面值）。
-_VALID_WINNING_KEY_KINDS = frozenset({"title", "phrasing", "content"})
-
-
-def _candidate_ids_shape_valid(candidate_ids: list, winning_key_kind: dict) -> bool:
-    """形狀守門（Plan §2.1-4）：任一 id 不 `fullmatch`、或 `len > K`、或
-    `winning_key_kind` 的鍵不在 `candidate_ids` 內、或值不在允許值域 ⇒ `False`。
-    """
-    if len(candidate_ids) > _CANDIDATE_K:
-        return False
-    if not all(isinstance(cid, str) and _CANDIDATE_ID_RE.fullmatch(cid) for cid in candidate_ids):
-        return False
-    id_set = set(candidate_ids)
-    for key, value in winning_key_kind.items():
-        if key not in id_set or value not in _VALID_WINNING_KEY_KINDS:
-            return False
-    return True
 
 
 def _candidate_query(user_message: str, dialog: list) -> str:
@@ -235,33 +244,6 @@ class AssemblerProtocol(Protocol):
         tool_specs: list[dict],
         nonce: str,
     ) -> list[dict]: ...
-
-
-# ---------------------------------------------------------------------------
-# 資料模型（design 元件 1／「資料模型」節）
-# ---------------------------------------------------------------------------
-
-
-@dataclass
-class ToolCallRecord:
-    """⛔ **無 `args_hash`**（2.6 前置 security review P2）：低熵參數（`kb_id`、
-    `face` enum、短 `keyword`）的 sha256 可字典反解，等於把原值以另一種形式
-    落進 `decision_snapshot`。只留 `args_summary` 的形狀摘要。
-    """
-
-    id: str
-    name: str
-    args_summary: dict
-    ms: int
-    status: Literal["ok", "error", "timeout", "rejected"]
-    n_items: int
-    #: T2（Plan `inputs/plan-walkthrough-fixes-batch2-20260909.md` §3）：這一筆
-    #: 工具結果是不是「查了、但查無資料」。⚠️ **只有 `status=="ok"` 時才可能為
-    #: `True`**——`error`／`timeout`／`rejected` 一律 `False`（plan-verifier r2 #1：
-    #: 「沒查成」⛔ 不得講成「不存在」）；由主模型迴圈在 `tool_results_by_id`
-    #: 登記處以程式算出。select／confirm 兩段建構點只用預設值 `False`
-    #: （那兩段本來就不會走 T2 的兩出口分流）。
-    empty: bool = False
 
 
 #: DSP-038／W3：待確認動作的 session 狀態鍵。
@@ -373,9 +355,6 @@ def _apply_image_suggestion_to_confirm_args(raw_args: Any, suggestion: Any) -> t
 # ⛔⛔ **名稱不得進 trace／log／`decision_snapshot`**：物件名稱等同識別碼，
 #    trace 與計量表都會序列化落地（同 `has_ref`／`pre_lookup` 那一套紀律）。
 
-#: `state["agent"]` 底下的物件記憶：`{"name": str, "id": str|None}` 或不存在。
-#: **封閉兩鍵**——多存一個欄位就會有人把它當成可引用的事實來源。
-ESTATE_CARRY_KEY = "estate_carry"
 
 #: 物件名稱的長度上限（超過即不記）。比 `_pre_lookup_trigger` 的 6 字寬，因為
 #: 物件全名（「基隆獨立共生公寓」）本來就過不了那道短名詞閘；但仍要有上限——
@@ -758,14 +737,6 @@ def _pre_lookup_trigger(message: str) -> Optional[tuple[str, str]]:
 # ⚠️ **fail-closed**：有範圍而某一筆算不出 `estate_id`（缺欄位／`None`）一律
 #    當成範圍外，⛔ 不放行——放行的失敗方向是別戶資料進答案。
 
-#: `state["agent"]` 底下的會話範圍鍵：`{"type": <select_type>, "estate_id": str}`
-#: 或 `None`。**每個 `select:` 回合都會覆寫它**（含失敗回合寫 `None`，L15-05：
-#: ⛔ 舊範圍不得殘留到下一次點選）。
-SELECT_SCOPE_KEY = "select_scope"
-
-#: L15 (a)⑤：範圍外時使用者看到的**指路固定句**。單一句、對所有受眾一體適用；
-#: ⛔ 無任何插值（L15-13：帶 id／名稱等於用回話的差別揭露存在性）。
-SCOPE_EXIT_TEXT = "這個對話只看你點選的那一戶；要查別戶請回清單點那一戶。"
 
 #: L15 (a)③：範圍外的工具結果替換成的**工具訊息**（模型看到的那一份）。
 #: ⛔ 原 facts 不進 messages／provenance；⛔ 這一段不結束回合（L15-09：模型還要
@@ -864,179 +835,6 @@ def _enforce_tool_scope(
     return None
 
 
-def _apply_scope_exit(result: TurnResult, *, scope_in: int, scope_out: int,
-                      agent_state: Optional[dict] = None) -> TurnResult:
-    """L15 (a)④：**唯一接句點**——模型迴圈產出的每一個 `TurnResult` 都經這裡。
-
-    - 全部範圍外（`scope_out>0 and scope_in==0`）⇒ 整個答案換成固定句、
-      `kind="answer"`、`handoff=None`（⛔ 不進 handoff cache：`_finalize` 只對
-      `trace.final_kind == "handoff"` 寫快取，故這裡連 `final_kind` 一起改）。
-    - 部分範圍外 ⇒ 答案末尾接一行固定句。
-    - 沒有範圍外 ⇒ 逐字不動。
-
-    第六批 #10：`agent_state` 給的話，**這一回合出現過範圍外查詢就清掉物件記憶**
-    ——使用者已經在講另一戶了，留著上一個名字只會讓下一張確認卡填錯物件。
-    ⚠️ 缺省 `None` ⇒ 只做原本那三件事（模組級函式，測試直接呼叫它時不必給狀態）。
-    """
-    if scope_out <= 0:
-        return result
-    if isinstance(agent_state, dict):
-        agent_state.pop(ESTATE_CARRY_KEY, None)
-    if scope_in == 0:
-        result.answer = SCOPE_EXIT_TEXT
-        result.kind = "answer"
-        result.handoff = None
-        result.trace.final_kind = "answer"
-        result.trace.handoff_reason = None
-        result.outcome = make_outcome("out_of_scope", expects="none")
-        return result
-    result.answer = result.answer.rstrip() + "\n" + SCOPE_EXIT_TEXT
-    return result
-
-
-#: S4 §5：零查詢轉人的追問固定句。單一句、⛔ 無任何插值（同 `SCOPE_EXIT_TEXT`
-#: 的紀律——帶物件名稱等於用回話的差別揭露存在性）。
-#: 非敏感的轉人原因（封閉集合）：兩道降級閘與 T2 改寫提示都只認這一組——
-#: `no_grounding`（模型自報查無）與 `llm_mentioned_handoff`（模型在文字裡自己寫了轉人
-#: 詞、後掃描補的訊號）。2026-09-09 verifier F1：模型用後者繞過兩出口 ⇒ 併入同一組；
-#: 敏感類（`sensitive_no_grounding`）與預算耗盡一律不在此列。
-NON_SENSITIVE_HANDOFF_REASONS: frozenset = frozenset({"no_grounding", "llm_mentioned_handoff"})
-
-#: 各受眾共用（prospect 也會經過同一道閘），措辭不帶任何一條線的名詞。
-ASK_TARGET_TEXT = "想處理哪一件事？講名稱或編號就可以。"
-
-
-def _handoff_fact_class(result: TurnResult) -> Optional[FactClass]:
-    """`result.handoff["fact_class"]` 解析成封閉值域；缺值／值域外 ⇒ `None`。"""
-    try:
-        return FactClass((result.handoff or {}).get("fact_class"))
-    except ValueError:
-        return None
-
-
-def _sensitive_self_report_overridden(
-    result: TurnResult, message: str, rules: Any
-) -> bool:
-    """U2（Plan `plan-walkthrough-fixes-batch3-20260909.md` §3）：模型**自報**敏感，
-    但程式側判這一句不是敏感題 ⇒ 這次自報不算准入豁免，本回合照走兩道降級閘。
-
-    三個條件全成立才算（缺任一 ⇒ `False`＝維持現狀轉人）：
-    - `trace.handoff_reason == "sensitive_no_grounding"`（模型自報敏感時 Verifier
-      強制的原因值；⛔ 不改 `NON_SENSITIVE_HANDOFF_REASONS` 集合本身）
-    - `fact_class ∈ SENSITIVE`
-    - `question_sensitive(message, rules) is False`（程式側第二意見）
-
-    ⚠️ **`rules` 拿不到 ⇒ 一律 `False`**：判不出來的時候要往「維持轉人」錯，
-    ⛔ 不能往「降級成固定句」錯（feedback「規則只能治封閉集合」：非用規則不可時
-    刻意往可回復的方向錯）。
-    ⛔ 本函式**不改任何欄位**——不改寫 `out.fact_class`、不動 `result.handoff`
-    （security r1 F7：改寫 fact_class 會反轉答案側的 `SENSITIVE_TOPIC` 擋法）。
-    """
-    if result.trace.handoff_reason != "sensitive_no_grounding":
-        return False
-    if _handoff_fact_class(result) not in SENSITIVE:
-        return False
-    if rules is None:
-        return False
-    return question_sensitive(message, rules) is False
-
-
-def _apply_handoff_without_lookup(
-    result: TurnResult, agent_state: dict, message: str = "", rules: Any = None
-) -> TurnResult:
-    """S4 §5：零查詢的 `no_grounding` 轉人降級成追問（與 `_apply_scope_exit` 同層）。
-
-    條件全為封閉欄位（缺任一 ⇒ 不降級）：
-    - `result.kind == "handoff"`
-    - `result.trace.handoff_reason ∈ NON_SENSITIVE_HANDOFF_REASONS`
-      **或**（U2）`_sensitive_self_report_overridden` 成立
-    - `fact_class` 不在敏感五類（敏感類一律不動，仍轉人）；U2 那條路例外——
-      自報敏感被程式推翻時 ⛔ 不享這道豁免，並多記一筆
-      `sensitive_self_report_overridden`
-    - 本回合沒有任何工具呼叫（`trace.tool_calls` 為空）
-    - 沒有釘住的 select 範圍（`SELECT_SCOPE_KEY` 為 `None`）
-
-    降級時**五欄一起改**（mirrors `_apply_scope_exit`）：`answer`／`kind`／
-    `handoff`／`trace.final_kind`／`trace.handoff_reason`，另設
-    `outcome=clarifying` 並記一筆 `violations`。
-    """
-    if result.kind != "handoff":
-        return result
-    overridden = _sensitive_self_report_overridden(result, message, rules)
-    if result.trace.handoff_reason not in NON_SENSITIVE_HANDOFF_REASONS and not overridden:
-        return result
-    # U2：自報敏感被程式推翻的那條路，⛔ 不再享 `fact_class ∈ SENSITIVE` 的豁免
-    # ——它走的是同一組固定句出口（`ASK_TARGET_TEXT`），⛔ 不會吐敏感內容。
-    if _handoff_fact_class(result) in SENSITIVE and not overridden:
-        return result
-    if len(result.trace.tool_calls) != 0:
-        return result
-    if agent_state.get(SELECT_SCOPE_KEY) is not None:
-        return result
-    result.answer = ASK_TARGET_TEXT
-    result.kind = "answer"
-    result.handoff = None
-    result.trace.final_kind = "answer"
-    result.trace.handoff_reason = None
-    result.outcome = make_outcome("clarifying", expects="text")
-    result.trace.violations.append("handoff_without_lookup")
-    if overridden:
-        result.trace.violations.append("sensitive_self_report_overridden")
-    return result
-
-
-# ════════════════════════════════════════════════════════════════════
-# T1：追問契約 `ask_target`（Plan `inputs/plan-walkthrough-fixes-batch2-20260909.md` §2）
-# ════════════════════════════════════════════════════════════════════
-#: `state["agent"]` 底下的**上一回合追問對象**。⚠️ 與 `SELECT_SCOPE_KEY` 同一條
-#: 鐵則：**每一個回合出口都要寫**（`_finalize`／`_finish_confirm_turn`／
-#: `handoff_cache` 重播共三個寫點），不寫就會殘留上一回合的授權訊號——下游
-#: （T3 的肯定語＝授權）讀的是「緊鄰上一回合出口寫入之值」，殘留等於讓一句
-#: 「對」去授權一個早就結束的提議。
-LAST_ASK_TARGET_KEY = "last_ask_target"
-
-
-def _apply_ask_target_gate(result: TurnResult) -> TurnResult:
-    """T1：最終輸出是 `kind=ask` 卻沒有合法追問對象 ⇒ 換成指路固定句。
-
-    ⚠️ 這是**保底閘**，不是主檢查：主檢查在 Verifier
-    （`SCHEMA/ask_target_invalid`），但正式站的觀察模式
-    （`AGENT_VERIFIER_OBSERVE_ONLY`）下 Verifier 不擋，所以出口這一層必須自己
-    再判一次——⛔ 不得假設「Verifier 過了就一定合法」。
-
-    條件全為封閉欄位：`kind == "ask"` 且 `ask_target ∉ ASK_TARGETS`
-    （缺值與值域外同一條）。命中時四欄一起改（mirrors `_apply_handoff_without_lookup`）：
-    `answer`／`outcome`／`trace.violations`，外加把 `ask_target` 歸零——
-    ⚠️ **歸零是刻意的**：一個值域外的字串若留在 `TurnResult.ask_target` 上，
-    `_finalize` 就會把它寫進 `agent_state[LAST_ASK_TARGET_KEY]`，讓「本會話的
-    上一個追問對象」這個封閉欄位變成模型可以塞任意字串的地方。
-
-    ⛔ **不改 `kind`**：這一回合仍然是在追問（`outcome=clarifying/expects=text`），
-    改成 `answer` 會讓呼叫端以為問題已經答完。
-    """
-    if result.kind != "ask":
-        return result
-    if result.ask_target in ASK_TARGETS:
-        return result
-    result.answer = ASK_TARGET_TEXT
-    result.ask_target = None
-    result.outcome = make_outcome("clarifying", expects="text")
-    result.trace.violations.append("ask_target_invalid")
-    return result
-
-
-# ════════════════════════════════════════════════════════════════════
-# T2：兩出口——資料裡沒有 vs 不做判斷（Plan `inputs/plan-walkthrough-fixes-batch2-20260909.md` §3）
-# ════════════════════════════════════════════════════════════════════
-
-#: 全部工具結果為空（`status=="ok"` 且 `empty`）時的固定句。⛔ 無插值——
-#: 帶物件名稱等於用回話的差別揭露存在性（同 `SCOPE_EXIT_TEXT`／`ASK_TARGET_TEXT`）。
-NO_DATA_TEXT = "系統裡查不到這一筆或這一類資料；請確認名稱或編號，或換一個查法。"
-
-#: 至少一筆工具結果有資料、但模型改寫後仍轉人（或改寫預算已耗盡）時的固定句。
-#: ⛔ 無插值。
-NO_JUDGEMENT_TEXT = "這題要看你的判斷；我這邊能給的是系統資料，要我列出來嗎？"
-
 #: 迴圈內改寫提示的固定句（定義，⛔ 無插值）——與 `_REASON_HINTS`／
 #: `_SCHEMA_CAUSE_HINTS` 同一條紀律：只有方法，無原文。
 HANDOFF_DATA_REWRITE_HINT = "資料段有內容；判斷題依資料段給建議並引用，⛔ 不轉人。"
@@ -1059,83 +857,6 @@ def rewrite_feedback(tag: str, body: str) -> str:
     return f"{tag}: {body}{REWRITE_FEEDBACK_SUFFIX}"
 
 
-def _apply_handoff_data_exits(
-    result: TurnResult, message: str = "", rules: Any = None
-) -> TurnResult:
-    """T2：`no_grounding` 轉人依工具結果是否有資料分成兩個出口（與
-    `_apply_ask_target_gate` 同層、在其之後）。
-
-    條件全為封閉欄位（缺任一 ⇒ 不動）：
-    - `result.kind == "handoff"`
-    - `result.trace.handoff_reason ∈ NON_SENSITIVE_HANDOFF_REASONS`
-      **或**（U2）`_sensitive_self_report_overridden` 成立
-    - `fact_class` 不在敏感五類（敏感類一律不動，仍轉人）；U2 那條路例外，同上
-    - `result.trace.tool_calls` 非空
-
-    命中後先看有沒有「不能拿 `ToolCallRecord.empty` 判定」的筆——任一筆
-    `status != "ok"`（`error`／`timeout`／`rejected`），或本回合有
-    `tool_call_id_collides_with_reserved`（撞名保留 id）⇒ **整段不動**，
-    維持既有出口（`sensitive_no_grounding`／`llm_mentioned_handoff`／
-    `budget_exhausted` 也在這條路上，本函式對它們同樣不動）。
-
-    剩下的情況（全部工具結果 `status=="ok"`）依 `empty` 分流：
-    - 全部 `empty` ⇒ `kind=answer`、`answer=NO_DATA_TEXT`、
-      `outcome=answered`、`violations += ["handoff_no_data"]`。
-    - 至少一筆非 `empty` ⇒ `kind=answer`、`answer=NO_JUDGEMENT_TEXT`、
-      `ask_target=confirm_intent`、`outcome=clarifying`、
-      `violations += ["handoff_no_judgement"]`（此路只有在模型迴圈內的
-      改寫提示——§3 的「迴圈內改寫」——已經重試過仍轉人，或改寫預算已耗盡
-      時才會走到這裡；本函式本身 ⛔ 不呼叫模型）。
-
-    五欄一起改（mirrors `_apply_scope_exit`／`_apply_handoff_without_lookup`）：
-    `answer`／`kind`／`handoff`／`trace.final_kind`／`trace.handoff_reason`，
-    另設 `outcome` 並記一筆 `violations`；NO_JUDGEMENT 分支另外設
-    `result.ask_target = "confirm_intent"`——`_finalize` 把
-    `agent_state[LAST_ASK_TARGET_KEY]` 寫成「本回合 `ask_target` 是否落在
-    `ASK_TARGETS` 值域內」（見 `_finalize` 的寫點，⛔ 不再只認 `kind=="ask"`），
-    使這個 `kind=="answer"` 的回合一樣能把 `confirm_intent` 帶進下一回合，供
-    T3 的肯定語＝授權判定使用。
-    """
-    if result.kind != "handoff":
-        return result
-    overridden = _sensitive_self_report_overridden(result, message, rules)
-    if result.trace.handoff_reason not in NON_SENSITIVE_HANDOFF_REASONS and not overridden:
-        return result
-    # U2：理由同 `_apply_handoff_without_lookup`——被推翻的自報敏感 ⛔ 不享豁免，
-    # 走同一組固定句出口（`NO_DATA_TEXT`／`NO_JUDGEMENT_TEXT`）。
-    if _handoff_fact_class(result) in SENSITIVE and not overridden:
-        return result
-    tool_calls = result.trace.tool_calls
-    if not tool_calls:
-        return result
-    if "tool_call_id_collides_with_reserved" in result.trace.violations:
-        return result
-    if any(r.status != "ok" for r in tool_calls):
-        return result
-    if all(r.empty for r in tool_calls):
-        result.answer = NO_DATA_TEXT
-        result.kind = "answer"
-        result.handoff = None
-        result.trace.final_kind = "answer"
-        result.trace.handoff_reason = None
-        result.outcome = make_outcome("answered", expects="text")
-        result.trace.violations.append("handoff_no_data")
-        if overridden:
-            result.trace.violations.append("sensitive_self_report_overridden")
-        return result
-    result.answer = NO_JUDGEMENT_TEXT
-    result.kind = "answer"
-    result.handoff = None
-    result.trace.final_kind = "answer"
-    result.trace.handoff_reason = None
-    result.ask_target = "confirm_intent"
-    result.outcome = make_outcome("clarifying", expects="text")
-    result.trace.violations.append("handoff_no_judgement")
-    if overridden:
-        result.trace.violations.append("sensitive_self_report_overridden")
-    return result
-
-
 def _parse_select_value(message: Any) -> Optional[tuple]:
     """`"select:bill:12345"` → `("bill", "12345")`；不是機器值 ⇒ `None`。
 
@@ -1149,67 +870,6 @@ def _parse_select_value(message: Any) -> Optional[tuple]:
     if m is None:
         return None
     return m.group(1), m.group(2)
-
-
-@dataclass
-class TurnTrace:
-    trace_id: str
-    tool_calls: list[ToolCallRecord] = field(default_factory=list)
-    llm_calls: int = 0
-    prompt_tokens: int = 0
-    completion_tokens: int = 0
-    verifier: list[VerifierVerdict] = field(default_factory=list)
-    final_kind: str = ""
-    handoff_reason: Optional[str] = None
-    latency_ms: int = 0
-    violations: list[str] = field(default_factory=list)
-    rules_sha: str = ""
-    outline_sha: str = ""
-    #: 任務 4.1（Plan §2.1-3）：候選選取結果。重播路徑一律留預設
-    #: （`[]`／`{}`／`None`）——那條路根本沒跑過 `_select_outline`。
-    candidate_ids: list[str] = field(default_factory=list)
-    winning_key_kind: dict[str, str] = field(default_factory=dict)
-    miss_kind: Optional[str] = None
-    #: DSP-038／S-11（稽核落點）：確認回合與兌現回合各記一個 `pending_id`；
-    #: 兌現成功時另記 receipt 的識別碼。⛔ 兩者都**不是原文**——`pending_id` 是
-    #: token 的單向摘要，`receipt_id` 經 `confirm_card.receipt_id_of` 過形狀
-    #: （`[A-Za-z0-9_.:-]{1,64}`），下游回來的自由文字進不了這裡。
-    pending_id: Optional[str] = None
-    receipt_id: Optional[str] = None
-    #: W8 (1)／S8-6：清單點選回合的稽核三鍵。
-    #: ⛔⛔ **`ref` 原值不得進來**——`has_ref` 只記「有沒有」，`select_type` 是
-    #:     封閉表的鍵。trace 與 `usage_events` 都會被序列化落地，把使用者點的
-    #:     那張帳單／合約編號寫進去，等於把識別碼從對話狀態外溢到計量表。
-    select_type: Optional[str] = None
-    has_ref: Optional[bool] = None
-    #: 槽位有沒有真的寫進去（找不到 COLLECTING 列 ⇒ False，回合照樣回 facts）。
-    slot_written: Optional[bool] = None
-    #: T1／security r1 #7：本回合**有沒有注入呼叫端進場句資料段**。
-    #: ⛔⛔ **進場句的文字不得進來**——`context` 是呼叫端送的自由文字，trace 與
-    #:     `usage_events.decision_snapshot` 都會被序列化落地，記文字等於把外部
-    #:     輸入原封不動抄進計量表。只記一個 bool。
-    has_context: bool = False
-    #: U3（Plan `plan-walkthrough-fixes-batch3-20260909.md` §4）：本回合有沒有
-    #: 觸發純編號／短名詞前置查詢。⛔⛔ **原 ref／關鍵字不得進來**——只記
-    #: `{"kind": "id"|"keyword", "hits": <int>}`；未觸發 ⇒ `None`。
-    pre_lookup: Optional[dict] = None
-    #: V2（Plan batch4 §3）：本回合有沒有注入「最近出現的編號」資料段。
-    #: ⛔⛔ **編號原值不得進來**——同 `has_context`／`has_ref` 一套紀律，只記 bool。
-    has_recent_refs: bool = False
-    #: W9 U2：文件回合的稽核四鍵。
-    #: ⛔⛔ **任何欄位值都不得進來**——`document_status`／`document_kind` 都是
-    #:     封閉值域裡的標籤（`DOCUMENT_STATUSES`／`DOCUMENT_KINDS`），`pages_seen`
-    #:     是計數。trace 與 `usage_events.decision_snapshot` 都會被序列化落地，
-    #:     記一個金額或一個地址進去，等於把使用者上傳的文件內容抄進計量表。
-    has_document: bool = False
-    document_status: Optional[str] = None
-    document_kind: Optional[str] = None
-    pages_seen: Optional[int] = None
-    #: 第六批 #8：呼叫端帶了 `attachment_purpose="document"` 但**一張照片、一份
-    #: 檔案都沒帶** ⇒ 這一回合當一般回合跑，這個旗標記下「那個鍵被忽略了」。
-    #: ⛔ 只有 bool，無任何附件資訊。寫入點是 `mcp_facade._agent_turn`（門面才
-    #: 知道 `attachment_purpose`），⛔ 不由 Runtime 猜。
-    attachment_purpose_ignored: bool = False
 
 
 #: `reasoning_effort` 允許值（OpenAI gpt-5 系列）；封閉集合，⛔ 不在程式內以字串推導。
@@ -1288,100 +948,6 @@ def _schema_reject_hint(verdict: VerifierVerdict) -> str:
         return f"{where}{_SCHEMA_CAUSE_HINTS[cause]}"
     # 沒有子成因＝新的成因沒有同步到這張表：⛔ 不編一句假的修法給模型。
     return "輸出不符 `AgentOutput` 契約，請依 schema 重新輸出。"
-
-
-@dataclass
-class TurnResult:
-    kind: str
-    answer: str
-    handoff: Optional[dict]
-    quick_replies: list
-    trace: TurnTrace
-    #: T1：本回合的**追問對象**（`AgentOutput.ask_target` 帶進來的封閉值）。
-    #: ⚠️ **內部欄位**：`/mcp` `agent.turn` 的輸出契約仍是七鍵，`ask_target`
-    #:     ⛔ 不對外——它的用途是寫進 `agent_state[LAST_ASK_TARGET_KEY]` 給
-    #:     下一回合的程式判定讀，不是給呼叫端畫面用的。
-    ask_target: Optional[str] = None
-    #: DSP-043（2026-09-08）：機器可讀的回合結果（第七鍵 `outcome`）。`None` ⇒
-    #: 由 `default_outcome()` 依 `kind`／`quick_replies` 導出；確認鏈、清單點選、
-    #: 範圍外、照片終止路徑在各自出口**以程式**明設。⛔ 不由模型、不由字串判。
-    outcome: Optional[dict] = None
-
-
-# ════════════════════════════════════════════════════════════════════
-# DSP-043：`outcome`——回合結果的封閉描述（與畫面無關，任何呼叫端共用）
-# ════════════════════════════════════════════════════════════════════
-#: `state`：這回合發生了什麼（封閉八值）。
-OUTCOME_STATES: tuple = (
-    "answered",         # 一般回答（含清單點選直答、查無此筆）
-    "clarifying",       # 反問／請選分類（等使用者補一句或選一個）
-    "confirm_pending",  # 出了確認卡，等三顆按鈕
-    "confirmed",        # 兌現成功（含 R4.3 重送同一 receipt）
-    "cancelled",        # 按了取消／修改而燒掉卡（含重送已取消那一筆）
-    "failed",           # 寫入失敗、確認已失效、照片處理失敗／逾時
-    "handoff",          # 轉專人固定句
-    "out_of_scope",     # 清單點選後問別戶／別戶寫入被擋
-)
-#: `expects`：接下來等使用者什麼（封閉六值）。
-#: 第六批 #4：加 `image`／`file`——「請拍張照片給我」與「請把那份文件傳上來」
-#: 這兩種追問，呼叫端畫面要出的是**傳檔鍵**而不是輸入框，而 `text` 讓 LIFF／
-#: line-bot 只能出輸入框（實測：使用者被要求傳照片卻只看得到打字列）。
-OUTCOME_EXPECTS: tuple = ("text", "choice", "button", "image", "file", "none")
-
-#: 第六批 #4：**追問對象 → `expects`** 的封閉對映，且是「哪個追問對象要傳檔」
-#: 的**唯一**來源（`ASK_TARGETS` 的 `photo`／`document` 兩項）。表外的追問對象
-#: 照舊由 `quick_replies` 決定 `text`／`choice`。
-#: ⛔ 不得在別處另開一個判 `ask_target` 的 if——那就會有第二份「要傳檔的對象」
-#: 清單，而兩份清單只會各自演化。
-_ASK_TARGET_EXPECTS: dict = {"photo": "image", "document": "file"}
-#: `ref.type` 封閉值域（與 `select:<type>` 同源）。
-OUTCOME_REF_TYPES: tuple = ("repair", "bill", "contract")
-
-
-def make_outcome(state: str, *, expects: str, action: Optional[str] = None,
-                 ref: Optional[dict] = None) -> dict:
-    """組 `outcome`；值域外一律 ValueError（⛔ 不靜默降級成別的狀態）。"""
-    if state not in OUTCOME_STATES:
-        raise ValueError(f"outcome.state 不在值域: {state!r}")
-    if expects not in OUTCOME_EXPECTS:
-        raise ValueError(f"outcome.expects 不在值域: {expects!r}")
-    if ref is not None:
-        if not isinstance(ref, dict) or ref.get("type") not in OUTCOME_REF_TYPES \
-                or not isinstance(ref.get("id"), str) or not ref["id"]:
-            raise ValueError("outcome.ref 形狀不合")
-        ref = {"type": ref["type"], "id": ref["id"]}
-    return {"state": state, "expects": expects, "action": action, "ref": ref}
-
-
-def default_outcome(result: "TurnResult") -> dict:
-    """沒有明設時由 `kind`／`ask_target`／`quick_replies` 決定性導出（模型迴圈的一般出口）。
-
-    第六批 #4：`ask_target ∈ _ASK_TARGET_EXPECTS`（`photo`／`document`）時
-    `expects` 改成 `image`／`file`，**且贏過 `quick_replies`**——這一輪要的是一個
-    檔案，出幾顆選項鍵不會改變這件事。⚠️ 讀的是**過完所有出口閘之後**的
-    `ask_target`（`_finalize` 的呼叫順序），故被 `_apply_ask_target_gate` 歸零的
-    非法值不會走到這裡。
-    ⚠️ `getattr`：`mcp_facade._outcome_of` 會拿舊的假 runtime 物件進來（那些沒有
-    `ask_target` 欄位），⛔ 不讓一個替身的形狀把正式路徑炸掉。
-    """
-    has_choice = bool(result.quick_replies)
-    attachment = _ASK_TARGET_EXPECTS.get(getattr(result, "ask_target", None) or "")
-    if result.kind == "handoff":
-        return make_outcome("handoff", expects="none")
-    if result.kind == "ask":
-        return make_outcome("clarifying", expects=attachment or ("choice" if has_choice else "text"))
-    return make_outcome("answered", expects=attachment or ("choice" if has_choice else "text"))
-
-
-def receipt_ref(action: Optional[str], receipt: Any) -> Optional[dict]:
-    """receipt → `outcome.ref`（決定性；只認識兩個寫入動作的識別碼欄位）。"""
-    if not isinstance(receipt, dict):
-        return None
-    if action == "repair_create" and receipt.get("repair_id"):
-        return {"type": "repair", "id": str(receipt["repair_id"])}
-    if action == "bill_due_extend" and receipt.get("bill_id"):
-        return {"type": "bill", "id": str(receipt["bill_id"])}
-    return None
 
 
 # ════════════════════════════════════════════════════════════════════
@@ -1526,19 +1092,6 @@ SSEEvent = dict
 _IDENTITY_ARG_KEYS = frozenset(
     {"vendor_id", "role_id", "user_id", "target_user", "mode", "viewer_user_id"}
 )
-
-
-#: `state["agent"]["handoff_cache"]` 每 session 的筆數上限（2.6 前置 security
-#: review P3）。快取跟著 `form_sessions.collected_data` 一起序列化，無上限等於讓
-#: 呼叫端用不同訊息把單一 jsonb 列無限撐大。超過即以 **FIFO** 擠掉最早插入的一筆
-#: （dict 保序；⛔ 不是 LRU——重問命中時不重排，那會讓熱門題永遠擠不掉冷門題）。
-HANDOFF_CACHE_MAX = 50
-
-
-def _trim_handoff_cache(cache: dict, limit: int = HANDOFF_CACHE_MAX) -> None:
-    """把 `cache` 修到 `limit` 筆以內，先進先出。"""
-    while len(cache) > limit:
-        cache.pop(next(iter(cache)))
 
 
 #: `session.slots.set` 的工具名。⚠️ **這是第二份字面量**——唯一正本是
@@ -1756,102 +1309,6 @@ def _assistant_tool_call_message(message: Any, tool_calls: list) -> dict:
             for tc in tool_calls
         ],
     }
-
-
-def _replayed_from(violations: list) -> Optional[str]:
-    for v in violations:
-        if v.startswith("replayed_from:"):
-            return v.split(":", 1)[1]
-    return None
-
-
-def _emit_agent_decision(trace: TurnTrace) -> None:
-    """每回合把結構化 trace 落 `decision_snapshot.agent`（design 附錄 B
-    不變量 30／任務 2.5）。
-
-    ⚠️ 呼叫點必須是**字面 dict**（不得先組成變數再傳入）——
-    `scripts/audit/checks/agent_boundary.py:check_30_decision_snapshot_no_verbatim`
-    是靜態掃描這個呼叫的 dict 字面量鍵名，傳變數等於讓這條不變量看不見
-    自己在保護什麼。⛔ 鍵集合是封閉白名單（任務 brief），多一鍵就是這條
-    不變量要抓的事：無 `answer`／`quote`／`text`／`user_message`。
-    `schema_cause`（DSP-029 r13 #7）是封閉列舉值，⛔ 不攜帶任何模型或來源文字。
-
-    任務 4.1（Plan §2.1-4）：寫入前先跑形狀守門——不合格 ⇒ `candidate_ids`／
-    `winning_key_kind` 落空、`trace.violations` 補一筆 `candidate_ids_shape_invalid`
-    （fail-closed，⛔ 不 raise 進熱路徑）。`trace` 是與 `TurnResult` 共用的同一個
-    物件，這裡的修正會反映到呼叫端讀到的 `result.trace` 上。
-    """
-    candidate_ids = list(trace.candidate_ids)
-    winning_key_kind = dict(trace.winning_key_kind)
-    if not _candidate_ids_shape_valid(candidate_ids, winning_key_kind):
-        candidate_ids = []
-        winning_key_kind = {}
-        trace.candidate_ids = []
-        trace.winning_key_kind = {}
-        trace.violations.append("candidate_ids_shape_invalid")
-
-    usage_metering.set_agent_decision(
-        {
-            "trace_id": trace.trace_id,
-            "tool_calls": [
-                {
-                    "name": tc.name,
-                    "args_summary": tc.args_summary,
-                    "ms": tc.ms,
-                    "status": tc.status,
-                    "n_items": tc.n_items,
-                }
-                for tc in trace.tool_calls
-            ],
-            "llm_calls": trace.llm_calls,
-            "prompt_tokens": trace.prompt_tokens,
-            "completion_tokens": trace.completion_tokens,
-            "verifier": [
-                {
-                    "reason": v.reason,
-                    "sent": v.sent,
-                    "term_id": v.term_id,
-                    "quote_len": v.quote_len,
-                    "schema_cause": v.schema_cause,
-                }
-                for v in trace.verifier
-            ],
-            "final_kind": trace.final_kind,
-            "handoff_reason": trace.handoff_reason,
-            "latency_ms": trace.latency_ms,
-            "rules_sha": trace.rules_sha,
-            "outline_sha": trace.outline_sha,
-            "candidate_ids": candidate_ids,
-            "winning_key_kind": winning_key_kind,
-            "miss_kind": trace.miss_kind,
-            # DSP-038／S-11：確認鏈的稽核兩鍵（⛔ 皆非原文，見 `TurnTrace` 註記）。
-            "pending_id": trace.pending_id,
-            "receipt_id": trace.receipt_id,
-            # W8 (1)／S8-6：⛔ 只有型別與「有沒有 ref」，**沒有 ref 原值**。
-            "select_type": trace.select_type,
-            "has_ref": trace.has_ref,
-            "slot_written": trace.slot_written,
-            # T1／security r1 #7：⛔ 只有 bool，**沒有進場句原文**。
-            "has_context": trace.has_context,
-            # U3：⛔ 只有種類與命中數，**沒有 ref／關鍵字原文**。
-            "pre_lookup": trace.pre_lookup,
-            # V2：⛔ 只有 bool，**沒有編號原值**。
-            "has_recent_refs": trace.has_recent_refs,
-            "violations": trace.violations,
-            "replayed_from": _replayed_from(trace.violations),
-        }
-    )
-    # 日誌只印 kind／拒因／計數，⛔ 不印 answer／quote 原文（任務 brief）。
-    logger.info(
-        "agent_turn trace_id=%s kind=%s handoff_reason=%s tool_calls=%d "
-        "verifier_rejects=%d llm_calls=%d",
-        trace.trace_id,
-        trace.final_kind,
-        trace.handoff_reason,
-        len(trace.tool_calls),
-        sum(1 for v in trace.verifier if not v.ok),
-        trace.llm_calls,
-    )
 
 
 class AgentRuntime:
@@ -3024,144 +2481,86 @@ class AgentRuntime:
         context: Optional[str] = None,
         document: Optional[DocumentTurnInput] = None,
     ) -> TurnResult:
+        """四段管線的**接線**（Plan R R1）：程式段 → 資料注入 → 模型迴圈 → 出口閘。
+
+        ⛔ 這一支本身 **不做任何判定**——每一段的條件、順序、文案都在各自的模組裡
+        （`turn_segments`／`turn_context`／`_run_model_loop`／`exit_gates`），
+        本函式只負責把同一個 `TurnAccumulator` 串過去。
+        """
         start = self._clock()
         trace_id = uuid.uuid4().hex
         agent_state = state.setdefault("agent", {})
-        # W9 U2：文件回合的四鍵，一次算好餵給本函式裡的每一個 trace 建構點。
+        # W9 U2：文件回合的四鍵，一次算好餵給本回合裡的每一個 trace 建構點。
         doc_trace = self._document_trace(document)
-        # W9-1 落點①：文件回合 ⛔ 不接受 `confirm_submit`——排在確認段**之前**
-        # （確認段一進去就會兌現，那時候再擋已經來不及）。
-        if document is not None and _parse_confirm_value(user_message) is not None:
-            return self._document_turn_no_write(
-                document, agent_state=agent_state, user_message=user_message,
-                trace_id=trace_id, start=start,
-            )
-        # W9 U2：擷取不出可用欄位 ⇒ 固定句，⛔ 不進模型（排在最前，同影像三條）。
-        document_turn = self._document_program_turn(
-            document, agent_state=agent_state, user_message=user_message,
-            trace_id=trace_id, start=start,
-        )
-        if document_turn is not None:
-            return document_turn
-        # W8 (2)：照片的三條程式終止路徑**排在最前**——失敗／逾時／要先問分類的
-        # 回合根本不該進確認段、快取或模型。
-        image_turn = self._image_program_turn(
-            image, agent_state=agent_state, user_message=user_message,
-            trace_id=trace_id, start=start,
-        )
-        if image_turn is not None:
-            return image_turn
-        # DSP-038／W3：⚠️ **排在同題重問快取之前**——機器值不是「一題」，
-        # 它是一次狀態轉移；讓它先落進快取比對只會多一次無謂的字串雜湊。
-        confirmed = await self._run_confirm_segment(
-            identity, user_message, agent_state, trace_id, start
-        )
-        if confirmed is not None:
-            return confirmed
-        # W8 (1)：清單點選機器值同樣**排在同題重問快取之前**（理由同上：它是
-        # 一次狀態轉移，不是「一題」）。兩段的正則值域互斥（`confirm_*:` vs
-        # `select:`），⛔ 順序不影響結果，排在後面只是讓既有的確認鏈先判。
-        selected = await self._run_select_segment(
-            identity, user_message, agent_state, trace_id, start
-        )
-        if selected is not None:
-            return selected
-        cache = agent_state.setdefault("handoff_cache", {})
-        cache_key = _cache_key(user_message)
 
-        cached = cache.get(cache_key)
-        if cached is not None:
-            trace = TurnTrace(
-                trace_id=trace_id,
-                llm_calls=0,
-                final_kind="handoff",
-                handoff_reason=(cached.get("handoff") or {}).get("reason"),
-                latency_ms=int((self._clock() - start) * 1000),
-                violations=[f"replayed_from:{cached.get('trace_id', '')}"],
-                # W9 U2：重播出口同樣標明「這一回合帶了文件」——⛔ 不留預設值
-                # 假裝沒帶（稽核上「有帶文件卻走重播」正是要看得見的事）。
-                **doc_trace,
-            )
-            _emit_agent_decision(trace)
-            _append_dialog(agent_state, user_message, cached.get("answer", ""))
-            # T1：三個寫點之三（plan-verifier r3 #1）——重播出口既不經
-            # `_finalize` 也不經 `_finish_confirm_turn`，⛔ 不寫就會讓上一回合的
-            # 追問對象跨過一個完整回合殘留下來。
-            agent_state[LAST_ASK_TARGET_KEY] = None
-            return TurnResult(
-                kind="handoff",
-                answer=cached.get("answer", ""),
-                handoff=cached.get("handoff"),
-                quick_replies=list(cached.get("quick_replies", [])),
-                trace=trace,
-            )
+        # ── 第一段：模型前的程式段（六條終止路徑，順序即契約）────────────────
+        # ⚠️ `_parse_confirm_value`／`_cache_key` 都是**純函式**，在這裡先算好傳進去
+        #    ⛔ 不改變任何行為（段內唯一有副作用的 `handoff_cache` setdefault 仍留在
+        #    清單點選段之後，見 `turn_segments` 模組 docstring）。
+        segments = await run_program_segments(
+            self, identity, user_message, agent_state,
+            image=image, document=document, trace_id=trace_id, start=start,
+            doc_trace=doc_trace,
+            confirm_value=_parse_confirm_value(user_message),
+            cache_key=_cache_key(user_message),
+        )
+        if segments.result is not None:
+            return segments.result
+        cache, cache_key = segments.cache, segments.cache_key
 
-        counters = BudgetCounters()
-        # L15 (a)③④：本回合的會話範圍（`select:` 段寫的），與範圍內／外的工具
-        # 結果計數。⛔ 不進 trace 新鍵（L15-11：只用既有的 `violations`）。
-        scope_estate_id = _scope_estate_id(agent_state)
-        scope_counts = {"in": 0, "out": 0}
-        violations: list[str] = []
-        tool_call_records: list[ToolCallRecord] = []
-        verifier_verdicts: list[VerifierVerdict] = []
-        tool_results_by_id: dict[str, ToolResult] = {}
-        llm_calls = 0
-        prompt_tokens = 0
-        completion_tokens = 0
-        attempt_no = 0  # tasks 4.3c：模型「最終輸出」嘗試計數，從 1 起（工具呼叫不計）
+        acc, tool_specs, visible_names, doc_write_face, reserved_ids, scope_estate_id = (
+            await self._build_turn_context(
+                identity, user_message, state, agent_state,
+                image=image, context=context, document=document,
+                trace_id=trace_id, start=start, doc_trace=doc_trace,
+                cache_key=cache_key,
+            )
+        )
 
+        # ── 第三段：模型迴圈（第四段的四道出口閘由 `exit_gates.finalize` 收尾）──
+        return await self._run_model_loop(
+            acc, identity, user_message, state, agent_state,
+            document=document, cache=cache, tool_specs=tool_specs,
+            visible_names=visible_names, doc_write_face=doc_write_face,
+            reserved_ids=reserved_ids, scope_estate_id=scope_estate_id,
+        )
+
+    async def _build_turn_context(
+        self, identity: Identity, user_message: str, state: dict, agent_state: dict,
+        *, image, context: Optional[str], document, trace_id: str, start: float,
+        doc_trace: dict, cache_key: str,
+    ) -> tuple:
+        """第二段：回合狀態容器 ＋ prompt 組裝 ＋ **九段資料注入**（Plan R R1）。
+
+        ⛔ 逐字搬自原 `_run_turn_body`——九段的**條件、順序、文案**都沒有改；
+        差別只有九段各自那 25 行的注入樣板收斂成 `TurnAccumulator.inject()` 一支
+        （形狀只有一種），與保留 id 改由 `ReservedCallIds` 統一派生。
+
+        回 `(acc, tool_specs, visible_names, doc_write_face, reserved_ids,
+        scope_estate_id)`——後五格是模型迴圈要用的**不變輸入**。
+        """
+        # ── 回合狀態容器（Plan §0c：閉包捕獲的可變名稱一律收進這一個物件）──────
         # `new_nonce()`（`services.agent.prompt_assembler`）＝ 16 位十六進位，
         # 符合 `wrap_tool_data`／`PromptAssembler` 的 nonce 形狀守門；
         # ⛔ 不用 `secrets.token_urlsafe`——它會產出 `-`／`_`，被 `_require_nonce`
         # 的 `^[0-9A-Za-z]{8,64}$` 擋下（2.5 接線時發現，見任務回報）。
-        nonce = new_nonce()
-        # S2 §3（plan-verifier r2 #3／r3 #1）：**保留 tool_call id 集合**——本回合
-        # 程式會產出的資料段 id 一律由 nonce 導出、在回合最開始就固定下來，
-        # ⛔ 不等到「這回合真的有影像／完成動作」才算出來：模型能不能偽造一個
-        # 同名 id 不該取決於這回合是否真的用到它（那會讓「沒有影像時 img-… 可以
-        # 被模型自己造」這種邊界情況變成漏洞）。`OUTLINE_TOOL_CALL_ID` 是固定字串，
-        # 另外兩個當回合才算得出來，故三者都在這裡收斂成同一個集合，下面的工具
-        # 迴圈只認這一個集合（見 `tool_call_id_collides_with_reserved`）。
-        image_call_id = f"img-{nonce[:8]}"
-        completed_call_id = f"done-{nonce[:8]}"
-        # T1：進場句資料段的 id 同樣**在回合最開始就固定**、⛔ 不等到「這回合真的
-        # 有 context」才算——模型能不能偽造一個 `entry-…` 不該取決於呼叫端這次
-        # 有沒有帶進場句（否則「沒帶進場句時 entry-… 可以被模型自己造」就成了洞）。
-        entry_call_id = f"entry-{nonce[:8]}"
-        # T3：肯定語承接段／空會話註記段的 id 同樣**在回合最開始就固定**——
-        # 理由同 `entry_call_id`：模型能不能偽造 `aff-…`／`ctx-…` 不該取決於
-        # 這一回合是否真的會注入那一段。
-        aff_call_id = f"aff-{nonce[:8]}"
-        ctx_call_id = f"ctx-{nonce[:8]}"
-        # U3（security F10）：前置查詢資料段的 id 同樣**在回合最開始就無條件
-        # 算出並加入 `reserved_ids`**——理由同 `entry_call_id`：模型能不能偽造
-        # 一個 `pre-…` 不該取決於這一回合是否真的觸發了前置查詢。
-        pre_lookup_call_id = f"pre-{nonce[:8]}"
-        # V2（Plan batch4 §3）：最近編號資料段的 id 同樣**在回合最開始就無條件
-        # 算出並加入 `reserved_ids`**——理由同 `pre_lookup_call_id`：模型能不能
-        # 偽造一個 `ref-…` 不該取決於這一回合是否真的有最近編號可注入。
-        recent_refs_call_id = f"ref-{nonce[:8]}"
-        # W9 U2：文件事實資料段的 id 同樣**在回合最開始就無條件算出並加入
-        # `reserved_ids`**——理由同上：模型能不能偽造一個 `doc-…` 不該取決於這一
-        # 回合是否真的帶了文件（否則「沒帶文件時 doc-… 可以被模型自己造」就成了
-        # 洞，而文件段是 `citable=True` 的，偽造它等於偽造一份可引用的事實）。
-        document_call_id = f"doc-{nonce[:8]}"
-        # 第六批 #10：物件記憶資料段的 id 同樣**在回合最開始就無條件算出並加入
-        # `reserved_ids`**——理由同 `pre_lookup_call_id`：模型能不能偽造一個
-        # `est-…` 不該取決於這一回合是否真的有物件記憶可注入。
-        estate_carry_call_id = f"est-{nonce[:8]}"
-        reserved_ids: frozenset[str] = frozenset(
-            {
-                OUTLINE_TOOL_CALL_ID, image_call_id, completed_call_id,
-                entry_call_id, aff_call_id, ctx_call_id, pre_lookup_call_id,
-                recent_refs_call_id, document_call_id, estate_carry_call_id,
-            }
+        acc = TurnAccumulator(
+            cache_key=cache_key, nonce=new_nonce(), trace_id=trace_id, start=start,
         )
+        # S2 §3（plan-verifier r2 #3／r3 #1）：**保留 tool_call id 集合**——本回合
+        # 程式會產出的資料段 id 一律由 nonce 導出、在回合最開始就固定下來
+        # （派生與無條件性的理由見 `turn_context.ReservedCallIds`）。
+        ids = acc.reserved
+        reserved_ids: frozenset[str] = ids.all
+        # L15 (a)③④：本回合的會話範圍（`select:` 段寫的），與範圍內／外的工具
+        # 結果計數（`acc.scope_counts`）。⛔ 不進 trace 新鍵（L15-11：只用既有的
+        # `violations`）。
+        scope_estate_id = _scope_estate_id(agent_state)
         # T1：正規化與記憶行走**同一支** `sanitize_data_piece`（控制字元／零寬／
         # 雙向／換行／假標記逐類剝除）。非字串或剝完為空 ⇒ 空字串＝不注入。
         entry_text = sanitize_data_piece(context).strip()
         # T3（Plan §4）：讀「緊鄰上一回合出口寫入之值」——T1 保證每一個回合出口
-        # （`_finalize`／`_finish_confirm_turn`／`handoff_cache` 重播）都會寫
+        # （`finalize`／`_finish_confirm_turn`／`handoff_cache` 重播）都會寫
         # `agent_state[LAST_ASK_TARGET_KEY]`，故這裡讀到的必是上一回合的值，
         # ⛔ 不會讀到更早以前殘留的舊訊號。
         last_ask_target = agent_state.get(LAST_ASK_TARGET_KEY)
@@ -3179,47 +2578,38 @@ class AgentRuntime:
         # 可見子集）；**同一個** outline 物件接著餵 `_seed_outline_provenance` 與
         # `assembler.build_messages`（下方）。
         outline, sel_meta = await self._select_outline(
-            identity, outline, user_message, dialog, violations
+            identity, outline, user_message, dialog, acc.violations
         )
-        candidate_ids: list[str] = list(sel_meta["candidate_ids"]) if sel_meta else []
-        winning_key_kind: dict[str, str] = dict(sel_meta["winning_key_kind"]) if sel_meta else {}
-        miss_kind: Optional[str] = sel_meta["miss_kind"] if sel_meta else None
+        # Plan §0c r2 #4：段落產生後寫入、之後唯讀的 trace 輸入。
+        acc.snapshot = TurnInputsSnapshot(
+            candidate_ids=list(sel_meta["candidate_ids"]) if sel_meta else [],
+            winning_key_kind=dict(sel_meta["winning_key_kind"]) if sel_meta else {},
+            miss_kind=sel_meta["miss_kind"] if sel_meta else None,
+            entry_text=entry_text,
+            doc_trace=doc_trace,
+            outline_sha=getattr(outline, "sha256", "") if outline is not None else "",
+            rules_sha=getattr(self.verifier, "rules_sha", "") or "",
+        )
         seeded_outline = _seed_outline_provenance(outline)
         if seeded_outline is not None:
-            tool_results_by_id[OUTLINE_TOOL_CALL_ID] = seeded_outline
+            acc.tool_results_by_id[OUTLINE_TOOL_CALL_ID] = seeded_outline
 
         tool_specs = self.registry.to_openai_tools(
             identity, self._stage, readonly_view=self.readonly_view
         )
-        # W9-1 落點②：**文件回合的寫入面對模型不可見**。判準沿用 registry 對
-        # 「會改狀態的工具」的三個旗標聯集：`scope == "write"` **或** `mcp_only`
-        # **或** `mutates_session`——第三個旗標是 verifier 2026-09-09 F1 補的：
-        # `confirm.request` 的正本規格是 `scope=read, mcp_only=None,
-        # mutates_session=True`（見 `tools/confirm.py::CONFIRM_SPEC`），只看前兩個
-        # 旗標會漏掉它，文件回合就會多執行一次確認登記、留一列孤兒 token（不可兌現，
-        # 但不該發生）。與 `registry.specs_for` 的 `readonly_view` 判準（`scope=="write"
-        # or mutates_session`）同一族，⛔ 不在此另列一張工具名單：名單會漏掉之後
-        # 新加的寫入工具，而漏掉的那一支不會有任何徵兆。第二道網在下方工具迴圈
-        # （模型硬造名字時擋執行），第三道在 `_document_turn_no_write`
-        # （⛔ 三道都不得單獨拿掉）。
-        doc_write_face: frozenset = frozenset()
-        if document is not None:
-            doc_write_face = frozenset(
-                s["name"]
-                for s in self.registry.specs_for(
-                    identity, self._stage,
-                    readonly_view=self.readonly_view, for_model=True,
-                )
-                if s.get("scope") == "write" or s.get("mcp_only") or s.get("mutates_session")
-            )
+        doc_write_face = self._doc_write_face(identity, document)
+        if doc_write_face:
             tool_specs = [
                 t for t in tool_specs
                 if tool_name_from_openai(t["function"]["name"]) not in doc_write_face
             ]
         visible_names = {tool_name_from_openai(t["function"]["name"]) for t in tool_specs}   # 解回 registry 名
 
-        messages = self.assembler.build_messages(identity, outline, slots, dialog, tool_specs, nonce)
+        acc.messages = self.assembler.build_messages(
+            identity, outline, slots, dialog, tool_specs, acc.nonce
+        )
 
+        # ── 第二段：九段資料注入（形狀唯一，見 `TurnAccumulator.inject`）──────
         # T3（Plan §4）：**肯定語＝授權**——本回合訊息整句屬 `AFFIRMATIVE_WORDS`
         # 且緊鄰上一回合出口寫入的 `last_ask_target == "confirm_intent"` ⇒ 以
         # 程式資料段注入「上一句提議已獲授權」，供模型直接執行（⛔ 不代模型執行
@@ -3230,83 +2620,42 @@ class AgentRuntime:
         #    最後一則訊息」這個既有不變量，見
         #    `test_outline_citation_seed_req.test_current_user_message_is_last_message_sent_to_model`）。
         if last_ask_target == "confirm_intent" and is_affirmative(user_message):
-            violations.append("affirmative_carry")
-            tool_results_by_id[aff_call_id] = ToolResult(
-                ok=True,
-                data={},
-                provenance=[
-                    Provenance(
-                        source=CALLER_AFFIRMATIVE_PROVENANCE_SOURCE,
-                        text=AFFIRMATIVE_CARRY_TEXT,
-                        citable=False,
-                    )
-                ],
-                text_for_model="",
-            )
-            messages.append(
-                {
-                    "role": "user",
-                    "content": wrap_provenance_data(
-                        CALLER_AFFIRMATIVE_LABEL,
-                        aff_call_id,
-                        [(CALLER_AFFIRMATIVE_PROVENANCE_SOURCE, provenance_units(AFFIRMATIVE_CARRY_TEXT))],
-                        nonce,
-                    ),
-                }
-            )
+            acc.violations.append("affirmative_carry")
+            acc.inject(CALLER_AFFIRMATIVE_LABEL, ids.affirmative, AFFIRMATIVE_CARRY_TEXT,
+                       citable=False, source=CALLER_AFFIRMATIVE_PROVENANCE_SOURCE)
 
         # T3（Plan §4）：**空會話註記**——dialog 長度 0（封閉條件）⇒ 注入固定句，
         # 讓模型能誠實回答「你剛剛問了我什麼」這類問題，而不是在沒有歷史時
         # 憑印象幻覺。同樣排在 DSP-022 那句之前，理由同上。
         if not dialog:
-            tool_results_by_id[ctx_call_id] = ToolResult(
-                ok=True,
-                data={},
-                provenance=[
-                    Provenance(
-                        source=CONTEXT_EMPTY_SESSION_PROVENANCE_SOURCE,
-                        text=EMPTY_SESSION_TEXT,
-                        citable=False,
-                    )
-                ],
-                text_for_model="",
-            )
-            messages.append(
-                {
-                    "role": "user",
-                    "content": wrap_provenance_data(
-                        CONTEXT_EMPTY_SESSION_LABEL,
-                        ctx_call_id,
-                        [(CONTEXT_EMPTY_SESSION_PROVENANCE_SOURCE, provenance_units(EMPTY_SESSION_TEXT))],
-                        nonce,
-                    ),
-                }
-            )
+            acc.inject(CONTEXT_EMPTY_SESSION_LABEL, ids.context_empty, EMPTY_SESSION_TEXT,
+                       citable=False, source=CONTEXT_EMPTY_SESSION_PROVENANCE_SOURCE)
 
         # U3（Plan `plan-walkthrough-fixes-batch3-20260909.md` §4）：純編號／
         # 短名詞一句 ⇒ 程式先查一次，把結果當可引用資料段注入——模型才不會反問
         #「哪一種類型」。⛔ 不代模型作答、不改變 outcome；⛔ 原 ref／關鍵字不進
-        # trace／決策快照（只記 `pre_lookup_trace`，見下方）。⚠️ 同 T3 兩段的排法：
+        # trace／決策快照（只記 `pre_lookup_trace`）。⚠️ 同 T3 兩段的排法：
         # 排在 DSP-022 那句**之前**——這是使用者這句之前的背景資料。
-        pre_lookup_trace: Optional[dict] = None
         pre_trigger = _pre_lookup_trigger(user_message)
         if pre_trigger is not None:
             pre_kind, pre_candidate = pre_trigger
             pre_carry: Optional[tuple] = None
             if pre_kind == "id":
                 pre_outcome, pre_facts = await self._pre_lookup_id_result(
-                    identity, pre_candidate, scope_estate_id, violations
+                    identity, pre_candidate, scope_estate_id, acc.violations
                 )
             else:
                 pre_outcome, pre_facts, pre_carry = await self._pre_lookup_keyword_result(
-                    identity, pre_candidate, scope_estate_id, violations
+                    identity, pre_candidate, scope_estate_id, acc.violations
                 )
             # 第六批 #10 **寫點 (b)**：前置查詢命中**唯一一個物件** ⇒ 記起來。
             # ⛔ 只記 name／id 兩鍵；釘住範圍時 `_write_estate_carry` 自己不寫。
             # ⛔ violation 只留一個無名稱的標記（名稱不得進 trace／決策快照）。
             if pre_carry is not None and _write_estate_carry(agent_state, *pre_carry):
-                violations.append("estate_carry_set")
-            pre_lookup_trace = {"kind": pre_kind, "hits": 1 if pre_outcome == "found" else 0}
+                acc.violations.append("estate_carry_set")
+            acc.snapshot.pre_lookup_trace = {
+                "kind": pre_kind, "hits": 1 if pre_outcome == "found" else 0,
+            }
             # L15：範圍外 ⇒ **完全不注入**（連查無固定句也不印——範圍檢查本身
             # 就已經在別的路徑上有指路句，這裡多印一句等於多一個揭露面）。
             # `"error"`（逾時／速率限制／例外）同樣**完全不注入**——這種情況
@@ -3320,29 +2669,8 @@ class AgentRuntime:
                 inject_text = pre_facts if pre_outcome == "found" else PRE_LOOKUP_NOT_FOUND_TEXT
                 inject_text = sanitize_data_piece(inject_text)
                 if inject_text:
-                    tool_results_by_id[pre_lookup_call_id] = ToolResult(
-                        ok=True,
-                        data={},
-                        provenance=[
-                            Provenance(
-                                source=PRE_LOOKUP_PROVENANCE_SOURCE,
-                                text=inject_text,
-                                citable=True,
-                            )
-                        ],
-                        text_for_model="",
-                    )
-                    messages.append(
-                        {
-                            "role": "user",
-                            "content": wrap_provenance_data(
-                                PRE_LOOKUP_LABEL,
-                                pre_lookup_call_id,
-                                [(PRE_LOOKUP_PROVENANCE_SOURCE, provenance_units(inject_text))],
-                                nonce,
-                            ),
-                        }
-                    )
+                    acc.inject(PRE_LOOKUP_LABEL, ids.pre_lookup, inject_text,
+                               citable=True, source=PRE_LOOKUP_PROVENANCE_SOURCE)
 
         # V2（Plan batch4 §3）：**有前文的零查詢**——釘住範圍時不注入（同
         # `completed_actions_line`／前置查詢那一套 L15 紀律：範圍內的對話不該
@@ -3351,34 +2679,13 @@ class AgentRuntime:
         recent_refs_ids: list[str] = []
         if agent_state.get(SELECT_SCOPE_KEY) is None:
             recent_refs_ids = _recent_ref_ids(agent_state, dialog)
-        has_recent_refs = bool(recent_refs_ids)
-        if has_recent_refs:
+        acc.snapshot.has_recent_refs = bool(recent_refs_ids)
+        if acc.snapshot.has_recent_refs:
             recent_refs_text = sanitize_data_piece(
                 RECENT_REFS_TEXT_PREFIX + "、".join(recent_refs_ids)
             )
-            tool_results_by_id[recent_refs_call_id] = ToolResult(
-                ok=True,
-                data={},
-                provenance=[
-                    Provenance(
-                        source=RECENT_REFS_PROVENANCE_SOURCE,
-                        text=recent_refs_text,
-                        citable=False,
-                    )
-                ],
-                text_for_model="",
-            )
-            messages.append(
-                {
-                    "role": "user",
-                    "content": wrap_provenance_data(
-                        RECENT_REFS_LABEL,
-                        recent_refs_call_id,
-                        [(RECENT_REFS_PROVENANCE_SOURCE, provenance_units(recent_refs_text))],
-                        nonce,
-                    ),
-                }
-            )
+            acc.inject(RECENT_REFS_LABEL, ids.recent_refs, recent_refs_text,
+                       citable=False, source=RECENT_REFS_PROVENANCE_SOURCE)
 
         # W9 U2／W9-22：**文件事實排在使用者訊息之前**。
         # ⚠️ 這是本回合最大的一段「不可信文字」，⛔ 不得是模型看到的最後一則訊息
@@ -3390,32 +2697,13 @@ class AgentRuntime:
         # ⛔ 不併進 `user_message`（那會變成使用者說的話）、⛔ 不進 dialog
         #    （`_append_dialog` 不動）、⛔ 不進 `agent_state`、⛔ 不進 trace 欄位值。
         if document is not None and document.facts.strip():
-            tool_results_by_id[document_call_id] = ToolResult(
-                ok=True,
-                data={"pages_seen": document.pages_seen, "pages_total": document.pages_total},
-                provenance=[
-                    Provenance(
-                        source=DOCUMENT_PROVENANCE_SOURCE,
-                        text=document.facts,
-                        citable=True,
-                    )
-                ],
-                text_for_model="",
-            )
-            messages.append(
-                {
-                    "role": "user",
-                    "content": wrap_provenance_data(
-                        DOCUMENT_DATA_LABEL,
-                        document_call_id,
-                        [(DOCUMENT_PROVENANCE_SOURCE, provenance_units(document.facts))],
-                        nonce,
-                    ),
-                }
-            )
+            acc.inject(DOCUMENT_DATA_LABEL, ids.document, document.facts,
+                       citable=True, source=DOCUMENT_PROVENANCE_SOURCE,
+                       data={"pages_seen": document.pages_seen,
+                             "pages_total": document.pages_total})
 
         # DSP-022：當前這句一定是最後一則 user 訊息（歷史由 assembler 從 `dialog` 放前面）。
-        messages.append({"role": "user", "content": user_message})
+        acc.messages.append({"role": "user", "content": user_message})
         # W8 (2)：影像事實以**可引用的工具事實**進場（r1 裁定接線）——包法與工具
         # 回傳完全相同（`wrap_provenance_data` ＋ 同回合 nonce），故模型引用它的
         # 句子解析得出來、過得了 Verifier（驗收 (xii)）。
@@ -3434,27 +2722,9 @@ class AgentRuntime:
                 else None
             )
         if image is not None and image.status in ("ok", "partial") and image.facts.strip():
-            tool_results_by_id[image_call_id] = ToolResult(
-                ok=True,
-                data={"processed": image.processed, "total": image.total},
-                provenance=[
-                    Provenance(
-                        source=IMAGE_PROVENANCE_SOURCE, text=image.facts, citable=True
-                    )
-                ],
-                text_for_model="",
-            )
-            messages.append(
-                {
-                    "role": "user",
-                    "content": wrap_provenance_data(
-                        IMAGE_DATA_LABEL,
-                        image_call_id,
-                        [(IMAGE_PROVENANCE_SOURCE, provenance_units(image.facts))],
-                        nonce,
-                    ),
-                }
-            )
+            acc.inject(IMAGE_DATA_LABEL, ids.image, image.facts,
+                       citable=True, source=IMAGE_PROVENANCE_SOURCE,
+                       data={"processed": image.processed, "total": image.total})
 
         # 第六批 #10 **讀點**：照片回合多一句「本對話最近提到的物件：X」。
         # ⚠️ 病灶是「先講物件、再傳照片」——照片段本身沒有物件資訊，模型只好反問。
@@ -3472,30 +2742,8 @@ class AgentRuntime:
                 ESTATE_CARRY_TEXT_PREFIX + estate_carry["name"]
             )
             if estate_carry_text:
-                tool_results_by_id[estate_carry_call_id] = ToolResult(
-                    ok=True,
-                    data={},
-                    provenance=[
-                        Provenance(
-                            source=ESTATE_CARRY_PROVENANCE_SOURCE,
-                            text=estate_carry_text,
-                            citable=False,
-                        )
-                    ],
-                    text_for_model="",
-                )
-                messages.append(
-                    {
-                        "role": "user",
-                        "content": wrap_provenance_data(
-                            ESTATE_CARRY_LABEL,
-                            estate_carry_call_id,
-                            [(ESTATE_CARRY_PROVENANCE_SOURCE,
-                              provenance_units(estate_carry_text))],
-                            nonce,
-                        ),
-                    }
-                )
+                acc.inject(ESTATE_CARRY_LABEL, ids.estate_carry, estate_carry_text,
+                           citable=False, source=ESTATE_CARRY_PROVENANCE_SOURCE)
 
         # S2／H3：完成動作記憶——與影像事實**同一套**注入紀律（可引用資料段、
         # 同回合 nonce、⛔ 不進 dialog、⛔ 不經 `agent_state` 以外的任何管道）。
@@ -3505,29 +2753,8 @@ class AgentRuntime:
             agent_state.get(COMPLETED_ACTIONS_KEY), scope_estate_id
         )
         if completed_line:
-            tool_results_by_id[completed_call_id] = ToolResult(
-                ok=True,
-                data={},
-                provenance=[
-                    Provenance(
-                        source=COMPLETED_ACTIONS_PROVENANCE_SOURCE,
-                        text=completed_line,
-                        citable=True,
-                    )
-                ],
-                text_for_model="",
-            )
-            messages.append(
-                {
-                    "role": "user",
-                    "content": wrap_provenance_data(
-                        COMPLETED_ACTIONS_LABEL,
-                        completed_call_id,
-                        [(COMPLETED_ACTIONS_PROVENANCE_SOURCE, provenance_units(completed_line))],
-                        nonce,
-                    ),
-                }
-            )
+            acc.inject(COMPLETED_ACTIONS_LABEL, ids.completed, completed_line,
+                       citable=True, source=COMPLETED_ACTIONS_PROVENANCE_SOURCE)
 
         # T1（Plan §2）：**呼叫端進場句**——與影像事實／完成動作記憶行同一套注入
         # 紀律，只差一個旗標：`citable=False`（進場句是呼叫端印的字，⛔ 不是可
@@ -3535,140 +2762,70 @@ class AgentRuntime:
         # ⛔ 不併進 `user_message`（那會變成使用者說的話）、⛔ 不進 dialog 歷史
         #    （`_append_dialog` 不動）、⛔ 不進 trace／決策快照（只記 bool）。
         # ⚠️ **一定要登記進 `tool_results_by_id`**：不登記的話模型引用它會落
-        #    `ref_source_not_found`，而正確的訊號是 `SOURCE_NOT_CITABLE`。
+        #    `ref_source_not_found`，而正確的訊號是 `SOURCE_NOT_CITABLE`
+        #    （`TurnAccumulator.inject` 兩件事一起做，⛔ 不得只做一半）。
         if entry_text:
             # V4（Plan batch4 §5）：**先 sanitize 再加常數前綴**——前綴不含任何
             # 呼叫端輸入，不需要也不應該再過一次 `sanitize_data_piece`；
             # `has_context`／空值判斷仍以未加前綴的 `entry_text` 為準。
             entry_display_text = CALLER_CONTEXT_PREFIX + entry_text
-            tool_results_by_id[entry_call_id] = ToolResult(
-                ok=True,
-                data={},
-                provenance=[
-                    Provenance(
-                        source=CALLER_CONTEXT_PROVENANCE_SOURCE,
-                        text=entry_display_text,
-                        citable=False,
-                    )
-                ],
-                text_for_model="",
-            )
-            messages.append(
-                {
-                    "role": "user",
-                    "content": wrap_provenance_data(
-                        CALLER_CONTEXT_LABEL,
-                        entry_call_id,
-                        [(CALLER_CONTEXT_PROVENANCE_SOURCE, provenance_units(entry_display_text))],
-                        nonce,
-                    ),
-                }
-            )
+            acc.inject(CALLER_CONTEXT_LABEL, ids.entry, entry_display_text,
+                       citable=False, source=CALLER_CONTEXT_PROVENANCE_SOURCE)
 
-        def _outline_sha() -> str:
-            return getattr(outline, "sha256", "") if outline is not None else ""
+        return (acc, tool_specs, visible_names, doc_write_face,
+                reserved_ids, scope_estate_id)
 
-        def _rules_sha() -> str:
-            return getattr(self.verifier, "rules_sha", "") or ""
+    def _doc_write_face(self, identity: Identity, document) -> frozenset:
+        """W9-1 落點②：**文件回合的寫入面對模型不可見**——回這一回合要藏起來的
+        工具名集合（非文件回合 ⇒ 空集合）。
 
-        def _build_fixed(reason: str) -> TurnResult:
-            message_text = effective_handoff_message(None)
-            channel = effective_handoff_channel(None)
-            handoff_dict = {
-                "reason": reason,
-                "fact_class": FactClass.other.value,
-                "channel": channel,
-                "message": message_text,
-            }
-            trace = TurnTrace(
-                trace_id=trace_id,
-                tool_calls=list(tool_call_records),
-                llm_calls=llm_calls,
-                prompt_tokens=prompt_tokens,
-                completion_tokens=completion_tokens,
-                verifier=list(verifier_verdicts),
-                final_kind="handoff",
-                handoff_reason=reason,
-                latency_ms=int((self._clock() - start) * 1000),
-                violations=list(violations),
-                rules_sha=_rules_sha(),
-                outline_sha=_outline_sha(),
-                candidate_ids=list(candidate_ids),
-                winning_key_kind=dict(winning_key_kind),
-                miss_kind=miss_kind,
-                has_context=bool(entry_text),
-                has_recent_refs=has_recent_refs,
-                pre_lookup=pre_lookup_trace,
-                # W9 U2：文件回合四鍵（⛔ 無任何欄位值）。
-                **doc_trace,
+        判準沿用 registry 對「會改狀態的工具」的三個旗標聯集：`scope == "write"`
+        **或** `mcp_only` **或** `mutates_session`——第三個旗標是 verifier
+        2026-09-09 F1 補的：`confirm.request` 的正本規格是 `scope=read,
+        mcp_only=None, mutates_session=True`（見 `tools/confirm.py::CONFIRM_SPEC`），
+        只看前兩個旗標會漏掉它，文件回合就會多執行一次確認登記、留一列孤兒 token
+        （不可兌現，但不該發生）。與 `registry.specs_for` 的 `readonly_view` 判準
+        （`scope=="write" or mutates_session`）同一族，⛔ 不在此另列一張工具名單：
+        名單會漏掉之後新加的寫入工具，而漏掉的那一支不會有任何徵兆。第二道網在
+        `_run_model_loop`（模型硬造名字時擋執行），第三道在
+        `_document_turn_no_write`（⛔ 三道都不得單獨拿掉）。
+        """
+        if document is None:
+            return frozenset()
+        return frozenset(
+            s["name"]
+            for s in self.registry.specs_for(
+                identity, self._stage,
+                readonly_view=self.readonly_view, for_model=True,
             )
-            return TurnResult(
-                kind="handoff",
-                answer=message_text,
-                handoff=handoff_dict,
-                quick_replies=[],
-                trace=trace,
-            )
+            if s.get("scope") == "write" or s.get("mcp_only") or s.get("mutates_session")
+        )
 
+    async def _run_model_loop(
+        self, acc: TurnAccumulator, identity: Identity, user_message: str,
+        state: dict, agent_state: dict, *, document, cache: dict,
+        tool_specs: list, visible_names: set, doc_write_face: frozenset,
+        reserved_ids: frozenset, scope_estate_id: Optional[str],
+    ) -> TurnResult:
+        """第三段：工具迴圈＋Verifier＋兩條迴圈內改寫（Plan R R1）。
+
+        ⛔ 逐字搬自原 `_run_turn_body`——**一個判定、一個順序、一個文案都沒有改**；
+        差別只有可變狀態改走 `acc`（Plan §0c：整數就地加、list／dict 同一物件）。
+        出口一律經 `exit_gates.finalize`（四道閘依序表＋三個狀態寫點）。
+        """
         def _finalize(result: TurnResult, *, is_fixed: bool) -> TurnResult:
-            # L15 (a)④：**唯一接句點**，排在 handoff cache 與 dialog 之前——
-            # 全範圍外的回合在這裡就已經是 `kind="answer"`，故 ⛔ 不會進快取，
-            # dialog 存的也是使用者看到的那一句（含接句）。
-            result = _apply_scope_exit(
-                result, scope_in=scope_counts["in"], scope_out=scope_counts["out"],
-                agent_state=agent_state,
+            return exit_gates.finalize(
+                acc, result, is_fixed=is_fixed, verifier=self.verifier,
+                cache=cache, agent_state=agent_state, user_message=user_message,
             )
-            # U2：兩道閘要拿得到**使用者這一句**與規則集，才能判「模型自報的敏感
-            # 站不站得住」（Plan §3；⛔ 規則拿不到就一律當敏感、維持轉人）。
-            _qs_rules = getattr(self.verifier, "rules", None)
-            result = _apply_handoff_without_lookup(
-                result, agent_state, user_message, _qs_rules
-            )
-            # T1（security r1 #3）：新閘一律排在 `_apply_scope_exit` **之後**——
-            # 範圍外的回合在上面已經被換成固定句，不該再被當成一次追問來判。
-            result = _apply_ask_target_gate(result)
-            # T2：新閘在 `_apply_ask_target_gate` **之後**——NO_JUDGEMENT 分支
-            # 會把 `kind` 從 `handoff` 換成 `answer` 並另設 `ask_target=
-            # "confirm_intent"`；排在 ask_target 閘之後，才不會被那道只認
-            # `kind=="ask"` 的閘動到。
-            result = _apply_handoff_data_exits(result, user_message, _qs_rules)
-            # T1：三個寫點之一（模型迴圈的一般出口與所有固定句出口都經這裡）。
-            # ⚠️ 讀的是**過完所有出口閘之後**的 `ask_target`：閘門可能把一個
-            #    `kind=ask` 的追問對象歸零，殘留舊值等於讓下一回合的程式判定
-            #    拿到一個這一回合根本沒有出去的授權訊號。T2（NO_JUDGEMENT）把
-            #    `kind` 換成 `answer` 但仍設了合法的 `ask_target=
-            #    "confirm_intent"`——⛔ 不再只認 `kind=="ask"`，改認
-            #    `ask_target` 是否落在 `ASK_TARGETS` 值域內：其他 `kind` 的
-            #    `ask_target` 一律是模型依 schema 填的 `None`，這條件對它們
-            #    等價於原本的 `kind=="ask"` 判定。
-            agent_state[LAST_ASK_TARGET_KEY] = (
-                result.ask_target if result.ask_target in ASK_TARGETS else None
-            )
-            if result.trace.final_kind == "handoff":
-                cache[cache_key] = {
-                    "answer": result.answer,
-                    "handoff": result.handoff,
-                    "quick_replies": list(result.quick_replies),
-                    "trace_id": result.trace.trace_id,
-                }
-                _trim_handoff_cache(cache)
-            agent_state["fixed_streak"] = (
-                agent_state.get("fixed_streak", 0) + 1 if is_fixed else 0
-            )
-            if result.outcome is None:
-                result.outcome = default_outcome(result)
-            _append_dialog(agent_state, user_message, result.answer)
-            _emit_agent_decision(result.trace)
-            return result
-
         while True:
-            if (self._clock() - start) >= self.budget.deadline_s:
-                return _finalize(_build_fixed("budget_exhausted"), is_fixed=True)
+            if (self._clock() - acc.start) >= self.budget.deadline_s:
+                return _finalize(acc.build_fixed("budget_exhausted", clock=self._clock), is_fixed=True)
 
-            llm_calls += 1
+            acc.llm_calls += 1
             create_kwargs = dict(
                 model=self._model,
-                messages=messages,
+                messages=acc.messages,
                 tools=tool_specs,
                 parallel_tool_calls=False,
                 response_format=_agent_output_response_format(),
@@ -3681,8 +2838,8 @@ class AgentRuntime:
             usage = getattr(response, "usage", None)
             turn_pt = int(getattr(usage, "prompt_tokens", 0) or 0)
             turn_ct = int(getattr(usage, "completion_tokens", 0) or 0)
-            prompt_tokens += turn_pt
-            completion_tokens += turn_ct
+            acc.prompt_tokens += turn_pt
+            acc.completion_tokens += turn_ct
             # 2.6 前置 security review P2：Runtime 直呼 `chat.completions.create`
             # 繞過 `services/llm_provider.py` 的統一出口 ⇒ token／費用不進事件層，
             # 而 `/mcp` 的內部 key 又免額度 ⇒ 這條路徑等於沒有量。這裡按
@@ -3698,10 +2855,10 @@ class AgentRuntime:
             tool_calls = list(getattr(message, "tool_calls", None) or [])
 
             if tool_calls:
-                messages.append(_assistant_tool_call_message(message, tool_calls))
+                acc.messages.append(_assistant_tool_call_message(message, tool_calls))
                 budget_hit = False
                 for tc in tool_calls:
-                    if counters.tool_call_exhausted(self.budget):
+                    if acc.counters.tool_call_exhausted(self.budget):
                         budget_hit = True
                         break
                     name = tool_name_from_openai(tc.function.name)   # kb__get → kb.get（OpenAI 名稱規則，registry.openai_tool_name）
@@ -3713,9 +2870,9 @@ class AgentRuntime:
                         raw_args = {}
 
                     for key in sorted(_IDENTITY_ARG_KEYS & set(raw_args.keys())):
-                        violations.append(f"IDENTITY_KEY:{key}")
+                        acc.violations.append(f"IDENTITY_KEY:{key}")
                     if name not in visible_names:
-                        violations.append(f"FORBIDDEN:{name}")
+                        acc.violations.append(f"FORBIDDEN:{name}")
 
                     # W9-1 第二道網：文件回合的寫入面**不得執行**。
                     # ⚠️ 只把它從 `tool_specs` 拿掉是不夠的——`registry.call` 的
@@ -3723,16 +2880,16 @@ class AgentRuntime:
                     #    會真的執行（`FORBIDDEN:` 只是記一筆 violation，⛔ 不擋）。
                     #    ⇒ 這裡直接回一個封閉錯誤、⛔ 不呼叫 registry。
                     if name in doc_write_face:
-                        violations.append(f"DOCUMENT_TURN_WRITE_BLOCKED:{name}")
-                        counters.tool_calls += 1
-                        tool_call_records.append(
+                        acc.violations.append(f"DOCUMENT_TURN_WRITE_BLOCKED:{name}")
+                        acc.counters.tool_calls += 1
+                        acc.tool_call_records.append(
                             ToolCallRecord(
                                 id=tc.id, name=name,
                                 args_summary=_args_summary(raw_args),
                                 ms=0, status="error", n_items=0, empty=False,
                             )
                         )
-                        messages.append(
+                        acc.messages.append(
                             {
                                 "role": "tool",
                                 "tool_call_id": tc.id,
@@ -3742,19 +2899,19 @@ class AgentRuntime:
                                         {"ok": False, "error": "NO_MATCH"},
                                         ensure_ascii=False,
                                     ),
-                                    nonce,
+                                    acc.nonce,
                                 ),
                             }
                         )
                         continue
 
-                    counters.tool_calls += 1
+                    acc.counters.tool_calls += 1
                     if name == CONFIRM_TOOL_NAME:
                         raw_args, _applied = _apply_image_suggestion_to_confirm_args(
                             raw_args, agent_state.get(IMAGE_SUGGESTION_KEY)
                         )
                         for _field in _applied:
-                            violations.append(f"image_suggestion_applied:{_field}")
+                            acc.violations.append(f"image_suggestion_applied:{_field}")
                         # 第六批 #10 **讀點**：payload 缺 `estate_name` ⇒ 由物件記憶補。
                         # ⚠️ 排在照片建議之後、`registry.call` 之前（同一個落點，
                         #    ⛔ 不另開一段）；模型有給就不動（`_apply_...` 自己判）。
@@ -3764,7 +2921,7 @@ class AgentRuntime:
                             raw_args, _estate_carry_of(agent_state)
                         )
                         for _field in _applied_carry:
-                            violations.append(f"estate_carry_applied:{_field}")
+                            acc.violations.append(f"estate_carry_applied:{_field}")
                         # 一次性：任何 `confirm.request` 呼叫（不論成敗）都把照片建議用掉，
                         # ⛔ 不讓上一張照片的分類補到之後另一張無關的單。
                         agent_state.pop(IMAGE_SUGGESTION_KEY, None)
@@ -3780,14 +2937,14 @@ class AgentRuntime:
                             for_model=True,
                         )
                     except Exception as exc:  # registry 不可用（例外）
-                        violations.append(f"REGISTRY_EXC:{type(exc).__name__}")
-                        return _finalize(_build_fixed("tool_unavailable"), is_fixed=True)
+                        acc.violations.append(f"REGISTRY_EXC:{type(exc).__name__}")
+                        return _finalize(acc.build_fixed("tool_unavailable", clock=self._clock), is_fixed=True)
 
                     if tool_result.error == "TOOL_TIMEOUT":
-                        if counters.tool_call_exhausted(self.budget):
+                        if acc.counters.tool_call_exhausted(self.budget):
                             budget_hit = True
                             break
-                        counters.tool_calls += 1  # 重試也計（design 預算表）
+                        acc.counters.tool_calls += 1  # 重試也計（design 預算表）
                         try:
                             tool_result = await self.registry.call(
                                 identity,
@@ -3799,11 +2956,11 @@ class AgentRuntime:
                                 for_model=True,
                             )
                         except Exception as exc:
-                            violations.append(f"REGISTRY_EXC:{type(exc).__name__}")
-                            return _finalize(_build_fixed("tool_unavailable"), is_fixed=True)
+                            acc.violations.append(f"REGISTRY_EXC:{type(exc).__name__}")
+                            return _finalize(acc.build_fixed("tool_unavailable", clock=self._clock), is_fixed=True)
                         if tool_result.error == "TOOL_TIMEOUT":
                             return _finalize(
-                                _build_fixed("tool_unavailable"), is_fixed=True
+                                acc.build_fixed("tool_unavailable", clock=self._clock), is_fixed=True
                             )
 
                     # L15 (a)③：**範圍比對排在這裡**——`registry.call` 一回來、
@@ -3815,12 +2972,12 @@ class AgentRuntime:
                         _outcome = _enforce_tool_scope(
                             name, tool_result, scope_estate_id,
                             _q if _q is None or isinstance(_q, str) else str(_q),
-                            violations,
+                            acc.violations,
                         )
                         if _outcome == "in":
-                            scope_counts["in"] += 1
+                            acc.scope_counts["in"] += 1
                         elif _outcome == "out":
-                            scope_counts["out"] += 1
+                            acc.scope_counts["out"] += 1
 
                     # 第六批 #10 **寫點 (c)**：模型自己查 estates 且**對到唯一一個
                     # 物件** ⇒ 記起來（Plan 第六批 B 欄的來源①「查詢工具回傳唯一
@@ -3838,14 +2995,14 @@ class AgentRuntime:
                             tool_result.data, _kw if isinstance(_kw, str) else ""
                         )
                         if _carry is not None and _write_estate_carry(agent_state, *_carry):
-                            violations.append("estate_carry_set")
+                            acc.violations.append("estate_carry_set")
 
                     ms = int((self._clock() - call_start) * 1000)
                     status_value = _tool_result_status(tool_result)
                     # T2：撞名保留 id 的那筆沒有真的登記進 `tool_results_by_id`——
                     # 它不是「查了、查無資料」，`empty` 一律 `False`（§2）。
                     is_reserved_collision = tc.id in reserved_ids
-                    tool_call_records.append(
+                    acc.tool_call_records.append(
                         ToolCallRecord(
                             id=tc.id,
                             name=name,
@@ -3868,9 +3025,9 @@ class AgentRuntime:
                     # 動作同理。原本只防 `OUTLINE_TOOL_CALL_ID` 一個保留字，
                     # 現在以集合迭代，⛔ 不分三個 if 各自處理。
                     if is_reserved_collision:
-                        violations.append("tool_call_id_collides_with_reserved")
+                        acc.violations.append("tool_call_id_collides_with_reserved")
                     else:
-                        tool_results_by_id[tc.id] = tool_result
+                        acc.tool_results_by_id[tc.id] = tool_result
                     # DSP-038-2／W3「確認回合」：`confirm.request` 一成功，這一回合
                     # **立刻結束**——`TurnResult.answer` 逐字＝程式產出的確認卡，
                     # 模型當回合的輸出丟棄、Verifier 不跑（卡不是模型寫的，沒有可
@@ -3885,11 +3042,11 @@ class AgentRuntime:
                         if document is not None:
                             return self._document_turn_no_write(
                                 document, agent_state=agent_state,
-                                user_message=user_message, trace_id=trace_id,
-                                start=start, violations=violations,
-                                tool_calls=tool_call_records, llm_calls=llm_calls,
-                                prompt_tokens=prompt_tokens,
-                                completion_tokens=completion_tokens,
+                                user_message=user_message, trace_id=acc.trace_id,
+                                start=acc.start, violations=acc.violations,
+                                tool_calls=acc.tool_call_records, llm_calls=acc.llm_calls,
+                                prompt_tokens=acc.prompt_tokens,
+                                completion_tokens=acc.completion_tokens,
                             )
                         # L15 (a)⑥／L15-03：**寫入路徑的邊界**。⛔ 不靠讀路徑
                         # 的比對——`confirm.request` 的 payload 是模型自己填的，
@@ -3900,28 +3057,28 @@ class AgentRuntime:
                         #    行為等同「有範圍且別戶 ⇒ 不建 pending、回固定句」。
                         scope_turn = await self._scope_gate_confirm_request(
                             identity, agent_state, tool_result.data,
-                            trace_id=trace_id,
-                            start=start,
+                            trace_id=acc.trace_id,
+                            start=acc.start,
                             user_message=user_message,
-                            tool_calls=tool_call_records,
-                            violations=violations,
-                            llm_calls=llm_calls,
-                            prompt_tokens=prompt_tokens,
-                            completion_tokens=completion_tokens,
+                            tool_calls=acc.tool_call_records,
+                            violations=acc.violations,
+                            llm_calls=acc.llm_calls,
+                            prompt_tokens=acc.prompt_tokens,
+                            completion_tokens=acc.completion_tokens,
                         )
                         if scope_turn is not None:
                             return scope_turn
                         confirm_turn = self._begin_pending_confirm(
                             agent_state,
                             tool_result.data,
-                            trace_id=trace_id,
-                            start=start,
+                            trace_id=acc.trace_id,
+                            start=acc.start,
                             user_message=user_message,
-                            tool_calls=tool_call_records,
-                            violations=violations,
-                            llm_calls=llm_calls,
-                            prompt_tokens=prompt_tokens,
-                            completion_tokens=completion_tokens,
+                            tool_calls=acc.tool_call_records,
+                            violations=acc.violations,
+                            llm_calls=acc.llm_calls,
+                            prompt_tokens=acc.prompt_tokens,
+                            completion_tokens=acc.completion_tokens,
                         )
                         if confirm_turn is not None:
                             return confirm_turn
@@ -3943,7 +3100,7 @@ class AgentRuntime:
                     ):
                         state[SLOTS_STATE_KEY] = tool_result.data[SLOTS_STATE_KEY]
                     # 2.5 接線：工具回傳一律包成資料段（同回合共用一個 nonce，
-                    # 見上方 `nonce = new_nonce()`）。
+                    # 見 `_build_turn_context` 的 `TurnAccumulator(nonce=new_nonce(), …)`）。
                     # DSP-029 P0-1：**有 provenance 的工具改送編號後的片段**——
                     # `text_for_model` ⛔ 不再是編號或送模型的輸入。理由：unit 的唯一
                     # 來源必須是 `Provenance.text`，否則模型看到的第 i 句與系統解析的
@@ -3963,9 +3120,9 @@ class AgentRuntime:
                                 tool_label,
                                 tool_call_id,
                                 [(p.source, provenance_units(p.text)) for p in provenance],
-                                nonce,
+                                acc.nonce,
                             )
-                        return wrap_tool_data(tool_label, raw_tool_text, nonce)
+                        return wrap_tool_data(tool_label, raw_tool_text, acc.nonce)
 
                     try:
                         tool_content = _wrap(name)
@@ -3973,9 +3130,9 @@ class AgentRuntime:
                         # 模型送的 tool 名不合形狀守門（例如空白／標記字元）——
                         # registry.call 已經用它判過 NO_MATCH／FORBIDDEN，這裡只是
                         # 包裝層，⛔ 不因此讓整回合崩潰。
-                        violations.append(f"BAD_TOOL_NAME:{name!r}")
+                        acc.violations.append(f"BAD_TOOL_NAME:{name!r}")
                         tool_content = _wrap("tool")
-                    messages.append(
+                    acc.messages.append(
                         {
                             "role": "tool",
                             "tool_call_id": tc.id,
@@ -3984,11 +3141,11 @@ class AgentRuntime:
                     )
 
                 if budget_hit:
-                    return _finalize(_build_fixed("budget_exhausted"), is_fixed=True)
+                    return _finalize(acc.build_fixed("budget_exhausted", clock=self._clock), is_fixed=True)
                 continue  # 工具結果已回填，回到迴圈頂端再叫一次模型
 
             # 無 tool_calls ⇒ 這一回合模型嘗試給最終答案
-            attempt_no += 1
+            acc.attempt_no += 1
             content = getattr(message, "content", None) or ""
             try:
                 payload = json.loads(content)
@@ -3997,17 +3154,17 @@ class AgentRuntime:
                 if self._attempt_sink is not None:
                     self._emit_attempt(
                         {
-                            "attempt": attempt_no,
+                            "attempt": acc.attempt_no,
                             "kind": None,
                             "raw_len": len(content),
                             "verdict": {"reason": "SCHEMA_PARSE"},
                         }
                     )
-                counters.rewrites += 1
-                if counters.rewrite_exhausted(self.budget):
-                    return _finalize(_build_fixed("budget_exhausted"), is_fixed=True)
-                messages.append({"role": "assistant", "content": content})
-                messages.append(
+                acc.counters.rewrites += 1
+                if acc.counters.rewrite_exhausted(self.budget):
+                    return _finalize(acc.build_fixed("budget_exhausted", clock=self._clock), is_fixed=True)
+                acc.messages.append({"role": "assistant", "content": content})
+                acc.messages.append(
                     {
                         "role": "user",
                         "content": rewrite_feedback("SCHEMA", "輸出不符 AgentOutput schema。"),
@@ -4040,7 +3197,7 @@ class AgentRuntime:
             # `empty`」（那種情況本來就該轉走 T2 的 NO_DATA 出口，⛔ 不該被改寫
             # 成瞎編）。命中且改寫預算未耗盡 ⇒ 消耗一次 `max_rewrites`、帶固定
             # 修法句重回模型；**預算已耗盡 ⇒ 直接跳過改寫**（⛔ 不走
-            # `counters.rewrite_exhausted` ⇒ `_build_fixed("budget_exhausted")`
+            # `counters.rewrite_exhausted` ⇒ `build_fixed("budget_exhausted")`
             # 那條，否則 `handoff_reason` 會變成 `budget_exhausted`，T2 出口閘
             # 永遠到不了——plan-verifier r1 #6），讓輸出照常往下走進 Verifier，
             # 最終落到 `_apply_handoff_data_exits` 換成 `NO_JUDGEMENT_TEXT`。
@@ -4051,13 +3208,13 @@ class AgentRuntime:
                     rewrite_fact_class = None
                 if (
                     rewrite_fact_class not in SENSITIVE
-                    and tool_call_records
-                    and not all(r.status == "ok" and r.empty for r in tool_call_records)
-                    and not counters.rewrite_exhausted(self.budget)
+                    and acc.tool_call_records
+                    and not all(r.status == "ok" and r.empty for r in acc.tool_call_records)
+                    and not acc.counters.rewrite_exhausted(self.budget)
                 ):
-                    counters.rewrites += 1
-                    messages.append({"role": "assistant", "content": content})
-                    messages.append(
+                    acc.counters.rewrites += 1
+                    acc.messages.append({"role": "assistant", "content": content})
+                    acc.messages.append(
                         {"role": "user", "content": rewrite_feedback("HANDOFF_DATA", HANDOFF_DATA_REWRITE_HINT)}
                     )
                     continue
@@ -4069,15 +3226,15 @@ class AgentRuntime:
             # 呼叫工具、且本回合真的注入過「最近編號」資料段。命中且改寫預算
             # 未耗盡 ⇒ 消耗一次 `max_rewrites`、帶固定定義句重回模型；
             # **預算已耗盡 ⇒ 直接跳過改寫**（同上一條分支的坑：⛔ 不走
-            # `counters.rewrite_exhausted` ⇒ `_build_fixed("budget_exhausted")`
+            # `counters.rewrite_exhausted` ⇒ `build_fixed("budget_exhausted")`
             # 那條，否則 `handoff_reason` 會變成 `budget_exhausted`，到不了
             # `_apply_handoff_without_lookup` 的 `ASK_TARGET_TEXT` 出口），讓輸出
             # 照常往下走，最終落到 `_apply_handoff_without_lookup` 的既有行為。
             if (
                 out.kind == "handoff"
                 and out.handoff_reason in NON_SENSITIVE_HANDOFF_REASONS
-                and not tool_call_records
-                and has_recent_refs
+                and not acc.tool_call_records
+                and acc.snapshot.has_recent_refs
             ):
                 try:
                     zero_lookup_fact_class = FactClass(out.fact_class)
@@ -4085,11 +3242,11 @@ class AgentRuntime:
                     zero_lookup_fact_class = None
                 if (
                     zero_lookup_fact_class not in SENSITIVE
-                    and not counters.rewrite_exhausted(self.budget)
+                    and not acc.counters.rewrite_exhausted(self.budget)
                 ):
-                    counters.rewrites += 1
-                    messages.append({"role": "assistant", "content": content})
-                    messages.append(
+                    acc.counters.rewrites += 1
+                    acc.messages.append({"role": "assistant", "content": content})
+                    acc.messages.append(
                         {"role": "user", "content": rewrite_feedback("RECENT_REFS", RECENT_REFS_REWRITE_HINT)}
                     )
                     continue
@@ -4100,7 +3257,7 @@ class AgentRuntime:
             # DSP-029a：**本回合的 `nonce` 一起傳進去**——標記裡的 nonce 必須等於它，
             # 否則 `ref_invalid`。這是「這串標記真的出自本回合資料段」的唯一憑據，
             # ⛔ 不得改成不檢查或用固定值。
-            resolved, resolve_errors = resolve_refs(out, tool_results_by_id, nonce)
+            resolved, resolve_errors = resolve_refs(out, acc.tool_results_by_id, acc.nonce)
             # U3／W9-11：`audience` 傳的是 `identity.resolved_audience()` 的
             # **解析後封閉值**（`identity.Audience` 三值），⛔ 不傳 `target_user`
             # 原字串——那是上游可控的自由文字，Verifier 端對值域外一律照擋
@@ -4112,15 +3269,15 @@ class AgentRuntime:
             # ⑥' 就會對一個沒有文件事實的回合生效。⛔ 非文件回合一律 `False`
             # ——那張表（「已建立」「要我匯入嗎」）在正常寫入回合是**正確的話**。
             verdict = self.verifier.verify(
-                out, tool_results_by_id, user_message, handoff_dict,
+                out, acc.tool_results_by_id, user_message, handoff_dict,
                 resolved=resolved, resolve_errors=resolve_errors,
                 audience=identity.resolved_audience(),
                 document_turn=bool(document is not None and document.facts.strip()))
-            verifier_verdicts.append(verdict)
+            acc.verifier_verdicts.append(verdict)
             if self._attempt_sink is not None:
                 self._emit_attempt(
                     {
-                        "attempt": attempt_no,
+                        "attempt": acc.attempt_no,
                         "kind": out.kind,
                         "fact_class": out.fact_class,
                         "handoff_reason": out.handoff_reason,
@@ -4152,14 +3309,14 @@ class AgentRuntime:
                     }
                 )
             if not verdict.ok:
-                counters.rewrites += 1
+                acc.counters.rewrites += 1
                 logger.info(
                     "agent_verifier_reject trace_id=%s reason=%s rewrites=%d/%d",
-                    trace_id, verdict.reason, counters.rewrites, self.budget.max_rewrites,
+                    acc.trace_id, verdict.reason, acc.counters.rewrites, self.budget.max_rewrites,
                 )
-                if counters.rewrite_exhausted(self.budget):
-                    return _finalize(_build_fixed("budget_exhausted"), is_fixed=True)
-                messages.append({"role": "assistant", "content": content})
+                if acc.counters.rewrite_exhausted(self.budget):
+                    return _finalize(acc.build_fixed("budget_exhausted", clock=self._clock), is_fixed=True)
+                acc.messages.append({"role": "assistant", "content": content})
                 schema_hint = _reason_hint(verdict)
                 if verdict.reason == "SCHEMA":
                     # DSP-028：只回 SCHEMA 模型不知道哪裡錯。DSP-029a 下 SCHEMA 有八種
@@ -4176,7 +3333,7 @@ class AgentRuntime:
                 # 的結構化拒因（ok/reason/sent/term_id/quote_len），⛔ 無原文
                 # ——被拒的 `answer` 只留在 `messages`（模型自己的重寫上下文），
                 # ⛔ 不進 `TurnTrace`／`TurnResult`。
-                messages.append(
+                acc.messages.append(
                     {
                         "role": "user",
                         "content": rewrite_feedback(
@@ -4196,31 +3353,19 @@ class AgentRuntime:
             if (
                 out.kind == "ask"
                 and out.ask_target == "confirm_intent"
-                and not any(tc.name == CONFIRM_TOOL_NAME for tc in tool_call_records)
+                and not any(tc.name == CONFIRM_TOOL_NAME for tc in acc.tool_call_records)
             ):
-                violations.append("prose_confirm_suspect")
+                acc.violations.append("prose_confirm_suspect")
 
-            trace = TurnTrace(
-                trace_id=trace_id,
-                tool_calls=tool_call_records,
-                llm_calls=llm_calls,
-                prompt_tokens=prompt_tokens,
-                completion_tokens=completion_tokens,
-                verifier=verifier_verdicts,
+            trace = acc.build_trace(
                 final_kind=out.kind,
                 handoff_reason=(handoff_dict or {}).get("reason"),
-                latency_ms=int((self._clock() - start) * 1000),
-                violations=violations,
-                rules_sha=_rules_sha(),
-                outline_sha=_outline_sha(),
-                candidate_ids=list(candidate_ids),
-                winning_key_kind=dict(winning_key_kind),
-                miss_kind=miss_kind,
-                has_context=bool(entry_text),
-                has_recent_refs=has_recent_refs,
-                pre_lookup=pre_lookup_trace,
-                # W9 U2：文件回合四鍵（⛔ 無任何欄位值）。
-                **doc_trace,
+                clock=self._clock,
+                # 一般出口：`tool_calls`／`verifier`／`violations` 傳**同一個物件**
+                # ——`_emit_agent_decision` 的形狀守門會就地改 `trace.candidate_ids`
+                # 與 `trace.violations`，那個修正必須反映到呼叫端讀到的 `result.trace`
+                # 上（⛔ 不得改成副本；固定句出口才是副本，見 `build_fixed`）。
+                copy_lists=False,
             )
             result = TurnResult(
                 kind=out.kind,

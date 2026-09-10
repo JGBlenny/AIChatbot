@@ -269,15 +269,79 @@ def test_sensitive_no_grounding_still_transfers_without_rules_by_default():
 
 
 # ---------------------------------------------------------------------------
-# `_finalize` 有把 message 串下去
+# `finalize` 有把 message 串下去
 # ---------------------------------------------------------------------------
-def test_finalize_threads_message_into_both_gates():
-    """釘住串接：`_finalize` 呼叫兩道閘時要帶 `user_message` 與規則集。"""
+#
+# ⚠️ **受測物換過一次**（Plan R §1.1 例外表 (1)）：R1 把 `_finalize` 從
+#    `_run_turn_body` 的閉包升為 `services.agent.exit_gates.finalize`，四道閘的
+#    順序改由同檔的 `EXIT_GATES` 依序表持有。三條斷言的**語義不變**——
+#    ①「四道閘依序」、②「`_qs_rules` 由 verifier.rules 取得」、
+#    ③「`_qs_rules` 真的傳進 `_apply_handoff_without_lookup`／
+#    `_apply_handoff_data_exits`」——只是掃的檔案換了。
+#    下方 `test_gate_wiring_mutation_positive_control` 是它的變異正對照：
+#    拿掉任一 `_qs_rules` 參數，這條檢查必須紅。
+_EXPECTED_GATE_ORDER = (
+    "scope_exit", "handoff_without_lookup", "ask_target_gate", "handoff_data_exits",
+)
+
+
+def _gate_wiring_ok(finalize_src: str, module_src: str) -> bool:
+    """三條斷言的**唯一判定點**（正對照與變異正對照共用同一支）。"""
+    return (
+        # ② `_qs_rules` 由 verifier.rules 取得（拿不到 ⇒ None ⇒ 一律當敏感、維持轉人）
+        '_qs_rules = getattr(verifier, "rules", None)' in finalize_src
+        # ① 四道閘依 `EXIT_GATES` 依序跑
+        and "for _name, _gate in EXIT_GATES:" in finalize_src
+        # ③ `_qs_rules` 真的傳進兩道閘
+        and "_apply_handoff_without_lookup(result, agent_state, user_message, qs_rules)"
+        in module_src
+        and "_apply_handoff_data_exits(result, user_message, qs_rules)" in module_src
+    )
+
+
+def _gate_sources() -> tuple:
     import inspect
 
-    from services.agent import runtime as rt
+    from services.agent import exit_gates
 
-    src = " ".join(inspect.getsource(rt.AgentRuntime._run_turn_body).split())
-    assert '_qs_rules = getattr(self.verifier, "rules", None)' in src
-    assert "_apply_handoff_without_lookup( result, agent_state, user_message, _qs_rules )" in src
-    assert "_apply_handoff_data_exits(result, user_message, _qs_rules)" in src
+    return (
+        " ".join(inspect.getsource(exit_gates.finalize).split()),
+        " ".join(inspect.getsource(exit_gates).split()),
+    )
+
+
+def test_finalize_threads_message_into_both_gates():
+    """釘住串接：`exit_gates.finalize` 呼叫兩道閘時要帶 `user_message` 與規則集。"""
+    from services.agent import exit_gates
+
+    finalize_src, module_src = _gate_sources()
+    assert _gate_wiring_ok(finalize_src, module_src)
+    assert tuple(name for name, _ in exit_gates.EXIT_GATES) == _EXPECTED_GATE_ORDER
+
+
+def test_gate_wiring_mutation_positive_control():
+    """變異正對照：拿掉任一 `_qs_rules` 參數／換掉取得處，上面那條必紅。
+
+    ⚠️ 沒有這一條，`_gate_wiring_ok` 可能只是在比對一組**永遠成立**的字串。
+    """
+    finalize_src, module_src = _gate_sources()
+    assert _gate_wiring_ok(finalize_src, module_src), "正對照不成立：現況就已經不符"
+
+    # (a) `_qs_rules` 不再由 verifier.rules 取得
+    assert not _gate_wiring_ok(
+        finalize_src.replace('getattr(verifier, "rules", None)', "None"), module_src
+    )
+    # (b) 零查詢閘漏傳 `_qs_rules`
+    assert not _gate_wiring_ok(finalize_src, module_src.replace(
+        "_apply_handoff_without_lookup(result, agent_state, user_message, qs_rules)",
+        "_apply_handoff_without_lookup(result, agent_state)",
+    ))
+    # (c) 兩出口閘漏傳 `_qs_rules`
+    assert not _gate_wiring_ok(finalize_src, module_src.replace(
+        "_apply_handoff_data_exits(result, user_message, qs_rules)",
+        "_apply_handoff_data_exits(result)",
+    ))
+    # (d) 四道閘不再依序跑
+    assert not _gate_wiring_ok(
+        finalize_src.replace("for _name, _gate in EXIT_GATES:", "pass"), module_src
+    )
