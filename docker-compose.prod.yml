@@ -295,15 +295,16 @@ services:
       #   AGENT_STAGE（預設 M0；部署里程碑，M0-M5）
       #   AGENT_AUDIENCES（預設空；M3 才開 AGENT_AUDIENCES=prospect，管 REST 入口）
       #   AGENT_TURN_ENABLED（預設 false；/mcp 的 agent.turn 工具回切開關，與 AGENT_AUDIENCES 互不管轄）
-      #   AGENT_TURN_TIMEOUT_S（預設 30 秒）／AGENT_TURN_CAP（預設 120/小時/(api_key_id,vendor_id)）
+      #   AGENT_TURN_TIMEOUT_S（預設 30 秒）
       #   AGENT_SHADOW_AUDIENCES（預設空；M2 影子評估用）
       #   AGENT_SHADOW_MONTHLY_USD_CAP（預設 50 USD；超過自動關並告警）
       #   AGENT_OUTLINE_TOKEN_LIMIT_PROSPECT（預設 10000）／_PM（預設 8000）／_TENANT（預設 8000）
       #   AGENT_MODEL（未設回退 OPENAI_MODEL，再無則 gpt-4o-mini）
       #   AGENT_TRACE_WINDOW_DAYS（預設 7；agent_trace 查詢時間窗）
-      #   RATE_PER_MIN（預設 60/分鐘/(api_key_id,vendor_id)；一般 MCP 工具速率）
-      #   KB_GET_CAP（預設 300/小時/key；kb.get 上限）
       #   JGB2_CANDIDATE_CAP（預設 5；jgb2.query.* 候選列筆數）
+      # 上限（agent.turn／一般工具速率／kb.get／照片／PDF）由 services/agent/limits.py
+      # 這張封閉表決定（DSP-045），⛔ 不設 env——AGENT_TURN_CAP／RATE_PER_MIN／
+      # KB_GET_CAP／IMAGE_COUNT_CAP_PER_HOUR／FILE_COUNT_CAP_PER_HOUR 已除役。
       #   AGENT_BUDGET_TOOL_CALLS／AGENT_BUDGET_REWRITES／AGENT_BUDGET_DEADLINE_S（預設 4／2／20.0；bootstrap.budget_from_env 讀取）
       # usage-metering 使用量計量（2026-07-06；預設開，關=零行為差異）
       USAGE_METERING_ENABLED: ${USAGE_METERING_ENABLED:-true}

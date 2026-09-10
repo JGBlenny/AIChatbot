@@ -15,7 +15,8 @@
 - **schema 只收 `message`**（⛔ 無 `dialog_ref`）；
 - **獨立逾時** `AGENT_TURN_TIMEOUT_S`（預設 30 > `Budget.deadline_s`），逾時／
   取消 ⇒ 不 save；
-- **每小時上限** `AGENT_TURN_CAP`（預設 120，key `(api_key_id, vendor_id)`）。
+- **每小時上限** `LIMITS.turns_per_hour`（DSP-045 封閉表，預設 1200，
+  key `(api_key_id, vendor_id)`；⛔ 不再讀 `AGENT_TURN_CAP` env）。
 註冊本身受 `AGENT_TURN_ENABLED`（預設 false）管，⛔ 不受 `AGENT_AUDIENCES` 左右。
 
 ## 命名空間身分（任務 2.9）
@@ -130,6 +131,7 @@ from services.agent.identity import (
     Stage,
     normalize_entry_mode,
 )
+from services.agent.limits import LIMITS
 from services.agent.state_store import (
     NamespacedStateStore,
     is_expired as _session_is_expired,
@@ -504,7 +506,6 @@ AGENT_TURN_NAME = "agent.turn"
 
 _AGENT_TURN_ENABLED_ENV = "AGENT_TURN_ENABLED"
 _AGENT_TURN_TIMEOUT_ENV = "AGENT_TURN_TIMEOUT_S"
-_AGENT_TURN_CAP_ENV = "AGENT_TURN_CAP"
 
 #: 預設 **30 秒 > `Budget.deadline_s`（20）**（2.6 前置 security review P2）：
 #: 門面對一般唯讀工具的 3 秒逾時是給「一次 DB／API 查詢」用的，整回合會跑
@@ -516,14 +517,15 @@ _DEFAULT_AGENT_TURN_TIMEOUT_S = 30.0
 #: 外層只是**卡死的 save 也有出口**的保險，⛔ 不該是先觸發的那一個。
 _AGENT_TURN_OUTER_MARGIN_S = 5.0
 
-#: 每小時每 `(api_key_id, vendor_id)` 的 `agent.turn` 次數上限（比照 `KB_GET_CAP`）。
-_DEFAULT_AGENT_TURN_CAP = 120
+#: 每小時每 `(api_key_id, vendor_id)` 的 `agent.turn` 次數上限——DSP-045 封閉表
+#: `LIMITS.turns_per_hour`（預設 1200），⛔ 不再有本檔獨立預設常數。
 _AGENT_TURN_WINDOW_S = 3600.0
 
 #: 滑動視窗：`(api_key_id, vendor_id) -> [呼叫時戳]`。
 #: ⚠️ **行程內記憶體**——多 worker 部署時每個 worker 各有一份，實際上限是
-#: `cap × worker 數`。這與 `ToolRegistry` 既有的 `RATE_PER_MIN`／`KB_GET_CAP`
-#: 同一個限制，⛔ 不在 2.6 另建共享計數器（那是額度層 `usage_metering` 的事）。
+#: `cap × worker 數`。這與 `ToolRegistry` 既有的 `LIMITS.tool_calls_per_minute`／
+#: `LIMITS.kb_get_per_hour` 同一個限制，⛔ 不在此另建共享計數器（那是額度層
+#: `usage_metering` 的事）。
 #: ⚠️ 這段滑動視窗與 `tools/registry.py:_check_and_record_rate` 是**兩份實作**：
 #: registry.py 不在 2.6 的可改檔案清單內，而 `agent.turn` 的上限依 brief 歸門面。
 #: 之後若要合併，合併點是 registry 的 `_prune`／`_check_and_record_*`。
@@ -552,15 +554,9 @@ def agent_turn_timeout_s() -> float:
 
 
 def agent_turn_cap() -> int:
-    """`AGENT_TURN_CAP`（預設 120／小時／`(api_key_id, vendor_id)`）；非法值回預設。"""
-    raw = (os.getenv(_AGENT_TURN_CAP_ENV) or "").strip()
-    if not raw:
-        return _DEFAULT_AGENT_TURN_CAP
-    try:
-        value = int(raw)
-    except ValueError:
-        return _DEFAULT_AGENT_TURN_CAP
-    return value if value >= 0 else _DEFAULT_AGENT_TURN_CAP
+    """`LIMITS.turns_per_hour`（DSP-045 封閉表，預設 1200／小時／
+    `(api_key_id, vendor_id)`）；⛔ 不再讀 `AGENT_TURN_CAP` env。"""
+    return LIMITS.turns_per_hour
 
 
 def check_and_record_agent_turn(key: tuple, now: Optional[float] = None) -> bool:
@@ -1533,7 +1529,8 @@ def _make_agent_turn(
         if outline is _OUTLINE_UNAVAILABLE:
             return ToolResult(ok=False, error="NO_MATCH")
 
-        # ③ 張數配額（`IMAGE_COUNT_CAP_PER_HOUR`／`(api_key_id, vendor_id)`／
+        # ③ 張數配額（`LIMITS.images_per_hour`／`LIMITS.files_per_hour`——DSP-045
+        #    封閉表，⛔ 不再是 `IMAGE_COUNT_CAP_PER_HOUR` env——／`(api_key_id, vendor_id)`／
         #    行程內滑動窗）——**排在抓檔之前**：超過 ⇒ `RATE_LIMITED`、一張都不抓。
         #    W9-6：文件回合以**最壞值預扣**——一份 PDF 最多會變成 `DOC_MAX_PAGES`
         #    張頁圖，配額必須按那個最壞值先扣，⛔ 不能等抓完才知道扣多少

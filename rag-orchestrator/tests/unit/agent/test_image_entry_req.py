@@ -46,6 +46,7 @@ from services.agent.confirm_card import (
     render as render_card,
 )
 from services.agent.identity import Identity
+from services.agent.limits import AGENT_LIMITS_TEST_OVERRIDE_ENV
 from services.agent.output_schema import VerifierRules
 from services.agent.runtime import (
     IMAGE_CONFIDENCE_MIN,
@@ -729,7 +730,8 @@ async def test_inner_timeout_deducts_image_elapsed(monkeypatch, tree_fn):
 # ════════════════════════════════════════════════════════════════════
 @pytest.mark.req(_REQ)
 async def test_hourly_image_cap_returns_rate_limited_without_fetching(monkeypatch, tree_fn):
-    monkeypatch.setenv("IMAGE_COUNT_CAP_PER_HOUR", "3")
+    # DSP-045：上限不再讀 `IMAGE_COUNT_CAP_PER_HOUR` env——改用 limits.py 測試鉤子。
+    monkeypatch.setenv(AGENT_LIMITS_TEST_OVERRIDE_ENV, json.dumps({"images_per_hour": 3}))
     fetcher, recognizer = FakeFetcher(), FakeRecognizer()
     monkeypatch.setattr(F, "_image_fetch_one", fetcher)
     monkeypatch.setattr(F, "_image_recognize_batch", recognizer)

@@ -51,6 +51,7 @@ from services.agent import mcp_facade as F
 from services.agent import runtime as runtime_mod
 from services.agent.budget import Budget
 from services.agent.identity import Identity
+from services.agent.limits import AGENT_LIMITS_TEST_OVERRIDE_ENV
 from services.agent.provenance_units import provenance_units
 from services.agent.runtime import (
     DOC_NO_WRITE_TEXT,
@@ -77,6 +78,13 @@ from tests.unit.agent.test_agent_turn_unit_req import (
 )
 
 pytestmark = pytest.mark.unit
+
+
+def _set_limits(monkeypatch, **overrides) -> None:
+    """DSP-045：上限不再讀 `IMAGE_COUNT_CAP_PER_HOUR`／`FILE_COUNT_CAP_PER_HOUR`
+    env——改用 limits.py 測試鉤子。"""
+    monkeypatch.setenv(AGENT_LIMITS_TEST_OVERRIDE_ENV, json.dumps(overrides))
+
 
 _REQ = "agentic-mcp-orchestration:R10"
 
@@ -341,7 +349,8 @@ def test_spec_has_exactly_two_new_keys_and_pinned_constants():
     # 契約值（改動要走 Plan，⛔ 不由改碼的人決定）
     assert image_fetch.FILE_MAX_BYTES == 5_000_000
     assert image_fetch.FILE_MAX_COUNT == 1
-    assert image_fetch.FILE_COUNT_CAP_PER_HOUR == 20
+    # DSP-045：每小時份數上限收進 limits.py 封閉表（不再是本模組常數）。
+    assert image_fetch.file_count_cap_per_hour() == 100
     assert image_fetch.DOC_MAX_PAGES == 5
     assert image_fetch.DOC_TOTAL_PAGES_MAX == 10
     assert image_fetch.PDF_CONTENT_TYPE == "application/pdf"
@@ -430,7 +439,7 @@ async def test_total_pages_over_limit_is_invalid_input(monkeypatch):
     monkeypatch.setattr(F, "_image_fetch_one", FakePhotoFetcher())
     extractor = FakeExtractor()
     monkeypatch.setattr(F, "_document_extract_pages", extractor)
-    monkeypatch.setenv("IMAGE_COUNT_CAP_PER_HOUR", "10000")
+    _set_limits(monkeypatch, images_per_hour=10000)
     registry = _registry_with_turn(_turn_deps())
 
     # 6 張照片 ＋ 5 頁 PDF ＝ 11 > 10
@@ -453,7 +462,7 @@ async def test_quota_prepays_worst_case_pages(monkeypatch):
     """W9-6：一份 PDF 先扣 `DOC_MAX_PAGES` 張的配額（⛔ 不等抓完才知道扣多少）。"""
     monkeypatch.setattr(F, "_document_fetch_one", FakeFileFetcher(_synth_pdf(pages=1)))
     monkeypatch.setattr(F, "_document_extract_pages", FakeExtractor())
-    monkeypatch.setenv("IMAGE_COUNT_CAP_PER_HOUR", "6")
+    _set_limits(monkeypatch, images_per_hour=6)
     registry = _registry_with_turn(_turn_deps())
 
     # 一份 PDF（實際只有 1 頁）⇒ 仍以最壞值 5 預扣
@@ -480,8 +489,7 @@ async def test_file_count_cap_exhausted_is_rate_limited_and_never_fetches(monkey
     fetcher = FakeFileFetcher()
     monkeypatch.setattr(F, "_document_fetch_one", fetcher)
     monkeypatch.setattr(F, "_document_extract_pages", FakeExtractor())
-    monkeypatch.setenv("FILE_COUNT_CAP_PER_HOUR", "1")
-    monkeypatch.setenv("IMAGE_COUNT_CAP_PER_HOUR", "10000")
+    _set_limits(monkeypatch, files_per_hour=1, images_per_hour=10000)
     registry = _registry_with_turn(_turn_deps())
 
     r1 = await _call_turn(registry, _identity(), "看一下", file_urls=[_OK_FILE_URL],

@@ -10,11 +10,19 @@
 全部離線、假工具、假時鐘，不接觸真 DB／真 LLM。
 """
 import asyncio
+import json
 
 import pytest
 
 from services.agent.identity import Identity
+from services.agent.limits import AGENT_LIMITS_TEST_OVERRIDE_ENV
 from services.agent.tools.registry import ToolRegistry, ToolResult
+
+
+def _set_limits_override(monkeypatch, **overrides):
+    """DSP-045：上限不再讀 `RATE_PER_MIN`／`KB_GET_CAP` env——改用
+    `services/agent/limits.py` 的測試鉤子把上限釘成小值。"""
+    monkeypatch.setenv(AGENT_LIMITS_TEST_OVERRIDE_ENV, json.dumps(overrides))
 
 pytestmark = pytest.mark.unit
 
@@ -339,7 +347,7 @@ async def test_call_fn_exception_returns_no_match_and_records_exc_note():
 
 
 async def test_rate_limit_exceeded_returns_rate_limited(monkeypatch):
-    monkeypatch.setenv("RATE_PER_MIN", "2")
+    _set_limits_override(monkeypatch, tool_calls_per_minute=2)
     clock = {"t": 0.0}
     reg = ToolRegistry(clock=lambda: clock["t"])
     reg.register(
@@ -363,7 +371,7 @@ async def test_rate_limit_exceeded_returns_rate_limited(monkeypatch):
 async def test_rate_limit_key_excludes_session_id_changing_session_does_not_reset(
     monkeypatch,
 ):
-    monkeypatch.setenv("RATE_PER_MIN", "1")
+    _set_limits_override(monkeypatch, tool_calls_per_minute=1)
     clock = {"t": 0.0}
     reg = ToolRegistry(clock=lambda: clock["t"])
     reg.register(
@@ -386,8 +394,9 @@ async def test_rate_limit_key_excludes_session_id_changing_session_does_not_rese
 
 
 async def test_kb_get_hourly_cap_separate_from_per_minute_rate(monkeypatch):
-    monkeypatch.setenv("RATE_PER_MIN", "1000")  # 不讓每分鐘限制先觸發
-    monkeypatch.setenv("KB_GET_CAP", "2")
+    _set_limits_override(
+        monkeypatch, tool_calls_per_minute=1000, kb_get_per_hour=2
+    )  # tool_calls_per_minute 拉大：不讓每分鐘限制先觸發
     clock = {"t": 0.0}
     reg = ToolRegistry(clock=lambda: clock["t"])
     reg.register(

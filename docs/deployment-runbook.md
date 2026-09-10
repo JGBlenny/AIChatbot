@@ -792,7 +792,6 @@ docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c \
 | `AGENT_AUDIENCES` | 空（逗號分隔清單） | REST 入口（`/api/v1/message`）哪些 audience 走 agent 鏈 | **M3 才開 `AGENT_AUDIENCES=prospect`**（5.1 切換演練後） | `routers/agent_entry.py:agent_audiences` |
 | `AGENT_TURN_ENABLED` | `false` | `agent.turn` MCP 工具是否註冊；關閉時 `tools/list` 看不到它 | 只在需要 MCP client 對話（Claude Code／jgb2 後端經 `/mcp` 跑整回合）時開；⛔ 與 `AGENT_AUDIENCES` 互不管轄 | `services/agent/mcp_facade.py:_AGENT_TURN_ENABLED_ENV` |
 | `AGENT_TURN_TIMEOUT_S` | `30.0` 秒 | `agent.turn` 單次呼叫逾時（刻意大於 `Budget.deadline_s`=20） | 隨 `AGENT_TURN_ENABLED` 一併評估，預設值通常免調 | `services/agent/mcp_facade.py:agent_turn_timeout_s` |
-| `AGENT_TURN_CAP` | `120`／小時／`(api_key_id, vendor_id)` | `agent.turn` 速率上限 | 同上；⚠️ 行程內記憶體，多 worker 部署時實際上限＝此值 × worker 數 | `services/agent/mcp_facade.py:agent_turn_cap` |
 | `AGENT_SHADOW_AUDIENCES` | 空（逗號分隔清單） | 影子跑動的 audience 白名單 | M2 影子評估開始時開（如 `AGENT_SHADOW_AUDIENCES=prospect`），M2 完成或未使用時關 | `services/agent/shadow.py:_shadow_audiences` |
 | `AGENT_SHADOW_MONTHLY_USD_CAP` | `50.0`（USD） | 影子月成本上限，超過自動關並告警 | 隨 `AGENT_SHADOW_AUDIENCES` 一併開 | `services/agent/shadow.py:_monthly_cap_usd` |
 | `AGENT_OUTLINE_TOKEN_LIMIT_PROSPECT` | `10000` | 售前大綱 token 預算上限 | 全程有效（M1 起，非里程碑開關） | `services/agent/outline.py:OUTLINE_TOKEN_LIMIT_ENV` |
@@ -801,9 +800,16 @@ docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c \
 | `AGENT_MODEL` | 未設 ⇒ 退回 `OPENAI_MODEL` ⇒ 再無則 `gpt-4o-mini` | agent runtime 呼叫的模型名 | 全程有效；未設時沿用專案既有 `OPENAI_MODEL` 慣例 | `services/agent/runtime.py`（`self._model = model or os.environ.get("AGENT_MODEL") or os.environ.get("OPENAI_MODEL", "gpt-4o-mini")`） |
 | `AGENT_TRACE_WINDOW_DAYS` | `7`（非法／非正數回退） | `agent_trace` 查詢與 CLI 的時間窗上限 | 全程有效 | `services/agent/trace_view.py:window_days` |
 | `MCP_ALLOWED_ORIGINS` | **無**（未設＝啟動即 raise） | `/mcp` 的 Origin 白名單三態判定 | 已於 1.7 落地必填，維持 `-`（見 §19-3） | `services/agent/mcp_facade.py:load_allowed_origins` |
-| `RATE_PER_MIN` | `60`／分鐘／`(api_key_id, vendor_id)` | 一般 MCP 工具（非 `agent.turn`）速率限制 | 全程有效，既有工具通用旋鈕 | `services/agent/tools/registry.py:_DEFAULT_RATE_PER_MIN` |
-| `KB_GET_CAP` | `300`／小時／key | `kb.get` 呼叫上限 | 全程有效 | `services/agent/tools/registry.py:_DEFAULT_KB_GET_CAP` |
 | `JGB2_CANDIDATE_CAP` | `5` | `jgb2.query.*` 候選列筆數上限 | 全程有效 | `services/agent/tools/jgb2.py:_candidate_cap` |
+
+⚠️ **DSP-045（2026-09-10）：`agent.turn`／一般 MCP 工具速率／`kb.get`／照片／PDF 五道上限
+不再讀 env。** 上限由 `services/agent/limits.py` 的封閉表 `AgentLimits` 決定
+（`turns_per_hour=1200`／`tool_calls_per_minute=600`／`kb_get_per_hour=3000`／
+`images_per_hour=600`／`files_per_hour=100`），⛔ **不設 `AGENT_TURN_CAP`／
+`RATE_PER_MIN`／`KB_GET_CAP`／`IMAGE_COUNT_CAP_PER_HOUR`／`FILE_COUNT_CAP_PER_HOUR`**
+（這幾個 env 已除役，設了也不會被讀取）。想改上限＝改 `limits.py` 走程式審查。
+生效值印在 `/api/v1/agent/health` 的 `checks.limits`。查證：
+`grep -n "LIMITS" services/agent/limits.py`。
 
 ℹ️ `AGENT_BUDGET_TOOL_CALLS`／`AGENT_BUDGET_REWRITES`／`AGENT_BUDGET_DEADLINE_S`（預設 4／2／20.0）由 `services/agent/bootstrap.py:budget_from_env` 讀取（2026-09-05 補上），壞值／≤0 退回預設；一般不需宣告。
 
@@ -1161,7 +1167,8 @@ RAG_API_AUTH_ENFORCE=true        # 應已是 true
 文件回合相關環境變數（Plan W9 U12；皆有程式預設，不設即預設；U12 落地後生效）：
 - `DOC_MAX_PAGES`（預設 `5`）——單份 PDF 最多 rasterize 前幾頁。
 - `FILE_MAX_BYTES`（預設 `5000000`）——單檔下載位元組上限。
-- `FILE_COUNT_CAP_PER_HOUR`（預設 `20`）——每 (key,vendor)/worker 每小時檔案數上限。
+- 每小時檔案數上限由 `services/agent/limits.py` 的封閉表決定（`files_per_hour=100`，
+  DSP-045），⛔ 不設 `FILE_COUNT_CAP_PER_HOUR`（已除役）。
 - `DOCUMENT_EXTRACTION_MODEL`（預設 `gpt-5.6-luna`）——文件擷取所用 vision 模型。
 - `OPENAI_TIMEOUT_S=25`（2026-09-10 第六批 #11：agent 回合每次模型呼叫的 SDK 逾時；未設＝SDK 預設 600 s，一個掛住的請求只能等門面 60 s 逾時。25 s＋SDK 預設 2 次重試讓卡住的呼叫在 60 s 內自救；影像／文件擷取各自帶 timeout 不受此影響）
 

@@ -28,6 +28,7 @@ import pytest
 from services.agent import mcp_facade as F
 from services.agent.budget import Budget
 from services.agent.identity import Identity
+from services.agent.limits import AGENT_LIMITS_TEST_OVERRIDE_ENV
 from services.agent.output_schema import (
     AgentOutput,
     TERM_ID_PATTERN,
@@ -40,6 +41,14 @@ from services.agent.tools.registry import ToolRegistry, ToolResult
 from services.agent.verifier import OutputVerifier
 
 pytestmark = pytest.mark.unit
+
+
+def _set_turns_per_hour(monkeypatch, value: int) -> None:
+    """DSP-045：上限不再讀 `AGENT_TURN_CAP` env——改用 limits.py 測試鉤子。"""
+    monkeypatch.setenv(
+        AGENT_LIMITS_TEST_OVERRIDE_ENV, json.dumps({"turns_per_hour": value})
+    )
+
 
 _SPEC = "agentic-mcp-orchestration:2.6"
 
@@ -577,7 +586,7 @@ def _patch_resolve_call(monkeypatch, *, identity=None):
 
 @pytest.mark.req(_SPEC)
 async def test_hourly_cap_returns_rate_limited(monkeypatch):
-    monkeypatch.setenv("AGENT_TURN_CAP", "2")
+    _set_turns_per_hour(monkeypatch, 2)
     monkeypatch.setenv("AGENT_TURN_TIMEOUT_S", "5")
     F.reset_agent_turn_cap()
     finalized = _patch_metering(monkeypatch)
@@ -604,7 +613,7 @@ async def test_hourly_cap_returns_rate_limited(monkeypatch):
 
 @pytest.mark.req(_SPEC)
 async def test_missing_runtime_is_agent_unavailable(monkeypatch):
-    monkeypatch.setenv("AGENT_TURN_CAP", "100")
+    _set_turns_per_hour(monkeypatch, 100)
     F.reset_agent_turn_cap()
     finalized = _patch_metering(monkeypatch)
     _patch_resolve_call(monkeypatch)
@@ -624,7 +633,7 @@ async def test_missing_runtime_is_agent_unavailable(monkeypatch):
 @pytest.mark.req(_SPEC)
 def test_cap_key_is_api_key_and_vendor_not_session(monkeypatch):
     """換 `session_id` ⛔ 不重置計數；換 vendor 才是另一個桶。"""
-    monkeypatch.setenv("AGENT_TURN_CAP", "1")
+    _set_turns_per_hour(monkeypatch, 1)
     F.reset_agent_turn_cap()
     assert F.check_and_record_agent_turn((API_KEY_ID, VENDOR_A)) is True
     assert F.check_and_record_agent_turn((API_KEY_ID, VENDOR_A)) is False
@@ -633,7 +642,7 @@ def test_cap_key_is_api_key_and_vendor_not_session(monkeypatch):
 
 @pytest.mark.req(_SPEC)
 def test_cap_window_slides(monkeypatch):
-    monkeypatch.setenv("AGENT_TURN_CAP", "1")
+    _set_turns_per_hour(monkeypatch, 1)
     F.reset_agent_turn_cap()
     key = (API_KEY_ID, VENDOR_A)
     assert F.check_and_record_agent_turn(key, now=0.0) is True
@@ -852,7 +861,7 @@ async def test_invisible_identity_gets_no_match_not_agent_unavailable(monkeypatc
     preflight（`AGENT_UNAVAILABLE`／`RATE_LIMITED`）只在工具**對該身分可見**時
     才跑；否則一律讓 `registry.call()` 統一回 `NO_MATCH`，也不燒他的配額。
     """
-    monkeypatch.setenv("AGENT_TURN_CAP", "1")
+    _set_turns_per_hour(monkeypatch, 1)
     F.reset_agent_turn_cap()
     tenant = _identity(target_user="tenant")
     _patch_metering(monkeypatch)
@@ -935,7 +944,7 @@ async def _ok_result():
 async def test_invoke_does_not_double_prefix_agent_turn(monkeypatch):
     """`agent.turn` 例外：它自己餵 `NamespacedStateStore`（會加前綴），
     所以門面交給 registry 的必須是**裸**身分——否則變成 `mcp:k:v:mcp:k:v:sid`。"""
-    monkeypatch.setenv("AGENT_TURN_CAP", "100")
+    _set_turns_per_hour(monkeypatch, 100)
     monkeypatch.setenv("AGENT_TURN_TIMEOUT_S", "5")
     F.reset_agent_turn_cap()
     _patch_metering(monkeypatch)

@@ -37,6 +37,8 @@ from urllib.parse import parse_qs, urlparse
 
 import httpx
 
+from services.agent.limits import LIMITS
+
 # ════════════════════════════════════════════════════════════════════
 # 常數與旋鈕
 # ════════════════════════════════════════════════════════════════════
@@ -64,8 +66,9 @@ FILE_MAX_BYTES = 5_000_000
 #:    （S9-5／W9-18：寫了等於掛一張看起來有守、實際靜默無效的牌）。
 FILE_MAX_COUNT = 1
 
-#: 每小時每 `(api_key_id, vendor_id)` 的份數上限。
-FILE_COUNT_CAP_PER_HOUR = 20
+#: 每小時每 `(api_key_id, vendor_id)` 的份數上限——DSP-045 封閉表
+#: `LIMITS.files_per_hour`（預設 100）；本檔不再有獨立預設常數，見
+#: `file_count_cap_per_hour()`。
 
 #: 單份 PDF 最多看前幾頁（超過只看前 N 頁**並明講**，⛔ 不靜默截斷）。
 DOC_MAX_PAGES = 5
@@ -75,7 +78,6 @@ DOC_MAX_PAGES = 5
 DOC_TOTAL_PAGES_MAX = 10
 
 _FILE_MAX_BYTES_ENV = "FILE_MAX_BYTES"
-_FILE_COUNT_CAP_ENV = "FILE_COUNT_CAP_PER_HOUR"
 _DOC_MAX_PAGES_ENV = "DOC_MAX_PAGES"
 _DOC_TOTAL_PAGES_MAX_ENV = "DOC_TOTAL_PAGES_MAX"
 
@@ -88,9 +90,8 @@ PDF_MAGIC = b"%PDF-"
 #: 每批送辨識的張數（>5 張時 chatai **內部**分批，⛔ 不讓 line-bot 拆回合）。
 IMAGE_BATCH_SIZE = 5
 
-#: 每小時每 `(api_key_id, vendor_id)` 的張數上限。
-_DEFAULT_IMAGE_COUNT_CAP_PER_HOUR = 200
-_IMAGE_COUNT_CAP_ENV = "IMAGE_COUNT_CAP_PER_HOUR"
+#: 每小時每 `(api_key_id, vendor_id)` 的張數上限——DSP-045 封閉表
+#: `LIMITS.images_per_hour`（預設 600），⛔ 不再是本檔獨立預設常數。
 _IMAGE_COUNT_WINDOW_S = 3600.0
 
 #: 內部錯誤碼（**只進 trace 的 violation 與健檢**，⛔ 不外送給呼叫端——
@@ -140,15 +141,9 @@ def image_entry_enabled() -> bool:
 
 
 def image_count_cap_per_hour() -> int:
-    """`IMAGE_COUNT_CAP_PER_HOUR`（預設 200）；非法值回預設。"""
-    raw = (os.getenv(_IMAGE_COUNT_CAP_ENV) or "").strip()
-    if not raw:
-        return _DEFAULT_IMAGE_COUNT_CAP_PER_HOUR
-    try:
-        value = int(raw)
-    except ValueError:
-        return _DEFAULT_IMAGE_COUNT_CAP_PER_HOUR
-    return value if value >= 0 else _DEFAULT_IMAGE_COUNT_CAP_PER_HOUR
+    """`LIMITS.images_per_hour`（DSP-045 封閉表，預設 600）；
+    ⛔ 不再讀 `IMAGE_COUNT_CAP_PER_HOUR` env。"""
+    return LIMITS.images_per_hour
 
 
 #: `(api_key_id, vendor_id) -> [(時戳, 張數)]`。⚠️ **行程內記憶體**——多 worker
@@ -202,8 +197,9 @@ def file_max_bytes() -> int:
 
 
 def file_count_cap_per_hour() -> int:
-    """`FILE_COUNT_CAP_PER_HOUR`（預設 20）；非法值回預設。"""
-    return _int_env(_FILE_COUNT_CAP_ENV, FILE_COUNT_CAP_PER_HOUR)
+    """`LIMITS.files_per_hour`（DSP-045 封閉表，預設 100）；
+    ⛔ 不再讀 `FILE_COUNT_CAP_PER_HOUR` env。"""
+    return LIMITS.files_per_hour
 
 
 def doc_max_pages() -> int:
@@ -449,7 +445,6 @@ __all__ = [
     "DEFAULT_IMAGE_URL_ALLOWLIST",
     "DOC_MAX_PAGES",
     "DOC_TOTAL_PAGES_MAX",
-    "FILE_COUNT_CAP_PER_HOUR",
     "FILE_FORMAT_INVALID",
     "FILE_MAX_BYTES",
     "FILE_MAX_COUNT",

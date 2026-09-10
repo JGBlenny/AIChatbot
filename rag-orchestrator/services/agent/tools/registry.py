@@ -18,8 +18,9 @@ identity.vendor_id)`。換 `session_id` 不重置計數——同一把 API key �
   ⚠️ 真正的確認閘門在 `register()` 強制包上去的**共用 wrapper**
   （`_wrap_write_tool`：`assert_redeemed(token, session_id)` ＋ pm 雙證，
   DSP-038／S-8／S-9）——⛔ 別把「守門②過了」讀成「這張 token 是真的」。
-③速率：每分鐘 ≤ `RATE_PER_MIN`（env，預設 60）；`kb.get` 另外每小時
-  ≤ `KB_GET_CAP`（env，預設 300）⇒ `RATE_LIMITED`
+③速率：每分鐘 ≤ `LIMITS.tool_calls_per_minute`（DSP-045 封閉表，預設 600）；
+  `kb.get` 另外每小時 ≤ `LIMITS.kb_get_per_hour`（預設 3000）⇒ `RATE_LIMITED`
+  （⛔ 不再讀 env——`RATE_PER_MIN`／`KB_GET_CAP` 已除役，見 `services/agent/limits.py`）
 ④`input_schema` 驗證失敗 ⇒ `INVALID_INPUT`
 再 `asyncio.wait_for(fn(identity, args), timeout_s)`：逾時 ⇒ `TOOL_TIMEOUT`。
 
@@ -59,6 +60,7 @@ from services.agent.identity import (
     Identity,
     Stage,
 )
+from services.agent.limits import LIMITS
 
 ToolError = Literal[
     "NO_MATCH",
@@ -92,8 +94,6 @@ def write_tools_enabled() -> bool:
     return (os.environ.get(AGENT_WRITE_TOOLS_ENV) or "").strip().lower() in _TRUTHY
 
 
-_DEFAULT_RATE_PER_MIN = 60
-_DEFAULT_KB_GET_CAP = 300
 _MINUTE_S = 60.0
 _HOUR_S = 3600.0
 
@@ -585,7 +585,7 @@ class ToolRegistry:
     def _check_and_record_rate(
         self, key: tuple[Any, Any], now: float
     ) -> bool:
-        limit = int(os.environ.get("RATE_PER_MIN", _DEFAULT_RATE_PER_MIN))
+        limit = LIMITS.tool_calls_per_minute
         calls = self._rate_calls.setdefault(key, [])
         self._prune(calls, now, _MINUTE_S)
         if len(calls) >= limit:
@@ -596,7 +596,7 @@ class ToolRegistry:
     def _check_and_record_kb_get_cap(
         self, key: tuple[Any, Any], now: float
     ) -> bool:
-        cap = int(os.environ.get("KB_GET_CAP", _DEFAULT_KB_GET_CAP))
+        cap = LIMITS.kb_get_per_hour
         calls = self._kb_get_calls.setdefault(key, [])
         self._prune(calls, now, _HOUR_S)
         if len(calls) >= cap:

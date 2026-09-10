@@ -58,7 +58,7 @@ import sys
 from typing import Any, Callable, Optional
 
 from services import api_key_auth
-from services.agent import image_fetch, mcp_facade
+from services.agent import image_fetch, limits, mcp_facade
 from services.agent.identity import Identity, Stage
 from services.agent.tools.kb import kb_get
 from services.agent.tools.registry import write_tools_enabled
@@ -416,6 +416,9 @@ async def compute_agent_health(
             # `enabled` ＝ `image_fetch.image_entry_enabled()`＝白名單非空
             # （⛔ 不是 REST 的 `ENABLE_IMAGE_RECOGNITION`，那是另一條信任模型）。
             "image_recognition": _image_recognition_state(),
+            # DSP-045：上限封閉表生效值（`services/agent/limits.py`）——
+            # 只列數字，⛔ 不致紅（沒有 env 可誤設，這裡永遠是程式表的當前值）。
+            "limits": limits.effective(),
             # R8：Verifier 對照實驗旗——**觀測值、⛔ 不致紅**（它不是故障，
             # 是一個刻意的非正式組態）；但它必須看得見，否則「這台機器的答案
             # 有沒有經過尺」從外面完全問不出來。
