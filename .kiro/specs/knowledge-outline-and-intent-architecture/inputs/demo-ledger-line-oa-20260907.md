@@ -366,6 +366,12 @@ line-bot 側：拍照鍵每回合保留（部署中）；「建立帳單」格�
 - **架構對目標盤查**：寫入面硬保證（不經確認不寫入、雙雜湊、三道網、別戶邊界）✅；`outcome` 契約 ✅；信任邊界 ✅。⚠️ 四條：(1)「答案每句有憑據」在 `grounding_observe` 下只是觀察值，且 DSP-040 絆線計數沒有線上落點（`observed` 只進 dev attempt log）；(2) 寫入面沒有程式下限——出不出確認卡完全取決於模型（§1s 實證），建議 UI 已知寫入意圖走封閉機器值 `action:<name>`；(3) 延遲目標三個數字互相不對（spec p95 ≤12 s／預設 20 s／部署 45／60 s）；(4) `_POLICY_TEXT_NON_PROSPECT` 已 1,927 字超過自述上限 1,511。結構債：`runtime.py` 4,269 行、`_run_turn_body` 1,230 行、11 個會話鍵五種生命週期、Verifier 三維度各用不同機制。最該做的三個結構改動：拆 `_run_turn_body` 成四段管線（含出口閘順序表格測試）、Verifier 規則自帶屬性＋`VerifyContext`、`AgentSession` 會話實體。不要動的三件：`Optional[str]` 型別與 payload JSON 字串、十個保留 id／三道網／雙雜湊縱深、`grounding_observe`／固定句／pm 關表（皆業主裁且有量測）。
 - 治理補記：S9-11 撤銷已補 DSP-044 與架構文 §4c。待業主裁：延遲命題數字、pm 自己的敏感類定義（`SENSITIVE` 五類是售前的）、寫入面機器值下限、tenant 守門表。
 
+## 1u. 額度盤點與 Plan R 派工（2026-09-10 晚）
+
+- 業主問「額度目前不是 0 不擋只觀察？」：對——線上 `vendor_quotas` 零列，`quota_check` 對未設定業者回 `none`（只計量；30 天 1,396 則、當日 134 則）。真正會擋的是六道程式內上限（全按 `(api_key_id, vendor_id)` 行程內計、line-bot 一把 key 全體共用）：`AGENT_TURN_CAP` 120/h、`RATE_PER_MIN` 60 工具呼叫/min、`KB_GET_CAP` 300/h、`IMAGE_COUNT_CAP_PER_HOUR` 200、`FILE_COUNT_CAP_PER_HOUR` 20、每回合預算。本機基準兩次撞 `RATE_LIMITED`（第一次 turn cap、第二次 RATE_PER_MIN——luna 3 s 回合×每回合 2–4 次工具）。
+- 業主裁（DSP-045）：額度不擋；之後每團隊自帶 OpenAI key 自付額度；上限只防惡意、不切細、⛔ 不藏 env ⇒ 收成程式內封閉表 `limits.py`（回合 1200/h、工具 600/min、kb.get 3000/h、照片 600/h、PDF 100/h）＋健檢回報生效值；派 executor（與 R1／R2 檔案不重疊）。
+- Plan R（結構整理）：plan-verifier 三輪（r1 六條、r2 四條、r3 兩條措辭）全處置，第 4 稿派工：R1（runtime 四段管線＋R1b observed 計數落點）與 R2（Verifier 規則自帶屬性、加法 `ctx=`）平行進行中；整理前基準見 Plan §1.4（lb2 11／11／13、線③ 12/12、b6 8/8、p50 3.2–4.1 s）；計分尺升格 `scripts/smoke/`（`e76fe43a`）。
+
 ## 2. demo 處理（這次就做，本機可驗）
 
 | # | 事 | 狀態 | 證據 |
