@@ -33,7 +33,13 @@ _ROOT = os.path.dirname(  # rag-orchestrator/
         )
     )
 )
-_CHAT_PY = os.path.join(_ROOT, "routers", "chat.py")
+#: ⚠️ **2026-09-11 舊鏈退役**：`routers/chat.py` 已刪，consumed 端因此無受測對象。
+#: 保留的是「produced ⊆ selected」那半（檢索器仍在）；退役的是「consumed ⊆ produced」那半。
+#: ⛔ **失去的保護**：沒有東西再擋「消費端讀了 `_format_result` 未產出的欄位」。
+#: 新線的消費端是 `services/agent/tools/kb.py`，但它的存取形狀不同
+#: （`r.get("id")` 於 comprehension、`it["question_summary"]`），
+#: ⛔ 不是舊的 `best_knowledge.get(...)`／`best_knowledge[...]`——
+#: 要復原這半，得為新形狀重寫 `_parse_consumed`，不是改個路徑就好。列為債。
 _RETRIEVER_PY = os.path.join(_ROOT, "services", "vendor_knowledge_retriever_v2.py")
 
 
@@ -215,10 +221,8 @@ def _read(path: str) -> str:
 
 @pytest.fixture(scope="module")
 def _sets():
-    chat_src = _read(_CHAT_PY)
     retr_src = _read(_RETRIEVER_PY)
 
-    consumed = _parse_consumed(chat_src)
     produced = _parse_produced(retr_src)
     selects = _parse_selects(retr_src)
 
@@ -229,25 +233,10 @@ def _sets():
     )
     selected_vector, selected_keyword = selects[0], selects[1]
     return {
-        "consumed": consumed,
         "produced": produced,
         "selected_vector": selected_vector,
         "selected_keyword": selected_keyword,
     }
-
-
-@pytest.mark.req("trigger-vocabulary-debt:4.1")
-def test_consumed_subset_of_produced(_sets):
-    consumed, produced = _sets["consumed"], _sets["produced"]
-    missing = consumed - produced
-    assert not missing, (
-        "檢索斷鏈：chat.py 消費了 _format_result 未產出的欄位。\n"
-        f"  缺於 produced（_format_result）：{sorted(missing)}\n"
-        f"  consumed（chat.py best_knowledge 硬存取）：{sorted(consumed)}\n"
-        f"  produced（_format_result keys）：{sorted(produced)}\n"
-        "→ 若為新契約欄位：請於 _format_result 補透傳；"
-        "若為良性非契約讀取：加入 _CONSUMED_BENIGN 並註明理由。"
-    )
 
 
 @pytest.mark.req("trigger-vocabulary-debt:4.1")

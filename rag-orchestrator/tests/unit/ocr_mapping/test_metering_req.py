@@ -92,9 +92,23 @@ def test_logs_contain_field_names_but_no_values_or_ocr_text(client, spy, capsys)
         assert pii not in out, f"日誌洩漏個資／欄位值：{pii}"
 
 
-# ── 雙落點反例：middleware 路徑條件未被動到 ─────────────────────────────────────
+# ── 雙落點反例：middleware 不得替 ocr-mapping 落計量 ─────────────────────────────
 @pytest.mark.req("documind-ocr-mapping:9.3")
-def test_middleware_still_only_meters_message_path():
+def test_middleware_does_not_meter_ocr_mapping():
+    """需求 9.3／9.3a 的守門：ocr-mapping **端點內自記**，⛔ middleware 不得雙落點。
+
+    ⚠️ **2026-09-11 舊鏈退役後本斷言加強**：原本驗的是
+    `request.url.path == "/api/v1/message"` 仍在（＝middleware 只認那一條）。
+    該端點已隨舊 REST 對話鏈刪除，整條 REST 計量分支一併移除
+    （它跑在路由之前，會對 404 扣額度並寫 `status='success'` 事件）。
+    現在 middleware **只做 `/mcp` 額度短路、完全不 begin／finalize**，
+    本需求要守的「不雙落點」因此比原本更強。
+    ⛔ 日後若重開 REST 入口，⛔ 不要在 middleware 以路徑字串等值判斷（改路徑會靜默停止計量）。
+    """
     src = (Path(__file__).parents[3] / "app.py").read_text(encoding="utf-8")
-    assert 'request.url.path == "/api/v1/message"' in src
-    assert "ocr-mapping" not in src.split("def usage_metering_middleware", 1)[1].split("@app.", 1)[0]
+    body = src.split("def usage_metering_middleware", 1)[1].split("@app.", 1)[0]
+    assert "ocr-mapping" not in body                      # 原斷言，逐字保留
+    # ⚠️ 比對**判斷式**而非字串出現與否——docstring 裡會提到該路徑以說明為何移除
+    assert 'request.url.path == "/api/v1/message"' not in body
+    assert "_um.begin(" not in body and "_um.finalize(" not in body   # ⛔ 不得雙落點
+    assert 'request.url.path.startswith("/mcp")' in body  # 正對照：/mcp 短路仍在

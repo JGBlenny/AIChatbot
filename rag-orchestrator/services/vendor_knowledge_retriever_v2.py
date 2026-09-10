@@ -413,6 +413,13 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
         )
 
         # 如果不需要 debug info，移除內部欄位
+        # ⚠️ **2026-09-11 舊鏈退役：這份剝欄清單失去了對帳夥伴。**
+        # 原本 `routers/chat.py:_retrieve_knowledge` 恆以 `return_debug_info=True` 取值後
+        # 自行剝同一組欄位，`tests/unit/retrieval/test_kb_candidate_telemetry_contract_req.py`
+        # 逐項比對兩份清單，任一邊漂移即紅（P0-1 回測輸出契約 §B②）。
+        # `chat.py` 已刪 ⇒ 該測試整檔失去受測對象、一併移除。
+        # ⛔ **失去的保護**：清單漂移不再有機器把關；改動下面五個 pop 之前，
+        #    要自己確認沒有呼叫端依賴被剝掉的欄位（新線走 `services/agent/tools/kb.py`）。
         if not return_debug_info:
             for result in results:
                 result.pop('search_method', None)

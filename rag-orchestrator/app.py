@@ -336,14 +336,22 @@ else:
 
 @app.middleware("http")
 async def usage_metering_middleware(request: Request, call_next):
-    """usage-metering（spec usage-metering 2.1）：/api/v1/message 進場建計量
-    context、出場落事件（fire-and-forget）。串流回應（SSE）由 generator finally
-    落點（finalize 冪等使雙落點安全）；其餘路徑零觸碰；任何失敗不影響回應。"""
+    """`/mcp` 的**額度短路**（agentic-mcp-orchestration 1.7）；其餘路徑零觸碰。
+
+    ⛔ **不 begin／finalize**：門面 `services/agent/mcp_facade.py` 是唯一寫入者
+    （每次工具呼叫一列 `usage_events`，不變量 31）。這裡再落一次 ⇒ 一次呼叫兩列。
+    身分與 key 屬性由 `McpServiceGate`（最外層 middleware）放進 `request.state`。
+
+    ⚠️ **2026-09-11 舊鏈退役**：原本另有一條 `path == "/api/v1/message"` 的 REST 計量分支
+    （一則訊息一列）。該端點已隨舊 REST 對話鏈刪除，但 middleware 跑在**路由之前**，
+    分支因此仍會對 404 請求 `begin()`＋`quota_check()`＋`finalize("success", 404)`
+    ——實測扣掉額度並寫下一列 `status='success'` 的事件，而該請求根本沒有服務產出
+    （`vendor_id` 還取自請求 body ⇒ 可對任意業者扣額）。⇒ 整條移除。
+    ⛔ 日後若重開 REST 入口，計量要重寫：**⛔ 不要在 middleware 層以路徑字串等值判斷**
+    （字面量一改路徑就靜默停止計量，查無任何測試釘住它），改在端點內自記或用路由層判定。
+    ⚠️ 另注意計費單位不同：REST 是一則訊息一列，MCP 是一次工具呼叫一列。
+    """
     from services import usage_metering as _um
-    # ── /mcp：**只做額度短路**（agentic-mcp-orchestration 1.7）──
-    # ⛔ 不 begin／finalize：門面 services/agent/mcp_facade.py 是唯一寫入者
-    #    （每次工具呼叫一列 usage_events，不變量 31）。這裡再落一次 ⇒ 一次呼叫兩列。
-    # 身分與 key 屬性由 McpServiceGate（最外層 middleware）放進 request.state。
     if request.url.path.startswith("/mcp"):
         _mcp_call = getattr(request.state, "mcp_call", None)
         if _mcp_call is not None and _um.is_enabled():
@@ -353,65 +361,7 @@ async def usage_metering_middleware(request: Request, call_next):
                 return JSONResponse(status_code=429,
                                     content={"detail": "QUOTA_EXCEEDED",
                                              "code": "QUOTA_EXCEEDED"})
-        return await call_next(request)
-    metered = (request.url.path == "/api/v1/message" and request.method == "POST"
-               and _um.is_enabled())
-    if metered:
-        try:
-            import json as _json
-            _body = await request.body()
-            # ⚠️ BaseHTTPMiddleware 讀 body 會吃掉 receive channel，下游 handler
-            #    等 body 永久卡死（實測）——回灌 _receive 供下游重читать
-            async def _replay():
-                return {"type": "http.request", "body": _body, "more_body": False}
-            request._receive = _replay
-            _fields = _json.loads(_body) if _body else {}
-            _um.begin(_fields if isinstance(_fields, dict) else {})
-        except Exception:
-            _fields = {}
-            _um.begin({})
-    _pool = getattr(request.app.state, "db_pool", None)
-    _quota = None
-    if metered:
-        # quota-management：達限短路（進檢索/LLM 前，零成本，R4.1）；fail-open
-        _ctx_obj = _um._ctx.get()
-        _quota = await _um.quota_check(_pool, (_fields or {}).get("vendor_id"),
-                                       bool(_ctx_obj and _ctx_obj.is_internal))
-        if _quota.state == "blocked":
-            _um.set_path("quota_blocked")
-            _um.finalize("blocked", 200, db_pool=_pool)      # 記事件供舉證（R4.6）
-            _body_dict = _um.quota_blocked_body(
-                _ctx_obj.user_type if _ctx_obj else "unknown", _quota, _fields or {})
-            return JSONResponse(status_code=200, content=_body_dict)
-    try:
-        response = await call_next(request)
-    except Exception:
-        if metered:
-            _um.finalize("error", 500, db_pool=_pool)
-        raise
-    if metered:
-        _ctype = response.headers.get("content-type", "")
-        if "text/event-stream" not in _ctype:      # 串流由 generator finally 收尾
-            _um.finalize("success" if response.status_code < 500 else "error",
-                         response.status_code, db_pool=_pool)
-            # quota 警示：2026-07-06 改判——警示不進對話（改寄信），
-            # env QUOTA_WARN_IN_CHAT=true 可重新啟用對話內提示
-            if (os.getenv("QUOTA_WARN_IN_CHAT", "false").lower() == "true"
-                    and _quota is not None and _quota.state == "warn"
-                    and "application/json" in _ctype and response.status_code == 200):
-                _ctx_obj = _um._ctx.get()
-                _ut = _ctx_obj.user_type if _ctx_obj else "unknown"
-                _raw = b""
-                async for _chunk in response.body_iterator:
-                    _raw += _chunk
-                _new_raw = _um.append_quota_hint(_raw, _ut, _quota)
-                from starlette.responses import Response as _Resp
-                _hdrs = dict(response.headers)
-                _hdrs.pop("content-length", None)      # 重算（research 風險 2）
-                return _Resp(content=_new_raw if _new_raw is not None else _raw,
-                             status_code=response.status_code, headers=_hdrs,
-                             media_type="application/json")
-    return response
+    return await call_next(request)
 
 
 @app.middleware("http")
