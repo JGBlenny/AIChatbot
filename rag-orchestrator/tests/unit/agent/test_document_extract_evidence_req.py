@@ -265,3 +265,13 @@ def test_evidence_never_leaks_into_facts():
     assert "敬請留意" not in facts
     assert "開立單位欄位寫著" not in facts
     assert "業者專線" not in facts
+
+
+# verifier 2026-09-10 P3：數值比對是整個 token 等值，不是子字串
+def test_number_evidence_is_token_equality_not_substring():
+    from services.agent.document_extract import _number_evidence_ok
+    assert _number_evidence_ok(800, "合計 18,000") is False
+    assert _number_evidence_ok(18000, "合計 18,000") is True
+    assert _number_evidence_ok(19520, "合計：NT$ 19,520") is True
+    assert _number_evidence_ok(1200, "清潔費 1,200 元") is True
+    assert _number_evidence_ok(200, "清潔費 1,200 元") is False

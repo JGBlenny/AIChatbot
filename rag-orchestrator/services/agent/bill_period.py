@@ -61,6 +61,9 @@ CN_MONTH_VALUES: Final[dict] = {
 
 #: 沒給年份時允許往未來看幾個月（見模組 docstring）。
 MAX_MONTHS_AHEAD: Final[int] = 1
+#: 年份修飾詞（封閉表）：值＝相對今年的位移；`None`＝表內但不支援 ⇒ 整句不解析。
+#: ⚠️ 「明年」「前年」「後年」列 None 是刻意：延期只對既有帳單，未來年份沒有可對的張。
+YEAR_MODIFIER_TERMS: Final[dict] = {"去年": -1, "今年": 0, "明年": None, "前年": None, "後年": None}
 
 #: `YYYY-MM`／`YYYY/MM`。年份四位、月份一或兩位（值域另驗）。
 _YEAR_MONTH_RE: Final = re.compile(r"(\d{4})[-/](\d{1,2})(?!\d)")
@@ -115,6 +118,16 @@ def parse_period(text: Any, today: date) -> Optional[PeriodSpec]:
     if not isinstance(text, str) or not text.strip():
         return None
 
+    # verifier 2026-09-10 P2-1：年份修飾詞是封閉表——「去年」⇒ 上一年、「今年」⇒ 當年；
+    # 「明年」「前年」等表內但不支援的修飾詞 ⇒ 整句 None（⛔ 不忽略修飾詞只吃月份：那會把
+    # 「去年九月」對到今年九月，卡看起來完全正常）。
+    year_shift: Optional[int] = None
+    for term, shift in YEAR_MODIFIER_TERMS.items():
+        if term in text:
+            if shift is None:
+                return None
+            year_shift = shift
+            break
     unpaid_only = any(term in text for term in UNPAID_TERMS)
 
     year: Optional[int] = None
@@ -147,6 +160,8 @@ def parse_period(text: Any, today: date) -> Optional[PeriodSpec]:
     if month is None and any(term in text for term in LAST_PERIOD_TERMS):
         year, month = _previous_month(today)
 
+    if month is not None and year_shift is not None and ym is None:
+        year = today.year + year_shift   # 修飾詞優先於「裸月份取最近」的推定
     if month is None and not unpaid_only:
         # 封閉語法一個都沒命中 ⇒ 解析不到（⛔ 不回一個「什麼都不篩」的空規格：
         # 那會讓呼叫端分不出「使用者沒講期別」與「講了但我看不懂」）。
@@ -158,6 +173,7 @@ __all__ = [
     "CN_MONTH_VALUES",
     "LAST_PERIOD_TERMS",
     "MAX_MONTHS_AHEAD",
+    "YEAR_MODIFIER_TERMS",
     "PeriodSpec",
     "THIS_PERIOD_TERMS",
     "UNPAID_TERMS",

@@ -428,3 +428,12 @@ def test_scope_exit_without_state_still_does_its_original_three_things():
     """模組級函式：測試直接呼叫它時不必給狀態（⛔ 不得因此炸掉）。"""
     out = _apply_scope_exit(_turn_result(), scope_in=0, scope_out=1)
     assert out.kind == "answer" and out.answer != "原本的答案"
+
+
+# verifier 2026-09-10 P3：範圍釘住時讀點一律 None（不靠下游閘救）
+def test_read_point_returns_none_when_scope_pinned():
+    from services.agent.runtime import ESTATE_CARRY_KEY, SELECT_SCOPE_KEY, _estate_carry_of
+    state = {ESTATE_CARRY_KEY: {"name": "某物件", "id": "1"}, SELECT_SCOPE_KEY: {"estate_id": "77"}}
+    assert _estate_carry_of(state) is None
+    state.pop(SELECT_SCOPE_KEY)
+    assert _estate_carry_of(state) == {"name": "某物件", "id": "1"}

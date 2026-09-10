@@ -52,7 +52,7 @@ def test_key_is_loaded_from_file(rules):
     assert rules.route_check_audiences == ["prospect"]
     raw = json.loads(_RULES_PATH.read_text(encoding="utf-8"))
     # 單元 E（第六批）：規則檔多一張 `document_turn_forbid_terms` ⇒ 版本升 1.6.0。
-    assert raw["route_check_audiences"] == ["prospect"] and raw["version"] == "1.6.1"
+    assert raw["route_check_audiences"] == ["prospect"] and raw["version"] == "1.6.2"
 
 
 @pytest.mark.parametrize("sentence", [_PHONEISH, _URLISH])

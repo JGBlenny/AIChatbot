@@ -119,7 +119,7 @@ def test_rules_file_declares_both_classes():
     加了鍵也讀不到，而那個失敗方向是「閘悄悄沒開」。這條把「表在不在」與「表咬不咬」
     分開報，不然第 1 節全紅時看不出是規則沒載到還是判定寫錯。"""
     rules = VerifierRules.load(_RULES_PATH)
-    assert rules.version == "1.6.1"
+    assert rules.version == "1.6.2"
     assert rules.document_turn_forbid_terms is not None, (
         "規則檔缺 `document_turn_forbid_terms`，或 `VerifierRules` 沒宣告這個欄位"
     )
@@ -136,6 +136,8 @@ _DONE_CLAIMS: list[tuple[str, Optional[str]]] = [
     ("已匯入這張收據的金額欄位。", "業者於後台匯入這張收據的金額欄位。"),
     ("已上傳附件到該筆帳單。", "業者於後台上傳附件到該筆帳單。"),
     ("已寫入備註欄。", "業者於後台寫入備註欄。"),
+    ("憑證已經匯入系統帳單了。", "憑證已經匯入系統帳單了。"),   # 1.6.2：verifier P2-2「已經＋動詞」（無把／將）漏網；引文＝句子且 ≥10 字
+    ("這筆資料已經寫入備註欄了。", "這筆資料已經寫入備註欄了。"),
 ]
 
 #: (b) **提議寫入**。不含 `assertion_terms` 的走純問句；含「可以／需要」的會被步②

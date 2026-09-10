@@ -303,8 +303,9 @@ def _candidate_button_label(row: dict) -> str:
 #: 修法在程式層、⛔ 不改提示詞：照片回合把**封閉值**（分類樹名稱）存進 `agent_state[
 #: IMAGE_SUGGESTION_KEY]`（照片與出卡常常不同回合：照片→問急不急→答「不急」→出卡），
 #: `confirm.request`（`repair_create`）執行前由程式補進 payload 缺的 `category_name`；
-#: 描述沒人講時填 `IMAGE_DESCRIPTION_TEMPLATE`（只含分類樹名稱，⛔ 不含任何 vision
-#: 自由文字——S9-11 的「照片內文字不進修繕單」不變）。出卡成功即清掉；新照片覆寫。
+#: 描述沒人講時填 `IMAGE_DESCRIPTION_TEMPLATE`（業主 2026-09-10 撤銷 S9-11：辨識描述（淨化、
+#: 截長）優先，缺則部位＋原因短標籤，再缺退分類名；⛔ 這些文字只進修繕單描述，不進模型資料段）。
+#: 一次性：任何 `confirm.request` 呼叫即清；新照片覆寫。
 IMAGE_SUGGESTION_KEY = "image_suggestion"
 IMAGE_DESCRIPTION_TEMPLATE = "照片辨識：{label}"
 
@@ -394,6 +395,10 @@ def _estate_carry_of(agent_state: Any) -> Optional[dict]:
     的東西 ⛔ 不得假設形狀正確——舊 session 沒有這個鍵，別的版本可能寫成別的樣子。
     """
     if not isinstance(agent_state, dict):
+        return None
+    # verifier 2026-09-10 P3：範圍釘住時讀點也一律 None——⛔ 不靠下游 `_scope_gate_confirm_request`
+    # 救「舊物件補進 payload」；寫點與注入點本來就擋，讀點補齊同一紀律。
+    if agent_state.get(SELECT_SCOPE_KEY) is not None:
         return None
     carry = agent_state.get(ESTATE_CARRY_KEY)
     if not isinstance(carry, dict):

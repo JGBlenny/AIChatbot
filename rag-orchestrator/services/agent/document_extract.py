@@ -711,7 +711,10 @@ def _number_evidence_ok(value: Any, evidence: str) -> bool:
     value_digits = _digits(str(value))
     if not value_digits:
         return False
-    return value_digits in _digits(evidence)
+    # verifier 2026-09-10 P3：⛔ 不做子字串（`800` 會被 `18,000` 放行）。先把千分位逗號併回，
+    # 再以「整個數字 token 等值」比對；`19,520`／`19520` 都成 token `19520`。
+    normalized = re.sub(r"(?<=\d)[,，](?=\d{3}(?!\d))", "", evidence or "")
+    return value_digits in re.findall(r"\d+", normalized)
 
 
 #: 值欄型別 → 比對函式的**封閉表**——依型別，⛔ 不逐欄寫特例。陣列型

@@ -447,3 +447,17 @@ async def test_tool_contract_still_passes_the_real_registry(api):
     )
     assert result.ok is True
     assert result.data["payload"]["bill_id"] == _SEP_BILL
+
+
+# verifier 2026-09-10 P2-1：年份修飾詞封閉表
+def test_year_modifiers_are_closed_and_never_silently_dropped():
+    from datetime import date
+    from services.agent.bill_period import parse_period, YEAR_MODIFIER_TERMS
+    today = date(2026, 9, 10)
+    assert parse_period("去年九月", today).year == 2025 and parse_period("去年九月", today).month == 9
+    assert parse_period("今年九月", today).year == 2026
+    assert parse_period("明年三月", today) is None
+    assert parse_period("前年九月", today) is None
+    # 正對照：裸月份推定不受影響
+    assert parse_period("九月", today).year == 2026 and parse_period("十二月", today).year == 2025
+    assert set(YEAR_MODIFIER_TERMS) == {"去年", "今年", "明年", "前年", "後年"}
