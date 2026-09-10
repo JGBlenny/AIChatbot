@@ -32,6 +32,7 @@ from __future__ import annotations
 import re
 from typing import Any, Optional
 
+from services.agent.agent_session import AgentSession
 from services.agent.verifier import _UNIT_MARKER_RE
 
 #: `agent_state` 底下的鍵。
@@ -106,9 +107,10 @@ def record_completed_action(
         if isinstance(value, str) and value:
             entry["due_date"] = value
     items.append(entry)
-    if len(items) > MAX_COMPLETED_ACTIONS:
-        items = items[-MAX_COMPLETED_ACTIONS:]
-    agent_state[COMPLETED_ACTIONS_KEY] = items
+    # R3：FIFO 修剪與落地集中到 `AgentSession.write_completed_actions`
+    # （⛔ 上限數值不變——同一個 `MAX_COMPLETED_ACTIONS`／`COMPLETED_ACTIONS_MAX`，
+    # 見 `test_agent_session_req.py` 的逐一相等正對照）。
+    AgentSession(agent_state).write_completed_actions(items)
 
 
 def _slash_date(value: str) -> str:

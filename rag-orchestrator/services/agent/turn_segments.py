@@ -24,11 +24,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Optional
 
+from services.agent.agent_session import AgentSession
 from services.agent.turn_context import (
-    LAST_ASK_TARGET_KEY,
     TurnResult,
     TurnTrace,
-    _append_dialog,
     _emit_agent_decision,
 )
 
@@ -91,7 +90,8 @@ async def run_program_segments(
     )
     if selected is not None:
         return ProgramSegmentOutcome(result=selected)
-    cache = agent_state.setdefault("handoff_cache", {})
+    session = AgentSession(agent_state)
+    cache = session.handoff_cache()
 
     cached = cache.get(cache_key)
     if cached is not None:
@@ -107,11 +107,17 @@ async def run_program_segments(
             **doc_trace,
         )
         _emit_agent_decision(trace)
-        _append_dialog(agent_state, user_message, cached.get("answer", ""))
         # T1：三個寫點之三（plan-verifier r3 #1）——重播出口既不經
         # `_finalize` 也不經 `_finish_confirm_turn`，⛔ 不寫就會讓上一回合的
-        # 追問對象跨過一個完整回合殘留下來。
-        agent_state[LAST_ASK_TARGET_KEY] = None
+        # 追問對象跨過一個完整回合殘留下來。R3：`AgentSession.end_turn`
+        # 收斂 `dialog`／`last_ask_target` 兩個寫點（這條路徑 ⛔ 不寫
+        # `handoff_cache`——讀的是既有快取，不是新產生一筆；也 ⛔ 不碰
+        # `fixed_streak`——逐字保留原行為）。
+        session.end_turn(
+            user_message=user_message,
+            dialog_text=cached.get("answer", ""),
+            ask_target=None,
+        )
         return ProgramSegmentOutcome(result=TurnResult(
             kind="handoff",
             answer=cached.get("answer", ""),

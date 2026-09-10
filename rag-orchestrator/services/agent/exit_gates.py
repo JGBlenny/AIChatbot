@@ -17,17 +17,14 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
+from services.agent.agent_session import AgentSession
 from services.agent.output_schema import ASK_TARGETS
 from services.agent.question_sensitivity import question_sensitive
 from services.agent.turn_context import (
-    ESTATE_CARRY_KEY,
-    LAST_ASK_TARGET_KEY,
     SELECT_SCOPE_KEY,
     TurnAccumulator,
     TurnResult,
-    _append_dialog,
     _emit_agent_decision,
-    _trim_handoff_cache,
     default_outcome,
     make_outcome,
 )
@@ -56,7 +53,9 @@ def _apply_scope_exit(result: TurnResult, *, scope_in: int, scope_out: int,
     if scope_out <= 0:
         return result
     if isinstance(agent_state, dict):
-        agent_state.pop(ESTATE_CARRY_KEY, None)
+        # R3：`estate_carry` 是唯一的 `until_scope_exit` 鍵——清它就是
+        # `AgentSession.scope_exit()`（⛔ 值不變，只是換個落點）。
+        AgentSession(agent_state).scope_exit()
     if scope_in == 0:
         result.answer = SCOPE_EXIT_TEXT
         result.kind = "answer"
@@ -351,8 +350,12 @@ def finalize(
     _qs_rules = getattr(verifier, "rules", None)
     for _name, _gate in EXIT_GATES:
         result = _gate(result, agent_state, user_message, _qs_rules, acc.scope_counts)
-    # T1：三個寫點之一（模型迴圈的一般出口與所有固定句出口都經這裡）。
-    # ⚠️ 讀的是**過完所有出口閘之後**的 `ask_target`：閘門可能把一個
+    if result.outcome is None:
+        result.outcome = default_outcome(result)
+    # T1：三個寫點之一（模型迴圈的一般出口與所有固定句出口都經這裡）——
+    # R3：`AgentSession.end_turn` 收斂本函式原本散寫的
+    # `last_ask_target`／`handoff_cache`／`fixed_streak`／`dialog` 四鍵。
+    # ⚠️ `ask_target` 讀的是**過完所有出口閘之後**的值：閘門可能把一個
     #    `kind=ask` 的追問對象歸零，殘留舊值等於讓下一回合的程式判定
     #    拿到一個這一回合根本沒有出去的授權訊號。T2（NO_JUDGEMENT）把
     #    `kind` 換成 `answer` 但仍設了合法的 `ask_target=
@@ -360,22 +363,23 @@ def finalize(
     #    `ask_target` 是否落在 `ASK_TARGETS` 值域內：其他 `kind` 的
     #    `ask_target` 一律是模型依 schema 填的 `None`，這條件對它們
     #    等價於原本的 `kind=="ask"` 判定。
-    agent_state[LAST_ASK_TARGET_KEY] = (
-        result.ask_target if result.ask_target in ASK_TARGETS else None
+    AgentSession(agent_state).end_turn(
+        user_message=user_message,
+        dialog_text=result.answer,
+        ask_target=result.ask_target if result.ask_target in ASK_TARGETS else None,
+        is_fixed=is_fixed,
+        cache=cache if result.trace.final_kind == "handoff" else None,
+        cache_key=acc.cache_key if result.trace.final_kind == "handoff" else None,
+        cache_entry=(
+            {
+                "answer": result.answer,
+                "handoff": result.handoff,
+                "quick_replies": list(result.quick_replies),
+                "trace_id": result.trace.trace_id,
+            }
+            if result.trace.final_kind == "handoff"
+            else None
+        ),
     )
-    if result.trace.final_kind == "handoff":
-        cache[acc.cache_key] = {
-            "answer": result.answer,
-            "handoff": result.handoff,
-            "quick_replies": list(result.quick_replies),
-            "trace_id": result.trace.trace_id,
-        }
-        _trim_handoff_cache(cache)
-    agent_state["fixed_streak"] = (
-        agent_state.get("fixed_streak", 0) + 1 if is_fixed else 0
-    )
-    if result.outcome is None:
-        result.outcome = default_outcome(result)
-    _append_dialog(agent_state, user_message, result.answer)
     _emit_agent_decision(result.trace)
     return result

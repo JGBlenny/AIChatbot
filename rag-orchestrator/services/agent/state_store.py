@@ -34,12 +34,28 @@ from __future__ import annotations
 import time
 from typing import Any, Optional
 
+from services.agent.agent_session import AgentSession
+
 #: `form_sessions.session_id` 的欄位長度（實查測試庫 information_schema，2026-09-05）。
 #: 超過會在 INSERT 當下被 DB 拒；寧可在組鍵時就明說，⛔ 不讓它變成一次 500。
 SESSION_ID_MAX_LEN = 100
 
-#: `_start` 的 `config_key`（任務 2.6 brief）——M1 的 `/mcp` 對話對象只有 prospect。
+#: `_start` 的 `config_key` 舊預設（任務 2.6 brief 當時 M1 的 `/mcp` 對話對象只
+#: 有 prospect）。**L8（Plan R R3）**：REST 路徑（`routers/agent_entry.py`）
+#: 已經是 `f"agent:{identity.audience}"`（依受眾），`/mcp` 這邊落後——
+#: `NamespacedStateStore.start()` 新增 `audience` 參數依受眾組字串，這個舊
+#: 預設值**原封不動**保留當「沒給 `config_key`／`audience` 時」的相容值
+#: （⛔ 不改既有列的鍵值——舊列的 `config_key='agent:prospect'` 讀取邏輯
+#: 不看這個值，仍照常相容）。
 DEFAULT_CONFIG_KEY = "agent:prospect"
+
+
+def config_key_for(audience: Optional[str]) -> str:
+    """`agent:<audience>`；`audience` 缺值 ⇒ 回舊預設 `DEFAULT_CONFIG_KEY`
+    （L8｜Plan R R3，相容既有呼叫端不傳 `audience` 的路徑）。"""
+    if not audience:
+        return DEFAULT_CONFIG_KEY
+    return f"agent:{audience}"
 
 #: 命名空間前綴，⛔ 不得省略（見模組 docstring）。
 NAMESPACE = "mcp"
@@ -64,7 +80,7 @@ def stamp_last_turn(agent_state: dict, now: Optional[float] = None) -> float:
     ⛔ 呼叫端不得自己 `agent_state["last_turn_at"] = …`——鍵名只有這裡知道。
     """
     ts = time.time() if now is None else float(now)
-    agent_state[LAST_TURN_AT_KEY] = ts
+    AgentSession(agent_state).write_last_turn_at(ts)
     return ts
 
 
@@ -130,10 +146,18 @@ class NamespacedStateStore:
         user_id: Any,
         vendor_id: Any,
         role_id: Any,
-        config_key: str = DEFAULT_CONFIG_KEY,
+        config_key: Optional[str] = None,
+        *,
+        audience: Optional[str] = None,
     ) -> dict:
+        """L8：`config_key` 顯式給值 ⇒ 照給值用（既有呼叫端行為不變）；
+        缺 `config_key` 但給了 `audience` ⇒ `agent:<audience>`；兩者都缺 ⇒
+        舊預設 `DEFAULT_CONFIG_KEY`（`"agent:prospect"`，⛔ 不變——`mcp_facade.py`
+        目前就是這條路徑，行為逐字不變，接上 `audience` 是 R3b 待辦）。
+        """
+        effective_key = config_key if config_key is not None else config_key_for(audience)
         return await self._engine._start(
-            self.key(session_id), user_id, vendor_id, config_key, role_id=role_id
+            self.key(session_id), user_id, vendor_id, effective_key, role_id=role_id
         )
 
     async def save(self, session_id: str, state: dict) -> None:
@@ -153,6 +177,7 @@ __all__ = [
     "NamespacedStateStore",
     "SESSION_ID_MAX_LEN",
     "DEFAULT_CONFIG_KEY",
+    "config_key_for",
     "NAMESPACE",
     "SESSION_IDLE_TTL_S",
     "LAST_TURN_AT_KEY",

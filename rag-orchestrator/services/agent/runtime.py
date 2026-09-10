@@ -63,6 +63,7 @@ from typing import Any, Callable, Literal, Optional, Protocol
 from pydantic import ValidationError
 
 from services import usage_metering
+from services.agent.agent_session import AgentSession
 from services.agent.budget import Budget, BudgetCounters
 from services.agent.affirmative import is_affirmative
 from services.agent.completed_actions import (
@@ -416,7 +417,7 @@ def _write_estate_carry(agent_state: dict, name: Any, estate_id: Any = None) -> 
     rid: Optional[str] = None
     if isinstance(estate_id, (str, int)) and str(estate_id).strip():
         rid = str(estate_id).strip()
-    agent_state[ESTATE_CARRY_KEY] = {"name": clean, "id": rid}
+    AgentSession(agent_state).write_estate_carry({"name": clean, "id": rid})
     return True
 
 
@@ -1575,8 +1576,11 @@ class AgentRuntime:
         與確認兌現都走這裡）。⚠️ 寫在**組 trace 之前**，與 `SELECT_SCOPE_KEY`
         「先寫再走任何早退」同一鐵則。
         """
-        # T1：三個寫點之一（⛔ 不得移到函式尾端）。
-        agent_state[LAST_ASK_TARGET_KEY] = None
+        # T1：三個寫點之一（⛔ 不得移到函式尾端）——R3：與下方 `fixed_streak`／
+        # `dialog` 兩個寫點一起收進 `AgentSession.end_turn`（見下方單一呼叫；
+        # `ask_target=None`／`is_fixed=False` 逐字＝原本這裡與下方兩行各自的值，
+        # 這條路徑 ⛔ 不進 `handoff_cache`——不傳 `cache`）。
+        session = AgentSession(agent_state)
         trace = TurnTrace(
             trace_id=trace_id,
             tool_calls=list(tool_calls or []),
@@ -1598,9 +1602,11 @@ class AgentRuntime:
             # W9 U2：文件回合的四鍵（⛔ 無任何欄位值，見 `TurnTrace` 的說明）。
             **(document_trace or {}),
         )
-        agent_state["fixed_streak"] = 0
-        _append_dialog(
-            agent_state, user_message, answer if dialog_answer is None else dialog_answer
+        session.end_turn(
+            user_message=user_message,
+            dialog_text=answer if dialog_answer is None else dialog_answer,
+            ask_target=None,
+            is_fixed=False,
         )
         # S2／H3：兌現成功 ⇒ 記進會話記憶（下一句「剛剛那張單號多少」答得出來）。
         # ⚠️ **只看 `outcome`**（模型不在兌現路徑的迴圈裡，`outcome` 全是程式組的
@@ -1763,7 +1769,7 @@ class AgentRuntime:
         # L15 (a)②／L15-05：**先寫再走任何早退**。這一行的存在理由就是「上一次
         # 點選的範圍 ⛔ 不得殘留」——下面每一個早退（NO_MATCH／空 facts／路由
         # 檢查不過）都代表這一次沒有確立任何一戶，範圍必須是 `None`。
-        agent_state[SELECT_SCOPE_KEY] = None
+        AgentSession(agent_state).write_select_scope(None)
 
         violations: list[str] = []
 
@@ -1869,9 +1875,9 @@ class AgentRuntime:
         scope = data.get("scope")
         row_estate = scope.get("estate_id") if isinstance(scope, dict) else None
         if row_estate is not None and str(row_estate):
-            agent_state[SELECT_SCOPE_KEY] = {
-                "type": select_type, "estate_id": str(row_estate),
-            }
+            AgentSession(agent_state).write_select_scope(
+                {"type": select_type, "estate_id": str(row_estate)}
+            )
 
         return _finish(
             facts,
@@ -2277,19 +2283,16 @@ class AgentRuntime:
         ):
             violations.append("confirm_request_data_shape_invalid")
             return None
-        pending_all = agent_state.setdefault(PENDING_CONFIRM_KEY, {})
-        if not isinstance(pending_all, dict):
-            pending_all = {}
-            agent_state[PENDING_CONFIRM_KEY] = pending_all
+        session = AgentSession(agent_state)
         # 出卡成功 ⇒ 照片建議用掉了，清掉（⛔ 不讓它再補到下一張無關的單）。
-        agent_state.pop(IMAGE_SUGGESTION_KEY, None)
+        session.consume_image_suggestion()
         # 第六批 #10 **寫點 (a)**：出卡成功 ⇒ 這張卡上的物件就是「本對話最近提到
         # 的物件」。兩個值都是**封閉來源**：`estate_name` 是使用者剛才會在卡上看到
         # 的那一行（`confirm_card._render_repair_create` 的「物件」），`estate_id`
         # 是 `confirm.request` 自己查出來的（`tools/confirm.py::_open_repairs_hint`）。
         # ⛔ 不在這裡另外查一次；釘住範圍時 `_write_estate_carry` 自己不寫。
         _write_estate_carry(agent_state, payload.get("estate_name"), estate_id)
-        pending_all[pending_id] = {
+        pending_entry: dict = {
             "action": action,
             "payload": payload,
             # ＝ `agent_confirmation_tokens.summary_sha256`（DSP-038-2）。兌現時
@@ -2300,11 +2303,12 @@ class AgentRuntime:
         }
         # W8 (3)：物件 id 存進待確認筆（兌現時用；⛔ 不進卡、不進雜湊）。
         if isinstance(estate_id, str) and estate_id:
-            pending_all[pending_id]["estate_id"] = estate_id
+            pending_entry["estate_id"] = estate_id
         # FIFO 上限（dict 保序）；⛔ 不是 LRU——重送命中時不重排，那會讓一筆被
-        # 反覆重送的確認永遠擠不掉別人的。
-        while len(pending_all) > PENDING_CONFIRM_MAX:
-            pending_all.pop(next(iter(pending_all)))
+        # 反覆重送的確認永遠擠不掉別人的。R3：落地與修剪收進
+        # `AgentSession.write_pending_confirm`（⛔ 上限值不變，同一個
+        # `PENDING_CONFIRM_MAX`）。
+        session.write_pending_confirm(pending_id, pending_entry)
         return self._finish_confirm_turn(
             agent_state=agent_state,
             user_message=user_message,
@@ -2677,9 +2681,19 @@ class AgentRuntime:
         # `completed_actions_line`／前置查詢那一套 L15 紀律：範圍內的對話不該
         # 再讓「最近提過的編號」跨戶漏出去）；非空時以不可引用資料段注入，
         # 供模型在對象不明時先當它是那一筆（見下方 T2 迴圈內改寫分支）。
-        recent_refs_ids: list[str] = []
-        if agent_state.get(SELECT_SCOPE_KEY) is None:
-            recent_refs_ids = _recent_ref_ids(agent_state, dialog)
+        # R3：與下方（第六批 #10）的 `estate_carry` 同一道門檻——
+        # `AgentSession.prompt_segments` 收斂兩段各自的
+        # 「if scope_estate_id is None」判斷成唯一一處（⛔ 判定值不變：
+        # `_scope_estate_id` 對本檔唯一的 `SELECT_SCOPE_KEY` 寫點
+        # `_run_select_segment` 而言與舊的 `SELECT_SCOPE_KEY is None` 檢查
+        # 等價——該寫點只會寫 `None` 或帶非空 `estate_id` 的 dict）。兩段的
+        # 實際計算仍是各自的純函式，本呼叫只做門檻，⛔ 不改計算內容。
+        _prompt_segments = AgentSession(agent_state).prompt_segments(
+            scope_estate_id,
+            recent_refs_ids=_recent_ref_ids(agent_state, dialog),
+            estate_carry=_estate_carry_of(agent_state),
+        )
+        recent_refs_ids: list[str] = _prompt_segments["recent_refs_ids"]
         acc.snapshot.has_recent_refs = bool(recent_refs_ids)
         if acc.snapshot.has_recent_refs:
             recent_refs_text = sanitize_data_piece(
@@ -2712,7 +2726,7 @@ class AgentRuntime:
         if image is not None and image.status in ("ok", "partial"):
             # 照片建議（封閉值）進 session：給之後回合的 `confirm.request` 補分類用。
             # 新照片一律覆寫（沒辨識出分類就寫 None，⛔ 不讓上一張的分類殘留到這張）。
-            agent_state[IMAGE_SUGGESTION_KEY] = (
+            AgentSession(agent_state).write_image_suggestion(
                 {
                     "category_name": image.suggested_category,
                     "item": image.suggested_item,
@@ -2735,9 +2749,7 @@ class AgentRuntime:
         # ⚠️ 釘住範圍時 `_estate_carry_of` 讀到的一定是舊值或空——寫入口本來就
         #    不在釘住時寫；這裡再擋一次，理由同 `recent_refs`（釘住的對話 ⛔ 不
         #    讓另一戶的名字漏進來）。
-        estate_carry = (
-            _estate_carry_of(agent_state) if scope_estate_id is None else None
-        )
+        estate_carry = _prompt_segments["estate_carry"]
         if image is not None and estate_carry is not None:
             estate_carry_text = sanitize_data_piece(
                 ESTATE_CARRY_TEXT_PREFIX + estate_carry["name"]
@@ -2925,7 +2937,7 @@ class AgentRuntime:
                             acc.violations.append(f"estate_carry_applied:{_field}")
                         # 一次性：任何 `confirm.request` 呼叫（不論成敗）都把照片建議用掉，
                         # ⛔ 不讓上一張照片的分類補到之後另一張無關的單。
-                        agent_state.pop(IMAGE_SUGGESTION_KEY, None)
+                        AgentSession(agent_state).consume_image_suggestion()
                     call_start = self._clock()
                     try:
                         tool_result = await self.registry.call(
