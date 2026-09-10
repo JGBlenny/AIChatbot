@@ -31,7 +31,7 @@
 - **統一部署**：[deployment-runbook.md](./deployment-runbook.md) ⭐（部署聖經，取代舊 deployment/ 指南）
 - **jgb2 串接規格（b2b/b2c/售前）**：[jgb2-chat-integration.md](./jgb2-chat-integration.md)
 - 架構真相來源：[完整對話架構](./architecture/COMPLETE_CONVERSATION_ARCHITECTURE.md)、[Retriever Pipeline](./architecture/retriever-pipeline.md)
-- API 一覽：[API 端點完整清單](./API_ENDPOINTS_COMPLETE_INVENTORY.md)
+- API 一覽：以 routers/ 目錄為準；歷史快照見 [API 端點完整清單（已歸檔）](./archive/2026-09/API_ENDPOINTS_COMPLETE_INVENTORY.md)
 - 上手：[快速開始](./guides/getting-started/QUICKSTART.md)
 - 部署：[部署指南](./deployment/DEPLOY_GUIDE.md)
 - 回測 / 知識完善迴圈：[回測快速開始](./backtest/GETTING_STARTED.md)

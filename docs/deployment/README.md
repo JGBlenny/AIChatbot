@@ -174,7 +174,7 @@ deployment/
 
 **技術文檔：**
 - SMART_RETRIEVAL_IMPLEMENTATION.md - 智能檢索完整實施報告
-- [SMART_RETRIEVAL_QUICK_REF.md](../SMART_RETRIEVAL_QUICK_REF.md) - 快速參考指南
+- [SMART_RETRIEVAL_QUICK_REF.md](../archive/2026-09/SMART_RETRIEVAL_QUICK_REF.md)（已歸檔，歷史文件）
 - [RERANKER_FEATURE.md](../features/RERANKER_FEATURE.md) - Reranker 功能文檔
 - CHANGELOG_2026-01-28.md - 詳細更新日誌
 - INTENT_BOOST_OPTIMIZATION_2026-01-28.md - 意圖加成優化

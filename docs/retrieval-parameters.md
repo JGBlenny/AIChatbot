@@ -8,6 +8,31 @@
 
 ---
 
+## 〇、程式預設 vs 部署值對照（2026-09-10 補）
+
+「程式預設」＝程式碼裡 `os.getenv(key, fallback)` 的 fallback（符號可 grep）；
+「部署值」＝ `docker-compose.prod.yml` 是否顯式覆寫該鍵（沒覆寫＝實際吃程式預設）。
+⛔ 兩欄不可互相取代：程式預設是「沒設環境變數時的行為」，部署值是「production 實際在吃的值」。
+
+| 參數 | 程式預設（符號） | `docker-compose.prod.yml` 部署值 |
+|---|---|---|
+| `QUERY_REWRITE_MODEL` | `query_rewriter.QueryRewriter.__init__`：`os.getenv("QUERY_REWRITE_MODEL") or os.getenv("OPENAI_MODEL", "gpt-4o-mini")` | 顯式 `${QUERY_REWRITE_MODEL:-gpt-4o-mini}` |
+| `QUERY_REWRITE_TEMPERATURE` | 同檔：`float(os.getenv("QUERY_REWRITE_TEMPERATURE", "0"))` | 顯式 `${QUERY_REWRITE_TEMPERATURE:-0}` |
+| `RELEVANCE_GATE_MODEL` | `routers/chat.py`：`os.getenv("RELEVANCE_GATE_MODEL") or os.getenv("LLM_MODEL")…` | **無此鍵**，走程式 fallback |
+| `RELEVANCE_GATE_SKIP_VEC` | `routers/chat.py`：`os.getenv("RELEVANCE_GATE_SKIP_VEC")`（未設＝不跳過） | **無此鍵**，走程式 fallback（不跳過） |
+| `SCORE_SHIFT_PROBE` | `base_retriever.py`：`os.getenv("SCORE_SHIFT_PROBE")`（空字串視為未設定） | 顯式 `${SCORE_SHIFT_PROBE:-}`（僅平移基線量測時暫時設 0.10，量完拿掉） |
+| `FORM_TRIGGER_THRESHOLD` | `decision_layer.py`：`float(os.getenv("FORM_TRIGGER_THRESHOLD", "0.75"))` | 顯式 `${FORM_TRIGGER_THRESHOLD:-0.75}` |
+| `KB_SIMILARITY_THRESHOLD` | `decision_layer.py` 的 `kb_threshold`：`float(os.getenv("KB_SIMILARITY_THRESHOLD", "0.55"))` | 顯式寫死 `0.65`（不走 env 插值，且註明「涵蓋原 fallback 範圍」） |
+| `RERANKER_MIN_VECTOR_SIMILARITY` | `base_retriever.py`：`float(os.getenv("RERANKER_MIN_VECTOR_SIMILARITY", "0.3"))` | 顯式 `${RERANKER_MIN_VECTOR_SIMILARITY:-0.3}` |
+| `RERANKER_INPUT_LIMIT` | `base_retriever.py`：`int(os.getenv("RERANKER_INPUT_LIMIT", "20"))` | 顯式 `${RERANKER_INPUT_LIMIT:-20}` |
+| `ADVISOR_TEMP` | `llm_answer_optimizer.py`：`float(os.getenv("ADVISOR_TEMP", "0.4"))` | **無此鍵**，走程式 fallback（0.4） |
+| `ENABLE_QUERY_REWRITE` | `query_rewriter.py`／`base_retriever.py`／`routers/chat.py`：`os.getenv("ENABLE_QUERY_REWRITE", "false")` | 顯式 `${ENABLE_QUERY_REWRITE:-false}` |
+| `ENABLE_QUERY_REWRITE_B2B` | `base_retriever.py`：`os.getenv("ENABLE_QUERY_REWRITE_B2B", "true")`⚠️ **程式 fallback 是 `true`** | 顯式 `${ENABLE_QUERY_REWRITE_B2B:-false}`⚠️ **與程式 fallback 方向相反**，b2b 路徑靠部署顯式覆寫才會跳過改寫 |
+
+> `FALLBACK_SIMILARITY_THRESHOLD`（compose 顯式 `0.55`）已標「已廢棄：RAG Fallback 已移除，統一使用 `KB_SIMILARITY_THRESHOLD`」——不是現行判準，不列入上表對照。
+
+---
+
 ## 一、本輪已改（分支內）
 
 | 參數 | 舊值 | 新值 | 為什麼 |

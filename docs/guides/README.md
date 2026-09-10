@@ -56,7 +56,7 @@ guides/
 | [AUTH_DEPLOYMENT_GUIDE.md](./deployment/AUTH_DEPLOYMENT_GUIDE.md) | 認證系統部署指南 |
 | [AWS_S3_VIDEO_SETUP.md](./deployment/AWS_S3_VIDEO_SETUP.md) | AWS S3 視頻設置 |
 | [ENVIRONMENT_VARIABLES.md](./deployment/ENVIRONMENT_VARIABLES.md) | 環境變量配置完整說明 |
-| [PGVECTOR_SETUP.md](./deployment/PGVECTOR_SETUP.md) | pgVector 向量資料庫設置 |
+| [PGVECTOR_SETUP.md（已歸檔）](../archive/2026-09/PGVECTOR_SETUP.md) | pgVector 向量資料庫設置（歷史快照，新環境走 dump 還原） |
 
 ---
 
@@ -125,7 +125,7 @@ guides/
 
 ### 任務 3: 我要部署到生產環境
 1. 配置 [ENVIRONMENT_VARIABLES.md](./deployment/ENVIRONMENT_VARIABLES.md)
-2. 設置 [PGVECTOR_SETUP.md](./deployment/PGVECTOR_SETUP.md)
+2. 新環境建置走 dump 還原，見 [docs/deployment-runbook.md](../deployment-runbook.md) 附錄 A（PGVECTOR_SETUP.md 已歸檔，僅供歷史考據）
 3. 參考 README.md 中的 Docker 操作指令
 
 ### 任務 4: 我要開發 API

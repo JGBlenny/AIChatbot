@@ -498,7 +498,7 @@ ON lookup_tables(vendor_id, category);
 
 ## 相關資源
 
-- **API 完整清單**: [docs/API_ENDPOINTS_COMPLETE_INVENTORY.md](../../API_ENDPOINTS_COMPLETE_INVENTORY.md)
+- **API 完整清單（已歸檔，歷史快照）**: [docs/archive/2026-09/API_ENDPOINTS_COMPLETE_INVENTORY.md](../../archive/2026-09/API_ENDPOINTS_COMPLETE_INVENTORY.md)
 - **範本檔案**: `rag-orchestrator/templates/Lookup匯入範本.xlsx`
 - **前端元件**: `knowledge-admin/frontend/src/components/VendorLookupManager.vue`
 - **後端路由**: `rag-orchestrator/routers/lookup.py`

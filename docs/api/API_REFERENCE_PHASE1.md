@@ -181,7 +181,7 @@ Content-Type: application/json
   ],
   "source_count": 1,
   "vendor_id": 1,
-  "mode": "tenant",
+  "mode": "b2c",
   "session_id": null,
   "timestamp": "2024-01-01T12:00:00.000000",
   "llm_optimization": {

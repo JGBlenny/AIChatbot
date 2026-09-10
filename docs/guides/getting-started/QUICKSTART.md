@@ -391,7 +391,7 @@ docker exec -it aichatbot-postgres psql -U aichatbot -d aichatbot_admin
 - [系統架構文件](../../architecture/SYSTEM_ARCHITECTURE.md)
 - RAG 系統實作計畫
 - RAG Orchestrator 使用說明 ⭐
-- [pgvector 設定說明](../deployment/PGVECTOR_SETUP.md)
+- [pgvector 設定說明（已歸檔，歷史快照）](../../archive/2026-09/PGVECTOR_SETUP.md)——新環境建置走 dump 還原，見 docs/deployment-runbook.md 附錄 A
 - 知識庫管理說明
 
 ---

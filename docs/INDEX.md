@@ -33,7 +33,7 @@
 
 | 文檔 | 用途 |
 |------|------|
-| [API 端點完整清單](./API_ENDPOINTS_COMPLETE_INVENTORY.md) | 所有端點一覽 |
+| [API 端點完整清單（已歸檔，2026-02-17 快照）](./archive/2026-09/API_ENDPOINTS_COMPLETE_INVENTORY.md) | 歷史參考，現行端點以 routers/ 目錄為準 |
 | [API 文檔索引](./api/README.md) | API 規格詳細說明 |
 | [JGB 外部 API 規格](./api/jgb_external_api_spec.md) | JGB 系統對接規格 |
 | [JGB 合約 API 規格](./api/jgb-contracts-api-spec.md) | JGB 合約查詢規格 |

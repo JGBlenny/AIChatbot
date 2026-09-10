@@ -92,8 +92,7 @@
 │  步驟 8: 處理找不到知識的情況                               │
 │  如果知識庫沒有結果：                                        │
 │  1️⃣ 優先檢查是否為參數型問題（如：繳費日期、客服電話）           │
-│  2️⃣ 使用 RAG Fallback（降低相似度門檻再搜尋一次）             │
-│  3️⃣ 都找不到 → 返回兜底答案並記錄到測試場景庫                  │
+│  2️⃣ 都找不到 → 返回兜底答案並記錄到測試場景庫                  │
 └─────────────────────────────────────────────────────────┘
                           ↓
 ┌─────────────────────────────────────────────────────────┐
@@ -226,7 +225,7 @@
 | 租客 | `tenant` | 租金、報修、使用規定 | 顯示標記為 tenant 或通用的知識 |
 | 房東 | `landlord` | 租金收取、合約、稅務 | 顯示標記為 landlord 或通用的知識 |
 | 管理師 | `property_manager` | 處理流程、系統操作 | 顯示標記為 property_manager 或通用的知識 |
-| 系統管理 | `system_admin` | B2B 系統操作 | 顯示標記為 system_admin 的知識 |
+| 系統管理 | `system_admin` | B2B 系統操作 | 顯示標記為 system_admin 的知識；b2b 路徑另加 `business_types && ARRAY['system_provider']` 嚴格過濾，**無 `IS NULL` 放行**（刻意的業者池隔離） |
 
 **實際過濾邏輯**：(`vendor_knowledge_retriever_v2.py`，符號 `_vector_search`／`_keyword_search`；⛔ 行號會漂，以符號名 grep)
 
@@ -247,45 +246,32 @@ WHERE (kb.target_user IS NULL OR kb.target_user && ['tenant']::text[])
 
 ### 3. 優先級判斷（答案來源排序）
 
-當系統找到多個可能答案時，會按照以下**三層排序規則**：
+現行是 `vendor_knowledge_retriever_v2.py`（可見性先由 `business_types`／`target_user`／
+`vendor_ids` 三軸過濾出候選，⛔ 沒有「customized/vendor/global scope 權重」這種分層機制），
+排序按以下規則：
 
-#### 第一優先：Scope 權重
-
-```
-🥇 customized（客製化）: 權重 1000
-   └─ 針對特定業者的專屬知識
-
-🥈 vendor（業者）: 權重 500
-   └─ 業者層級的知識
-
-🥉 global（全域）: 權重 100
-   └─ 通用知識，適用所有業者
-```
-
-#### 第二優先：語義相似度（向量相似度 + Reranker 重排序）
+#### 第一優先：語義相似度（向量相似度 + Reranker 重排序）
 
 ```
 基礎相似度計算：
 similarity = 1 - (embedding <=> query_embedding)
 
-Reranker 重排序（如啟用）：
-最終分數 = 原始相似度 × 0.3 + Rerank 分數 × 0.7
+Reranker 重排序（如啟用）：走 reranker 分數
 ```
 
-#### 第三優先：人工優先級
+#### 第二優先：人工優先級
 
 ```
 知識庫中每筆知識都有 priority 欄位（預設 0）
 數字越大，優先級越高
 ```
 
-**完整排序 SQL**：(`vendor_knowledge_retriever_v2.py`，符號 `_keyword_search` 內的 `ORDER BY`；⛔ 行號會漂，以符號名 grep)
+**排序 SQL**（`vendor_knowledge_retriever_v2.py`，符號 `ORDER BY`；⛔ 行號會漂，以符號名 grep）：
 
 ```sql
 ORDER BY
-    scope_weight DESC,        -- 1st: Scope 優先級
-    boosted_similarity DESC,  -- 2nd: 加成後的相似度
-    kb.priority DESC          -- 3rd: 人工優先級
+    (1 - (kb.embedding <=> %s::vector)) DESC,  -- 1st: 向量相似度
+    kb.priority DESC                            -- 2nd: 人工優先級
 ```
 
 ---
@@ -605,13 +591,8 @@ knowledge_list = await _retrieve_knowledge(...)
    「租金怎麼繳？幾號繳？」
    預期：分別回答或整合回答
 
-□ 16. RAG Fallback 測試
-   問一個沒有明確意圖但知識庫有相似內容的問題
-   預期：使用向量搜尋找到答案
-
 □ 17. 優先級排序驗證
-   創建 3 筆知識：customized、vendor、global
-   預期：優先返回 customized
+   相似度相近時，priority 較高的知識應優先返回
 
 □ 18. Reranker 重排序驗證
    同一問題在不同語義表達下
@@ -898,7 +879,6 @@ knowledge_list = await _retrieve_knowledge(...)
 | 變數名稱 | 預設值 | 說明 |
 |---------|-------|------|
 | `KB_SIMILARITY_THRESHOLD` | 0.65 | 知識庫相似度門檻 |
-| `FALLBACK_SIMILARITY_THRESHOLD` | 0.55 | RAG Fallback 相似度門檻 |
 | `RAG_TOP_K` | 3 | 檢索結果數量 |
 | `INTENT_CLASSIFIER_MODEL` | gpt-3.5-turbo | 表單流程意圖分類模型（僅表單流程使用） |
 
@@ -933,7 +913,7 @@ knowledge_list = await _retrieve_knowledge(...)
 **驗證檔案**：
 - ✅ `chat.py` (主流程)
 - ✅ `intent_classifier.py` (意圖判斷)
-- ✅ `vendor_knowledge_retriever.py` (知識檢索、角色過濾、優先級)
+- ✅ `vendor_knowledge_retriever_v2.py` (知識檢索、角色過濾、優先級；2026-09-10 對碼修正：原引用的 `vendor_knowledge_retriever.py` 已不存在)
 - ✅ `vendor_sop_retriever.py` (SOP 檢索)
 - ✅ `llm_answer_optimizer.py` (答案優化)
 - ✅ `sop_utils.py` (工具函數)
