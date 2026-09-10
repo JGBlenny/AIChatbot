@@ -50,11 +50,12 @@ _KEY = f"mcp:{API_KEY_ID}:{VENDOR_A}:{SESSION}"
 class _FakeEngine:
     """記憶體版 `form_sessions`——**逐條對照真 SQL 的語義**，⛔ 不簡化成一列。
 
-    真表的四句 SQL（`services/conversational_engine.py`）：
+    真表的四句 SQL（`services/agent/session_persistence.py:AgentSessionStore`，
+    舊鏈隔離 S3 從 `conversational_engine.py` 抽出、SQL 逐字未變）：
       - `get_state`：`WHERE session_id=$1 AND state='COLLECTING' ORDER BY id DESC LIMIT 1`
-      - `_start`：INSERT 一列 `COLLECTING`
-      - `_save`：UPDATE 最新那一列 `COLLECTING`
-      - `_close`：把該 `session_id` **所有** `COLLECTING` 列改成 `COMPLETED`
+      - `start`：INSERT 一列 `COLLECTING`
+      - `save`：UPDATE 最新那一列 `COLLECTING`
+      - `close`：把該 `session_id` **所有** `COLLECTING` 列改成 `COMPLETED`
     「過期後留下第二列 COLLECTING」這個病灶只有在多列模型下才看得見，
     ⛔ 用 `dict[session_id] -> state` 的單列替身測等於把要抓的東西抹掉。
     """
@@ -75,8 +76,8 @@ class _FakeEngine:
             return None
         return json.loads(json.dumps(rows[-1]["collected_data"]))
 
-    async def _start(self, session_id, user_id, vendor_id, config_key,
-                     seed_topic=None, role_id=None):
+    async def start(self, session_id, user_id, vendor_id, config_key,
+                    seed_topic=None, role_id=None):
         state = {"config_key": config_key, "collected_fields": {}, "asked_count": 0,
                  "session_id": session_id, "user_id": user_id,
                  "vendor_id": vendor_id, "role_id": role_id}
@@ -85,13 +86,13 @@ class _FakeEngine:
                           "collected_data": json.loads(json.dumps(state))})
         return state
 
-    async def _save(self, session_id, state):
+    async def save(self, session_id, state):
         self.saved.append(session_id)
         rows = self._collecting(session_id)
         assert rows, "⛔ 沒有 COLLECTING 列可存——真 SQL 這時是靜默 0 列更新"
         rows[-1]["collected_data"] = json.loads(json.dumps(state))
 
-    async def _close(self, session_id):
+    async def close(self, session_id):
         self.closed.append(session_id)
         for row in self._collecting(session_id):
             row["state"] = "COMPLETED"

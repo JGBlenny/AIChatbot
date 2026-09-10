@@ -153,8 +153,8 @@ class FakeEngine:
         row = self.rows.get(session_id)
         return json.loads(json.dumps(row)) if row is not None else None
 
-    async def _start(self, session_id, user_id, vendor_id, config_key,
-                     seed_topic=None, role_id=None):
+    async def start(self, session_id, user_id, vendor_id, config_key,
+                    seed_topic=None, role_id=None):
         state = {"config_key": config_key, "collected_fields": {}, "asked_count": 0,
                  "session_id": session_id, "user_id": user_id,
                  "vendor_id": vendor_id, "role_id": role_id}
@@ -162,7 +162,7 @@ class FakeEngine:
         self.rows[session_id] = json.loads(json.dumps(state))
         return state
 
-    async def _save(self, session_id, state):
+    async def save(self, session_id, state):
         self.saved.append(session_id)
         self.rows[session_id] = json.loads(json.dumps(state))
 
@@ -189,7 +189,7 @@ def _app(*, runtime=None, engine=None, outline=None, resolver=None):
     if runtime is not None:
         state.agent_runtime = runtime
     if engine is not None:
-        state.conversational_engine = engine
+        state.agent_session_store = engine
     if outline is not None:
         state.agent_outline = outline
     if resolver is not None:

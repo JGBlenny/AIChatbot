@@ -327,11 +327,13 @@ def check_29_predicate_single_source(targets=None):
                                f"（未經 {PREDICATE_FUNC} 這道單一來源）")
         if not _calls_predicate(fn):
             bad.append(f"{rel}:{fname} 未呼叫 {PREDICATE_FUNC}()——謂詞不是單一來源")
-    info = ("INFO：舊鏈另有手抄可見性條件未搬、⛔ 本不變量不動它們（1.1 留項③，"
+    info = ("INFO：舊鏈曾另有手抄可見性條件未搬、⛔ 本不變量當時不動它們（1.1 留項③，"
             "見 tasks.md 收案註記）——"
             "services/conversational_engine.py:_grounding_by_ids（研究筆記指出無業者過濾）、"
             "services/conversational_engine.py:_grounding_by_category、"
-            "services/system_context.py:_fetch_base。")
+            "services/system_context.py:_fetch_base；三者皆已隨舊鏈於 2026-09-10 舊鏈"
+            "隔離 S3 一起刪除，這條 INFO 保留當歷史記錄，⛔ 不再是「未搬」的待辦——"
+            "已無可搬的目標。")
     if bad:
         return False, "；".join(bad)
     detail = f"{checked} 個函式已檢查，均引用 {PREDICATE_FUNC} 且無字面違禁欄位" if checked else "0 個函式存在，通過（空集合）"

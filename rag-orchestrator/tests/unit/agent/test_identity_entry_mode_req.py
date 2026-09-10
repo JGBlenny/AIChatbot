@@ -22,7 +22,6 @@ import json
 import pytest
 
 from routers import agent_entry as ae
-from routers.chat import VendorChatRequest
 from services.agent import health as health_mod
 from services.agent import mcp_facade as F
 from services.agent.identity import (
@@ -42,6 +41,29 @@ pytestmark = [
 
 def _headers(payload: str) -> dict:
     return {"x-jgb-identity": payload}
+
+
+class _LegacyChatRequestShape:
+    """舊鏈 `routers.chat.VendorChatRequest` 的最小替身（該類別已隨舊鏈於
+    2026-09-10 退役）——只重現本檔測試需要的欄位與**預設值**：`mode` 未明送
+    時預設 `'b2c'`（原 pydantic `Field('b2c', ...)`），這正是 F-1 現況缺陷
+    的形狀，本檔要測的就是 `ae.build_identity` 面對這個預設值時的行為，
+    ⛔ 不因為原類別消失就順手把這個預設值也改掉。`ae.build_identity` 純靠
+    `getattr` 讀欄位（鴨定型），不需要真正的 pydantic 驗證。
+    """
+
+    def __init__(self, *, message, target_user=None, vendor_id=None, mode="b2c",
+                role_id=None, session_id=None, user_id=None):
+        self.message = message
+        self.target_user = target_user
+        self.vendor_id = vendor_id
+        self.mode = mode
+        self.role_id = role_id
+        self.session_id = session_id
+        self.user_id = user_id
+
+
+VendorChatRequest = _LegacyChatRequestShape
 
 
 def _always_exists(_vendor_id):

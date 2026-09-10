@@ -4,10 +4,17 @@
 
 ⛔ **射程聲明（別拿它當萬用保證）**：
 1. 本檢查器**只看 import 邊**。⛔ 它看不見 `app.state` 注入的執行期耦合——
-   例如 `services/agent/state_store.py` 透過 `app.state.conversational_engine` 呼叫
-   `ConversationalEngine.get_state/_start/_save/_close`，那條邊在這裡完全不可見。
+   例如 `services/agent/state_store.py` 曾經透過 `app.state.conversational_engine`
+   呼叫 `ConversationalEngine.get_state/_start/_save/_close`，那條邊在這裡完全不可見。
    這類模組登記在 `RUNTIME_COUPLED`（第四桶），⛔ 不得進 legacy_only。
 2. 它綠 **不構成**「該模組可安全刪除」的授權；刪除仍需人工複核＋實跑。
+
+⚠️ **2026-09-10 舊鏈隔離 S3 完成後：本檢查器進入 RETIRED 狀態**（見
+`retirement_status()`）。`LEGACY_SEEDS` 宣告的五個舊線進入點已隨 S3 全數刪除，
+分桶（新線／舊線兩條線）的前提不再成立——`main()`／`self_test()` 偵測到這個狀態
+會印明確訊息、exit 0，⛔ 不會假裝分桶結果仍然有效，也⛔ 不會因為 `LEGACY_SEEDS`
+的模組消失而靜默略過變成「綠但瞎」（FATAL 只留給**部分**種子消失的不一致狀態）。
+`scripts/audit/lists/*.txt` 停在退役當下最後一次核可的內容，當歷史記錄。
 
 分桶（宣告式，⛔ 新線不用可達性算——`shadow`／`agent_rules`／`bootstrap`／`canon`
 由 `app.py` 接線而非被 facade import，可達性會漏掉它們）：
@@ -37,12 +44,55 @@ AGENT_GLOBS = ("services.agent", "services.agent.*")
 AGENT_EXTRA = {"routers.agent_entry"}
 LEGACY_SEEDS = {"routers.chat", "routers.platform_sop", "routers.intents",
                 "routers.suggested_intents", "services.sop_orchestrator"}
-#: 第四桶：靠 `app.state` 注入共用，import 圖看不見。⛔ 不得進 legacy_only、⛔ 不得刪。
-#: ⚠️ **成員的依賴也要保**，而且不只 import 閉包——`app.py` 用**建構子參數**注進去的也算。
-#: 例：`conversational_engine.py` 從不 import `api_call_handler`，但 `app.py` 以
-#: `ConversationalEngine(api_handler=get_api_call_handler(db_pool))` 注入，引擎內
-#: `self.api_handler.execute_api_call(...)` 真的會呼叫。`injected_deps()` 就是掃這一類。
-RUNTIME_COUPLED = {"services.conversational_engine", "services.api_call_handler"}
+#: 第四桶：靠**非 Python-import 的邊**共用，`reach()` 的可達性算法天生看不到。
+#: ⛔ 不得進 legacy_only、⛔ 不得刪。⚠️ **成員的依賴也要保**，而且不只 import
+#: 閉包——`app.py` 用**建構子參數**注進去的也算，`injected_deps()` 就是掃這一類
+#: （`app.py` 建構第四桶類別時，引數裡出現的每個本地模組名都併進來）。
+#:
+#: 這個集合會隨時間**非空 → 空 → 非空**地變動，理由每次都不同，逐次記錄如下，
+#: ⛔ 都不要因為看到「曾經清空過」就假設現在也該是空的——每次變動都要重新查證：
+#:
+#: **① 2026-09-10（舊鏈隔離 S3／D 案）：app.state 注入邊——`conversational_engine`
+#: ／`api_call_handler` 曾在這裡，之後被移除。**
+#: `app.py` 以前用 `ConversationalEngine(api_handler=get_api_call_handler(db_pool))`
+#: 注入到 `app.state.conversational_engine`，新線（`services/agent/state_store.py`）
+#: 透過它存取 `form_sessions`。業主裁定 B 案：把新線實際用到的四個狀態方法
+#: （43 行純 SQL，對 `api_handler` 零命中）抽成 `services/agent/session_persistence.
+#: AgentSessionStore`，`app.py` 改注入 `app.state.agent_session_store`——這兩個
+#: 模組從此不再被任何存活線 import 或注入，故移除，讓它們隨 S3 落入 `legacy_only`。
+#:
+#: **② 2026-09-10（同一輪 S3，同日但後一步）：docker-exec 耦合邊——七個
+#: `responsibility_*`／`fulfillment_registry`／`grounding_presentation` 模組。**
+#: `scripts/audit/check_invariants.sh`（`make audit` 的真正入口，⛔ 不是本檔）
+#: 的不變量 24／25 用 `docker exec … python3 -c "from services.responsibility_artifacts
+#: import validate"` 與 `"from services.responsibility_completion import
+#: RESPONSIBILITY_FORMS, _RESOLVER_SPECS"` 直接在**容器內**匯入這兩個模組來驗
+#: R10P sealed artifact 完整性與 responsibility form 輸入鍵契約——這條耦合邊既不是
+#: Python import、也不是 `app.py` 的建構子注入，是**跑在 shell 腳本裡的字串**，
+#: `injected_deps()`／`reach()` 兩種機制都看不到。`responsibility_completion.py`
+#: 自己又 import `fulfillment_registry`／`grounding_presentation`／
+#: `responsibility_bill_resolution`／`responsibility_entity_resolution`／
+#: `responsibility_session` 五個模組，缺一個 docker exec 那行就 ImportError，
+#: 故七個一起收進本桶。⚠️ **這是刪除 32 模組清單時真正刪錯的地方**——第一輪誤
+#: 以為它們只被 `services/conversational_engine.py`／`routers/chat.py` 的
+#: responsibility-resolution 舊邏輯引用，實際上它們同時是**完全獨立、與舊 REST
+#: 對話鏈無關**的 R10P canonical-responsibility-registry 稽核基礎設施。
+#: ⛔ **不要**因為模組名字面上像「responsibility」（聽起來像舊鏈的責任解析）
+#: 就假設它屬於舊鏈——這批模組的真正身分要看**誰在 import 它**，不是看名字。
+#:
+#: **什麼情況要讓它再度變動**：任何「`app.py` 或某支 shell／CI 腳本把一個模組
+#: 塞進只能用字串／屬性存取到的位置，而不是 Python import」的新模式出現，都要
+#: 手動查一遍該模組（與它的遞移依賴）有沒有被這樣用，找到了就要加進來——
+#: `reach()` 永遠只看得到 import 邊，這類邊只能靠人宣告。
+RUNTIME_COUPLED: set[str] = {
+    "services.responsibility_artifacts",
+    "services.responsibility_completion",
+    "services.fulfillment_registry",
+    "services.grounding_presentation",
+    "services.responsibility_bill_resolution",
+    "services.responsibility_entity_resolution",
+    "services.responsibility_session",
+}
 
 
 def load(src: str) -> dict:
@@ -117,11 +167,33 @@ def injected_deps(src: str, mods: dict) -> set:
     return out - RUNTIME_COUPLED
 
 
+def retirement_status(src: str) -> str:
+    """舊鏈退役偵測——⛔ 別讓「target 消失」靜默變成綠但瞎（見 check_invariants.sh
+    同款教訓）。三態：
+
+    - `"active"`：`LEGACY_SEEDS` 全部還在——舊鏈還沒開始砍，正常跑分桶。
+    - `"retired"`：`LEGACY_SEEDS` **全部**不在——舊鏈隔離 S3 已完成（2026-09-10），
+      這支檢查器的宣告式分桶（新線／舊線兩條線）不再有意義，`main()`／`self_test()`
+      改印明確的退役訊息、exit 0，⛔ 不假裝分桶結果仍然有效。
+    - `"inconsistent"`：**部分**在、部分不在——這不是正常的「還沒砍」或「砍完了」，
+      是掃描條件壞了或砍到一半就停，維持原本的 FATAL 大聲失敗。
+    """
+    mods = load(src)
+    present = LEGACY_SEEDS & set(mods)
+    if present == LEGACY_SEEDS:
+        return "active"
+    if not present:
+        return "retired"
+    return "inconsistent"
+
+
 def buckets(src: str) -> dict:
     mods = load(src)
     missing = LEGACY_SEEDS - set(mods)
     if missing:
-        raise SystemExit("FATAL：舊線進入點不存在 %s（掃描條件或路徑壞了）" % sorted(missing))
+        raise SystemExit("FATAL：舊線進入點不存在 %s（掃描條件或路徑壞了，或舊鏈已退役——"
+                          "呼叫端該先查 retirement_status()，不是直接呼叫 buckets()）"
+                          % sorted(missing))
     graph = {m: imports_of(mods, m) for m in mods}
 
     def reach(seeds):
@@ -175,7 +247,17 @@ def controls(b) -> list:
 
 
 def self_test() -> int:
-    """植入一條假的新線→舊線邊，負對照必須紅；⛔ 自測不紅 ⇒ 本檢查器的 PASS 不可信。"""
+    """植入一條假的新線→舊線邊，負對照必須紅；⛔ 自測不紅 ⇒ 本檢查器的 PASS 不可信。
+
+    舊鏈已退役時（`retirement_status(SRC) == "retired"`）：植入邊要打的靶
+    （`services.sop_orchestrator` 等 `LEGACY_SEEDS`）已經不存在，這個自測從
+    「驗證分桶邏輯」變成「驗證一個已經不成立的前提」——印明確訊息、PASS，
+    ⛔ 不假裝還在驗證分桶。
+    """
+    if retirement_status(SRC) == "retired":
+        print("自我測試 SKIP（舊鏈已退役，LEGACY_SEEDS 全部不存在——"
+              "分桶自測的前提〔存在可注入邊的舊線種子〕不再成立，無需驗證）")
+        return 0
     import tempfile, shutil
     with tempfile.TemporaryDirectory() as td:
         shutil.copytree(SRC, os.path.join(td, "s"),
@@ -211,6 +293,19 @@ def write_lists(b) -> None:
 def main() -> int:
     if "--self-test" in sys.argv:
         return self_test()
+    status = retirement_status(SRC)
+    if status == "retired":
+        print("ℹ️ RETIRED：舊鏈隔離 S3 已完成（2026-09-10）——LEGACY_SEEDS 全部已刪除"
+              "（%s）。本檢查器的宣告式分桶（新線／舊線兩條線）任務已完成，"
+              "repo 現在只剩一條線，⛔ 分桶結果不再有意義（不是「查不到」，是「不再適用」）。"
+              "`scripts/audit/lists/*.txt` 停留在退役當下最後一次核可的內容，當歷史記錄，"
+              "⛔ 不再由本檢查器維護／比對。" % sorted(LEGACY_SEEDS))
+        return 0
+    if status == "inconsistent":
+        present = LEGACY_SEEDS & set(load(SRC))
+        raise SystemExit("FATAL：LEGACY_SEEDS 部分存在部分不存在（現存 %s／全集 %s）——"
+                          "這不是正常的『還沒砍』或『砍完了』，是掃描條件壞了或砍到一半就停"
+                          % (sorted(present), sorted(LEGACY_SEEDS)))
     b = buckets(SRC)
     errs = controls(b)
     for e in errs:

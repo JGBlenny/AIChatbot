@@ -23,7 +23,9 @@ demo 只走替身 transport（`USE_MOCK_JGB_API=true`）。真 `agent/v1` 的簽
 
 ## `emergency_status` 是已知地雷
 `1＝非緊急、2＝緊急`（jgb2 DB 真值，⛔ 不可望文生義）。本檔不自己對照，
-值域檢查交給 `confirm_card`（那裡與 `jgb_response_formatter` 逐鍵對帳過）。
+值域檢查交給 `confirm_card`（那裡自帶同一份真值，見該檔模組 docstring
+「`emergency_status` 是已知地雷」一節——舊鏈曾有第二份對照表可互相對帳，
+已隨舊鏈於 2026-09-10 退役，現在 `confirm_card` 的真值是唯一來源）。
 """
 from __future__ import annotations
 

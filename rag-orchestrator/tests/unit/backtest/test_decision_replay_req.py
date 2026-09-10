@@ -362,40 +362,16 @@ def test_manifest_matches_frozen_corpus_on_disk():
 
 
 # ════════════════════════════════════════════════════════════
-# 任務 0.4｜D-23：判定字面量須與程式碼實際字串一致
-# 契約：規則表的標記是從引擎/路由程式碼抄來的字面量。有人改引擎一個字，
-# 分類器會**靜默**把整批 FACET_EMPTY 重判成 ANSWER，而 classifier_version 不變
-# （版本戳只涵蓋規則表內容，涵蓋不到「規則表與現實脫節」）。此測試釘死兩者一致。
+# 任務 0.4｜D-23：判定字面量須與程式碼實際字串一致（⚠️ 舊鏈隔離 S3 後失去對帳能力）
+# 契約：規則表的標記本是從引擎/路由程式碼抄來的字面量，兩條測試釘死兩者一致，
+# 有人改引擎一個字就會炸。`services/conversational_engine.py`／`routers/chat.py`
+# 已隨舊鏈於 2026-09-10 一起刪除——**對帳的另一邊消失了**，這兩條測試連同移除。
+# ⚠️ `dr.ROUTING_RULES["facet_empty_markers"]`／`["fallback_markers"]` 這兩份
+# 字面量清單本身**沒有跟著刪**（它們是分析既有歷史語料用的凍結標記，見
+# `dr.CORPUS_DIR` 的既有回放語料——那批語料是舊鏈產生的歷史紀錄，內容不會再變），
+# 但往後**沒有任何機制**會在有人改動這兩份標記時提醒「有沒有東西可以對」——
+# 反正對帳目標已經不存在了，這正是本節要留下的紀錄：對帳能力消失，不是靜默失蹤。
 # ════════════════════════════════════════════════════════════
-
-_SRC_ROOT = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(
-    os.path.dirname(os.path.abspath(__file__))))))
-
-
-def _read(rel):
-    with open(os.path.join(_SRC_ROOT, rel), encoding="utf-8") as f:
-        return f.read()
-
-
-@pytest.mark.req("retrieval-decision-layer:1.3")
-def test_facet_empty_marker_matches_engine_source():
-    """`查無對應的資料` 必須真的還在引擎裡——否則分類器把面向查無全判成 ANSWER。"""
-    src = _read("services/conversational_engine.py")
-    for m in dr.ROUTING_RULES["facet_empty_markers"]:
-        assert m in src, (
-            f"規則表標記 {m!r} 已不在 conversational_engine.py——"
-            f"引擎文案改了而規則表沒跟上，整批 FACET_EMPTY 會被靜默重判成 ANSWER")
-
-
-@pytest.mark.req("retrieval-decision-layer:1.3")
-def test_fallback_marker_matches_chat_source():
-    """兜底句必須真的還在 chat.py 的 `_handle_no_knowledge_found` 模板裡。"""
-    src = _read("routers/chat.py")
-    for m in dr.ROUTING_RULES["fallback_markers"]:
-        assert m in src, (
-            f"規則表標記 {m!r} 已不在 chat.py——兜底文案改了而規則表沒跟上，"
-            f"整批 FALLBACK 會被靜默重判成 ANSWER")
-
 
 @pytest.mark.req("retrieval-decision-layer:1.3")
 def test_ask_id_verb_still_appears_in_corpus():

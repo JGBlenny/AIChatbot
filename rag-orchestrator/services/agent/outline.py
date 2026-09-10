@@ -250,10 +250,11 @@ _TOC_AUDIENCE_TARGET_USER: dict[str, str] = {
 def _fetch_toc_rows(db_pool, audience: str, vendor_id: Optional[int]) -> list[tuple]:
     """`系統脈絡` 列（`(id, question_summary, answer, updated_at)`），加 vendor／target_user 過濾。
 
-    ⛔ **不照抄 `services/system_context.py:_fetch_base`／`_fetch_appends`**
-    （design 元件 5 明文禁止）——那兩支只切 `category`／`target_user`，完全
-    沒有 `vendor_ids` 過濾（`system_context.py` 是「系統脈絡＝跨業者共用底座」
-    的既有假設；agentic 大綱要對到 MCP 門面解析出的單一 `vendor_id`，不能照搬）。
+    ⛔ **不照抄舊鏈「系統脈絡」查詢的取法**（design 元件 5 明文禁止；原實作在
+    `services/system_context.py:_fetch_base`／`_fetch_appends`，⛔ 該實作已隨
+    舊鏈於 2026-09-10 退役）——那兩支只切 `category`／`target_user`，完全
+    沒有 `vendor_ids` 過濾（舊鏈把「系統脈絡」當「跨業者共用底座」，這是它的
+    既有假設；agentic 大綱要對到 MCP 門面解析出的單一 `vendor_id`，不能照搬）。
     這裡只借它們「`target_user` 分層＋`IS NULL` 放行通用列」的語義，自寫成
     本檔獨立的 psycopg2 `%s` 條件（見不變量 29 附註：這兩個條件因不走
     `build_visibility_predicate`——`系統脈絡` 是該謂詞明確排除的保留分類，

@@ -489,7 +489,8 @@ def _apply_estate_carry_to_confirm_args(raw_args: Any, carry: Any) -> tuple:
 #: ⚠️ **等值**比對（`fullmatch`、無前後綴）——⛔ 不做子字串比對：那會讓
 #: 「confirm_submit:abcd… 這是什麼意思？」這種自由文字誤觸發一次真實寫入。
 #: 三個前綴**由 `CONFIRM_QUICK_REPLY_VALUES` 組出來**（那組常數又轉引
-#: `conversational_engine._QR_*`），⛔ 不在此另抄字面量。
+#: `services/form_contract.py` 的 `QR_*`——舊鏈隔離 S3 從 `conversational_engine`
+#: 抽出，值不變），⛔ 不在此另抄字面量。
 _CONFIRM_VALUE_RE = re.compile(
     r"^(?:%s)%s([0-9a-f]{16})$"
     % (
@@ -1098,18 +1099,23 @@ _IDENTITY_ARG_KEYS = frozenset(
 
 #: `session.slots.set` 的工具名。⚠️ **這是第二份字面量**——唯一正本是
 #: `services/agent/tools/session.py:SLOTS_SET_SPEC["name"]`。⛔ 不在本檔 import
-#: 那個模組：它會連帶把 `services.conversational_engine` 拉進 runtime 的
-#: import 期（runtime 已被 `mcp_facade` import，鏈路越長越容易繞成環）。
+#: 那個模組：runtime 已被 `mcp_facade` import，鏈路越長越容易繞成環——這是一般性
+#: 的循環 import 風險考量，⛔ 不因為 `session.py` 現在的依賴變輕（舊鏈隔離 S3
+#: 之前它會連帶拉進 `services.conversational_engine`；S3 之後只拉 `services.
+#: form_contract` 這種輕量葉模組）就當作理由消失——runtime→session→…→runtime
+#: 的環路風險與 session.py 具體 import 了什麼無關，是拓樸本身的風險。
 #: 兩份不得漂：`tests/unit/agent/test_session_confirm_tools_req.py` 有一條把兩者
 #: 釘在一起的回歸案，改名時它會紅。
 SLOTS_SET_TOOL_NAME = "session.slots.set"
 
 #: state 內槽位表的鍵——**頂層**（`form_sessions.collected_data.slots`）。
 #: ⚠️ 2.9 對齊：2.1 原本讀 `state["agent"]["slots"]`，而 2.4 的
-#: `session.slots.set` 寫的是頂層 `slots`（與 `conversational_engine.
-#: TransactionState.slots` 同一個位置，舊鏈的交易面向也讀它）。兩處不一致 ⇒
-#: 工具寫進去的槽位 runtime 永遠讀不到。以 design（元件 3／`form_sessions.
-#: collected_data`）為準取**頂層**。⛔ 別改回 `state["agent"]["slots"]`。
+#: `session.slots.set` 寫的是頂層 `slots`（原與舊鏈 `conversational_engine.
+#: TransactionState.slots` 同一個位置——舊鏈的交易面向也讀它，該模組已隨舊鏈
+#: 於 2026-09-10 退役，位置本身**不因此改變**：頂層 `slots` 仍是唯一正本，
+#: 只是不再有第二個讀者）。兩處不一致 ⇒ 工具寫進去的槽位 runtime 永遠讀不到。
+#: 以 design（元件 3／`form_sessions.collected_data`）為準取**頂層**。
+#: ⛔ 別改回 `state["agent"]["slots"]`。
 SLOTS_STATE_KEY = "slots"
 
 #: **派生**槽位鍵（任務 4.2／Plan §4.1-2、§4.1-3 第 (1) 道守門）。
@@ -1124,10 +1130,11 @@ def _slots_for_prompt(state: dict) -> dict:
     """從 state 取槽位表，並把 `SlotValue` 攤平成純量給 PromptAssembler。
 
     ⚠️ **兩份契約在這裡對接，⛔ 別把任何一邊改成另一邊**：
-      - 儲存側（`services/agent/tools/session.py:write_slot`、以及舊鏈的
-        `conversational_engine.SlotValue`）存的是
+      - 儲存側（`services/agent/tools/session.py:write_slot`）存的是
         `{key: {"value": ..., "source": ..., "confirmed": ...}}`——這個形狀
-        是與舊鏈共用同一格 jsonb 的代價，改了舊鏈的交易面向就讀不到。
+        原是與舊鏈 `conversational_engine.SlotValue` 共用同一格 jsonb 的代價
+        （該模組已隨舊鏈於 2026-09-10 退役）；形狀本身**不因此改變**，改了
+        既有 DB 資料列讀不到，⛔ 不是「舊鏈沒了就可以自由改」。
       - prompt 側（`prompt_assembler._slot_blocks`）**只收純量**
         （str／int／float／bool／None），巢狀一律 `raise ValueError`——那是
         刻意的注入面收斂（一 slot 一段、值不得自帶結構）。
@@ -1367,9 +1374,10 @@ class AgentRuntime:
         # 位置呼叫，那樣只會在模組 import 當下讀一次、之後 env 改了也不生效）。
         self._stage: Stage = stage if stage is not None else current_stage()
         self._clock = clock
-        # 模型名稱不在 design 契約內明列，沿用專案既有慣例
-        # （`OPENAI_MODEL` env，見 `services/llm_answer_optimizer.py` 等）；
-        # 另開 `AGENT_MODEL` 供獨立覆寫，兩者皆缺才落 "gpt-4o-mini"。
+        # 模型名稱不在 design 契約內明列，沿用專案既有慣例——`OPENAI_MODEL` env
+        # 是舊鏈（原 `services/llm_answer_optimizer.py`，已隨舊鏈於 2026-09-10
+        # 退役）就在用的既有變數名，這裡延用同一把 env 是刻意的相容選擇，不是
+        # 巧合；另開 `AGENT_MODEL` 供獨立覆寫，兩者皆缺才落 "gpt-4o-mini"。
         self._model = model or os.environ.get("AGENT_MODEL") or os.environ.get(
             "OPENAI_MODEL", "gpt-4o-mini"
         )

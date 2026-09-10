@@ -2,9 +2,10 @@
 
 見 design.md 元件 3 表格 `session.slots.get/set` 列與資料模型 `SlotValue`。
 槽位存在既有的對話 state：`form_sessions.collected_data.slots[<SlotKey>] =
-{value, source, confirmed}`——與 `conversational_engine.SlotValue`／
-`TransactionState.slots` **同一個位置、同一個形狀**，⛔ 不另開一張表或另一個鍵，
-否則 agent 路徑與舊鏈會各記一份槽位、切換時互看不見。
+{value, source, confirmed}`——這個位置與形狀原與舊鏈 `conversational_engine.
+SlotValue`／`TransactionState.slots` 相同（該模組已隨舊鏈於 2026-09-10 退役），
+⛔ 不另開一張表或另一個鍵，理由不變：既有 DB 資料列是同一格 jsonb，換位置／
+換形狀就讀不到舊資料。
 
 **`SlotKey` 是封閉 enum**：十值——六個識別／數量槽位（`contract_ref`／
 `bill_ref`／`estate_ref`／`repair_ref`／`unit_count`／`business_type`）＋
@@ -47,7 +48,7 @@ from typing import Any, Dict, Final, Optional, Tuple
 
 from services.agent.identity import Identity
 from services.agent.tools.registry import ToolResult, ToolSpec
-from services.conversational_engine import CONVERSATIONAL_FORM_ID
+from services.form_contract import CONVERSATIONAL_FORM_ID
 
 
 class SlotKey(str, Enum):
@@ -82,7 +83,8 @@ SLOT_MARKUP_CHARS: Final[str] = "<>{}[]"
 #: 工具寫入的槽位一律標這個來源（design 資料模型 `SlotValue.source`）。
 SLOT_SOURCE_TOOL: Final[str] = "tool"
 
-#: state 內放槽位表的鍵（與 `conversational_engine.TransactionState.slots` 同鍵）。
+#: state 內放槽位表的鍵（原與舊鏈 `conversational_engine.TransactionState.slots`
+#: 同鍵，該模組已隨舊鏈於 2026-09-10 退役，鍵名本身不變）。
 SLOTS_STATE_KEY: Final[str] = "slots"
 
 _SLOT_KEY_SCHEMA: Final[dict] = {"type": "string", "enum": list(SLOT_KEYS)}
@@ -175,8 +177,10 @@ def _session_id_of(identity: Identity) -> Optional[str]:
 async def read_slots(db_pool, session_id: str) -> Dict[str, Any]:
     """讀回該 session 的槽位表；無會話／無槽位一律回 `{}`（讀取端不需要區分兩者）。
 
-    取法與 `conversational_engine.ConversationalEngine.get_state` 同式
-    （`form_id='conversational'`、`state='COLLECTING'`、最新一列），⛔ 不另立第二套取法。
+    取法與 `services.agent.session_persistence.AgentSessionStore.get_state`
+    同式（`form_id='conversational'`、`state='COLLECTING'`、最新一列；原與舊鏈
+    `conversational_engine.ConversationalEngine.get_state` 同式，該模組已隨
+    舊鏈於 2026-09-10 退役），⛔ 不另立第二套取法。
     """
     row = await db_pool.fetchrow(
         "SELECT collected_data FROM form_sessions "

@@ -198,7 +198,7 @@ ERR_VENDOR_OUT_OF_KEY_SCOPE = "VENDOR_NOT_IN_KEY_SCOPE"
 ERR_QUOTA = "QUOTA_EXCEEDED"
 ERR_METERING = "METERING_UNAVAILABLE"
 
-#: `agent.turn` 專屬：`app.state.agent_runtime`／`app.state.conversational_engine`
+#: `agent.turn` 專屬：`app.state.agent_runtime`／`app.state.agent_session_store`
 #: 任一缺席（2.2 尚未接線、或啟動時 `bootstrap.build_runtime` 失敗）⇒ 回這個碼。
 #: ⛔ 不退化成「就地建一個 runtime」——那會繞過 `build_runtime` 的 Verifier 自證。
 ERR_AGENT_UNAVAILABLE = "AGENT_UNAVAILABLE"
@@ -477,7 +477,8 @@ class FacadeDeps:
       建好放 `app.state.outline_resolver`，這個 getter 讀它。
     - `get_app`：回 FastAPI/Starlette 的 app 物件（`agent.turn` 用）。門面靠它讀
       `app.state.agent_runtime`（2.2 建的 `AgentRuntime`）、
-      `app.state.conversational_engine`（狀態存取用的引擎）、
+      `app.state.agent_session_store`（狀態存取用的 `AgentSessionStore`，
+      舊鏈隔離 S3 取代原本的 `conversational_engine`）、
       `app.state.agent_outline`（行程級大綱物件）。⛔ 門面**不自建** runtime——
       `bootstrap.build_runtime` 的 Verifier 自證只跑在啟動路徑上，就地新建一個
       等於帶著一把沒驗過的尺上線。缺 ⇒ `ToolError("AGENT_UNAVAILABLE")`。
@@ -1418,7 +1419,7 @@ def _open_state_store(deps: FacadeDeps, identity: Identity) -> NamespacedStateSt
     正確的錯誤碼（registry 內拋例外一律被吞成 `NO_MATCH`），後者才是真的用它。
     兩次都是純運算、無 I/O，⛔ 不值得為此在 `ToolFn` 簽名上開洞傳物件。
     """
-    engine = _app_state(deps, "conversational_engine")
+    engine = _app_state(deps, "agent_session_store")
     store = NamespacedStateStore(engine, identity.api_key_id, identity.vendor_id)
     store.key(identity.session_id)  # 形狀／長度先驗
     return store
@@ -2047,7 +2048,7 @@ def _agent_turn_preflight(deps: FacadeDeps, identity: Identity) -> Optional[str]
        不該把配額算在呼叫端頭上。
     """
     if _app_state(deps, "agent_runtime") is None or _app_state(
-        deps, "conversational_engine"
+        deps, "agent_session_store"
     ) is None:
         return ERR_AGENT_UNAVAILABLE
     # DSP-037／S1b：`agent.turn` 已對 pm 可見，但 pm 正本可能沒上線（`app.py` 只跳過

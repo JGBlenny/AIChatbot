@@ -52,7 +52,7 @@ class FakeRuntime:
 
 
 def _app(runtime, engine=None):
-    state = SimpleNamespace(agent_runtime=runtime, conversational_engine=engine, db_pool=None)
+    state = SimpleNamespace(agent_runtime=runtime, agent_session_store=engine, db_pool=None)
     return SimpleNamespace(state=state)
 
 

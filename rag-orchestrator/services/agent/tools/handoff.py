@@ -9,6 +9,14 @@
 `input_schema.enum` 由 enum 反射產生——多一份手抄清單就會有兩份會漂的真相，
 而漂掉的那一份正好是「模型能不能講出這個 reason」的守門。
 
+⚠️ **舊鏈隔離 S3（2026-09-10）失去的防線**：舊鏈 `routers/chat.py` 曾有自己的
+`HandoffSignal.reason`（pydantic `Literal`），與這裡的 `HandoffReason` 逐值核對
+由 `tests/unit/agent/test_session_confirm_tools_req.py` 的一條回歸測試把關——
+舊鏈砍掉後那份 Literal 與測試一併消失，**本檔現在是這個值域唯一的權威**、
+⛔ 不再有第二份獨立真相可以互相對帳防漂移。日後改動 `HandoffReason` 的值域
+前，除了走 `presales_gate.py` 這個唯一來源，也要記得：這裡沒有另一個「兩邊
+都要改」的提醒機制了，全靠人記得。
+
 **⚠️ 三個刻意的決定：**
 
 1. **⛔ 不呼叫 `presales_gate.build_handoff`**：那支由 `fact_class` 的敏感性

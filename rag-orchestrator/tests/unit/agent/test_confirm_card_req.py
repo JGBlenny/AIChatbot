@@ -102,21 +102,6 @@ def test_repair_accepts_parent_category_and_empty_description():
 
 
 @pytest.mark.req(_REQ)
-def test_emergency_status_labels_match_production_truth_table():
-    """`emergency_status` 是已知地雷（jgb2 對外 mapping 曾標反）。
-    本檔的對照表必須與產線 formatter 的自家真值表逐鍵相同——⛔ 兩邊不得分岔。
-
-    正對照組：先確認產線那張表真的存在且有這兩個鍵（否則下面的比對是空跑）。
-    """
-    from services.jgb_response_formatter import _EMERGENCY_STATUS_LABELS
-
-    assert set(_EMERGENCY_STATUS_LABELS) == {"1", "2"}          # 正對照組
-    for value, label in _EMERGENCY_STATUS_LABELS.items():
-        payload = {**_REPAIR, "emergency_status": int(value)}
-        assert f"・急迫程度：{label}" in render("repair_create", payload), value
-
-
-@pytest.mark.req(_REQ)
 @pytest.mark.parametrize("missing", sorted(set(_BILL) - {"action"}))
 def test_bill_missing_any_field_raises(missing):
     payload = {k: v for k, v in _BILL.items() if k != missing}

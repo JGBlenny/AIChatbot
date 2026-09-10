@@ -27,6 +27,7 @@ rag-orchestrator/services/agent/prompt_assembler.py
 rag-orchestrator/services/agent/provenance_units.py
 rag-orchestrator/services/agent/question_sensitivity.py
 rag-orchestrator/services/agent/runtime.py
+rag-orchestrator/services/agent/session_persistence.py
 rag-orchestrator/services/agent/shadow.py
 rag-orchestrator/services/agent/state_store.py
 rag-orchestrator/services/agent/text_norm.py

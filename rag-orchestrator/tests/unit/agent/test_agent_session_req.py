@@ -325,7 +325,7 @@ class _FakeEngine:
     def __init__(self):
         self.started_with: dict = {}
 
-    async def _start(self, key, user_id, vendor_id, config_key, *, role_id=None):
+    async def start(self, key, user_id, vendor_id, config_key, *, role_id=None):
         self.started_with = {
             "key": key, "user_id": user_id, "vendor_id": vendor_id,
             "config_key": config_key, "role_id": role_id,

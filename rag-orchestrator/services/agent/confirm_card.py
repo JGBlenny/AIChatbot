@@ -27,10 +27,12 @@
 
 ## `emergency_status` 是已知地雷（⛔ 不可望文生義）
 `1＝非緊急、2＝緊急`（jgb2 DB 真值）。jgb2 對外 `mapping` 曾把它標反，
-本 repo 的既有處置是「一律用自家真值對照，⛔ 不信任回應附的 mapping」
-（見 `services/jgb_response_formatter.py` 的 `_EMERGENCY_STATUS_LABELS`）。
-本檔的 `_EMERGENCY_ZH` 與那張表由
-`tests/unit/agent/test_confirm_card_req.py` 逐鍵對帳，⛔ 兩邊不得分岔。
+本 repo 的既有處置是「一律用自家真值對照，⛔ 不信任回應附的 mapping」。
+⚠️ 舊鏈曾有第二份同義對照表（`services/jgb_response_formatter.py` 的
+`_EMERGENCY_STATUS_LABELS`），本檔的 `_EMERGENCY_ZH` 曾與它逐鍵對帳防漂移；
+該模組已隨舊鏈於 2026-09-10 退役，對帳測試一併移除——**這裡的真值本身不變**，
+只是失去了跨模組的重複校驗，⛔ 改這兩個鍵前務必重查 jgb2 DB 真值，不能只憑
+「原本兩邊都這樣寫」當依據。
 """
 from __future__ import annotations
 
@@ -154,7 +156,9 @@ def _require_ref(payload: Mapping[str, Any], key: str, action: str) -> str:
 def _parse_date(value: Any, key: str, action: str) -> date:
     """`YYYYMMDD`（int 或 str）⇒ `date`。
 
-    形狀取自 jgb2 的日期整數欄位慣例（`jgb_response_formatter.DATE_INT_KEYS`）。
+    形狀取自 jgb2 的日期整數欄位慣例（舊鏈 `jgb_response_formatter.DATE_INT_KEYS`
+    曾是這個慣例的同源引用，該模組已隨舊鏈於 2026-09-10 退役；`YYYYMMDD` 本身
+    是 jgb2 API 的欄位慣例，不隨舊鏈存廢而變）。
     ⛔ 不接受其他寫法——多接受一種寫法就多一種「同一天算出兩張不同卡」的可能。
     """
     if isinstance(value, bool) or not isinstance(value, (str, int)):

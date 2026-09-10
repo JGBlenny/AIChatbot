@@ -7,8 +7,9 @@
 **註解行**（`: keepalive`）當心跳——EventSource 規格會忽略註解行，⛔ 不新增事件型別
 （前端契約未驗證新型別，R1.4 只要求連線不靜默 >10 秒）。
 
-狀態：REST 路徑沿用舊鏈的 `form_sessions`（`form_id='conversational'`）列，透過
-`EngineStateStore` 呼叫 `ConversationalEngine.get_state／_start／_save`，⛔ 不另寫 SQL；
+狀態：REST 路徑沿用 `form_sessions`（`form_id='conversational'`）列，透過
+`EngineStateStore` 呼叫 `AgentSessionStore.get_state／start／save`（舊鏈隔離 S3，
+取代原本的 `ConversationalEngine`），⛔ 不另寫 SQL；
 agent 會話的 `config_key='agent:<audience>'`。回退：`state["agent"]["fixed_streak"] >= 3`
 ⇒ 標 `fallback_old_chain` 並回 `None`（design 元件 1 預算表・元件 8）。
 ⚠️ 回退後舊鏈 `prepare()` 讀到 `config_key='agent:*'` 會查無設定而降級到一般 RAG 流程，
@@ -36,7 +37,6 @@ from services.agent.identity import (
 
 logger = logging.getLogger(__name__)
 
-CONVERSATIONAL_FORM_ID = "conversational"
 KEEPALIVE_INTERVAL_S = 5.0          # R1.4：連線靜默 ≤10 秒；5 秒一則註解行
 FIXED_STREAK_FALLBACK = 3           # design 元件 1 預算表：連續 3 回合固定句 ⇒ 回退舊鏈
 
@@ -97,7 +97,14 @@ class StateStore(Protocol):
 
 
 class EngineStateStore:
-    """包 `ConversationalEngine` 的三個狀態方法（同一張 `form_sessions` 列、同一 SQL）。"""
+    """包 `AgentSessionStore` 的三個狀態方法（同一張 `form_sessions` 列、同一 SQL）。
+
+    ⚠️ 舊鏈隔離 S3（2026-09-10）：原本包的是 `ConversationalEngine`
+    （`get_state`／`_start`／`_save`，後兩者底線開頭）；舊引擎已隨舊鏈砍掉，
+    狀態子集抽成 `services.agent.session_persistence.AgentSessionStore`，
+    四個方法皆為公開名（`get_state`／`start`／`save`／`close`）。SQL 與簽章
+    逐字未變。
+    """
 
     def __init__(self, engine) -> None:
         self._engine = engine
@@ -106,10 +113,10 @@ class EngineStateStore:
         return await self._engine.get_state(session_id)
 
     async def start(self, session_id, user_id, vendor_id, role_id, config_key) -> dict:
-        return await self._engine._start(session_id, user_id, vendor_id, config_key, role_id=role_id)
+        return await self._engine.start(session_id, user_id, vendor_id, config_key, role_id=role_id)
 
     async def save(self, session_id: str, state: dict) -> None:
-        await self._engine._save(session_id, state)
+        await self._engine.save(session_id, state)
 
 
 def _resolve(app, name: str, override):
@@ -144,8 +151,8 @@ async def handle_agent_entry(request, req, ctx, *, runtime=None, store=None,
     rt = _resolve(app, "agent_runtime", runtime)
     if rt is None:
         return None
-    st = store or (EngineStateStore(app.state.conversational_engine)
-                   if getattr(app.state, "conversational_engine", None) else None)
+    st = store or (EngineStateStore(app.state.agent_session_store)
+                   if getattr(app.state, "agent_session_store", None) else None)
     if st is None:
         return None
 

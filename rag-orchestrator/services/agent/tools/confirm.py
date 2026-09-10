@@ -78,14 +78,15 @@ from services.agent.tools.registry import ToolResult, ToolSpec
 # 綁死函式物件會讓測試（與 smoke 的凍結時鐘）monkeypatch 不到。
 from services.jgb import bills
 
-# 三顆確認 quick reply 的穩定機器值——**沿用引擎的常數，⛔ 不在此另抄字面量**。
-# 前後端契約由 `conversational_engine` 持有；抄一份等於讓 agent 路徑與舊鏈
-# 在改值時默默分岔（使用者按了按鈕、後端認不得）。
-from services.conversational_engine import (
-    _DEFAULT_QR_LABELS,
-    _QR_CANCEL,
-    _QR_EDIT,
-    _QR_SUBMIT,
+# 三顆確認 quick reply 的穩定機器值——**沿用共用契約的常數，⛔ 不在此另抄字面量**。
+# 前後端契約由 `services/form_contract.py` 持有（舊鏈隔離 S3 從 `conversational_engine`
+# 抽出，⛔ 值不變）；抄一份等於讓 agent 路徑與呼叫端在改值時默默分岔
+# （使用者按了按鈕、後端認不得）。
+from services.form_contract import (
+    DEFAULT_QR_LABELS as _DEFAULT_QR_LABELS,
+    QR_CANCEL as _QR_CANCEL,
+    QR_EDIT as _QR_EDIT,
+    QR_SUBMIT as _QR_SUBMIT,
 )
 
 logger = logging.getLogger(__name__)
@@ -108,9 +109,9 @@ CONFIRM_VALUE_SEP: Final[str] = ":"
 def confirm_quick_replies(pending_id: str) -> list:
     """三顆機器值 quick reply：`[{"label": …, "value": "<前綴>:<pending_id>"}, …]`。
 
-    ⚠️ label 與前綴**都沿用 `conversational_engine` 的常數**
-    （`_DEFAULT_QR_LABELS`／`_QR_SUBMIT` 等），⛔ 不在本檔另抄字面量——
-    前後端契約由引擎持有，抄一份等於讓 agent 路徑與舊鏈在改值時默默分岔
+    ⚠️ label 與前綴**都沿用 `services/form_contract.py` 的常數**
+    （`DEFAULT_QR_LABELS`／`QR_SUBMIT` 等），⛔ 不在本檔另抄字面量——
+    前後端契約由該檔持有，抄一份等於讓 agent 路徑與呼叫端在改值時默默分岔
     （使用者按了按鈕、後端認不得）。
     """
     return [

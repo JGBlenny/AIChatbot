@@ -22,15 +22,11 @@ Image.MAX_IMAGE_PIXELS = IMAGE_MAX_PIXELS
 from services.intent_classifier import IntentClassifier
 from services.confidence_evaluator import ConfidenceEvaluator
 from services.unclear_question_manager import UnclearQuestionManager
-from services.llm_answer_optimizer import LLMAnswerOptimizer
 from services.intent_suggestion_engine import IntentSuggestionEngine
-from services.vendor_config_service import VendorConfigService
 from services.cache_service import CacheService
-from services.form_manager import FormManager
-from services.sop_orchestrator import SOPOrchestrator
 
 # 導入路由
-from routers import chat, unclear_questions, knowledge, vendors, knowledge_import, knowledge_export, knowledge_generation, platform_sop, cache, videos, images, business_types, document_converter, target_user_config, forms, api_endpoints, lookup, loops, loop_knowledge, system_health, conversational_configs
+from routers import unclear_questions, knowledge, vendors, knowledge_import, knowledge_export, knowledge_generation, cache, videos, images, business_types, document_converter, target_user_config, forms, api_endpoints, lookup, loops, loop_knowledge, system_health, conversational_configs
 from routers import ocr_mapping  # documind-ocr-mapping：DocuMind OCR → JGB 欄位草稿（同步端點）
 from routers import agent as agent_router  # agentic-mcp-orchestration 1.8：/api/v1/agent/openapi.json・/health
 
@@ -39,12 +35,8 @@ db_pool: Pool = None
 intent_classifier: IntentClassifier = None
 confidence_evaluator: ConfidenceEvaluator = None
 unclear_question_manager: UnclearQuestionManager = None
-llm_answer_optimizer: LLMAnswerOptimizer = None
 suggestion_engine: IntentSuggestionEngine = None
-vendor_config_service: VendorConfigService = None
 cache_service: CacheService = None
-form_manager: FormManager = None
-sop_orchestrator: SOPOrchestrator = None
 
 
 def _agent_configured() -> bool:
@@ -237,7 +229,7 @@ async def _init_agent_runtime(app: FastAPI) -> None:
 async def lifespan(app: FastAPI):
     """應用生命週期管理"""
     # 啟動時初始化
-    global db_pool, intent_classifier, confidence_evaluator, unclear_question_manager, llm_answer_optimizer, suggestion_engine, vendor_config_service, cache_service, form_manager, sop_orchestrator
+    global db_pool, intent_classifier, confidence_evaluator, unclear_question_manager, suggestion_engine, cache_service
 
     print("🚀 初始化 RAG Orchestrator...")
 
@@ -263,73 +255,32 @@ async def lifespan(app: FastAPI):
     unclear_question_manager = UnclearQuestionManager(db_pool)
     print("✅ 未釐清問題管理器已初始化")
 
-    # Phase 3 擴展：配置 LLM 答案優化器（含答案合成功能）
-    llm_optimizer_config = {
-        "enable_synthesis": os.getenv("ENABLE_ANSWER_SYNTHESIS", "false").lower() == "true",
-        "synthesis_threshold": float(os.getenv("SYNTHESIS_THRESHOLD", "0.7")),
-        "synthesis_min_results": int(os.getenv("SYNTHESIS_MIN_RESULTS", "2")),
-        "synthesis_max_results": int(os.getenv("SYNTHESIS_MAX_RESULTS", "3"))
-    }
-
-    llm_answer_optimizer = LLMAnswerOptimizer(config=llm_optimizer_config)
-
-    if llm_optimizer_config["enable_synthesis"]:
-        print(f"✅ LLM 答案優化器已初始化 (Phase 3 + 答案合成功能已啟用)")
-        print(f"   合成閾值: {llm_optimizer_config['synthesis_threshold']}")
-        print(f"   合成來源數: {llm_optimizer_config['synthesis_min_results']}-{llm_optimizer_config['synthesis_max_results']}")
-    else:
-        print("✅ LLM 答案優化器已初始化 (Phase 3，答案合成功能停用)")
-
     suggestion_engine = IntentSuggestionEngine()
     print("✅ 意圖建議引擎已初始化 (Phase B)")
-
-    vendor_config_service = VendorConfigService(db_pool)
-    print("✅ 業者配置服務已初始化 (Vendor Configs 整合)")
 
     # 初始化緩存服務
     cache_service = CacheService()
 
-    # 初始化表單管理器（Phase X: 表單填寫對話功能 + 方案 B: 資料庫配置）
-    form_manager = FormManager(db_pool=db_pool)
-    print("✅ 表單管理器已初始化（表單填寫功能 + 資料庫配置支援）")
-
-    # 初始化 SOP 編排器（SOP Next Action 功能）
-    sop_orchestrator = SOPOrchestrator(form_manager=form_manager)
-    print("✅ SOP 編排器已初始化（SOP Next Action 功能 - 4 種觸發模式 + 3 種後續動作）")
-
-    # 初始化對話式回答引擎（option-routing R14–R19｜售前為首例）
-    from services.conversational_engine import ConversationalEngine
-    from services.conversational_rules import load_rules as conversational_load_rules
-    from services.system_context import get_system_context as conversational_get_system_context
-    from services.vendor_knowledge_retriever_v2 import VendorKnowledgeRetrieverV2
-    from services.api_call_handler import get_api_call_handler
-    conversational_engine = ConversationalEngine(
-        db_pool=db_pool,
-        optimizer=llm_answer_optimizer,
-        retriever=VendorKnowledgeRetrieverV2(),
-        get_system_context=conversational_get_system_context,
-        rules_loader=conversational_load_rules,
-        api_handler=get_api_call_handler(db_pool),  # 診斷型對話 API grounding 用
-    )
-    print("✅ 對話式回答引擎已初始化（conversational：多輪自適應問答→收斂，售前為首例）")
+    # 新線自有的會話狀態層（舊鏈隔離 S3／D 案）：取代舊 `ConversationalEngine`
+    # 的狀態子集，新線只需要 get_state/start/save/close 四個方法（見
+    # services/agent/session_persistence.py 檔頭的取捨說明）。
+    from services.agent.session_persistence import AgentSessionStore
+    agent_session_store = AgentSessionStore(db_pool=db_pool)
+    print("✅ agent 會話狀態層已初始化（session_persistence：取代舊引擎狀態子集）")
 
     # 將服務注入到 app.state
     app.state.db_pool = db_pool
     app.state.intent_classifier = intent_classifier
     app.state.confidence_evaluator = confidence_evaluator
     app.state.unclear_question_manager = unclear_question_manager
-    app.state.llm_answer_optimizer = llm_answer_optimizer
-    app.state.vendor_config_service = vendor_config_service
     app.state.suggestion_engine = suggestion_engine
     app.state.cache_service = cache_service
-    app.state.form_manager = form_manager
-    app.state.sop_orchestrator = sop_orchestrator
-    app.state.conversational_engine = conversational_engine
+    app.state.agent_session_store = agent_session_store
 
     # agent 路徑（agentic-mcp-orchestration 2.2／design 元件 8）：runtime／大綱／影子。
     await _init_agent_runtime(app)
 
-    print("🎉 RAG Orchestrator 啟動完成！（含 Phase 3 LLM 優化 + Phase B 意圖建議 + 表單填寫功能 + SOP Next Action）")
+    print("🎉 RAG Orchestrator 啟動完成！（含 Phase B 意圖建議 + agent 會話狀態層）")
     print(f"📝 API 文件: http://localhost:8100/docs")
 
     # MCP session manager（agentic-mcp-orchestration 1.7）：⚠️ **必須**進 lifespan，
@@ -534,7 +485,6 @@ else:
 
 
 # 註冊路由
-app.include_router(chat.router, prefix="/api/v1", tags=["chat"])
 app.include_router(unclear_questions.router, prefix="/api/v1", tags=["unclear_questions"])
 app.include_router(business_types.router, prefix="/api/v1", tags=["business_types"])  # Business Types (Read-only from config)
 app.include_router(knowledge.router, tags=["knowledge"])
@@ -542,7 +492,6 @@ app.include_router(vendors.router, tags=["vendors"])  # Phase 1: Multi-Vendor Su
 app.include_router(knowledge_import.router, tags=["knowledge_import"])  # Knowledge Import from LINE chats
 app.include_router(knowledge_export.router, tags=["knowledge_export"])  # Knowledge Export to Excel
 app.include_router(knowledge_generation.router, prefix="/api/v1", tags=["knowledge_generation"])  # AI Knowledge Generation
-app.include_router(platform_sop.router, tags=["platform_sop"])  # Platform SOP Template Management
 app.include_router(cache.router, tags=["cache"])  # Cache Management (事件驅動 + TTL 混合策略)
 app.include_router(videos.router, tags=["videos"])  # Video Upload & Management (S3 Storage)
 app.include_router(images.router, tags=["images"])  # Image Upload & Recognition (修繕圖片上傳)
@@ -585,7 +534,6 @@ async def health_check():
                 "intent_classifier": "ready",
                 "confidence_evaluator": "ready",
                 "unclear_question_manager": "ready",
-                "llm_answer_optimizer": "ready (Phase 3)",
                 "suggestion_engine": "ready (Phase B)"
             }
         }

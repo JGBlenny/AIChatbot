@@ -34,7 +34,7 @@ from services.agent.bootstrap import build_runtime
 from services.agent.identity import Identity
 from services.agent.tools.registry import ToolRegistry
 from services.api_key_auth import _reset_agent_scope_detection, hash_key
-from services.conversational_engine import ConversationalEngine
+from services.agent.session_persistence import AgentSessionStore
 
 pytestmark = pytest.mark.integration
 
@@ -184,16 +184,10 @@ class FakeProvider:
 
 
 def _engine(pool):
-    """最小引擎：**沿用 `ConversationalEngine` 的三個狀態方法本體**（同一張表、
-    同一組 SQL）。⛔ 不在測試裡另寫一份 SQL——那樣測的就不是產品那條路了。"""
-
-    class _Engine:
-        db_pool = pool
-        get_state = ConversationalEngine.get_state
-        _start = ConversationalEngine._start
-        _save = ConversationalEngine._save
-
-    return _Engine()
+    """最小引擎：**沿用 `AgentSessionStore` 本體**（同一張表、同一組 SQL；
+    舊鏈隔離 S3 從 `ConversationalEngine` 抽出的狀態子集，⛔ 不在測試裡另寫
+    一份 SQL——那樣測的就不是產品那條路了）。"""
+    return AgentSessionStore(pool)
 
 
 def _make_runtime(pool, script):
@@ -209,7 +203,7 @@ def _app(pool, runtime, *, outlines=None):
     `_OUTLINE_UNAVAILABLE`）——本檔多數案例是 prospect，維持原樣。
     pm 的案例要自己帶一份，⛔ 不得由本函式偷偷補一個回退大綱給所有受眾。
     """
-    state = SimpleNamespace(agent_runtime=runtime, conversational_engine=_engine(pool),
+    state = SimpleNamespace(agent_runtime=runtime, agent_session_store=_engine(pool),
                             db_pool=pool)
     if outlines is not None:
         state.agent_outlines = outlines
@@ -346,7 +340,7 @@ async def test_same_session_id_different_vendor_is_isolated(pool, env):
     # `collected_data` **頂層** `slots`，⛔ 不是 `agent` 子樹）
     state_a = await _state(pool, row_key_a)
     state_a["slots"] = {"unit_count": "600"}
-    await app_a.state.conversational_engine._save(row_key_a, state_a)
+    await app_a.state.agent_session_store.save(row_key_a, state_a)
     before = await _state(pool, row_key_a)
     assert before["slots"] == {"unit_count": "600"}   # 正對照組
 
@@ -412,7 +406,7 @@ async def test_two_turns_second_sees_first_turn_state(pool, env):
 
     state = await _state(pool, row_key)
     state["slots"] = {"unit_count": "600"}
-    await app.state.conversational_engine._save(row_key, state)
+    await app.state.agent_session_store.save(row_key, state)
 
     seen = {}
 
@@ -603,7 +597,7 @@ async def test_real_mcp_client_two_turn_conversation(pool, env):
                 # （2.9 對齊：落點是 `collected_data` **頂層** `slots`）
                 state = await _state(pool, row_key)
                 state["slots"] = {"unit_count": "600"}
-                await app_obj.state.conversational_engine._save(row_key, state)
+                await app_obj.state.agent_session_store.save(row_key, state)
 
                 seen = {}
                 inner_assembler = runtime.assembler

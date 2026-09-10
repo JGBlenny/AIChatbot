@@ -21,7 +21,6 @@ from services.jgb.bills import build_invoice_facts, build_payment_flow_facts
 # 容器內 rootdir＝/app＝rag-orchestrator/（run-tests.sh 掛載），故從 tests/ 往上三層
 APP = Path(__file__).resolve().parents[3]
 MIGRATION = APP / "database/migrations/restore_preempted_diagnostic_capabilities.sql"
-ENGINE = APP / "services/conversational_engine.py"
 
 pytestmark = pytest.mark.unit
 
@@ -86,21 +85,6 @@ def test_non_atm_question_does_not_trigger_atm_engine():
                                           "atm_info": {"v_account": "9990005678"}}}]}
     out = build_payment_flow_facts(bill, "這筆到帳了嗎")
     assert "9990005678" not in out
-
-
-# ════════════════════════════════════════════════════════════════════
-# 假綠防線：單物件 secondary 結果不得被丟成 []
-# ════════════════════════════════════════════════════════════════════
-
-def test_single_object_secondary_is_wrapped_not_dropped():
-    """`jgb_bill_detail` 回 dict——引擎必須包成單元素 list，⛔ 不得丟成 []。
-
-    原碼 `sec_rows if isinstance(sec_rows, list) else []` 會把 dict 整個丟掉：
-    端點宣告了、資料卻永遠不到 ⇒ 設定看起來對、能力仍失效。
-    """
-    src = ENGINE.read_text(encoding="utf-8")
-    assert "elif sec_rows:\n                        attached = [sec_rows]" in src, \
-        "單物件 secondary 的包裝已被改掉——會退回丟棄 dict 的假綠行為"
 
 
 # ════════════════════════════════════════════════════════════════════

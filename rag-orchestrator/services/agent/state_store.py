@@ -20,9 +20,17 @@ REST 路徑（`routers/agent_entry.py:EngineStateStore`）維持裸 `session_id`
 就不可能發生——⛔ 這不是靠字串跳脫維持的，別把兩個 id 改成字串。
 
 ## 為什麼不另寫 SQL
-`load`／`start`／`save` 一律轉呼 `ConversationalEngine.get_state`／`_start`／
-`_save`（同一張 `form_sessions`、同一組 SQL）。⛔ 不在本檔寫第二份 SQL——
-兩份 SQL 會各自演化，而「隔離謂詞單一來源」是本專案的既有紀律。
+`load`／`start`／`save`／`close` 一律轉呼 `services.agent.session_persistence.
+AgentSessionStore` 的 `get_state`／`start`／`save`／`close`（同一張 `form_sessions`、
+同一組 SQL）。⛔ 不在本檔寫第二份 SQL——兩份 SQL 會各自演化，而「隔離謂詞單一
+來源」是本專案的既有紀律。
+
+⚠️ **舊鏈隔離 S3（2026-09-10）改名紀錄**：這四個方法原本轉呼
+`ConversationalEngine.get_state`／`_start`／`_save`／`_close`（後三者底線開頭、
+引擎私有介面）；舊引擎與它依賴的 `api_call_handler.py` 已隨舊鏈一起砍掉，
+狀態子集抽成 `AgentSessionStore`，四個方法**改公開名**（`start`／`save`／`close`
+不再帶底線）。SQL 與簽章逐字未變，`app.state` 的注入鍵也從 `conversational_engine`
+改名 `agent_session_store`（見 `mcp_facade._open_state_store`）。
 
 ## fail-closed
 `api_key_id`／`vendor_id` 缺、或算出的鍵超過 `form_sessions.session_id`
@@ -67,10 +75,12 @@ SESSION_IDLE_TTL_S = 1800
 
 #: 過期戳在 `state["agent"]` 裡的鍵。
 #: ⚠️ **為什麼不看 `form_sessions.updated_at`**（security-reviewer S8-7）：
-#: 那個欄位**不存在**（實查 `services/conversational_engine.py` 的 `_save`：
-#: 它更新的是 `last_activity_at`，而 `get_state` 也不回這一欄）。照字面實作
-#: 只會得到一個永遠不過期的閘。故過期戳存進 state JSON，跟著既有
-#: `collected_data` 一起落地，⛔ 不新增 DB 欄位、⛔ 不另寫第二份 SQL。
+#: 那個欄位**不存在**（實查 `services/agent/session_persistence.py` 的
+#: `AgentSessionStore.save`：它更新的是 `last_activity_at`，而 `get_state`
+#: 也不回這一欄；原查證對象是舊鏈 `conversational_engine.py` 的 `_save`，
+#: SQL 逐字照搬過來，結論不變）。照字面實作只會得到一個永遠不過期的閘。
+#: 故過期戳存進 state JSON，跟著既有 `collected_data` 一起落地，⛔ 不新增
+#: DB 欄位、⛔ 不另寫第二份 SQL。
 LAST_TURN_AT_KEY = "last_turn_at"
 
 
@@ -156,21 +166,21 @@ class NamespacedStateStore:
         目前就是這條路徑，行為逐字不變，接上 `audience` 是 R3b 待辦）。
         """
         effective_key = config_key if config_key is not None else config_key_for(audience)
-        return await self._engine._start(
+        return await self._engine.start(
             self.key(session_id), user_id, vendor_id, effective_key, role_id=role_id
         )
 
     async def save(self, session_id: str, state: dict) -> None:
-        await self._engine._save(self.key(session_id), state)
+        await self._engine.save(self.key(session_id), state)
 
     async def close(self, session_id: str) -> None:
         """把這把鍵目前那列 `COLLECTING` 關掉（W8 (5) 過期換新）。
 
-        ⚠️ 轉呼 `ConversationalEngine._close`（同 `load`／`start`／`save` 的紀律：
-        ⛔ 不在本檔寫第二份 SQL）。`_close` 是 `state='COMPLETED'`，**不可逆**——
+        ⚠️ 轉呼 `AgentSessionStore.close`（同 `load`／`start`／`save` 的紀律：
+        ⛔ 不在本檔寫第二份 SQL）。`close` 是 `state='COMPLETED'`，**不可逆**——
         Plan §6 W8 回退欄已明列這個取捨（過期列本就不該再續）。
         """
-        await self._engine._close(self.key(session_id))
+        await self._engine.close(self.key(session_id))
 
 
 __all__ = [

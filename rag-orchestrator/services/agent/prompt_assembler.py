@@ -347,9 +347,10 @@ class PromptAssembler:
     `persona_provider`／`policy_provider` 由呼叫端注入（`(Identity) -> str`）。
     ⛔ 本檔不自帶 persona／政策文字、⛔ 不複製既有規則文字第二份——現行來源是
     `services/conversational_rules.py:load_rules`（DB `category='對話規則'`
-    → code fallback `CONVERSATIONAL_RULES_BY_ROLE`）與
-    `services/system_context.py:get_system_context`（DB `category='系統脈絡'`
-    → `MINIMAL_FALLBACK`），兩者皆為 async 且要 db_pool，接線屬任務 2.1。
+    → code fallback `CONVERSATIONAL_RULES_BY_ROLE`）與舊鏈的「系統脈絡」讀取
+    （DB `category='系統脈絡'` → `MINIMAL_FALLBACK`；原實作
+    `services/system_context.py:get_system_context` 已隨舊鏈於 2026-09-10
+    退役，語義描述保留供未來接線參考），兩者皆為 async 且要 db_pool，接線屬任務 2.1。
 
     ⚠️ **接線時要當成安全決策，⛔ 不要順手接**：上述兩個來源都是 DB 文字，
     「有 KB 寫入權＝有 system prompt 寫入權」正是 DSP-012／R11.6 對大綱關掉的

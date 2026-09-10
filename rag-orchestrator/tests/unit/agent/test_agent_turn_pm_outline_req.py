@@ -227,13 +227,15 @@ def _canon_dir_without_pm(tmp_path):
 
 
 class _FakeEngine:
+    """形狀對齊 `services.agent.session_persistence.AgentSessionStore`（公開方法名）。"""
+
     async def get_state(self, session_id):
         return None
 
-    async def _start(self, *a, **k):
+    async def start(self, *a, **k):
         return {}
 
-    async def _save(self, *a, **k):
+    async def save(self, *a, **k):
         return None
 
 
@@ -258,7 +260,7 @@ async def test_missing_pm_canon_skips_pm_only_and_fails_closed(monkeypatch, tmp_
     assert set(app.state.agent_outlines) == {"prospect"}
     assert app.state.agent_outline is app.state.agent_outlines["prospect"]
 
-    app.state.conversational_engine = _FakeEngine()
+    app.state.agent_session_store = _FakeEngine()
     deps = F.FacadeDeps(get_db_pool=lambda: None, get_app=lambda: app)
 
     # 門面層：pm ⇒ AGENT_UNAVAILABLE；prospect ⇒ 放行（preflight 回 None）
@@ -287,7 +289,7 @@ async def test_tool_fn_never_injects_another_audiences_outline():
     prospect_doc = await build_audience_outline("prospect")
     app = types.SimpleNamespace(state=types.SimpleNamespace(
         agent_runtime=_Runtime(),
-        conversational_engine=_FakeEngine(),
+        agent_session_store=_FakeEngine(),
         agent_outlines={"prospect": prospect_doc},
     ))
     deps = F.FacadeDeps(get_db_pool=lambda: None, get_app=lambda: app)

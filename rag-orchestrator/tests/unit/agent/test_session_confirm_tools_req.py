@@ -124,17 +124,6 @@ def test_handoff_reason_enum_covers_existing_four_and_two_new():
 
 
 @pytest.mark.req(_REQ)
-def test_handoff_signal_literal_matches_handoff_reason_value_for_value():
-    """`routers/chat.py:HandoffSignal.reason` 的 Literal 必須與 `HandoffReason` 逐值相同。"""
-    from typing import get_args
-
-    from routers.chat import HandoffSignal
-
-    literal_values = set(get_args(HandoffSignal.model_fields["reason"].annotation))
-    assert literal_values == {r.value for r in HandoffReason}
-
-
-@pytest.mark.req(_REQ)
 def test_parse_handoff_reason_rejects_unknown_and_non_str():
     assert parse_handoff_reason("tool_unavailable") is HandoffReason.tool_unavailable
     assert parse_handoff_reason("no_grounding") is HandoffReason.no_grounding  # 正對照組
@@ -358,8 +347,14 @@ def _confirm_pool():
 
 @pytest.mark.req(_REQ)
 async def test_confirm_request_returns_three_machine_values_reusing_engine_constants():
-    """DSP-038：`value` 改成 `<引擎前綴>:<pending_id>`，label 沿用引擎常數。"""
-    from services.conversational_engine import _DEFAULT_QR_LABELS, _QR_CANCEL, _QR_EDIT, _QR_SUBMIT
+    """DSP-038：`value` 改成 `<前綴>:<pending_id>`，label 沿用 `form_contract` 常數
+    （舊鏈隔離 S3 從 `conversational_engine` 抽出，值不變）。"""
+    from services.form_contract import (
+        DEFAULT_QR_LABELS as _DEFAULT_QR_LABELS,
+        QR_CANCEL as _QR_CANCEL,
+        QR_EDIT as _QR_EDIT,
+        QR_SUBMIT as _QR_SUBMIT,
+    )
 
     assert CONFIRM_QUICK_REPLY_VALUES == (_QR_SUBMIT, _QR_EDIT, _QR_CANCEL)
 

@@ -31,7 +31,9 @@
 已知缺口（留待業主裁決，見任務回報）：`ACCOUNT_FACE_BUILDERS` 的兩個鍵
 （`登入排障`／`團隊成員權限`）在既有系統中分別掛在**不同**主查資料源
 （`登入排障` 讀 `jgb_contracts` 合約列，`團隊成員權限` 讀 `jgb_team_members`
-成員列——見 `services/jgb_response_formatter.py:198` 起的既有分派），但 design
+成員列——原見舊鏈 `services/jgb_response_formatter.py:198` 起的既有分派，
+該模組已隨舊鏈於 2026-09-10 退役；這是 jgb2 資料模型本身的事實，不隨舊鏈
+存廢而變，只是失去了程式引用當佐證），但 design
 域映射表只給 accounts 域指定 `get_team_members`／`get_member_permissions`
 兩個 API。本工具的 `query_accounts` 因此**只**走成員/權限流程；`face="登入排障"`
 雖仍是合法 enum 值（不觸發 `INVALID_INPUT`），但套用成員流程會取不到
