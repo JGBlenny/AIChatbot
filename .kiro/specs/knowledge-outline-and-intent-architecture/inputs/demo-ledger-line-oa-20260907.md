@@ -379,7 +379,8 @@ line-bot 側：拍照鍵每回合保留（部署中）；「建立帳單」格�
 - 限額表 `7fdbf106`（DSP-045）：`limits.py` 五值、五讀取處、健檢 `checks.limits`、env 不再讀。
 - 整理：文件 `f16a7cb3`（3 歸檔、4 對碼修正、索引、inputs 索引）；程式 `ceccd1f0`（刪 `intent_manager.py`、移除 `user_role` 過渡、`AGENT_VERIFIER_OBSERVE_ONLY` 除役——⚠️ 部署時線上 `.env` 要刪該行；順帶發現 `cache_service.save_conversation` 不存在、呼叫恆被 try 吞掉，列債）。
 - fresh verifier CONFIRMED（R1／R1b／R2／限額）；smoke 前後對照見 Plan §1.4（判為抽樣變異）。單元 2707 綠（agent＋audit＋api）。
-- 待業主：#6（文件多版本關係）、#10（三個從未開旗標刪不刪）、`ENABLE_QUERY_REWRITE_B2B` 程式預設 true／部署 false 對齊方向、部署（第六批＋Plan R＋整理＋luna）。
+- R3 `1be85c01`：`agent_session.py`（`Lifetime` 六值、`KEY_SPECS` 11 鍵、`begin_turn`／`end_turn` 唯一寫點、`prompt_segments` 唯一讀點、`scope_exit()`；L8 `config_key_for(audience)`）；golden 逐位相同；直接寫 `agent_state[` 只剩 `mcp_facade.py` 的 `outline`（R3b）。文件第二批 `ea1583fc`（多版本關係標註、架構文 §1a／§6／§8／§9、MAP `#agentic-mcp`）。全套 agent＋audit＋api 2729 綠；main＝feat＝`1be85c01`。
+- 待業主：#10（三個從未開旗標刪不刪）、`ENABLE_QUERY_REWRITE_B2B` 程式預設 true／部署 false 對齊方向、`budget_exhausted` 連續轉人降級走既有閘（一行封閉條件）、golden 補第 3／4 道閘互換情境（verifier A1）、部署（第六批＋Plan R＋整理＋luna）。
 
 ## 2. demo 處理（這次就做，本機可驗）
 
