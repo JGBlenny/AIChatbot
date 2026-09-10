@@ -1,0 +1,2021 @@
+# 追溯矩陣（traceability matrix）
+
+> 缺口總數：**1990**（漸進式，預設警示不硬擋）
+
+## 需求 ↔ 測試 ↔ 文件
+
+| 需求 ID | 測試 | 文件章節 |
+|---|---|---|
+
+## 孤兒需求（無測試）（0）
+> R6.3：每條需求應 ≥1 測試。
+
+_（無）_
+
+## 孤兒測試（未標記需求・待標記）（372）
+> R6.5：漸進導入，未標記非錯誤，列為待補。
+
+- tests/test_usage_event_live_req.py::test_one_request_one_event_with_dimensions
+- tests/test_usage_event_live_req.py::test_internal_prefix_marked
+- tests/test_usage_event_live_req.py::test_non_message_path_zero_event
+- tests/test_usage_event_live_req.py::test_arbitration_request_records_scores
+- tests/test_usage_event_live_req.py::test_short_circuit_path_leaves_scores_null
+- tests/test_usage_stats_agg_req.py::test_totals_exclude_internal_by_default
+- tests/test_usage_stats_agg_req.py::test_session_first_day_attribution
+- tests/test_usage_stats_agg_req.py::test_include_internal_toggle
+- tests/test_usage_stats_agg_req.py::test_requery_idempotent
+- tests/test_usage_stats_agg_req.py::test_no_user_id_leak
+- tests/test_usage_stats_agg_req.py::test_bad_params_400
+- tests/test_bill_fixture_table_req.py::test_every_row_is_within_external_projection
+- tests/test_bill_fixture_table_req.py::test_projection_guard_bites_on_foreign_field
+- tests/test_bill_fixture_table_req.py::test_archive_at_is_not_in_projection
+- tests/test_bill_fixture_table_req.py::test_all_rows_share_the_same_key_set
+- tests/test_bill_fixture_table_req.py::test_lookup_is_by_id_not_position
+- tests/test_bill_fixture_table_req.py::test_unknown_id_returns_none
+- tests/test_bill_fixture_table_req.py::test_ids_are_unique
+- tests/test_bill_fixture_table_req.py::test_rows_returns_a_copy
+- tests/test_bill_fixture_table_req.py::test_minimum_shape_requirements
+- tests/test_bill_fixture_table_req.py::test_no_single_filter_reproduces_another_filters_result
+- tests/test_bill_fixture_table_req.py::test_each_pair_shares_exactly_one_dimension
+- tests/test_bill_fixture_table_req.py::test_month_filter_is_observable
+- tests/test_bill_fixture_table_req.py::test_ids_are_synthetic_ranges
+- tests/test_bill_mock_responses_req.py::test_missing_role_id_is_400
+- tests/test_bill_mock_responses_req.py::test_contract_filter_uses_fixture_matrix
+- tests/test_bill_mock_responses_req.py::test_status_and_type_filters_are_computed
+- tests/test_bill_mock_responses_req.py::test_bill_id_filter_converges_to_single_row
+- tests/test_bill_mock_responses_req.py::test_month_filter_is_derived_not_hardcoded
+- tests/test_bill_mock_responses_req.py::test_month_with_no_data_returns_empty_not_error
+- tests/test_bill_mock_responses_req.py::test_invalid_month_is_silently_ignored
+- tests/test_bill_mock_responses_req.py::test_month_range_is_inclusive_to_day_31_like_production
+- tests/test_bill_mock_responses_req.py::test_allowed_sort_fields_are_accepted
+- tests/test_bill_mock_responses_req.py::test_unsupported_sort_field_falls_back_like_production
+- tests/test_bill_mock_responses_req.py::test_invalid_sort_direction_falls_back_to_desc
+- tests/test_bill_mock_responses_req.py::test_per_page_is_capped_at_200
+- tests/test_bill_mock_responses_req.py::test_pagination_shape_and_has_more
+- tests/test_bill_mock_responses_req.py::test_default_per_page_is_50
+- tests/test_bill_mock_responses_req.py::test_detail_returns_projected_bill_without_pagination
+- tests/test_bill_mock_responses_req.py::test_detail_unknown_id_is_ambiguous_404
+- tests/test_bill_mock_responses_req.py::test_detail_missing_role_id_is_400
+- tests/test_bill_mock_responses_req.py::test_no_bill_ref_in_list_items
+- tests/test_bill_mock_responses_req.py::test_no_bill_ref_in_detail_item
+- tests/test_bill_mock_responses_req.py::test_every_returned_row_stays_within_projection
+- tests/test_bill_mock_responses_req.py::test_mapping_matches_production_labels
+- tests/test_chain_closure_assertion_req.py::test_framework_has_no_formatter_knowledge
+- tests/test_chain_closure_assertion_req.py::test_observed_keys_must_be_injected
+- tests/test_chain_closure_assertion_req.py::test_passes_when_both_dimensions_satisfied
+- tests/test_chain_closure_assertion_req.py::test_result_carries_not_covered_into_report
+- tests/test_chain_closure_assertion_req.py::test_delivery_failure_is_caught
+- tests/test_chain_closure_assertion_req.py::test_sufficiency_failure_is_caught_even_when_delivery_passes
+- tests/test_chain_closure_assertion_req.py::test_rejects_assertion_against_final_answer_object
+- tests/test_chain_closure_assertion_req.py::test_rejects_other_answer_like_shapes
+- tests/test_chain_closure_assertion_req.py::test_rejects_non_string_grounding
+- tests/test_chain_closure_assertion_req.py::test_rejects_empty_required_facts
+- tests/test_chain_closure_assertion_req.py::test_rejects_unknown_closure_scope
+- tests/test_chain_closure_assertion_req.py::test_numeric_bill_ref_is_the_only_declared_scope
+- tests/test_fact_extractors_req.py::test_diagnosis_extractor_on_real_formatter_output
+- tests/test_fact_extractors_req.py::test_anomaly_extractor_on_real_formatter_output
+- tests/test_fact_extractors_req.py::test_two_extractors_share_one_canonical_key_space
+- tests/test_fact_extractors_req.py::test_extractors_return_observations_not_verdicts
+- tests/test_fact_extractors_req.py::test_status_observed_regardless_of_typography
+- tests/test_fact_extractors_req.py::test_billing_period_observed_regardless_of_bullet
+- tests/test_fact_extractors_req.py::test_prose_mentioning_status_is_not_a_fact
+- tests/test_fact_extractors_req.py::test_prose_mentioning_amount_is_not_a_fact
+- tests/test_fact_extractors_req.py::test_amount_requires_the_stored_value_context
+- tests/test_fact_extractors_req.py::test_empty_label_value_is_not_a_fact
+- tests/test_fact_extractors_req.py::test_unknown_bracket_key_is_ignored
+- tests/test_fact_extractors_req.py::test_diagnosis_extractor_ignores_anomaly_syntax
+- tests/test_fact_extractors_req.py::test_anomaly_extractor_ignores_bracket_syntax
+- tests/test_fact_extractors_req.py::test_diagnosis_observes_amount_due_from_real_formatter
+- tests/test_fact_extractors_req.py::test_amount_due_requires_the_money_rendering
+- tests/test_fact_extractors_req.py::test_amount_due_not_observed_when_value_missing
+- tests/test_fact_extractors_req.py::test_amount_due_is_not_keyword_spotting
+- tests/test_fact_extractors_req.py::test_amount_due_and_amount_stored_stay_distinct
+- tests/test_transport_endpoint_resolution_req.py::test_static_path_matches_exactly
+- tests/test_transport_endpoint_resolution_req.py::test_template_matches_single_segment_and_extracts_param
+- tests/test_transport_endpoint_resolution_req.py::test_placeholder_does_not_eat_two_segments
+- tests/test_transport_endpoint_resolution_req.py::test_extra_segment_does_not_match
+- tests/test_transport_endpoint_resolution_req.py::test_missing_segment_does_not_match
+- tests/test_transport_endpoint_resolution_req.py::test_empty_placeholder_value_does_not_match
+- tests/test_transport_endpoint_resolution_req.py::test_static_segment_must_be_identical
+- tests/test_transport_endpoint_resolution_req.py::test_resolve_list_endpoint
+- tests/test_transport_endpoint_resolution_req.py::test_detail_path_with_arbitrary_id
+- tests/test_transport_endpoint_resolution_req.py::test_unknown_path_resolves_to_none_without_guessing
+- tests/test_transport_endpoint_resolution_req.py::test_method_is_part_of_identity
+- tests/test_transport_endpoint_resolution_req.py::test_ambiguous_templates_fail_loudly
+- tests/test_transport_endpoint_resolution_req.py::test_routes_registry_has_no_duplicate_keys
+- tests/test_transport_endpoint_resolution_req.py::test_resolver_does_not_consult_migration_state
+- tests/test_transport_migration_gate_req.py::test_unresolvable_endpoint_fails_loudly
+- tests/test_transport_migration_gate_req.py::test_resolved_but_unmigrated_endpoint_fails_loudly
+- tests/test_transport_migration_gate_req.py::test_migrated_but_missing_fixture_fails_loudly
+- tests/test_transport_migration_gate_req.py::test_no_real_network_touched_on_any_path
+- tests/test_transport_migration_gate_req.py::test_mock_transport_holds_no_real_transport
+- tests/test_transport_migration_gate_req.py::test_resolver_still_ignores_migration_state
+- tests/test_transport_migration_gate_req.py::test_migrated_endpoints_holds_identities_not_paths
+- tests/test_transport_migration_gate_req.py::test_admission_set_keys_all_exist_in_routes
+- tests/test_transport_migration_gate_req.py::test_detail_identity_unchanged_by_43
+- tests/test_debug_info_comparison_wire_req.py::test_meter_calls_set_comparison_with_scores
+- tests/test_debug_info_comparison_wire_req.py::test_meter_skips_when_no_comparison
+- tests/test_debug_info_comparison_wire_req.py::test_meter_skips_when_empty_comparison
+- tests/test_debug_info_comparison_wire_req.py::test_meter_metering_failure_is_isolated
+- tests/test_debug_info_comparison_wire_req.py::test_build_debug_info_no_longer_wires_comparison
+- tests/test_account_face_builders_req.py::test_unregistered_gives_registration_guidance
+- tests/test_account_face_builders_req.py::test_registered_with_mismatched_login_email_suggests_wrong_account
+- tests/test_account_face_builders_req.py::test_registered_and_matched_turns_to_role_view_and_password
+- tests/test_account_face_builders_req.py::test_missing_registration_field_degrades_honestly
+- tests/test_account_face_builders_req.py::test_ciphertext_login_email_treated_unavailable
+- tests/test_account_face_builders_req.py::test_no_verification_code_value_ever
+- tests/test_account_face_builders_req.py::test_face_none_and_unknown_face_identity
+- tests/test_account_face_builders_req.py::test_login_face_routes_to_accounts_builder
+- tests/test_account_face_builders_req.py::test_contract_faces_still_route_to_contract_builders
+- tests/test_account_face_builders_req.py::test_registry_shape
+- tests/test_account_face_builders_req.py::test_team_owner_sees_all_no_permission_issue
+- tests/test_account_face_builders_req.py::test_team_owner_scoped_bill_invisible_explains_and_confirms
+- tests/test_account_face_builders_req.py::test_team_full_visibility_flag_says_should_see
+- tests/test_account_face_builders_req.py::test_team_no_permission_flag_at_all
+- tests/test_account_face_builders_req.py::test_team_degrades_without_permissions_attach
+- tests/test_account_face_builders_req.py::test_team_owner_scoped_generic_without_resource
+- tests/test_account_face_builders_req.py::test_ga1_found_false_routes_to_support
+- tests/test_account_face_builders_req.py::test_ga1_not_registered_gives_invite_link
+- tests/test_account_face_builders_req.py::test_ga1_registered_but_email_unverified
+- tests/test_account_face_builders_req.py::test_ga1_registered_verified_turns_to_login_ops
+- tests/test_account_face_builders_req.py::test_ga1_no_pii_ever_across_states
+- tests/test_account_face_builders_req.py::test_ga1_absent_falls_back_to_contract_logic
+- tests/test_anchor_single_shot_guard_req.py::test_drop_empty_answer_rows_filters_anchors
+- tests/test_anchor_single_shot_guard_req.py::test_drop_empty_answer_rows_tolerates_none_and_empty
+- tests/test_anchor_single_shot_guard_req.py::test_all_anchors_filtered_leaves_empty_list
+- tests/test_anchor_single_shot_guard_req.py::test_form_trigger_rows_with_empty_answer_kept
+- tests/test_applicability_decision_matrix_req.py::test_six_cell_matrix
+- tests/test_applicability_decision_matrix_req.py::test_face_not_required_is_never_hit_by_instance_rules
+- tests/test_applicability_decision_matrix_req.py::test_decision_is_a_pure_function
+- tests/test_applicability_decision_matrix_req.py::test_unknown_never_collapses_into_general_or_false
+- tests/test_applicability_decision_matrix_req.py::test_unknown_and_ineligible_are_distinct_results
+- tests/test_applicability_decision_matrix_req.py::test_3509_shape_stays_unknown_despite_us_knowing_it_is_instance
+- tests/test_applicability_decision_matrix_req.py::test_contract_module_has_no_inference_surface
+- tests/test_applicability_decision_matrix_req.py::test_live_predicate_truth_table_unchanged
+- tests/test_applicability_decision_matrix_req.py::test_gate_scope_unchanged_and_still_paused
+- tests/test_applicability_decision_matrix_req.py::test_consumer_is_wired_at_the_level_a_seam_only
+- tests/test_bill_diagnosis_facet_req.py::test_face_registered
+- tests/test_bill_diagnosis_facet_req.py::test_cannot_send_already_sent_deterministic
+- tests/test_bill_diagnosis_facet_req.py::test_cannot_send_draft_missing_details
+- tests/test_bill_diagnosis_facet_req.py::test_manual_complete_routes_by_keyword
+- tests/test_bill_diagnosis_facet_req.py::test_secondary_detail_attached_is_merged
+- tests/test_bill_diagnosis_facet_req.py::test_candidate_pick_turn_emits_full_verdicts
+- tests/test_bill_diagnosis_facet_req.py::test_cancel_verdict_ready_is_cancellable
+- tests/test_bill_diagnosis_facet_req.py::test_cancel_verdict_scheduled_is_cancellable
+- tests/test_bill_diagnosis_facet_req.py::test_cancel_verdict_draft_needs_no_cancel
+- tests/test_bill_diagnosis_facet_req.py::test_cancel_verdict_paid_not_cancellable
+- tests/test_bill_diagnosis_facet_req.py::test_receipt_unpaid_says_no_receipt_yet
+- tests/test_bill_diagnosis_facet_req.py::test_receipt_paid_gives_receipt_amount
+- tests/test_bill_diagnosis_facet_req.py::test_receipt_paid_zero_final_total_uses_bill_total
+- tests/test_bill_diagnosis_facet_req.py::test_receipt_paid_final_total_differs_flags_actual_received
+- tests/test_bill_diagnosis_facet_req.py::test_other_faces_unaffected
+- tests/test_bill_face_builders_req.py::test_bill_status_falls_back_to_bit_status_for_legacy_rows
+- tests/test_bill_face_builders_req.py::test_all_four_registered
+- tests/test_bills_contract_param_req.py::test_contract_filter_uses_singular_param
+- tests/test_bills_contract_param_req.py::test_client_side_guard_filters_foreign_bills
+- tests/test_bills_contract_param_req.py::test_bill_ref_name_resolves_contract_then_filters
+- tests/test_bills_contract_param_req.py::test_rows_without_contract_id_not_nuked
+- tests/test_capability_restoration_req.py::test_invoice_logs_attach_reaches_issue_failure_engine
+- tests/test_capability_restoration_req.py::test_invoice_facts_without_attach_does_not_fabricate
+- tests/test_capability_restoration_req.py::test_bill_detail_attach_reaches_atm_engine
+- tests/test_capability_restoration_req.py::test_payment_flow_without_detail_does_not_fabricate
+- tests/test_capability_restoration_req.py::test_non_atm_question_does_not_trigger_atm_engine
+- tests/test_capability_restoration_req.py::test_single_object_secondary_is_wrapped_not_dropped
+- tests/test_capability_restoration_req.py::test_subscription_face_scope_is_narrow
+- tests/test_capability_restoration_req.py::test_subscription_face_declares_existing_capability_only
+- tests/test_capability_restoration_req.py::test_subscription_category_is_prepended_not_appended
+- tests/test_capability_restoration_req.py::test_migration_does_not_touch_3507
+- tests/test_contract_keyword_fallback_req.py::test_exact_keyword_hit_no_fallback
+- tests/test_contract_keyword_fallback_req.py::test_full_estate_name_falls_back_to_token_search
+- tests/test_contract_keyword_fallback_req.py::test_fallback_matches_prefixed_title_too
+- tests/test_contract_keyword_fallback_req.py::test_fallback_no_match_returns_empty
+- tests/test_contract_keyword_fallback_req.py::test_short_unsplittable_keyword_no_fallback
+- tests/test_estate_facets_req.py::test_estate_status_keyword_token_filter_title
+- tests/test_estate_facets_req.py::test_estate_status_keyword_matches_display_address
+- tests/test_estate_facets_req.py::test_estate_status_pure_digit_keyword_matches_id_first
+- tests/test_estate_facets_req.py::test_estate_status_int_keyword_tolerated
+- tests/test_estate_facets_req.py::test_estate_status_empty_result_returns_sentinel
+- tests/test_estate_facets_req.py::test_estate_status_api_empty_also_sentinel
+- tests/test_estate_facets_req.py::test_estate_status_rows_carry_status_zh_label_field
+- tests/test_estate_facets_req.py::test_estate_status_api_failure_degrades
+- tests/test_estate_facets_req.py::test_estate_detail_empty_id_degrades
+- tests/test_estate_facets_req.py::test_estate_detail_single_object_normalized_to_list
+- tests/test_estate_facets_req.py::test_facts_sentinel_wording_red_lines
+- tests/test_estate_facets_req.py::test_facts_status_translation
+- tests/test_estate_facets_req.py::test_facts_unknown_status_annotated_raw
+- tests/test_estate_facets_req.py::test_facts_contract_ready_when_filled_and_published
+- tests/test_estate_facets_req.py::test_facts_missing_fields_listed
+- tests/test_estate_facets_req.py::test_facts_not_published_states_contract_precondition
+- tests/test_estate_facets_req.py::test_facts_status4_no_axis_confusion
+- tests/test_estate_facets_req.py::test_facts_detail_absent_degrades_gracefully
+- tests/test_estate_facets_req.py::test_facts_pii_red_line
+- tests/test_estate_facets_req.py::test_face_none_returns_none
+- tests/test_estate_facets_req.py::test_face_unknown_returns_none
+- tests/test_estate_facets_req.py::test_face_diagnosis_dispatches
+- tests/test_estate_facets_req.py::test_formatter_routes_estate_status_endpoint
+- tests/test_estate_facets_req.py::test_registry_has_new_keys_and_old_key_untouched
+- tests/test_f_c27_form_input_key_contract_req.py::test_positive_control_migration_file_exists
+- tests/test_f_c27_form_input_key_contract_req.py::test_form_collects_exactly_one_field
+- tests/test_f_c27_form_input_key_contract_req.py::test_field_name_matches_resolver_input_contract
+- tests/test_f_c27_form_input_key_contract_req.py::test_prompt_is_exact
+- tests/test_f_c27_form_input_key_contract_req.py::test_field_is_required
+- tests/test_f_c27_form_input_key_contract_req.py::test_migration_is_additive_only
+- tests/test_f_c27_form_input_key_contract_req.py::test_rollback_targets_only_this_identity
+- tests/test_f_c27_form_input_key_contract_req.py::test_legacy_form_id_is_not_reused
+- tests/test_f_c28_session_contract_persistable_req.py::test_positive_control_validator_reads_something
+- tests/test_f_c28_session_contract_persistable_req.py::test_every_validated_field_is_declared_persistable
+- tests/test_f_c28_session_contract_persistable_req.py::test_builder_output_covers_every_persisted_field
+- tests/test_f_c28_session_contract_persistable_req.py::test_persisted_declaration_is_single_source_in_writer
+- tests/test_f_c28_session_contract_persistable_req.py::test_restore_must_not_derive_on_complete_action
+- tests/test_f_c28_session_contract_persistable_req.py::test_show_knowledge_in_responsibility_mode_is_red
+- tests/test_f_c28_session_contract_persistable_req.py::test_fully_persisted_session_validates
+- tests/test_face_requirement_population_req.py::test_gate_still_inactive_after_population
+- tests/test_face_requirement_population_req.py::test_declared_face_becomes_gate_applicable_only_within_rollout_scope
+- tests/test_face_requirement_population_req.py::test_suppression_requires_gate_active_not_just_declaration
+- tests/test_face_requirement_population_req.py::test_cross_product_now_resolves_for_declared_pairs
+- tests/test_face_requirement_population_req.py::test_counter_matrix_execution_shape_is_not_responsibility
+- tests/test_instance_applicability_contract_req.py::test_declared_values_are_read_verbatim
+- tests/test_instance_applicability_contract_req.py::test_missing_or_malformed_is_unknown_never_general
+- tests/test_instance_applicability_contract_req.py::test_execution_capability_never_derives_applicability
+- tests/test_instance_applicability_contract_req.py::test_unknown_grants_no_positive_authorization
+- tests/test_instance_applicability_contract_req.py::test_face_requirement_is_tri_state
+- tests/test_instance_applicability_contract_req.py::test_p1a_does_not_change_live_routing_predicate
+- tests/test_iot_meter_facets_req.py::test_meters_missing_role_id_degrades
+- tests/test_iot_meter_facets_req.py::test_meters_keyword_filters_by_estate_name
+- tests/test_iot_meter_facets_req.py::test_meters_keyword_filters_by_meter_name
+- tests/test_iot_meter_facets_req.py::test_meters_keyword_no_match_returns_empty_not_raise
+- tests/test_iot_meter_facets_req.py::test_meters_no_keyword_returns_all
+- tests/test_iot_meter_facets_req.py::test_meters_requests_full_page_and_passes_estate_id
+- tests/test_iot_meter_facets_req.py::test_meters_upstream_failure_degrades_to_empty
+- tests/test_iot_meter_facets_req.py::test_meters_registered_in_api_registry
+- tests/test_iot_meter_facets_req.py::test_offline_dae_snapshot_wording_and_account_cause
+- tests/test_iot_meter_facets_req.py::test_offline_miezo_no_synced_at_degrades_wording
+- tests/test_iot_meter_facets_req.py::test_online_topup_exhausted_gives_auto_repower
+- tests/test_iot_meter_facets_req.py::test_online_poweroff_non_topup_points_to_mode_switch
+- tests/test_iot_meter_facets_req.py::test_online_poweroff_topup_with_sufficient_balance_is_switch_not_exhausted
+- tests/test_iot_meter_facets_req.py::test_online_poweron_normal_turns_to_hardware
+- tests/test_iot_meter_facets_req.py::test_status_decode_carries_reading_verbatim
+- tests/test_iot_meter_facets_req.py::test_meter_face_builders_registry
+- tests/test_iot_meter_facets_req.py::test_formatter_dispatches_jgb_meters_by_face
+- tests/test_iot_meter_facets_req.py::test_meters_keyword_tokenized_multiword_colloquial
+- tests/test_iot_meter_facets_req.py::test_meters_keyword_tokenized_partial_no_match
+- tests/test_iot_meter_facets_req.py::test_meters_keyword_matches_meter_id_for_refine
+- tests/test_iot_meter_facets_req.py::test_meters_keyword_int_type_tolerant
+- tests/test_iot_meter_facets_req.py::test_team_members_keyword_int_type_tolerant
+- tests/test_p1f_authority_transfer_req.py::test_matrix
+- tests/test_p1f_authority_transfer_req.py::test_unknown_reason_is_not_disguised_as_general
+- tests/test_p1f_authority_transfer_req.py::test_gate_off_never_suppresses
+- tests/test_p1f_authority_transfer_req.py::test_non_level_a_faces_unchanged
+- tests/test_p1f_authority_transfer_req.py::test_mutation_general_to_instance_flips_to_retained
+- tests/test_p1f_authority_transfer_req.py::test_mutation_instance_to_general_flips_to_suppressed
+- tests/test_p1f_authority_transfer_req.py::test_mutation_face_requirement_flip
+- tests/test_p1f_authority_transfer_req.py::test_lexical_block_cannot_suppress_a_declared_instance_row
+- tests/test_p1f_authority_transfer_req.py::test_lexical_allow_cannot_rescue_a_declared_general_row
+- tests/test_p1f_authority_transfer_req.py::test_suppression_seam_does_not_consult_lexical_evidence
+- tests/test_p1g_transport_contract_req.py::test_producer_row_supplies_every_key_the_gate_needs
+- tests/test_p1g_transport_contract_req.py::test_projection_present_in_every_sql_select
+- tests/test_p1g_transport_contract_req.py::test_producer_does_not_normalize_the_value
+- tests/test_p1g_transport_contract_req.py::test_three_state_transport_on_production_shape
+- tests/test_p1g_transport_contract_req.py::test_missing_declaration_never_becomes_general_on_production_shape
+- tests/test_p1g_transport_contract_req.py::test_mutation_removing_transport_field_breaks_the_contract
+- tests/test_p1g_transport_contract_req.py::test_mutation_projection_returning_null_makes_instance_and_general_indistinguishable
+- tests/test_p1g_transport_contract_req.py::test_generation_metadata_is_not_a_production_transport_shape
+- tests/test_relevance_gate_req.py::test_relevant_top1_passes_through
+- tests/test_relevance_gate_req.py::test_irrelevant_top1_promotes_next
+- tests/test_relevance_gate_req.py::test_all_irrelevant_returns_empty_for_honest_fallback
+- tests/test_relevance_gate_req.py::test_high_vector_similarity_does_not_skip_gate_by_default
+- tests/test_relevance_gate_req.py::test_high_vector_similarity_skips_gate_when_explicitly_enabled
+- tests/test_relevance_gate_req.py::test_form_trigger_rows_not_gated
+- tests/test_relevance_gate_req.py::test_llm_failure_fails_open
+- tests/test_relevance_gate_req.py::test_disabled_by_env
+- tests/test_repair_slot_wiring_req.py::test_each_required_slot_reaches_payload_with_same_value
+- tests/test_repair_slot_wiring_req.py::test_each_required_slot_is_a_create_repair_parameter
+- tests/test_repair_slot_wiring_req.py::test_key_mutation_breaks_payload
+- tests/test_repair_slot_wiring_req.py::test_drop_mutation_makes_create_repair_uncallable
+- tests/test_repair_slot_wiring_req.py::test_emergency_status_has_a_default_and_that_is_why_it_is_required_by_config
+- tests/test_repair_slot_wiring_req.py::test_only_slot_zero_is_index_sensitive
+- tests/test_repair_slot_wiring_req.py::test_candidates_declare_their_target_slot
+- tests/test_repair_slot_wiring_req.py::test_engine_prefers_candidate_declared_slot
+- tests/test_s1a_artifact_validator_req.py::test_positive_control_real_artifacts_validate
+- tests/test_s1a_artifact_validator_req.py::test_positive_control_sandbox_copy_validates
+- tests/test_s1a_artifact_validator_req.py::test_missing_artifact_is_red
+- tests/test_s1a_artifact_validator_req.py::test_tampered_registry_is_epoch_mismatch
+- tests/test_s1a_artifact_validator_req.py::test_tampered_embeddings_is_digest_mismatch
+- tests/test_s1a_artifact_validator_req.py::test_manifest_epoch_mismatch_is_red
+- tests/test_s1a_artifact_validator_req.py::test_embeddings_epoch_mismatch_is_red
+- tests/test_s1a_artifact_validator_req.py::test_stale_manifest_without_embeddings_digest_is_red
+- tests/test_s1a_artifact_validator_req.py::test_embedding_count_mismatch_is_red
+- tests/test_s1a_artifact_validator_req.py::test_embedding_dimension_mismatch_is_red
+- tests/test_s1a_artifact_validator_req.py::test_uncovered_responsibility_is_red
+- tests/test_s1a_artifact_validator_req.py::test_pinned_digest_mismatch_is_red
+- tests/test_s1a_artifact_validator_req.py::test_pinned_digest_match_is_green
+- tests/test_s1b_responsibility_telemetry_req.py::test_observation_runs_through_to_winner
+- tests/test_s1b_responsibility_telemetry_req.py::test_observation_declares_zero_authority
+- tests/test_s1b_responsibility_telemetry_req.py::test_observe_never_calls_build_responsibility_session
+- tests/test_s1b_responsibility_telemetry_req.py::test_removing_4640_removes_r29
+- tests/test_s1b_responsibility_telemetry_req.py::test_facet_name_alone_cannot_reconstitute_r29
+- tests/test_s1b_responsibility_telemetry_req.py::test_masked_binding_availability_does_not_change_winner
+- tests/test_s1b_responsibility_telemetry_req.py::test_winner_selected_before_availability_is_checked
+- tests/test_s1b_responsibility_telemetry_req.py::test_artifact_failure_is_error_not_no_nomination
+- tests/test_s1b_responsibility_telemetry_req.py::test_scorer_failure_is_error
+- tests/test_s1b_responsibility_telemetry_req.py::test_partial_rerank_response_is_error_not_silent
+- tests/test_s1b_responsibility_telemetry_req.py::test_error_log_line_is_explicit
+- tests/test_s1b_responsibility_telemetry_req.py::test_disabled_by_default
+- tests/test_s1b_responsibility_telemetry_req.py::test_cheap_gate_miss_never_invokes_scorer
+- tests/test_s1b_responsibility_telemetry_req.py::test_cheap_gate_miss_is_not_error_nor_no_nomination
+- tests/test_s1b_responsibility_telemetry_req.py::test_cheap_gate_hit_scores_all_nominated_not_only_allowlisted
+- tests/test_s1b_responsibility_telemetry_req.py::test_only_one_canonical_scoring_per_turn
+- tests/test_s1b_responsibility_telemetry_req.py::test_handoff_eligible_when_winner_in_allowlist_with_binding
+- tests/test_s1b_responsibility_telemetry_req.py::test_winner_not_in_allowlist_blocks_handoff_without_substitution
+- tests/test_s1b_responsibility_telemetry_req.py::test_winner_without_binding_is_explicit_failure_not_fallback
+- tests/test_s1b_responsibility_telemetry_req.py::test_empty_allowlist_keeps_s1_diagnostic_scoring
+- tests/test_skip_refine_candidates_req.py::test_skip_refine_lists_candidates_directly
+- tests/test_skip_refine_candidates_req.py::test_entity_noun_in_truncation_message
+- tests/test_skip_refine_candidates_req.py::test_default_refine_flow_unchanged
+- tests/test_embedding_utils_req.py::test_to_pgvector_format
+- tests/test_embedding_utils_req.py::test_to_pgvector_empty_raises
+- tests/test_query_rewriter_req.py::test_disabled_returns_empty
+- tests/test_query_rewriter_req.py::test_short_query_not_rewritten_and_no_llm_call
+- tests/test_query_rewriter_req.py::test_parses_multiline_and_excludes_original
+- tests/test_query_rewriter_req.py::test_empty_content_returns_empty
+- tests/test_query_rewriter_req.py::test_provider_error_falls_back_to_empty
+- tests/test_api_key_auth_req.py::test_exempt_paths
+- tests/test_api_key_auth_req.py::test_hash_key_is_sha256_hex_and_stable
+- tests/test_api_key_auth_req.py::test_auth_enforced_toggle
+- tests/test_sop_trigger_handler_req.py::test_none_mode_when_no_trigger_mode
+- tests/test_sop_trigger_handler_req.py::test_none_mode_when_next_action_none
+- tests/test_sop_trigger_handler_req.py::test_manual_mode_waits_for_keywords
+- tests/test_sop_trigger_handler_req.py::test_immediate_mode_asks_confirmation
+- tests/test_sop_trigger_handler_req.py::test_unknown_mode_falls_back_to_none
+- tests/test_param_source_lookup_req.py::test_flag_on_reads_lookup_tables
+- tests/test_param_source_lookup_req.py::test_default_reads_vendor_configs
+- tests/test_quota_req.py::test_no_quota_row_none
+- tests/test_quota_req.py::test_inactive_row_none
+- tests/test_quota_req.py::test_internal_traffic_none
+- tests/test_quota_req.py::test_metering_disabled_none
+- tests/test_quota_req.py::test_state_machine_boundaries
+- tests/test_quota_req.py::test_grace_mode_stays_warn
+- tests/test_quota_req.py::test_fail_open_on_db_error
+- tests/test_quota_req.py::test_cache_hit_within_ttl
+- tests/test_quota_req.py::test_blocked_body_pm_has_topup_guidance
+- tests/test_quota_req.py::test_blocked_body_non_pm_neutral
+- tests/test_quota_req.py::test_append_hint_pm_json
+- tests/test_quota_req.py::test_append_hint_skipped_for_non_pm
+- tests/test_quota_req.py::test_append_hint_non_json_safe
+- tests/test_quota_req.py::test_warn_email_claim_once_per_month
+- tests/test_quota_req.py::test_warn_email_failure_never_raises
+- tests/test_usage_metering_req.py::test_token_accumulation_equals_sum_of_calls
+- tests/test_usage_metering_req.py::test_internal_traffic_rules
+- tests/test_usage_metering_req.py::test_normal_traffic_not_internal
+- tests/test_usage_metering_req.py::test_user_type_derivation
+- tests/test_usage_metering_req.py::test_no_raw_message_stored
+- tests/test_usage_metering_req.py::test_finalize_idempotent_single_write
+- tests/test_usage_metering_req.py::test_write_failure_does_not_raise
+- tests/test_usage_metering_req.py::test_cost_known_model
+- tests/test_usage_metering_req.py::test_cost_unknown_model_left_null
+- tests/test_usage_metering_req.py::test_disabled_noop
+- tests/test_usage_metering_req.py::test_no_context_silent
+- tests/test_usage_metering_req.py::test_date_tpe_taipei_boundary
+- tests/test_usage_metering_req.py::test_set_comparison_no_context_silent
+- tests/test_usage_metering_req.py::test_set_comparison_decision_case_truncated
+- tests/test_usage_metering_req.py::test_set_comparison_after_finalized_noop
+- tests/test_usage_metering_req.py::test_to_row_without_score_cols
+- tests/test_usage_metering_req.py::test_to_row_undetected_omits_score_cols
+- tests/test_usage_metering_req.py::test_to_row_with_score_cols
+- tests/test_usage_metering_req.py::test_to_row_score_cols_present_but_none
+- tests/test_usage_metering_req.py::test_detect_score_cols_present
+- tests/test_usage_metering_req.py::test_detect_score_cols_absent
+- tests/test_usage_metering_req.py::test_detect_score_cols_failure_retryable
+- tests/test_usage_metering_req.py::test_detect_score_cols_cached_skips_query
+
+## 失效引用（宣告的需求 ID 不存在）（1618）
+> R6.4
+
+- tests/test_message_e2e_req.py::test_message_b2c_nonstream_returns_wellformed_response → testing-traceability:5.5（需求不存在）
+- tests/test_message_e2e_req.py::test_message_prospect_stream_event_sequence → testing-traceability:5.5（需求不存在）
+- tests/test_message_e2e_req.py::test_multiturn_same_session_accumulates_state → testing-traceability:5.5（需求不存在）
+- tests/test_message_e2e_req.py::test_conversation_to_form_transition → testing-traceability:5.5（需求不存在）
+- tests/test_message_e2e_req.py::test_sop_triggered_returns_vendor_sop_source → testing-traceability:5.3（需求不存在）
+- tests/test_message_e2e_req.py::test_form_fill_drives_to_completion → testing-traceability:5.4（需求不存在）
+- tests/test_message_e2e_req.py::test_message_invalid_requests_rejected_with_422 → testing-traceability:5.5（需求不存在）
+- tests/test_real_api_contract_smoke_req.py::test_drift_detector_sees_both_directions → conversational-routing-execution:4.4（需求不存在）
+- tests/test_real_api_contract_smoke_req.py::test_row_shape_violation_fails_loudly → conversational-routing-execution:4.4（需求不存在）
+- tests/test_real_api_contract_smoke_req.py::test_jgb_contracts_schema_has_not_drifted → conversational-routing-execution:4.4（需求不存在）
+- tests/test_real_api_contract_smoke_req.py::test_jgb_bills_schema_has_not_drifted → conversational-routing-execution:4.4（需求不存在）
+- tests/test_real_api_contract_smoke_req.py::test_jgb_bill_detail_schema_has_not_drifted → conversational-routing-execution:4.4（需求不存在）
+- tests/test_message_branches_characterization_req.py::test_reviewing_cancel_nonstream_returns_json → chat-flow-refactor:1.1（需求不存在）
+- tests/test_message_branches_characterization_req.py::test_reviewing_cancel_stream_returns_sse → chat-flow-refactor:1.1（需求不存在）
+- tests/test_message_branches_characterization_req.py::test_collecting_normal_nonstream_returns_json → chat-flow-refactor:1.1（需求不存在）
+- tests/test_message_branches_characterization_req.py::test_collecting_normal_stream_returns_sse → chat-flow-refactor:1.1（需求不存在）
+- tests/test_message_branches_characterization_req.py::test_image_nondamage_nonstream_returns_json → chat-flow-refactor:1.1（需求不存在）
+- tests/test_message_branches_characterization_req.py::test_image_nondamage_stream_returns_sse → chat-flow-refactor:1.1（需求不存在）
+- tests/test_message_branches_characterization_req.py::test_image_damage_stream_returns_sse → chat-flow-refactor:1.1（需求不存在）
+- tests/test_message_branches_characterization_req.py::test_editing_ignores_stream_returns_json → chat-flow-refactor:1.1（需求不存在）
+- tests/test_message_branches_gap_req.py::test_cache_hit_nonstream_returns_cached_json → chat-flow-refactor:5.1（需求不存在）
+- tests/test_message_branches_gap_req.py::test_cache_hit_stream_returns_sse → chat-flow-refactor:5.1（需求不存在）
+- tests/test_message_branches_gap_req.py::test_b2c_knowledge_stream_synthesis_event_sequence → chat-flow-refactor:1.2（需求不存在）
+- tests/test_message_branches_gap_req.py::test_reviewing_confirm_nonstream_returns_json → chat-flow-refactor:1.1（需求不存在）
+- tests/test_message_branches_gap_req.py::test_image_damage_nonstream_returns_json → chat-flow-refactor:1.1（需求不存在）
+- tests/test_message_branches_gap_req.py::test_digression_cancel_answers_pending_question_e2e → chat-flow-refactor:3.2（需求不存在）
+- tests/test_trigger_manual_flow_e2e_req.py::test_manual_trigger_full_flow → trigger-vocabulary-debt:1.2（需求不存在）
+- tests/test_trigger_manual_flow_e2e_req.py::test_manual_trigger_full_flow → trigger-vocabulary-debt:4.2（需求不存在）
+- tests/test_account_facets_e2e_req.py::test_login_multiturn_unregistered_branch → account-conversational-facets:3.3（需求不存在）
+- tests/test_account_facets_e2e_req.py::test_login_multiturn_registered_ok_branch → account-conversational-facets:3.3（需求不存在）
+- tests/test_account_facets_e2e_req.py::test_register_entry_then_mechanism_tokens → account-conversational-facets:2.2（需求不存在）
+- tests/test_account_facets_e2e_req.py::test_binding_entry_then_application_form_tokens → account-conversational-facets:4.2（需求不存在）
+- tests/test_account_facets_e2e_req.py::test_team_grounded_member_role_flags → account-conversational-facets:5.1（需求不存在）
+- tests/test_account_facets_e2e_req.py::test_cross_domain_switch_to_contract_sign → account-conversational-facets:10.5（需求不存在）
+- tests/test_account_facets_e2e_req.py::test_teaching_question_stays_single_shot → account-conversational-facets:10.3（需求不存在）
+- tests/test_billing_facets_e2e_req.py::test_payment_flow_multiturn_real_data_amount_verbatim → billing-conversational-facets:2.2（需求不存在）
+- tests/test_billing_facets_e2e_req.py::test_bill_anomaly_colloquial_entry → billing-conversational-facets:8.3（需求不存在）
+- tests/test_billing_facets_e2e_req.py::test_invoice_colloquial_entry_then_ground → billing-conversational-facets:8.3（需求不存在）
+- tests/test_billing_facets_e2e_req.py::test_late_fee_colloquial_entry → billing-conversational-facets:8.3（需求不存在）
+- tests/test_billing_facets_e2e_req.py::test_setup_guide_colloquial_entry → billing-conversational-facets:8.3（需求不存在）
+- tests/test_billing_facets_e2e_req.py::test_teaching_question_stays_single_shot → billing-conversational-facets:11.3（需求不存在）
+- tests/test_c4b_brain_grounding_e2e_req.py::test_c4b_brain_uses_grounding → conversational-routing-execution:3.2（需求不存在）
+- tests/test_c4b_gated_resolver_validation_req.py::test_gated_resolver_vertical_slice → face-exit-before-grounding:1（需求不存在）
+- tests/test_c4b_gated_resolver_validation_req.py::test_mid_session_scope_salvage → conversational-routing-execution:5.2（需求不存在）
+- tests/test_contract_diagnosis_e2e_req.py::test_ambiguous_then_identify_converges → conversational-diagnosis:8.3（需求不存在）
+- tests/test_contract_diagnosis_e2e_req.py::test_general_contract_knowledge_goes_static → conversational-diagnosis:8.4（需求不存在）
+- tests/test_contract_diagnosis_e2e_req.py::test_stream_contract_diagnosis_event_sequence → conversational-diagnosis:2.2（需求不存在）
+- tests/test_contract_diagnosis_e2e_req.py::test_zero_result_reasks → conversational-diagnosis:3.4（需求不存在）
+- tests/test_contract_diagnosis_e2e_req.py::test_multiple_results_list_then_select → conversational-diagnosis:3.5（需求不存在）
+- tests/test_contract_diagnosis_e2e_req.py::test_prospect_conversation_unchanged → conversational-diagnosis:7.1（需求不存在）
+- tests/test_contract_diagnosis_e2e_req.py::test_non_diagnosis_query_unchanged → conversational-diagnosis:7.2（需求不存在）
+- tests/test_contract_facets_e2e_req.py::test_change_tree_application_form_tokens → contract-conversational-facets:2.4（需求不存在）
+- tests/test_contract_facets_e2e_req.py::test_closeout_colloquial_entry_then_ground → contract-conversational-facets:8.3（需求不存在）
+- tests/test_contract_facets_e2e_req.py::test_renew_colloquial_entry_then_ground_degrades_without_g4 → contract-conversational-facets:8.3（需求不存在）
+- tests/test_contract_facets_e2e_req.py::test_sign_trouble_colloquial_entry_degrades_without_g1_g2 → contract-conversational-facets:8.3（需求不存在）
+- tests/test_contract_facets_e2e_req.py::test_create_guide_entry_then_scope_switch_reroute → contract-conversational-facets:8.3（需求不存在）
+- tests/test_contract_facets_e2e_req.py::test_specific_operation_question_stays_single_shot → contract-conversational-facets:11.4（需求不存在）
+- tests/test_domain_facets_e2e_req.py::test_single_contract_converges_with_domain_context → domain-conversational-facets:5.3（需求不存在）
+- tests/test_domain_facets_e2e_req.py::test_multi_candidates_carry_distinguishing_period → domain-conversational-facets:4.1（需求不存在）
+- tests/test_domain_facets_e2e_req.py::test_too_many_candidates_asks_to_refine → domain-conversational-facets:8.3（需求不存在）
+- tests/test_domain_facets_e2e_req.py::test_general_contract_knowledge_goes_static → domain-conversational-facets:8.2（需求不存在）
+- tests/test_domain_facets_e2e_req.py::test_presales_not_regressed → domain-conversational-facets:7.1（需求不存在）
+- tests/test_estate_facets_e2e_req.py::test_guide_display_address_multiturn → estate-conversational-facets:3.1（需求不存在）
+- tests/test_estate_facets_e2e_req.py::test_guide_save_behavior_cold → estate-conversational-facets:2.2（需求不存在）
+- tests/test_estate_facets_e2e_req.py::test_diag_real_estate_status → estate-conversational-facets:4.2（需求不存在）
+- tests/test_estate_facets_e2e_req.py::test_diag_sentinel_then_correction → estate-conversational-facets:4.2（需求不存在）
+- tests/test_estate_facets_e2e_req.py::test_boundary_contract_sentence_not_estate → estate-conversational-facets:7.2（需求不存在）
+- tests/test_iot_facets_e2e_req.py::test_meter_entry_then_degraded_no_fabrication → iot-conversational-facets:2.2（需求不存在）
+- tests/test_iot_facets_e2e_req.py::test_setup_entry_then_mechanism_tokens → iot-conversational-facets:3.1（需求不存在）
+- tests/test_iot_facets_e2e_req.py::test_topup_price_question_mechanism → iot-conversational-facets:5.2（需求不存在）
+- tests/test_iot_facets_e2e_req.py::test_cross_domain_switch_to_billing → iot-conversational-facets:6.2（需求不存在）
+- tests/test_iot_facets_e2e_req.py::test_doorlock_hardware_stays_single_shot → iot-conversational-facets:4.1（需求不存在）
+- tests/test_iot_facets_e2e_req.py::test_meter_real_data_multiturn_candidates_then_ground → iot-conversational-facets:9.3（需求不存在）
+- tests/test_r1_face_exit_reproduction_req.py::test_r1_goal_a_reroute_residue → face-exit-before-grounding:1（需求不存在）
+- tests/test_r1_face_exit_reproduction_req.py::test_r1_goal_b_billing_anomaly_runtime_verdict → face-exit-before-grounding:1（需求不存在）
+- tests/test_r1b2_contract_closeout_scope_req.py::test_b2_contract_closeout_scope_verdict → face-exit-before-grounding:1（需求不存在）
+- tests/test_r1b_prime_insession_scope_req.py::test_b_prime_insession_scope_verdict → face-exit-before-grounding:1（需求不存在）
+- tests/test_repair_kb_digression_e2e_req.py::test_repair_digression_invokes_search_kb → brain-kb-grounding:5.2（需求不存在）
+- tests/test_repair_scenarios_e2e_req.py::test_scenario_a_text_inference_creates_ticket → conversational-repair:7.3（需求不存在）
+- tests/test_repair_scenarios_e2e_req.py::test_scenario_a_with_image_three_turns → conversational-repair:7.3（需求不存在）
+- tests/test_repair_scenarios_e2e_req.py::test_scenario_b_digression_answered_then_resume → conversational-repair:7.3（需求不存在）
+- tests/test_repair_scenarios_e2e_req.py::test_scenario_c_vague_clarifies_then_enters → conversational-repair:7.3（需求不存在）
+- tests/test_repair_scenarios_e2e_req.py::test_scenario_d_edit_at_confirm_then_reconfirm → conversational-repair:7.3（需求不存在）
+- tests/test_repair_scenarios_e2e_req.py::test_scenario_e_progress_query_after_create → conversational-repair:7.3（需求不存在）
+- tests/test_repair_scenarios_e2e_req.py::test_scenario_f_trigger_facet_key_enters_same_facet → conversational-repair:7.3（需求不存在）
+- tests/test_repair_scenarios_e2e_req.py::test_idempotent_repeat_consent_no_duplicate → conversational-repair:7.3（需求不存在）
+- tests/test_repair_vendor_matrix_e2e_req.py::test_vendor_matrix_scenario_a_consistent → conversational-repair:6.4（需求不存在）
+- tests/test_repair_vendor_matrix_e2e_req.py::test_vendor_sop_switched_decision_case_not_sop → conversational-repair:6.4（需求不存在）
+- tests/test_repair_vendor_matrix_e2e_req.py::test_gate_disabled_returns_degraded_not_facet → conversational-repair:6.4（需求不存在）
+- tests/test_loop_sync_categories_integration_req.py::test_loop_sync_populates_categories → category-multi-select:1.1（需求不存在）
+- tests/test_multi_category_e2e_integration_req.py::test_multi_category_grounding_covers_every_topic → category-multi-select:3.1（需求不存在）
+- tests/test_multi_category_e2e_integration_req.py::test_grounding_by_parent_expands_to_children → category-multi-select:3.1（需求不存在）
+- tests/test_role_decoupling_invariants_integration_req.py::test_reserved_rows_readable_by_singular_category → category-multi-select:2.1（需求不存在）
+- tests/test_role_decoupling_invariants_integration_req.py::test_no_reserved_value_in_any_categories_array → category-multi-select:2.2（需求不存在）
+- tests/test_role_decoupling_invariants_integration_req.py::test_exclusion_predicate_excludes_reserved_rows → category-multi-select:5.2（需求不存在）
+- tests/test_account_facets_seed_integration_req.py::test_all_four_facets_enter_by_category → account-conversational-facets:1.2（需求不存在）
+- tests/test_account_facets_seed_integration_req.py::test_three_layer_context_isolated → account-conversational-facets:1.3（需求不存在）
+- tests/test_account_facets_seed_integration_req.py::test_login_trouble_grounds_three_branches → account-conversational-facets:3.3（需求不存在）
+- tests/test_account_facets_seed_integration_req.py::test_face_switch_register_to_binding_keeps_clues → account-conversational-facets:7.1（需求不存在）
+- tests/test_account_facets_seed_integration_req.py::test_cross_domain_switch_to_contract_sign → account-conversational-facets:7.2（需求不存在）
+- tests/test_account_flow_tree_integration_req.py::test_register_two_round_triage_then_category_grounding → account-conversational-facets:2.2（需求不存在）
+- tests/test_account_flow_tree_integration_req.py::test_binding_converge_carries_application_form_tokens → account-conversational-facets:4.2（需求不存在）
+- tests/test_account_flow_tree_integration_req.py::test_team_member_no_permission_flags → account-conversational-facets:5.1（需求不存在）
+- tests/test_account_flow_tree_integration_req.py::test_login_candidate_path_then_ground → account-conversational-facets:3.1（需求不存在）
+- tests/test_account_flow_tree_integration_req.py::test_login_ga1_secondary_three_state_and_masking → account-conversational-facets:9.2（需求不存在）
+- tests/test_account_flow_tree_integration_req.py::test_team_permission_full_three_hop_owner_scoped_invisible → account-conversational-facets:5.1（需求不存在）
+- tests/test_account_flow_tree_integration_req.py::test_team_permission_candidate_list_multiple_members → account-conversational-facets:5.1（需求不存在）
+- tests/test_account_flow_tree_integration_req.py::test_register_context_carries_incident_clause → account-conversational-facets:2.4（需求不存在）
+- tests/test_billing_facets_seed_integration_req.py::test_all_five_facets_enter_by_category → billing-conversational-facets:1.2（需求不存在）
+- tests/test_billing_facets_seed_integration_req.py::test_three_layer_context_isolated → billing-conversational-facets:1.3（需求不存在）
+- tests/test_billing_facets_seed_integration_req.py::test_face_switch_keeps_bill_and_secondary_attaches → billing-conversational-facets:8.1（需求不存在）
+- tests/test_billing_facets_seed_integration_req.py::test_setup_guide_scope_switch_closes_session → billing-conversational-facets:8.1（需求不存在）
+- tests/test_billing_flow_tree_integration_req.py::test_flow_ask_then_direct_hit_with_cvs_schedule → billing-conversational-facets:2.2（需求不存在）
+- tests/test_billing_flow_tree_integration_req.py::test_flow_contract_name_resolves_to_bill_candidates → billing-conversational-facets:2.1（需求不存在）
+- tests/test_billing_flow_tree_integration_req.py::test_flow_ready_bill_gives_verification_guidance → billing-conversational-facets:2.2（需求不存在）
+- tests/test_billing_flow_tree_integration_req.py::test_cross_domain_switch_billing_to_contract → billing-conversational-facets:8.2（需求不存在）
+- tests/test_brain_kb_search_integration_req.py::test_kb_search_returns_string_no_crash → brain-kb-grounding:2.1（需求不存在）
+- tests/test_brain_kb_search_integration_req.py::test_kb_search_garbage_returns_no_match → brain-kb-grounding:3.2（需求不存在）
+- tests/test_brain_kb_search_integration_req.py::test_kb_search_context_isolation_no_crash → brain-kb-grounding:2.2（需求不存在）
+- tests/test_brain_kb_search_integration_req.py::test_kb_search_retriever_failure_degrades → brain-kb-grounding:4.1（需求不存在）
+- tests/test_c4a_bill_diagnosis_closure_req.py::test_c4a_diag_01_closure → conversational-routing-execution:3.1（需求不存在）
+- tests/test_c4a_bill_diagnosis_closure_req.py::test_c4a_diag_02_closure → conversational-routing-execution:3.1（需求不存在）
+- tests/test_c4a_bill_diagnosis_closure_req.py::test_sufficiency_still_bites_on_full_chain → conversational-routing-execution:3.1（需求不存在）
+- tests/test_c4a_bill_diagnosis_closure_req.py::test_ob3_binding_bites_when_fixture_mismatches → conversational-routing-execution:3.1（需求不存在）
+- tests/test_c4a_billing_anomaly_closure_req.py::test_c4a_anom_01_closure_with_both_source_values → conversational-routing-execution:3.3（需求不存在）
+- tests/test_c4a_billing_anomaly_closure_req.py::test_ob2_half_period_must_fail → conversational-routing-execution:3.3（需求不存在）
+- tests/test_c4a_billing_anomaly_closure_req.py::test_c4a_anom_02_closure → conversational-routing-execution:3.3（需求不存在）
+- tests/test_c4a_billing_anomaly_closure_req.py::test_sufficiency_bites_on_anomaly_path → conversational-routing-execution:3.3（需求不存在）
+- tests/test_c4a_billing_anomaly_closure_req.py::test_no_secondary_dispatch_even_though_detail_endpoint_was_called → conversational-routing-execution:3.3（需求不存在）
+- tests/test_contract_change_tree_integration_req.py::test_three_exit_facts_flow_by_status → contract-conversational-facets:2.2（需求不存在）
+- tests/test_contract_change_tree_integration_req.py::test_application_slot_collection_then_converge → contract-conversational-facets:2.4（需求不存在）
+- tests/test_contract_change_tree_integration_req.py::test_history_deletion_request_shared_exit → contract-conversational-facets:2.7（需求不存在）
+- tests/test_contract_change_tree_integration_req.py::test_g5_permission_block_when_status_editable → contract-conversational-facets:7.4（需求不存在）
+- tests/test_contract_change_tree_integration_req.py::test_g5_status_block_disambiguated_with_permission → contract-conversational-facets:7.4（需求不存在）
+- tests/test_contract_facets_seed_integration_req.py::test_all_five_facets_enter_by_category → contract-conversational-facets:1.2（需求不存在）
+- tests/test_contract_facets_seed_integration_req.py::test_three_layer_context_per_facet_without_presales → contract-conversational-facets:1.3（需求不存在）
+- tests/test_contract_facets_seed_integration_req.py::test_domain_faces_contains_all_six → contract-conversational-facets:8.1（需求不存在）
+- tests/test_contract_facets_seed_integration_req.py::test_face_switch_keeps_locked_contract → contract-conversational-facets:8.2（需求不存在）
+- tests/test_contract_facets_seed_integration_req.py::test_create_guide_scope_switch_closes_session → contract-conversational-facets:8.1（需求不存在）
+- tests/test_diagnosis_routing_integration_req.py::test_category_hit_routes_to_conversation → conversational-diagnosis:1.1（需求不存在）
+- tests/test_diagnosis_routing_integration_req.py::test_category_hit_stream_contract → conversational-diagnosis:1.1（需求不存在）
+- tests/test_diagnosis_routing_integration_req.py::test_category_miss_keeps_existing_handling → conversational-diagnosis:1.2（需求不存在）
+- tests/test_diagnosis_routing_integration_req.py::test_engine_degrade_falls_back_not_blocked → conversational-diagnosis:7.2（需求不存在）
+- tests/test_e2_baseline_db_isolation_req.py::test_runtime_actually_connects_to_the_intended_database → E2_G1:1（需求不存在）
+- tests/test_e2_baseline_db_isolation_req.py::test_intended_database_is_not_a_production_like_name → E2_G1:2（需求不存在）
+- tests/test_e2_baseline_db_isolation_req.py::test_delegates_presence_matches_migration_ledger → E2_G2:1（需求不存在）
+- tests/test_e2_baseline_db_isolation_req.py::test_rollout_fixture_is_state_neutral → E2_G2:2（需求不存在）
+- tests/test_e2_baseline_db_isolation_req.py::test_clean_does_not_mean_empty → E2_G3:1（需求不存在）
+- tests/test_e2_baseline_db_isolation_req.py::test_required_schema_present → E2_G3:2（需求不存在）
+- tests/test_e2_baseline_db_isolation_req.py::test_e2_m1_wrong_rollback_path_makes_guard_red → E2_G4:1（需求不存在）
+- tests/test_e2_baseline_db_isolation_req.py::test_e2_m2_residue_would_make_sentinel_red → E2_G4:2（需求不存在）
+- tests/test_estate_facets_seed_integration_req.py::test_both_facets_enter_by_category → estate-conversational-facets:1.2（需求不存在）
+- tests/test_estate_facets_seed_integration_req.py::test_three_layer_context_isolated → estate-conversational-facets:1.3（需求不存在）
+- tests/test_estate_facets_seed_integration_req.py::test_diag_flow_status_and_missing_fields → estate-conversational-facets:4.2（需求不存在）
+- tests/test_estate_facets_seed_integration_req.py::test_diag_flow_multiple_candidates_with_status_label → estate-conversational-facets:4.1（需求不存在）
+- tests/test_estate_facets_seed_integration_req.py::test_diag_sentinel_not_generic_message → estate-conversational-facets:4.2（需求不存在）
+- tests/test_estate_facets_seed_integration_req.py::test_guide_category_convergence_has_grounding → estate-conversational-facets:2.1（需求不存在）
+- tests/test_estate_facets_seed_integration_req.py::test_guide_two_turn_triage_then_converge_real_knowledge → estate-conversational-facets:2.2（需求不存在）
+- tests/test_estate_facets_seed_integration_req.py::test_diag_status4_negotiating_no_axis_confusion → estate-conversational-facets:4.2（需求不存在）
+- tests/test_estate_facets_seed_integration_req.py::test_diag_switch_out_on_howto → estate-conversational-facets:5.3（需求不存在）
+- tests/test_estate_facets_seed_integration_req.py::test_guide_switch_out_on_case_specific → estate-conversational-facets:5.3（需求不存在）
+- tests/test_f_c23_knowledge_scope_containment_req.py::test_r26_still_covers_all_canonical_elements → FC23_R26:1（需求不存在）
+- tests/test_f_c23_knowledge_scope_containment_req.py::test_r26_no_longer_describes_the_scheduled_mechanism → FC23_R26:2（需求不存在）
+- tests/test_f_c23_knowledge_scope_containment_req.py::test_r26_does_not_answer_r27_cross_version_comparison → FC23_R26:3（需求不存在）
+- tests/test_f_c23_knowledge_scope_containment_req.py::test_r26_answer_digest_is_pinned → FC23_R26:4（需求不存在）
+- tests/test_f_c23_knowledge_scope_containment_req.py::test_fc23_negative_control_readding_second_mechanism_turns_red → FC23_M1:1（需求不存在）
+- tests/test_facet_diagnosis_multiturn_integration_req.py::test_multiturn_ambiguous_then_distinguishing_candidates → domain-conversational-facets:8.1（需求不存在）
+- tests/test_facet_diagnosis_multiturn_integration_req.py::test_single_row_converges_with_hybrid_three_level_context → domain-conversational-facets:5.3（需求不存在）
+- tests/test_facet_diagnosis_multiturn_integration_req.py::test_scope_switch_closes_session → mid-session-switch:3.3（需求不存在）
+- tests/test_facet_entry_equivalence_config_req.py::test_facet_declares_no_equivalence_breaking_keys → conversational-routing-execution:3.2（需求不存在）
+- tests/test_facet_entry_equivalence_config_req.py::test_both_config_indexes_resolve_to_same_object → conversational-routing-execution:3.2（需求不存在）
+- tests/test_facet_entry_routing_req.py::test_iot_openers_enter_dialog → iot-conversational-facets:6.3（需求不存在）
+- tests/test_facet_entry_routing_req.py::test_iot_teaching_stays_single_shot → iot-conversational-facets:9.2（需求不存在）
+- tests/test_facet_entry_routing_req.py::test_iot_boundary_no_misattraction → iot-conversational-facets:6.4（需求不存在）
+- tests/test_facet_entry_routing_req.py::test_estate_openers_enter_dialog → estate-conversational-facets:7.1（需求不存在）
+- tests/test_facet_entry_routing_req.py::test_estate_teaching_stays_single_shot → estate-conversational-facets:7.1（需求不存在）
+- tests/test_facet_entry_routing_req.py::test_estate_boundary_no_misattraction → estate-conversational-facets:7.2（需求不存在）
+- tests/test_facet_entry_routing_req.py::test_account_openers_enter_dialog → account-conversational-facets:7.3（需求不存在）
+- tests/test_facet_entry_routing_req.py::test_account_teaching_stays_single_shot → account-conversational-facets:10.2（需求不存在）
+- tests/test_facet_entry_routing_req.py::test_cross_domain_boundary_no_misattraction → account-conversational-facets:10.2（需求不存在）
+- tests/test_facet_entry_routing_req.py::test_billing_openers_enter_dialog → billing-conversational-facets:8.3（需求不存在）
+- tests/test_facet_entry_routing_req.py::test_billing_instance_questions_enter_diagnosis_facet → conversational-routing-execution:2.1（需求不存在）
+- tests/test_facet_entry_routing_req.py::test_billing_operation_questions_stay_single_shot → billing-conversational-facets:11.2（需求不存在）
+- tests/test_facet_entry_routing_req.py::test_vague_openers_enter_dialog → contract-conversational-facets:8.3（需求不存在）
+- tests/test_facet_entry_routing_req.py::test_operation_questions_stay_single_shot → contract-conversational-facets:11.2（需求不存在）
+- tests/test_instance_gate_seam_req.py::test_flag_off_and_requested_but_unauthorized_are_both_inert → routing-disambiguation:7.1（需求不存在）
+- tests/test_instance_gate_seam_req.py::test_rule_questions_are_suppressed_when_active → routing-disambiguation:1.2（需求不存在）
+- tests/test_instance_gate_seam_req.py::test_instance_questions_survive_activation → routing-disambiguation:1.1（需求不存在）
+- tests/test_instance_gate_seam_req.py::test_undecided_utterances_are_never_suppressed → routing-disambiguation:4.2（需求不存在）
+- tests/test_instance_gate_seam_req.py::test_category_order_cannot_bypass_suppression → routing-disambiguation:1.2（需求不存在）
+- tests/test_instance_gate_seam_req.py::test_suppression_does_not_leak_to_unmanaged_faces → routing-disambiguation:2.5（需求不存在）
+- tests/test_instance_gate_seam_req.py::test_exception_fails_open_and_is_not_disguised_as_abstain → routing-disambiguation:1.3（需求不存在）
+- tests/test_iot_facets_seed_integration_req.py::test_both_facets_enter_by_category → iot-conversational-facets:1.2（需求不存在）
+- tests/test_iot_facets_seed_integration_req.py::test_three_layer_context_isolated → iot-conversational-facets:1.3（需求不存在）
+- tests/test_iot_facets_seed_integration_req.py::test_meter_flow_filter_then_exhausted_branch → iot-conversational-facets:2.2（需求不存在）
+- tests/test_iot_facets_seed_integration_req.py::test_meter_flow_multiple_candidates → iot-conversational-facets:2.1（需求不存在）
+- tests/test_iot_facets_seed_integration_req.py::test_meter_flow_offline_snapshot_wording → iot-conversational-facets:2.3（需求不存在）
+- tests/test_iot_facets_seed_integration_req.py::test_setup_guide_category_grounding_and_face_switch → iot-conversational-facets:3.1（需求不存在）
+- tests/test_iot_facets_seed_integration_req.py::test_cross_domain_switch_to_billing → iot-conversational-facets:6.2（需求不存在）
+- tests/test_iot_facets_seed_integration_req.py::test_meter_flow_poweroff_switch_branch → iot-conversational-facets:2.2（需求不存在）
+- tests/test_iot_facets_seed_integration_req.py::test_meter_flow_normal_turns_hardware → iot-conversational-facets:2.2（需求不存在）
+- tests/test_iot_facets_seed_integration_req.py::test_setup_guide_two_round_triage → iot-conversational-facets:3.1（需求不存在）
+- tests/test_iot_facets_seed_integration_req.py::test_cross_domain_switch_to_account → iot-conversational-facets:6.2（需求不存在）
+- tests/test_level_a_scope_isolation_req.py::test_level_a_membership_is_not_bool_required_slots → routing-disambiguation:2.5（需求不存在）
+- tests/test_level_a_scope_isolation_req.py::test_faces_without_required_slots_are_never_members → routing-disambiguation:2.5（需求不存在）
+- tests/test_level_a_scope_isolation_req.py::test_membership_and_rollout_scope_are_two_separate_layers → routing-disambiguation:2.5（需求不存在）
+- tests/test_level_a_scope_isolation_req.py::test_in_rollout_scope_but_undeclared_is_not_governed → routing-disambiguation:2.5（需求不存在）
+- tests/test_level_a_scope_isolation_req.py::test_level_a_face_satisfies_both_layers → routing-disambiguation:2.5（需求不存在）
+- tests/test_level_a_scope_isolation_req.py::test_flag_on_does_not_change_faces_outside_level_a → routing-disambiguation:5.2（需求不存在）
+- tests/test_level_a_scope_isolation_req.py::test_isolation_check_catches_an_overbroad_gate → routing-disambiguation:5.2（需求不存在）
+- tests/test_level_a_scope_isolation_req.py::test_isolation_check_does_not_flag_a_correctly_scoped_gate → routing-disambiguation:5.2（需求不存在）
+- tests/test_level_a_scope_isolation_req.py::test_pending_erratum_faces_are_recorded_not_asserted → routing-disambiguation:2.5（需求不存在）
+- tests/test_multi_category_gate_scope_req.py::test_multi_category_rule_query_stays_single → routing-disambiguation:1.2（需求不存在）
+- tests/test_multi_category_gate_scope_req.py::test_multi_category_instance_query_still_enters_bill_diagnosis → routing-disambiguation:1.3（需求不存在）
+- tests/test_multi_category_gate_scope_req.py::test_flag_off_leaves_multi_category_behaviour_unchanged → routing-disambiguation:1.2（需求不存在）
+- tests/test_multi_category_gate_scope_req.py::test_case_shape_is_genuinely_multi_face → routing-disambiguation:1.2（需求不存在）
+- tests/test_multi_category_gate_scope_req.py::test_cases_come_from_frozen_protocol_v2 → routing-disambiguation:3.5（需求不存在）
+- tests/test_repair_entry_points_req.py::test_declared_entry_points_still_exist → conversational-routing-execution:5.3（需求不存在）
+- tests/test_repair_entry_points_req.py::test_category_routes_to_the_repair_facet → conversational-routing-execution:5.3（需求不存在）
+- tests/test_repair_entry_points_req.py::test_tenant_repair_intent_enters_the_facet → conversational-routing-execution:5.3（需求不存在）
+- tests/test_repair_entry_points_req.py::test_informational_questions_do_not_enter_repair → conversational-routing-execution:5.3（需求不存在）
+- tests/test_repair_image_ingest_integration_req.py::test_continuation_image_merges_into_persisted_session → conversational-repair:2.6（需求不存在）
+- tests/test_repair_image_ingest_integration_req.py::test_continuation_low_confidence_sets_candidates_persisted → conversational-repair:2.6（需求不存在）
+- tests/test_resolver_rollout_integration_req.py::test_chain_runs_from_migration_produced_config → face-exit-before-grounding:1（需求不存在）
+- tests/test_resolver_rollout_integration_req.py::test_scoped_gate_out_of_allowlist_is_untouched → face-exit-before-grounding:1（需求不存在）
+- tests/test_resolver_rollout_integration_req.py::test_scoped_gate_inside_allowlist_uses_resolver → face-exit-before-grounding:1（需求不存在）
+- tests/test_resolver_rollout_integration_req.py::test_gate_open_without_allowlist_is_fail_safe → face-exit-before-grounding:1（需求不存在）
+- tests/test_resolver_rollout_integration_req.py::test_fallback_paths_commit_nothing → face-exit-before-grounding:1（需求不存在）
+- tests/test_resolver_rollout_integration_req.py::test_unknown_delegate_fails_closed → face-exit-before-grounding:1（需求不存在）
+- tests/test_resolver_rollout_integration_req.py::test_resolver_telemetry_persists_to_usage_events → face-exit-before-grounding:1（需求不存在）
+- tests/test_responsibility_resolver_integration_req.py::test_preentry_context_matches_in_session → face-exit-before-grounding:1（需求不存在）
+- tests/test_responsibility_resolver_integration_req.py::test_resolution_commits_the_delegated_face_without_creating_sessions → face-exit-before-grounding:1（需求不存在）
+- tests/test_form_missing_prompt_regression_req.py::test_schema_load_normalizes_missing_prompt → testing-traceability:5.4（需求不存在）
+- tests/test_form_missing_prompt_regression_req.py::test_advance_field_does_not_crash_when_prompt_missing → testing-traceability:5.4（需求不存在）
+- tests/test_form_multifield_integration_req.py::test_demo_form_multifield_progression_to_review → testing-traceability:5.4（需求不存在）
+- tests/test_select_validation_regression_req.py::test_select_rejects_non_option_and_accepts_valid → testing-traceability:5.4（需求不存在）
+- tests/test_metering_db_req.py::test_metering_writes_one_row_with_ocr_mapping_path → documind-ocr-mapping:9.3（需求不存在）
+- tests/test_embedding_integration_req.py::test_real_embedding_returns_1536_vector → retrieval-embedding:1.1（需求不存在）
+- tests/test_embedding_integration_req.py::test_unreachable_api_returns_none_not_raise → retrieval-embedding:1.1（需求不存在）
+- tests/test_reranker_health_req.py::test_reranker_service_reachable → testing-traceability:5.3（需求不存在）
+- tests/test_reranker_health_req.py::test_reranker_ranks_relevant_candidate_highest → testing-traceability:5.3（需求不存在）
+- tests/test_retrieval_invariants_req.py::test_reserved_categories_never_returned_as_answers → testing-traceability:5.3（需求不存在）
+- tests/test_retrieval_invariants_req.py::test_b2b_prospect_query_returns_only_prospect_or_public → testing-traceability:5.3（需求不存在）
+- tests/test_trigger_fields_passthrough_integration_req.py::test_vector_path_carries_trigger_fields → trigger-vocabulary-debt:1.1（需求不存在）
+- tests/test_trigger_fields_passthrough_integration_req.py::test_keyword_path_carries_trigger_fields → trigger-vocabulary-debt:1.1（需求不存在）
+- tests/test_trigger_fields_passthrough_integration_req.py::test_reranker_path_carries_trigger_fields → trigger-vocabulary-debt:1.1（需求不存在）
+- tests/test_api_key_db_integration_req.py::test_verify_api_key_db → api-key-auth:1.1（需求不存在）
+- tests/test_t4b2_session_persistence_req.py::test_b2_g1_columns_exist → T4B2_G1:1（需求不存在）
+- tests/test_t4b2_session_persistence_req.py::test_b2_g2_no_historical_backfill → T4B2_G2:1（需求不存在）
+- tests/test_t4b2_session_persistence_req.py::test_b2_g3_authority_exact_restore → T4B2_G3:1（需求不存在）
+- tests/test_t4b2_session_persistence_req.py::test_b2_g4_legacy_row_unchanged → T4B2_G4:1（需求不存在）
+- tests/test_t4b2_session_persistence_req.py::test_b2_g5_responsibility_with_knowledge_id_is_conflict → T4B2_G5:1（需求不存在）
+- tests/test_t4b4_legacy_wiring_req.py::test_legacy_tenant_wiring_passes_keyword_as_user_id → T4B4_M1:1（需求不存在）
+- tests/test_c4b_report_discipline_req.py::test_no_unqualified_overclaim_in_spec_docs → conversational-routing-execution:9.1（需求不存在）
+- tests/test_c4b_report_discipline_req.py::test_signed_report_carries_the_compliant_sentence → conversational-routing-execution:9.1（需求不存在）
+- tests/test_c4b_report_discipline_req.py::test_release_gate_stays_closed_in_the_ledger → conversational-routing-execution:9.1（需求不存在）
+- tests/test_config_audit_rules_req.py::test_role_routed_config_is_not_a_violation → knowledge-config-governance:5.1（需求不存在）
+- tests/test_config_audit_rules_req.py::test_dynamic_endpoint_from_api_endpoints_table_is_not_a_violation → knowledge-config-governance:5.1（需求不存在）
+- tests/test_config_audit_rules_req.py::test_endpoint_missing_from_both_sources_is_caught → knowledge-config-governance:5.1（需求不存在）
+- tests/test_config_audit_rules_req.py::test_c1_row_without_config_or_target_user → knowledge-config-governance:2.1（需求不存在）
+- tests/test_config_audit_rules_req.py::test_c1_row_with_only_target_user_is_ok → knowledge-config-governance:2.1（需求不存在）
+- tests/test_config_audit_rules_req.py::test_c2_duplicate_key → knowledge-config-governance:2.1（需求不存在）
+- tests/test_config_audit_rules_req.py::test_c3_category_mode_without_category → knowledge-config-governance:2.1（需求不存在）
+- tests/test_config_audit_rules_req.py::test_c4_duplicate_category → knowledge-config-governance:2.1（需求不存在）
+- tests/test_config_audit_rules_req.py::test_c5_delegate_target_not_in_registry → knowledge-config-governance:2.1（需求不存在）
+- tests/test_config_audit_rules_req.py::test_c6_delegate_without_when → knowledge-config-governance:2.1（需求不存在）
+- tests/test_config_audit_rules_req.py::test_c7_delegates_declared_but_output_shape_missing → knowledge-config-governance:2.1（需求不存在）
+- tests/test_config_audit_rules_req.py::test_c7_satisfied_by_answer_text_not_only_answer_rules → knowledge-config-governance:2.1（需求不存在）
+- tests/test_config_audit_rules_req.py::test_c8_grounding_endpoint_unknown → knowledge-config-governance:2.1（需求不存在）
+- tests/test_config_audit_rules_req.py::test_c9_knowledge_endpoint_unknown → knowledge-config-governance:2.1（需求不存在）
+- tests/test_config_audit_rules_req.py::test_every_contract_rule_is_implemented_or_declared_not_implemented → knowledge-config-governance:1.1（需求不存在）
+- tests/test_db_safety_guard_req.py::test_refuses_unless_proven_test_db → conversational-routing-execution:1.2（需求不存在）
+- tests/test_db_safety_guard_req.py::test_allows_whitelisted_test_db → conversational-routing-execution:1.2（需求不存在）
+- tests/test_db_safety_guard_req.py::test_whitelist_is_not_a_blacklist → conversational-routing-execution:1.2（需求不存在）
+- tests/test_db_safety_guard_req.py::test_unset_db_name_resolves_to_production_and_is_refused → conversational-routing-execution:1.2（需求不存在）
+- tests/test_db_safety_guard_req.py::test_resolve_reads_actual_env → conversational-routing-execution:1.2（需求不存在）
+- tests/test_env_parity_req.py::test_dev_compose_mirrors_prod_declaration → conversational-routing-execution:9.4（需求不存在）
+- tests/test_env_parity_req.py::test_service_locations_are_container_view_not_host_view → conversational-routing-execution:9.4（需求不存在）
+- tests/test_env_parity_req.py::test_dev_compose_overrides_connection_vars_with_test_namespace → conversational-routing-execution:9.4（需求不存在）
+- tests/test_runner_layer_contract_req.py::test_runner_injects_matching_flags_and_declaration → conversational-routing-execution:1.1（需求不存在）
+- tests/test_runner_layer_contract_req.py::test_unit_layer_stays_offline → conversational-routing-execution:1.4（需求不存在）
+- tests/test_runner_layer_contract_req.py::test_ci_integration_job_declares_matching_pair → conversational-routing-execution:1.4（需求不存在）
+- tests/test_runner_layer_contract_req.py::test_ci_integration_job_has_no_job_level_swallow → conversational-routing-execution:1.4（需求不存在）
+- tests/test_runner_layer_contract_req.py::test_runner_forces_the_jgb_mock_by_default → conversational-routing-execution:1.11（需求不存在）
+- tests/test_traceability_scan.py::test_scan_requirements_parses_numeric_ids → testing-traceability:8.1（需求不存在）
+- tests/test_traceability_scan.py::test_scan_tests_reads_marker_and_docstring → testing-traceability:6.1（需求不存在）
+- tests/test_traceability_scan.py::test_orphan_requirement_when_no_test → testing-traceability:6.3（需求不存在）
+- tests/test_traceability_scan.py::test_orphan_test_when_untagged → testing-traceability:6.5（需求不存在）
+- tests/test_traceability_scan.py::test_dangling_ref_when_requirement_absent → testing-traceability:6.4（需求不存在）
+- tests/test_traceability_scan.py::test_docs_unbacked_when_no_test_covers_referenced_req → testing-traceability:7.3（需求不存在）
+- tests/test_traceability_scan.py::test_docs_stale_when_behavior_keyword_missing_in_backing_tests → testing-traceability:7.4（需求不存在）
+- tests/test_traceability_scan.py::test_docs_not_stale_when_keyword_present → testing-traceability:7.4（需求不存在）
+- tests/test_traceability_scan.py::test_scan_docs_parses_tested_by_annotation → testing-traceability:7.1（需求不存在）
+- tests/test_traceability_scan.py::test_to_markdown_and_to_json_and_gap_count → testing-traceability:8.1（需求不存在）
+- tests/test_api_request_contract_req.py::test_message_required_and_default_mode_b2c → testing-traceability:5.5（需求不存在）
+- tests/test_api_request_contract_req.py::test_invalid_target_user_rejected → testing-traceability:5.5（需求不存在）
+- tests/test_api_request_contract_req.py::test_prospect_is_valid_target_user → testing-traceability:5.5（需求不存在）
+- tests/test_api_request_contract_req.py::test_b2c_requires_vendor_id → testing-traceability:5.5（需求不存在）
+- tests/test_api_request_contract_req.py::test_b2b_allows_missing_vendor_id → testing-traceability:5.5（需求不存在）
+- tests/test_api_request_contract_req.py::test_legacy_user_role_migrates_to_target_user → testing-traceability:5.5（需求不存在）
+- tests/test_api_request_contract_req.py::test_image_urls_max_three → testing-traceability:5.5（需求不存在）
+- tests/test_bills_viewer_scope_gap_req.py::test_viewer_user_id_is_refused_not_ignored → face-exit-before-grounding:1（需求不存在）
+- tests/test_bills_viewer_scope_gap_req.py::test_bills_without_viewer_scope_still_works → face-exit-before-grounding:1（需求不存在）
+- tests/test_bills_viewer_scope_gap_req.py::test_bill_visibility_does_not_fabricate_an_answer → face-exit-before-grounding:1（需求不存在）
+- tests/test_bills_viewer_scope_gap_req.py::test_gap_b1_user_id_is_not_filtered_yet → face-exit-before-grounding:1（需求不存在）
+- tests/test_brain_grounding_assertion_req.py::test_passes_regardless_of_wording → conversational-routing-execution:3.2（需求不存在）
+- tests/test_brain_grounding_assertion_req.py::test_answer_that_only_answers_the_question_passes → conversational-routing-execution:3.2（需求不存在）
+- tests/test_brain_grounding_assertion_req.py::test_record_keeps_raw_answer_verbatim_on_pass → conversational-routing-execution:3.2（需求不存在）
+- tests/test_brain_grounding_assertion_req.py::test_record_keeps_raw_answer_and_spans_on_fail → conversational-routing-execution:3.2（需求不存在）
+- tests/test_brain_grounding_assertion_req.py::test_matched_span_context_preserves_negation → conversational-routing-execution:3.2（需求不存在）
+- tests/test_brain_grounding_assertion_req.py::test_adjudication_flag_is_recorded_but_never_blocks → conversational-routing-execution:3.2（需求不存在）
+- tests/test_brain_grounding_assertion_req.py::test_blocking_foil_without_other_fixture_provenance_is_refused → conversational-routing-execution:3.2（需求不存在）
+- tests/test_brain_grounding_assertion_req.py::test_literal_cannot_be_both_blocking_and_adjudication → conversational-routing-execution:3.2（需求不存在）
+- tests/test_brain_grounding_assertion_req.py::test_bites_when_value_absent → conversational-routing-execution:3.2（需求不存在）
+- tests/test_brain_grounding_assertion_req.py::test_bites_on_generic_fallback_marker → conversational-routing-execution:3.2（需求不存在）
+- tests/test_brain_grounding_assertion_req.py::test_refuses_empty_must_contain → conversational-routing-execution:3.2（需求不存在）
+- tests/test_brain_grounding_assertion_req.py::test_refuses_empty_fallback_markers → conversational-routing-execution:3.2（需求不存在）
+- tests/test_brain_grounding_assertion_req.py::test_refuses_literal_fed_by_the_test_itself → conversational-routing-execution:3.2（需求不存在）
+- tests/test_brain_grounding_assertion_req.py::test_refuses_wording_lock → conversational-routing-execution:3.2（需求不存在）
+- tests/test_brain_grounding_assertion_req.py::test_wording_lock_guard_also_applies_to_blocking_foils → conversational-routing-execution:3.2（需求不存在）
+- tests/test_brain_grounding_assertion_req.py::test_refuses_literal_without_provenance → conversational-routing-execution:3.2（需求不存在）
+- tests/test_brain_grounding_assertion_req.py::test_refuses_non_answer_text → conversational-routing-execution:3.2（需求不存在）
+- tests/test_brain_grounding_assertion_req.py::test_foil_literals_merge_with_declared_ones → conversational-routing-execution:3.2（需求不存在）
+- tests/test_bugfix_payment_not_reflected_01_req.py::test_g1_first_log_without_response_does_not_crash → BUGFIX_PNR01_G1:1（需求不存在）
+- tests/test_bugfix_payment_not_reflected_01_req.py::test_g1_first_missing_then_others_does_not_crash → BUGFIX_PNR01_G1:2（需求不存在）
+- tests/test_bugfix_payment_not_reflected_01_req.py::test_g2_later_missing_response_does_not_inherit_previous_code → BUGFIX_PNR01_G2:1（需求不存在）
+- tests/test_bugfix_payment_not_reflected_01_req.py::test_g2_all_missing_after_success_still_reports_each_row → BUGFIX_PNR01_G2:2（需求不存在）
+- tests/test_bugfix_payment_not_reflected_01_req.py::test_g3_all_with_response_output_matches_recomputed_expectation → BUGFIX_PNR01_G3:1（需求不存在）
+- tests/test_bugfix_payment_not_reflected_01_req.py::test_g3_all_failed_keeps_failure_tail → BUGFIX_PNR01_G3:2（需求不存在）
+- tests/test_bugfix_payment_not_reflected_01_req.py::test_g4_classification_per_code_branch_unchanged → BUGFIX_PNR01_G4:1（需求不存在）
+- tests/test_bugfix_payment_not_reflected_01_req.py::test_g5_empty_list_behaviour_unchanged → BUGFIX_PNR01_G5:1（需求不存在）
+- tests/test_bugfix_payment_not_reflected_01_req.py::test_g5_dispatcher_empty_boundary_untouched → BUGFIX_PNR01_G5:2（需求不存在）
+- tests/test_bugfix_payment_not_reflected_01_req.py::test_g5_responsibility_empty_adapter_untouched → BUGFIX_PNR01_G5:3（需求不存在）
+- tests/test_bugfix_payment_not_reflected_01_req.py::test_exhaustive_combinations_never_crash → BUGFIX_PNR01_G1:3（需求不存在）
+- tests/test_bugfix_payment_not_reflected_01_req.py::test_m1_moving_init_back_inside_if_would_crash → BUGFIX_PNR01_M1:1（需求不存在）
+- tests/test_c4b_harness_isolation_req.py::test_each_run_and_each_infra_retry_gets_a_fresh_session → conversational-routing-execution:3.2（需求不存在）
+- tests/test_c4b_harness_isolation_req.py::test_session_id_allocator_refuses_reuse → conversational-routing-execution:3.2（需求不存在）
+- tests/test_c4b_harness_isolation_req.py::test_dirty_session_start_is_refused → conversational-routing-execution:3.2（需求不存在）
+- tests/test_contracts_transport_req.py::test_route_and_admission → face-exit-before-grounding:1（需求不存在）
+- tests/test_contracts_transport_req.py::test_no_identifier_returns_all → face-exit-before-grounding:1（需求不存在）
+- tests/test_contracts_transport_req.py::test_contract_ids_converges → face-exit-before-grounding:1（需求不存在）
+- tests/test_contracts_transport_req.py::test_keyword_filters → face-exit-before-grounding:1（需求不存在）
+- tests/test_contracts_transport_req.py::test_role_id_required_like_production → face-exit-before-grounding:1（需求不存在）
+- tests/test_contracts_transport_req.py::test_missing_contract_fixture_fails_closed → face-exit-before-grounding:1（需求不存在）
+- tests/test_contracts_transport_req.py::test_projection_guard_bites → face-exit-before-grounding:1（需求不存在）
+- tests/test_contracts_transport_req.py::test_envelope_shape_matches_adapter_expectations → face-exit-before-grounding:1（需求不存在）
+- tests/test_contracts_transport_req.py::test_empty_result_pagination_matches_production → face-exit-before-grounding:1（需求不存在）
+- tests/test_contracts_transport_req.py::test_projection_matches_formatcontract_keys → face-exit-before-grounding:1（需求不存在）
+- tests/test_estates_mock_fidelity_req.py::test_only_published_estates_are_visible → face-exit-before-grounding:1（需求不存在）
+- tests/test_estates_mock_fidelity_req.py::test_unpublished_estate_detail_is_not_found → face-exit-before-grounding:1（需求不存在）
+- tests/test_estates_mock_fidelity_req.py::test_keyword_matches_title_only_not_address → face-exit-before-grounding:1（需求不存在）
+- tests/test_estates_mock_fidelity_req.py::test_role_id_is_a_filter_not_an_echo → face-exit-before-grounding:1（需求不存在）
+- tests/test_estates_mock_fidelity_req.py::test_use_for_outside_whitelist_is_silently_ignored → face-exit-before-grounding:1（需求不存在）
+- tests/test_estates_mock_fidelity_req.py::test_sort_by_outside_whitelist_falls_back_to_updated_at → face-exit-before-grounding:1（需求不存在）
+- tests/test_estates_mock_fidelity_req.py::test_pagination_bounds_match_production → face-exit-before-grounding:1（需求不存在）
+- tests/test_estates_mock_fidelity_req.py::test_no_foreign_field_and_no_internal_leak → face-exit-before-grounding:1（需求不存在）
+- tests/test_estates_mock_fidelity_req.py::test_projection_guard_bites → face-exit-before-grounding:1（需求不存在）
+- tests/test_estates_mock_fidelity_req.py::test_contract_required_fields_shape_matches_production → face-exit-before-grounding:1（需求不存在）
+- tests/test_estates_mock_fidelity_req.py::test_estate_status_mock_shares_the_same_visible_set → face-exit-before-grounding:1（需求不存在）
+- tests/test_estates_mock_fidelity_req.py::test_estate_status_sentinel_now_reachable_in_mock → face-exit-before-grounding:1（需求不存在）
+- tests/test_estates_mock_fidelity_req.py::test_accessor_shaped_empty_values → face-exit-before-grounding:1（需求不存在）
+- tests/test_estates_mock_fidelity_req.py::test_uncast_json_columns_stay_strings → face-exit-before-grounding:1（需求不存在）
+- tests/test_estates_mock_fidelity_req.py::test_fixture_rows_declare_the_closed_case → face-exit-before-grounding:1（需求不存在）
+- tests/test_invoices_mock_fidelity_req.py::test_orders_by_id_desc → face-exit-before-grounding:1（需求不存在）
+- tests/test_invoices_mock_fidelity_req.py::test_bill_id_filter_bites → face-exit-before-grounding:1（需求不存在）
+- tests/test_invoices_mock_fidelity_req.py::test_status_filter_bites → face-exit-before-grounding:1（需求不存在）
+- tests/test_invoices_mock_fidelity_req.py::test_pagination_tracks_the_filtered_set → face-exit-before-grounding:1（需求不存在）
+- tests/test_invoices_mock_fidelity_req.py::test_mapping_values_match_invoice_constants → face-exit-before-grounding:1（需求不存在）
+- tests/test_invoices_mock_fidelity_req.py::test_projection_matches_format_invoice → face-exit-before-grounding:1（需求不存在）
+- tests/test_invoices_mock_fidelity_req.py::test_gap_i1_user_id_is_not_filtered_yet → face-exit-before-grounding:1（需求不存在）
+- tests/test_iot_account_mock_fidelity_req.py::test_meter_type_follows_manufacturer_whitelist → face-exit-before-grounding:1（需求不存在）
+- tests/test_iot_account_mock_fidelity_req.py::test_is_poweron_is_tri_state → face-exit-before-grounding:1（需求不存在）
+- tests/test_iot_account_mock_fidelity_req.py::test_estate_id_filter_uses_the_binding → face-exit-before-grounding:1（需求不存在）
+- tests/test_iot_account_mock_fidelity_req.py::test_meter_projection_matches_format_meter → face-exit-before-grounding:1（需求不存在）
+- tests/test_iot_account_mock_fidelity_req.py::test_members_match_email_then_name_case_insensitively → face-exit-before-grounding:1（需求不存在）
+- tests/test_iot_account_mock_fidelity_req.py::test_members_no_match_returns_empty → face-exit-before-grounding:1（需求不存在）
+- tests/test_iot_account_mock_fidelity_req.py::test_members_cover_owner_and_null_character → face-exit-before-grounding:1（需求不存在）
+- tests/test_iot_account_mock_fidelity_req.py::test_members_never_leak_contact_details → face-exit-before-grounding:1（需求不存在）
+- tests/test_iot_account_mock_fidelity_req.py::test_permissions_return_all_32_whitelisted_abilities → face-exit-before-grounding:1（需求不存在）
+- tests/test_iot_account_mock_fidelity_req.py::test_permissions_row_shape_matches_production → face-exit-before-grounding:1（需求不存在）
+- tests/test_iot_account_mock_fidelity_req.py::test_owner_gets_every_ability → face-exit-before-grounding:1（需求不存在）
+- tests/test_iot_account_mock_fidelity_req.py::test_unknown_member_degrades → face-exit-before-grounding:1（需求不存在）
+- tests/test_iot_account_mock_fidelity_req.py::test_builder_reads_character_object → face-exit-before-grounding:1（需求不存在）
+- tests/test_jgb_tenant_contracts_req.py::test_identity_required → conversational-repair:2.1（需求不存在）
+- tests/test_jgb_tenant_contracts_req.py::test_hits_contracts_endpoint_with_user_id → conversational-repair:2.2（需求不存在）
+- tests/test_jgb_tenant_contracts_req.py::test_user_id_converges_to_that_tenant → conversational-repair:2.2（需求不存在）
+- tests/test_jgb_tenant_contracts_req.py::test_history_only_tenant_gets_zero → conversational-repair:2.2（需求不存在）
+- tests/test_jgb_tenant_contracts_req.py::test_unknown_tenant_gets_zero → conversational-repair:2.2（需求不存在）
+- tests/test_jgb_tenant_contracts_req.py::test_projection_maps_formatcontract_keys → conversational-repair:2.2（需求不存在）
+- tests/test_jgb_tenant_contracts_req.py::test_room_is_not_fabricated → conversational-repair:2.2（需求不存在）
+- tests/test_jgb_tenant_contracts_req.py::test_internal_column_never_leaks → conversational-repair:2.2（需求不存在）
+- tests/test_payment_logs_mock_fidelity_req.py::test_envelope_matches_production → face-exit-before-grounding:1（需求不存在）
+- tests/test_payment_logs_mock_fidelity_req.py::test_bill_id_is_required_like_production → face-exit-before-grounding:1（需求不存在）
+- tests/test_payment_logs_mock_fidelity_req.py::test_adapter_normalizes_logs_into_data_for_the_consumer → face-exit-before-grounding:1（需求不存在）
+- tests/test_payment_logs_mock_fidelity_req.py::test_log_rows_do_not_carry_response → face-exit-before-grounding:1（需求不存在）
+- tests/test_payment_logs_mock_fidelity_req.py::test_payments_rows_match_production_projection → face-exit-before-grounding:1（需求不存在）
+- tests/test_payment_logs_mock_fidelity_req.py::test_has_successful_payment_uses_status_2 → face-exit-before-grounding:1（需求不存在）
+- tests/test_remaining_endpoints_fidelity_req.py::test_invoice_logs_require_bill_or_invoice_id → face-exit-before-grounding:1（需求不存在）
+- tests/test_remaining_endpoints_fidelity_req.py::test_invoice_logs_return_parsed_not_raw → face-exit-before-grounding:1（需求不存在）
+- tests/test_remaining_endpoints_fidelity_req.py::test_invoice_logs_have_no_mapping_key → face-exit-before-grounding:1（需求不存在）
+- tests/test_remaining_endpoints_fidelity_req.py::test_invoice_logs_filters_and_order → face-exit-before-grounding:1（需求不存在）
+- tests/test_remaining_endpoints_fidelity_req.py::test_invoice_log_consumer_reads_parsed → face-exit-before-grounding:1（需求不存在）
+- tests/test_remaining_endpoints_fidelity_req.py::test_invoice_log_null_parsed_does_not_crash → face-exit-before-grounding:1（需求不存在）
+- tests/test_remaining_endpoints_fidelity_req.py::test_payments_filters_and_order → face-exit-before-grounding:1（需求不存在）
+- tests/test_remaining_endpoints_fidelity_req.py::test_payments_empty_filter_zeroes_pagination → face-exit-before-grounding:1（需求不存在）
+- tests/test_remaining_endpoints_fidelity_req.py::test_repairs_filters → face-exit-before-grounding:1（需求不存在）
+- tests/test_remaining_endpoints_fidelity_req.py::test_repair_categories_shape_is_already_faithful → face-exit-before-grounding:1（需求不存在）
+- tests/test_remaining_endpoints_fidelity_req.py::test_subscription_usage_formula_matches_production → face-exit-before-grounding:1（需求不存在）
+- tests/test_remaining_endpoints_fidelity_req.py::test_iot_manufacturers_projection_excludes_password → face-exit-before-grounding:1（需求不存在）
+- tests/test_remaining_endpoints_fidelity_req.py::test_tenant_summary_sections → face-exit-before-grounding:1（需求不存在）
+- tests/test_remaining_endpoints_fidelity_req.py::test_checkin_eligibility_shape → face-exit-before-grounding:1（需求不存在）
+- tests/test_repair_entry_gate_req.py::test_trigger_facet_key_absent_returns_none → conversational-repair:1.3（需求不存在）
+- tests/test_repair_entry_gate_req.py::test_trigger_facet_key_miss_returns_none_no_error → conversational-repair:1.3（需求不存在）
+- tests/test_repair_entry_gate_req.py::test_trigger_facet_key_disabled_returns_none → conversational-repair:1.3（需求不存在）
+- tests/test_repair_entry_gate_req.py::test_trigger_facet_key_hit_seeds_facet → conversational-repair:1.3（需求不存在）
+- tests/test_repair_entry_gate_req.py::test_gate_false_closed → conversational-repair:1.5（需求不存在）
+- tests/test_repair_entry_gate_req.py::test_gate_true_open → conversational-repair:1.5（需求不存在）
+- tests/test_repair_entry_gate_req.py::test_gate_missing_defaults_open → conversational-repair:1.5（需求不存在）
+- tests/test_repair_entry_gate_req.py::test_gate_not_declared_always_open → conversational-repair:1.5（需求不存在）
+- tests/test_repair_entry_gate_req.py::test_gate_closed_returns_degraded_not_facet → conversational-repair:1.5（需求不存在）
+- tests/test_repair_entry_gate_req.py::test_gate_open_seeds_facet_with_prefill → conversational-repair:1.5（需求不存在）
+- tests/test_repair_entry_gate_req.py::test_prefill_degraded_no_contract_does_not_open_facet → conversational-repair:1.5（需求不存在）
+- tests/test_repair_entry_gate_req.py::test_step05_damage_seeds_facet_not_sop → conversational-repair:1.1（需求不存在）
+- tests/test_repair_entry_gate_req.py::test_step05_damage_no_config_falls_back_to_sop → conversational-repair:1.1（需求不存在）
+- tests/test_repair_entry_gate_req.py::test_step05_non_damage_keeps_current_degradation → conversational-repair:1.1（需求不存在）
+- tests/test_repair_entry_gate_req.py::test_continuation_image_ingested → conversational-repair:2.6（需求不存在）
+- tests/test_repair_entry_gate_req.py::test_continuation_no_image_no_ingest → conversational-repair:2.6（需求不存在）
+- tests/test_resolver_capture_req.py::test_A_missing_field → face-exit-before-grounding:1（需求不存在）
+- tests/test_resolver_capture_req.py::test_B_wrong_key → face-exit-before-grounding:1（需求不存在）
+- tests/test_resolver_capture_req.py::test_C_not_allowed → face-exit-before-grounding:1（需求不存在）
+- tests/test_resolver_capture_req.py::test_not_string_and_scope_not_switch → face-exit-before-grounding:1（需求不存在）
+- tests/test_resolver_capture_req.py::test_kept_when_normalization_preserved_it → face-exit-before-grounding:1（需求不存在）
+- tests/test_resolver_capture_req.py::test_unparsable_payload_is_missing_not_crash → face-exit-before-grounding:1（需求不存在）
+- tests/test_resolver_capture_req.py::test_hop_evidence_has_all_eight_fields → face-exit-before-grounding:1（需求不存在）
+- tests/test_resolver_capture_req.py::test_delegate_related_keys_lists_candidates_for_human_review → face-exit-before-grounding:1（需求不存在）
+- tests/test_v6_regression_ruler_req.py::test_fixture_grounded_correct_answer_passes → face-exit-before-grounding:1（需求不存在）
+- tests/test_v6_regression_ruler_req.py::test_correct_answer_without_rent_passes → face-exit-before-grounding:1（需求不存在）
+- tests/test_v6_regression_ruler_req.py::test_answer_using_one_valid_timing_fact_passes → face-exit-before-grounding:1（需求不存在）
+- tests/test_v6_regression_ruler_req.py::test_generic_answer_fails → face-exit-before-grounding:1（需求不存在）
+- tests/test_v6_regression_ruler_req.py::test_other_fixture_answer_fails → face-exit-before-grounding:1（需求不存在）
+- tests/test_v6_regression_ruler_req.py::test_closed_set_status_word_is_flagged_not_blocking → face-exit-before-grounding:1（需求不存在）
+- tests/test_v6_regression_ruler_req.py::test_ruler_does_not_require_the_title → face-exit-before-grounding:1（需求不存在）
+- tests/test_decision_replay_req.py::test_classify_routing_matrix → retrieval-decision-layer:1.3（需求不存在）
+- tests/test_decision_replay_req.py::test_knowledge_answer_mentioning_ask_phrase_is_answer → retrieval-decision-layer:1.3（需求不存在）
+- tests/test_decision_replay_req.py::test_ask_id_requires_no_sources → retrieval-decision-layer:1.3（需求不存在）
+- tests/test_decision_replay_req.py::test_form_requires_structured_evidence → retrieval-decision-layer:1.3（需求不存在）
+- tests/test_decision_replay_req.py::test_error_turn_is_not_a_real_class → retrieval-decision-layer:1.3（需求不存在）
+- tests/test_decision_replay_req.py::test_marker_precedence_over_ask_id_shape → retrieval-decision-layer:1.3（需求不存在）
+- tests/test_decision_replay_req.py::test_empty_answer_does_not_crash → retrieval-decision-layer:1.3（需求不存在）
+- tests/test_decision_replay_req.py::test_classifier_version_is_stable_and_content_derived → retrieval-decision-layer:1.3（需求不存在）
+- tests/test_decision_replay_req.py::test_classifier_version_ignores_declared_version_only_change → retrieval-decision-layer:1.3（需求不存在）
+- tests/test_decision_replay_req.py::test_clarify_flag_marks_non_id_questions → retrieval-decision-layer:1.3（需求不存在）
+- tests/test_decision_replay_req.py::test_invariant3_pass_allows_run → retrieval-decision-layer:1.2（需求不存在）
+- tests/test_decision_replay_req.py::test_invariant3_fail_aborts → retrieval-decision-layer:1.2（需求不存在）
+- tests/test_decision_replay_req.py::test_other_invariant_failure_does_not_block → retrieval-decision-layer:1.2（需求不存在）
+- tests/test_decision_replay_req.py::test_missing_invariant3_block_aborts → retrieval-decision-layer:1.2（需求不存在）
+- tests/test_decision_replay_req.py::test_skip_audit_is_recorded_not_silent → retrieval-decision-layer:1.2（需求不存在）
+- tests/test_decision_replay_req.py::test_cache_mode_match → retrieval-decision-layer:1.7（需求不存在）
+- tests/test_decision_replay_req.py::test_cache_mode_unset_defaults_true → retrieval-decision-layer:1.7（需求不存在）
+- tests/test_decision_replay_req.py::test_cache_mode_mismatch_aborts → retrieval-decision-layer:1.7（需求不存在）
+- tests/test_decision_replay_req.py::test_cache_probe_failure_aborts → retrieval-decision-layer:1.7（需求不存在）
+- tests/test_decision_replay_req.py::test_corpus_integrity_pass → retrieval-decision-layer:1.1（需求不存在）
+- tests/test_decision_replay_req.py::test_corpus_modified_aborts → retrieval-decision-layer:1.1（需求不存在）
+- tests/test_decision_replay_req.py::test_corpus_extra_file_aborts → retrieval-decision-layer:1.1（需求不存在）
+- tests/test_decision_replay_req.py::test_corpus_missing_dir_aborts → retrieval-decision-layer:1.1（需求不存在）
+- tests/test_decision_replay_req.py::test_manifest_without_integrity_aborts → retrieval-decision-layer:1.1（需求不存在）
+- tests/test_decision_replay_req.py::test_noise_manifest_shape_and_totals → retrieval-decision-layer:1.4（需求不存在）
+- tests/test_decision_replay_req.py::test_noise_manifest_tags_are_all_defined → retrieval-decision-layer:1.4（需求不存在）
+- tests/test_decision_replay_req.py::test_turn_tags_within_turn_count → retrieval-decision-layer:1.4（需求不存在）
+- tests/test_decision_replay_req.py::test_manifest_matches_frozen_corpus_on_disk → retrieval-decision-layer:1.4（需求不存在）
+- tests/test_decision_replay_req.py::test_facet_empty_marker_matches_engine_source → retrieval-decision-layer:1.3（需求不存在）
+- tests/test_decision_replay_req.py::test_fallback_marker_matches_chat_source → retrieval-decision-layer:1.3（需求不存在）
+- tests/test_decision_replay_req.py::test_ask_id_verb_still_appears_in_corpus → retrieval-decision-layer:1.3（需求不存在）
+- tests/test_expected_answers_req.py::test_in_population_only_for_listed_turns → retrieval-decision-layer:5.4（需求不存在）
+- tests/test_expected_answers_req.py::test_unjudged_inside_population_fails → retrieval-decision-layer:5.4（需求不存在）
+- tests/test_expected_answers_req.py::test_population_fully_judged_passes_and_reports_outside → retrieval-decision-layer:5.4（需求不存在）
+- tests/test_expected_answers_req.py::test_table_structure_is_validated → retrieval-decision-layer:5.4（需求不存在）
+- tests/test_expected_answers_req.py::test_valid_table_passes_validation → retrieval-decision-layer:5.4（需求不存在）
+- tests/test_expected_answers_req.py::test_confidence_breakdown_is_reportable → retrieval-decision-layer:5.4（需求不存在）
+- tests/test_expected_answers_req.py::test_table_hash_is_stable_and_content_derived → retrieval-decision-layer:2.5（需求不存在）
+- tests/test_expected_answers_req.py::test_real_table_validates_if_present → retrieval-decision-layer:5.4（需求不存在）
+- tests/test_expected_answers_req.py::test_env_limited_incorrect_is_rejected_as_false_negative → retrieval-decision-layer:5.4（需求不存在）
+- tests/test_expected_answers_req.py::test_env_limited_not_applicable_passes_and_is_counted → retrieval-decision-layer:5.4（需求不存在）
+- tests/test_expected_answers_req.py::test_not_applicable_is_not_unjudged → retrieval-decision-layer:5.4（需求不存在）
+- tests/test_verdict_ruler_req.py::test_verdict_domain_matches_design_enum → retrieval-decision-layer:1.3（需求不存在）
+- tests/test_verdict_ruler_req.py::test_turn_result_reads_verdict_from_snapshot → retrieval-decision-layer:1.3（需求不存在）
+- tests/test_verdict_ruler_req.py::test_missing_snapshot_is_not_silently_guessed → retrieval-decision-layer:1.3（需求不存在）
+- tests/test_verdict_ruler_req.py::test_composite_key_includes_grounded_and_answer_verdict → retrieval-decision-layer:1.3（需求不存在）
+- tests/test_verdict_ruler_req.py::test_legacy_and_snapshot_must_not_mix → retrieval-decision-layer:1.3（需求不存在）
+- tests/test_verdict_ruler_req.py::test_new_ruler_sees_known_stickiness_flip → retrieval-decision-layer:1.3（需求不存在）
+- tests/test_verdict_ruler_req.py::test_stay_facet_subdivision_is_load_bearing → retrieval-decision-layer:1.3（需求不存在）
+- tests/test_verdict_ruler_req.py::test_ruler_gate_rejects_blind_ruler → retrieval-decision-layer:1.3（需求不存在）
+- tests/test_verdict_ruler_req.py::test_ruler_gate_passes_when_defect_visible → retrieval-decision-layer:1.3（需求不存在）
+- tests/test_verdict_ruler_req.py::test_unsubdivided_stay_facet_is_rejected_at_domain → retrieval-decision-layer:1.3（需求不存在）
+- tests/test_verdict_ruler_req.py::test_ruler_can_represent_all_documented_defects → retrieval-decision-layer:1.3（需求不存在）
+- tests/test_verdict_ruler_req.py::test_capability_check_catches_unsubdivided_ruler → retrieval-decision-layer:1.3（需求不存在）
+- tests/test_category_utils_req.py::test_single_value_to_single_element_array → category-multi-select:1.1（需求不存在）
+- tests/test_category_utils_req.py::test_empty_and_none_yield_empty_list → category-multi-select:1.3（需求不存在）
+- tests/test_category_utils_req.py::test_reserved_values_are_stripped → category-multi-select:2.2（需求不存在）
+- tests/test_category_utils_req.py::test_multi_value_takes_priority_over_single → category-multi-select:6.3（需求不存在）
+- tests/test_category_utils_req.py::test_dedupe_preserves_order_and_trims → category-multi-select:1.4（需求不存在）
+- tests/test_grounding_categories_req.py::test_grounding_by_category_uses_array_any_predicate → category-multi-select:3.1（需求不存在）
+- tests/test_grounding_categories_req.py::test_grounding_by_category_with_target_user_keeps_role_filter → category-multi-select:3.1（需求不存在）
+- tests/test_conversational_quick_replies_req.py::test_confirm_response_surfaces_quick_replies → conversational-repair:4.1（需求不存在）
+- tests/test_conversational_quick_replies_req.py::test_plain_facet_response_has_no_quick_replies → conversational-repair:4.1（需求不存在）
+- tests/test_conversational_quick_replies_req.py::test_empty_quick_replies_normalized_to_none → conversational-repair:4.1（需求不存在）
+- tests/test_dispatcher_glue_req.py::test_form_session_no_state_returns_none → chat-flow-refactor:6.1（需求不存在）
+- tests/test_dispatcher_glue_req.py::test_conversational_session_no_state_returns_none → chat-flow-refactor:6.1（需求不存在）
+- tests/test_dispatcher_glue_req.py::test_collecting_no_state_returns_none → chat-flow-refactor:6.1（需求不存在）
+- tests/test_dispatcher_glue_req.py::test_image_no_urls_returns_none → chat-flow-refactor:6.1（需求不存在）
+- tests/test_dispatcher_glue_req.py::test_conversational_entry_non_prospect_returns_none → chat-flow-refactor:6.1（需求不存在）
+- tests/test_dispatcher_glue_req.py::test_dispatch_order_falls_through_to_retrieval → chat-flow-refactor:6.2（需求不存在）
+- tests/test_dispatcher_glue_req.py::test_dispatch_first_hit_short_circuits → chat-flow-refactor:6.2（需求不存在）
+- tests/test_dispatcher_glue_req.py::test_dispatch_conv_entry_first_hit_short_circuits → chat-flow-refactor:6.2（需求不存在）
+- tests/test_dispatcher_glue_req.py::test_collecting_cancel_with_pending_swaps_message_and_continues → chat-flow-refactor:3.2（需求不存在）
+- tests/test_dispatcher_glue_req.py::test_collecting_cancel_without_pending_returns_response → chat-flow-refactor:3.2（需求不存在）
+- tests/test_finalize_response_stream_req.py::test_stream_true_builds_streaming_response_without_scope_error → conversational-repair:8.1（需求不存在）
+- tests/test_finalize_response_stream_req.py::test_stream_false_returns_plain_response → conversational-repair:8.1（需求不存在）
+- tests/test_smart_retrieval_fixes_req.py::test_stream_low_quality_uses_rich_fallback_not_bare_sentence → retrieval-fixes:3（需求不存在）
+- tests/test_trigger_mode_else_branch_req.py::test_form_knowledge_non_manual_goes_to_auto_else_branch → trigger-vocabulary-debt:1.3（需求不存在）
+- tests/test_account_facet_seeds_req.py::test_categories_four_children_idempotent → account-conversational-facets:1.1（需求不存在）
+- tests/test_account_facet_seeds_req.py::test_domain_faces_derives_four → account-conversational-facets:7.1（需求不存在）
+- tests/test_account_facet_seeds_req.py::test_context_rows_and_length_budget → account-conversational-facets:1.5（需求不存在）
+- tests/test_account_facet_seeds_req.py::test_parent_layer_free_of_class_mechanism_details → account-conversational-facets:1.3（需求不存在）
+- tests/test_account_facet_seeds_req.py::test_context_carries_ground_truth_anchors → account-conversational-facets:2.2（需求不存在）
+- tests/test_account_facet_seeds_req.py::test_class_isolation_between_children → account-conversational-facets:1.3（需求不存在）
+- tests/test_account_facet_seeds_req.py::test_four_configs_route_by_facet → account-conversational-facets:1.2（需求不存在）
+- tests/test_account_facet_seeds_req.py::test_persona_roles_account_scoped → account-conversational-facets:1.6（需求不存在）
+- tests/test_account_facet_seeds_req.py::test_grounding_shapes → account-conversational-facets:3.1（需求不存在）
+- tests/test_account_facet_seeds_req.py::test_team_grounded_three_hop → account-conversational-facets:5.1（需求不存在）
+- tests/test_account_facet_seeds_req.py::test_verification_code_red_line_everywhere → account-conversational-facets:6.2（需求不存在）
+- tests/test_account_facet_seeds_req.py::test_external_personas_speak_proxy_mode → account-conversational-facets:1.7（需求不存在）
+- tests/test_answer_rules_req.py::test_config_parses_answer_rules → domain-conversational-facets:3.2（需求不存在）
+- tests/test_answer_rules_req.py::test_deterministic_fill_converge_appends_answer_rules → domain-conversational-facets:3.2（需求不存在）
+- tests/test_answer_rules_req.py::test_candidate_pick_converge_appends_answer_rules → domain-conversational-facets:3.2（需求不存在）
+- tests/test_answer_rules_req.py::test_brain_converge_appends_answer_rules → domain-conversational-facets:3.2（需求不存在）
+- tests/test_answer_rules_req.py::test_no_answer_rules_leaves_system_md_untouched → domain-conversational-facets:3.2（需求不存在）
+- tests/test_answer_rules_req.py::test_contract_seed_carries_answer_rules → domain-conversational-facets:3.2（需求不存在）
+- tests/test_api_config_roundtrip_req.py::test_config_from_row_preserves_api_grounding_scope → conversational-diagnosis:5.3（需求不存在）
+- tests/test_api_config_roundtrip_req.py::test_reset_cache_makes_edited_api_config_live → conversational-diagnosis:5.4（需求不存在）
+- tests/test_api_config_roundtrip_req.py::test_without_reset_keeps_cached_value → conversational-diagnosis:5.4（需求不存在）
+- tests/test_api_validation_flow_req.py::test_extract_identifier_no_semantic_guard → domain-conversational-facets:4.4（需求不存在）
+- tests/test_api_validation_flow_req.py::test_extract_identifier_ignores_date_tokens → contract-conversational-facets:2.4（需求不存在）
+- tests/test_api_validation_flow_req.py::test_numeric_name_falls_back_to_keyword → domain-conversational-facets:4.4（需求不存在）
+- tests/test_api_validation_flow_req.py::test_id_hit_skips_name_attempt → domain-conversational-facets:4.4（需求不存在）
+- tests/test_api_validation_flow_req.py::test_name_many_rows_lists_candidates → domain-conversational-facets:4.4（需求不存在）
+- tests/test_api_validation_flow_req.py::test_all_attempts_zero_clears_slot → domain-conversational-facets:4.4（需求不存在）
+- tests/test_api_validation_flow_req.py::test_backward_compat_single_params → domain-conversational-facets:4.4（需求不存在）
+- tests/test_api_validation_flow_req.py::test_switch_hit_commits_new_contract → domain-conversational-facets:4.4（需求不存在）
+- tests/test_api_validation_flow_req.py::test_switch_zero_rows_rolls_back_and_falls_to_brain → domain-conversational-facets:4.4（需求不存在）
+- tests/test_api_validation_flow_req.py::test_first_identify_zero_rows_asks_again → domain-conversational-facets:4.4（需求不存在）
+- tests/test_b3_fetch_resolver_req.py::test_fetch_resolver_signature_has_no_semantic_inputs → B3_G1:1（需求不存在）
+- tests/test_b3_fetch_resolver_req.py::test_fetch_resolver_only_takes_verified_transport_input → B3_G1:2（需求不存在）
+- tests/test_b3_fetch_resolver_req.py::test_fetch_resolver_never_touches_legacy_dispatcher → B3_G2:1（需求不存在）
+- tests/test_b3_fetch_resolver_req.py::test_fetch_resolver_calls_its_fixed_endpoint → B3_G2:2（需求不存在）
+- tests/test_b3_fetch_resolver_req.py::test_invoice_resolver_only_calls_invoice_endpoint → B3_G3:1（需求不存在）
+- tests/test_b3_fetch_resolver_req.py::test_iot_resolver_only_calls_iot_endpoint → B3_G4:1（需求不存在）
+- tests/test_b3_fetch_resolver_req.py::test_many_members_resolve_as_collection_not_ambiguous → B3_G5:1（需求不存在）
+- tests/test_b3_fetch_resolver_req.py::test_collection_entity_is_the_whole_list → B3_G5:2（需求不存在）
+- tests/test_b3_fetch_resolver_req.py::test_empty_becomes_resolved_empty_per_ruled_policy → B3_G6:1（需求不存在）
+- tests/test_b3_fetch_resolver_req.py::test_fetch_resolver_never_composes_an_answer → B3_G6:2（需求不存在）
+- tests/test_b3_fetch_resolver_req.py::test_member_scope_mismatch_is_hard_fail_not_filtered → B3_G7:1（需求不存在）
+- tests/test_b3_fetch_resolver_req.py::test_iot_role_scope_mismatch_is_hard_fail → B3_G7:2（需求不存在）
+- tests/test_b3_fetch_resolver_req.py::test_envelope_scope_mismatch_is_hard_fail → B3_G7:3（需求不存在）
+- tests/test_b3_fetch_resolver_req.py::test_payment_scope_proof_is_split_not_collapsed → B3_G7:4（需求不存在）
+- tests/test_b3_fetch_resolver_req.py::test_verifiable_contracts_do_report_verified → B3_G7:5（需求不存在）
+- tests/test_b3_fetch_resolver_req.py::test_payment_logs_scope_proof_is_envelope_verifiable_with_cited_evidence → B3_G7:8（需求不存在）
+- tests/test_b3_fetch_resolver_req.py::test_empty_collection_scope_is_not_reported_verified → B3_G7:7（需求不存在）
+- tests/test_b3_fetch_resolver_req.py::test_envelope_reference_integrity_verified_on_consistent_response → B3_G9:1（需求不存在）
+- tests/test_b3_fetch_resolver_req.py::test_orphan_member_is_hard_fail_not_filtered → B3_G9:2（需求不存在）
+- tests/test_b3_fetch_resolver_req.py::test_empty_members_report_na_empty_not_verified → B3_G9:3（需求不存在）
+- tests/test_b3_fetch_resolver_req.py::test_missing_parent_list_with_members_is_hard_fail → B3_G9:4（需求不存在）
+- tests/test_b3_fetch_resolver_req.py::test_reference_integrity_is_declared_in_contract_not_hardcoded → B3_G9:5（需求不存在）
+- tests/test_b3_fetch_resolver_req.py::test_reference_integrity_does_not_replace_scope_provenance → B3_G9:6（需求不存在）
+- tests/test_b3_fetch_resolver_req.py::test_api_failure_never_becomes_no_match → B3_G8:1（需求不存在）
+- tests/test_b3_fetch_resolver_req.py::test_api_exception_becomes_transport_failure → B3_G8:2（需求不存在）
+- tests/test_b3_fetch_resolver_req.py::test_missing_identity_is_loud_not_no_match → B3_G8:3（需求不存在）
+- tests/test_b3_fetch_resolver_req.py::test_transport_failure_never_returns_a_resolution_state → B3_G8:4（需求不存在）
+- tests/test_b3_fetch_resolver_req.py::test_b3_m1_taking_first_member_makes_guard_red → B3_M1:1（需求不存在）
+- tests/test_b3_fetch_resolver_req.py::test_b3_m2_calling_dispatcher_makes_ast_guard_red → B3_M2:1（需求不存在）
+- tests/test_b3_fetch_resolver_req.py::test_b3_m3_silent_filtering_makes_scope_guard_red → B3_M3:1（需求不存在）
+- tests/test_b3_fetch_resolver_req.py::test_collection_contracts_declare_scope_verification → B3_G7:6（需求不存在）
+- tests/test_b3_fetch_resolver_req.py::test_every_collection_contract_has_a_fetch_resolver → B3_G1:3（需求不存在）
+- tests/test_base_split_presales_req.py::test_presales_gets_base_plus_presales_append → domain-conversational-facets:7.1（需求不存在）
+- tests/test_base_split_presales_req.py::test_contract_excludes_presales_content → domain-conversational-facets:2.2（需求不存在）
+- tests/test_base_split_presales_req.py::test_chat_no_bare_system_context_call → domain-conversational-facets:7.1（需求不存在）
+- tests/test_base_split_presales_req.py::test_migration_has_content_preserving_guard → domain-conversational-facets:7.1（需求不存在）
+- tests/test_bill_face_builders_req.py::test_flow_cvs_stuck_at_reconcile_gives_payout_schedule → billing-conversational-facets:2.2（需求不存在）
+- tests/test_bill_face_builders_req.py::test_flow_non_cvs_stuck_suggests_support_with_facts → billing-conversational-facets:2.2（需求不存在）
+- tests/test_bill_face_builders_req.py::test_flow_ready_without_payment_guides_verification → billing-conversational-facets:2.2（需求不存在）
+- tests/test_bill_face_builders_req.py::test_flow_not_sent_or_expired → billing-conversational-facets:2.2（需求不存在）
+- tests/test_bill_face_builders_req.py::test_flow_completed → billing-conversational-facets:2.2（需求不存在）
+- tests/test_bill_face_builders_req.py::test_flow_unknown_status_escalates_with_facts → billing-conversational-facets:2.3（需求不存在）
+- tests/test_bill_face_builders_req.py::test_flow_attach_logs_and_va_expiry_existence_driven → billing-conversational-facets:2.4（需求不存在）
+- tests/test_bill_face_builders_req.py::test_anomaly_lists_stored_details_verbatim → billing-conversational-facets:3.2（需求不存在）
+- tests/test_bill_face_builders_req.py::test_anomaly_prorated_period_facts → billing-conversational-facets:3.1（需求不存在）
+- tests/test_bill_face_builders_req.py::test_anomaly_visibility_not_sent → billing-conversational-facets:3.4（需求不存在）
+- tests/test_bill_face_builders_req.py::test_anomaly_archived_routes_to_contract_domain → billing-conversational-facets:3.3（需求不存在）
+- tests/test_bill_face_builders_req.py::test_anomaly_ready_but_reported_invisible_gives_checks → billing-conversational-facets:3.4（需求不存在）
+- tests/test_bill_face_builders_req.py::test_invoice_not_issued_before_payment → billing-conversational-facets:4.1（需求不存在）
+- tests/test_bill_face_builders_req.py::test_invoice_paid_but_not_issued_lists_causes → billing-conversational-facets:4.1（需求不存在）
+- tests/test_bill_face_builders_req.py::test_invoice_issued_with_number → billing-conversational-facets:4.1（需求不存在）
+- tests/test_bill_face_builders_req.py::test_invoice_status_one_but_number_empty_is_incomplete → billing-conversational-facets:4.1（需求不存在）
+- tests/test_bill_face_builders_req.py::test_invoice_abnormal_lists_common_causes_and_supplement_rules → billing-conversational-facets:4.2（需求不存在）
+- tests/test_bill_face_builders_req.py::test_invoice_attach_records_existence_driven → billing-conversational-facets:4.4（需求不存在）
+- tests/test_bill_face_builders_req.py::test_late_fee_contract_row_with_settings → billing-conversational-facets:5.1（需求不存在）
+- tests/test_bill_face_builders_req.py::test_late_fee_contract_row_disabled → billing-conversational-facets:5.1（需求不存在）
+- tests/test_bill_face_builders_req.py::test_late_fee_bill_row_with_formula_note → billing-conversational-facets:5.2（需求不存在）
+- tests/test_bill_face_builders_req.py::test_late_fee_generic_bill_row_degrades_with_guidance → billing-conversational-facets:5.3（需求不存在）
+- tests/test_bill_face_builders_req.py::test_bill_status_prefers_corrected_status_field → billing-conversational-facets:7.1（需求不存在）
+- tests/test_bill_face_threading_req.py::test_face_none_and_unregistered_identical → billing-conversational-facets:11.1（需求不存在）
+- tests/test_bill_face_threading_req.py::test_face_hit_dispatches_with_normalized_row → billing-conversational-facets:7.1（需求不存在）
+- tests/test_bill_face_threading_req.py::test_face_hit_empty_data_falls_back → billing-conversational-facets:7.1（需求不存在）
+- tests/test_bill_face_threading_req.py::test_face_threads_through_real_handler_to_bills → billing-conversational-facets:1.4（需求不存在）
+- tests/test_bill_face_threading_req.py::test_interface_types_defined → billing-conversational-facets:7.1（需求不存在）
+- tests/test_bill_ref_adapter_req.py::test_numeric_bill_ref_direct_hit → billing-conversational-facets:2.1（需求不存在）
+- tests/test_bill_ref_adapter_req.py::test_numeric_miss_falls_back_to_contract_id → billing-conversational-facets:2.1（需求不存在）
+- tests/test_bill_ref_adapter_req.py::test_text_bill_ref_resolves_contract_by_keyword → billing-conversational-facets:2.1（需求不存在）
+- tests/test_bill_ref_adapter_req.py::test_resolution_failure_returns_empty_not_raise → billing-conversational-facets:7.3（需求不存在）
+- tests/test_bill_ref_adapter_req.py::test_identity_allows_role_id_plus_bill_ref → billing-conversational-facets:2.1（需求不存在）
+- tests/test_bill_ref_adapter_req.py::test_without_bill_ref_unchanged → billing-conversational-facets:2.1（需求不存在）
+- tests/test_bill_ref_adapter_req.py::test_get_invoices_allows_role_id_plus_bill_id → billing-conversational-facets:7.5（需求不存在）
+- tests/test_billing_facet_seeds_req.py::test_categories_five_children_idempotent → billing-conversational-facets:1.1（需求不存在）
+- tests/test_billing_facet_seeds_req.py::test_domain_faces_derives_five → billing-conversational-facets:1.1（需求不存在）
+- tests/test_billing_facet_seeds_req.py::test_context_rows_and_length_budget → billing-conversational-facets:1.3（需求不存在）
+- tests/test_billing_facet_seeds_req.py::test_context_carries_ground_truth_anchors → billing-conversational-facets:1.3（需求不存在）
+- tests/test_billing_facet_seeds_req.py::test_five_configs_route_by_facet → billing-conversational-facets:1.2（需求不存在）
+- tests/test_billing_facet_seeds_req.py::test_persona_roles_billing_scoped → billing-conversational-facets:1.6（需求不存在）
+- tests/test_billing_facet_seeds_req.py::test_grounding_shapes → billing-conversational-facets:2.1（需求不存在）
+- tests/test_billing_facet_seeds_req.py::test_secondary_call_declarations → billing-conversational-facets:7.5（需求不存在）
+- tests/test_brain_dialog_history_req.py::test_dialog_history_rendered_into_prompt → conversational-diagnosis:2.4（需求不存在）
+- tests/test_brain_dialog_history_req.py::test_no_dialog_no_history_block → conversational-diagnosis:2.4（需求不存在）
+- tests/test_brain_dialog_history_req.py::test_dialog_renders_only_recent_tail → conversational-diagnosis:2.4（需求不存在）
+- tests/test_brain_dialog_history_req.py::test_brain_ask_records_dialog → conversational-diagnosis:2.4（需求不存在）
+- tests/test_brain_dialog_history_req.py::test_slot_guard_ask_records_dialog → conversational-diagnosis:2.4（需求不存在）
+- tests/test_brain_dialog_history_req.py::test_dialog_capped_at_six → conversational-diagnosis:2.4（需求不存在）
+- tests/test_brain_dialog_history_req.py::test_ground_by_api_converge_stores_grounding_note → conversational-diagnosis:2.4（需求不存在）
+- tests/test_brain_dialog_history_req.py::test_grounding_note_rendered_into_brain_prompt → conversational-diagnosis:2.4（需求不存在）
+- tests/test_brain_dialog_history_req.py::test_no_grounding_note_no_block → conversational-diagnosis:2.4（需求不存在）
+- tests/test_brain_dialog_history_req.py::test_converge_answer_recorded_into_dialog → conversational-diagnosis:2.4（需求不存在）
+- tests/test_brain_kb_grounding_req.py::test_no_kb_search_single_call_identical_output → brain-kb-grounding:1.3（需求不存在）
+- tests/test_brain_kb_grounding_req.py::test_no_kb_search_unknown_action_still_none → brain-kb-grounding:1.3（需求不存在）
+- tests/test_brain_kb_grounding_req.py::test_tool_call_then_final_json_with_hit → brain-kb-grounding:1.1（需求不存在）
+- tests/test_brain_kb_grounding_req.py::test_hit_sets_search_kb_status_hit → brain-kb-grounding:5.2（需求不存在）
+- tests/test_brain_kb_grounding_req.py::test_no_match_sets_status_miss → brain-kb-grounding:5.2（需求不存在）
+- tests/test_brain_kb_grounding_req.py::test_max_one_tool_call_forces_convergence → brain-kb-grounding:1.2（需求不存在）
+- tests/test_brain_kb_grounding_req.py::test_kb_search_raises_returns_none → brain-kb-grounding:4.2（需求不存在）
+- tests/test_brain_kb_grounding_req.py::test_second_call_failure_returns_none → brain-kb-grounding:4.2（需求不存在）
+- tests/test_brain_kb_grounding_req.py::test_model_declines_tool_single_call → brain-kb-grounding:1.1（需求不存在）
+- tests/test_brain_kb_grounding_req.py::test_none_path_prompt_has_no_tool_contract → brain-kb-grounding:1.3（需求不存在）
+- tests/test_brain_kb_grounding_req.py::test_tool_path_prompt_carries_contract → brain-kb-grounding:3.2（需求不存在）
+- tests/test_brain_strict_schema_req.py::test_schema_is_strict_and_requires_every_field → conversational-routing-execution:5.2（需求不存在）
+- tests/test_brain_strict_schema_req.py::test_schema_pins_the_two_enums → conversational-routing-execution:5.2（需求不存在）
+- tests/test_brain_strict_schema_req.py::test_nested_object_is_also_strict → conversational-routing-execution:5.2（需求不存在）
+- tests/test_brain_strict_schema_req.py::test_evaluator_sends_strict_schema → conversational-routing-execution:5.2（需求不存在）
+- tests/test_brain_strict_schema_req.py::test_flag_off_falls_back_to_json_object → conversational-routing-execution:5.2（需求不存在）
+- tests/test_brain_strict_schema_req.py::test_array_shape_is_restored_to_dict → conversational-routing-execution:5.2（需求不存在）
+- tests/test_brain_strict_schema_req.py::test_dict_shape_still_accepted → conversational-routing-execution:5.2（需求不存在）
+- tests/test_brain_strict_schema_req.py::test_empty_next_question_is_still_a_semantic_rejection → conversational-routing-execution:5.2（需求不存在）
+- tests/test_brain_strict_schema_req.py::test_empty_delegate_still_reported_as_missing_for_singleton → conversational-routing-execution:5.2（需求不存在）
+- tests/test_brain_transaction_req.py::test_confirm_action_passed_through → conversational-repair:4.1（需求不存在）
+- tests/test_brain_transaction_req.py::test_confirm_without_next_question_is_valid → conversational-repair:4.1（需求不存在）
+- tests/test_brain_transaction_req.py::test_inline_answer_passed_through → conversational-repair:3.1（需求不存在）
+- tests/test_brain_transaction_req.py::test_inline_answer_non_str_dropped → conversational-repair:3.1（需求不存在）
+- tests/test_brain_transaction_req.py::test_inline_answer_absent_no_key → conversational-repair:3.1（需求不存在）
+- tests/test_brain_transaction_req.py::test_unknown_action_rejected → conversational-repair:4.1（需求不存在）
+- tests/test_brain_transaction_req.py::test_ask_without_next_question_still_none → conversational-repair:4.1（需求不存在）
+- tests/test_build_change_exit_facts_req.py::test_status_ready_can_edit_directly → contract-conversational-facets:2.2（需求不存在）
+- tests/test_build_change_exit_facts_req.py::test_status_inviting_cancel_and_redo → contract-conversational-facets:2.2（需求不存在）
+- tests/test_build_change_exit_facts_req.py::test_status_signed_two_exits_with_blue_letter_facts → contract-conversational-facets:2.6（需求不存在）
+- tests/test_build_change_exit_facts_req.py::test_history_contract_routes_to_application_form → contract-conversational-facets:2.2（需求不存在）
+- tests/test_build_change_exit_facts_req.py::test_facts_carry_current_stage → contract-conversational-facets:7.1（需求不存在）
+- tests/test_build_change_exit_facts_req.py::test_registered_in_face_builders → contract-conversational-facets:7.1（需求不存在）
+- tests/test_build_change_exit_facts_req.py::test_g5_no_edit_permission_flags_permission_block → contract-conversational-facets:7.4（需求不存在）
+- tests/test_build_change_exit_facts_req.py::test_g5_has_edit_permission_ready_confirms_not_permission → contract-conversational-facets:7.4（需求不存在）
+- tests/test_build_change_exit_facts_req.py::test_g5_signed_with_permission_disambiguates_status_block → contract-conversational-facets:7.4（需求不存在）
+- tests/test_build_change_exit_facts_req.py::test_g5_absent_identity_with_current_output → contract-conversational-facets:7.4（需求不存在）
+- tests/test_build_closeout_facts_req.py::test_early_termination_pending_waits_countersign → contract-conversational-facets:3.1（需求不存在）
+- tests/test_build_closeout_facts_req.py::test_move_out_pending_waits_tenant → contract-conversational-facets:3.1（需求不存在）
+- tests/test_build_closeout_facts_req.py::test_closeout_done_next_is_archive_then_history → contract-conversational-facets:3.3（需求不存在）
+- tests/test_build_closeout_facts_req.py::test_overdue_not_history_escalates_to_support → contract-conversational-facets:3.4（需求不存在）
+- tests/test_build_closeout_facts_req.py::test_history_means_closeout_complete → contract-conversational-facets:3.4（需求不存在）
+- tests/test_build_closeout_facts_req.py::test_not_started_movable_states_pair_independence → contract-conversational-facets:3.2（需求不存在）
+- tests/test_build_closeout_facts_req.py::test_not_started_blocked_lists_blockers → contract-conversational-facets:3.2（需求不存在）
+- tests/test_build_closeout_facts_req.py::test_not_started_gives_early_termination_path → contract-conversational-facets:3.5（需求不存在）
+- tests/test_build_closeout_facts_req.py::test_registered_in_face_builders → contract-conversational-facets:7.1（需求不存在）
+- tests/test_build_renew_facts_req.py::test_days_remaining_before_expiry → contract-conversational-facets:4.1（需求不存在）
+- tests/test_build_renew_facts_req.py::test_expired_states_overdue → contract-conversational-facets:4.1（需求不存在）
+- tests/test_build_renew_facts_req.py::test_renewable_when_signed_and_not_expired → contract-conversational-facets:4.1（需求不存在）
+- tests/test_build_renew_facts_req.py::test_not_renewable_lists_blockers → contract-conversational-facets:4.1（需求不存在）
+- tests/test_build_renew_facts_req.py::test_unregistered_tenant_single_side_confirm → contract-conversational-facets:4.3（需求不存在）
+- tests/test_build_renew_facts_req.py::test_registered_tenant_needs_resign_72h → contract-conversational-facets:4.3（需求不存在）
+- tests/test_build_renew_facts_req.py::test_registration_field_absent_skips_branch → contract-conversational-facets:10.3（需求不存在）
+- tests/test_build_renew_facts_req.py::test_g4_is_newest_zero_means_already_renewed → contract-conversational-facets:4.5（需求不存在）
+- tests/test_build_renew_facts_req.py::test_g4_newest_or_absent_no_renewed_hint → contract-conversational-facets:10.3（需求不存在）
+- tests/test_build_renew_facts_req.py::test_father_chain_marks_renew_contract → contract-conversational-facets:4.5（需求不存在）
+- tests/test_build_renew_facts_req.py::test_registered_in_face_builders → contract-conversational-facets:7.1（需求不存在）
+- tests/test_build_sign_facts_req.py::test_not_sent_yet → contract-conversational-facets:6.1（需求不存在）
+- tests/test_build_sign_facts_req.py::test_waiting_tenant_signature → contract-conversational-facets:6.1（需求不存在）
+- tests/test_build_sign_facts_req.py::test_waiting_manager_countersign → contract-conversational-facets:6.1（需求不存在）
+- tests/test_build_sign_facts_req.py::test_both_signed_complete → contract-conversational-facets:6.1（需求不存在）
+- tests/test_build_sign_facts_req.py::test_channel_email_and_connect_state → contract-conversational-facets:6.2（需求不存在）
+- tests/test_build_sign_facts_req.py::test_no_channel_at_all_is_stated → contract-conversational-facets:6.2（需求不存在）
+- tests/test_build_sign_facts_req.py::test_g1_present_not_expired → contract-conversational-facets:6.4（需求不存在）
+- tests/test_build_sign_facts_req.py::test_g1_present_expired_explains_reset_and_data_wipe → contract-conversational-facets:6.4（需求不存在）
+- tests/test_build_sign_facts_req.py::test_g1_absent_skips_expiry_branch → contract-conversational-facets:10.3（需求不存在）
+- tests/test_build_sign_facts_req.py::test_g2_present_mismatch_masked → contract-conversational-facets:6.3（需求不存在）
+- tests/test_build_sign_facts_req.py::test_g2_present_match_states_consistent → contract-conversational-facets:6.3（需求不存在）
+- tests/test_build_sign_facts_req.py::test_g2_absent_skips_mismatch_branch → contract-conversational-facets:10.3（需求不存在）
+- tests/test_build_sign_facts_req.py::test_g2_ciphertext_value_skips_comparison → contract-conversational-facets:10.3（需求不存在）
+- tests/test_build_sign_facts_req.py::test_registered_in_face_builders → contract-conversational-facets:7.1（需求不存在）
+- tests/test_c2_collapse_req.py::test_g1_late_fee_aliases_collapse_to_one → C2_G1:1（需求不存在）
+- tests/test_c2_collapse_req.py::test_g2_second_alias_adds_no_candidate_and_no_score → C2_G2:1（需求不存在）
+- tests/test_c2_collapse_req.py::test_m2_sum_aggregator_makes_g2_red → C2_G2:2（需求不存在）
+- tests/test_c2_collapse_req.py::test_g3_collapse_recovers_a_slot → C2_G3:1（需求不存在）
+- tests/test_c2_collapse_req.py::test_m1_collapse_after_truncation_makes_g3_red → C2_G3:2（需求不存在）
+- tests/test_c2_collapse_req.py::test_g4_row_3511_nominates_exactly_four → C2_G4:1（需求不存在）
+- tests/test_c2_collapse_req.py::test_g5_historical_row_makes_no_candidate → C2_G5:1（需求不存在）
+- tests/test_c2_collapse_req.py::test_g6_unresolved_rows_make_no_candidate → C2_G6:1（需求不存在）
+- tests/test_c2_collapse_req.py::test_m3_row_id_fallback_makes_g6_red → C2_G6:2（需求不存在）
+- tests/test_c2_collapse_req.py::test_g8_keyword_only_survives_threshold → C2_G8:1（需求不存在）
+- tests/test_c2_collapse_req.py::test_vector_only_below_floor_is_rejected → C2_G8:2（需求不存在）
+- tests/test_c2_collapse_req.py::test_g9_mixed_source_is_one_candidate → C2_G9:1（需求不存在）
+- tests/test_c2_collapse_req.py::test_keyword_priority_orders_before_vector_only → C2_G9:2（需求不存在）
+- tests/test_c2_grounding_bindings_req.py::test_c2_g1_r28_no_reroute → T4C2_G1:1（需求不存在）
+- tests/test_c2_grounding_bindings_req.py::test_c2_g1_adapter_does_not_touch_face_dispatch → T4C2_G1:2（需求不存在）
+- tests/test_c2_grounding_bindings_req.py::test_c2_g2_member_answer_never_participates → T4C2_G2:1（需求不存在）
+- tests/test_c2_grounding_bindings_req.py::test_c2_g2_tagged_alternatives_required → T4C2_G2:2（需求不存在）
+- tests/test_c2_grounding_bindings_req.py::test_c2_g3_r31_fixed_builder → T4C2_G3:1（需求不存在）
+- tests/test_c2_grounding_bindings_req.py::test_c2_m1_intent_check_would_reroute → T4C2_M1:1（需求不存在）
+- tests/test_c2_grounding_bindings_req.py::test_c2_g4_candidates_do_not_build_facts → T4C2_G4:1（需求不存在）
+- tests/test_c2_grounding_bindings_req.py::test_c2_m2_taking_first_candidate_would_be_red → T4C2_M2:1（需求不存在）
+- tests/test_c2_grounding_bindings_req.py::test_c2_g5_selection_provenance_preserved → T4C2_G5:1（需求不存在）
+- tests/test_c2_grounding_bindings_req.py::test_c2_g5_mutation_dropping_type_line_is_red → T4C2_G5:2（需求不存在）
+- tests/test_c2_grounding_bindings_req.py::test_c2_g6_not_found_carries_reviewed_note → T4C2_G6:1（需求不存在）
+- tests/test_c2_grounding_bindings_req.py::test_c2_g6_type_mismatch_carries_note → T4C2_G6:2（需求不存在）
+- tests/test_c2_grounding_bindings_req.py::test_c2_g6_missing_note_makes_d2_hard_fail → T4C2_G6:3（需求不存在）
+- tests/test_c2_grounding_bindings_req.py::test_c2_g7_binding_pair_enforced → T4C2_G7:1（需求不存在）
+- tests/test_c2_grounding_bindings_req.py::test_c2_g8_output_mode_exactness → T4C2_G8:1（需求不存在）
+- tests/test_c2_grounding_bindings_req.py::test_c2_g8_string_return_is_rejected → T4C2_G8:2（需求不存在）
+- tests/test_c2_grounding_bindings_req.py::test_three_fulfillment_shapes_registered → T4C2_SHAPES:1（需求不存在）
+- tests/test_c2_rerank_required_req.py::test_g15_rerank_required → C2_G15:1（需求不存在）
+- tests/test_c2_rerank_required_req.py::test_g15_vector_also_required → C2_G15:2（需求不存在）
+- tests/test_c2_rerank_required_req.py::test_m8_vector_only_fallback_makes_g15_red → C2_G15:3（需求不存在）
+- tests/test_c2_rerank_required_req.py::test_g16_nomination_evidence_cannot_rescue_finalization → C2_G16:1（需求不存在）
+- tests/test_c2_rerank_required_req.py::test_g17_exact_set_contract → C2_G17:1（需求不存在）
+- tests/test_c2_rerank_required_req.py::test_g17_duplicate_candidate_rejected → C2_G17:2（需求不存在）
+- tests/test_c2_rerank_required_req.py::test_g17_count_only_check_would_be_false_green → C2_G17:3（需求不存在）
+- tests/test_c2_rerank_required_req.py::test_g18_downstream_similarity_is_canonical_only → C2_G18:1（需求不存在）
+- tests/test_c2_rerank_required_req.py::test_g18_cannot_project_before_finalize → C2_G18:2（需求不存在）
+- tests/test_c2_scoring_req.py::test_cosine_parity_with_existing_helper → C2_PARITY:1（需求不存在）
+- tests/test_c2_scoring_req.py::test_g7a_nomination_isolation → C2_G7a:1（需求不存在）
+- tests/test_c2_scoring_req.py::test_m5_vector_from_alias_makes_g7a_red → C2_G7a:2（需求不存在）
+- tests/test_c2_scoring_req.py::test_g7b_canonical_vector_causality_and_weight → C2_G7b:1（需求不存在）
+- tests/test_c2_scoring_req.py::test_m5_ignoring_canonical_vector_makes_g7b_red → C2_G7b:2（需求不存在）
+- tests/test_c2_scoring_req.py::test_g7c_row_text_cannot_reach_reranker → C2_G7c:1（需求不存在）
+- tests/test_c2_scoring_req.py::test_g7c_positive_control_canonical_text_changes_surface → C2_G7c:2（需求不存在）
+- tests/test_c2_scoring_req.py::test_m6_reranker_on_row_representation_makes_g7c_red → C2_G7c:3（需求不存在）
+- tests/test_c2_scoring_req.py::test_missing_embedding_raises → C2_FAILLOUD:1（需求不存在）
+- tests/test_c2_scoring_req.py::test_missing_canonical_text_raises → C2_FAILLOUD:2（需求不存在）
+- tests/test_c2_scoring_req.py::test_unknown_responsibility_id_raises → C2_FAILLOUD:3（需求不存在）
+- tests/test_c2_scoring_req.py::test_dimension_mismatch_raises → C2_FAILLOUD:4（需求不存在）
+- tests/test_c2_scoring_req.py::test_historical_responsibility_is_not_scorable → C2_FAILLOUD:5（需求不存在）
+- tests/test_c2_selector_order_req.py::test_g11_follows_selector_rank_not_global_ordinal → C2_G11:1（需求不存在）
+- tests/test_c2_selector_order_req.py::test_m7_global_ordinal_rank_makes_g11_red → C2_G11:2（需求不存在）
+- tests/test_c2_selector_order_req.py::test_g12_vector_score_does_not_reorder_keyword_bucket → C2_G12:1（需求不存在）
+- tests/test_c2_selector_order_req.py::test_g13_earliest_keyword_surface_and_no_alias_count_effect → C2_G13:1（需求不存在）
+- tests/test_c2_selector_order_req.py::test_g14_multi_membership_tie_break_is_deterministic → C2_G14:1（需求不存在）
+- tests/test_c2_selector_order_req.py::test_keyword_row_without_rank_raises → C2_G11:3（需求不存在）
+- tests/test_c2_selector_order_req.py::test_annotate_helper_stamps_selector_local_rank → C2_G11:4（需求不存在）
+- tests/test_candidate_labels_routing_req.py::test_label_fields_joined_with_date_format → domain-conversational-facets:4.1（需求不存在）
+- tests/test_candidate_labels_routing_req.py::test_same_name_distinguishable_by_extra_fields → domain-conversational-facets:4.1（需求不存在）
+- tests/test_candidate_labels_routing_req.py::test_within_cap_lists_all_candidates → domain-conversational-facets:4.3（需求不存在）
+- tests/test_candidate_labels_routing_req.py::test_over_cap_first_asks_to_refine → domain-conversational-facets:4.3（需求不存在）
+- tests/test_candidate_labels_routing_req.py::test_over_cap_after_refine_truncates_with_hint → domain-conversational-facets:4.4（需求不存在）
+- tests/test_candidate_labels_routing_req.py::test_no_label_fields_falls_back_to_single_label → domain-conversational-facets:7.5（需求不存在）
+- tests/test_candidate_labels_routing_req.py::test_no_cap_lists_all → domain-conversational-facets:7.5（需求不存在）
+- tests/test_config_for_category_req.py::test_category_hit_returns_config → conversational-diagnosis:1.3（需求不存在）
+- tests/test_config_for_category_req.py::test_category_miss_returns_none → conversational-diagnosis:1.3（需求不存在）
+- tests/test_config_for_category_req.py::test_mode_all_not_indexed → conversational-diagnosis:1.3（需求不存在）
+- tests/test_config_for_category_req.py::test_disabled_not_indexed → conversational-diagnosis:1.3（需求不存在）
+- tests/test_config_for_category_req.py::test_multiple_facets_each_indexed → conversational-diagnosis:1.3（需求不存在）
+- tests/test_config_for_category_req.py::test_none_category_returns_none → conversational-diagnosis:1.3（需求不存在）
+- tests/test_contract_all_stages_matrix_req.py::test_stage_label_per_status → domain-conversational-facets:3.2（需求不存在）
+- tests/test_contract_all_stages_matrix_req.py::test_lifecycle_flags_override_status → domain-conversational-facets:3.2（需求不存在）
+- tests/test_contract_all_stages_matrix_req.py::test_status_response_renders_every_status → domain-conversational-facets:3.2（需求不存在）
+- tests/test_contract_category_backfill_req.py::test_backfill_category_matches_rule_topic_scope → conversational-diagnosis:8.2（需求不存在）
+- tests/test_contract_category_backfill_req.py::test_backfill_targets_categories_idempotent_and_safe → conversational-diagnosis:8.2（需求不存在）
+- tests/test_contract_category_backfill_req.py::test_backfill_predicate_uses_contract_endpoint_not_hardcoded_ids → conversational-diagnosis:8.2（需求不存在）
+- tests/test_contract_category_backfill_req.py::test_backfilled_knowledge_yields_diagnosis_category → conversational-diagnosis:8.2（需求不存在）
+- tests/test_contract_diagnosis_seed_req.py::test_seed_metadata_parses_to_contract_diag_config → conversational-diagnosis:8.1（需求不存在）
+- tests/test_contract_diagnosis_seed_req.py::test_seed_grounding_scope_is_api_with_full_mapping → conversational-diagnosis:8.1（需求不存在）
+- tests/test_contract_diagnosis_seed_req.py::test_seed_indexed_by_category_router → conversational-diagnosis:8.1（需求不存在）
+- tests/test_contract_diagnosis_seed_req.py::test_seed_is_rules_row_and_idempotent → conversational-diagnosis:8.1（需求不存在）
+- tests/test_contract_diagnosis_seed_req.py::test_seed_rules_text_covers_required_behaviors → conversational-diagnosis:8.1（需求不存在）
+- tests/test_contract_domain_seed_req.py::test_parent_shared_covers_structure → domain-conversational-facets:5.1（需求不存在）
+- tests/test_contract_domain_seed_req.py::test_child_facet_is_status_judgment → domain-conversational-facets:5.1（需求不存在）
+- tests/test_contract_domain_seed_req.py::test_no_penalty_latefee_calc_framework → domain-conversational-facets:3.2（需求不存在）
+- tests/test_contract_domain_seed_req.py::test_seed_only_inserts_system_context → domain-conversational-facets:5.4（需求不存在）
+- tests/test_contract_domain_seed_req.py::test_three_level_stack_and_bit_status_decodable → domain-conversational-facets:5.3（需求不存在）
+- tests/test_contract_domain_seed_req.py::test_layered_size_within_budget → domain-conversational-facets:5.1（需求不存在）
+- tests/test_contract_facet_seeds_req.py::test_categories_v2_inserts_five_children_idempotent → contract-conversational-facets:1.1（需求不存在）
+- tests/test_contract_facet_seeds_req.py::test_domain_faces_derives_six_facets → contract-conversational-facets:8.1（需求不存在）
+- tests/test_contract_facet_seeds_req.py::test_context_five_rows_within_length_budget → contract-conversational-facets:1.3（需求不存在）
+- tests/test_contract_facet_seeds_req.py::test_change_context_carries_application_skeleton → contract-conversational-facets:2.4（需求不存在）
+- tests/test_contract_facet_seeds_req.py::test_context_stack_budget_with_existing_parent → contract-conversational-facets:1.5（需求不存在）
+- tests/test_contract_facet_seeds_req.py::test_context_seed_insert_only_tagged_by_facet → contract-conversational-facets:1.3（需求不存在）
+- tests/test_contract_facet_seeds_req.py::test_five_configs_route_by_facet_category → contract-conversational-facets:1.2（需求不存在）
+- tests/test_contract_facet_seeds_req.py::test_diagnosis_configs_share_status_grounding_shape → contract-conversational-facets:1.2（需求不存在）
+- tests/test_contract_facet_seeds_req.py::test_closeout_declares_secondary_call_for_bills → contract-conversational-facets:3.3（需求不存在）
+- tests/test_contract_facet_seeds_req.py::test_create_guide_grounds_by_knowledge_category → contract-conversational-facets:5.1（需求不存在）
+- tests/test_contract_facet_seeds_req.py::test_persona_roles_are_facet_scoped_not_property_manager → contract-conversational-facets:11.1（需求不存在）
+- tests/test_contract_facet_seeds_req.py::test_persona_rules_carry_facet_specific_behaviors → contract-conversational-facets:2.1（需求不存在）
+- tests/test_contract_facet_seeds_req.py::test_closeout_persona_acknowledges_identifier_no_verbatim_repeat → contract-conversational-facets:2.1（需求不存在）
+- tests/test_contract_formatter_facts_req.py::test_ops_line_carries_effectiveness_statement → domain-conversational-facets:3.2（需求不存在）
+- tests/test_contract_formatter_facts_req.py::test_pair_clarifier_when_both_movein_moveout_available → domain-conversational-facets:3.2（需求不存在）
+- tests/test_contract_formatter_facts_req.py::test_no_ops_line_unchanged → domain-conversational-facets:3.2（需求不存在）
+- tests/test_contract_formatter_facts_req.py::test_milestones_line_from_bit_status → domain-conversational-facets:3.2（需求不存在）
+- tests/test_converge_slot_guard_req.py::test_converge_without_required_slot_asks_without_api → contract-conversational-facets:7.3（需求不存在）
+- tests/test_converge_slot_guard_req.py::test_guard_ask_counts_and_saves → contract-conversational-facets:7.3（需求不存在）
+- tests/test_converge_slot_guard_req.py::test_guard_fallback_question_when_brain_gives_none → contract-conversational-facets:7.3（需求不存在）
+- tests/test_converge_slot_guard_req.py::test_converge_with_slot_filled_grounds_normally → contract-conversational-facets:7.3（需求不存在）
+- tests/test_converge_slot_guard_req.py::test_category_select_converges_without_slots → contract-conversational-facets:7.3（需求不存在）
+- tests/test_converge_slot_guard_req.py::test_no_required_slots_config_unaffected → contract-conversational-facets:7.3（需求不存在）
+- tests/test_converge_slot_guard_req.py::test_missing_session_param_blocks_api_with_honest_degrade → contract-conversational-facets:7.3（需求不存在）
+- tests/test_converge_slot_guard_req.py::test_session_param_present_grounds_normally → contract-conversational-facets:7.3（需求不存在）
+- tests/test_converge_slot_guard_req.py::test_config_without_session_templates_unaffected → contract-conversational-facets:7.3（需求不存在）
+- tests/test_converge_slot_guard_req.py::test_guard_yields_at_max_asks → contract-conversational-facets:7.3（需求不存在）
+- tests/test_conversational_engine_unit_req.py::test_active_when_form_id_is_conversational → unit-coverage-rebuild:5.1（需求不存在）
+- tests/test_conversational_engine_unit_req.py::test_inactive_when_none → unit-coverage-rebuild:5.1（需求不存在）
+- tests/test_conversational_engine_unit_req.py::test_inactive_when_empty_dict → unit-coverage-rebuild:5.1（需求不存在）
+- tests/test_conversational_engine_unit_req.py::test_inactive_when_other_form → unit-coverage-rebuild:5.1（需求不存在）
+- tests/test_conversational_sse_sequence_req.py::test_sse_event_sequence_is_start_intent_chunks_metadata_done → testing-traceability:5.5（需求不存在）
+- tests/test_conversational_sse_sequence_req.py::test_sse_skips_empty_chunks_but_keeps_framing → testing-traceability:5.5（需求不存在）
+- tests/test_conversational_sse_sequence_req.py::test_sse_emits_error_event_on_stream_failure → testing-traceability:5.5（需求不存在）
+- tests/test_d1e_envelope_req.py::test_e_g1_exact_final_text_mapping → D1E_G1:1（需求不存在）
+- tests/test_d1e_envelope_req.py::test_e_g2_no_silent_empty_fallback → D1E_G2:1（需求不存在）
+- tests/test_d1e_envelope_req.py::test_e_g2_missing_text_key_also_fails → D1E_G2:2（需求不存在）
+- tests/test_d1e_envelope_req.py::test_e_g2_mutation_silent_default_would_pass_silently → D1E_G2:3（需求不存在）
+- tests/test_d1e_envelope_req.py::test_e_g3_no_row_shaped_recovery → D1E_G3:1（需求不存在）
+- tests/test_d1e_envelope_req.py::test_e_g3_row_answer_never_wins_over_text → D1E_G3:2（需求不存在）
+- tests/test_d1e_envelope_req.py::test_e_g4_envelope_metadata_from_session_only → D1E_G4:1（需求不存在）
+- tests/test_d1e_envelope_req.py::test_e_g5_ambiguous_prompt_and_not_completed → D1E_G5:1（需求不存在）
+- tests/test_d1e_envelope_req.py::test_e_g5_other_unresolved_states → D1E_G5:2（需求不存在）
+- tests/test_d1e_envelope_req.py::test_e_g6_resolved_cannot_escape_executor → D1E_G6:1（需求不存在）
+- tests/test_d1e_envelope_req.py::test_e_g7_legacy_dict_goes_to_legacy_converter → D1E_G7:1（需求不存在）
+- tests/test_d1e_envelope_req.py::test_e_g7_dispatch_is_by_type_not_by_key → D1E_G7:2（需求不存在）
+- tests/test_d1e_envelope_req.py::test_e_g7_unknown_type_hard_fails → D1E_G7:3（需求不存在）
+- tests/test_d2_grounding_presentation_req.py::test_d2_g1_signature_has_no_authority_inputs → D2_G1:1（需求不存在）
+- tests/test_d2_grounding_presentation_req.py::test_d2_g1_scanner_itself_can_detect_violation → D2_G1:3（需求不存在）
+- tests/test_d2_grounding_presentation_req.py::test_d2_g1_module_does_not_import_owner_selection → D2_G1:2（需求不存在）
+- tests/test_d2_grounding_presentation_req.py::test_d2_g2_identical_payload_under_noise → D2_G2:1（需求不存在）
+- tests/test_d2_grounding_presentation_req.py::test_d2_g3_r28_members_empty_answer_still_works → D2_G3:1（需求不存在）
+- tests/test_d2_grounding_presentation_req.py::test_d2_g4_missing_facts_hard_fails → D2_G4:1（需求不存在）
+- tests/test_d2_grounding_presentation_req.py::test_d2_m2_row_answer_cannot_rescue_missing_facts → D2_M2:1（需求不存在）
+- tests/test_d2_grounding_presentation_req.py::test_d2_g5_candidates_never_auto_selected → D2_G5:1（需求不存在）
+- tests/test_d2_grounding_presentation_req.py::test_d2_g5_empty_candidates_hard_fails → D2_G5:2（需求不存在）
+- tests/test_d2_grounding_presentation_req.py::test_d2_g6_facts_outcome_is_converge_and_writes_note → D2_G6:1（需求不存在）
+- tests/test_d2_grounding_presentation_req.py::test_d2_g6_does_not_reclassify_outcome → D2_G6:2（需求不存在）
+- tests/test_d2_grounding_presentation_req.py::test_d2_r31_other_outcomes_need_reviewed_note → D2_R31:1（需求不存在）
+- tests/test_d2_grounding_presentation_req.py::test_d2_does_not_rerun_selection → D2_R31:2（需求不存在）
+- tests/test_d2_grounding_presentation_req.py::test_d2_m1_face_based_builder_selection_would_be_red → D2_M1:1（需求不存在）
+- tests/test_d2_grounding_presentation_req.py::test_d2_m3_utterance_cannot_select_different_wording → D2_M3:1（需求不存在）
+- tests/test_deterministic_slot_fill_req.py::test_looks_like_identifier → domain-conversational-facets:4.4（需求不存在）
+- tests/test_deterministic_slot_fill_req.py::test_extract_identifier → domain-conversational-facets:4.4（需求不存在）
+- tests/test_deterministic_slot_fill_req.py::test_pure_number_fills_slot_and_converges_without_brain → domain-conversational-facets:4.4（需求不存在）
+- tests/test_deterministic_slot_fill_req.py::test_invalid_number_zero_rows_asks_not_crash → domain-conversational-facets:4.4（需求不存在）
+- tests/test_deterministic_slot_fill_req.py::test_number_many_rows_lists_candidates → domain-conversational-facets:4.4（需求不存在）
+- tests/test_deterministic_slot_fill_req.py::test_opening_sentence_goes_to_brain → domain-conversational-facets:4.4（需求不存在）
+- tests/test_deterministic_slot_fill_req.py::test_pending_candidates_not_intercepted_by_slot_fill → domain-conversational-facets:4.4（需求不存在）
+- tests/test_deterministic_slot_fill_req.py::test_zero_rows_clears_identifier_slot → domain-conversational-facets:4.4（需求不存在）
+- tests/test_deterministic_slot_fill_req.py::test_prepare_saves_after_zero_rows_so_slot_reusable → domain-conversational-facets:4.4（需求不存在）
+- tests/test_deterministic_slot_fill_req.py::test_switch_contract_via_text_number → domain-conversational-facets:4.4（需求不存在）
+- tests/test_deterministic_slot_fill_req.py::test_same_number_followup_goes_to_brain → domain-conversational-facets:4.4（需求不存在）
+- tests/test_diagnosis_category_routing_req.py::test_knowledge_category_multi_value_preferred → conversational-diagnosis:1.3（需求不存在）
+- tests/test_diagnosis_category_routing_req.py::test_knowledge_category_single_fallback → conversational-diagnosis:1.3（需求不存在）
+- tests/test_diagnosis_category_routing_req.py::test_knowledge_category_none → conversational-diagnosis:1.3（需求不存在）
+- tests/test_diagnosis_category_routing_req.py::test_routes_when_threshold_met_and_category_hits → conversational-diagnosis:1.1（需求不存在）
+- tests/test_diagnosis_category_routing_req.py::test_no_route_below_threshold → conversational-diagnosis:7.2（需求不存在）
+- tests/test_diagnosis_category_routing_req.py::test_no_route_when_category_misses → conversational-diagnosis:1.2（需求不存在）
+- tests/test_diagnosis_category_routing_req.py::test_multi_category_second_hits → conversational-diagnosis:1.4（需求不存在）
+- tests/test_diagnosis_category_routing_req.py::test_no_route_when_best_knowledge_none → conversational-diagnosis:7.2（需求不存在）
+- tests/test_domain_org_routing_req.py::test_diagnosis_config_declares_domain_and_key → domain-conversational-facets:1.3（需求不存在）
+- tests/test_domain_org_routing_req.py::test_domain_key_loads_matching_system_context → domain-conversational-facets:1.3（需求不存在）
+- tests/test_domain_org_routing_req.py::test_domain_key_reuses_target_user_convention → domain-conversational-facets:1.4（需求不存在）
+- tests/test_engine_api_handler_injection_req.py::test_api_handler_injected_and_stored → conversational-diagnosis:3.1（需求不存在）
+- tests/test_engine_api_handler_injection_req.py::test_api_handler_optional_defaults_none → conversational-diagnosis:3.1（需求不存在）
+- tests/test_engine_domain_context_threading_req.py::test_prepare_threads_persona_role_as_domain_key → domain-conversational-facets:2.2（需求不存在）
+- tests/test_engine_domain_context_threading_req.py::test_candidate_selection_threads_persona_role → domain-conversational-facets:2.2（需求不存在）
+- tests/test_engine_prefill_ingest_req.py::test_apply_prefill_slots_and_candidates → conversational-repair:2.6（需求不存在）
+- tests/test_engine_prefill_ingest_req.py::test_apply_prefill_none_is_noop → conversational-repair:2.6（需求不存在）
+- tests/test_engine_prefill_ingest_req.py::test_prepare_seeds_prefill_on_new_session → conversational-repair:2.6（需求不存在）
+- tests/test_engine_prefill_ingest_req.py::test_prepare_ignores_prefill_on_existing_session → conversational-repair:2.6（需求不存在）
+- tests/test_engine_prefill_ingest_req.py::test_ingest_high_confidence_resolves_id_slots_with_jgb_api → conversational-repair:2.6（需求不存在）
+- tests/test_engine_prefill_ingest_req.py::test_ingest_no_jgb_api_degrades_to_candidates → conversational-repair:2.6（需求不存在）
+- tests/test_engine_prefill_ingest_req.py::test_ingest_does_not_overwrite_user_slot → conversational-repair:2.6（需求不存在）
+- tests/test_engine_prefill_ingest_req.py::test_ingest_low_confidence_sets_candidates → conversational-repair:2.6（需求不存在）
+- tests/test_engine_prefill_ingest_req.py::test_ingest_none_recognition_noop → conversational-repair:2.6（需求不存在）
+- tests/test_engine_prefill_ingest_req.py::test_ingest_non_transaction_facet_noop → conversational-repair:2.6（需求不存在）
+- tests/test_engine_prefill_ingest_req.py::test_ingest_no_session_noop → conversational-repair:2.6（需求不存在）
+- tests/test_engine_scope_face_req.py::test_domain_faces_explicit_wins → mid-session-switch:3.5（需求不存在）
+- tests/test_engine_scope_face_req.py::test_domain_faces_derived_from_category_config → mid-session-switch:3.5（需求不存在）
+- tests/test_engine_scope_face_req.py::test_domain_faces_derive_failure_returns_empty → mid-session-switch:3.5（需求不存在）
+- tests/test_engine_scope_face_req.py::test_scope_switch_closes_and_reroutes → mid-session-switch:3.3（需求不存在）
+- tests/test_engine_scope_face_req.py::test_pending_candidates_not_switched → mid-session-switch:4.1（需求不存在）
+- tests/test_engine_scope_face_req.py::test_face_switch_loads_that_face_context → mid-session-switch:3.5（需求不存在）
+- tests/test_engine_scope_face_req.py::test_invalid_face_falls_back_to_entry → mid-session-switch:4.1（需求不存在）
+- tests/test_engine_scope_face_req.py::test_previous_face_used_for_step_context → mid-session-switch:3.2（需求不存在）
+- tests/test_engine_transaction_req.py::test_slots_full_confirm_emits_summary_and_quick_replies_no_execute → conversational-repair:4.1（需求不存在）
+- tests/test_engine_transaction_req.py::test_consent_by_button_executes_once_and_returns_receipt → conversational-repair:4.2（需求不存在）
+- tests/test_engine_transaction_req.py::test_consent_by_natural_language_executes → conversational-repair:4.2（需求不存在）
+- tests/test_engine_transaction_req.py::test_execute_maps_slots_via_params_from_form → conversational-repair:4.2（需求不存在）
+- tests/test_engine_transaction_req.py::test_idempotent_no_re_execute_after_executed → conversational-repair:4.4（需求不存在）
+- tests/test_engine_transaction_req.py::test_execute_failure_does_not_set_executed_and_offers_retry → conversational-repair:4.3（需求不存在）
+- tests/test_engine_transaction_req.py::test_execute_can_retry_after_failure → conversational-repair:4.3（需求不存在）
+- tests/test_engine_transaction_req.py::test_edit_reconfirms_via_brain_and_keeps_slots → conversational-repair:4.5（需求不存在）
+- tests/test_engine_transaction_req.py::test_edit_button_routes_to_brain → conversational-repair:4.5（需求不存在）
+- tests/test_engine_transaction_req.py::test_cancel_closes_and_discards_slots → conversational-repair:3.3（需求不存在）
+- tests/test_engine_transaction_req.py::test_cancel_button_closes → conversational-repair:3.3（需求不存在）
+- tests/test_engine_transaction_req.py::test_brain_none_degrades_and_never_executes → conversational-repair:3.4（需求不存在）
+- tests/test_engine_transaction_req.py::test_inline_answer_precedes_question → conversational-repair:3.1（需求不存在）
+- tests/test_engine_transaction_req.py::test_inline_answer_precedes_confirm_summary → conversational-repair:3.1（需求不存在）
+- tests/test_engine_transaction_req.py::test_non_transaction_facet_uses_existing_path → conversational-repair:8.1（需求不存在）
+- tests/test_engine_transaction_req.py::test_non_transaction_consent_word_not_intercepted → conversational-repair:8.1（需求不存在）
+- tests/test_engine_transaction_req.py::test_set_facet_called_with_incrementing_turn → conversational-repair:7.1（需求不存在）
+- tests/test_engine_transaction_req.py::test_set_facet_failure_does_not_break_dialog → conversational-repair:7.1（需求不存在）
+- tests/test_estate_facet_seeds_req.py::test_categories_two_children_under_existing_parent → estate-conversational-facets:1.1（需求不存在）
+- tests/test_estate_facet_seeds_req.py::test_context_rows_and_length_budget → estate-conversational-facets:1.5（需求不存在）
+- tests/test_estate_facet_seeds_req.py::test_parent_layer_two_axis_without_branch_details → estate-conversational-facets:1.3（需求不存在）
+- tests/test_estate_facet_seeds_req.py::test_guide_context_carries_ground_truth_anchors → estate-conversational-facets:2.3（需求不存在）
+- tests/test_estate_facet_seeds_req.py::test_diagnosis_context_carries_decision_tree_and_red_line → estate-conversational-facets:4.2（需求不存在）
+- tests/test_estate_facet_seeds_req.py::test_two_configs_route_by_facet → estate-conversational-facets:1.2（需求不存在）
+- tests/test_estate_facet_seeds_req.py::test_persona_roles_estate_scoped → estate-conversational-facets:1.6（需求不存在）
+- tests/test_estate_facet_seeds_req.py::test_grounding_shapes → estate-conversational-facets:1.7（需求不存在）
+- tests/test_estate_facet_seeds_req.py::test_red_lines_everywhere → estate-conversational-facets:2.7（需求不存在）
+- tests/test_f_c12_empty_handling_req.py::test_empty_policy_is_resolved_empty → FC12_POLICY:1（需求不存在）
+- tests/test_f_c12_empty_handling_req.py::test_resolved_empty_is_executable_input → FC12_POLICY:2（需求不存在）
+- tests/test_f_c12_empty_handling_req.py::test_direct_supported_empty_handling → FC12_DIRECT:1（需求不存在）
+- tests/test_f_c12_empty_handling_req.py::test_auto_pay_failure_is_not_assumed_from_family → FC12_DIRECT:2（需求不存在）
+- tests/test_f_c12_empty_handling_req.py::test_r12_empty_is_degenerate_without_adapter → FC12_R12:1（需求不存在）
+- tests/test_f_c12_empty_handling_req.py::test_r12_adapter_handles_empty → FC12_R12:2（需求不存在）
+- tests/test_f_c12_empty_handling_req.py::test_r12_adapter_delegates_when_non_empty → FC12_R12:3（需求不存在）
+- tests/test_f_c12_empty_handling_req.py::test_r23_empty_without_adapter_is_semantically_wrong → FC12_R23:1（需求不存在）
+- tests/test_f_c12_empty_handling_req.py::test_r23_adapter_handles_empty → FC12_R23:2（需求不存在）
+- tests/test_f_c12_empty_handling_req.py::test_r16_empty_adapter_replaces_causal_assertion_with_reviewed_facts → FC22_R16:1（需求不存在）
+- tests/test_f_c12_empty_handling_req.py::test_r16_non_empty_still_uses_the_named_branch_unchanged → FC22_R16:2（需求不存在）
+- tests/test_f_c12_empty_handling_req.py::test_r16_adapter_never_enters_the_dispatcher → FC22_R16:3（需求不存在）
+- tests/test_f_c12_empty_handling_req.py::test_adapter_empty_text_matches_legacy_dispatcher_text → FC12_DRIFT:1（需求不存在）
+- tests/test_f_c12_empty_handling_req.py::test_adapters_are_not_registered_yet → FC12_DRIFT:2（需求不存在）
+- tests/test_f_c12_empty_handling_req.py::test_r12_records_known_production_defect → FC12_R12:4（需求不存在）
+- tests/test_f_c12_empty_handling_req.py::test_tenant_singleton_runtime_contract_not_established → FC12_TENANT:1（需求不存在）
+- tests/test_face_builders_registry_req.py::test_face_hit_dispatches_to_builder → contract-conversational-facets:7.1（需求不存在）
+- tests/test_face_builders_registry_req.py::test_keyword_filter_applies_before_builder → contract-conversational-facets:7.1（需求不存在）
+- tests/test_face_builders_registry_req.py::test_face_miss_falls_back_to_existing_routing → contract-conversational-facets:11.1（需求不存在）
+- tests/test_face_builders_registry_req.py::test_status_face_never_registered → contract-conversational-facets:11.1（需求不存在）
+- tests/test_face_builders_registry_req.py::test_no_rows_returns_existing_message_even_with_face → contract-conversational-facets:7.1（需求不存在）
+- tests/test_face_builders_registry_req.py::test_interface_types_defined → contract-conversational-facets:7.1（需求不存在）
+- tests/test_face_none_identity_req.py::test_face_none_and_unregistered_identical_output → contract-conversational-facets:11.1（需求不存在）
+- tests/test_face_none_identity_req.py::test_format_jgb_response_identity_with_face → contract-conversational-facets:11.1（需求不存在）
+- tests/test_face_none_identity_req.py::test_state_without_face_reaches_contracts_as_entry_face → contract-conversational-facets:11.1（需求不存在）
+- tests/test_face_param_threading_req.py::test_ground_by_api_passes_face_and_user_message → contract-conversational-facets:7.1（需求不存在）
+- tests/test_face_param_threading_req.py::test_ground_by_api_falls_back_to_entry_face_when_unset → contract-conversational-facets:7.1（需求不存在）
+- tests/test_face_param_threading_req.py::test_face_threads_through_real_handler_to_contracts → contract-conversational-facets:2.2（需求不存在）
+- tests/test_face_param_threading_req.py::test_signatures_accept_face_defaulting_none → contract-conversational-facets:7.1（需求不存在）
+- tests/test_face_precedence_req.py::test_precedence_grid → routing-authority-model:ruling-001A-2（需求不存在）
+- tests/test_face_precedence_req.py::test_fail_open_never_beats_an_existing_knowledge_candidate → routing-authority-model:ruling-001A-2（需求不存在）
+- tests/test_face_precedence_req.py::test_authoritative_stay_wins_regardless_of_the_direct_answer_gate → routing-authority-model:ruling-001A-2（需求不存在）
+- tests/test_face_precedence_req.py::test_unevaluated_keeps_existing_behaviour → routing-authority-model:ruling-001A-2（需求不存在）
+- tests/test_face_precedence_req.py::test_no_face_falls_through_to_knowledge_then_fallback → routing-authority-model:ruling-001A-2（需求不存在）
+- tests/test_face_precedence_req.py::test_switch_salvage_guard_are_never_laundered_into_a_face_stay → routing-authority-model:ruling-001A-2（需求不存在）
+- tests/test_face_precedence_req.py::test_router_never_reads_dot_stay_for_precedence → routing-authority-model:ruling-001A-guard（需求不存在）
+- tests/test_face_precedence_req.py::test_guard_itself_can_see_a_planted_violation → routing-authority-model:ruling-001A-guard（需求不存在）
+- tests/test_facet_entry_path_equivalence_req.py::test_seed_reduces_to_plain_respond_for_diagnosis_facet → conversational-routing-execution:3.2（需求不存在）
+- tests/test_facet_entry_path_equivalence_req.py::test_gate_and_prefill_are_noop_when_keys_absent → conversational-routing-execution:3.2（需求不存在）
+- tests/test_facet_entry_path_equivalence_req.py::test_transaction_facet_is_not_equivalent → conversational-routing-execution:3.2（需求不存在）
+- tests/test_ground_by_api_param_mapping_req.py::test_numeric_slot_resolves_to_contract_ids_via_form_channel → conversational-diagnosis:3.2（需求不存在）
+- tests/test_ground_by_api_param_mapping_req.py::test_text_slot_resolves_to_keyword_via_form_channel → conversational-diagnosis:3.2（需求不存在）
+- tests/test_ground_by_api_param_mapping_req.py::test_session_role_id_passed_through_session_data → conversational-diagnosis:3.1（需求不存在）
+- tests/test_ground_by_api_req.py::test_reuses_execute_api_call_with_assembled_inputs → conversational-diagnosis:3.2（需求不存在）
+- tests/test_ground_by_api_req.py::test_endpoint_and_mapping_from_config_not_hardcoded → conversational-diagnosis:6.3（需求不存在）
+- tests/test_ground_by_api_req.py::test_one_row_converges → conversational-diagnosis:3.1（需求不存在）
+- tests/test_ground_by_api_req.py::test_zero_rows_asks_without_candidates → conversational-diagnosis:3.1（需求不存在）
+- tests/test_ground_by_api_req.py::test_many_rows_list_candidates_via_result_mapping → conversational-diagnosis:6.1（需求不存在）
+- tests/test_ground_by_api_three_way_req.py::test_one_row_grounding_combines_label_and_formatted_response → conversational-diagnosis:3.4（需求不存在）
+- tests/test_ground_by_api_three_way_req.py::test_zero_rows_reasks_identification → conversational-diagnosis:3.4（需求不存在）
+- tests/test_ground_by_api_three_way_req.py::test_many_rows_return_candidates_from_mapping → conversational-diagnosis:3.5（需求不存在）
+- tests/test_ground_by_api_three_way_req.py::test_api_exception_returns_safe_ask_without_raising → conversational-diagnosis:3.6（需求不存在）
+- tests/test_ground_by_api_three_way_req.py::test_api_unsuccessful_response_returns_safe_ask → conversational-diagnosis:3.6（需求不存在）
+- tests/test_has_basic_info_req.py::test_required_slot_missing_insufficient → conversational-diagnosis:2.1（需求不存在）
+- tests/test_has_basic_info_req.py::test_required_slot_present_sufficient → conversational-diagnosis:2.1（需求不存在）
+- tests/test_has_basic_info_req.py::test_required_slots_partial_insufficient → conversational-diagnosis:2.1（需求不存在）
+- tests/test_has_basic_info_req.py::test_no_required_slots_presales_insufficient → conversational-diagnosis:2.5（需求不存在）
+- tests/test_has_basic_info_req.py::test_no_required_slots_presales_sufficient → conversational-diagnosis:2.5（需求不存在）
+- tests/test_has_basic_info_req.py::test_config_none_uses_presales_default → conversational-diagnosis:2.5（需求不存在）
+- tests/test_hybrid_grounding_req.py::test_converge_decision_carries_api_grounding_and_domain_system_md → domain-conversational-facets:3.1（需求不存在）
+- tests/test_hybrid_grounding_req.py::test_handle_passes_both_api_grounding_and_domain_system_md_to_synthesize → domain-conversational-facets:3.1（需求不存在）
+- tests/test_iot_facet_seeds_req.py::test_categories_two_children_idempotent → iot-conversational-facets:1.1（需求不存在）
+- tests/test_iot_facet_seeds_req.py::test_domain_faces_derives_two → iot-conversational-facets:1.2（需求不存在）
+- tests/test_iot_facet_seeds_req.py::test_context_rows_and_length_budget → iot-conversational-facets:1.5（需求不存在）
+- tests/test_iot_facet_seeds_req.py::test_parent_layer_free_of_branch_details → iot-conversational-facets:1.3（需求不存在）
+- tests/test_iot_facet_seeds_req.py::test_context_carries_ground_truth_anchors → iot-conversational-facets:2.6（需求不存在）
+- tests/test_iot_facet_seeds_req.py::test_two_configs_route_by_facet → iot-conversational-facets:1.2（需求不存在）
+- tests/test_iot_facet_seeds_req.py::test_persona_roles_iot_scoped → iot-conversational-facets:1.6（需求不存在）
+- tests/test_iot_facet_seeds_req.py::test_grounding_shapes → iot-conversational-facets:2.1（需求不存在）
+- tests/test_iot_facet_seeds_req.py::test_no_remote_operation_red_line_everywhere → iot-conversational-facets:5.5（需求不存在）
+- tests/test_iot_facet_seeds_req.py::test_meter_billing_advice_red_line → iot-conversational-facets:5.5（需求不存在）
+- tests/test_late_fee_owner_consolidation_req.py::test_paid_bill_keeps_payment_and_settlement_time → LATE_FEE_OWNER_CONSOLIDATION:1（需求不存在）
+- tests/test_late_fee_owner_consolidation_req.py::test_unpaid_bill_never_fabricates_payment_time → LATE_FEE_OWNER_CONSOLIDATION:2（需求不存在）
+- tests/test_late_fee_owner_consolidation_req.py::test_only_present_fields_are_emitted → LATE_FEE_OWNER_CONSOLIDATION:2（需求不存在）
+- tests/test_late_fee_owner_consolidation_req.py::test_late_fee_bill_identity_survives → LATE_FEE_OWNER_CONSOLIDATION:3（需求不存在）
+- tests/test_late_fee_owner_consolidation_req.py::test_paid_late_fee_bill_shows_both → LATE_FEE_OWNER_CONSOLIDATION:3（需求不存在）
+- tests/test_late_fee_owner_consolidation_req.py::test_contract_settings_unchanged → LATE_FEE_OWNER_CONSOLIDATION:4（需求不存在）
+- tests/test_late_fee_owner_consolidation_req.py::test_contract_late_fee_disabled_unchanged → LATE_FEE_OWNER_CONSOLIDATION:4（需求不存在）
+- tests/test_late_fee_owner_consolidation_req.py::test_mutation_removing_payment_projection_turns_red → LATE_FEE_OWNER_CONSOLIDATION:5（需求不存在）
+- tests/test_late_fee_owner_consolidation_req.py::test_late_fee_intent_is_not_answered_by_bill_diagnosis → LATE_FEE_OWNER_CONSOLIDATION:2A（需求不存在）
+- tests/test_late_fee_owner_consolidation_req.py::test_other_bill_diagnoses_unchanged → LATE_FEE_OWNER_CONSOLIDATION:2A（需求不存在）
+- tests/test_late_fee_owner_consolidation_req.py::test_diagnose_bill_entry_also_excluded → LATE_FEE_OWNER_CONSOLIDATION:2A（需求不存在）
+- tests/test_late_fee_owner_consolidation_req.py::test_no_dispatch_reaches_superseded_engine → LATE_FEE_OWNER_CONSOLIDATION:2A（需求不存在）
+- tests/test_late_fee_owner_consolidation_req.py::test_M1_restoring_dispatch_turns_red → LATE_FEE_OWNER_CONSOLIDATION:M1（需求不存在）
+- tests/test_late_fee_owner_consolidation_req.py::test_M2_removing_authority_exclusion_turns_red → LATE_FEE_OWNER_CONSOLIDATION:M2（需求不存在）
+- tests/test_late_fee_owner_consolidation_req.py::test_intent_predicate_keywords_frozen → LATE_FEE_OWNER_CONSOLIDATION:2A（需求不存在）
+- tests/test_late_fee_owner_consolidation_req.py::test_diag_keywords_unchanged → LATE_FEE_OWNER_CONSOLIDATION:2A（需求不存在）
+- tests/test_match_candidate_ordinal_req.py::test_ordinal_selection → domain-conversational-facets:4.4（需求不存在）
+- tests/test_match_candidate_ordinal_req.py::test_existing_matching_unchanged → domain-conversational-facets:4.4（需求不存在）
+- tests/test_match_candidate_ordinal_req.py::test_out_of_range_or_unparseable_returns_none → domain-conversational-facets:4.4（需求不存在）
+- tests/test_match_candidate_req.py::test_match_by_ordinal → conversational-diagnosis:3.5（需求不存在）
+- tests/test_match_candidate_req.py::test_match_by_exact_label → conversational-diagnosis:2.3（需求不存在）
+- tests/test_match_candidate_req.py::test_match_by_label_substring → conversational-diagnosis:2.3（需求不存在）
+- tests/test_match_candidate_req.py::test_match_by_id_when_not_ordinal → conversational-diagnosis:3.5（需求不存在）
+- tests/test_match_candidate_req.py::test_ordinal_takes_priority_over_id → conversational-diagnosis:3.5（需求不存在）
+- tests/test_match_candidate_req.py::test_no_match_returns_none → conversational-diagnosis:2.2（需求不存在）
+- tests/test_nomination_enumeration_req.py::test_shape01_first_category_no_candidate_second_commits → conversational-routing-execution:stage1-nomination（需求不存在）
+- tests/test_nomination_enumeration_req.py::test_shape02_first_candidate_commits → conversational-routing-execution:stage1-nomination（需求不存在）
+- tests/test_nomination_enumeration_req.py::test_shape03_first_no_commit_second_commits → conversational-routing-execution:stage1-nomination（需求不存在）
+- tests/test_nomination_enumeration_req.py::test_shape04_all_candidates_no_commit → conversational-routing-execution:stage1-nomination（需求不存在）
+- tests/test_nomination_enumeration_req.py::test_shape05_suppression_skips_first_second_commits → conversational-routing-execution:stage1-nomination（需求不存在）
+- tests/test_nomination_enumeration_req.py::test_shape06_delegation_commits_to_non_nominated_face → conversational-routing-execution:stage1-nomination（需求不存在）
+- tests/test_nomination_enumeration_req.py::test_shape07_technical_fail_open_authority_preserved → conversational-routing-execution:stage1-nomination（需求不存在）
+- tests/test_nomination_enumeration_req.py::test_shape08_resolver_exception_propagates_unchanged → conversational-routing-execution:stage1-nomination（需求不存在）
+- tests/test_nomination_enumeration_req.py::test_shape09_unknown_category_yields_no_candidate → conversational-routing-execution:stage1-nomination（需求不存在）
+- tests/test_nomination_enumeration_req.py::test_shape10_duplicate_config_still_resolved_twice → conversational-routing-execution:stage1-nomination（需求不存在）
+- tests/test_nomination_enumeration_req.py::test_shape11_empty_categories → conversational-routing-execution:stage1-nomination（需求不存在）
+- tests/test_nomination_enumeration_req.py::test_shape12_below_threshold_short_circuits_before_nomination → conversational-routing-execution:stage1-nomination（需求不存在）
+- tests/test_nomination_enumeration_req.py::test_negative_control_reversed_order_changes_outcome → conversational-routing-execution:stage1-nomination（需求不存在）
+- tests/test_nomination_telemetry_req.py::test_non_classification_entry_writes_null_not_empty_list → conversational-routing-execution:stage1-telemetry（需求不存在）
+- tests/test_nomination_telemetry_req.py::test_classification_without_top1_writes_empty_list → conversational-routing-execution:stage1-telemetry（需求不存在）
+- tests/test_nomination_telemetry_req.py::test_categories_without_mapping_keeps_categories_and_empty_candidates → conversational-routing-execution:stage1-telemetry（需求不存在）
+- tests/test_nomination_telemetry_req.py::test_telemetry_records_full_nomination_not_commit → conversational-routing-execution:stage1-telemetry（需求不存在）
+- tests/test_nomination_telemetry_req.py::test_delegation_to_non_nominated_face_does_not_rewrite_candidates → conversational-routing-execution:stage1-telemetry（需求不存在）
+- tests/test_nomination_telemetry_req.py::test_top1_snapshot_is_the_row_nomination_saw → conversational-routing-execution:stage1-telemetry（需求不存在）
+- tests/test_nomination_telemetry_req.py::test_telemetry_write_failure_does_not_change_routing → conversational-routing-execution:stage1-telemetry（需求不存在）
+- tests/test_nomination_telemetry_req.py::test_mapping_digest_moves_when_mapping_changes → conversational-routing-execution:stage1-epoch（需求不存在）
+- tests/test_nomination_telemetry_req.py::test_mapping_digest_never_triggers_a_load → conversational-routing-execution:stage1-epoch（需求不存在）
+- tests/test_non_regression_domain_facets_req.py::test_prospect_eats_base_only → domain-conversational-facets:7.1（需求不存在）
+- tests/test_non_regression_domain_facets_req.py::test_no_domain_key_backward_compatible → domain-conversational-facets:7.5（需求不存在）
+- tests/test_non_regression_domain_facets_req.py::test_non_api_still_uses_existing_converge_grounding → domain-conversational-facets:7.2（需求不存在）
+- tests/test_non_regression_domain_facets_req.py::test_candidate_backward_compat_single_label_all_listed → domain-conversational-facets:7.5（需求不存在）
+- tests/test_persona_currentvalue_principle_req.py::test_persona_contains_current_value_precedence_principle → domain-conversational-facets:3.2（需求不存在）
+- tests/test_persona_currentvalue_principle_req.py::test_seed_still_parses_to_config → domain-conversational-facets:7.2（需求不存在）
+- tests/test_point_refund_selection_req.py::test_first_row_type1_second_type2_selects_second → POINT_REFUND_BILL_SELECTION:1（需求不存在）
+- tests/test_point_refund_selection_req.py::test_single_point_refund_yields_amount_and_status → POINT_REFUND_BILL_SELECTION:2（需求不存在）
+- tests/test_point_refund_selection_req.py::test_no_point_refund_bill_is_not_found_not_fallback → POINT_REFUND_BILL_SELECTION:3（需求不存在）
+- tests/test_point_refund_selection_req.py::test_multiple_point_refund_bills_list_candidates → POINT_REFUND_BILL_SELECTION:4（需求不存在）
+- tests/test_point_refund_selection_req.py::test_direct_bill_id_with_wrong_type_is_refused → POINT_REFUND_BILL_SELECTION:5（需求不存在）
+- tests/test_point_refund_selection_req.py::test_missing_type_is_not_treated_as_point_refund → POINT_REFUND_BILL_SELECTION:5（需求不存在）
+- tests/test_point_refund_selection_req.py::test_title_saying_point_refund_is_not_identity → POINT_REFUND_BILL_SELECTION:5（需求不存在）
+- tests/test_point_refund_selection_req.py::test_non_point_refund_intent_keeps_legacy_path → POINT_REFUND_BILL_SELECTION:scope（需求不存在）
+- tests/test_point_refund_selection_req.py::test_mutation_removing_type_filter_turns_red → POINT_REFUND_BILL_SELECTION:6（需求不存在）
+- tests/test_point_refund_selection_req.py::test_mutation_back_to_data0_turns_red → POINT_REFUND_BILL_SELECTION:6（需求不存在）
+- tests/test_point_refund_selection_req.py::test_mutation_dropping_type_fact_line_turns_red → POINT_REFUND_BILL_SELECTION:6（需求不存在）
+- tests/test_prepare_api_converge_req.py::test_api_converge_uses_api_grounding → conversational-diagnosis:3.4（需求不存在）
+- tests/test_prepare_api_converge_req.py::test_api_zero_degrades_to_ask_decision → conversational-diagnosis:3.4（需求不存在）
+- tests/test_prepare_api_converge_req.py::test_api_many_writes_pending_candidates_and_saves → conversational-diagnosis:3.5（需求不存在）
+- tests/test_prepare_api_converge_req.py::test_non_api_uses_existing_converge_grounding → conversational-diagnosis:2.4（需求不存在）
+- tests/test_prepare_candidate_selection_req.py::test_hit_sets_slot_clears_candidates_and_converges → conversational-diagnosis:3.5（需求不存在）
+- tests/test_prepare_candidate_selection_req.py::test_hit_by_label_substring_converges → conversational-diagnosis:2.3（需求不存在）
+- tests/test_prepare_candidate_selection_req.py::test_miss_reasks_and_retains_candidates → conversational-diagnosis:2.2（需求不存在）
+- tests/test_prepare_presales_no_diagnosis_req.py::test_presales_converge_uses_knowledge_grounding_not_api → conversational-diagnosis:7.1（需求不存在）
+- tests/test_prepare_presales_no_diagnosis_req.py::test_presales_ask_does_not_trigger_either_insertion_point → conversational-diagnosis:7.1（需求不存在）
+- tests/test_presales_compliance_req.py::test_has_basic_info_truth_table → testing-traceability:5.2（需求不存在）
+- tests/test_presales_compliance_req.py::test_max_asks_is_sane_positive_int → testing-traceability:5.1（需求不存在）
+- tests/test_presales_compliance_req.py::test_compliance_no_pricing_directive → testing-traceability:5.2（需求不存在）
+- tests/test_presales_compliance_req.py::test_compliance_iot_not_proactive → testing-traceability:5.2（需求不存在）
+- tests/test_presales_compliance_req.py::test_compliance_competitor_neutral → testing-traceability:5.2（需求不存在）
+- tests/test_presales_compliance_req.py::test_compliance_cta_links_are_markdown_no_bare_url → testing-traceability:5.2（需求不存在）
+- tests/test_presales_grounding_req.py::test_grounding_select_ids_uses_deterministic_ids_path → testing-traceability:5.2（需求不存在）
+- tests/test_presales_grounding_req.py::test_grounding_select_category_uses_category_path → testing-traceability:5.2（需求不存在）
+- tests/test_presales_grounding_req.py::test_grounding_default_vector_path → testing-traceability:5.2（需求不存在）
+- tests/test_presales_grounding_req.py::test_answer_kind_suppresses_cta_and_drops_context → testing-traceability:5.2（需求不存在）
+- tests/test_presales_grounding_req.py::test_recommend_kind_carries_context_for_personalization → testing-traceability:5.2（需求不存在）
+- tests/test_presales_rules_extraction_req.py::test_config_parses_cta_rules → domain-conversational-facets:3.2（需求不存在）
+- tests/test_presales_rules_extraction_req.py::test_presales_code_default_carries_rules → domain-conversational-facets:3.2（需求不存在）
+- tests/test_presales_rules_extraction_req.py::test_build_presales_synth_is_generic_now → domain-conversational-facets:3.2（需求不存在）
+- tests/test_presales_rules_extraction_req.py::test_synth_context_appends_cta_rules_only_on_force → domain-conversational-facets:3.2（需求不存在）
+- tests/test_presales_rules_extraction_req.py::test_engine_recommend_converge_carries_cta_rules → domain-conversational-facets:3.2（需求不存在）
+- tests/test_repair_prefill_req.py::test_single_contract_prefills_flat_scalar_estate_slots → conversational-repair:2.1（需求不存在）
+- tests/test_repair_prefill_req.py::test_multiple_contracts_yield_candidates_not_prefill → conversational-repair:2.2（需求不存在）
+- tests/test_repair_prefill_req.py::test_zero_contracts_degrades → conversational-repair:2.1（需求不存在）
+- tests/test_repair_prefill_req.py::test_api_failure_degrades_same_path → conversational-repair:2.1（需求不存在）
+- tests/test_repair_prefill_req.py::test_api_exception_degrades_not_raise → conversational-repair:2.1（需求不存在）
+- tests/test_repair_prefill_req.py::test_high_confidence_infers_id_slots_and_display → conversational-repair:2.3（需求不存在）
+- tests/test_repair_prefill_req.py::test_name_not_in_tree_leaves_id_slot_empty → conversational-repair:2.3（需求不存在）
+- tests/test_repair_prefill_req.py::test_category_tree_query_failure_degrades_to_candidates → conversational-repair:2.3（需求不存在）
+- tests/test_repair_prefill_req.py::test_reason_not_in_tree_still_produces_ids → conversational-repair:2.3（需求不存在）
+- tests/test_repair_prefill_req.py::test_low_confidence_yields_candidates_capped → conversational-repair:2.4（需求不存在）
+- tests/test_repair_prefill_req.py::test_low_confidence_respects_candidate_max → conversational-repair:2.4（需求不存在）
+- tests/test_repair_prefill_req.py::test_no_vision_leaves_category_slots_empty → conversational-repair:2.5（需求不存在）
+- tests/test_repair_prefill_req.py::test_threshold_override_from_config → conversational-repair:2.3（需求不存在）
+- tests/test_repair_prefill_req.py::test_defaults_used_when_config_keys_absent → conversational-repair:2.3（需求不存在）
+- tests/test_responsibility_context_req.py::test_context_key_prefers_current_face_then_category_then_role → face-exit-before-grounding:1（需求不存在）
+- tests/test_responsibility_context_req.py::test_engine_domain_key_delegates_to_the_single_definition → face-exit-before-grounding:1（需求不存在）
+- tests/test_responsibility_context_req.py::test_builder_uses_the_authoritative_key_not_the_facet_key → face-exit-before-grounding:1（需求不存在）
+- tests/test_responsibility_context_req.py::test_preentry_and_insession_digests_match → face-exit-before-grounding:1（需求不存在）
+- tests/test_responsibility_context_req.py::test_missing_rules_returns_none_not_an_invented_context → face-exit-before-grounding:1（需求不存在）
+- tests/test_responsibility_delegation_req.py::test_responsibility_parsed_from_metadata → face-exit-before-grounding:1（需求不存在）
+- tests/test_responsibility_delegation_req.py::test_delegates_absent_is_empty_not_error → face-exit-before-grounding:1（需求不存在）
+- tests/test_responsibility_delegation_req.py::test_delegates_accepts_plain_strings_and_dedupes → face-exit-before-grounding:1（需求不存在）
+- tests/test_responsibility_delegation_req.py::test_delegate_kept_when_in_whitelist → face-exit-before-grounding:1（需求不存在）
+- tests/test_responsibility_delegation_req.py::test_invented_delegate_is_dropped → face-exit-before-grounding:1（需求不存在）
+- tests/test_responsibility_delegation_req.py::test_delegate_dropped_when_scope_is_stay → face-exit-before-grounding:1（需求不存在）
+- tests/test_responsibility_delegation_req.py::test_delegate_dropped_when_no_whitelist_declared → face-exit-before-grounding:1（需求不存在）
+- tests/test_responsibility_delegation_req.py::test_prompt_unchanged_when_no_delegates → face-exit-before-grounding:1（需求不存在）
+- tests/test_responsibility_delegation_req.py::test_delegate_specs_carry_when_and_allowed_keys_ignore_it → face-exit-before-grounding:1（需求不存在）
+- tests/test_responsibility_delegation_req.py::test_when_is_rendered_into_the_prompt → face-exit-before-grounding:1（需求不存在）
+- tests/test_responsibility_delegation_req.py::test_when_does_not_widen_the_whitelist → face-exit-before-grounding:1（需求不存在）
+- tests/test_responsibility_delegation_req.py::test_tuple_form_still_validates_against_target_only → face-exit-before-grounding:1（需求不存在）
+- tests/test_responsibility_resolver_req.py::test_delegation_chain_commits_only_the_staying_face → face-exit-before-grounding:1（需求不存在）
+- tests/test_responsibility_resolver_req.py::test_seed_stays_commits_immediately_without_extra_calls → face-exit-before-grounding:1（需求不存在）
+- tests/test_responsibility_resolver_req.py::test_delegation_cycle_stops_deterministically → face-exit-before-grounding:1（需求不存在）
+- tests/test_responsibility_resolver_req.py::test_switch_without_delegate_falls_back → face-exit-before-grounding:1（需求不存在）
+- tests/test_responsibility_resolver_req.py::test_invalid_or_disabled_delegate_fails_closed → face-exit-before-grounding:1（需求不存在）
+- tests/test_responsibility_resolver_req.py::test_max_hops_is_bounded → face-exit-before-grounding:1（需求不存在）
+- tests/test_responsibility_resolver_req.py::test_missing_rules_fails_open_to_stay → face-exit-before-grounding:1（需求不存在）
+- tests/test_responsibility_resolver_req.py::test_brain_failure_fails_open_to_stay → face-exit-before-grounding:1（需求不存在）
+- tests/test_responsibility_resolver_req.py::test_chat_wiring_is_a_noop_while_gate_is_off → face-exit-before-grounding:1（需求不存在）
+- tests/test_responsibility_resolver_req.py::test_chat_wiring_returns_delegated_config_when_gate_on → face-exit-before-grounding:1（需求不存在）
+- tests/test_responsibility_resolver_req.py::test_scoped_rollout_gate → face-exit-before-grounding:1（需求不存在）
+- tests/test_responsibility_resolver_req.py::test_resolver_telemetry_shape_supports_the_rollout_rates → face-exit-before-grounding:1（需求不存在）
+- tests/test_responsibility_resolver_req.py::test_telemetry_records_fallback_reason_when_nothing_committed → face-exit-before-grounding:1（需求不存在）
+- tests/test_responsibility_resolver_req.py::test_technical_fail_open_stays_but_has_no_commit_authority → routing-authority-model:ruling-001-4（需求不存在）
+- tests/test_responsibility_resolver_req.py::test_model_stay_is_the_only_thing_with_commit_authority → routing-authority-model:ruling-001-4（需求不存在）
+- tests/test_responsibility_resolver_req.py::test_switch_never_has_commit_authority_even_from_the_model → routing-authority-model:ruling-001-4（需求不存在）
+- tests/test_responsibility_resolver_req.py::test_entry_resolution_carries_the_authority_of_its_commit → routing-authority-model:ruling-001-4（需求不存在）
+- tests/test_responsibility_resolver_req.py::test_missing_decision_source_defaults_to_losing_authority → routing-authority-model:ruling-001-4（需求不存在）
+- tests/test_responsibility_resolver_req.py::test_guard_terminations_are_not_counted_as_technical_fail_open → routing-authority-model:ruling-001-4（需求不存在）
+- tests/test_responsibility_resolver_req.py::test_wiring_marks_fail_open_commit_as_compat_not_authoritative → routing-authority-model:ruling-001A-2（需求不存在）
+- tests/test_responsibility_resolver_req.py::test_wiring_reports_no_face_when_resolver_declines → routing-authority-model:ruling-001A-2（需求不存在）
+- tests/test_responsibility_resolver_req.py::test_returned_config_is_identical_to_pre_change_behaviour → routing-authority-model:ruling-001A-2（需求不存在）
+- tests/test_sec01_no_secret_in_output_req.py::test_real_transport_repr_does_not_leak_api_key → SEC01_G1:1（需求不存在）
+- tests/test_sec01_no_secret_in_output_req.py::test_jgb_api_init_log_does_not_include_key → SEC01_G1:2（需求不存在）
+- tests/test_sec01_no_secret_in_output_req.py::test_environment_secrets_are_not_echoed_by_helpers → SEC01_G1:3（需求不存在）
+- tests/test_sec01_no_secret_in_output_req.py::test_no_hardcoded_key_shape_in_responsibility_modules → SEC01_G1:4（需求不存在）
+- tests/test_secondary_call_req.py::test_row_template_resolution → contract-conversational-facets:10.2（需求不存在）
+- tests/test_secondary_call_req.py::test_secondary_runs_attaches_and_reformats → contract-conversational-facets:3.3（需求不存在）
+- tests/test_secondary_call_req.py::test_no_declaration_single_call_unchanged → contract-conversational-facets:10.2（需求不存在）
+- tests/test_secondary_call_req.py::test_secondary_failure_degrades_to_primary → contract-conversational-facets:10.3（需求不存在）
+- tests/test_secondary_call_req.py::test_secondary_skipped_when_many_rows → contract-conversational-facets:3.3（需求不存在）
+- tests/test_secondary_call_req.py::test_get_bills_forwards_contract_ids_without_user_id → contract-conversational-facets:3.3（需求不存在）
+- tests/test_secondary_call_req.py::test_closeout_facts_personalized_unarchived_bills → contract-conversational-facets:3.3（需求不存在）
+- tests/test_secondary_call_req.py::test_closeout_facts_all_archived → contract-conversational-facets:3.3（需求不存在）
+- tests/test_secondary_call_req.py::test_closeout_facts_without_bills_keeps_generic_guide → contract-conversational-facets:10.3（需求不存在）
+- tests/test_secondary_call_req.py::test_history_contract_still_reminds_unarchived_bills → contract-conversational-facets:3.3（需求不存在）
+- tests/test_session_identity_threading_req.py::test_start_persists_session_identity_into_state → conversational-diagnosis:3.1（需求不存在）
+- tests/test_session_identity_threading_req.py::test_prepare_threads_role_id_to_start → conversational-diagnosis:3.1（需求不存在）
+- tests/test_session_identity_threading_req.py::test_ground_by_api_reads_threaded_role_id_from_state → conversational-diagnosis:3.1（需求不存在）
+- tests/test_singleton_delegation_req.py::test_switch_missing_delegate_with_single_allowed_uses_contract → conversational-routing-execution:5.2（需求不存在）
+- tests/test_singleton_delegation_req.py::test_model_supplied_valid_target_wins → conversational-routing-execution:5.2（需求不存在）
+- tests/test_singleton_delegation_req.py::test_invalid_target_is_not_rewritten_to_the_singleton → conversational-routing-execution:5.2（需求不存在）
+- tests/test_singleton_delegation_req.py::test_two_allowed_delegates_never_auto_picks → conversational-routing-execution:5.2（需求不存在）
+- tests/test_singleton_delegation_req.py::test_zero_allowed_delegates_never_delegates → conversational-routing-execution:5.2（需求不存在）
+- tests/test_singleton_delegation_req.py::test_stay_never_delegates_even_with_single_allowed → conversational-routing-execution:5.2（需求不存在）
+- tests/test_singleton_delegation_req.py::test_stay_with_model_supplied_target_still_does_not_delegate → conversational-routing-execution:5.2（需求不存在）
+- tests/test_skip_refine_semantics_req.py::test_over_cap_then_pick_then_requery_converges_to_single_row → conversational-routing-execution:5.1（需求不存在）
+- tests/test_skip_refine_semantics_req.py::test_skip_refine_does_not_change_the_result_set → conversational-routing-execution:5.1（需求不存在）
+- tests/test_step_contract_layers_req.py::test_invalid_action_keeps_scope_switch → conversational-routing-execution:5.2（需求不存在）
+- tests/test_step_contract_layers_req.py::test_invalid_action_with_stay_scope_still_reports_stay → conversational-routing-execution:5.2（需求不存在）
+- tests/test_step_contract_layers_req.py::test_payload_never_carries_invalid_action → conversational-routing-execution:5.2（需求不存在）
+- tests/test_step_contract_layers_req.py::test_ask_without_next_question_is_rejected_but_scope_survives → conversational-routing-execution:5.2（需求不存在）
+- tests/test_step_contract_layers_req.py::test_unparseable_model_output_returns_none_not_stepresult → conversational-routing-execution:5.2（需求不存在）
+- tests/test_step_contract_layers_req.py::test_delegate_survives_invalid_action_when_whitelisted → conversational-routing-execution:5.2（需求不存在）
+- tests/test_step_contract_layers_req.py::test_delegate_outside_whitelist_is_dropped → conversational-routing-execution:5.2（需求不存在）
+- tests/test_step_contract_layers_req.py::test_delegate_ignored_when_scope_is_stay → conversational-routing-execution:5.2（需求不存在）
+- tests/test_step_contract_layers_req.py::test_compat_layer_returns_same_payload_for_valid_action → conversational-routing-execution:5.2（需求不存在）
+- tests/test_step_contract_layers_req.py::test_compat_layer_returns_none_for_invalid_action → conversational-routing-execution:5.2（需求不存在）
+- tests/test_step_contract_layers_req.py::test_extracted_fields_non_dict_is_normalized → conversational-routing-execution:5.2（需求不存在）
+- tests/test_step_contract_layers_req.py::test_inline_answer_non_str_is_dropped → conversational-routing-execution:5.2（需求不存在）
+- tests/test_step_contract_layers_req.py::test_responsibility_stays_when_salvage_disabled → conversational-routing-execution:5.2（需求不存在）
+- tests/test_step_contract_layers_req.py::test_responsibility_switches_when_salvage_enabled → conversational-routing-execution:5.2（需求不存在）
+- tests/test_step_contract_layers_req.py::test_unparseable_output_still_fails_open_regardless_of_flag → conversational-routing-execution:5.2（需求不存在）
+- tests/test_step_contract_layers_req.py::test_preentry_gate_respects_both_flags → conversational-routing-execution:5.2（需求不存在）
+- tests/test_step_scope_face_req.py::test_scope_switch_passed_through → mid-session-switch:3.1（需求不存在）
+- tests/test_step_scope_face_req.py::test_scope_defaults_to_stay → mid-session-switch:3.1（需求不存在）
+- tests/test_step_scope_face_req.py::test_scope_invalid_normalized_to_stay → mid-session-switch:3.1（需求不存在）
+- tests/test_step_scope_face_req.py::test_face_passed_through → mid-session-switch:3.1（需求不存在）
+- tests/test_step_scope_face_req.py::test_faces_injected_into_prompt → mid-session-switch:3.1（需求不存在）
+- tests/test_synth_suppress_no_stall_req.py::test_facet_context_stays_domain_framing_only → domain-conversational-facets:3.2（需求不存在）
+- tests/test_synth_suppress_no_stall_req.py::test_presales_suppress_branch_stays_generic → domain-conversational-facets:3.2（需求不存在）
+- tests/test_synth_suppress_no_stall_req.py::test_force_branch_generic_no_hardcoded_cta → domain-conversational-facets:3.2（需求不存在）
+- tests/test_system_context_per_domain_req.py::test_facet_three_level_stack → domain-conversational-facets:2.1（需求不存在）
+- tests/test_system_context_per_domain_req.py::test_parent_key_loads_base_plus_parent_only → domain-conversational-facets:2.1（需求不存在）
+- tests/test_system_context_per_domain_req.py::test_role_key_single_layer → domain-conversational-facets:7.1（需求不存在）
+- tests/test_system_context_per_domain_req.py::test_no_key_base_only → domain-conversational-facets:7.1（需求不存在）
+- tests/test_system_context_per_domain_req.py::test_unknown_facet_returns_base_only → domain-conversational-facets:2.3（需求不存在）
+- tests/test_system_context_per_domain_req.py::test_per_key_cache_isolation_and_reset → domain-conversational-facets:2.5（需求不存在）
+- tests/test_system_context_per_domain_req.py::test_missing_base_fallback → domain-conversational-facets:2.3（需求不存在）
+- tests/test_system_context_per_domain_req.py::test_db_exception_not_cached → domain-conversational-facets:2.3（需求不存在）
+- tests/test_t4a_session_carrier_req.py::test_a_g1_authority_survives_round_trip → T4A_G1:1（需求不存在）
+- tests/test_t4a_session_carrier_req.py::test_a_g1_resume_does_not_execute_capability → T4A_G1:2（需求不存在）
+- tests/test_t4a_session_carrier_req.py::test_a_g2_build_rejects_knowledge_id → T4A_G2:1（需求不存在）
+- tests/test_t4a_session_carrier_req.py::test_a_g2_legacy_field_residue_is_hard_fail → T4A_G2:2（需求不存在）
+- tests/test_t4a_session_carrier_req.py::test_a_g3_responsibility_with_show_knowledge_rejected → T4A_G3:1（需求不存在）
+- tests/test_t4a_session_carrier_req.py::test_a_g3_legacy_show_knowledge_unchanged → T4A_G3:2（需求不存在）
+- tests/test_t4a_session_carrier_req.py::test_a_g4_mode_exactness → T4A_G4:1（需求不存在）
+- tests/test_t4a_session_carrier_req.py::test_a_g4_legacy_cannot_use_responsibility_action → T4A_G4:2（需求不存在）
+- tests/test_t4a_session_carrier_req.py::test_a_g4_no_mixed_session → T4A_G4:3（需求不存在）
+- tests/test_t4a_session_carrier_req.py::test_a_g4_legacy_session_cannot_resume → T4A_G4:4（需求不存在）
+- tests/test_t4a_session_carrier_req.py::test_a_g5_payload_cannot_override_authority → T4A_G5:1（需求不存在）
+- tests/test_t4a_session_carrier_req.py::test_a_g5_payload_cannot_change_mode_or_action → T4A_G5:2（需求不存在）
+- tests/test_t4a_session_carrier_req.py::test_a_g5_binding_id_is_opaque_not_callable → T4A_G5:3（需求不存在）
+- tests/test_t4b3_bill_ref_resolution_req.py::test_numeric_ref_resolves_exact_bill → T4B3_NUM:1（需求不存在）
+- tests/test_t4b3_bill_ref_resolution_req.py::test_numeric_ref_not_found → T4B3_NUM:2（需求不存在）
+- tests/test_t4b3_bill_ref_resolution_req.py::test_empty_ref_is_invalid_input → T4B3_NUM:3（需求不存在）
+- tests/test_t4b3_bill_ref_resolution_req.py::test_b_g5_two_contracts_is_ambiguous_not_first → T4B3_G5:1（需求不存在）
+- tests/test_t4b3_bill_ref_resolution_req.py::test_b_g5_mutation_taking_first_contract_makes_guard_red → T4B3_G5:2（需求不存在）
+- tests/test_t4b3_bill_ref_resolution_req.py::test_unique_contract_then_unique_bill_resolves → T4B3_G5:3（需求不存在）
+- tests/test_t4b3_bill_ref_resolution_req.py::test_unique_contract_but_many_bills_is_ambiguous → T4B3_G5:4（需求不存在）
+- tests/test_t4b3_bill_ref_resolution_req.py::test_no_contract_is_no_match → T4B3_G5:5（需求不存在）
+- tests/test_t4b3_bill_ref_resolution_req.py::test_fc6_never_calls_legacy_bill_ref_branch → T4B3_FC6:1（需求不存在）
+- tests/test_t4b3_bill_ref_resolution_req.py::test_ambiguous_cannot_enter_capability → T4B3_FC6:2（需求不存在）
+- tests/test_t4b4_resolver_closure_req.py::test_estate_exact_id_resolves → T4B4_G2:1（需求不存在）
+- tests/test_t4b4_resolver_closure_req.py::test_estate_keyword_many_is_ambiguous_not_first → T4B4_G1:1（需求不存在）
+- tests/test_t4b4_resolver_closure_req.py::test_estate_unique_keyword_resolves → T4B4_G1:2（需求不存在）
+- tests/test_t4b4_resolver_closure_req.py::test_estate_sentinel_is_not_an_entity → T4B4_G1:3（需求不存在）
+- tests/test_t4b4_resolver_closure_req.py::test_b4_m2_first_row_mutation_would_be_red → T4B4_M2:1（需求不存在）
+- tests/test_t4b4_resolver_closure_req.py::test_subscription_singleton_resolves → T4B4_G3:1（需求不存在）
+- tests/test_t4b4_resolver_closure_req.py::test_subscription_wrong_shape_is_contract_violation → T4B4_G4:1（需求不存在）
+- tests/test_t4b4_resolver_closure_req.py::test_subscription_absent_is_no_match → T4B4_G4:2（需求不存在）
+- tests/test_t4b4_resolver_closure_req.py::test_subscription_requires_verified_role → T4B4_G7:1（需求不存在）
+- tests/test_t4b4_resolver_closure_req.py::test_tenant_verified_user_id_resolves → T4B4_G5:1（需求不存在）
+- tests/test_t4b4_resolver_closure_req.py::test_tenant_keyword_only_is_hard_fail → T4B4_G6:1（需求不存在）
+- tests/test_t4b4_resolver_closure_req.py::test_singleton_shape_cannot_override_unresolved_identity → T4B4_G7:2（需求不存在）
+- tests/test_t4b4_resolver_closure_req.py::test_resolver_signatures_have_no_semantic_inputs → T4B4_G8:1（需求不存在）
+- tests/test_t4b_cardinality_req.py::test_every_contract_declares_cardinality_mode → T4B_CARD:1（需求不存在）
+- tests/test_t4b_cardinality_req.py::test_owner_ruled_shapes → T4B_CARD:2（需求不存在）
+- tests/test_t4b_cardinality_req.py::test_collection_many_members_is_resolved_not_ambiguous → T4B_C3:1（需求不存在）
+- tests/test_t4b_cardinality_req.py::test_collection_never_takes_first_member → T4B_C3:2（需求不存在）
+- tests/test_t4b_cardinality_req.py::test_empty_resolved_empty_is_still_executable → T4B_C3:3（需求不存在）
+- tests/test_t4b_cardinality_req.py::test_empty_no_match_policy → T4B_C3:4（需求不存在）
+- tests/test_t4b_cardinality_req.py::test_undecided_policy_hard_fails → T4B_C3:5（需求不存在）
+- tests/test_t4b_cardinality_req.py::test_collection_scope_violation → T4B_C3:6（需求不存在）
+- tests/test_t4b_cardinality_req.py::test_select_one_contract_cannot_use_collection_resolver → T4B_C3:7（需求不存在）
+- tests/test_t4b_cardinality_req.py::test_select_one_still_ambiguous_on_many → T4B_C1:11（需求不存在）
+- tests/test_t4b_entity_resolution_req.py::test_r29_unique_bill_ref_resolves → T4B_C1:1（需求不存在）
+- tests/test_t4b_entity_resolution_req.py::test_r29_no_rows_is_no_match → T4B_C1:2（需求不存在）
+- tests/test_t4b_entity_resolution_req.py::test_r29_missing_field_is_invalid_input → T4B_C1:3（需求不存在）
+- tests/test_t4b_entity_resolution_req.py::test_r05_multiple_contracts_is_ambiguous_not_first → T4B_C1:4（需求不存在）
+- tests/test_t4b_entity_resolution_req.py::test_ambiguous_cannot_enter_capability → T4B_C1:5（需求不存在）
+- tests/test_t4b_entity_resolution_req.py::test_reviewed_selection_contract_may_uniquify → T4B_C1:6（需求不存在）
+- tests/test_t4b_entity_resolution_req.py::test_selection_contract_two_candidates_is_ambiguous → T4B_C1:7（需求不存在）
+- tests/test_t4b_entity_resolution_req.py::test_selection_contract_absent_falls_to_ambiguous_not_first → T4B_C1:8（需求不存在）
+- tests/test_t4b_entity_resolution_req.py::test_late_fee_tagged_alternatives → T4B_C1:9（需求不存在）
+- tests/test_t4b_entity_resolution_req.py::test_resolver_id_is_opaque_not_callable → T4B_C1:10（需求不存在）
+- tests/test_t4b_entity_resolution_req.py::test_b_m1_ambiguous_taking_first_makes_guard_red → T4B_M1:1（需求不存在）
+- tests/test_t4b_entity_resolution_req.py::test_b_m2_missing_resolver_must_not_fallback_to_first_row → T4B_M2:1（需求不存在）
+- tests/test_t4c_direct_execution_req.py::test_c_g2_exact_registered_adapter → T4C_G2:1（需求不存在）
+- tests/test_t4c_direct_execution_req.py::test_c_g1_no_reroute_by_utterance → T4C_G1:1（需求不存在）
+- tests/test_t4c_direct_execution_req.py::test_c_m1_rerouting_adapter_makes_g1_red → T4C_G1:2（需求不存在）
+- tests/test_t4c_direct_execution_req.py::test_c_g3_responsibility_binding_mismatch → T4C_G3:1（需求不存在）
+- tests/test_t4c_direct_execution_req.py::test_c_g4_unknown_binding_hard_fails → T4C_G4:1（需求不存在）
+- tests/test_t4c_direct_execution_req.py::test_c_g4_owner_prose_is_structurally_unusable → T4C_G4:2（需求不存在）
+- tests/test_t4c_direct_execution_req.py::test_c_m2_prose_parsing_would_bypass_registry → T4C_G4:3（需求不存在）
+- tests/test_t4c_direct_execution_req.py::test_c_g5_non_resolved_is_unreachable → T4C_G5:1（需求不存在）
+- tests/test_t4c_direct_execution_req.py::test_c_g6_output_mode_mismatch_hard_fails → T4C_G6:1（需求不存在）
+- tests/test_t4c_direct_execution_req.py::test_c_g7_entity_type_must_match → T4C_G7:1（需求不存在）
+- tests/test_t4c_direct_execution_req.py::test_c_g7_input_contract_must_match → T4C_G7:2（需求不存在）
+- tests/test_t4c_direct_execution_req.py::test_c_m3_member_row_answer_cannot_be_output → T4C_M3:1（需求不存在）
+- tests/test_t4d1_wired_completion_req.py::test_d1_g1_responsibility_bypasses_legacy → T4D1_G1:1（需求不存在）
+- tests/test_t4d1_wired_completion_req.py::test_d1_g1_mutation_dispatch_after_legacy_would_be_red → T4D1_G1:2（需求不存在）
+- tests/test_t4d1_wired_completion_req.py::test_d1_g2_legacy_modes_go_to_legacy → T4D1_G2:1（需求不存在）
+- tests/test_t4d1_wired_completion_req.py::test_d1_g2_unknown_mode_hard_fails → T4D1_G2:2（需求不存在）
+- tests/test_t4d1_wired_completion_req.py::test_d1_g3_authority_survives_wired_path → T4D1_G3:1（需求不存在）
+- tests/test_t4d1_wired_completion_req.py::test_d1_g3_payload_cannot_override_authority → T4D1_G3:2（需求不存在）
+- tests/test_t4d1_wired_completion_req.py::test_d1_g5_no_semantic_reroute → T4D1_G5:1（需求不存在）
+- tests/test_t4d1_wired_completion_req.py::test_d1_g4_real_resolver_no_hidden_legacy_lookup → T4D1_G4:1（需求不存在）
+- tests/test_t4d1_wired_completion_req.py::test_d1_g6_non_resolved_never_executes → T4D1_G6:1（需求不存在）
+- tests/test_universality_domain_facets_req.py::test_fake_domain_layering_data_only → domain-conversational-facets:6.2（需求不存在）
+- tests/test_universality_domain_facets_req.py::test_fake_domain_candidate_labels_from_mapping → domain-conversational-facets:6.1（需求不存在）
+- tests/test_universality_domain_facets_req.py::test_no_domain_literal_in_system_context → domain-conversational-facets:6.1（需求不存在）
+- tests/test_universality_domain_facets_req.py::test_no_domain_literal_in_candidate_builders → domain-conversational-facets:6.1（需求不存在）
+- tests/test_universality_req.py::test_second_facet_one_row_converges_via_its_mapping → conversational-diagnosis:6.3（需求不存在）
+- tests/test_universality_req.py::test_second_facet_zero_and_many_rows → conversational-diagnosis:6.1（需求不存在）
+- tests/test_universality_req.py::test_second_facet_candidate_selection_no_code_change → conversational-diagnosis:6.2（需求不存在）
+- tests/test_universality_req.py::test_no_contract_hardcode_in_engine_components → conversational-diagnosis:6.1（需求不存在）
+- tests/test_universality_req.py::test_no_contract_hardcode_in_config_and_routing → conversational-diagnosis:6.2（需求不存在）
+- tests/test_w_wired_seam_req.py::test_every_wired_contract_is_explicitly_declared → W_G1:1（需求不存在）
+- tests/test_w_wired_seam_req.py::test_wiring_never_uses_dynamic_name_resolution → W_G1:2（需求不存在）
+- tests/test_w_wired_seam_req.py::test_unregistered_contract_is_loud_not_legacy_fallback → W_G1:3（需求不存在）
+- tests/test_w_wired_seam_req.py::test_tenant_summary_is_deliberately_absent_from_wiring → W_G1:4（需求不存在）
+- tests/test_w_wired_seam_req.py::test_upstream_unresolved_never_forges_a_resolved_id → W_G1:5（需求不存在）
+- tests/test_w_wired_seam_req.py::test_upstream_resolved_feeds_downstream_the_resolved_id → W_G1:6（需求不存在）
+- tests/test_w_wired_seam_req.py::test_grounding_exit_never_reenters_legacy_or_row_answer → W_G2:1（需求不存在）
+- tests/test_w_wired_seam_req.py::test_grounding_authority_comes_from_plan_not_adapter_output → W_G2:2（需求不存在）
+- tests/test_w_wired_seam_req.py::test_grounding_facts_missing_is_hard_fail_not_silent_empty → W_G2:3（需求不存在）
+- tests/test_w_wired_seam_req.py::test_grounding_outcome_must_be_a_classified_dict → W_G2:4（需求不存在）
+- tests/test_w_wired_seam_req.py::test_grounding_result_is_a_distinct_family_not_a_form_dict → W_G2:5（需求不存在）
+- tests/test_w_wired_seam_req.py::test_three_result_families_are_type_disjoint → W_G2:6（需求不存在）
+- tests/test_w_wired_seam_req.py::test_collection_entity_can_reach_executor → W_G2:7（需求不存在）
+- tests/test_w_wired_seam_req.py::test_single_entity_contract_still_rejects_a_list → W_G2:8（需求不存在）
+- tests/test_w_wired_seam_req.py::test_empty_collection_only_executes_under_resolved_empty → W_G2:9（需求不存在）
+- tests/test_w_wired_seam_req.py::test_w_m1_dynamic_getattr_would_be_caught → W_M1:1（需求不存在）
+- tests/test_w_wired_seam_req.py::test_w_m3_row_answer_fallback_would_be_caught → W_M3:1（需求不存在）
+- tests/test_decision_layer_equivalence_req.py::test_arbitration_strict_equivalence_full_grid → retrieval-decision-layer:7.4（需求不存在）
+- tests/test_decision_layer_equivalence_req.py::test_arbitration_next_action_string_passthrough → retrieval-decision-layer:7.4（需求不存在）
+- tests/test_decision_layer_equivalence_req.py::test_arbitration_snapshot_content → retrieval-decision-layer:8.3（需求不存在）
+- tests/test_decision_layer_equivalence_req.py::test_config_defaults_match_legacy_values → retrieval-decision-layer:7.4（需求不存在）
+- tests/test_decision_layer_equivalence_req.py::test_config_env_override_same_keys → retrieval-decision-layer:7.4（需求不存在）
+- tests/test_decision_layer_equivalence_req.py::test_config_hash_reflects_values → retrieval-decision-layer:8.3（需求不存在）
+- tests/test_decision_layer_equivalence_req.py::test_facet_entry_eligible_matrix → retrieval-decision-layer:7.4（需求不存在）
+- tests/test_decision_layer_equivalence_req.py::test_form_trigger_eligible_matrix → retrieval-decision-layer:7.4（需求不存在）
+- tests/test_decision_layer_equivalence_req.py::test_gates_honor_env_threshold → retrieval-decision-layer:7.4（需求不存在）
+- tests/test_decision_snapshot_coverage_req.py::test_exit_emits_minimal_snapshot_when_nothing_contributed → retrieval-decision-layer:8.3（需求不存在）
+- tests/test_decision_snapshot_coverage_req.py::test_exit_preserves_contributed_snapshot → retrieval-decision-layer:8.3（需求不存在）
+- tests/test_decision_snapshot_coverage_req.py::test_exit_marks_incomplete_when_required_fields_missing → retrieval-decision-layer:8.3（需求不存在）
+- tests/test_decision_snapshot_coverage_req.py::test_exit_silent_without_context → retrieval-decision-layer:8.3（需求不存在）
+- tests/test_decision_snapshot_coverage_req.py::test_exit_is_idempotent → retrieval-decision-layer:8.3（需求不存在）
+- tests/test_decision_snapshot_coverage_req.py::test_facet_continuation_contributes_stay → retrieval-decision-layer:8.3（需求不存在）
+- tests/test_decision_snapshot_coverage_req.py::test_facet_cancel_contributes_exit → retrieval-decision-layer:8.3（需求不存在）
+- tests/test_decision_snapshot_coverage_req.py::test_refine_stay_verdict_marks_ask → retrieval-decision-layer:1.3（需求不存在）
+- tests/test_decision_snapshot_coverage_req.py::test_refine_stay_verdict_keeps_answer_when_not_asking → retrieval-decision-layer:1.3（需求不存在）
+- tests/test_decision_snapshot_coverage_req.py::test_refine_stay_verdict_safe_on_stream → retrieval-decision-layer:1.3（需求不存在）
+- tests/test_decision_snapshot_wire_req.py::test_meter_decision_calls_set_decision → retrieval-decision-layer:8.3（需求不存在）
+- tests/test_decision_snapshot_wire_req.py::test_meter_decision_swallows_metering_failure → retrieval-decision-layer:8.3（需求不存在）
+- tests/test_decision_snapshot_wire_req.py::test_b2b_short_circuit_records_snapshot → retrieval-decision-layer:8.3（需求不存在）
+- tests/test_erratum01_falsifier_req.py::test_undecided_utterances_carry_positive_instance_evidence → routing-disambiguation:4.2（需求不存在）
+- tests/test_erratum01_falsifier_req.py::test_undecided_utterances_are_never_blocked → routing-disambiguation:4.2（需求不存在）
+- tests/test_instance_evidence_empty_input_req.py::test_empty_input_yields_empty_evidence → routing-disambiguation:3.1（需求不存在）
+- tests/test_instance_evidence_empty_input_req.py::test_empty_input_path_is_not_exception_driven → routing-disambiguation:3.1（需求不存在）
+- tests/test_instance_evidence_empty_input_req.py::test_whitespace_only_is_not_confused_with_a_real_question → routing-disambiguation:3.1（需求不存在）
+- tests/test_instance_evidence_invariants_req.py::test_module_imports_are_pure_stdlib_only → routing-disambiguation:3.1（需求不存在）
+- tests/test_instance_evidence_invariants_req.py::test_module_never_mentions_similarity → routing-disambiguation:2.3（需求不存在）
+- tests/test_instance_evidence_invariants_req.py::test_extract_performs_no_io → routing-disambiguation:3.1（需求不存在）
+- tests/test_instance_evidence_invariants_req.py::test_extract_signature_takes_only_the_question → routing-disambiguation:3.4（需求不存在）
+- tests/test_instance_evidence_invariants_req.py::test_extract_is_deterministic_across_runs_and_instances → routing-disambiguation:3.1（需求不存在）
+- tests/test_instance_evidence_invariants_req.py::test_evidence_is_truly_immutable → routing-disambiguation:2.1（需求不存在）
+- tests/test_instance_evidence_invariants_req.py::test_spans_only_hold_matched_substrings → routing-disambiguation:2.1（需求不存在）
+- tests/test_instance_evidence_invariants_req.py::test_identifier_extraction_matches_the_engine_convention → routing-disambiguation:2.1（需求不存在）
+- tests/test_instance_gate_activation_req.py::test_flag_defaults_to_off → routing-disambiguation:7.1（需求不存在）
+- tests/test_instance_gate_activation_req.py::test_flag_parsing_is_strict → routing-disambiguation:7.1（需求不存在）
+- tests/test_instance_gate_activation_req.py::test_today_the_gate_is_not_authorized → routing-disambiguation:3.5（需求不存在）
+- tests/test_instance_gate_activation_req.py::test_requesting_without_authorization_does_not_activate → routing-disambiguation:3.5（需求不存在）
+- tests/test_instance_gate_activation_req.py::test_authorized_without_request_does_not_activate → routing-disambiguation:7.1（需求不存在）
+- tests/test_instance_gate_activation_req.py::test_active_requires_both → routing-disambiguation:7.1（需求不存在）
+- tests/test_instance_gate_activation_req.py::test_authorization_only_swallows_gate_not_enablable → routing-disambiguation:3.5（需求不存在）
+- tests/test_instance_gate_enable_invariant_req.py::test_reject_when_holdout_not_run → routing-disambiguation:3.5（需求不存在）
+- tests/test_instance_gate_enable_invariant_req.py::test_reject_when_holdout_failed → routing-disambiguation:3.5（需求不存在）
+- tests/test_instance_gate_enable_invariant_req.py::test_reject_when_passed_on_a_different_ruleset → routing-disambiguation:3.5（需求不存在）
+- tests/test_instance_gate_enable_invariant_req.py::test_reject_when_passed_under_a_different_protocol → routing-disambiguation:9.2（需求不存在）
+- tests/test_instance_gate_enable_invariant_req.py::test_allow_only_when_all_three_match → routing-disambiguation:3.5（需求不存在）
+- tests/test_instance_gate_enable_invariant_req.py::test_rejection_is_not_downgraded_to_warning → routing-disambiguation:3.5（需求不存在）
+- tests/test_instance_reference_gate_req.py::test_decision_table → routing-disambiguation:1.1（需求不存在）
+- tests/test_instance_reference_gate_req.py::test_counter_evidence_is_not_a_veto → routing-disambiguation:1.3（需求不存在）
+- tests/test_instance_reference_gate_req.py::test_block_requires_both_conditions → routing-disambiguation:1.3（需求不存在）
+- tests/test_instance_reference_gate_req.py::test_abstain_is_not_collapsed_into_allow_or_block → routing-disambiguation:1.3（需求不存在）
+- tests/test_instance_reference_gate_req.py::test_rollout_action_is_a_separate_field_from_verdict → routing-disambiguation:1.3（需求不存在）
+- tests/test_instance_reference_gate_req.py::test_reason_names_the_evidence_that_drove_the_verdict → routing-disambiguation:3.1（需求不存在）
+- tests/test_instance_reference_gate_req.py::test_decision_is_immutable_and_carries_the_evidence_sets → routing-disambiguation:3.1（需求不存在）
+- tests/test_instance_reference_gate_req.py::test_gate_is_deterministic → routing-disambiguation:3.1（需求不存在）
+- tests/test_protocol_facet_verdict_req.py::test_wrong_facet_is_not_success → routing-disambiguation:1.4（需求不存在）
+- tests/test_protocol_facet_verdict_req.py::test_correct_facet_is_the_only_pass → routing-disambiguation:1.4（需求不存在）
+- tests/test_protocol_facet_verdict_req.py::test_dialog_without_facet_is_never_pass → routing-disambiguation:1.4（需求不存在）
+- tests/test_protocol_facet_verdict_req.py::test_single_shot_on_instance_is_failure → routing-disambiguation:1.4（需求不存在）
+- tests/test_protocol_facet_verdict_req.py::test_bilateral_pass_rejects_run_where_instances_landed_in_wrong_facet → routing-disambiguation:1.4（需求不存在）
+- tests/test_protocol_facet_verdict_req.py::test_bilateral_pass_requires_both_sides → routing-disambiguation:1.3（需求不存在）
+- tests/test_protocol_facet_verdict_req.py::test_expected_facet_comes_from_the_frozen_protocol → routing-disambiguation:1.4（需求不存在）
+- tests/test_protocol_facet_verdict_req.py::test_undecided_cases_are_unscored_not_pass → routing-disambiguation:1.4（需求不存在）
+- tests/test_ruleset_manifest_req.py::test_production_manifest_holdout_is_never_passed → routing-disambiguation:3.5（需求不存在）
+- tests/test_ruleset_manifest_req.py::test_production_manifest_cannot_enable_the_gate_today → routing-disambiguation:3.5（需求不存在）
+- tests/test_ruleset_manifest_req.py::test_ruleset_digest_changes_when_any_pattern_changes → routing-disambiguation:7.2（需求不存在）
+- tests/test_ruleset_manifest_req.py::test_current_manifest_digest_tracks_the_live_ruleset → routing-disambiguation:7.2（需求不存在）
+- tests/test_ruleset_manifest_req.py::test_manifest_patterns_are_not_mutable_through_the_manifest → routing-disambiguation:7.2（需求不存在）
+- tests/test_ruleset_manifest_req.py::test_mutating_the_source_dict_does_not_change_a_built_manifest → routing-disambiguation:7.2（需求不存在）
+- tests/test_branch_answer_req.py::test_branch_answer_hit_returns_kb_answer → unit-coverage-rebuild:6.1（需求不存在）
+- tests/test_branch_answer_req.py::test_branch_answer_kb_missing_returns_fallback → unit-coverage-rebuild:6.2（需求不存在）
+- tests/test_branch_answer_req.py::test_branch_answer_no_mapping_returns_fallback → unit-coverage-rebuild:6.2（需求不存在）
+- tests/test_branch_answer_req.py::test_branch_answer_default_fallback_when_none_choice → unit-coverage-rebuild:6.2（需求不存在）
+- tests/test_branch_answer_req.py::test_branch_answer_db_exception_returns_fallback → unit-coverage-rebuild:6.2（需求不存在）
+- tests/test_form_option_routing_req.py::test_chain_depth_limit_is_bounded → testing-traceability:5.4（需求不存在）
+- tests/test_form_option_routing_req.py::test_option_routes_to_next_form_subtree → testing-traceability:5.4（需求不存在）
+- tests/test_form_option_routing_req.py::test_option_routes_to_leaf_answer → testing-traceability:5.4（需求不存在）
+- tests/test_form_option_routing_req.py::test_unknown_option_value_returns_none → testing-traceability:5.4（需求不存在）
+- tests/test_form_option_routing_req.py::test_option_without_route_returns_none → testing-traceability:5.4（需求不存在）
+- tests/test_maybe_chain_next_form_req.py::test_no_route_and_no_form_level_next_returns_none → unit-coverage-rebuild:3.1（需求不存在）
+- tests/test_maybe_chain_next_form_req.py::test_pure_leaf_answer_returns_leaf_contract → unit-coverage-rebuild:3.1（需求不存在）
+- tests/test_maybe_chain_next_form_req.py::test_leaf_answer_resolution_failure_returns_none → unit-coverage-rebuild:3.2（需求不存在）
+- tests/test_maybe_chain_next_form_req.py::test_subtree_load_fail_degrades_to_leaf → unit-coverage-rebuild:3.2（需求不存在）
+- tests/test_present_first_field_req.py::test_present_first_field_prompt_and_field_meta → unit-coverage-rebuild:4.1（需求不存在）
+- tests/test_present_first_field_req.py::test_present_first_field_defaults_field_type_text → unit-coverage-rebuild:4.1（需求不存在）
+- tests/test_present_first_field_req.py::test_present_first_field_select_builds_quick_replies → unit-coverage-rebuild:4.2（需求不存在）
+- tests/test_present_first_field_req.py::test_present_first_field_non_select_quick_replies_none → unit-coverage-rebuild:4.2（需求不存在）
+- tests/test_resolve_route_residual_req.py::test_int_collected_matches_str_option_value → unit-coverage-rebuild:2.3（需求不存在）
+- tests/test_resolve_route_residual_req.py::test_str_collected_matches_int_option_value → unit-coverage-rebuild:2.3（需求不存在）
+- tests/test_resolve_route_residual_req.py::test_terminal_falls_back_to_last_select_when_last_field_not_select → unit-coverage-rebuild:2.4（需求不存在）
+- tests/test_resolve_route_residual_req.py::test_no_select_field_returns_none → unit-coverage-rebuild:2.4（需求不存在）
+- tests/test_clause_splitter_req.py::test_keeps_money_period_and_obligation_clauses_verbatim → documind-ocr-mapping:7.1（需求不存在）
+- tests/test_clause_splitter_req.py::test_drops_segments_without_money_period_or_obligation → documind-ocr-mapping:7.1（需求不存在）
+- tests/test_clause_splitter_req.py::test_absorbed_raw_removes_the_clause → documind-ocr-mapping:7.1（需求不存在）
+- tests/test_clause_splitter_req.py::test_enumerator_styles_and_newlines_all_split → documind-ocr-mapping:7.1（需求不存在）
+- tests/test_clause_splitter_req.py::test_output_is_exact_substring_no_normalization → documind-ocr-mapping:7.2（需求不存在）
+- tests/test_clause_splitter_req.py::test_pet_smoke_visitor_clauses_are_kept_as_unmapped → documind-ocr-mapping:7.3（需求不存在）
+- tests/test_clause_splitter_req.py::test_dedup_and_page_order_stable → documind-ocr-mapping:7.1（需求不存在）
+- tests/test_clause_splitter_req.py::test_empty_pages_yield_empty_list → documind-ocr-mapping:7.1（需求不存在）
+- tests/test_contract_mapper_req.py::test_fixture_maps_core_fields_per_table → documind-ocr-mapping:4.1（需求不存在）
+- tests/test_contract_mapper_req.py::test_signing_date_same_date_different_notation_is_not_a_conflict → documind-ocr-mapping:4.1（需求不存在）
+- tests/test_contract_mapper_req.py::test_date_end_derived_from_lease_months_and_flagged → documind-ocr-mapping:4.2（需求不存在）
+- tests/test_contract_mapper_req.py::test_lease_months_not_confused_by_prepaid_electricity_months → documind-ocr-mapping:4.2（需求不存在）
+- tests/test_contract_mapper_req.py::test_empty_contract_lists_all_required_fields_for_confirmation → documind-ocr-mapping:4.4（需求不存在）
+- tests/test_contract_mapper_req.py::test_absent_fields_are_still_present_as_objects → documind-ocr-mapping:4.3（需求不存在）
+- tests/test_contract_mapper_req.py::test_payment_method_goes_to_unmapped_verbatim → documind-ocr-mapping:4.5（需求不存在）
+- tests/test_contract_mapper_req.py::test_currency_absent_when_missing_and_cycle_date_flagged_when_vague → documind-ocr-mapping:4.1（需求不存在）
+- tests/test_contract_mapper_req.py::test_keep_full_policy_leaves_name_parts_absent → documind-ocr-mapping:4.1（需求不存在）
+- tests/test_contract_mapper_req.py::test_inconsistent_calendars_pick_high_confidence_and_flag → documind-ocr-mapping:5.3（需求不存在）
+- tests/test_contract_mapper_req.py::test_absorbed_raws_include_mapped_field_raw_text → documind-ocr-mapping:7.1（需求不存在）
+- tests/test_deposit_rule_req.py::test_amount_text_sets_type_1_and_amount_only → documind-ocr-mapping:6.1（需求不存在）
+- tests/test_deposit_rule_req.py::test_months_text_sets_type_0_and_months_only → documind-ocr-mapping:6.2（需求不存在）
+- tests/test_deposit_rule_req.py::test_both_present_prefers_amount_and_flags_confirmation → documind-ocr-mapping:6.3（需求不存在）
+- tests/test_deposit_rule_req.py::test_unparseable_deposit_is_all_absent_and_flagged → documind-ocr-mapping:6.4（需求不存在）
+- tests/test_deposit_rule_req.py::test_each_of_three_fields_carries_its_own_source_and_page → documind-ocr-mapping:6.6（需求不存在）
+- tests/test_deposit_rule_req.py::test_invariant_rejects_derived_months_from_amount → documind-ocr-mapping:6.5（需求不存在）
+- tests/test_deposit_rule_req.py::test_invariant_rejects_derived_amount_from_months → documind-ocr-mapping:6.5（需求不存在）
+- tests/test_deposit_rule_req.py::test_mutation_control_actually_bites_positive_control → documind-ocr-mapping:10.3（需求不存在）
+- tests/test_field_normalizer_req.py::test_amount_parses_chinese_numerals_and_thousands → documind-ocr-mapping:5.5（需求不存在）
+- tests/test_field_normalizer_req.py::test_amount_vague_or_absent_returns_none → documind-ocr-mapping:5.5（需求不存在）
+- tests/test_field_normalizer_req.py::test_area_strips_thousands_and_units → documind-ocr-mapping:3.2（需求不存在）
+- tests/test_field_normalizer_req.py::test_area_unparseable_returns_none → documind-ocr-mapping:3.2（需求不存在）
+- tests/test_field_normalizer_req.py::test_lease_months_from_chinese_and_arabic → documind-ocr-mapping:5.4（需求不存在）
+- tests/test_field_normalizer_req.py::test_lease_months_unparseable_returns_none → documind-ocr-mapping:5.4（需求不存在）
+- tests/test_field_normalizer_req.py::test_cycle_date_parses_day_of_month → documind-ocr-mapping:4.1（需求不存在）
+- tests/test_field_normalizer_req.py::test_cycle_date_out_of_range_or_ambiguous_returns_none → documind-ocr-mapping:4.1（需求不存在）
+- tests/test_field_normalizer_req.py::test_roc_dates_convert_to_gregorian → documind-ocr-mapping:5.1（需求不存在）
+- tests/test_field_normalizer_req.py::test_gregorian_dates_normalize → documind-ocr-mapping:5.2（需求不存在）
+- tests/test_field_normalizer_req.py::test_unparseable_dates_return_none → documind-ocr-mapping:5.1（需求不存在）
+- tests/test_field_normalizer_req.py::test_raw_is_full_original_segment_not_just_the_match → documind-ocr-mapping:5.6（需求不存在）
+- tests/test_fixtures_req.py::test_transcript_fixture_is_deidentified_multi_page_and_valid → documind-ocr-mapping:10.2（需求不存在）
+- tests/test_fixtures_req.py::test_contract_fixture_is_marked_non_real_and_valid → documind-ocr-mapping:10.2（需求不存在）
+- tests/test_mapper_req.py::test_contract_fixture_end_to_end_shape_and_status → documind-ocr-mapping:9.1（需求不存在）
+- tests/test_mapper_req.py::test_needs_confirmation_is_union_dedup_ordered → documind-ocr-mapping:7.5（需求不存在）
+- tests/test_mapper_req.py::test_provenance_passthrough → documind-ocr-mapping:9.2（需求不存在）
+- tests/test_mapper_req.py::test_transcript_fixture_end_to_end → documind-ocr-mapping:9.1（需求不存在）
+- tests/test_mapper_req.py::test_empty_pages_contract_is_draft_with_all_required_listed → documind-ocr-mapping:1.4（需求不存在）
+- tests/test_mapper_req.py::test_all_empty_structured_data_transcript_is_draft_with_all_fields_listed → documind-ocr-mapping:1.4（需求不存在）
+- tests/test_mapper_req.py::test_needs_review_true_forces_draft_even_when_required_present → documind-ocr-mapping:7.6（需求不存在）
+- tests/test_mapper_req.py::test_ready_only_when_not_needs_review_and_required_present → documind-ocr-mapping:7.6（需求不存在）
+- tests/test_mapper_req.py::test_not_needs_review_but_missing_required_stays_draft → documind-ocr-mapping:7.6（需求不存在）
+- tests/test_metering_req.py::test_success_path_meters_exactly_once → documind-ocr-mapping:9.3（需求不存在）
+- tests/test_metering_req.py::test_rejections_are_metered_as_rejected → documind-ocr-mapping:9.3（需求不存在）
+- tests/test_metering_req.py::test_413_is_metered_as_rejected → documind-ocr-mapping:9.3（需求不存在）
+- tests/test_metering_req.py::test_internal_flag_follows_session_prefix_rules → documind-ocr-mapping:9.3a（需求不存在）
+- tests/test_metering_req.py::test_logs_contain_field_names_but_no_values_or_ocr_text → documind-ocr-mapping:9.5（需求不存在）
+- tests/test_metering_req.py::test_middleware_still_only_meters_message_path → documind-ocr-mapping:9.3（需求不存在）
+- tests/test_models_contract_req.py::test_request_accepts_full_documind_payload_with_identity → documind-ocr-mapping:1.1（需求不存在）
+- tests/test_models_contract_req.py::test_request_rejects_missing_pages_and_identity → documind-ocr-mapping:1.1（需求不存在）
+- tests/test_models_contract_req.py::test_request_allows_empty_pages_for_draft_path → documind-ocr-mapping:1.1（需求不存在）
+- tests/test_models_contract_req.py::test_field_source_domain_is_closed → documind-ocr-mapping:9.1（需求不存在）
+- tests/test_models_contract_req.py::test_absent_field_has_null_confidence_and_no_value → documind-ocr-mapping:7.4（需求不存在）
+- tests/test_models_contract_req.py::test_confidence_source_is_field_or_page_level_only → documind-ocr-mapping:3.5（需求不存在）
+- tests/test_models_contract_req.py::test_empty_fields_yields_fixed_key_set_per_type → documind-ocr-mapping:4.3（需求不存在）
+- tests/test_models_contract_req.py::test_mapping_result_rejects_wrong_key_set → documind-ocr-mapping:9.1（需求不存在）
+- tests/test_models_contract_req.py::test_required_for_write_is_subset_of_contract_fields → documind-ocr-mapping:4.3（需求不存在）
+- tests/test_models_contract_req.py::test_provenance_requires_core_keys_and_notes_default_empty → documind-ocr-mapping:9.2（需求不存在）
+- tests/test_models_contract_req.py::test_page_accepts_null_llm_postprocessed_and_empty_structured_data → documind-ocr-mapping:2.4（需求不存在）
+- tests/test_name_splitter_req.py::test_split_policy_uses_compound_surname_table_then_first_char → documind-ocr-mapping:4.1（需求不存在）
+- tests/test_name_splitter_req.py::test_keep_full_policy_does_not_split → documind-ocr-mapping:4.1（需求不存在）
+- tests/test_name_splitter_req.py::test_empty_name_is_all_absent → documind-ocr-mapping:4.1（需求不存在）
+- tests/test_name_splitter_req.py::test_single_char_name_cannot_split_and_is_flagged → documind-ocr-mapping:4.1（需求不存在）
+- tests/test_name_splitter_req.py::test_compound_table_is_configurable_and_contains_common_ones → documind-ocr-mapping:4.1（需求不存在）
+- tests/test_nfr_req.py::test_rule_only_path_p95_is_far_below_two_seconds → documind-ocr-mapping:9.4（需求不存在）
+- tests/test_nfr_req.py::test_runs_on_python_311_container → documind-ocr-mapping:10.5（需求不存在）
+- tests/test_page_merger_req.py::test_single_page_value_adopted_with_page_recorded → documind-ocr-mapping:2.1（需求不存在）
+- tests/test_page_merger_req.py::test_same_value_on_multiple_pages_takes_max_confidence_and_first_page → documind-ocr-mapping:2.2（需求不存在）
+- tests/test_page_merger_req.py::test_different_values_pick_highest_confidence_and_keep_conflicts → documind-ocr-mapping:2.3（需求不存在）
+- tests/test_page_merger_req.py::test_conflict_tie_prefers_first_page_but_still_records_conflict → documind-ocr-mapping:2.3（需求不存在）
+- tests/test_page_merger_req.py::test_page_without_llm_postprocess_still_participates → documind-ocr-mapping:2.4（需求不存在）
+- tests/test_page_merger_req.py::test_needs_confirmation_union_dedup_ordered → documind-ocr-mapping:2.5（需求不存在）
+- tests/test_page_merger_req.py::test_top_level_consensus_wins_and_skips_page_merge → documind-ocr-mapping:2.6（需求不存在）
+- tests/test_page_merger_req.py::test_consensus_missing_field_falls_back_to_page_merge → documind-ocr-mapping:2.6（需求不存在）
+- tests/test_page_merger_req.py::test_missing_field_confidence_falls_back_to_page_extraction_confidence → documind-ocr-mapping:3.5（需求不存在）
+- tests/test_page_merger_req.py::test_dotted_path_reads_nested_structured_data_and_leaf_confidence → documind-ocr-mapping:2.1（需求不存在）
+- tests/test_page_merger_req.py::test_all_pages_empty_yields_absent_merged_field → documind-ocr-mapping:2.1（需求不存在）
+- tests/test_router_req.py::test_happy_path_returns_mapping_result → documind-ocr-mapping:1.1（需求不存在）
+- tests/test_router_req.py::test_path_body_document_type_mismatch_is_400 → documind-ocr-mapping:1.2（需求不存在）
+- tests/test_router_req.py::test_unsupported_document_type_is_400 → documind-ocr-mapping:1.3（需求不存在）
+- tests/test_router_req.py::test_body_over_limit_is_413 → documind-ocr-mapping:1.5（需求不存在）
+- tests/test_router_req.py::test_invalid_documind_payload_is_422_with_error_code → documind-ocr-mapping:1.1（需求不存在）
+- tests/test_router_req.py::test_empty_pages_is_200_draft_not_500 → documind-ocr-mapping:1.4（需求不存在）
+- tests/test_router_req.py::test_endpoint_is_not_exempt_from_api_key_auth → documind-ocr-mapping:1.6（需求不存在）
+- tests/test_router_req.py::test_router_is_wired_into_app → documind-ocr-mapping:1.6（需求不存在）
+- tests/test_transcript_mapper_req.py::test_fixture_maps_five_fields_with_original_keys → documind-ocr-mapping:3.1（需求不存在）
+- tests/test_transcript_mapper_req.py::test_area_is_numeric_derived_with_raw → documind-ocr-mapping:3.2（需求不存在）
+- tests/test_transcript_mapper_req.py::test_area_unparseable_is_absent_but_raw_kept → documind-ocr-mapping:3.2（需求不存在）
+- tests/test_transcript_mapper_req.py::test_missing_building_number_with_land_number_adds_note_and_does_not_copy → documind-ocr-mapping:3.3（需求不存在）
+- tests/test_transcript_mapper_req.py::test_multiple_owners_become_list_with_raw → documind-ocr-mapping:3.4（需求不存在）
+- tests/test_transcript_mapper_req.py::test_single_owner_stays_scalar → documind-ocr-mapping:3.4（需求不存在）
+- tests/test_transcript_mapper_req.py::test_confidence_fallback_to_page_level_is_carried → documind-ocr-mapping:3.5（需求不存在）
+- tests/test_transcript_mapper_req.py::test_conflicts_from_merge_are_carried_on_field_value → documind-ocr-mapping:2.3（需求不存在）
+- tests/test_kb_candidate_telemetry_contract_req.py::test_debug_only_keys_match_retriever_pop_list → conversational-routing-execution:P0-1（需求不存在）
+- tests/test_kb_candidate_telemetry_contract_req.py::test_retrieve_knowledge_requests_debug_unconditionally → conversational-routing-execution:P0-1（需求不存在）
+- tests/test_kb_candidate_telemetry_contract_req.py::test_metering_happens_before_stripping → conversational-routing-execution:P0-1（需求不存在）
+- tests/test_knowledge_dict_contract_req.py::test_consumed_subset_of_produced → trigger-vocabulary-debt:4.1（需求不存在）
+- tests/test_knowledge_dict_contract_req.py::test_db_backed_produced_subset_of_vector_select → trigger-vocabulary-debt:4.1（需求不存在）
+- tests/test_knowledge_dict_contract_req.py::test_db_backed_produced_subset_of_keyword_select → trigger-vocabulary-debt:4.1（需求不存在）
+- tests/test_knowledge_dict_contract_req.py::test_trigger_config_fields_in_all_three_sets → trigger-vocabulary-debt:4.1（需求不存在）
+- tests/test_retrieval_recall_fixes_req.py::test_keyword_fallback_fires_when_relevant_below_top_k → retrieval-fixes:1（需求不存在）
+- tests/test_retrieval_recall_fixes_req.py::test_keyword_fallback_skipped_when_enough_relevant → retrieval-fixes:1（需求不存在）
+- tests/test_retrieval_recall_fixes_req.py::test_b2c_vector_search_none_vendor_info_no_crash → retrieval-fixes:4（需求不存在）
+- tests/test_retrieval_recall_fixes_req.py::test_b2c_keyword_search_none_vendor_info_no_crash → retrieval-fixes:4（需求不存在）
+- tests/test_retrieval_representation_contract_req.py::test_producer_actually_emits_contract_fields → D1:transport（需求不存在）
+- tests/test_retrieval_representation_contract_req.py::test_declared_row_survives_producer → D1:transport（需求不存在）
+- tests/test_retrieval_representation_contract_req.py::test_proposal_is_not_consumable → D3:reviewed-only（需求不存在）
+- tests/test_retrieval_representation_contract_req.py::test_declared_text_without_provenance_is_not_consumable → D3:reviewed-only（需求不存在）
+- tests/test_retrieval_representation_contract_req.py::test_unmigrated_row_falls_back_and_is_counted → D2:single-surface（需求不存在）
+- tests/test_retrieval_representation_contract_req.py::test_reviewed_row_uses_declared_surface → D2:single-surface（需求不存在）
+- tests/test_retrieval_representation_contract_req.py::test_empty_row_is_loud_not_silent → D2:single-surface（需求不存在）
+- tests/test_retrieval_representation_contract_req.py::test_reader_never_guesses → D1:no-fallback（需求不存在）
+- tests/test_retrieval_representation_contract_req.py::test_reranker_payload_carries_surface_and_source → D2:single-surface（需求不存在）
+- tests/test_retrieval_score_fields_req.py::test_rerank_branch_formula_and_source → testing-traceability:5.3（需求不存在）
+- tests/test_retrieval_score_fields_req.py::test_keyword_branch_formula_and_source → testing-traceability:5.3（需求不存在）
+- tests/test_retrieval_score_fields_req.py::test_vector_branch_formula_and_source → testing-traceability:5.3（需求不存在）
+- tests/test_retrieval_score_fields_req.py::test_similarity_capped_at_one → testing-traceability:5.3（需求不存在）
+- tests/test_retrieval_score_fields_req.py::test_finalize_does_not_mutate_source_score_fields → testing-traceability:5.3（需求不存在）
+- tests/test_retrieval_score_fields_req.py::test_finalize_is_null_safe_on_missing_vector → testing-traceability:5.3（需求不存在）
+- tests/test_retrieval_score_fields_req.py::test_reserved_categories_defined_for_exclusion → testing-traceability:5.3（需求不存在）
+- tests/test_retrieval_score_fields_req.py::test_known_target_users_include_prospect → testing-traceability:5.3（需求不存在）
+- tests/test_retrieve_pipeline_req.py::test_reranker_input_floor_drops_low_vector_keeps_keyword_fallback → unit-coverage-rebuild:5（需求不存在）
+- tests/test_retrieve_pipeline_req.py::test_reranker_input_limit_prefers_keyword_then_top_vector → unit-coverage-rebuild:5（需求不存在）
+- tests/test_retrieve_pipeline_req.py::test_embedding_failure_falls_back_to_keyword → unit-coverage-rebuild:5（需求不存在）
+- tests/test_retrieve_pipeline_req.py::test_embedding_failure_without_fallback_returns_empty → unit-coverage-rebuild:5（需求不存在）
+- tests/test_retrieve_pipeline_req.py::test_query_rewrite_union_dedups_by_id → unit-coverage-rebuild:5（需求不存在）
+- tests/test_retrieve_pipeline_req.py::test_keyword_fallback_tops_up_when_below_top_k → unit-coverage-rebuild:5（需求不存在）
+- tests/test_retrieve_pipeline_req.py::test_threshold_filters_low_similarity → unit-coverage-rebuild:5（需求不存在）
+- tests/test_retrieve_pipeline_req.py::test_return_unfiltered_bypasses_threshold → unit-coverage-rebuild:5（需求不存在）
+- tests/test_retrieve_pipeline_req.py::test_sorts_by_similarity_and_truncates_top_k → unit-coverage-rebuild:5（需求不存在）
+- tests/test_retriever_sql_filter_req.py::test_reserved_categories_always_excluded → unit-coverage-rebuild:5（需求不存在）
+- tests/test_retriever_sql_filter_req.py::test_b2b_role_applies_target_user_and_strict_business_types → unit-coverage-rebuild:5（需求不存在）
+- tests/test_retriever_sql_filter_req.py::test_mode_b2b_triggers_b2b_path_even_for_tenant → unit-coverage-rebuild:5（需求不存在）
+- tests/test_retriever_sql_filter_req.py::test_b2c_filters_target_user_default_tenant_with_all_users_passthrough → retrieval-fixes:5（需求不存在）
+- tests/test_retriever_sql_filter_req.py::test_b2c_unknown_target_user_normalized_to_tenant → retrieval-fixes:5（需求不存在）
+- tests/test_retriever_sql_filter_req.py::test_b2c_landlord_role_preserved_not_forced_tenant → retrieval-fixes:5（需求不存在）
+- tests/test_score_shift_probe_req.py::test_default_is_exact_noop → retrieval-decision-layer:7.2（需求不存在）
+- tests/test_score_shift_probe_req.py::test_explicit_zero_is_exact_noop → retrieval-decision-layer:7.2（需求不存在）
+- tests/test_score_shift_probe_req.py::test_positive_shift_applies_and_clamps → retrieval-decision-layer:7.2（需求不存在）
+- tests/test_score_shift_probe_req.py::test_shift_clamps_at_one → retrieval-decision-layer:7.2（需求不存在）
+- tests/test_score_shift_probe_req.py::test_negative_shift_clamps_at_zero → retrieval-decision-layer:7.2（需求不存在）
+- tests/test_score_shift_probe_req.py::test_malformed_shift_raises → retrieval-decision-layer:7.2（需求不存在）
+- tests/test_score_shift_probe_req.py::test_blank_shift_is_unset_not_malformed → retrieval-decision-layer:7.2（需求不存在）
+- tests/test_score_shift_probe_req.py::test_enabled_probe_is_loud → retrieval-decision-layer:7.2（需求不存在）
+- tests/test_target_user_routing_req.py::test_effective_target_user_normalization → testing-traceability:5.3（需求不存在）
+- tests/test_trigger_config_passthrough_req.py::test_trigger_config_passthrough_present → trigger-vocabulary-debt:1.1（需求不存在）
+- tests/test_trigger_config_passthrough_req.py::test_trigger_config_passthrough_null → trigger-vocabulary-debt:1.3（需求不存在）
+- tests/test_visibility_ruler_contract_req.py::test_vector_filter_columns_declared → conversational-routing-execution:P0-1（需求不存在）
+- tests/test_visibility_ruler_contract_req.py::test_keyword_filter_columns_declared → conversational-routing-execution:P0-1（需求不存在）
+- tests/test_visibility_ruler_contract_req.py::test_two_paths_have_different_filters → conversational-routing-execution:P0-1（需求不存在）
+- tests/test_visibility_ruler_contract_req.py::test_b2b_business_type_filter_has_no_null_pass → conversational-routing-execution:P0-1（需求不存在）
+- tests/test_usage_metering_req.py::test_set_facet_writes_to_ctx → conversational-repair:7.1（需求不存在）
+- tests/test_usage_metering_req.py::test_set_facet_no_context_silent → conversational-repair:7.1（需求不存在）
+- tests/test_usage_metering_req.py::test_set_facet_after_finalized_noop → conversational-repair:7.1（需求不存在）
+- tests/test_usage_metering_req.py::test_set_facet_key_truncated → conversational-repair:7.1（需求不存在）
+- tests/test_usage_metering_req.py::test_to_row_without_facet_cols → conversational-repair:7.1（需求不存在）
+- tests/test_usage_metering_req.py::test_to_row_undetected_omits_facet_cols → conversational-repair:7.1（需求不存在）
+- tests/test_usage_metering_req.py::test_to_row_with_facet_cols → conversational-repair:7.1（需求不存在）
+- tests/test_usage_metering_req.py::test_to_row_facet_cols_present_but_none → conversational-repair:7.1（需求不存在）
+- tests/test_usage_metering_req.py::test_detect_facet_cols_present → conversational-repair:7.1（需求不存在）
+- tests/test_usage_metering_req.py::test_detect_facet_cols_absent → conversational-repair:7.1（需求不存在）
+- tests/test_usage_metering_req.py::test_detect_facet_cols_failure_retryable → conversational-repair:7.1（需求不存在）
+- tests/test_usage_metering_req.py::test_detect_facet_cols_cached_skips_query → conversational-repair:7.1（需求不存在）
+- tests/test_usage_metering_req.py::test_set_search_kb_status_writes_to_ctx → brain-kb-grounding:5.2（需求不存在）
+- tests/test_usage_metering_req.py::test_set_search_kb_status_no_context_silent → brain-kb-grounding:5.2（需求不存在）
+- tests/test_usage_metering_req.py::test_set_search_kb_status_after_finalized_noop → brain-kb-grounding:5.2（需求不存在）
+- tests/test_usage_metering_req.py::test_set_search_kb_status_rejects_out_of_domain → brain-kb-grounding:5.2（需求不存在）
+- tests/test_usage_metering_req.py::test_to_row_without_search_kb_col → brain-kb-grounding:5.2（需求不存在）
+- tests/test_usage_metering_req.py::test_to_row_undetected_omits_search_kb_col → brain-kb-grounding:5.2（需求不存在）
+- tests/test_usage_metering_req.py::test_to_row_with_search_kb_col → brain-kb-grounding:5.2（需求不存在）
+- tests/test_usage_metering_req.py::test_to_row_search_kb_col_present_but_none → brain-kb-grounding:5.2（需求不存在）
+- tests/test_usage_metering_req.py::test_detect_search_kb_col_present → brain-kb-grounding:5.2（需求不存在）
+- tests/test_usage_metering_req.py::test_detect_search_kb_col_absent → brain-kb-grounding:5.2（需求不存在）
+- tests/test_usage_metering_req.py::test_detect_search_kb_col_failure_retryable → brain-kb-grounding:5.2（需求不存在）
+- tests/test_usage_metering_req.py::test_detect_search_kb_col_cached_skips_query → brain-kb-grounding:5.2（需求不存在）
+- tests/test_usage_metering_req.py::test_set_decision_writes_to_ctx → retrieval-decision-layer:8.3（需求不存在）
+- tests/test_usage_metering_req.py::test_set_decision_no_context_silent → retrieval-decision-layer:8.3（需求不存在）
+- tests/test_usage_metering_req.py::test_set_decision_after_finalized_noop → retrieval-decision-layer:8.3（需求不存在）
+- tests/test_usage_metering_req.py::test_set_decision_facet_event_truncated → retrieval-decision-layer:8.3（需求不存在）
+- tests/test_usage_metering_req.py::test_set_decision_partial_args_independent → retrieval-decision-layer:8.3（需求不存在）
+- tests/test_usage_metering_req.py::test_set_decision_merges_disjoint_keys → retrieval-decision-layer:8.3（需求不存在）
+- tests/test_usage_metering_req.py::test_set_decision_conflicting_write_keeps_prior → retrieval-decision-layer:8.3（需求不存在）
+- tests/test_usage_metering_req.py::test_set_decision_prior_capped → retrieval-decision-layer:8.3（需求不存在）
+- tests/test_usage_metering_req.py::test_to_row_without_decision_cols → retrieval-decision-layer:8.3（需求不存在）
+- tests/test_usage_metering_req.py::test_to_row_undetected_omits_decision_cols → retrieval-decision-layer:8.3（需求不存在）
+- tests/test_usage_metering_req.py::test_to_row_with_decision_cols_serialized → retrieval-decision-layer:8.3（需求不存在）
+- tests/test_usage_metering_req.py::test_to_row_decision_cols_present_but_none → retrieval-decision-layer:8.3（需求不存在）
+- tests/test_usage_metering_req.py::test_to_row_non_json_native_values_coerced → retrieval-decision-layer:8.3（需求不存在）
+- tests/test_usage_metering_req.py::test_to_row_unserializable_snapshot_degrades → retrieval-decision-layer:8.3（需求不存在）
+- tests/test_usage_metering_req.py::test_detect_decision_cols_present → retrieval-decision-layer:8.3（需求不存在）
+- tests/test_usage_metering_req.py::test_detect_decision_cols_absent → retrieval-decision-layer:8.3（需求不存在）
+- tests/test_usage_metering_req.py::test_detect_decision_cols_failure_retryable → retrieval-decision-layer:8.3（需求不存在）
+- tests/test_usage_metering_req.py::test_detect_decision_cols_cached_skips_query → retrieval-decision-layer:8.3（需求不存在）
+- tests/test_usage_metering_req.py::test_finalize_detects_decision_cols → retrieval-decision-layer:8.3（需求不存在）
+- docs/api/conversational-api.md › `quick_replies`——交易面向確認 gate（conversational-repair） → conversational-repair:4.1（需求不存在）
+- docs/api/conversational-api.md › Response B — 串流（`stream:true`） → testing-traceability:5.5（需求不存在）
+- docs/api/conversational-api.md › 售前對話行為（prospect） → testing-traceability:5.2（需求不存在）
+- docs/api/conversational-api.md › 交易面向範例——修繕報修（conversational-repair，b2c 租客） → conversational-repair:1.1（需求不存在）
+- docs/architecture/COMPLETE_CONVERSATION_ARCHITECTURE.md › 進場順位補述（conversational-repair） → conversational-repair:1.1（需求不存在）
+- docs/architecture/COMPLETE_CONVERSATION_ARCHITECTURE.md › 14. 交易面向流程（conversational-repair） → conversational-repair:4.1（需求不存在）
+- docs/architecture/COMPLETE_CONVERSATION_ARCHITECTURE.md › 14. 交易面向流程（conversational-repair） → conversational-repair:4.4（需求不存在）
+- docs/architecture/facet-architecture.md › 七、交易面向（conversational-repair 落地） → conversational-repair:4.1（需求不存在）
+- docs/architecture/facet-architecture.md › 七、交易面向（conversational-repair 落地） → conversational-repair:4.4（需求不存在）
+- docs/architecture/retriever-pipeline.md › 分數欄位定義 → testing-traceability:5.3（需求不存在）
+- docs/architecture/retriever-pipeline.md › Final similarity 計算公式（`_finalize_scores`） → testing-traceability:5.3（需求不存在）
+- docs/features/conversational-presales.md › 三、合規鐵則（內容硬約束） → testing-traceability:5.2（需求不存在）
+- docs/features/conversational-presales.md › 五、資料（DB，category 保留分類） → testing-traceability:5.3（需求不存在）
+
+## 未受測試背書之文件章節（0）
+> R7.3
+
+_（無）_
+
+## 候選過時文件（人工確認）（0）
+> R7.4：啟發式，僅供人工確認。
+
+_（無）_
