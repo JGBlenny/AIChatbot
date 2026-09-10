@@ -167,7 +167,7 @@ file_urls/image_urls
 
 | | 照片（`ImageTurnInput`） | 文件（`DocumentTurnInput`） |
 |---|---|---|
-| 進場文字 | 全封閉值，`description` 刻意不存在（S9-11） | 型別化、可引用文字（citable），代價由「寫入面關閉＋不可自成 unit」承擔 |
+| 進場文字 | 封閉值＋辨識描述（業主 2026-09-10 **撤銷 S9-11**：`suggested_description` 淨化、≤200 字，只進修繕單描述、⛔ 不進模型資料段；DSP-044） | 型別化、可引用文字（citable），代價由「寫入面關閉＋不可自成 unit」承擔 |
 | 模型 | `IMAGE_RECOGNITION_MODEL` | `DOCUMENT_EXTRACTION_MODEL` |
 | detail | `low` | `high` |
 

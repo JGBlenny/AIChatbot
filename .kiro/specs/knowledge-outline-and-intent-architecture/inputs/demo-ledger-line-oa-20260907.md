@@ -350,6 +350,22 @@ line-bot 側：拍照鍵每回合保留（部署中）；「建立帳單」格�
 - 小範圍 verifier（`af85644b`）CONFIRMED：真值表 5 受眾狀態 × 3 句、缺鍵正對照六格全擋、反證 monkeypatch 兩測試紅、self_test 三新案吃到。附帶：**tenant 受眾同時被兩張表放寬**（`sensitive_patterns_audiences`／`route_check_audiences` 都只列 prospect，tenant 在封閉值域內 ⇒ 跳過）——tenant 目前不是 agent 路徑的啟用受眾（啟動 `audiences=[property_manager, prospect]`），先記待業主裁：要不要把 tenant 加進兩張清單。
 - 待部署：業主 push → 線上 pull → **build（新依賴）** → up → 暖機 → tools/list 見兩新鍵；line-bot 兩個 LIFF 入口帶 `attachment_purpose=document`（契約表已列）。
 
+## 1s. line-bot 第四輪回報（2026-09-10；#1 修繕分類已上線 `fb4888d2`／`5ee1a861`；#2–#11 第六批，本地 `03e070ab`，⛔ 未部署——業主「修改完不要部署」）
+
+- #1 修繕分類：照片建議（分類樹封閉值＋辨識描述）存會話，`confirm.request` 缺分類／描述由程式補；業主 2026-09-10 **撤銷 S9-11「照片內文字不進修繕單」**——辨識描述（淨化、≤200 字）直接進修繕單描述，前綴「照片辨識：」；仍不進模型資料段。線上 `5ee1a861`。
+- 第六批（快速路線，省 plan-verifier）：A `644d4d4a` 期別對帳單（`bill_period.parse_period` 封閉語法＋`confirm.py` 決定性對帳單；候選形狀帶 action／payload 讓範圍閘 fail-closed）；C `7b821636` 擷取證據閘（每欄 evidence、比不上就 null）；E `b5688ddc`＋`03e070ab` 文件回合禁用寫入宣稱／提議（規則 1.6.1、`verify(document_turn=)`；lb2＋線③ 108 句若誤套會擋 7 句＝全是寫入鏈正確句 ⇒ 必須 per-turn）；B `b7146e1d`（兩位執行者中斷後第三位接手完成）`expects` 加 `image`／`file`、`document` 無附件視同一般回合、estate carry、接線；候選按鈕 `select:bill:<id>`（我補）；`5f357a31` `REASONING_EFFORT_VALUES` 加 `none`。單元 2278 綠。
+- #11：線上 `OPENAI_TIMEOUT_S=25`（compose 透傳 `10c34a70`，已生效——業主「不要部署」指示之前）。量測：`AGENT_MODEL=gpt-5.6-luna`＋`reasoning_effort=none`（帶工具只接受 none；`low`／`minimal` 400）三輪 lb2 11／10／12，p50 3.4–3.7 s、p95 6.9–8.8 s；mini 同日對照 7/13、9.8／16.2 s。
+- **本機情境（HEAD 映像）**：gpt-5-mini 下 #2／#10 機制沒被觸發（模型先反問、不呼叫確認工具）、#8 仍照唸開場白問句；**luna 下全部接上**：#2「九月的房租晚三天繳」一句直接出卡 756248（5.3 s）；#10 先講物件再傳照片 ⇒ 卡含物件＋房屋結構＋辨識描述；#8 純文字帶 document ⇒ 請上傳、`expects=file`；#4 `expects=file`；#6 不承諾掛帳（第一版詞表漏「我就幫您掛上」，1.6.1 補）。lb2 luna 10/13（1 轉人）。**結論：第六批效果綁著模型切換**。
+- 未做／待裁：#9 物件級總覽前置查詢、#7 排版契約（`format` 欄位或 G 逐欄一行）、#3 真掛附件（jgb2 external 只有 `GET /bills/{id}`，要開帳單附件 API）、方便時段（建單 API 無欄位；(a) 寫 `broken_note` 或 (b) jgb2 加欄位）、tenant 是否加回兩張售前守門表。
+- fresh verifier（第六批程式面）派出中。
+
+## 1t. 獨立審查三份（2026-09-10；業主「派代理驗證調整都是合理的不是應付的補丁，且盤查架構是否對其目標」）
+
+- **第六批 verifier：REFUTED → 修 → 2285 綠**（本地 `b7cfa7c2`）：P2-1 `parse_period` 忽略年份修飾詞（「去年九月」→今年九月）⇒ 封閉表 `YEAR_MODIFIER_TERMS`（去年／今年；明年／前年／後年 ⇒ 整句 None）；P2-2 禁用詞 (a) 漏「已經＋動詞」⇒ 規則 1.6.2；P3 三條（釘住範圍後物件記憶讀點仍補值 ⇒ 讀點也 None；數值證據子字串放行 800/18,000 ⇒ 整 token 等值；S9-11 過時註解）。verifier 其餘全確認（候選 fail-closed、estate carry 不進 trace、evidence 閘、grounding_observe 照擋…）。未驗：劇本回歸（我已跑：luna 六條情境全過、lb2 10/13）、`make audit`（常駐 dev 容器舊映像，不變量 3 結構性紅）。
+- **修正性質審查（39 筆程式／正本）**：A 機制層 ≈17（44%）、B 合理但有債 ≈19（49%）、C 補丁 2（`a1222c9a` V1 記憶段標頭措辭、`03e070ab` 詞表補四引導詞）。三個家族在漂：① 售前規則對 pm「按受眾關掉」而非「按受眾分表」（`_PHONE_RE` 無邊界沒修、pm 答案側無金額守門）；② 開放語義用正則追（禁用詞表 5 小時漏一次、`question_sensitive_patterns`、`negation_terms`、`_pre_lookup_trigger` keyword 分支）；③ 會話記憶五把鑰匙各自為政（`completed_actions`／`image_suggestion`／`estate_carry`／`recent_refs`／`last_ask_target`），V2 與 #10 是同一缺口分兩次補。建議升格：`session_entities`（封閉槽位、唯一寫讀點）、Verifier 規則自帶 `{class, audiences, turn_types}`、文件回合輸出改程式逐欄渲染讓「已掛」沒有出口、迴圈內回饋換角色。
+- **架構對目標盤查**：寫入面硬保證（不經確認不寫入、雙雜湊、三道網、別戶邊界）✅；`outcome` 契約 ✅；信任邊界 ✅。⚠️ 四條：(1)「答案每句有憑據」在 `grounding_observe` 下只是觀察值，且 DSP-040 絆線計數沒有線上落點（`observed` 只進 dev attempt log）；(2) 寫入面沒有程式下限——出不出確認卡完全取決於模型（§1s 實證），建議 UI 已知寫入意圖走封閉機器值 `action:<name>`；(3) 延遲目標三個數字互相不對（spec p95 ≤12 s／預設 20 s／部署 45／60 s）；(4) `_POLICY_TEXT_NON_PROSPECT` 已 1,927 字超過自述上限 1,511。結構債：`runtime.py` 4,269 行、`_run_turn_body` 1,230 行、11 個會話鍵五種生命週期、Verifier 三維度各用不同機制。最該做的三個結構改動：拆 `_run_turn_body` 成四段管線（含出口閘順序表格測試）、Verifier 規則自帶屬性＋`VerifyContext`、`AgentSession` 會話實體。不要動的三件：`Optional[str]` 型別與 payload JSON 字串、十個保留 id／三道網／雙雜湊縱深、`grounding_observe`／固定句／pm 關表（皆業主裁且有量測）。
+- 治理補記：S9-11 撤銷已補 DSP-044 與架構文 §4c。待業主裁：延遲命題數字、pm 自己的敏感類定義（`SENSITIVE` 五類是售前的）、寫入面機器值下限、tenant 守門表。
+
 ## 2. demo 處理（這次就做，本機可驗）
 
 | # | 事 | 狀態 | 證據 |
