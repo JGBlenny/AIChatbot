@@ -372,7 +372,7 @@ line-bot 側：拍照鍵每回合保留（部署中）；「建立帳單」格�
 - 業主裁（DSP-045）：額度不擋；之後每團隊自帶 OpenAI key 自付額度；上限只防惡意、不切細、⛔ 不藏 env ⇒ 收成程式內封閉表 `limits.py`（回合 1200/h、工具 600/min、kb.get 3000/h、照片 600/h、PDF 100/h）＋健檢回報生效值；派 executor（與 R1／R2 檔案不重疊）。
 - Plan R（結構整理）：plan-verifier 三輪（r1 六條、r2 四條、r3 兩條措辭）全處置，第 4 稿派工：R1（runtime 四段管線＋R1b observed 計數落點）與 R2（Verifier 規則自帶屬性、加法 `ctx=`）平行進行中；整理前基準見 Plan §1.4（lb2 11／11／13、線③ 12/12、b6 8/8、p50 3.2–4.1 s）；計分尺升格 `scripts/smoke/`（`e76fe43a`）。
 
-## 1v. Plan R 前兩片＋整理落地（2026-09-10 晚；本地 `ceccd1f0`＋R3 進行中；⛔ 未部署）
+## 1v. Plan R 三片＋整理落地（2026-09-10 晚；本地 `df0edb1a`；⛔ 未部署）
 
 - R1 `8ea59888`（golden 基準 `2d7ccb0e`）：`_run_turn_body` 1226→49 行，四段拆 `turn_segments.py`／`turn_context.py`（`TurnAccumulator`／`TurnInputsSnapshot`／`inject`；`TurnTrace`／`TurnResult`／`_emit_agent_decision` 亦搬入避免循環 import）／`exit_gates.py`（`EXIT_GATES` 順序表＋模組級 `finalize`）；28 條 golden 逐位相同；golden 抓到一個真缺陷（改名時把 `"prompt_tokens"` 字串字面也改了 ⇒ token 計量歸零）已修。R1b `b62c9327`：`verifier_observed_counts` 進 trace 與決策快照（只一般出口）。
 - R2 `a9442837`：規則檔 2.0.0 每條 `{id,pattern,class,audiences,turn_types}`（106 條鏡像，扁平表仍權威、`_reconcile` 咬漂移）；`verify(ctx=)` 加法；`_is_observed` 由 `verdict_class × mode`；`term_id` 半遷移（`pair:`／`docturn:`；三表仍 `rule#n`，因既有測試字面釘住）；R2b 七條待辦記 commit。
@@ -380,6 +380,7 @@ line-bot 側：拍照鍵每回合保留（部署中）；「建立帳單」格�
 - 整理：文件 `f16a7cb3`（3 歸檔、4 對碼修正、索引、inputs 索引）；程式 `ceccd1f0`（刪 `intent_manager.py`、移除 `user_role` 過渡、`AGENT_VERIFIER_OBSERVE_ONLY` 除役——⚠️ 部署時線上 `.env` 要刪該行；順帶發現 `cache_service.save_conversation` 不存在、呼叫恆被 try 吞掉，列債）。
 - fresh verifier CONFIRMED（R1／R1b／R2／限額）；smoke 前後對照見 Plan §1.4（判為抽樣變異）。單元 2707 綠（agent＋audit＋api）。
 - R3 `1be85c01`：`agent_session.py`（`Lifetime` 六值、`KEY_SPECS` 11 鍵、`begin_turn`／`end_turn` 唯一寫點、`prompt_segments` 唯一讀點、`scope_exit()`；L8 `config_key_for(audience)`）；golden 逐位相同；直接寫 `agent_state[` 只剩 `mcp_facade.py` 的 `outline`（R3b）。文件第二批 `ea1583fc`（多版本關係標註、架構文 §1a／§6／§8／§9、MAP `#agentic-mcp`）。全套 agent＋audit＋api 2729 綠；main＝feat＝`1be85c01`。
+- R3 fresh verifier **CONFIRMED**（探針 ALL_PASS：`Lifetime` 六值、`KEY_SPECS` 11 鍵、FIFO 20／50／20／5 上限與權威定義相等、`scope_exit()` 只清 `estate_carry`、`end_turn` 三出口行為；反證三條——`HANDOFF_CACHE_MAX` 49 ⇒ 3 紅、`COMPLETED_ACTIONS_MAX` 6 ⇒ 3 紅、`write_last_ask_target` 換 pass ⇒ golden 紅；golden fixture 最後改於 R1b `b62c9327`、R3 未碰，28 條逐位相同）。三條不阻斷、裁決：**A1** P3 全套 `passed=2411`（commit 訊息寫 2410；基準 2390 應為 2391 抄錄差 1，非漏測）→ 文件此處更正、不再追；**A2** P4 `recent_refs` 閘判定式由 `select_scope is None` 改為 `scope_estate_id is None`，只在 `select_scope` 為無 `estate_id` 的 dict 時分歧、全歷史指派形狀查無此形 → DEFER，併入「golden 補情境」候選（加 `select_scope={"type":"bills"}` 一條即可分辨）；**A3** P4 `begin_turn` 零呼叫者 no-op、`runtime.py` 仍 import 未用的 `_append_dialog`／`_trim_handoff_cache` → DEFER 併 R3b（facade `outline` 走 AgentSession 時一起接線／刪）。未驗：`make audit`（dev 容器映像過期、不變量 3 結構性紅）、真模型 smoke 對照（純結構收斂，golden 逐位相同故不補）。
 - 待業主：#10（三個從未開旗標刪不刪）、`ENABLE_QUERY_REWRITE_B2B` 程式預設 true／部署 false 對齊方向、`budget_exhausted` 連續轉人降級走既有閘（一行封閉條件）、golden 補第 3／4 道閘互換情境（verifier A1）、部署（第六批＋Plan R＋整理＋luna）。
 
 ## 2. demo 處理（這次就做，本機可驗）
