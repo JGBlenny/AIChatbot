@@ -1,0 +1,2408 @@
+{
+  "affirmative_carry": {
+    "agent_state": {
+      "dialog": [
+        {
+          "content": "要我幫你送出嗎",
+          "role": "assistant"
+        },
+        {
+          "content": "好",
+          "role": "user"
+        },
+        {
+          "content": "好的，我來處理",
+          "role": "assistant"
+        }
+      ],
+      "fixed_streak": 0,
+      "handoff_cache": {},
+      "last_ask_target": null
+    },
+    "agent_state_keys": [
+      "dialog",
+      "fixed_streak",
+      "handoff_cache",
+      "last_ask_target"
+    ],
+    "answer": "好的，我來處理",
+    "ask_target": null,
+    "covers": {
+      "flows": [],
+      "gates": [],
+      "reserved_ids": [
+        "aff-"
+      ]
+    },
+    "handoff": null,
+    "kind": "answer",
+    "outcome": {
+      "action": null,
+      "expects": "text",
+      "ref": null,
+      "state": "answered"
+    },
+    "quick_replies": [],
+    "trace": {
+      "attachment_purpose_ignored": false,
+      "candidate_ids": [],
+      "completion_tokens": 5,
+      "document_kind": null,
+      "document_status": null,
+      "final_kind": "answer",
+      "handoff_reason": null,
+      "has_context": false,
+      "has_document": false,
+      "has_recent_refs": false,
+      "has_ref": null,
+      "latency_ms": 0,
+      "llm_calls": 1,
+      "miss_kind": null,
+      "outline_sha": "",
+      "pages_seen": null,
+      "pending_id": null,
+      "pre_lookup": null,
+      "prompt_tokens": 10,
+      "receipt_id": null,
+      "rules_sha": "fake-rules-sha",
+      "select_type": null,
+      "slot_written": null,
+      "tool_calls": [],
+      "trace_id": "ffffffffffffffffffffffffffffffff",
+      "verifier": [
+        {
+          "observed": [],
+          "ok": true,
+          "polarity_source": null,
+          "quote_len": null,
+          "reason": null,
+          "schema_cause": null,
+          "sent": null,
+          "term_id": null
+        }
+      ],
+      "violations": [
+        "affirmative_carry"
+      ],
+      "winning_key_kind": {}
+    }
+  },
+  "budget_exhausted_fixed": {
+    "agent_state": {
+      "dialog": [
+        {
+          "content": "幫我查一下這個東西",
+          "role": "user"
+        },
+        {
+          "content": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+          "role": "assistant"
+        }
+      ],
+      "fixed_streak": 1,
+      "handoff_cache": {
+        "68f520c936be93788ecd5f8c91d6314e3643a6fd6f6edde276144be4fd4a6daa": {
+          "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+          "handoff": {
+            "channel": "line_official",
+            "fact_class": "other",
+            "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+            "reason": "budget_exhausted"
+          },
+          "quick_replies": [],
+          "trace_id": "ffffffffffffffffffffffffffffffff"
+        }
+      },
+      "last_ask_target": null
+    },
+    "agent_state_keys": [
+      "dialog",
+      "fixed_streak",
+      "handoff_cache",
+      "last_ask_target"
+    ],
+    "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+    "ask_target": null,
+    "covers": {
+      "flows": [],
+      "gates": [],
+      "reserved_ids": [
+        "ctx-"
+      ]
+    },
+    "handoff": {
+      "channel": "line_official",
+      "fact_class": "other",
+      "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+      "reason": "budget_exhausted"
+    },
+    "kind": "handoff",
+    "outcome": {
+      "action": null,
+      "expects": "none",
+      "ref": null,
+      "state": "handoff"
+    },
+    "quick_replies": [],
+    "trace": {
+      "attachment_purpose_ignored": false,
+      "candidate_ids": [],
+      "completion_tokens": 5,
+      "document_kind": null,
+      "document_status": null,
+      "final_kind": "handoff",
+      "handoff_reason": "budget_exhausted",
+      "has_context": false,
+      "has_document": false,
+      "has_recent_refs": false,
+      "has_ref": null,
+      "latency_ms": 100000,
+      "llm_calls": 1,
+      "miss_kind": null,
+      "outline_sha": "",
+      "pages_seen": null,
+      "pending_id": null,
+      "pre_lookup": null,
+      "prompt_tokens": 10,
+      "receipt_id": null,
+      "rules_sha": "fake-rules-sha",
+      "select_type": null,
+      "slot_written": null,
+      "tool_calls": [
+        {
+          "args_summary": {},
+          "empty": false,
+          "id": "call_1",
+          "ms": 0,
+          "n_items": 1,
+          "name": "kb.get",
+          "status": "ok"
+        }
+      ],
+      "trace_id": "ffffffffffffffffffffffffffffffff",
+      "verifier": [],
+      "violations": [],
+      "winning_key_kind": {}
+    }
+  },
+  "completed_actions": {
+    "agent_state": {
+      "completed_actions": [
+        {
+          "estate_id": null,
+          "estate_name": "測試物件",
+          "ref_id": "12345",
+          "ref_type": "repair"
+        }
+      ],
+      "dialog": [
+        {
+          "content": "剛剛那張報修單處理得怎麼樣",
+          "role": "user"
+        },
+        {
+          "content": "剛才那張單已經建立了",
+          "role": "assistant"
+        }
+      ],
+      "fixed_streak": 0,
+      "handoff_cache": {},
+      "last_ask_target": null
+    },
+    "agent_state_keys": [
+      "completed_actions",
+      "dialog",
+      "fixed_streak",
+      "handoff_cache",
+      "last_ask_target"
+    ],
+    "answer": "剛才那張單已經建立了",
+    "ask_target": null,
+    "covers": {
+      "flows": [],
+      "gates": [],
+      "reserved_ids": [
+        "done-",
+        "ctx-",
+        "ref-"
+      ]
+    },
+    "handoff": null,
+    "kind": "answer",
+    "outcome": {
+      "action": null,
+      "expects": "text",
+      "ref": null,
+      "state": "answered"
+    },
+    "quick_replies": [],
+    "trace": {
+      "attachment_purpose_ignored": false,
+      "candidate_ids": [],
+      "completion_tokens": 5,
+      "document_kind": null,
+      "document_status": null,
+      "final_kind": "answer",
+      "handoff_reason": null,
+      "has_context": false,
+      "has_document": false,
+      "has_recent_refs": true,
+      "has_ref": null,
+      "latency_ms": 0,
+      "llm_calls": 1,
+      "miss_kind": null,
+      "outline_sha": "",
+      "pages_seen": null,
+      "pending_id": null,
+      "pre_lookup": null,
+      "prompt_tokens": 10,
+      "receipt_id": null,
+      "rules_sha": "fake-rules-sha",
+      "select_type": null,
+      "slot_written": null,
+      "tool_calls": [],
+      "trace_id": "ffffffffffffffffffffffffffffffff",
+      "verifier": [
+        {
+          "observed": [],
+          "ok": true,
+          "polarity_source": null,
+          "quote_len": null,
+          "reason": null,
+          "schema_cause": null,
+          "sent": null,
+          "term_id": null
+        }
+      ],
+      "violations": [],
+      "winning_key_kind": {}
+    }
+  },
+  "confirm_cancel": {
+    "agent_state": {
+      "dialog": [
+        {
+          "content": "confirm_cancel:34b58ef7b449d015",
+          "role": "user"
+        },
+        {
+          "content": "好的，這筆操作沒有送出。",
+          "role": "assistant"
+        }
+      ],
+      "fixed_streak": 0,
+      "last_ask_target": null,
+      "pending_confirm": {
+        "34b58ef7b449d015": {
+          "action": "bill_due_extend",
+          "card_sha256": "752d809cf2b9a48c09f9060ab170e94a9c5a028c23246044cf04586e97fab2d5",
+          "payload": {
+            "action": "bill_due_extend",
+            "bill_id": "900001",
+            "date_expire_after": "20260818",
+            "date_expire_before": "20260815",
+            "days": 3
+          },
+          "receipt": {
+            "cancelled": true
+          }
+        }
+      }
+    },
+    "agent_state_keys": [
+      "dialog",
+      "fixed_streak",
+      "last_ask_target",
+      "pending_confirm"
+    ],
+    "answer": "好的，這筆操作沒有送出。",
+    "ask_target": null,
+    "covers": {
+      "flows": [
+        "confirm_cancel"
+      ],
+      "gates": [],
+      "reserved_ids": []
+    },
+    "handoff": null,
+    "kind": "answer",
+    "outcome": {
+      "action": "bill_due_extend",
+      "expects": "none",
+      "ref": null,
+      "state": "cancelled"
+    },
+    "quick_replies": [],
+    "trace": {
+      "attachment_purpose_ignored": false,
+      "candidate_ids": [],
+      "completion_tokens": 0,
+      "document_kind": null,
+      "document_status": null,
+      "final_kind": "answer",
+      "handoff_reason": null,
+      "has_context": false,
+      "has_document": false,
+      "has_recent_refs": false,
+      "has_ref": null,
+      "latency_ms": 0,
+      "llm_calls": 0,
+      "miss_kind": null,
+      "outline_sha": "",
+      "pages_seen": null,
+      "pending_id": "34b58ef7b449d015",
+      "pre_lookup": null,
+      "prompt_tokens": 0,
+      "receipt_id": null,
+      "rules_sha": "fake-rules-sha",
+      "select_type": null,
+      "slot_written": null,
+      "tool_calls": [],
+      "trace_id": "ffffffffffffffffffffffffffffffff",
+      "verifier": [],
+      "violations": [],
+      "winning_key_kind": {}
+    }
+  },
+  "confirm_card": {
+    "agent_state": {
+      "dialog": [
+        {
+          "content": "900001 逾期了，幫我延 3 天",
+          "role": "user"
+        },
+        {
+          "content": "即將調整帳單到期日，請確認：\n・帳單編號：900001\n・原到期日：2026/08/15\n・起算日：2026/08/15\n・延後天數：3 天\n・新到期日：2026/08/18\n請從下方按鈕擇一。",
+          "role": "assistant"
+        }
+      ],
+      "fixed_streak": 0,
+      "handoff_cache": {},
+      "last_ask_target": null,
+      "pending_confirm": {
+        "34b58ef7b449d015": {
+          "action": "bill_due_extend",
+          "card_sha256": "752d809cf2b9a48c09f9060ab170e94a9c5a028c23246044cf04586e97fab2d5",
+          "payload": {
+            "action": "bill_due_extend",
+            "bill_id": "900001",
+            "date_expire_after": "20260818",
+            "date_expire_before": "20260815",
+            "days": 3
+          }
+        }
+      }
+    },
+    "agent_state_keys": [
+      "dialog",
+      "fixed_streak",
+      "handoff_cache",
+      "last_ask_target",
+      "pending_confirm"
+    ],
+    "answer": "即將調整帳單到期日，請確認：\n・帳單編號：900001\n・原到期日：2026/08/15\n・起算日：2026/08/15\n・延後天數：3 天\n・新到期日：2026/08/18\n請從下方按鈕擇一。",
+    "ask_target": null,
+    "covers": {
+      "flows": [
+        "confirm_card"
+      ],
+      "gates": [],
+      "reserved_ids": [
+        "ctx-"
+      ]
+    },
+    "handoff": null,
+    "kind": "ask",
+    "outcome": {
+      "action": "bill_due_extend",
+      "expects": "button",
+      "ref": null,
+      "state": "confirm_pending"
+    },
+    "quick_replies": [
+      {
+        "label": "✅ 確認送出",
+        "value": "confirm_submit:34b58ef7b449d015"
+      }
+    ],
+    "trace": {
+      "attachment_purpose_ignored": false,
+      "candidate_ids": [],
+      "completion_tokens": 5,
+      "document_kind": null,
+      "document_status": null,
+      "final_kind": "ask",
+      "handoff_reason": null,
+      "has_context": false,
+      "has_document": false,
+      "has_recent_refs": false,
+      "has_ref": null,
+      "latency_ms": 0,
+      "llm_calls": 1,
+      "miss_kind": null,
+      "outline_sha": "",
+      "pages_seen": null,
+      "pending_id": "34b58ef7b449d015",
+      "pre_lookup": null,
+      "prompt_tokens": 10,
+      "receipt_id": null,
+      "rules_sha": "fake-rules-sha",
+      "select_type": null,
+      "slot_written": null,
+      "tool_calls": [
+        {
+          "args_summary": {},
+          "empty": false,
+          "id": "call_1",
+          "ms": 0,
+          "n_items": 1,
+          "name": "confirm.request",
+          "status": "ok"
+        }
+      ],
+      "trace_id": "ffffffffffffffffffffffffffffffff",
+      "verifier": [],
+      "violations": [],
+      "winning_key_kind": {}
+    }
+  },
+  "confirm_submit_redeemed": {
+    "agent_state": {
+      "dialog": [
+        {
+          "content": "confirm_submit:34b58ef7b449d015",
+          "role": "user"
+        },
+        {
+          "content": "已將帳單 900001 的到期日延至 2026/08/18。（單號 BILL-77）",
+          "role": "assistant"
+        }
+      ],
+      "fixed_streak": 0,
+      "last_ask_target": null,
+      "pending_confirm": {
+        "34b58ef7b449d015": {
+          "action": "bill_due_extend",
+          "card_sha256": "752d809cf2b9a48c09f9060ab170e94a9c5a028c23246044cf04586e97fab2d5",
+          "payload": {
+            "action": "bill_due_extend",
+            "bill_id": "900001",
+            "date_expire_after": "20260818",
+            "date_expire_before": "20260815",
+            "days": 3
+          },
+          "receipt": {
+            "id": "BILL-77"
+          }
+        }
+      }
+    },
+    "agent_state_keys": [
+      "dialog",
+      "fixed_streak",
+      "last_ask_target",
+      "pending_confirm"
+    ],
+    "answer": "已將帳單 900001 的到期日延至 2026/08/18。（單號 BILL-77）",
+    "ask_target": null,
+    "covers": {
+      "flows": [
+        "confirm_redeem"
+      ],
+      "gates": [],
+      "reserved_ids": []
+    },
+    "handoff": null,
+    "kind": "answer",
+    "outcome": {
+      "action": "bill_due_extend",
+      "expects": "none",
+      "ref": null,
+      "state": "confirmed"
+    },
+    "quick_replies": [],
+    "trace": {
+      "attachment_purpose_ignored": false,
+      "candidate_ids": [],
+      "completion_tokens": 0,
+      "document_kind": null,
+      "document_status": null,
+      "final_kind": "answer",
+      "handoff_reason": null,
+      "has_context": false,
+      "has_document": false,
+      "has_recent_refs": false,
+      "has_ref": null,
+      "latency_ms": 0,
+      "llm_calls": 0,
+      "miss_kind": null,
+      "outline_sha": "",
+      "pages_seen": null,
+      "pending_id": "34b58ef7b449d015",
+      "pre_lookup": null,
+      "prompt_tokens": 0,
+      "receipt_id": "BILL-77",
+      "rules_sha": "fake-rules-sha",
+      "select_type": null,
+      "slot_written": null,
+      "tool_calls": [
+        {
+          "args_summary": {},
+          "empty": false,
+          "id": "confirm:34b58ef7b449d015",
+          "ms": 0,
+          "n_items": 1,
+          "name": "jgb2.action.bill_due_extend",
+          "status": "ok"
+        }
+      ],
+      "trace_id": "ffffffffffffffffffffffffffffffff",
+      "verifier": [],
+      "violations": [],
+      "winning_key_kind": {}
+    }
+  },
+  "confirm_unknown_pid": {
+    "agent_state": {
+      "dialog": [
+        {
+          "content": "confirm_submit:aaaaaaaaaaaaaaaa",
+          "role": "user"
+        },
+        {
+          "content": "這筆確認已失效，請重新確認一次。",
+          "role": "assistant"
+        }
+      ],
+      "fixed_streak": 0,
+      "last_ask_target": null
+    },
+    "agent_state_keys": [
+      "dialog",
+      "fixed_streak",
+      "last_ask_target"
+    ],
+    "answer": "這筆確認已失效，請重新確認一次。",
+    "ask_target": null,
+    "covers": {
+      "flows": [],
+      "gates": [],
+      "reserved_ids": []
+    },
+    "handoff": null,
+    "kind": "answer",
+    "outcome": {
+      "action": null,
+      "expects": "none",
+      "ref": null,
+      "state": "failed"
+    },
+    "quick_replies": [],
+    "trace": {
+      "attachment_purpose_ignored": false,
+      "candidate_ids": [],
+      "completion_tokens": 0,
+      "document_kind": null,
+      "document_status": null,
+      "final_kind": "answer",
+      "handoff_reason": null,
+      "has_context": false,
+      "has_document": false,
+      "has_recent_refs": false,
+      "has_ref": null,
+      "latency_ms": 0,
+      "llm_calls": 0,
+      "miss_kind": null,
+      "outline_sha": "",
+      "pages_seen": null,
+      "pending_id": "aaaaaaaaaaaaaaaa",
+      "pre_lookup": null,
+      "prompt_tokens": 0,
+      "receipt_id": null,
+      "rules_sha": "fake-rules-sha",
+      "select_type": null,
+      "slot_written": null,
+      "tool_calls": [],
+      "trace_id": "ffffffffffffffffffffffffffffffff",
+      "verifier": [],
+      "violations": [
+        "confirm_unknown_pending_id"
+      ],
+      "winning_key_kind": {}
+    }
+  },
+  "document_turn": {
+    "agent_state": {
+      "dialog": [
+        {
+          "content": "這份收據幫我看一下",
+          "role": "user"
+        },
+        {
+          "content": "文件內容已讀取",
+          "role": "assistant"
+        }
+      ],
+      "fixed_streak": 0,
+      "handoff_cache": {},
+      "last_ask_target": null
+    },
+    "agent_state_keys": [
+      "dialog",
+      "fixed_streak",
+      "handoff_cache",
+      "last_ask_target"
+    ],
+    "answer": "文件內容已讀取",
+    "ask_target": null,
+    "covers": {
+      "flows": [],
+      "gates": [],
+      "reserved_ids": [
+        "ctx-",
+        "doc-"
+      ]
+    },
+    "handoff": null,
+    "kind": "answer",
+    "outcome": {
+      "action": null,
+      "expects": "text",
+      "ref": null,
+      "state": "answered"
+    },
+    "quick_replies": [],
+    "trace": {
+      "attachment_purpose_ignored": false,
+      "candidate_ids": [],
+      "completion_tokens": 5,
+      "document_kind": "bill_receipt",
+      "document_status": "ok",
+      "final_kind": "answer",
+      "handoff_reason": null,
+      "has_context": false,
+      "has_document": true,
+      "has_recent_refs": false,
+      "has_ref": null,
+      "latency_ms": 0,
+      "llm_calls": 1,
+      "miss_kind": null,
+      "outline_sha": "",
+      "pages_seen": 1,
+      "pending_id": null,
+      "pre_lookup": null,
+      "prompt_tokens": 10,
+      "receipt_id": null,
+      "rules_sha": "fake-rules-sha",
+      "select_type": null,
+      "slot_written": null,
+      "tool_calls": [],
+      "trace_id": "ffffffffffffffffffffffffffffffff",
+      "verifier": [
+        {
+          "observed": [],
+          "ok": true,
+          "polarity_source": null,
+          "quote_len": null,
+          "reason": null,
+          "schema_cause": null,
+          "sent": null,
+          "term_id": null
+        }
+      ],
+      "violations": [],
+      "winning_key_kind": {}
+    }
+  },
+  "document_unreadable": {
+    "agent_state": {
+      "dialog": [
+        {
+          "content": "這份檔案幫我看",
+          "role": "user"
+        },
+        {
+          "content": "這份文件我讀不出可用的欄位；換一張清楚一點的，或直接把重點打字給我。",
+          "role": "assistant"
+        }
+      ],
+      "fixed_streak": 0,
+      "last_ask_target": null
+    },
+    "agent_state_keys": [
+      "dialog",
+      "fixed_streak",
+      "last_ask_target"
+    ],
+    "answer": "這份文件我讀不出可用的欄位；換一張清楚一點的，或直接把重點打字給我。",
+    "ask_target": null,
+    "covers": {
+      "flows": [],
+      "gates": [],
+      "reserved_ids": []
+    },
+    "handoff": null,
+    "kind": "answer",
+    "outcome": {
+      "action": null,
+      "expects": "text",
+      "ref": null,
+      "state": "answered"
+    },
+    "quick_replies": [],
+    "trace": {
+      "attachment_purpose_ignored": false,
+      "candidate_ids": [],
+      "completion_tokens": 0,
+      "document_kind": null,
+      "document_status": "failed",
+      "final_kind": "answer",
+      "handoff_reason": null,
+      "has_context": false,
+      "has_document": true,
+      "has_recent_refs": false,
+      "has_ref": null,
+      "latency_ms": 0,
+      "llm_calls": 0,
+      "miss_kind": null,
+      "outline_sha": "",
+      "pages_seen": 0,
+      "pending_id": null,
+      "pre_lookup": null,
+      "prompt_tokens": 0,
+      "receipt_id": null,
+      "rules_sha": "fake-rules-sha",
+      "select_type": null,
+      "slot_written": null,
+      "tool_calls": [],
+      "trace_id": "ffffffffffffffffffffffffffffffff",
+      "verifier": [],
+      "violations": [
+        "document_failed"
+      ],
+      "winning_key_kind": {}
+    }
+  },
+  "empty_session_note": {
+    "agent_state": {
+      "dialog": [
+        {
+          "content": "你剛剛跟我說了什麼呢",
+          "role": "user"
+        },
+        {
+          "content": "這是全新對話的第一句",
+          "role": "assistant"
+        }
+      ],
+      "fixed_streak": 0,
+      "handoff_cache": {},
+      "last_ask_target": null
+    },
+    "agent_state_keys": [
+      "dialog",
+      "fixed_streak",
+      "handoff_cache",
+      "last_ask_target"
+    ],
+    "answer": "這是全新對話的第一句",
+    "ask_target": null,
+    "covers": {
+      "flows": [],
+      "gates": [],
+      "reserved_ids": [
+        "ctx-"
+      ]
+    },
+    "handoff": null,
+    "kind": "answer",
+    "outcome": {
+      "action": null,
+      "expects": "text",
+      "ref": null,
+      "state": "answered"
+    },
+    "quick_replies": [],
+    "trace": {
+      "attachment_purpose_ignored": false,
+      "candidate_ids": [],
+      "completion_tokens": 5,
+      "document_kind": null,
+      "document_status": null,
+      "final_kind": "answer",
+      "handoff_reason": null,
+      "has_context": false,
+      "has_document": false,
+      "has_recent_refs": false,
+      "has_ref": null,
+      "latency_ms": 0,
+      "llm_calls": 1,
+      "miss_kind": null,
+      "outline_sha": "",
+      "pages_seen": null,
+      "pending_id": null,
+      "pre_lookup": null,
+      "prompt_tokens": 10,
+      "receipt_id": null,
+      "rules_sha": "fake-rules-sha",
+      "select_type": null,
+      "slot_written": null,
+      "tool_calls": [],
+      "trace_id": "ffffffffffffffffffffffffffffffff",
+      "verifier": [
+        {
+          "observed": [],
+          "ok": true,
+          "polarity_source": null,
+          "quote_len": null,
+          "reason": null,
+          "schema_cause": null,
+          "sent": null,
+          "term_id": null
+        }
+      ],
+      "violations": [],
+      "winning_key_kind": {}
+    }
+  },
+  "entry_context": {
+    "agent_state": {
+      "dialog": [
+        {
+          "content": "我想了解一下服務範圍",
+          "role": "user"
+        },
+        {
+          "content": "收到進場句後的回答",
+          "role": "assistant"
+        }
+      ],
+      "fixed_streak": 0,
+      "handoff_cache": {},
+      "last_ask_target": null
+    },
+    "agent_state_keys": [
+      "dialog",
+      "fixed_streak",
+      "handoff_cache",
+      "last_ask_target"
+    ],
+    "answer": "收到進場句後的回答",
+    "ask_target": null,
+    "covers": {
+      "flows": [],
+      "gates": [],
+      "reserved_ids": [
+        "entry-",
+        "ctx-"
+      ]
+    },
+    "handoff": null,
+    "kind": "answer",
+    "outcome": {
+      "action": null,
+      "expects": "text",
+      "ref": null,
+      "state": "answered"
+    },
+    "quick_replies": [],
+    "trace": {
+      "attachment_purpose_ignored": false,
+      "candidate_ids": [],
+      "completion_tokens": 5,
+      "document_kind": null,
+      "document_status": null,
+      "final_kind": "answer",
+      "handoff_reason": null,
+      "has_context": true,
+      "has_document": false,
+      "has_recent_refs": false,
+      "has_ref": null,
+      "latency_ms": 0,
+      "llm_calls": 1,
+      "miss_kind": null,
+      "outline_sha": "",
+      "pages_seen": null,
+      "pending_id": null,
+      "pre_lookup": null,
+      "prompt_tokens": 10,
+      "receipt_id": null,
+      "rules_sha": "fake-rules-sha",
+      "select_type": null,
+      "slot_written": null,
+      "tool_calls": [],
+      "trace_id": "ffffffffffffffffffffffffffffffff",
+      "verifier": [
+        {
+          "observed": [],
+          "ok": true,
+          "polarity_source": null,
+          "quote_len": null,
+          "reason": null,
+          "schema_cause": null,
+          "sent": null,
+          "term_id": null
+        }
+      ],
+      "violations": [],
+      "winning_key_kind": {}
+    }
+  },
+  "gate_ask_target": {
+    "agent_state": {
+      "dialog": [
+        {
+          "content": "我有個問題想請教一下",
+          "role": "user"
+        },
+        {
+          "content": "想處理哪一件事？講名稱或編號就可以。",
+          "role": "assistant"
+        }
+      ],
+      "fixed_streak": 0,
+      "handoff_cache": {},
+      "last_ask_target": null
+    },
+    "agent_state_keys": [
+      "dialog",
+      "fixed_streak",
+      "handoff_cache",
+      "last_ask_target"
+    ],
+    "answer": "想處理哪一件事？講名稱或編號就可以。",
+    "ask_target": null,
+    "covers": {
+      "flows": [],
+      "gates": [
+        "ask_target_gate"
+      ],
+      "reserved_ids": [
+        "ctx-"
+      ]
+    },
+    "handoff": null,
+    "kind": "ask",
+    "outcome": {
+      "action": null,
+      "expects": "text",
+      "ref": null,
+      "state": "clarifying"
+    },
+    "quick_replies": [],
+    "trace": {
+      "attachment_purpose_ignored": false,
+      "candidate_ids": [],
+      "completion_tokens": 5,
+      "document_kind": null,
+      "document_status": null,
+      "final_kind": "ask",
+      "handoff_reason": null,
+      "has_context": false,
+      "has_document": false,
+      "has_recent_refs": false,
+      "has_ref": null,
+      "latency_ms": 0,
+      "llm_calls": 1,
+      "miss_kind": null,
+      "outline_sha": "",
+      "pages_seen": null,
+      "pending_id": null,
+      "pre_lookup": null,
+      "prompt_tokens": 10,
+      "receipt_id": null,
+      "rules_sha": "fake-rules-sha",
+      "select_type": null,
+      "slot_written": null,
+      "tool_calls": [],
+      "trace_id": "ffffffffffffffffffffffffffffffff",
+      "verifier": [
+        {
+          "observed": [],
+          "ok": true,
+          "polarity_source": null,
+          "quote_len": null,
+          "reason": null,
+          "schema_cause": null,
+          "sent": null,
+          "term_id": null
+        }
+      ],
+      "violations": [
+        "ask_target_invalid"
+      ],
+      "winning_key_kind": {}
+    }
+  },
+  "gate_handoff_no_data": {
+    "agent_state": {
+      "dialog": [
+        {
+          "content": "900003 這張帳單的狀況",
+          "role": "user"
+        },
+        {
+          "content": "系統裡查不到這一筆或這一類資料；請確認名稱或編號，或換一個查法。",
+          "role": "assistant"
+        }
+      ],
+      "fixed_streak": 0,
+      "handoff_cache": {},
+      "last_ask_target": null
+    },
+    "agent_state_keys": [
+      "dialog",
+      "fixed_streak",
+      "handoff_cache",
+      "last_ask_target"
+    ],
+    "answer": "系統裡查不到這一筆或這一類資料；請確認名稱或編號，或換一個查法。",
+    "ask_target": null,
+    "covers": {
+      "flows": [],
+      "gates": [
+        "handoff_data_exits"
+      ],
+      "reserved_ids": [
+        "ctx-"
+      ]
+    },
+    "handoff": null,
+    "kind": "answer",
+    "outcome": {
+      "action": null,
+      "expects": "text",
+      "ref": null,
+      "state": "answered"
+    },
+    "quick_replies": [],
+    "trace": {
+      "attachment_purpose_ignored": false,
+      "candidate_ids": [],
+      "completion_tokens": 10,
+      "document_kind": null,
+      "document_status": null,
+      "final_kind": "answer",
+      "handoff_reason": null,
+      "has_context": false,
+      "has_document": false,
+      "has_recent_refs": false,
+      "has_ref": null,
+      "latency_ms": 0,
+      "llm_calls": 2,
+      "miss_kind": null,
+      "outline_sha": "",
+      "pages_seen": null,
+      "pending_id": null,
+      "pre_lookup": null,
+      "prompt_tokens": 20,
+      "receipt_id": null,
+      "rules_sha": "fake-rules-sha",
+      "select_type": null,
+      "slot_written": null,
+      "tool_calls": [
+        {
+          "args_summary": {
+            "has_ref": true
+          },
+          "empty": true,
+          "id": "call_1",
+          "ms": 0,
+          "n_items": 1,
+          "name": "jgb2.query.bills",
+          "status": "ok"
+        }
+      ],
+      "trace_id": "ffffffffffffffffffffffffffffffff",
+      "verifier": [
+        {
+          "observed": [],
+          "ok": true,
+          "polarity_source": null,
+          "quote_len": null,
+          "reason": null,
+          "schema_cause": null,
+          "sent": null,
+          "term_id": null
+        }
+      ],
+      "violations": [
+        "handoff_no_data"
+      ],
+      "winning_key_kind": {}
+    }
+  },
+  "gate_handoff_no_judgement": {
+    "agent_state": {
+      "dialog": [
+        {
+          "content": "你覺得我該不該催他繳款",
+          "role": "user"
+        },
+        {
+          "content": "這題要看你的判斷；我這邊能給的是系統資料，要我列出來嗎？",
+          "role": "assistant"
+        }
+      ],
+      "fixed_streak": 0,
+      "handoff_cache": {},
+      "last_ask_target": "confirm_intent"
+    },
+    "agent_state_keys": [
+      "dialog",
+      "fixed_streak",
+      "handoff_cache",
+      "last_ask_target"
+    ],
+    "answer": "這題要看你的判斷；我這邊能給的是系統資料，要我列出來嗎？",
+    "ask_target": "confirm_intent",
+    "covers": {
+      "flows": [],
+      "gates": [
+        "handoff_data_exits"
+      ],
+      "reserved_ids": [
+        "ctx-"
+      ]
+    },
+    "handoff": null,
+    "kind": "answer",
+    "outcome": {
+      "action": null,
+      "expects": "text",
+      "ref": null,
+      "state": "clarifying"
+    },
+    "quick_replies": [],
+    "trace": {
+      "attachment_purpose_ignored": false,
+      "candidate_ids": [],
+      "completion_tokens": 20,
+      "document_kind": null,
+      "document_status": null,
+      "final_kind": "answer",
+      "handoff_reason": null,
+      "has_context": false,
+      "has_document": false,
+      "has_recent_refs": false,
+      "has_ref": null,
+      "latency_ms": 0,
+      "llm_calls": 4,
+      "miss_kind": null,
+      "outline_sha": "",
+      "pages_seen": null,
+      "pending_id": null,
+      "pre_lookup": null,
+      "prompt_tokens": 40,
+      "receipt_id": null,
+      "rules_sha": "fake-rules-sha",
+      "select_type": null,
+      "slot_written": null,
+      "tool_calls": [
+        {
+          "args_summary": {},
+          "empty": false,
+          "id": "call_1",
+          "ms": 0,
+          "n_items": 1,
+          "name": "kb.get",
+          "status": "ok"
+        }
+      ],
+      "trace_id": "ffffffffffffffffffffffffffffffff",
+      "verifier": [
+        {
+          "observed": [],
+          "ok": true,
+          "polarity_source": null,
+          "quote_len": null,
+          "reason": null,
+          "schema_cause": null,
+          "sent": null,
+          "term_id": null
+        }
+      ],
+      "violations": [
+        "handoff_no_judgement"
+      ],
+      "winning_key_kind": {}
+    }
+  },
+  "gate_handoff_without_lookup": {
+    "agent_state": {
+      "dialog": [
+        {
+          "content": "幫我看一下這件事情要怎麼處理",
+          "role": "user"
+        },
+        {
+          "content": "想處理哪一件事？講名稱或編號就可以。",
+          "role": "assistant"
+        }
+      ],
+      "fixed_streak": 0,
+      "handoff_cache": {},
+      "last_ask_target": null
+    },
+    "agent_state_keys": [
+      "dialog",
+      "fixed_streak",
+      "handoff_cache",
+      "last_ask_target"
+    ],
+    "answer": "想處理哪一件事？講名稱或編號就可以。",
+    "ask_target": null,
+    "covers": {
+      "flows": [],
+      "gates": [
+        "handoff_without_lookup"
+      ],
+      "reserved_ids": [
+        "ctx-"
+      ]
+    },
+    "handoff": null,
+    "kind": "answer",
+    "outcome": {
+      "action": null,
+      "expects": "text",
+      "ref": null,
+      "state": "clarifying"
+    },
+    "quick_replies": [],
+    "trace": {
+      "attachment_purpose_ignored": false,
+      "candidate_ids": [],
+      "completion_tokens": 5,
+      "document_kind": null,
+      "document_status": null,
+      "final_kind": "answer",
+      "handoff_reason": null,
+      "has_context": false,
+      "has_document": false,
+      "has_recent_refs": false,
+      "has_ref": null,
+      "latency_ms": 0,
+      "llm_calls": 1,
+      "miss_kind": null,
+      "outline_sha": "",
+      "pages_seen": null,
+      "pending_id": null,
+      "pre_lookup": null,
+      "prompt_tokens": 10,
+      "receipt_id": null,
+      "rules_sha": "fake-rules-sha",
+      "select_type": null,
+      "slot_written": null,
+      "tool_calls": [],
+      "trace_id": "ffffffffffffffffffffffffffffffff",
+      "verifier": [
+        {
+          "observed": [],
+          "ok": true,
+          "polarity_source": null,
+          "quote_len": null,
+          "reason": null,
+          "schema_cause": null,
+          "sent": null,
+          "term_id": null
+        }
+      ],
+      "violations": [
+        "handoff_without_lookup"
+      ],
+      "winning_key_kind": {}
+    }
+  },
+  "gate_scope_exit": {
+    "agent_state": {
+      "dialog": [
+        {
+          "content": "900002 這張怎麼樣了",
+          "role": "user"
+        },
+        {
+          "content": "這個對話只看你點選的那一戶；要查別戶請回清單點那一戶。",
+          "role": "assistant"
+        }
+      ],
+      "fixed_streak": 0,
+      "handoff_cache": {},
+      "last_ask_target": null,
+      "select_scope": {
+        "estate_id": "456400",
+        "type": "bill"
+      }
+    },
+    "agent_state_keys": [
+      "dialog",
+      "fixed_streak",
+      "handoff_cache",
+      "last_ask_target",
+      "select_scope"
+    ],
+    "answer": "這個對話只看你點選的那一戶；要查別戶請回清單點那一戶。",
+    "ask_target": null,
+    "covers": {
+      "flows": [],
+      "gates": [
+        "scope_exit"
+      ],
+      "reserved_ids": [
+        "ctx-"
+      ]
+    },
+    "handoff": null,
+    "kind": "answer",
+    "outcome": {
+      "action": null,
+      "expects": "none",
+      "ref": null,
+      "state": "out_of_scope"
+    },
+    "quick_replies": [],
+    "trace": {
+      "attachment_purpose_ignored": false,
+      "candidate_ids": [],
+      "completion_tokens": 10,
+      "document_kind": null,
+      "document_status": null,
+      "final_kind": "answer",
+      "handoff_reason": null,
+      "has_context": false,
+      "has_document": false,
+      "has_recent_refs": false,
+      "has_ref": null,
+      "latency_ms": 0,
+      "llm_calls": 2,
+      "miss_kind": null,
+      "outline_sha": "",
+      "pages_seen": null,
+      "pending_id": null,
+      "pre_lookup": null,
+      "prompt_tokens": 20,
+      "receipt_id": null,
+      "rules_sha": "fake-rules-sha",
+      "select_type": null,
+      "slot_written": null,
+      "tool_calls": [
+        {
+          "args_summary": {
+            "has_ref": true
+          },
+          "empty": true,
+          "id": "call_1",
+          "ms": 0,
+          "n_items": 1,
+          "name": "jgb2.query.bills",
+          "status": "ok"
+        }
+      ],
+      "trace_id": "ffffffffffffffffffffffffffffffff",
+      "verifier": [
+        {
+          "observed": [],
+          "ok": true,
+          "polarity_source": null,
+          "quote_len": null,
+          "reason": null,
+          "schema_cause": null,
+          "sent": null,
+          "term_id": null
+        }
+      ],
+      "violations": [
+        "select_scope_exit"
+      ],
+      "winning_key_kind": {}
+    }
+  },
+  "handoff_cache_replay": {
+    "agent_state": {
+      "dialog": [
+        {
+          "content": "你們有什麼保證嗎",
+          "role": "user"
+        },
+        {
+          "content": "已為你轉真人客服，請稍候。",
+          "role": "assistant"
+        }
+      ],
+      "handoff_cache": {
+        "1f100ac67ca2d490fa65e740d0a7a92477cab6757a8c244552f8af6e6303a4af": {
+          "answer": "已為你轉真人客服，請稍候。",
+          "handoff": {
+            "channel": "line",
+            "fact_class": "pricing",
+            "message": "已為你轉真人客服，請稍候。",
+            "reason": "sensitive_no_grounding"
+          },
+          "quick_replies": [],
+          "trace_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        }
+      },
+      "last_ask_target": null
+    },
+    "agent_state_keys": [
+      "dialog",
+      "handoff_cache",
+      "last_ask_target"
+    ],
+    "answer": "已為你轉真人客服，請稍候。",
+    "ask_target": null,
+    "covers": {
+      "flows": [
+        "cache_replay"
+      ],
+      "gates": [],
+      "reserved_ids": []
+    },
+    "handoff": {
+      "channel": "line",
+      "fact_class": "pricing",
+      "message": "已為你轉真人客服，請稍候。",
+      "reason": "sensitive_no_grounding"
+    },
+    "kind": "handoff",
+    "outcome": null,
+    "quick_replies": [],
+    "trace": {
+      "attachment_purpose_ignored": false,
+      "candidate_ids": [],
+      "completion_tokens": 0,
+      "document_kind": null,
+      "document_status": null,
+      "final_kind": "handoff",
+      "handoff_reason": "sensitive_no_grounding",
+      "has_context": false,
+      "has_document": false,
+      "has_recent_refs": false,
+      "has_ref": null,
+      "latency_ms": 0,
+      "llm_calls": 0,
+      "miss_kind": null,
+      "outline_sha": "",
+      "pages_seen": null,
+      "pending_id": null,
+      "pre_lookup": null,
+      "prompt_tokens": 0,
+      "receipt_id": null,
+      "rules_sha": "",
+      "select_type": null,
+      "slot_written": null,
+      "tool_calls": [],
+      "trace_id": "ffffffffffffffffffffffffffffffff",
+      "verifier": [],
+      "violations": [
+        "replayed_from:<id>"
+      ],
+      "winning_key_kind": {}
+    }
+  },
+  "image_turn": {
+    "agent_state": {
+      "dialog": [
+        {
+          "content": "這是照片",
+          "role": "user"
+        },
+        {
+          "content": "照片收到了",
+          "role": "assistant"
+        }
+      ],
+      "fixed_streak": 0,
+      "handoff_cache": {},
+      "image_suggestion": {
+        "category_name": "漏水",
+        "description": "天花板出現水漬",
+        "item": "天花板",
+        "reason": "滲水"
+      },
+      "last_ask_target": null
+    },
+    "agent_state_keys": [
+      "dialog",
+      "fixed_streak",
+      "handoff_cache",
+      "image_suggestion",
+      "last_ask_target"
+    ],
+    "answer": "照片收到了",
+    "ask_target": null,
+    "covers": {
+      "flows": [],
+      "gates": [],
+      "reserved_ids": [
+        "img-",
+        "ctx-"
+      ]
+    },
+    "handoff": null,
+    "kind": "answer",
+    "outcome": {
+      "action": null,
+      "expects": "text",
+      "ref": null,
+      "state": "answered"
+    },
+    "quick_replies": [],
+    "trace": {
+      "attachment_purpose_ignored": false,
+      "candidate_ids": [],
+      "completion_tokens": 5,
+      "document_kind": null,
+      "document_status": null,
+      "final_kind": "answer",
+      "handoff_reason": null,
+      "has_context": false,
+      "has_document": false,
+      "has_recent_refs": false,
+      "has_ref": null,
+      "latency_ms": 0,
+      "llm_calls": 1,
+      "miss_kind": null,
+      "outline_sha": "",
+      "pages_seen": null,
+      "pending_id": null,
+      "pre_lookup": {
+        "hits": 0,
+        "kind": "keyword"
+      },
+      "prompt_tokens": 10,
+      "receipt_id": null,
+      "rules_sha": "fake-rules-sha",
+      "select_type": null,
+      "slot_written": null,
+      "tool_calls": [],
+      "trace_id": "ffffffffffffffffffffffffffffffff",
+      "verifier": [
+        {
+          "observed": [],
+          "ok": true,
+          "polarity_source": null,
+          "quote_len": null,
+          "reason": null,
+          "schema_cause": null,
+          "sent": null,
+          "term_id": null
+        }
+      ],
+      "violations": [],
+      "winning_key_kind": {}
+    }
+  },
+  "image_with_estate_carry": {
+    "agent_state": {
+      "dialog": [
+        {
+          "content": "這是剛剛講的那一戶的照片",
+          "role": "user"
+        },
+        {
+          "content": "照片與物件都收到了",
+          "role": "assistant"
+        }
+      ],
+      "estate_carry": {
+        "id": "456400",
+        "name": "基隆獨立共生公寓"
+      },
+      "fixed_streak": 0,
+      "handoff_cache": {},
+      "image_suggestion": null,
+      "last_ask_target": null
+    },
+    "agent_state_keys": [
+      "dialog",
+      "estate_carry",
+      "fixed_streak",
+      "handoff_cache",
+      "image_suggestion",
+      "last_ask_target"
+    ],
+    "answer": "照片與物件都收到了",
+    "ask_target": null,
+    "covers": {
+      "flows": [],
+      "gates": [],
+      "reserved_ids": [
+        "img-",
+        "ctx-",
+        "est-"
+      ]
+    },
+    "handoff": null,
+    "kind": "answer",
+    "outcome": {
+      "action": null,
+      "expects": "text",
+      "ref": null,
+      "state": "answered"
+    },
+    "quick_replies": [],
+    "trace": {
+      "attachment_purpose_ignored": false,
+      "candidate_ids": [],
+      "completion_tokens": 5,
+      "document_kind": null,
+      "document_status": null,
+      "final_kind": "answer",
+      "handoff_reason": null,
+      "has_context": false,
+      "has_document": false,
+      "has_recent_refs": false,
+      "has_ref": null,
+      "latency_ms": 0,
+      "llm_calls": 1,
+      "miss_kind": null,
+      "outline_sha": "",
+      "pages_seen": null,
+      "pending_id": null,
+      "pre_lookup": null,
+      "prompt_tokens": 10,
+      "receipt_id": null,
+      "rules_sha": "fake-rules-sha",
+      "select_type": null,
+      "slot_written": null,
+      "tool_calls": [],
+      "trace_id": "ffffffffffffffffffffffffffffffff",
+      "verifier": [
+        {
+          "observed": [],
+          "ok": true,
+          "polarity_source": null,
+          "quote_len": null,
+          "reason": null,
+          "schema_cause": null,
+          "sent": null,
+          "term_id": null
+        }
+      ],
+      "violations": [],
+      "winning_key_kind": {}
+    }
+  },
+  "plain_answer": {
+    "agent_state": {
+      "dialog": [
+        {
+          "content": "請問這個系統怎麼用呢",
+          "role": "user"
+        },
+        {
+          "content": "這是一般回答",
+          "role": "assistant"
+        }
+      ],
+      "fixed_streak": 0,
+      "handoff_cache": {},
+      "last_ask_target": null
+    },
+    "agent_state_keys": [
+      "dialog",
+      "fixed_streak",
+      "handoff_cache",
+      "last_ask_target"
+    ],
+    "answer": "這是一般回答",
+    "ask_target": null,
+    "covers": {
+      "flows": [],
+      "gates": [],
+      "reserved_ids": [
+        "ctx-"
+      ]
+    },
+    "handoff": null,
+    "kind": "answer",
+    "outcome": {
+      "action": null,
+      "expects": "text",
+      "ref": null,
+      "state": "answered"
+    },
+    "quick_replies": [],
+    "trace": {
+      "attachment_purpose_ignored": false,
+      "candidate_ids": [],
+      "completion_tokens": 5,
+      "document_kind": null,
+      "document_status": null,
+      "final_kind": "answer",
+      "handoff_reason": null,
+      "has_context": false,
+      "has_document": false,
+      "has_recent_refs": false,
+      "has_ref": null,
+      "latency_ms": 0,
+      "llm_calls": 1,
+      "miss_kind": null,
+      "outline_sha": "",
+      "pages_seen": null,
+      "pending_id": null,
+      "pre_lookup": null,
+      "prompt_tokens": 10,
+      "receipt_id": null,
+      "rules_sha": "fake-rules-sha",
+      "select_type": null,
+      "slot_written": null,
+      "tool_calls": [],
+      "trace_id": "ffffffffffffffffffffffffffffffff",
+      "verifier": [
+        {
+          "observed": [],
+          "ok": true,
+          "polarity_source": null,
+          "quote_len": null,
+          "reason": null,
+          "schema_cause": null,
+          "sent": null,
+          "term_id": null
+        }
+      ],
+      "violations": [],
+      "winning_key_kind": {}
+    }
+  },
+  "pre_lookup_id_found": {
+    "agent_state": {
+      "dialog": [
+        {
+          "content": "756248",
+          "role": "user"
+        },
+        {
+          "content": "這張帳單的狀況如下",
+          "role": "assistant"
+        }
+      ],
+      "fixed_streak": 0,
+      "handoff_cache": {},
+      "last_ask_target": null
+    },
+    "agent_state_keys": [
+      "dialog",
+      "fixed_streak",
+      "handoff_cache",
+      "last_ask_target"
+    ],
+    "answer": "這張帳單的狀況如下",
+    "ask_target": null,
+    "covers": {
+      "flows": [],
+      "gates": [],
+      "reserved_ids": [
+        "ctx-",
+        "pre-"
+      ]
+    },
+    "handoff": null,
+    "kind": "answer",
+    "outcome": {
+      "action": null,
+      "expects": "text",
+      "ref": null,
+      "state": "answered"
+    },
+    "quick_replies": [],
+    "trace": {
+      "attachment_purpose_ignored": false,
+      "candidate_ids": [],
+      "completion_tokens": 5,
+      "document_kind": null,
+      "document_status": null,
+      "final_kind": "answer",
+      "handoff_reason": null,
+      "has_context": false,
+      "has_document": false,
+      "has_recent_refs": false,
+      "has_ref": null,
+      "latency_ms": 0,
+      "llm_calls": 1,
+      "miss_kind": null,
+      "outline_sha": "",
+      "pages_seen": null,
+      "pending_id": null,
+      "pre_lookup": {
+        "hits": 1,
+        "kind": "id"
+      },
+      "prompt_tokens": 10,
+      "receipt_id": null,
+      "rules_sha": "fake-rules-sha",
+      "select_type": null,
+      "slot_written": null,
+      "tool_calls": [],
+      "trace_id": "ffffffffffffffffffffffffffffffff",
+      "verifier": [
+        {
+          "observed": [],
+          "ok": true,
+          "polarity_source": null,
+          "quote_len": null,
+          "reason": null,
+          "schema_cause": null,
+          "sent": null,
+          "term_id": null
+        }
+      ],
+      "violations": [],
+      "winning_key_kind": {}
+    }
+  },
+  "pre_lookup_keyword_carry": {
+    "agent_state": {
+      "dialog": [
+        {
+          "content": "台科電",
+          "role": "user"
+        },
+        {
+          "content": "這個物件的資料如下",
+          "role": "assistant"
+        }
+      ],
+      "estate_carry": {
+        "id": "456400",
+        "name": "台科電"
+      },
+      "fixed_streak": 0,
+      "handoff_cache": {},
+      "last_ask_target": null
+    },
+    "agent_state_keys": [
+      "dialog",
+      "estate_carry",
+      "fixed_streak",
+      "handoff_cache",
+      "last_ask_target"
+    ],
+    "answer": "這個物件的資料如下",
+    "ask_target": null,
+    "covers": {
+      "flows": [],
+      "gates": [],
+      "reserved_ids": [
+        "ctx-",
+        "pre-"
+      ]
+    },
+    "handoff": null,
+    "kind": "answer",
+    "outcome": {
+      "action": null,
+      "expects": "text",
+      "ref": null,
+      "state": "answered"
+    },
+    "quick_replies": [],
+    "trace": {
+      "attachment_purpose_ignored": false,
+      "candidate_ids": [],
+      "completion_tokens": 5,
+      "document_kind": null,
+      "document_status": null,
+      "final_kind": "answer",
+      "handoff_reason": null,
+      "has_context": false,
+      "has_document": false,
+      "has_recent_refs": false,
+      "has_ref": null,
+      "latency_ms": 0,
+      "llm_calls": 1,
+      "miss_kind": null,
+      "outline_sha": "",
+      "pages_seen": null,
+      "pending_id": null,
+      "pre_lookup": {
+        "hits": 1,
+        "kind": "keyword"
+      },
+      "prompt_tokens": 10,
+      "receipt_id": null,
+      "rules_sha": "fake-rules-sha",
+      "select_type": null,
+      "slot_written": null,
+      "tool_calls": [],
+      "trace_id": "ffffffffffffffffffffffffffffffff",
+      "verifier": [
+        {
+          "observed": [],
+          "ok": true,
+          "polarity_source": null,
+          "quote_len": null,
+          "reason": null,
+          "schema_cause": null,
+          "sent": null,
+          "term_id": null
+        }
+      ],
+      "violations": [
+        "estate_carry_set"
+      ],
+      "winning_key_kind": {}
+    }
+  },
+  "recent_refs": {
+    "agent_state": {
+      "dialog": [
+        {
+          "content": "756248 這張怎麼了",
+          "role": "user"
+        },
+        {
+          "content": "帳單 756248 已經逾期。",
+          "role": "assistant"
+        },
+        {
+          "content": "那張後來怎麼樣了呢",
+          "role": "user"
+        },
+        {
+          "content": "我先確認你說的那一筆",
+          "role": "assistant"
+        }
+      ],
+      "fixed_streak": 0,
+      "handoff_cache": {},
+      "last_ask_target": null
+    },
+    "agent_state_keys": [
+      "dialog",
+      "fixed_streak",
+      "handoff_cache",
+      "last_ask_target"
+    ],
+    "answer": "我先確認你說的那一筆",
+    "ask_target": null,
+    "covers": {
+      "flows": [],
+      "gates": [],
+      "reserved_ids": [
+        "ref-"
+      ]
+    },
+    "handoff": null,
+    "kind": "answer",
+    "outcome": {
+      "action": null,
+      "expects": "text",
+      "ref": null,
+      "state": "answered"
+    },
+    "quick_replies": [],
+    "trace": {
+      "attachment_purpose_ignored": false,
+      "candidate_ids": [],
+      "completion_tokens": 5,
+      "document_kind": null,
+      "document_status": null,
+      "final_kind": "answer",
+      "handoff_reason": null,
+      "has_context": false,
+      "has_document": false,
+      "has_recent_refs": true,
+      "has_ref": null,
+      "latency_ms": 0,
+      "llm_calls": 1,
+      "miss_kind": null,
+      "outline_sha": "",
+      "pages_seen": null,
+      "pending_id": null,
+      "pre_lookup": null,
+      "prompt_tokens": 10,
+      "receipt_id": null,
+      "rules_sha": "fake-rules-sha",
+      "select_type": null,
+      "slot_written": null,
+      "tool_calls": [],
+      "trace_id": "ffffffffffffffffffffffffffffffff",
+      "verifier": [
+        {
+          "observed": [],
+          "ok": true,
+          "polarity_source": null,
+          "quote_len": null,
+          "reason": null,
+          "schema_cause": null,
+          "sent": null,
+          "term_id": null
+        }
+      ],
+      "violations": [],
+      "winning_key_kind": {}
+    }
+  },
+  "select_hit": {
+    "agent_state": {
+      "dialog": [
+        {
+          "content": "select:bill:900001",
+          "role": "user"
+        },
+        {
+          "content": "已提供 bill 900001 的資料",
+          "role": "assistant"
+        }
+      ],
+      "fixed_streak": 0,
+      "last_ask_target": null,
+      "select_scope": {
+        "estate_id": "456400",
+        "type": "bill"
+      }
+    },
+    "agent_state_keys": [
+      "dialog",
+      "fixed_streak",
+      "last_ask_target",
+      "select_scope"
+    ],
+    "answer": "帳單 900001 應繳 3200 元。",
+    "ask_target": null,
+    "covers": {
+      "flows": [
+        "select"
+      ],
+      "gates": [],
+      "reserved_ids": []
+    },
+    "handoff": null,
+    "kind": "answer",
+    "outcome": {
+      "action": null,
+      "expects": "text",
+      "ref": null,
+      "state": "answered"
+    },
+    "quick_replies": [],
+    "trace": {
+      "attachment_purpose_ignored": false,
+      "candidate_ids": [],
+      "completion_tokens": 0,
+      "document_kind": null,
+      "document_status": null,
+      "final_kind": "answer",
+      "handoff_reason": null,
+      "has_context": false,
+      "has_document": false,
+      "has_recent_refs": false,
+      "has_ref": true,
+      "latency_ms": 0,
+      "llm_calls": 0,
+      "miss_kind": null,
+      "outline_sha": "",
+      "pages_seen": null,
+      "pending_id": null,
+      "pre_lookup": null,
+      "prompt_tokens": 0,
+      "receipt_id": null,
+      "rules_sha": "fake-rules-sha",
+      "select_type": "bill",
+      "slot_written": false,
+      "tool_calls": [
+        {
+          "args_summary": {
+            "face": "帳單異常"
+          },
+          "empty": false,
+          "id": "select:bill",
+          "ms": 0,
+          "n_items": 1,
+          "name": "jgb2.query.bills",
+          "status": "ok"
+        }
+      ],
+      "trace_id": "ffffffffffffffffffffffffffffffff",
+      "verifier": [],
+      "violations": [],
+      "winning_key_kind": {}
+    }
+  },
+  "select_not_found": {
+    "agent_state": {
+      "dialog": [
+        {
+          "content": "select:bill:000000",
+          "role": "user"
+        },
+        {
+          "content": "查無此筆",
+          "role": "assistant"
+        }
+      ],
+      "fixed_streak": 0,
+      "last_ask_target": null,
+      "select_scope": null
+    },
+    "agent_state_keys": [
+      "dialog",
+      "fixed_streak",
+      "last_ask_target",
+      "select_scope"
+    ],
+    "answer": "查無此筆",
+    "ask_target": null,
+    "covers": {
+      "flows": [
+        "select"
+      ],
+      "gates": [],
+      "reserved_ids": []
+    },
+    "handoff": null,
+    "kind": "answer",
+    "outcome": {
+      "action": null,
+      "expects": "text",
+      "ref": null,
+      "state": "answered"
+    },
+    "quick_replies": [],
+    "trace": {
+      "attachment_purpose_ignored": false,
+      "candidate_ids": [],
+      "completion_tokens": 0,
+      "document_kind": null,
+      "document_status": null,
+      "final_kind": "answer",
+      "handoff_reason": null,
+      "has_context": false,
+      "has_document": false,
+      "has_recent_refs": false,
+      "has_ref": true,
+      "latency_ms": 0,
+      "llm_calls": 0,
+      "miss_kind": null,
+      "outline_sha": "",
+      "pages_seen": null,
+      "pending_id": null,
+      "pre_lookup": null,
+      "prompt_tokens": 0,
+      "receipt_id": null,
+      "rules_sha": "fake-rules-sha",
+      "select_type": "bill",
+      "slot_written": null,
+      "tool_calls": [
+        {
+          "args_summary": {
+            "face": "帳單異常"
+          },
+          "empty": false,
+          "id": "select:bill",
+          "ms": 0,
+          "n_items": 0,
+          "name": "jgb2.query.bills",
+          "status": "error"
+        }
+      ],
+      "trace_id": "ffffffffffffffffffffffffffffffff",
+      "verifier": [],
+      "violations": [],
+      "winning_key_kind": {}
+    }
+  },
+  "tool_then_answer": {
+    "agent_state": {
+      "dialog": [
+        {
+          "content": "幫我查一下知識庫的內容",
+          "role": "user"
+        },
+        {
+          "content": "工具查完後的回答",
+          "role": "assistant"
+        }
+      ],
+      "fixed_streak": 0,
+      "handoff_cache": {},
+      "last_ask_target": null
+    },
+    "agent_state_keys": [
+      "dialog",
+      "fixed_streak",
+      "handoff_cache",
+      "last_ask_target"
+    ],
+    "answer": "工具查完後的回答",
+    "ask_target": null,
+    "covers": {
+      "flows": [],
+      "gates": [],
+      "reserved_ids": [
+        "ctx-"
+      ]
+    },
+    "handoff": null,
+    "kind": "answer",
+    "outcome": {
+      "action": null,
+      "expects": "text",
+      "ref": null,
+      "state": "answered"
+    },
+    "quick_replies": [],
+    "trace": {
+      "attachment_purpose_ignored": false,
+      "candidate_ids": [],
+      "completion_tokens": 10,
+      "document_kind": null,
+      "document_status": null,
+      "final_kind": "answer",
+      "handoff_reason": null,
+      "has_context": false,
+      "has_document": false,
+      "has_recent_refs": false,
+      "has_ref": null,
+      "latency_ms": 0,
+      "llm_calls": 2,
+      "miss_kind": null,
+      "outline_sha": "",
+      "pages_seen": null,
+      "pending_id": null,
+      "pre_lookup": null,
+      "prompt_tokens": 20,
+      "receipt_id": null,
+      "rules_sha": "fake-rules-sha",
+      "select_type": null,
+      "slot_written": null,
+      "tool_calls": [
+        {
+          "args_summary": {},
+          "empty": false,
+          "id": "call_1",
+          "ms": 0,
+          "n_items": 1,
+          "name": "kb.get",
+          "status": "ok"
+        }
+      ],
+      "trace_id": "ffffffffffffffffffffffffffffffff",
+      "verifier": [
+        {
+          "observed": [],
+          "ok": true,
+          "polarity_source": null,
+          "quote_len": null,
+          "reason": null,
+          "schema_cause": null,
+          "sent": null,
+          "term_id": null
+        }
+      ],
+      "violations": [],
+      "winning_key_kind": {}
+    }
+  },
+  "verifier_reject_then_fixed": {
+    "agent_state": {
+      "dialog": [
+        {
+          "content": "有什麼保證可以給我嗎",
+          "role": "user"
+        },
+        {
+          "content": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+          "role": "assistant"
+        }
+      ],
+      "fixed_streak": 1,
+      "handoff_cache": {
+        "7a3022f8d2c441731e454be6f7a12874030a44b602a005d0b883a510a7237976": {
+          "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+          "handoff": {
+            "channel": "line_official",
+            "fact_class": "other",
+            "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+            "reason": "budget_exhausted"
+          },
+          "quick_replies": [],
+          "trace_id": "ffffffffffffffffffffffffffffffff"
+        }
+      },
+      "last_ask_target": null
+    },
+    "agent_state_keys": [
+      "dialog",
+      "fixed_streak",
+      "handoff_cache",
+      "last_ask_target"
+    ],
+    "answer": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+    "ask_target": null,
+    "covers": {
+      "flows": [],
+      "gates": [],
+      "reserved_ids": [
+        "ctx-"
+      ]
+    },
+    "handoff": {
+      "channel": "line_official",
+      "fact_class": "other",
+      "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。",
+      "reason": "budget_exhausted"
+    },
+    "kind": "handoff",
+    "outcome": {
+      "action": null,
+      "expects": "none",
+      "ref": null,
+      "state": "handoff"
+    },
+    "quick_replies": [],
+    "trace": {
+      "attachment_purpose_ignored": false,
+      "candidate_ids": [],
+      "completion_tokens": 10,
+      "document_kind": null,
+      "document_status": null,
+      "final_kind": "handoff",
+      "handoff_reason": "budget_exhausted",
+      "has_context": false,
+      "has_document": false,
+      "has_recent_refs": false,
+      "has_ref": null,
+      "latency_ms": 0,
+      "llm_calls": 2,
+      "miss_kind": null,
+      "outline_sha": "",
+      "pages_seen": null,
+      "pending_id": null,
+      "pre_lookup": null,
+      "prompt_tokens": 20,
+      "receipt_id": null,
+      "rules_sha": "fake-rules-sha",
+      "select_type": null,
+      "slot_written": null,
+      "tool_calls": [],
+      "trace_id": "ffffffffffffffffffffffffffffffff",
+      "verifier": [
+        {
+          "observed": [],
+          "ok": false,
+          "polarity_source": null,
+          "quote_len": null,
+          "reason": "UNCITED_ASSERTION",
+          "schema_cause": null,
+          "sent": null,
+          "term_id": null
+        },
+        {
+          "observed": [],
+          "ok": false,
+          "polarity_source": null,
+          "quote_len": null,
+          "reason": "UNCITED_ASSERTION",
+          "schema_cause": null,
+          "sent": null,
+          "term_id": null
+        }
+      ],
+      "violations": [],
+      "winning_key_kind": {}
+    }
+  }
+}
