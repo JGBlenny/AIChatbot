@@ -123,7 +123,7 @@ async loadVendors() {
 - 每個分支現在使用簡單的 vendor_id 檢查
 - 移除複雜的 scope 過濾邏輯
 
-#### chat.py
+#### chat.py （⚠️ 2026-09-11：`routers/chat.py` 已隨舊鏈退役，見 `.claude/DECISIONS.md` DSP-046；本節為 2026-02-09 當時的歷史變更記錄，知識範圍簡化本身〔scope 欄位廢除、改用 vendor_id〕的設計理由不受影響，vendor_id 過濾邏輯仍在 `vendor_knowledge_retriever_v2.py` 等現行檢索模組中）
 - 從 DebugKnowledgeInfo 類別移除 `scope_weight`
 - 清理除錯資訊生成
 
@@ -148,7 +148,7 @@ async loadVendors() {
   - 更新 8 個 SQL 查詢分支
   - 簡化業者過濾
 
-- `/rag-orchestrator/routers/chat.py`
+- `/rag-orchestrator/routers/chat.py`（⚠️ 已隨舊鏈退役）
   - 從除錯資訊移除 scope_weight
   - 清理回應格式
 

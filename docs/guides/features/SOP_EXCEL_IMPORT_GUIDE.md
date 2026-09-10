@@ -20,7 +20,7 @@ services/sop_utils.py
 
 使用位置：
 ├── routers/vendors.py                   # 業者 SOP Excel 匯入 API
-└── routers/platform_sop.py              # 平台 SOP Excel 匯入 API
+└── routers/platform_sop.py              # 平台 SOP Excel 匯入 API（⚠️ 已隨舊鏈於 2026-09-11 退役，業者層級的 routers/vendors.py 匯入不受影響）
 ```
 
 **優點：**
@@ -218,7 +218,7 @@ cashflow_keywords = ['租金支付', '繳費', '收據', '發票', '遲付', '�
 ## 🎯 相關文件
 
 - 業者 SOP API：`rag-orchestrator/routers/vendors.py` (Line 2017: `import_sop_from_excel`)
-- 平台 SOP API：`rag-orchestrator/routers/platform_sop.py` (Line 1053: `import_sop_from_excel`)
+- 平台 SOP API：`rag-orchestrator/routers/platform_sop.py`（⚠️ 已隨舊鏈於 2026-09-11 退役，見 `.claude/DECISIONS.md` DSP-046；可 grep 符號 `import_sop_from_excel` 已隨檔案一併刪除，⛔ 行號不再有效）
 - 前端 UI：`knowledge-admin/frontend/src/components/VendorSOPManager.vue`
 - 共用工具：`rag-orchestrator/services/sop_utils.py`
 - 測試文件：`data/20250305 租管業 SOP_2 管理模式 基礎-改.xlsx`

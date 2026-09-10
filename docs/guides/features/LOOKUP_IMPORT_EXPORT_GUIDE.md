@@ -502,7 +502,7 @@ ON lookup_tables(vendor_id, category);
 - **範本檔案**: `rag-orchestrator/templates/Lookup匯入範本.xlsx`
 - **前端元件**: `knowledge-admin/frontend/src/components/VendorLookupManager.vue`
 - **後端路由**: `rag-orchestrator/routers/lookup.py`
-- **表單整合**: `rag-orchestrator/services/form_manager.py`
+- **表單整合**: `rag-orchestrator/services/form_manager.py`（⚠️ 已隨舊鏈於 2026-09-11 退役，見 `.claude/DECISIONS.md` DSP-046；Lookup 資料本身仍在用，agentic-MCP 新線改由 `services/agent/turn_context.py`／`exit_gates.py`／`runtime.py`／`question_sensitivity.py` 讀取）
 
 ---
 

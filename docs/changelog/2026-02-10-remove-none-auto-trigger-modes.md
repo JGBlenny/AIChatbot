@@ -1,5 +1,7 @@
 # 移除 none 和 auto 觸發模式更新
 
+> ⚠️ 本文為 2026-02-10 的紀錄；文中的舊 REST 對話鏈相關模組（`routers/chat.py`／`services/sop_trigger_handler.py` 等）已於 2026-09-11 退役，見 `.claude/DECISIONS.md` DSP-046。
+
 ## 更新日期
 2026-02-10
 

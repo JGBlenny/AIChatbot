@@ -5,6 +5,8 @@
 
 本文檔提供所有 API 相關文檔的快速索引和導航。
 
+> ⚠️ **2026-09-11 補充**：本檔原「核心必讀」指向的統一動態 API 執行機制（`universal_api_handler.py`／`api_call_handler.py`）已隨舊 REST 對話鏈整批砍除（見 `.claude/DECISIONS.md` DSP-046），對應的 `CORE_API_FUNCTIONS_REFERENCE.md`／`how-to-add-complete-api.md`／`how-to-add-api-endpoints.md`／`API_CONFIGURATION_GUIDE.md`已歸檔至 `docs/archive/2026-09/`。⚠️ `docs/design/IMPROVED_API_ARCHITECTURE.md`／`docs/design/API_DATA_FLOW.md` 兩份仍指向同一套已退役機制、疑似同樣過時，但不在本輪執行契約列出的 35 個目標檔案內（未被路徑字面比對抓到，原因是引用多用短檔名如「api_call_handler.py」而非含目錄的完整路徑），本輪未動，留待下一輪或業主決定是否一併歸檔。本目錄其餘 API 契約文檔（jgb2 對外契約、知識後台、loops）與本次砍除無關，仍有效。
+
 ---
 
 ## 📚 快速導航
@@ -13,8 +15,8 @@
 
 如果您是新手或想快速了解系統，請按順序閱讀：
 
-1. **[API 核心函數參考](../design/CORE_API_FUNCTIONS_REFERENCE.md)** ⭐ 最重要
-   - 統一處理函數說明
+1. **[API 核心函數參考](../archive/2026-09/CORE_API_FUNCTIONS_REFERENCE.md)** （⚠️ 2026-09-11：該執行機制已隨舊鏈退役，原檔已歸檔至 `docs/archive/2026-09/CORE_API_FUNCTIONS_REFERENCE.md`，見 `.claude/DECISIONS.md` DSP-046）
+   - 統一處理函數說明（描述的 `universal_api_handler.py`／`api_call_handler.py` 執行引擎已隨舊鏈於 2026-09-11 砍除，agentic-MCP 新線無此機制的對應物）
    - 核心函數列表和作用
    - 快速參考和示例
    - **閱讀時間**: 10 分鐘
@@ -78,7 +80,7 @@
 
 | 文檔名稱 | 路徑 | 日期 | 狀態 | 用途 |
 |---------|------|------|------|------|
-| **API 核心函數參考** | `docs/design/CORE_API_FUNCTIONS_REFERENCE.md` | 2026-01-20 | ✅ 最新 | 快速參考統一處理函數和核心 API |
+| **API 核心函數參考** | `docs/archive/2026-09/CORE_API_FUNCTIONS_REFERENCE.md` | 2026-01-20 | 🗄️ 已歸檔 | 快速參考統一處理函數和核心 API （⚠️ 2026-09-11：該執行機制已隨舊鏈退役，原檔已歸檔至 `docs/archive/2026-09/CORE_API_FUNCTIONS_REFERENCE.md`，見 `.claude/DECISIONS.md` DSP-046） |
 | **API 數據流程完整說明** | `docs/design/API_DATA_FLOW.md` | 2026-01-20 | ✅ 最新 | 了解完整的數據流程和轉換 |
 | **動態 API 測試報告** | `docs/archive/design-reports/DYNAMIC_API_TESTING_REPORT.md` | 2026-01-20 | ✅ 最新 | 測試結果和生產就緒評估 |
 | **改進的 API 架構設計** | `docs/design/IMPROVED_API_ARCHITECTURE.md` | 2026-01-18 | ✅ 有效 | 架構設計和實作細節 |
@@ -88,7 +90,7 @@
 | 文檔名稱 | 路徑 | 日期 | 狀態 | 備註 |
 |---------|------|------|------|------|
 | **API Endpoint 架構說明** | （已刪除） | 2026-01-18 | ❌ 已刪除 | 請參考 `design/IMPROVED_API_ARCHITECTURE.md` |
-| **如何新增 API Endpoint** | `guides/api/how-to-add-complete-api.md` | 2026-01-18 | ⚠️ 部分過時 | 已遷移至 guides/ |
+| **如何新增 API Endpoint** | `docs/archive/2026-09/how-to-add-complete-api.md` | 2026-01-18 | 🗄️ 已歸檔 | 描述的執行引擎已隨舊鏈退役，2026-09-11 歸檔 |
 
 ---
 
@@ -96,12 +98,12 @@
 
 ### 我想了解...
 
-#### 「系統是如何處理 API 回傳的？」
-→ 閱讀: [API 核心函數參考](../design/CORE_API_FUNCTIONS_REFERENCE.md)
+#### 「系統是如何處理 API 回傳的？」（⚠️ 舊鏈機制，已退役）
+→ 閱讀: [API 核心函數參考（已歸檔）](../archive/2026-09/CORE_API_FUNCTIONS_REFERENCE.md)
 
-**關鍵信息**:
+**歷史機制**（`services/universal_api_handler.py` 已隨舊鏈於 2026-09-11 砍除，見 `.claude/DECISIONS.md` DSP-046）:
 - 統一處理函數: `UniversalAPICallHandler._format_response()`
-- 位置: `services/universal_api_handler.py:352-383`
+- 位置（歷史）: `services/universal_api_handler.py:352-383`
 - 作用: 統一處理所有動態 API 的回傳數據
 
 #### 「從 API 取得資訊後，系統如何組成可用資訊？」
@@ -138,10 +140,10 @@
 ### Q1: 有一個統一處理 API 回傳的函數嗎？
 **A**: ✅ 是的！
 
-- **函數名**: `UniversalAPICallHandler._format_response()`
-- **位置**: `services/universal_api_handler.py:352-383`
-- **作用**: 統一處理所有 `implementation_type='dynamic'` API 的回傳
-- **詳細說明**: 參考 [API 核心函數參考](../design/CORE_API_FUNCTIONS_REFERENCE.md)
+- **函數名（歷史）**: `UniversalAPICallHandler._format_response()`（⚠️ 已隨舊鏈於 2026-09-11 退役）
+- **位置（歷史）**: `services/universal_api_handler.py:352-383`
+- **作用（歷史）**: 統一處理所有 `implementation_type='dynamic'` API 的回傳
+- **詳細說明**: 參考 [API 核心函數參考（已歸檔）](../archive/2026-09/CORE_API_FUNCTIONS_REFERENCE.md)
 
 ### Q2: 從 API 取得資訊後，會在系統組成可用資訊嗎？
 **A**: ✅ 完全正確！
@@ -201,7 +203,7 @@
 - [改良版 API 架構](../design/IMPROVED_API_ARCHITECTURE.md)
 
 **核心函數**:
-- [API 核心函數參考](../design/CORE_API_FUNCTIONS_REFERENCE.md) ✅ (最新)
+- [API 核心函數參考（已歸檔）](../archive/2026-09/CORE_API_FUNCTIONS_REFERENCE.md) 🗄️ (機制已退役)
 
 **數據流程**:
 - [API 數據流程完整說明](../design/API_DATA_FLOW.md) ✅
@@ -210,7 +212,7 @@
 - 動態 API 測試報告 ✅
 
 **操作指南**:
-- [如何新增 API Endpoint](../guides/api/how-to-add-complete-api.md) ⚠️ (部分過時，僅適用自定義 API)
+- [如何新增 API Endpoint（已歸檔）](../archive/2026-09/how-to-add-complete-api.md) 🗄️ (機制已隨舊鏈退役)
 
 ---
 
@@ -219,7 +221,7 @@
 ### 新手入門（3 步驟）
 
 1. **快速了解**（10 分鐘）
-   - 閱讀：[API 核心函數參考](../design/CORE_API_FUNCTIONS_REFERENCE.md)
+   - 閱讀：[API 核心函數參考（已歸檔）](../archive/2026-09/CORE_API_FUNCTIONS_REFERENCE.md)
    - 目標：了解統一處理函數是什麼
 
 2. **深入理解**（15 分鐘）
@@ -272,10 +274,10 @@
 
 ### 代碼文件
 
-- `services/universal_api_handler.py` - 通用 API 處理器
-- `services/api_call_handler.py` - API 調用處理器
-- `routers/chat.py` - 聊天路由（調用 API）
-- `services/form_manager.py` - 表單管理（調用 API）
+- `services/universal_api_handler.py` - 通用 API 處理器（⚠️ 已隨舊鏈於 2026-09-11 退役）
+- `services/api_call_handler.py` - API 調用處理器（⚠️ 已隨舊鏈於 2026-09-11 退役）
+- `routers/chat.py` - 聊天路由（調用 API）（⚠️ 已隨舊鏈於 2026-09-11 退役）
+- `services/form_manager.py` - 表單管理（調用 API）（⚠️ 已隨舊鏈於 2026-09-11 退役）
 
 ### 數據庫
 
@@ -293,7 +295,7 @@
 
 ## ✅ 文檔完整性檢查表
 
-- ✅ 統一處理函數說明 → [API 核心函數參考](../design/CORE_API_FUNCTIONS_REFERENCE.md)
+- （已隨舊鏈退役）統一處理函數說明 → [API 核心函數參考（已歸檔）](../archive/2026-09/CORE_API_FUNCTIONS_REFERENCE.md)
 - ✅ 數據流程說明 → [API 數據流程完整說明](../design/API_DATA_FLOW.md)
 - ✅ 架構設計說明 → [改進的 API 架構設計](../design/IMPROVED_API_ARCHITECTURE.md)
 - ✅ 測試驗證報告 → 動態 API 測試報告

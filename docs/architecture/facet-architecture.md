@@ -2,6 +2,19 @@
 
 > 建立：2026-07-01。本檔記錄「per-領域系統脈絡」在實作審視後演進到「**面向化（facet）三層疊加**」的完整邏輯與資料佈局，取代 design.md 元件1/D2 的兩層版本（design.md 變更歷史已標注）。
 
+> ⚠️ **2026-09-11 更新**：本檔描述的**資料模型／設定概念**（`category_config`、
+> `conversational_config`、`grounding_scope`、`persona_role`、`topic_scope`）
+> 仍在用——agentic-MCP 新線（`services/agent/runtime.py`／`turn_context.py`／
+> `verifier.py`／`tools/handoff.py`）繼續讀這幾張表與這幾個鍵。但下文引用的
+> **舊鏈執行程式**（`services/conversational_engine.py`、`services/system_context.py`、
+> `routers/chat.py`、`services/jgb/repair_prefill.py`）已隨舊 REST 對話鏈於
+> 2026-09-11 整批砍除（commit `7c905408`／`10116570`，見 `.claude/DECISIONS.md`
+> DSP-046）。逐段標記見下；`get_system_context` 一類的系統脈絡組裝邏輯，新線
+> 對應位置在 `services/agent/outline.py`／`services/agent/prompt_assembler.py`
+> （具體對應關係未逐行核對，僅供下一步查找起點）；`repair_prefill.py` 的
+> API 預填機制**沒有**新線對應物——agent 路徑改由模型呼叫工具即時取值，
+> 不再有程式先行預填槽位這一步，這是能力形態的改變而非搬家。
+
 ## 〇、三層責任分層（與母圖 §0 對齊，2026-08-25）
 
 本檔其餘章節談的是**面向怎麼組裝與執行**；先把它與另外兩層分開，否則「進場」很容易
@@ -76,13 +89,13 @@ system_md = base ＋（沿領域鍵在 category_config 的父鏈，母共用在�
 
 ## 四、程式（皆讀設定，與名稱無關）
 
-- `services/system_context.py`：
+- `services/system_context.py`（⚠️ 已隨舊鏈於 2026-09-11 退役，見檔頭註記）：
   - `_fetch_base`：`target_user IS NULL AND categories 空`（真通用，避免誤取面向列）。
   - `_fetch_category_chain`：`category_config` 遞迴父鏈（母在前、子在後）。
   - `_fetch_appends`：角色級鍵走 target_user 單層；面向鍵沿父鏈逐層取 categories 列，多層。
   - `get_system_context`：`base ＋ "\n\n".join(appends)`，per-key 快取。
-- `services/conversational_engine.py::_domain_key(config)`：`topic_scope.mode=='category'` → `topic_scope.category`；否則 `persona_role`。prepare 兩處呼叫傳它。
-- `config_for_category`（chat.py 路由）：**無需改**——config 宣告子面向 `狀態判斷`、知識也掛 `狀態判斷`，精確命中。（若未來知識只掛更細子分類，再補子→母展開。）
+- `services/conversational_engine.py::_domain_key(config)`（⚠️ 已隨舊鏈於 2026-09-11 退役，見檔頭註記）：`topic_scope.mode=='category'` → `topic_scope.category`；否則 `persona_role`。prepare 兩處呼叫傳它。
+- `config_for_category`（chat.py 路由，⚠️ 已隨舊鏈於 2026-09-11 退役，見檔頭註記）：**無需改**——config 宣告子面向 `狀態判斷`、知識也掛 `狀態判斷`，精確命中。（若未來知識只掛更細子分類，再補子→母展開。）
 
 ## 五、部署順序（migrations）
 
@@ -127,7 +140,7 @@ psql "$DATABASE_URL" -f rag-orchestrator/database/migrations/backfill_contract_k
 
 ### 7.2 進場三路（共用 repair_enabled gate）
 
-三路都先過同一個 gate helper（`routers/chat.py`），命中才 seed 面向：
+三路都先過同一個 gate helper（`routers/chat.py`（⚠️ 已隨舊鏈於 2026-09-11 退役，見檔頭註記）），命中才 seed 面向：
 
 | 路 | 觸發 | 行為 |
 |---|---|---|
@@ -140,7 +153,7 @@ psql "$DATABASE_URL" -f rag-orchestrator/database/migrations/backfill_contract_k
 
 **gate（`enabled_gate`）**：面向配置有 `enabled_gate` 鍵（修繕＝`"repair_enabled"`）才檢查——`vendor_configs` 讀值、**缺值預設 true**；`false`→不進面向、回 `degraded_messages.gate_disabled` 文案並注入客服管道參數（預設鍵 `service_hotline`，可由 `contact_config_key` 覆蓋）。gate 僅對「宣告 `enabled_gate` 的面向」生效（配置驅動，引擎/進場不硬編修繕字樣）。
 
-### 7.3 槽位預填 Prefill（`services/jgb/repair_prefill.py`）
+### 7.3 槽位預填 Prefill（`services/jgb/repair_prefill.py`，⚠️ 已隨舊鏈於 2026-09-11 退役、新線無對應物，見檔頭註記）
 
 面向啟動時執行、配置 `prefill_api` 鍵武裝。
 

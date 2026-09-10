@@ -134,7 +134,7 @@ migration（`add_usage_events.sql`）已含於 §1 序列尾端，本節只剩 e
 
 - **env（皆有預設可不設）**：`USAGE_METERING_ENABLED`（預設 true；關=零行為差異）、
   `LLM_PRICING_PATH`（外部單價 JSON，缺省用內建表）、`USAGE_RETENTION_MONTHS`（預設 18）
-- **版更檔**：app.py（middleware）、routers/chat.py（路徑標記）、services/llm_provider.py（token 鉤）、
+- **版更檔（歷史，2026-07-06 當時）**：app.py（middleware）、routers/chat.py（路徑標記，（⚠️ 已隨舊鏈於 2026-09-11 退役，見 `.claude/DECISIONS.md` DSP-046））、services/llm_provider.py（token 鉤）、
   services/usage_metering.py（新）、admin app.py（/api/usage/* 端點，掛載即生效）、前端 npm run build
 - **驗證**：真打一句 →`SELECT * FROM usage_events ORDER BY id DESC LIMIT 1` 事件到位（vendor/user_type/token/成本）；
   跑一題回測 → `is_internal=true, internal_kind='backtest'`；後台「使用量統計」頁有數字；`make audit` 不變量 5 綠
@@ -296,8 +296,8 @@ docker compose -f docker-compose.prod.yml up -d --build --no-deps rag-orchestrat
 ```
 
 > ⚠️ **常駐 rag 容器是舊 image，本案生效必須重建**（不重建＝confirm/execute 分支、預填、埋點皆不上線；
-> `make audit` 不變量 3 也會抓到 `services/conversational_engine.py`／`routers/chat.py`／
-> `services/usage_metering.py`／`services/jgb_system_api.py`／`services/llm_answer_optimizer.py` 容器/本地不一致）。
+> `make audit` 不變量 3 當時也會抓到 `services/conversational_engine.py`／`routers/chat.py`／
+> `services/usage_metering.py`／`services/jgb_system_api.py`／`services/llm_answer_optimizer.py` 容器/本地不一致）。⚠️ 前兩者已隨舊鏈於 2026-09-11 退役（見 `.claude/DECISIONS.md` DSP-046），本段落為當時部署的歷史紀錄。
 
 > **semantic-model／reranker 免重建——查證結論（不抄任務假設）**：
 > semantic-model 是 **stateless cross-encoder**（BAAI/bge-reranker-base）：rag-orchestrator 呼 `/rerank`，
@@ -396,8 +396,8 @@ docker compose -f docker-compose.prod.yml up -d --build --no-deps rag-orchestrat
 ```
 
 > ⚠️ **常駐 rag 容器不重建＝工具圈不上線**（`conversational_step` 仍為舊 sync 版、Brain 不掛工具；
-> `make audit` 不變量 3 也會抓 `services/llm_answer_optimizer.py`／`services/conversational_engine.py`／
-> `services/usage_metering.py` 容器/本地不一致）。**semantic-model／reranker 免重建**（檢索管線零改動，
+> `make audit` 不變量 3 當時也會抓 `services/llm_answer_optimizer.py`／`services/conversational_engine.py`／
+> `services/usage_metering.py` 容器/本地不一致）。⚠️ 前兩者已隨舊鏈於 2026-09-11 退役（見 `.claude/DECISIONS.md` DSP-046），本段落為當時部署的歷史紀錄。**semantic-model／reranker 免重建**（檢索管線零改動，
 > 同 §13 查證結論）。**redis 檢索快取免特別清**（本案不改知識內容、不改檢索結果，只多一個內部呼叫方）。
 
 **14-3 煙囪**（費用岔題實跑一輪，確認查庫落地＋埋點）：

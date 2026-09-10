@@ -1,5 +1,7 @@
 # Changelog - 2026-02-03
 
+> ⚠️ 本文為 2026-02-03 的紀錄；文中的舊 REST 對話鏈相關模組（`routers/chat.py`／`services/sop_orchestrator.py`／`services/sop_trigger_handler.py`／`services/form_manager.py` 等）已於 2026-09-11 退役，見 `.claude/DECISIONS.md` DSP-046。
+
 ## 🚀 知識庫表單觸發模式實現 - 統一知識庫與 SOP 觸發機制
 
 ### 概述

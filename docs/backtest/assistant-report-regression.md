@@ -1,5 +1,7 @@
 # 智能客服「回報」案例回測登錄簿
 
+> ⚠️ 本文為持續累積的回測登錄簿；文中日期早於 2026-09-11 的條目若提及舊 REST 對話鏈相關模組（`routers/chat.py`／`conversational_engine.py` 等），該等模組已於 2026-09-11 退役，見 `.claude/DECISIONS.md` DSP-046。
+
 使用者在 JGB 平台對 AI 對話按「回報」的案例彙整，作為持續回測的案例來源。每筆回報＝一個真實失敗（或使用者不滿意）案例，修正後應納入回測防止回歸。
 
 > **修正流程 SOP**：見 [assistant-report-workflow.md](./assistant-report-workflow.md)（同步登錄→分類→查證→修正→本機驗證→部署驗收→收案，七步含各分類修法與驗證鐵則）。

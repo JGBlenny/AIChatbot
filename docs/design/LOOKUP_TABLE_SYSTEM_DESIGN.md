@@ -159,7 +159,7 @@
 - **依賴**: asyncpg, difflib
 
 #### 2. UniversalAPICallHandler
-- **路徑**: `/rag-orchestrator/services/universal_api_handler.py` (已存在)
+- **路徑**: `/rag-orchestrator/services/universal_api_handler.py` (已存在) （⚠️ 已隨舊鏈於 2026-09-11 退役，見 `.claude/DECISIONS.md` DSP-046——這是「對話流程動態呼叫 Lookup」這條整合路徑的退役，`routers/lookup.py` 本身的 CRUD／查詢端點不受影響、仍活著）
 - **功能**: 動態調用 API，無需為每個 API 寫函數
 - **支持**: 內部 API 和外部 API
 
@@ -1277,7 +1277,7 @@ COMMIT;
 
 - [Knowledge Action System Design](./KNOWLEDGE_ACTION_SYSTEM_DESIGN.md)
 - [API Configuration Guide](./API_CONFIGURATION_GUIDE.md)
-- [Universal API Handler 實現](../../rag-orchestrator/services/universal_api_handler.py)
+- [Universal API Handler 實現（已隨舊鏈退役，見上）](../../rag-orchestrator/services/universal_api_handler.py)
 - [SOP 系統指南](../guides/features/SOP_GUIDE.md)
 
 ---

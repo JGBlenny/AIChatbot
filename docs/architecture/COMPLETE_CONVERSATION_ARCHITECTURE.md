@@ -3,6 +3,18 @@
 **最後更新**: 2026-08-25
 **版本**: 2.2（＋§0 三層責任分層；§12 參數回寫至實況）
 
+> ⚠️ **2026-09-11 更新**：本檔描述的是**舊 REST 對話鏈**（`POST /api/v1/message`，
+> 以 `routers/chat.py` 為主入口的既有管線）。該鏈已於 2026-09-11 隨 commit
+> `7c905408`／`10116570` 整批砍除（31 個模組，見 `.claude/DECISIONS.md`
+> DSP-046），repo 現在只剩 agentic-MCP（`/mcp` 門面＋`services/agent/**`）一條
+> 活線，架構總覽另見 `docs/architecture/AGENTIC_MCP_ARCHITECTURE.md`。
+> 本檔許多決策理由（b2b 資源池隔離、precision-first 適用性把關、分數合成公式
+> 等）對新線的檢索/知識治理仍可能有效參考價值，故保留不刪；但文中任何指向
+> `routers/chat.py`／`conversational_engine.py`／`sop_orchestrator.py`／
+> `form_manager.py`／`llm_answer_optimizer.py` 等舊鏈模組的段落，一律讀作
+> **歷史記錄**，⛔ 不是現況——這些檔案已不存在，逐行全面改寫工程過大，
+> 本輪只在關鍵處（§11 組件表等）加註記，未逐段標記的段落請以此檔頭聲明為準。
+
 > **相關文件**：
 > - Retriever Pipeline 分數欄位：[retriever-pipeline.md](./retriever-pipeline.md)
 > - 知識資料結構：[DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md)
@@ -339,7 +351,7 @@ flowchart LR
     end
 
     subgraph Parallel[並行檢索]
-        SOPT[SOP Task<br/>sop_orchestrator.process_message]
+        SOPT[SOP Task<br/>sop_orchestrator.process_message（⚠️ 已退役）]
         KnowledgeT[Knowledge Task<br/>_retrieve_knowledge]
     end
 
@@ -758,7 +770,7 @@ stateDiagram-v2
     end note
 ```
 
-> ⚠️ 2026-07-16 對碼修正：`CONFIRMING` 於 FormState 有定義（form_manager.py:41）但全庫**無任何轉換使用**（死狀態）；SOP immediate 的待確認由 SOP context（Redis）管理，不進表單狀態機。上圖已移除 CONFIRMING 轉換，實際使用中狀態為 7 個。
+> ⚠️ 2026-07-16 對碼修正：`CONFIRMING` 於 FormState 有定義（form_manager.py:41，⚠️ 已隨舊鏈退役）但全庫**無任何轉換使用**（死狀態）；SOP immediate 的待確認由 SOP context（Redis）管理，不進表單狀態機。上圖已移除 CONFIRMING 轉換，實際使用中狀態為 7 個。
 
 ### 離題偵測
 
@@ -1029,12 +1041,12 @@ flowchart LR
 
 | 組件 | 職責 | 關鍵決策點 |
 |------|------|-----------|
-| **Chat Router** (`routers/chat.py`) | 主入口，協調整體流程 | 表單優先、SOP 優先、分數比較 |
-| **SOP Orchestrator** (`services/sop_orchestrator.py`) | SOP 檢索與觸發管理 | 觸發模式判斷、關鍵詞匹配 |
+| **Chat Router** (`routers/chat.py`)（⚠️ 已隨舊鏈退役，見檔頭 2026-09-11 註記） | 主入口，協調整體流程 | 表單優先、SOP 優先、分數比較 |
+| **SOP Orchestrator** (`services/sop_orchestrator.py`)（⚠️ 已隨舊鏈退役，見檔頭 2026-09-11 註記） | SOP 檢索與觸發管理 | 觸發模式判斷、關鍵詞匹配 |
 | **Knowledge Retriever** (`services/vendor_knowledge_retriever_v2.py`) | 知識庫檢索與過濾 | 向量相似度、意圖匹配 |
-| **Form Manager** (`services/form_manager.py`) | 表單生命週期管理 | 狀態轉換、欄位驗證 |
+| **Form Manager** (`services/form_manager.py`)（⚠️ 已隨舊鏈退役，見檔頭 2026-09-11 註記） | 表單生命週期管理 | 狀態轉換、欄位驗證 |
 | **Intent Classifier** (`services/intent_classifier.py`) | 意圖識別 | 多意圖支援、信心度評估 |
-| **LLM Optimizer** (`services/llm_answer_optimizer.py`) | 答案優化與合成 | 合成策略、參數注入 |
+| **LLM Optimizer** (`services/llm_answer_optimizer.py`)（⚠️ 已隨舊鏈退役，見檔頭 2026-09-11 註記） | 答案優化與合成 | 合成策略、參數注入 |
 | **Cache Service** (`services/cache_service.py`) | 三層緩存管理 | 緩存命中、過期策略 |
 | **Confidence Evaluator** (`services/confidence_evaluator.py`) | 品質評估 | 信心度計算、等級判定 |
 | **Base Retriever** (`services/base_retriever.py`) | 統一檢索策略 | Pipeline stages、分數組合 |
@@ -1167,7 +1179,7 @@ ELSE:
 
 - **判定**：`grounding_scope` 宣告 `execute_endpoint` ＝交易面向；診斷面向無此鍵、完全走原路徑。
 - **state**：`form_sessions.collected_data` 內 `TransactionState`（`slots`／`executed`／`execute_result`／`user_turns`／`awaiting_confirm`）；非交易面向不設這些鍵、既有結構零改變。
-- **槽位形狀**：`SlotValue{value, source∈prefill|inferred|user|candidate_pick, confirmed}`；**扁平標量鐵則**（`api_call_handler` 的 `{form.x}` 不吃 dict/點號）。
+- **槽位形狀**：`SlotValue{value, source∈prefill|inferred|user|candidate_pick, confirmed}`；**扁平標量鐵則**（`api_call_handler` 的 `{form.x}` 不吃 dict/點號；`api_call_handler.py` ⚠️ 已隨舊鏈退役）。
 
 ### 14.2 情境 A 時序（≤3 輪建單）
 

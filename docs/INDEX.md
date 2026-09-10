@@ -67,9 +67,9 @@
 
 | 文檔 | 用途 |
 |------|------|
-| [API 配置指南](./design/API_CONFIGURATION_GUIDE.md) | API 配置方式 |
+| [API 配置指南（已歸檔，機制已隨舊鏈退役）](./archive/2026-09/API_CONFIGURATION_GUIDE.md) | 歷史參考，所述動態 API 執行引擎已於 2026-09-11 隨舊 REST 對話鏈退役 |
 | [知識動作系統設計](./design/KNOWLEDGE_ACTION_SYSTEM_DESIGN.md) | 知識庫動作架構 |
-| [表單對話設計](./design/FORM_FILLING_DIALOG_DESIGN.md) | 表單填寫流程 |
+| [表單對話設計（已歸檔，機制已隨舊鏈退役）](./archive/2026-09/FORM_FILLING_DIALOG_DESIGN.md) | 歷史參考，`services/form_manager.py` 已於 2026-09-11 隨舊 REST 對話鏈退役 |
 | [權限系統設計](./design/PERMISSION_SYSTEM_DESIGN.md) | 權限架構 |
 | [Lookup 表系統設計](./design/LOOKUP_TABLE_SYSTEM_DESIGN.md) | Lookup 系統架構 |
 
@@ -78,8 +78,8 @@
 | 文檔 | 用途 |
 |------|------|
 | [功能文件索引](./features/README.md) | 所有功能總覽 |
-| [對話式回答＋售前顧問](./features/conversational-presales.md) | conversational 模式（多輪問答→收斂）、資料驅動設定、串流、部署 |
-| [表單管理系統](./features/FORM_MANAGEMENT_SYSTEM.md) | 表單系統說明 |
+| [對話式回答＋售前顧問（已歸檔，機制已隨舊鏈退役）](./archive/2026-09/conversational-presales.md) | 歷史參考，`conversational_engine.py`／`llm_answer_optimizer.py` 已於 2026-09-11 隨舊 REST 對話鏈退役 |
+| [表單管理系統（已歸檔，機制已隨舊鏈退役）](./archive/2026-09/FORM_MANAGEMENT_SYSTEM.md) | 歷史參考，`services/form_manager.py` 已於 2026-09-11 隨舊 REST 對話鏈退役 |
 | [Reranker 功能](./features/RERANKER_FEATURE.md) | 語義重排序 |
 | [認證系統](./features/AUTH_SYSTEM_README.md) | 認證機制 |
 | [SOP 功能](./features/sop/README.md) | SOP 系統完整說明 |

@@ -183,7 +183,7 @@ deployment/
 - `rag-orchestrator/requirements.txt` - 新增 Reranker 依賴
   - `sentence-transformers==5.2.2`
   - `torch==2.5.0`
-- `rag-orchestrator/routers/chat.py` - 智能檢索系統核心邏輯
+- `rag-orchestrator/routers/chat.py` - 智能檢索系統核心邏輯 （⚠️ 已隨舊鏈於 2026-09-11 退役，見 `.claude/DECISIONS.md` DSP-046；本段為歷史變更記錄）
   - Lines 515-850: `_smart_retrieval_with_comparison` 函數
   - Lines 621: SCORE_GAP_THRESHOLD = 0.15
   - Lines 852-964: comparison_metadata 傳遞修復
@@ -303,7 +303,7 @@ deployment/
   - Lines 589-603: Pydantic 模型更新
   - Lines 733-761: 組合與必填欄位驗證
   - Lines 801-824: SQL 更新
-- `rag-orchestrator/services/sop_trigger_handler.py` - 動態關鍵詞組合
+- `rag-orchestrator/services/sop_trigger_handler.py` - 動態關鍵詞組合 （⚠️ 已隨舊鏈於 2026-09-11 退役，見 `.claude/DECISIONS.md` DSP-046；本段為歷史變更記錄）
   - Lines 222-241: 動態組合邏輯
 
 **測試結果：**

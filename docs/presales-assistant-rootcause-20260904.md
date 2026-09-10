@@ -1,5 +1,7 @@
 # 售前小幫手盤查的根因對碼（2026-09-04）
 
+> ⚠️ 本文為 2026-09-04 的紀錄；文中的舊 REST 對話鏈相關模組（`routers/chat.py`／`conversational_engine.py` 等）已於 2026-09-11 退役，見 `.claude/DECISIONS.md` DSP-046。
+
 > 對象：`docs/presales-assistant-quality-audit-20260902.md`（jgb2 側實機盤查，P0×3／P1×3／P2×1）。
 > 方法：`/canon-audit dialogue-logic` 22 份整檔讀（四個唯讀代理分工，憑證已累計進主 session；CLI `status` 猜錯檔誤報 0/22，見 BACKLOG）＋ 本機 `:8100`（2026-09-04 00:43 image）以 prospect 身分重現。
 > ⛔ 本檔只講「現在怎麼跑、為什麼會這樣」與可選修法；⛔ 不預選產品決策。每個事實附可 grep 的符號。

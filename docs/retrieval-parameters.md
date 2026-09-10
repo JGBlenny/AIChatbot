@@ -18,15 +18,15 @@
 |---|---|---|
 | `QUERY_REWRITE_MODEL` | `query_rewriter.QueryRewriter.__init__`：`os.getenv("QUERY_REWRITE_MODEL") or os.getenv("OPENAI_MODEL", "gpt-4o-mini")` | 顯式 `${QUERY_REWRITE_MODEL:-gpt-4o-mini}` |
 | `QUERY_REWRITE_TEMPERATURE` | 同檔：`float(os.getenv("QUERY_REWRITE_TEMPERATURE", "0"))` | 顯式 `${QUERY_REWRITE_TEMPERATURE:-0}` |
-| `RELEVANCE_GATE_MODEL` | `routers/chat.py`：`os.getenv("RELEVANCE_GATE_MODEL") or os.getenv("LLM_MODEL")…` | **無此鍵**，走程式 fallback |
-| `RELEVANCE_GATE_SKIP_VEC` | `routers/chat.py`：`os.getenv("RELEVANCE_GATE_SKIP_VEC")`（未設＝不跳過） | **無此鍵**，走程式 fallback（不跳過） |
+| `RELEVANCE_GATE_MODEL` | ⚠️ 讀值處 `routers/chat.py` 已隨舊鏈於 2026-09-11 退役（見 DSP-046），現況只剩 `scripts/routing/` 離線回放工具讀這個鍵，agentic-MCP 線上路徑不讀：`os.getenv("RELEVANCE_GATE_MODEL") or os.getenv("LLM_MODEL")…` | **無此鍵**，走程式 fallback |
+| `RELEVANCE_GATE_SKIP_VEC` | ⚠️ 讀值處 `routers/chat.py` 已隨舊鏈於 2026-09-11 退役（見 DSP-046），線上路徑不再讀這個鍵：`os.getenv("RELEVANCE_GATE_SKIP_VEC")`（未設＝不跳過） | **無此鍵**，走程式 fallback（不跳過） |
 | `SCORE_SHIFT_PROBE` | `base_retriever.py`：`os.getenv("SCORE_SHIFT_PROBE")`（空字串視為未設定） | 顯式 `${SCORE_SHIFT_PROBE:-}`（僅平移基線量測時暫時設 0.10，量完拿掉） |
 | `FORM_TRIGGER_THRESHOLD` | `decision_layer.py`：`float(os.getenv("FORM_TRIGGER_THRESHOLD", "0.75"))` | 顯式 `${FORM_TRIGGER_THRESHOLD:-0.75}` |
 | `KB_SIMILARITY_THRESHOLD` | `decision_layer.py` 的 `kb_threshold`：`float(os.getenv("KB_SIMILARITY_THRESHOLD", "0.55"))` | 顯式寫死 `0.65`（不走 env 插值，且註明「涵蓋原 fallback 範圍」） |
 | `RERANKER_MIN_VECTOR_SIMILARITY` | `base_retriever.py`：`float(os.getenv("RERANKER_MIN_VECTOR_SIMILARITY", "0.3"))` | 顯式 `${RERANKER_MIN_VECTOR_SIMILARITY:-0.3}` |
 | `RERANKER_INPUT_LIMIT` | `base_retriever.py`：`int(os.getenv("RERANKER_INPUT_LIMIT", "20"))` | 顯式 `${RERANKER_INPUT_LIMIT:-20}` |
 | `ADVISOR_TEMP` | `llm_answer_optimizer.py`：`float(os.getenv("ADVISOR_TEMP", "0.4"))` | **無此鍵**，走程式 fallback（0.4） |
-| `ENABLE_QUERY_REWRITE` | `query_rewriter.py`／`base_retriever.py`／`routers/chat.py`：`os.getenv("ENABLE_QUERY_REWRITE", "false")` | 顯式 `${ENABLE_QUERY_REWRITE:-false}` |
+| `ENABLE_QUERY_REWRITE` | `query_rewriter.py`／`base_retriever.py`（皆未刪，agentic-MCP 的 `kb.search` 經 `retriever.retrieve()` 間接吃到）；`routers/chat.py` 讀值處已隨舊鏈於 2026-09-11 退役（見 DSP-046）：`os.getenv("ENABLE_QUERY_REWRITE", "false")` | 顯式 `${ENABLE_QUERY_REWRITE:-false}` |
 | `ENABLE_QUERY_REWRITE_B2B` | `base_retriever.py`：`os.getenv("ENABLE_QUERY_REWRITE_B2B", "true")`⚠️ **程式 fallback 是 `true`** | 顯式 `${ENABLE_QUERY_REWRITE_B2B:-false}`⚠️ **與程式 fallback 方向相反**，b2b 路徑靠部署顯式覆寫才會跳過改寫 |
 
 > `FALLBACK_SIMILARITY_THRESHOLD`（compose 顯式 `0.55`）已標「已廢棄：RAG Fallback 已移除，統一使用 `KB_SIMILARITY_THRESHOLD`」——不是現行判準，不列入上表對照。

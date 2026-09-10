@@ -115,17 +115,29 @@ G3 單一變因閘門                       ⛔ 一輪只動一類成因；跨�
 ✅ 決策樹本體（Case 0A–6）已逐條對碼，可信。
 
 ### ② 這一段的實作正本（⛔ 文件與程式衝突一律以程式為準）
+
+⚠️ **2026-09-11 更新**：`routers/chat.py`／`services/conversational_engine.py`
+已隨舊 REST 對話鏈砍除（見 `.claude/DECISIONS.md` DSP-046），下列前兩行是
+**歷史記錄**——`_retrieve_knowledge`／`_top1_relevance_gate`／
+`_handle_no_knowledge_found` 這三個符號已不存在，agentic-MCP 新線的等價
+呼叫點在 `services/agent/tools/kb.py`（`kb.search`/`kb.get`）＋
+`services/agent/verifier.py`（引用驗證取代 `_top1_relevance_gate` 的適用性
+把關，拒因邏輯不同，⛔ 不要假設兩者行為等價，改動前重新查證）。
+`services/decision_layer.py:DecisionConfig` 門檻與
+`services/vendor_knowledge_retriever_v2.py` 兩條檢索路仍是現行實作，未受影響。
+
 ```text
-routers/chat.py                    入口 → 分類 → 仲裁 → 面向 → 回應
-  符號 _retrieve_knowledge          檢索呼叫點（門檻取自 DecisionConfig）
-  符號 _top1_relevance_gate         ⚠️ **適用性**閘門（precision-first，⛔ 勿改回從寬）
-                                    可把候選清空 ⇒ 走誠實 fallback
-                                    ⚠️ 表單/API 觸發列**豁免不判**
-  符號 _handle_no_knowledge_found   fallback／參數型答案／轉客服
-services/decision_layer.py         符號 decide_arbitration：六 case 仲裁
+routers/chat.py                    ⚠️ 已隨舊鏈退役（2026-09-11），歷史入口：分類 → 仲裁 → 面向 → 回應
+  符號 _retrieve_knowledge          ⚠️ 已隨舊鏈退役，檢索呼叫點（門檻取自 DecisionConfig）
+  符號 _top1_relevance_gate         ⚠️ 已隨舊鏈退役；**適用性**把關現由 services/agent/verifier.py 承接
+                                    （precision-first 的設計理由仍有效，⛔ 勿在新線改回從寬）
+  符號 _handle_no_knowledge_found   ⚠️ 已隨舊鏈退役，歷史行為：fallback／參數型答案／轉客服
+services/decision_layer.py         符號 decide_arbitration：六 case 仲裁（agent 路徑不呼叫，見
+                                    docs/architecture/agent-path-retired-symbols.md）；
+                                    `DecisionConfig` 門檻仍被 services/agent/tools/kb.py 讀取，現行
                                     ⚠️ knowledge_min=0.6 硬編、無 env
-services/vendor_knowledge_retriever_v2.py  兩條檢索路與三軸過濾
-services/conversational_engine.py  面向進場、槽位、grounding
+services/vendor_knowledge_retriever_v2.py  兩條檢索路與三軸過濾（現行，kb.search 經此檢索）
+services/conversational_engine.py  ⚠️ 已隨舊鏈退役，歷史行為：面向進場、槽位、grounding
 ```
 
 ### ③ 契約與身分形狀

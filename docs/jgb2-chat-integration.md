@@ -4,6 +4,37 @@
 > v1 僅涵蓋租客端（b2c）；v2 整合三種身分形狀；v3 定案 **vendor_id 由 AI 側經 role_id 關聯解出，JGB 端一律不送**（見 §4、§8）。
 > 業者端（b2b）為現役已上線串接（HelpSystem `useChat.ts`），本文件同時列出前端與 AI 側**待補齊項**（§8）。
 
+> ⛔⛔⛔ **2026-09-11 重大更新：本文件描述的端點已不存在，jgb2 Web 目前沒有可用的 AI 對話後端。**
+>
+> 本文件 §2 起描述的 `POST https://chatai.jgbsmart.com/rag-api/v1/message`
+> （即 rag-orchestrator 內的 `routers/chat.py` 對外掛點）已隨舊 REST 對話鏈於
+> 2026-09-11 隨 commit `7c905408`／`10116570` 整批砍除，見 `.claude/DECISIONS.md`
+> DSP-046。查證（原始碼靜態掃描，非線上 curl——本輪未觸碰正式機）：
+> `grep -rn '@router\.\(post\|get\|put\|delete\)(' rag-orchestrator/routers/*.py | grep -i message`
+> 命中 0 條；正對照 `grep -rn '@router\.\(post\|get\|put\|delete\)(' rag-orchestrator/routers/*.py | wc -l`
+> 為 137 條（工具本身有效，不是全部路由都消失）；`routers/chat.py` 本體
+> `ls rag-orchestrator/routers/chat.py` 直接回「No such file or directory」。
+>
+> **repo 現在唯一活的對話入口是 `/mcp`**（MCP 協定，`services/agent/mcp_facade.py`
+> 掛載，見 `docs/architecture/AGENTIC_MCP_ARCHITECTURE.md`），目前的使用場景是
+> LINE OA 房東管家（`.kiro/specs/agentic-mcp-orchestration/`），⚠️ **不是**為
+> jgb2 Web 這種瀏覽器端 fetch 串接設計的協定，也**沒有**現成的 `POST JSON → 純文字
+> answer` 相容端點。`routers/agent_entry.py`（`handle_agent_entry` 等函式）雖仍在
+> repo 內，但**未掛任何路由**、目前沒有呼叫者（commit message原話：「保留、未發明
+> 新掛載點……維持原樣交業主另外裁決」）。
+>
+> **後果**：若 jgb2 Web（b2b `useChat.ts`／b2c widget／售前 widget）目前仍照本文件
+> 打 `/rag-api/v1/message`，該串接在這個 commit 之後會**全面失敗**（HTTP 404 或
+> 反向代理層錯誤，視 nginx 設定而定，本輪未實測反代行為）。是否要（a）讓 jgb2 Web
+> 改走 `/mcp`、（b）在 `routers/agent_entry.py` 基礎上新開一個 REST 相容端點、或
+> （c）本次砍除本就包含「jgb2 Web 整合另案處理、目前先斷線」的既定安排——這是
+> **產品／部署時序決策**，不屬本輪文件整理範圍，本文件只據實記錄現況、不代為選邊。
+>
+> ⚠️ 下文 §1–§10 是**該端點存在時的正式規格**，其中的欄位語義、安全紅線（雙證、
+> 跨業者隔離、vendor_id 解析設計理由）在新端點若要重建同等能力時仍是有效參考，
+> 故保留全文不刪；但**照此文件現在去打 API 會失敗**，這不是舊版本落差，是端點
+> 本體不存在。
+
 > **一句話原則**：jgb2 端送出的身分只有 `role_id`（＋`user_id`）；`vendor_id` 是 AI 側用 `role_id` 關聯解出，jgb2 不管、不送。
 
 ## 1. 總覽：一支 API，三種身分形狀
@@ -129,7 +160,7 @@ X-API-Key: <發放之金鑰>          # 認證啟用（RAG_API_AUTH_ENFORCE）�
 
 定案：**jgb2 端不送 `vendor_id`**，一律只送 `role_id`；vendor 由 AI 側經 `role_id` 關聯解出。對照現行 AI 碼，尚有兩項待補：
 
-| # | AI 側現況（`rag-orchestrator/routers/chat.py`） | 缺口 | 補齊 |
+| # | AI 側現況（`rag-orchestrator/routers/chat.py`，⚠️ 已隨舊鏈於 2026-09-11 退役，下列兩列為歷史現況記錄） | 缺口 | 補齊 |
 |---|---|---|---|
 | A | `validate_vendor_id`（約 L3593）：`b2c` 未帶 `vendor_id` → 直接 422 | jgb2 b2c 只送 role_id 會被擋在驗證層 | 放寬 b2c 的 `vendor_id` 必填（改為可由 role_id 補全） |
 | B | Step 0a 自動補全（約 L3782）只做 **`vendor_id`→`role_id`** 單向反查（`vendors.settings.jgb_role_id`） | 沒有 **`role_id`→`vendor_id`** 的反查，jgb2 只送 role_id 時 vendor 無從解出 → 隔離／計量／額度失去 vendor 掛點 | 新增 `role_id`→`vendor_id` 反查（`vendors.settings->>'jgb_role_id' = role_id`），並在缺對應時明確處置 |

@@ -1,5 +1,7 @@
 # 研究紀錄：conversational-diagnosis
 
+> ⚠️ 本文為 2026-06-30 的紀錄；文中的舊 REST 對話鏈相關模組（`conversational_engine.py`／`api_call_handler.py`／`routers/chat.py` 等）已於 2026-09-11 退役，見 `.claude/DECISIONS.md` DSP-046。
+
 > 建立時間：2026-06-30　功能類型：Extension（既有系統整合，light discovery）
 
 ## Summary
