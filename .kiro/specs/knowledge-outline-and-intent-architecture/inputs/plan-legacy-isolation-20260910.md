@@ -1,8 +1,9 @@
-# Plan：舊鏈隔離與共用詞彙歸位（2026-09-10；第 4 稿）
+# Plan：舊鏈隔離與共用詞彙歸位（2026-09-10；第 5 稿・就緒）
 
 **審查歷程**：第 1 稿 → security-reviewer 八條（處置見 §7）→ 第 2 稿 → plan-verifier **REVISE** 八條
 （2 BLOCKER／4 MAJOR／2 MINOR，處置見 §8）→ 第 3 稿 → 收尾複審再判 **REVISE**
-（1 BLOCKER／2 MAJOR／3 MINOR，處置見 §9）→ 本稿。**⛔ 已達兩輪 REVISE 上限，不再送審；§9 逐條處置後交業主裁決。**
+（1 BLOCKER／2 MAJOR／3 MINOR，處置見 §9）→ 第 4 稿 → **業主指示再審一輪**：
+1 BLOCKER（兩句可收）＋3 MINOR，且**獨立推導確認 C1 修正成立、無殘留恆真路徑**（處置見 §10）→ 本稿。
 **基準 HEAD**：`1ef9b68e`（main＝feat；⛔ 第 2 稿誤寫 `d1e46afb`，已更正）。**分支**：`feat/agentic-mcp`。
 **上位 spec**：`.kiro/specs/agentic-mcp-orchestration`（需求 12.1「agent 路徑不呼叫的舊鏈符號」）。
 **⛔ 本 Plan 只含 S1a／S1b／S2；砍舊鏈（S3）不在範圍**，理由見 §5。
@@ -103,7 +104,9 @@ scratchpad 的腳本，且用的分桶算法本身有缺陷（見 §8 B1）。**
    - ① `legacy_only.txt` 必須含 `services/sop_orchestrator.py`（進入點種子；驗路徑正規化沒壞）。
    - ② 必須含一個**只能經遞移邊到達、且其中一段是函式內 import 或 `from <套件> import <子模組>`**
      的已知舊線模組（執行者從 S1a 的實算輸出裡挑一個，記進 commit message）。
-     **反向自測**：把 `reach()` 改回只走 `tree.body` 時該模組必須從清單消失。
+     **反向自測（依所選形狀對應，M-a）**：挑到**函式內 import** ⇒ 把 `reach()` 改回只走 `tree.body`
+     時該模組必須消失；挑到 **`from <套件> import <子模組>`** ⇒ 關掉子模組解析時必須消失。
+     ⛔ 兩者不可互套，否則會誤觸 §4 停止門檻。
    它們若沒中，就是算法或解析壞了，不是「舊線很乾淨」。
 4. **清單交主執行緒核可才進 S1b。** 差異處置門檻：清單若含任何我判斷不該在裡面的模組 ⇒
    停下改算法，⛔ 不得先上檔頭再說。
@@ -135,6 +138,10 @@ scratchpad 的腳本，且用的分桶算法本身有缺陷（見 §8 B1）。**
   每個檔案都必須含統一檔頭字串與 `.claude/MAP.md#legacy-rest-chat` 指標，**命中數＝清單行數、缺 0**。
   **負對照**：清單外的檔案不得帶該檔頭。
   **反向自測**：刻意移除任一檔頭，該判定必須 FAIL。
+- **§2 第 2／3 項的驗收（M-c，第 4 稿只驗了第 1 項）**：
+  `.claude/MAP.md` 必須存在 `#legacy-rest-chat` 錨點（⛔ 錨點不在＝所有檔頭指標懸空）
+  且含 §1.4 射程聲明兩句；四個 `tests/unit/{conversational,sop,forms,chat_flow}/README.md` 皆存在
+  且含「維護級」字樣。
 
 ---
 
@@ -165,9 +172,13 @@ scratchpad 的腳本，且用的分桶算法本身有缺陷（見 §8 B1）。**
 ### 3.2 搬確認卡與表單常數
 
 `services/conversational_engine.py` 的 `CONVERSATIONAL_FORM_ID`、`_QR_SUBMIT`、`_QR_EDIT`、
-`_QR_CANCEL`、`_DEFAULT_QR_LABELS` 搬到 `services/form_contract.py`，去底線改公開名
-（這五個是底線開頭的私有名被跨套件 import，見 `services/agent/tools/confirm.py`、`tools/session.py`）。
-舊位置逐名 re-export。
+`_QR_CANCEL`、`_DEFAULT_QR_LABELS` 搬到 `services/form_contract.py`；**其中四個底線開頭的**
+在新家改公開名（`CONVERSATIONAL_FORM_ID` 本來就是公開名，M-b 更正第 4 稿的誤述）。
+搬的理由是那四個私有名正被跨套件 import（見 `services/agent/tools/confirm.py`、`tools/session.py`）。
+
+**⛔ re-export 必須綁回原名（含底線名）**（M-b）：`conversational_engine.py` 內部有十餘處使用
+`_QR_CANCEL`／`CONVERSATIONAL_FORM_ID` 等舊名，re-export 不綁回原名會 NameError。
+把這件事寫死，⛔ 不靠測試炸出來。
 
 **刪一個死常數**：`routers/agent_entry.py` 的 `CONVERSATIONAL_FORM_ID = "conversational"`
 零使用點、零外部 import ⇒ **直接刪那一行**（⛔ 不是改成 import——那會替一個只依賴
@@ -245,6 +256,19 @@ grep -rn "presales_gate\|conversational_engine" rag-orchestrator/services/agent 
      新增逐名 re-export。出現其他形狀即為缺陷。
    - `routers/chat.py`、`services/llm_answer_optimizer.py`：`git diff -- <path>` 必須為空。
    - ⛔ 不用 `git diff --stat` 的行數判斷（分不出邏輯行與 re-export 行）。
+6. **散文同步的正／負對照**（R1 的處置：第 4 稿的 §3.3 有清單、無驗收，S2 可以全綠收案卻留下一句假話）：
+   - **負對照**（必須 0 命中）：
+     ```
+     grep -rn "presales_gate\.\(FactClass\|SENSITIVE\|HANDOFF_WORDS\|HandoffReason\|Handoff\|parse_fact_class\|scan_handoff_mentions\)\|conversational_engine\._\?\(CONVERSATIONAL_FORM_ID\|QR_SUBMIT\|QR_EDIT\|QR_CANCEL\|DEFAULT_QR_LABELS\)" rag-orchestrator/services/agent rag-orchestrator/routers/agent_entry.py
+     ```
+   - **正對照**（必須仍有命中，證明尺沒瞎）：同一支 grep 對**未搬**符號
+     `presales_gate.build_handoff`／`presales_gate.extractive_enabled` 應照樣命中。
+   - 逐項確認 §3.3「必改的」清單：`services/agent/verifier.py` 檔頭那句
+     「只 import `presales_gate`／`conversational_config`」與 `design.md` 紅線清單已指向新出處。
+   - 已知待改的散文至少五處（執行者以上列 grep 取全集）：`verifier.py` 檔頭、
+     `question_sensitivity.py` 的 `presales_gate.SENSITIVE`、`output_schema.py` 的 `presales_gate.SENSITIVE`、
+     `tools/handoff.py` 的 `presales_gate.HandoffReason`／`parse_fact_class`、
+     `confirm_card.py` 的 `conversational_engine._DEFAULT_QR_LABELS`。
 
 ---
 
@@ -257,7 +281,8 @@ grep -rn "presales_gate\|conversational_engine" rag-orchestrator/services/agent 
 | S2 | `executor` | worktree B | **S1a＋S1b 併回** |
 
 ⛔ 派工 brief 必含：不得 `git stash`；不得讀 `.env`；不得 push；
-**只准動 §3.1／§3.2 列出的 import 與 re-export，⛔ 不得改任何舊線邏輯**
+**只准動 §3.1／§3.2 列出的 import 與 re-export、以及 §3.3 明列的散文／docstring 同步，
+⛔ 不得改任何舊線邏輯**
 （第 3 稿此處誤寫成「不得改 `services/agent/runtime.py` 以外的舊線邏輯」——`runtime.py` 是新線，
 照字面讀反而像是允許改它裡面的邏輯，MINOR 6）。
 
@@ -361,3 +386,25 @@ F4-a 的 `state_store.py` 轉呼四個引擎方法；F2 的三支 `build_*` 在 
 
 **現況**：六條全部 FIX 完畢，但**本稿未經任何獨立審查者蓋章**（兩輪上限已達，依規矩不自動再送）。
 ⇒ 交業主裁決：(a) 就這樣派工；(b) 授權再跑一輪收尾複審；(c) 縮小範圍（例如只做 S1a＋S1b、S2 另案）。
+
+## 10. 業主指示的額外一輪處置表（第 4 稿 → 第 5 稿）
+
+| 編號 | 嚴重度 | 內容 | 處置 |
+|---|---|---|---|
+| R1 | **BLOCKER** | §4 的約束改寫與 §3.3 的交付字面互斥（散文既非 import 也非 re-export ⇒ 執行者正確做法是不動它），且 §3.3 **無任何驗收**——五條驗收全是負向檢查，S2 可以全綠收案卻留下一句假話 | **FIX**（兩句）：§4 約束加「以及 §3.3 明列的散文／docstring 同步」；§3.6 加第 6 條驗收，含負對照（已搬符號 0 命中）與正對照（未搬的 `build_handoff`／`extractive_enabled` 仍命中，證明尺沒瞎） |
+| M-a | MINOR | 正對照②的反向自測只覆蓋「函式內 import」一支；若執行者挑子模組 import，反向自測不會消失 ⇒ 依 §4 停止門檻**誤停** | **FIX**：反向自測改為依所選形狀對應 |
+| M-b | MINOR | 第 4 稿誤述五個常數皆為底線私有名（`CONVERSATIONAL_FORM_ID` 本來就公開）；且 §3.6.5 隱含要求 re-export 綁回舊底線名，否則 `conversational_engine.py` 內部使用點 NameError | **FIX**：更正描述；把「re-export 綁回原名」從隱含改為寫死 |
+| M-c | MINOR | 檔頭覆蓋率只證 §2 第 1 項；MAP 錨點與四個 README 無驗收，而所有檔頭都指向那個錨點 | **FIX**：§2 加第 2／3 項驗收 |
+
+**本輪的獨立推導結論（⛔ 這是第 5 稿可以收案的關鍵）**：審查者自行推導 C1，確認新定義下
+左邊即時算、右邊凍結，兩條正對照**真的會 FAIL**，**無殘留恆真路徑**；並實查
+`services/sop_orchestrator.py` 在 `services/agent/**` 零 import（正對照組：`app.py` 有模組級 import、命中）
+⇒ 推導前提成立。另確認七個待搬符號對留下的符號零依賴 ⇒ `handoff_contract` → `presales_gate`
+**無循環 import**，S2 可執行。
+
+**已知且接受的射程收窄（P4，非缺陷）**：右邊凍結 ⇒ S1a 之後才變成「舊線獨有」的模組
+（例如 S2 之後的 `presales_gate.py`）不受不變量 35 覆蓋，直到 `--regenerate` 並重走核可。
+這是換取可證偽性的正確取捨。
+
+**現況**：R1 與三條 MINOR 全部 FIX 完畢。審查者對第 4 稿的原話是「補完即可交業主核可派工」，
+本稿即為補完版。**⛔ 依規矩不再自動送審**（三輪已跑，第三輪由業主指示）。
