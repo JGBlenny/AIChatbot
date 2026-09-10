@@ -38,7 +38,11 @@ AGENT_EXTRA = {"routers.agent_entry"}
 LEGACY_SEEDS = {"routers.chat", "routers.platform_sop", "routers.intents",
                 "routers.suggested_intents", "services.sop_orchestrator"}
 #: 第四桶：靠 `app.state` 注入共用，import 圖看不見。⛔ 不得進 legacy_only、⛔ 不得刪。
-RUNTIME_COUPLED = {"services.conversational_engine"}
+#: ⚠️ **成員的依賴也要保**，而且不只 import 閉包——`app.py` 用**建構子參數**注進去的也算。
+#: 例：`conversational_engine.py` 從不 import `api_call_handler`，但 `app.py` 以
+#: `ConversationalEngine(api_handler=get_api_call_handler(db_pool))` 注入，引擎內
+#: `self.api_handler.execute_api_call(...)` 真的會呼叫。`injected_deps()` 就是掃這一類。
+RUNTIME_COUPLED = {"services.conversational_engine", "services.api_call_handler"}
 
 
 def load(src: str) -> dict:
@@ -78,6 +82,41 @@ def imports_of(mods, rel):
     return {m for m in out if m in mods}
 
 
+def injected_deps(src: str, mods: dict) -> set:
+    """掃 `app.py`：第四桶類別的建構子被注入了哪些模組（import 圖看不見的邊）。
+
+    ⛔ 這條是 `api_call_handler` 漏判逼出來的：`conversational_engine.py` 從不 import 它，
+    `app.py` 卻以 `ConversationalEngine(api_handler=get_api_call_handler(db_pool))` 注入，
+    而引擎內部真的呼叫 `self.api_handler.execute_api_call(...)`。
+    純 import 可達性看不到這種邊，回傳值必須併進第四桶。
+    """
+    app = os.path.join(src, "app.py")
+    if not os.path.exists(app):
+        raise SystemExit("FATAL：找不到 app.py（掃描條件或路徑壞了）")
+    tree = ast.parse(open(app, encoding="utf-8").read())
+
+    name2mod = {}                       # app.py 的 import 表：本地名 → 模組
+    for n in ast.walk(tree):
+        if isinstance(n, ast.ImportFrom) and n.module in mods:
+            for a in n.names:
+                name2mod[a.asname or a.name] = n.module
+        elif isinstance(n, ast.Import):
+            for a in n.names:
+                if a.name in mods:
+                    name2mod[a.asname or a.name] = a.name
+
+    coupled_names = {nm for nm, m in name2mod.items() if m in RUNTIME_COUPLED}
+    out = set()
+    for n in ast.walk(tree):
+        if not (isinstance(n, ast.Call) and isinstance(n.func, ast.Name)
+                and n.func.id in coupled_names):
+            continue
+        for sub in ast.walk(n):         # 建構子引數裡出現的每個本地名
+            if isinstance(sub, ast.Name) and sub.id in name2mod:
+                out.add(name2mod[sub.id])
+    return out - RUNTIME_COUPLED
+
+
 def buckets(src: str) -> dict:
     mods = load(src)
     missing = LEGACY_SEEDS - set(mods)
@@ -99,7 +138,9 @@ def buckets(src: str) -> dict:
     agent_set |= AGENT_EXTRA & set(mods)
     agent_closure = reach(agent_set)
     legacy_reach = reach(LEGACY_SEEDS)
-    legacy_only = legacy_reach - agent_set - agent_closure - RUNTIME_COUPLED
+    # 第四桶＝宣告成員 ∪ 其 import 閉包 ∪ app.py 建構子注入的模組
+    coupled = reach(RUNTIME_COUPLED) | injected_deps(src, mods)
+    legacy_only = legacy_reach - agent_set - agent_closure - coupled
 
     # 第三方消費者（後台等）。⛔ 不含 app（它掛兩線、當種子會讓一切變爭議），
     # ⛔ 不含本身就落在 legacy_only 的 router，⛔ test_* 路由另計。
@@ -111,7 +152,8 @@ def buckets(src: str) -> dict:
     pkg_inits = {m for m in mods if mods[m].endswith("__init__.py")}
     deletable = legacy_only - third - pkg_inits
     return dict(mods=mods, reach=reach, agent_set=agent_set, agent_closure=agent_closure,
-                legacy_only=legacy_only, shared=(legacy_reach & agent_closure) - RUNTIME_COUPLED,
+                legacy_only=legacy_only, shared=(legacy_reach & agent_closure) - coupled,
+                coupled=coupled,
                 third=third, deletable=deletable, contested=legacy_only & third,
                 pkg_inits=legacy_only & pkg_inits)
 
@@ -126,7 +168,7 @@ def controls(b) -> list:
         errs.append("正對照① FAIL：legacy_only 未含 services.sop_orchestrator（已知必然的舊線模組）")
     if "routers.chat" not in b["legacy_only"]:
         errs.append("正對照② FAIL：legacy_only 未含 routers.chat")
-    dup = sorted((b["legacy_only"] | b["shared"]) & RUNTIME_COUPLED)
+    dup = sorted((b["legacy_only"] | b["shared"]) & b["coupled"])
     if dup:
         errs.append("一致性 FAIL：第四桶成員同時出現在其他清單 %s" % dup)
     return errs
@@ -162,8 +204,8 @@ def write_lists(b) -> None:
             for m in sorted(b[key]):
                 fh.write(os.path.relpath(b["mods"][m], REPO) + "\n")
     with open(os.path.join(DATA, "runtime_coupled.txt"), "w", encoding="utf-8") as fh:
-        for m in sorted(RUNTIME_COUPLED):
-            fh.write("rag-orchestrator/" + m.replace(".", "/") + ".py\n")
+        for m in sorted(b["coupled"]):
+            fh.write(os.path.relpath(b["mods"][m], REPO) + "\n")
 
 
 def main() -> int:
@@ -186,7 +228,7 @@ def main() -> int:
             print("❌ 可刪清單與凍結檔漂移：多 %s／少 %s" % (sorted(got - want), sorted(want - got)))
             return 1
     print("✅ PASS：對照全過；可刪 %d／爭議 %d／共用 %d／第四桶 %d"
-          % (len(b["deletable"]), len(b["contested"]), len(b["shared"]), len(RUNTIME_COUPLED)))
+          % (len(b["deletable"]), len(b["contested"]), len(b["shared"]), len(b["coupled"])))
     return 0
 
 
