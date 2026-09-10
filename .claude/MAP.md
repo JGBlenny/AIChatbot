@@ -56,8 +56,8 @@ repo 內另有約 250 份非資料文件尚未指派角色,⛔ 未列於此**不
 - 規格 | `.kiro/specs/contract-conversational-facets/g1-g4-api-contract.md` | 外部 API 契約定義
 - 產線 | `rag-orchestrator/services/jgb/contracts.py` | 合約 face builder 註冊表
 - 路由 | 『rag-orchestrator/services/api_call_handler.py』 | face 參數貫穿到 API 呼叫 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
-- 判準 | `rag-orchestrator/tests/unit/conversational/test_step_scope_face_req.py` | face 與 scope 正規化驗收
-- 判準 | `rag-orchestrator/tests/unit/conversational/test_engine_scope_face_req.py` | 引擎端 face 處理驗收
+- 判準 | 『rag-orchestrator/tests/unit/conversational/test_step_scope_face_req.py』 | ⚠️ 已隨舊 REST 對話鏈於 2026-09-11 退役（該目錄整批刪除）；face／scope 正規化在新線由 `rag-orchestrator/tests/unit/agent/` 涵蓋
+- 判準 | 『rag-orchestrator/tests/unit/conversational/test_engine_scope_face_req.py』 | ⚠️ 已隨舊 REST 對話鏈於 2026-09-11 退役（舊引擎本體已刪）
 - 決策 | `.kiro/specs/contract-conversational-facets/design.md` | face 參數設計、formatter 分層、matcher 預先生成
 
 ## 對話式診斷 {#conversational-diagnosis}
@@ -86,7 +86,7 @@ repo 內另有約 250 份非資料文件尚未指派角色,⛔ 未列於此**不
 - 產線 | 『rag-orchestrator/services/conversational_engine.py』 | scope/face 正規化與狀態機擴充 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
 - 產線 | 『rag-orchestrator/services/system_context.py』 | 系統脈絡的領域化查詢 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
 - 路由 | 『rag-orchestrator/routers/chat.py』 | 混合 grounding 分支 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
-- 判準 | `rag-orchestrator/tests/unit/conversational/test_engine_scope_face_req.py` | scope/face 明列、衍生、失敗三態驗收
+- 判準 | 『rag-orchestrator/tests/unit/conversational/test_engine_scope_face_req.py』 | ⚠️ 已隨舊 REST 對話鏈於 2026-09-11 退役（舊引擎本體已刪）
 - 決策 | `.kiro/specs/domain-conversational-facets/design.md` | per-領域脈絡、face 衍生、scope 正規化
 - 實測 | `docs/research/domain-conversational-facets-research.md` | 面向化架構定案:三層脈絡／候選辨識／中途切換(2026-07-06 對 jgb2 真碼盤查);⚠️ 見〈jgb2 盤查結論〉區塊的家族規約
 
