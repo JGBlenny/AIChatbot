@@ -50,7 +50,7 @@
 | [g1-g4-api-contract.md](./g1-g4-api-contract.md) | G1–G4 合約欄位擴充 | 逐 gate「✓ 已驗證」是 2026-07-02 當時狀態 |
 | [iot-api-contract.md](./iot-api-contract.md) | IoT J/G 契約（台科電＝DAE） | 「jgb2 已修復並部署」為 2026-07-04 當時狀態 |
 | [repair-api-contract.md](./repair-api-contract.md) | 修繕租約清單契約 | 含 E1 真 API 上線 gate 的分支落差提醒 |
-| [jgb-contracts-api-spec.md](./jgb-contracts-api-spec.md) | 合約查詢 API 完整規格提案（2026-04-20） | ⚠️ 疑似已被上列欄位增量契約取代，**待裁** |
+| [jgb-contracts-api-spec.md](./jgb-contracts-api-spec.md) | 合約查詢 API 完整規格提案（2026-04-20） | 對碼結果（2026-09-10，見檔頭）：提出的端點 `GET /api/external/v1/contracts` 查無實作，已被 `g1-g4-api-contract.md`（`status-overview`）取代；業務判斷邏輯段仍作背景參考 |
 
 > ⛔ 這批是混合體：**欄位與介面定義是雙方仍在遵守的約定**，而逐條「✓ 已驗證」是時點狀態。
 > 用前一律對 jgb2 現碼重驗。
@@ -67,7 +67,7 @@
 |------|------|--------|
 | [API_REFERENCE_PHASE1.md](./API_REFERENCE_PHASE1.md) | 聊天／快取管理／業者管理核心 API | 「Phase 1」是功能集合命名，文件版本已到 3.1 |
 | [API_REFERENCE_KNOWLEDGE_ADMIN.md](./API_REFERENCE_KNOWLEDGE_ADMIN.md) | 知識後台九模塊、39 支端點 | ⛔ **不是** `KNOWLEDGE_ADMIN_API.md` 的超集，兩份只重疊 2 支 |
-| [KNOWLEDGE_ADMIN_API.md](./KNOWLEDGE_ADMIN_API.md) | 知識管理 6 支端點 | 其中 `DELETE`／`PUT /api/knowledge/{id}`、`GET /api/vendors`、`POST /api/login` **不在**上一份內 |
+| [KNOWLEDGE_ADMIN_API.md](./KNOWLEDGE_ADMIN_API.md) | 知識管理 6 支端點 | 對碼結果（2026-09-10，見檔頭）：`GET /api/vendors` 已併入上一份（`/api/v1/vendors`）；`DELETE`／`PUT /api/knowledge/{id}`、`POST /api/login` 全 repo 查無對應路由，端點已不存在 |
 | [loops_api.md](./loops_api.md) | 知識完善迴圈生命週期 | 產線：`rag-orchestrator/routers/loops.py` |
 | [loop_knowledge_api.md](./loop_knowledge_api.md) | 迴圈生成知識的審核端點 | 產線：`rag-orchestrator/routers/loop_knowledge.py` |
 | [conversational-api.md](./conversational-api.md) | 對話式回答的對外串接指南 | 已列於 `.claude/MAP.md`〈對話邏輯與路由執行〉 |

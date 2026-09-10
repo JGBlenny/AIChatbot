@@ -1,5 +1,6 @@
 # 📚 知識完善迴圈使用者指南
 
+> **本檔角色**：三層之一 —— 深度執行流程（概念與參數）。入門見 `quick_start.md`；標準手冊見 `knowledge_loop_workflow.md`。三層順序見 `docs/user-guides/README.md`。
 > **最後更新**: 2026-03-27
 > **適用版本**: backtest-knowledge-refinement v1.0
 > **目標讀者**: 知識管理員、業者管理員

@@ -1,5 +1,11 @@
 # Knowledge Admin API 參考文件
 
+> **對碼 `KNOWLEDGE_ADMIN_API.md`（6 支精簡版）差集結果**（`rag-orchestrator/routers/*.py`，2026-09-10）：
+> `GET /api/vendors` 對應 `routers/vendors.py`（router `"" GET`，實際掛載路徑為 `/api/v1/vendors`）——**已併入本檔**（見「業者 API」相關節）；
+> `POST /api/login`、`PUT /api/knowledge/{id}`、`DELETE /api/knowledge/{id}` 全 repo 查無對應路由（`grep -rn "@router\." routers/*.py` 及 `app.py`
+> 無 login 端點；`routers/knowledge.py` 僅有 `/classify`、`/classify/batch`、`/mark-reclassify`、`/stats`、`/reload`、`/health`，無泛用
+> `PUT|DELETE /{id}`）——**端點已不存在**，`KNOWLEDGE_ADMIN_API.md` 該三節為過時描述。
+
 **Base URL:** `http://localhost:8000`
 **版本:** v1.0
 **最後更新:** 2026-01-14
@@ -1479,6 +1485,30 @@ curl -X POST http://localhost:8000/api/category-config/7/remove-from-knowledge \
   "message": "已刪除"
 }
 ```
+
+---
+
+## 業者管理 API（自 `KNOWLEDGE_ADMIN_API.md` 併入，2026-09-10）
+
+### GET /api/v1/vendors
+
+取得業者列表（`routers/vendors.py` `list_vendors`）
+
+**Query Parameters**:
+
+| 參數 | 類型 | 必填 | 說明 |
+|------|------|------|------|
+| `is_active` | boolean | 否 | 是否啟用 |
+| `subscription_plan` | string | 否 | 訂閱方案 |
+
+**範例**:
+
+```bash
+curl http://localhost:8000/api/v1/vendors?is_active=true \
+  -H "X-API-Key: <api-key>"
+```
+
+**回應 (200 OK)**：`VendorResponse` 陣列，欄位含 `id、code、name、short_name、contact_phone、contact_email、address、subscription_plan、business_types、subscription_status、settings、is_active、created_at、updated_at`。
 
 ---
 

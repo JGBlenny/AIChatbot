@@ -1,5 +1,7 @@
 # 知識完善迴圈系統 - 快速入門
 
+> **本檔角色**：三層之一 —— 5 分鐘入門。標準手冊見 `knowledge_loop_workflow.md`；深度執行流程（概念與參數）見 `knowledge_completion_loop.md`。三層順序見 `docs/user-guides/README.md`。
+
 ## 5 分鐘快速上手
 
 ### 步驟 1：啟動迴圈 (1 分鐘)

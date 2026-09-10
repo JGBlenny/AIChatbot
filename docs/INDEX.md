@@ -36,7 +36,8 @@
 | [API 端點完整清單（已歸檔，2026-02-17 快照）](./archive/2026-09/API_ENDPOINTS_COMPLETE_INVENTORY.md) | 歷史參考，現行端點以 routers/ 目錄為準 |
 | [API 文檔索引](./api/README.md) | API 規格詳細說明 |
 | [JGB 外部 API 規格](./api/jgb_external_api_spec.md) | JGB 系統對接規格 |
-| [JGB 合約 API 規格](./api/jgb-contracts-api-spec.md) | JGB 合約查詢規格 |
+| [JGB 合約 API 規格](./api/jgb-contracts-api-spec.md) | JGB 合約查詢規格（部分段落已被下一項取代，見檔頭） |
+| [G1–G4 API 欄位擴充契約](./api/g1-g4-api-contract.md) | 現行 `status-overview`／`bills` 端點欄位擴充，取代合約規格中查無實作的端點段落 |
 | [對話式回答 API 串接](./api/conversational-api.md) | 售前 conversational 對話 API（外部專案串接） |
 
 ## 操作指南
@@ -58,8 +59,9 @@
 |------|------|
 | [修繕表單指南](./user-guides/MAINTENANCE_FORM_USER_GUIDE.md) | 修繕報修操作 |
 | [SOP 使用指南](./user-guides/VENDOR_SOP_USER_GUIDE.md) | SOP 流程操作 |
-| [知識完善迴圈](./user-guides/knowledge_completion_loop.md) | 知識迴圈操作 |
-| [快速開始](./user-guides/quick_start.md) | 快速上手 |
+| [知識完善迴圈三層文件索引](./user-guides/README.md) | 入門／標準手冊／深度執行流程順序 |
+| [知識完善迴圈（深度執行流程）](./user-guides/knowledge_completion_loop.md) | 知識迴圈概念與參數 |
+| [快速開始（5 分鐘入門）](./user-guides/quick_start.md) | 快速上手 |
 
 ## 設計文件
 

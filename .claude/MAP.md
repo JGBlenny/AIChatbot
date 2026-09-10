@@ -195,6 +195,25 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 - 規格 | `docs/features/conversational-presales.md` | 對話式回答模式本身:單次直答 → 多輪自適應收斂(prospect 為第一個套用者)
 - 規格 | `docs/api/conversational-api.md` | 對話式回答的對外串接指南
 
+## agentic-MCP（LINE OA 房東管家）{#agentic-mcp}
+
+⚠️ 與上面「對話邏輯與路由執行(主線)」(`#dialogue-logic`) 是**不同的兩條線**：`dialogue-logic` 是
+`conversational-routing-execution` 舊有 HTTP chat 路由主線；本節是 `/mcp` LINE OA 房東管家新線（2026-09-08 demo 上線）。
+
+- 規格 | `docs/architecture/AGENTIC_MCP_ARCHITECTURE.md` | 總覽：`/mcp` `agent.turn` 門面→四段管線（Plan R R1 後：`turn_segments`／`turn_context`／模型迴圈／`exit_gates`）→工具註冊→替身；組態、已知限制、模型行為假設表
+- 規格 | `.kiro/specs/agentic-mcp-orchestration/requirements.md` | 需求正本，含 D2 延遲／答到率驗收線
+- 產線 | `rag-orchestrator/services/agent/runtime.py` | `AgentRuntime.run_turn`／`_run_turn_body`（四段管線接線）
+- 產線 | `rag-orchestrator/services/agent/exit_gates.py` | 四道出口閘依序表 `EXIT_GATES`
+- 產線 | `rag-orchestrator/services/agent/turn_context.py` | `TurnAccumulator`／`ReservedCallIds`／九段資料注入
+- 產線 | `rag-orchestrator/services/agent/verifier.py` | `OutputVerifier`，`AGENT_VERIFIER_MODE` 三態（`enforce`／`grounding_observe`／`observe_only`）
+- 產線 | `rag-orchestrator/services/agent/mcp_facade.py` | `/mcp` 門面：驗 key／Origin／身分 header、命名空間、每呼叫記錄
+- 產線 | `rag-orchestrator/services/agent/limits.py` | DSP-045 額度封閉表（⛔ 不讀 env 覆寫）
+- 判準 | `rag-orchestrator/tests/unit/agent/test_pipeline_golden_req.py` | Plan R 回放等價 golden（`TurnTrace` 全欄位逐位比對）
+- 判準 | `rag-orchestrator/tests/unit/agent/test_pipeline_order_req.py` | 四道出口閘順序表測試
+- 判準 | `scripts/smoke/` | 真模型 smoke 對照計分尺（`mcp_smoke.py`／`b4_score.py`／`liff_score.py`）
+- 決策 | `.claude/DECISIONS.md` | DSP-037～045（pm 受眾開放、寫入工具正本、Verifier 兩類拒因、DSP-040 引用類絆線、W7 語音、W8 LIFF、outcome 七鍵、DSP-044 照片文字撤銷、DSP-045 額度封閉表）
+- 實測 | `.kiro/specs/knowledge-outline-and-intent-architecture/inputs/demo-ledger-line-oa-20260907.md` | demo 帳本：模型換測（luna／terra）、延遲量測、病灶審查
+
 ## jgb2 串接契約 {#jgb2-chat-integration}
 
 - 規格 | `docs/jgb2-chat-integration.md` | 一支 API 三種身分形狀:`mode`＋`target_user`＋`role_id` 決定回答資源池與跨業者隔離;`vendor_id` jgb2 不送,由 AI 側經 role_id 解出

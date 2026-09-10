@@ -1,5 +1,11 @@
 # 知識管理 API 參考
 
+> **對碼結果（2026-09-10，`rag-orchestrator/routers/*.py`）**：本檔 `GET /api/vendors` 已併入 `API_REFERENCE_KNOWLEDGE_ADMIN.md`
+> （對應實際路由 `routers/vendors.py` `list_vendors`，掛載路徑 `/api/v1/vendors`）。`POST /api/login`、
+> `PUT /api/knowledge/{id}`、`DELETE /api/knowledge/{id}` 三支端點已不存在——全 repo 查無對應路由
+> （`routers/knowledge.py` 僅有 `/classify`、`/classify/batch`、`/mark-reclassify`、`/stats`、`/reload`、`/health`；
+> app.py 與各 routers 無任何 `login` 路由，含 `API_REFERENCE_KNOWLEDGE_ADMIN.md` 描述的 `POST /api/auth/login` 亦查無實作）。
+
 ## 概述
 知識管理 API 提供管理知識庫條目的端點，包括 CRUD 操作和業者特定的知識管理。
 

@@ -1,5 +1,8 @@
 # 知識庫表單觸發模式實現文檔
 
+> **現況：使用中**（2026-09-10 對碼）——`form_id` 觸發機制仍在 `rag-orchestrator/routers/chat.py` 使用
+> （符號 `form_id`、`action_type in ('form_fill', 'api_call', 'form_then_api')`，見該檔多處判斷）。
+
 **版本**: 1.0
 **日期**: 2026-02-03
 **狀態**: ✅ 已完成

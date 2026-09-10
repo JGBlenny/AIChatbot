@@ -48,6 +48,29 @@ flowchart LR
 | 規則與正本 | `services/agent/agent_rules.py`（`_POLICY_TEXT_NON_PROSPECT`）、`canon/property_manager.md`（2026-09-08.4）＋`.json` | 模型每回合看到的定義句與受眾正本 | 只寫定義不寫例子 |
 | 健檢 | `services/agent/health.py`（`verifier_mode`） | `write_tools_enabled`、`use_mock_jgb_api`、`verifier_mode`、`verifier_observe_only`（保留鍵）、`image_recognition{…}` | `grounding_observe`×非 mock ⇒ `premise.red_flags` |
 
+### 1a. 2026-09-10 Plan R 後的模組圖
+
+`services/agent/runtime.py` 的 `_run_turn_body`（對碼 `rag-orchestrator/services/agent/runtime.py` 符號 `_run_turn_body`，
+現約 40 餘行）已拆成四段管線的**接線**，段本身收斂到獨立模組（Plan R R1，`inputs/plan-structural-refactor-20260910.md`）：
+
+```mermaid
+flowchart LR
+  RTB["_run_turn_body\n（接線，~45 行）"] --> TS["turn_segments.py\nrun_program_segments\n模型前六條終止路徑"]
+  RTB --> TC["turn_context.py\nTurnAccumulator／ReservedCallIds\n九段資料注入"]
+  RTB --> ML["_run_model_loop\n（runtime.py 內，工具迴圈＋Verifier）"]
+  ML --> EG["exit_gates.py\nEXIT_GATES 四道閘"]
+  EG --> AS["agent_session.py\n（規劃中，R3 尚未落地）"]
+```
+
+- `turn_segments.py`：模型前的六條終止路徑（機器值程式段）。
+- `turn_context.py`：`TurnAccumulator`（回合可變狀態容器）＋ `ReservedCallIds`（保留 id 派生）＋九段資料注入。
+- `exit_gates.py`：四道出口閘依序表 `EXIT_GATES`（`scope_exit` → `handoff_without_lookup` → `ask_target_gate` → `handoff_data_exits`，
+  順序本身是契約，見該檔 docstring）與 `finalize`。
+- `limits.py`：DSP-045 額度封閉表（見 §6），與回合管線並行、非管線的一段。
+- `agent_session.py`（**規劃中，Plan R R3，對碼查無此檔**）：預計收攏 `state["agent"]` 11 個鍵的生命週期讀寫成單一類別
+  （`begin_turn()`／`end_turn()`／`prompt_segments()` 唯一寫讀點），⛔ 尚未執行，本節先記目標形態避免下一輪走查誤判。
+- 九個保留 id 前綴（Plan R 覆蓋矩陣列舉）：`img-`／`done-`／`entry-`／`aff-`／`ctx-`／`pre-`／`ref-`／`doc-`／`est-`。
+
 ## 2. 一回合的路徑（`agent.turn`）
 
 ```mermaid
@@ -189,11 +212,14 @@ file_urls/image_urls
 | `AGENT_STAGE`／`AGENT_TURN_ENABLED` | M1／true | 工具面可見與 `agent.turn` 註冊 |
 | `AGENT_WRITE_TOOLS_ENABLED` | true | `jgb2.action.*` 可見（AND stage） |
 | `AGENT_VERIFIER_MODE` | grounding_observe | 正式參數（DSP-040／W6-b3）：`enforce`（預設）／`grounding_observe`（引用類觀察、極性與機敏類照擋）／`observe_only`（全部觀察，只在 mock 允許、否則啟動 raise）。`grounding_observe`×非 mock ⇒ 健檢 `premise.red_flags` 記紅但不阻起 |
-| `AGENT_VERIFIER_OBSERVE_ONLY` | 不設 | **相容旗，一版後移除**：truthy ⇒ 解析成 `observe_only`；`AGENT_VERIFIER_MODE` 有設時它說了不算 |
-| `AGENT_MODEL`／`AGENT_REASONING_EFFORT` | gpt-5-mini／low | 對話模型 |
-| `IMAGE_RECOGNITION_MODEL` | gpt-4o（R12，覆寫 compose 預設 mini） | 照片辨識 |
+| `AGENT_VERIFIER_OBSERVE_ONLY` | **已除役（2026-09-10）** | 舊相容旗；`app.py`／`health.py` 讀到即印警告要求改用 `AGENT_VERIFIER_MODE`，⛔ 不再參與解析（查證：`grep -n AGENT_VERIFIER_OBSERVE_ONLY rag-orchestrator/services/agent/health.py`） |
+| `AGENT_MODEL`／`AGENT_REASONING_EFFORT` | 線上 gpt-5-mini／low | 對話模型；量測建議 `gpt-5.6-luna`＋`AGENT_REASONING_EFFORT=none`（帶工具僅接受 `none`，`low`／`minimal` 400；三輪 lb2 11/10/12、p50 3.4–3.7s／p95 6.9–8.8s，優於 mini 同日對照 7/13、9.8/16.2s——帳本 §1s，尚未切線上） |
+| `IMAGE_RECOGNITION_MODEL` | `gpt-5.6-terra`（線上已切，2026-09-09；備份 `.env.bak-20260909`） | 照片辨識；帳本 §1q：terra 與舊 4o 分類逐張相同，信心 0.93–0.98 vs 0.0–0.9，延遲 2.4–5.8s |
+| `DOCUMENT_EXTRACTION_MODEL` | 預設 `gpt-5.6-luna` | 文件歸納（W9）；合成收據／合約實測全對、抗注入、模糊圖全 null；每千頁 $1.76 vs gpt-4o $17.3 |
+| `OPENAI_TIMEOUT_S` | 線上 25（compose 透傳，commit `10c34a70`） | agent 每次模型呼叫 SDK 逾時＋預設重試，讓掛住的呼叫在門面 60s 內自救 |
 | `IMAGE_URL_ALLOWLIST`／`IMAGE_MAX_BYTES`／`IMAGE_COUNT_CAP_PER_HOUR` | relay.jgbsmart.com／5,000,000／200 | 照片硬邊界；白名單空＝關 |
-| `AGENT_BUDGET_DEADLINE_S`／`AGENT_TURN_TIMEOUT_S` | 45／60 | 回合預算／門面逾時 |
+| 額度與速率上限（`AGENT_TURN_CAP`／`RATE_PER_MIN`／`KB_GET_CAP`／`IMAGE_COUNT_CAP_PER_HOUR`／`FILE_COUNT_CAP_PER_HOUR`／每回合預算） | 改由 `services/agent/limits.py` 程式內封閉表 | **DSP-045（2026-09-10）**：⛔ 不再讀 env 覆寫（業主：「env 沒人記得」）；預設寬鬆只擋惡意（回合 1200/h、工具 600/min、kb.get 3000/h、照片 600/h、PDF 100/h）；生效值由 `/api/v1/agent/health` 回報 |
+| `AGENT_BUDGET_DEADLINE_S`／`AGENT_TURN_TIMEOUT_S` | 部署 45／60（compose 註解「demo 建議 45，rewrites=2 路徑 >20s」） | 回合預算／門面逾時；⚠️ 程式內建預設是 `AGENT_BUDGET_DEADLINE_S=20.0`（`bootstrap.py`），三個延遲數字互不對齊，見 §8 |
 | `UVICORN_WORKERS` | 1 | `/mcp` 與行程內計數需單 worker |
 | `MCP_ALLOWED_ORIGINS` | `-` | 伺服器對伺服器不送 Origin |
 
@@ -212,7 +238,23 @@ file_urls/image_urls
 ## 8. 已知限制（demo 期）
 
 - 線⑤ 模型偶爾在有工具結果時自判「無依據」轉人（三輪 2/21 情境不穩）；屬答案層定義文（5.1）範圍。
-- `AGENT_VERIFIER_MODE=grounding_observe`（線上值）下引用類不擋——模型講的事實**沒有被要求對得上引文**，只有極性、機敏、標記外洩、schema 契約這幾類在守；重開引用類的依據是觀察紀錄（`verdict.observed`）中「真該擋」的計數（DSP-040 絆線）。相容旗 `AGENT_VERIFIER_OBSERVE_ONLY` 一版後移除。
+- `AGENT_VERIFIER_MODE=grounding_observe`（線上值）下引用類不擋——模型講的事實**沒有被要求對得上引文**，只有極性、機敏、標記外洩、schema 契約這幾類在守；重開引用類的依據是觀察紀錄（`verdict.observed`）中「真該擋」的計數（DSP-040 絆線）。相容旗 `AGENT_VERIFIER_OBSERVE_ONLY` 已於 2026-09-10 除役（見 §6）。
+- **寫入面出卡與否綁模型**：無程式面下限保證出卡一定成功——實證見帳本 `demo-ledger-line-oa-20260907.md` §1s（mini 對照 7/13 出卡，luna none 三輪 11/10/12），出卡率隨模型換動、非固定契約。
+- **`grounding_observe` 下引用類只觀察，pm 答案側無金額守門**：`sensitive_patterns` 不分受眾，pm 引資料段的金額（如帳單、租金數字）會被當敏感字樣處理，非其本意的守門缺口（帳本 §1s W9-13、`plan-document-summary-demo-20260909.md` 同批病灶審查列為機制層債）。
+- **延遲命題三個數字未對齊**：需求文 `requirements.md` D2／§「延遲」寫 p95 ≤12 秒（業主待裁）；程式內建預設 `AGENT_BUDGET_DEADLINE_S=20.0`（`bootstrap.py`）；部署值 `AGENT_BUDGET_DEADLINE_S=45`／`AGENT_TURN_TIMEOUT_S=60`（compose 註解「demo 建議 45，rewrites=2 路徑 >20s」）。三者是同一命題（回合延遲上限）在 spec／程式預設／實際部署三層各自定的數字，⛔ 尚未有裁決把它們收斂成一個。
 - 照片線的 LIFF 五案尚未在 `/mcp` 端到端跑（等 relay 簽章網址）；`scope_exit` 機器可讀鍵未加；confirm 卡回合不接指路句（A1）。
 - 速率與配額為行程內計數（單 worker 正確；多 worker 會乘倍）。
 - 替身寫入只在記憶體；正式 `agent/v1` 簽章 client 與 JGB 端 `PATCH bills`、冪等、更新權限為 demo 後切片（需求文 `inputs/jgb-api-needs-line-oa-demo-20260907.md`）。
+
+## 9. 模型行為假設表
+
+本線程式對「模型會怎麼配合」有若干未經 API 文件白紙黑字保證、僅靠實測支撐的假設；換模型或換 SDK 版本前應重新核對。
+
+| 假設 | 內容 | 量測出處 |
+|---|---|---|
+| 主動呼叫 `confirm.request` | 模型在需要使用者二次確認的寫入前，會主動選用 `confirm.request` 工具而非直接呼叫寫入工具 | 帳本 §1s（lb2 劇本各輪出卡計數） |
+| strict `json_schema` | 對話模型與文件歸納模型皆走 `response_format=json_schema strict` 原生支援（非二次解析） | `plan-document-summary-demo-20260909.md`（容器內 openai 1.54.0 驗證） |
+| `reasoning_effort` 值域 | `gpt-5.6-luna` 帶工具呼叫時僅接受 `reasoning_effort=none`；傳 `low`／`minimal` 回 400 | 帳本 §1s |
+| tools＋reasoning 相容性 | 工具定義（MCP facade 轉譯後的 schema）與 reasoning 參數同時傳入時不衝突；已用於 luna／terra／mini 三種模型對照 | 帳本 §1q、§1s |
+
+⚠️ 上表全部繫於實測樣本數（三輪 lb2、四張照片等），非窮舉；模型供應方行為變動時無自動偵測，靠下一輪 smoke 對照才會發現。

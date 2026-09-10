@@ -1,5 +1,12 @@
 # JGB 合約查詢 API 規格需求
 
+> **已被 `g1-g4-api-contract.md` 取代的段落**：本檔提出的端點 `GET /api/external/v1/contracts`（§「API 端點」）查無實作——
+> 對碼 `rag-orchestrator/services/jgb_system_api.py`（符號 `status-overview`）與 `rag-orchestrator/services/jgb/contracts.py`
+> （符號 `contract_inviting_expire_at`、`to_user_login_email`、`is_newest`），實際呼叫的是
+> `GET /api/external/v1/contracts/status-overview`，其欄位擴充規格見 `g1-g4-api-contract.md`。
+> **仍有效的段落**：本檔「回應範例」「AI 客服使用場景」節描述的業務判斷邏輯（點交/點退/提前解約/續約的資料需求）
+> 仍為背景參考，但實際回傳欄位以 `status-overview` 端點與 `g1-g4-api-contract.md` 為準。
+
 AI 客服需要查詢合約資料，判斷用戶能否執行特定操作（點交/點退/提前解約/續約）並回答原因。
 
 ---

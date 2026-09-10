@@ -1,5 +1,9 @@
 # 雙 Embedding 檢索實施報告
 
+> **現況：使用中**（2026-09-10 對碼）——`GREATEST(primary_embedding, fallback_embedding)` 機制仍在，
+> 惟檔案已改名為 `rag-orchestrator/services/vendor_sop_retriever_v2.py`（本檔原載路徑
+> `vendor_sop_retriever.py` 已不存在，符號 `GREATEST`／`primary_embedding`／`fallback_embedding` 仍可 grep 到）。
+
 **實施日期**: 2026-01-26
 **方案名稱**: 方案 A - GREATEST(primary, fallback) 雙 Embedding 檢索
 **實施人員**: Claude Code

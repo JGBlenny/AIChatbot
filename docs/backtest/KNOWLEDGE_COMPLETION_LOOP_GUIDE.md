@@ -1,5 +1,7 @@
 # 知識完善迴圈 - 執行指南
 
+> **本檔角色**：開發者腳本參考（腳本位置與用途，非使用者操作手冊）。使用者三層文件見 `docs/user-guides/README.md`（入門 `quick_start.md`／標準手冊 `knowledge_loop_workflow.md`／深度執行流程 `knowledge_completion_loop.md`）。
+
 ## 重要提醒
 **不要重複創建腳本！所有需要的腳本已經存在於代碼庫中。**
 
