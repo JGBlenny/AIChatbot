@@ -336,6 +336,150 @@ def _apply_image_suggestion_to_confirm_args(raw_args: Any, suggestion: Any) -> t
     new_args["payload"] = json.dumps(payload, ensure_ascii=False)
     return new_args, applied
 
+
+# ════════════════════════════════════════════════════════════════════
+# 第六批 #10：物件記憶（`estate_carry`）——line-bot 2026-09-10 回報
+# ════════════════════════════════════════════════════════════════════
+#
+# 病灶：使用者先講「基隆獨立共生公寓」再傳照片／再說「幫我報修」，模型手上沒有
+# 任何「剛剛講的是哪個物件」的東西，於是回頭反問物件名稱（或把 `estate_name`
+# 留空 ⇒ `confirm.request` 直接 `INVALID_INPUT`）。
+#
+# ⚠️ **與 `SELECT_SCOPE_KEY` 是兩件事，⛔ 不得混用**：那個是點清單釘住的**授權
+#    範圍**（`_enforce_tool_scope` 拿它擋別戶）；這個只是「使用者最近講到哪個
+#    物件」的**記憶**，⛔ 不具任何授權意義、⛔ 不參與任何範圍比對。
+#    範圍釘住時本鍵一律**不寫也不注入**（同 `recent_refs`／`completed_actions`
+#    的 L15 紀律：釘住的對話不該再讓另一戶的名字漏進來）。
+# ⛔⛔ **名稱不得進 trace／log／`decision_snapshot`**：物件名稱等同識別碼，
+#    trace 與計量表都會序列化落地（同 `has_ref`／`pre_lookup` 那一套紀律）。
+
+#: `state["agent"]` 底下的物件記憶：`{"name": str, "id": str|None}` 或不存在。
+#: **封閉兩鍵**——多存一個欄位就會有人把它當成可引用的事實來源。
+ESTATE_CARRY_KEY = "estate_carry"
+
+#: 物件名稱的長度上限（超過即不記）。比 `_pre_lookup_trigger` 的 6 字寬，因為
+#: 物件全名（「基隆獨立共生公寓」）本來就過不了那道短名詞閘；但仍要有上限——
+#: 沒有上限時，一段被判成「唯一命中」的長句會整段被當成物件名稱送進確認卡。
+ESTATE_CARRY_NAME_MAX_CHARS = 40
+
+#: 照片回合注入資料段的固定前綴（⛔ 常數，名稱由程式接在後面）。
+ESTATE_CARRY_TEXT_PREFIX = "本對話最近提到的物件："
+ESTATE_CARRY_PROVENANCE_SOURCE = "session:estate_carry#1"
+ESTATE_CARRY_LABEL = "session.estate_carry"
+
+
+def _estate_carry_of(agent_state: Any) -> Optional[dict]:
+    """讀出物件記憶；不是封閉形狀（非 dict／`name` 非字串或空）⇒ `None`。
+
+    ⚠️ 這份狀態會被序列化進 `form_sessions.collected_data` 再讀回來，所以讀出來
+    的東西 ⛔ 不得假設形狀正確——舊 session 沒有這個鍵，別的版本可能寫成別的樣子。
+    """
+    if not isinstance(agent_state, dict):
+        return None
+    carry = agent_state.get(ESTATE_CARRY_KEY)
+    if not isinstance(carry, dict):
+        return None
+    name = carry.get("name")
+    if not isinstance(name, str) or not name.strip():
+        return None
+    estate_id = carry.get("id")
+    return {
+        "name": name.strip(),
+        # ⚠️ `id` 與 `name` **同樣去空白**：讀出來的東西來自
+        # `form_sessions.collected_data`（別的版本／舊 session 可能寫成別的樣子），
+        # 兩格只正規化其中一格的話，`" 77 "` 這種值會原樣流到下游做等值比對。
+        "id": estate_id.strip() if isinstance(estate_id, str) and estate_id.strip() else None,
+    }
+
+
+def _write_estate_carry(agent_state: dict, name: Any, estate_id: Any = None) -> bool:
+    """三個寫點共用的唯一寫入口；寫成功回 `True`。
+
+    ⛔ **釘住範圍時不寫**（`SELECT_SCOPE_KEY` 有值）：那一段對話的物件由範圍決定，
+    再記一個「最近提到的物件」只會多一條讓別戶名字漏進來的路。
+    名稱一律過 `sanitize_data_piece`（控制字元／零寬／假標記）並截長度上限，
+    ⛔ 不接受非字串、空白、超長。`estate_id` 缺值就是 `None`（⛔ 不猜）。
+    """
+    if not isinstance(agent_state, dict):
+        return False
+    if _scope_estate_id(agent_state) is not None:
+        return False
+    if not isinstance(name, str):
+        return False
+    clean = sanitize_data_piece(name).strip()
+    if not clean or len(clean) > ESTATE_CARRY_NAME_MAX_CHARS:
+        return False
+    rid: Optional[str] = None
+    if isinstance(estate_id, (str, int)) and str(estate_id).strip():
+        rid = str(estate_id).strip()
+    agent_state[ESTATE_CARRY_KEY] = {"name": clean, "id": rid}
+    return True
+
+
+def _estate_carry_from_estates_data(data: Any, keyword: str) -> Optional[tuple]:
+    """`jgb2.query.estates`（keyword 查詢）的回傳 → `(name, estate_id)`；
+    **判不出唯一一個物件就回 `None`**（⛔ 不挑第一筆）。
+
+    兩種「唯一」的形狀，都來自 `tools/jgb2.py` 同一支 `query_estates`：
+      * `_ok_single(scoped=True)`：keyword 恰好命中一列 ⇒ `data["scope"]["estate_id"]`。
+        這條路 `data` 裡沒有列上的 `title`（`facts` 是組好的句子），所以名稱用
+        **查進去的那個關鍵字**——那正是 `repair_create` 的 `estate_name` 契約
+        （`tools/action.py::_resolve_estate`「業務口述的物件名稱，由系統比對」），
+        ⛔ 不去解析 `facts` 字串把標題挖出來（那是把另一支的輸出格式當契約）。
+      * `_ok_candidates` 恰好一列：列上有 `title`，用它（比關鍵字精確）。
+    sentinel（查無）不帶 `scope` 鍵也沒有候選 ⇒ 自然落空，⛔ 不靠巧合。
+    """
+    if not isinstance(data, dict):
+        return None
+    candidates = data.get("candidates")
+    if isinstance(candidates, list) and len(candidates) == 1:
+        row = candidates[0]
+        if isinstance(row, dict) and row.get("found") is not False:
+            title = row.get("title")
+            if isinstance(title, str) and title.strip():
+                return title, row.get("id")
+    scope = data.get("scope")
+    if isinstance(scope, dict):
+        return keyword, scope.get("estate_id")
+    return None
+
+
+def _apply_estate_carry_to_confirm_args(raw_args: Any, carry: Any) -> tuple:
+    """`confirm.request` 的 payload 缺 `estate_name` 時由物件記憶補上。
+    回 `(new_args, applied)`；`applied` 是補了哪些欄位的清單（空＝原樣）。
+
+    形狀比照 `_apply_image_suggestion_to_confirm_args`（同一個落點、同一條紀律）：
+    只補**缺值**（鍵不存在、None、去空白為空），模型有給就不動；任何形狀不對
+    （非 dict、payload 非 JSON 物件、action 不在 `CONFIRM_ACTIONS`、記憶缺名稱）
+    一律原樣回傳，⛔ 不在此 raise——形狀由 confirm 工具自己驗。
+    ⚠️ `CONFIRM_ACTIONS` 兩支都補：`repair_create` 的卡直接印「物件」那一行；
+       `bill_due_extend` 今天的卡不印它，但 payload 多一個鍵不影響
+       `payload_digest`／`render`（保留鍵只有 `today`），而缺編號時要靠物件名稱
+       對帳單的那條路（第六批 #2，單元 A）讀的就是這一格。
+    """
+    if not isinstance(raw_args, dict) or not isinstance(carry, dict):
+        return raw_args, []
+    name = carry.get("name")
+    if not isinstance(name, str) or not name.strip():
+        return raw_args, []
+    payload_raw = raw_args.get("payload")
+    if not isinstance(payload_raw, str):
+        return raw_args, []
+    try:
+        payload = json.loads(payload_raw)
+    except (TypeError, ValueError):
+        return raw_args, []
+    if not isinstance(payload, dict) or payload.get("action") not in CONFIRM_ACTIONS:
+        return raw_args, []
+    existing = payload.get("estate_name")
+    if existing is not None and not (isinstance(existing, str) and not existing.strip()):
+        return raw_args, []
+    payload["estate_name"] = name.strip()
+    new_args = dict(raw_args)
+    new_args["payload"] = json.dumps(payload, ensure_ascii=False)
+    return new_args, ["estate_name"]
+
+
 #: 使用者按下按鈕送回來的機器值：`^confirm_(submit|edit|cancel):<16 位十六進位>$`。
 #: ⚠️ **等值**比對（`fullmatch`、無前後綴）——⛔ 不做子字串比對：那會讓
 #: 「confirm_submit:abcd… 這是什麼意思？」這種自由文字誤觸發一次真實寫入。
@@ -696,7 +840,8 @@ def _enforce_tool_scope(
     return None
 
 
-def _apply_scope_exit(result: TurnResult, *, scope_in: int, scope_out: int) -> TurnResult:
+def _apply_scope_exit(result: TurnResult, *, scope_in: int, scope_out: int,
+                      agent_state: Optional[dict] = None) -> TurnResult:
     """L15 (a)④：**唯一接句點**——模型迴圈產出的每一個 `TurnResult` 都經這裡。
 
     - 全部範圍外（`scope_out>0 and scope_in==0`）⇒ 整個答案換成固定句、
@@ -704,9 +849,15 @@ def _apply_scope_exit(result: TurnResult, *, scope_in: int, scope_out: int) -> T
       `trace.final_kind == "handoff"` 寫快取，故這裡連 `final_kind` 一起改）。
     - 部分範圍外 ⇒ 答案末尾接一行固定句。
     - 沒有範圍外 ⇒ 逐字不動。
+
+    第六批 #10：`agent_state` 給的話，**這一回合出現過範圍外查詢就清掉物件記憶**
+    ——使用者已經在講另一戶了，留著上一個名字只會讓下一張確認卡填錯物件。
+    ⚠️ 缺省 `None` ⇒ 只做原本那三件事（模組級函式，測試直接呼叫它時不必給狀態）。
     """
     if scope_out <= 0:
         return result
+    if isinstance(agent_state, dict):
+        agent_state.pop(ESTATE_CARRY_KEY, None)
     if scope_in == 0:
         result.answer = SCOPE_EXIT_TEXT
         result.kind = "answer"
@@ -1030,6 +1181,11 @@ class TurnTrace:
     document_status: Optional[str] = None
     document_kind: Optional[str] = None
     pages_seen: Optional[int] = None
+    #: 第六批 #8：呼叫端帶了 `attachment_purpose="document"` 但**一張照片、一份
+    #: 檔案都沒帶** ⇒ 這一回合當一般回合跑，這個旗標記下「那個鍵被忽略了」。
+    #: ⛔ 只有 bool，無任何附件資訊。寫入點是 `mcp_facade._agent_turn`（門面才
+    #: 知道 `attachment_purpose`），⛔ 不由 Runtime 猜。
+    attachment_purpose_ignored: bool = False
 
 
 #: `reasoning_effort` 允許值（OpenAI gpt-5 系列）；封閉集合，⛔ 不在程式內以字串推導。
@@ -1142,8 +1298,18 @@ OUTCOME_STATES: tuple = (
     "handoff",          # 轉專人固定句
     "out_of_scope",     # 清單點選後問別戶／別戶寫入被擋
 )
-#: `expects`：接下來等使用者什麼（封閉四值）。
-OUTCOME_EXPECTS: tuple = ("text", "choice", "button", "none")
+#: `expects`：接下來等使用者什麼（封閉六值）。
+#: 第六批 #4：加 `image`／`file`——「請拍張照片給我」與「請把那份文件傳上來」
+#: 這兩種追問，呼叫端畫面要出的是**傳檔鍵**而不是輸入框，而 `text` 讓 LIFF／
+#: line-bot 只能出輸入框（實測：使用者被要求傳照片卻只看得到打字列）。
+OUTCOME_EXPECTS: tuple = ("text", "choice", "button", "image", "file", "none")
+
+#: 第六批 #4：**追問對象 → `expects`** 的封閉對映，且是「哪個追問對象要傳檔」
+#: 的**唯一**來源（`ASK_TARGETS` 的 `photo`／`document` 兩項）。表外的追問對象
+#: 照舊由 `quick_replies` 決定 `text`／`choice`。
+#: ⛔ 不得在別處另開一個判 `ask_target` 的 if——那就會有第二份「要傳檔的對象」
+#: 清單，而兩份清單只會各自演化。
+_ASK_TARGET_EXPECTS: dict = {"photo": "image", "document": "file"}
 #: `ref.type` 封閉值域（與 `select:<type>` 同源）。
 OUTCOME_REF_TYPES: tuple = ("repair", "bill", "contract")
 
@@ -1164,13 +1330,23 @@ def make_outcome(state: str, *, expects: str, action: Optional[str] = None,
 
 
 def default_outcome(result: "TurnResult") -> dict:
-    """沒有明設時由 `kind`／`quick_replies` 決定性導出（模型迴圈的一般出口）。"""
+    """沒有明設時由 `kind`／`ask_target`／`quick_replies` 決定性導出（模型迴圈的一般出口）。
+
+    第六批 #4：`ask_target ∈ _ASK_TARGET_EXPECTS`（`photo`／`document`）時
+    `expects` 改成 `image`／`file`，**且贏過 `quick_replies`**——這一輪要的是一個
+    檔案，出幾顆選項鍵不會改變這件事。⚠️ 讀的是**過完所有出口閘之後**的
+    `ask_target`（`_finalize` 的呼叫順序），故被 `_apply_ask_target_gate` 歸零的
+    非法值不會走到這裡。
+    ⚠️ `getattr`：`mcp_facade._outcome_of` 會拿舊的假 runtime 物件進來（那些沒有
+    `ask_target` 欄位），⛔ 不讓一個替身的形狀把正式路徑炸掉。
+    """
     has_choice = bool(result.quick_replies)
+    attachment = _ASK_TARGET_EXPECTS.get(getattr(result, "ask_target", None) or "")
     if result.kind == "handoff":
         return make_outcome("handoff", expects="none")
     if result.kind == "ask":
-        return make_outcome("clarifying", expects="choice" if has_choice else "text")
-    return make_outcome("answered", expects="choice" if has_choice else "text")
+        return make_outcome("clarifying", expects=attachment or ("choice" if has_choice else "text"))
+    return make_outcome("answered", expects=attachment or ("choice" if has_choice else "text"))
 
 
 def receipt_ref(action: Optional[str], receipt: Any) -> Optional[dict]:
@@ -2028,13 +2204,19 @@ class AgentRuntime:
     async def _pre_lookup_keyword_result(
         self, identity: Identity, keyword: str, scope_estate_id: Optional[str],
         violations: list,
-    ) -> tuple[str, Optional[str]]:
+    ) -> tuple[str, Optional[str], Optional[tuple]]:
         """trigger B：只開既有的 estates keyword 查詢（S8-13：⛔ 不開
-        `estate`／`meter` 的新 `ref` 語義）。回傳形狀同 `_pre_lookup_id_result`。
+        `estate`／`meter` 的新 `ref` 語義）。
+
+        回 `(outcome, facts, carry)`：前兩格同 `_pre_lookup_id_result`；
+        第三格是第六批 #10 的物件記憶候選 `(name, estate_id)`——**這一次查詢真的
+        對到唯一一個物件**時才有值（`_estate_carry_from_estates_data`），
+        其餘一律 `None`。⚠️ 本方法自己 ⛔ 不寫 `agent_state`：寫入紀律（範圍釘住
+        不寫、名稱正規化）集中在 `_write_estate_carry` 一支，⛔ 不分兩處各做一半。
         """
         clean = sanitize_data_piece(keyword).strip()
         if not clean:
-            return "not_found", None
+            return "not_found", None, None
         try:
             tool_result = await self.registry.call(
                 identity, _PRE_LOOKUP_ESTATE_TOOL,
@@ -2043,28 +2225,29 @@ class AgentRuntime:
                 readonly_view=self.readonly_view, for_model=True,
             )
         except Exception:  # noqa: BLE001 — 沒查成，⛔ 不是查無
-            return "error", None
+            return "error", None, None
         if not tool_result.ok:
             if tool_result.error == _PRE_LOOKUP_NOT_FOUND_ERROR:
-                return "not_found", None
-            return "error", None
+                return "not_found", None, None
+            return "error", None, None
         data = tool_result.data if isinstance(tool_result.data, dict) else {}
+        carry = _estate_carry_from_estates_data(data, clean)
         facts = data.get("facts")
         if not isinstance(facts, str) or not facts.strip():
-            return "not_found", None
+            return "not_found", None, carry
         # estates 工具對「查無」回的是 `found=False` 哨兵單筆：`ok=True`、facts 是
         # 「在對外刊登清單中找不到…」的決定性說明、**不帶 `scope` 鍵**（L15 (a)①）。
         # 封閉判定：真的命中恰一筆 ⇒ 帶 `scope`；多筆 ⇒ `candidates` 非空；兩者皆無
         # ⇒ 視為查無（2026-09-09 實測：「延三天」被注入「找不到物件」誤導模型答查無）。
         if "scope" not in data and not data.get("candidates"):
-            return "not_found", None
+            return "not_found", None, carry
         if scope_estate_id is not None:
             scope_outcome = _enforce_tool_scope(
                 _PRE_LOOKUP_ESTATE_TOOL, tool_result, scope_estate_id, clean, violations
             )
             if scope_outcome == "out":
-                return "out_of_scope", None
-        return "found", facts
+                return "out_of_scope", None, None
+        return "found", facts, carry
 
     # ------------------------------------------------------------------
     # W8 (1)：清單點選段（機器值 `select:<type>:<id>` → 工具 → facts）
@@ -2575,6 +2758,12 @@ class AgentRuntime:
             agent_state[PENDING_CONFIRM_KEY] = pending_all
         # 出卡成功 ⇒ 照片建議用掉了，清掉（⛔ 不讓它再補到下一張無關的單）。
         agent_state.pop(IMAGE_SUGGESTION_KEY, None)
+        # 第六批 #10 **寫點 (a)**：出卡成功 ⇒ 這張卡上的物件就是「本對話最近提到
+        # 的物件」。兩個值都是**封閉來源**：`estate_name` 是使用者剛才會在卡上看到
+        # 的那一行（`confirm_card._render_repair_create` 的「物件」），`estate_id`
+        # 是 `confirm.request` 自己查出來的（`tools/confirm.py::_open_repairs_hint`）。
+        # ⛔ 不在這裡另外查一次；釘住範圍時 `_write_estate_carry` 自己不寫。
+        _write_estate_carry(agent_state, payload.get("estate_name"), estate_id)
         pending_all[pending_id] = {
             "action": action,
             "payload": payload,
@@ -2890,11 +3079,15 @@ class AgentRuntime:
         # 回合是否真的帶了文件（否則「沒帶文件時 doc-… 可以被模型自己造」就成了
         # 洞，而文件段是 `citable=True` 的，偽造它等於偽造一份可引用的事實）。
         document_call_id = f"doc-{nonce[:8]}"
+        # 第六批 #10：物件記憶資料段的 id 同樣**在回合最開始就無條件算出並加入
+        # `reserved_ids`**——理由同 `pre_lookup_call_id`：模型能不能偽造一個
+        # `est-…` 不該取決於這一回合是否真的有物件記憶可注入。
+        estate_carry_call_id = f"est-{nonce[:8]}"
         reserved_ids: frozenset[str] = frozenset(
             {
                 OUTLINE_TOOL_CALL_ID, image_call_id, completed_call_id,
                 entry_call_id, aff_call_id, ctx_call_id, pre_lookup_call_id,
-                recent_refs_call_id, document_call_id,
+                recent_refs_call_id, document_call_id, estate_carry_call_id,
             }
         )
         # T1：正規化與記憶行走**同一支** `sanitize_data_piece`（控制字元／零寬／
@@ -3032,14 +3225,20 @@ class AgentRuntime:
         pre_trigger = _pre_lookup_trigger(user_message)
         if pre_trigger is not None:
             pre_kind, pre_candidate = pre_trigger
+            pre_carry: Optional[tuple] = None
             if pre_kind == "id":
                 pre_outcome, pre_facts = await self._pre_lookup_id_result(
                     identity, pre_candidate, scope_estate_id, violations
                 )
             else:
-                pre_outcome, pre_facts = await self._pre_lookup_keyword_result(
+                pre_outcome, pre_facts, pre_carry = await self._pre_lookup_keyword_result(
                     identity, pre_candidate, scope_estate_id, violations
                 )
+            # 第六批 #10 **寫點 (b)**：前置查詢命中**唯一一個物件** ⇒ 記起來。
+            # ⛔ 只記 name／id 兩鍵；釘住範圍時 `_write_estate_carry` 自己不寫。
+            # ⛔ violation 只留一個無名稱的標記（名稱不得進 trace／決策快照）。
+            if pre_carry is not None and _write_estate_carry(agent_state, *pre_carry):
+                violations.append("estate_carry_set")
             pre_lookup_trace = {"kind": pre_kind, "hits": 1 if pre_outcome == "found" else 0}
             # L15：範圍外 ⇒ **完全不注入**（連查無固定句也不印——範圍檢查本身
             # 就已經在別的路徑上有指路句，這裡多印一句等於多一個揭露面）。
@@ -3190,6 +3389,47 @@ class AgentRuntime:
                 }
             )
 
+        # 第六批 #10 **讀點**：照片回合多一句「本對話最近提到的物件：X」。
+        # ⚠️ 病灶是「先講物件、再傳照片」——照片段本身沒有物件資訊，模型只好反問。
+        # ⛔ `citable=False`（同呼叫端進場句那一段的紀律）：這是**程式組的一句
+        #    會話記憶**，⛔ 不是可引用的事實來源，模型不得拿它當 `refs` 的依據。
+        # ⛔ 不進 `user_message`、⛔ 不進 dialog、⛔ 不進 trace（名稱是識別碼）。
+        # ⚠️ 釘住範圍時 `_estate_carry_of` 讀到的一定是舊值或空——寫入口本來就
+        #    不在釘住時寫；這裡再擋一次，理由同 `recent_refs`（釘住的對話 ⛔ 不
+        #    讓另一戶的名字漏進來）。
+        estate_carry = (
+            _estate_carry_of(agent_state) if scope_estate_id is None else None
+        )
+        if image is not None and estate_carry is not None:
+            estate_carry_text = sanitize_data_piece(
+                ESTATE_CARRY_TEXT_PREFIX + estate_carry["name"]
+            )
+            if estate_carry_text:
+                tool_results_by_id[estate_carry_call_id] = ToolResult(
+                    ok=True,
+                    data={},
+                    provenance=[
+                        Provenance(
+                            source=ESTATE_CARRY_PROVENANCE_SOURCE,
+                            text=estate_carry_text,
+                            citable=False,
+                        )
+                    ],
+                    text_for_model="",
+                )
+                messages.append(
+                    {
+                        "role": "user",
+                        "content": wrap_provenance_data(
+                            ESTATE_CARRY_LABEL,
+                            estate_carry_call_id,
+                            [(ESTATE_CARRY_PROVENANCE_SOURCE,
+                              provenance_units(estate_carry_text))],
+                            nonce,
+                        ),
+                    }
+                )
+
         # S2／H3：完成動作記憶——與影像事實**同一套**注入紀律（可引用資料段、
         # 同回合 nonce、⛔ 不進 dialog、⛔ 不經 `agent_state` 以外的任何管道）。
         # 只有非空且（有釘範圍時）有同戶項目才真的注入——沒有東西可引用時
@@ -3308,7 +3548,8 @@ class AgentRuntime:
             # 全範圍外的回合在這裡就已經是 `kind="answer"`，故 ⛔ 不會進快取，
             # dialog 存的也是使用者看到的那一句（含接句）。
             result = _apply_scope_exit(
-                result, scope_in=scope_counts["in"], scope_out=scope_counts["out"]
+                result, scope_in=scope_counts["in"], scope_out=scope_counts["out"],
+                agent_state=agent_state,
             )
             # U2：兩道閘要拿得到**使用者這一句**與規則集，才能判「模型自報的敏感
             # 站不站得住」（Plan §3；⛔ 規則拿不到就一律當敏感、維持轉人）。
@@ -3447,6 +3688,16 @@ class AgentRuntime:
                         )
                         for _field in _applied:
                             violations.append(f"image_suggestion_applied:{_field}")
+                        # 第六批 #10 **讀點**：payload 缺 `estate_name` ⇒ 由物件記憶補。
+                        # ⚠️ 排在照片建議之後、`registry.call` 之前（同一個落點，
+                        #    ⛔ 不另開一段）；模型有給就不動（`_apply_...` 自己判）。
+                        # ⛔ 一次性語義**不適用**：物件記憶不是「用完就丟」的建議，
+                        #    同一段對話可能連開兩張單，故這裡 ⛔ 不清掉它。
+                        raw_args, _applied_carry = _apply_estate_carry_to_confirm_args(
+                            raw_args, _estate_carry_of(agent_state)
+                        )
+                        for _field in _applied_carry:
+                            violations.append(f"estate_carry_applied:{_field}")
                         # 一次性：任何 `confirm.request` 呼叫（不論成敗）都把照片建議用掉，
                         # ⛔ 不讓上一張照片的分類補到之後另一張無關的單。
                         agent_state.pop(IMAGE_SUGGESTION_KEY, None)
@@ -3503,6 +3754,24 @@ class AgentRuntime:
                             scope_counts["in"] += 1
                         elif _outcome == "out":
                             scope_counts["out"] += 1
+
+                    # 第六批 #10 **寫點 (c)**：模型自己查 estates 且**對到唯一一個
+                    # 物件** ⇒ 記起來（Plan 第六批 B 欄的來源①「查詢工具回傳唯一
+                    # 物件」）。使用者整句就是物件名稱（「基隆獨立共生公寓」8 字，
+                    # 過不了 `_pre_lookup_trigger` 的 6 字閘）時，模型本來就會拿
+                    # 整句當 `keyword` 查一次——**接在那一次查詢上**，因此
+                    # ⛔ 不另打一次 API、⛔ 不另建物件名稱表。
+                    # ⚠️ 排在範圍比對**之後**：範圍外的結果已經被 `_scope_replace_result`
+                    #    換成空殼（沒有 `scope`／`candidates`）⇒ 自然寫不進去。
+                    # ⚠️ 只認 `keyword` 查詢：`ref` 查詢的「名稱」會是一個編號，
+                    #    那不是物件名稱（`_write_estate_carry` 對空名稱直接不寫）。
+                    if name == _PRE_LOOKUP_ESTATE_TOOL and tool_result.ok:
+                        _kw = raw_args.get("keyword")
+                        _carry = _estate_carry_from_estates_data(
+                            tool_result.data, _kw if isinstance(_kw, str) else ""
+                        )
+                        if _carry is not None and _write_estate_carry(agent_state, *_carry):
+                            violations.append("estate_carry_set")
 
                     ms = int((self._clock() - call_start) * 1000)
                     status_value = _tool_result_status(tool_result)
@@ -3769,10 +4038,17 @@ class AgentRuntime:
             # **解析後封閉值**（`identity.Audience` 三值），⛔ 不傳 `target_user`
             # 原字串——那是上游可控的自由文字，Verifier 端對值域外一律照擋
             # （fail-closed），傳原字串只會讓「pm 放寬」在某些寫法下靜靜失效。
+            # 第六批（單元 E 接線）：`document_turn` ＝**這一回合真的有文件事實
+            # 進場**（有 `document` 且 `facts` 非空）。⚠️ 兩個條件都要：`facts`
+            # 為空的文件回合走 `_document_program_turn` 的固定句、根本到不了這裡，
+            # 而這一格若寫成「有沒有 document 物件」，日後那條早退一旦鬆動，
+            # ⑥' 就會對一個沒有文件事實的回合生效。⛔ 非文件回合一律 `False`
+            # ——那張表（「已建立」「要我匯入嗎」）在正常寫入回合是**正確的話**。
             verdict = self.verifier.verify(
                 out, tool_results_by_id, user_message, handoff_dict,
                 resolved=resolved, resolve_errors=resolve_errors,
-                audience=identity.resolved_audience())
+                audience=identity.resolved_audience(),
+                document_turn=bool(document is not None and document.facts.strip()))
             verifier_verdicts.append(verdict)
             if self._attempt_sink is not None:
                 self._emit_attempt(

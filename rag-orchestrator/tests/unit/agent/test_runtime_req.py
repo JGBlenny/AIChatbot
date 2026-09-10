@@ -192,11 +192,13 @@ class FakeVerifier:
         self.rules_sha = rules_sha
 
     def verify(self, out, tool_results, user_message, handoff, *, resolved,
-               resolve_errors, audience):
+               resolve_errors, audience, document_turn):
         # DSP-029 F-A：`resolved`／`resolve_errors` 是**必填關鍵字**，替身照收——
         # 替身若還停在舊簽名，Runtime 換新簽名時這裡會炸，而不是靜靜地少驗一層。
         # W9 U2／U3：`audience` 同上（⛔ 不給預設值）——Runtime 忘了傳時要當場
         # 炸，而不是讓 fail-closed 那條路靜靜地變成「總是照擋」。
+        # 第六批（單元 B 接 E）：`document_turn` 同樣是**必填關鍵字**——它在真尺上
+        # 的預設方向是「少擋」，Runtime 忘了傳的話文件回合那道禁詞閘會靜靜地不跑。
         self.calls.append(
             {
                 "out": out,
@@ -206,6 +208,7 @@ class FakeVerifier:
                 "resolved": dict(resolved),
                 "resolve_errors": dict(resolve_errors),
                 "audience": audience,
+                "document_turn": document_turn,
             }
         )
         if not self._results:

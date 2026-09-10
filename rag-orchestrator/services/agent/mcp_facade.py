@@ -1260,7 +1260,8 @@ async def prepare_document_turn(
 class TurnOutcome(BaseModel):
     """DSP-043：機器可讀的回合結果（第七鍵 `outcome`；值域封閉、由 Runtime 程式設）。
 
-    `state` 八值／`expects` 四值／`ref.type` 三值與 `runtime.OUTCOME_*` 同源；
+    `state` 八值／`expects` **六值**（第六批 #4 加 `image`／`file`）／`ref.type`
+    三值與 `runtime.OUTCOME_*` 同源；
     呼叫端（LINE 聊天、LIFF、之後的網頁）只看這個物件決定畫面，⛔ 不解析 `answer` 字串。
     """
 
@@ -1601,6 +1602,16 @@ def _make_agent_turn(
         image_input = None
         document_input = None
         image_elapsed = 0.0
+        # 第六批 #8（line-bot 2026-09-10 回報）：`attachment_purpose="document"`
+        # 但**一張照片、一份檔案都沒帶** ⇒ **視同一般回合**——⛔ 不走
+        # `prepare_document_turn`、⛔ 不設 `document=`、⛔ 不套文件回合閘
+        # （寫入面工具照樣可見）、⛔ 不 `INVALID_INPUT`。
+        # ⚠️ 這是既有條件式（`and (image_urls or file_urls)`）本來就有的行為；
+        #    這裡只是把它**記下來**：呼叫端送了那個鍵卻沒送附件是設定錯誤，
+        #    而「什麼都沒發生」在稽核上是無聲的。⛔ 只記一個 bool。
+        attachment_purpose_ignored = (
+            purpose == "document" and not image_urls and not file_urls
+        )
         if purpose == "document" and (image_urls or file_urls):
             # W9 U1／U2：文件回合走**另一條**準備函式（形狀同 `prepare_image_turn`）。
             # ⛔ 不與照片線混跑：`repair` 回合的行為必須逐位不變
@@ -1659,6 +1670,14 @@ def _make_agent_turn(
             )
         except asyncio.TimeoutError:
             return ToolResult(ok=False, error="TOOL_TIMEOUT")
+        # 第六批 #8：⛔ 只有 bool、⛔ 無任何附件資訊。時機在 `run_turn` **之後**
+        # ——`attachment_purpose` 只有門面知道，而 `run_turn` 的舊簽名是 REST／
+        # 影子／回測共用的介面（⛔ 不為一個稽核旗標多塞一個具名參數，那會讓每一個
+        # 既有替身都得跟著改）。取捨：它因此**排在 `_emit_agent_decision` 之後**，
+        # 只出現在 `TurnResult.trace` 上，⛔ 不進 `decision_snapshot`／trace 端點
+        # （與 `has_document` 那四鍵同樣的處置，那四鍵也不在快照白名單裡）。
+        if attachment_purpose_ignored:
+            result.trace.attachment_purpose_ignored = True
         agent_state.pop("outline", None)
         # W8 (5)：過期戳**在存檔前才蓋**——逾時／取消的回合走不到這裡，
         # 那一列的戳因此停在上一個真正跑完的回合，⛔ 不會被一次失敗的呼叫續命。

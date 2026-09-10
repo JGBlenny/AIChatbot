@@ -35,11 +35,24 @@ X-JGB-Identity: {"mode":"b2b","target_user":"property_manager","vendor_id":4,"ro
 輸出（`tools/call` 結果的文字內容是 JSON）：
 ```json
 {"answer": "<給使用者看的文字>", "kind": "answer|ask|handoff", "handoff": null, "quick_replies": [{"label": "...", "value": "..."}], "trace_id": "<hex>", "session_expired": false,
- "outcome": {"state": "answered|clarifying|confirm_pending|confirmed|cancelled|failed|handoff|out_of_scope", "expects": "text|choice|button|none", "action": "repair_create|bill_due_extend|null", "ref": {"type": "repair|bill|contract", "id": "12346"}}}
+ "outcome": {"state": "answered|clarifying|confirm_pending|confirmed|cancelled|failed|handoff|out_of_scope", "expects": "text|choice|button|image|file|none", "action": "repair_create|bill_due_extend|null", "ref": {"type": "repair|bill|contract", "id": "12346"}}}
 ```
 - `answer` 直接顯示。`kind=handoff` ⇒ `answer` 是固定的轉專人句，請掛「找真人」動作。
 - `quick_replies` 有值就渲染成按鈕；使用者點了，把 `value` **原字串**當下一回合的 `message` 送回，⛔ 不要改寫。
-- **畫面狀態只看 `outcome`**：`state==confirmed` ⇒ 任務完成（`ref` 是單號／帳單編號）；`confirm_pending` ⇒ 顯示三顆確認鍵；`clarifying` ⇒ 等文字或選項（看 `expects`）；`handoff` ⇒ 找真人；`out_of_scope` ⇒ 回清單；`failed` ⇒ 顯示 `answer` 的固定句。⛔ 不要解析 `answer` 字串。
+- **畫面狀態只看 `outcome`**：`state==confirmed` ⇒ 任務完成（`ref` 是單號／帳單編號）；`confirm_pending` ⇒ 顯示三顆確認鍵；`clarifying` ⇒ 等使用者補一手（看 `expects`）；`handoff` ⇒ 找真人；`out_of_scope` ⇒ 回清單；`failed` ⇒ 顯示 `answer` 的固定句。⛔ 不要解析 `answer` 字串。
+- **`expects` ＝這一輪畫面要開哪個輸入方式**（封閉六值，2026-09-10 由四值擴充；⛔ 不要自行新增值）：
+
+  | `expects` | 畫面要出什麼 |
+  |---|---|
+  | `text` | 一般輸入框 |
+  | `choice` | `quick_replies` 的選項鍵 |
+  | `button` | 確認卡的三顆鍵（`confirm_pending` 專用） |
+  | `image` | **傳照片鍵**（相機／相簿）——chatai 這一輪要的是一張照片 |
+  | `file` | **傳檔案鍵**（PDF）——chatai 這一輪要的是一份文件 |
+  | `none` | 不等輸入（`handoff`／收尾固定句） |
+
+  ⚠️ **`image`／`file` 出現時 ⛔ 不要只開輸入框**：使用者被要求傳照片卻只看得到打字列，是 2026-09-10 回報 #4 的原始症狀。收到 `image` 請把回覆的附件送出走 `attachment_purpose=repair`＋`image_urls`；收到 `file` 走 `attachment_purpose=document`＋`file_urls`（規則見上方輸入節）。
+  ⚠️ 這兩個值**贏過 `quick_replies`**：同一回合可能既給選項鍵又要檔案，此時以傳檔鍵為主、選項鍵照樣渲染。
 - **照片**：同一使用者 3 秒內的照片與文字合成一次 `agent.turn`，不要拆回合。**LIFF** 六格一律走這條 MCP（relay 後端代打），不接 REST `/rag-api/v1/message`。
 
 ## 機器值（`value` 會出現的形狀）

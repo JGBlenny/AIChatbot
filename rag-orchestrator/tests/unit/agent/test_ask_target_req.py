@@ -73,6 +73,10 @@ def test_ask_targets_is_the_frozen_plan_tuple_verbatim():
         "urgency",
         "confirm_intent",
         "choice",
+        # 第六批 #4（line-bot 2026-09-10）：要檔案的兩個追問對象——它們在
+        # `runtime._ASK_TARGET_EXPECTS` 另有 `expects` 對映（`image`／`file`）。
+        "photo",
+        "document",
         "identity",
         "scale",
         "team",

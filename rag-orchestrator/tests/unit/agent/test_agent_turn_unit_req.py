@@ -107,13 +107,15 @@ class FakeVerifier:
         self.rules_sha = rules_sha
 
     def verify(self, out, tool_results, user_message, handoff, *, resolved,
-               resolve_errors, audience):
+               resolve_errors, audience, document_turn):
         # DSP-029 F-A：替身也要收 `resolved`／`resolve_errors`（必填關鍵字）——
         # 停在舊簽名的話 Runtime 換簽名時會靜靜地少驗一層。
         # W9 U2／U3：`audience` 同樣是**必填關鍵字**（⛔ 不寫成有預設值）：
         # Runtime 忘了傳的話這裡要當場炸，而不是讓 fail-closed 的那條路靜靜地
         # 變成「總是照擋」（症狀是 pm 金額突然又被擋，而沒人知道為什麼）。
+        # 第六批（單元 B 接 E）：`document_turn` 同一條紀律。
         self.last_audience = audience
+        self.last_document_turn = document_turn
         if not self._results:
             return VerifierVerdict(ok=True)
         return self._results.pop(0)

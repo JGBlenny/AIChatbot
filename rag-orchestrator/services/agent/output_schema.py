@@ -38,6 +38,12 @@ ASK_TARGETS: tuple[str, ...] = (
     "urgency",
     "confirm_intent",
     "choice",
+    # 第六批 #4（line-bot 2026-09-10 回報）：要**檔案**的追問對象。畫面要出的是
+    # 傳檔鍵而不是輸入框，故它們在 `runtime._ASK_TARGET_EXPECTS` 另有 `expects`
+    # 對映（`photo`→`image`／`document`→`file`）；⛔ 那張對映只有一份，不在別處
+    # 再抄一次「哪個對象要傳檔」。
+    "photo",
+    "document",
     # 售前線（prospect）補問對象——與 `_POLICY_TEXT` 的可補問欄位同名（identity／scale／team／pain／interested）；
     # schema 與 Verifier 是各受眾共用的，值域必須是各受眾的聯集（2026-09-09 T1 執行代理 P1 裁定）。
     "identity",
