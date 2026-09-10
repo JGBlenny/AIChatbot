@@ -109,6 +109,7 @@ from services.agent.tools.confirm import (
     sha256_hex,
 )
 from services.agent.tools.jgb2 import _candidates_text as _jgb2_candidates_text
+from services.agent.tools.jgb2 import _bill_format_date as _jgb2_bill_format_date
 from services.agent.tools.registry import Provenance, ToolRegistry, ToolResult, tool_name_from_openai
 from services.agent.tools.session import write_slot
 from services.conversational_config import (
@@ -277,6 +278,24 @@ PENDING_CONFIRM_MAX = 20
 
 #: `confirm.request` 的工具名（⛔ 不抄字面量，值域由 `CONFIRM_SPEC` 持有）。
 CONFIRM_TOOL_NAME = CONFIRM_SPEC["name"]
+
+#: 第六批 #2（A 交接）：`confirm.request` 以物件＋期別對帳單對到**多筆**時，工具回既有候選形狀
+#: （`data["candidates"]`＋`action`／`payload`、無 `card`）。Runtime 把它收成一個 **ask 回合**：
+#: 固定句＋候選清單文字（`jgb2._candidates_text` 同一份投影）＋ `select:bill:<id>` 按鈕
+#: （與 LIFF 清單點選同一條入向機器值，⛔ 不另開形狀）；⛔ 不建 pending、不出卡。
+CONFIRM_CANDIDATES_TEXT = "這戶對到不只一張帳單，請點選要處理的那一張。"
+CONFIRM_CANDIDATES_MAX = 5
+#: action ⇒ (候選清單 domain, select 型別)。封閉表，只有會走期別解析的動作才有列。
+_CONFIRM_CANDIDATE_DOMAIN: dict = {"bill_due_extend": ("bills", "bill")}
+
+
+def _candidate_button_label(row: dict) -> str:
+    """候選按鈕文字：編號＋到期日（有才印）。⛔ 不放金額／標題——按鈕要短，細節在清單文字裡。"""
+    label = f"編號 {row.get('id')}"
+    due = row.get("date_expire")
+    if due:
+        label += f"｜到期 {_jgb2_bill_format_date(due)}"
+    return label
 
 #: line-bot 2026-09-10 回報（單號 12357／12358 vs 對照 12356）：照片辨識出的分類（已過分類樹
 #: 封閉映射的 `ImageTurnInput.suggested_category`）沒接到建單參數——`CONFIRM_SPEC` 要模型
@@ -2734,6 +2753,49 @@ class AgentRuntime:
         """
         if not isinstance(data, dict):
             return None
+        # 第六批 #2：多筆候選 ⇒ ask 回合＋按鈕（見 `CONFIRM_CANDIDATES_TEXT`）。
+        # 排在形狀檢查之前：候選形狀本來就沒有 `card`／`pending_id`，⛔ 不該被記成
+        # `confirm_request_data_shape_invalid`。範圍釘住時 `_scope_gate_confirm_request`
+        # 已在更前面 fail-closed（候選結果帶 `action`／`payload` 就是為了那一關）。
+        candidates = data.get("candidates")
+        cand_action = data.get("action")
+        if (
+            isinstance(candidates, list) and candidates and not data.get("card")
+            and cand_action in _CONFIRM_CANDIDATE_DOMAIN
+        ):
+            domain, select_type = _CONFIRM_CANDIDATE_DOMAIN[cand_action]
+            rows = [
+                c for c in candidates
+                if isinstance(c, dict) and c.get("id") is not None
+            ][:CONFIRM_CANDIDATES_MAX]
+            if rows:
+                violations.append("confirm_request_candidates")
+                cand_payload = data.get("payload") if isinstance(data.get("payload"), dict) else {}
+                query = " ".join(
+                    str(cand_payload.get(k) or "") for k in ("estate_name", "period")
+                ).strip() or None
+                text = CONFIRM_CANDIDATES_TEXT + "\n" + _jgb2_candidates_text(domain, query, rows)
+                quick = [
+                    {"label": _candidate_button_label(c), "value": f"select:{select_type}:{c['id']}"}
+                    for c in rows
+                ]
+                return self._finish_confirm_turn(
+                    agent_state=agent_state,
+                    user_message=user_message,
+                    trace_id=trace_id,
+                    start=start,
+                    kind="ask",
+                    outcome=make_outcome("clarifying", expects="choice"),
+                    answer=text,
+                    dialog_answer=text,
+                    pending_id=None,
+                    quick_replies=quick,
+                    tool_calls=tool_calls,
+                    violations=violations,
+                    llm_calls=llm_calls,
+                    prompt_tokens=prompt_tokens,
+                    completion_tokens=completion_tokens,
+                )
         pending_id = data.get("pending_id")
         card = data.get("card")
         action = data.get("action")
