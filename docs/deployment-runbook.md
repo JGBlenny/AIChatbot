@@ -1176,7 +1176,7 @@ RAG_API_AUTH_ENFORCE=true        # 應已是 true
 - `grounding_observe`＝**引用解析與涵蓋類只記錄**（`UNCITED_ASSERTION`／`QUOTE_TOO_SHORT`／`QUOTE_NOT_COVERING`／`SOURCE_NOT_CITABLE`＋`SCHEMA` 的 `ref_*`／`unit_out_of_range`），**極性類與機敏類（`POLARITY_MISMATCH`／`SENSITIVE_TOPIC`／`ROUTE_NOT_ALLOWED`／`FORBIDDEN_TERM`／`SCHEMA` 的 `marker_in_answer`／`handoff_reason_*`／`ask_target_invalid`／`empty_*`）照擋**——這是 demo 線上值。
 - `enforce`＝全部照擋（預設，⛔ 沒設就是它）。
 - `observe_only`＝全部只記錄（＝舊旗語義，連機敏類都不擋），**只准配 `USE_MOCK_JGB_API=true`，否則啟動直接 raise**。
-- 舊旗 `AGENT_VERIFIER_OBSERVE_ONLY=true` **仍被接受一版**（解析成 `observe_only`），下一版移除；兩旗同時設以 `AGENT_VERIFIER_MODE` 為準，⛔ 打錯字一律退回 `enforce`。
+- ⛔ **舊旗 `AGENT_VERIFIER_OBSERVE_ONLY` 已於 2026-09-10 除役**：不再被讀值、不再映射成 `observe_only`。設了它 ⇒ 啟動時 stderr 印一行警告（`已無效，請改 AGENT_VERIFIER_MODE`）並忽略，⛔ 不再靜默映射。⚠️ 線上 `.env` 若仍留著這行（目前值 `false`），部署時要一併刪掉——留著不影響行為，但會在每次啟動印一行誤導性警告。
 
 ### 20-3 重建＋起
 ```bash
@@ -1210,7 +1210,7 @@ make audit    # 預期 OVERALL: PASS
 `.env` 把 §20-2 那幾行拿掉或改回（`AGENT_TURN_ENABLED=false`、`AGENT_WRITE_TOOLS_ENABLED=false`、`AGENT_VERIFIER_MODE=enforce`（或整行刪掉，預設就是 `enforce`）、`USE_MOCK_JGB_API=false`＋`JGB_API_KEY` 必須在，否則啟動直接 raise——S-5 刻意）→ `up -d rag-orchestrator`。替身狀態在行程記憶體，重啟即歸零。
 
 ⚠️ **`grounding_observe` × 真 JGB API 是刻意但危險的組合**（W6-b3／security-reviewer r1 F3）：它是第一個**能在真 API 上把引用檢查關掉**的組態——那時模型講的事實不再被要求對得上引文（機敏類與極性類仍擋）。程式**不阻止**這個組合起來，但健檢會在 `checks.premise.red_flags` 記一支 `verifier_grounding_observe_on_real_api` 並讓 `status` 轉 `red`。所以回切時 `USE_MOCK_JGB_API=false` 與 `AGENT_VERIFIER_MODE` **要一起改**：只改替身、忘了改模式 ⇒ 健檢紅、且線上答案沒有引用檢查。
-⚠️ `observe_only` 配非 mock 是**啟動 raise**（連機敏類都不擋，⛔ 不給它上真 API 的機會）——回切時若沿用舊旗 `AGENT_VERIFIER_OBSERVE_ONLY=true` 又把替身關掉，服務會起不來，這是刻意的失敗方向。
+⚠️ `observe_only` 配非 mock 是**啟動 raise**（連機敏類都不擋，⛔ 不給它上真 API 的機會）——回切時若把 `AGENT_VERIFIER_MODE=observe_only` 又把替身關掉，服務會起不來，這是刻意的失敗方向（舊旗 `AGENT_VERIFIER_OBSERVE_ONLY` 已除役，⛔ 不再有映射效果）。
 
 ### 20-8 env 一覽補充（接 §19-5）
 | 名稱 | 預設 | 作用 | demo 值 |
@@ -1218,7 +1218,6 @@ make audit    # 預期 OVERALL: PASS
 | `UVICORN_WORKERS` | 4 | worker 數；`/mcp` 需 1 | 1 |
 | `AGENT_WRITE_TOOLS_ENABLED` | false | `jgb2.action.*` 可見（AND stage） | true |
 | `AGENT_VERIFIER_MODE` | enforce | Verifier 模式：`enforce`／`grounding_observe`（引用類只記錄、極性與機敏類照擋）／`observe_only`（全部只記錄，僅 mock 可開，否則啟動 raise） | grounding_observe |
-| `AGENT_VERIFIER_OBSERVE_ONLY` | false | **相容旗（一版後移除）**：truthy ⇒ 解析成 `observe_only`；`AGENT_VERIFIER_MODE` 有設時它說了不算 | 不設 |
 | `AGENT_BUDGET_DEADLINE_S`／`AGENT_TURN_TIMEOUT_S` | 20／30 | 回合預算／門面逾時 | 45／60 |
 | `AGENT_MODEL`／`AGENT_REASONING_EFFORT` | 空（退 `OPENAI_MODEL`）／空（不送） | 模型與推理等級 | gpt-5-mini／low |
 | `USE_SEMANTIC_RERANK` | true | 舊鏈 reranker | false（demo 不用） |

@@ -89,16 +89,23 @@ def _wrap_verifier_observe_only(runtime, attempt_sink):
     先命中的引用類把機敏類整段跳過，翻出來的 `ok=True` 不代表機敏類看過）。
     模式感知在 `OutputVerifier.verify()` 內部。
 
-    ⚠️ 旗的解析走 `services.agent.health.verifier_mode()`（**唯一讀值點**，含相容舊旗
-    `AGENT_VERIFIER_OBSERVE_ONLY`）——健檢印的與這裡判的必須是同一個答案，
-    ⛔ 不各寫一份解析。
+    ⚠️ 旗的解析走 `services.agent.health.verifier_mode()`（**唯一讀值點**，⛔ 已不含舊旗
+    `AGENT_VERIFIER_OBSERVE_ONLY` 的映射，2026-09-10 除役）——健檢印的與這裡判的必須
+    是同一個答案，⛔ 不各寫一份解析。舊旗若仍被設定，本函式在啟動時印一次警告並忽略。
 
     守衛（F3，看**解析後**的 mode，⛔ 不綁舊 env 字面）：
       * `observe_only`（連機敏類都不擋）配非 mock ⇒ 啟動 raise；
       * `grounding_observe`（引用類觀察、機敏類照擋）配非 mock ⇒ **不阻起**，
         由健檢 `premise.red_flags` 記紅（`health.compute_agent_health`）。
     """
-    from services.agent.health import verifier_mode
+    from services.agent.health import verifier_mode, AGENT_VERIFIER_OBSERVE_ONLY_ENV
+
+    if os.getenv(AGENT_VERIFIER_OBSERVE_ONLY_ENV) is not None:
+        print(
+            f"⚠️ [agent] {AGENT_VERIFIER_OBSERVE_ONLY_ENV} 已無效，請改用 AGENT_VERIFIER_MODE"
+            "（本次啟動已忽略此舊名）",
+            file=sys.stderr,
+        )
 
     mode = verifier_mode()
     runtime.verifier.mode = mode   # 值域外會 raise（`OutputVerifier.mode` setter）
@@ -108,8 +115,7 @@ def _wrap_verifier_observe_only(runtime, attempt_sink):
     if mode == "observe_only":
         if not mock_on:
             raise RuntimeError(
-                "AGENT_VERIFIER_MODE=observe_only（含相容旗 AGENT_VERIFIER_OBSERVE_ONLY）"
-                "只准在 USE_MOCK_JGB_API=true 下使用"
+                "AGENT_VERIFIER_MODE=observe_only 只准在 USE_MOCK_JGB_API=true 下使用"
             )
         print("ℹ️ [agent] AGENT_VERIFIER_MODE=observe_only：Verifier 全類只觀察不擋"
               "（含機敏類；DSP-040 相容旗語義，只准配替身）", file=sys.stderr)

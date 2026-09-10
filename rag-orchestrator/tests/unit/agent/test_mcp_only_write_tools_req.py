@@ -324,22 +324,24 @@ def test_jgb_system_api_fails_loud_when_real_mode_has_no_credential(monkeypatch)
 
 # ---------------------------------------------------------------------------
 # (v) R8：健檢第三支旗 `verifier_observe_only`
+#     2026-09-10 程式整理項目 11：舊名 `AGENT_VERIFIER_OBSERVE_ONLY` 除役、
+#     `verifier_observe_only()` 解析函式已刪除——`verifier_observe_only` 鍵現在
+#     純粹是 `verifier_mode() == "observe_only"` 的衍生值，舊名設了也被忽略。
 # ---------------------------------------------------------------------------
 @pytest.mark.req(_REQ)
-def test_verifier_observe_only_parses_truthy_and_defaults_false(monkeypatch):
+def test_legacy_observe_only_env_is_ignored_by_verifier_mode(monkeypatch):
+    monkeypatch.delenv(health_mod.AGENT_VERIFIER_MODE_ENV, raising=False)
     monkeypatch.delenv(health_mod.AGENT_VERIFIER_OBSERVE_ONLY_ENV, raising=False)
-    assert health_mod.verifier_observe_only() is False
+    assert health_mod.verifier_mode() == "enforce"
     for truthy in ("1", "true", "YES", "On"):
         monkeypatch.setenv(health_mod.AGENT_VERIFIER_OBSERVE_ONLY_ENV, truthy)
-        assert health_mod.verifier_observe_only() is True, truthy
-    for falsy in ("0", "false", "", "  ", "maybe"):
-        monkeypatch.setenv(health_mod.AGENT_VERIFIER_OBSERVE_ONLY_ENV, falsy)
-        assert health_mod.verifier_observe_only() is False, falsy
+        assert health_mod.verifier_mode() == "enforce", truthy
 
 
 @pytest.mark.req(_REQ)
 async def test_health_reports_verifier_observe_only(monkeypatch):
-    """三支旗都印得出來、都 ⛔ 不致紅；`verifier_observe_only` 與 `entry` 無關。"""
+    """三支旗都印得出來、都 ⛔ 不致紅；`verifier_observe_only` 與 `entry` 無關。
+    舊名已除役：單獨設它（未設 `AGENT_VERIFIER_MODE`）⇒ 忽略，鍵值維持 False。"""
     monkeypatch.setattr(health_mod.mcp_facade, "union_specs", lambda reg, stage: [_READ_SPEC])
     monkeypatch.setattr(health_mod.mcp_facade, "mcp_sdk_available", lambda: (True, ""))
     monkeypatch.setattr(health_mod.mcp_facade, "premise_stats", lambda: {})
@@ -347,15 +349,16 @@ async def test_health_reports_verifier_observe_only(monkeypatch):
     monkeypatch.setattr(health_mod, "_check_kb_reachable", _fake_kb_ok)
     monkeypatch.setattr(health_mod, "_check_agent_scope_ready", _fake_scope_ok)
     monkeypatch.setenv("USE_MOCK_JGB_API", "true")
+    monkeypatch.delenv(health_mod.AGENT_VERIFIER_MODE_ENV, raising=False)
 
     monkeypatch.setenv(health_mod.AGENT_VERIFIER_OBSERVE_ONLY_ENV, "1")
     out = await health_mod.compute_agent_health(
         registry=_registry(write_tools_enabled=True), get_kb_pool=None, stage="M1")
-    assert out["checks"]["verifier_observe_only"] is True
+    assert out["checks"]["verifier_observe_only"] is False
     assert out["status"] == "ok", "⛔ 這支旗不致紅（它是組態事實，不是故障）"
 
-    # 正對照組：關掉就印 False ⇒ 上面的 True 不是硬編的
-    monkeypatch.delenv(health_mod.AGENT_VERIFIER_OBSERVE_ONLY_ENV, raising=False)
+    # 正對照組：正式參數明示 observe_only ⇒ 鍵才會是 True（證明上面的 False 不是硬編的）
+    monkeypatch.setenv(health_mod.AGENT_VERIFIER_MODE_ENV, "observe_only")
     out = await health_mod.compute_agent_health(
         registry=_registry(write_tools_enabled=True), get_kb_pool=None, stage="M1")
-    assert out["checks"]["verifier_observe_only"] is False
+    assert out["checks"]["verifier_observe_only"] is True

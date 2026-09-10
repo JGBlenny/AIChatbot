@@ -282,7 +282,6 @@ services:
       UVICORN_WORKERS: ${UVICORN_WORKERS:-4}                       # /mcp 用 agent.turn 須 1（MCP session 行程內；W1）
       AGENT_WRITE_TOOLS_ENABLED: ${AGENT_WRITE_TOOLS_ENABLED:-false} # jgb2.action.* 可見＝此旗 AND stage（DSP-038）
       AGENT_VERIFIER_MODE: ${AGENT_VERIFIER_MODE:-enforce}          # W6-b3／DSP-040 正式參數：enforce｜grounding_observe（引用類只記錄、極性與機敏類照擋；demo 值）｜observe_only（全類只記錄，只准配 USE_MOCK_JGB_API=true，否則啟動 raise）
-      AGENT_VERIFIER_OBSERVE_ONLY: ${AGENT_VERIFIER_OBSERVE_ONLY:-false} # 相容旗（一版後移除）：truthy ⇒ 解析成 observe_only；AGENT_VERIFIER_MODE 有設時它說了不算
       AGENT_BUDGET_DEADLINE_S: ${AGENT_BUDGET_DEADLINE_S:-20}       # demo 建議 45（rewrites=2 路徑 >20 s）
       AGENT_TURN_TIMEOUT_S: ${AGENT_TURN_TIMEOUT_S:-30}             # demo 建議 60；line-bot 逾時 ≥60
       AGENT_BUDGET_REWRITES: ${AGENT_BUDGET_REWRITES:-2}            # ⛔ demo 不設 0（探針量測組態）

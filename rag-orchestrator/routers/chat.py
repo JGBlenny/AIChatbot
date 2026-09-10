@@ -4511,7 +4511,7 @@ async def _handle_api_call(
             await cache_service.save_conversation(
                 session_id=request.session_id,
                 user_id=request.user_id,
-                user_role=request.user_role,
+                user_role=request.target_user,
                 question=request.message,
                 answer=formatted_response,
                 related_kb_ids=[best_knowledge['id']],
@@ -4680,12 +4680,6 @@ class VendorChatRequest(BaseModel):
     # 🆕 JGB 系統身份編號（API 資料權限過濾用，與 target_user 知識過濾用途分離）
     role_id: Optional[str] = Field(None, description="JGB 系統角色編號（資料權限過濾用）")
 
-    # ⚠️ 舊欄位（向後兼容，已廢棄，將於 2026-03 移除）
-    user_role: Optional[str] = Field(
-        None,
-        description="[已廢棄，將於 2026-03 移除] 請使用 target_user 替代"
-    )
-
     session_id: Optional[str] = Field(None, description="會話 ID（用於追蹤）")
     user_id: Optional[str] = Field(None, description="使用者 ID（租客 ID 或客服 ID）")
     top_k: int = Field(5, description="返回知識數量", ge=1, le=10)
@@ -4706,29 +4700,15 @@ class VendorChatRequest(BaseModel):
         None, description="直達對話面向鍵（如 repair）；未命中 registry 時忽略、照常走既有管線")
 
     @validator('target_user', always=True)
-    def migrate_user_role(cls, v, values):
-        """自動從舊欄位遷移到新欄位"""
+    def validate_target_user(cls, v, values):
+        """驗證 target_user，未提供時依 mode 給預設值"""
         if v:
-            # 已提供新欄位，驗證並返回
             if v not in TARGET_USER_ROLES:
                 raise ValueError(f"target_user 必須是 {TARGET_USER_ROLES} 之一，當前值：{v}")
             return v
 
-        # 向後兼容：從舊欄位轉換
-        old_user_role = values.get('user_role')
-        mode = values.get('mode', 'b2c')
-
-        if old_user_role:
-            print(f"⚠️  [DEPRECATED] 使用了已廢棄的 user_role 參數：'{old_user_role}'，請改用 target_user（將於 2026-03 移除）")
-            # 舊值轉換邏輯
-            if old_user_role == 'staff':
-                return 'property_manager'  # B2B 默認為物管
-            elif old_user_role == 'customer':
-                return 'tenant'  # B2C 默認為租客
-            elif old_user_role in TARGET_USER_ROLES:
-                return old_user_role  # 已經是新格式
-
         # 默認值：根據 mode 判斷
+        mode = values.get('mode', 'b2c')
         if mode in ['b2b', 'customer_service']:
             return 'property_manager'
         else:

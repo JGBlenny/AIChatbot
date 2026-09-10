@@ -31,7 +31,8 @@
    相依，這裡只是防禦性守衛；否 ⇒ `"unavailable (DSP-014)"`，⛔ 不算紅
    （`/mcp` 服務層閘仍生效，只是工具面未掛載）。
 5b. **三支旗標（DSP-038-1／S-5／R8，皆為觀測值、⛔ 不致紅）**：
-   `verifier_mode`＝`AGENT_VERIFIER_MODE`（見 `verifier_mode()`，含相容舊旗的解析）、
+   `verifier_mode`＝`AGENT_VERIFIER_MODE`（見 `verifier_mode()`；舊旗
+   `AGENT_VERIFIER_OBSERVE_ONLY` 已除役、不再參與解析）、
    `verifier_observe_only`＝`verifier_mode() == "observe_only"`（**保留鍵**，煙囪 §20-5 有斷言）；
    ⚠️ `grounding_observe` 配非 mock ⇒ `premise.red_flags` 多一支
    `verifier_grounding_observe_on_real_api`（**致紅**、⛔ 不阻起）；
@@ -86,28 +87,10 @@ _PROBE_KB_ID = "0"
 USE_MOCK_JGB_API_ENV = "USE_MOCK_JGB_API"
 
 
-#: Verifier「只觀察不擋」對照實驗旗（R8）。⚠️ **⛔ 非正式組態**：開著代表引用類
-#: 拒因只被記錄、不觸發改寫／轉人，⇒ 這台機器輸出的答案沒有經過完整的尺。
-#: `app.py:_wrap_verifier_observe_only` 讀的就是本函式（**唯一讀值點**，
-#: ⛔ 不在兩邊各寫一份 truthy 解析——健檢說 false、實際卻在觀察模式，比沒有這個旗更糟）。
+#: Verifier「只觀察不擋」對照實驗舊旗（R8）。⛔ **已除役（2026-09-10）**：不再有任何
+#: 讀值點會依它決定行為，僅留這個名字給 `app.py:_wrap_verifier_observe_only` 在啟動時
+#: 偵測「是否誤設」並印一次警告——設了也不再被映射成 `observe_only`。
 AGENT_VERIFIER_OBSERVE_ONLY_ENV = "AGENT_VERIFIER_OBSERVE_ONLY"
-_OBSERVE_TRUTHY = frozenset({"1", "true", "yes", "on"})
-
-
-def verifier_observe_only() -> bool:
-    """`AGENT_VERIFIER_OBSERVE_ONLY` ∈ {1,true,yes,on}（不分大小寫）⇒ True；
-    未設或其他值 ⇒ **False**（fail-closed＝尺照常擋）。
-
-    ⚠️ 這是**相容旗**的原始解析（W6-b3 起只被 `verifier_mode()` 讀）——要判「這台
-    機器實際跑在哪個模式」一律問 `verifier_mode()`，⛔ 不要直接讀這一支：
-    `AGENT_VERIFIER_MODE` 明示時它說了不算。
-
-    ⚠️ 與 `entry`／`write_tools_enabled` 無關：它是 Verifier 的行為旗，
-    ⛔ 不參與任何可見性或授權判定。
-    """
-    return (os.getenv(AGENT_VERIFIER_OBSERVE_ONLY_ENV) or "").strip().lower() in (
-        _OBSERVE_TRUTHY
-    )
 
 
 #: W6-b3（DSP-040 正式參數）：Verifier 模式旗。**唯一讀值點＝`verifier_mode()`**——
@@ -125,29 +108,24 @@ def verifier_mode() -> str:
 
     優先序（⛔ 不可對調）：
       1. `AGENT_VERIFIER_MODE` 明示且在值域內 ⇒ 用它；
-      2. 值域外的字（打錯字）⇒ **`enforce`**＋stderr 警告：失敗方向必須是「尺照常擋」，
-         ⛔ 不得靜默落回某個觀察模式；
-      3. 沒設 ⇒ 相容舊旗 `AGENT_VERIFIER_OBSERVE_ONLY` truthy ⇒ `observe_only`；
-      4. 都沒有 ⇒ `enforce`。
+      2. 值域外的字（打錯字）或沒設 ⇒ **`enforce`**＋（打錯字時）stderr 警告：
+         失敗方向必須是「尺照常擋」。
 
-    ⚠️ 相容旗**一版後移除**（runbook §20-2）。兩個旗同時設而互相矛盾時以
-    `AGENT_VERIFIER_MODE` 為準——它是正式參數。
+    ⚠️ 舊旗 `AGENT_VERIFIER_OBSERVE_ONLY` 已於 2026-09-10 除役：本函式 ⛔ 不再讀它、
+    不再映射成 `observe_only`。設了舊名只在 app 啟動時被印一次警告並忽略
+    （見 `app.py:_wrap_verifier_observe_only`），⛔ 不再靜默映射。
     """
     raw = (os.getenv(AGENT_VERIFIER_MODE_ENV) or "").strip().lower()
     if raw in VERIFIER_MODES:
         return raw
     if raw:
-        # 打錯字 ⇒ `enforce`，且**⛔ 不再往下看相容旗**：有人明示過這個參數，
-        # 只是打錯——此時讓舊旗接手會把「我想開 grounding_observe」變成比它更寬的
-        # `observe_only`（連機敏類都不擋）。失敗方向必須是尺照常擋。
+        # 打錯字 ⇒ `enforce`：失敗方向必須是尺照常擋。
         print(
             f"⚠️ [agent] {AGENT_VERIFIER_MODE_ENV}={raw!r} 不在 {VERIFIER_MODES}，"
-            f"退回 {DEFAULT_VERIFIER_MODE}（fail-closed；⛔ 不落回相容旗）",
+            f"退回 {DEFAULT_VERIFIER_MODE}（fail-closed）",
             file=sys.stderr,
         )
         return DEFAULT_VERIFIER_MODE
-    if verifier_observe_only():
-        return "observe_only"
     return DEFAULT_VERIFIER_MODE
 
 

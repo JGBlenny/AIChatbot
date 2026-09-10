@@ -43,10 +43,12 @@ def test_b2b_allows_missing_vendor_id():
 
 
 @pytest.mark.req("testing-traceability:5.5")
-def test_legacy_user_role_migrates_to_target_user():
-    """向後相容：舊欄位 user_role=staff → target_user=property_manager（非 prospect 角色不受售前影響）。"""
-    req = VendorChatRequest(message="hi", mode="b2b", user_role="staff")
+def test_legacy_user_role_field_ignored():
+    """user_role 相容層已移除：欄位被當未知欄位忽略，target_user 只依 mode 給預設值
+    （非 mode 對應的舊值 'customer' 不再生效，證明不是走已刪的遷移邏輯）。"""
+    req = VendorChatRequest(message="hi", mode="b2b", user_role="customer")
     assert req.target_user == "property_manager"
+    assert not hasattr(req, "user_role")
 
 
 @pytest.mark.req("testing-traceability:5.5")

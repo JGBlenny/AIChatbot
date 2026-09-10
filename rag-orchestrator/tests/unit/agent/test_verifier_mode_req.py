@@ -1,7 +1,9 @@
 """unit：`AGENT_VERIFIER_MODE`（W6-b3／DSP-040 正式參數）。
 
-覆蓋（Plan `inputs/plan-walkthrough-fixes-batch3-20260909.md` §2 驗收）：
-- 模式解析三態＋相容舊旗 `AGENT_VERIFIER_OBSERVE_ONLY`＋值域外字（fail-closed 回 enforce）；
+覆蓋（Plan `inputs/plan-walkthrough-fixes-batch3-20260909.md` §2 驗收；
+2026-09-10 程式整理項目 11：舊旗 `AGENT_VERIFIER_OBSERVE_ONLY` 除役，改為
+設了即忽略＋印警告，⛔ 不再映射成 `observe_only`）：
+- 模式解析三態＋舊旗除役後被忽略＋值域外字（fail-closed 回 enforce）；
 - 兩個模組的封閉集合對齊（`health.VERIFIER_MODES` vs `verifier.VERIFIER_MODES`）；
 - 健檢：新鍵 `verifier_mode`、**保留鍵** `verifier_observe_only`（煙囪 §20-5 有斷言）；
 - 守衛：`observe_only`＋非 mock ⇒ 啟動 raise；`grounding_observe`＋非 mock ⇒
@@ -116,19 +118,23 @@ def test_verifier_mode_parses_each_value(monkeypatch, mode):
 
 
 @pytest.mark.parametrize("truthy", ["1", "true", "TRUE", "yes", "on"])
-def test_legacy_observe_only_flag_maps_to_observe_only(monkeypatch, truthy):
-    """相容一版：`AGENT_VERIFIER_OBSERVE_ONLY` truthy ⇒ `observe_only`。"""
+def test_legacy_observe_only_flag_is_ignored(monkeypatch, truthy):
+    """舊旗已除役（2026-09-10）：`AGENT_VERIFIER_OBSERVE_ONLY` 設任何 truthy 值
+    ⇒ `verifier_mode()` ⛔ 不再映射，維持預設 `enforce`。"""
     _clear_flags(monkeypatch)
     monkeypatch.setenv(health_mod.AGENT_VERIFIER_OBSERVE_ONLY_ENV, truthy)
-    assert health_mod.verifier_mode() == "observe_only"
+    assert health_mod.verifier_mode() == "enforce"
 
 
-def test_explicit_mode_wins_over_legacy_flag(monkeypatch):
-    """兩旗矛盾時以**正式參數**為準（⛔ 不是「哪個比較寬鬆就聽哪個」）。"""
+def test_explicit_mode_ignores_legacy_flag_either_way(monkeypatch):
+    """正式參數是唯一讀值點：無論舊旗設不設、設什麼，只要 `AGENT_VERIFIER_MODE`
+    明示就照它走（⛔ 舊旗不再有任何影響力）。"""
     _clear_flags(monkeypatch)
     monkeypatch.setenv(health_mod.AGENT_VERIFIER_OBSERVE_ONLY_ENV, "true")
     monkeypatch.setenv(health_mod.AGENT_VERIFIER_MODE_ENV, "enforce")
     assert health_mod.verifier_mode() == "enforce"
+    monkeypatch.setenv(health_mod.AGENT_VERIFIER_MODE_ENV, "observe_only")
+    assert health_mod.verifier_mode() == "observe_only"
 
 
 def test_unknown_mode_value_falls_back_to_enforce(monkeypatch):
@@ -137,7 +143,7 @@ def test_unknown_mode_value_falls_back_to_enforce(monkeypatch):
     _clear_flags(monkeypatch)
     monkeypatch.setenv(health_mod.AGENT_VERIFIER_MODE_ENV, "groundig_observe")
     assert health_mod.verifier_mode() == "enforce"
-    # 正對照：打錯字**不會**讓相容旗接手放寬。
+    # 正對照：打錯字**不會**讓已除役的舊旗接手放寬（舊旗本來就不再讀值）。
     monkeypatch.setenv(health_mod.AGENT_VERIFIER_OBSERVE_ONLY_ENV, "true")
     assert health_mod.verifier_mode() == "enforce"
 
@@ -197,16 +203,19 @@ async def _async_value(value):
 
 @pytest.mark.asyncio
 async def test_health_reports_mode_and_keeps_legacy_key(monkeypatch):
-    """新鍵 `verifier_mode`；**舊鍵 `verifier_observe_only` 保留**（煙囪 §20-5 斷言它）。"""
+    """新鍵 `verifier_mode`；**舊鍵 `verifier_observe_only` 保留**（煙囪 §20-5 斷言它）
+    但它現在純粹是 `verifier_mode() == "observe_only"` 的衍生值——舊 env 旗
+    `AGENT_VERIFIER_OBSERVE_ONLY` 已除役、不再映射（設了也被忽略）。"""
     out = await _health(monkeypatch, AGENT_VERIFIER_MODE="grounding_observe",
                         AGENT_VERIFIER_OBSERVE_ONLY=None, USE_MOCK_JGB_API="true")
     assert out["checks"]["verifier_mode"] == "grounding_observe"
     assert out["checks"]["verifier_observe_only"] is False
 
+    # 舊名 truthy 但 AGENT_VERIFIER_MODE 未設 ⇒ 忽略、落回預設 enforce（⛔ 不再映射）。
     out = await _health(monkeypatch, AGENT_VERIFIER_MODE=None,
                         AGENT_VERIFIER_OBSERVE_ONLY="true", USE_MOCK_JGB_API="true")
-    assert out["checks"]["verifier_mode"] == "observe_only"
-    assert out["checks"]["verifier_observe_only"] is True
+    assert out["checks"]["verifier_mode"] == "enforce"
+    assert out["checks"]["verifier_observe_only"] is False
 
     out = await _health(monkeypatch, AGENT_VERIFIER_MODE=None,
                         AGENT_VERIFIER_OBSERVE_ONLY=None, USE_MOCK_JGB_API="true")
@@ -259,17 +268,37 @@ def test_observe_only_requires_mock_jgb_api(monkeypatch):
     with pytest.raises(RuntimeError):
         app_mod._wrap_verifier_observe_only(runtime, None)
 
-    # 相容旗走同一條守衛（它解析成同一個 mode）。
+    # 舊旗已除役：單獨設它（未設正式參數）⇒ 忽略、落回 enforce，⛔ 不再觸發這條守衛
+    # （即使非 mock），只印警告。
     _clear_flags(monkeypatch)
     monkeypatch.setenv(health_mod.AGENT_VERIFIER_OBSERVE_ONLY_ENV, "true")
-    with pytest.raises(RuntimeError):
-        app_mod._wrap_verifier_observe_only(_StubRuntime(), None)
+    monkeypatch.setenv("USE_MOCK_JGB_API", "false")
+    runtime = _StubRuntime()
+    app_mod._wrap_verifier_observe_only(runtime, None)   # ⛔ 不 raise
+    assert runtime.verifier.mode == "enforce"
 
-    # 正對照：配替身 ⇒ 不 raise，且模式**交到 Verifier 手上**。
+    # 正對照：正式參數配替身 ⇒ 不 raise，且模式**交到 Verifier 手上**。
+    _clear_flags(monkeypatch)
+    monkeypatch.setenv(health_mod.AGENT_VERIFIER_MODE_ENV, "observe_only")
     monkeypatch.setenv("USE_MOCK_JGB_API", "true")
     runtime = _StubRuntime()
     app_mod._wrap_verifier_observe_only(runtime, None)
     assert runtime.verifier.mode == "observe_only"
+
+
+def test_legacy_flag_prints_deprecation_warning_and_is_ignored(monkeypatch, capsys):
+    """設了舊名 ⇒ 啟動時印一行警告並忽略（⛔ 不再靜默映射）。"""
+    import app as app_mod
+
+    _clear_flags(monkeypatch)
+    monkeypatch.setenv(health_mod.AGENT_VERIFIER_OBSERVE_ONLY_ENV, "true")
+    monkeypatch.setenv("USE_MOCK_JGB_API", "true")
+    runtime = _StubRuntime()
+    app_mod._wrap_verifier_observe_only(runtime, None)
+    assert runtime.verifier.mode == "enforce"
+    err = capsys.readouterr().err
+    assert "AGENT_VERIFIER_OBSERVE_ONLY" in err
+    assert "AGENT_VERIFIER_MODE" in err
 
 
 def test_grounding_observe_does_not_block_startup_even_on_real_api(monkeypatch):
