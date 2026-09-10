@@ -119,7 +119,7 @@ def test_rules_file_declares_both_classes():
     加了鍵也讀不到，而那個失敗方向是「閘悄悄沒開」。這條把「表在不在」與「表咬不咬」
     分開報，不然第 1 節全紅時看不出是規則沒載到還是判定寫錯。"""
     rules = VerifierRules.load(_RULES_PATH)
-    assert rules.version == "1.6.0"
+    assert rules.version == "1.6.1"
     assert rules.document_turn_forbid_terms is not None, (
         "規則檔缺 `document_turn_forbid_terms`，或 `VerifierRules` 沒宣告這個欄位"
     )
@@ -143,6 +143,10 @@ _DONE_CLAIMS: list[tuple[str, Optional[str]]] = [
 _WRITE_OFFERS: list[tuple[str, Optional[str]]] = [
     ("要我把這張憑證的資料存為系統帳單並匯入嗎？", None),
     ("要不要我幫您建立一張帳單？", None),
+    ("請提供要掛到的本月帳單編號或指定戶別，我就幫您掛上。",   # 1.6.1：改寫後的承諾句式（line-bot #3 第二版）
+     "後台流程說明：請提供要掛到的本月帳單編號或指定戶別，我就幫您掛上，是業者端的用語。"),
+    ("收到編號後我會把憑證附加到那張帳單。",
+     "後台流程說明：收到編號後我會把憑證附加到那張帳單，是業者端的用語。"),
     ("要我把附件上傳到那筆修繕單嗎？", None),
     ("要不要我把這張收據附加到帳單上？", None),
     ("需要我把它匯入系統嗎？", "後台流程說明：需要我把它匯入系統嗎，是業者端的確認用語。"),
