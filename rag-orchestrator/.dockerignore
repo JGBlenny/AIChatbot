@@ -1,0 +1,23 @@
+# ⛔ 2026-09-11 新增：先前**沒有** .dockerignore，`COPY . .` 把 gitignore 掉的
+#    一次性測試檔與備份一併打進正式映像（實測 /app/test_13_6_to_13_8.py 等 4 支）。
+#    ⚠️ 這類「不在版控卻在映像裡」的東西，靜態分析與 git 都看不見。
+#    ⚠️ build context 是 ./rag-orchestrator ⇒ 本檔必須放這裡，⛔ 不是 repo 根。
+.git
+__pycache__/
+**/__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.coverage
+.coverage.json
+tests/.coverage*
+
+# 一次性測試與備份（gitignore 忽略，⛔ 也不該進 image）
+test_*.py
+**/*.backup
+**/*.bak
+**/*.orig
+
+# 暫存與產物
+.probe-run*/
+output/
