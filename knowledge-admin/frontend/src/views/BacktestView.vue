@@ -123,7 +123,8 @@ export default {
               </ul>
             </div>
             <p class="note">
-              <strong>注意：</strong>目前可透過「迴圈管理」Tab 執行完整迭代來驗證知識改善效果。
+              <strong>注意：</strong>迴圈執行機制已於 2026-09 移除（見「迴圈管理」Tab 說明），
+              本頁現僅供檢視既有迴圈紀錄與審核既有生成知識。
             </p>
           </div>
         </div>

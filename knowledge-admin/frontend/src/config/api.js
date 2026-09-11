@@ -72,20 +72,11 @@ export const API_ENDPOINTS = {
   platformSOPGroups: `${API_BASE_URL}/rag-api/v1/platform/sop/groups`,
   platformSOPTemplates: `${API_BASE_URL}/rag-api/v1/platform/sop/templates`,
 
-  // Loop 相關
-  loopStart: `${API_BASE_URL}/rag-api/v1/loops/start`,
+  // Loop 相關（⚠️ 執行面端點已於 2026-09 隨知識完善迴圈執行機制移除，僅留查詢面）
   loopList: `${API_BASE_URL}/rag-api/v1/loops/`,
   loopById: (loopId) => `${API_BASE_URL}/rag-api/v1/loops/${loopId}`,
-  loopStatus: (loopId) => `${API_BASE_URL}/rag-api/v1/loops/${loopId}/status`,
   loopIterations: (loopId) => `${API_BASE_URL}/rag-api/v1/loops/${loopId}/iterations`,
   loopIterationResults: (loopId, iteration) => `${API_BASE_URL}/rag-api/v1/loops/${loopId}/iterations/${iteration}/backtest-results`,
-  loopExecuteIteration: (loopId) => `${API_BASE_URL}/rag-api/v1/loops/${loopId}/execute-iteration`,
-  loopValidate: (loopId) => `${API_BASE_URL}/rag-api/v1/loops/${loopId}/validate`,
-  loopCompleteBatch: (loopId) => `${API_BASE_URL}/rag-api/v1/loops/${loopId}/complete-batch`,
-  loopStartNextBatch: `${API_BASE_URL}/rag-api/v1/loops/start-next-batch`,
-  loopPause: (loopId) => `${API_BASE_URL}/rag-api/v1/loops/${loopId}/pause`,
-  loopResume: (loopId) => `${API_BASE_URL}/rag-api/v1/loops/${loopId}/resume`,
-  loopCancel: (loopId) => `${API_BASE_URL}/rag-api/v1/loops/${loopId}/cancel`,
 
   // System Health 相關
   pipelineHealth: `${API_BASE_URL}/rag-api/v1/system/pipeline-health`,
