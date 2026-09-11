@@ -1,7 +1,8 @@
 # Testing（程式碼測試）＋ 文件追溯 Steering
 
-> 由 spec **testing-traceability** 沉澱（R9.3）。本軌道評估「程式碼行為正確性與文件一致性」，
-> 與 [testing.md](./testing.md)「答案品質回測迴圈」**並存互補、不互相取代**。
+> 由 spec **testing-traceability** 沉澱（R9.3）。本軌道評估「程式碼行為正確性與文件一致性」。
+> ⚠️ 答案品質回測那一軌（原 `testing.md`）連同 `knowledge_completion_loop` 的執行機制已於
+> 2026-09-11 整批刪除；新的回測走 skill，尚未落地。
 
 ## 一、執行環境（canonical）
 
@@ -18,12 +19,12 @@
 - **integration**：真實 DB／跨模組 → 預設略過，`RUN_INTEGRATION=1` 才跑。
 - **e2e**：需整服務（DB/embedding/semantic-model/LLM）→ 預設略過，`RUN_E2E=1` 才跑。
   ⚠️ **2026-09-11 舊鏈退役**：原本的主要對象 `POST /api/v1/message`／SSE 已刪除
-  （`routers/agent_entry.router` 未掛載於 `app.py`）；`rag-orchestrator/tests/e2e/`
-  下仍有多個測試檔打這個已不存在的端點（例如 `api/test_message_e2e_req.py`、
-  `chat_flow/test_trigger_manual_flow_e2e_req.py`），這些檔案本身尚未跟進調整——
-  ⛔ 此為既知缺口，非本輪處理範圍（本輪只動文件，不動 `.py`）。新線 `/mcp` 目前
-  **尚無 e2e 層測試**覆蓋（只有 `tests/integration/agent/test_mcp_facade_req.py`
-  等 integration 層驗收）。
+  （`routers/agent_entry.router` 未掛載於 `app.py`）。打該端點的 12 個 e2e 檔
+  （67 個 test／2670 行，涵蓋五域對話面向、跨域切換、grounding 降級、冪等性）
+  已於 2026-09-11 一併刪除——它們全數恆紅，留著只會讓 `make test-e2e` 無法當閘用。
+  ⇒ **新線 `/mcp` 目前完全沒有 e2e 層覆蓋**（只有 `tests/integration/agent/test_mcp_facade_req.py`
+  等 integration 層驗收）；`tests/e2e/` 現在只剩 `api/test_real_api_contract_smoke_req.py`。
+  ⛔ 這是真的覆蓋缺口，不是已知債的記帳——重建時改打 `/mcp agent.turn`。
 - 既有測試的分層**集中於 `tests/conftest.py`** 以 `pytest_collection_modifyitems` 指派（不逐檔改、零行為變動）；
   分層依據＝離線實跑結果。**新測試一律用顯式 marker**：`@pytest.mark.unit/integration/e2e`。
 - 真實相依層在無相依時**標示略過（skipped）而非失敗**，避免假綠燈（R4.5）。

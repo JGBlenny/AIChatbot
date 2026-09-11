@@ -29,7 +29,7 @@ def _write(path, text):
 
 @pytest.fixture
 def spec_tree(tmp_path):
-    """建立 specs/ 含一個 spec、兩條需求（1.1, 1.2）。"""
+    """建立 specs/ 含一個 spec、兩條需求（1.1, 1.2）——舊式行內形。"""
     req = """# 需求
 
 #### 驗收條件
@@ -40,10 +40,80 @@ def spec_tree(tmp_path):
     return tmp_path
 
 
+@pytest.fixture
+def real_shape_spec_tree(tmp_path):
+    """⚠️ 逐字沿用線上 requirements.md 的真實形狀。
+
+    ⛔ 不得改成「剛好符合正規式」的合成格式：本檔的 fixture 曾自創
+    `1.1 系統 shall ...` 這種真實檔案裡不存在的行內形，於是測試恆綠、
+    而 `make trace`／CI 的追溯閘實際解析到 0 條需求、把 2083 支測試
+    全判成孤兒。修改本 fixture 前先對一份真的 requirements.md。
+    """
+    req = """# 需求規格：demo
+
+## 已拍板決策
+1. 這是決策清單，⛔ 不是驗收條件，不得被算成需求 id。
+2. 同上。
+
+## 需求
+
+### Requirement 1：意圖進場
+#### 驗收標準（EARS）
+1. WHEN 條件 A，THE SYSTEM SHALL 行為 A。
+2. WHEN 條件 B，THE SYSTEM SHALL 行為 B。
+
+### Requirement 2：槽位預填
+#### 驗收標準（EARS）
+1. WHEN 條件 C，THE SYSTEM SHALL 行為 C。
+"""
+    bullet = """# 需求規格：bullet
+
+## Requirement 4：Mock 保真度
+**背景**：散文段落，⛔ 不是驗收條件。
+
+- 4.1 WHEN 條件 A，THEN SHALL 行為 A。
+- 4.2 條件 B SHALL 行為 B。
+"""
+    r_style = """# 需求規格：rstyle
+
+## R1（provenance：NECESSARY）｜業主裁定：APPROVE
+內文。
+
+## R2（provenance：SUPPORTED）｜業主裁定：APPROVE
+內文。
+"""
+    _write(tmp_path / "specs" / "demo" / "requirements.md", req)
+    _write(tmp_path / "specs" / "rstyle" / "requirements.md", r_style)
+    _write(tmp_path / "specs" / "bullet" / "requirements.md", bullet)
+    return tmp_path
+
+
 @pytest.mark.req("testing-traceability:8.1")
 def test_scan_requirements_parses_numeric_ids(spec_tree):
     reqs = scan_requirements(spec_tree / "specs")
     assert reqs == {"demo": ["1.1", "1.2"]}
+
+
+@pytest.mark.req("testing-traceability:8.1")
+def test_scan_requirements_parses_real_requirement_heading_shape(real_shape_spec_tree):
+    """真實形狀：`### Requirement N` ＋ `#### 驗收標準（EARS）` 底下的編號項。"""
+    reqs = scan_requirements(real_shape_spec_tree / "specs")
+    assert reqs["demo"] == ["1", "1.1", "1.2", "2", "2.1"]
+
+
+@pytest.mark.req("testing-traceability:8.1")
+def test_scan_requirements_ignores_numbered_lists_outside_criteria(real_shape_spec_tree):
+    """`## 已拍板決策` 底下的 1. 2. ⛔ 不得被算成驗收條件。"""
+    reqs = scan_requirements(real_shape_spec_tree / "specs")
+    assert "1.1" in reqs["demo"]          # 正對照：真的驗收條件有被收
+    assert reqs["demo"].count("1.1") == 1  # 決策清單沒有汙染
+
+
+@pytest.mark.req("testing-traceability:8.1")
+def test_scan_requirements_parses_r_style_headings(real_shape_spec_tree):
+    """`## RN` 標題形（routing-authority-model 等）⇒ id "N"。"""
+    reqs = scan_requirements(real_shape_spec_tree / "specs")
+    assert reqs["rstyle"] == ["1", "2"]
 
 
 @pytest.mark.req("testing-traceability:6.1")
@@ -161,3 +231,15 @@ def test_to_markdown_and_to_json_and_gap_count():
     assert "demo:1.1" in md
     # JSON 可序列化
     json.dumps(js, ensure_ascii=False)
+
+
+@pytest.mark.req("testing-traceability:8.1")
+def test_scan_requirements_parses_bullet_form_ids(real_shape_spec_tree):
+    """條列式明寫完整 id：`- 4.1 WHEN ...`（conversational-routing-execution 等 4 份用這形狀）。
+
+    ⚠️ 這條是第二次補漏才加的：首版只支援 `#### 驗收標準` 底下的編號項，
+    於是 `conversational-routing-execution:4.4` 之類仍被判成失效引用。
+    ⛔ 新增 requirements.md 形狀時要先在這裡加一條，不要只改掃描器。
+    """
+    reqs = scan_requirements(real_shape_spec_tree / "specs")
+    assert reqs["bullet"] == ["4", "4.1", "4.2"]

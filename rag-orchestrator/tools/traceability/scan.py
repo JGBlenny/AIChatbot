@@ -26,8 +26,19 @@ from pathlib import Path
 _RAG_ROOT = Path(__file__).resolve().parents[2]
 _REPO_ROOT = _RAG_ROOT.parent
 
-# 規格需求 ID 行（如 "5.2 對話引擎..."）；canonical 引用 "spec:id"（如 "a:1.1"）。
+# 規格需求 ID。實際 requirements.md 有三種形狀，三種都要解析：
+#   ① "### Requirement N：標題" + "#### 驗收標準（EARS）" 底下的編號項 ⇒ id "N" 與 "N.M"
+#   ② "## RN（...）" 標題（routing-authority-model 等）⇒ id "N"
+#   ③ 行內 "N.M 系統 shall ..."（舊式，保留相容）
+# canonical 引用 "spec:id"（如 "a:1.1"）。
+_REQ_HEADING = re.compile(r"^#{2,4}\s*(?:Requirement|需求)\s*(\d+)\b")
+_R_HEADING = re.compile(r"^#{2,4}\s*R(\d+)\b")
+_CRITERIA_HEADING = re.compile(r"^#{2,6}\s*[^\n]*驗收(?:標準|條件)")
+_ANY_HEADING = re.compile(r"^#{1,6}\s")
+_CRITERION_ITEM = re.compile(r"^(\d+)\.\s+\S")
 _REQ_LINE = re.compile(r"^(\d+\.\d+)\s+\S")
+# ④ 條列式明寫完整 id："- 4.1 WHEN ..."（conversational-routing-execution 等 4 份）
+_BULLET_REQ_LINE = re.compile(r"^[-*+]\s+(\d+\.\d+)\s+\S")
 _CANON_REF = re.compile(r"\b([A-Za-z][\w-]+):(\d+\.\d+)\b")
 # 文件標註：<!-- tested-by: spec:id[, spec:id ...] [behavior="..."] -->
 _TESTED_BY = re.compile(
@@ -132,10 +143,27 @@ def scan_requirements(specs_dir: str | os.PathLike) -> dict[str, list[str]]:
         if not (spec_path.is_dir() and req_file.exists()):
             continue
         ids: list[str] = []
-        for line in req_file.read_text(encoding="utf-8").splitlines():
-            m = _REQ_LINE.match(line.strip())
+        cur_req: str | None = None
+        in_criteria = False
+        for raw in req_file.read_text(encoding="utf-8").splitlines():
+            line = raw.strip()
+            if _ANY_HEADING.match(line):
+                m = _REQ_HEADING.match(line) or _R_HEADING.match(line)
+                if m:
+                    cur_req = m.group(1)
+                    ids.append(cur_req)
+                    in_criteria = False
+                else:
+                    in_criteria = bool(_CRITERIA_HEADING.match(line))
+                continue
+            m = _REQ_LINE.match(line) or _BULLET_REQ_LINE.match(line)
             if m:
                 ids.append(m.group(1))
+                continue
+            if in_criteria and cur_req:
+                m = _CRITERION_ITEM.match(line)
+                if m:
+                    ids.append(f"{cur_req}.{m.group(1)}")
         # 去重保序
         seen: set[str] = set()
         result[spec_path.name] = [x for x in ids if not (x in seen or seen.add(x))]

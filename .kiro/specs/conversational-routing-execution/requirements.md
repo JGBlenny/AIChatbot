@@ -219,7 +219,7 @@ Knowledge Evidence（內容本身）
 
 ## Requirement 7：測試成本控制
 
-**背景**：`.kiro/steering/testing.md` 已有「控制成本：避免大規模執行產生過高 API 成本」原則。
+**背景**：避免大規模執行產生過高 API 成本。
 現況 integration 層的 brain 與合成 LLM 已腳本化（183 測試 36 秒、零 OpenAI 呼叫）。
 
 - 7.1 unit 與 integration 層 SHALL 維持零外部 LLM 呼叫。

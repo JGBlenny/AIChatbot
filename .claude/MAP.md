@@ -287,7 +287,6 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 
 - 產線 | `semantic_model/` | 語意模型的訓練、部署、路由規則與效能分析說明
 - 產線 | `scripts/` | 腳本目錄的使用說明、盤點與稽核報告
-- 產線 | `tests/` | 測試套件的執行說明與資料集說明
 - 產線 | `database/` | migration 體系與 seed 的使用說明
 - 產線 | `data/` | 知識單元格式與業者知識範本說明
 - 產線 | `knowledge-admin/` | 知識後台前端的說明與遷移紀錄
@@ -296,9 +295,8 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 - 產線 | `rag-orchestrator/artifacts/responsibility/README.md` | responsibility 產物說明
 
 ⚠️ 這區是**隨程式走的操作說明**,⛔ 不是產品功能正本 —— 它們回答「這個目錄怎麼用」,
-不回答「系統對使用者做什麼」。⚠️ 其中多份壞引用密度高(`/canon-triage` 的處置清單裡
-`tests/data/README.md`、`tests/integration/README_*.md`、`rag-orchestrator/services/jgb/README.md`
-被列為「整份可能已退休」),⛔ 引用前一律對碼。
+不回答「系統對使用者做什麼」。⚠️ 其中 `rag-orchestrator/services/jgb/README.md` 壞引用密度高
+(`/canon-triage` 列為「整份可能已退休」),⛔ 引用前一律對碼。
 
 ## repo 根目錄 {#repo-root}
 
