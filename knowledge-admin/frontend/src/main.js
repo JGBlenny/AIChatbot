@@ -3,6 +3,8 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import './style.css'
+import './styles/tokens.css'      // 設計 token（值取自現況最高頻，⛔ 不改外觀）
+import './styles/components.css'  // 共用元件樣式；⚠️ scoped 仍勝出，需逐檔刪重複才生效
 import axios from 'axios'
 import permissionDirective from './directives/permission'
 import { useAuthStore } from './stores/auth'

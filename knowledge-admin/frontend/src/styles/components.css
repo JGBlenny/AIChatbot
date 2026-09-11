@@ -1,0 +1,109 @@
+/* ============================================================================
+ * 共用元件樣式（2026-09-11 建立）
+ *
+ * ⛔ **每一條的值都取自現況「最多檔案採用」的那個變體**，⛔ 不是重新設計。
+ * 實測重複情形（50 檔掃描）：
+ *   .btn-primary   19 檔 / 15 種定義      .stat-value   16 檔 / 14 種
+ *   .badge         19 檔 / 13 種          .stat-card    15 檔 / 12 種
+ *   .btn-secondary 17 檔 / 13 種          .modal-content 15 檔 / 12 種
+ *   .form-group    16 檔 /  6 種          .modal-overlay  9 檔 /  6 種
+ *
+ * ⚠️ **加入本檔不會改變任何頁面外觀**——單檔 `<style scoped>` 編譯後帶
+ * `[data-v-xxx]` 屬性選擇器，specificity 高於這裡的裸類別選擇器。
+ * 要讓共用定義生效，必須**逐檔刪掉該檔的重複區塊**；那一步會改變外觀
+ * （因為該檔原本用的是 15 種變體之一），所以分批做、每批 build 對照。
+ * 進度見 styles/README.md。
+ * ========================================================================== */
+
+/* ── 按鈕 ──────────────────────────────────────────────── */
+.btn-primary {
+  background: var(--c-success);
+  color: #fff;
+  border: none;
+  padding: var(--s-2) var(--s-5);
+  border-radius: var(--r-md);
+  cursor: pointer;
+  font-size: var(--f-base);
+}
+.btn-primary:hover { filter: brightness(.95); }
+.btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+
+.btn-secondary {
+  background: #e9ecef;
+  color: #495057;
+  border: none;
+  padding: var(--s-2) var(--s-5);
+  border-radius: var(--r-md);
+  cursor: pointer;
+  font-size: var(--f-base);
+}
+.btn-secondary:hover { filter: brightness(.95); }
+.btn-secondary:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ── 標籤 ──────────────────────────────────────────────── */
+.badge {
+  display: inline-block;
+  padding: var(--s-1) var(--s-3);
+  border-radius: var(--r-pill);
+  font-size: var(--f-sm);
+}
+.badge-easy   { background: var(--c-ok-bg);   color: var(--c-ok-fg); }
+.badge-medium { background: var(--c-warn-bg); color: var(--c-warn-fg); }
+.badge-hard   { background: var(--c-err-bg);  color: var(--c-err-fg); }
+
+/* ── 表單 ──────────────────────────────────────────────── */
+.form-group { margin-bottom: var(--s-6); }
+.form-group > label { display: block; margin-bottom: var(--s-2); font-weight: 600; }
+
+/* ── 彈窗 ──────────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, .5);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000;
+}
+.modal-content {
+  background: var(--c-surface);
+  border-radius: var(--r-lg);
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-2);
+}
+
+/* ── 統計卡 ────────────────────────────────────────────── */
+.stat-card {
+  flex: 1;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--r-lg);
+  padding: var(--s-6);
+}
+.stat-value { font-size: var(--f-xl); font-weight: bold; color: #303133; }
+.stat-label { color: var(--c-text-secondary); font-size: var(--f-base); }
+
+/* ── 空狀態 ────────────────────────────────────────────── */
+.empty-state {
+  text-align: center;
+  padding: var(--s-8) var(--s-6);
+  color: #a0aec0;
+}
+
+/* ── 版面 ──────────────────────────────────────────────── */
+.header-actions { display: flex; gap: var(--s-3); }
+
+/* ── 退役標示（舊鏈退役後統一用這兩個，⛔ 別再各自寫一份）──── */
+.retired-banner {
+  background: #fdecea; border-left: 4px solid #d32f2f;
+  padding: var(--s-4) 14px; margin: 0 0 var(--s-4);
+  font-size: var(--f-sm); line-height: 1.8; color: #8a1c14;
+}
+.retired-notice {
+  background: #fff4e5; border-left: 4px solid #ff9800;
+  padding: var(--s-3) var(--s-4); margin-bottom: var(--s-2);
+  font-size: var(--f-sm); line-height: 1.7; color: #7a4a00;
+  border-radius: var(--r-sm);
+}
+.retired-banner code, .retired-notice code {
+  background: rgba(0, 0, 0, .06); padding: 1px var(--s-1); border-radius: 2px;
+}

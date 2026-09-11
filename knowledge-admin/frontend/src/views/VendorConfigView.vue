@@ -469,11 +469,6 @@ export default {
   font-size: 18px;
 }
 
-.header-actions {
-  display: flex;
-  gap: 10px;
-}
-
 /* 配置網格 */
 .config-grid {
   display: grid;

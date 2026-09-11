@@ -1210,10 +1210,6 @@ export default {
   font-weight: 600;
 }
 
-.badge-easy { background: #d4edda; color: #155724; }
-.badge-medium { background: #fff3cd; color: #856404; }
-.badge-hard { background: #f8d7da; color: #721c24; }
-
 /* 高亮動畫 */
 @keyframes pulse-highlight {
   0%, 100% {

@@ -1621,16 +1621,6 @@ export default {
 
 <style scoped>
 /* ⛔ 2026-09-11 舊對話鏈退役：標示「欄位還在但不生效」的設定 */
-.retired-notice {
-  background: #fff4e5;
-  border-left: 4px solid #ff9800;
-  padding: 10px 12px;
-  margin-bottom: 8px;
-  font-size: 13px;
-  line-height: 1.7;
-  color: #7a4a00;
-  border-radius: 3px;
-}
 .retired-notice code {
   background: rgba(0, 0, 0, 0.06);
   padding: 1px 4px;

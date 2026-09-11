@@ -708,11 +708,6 @@ export default {
   color: #333;
 }
 
-.header-actions {
-  display: flex;
-  gap: 10px;
-}
-
 /* 篩選區域 */
 .filter-section {
   background: white;
@@ -772,11 +767,6 @@ export default {
   margin-bottom: 8px;
 }
 
-.stat-label {
-  color: #666;
-  font-size: 14px;
-}
-
 /* 表格樣式 */
 .scenarios-table {
   background: white;
@@ -815,10 +805,6 @@ td {
   font-size: 12px;
   font-weight: 600;
 }
-
-.badge-easy { background: #d4edda; color: #155724; }
-.badge-medium { background: #fff3cd; color: #856404; }
-.badge-hard { background: #f8d7da; color: #721c24; }
 
 .badge-approved { background: #d4edda; color: #155724; }
 .badge-pending_review { background: #fff3cd; color: #856404; }
@@ -1332,10 +1318,6 @@ td {
   margin-top: 0;
   margin-bottom: 20px;
   color: #333;
-}
-
-.form-group {
-  margin-bottom: 20px;
 }
 
 .form-row {

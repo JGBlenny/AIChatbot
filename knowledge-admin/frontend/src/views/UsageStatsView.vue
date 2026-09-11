@@ -328,7 +328,6 @@ export default {
   margin-bottom: 10px;
 }
 .page-header h2 { margin: 0; font-size: 28px; color: #333; }
-.header-actions { display: flex; gap: 10px; }
 .page-hint { color: #7f8c8d; font-size: 13px; margin: 0 0 20px; }
 .btn {
   padding: 8px 16px; border: none; border-radius: 4px;

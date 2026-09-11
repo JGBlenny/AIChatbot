@@ -542,12 +542,6 @@ export default {
   margin-bottom: 8px;
 }
 
-.stat-value {
-  font-size: 28px;
-  font-weight: bold;
-  color: #303133;
-}
-
 .stat-value.success {
   color: #67C23A;
 }

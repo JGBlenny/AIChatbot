@@ -2001,21 +2001,6 @@ export default {
   padding: 3px 8px;
 }
 
-.badge-medium {
-  background: #fff3cd;
-  color: #856404;
-}
-
-.badge-easy {
-  background: #d4edda;
-  color: #155724;
-}
-
-.badge-hard {
-  background: #f8d7da;
-  color: #721c24;
-}
-
 .btn-success {
   background: #28a745;
   color: white;

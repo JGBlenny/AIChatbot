@@ -2234,10 +2234,6 @@ export default {
   text-decoration: underline;
 }
 
-.form-group {
-  margin-bottom: 20px;
-}
-
 .form-group label {
   display: block;
   margin-bottom: 8px;
@@ -2451,11 +2447,6 @@ export default {
   color: #2E7D32;
   font-size: 14px;
   font-weight: 500;
-}
-
-.header-actions {
-  display: flex;
-  gap: 10px;
 }
 
 .section-header {

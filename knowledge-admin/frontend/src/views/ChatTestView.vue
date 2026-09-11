@@ -804,11 +804,6 @@ export default {
 
 <style scoped>
 /* ⛔ 2026-09-11 舊對話鏈退役橫幅 */
-.retired-banner {
-  background: #fdecea; border-left: 4px solid #d32f2f;
-  padding: 12px 14px; margin: 0 0 12px;
-  font-size: 13px; line-height: 1.8; color: #8a1c14;
-}
 .retired-banner code { background: rgba(0,0,0,.06); padding: 1px 4px; border-radius: 2px; }
 
 .chat-test-view {

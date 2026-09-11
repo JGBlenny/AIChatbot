@@ -384,12 +384,6 @@ export default {
   margin-bottom: 8px;
 }
 
-.stat-value {
-  font-size: 28px;
-  font-weight: bold;
-  color: #303133;
-}
-
 /* 表格樣式 */
 .knowledge-list table {
   width: 100%;

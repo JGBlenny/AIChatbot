@@ -460,10 +460,6 @@ export default {
   font-weight: 600;
 }
 
-.badge-easy { background: #d4edda; color: #155724; }
-.badge-medium { background: #fff3cd; color: #856404; }
-.badge-hard { background: #f8d7da; color: #721c24; }
-
 .keywords-section,
 .notes-section {
   margin: 15px 0;
@@ -574,10 +570,6 @@ export default {
 .review-summary p {
   margin: 0;
   color: #333;
-}
-
-.form-group {
-  margin-bottom: 20px;
 }
 
 .form-row {

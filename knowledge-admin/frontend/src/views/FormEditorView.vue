@@ -862,11 +862,6 @@ export default {
   margin: 0;
 }
 
-.header-actions {
-  display: flex;
-  gap: 10px;
-}
-
 .editor-container {
   display: grid;
   grid-template-columns: 350px 1fr;

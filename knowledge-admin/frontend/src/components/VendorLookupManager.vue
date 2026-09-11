@@ -807,11 +807,6 @@ export default {
   font-size: 18px;
 }
 
-.header-actions {
-  display: flex;
-  gap: 10px;
-}
-
 /* 篩選區 */
 .filter-bar {
   display: flex;
@@ -1035,10 +1030,6 @@ export default {
 }
 
 /* Modal 樣式 */
-.form-group {
-  margin-bottom: 20px;
-}
-
 .form-group label {
   display: block;
   font-weight: 500;
