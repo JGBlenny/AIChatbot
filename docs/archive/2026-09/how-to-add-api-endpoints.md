@@ -1,4 +1,5 @@
 # 如何新增或修改 API Endpoint 選項
+> 📦 **2026-09-11 歸檔（舊鏈退役）：原位置 `docs/guides/api/how-to-add-api-endpoints.md`**——原因：所述動態 API 執行引擎已隨舊 REST 對話鏈於 2026-09-11 退役，見 .claude/DECISIONS.md DSP-046。
 
 **日期**: 2026-01-18
 **適用範圍**: 知識庫動作系統、表單完成後動作

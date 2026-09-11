@@ -1,4 +1,5 @@
 # SOP 流程配置嚴格限制實施
+> 📦 **2026-09-11 歸檔（舊鏈退役）：原位置 `docs/features/sop/implementation/SOP_FLOW_STRICT_VALIDATION_2026-01-26.md`**——原因：services/sop_trigger_handler.py 已隨舊 REST 對話鏈於 2026-09-11 退役，見 .claude/DECISIONS.md DSP-046。
 
 **實施日期**: 2026-01-26
 **狀態**: ✅ 已完成並可用於生產環境

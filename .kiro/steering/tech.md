@@ -62,21 +62,20 @@ AIChatbot (Multi-container Docker Compose)
 ### 分層架構 (RAG Orchestrator)
 ```
 Routers (路由層)
-  ├── chat.py - 聊天對話 API
+  ├── agent.py - /mcp 門面掛載（agentic-mcp-orchestration；prefix 在 router 內）
   ├── knowledge.py - 知識管理 API
-  ├── platform_sop.py - SOP 編排 API
-  ├── forms.py - 表單管理 API
+  ├── forms.py - 表單管理 API（後台 CRUD 仍活，對話填單引擎已退役）
   ├── api_endpoints.py - 外部 API 管理
   ├── lookup.py - Lookup 表管理
   └── ...
+  （⚠️ 2026-09-11 舊鏈退役：`chat.py`／`platform_sop.py` 等 31 個舊 REST 對話鏈
+  路由模組已刪或未掛載，見 `.claude/DECISIONS.md` DSP-046）
 
 Services (服務層)
-  ├── rag_engine.py - RAG 檢索引擎
+  ├── intent_suggestion_engine.py - 意圖建議引擎
   ├── intent_classifier.py - 意圖分類器
   ├── confidence_evaluator.py - 信心度評估器
-  ├── llm_answer_optimizer.py - LLM 答案優化器
-  ├── sop_orchestrator.py - SOP 編排器
-  ├── form_manager.py - 表單管理器
+  ├── services/agent/ - agentic-mcp-orchestration 新線（runtime.py／mcp_facade.py／verifier.py 等，現役核心）
   ├── knowledge_completion_loop/ - 知識完善迴圈
   │   ├── coordinator.py - 迴圈協調器
   │   ├── gap_analyzer.py - 缺口分析器
@@ -182,9 +181,10 @@ Utils (工具層)
 ## 命名慣例
 
 ### 檔案與目錄
-- **服務**: `{service_name}.py` (如 `rag_engine.py`)
-- **路由**: `{resource}.py` (如 `chat.py`, `knowledge.py`)
-- **測試**: `test_{module}.py` (如 `test_rag_engine.py`)
+- **服務**: `{service_name}.py` (如 `intent_suggestion_engine.py`)
+- **路由**: `{resource}.py` (如 `knowledge.py`, `forms.py`)
+- **測試**: `test_{module}_req.py`（`_req` 對應 `@pytest.mark.req(...)` 追溯標記，
+  見 `.kiro/steering/testing-code.md`；如 `tests/unit/security/test_api_key_auth_req.py`）
 - **配置**: `{config_name}_config.py` (如 `deduplication_config.py`)
 
 ### 變數與函數

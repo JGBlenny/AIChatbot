@@ -12,8 +12,15 @@ config:
   elk:
     nodePlacementStrategy: NETWORK_SIMPLEX
 ---
+%% ⚠️ 2026-09-11 舊鏈退役：本圖描繪的是舊 REST 對話鏈的端到端流程
+%% （含下方 `api_call_handler`／表單機／SOP 編排等節點），2026-09-11 隨 31 個
+%% 產品模組刪除。現況架構（agentic-MCP，/mcp 門面 + agent.turn 一次跑完整回合）
+%% 見 docs/architecture/AGENTIC_MCP_ARCHITECTURE.md。本圖保留供理解舊設計脈絡，
+%% ⛔ 不代表現況；對應的 conversation-flow-complete.svg 尚未依此重生（svg 是
+%% 產物，需另跑 mmdc 重新產生，本輪不手改 svg XML）。
+%%
 %% 對話邏輯端到端合併流程圖（單一大圖版）
-%% 來源合併：COMPLETE_CONVERSATION_ARCHITECTURE.md §1–§14 ＋ chat-architecture-overview.md 全景圖
+%% 來源合併：COMPLETE_CONVERSATION_ARCHITECTURE.md §1–§14 ＋ chat-architecture-overview.md 全景圖（皆為舊鏈文件）
 %% 產生：2026-07-16；現況基準＝conversational-repair 收案（646743a）＋ a4421d5
 %% 維護：與上述兩文件同步改；編譯：npx -y @mermaid-js/mermaid-cli -i conversation-flow-complete.mmd -o conversation-flow-complete.svg
 %% 圖例：(( )) 起訖　{ } 決策　⟦R⟧ 就地回應終點（= 回傳用戶，JSON 或 SSE）　虛線＝資料/埋點

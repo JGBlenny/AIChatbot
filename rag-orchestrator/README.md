@@ -1,5 +1,15 @@
 # 🤖 RAG Orchestrator - 智能問答協調器
 
+> ⚠️ **2026-09-11 舊鏈退役（讀者請先看這段）**：本檔「系統概述」「核心功能」
+> 「使用範例」三節描述的是**已刪除**的舊 REST 對話鏈（`/api/v1/message`、
+> `/api/v1/chat/stream` 等，2026-09-11 隨 31 個產品模組一併移除），包含意圖
+> 分類系統、Phase 3 LLM 答案優化、信心度評估等設計——這些**設計理由本身仍有
+> 參考價值**（保留於下方），但**程式已不存在**，⛔ 不要照著這些章節的 curl
+> 範例串接。對話能力現在**只**經 `/mcp` 門面（server-to-server），契約見
+> `docs/api/mcp-facade.md`；架構全貌見 `docs/architecture/AGENTIC_MCP_ARCHITECTURE.md`。
+> 「未釐清問題管理」「Redis 緩存系統」兩節與 API 文件表格中的
+> `/api/v1/unclear-questions*` 端點**仍存活**。
+
 RAG Orchestrator 是 AIChatbot 系統的核心智能問答引擎，負責協調意圖分類、知識檢索、信心度評估等多個服務，提供高品質的自動化客服回答。
 
 ## 📋 目錄
@@ -176,6 +186,10 @@ RAG Orchestrator 是一個基於 FastAPI 的微服務，整合了以下核心能
 
 ### 目錄結構
 
+> ⚠️ **2026-09-11 舊鏈退役**：下面這棵樹是 Phase 3 時期的舊結構，`chat.py`／
+> `rag_engine.py`／`llm_answer_optimizer.py` 已刪除。現況目錄樹請見
+> `.kiro/steering/structure.md`（單一正本，避免多處各自過時）。
+
 ```
 rag-orchestrator/
 ├── app.py                    # FastAPI 主應用
@@ -183,14 +197,12 @@ rag-orchestrator/
 ├── Dockerfile               # Docker 配置
 │
 ├── routers/                 # API 路由
-│   ├── chat.py              # 聊天 API
+│   ├── agent.py              # /mcp 門面掛載（現役）
 │   └── unclear_questions.py # 未釐清問題 API
 │
 ├── services/                # 核心服務
-│   ├── intent_classifier.py      # 意圖分類器
-│   ├── rag_engine.py             # RAG 檢索引擎
+│   ├── agent/                     # agentic-mcp-orchestration 新線（現役核心）
 │   ├── confidence_evaluator.py   # 信心度評估器
-│   ├── llm_answer_optimizer.py   # LLM 答案優化器 (Phase 3) ✨
 │   └── unclear_question_manager.py  # 未釐清問題管理器
 │
 ├── models/                  # 資料模型
@@ -261,15 +273,20 @@ RAG Orchestrator (Port 8100)
 
 ### 主要端點
 
+> ⚠️ **2026-09-11 舊鏈退役**：`/api/v1/message`、`/api/v1/chat/stream`、
+> `/api/v1/conversations`、`/api/v1/conversations/{id}`、
+> `/api/v1/conversations/{id}/feedback` 五支端點**均已刪除**（2026-09-11 砍除舊
+> REST 對話鏈，31 個產品模組隨之移除）。對話能力現在**只**經 `/mcp` 門面
+> （server-to-server，非公開 REST，也不支援瀏覽器直連），契約見
+> `docs/api/mcp-facade.md`。⛔ 下面這行「已移除請改用 xxx」的舊警語**指向的
+> 兩個替代端點自己也已經死了**，勿依此串接：
+>
+> ~~`/api/v1/chat` 端點已於 2025-10-21 移除。請使用 `/api/v1/message` 或
+> `/api/v1/chat/stream` 替代。`~~ ⛔ 上一句是 2025-10-21 的歷史記錄，其推薦的
+> 替代端點也已於 2026-09-11 一併刪除。
+
 | 方法 | 端點 | 說明 |
 |------|------|------|
-| POST | `/api/v1/message` | 多業者聊天 (推薦) |
-| POST | `/api/v1/chat/stream` | 流式聊天 (即時反饋) |
-| GET | `/api/v1/conversations` | 取得對話記錄列表 |
-| GET | `/api/v1/conversations/{id}` | 取得特定對話詳情 |
-| POST | `/api/v1/conversations/{id}/feedback` | 提交反饋 |
-
-> ⚠️ **注意**: `/api/v1/chat` 端點已於 2025-10-21 移除。請使用 `/api/v1/message` 或 `/api/v1/chat/stream` 替代。
 | GET | `/api/v1/unclear-questions` | 取得未釐清問題列表 |
 | GET | `/api/v1/unclear-questions/{id}` | 取得問題詳情 |
 | PUT | `/api/v1/unclear-questions/{id}` | 更新問題狀態 |
@@ -346,7 +363,7 @@ config = {
 
 ---
 
-## 使用範例
+## 使用範例 ⚠️ 已退役（2026-09-11，見檔頭警語——下列 curl 打的是已刪除端點）
 
 ### 1. 基本問答（含 Phase 3 LLM 優化 + 多業者支持）✨
 

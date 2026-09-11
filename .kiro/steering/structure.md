@@ -23,17 +23,15 @@ AIChatbot/
 │   ├── requirements.txt                # Python 依賴
 │   │
 │   ├── routers/                        # API 路由層
-│   │   ├── chat.py                     # 聊天對話（核心）
-│   │   ├── chat_shared.py              # Chat 共用工具
+│   │   ├── agent.py                    # /mcp 門面掛載（agentic-mcp-orchestration；prefix 在 router 內）
 │   │   ├── vendors.py                  # 業者管理
 │   │   ├── knowledge.py                # 知識 CRUD
 │   │   ├── knowledge_generation.py     # 知識生成
 │   │   ├── knowledge_import.py         # 知識匯入
 │   │   ├── knowledge_export.py         # 知識匯出
-│   │   ├── platform_sop.py             # SOP 編排
-│   │   ├── forms.py                    # 表單管理
-│   │   ├── intents.py                  # 意圖管理
-│   │   ├── suggested_intents.py        # 意圖建議
+│   │   ├── forms.py                    # 表單管理（後台 CRUD 仍活，對話填單引擎已退役——見 F4/archive）
+│   │   ├── conversational_configs.py   # 對話式回答設定管理
+│   │   ├── unclear_questions.py        # 未釐清問題
 │   │   ├── loops.py                    # 知識完善迴圈
 │   │   ├── loop_knowledge.py           # 迴圈知識審核
 │   │   ├── api_endpoints.py            # 外部 API 管理
@@ -41,21 +39,42 @@ AIChatbot/
 │   │   ├── images.py                   # 圖片上傳
 │   │   ├── videos.py                   # 視頻管理
 │   │   ├── document_converter.py       # 文檔轉換
+│   │   ├── ocr_mapping.py              # OCR 合約映射
 │   │   ├── business_types.py           # 業態類型
 │   │   ├── target_user_config.py       # 目標用戶配置
 │   │   ├── cache.py                    # 快取管理
 │   │   ├── system_health.py            # 系統健康檢查
 │   │   └── error_middleware.py         # 錯誤處理中介
+│   │   （⚠️ 2026-09-11 舊鏈退役：`chat.py`／`chat_shared.py`／`platform_sop.py`／
+│   │    `intents.py`／`suggested_intents.py`／`agent_entry.py` 等 31 個舊 REST
+│   │    對話鏈模組已刪或未掛載，見 `.claude/DECISIONS.md` DSP-046）
 │   │
 │   ├── services/                       # 業務邏輯層
-│   │   ├── rag_engine.py               # RAG 檢索引擎
-│   │   ├── intent_classifier.py        # 意圖分類器
-│   │   ├── confidence_evaluator.py     # 信心度評估器
-│   │   ├── llm_answer_optimizer.py     # LLM 答案優化器
-│   │   ├── sop_orchestrator.py         # SOP 編排器
-│   │   ├── form_manager.py             # 表單管理器
-│   │   ├── vendor_config_service.py    # 業者配置服務
-│   │   ├── cache_service.py            # 快取服務
+│   │   ├── form_contract.py            # 表單契約（結構化 schema，取代舊 form_manager）
+│   │   ├── decision_layer.py           # 決策層
+│   │   ├── conversational_config.py    # 對話式設定讀取
+│   │   ├── conversational_rules.py     # 對話式規則
+│   │   ├── presales_gate.py            # 售前 grounding 閘門
+│   │   ├── grounding_presentation.py   # grounding 呈現
+│   │   ├── retrieval_representation.py # representation 契約（general/instance 兩把尺）
+│   │   ├── responsibility_*.py         # 責任分攤系列（artifacts/completion/session/entity_resolution/bill_resolution）
+│   │   ├── usage_metering.py           # 額度計量
+│   │   ├── api_key_auth.py             # API key 驗證
+│   │   ├── instance_applicability.py   # 面向實例可適用性
+│   │   ├── fulfillment_registry.py     # 履行動作登記
+│   │   │
+│   │   ├── agent/                      # agentic-mcp-orchestration 新線（現役核心）
+│   │   │   ├── runtime.py              # AgentRuntime.run_turn——一整回合邏輯
+│   │   │   ├── mcp_facade.py           # /mcp 工具面實作（tools/list、tools/call、agent.turn）
+│   │   │   ├── agent_rules.py          # 對話規則
+│   │   │   ├── identity.py             # X-JGB-Identity 解析、audience_of
+│   │   │   ├── verifier.py             # Output Verifier（逐句驗引用）
+│   │   │   ├── session_persistence.py  # /mcp 會話狀態層（取代舊鏈 ConversationalEngine 持久化）
+│   │   │   ├── state_store.py          # 回合狀態存取點
+│   │   │   ├── outline.py              # 面向大綱組裝
+│   │   │   ├── shadow.py               # 影子跑動
+│   │   │   ├── health.py               # 健康檢查
+│   │   │   └── ...
 │   │   │
 │   │   ├── knowledge_completion_loop/  # 知識完善迴圈
 │   │   │   ├── coordinator.py          # 迴圈協調器
@@ -69,32 +88,32 @@ AIChatbot/
 │   │   │   ├── models.py               # 資料模型
 │   │   │   └── run_first_loop.py       # 執行腳本
 │   │   │
+│   │   ├── ocr_mapping/                # OCR 合約映射（clause_splitter/contract_mapper/deposit_rule…）
+│   │   │
+│   │   ├── jgb/                        # JGB 面向邏輯（帳單/合約/物件/IoT/修繕 fixtures 與轉接）
+│   │   │   ├── bills.py                # 帳單
+│   │   │   ├── contracts.py            # 合約
+│   │   │   ├── repairs.py              # 修繕
+│   │   │   ├── estates.py              # 物件
+│   │   │   ├── iot.py                  # IoT
+│   │   │   └── transport.py            # jgb2 API 轉接
+│   │   │
 │   │   ├── base_retriever.py           # 基礎檢索器
 │   │   ├── vendor_knowledge_retriever_v2.py # 業者知識檢索器
-│   │   ├── vendor_sop_retriever_v2.py  # 業者 SOP 檢索器
 │   │   ├── semantic_reranker.py        # 語義重排序器
 │   │   ├── knowledge_classifier.py     # 知識分類器
 │   │   ├── knowledge_generator.py      # 知識生成服務
 │   │   ├── knowledge_import_service.py # 知識匯入服務
 │   │   ├── knowledge_export_service.py # 知識匯出服務
-│   │   ├── digression_detector.py      # 離題檢測器
 │   │   ├── unclear_question_manager.py # 未釐清問題管理器
-│   │   ├── intent_manager.py           # 意圖管理器
 │   │   ├── intent_semantic_matcher.py  # 意圖語義匹配器
-│   │   ├── keyword_matcher.py          # 關鍵字匹配器
-│   │   ├── sop_trigger_handler.py      # SOP 觸發處理器
-│   │   ├── sop_next_action_handler.py  # SOP 下一步處理器
 │   │   ├── sop_embedding_generator.py  # SOP 嵌入生成器
 │   │   ├── sop_utils.py                # SOP 工具函式
-│   │   ├── form_validator.py           # 表單驗證器
 │   │   ├── vendor_parameter_resolver.py # 業者參數解析器
-│   │   ├── universal_api_handler.py    # 通用 API 處理器
-│   │   ├── billing_api.py              # 計費 API
 │   │   ├── document_converter_service.py # 文檔轉換服務
 │   │   ├── image_recognition_service.py # 圖片辨識服務
 │   │   ├── s3_image_service.py         # S3 圖片服務
 │   │   ├── s3_video_service.py         # S3 視頻服務
-│   │   ├── answer_formatter.py         # 答案格式化器
 │   │   ├── llm_provider.py             # LLM 提供者
 │   │   ├── query_rewriter.py           # 查詢改寫器
 │   │   ├── intent_suggestion_engine.py # 意圖建議引擎
@@ -103,11 +122,15 @@ AIChatbot/
 │   │   ├── pipeline_health_service.py  # 管線健康檢查
 │   │   ├── unified_job_service.py      # 統一背景任務
 │   │   ├── jgb_system_api.py           # JGB 系統 API
-│   │   ├── jgb_response_formatter.py   # JGB 回應格式化
-│   │   ├── conversational_engine.py    # 對話面向引擎（交易語義：confirm gate/execute/冪等）
-│   │   ├── jgb/                         # JGB 面向邏輯
-│   │   │   └── repair_prefill.py       # 修繕槽位預填（租約→物件雙證、Vision 分類推斷）
 │   │   └── ...
+│   │   （⚠️ 2026-09-11 舊鏈退役：`sop_orchestrator.py`／`sop_trigger_handler.py`／
+│   │    `sop_next_action_handler.py`／`conversational_engine.py`／
+│   │    `llm_answer_optimizer.py`／`digression_detector.py`／`keyword_matcher.py`／
+│   │    `universal_api_handler.py`／`billing_api.py`／`answer_formatter.py`／
+│   │    `jgb_response_formatter.py`／`vendor_config_service.py`／
+│   │    `vendor_sop_retriever_v2.py`／`form_manager.py`／`form_validator.py`／
+│   │    `intent_manager.py` 已刪，職責由 `services/agent/**` 與
+│   │    `services/form_contract.py` 等取代)
 │   │
 │   ├── models/                         # 資料模型
 │   │   ├── unclear_question.py         # 未釐清問題模型
@@ -121,10 +144,9 @@ AIChatbot/
 │   ├── utils/                          # 工具函數（目前為空，工具已移至 services/）
 │   │   └── __init__.py
 │   │
-│   ├── tests/                          # 測試檔案
-│   │   ├── test_rag_engine.py
-│   │   ├── test_intent_classifier.py
-│   │   ├── test_sop_orchestrator.py
+│   ├── tests/                          # 測試檔案（unit/integration/e2e 三層，見 testing-code.md）
+│   │   ├── unit/agent/                 # /mcp 新線 unit 測試主力
+│   │   ├── integration/agent/          # /mcp 新線 integration 驗收
 │   │   └── ...
 │   │
 │   ├── scripts/                        # 工具腳本
@@ -168,23 +190,27 @@ AIChatbot/
 ## 命名模式
 
 ### 服務模組 (services/)
-- **核心引擎**: `{domain}_engine.py` (如 `rag_engine.py`)
+- **核心引擎**: `{domain}_engine.py` (如 `intent_suggestion_engine.py`)
 - **分類器**: `{domain}_classifier.py` (如 `intent_classifier.py`, `action_type_classifier.py`)
-- **管理器**: `{domain}_manager.py` (如 `form_manager.py`, `unclear_question_manager.py`)
-- **編排器**: `{domain}_orchestrator.py` (如 `sop_orchestrator.py`)
-- **檢索器**: `{domain}_retriever.py` 或 `{domain}_retriever_v2.py`
-- **處理器**: `{domain}_handler.py` (如 `api_call_handler.py`, `sop_trigger_handler.py`)
+- **管理器**: `{domain}_manager.py` (如 `unclear_question_manager.py`)
+- **編排器**: `{domain}_orchestrator.py`（⚠️ 2026-09-11 舊鏈退役後目前無存活範例——原範例
+  `sop_orchestrator.py` 已刪；比照套用於未來新檔即可）
+- **檢索器**: `{domain}_retriever.py` 或 `{domain}_retriever_v2.py` (如 `vendor_knowledge_retriever_v2.py`)
+- **處理器**: `{domain}_handler.py`（⚠️ 舊鏈退役後目前無存活範例——原範例 `api_call_handler.py`／
+  `sop_trigger_handler.py` 已刪；比照套用於未來新檔即可）
 - **評估器**: `{domain}_evaluator.py` (如 `confidence_evaluator.py`)
-- **優化器**: `{domain}_optimizer.py` (如 `llm_answer_optimizer.py`)
+- **優化器**: `{domain}_optimizer.py`（⚠️ 舊鏈退役後目前無存活範例——原範例
+  `llm_answer_optimizer.py` 已刪；比照套用於未來新檔即可）
 - **生成器**: `{domain}_generator.py` (如 `knowledge_generator.py`, `sop_embedding_generator.py`)
-- **驗證器**: `{domain}_validator.py` (如 `form_validator.py`)
-- **解析器**: `{domain}_resolver.py` 或 `{domain}_matcher.py`
+- **驗證器**: `{domain}_validator.py`（⚠️ 舊鏈退役後目前無存活範例——原範例
+  `form_validator.py` 已刪；比照套用於未來新檔即可）
+- **解析器**: `{domain}_resolver.py` 或 `{domain}_matcher.py` (如 `vendor_parameter_resolver.py`, `intent_semantic_matcher.py`)
 - **追蹤器**: `{domain}_tracker.py` (如 `cost_tracker.py`)
 - **監控器**: `{domain}_monitor.py` (如 `review_timeout_monitor.py`)
-- **工具服務**: `{service_name}_service.py` (如 `cache_service.py`, `vendor_config_service.py`)
+- **工具服務**: `{service_name}_service.py` (如 `cache_service.py`, `pipeline_health_service.py`)
 
 ### 路由模組 (routers/)
-- **資源路由**: `{resource}.py` (如 `chat.py`, `knowledge.py`, `forms.py`)
+- **資源路由**: `{resource}.py` (如 `knowledge.py`, `forms.py`, `vendors.py`)
 - **操作路由**: `{resource}_{operation}.py` (如 `knowledge_import.py`, `knowledge_export.py`)
 
 ### 配置模組 (config/)
@@ -203,7 +229,8 @@ AIChatbot/
 - **執行腳本**: `run_{task}.py` - 執行特定任務
 
 ### 測試檔案 (tests/)
-- **單元測試**: `test_{module}.py` (如 `test_rag_engine.py`)
+- **單元測試**: `test_{module}_req.py`（`_req` 對應追溯標記，見 `.kiro/steering/testing-code.md`；
+  如 `tests/unit/security/test_api_key_auth_req.py`）
 - **整合測試**: `test_{module}_integration.py`
 - **端到端測試**: `test_e2e_{scenario}.py`
 

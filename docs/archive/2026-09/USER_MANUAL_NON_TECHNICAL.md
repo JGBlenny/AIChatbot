@@ -1,4 +1,5 @@
 # 信義 AI 客服系統使用手冊（非技術版）
+> 📦 **2026-09-11 歸檔（舊鏈退役）：原位置 `docs/guides/getting-started/USER_MANUAL_NON_TECHNICAL.md`**——原因：全文描述舊 REST 對話鏈（routers/chat.py handle_conversational_entry 的完整對話流程與測試方法），已於 2026-09-11 隨舊鏈退役，見 .claude/DECISIONS.md DSP-046；現行 agentic-MCP 線尚無對應的非技術版使用手冊。
 
 > **適用對象**：客服人員、業務人員、測試人員、管理層
 > **最後更新**：2025-12-05

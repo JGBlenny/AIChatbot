@@ -1,6 +1,13 @@
+%% ⚠️ 2026-09-11 舊鏈退役：本圖描繪的是舊 REST 對話鏈架構（VendorChatRequest／
+%% 對話引擎 Brain・CTX・GRD／檢索快路徑等），2026-09-11 隨 31 個產品模組刪除。
+%% 現況架構（agentic-MCP，/mcp 門面 + agent.turn）見
+%% docs/architecture/AGENTIC_MCP_ARCHITECTURE.md。本圖保留供理解舊設計脈絡與
+%% 決策理由，⛔ 不代表現況；對應的 architecture-map.svg 尚未依此重生
+%% （svg 是產物，需另跑 mmdc 重新產生，本輪不手改 svg XML）。
+%%
 %% 全景架構圖：骨架（回合歸屬→引擎/快路徑→工具箱→資料層）× 四維度（通路/角色/業者/業態）
 %% 狀態標記：✅ 生產/已收案　🚧 已規劃有案　⬜ 未立案/待建
-%% 來源：docs/chat-architecture-overview.md（同步維護，以 overview 為權威）
+%% 來源：docs/chat-architecture-overview.md（同步維護，以 overview 為權威；同樣是舊鏈文件）
 %% 渲染：mmdc -i architecture-map.mmd -o architecture-map.svg 或貼 mermaid.live
 flowchart TB
     subgraph CH["通路層"]

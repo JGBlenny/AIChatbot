@@ -1,6 +1,9 @@
 # 多輪對話煙囪劇本（手動測試用）
 
-> 2026-07-07 整理。適用：8087 chat-test 頁或直打 `/api/v1/message`。
+> 2026-07-07 整理。⚠️ **2026-09-11 舊鏈退役**：原適用的「8087 chat-test 頁」與
+> 直打 `/api/v1/message` 均已隨舊 REST 對話鏈刪除。下方劇本本身（面向/句子/身分
+> 設定）仍有效，改走 `/mcp` 的 `agent.turn` 工具送出（見 `docs/api/mcp-facade.md`
+> §7.1），session_id 命名限制不變。
 > 身分設定：vendor 2、`mode=b2b`、`target_user=property_manager`、`role_id=37305`（有真資料的測試角色）。
 > **同一組劇本必須用同一個 session_id 連續送**；session 前綴避開內部保留字（backtest_/loop_/smoke_ 等）。
 > 單句煙囪（20 面向各一句）見 `docs/deployment-runbook.md` §5。

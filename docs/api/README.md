@@ -5,7 +5,10 @@
 
 本文檔提供所有 API 相關文檔的快速索引和導航。
 
-> ⚠️ **2026-09-11 補充**：本檔原「核心必讀」指向的統一動態 API 執行機制（`universal_api_handler.py`／`api_call_handler.py`）已隨舊 REST 對話鏈整批砍除（見 `.claude/DECISIONS.md` DSP-046），對應的 `CORE_API_FUNCTIONS_REFERENCE.md`／`how-to-add-complete-api.md`／`how-to-add-api-endpoints.md`／`API_CONFIGURATION_GUIDE.md`已歸檔至 `docs/archive/2026-09/`。⚠️ `docs/design/IMPROVED_API_ARCHITECTURE.md`／`docs/design/API_DATA_FLOW.md` 兩份仍指向同一套已退役機制、疑似同樣過時，但不在本輪執行契約列出的 35 個目標檔案內（未被路徑字面比對抓到，原因是引用多用短檔名如「api_call_handler.py」而非含目錄的完整路徑），本輪未動，留待下一輪或業主決定是否一併歸檔。本目錄其餘 API 契約文檔（jgb2 對外契約、知識後台、loops）與本次砍除無關，仍有效。
+> ⚠️ **2026-09-11 補充**：本檔原「核心必讀」指向的統一動態 API 執行機制（`universal_api_handler.py`／`api_call_handler.py`）已隨舊 REST 對話鏈整批砍除（見 `.claude/DECISIONS.md` DSP-046），對應的 `CORE_API_FUNCTIONS_REFERENCE.md`／`how-to-add-complete-api.md`／`how-to-add-api-endpoints.md`／`API_CONFIGURATION_GUIDE.md`已歸檔至 `docs/archive/2026-09/`。⚠️ **後續更新**：`docs/design/API_DATA_FLOW.md` 已於後續一輪歸檔（見
+`docs/archive/2026-09/API_DATA_FLOW.md`）。`docs/design/IMPROVED_API_ARCHITECTURE.md`
+仍指向同一套已退役機制、疑似同樣過時，**尚未歸檔**（未被路徑字面比對抓到，
+原因是引用多用短檔名如「api_call_handler.py」而非含目錄的完整路徑），留待下一輪或業主決定是否一併歸檔。本目錄其餘 API 契約文檔（jgb2 對外契約、知識後台、loops）與本次砍除無關，仍有效。
 
 ---
 

@@ -94,10 +94,16 @@
 ┌─────────────────────────────────────────────────────────────┐
 │  外部服務 (External Services)                                 │
 │  - OpenAI API (GPT-4o-mini - 知識分類、生成)                   │
-│  - RAG API (/api/v1/message - 回測使用)                        │
+│  - RAG API (/api/v1/message - 回測使用) ⛔ 已刪除，見下方警語   │
 │  - Embedding API (/api/v1/embeddings - 向量生成)              │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+> ⚠️ **2026-09-11 舊鏈退役、連帶發現的既有落差**：`RAG API (/api/v1/message)`
+> 已隨舊 REST 對話鏈刪除，但 `rag-orchestrator/scripts/backtest/` 下的
+> `backtest_framework_async.py`／`decision_replay.py`／`run_batch.py` 三支腳本
+> **目前仍打這個已不存在的端點**（`.py`，本輪文件盤查不改程式）。這代表回測
+> 框架現況可能已失效，需要另開任務確認並修正腳本指向 `/mcp`。
 
 ### 技術棧
 

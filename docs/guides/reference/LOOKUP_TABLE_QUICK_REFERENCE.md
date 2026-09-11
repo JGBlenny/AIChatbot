@@ -207,11 +207,16 @@ curl "http://localhost:8100/api/lookup/categories?vendor_id=1" | jq
 
 ### 測試完整對話
 
+> ⚠️ **2026-09-11 舊鏈退役（本輪文件盤查連帶發現）**：下面的 `/api/v1/message` 已
+> 隨舊 REST 對話鏈刪除。Lookup 表本身的 CRUD／查詢端點（`routers/lookup.py`）不
+> 受影響，但「對話中觸發 lookup」這條整合路徑已死，現無替代驗證方式（agentic-MCP
+> 新線是否有對應消費者未查證，不在本輪範圍）。
+
 ```bash
 # 使用測試腳本
 bash tests/test_billing_chat_flow.sh
 
-# 或手動測試
+# 或手動測試（已失效範例）
 curl -X POST http://localhost:8100/api/v1/message \
   -H "Content-Type: application/json" \
   -d '{

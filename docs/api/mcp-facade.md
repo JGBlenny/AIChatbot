@@ -68,9 +68,12 @@ POST /mcp                       （MCP streamable HTTP；方法與 body 由 MCP 
 | `is_internal` | 這把 key 的 `/mcp` 流量是否算內部（內部＝不計額度） |
 | `vendor_ids` | 這把 key 可代表的業者白名單。**`NULL` ＝ 不限**；`{}`（空陣列）＝ 全拒 |
 
-> ⚠️ `/mcp` 的「內部流量」判定**只看 key**。`/api/v1/message` 沿用的
-> `session_id` 前綴規則（`backtest_`／`loop_`／`smoke_`…）**⛔ 不適用於 `/mcp`**——
-> 那是呼叫方自己取的字串，若拿它決定計不計額度，等於讓呼叫方自己把額度關掉。
+> ⚠️ `/mcp` 的「內部流量」判定**只看 key**。⚠️ **2026-09-11 舊鏈退役**：
+> 曾經存在的 `/api/v1/message`（已刪除，`routers/agent_entry.py` 未掛載於
+> `app.py`，無此路由）沿用的是 `session_id` 前綴規則（`backtest_`／`loop_`／
+> `smoke_`…）——那套規則**⛔ 不適用於 `/mcp`**，即使日後有新入口比照辦理也一樣：
+> `session_id` 是呼叫方自己取的字串，若拿它決定計不計額度，等於讓呼叫方自己把
+> 額度關掉。
 
 ## 4. 身分 header `X-JGB-Identity`
 
@@ -112,11 +115,11 @@ X-JGB-Identity: {"vendor_id":1,"session_id":"jgb2-web-8f3c…","mode":"b2c",
 ### 4.1 `session_id` 由呼叫端產生，且**跨回合穩定**
 
 - 同一段對話的每一次呼叫**必須帶同一個 `session_id`**——服務端以它為鍵存
-  對話歷史與 slots（`form_sessions.collected_data`，與 REST 路徑同一張表）。
+  對話歷史與 slots（`form_sessions.collected_data`；⚠️ 2026-09-11 舊鏈退役前，該表曾與 REST 路徑〔已刪除〕共用，現在 `/mcp` 是唯一寫入者）。
   換 `session_id` ＝ 換一段新對話，先前的上下文不會被看到。
 - ⚠️ `/mcp` 的實際鍵是 **`mcp:{api_key_id}:{vendor_id}:{session_id}`**（命名空間，
-  見 §7.1）：同一個 `session_id` 換 key／換 vendor 就是另一段對話，與 REST 路徑
-  也不互通。整把鍵受 `VARCHAR(100)` 限制 ⇒ `session_id` 請留在 80 字以內。
+  見 §7.1）：同一個 `session_id` 換 key／換 vendor 就是另一段對話（歷史上與已刪除的
+  REST 路徑也不互通）。整把鍵受 `VARCHAR(100)` 限制 ⇒ `session_id` 請留在 80 字以內。
 - ⛔ **不要**把 `session_id` 拿來當免額度的開關：`/mcp` 的內部判定只看 key（§3）。
 - 速率限制的桶是 `(api_key_id, vendor_id)`，**不含 `session_id`**——換 session
   不會重置計數，這是刻意的。
@@ -172,8 +175,11 @@ X-JGB-Identity: {"vendor_id":1,"session_id":"jgb2-web-8f3c…","mode":"b2c",
 - **未設定 ⇒ 服務啟動即失敗**（大聲失敗，⛔ 不預設放行）。
   若刻意不允許任何瀏覽器來源，設為 `-`（單一減號）＝空集合。
   兩份 compose 皆已宣告 `MCP_ALLOWED_ORIGINS: ${MCP_ALLOWED_ORIGINS:--}`。
-- ⚠️ **`/mcp` 僅 server-to-server**。瀏覽器不能持金鑰；瀏覽器端請走
-  `POST /api/v1/message`（REST＋SSE）。⛔ 不要為了「讓前端連得上」而放寬白名單。
+- ⚠️ **`/mcp` 僅 server-to-server**。瀏覽器不能持金鑰。⚠️ **2026-09-11 舊鏈退役**：
+  過去瀏覽器端走的 `POST /api/v1/message`（REST＋SSE）已刪除，且**目前沒有替代
+  的瀏覽器直連入口**——`/mcp` 是 MCP 協定門面，⛔ 不是 REST JSON／SSE 的替代品，
+  不能直接拿給瀏覽器用。瀏覽器端對話目前無可用入口（既知缺口，非本文件範圍）。
+  ⛔ 不要為了「讓前端連得上」而放寬白名單。
 
 ## 6. 額度與計量
 
@@ -261,15 +267,19 @@ M1 階段另加一支**整回合**工具（見 §7.1）：
   **`mcp:{api_key_id}:{vendor_id}:{session_id}`**（命名空間）。這代表：
   - 換一把 key、或換一個 `vendor_id`，即使 `session_id` 一模一樣，**讀到的是另
     一段對話**，也改不到原本那一列。這是刻意的隔離，⛔ 不是 bug；
-  - `/api/v1/message`（REST）走裸 `session_id`，與 `/mcp` **天然分池**——同一個
-    `session_id` 在兩條入口是兩段對話，⛔ 不要指望互通；
+  - ⚠️ **2026-09-11 舊鏈退役**：過去的 `/api/v1/message`（REST，已刪除）走裸
+    `session_id`，與 `/mcp` 的命名空間鍵**天然分池**——歷史上同一個 `session_id`
+    在兩條入口是兩段對話，⛔ 不曾互通，此事實不因舊鏈刪除而改變（`form_sessions`
+    表仍是同一張，`/mcp` 現在是唯一寫入者）；
   - 整把鍵受 `form_sessions.session_id` 的 `VARCHAR(100)` 限制 ⇒ 你的
     `session_id` 太長時會拿到 `INVALID_INPUT`。實務上留 80 字以內即可。
 
 ### 一次性回傳，⛔ 沒有逐字串流
 
-MCP 工具結果是一次回完的，**首字＝整段完成**（決策 15 明列的代價）。要逐字串流
-請走 REST 的 `POST /api/v1/message` + SSE。
+MCP 工具結果是一次回完的，**首字＝整段完成**（決策 15 明列的代價）。
+⚠️ **2026-09-11 舊鏈退役**：過去可以走 REST 的 `POST /api/v1/message` + SSE
+取得逐字串流，該端點已刪除；`/mcp` 目前**沒有**逐字串流的替代方案，
+這是刻意接受的代價（決策 15），不是尚待補的功能。
 
 ### 逾時
 
@@ -290,8 +300,10 @@ MCP 工具結果是一次回完的，**首字＝整段完成**（決策 15 明�
 **預設 `false`**。關閉 ⇒ 這支工具**根本不註冊**，`tools/list` 看不到它、呼叫它
 回 `NO_MATCH`——⛔ 不是「註冊了但拒絕」。要回切就把 env 改回 false 再重啟，
 其餘工具面不受影響（5.1 回切演練含這一格）。
-⚠️ `AGENT_AUDIENCES` **管不到它**：那支 env 只管 REST 入口
-（`routers/agent_entry.py`）要不要把哪些身分導進 agent 鏈。
+⚠️ `AGENT_AUDIENCES` **管不到它**：那支 env 原本只管 REST 入口
+（`routers/agent_entry.py`）要不要把哪些身分導進 agent 鏈；⚠️ **2026-09-11 舊鏈
+退役**後 `routers/agent_entry.router` 未掛載於 `app.py`，這支 env **目前沒有生效
+路徑**（讀了也不影響任何路由），留著只是尚未清理的殘留設定。
 
 ### ⚠️ 給外部 MCP client 的一句話：`facade_only` 對你是**單層**設計
 
@@ -336,7 +348,7 @@ DSP-011 成立的前提是「`/mcp` 只有上游／內部呼叫者」。以下�
 | `rag-orchestrator/services/api_key_auth.py` | `require_api_key_unconditional`／`verify_api_key` |
 | `rag-orchestrator/database/migrations/20260904_api_keys_agent_scope.sql` | `api_keys.is_internal`／`vendor_ids` |
 | `rag-orchestrator/services/agent/state_store.py` | `agent.turn` 的狀態命名空間鍵（`NamespacedStateStore`） |
-| `rag-orchestrator/services/agent/runtime.py` | `AgentRuntime.run_turn`——`agent.turn` 與 REST 共用的**同一條**回合邏輯 |
+| `rag-orchestrator/services/agent/runtime.py` | `AgentRuntime.run_turn`——`agent.turn` 的回合邏輯（⚠️ 2026-09-11 舊鏈退役前曾與 REST 入口共用同一條） |
 | `rag-orchestrator/tests/integration/agent/test_mcp_facade_req.py` | 兩道閘與額度落點的整合驗收（不變量 31 的覆蓋來源） |
 | `rag-orchestrator/tests/integration/agent/test_agent_turn_req.py` | `agent.turn` 的整合驗收（跨業者隔離、兩回合、Verifier 拒兩次、計量） |
 | `rag-orchestrator/tests/unit/agent/test_agent_turn_req.py` | `agent.turn` 的 unit 驗收（可見性、命名空間、逾時、上限） |
@@ -352,7 +364,7 @@ DSP-011 成立的前提是「`/mcp` 只有上游／內部呼叫者」。以下�
 | env | 預設 | 作用 |
 |---|---|---|
 | `AGENT_STAGE` | `M0` | 部署里程碑；工具可見性以 `stage[audience] <= AGENT_STAGE` 判定（`services/agent/mcp_facade.py:current_stage`） |
-| `AGENT_AUDIENCES` | 空 | REST 入口（`/api/v1/message`）分流用，**不影響** `/mcp`／`agent.turn` 的可見性（見 §7.1「回切開關」段） |
+| `AGENT_AUDIENCES` | 空 | ⚠️ **2026-09-11 舊鏈退役**：原本是 REST 入口（已刪除的 `/api/v1/message`）分流用，`routers/agent_entry.router` 現未掛載於 `app.py`，**目前無生效路徑**；**不影響** `/mcp`／`agent.turn` 的可見性（見 §7.1「回切開關」段） |
 | `AGENT_SHADOW_AUDIENCES` | 空 | 影子跑動的 audience 白名單（`services/agent/shadow.py`） |
 | `AGENT_SHADOW_MONTHLY_USD_CAP` | `50.0`（USD） | 影子月成本上限，超過自動關 |
 | `AGENT_OUTLINE_TOKEN_LIMIT_PROSPECT` | `10000` | 售前大綱 token 預算（`services/agent/outline.py`） |

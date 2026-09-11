@@ -1,4 +1,5 @@
 # 知識庫 API 配置完全指南
+> 📦 **2026-09-11 歸檔（舊鏈退役）：原位置 `docs/design/API_CONFIGURATION_GUIDE.md`**——原因：所述動態 API 執行引擎（services/api_call_handler.py）已隨舊 REST 對話鏈於 2026-09-11 退役，見 .claude/DECISIONS.md DSP-046；API 端點管理後台（routers/api_endpoints.py）本身仍活著，不受影響。
 
 > 如何設定知識觸發 API 調用以及控制回應格式
 

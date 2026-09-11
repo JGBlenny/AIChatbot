@@ -1,4 +1,5 @@
 # Vendor SOP 流程配置功能
+> 📦 **2026-09-11 歸檔（舊鏈退役）：原位置 `docs/features/sop/implementation/VENDOR_SOP_FLOW_CONFIGURATION.md`**——原因：services/sop_orchestrator.py 已隨舊 REST 對話鏈於 2026-09-11 退役，見 .claude/DECISIONS.md DSP-046。
 
 **實施日期**: 2026-01-24
 **最後更新**: 2026-01-24（檢索邏輯重大改進）

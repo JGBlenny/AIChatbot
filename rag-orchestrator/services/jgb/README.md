@@ -1,30 +1,41 @@
 # JGB API 整合模組
 
-## 架構概覽
+> ⚠️ **2026-09-11 舊鏈退役對碼**：本檔原本描述的「表單填寫觸發 API」流程
+> （`form_manager` 收集資訊 → `call_api` → `api_call_handler` →
+> `jgb_response_formatter` 分派）**已隨舊 REST 對話鏈刪除**——`api_call_handler.py`／
+> `jgb_response_formatter.py` 都已不存在。目前的呼叫路徑改為 `/mcp` 的
+> `agent.turn`／`jgb2.query.*` 工具直接呼叫本目錄模組，見下方「現況架構」。
+> `jgb/contracts.py`、`jgb/bills.py`、`jgb/estates.py`、`jgb/iot.py`、
+> `jgb/repairs.py` **五個模組皆已建成**（原表格中的「待建」已完成，見下方檔案職責）。
+
+## 現況架構
 
 ```
-用戶提問
-  → knowledge_base 匹配（action_type=form_fill）
-  → form_manager 收集必要資訊（合約編號/帳單標題等）
-  → 表單完成 → call_api → api_call_handler
-  → jgb_system_api（mock / real 切換）
-  → api_call_handler._format_success_data 偵測 JGB 格式
-  → jgb_response_formatter.format_jgb_response()
-  → 根據 endpoint 分派到對應模組（jgb/contracts.py, jgb/bills.py 等）
-  → 產出客戶理解的自然語言回應
+使用者訊息（經 X-JGB-Identity 帶身分）
+  → /mcp 的 agent.turn 或 jgb2.query.* 工具（services/agent/tools/jgb2.py）
+  → JGBSystemAPI（jgb_system_api.py；mock / real 切換，經 transport.py 的 Transport 契約）
+  → 依 domain 呼叫對應模組的 face-builder / format_*_response（jgb/contracts.py、
+    jgb/bills.py、jgb/estates.py、jgb/iot.py、jgb/repairs.py 等）
+  → 產出 facts 文字，交由 agent runtime 組進最終答覆（經 Output Verifier 逐句驗引用）
 ```
+
+契約細節見 `docs/api/mcp-facade.md` §7.1（`agent.turn`）與
+`rag-orchestrator/services/agent/tools/jgb2.py`（各 `jgb2.query.*` 工具的身分閘與
+候選列表邏輯）。
 
 ## 檔案職責
 
 | 檔案 | 職責 | 不應做的事 |
 |---|---|---|
 | `jgb_system_api.py` | JGB API client，mock/real 切換，只負責打 API 拿資料 | 不做業務邏輯判斷、不做回應格式化 |
-| `jgb_response_formatter.py` | JGB 回應分派器，根據 endpoint 分派到對應模組 | 不寫業務邏輯，只做分派 |
-| `jgb/contracts.py` | 合約業務邏輯判斷 + 回應格式化 | 不打 API、不處理其他模組 |
-| `jgb/bills.py`（待建） | 帳單業務邏輯判斷 + 回應格式化 | 同上 |
-| `jgb/repairs.py`（待建） | 修繕業務邏輯判斷 + 回應格式化 | 同上 |
-| `jgb/iots.py`（待建） | 電表/IOT 業務邏輯判斷 + 回應格式化 | 同上 |
-| `api_call_handler.py` | 通用 API 呼叫處理器 | 不寫 JGB 專屬邏輯 |
+| `transport.py` | HTTP transport 契約（`Transport` Protocol），mock 與 real 共用同一份呼叫端契約 | 不做業務判斷 |
+| `jgb/contracts.py` | 合約業務邏輯判斷 + 回應格式化（`format_contract_response`、`check_can_*`） | 不打 API、不處理其他模組 |
+| `jgb/bills.py` | 帳單診斷引擎 + 面向 fact-builder（B01–B04、P04 等） | 同上 |
+| `jgb/repairs.py` | 修繕業務邏輯判斷 + 回應格式化 | 同上 |
+| `jgb/iot.py` | 電表/IoT 業務邏輯判斷 + 回應格式化 | 同上 |
+| `jgb/estates.py` | 物件業務邏輯判斷 + 回應格式化 | 同上 |
+| `jgb/accounts.py` | 帳戶面向 fact-builder | 同上 |
+| `services/agent/tools/jgb2.py` | `/mcp` 的 `jgb2.query.*` 工具入口：身分閘、候選列表、逐模組分派 | 不寫 JGB 專屬業務判斷（那是各 `jgb/*.py` 的事） |
 
 ## 每個模組的標準結構（以 contracts.py 為例）
 
@@ -151,12 +162,15 @@ bit_status 是 bitmask，一個執行中且已點交的合約：`1+2+4+8+16+32 =
 - `USE_MOCK_JGB_API=true`（預設）：使用 jgb_system_api.py 內的假資料
 - `USE_MOCK_JGB_API=false` + `JGB_API_KEY=xxx`：打真實 JGB API
 
-## 新增模組流程
+## 新增模組流程（⚠️ 2026-09-11 對碼：分派點已改為 `jgb2.py`，非舊鏈的 `jgb_response_formatter.py`）
 
-以新增帳單模組（`jgb/bills.py`）為例：
+以新增一個 jgb domain 模組為例（比照 `jgb/bills.py` 的既有作法）：
 
-1. 建立 `jgb/bills.py`，定義狀態常數 + 判斷邏輯 + `format_bill_response()`
-2. 在 `jgb_response_formatter.py` 加入 endpoint 分派（`jgb_bills` → `_format_bills`）
+1. 建立 `jgb/{domain}.py`，定義狀態常數 + 判斷邏輯 + `format_*_response()` 或
+   face-builder（比照 `jgb/bills.py`／`jgb/contracts.py` 的既有寫法）
+2. 在 `services/agent/tools/jgb2.py` 加入對應的 `jgb2.query.*` 工具（身分閘＋候選
+   列表邏輯，比照既有的 `query_bills`／`query_contracts`）
 3. 更新 `jgb_system_api.py` 的 mock 資料對齊實際欄位
-4. 測試：chat-test B2B → 問帳單相關問題 → 確認回應品質
+4. 測試：`rag-orchestrator/tests/unit/agent/`／`tests/integration/agent/` 加對應
+   測試，或用 `/mcp` 實打 `jgb2.query.*` 確認回應品質
 5. 更新此 README

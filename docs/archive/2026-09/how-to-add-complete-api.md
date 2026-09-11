@@ -1,4 +1,5 @@
 # 如何新增一個完整的 API Endpoint
+> 📦 **2026-09-11 歸檔（舊鏈退役）：原位置 `docs/guides/api/how-to-add-complete-api.md`**——原因：所述動態 API 執行引擎（services/api_call_handler.py／services/universal_api_handler.py）已隨舊 REST 對話鏈於 2026-09-11 退役，見 .claude/DECISIONS.md DSP-046。
 
 > ⚠️ **此文檔部分過時** (2026-01-20)
 >

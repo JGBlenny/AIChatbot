@@ -1074,7 +1074,11 @@ curl -s -X GET "$BASE_URL/api/lookup/categories?vendor_id=1" \
 
 #### 5.2 集成測試 - 完整對話流程
 
-**文件**: `tests/test_billing_chat_flow.sh`
+> ⚠️ **2026-09-11 舊鏈退役（本輪文件盤查連帶發現）**：下面腳本打的
+> `/api/v1/message` 已隨舊 REST 對話鏈刪除，此對話式整合測試已失效。
+> Lookup 表本身的 CRUD／查詢端點（`routers/lookup.py`）不受影響。
+
+**文件**: `tests/test_billing_chat_flow.sh`（已失效，僅供理解原始測試意圖）
 
 ```bash
 #!/bin/bash

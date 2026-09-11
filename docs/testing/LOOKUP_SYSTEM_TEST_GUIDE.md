@@ -116,8 +116,12 @@ curl "http://localhost:8100/api/lookup?category=billing_interval&key=新北市�
    ```
 
 3. **測試對話流程**
+   > ⚠️ **2026-09-11 舊鏈退役**：下面這支 `curl` 打的 `/api/v1/message` 已刪除
+   > （2026-09-11 砍除舊 REST 對話鏈）。對話能力現在只經 `/mcp` 的 `agent.turn`
+   > 工具（server-to-server，見 `docs/api/mcp-facade.md` §7.1），不再是這種
+   > 裸 JSON POST 的形狀。
    ```bash
-   # 發送查詢
+   # （已失效範例，僅供理解原始測試意圖）
    curl -X POST "http://localhost:8100/api/v1/message" \
      -H "Content-Type: application/json" \
      -d '{

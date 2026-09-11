@@ -1,7 +1,14 @@
 # 對話式回答 API 串接指南（售前顧問）
 
-> 給外部專案串接 JGB 售前對話(conversational)。功能說明見
-> [`docs/features/conversational-presales.md`](../features/conversational-presales.md)。
+> ⚠️ **2026-09-11 舊鏈退役（本輪文件盤查連帶發現，非原七條指定範圍）**：本檔全篇
+> 描述的 `POST /api/v1/message`（含下方 `AGENT_AUDIENCES` 分支）**已於
+> 2026-09-11 隨舊 REST 對話鏈刪除**——`routers/agent_entry.router` 未掛載於
+> `app.py`，此路由不存在。外部串接請改走 `/mcp` 門面（server-to-server），
+> 契約見 `docs/api/mcp-facade.md`；⛔ **目前沒有給外部專案的公開 REST 替代
+> 端點**，這是既知缺口。功能說明本身（售前對話設計）見
+> [`docs/features/conversational-presales.md`](../features/conversational-presales.md)（該檔已歸檔標註）。
+
+> 給外部專案串接 JGB 售前對話(conversational)——⛔ **以下內容已死，僅供理解歷史契約形狀**。
 
 ## 端點
 

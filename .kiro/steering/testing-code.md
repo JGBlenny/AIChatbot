@@ -16,7 +16,14 @@
 
 - **unit**：純函式／mock、可離線、<1s → **CI 主力、必綠**。
 - **integration**：真實 DB／跨模組 → 預設略過，`RUN_INTEGRATION=1` 才跑。
-- **e2e**：經 `/api/v1/message`／SSE、需整服務 → 預設略過，`RUN_E2E=1` 才跑。
+- **e2e**：需整服務（DB/embedding/semantic-model/LLM）→ 預設略過，`RUN_E2E=1` 才跑。
+  ⚠️ **2026-09-11 舊鏈退役**：原本的主要對象 `POST /api/v1/message`／SSE 已刪除
+  （`routers/agent_entry.router` 未掛載於 `app.py`）；`rag-orchestrator/tests/e2e/`
+  下仍有多個測試檔打這個已不存在的端點（例如 `api/test_message_e2e_req.py`、
+  `chat_flow/test_trigger_manual_flow_e2e_req.py`），這些檔案本身尚未跟進調整——
+  ⛔ 此為既知缺口，非本輪處理範圍（本輪只動文件，不動 `.py`）。新線 `/mcp` 目前
+  **尚無 e2e 層測試**覆蓋（只有 `tests/integration/agent/test_mcp_facade_req.py`
+  等 integration 層驗收）。
 - 既有測試的分層**集中於 `tests/conftest.py`** 以 `pytest_collection_modifyitems` 指派（不逐檔改、零行為變動）；
   分層依據＝離線實跑結果。**新測試一律用顯式 marker**：`@pytest.mark.unit/integration/e2e`。
 - 真實相依層在無相依時**標示略過（skipped）而非失敗**，避免假綠燈（R4.5）。

@@ -1,5 +1,17 @@
 # Phase 1 API 參考文件
 
+> ⚠️ **2026-09-11 舊鏈退役**：下方「Chat API」整節（`POST /api/v1/message`、
+> `GET /api/v1/vendors/{vendor_id}/test`、`POST /api/v1/reload`）所描述的端點
+> **已刪除**——2026-09-11 砍除舊 REST 對話鏈（31 個產品模組），對話能力現在
+> **只**經 `/mcp` 門面（server-to-server，非公開 REST），契約見
+> `docs/api/mcp-facade.md`。⛔ 本節內容（curl 範例、回應格式）已死，勿依此串接。
+> ⚠️ 「Cache Management API」「Vendors API」兩節描述的路由模組
+> （`routers/cache.py`／`routers/vendors.py`）本身仍存活，但本輪未逐條核對其下
+> 每一支端點路徑與參數是否仍與程式一致（例如 `POST /api/v1/reload` 的實際路徑
+> 現為 `routers/knowledge.py` 的 `/api/v1/knowledge/reload`，`vendors.py` 查無
+> `/test` 路由）——這是本輪盤查中連帶發現、但非本次七條發現範圍內的既有落差，
+> 留待下一輪文件盤查核實，⛔ 不要假設本節其餘內容逐條準確。
+
 ## 基本資訊
 
 **Base URL:** `http://localhost:8100`
@@ -25,9 +37,9 @@
 
 ---
 
-## Chat API
+## Chat API ⚠️ 已退役（2026-09-11，見檔頭警語）
 
-### POST /api/v1/message
+### POST /api/v1/message ⛔ 已刪除，不存在此路由
 
 多業者通用聊天端點（標準回應）
 

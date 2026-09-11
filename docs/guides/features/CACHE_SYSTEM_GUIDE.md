@@ -670,8 +670,15 @@ cache.get_cached_answer(
 ```
 
 **使用示例**：
+
+> ⚠️ **2026-09-11 舊鏈退役**：下面的 `POST /api/v1/message` 已刪除（2026-09-11
+> 砍除舊 REST 對話鏈）；`include_debug_info` 這個請求體欄位屬於舊鏈的請求格式，
+> **未查證**新線 `/mcp` 的 `agent.turn` 是否有對應的除錯旗標——上方「設計原因」
+> 的快取策略考量（debug 響應體積大、不緩存）仍可能適用，但呼叫形狀本身已死，
+> ⛔ 不要照抄下面的 curl／Python 範例串接。
+
 ```python
-# 普通請求（使用緩存）
+# （已失效範例，僅供理解原始快取策略設計）
 response = requests.post("http://localhost:8100/api/v1/message", json={
     "message": "租金何時繳？",
     "vendor_id": 1,

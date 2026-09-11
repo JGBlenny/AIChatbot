@@ -1,5 +1,13 @@
 # 📋 動態表單收集系統
 
+> 📦 **2026-09-11 歸檔（舊鏈退役，局部）：原位置 `docs/features/FORM_MANAGEMENT_SYSTEM.md`**——
+> 原因：**只有對話式填單引擎**（services/form_manager.py）已隨舊 REST 對話鏈於
+> 2026-09-11 退役，見 .claude/DECISIONS.md DSP-046。⚠️ **表單管理 CRUD 後台
+> 仍活**：下方「🗄️ 資料庫設計」與「📊 API 端點」兩節記的端點
+> （`GET/POST/PUT/DELETE /rag-api/v1/forms`、`/rag-api/v1/form-submissions` 等）
+> 仍與現行 `routers/forms.py` 一致，⛔ 不要因為本檔被歸檔就假設整套表單系統已
+> 下線。死的只有「🔧 核心功能實作」節描述的對話觸發／欄位收集流程。詳見 stub。
+
 ## 概述
 
 動態表單收集系統允許 AI 聊天機器人在對話過程中自動觸發表單填寫流程，收集結構化數據，並將表單答案與知識庫回答整合，提供無縫的用戶體驗。
