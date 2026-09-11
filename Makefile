@@ -1,6 +1,7 @@
 # Makefile — 測試入口（spec testing-traceability 元件 2・R1.2/4.2）
 # 所有 target 透過 scripts/run-tests.sh，於 Python 3.11 容器內跑 pytest（本地與 CI 同一支）。
-.PHONY: test test-unit test-integration test-e2e test-all test-cov trace audit
+.PHONY: test test-unit test-integration test-e2e test-all test-cov \
+        test-admin test-admin-integration trace audit
 
 test: test-unit            ## 預設＝unit 層（CI 主力、可離線）
 
@@ -18,6 +19,14 @@ test-all:                  ## 跑全部層
 
 test-cov:                  ## unit + 覆蓋率報告
 	scripts/run-tests.sh unit --cov
+
+# knowledge-admin 後端有自己的 pytest.ini／conftest／requirements，故走獨立服務。
+# 2026-09-12 之前這 4 支測試（含 2 支 security）不在任何入口內，從未被跑過。
+test-admin:                ## knowledge-admin 後端的 unit 層
+	scripts/run-tests.sh admin
+
+test-admin-integration:    ## knowledge-admin 後端的 integration（需真實 DB）
+	scripts/run-tests.sh admin-integration
 
 trace:                     ## 產生追溯矩陣報告
 	python3 rag-orchestrator/tools/traceability/scan.py

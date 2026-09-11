@@ -127,6 +127,40 @@ services:
       #   全部維持不宣告＝吃程式內建預設（AGENT_BUDGET_TOOL_CALLS/REWRITES/DEADLINE_S 由 bootstrap.budget_from_env 讀取，預設 4／2／20.0）。
     command: ["sleep", "infinity"]        # 維持容器；測試以 run --rm 進入
 
+  # knowledge-admin 後端的測試容器。
+  #
+  # ⚠️ 為什麼需要獨立服務：`knowledge-admin/backend/` 有自己的 `pytest.ini`
+  #    （`testpaths = tests`）、自己的 `requirements*.txt`、自己的 `conftest.py`，
+  #    且測試用 `from app import app` ⇒ 必須以該目錄為 /app 才 import 得到。
+  #    2026-09-12 盤查發現：Makefile／run-tests.sh／CI 三份入口對 `knowledge-admin`
+  #    **零引用**，所以這 4 支測試（含 2 支 security）從來沒有被跑過。
+  knowledge-admin-api:
+    build: ./knowledge-admin/backend
+    image: aichatbot-knowledge-admin-api-test
+    working_dir: /app
+    volumes:
+      - ./knowledge-admin/backend:/app   # 掛載源碼：改碼即跑、免 rebuild
+    env_file:
+      - .env
+    environment:
+      TZ: Asia/Taipei
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONPATH: /app
+      # ⛔ 這一行不可刪：`auth_utils.py` 在缺 JWT_SECRET_KEY 時會 raise（刻意的大聲失敗，
+      #    見 0ff1768d），而 conftest 的 `from app import app` 會連帶 import 它 ⇒
+      #    不給值則 4 支測試全部 collection error，看起來像產品壞了。
+      #    ⚠️ 這是**測試專用**的固定值，與 production 的金鑰無關、⛔ 不得挪用。
+      JWT_SECRET_KEY: test-only-not-a-real-secret
+      # 連線類一律用 TEST_ 前綴覆蓋鍵，理由同上方 rag-orchestrator 服務：
+      # `.env` 是宿主視角，裸名會被它蓋掉而連到 production 庫。
+      DB_HOST: ${TEST_DB_HOST:-postgres}
+      DB_PORT: ${TEST_DB_PORT:-5432}
+      DB_NAME: ${TEST_DB_NAME:-aichatbot_test}
+      DB_ENV: ${TEST_DB_ENV:-test}
+      DB_USER: ${TEST_DB_USER:-aichatbot}
+      DB_PASSWORD: ${TEST_DB_PASSWORD:-aichatbot_password}
+    command: ["sleep", "infinity"]
+
 # 接上共用基礎設施網路（spec conversational-routing-execution 任務 1.2｜R1.2）
 # 已實查：aichatbot_default 上 postgres 服務帶有 alias `postgres`，
 # 故 DB_HOST 預設值無須改動即可解析。

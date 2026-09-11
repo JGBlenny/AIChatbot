@@ -172,26 +172,18 @@ services:
       USE_MOCK_JGB_API: ${USE_MOCK_JGB_API:-true}
       ENABLE_ANSWER_SYNTHESIS: ${ENABLE_ANSWER_SYNTHESIS:-true}
       ENABLE_LLM_OPTIMIZATION: ${ENABLE_LLM_OPTIMIZATION:-true}
-      SYNTHESIS_THRESHOLD: ${SYNTHESIS_THRESHOLD:-0.99}  # 比對 final similarity（_should_synthesize 合成觸發判定）
       PERFECT_MATCH_THRESHOLD: ${PERFECT_MATCH_THRESHOLD:-0.90}  # 比對 vector_similarity（純向量分數）— 重構後閾值語意改變，需校準
       SYNTHESIS_MIN_RESULTS: ${SYNTHESIS_MIN_RESULTS:-2}
       SYNTHESIS_MAX_RESULTS: ${SYNTHESIS_MAX_RESULTS:-3}
-      SOP_SIMILARITY_SCORE: ${SOP_SIMILARITY_SCORE:-0.70}
       # RAG 檢索配置 - ✅ 選項1：統一檢索閾值（移除獨立 RAG fallback）
       SOP_SIMILARITY_THRESHOLD: ${SOP_SIMILARITY_THRESHOLD:-0.75}  # 比對 final similarity（application 端過濾 SOP 候選）
       KB_SIMILARITY_THRESHOLD: 0.65  # 比對 final similarity（application 端過濾知識庫候選，涵蓋原 fallback 範圍）
       # PRESALES_EXTRACTIVE: "1"  # presales-grounding-gate D6 事實題抽取式作答；業主 2026-09-04 裁預設關（先補知識再考慮），要開再取消註解
       PRESALES_GROUNDING_THRESHOLD: 0.5  # presales-grounding-gate D2（業主 2026-09-04）：售前 grounding 專用門檻；20 題掃描無知識題最高 0.337、有知識題最低 0.534，0.65 誤擋「電子發票」等有知識題
       HIGH_QUALITY_THRESHOLD: ${HIGH_QUALITY_THRESHOLD:-0.8}  # 比對 final similarity（高品質判定，用於答案合成觸發）
-      FALLBACK_SIMILARITY_THRESHOLD: 0.55  # ⚠️ 已廢棄：RAG Fallback 已移除，統一使用 KB_SIMILARITY_THRESHOLD
-      RAG_SIMILARITY_THRESHOLD: ${RAG_SIMILARITY_THRESHOLD:-0.6}  # ⚠️ 已廢棄：待移除
-      RAG_TOP_K: ${RAG_TOP_K:-5}
       # 信心度評估配置
       CONFIDENCE_HIGH_THRESHOLD: ${CONFIDENCE_HIGH_THRESHOLD:-0.85}
       CONFIDENCE_MEDIUM_THRESHOLD: ${CONFIDENCE_MEDIUM_THRESHOLD:-0.70}
-      # 知識優先級配置
-      PRIORITY_BOOST: ${PRIORITY_BOOST:-0.15}
-      PRIORITY_QUALITY_THRESHOLD: ${PRIORITY_QUALITY_THRESHOLD:-0.70}
       # 質量評估配置
       QUALITY_EVALUATION_ENABLED: ${QUALITY_EVALUATION_ENABLED:-true}
       QUALITY_EVALUATION_THRESHOLD: ${QUALITY_EVALUATION_THRESHOLD:-6}
@@ -201,10 +193,6 @@ services:
       RERANKER_MIN_VECTOR_SIMILARITY: ${RERANKER_MIN_VECTOR_SIMILARITY:-0.3}   # vector 下限（過濾不可能進 top_k 的低分）
       RERANKER_HTTP_TIMEOUT: ${RERANKER_HTTP_TIMEOUT:-60}                      # HTTP client timeout（秒）
       # 條件式優化配置
-      FAST_PATH_THRESHOLD: ${FAST_PATH_THRESHOLD:-0.75}
-      TEMPLATE_MIN_SCORE: ${TEMPLATE_MIN_SCORE:-0.55}
-      TEMPLATE_MAX_SCORE: ${TEMPLATE_MAX_SCORE:-0.75}
-      LLM_PARAM_INJECTION_TEMP: ${LLM_PARAM_INJECTION_TEMP:-0.1}
       LLM_SYNTHESIS_TEMP: ${LLM_SYNTHESIS_TEMP:-0.1}
       # 意圖建議配置
       INTENT_SUGGESTION_TEMP: ${INTENT_SUGGESTION_TEMP:-0.2}
@@ -215,9 +203,6 @@ services:
       # LLM 答案優化配置
       LLM_ANSWER_TEMPERATURE: ${LLM_ANSWER_TEMPERATURE:-0.7}
       LLM_ANSWER_MAX_TOKENS: ${LLM_ANSWER_MAX_TOKENS:-800}
-      # 未釐清問題配置
-      UNCLEAR_SEMANTIC_THRESHOLD: ${UNCLEAR_SEMANTIC_THRESHOLD:-0.80}
-      UNCLEAR_PINYIN_THRESHOLD: ${UNCLEAR_PINYIN_THRESHOLD:-0.80}
       # AWS S3 影片儲存配置
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
@@ -268,16 +253,10 @@ services:
       BRAIN_STRICT_SCHEMA: ${BRAIN_STRICT_SCHEMA:-true}
       # Reranker 配置（2026-01-28）
       ENABLE_RERANKER: ${ENABLE_RERANKER:-true}
-      ENABLE_KNOWLEDGE_RERANKER: ${ENABLE_KNOWLEDGE_RERANKER:-true}
       # 語義重排序配置（2026-02-06）
-      USE_SEMANTIC_RERANK: ${USE_SEMANTIC_RERANK:-true}
       SEMANTIC_MODEL_API_URL: http://semantic-model:8000
       # 表單觸發配置
       FORM_TRIGGER_THRESHOLD: ${FORM_TRIGGER_THRESHOLD:-0.75}
-      # 回測系統配置
-      BACKTEST_BASE_URL: ${BACKTEST_BASE_URL:-http://rag-orchestrator:8100}
-      # 多輪模擬器情境卡綁定的測試角色（37305 有租約中/刊登中物件與電表真資料）
-      BACKTEST_ROLE_ID: ${BACKTEST_ROLE_ID:-37305}
       # 圖片辨識配置（2026-04-28）
       ENABLE_IMAGE_RECOGNITION: ${ENABLE_IMAGE_RECOGNITION:-false}
       # ⚠️ 視覺模型：mini 支援 vision，但辨識信心會下降，而修繕預填是

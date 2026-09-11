@@ -13,11 +13,12 @@
 #          兩者供裝方式本質不同，強行統一只會多一層間接。
 #
 # 用法：
-#   scripts/run-tests.sh [unit|integration|e2e|all] [--cov] [pytest 額外參數...]
+#   scripts/run-tests.sh [unit|integration|e2e|all|admin|admin-integration|admin-all] [--cov] [pytest 額外參數...]
 # 範例：
 #   scripts/run-tests.sh                 # 預設 unit（CI 主力、可離線）
 #   scripts/run-tests.sh unit --cov      # unit + 覆蓋率
 #   scripts/run-tests.sh all -k chain    # 全部、篩選含 chain 的測試
+#   scripts/run-tests.sh admin           # knowledge-admin 後端的 unit 層
 #
 # 退出碼：pytest 失敗→非 0（供 CI 把關）。
 set -euo pipefail
@@ -31,11 +32,17 @@ COMPOSE_FILE="docker-compose.dev.yml"
 SERVICE="rag-orchestrator"
 
 # 組 pytest -m 表達式
+#
+# `admin*` 系列跑的是 knowledge-admin 後端（自己的 pytest.ini／conftest／requirements），
+# 故要換服務。2026-09-12 之前三份入口對 knowledge-admin 零引用 ⇒ 那 4 支測試從未跑過。
 case "$LAYER" in
-  unit)        MARK_EXPR="unit" ;;
-  integration) MARK_EXPR="integration" ;;
-  e2e)         MARK_EXPR="e2e" ;;
-  all)         MARK_EXPR="" ;;
+  unit)             MARK_EXPR="unit" ;;
+  integration)      MARK_EXPR="integration" ;;
+  e2e)              MARK_EXPR="e2e" ;;
+  all)              MARK_EXPR="" ;;
+  admin)            MARK_EXPR="unit";        SERVICE="knowledge-admin-api" ;;
+  admin-integration) MARK_EXPR="integration"; SERVICE="knowledge-admin-api" ;;
+  admin-all)        MARK_EXPR="";            SERVICE="knowledge-admin-api" ;;
   --cov|-*)    # 未指定 layer，第一參數其實是旗標 → 視為 unit 並把參數放回
                set -- "$LAYER" "$@"; MARK_EXPR="unit" ;;
   *)           MARK_EXPR="$LAYER" ;;   # 直接當作自訂 marker 表達式
@@ -72,6 +79,9 @@ case "$LAYER" in
   e2e)         ENV_ARGS=(-e RUN_E2E=1 -e REQUESTED_TEST_LAYERS=e2e) ;;
   all)         ENV_ARGS=(-e RUN_INTEGRATION=1 -e RUN_E2E=1
                          -e REQUESTED_TEST_LAYERS=integration,e2e) ;;
+  # knowledge-admin 的 conftest 只讀 RUN_INTEGRATION；它沒有空跑守門，
+  # 故不注入 REQUESTED_TEST_LAYERS（注入了也沒有讀取端）。
+  admin-integration|admin-all) ENV_ARGS=(-e RUN_INTEGRATION=1) ;;
   *)           ;;   # unit 與自訂 marker 運算式：兩者皆不注入（維持離線、不受守門管轄）
 esac
 

@@ -19,6 +19,12 @@ jobs:
       - name: Unit 測試（容器內 3.11）＋覆蓋率
         run: scripts/run-tests.sh unit --cov
 
+      # knowledge-admin 後端有獨立的 pytest.ini／conftest／requirements。
+      # 2026-09-12 之前本 workflow、Makefile、run-tests.sh 三者對 knowledge-admin
+      # 零引用 ⇒ 其 4 支測試（含 2 支 security）從未在 CI 跑過。
+      - name: knowledge-admin 後端 unit 測試
+        run: scripts/run-tests.sh admin
+
       - name: 覆蓋率 ratchet 守門（CI 只讀，低於基準→fail）
         run: python3 rag-orchestrator/tools/coverage/check_baseline.py
 
