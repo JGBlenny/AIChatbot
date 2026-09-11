@@ -1,5 +1,6 @@
 <template>
   <div class="knowledge-reclassify-container">
+    <!-- ⚠️ 孤兒頁（2026-09-11 盤查）：⚠️ 本頁**不在 `router.js` 的路由表中**，使用者目前到不了；且它打的 `/intents` 端點**從未掛載過**（`app.py` 的 include_router 清單裡沒有），而 `/knowledge/classify/batch` 仍在線。⇒ 即使補上路由，意圖那半也不會動。⛔ 兩者都不是本次舊鏈退役造成的。 -->
     <h2>⚙️ 知識庫意圖分類工具</h2>
 
     <!-- 說明區塊 -->

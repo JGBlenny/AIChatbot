@@ -1,5 +1,6 @@
 <template>
   <div class="ai-knowledge-review-view">
+    <!-- ⚠️ 孤兒頁（2026-09-11 盤查）：⚠️ 本頁**不在 `router.js` 的路由表中**，使用者目前到不了。⛔ 不是本次舊鏈退役造成的（砍鏈前就沒掛）。保留檔案是因為功能本身未被否決，要啟用請在 `router.js` 補路由並先驗證它打的端點仍在線。 -->
     <div class="page-header">
       <h2>🤖 AI 知識候選審核</h2>
       <div class="header-actions">

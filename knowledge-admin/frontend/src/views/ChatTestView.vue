@@ -1,5 +1,13 @@
 <template>
   <div class="chat-test-view">
+    <!-- ⛔ 2026-09-11：REST 對話入口退役，本頁無法運作 -->
+    <div class="retired-banner">
+      ⛔ <strong>本頁目前無法使用</strong>——對話測試走的 REST 入口
+      （<code>POST /rag-api/v1/message</code>）已於 2026-09-11 隨舊對話鏈退役。<br>
+      現行唯一入口是 <code>/mcp</code> 的 <code>agent.turn</code>（MCP 協定，
+      無條件要求 <code>X-API-Key</code>，<strong>金鑰不得放進瀏覽器</strong>），
+      本頁無法直接改指過去。目前請改用 LINE OA 測試對話。
+    </div>
     <h2>💬 Chat API 測試</h2>
 
     <!-- ✅ 新增：顯示當前用戶角色 -->
@@ -574,6 +582,11 @@ export default {
           if (this.jgbRoleId) payload.role_id = this.jgbRoleId;
           if (this.jgbUserId) payload.user_id = this.jgbUserId;
         }
+        // ⛔ 2026-09-11：`POST /rag-api/v1/message` 已刪，⛔ 不讓它去撞 404。
+        //    無法改指 `/mcp`：MCP 協定＋金鑰不得進瀏覽器（不變量 28）。
+        //    ⚠️ 以下原實作整段保留——後端若另開 REST 入口，移除這個 throw 即可復用。
+        throw new Error('本頁已停用：對話的 REST 入口已於 2026-09-11 隨舊對話鏈退役，現行入口 /mcp agent.turn 為 MCP 協定、瀏覽器無法直接呼叫。請改用 LINE OA 測試。');
+        /* eslint-disable no-unreachable */
         const response = await axios.post(`${RAG_API}/v1/message`, payload);
 
         // 檢查是否觸發表單
@@ -790,6 +803,14 @@ export default {
 </script>
 
 <style scoped>
+/* ⛔ 2026-09-11 舊對話鏈退役橫幅 */
+.retired-banner {
+  background: #fdecea; border-left: 4px solid #d32f2f;
+  padding: 12px 14px; margin: 0 0 12px;
+  font-size: 13px; line-height: 1.8; color: #8a1c14;
+}
+.retired-banner code { background: rgba(0,0,0,.06); padding: 1px 4px; border-radius: 2px; }
+
 .chat-test-view {
   width: 100%;
 }
