@@ -5,10 +5,10 @@ knowledge-outline-and-intent-architecture:4.2）。
 主張：
 1. `normalize_entry_mode`：prospect × {缺、非法、明送 b2c、明送 b2b} ⇒ 一律 b2b；
    其餘 target_user 維持原值／預設 b2c。
-2. 兩個入口都真的呼叫它：MCP `parse_identity`（含 payload 的 **list 形狀**
-   `["prospect"]`——先正規化 target_user 才比得到 prospect）、REST
-   `build_identity`（用 `VendorChatRequest` 的 **pydantic 預設** `'b2c'`，
-   ⛔ 不明送 null；那是 F-1 現況缺陷的形狀）。
+2. 入口真的呼叫它：MCP `parse_identity`（含 payload 的 **list 形狀**
+   `["prospect"]`——先正規化 target_user 才比得到 prospect）。
+   ⚠️ 原本還測 REST `build_identity`，該入口（`routers/agent_entry.py`）已於
+   2026-09-12 刪除，那三支測試一併移除。
 3. 正規化實際發生 ⇒ `_STATS.identity_mode_normalized` 與
    `premise_stats()` 同名鍵各 +1；health 的 `premise` 節有該鍵、
    `red_flags` **不含**它（觀測值，⛔ 不致紅）。
@@ -21,7 +21,6 @@ import json
 
 import pytest
 
-from routers import agent_entry as ae
 from services.agent import health as health_mod
 from services.agent import mcp_facade as F
 from services.agent.identity import (
@@ -41,29 +40,6 @@ pytestmark = [
 
 def _headers(payload: str) -> dict:
     return {"x-jgb-identity": payload}
-
-
-class _LegacyChatRequestShape:
-    """舊鏈 `routers.chat.VendorChatRequest` 的最小替身（該類別已隨舊鏈於
-    2026-09-10 退役）——只重現本檔測試需要的欄位與**預設值**：`mode` 未明送
-    時預設 `'b2c'`（原 pydantic `Field('b2c', ...)`），這正是 F-1 現況缺陷
-    的形狀，本檔要測的就是 `ae.build_identity` 面對這個預設值時的行為，
-    ⛔ 不因為原類別消失就順手把這個預設值也改掉。`ae.build_identity` 純靠
-    `getattr` 讀欄位（鴨定型），不需要真正的 pydantic 驗證。
-    """
-
-    def __init__(self, *, message, target_user=None, vendor_id=None, mode="b2c",
-                role_id=None, session_id=None, user_id=None):
-        self.message = message
-        self.target_user = target_user
-        self.vendor_id = vendor_id
-        self.mode = mode
-        self.role_id = role_id
-        self.session_id = session_id
-        self.user_id = user_id
-
-
-VendorChatRequest = _LegacyChatRequestShape
 
 
 def _always_exists(_vendor_id):
@@ -156,31 +132,6 @@ async def test_mcp_unknown_target_user_is_tenant_b2c_and_not_counted():
 
 # ---------------------------------------------------------------------------
 # §4.3-1 REST 入口（pydantic 預設，⛔ 不明送 null）
-# ---------------------------------------------------------------------------
-def test_rest_prospect_with_pydantic_default_mode_becomes_b2b():
-    """F-1：`VendorChatRequest.mode` 的預設是 `'b2c'`——沒帶 mode 的 prospect 現況會落 b2c。"""
-    req = VendorChatRequest(message="請問系統支援哪些功能", target_user="prospect", vendor_id=1)
-    assert req.mode == "b2c", "前提變了：pydantic 預設不再是 b2c，本案的意義要重寫"
-    ident = ae.build_identity(req)
-    assert ident.mode == "b2b"
-    assert ident.audience == "prospect"
-
-
-def test_rest_tenant_with_pydantic_default_mode_stays_b2c():
-    """正對照：非 prospect 不受影響。"""
-    req = VendorChatRequest(message="我要報修", target_user="tenant", vendor_id=1)
-    ident = ae.build_identity(req)
-    assert ident.mode == "b2c"
-
-
-def test_rest_entry_has_no_stats_counter():
-    """明列取捨：REST 入口沒有 `_STATS` ⇒ 只 log 不計數。"""
-    ae.build_identity(VendorChatRequest(message="hi", target_user="prospect", vendor_id=1))
-    assert F._STATS.identity_mode_normalized == 0
-
-
-# ---------------------------------------------------------------------------
-# §4.3-9 計數三處
 # ---------------------------------------------------------------------------
 async def test_premise_stats_exposes_the_same_key():
     payload = json.dumps({"vendor_id": 1, "session_id": "s", "target_user": "prospect"})

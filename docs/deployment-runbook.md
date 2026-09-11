@@ -814,11 +814,11 @@ docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c \
 | env | 預設 | 作用 | 何時才開 | 查證 |
 |---|---|---|---|---|
 | `AGENT_STAGE` | `M0`（非法值／未設回退 `M0`） | 部署里程碑；工具 `stage[audience] <= AGENT_STAGE` 才可見 | 隨 M0→M1→…推進逐步調高，⛔ 不超前實際完成的里程碑 | `services/agent/mcp_facade.py:current_stage` |
-| `AGENT_AUDIENCES` | 空 | 🔴 **目前完全沒有效果**：唯一讀點 `routers/agent_entry.py` 未掛載於 `app.py`，它分流的 `/api/v1/message` 也已刪除。M3 切換演練需要先決定 agent_entry 的去留並重建入口，⛔ 在那之前設這個鍵不會改變任何行為 | ⛔ 不要設 | `routers/agent_entry.py:agent_audiences`（未掛載） |
-| `AGENT_TURN_ENABLED` | `false` | `agent.turn` MCP 工具是否註冊；關閉時 `tools/list` 看不到它 | 只在需要 MCP client 對話（Claude Code／jgb2 後端經 `/mcp` 跑整回合）時開；⛔ 與 `AGENT_AUDIENCES` 互不管轄 | `services/agent/mcp_facade.py:_AGENT_TURN_ENABLED_ENV` |
+| ~~`AGENT_AUDIENCES`~~ | — | 🔴 **已於 2026-09-12 刪除**（連同 `routers/agent_entry.py`）。M3 切換演練需要重建 REST 入口，⛔ 這個鍵不再是它的開關 | ⛔ 從 `.env` 移除 | 已不存在 |
+| `AGENT_TURN_ENABLED` | `false` | `agent.turn` MCP 工具是否註冊；關閉時 `tools/list` 看不到它 | 只在需要 MCP client 對話（Claude Code／jgb2 後端經 `/mcp` 跑整回合）時開。⚠️ 2026-09-12 起它也是 `agent_configured()` 的**唯一**判準 | `services/agent/mcp_facade.py:_AGENT_TURN_ENABLED_ENV` |
 | `AGENT_TURN_TIMEOUT_S` | `30.0` 秒 | `agent.turn` 單次呼叫逾時（刻意大於 `Budget.deadline_s`=20） | 隨 `AGENT_TURN_ENABLED` 一併評估，預設值通常免調 | `services/agent/mcp_facade.py:agent_turn_timeout_s` |
-| `AGENT_SHADOW_AUDIENCES` | 空（逗號分隔清單） | 影子跑動的 audience 白名單 | M2 影子評估開始時開（如 `AGENT_SHADOW_AUDIENCES=prospect`），M2 完成或未使用時關 | `services/agent/shadow.py:_shadow_audiences` |
-| `AGENT_SHADOW_MONTHLY_USD_CAP` | `50.0`（USD） | 影子月成本上限，超過自動關並告警 | 隨 `AGENT_SHADOW_AUDIENCES` 一併開 | `services/agent/shadow.py:_monthly_cap_usd` |
+| ~~`AGENT_SHADOW_AUDIENCES`~~ | — | 🔴 **已於 2026-09-12 刪除**：影子模式（`services/agent/shadow.py`）已於 2026-09-12 刪除——它比對的是**舊鏈**答案，舊鏈不存在了 | ⛔ 從 `.env` 移除 | 已不存在 |
+| ~~`AGENT_SHADOW_MONTHLY_USD_CAP`~~ | — | 🔴 **已於 2026-09-12 刪除**：同上，影子模式已刪除 | ⛔ 從 `.env` 移除 | 已不存在 |
 | `AGENT_OUTLINE_TOKEN_LIMIT_PROSPECT` | `10000` | 售前大綱 token 預算上限 | 全程有效（M1 起，非里程碑開關） | `services/agent/outline.py:OUTLINE_TOKEN_LIMIT_ENV` |
 | `AGENT_OUTLINE_TOKEN_LIMIT_PM` | `8000` | pm 目錄 token 預算上限（子 spec 用） | 同上，M1 尚未消費（pm 另案） | 同上 |
 | `AGENT_OUTLINE_TOKEN_LIMIT_TENANT` | `8000` | tenant 目錄 token 預算上限（子 spec 用） | 同上 | 同上 |
@@ -876,8 +876,7 @@ docker exec aichatbot-rag-orchestrator make audit
 ### 19-7 回切
 
 ```bash
-# .env：AGENT_AUDIENCES 設為空、AGENT_TURN_ENABLED=false
-sed -i 's/^AGENT_AUDIENCES=.*/AGENT_AUDIENCES=/' .env
+# .env：AGENT_TURN_ENABLED=false（AGENT_AUDIENCES 已於 2026-09-12 刪除，⛔ 不要再設）
 sed -i 's/^AGENT_TURN_ENABLED=.*/AGENT_TURN_ENABLED=false/' .env
 docker compose -f docker-compose.prod.yml up -d   # ⛔ 不加 --build，回切不需要重建 image
 ```
@@ -886,7 +885,7 @@ docker compose -f docker-compose.prod.yml up -d   # ⛔ 不加 --build，回切�
 > 原文寫「預期：≤5 分鐘內完成，**走舊鏈**」。**舊鏈已於 2026-09-11 整條刪除**
 > （31 個產品模組，commit `7c905408`）——關掉 `AGENT_TURN_ENABLED` 之後
 > **不會退回任何東西，而是完全沒有對話服務**。
-> `AGENT_AUDIENCES` 的唯一讀點 `routers/agent_entry.py` 也已無呼叫者、未掛路由。
+> `AGENT_AUDIENCES` 與它的唯一讀點 `routers/agent_entry.py` 已於 2026-09-12 一併刪除。
 >
 > ⛔ **不要把這段當退路。** 現在唯一的回退手段是**回滾版本**：
 > `git checkout <上一個已知良好的 commit>` → `docker compose -f docker-compose.prod.yml up -d --build`。
@@ -907,12 +906,12 @@ curl -s http://localhost:8100/mcp -X POST -H "X-API-Key: $MCP_INTERNAL_API_KEY" 
 以下四項屬觀測/告警設計，本任務只記錄判準與查詢方式，**不在本任務內接線到既有告警系統**
 （⛔ 不改 `.py`；接線屬另案）：
 
-1. **每回合成本 > 現行（舊鏈同類回合）×3**：查 `usage_events.processing_path LIKE 'mcp:agent.turn'`
-   或 `'shadow:agent'` 的 `cost_usd`／`total_tokens`，與同期舊鏈（`decision_snapshot` 的既有
-   路徑）比較均值。
-2. **影子月上限**：`AGENT_SHADOW_MONTHLY_USD_CAP` 觸發後 `shadow.py` 會自動關（見
-   `services/agent/shadow.py:_monthly_cap_usd`）並告警——告警落點需人工看 log
-   （`shadow disabled: monthly cap exceeded` 類字串，實際訊息以程式為準）。
+1. **每回合成本**：查 `usage_events.processing_path LIKE 'mcp:agent.turn'` 的
+   `cost_usd`／`total_tokens`。⚠️ 原本的判準是「> 舊鏈同類回合 ×3」，**舊鏈已刪除、
+   沒有同期對照可比**；要設門檻得先用新線自己跑一段時間取基線。
+2. ~~影子月上限~~ 🔴 **已失效**：影子模式（`services/agent/shadow.py`）與
+   `AGENT_SHADOW_MONTHLY_USD_CAP` 於 2026-09-12 一併刪除（它比對的是舊鏈答案）。
+   `usage_events` 也不會再出現 `'shadow:agent'` 這個 `processing_path`。
 3. **Verifier 拒率**：`decision_snapshot.agent`（或 `agent_trace`）裡的拒因分佈
    （`tools/agent_trace.py`）——拒率異常升高代表知識供給或大綱組裝出問題。
 4. **`tool_unavailable` 率**與**p95**：`usage_events` 的 `channel='mcp'` 或 `agent` 相關列，

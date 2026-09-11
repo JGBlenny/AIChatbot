@@ -1,6 +1,6 @@
 """舊鏈隔離 S3（Plan 第 5 稿 D 案）：新線自有的會話狀態層。
 
-**為什麼要有這個檔**：新線（`/mcp`、`agent_entry.py`）過去借用 `ConversationalEngine`
+**為什麼要有這個檔**：新線（`/mcp`）過去借用 `ConversationalEngine`
 的 `get_state`／`_start`／`_save`／`_close` 四個方法存取 `form_sessions`——但引擎
 其餘 1,581 行（brain 呼叫、grounding、確認流程…）新線完全不用。量過：新線只命中
 這四個方法，合計 43 行純 SQL，只依賴 `db_pool`／`json`／`CONVERSATIONAL_FORM_ID`
@@ -15,8 +15,8 @@
 （後三者底線開頭，因為它們是引擎私有介面、只給 `NamespacedStateStore` 和
 `EngineStateStore` 轉呼）。搬到本檔後**四個都改公開名**：`get_state`／`start`／
 `save`／`close`——因為本檔本身就是給別的模組當狀態層用的獨立類別，不再是
-「私有方法、外部靠繞過命名慣例轉呼」的關係。呼叫端（`state_store.py`、
-`routers/agent_entry.py`）已同步改叫公開名。
+「私有方法、外部靠繞過命名慣例轉呼」的關係。呼叫端（`state_store.py`）
+已同步改叫公開名。
 
 **簽章不變**：`start()` 的參數順序 `session_id, user_id, vendor_id, config_key,
 seed_topic=None, role_id=None` 與舊引擎的 `_start` 逐字相同——呼叫端不用改傳參方式。
@@ -30,7 +30,7 @@ from services.form_contract import CONVERSATIONAL_FORM_ID
 
 
 class AgentSessionStore:
-    """`/mcp`／`agent_entry.py` 共用的會話狀態層（取代舊鏈 `ConversationalEngine`
+    """`/mcp` 的會話狀態層（取代舊鏈 `ConversationalEngine`
     的狀態子集）。只認 `db_pool`，不依賴引擎其餘的 brain／grounding／確認邏輯。
     """
 

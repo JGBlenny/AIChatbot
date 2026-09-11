@@ -724,8 +724,12 @@ async def test_agent_configured_true_not_ready_or_absent_turns_red_ready_does_no
 
 
 # ══════════════════════════════════════════════════════════════════════
-# `mcp_facade.agent_configured()` 本身：三個 env 各自單獨設值 ⇒ 真；
+# `mcp_facade.agent_configured()` 本身：唯一的旗標 `AGENT_TURN_ENABLED` 設值 ⇒ 真；
 # 全清 ⇒ 假；`AGENT_TURN_ENABLED=0`／`false` ⇒ 假（正對照，⛔ 不是「任一有值」）。
+#
+# ⚠️ 2026-09-12：原本還認 `AGENT_AUDIENCES`（管已刪的 REST 入口）與
+# `AGENT_SHADOW_AUDIENCES`（管已刪的影子模式）。本檔改為**反向**斷言那兩把
+# 不再有效——設了它們仍應是假，否則等於「設了旗標卻啟用不了任何東西」。
 # ══════════════════════════════════════════════════════════════════════
 
 
@@ -740,19 +744,26 @@ def test_agent_configured_env_positive_controls(monkeypatch):
     _clear_agent_env(monkeypatch)
     assert F.agent_configured() is False
 
-    monkeypatch.setenv("AGENT_AUDIENCES", "prospect")
-    assert F.agent_configured() is True
-    monkeypatch.delenv("AGENT_AUDIENCES")
-
-    monkeypatch.setenv("AGENT_SHADOW_AUDIENCES", "prospect")
-    assert F.agent_configured() is True
-    monkeypatch.delenv("AGENT_SHADOW_AUDIENCES")
-
     monkeypatch.setenv("AGENT_TURN_ENABLED", "1")
-    assert F.agent_configured() is True
+    assert F.agent_configured() is True     # 正對照：唯一有效的旗標真的看得見
     monkeypatch.delenv("AGENT_TURN_ENABLED")
 
     assert F.agent_configured() is False   # 全清 ⇒ 假
+
+
+def test_agent_configured_ignores_retired_flags(monkeypatch):
+    """已退役的兩把旗標 ⛔ 不得再讓 `agent_configured()` 為真。
+
+    它們管的東西（REST 入口 `routers/agent_entry.py`、影子模式
+    `services/agent/shadow.py`）已於 2026-09-12 刪除。
+    """
+    from services.agent import mcp_facade as F
+
+    _clear_agent_env(monkeypatch)
+    for retired in ("AGENT_AUDIENCES", "AGENT_SHADOW_AUDIENCES"):
+        monkeypatch.setenv(retired, "prospect")
+        assert F.agent_configured() is False, f"{retired} 不該再生效"
+        monkeypatch.delenv(retired)
 
 
 @pytest.mark.parametrize("value", ["0", "false", "False", ""])

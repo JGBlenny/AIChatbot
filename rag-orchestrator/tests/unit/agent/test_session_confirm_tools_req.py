@@ -865,19 +865,6 @@ def test_namespaced_identity_shape_and_fail_closed():
 
 
 @pytest.mark.req(_REQ_29)
-def test_rest_path_identity_is_not_namespaced():
-    """REST（`routers/agent_entry.build_identity`）⛔ 不加前綴——兩條路徑天然分池。"""
-    from types import SimpleNamespace
-
-    from routers.agent_entry import build_identity
-
-    request = SimpleNamespace(vendor_id=3, target_user="prospect", mode="b2c",
-                              role_id=None, user_id="u1", session_id="sid-1")
-    assert build_identity(request).session_id == "sid-1"
-    assert not build_identity(request).session_id.startswith("mcp:")
-
-
-@pytest.mark.req(_REQ_29)
 async def test_slots_tools_use_the_session_id_they_are_handed():
     """工具是拿 `identity.session_id` 去找列的——所以換身分就等於換命名空間。
 

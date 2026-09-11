@@ -10,8 +10,9 @@ m1-security-review-2.6-2.7.md`）：
 > 的 key、帶他人的 `session_id`，就能讀寫他人的對話。
 
 處置＝**命名空間鍵**：`mcp:{api_key_id}:{vendor_id}:{session_id}`。
-REST 路徑（`routers/agent_entry.py:EngineStateStore`）維持裸 `session_id` 不變，
-兩條路徑因此**天然分池**，⛔ 不共用會話列。
+⚠️ 2026-09-12：曾有第二條 REST 路徑（`routers/agent_entry.py:EngineStateStore`）
+用裸 `session_id`，兩條天然分池。該路徑已刪除 ⇒ **現在只剩 `/mcp` 一條**。
+命名空間鍵仍保留（⛔ 不要為了「只剩一條」就退回裸 key——既有會話列是用這個形狀寫的）。
 
 ## 為什麼前綴不會被撞開
 `api_key_id` 與 `vendor_id` 都是**整數**（`api_keys.id`／`vendors.id`），
@@ -49,8 +50,8 @@ from services.agent.agent_session import AgentSession
 SESSION_ID_MAX_LEN = 100
 
 #: `_start` 的 `config_key` 舊預設（任務 2.6 brief 當時 M1 的 `/mcp` 對話對象只
-#: 有 prospect）。**L8（Plan R R3）**：REST 路徑（`routers/agent_entry.py`）
-#: 已經是 `f"agent:{identity.audience}"`（依受眾），`/mcp` 這邊落後——
+#: 有 prospect）。**L8（Plan R R3）**：已刪除的 REST 路徑當時已是
+#: `f"agent:{identity.audience}"`（依受眾），`/mcp` 這邊落後——
 #: `NamespacedStateStore.start()` 新增 `audience` 參數依受眾組字串，這個舊
 #: 預設值**原封不動**保留當「沒給 `config_key`／`audience` 時」的相容值
 #: （⛔ 不改既有列的鍵值——舊列的 `config_key='agent:prospect'` 讀取邏輯
@@ -116,7 +117,7 @@ def is_expired(state: Any, now: Optional[float] = None, ttl_s: float = SESSION_I
 
 
 class NamespacedStateStore:
-    """`/mcp` 回合狀態的存取點；介面與 `routers/agent_entry.py:EngineStateStore` 同形。"""
+    """`/mcp` 回合狀態的存取點。"""
 
     def __init__(self, engine: Any, api_key_id: Optional[int], vendor_id: Optional[int]) -> None:
         if api_key_id is None or vendor_id is None:

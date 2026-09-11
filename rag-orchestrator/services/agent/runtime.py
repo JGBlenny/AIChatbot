@@ -3105,8 +3105,8 @@ class AgentRuntime:
                             return confirm_turn
                     # ⚠️ **槽位寫回 state（2.9，⛔ 勿刪）**：`session.slots.set` 是
                     #    以 `jsonb_set` 直接改 `form_sessions.collected_data.slots`
-                    #    的，但回合結束時呼叫端（`mcp_facade._agent_turn`／
-                    #    `routers/agent_entry._persist`）會用手上這份 `state`
+                    #    的，但回合結束時呼叫端（`mcp_facade._agent_turn`）
+                    #    會用手上這份 `state`
                     #    **整包覆蓋** `collected_data`（`_save` 是
                     #    `SET collected_data=$2::jsonb`，不是 merge）。不同步回來，
                     #    剛寫進去的槽位會在同一回合結束時被自己抹掉——工具回 ok、

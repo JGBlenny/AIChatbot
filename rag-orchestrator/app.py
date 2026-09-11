@@ -123,7 +123,7 @@ def _wrap_verifier_observe_only(runtime, attempt_sink):
           file=sys.stderr)
 
 async def _init_agent_runtime(app: FastAPI) -> None:
-    """建 `app.state.agent_runtime`／`agent_outlines`／`agent_indexes`／`outline_resolver`／`shadow_runner`。
+    """建 `app.state.agent_runtime`／`agent_outlines`／`agent_indexes`／`outline_resolver`。
 
     design 元件 5：大綱超出 token 預算 ⇒ 啟動紅；Verifier 自證失敗 ⇒ 啟動紅（bootstrap）。
     但 agent 路徑在業主未跑 migration（`knowledge_base.outline_approved_by`）前組不起來，
@@ -138,7 +138,6 @@ async def _init_agent_runtime(app: FastAPI) -> None:
     app.state.agent_outlines = {}
     app.state.agent_indexes = {}
     app.state.outline_resolver = None
-    app.state.shadow_runner = None
     try:
         import asyncio
 
@@ -211,16 +210,6 @@ async def _init_agent_runtime(app: FastAPI) -> None:
         app.state.agent_indexes = indexes
         app.state.outline_resolver = _agent_outline_mod.make_outline_resolver(dict(outlines))
         app.state.agent_runtime = runtime
-        try:
-            from services.agent.shadow import ShadowRunner as _ShadowRunner   # 任務 4.1
-            app.state.shadow_runner = _ShadowRunner(
-                lambda readonly_view: _agent_bootstrap.build_runtime(
-                    app.state.db_pool, provider, _mcp_registry, outline_doc=outline_doc,
-                    candidate_selector=candidate_selector, candidate_selectors=selectors,
-                    readonly_view=readonly_view),
-                app.state.db_pool)
-        except ImportError:
-            print("ℹ️ [agent] ShadowRunner 尚未落地（4.1），影子模式停用")
         print(f"✅ agent runtime 已初始化（rules_sha={runtime.rules_sha[:12]} outline_sha={runtime.outline_sha[:12]} "
               f"sections={len(outline_doc.sections)} tokens={outline_doc.token_count} "
               f"index_state={index.state} audiences={sorted(outlines)}）")

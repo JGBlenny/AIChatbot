@@ -19,7 +19,7 @@
 - 每個 scenario 的多輪對話共用同一個 `state` dict。
 - 身分改 `mode="b2b"`、`vendor_id=1`（售前池是 b2b 池，見
   `services/agent/outline.py:build_prospect_outline` 與
-  `routers/agent_entry.py` 的 `"b2b" if target_user == "prospect"`）。
+  已刪除的 `routers/agent_entry.py` 當時的 `"b2b" if target_user == "prospect"`）。
 - 無捏造（`no_fabrication`）的尺：`forbid_hit`。`verifier_rejects`／
   `rewrote_ok` 只是觀測值，不再判定這條硬線。
 - 固定句率的分母只算「非敏感、非邊界」子集，基準取自 manifest 的跨樣本基準。
@@ -97,7 +97,7 @@ class IndexNotReady(RuntimeError):
 
 #: 售前池是 b2b 池（見 services/agent/outline.py:build_prospect_outline 的
 #: `Identity(vendor_id=1, target_user="prospect", mode="b2b")` 與其
-#: 「⛔ 勿改回 b2c」註解；routers/agent_entry.py 的
+#: 「⛔ 勿改回 b2c」註解；已刪除的 routers/agent_entry.py 當時的
 #: `"b2b" if target_user == "prospect" else ...`）——⛔ 別改回 b2c/vendor_id=0，
 #: 那樣測到的是錯的知識池。
 EVAL_VENDOR_ID = 1
@@ -702,8 +702,8 @@ async def _build_fake_candidate_selector() -> "CandidateSelector":
 
 def _set_outline_on_state(state: dict, outline_doc: Any) -> dict:
     """回傳 `state["agent"]`；若有大綱則塞入 `outline`（Runtime 從
-    `state["agent"]["outline"]` 讀，見 `routers/agent_entry.py
-    :handle_agent_entry`／`services/agent/mcp_facade.py:_agent_turn` 同一做法）。"""
+    `state["agent"]["outline"]` 讀，見 `services/agent/mcp_facade.py:_agent_turn`
+    同一做法）。"""
     agent_state = state.setdefault("agent", {})
     if outline_doc is not None:
         agent_state["outline"] = outline_doc
@@ -711,12 +711,23 @@ def _set_outline_on_state(state: dict, outline_doc: Any) -> dict:
 
 
 def _estimate_cost_usd(model: str, prompt_tokens: int, completion_tokens: int) -> float:
-    """agent 鏈成本估算——⛔ 不另抄一份價目表，直接借
-    `services.agent.shadow._estimate_cost_usd`（同一張 `usage_metering
-    .DEFAULT_PRICING`）。缺價 ⇒ 0.0。"""
-    from services.agent.shadow import _estimate_cost_usd as _shadow_estimate
+    """agent 鏈成本估算。
 
-    return _shadow_estimate(model, prompt_tokens, completion_tokens)
+    ⛔ 不另抄一份價目表：讀 `services.usage_metering.DEFAULT_PRICING`
+    （與線上計量同一張表）。缺價 ⇒ 0.0，⛔ 不臆造。
+
+    ⚠️ 2026-09-12：本函式原本轉呼 `services.agent.shadow._estimate_cost_usd`，
+    該模組已隨影子模式刪除（它的用途是拿新線答案比對**舊鏈**答案，舊鏈不存在了），
+    故把這段算式搬進本檔。算法與原本逐位元相同。
+    """
+    from services import usage_metering
+
+    price = usage_metering.DEFAULT_PRICING.get(model)
+    if price is None:
+        return 0.0
+    prompt_cost = prompt_tokens * price[0]
+    completion_cost = completion_tokens * price[1]
+    return round((prompt_cost + completion_cost) / 1_000_000, 6)
 
 
 def _provider_error_result(exc: BaseException):

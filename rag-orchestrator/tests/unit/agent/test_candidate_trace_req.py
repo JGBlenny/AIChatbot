@@ -1,4 +1,4 @@
-"""unit：任務 4.1 trace 三鍵——白名單、形狀守門、shadow／trace_view 鏡射
+"""unit：任務 4.1 trace 三鍵——白名單、形狀守門、trace_view 鏡射
 （Plan `inputs/plan-m-d-runtime-wiring-20260907.md` §2.4-6｜
 knowledge-outline-and-intent-architecture:4.1）。
 
@@ -15,7 +15,6 @@ import json
 import pytest
 
 from services.agent import runtime as runtime_mod
-from services.agent import shadow as shadow_mod
 from services.agent import trace_view
 from services.agent.runtime import TurnTrace, _emit_agent_decision
 from services.agent.output_schema import VerifierVerdict
@@ -143,29 +142,6 @@ def test_shape_gate_passes_well_formed_candidates(monkeypatch):
     assert captured[-1]["candidate_ids"] == ids
     assert captured[-1]["winning_key_kind"] == {"prospect/A/f0": "title", "prospect/A/f1": "phrasing"}
     assert "candidate_ids_shape_invalid" not in trace.violations
-
-
-# ---------------------------------------------------------------------------
-# shadow._trace_to_dict 鏡射三鍵
-# ---------------------------------------------------------------------------
-
-
-def test_shadow_trace_to_dict_mirrors_candidate_trio():
-    trace = TurnTrace(
-        trace_id="t-shadow",
-        verifier=[VerifierVerdict(ok=True)],
-        final_kind="answer",
-        candidate_ids=["prospect/A/f0", "prospect/A/f1"],
-        winning_key_kind={"prospect/A/f0": "title"},
-        miss_kind="hit",
-    )
-    d = shadow_mod._trace_to_dict(trace)
-    assert d["candidate_ids"] == ["prospect/A/f0", "prospect/A/f1"]
-    assert d["winning_key_kind"] == {"prospect/A/f0": "title"}
-    assert d["miss_kind"] == "hit"
-    # 三鍵值只有 id／列舉——序列化不炸、且不含被禁字面鍵（縱深檢查）。
-    blob = json.loads(json.dumps(d, ensure_ascii=False))
-    assert "answer" not in blob and "quote" not in blob and "user_message" not in blob
 
 
 # ---------------------------------------------------------------------------

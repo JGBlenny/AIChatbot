@@ -131,8 +131,8 @@ class Identity:
         entry: 呼叫入口（DSP-038-1）。預設 `"rest"`＝fail-closed——只有
             `/mcp` 門面自己的身分解析（`mcp_facade.parse_identity`／
             `union_specs` 的探針，屬子切片 W1b）才把它設成 `"mcp"`；
-            `routers/agent_entry.build_identity`、`health._PROBE_IDENTITY`、
-            `outline.py`、`tools/agent_eval.py` 一律**不帶** ⇒ 落 `"rest"`
+            `health._PROBE_IDENTITY`、`outline.py`、`tools/agent_eval.py`
+            一律**不帶** ⇒ 落 `"rest"`
             ⇒ `mcp_only=True` 的寫入型工具對它們永遠不可見、也呼叫不到。
             ⛔ 不是認證欄位：它由建構點決定，不由呼叫端 payload 決定。
     """

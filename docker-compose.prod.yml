@@ -276,9 +276,11 @@ services:
       MCP_ALLOWED_ORIGINS: ${MCP_ALLOWED_ORIGINS:--}
       # agentic-mcp 開關（M1 影子／M3 切換；全部預設關，見 runbook §19-5）
       AGENT_STAGE: ${AGENT_STAGE:-M0}
-      AGENT_AUDIENCES: ${AGENT_AUDIENCES:-}
-      AGENT_SHADOW_AUDIENCES: ${AGENT_SHADOW_AUDIENCES:-}
-      AGENT_SHADOW_MONTHLY_USD_CAP: ${AGENT_SHADOW_MONTHLY_USD_CAP:-50}
+      # ⛔ AGENT_AUDIENCES／AGENT_SHADOW_AUDIENCES／AGENT_SHADOW_MONTHLY_USD_CAP
+      #    已於 2026-09-12 移除：前者管的 REST 入口 routers/agent_entry.py 與後兩者
+      #    管的影子模式 services/agent/shadow.py 都已刪除，設了不會啟用任何東西。
+      #    ⚠️ .env 若還留著這三個鍵請一併刪掉（它們曾經會讓 agent_configured() 為真，
+      #    現在不會了——見 services/agent/mcp_facade.py:_AGENT_CONFIGURED_ENV_KEYS）。
       AGENT_TURN_ENABLED: ${AGENT_TURN_ENABLED:-false}
       # ── LINE OA demo／agent 路徑（2026-09-08；預設＝程式預設，不設即現行行為）──
       UVICORN_WORKERS: ${UVICORN_WORKERS:-4}                       # /mcp 用 agent.turn 須 1（MCP session 行程內；W1）
@@ -294,11 +296,9 @@ services:
       # agentic-mcp-orchestration 其餘新 env（runbook §19-5 逐一 grep 核對名稱／預設值）——
       # 全部維持不宣告＝吃程式內建預設；里程碑推進時才在 .env 加對應鍵覆寫，⛔ 不在此處預先宣告：
       #   AGENT_STAGE（預設 M0；部署里程碑，M0-M5）
-      #   AGENT_AUDIENCES（預設空；M3 才開 AGENT_AUDIENCES=prospect，管 REST 入口）
-      #   AGENT_TURN_ENABLED（預設 false；/mcp 的 agent.turn 工具回切開關，與 AGENT_AUDIENCES 互不管轄）
+      #   AGENT_TURN_ENABLED（預設 false；/mcp 的 agent.turn 工具回切開關——現在是
+      #     agent_configured() 的**唯一**判準）
       #   AGENT_TURN_TIMEOUT_S（預設 30 秒）
-      #   AGENT_SHADOW_AUDIENCES（預設空；M2 影子評估用）
-      #   AGENT_SHADOW_MONTHLY_USD_CAP（預設 50 USD；超過自動關並告警）
       #   AGENT_OUTLINE_TOKEN_LIMIT_PROSPECT（預設 10000）／_PM（預設 8000）／_TENANT（預設 8000）
       #   AGENT_MODEL（未設回退 OPENAI_MODEL，再無則 gpt-4o-mini）
       #   AGENT_TRACE_WINDOW_DAYS（預設 7；agent_trace 查詢時間窗）
