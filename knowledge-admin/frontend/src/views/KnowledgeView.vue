@@ -389,15 +389,23 @@
           <!-- 1️⃣ 後續動作 -->
           <div class="form-group">
             <label>後續動作 *</label>
+            <div class="retired-notice">
+              ⛔ <strong>此設定目前不會生效</strong>（2026-09-11 起）<br>
+              觸發表單／調用 API 這條機制隨舊對話鏈退役，現行對話路徑
+              （<code>/mcp</code> 的 <code>agent.turn</code>）沒有任何地方讀取它。
+              欄位與既有資料保留，<strong>但選了「觸發表單」或「調用 API」不會有任何作用，
+              也不會有錯誤訊息</strong>。<br>
+              需要讓知識觸發動作，請改用 agent 的工具機制（待產品決定）。
+            </div>
             <select v-model="linkType" @change="onLinkTypeChange" class="form-control">
               <option value="none">無（僅顯示知識庫內容）</option>
-              <option value="form">觸發表單（引導用戶填寫表單）</option>
-              <option value="api">調用 API（查詢或處理資料）</option>
+              <option value="form">⛔ 觸發表單（目前不生效）</option>
+              <option value="api">⛔ 調用 API（目前不生效）</option>
             </select>
             <small class="form-hint">
               💡 <strong>無</strong>：只顯示知識庫內容，不執行其他動作<br>
-              💡 <strong>觸發表單</strong>：引導用戶填寫表單（例如：報修申請），表單內可設定是否完成後調用 API<br>
-              💡 <strong>調用 API</strong>：直接調用 API（例如：查詢帳單）
+              ⛔ <strong>觸發表單</strong>：（已退役）原為引導用戶填寫表單<br>
+              ⛔ <strong>調用 API</strong>：（已退役）原為直接調用 API
             </small>
           </div>
 
@@ -1612,6 +1620,23 @@ export default {
 </script>
 
 <style scoped>
+/* ⛔ 2026-09-11 舊對話鏈退役：標示「欄位還在但不生效」的設定 */
+.retired-notice {
+  background: #fff4e5;
+  border-left: 4px solid #ff9800;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #7a4a00;
+  border-radius: 3px;
+}
+.retired-notice code {
+  background: rgba(0, 0, 0, 0.06);
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+
 /* 優先級樣式 */
 .priority-badge {
   display: inline-block;

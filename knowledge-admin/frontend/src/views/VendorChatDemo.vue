@@ -1,5 +1,15 @@
 <template>
   <div class="vendor-chat-demo">
+    <!-- ⛔ 2026-09-11：REST 對話入口退役，本頁無法運作 -->
+    <div class="retired-banner">
+      ⛔ <strong>本頁目前無法使用</strong>——業者對話的 REST 入口
+      （<code>POST /rag-api/v1/message</code>）已於 2026-09-11 隨舊對話鏈退役。<br>
+      現行唯一入口是 <code>/mcp</code> 的 <code>agent.turn</code>：那是 MCP 協定、不是 REST JSON，
+      且無條件要求 <code>X-API-Key</code>，<strong>金鑰不得放進瀏覽器</strong>，
+      所以本頁無法直接改指過去。<br>
+      要恢復本頁，需後端另開一個瀏覽器可用的對話端點——尚未決定。
+      目前請改用 LINE OA 測試對話。
+    </div>
     <!-- 頭部 -->
     <div class="chat-header">
       <div class="vendor-info" v-if="vendor">
@@ -300,7 +310,19 @@ export default {
 
         console.log('📡 [Stream] 發送串流請求:', payload);
 
-        // 使用 fetch API 處理 SSE
+        // ⛔ 2026-09-11：`POST /rag-api/v1/message` 已隨舊 REST 對話鏈刪除。
+        //    本頁無法改走 `/mcp`——那是 MCP 協定不是 REST JSON，且它無條件要求
+        //    `X-API-Key`（不變量 28），而金鑰⛔ 不得放進瀏覽器。
+        //    ⇒ 本頁在後端不再提供 REST 對話入口之前**無法運作**，先明確告知而非讓它 404。
+        throw new Error(
+          '本頁已停用：業者對話的 REST 入口（POST /rag-api/v1/message）已於 2026-09-11 ' +
+          '隨舊對話鏈退役。現行唯一入口是 /mcp 的 agent.turn（MCP 協定，需伺服器端持金鑰），' +
+          '瀏覽器無法直接呼叫。要恢復本頁需後端另開一個對話端點——尚未決定。'
+        );
+
+        /* eslint-disable no-unreachable */
+        // ⚠️ 以下保留為原實作，⛔ 不刪：後端若另開 REST 入口，改掉上面的 throw 並把
+        //    網址指向新端點即可復用整段 SSE 處理邏輯。
         const response = await fetch(`${RAG_API}/message`, {
           method: 'POST',
           headers: {
@@ -667,6 +689,22 @@ export default {
 </script>
 
 <style scoped>
+/* ⛔ 2026-09-11 舊對話鏈退役橫幅 */
+.retired-banner {
+  background: #fdecea;
+  border-left: 4px solid #d32f2f;
+  padding: 12px 14px;
+  margin: 0 0 12px;
+  font-size: 13px;
+  line-height: 1.8;
+  color: #8a1c14;
+}
+.retired-banner code {
+  background: rgba(0, 0, 0, 0.06);
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+
 .vendor-chat-demo {
   display: flex;
   flex-direction: column;
