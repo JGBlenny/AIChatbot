@@ -83,8 +83,13 @@ services:
       PROJECT_ROOT: /app
       RAG_API_URL: http://rag-orchestrator:8100
       OPENAI_API_KEY: ${OPENAI_API_KEY}
+      # 後台 JWT 簽發金鑰。⛔ 不得給預設值：`:?` 讓缺值時 compose 直接失敗，
+      # 而不是讓程式退回原始碼裡的硬編碼字串（那等於簽發金鑰對全世界公開）。
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?JWT_SECRET_KEY 未設：請在 .env 設強隨機值}
     ports:
-      - "8000:8000"
+      # 只綁 loopback：此服務對外一律經 knowledge-admin-web 的 nginx。
+      # ⛔ 不得改回 "8000:8000"——那讓 /api/ 繞過 nginx 直達宿主網路介面。
+      - "127.0.0.1:8000:8000"
     volumes:
       # 生產環境：只掛載必要的數據目錄和腳本
       - ./knowledge-admin/backend/create_admin.py:/app/create_admin.py:ro

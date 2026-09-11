@@ -1882,12 +1882,6 @@ class SmartBatchRequest(BaseModel):
     difficulty: Optional[str] = None  # easy, medium, hard
     target_user: Optional[str] = None  # 題庫受眾：property_manager(JGB知識)/tenant(租客)/prospect(售前)
 
-class CountRequest(BaseModel):
-    """題數統計請求模型"""
-    status: Optional[str] = None
-    source: Optional[str] = None
-    difficulty: Optional[str] = None
-    target_user: Optional[str] = None  # 題庫受眾：property_manager(JGB知識)/tenant/prospect
 
 class ContinuousBatchRequest(BaseModel):
     """連續分批回測請求模型"""
@@ -2007,68 +2001,6 @@ async def get_backtest_status(user: dict = Depends(get_current_user)):
         "log": log_content
     }
 
-
-@app.post("/api/test-scenarios/count")
-async def count_test_scenarios(request: CountRequest = None):
-    """
-    統計符合條件的測試題數
-
-    NOTE: 此 API 不需要認證，因為只是統計數量用於顯示 UI 資訊
-
-    參數:
-    - status: 篩選狀態 (pending_review, approved, rejected)
-    - source: 篩選來源 (imported, manual, user_question)
-    - difficulty: 篩選難度 (easy, medium, hard)
-    """
-    try:
-        conn = get_db_connection()
-        cur = conn.cursor()
-
-        # 建立查詢
-        query = "SELECT COUNT(*) as total FROM test_scenarios WHERE 1=1"
-        params = []
-
-        # 添加篩選條件
-        if request and request.status:
-            query += " AND status = %s"
-            params.append(request.status)
-
-        if request and request.source:
-            query += " AND source = %s"
-            params.append(request.source)
-
-        if request and request.difficulty:
-            query += " AND difficulty = %s"
-            params.append(request.difficulty)
-
-        if request and request.target_user:
-            query += " AND request_target_user = %s"
-            params.append(request.target_user)
-
-        cur.execute(query, params)
-        result = cur.fetchone()
-        # 處理不同的 cursor 類型（dict 或 tuple）
-        # SQL 使用 COUNT(*) as total，所以欄位名稱是 'total'
-        if result:
-            total = result['total'] if isinstance(result, dict) else result[0]
-        else:
-            total = 0
-
-        cur.close()
-        conn.close()
-
-        return {
-            "success": True,
-            "total": total,
-            "filters": {
-                "status": request.status if request else None,
-                "source": request.source if request else None,
-                "difficulty": request.difficulty if request else None
-            }
-        }
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"統計失敗: {str(e)}")
 
 
 @app.post("/api/backtest/run/smart-batch")

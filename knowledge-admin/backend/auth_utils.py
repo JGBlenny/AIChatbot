@@ -15,7 +15,15 @@ from psycopg2.extras import RealDictCursor
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # JWT 配置
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "your-secret-key-change-in-production")
+# ⛔ 不得加回預設值。這支檔進版控，任何硬編碼後備＝簽發金鑰對全世界公開，
+# 攻擊者可自簽任意 admin JWT，後台所有 Depends(get_current_user) 保護一併失效。
+# 缺值就讓程序起不來（大聲失敗），⛔ 不要靜默退回可預測的字串。
+SECRET_KEY = os.environ.get("JWT_SECRET_KEY")
+if not SECRET_KEY:
+    raise RuntimeError(
+        "JWT_SECRET_KEY 未設。請在 .env 設定強隨機值後重啟；"
+        "⛔ 不得在原始碼提供預設值。"
+    )
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = 24
 
@@ -156,58 +164,3 @@ async def get_user_roles(admin_id: int) -> List[dict]:
     finally:
         conn.close()
 
-async def has_permission(admin_id: int, permission: str) -> bool:
-    """
-    檢查用戶是否擁有特定權限
-
-    Args:
-        admin_id: 管理員 ID
-        permission: 權限名稱，如 'knowledge:view'
-
-    Returns:
-        True if user has permission, False otherwise
-    """
-    user_permissions = await get_user_permissions(admin_id)
-
-    # 超級管理員擁有所有權限
-    if '*:*' in user_permissions:
-        return True
-
-    # 檢查具體權限
-    if permission in user_permissions:
-        return True
-
-    # 檢查通配符權限（如 knowledge:*）
-    if ':' in permission:
-        resource, action = permission.split(':', 1)
-        if f'{resource}:*' in user_permissions:
-            return True
-
-    return False
-
-def require_permission(permission: str):
-    """
-    創建一個權限檢查依賴
-
-    用法:
-    @app.get("/api/knowledge", dependencies=[Depends(require_permission("knowledge:view"))])
-    async def list_knowledge():
-        # ...
-
-    Args:
-        permission: 需要的權限，如 'knowledge:view'
-
-    Returns:
-        FastAPI dependency function
-    """
-    async def permission_checker(user: dict = Depends(lambda: None)):
-        """
-        權限檢查函數
-
-        注意：需要在使用時注入 get_current_user
-        """
-        # 這裡暫時返回，實際使用時需要配合 get_current_user
-        # 在 routes 中直接使用 get_current_user 並檢查權限
-        return user
-
-    return permission_checker

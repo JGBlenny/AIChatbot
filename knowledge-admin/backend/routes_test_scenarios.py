@@ -2,7 +2,7 @@
 測試題庫管理 API 路由
 提供測試情境的 CRUD 操作
 """
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field, validator
 from typing import List, Optional, Dict, Any
 import psycopg2
@@ -10,7 +10,17 @@ from psycopg2.extras import RealDictCursor
 from datetime import datetime
 import os
 
-router = APIRouter(prefix="/api/test", tags=["Test Scenarios"])
+from routes_auth import get_current_user
+
+# 認證掛在 router 層而非逐條路由：11 條全覆蓋、之後新增的路由自動受保護。
+# ⛔ 不得改回無相依的 APIRouter(...)——本 router 曾有 11 條路由（含 POST／PUT／
+# DELETE 與真實使用者提問原文）完全未驗身分，且 nginx 的 location /api/ 沒有
+# auth_request，等於對所有連得到後台的人開放。
+router = APIRouter(
+    prefix="/api/test",
+    tags=["Test Scenarios"],
+    dependencies=[Depends(get_current_user)],
+)
 
 # 資料庫配置
 DB_HOST = os.getenv("DB_HOST", "localhost")
