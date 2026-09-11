@@ -30,7 +30,6 @@ AIChatbot/
 │   │   ├── knowledge_import.py         # 知識匯入
 │   │   ├── knowledge_export.py         # 知識匯出
 │   │   ├── forms.py                    # 表單管理（後台 CRUD 仍活，對話填單引擎已退役——見 F4/archive）
-│   │   ├── conversational_configs.py   # 對話式回答設定管理
 │   │   ├── unclear_questions.py        # 未釐清問題
 │   │   ├── loops.py                    # 知識完善迴圈
 │   │   ├── loop_knowledge.py           # 迴圈知識審核
@@ -53,7 +52,6 @@ AIChatbot/
 │   │   ├── form_contract.py            # 表單契約（結構化 schema，取代舊 form_manager）
 │   │   ├── decision_layer.py           # 決策層
 │   │   ├── conversational_config.py    # 對話式設定讀取
-│   │   ├── conversational_rules.py     # 對話式規則
 │   │   ├── presales_gate.py            # 售前 grounding 閘門
 │   │   ├── grounding_presentation.py   # grounding 呈現
 │   │   ├── retrieval_representation.py # representation 契約（general/instance 兩把尺）

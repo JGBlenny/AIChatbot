@@ -384,123 +384,20 @@
               </div>
             </div>
             <p v-if="selectedCategories.length === 0" class="hint-text">未選擇類別的知識將標記為「未分類」</p>
-          </div>
+          </div>          <!-- 2️⃣ 表單選擇（選擇「表單」後才顯示） -->
 
-          <!-- 1️⃣ 後續動作 -->
-          <div class="form-group">
-            <label>後續動作 *</label>
-            <div class="retired-notice">
-              ⛔ <strong>此設定目前不會生效</strong>（2026-09-11 起）<br>
-              觸發表單／調用 API 這條機制隨舊對話鏈退役，現行對話路徑
-              （<code>/mcp</code> 的 <code>agent.turn</code>）沒有任何地方讀取它。
-              欄位與既有資料保留，<strong>但選了「觸發表單」或「調用 API」不會有任何作用，
-              也不會有錯誤訊息</strong>。<br>
-              需要讓知識觸發動作，請改用 agent 的工具機制（待產品決定）。
-            </div>
-            <select v-model="linkType" @change="onLinkTypeChange" class="form-control">
-              <option value="none">無（僅顯示知識庫內容）</option>
-              <option value="form">⛔ 觸發表單（目前不生效）</option>
-              <option value="api">⛔ 調用 API（目前不生效）</option>
-            </select>
-            <small class="form-hint">
-              💡 <strong>無</strong>：只顯示知識庫內容，不執行其他動作<br>
-              ⛔ <strong>觸發表單</strong>：（已退役）原為引導用戶填寫表單<br>
-              ⛔ <strong>調用 API</strong>：（已退役）原為直接調用 API
-            </small>
-          </div>
-
-          <!-- 2️⃣ 表單選擇（選擇「表單」後才顯示） -->
-          <div v-if="linkType === 'form'" class="form-group">
-            <label>選擇表單 *</label>
-            <select v-model="formData.form_id" @change="onFormSelect" class="form-select">
-              <option value="">請選擇表單...</option>
-              <option v-for="form in availableForms" :key="form.form_id" :value="form.form_id">
-                {{ form.form_name }} ({{ form.form_id }})
-              </option>
-            </select>
-            <p v-if="!formData.form_id" class="hint-text">💡 請選擇一個表單</p>
-            <p v-else class="hint-text">✅ 已關聯表單：{{ getFormName(formData.form_id) }}</p>
-          </div>
 
           <!-- 3️⃣ 觸發模式（選擇表單後才顯示） -->
-          <div v-if="linkType === 'form' && formData.form_id" class="form-group">
-            <label>觸發模式 *</label>
-            <select v-model="formData.trigger_mode" @change="onTriggerModeChange" class="form-control">
-              <option value="auto">自動（系統根據用戶意圖智能判斷）</option>
-              <option value="manual">排查型（等待用戶說出關鍵詞後觸發）</option>
-              <option value="immediate">行動型（主動詢問用戶是否執行）</option>
-            </select>
-            <small class="form-hint">
-              💡 <strong>自動</strong>：系統智能判斷用戶是否需要填表（詢問時不觸發，執行時觸發）<br>
-              &nbsp;&nbsp;&nbsp;&nbsp;範例：「退租流程？」→ 只顯示答案；「我要退租」→ 觸發退租表單<br>
-              💡 <strong>排查型</strong>：先在上方「知識庫內容」填寫排查步驟，用戶排查後說出關鍵詞才觸發表單<br>
-              &nbsp;&nbsp;&nbsp;&nbsp;範例：內容寫「請檢查溫度設定、濾網...若仍不冷請報修」→ 用戶說「還是不冷」→ 觸發報修表單<br>
-              💡 <strong>行動型</strong>：顯示知識庫內容後，立即主動詢問是否執行<br>
-              &nbsp;&nbsp;&nbsp;&nbsp;範例：內容寫「租金繳納方式...」→ 自動詢問「是否要登記繳納記錄？」→ 用戶說「要」→ 觸發表單
-            </small>
-          </div>
+
 
           <!-- 4️⃣ manual 模式：觸發關鍵詞 -->
-          <div v-if="linkType === 'form' && formData.form_id && formData.trigger_mode === 'manual'" class="form-group">
-            <label>觸發關鍵詞 *</label>
-            <KeywordsInput
-              v-model="formData.trigger_keywords"
-              :placeholder="'輸入關鍵詞後按 Enter，例如：還是不行、試過了、無法解決'"
-            />
-            <small class="form-hint">
-              💡 用戶說出任一關鍵詞後，系統會觸發表單填寫
-            </small>
-          </div>
+
 
           <!-- 5️⃣ immediate 模式：確認提示詞 -->
-          <div v-if="linkType === 'form' && formData.form_id && formData.trigger_mode === 'immediate'" class="form-group">
-            <label>確認提示詞（選填）</label>
-            <textarea
-              v-model="formData.immediate_prompt"
-              class="form-control"
-              rows="2"
-              placeholder="例如：📋 是否要登記本月租金繳納記錄？"
-            ></textarea>
-            <small class="form-hint">
-              💡 <strong>作用</strong>：顯示知識庫內容後，自動附加此詢問提示<br>
-              💡 <strong>留空則使用預設</strong>：「需要安排處理嗎？回覆『要』或『需要』即可開始填寫表單」<br>
-              💡 <strong>自訂範例</strong>：「📋 是否要登記本月租金繳納記錄？（回覆『是』或『要』即可開始登記）」
-            </small>
-          </div>
+
 
             <!-- API 端點選擇（選擇「API」後才顯示） -->
-            <div v-if="linkType === 'api'" style="margin-top: 15px;">
-              <label>選擇 API 端點 *</label>
-              <select
-                v-model="selectedApiEndpointId"
-                class="form-select"
-                @change="onApiEndpointChange"
-              >
-                <option value="">請選擇 API 端點...</option>
-                <option
-                  v-for="api in availableApiEndpoints"
-                  :key="api.endpoint_id"
-                  :value="api.endpoint_id"
-                >
-                  {{ api.endpoint_icon }} {{ api.endpoint_name }} ({{ api.endpoint_id }})
-                </option>
-              </select>
 
-              <!-- 顯示選中的 API 資訊 -->
-              <div v-if="selectedApi" class="api-info-box" style="margin-top: 10px; padding: 10px; background: #f5f5f5; border-radius: 5px;">
-                <p><strong>{{ selectedApi.endpoint_icon }} {{ selectedApi.endpoint_name }}</strong></p>
-                <p v-if="selectedApi.description" style="font-size: 0.9em; color: #666;">{{ selectedApi.description }}</p>
-                <p style="font-size: 0.85em; color: #999;">
-                  {{ selectedApi.http_method }} {{ selectedApi.api_url }}
-                </p>
-                <p v-if="selectedApi.param_mappings && selectedApi.param_mappings.length > 0" style="font-size: 0.85em; color: #666; margin-top: 5px;">
-                  📋 需要參數：{{ selectedApi.param_mappings.map(p => p.param_name).join(', ') }}
-                </p>
-              </div>
-
-              <p v-if="!selectedApiEndpointId" class="hint-text">💡 請選擇一個 API 端點</p>
-              <p v-else class="hint-text">✅ 已關聯 API：{{ selectedApi?.endpoint_name }}</p>
-            </div>
 
           <div class="form-group">
             <label>內容 (Markdown) *</label>
@@ -650,7 +547,6 @@ export default {
         video_duration: null,
         video_format: null
       },
-      linkType: 'none',  // 關聯類型：'none', 'form', 'api'
       selectedApiEndpointId: '',  // 臨時變量：選中的 API 端點 ID
       keywordsString: '',
       selectedCategories: [],
@@ -965,31 +861,6 @@ export default {
       return form ? form.form_name : formId;
     },
 
-    onLinkTypeChange() {
-      // 切換關聯類型時，清空對應的欄位並設定 action_type
-      if (this.linkType === 'none') {
-        this.formData.form_id = null;
-        this.formData.action_type = 'direct_answer';
-        this.formData.api_config = null;
-        this.selectedApiEndpointId = '';
-      } else if (this.linkType === 'form') {
-        this.formData.action_type = 'form_fill';
-        this.formData.api_config = null;
-        this.selectedApiEndpointId = '';
-        // 確保 trigger_mode 有預設值
-        if (!this.formData.trigger_mode) {
-          this.formData.trigger_mode = 'manual';
-        }
-      } else if (this.linkType === 'api') {
-        this.formData.form_id = null;
-        this.formData.action_type = 'api_call';
-        // api_config 會在選擇 API 時構建
-      } else if (this.linkType === 'form_api') {
-        // 新增：表單+API 模式
-        this.formData.action_type = 'form_then_api';
-        // 保留表單和 API 配置
-      }
-    },
 
     onFormSelect() {
       // 當選擇表單時，確保 trigger_mode 有值
@@ -1164,7 +1035,6 @@ export default {
         action_type: 'direct_answer',
         api_config: null
       };
-      this.linkType = 'none';
       this.selectedApiEndpointId = '';
       this.keywordsString = '';
       this.selectedCategories = [];
@@ -1211,7 +1081,6 @@ export default {
         // 根據 action_type 判斷關聯類型
         if (knowledge.action_type === 'form_then_api') {
           // 修正：form_then_api 應該設為 form_api，不是 api
-          this.linkType = 'form_api';
           // 載入表單資訊（formData.form_id 已在 Line 1017 設定）
           console.log('📋 載入表單:', knowledge.form_id);
           // 載入 API 資訊
@@ -1220,16 +1089,13 @@ export default {
             console.log('🔌 載入 API 端點:', this.selectedApiEndpointId);
           }
         } else if (knowledge.action_type === 'api_call') {
-          this.linkType = 'api';
           // 從 api_config 解析出 endpoint
           if (knowledge.api_config && knowledge.api_config.endpoint) {
             this.selectedApiEndpointId = knowledge.api_config.endpoint;
             console.log('🔌 載入 API 端點:', this.selectedApiEndpointId);
           }
         } else if (knowledge.action_type === 'form_fill') {
-          this.linkType = 'form';
         } else {
-          this.linkType = 'none';
         }
 
         this.keywordsString = (knowledge.keywords || []).join(', ');
@@ -1283,85 +1149,12 @@ export default {
           ? this.selectedTargetUsers
           : null;
 
-        // 🆕 驗證觸發模式（當有關聯功能時）
-        if (this.linkType !== 'none') {
-          if (!this.formData.trigger_mode) {
-            this.showNotification('error', '請選擇觸發模式', '選擇關聯功能後，必須設定觸發模式');
-            this.saving = false;
-            return;
-          }
-
-          // 驗證 manual 模式必須設定觸發關鍵詞
-          if (this.formData.trigger_mode === 'manual') {
-            if (!this.formData.trigger_keywords || this.formData.trigger_keywords.length === 0) {
-              this.showNotification('error', '請設定觸發關鍵詞', '觸發模式選擇「排查型」時，必須設定至少一個觸發關鍵詞');
-              this.saving = false;
-              return;
-            }
-          }
-        }
-
-        // 根據關聯類型處理表單和 API 欄位
-        if (this.linkType === 'form') {
-          // 選擇了表單，必須選擇一個表單
-          if (!this.formData.form_id) {
-            this.showNotification('error', '請選擇表單', '關聯功能選擇「表單」時，必須選擇一個表單');
-            this.saving = false;
-            return;
-          }
-          // 設定 action_type
-          this.formData.action_type = 'form_fill';
-          this.formData.api_config = null;
-        } else if (this.linkType === 'api') {
-          // 選擇了 API，必須選擇一個 API 端點
-          if (!this.selectedApiEndpointId) {
-            this.showNotification('error', '請選擇 API 端點', '關聯功能選擇「API」時，必須選擇一個 API 端點');
-            this.saving = false;
-            return;
-          }
-          // 設定 action_type 和構建 api_config
-          this.formData.action_type = 'api_call';
-          this.formData.api_config = {
-            endpoint: this.selectedApiEndpointId,
-            params: {},
-            combine_with_knowledge: true
-          };
-          // 清空表單關聯
-          this.formData.form_id = null;
-            // 🆕 清空表單觸發模式（API 模式不需要）- 設為 null
-          this.formData.trigger_mode = null;
-          this.formData.immediate_prompt = null;
-        } else if (this.linkType === 'form_api') {
-          // 新增：表單+API 模式
-          // 驗證：必須同時選擇表單和 API 端點
-          if (!this.formData.form_id) {
-            this.showNotification('error', '請選擇表單', '關聯功能選擇「表單+API」時，必須選擇表單');
-            this.saving = false;
-            return;
-          }
-          if (!this.selectedApiEndpointId) {
-            this.showNotification('error', '請選擇 API 端點', '關聯功能選擇「表單+API」時，必須選擇 API 端點');
-            this.saving = false;
-            return;
-          }
-          // 設定 action_type 為 form_then_api
-          this.formData.action_type = 'form_then_api';
-          // 構建 api_config
-          this.formData.api_config = {
-            endpoint: this.selectedApiEndpointId,
-            params: {},
-            combine_with_knowledge: true
-          };
-          // 保留 form_id（不清空）
-        } else {
-          // 選擇了「無」，清空所有關聯
-          this.formData.action_type = 'direct_answer';
-          this.formData.form_id = null;
-            this.formData.api_config = null;
-          // 🆕 清空表單觸發模式 - 設為 null 或 'manual' (預設值)
-          this.formData.trigger_mode = null;
-          this.formData.immediate_prompt = null;
-        }
+        // 知識列固定為純回答；表單／API 關聯已於 2026-09-11 隨舊鏈移除
+        this.formData.action_type = 'direct_answer';
+        this.formData.form_id = null;
+        this.formData.api_config = null;
+        this.formData.trigger_mode = null;
+        this.formData.immediate_prompt = null;
 
         console.log('📝 準備儲存的資料:', {
           question_summary: this.formData.question_summary,
@@ -1620,22 +1413,6 @@ export default {
 </script>
 
 <style scoped>
-/* ⛔ 2026-09-11 舊對話鏈退役：標示「欄位還在但不生效」的設定 */
-.retired-notice {
-  background: #fff4e5;
-  border-left: 4px solid #ff9800;
-  padding: 10px 12px;
-  margin-bottom: 8px;
-  font-size: 13px;
-  line-height: 1.7;
-  color: #7a4a00;
-  border-radius: 3px;
-}
-.retired-notice code {
-  background: rgba(0, 0, 0, 0.06);
-  padding: 1px 4px;
-  border-radius: 2px;
-}
 
 /* 優先級樣式 */
 .priority-badge {

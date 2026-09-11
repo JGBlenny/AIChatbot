@@ -346,7 +346,9 @@ class PromptAssembler:
 
     `persona_provider`／`policy_provider` 由呼叫端注入（`(Identity) -> str`）。
     ⛔ 本檔不自帶 persona／政策文字、⛔ 不複製既有規則文字第二份——現行來源是
-    `services/conversational_rules.py:load_rules`（DB `category='對話規則'`
+    ⚠️ 原文引用的 `services/conversational_rules.py:load_rules` 已於 2026-09-11 刪除
+    （無活呼叫者）。設計理由仍成立：persona 來源要單一、⛔ 不在本檔另抄一份。
+    原文（DB `category='對話規則'`
     → code fallback `CONVERSATIONAL_RULES_BY_ROLE`）與舊鏈的「系統脈絡」讀取
     （DB `category='系統脈絡'` → `MINIMAL_FALLBACK`；原實作
     `services/system_context.py:get_system_context` 已隨舊鏈於 2026-09-10

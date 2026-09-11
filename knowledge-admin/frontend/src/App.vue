@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <!-- 左側導航欄 (VendorChatDemo 頁面不顯示) -->
+    <!-- 左側導航欄（獨立頁面不顯示） -->
     <aside v-if="!isStandalonePage" class="sidebar" :class="{ collapsed: sidebarCollapsed }">
       <div class="sidebar-header">
         <div class="logo">
@@ -40,10 +40,6 @@
               <router-link to="/target-users-config" class="nav-item nav-item-sub">
                 <span class="nav-icon">👥</span>
                 <span class="nav-text">目標設定</span>
-              </router-link>
-              <router-link to="/conversational-config" class="nav-item nav-item-sub">
-                <span class="nav-icon">💬</span>
-                <span class="nav-text">對話設定</span>
               </router-link>
             </div>
           </div>
@@ -104,10 +100,6 @@
         <!-- 對話測試層 -->
         <div class="nav-layer">
           <div class="layer-title">對話測試層</div>
-          <router-link to="/chat-test" class="nav-item">
-            <span class="nav-icon">💬</span>
-            <span class="nav-text">Chat測試</span>
-          </router-link>
         </div>
 
         <!-- 資料工具層 -->
@@ -178,7 +170,7 @@
       </div>
     </aside>
 
-    <!-- 主內容區 (VendorChatDemo 使用獨立容器) -->
+    <!-- 主內容區（獨立頁面另用容器） -->
     <div v-if="!isStandalonePage" class="main-container">
       <header class="app-header">
         <h1 class="page-title">{{ currentPageTitle }}</h1>
@@ -201,7 +193,7 @@
       </main>
     </div>
 
-    <!-- 獨立頁面容器 (VendorChatDemo) -->
+    <!-- 獨立頁面容器 -->
     <div v-if="isStandalonePage" class="standalone-container">
       <router-view />
     </div>
@@ -248,7 +240,6 @@ export default {
         '/knowledge-import': '知識匯入',
         '/vendors': '業者管理',
         '/platform-sop': 'SOP 範本管理',
-        '/chat-test': 'Chat 測試',
         '/test-scenarios': '測試題庫',
         '/backtest': '回測結果',
         '/usage-stats': '使用量統計',
@@ -273,8 +264,7 @@ export default {
 
     isStandalonePage() {
       // 檢查是否為獨立頁面（不需要側邊欄和 header）
-      return this.$route.name === 'VendorChatDemo' ||
-             this.$route.name === 'VendorFormSubmissions' ||
+      return this.$route.name === 'VendorFormSubmissions' ||
              this.$route.name === 'Login';
     }
   },

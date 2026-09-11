@@ -26,7 +26,7 @@ from services.intent_suggestion_engine import IntentSuggestionEngine
 from services.cache_service import CacheService
 
 # 導入路由
-from routers import unclear_questions, knowledge, vendors, knowledge_import, knowledge_export, knowledge_generation, cache, videos, images, business_types, document_converter, target_user_config, forms, api_endpoints, lookup, loops, loop_knowledge, system_health, conversational_configs
+from routers import unclear_questions, knowledge, vendors, knowledge_import, knowledge_export, knowledge_generation, cache, videos, images, business_types, document_converter, target_user_config, forms, api_endpoints, lookup, loops, loop_knowledge, system_health
 from routers import platform_sop  # ⚠️ 平台管理員的 SOP 範本後台 CRUD（15 條路由）。
 #    ⛔ **它不是對話鏈的一部分**——2026-09-11 砍舊鏈時被誤刪，同日還原。
 #    誤刪原因：分桶時把它列為「舊線進入點」，依據是檔名有 sop，⛔ 不是依據它做什麼。
@@ -452,7 +452,6 @@ app.include_router(videos.router, tags=["videos"])  # Video Upload & Management 
 app.include_router(images.router, tags=["images"])  # Image Upload & Recognition (修繕圖片上傳)
 app.include_router(document_converter.router, tags=["document_converter"])  # Document Converter (Word/PDF -> Q&A)
 app.include_router(target_user_config.router, tags=["target_user_config"])  # Target User Configuration (用戶類型配置)
-app.include_router(conversational_configs.router, tags=["conversational_configs"])  # 對話式回答設定管理
 app.include_router(forms.router, prefix="/api/v1", tags=["forms"])  # Form Management (表單管理)
 app.include_router(api_endpoints.router, prefix="/api/v1", tags=["api_endpoints"])  # API Endpoints Management (API 端點管理)
 app.include_router(lookup.router, tags=["lookup"])  # Lookup Table System (通用查詢系統)

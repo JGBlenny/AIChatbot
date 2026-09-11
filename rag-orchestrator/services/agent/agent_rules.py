@@ -6,7 +6,8 @@
 政策這一塊的落地方式：不是資料庫列（那條路已被 DSP-012／R11.6 判定為
 「有 KB 寫入權＝有 system prompt 寫入權」的洞），是進版控、人審過的原始碼。
 
-⛔ 不複製 `services/conversational_rules.py`（`load_rules`／
+⛔ 不複製舊鏈的 persona 載入（`services/conversational_rules.py` 已於 2026-09-11 刪除，
+⚠️ 該紀律仍成立：persona 只有這一份正本）。原文：（`load_rules`／
 `CONVERSATIONAL_RULES_BY_ROLE`）的任何段落——那邊的 `prospect` 規則含舊鏈的
 JSON 輸出契約（`{"extracted_fields": …, "action": …}`），與 agent 路徑的
 `AgentOutput` strict schema 相衝，照抄等於把兩套契約疊在一起。這裡是給

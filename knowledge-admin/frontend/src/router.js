@@ -5,8 +5,6 @@ import LoginView from './views/LoginView.vue';
 // Phase 1: Multi-Vendor Support
 import VendorManagementView from './views/VendorManagementView.vue';
 import VendorConfigView from './views/VendorConfigView.vue';
-import ChatTestView from './views/ChatTestView.vue';
-import VendorChatDemo from './views/VendorChatDemo.vue';
 // Platform SOP Template Management
 import PlatformSOPView from './views/PlatformSOPView.vue';
 import PlatformSOPEditView from './views/PlatformSOPEditView.vue';
@@ -33,7 +31,6 @@ import CategoryConfigView from './views/CategoryConfigView.vue';
 import ApiKeyManagementView from './views/ApiKeyManagementView.vue';
 // Target User Config Management
 import TargetUserConfigView from './views/TargetUserConfigView.vue';
-import ConversationalConfigView from './views/ConversationalConfigView.vue';
 // Admin Management
 import AdminManagementView from './views/AdminManagementView.vue';
 // Role Management
@@ -124,11 +121,6 @@ const routes = [
     component: PlatformSOPEditView
   },
   {
-    path: '/chat-test',
-    name: 'ChatTest',
-    component: ChatTestView
-  },
-  {
     path: '/backtest',
     name: 'Backtest',
     component: BacktestView
@@ -184,11 +176,6 @@ const routes = [
     component: TargetUserConfigView
   },
   // Conversational Config Management（對話式回答設定）
-  {
-    path: '/conversational-config',
-    name: 'ConversationalConfig',
-    component: ConversationalConfigView
-  },
   // Audience Config - Redirect to Target Users (舊功能已遷移)
   {
     path: '/audience-config',
@@ -289,13 +276,6 @@ const routes = [
     component: VendorFormSubmissionsView,
     meta: { requiresAuth: false }  // 展示頁不需要登入
   },
-  // Vendor Chat Demo - 業者測試頁面（放在最後以避免路由衝突）
-  {
-    path: '/:vendorCode/chat',
-    name: 'VendorChatDemo',
-    component: VendorChatDemo,
-    meta: { requiresAuth: false }  // 展示頁不需要登入
-  }
 ];
 
 const router = createRouter({

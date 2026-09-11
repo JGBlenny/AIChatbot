@@ -5,7 +5,9 @@
 conversational（多輪自適應問答→收斂）；未設定的面向一律 direct（單次直答）。
 
 **設定來源（資料驅動）**：knowledge_base 中 `category='對話規則'` 的每一列同時承載：
-  - `answer`        → 該角色的對話規則（persona，見 conversational_rules 載入）
+  - `answer`        → 該角色的對話規則（persona）。⚠️ 2026-09-11：載入端
+                      `services/conversational_rules.py` 已刪（無活呼叫者），
+                      **這些列目前沒有任何消費者**；新線的 persona 走 `services/agent/agent_rules.py`。
   - `target_user[]` → 角色（persona_role）
   - `generation_metadata.conversational_config`（jsonb）→ 設定本體：
         { key, answer_mode, persona_role?, enabled?,
