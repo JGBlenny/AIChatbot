@@ -1,6 +1,6 @@
 # 追溯矩陣（traceability matrix）
 
-> 缺口總數：**3045**（漸進式，預設警示不硬擋）
+> 缺口總數：**2996**（漸進式，預設警示不硬擋）
 
 ## 需求 ↔ 測試 ↔ 文件
 
@@ -401,7 +401,7 @@
 | conversational-routing-execution:2.3 | —（孤兒需求） | — |
 | conversational-routing-execution:3 | —（孤兒需求） | — |
 | conversational-routing-execution:3.1 | —（孤兒需求） | — |
-| conversational-routing-execution:3.2 | tests/test_brain_grounding_assertion_req.py::test_adjudication_flag_is_recorded_but_never_blocks<br>tests/test_brain_grounding_assertion_req.py::test_answer_that_only_answers_the_question_passes<br>tests/test_brain_grounding_assertion_req.py::test_bites_on_generic_fallback_marker<br>tests/test_brain_grounding_assertion_req.py::test_bites_when_value_absent<br>tests/test_brain_grounding_assertion_req.py::test_blocking_foil_without_other_fixture_provenance_is_refused<br>tests/test_brain_grounding_assertion_req.py::test_foil_literals_merge_with_declared_ones<br>tests/test_brain_grounding_assertion_req.py::test_literal_cannot_be_both_blocking_and_adjudication<br>tests/test_brain_grounding_assertion_req.py::test_matched_span_context_preserves_negation<br>tests/test_brain_grounding_assertion_req.py::test_passes_regardless_of_wording<br>tests/test_brain_grounding_assertion_req.py::test_record_keeps_raw_answer_and_spans_on_fail<br>tests/test_brain_grounding_assertion_req.py::test_record_keeps_raw_answer_verbatim_on_pass<br>tests/test_brain_grounding_assertion_req.py::test_refuses_empty_fallback_markers<br>tests/test_brain_grounding_assertion_req.py::test_refuses_empty_must_contain<br>tests/test_brain_grounding_assertion_req.py::test_refuses_literal_fed_by_the_test_itself<br>tests/test_brain_grounding_assertion_req.py::test_refuses_literal_without_provenance<br>tests/test_brain_grounding_assertion_req.py::test_refuses_non_answer_text<br>tests/test_brain_grounding_assertion_req.py::test_refuses_wording_lock<br>tests/test_brain_grounding_assertion_req.py::test_wording_lock_guard_also_applies_to_blocking_foils<br>tests/test_facet_entry_equivalence_config_req.py::test_both_config_indexes_resolve_to_same_object<br>tests/test_facet_entry_equivalence_config_req.py::test_facet_declares_no_equivalence_breaking_keys | — |
+| conversational-routing-execution:3.2 | tests/test_brain_grounding_assertion_req.py::test_adjudication_flag_is_recorded_but_never_blocks<br>tests/test_brain_grounding_assertion_req.py::test_answer_that_only_answers_the_question_passes<br>tests/test_brain_grounding_assertion_req.py::test_bites_on_generic_fallback_marker<br>tests/test_brain_grounding_assertion_req.py::test_bites_when_value_absent<br>tests/test_brain_grounding_assertion_req.py::test_blocking_foil_without_other_fixture_provenance_is_refused<br>tests/test_brain_grounding_assertion_req.py::test_foil_literals_merge_with_declared_ones<br>tests/test_brain_grounding_assertion_req.py::test_literal_cannot_be_both_blocking_and_adjudication<br>tests/test_brain_grounding_assertion_req.py::test_matched_span_context_preserves_negation<br>tests/test_brain_grounding_assertion_req.py::test_passes_regardless_of_wording<br>tests/test_brain_grounding_assertion_req.py::test_record_keeps_raw_answer_and_spans_on_fail<br>tests/test_brain_grounding_assertion_req.py::test_record_keeps_raw_answer_verbatim_on_pass<br>tests/test_brain_grounding_assertion_req.py::test_refuses_empty_fallback_markers<br>tests/test_brain_grounding_assertion_req.py::test_refuses_empty_must_contain<br>tests/test_brain_grounding_assertion_req.py::test_refuses_literal_fed_by_the_test_itself<br>tests/test_brain_grounding_assertion_req.py::test_refuses_literal_without_provenance<br>tests/test_brain_grounding_assertion_req.py::test_refuses_non_answer_text<br>tests/test_brain_grounding_assertion_req.py::test_refuses_wording_lock<br>tests/test_brain_grounding_assertion_req.py::test_wording_lock_guard_also_applies_to_blocking_foils | — |
 | conversational-routing-execution:3.3 | —（孤兒需求） | — |
 | conversational-routing-execution:3.4 | —（孤兒需求） | — |
 | conversational-routing-execution:3.5 | —（孤兒需求） | — |
@@ -1688,7 +1688,7 @@
 - usage-metering:8.4
 - usage-metering:8.5
 
-## 孤兒測試（未標記需求・待標記）（2083）
+## 孤兒測試（未標記需求・待標記）（2034）
 > R6.5：漸進導入，未標記非錯誤，列為待補。
 
 - tests/test_agent_router_req.py::test_openapi_endpoint_over_http
@@ -1764,10 +1764,6 @@
 - tests/test_select_entry_req.py::test_select_without_collecting_row_still_answers_and_creates_nothing
 - tests/test_select_entry_req.py::test_missing_row_gives_the_fixed_sentence_and_writes_no_slot
 - tests/test_select_entry_req.py::test_only_the_program_summary_reaches_the_persisted_dialog
-- tests/test_shadow_texts_req.py::test_migration_is_idempotent
-- tests/test_shadow_texts_req.py::test_write_then_read_back_row
-- tests/test_shadow_texts_req.py::test_row_is_cleanable_by_created_at_predicate
-- tests/test_shadow_texts_req.py::test_missing_required_columns_rejected
 - tests/test_visibility_predicate_equiv.py::test_sql_shape_matches_oracle
 - tests/test_visibility_predicate_equiv.py::test_oracle_detects_a_planted_difference
 - tests/test_visibility_predicate_equiv.py::test_production_function_emits_the_predicate
@@ -1782,11 +1778,6 @@
 - tests/test_visible_subset_sql_equiv_req.py::test_mutation_control_both_sides_move_together
 - tests/test_visible_subset_sql_equiv_req.py::test_mutation_control_db_only_change_makes_the_equality_fail
 - tests/test_visible_subset_sql_equiv_req.py::test_real_prospect_canon_visibility
-- tests/test_usage_event_live_req.py::test_one_request_one_event_with_dimensions
-- tests/test_usage_event_live_req.py::test_internal_prefix_marked
-- tests/test_usage_event_live_req.py::test_non_message_path_zero_event
-- tests/test_usage_event_live_req.py::test_arbitration_request_records_scores
-- tests/test_usage_event_live_req.py::test_short_circuit_path_leaves_scores_null
 - tests/test_usage_stats_agg_req.py::test_totals_exclude_internal_by_default
 - tests/test_usage_stats_agg_req.py::test_session_first_day_attribution
 - tests/test_usage_stats_agg_req.py::test_include_internal_toggle
@@ -1901,17 +1892,6 @@
 - tests/test_agent_attempts_report_req.py::test_main_writes_markdown_report_without_any_raw_ref_or_text
 - tests/test_agent_attempts_report_req.py::test_main_reports_missing_file
 - tests/test_agent_attempts_report_req.py::test_render_report_md_handles_empty_records
-- tests/test_agent_entry_req.py::test_not_in_agent_audiences_returns_none
-- tests/test_agent_entry_req.py::test_prospect_in_agent_audiences_runs_turn_and_persists
-- tests/test_agent_entry_req.py::test_runtime_missing_returns_none
-- tests/test_agent_entry_req.py::test_fixed_streak_three_marks_fallback_and_next_turn_routes_old_chain
-- tests/test_agent_entry_req.py::test_stream_event_sequence_and_keepalive
-- tests/test_agent_entry_req.py::test_build_identity_is_trusted_input_and_audience_derived
-- tests/test_agent_entry_req.py::test_schedule_shadow_noop_without_runner_and_swallows_errors
-- tests/test_agent_entry_req.py::test_schedule_shadow_injects_outline_for_prospect_only
-- tests/test_agent_entry_req.py::test_outline_injected_for_run_but_not_persisted
-- tests/test_agent_entry_req.py::test_app_agent_configured_is_plain_bool_and_lifespan_is_context_manager
-- tests/test_agent_entry_req.py::test_prospect_without_mode_defaults_to_b2b_pool
 - tests/test_agent_eval_provider_error_req.py::test_provider_exception_becomes_error_row_and_run_continues
 - tests/test_agent_eval_provider_error_req.py::test_cancelled_error_is_not_swallowed
 - tests/test_agent_eval_req.py::test_sha_mismatch_exits_3
@@ -1924,7 +1904,6 @@
 - tests/test_agent_eval_req.py::test_agent_chain_multi_turn_carries_history
 - tests/test_agent_eval_req.py::test_agent_chain_fake_provider_topics_uses_shared_state_per_scenario
 - tests/test_agent_eval_req.py::test_make_agent_identity_is_b2b_vendor_1
-- tests/test_agent_eval_req.py::test_run_old_chain_body_is_b2b_vendor_1
 - tests/test_agent_eval_req.py::test_sensitive_manifest_registered
 - tests/test_agent_eval_req.py::test_load_sensitive_v1_each_class_at_least_5_all_sensitive_no_dup
 - tests/test_agent_eval_req.py::test_real_sensitive_v1_fixture_meets_spec
@@ -1936,18 +1915,12 @@
 - tests/test_agent_eval_req.py::test_no_fabrication_uses_forbid_hit_not_verifier_rejects_alone
 - tests/test_agent_eval_req.py::test_hardlines_unset_without_baseline
 - tests/test_agent_eval_req.py::test_fixed_rate_excludes_sensitive_and_boundary_subset
-- tests/test_agent_eval_req.py::test_fixed_rate_chain_both_uses_same_batch_old_baseline
 - tests/test_agent_eval_req.py::test_fixed_rate_agent_only_falls_back_to_manifest_baseline
 - tests/test_agent_eval_req.py::test_supplementary_metrics_shape
 - tests/test_agent_eval_req.py::test_boundary_ok_rate_none_when_no_boundary_samples
 - tests/test_agent_eval_req.py::test_knowledge_gap_unfilled_true_when_batches_not_imported
 - tests/test_agent_eval_req.py::test_knowledge_gap_unfilled_false_when_batches_imported
 - tests/test_agent_eval_req.py::test_knowledge_gap_unfilled_field_present_in_jsonl
-- tests/test_agent_eval_req.py::test_old_chain_session_prefix_and_key_not_leaked
-- tests/test_agent_eval_req.py::test_old_chain_without_env_key_omits_header
-- tests/test_agent_eval_req.py::test_old_chain_fixed_message_match_marks_handoff_without_heuristic
-- tests/test_agent_eval_req.py::test_old_chain_keyword_heuristic_marks_flag_true
-- tests/test_agent_eval_req.py::test_old_chain_structured_handoff_takes_precedence_over_heuristic
 - tests/test_agent_eval_req.py::test_dump_texts_default_off_no_texts_dir
 - tests/test_agent_eval_req.py::test_dump_texts_on_writes_warning_header_and_raw_text
 - tests/test_agent_eval_req.py::test_report_has_repeat_jitter_section_when_repeat_gt_1
@@ -1971,7 +1944,6 @@
 - tests/test_agent_eval_req.py::test_real_provider_on_arm_actually_wires_candidate_selector_into_runtime
 - tests/test_agent_eval_req.py::test_no_candidates_related_env_reads_in_agent_eval
 - tests/test_agent_eval_req.py::test_build_prospect_index_not_called_when_candidates_off
-- tests/test_agent_eval_req.py::test_chain_both_candidates_off_old_rows_28_keys_backend_none
 - tests/test_agent_eval_req.py::test_chain_agent_only_candidates_on_backend_is_fake
 - tests/test_agent_eval_req.py::test_load_outline_probe_v1_multi_turn_item_yields_one_scenario
 - tests/test_agent_eval_req.py::test_load_outline_probe_v1_multi_turn_sensitive_stratum_forces_handoff
@@ -2089,7 +2061,7 @@
 - tests/test_agent_turn_unit_req.py::test_next_turn_reads_the_slot_written_by_the_tool
 - tests/test_answer_punctuation_normalization_req.py::test_run_turn_collapses_terminal_punctuation_run_at_the_join_site
 - tests/test_answer_punctuation_normalization_req.py::test_run_turn_leaves_single_terminal_punctuation_untouched
-- tests/test_app_agent_init_req.py::test_index_ready_and_main_shadow_share_same_selector
+- tests/test_app_agent_init_req.py::test_index_ready_and_main_runtime_has_selector
 - tests/test_app_agent_init_req.py::test_never_responding_backend_returns_within_shortened_timeout_and_never_raises
 - tests/test_ask_expects_req.py::test_outcome_expects_is_the_frozen_six_value_tuple
 - tests/test_ask_expects_req.py::test_ask_target_expects_is_the_single_source_of_which_targets_want_a_file
@@ -2204,7 +2176,6 @@
 - tests/test_candidate_trace_req.py::test_shape_gate_rejects_winning_key_kind_referencing_unknown_id
 - tests/test_candidate_trace_req.py::test_shape_gate_rejects_unknown_key_kind_value
 - tests/test_candidate_trace_req.py::test_shape_gate_passes_well_formed_candidates
-- tests/test_candidate_trace_req.py::test_shadow_trace_to_dict_mirrors_candidate_trio
 - tests/test_candidate_trace_req.py::test_render_trace_mirrors_candidate_trio_and_stays_verbatim_clean
 - tests/test_candidate_trace_req.py::test_render_trace_candidates_absent_when_snapshot_lacks_them
 - tests/test_candidate_trace_req.py::test_top_level_key_set_still_closed_with_candidates_key
@@ -2470,6 +2441,7 @@
 - tests/test_fine_index_req.py::test_agent_configured_false_index_never_turns_red
 - tests/test_fine_index_req.py::test_agent_configured_true_not_ready_or_absent_turns_red_ready_does_not
 - tests/test_fine_index_req.py::test_agent_configured_env_positive_controls
+- tests/test_fine_index_req.py::test_agent_configured_ignores_retired_flags
 - tests/test_fine_index_req.py::test_agent_configured_turn_enabled_falsy_values_stay_false
 - tests/test_fine_index_req.py::test_no_title_or_phrasing_text_reaches_logs_or_stdout
 - tests/test_handoff_data_exits_req.py::test_empty_true_for_facts_empty_string_and_found_false
@@ -2513,9 +2485,6 @@
 - tests/test_identity_entry_mode_req.py::test_mcp_prospect_explicit_b2c_is_normalized_and_counted
 - tests/test_identity_entry_mode_req.py::test_mcp_prospect_explicit_b2b_is_not_counted
 - tests/test_identity_entry_mode_req.py::test_mcp_unknown_target_user_is_tenant_b2c_and_not_counted
-- tests/test_identity_entry_mode_req.py::test_rest_prospect_with_pydantic_default_mode_becomes_b2b
-- tests/test_identity_entry_mode_req.py::test_rest_tenant_with_pydantic_default_mode_stays_b2c
-- tests/test_identity_entry_mode_req.py::test_rest_entry_has_no_stats_counter
 - tests/test_identity_entry_mode_req.py::test_premise_stats_exposes_the_same_key
 - tests/test_identity_entry_mode_req.py::test_health_premise_has_the_key_and_never_reds_on_it
 - tests/test_identity_entry_mode_req.py::test_derive_identity_source_by_shape
@@ -3206,7 +3175,6 @@
 - tests/test_session_confirm_tools_req.py::test_wired_mutating_tools_are_invisible_to_shadow_readonly_view
 - tests/test_session_confirm_tools_req.py::test_wired_tools_fail_closed_without_db_pool
 - tests/test_session_confirm_tools_req.py::test_namespaced_identity_shape_and_fail_closed
-- tests/test_session_confirm_tools_req.py::test_rest_path_identity_is_not_namespaced
 - tests/test_session_confirm_tools_req.py::test_slots_tools_use_the_session_id_they_are_handed
 - tests/test_session_confirm_tools_req.py::test_runtime_reads_slots_from_top_level_not_agent_subtree
 - tests/test_session_confirm_tools_req.py::test_slot_value_shape_is_rejected_by_prompt_assembler_without_flattening
@@ -3228,23 +3196,6 @@
 - tests/test_session_expired_req.py::test_non_expired_turn_reuses_the_row_and_reports_false
 - tests/test_session_expired_req.py::test_expired_turn_drops_pending_confirm_with_the_old_row
 - tests/test_session_expired_req.py::test_session_expired_is_the_sixth_key_and_defaults_to_false
-- tests/test_shadow_req.py::test_enabled_false_when_audience_not_allowed
-- tests/test_shadow_req.py::test_enabled_true_when_audience_allowed_and_under_cap
-- tests/test_shadow_req.py::test_enabled_false_when_over_monthly_cap
-- tests/test_shadow_req.py::test_enabled_cap_warning_throttled_to_one_hour
-- tests/test_shadow_req.py::test_schedule_returns_immediately
-- tests/test_shadow_req.py::test_schedule_factory_called_with_readonly_view_true
-- tests/test_shadow_req.py::test_schedule_set_decision_uses_whitelisted_keys_only
-- tests/test_shadow_req.py::test_schedule_emits_begin_is_internal_and_shadow_processing_path
-- tests/test_shadow_req.py::test_shadow_never_calls_any_save
-- tests/test_shadow_req.py::test_diff_flags_five_states
-- tests/test_shadow_req.py::test_looks_like_handoff_text_matches_effective_message
-- tests/test_shadow_req.py::test_writes_texts_only_for_prospect
-- tests/test_shadow_req.py::test_does_not_write_texts_for_tenant
-- tests/test_shadow_req.py::test_exception_in_run_turn_does_not_propagate
-- tests/test_shadow_req.py::test_exception_in_runtime_factory_does_not_propagate
-- tests/test_shadow_req.py::test_schedule_without_running_loop_does_not_raise
-- tests/test_shadow_req.py::test_trace_with_tool_calls_serializes_without_args_hash
 - tests/test_text_norm_req.py::test_collapses_runs_of_terminal_punctuation
 - tests/test_text_norm_req.py::test_no_op_on_inputs_without_a_collapsible_run
 - tests/test_text_norm_req.py::test_only_collapses_the_terminal_punctuation_not_surrounding_text

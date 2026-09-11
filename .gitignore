@@ -144,3 +144,6 @@ docs/backtest/corpus-20260810/*.tar.gz
 .claude/skills/outline-curation/journal/
 rag-orchestrator/tmp_outline_judge/
 .claude/settings.local.json
+
+# canon 決策簿的併發鎖（0 byte，執行期產物）——⛔ 不進版控
+.claude/DECISIONS.md.lock
