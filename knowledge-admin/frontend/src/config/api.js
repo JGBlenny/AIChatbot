@@ -86,11 +86,6 @@ export const API_ENDPOINTS = {
 
   // Vendors 相關
   vendors: '/api/vendors',
-  vendorById: (id) => `/api/vendors/${id}`,
-
-  // Test Scenarios 相關
-  testScenarios: '/api/test-scenarios',
-  testScenarioById: (id) => `/api/test-scenarios/${id}`,
 
   // Knowledge Base 相關
   knowledge: '/api/knowledge',

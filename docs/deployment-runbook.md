@@ -233,6 +233,10 @@ docker compose -f docker-compose.prod.yml up -d --build --no-deps rag-orchestrat
 
 **12-3 煙囪**（M2 之前必過）：
 
+> 🔴 **本小節的煙囪已不可執行（2026-09-11）**：它打 `POST /api/v1/message`，該端點隨舊 REST 對話鏈刪除（commit `7c905408`），實測 404。
+> 保留為當時的部署紀錄；⛔ 不要照跑，也不要拿它的「期望」欄當現行行為的依據。
+> 新線唯一入口是 `/mcp` 的 `agent.turn`，尚無等價的單行驗收指令。
+
 ```bash
 # ① 一則真 b2c 請求（走 SOP↔知識檢索仲裁）→ 事件帶分數
 SID="smoke_tvd_$(date +%s)"
@@ -328,6 +332,10 @@ docker compose -f docker-compose.prod.yml up -d --build --no-deps rag-orchestrat
 
 **13-4 煙囪**（M2 之前必過）：情境 A（單一租約、圖片高信心）真跑一輪，確認①面向接管報修對話②埋點入庫。
 
+> 🔴 **本小節的煙囪已不可執行（2026-09-11）**：它打 `POST /api/v1/message`，該端點隨舊 REST 對話鏈刪除（commit `7c905408`），實測 404。
+> 保留為當時的部署紀錄；⛔ 不要照跑，也不要拿它的「期望」欄當現行行為的依據。
+> 新線唯一入口是 `/mcp` 的 `agent.turn`，尚無等價的單行驗收指令。
+
 ```bash
 SID="smoke_repair_$(date +%s)"
 # 直達面向：trigger_facet_key=repair_create（或以報修意圖問句命中錨點；正確鍵以 config registry 為準）
@@ -412,6 +420,10 @@ docker compose -f docker-compose.prod.yml up -d --build --no-deps rag-orchestrat
 > 同 §13 查證結論）。**redis 檢索快取免特別清**（本案不改知識內容、不改檢索結果，只多一個內部呼叫方）。
 
 **14-3 煙囪**（費用岔題實跑一輪，確認查庫落地＋埋點）：
+
+> 🔴 **本小節的煙囪已不可執行（2026-09-11）**：它打 `POST /api/v1/message`，該端點隨舊 REST 對話鏈刪除（commit `7c905408`），實測 404。
+> 保留為當時的部署紀錄；⛔ 不要照跑，也不要拿它的「期望」欄當現行行為的依據。
+> 新線唯一入口是 `/mcp` 的 `agent.turn`，尚無等價的單行驗收指令。
 
 ```bash
 SID="smoke_kbtool_$(date +%s)"
@@ -618,15 +630,17 @@ docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c \
 # VALUES (<vendor_id>, 'service_hotline', '<專線號碼>', 'string', '客服專線', 'contact', true);
 ```
 
-### 18-5. 驗證（帶 X-API-Key，見 §0）
+### 18-5. 驗證
 
-```bash
-# ① T-1：應進面向（回追問/查無或實值，不能是通用知識條目）
-curl -s -X POST https://chatai.jgbsmart.com/rag-api/v1/message -H "Content-Type: application/json" -H "X-API-Key: $KEY" \
-  -d '{"message":"合約822032點退帳單金額為多少?","vendor_id":4,"mode":"b2b","role_id":"<真role>","user_id":"<真user>","session_id":"verify-18-1"}'
-# ② B-1：無知識題 fallback 不得含 {{service_hotline}} 字樣
-# ③ R-33：問「已發送的帳單可以取消嗎」不得再答「無法撤回」
-```
+🔴 **本節原有的三條 curl 驗收已不可執行**：它們打 `POST /rag-api/v1/message`，
+該端點隨舊 REST 對話鏈於 2026-09-11 刪除（本機實測 `GET`／`POST` 皆 404；
+正對照 `/api/v1/agent/health` 與 `/mcp` 回 401 ＝存在但要金鑰）。
+
+⛔ 目前**沒有等價的線上驗收指令**：新線入口是 `/mcp` 的 `agent.turn`，
+走 MCP streamable HTTP，不是一條 curl 打得完的請求。要驗這三項
+（T-1 應進面向、B-1 fallback 不得含 `{{service_hotline}}` 字樣、
+R-33「已發送的帳單可以取消嗎」不得再答「無法撤回」）
+需先有 MCP 用戶端的驗收腳本——尚未落地。
 
 **prod 待驗（真 API 才能確認）**：bill_diagnosis 以合約編號搜帳單的實際效果（R-35 期望找到關帳帳單）、bill_detail 是否含收據金額（R-31）。驗完把登錄簿對應案例標「已入回測」。
 
@@ -800,7 +814,7 @@ docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c \
 | env | 預設 | 作用 | 何時才開 | 查證 |
 |---|---|---|---|---|
 | `AGENT_STAGE` | `M0`（非法值／未設回退 `M0`） | 部署里程碑；工具 `stage[audience] <= AGENT_STAGE` 才可見 | 隨 M0→M1→…推進逐步調高，⛔ 不超前實際完成的里程碑 | `services/agent/mcp_facade.py:current_stage` |
-| `AGENT_AUDIENCES` | 空（逗號分隔清單） | REST 入口（`/api/v1/message`）哪些 audience 走 agent 鏈 | **M3 才開 `AGENT_AUDIENCES=prospect`**（5.1 切換演練後） | `routers/agent_entry.py:agent_audiences` |
+| `AGENT_AUDIENCES` | 空 | 🔴 **目前完全沒有效果**：唯一讀點 `routers/agent_entry.py` 未掛載於 `app.py`，它分流的 `/api/v1/message` 也已刪除。M3 切換演練需要先決定 agent_entry 的去留並重建入口，⛔ 在那之前設這個鍵不會改變任何行為 | ⛔ 不要設 | `routers/agent_entry.py:agent_audiences`（未掛載） |
 | `AGENT_TURN_ENABLED` | `false` | `agent.turn` MCP 工具是否註冊；關閉時 `tools/list` 看不到它 | 只在需要 MCP client 對話（Claude Code／jgb2 後端經 `/mcp` 跑整回合）時開；⛔ 與 `AGENT_AUDIENCES` 互不管轄 | `services/agent/mcp_facade.py:_AGENT_TURN_ENABLED_ENV` |
 | `AGENT_TURN_TIMEOUT_S` | `30.0` 秒 | `agent.turn` 單次呼叫逾時（刻意大於 `Budget.deadline_s`=20） | 隨 `AGENT_TURN_ENABLED` 一併評估，預設值通常免調 | `services/agent/mcp_facade.py:agent_turn_timeout_s` |
 | `AGENT_SHADOW_AUDIENCES` | 空（逗號分隔清單） | 影子跑動的 audience 白名單 | M2 影子評估開始時開（如 `AGENT_SHADOW_AUDIENCES=prospect`），M2 完成或未使用時關 | `services/agent/shadow.py:_shadow_audiences` |

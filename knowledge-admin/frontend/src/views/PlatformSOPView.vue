@@ -582,9 +582,13 @@ export default {
       }
     },
 
+    // ⛔ 這兩支要打 `/rag-api/v1/...` 而不是 `/api/...`：表單與 API 端點住在
+    // rag-orchestrator，knowledge-admin 後端沒有這兩條路由。原本寫 `/api/forms`
+    // 與 `/api/api-endpoints`，實測 404（正對照：`/api/vendors` 回 403 ＝存在但要授權），
+    // 而 catch 直接吞掉並設成 []，於是兩個下拉**靜默空白**、看起來像「沒有資料」。
     async loadAvailableForms() {
       try {
-        const response = await axios.get(`/api/forms`);
+        const response = await axios.get(`/rag-api/v1/forms`);
         this.availableForms = response.data || [];
       } catch (error) {
         console.error('載入表單列表失敗:', error);
@@ -594,7 +598,7 @@ export default {
 
     async loadAvailableApiEndpoints() {
       try {
-        const response = await axios.get(`/api/api-endpoints`);
+        const response = await axios.get(`/rag-api/v1/api-endpoints`);
         this.availableApiEndpoints = response.data || [];
       } catch (error) {
         console.error('載入 API 端點列表失敗:', error);
