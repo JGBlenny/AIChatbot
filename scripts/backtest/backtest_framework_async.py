@@ -132,6 +132,14 @@ class AsyncBacktestFramework:
         Returns:
             系統回應字典
         """
+        # ⛔ 2026-09-11：`POST /api/v1/message` 已隨舊 REST 對話鏈刪除（commit 7c905408）。
+        #    本框架在活路徑上：routers/loops.py → coordinator → backtest_client → 這裡。
+        #    ⇒ 讓它大聲失敗，⛔ 不要送出去收一堆 404 當「回測結果」。
+        raise RuntimeError(
+            "回測框架已失效：它打的 POST /api/v1/message 於 2026-09-11 隨舊 REST 對話鏈刪除。"
+            "現行唯一入口是 /mcp 的 agent.turn（MCP 協定，非 REST JSON），"
+            "本框架需改寫才能重新運作。在那之前，知識迴圈請用 backtest_only=false 或停用回測。"
+        )
         url = f"{self.base_url}/api/v1/message"
 
         # 為每個測試案例生成唯一的 session_id，避免表單狀態互相干擾
