@@ -132,14 +132,6 @@ class AsyncBacktestFramework:
         Returns:
             系統回應字典
         """
-        # ⛔ 2026-09-11：`POST /api/v1/message` 已隨舊 REST 對話鏈刪除（commit 7c905408）。
-        #    本框架在活路徑上：routers/loops.py → coordinator → backtest_client → 這裡。
-        #    ⇒ 讓它大聲失敗，⛔ 不要送出去收一堆 404 當「回測結果」。
-        raise RuntimeError(
-            "回測框架已失效：它打的 POST /api/v1/message 於 2026-09-11 隨舊 REST 對話鏈刪除。"
-            "現行唯一入口是 /mcp 的 agent.turn（MCP 協定，非 REST JSON），"
-            "本框架需改寫才能重新運作。在那之前，知識迴圈請用 backtest_only=false 或停用回測。"
-        )
         url = f"{self.base_url}/api/v1/message"
 
         # 為每個測試案例生成唯一的 session_id，避免表單狀態互相干擾
@@ -1145,6 +1137,17 @@ class AsyncBacktestFramework:
         Returns:
             測試結果列表
         """
+        # ⛔⛔ 2026-09-11：本框架整體已失效，⛔ 不要讓它跑。
+        #    它打 `POST /api/v1/message`，該端點隨舊 REST 對話鏈刪除（commit 7c905408）。
+        #    ⚠️ **擋在批次入口、⛔ 不擋在單一情境**：`_test_single_scenario_async` 內的
+        #    `except Exception` 會把例外吞成一筆 `passed=False` 的「結果」，
+        #    下游 `backtest_client` 再算出 pass_rate=0.0 並把整輪標成 status=completed
+        #    ⇒ 知識迴圈會拿一份「全部失敗但看起來跑完」的回測去做缺口分析。
+        raise RuntimeError(
+            "回測框架已失效：它打的 POST /api/v1/message 於 2026-09-11 隨舊 REST 對話鏈刪除。"
+            "現行唯一入口是 /mcp 的 agent.turn（MCP 協定，非 REST JSON）；本框架需改寫才能運作。"
+            "在那之前，知識迴圈請以 backtest_only=false 啟動，或不要觸發回測。"
+        )
         # 使用默認值
         concurrency = concurrency or self.concurrency
         timeout = timeout or self.default_timeout

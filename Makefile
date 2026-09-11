@@ -20,7 +20,7 @@ test-cov:                  ## unit + 覆蓋率報告
 	scripts/run-tests.sh unit --cov
 
 trace:                     ## 產生追溯矩陣報告
-	python3 tools/traceability/scan.py
+	python3 rag-orchestrator/tools/traceability/scan.py
 
 fix-config:                ## L1 決定性修正（預設 dry-run；`make fix-config APPLY=1` 才真跑並產生 rollback）
 	APPLY=$(APPLY) python3 rag-orchestrator/tools/fix_config.py
