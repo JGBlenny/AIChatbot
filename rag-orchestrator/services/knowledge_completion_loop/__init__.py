@@ -1,44 +1,10 @@
 """
-知識庫完善迴圈系統
+知識完善迴圈 - 審核面殘留模組
 
-此模組實作自動化的知識庫完善迴圈，包含：
-- 批次回測執行
-- 知識缺口分析
-- AI 知識生成
-- 回應類型判斷
-- 迭代驗證與同步
+執行機制（回測、迴圈協調、知識生成）已於 2026-09 移除（原打的
+POST /api/v1/message 已隨舊 REST 對話鏈刪除，迴圈自此無法執行）。
+本目錄現僅保留審核面所需模組：
+
+- embedding_client.py：`routers/loop_knowledge.py` 審核端點的去重比對用 embedding client
+- create_missing_indexes.sql：既有索引腳本，與審核查詢效能相關
 """
-
-# Lazy imports to avoid import errors - import these directly where needed
-# from .models import (
-#     LoopStatus,
-#     LoopConfig,
-#     FailureReason,
-#     GapPriority,
-#     ActionType,
-#     KnowledgeGap,
-# )
-#
-# from .coordinator import LoopCoordinator
-# from .clients import (
-#     BacktestFrameworkClient,
-#     GapAnalyzer,
-#     ActionTypeClassifier,
-#     KnowledgeGeneratorClient,
-# )
-
-__all__ = [
-    # Models
-    "LoopStatus",
-    "LoopConfig",
-    "FailureReason",
-    "GapPriority",
-    "ActionType",
-    "KnowledgeGap",
-    # Services
-    "LoopCoordinator",
-    "BacktestFrameworkClient",
-    "GapAnalyzer",
-    "ActionTypeClassifier",
-    "KnowledgeGeneratorClient",
-]

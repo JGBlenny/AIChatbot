@@ -45,14 +45,9 @@
 
 ---
 
-### `/scripts/backtest/`
-回測框架和測試執行：
-
-- **`backtest_framework_async.py`** - 異步回測框架（並發執行測試場景）
-- **`run_backtest_with_db_progress.py`** - 資料庫整合的回測執行腳本
-- **`README.md`** - 回測框架使用說明
-
-推薦使用管理後台的「回測」頁面執行（開發環境：http://localhost:8087/backtest）
+⚠️ `/scripts/backtest/`（repo 內 Python 回測框架）已於 2026-09-11 隨知識完善迴圈執行面一併移除——
+它打的 `POST /api/v1/message` 已隨舊 REST 對話鏈刪除，框架自此無法執行。
+新的回測改走 `.claude/skills/retrieval-improvement-loop/`（打 `/mcp` 的 `agent.turn`）。
 
 ---
 

@@ -89,12 +89,14 @@ echo ""
 echo "═══ 不變量 3：服務容器內關鍵檔案與本地一致 ═══"
 # 2026-09-04 改為整目錄 digest 比對（原為白名單 SYNC_FILES）：
 # 白名單漏掉 vendor_knowledge_retriever_v2.py 造成假綠，且同步單檔後容器缺
-# services/agent/ 套件 ⇒ app 起不來。現在比對 app.py＋services/**＋routers/**＋
-# scripts/backtest/** 的所有 *.py：內容不同 ⇒ FAIL；本地有容器沒有 ⇒ FAIL（缺相依）；
+# services/agent/ 套件 ⇒ app 起不來。現在比對 app.py＋services/**＋routers/**
+# 的所有 *.py：內容不同 ⇒ FAIL；本地有容器沒有 ⇒ FAIL（缺相依）；
 # 容器有本地沒有 ⇒ WARN（已刪檔，重建 image 才會消失）。⛔ 不再靠人記得列檔。
+# 2026-09-11：scripts/backtest 隨知識完善迴圈執行面一併移除（回測改走
+# .claude/skills/retrieval-improvement-loop/ 打 /mcp），移出 SYNC_ROOTS。
 REPO="$(cd "$(dirname "$0")/../.." && pwd)"
-SYNC_ROOTS=(app.py services routers scripts/backtest)
-C_SUMS=$(docker exec aichatbot-rag-orchestrator sh -c 'cd /app && find app.py services routers scripts/backtest -name "*.py" -not -path "*/__pycache__/*" -not -path "*/tests/*" -exec md5sum {} + 2>/dev/null' 2>/dev/null)
+SYNC_ROOTS=(app.py services routers)
+C_SUMS=$(docker exec aichatbot-rag-orchestrator sh -c 'cd /app && find app.py services routers -name "*.py" -not -path "*/__pycache__/*" -not -path "*/tests/*" -exec md5sum {} + 2>/dev/null' 2>/dev/null)
 if [ -z "$C_SUMS" ]; then
   echo "❌ FAIL：無法從容器取得檔案 digest（容器未起或 find 失敗）"
   FAIL=1
