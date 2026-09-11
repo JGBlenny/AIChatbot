@@ -204,6 +204,16 @@ async function handleSubmit() {
 
 <style scoped>
 .modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
   padding: 20px;
 }
 
@@ -219,6 +229,9 @@ async function handleSubmit() {
 }
 
 .modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 24px;
   border-bottom: 1px solid #e2e8f0;
 }
@@ -299,6 +312,8 @@ async function handleSubmit() {
 }
 
 .form-hint {
+  margin-top: 6px;
+  font-size: 12px;
   color: #718096;
 }
 
@@ -313,7 +328,9 @@ async function handleSubmit() {
 }
 
 .modal-footer {
+  display: flex;
   gap: 12px;
+  justify-content: flex-end;
   padding-top: 16px;
   border-top: 1px solid #e2e8f0;
 }
@@ -331,6 +348,7 @@ async function handleSubmit() {
 
 .btn-primary {
   background: #667eea;
+  color: white;
 }
 
 .btn-primary:hover:not(:disabled) {

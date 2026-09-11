@@ -170,6 +170,7 @@ export default {
 }
 
 .info-grid {
+  display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 24px;
   margin-bottom: 24px;
@@ -284,7 +285,11 @@ export default {
 }
 
 .badge {
+  display: inline-block;
   padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
   color: white;
 }
 

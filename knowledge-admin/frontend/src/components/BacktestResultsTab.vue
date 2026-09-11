@@ -1466,12 +1466,18 @@ export default {
 
 /* 統計卡片樣式 */
 .stats-cards {
+  display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 15px;
   margin-bottom: 25px;
 }
 
 .stat-card {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  text-align: center;
 }
 
 .stat-card.success {
@@ -1496,11 +1502,13 @@ export default {
 
 .stat-label {
   font-size: 14px;
+  color: #666;
   margin-bottom: 8px;
 }
 
 .stat-value {
   font-size: 28px;
+  font-weight: bold;
   color: #333;
 }
 
@@ -1712,6 +1720,18 @@ export default {
 }
 
 /* Modal 樣式 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
 
 .modal-content {
   background: white;
@@ -1723,6 +1743,9 @@ export default {
 }
 
 .modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   padding: 20px;
   border-bottom: 1px solid #dee2e6;
 }
@@ -1789,6 +1812,9 @@ export default {
 .modal-footer {
   padding: 15px 20px;
   border-top: 1px solid #dee2e6;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
 
 .btn-primary {

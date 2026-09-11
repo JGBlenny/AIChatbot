@@ -322,9 +322,13 @@ export default {
 
 /* 頁首（全站慣例） */
 .page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 10px;
 }
 .page-header h2 { margin: 0; font-size: 28px; color: #333; }
+.header-actions { display: flex; gap: 10px; }
 .page-hint { color: #7f8c8d; font-size: 13px; margin: 0 0 20px; }
 .btn {
   padding: 8px 16px; border: none; border-radius: 4px;
@@ -355,8 +359,10 @@ export default {
 
 /* 統計卡（全站 stats-grid/stat-card 慣例） */
 .stats-grid {
+  display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 16px;
+  margin-bottom: 20px;
 }
 .stat-card {
   background: white;
@@ -369,9 +375,7 @@ export default {
 }
 .stat-icon { font-size: 28px; margin-right: 14px; }
 .stat-value { font-size: 24px; font-weight: 700; color: #333; }
-.stat-label {
-  color: #7f8c8d;
-}
+.stat-label { font-size: 13px; color: #7f8c8d; }
 
 /* 表格白卡（全站 table 慣例） */
 .table-card {
@@ -394,7 +398,8 @@ tr.row-internal { color: #999; background: #fafafa; }
 
 /* 使用者類型章（全站 badge 慣例） */
 .badge {
-  font-weight: 600;
+  display: inline-block; padding: 4px 10px; border-radius: 12px;
+  font-size: 12px; font-weight: 600;
 }
 .badge-tenant { background: #d4edda; color: #155724; }
 .badge-pm { background: #cce5ff; color: #004085; }
@@ -414,12 +419,7 @@ tr.row-internal { color: #999; background: #fafafa; }
 .btn-sm { padding: 4px 10px; font-size: 12px; border: none; border-radius: 4px;
           background: #007bff; color: #fff; cursor: pointer; margin-right: 4px; }
 .btn-plain { background: #6c757d; }
-.empty-state {
-  color: #999;
-  padding: 40px;
-  background: white;
-  border-radius: 8px;
-}
+.empty-state { color: #999; padding: 40px; text-align: center; background: white; border-radius: 8px; }
 .empty-hint { margin-top: 8px; font-size: 13px; color: #b8860b; }
 .error-message { color: #c0392b; margin-top: 10px; }
 </style>

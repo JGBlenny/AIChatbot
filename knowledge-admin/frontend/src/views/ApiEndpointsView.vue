@@ -523,6 +523,8 @@ export default {
 
 .stats-cards {
   display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
 }
 
 .stat-card {
@@ -538,6 +540,12 @@ export default {
   font-size: 14px;
   color: #666;
   margin-bottom: 8px;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: bold;
+  color: #303133;
 }
 
 .stat-value.success {

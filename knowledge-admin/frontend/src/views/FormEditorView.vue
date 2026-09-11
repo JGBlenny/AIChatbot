@@ -862,6 +862,11 @@ export default {
   margin: 0;
 }
 
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
+
 .editor-container {
   display: grid;
   grid-template-columns: 350px 1fr;
@@ -888,10 +893,14 @@ export default {
 }
 
 .section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 15px;
 }
 
 .hint {
+  color: #999;
   font-size: 0.9em;
 }
 

@@ -382,7 +382,18 @@ export default {
   line-height: 1.6;
 }
 
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-bottom: 15px;
+}
 
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
 
 .info-item label {
   font-size: 12px;
@@ -497,6 +508,7 @@ export default {
 
 .btn-primary {
   background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
   flex: 1;
 }
 
@@ -527,6 +539,8 @@ export default {
 /* 狀態顯示 */
 .loading-state,
 .empty-state {
+  text-align: center;
+  padding: 60px 20px;
   color: #999;
 }
 

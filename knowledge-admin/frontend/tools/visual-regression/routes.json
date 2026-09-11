@@ -1,0 +1,10 @@
+[{"name":"01-login","path":"/login"},
+ {"name":"02-knowledge-universal","path":"/knowledge/universal"},
+ {"name":"03-vendors","path":"/vendors"},
+ {"name":"04-platform-sop","path":"/platform-sop"},
+ {"name":"05-chat-test","path":"/chat-test"},
+ {"name":"06-knowledge-import","path":"/knowledge-import"},
+ {"name":"07-backtest","path":"/backtest"},
+ {"name":"08-usage-stats","path":"/usage-stats"},
+ {"name":"09-document-converter","path":"/document-converter"},
+ {"name":"10-knowledge-export","path":"/knowledge-export"}]

@@ -172,6 +172,16 @@ function formatDate(dateString) {
 
 <style scoped>
 .modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
   padding: 20px;
 }
 
@@ -187,6 +197,9 @@ function formatDate(dateString) {
 }
 
 .modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 24px;
   border-bottom: 1px solid #e2e8f0;
 }
@@ -243,6 +256,8 @@ function formatDate(dateString) {
 }
 
 .info-item {
+  display: flex;
+  flex-direction: column;
   gap: 6px;
 }
 
@@ -270,6 +285,13 @@ function formatDate(dateString) {
   color: #667eea;
 }
 
+.badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
 
 .badge-system {
   background: #bee3f8;
@@ -289,6 +311,9 @@ function formatDate(dateString) {
 
 .stat-card {
   background: #f7fafc;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
 }
 
 .stat-icon {
@@ -304,10 +329,12 @@ function formatDate(dateString) {
 }
 
 .stat-label {
+  font-size: 13px;
   color: #718096;
 }
 
 .empty-state {
+  text-align: center;
   padding: 40px 20px;
   color: #a0aec0;
   font-size: 14px;

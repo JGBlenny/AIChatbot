@@ -328,7 +328,10 @@ h3 {
 
 /* 統計卡片 */
 .stats-grid {
+  display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 20px;
 }
 
 .stat-card {
@@ -352,11 +355,13 @@ h3 {
 
 .stat-label {
   font-size: 0.9rem;
+  color: #666;
   margin-bottom: 5px;
 }
 
 .stat-value {
   font-size: 2rem;
+  font-weight: bold;
   color: #2c3e50;
 }
 
@@ -402,6 +407,7 @@ h3 {
 
 /* 操作按鈕 */
 .actions {
+  display: flex;
   gap: 10px;
   margin-bottom: 20px;
 }

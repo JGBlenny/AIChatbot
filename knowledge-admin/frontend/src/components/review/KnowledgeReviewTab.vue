@@ -632,6 +632,7 @@ export default {
 
 /* 統計卡片 */
 .stats-cards {
+  display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 20px;
   margin-bottom: 30px;
@@ -719,6 +720,8 @@ export default {
 
 /* 空狀態 */
 .empty-state {
+  text-align: center;
+  padding: 60px 20px;
   color: #666;
 }
 
@@ -1155,6 +1158,7 @@ export default {
 
 .btn-edit {
   background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+  color: white;
 }
 
 .btn-edit:hover:not(:disabled) {
@@ -1190,6 +1194,7 @@ export default {
 
 .btn-primary {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
 }
 
 .btn-primary:hover:not(:disabled) {
@@ -1198,8 +1203,16 @@ export default {
 
 /* 徽章 */
 .badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
   font-weight: 600;
 }
+
+.badge-easy { background: #d4edda; color: #155724; }
+.badge-medium { background: #fff3cd; color: #856404; }
+.badge-hard { background: #f8d7da; color: #721c24; }
 
 /* 高亮動畫 */
 @keyframes pulse-highlight {

@@ -381,8 +381,11 @@ export default {
 }
 
 .badge {
+  display: inline-block;
+  padding: 4px 10px;
   border-radius: 4px;
   font-size: 13px;
+  font-weight: 500;
 }
 
 .badge-form {
@@ -513,6 +516,7 @@ export default {
 
 .btn-success {
   background: #67c23a;
+  color: white;
 }
 
 .btn-success:hover {
@@ -559,6 +563,9 @@ export default {
 .modal-header {
   padding: 20px 30px;
   border-bottom: 1px solid #ebeef5;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .modal-header h3 {
@@ -595,11 +602,17 @@ export default {
 
 /* 狀態標籤樣式 */
 .status-badge {
+  display: inline-block;
   padding: 5px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
   white-space: nowrap;
 }
 
 .status-pending {
+  background: #fff3cd;
+  color: #856404;
   border: 1px solid #ffc107;
 }
 
@@ -610,6 +623,8 @@ export default {
 }
 
 .status-completed {
+  background: #d1e7dd;
+  color: #0f5132;
   border: 1px solid #198754;
 }
 

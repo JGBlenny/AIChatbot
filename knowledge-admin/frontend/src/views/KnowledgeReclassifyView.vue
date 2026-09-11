@@ -623,6 +623,12 @@ export default {
 }
 
 /* 頁面標題 */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
 
 .page-header h2 {
   margin: 0;
@@ -727,7 +733,10 @@ export default {
 }
 
 .stat-card {
+  padding: 20px;
+  border-radius: 8px;
   background: #f8f9fa;
+  text-align: center;
   transition: all 0.2s;
 }
 
@@ -757,12 +766,15 @@ export default {
 }
 
 .stat-label {
+  font-size: 13px;
+  color: #666;
   margin-bottom: 8px;
   font-weight: 500;
 }
 
 .stat-value {
   font-size: 28px;
+  font-weight: bold;
   color: #333;
   margin-bottom: 5px;
 }
@@ -859,6 +871,7 @@ export default {
 
 /* 操作按鈕 - 改用全域 CSS */
 .actions {
+  display: flex;
   gap: 15px;
   margin-bottom: 15px;
   flex-wrap: wrap;

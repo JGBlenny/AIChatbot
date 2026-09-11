@@ -365,6 +365,8 @@ export default {
 /* 統計卡片 */
 .stats-cards {
   display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
 }
 
 .stat-card {
@@ -380,6 +382,12 @@ export default {
   font-size: 14px;
   color: #666;
   margin-bottom: 8px;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: bold;
+  color: #303133;
 }
 
 /* 表格樣式 */
@@ -422,7 +430,11 @@ code {
 
 /* 徽章樣式 */
 .badge {
+  display: inline-block;
   padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
 }
 
 .type-global {
@@ -465,6 +477,7 @@ code {
 
 .btn-primary {
   background: #409EFF;
+  color: white;
 }
 
 .btn-primary:hover {
@@ -482,6 +495,7 @@ code {
 
 .btn-edit {
   background: #E6A23C;
+  color: white;
 }
 
 .btn-edit:hover {
@@ -490,6 +504,7 @@ code {
 
 .btn-success {
   background: #67C23A;
+  color: white;
 }
 
 .btn-success:hover {
@@ -519,21 +534,41 @@ code {
 }
 
 .empty-state {
+  text-align: center;
   padding: 40px;
   color: #909399;
   background: white;
 }
 
 .loading {
+  text-align: center;
+  padding: 40px;
   color: #909399;
   background: white;
 }
 
 /* Modal 樣式 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
 
 .modal-content {
+  background: white;
+  border-radius: 8px;
   padding: 30px;
   max-width: 800px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
 }
 

@@ -654,6 +654,18 @@ export default {
 
 <style scoped>
 /* 彈窗遮罩 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
 
 /* 彈窗主體 */
 .modal-content {
@@ -670,6 +682,9 @@ export default {
 
 /* 彈窗標題列 */
 .modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   padding: 20px 24px;
   background: #f8f9fa;
   border-bottom: 1px solid #e9ecef;
@@ -863,11 +878,14 @@ export default {
 .error-message {
   color: #dc3545;
   font-size: 12px;
+  margin-top: 4px;
 }
 
 /* 提示訊息 */
 .form-hint {
+  font-size: 12px;
   color: #718096;
+  margin-top: 6px;
   line-height: 1.5;
 }
 
@@ -1057,6 +1075,9 @@ export default {
 
 /* 彈窗底部按鈕區 */
 .modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
   margin-top: 24px;
   padding-top: 16px;
   border-top: 1px solid #dee2e6;
@@ -1080,6 +1101,7 @@ export default {
 .btn-secondary {
   background: #6c757d;
   border-color: #6c757d;
+  color: white;
 }
 
 .btn-secondary:hover:not(:disabled) {
@@ -1090,6 +1112,7 @@ export default {
 .btn-primary {
   background: #007bff;
   border-color: #007bff;
+  color: white;
 }
 
 .btn-primary:hover:not(:disabled) {

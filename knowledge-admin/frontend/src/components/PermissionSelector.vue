@@ -184,6 +184,7 @@ function getSelectedInGroup(group) {
 }
 
 .actions {
+  display: flex;
   gap: 6px;
 }
 

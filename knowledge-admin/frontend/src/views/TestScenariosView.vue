@@ -695,11 +695,22 @@ export default {
   /* width 由 app-main 統一管理 */
 }
 
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
 
 .page-header h2 {
   margin: 0;
   font-size: 28px;
   color: #333;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
 }
 
 /* 篩選區域 */
@@ -747,13 +758,23 @@ export default {
 }
 
 .stat-card {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  text-align: center;
 }
 
 .stat-value {
   font-size: 32px;
+  font-weight: bold;
   color: #667eea;
   margin-bottom: 8px;
+}
+
+.stat-label {
+  color: #666;
+  font-size: 14px;
 }
 
 /* 表格樣式 */
@@ -788,8 +809,16 @@ td {
 }
 
 .badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
   font-weight: 600;
 }
+
+.badge-easy { background: #d4edda; color: #155724; }
+.badge-medium { background: #fff3cd; color: #856404; }
+.badge-hard { background: #f8d7da; color: #721c24; }
 
 .badge-approved { background: #d4edda; color: #155724; }
 .badge-pending_review { background: #fff3cd; color: #856404; }
@@ -1020,8 +1049,11 @@ td {
 }
 
 .status-badge {
+  display: inline-block;
   padding: 6px 12px;
   border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
   margin-bottom: 8px;
 }
 
@@ -1202,6 +1234,7 @@ td {
 
 .btn-edit {
   background-color: #667eea;
+  color: white;
 }
 
 .btn-edit:hover {
@@ -1212,6 +1245,7 @@ td {
 
 .btn-danger {
   background-color: #dc3545;
+  color: white;
 }
 
 .btn-danger:hover {
@@ -1271,13 +1305,27 @@ td {
 
 /* 對話框 */
 .modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
 }
 
 .modal-content {
+  background: white;
   padding: 30px;
   border-radius: 12px;
   box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 .modal-content h3 {
@@ -1286,6 +1334,15 @@ td {
   color: #333;
 }
 
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
 
 .form-group label {
   display: block;
@@ -1324,4 +1381,10 @@ td {
   cursor: pointer;
 }
 
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 30px;
+}
 </style>

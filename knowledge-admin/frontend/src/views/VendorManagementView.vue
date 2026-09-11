@@ -645,14 +645,20 @@ code {
 
 .stat-card {
   background: #f0f9ff;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
 }
 
 .stat-label {
+  font-size: 13px;
+  color: #666;
   margin-bottom: 8px;
 }
 
 .stat-value {
   font-size: 32px;
+  font-weight: bold;
   color: #1e40af;
 }
 

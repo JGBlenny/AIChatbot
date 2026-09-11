@@ -613,8 +613,11 @@ export default {
 }
 
 .badge {
+  display: inline-block;
+  padding: 4px 10px;
   border-radius: 4px;
   font-size: 13px;
+  font-weight: 500;
 }
 
 .badge-form {
@@ -662,6 +665,7 @@ export default {
 
 .btn-success {
   background: #67c23a;
+  color: white;
 }
 
 .btn-success:hover {
@@ -722,13 +726,21 @@ export default {
 }
 
 .modal-content {
+  background: white;
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 .modal-header {
   padding: 25px 30px;
   border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
@@ -837,11 +849,17 @@ export default {
 
 /* 狀態標籤樣式 */
 .status-badge {
+  display: inline-block;
   padding: 5px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
   white-space: nowrap;
 }
 
 .status-pending {
+  background: #fff3cd;
+  color: #856404;
   border: 1px solid #ffc107;
 }
 
@@ -852,6 +870,8 @@ export default {
 }
 
 .status-completed {
+  background: #d1e7dd;
+  color: #0f5132;
   border: 1px solid #198754;
 }
 

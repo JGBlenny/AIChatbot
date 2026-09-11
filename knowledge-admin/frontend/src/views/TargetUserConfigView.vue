@@ -296,12 +296,21 @@ export default {
   font-size: 13px;
 }
 
+.toolbar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  align-items: center;
+}
 
 .loading {
+  text-align: center;
+  padding: 40px;
   color: #909399;
 }
 
 .empty-state {
+  text-align: center;
   padding: 40px 20px;
   color: #909399;
   background: #f5f7fa;
@@ -337,7 +346,11 @@ export default {
 }
 
 .badge {
+  display: inline-block;
+  padding: 4px 10px;
   border-radius: 3px;
+  font-size: 12px;
+  font-weight: 500;
 }
 
 .badge-user {
@@ -366,15 +379,37 @@ export default {
   color: #f56c6c;
 }
 
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
 
 .modal-content {
+  background: white;
+  border-radius: 8px;
   padding: 30px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 .modal-content h2 {
   margin-top: 0;
   margin-bottom: 20px;
   color: #303133;
+}
+
+.form-group {
+  margin-bottom: 20px;
 }
 
 .form-group label {
@@ -402,8 +437,17 @@ export default {
   font-size: 12px;
 }
 
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
 
 .form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 30px;
   padding-top: 20px;
   border-top: 1px solid #ebeef5;
 }
