@@ -233,15 +233,33 @@ services:
       RESPONSIBILITY_TELEMETRY: ${RESPONSIBILITY_TELEMETRY:-false}
       # S2：authority handoff 的 migration allowlist（空＝不啟用任何 handoff）
       RESPONSIBILITY_MIGRATION_ALLOWLIST: ${RESPONSIBILITY_MIGRATION_ALLOWLIST:-}
-      # ⚠️ 下面三個旗標**必須宣告**，否則 compose 不會把 .env 的值傳進容器——
+      # ⛔⛔ **2026-09-11 舊 REST 對話鏈退役：以下 17 個旗標已無任何程式讀取。**
+      #    它們曾是真的行為槓桿，消費者隨舊鏈刪除（commit 7c905408）而消失。
+      #    ⚠️ **這一類最難發現**：不是 import、不是路徑、不是字串匯入——組態還在、
+      #    註解還在教用法，但沒有人讀它。`tests/unit/_meta/test_env_parity_req.py`
+      #    只驗「兩份 compose 宣告一致」，⛔ 不驗「有沒有人讀」，反而把死鍵釘住了
+      #    （⇒ 要刪任一鍵，得同步改那支測試）。
+      #    ⚠️ 預設值皆為 false／空，故線上行為不變、方向 fail-safe；
+      #    真正的風險是**維運相信閘還在**。
+      #    清單：PREENTRY_ROUTABILITY_FACETS／PREENTRY_ROUTABILITY_GATE／BRAIN_STRICT_SCHEMA／
+      #    FACET_SCOPE_SALVAGE／ENABLE_ANSWER_SYNTHESIS／ENABLE_LLM_OPTIMIZATION／
+      #    HIGH_QUALITY_THRESHOLD／PERFECT_MATCH_THRESHOLD／LLM_ANSWER_MAX_TOKENS／
+      #    LLM_ANSWER_TEMPERATURE／LLM_SYNTHESIS_TEMP／PRESALES_SYNTH_MODEL／
+      #    QUOTA_WARN_IN_CHAT／SOP_SIMILARITY_THRESHOLD／SYNTHESIS_MAX_RESULTS／
+      #    SYNTHESIS_MIN_RESULTS／RESPONSIBILITY_TELEMETRY／RESPONSIBILITY_MIGRATION_ALLOWLIST
+      #
+      # ⚠️ 下面三個旗標當初**必須宣告**，否則 compose 不會把 .env 的值傳進容器——
       #    Stage-1 會在「旗標看起來設了、實際沒生效」的狀態下上線（fail-safe 停用）。
       #    本專案已三次因 runner／env 保真度不足而結論作廢，故一律顯式宣告。
-      # 進場委派 resolver 的面向白名單：GATE=true **且** 面向列於此才啟用；
-      # 只開 GATE 不設白名單 ＝ fail-safe 停用（見 routers/chat.py:831）
+      #    ⛔ 該理由仍成立（給仍有消費者的旗標用），但下列三個本身已失效。
+      # ⛔ 已失效：進場委派 resolver 的面向白名單。原註解寫「GATE=true 且面向列於此才啟用，
+      #    見 routers/chat.py:831」——該檔已刪，整個進場委派閘在活路徑上不存在。
       PREENTRY_ROUTABILITY_FACETS: ${PREENTRY_ROUTABILITY_FACETS:-}
-      # 任務 8：action 越界時呼叫端是否仍依 scope 行動（預設 off，需獨立驗收）
+      # ⛔ 已失效：任務 8 的 action 越界 scope 行動（消費者隨舊鏈刪除）
       FACET_SCOPE_SALVAGE: ${FACET_SCOPE_SALVAGE:-false}
-      # conversational-step 的 strict json_schema 輸出契約（預設 on；false 回退 json_object）
+      # ⛔ 已失效：原承諾「false 回退 json_object」——唯一消費者 llm_answer_optimizer.py 已刪。
+      #    新線的 strict schema 走 services/agent/output_schema.py，**無條件生效**，
+      #    在這裡設 false 不會有任何效果。
       BRAIN_STRICT_SCHEMA: ${BRAIN_STRICT_SCHEMA:-true}
       # Reranker 配置（2026-01-28）
       ENABLE_RERANKER: ${ENABLE_RERANKER:-true}

@@ -20,7 +20,27 @@ pytestmark = pytest.mark.unit
 # ── R1.3.2：值域與 design C1 枚舉一致 ──
 @pytest.mark.req("retrieval-decision-layer:1.3")
 def test_verdict_domain_matches_design_enum():
-    spec = os.path.join(dr.REPO, ".kiro", "specs", "retrieval-decision-layer", "design.md")
+    """值域與 design C1 枚舉一致。
+
+    ⚠️ **2026-09-01 起該 spec 已封存到 `.kiro/specs/archive/`**（commit `206876a2`），
+    但本測試的路徑沒跟著改 ⇒ `FileNotFoundError` ⇒ **CI 的 unit job 第一個實質步驟
+    連續紅了十天**，而它標「硬把關」、沒有 `continue-on-error`，所以後面的
+    覆蓋率 ratchet 與追溯掃描在真實 CI 從來沒有跑過。
+    ⛔ 封存 spec 時要連同引用它的測試一起改路徑，⛔ 不能只搬檔案。
+
+    ⚠️ 這裡刻意**先找封存位置、再找原位置**（而不是反過來）：spec 已經封存了，
+    回到原位置才是異常。兩處都沒有就大聲失敗，⛔ 不 skip——
+    skip 會讓「兩套詞彙分岔」這個本測試唯一要守的東西靜默失去保護。
+    """
+    candidates = [
+        os.path.join(dr.REPO, ".kiro", "specs", "archive", "retrieval-decision-layer", "design.md"),
+        os.path.join(dr.REPO, ".kiro", "specs", "retrieval-decision-layer", "design.md"),
+    ]
+    spec = next((c for c in candidates if os.path.exists(c)), None)
+    assert spec is not None, (
+        "找不到 retrieval-decision-layer 的 design.md（已試封存與原位置兩處）——"
+        "spec 可能又被搬動，請更新本測試的候選路徑，⛔ 不要改成 skip"
+    )
     with open(spec, encoding="utf-8") as f:
         src = f.read()
     for v in dr.ROUTING_VERDICTS:
