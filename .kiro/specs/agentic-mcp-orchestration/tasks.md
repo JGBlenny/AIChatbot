@@ -117,7 +117,7 @@
 - [x] 3.6 (P) agent 可讀知識形態指南（知識線；2026-09-05 mech-executor 交付 `docs/knowledge/agent-readable-knowledge.md` 14 條依據、skill 檔尾追加 3 條檢查）：新建 `docs/knowledge/agent-readable-knowledge.md`：①主題頁 vs 講法列（前者進大綱、後者只供召回）；②每筆自成一段可逐字引用的事實（`question_summary` 短主題、`answer` 先情境再條件、⛔「見上一筆」）；③邊界句必明寫（「合約 ⛔ 不支援批次匯入」）；④內容矛盾要裁（DSP-010 範本 5 vs 12）；⑤`categories` 對齊六模組＋顧問／方案／價格／競品；⑥Verifier 逐字引用對句子完整度的要求。並把①–③併進 `retrieval-improvement-loop` skill 的知識設定檢查清單（⛔ 不動 skill 其他段）。
   - 需求：5.1, 6.3
   - 執行：mech-executor／effort 低——寫指南，規則來自 design 元件 5／6 與既有知識工程記憶
-- [ ] 3.4 (P) M2 前知識前置（知識線，非程式）：售前缺口地圖批次 2（`scripts/knowledge-batches/presales-gapmap-batch2-20260904.json` 18 筆）dry-run 後由業主放行匯入；3600／3610 口語講法補強（「線上簽約」「費用怎麼算」）依 `retrieval-improvement-loop` 流程補列；DSP-010 範本數、C52 系統管理模組歸屬列待裁不擋；匯入後重跑 `tools/gapmap/presales_gap_map.py` topics 模式留基準。⛔ 未做則 4.2 對照表要標「知識缺口未補」欄，不得把知識缺口算成 agent 缺口。
+- [ ] 3.4 (P) M2 前知識前置（知識線，非程式）：售前缺口地圖批次 2（`scripts/knowledge-batches/presales-gapmap-batch2-20260904.json` 18 筆）dry-run 後由業主放行匯入；3600／3610 口語講法補強（「線上簽約」「費用怎麼算」）依 `retrieval-improvement-loop` 流程補列；DSP-010 範本數、C52 系統管理模組歸屬列待裁不擋；匯入後以 `tools/agent_eval.py --set topics` 留基準（原 `tools/gapmap/presales_gap_map.py` 已於 2026-09-12 刪除：它打的 `POST /api/v1/message` 隨舊鏈退役，主模式的三個正對照必敗 exit 3；量活系統由 `agent_eval` 承接，凍結材料建圖由 `tools/gapmap/coverage_map.py` 承接）。⛔ 未做則 4.2 對照表要標「知識缺口未補」欄，不得把知識缺口算成 agent 缺口。
   - 需求：5.1, 8.3
   - 執行：main／effort 中——匯入需業主放行、講法要人工寫；工具已存在
 

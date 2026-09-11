@@ -64,7 +64,7 @@
 **調查問題**：R6 四步各用哪支工具、缺什麼？
 **研究方法**：讀 `tools/agent_eval.py` 參數與 manifest 紀律、`inputs/phrasing-selection-rule-20260906.json`、`inputs/outline-paragraphs-proxy-20260906.json`、`coverage-map/demand-v2.json` 的 `_meta.states`。
 **發現**：
-- `agent_eval.py`：`--set {topics,scenarios,sensitive,traffic}`、`--chain {old,agent,both}`、`--provider {fake,openai}`、`--repeat N`、manifest sha 不符 exit 3；`EvalRecord` 18 欄；無 rubric 判對錯（A3 未實作，指向 `answer-acceptance-verify` skill）。
+- `agent_eval.py`：`--set {topics,scenarios,sensitive,traffic}`、`--provider {fake,openai}`、`--repeat N`、manifest sha 不符 exit 3；`EvalRecord` 18 欄；無 rubric 判對錯（A3 未實作，指向 `answer-acceptance-verify` skill）。
 - 問法選題規則已凍結（422 句、sha `b771a6e5…`、每篇每型取 1 句、排除凍結 54 句與「操作」型）；段落代替品 59 段（`outline_sha256 90e9a987…`）明標 ⛔ 不作索引。
 - 缺口地圖狀態機（`cause_state`／`entry_state`／`coverage`）已定義於 `demand-v2.json._meta.states`，格 id `C01–C55`。
 **結論**：

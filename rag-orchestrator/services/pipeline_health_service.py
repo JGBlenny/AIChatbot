@@ -28,8 +28,11 @@ DEGRADATION_IMPACTS = {
     "Reranker": "重排序不可用，回答排序品質可能下降",
     "Vector Search": "向量檢索不可用，僅能使用關鍵字備選",
     "Keyword Search": "關鍵字備選不可用，僅能依賴向量檢索",
-    "Agent": "agentic-mcp-orchestration 工具面／DSP-011 前提偵測異常，"
-             "非核心對話流程（/api/v1/message）不受影響",
+    # ⚠️ 2026-09-12 改：原文寫「非核心對話流程（/api/v1/message）不受影響」——
+    #    那條 REST 端點已隨舊鏈刪除，agent 線是**現存唯一**的對話路徑，
+    #    對維運講「不受影響」剛好是反的。
+    "Agent": "agentic-mcp-orchestration 工具面／DSP-011 前提偵測異常；"
+             "agent 線是現存唯一的對話路徑，此項紅燈代表對話能力受損",
 }
 
 

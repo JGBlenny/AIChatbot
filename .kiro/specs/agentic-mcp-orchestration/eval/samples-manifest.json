@@ -64,7 +64,7 @@
     "fixed_rate": {
       "value": 0.21,
       "unit": "固定句率（S1 房東流 9 題中固定句題數 / 9）",
-      "source": "presales-grounding-gate/perf-20260904.md §9–10：知識批次 1 匯入後房東流 2/9＋代管 2/10 ⇒ 4/19≈0.21（本機 :8100 現況）。--chain both 時以同批 old 鏈實測率為準，此值只作 --chain agent 單跑時的對照。",
+      "source": "presales-grounding-gate/perf-20260904.md §9–10：知識批次 1 匯入後房東流 2/9＋代管 2/10 ⇒ 4/19≈0.21（本機 :8100 現況）。此值即 fixed_rate 的基準（同批 old 鏈基準隨舊 REST 臂於 2026-09-12 移除）。",
       "note": "⛔ 待主 session 從 §9（第四輪 5/9）、§10（第五輪 6/9）與後續 §11 知識補強重跑數字裁定唯一基準值後填入；本任務（4.2 工具骨架）不自行選一個數字當基準——`report.md` 的固定句率 PASS/FAIL 判定在此欄為 null 時輸出 UNSET，不判定 PASS 也不判定 FAIL。2026-09-05 補充（agent_eval.py 5.x 修訂）：`--chain both` 時本值不再直接套用——`fixed_rate` 的基準改為同批 old 鏈的實測值（`baseline_source=same_batch_old`）；此欄只在單跑 `--chain agent`（沒有同批 old 鏈可比）時當退回基準，且報表會標「跨樣本基準，僅參考」（`baseline_source=manifest_cross_sample`）。",
       "set_by": "主 session 2026-09-05"
     }

@@ -11,7 +11,7 @@ transport（不打真 `:8100`）。⛔ 不呼叫真 OpenAI——`--provider open
 - b2b 身分兩處：`make_agent_identity`／`run_old_chain` body。
 - `--set sensitive` 載入：五類各 ≥5、全部 sensitive=True、無重複 q。
 - `--repeat N` 聚合：N 倍記錄、聚合形狀。
-- `fixed_rate` 只算非敏感非邊界子集、`--chain both` 用同批 old 鏈基準。
+- `fixed_rate` 只算非敏感非邊界子集，基準取自 manifest 的跨樣本值。
 - `no_fabrication` 兩鏈同一把尺（forbid_hit）。
 - `latency_p95_ms`／`boundary_ok_rate` 形狀。
 - 舊鏈固定句比對（`effective_handoff_message`）與關鍵字啟發式旗標。
@@ -173,7 +173,7 @@ def test_sha_mismatch_exits_3(sample_root, tmp_path, capsys):
     out_dir = tmp_path / "out"
     code = agent_eval.main(
         [
-            "--set", "topics", "--chain", "agent", "--out", str(out_dir),
+            "--set", "topics", "--out", str(out_dir),
             "--manifest", str(manifest_path), "--root", str(root),
         ]
     )
@@ -199,7 +199,7 @@ def test_traffic_unavailable_exits_4(sample_root, tmp_path):
     out_dir = tmp_path / "out2"
     code = agent_eval.main(
         [
-            "--set", "traffic", "--chain", "agent", "--out", str(out_dir),
+            "--set", "traffic", "--out", str(out_dir),
             "--manifest", str(manifest_path), "--root", str(root),
         ]
     )
@@ -230,7 +230,7 @@ def test_agent_chain_fake_provider_topics_shape(sample_root, tmp_path):
     out_dir = tmp_path / "out3"
     code = agent_eval.main(
         [
-            "--set", "topics", "--chain", "agent", "--out", str(out_dir),
+            "--set", "topics", "--out", str(out_dir),
             "--provider", "fake", "--limit", "3",
             "--manifest", str(manifest_path), "--root", str(root),
         ]
@@ -274,7 +274,7 @@ def test_agent_chain_is_deterministic(sample_root, tmp_path):
     for out_dir in (out1, out2):
         code = agent_eval.main(
             [
-                "--set", "scenarios", "--chain", "agent", "--out", str(out_dir),
+                "--set", "scenarios", "--out", str(out_dir),
                 "--provider", "fake",
                 "--manifest", str(manifest_path), "--root", str(root),
             ]
@@ -305,7 +305,7 @@ def test_provider_openai_without_key_refused_before_any_network(monkeypatch, sam
     with pytest.raises(SystemExit, match="OPENAI_API_KEY"):
         agent_eval.main(
             [
-                "--set", "topics", "--chain", "agent", "--out", str(out_dir),
+                "--set", "topics", "--out", str(out_dir),
                 "--provider", "openai",
                 "--manifest", str(manifest_path), "--root", str(root),
             ]
@@ -346,7 +346,7 @@ def test_provider_openai_without_key_refused_before_index_build_too(monkeypatch,
     with pytest.raises(SystemExit, match="OPENAI_API_KEY"):
         agent_eval.main(
             [
-                "--set", "topics", "--chain", "agent", "--out", str(out_dir),
+                "--set", "topics", "--out", str(out_dir),
                 "--provider", "openai",
                 "--manifest", str(manifest_path), "--root", str(root),
             ]
@@ -486,7 +486,7 @@ def test_agent_chain_fake_provider_topics_uses_shared_state_per_scenario(sample_
     out_dir = tmp_path / "out_multi"
     code = agent_eval.main(
         [
-            "--set", "scenarios", "--chain", "agent", "--out", str(out_dir),
+            "--set", "scenarios", "--out", str(out_dir),
             "--provider", "fake",
             "--manifest", str(manifest_path), "--root", str(root),
         ]
@@ -506,37 +506,6 @@ def test_make_agent_identity_is_b2b_vendor_1():
     assert identity.vendor_id == 1
     assert identity.mode == "b2b"
     assert identity.target_user == "prospect"
-
-
-def test_run_old_chain_body_is_b2b_vendor_1(sample_root, tmp_path):
-    root, manifest_path = sample_root
-    manifest = agent_eval.load_manifest(manifest_path)
-    scenarios = agent_eval.load_samples("topics", manifest, root=root, limit=1)
-
-    class _Client:
-        def __init__(self):
-            self.requests = []
-
-        def post(self, url, *, json, headers):
-            self.requests.append(json)
-            class _R:
-                def json(self):
-                    return {"answer": "ok", "handoff": None}
-            return _R()
-
-    client = _Client()
-    agent_eval.run_old_chain(
-        scenarios, set_name="topics", base_url="http://x", api_key=None, client=client,
-    )
-    assert client.requests
-    for body in client.requests:
-        assert body["vendor_id"] == 1
-        assert body["mode"] == "b2b"
-
-
-# ---------------------------------------------------------------------------
-# 5) --set sensitive 載入（P1 必修 4）
-# ---------------------------------------------------------------------------
 
 
 def test_sensitive_manifest_registered(sample_root):
@@ -597,7 +566,7 @@ def test_repeat_n_produces_n_times_records(sample_root, tmp_path):
     out_dir = tmp_path / "out_repeat"
     code = agent_eval.main(
         [
-            "--set", "scenarios", "--chain", "agent", "--out", str(out_dir),
+            "--set", "scenarios", "--out", str(out_dir),
             "--provider", "fake", "--repeat", "3",
             "--manifest", str(manifest_path), "--root", str(root),
         ]
@@ -621,7 +590,7 @@ def test_repeat_default_1_no_summary_file(sample_root, tmp_path):
     out_dir = tmp_path / "out_repeat1"
     agent_eval.main(
         [
-            "--set", "scenarios", "--chain", "agent", "--out", str(out_dir),
+            "--set", "scenarios", "--out", str(out_dir),
             "--provider", "fake",
             "--manifest", str(manifest_path), "--root", str(root),
         ]
@@ -722,22 +691,6 @@ def test_fixed_rate_excludes_sensitive_and_boundary_subset():
     assert fr["value"] == 0.5  # 1/2
 
 
-def test_fixed_rate_chain_both_uses_same_batch_old_baseline():
-    old_records = [
-        _rec(chain="old", kind="answer"),
-        _rec(chain="old", kind="handoff"),  # old fixed_rate = 0.5
-    ]
-    agent_records = [
-        _rec(chain="agent", kind="handoff"),
-        _rec(chain="agent", kind="handoff"),  # agent fixed_rate = 1.0 > old 0.5 ⇒ FAIL
-    ]
-    manifest = {"baseline": {"fixed_rate": {"value": 0.0}}}  # 若誤用 manifest 基準會變成 FAIL(0)；此處驗證用的是 old 的 0.5
-    h = agent_eval.compute_hardlines(old_records + agent_records, manifest)
-    assert h["agent"]["fixed_rate"]["baseline_source"] == "same_batch_old"
-    assert h["agent"]["fixed_rate"]["baseline"] == 0.5
-    assert h["agent"]["fixed_rate"]["verdict"] == "FAIL"
-
-
 def test_fixed_rate_agent_only_falls_back_to_manifest_baseline():
     agent_records = [_rec(chain="agent", kind="answer"), _rec(chain="agent", kind="answer")]
     manifest = {"baseline": {"fixed_rate": {"value": 0.9}}}
@@ -809,7 +762,7 @@ def test_knowledge_gap_unfilled_field_present_in_jsonl(sample_root, tmp_path):
     out_dir = tmp_path / "out_gap"
     agent_eval.main(
         [
-            "--set", "topics", "--chain", "agent", "--out", str(out_dir),
+            "--set", "topics", "--out", str(out_dir),
             "--provider", "fake", "--limit", "1",
             "--manifest", str(manifest_path), "--root", str(root),
         ]
@@ -843,105 +796,12 @@ class _RecordingClient:
         return _FakeHttpResponse(self._payload)
 
 
-def test_old_chain_session_prefix_and_key_not_leaked(monkeypatch, sample_root, tmp_path):
-    root, manifest_path = sample_root
-    monkeypatch.setenv("RAG_ADMIN_API_KEY", "sk-super-secret-do-not-leak")
-    out_dir = tmp_path / "out_old"
-    client = _RecordingClient()
-
-    code = agent_eval.main(
-        [
-            "--set", "topics", "--chain", "old", "--out", str(out_dir),
-            "--limit", "2",
-            "--manifest", str(manifest_path), "--root", str(root),
-        ],
-        http_client=client,
-    )
-    assert code == agent_eval.EXIT_OK
-    assert len(client.requests) == 2
-    for req in client.requests:
-        assert req["json"]["session_id"].startswith("backtest_session_")
-        # X-API-Key 走 header，⛔ 不落 json body 或 url
-        assert "sk-super-secret-do-not-leak" not in json.dumps(req["json"])
-        assert "sk-super-secret-do-not-leak" not in req["url"]
-        assert req["headers"]["X-API-Key"] == "sk-super-secret-do-not-leak"
-
-    jsonl_rows = [
-        json.loads(l)
-        for l in (out_dir / "topics.jsonl").read_text(encoding="utf-8").strip().splitlines()
-    ]
-    dumped = json.dumps(jsonl_rows, ensure_ascii=False)
-    assert "sk-super-secret-do-not-leak" not in dumped
-
-
-def test_old_chain_without_env_key_omits_header(monkeypatch, sample_root, tmp_path):
-    root, manifest_path = sample_root
-    monkeypatch.delenv("RAG_ADMIN_API_KEY", raising=False)
-    out_dir = tmp_path / "out_old_nokey"
-    client = _RecordingClient()
-
-    agent_eval.main(
-        [
-            "--set", "topics", "--chain", "old", "--out", str(out_dir),
-            "--limit", "1",
-            "--manifest", str(manifest_path), "--root", str(root),
-        ],
-        http_client=client,
-    )
-    assert "X-API-Key" not in client.requests[0]["headers"]
-
-
-def test_old_chain_fixed_message_match_marks_handoff_without_heuristic():
-    from services.conversational_config import effective_handoff_message
-
-    fixed_msg = effective_handoff_message(None)
-    client = _RecordingClient(payload={"answer": fixed_msg, "handoff": None})
-    scenarios = [
-        agent_eval.Scenario(idx="fix1", turns=[agent_eval.Turn(turn=0, q="任意問題")]),
-    ]
-    records = agent_eval.run_old_chain(
-        scenarios, set_name="s", base_url="http://x", api_key=None, client=client,
-    )
-    assert records[0].kind == "handoff"
-    assert records[0].handoff_heuristic is False
-
-
-def test_old_chain_keyword_heuristic_marks_flag_true():
-    client = _RecordingClient(payload={"answer": "這個問題請找專人協助", "handoff": None})
-    scenarios = [
-        agent_eval.Scenario(idx="kw1", turns=[agent_eval.Turn(turn=0, q="任意問題")]),
-    ]
-    records = agent_eval.run_old_chain(
-        scenarios, set_name="s", base_url="http://x", api_key=None, client=client,
-    )
-    assert records[0].kind == "handoff"
-    assert records[0].handoff_heuristic is True
-
-
-def test_old_chain_structured_handoff_takes_precedence_over_heuristic():
-    client = _RecordingClient(payload={"answer": "", "handoff": {"reason": "no_grounding"}})
-    scenarios = [
-        agent_eval.Scenario(idx="h1", turns=[agent_eval.Turn(turn=0, q="任意問題")]),
-    ]
-    records = agent_eval.run_old_chain(
-        scenarios, set_name="s", base_url="http://x", api_key=None, client=client,
-    )
-    assert records[0].kind == "handoff"
-    assert records[0].handoff_reason == "no_grounding"
-    assert records[0].handoff_heuristic is False
-
-
-# ---------------------------------------------------------------------------
-# 11) A2：--dump-texts 原文抽審旁路（預設關）
-# ---------------------------------------------------------------------------
-
-
 def test_dump_texts_default_off_no_texts_dir(sample_root, tmp_path):
     root, manifest_path = sample_root
     out_dir = tmp_path / "out_no_dump"
     code = agent_eval.main(
         [
-            "--set", "topics", "--chain", "agent", "--out", str(out_dir),
+            "--set", "topics", "--out", str(out_dir),
             "--provider", "fake", "--limit", "1",
             "--manifest", str(manifest_path), "--root", str(root),
         ]
@@ -955,7 +815,7 @@ def test_dump_texts_on_writes_warning_header_and_raw_text(sample_root, tmp_path)
     out_dir = tmp_path / "out_dump"
     code = agent_eval.main(
         [
-            "--set", "topics", "--chain", "agent", "--out", str(out_dir),
+            "--set", "topics", "--out", str(out_dir),
             "--provider", "fake", "--limit", "2", "--dump-texts",
             "--manifest", str(manifest_path), "--root", str(root),
         ]
@@ -1022,7 +882,7 @@ def test_report_has_repeat_jitter_section_when_repeat_gt_1(sample_root, tmp_path
     out_dir = tmp_path / "out_report_repeat"
     code = agent_eval.main(
         [
-            "--set", "scenarios", "--chain", "agent", "--out", str(out_dir),
+            "--set", "scenarios", "--out", str(out_dir),
             "--provider", "fake", "--repeat", "2",
             "--manifest", str(manifest_path), "--root", str(root),
         ]
@@ -1040,7 +900,7 @@ def test_report_omits_repeat_jitter_section_when_repeat_1(sample_root, tmp_path)
     out_dir = tmp_path / "out_report_norepeat"
     code = agent_eval.main(
         [
-            "--set", "scenarios", "--chain", "agent", "--out", str(out_dir),
+            "--set", "scenarios", "--out", str(out_dir),
             "--provider", "fake",
             "--manifest", str(manifest_path), "--root", str(root),
         ]
@@ -1099,7 +959,7 @@ def test_git_head_override_appears_in_report(sample_root, tmp_path):
     out_dir = tmp_path / "out_githead"
     code = agent_eval.main(
         [
-            "--set", "topics", "--chain", "agent", "--out", str(out_dir),
+            "--set", "topics", "--out", str(out_dir),
             "--provider", "fake", "--limit", "1", "--git-head", "deadbeef-fake-sha",
             "--manifest", str(manifest_path), "--root", str(root),
         ]
@@ -1155,7 +1015,7 @@ def test_main_falls_back_to_repo_root_git_head_when_root_not_a_repo(monkeypatch,
     out_dir = tmp_path / "out_fallback"
     code = agent_eval.main(
         [
-            "--set", "topics", "--chain", "agent", "--out", str(out_dir),
+            "--set", "topics", "--out", str(out_dir),
             "--provider", "fake", "--limit", "1",
             "--manifest", str(manifest_path), "--root", str(root),
         ]
@@ -1180,7 +1040,7 @@ def test_candidates_off_every_row_has_no_candidate_mechanism(sample_root, tmp_pa
     out_dir = tmp_path / "out_cand_off"
     code = agent_eval.main(
         [
-            "--set", "topics", "--chain", "agent", "--out", str(out_dir),
+            "--set", "topics", "--out", str(out_dir),
             "--provider", "fake", "--candidates", "off", "--limit", "3",
             "--manifest", str(manifest_path), "--root", str(root),
         ]
@@ -1200,7 +1060,7 @@ def test_candidates_on_hit_rows_have_bounded_candidate_ids_and_clean_report(samp
     out_dir = tmp_path / "out_cand_on"
     code = agent_eval.main(
         [
-            "--set", "topics", "--chain", "agent", "--out", str(out_dir),
+            "--set", "topics", "--out", str(out_dir),
             "--provider", "fake", "--candidates", "on", "--limit", "3",
             "--manifest", str(manifest_path), "--root", str(root),
         ]
@@ -1250,7 +1110,7 @@ def test_candidates_on_query_backend_raise_marks_fallback_not_selector_error(mon
     out_dir = tmp_path / "out_cand_backend_raise"
     code = agent_eval.main(
         [
-            "--set", "topics", "--chain", "agent", "--out", str(out_dir),
+            "--set", "topics", "--out", str(out_dir),
             "--provider", "fake", "--candidates", "on", "--limit", "3",
             "--manifest", str(manifest_path), "--root", str(root),
         ]
@@ -1279,7 +1139,7 @@ def test_candidates_on_selector_select_raise_marks_selector_error_not_fallback(m
     out_dir = tmp_path / "out_cand_selector_raise"
     code = agent_eval.main(
         [
-            "--set", "topics", "--chain", "agent", "--out", str(out_dir),
+            "--set", "topics", "--out", str(out_dir),
             "--provider", "fake", "--candidates", "on", "--limit", "3",
             "--manifest", str(manifest_path), "--root", str(root),
         ]
@@ -1341,7 +1201,7 @@ def test_outline_probe_manifest_unavailable_exits_4(sample_root, tmp_path):
     out_dir = tmp_path / "out_op_unavail"
     code = agent_eval.main(
         [
-            "--set", "outline-probe", "--chain", "agent", "--out", str(out_dir),
+            "--set", "outline-probe", "--out", str(out_dir),
             "--manifest", str(manifest_path), "--root", str(root),
         ]
     )
@@ -1358,7 +1218,7 @@ def test_outline_probe_runs_and_gold_in_candidates_is_bool(tmp_path):
     out_dir = tmp_path / "out_op_run"
     code = agent_eval.main(
         [
-            "--set", "outline-probe", "--chain", "agent", "--out", str(out_dir),
+            "--set", "outline-probe", "--out", str(out_dir),
             "--provider", "fake", "--candidates", "on",
             "--manifest", str(manifest_path), "--root", str(tmp_path),
         ]
@@ -1392,7 +1252,7 @@ def test_outline_probe_sha_mismatch_exits_3(tmp_path):
     out_dir = tmp_path / "out_op_sha"
     code = agent_eval.main(
         [
-            "--set", "outline-probe", "--chain", "agent", "--out", str(out_dir),
+            "--set", "outline-probe", "--out", str(out_dir),
             "--provider", "fake",
             "--manifest", str(manifest_path), "--root", str(tmp_path),
         ]
@@ -1463,7 +1323,7 @@ def test_real_provider_candidates_on_index_not_ready_exits_5_no_jsonl(monkeypatc
     out_dir = tmp_path / "out_real_notready"
     code = agent_eval.main(
         [
-            "--set", "scenarios", "--chain", "agent", "--out", str(out_dir),
+            "--set", "scenarios", "--out", str(out_dir),
             "--provider", "openai", "--candidates", "on",
             "--manifest", str(manifest_path), "--root", str(root),
         ]
@@ -1494,7 +1354,7 @@ def test_real_provider_candidates_on_index_ready_exits_0_writes_jsonl(monkeypatc
     out_dir = tmp_path / "out_real_ready"
     code = agent_eval.main(
         [
-            "--set", "scenarios", "--chain", "agent", "--out", str(out_dir),
+            "--set", "scenarios", "--out", str(out_dir),
             "--provider", "openai", "--candidates", "on",
             "--manifest", str(manifest_path), "--root", str(root),
         ]
@@ -1642,7 +1502,7 @@ def test_build_prospect_index_not_called_when_candidates_off(monkeypatch, sample
     with pytest.raises(SystemExit, match="OPENAI_API_KEY"):
         agent_eval.main(
             [
-                "--set", "topics", "--chain", "agent", "--out", str(tmp_path / "o1"),
+                "--set", "topics", "--out", str(tmp_path / "o1"),
                 "--provider", "openai", "--candidates", "off",
                 "--manifest", str(manifest_path), "--root", str(root),
             ]
@@ -1690,33 +1550,8 @@ def test_build_prospect_index_not_called_when_candidates_off(monkeypatch, sample
 
 
 # ---------------------------------------------------------------------------
-# 18) `--chain both --candidates off`：old 鏈列也是 28 鍵、candidates_mode="off"
+# 18) `--candidates off`：JSONL 列 28 鍵、candidates_mode="off"
 # ---------------------------------------------------------------------------
-
-
-@pytest.mark.req(_REQ_4_3)
-def test_chain_both_candidates_off_old_rows_28_keys_backend_none(sample_root, tmp_path):
-    root, manifest_path = sample_root
-    out_dir = tmp_path / "out_both_off"
-    client = _RecordingClient()
-    code = agent_eval.main(
-        [
-            "--set", "topics", "--chain", "both", "--out", str(out_dir),
-            "--provider", "fake", "--candidates", "off", "--limit", "2",
-            "--manifest", str(manifest_path), "--root", str(root),
-        ],
-        http_client=client,
-    )
-    assert code == agent_eval.EXIT_OK
-    rows = [json.loads(l) for l in (out_dir / "topics.jsonl").read_text(encoding="utf-8").strip().splitlines()]
-    assert rows
-    old_rows = [r for r in rows if r["chain"] == "old"]
-    assert old_rows
-    for row in rows:
-        assert set(row.keys()) == _EXPECTED_JSONL_KEYS
-        assert row["candidates_mode"] == "off"
-    report = (out_dir / "report.md").read_text(encoding="utf-8")
-    assert "candidates_backend：`none`" in report
 
 
 @pytest.mark.req(_REQ_4_3)
@@ -1725,7 +1560,7 @@ def test_chain_agent_only_candidates_on_backend_is_fake(sample_root, tmp_path):
     out_dir = tmp_path / "out_on_fake_backend"
     code = agent_eval.main(
         [
-            "--set", "topics", "--chain", "agent", "--out", str(out_dir),
+            "--set", "topics", "--out", str(out_dir),
             "--provider", "fake", "--candidates", "on", "--limit", "1",
             "--manifest", str(manifest_path), "--root", str(root),
         ]
@@ -1829,7 +1664,7 @@ def test_outline_probe_multi_turn_fake_provider_same_idx_turn_increases(tmp_path
     out_dir = tmp_path / "out_op_multi"
     code = agent_eval.main(
         [
-            "--set", "outline-probe", "--chain", "agent", "--out", str(out_dir),
+            "--set", "outline-probe", "--out", str(out_dir),
             "--provider", "fake",
             "--manifest", str(manifest_path), "--root", str(tmp_path),
         ]

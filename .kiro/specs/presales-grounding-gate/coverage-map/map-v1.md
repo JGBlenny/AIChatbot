@@ -84,4 +84,4 @@
 - 供給側：prospect 可見池（`business_types && system_provider AND (target_user IS NULL OR && prospect)`，answer 非空）31 筆。
 - 判法：① `retrieve()` top-3（元件層，只分 S／N）② 關鍵詞 ILIKE 掃池 ③ 正式入口冷 session 一次（使用者層）④ **人工覆核答案是否答到題**（v1 手動；v2 接 answer-acceptance rubric）。
 - 限制：一格一句，同格其他講法未量；冷 session 單輪，多輪脈絡未量；「刻意不補」與「缺口」的界線由業主裁（C35 手續費是候選）。
-- 重跑：`python3 tools/gapmap/presales_gap_map.py --demand demand-v1.json --out map-vN.json`（容器內）→ `--render`。新一輪知識補完後重跑並與前版比對格數。
+- ⛔ 無法重跑：`tools/gapmap/presales_gap_map.py` 已於 2026-09-12 刪除（主模式打的 `POST /api/v1/message` 隨舊鏈退役）。承接：量活系統走 `tools/agent_eval.py`，凍結材料建圖走 `tools/gapmap/coverage_map.py`。

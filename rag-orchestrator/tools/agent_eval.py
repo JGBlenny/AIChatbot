@@ -2,9 +2,13 @@
 """離線評估 `tools/agent_eval.py`（spec agentic-mcp-orchestration・任務 4.2→5.x 修訂）。
 
 四組凍結樣本（topics／scenarios／sensitive／traffic，見同目錄
-`.kiro/specs/agentic-mcp-orchestration/eval/samples-manifest.json`）對舊鏈
-（`POST /api/v1/message`）與 agent 鏈（`services.agent.bootstrap.build_runtime`
-直呼 `run_turn`）跑，逐題輸出 JSONL 對照＋彙總 `report.md`。
+`.kiro/specs/agentic-mcp-orchestration/eval/samples-manifest.json`）對 agent 鏈
+（`services.agent.bootstrap.build_runtime` 直呼 `run_turn`）跑，
+逐題輸出 JSONL ＋彙總 `report.md`。
+
+⚠️ 2026-09-12：舊 REST 臂（`--chain old`／`both`，打 `POST /api/v1/message`）
+已移除——該端點隨舊鏈刪除，那條臂永遠拿不到基準。`--chain` 參數一併移除，
+帶它會 argparse 報錯（刻意的大聲失敗，⛔ 不要靜默忽略）。
 
 5.x 修訂重點（獨立審查 REVISE 後的修法，⛔ 別再退回 4.2 骨架的做法）：
 - `--provider openai` 不再無條件拒絕：`build_real_runtime()` 接上真
@@ -12,16 +16,13 @@
   .build_prospect_outline`／`services.agent.bootstrap.build_runtime`
   （import `app` 取已建好的 `_mcp_registry`／`_mcp_kb_pool`，⛔ 不跑
   lifespan）。缺 `OPENAI_API_KEY` 時在**任何網路呼叫之前**明確拒絕。
-- 每個 scenario 的多輪對話共用同一個 `state` dict（agent 鏈）；old 鏈的歷史
-  由服務端依 `session_id` 保存，本工具只需確保同一 scenario 用同一個
-  session_id（既有行為）。
+- 每個 scenario 的多輪對話共用同一個 `state` dict。
 - 身分改 `mode="b2b"`、`vendor_id=1`（售前池是 b2b 池，見
   `services/agent/outline.py:build_prospect_outline` 與
   `routers/agent_entry.py` 的 `"b2b" if target_user == "prospect"`）。
-- 無捏造（`no_fabrication`）兩鏈同一把尺：`forbid_hit`。agent 鏈的
-  `verifier_rejects`／`rewrote_ok` 只是觀測值，不再判定這條硬線。
-- 固定句率的分母只算「非敏感、非邊界」子集；`--chain both` 時基準＝同批
-  old 鏈的該子集實測值，單跑 agent 才退回 manifest 的跨樣本基準。
+- 無捏造（`no_fabrication`）的尺：`forbid_hit`。`verifier_rejects`／
+  `rewrote_ok` 只是觀測值，不再判定這條硬線。
+- 固定句率的分母只算「非敏感、非邊界」子集，基準取自 manifest 的跨樣本基準。
 - 新增 `boundary_ok_rate`／`latency_p95_ms`／`answered_rate`／`cost_usd`
   總和平均，`--repeat N` 支援多次重跑聚合，`--set sensitive` 五類敏感樣本。
 
@@ -414,14 +415,14 @@ class EvalRecord:
     #: DSP-028 驗收尺①就量它——⛔ 不要再從報表反推。
     budget_exhausted: bool = False
     #: 任務 4.3（knowledge-outline-and-intent-architecture・Plan §3.1）：本回合的候選
-    #: 細目 id（`TurnResult.trace.candidate_ids` 原樣透傳）；old 鏈與「這條路沒有候選
-    #: 機制」的 agent 回合一律 `[]`。
+    #: 細目 id（`TurnResult.trace.candidate_ids` 原樣透傳）；「這條路沒有候選
+    #: 機制」的回合一律 `[]`。
     candidate_ids: list[str] = field(default_factory=list)
     #: `TurnResult.trace.miss_kind` 原樣透傳；`None` 代表「這條路沒有候選機制」
-    #: （`--candidates off`、old 鏈，或受眾無正本）。
+    #: （`--candidates off`，或受眾無正本）。
     miss_kind: Optional[str] = None
     #: `--candidates` 的 CLI 實際值（`"on"|"off"`）——⛔ 不是「這一列有沒有候選」，
-    #: old 鏈列也填它，供跨鏈對照本次評估組態。
+    #: 每列都填它，供對照本次評估組態。
     candidates_mode: str = "off"
     #: `gold_fine_ids` 非空時 `bool(set(gold) & set(candidate_ids))`；空 ⇒ `None`
     #: （4.4「gold 不在候選對照」的直接量）。
@@ -494,184 +495,23 @@ def _rewrote_ok(kind: str, verifier_rejects: int) -> bool:
 
 
 # ---------------------------------------------------------------------------
-# 舊鏈（httpx，可注入 transport 供測試）
+# 評測共用：session id 產生器
 # ---------------------------------------------------------------------------
 
 
-def old_chain_session_id(set_name: str, scenario_idx: str, rep: int = 0) -> str:
-    """⛔ 前綴必須是 `backtest_session_`（見 scripts/backtest/run_batch.py 的
-    `_REQUIRED_PREFIX` 紀律，兩個豁免前綴都要吃到）。`rep>0` 時加後綴避免
-    `--repeat` 多次重跑共用同一個 session、把上一輪的對話歷史帶進下一輪。"""
+def eval_session_id(set_name: str, scenario_idx: str, rep: int = 0) -> str:
+    """評測用的 session id。
+
+    `rep>0` 時加後綴，避免 `--repeat` 多次重跑共用同一個 session、
+    把上一輪的對話歷史帶進下一輪。
+
+    ⚠️ `backtest_session_` 前綴目前**沒有強制它的消費者**——原本執行該紀律的
+    `scripts/backtest/run_batch.py` 已隨舊回測框架刪除，稽核與計量都不認這個前綴。
+    保留只是為了與既有 `usage_events` 資料對得上，⛔ 不要當成還在生效的契約。
+    """
     safe_idx = scenario_idx.replace(":", "_").replace(" ", "_")
     base = f"backtest_session_eval_{set_name}_{safe_idx}"
     return base if rep == 0 else f"{base}_rep{rep}"
-
-
-def _old_chain_classify(answer: str, handoff: Any) -> tuple[str, Optional[str], bool]:
-    """判定舊鏈這一題的 `(kind, handoff_reason, handoff_heuristic)`。
-
-    順序（P1.9）：① 結構化 `handoff` 欄；② 比對
-    `services.conversational_config.effective_handoff_message(None)` 的固定句
-    是否為 `answer` 子字串；③ 關鍵字啟發式（`services.presales_gate
-    .HANDOFF_WORDS`，⛔ 不另立第二份詞表）當最後手段，命中則
-    `handoff_heuristic=True`——供報表區分「真的比對到固定句」與「用詞猜的」。
-    """
-    if isinstance(handoff, dict):
-        return "handoff", handoff.get("reason"), False
-
-    try:
-        from services.conversational_config import effective_handoff_message
-
-        fixed_msg = (effective_handoff_message(None) or "").strip()
-    except Exception:  # noqa: BLE001 — 比對是加值，缺此模組不擋整支工具
-        fixed_msg = ""
-    if fixed_msg and fixed_msg in (answer or ""):
-        return "handoff", None, False
-
-    try:
-        from services.presales_gate import HANDOFF_WORDS
-
-        words = HANDOFF_WORDS
-    except Exception:  # noqa: BLE001
-        words = ("專人", "真人", "客服", "沒有資料")
-    if any(w in (answer or "") for w in words):
-        return "handoff", None, True
-
-    return ("answer" if answer else "ask"), None, False
-
-
-def run_old_chain(
-    scenarios: list[Scenario],
-    *,
-    set_name: str,
-    base_url: str,
-    api_key: Optional[str],
-    client: Any,
-    vendor_id: int = EVAL_VENDOR_ID,
-    role_id: Optional[str] = None,
-    repeat: int = 1,
-    db_pool: Any = None,
-    dump_sink: Optional[list[dict]] = None,
-    candidates_mode: str = "off",
-) -> list[EvalRecord]:
-    """`client` 是一個具 `.post(url, json=..., headers=...) -> response` 的物件
-    （生產用 `httpx.Client(base_url=...)`；測試注入假 transport）。
-    ⛔ `api_key` 只放進 header，永遠不放進 URL／log／args。
-
-    對話歷史由服務端依 `session_id` 保存（`form_sessions`），本工具端不持有
-    client 狀態——同一 scenario 內逐輪沿用同一個 `session_id` 即天然帶史。
-    """
-    records: list[EvalRecord] = []
-    record_session_ids: list[str] = []
-    for rep in range(repeat):
-        for sc in scenarios:
-            session_id = old_chain_session_id(set_name, sc.idx, rep)
-            for t in sc.turns:
-                headers = {"Content-Type": "application/json"}
-                if api_key:
-                    headers["X-API-Key"] = api_key
-                body = {
-                    "vendor_id": vendor_id,
-                    "mode": EVAL_MODE,
-                    "target_user": "prospect",
-                    "role_id": role_id,
-                    "session_id": session_id,
-                    "user_id": session_id,
-                    "message": t.q,
-                }
-                t0 = time.monotonic()
-                resp = client.post(f"{base_url}/api/v1/message", json=body, headers=headers)
-                latency_ms = int((time.monotonic() - t0) * 1000)
-                # ⛔ 原本不檢查狀態碼 ⇒ 端點於 2026-09-11 刪除後，404 被 `data.get("answer") or ""`
-                #    吃成「空答案的正常回合」，三條硬性驗收線全部 PASS ⇒ **假綠報告**。
-                #    ⚠️ `--chain both` 時 agent 臂的固定句率基準還會取自這批 404 數字。
-                status = getattr(resp, "status_code", None)
-                if status is not None and status >= 400:
-                    raise RuntimeError(
-                        f"舊鏈臂打 {base_url}/api/v1/message 回 HTTP {status}。"
-                        "該端點已於 2026-09-11 隨舊 REST 對話鏈刪除（commit 7c905408）"
-                        "⇒ `--chain old`／`--chain both` 已無法產生有效基準，⛔ 不要用它的數字收案。"
-                        "只跑新線請用 `--chain agent`。"
-                    )
-                data = resp.json() if hasattr(resp, "json") else {}
-                answer = data.get("answer") or ""
-                handoff = data.get("handoff")
-                kind, handoff_reason, handoff_heuristic = _old_chain_classify(answer, handoff)
-                forbid_hit = _forbid_hit(answer, t.must_not_contain)
-                records.append(
-                    EvalRecord(
-                        set=set_name,
-                        idx=sc.idx,
-                        turn=t.turn,
-                        chain="old",
-                        kind=kind,
-                        answered=bool(answer) and kind not in HANDOFF_KINDS,
-                        handoff_reason=handoff_reason,
-                        sensitive_expected=t.sensitive,
-                        sensitive_leak=_sensitive_leak(kind, handoff_reason, answer, forbid_hit) if t.sensitive else False,
-                        boundary_ok=_boundary_ok(kind, answer, handoff_reason, forbid_hit)
-                        if t.expect_kind == "handoff"
-                        else None,
-                        boundary_expected=t.boundary_expected,
-                        forbid_hit=forbid_hit,
-                        verifier_rejects=0,  # 舊鏈無 verifier
-                        latency_ms=latency_ms,
-                        cost_usd=0.0,  # 缺 db_pool 時保底 0（見下方 _apply_old_chain_cost）
-                        knowledge_gap_unfilled=t.knowledge_gap_unfilled,
-                        answer_digest=_text_digest(answer),
-                        rep=rep,
-                        handoff_heuristic=handoff_heuristic,
-                        forbid_terms_n=len(t.must_not_contain),
-                        candidate_ids=[],
-                        miss_kind=None,
-                        candidates_mode=candidates_mode,
-                        gold_in_candidates=None,
-                        candidate_violations=(),
-                    )
-                )
-                record_session_ids.append(session_id)
-                if dump_sink is not None:
-                    dump_sink.append(
-                        {
-                            "set": set_name, "idx": sc.idx, "turn": t.turn, "rep": rep,
-                            "chain": "old", "q": t.q, "answer": answer,
-                            "handoff_reason": handoff_reason, "kind": kind,
-                            # 舊鏈沒有結構化引用／嘗試記錄（它不是 agent 契約）⇒ 恆空，
-                            # 但鍵要在：同一份 texts JSONL 的鍵集合⛔ 不得因鏈而異。
-                            "refs": [],
-                            "attempts": [],
-                        }
-                    )
-    if db_pool is not None:
-        _apply_old_chain_cost(records, record_session_ids, db_pool)
-    return records
-
-
-def _apply_old_chain_cost(records: list[EvalRecord], session_ids: list[str], db_pool: Any) -> None:
-    """把 `usage_events.est_cost_usd` 依 `session_id` 併回舊鏈的 `cost_usd`
-    （P1 必修 7）。`db_pool` 查詢失敗（連不上／表不存在）⇒ 靜默保留 0.0，
-    ⛔ 不讓報表輸出因為這顆加值欄位而整支炸掉。"""
-    import asyncio
-
-    async def _query() -> dict:
-        uniq = sorted(set(session_ids))
-        if not uniq:
-            return {}
-        async with db_pool.acquire() as conn:
-            rows = await conn.fetch(
-                "SELECT session_id, COALESCE(SUM(est_cost_usd), 0) AS total "
-                "FROM usage_events WHERE session_id = ANY($1) GROUP BY session_id",
-                uniq,
-            )
-        return {row["session_id"]: float(row["total"]) for row in rows}
-
-    try:
-        totals = asyncio.run(_query())
-    except Exception as e:  # noqa: BLE001 — 加值欄位，查不到就是 0，不擋主流程
-        print(f"⚠️ [agent_eval] 舊鏈成本併回失敗（保留 0.0）：{type(e).__name__}: {e}", file=sys.stderr)
-        return
-    for r, sid in zip(records, session_ids):
-        r.cost_usd = totals.get(sid, 0.0)
 
 
 # ---------------------------------------------------------------------------
@@ -1012,7 +852,7 @@ def _build_agent_record(
                 # tasks 4.3c：`refs`＝最後一次嘗試（被採用者）所有句子的 refs 攤平。
                 "refs": _refs_for_dump(attempts),
                 # tasks 4.3c：被 Verifier 拒掉的中間嘗試——只存在這條 texts 旁路
-                # （不進版控），主 JSONL／report.md 不落任何一筆。舊鏈 `attempts: []`。
+                # （不進版控），主 JSONL／report.md 不落任何一筆。
                 "attempts": attempts,
             }
         )
@@ -1079,7 +919,7 @@ async def _run_agent_chain_fake(
             runtime_kwargs = {"attempt_sink": attempts_buffer.append} if attempts_buffer is not None else {}
             runtime_kwargs["candidate_selector"] = selector
             runtime = build_runtime(db_pool=None, provider=provider, registry=registry, **runtime_kwargs)
-            identity = make_agent_identity(session_id=old_chain_session_id(set_name, sc.idx, rep))
+            identity = make_agent_identity(session_id=eval_session_id(set_name, sc.idx, rep))
             for t, result, latency_ms, attempts in await _run_scenario_agent(
                 runtime, identity, sc.turns, outline_doc=outline_doc, attempts_buffer=attempts_buffer,
             ):
@@ -1234,7 +1074,7 @@ async def _run_agent_chain_openai(
         records: list[EvalRecord] = []
         for rep in range(repeat):
             for sc in scenarios:
-                identity = make_agent_identity(session_id=old_chain_session_id(set_name, sc.idx, rep))
+                identity = make_agent_identity(session_id=eval_session_id(set_name, sc.idx, rep))
                 for t, result, latency_ms, attempts in await _run_scenario_agent(
                     handle.runtime, identity, sc.turns, outline_doc=handle.outline_doc,
                     attempts_buffer=attempts_buffer,
@@ -1308,11 +1148,6 @@ def compute_hardlines(records: list[EvalRecord], manifest: dict) -> dict:
 
     manifest_baseline = (manifest.get("baseline", {}).get("fixed_rate", {}) or {}).get("value")
 
-    old_subset = _fixed_subset(by_chain.get("old", []))
-    old_fixed_rate: Optional[float] = None
-    if old_subset:
-        old_fixed_rate = sum(1 for r in old_subset if r.kind == "handoff") / len(old_subset)
-
     result: dict[str, Any] = {}
     for chain, rs in by_chain.items():
         sensitive_rs = [r for r in rs if r.sensitive_expected]
@@ -1333,12 +1168,10 @@ def compute_hardlines(records: list[EvalRecord], manifest: dict) -> dict:
         fixed = sum(1 for r in subset if r.kind == "handoff")
         fixed_rate = (fixed / len(subset)) if subset else 0.0
 
-        if chain == "agent" and old_fixed_rate is not None:
-            baseline_value = old_fixed_rate
-            baseline_source = "same_batch_old"
-        else:
-            baseline_value = manifest_baseline
-            baseline_source = "manifest_cross_sample" if manifest_baseline is not None else "unset"
+        # 基準只剩 manifest 的跨樣本值：同批 old 鏈基準（`same_batch_old`）
+        # 隨舊 REST 臂於 2026-09-12 移除。
+        baseline_value = manifest_baseline
+        baseline_source = "manifest_cross_sample" if manifest_baseline is not None else "unset"
 
         if baseline_value is None:
             fixed_rate_verdict = "UNSET"
@@ -1474,12 +1307,8 @@ def render_report_md(
         lines.append("- 被拒嘗試僅存於 texts 旁路（不進版控）。")
         lines.append("")
     lines.append(
-        "- 延遲量法：agent 鏈以 `run_turn` 邊界計時（非使用者實際看到回覆的 SSE 層，屬下限，"
-        "不含網路來回／串流首字延遲）；舊鏈以本工具對 `/api/v1/message` 的 HTTP round-trip 計時。"
-    )
-    lines.append(
-        "- 舊鏈成本：`db_pool` 可用時以 `session_id` 從 `usage_events.est_cost_usd` 併回，"
-        "否則保留 0.0（本工具預設不建 DB 連線給舊鏈，見 `run_old_chain(db_pool=...)`）。"
+        "- 延遲量法：以 `run_turn` 邊界計時（非使用者實際看到回覆的 SSE 層，屬下限，"
+        "不含網路來回／串流首字延遲）。"
     )
     lines.append("")
     if candidates_meta is not None:
@@ -1659,7 +1488,6 @@ def build_arg_parser() -> argparse.ArgumentParser:
         "--set", required=True,
         choices=["topics", "scenarios", "sensitive", "traffic", "outline-probe"],
     )
-    p.add_argument("--chain", required=True, choices=["old", "agent", "both"])
     p.add_argument(
         "--candidates", default="on", choices=["on", "off"],
         help="任務 4.3：評估專用依賴注入（⛔ 不是線上開關、⛔ 不讀 env）。"
@@ -1667,7 +1495,6 @@ def build_arg_parser() -> argparse.ArgumentParser:
     )
     p.add_argument("--out", required=True, help="輸出目錄（JSONL + report.md）")
     p.add_argument("--provider", default="fake", choices=["fake", "openai"])
-    p.add_argument("--old-base-url", default="http://localhost:8100")
     p.add_argument("--limit", type=int, default=None)
     p.add_argument("--repeat", type=int, default=1, help="每題重跑 N 次（預設 1）；敏感硬線取任一 rep 漏即 FAIL，比率類取平均並報 min/max")
     p.add_argument("--manifest", default=str(DEFAULT_MANIFEST_PATH), help="samples-manifest.json 路徑（測試用可覆寫）")
@@ -1737,7 +1564,7 @@ def _repeat_summary(records: list[EvalRecord]) -> dict:
     }
 
 
-def main(argv: Optional[list[str]] = None, *, http_client: Any = None) -> int:
+def main(argv: Optional[list[str]] = None) -> int:
     args = build_arg_parser().parse_args(argv)
     root = Path(args.root)
     manifest_path = Path(args.manifest)
@@ -1758,45 +1585,26 @@ def main(argv: Optional[list[str]] = None, *, http_client: Any = None) -> int:
     scenarios = load_samples(args.set, manifest, root=root, limit=args.limit)
 
     records: list[EvalRecord] = []
-    chains = ["old", "agent"] if args.chain == "both" else [args.chain]
     outline_sha = ""
     dump_sink: Optional[list[dict]] = [] if args.dump_texts else None
     candidates_meta = {"candidates_mode": args.candidates, "candidates_backend": "none"}
 
-    for chain in chains:
-        if chain == "old":
-            client = http_client
-            if client is None:
-                import httpx
-
-                client = httpx.Client(timeout=180.0)
-            api_key = os.environ.get("RAG_ADMIN_API_KEY")  # ⛔ 不進 argv
-            records.extend(
-                run_old_chain(
-                    scenarios,
-                    set_name=args.set,
-                    base_url=args.old_base_url,
-                    api_key=api_key,
-                    client=client,
-                    repeat=args.repeat,
-                    dump_sink=dump_sink,
-                    candidates_mode=args.candidates,
-                )
-            )
-        else:
-            # 任務 4.3（Plan §3.1）exit 5 的唯一傳遞形式：真 provider 路徑候選
-            # 索引未就緒時 `run_agent_chain` 拋 `IndexNotReady`，此處接住 ⇒
-            # `EXIT_INDEX_NOT_READY`——⛔ 必須在任何 JSONL／report 寫出之前。
-            try:
-                agent_records, agent_meta = run_agent_chain(
-                    scenarios, set_name=args.set, provider_kind=args.provider, repeat=args.repeat,
-                    dump_sink=dump_sink, candidates=args.candidates,
-                )
-            except IndexNotReady:
-                return EXIT_INDEX_NOT_READY
-            records.extend(agent_records)
-            outline_sha = agent_meta.get("outline_sha", "") or outline_sha
-            candidates_meta["candidates_backend"] = agent_meta.get("candidates_backend", "none")
+    # 只剩 agent 鏈。舊 REST 臂（`--chain old`／`both`）於 2026-09-12 移除：
+    # 它打的 `POST /api/v1/message` 已不存在，那條臂永遠拿不到基準。
+    #
+    # 任務 4.3（Plan §3.1）exit 5 的唯一傳遞形式：真 provider 路徑候選索引未就緒時
+    # `run_agent_chain` 拋 `IndexNotReady`，此處接住 ⇒ `EXIT_INDEX_NOT_READY`
+    # ——⛔ 必須在任何 JSONL／report 寫出之前。
+    try:
+        agent_records, agent_meta = run_agent_chain(
+            scenarios, set_name=args.set, provider_kind=args.provider, repeat=args.repeat,
+            dump_sink=dump_sink, candidates=args.candidates,
+        )
+    except IndexNotReady:
+        return EXIT_INDEX_NOT_READY
+    records.extend(agent_records)
+    outline_sha = agent_meta.get("outline_sha", "") or outline_sha
+    candidates_meta["candidates_backend"] = agent_meta.get("candidates_backend", "none")
 
     out_dir = Path(args.out)
     out_dir.mkdir(parents=True, exist_ok=True)
