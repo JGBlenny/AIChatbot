@@ -1,7 +1,14 @@
 # 知識庫表單觸發模式實現文檔
 
-> **現況：使用中**（2026-09-10 對碼）——`form_id` 觸發機制仍在 `rag-orchestrator/routers/chat.py` 使用
-> （符號 `form_id`、`action_type in ('form_fill', 'api_call', 'form_then_api')`，見該檔多處判斷）。
+> ⛔ **已退役（2026-09-11）｜⚠️ 本檔前一版的檔頭是錯的**
+>
+> 前一版寫「現況：使用中——仍在 `routers/chat.py` 使用」。該檔已刪（commit `7c905408`）。
+> 實查：`action_type in ('form_fill', …)` 的**觸發判斷**在存活的對話路徑上已無消費者
+> （僅存 `services/decision_layer.py` 與知識迴圈的分類器仍持有該值域）。
+> ⚠️ **表單本身沒死**：CRUD 後台仍活（`routers/forms.py`，`/rag-api/v1/forms` 等端點在線），
+> 死的是「知識列觸發自動填單」這條對話機制。
+> 本檔保留為 2026-02-03 的實施紀錄，⛔ 不描述現況。
+> 原位置 stub：`docs/features/KNOWLEDGE_FORM_TRIGGER_IMPLEMENTATION.md`。
 
 **版本**: 1.0
 **日期**: 2026-02-03

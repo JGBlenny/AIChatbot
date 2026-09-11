@@ -24,7 +24,7 @@ repo 內另有約 250 份非資料文件尚未指派角色,⛔ 未列於此**不
 - 規格 | `.kiro/specs/account-conversational-facets/requirements.md` | 帳號領域四子面向:註冊驗證、登入排障、綁定異動、團隊成員權限
 - 規格 | `.kiro/specs/account-conversational-facets/design.md` | 實作架構與機制數字定案
 - 產線 | `rag-orchestrator/services/jgb/accounts.py` | 登入排障的決定性 fact-builder
-- 路由 | 『rag-orchestrator/routers/chat.py』 | 分類路由進對話、依分類取 config 進場 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
+  ⚠️ 已退役來源（⛔ 不是應讀清單的一員）｜路由｜rag-orchestrator/routers/chat.py｜分類路由進對話、依分類取 config 進場 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
 - 判準 | `scripts/audit/check_invariants.sh` | 不變量 1:動作知識必有面向接管或明確豁免
 - 決策 | `.kiro/specs/account-conversational-facets/design.md` | 母分類劃分、API 掛點、b2c 初版範圍
 - 規格 | `docs/api/account-api-contract.md` | 帳號 G/J 對外契約(交付 jgb2);消費端存在性驅動,不需同步上版
@@ -34,9 +34,9 @@ repo 內另有約 250 份非資料文件尚未指派角色,⛔ 未列於此**不
 - 規格 | `.kiro/specs/billing-conversational-facets/requirements.md` | 帳務五子面向:繳費金流、帳單異常、發票、滯納金、設定引導
 - 規格 | `.kiro/specs/billing-conversational-facets/design.md` | 決定性計算與 formatter 分支透傳
 - 產線 | `rag-orchestrator/services/jgb/bills.py` | 帳單 face builder 註冊表
-- 產線 | 『rag-orchestrator/services/jgb/payments.py』 | 繳費狀態判因素材（payment-logs P01/P02/P03 診斷）（該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570；⚠️ agentic-MCP 新線無承接——`services/agent/tools/jgb2.py` 只處理 bills／contracts／repairs／meters／estates 五域，付款日誌診斷是真正失去的能力，非搬家）
+  ⚠️ 已退役來源（⛔ 不是應讀清單的一員）｜產線｜rag-orchestrator/services/jgb/payments.py｜繳費狀態判因素材（payment-logs P01/P02/P03 診斷）（該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570；⚠️ agentic-MCP 新線無承接——`services/agent/tools/jgb2.py` 只處理 bills／contracts／repairs／meters／estates 五域，付款日誌診斷是真正失去的能力，非搬家）
 - 產線 | `rag-orchestrator/services/jgb/invoices.py` | 發票邏輯
-- 路由 | 『rag-orchestrator/services/jgb_response_formatter.py』 | 帳務分支的 face 透傳 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
+  ⚠️ 已退役來源（⛔ 不是應讀清單的一員）｜路由｜rag-orchestrator/services/jgb_response_formatter.py｜帳務分支的 face 透傳 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
 - 判準 | `scripts/audit/check_invariants.sh` | 不變量 7:JGB 金額欄位一律走語義層,禁止重算
 - 決策 | `.kiro/specs/billing-conversational-facets/design.md` | 分支劃分與金額禁重算原則
 
@@ -44,8 +44,8 @@ repo 內另有約 250 份非資料文件尚未指派角色,⛔ 未列於此**不
 
 - 規格 | `.kiro/specs/brain-kb-grounding/requirements.md` | 岔題即答要有知識背書,不靠印象回答
 - 規格 | `.kiro/specs/brain-kb-grounding/design.md` | Callback 注入的工具圈與 async 邊界跨越
-- 產線 | 『rag-orchestrator/services/llm_answer_optimizer.py』 | search_kb function calling （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570；同構想的新線版本見 `services/agent/tools/kb.py` 的 `kb.search`/`kb.get` 工具）
-- 路由 | 『rag-orchestrator/services/conversational_engine.py』 | async kb_search closure 的建構與注入 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
+  ⚠️ 已退役來源（⛔ 不是應讀清單的一員）｜產線｜rag-orchestrator/services/llm_answer_optimizer.py｜search_kb function calling （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570；同構想的新線版本見 `services/agent/tools/kb.py` 的 `kb.search`/`kb.get` 工具）
+  ⚠️ 已退役來源（⛔ 不是應讀清單的一員）｜路由｜rag-orchestrator/services/conversational_engine.py｜async kb_search closure 的建構與注入 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
 - 實測 | `.kiro/specs/brain-kb-grounding/tasks.md` | 岔題三態:進場、多輪、逸出
 - 決策 | `.kiro/specs/brain-kb-grounding/design.md` | 工具圈內聚、async 重構、tools API 選型
 
@@ -55,18 +55,18 @@ repo 內另有約 250 份非資料文件尚未指派角色,⛔ 未列於此**不
 - 規格 | `.kiro/specs/contract-conversational-facets/design.md` | 資料驅動、決定性計算、face 參數貫穿
 - 規格 | `.kiro/specs/contract-conversational-facets/g1-g4-api-contract.md` | 外部 API 契約定義
 - 產線 | `rag-orchestrator/services/jgb/contracts.py` | 合約 face builder 註冊表
-- 路由 | 『rag-orchestrator/services/api_call_handler.py』 | face 參數貫穿到 API 呼叫 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
-- 判準 | 『rag-orchestrator/tests/unit/conversational/test_step_scope_face_req.py』 | ⚠️ 已隨舊 REST 對話鏈於 2026-09-11 退役（該目錄整批刪除）；face／scope 正規化在新線由 `rag-orchestrator/tests/unit/agent/` 涵蓋
-- 判準 | 『rag-orchestrator/tests/unit/conversational/test_engine_scope_face_req.py』 | ⚠️ 已隨舊 REST 對話鏈於 2026-09-11 退役（舊引擎本體已刪）
+  ⚠️ 已退役來源（⛔ 不是應讀清單的一員）｜路由｜rag-orchestrator/services/api_call_handler.py｜face 參數貫穿到 API 呼叫 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
+  ⚠️ 已退役來源（⛔ 不是應讀清單的一員）｜判準｜rag-orchestrator/tests/unit/conversational/test_step_scope_face_req.py｜⚠️ 已隨舊 REST 對話鏈於 2026-09-11 退役（該目錄整批刪除）；face／scope 正規化在新線由 `rag-orchestrator/tests/unit/agent/` 涵蓋
+  ⚠️ 已退役來源（⛔ 不是應讀清單的一員）｜判準｜rag-orchestrator/tests/unit/conversational/test_engine_scope_face_req.py｜⚠️ 已隨舊 REST 對話鏈於 2026-09-11 退役（舊引擎本體已刪）
 - 決策 | `.kiro/specs/contract-conversational-facets/design.md` | face 參數設計、formatter 分層、matcher 預先生成
 
 ## 對話式診斷 {#conversational-diagnosis}
 
 - 規格 | `.kiro/specs/conversational-diagnosis/requirements.md` | API grounding 與分類路由進對話
 - 規格 | `.kiro/specs/conversational-diagnosis/design.md` | select:api 分支、依分類查 config、三路出口
-- 產線 | 『rag-orchestrator/services/conversational_engine.py』 | select:api grounding 分支 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
-- 產線 | 『rag-orchestrator/services/api_call_handler.py』 | API 呼叫重用 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
-- 路由 | 『rag-orchestrator/routers/chat.py』 | 分類到 config 的路由出口 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
+  ⚠️ 已退役來源（⛔ 不是應讀清單的一員）｜產線｜rag-orchestrator/services/conversational_engine.py｜select:api grounding 分支 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
+  ⚠️ 已退役來源（⛔ 不是應讀清單的一員）｜產線｜rag-orchestrator/services/api_call_handler.py｜API 呼叫重用 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
+  ⚠️ 已退役來源（⛔ 不是應讀清單的一員）｜路由｜rag-orchestrator/routers/chat.py｜分類到 config 的路由出口 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
 - 判準 | `.kiro/specs/conversational-diagnosis/gap-analysis.md` | 現行轉折點覆蓋分析
 - 決策 | `.kiro/specs/conversational-diagnosis/design.md` | select 三路、config 依分類索引、API 參數透傳
 
@@ -74,19 +74,19 @@ repo 內另有約 250 份非資料文件尚未指派角色,⛔ 未列於此**不
 
 - 規格 | `.kiro/specs/conversational-repair/requirements.md` | 修繕交易面向、三輪完成、四業者同步
 - 規格 | `.kiro/specs/conversational-repair/design.md` | confirm/execute 交易語義與決定性推斷
-- 產線 | 『rag-orchestrator/services/conversational_engine.py』 | confirm/execute 分支 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
-- 產線 | 『rag-orchestrator/services/jgb/repair_prefill.py』 | 修繕單預填邏輯 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
-- 路由 | 『rag-orchestrator/routers/chat.py』 | 面向鍵直達路由、損傷圖對應面向 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
+  ⚠️ 已退役來源（⛔ 不是應讀清單的一員）｜產線｜rag-orchestrator/services/conversational_engine.py｜confirm/execute 分支 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
+  ⚠️ 已退役來源（⛔ 不是應讀清單的一員）｜產線｜rag-orchestrator/services/jgb/repair_prefill.py｜修繕單預填邏輯 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
+  ⚠️ 已退役來源（⛔ 不是應讀清單的一員）｜路由｜rag-orchestrator/routers/chat.py｜面向鍵直達路由、損傷圖對應面向 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
 - 決策 | `.kiro/specs/conversational-repair/design.md` | 租約 mock、影像信心度、confirm 文案、execute 重用、計量埋點
 
 ## 領域化對話面向 {#domain-facets}
 
 - 規格 | `.kiro/specs/domain-conversational-facets/requirements.md` | 領域化脈絡、混合 grounding、多筆候選辨識
 - 規格 | `.kiro/specs/domain-conversational-facets/design.md` | 脈絡、合成、候選三邊界擴充
-- 產線 | 『rag-orchestrator/services/conversational_engine.py』 | scope/face 正規化與狀態機擴充 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
-- 產線 | 『rag-orchestrator/services/system_context.py』 | 系統脈絡的領域化查詢 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
-- 路由 | 『rag-orchestrator/routers/chat.py』 | 混合 grounding 分支 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
-- 判準 | 『rag-orchestrator/tests/unit/conversational/test_engine_scope_face_req.py』 | ⚠️ 已隨舊 REST 對話鏈於 2026-09-11 退役（舊引擎本體已刪）
+  ⚠️ 已退役來源（⛔ 不是應讀清單的一員）｜產線｜rag-orchestrator/services/conversational_engine.py｜scope/face 正規化與狀態機擴充 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
+  ⚠️ 已退役來源（⛔ 不是應讀清單的一員）｜產線｜rag-orchestrator/services/system_context.py｜系統脈絡的領域化查詢 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
+  ⚠️ 已退役來源（⛔ 不是應讀清單的一員）｜路由｜rag-orchestrator/routers/chat.py｜混合 grounding 分支 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
+  ⚠️ 已退役來源（⛔ 不是應讀清單的一員）｜判準｜rag-orchestrator/tests/unit/conversational/test_engine_scope_face_req.py｜⚠️ 已隨舊 REST 對話鏈於 2026-09-11 退役（舊引擎本體已刪）
 - 決策 | `.kiro/specs/domain-conversational-facets/design.md` | per-領域脈絡、face 衍生、scope 正規化
 - 實測 | `docs/research/domain-conversational-facets-research.md` | 面向化架構定案:三層脈絡／候選辨識／中途切換(2026-07-06 對 jgb2 真碼盤查);⚠️ 見〈jgb2 盤查結論〉區塊的家族規約
 
@@ -96,7 +96,7 @@ repo 內另有約 250 份非資料文件尚未指派角色,⛔ 未列於此**不
 - 規格 | `.kiro/specs/estate-conversational-facets/design.md` | 兩軸狀態機的決定性機制語義
 - 規格 | `.kiro/specs/estate-conversational-facets/research.md` | 真碼盤查定案項
 - 產線 | `rag-orchestrator/services/jgb/estates.py` | 物件 fact-builder 與狀態機解碼
-- 路由 | 『rag-orchestrator/services/conversational_engine.py』 | 二級呼叫取物件詳情 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
+  ⚠️ 已退役來源（⛔ 不是應讀清單的一員）｜路由｜rag-orchestrator/services/conversational_engine.py｜二級呼叫取物件詳情 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
 - 決策 | `.kiro/specs/estate-conversational-facets/design.md` | API 直查、二級詳情、面向切換邊界
 
 ## 智慧設備對話面向 {#iot-facets}
@@ -105,7 +105,7 @@ repo 內另有約 250 份非資料文件尚未指派角色,⛔ 未列於此**不
 - 規格 | `.kiro/specs/iot-conversational-facets/design.md` | 離線優先機制語義與 DAE 同步語義
 - 規格 | `.kiro/specs/iot-conversational-facets/research.md` | 台科電機制與 jgb2 真碼盤查
 - 產線 | `rag-orchestrator/services/jgb/iot.py` | 電表 fact-builder 與離線優先判定
-- 路由 | 『rag-orchestrator/routers/chat.py』 | 電表清單查詢與篩選 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
+  ⚠️ 已退役來源（⛔ 不是應讀清單的一員）｜路由｜rag-orchestrator/routers/chat.py｜電表清單查詢與篩選 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
 - 決策 | `.kiro/specs/iot-conversational-facets/design.md` | 離線優先機制、非決定性查詢處理、DAE 帳號失效整批停
 
 ## 額度管制 {#quota-management}
@@ -123,7 +123,7 @@ repo 內另有約 250 份非資料文件尚未指派角色,⛔ 未列於此**不
 - 規格 | `.kiro/specs/archive/retrieval-decision-layer/design.md` | ⛔ 已封存、非主線:八個元件與決策集中化
 - 規格 | `.kiro/specs/archive/retrieval-decision-layer/HALTED.md` | 停案理由與仍在生產運行的部分
 - 產線 | `rag-orchestrator/services/decision_layer.py` | 決策中樞與門檻的唯一讀值點
-- 路由 | 『rag-orchestrator/routers/chat.py』 | 檢索前後與路由三個攔截點 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
+  ⚠️ 已退役來源（⛔ 不是應讀清單的一員）｜路由｜rag-orchestrator/routers/chat.py｜檢索前後與路由三個攔截點 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
 - 判準 | `rag-orchestrator/tests/unit/decision/test_decision_layer_equivalence_req.py` | 大規模對拍的嚴格等價測試
 - 判準 | `scripts/audit/checks/decision_threshold_ast.py` | 不變量 8 的 AST 檢查,含規避寫法自我測試
 - 決策 | `.kiro/specs/archive/retrieval-decision-layer/decisions/DECISIONS.md` | D-01 起的決策彙整(已封存)
@@ -145,8 +145,8 @@ SOP 檢索時參考；是否正式封存交人裁決。
 - 規格 | `.kiro/specs/sop-audience-isolation/requirements.md` | SOP 受眾隔離與 target_user 維度
 - 規格 | `.kiro/specs/sop-audience-isolation/design.md` | schema 加欄、資料回填、補位知識
 - 規格 | `.kiro/specs/sop-audience-isolation/research.md` | 內容體系查證與受眾錯位根因
-- 產線 | 『rag-orchestrator/services/vendor_sop_retriever_v2.py』 | retriever 單點過濾與 SQL 謂詞 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
-- 路由 | 『rag-orchestrator/services/sop_orchestrator.py』 | SOP 查詢穿線 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
+  ⚠️ 已退役來源（⛔ 不是應讀清單的一員）｜產線｜rag-orchestrator/services/vendor_sop_retriever_v2.py｜retriever 單點過濾與 SQL 謂詞 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
+  ⚠️ 已退役來源（⛔ 不是應讀清單的一員）｜路由｜rag-orchestrator/services/sop_orchestrator.py｜SOP 查詢穿線 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
 - 決策 | `.kiro/specs/sop-audience-isolation/design.md` | schema 同型別語義、審表閘門、補位知識路徑
 - 規格 | `docs/features/sop/README.md` | SOP 系統文檔索引
 - 規格 | `docs/guides/features/SOP_GUIDE.md` | SOP 系統完整指南(v2.0 整合版)
@@ -158,7 +158,7 @@ SOP 檢索時參考；是否正式封存交人裁決。
 - 規格 | `.kiro/specs/trigger-vocabulary-debt/design.md` | 三層不改語義、仲裁分數埋點、欄位偵測降級
 - 產線 | `rag-orchestrator/services/vendor_knowledge_retriever_v2.py` | 觸發三欄透傳
 - 產線 | `rag-orchestrator/services/usage_metering.py` | 仲裁比較 hook 與欄位偵測降級
-- 路由 | 『rag-orchestrator/routers/chat.py』 | 仲裁分數埋點呼叫點 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
+  ⚠️ 已退役來源（⛔ 不是應讀清單的一員）｜路由｜rag-orchestrator/routers/chat.py｜仲裁分數埋點呼叫點 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
 - 決策 | `.kiro/specs/trigger-vocabulary-debt/design.md` | 透傳不解讀、欄位偵測降級、機械防回歸
 
 ## 使用量計量 {#usage-metering}
@@ -201,9 +201,9 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 - 判準 | `docs/retrieval-parameters.md` | 量測紀律:不要離線重建 pipeline、比較性結論 30 題起跳
 - 決策 | `docs/retrieval-recall-audit-20260822.md` | 前案裁決:precision-first、b2b 嚴格過濾勿改
 - 判準 | `.kiro/specs/conversational-routing-execution/b2b-doc-status-ledger.md` | b2b／檢索過濾／門檻主題的**文件可信度分流**:哪幾份可依據、哪幾份照做會出事
-- 產線 | 『rag-orchestrator/services/conversational_engine.py』 | 對話狀態機與 confirm/execute 分支 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
-- 產線 | 『rag-orchestrator/services/llm_answer_optimizer.py』 | `conversational_step` 的 action／scope 驗證順序 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
-- 路由 | 『rag-orchestrator/routers/chat.py』 | 面向進場、適用性把關、三個攔截點 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
+  ⚠️ 已退役來源（⛔ 不是應讀清單的一員）｜產線｜rag-orchestrator/services/conversational_engine.py｜對話狀態機與 confirm/execute 分支 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
+  ⚠️ 已退役來源（⛔ 不是應讀清單的一員）｜產線｜rag-orchestrator/services/llm_answer_optimizer.py｜`conversational_step` 的 action／scope 驗證順序 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
+  ⚠️ 已退役來源（⛔ 不是應讀清單的一員）｜路由｜rag-orchestrator/routers/chat.py｜面向進場、適用性把關、三個攔截點 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
 - 規格 | `docs/architecture/COMPLETE_CONVERSATION_ARCHITECTURE.md` | 對話架構母圖(被主線 spec 引用 8 次);⚠️ §3 過濾公式與兩處門檻敘述已於 2026-09-01 對碼修正,決策樹本體與 `decide_arbitration` 逐條相符
 - 規格 | `docs/architecture/facet-architecture.md` | 面向化三層疊加的邏輯與資料佈局(取代 design.md 元件1/D2 的兩層版本)
 - 判準 | `docs/routing-gate-acceptance.md` | pre-entry routability gate 驗收契約——**實作前凍結,⛔ 指標定義與通過線不得改**
@@ -214,7 +214,7 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 ## agentic-MCP（LINE OA 房東管家）{#agentic-mcp}
 
 ⚠️ 與上面「對話邏輯與路由執行(主線)」(`#dialogue-logic`) 是**不同的兩條線**：`dialogue-logic` 是
-`conversational-routing-execution` 舊有 HTTP chat 路由主線；本節是 `/mcp` LINE OA 房東管家新線（2026-09-08 demo 上線）。
+`conversational-routing-execution` 舊有 HTTP chat 路由主線——⛔ **該線已於 2026-09-11 整條退役**（`POST /api/v1/message` 與 31 個模組刪除，commit `7c905408`）；本節是現行**唯一**活線。
 
 - 規格 | `docs/architecture/AGENTIC_MCP_ARCHITECTURE.md` | 總覽：`/mcp` `agent.turn` 門面→四段管線（Plan R R1 後：`turn_segments`／`turn_context`／模型迴圈／`exit_gates`）→工具註冊→替身；組態、已知限制、模型行為假設表
 - 規格 | `.kiro/specs/agentic-mcp-orchestration/requirements.md` | 需求正本，含 D2 延遲／答到率驗收線
@@ -224,6 +224,9 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 - 產線 | `rag-orchestrator/services/agent/verifier.py` | `OutputVerifier`，`AGENT_VERIFIER_MODE` 三態（`enforce`／`grounding_observe`／`observe_only`）
 - 產線 | `rag-orchestrator/services/agent/mcp_facade.py` | `/mcp` 門面：驗 key／Origin／身分 header、命名空間、每呼叫記錄
 - 產線 | `rag-orchestrator/services/agent/limits.py` | DSP-045 額度封閉表（⛔ 不讀 env 覆寫）
+- 產線 | `rag-orchestrator/services/agent/session_persistence.py` | `AgentSessionStore`：會話狀態層（`get_state`／`start`／`save`／`close`）。⚠️ 2026-09-11 自舊引擎抽出，SQL 逐字照搬，同一張 `form_sessions`、同一個 `form_id='conversational'`
+- 產線 | `rag-orchestrator/services/form_contract.py` | 確認卡按鈕值與表單 id 常數（⚠️ 值寫進 DB／送給呼叫端，⛔ 不得改）
+- 工具 | `scripts/audit/checks/agent_import_closure.py` | 新線／舊線 import 分桶檢查器。⚠️ **已 RETIRED**（舊鏈退役後分桶不再適用，執行會自報並 exit 0）；⛔ 未接進 `make audit`，是刻意的
 - 判準 | `rag-orchestrator/tests/unit/agent/test_pipeline_golden_req.py` | Plan R 回放等價 golden（`TurnTrace` 全欄位逐位比對）
 - 判準 | `rag-orchestrator/tests/unit/agent/test_pipeline_order_req.py` | 四道出口閘順序表測試
 - 判準 | `scripts/smoke/` | 真模型 smoke 對照計分尺（`mcp_smoke.py`／`b4_score.py`／`liff_score.py`）
@@ -233,7 +236,7 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 ## jgb2 串接契約 {#jgb2-chat-integration}
 
 - 規格 | `docs/jgb2-chat-integration.md` | 一支 API 三種身分形狀:`mode`＋`target_user`＋`role_id` 決定回答資源池與跨業者隔離;`vendor_id` jgb2 不送,由 AI 側經 role_id 解出
-- 路由 | 『rag-orchestrator/routers/chat.py』 | 身分欄位驗證與 vendor 補全的進場點 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
+  ⚠️ 已退役來源（⛔ 不是應讀清單的一員）｜路由｜rag-orchestrator/routers/chat.py｜身分欄位驗證與 vendor 補全的進場點 （該實作已隨舊鏈於 2026-09-11 退役，見 commit 7c905408／10116570）
 - 判準 | `rag-orchestrator/services/vendor_knowledge_retriever_v2.py` | b2b 資源池的實際過濾點(`business_types`／`target_user` 謂詞)
 
 ⚠️ 三種身分形狀是**對外契約**,⛔ 不屬於任何單一對話面向 —— 帶錯 `mode` 即受眾錯位,

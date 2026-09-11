@@ -101,27 +101,40 @@ PAUSED → COLLECTING / CANCELLED（超時 30 分鐘）
 
 ## 系統角色對應
 
-| 組件 | 檔案 |
-|------|------|
-| 主入口 | `routers/chat.py` |
-| 對話面向引擎／交易語義 | `services/conversational_engine.py` |
-| 修繕槽位預填 | `services/jgb/repair_prefill.py` |
-| SOP 編排 | `services/sop_orchestrator.py` |
-| 知識檢索 | `services/vendor_knowledge_retriever_v2.py` |
-| 表單管理 | `services/form_manager.py` |
-| 意圖分類 | `services/intent_classifier.py` |
-| 答案優化 | `services/llm_answer_optimizer.py` |
-| 統一檢索 | `services/base_retriever.py` |
-| 信心度評估 | `services/confidence_evaluator.py` |
-| 緩存 | `services/cache_service.py` |
+⚠️ **2026-09-11 舊 REST 對話鏈退役後的現況**。本檔每個 session 都被當專案記憶載入
+（`CLAUDE.md`：Load entire `.kiro/steering/` as project memory），⛔ 過時一行的傷害大於一整份文件。
+
+| 組件 | 檔案 | 狀態 |
+|------|------|------|
+| 主入口 | `services/agent/mcp_facade.py`（`/mcp` 的 `agent.turn`） | 現行唯一入口 |
+| 回合管線 | `services/agent/runtime.py`＋`turn_segments.py`／`turn_context.py`／`exit_gates.py` | 現行 |
+| 會話狀態 | `services/agent/session_persistence.py`（`AgentSessionStore`） | 現行（2026-09-11 自舊引擎抽出） |
+| 表單／確認卡常數 | `services/form_contract.py` | 現行（同上） |
+| 輸出驗證 | `services/agent/verifier.py` | 現行 |
+| 知識檢索 | `services/vendor_knowledge_retriever_v2.py` | 現行（兩線共用，新線經 `services/agent/tools/kb.py`） |
+| 統一檢索 | `services/base_retriever.py` | 現行 |
+| 意圖分類 | `services/intent_classifier.py` | 現行（**知識後台**用，⛔ 已不在對話路徑上） |
+| 信心度評估 | `services/confidence_evaluator.py` | 現行 |
+| 緩存 | `services/cache_service.py` | 現行 |
+| ~~主入口~~ `routers/chat.py` | — | ⛔ 已刪（2026-09-11，commit 7c905408） |
+| ~~對話面向引擎~~ `services/conversational_engine.py` | — | ⛔ 已刪 |
+| ~~修繕槽位預填~~ `services/jgb/repair_prefill.py` | — | ⛔ 已刪 |
+| ~~SOP 編排~~ `services/sop_orchestrator.py` | — | ⛔ 已刪 |
+| ~~表單管理~~ `services/form_manager.py` | — | ⛔ 已刪（⚠️ 表單 **CRUD 後台仍活**，見 `routers/forms.py`） |
+| ~~答案優化~~ `services/llm_answer_optimizer.py` | — | ⛔ 已刪 |
 
 ## agent 路徑分流
 
-> 依據：`routers/chat.py:handle_conversational_entry`（呼叫 `routers/agent_entry.py:handle_agent_entry`）；
-> spec `agentic-mcp-orchestration` 任務 2.2（design 元件 8）。⛔ 本節為**新增分流層**，
-> 不改本文件其餘既有段落——舊鏈流程（上述「對話處理核心流程」起）維持原樣，僅適用
-> `audience ∉ AGENT_AUDIENCES` 的情況；回切（AGENT_AUDIENCES 清空或 runtime 未建）
-> 仍走舊鏈，行為不變。
+> ⛔ **本節已失效（2026-09-11）**：分流的兩端都不存在了。
+> 原依據 `routers/chat.py:handle_conversational_entry` 隨舊鏈刪除；
+> `routers/agent_entry.py` 仍在檔案系統上但**無任何呼叫者、未掛任何路由**，是孤立死碼。
+>
+> ⚠️ **原文的「回切（AGENT_AUDIENCES 清空）仍走舊鏈，行為不變」現在是假保證**——
+> 舊鏈已不存在，清空 `AGENT_AUDIENCES` 不會回到任何東西。⛔ 不要據此做回切決策。
+>
+> **現況**：唯一入口是 `/mcp` 的 `agent.turn`（`services/agent/mcp_facade.py`），
+> 沒有分流、沒有回退、沒有影子。下方流程圖保留作為**歷史紀錄**，
+> ⛔ 不描述現況（`ShadowRunner`／`fallback_old_chain`／六 case 仲裁皆已隨舊鏈退役）。
 
 ```mermaid
 flowchart TD
@@ -134,7 +147,8 @@ flowchart TD
     C -.影子（no-op 若無 runner）.-> G[ShadowRunner<br/>唯讀對照，不影響回應]
 ```
 
-- **舊鏈流程僅適用 `audience ∉ AGENT_AUDIENCES`；⛔ 不刪舊鏈段落，回切仍用**。
+- ~~舊鏈流程僅適用 `audience ∉ AGENT_AUDIENCES`；⛔ 不刪舊鏈段落，回切仍用~~
+  ⛔ **已失效**：舊鏈於 2026-09-11 整條刪除，沒有可回切的對象。
 - 影子路徑（`schedule_shadow`）另標於圖中虛線：舊鏈產出答案後才排程，唯讀對照，
   不影響實際回應內容。
 - 回退條件（連續 3 回合固定句 `fixed_streak >= 3`）標為 `fallback_old_chain`，

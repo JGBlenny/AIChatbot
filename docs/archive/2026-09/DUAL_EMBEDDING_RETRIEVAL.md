@@ -1,8 +1,13 @@
 # 雙 Embedding 檢索實施報告
 
-> **現況：使用中**（2026-09-10 對碼）——`GREATEST(primary_embedding, fallback_embedding)` 機制仍在，
-> 惟檔案已改名為 `rag-orchestrator/services/vendor_sop_retriever_v2.py`（本檔原載路徑
-> `vendor_sop_retriever.py` 已不存在，符號 `GREATEST`／`primary_embedding`／`fallback_embedding` 仍可 grep 到）。
+> ⛔ **已退役（2026-09-11）｜⚠️ 本檔前一版的檔頭是錯的**
+>
+> 前一版寫「現況：使用中——機制仍在 `services/vendor_sop_retriever_v2.py`」。
+> 該檔已隨舊 REST 對話鏈刪除（commit `7c905408`），而存活的
+> `services/vendor_knowledge_retriever_v2.py` 內 `GREATEST` **0 命中**（實查）。
+> ⇒ 雙 embedding 檢索機制隨業者 SOP 檢索一併退役。
+> 本檔保留為 2026-01-26 的實施紀錄，⛔ 不描述現況。
+> 原位置 stub：`docs/features/DUAL_EMBEDDING_RETRIEVAL.md`。
 
 **實施日期**: 2026-01-26
 **方案名稱**: 方案 A - GREATEST(primary, fallback) 雙 Embedding 檢索
