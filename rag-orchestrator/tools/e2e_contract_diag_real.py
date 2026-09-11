@@ -1,3 +1,7 @@
+# ⛔ **本工具自 2026-09-11 起無法執行**：依賴的 services.conversational_engine、services.api_call_handler、services.llm_answer_optimizer、services.system_context 已隨舊 REST 對話鏈刪除
+#    （commit 7c905408）。一跑就 ImportError——pytest 收不到它、沒有 lint／import 閘，
+#    所以不會有人替你發現。⚠️ 保留原始碼是為了留下分析方法；
+#    要復用請先確認新線（services/agent/**）的對應出處，⛔ 不要照抄舊實作。
 """一次性真實 e2e（不 commit）：真 db_pool + 真 LLM(gpt-4o) + 真 jgb2 API + 真設定。
 
 完全比照 app.py 組裝 ConversationalEngine，跑多輪對話、多合約狀態，印出「成像」（真實使用者

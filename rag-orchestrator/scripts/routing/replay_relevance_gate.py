@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# ⛔ **本工具自 2026-09-11 起無法執行**：依賴的 routers.chat 已隨舊 REST 對話鏈刪除
+#    （commit 7c905408）。一跑就 ImportError——pytest 收不到它、沒有 lint／import 閘，
+#    所以不會有人替你發現。⚠️ 保留原始碼是為了留下分析方法；
+#    要復用請先確認新線（services/agent/**）的對應出處，⛔ 不要照抄舊實作。
 """Q2 offline replay 第 3 步：**首次**執行 `_top1_relevance_gate` 的判定並與盲標對照。
 
 ⚠️ 逐字複用 production 的 `_GATE_SYSTEM_PROMPT` 與 user message 組法、同一 `chat_completion`、

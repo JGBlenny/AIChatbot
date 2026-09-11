@@ -1,14 +1,21 @@
 {
-  "_comment": "spec testing-traceability 元件 4 (R3.2-3.4). 首次量測於 unit 層 (scripts/run-tests.sh unit --cov), Python 3.11 容器. 值為實測向下取整 (留 ratchet headroom). 政策: 只升不降, 升基準由人工 commit (CI 只讀守門, 不自動寫回).",
-  "measured_at": "2026-06-22",
+  "_comment": "spec testing-traceability 元件 4 (R3.2-3.4). 值為實測向下取整 (留 ratchet headroom). ⚠️ 2026-09-11 舊 REST 對話鏈退役後重量測：原本四個模組有三個（conversational_engine／form_manager／routers/chat）已隨舊鏈刪除，check_baseline 找不到模組即判「覆蓋率倒退」⇒ CI 硬把關 step 永久紅，而且錯誤訊息會把『刪檔』誤導成『品質回歸』。處置：移除三列、依實測重設門檻。overall 從 0.10 升到 0.50——不是變嚴格了，是兩萬行沒測試的舊碼走了，分母變小。⛔ 新增的 jgb/estates.py 與 jgb/iot.py 是釘住**現況**防再劣化，⛔ 不代表覆蓋足夠（兩者都在 /mcp 主路徑上、函式體幾乎零執行，見 DSP 待辦）。",
+  "measured_at": "2026-09-11",
   "layer": "unit",
-  "scope": ["services", "routers"],
+  "scope": [
+    "services",
+    "routers"
+  ],
   "policy": "ratchet",
-  "overall": 0.10,
+  "overall": 0.5,
   "modules": {
-    "services/conversational_engine.py": 0.43,
-    "services/vendor_knowledge_retriever_v2.py": 0.16,
-    "services/form_manager.py": 0.25,
-    "routers/chat.py": 0.17
+    "services/vendor_knowledge_retriever_v2.py": 0.72,
+    "services/decision_layer.py": 1.0,
+    "services/agent/runtime.py": 0.93,
+    "services/agent/verifier.py": 0.96,
+    "services/agent/session_persistence.py": 0.39,
+    "services/form_contract.py": 1.0,
+    "services/jgb/estates.py": 0.22,
+    "services/jgb/iot.py": 0.1
   }
 }

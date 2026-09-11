@@ -1,3 +1,7 @@
+# ⛔ **本工具自 2026-09-11 起無法執行**：依賴的 services.conversational_engine、services.api_call_handler 已隨舊 REST 對話鏈刪除
+#    （commit 7c905408）。一跑就 ImportError——pytest 收不到它、沒有 lint／import 閘，
+#    所以不會有人替你發現。⚠️ 保留原始碼是為了留下分析方法；
+#    要復用請先確認新線（services/agent/**）的對應出處，⛔ 不要照抄舊實作。
 """一次性驗證（不 commit）：用「真的」元件跑,不自己造 filter/格式化。
 
 真：ConversationalConfig（讀 8.1 種子）、ConversationalEngine 控制流、_ground_by_api、

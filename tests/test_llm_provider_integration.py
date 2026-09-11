@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+# ⛔ **本工具自 2026-09-11 起無法執行**：依賴的 services.llm_answer_optimizer 已隨舊 REST
+#    對話鏈刪除（commit 7c905408）。⚠️ 注意它雖然叫 test_*，卻**不在 pytest 收集範圍內**
+#    （`pytest.ini` 的 rootdir 是 rag-orchestrator/、testpaths=tests，本檔在 repo 根的 tests/），
+#    所以套件全綠也不會發現它壞了。⚠️ 保留原始碼是為了留下驗證方法；
+#    要復用請先確認新線（services/agent/**）的對應出處，⛔ 不要照抄舊實作。
 """
 LLM Provider 集成測試
 驗證修改後的服務(IntentClassifier, LLMAnswerOptimizer)是否正常運作
