@@ -626,9 +626,27 @@ async def get_import_statistics(
     db_pool = request.app.state.db_pool
 
     async with db_pool.acquire() as conn:
+        # ⛔ 原本呼叫 `get_import_statistics($1,$2)`——該函式**從未被任何 migration 建立**
+        #    （`grep -rl` 於 database/ 零命中）⇒ 本端點一直回 500。改為直接聚合 unified_jobs。
         stats = await conn.fetchrow("""
-            SELECT * FROM get_import_statistics($1, $2)
-        """, vendor_id, days)
+            SELECT
+                COUNT(*)                                            AS total_jobs,
+                COUNT(*) FILTER (WHERE status = 'completed')        AS completed_jobs,
+                COUNT(*) FILTER (WHERE status = 'failed')           AS failed_jobs,
+                COUNT(*) FILTER (WHERE status = 'processing')       AS processing_jobs,
+                COALESCE(SUM(success_records), 0)                   AS total_imported,
+                COALESCE(SUM(skipped_records), 0)                   AS total_skipped,
+                COALESCE(SUM(failed_records), 0)                    AS total_errors,
+                COALESCE(AVG(success_records) FILTER (WHERE status = 'completed'), 0)
+                                                                    AS avg_imported_per_job,
+                CASE WHEN COUNT(*) = 0 THEN 0
+                     ELSE COUNT(*) FILTER (WHERE status = 'completed')::numeric
+                          / COUNT(*)::numeric * 100 END             AS success_rate
+            FROM unified_jobs
+            WHERE job_type = 'knowledge_import'
+              AND ($1::int IS NULL OR vendor_id = $1)
+              AND created_at >= NOW() - ($2 || ' days')::interval
+        """, vendor_id, str(days))
 
         return {
             "total_jobs": stats['total_jobs'],

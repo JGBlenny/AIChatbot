@@ -335,10 +335,14 @@ class LoopCoordinator:
         # 執行驗證回測
         await self._update_loop_status(LoopStatus.VALIDATING)
 
-        validation_result = await self.backtest_client.execute_backtest(
+        # ⛔ `execute_backtest` 從未存在（`git log -S"def execute_backtest"` 無任何 commit）——
+        #    BacktestFrameworkClient 只有 execute_batch_backtest／execute_validation_backtest。
+        _iter = await self._get_current_iteration()
+        validation_result = await self.backtest_client.execute_validation_backtest(
+            loop_id=self.loop_id,
+            iteration=_iter,
             vendor_id=self.vendor_id,
             scenario_ids=test_scenario_ids,
-            run_name=f"Validation_{self.loop_id}_Iter{await self._get_current_iteration()}"
         )
 
         # 檢測 regression（如果測試了通過案例）

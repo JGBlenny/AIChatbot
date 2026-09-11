@@ -966,7 +966,39 @@ async def get_template_usage_statistics(
     """
     try:
         async with request.app.state.db_pool.acquire() as conn:
-            rows = await conn.fetch("SELECT * FROM v_platform_sop_template_usage ORDER BY usage_percentage DESC")
+            # ⛔ 原本 `SELECT * FROM v_platform_sop_template_usage`——該 view **從未建立**
+            #    （`grep -rl` 於 database/ 零命中）⇒ 本端點一直回 500。改為直接聚合。
+            #    ⚠️ vendors.business_types 是陣列 ⇒ 適用業者數用 = ANY() 算。
+            rows = await conn.fetch("""
+                SELECT
+                    t.id                AS template_id,
+                    c.category_name     AS category_name,
+                    t.business_type     AS business_type,
+                    t.item_name         AS item_name,
+                    COUNT(DISTINCT vsi.vendor_id) AS copied_by_vendor_count,
+                    (SELECT COUNT(*) FROM vendors v
+                      WHERE v.is_active = TRUE
+                        AND (t.business_type IS NULL
+                             OR t.business_type = ANY(v.business_types))
+                    )                   AS applicable_vendor_count,
+                    CASE WHEN (SELECT COUNT(*) FROM vendors v
+                                WHERE v.is_active = TRUE
+                                  AND (t.business_type IS NULL
+                                       OR t.business_type = ANY(v.business_types))) = 0
+                         THEN 0
+                         ELSE COUNT(DISTINCT vsi.vendor_id)::numeric
+                              / (SELECT COUNT(*) FROM vendors v
+                                  WHERE v.is_active = TRUE
+                                    AND (t.business_type IS NULL
+                                         OR t.business_type = ANY(v.business_types)))::numeric
+                              * 100 END AS usage_percentage
+                FROM platform_sop_templates t
+                LEFT JOIN platform_sop_categories c ON c.id = t.category_id
+                LEFT JOIN vendor_sop_items vsi
+                       ON vsi.template_id = t.id AND vsi.is_active = TRUE
+                GROUP BY t.id, c.category_name, t.business_type, t.item_name
+                ORDER BY usage_percentage DESC
+            """)
 
             statistics = []
             for row in rows:
@@ -1011,7 +1043,7 @@ async def get_template_usage(
                 SELECT
                     v.id AS vendor_id,
                     v.name AS vendor_name,
-                    v.business_type AS vendor_business_type,
+                    v.business_types AS vendor_business_types,
                     vsi.id AS vendor_sop_item_id,
                     vsi.created_at
                 FROM vendors v
@@ -1020,7 +1052,8 @@ async def get_template_usage(
                     AND vsi.template_id = $1
                     AND vsi.is_active = TRUE
                 WHERE v.is_active = TRUE
-                  AND (v.business_type = $2 OR $2 IS NULL)
+                  -- ⚠️ vendors.business_types 是陣列（_text）⇒ 用 = ANY()，⛔ 不是等值
+                  AND ($2::text IS NULL OR $2 = ANY(v.business_types))
                 ORDER BY v.name
             """, template_id, template["business_type"])
 
@@ -1029,7 +1062,7 @@ async def get_template_usage(
                 usage.append({
                     "vendor_id": row["vendor_id"],
                     "vendor_name": row["vendor_name"],
-                    "vendor_business_type": row["vendor_business_type"],
+                    "vendor_business_types": row["vendor_business_types"],
                     "has_copied": row["vendor_sop_item_id"] is not None,
                     "copied_at": row["created_at"].isoformat() if row["created_at"] else None
                 })

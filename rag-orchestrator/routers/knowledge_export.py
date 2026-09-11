@@ -477,7 +477,7 @@ async def preview_export(
         # 統計知識數量
         if vendor_id is not None:
             knowledge_count = await conn.fetchval("""
-                SELECT COUNT(*) FROM knowledge_base WHERE vendor_id = $1
+                SELECT COUNT(*) FROM knowledge_base WHERE $1 = ANY(vendor_ids)
             """, vendor_id)
 
             intent_count = await conn.fetchval("""
@@ -485,7 +485,8 @@ async def preview_export(
             """)
         else:
             knowledge_count = await conn.fetchval("""
-                SELECT COUNT(*) FROM knowledge_base WHERE vendor_id IS NULL
+                SELECT COUNT(*) FROM knowledge_base
+                WHERE vendor_ids IS NULL OR cardinality(vendor_ids) = 0
             """)
 
             intent_count = await conn.fetchval("""

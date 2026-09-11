@@ -535,7 +535,7 @@ async def get_related_knowledge(request: Request, form_id: str):
                 SELECT
                     id,
                     question_summary,
-                    vendor_id,
+                    vendor_ids,
                     scope,
                     is_active
                 FROM knowledge_base

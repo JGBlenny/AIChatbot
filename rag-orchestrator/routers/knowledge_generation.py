@@ -365,8 +365,28 @@ async def get_generation_stats(req: Request):
         db_pool = req.app.state.db_pool
 
         async with db_pool.acquire() as conn:
+            # ⛔ 原本 `SELECT * FROM v_ai_knowledge_generation_stats`——該 view
+            #    **從未被任何 migration 建立過**（`grep -rl` 於 database/ 零命中），
+            #    所以本端點一直回 500；前端只 console.error ⇒ 統計永遠顯示初始值。
+            #    改為直接對來源表聚合。
             stats = await conn.fetchrow("""
-                SELECT * FROM v_ai_knowledge_generation_stats
+                SELECT
+                    COUNT(*) FILTER (WHERE status = 'pending_review')     AS pending_count,
+                    COUNT(*) FILTER (WHERE status = 'needs_revision')     AS needs_revision_count,
+                    COUNT(*) FILTER (WHERE status = 'approved')           AS approved_count,
+                    COUNT(*) FILTER (WHERE status = 'rejected')           AS rejected_count,
+                    COALESCE(AVG(confidence_score) FILTER (WHERE status = 'approved'), 0) AS avg_confidence_approved,
+                    COALESCE(AVG(confidence_score) FILTER (WHERE status = 'rejected'), 0) AS avg_confidence_rejected,
+                    COUNT(*) FILTER (
+                        WHERE status = 'approved'
+                          AND (edited_question IS NOT NULL OR edited_answer IS NOT NULL)
+                    ) AS approved_with_edits,
+                    COUNT(*) FILTER (
+                        WHERE status = 'approved'
+                          AND edited_question IS NULL AND edited_answer IS NULL
+                    ) AS approved_without_edits,
+                    COUNT(*) AS total_generated
+                FROM ai_generated_knowledge_candidates
             """)
 
             if not stats:

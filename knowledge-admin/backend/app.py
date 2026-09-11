@@ -2088,6 +2088,18 @@ async def run_smart_batch(request: SmartBatchRequest, user: dict = Depends(get_c
     - source: 可選，篩選來源
     - difficulty: 可選，篩選難度
     """
+    # ⛔⛔ 2026-09-11：本端點已無法運作，⛔ 不要讓它假裝成功。
+    #    它 spawn `run_backtest_db.py`，該檔已於 2026-03-27（commit 62bd17f7）刪除。
+    #    ⚠️ 原本失敗只寫檔案 log、端點照樣回 200，並把 backtest_runs 標 completed
+    #    ⇒ 後台顯示「批次完成」但 backtest_results 一列都沒有。
+    #    ⚠️ 根因更深：回測框架打的 `POST /api/v1/message` 已隨舊 REST 對話鏈刪除，
+    #    即使腳本補回來也跑不出結果——要重新運作需把框架改寫成講 MCP 協定。
+    raise HTTPException(
+        status_code=503,
+        detail="回測執行已停用：依賴的 run_backtest_db.py 不存在，且回測框架打的 "
+               "POST /api/v1/message 已於 2026-09-11 隨舊 REST 對話鏈刪除。"
+               "歷史結果仍可查詢（/api/backtest/results、/api/backtest/runs）。",
+    )
     import subprocess
     import threading
 
@@ -2289,6 +2301,18 @@ async def run_continuous_batch(request: ContinuousBatchRequest, user: dict = Dep
     3. 前端輪詢進度
     4. 完成後顯示完整報告
     """
+    # ⛔⛔ 2026-09-11：本端點已無法運作，⛔ 不要讓它假裝成功。
+    #    它 spawn `scripts/backtest/run_backtest_with_db_progress.py`，該檔已於 2026-09-11 刪除。
+    #    ⚠️ 原本失敗只寫檔案 log、端點照樣回 200，並把 backtest_runs 標 completed
+    #    ⇒ 後台顯示「批次完成」但 backtest_results 一列都沒有。
+    #    ⚠️ 根因更深：回測框架打的 `POST /api/v1/message` 已隨舊 REST 對話鏈刪除，
+    #    即使腳本補回來也跑不出結果——要重新運作需把框架改寫成講 MCP 協定。
+    raise HTTPException(
+        status_code=503,
+        detail="回測執行已停用：依賴的 scripts/backtest/run_backtest_with_db_progress.py 不存在，且回測框架打的 "
+               "POST /api/v1/message 已於 2026-09-11 隨舊 REST 對話鏈刪除。"
+               "歷史結果仍可查詢（/api/backtest/results、/api/backtest/runs）。",
+    )
     import subprocess
     import threading
 

@@ -939,13 +939,13 @@ async def validate_loop(
             openai_api_key=os.getenv("OPENAI_API_KEY")
         )
 
-        # 載入迴圈
-        import asyncio
-        await asyncio.to_thread(coordinator.load_loop, loop_id)
+        # ⛔ 這兩支都是 async def，⛔ 不可用 asyncio.to_thread 包——
+        #    to_thread 會在另一條執行緒呼叫它們、拿回**未 await 的 coroutine**，
+        #    協程從未執行（連 LoopNotFoundError 都不會拋 ⇒ 不存在的 loop 也回 500 而非 404）。
+        #    同檔 execute-iteration 走的是 run_until_complete 包同步函式，⛔ 別混用。
+        await coordinator.load_loop(loop_id)
 
-        # 執行驗證回測
-        validation_result = await asyncio.to_thread(
-            coordinator.validate_loop,
+        validation_result = await coordinator.validate_loop(
             validation_scope=request.validation_scope,
             sample_pass_rate=request.sample_pass_rate
         )

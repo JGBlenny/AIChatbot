@@ -549,7 +549,7 @@ async def get_vendor_stats(vendor_id: int):
                 COUNT(CASE WHEN scope = 'vendor' THEN 1 END) as vendor_knowledge,
                 COUNT(CASE WHEN scope = 'customized' THEN 1 END) as customized_knowledge
             FROM knowledge_base
-            WHERE vendor_id = %s
+            WHERE %s = ANY(vendor_ids)
         """, (vendor_id,))
         knowledge_stats = cursor.fetchone()
 

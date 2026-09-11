@@ -582,6 +582,17 @@ def run_old_chain(
                 t0 = time.monotonic()
                 resp = client.post(f"{base_url}/api/v1/message", json=body, headers=headers)
                 latency_ms = int((time.monotonic() - t0) * 1000)
+                # ⛔ 原本不檢查狀態碼 ⇒ 端點於 2026-09-11 刪除後，404 被 `data.get("answer") or ""`
+                #    吃成「空答案的正常回合」，三條硬性驗收線全部 PASS ⇒ **假綠報告**。
+                #    ⚠️ `--chain both` 時 agent 臂的固定句率基準還會取自這批 404 數字。
+                status = getattr(resp, "status_code", None)
+                if status is not None and status >= 400:
+                    raise RuntimeError(
+                        f"舊鏈臂打 {base_url}/api/v1/message 回 HTTP {status}。"
+                        "該端點已於 2026-09-11 隨舊 REST 對話鏈刪除（commit 7c905408）"
+                        "⇒ `--chain old`／`--chain both` 已無法產生有效基準，⛔ 不要用它的數字收案。"
+                        "只跑新線請用 `--chain agent`。"
+                    )
                 data = resp.json() if hasattr(resp, "json") else {}
                 answer = data.get("answer") or ""
                 handoff = data.get("handoff")
