@@ -8,7 +8,6 @@
 | 2. 標準手冊 | [`knowledge_loop_workflow.md`](./knowledge_loop_workflow.md) | 完整操作流程圖與逐步說明 |
 | 3. 深度執行流程 | [`knowledge_completion_loop.md`](./knowledge_completion_loop.md) | 概念、參數、8 步驟系統原理 |
 
-開發者若要找腳本位置與用途（非使用者操作），見 `docs/backtest/KNOWLEDGE_COMPLETION_LOOP_GUIDE.md`（不同受眾，不屬於上述三層）。
 
 ## 其他指南
 

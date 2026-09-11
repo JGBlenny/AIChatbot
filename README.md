@@ -144,7 +144,6 @@ AIChatbot/
 | 功能文件索引 | [docs/features/README.md](./docs/features/README.md) |
 | SOP 系統 | [docs/features/sop/README.md](./docs/features/sop/README.md) |
 | 認證系統 | [docs/features/AUTH_SYSTEM_README.md](./docs/features/AUTH_SYSTEM_README.md) |
-| 回測入門 | [docs/backtest/GETTING_STARTED.md](./docs/backtest/GETTING_STARTED.md) |
 | 變更日誌 | [CHANGELOG.md](./CHANGELOG.md) |
 
 ---

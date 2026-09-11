@@ -116,40 +116,14 @@ PAUSED → COLLECTING / CANCELLED（超時 30 分鐘）
 | 意圖分類 | `services/intent_classifier.py` | 現行（**知識後台**用，⛔ 已不在對話路徑上） |
 | 信心度評估 | `services/confidence_evaluator.py` | 現行 |
 | 緩存 | `services/cache_service.py` | 現行 |
-| ~~主入口~~ `routers/chat.py` | — | ⛔ 已刪（2026-09-11，commit 7c905408） |
-| ~~對話面向引擎~~ `services/conversational_engine.py` | — | ⛔ 已刪 |
-| ~~修繕槽位預填~~ `services/jgb/repair_prefill.py` | — | ⛔ 已刪 |
-| ~~SOP 編排~~ `services/sop_orchestrator.py` | — | ⛔ 已刪 |
-| ~~表單管理~~ `services/form_manager.py` | — | ⛔ 已刪（⚠️ 表單 **CRUD 後台仍活**，見 `routers/forms.py`） |
-| ~~答案優化~~ `services/llm_answer_optimizer.py` | — | ⛔ 已刪 |
 
-## agent 路徑分流
+## 現行入口
 
-> ⛔ **本節已失效（2026-09-11）**：分流的兩端都不存在了。
-> 原依據 `routers/chat.py:handle_conversational_entry` 隨舊鏈刪除；
-> `routers/agent_entry.py` 仍在檔案系統上但**無任何呼叫者、未掛任何路由**，是孤立死碼。
->
-> ⚠️ **原文的「回切（AGENT_AUDIENCES 清空）仍走舊鏈，行為不變」現在是假保證**——
-> 舊鏈已不存在，清空 `AGENT_AUDIENCES` 不會回到任何東西。⛔ 不要據此做回切決策。
->
-> **現況**：唯一入口是 `/mcp` 的 `agent.turn`（`services/agent/mcp_facade.py`），
-> 沒有分流、沒有回退、沒有影子。下方流程圖保留作為**歷史紀錄**，
-> ⛔ 不描述現況（`ShadowRunner`／`fallback_old_chain`／六 case 仲裁皆已隨舊鏈退役）。
+唯一入口是 `/mcp` 的 `agent.turn`（`services/agent/mcp_facade.py`）。
+⛔ **沒有分流、沒有回退、沒有影子**——三者的兩端（舊 REST 鏈、`routers/agent_entry.py`、
+`services/agent/shadow.py`）都已刪除。
 
-```mermaid
-flowchart TD
-    A[用戶問題進 handle_conversational_entry] --> B{audience_of 屬於<br/>AGENT_AUDIENCES 且<br/>app.state.agent_runtime 已建？}
-    B -- 是 --> C[AgentRuntime<br/>routers/agent_entry.py]
-    C --> D{回應非 None？}
-    D -- 是 --> E[回傳 agent 回應<br/>含 trace_id]
-    D -- 否（回退 fallback_old_chain） --> F[照舊鏈往下]
-    B -- 否 --> F[舊鏈：<br/>意圖分類／檢索／六 case 仲裁]
-    C -.影子（no-op 若無 runner）.-> G[ShadowRunner<br/>唯讀對照，不影響回應]
-```
-
-- ~~舊鏈流程僅適用 `audience ∉ AGENT_AUDIENCES`；⛔ 不刪舊鏈段落，回切仍用~~
-  ⛔ **已失效**：舊鏈於 2026-09-11 整條刪除，沒有可回切的對象。
-- 影子路徑（`schedule_shadow`）另標於圖中虛線：舊鏈產出答案後才排程，唯讀對照，
-  不影響實際回應內容。
-- 回退條件（連續 3 回合固定句 `fixed_streak >= 3`）標為 `fallback_old_chain`，
-  回 `None` 後由舊鏈接手，屬正常降級（非資料損壞）。
+⚠️ `AGENT_AUDIENCES` 曾是分流開關，2026-09-12 連同它管的入口一併移除；
+現在 `agent_configured()` 的唯一判準是 `AGENT_TURN_ENABLED`
+（查證：`services/agent/mcp_facade.py:_AGENT_CONFIGURED_ENV_KEYS`）。
+⛔ 不要以「清空某個旗標就能回切」做決策——沒有可回切的對象，只能回滾版本。
