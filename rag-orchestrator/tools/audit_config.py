@@ -47,13 +47,16 @@ def known_endpoints() -> "set[str]":
     **8 筆合法設定**判成違規（10 筆裡 8 筆誤報）。
     依 R5.1「誤報視為缺陷」——修規則，不是叫人忽略。
     ⚠️ 刻意**不 import** registry：稽核不得依賴應用程式可啟動（R2.3）。
+
+    ⛔ **2026-09-11：來源① 已退役。** `services/api_call_handler.py` 隨舊 REST 對話鏈
+    刪除（commit `7c905408`），其 `api_registry` 不復存在 ⇒ 本函式原本 `open()` 該檔，
+    自那天起 `make audit-config` **一進入點就 FileNotFoundError**。
+    ⚠️ ⛔ **不以 try/except 吞掉**——那會讓來源①靜默消失，重演初版「只讀一個來源
+    導致 10 筆裡 8 筆誤報」的問題。改為明示只剩來源②，並讓合法集合＝DB 單一來源。
+    ⚠️ 若日後重新引入程式端 registry，請把它加回這裡的聯集，⛔ 不要另開一份判準。
     """
-    src = open(os.path.join(REPO, "rag-orchestrator", "services", "api_call_handler.py"),
-               encoding="utf-8").read()
-    block = re.search(r"self\.api_registry\s*=\s*\{(.*?)\n        \}", src, re.S)
-    keys = set(re.findall(r"'([a-z_0-9]+)':", block.group(1))) if block else set()
     dynamic = q("SELECT endpoint_id FROM api_endpoints;")
-    return keys | {r.strip() for r in dynamic.splitlines() if r.strip()}
+    return {r.strip() for r in dynamic.splitlines() if r.strip()}
 
 
 def load_configs() -> "list[dict]":

@@ -49,7 +49,7 @@ PG = "aichatbot-postgres"
 #: ⚠️ 本檔 `--b2b` 初版少了 `target_user` 與 `id <> 4253` ⇒ 母體 320（正本 **293**）；
 #: 而我同一天還用過另外兩種寫法（381／772）⇒ **一天四個母體、四組數字，沒有一次對齊**。
 #: ⛔ **報數字**用的母體只能有一份：改這裡之前先改 `status.py`，再同步過來。
-#: ⛔ 但 ⛔ 不得拿本常數當可見性——那要用 `contract_enrich.visibility()`（兩路分開報）。
+#: ⛔ 但 ⛔ 不得拿本常數當可見性——那要用 `rag-orchestrator/tools/contracts/visibility.py` 的 `visibility()`（兩路分開報）。
 B2B_VISIBLE = ("is_active AND business_types && ARRAY['system_provider']::text[] "
                "AND (target_user IS NULL OR 'property_manager' = ANY(target_user)) "
                "AND COALESCE(category,'') NOT IN ('系統脈絡','對話規則') AND id <> 4253 "

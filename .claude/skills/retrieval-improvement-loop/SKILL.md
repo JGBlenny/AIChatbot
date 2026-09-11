@@ -224,7 +224,7 @@ G3 單一變因   一輪只動一類成因，**且一批只做一型**
 ```text
 答題母體   scripts/status.py 的 _B2B（**b2b 可見且有 answer**）與 ELIGIBLE（全庫適格）
            用法：逐條複製並註明出處；⛔ 不得為了報數字自己另寫一個 where
-可見性     `rag-orchestrator/scripts/backtest/contract_enrich.py` 的 `visibility()`
+可見性     `rag-orchestrator/tools/contracts/visibility.py` 的 `visibility()`
            ——判「這一筆這個角色看不看得到」**必須**用它，⛔ 不得用 _B2B 代替
 驗法       跑 `python3 scripts/status.py`，報數字時必須與「各池可見」那行對得上
 ```
@@ -241,7 +241,7 @@ retriever 實撈 354   差的 61 筆是空 answer 的**面向進場錨點**，
 ```
 
 ⚠️ 本節初版寫「⛔ 不得自己重寫一個 where」——那條**會把已修正的可見性尺改回錯版**：
-`contract_enrich.visibility()` 註解明寫它曾因只模型單一路徑而出錯、後來改成兩路聯集。
+`tools/contracts/visibility.py` 的 `visibility()` 註解明寫它曾因只模型單一路徑而出錯、後來改成兩路聯集。
 ⇒ **⛔ 禁的是「為了報數字另寫母體」，⛔ 不是禁「實作可見性模型」。**
 ⇒ **DSP-002 已裁（業主 2026-09-02）**：三個數字非爭議、各有用途；
 `_B2B`（答題母體約定）與 `visibility()`（結構上界）**本就各司其職，⛔ 不是二選一**。

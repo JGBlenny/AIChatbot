@@ -145,7 +145,7 @@ def print_kb() -> None:
 #:     ⛔ 不等於「候選池裡沒有東西」。
 #: ⚠️ 本常數也**無法表達兩條檢索路母體不同**
 #:   （向量路 **354**／詞面路 **320**）——扁平 where 在結構上做不到。
-#:   `rag-orchestrator/scripts/backtest/contract_enrich.py` 的 `visibility()`（兩路取聯集）。
+#:   `rag-orchestrator/tools/contracts/visibility.py` 的 `visibility()`（兩路取聯集）。
 #:   ⇒ 兩者何為正本已登記 **DSP-002**，⛔ 未裁前不得互相取代。
 #: ⚠️ 本常數只涵蓋 `property_manager`；retriever 的 `is_b2b_mode` 還認 `system_admin`
 #:   （該身分僅 8 筆可見）⇒ 窄化是刻意的，但此前**未宣告**。
