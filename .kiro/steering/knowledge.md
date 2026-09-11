@@ -1,6 +1,27 @@
 # Knowledge Steering
 
-> **相關文件**：對話處理流程請參考 [dialogue.md](./dialogue.md)
+> 🔴 **2026-09-11 舊 REST 對話鏈退役——本檔多處描述的是已停用機制。**
+> 本檔每個 session 都被當專案記憶自動載入（`CLAUDE.md`：Load entire `.kiro/steering/`
+> as project memory），⛔ 過時一行的傷害大於一整份文件，故在此統一聲明：
+>
+> **仍然成立**：知識表的欄位定義、`categories` 主題分類、`business_types` 業態過濾、
+> `target_user` 受眾、embedding 與檢索的資料形狀。新線（`services/agent/tools/kb.py`）
+> 讀的是同一批列。
+>
+> **⛔ 已停用（本檔仍以現行語氣描述，讀到請自行折扣）**：
+> - **表單／動作觸發整條**：`form_id`／`action_type`／`trigger_mode` 的**觸發判斷**
+>   在活路徑上已無消費者（`grep -rn "action_type" rag-orchestrator/services/agent/` ⇒ 0 命中；
+>   `services/decision_layer.py` 的 `facet_entry_eligible`／`form_trigger_eligible`／
+>   `decide_arbitration` 三個函式亦無呼叫者——活路徑只 import `DecisionConfig`）。
+>   ⚠️ **欄位還在、線上檢索器還在 SELECT 它們，所以後台仍可編輯——但編了不會有任何作用。**
+> - **`FORM_TRIGGER_THRESHOLD` 0.75 這道門檻**：無消費者。
+> - **面向（facet）進場與 `grounding_scope`**：新線無 facet 機制。
+> - **六 case 仲裁**：隨舊鏈刪除。
+>
+> ⚠️ 表單本身沒死：CRUD 後台仍活（`rag-orchestrator/routers/forms.py`，`/rag-api/v1/forms` 在線）。
+> 死的是「知識列觸發自動填單」這條對話機制。
+>
+> **相關文件**：對話處理流程請參考 [dialogue.md](./dialogue.md)（該檔已標註同一批退役）
 
 ## 1. knowledge_base 資料表架構（核心基礎）
 

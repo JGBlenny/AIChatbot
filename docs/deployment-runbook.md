@@ -94,7 +94,18 @@ semantic-model 重建說明（校正認知）：`/rerank`（檢索排序主路�
 cd semantic_model && DB_HOST=localhost DB_NAME=aichatbot_admin DB_USER=aichatbot DB_PASSWORD=<prod密碼> python3 scripts/extract_knowledge.py
 ```
 
-## 5. 煙囪驗證（20 面向各一句，走正式入口真跑）
+## 5. 煙囪驗證（⛔ **已失效，2026-09-11**）
+
+> 🔴 **本節整節不可執行。** 它走的「正式入口」是 `POST /api/v1/message`，
+> 該端點已隨舊 REST 對話鏈刪除（commit `7c905408`）；下表期望欄的「進對話面向」
+> 這個機制在新線也不存在（`services/agent/**` 查無 facet 進場）。
+> ⚠️ **上方〈現行部署路徑〉第 3 步指向本節——那一步目前沒有可執行的內容。**
+>
+> **現況**：唯一入口是 `/mcp` 的 `agent.turn`。部署後的煙囪請走
+> `scripts/smoke/mcp_smoke.py`（見該檔用法），⛔ 不要照抄下表。
+> 下表保留為舊鏈時期的驗證題庫，⚠️ 不描述現況。
+
+### ~~5-0. 原 20 面向驗證表~~（歷史紀錄）
 
 | 面向 | 驗證句 | 期望 |
 |---|---|---|
@@ -856,8 +867,19 @@ sed -i 's/^AGENT_AUDIENCES=.*/AGENT_AUDIENCES=/' .env
 sed -i 's/^AGENT_TURN_ENABLED=.*/AGENT_TURN_ENABLED=false/' .env
 docker compose -f docker-compose.prod.yml up -d   # ⛔ 不加 --build，回切不需要重建 image
 ```
-預期：≤5 分鐘內完成，走舊鏈（無資料修復——agent 路徑的表如 `agent_confirmation_tokens`／
-`agent_shadow_texts` 保留但不再寫入，不影響舊鏈）。驗證：
+> 🔴 **2026-09-11 起這段回切程序的語義已改變，事故時照做會出事。**
+>
+> 原文寫「預期：≤5 分鐘內完成，**走舊鏈**」。**舊鏈已於 2026-09-11 整條刪除**
+> （31 個產品模組，commit `7c905408`）——關掉 `AGENT_TURN_ENABLED` 之後
+> **不會退回任何東西，而是完全沒有對話服務**。
+> `AGENT_AUDIENCES` 的唯一讀點 `routers/agent_entry.py` 也已無呼叫者、未掛路由。
+>
+> ⛔ **不要把這段當退路。** 現在唯一的回退手段是**回滾版本**：
+> `git checkout <上一個已知良好的 commit>` → `docker compose -f docker-compose.prod.yml up -d --build`。
+> 下面的指令保留為歷史紀錄，⚠️ 它只會關掉工具註冊、不會帶回任何替代路徑。
+
+預期（⚠️ 已失效，見上方紅框）：≤5 分鐘內完成，走舊鏈（無資料修復——agent 路徑的表如
+`agent_confirmation_tokens`／`agent_shadow_texts` 保留但不再寫入，不影響舊鏈）。驗證：
 
 ```bash
 curl -s http://localhost:8100/mcp -X POST -H "X-API-Key: $MCP_INTERNAL_API_KEY" \
