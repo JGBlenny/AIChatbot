@@ -27,6 +27,11 @@ from services.cache_service import CacheService
 
 # 導入路由
 from routers import unclear_questions, knowledge, vendors, knowledge_import, knowledge_export, knowledge_generation, cache, videos, images, business_types, document_converter, target_user_config, forms, api_endpoints, lookup, loops, loop_knowledge, system_health, conversational_configs
+from routers import platform_sop  # ⚠️ 平台管理員的 SOP 範本後台 CRUD（15 條路由）。
+#    ⛔ **它不是對話鏈的一部分**——2026-09-11 砍舊鏈時被誤刪，同日還原。
+#    誤刪原因：分桶時把它列為「舊線進入點」，依據是檔名有 sop，⛔ 不是依據它做什麼。
+#    後台的 PlatformSOPView／PlatformSOPEditView 兩頁靠它；業者的
+#    `/vendors/{id}/sop/copy-category/{platform_category_id}` 也要平台分類存在才有得複製。
 from routers import ocr_mapping  # documind-ocr-mapping：DocuMind OCR → JGB 欄位草稿（同步端點）
 from routers import agent as agent_router  # agentic-mcp-orchestration 1.8：/api/v1/agent/openapi.json・/health
 
@@ -454,6 +459,7 @@ app.include_router(lookup.router, tags=["lookup"])  # Lookup Table System (通�
 app.include_router(loops.router, prefix="/api/v1/loops", tags=["loops"])  # Knowledge Completion Loop Management (知識完善迴圈管理)
 app.include_router(loop_knowledge.router, prefix="/api/v1/loops", tags=["loop_knowledge"])  # Loop Knowledge Review API (知識審核 API)
 app.include_router(system_health.router, tags=["system_health"])  # Pipeline Health Dashboard (系統健康檢查)
+app.include_router(platform_sop.router, tags=["platform_sop"])  # Platform SOP Template Management（2026-09-11 還原）
 app.include_router(ocr_mapping.router, tags=["ocr-mapping"])  # documind-ocr-mapping（prefix 在 router 內）
 app.include_router(agent_router.router, tags=["agent"])  # agentic-mcp-orchestration 1.8（prefix 在 router 內）
 
