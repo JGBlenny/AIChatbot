@@ -455,7 +455,6 @@ export default {
 .badge {
   padding: 6px 12px;
   border-radius: 8px;
-  font-size: 12px;
   font-weight: 600;
   display: inline-flex;
   align-items: center;
@@ -565,7 +564,6 @@ export default {
 
 .btn-primary {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
 }
 
 .btn-primary:hover {
@@ -575,7 +573,6 @@ export default {
 
 .btn-secondary {
   background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
-  color: white;
 }
 
 .btn-secondary:hover {
@@ -593,7 +590,6 @@ export default {
 
 .btn-danger {
   background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-  color: white;
 }
 
 .btn-danger:hover {
@@ -602,7 +598,6 @@ export default {
 
 .btn-success {
   background: linear-gradient(135deg, #28a745 0%, #218838 100%);
-  color: white;
 }
 
 .btn-success:hover {

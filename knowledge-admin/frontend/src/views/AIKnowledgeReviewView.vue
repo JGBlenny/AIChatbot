@@ -341,12 +341,6 @@ export default {
   width: 100%;
 }
 
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30px;
-}
 
 .page-header h2 {
   margin: 0;
@@ -363,16 +357,11 @@ export default {
 }
 
 .stat-card {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  text-align: center;
 }
 
 .stat-value {
   font-size: 32px;
-  font-weight: bold;
   color: #667eea;
   margin-bottom: 8px;
 }
@@ -557,10 +546,6 @@ export default {
 
 /* 徽章 */
 .badge {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 12px;
   font-weight: 600;
 }
 

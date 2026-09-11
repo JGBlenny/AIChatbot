@@ -888,14 +888,10 @@ export default {
 }
 
 .section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   margin-bottom: 15px;
 }
 
 .hint {
-  color: #999;
   font-size: 0.9em;
 }
 

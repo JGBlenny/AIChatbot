@@ -731,7 +731,6 @@ h1 {
 
 /* 按鈕 */
 .actions {
-  display: flex;
   gap: 10px;
   margin-top: 20px;
 }
@@ -749,7 +748,6 @@ h1 {
 
 .btn-primary {
   background: #4CAF50;
-  color: white;
 }
 
 .btn-primary:hover {
@@ -811,13 +809,11 @@ h1 {
 /* 提示文字 */
 .hint {
   font-size: 12px;
-  color: #999;
   margin-top: 5px;
 }
 
 /* 空狀態 */
 .empty-state {
-  text-align: center;
   padding: 40px;
   color: #999;
 }

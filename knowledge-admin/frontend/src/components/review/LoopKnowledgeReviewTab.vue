@@ -856,13 +856,11 @@ export default {
 
 .stat-value {
   font-size: 32px;
-  font-weight: bold;
   color: #333;
 }
 
 .stat-label {
   font-size: 14px;
-  color: #666;
   margin-top: 5px;
 }
 
@@ -1305,16 +1303,7 @@ export default {
 
 /* 對話框共用樣式 */
 .modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
   background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
 }
 
 .modal-dialog {
@@ -1330,9 +1319,6 @@ export default {
 }
 
 .modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   padding: 20px 24px;
   border-bottom: 1px solid #e0e0e0;
   background: #f5f5f5;
@@ -1369,9 +1355,6 @@ export default {
 }
 
 .modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
   padding: 16px 24px;
   border-top: 1px solid #e0e0e0;
   background: #f5f5f5;
@@ -1400,7 +1383,6 @@ export default {
 }
 
 .stat-value {
-  font-weight: bold;
   color: #333;
 }
 
@@ -1606,7 +1588,6 @@ export default {
   color: #d32f2f;
   font-size: 13px;
   display: block;
-  margin-top: 4px;
 }
 
 .btn-primary {

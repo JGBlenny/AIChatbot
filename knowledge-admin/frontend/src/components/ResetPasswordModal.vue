@@ -220,33 +220,13 @@ export default {
 </script>
 
 <style scoped>
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
 
 .modal-content {
-  background: white;
-  border-radius: 8px;
-  width: 90%;
   max-width: 500px;
-  max-height: 90vh;
-  overflow-y: auto;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 }
 
 .modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   padding: 20px;
   border-bottom: 1px solid #eee;
 }
@@ -305,9 +285,6 @@ export default {
   color: #666;
 }
 
-.form-group {
-  margin-bottom: 16px;
-}
 
 .form-group label {
   display: block;
@@ -401,12 +378,9 @@ export default {
 .error-message {
   color: #d32f2f;
   font-size: 12px;
-  margin-top: 4px;
 }
 
 .modal-footer {
-  display: flex;
-  justify-content: flex-end;
   gap: 12px;
   margin-top: 24px;
   padding-top: 20px;
@@ -429,7 +403,6 @@ export default {
 
 .btn-secondary {
   background: #757575;
-  color: white;
 }
 
 .btn-secondary:hover:not(:disabled) {
@@ -438,7 +411,6 @@ export default {
 
 .btn-danger {
   background: #d32f2f;
-  color: white;
 }
 
 .btn-danger:hover:not(:disabled) {

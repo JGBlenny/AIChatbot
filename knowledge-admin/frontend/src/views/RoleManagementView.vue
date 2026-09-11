@@ -355,8 +355,6 @@ onMounted(() => {
 .loading-container,
 .error-container,
 .empty-state {
-  text-align: center;
-  padding: 60px 20px;
   color: #718096;
 }
 
@@ -435,13 +433,6 @@ onMounted(() => {
   color: #718096;
 }
 
-.badge {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 500;
-}
 
 .badge-system {
   background: #bee3f8;

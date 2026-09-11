@@ -945,10 +945,7 @@ export default {
 }
 
 .info-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 10px;
-  margin-bottom: 15px;
 }
 
 .vendor-code-link {

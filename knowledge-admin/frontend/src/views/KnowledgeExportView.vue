@@ -562,11 +562,6 @@ export default {
   border-color: #4CAF50;
 }
 
-.form-hint {
-  margin-top: 6px;
-  font-size: 12px;
-  color: #999;
-}
 
 .info-box {
   background: #e3f2fd;
@@ -756,20 +751,12 @@ tbody tr:hover {
   white-space: nowrap;
 }
 
-.status-pending {
-  background: #fff3cd;
-  color: #856404;
-}
 
 .status-processing {
   background: #cfe2ff;
   color: #084298;
 }
 
-.status-completed {
-  background: #d1e7dd;
-  color: #0f5132;
-}
 
 .status-failed {
   background: #f8d7da;
@@ -873,7 +860,6 @@ tbody tr:hover {
 }
 
 .hint {
-  font-size: 14px;
   color: #bbb;
 }
 
@@ -924,15 +910,10 @@ tbody tr:hover {
 
 .stat-value {
   font-size: 24px;
-  font-weight: bold;
   color: #333;
   margin-bottom: 4px;
 }
 
-.stat-label {
-  font-size: 13px;
-  color: #666;
-}
 
 /* ==================== 按鈕通用樣式 ==================== */
 .btn-primary {

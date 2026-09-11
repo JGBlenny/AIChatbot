@@ -163,7 +163,10 @@ export default {
 
 <style scoped>
 .api-key-view { padding: 20px; }
-.page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+.page-header {
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
 .subtitle { color: #8a94a6; font-size: 13px; margin: 4px 0 0; }
 .key-table { width: 100%; border-collapse: collapse; }
 .key-table th, .key-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #eee; }
@@ -183,7 +186,6 @@ code { background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-size: 13p
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 1000; }
 .modal { background: #fff; padding: 24px; border-radius: 8px; width: 520px; max-width: 92vw; }
 .modal h3 { margin-top: 0; }
-.form-group { margin-bottom: 16px; }
 .form-group label { display: block; margin-bottom: 4px; font-weight: 500; font-size: 14px; }
 .form-group input { width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }

@@ -523,8 +523,6 @@ export default {
 
 .stats-cards {
   display: flex;
-  gap: 15px;
-  margin-bottom: 20px;
 }
 
 .stat-card {

@@ -1626,8 +1626,6 @@ export default {
 }
 
 .subtitle {
-  color: #666;
-  font-size: 14px;
   margin: 0;
 }
 
@@ -1642,7 +1640,6 @@ export default {
 
 .btn-primary {
   background: #4CAF50;
-  color: white;
 }
 
 .btn-primary:hover {
@@ -1651,7 +1648,6 @@ export default {
 
 .btn-secondary {
   background: #6c757d;
-  color: white;
 }
 
 .btn-secondary:hover {
@@ -1669,7 +1665,6 @@ export default {
 
 .btn-danger {
   background: #dc3545;
-  color: white;
 }
 
 .btn-danger:hover {
@@ -1701,8 +1696,6 @@ export default {
 }
 
 .loading {
-  text-align: center;
-  padding: 40px;
   color: #666;
 }
 
@@ -1981,27 +1974,9 @@ export default {
 }
 
 /* Modal styles */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
 
 .modal-content {
-  background: white;
-  border-radius: 8px;
   padding: 24px;
-  max-width: 600px;
-  width: 90%;
-  max-height: 90vh;
-  overflow-y: auto;
 }
 
 .modal-large {
@@ -2032,9 +2007,6 @@ export default {
   margin-bottom: 16px;
 }
 
-.form-group {
-  margin-bottom: 16px;
-}
 
 .form-group label {
   display: block;
@@ -2059,26 +2031,14 @@ export default {
 }
 
 .form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
   gap: 16px;
 }
 
 .form-hint {
   display: block;
   margin-top: 4px;
-  color: #999;
-  font-size: 12px;
 }
 
-.modal-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-  margin-top: 24px;
-  padding-top: 20px;
-  border-top: 1px solid #eee;
-}
 
 /* Usage Modal */
 .usage-list {

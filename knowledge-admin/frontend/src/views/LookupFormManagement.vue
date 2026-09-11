@@ -628,12 +628,10 @@ export default {
 
 .subtitle {
   color: #909399;
-  font-size: 14px;
   margin-top: 8px;
 }
 
 .stats-cards {
-  display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 20px;
   margin-bottom: 30px;
@@ -654,7 +652,6 @@ export default {
 
 .stat-value {
   font-size: 32px;
-  font-weight: bold;
   color: #303133;
 }
 
@@ -746,11 +743,7 @@ export default {
 }
 
 .badge {
-  display: inline-block;
-  padding: 4px 10px;
   border-radius: 4px;
-  font-size: 12px;
-  font-weight: 500;
 }
 
 .badge-category {
@@ -925,8 +918,6 @@ export default {
 
 .loading,
 .empty-state {
-  text-align: center;
-  padding: 60px 20px;
   color: #909399;
 }
 
@@ -993,7 +984,6 @@ export default {
 
 .btn-danger {
   background: #f56c6c;
-  color: white;
 }
 
 .btn-danger:hover {
@@ -1025,9 +1015,6 @@ export default {
 .modal-header {
   padding: 20px 30px;
   border-bottom: 1px solid #ebeef5;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
 }
 
 .modal-header h3 {
@@ -1061,9 +1048,6 @@ export default {
 .modal-footer {
   padding: 15px 30px;
   border-top: 1px solid #ebeef5;
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
 }
 
 .success {
@@ -1086,12 +1070,6 @@ export default {
 }
 
 /* 新增: 統計 Modal 樣式 */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
-  margin-bottom: 20px;
-}
 
 .stat-item {
   background: #f9fafb;

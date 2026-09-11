@@ -360,9 +360,6 @@ export default {
 
 <style scoped>
 .page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   margin-bottom: 20px;
 }
 
@@ -456,9 +453,6 @@ export default {
 }
 
 .section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   margin-bottom: 25px;
   padding-bottom: 15px;
   border-bottom: 2px solid #f3f4f6;

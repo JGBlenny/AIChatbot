@@ -1184,8 +1184,6 @@ export default {
 }
 
 .hint {
-  color: #999;
-  font-size: 14px;
   margin-top: 10px;
 }
 
@@ -1263,20 +1261,12 @@ export default {
   font-weight: bold;
 }
 
-.status-pending {
-  background: #fff3cd;
-  color: #856404;
-}
 
 .status-processing {
   background: #cfe2ff;
   color: #084298;
 }
 
-.status-completed {
-  background: #d1e7dd;
-  color: #0f5132;
-}
 
 .status-failed {
   background: #f8d7da;
@@ -1817,7 +1807,6 @@ export default {
   padding: 2px 8px;
   border-radius: 10px;
   font-size: 11px;
-  font-weight: 600;
   vertical-align: middle;
 }
 
@@ -2003,7 +1992,6 @@ export default {
 
 .btn-success {
   background: #28a745;
-  color: white;
 }
 
 .btn-success:hover:not(:disabled) {

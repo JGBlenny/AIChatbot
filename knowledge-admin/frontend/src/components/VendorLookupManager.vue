@@ -794,10 +794,6 @@ export default {
 }
 
 .section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
   padding-bottom: 15px;
   border-bottom: 2px solid #f3f4f6;
 }
@@ -849,18 +845,12 @@ export default {
 
 /* 統計卡片 */
 .stats-cards {
-  display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 15px;
-  margin-bottom: 20px;
 }
 
 .stat-card {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  padding: 20px;
-  border-radius: 8px;
-  text-align: center;
 }
 
 .stat-label {
@@ -871,7 +861,6 @@ export default {
 
 .stat-value {
   font-size: 28px;
-  font-weight: bold;
 }
 
 /* 表格 */
@@ -937,11 +926,8 @@ export default {
 }
 
 .status-badge {
-  display: inline-block;
   padding: 4px 10px;
-  border-radius: 12px;
   font-size: 11px;
-  font-weight: 600;
 }
 
 .status-badge.status-active {
@@ -967,7 +953,6 @@ export default {
 
 .btn-edit {
   background: #3b82f6;
-  color: white;
 }
 
 .btn-edit:hover {
@@ -1009,8 +994,6 @@ export default {
 
 /* 空狀態 */
 .empty-state {
-  text-align: center;
-  padding: 60px 20px;
   color: #9ca3af;
 }
 
@@ -1024,8 +1007,6 @@ export default {
 
 /* 載入狀態 */
 .loading {
-  text-align: center;
-  padding: 40px;
   color: #9ca3af;
 }
 
@@ -1180,7 +1161,6 @@ export default {
 
 .btn-success {
   background: #10b981;
-  color: white;
 }
 
 .btn-success:hover {

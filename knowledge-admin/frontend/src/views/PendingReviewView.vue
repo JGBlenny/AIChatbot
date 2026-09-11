@@ -332,9 +332,6 @@ export default {
 }
 
 .page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   margin-bottom: 20px;
 }
 
@@ -396,8 +393,6 @@ export default {
   background: #e7f3ff;
   color: #0066cc;
   border-radius: 12px;
-  font-size: 12px;
-  font-weight: 600;
 }
 
 .card-body {
@@ -418,18 +413,7 @@ export default {
   line-height: 1.6;
 }
 
-.info-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 15px;
-  margin-bottom: 15px;
-}
 
-.info-item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
 
 .info-item label {
   font-size: 12px;
@@ -453,10 +437,6 @@ export default {
 }
 
 .badge {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 12px;
   font-weight: 600;
 }
 
@@ -531,27 +511,13 @@ export default {
 
 /* 對話框 */
 .modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
   background: rgba(0,0,0,0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
 }
 
 .modal-content {
-  background: white;
   padding: 30px;
   border-radius: 12px;
   box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-  max-width: 600px;
-  width: 90%;
-  max-height: 90vh;
-  overflow-y: auto;
 }
 
 .modal-content h3 {
@@ -572,11 +538,6 @@ export default {
   color: #333;
 }
 
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 15px;
-}
 
 .form-group label {
   display: block;
@@ -615,10 +576,4 @@ export default {
   cursor: pointer;
 }
 
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 30px;
-}
 </style>

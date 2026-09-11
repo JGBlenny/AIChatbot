@@ -320,7 +320,9 @@ export default {
 .modal-spacer { flex: 1; }
 .btn-danger { padding: 8px 16px; border: 1px solid #e74c3c; background: #fff; color: #e74c3c; border-radius: 4px; cursor: pointer; }
 .btn-danger:hover { background: #e74c3c; color: #fff; }
-.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.page-header {
+  margin-bottom: 20px;
+}
 table { width: 100%; border-collapse: collapse; }
 th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #eee; }
 th { background: #f8f9fa; font-weight: 600; }
@@ -335,10 +337,11 @@ code { background: #f0f0f0; padding: 2px 6px; border-radius: 3px; font-size: 13p
 .btn-sm:hover { background: #f0f0f0; }
 .btn-toggle { color: #666; }
 .empty { text-align: center; color: #999; padding: 40px; }
-.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+.modal-overlay {
+  background: rgba(0,0,0,0.4);
+}
 .modal { background: white; padding: 24px; border-radius: 8px; width: 450px; }
 .modal h3 { margin-top: 0; }
-.form-group { margin-bottom: 16px; }
 .form-group label { display: block; margin-bottom: 4px; font-weight: 500; font-size: 14px; }
 .form-group input { width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; box-sizing: border-box; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }

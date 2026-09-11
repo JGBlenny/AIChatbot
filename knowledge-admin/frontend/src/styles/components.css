@@ -1,96 +1,220 @@
 /* ============================================================================
- * 共用元件樣式（2026-09-11 建立）
+ * 共用元件樣式（2026-09-11 由 tools 產生，⛔ 不要手改）
  *
- * ⛔ **每一條的值都取自現況「最多檔案採用」的那個變體**，⛔ 不是重新設計。
- * 實測重複情形（50 檔掃描）：
- *   .btn-primary   19 檔 / 15 種定義      .stat-value   16 檔 / 14 種
- *   .badge         19 檔 / 13 種          .stat-card    15 檔 / 12 種
- *   .btn-secondary 17 檔 / 13 種          .modal-content 15 檔 / 12 種
- *   .form-group    16 檔 /  6 種          .modal-overlay  9 檔 /  6 種
+ * ⛔ **每一條都是資料算出來的**：某屬性在該類別的所有出現中，
+ * ≥50%（且至少 3 份）的檔案設了同一個值 ⇒ 收進這裡。
+ * ⛔ 不是重新設計、不是我挑的，是各檔的**多數交集**。
  *
- * ⚠️ **加入本檔不會改變任何頁面外觀**——單檔 `<style scoped>` 編譯後帶
- * `[data-v-xxx]` 屬性選擇器，specificity 高於這裡的裸類別選擇器。
- * 要讓共用定義生效，必須**逐檔刪掉該檔的重複區塊**；那一步會改變外觀
- * （因為該檔原本用的是 15 種變體之一），所以分批做、每批 build 對照。
- * 進度見 styles/README.md。
+ * ⚠️ 各檔只保留與這裡**不同**的宣告（delta），因此外觀逐檔維持原狀。
+ * 驗收：每個 (檔, 類別) 的「本檔 ∪ delta」逐宣告等於收斂前，工具會硬檢查。
  * ========================================================================== */
 
-/* ── 按鈕 ──────────────────────────────────────────────── */
-.btn-primary {
-  background: var(--c-success);
-  color: #fff;
-  border: none;
-  padding: var(--s-2) var(--s-5);
-  border-radius: var(--r-md);
-  cursor: pointer;
-  font-size: var(--f-base);
+.actions {
+  display: flex;
 }
-.btn-primary:hover { filter: brightness(.95); }
-.btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+
+.badge {
+  font-size: 12px;
+  padding: 4px 10px;
+  display: inline-block;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.btn-danger {
+  color: white;
+}
+
+.btn-edit {
+  color: white;
+}
+
+.btn-primary {
+  color: white;
+}
 
 .btn-secondary {
-  background: #e9ecef;
-  color: #495057;
-  border: none;
-  padding: var(--s-2) var(--s-5);
-  border-radius: var(--r-md);
-  cursor: pointer;
-  font-size: var(--f-base);
-}
-.btn-secondary:hover { filter: brightness(.95); }
-.btn-secondary:disabled { opacity: .5; cursor: not-allowed; }
-
-/* ── 標籤 ──────────────────────────────────────────────── */
-.badge {
-  display: inline-block;
-  padding: var(--s-1) var(--s-3);
-  border-radius: var(--r-pill);
-  font-size: var(--f-sm);
-}
-.badge-easy   { background: var(--c-ok-bg);   color: var(--c-ok-fg); }
-.badge-medium { background: var(--c-warn-bg); color: var(--c-warn-fg); }
-.badge-hard   { background: var(--c-err-bg);  color: var(--c-err-fg); }
-
-/* ── 表單 ──────────────────────────────────────────────── */
-.form-group { margin-bottom: var(--s-6); }
-.form-group > label { display: block; margin-bottom: var(--s-2); font-weight: 600; }
-
-/* ── 彈窗 ──────────────────────────────────────────────── */
-.modal-overlay {
-  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0, 0, 0, .5);
-  display: flex; align-items: center; justify-content: center;
-  z-index: 1000;
-}
-.modal-content {
-  background: var(--c-surface);
-  border-radius: var(--r-lg);
-  width: 90%;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: var(--shadow-2);
+  color: white;
 }
 
-/* ── 統計卡 ────────────────────────────────────────────── */
-.stat-card {
-  flex: 1;
-  background: var(--c-surface);
-  border: 1px solid var(--c-border-strong);
-  border-radius: var(--r-lg);
-  padding: var(--s-6);
+.btn-success {
+  color: white;
 }
-.stat-value { font-size: var(--f-xl); font-weight: bold; color: #303133; }
-.stat-label { color: var(--c-text-secondary); font-size: var(--f-base); }
 
-/* ── 空狀態 ────────────────────────────────────────────── */
 .empty-state {
   text-align: center;
-  padding: var(--s-8) var(--s-6);
-  color: #a0aec0;
+  padding: 60px 20px;
 }
 
-/* ── 版面 ──────────────────────────────────────────────── */
-.header-actions { display: flex; gap: var(--s-3); }
+.error-message {
+  margin-top: 4px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 30px;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-hint {
+  font-size: 12px;
+  color: #999;
+  margin-top: 6px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.hint {
+  font-size: 14px;
+  color: #999;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  margin-bottom: 15px;
+  gap: 15px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.loading {
+  padding: 40px;
+  text-align: center;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid #eee;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 20px;
+}
+
+.modal-content {
+  background: white;
+  max-height: 90vh;
+  overflow-y: auto;
+  width: 90%;
+  border-radius: 8px;
+  max-width: 600px;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.modal-header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.modal-overlay {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 1000;
+  bottom: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 30px;
+}
+
+.section-header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.source-badge {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.stat-card {
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  background: white;
+}
+
+.stat-label {
+  color: #666;
+  font-size: 13px;
+}
+
+.stat-value {
+  font-weight: bold;
+}
+
+.stats-cards {
+  display: grid;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.stats-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(2, 1fr);
+  margin-bottom: 20px;
+}
+
+.status-badge {
+  font-size: 12px;
+  border-radius: 12px;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.status-completed {
+  background: #d1e7dd;
+  color: #0f5132;
+}
+
+.status-pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.subtitle {
+  color: #666;
+  font-size: 14px;
+}
+
+.toolbar {
+  display: flex;
+  margin-bottom: 20px;
+  align-items: center;
+  gap: 10px;
+}
 
 /* ── 退役標示（舊鏈退役後統一用這兩個，⛔ 別再各自寫一份）──── */
 .retired-banner {

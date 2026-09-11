@@ -1253,7 +1253,6 @@ export default {
 
 .btn-primary {
   background-color: #4CAF50;
-  color: white;
 }
 
 .btn-primary:hover:not(:disabled) {
@@ -1271,7 +1270,6 @@ export default {
 
 .btn-secondary {
   background-color: #757575;
-  color: white;
 }
 
 .loading-state, .error-state, .empty-state {
@@ -1344,10 +1342,7 @@ export default {
 }
 
 .status-badge {
-  display: inline-block;
   padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 12px;
   font-weight: 500;
 }
 
@@ -1381,7 +1376,6 @@ export default {
 .pass-rate.poor { color: #F44336; }
 
 .actions {
-  display: flex;
   gap: 4px;
 }
 
@@ -1588,9 +1582,6 @@ export default {
 }
 
 .modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
   padding-top: 16px;
   border-top: 1px solid #e0e0e0;
 }
@@ -1747,9 +1738,6 @@ export default {
 }
 
 .form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
   margin-top: 8px;
 }
 
@@ -1767,19 +1755,10 @@ export default {
 }
 
 .modal-content {
-  background: white;
-  border-radius: 8px;
-  max-width: 600px;
-  width: 90%;
-  max-height: 90vh;
-  overflow-y: auto;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 .modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   padding: 20px;
   border-bottom: 1px solid #e0e0e0;
 }
