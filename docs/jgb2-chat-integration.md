@@ -12,7 +12,7 @@
 > DSP-046。查證（原始碼靜態掃描，非線上 curl——本輪未觸碰正式機）：
 > `grep -rn '@router\.\(post\|get\|put\|delete\)(' rag-orchestrator/routers/*.py | grep -i message`
 > 命中 0 條；正對照 `grep -rn '@router\.\(post\|get\|put\|delete\)(' rag-orchestrator/routers/*.py | wc -l`
-> 為 137 條（工具本身有效，不是全部路由都消失）；`routers/chat.py` 本體
+> 為 **135** 條（2026-09-12 複驗；工具本身有效，不是全部路由都消失）；`routers/chat.py` 本體
 > `ls rag-orchestrator/routers/chat.py` 直接回「No such file or directory」。
 >
 > **repo 現在唯一活的對話入口是 `/mcp`**（MCP 協定，`services/agent/mcp_facade.py`

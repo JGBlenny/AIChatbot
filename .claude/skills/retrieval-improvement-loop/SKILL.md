@@ -109,7 +109,7 @@ G3 單一變因閘門                       ⛔ 一輪只動一類成因；跨�
 ### ① 完整對話流程——**這一份最重要**
 | 讀什麼 | 為什麼 |
 |---|---|
-| [`docs/architecture/AGENTIC_MCP_ARCHITECTURE.md`](../../../docs/architecture/AGENTIC_MCP_ARCHITECTURE.md) §2b 完整流程（四段、13 個終止點） | 使用者的一句話會經過哪幾段、每段可能在哪裡結束 |
+| [`docs/architecture/AGENTIC_MCP_ARCHITECTURE.md`](../../../docs/architecture/AGENTIC_MCP_ARCHITECTURE.md) §2b 完整流程（一回合四段，每段的分岔與結束點） | 使用者的一句話會經過哪幾段、每段可能在哪裡結束 |
 | [`docs/architecture/COMPLETE_CONVERSATION_ARCHITECTURE.md`](../../../docs/architecture/COMPLETE_CONVERSATION_ARCHITECTURE.md) §0 三層責任分層、§3 檢索的過濾機制與加成 | 檢索這一段的責任邊界與三軸過濾公式（b2b `&&` 無 `IS NULL` 放行是刻意的隔離） |
 | [`docs/architecture/SYSTEM_ARCHITECTURE.md`](../../../docs/architecture/SYSTEM_ARCHITECTURE.md) §1／§3 | 核心是 `AgentRuntime`、`/mcp` 只是門面之一；15 個 face 與六域隔離不對稱 |
 

@@ -239,7 +239,17 @@ Utils (工具層)
 
 ## 2026-07 現況增補（本節為最新，與上文衝突時以本節與 docs/architecture-overview.md 為準）
 
-- **對話面向體系**：資料驅動（`category='對話規則'` 一筆設定＝一個面向，新增零改程式），分**診斷（唯讀）＋交易（寫入）兩型**。診斷面向 21＋售前個，五域（合約/帳務/帳號/物件/IoT）機械判定用 `services/jgb/*` FACE_BUILDERS、LLM 只照 facts 組話。**交易面向**（2026-07-12 conversational-repair 收案，commit 646743a）：引擎長出交易語義（confirm gate／execute／冪等），修繕為第一個交易面向；判定＝面向配置 `grounding_scope.execute_endpoint` 存在，全配置驅動，下一個交易面向＝加配置與 seeds、引擎零改動（目標）。**b2c 租客報修改走對話面向**：vendor 2/4 修繕子集 SOP 已停用（M2，可逆），SOP 仍為 b2c 其餘場景專用。
+- **對話面向體系（🔴 2026-09-12 逐項對碼更正）**：**15 個 face、六域**
+  （帳單 5／合約 4／帳號 2／電表 1／物件 1／修繕 2），在註冊時由
+  `_jgb2_spec(domain, sorted(builders.keys()))` **現算**——⛔ 不是「資料驅動、一筆設定＝一個面向」，
+  ⛔ 也不是 21＋、⛔ 不是五域。加一個 face 要改 `services/jgb/<域>.py` 的 `*_FACE_BUILDERS`（寫程式）。
+  機械判定用 `*_FACE_BUILDERS` 決定性算 facts、LLM 只照 facts 組話（這條仍成立）。
+  - **寫入類**改走 `services/agent/tools/action.py` 的兩支（`bill_due_extend`／`repair_create`）
+    ＋ `services/agent/confirm_card.py::render` 產確認卡；⛔ 不再有 `grounding_scope.execute_endpoint`
+    這種配置驅動（`conversational_engine.py` 已於 2026-09-11 刪除）。
+  - **可見性**改為 `AGENT_WRITE_TOOLS_ENABLED` AND `ToolSpec.stage`（DSP-038-1）。
+  - **SOP 對話路徑零讀取**：後台 CRUD 仍活，但改 SOP 不影響機器人回答。
+  - 擴充判準見 `docs/guides/development/how-to-add-a-query-capability.md`。
 - **資料體系分工（定案）**：`vendor_configs`＝通用單值參數（{{param}} 模板）；`lookup_tables`＝案場級（Excel 匯入＋錨點）；SOP＝b2c 專用（b2b 不走）；jgb API＝個資（role_id+user_id 雙證）。
 - **計量與額度**：usage_events 每請求計量（token/成本/內部流量標記）；vendor_quotas 月額度（達限攔截/警示寄信）。
 - **品質三層**：unit（make test-unit）／系統回測（迴圈＋多輪模擬＋v3 評審＋金標，按受眾分庫）／不變量稽核（make audit，修一類 bug＝加一條）。驗收鐵則：改引擎行為以系統路徑實跑收案。

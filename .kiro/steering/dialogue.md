@@ -27,7 +27,11 @@ AgentRuntime.run_turn —— 核心，建構依賴裡⛔ 沒有任何協定或�
 段四 exit_gates.finalize                 （四道閘依序，⛔ 順序即契約）
 ```
 
-**全回合共 13 個終止點。** 逐步流程與每個分岔見
+**回合可以在哪裡結束**（每個數字都指得回程式，⛔ 不要引用沒有來源的總數）：
+段一 **六條**程式終止路徑（`turn_segments.py` docstring 自述「六個程式終止路徑」）、
+段四 **四道**出口閘（`exit_gates.py::EXIT_GATES`）、
+門面階段 0 的驗證失敗（401／403／400／`INVALID_INPUT`／`RATE_LIMITED`／`TOOL_TIMEOUT`）。
+逐步流程與每個分岔見
 [`docs/architecture/AGENTIC_MCP_ARCHITECTURE.md`](../../docs/architecture/AGENTIC_MCP_ARCHITECTURE.md) §2b。
 
 🔴 **⛔ 以下機制全部不存在**（2026-09-11 隨舊 REST 對話鏈刪除，DSP-046）：

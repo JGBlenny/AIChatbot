@@ -11,7 +11,7 @@
 | 想知道 | 讀哪份 |
 |---|---|
 | **系統現在怎麼跑**（核心／門面／15 個 face／知識兩條路／六域隔離不對稱） | [`architecture/SYSTEM_ARCHITECTURE.md`](./architecture/SYSTEM_ARCHITECTURE.md) — v4.0，2026-09-12 |
-| **一回合的完整流程**、**為什麼被轉人**、每個分岔與終止點 | [`architecture/AGENTIC_MCP_ARCHITECTURE.md`](./architecture/AGENTIC_MCP_ARCHITECTURE.md) — §2b 是四段 13 個終止點，§4b 是轉人的五個來源 |
+| **一回合的完整流程**、**為什麼被轉人**、每個分岔與終止點 | [`architecture/AGENTIC_MCP_ARCHITECTURE.md`](./architecture/AGENTIC_MCP_ARCHITECTURE.md) — §2b 是一回合四段的逐步流程，§4b 是轉人的五個來源 |
 | **`/mcp` 串接契約**（header、工具、錯誤碼、額度） | [`api/mcp-facade.md`](./api/mcp-facade.md) |
 | **怎麼加一個查詢能力／新 face／新域** | [`guides/development/how-to-add-a-query-capability.md`](./guides/development/how-to-add-a-query-capability.md) |
 

@@ -2,9 +2,11 @@
 
 > **對碼 `KNOWLEDGE_ADMIN_API.md`（6 支精簡版）差集結果**（`rag-orchestrator/routers/*.py`，2026-09-10）：
 > `GET /api/vendors` 對應 `routers/vendors.py`（router `"" GET`，實際掛載路徑為 `/api/v1/vendors`）——**已併入本檔**（見「業者 API」相關節）；
-> `POST /api/login`、`PUT /api/knowledge/{id}`、`DELETE /api/knowledge/{id}` 全 repo 查無對應路由（`grep -rn "@router\." routers/*.py` 及 `app.py`
-> 無 login 端點；`routers/knowledge.py` 僅有 `/classify`、`/classify/batch`、`/mark-reclassify`、`/stats`、`/reload`、`/health`，無泛用
-> `PUT|DELETE /{id}`）——**端點已不存在**，`KNOWLEDGE_ADMIN_API.md` 該三節為過時描述。
+> `POST /api/login`、`PUT /api/knowledge/{id}`、`DELETE /api/knowledge/{id}` 全 repo 查無對應路由（`grep -rn "@router\." rag-orchestrator/routers/*.py` 及 `app.py`
+> 無 login 端點）——**端點已不存在**。
+> 🔴 **2026-09-12 補正**：原文說「`routers/knowledge.py` 僅有 `/classify`…」——
+> **該檔本身已於 2026-09-11 刪除**（正對照：同目錄 `vendors.py` 仍在），
+> `POST /api/v1/knowledge/classify` 實測 404，連這幾支也不存在了，`KNOWLEDGE_ADMIN_API.md` 該三節為過時描述。
 
 **Base URL:** `http://localhost:8000`
 **版本:** v1.0

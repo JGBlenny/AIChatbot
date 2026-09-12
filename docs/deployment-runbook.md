@@ -1,6 +1,6 @@
 # 統一部署 Runbook
 
-> 涵蓋：對話式診斷＋五域對話面向（contract/billing/account/iot/estate）＋帳單診斷＋回測新架構＋
+> 涵蓋：六域 15 個 face（bills／contracts／accounts／meters／estates／repairs）＋回測新架構＋
 > 知識盤查修正＋使用量計量＋額度管制＋參數分工——**一批上**。依序執行 §0–§10，§11 為部署後掛帳。
 
 ---
@@ -194,7 +194,7 @@ docker exec -i aichatbot-postgres psql -U aichatbot -d aichatbot_admin -v ON_ERR
 對話式報修：引擎新增 confirm/execute 語義分支＋接線（image 辨識併槽／插點 A 預填／埋點）＋
 面向配置與意圖錨點知識資料＋3 支 migration（M2 停租客修繕 SOP、M3 埋點兩欄）。
 唯一新 chat API 選填參數 `trigger_facet_key`（命中 config registry 即直達面向）。
-零回歸原則：既有 FAQ 快路徑／五域診斷面向／prospect／非修繕表單邏輯一行未動。
+零回歸原則（該批次當時）：既有 FAQ 快路徑／對話面向／prospect 邏輯一行未動。⚠️ 現行是六域 15 face。
 
 **部署順序：M3 → 面向配置＋知識 seeds → 推程式（image rebuild）→ 煙囪 → M2（破壞性，操作者手動）→ 四業者驗收矩陣**
 
@@ -704,7 +704,7 @@ docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c \
 `RATE_PER_MIN`／`KB_GET_CAP`／`IMAGE_COUNT_CAP_PER_HOUR`／`FILE_COUNT_CAP_PER_HOUR`**
 （這幾個 env 已除役，設了也不會被讀取）。想改上限＝改 `limits.py` 走程式審查。
 生效值印在 `/api/v1/agent/health` 的 `checks.limits`。查證：
-`grep -n "LIMITS" services/agent/limits.py`。
+`grep -n "LIMITS" rag-orchestrator/services/agent/limits.py`。
 
 ℹ️ `AGENT_BUDGET_TOOL_CALLS`／`AGENT_BUDGET_REWRITES`／`AGENT_BUDGET_DEADLINE_S`（預設 4／2／20.0）由 `services/agent/bootstrap.py:budget_from_env` 讀取（2026-09-05 補上），壞值／≤0 退回預設；一般不需宣告。
 

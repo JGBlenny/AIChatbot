@@ -220,7 +220,10 @@ M0 階段：
 ③**`agent.turn` 把 `property_manager` 標成「—」，與程式相反**
 （`AGENT_TURN_SPEC["stage"] = {'prospect': 'M1', 'property_manager': 'M1'}`，DSP-037）。
 
-**全部 16 支**（`stage` 鍵即可見受眾；查證：容器內逐支讀 `ToolSpec`）：
+**全部 16 支**（`stage` 鍵即可見受眾）。
+查證：`grep -n "reg.register" rag-orchestrator/services/agent/mcp_facade.py`
+（7 支顯式 ＋ 六域 `jgb2.query.*` 迴圈 ＋ `ACTION_SPECS` 2 支 ＋ `agent.turn`）。
+⛔ **不要用 `docker exec` 逐支讀**——長駐容器跑的是映像、可能落後工作樹（見 §6 兩容器陷阱）。
 
 | 工具 | prospect | property_manager | tenant |
 |---|---|---|---|
