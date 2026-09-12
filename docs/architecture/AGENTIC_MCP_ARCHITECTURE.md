@@ -124,7 +124,7 @@ nginx auth_request
 |---|---|---|---|
 | 1 | API key | **401，無條件**（⛔ 不看 `RAG_API_AUTH_ENFORCE`） | `require_api_key_unconditional`／`ERR_API_KEY` |
 | 2 | Origin 三態 | 403 | `check_origin`／`load_allowed_origins` |
-| 3 | `X-JGB-Identity`（base64 JSON）fail-closed | 400／403 | `parse_identity` |
+| 3 | `X-JGB-Identity`（**明文 JSON**，⛔ 無 base64）fail-closed | 400／403 | `parse_identity` 直接 `json.loads(raw)` |
 
 第 3 道內部依序：
 
@@ -137,7 +137,8 @@ nginx auth_request
 7. 回 `Identity(entry="mcp")`——**唯一**把 `entry` 設成 `"mcp"` 的真身分建構點
 
 **額度**：門面是 `usage_events` 的唯一寫入者（`begin()` → `quota_check()` → 呼叫 → `finalize()`）。
-計量不可用 ⇒ **拒絕服務**（`METERING_UNAVAILABLE`），⛔ 不靜默略過。
+這一層另有兩個出口：`uctx is None` ⇒ **`METERING_UNAVAILABLE`**（計量不可用一律**拒絕服務**，
+⛔ 不靜默略過——額度是本系統對呼叫者的唯一控制）；`quota.state == "blocked"` ⇒ **`QUOTA_EXCEEDED`**（429）。
 
 ### 階段 1｜`agent.turn` 門面（`_make_agent_turn`）
 
@@ -166,8 +167,8 @@ nginx auth_request
 | ① | 有文件 **且** 訊息是 `confirm_*:<pid>` | `_document_turn_no_write`。**排在確認段之前**——確認段一進去就兌現，那時再擋來不及 |
 | ② | 文件擷取不出可用欄位 | 固定句 `DOC_UNREADABLE_TEXT` |
 | ③ | 照片失敗／逾時／信心 < `IMAGE_CONFIDENCE_MIN` | `IMAGE_FAILED_TEXT`／`IMAGE_TIMEOUT_TEXT`／`IMAGE_PICK_CATEGORY_TEXT` |
-| ④ | `^confirm_(submit\|edit\|cancel):[0-9a-f]{16}$` **等值 `fullmatch`** | `_run_confirm_segment`（見階段 3） |
-| ⑤ | `select:(bill\|contract\|repair):<id>` **`fullmatch`、⛔ 不 NFKC、⛔ 不 strip** | `_run_select_segment`：程式直答該筆 facts、寫槽位、記 `select_scope` |
+| ④ | `^confirm_(submit\|edit\|cancel):[0-9a-f]{16}$`，`_parse_confirm_value` 用 **`re.match`**。🔴 **不是 `fullmatch`**——Python 的 `$` 允許結尾換行，`"confirm_submit:<pid>\n"` **會命中**（實測 `match=True／fullmatch=False`）。⚠️ 程式自己的註解寫「等值比對（`fullmatch`）」，**註解與行為不符**，見 §8 已知限制 | `_run_confirm_segment`（見階段 3） |
+| ⑤ | `select:(bill\|contract\|repair):<id>` **真的是 `fullmatch`**、⛔ 不 NFKC、⛔ 不 strip | `_run_select_segment`：程式直答該筆 facts、寫槽位、記 `select_scope`。⚠️ 另有四條早退**全部回同一句** `SELECT_NOT_FOUND_TEXT`：工具 `not ok`／`facts` 空／`_verify_routes` 取不到（fail-closed）／路由命中——⛔ 不細分，細分等於用回話差別揭露「這筆存在但你看不到」 |
 | ⑥ | `handoff_cache[cache_key]` 命中（同題重問） | 逐字重播，`llc_calls=0`、`violations=["replayed_from:<trace_id>"]` |
 
 ⚠️ `handoff_cache` 的 `setdefault` **排在 ⑤ 之後**：提早建鍵會讓每個從 ①–⑤ 早退的回合
@@ -226,9 +227,11 @@ while True:
   │   continue（回迴圈頂端再叫一次模型）
   └─ 無 tool_calls（模型嘗試給最終答案）────────────────────────
       AgentOutput.model_validate 失敗 ⇒ 記一次 rewrite、回饋 SCHEMA、continue
-      改寫分支 A「HANDOFF_DATA」：kind=handoff ∧ reason 非敏感 ∧ fact_class 非敏感五類
-        ∧ 有工具結果 ∧ 非「每筆都 ok 且 empty」⇒ 消耗一次 rewrite 回模型
+      改寫分支 A「HANDOFF_DATA」：kind=handoff ∧ reason ∈ NON_SENSITIVE_HANDOFF_REASONS
+        ∧ fact_class ∉ 敏感五類 ∧ 有工具結果 ∧ 非「每筆都 ok 且 empty」⇒ 消耗一次 rewrite
       改寫分支 B「RECENT_REFS」：同上但**零工具呼叫** ∧ 本回合注入過最近編號
+      ⚠️ NON_SENSITIVE_HANDOFF_REASONS 是**封閉白名單** = {no_grounding, llm_mentioned_handoff}
+         ⛔ 不等於「非敏感」——budget_exhausted 非敏感卻不在集合內，T2 出口正是靠這個差別成立
       ⚠️ 兩條在**預算已耗盡時直接跳過**，⛔ 不走 rewrite_exhausted——否則
          handoff_reason 會變成 budget_exhausted，T2 出口閘永遠到不了
       resolve_refs(out, tool_results_by_id, nonce)  ← nonce 是「出自本回合」的唯一憑據
@@ -249,9 +252,12 @@ while True:
 | 序 | 閘 | 命中條件 | 效果 |
 |---|---|---|---|
 | 1 | `scope_exit` | `scope_out>0 且 scope_in==0` | 整段換 `SCOPE_EXIT_TEXT`、`kind="answer"`、`handoff=None`、`final_kind` 一起改（⛔ 不進 handoff cache）。部分範圍外 ⇒ 末尾接一行。⚠️ 本回合出現過範圍外 ⇒ **清掉 `estate_carry`** |
-| 2 | `handoff_without_lookup` | `kind=handoff` ∧ reason 非敏感 ∧ fact_class 非敏感五類 ∧ **零工具呼叫** ∧ 無 select 範圍 | 降級為追問 `ASK_TARGET_TEXT`，五欄一起改 |
+| 2 | `handoff_without_lookup` | `kind=handoff` ∧ reason ∈ **`NON_SENSITIVE_HANDOFF_REASONS`**（封閉白名單，⛔ 不等於「非敏感」）∧ `fact_class ∉ 敏感五類` ∧ **零工具呼叫** ∧ 無 select 範圍 | 降級為追問 `ASK_TARGET_TEXT`，五欄一起改 |
 | 3 | `ask_target_gate` | `kind=="ask"` ∧ `ask_target ∉ ASK_TARGETS` | 換指路固定句，並把 `ask_target` **歸零**——留著值域外字串會讓 `LAST_ASK_TARGET_KEY` 變成模型可塞任意字串的地方。⚠️ 這是**保底閘**：觀察模式下 Verifier 不擋，⛔ 不得假設「Verifier 過了就合法」 |
-| 4 | `handoff_data_exits` | `kind=handoff` ∧ reason 非敏感 ∧ fact_class 非敏感 ∧ **有工具呼叫** | 依工具結果分兩出口：`NO_DATA_TEXT`／`NO_JUDGEMENT_TEXT`。⚠️ 任一筆 `status != "ok"` 或撞名保留 id ⇒ **整段不動**（那時 `empty` 不可信） |
+| 4 | `handoff_data_exits` | 同閘 2 的封閉白名單條件，但 **有工具呼叫** | 全部 `empty` ⇒ `NO_DATA_TEXT`；否則 `NO_JUDGEMENT_TEXT`＋`ask_target="confirm_intent"`。⚠️ 任一筆 `status != "ok"` 或撞名保留 id ⇒ **整段不動**（那時 `empty` 不可信） |
+
+⚠️ **閘 2／閘 4 另有 U2 例外**：模型自報敏感但被程式推翻時（`_sensitive_self_report_overridden`），
+即使 reason 不在白名單也照樣進閘，並多記一筆 `sensitive_self_report_overridden`。
 
 收尾：`default_outcome(result)` → `AgentSession.end_turn`（寫 `dialog`／`last_ask_target`／
 `fixed_streak`；`final_kind=="handoff"` 才寫 `handoff_cache`）→ `_emit_agent_decision(trace)`。
@@ -260,13 +266,22 @@ while True:
 
 ```
 模型 confirm.request(summary, payload)
-  → 程式依 action＋payload 決定性產卡（confirm_card.render）
+  → ⚠️ **成功有兩種形狀**：
+     (a) 對到單筆 ⇒ 產卡（下行）
+     (b) 以 estate_name＋period 對到**多筆** ⇒ `_bill_candidates_result` 回候選形狀
+         （⛔ 無 card／pending_id）⇒ `_begin_pending_confirm` 收成一個 **ask 回合**：
+         `CONFIRM_CANDIDATES_TEXT` ＋候選清單＋最多 `CONFIRM_CANDIDATES_MAX` 顆
+         `select:bill:<id>` 按鈕；⛔ 不建 pending、⛔ 不發 token
+  → (a) 程式依 action＋payload 決定性產卡（confirm_card.render）
   → 發 token（DB 只存雜湊與 pending_id）
   → 三顆 quick reply：confirm_(submit|edit|cancel):<pending_id>
   → ⚠️ 有 select_scope ⇒ _scope_gate_confirm_request 先比物件，別戶**不建 pending**
   → ⚠️ 文件回合 ⇒ _document_turn_no_write（第三道網）
   → _begin_pending_confirm 存 {action, payload, card_sha256, estate_id}
   → 回合以 kind=ask 結束；**卡文字逐字＝TurnResult.answer，模型輸出丟棄、Verifier 不跑**
+  ⚠️ **例外**：`data` 形狀不符（缺 `card`／`action` 值域外／`payload` 非 dict）⇒
+     `_begin_pending_confirm` 記 `confirm_request_data_shape_invalid` 後回 `None`，
+     **模型迴圈繼續跑**，⛔ 不是「立刻結束」
 
 下一回合，使用者按鈕（段一 ④）
   → redeem_pending 先燒 token、比對卡雜湊
@@ -279,11 +294,12 @@ while True:
 失敗誠實回 `ACTION_FAILED_TEXT`；取消燒 token 但 ⛔ 不覆蓋既有 receipt；
 pid 不在本 session（含過期後舊鍵）⇒ 固定句「這筆確認已失效」。
 
-### 回合的全部終止點（一張表）
+### 回合的全部終止點（一張表；🔴 2026-09-12 獨立驗證後由 11 列補到 13 列）
 
 | 出口 | 從哪來 | `kind` |
 |---|---|---|
 | 401／403／400 | 階段 0 三道請求層檢查 | （不成回合） |
+| `QUOTA_EXCEEDED`(429)／`METERING_UNAVAILABLE` | 階段 0 `_invoke` 的額度／計量 | （不成回合） |
 | `INVALID_INPUT`／`RATE_LIMITED`／`NO_MATCH`／`TOOL_TIMEOUT` | 階段 1 門面 | （工具錯誤） |
 | 文件禁寫／文件不可讀／照片三條 | 段一 ①②③ | `answer` |
 | 確認兌現／取消／失效 | 段一 ④ | `answer` |
@@ -291,7 +307,9 @@ pid 不在本 session（含過期後舊鍵）⇒ 固定句「這筆確認已失�
 | 同題重問重播 | 段一 ⑥ | `handoff` |
 | `budget_exhausted`（deadline／工具數／改寫數） | 段三 | `handoff` |
 | `tool_unavailable`（registry 例外／兩次 TOOL_TIMEOUT） | 段三 | `handoff` |
-| 確認卡 | 段三 `confirm.request` 成功 | `ask` |
+| 確認卡 | 段三 `confirm.request` 成功**對到單筆** | `ask` |
+| **確認候選清單** | 段三 `confirm.request` 對到**多筆**（`_bill_candidates_result` ⇒ `_begin_pending_confirm` 候選分支）；⛔ 不建 pending、⛔ 不發 token | `ask` |
+| **範圍外不出卡** | 段三 `_scope_gate_confirm_request`（⛔ 不經 `exit_gates.finalize`，是段三獨立的 return） | `answer` |
 | 模型正常作答（過 Verifier） | 段三 → 段四 | `answer`／`ask`／`recommend`／`handoff` |
 | 四道閘改寫後的固定句 | 段四 | `answer`／`ask` |
 
@@ -429,6 +447,15 @@ file_urls/image_urls
 | 稽核 | `scripts/audit/check_invariants.sh`（不變量 27–31 為本線） | `make audit` |
 
 ## 8. 已知限制（demo 期）
+
+- 🔴 **`_parse_confirm_value` 的註解與行為不符（2026-09-12 獨立驗證抓到，尚未處置）**：
+  `runtime.py::_parse_confirm_value` 的註解寫「**等值**比對（`fullmatch`、無前後綴）——
+  ⛔ 不做子字串比對：那會讓自由文字誤觸發一次真實寫入」，但實作是
+  `_CONFIRM_VALUE_RE.match` 配 `^…$`。**Python 的 `$` 允許結尾換行**，
+  故 `"confirm_submit:<pid>\n"` **會命中並兌現一次真實寫入**
+  （實測 `match=True`／`fullmatch=False`）。對照 `_parse_select_value` 用的**才是** `fullmatch`。
+  機器值來自 LINE quick reply 正常不帶換行，但**這正是該註解宣稱要防的形狀**。
+  修法是一個字（`.match` → `.fullmatch`），⚠️ 屬寫入路徑的行為變更，⛔ 待業主裁示。
 
 - 線⑤ 模型偶爾在有工具結果時自判「無依據」轉人（三輪 2/21 情境不穩）；屬答案層定義文（5.1）範圍。
 - `AGENT_VERIFIER_MODE=grounding_observe`（線上值）下引用類不擋——模型講的事實**沒有被要求對得上引文**，只有極性、機敏、標記外洩、schema 契約這幾類在守；重開引用類的依據是觀察紀錄（`verdict.observed`）中「真該擋」的計數（DSP-040 絆線）。相容旗 `AGENT_VERIFIER_OBSERVE_ONLY` 已於 2026-09-10 除役（見 §6）。
