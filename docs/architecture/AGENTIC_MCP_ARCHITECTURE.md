@@ -204,7 +204,7 @@ nginx auth_request
 |---|---|---|
 | ① | 有文件 **且** 訊息是 `confirm_*:<pid>` | `_document_turn_no_write`。**排在確認段之前**——確認段一進去就兌現，那時再擋來不及 |
 | ② | 文件擷取不出可用欄位 | 固定句 `DOC_UNREADABLE_TEXT` |
-| ③ | 照片失敗／逾時／信心 < `IMAGE_CONFIDENCE_MIN` | `IMAGE_FAILED_TEXT`／`IMAGE_TIMEOUT_TEXT`／`IMAGE_PICK_CATEGORY_TEXT` |
+| ③ | 照片失敗／逾時／信心 < `IMAGE_CONFIDENCE_MIN`（⚠️ **程式常數 0.6，⛔ 不是 env**，`test_image_entry_req.py` 斷言 `== 0.6`） | `IMAGE_FAILED_TEXT`／`IMAGE_TIMEOUT_TEXT`／`IMAGE_PICK_CATEGORY_TEXT` |
 | ④ | `^confirm_(submit\|edit\|cancel):[0-9a-f]{16}$` **等值 `fullmatch`**（2026-09-12 由 `.match` 改正，見 §8）——帶結尾換行／空白／前後綴一律不觸發兌現 | `_run_confirm_segment`（見階段 3） |
 | ⑤ | `select:(bill\|contract\|repair):<id>` **真的是 `fullmatch`**、⛔ 不 NFKC、⛔ 不 strip | `_run_select_segment`：程式直答該筆 facts、寫槽位、記 `select_scope`。⚠️ 另有四條早退**全部回同一句** `SELECT_NOT_FOUND_TEXT`：工具 `not ok`／`facts` 空／`_verify_routes` 取不到（fail-closed）／路由命中——⛔ 不細分，細分等於用回話差別揭露「這筆存在但你看不到」 |
 | ⑥ | `handoff_cache[cache_key]` 命中（同題重問） | 逐字重播，`llc_calls=0`、`violations=["replayed_from:<trace_id>"]` |
@@ -453,7 +453,28 @@ file_urls/image_urls
 | trace | 決策快照（`/api/v1/agent/trace/{trace_id}`） | 結構化欄位 |
 | 替身寫入 | 行程記憶體（`services/jgb/transport.py`） | 重啟歸零 |
 
-## 6. 組態（demo 值；正式站 `.env`，見 runbook §20）
+## 6. 組態
+
+🔴 **⛔ 下表是「demo 期曾用值／建議值」，⛔ 不是現行部署值，⛔ 也不是程式預設**
+（2026-09-12 對抗性演練：一位工程師照本表診斷「哪裡太保守」，**整套診斷建立在錯的
+守門模式上**）。三者是**三組不同的數字**：
+
+| 鍵 | 本表（demo 建議） | `docker-compose.prod.yml` **插值預設** | 真值 |
+|---|---|---|---|
+| `AGENT_VERIFIER_MODE` | `grounding_observe` | **`enforce`** ← 行為相反（引用類也擋） | `.env` |
+| `AGENT_BUDGET_DEADLINE_S` | 45 | **20** | `.env` |
+| `AGENT_TURN_TIMEOUT_S` | 60 | **30** | `.env` |
+
+compose 的註解自己寫的是「**demo 建議** 45」——那是建議，不是現況。
+⇒ **要知道線上現在跑什麼，只能讀 `.env` 或打健檢**（`/api/v1/agent/health` 的
+`checks.limits`／`verifier_mode`），⛔ 本檔不可能知道，⛔ 不要拿本表當基準算「所以調成 X」。
+
+⚠️ **一個會靜默假成功的組合**：`AGENT_VERIFIER_MODE=observe_only` 只在
+`USE_MOCK_JGB_API=true` 時允許（否則啟動 raise）。為了讓它不 raise 而去開 mock
+⇒ **整站替身、寫入只落行程記憶體**——測起來全過，實際什麼都沒寫。⛔ 不得為了
+放寬 Verifier 而開 mock。
+
+（以下為 demo 期的值與說明，正式站見 runbook §20）
 
 | 鍵 | demo | 說明 |
 |---|---|---|
@@ -501,7 +522,19 @@ file_urls/image_urls
 - 線⑤ 模型偶爾在有工具結果時自判「無依據」轉人（三輪 2/21 情境不穩）；屬答案層定義文（5.1）範圍。
 - `AGENT_VERIFIER_MODE=grounding_observe`（線上值）下引用類不擋——模型講的事實**沒有被要求對得上引文**，只有極性、機敏、標記外洩、schema 契約這幾類在守；重開引用類的依據是觀察紀錄（`verdict.observed`）中「真該擋」的計數（DSP-040 絆線）。相容旗 `AGENT_VERIFIER_OBSERVE_ONLY` 已於 2026-09-10 除役（見 §6）。
 - **寫入面出卡與否綁模型**：無程式面下限保證出卡一定成功——實證見帳本 `demo-ledger-line-oa-20260907.md` §1s（mini 對照 7/13 出卡，luna none 三輪 11/10/12），出卡率隨模型換動、非固定契約。
-- **`grounding_observe` 下引用類只觀察，pm 答案側無金額守門**：`sensitive_patterns` 不分受眾，pm 引資料段的金額（如帳單、租金數字）會被當敏感字樣處理，非其本意的守門缺口（帳本 §1s W9-13、`plan-document-summary-demo-20260909.md` 同批病灶審查列為機制層債）。
+- 🔴 **2026-09-12 更正：前一版把兩張敏感表講反了。** 前一版寫「`sensitive_patterns` **不分受眾**，
+  pm 引資料段的金額會被當敏感字樣處理」——**與程式相反**。逐條對碼：
+
+  | 表 | 受眾範圍 | 會擋 pm 嗎 |
+  |---|---|---|
+  | `sensitive_patterns`（答案側金額／百分比／保證…） | `sensitive_patterns_audiences = ["prospect"]` | ⛔ **不會**——`_sensitive_patterns_apply` 對 pm 直接不掃 |
+  | **`question_sensitive_patterns`**（問句側：客戶案例／價格／SLA…） | `_TABLE_DEFAULTS["qsensitive"]` 的 audiences 參數是 **`None` ＝ 全受眾** | ✅ **會** |
+
+  ⇒ **pm 問「我這方案一個月多少錢」被判機敏而轉人，是 `question_sensitive_patterns` 幹的，
+  ⛔ 不是 `sensitive_patterns`。** 照前一版去調 `sensitive_patterns` 會調在完全無關的那張表上
+  ——真正讓功能答不出來的那張**動都不會動**。
+  （2026-09-12 對抗性演練：一位工程師規劃「方案與額度」工具時正是被這句導向錯的表。）
+  ⚠️ `grounding_observe` 下引用類只觀察、機敏類**照擋**，所以這道會真的擋掉答案。
 - **延遲命題三個數字未對齊**：需求文 `requirements.md` D2／§「延遲」寫 p95 ≤12 秒（業主待裁）；程式內建預設 `AGENT_BUDGET_DEADLINE_S=20.0`（`bootstrap.py`）；部署值 `AGENT_BUDGET_DEADLINE_S=45`／`AGENT_TURN_TIMEOUT_S=60`（compose 註解「demo 建議 45，rewrites=2 路徑 >20s」）。三者是同一命題（回合延遲上限）在 spec／程式預設／實際部署三層各自定的數字，⛔ 尚未有裁決把它們收斂成一個。
 - 照片線的 LIFF 五案尚未在 `/mcp` 端到端跑（等 relay 簽章網址）；`scope_exit` 機器可讀鍵未加；confirm 卡回合不接指路句（A1）。
 - 速率與配額為行程內計數（單 worker 正確；多 worker 會乘倍）。

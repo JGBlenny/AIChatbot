@@ -96,6 +96,17 @@ docker cp <script> aichatbot-rag-orchestrator:/data/ && \
 **建議**：先確認是否要把面向與表單的門檻**拆成兩個變數**，再談數值。
 
 ### `KB_SIMILARITY_THRESHOLD` = `0.65`
+
+🔴 **⛔ 不得下調。** 2026-09-12 對抗性演練：一位工程師把本節「本輪未量測，不要動」
+讀成「**缺實證**、補了實證就能調」，計畫調成 0.58。實際上
+`services/agent/tools/kb.py` 是它唯一的活消費者，而 `services/decision_layer.py`
+的模組 docstring 逐字寫著：
+
+> ⛔ **不得改回 0.55**：失敗方向是「門檻悄悄變鬆、回出相關性較低的知識」，而且無聲。
+
+2026-09-12 才剛把程式 fallback 由 `0.55` **上調**對齊 `0.65`（該分歧已造成過一次事故，
+見 `tests/unit/_meta/test_env_parity_req.py` 檔頭）。⇒ 這是**已裁決的禁令**，
+⛔ 不是「等人補實證」。要動請先撤那條裁決。
 知識進入答題候選的門檻。本輪未量測，**不要動**。
 
 ### `RERANKER_MIN_VECTOR_SIMILARITY` = `0.3`

@@ -107,6 +107,42 @@ AgentRuntime.__init__(provider, registry, verifier, assembler, budget,
 ⚠️ **這是門面的缺口，不是核心的缺口**：核心完好，缺的是一個 HTTP 面。
 spec R3.6／R9.3 仍要求它。
 
+### ⛔ 新增一個 `jgb2.query.<域>` 之前必讀（2026-09-12 對抗性演練逼出）
+
+| # | 坑 | 為什麼 |
+|---|---|---|
+| 1 | **`_jgb2_spec` 的 stage 預設是 `{property_manager: M0, tenant: M0}`** | 照抄＝**租客也看得到**。既有六域的資料租客本來就有份，**新域不一定**——例如業者的訂閱方案／價格／用量，照抄就是洩漏，而且**沒有任何閘會擋**。⇒ 新域必須**顯式**決定 stage |
+| 2 | **無物件維度的域 ⛔ 不得帶 `scope` 鍵** | `_ok_single(scoped=True)` 只給有 `estate_id` 的實體列。無物件維度卻帶 scope ⇒ L15 比對拿到 `None` 走 fail-closed，整域被判範圍外 |
+| 3 | **`usage_metering.quota_check` 的數字在 `/mcp` 上可能是「安靜的錯」** | `_quota_fetch` 的 used 只數 `is_internal = FALSE` 的 `usage_events`；而 `/mcp` 的 `is_internal` **由 API key 紀錄決定**，demo key 就是 `is_internal=TRUE` ⇒ 拿它做「本月用了幾則」會誠實地回 0。`quota_check(is_internal=True)` 更是直接回 `state='none'` |
+
+⚠️ **`test_mcp_facade_unit_req.py::test_build_registry_registers_expected_tools` 對工具名做
+集合等值斷言**——加一支工具就會紅，必須同 PR 改。文件 §7 測試層沒提任何清單型斷言。
+
+⚠️ **「額度」在本專案是兩個不同的東西**，兩者都叫額度但不同 DB、不同授權鏈：
+jgb2 訂閱的 `estate_usage`（物件／合約數上限，由 jgb2 依 role 收口）vs
+本系統的月訊息額度 `vendor_quotas`（**本 repo 自己的商業資料，DSP-011「授權由 JGB API
+全權處理」涵蓋不到它**）。⛔ 要把後者放進對話前，先裁決。
+
+### ⛔ 「調鬆一點」時不能動的東西（2026-09-12 對抗性演練逐條逼出）
+
+一位工程師收到「答案太保守，調鬆一點」，只讀文件寫出的計畫裡有四項會出事：
+
+| 想動 | 為什麼不能 |
+|---|---|
+| `KB_SIMILARITY_THRESHOLD` 下調 | **已裁決的禁令**：`decision_layer.py` docstring 逐字「⛔ 不得改回 0.55：失敗方向是門檻悄悄變鬆、回出相關性較低的知識，而且無聲」。2026-09-12 才剛**上調**對齊 |
+| 擴充 `NON_SENSITIVE_HANDOFF_REASONS`（加 `budget_exhausted` 少轉人） | **封閉集合**＝`{no_grounding, llm_mentioned_handoff}`，由 `test_handoff_without_lookup_req.py` 釘死。T2／兩道降級閘**正是靠這個差別成立**，加值會讓出口邏輯整個錯位 |
+| 在 `agent_rules` 加幾句「有資料段就先答」 | **反向惡化＋測試會紅**：`agent_rules.py` 檔頭記著「提示詞越長，模型越傾向先轉人」（DSP-028 回歸實測）；且 `test_ask_target_req.py` 斷言 `len(_POLICY_TEXT) <= 1584`（prospect 正本 5.1 凍結） |
+| `AGENT_VERIFIER_MODE` 改 `observe_only` | 它**只在 `USE_MOCK_JGB_API=true` 時允許**，否則啟動 raise。為了讓它不 raise 而開 mock ⇒ **整站替身、寫入只落行程記憶體＝靜默假成功**。⛔ 不得為放寬 Verifier 而開 mock |
+
+⚠️ `IMAGE_CONFIDENCE_MIN = 0.6` 是 **`runtime.py` 的程式常數，不是 env**，且
+`test_image_entry_req.py` 斷言 `== 0.6`——⛔ 不是旋鈕。
+
+⚠️ **真正能調鬆、但文件從沒並列過的旋鈕**：`CandidateSelector` 的 `K = 5`
+（模型每回合只拿到 5 條可引用細目，直接決定「沒有可引用事實 ⇒ 轉人」）、
+`kb.search(threshold=…)` 可**逐次覆寫**全域門檻、`AGENT_MODEL`（空＝退回 `OPENAI_MODEL`）、
+`AGENT_STAGE`（預設 M0，決定工具可見性）。⚠️ `PRESALES_EXTRACTIVE` ⛔ 不在此列
+（業主 2026-09-04 裁「補完知識前 ⛔ 不重提」）。
+
 ### ⚠️ 一處反向耦合（已知債）
 
 `runtime.py` 有 `from services.agent.mcp_facade import current_stage`——**核心 import 了門面**。
