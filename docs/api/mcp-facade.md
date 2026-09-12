@@ -49,6 +49,23 @@ POST /mcp                       （MCP streamable HTTP；方法與 body 由 MCP 
 - `/mcp` 與 `/api/v1/agent/*` **不受 `RAG_API_AUTH_ENFORCE` 開關左右**。
   該旗標關著時，其他路徑不驗金鑰，但這兩條路徑仍一律 401。
   （不變量 28；`_EXEMPT_PREFIX` ⛔ 不得含 `/mcp`。）
+
+> 🔴 **⛔ 這道無條件閘是一張硬編碼白名單，⛔ 不會自動涵蓋新路徑**
+> （2026-09-12 由對抗性演練抓到——一位只讀文件的工程師照本節規劃新端點，
+> 差一步做出免金鑰的 LLM 端點）：
+>
+> ```python
+> mcp_facade.GATED_PREFIXES = ("/mcp", "/api/v1/agent")   # 逐字，就這兩條
+> ```
+>
+> **任何新開的路徑（例如重建 `POST /api/v1/message`）預設不在其內** ⇒
+> 只剩 `api_key_guard`，而它**吃 `RAG_API_AUTH_ENFORCE` 開關**。
+> 該旗關著的環境（本機預設就是關的，啟動會印
+> 「⚠️ RAG_API_AUTH_ENFORCE 未開 → API Key 認證【停用】，rag 對外無保護」）
+> ⇒ 新端點**免金鑰即可呼叫**。沒有 key 就沒有額度歸屬，等於 DSP-011 的唯一控制被關掉。
+>
+> ⇒ **新開任何 agent 相關端點，必須同時把前綴加進 `GATED_PREFIXES`**，
+> 並補一條不變量守住它。⛔ 不得假設「照 `/mcp` 的作法做就有」。
 - 理由：DSP-011 把「額度」定為本系統對呼叫者的唯一控制，而額度綁在 API key 紀錄上。
   沒有 key 就沒有額度歸屬，等於沒有控制。
 

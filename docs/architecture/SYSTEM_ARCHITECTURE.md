@@ -70,6 +70,17 @@ AgentRuntime.__init__(provider, registry, verifier, assembler, budget,
 `run_turn` 的簽名在 `mcp_facade` 裡被註解為「**REST／影子／回測共用的介面**」
 ——共用，代表它不屬於任何一個門面。
 
+🔴 **⛔ 「門面之一」⛔ 不等於「門面很薄」**（2026-09-12 對抗性演練：一位只讀文件的工程師
+把「再加一個門面」估成 1 天，實際是重寫一整層邊界）。門面層自己帶著**順序即契約**的
+13 個步驟——outline fail-closed **排在 `store.load` 之前**（判不過的回合不留半開的 session 列）、
+配額**最壞值預扣排在抓檔之前**（超過一張都不抓）、過期**先 close 再 start**（顛倒會把新列一起關掉）、
+**逾時不 save**（落不了半寫狀態）、bytes 不落地、命名空間身分……逐步見 §2b 階段 1。
+另外還要處理三件門面層專屬的事：**額度計量要重寫**（`app.py::usage_metering_middleware`
+只對 `/mcp` 動作、且刻意不 begin/finalize——不變量 31「門面是唯一寫入者」）、
+**`GATED_PREFIXES` 要加前綴**（否則新端點沒有無條件金鑰閘）、
+**`Identity.entry` 要決定**（`"rest"` ⇒ 寫入型工具看不到也叫不到）。
+
+
 ⚠️ **`/mcp` 是插座，不是對話架構**：它只做驗 key／驗身分／記帳三件事，**零對話邏輯**。
 ⚠️ **本系統只有 MCP server，沒有對外的 MCP client**：`mcp.client`／`ClientSession`
 全 repo 只出現在兩支整合測試裡（拿 client 打自己的 server）；`runtime.py` **不 import `mcp`**，
@@ -110,6 +121,18 @@ spec R3.6／R9.3 仍要求它。
 | `AGENT_TURN_ENABLED` | env，預設 `false` | 只管 `agent.turn` 是否註冊 |
 
 ⇒ **能同時用到對話與 JGB 查詢的受眾只有 `property_manager` 一種。**
+
+🔴 **`tenant` 在新線完全不存在**（⛔ 不只是「叫不到 `agent.turn`」）：
+
+| 受眾 | canon 正本 | `AGENT_TURN_SPEC["stage"]` |
+|---|---|---|
+| `prospect` | ✅ `canon/prospect.md` | ✅ M1 |
+| `property_manager` | ✅ `canon/property_manager.md` | ✅ M1 |
+| **`tenant`** | ❌ **無 `canon/tenant.md`** | ❌ **缺鍵** |
+
+`app.py::_AGENT_OUTLINE_AUDIENCES = ("prospect", "property_manager")`；
+`build_audience_outline` 對 tenant 直接 `raise`；`build_toc`（讀 DB 的那條 tenant 路徑）
+**零生產呼叫端**。⇒ **接 tenant 不是接線，是一整個知識正本工程。**
 
 ⚠️ `jgb2.query.*`／`jgb2.action.*` 是**無條件註冊**的（不受 `AGENT_TURN_ENABLED` 管）——
 持 key 的 MCP client 即使在 `agent.turn` 關閉時仍可直接呼叫查詢工具。

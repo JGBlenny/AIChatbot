@@ -62,6 +62,26 @@
 > §7 的跨業者隔離紅線與「b2b 業態過濾無 `IS NULL` 放行是刻意設計」的**理由**
 > （程式只有 SQL 與註解，決策理由在這裡）。
 
+> 🔴 **2026-09-12 補正（最重要的一條，⛔ 先讀）：新線只有兩種受眾，`tenant` 不存在。**
+>
+> 本檔 §1「一支 API，三種身分形狀」在新線**不成立**。逐項對碼：
+>
+> | 受眾 | canon 正本 | `AGENT_TURN_SPEC["stage"]` | 結論 |
+> |---|---|---|---|
+> | `prospect` | ✅ `canon/prospect.md` | ✅ M1 | 可用 |
+> | `property_manager` | ✅ `canon/property_manager.md` | ✅ M1 | 可用 |
+> | **`tenant`** | ❌ **沒有 `canon/tenant.md`** | ❌ **缺鍵＝永不可見** | ⛔ **完全不存在** |
+>
+> 查證：`app.py::_AGENT_OUTLINE_AUDIENCES = ("prospect", "property_manager")`；
+> `ls rag-orchestrator/canon/*.md` 只有兩份；`AGENT_TURN_SPEC` 的
+> `stage = {'prospect': 'M1', 'property_manager': 'M1'}`。
+> 取不到正本時 `_outline_for_audience` **fail-closed** 回 `AGENT_UNAVAILABLE`。
+>
+> ⚠️ **後果**：照本檔排期「三種身分一起接回來」會嚴重低估——
+> **b2c 租客不是接線工作，是一整個知識正本工程**（要產 `canon/tenant.md`、
+> 走人審、建 FineIndex、開 stage 鍵）。
+> 2026-09-12 的對抗性演練裡，一位只讀文件的工程師正是這樣排了期。
+
 > **一句話原則**：jgb2 端送出的身分只有 `role_id`（＋`user_id`）；`vendor_id` 是 AI 側用 `role_id` 關聯解出，jgb2 不管、不送。
 
 ## 1. 總覽：一支 API，三種身分形狀
