@@ -5,7 +5,9 @@
   `consensus`）一律 Optional／預設空——DocuMind 未來若自己做跨頁共識，page_merger 會優先採用
   （需求 2.6），⛔ 不在這裡假設它們一定有值。
 - `pages[]` 允許為空：需求 1.4 要求空頁回 200 `draft`，⛔ 不是 422。
-- `FieldValue` 沿用 `services/jgb/repair_prefill.py` 的「值＋出處」語意（SlotValue），
+- `FieldValue` 沿用「值＋出處」語意（`SlotValue`）。⚠️ 2026-09-12 對碼：原出處
+  `services/jgb/repair_prefill.py` **已隨舊鏈刪除**；該語意現存的落點是
+  `services/agent/tools/session.py`（`session.slots.get/set` 的 `source` 欄位），
   並擴 `jgb_value`（給 JGB 送，日期為 Ymd 整數）、`confidence`、`raw`（可逆對照）、`page`、`conflicts`。
 - `MappingResult.fields` 的鍵集合對同一 `document_type` 恆定（需求 4.3／9.1）——由
   `TRANSCRIPT_FIELDS`／`CONTRACT_FIELDS` 常數定義，並由 model validator 強制；

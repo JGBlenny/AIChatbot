@@ -1,20 +1,33 @@
-"""C1 DecisionLayer 決策中樞（spec retrieval-decision-layer 任務 1.3｜R7.4、R8.3）。
+"""門檻讀值點（`DecisionConfig`）。
 
-**這一步只做「搬移不重構」**：把散落在 chat.py／conversational_engine.py 的門檻讀值
-（KB_SIMILARITY_THRESHOLD ×4、FORM_TRIGGER_THRESHOLD ×2）與六 case 答題仲裁的硬編碼
-常數（0.15／0.55／0.6）收進唯一讀值點，仲裁判定邏輯**逐分支原樣搬入** `decide_arbitration()`
-——六 case 結構不動（171 條整合測試護欄；gap-analysis G6 選項 A 定案）。
+🔴 **2026-09-12 對碼改寫**：前一版 docstring 整段描述 `decide_arbitration()` 六 case
+仲裁、`chat.py`／`conversational_engine.py` 的散落讀值點、`usage_metering.set_decision()`
+快照鏈——**那些全部已隨舊 REST 對話鏈於 2026-09-11 刪除**（DSP-046）。本檔現在只剩
+`DecisionConfig` 一個 frozen dataclass 與它的 `load()`／`config_hash()`。
 
-等價契約（審查修訂 1 第①層）：本模組的決定性子決策（門檻比對、分類路由 gate、六 case
-仲裁）對任意輸入必須與搬移前的 inline 邏輯**嚴格同輸出**——unit 以逐字複製的參考實作
-全域對拍（tests/unit/decision/）。調參、灰帶、識別碼訊號都是 P1 的事，不在此檔此版。
+## 誰在讀
 
-快照（R8.3）：`decide_arbitration()` 產出可歸因快照 dict，由呼叫端經
-`usage_metering.set_decision()` 貢獻，最終由 `chat._finalize_decision_snapshot()`
-在 dispatcher **唯一出口**組裝落地（任務 0.1）。仲裁只是其中一個貢獻者——
-面向進場/續輪/退出、b2b 短路、快取命中各自貢獻；未貢獻的路徑落最小快照
-（帶 `path` 與 `incomplete: true`），使覆蓋缺口成為可查事實而非靜默缺席。
-（本檔頭原寫「從此每輪記下」，實測僅 54.8%、面向續輪 0%——D-19 已修正。）
+唯一的生產消費者是 **`services/agent/tools/kb.py`**，它讀 `DecisionConfig.load().kb_threshold`
+當 `kb.search` 的相似度門檻。其餘四個欄位（`form_trigger_threshold`／`sop_min`／
+`knowledge_min`／`score_gap`）**目前沒有任何生產讀者**——它們是六 case 仲裁的常數，
+仲裁本身已刪。⛔ 不在此刪欄位：`config_hash()` 進過快照歸因，砍欄位會讓舊快照的
+雜湊對不上。
+
+## ⚠️ `kb_threshold` 的 fallback 與部署值不同（已知、未裁）
+
+| 讀值點 | 值 |
+|---|---|
+| 本檔程式 fallback | **0.55** |
+| `docs/retrieval-parameters.md` 參數台帳 | 0.65 |
+| `docker-compose.prod.yml`／`dev.yml` | 顯式寫死 **0.65**（不走 env 插值） |
+
+⇒ 任何 `KB_SIMILARITY_THRESHOLD` 未設的環境（新機器、新容器、CI），
+`kb.search` 會**靜默**跑在 0.55 而不是 0.65。台帳已如實記載此分歧。
+
+⚠️ ⛔ **這不是記憶裡那條「門檻對齊＝no-op、已 revert」**——那條講的是
+`knowledge_min=0.6` 與 `KB_SIMILARITY_THRESHOLD=0.65` 之間沒有可回收區間；
+本節講的是 **fallback 0.55 vs 部署 0.65**，是不同的命題，尚未有裁決。
+⛔ 未經業主裁示 不得逕改本檔的 `0.55` 預設值（那會改變檢索行為）。
 """
 import hashlib
 import json
