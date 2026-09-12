@@ -520,3 +520,56 @@ def test_outcome_helpers_closed_domain_and_receipt_ref():
     assert R.default_outcome(_T("ask", [{"label": "a", "value": "a"}]))["expects"] == "choice"
     assert R.default_outcome(_T("ask", []))["expects"] == "text"
     assert R.default_outcome(_T("answer", []))["state"] == "answered"
+
+
+# ════════════════════════════════════════════════════════════════════
+# 2026-09-12：`_parse_confirm_value` 的等值比對（獨立驗證抓到的缺陷）
+# ════════════════════════════════════════════════════════════════════
+#
+# 病灶：`_CONFIRM_VALUE_RE` 的註解寫「**等值**比對（`fullmatch`、無前後綴）——
+# ⛔ 不做子字串比對：那會讓自由文字誤觸發一次真實寫入」，但實作是 `.match`
+# 配 `^…$`。**Python 的 `$` 允許結尾換行** ⇒ `"confirm_submit:<pid>\n"` 命中
+# ⇒ 兌現一次真實寫入。這幾條把「等值」釘死，⛔ 不得再退回 `.match`。
+
+
+def test_parse_confirm_value_accepts_exact_machine_value():
+    """正對照：正常機器值必須解析得出來（否則下面的否定結論沒有意義）。"""
+    from services.agent.runtime import _parse_confirm_value
+
+    assert _parse_confirm_value("confirm_submit:0123456789abcdef") == (
+        "confirm_submit",
+        "0123456789abcdef",
+    )
+    assert _parse_confirm_value("confirm_edit:0123456789abcdef")[0] == "confirm_edit"
+    assert _parse_confirm_value("confirm_cancel:0123456789abcdef")[0] == "confirm_cancel"
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        "confirm_submit:0123456789abcdef\n",      # ← 這一條是本次修的病灶
+        "confirm_submit:0123456789abcdef\r\n",
+        "confirm_submit:0123456789abcdef ",
+        " confirm_submit:0123456789abcdef",
+        "confirm_submit:0123456789abcdef 這是什麼意思？",
+        "請問 confirm_submit:0123456789abcdef",
+        "confirm_submit：0123456789abcdef",        # 全形冒號
+        "confirm_submit:0123456789ABCDEF",         # 大寫十六進位不在值域
+        "confirm_submit:0123456789abcde",          # 15 位
+    ],
+)
+def test_parse_confirm_value_rejects_anything_but_exact(message):
+    """⛔ 非等值一律 `None`——帶結尾換行／空白／前後綴的都不得觸發兌現。"""
+    from services.agent.runtime import _parse_confirm_value
+
+    assert _parse_confirm_value(message) is None
+
+
+def test_parse_confirm_value_uses_fullmatch_not_match():
+    """釘住實作本身：⛔ 不得退回 `.match`（`$` 允許結尾換行，失敗方向是多寫一次）。"""
+    from services.agent.runtime import _CONFIRM_VALUE_RE
+
+    value = "confirm_submit:0123456789abcdef"
+    # `.match` 會放行結尾換行——這正是本次要擋掉的差別
+    assert _CONFIRM_VALUE_RE.match(value + "\n") is not None
+    assert _CONFIRM_VALUE_RE.fullmatch(value + "\n") is None

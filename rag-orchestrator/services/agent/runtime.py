@@ -501,10 +501,20 @@ _CONFIRM_VALUE_RE = re.compile(
 
 
 def _parse_confirm_value(message: Any) -> Optional[tuple]:
-    """`"confirm_submit:0123456789abcdef"` → `("confirm_submit", "0123…")`；不是機器值 ⇒ `None`。"""
+    """`"confirm_submit:0123456789abcdef"` → `("confirm_submit", "0123…")`；不是機器值 ⇒ `None`。
+
+    🔴 **2026-09-12：`.match` → `.fullmatch`（獨立驗證抓到，業主裁示後改）。**
+    上方常數的註解一直寫著「**等值**比對（`fullmatch`、無前後綴）」，實作卻是
+    `.match` 配 `^…$`——**Python 的 `$` 允許結尾換行**，於是
+    `"confirm_submit:<pid>\n"` 會命中並**兌現一次真實寫入**，正是那段註解宣稱
+    要防的形狀。對照 `_parse_select_value` 用的一直都是 `fullmatch`。
+    ⛔ 不得改回 `.match`：失敗方向是「多執行一次寫入」，不可回復。
+    釘住的測試：`tests/unit/agent/test_runtime_confirm_segment_req.py`
+    的 `test_parse_confirm_value_*`。
+    """
     if not isinstance(message, str):
         return None
-    m = _CONFIRM_VALUE_RE.match(message)
+    m = _CONFIRM_VALUE_RE.fullmatch(message)
     if m is None:
         return None
     verb, pending_id = message.split(CONFIRM_VALUE_SEP, 1)

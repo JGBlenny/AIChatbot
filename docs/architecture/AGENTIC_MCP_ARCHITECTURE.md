@@ -167,7 +167,7 @@ nginx auth_request
 | ① | 有文件 **且** 訊息是 `confirm_*:<pid>` | `_document_turn_no_write`。**排在確認段之前**——確認段一進去就兌現，那時再擋來不及 |
 | ② | 文件擷取不出可用欄位 | 固定句 `DOC_UNREADABLE_TEXT` |
 | ③ | 照片失敗／逾時／信心 < `IMAGE_CONFIDENCE_MIN` | `IMAGE_FAILED_TEXT`／`IMAGE_TIMEOUT_TEXT`／`IMAGE_PICK_CATEGORY_TEXT` |
-| ④ | `^confirm_(submit\|edit\|cancel):[0-9a-f]{16}$`，`_parse_confirm_value` 用 **`re.match`**。🔴 **不是 `fullmatch`**——Python 的 `$` 允許結尾換行，`"confirm_submit:<pid>\n"` **會命中**（實測 `match=True／fullmatch=False`）。⚠️ 程式自己的註解寫「等值比對（`fullmatch`）」，**註解與行為不符**，見 §8 已知限制 | `_run_confirm_segment`（見階段 3） |
+| ④ | `^confirm_(submit\|edit\|cancel):[0-9a-f]{16}$` **等值 `fullmatch`**（2026-09-12 由 `.match` 改正，見 §8）——帶結尾換行／空白／前後綴一律不觸發兌現 | `_run_confirm_segment`（見階段 3） |
 | ⑤ | `select:(bill\|contract\|repair):<id>` **真的是 `fullmatch`**、⛔ 不 NFKC、⛔ 不 strip | `_run_select_segment`：程式直答該筆 facts、寫槽位、記 `select_scope`。⚠️ 另有四條早退**全部回同一句** `SELECT_NOT_FOUND_TEXT`：工具 `not ok`／`facts` 空／`_verify_routes` 取不到（fail-closed）／路由命中——⛔ 不細分，細分等於用回話差別揭露「這筆存在但你看不到」 |
 | ⑥ | `handoff_cache[cache_key]` 命中（同題重問） | 逐字重播，`llc_calls=0`、`violations=["replayed_from:<trace_id>"]` |
 
@@ -448,14 +448,17 @@ file_urls/image_urls
 
 ## 8. 已知限制（demo 期）
 
-- 🔴 **`_parse_confirm_value` 的註解與行為不符（2026-09-12 獨立驗證抓到，尚未處置）**：
+- ✅ **`_parse_confirm_value` 的註解與行為不符（2026-09-12 獨立驗證抓到，**同日已修**）**：
   `runtime.py::_parse_confirm_value` 的註解寫「**等值**比對（`fullmatch`、無前後綴）——
   ⛔ 不做子字串比對：那會讓自由文字誤觸發一次真實寫入」，但實作是
   `_CONFIRM_VALUE_RE.match` 配 `^…$`。**Python 的 `$` 允許結尾換行**，
   故 `"confirm_submit:<pid>\n"` **會命中並兌現一次真實寫入**
   （實測 `match=True`／`fullmatch=False`）。對照 `_parse_select_value` 用的**才是** `fullmatch`。
   機器值來自 LINE quick reply 正常不帶換行，但**這正是該註解宣稱要防的形狀**。
-  修法是一個字（`.match` → `.fullmatch`），⚠️ 屬寫入路徑的行為變更，⛔ 待業主裁示。
+  **處置（業主裁示後）**：`.match` → `.fullmatch`。行為變嚴格——帶換行／空白／前後綴的
+  訊息不再兌現，改當一般訊息進模型。釘住的測試：`test_runtime_confirm_segment_req.py`
+  的 `test_parse_confirm_value_*`（11 條），含突變驗證：退回 `.match` 時換行那條會紅。
+  ⛔ 不得改回 `.match`——失敗方向是「多執行一次寫入」，不可回復。
 
 - 線⑤ 模型偶爾在有工具結果時自判「無依據」轉人（三輪 2/21 情境不穩）；屬答案層定義文（5.1）範圍。
 - `AGENT_VERIFIER_MODE=grounding_observe`（線上值）下引用類不擋——模型講的事實**沒有被要求對得上引文**，只有極性、機敏、標記外洩、schema 契約這幾類在守；重開引用類的依據是觀察紀錄（`verdict.observed`）中「真該擋」的計數（DSP-040 絆線）。相容旗 `AGENT_VERIFIER_OBSERVE_ONLY` 已於 2026-09-10 除役（見 §6）。
