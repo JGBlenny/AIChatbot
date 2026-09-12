@@ -282,6 +282,24 @@ kb.get    → build_visibility_predicate ＋ canon.review_state.content_reviewed
 受眾／面向規劃**，還是**舊鏈殘留**？前者要留並補程式，後者該停用。
 查證：`SELECT question_summary FROM knowledge_base WHERE is_active AND category='對話規則' ORDER BY id;`
 
+#### ⚠️ 19 張表在執行期程式零引用（2026-09-12 實查，待裁決）
+
+`public` 有 63 張表，其中 **19 張在 `.py`／`.ts`／`.js`／`.vue`（排除 tests）完全查不到**
+——只有 migration 與文件提過。⛔ 本輪不動 DB（業主「資料先不碰」）。
+
+| 類別 | 表 | 估列數 |
+|---|---|---|
+| **舊鏈殘留**（主體已刪） | `digression_config`（離題偵測配置）、`suggested_intents`、`chat_history`、`vendor_sop_overrides` | 10／1,561／—／— |
+| **迴圈執行面殘留** | `knowledge_gap_analysis`、`knowledge_import_jobs`、`knowledge_review_queue`、`loop_rollback_history`、`backtest_logic_changes`、`backtest_manual_reviews`、`test_collections`、`test_scenario_collections` | 2,662／33／—／… |
+| **備份／快照**（命名即自述） | `_category_phase2_snapshot`、`kb_rent_backup_20260419`、`knowledge_base_backup_dedup`、`knowledge_base_deleted_phase2` | 668／—／—／55 |
+| **非程式消費**（不是死的） | `schema_migrations`（97 列，runbook／shell 用）、`business_types_config`、`business_scope_config` | — |
+
+⚠️ **「零引用」≠「該刪」**：`schema_migrations` 是 migration 帳本、由 shell 與 runbook 使用；
+判死之前要先問「消費者是不是在**執行期程式以外**」（同 `return_unfiltered` 的教訓）。
+⛔ 我先前只掃 `.py` 得到「22 張零引用」——擴到 `.sh`／`.sql`／`.md` 後全 repo 是 **0/63**，
+那個數字是假警報。上表用的是**執行期程式**這個較嚴的定義。
+查證：`SELECT tablename FROM pg_tables WHERE schemaname='public';` 再對程式做逐表 grep。
+
 **已經沒有的**（全部零消費者）：
 
 - 分類進場路由（`categories` → `config_for_category` → Face）
