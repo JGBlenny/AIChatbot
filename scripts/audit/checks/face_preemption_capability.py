@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """不變量 9：Face preemption 的能力保全（Capability preservation across Face preemption）。
 
-**源起**（2026-08-29 盤查）：`chat.py` 的面向分支在表單分支**之前**（同一個
+**源起**（2026-08-29 盤查，⚠️ 描述的是**舊 REST 對話鏈**，`routers/chat.py` 已於
+2026-09-11 刪除；本不變量仍在 `make audit` 跑，守的是**資料面**的能力對應關係，
+⛔ 不是那條已刪的程式路徑）：`chat.py` 的面向分支在表單分支**之前**（同一個
 `form_trigger_threshold` 門檻），且 responsibility resolver 的 allowlist 未涵蓋的面向
 一律回 `FACE_UNEVALUATED` → `face_precedence()` 判 `"face"` → **無條件 commit**。
 於是「知識掛著 active 表單」與「知識的某個 category 命中面向」同時成立時，

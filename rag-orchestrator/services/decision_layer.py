@@ -59,7 +59,8 @@ class DecisionConfig:
       的 `kb.search` 讀）。⚠️ **預設值已不是歷史 fallback**：2026-09-12 由 `0.55`
       對齊為 `0.65`（＝參數台帳與兩份 compose 的值），理由見檔頭。
     - form_trigger_threshold ── FORM_TRIGGER_THRESHOLD（面向進場＋表單觸發同一顆）
-    - sop_min / knowledge_min / score_gap ── 六 case 仲裁硬編碼（原 chat.py 常數）
+    - sop_min / knowledge_min / score_gap ── 原六 case 仲裁的硬編碼常數（`decide_arbitration`
+  與 `chat.py` 皆已於 2026-09-11 刪除）；保留是為了 `knowledge_min` 仍被 `tools/kb.py` 讀
     """
     kb_threshold: float = 0.65        # 2026-09-12 由 0.55 對齊部署值，見檔頭
     form_trigger_threshold: float = 0.75

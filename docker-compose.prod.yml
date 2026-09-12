@@ -141,7 +141,6 @@ services:
       TZ: Asia/Taipei
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
-      # 意圖分類器配置
       DB_HOST: postgres
       DB_PORT: 5432
       DB_NAME: aichatbot_admin
@@ -171,7 +170,6 @@ services:
       KB_SIMILARITY_THRESHOLD: 0.65  # 比對 final similarity（application 端過濾知識庫候選，涵蓋原 fallback 範圍）
       # PRESALES_EXTRACTIVE: "1"  # presales-grounding-gate D6 事實題抽取式作答；業主 2026-09-04 裁預設關（先補知識再考慮），要開再取消註解
       PRESALES_GROUNDING_THRESHOLD: 0.5  # presales-grounding-gate D2（業主 2026-09-04）：售前 grounding 專用門檻；20 題掃描無知識題最高 0.337、有知識題最低 0.534，0.65 誤擋「電子發票」等有知識題
-      HIGH_QUALITY_THRESHOLD: ${HIGH_QUALITY_THRESHOLD:-0.8}  # 比對 final similarity（高品質判定，用於答案合成觸發）
       # 質量評估配置
       QUALITY_EVALUATION_ENABLED: ${QUALITY_EVALUATION_ENABLED:-true}
       QUALITY_EVALUATION_THRESHOLD: ${QUALITY_EVALUATION_THRESHOLD:-6}

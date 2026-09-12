@@ -175,8 +175,12 @@ class BaseRetriever(ABC):
                 True 時跳過 application 端 threshold 過濾，回傳所有候選
                 （含 final similarity < threshold 的低分項目）。
                 仍會套用 top_k 與 final similarity 排序。
-                僅供 chat.py 在 include_debug_info=True 時使用，
-                產線流量維持 False（預設）。
+                🔴 **2026-09-12：唯一的消費者 `chat.py` 的 debug 模式已於
+                2026-09-11 刪除，`include_debug_info` 全 repo 查無。**
+                本參數目前**沒有任何生產呼叫端傳 True**（`vendor_knowledge_retriever_v2`
+                只是原樣轉傳，`services/agent/**` 零引用），只剩
+                `tests/unit/retrieval/test_retrieve_pipeline_req.py` 在測。
+                ⚠️ 要不要連同這條旁路一起刪，待裁決——⛔ 先不要以為它還有人用。
             unfiltered_sink: **觀測用出口**（預設 None＝完全不動）。傳入 list 時，
                 於 Step 7 過濾**之前**把候選原樣放進去（同一批 dict 物件，非複本）。
                 ⚠️ 存在的理由：`similarity_threshold` 把候選砍到 0 筆時，回傳值為空
@@ -388,8 +392,8 @@ class BaseRetriever(ABC):
             unfiltered_sink.extend(results)
 
         # Step 7: application 端 threshold 過濾（比對 final similarity）
-        # followup-debug-visibility 選項 A：return_unfiltered=True 時跳過過濾，
-        # 讓 chat.py debug 模式拿到完整候選（含低分），供 chat-test 顯示。
+        # followup-debug-visibility 選項 A：return_unfiltered=True 時跳過過濾。
+        # 🔴 原消費者 chat.py 的 debug 模式已刪（2026-09-11）；現無生產呼叫端傳 True。
         if not return_unfiltered:
             before_filter = len(results)
             results = [r for r in results if r.get('similarity', 0) >= similarity_threshold]

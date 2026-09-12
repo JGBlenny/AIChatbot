@@ -154,7 +154,8 @@ async def handle_agent_entry(request, req, ctx, *, runtime=None, store=None,
                              sse_event=None, metered=None, to_response=None):
     """回最終 Response（stream 或 JSON），或 `None`（不啟用／回退／runtime 缺）。
 
-    `sse_event`／`metered`／`to_response` 由 chat.py 注入既有 helper（避免循環 import）。
+    `sse_event`／`metered`／`to_response` 原本由 `chat.py` 注入（避免循環 import）——
+🔴 **該檔已於 2026-09-11 刪除，這三個注入點永遠拿不到值**，這也是本橋掛不起來的原因之一。
     """
     app = req.app
     identity = build_identity(request)

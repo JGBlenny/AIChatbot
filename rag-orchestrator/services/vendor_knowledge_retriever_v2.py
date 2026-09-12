@@ -359,7 +359,10 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
             'retrieval_representation': row.get('retrieval_representation'),
             'retrieval_representation_source': row.get('retrieval_representation_source'),
             'intent_id': row.get('intent_id'),
-            # ─── 觸發配置（spec trigger-vocabulary-debt 元件 1：修檢索斷鏈，透傳至消費層 chat.py:2948）───
+            # ─── 觸發配置（spec trigger-vocabulary-debt 元件 1：修檢索斷鏈）───
+            # 🔴 2026-09-12：原消費層 `chat.py` 已於 2026-09-11 刪除 ⇒ 這三欄現在
+            #    **帶出來但無人消費**（`services/agent/**` 對 trigger_mode 零引用）。
+            #    ⛔ 不要以為修好斷鏈就會生效——消費端要重建才有意義。
             # trigger_mode=varchar／immediate_prompt=text → str|None；trigger_keywords=text[] → list|None（比照 keywords）
             'trigger_mode': row.get('trigger_mode'),
             'trigger_keywords': row.get('trigger_keywords'),
