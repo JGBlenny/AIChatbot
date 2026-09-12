@@ -19,14 +19,11 @@ IMAGE_MAX_PIXELS = 40_000_000
 Image.MAX_IMAGE_PIXELS = IMAGE_MAX_PIXELS
 
 # 導入服務
-from services.intent_classifier import IntentClassifier
-from services.confidence_evaluator import ConfidenceEvaluator
 from services.unclear_question_manager import UnclearQuestionManager
-from services.intent_suggestion_engine import IntentSuggestionEngine
 from services.cache_service import CacheService
 
 # 導入路由
-from routers import unclear_questions, knowledge, vendors, knowledge_import, knowledge_export, knowledge_generation, cache, videos, images, business_types, document_converter, target_user_config, forms, api_endpoints, lookup, loops, loop_knowledge, system_health
+from routers import unclear_questions, vendors, knowledge_import, knowledge_export, knowledge_generation, cache, videos, images, business_types, document_converter, target_user_config, forms, api_endpoints, lookup, loops, loop_knowledge, system_health
 from routers import platform_sop  # ⚠️ 平台管理員的 SOP 範本後台 CRUD（15 條路由）。
 #    ⛔ **它不是對話鏈的一部分**——2026-09-11 砍舊鏈時被誤刪，同日還原。
 #    誤刪原因：分桶時把它列為「舊線進入點」，依據是檔名有 sop，⛔ 不是依據它做什麼。
@@ -37,10 +34,7 @@ from routers import agent as agent_router  # agentic-mcp-orchestration 1.8：/ap
 
 # 全局變數
 db_pool: Pool = None
-intent_classifier: IntentClassifier = None
-confidence_evaluator: ConfidenceEvaluator = None
 unclear_question_manager: UnclearQuestionManager = None
-suggestion_engine: IntentSuggestionEngine = None
 cache_service: CacheService = None
 
 
@@ -223,7 +217,7 @@ async def _init_agent_runtime(app: FastAPI) -> None:
 async def lifespan(app: FastAPI):
     """應用生命週期管理"""
     # 啟動時初始化
-    global db_pool, intent_classifier, confidence_evaluator, unclear_question_manager, suggestion_engine, cache_service
+    global db_pool, unclear_question_manager, cache_service
 
     print("🚀 初始化 RAG Orchestrator...")
 
@@ -240,17 +234,8 @@ async def lifespan(app: FastAPI):
     print("✅ 資料庫連接池已建立")
 
     # 初始化服務
-    intent_classifier = IntentClassifier()
-    print("✅ 意圖分類器已初始化")
-
-    confidence_evaluator = ConfidenceEvaluator()
-    print("✅ 信心度評估器已初始化")
-
     unclear_question_manager = UnclearQuestionManager(db_pool)
     print("✅ 未釐清問題管理器已初始化")
-
-    suggestion_engine = IntentSuggestionEngine()
-    print("✅ 意圖建議引擎已初始化 (Phase B)")
 
     # 初始化緩存服務
     cache_service = CacheService()
@@ -264,10 +249,7 @@ async def lifespan(app: FastAPI):
 
     # 將服務注入到 app.state
     app.state.db_pool = db_pool
-    app.state.intent_classifier = intent_classifier
-    app.state.confidence_evaluator = confidence_evaluator
     app.state.unclear_question_manager = unclear_question_manager
-    app.state.suggestion_engine = suggestion_engine
     app.state.cache_service = cache_service
     app.state.agent_session_store = agent_session_store
 
@@ -431,7 +413,6 @@ else:
 # 註冊路由
 app.include_router(unclear_questions.router, prefix="/api/v1", tags=["unclear_questions"])
 app.include_router(business_types.router, prefix="/api/v1", tags=["business_types"])  # Business Types (Read-only from config)
-app.include_router(knowledge.router, tags=["knowledge"])
 app.include_router(vendors.router, tags=["vendors"])  # Phase 1: Multi-Vendor Support
 app.include_router(knowledge_import.router, tags=["knowledge_import"])  # Knowledge Import from LINE chats
 app.include_router(knowledge_export.router, tags=["knowledge_export"])  # Knowledge Export to Excel
@@ -475,10 +456,7 @@ async def health_check():
             "status": "healthy",
             "database": "connected",
             "services": {
-                "intent_classifier": "ready",
-                "confidence_evaluator": "ready",
-                "unclear_question_manager": "ready",
-                "suggestion_engine": "ready (Phase B)"
+                "unclear_question_manager": "ready"
             }
         }
     except Exception as e:

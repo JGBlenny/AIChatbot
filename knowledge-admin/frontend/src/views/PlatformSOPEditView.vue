@@ -797,7 +797,11 @@ export default {
 
     async loadIntents() {
       try {
-        const response = await axios.get(`${RAG_API}/intents`);
+        // ⛔ 意圖清單住在 knowledge-admin 後端（`/api/intents`），⛔ 不在 rag。
+        //    原本打 `${RAG_API}/intents`（＝`/rag-api/v1/intents`）實測 404
+        //    ——rag 端從未掛載 intents router；正對照：`/api/intents` 回 403（存在需授權）。
+        //    catch 直接吞掉並設成 []，於是意圖下拉**靜默空白**。
+        const response = await axios.get('/api/intents');
         this.intents = response.data.intents || [];
       } catch (error) {
         console.error('載入意圖失敗:', error);

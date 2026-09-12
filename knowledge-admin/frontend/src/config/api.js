@@ -28,18 +28,6 @@ export const API_BASE_URL = getBaseURL();
 export const API_ENDPOINTS = {
   // ==================== RAG Orchestrator API ====================
 
-  // Chat 相關
-  chat: `${API_BASE_URL}/rag-api/v1/chat`,
-  chatStream: `${API_BASE_URL}/rag-api/v1/chat/stream`,
-
-  // Intent 相關
-  intents: `${API_BASE_URL}/rag-api/v1/intents`,
-  intentById: (id) => `${API_BASE_URL}/rag-api/v1/intents/${id}`,
-
-  // Vendor 相關（RAG API）
-  vendorChat: (vendorId) => `${API_BASE_URL}/rag-api/v1/vendors/${vendorId}/chat`,
-  vendorSOPs: (vendorId) => `${API_BASE_URL}/rag-api/v1/vendors/${vendorId}/sops`,
-
   // Knowledge Candidates 相關
   knowledgeCandidatesPending: `${API_BASE_URL}/rag-api/v1/knowledge-candidates/pending`,
   knowledgeCandidatesStats: `${API_BASE_URL}/rag-api/v1/knowledge-candidates/stats`,

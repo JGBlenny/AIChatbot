@@ -135,15 +135,7 @@ services:
       TZ: Asia/Taipei
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
-      # presales 葉答案/自由問答合成模型（可獨立切換）
-      # 2026-08-26 業主定案「統一 mini」：預設由 gpt-4o 改為 gpt-4o-mini。
-      # ⚠️ 這是 **production brain** 的組態變更，會位移所有面向的答話；
-      #    C4b/M3 的取證必須跑在與此處一致的模型上（見 end-to-end-roadmap.md §二）。
-      PRESALES_SYNTH_MODEL: ${PRESALES_SYNTH_MODEL:-gpt-4o-mini}
       # 意圖分類器配置
-      INTENT_CLASSIFIER_MODEL: ${INTENT_CLASSIFIER_MODEL:-gpt-3.5-turbo}
-      INTENT_CLASSIFIER_TEMPERATURE: ${INTENT_CLASSIFIER_TEMPERATURE:-0.1}
-      INTENT_CLASSIFIER_MAX_TOKENS: ${INTENT_CLASSIFIER_MAX_TOKENS:-500}
       DB_HOST: postgres
       DB_PORT: 5432
       DB_NAME: aichatbot_admin
@@ -163,27 +155,17 @@ services:
       CACHE_TTL_QUESTION: ${CACHE_TTL_QUESTION:-3600}
       CACHE_TTL_VECTOR: ${CACHE_TTL_VECTOR:-7200}
       CACHE_TTL_RAG_RESULT: ${CACHE_TTL_RAG_RESULT:-1800}
-      # LLM 答案合成配置
       # 分數欄位語意（詳見 docs/architecture/retriever-pipeline.md）：
       #   vector_similarity = 純向量 cosine；similarity = final 組合分數（含 rerank/boost）
       # JGB 系統 API
       JGB_API_BASE_URL: ${JGB_API_BASE_URL:-https://preview.jgbsmart.com}
       JGB_API_KEY: ${JGB_API_KEY:-}
       USE_MOCK_JGB_API: ${USE_MOCK_JGB_API:-true}
-      ENABLE_ANSWER_SYNTHESIS: ${ENABLE_ANSWER_SYNTHESIS:-true}
-      ENABLE_LLM_OPTIMIZATION: ${ENABLE_LLM_OPTIMIZATION:-true}
-      PERFECT_MATCH_THRESHOLD: ${PERFECT_MATCH_THRESHOLD:-0.90}  # 比對 vector_similarity（純向量分數）— 重構後閾值語意改變，需校準
-      SYNTHESIS_MIN_RESULTS: ${SYNTHESIS_MIN_RESULTS:-2}
-      SYNTHESIS_MAX_RESULTS: ${SYNTHESIS_MAX_RESULTS:-3}
       # RAG 檢索配置 - ✅ 選項1：統一檢索閾值（移除獨立 RAG fallback）
-      SOP_SIMILARITY_THRESHOLD: ${SOP_SIMILARITY_THRESHOLD:-0.75}  # 比對 final similarity（application 端過濾 SOP 候選）
       KB_SIMILARITY_THRESHOLD: 0.65  # 比對 final similarity（application 端過濾知識庫候選，涵蓋原 fallback 範圍）
       # PRESALES_EXTRACTIVE: "1"  # presales-grounding-gate D6 事實題抽取式作答；業主 2026-09-04 裁預設關（先補知識再考慮），要開再取消註解
       PRESALES_GROUNDING_THRESHOLD: 0.5  # presales-grounding-gate D2（業主 2026-09-04）：售前 grounding 專用門檻；20 題掃描無知識題最高 0.337、有知識題最低 0.534，0.65 誤擋「電子發票」等有知識題
       HIGH_QUALITY_THRESHOLD: ${HIGH_QUALITY_THRESHOLD:-0.8}  # 比對 final similarity（高品質判定，用於答案合成觸發）
-      # 信心度評估配置
-      CONFIDENCE_HIGH_THRESHOLD: ${CONFIDENCE_HIGH_THRESHOLD:-0.85}
-      CONFIDENCE_MEDIUM_THRESHOLD: ${CONFIDENCE_MEDIUM_THRESHOLD:-0.70}
       # 質量評估配置
       QUALITY_EVALUATION_ENABLED: ${QUALITY_EVALUATION_ENABLED:-true}
       QUALITY_EVALUATION_THRESHOLD: ${QUALITY_EVALUATION_THRESHOLD:-6}
@@ -192,17 +174,9 @@ services:
       RERANKER_INPUT_LIMIT: ${RERANKER_INPUT_LIMIT:-20}                        # 送進 reranker 的候選數上限
       RERANKER_MIN_VECTOR_SIMILARITY: ${RERANKER_MIN_VECTOR_SIMILARITY:-0.3}   # vector 下限（過濾不可能進 top_k 的低分）
       RERANKER_HTTP_TIMEOUT: ${RERANKER_HTTP_TIMEOUT:-60}                      # HTTP client timeout（秒）
-      # 條件式優化配置
-      LLM_SYNTHESIS_TEMP: ${LLM_SYNTHESIS_TEMP:-0.1}
-      # 意圖建議配置
-      INTENT_SUGGESTION_TEMP: ${INTENT_SUGGESTION_TEMP:-0.2}
-      INTENT_SUGGESTION_MAX_TOKENS: ${INTENT_SUGGESTION_MAX_TOKENS:-800}
       # 知識生成配置
       KNOWLEDGE_GEN_TEMPERATURE: ${KNOWLEDGE_GEN_TEMPERATURE:-0.7}
       KNOWLEDGE_GEN_MAX_TOKENS: ${KNOWLEDGE_GEN_MAX_TOKENS:-800}
-      # LLM 答案優化配置
-      LLM_ANSWER_TEMPERATURE: ${LLM_ANSWER_TEMPERATURE:-0.7}
-      LLM_ANSWER_MAX_TOKENS: ${LLM_ANSWER_MAX_TOKENS:-800}
       # AWS S3 影片儲存配置
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
@@ -220,9 +194,7 @@ services:
       # pre-entry routability gate（entry-scoped 實驗，預設關）
       PREENTRY_ROUTABILITY_GATE: ${PREENTRY_ROUTABILITY_GATE:-false}
       # S1-B：responsibility observation（⛔ 零 authority；預設關閉）
-      RESPONSIBILITY_TELEMETRY: ${RESPONSIBILITY_TELEMETRY:-false}
       # S2：authority handoff 的 migration allowlist（空＝不啟用任何 handoff）
-      RESPONSIBILITY_MIGRATION_ALLOWLIST: ${RESPONSIBILITY_MIGRATION_ALLOWLIST:-}
       # ⛔⛔ **2026-09-11 舊 REST 對話鏈退役：以下 17 個旗標已無任何程式讀取。**
       #    它們曾是真的行為槓桿，消費者隨舊鏈刪除（commit 7c905408）而消失。
       #    ⚠️ **這一類最難發現**：不是 import、不是路徑、不是字串匯入——組態還在、
@@ -318,7 +290,6 @@ services:
       QUOTA_SMTP_PASS: ${QUOTA_SMTP_PASS:-}
       QUOTA_SMTP_FROM: ${QUOTA_SMTP_FROM:-}
       QUOTA_WARN_EMAIL_TO: ${QUOTA_WARN_EMAIL_TO:-}
-      QUOTA_WARN_IN_CHAT: ${QUOTA_WARN_IN_CHAT:-false}
       # 參數雙源切換（預設 configs；true 才改讀 lookup——2026-07-06 分工定案後保留開關）
       VENDOR_PARAMS_FROM_LOOKUP: ${VENDOR_PARAMS_FROM_LOOKUP:-false}
     ports:
