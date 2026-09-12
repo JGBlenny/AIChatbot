@@ -2,33 +2,49 @@
 
 > 本文檔提供任務導向的快速查找。技術演進與深度內容請查看 [README.md](./README.md)。
 
-**最後更新**: 2026-07-06
+**最後對碼**: 2026-09-12
 
 ---
 
-## 現況入口（2026-07-06 新增，優先讀）
+## ⛔ 先讀這三份（現況唯一正本）
+
+| 想知道 | 讀哪份 |
+|---|---|
+| **系統現在怎麼跑**（核心／門面／15 個 face／知識兩條路／六域隔離不對稱） | [`architecture/SYSTEM_ARCHITECTURE.md`](./architecture/SYSTEM_ARCHITECTURE.md) — v4.0，2026-09-12 |
+| **一回合的完整流程**、**為什麼被轉人**、每個分岔與終止點 | [`architecture/AGENTIC_MCP_ARCHITECTURE.md`](./architecture/AGENTIC_MCP_ARCHITECTURE.md) — §2b 是四段 13 個終止點，§4b 是轉人的五個來源 |
+| **`/mcp` 串接契約**（header、工具、錯誤碼、額度） | [`api/mcp-facade.md`](./api/mcp-facade.md) |
+
+🔴 **2026-09-11，31 個舊 REST 對話鏈模組整批刪除**（DSP-046）：意圖分類器、SOP 編排器與
+觸發器、表單狀態機、答案優化器、信心度評估器、並行檢索仲裁——**全部不存在**。
+任何「為什麼這樣回答」「為什麼被轉人」的問題，⛔ 不要從這些子系統查起，
+先讀上表第二列的 §4b。本檔以下各節若與上表衝突，以上表為準。
+
+---
+
+## 現況入口
 
 | 文檔 | 用途 |
 |------|------|
-| [系統架構總覽](./architecture-overview.md) ⭐ | 現況單一入口：使用者×路由×面向×資料體系×計量額度×品質×已知債 |
-| [統一部署 Runbook](./deployment-runbook.md) ⭐ | 33 migrations→匯入→重建→煙囪→稽核（部署唯一依據） |
-| [jgb2 串接規格（正式版）](./jgb2-chat-integration.md) | 三形狀身分契約 b2b/b2c/prospect（給 jgb2 工程，含 b2b 待補齊項） |
-| 盤查報告與批次 | `scripts/audit/reports/`（知識/業者SOP盤查證據鏈與可重放批次） |
-| [售前助手品質盤查 20260902](./presales-assistant-quality-audit-20260902.md) ⭐ | jgb2 preview 實機三情境對話：事實性問題自行生成（同題兩次答案矛盾）、話術推「專人」但無管道；含要求行為與驗收方式 |
-| [檢索召回盤查與適用性把關](./retrieval-recall-audit-20260822.md) ⭐ | 2026-08-22：原語料污染實證、四層架構評估、Baseline A 定義與凍結、面向分岔與 routing 發現 |
-| [Routing Gate 驗收契約](./archive/2026-09/routing-gate-acceptance.md)（🔴 已封存 2026-09-12，受測物不存在） | B 階段實作前凍結的判準：兩層基準角色、五項指標、B0–B3 拆組、結論兩級制 |
-| [檢索與對話路由參數台帳](./retrieval-parameters.md) ⭐ | 每個可調參數的現值／控制什麼／動它會怎樣／有沒有實證；含量測紀律（離線重建失敗三次的教訓）|
+| [統一部署 Runbook](./deployment-runbook.md) ⭐ | migrations→匯入→重建→煙囪→稽核（部署唯一依據） |
+| [jgb2 串接規格](./jgb2-chat-integration.md) | 給 jgb2 工程的身分契約；⚠️ 檔頭有 2026-09-11 重大更新，**`tenant` 在新線不存在** |
+| [檢索與對話路由參數台帳](./retrieval-parameters.md) ⭐ | 每個可調參數的現值／動它會怎樣／有沒有實證；含「不要動」的已裁決禁令 |
 | [Ground-truth Research](./research/README.md) | jgb2 原始碼盤查定案結論（各域真相依據） |
-| 知識批次 | `scripts/knowledge-batches/`（部署重放依賴） |
+| 盤查報告與批次 | `scripts/audit/reports/`、`scripts/knowledge-batches/`（部署重放依賴） |
 
-## 架構文件（Source of Truth）
+⚠️ **有日期的盤查報告是當時的快照**（`presales-assistant-quality-audit-20260902.md`、
+`retrieval-recall-audit-20260822.md` 等）：它們量的是 2026-09-08 agentic-MCP 上線**之前**
+的舊鏈行為，⛔ 不得當現況診斷依據。
+
+## 架構文件
 
 | 文檔 | 用途 |
 |------|------|
-| [完整對話架構](./architecture/COMPLETE_CONVERSATION_ARCHITECTURE.md) ⭐ | 對話流程、意圖分類、SOP/KB 決策、表單狀態機、答案優化 |
-| [Retriever Pipeline](./architecture/retriever-pipeline.md) ⭐ | 分數欄位定義、pipeline stage、閾值對應表 |
-| [系統架構](./architecture/SYSTEM_ARCHITECTURE.md) | 全系統架構、微服務、部署 |
+| [系統架構](./architecture/SYSTEM_ARCHITECTURE.md) ⭐ | **現況全景正本** |
+| [Agentic-MCP 對話架構](./architecture/AGENTIC_MCP_ARCHITECTURE.md) ⭐ | **對話線內部正本**（§2b 流程、§4b 轉人來源） |
+| [Facet 架構](./architecture/facet-architecture.md) | 六域 15 face 的責任分層與擴充判準 |
+| [Retriever Pipeline](./architecture/retriever-pipeline.md) | 分數欄位定義、pipeline stage |
 | [資料庫 Schema](./architecture/DATABASE_SCHEMA.md) | DB 結構、表關聯 |
+| [對話架構（殘卷）](./architecture/COMPLETE_CONVERSATION_ARCHITECTURE.md) | ⚠️ 2026-09-12 刪至四節：三層責任分層、檢索過濾與加成、系統角色、參數速查。⛔ 其餘章節的主體已刪，不要拿它當現況入口 |
 
 ## API 文件
 
@@ -58,10 +74,9 @@
 
 | 文檔 | 用途 |
 |------|------|
-| [SOP 使用指南](./user-guides/VENDOR_SOP_USER_GUIDE.md) | SOP 流程操作 |
+| [SOP 使用指南](./user-guides/VENDOR_SOP_USER_GUIDE.md) | SOP 後台操作（⚠️ 改 SOP 不影響機器人回答） |
+| [知識完善迴圈現況](./user-guides/knowledge-loop-status.md) | 迴圈剩下什麼、想跑改善輪走哪裡 |
 | [知識完善迴圈三層文件索引](./user-guides/README.md) | 入門／標準手冊／深度執行流程順序 |
-| [知識完善迴圈（深度執行流程）](./user-guides/knowledge_completion_loop.md) | 知識迴圈概念與參數 |
-| [快速開始（5 分鐘入門）](./user-guides/quick_start.md) | 快速上手 |
 
 ## 設計文件
 

@@ -209,9 +209,9 @@ AIChatbot/
 
 ### 腳本檔案 (scripts/, /tmp/)
 - **遷移腳本**: `migrate_{description}.py`
-- **分析腳本**: `analyze_{subject}.py` (如 `analyze_coverage.py`)
-- **生成腳本**: `generate_{content}.py` (如 `generate_test_scenarios.py`)
-- **匯入腳本**: `import_{source}.py` (如 `import_generated_tests.py`)
+- **覆蓋率腳本**: `review_coverage.py`、`check_embedding_coverage.py`
+- **生成腳本**: `generate_{content}.py`（`generate_test_scenario_embeddings.py`）
+- **匯入腳本**: `import_{source}.py`（`rag-orchestrator/tools/import_facet_knowledge.py`）
 
 ## 匯入規範
 

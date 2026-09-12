@@ -1,6 +1,15 @@
 # AIChatbot - 多業者 RAG AI 客服知識庫系統
 
-基於 RAG（Retrieval-Augmented Generation）的多業者 SaaS AI 客服知識庫系統，專注於租屋管理領域。整合向量語義檢索、SOP 流程編排、表單填寫、知識完善迴圈與多業者隔離，所有 AI 生成內容皆需人工審核。
+多業者 SaaS AI 客服系統，專注於租屋管理領域。
+
+**對話核心是 `AgentRuntime`**（`rag-orchestrator/services/agent/runtime.py`）——模型持有回合、
+自己決定呼叫哪支工具，輸出逐句經 Verifier 驗引用。**`/mcp` 是它的門面之一**，
+也是目前唯一掛著的對外入口。知識走兩條路：git canon 正本每回合自動注入，
+以及模型自己呼叫 `kb.search`／`kb.get`。
+
+⛔ **先讀 [`docs/architecture/SYSTEM_ARCHITECTURE.md`](./docs/architecture/SYSTEM_ARCHITECTURE.md)**
+（現況全景）與 [`docs/architecture/AGENTIC_MCP_ARCHITECTURE.md`](./docs/architecture/AGENTIC_MCP_ARCHITECTURE.md)
+（§2b 一回合完整流程、§4b 為什麼被轉人）。
 
 > 完整文檔請見 [docs/INDEX.md](./docs/INDEX.md)（任務導向索引）與 [docs/README.md](./docs/README.md)（技術演進總覽）。
 
@@ -8,12 +17,16 @@
 
 ## 核心功能
 
-### RAG 智能檢索與回答
-- **向量語義搜尋**：PostgreSQL + pgvector 進行相似度檢索
-- **分離式分數 pipeline**：vector → keyword → keyword_boost → reranker → finalize，各 stage 寫入獨立欄位（詳見 [retriever-pipeline](./docs/architecture/retriever-pipeline.md)）
-- **語義重排序（Reranker）**：本地 sentence-transformers / bge-reranker 二階段重排（可選）
-- **信心度評估**：高/中/低信心度判斷，低信心度標記為「未釐清問題」
-- **LLM 答案優化**：以業者參數動態合成、優化答案
+### 對話回合（agentic-MCP，唯一活線）
+- **`AgentRuntime.run_turn`**：程式段 → 九段脈絡注入 → 模型工具迴圈＋Verifier → 四道出口閘（順序即契約）
+- **工具**：`jgb2.query.*` 六域 15 個 face（帳單／合約／修繕／電表／帳號／物件）、`kb.search`／`kb.get`、寫入類與確認卡
+- **受眾只有兩種**：`prospect` 與 `property_manager`；⛔ `tenant` 在新線不存在（無 `canon/tenant.md`）
+- **引用驗證**：逐句驗，擋不住就走轉人固定句
+
+### 檢索
+- **向量語義搜尋**：PostgreSQL + pgvector
+- **分離式分數 pipeline**：vector → keyword → keyword_boost → reranker → finalize（詳見 [retriever-pipeline](./docs/architecture/retriever-pipeline.md)）
+- **語義重排序（Reranker）**：本地 bge-reranker 二階段重排。⚠️ 它會靜默永久停用，容器／稽核／健檢 API 三者都看不出來
 
 ### 知識管理
 - **多元知識來源**：通用知識庫（knowledge_base）、SOP 知識（vendor_sop_*）、測試場景（test_scenarios）
@@ -22,13 +35,10 @@
 - **業態類型過濾**：依不同業態（租屋、商辦等）過濾知識
 - **知識匯入/匯出**：Excel/JSON/TXT 批量匯入，雙層去重（文字精確 + 向量語意）
 
-### SOP 編排與表單
-- **SOP 智能編排**：多輪對話流程、語義觸發、Reranker 重排
-- **動態表單填寫**：表單生成、驗證、參數解析、表單串接（form-chaining）
-
-### 知識完善迴圈（Knowledge Completion Loop）
-- 回測執行 → 失敗分析 → AI 分類（SOP/表單/系統配置）→ 缺口聚類 → 知識生成 → 人工審核 → 迭代驗證
-- 全程記錄 OpenAI token 與成本，所有生成知識進入審核佇列
+### 後台維護面（⛔ 對話路徑不讀）
+- **SOP**（`vendor_sop_items`）：後台 CRUD 可用、存檔仍重算 embedding，但**改 SOP 不影響機器人回答**——編排器與觸發器已於 2026-09-11 刪除
+- **表單**：後台 CRUD 可用；對話填單引擎已退役，`form_sessions` 表被新線借用來存多輪狀態
+- **知識完善迴圈**：只剩查詢與審核，⛔ 沒有端點可以啟動新迴圈；想跑改善輪走 `.claude/skills/retrieval-improvement-loop/`（打 `/mcp`）
 
 ### 多業者 SaaS 與審核
 - 資料庫層級 `vendor_id` 隔離、業者動態配置（vendor_configs）
@@ -44,7 +54,7 @@
 
 | 服務 | 容器名 | 技術 | Port（本地） | 功能 |
 |------|--------|------|------|------|
-| RAG Orchestrator | aichatbot-rag-orchestrator | FastAPI | 8100 | 智能問答、SOP 編排、表單、知識完善迴圈 |
+| RAG Orchestrator | aichatbot-rag-orchestrator | FastAPI | 8100 | `/mcp` 門面＋`AgentRuntime`（對話核心）、檢索、後台 CRUD |
 | 知識管理 API | aichatbot-knowledge-admin-api | FastAPI | 8000 | 知識/測試場景/業者 CRUD、自動向量更新 |
 | 知識管理前端 | aichatbot-knowledge-admin-web | Vue.js 3 + Nginx | 8087 | 審核中心、知識/業者/分類管理 |
 | Embedding API | aichatbot-embedding-api | FastAPI | 5001 | 統一向量生成、Redis 快取 |
@@ -54,7 +64,7 @@
 
 > 前端正式環境 Port 由 `.env` 的 `WEB_PORT` 控制（本地預設 8087，線上預設 80）。
 
-詳見 [系統架構文件](./docs/architecture/SYSTEM_ARCHITECTURE.md) 與 [完整對話架構](./docs/architecture/COMPLETE_CONVERSATION_ARCHITECTURE.md)。
+詳見 [系統架構文件](./docs/architecture/SYSTEM_ARCHITECTURE.md) 與 [Agentic-MCP 對話架構](./docs/architecture/AGENTIC_MCP_ARCHITECTURE.md)。
 
 ---
 
@@ -109,7 +119,7 @@ docker-compose -f docker-compose.prod.yml logs -f rag-orchestrator
 
 ```
 AIChatbot/
-├── rag-orchestrator/     # 主服務：RAG 編排、SOP、表單、知識完善迴圈
+├── rag-orchestrator/     # 主服務：AgentRuntime 對話核心、/mcp 門面、檢索、後台 CRUD
 │   ├── routers/          # API 路由層
 │   ├── services/         # 業務邏輯層（含 knowledge_completion_loop/）
 │   ├── config/           # 配置（intents.yaml、business_types 等）
@@ -138,7 +148,9 @@ AIChatbot/
 | 技術演進總覽 | [docs/README.md](./docs/README.md) |
 | 快速開始 | [docs/guides/getting-started/QUICKSTART.md](./docs/guides/getting-started/QUICKSTART.md) |
 | 部署指南 | [docs/deployment/DEPLOY_GUIDE.md](./docs/deployment/DEPLOY_GUIDE.md) |
-| 系統架構 | [docs/architecture/SYSTEM_ARCHITECTURE.md](./docs/architecture/SYSTEM_ARCHITECTURE.md) |
+| **系統架構（現況全景）** ⭐ | [docs/architecture/SYSTEM_ARCHITECTURE.md](./docs/architecture/SYSTEM_ARCHITECTURE.md) |
+| **對話線內部＋為什麼被轉人** ⭐ | [docs/architecture/AGENTIC_MCP_ARCHITECTURE.md](./docs/architecture/AGENTIC_MCP_ARCHITECTURE.md) |
+| `/mcp` 串接契約 | [docs/api/mcp-facade.md](./docs/api/mcp-facade.md) |
 | 資料庫 Schema | [docs/architecture/DATABASE_SCHEMA.md](./docs/architecture/DATABASE_SCHEMA.md) |
 | API 文件索引 | [docs/api/README.md](./docs/api/README.md) |
 | 功能文件索引 | [docs/features/README.md](./docs/features/README.md) |

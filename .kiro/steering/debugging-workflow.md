@@ -37,6 +37,32 @@
 - [ ] **檢查錯誤處理** - 對比 try-catch 結構、HTTPException 處理
 - [ ] **檢查依賴調用** - 對比函數調用方式、參數傳遞
 
+### 3b. 對話問題的盤查清單（「為什麼這樣回答／為什麼被轉人」）
+
+⛔ **不要從意圖分類、SOP 觸發、表單狀態機、答案優化、檢索門檻查起——那五個子系統
+2026-09-11 已整批刪除**（DSP-046）。現行唯一活線是 `/mcp` → `AgentRuntime.run_turn`。
+
+按順序：
+
+- [ ] **先看 log 那一行**：`agent_turn trace_id=… kind=… handoff_reason=… tool_calls=… verifier_rejects=… llm_calls=…`
+      （`services/agent/turn_context.py::_emit_agent_decision`）。它一行就把回合分類完了。
+- [ ] **`handoff_reason` 決定往哪查**——轉人有**五個來源**，判讀法見
+      `docs/architecture/AGENTIC_MCP_ARCHITECTURE.md` §4b 表 A：
+      模型自報／`budget_exhausted`（Verifier 擋兩次）／範圍退出／程式降級／**工具查無或身分不足**。
+- [ ] **最常見的是最後一個**：`jgb2.query.*` 回 `NO_MATCH` ⇒ 該筆 `status="error"`
+      ⇒ 兩道降級閘都不接管 ⇒ 使用者看到轉人固定句而**不是** `NO_DATA_TEXT`。
+      ⚠️ pm 查 `bills`／`contracts` 缺 `role_id` 也走這條（門面選填、下游必填）。
+- [ ] **查線上組態**：`GET /api/v1/agent/health` 看 `verifier_mode`／`use_mock_jgb_api`／`limits`。
+      ⛔ 不要拿文件表格當現行部署值——`AGENTIC_MCP_ARCHITECTURE.md` §6 自己說那不是。
+- [ ] **看單一回合**：`GET /api/v1/agent/trace/{trace_id}`；或查 `usage_events.decision_snapshot`。
+- [ ] **⛔ 不能動的東西**：`KB_SIMILARITY_THRESHOLD`（docstring 明寫不得改回 0.55）、
+      `NON_SENSITIVE_HANDOFF_REASONS`（封閉白名單，測試釘死）、出口閘順序。
+      清單見 `docs/architecture/SYSTEM_ARCHITECTURE.md`「⛔ 調鬆一點時不能動的東西」。
+
+⚠️ **有日期的盤查報告是舊鏈的快照**（`presales-assistant-quality-audit-20260902.md`、
+`retrieval-recall-audit-20260822.md` 等，都早於 2026-09-08 agentic-MCP 上線）——
+它們的結論 ⛔ 不適用於現況診斷。
+
 ### 4. 禁止的行為
 
 以下行為會浪費時間且無效，**絕對禁止**：

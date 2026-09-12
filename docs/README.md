@@ -10,14 +10,14 @@
 
 | 目錄 | 內容 |
 |------|------|
-| [architecture/](./architecture/) | 系統架構、完整對話架構、Retriever Pipeline、資料庫 Schema（Source of Truth） |
+| [architecture/](./architecture/) | **現況正本**：系統全景、Agentic-MCP 對話架構、Facet、Retriever Pipeline、資料庫 Schema |
 | [api/](./api/) | API 規格與外部系統對接（JGB、conversational API 等） |
 | [guides/](./guides/) | 操作指南（快速開始、功能使用、知識匯入匯出等） |
 | [user-guides/](./user-guides/) | 非技術人員操作指南 |
-| [features/](./features/) | 功能說明（SOP、表單、Reranker、認證等） |
+| [features/](./features/) | 功能說明（⚠️ SOP 與表單只剩後台維護面，對話路徑不讀） |
 | [design/](./design/) | 設計文件（知識動作、表單對話、權限、Lookup 等） |
 | [deployment/](./deployment/) | 部署指南與檢查清單 |
-| [backtest/](./backtest/) | 回測系統與知識完善迴圈 |
+| [backtest/](./backtest/) | ⚠️ 回測框架與知識完善迴圈的**執行面已拆除**；現行改善輪走 `.claude/skills/retrieval-improvement-loop/` |
 | [testing/](./testing/) | 測試規範與整合測試指南 |
 | [changelog/](./changelog/) | 歷史變更記錄 |
 | [maintenance/](./maintenance/) | 系統審計與維護記錄 |
@@ -27,13 +27,21 @@
 
 ## 常用入口
 
-- **系統現況總覽（2026-07-06 起單一入口）**：[architecture-overview.md](./architecture-overview.md) ⭐ —— 三類使用者/路由順位/21+面向登記/資料體系分工/計量額度/品質三層/已知債
-- **統一部署**：[deployment-runbook.md](./deployment-runbook.md) ⭐（部署聖經，取代舊 deployment/ 指南）
-- **jgb2 串接規格（b2b/b2c/售前）**：[jgb2-chat-integration.md](./jgb2-chat-integration.md)
-- 架構真相來源：[完整對話架構](./architecture/COMPLETE_CONVERSATION_ARCHITECTURE.md)、[Retriever Pipeline](./architecture/retriever-pipeline.md)
-- API 一覽：以 routers/ 目錄為準；歷史快照見 [API 端點完整清單（已歸檔）](./archive/2026-09/API_ENDPOINTS_COMPLETE_INVENTORY.md)
+⛔ **先讀這三份**（現況唯一正本，2026-09-12 對碼）：
+
+1. [`architecture/SYSTEM_ARCHITECTURE.md`](./architecture/SYSTEM_ARCHITECTURE.md) ⭐ —— 系統現在怎麼跑
+2. [`architecture/AGENTIC_MCP_ARCHITECTURE.md`](./architecture/AGENTIC_MCP_ARCHITECTURE.md) ⭐ —— 一回合的完整流程（§2b）、為什麼被轉人（§4b）
+3. [`api/mcp-facade.md`](./api/mcp-facade.md) —— `/mcp` 串接契約
+
+其他：
+
+- **統一部署**：[deployment-runbook.md](./deployment-runbook.md) ⭐（部署唯一依據）
+- **jgb2 串接規格**：[jgb2-chat-integration.md](./jgb2-chat-integration.md)（⚠️ 檔頭有 2026-09-12 補正，**`tenant` 在新線不存在**）
+- **參數台帳**：[retrieval-parameters.md](./retrieval-parameters.md)（含「不要動」的已裁決禁令）
 - 上手：[快速開始](./guides/getting-started/QUICKSTART.md)
-- 部署：[部署指南](./deployment/DEPLOY_GUIDE.md)
-- 回測 / 知識完善迴圈：回測快速開始（檔已不存在）
+
+🔴 **2026-09-11，31 個舊 REST 對話鏈模組整批刪除**（DSP-046）：意圖分類、SOP 編排、
+表單狀態機、答案優化、信心度評估全部不存在。`architecture-overview.md` 已改成指路檔；
+`architecture/COMPLETE_CONVERSATION_ARCHITECTURE.md` 只剩四節，⛔ 都不要當現況入口。
 
 完整索引請見 [INDEX.md](./INDEX.md)。

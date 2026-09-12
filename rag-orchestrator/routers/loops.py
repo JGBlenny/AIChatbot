@@ -8,8 +8,9 @@
 新的回測改走 `.claude/skills/retrieval-improvement-loop/`（打 `/mcp` 的
 `agent.turn`），不再有 repo 內的 Python 回測框架。
 
-本檔僅保留純查詢端點，服務既有的 915 筆 `loop_generated_knowledge` 待審知識與
-27 筆 `knowledge_completion_loops` 歷史記錄的檢視需求：
+本檔僅保留純查詢端點，服務既有的 915 筆 `loop_generated_knowledge`（2026-09-12 實查：
+469 approved／446 rejected，**0 筆待審**）與 27 筆 `knowledge_completion_loops`
+歷史記錄的檢視需求：
 - GET /coverage-stats
 - GET /
 - GET /{loop_id}/iterations

@@ -86,15 +86,16 @@ else:
 
 ## 環境變數閾值對應
 
+🔴 **2026-09-12：本表原列 5 顆，其中 4 顆在 `rag-orchestrator` 的 `.py` 完全 0 命中**
+（`PERFECT_MATCH_THRESHOLD`／`HIGH_QUALITY_THRESHOLD`／`SYNTHESIS_THRESHOLD` 的比對位置
+`llm_answer_optimizer` 已刪；`SOP_SIMILARITY_THRESHOLD` 的 SOP 檢索程式已刪）。
+**現在只剩一顆真的被讀。** 正對照：`KB_SIMILARITY_THRESHOLD` 有 5 個 `.py` 命中。
+
 | 環境變數 | 對應欄位 | 比對位置 | 預設值 |
 |---------|---------|---------|-------|
-| `PERFECT_MATCH_THRESHOLD` | `vector_similarity` | `llm_answer_optimizer.optimize_answer` | 0.90 |
-| `SOP_SIMILARITY_THRESHOLD` | `similarity`（final） | SOP retrieve() 後的 application 端過濾 | 0.75 |
-| `KB_SIMILARITY_THRESHOLD` | `similarity`（final） | 知識庫 retrieve() 後的 application 端過濾 | 0.65 |
-| `HIGH_QUALITY_THRESHOLD` | `similarity`（final） | `llm_answer_optimizer` 高品質判定 | 0.80 |
-| `SYNTHESIS_THRESHOLD` | `similarity`（final） | `_should_synthesize` 合成觸發判定 | 0.80 |
+| `KB_SIMILARITY_THRESHOLD` | `similarity`（final） | `services/decision_layer.py::DecisionConfig.load` → `services/agent/tools/kb.py` | 0.65 |
 
-**關鍵差異**：只有 `PERFECT_MATCH_THRESHOLD` 比對純向量分數（`vector_similarity`），其餘都比對 final `similarity`。
+查證：`grep -rl "KB_SIMILARITY_THRESHOLD" rag-orchestrator --include="*.py"`。
 
 ---
 
@@ -106,7 +107,7 @@ else:
 
 | 檔案 / 位置 | 欄位 | 對應來源 |
 |-----------|------|---------|
-| `services/agent/tools/kb.py::kb.search` | 同一組 score 欄位 | `vector_similarity`／`similarity`／`score_source` |
+| `services/agent/tools/kb.py::kb.search` | **只回 `id`／`question_summary`／`similarity`** —— ⛔ `vector_similarity` 與 `score_source` 在 retriever 內部算完就留在內部，不出口 | `similarity`（final） |
 | `backtest_framework_async` sources 注入 | final + 純向量 | `similarity`（主）+ `vector_similarity`（輔助） |
 
 ⚠️ **能力落差（非搬家）**：新線**沒有等價的 `debug_info` 呈現層**——

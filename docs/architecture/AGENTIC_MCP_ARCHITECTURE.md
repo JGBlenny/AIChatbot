@@ -393,14 +393,14 @@ pid 不在本 session（含過期後舊鍵）⇒ 固定句「這筆確認已失�
 
 > 動機：2026-09-09 我把「答案被 Verifier 打回所以轉人」講成線上原因，業主指出線上是觀察模式。這一節把「誰決定轉人」寫死，每句附查證指令；⛔ 引用時先跑指令再說。
 
-**A. 轉人是誰決定的（四個來源）**
+**A. 轉人是誰決定的（五個來源）**
 
 | 來源 | 觸發 | 使用者看到 | 查證 |
 |---|---|---|---|
 | 模型自報 | 模型輸出 `kind=handoff`＋`handoff_reason=no_grounding`／`sensitive_no_grounding`（值域見 `HandoffReason`） | `PRESALES_HANDOFF_MESSAGE`（「這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。」，`effective_handoff_message(None)`） | `grep -n "class HandoffReason" rag-orchestrator/services/presales_gate.py`；`grep -n "PRESALES_HANDOFF_MESSAGE" rag-orchestrator/services/conversational_config.py rag-orchestrator/services/agent/tools/handoff.py` |
 | 預算耗盡 | Verifier **擋**（非觀察模式）兩次改寫仍不過 ⇒ `handoff_reason=budget_exhausted` | 同上固定句 | log 行 `agent_turn trace_id=… kind=handoff handoff_reason=budget_exhausted … verifier_rejects=2` |
-| 範圍退出 | 清單點選會話問別戶（L15） | `SCOPE_EXIT_TEXT` | `grep -n "def _apply_scope_exit" rag-orchestrator/services/agent/runtime.py` |
-| 程式降級（S4，2026-09-09） | 模型自報 `no_grounding` 但零工具呼叫、無範圍、非敏感類 ⇒ **不轉人**，改追問 `ASK_TARGET_TEXT` | 「想處理哪一戶或哪一筆？…」 | `grep -n "def _apply_handoff_without_lookup" rag-orchestrator/services/agent/runtime.py` |
+| 範圍退出 | 清單點選會話問別戶（L15） | `SCOPE_EXIT_TEXT` | `grep -n "def _apply_scope_exit" rag-orchestrator/services/agent/exit_gates.py`（⛔ 不在 runtime.py，那裡只是 import） |
+| 程式降級（S4，2026-09-09） | 模型自報 `no_grounding` 但零工具呼叫、無範圍、非敏感類 ⇒ **不轉人**，改追問 `ASK_TARGET_TEXT` | 「想處理哪一戶或哪一筆？…」 | `grep -n "def _apply_handoff_without_lookup" rag-orchestrator/services/agent/exit_gates.py` |
 | **工具查無／身分不足**（實務上最常見） | `jgb2.query.*` 回 `NO_MATCH`（ref／keyword 對不到列，或 pm 缺 `role_id`）⇒ 該筆 `status="error"` ⇒ **閘 2（要求零工具呼叫）與閘 4（要求全 `ok`）都不接管** ⇒ 模型的 `no_grounding` 原樣送出 | 同轉人固定句 | `grep -n "def _no_match" rag-orchestrator/services/agent/tools/jgb2.py`；log 行 `tool_calls=1 … handoff_reason=no_grounding` |
 
 **B. 線上（demo）到底擋不擋：`AGENT_VERIFIER_MODE=grounding_observe`（runbook §20-2；W6-b3 於 2026-09-09 落地）**

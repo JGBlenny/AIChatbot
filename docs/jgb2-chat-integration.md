@@ -91,7 +91,7 @@
 | 身分 | 誰在用 | 請求形狀（jgb2 送出） | 回答資源池 |
 |---|---|---|---|
 | **業者用戶**（b2b） | 管理公司員工（JGB 後台） | `mode=b2b`＋`target_user=property_manager`＋`role_id`＋`user_id` | 只走 JGB 系統知識（不走 SOP） |
-| **租客**（b2c） | 業者的租客（租客端 widget） | `mode=b2c`＋`target_user=tenant`＋所屬業者 `role_id`＋`user_id` | 該業者 SOP＋租客知識，比分擇優 |
+| ~~租客（b2c）~~ | — | — | ⛔ **新線不存在**：無 `canon/tenant.md`、`AGENT_TURN_SPEC` 無 tenant 鍵；且該業者 SOP 對話路徑零讀取。⛔ 不要照本表串接租客端，見檔頭 2026-09-12 補正 |
 | **潛在客戶**（售前） | 未註冊的潛在業者 | `mode=b2b`＋`target_user=prospect`＋**不帶 role_id/user_id** | 售前顧問知識 |
 
 > `vendor_id` 不在任何形狀的 jgb2 送出欄位內——AI 側以 `role_id` 關聯解出（見 §4、§8）。
@@ -127,18 +127,21 @@ X-API-Key: <發放之金鑰>          # 認證啟用（RAG_API_AUTH_ENFORCE）�
 
 ### 3.2 租客（b2c）
 
-```json
-{
-  "message": "使用者輸入的問題（1–2000 字）",
-  "mode": "b2c",
-  "target_user": "tenant",
-  "user_id": "<租客的 JGB user id>",
-  "role_id": "<該租客所屬業者的 role id>",
-  "session_id": "<對話識別，見 §6>"
-}
-```
+🔴 **本節（原本的 b2c 請求範例與欄位說明）已於 2026-09-12 刪除。**
+新線沒有 `tenant` 受眾：`ls rag-orchestrator/canon/*.md` 只有 `prospect.md` 與
+`property_manager.md`；`AGENT_TURN_SPEC["stage"]` 是 `{"prospect": "M1", "property_manager": "M1"}`
+——**無 tenant 鍵 ⇒ `agent.turn` 對 tenant 永不可見**。照舊範例串接會直接失敗。
 
-> 不送 `vendor_id`；AI 側由 `role_id` 關聯解出（§8）。`role_id` 是租客**所屬業者**的 role id，非租客自身角色。
+⚠️ **但「看不到 `agent.turn`」不等於「tenant 完全沒工具」**：`kb.search`／`kb.get`／
+`help.read` 與六域 `jgb2.query.*` 的 `stage` 都含 tenant（例：`help.read` 是
+`{"prospect": "M0", "property_manager": "M0", "tenant": "M0"}`）。也就是**資料存取層已經開了，
+缺的是對話層**。查證：`grep -n '"stage"' rag-orchestrator/services/agent/mcp_facade.py`。
+
+**要開租客端不是接線工作，是知識正本工程**：產 `canon/tenant.md`、人審、
+開 `AGENT_TURN_SPEC` 的 tenant 鍵、補六域裡 `repairs`／`meters`／`accounts`／`estates`
+缺的 jgb2 側 `viewer_user_id` 範圍限制（目前只有 `bills`／`contracts` 有）。
+⚠️ `audience_of` 把「其餘全部（含 `target_user=None`）」映射到 tenant——
+**開 tenant 等於打開預設分支**，⛔ 不可當成加一個受眾看待。
 
 ### 3.3 潛在客戶（售前）
 

@@ -6,6 +6,22 @@
 
 ---
 
+🔴 **2026-09-12 對碼：SOP 的「後台管理」是活的，「影響對話」那一半已經沒有了。**
+
+| 這份指南教的 | 現況 |
+|---|---|
+| 建立／編輯／複製 SOP 範本與項目（Platform 與 Vendor 兩層） | ✅ **仍然可用**——`routers/platform_sop.py`（15 條路由）與 `routers/vendors.py` 的 10 支 `/sop/*` 端點都掛著，存檔時仍真的重算 embedding |
+| 觸發模式（manual／immediate）、四種後續動作（none／form_fill／api_call／form_then_api）、關鍵詞觸發、主動詢問、表單整合 | ⛔ **對話路徑完全不讀**——`sop_orchestrator.py`／`sop_trigger_handler.py`／`form_manager.py` 已於 2026-09-11 隨舊 REST 對話鏈刪除（DSP-046）。查證：`grep -rn "sop" rag-orchestrator/services/agent/` 為空（正對照：同目錄 `kb.search` 在 `tools/kb.py` 找得到） |
+
+**結論：改 SOP 不會改變機器人的任何回答。** embedding 的計算成本是真的，效果是零。
+現行對話走 `/mcp` 的 `agent.turn`，知識來源是 git canon 正本與 `kb.search`，
+見 [`docs/architecture/AGENTIC_MCP_ARCHITECTURE.md`](../architecture/AGENTIC_MCP_ARCHITECTURE.md) §2b。
+
+⚠️ 下文第一～五部分與附錄的「流程配置」內容，讀時請套用上表：**欄位仍存在且存得進 DB，
+但沒有任何程式會在對話時查它們。**
+
+---
+
 ## 📚 目錄
 
 - [第一部分：功能概覽](#第一部分功能概覽)

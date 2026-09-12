@@ -1,14 +1,9 @@
-# 使用者指南索引
+# 使用者指南
 
-## 知識完善迴圈系統（三層文件，依需求選讀）
+| 主題 | 文件 | 說明 |
+|---|---|---|
+| 知識完善迴圈 | [`knowledge-loop-status.md`](./knowledge-loop-status.md) | ⚠️ 執行面已拆除，只剩查詢與審核；想跑改善輪走 `.claude/skills/retrieval-improvement-loop/` |
+| 業者 SOP 操作 | [`VENDOR_SOP_USER_GUIDE.md`](./VENDOR_SOP_USER_GUIDE.md) | ⚠️ 後台 CRUD 可用，但**改 SOP 不影響機器人回答**（對話路徑零讀取，詳見檔頭對碼表） |
 
-| 層級 | 檔案 | 用途 |
-|------|------|------|
-| 1. 5 分鐘入門 | [`quick_start.md`](./quick_start.md) | 第一次操作、快速跑一輪迴圈 |
-| 2. 標準手冊 | [`knowledge_loop_workflow.md`](./knowledge_loop_workflow.md) | 完整操作流程圖與逐步說明 |
-| 3. 深度執行流程 | [`knowledge_completion_loop.md`](./knowledge_completion_loop.md) | 概念、參數、8 步驟系統原理 |
-
-
-## 其他指南
-
-- [`VENDOR_SOP_USER_GUIDE.md`](./VENDOR_SOP_USER_GUIDE.md) — 業者 SOP 操作
+⛔ 原本的三份迴圈操作手冊（5 分鐘入門／標準手冊／深度執行流程）已於 2026-09-12
+歸檔——它們教的「啟動新迴圈」「執行迭代」按鈕，背後的端點已不存在。
