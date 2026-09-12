@@ -1723,7 +1723,7 @@ requirements.md 記其 blast radius 未量。
 - [面向架構](../../../docs/architecture/facet-architecture.md)
 - [檢索管線](../../../docs/architecture/retriever-pipeline.md)
 - [部署 runbook](../../../docs/deployment-runbook.md)
-- Steering：[testing-code.md](../../steering/testing-code.md)、[testing.md](../../steering/testing.md)、[dialogue.md](../../steering/dialogue.md)、[knowledge.md](../../steering/knowledge.md)
+- Steering：[testing-code.md](../../steering/testing-code.md)、[dialogue.md](../../steering/dialogue.md)、[knowledge.md](../../steering/knowledge.md)　🔴 2026-09-12：原另列 `testing.md`，該檔不存在（`.kiro/steering/` 只有 `testing-code.md`），已移除死鏈
 
 ---
 

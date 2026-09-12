@@ -20,7 +20,7 @@
 
 > 訂立 2026-08-23，分支 `fix/retrieval-routing-stability`
 > **本契約在實作之前凍結。實作過程中不得修改指標定義或通過線。**
-> 依據：[參數台帳 §六](./retrieval-parameters.md)｜[盤查報告](./retrieval-recall-audit-20260822.md)
+> 依據：[參數台帳 §六](../../retrieval-parameters.md)｜[盤查報告](../../retrieval-recall-audit-20260822.md)
 >
 > 訂立理由：本輪已發生**五次**「小樣本／未驗證因果就下結論」。
 > 先寫死判準，避免做到一半依結果移動球門。
