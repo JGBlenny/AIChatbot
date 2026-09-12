@@ -950,5 +950,5 @@ function toggleSelectAll(event: Event) {
 
 **相關文件**：
 - [迴圈管理 API 文檔](./loops_api.md)
-- [設計文件](../../.kiro/specs/backtest-knowledge-refinement/design.md)
-- [需求文件](../../.kiro/specs/backtest-knowledge-refinement/requirements.md)
+- 設計文件（檔已不存在）
+- 需求文件（檔已不存在）

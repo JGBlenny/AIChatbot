@@ -62,27 +62,26 @@ AIChatbot (Multi-container Docker Compose)
 ### 分層架構 (RAG Orchestrator)
 ```
 Routers (路由層)
-  ├── agent.py - /mcp 門面掛載（agentic-mcp-orchestration；prefix 在 router 內）
-  ├── knowledge.py - 知識管理 API
-  ├── forms.py - 表單管理 API（後台 CRUD 仍活，對話填單引擎已退役）
+  ├── agent.py - /mcp 門面掛載（prefix 在 router 內）——唯一的對話入口
+  ├── agent_entry.py - ⚠️ strangler 遷移橋，上游已滅、無 APIRouter、⛔ 掛不起來
+  ├── forms.py - 表單後台 CRUD（對話填單引擎已退役）
+  ├── platform_sop.py - 平台管理員的 SOP 範本後台 CRUD（15 條路由）
   ├── api_endpoints.py - 外部 API 管理
   ├── lookup.py - Lookup 表管理
-  └── ...
-  （⚠️ 2026-09-11 舊鏈退役：`chat.py`／`platform_sop.py` 等 31 個舊 REST 對話鏈
-  路由模組已刪或未掛載，見 `.claude/DECISIONS.md` DSP-046）
+  └── ...（完整清單見 .kiro/steering/structure.md，該樹依檔案系統維護）
 
 Services (服務層)
-  ├── intent_suggestion_engine.py - 意圖建議引擎
-  ├── intent_classifier.py - 意圖分類器
-  ├── confidence_evaluator.py - 信心度評估器
-  ├── services/agent/ - agentic-mcp-orchestration 新線（runtime.py／mcp_facade.py／verifier.py 等，現役核心）
-  ├── knowledge_completion_loop/ - 知識完善迴圈
-  │   ├── coordinator.py - 迴圈協調器
-  │   ├── gap_analyzer.py - 缺口分析器
-  │   ├── action_type_classifier.py - 動作類型分類器
-  │   ├── gap_classifier.py - 缺口聚類分類器
-  │   ├── knowledge_generator.py - 知識生成器
-  │   └── cost_tracker.py - 成本追蹤器
+  ├── services/agent/ - ⭐ 現役核心（30 檔＋canon／tools 兩個子套件）
+  │   ├── runtime.py - AgentRuntime.run_turn；建構依賴裡⛔ 沒有任何協定或門面
+  │   ├── mcp_facade.py - /mcp 門面（AgentRuntime 的四個門面之一）
+  │   ├── turn_segments.py / turn_context.py / exit_gates.py - 一回合的四段
+  │   ├── verifier.py - Output Verifier（逐句驗引用）
+  │   ├── canon/ - 知識路 A：git canon 正本 → FineIndex → CandidateSelector
+  │   └── tools/ - registry.py（in-process 呼叫）／jgb2.py（六域 15 face）／kb.py（知識路 B）
+  ├── services/jgb/ - 六域 face builders ＋ jgb2 轉接
+  ├── base_retriever.py / vendor_knowledge_retriever_v2.py / semantic_reranker.py - 檢索
+  ├── decision_layer.py - 檢索門檻
+  ├── knowledge_completion_loop/ - ⚠️ 只剩 embedding_client.py，執行面已刪
   └── ...
 
 Models (模型層)
@@ -180,8 +179,8 @@ Utils (工具層)
 ## 命名慣例
 
 ### 檔案與目錄
-- **服務**: `{service_name}.py` (如 `intent_suggestion_engine.py`)
-- **路由**: `{resource}.py` (如 `knowledge.py`, `forms.py`)
+- **服務**: `{service_name}.py`（如 `unclear_question_manager.py`、`semantic_reranker.py`）
+- **路由**: `{resource}.py`（如 `forms.py`、`vendors.py`）
 - **測試**: `test_{module}_req.py`（`_req` 對應 `@pytest.mark.req(...)` 追溯標記，
   見 `.kiro/steering/testing-code.md`；如 `tests/unit/security/test_api_key_auth_req.py`）
 - **配置**: `{config_name}_config.py` (如 `deduplication_config.py`)

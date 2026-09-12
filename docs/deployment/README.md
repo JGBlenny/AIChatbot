@@ -316,10 +316,9 @@ deployment/
 **部署步驟：**
 1. 修改前端 `VendorSOPManager.vue`（動態驗證邏輯）
 2. 修改後端 `vendors.py`（組合與必填驗證）
-3. 修改 `sop_trigger_handler.py`（動態關鍵詞）
-4. 重啟 `knowledge-admin` 和 `rag-orchestrator` 服務
-5. 重新生成 66 個 SOP embeddings（100% 成功）
-6. 執行測試驗證（8/8 通過）
+3. 重啟 `knowledge-admin` 和 `rag-orchestrator` 服務
+4. 重新生成 66 個 SOP embeddings（100% 成功）
+5. 執行測試驗證（8/8 通過）
 
 **部署效果：**
 - ✅ 用戶體驗：動態選項限制，減少選擇困惑

@@ -991,5 +991,5 @@ const statusText: Record<string, string> = {
 
 **相關文件**：
 - [知識審核 API 文檔](./loop_knowledge_api.md)
-- [設計文件](../../.kiro/specs/backtest-knowledge-refinement/design.md)
-- [需求文件](../../.kiro/specs/backtest-knowledge-refinement/requirements.md)
+- 設計文件（檔已不存在）
+- 需求文件（檔已不存在）

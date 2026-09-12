@@ -611,7 +611,7 @@ docker exec aichatbot-rag-orchestrator python3 /app/tools_embed_missing.py
 # 預期：缺 embedding 的列約 24 筆（新增 21＋既有列改名清嵌 3406/3926＋續約錨點）→ 完成
 ```
 
-### 18-3. 重建服務（載入 chat.py fallback 修正）
+### 18-3. 重建服務
 
 ```bash
 docker compose -f docker-compose.prod.yml up -d --build --no-deps rag-orchestrator

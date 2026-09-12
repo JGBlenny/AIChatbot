@@ -1021,4 +1021,4 @@ const routes = [
 **相關文件**:
 - [迴圈管理 API 文檔](../api/loops_api.md)
 - [批量選取功能需求](./batch_review_requirements.md)
-- [設計文件](../../.kiro/specs/backtest-knowledge-refinement/design.md)
+- 設計文件（檔已不存在）

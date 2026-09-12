@@ -370,9 +370,9 @@ dist/assets/index-BT4m8h7J.js   784.99 kB │ gzip: 254.56 kB
 
 ### 技術文檔
 - [KNOWLEDGE_FORM_TRIGGER_IMPLEMENTATION.md](../features/KNOWLEDGE_FORM_TRIGGER_IMPLEMENTATION.md) - **知識庫表單觸發模式實現** ⭐
-- [KNOWLEDGE_ACTION_SYSTEM_DESIGN.md](../design/KNOWLEDGE_ACTION_SYSTEM_DESIGN.md) - 知識庫動作系統設計
-- [SOP_TRIGGER_MODE_UI_UPDATE_2026-02-03.md](../features/sop/implementation/SOP_TRIGGER_MODE_UI_UPDATE_2026-02-03.md) - 前端 UI 優化詳細說明
-- [SOP_TYPES_ANALYSIS_2026-01-22.md](../features/sop/design/SOP_TYPES_ANALYSIS_2026-01-22.md) - 觸發模式類型分析
+- KNOWLEDGE_ACTION_SYSTEM_DESIGN.md（檔已不存在） - 知識庫動作系統設計
+- SOP_TRIGGER_MODE_UI_UPDATE_2026-02-03.md（檔已不存在） - 前端 UI 優化詳細說明
+- SOP_TYPES_ANALYSIS_2026-01-22.md（檔已不存在） - 觸發模式類型分析
 - [SOP_GUIDE.md](../guides/features/SOP_GUIDE.md) - SOP 系統完整指南
 
 ### 使用手冊

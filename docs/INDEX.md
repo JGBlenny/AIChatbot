@@ -67,7 +67,6 @@
 
 | 文檔 | 用途 |
 |------|------|
-| [知識動作系統設計](./design/KNOWLEDGE_ACTION_SYSTEM_DESIGN.md) | 知識庫動作架構 |
 | [權限系統設計](./design/PERMISSION_SYSTEM_DESIGN.md) | 權限架構 |
 | [Lookup 表系統設計](./design/LOOKUP_TABLE_SYSTEM_DESIGN.md) | Lookup 系統架構 |
 

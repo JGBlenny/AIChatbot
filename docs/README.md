@@ -34,6 +34,6 @@
 - API 一覽：以 routers/ 目錄為準；歷史快照見 [API 端點完整清單（已歸檔）](./archive/2026-09/API_ENDPOINTS_COMPLETE_INVENTORY.md)
 - 上手：[快速開始](./guides/getting-started/QUICKSTART.md)
 - 部署：[部署指南](./deployment/DEPLOY_GUIDE.md)
-- 回測 / 知識完善迴圈：[回測快速開始](./backtest/GETTING_STARTED.md)
+- 回測 / 知識完善迴圈：回測快速開始（檔已不存在）
 
 完整索引請見 [INDEX.md](./INDEX.md)。

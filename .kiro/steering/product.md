@@ -6,11 +6,14 @@
 
 ## 核心能力
 
-### 1. RAG 智能檢索與回答
-- **向量語義搜尋**: 使用 pgvector 進行高效向量相似度檢索
-- **類別分類**: 知識庫按類別（category）組織，檢索時依類別過濾與排序
-- **信心度評估**: 評估回答的可信度，低信心度時主動標記為「未釐清問題」
-- **答案優化**: LLM 驅動的答案合成與優化，支援多來源知識整合
+### 1. 對話回合（現役：agentic-MCP 單線）
+- **核心是 `AgentRuntime`**（`services/agent/runtime.py`），`/mcp` 只是它的門面之一
+- **一回合四段**：程式段 → 九段脈絡注入 → 模型迴圈＋Verifier → 四道出口閘（順序即契約）
+- **引用驗證**：`services/agent/verifier.py` 逐句驗引用，擋不住就走轉人固定句
+- **知識兩條路**：路 A＝git canon 正本每回合自動注入（⛔ 不碰 `knowledge_base`）；
+  路 B＝模型自己呼叫 `kb.search`／`kb.get`
+- **向量語義搜尋**: 使用 pgvector；三軸過濾單一來源 `build_visibility_predicate`
+- 🔴 **信心度評估與 LLM 答案合成已刪**（2026-09-11 DSP-046），⛔ 別依它們設計新東西
 
 ### 2. 知識管理系統
 - **多元知識來源**:
@@ -27,24 +30,18 @@
 ### 3. 知識完善迴圈 (Knowledge Completion Loop)
 **自動化知識缺口發現與補救流程**:
 
-1. **回測執行**: 使用迴圈建立時選定的固定測試集（scenario_ids），確保不同迭代間可比較，不同迴圈間不重複
-2. **失敗分析** (`gap_analyzer.py`): 識別測試失敗原因（知識缺失、檢索不準、答案品質差）
-3. **AI 分類** (`action_type_classifier.py`): 使用 OpenAI 分類失敗案例為 SOP、表單填寫、系統配置
-4. **分類聚類** (`gap_classifier.py`): 按 action_type 分別聚類，生成群組標題
-5. **知識生成** (`knowledge_generator.py`, 模型: gpt-4o-mini):
-   - 從房客（租客）的權益和需求角度生成回答
-   - SOP 知識: 生成到審核表，審核通過後同步到 vendor_sop_items（embedding 由 sop_embedding_generator 統一生成）
-   - 通用知識: 生成到審核表，審核通過後同步到 knowledge_base
-6. **人工審核**: 所有生成知識標記為 `pending_review`，需人工批准
-7. **迭代驗證**: 批准後重新回測，持續改善直到達成目標
+🔴 **執行面已於 2026-09-11 刪除**：協調器、缺口分析、AI 分類、聚類、知識生成器等
+整批不存在，`services/knowledge_completion_loop/` 只剩 `embedding_client.py`。
+**後台頁面與資料表仍在**（`routers/loops.py`、`routers/loop_knowledge.py`），
+可以看歷史迴圈、做人工審核，但**沒有任何程式會跑新一輪**。
 
-**成本追蹤**: 記錄 OpenAI API 使用（token、費用），支援成本控制
+現行的檢索改善走 `.claude/skills/retrieval-improvement-loop/`（打 `/mcp`，不走這條迴圈）。
 
-### 4. SOP 智能編排 (SOP Orchestrator)
-- **多輪對話流程**: 支援複雜 SOP 流程的多輪對話管理
-- **表單填寫**: 動態表單生成、驗證、參數解析
-- **檢索策略**: 向量搜尋（item_name embedding）+ 關鍵字備選（keywords 陣列比對）+ Reranker 重排序
-- **語義觸發**: 基於語義相似度的 SOP 流程觸發
+### 4. SOP 資料維護（⛔ 對話路徑零讀取）
+🔴 **編排器、觸發器、表單狀態機已於 2026-09-11 刪除。**
+`vendor_sop_items` 等資料表、後台 CRUD（`routers/platform_sop.py` 15 條路由）、
+存檔時的 embedding 計算（`sop_embedding_generator.py`）都還在真的運作——
+**但沒有任何對話程式會查它**。維護 SOP 不會改變機器人的回答。
 
 ### 5. 測試與驗證
 - **測試場景管理** (`test_scenarios`):
@@ -92,8 +89,8 @@
 
 ## 2026-07 現況增補（本節為最新，與上文衝突時以本節與 docs/architecture-overview.md 為準）
 
-- **對話面向體系**：21＋售前個 conversational facets（資料驅動：`category='對話規則'` 一筆設定＝一個面向，新增零改程式）；五域（合約/帳務/帳號/物件/IoT）；機械判定用 `services/jgb/*` FACE_BUILDERS，LLM 只照 facts 組話。
+- **對話面向體系（🔴 2026-09-12 更正）**：**15 個 face、六域**（帳單／合約／修繕／電表／帳號／物件），在註冊時由 `_jgb2_spec(domain, sorted(builders.keys()))` **現算**，⛔ 不是資料驅動、⛔ 不是 21＋。新增 face key **不等於**新增能力：face 只選 builder，資料來源硬編在 `query_<域>`。機械判定用 `services/jgb/*_FACE_BUILDERS`，LLM 只照 facts 組話。
 - **資料體系分工（定案）**：`vendor_configs`＝通用單值參數（{{param}} 模板）；`lookup_tables`＝案場級（Excel 匯入＋錨點）；SOP＝b2c 專用（b2b 不走）；jgb API＝個資（role_id+user_id 雙證）。
 - **計量與額度**：usage_events 每請求計量（token/成本/內部流量標記）；vendor_quotas 月額度（達限攔截/警示寄信）。
 - **品質三層**：unit（make test-unit）／系統回測（迴圈＋多輪模擬＋v3 評審＋金標，按受眾分庫）／不變量稽核（make audit，修一類 bug＝加一條）。驗收鐵則：改引擎行為以系統路徑實跑收案。
-- **單一真相源**：`docs/architecture-overview.md`（含已知債總表）；部署走 `docs/deployment-runbook.md`。
+- **單一真相源**：`docs/architecture/SYSTEM_ARCHITECTURE.md`（全景）＋ `docs/architecture/AGENTIC_MCP_ARCHITECTURE.md` §2b（一回合完整流程）；部署走 `docs/deployment-runbook.md`。⚠️ `docs/architecture-overview.md` 已改為指路檔。

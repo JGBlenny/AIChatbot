@@ -1279,7 +1279,6 @@ COMMIT;
 
 ## 📚 相關文檔
 
-- [Knowledge Action System Design](./KNOWLEDGE_ACTION_SYSTEM_DESIGN.md)
 - [API Configuration Guide](./API_CONFIGURATION_GUIDE.md)
 - [Universal API Handler 實現（已隨舊鏈退役，見上）](../../rag-orchestrator/services/universal_api_handler.py)
 - [SOP 系統指南](../guides/features/SOP_GUIDE.md)

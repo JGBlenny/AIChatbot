@@ -1,13 +1,5 @@
 # JGB API 整合模組
 
-> ⚠️ **2026-09-11 舊鏈退役對碼**：本檔原本描述的「表單填寫觸發 API」流程
-> （`form_manager` 收集資訊 → `call_api` → `api_call_handler` →
-> `jgb_response_formatter` 分派）**已隨舊 REST 對話鏈刪除**——`api_call_handler.py`／
-> `jgb_response_formatter.py` 都已不存在。目前的呼叫路徑改為 `/mcp` 的
-> `agent.turn`／`jgb2.query.*` 工具直接呼叫本目錄模組，見下方「現況架構」。
-> `jgb/contracts.py`、`jgb/bills.py`、`jgb/estates.py`、`jgb/iot.py`、
-> `jgb/repairs.py` **五個模組皆已建成**（原表格中的「待建」已完成，見下方檔案職責）。
-
 ## 現況架構
 
 ```
@@ -162,7 +154,7 @@ bit_status 是 bitmask，一個執行中且已點交的合約：`1+2+4+8+16+32 =
 - `USE_MOCK_JGB_API=true`（預設）：使用 jgb_system_api.py 內的假資料
 - `USE_MOCK_JGB_API=false` + `JGB_API_KEY=xxx`：打真實 JGB API
 
-## 新增模組流程（⚠️ 2026-09-11 對碼：分派點已改為 `jgb2.py`，非舊鏈的 `jgb_response_formatter.py`）
+## 新增模組流程（分派點＝`services/agent/tools/jgb2.py`）
 
 以新增一個 jgb domain 模組為例（比照 `jgb/bills.py` 的既有作法）：
 

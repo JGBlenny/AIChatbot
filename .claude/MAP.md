@@ -114,13 +114,6 @@ repo 內另有約 250 份非資料文件尚未指派角色,⛔ 未列於此**不
 
 ## SOP 受眾隔離 {#sop-audience-isolation}
 
-⚠️ 本節「產線／路由」所指的 SOP **檢索**程式碼（『vendor_sop_retriever_v2.py』／
-『sop_orchestrator.py』，完整路徑見下表已退役列）已隨舊 REST 對話鏈於 2026-09-11 全數砍除（commit
-7c905408／10116570），agentic-MCP 新線目前沒有對應工具讀取 SOP 做檢索。
-SOP **資料管理**（Excel 匯入、CRUD）不受影響，仍在 `rag-orchestrator/routers/vendors.py`
-＋ `services/sop_utils.py` 運作。本節規格/決策的設計理由保留，供日後在新線重建
-SOP 檢索時參考；是否正式封存交人裁決。
-
 - 規格 | `.kiro/specs/sop-audience-isolation/requirements.md` | SOP 受眾隔離與 target_user 維度
 - 規格 | `.kiro/specs/sop-audience-isolation/design.md` | schema 加欄、資料回填、補位知識
 - 規格 | `.kiro/specs/sop-audience-isolation/research.md` | 內容體系查證與受眾錯位根因
@@ -400,13 +393,10 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 ### API 架構
 
 - 規格 | `docs/design/CORE_API_FUNCTIONS_REFERENCE.md` | API 統一處理架構有哪些核心函數、各自負責什麼
-- 規格 | `docs/design/API_DATA_FLOW.md` | 一次 API 呼叫從進場到使用者收到回應之間經過哪些轉換點
 - 路由 | `docs/design/API_CONFIGURATION_GUIDE.md` | 知識要觸發 API 呼叫時,設定檔怎麼寫、參數怎麼映射
 
 ### 知識動作與表單
 
-- 規格 | `docs/design/KNOWLEDGE_ACTION_SYSTEM_DESIGN.md` | 知識庫動作系統的完整設計(問答／表單／API 呼叫的組合);檔內自標「狀態: 已實現」,產線見 `decision_layer.py` 符號 `action_type`
-- 產線 | `docs/design/KNOWLEDGE_ACTION_QUICK_REFERENCE.md` | 動作要選哪一種的決策表與速查;⚠️ 檔內明說「完整文檔請見 `KNOWLEDGE_ACTION_SYSTEM_DESIGN.md`」⇒ 兩份**互補非取代**
 
 ### 權限
 
@@ -510,7 +500,7 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 ### 架構
 
 - 規格 | `docs/architecture-overview.md` | 系統現況總覽:三類使用者與路由順位、對話面向、資料體系分工、計量與額度、品質三層、已知債總表
-- 判定 | `docs/chat-architecture-overview.md` | 2026-09-12 刪至 74 行,只剩診斷與裁決(§3–§6);⛔ 入口矩陣／決策管線／機制總表已隨舊 REST 鏈刪除。現況入口走 `SYSTEM_ARCHITECTURE.md`
+- 判定 | `docs/chat-architecture-overview.md` | 2026-09-12 刪至 27 行,只剩六條演化原則(2026-07-10 定案);觸發語彙診斷移交 `.kiro/specs/trigger-vocabulary-debt/`。現況架構走 `SYSTEM_ARCHITECTURE.md`
 - 決策 | `docs/conversation-first-architecture-assessment.md` | 檢索中心骨架是否仍合適的評估與拍板:混合骨架候選 C 定案(2026-07-10)、P0–P3 四階段遷移;⚠️ **本檔是 2026-07-10 的評估快照,其拍板結論後續是否被 `agentic-mcp-orchestration` 主線取代,待裁**
 
 ### 設定
@@ -522,6 +512,5 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 `docs/architecture/retriever-pipeline.md`」;
 `docs/API_ENDPOINTS_COMPLETE_INVENTORY.md`——「⚠️ **Snapshot:2026-02-17,未持續維護**……
 名稱中的 "Complete" 僅指快照當時」(它盤的是**本 repo** 兩個後端的端點,提及 jgb2 0 次);
-另 `docs/line-bot-integration-plan.md`(2026-07-10 規劃與缺口評估)、
-`docs/presales-assistant-quality-audit-20260902.md`(2026-09-02 實機測試報告)、
+另 `docs/presales-assistant-quality-audit-20260902.md`(2026-09-02 實機測試報告)、
 `docs/presales-assistant-rootcause-20260904.md`(2026-09-04 根因對碼)。

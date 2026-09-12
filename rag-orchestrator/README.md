@@ -186,33 +186,12 @@ RAG Orchestrator 是一個基於 FastAPI 的微服務，整合了以下核心能
 
 ### 目錄結構
 
-> ⚠️ **2026-09-11 舊鏈退役**：下面這棵樹是 Phase 3 時期的舊結構，`chat.py`／
-> `rag_engine.py`／`llm_answer_optimizer.py` 已刪除。現況目錄樹請見
-> `.kiro/steering/structure.md`（單一正本，避免多處各自過時）。
+⛔ **本檔不維護目錄樹**——單一正本在 [`.kiro/steering/structure.md`](../.kiro/steering/structure.md)，
+那棵樹依檔案系統維護。抄第二份的下場已經看過：這裡曾經留著 Phase 3 的舊結構，
+把 `chat.py`／`confidence_evaluator.py` 之類列成現況。
 
-```
-rag-orchestrator/
-├── app.py                    # FastAPI 主應用
-├── requirements.txt          # Python 依賴
-├── Dockerfile               # Docker 配置
-│
-├── routers/                 # API 路由
-│   ├── agent.py              # /mcp 門面掛載（現役）
-│   └── unclear_questions.py # 未釐清問題 API
-│
-├── services/                # 核心服務
-│   ├── agent/                     # agentic-mcp-orchestration 新線（現役核心）
-│   ├── confidence_evaluator.py   # 信心度評估器
-│   └── unclear_question_manager.py  # 未釐清問題管理器
-│
-├── models/                  # 資料模型
-│   └── unclear_question.py  # 未釐清問題模型
-│
-├── config/                  # 配置檔案
-│   └── intents.yaml         # 意圖定義
-│
-└── utils/                   # 工具函數
-```
+一句話版：入口 `app.py` → `routers/agent.py` 掛 `/mcp` →
+`services/agent/mcp_facade.py` → `services/agent/runtime.py`（核心）。
 
 ### 服務依賴
 
@@ -227,9 +206,11 @@ RAG Orchestrator (Port 8100)
     ├─► Embedding API (Port 5001)
     │   └─ 向量生成服務
     │
+    ├─► Semantic Model (Reranker)
+    │   └─ ⚠️ 會靜默永久停用，容器／稽核／健檢 API 三者都看不出來
+    │
     └─► OpenAI API
-        ├─ GPT-4o-mini (意圖分類)
-        └─ GPT-4o-mini (答案優化 - Phase 3) ✨
+        └─ AGENT_MODEL（對話回合）／QUERY_REWRITE_MODEL／KNOWLEDGE_GEN_MODEL
 ```
 
 ---

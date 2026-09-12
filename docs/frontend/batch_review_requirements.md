@@ -713,4 +713,4 @@ export const useReviewStore = defineStore('review', {
 **相關文件**:
 - [知識審核 API 文檔](../api/loop_knowledge_api.md)
 - [迴圈管理界面需求](./loop_management_requirements.md)
-- [設計文件](../../.kiro/specs/backtest-knowledge-refinement/design.md)
+- 設計文件（檔已不存在）

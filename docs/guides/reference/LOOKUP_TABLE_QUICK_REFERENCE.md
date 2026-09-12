@@ -381,8 +381,6 @@ AIChatbot/
 │   ├── routers/
 │   │   └── lookup.py                      # Lookup API 實現
 │   └── services/
-│       ├── api_call_handler.py            # API 調用處理器（⚠️ 已隨舊鏈於 2026-09-11 退役，見 `.claude/DECISIONS.md` DSP-046；`routers/lookup.py` 本身未受影響，仍可直接查詢）
-│       └── universal_api_handler.py       # 通用 API 處理器（⚠️ 已隨舊鏈於 2026-09-11 退役，同上）
 ├── scripts/
 │   └── data_import/
 │       └── import_billing_intervals.py    # 數據導入腳本
@@ -401,7 +399,6 @@ AIChatbot/
 ## 🔗 相關文檔
 
 - [📘 Lookup Table System 詳細設計](../../design/LOOKUP_TABLE_SYSTEM_DESIGN.md)
-- [📘 Knowledge Action System Design](../../design/KNOWLEDGE_ACTION_SYSTEM_DESIGN.md)
 - [📘 API Configuration Guide](../../design/API_CONFIGURATION_GUIDE.md)
 - [📘 SOP 系統指南](../features/SOP_GUIDE.md)
 
