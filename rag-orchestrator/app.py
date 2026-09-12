@@ -39,7 +39,13 @@ cache_service: CacheService = None
 
 
 def _agent_configured() -> bool:
-    """任一 agent 開關有值 ⇒ agent 路徯「被使用」⇒ 組裝失敗要啟動紅；否則 fail-soft 只警告。
+    """任一 agent 開關為真 ⇒ agent 路徑「被使用」⇒ 組裝失敗要啟動紅；否則 fail-soft 只警告。
+
+    🔴 2026-09-12 措辭更正：前一版寫「任一開關**有值**」，權威那支的 docstring
+    卻明寫「⚠️ **不是**『任一有值』」——三把鍵（`AGENT_AUDIENCES`／
+    `AGENT_SHADOW_AUDIENCES`／`AGENT_TURN_ENABLED`）是 `strip()` 後**不在
+    `{"", "0", "false", "False"}`** 才算真。`AGENT_TURN_ENABLED=false` 有值但為假。
+    （另更正一個錯字：「路徯」→「路徑」。）
 
     ⚠️ 薄別名（任務 4.1）：判準的**唯一權威**已搬到
     `services.agent.mcp_facade.agent_configured()`（health 也讀那一份，

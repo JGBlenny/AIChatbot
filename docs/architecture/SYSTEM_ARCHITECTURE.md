@@ -245,7 +245,7 @@ kb.get    → build_visibility_predicate ＋ canon.review_state.content_reviewed
 | `services/agent/` 模組 | 42（不含 `__init__.py`） |
 | prod compose env 鍵 | 90（去重；含重複出現則 104） |
 | DB 資料表 | 63 |
-| 單元測試 | 3,618 |
+| 單元測試 | 3,629 |
 
 🔴 **驗證前必讀——本機有兩個 rag-orchestrator，跑的是不同的程式碼**（2026-09-12 實測）：
 

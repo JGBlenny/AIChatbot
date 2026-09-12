@@ -141,7 +141,7 @@ sequenceDiagram
 
 **`outcome`（DSP-043）**：第七鍵 `{state, expects, action, ref}`，`state` 八態（answered／clarifying／confirm_pending／confirmed／cancelled／failed／handoff／out_of_scope）由各出口程式設、一般出口依 `kind`／`quick_replies` 導出（`runtime.make_outcome`／`default_outcome`／`receipt_ref`）；呼叫端只看它決定畫面。
 
-**三個程式段永遠先於模型**（`run_turn` 內順序：confirm → select → image 終止路徑 → 模型迴圈），這是「機器值不承載意圖」的實作：按鈕與點選不需要模型理解，也不讓模型看到 pid／id 原值。
+**六條程式終止路徑永遠先於模型**（🔴 2026-09-12 更正：前一版寫「三個程式段」，與本檔 §1a／§2b 及 `turn_segments.py` docstring 自述的**六條**矛盾——同一份文件內部不一致）。順序即契約：①文件回合禁寫 ②文件不可讀 ③照片失敗/逾時/低信心 ④確認機器值 ⑤清單點選 ⑥同題重問重播。這是「機器值不承載意圖」的實作：按鈕與點選不需要模型理解，也不讓模型看到 pid／id 原值。逐條見 §2b 段一。
 
 ## 2b. 完整流程（逐步，含每一個分岔與終止點）
 
