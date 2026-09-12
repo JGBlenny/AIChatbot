@@ -121,23 +121,18 @@ AIChatbot/
 │   │   └── ...
 │   │
 │   ├── config/                         # 配置管理
-│   │   ├── deduplication_config.py     # 去重配置
 │   │   ├── business_types.py           # 業態類型配置
-│   │   └── intents.yaml                # 意圖 YAML（DB fallback）
-│   │
-│   ├── utils/                          # 工具函數（目前為空，工具已移至 services/）
-│   │   └── __init__.py
+│   │   └── agent_verifier_rules.json   # Verifier 的機敏／極性詞表
 │   │
 │   ├── tests/                          # 測試檔案（unit/integration/e2e 三層，見 testing-code.md）
 │   │   ├── unit/agent/                 # /mcp 新線 unit 測試主力
 │   │   ├── integration/agent/          # /mcp 新線 integration 驗收
 │   │   └── ...
 │   │
-│   ├── scripts/                        # 工具腳本
-│   │   ├── backtest/
-│   │   │   └── backtest_framework_async.py  # 回測框架 V2（迴圈呼叫）
-│   │   ├── migrate_yaml_intents_to_db.py
-│   │   └── ...
+│   ├── tools/                          # 工具腳本（見上方「命名模式」節）
+│   │   ├── agent_eval.py               # 回測（run_turn 的四個非測試呼叫端之一）
+│   │   ├── agent_trace.py  agent_outline_dump.py  agent_attempts_report.py
+│   │   └── import_facet_knowledge.py  audit_config.py  embed_missing.py
 │   │
 │   └── Dockerfile                      # Docker 映像檔
 │
@@ -153,8 +148,10 @@ AIChatbot/
 │   └── ...
 │
 ├── scripts/                            # 全域腳本
-│   └── backtest/                       # 回測相關腳本
-│       └── backtest_framework_async.py
+│   ├── audit/                          # make audit 的不變量檢查器（checks/ 一支一條）
+│   ├── smoke/                          # 真模型 smoke 對照計分尺
+│   ├── knowledge-batches/              # 部署重放依賴的知識批次
+│   └── deployment/
 │
 ├── docs/                               # 文檔目錄
 │   ├── backtest/                       # 回測文檔

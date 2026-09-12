@@ -185,7 +185,7 @@ Utils (工具層)
 - **路由**: `{resource}.py`（如 `forms.py`、`vendors.py`）
 - **測試**: `test_{module}_req.py`（`_req` 對應 `@pytest.mark.req(...)` 追溯標記，
   見 `.kiro/steering/testing-code.md`；如 `tests/unit/security/test_api_key_auth_req.py`）
-- **配置**: `{config_name}_config.py` (如 `deduplication_config.py`)
+- **配置**: `{config_name}_config.py`（⚠️ 目前無存活範例；`config/` 只剩 `business_types.py`）
 
 ### 變數與函數
 - **snake_case**: 變數、函數、方法使用小寫加底線

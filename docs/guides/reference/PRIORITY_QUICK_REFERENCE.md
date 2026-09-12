@@ -12,7 +12,7 @@
 
 1. 前往 http://localhost:8087/knowledge
 2. 點擊知識的「編輯」按鈕
-3. 勾選「啟用優先級加成」✅
+3. ~~勾選「啟用優先級加成」~~ ⛔ **2026-09-12：`PRIORITY_BOOST`／`PRIORITY_QUALITY_THRESHOLD` 全 repo 零程式讀者，勾了沒有效果**（實際加成是 `base_retriever.py::_apply_keyword_boost` 的關鍵字加成，每詞 +0.1、上限 +0.3，⛔ 不可設定）
 4. 儲存
 
 **效果**: 該知識在檢索時相似度 +0.15

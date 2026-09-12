@@ -1453,7 +1453,7 @@ psql -h postgres -U aichatbot -d aichatbot_admin < backup_20251022.sql
 
 | 表 | 列數 | 誰讀寫 | 用途 |
 |---|---|---|---|
-| `usage_events` | 14,422 | `app.py`、`routers/agent.py`、`services/usage_metering.py` | **每次 `/mcp` 呼叫一列**；`decision_snapshot` 存回合軌跡（⛔ 無原文，不變量 30） |
+| `usage_events` | 14,422 | `app.py`、`routers/agent.py`、`services/usage_metering.py` | **每次 `/mcp` 呼叫一列**；`decision_snapshot` 存回合軌跡（⛔ 無原文，不變量 30）。⚠️ `knowledge_score`／`sop_score`／`decision_case` 三欄**只有 112/14,422 列有值**——那是舊鏈仲裁留下的，新線不寫；欄位與 `_SCORE_COLS` 偵測快取仍在 `usage_metering.py`，⛔ 別以為現在還在填 |
 | `agent_shadow_texts` | 1,811 | `services/agent/shadow.py` | 影子跑動的輸出文字 |
 | `openai_cost_tracking` | 1,709 | `services/image_recognition_service.py`、`services/agent/mcp_facade.py` | token／成本落帳 |
 | `loop_execution_logs` | 1,260 | `routers/loops.py`、`routers/loop_knowledge.py` | 迴圈迭代紀錄（⚠️ 執行面已拆，只剩查詢） |

@@ -1,5 +1,11 @@
 # 知識範圍簡化
 
+⚠️ **2026-09-12 對碼：本檔記的「改用 `vendor_ids` 判範圍」這條規則仍然成立**，
+現行實作在 `services/vendor_knowledge_retriever_v2.py::build_visibility_predicate`
+（`array_length(vendor_ids,1) IS NULL OR vendor_ids && ARRAY[$vendor_id]`）。
+⛔ **但下文點名的 `vendor_knowledge_retriever.py`（無 `_v2`）與 `rag_engine.py`
+兩支已不存在**——本檔是 2026-02-09 的變更紀錄，⛔ 不是現況模組圖。
+
 ## 概述
 日期：2026-02-09
 狀態：已實施
@@ -113,12 +119,12 @@ async loadVendors() {
 
 ### 5. 後端服務變更
 
-#### vendor_knowledge_retriever.py
+#### vendor_knowledge_retriever.py（⛔ 已不存在，現行是 `_v2`）
 - 移除所有 `scope_weight` 計算
 - 簡化 WHERE 子句僅使用 vendor_id
 - 移除基於 scope 的排序邏輯
 
-#### rag_engine.py
+#### rag_engine.py（⛔ 已不存在）
 - 更新 8 個不同的 SQL 查詢分支（由於巢狀條件）
 - 每個分支現在使用簡單的 vendor_id 檢查
 - 移除複雜的 scope 過濾邏輯

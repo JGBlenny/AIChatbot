@@ -786,6 +786,24 @@ else
 fi
 echo
 
+echo "═══ 不變量 38：現況文件不得把已刪模組當現況提（關鍵字全由 git 導出，⛔ 無人工詞表）═══"
+# 源起：舊鏈刪除後文件清了六輪仍有殘留，最後一輪是在**剛重寫過的 structure.md**
+# 裡抓到 deduplication_config.py／backtest_framework_async.py（目錄樹另外兩節沒跟著改）。
+# ⇒ 人工逐份掃不可靠，而這件事完全機械：清單可從 git --diff-filter=D 導。
+# ⚠️ 排除有日期的紀錄（archive／changelog／maintenance／research／inputs／reviews）。
+DDM_CHECK="$REPO/scripts/audit/checks/doc_dead_module_names.py"
+if ! python3 "$DDM_CHECK" --self-test >/dev/null 2>&1; then
+  echo "❌ FAIL：不變量 38 檢查器的自我測試未過（檢查器本身失效，其 PASS 不可信）"
+  python3 "$DDM_CHECK" --self-test
+  FAIL=1
+elif ! DDM_OUT=$(python3 "$DDM_CHECK" 2>&1); then
+  echo "$DDM_OUT"
+  FAIL=1
+else
+  echo "$DDM_OUT"
+fi
+echo
+
 echo "═══ 不變量 26：向量索引 ⛔ 不得用參數會崩塌的 IVFFlat ═══"
 # 為何需要（2026-09-01 b2b 35 題實測逼出）：
 #   idx_kb_embedding 為 ivfflat lists=100，而全表僅 992 筆向量 ⇒ 每 list 約 10 筆；
