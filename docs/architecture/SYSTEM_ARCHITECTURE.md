@@ -61,7 +61,7 @@ MCP client（LINE OA bot）
 
 三個**程式段**永遠先於模型（機器值不進模型）：確認按鈕 → 清單點選 → 照片終止路徑。
 之後才是模型迴圈（工具呼叫 → Verifier → 四道出口閘 → 收尾）。
-逐段細節見 `AGENTIC_MCP_ARCHITECTURE.md` §2。
+**完整流程（每一個分岔與終止點）見 `AGENTIC_MCP_ARCHITECTURE.md` §2b。**
 
 ---
 

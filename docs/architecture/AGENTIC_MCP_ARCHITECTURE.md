@@ -73,6 +73,8 @@ flowchart LR
 
 ## 2. 一回合的路徑（`agent.turn`）
 
+> 本節是**概覽**；逐步、含每一個分岔與終止點的完整流程見 **§2b**。
+
 ```mermaid
 sequenceDiagram
   participant L as line-bot
@@ -102,6 +104,197 @@ sequenceDiagram
 **`outcome`（DSP-043）**：第七鍵 `{state, expects, action, ref}`，`state` 八態（answered／clarifying／confirm_pending／confirmed／cancelled／failed／handoff／out_of_scope）由各出口程式設、一般出口依 `kind`／`quick_replies` 導出（`runtime.make_outcome`／`default_outcome`／`receipt_ref`）；呼叫端只看它決定畫面。
 
 **三個程式段永遠先於模型**（`run_turn` 內順序：confirm → select → image 終止路徑 → 模型迴圈），這是「機器值不承載意圖」的實作：按鈕與點選不需要模型理解，也不讓模型看到 pid／id 原值。
+
+## 2b. 完整流程（逐步，含每一個分岔與終止點）
+
+> 對碼日：2026-09-12。每一步附可 grep 的符號，⛔ 不寫行號當事實。
+> §2 的序列圖是概覽；本節是**全部**分岔——凡是能讓回合在這裡結束的，都列出來。
+
+### 階段 0｜請求層（`mcp_facade`，⛔ 順序固定不得調換）
+
+```
+nginx auth_request
+  → McpServiceGate（ASGI middleware，最外層）── 擋 initialize／tools/list／DELETE 等非工具請求
+  → _invoke（每支工具薄包裝的入口）── 身分只從 SDK request context 取
+```
+
+兩處**各跑一次**同樣三道檢查，這是刻意的縱深防禦：
+
+| # | 檢查 | 失敗 | 符號 |
+|---|---|---|---|
+| 1 | API key | **401，無條件**（⛔ 不看 `RAG_API_AUTH_ENFORCE`） | `require_api_key_unconditional`／`ERR_API_KEY` |
+| 2 | Origin 三態 | 403 | `check_origin`／`load_allowed_origins` |
+| 3 | `X-JGB-Identity`（base64 JSON）fail-closed | 400／403 | `parse_identity` |
+
+第 3 道內部依序：
+
+1. JSON 不合法 ⇒ `400 ERR_IDENTITY_MALFORMED`
+2. `_coerce_vendor_id` 取不到 ⇒ **`400 ERR_IDENTITY_NO_VENDOR`**（⚠️ `vendor_id` 是**必填**）
+3. `session_id` 缺 ⇒ `400 ERR_IDENTITY_NO_SESSION`
+4. `_normalize_target_user` → `normalize_entry_mode`（**順序不得對調**：payload 合法形狀含 list，拿原值比 `=="prospect"` 會是 False ⇒ 留下「受眾說 prospect、謂詞說 b2c」的分裂身分，失敗形狀是**靜默零內容**）
+5. `vendor_check(vendor_id)` 不在 vendors 表 ⇒ `403 ERR_VENDOR_UNKNOWN`
+6. 不在 key 的 `vendor_ids` 內 ⇒ `403 ERR_VENDOR_OUT_OF_KEY_SCOPE`
+7. 回 `Identity(entry="mcp")`——**唯一**把 `entry` 設成 `"mcp"` 的真身分建構點
+
+**額度**：門面是 `usage_events` 的唯一寫入者（`begin()` → `quota_check()` → 呼叫 → `finalize()`）。
+計量不可用 ⇒ **拒絕服務**（`METERING_UNAVAILABLE`），⛔ 不靜默略過。
+
+### 階段 1｜`agent.turn` 門面（`_make_agent_turn`）
+
+| 步 | 動作 | 失敗出口 |
+|---|---|---|
+| 1.1 | `image_urls` 形狀／張數 ≤ `IMAGE_MAX_COUNT`(10) | `INVALID_INPUT`（⛔ 不截斷後照跑） |
+| 1.2 | `attachment_purpose ∈ ATTACHMENT_PURPOSES`；非 document 帶 `file_urls` ⇒ 拒；份數 ≤ `FILE_MAX_COUNT` | `INVALID_INPUT` |
+| 1.3 | `message`／`image_urls`／`file_urls` **三者皆空** | `INVALID_INPUT` |
+| 1.4 | `app.state.agent_runtime` 缺席 | `NO_MATCH`（門面 preflight 已先回 `AGENT_UNAVAILABLE`） |
+| 1.5 | `_outline_for_audience(受眾)` 取不到 ⇒ **fail-closed** | `NO_MATCH`（⛔ 不塞別的受眾的大綱）。**刻意排在 `store.load` 之前**——判不過的回合不該先在 `form_sessions` 留半開的列 |
+| 1.6 | 配額**最壞值預扣**：`len(image_urls) + len(file_urls) × DOC_MAX_PAGES`；`LIMITS.images_per_hour`／`files_per_hour` | `RATE_LIMITED`（**排在抓檔之前**：一張都不抓） |
+| 1.7 | `namespaced_identity` ⇒ `mcp:{api_key_id}:{vendor_id}:{session_id}` | `INVALID_INPUT`（超長） |
+| 1.8 | `store.load` → `is_expired`（30 分鐘）⇒ **先 `close` 舊列再 `start` 新列**（⛔ 順序不得顛倒：先 start 再 close 會把新列一起關掉） | — |
+| 1.9 | `outline` 塞進 `agent_state`（**存檔前 `pop`**——⛔ 不得序列化進 `collected_data`） | — |
+| 1.10 | 照片／文件前處理（`prepare_image_turn`／`prepare_document_turn`）——**bytes 只活在區域變數**，⛔ 不進 state／trace／log | — |
+| 1.11 | `asyncio.wait_for(run_turn, AGENT_TURN_TIMEOUT_S − image_elapsed)` | `TOOL_TIMEOUT`；**逾時 ⇒ `store.save` 不執行**，落不了半寫狀態 |
+| 1.12 | `stamp_last_turn` → `store.save` | — |
+| 1.13 | 回 `AgentTurnOutput` 七鍵：`answer`／`kind`／`handoff`／`quick_replies`／`trace_id`／`session_expired`／`outcome` | — |
+
+### 階段 2｜`_run_turn_body` 四段管線（⛔ 本身不做任何判定，只接線）
+
+#### 段一：`turn_segments.run_program_segments` — **六條終止路徑，順序即契約**
+
+| # | 條件 | 出口 |
+|---|---|---|
+| ① | 有文件 **且** 訊息是 `confirm_*:<pid>` | `_document_turn_no_write`。**排在確認段之前**——確認段一進去就兌現，那時再擋來不及 |
+| ② | 文件擷取不出可用欄位 | 固定句 `DOC_UNREADABLE_TEXT` |
+| ③ | 照片失敗／逾時／信心 < `IMAGE_CONFIDENCE_MIN` | `IMAGE_FAILED_TEXT`／`IMAGE_TIMEOUT_TEXT`／`IMAGE_PICK_CATEGORY_TEXT` |
+| ④ | `^confirm_(submit\|edit\|cancel):[0-9a-f]{16}$` **等值 `fullmatch`** | `_run_confirm_segment`（見階段 3） |
+| ⑤ | `select:(bill\|contract\|repair):<id>` **`fullmatch`、⛔ 不 NFKC、⛔ 不 strip** | `_run_select_segment`：程式直答該筆 facts、寫槽位、記 `select_scope` |
+| ⑥ | `handoff_cache[cache_key]` 命中（同題重問） | 逐字重播，`llc_calls=0`、`violations=["replayed_from:<trace_id>"]` |
+
+⚠️ `handoff_cache` 的 `setdefault` **排在 ⑤ 之後**：提早建鍵會讓每個從 ①–⑤ 早退的回合
+在 `agent_state` 多一個空 dict，那是會被序列化落庫的狀態形狀改變。
+
+**六段全不命中**才進段二。以上六條**一次模型都沒叫**。
+
+#### 段二：`_build_turn_context` — 狀態容器 ＋ prompt ＋ 九段資料注入
+
+1. `TurnAccumulator(nonce=new_nonce())`——16 位十六進位（⛔ 不用 `secrets.token_urlsafe`，它產 `-`／`_` 會被 `_require_nonce` 擋）
+2. `ReservedCallIds`：九個保留前綴 `img-`／`done-`／`entry-`／`aff-`／`ctx-`／`pre-`／`ref-`／`doc-`／`est-`。**無條件保留**——沒有大綱時放行等於讓模型自己造一個叫 `outline` 的來源
+3. `_select_outline`：`canon_assembler.get_canon(audience)`（git 正本）→ `FineIndex.visible_subset` → `CandidateSelector.select`（K=5，餘弦）
+4. `_seed_outline_provenance`：大綱以保留 `tool_call_id="outline"` **預載成一筆 provenance**（DSP-020；不預載 ⇒ 模型照鐵則引用大綱、Verifier 只認工具回傳 ⇒ 兩次 `QUOTE_NOT_VERBATIM` → `budget_exhausted`）
+5. `registry.to_openai_tools` → 文件回合以 `doc_write_face` 濾掉寫入面
+6. `assembler.build_messages`（system 整回合**只有一則**）
+7. **九段注入**，順序固定：
+
+| 順序 | 段 | citable | 條件 |
+|---|---|---|---|
+| 1 | 肯定語授權 | ⛔ False | 上一回合 `ask_target=="confirm_intent"` 且本句是肯定語 |
+| 2 | 空會話註記 | ⛔ False | `dialog` 長度 0 |
+| 3 | 前置查詢 | ✅ True | 整句為 4–9 位數字，或 ≤6 字無數字無標點無空白的短名詞 |
+| 4 | 最近編號 | ⛔ False | dialog 最近 6 則＋`completed_actions` 的 4–9 位數字，上限 5 |
+| 5 | **文件事實** | ✅ True | 本回合最大的一段不可信文字，⛔ 不得是最後一則 |
+| 6 | **`user_message`** | — | **DSP-022：永遠是最後一則 user 訊息** |
+| 7 | 影像事實 | ✅ True | `image.status ∈ {ok, partial}` |
+| 8 | 物件記憶 | ⛔ False | 照片回合且有 `estate_carry`；⛔ 釘住範圍時不注入 |
+| 9 | 完成動作記憶 | ✅ True | 非空且（有範圍時）同戶 |
+| 10 | 呼叫端進場句 | ⛔ False | `context` 參數非空 |
+
+⚠️ 1–5 排在 `user_message` **之前**，7–10 排在**之後**——這是既有債（Plan 列 L-W9-a），
+動它會改變照片線的訊息順序。
+
+#### 段三：`_run_model_loop`
+
+```
+while True:
+  deadline 到 ⇒ build_fixed("budget_exhausted")
+  chat.completions.create(parallel_tool_calls=False, response_format=strict json_schema)
+  ├─ 有 tool_calls ─────────────────────────────────────────────
+  │   逐支：
+  │     身分鍵出現 ⇒ 記 IDENTITY_KEY:<key> violation（⛔ 不擋，剝除靠 registry）
+  │     不在 visible_names ⇒ 記 FORBIDDEN:<name>（⛔ 只記不擋）
+  │     在 doc_write_face ⇒ **第二道網，直接回 NO_MATCH、⛔ 不呼叫 registry**
+  │     registry.call 四步（可見性 / 速率 / schema / 執行）
+  │       TOOL_TIMEOUT ⇒ 重試一次（也計預算）；再逾時 ⇒ tool_unavailable
+  │       registry 例外 ⇒ tool_unavailable
+  │     L15 範圍比對（有 select_scope 時）：別戶就地換空殼——**三份全換**
+  │       （text_for_model / provenance / data），只換一份＝fail-open
+  │     estates keyword 查到唯一物件 ⇒ 寫 estate_carry
+  │     confirm.request 成功 ⇒ **這一回合立刻結束**（見階段 3）
+  │     session.slots.set 成功 ⇒ 槽位寫回 state（⛔ 勿刪：_save 是整包覆蓋不是 merge）
+  │     包成資料段：有 provenance 走 wrap_provenance_data（行首標記
+  │       `[{nonce}:{tool_call_id}:{source}§{i}]`），無 provenance 走 wrap_tool_data
+  │   預算耗盡 ⇒ build_fixed("budget_exhausted")
+  │   continue（回迴圈頂端再叫一次模型）
+  └─ 無 tool_calls（模型嘗試給最終答案）────────────────────────
+      AgentOutput.model_validate 失敗 ⇒ 記一次 rewrite、回饋 SCHEMA、continue
+      改寫分支 A「HANDOFF_DATA」：kind=handoff ∧ reason 非敏感 ∧ fact_class 非敏感五類
+        ∧ 有工具結果 ∧ 非「每筆都 ok 且 empty」⇒ 消耗一次 rewrite 回模型
+      改寫分支 B「RECENT_REFS」：同上但**零工具呼叫** ∧ 本回合注入過最近編號
+      ⚠️ 兩條在**預算已耗盡時直接跳過**，⛔ 不走 rewrite_exhausted——否則
+         handoff_reason 會變成 budget_exhausted，T2 出口閘永遠到不了
+      resolve_refs(out, tool_results_by_id, nonce)  ← nonce 是「出自本回合」的唯一憑據
+      verifier.verify(...)  九步（見下）
+      verdict.ok=False ⇒ 記一次 rewrite、回結構化拒因＋修法句、continue
+      verdict.ok=True  ⇒ 組 TurnResult → finalize
+```
+
+**Verifier 九步**（`OutputVerifier.verify`）：① fact_class／handoff 原因配對 → ① 敏感樣式表
+→ ①′ `marker_in_answer` → ①-b `ask_target_invalid` → ② 逐筆 schema → ③④ `_ref_failures`
+→ ⑤ `_verify_routes` → ⑥ `forbid`／⑥′ `docturn` → ⑦ `scan_handoff_mentions`。
+**擋或只記**由 `verdict_class()` × `_OBSERVED_CLASSES_BY_MODE` 查表決定，
+模式值域封閉 `("enforce", "grounding_observe", "observe_only")`。
+⚠️ 模式感知在 `verify()` **內部**——外層翻判定會讓先命中的引用類把機敏類整段跳過。
+
+#### 段四：`exit_gates.finalize` — 四道閘**依序**跑（⛔ 不得重排）
+
+| 序 | 閘 | 命中條件 | 效果 |
+|---|---|---|---|
+| 1 | `scope_exit` | `scope_out>0 且 scope_in==0` | 整段換 `SCOPE_EXIT_TEXT`、`kind="answer"`、`handoff=None`、`final_kind` 一起改（⛔ 不進 handoff cache）。部分範圍外 ⇒ 末尾接一行。⚠️ 本回合出現過範圍外 ⇒ **清掉 `estate_carry`** |
+| 2 | `handoff_without_lookup` | `kind=handoff` ∧ reason 非敏感 ∧ fact_class 非敏感五類 ∧ **零工具呼叫** ∧ 無 select 範圍 | 降級為追問 `ASK_TARGET_TEXT`，五欄一起改 |
+| 3 | `ask_target_gate` | `kind=="ask"` ∧ `ask_target ∉ ASK_TARGETS` | 換指路固定句，並把 `ask_target` **歸零**——留著值域外字串會讓 `LAST_ASK_TARGET_KEY` 變成模型可塞任意字串的地方。⚠️ 這是**保底閘**：觀察模式下 Verifier 不擋，⛔ 不得假設「Verifier 過了就合法」 |
+| 4 | `handoff_data_exits` | `kind=handoff` ∧ reason 非敏感 ∧ fact_class 非敏感 ∧ **有工具呼叫** | 依工具結果分兩出口：`NO_DATA_TEXT`／`NO_JUDGEMENT_TEXT`。⚠️ 任一筆 `status != "ok"` 或撞名保留 id ⇒ **整段不動**（那時 `empty` 不可信） |
+
+收尾：`default_outcome(result)` → `AgentSession.end_turn`（寫 `dialog`／`last_ask_target`／
+`fixed_streak`；`final_kind=="handoff"` 才寫 `handoff_cache`）→ `_emit_agent_decision(trace)`。
+
+### 階段 3｜寫入鏈（唯一能改 JGB 資料的路）
+
+```
+模型 confirm.request(summary, payload)
+  → 程式依 action＋payload 決定性產卡（confirm_card.render）
+  → 發 token（DB 只存雜湊與 pending_id）
+  → 三顆 quick reply：confirm_(submit|edit|cancel):<pending_id>
+  → ⚠️ 有 select_scope ⇒ _scope_gate_confirm_request 先比物件，別戶**不建 pending**
+  → ⚠️ 文件回合 ⇒ _document_turn_no_write（第三道網）
+  → _begin_pending_confirm 存 {action, payload, card_sha256, estate_id}
+  → 回合以 kind=ask 結束；**卡文字逐字＝TurnResult.answer，模型輸出丟棄、Verifier 不跑**
+
+下一回合，使用者按鈕（段一 ④）
+  → redeem_pending 先燒 token、比對卡雜湊
+  → registry.call(jgb2.action.<x>, {payload, confirmation_token})
+  → 工具內 assert_redeemed **再驗一次**（pool 缺席 ⇒ False ⇒ CONFIRMATION_REQUIRED，fail-closed）
+  → 寫替身（services/jgb/transport.py）或真 JGB
+  → receipt 存回 pending（重送回同一 receipt）
+```
+
+失敗誠實回 `ACTION_FAILED_TEXT`；取消燒 token 但 ⛔ 不覆蓋既有 receipt；
+pid 不在本 session（含過期後舊鍵）⇒ 固定句「這筆確認已失效」。
+
+### 回合的全部終止點（一張表）
+
+| 出口 | 從哪來 | `kind` |
+|---|---|---|
+| 401／403／400 | 階段 0 三道請求層檢查 | （不成回合） |
+| `INVALID_INPUT`／`RATE_LIMITED`／`NO_MATCH`／`TOOL_TIMEOUT` | 階段 1 門面 | （工具錯誤） |
+| 文件禁寫／文件不可讀／照片三條 | 段一 ①②③ | `answer` |
+| 確認兌現／取消／失效 | 段一 ④ | `answer` |
+| 清單點選直答 | 段一 ⑤ | `answer` |
+| 同題重問重播 | 段一 ⑥ | `handoff` |
+| `budget_exhausted`（deadline／工具數／改寫數） | 段三 | `handoff` |
+| `tool_unavailable`（registry 例外／兩次 TOOL_TIMEOUT） | 段三 | `handoff` |
+| 確認卡 | 段三 `confirm.request` 成功 | `ask` |
+| 模型正常作答（過 Verifier） | 段三 → 段四 | `answer`／`ask`／`recommend`／`handoff` |
+| 四道閘改寫後的固定句 | 段四 | `answer`／`ask` |
+
 
 ## 3. 寫入鏈（延到期日、開修繕單）
 
