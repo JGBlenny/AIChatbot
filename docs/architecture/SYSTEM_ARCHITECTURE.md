@@ -27,11 +27,28 @@
 ## 1. 唯一的對話路徑
 
 ```
-MCP client（LINE OA bot）
+MCP client（持有效 API key 的上游／內部呼叫者）
   → POST /rag-api/mcp        （X-API-Key + X-JGB-Identity；nginx auth_request）
   → services/agent/mcp_facade.py::build_asgi_app → AGENT_TURN_SPEC → _agent_turn
   → services/agent/runtime.py::AgentRuntime.run_turn
 ```
+
+🔴 **入口對呼叫端不設限、也不知道對方是誰**（2026-09-12 由程式重新推導，⛔ 不再照抄 demo 場景）。
+`mcp_facade.py` 的模組 docstring 自述：`/mcp` 是**非公開認證面**——只給
+**上游／內部呼叫者（jgb2 後端、回測工具、內部操作者）**。程式對呼叫端的全部要求是：
+
+| 項 | 值（`mcp_facade.py` 常數） |
+|---|---|
+| 掛載 | `Mount('/mcp', app=build_asgi_app(_mcp_server))` |
+| 金鑰 | `x-api-key`（`_API_KEY_HEADER`）——無條件 401 |
+| 身分 | `x-jgb-identity`（`_IDENTITY_HEADER`），**明文 JSON**，必帶 `vendor_id`＋`session_id` |
+| 受眾值域 | `Audience = Literal['prospect','property_manager','tenant']`（封閉） |
+| 入口模式 | `ENTRY_MODES = ('b2b','b2c')`，預設 `b2c` |
+
+⚠️ **程式中查無任何 LINE 相依**：`line-bot`／`LIFF` 的出現全在註解與 docstring，
+語境是「line-bot 2026-09-10 **回報**」——那是回報問題的管道，⛔ 不是系統元件。
+「LINE OA 房東管家」是 **demo 期的一個呼叫端場景**（見 `inputs/demo-ledger-line-oa-*.md`），
+⛔ 不是本架構的入口定義。
 
 ⛔ **沒有第二條。** 特別是：
 

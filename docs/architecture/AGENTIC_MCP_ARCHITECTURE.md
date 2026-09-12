@@ -1,18 +1,18 @@
 # Agentic MCP 對話線架構（demo 版，2026-09-08 上線）
 
-> 讀者：要改這條線的工程、要接它的 line-bot、要驗它的稽核。
+> 讀者：要改這條線的工程、要接它的呼叫端、要驗它的稽核。
 > 對象：`rag-orchestrator/services/agent/**`＋`/mcp` 門面。舊鏈（REST `/api/v1/message`、SOP、面向）不在本文，見 `COMPLETE_CONVERSATION_ARCHITECTURE.md`。
 > 事實紀律：每個機制都附可 grep 的符號；行號會漂，⛔ 不當事實。決策依據在 `.claude/DECISIONS.md` DSP-011／037～042、demo 帳本 `.kiro/specs/knowledge-outline-and-intent-architecture/inputs/demo-ledger-line-oa-20260907.md` §1b。
 
 ## 0. 一句話
 
-LINE 業務（房東管家）的一句話進 `/mcp` 的 `agent.turn`，Runtime 先用**程式**處理三種機器值（清單點選、確認按鈕、過期），其餘交模型在封閉工具清單裡查 JGB 替身資料；要寫入一律先出確認卡、按了才兌現；答案在 `grounding_observe` 模式的 Verifier 下**只有引用類只記不擋**，極性類與機敏類照擋（W6-b3，2026-09-09 落地）。
+呼叫端的一句話進 `/mcp` 的 `agent.turn`（**呼叫端＝任何持有效 API key 的上游／內部系統**；🔴 2026-09-12 更正：前一版寫「LINE 業務（房東管家）」——那是 **demo 期的場景**，程式對呼叫端不設限、查無任何 LINE 相依），Runtime 先用**程式**處理三種機器值（清單點選、確認按鈕、過期），其餘交模型在封閉工具清單裡查 JGB 替身資料；要寫入一律先出確認卡、按了才兌現；答案在 `grounding_observe` 模式的 Verifier 下**只有引用類只記不擋**，極性類與機敏類照擋（W6-b3，2026-09-09 落地）。
 
 ## 1. 元件與責任
 
 ```mermaid
 flowchart LR
-  LB[line-bot] -- "POST /rag-api/mcp\nX-API-Key / X-JGB-Identity" --> NG[nginx auth_request]
+  LB["呼叫端<br/>(持 API key 的上游/內部系統)"] -- "POST /rag-api/mcp\nX-API-Key / X-JGB-Identity" --> NG[nginx auth_request]
   NG --> F[mcp_facade\n/mcp 門面]
   F --> ST[NamespacedStateStore\nform_sessions.collected_data]
   F --> IM[image_fetch\n抓檔/縮圖]
@@ -77,7 +77,7 @@ flowchart LR
 
 ```mermaid
 sequenceDiagram
-  participant L as line-bot
+  participant L as 呼叫端
   participant F as mcp_facade
   participant R as AgentRuntime
   participant M as 模型

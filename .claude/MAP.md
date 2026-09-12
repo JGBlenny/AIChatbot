@@ -181,7 +181,7 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 - 規格 | `docs/features/conversational-presales.md` | 對話式回答模式本身:單次直答 → 多輪自適應收斂(prospect 為第一個套用者)
 - 規格 | `docs/api/conversational-api.md` | 對話式回答的對外串接指南
 
-## agentic-MCP（LINE OA 房東管家）{#agentic-mcp}
+## agentic-MCP（/mcp 對話線；LINE OA 為 demo 期場景之一）{#agentic-mcp}
 
 ⚠️ 與上面「對話邏輯與路由執行(主線)」(`#dialogue-logic`) 是**不同的兩條線**：`dialogue-logic` 是
 `conversational-routing-execution` 舊有 HTTP chat 路由主線——⛔ **該線已於 2026-09-11 整條退役**（`POST /api/v1/message` 與 31 個模組刪除，commit `7c905408`）；本節是現行**唯一**活線。
