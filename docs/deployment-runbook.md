@@ -256,9 +256,8 @@ docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c \
 # 期望：三欄皆 NULL（vendor/token/成本等本體欄位仍齊全）
 ```
 
-③（可選，完整驗證 manual 觸發全流程）——自動化 e2e 已於開發環境收案
-（`tests/e2e/chat_flow/test_trigger_manual_flow_e2e_req.py`，task 5.1，fixture 自建自清；
-需宿主直跑 pytest＋另起臨時 rag 容器，不適合照搬 prod 現場）。現場驗證照 e2e 同流程手動走：
+③（可選，完整驗證 manual 觸發全流程）——⚠️ 當時的自動化 e2e 已隨舊鏈刪除
+（commit `7c905408`），⛔ 沒有可跑的版本。現場驗證只能手動走同一流程：
 建一筆 `trigger_mode='manual'`＋`trigger_keywords` 的表單測試知識（後台建立即含 embedding）→
 問句命中 → 應**等待確認**（不直觸發表單、回應含關鍵詞引導）→ 回覆關鍵詞 → 表單觸發 →
 另起 session 命中後回非關鍵詞 → 不觸發 → **驗畢刪除該測試知識**。
@@ -359,11 +358,10 @@ docker exec -i aichatbot-postgres psql -U aichatbot -d aichatbot_admin -v ON_ERR
   < rag-orchestrator/database/migrations/rollback/20260711_disable_repair_sop_vendor24.rollback.sql
 ```
 
-**13-6 四業者驗收矩陣**：宿主直跑 `RUN_E2E=1`（fixture 自建自清，需臨時 rag 容器；不照搬 prod 現場）——
-
-```bash
-RUN_E2E=1 scripts/run-tests.sh e2e tests/e2e/conversational/test_repair_vendor_matrix_e2e_req.py
-```
+**13-6 四業者驗收矩陣**：🔴 **已無可執行的驗收**。原本跑的
+`tests/e2e/conversational/test_repair_vendor_matrix_e2e_req.py` 隨舊 REST 對話鏈
+刪於 commit `7c905408`；新線 `/mcp` 尚無等價的四業者矩陣測試。
+⛔ 不要照原指令跑，pytest 會找不到檔。
 
 ### 13-7 prod 部署另需盤查（環境相依，非 migration）
 
@@ -488,8 +486,9 @@ docker exec -i aichatbot-postgres psql -U aichatbot -d aichatbot_admin -v ON_ERR
 # 15-3 清檢索快取（keywords 變更影響加成計分，舊快取答案作廢）
 python3 scripts/clear_vendor_cache.py   # 或照既有清快取慣例
 
-# 15-4 驗證：路由回歸 83 案全綠
-RUN_INTEGRATION=1 ... pytest tests/integration/conversational/test_facet_entry_routing_req.py
+# 15-4 驗證：🔴 原本的路由回歸 83 案（tests/integration/conversational/
+#       test_facet_entry_routing_req.py）已隨舊鏈刪於 commit 7c905408，
+#       新線無等價測試 ⇒ ⛔ 此步目前沒有可執行的內容。
 ```
 
 > ⚠️ **既有列免重嵌**（只動 keywords/categories，不參與向量）；**reranker 照 §4 認知**

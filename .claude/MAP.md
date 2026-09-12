@@ -349,7 +349,7 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 - 規格 | `docs/api/API_REFERENCE_PHASE1.md` | 聊天／快取管理／業者管理等核心 API 的端點與參數;⚠️ 檔名的「Phase 1」是功能集合命名,文件版本已到 3.1 且含 Phase 3 優化
 - 規格 | `docs/api/API_REFERENCE_KNOWLEDGE_ADMIN.md` | 知識後台九模塊 API(39 支端點:知識／測試情境／回測／認證／管理員／角色／配置／API 金鑰);⚠️ 與 `KNOWLEDGE_ADMIN_API.md` 只重疊 2 支,⛔ 不是它的超集
 - 規格 | `docs/api/KNOWLEDGE_ADMIN_API.md` | 知識管理的 6 支端點規格;⚠️ 其中 `DELETE`／`PUT /api/knowledge/{id}`、`GET /api/vendors`、`POST /api/login` 四支**不在** `API_REFERENCE_KNOWLEDGE_ADMIN.md` 內,⛔ 兩份不可互相取代
-- 規格 | `docs/api/loops_api.md` | 知識完善迴圈的生命週期端點(啟動／迭代／驗證回測／暫停恢復);產線在 `rag-orchestrator/routers/loops.py`
+- 規格 | `docs/api/loops_api.md` | 知識完善迴圈的生命週期端點;⚠️ **文件記載的 10 支裡有 8 支已刪**(start／execute-iteration／validate／complete-batch／pause／resume／cancel／start-next-batch,隨執行機制退役);產線 `rag-orchestrator/routers/loops.py` 現存 5 支**皆為 GET 查詢**,⛔ 引用前先對碼
 - 規格 | `docs/api/loop_knowledge_api.md` | 迴圈生成知識的審核端點(待審查詢／單筆與批量審核／重複偵測);產線在 `rag-orchestrator/routers/loop_knowledge.py`
 
 ### 目錄索引
@@ -445,7 +445,7 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 ⚠️ **同批已判快照、⛔ 不在此列**:`docs/maintenance/audit_2026-06-26.md`(全 repo 文件健全度稽核)、
 `docs/deployment/records/20260729_{deploy,steps}.md`(某次部署的紀錄與逐步手冊)、
 `docs/changelog/2026-02-10-remove-none-auto-trigger-modes.md`、
-`docs/frontend/{batch_review,loop_management}_requirements.md`(檔頭「版本 1.0／建立時間 2026-03-27／對應任務 Task 9.2、9.3」,是**已交付的需求快照**——其引用的 `.kiro/specs/backtest-knowledge-refinement/` 已不存在,但子系統仍活)、
+`docs/frontend/{batch_review,loop_management}_requirements.md`(檔頭「版本 1.0／建立時間 2026-03-27／對應任務 Task 9.2、9.3」,是**已交付的需求快照**——其引用的 `.kiro/specs/backtest-knowledge-refinement/` 已不存在,且**執行機制已於 2026-09 退役**,只剩查詢與審核面)、
 以及 `docs/archive/2026-06/` 三份(見下)。
 
 🔴 **`docs/archive/2026-06/` 三份的翻案紀錄**:`FORM_FILLING_INTEGRATION_PLAN.md`、
@@ -464,12 +464,9 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 ### 架構
 
 - 規格 | `docs/architecture/SYSTEM_ARCHITECTURE.md` | 整體系統的高階架構:SaaS 多租戶、RAG、Reranker、SOP、表單、知識庫、快取、API 整合、部署;⚠️ 與 `COMPLETE_CONVERSATION_ARCHITECTURE.md`(對話母圖)、`facet-architecture.md`、`retriever-pipeline.md`、`DATABASE_SCHEMA.md` 是**不同層次的互補**,⛔ **無任何一份明說取代關係**
-- 規格 | `docs/architecture/developer_architecture.md` | 知識完善迴圈子系統的架構:分層、核心元件、資料流、非同步執行、成本追蹤;⚠️ 檔頭版本戳寫「backtest-knowledge-refinement v1.0」但**該 spec 目錄已不存在**,子系統本身仍活(`rag-orchestrator/services/knowledge_completion_loop/`)
+- 規格 | `docs/architecture/developer_architecture.md` | 知識完善迴圈子系統的架構:分層、核心元件、資料流、非同步執行、成本追蹤;⚠️ 檔頭版本戳寫「backtest-knowledge-refinement v1.0」但**該 spec 目錄已不存在**;⛔ 它描述的執行機制(LoopCoordinator／非同步執行／成本追蹤)已於 2026-09 整組刪除,`services/knowledge_completion_loop/` 只剩 `embedding_client.py`
 - 規格 | `docs/architecture/conversation-flow-business.md` | 業務版對話流程(八層次,給非技術讀者);其每條斷言的實碼出處在 `conversation-flow-evidence.md`
 - 實測 | `docs/architecture/conversation-flow-evidence.md` | 上一份的逐條對碼驗證:46 條斷言中 42 屬實、4 偏差(2026-07-16 四路獨立 scout)
-
-### 回測
-
 
 ### 測試
 

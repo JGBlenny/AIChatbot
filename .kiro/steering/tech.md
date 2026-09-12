@@ -169,8 +169,7 @@ Utils (工具層)
 ### 測試慣例
 - **測試檔案**: 命名為 `test_*.py`
 - **單元測試**: 測試個別服務邏輯
-- **整合測試**: 測試端到端流程（回測、知識完善迴圈）
-- **批次測試**: 透過前端「執行迭代」按鈕（`POST /api/v1/loops/{id}/execute-iteration`）或 `run_first_loop.py` 執行
+- **整合測試**: 測試端到端流程
 
 ### 文檔與註釋
 - **Docstrings**: 所有公開函數使用 Google 風格的 docstrings
