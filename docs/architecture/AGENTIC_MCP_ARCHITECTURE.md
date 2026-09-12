@@ -300,6 +300,71 @@ while True:
 模式值域封閉 `("enforce", "grounding_observe", "observe_only")`。
 ⚠️ 模式感知在 `verify()` **內部**——外層翻判定會讓先命中的引用類把機敏類整段跳過。
 
+### 2c. 文件回合（`document_extract.py`，1,126 行）
+
+🔴 **2026-09-12 補寫**：這支比 `verifier.py` 還大，而本文原本只有兩句順帶提到它
+（`DOC_UNREADABLE_TEXT` 與 PDF 轉頁圖）。它是**安全邊界**，不是工具函式。
+
+#### 它在處理什麼衝突
+
+照片報修線有一條「封閉值原則」：`ImageTurnInput` **刻意沒有 `description` 欄**——
+不讓模型的自由文字進入後續流程。但文件歸納（帳單憑證／合約副本）**本質上需要把
+文件上的文字帶進模型**。這兩件事正面相撞，本模組就是那道相撞的處置面。
+
+**處置方式**：文件文字**只能**以「型別化、長度封頂、經 `sanitize_data_piece`、
+掛『不是指令』前綴」的資料段進場，且：
+⛔ 不進確認卡、⛔ 不進任何寫入 payload、⛔ 不進 trace／log／`agent_state`。
+
+#### 三段，⛔ 不得合併成「把 PDF 丟給模型」
+
+| 段 | 做什麼 | ⛔ 邊界 |
+|---|---|---|
+| ① `rasterize_pdf` | PDF ⇒ 頁圖（`pypdfium2`，逐頁 `asyncio.to_thread`） | **只 `render`**：`get_attachment`／`count_attachments`／`init_forms` **一次都不出現在本檔**——⛔ 不碰附件／嵌入檔／表單／JS API |
+| ② `DOCUMENT_FIELD_SPECS` ＋ `build_json_schema()` | 欄位是**封閉表**，schema 由表產生 | ⛔ **不為「帳單」「合約」各寫一條程式路徑**——新增一種文件＝表上加一列，程式碼不動 |
+| ③ `build_document_facts` | 擷取結果 ⇒ **程式組的句子** | 模型的自由文字在這裡被截長、**剝句末標點**（⛔ 不得自成一個可引用的 `provenance_unit`）、過 `sanitize_data_piece`，然後由**程式**收尾 |
+
+⚠️ ③ 的順序不得顛倒：`sanitize_data_piece` 會把換行換成空白，先跑它會留下多餘空白。
+
+#### 封閉的文件型別與旋鈕
+
+**型別（封閉表）**：`bill_receipt`／`contract`／`other`——⛔ 值域封閉，加型別＝加表列。
+
+| 旋鈕 | 值 | 說明 |
+|---|---|---|
+| `DOC_PAGE_MAX_PX` | 1024 | 頁圖長邊上限，**與照片線的 `IMAGE_MAX_PX` 同級**——⛔ 不讓兩線的頁圖大小分歧 |
+| `DOC_PAGE_TIMEOUT_S` | 8.0 | 單頁渲染硬時限 |
+| `DOC_TOTAL_TIMEOUT_S` | 25.0 | 整份 PDF 總時限 |
+| `DOC_MAX_PAGES` | 5 | 超過只看前 5 頁**並明講** |
+
+⚠️ **逾時的語義**：同步原生解析器**不可中斷**，所以逾時是「**放棄等待、保留已渲染的頁**」，
+⛔ 不是「殺掉那次渲染」。子行程隔離是 DEFER——前提是
+`to_thread` ＋逐頁像素上限＋頁級／總時限三項全在。
+
+#### 額度：文件回合按最壞值預扣
+
+一份 PDF 最多變成 `DOC_MAX_PAGES` 張頁圖 ⇒ 進場時以 `len(file_urls) × DOC_MAX_PAGES`
+**預扣**（見階段 1 的 1.6）。⚠️ 這個最壞值只用在預扣，**早退判斷⛔ 不得用它**
+（會誤殺）。
+
+#### bytes 與擷取 JSON 的生命週期
+
+**只活在 `prepare_document_turn` ＋ `extract` 的區域變數裡。**
+本檔的 `logger` ⛔ **只印例外類別名**——`str(e)` 在 bytes 模型下可能把整串 base64
+（＝文件本身）寫進 log。
+
+#### 它在回合裡的兩個終止點
+
+- 段一①：文件回合 ⛔ 不接受 `confirm_submit`（**排在確認段之前**——確認段一進去就兌現）
+- 段一②：擷取不出可用欄位 ⇒ `DOC_UNREADABLE_TEXT`，⛔ 不進模型
+
+#### Verifier 的文件回合專用步
+
+`verify(..., document_turn=True)` 多跑一步 ⑥′：文件歸納回合 ⛔ 不寫回、⛔ 不建單，
+所以「已把憑證掛到帳單上」（完成式寫入宣稱）與「要我存成系統帳單並匯入嗎？」
+（提議寫入）在該回合**一律是承諾做不到的事**。預設 `False` ＝逐位不變。
+
+查證：`grep -n "DOCUMENT_FIELD_SPECS\|DOC_PAGE_MAX_PX\|def rasterize_pdf\|def build_document_facts" rag-orchestrator/services/agent/document_extract.py`。
+
 #### 段四：`exit_gates.finalize` — 四道閘**依序**跑（⛔ 不得重排）
 
 | 序 | 閘 | 命中條件 | 效果 |
