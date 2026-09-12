@@ -215,18 +215,31 @@ X-JGB-Identity: {"vendor_id":1,"session_id":"jgb2-web-8f3c…","mode":"b2c",
 工具清單依身分而異（`tools/list` 會依 `X-JGB-Identity` 過濾；真正的硬閘在呼叫時）。
 M0 階段：
 
+🔴 **2026-09-12 對碼重建（前一版三處錯）**：①漏 `jgb2.query.repairs`（實際六域）；
+②整批漏列 `session.slots.*`／`confirm.request`／`handoff.request`／`jgb2.action.*`；
+③**`agent.turn` 把 `property_manager` 標成「—」，與程式相反**
+（`AGENT_TURN_SPEC["stage"] = {'prospect': 'M1', 'property_manager': 'M1'}`，DSP-037）。
+
+**全部 16 支**（`stage` 鍵即可見受眾；查證：容器內逐支讀 `ToolSpec`）：
+
 | 工具 | prospect | property_manager | tenant |
 |---|---|---|---|
 | `kb.get` | ✅ | ✅ | ✅ |
 | `kb.search` | — | ✅ | ✅ |
 | `help.read` | ✅ | ✅ | ✅ |
-| `jgb2.query.{bills,contracts,accounts,meters,estates}` | — | ✅ | ✅ |
+| `handoff.request` | ✅ | ✅ | ✅ |
+| `session.slots.get`／`session.slots.set` | ✅ | ✅ | ✅ |
+| `confirm.request` | ✅ | ✅ | ✅ |
+| `jgb2.query.{bills,contracts,accounts,meters,estates,repairs}` | — | ✅ | ✅ |
+| `jgb2.action.{bill_due_extend,repair_create}` | — | ✅ | ✅ |
+| **`agent.turn`** | ✅ | ✅ | **—** |
 
-M1 階段另加一支**整回合**工具（見 §7.1）：
-
-| 工具 | prospect | property_manager | tenant |
-|---|---|---|---|
-| `agent.turn` | ✅（且需 `AGENT_TURN_ENABLED=true`） | — | — |
+⚠️ **`jgb2.action.*` 另有兩道閘**（`scope="write"` ＋ `mcp_only=True`）：
+`identity.entry == "mcp"` **且** `AGENT_WRITE_TOOLS_ENABLED=true` 才可見（DSP-038-1）。
+⚠️ **`agent.turn` 受 `AGENT_TURN_ENABLED`（預設 false）管**——關閉時**根本不註冊**，
+`tools/list`／`registry.call` 三處同時看不到（回切要整條路徑消失）。
+⚠️ **`tenant` 缺 `agent.turn` 鍵＝永不可見**；且 `tenant` 沒有 canon 正本
+（只有 `canon/prospect.md`／`canon/property_manager.md`）⇒ **tenant 在新線不存在**。
 
 工具錯誤以 MCP `ToolError` 拋出，**訊息只含業務代碼**（⛔ 無 SQL、無例外文字、
 無身分、無原文）：`NO_MATCH`／`TOOL_TIMEOUT`／`INVALID_INPUT`／`RATE_LIMITED`／

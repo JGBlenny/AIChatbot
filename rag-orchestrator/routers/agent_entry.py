@@ -1,4 +1,16 @@
-"""agent 路徑入口（spec agentic-mcp-orchestration・任務 2.2；design 元件 8）。
+"""strangler 遷移橋（spec agentic-mcp-orchestration・任務 2.2；design 元件 8／R9）。
+
+🔴 **2026-09-12：本檔已無任何生產呼叫端，⛔ 也不是「未掛路由的端點」。**
+它從來就不是 router（全檔無 `APIRouter`），是**掛在舊鏈請求路徑上的分流函式**。
+⛔ **掛路由救不活它**——下面 docstring 描述的上游五樣全隨 `routers/chat.py`
+於 2026-09-11 刪除（DSP-046）：`VendorChatRequest`／`VendorChatResponse`／
+`_conversational_to_response`／`sse_event`／`metered`，回退目標（舊鏈）也不在。
+⇒ 以下敘述讀作**當年的設計**，⛔ 不是現況。唯一還有價值的是 `_agent_sse` 的事件序
+（`start`／`intent`／`: keepalive`／`answer_chunk`／`metadata`／`done`）——
+全 repo 唯一的 SSE 契約實作，重建 HTTP 面時可參考。
+現行唯一掛著的門面是 `/mcp`（`services/agent/mcp_facade.py`）。
+
+---
 
 `/api/v1/message` 的分流：`audience_of(request) ∈ AGENT_AUDIENCES` 且 app 已建
 `agent_runtime` ⇒ 走 `AgentRuntime`；否則回 `None` 讓 `routers/chat.py` 照舊鏈走。

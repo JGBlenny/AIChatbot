@@ -370,8 +370,13 @@ async def api_key_guard(request: Request, call_next):
 #      這個 middleware 最後加 ⇒ 在 middleware 堆疊最外層 ⇒ 先於
 #      api_key_guard 與 usage_metering_middleware 跑。
 #   ② **工具面**（Mount("/mcp", …)）——只有 MCP SDK 可匯入時才掛。
-#      2026-09-04 實查：mcp==2.1.1 與 fastapi==0.104.1 相依衝突
-#      （anyio<4 vs anyio>=4.9），故正式 image 目前未裝，詳見 requirements.txt。
+#      🔴 2026-09-12 更正：前一版註解寫「mcp==2.1.1 與 fastapi==0.104.1 相依衝突
+#      （anyio<4 vs anyio>=4.9），故正式 image 目前未裝」——**那已經不成立**。
+#      DSP-014 裁 A 升了 web stack：requirements.txt 現已釘 mcp==2.1.1、
+#      fastapi 0.115.14／starlette 0.46／pydantic 2.13／anyio 4.15／uvicorn 0.52。
+#      ⇒ `mcp_sdk_available()` 現在只是**防禦性守衛**（image 供裝出錯時讓三道閘
+#      仍成立、工具面回 404，而不是整個 app 起不來），⛔ 不再代表「尚未安裝」。
+#      正常部署下它必為可用；回不可用代表**供裝壞了**。
 from starlette.routing import Mount
 from services.agent import mcp_facade as _mcp_facade
 

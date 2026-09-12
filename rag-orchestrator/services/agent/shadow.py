@@ -1,4 +1,11 @@
-"""`ShadowRunner`（spec agentic-mcp-orchestration・任務 4.1｜design 元件 7）。
+"""`ShadowRunner`（spec agentic-mcp-orchestration・任務 4.1｜design 元件 7／R8）。
+
+🔴 **2026-09-12：影子模式失去了它要比對的對象，⛔ 目前不會被觸發。**
+R8 的立足點是「新線與舊鏈同時跑同一題、比對差異」，而舊鏈（`routers/chat.py`）
+已於 2026-09-11 刪除（DSP-046）。唯一的呼叫點 `routers/agent_entry.py:schedule_shadow`
+也隨之沒有上游（那支是遷移橋，不是端點）。`app.py` 仍會建 `ShadowRunner`，
+但**沒有第二條線可以比對** ⇒ 實際零觸發。⚠️ R8 仍在 spec 內未撤案。
+⇒ 以下敘述讀作**當年的設計**，⛔ 不是現況。
 
 舊鏈（`routers/chat.py`）在把答案送出之後（`routers/agent_entry.py:schedule_shadow`
 的呼叫點），額外用 `AgentRuntime`（`readonly_view=True`）背景跑一次同一題，

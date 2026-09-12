@@ -106,7 +106,7 @@ PAUSED → COLLECTING / CANCELLED（超時 30 分鐘）
 
 | 組件 | 檔案 | 狀態 |
 |------|------|------|
-| 主入口 | `services/agent/mcp_facade.py`（`/mcp` 的 `agent.turn`） | 現行唯一入口 |
+| 唯一掛著的門面 | `services/agent/mcp_facade.py`（`/mcp` 的 `agent.turn`） | ⚠️ 它是**門面**不是核心；核心是 `services/agent/runtime.py::AgentRuntime` |
 | 回合管線 | `services/agent/runtime.py`＋`turn_segments.py`／`turn_context.py`／`exit_gates.py` | 現行 |
 | 會話狀態 | `services/agent/session_persistence.py`（`AgentSessionStore`） | 現行（2026-09-11 自舊引擎抽出） |
 | 表單／確認卡常數 | `services/form_contract.py` | 現行（同上） |
@@ -119,7 +119,9 @@ PAUSED → COLLECTING / CANCELLED（超時 30 分鐘）
 
 ## 現行入口
 
-唯一入口是 `/mcp` 的 `agent.turn`（`services/agent/mcp_facade.py`）。
+唯一**掛著的門面**是 `/mcp` 的 `agent.turn`（`services/agent/mcp_facade.py`）。
+⚠️ **它不是核心**——核心是 `AgentRuntime`，`/mcp` 只是接在它外面的門面之一
+（見 `docs/architecture/SYSTEM_ARCHITECTURE.md` §1）。
 ⛔ **實際上沒有分流、沒有回退、沒有影子在運作**——但原因不是程式被刪：
 `routers/agent_entry.py`（REST 分流，實作 R9.3 對外契約）與 `services/agent/shadow.py`
 （影子，實作 R8）**都還在**，它們失去的是另一端——舊 REST 鏈。
