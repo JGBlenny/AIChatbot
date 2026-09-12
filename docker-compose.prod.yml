@@ -85,7 +85,13 @@ services:
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       # 後台 JWT 簽發金鑰。⛔ 不得給預設值：`:?` 讓缺值時 compose 直接失敗，
       # 而不是讓程式退回原始碼裡的硬編碼字串（那等於簽發金鑰對全世界公開）。
-      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?JWT_SECRET_KEY 未設：請在 .env 設強隨機值}
+      # ⚠️ 守門在**應用層**，⛔ 不在這裡：`knowledge-admin/backend/auth_utils.py`
+      # 模組層 `if not SECRET_KEY: raise RuntimeError(...)` ——沒設就起不來。
+      # 🔴 2026-09-12 由 `:?` 改回 `:-`：compose **整檔插值**，一個服務的 `:?`
+      # 會讓整份檔的任何指令（連 `config --services`）全部失敗，連別的服務都不能
+      # build。⛔ 不是放寬安全——失敗位置從「檔案解析階段、擋住所有服務」
+      # 移回「該服務啟動時、只擋它自己」，那才是對的爆炸半徑。
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-}
     ports:
       # 只綁 loopback：此服務對外一律經 knowledge-admin-web 的 nginx。
       # ⛔ 不得改回 "8000:8000"——那讓 /api/ 繞過 nginx 直達宿主網路介面。
