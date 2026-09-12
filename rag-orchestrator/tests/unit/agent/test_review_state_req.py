@@ -80,10 +80,18 @@ def test_domain_table_python_mirror(value, visible, allowed):
     assert rs.is_domain_value(value) is allowed, f"{value!r} 的值域判定與 §3 不符"
 
 
-@pytest.mark.parametrize("value,visible,allowed", DOMAIN_TABLE)
-def test_visible_subset_of_allowed(value, visible, allowed):
-    """可見 ⊂ CHECK 允許——可見卻不在值域內是矛盾（會被 CHECK 擋在門外的值卻算已審）。"""
-    if visible:
+def test_visible_subset_of_allowed():
+    """可見 ⊂ CHECK 允許——可見卻不在值域內是矛盾（會被 CHECK 擋在門外的值卻算已審）。
+
+    ⚠️ 2026-09-12 由 `parametrize` 改成單一測試：原本 14 個 node 各自跑
+    `if visible: assert allowed`，而表裡只有 2 列 `visible=True`
+    ⇒ **12 個 node 一次都沒執行到 assert**。守的性質是表本身的一致性，
+    本來就該一次驗完整張表。
+    ⛔ 下面那行非空守門不得拿掉：表若哪天變空，這條會靜默轉綠。
+    """
+    visible_rows = [(v, a) for v, vis, a in DOMAIN_TABLE if vis]
+    assert visible_rows, "DOMAIN_TABLE 沒有任何 visible=True 的列 —— 這是表壞了，不是『通過』"
+    for value, allowed in visible_rows:
         assert allowed, f"{value!r} 可見卻不在值域內"
 
 
