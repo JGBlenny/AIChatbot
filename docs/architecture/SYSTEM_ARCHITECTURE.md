@@ -166,6 +166,17 @@ kb.get    → build_visibility_predicate ＋ canon.review_state.content_reviewed
 | DB 資料表 | 63 |
 | 單元測試 | 3,618 |
 
+🔴 **驗證前必讀——本機有兩個 rag-orchestrator，跑的是不同的程式碼**（2026-09-12 實測）：
+
+| | 起自 | Mounts | 跑的是 |
+|---|---|---|---|
+| 長駐 `aichatbot-rag-orchestrator` | `docker-compose.prod.yml` | **空** | **image 內的程式碼，落後工作樹** |
+| 測試容器（`./scripts/run-tests.sh` 的 `compose run --rm`） | `docker-compose.dev.yml` | `./rag-orchestrator:/app` | **工作樹** |
+
+⇒ `docker exec aichatbot-rag-orchestrator …` 的結果 **⛔ 不得當作工作樹的事實**。
+實例：本輪 `routers/` 在 image 內 21 支、工作樹 22 支（差 `agent_entry.py`）。
+要驗工作樹請走測試容器，或 `docker run --rm -v "$PWD:/w" -w /w python:3.11-slim …`。
+
 **服務**：`rag-orchestrator`(8100)、`knowledge-admin-api`(127.0.0.1:8000)、
 `knowledge-admin-web`(nginx)、`embedding-api`(5001)、`semantic-model`(8002)、
 `postgres`(5432, pgvector)、`redis`(6381)。

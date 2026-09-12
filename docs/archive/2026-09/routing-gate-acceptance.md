@@ -5,7 +5,10 @@
 > 本檔是一份**凍結的驗收契約**（⛔ 指標定義與通過線不得改），而它的受測物已不存在：
 > - `_preentry_routable`：`rag-orchestrator/` 全樹 **0 命中**
 >   （正對照：同法搜 `def build_visibility_predicate` 1 命中 ⇒ 工具有效）
-> - `PREENTRY_ROUTABILITY_GATE`：程式端 **0 讀者**；⚠️ `docker-compose.prod.yml`／
+> - `PREENTRY_ROUTABILITY_GATE`：**0 生產讀者**（`services/**`／`routers/**` 皆無）。
+>   ⚠️ 仍有兩支具名引用，都是刻意的護欄不是缺陷：`tests/unit/_meta/test_env_parity_req.py`
+>   的 `ROUTING_PARAMS`（比對兩份 compose 宣告是否一致）與 `scripts/g2_selftest.py` 的 `KEYS`。
+>   ⚠️ `docker-compose.prod.yml`／
 >   `docker-compose.dev.yml` **仍宣告此旗標**，讀 compose 會誤以為功能仍可開關
 > - §五邊界條款所護的 `services/llm_answer_optimizer.py`：**檔案不存在**
 >
