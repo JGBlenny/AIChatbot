@@ -141,7 +141,7 @@ repo 內另有約 250 份非資料文件尚未指派角色,⛔ 未列於此**不
 - 判準 | `scripts/audit/check_invariants.sh` | 不變量 5:內部事件標誌與 vendor_id 缺失率雷達
 - 決策 | `.kiro/specs/usage-metering/design.md` | contextvar 同生命週期、fail-open 掉線續行、統計走聚合
 
-## 對話邏輯與路由執行(主線) {#dialogue-logic}
+## ⛔ 舊 REST 對話鏈(已退役,2026-09-11) {#dialogue-logic}
 
 ⚠️ **本節所指的舊 REST 對話鏈生產程式碼已於 2026-09-11 全數砍除**
 （31 個模組，完整清單見 commit `7c905408`／`10116570` 的 diff）。本節下方仍列出的規格／決策／
@@ -153,7 +153,7 @@ repo 內另有約 250 份非資料文件尚未指派角色,⛔ 未列於此**不
 
 - 架構 | `docs/architecture/AGENTIC_MCP_ARCHITECTURE.md` | **agentic MCP 對話線總覽（2026-09-08 demo 上線）**：`/mcp` `agent.turn` 的門面→Runtime 三個程式段（confirm／select／image）→工具註冊→替身；寫入鏈、別戶邊界、照片硬邊界、組態、已知限制。改這條線先讀它，再讀 `HANDOFF-20260909.md` 與 demo 帳本
 
-⚠️ 測對話邏輯之前用 `/canon-audit dialogue-logic` 起盤查——下列每一份**整檔讀完**才算數,
+⚠️ 🔴 **測現行對話邏輯請用 `/canon-audit agentic-mcp`，⛔ 不是本節。** 本節保留供翻舊設計理由；若真要讀本節來源，用 `/canon-audit dialogue-logic` 起盤查——下列每一份**整檔讀完**才算數,
 Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必讀清單時,測試會反覆漏掉已裁決的前提。
 
 - 規格 | `.kiro/specs/conversational-routing-execution/requirements.md` | 主線唯一 spec 的需求正本
@@ -176,9 +176,11 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 
 ## agentic-MCP（/mcp 對話線；LINE OA 為 demo 期場景之一）{#agentic-mcp}
 
-⚠️ 與上面「對話邏輯與路由執行(主線)」(`#dialogue-logic`) 是**不同的兩條線**：`dialogue-logic` 是
+⚠️ 與上面「⛔ 舊 REST 對話鏈(已退役)」(`#dialogue-logic`) 是**不同的兩條線**：`dialogue-logic` 是
 `conversational-routing-execution` 舊有 HTTP chat 路由主線——⛔ **該線已於 2026-09-11 整條退役**（`POST /api/v1/message` 與 31 個模組刪除，commit `7c905408`）；本節是現行**唯一**活線。
 
+- 規格 | `docs/architecture/SYSTEM_ARCHITECTURE.md` | **現況全景正本**（v4.0，2026-09-12）：核心是 `AgentRuntime`、`/mcp` 只是四個門面之一；六域 15 face；知識兩條路；六域隔離不對稱
+- 產線 | `docs/guides/development/how-to-add-a-query-capability.md` | **怎麼加一個查詢能力**：先分「新 face／新域／跨列彙總」三類；加 face 的三個陷阱（face 只選 builder 不選資料源、builder 簽名是單列、參數列被 strict 測試凍死）；⛔ 跨列彙總在現行形狀下表達不出來
 - 規格 | `docs/architecture/AGENTIC_MCP_ARCHITECTURE.md` | 總覽：`/mcp` `agent.turn` 門面→四段管線（Plan R R1 後：`turn_segments`／`turn_context`／模型迴圈／`exit_gates`）→工具註冊→替身；組態、已知限制、模型行為假設表
 - 規格 | `.kiro/specs/agentic-mcp-orchestration/requirements.md` | 需求正本，含 D2 延遲／答到率驗收線
 - 產線 | `rag-orchestrator/services/agent/runtime.py` | `AgentRuntime.run_turn`／`_run_turn_body`（四段管線接線）
@@ -186,6 +188,10 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 - 產線 | `rag-orchestrator/services/agent/turn_context.py` | `TurnAccumulator`／`ReservedCallIds`／九段資料注入
 - 產線 | `rag-orchestrator/services/agent/verifier.py` | `OutputVerifier`，`AGENT_VERIFIER_MODE` 三態（`enforce`／`grounding_observe`／`observe_only`）
 - 產線 | `rag-orchestrator/services/agent/mcp_facade.py` | `/mcp` 門面：驗 key／Origin／身分 header、命名空間、每呼叫記錄
+- 規格 | `docs/api/mcp-facade.md` | **`/mcp` 對外串接契約**：三道閘（401／403／400）、`X-JGB-Identity` 明文 JSON（⛔ 無 base64）、16 支工具與各自 `stage`、錯誤碼、額度
+- 正本 | `rag-orchestrator/canon/prospect.md` | **會進模型脈絡的售前知識正本**（路 A：每回合自動注入）；⛔ 改它等於改模型看到的內容，配套 `.json` 的 sha 由 `load_canon_or_die` 啟動時比對
+- 正本 | `rag-orchestrator/canon/property_manager.md` | 同上，房東管家受眾。⚠️ **只有這兩份**——`tenant` 無正本，`agent.turn` 對 tenant 永不可見
+- 判定 | `docs/architecture/agent-path-retired-symbols.md` | agent 路徑上已退役的符號帳本（查「這個還在不在」先看這裡）
 - 產線 | `rag-orchestrator/services/agent/limits.py` | DSP-045 額度封閉表（⛔ 不讀 env 覆寫）
 - 產線 | `rag-orchestrator/services/agent/session_persistence.py` | `AgentSessionStore`：會話狀態層（`get_state`／`start`／`save`／`close`）。⚠️ 2026-09-11 自舊引擎抽出，SQL 逐字照搬，同一張 `form_sessions`、同一個 `form_id='conversational'`
 - 產線 | `rag-orchestrator/services/form_contract.py` | 確認卡按鈕值與表單 id 常數（⚠️ 值寫進 DB／送給呼叫端，⛔ 不得改）
@@ -422,9 +428,7 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 ### 使用手冊
 
 - 產線 | `docs/user-guides/VENDOR_SOP_USER_GUIDE.md` | Platform 與 Vendor 兩種角色各自怎麼配置 SOP 流程
-- 產線 | `docs/user-guides/knowledge_completion_loop.md` | 知識完善迴圈的標準使用手冊(概念＋操作＋最佳實踐＋FAQ)
-- 產線 | `docs/user-guides/knowledge_loop_workflow.md` | 同一迴圈的流程深度版:完整流程圖、逐步邏輯與實例
-- 產線 | `docs/user-guides/quick_start.md` | 同一迴圈的 5 分鐘入門版
+- 判定 | `docs/user-guides/knowledge-loop-status.md` | 知識完善迴圈剩下什麼:5 支 GET 查詢＋3 支審核端點(逐支實測);⛔ 啟動迴圈／執行迭代的端點已不存在(`grep -c "@router.post" routers/loops.py` ＝0);想跑改善輪走 `.claude/skills/retrieval-improvement-loop/`
 
 ⚠️ 上三份是**同主題的入門／標準／深度三層**,同日(2026-05-18)更新,**無任何一份明說取代關係**。
 
