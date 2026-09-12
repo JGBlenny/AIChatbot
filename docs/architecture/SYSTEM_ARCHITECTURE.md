@@ -185,6 +185,36 @@ kb.get    → build_visibility_predicate ＋ canon.review_state.content_reviewed
 新線**不是**「載入面向設定 → 進場判定 → 決定性算 facts」，而是
 **「模型從一個封閉 enum 挑 `face` → 直呼對應 builder」**——enum 由 `_jgb2_spec(domain, sorted(builders.keys()))` 在註冊當下由註冊表現算。
 
+🔴 **⛔ 「加一個 face 鍵」⛔ 不等於「加一個能力」**（2026-09-12 對抗性演練：一位只讀文件的
+工程師照上面那句規劃新 face，做出來會是一個拿得到資料列、卻算不出答案的 builder）。
+三件文件從來沒講、但決定你能不能做的事：
+
+| # | 事實 | 後果 |
+|---|---|---|
+| 1 | **face 只選 builder，⛔ 不選資料源** | 資料源**寫死在 `query_<domain>` 函式本體**。實測 `query_estates` 只呼叫 `get_estate_status`＋`get_estate_detail`，**⛔ 不依 `face` 分流**。加鍵拿不到新資料 |
+| 2 | **builder 簽名是單列** | `build_payment_flow_facts(bill, user_question)`、`build_estate_status_facts(estate, detail, user_question)`。多列一律走 `_ok_candidates` 變候選清單 ⇒ **跨列彙總（「這戶今年收了幾期」）在現行形狀下表達不出來** |
+| 3 | **參數列是封閉的** | `registry.to_openai_tools` 把 enum 生成 `Literal`；`test_to_openai_tools_strict_req.py` 釘住參數列為 `["ctx","face","ref","keyword"]`。只有 repairs 有 `JGB2_EXTRA_PROPERTIES` ⇒ 其餘域**傳不了額外參數** |
+
+⇒ 真要加能力，動的是 `query_<domain>` 的資料源與回傳形狀，**那是架構改動，不是加一個鍵**。
+
+### 🔴 六個域的隔離**不對稱**（安全相關，⛔ 挑域承載資料前必讀）
+
+| 域 | 身分閘 | jgb2 端 `viewer_user_id` 圈定 | stage |
+|---|---|---|---|
+| `bills` | `_identity_gate_ok`（受眾感知：pm 單證／tenant 雙證） | ✅ **有** | pm・tenant |
+| `contracts` | `_identity_gate_ok` | ✅ **有** | pm・tenant |
+| `repairs` | `_identity_gate_ok` | ⛔ 無 | pm・tenant |
+| `meters` | `_validate_identity`（一律雙證） | ⛔ 無 | pm・tenant |
+| `accounts` | `_validate_identity` | ⛔ 無 | pm・tenant |
+| `estates` | `_validate_identity` | ⛔ 無 | pm・tenant |
+
+⚠️ **只有 `bills`／`contracts` 有 jgb2 端的 viewer 圈定。** 其餘四域的別戶隔離**全靠本地**
+`_enforce_tool_scope` 的 `scope.estate_id`——而那個 scope **只在使用者點過清單（`select:`）之後才存在**。
+一般對話（沒點清單）時，那四域**既無 viewer 圈定、也無 scope**。
+
+⇒ **⛔ 不得把財務／個資等級的資料掛進沒有 viewer 圈定的域**（尤其 `estates`，
+六個域的 `stage` 都含 `tenant`）。要承載那類資料，掛 `bills`／`contracts`。
+
 六個域、15 個合法 `face`（＝六張 `*_FACE_BUILDERS` 註冊表的鍵；查證：以 `ast` 解析工作樹逐表取鍵——⛔ 不要用 `docker exec`，長駐容器落後工作樹，見下方 §6）：
 
 | 域 | face |

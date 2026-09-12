@@ -143,7 +143,24 @@ psql "$DATABASE_URL" -f rag-orchestrator/database/migrations/backfill_contract_k
 # 套用後清快取（重啟服務，或後台 /conversational-config 任一儲存）
 ```
 
-## 六、擴一個新面向 / 新領域（零改程式）
+## 六、擴一個新面向 / 新領域（🔴 「零改程式」已不成立）
+
+🔴 **2026-09-12：⛔ 不得照本節做。** 本節寫的四件套（`category_config` 加父子、
+系統脈絡加列、診斷 config 的 `topic_scope.category`、知識補標）在
+`services/agent/**` **全部 0 消費者**——做完四支 migration，**不會有任何程式讀它們**
+（逐鍵實測見本檔檔頭的對照表；正對照：同檔 `config_for_target_user` 在
+`services/agent/tools/handoff.py` 有生產呼叫端 ⇒ 不是掃描器壞）。
+
+2026-09-12 的對抗性演練裡，一位只讀文件的工程師正是照本節排了**一整天**做那四支 migration。
+
+**現行要加一個 face，實際要動的是**（見 `SYSTEM_ARCHITECTURE.md` §3）：
+在 `services/jgb/<domain>.py` 的 `*_FACE_BUILDERS` 加鍵＋寫 builder。
+⚠️ 但**加鍵 ⛔ 不等於加能力**——face 只選 builder、⛔ 不選資料源（資料源寫死在
+`services/agent/tools/jgb2.py::query_<domain>`），builder 簽名是**單列**（跨列彙總表達不出來），
+參數列由測試釘死。⚠️ 且**六個域的隔離不對稱**，挑錯域承載財務資料會外洩——
+兩張表都在 `SYSTEM_ARCHITECTURE.md` §3。
+
+以下為**歷史記錄**（舊鏈時代的作法，⛔ 不是現況）：
 
 - **合約加面向（違約金試算…）**：category_config 加 `違約金`(parent=系統合約)；系統脈絡加一列 `categories=['違約金']`；相關知識掛 `違約金`。問違約金→載 base＋系統合約母＋違約金子。
 - **新領域（帳單…）**：category_config 加 `系統帳單`(母)＋子面向；系統脈絡加母/子列；診斷 config topic_scope.category＝該子面向；知識掛該子面向。與合約完全平行，程式不動。
