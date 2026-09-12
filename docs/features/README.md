@@ -56,7 +56,7 @@
 | 文件 | 說明 |
 |------|------|
 | [sop/README.md](./sop/README.md) | SOP 系統文檔索引 |
-| [sop/SOP_TRIGGER_MODE_UPDATE_INDEX.md](./sop/SOP_TRIGGER_MODE_UPDATE_INDEX.md) | SOP 觸發模式 UI 更新（2026-02-03）的文檔導引 |
+| [sop/SOP_TRIGGER_MODE_UPDATE_INDEX.md](./sop/SOP_TRIGGER_MODE_UPDATE_INDEX.md) | SOP 觸發模式 UI 更新（2026-02 歷史；⛔ 觸發模式對話路徑已不讀）（2026-02-03）的文檔導引 |
 | [sop/implementation/VENDOR_SOP_FLOW_CONFIGURATION.md](./sop/implementation/VENDOR_SOP_FLOW_CONFIGURATION.md) | Vendor SOP 流程配置：4 種觸發模式 × 4 種後續動作 |
 | [sop/implementation/SOP_NEXT_ACTION_IMPLEMENTATION.md](./sop/implementation/SOP_NEXT_ACTION_IMPLEMENTATION.md) | SOP 後續動作的實作說明與進度 |
 | [sop/implementation/SOP_FLOW_STRICT_VALIDATION_2026-01-26.md](./sop/implementation/SOP_FLOW_STRICT_VALIDATION_2026-01-26.md) | 觸發模式與後續動作的有效組合嚴格限制 |

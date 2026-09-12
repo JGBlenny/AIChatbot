@@ -18,8 +18,10 @@
 
 | 連法 | URL | 說明 |
 |---|---|---|
-| 直連 rag-orchestrator | `http://<host>:8100/api/v1/message` | 同 VPC / 內網最直接 |
-| 經 nginx（web :80） | `http://<host>/rag-api/v1/message` | nginx 把 `/rag-api/` 改寫成 `/api/` |
+| 直連 rag-orchestrator | `http://<host>:8100/mcp` | 同 VPC / 內網最直接 |
+| 經 nginx（web :80） | `http://<host>/rag-api/…` | nginx 把 `/rag-api/` 改寫成 `/api/`。⚠️ 曾因改寫規則害 `/mcp` 變 404 卻回 401——驗端點要打到協定層 |
+
+🔴 **舊的 `/api/v1/message`（兩種連法）已於 2026-09-11 刪除，實測 404。**
 | CloudFront | ❌ 不可（CloudFront 只服務 S3 靜態前端，未代理 `/rag-api/`） | 不要用 |
 
 > 服務在 bastion 後、EC2 無 public IP；**對外入口（ALB/域名）請向基礎設施確認**。合約與位址無關。

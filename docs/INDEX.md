@@ -13,6 +13,7 @@
 | **系統現在怎麼跑**（核心／門面／15 個 face／知識兩條路／六域隔離不對稱） | [`architecture/SYSTEM_ARCHITECTURE.md`](./architecture/SYSTEM_ARCHITECTURE.md) — v4.0，2026-09-12 |
 | **一回合的完整流程**、**為什麼被轉人**、每個分岔與終止點 | [`architecture/AGENTIC_MCP_ARCHITECTURE.md`](./architecture/AGENTIC_MCP_ARCHITECTURE.md) — §2b 是四段 13 個終止點，§4b 是轉人的五個來源 |
 | **`/mcp` 串接契約**（header、工具、錯誤碼、額度） | [`api/mcp-facade.md`](./api/mcp-facade.md) |
+| **怎麼加一個查詢能力／新 face／新域** | [`guides/development/how-to-add-a-query-capability.md`](./guides/development/how-to-add-a-query-capability.md) |
 
 🔴 **2026-09-11，31 個舊 REST 對話鏈模組整批刪除**（DSP-046）：意圖分類器、SOP 編排器與
 觸發器、表單狀態機、答案優化器、信心度評估器、並行檢索仲裁——**全部不存在**。
@@ -66,7 +67,6 @@
 | [部署清單](./deployment/DEPLOY_CHECKLIST.md) | 部署前檢查 |
 | [SOP 指南](./guides/features/SOP_GUIDE.md) | SOP 系統使用 |
 | [知識匯入匯出](./guides/features/KNOWLEDGE_IMPORT_EXPORT_GUIDE.md) | 知識庫管理 |
-| [串流聊天指南](./guides/features/STREAMING_CHAT_GUIDE.md) | SSE 串流實作 |
 | [快取系統](./guides/features/CACHE_SYSTEM_GUIDE.md) | Redis 快取管理 |
 | [更多指南...](./guides/README.md) | 完整指南目錄 |
 

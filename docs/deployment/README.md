@@ -373,7 +373,7 @@ deployment/
 2. 執行 Migration：`./database/run_migrations.sh docker-compose.yml` 或手動執行
 3. 重啟服務：`docker-compose restart rag-orchestrator`
 4. 驗證部署：測試 API 端點（`/api/v1/loops`, `/api/v1/loop-knowledge/pending`）
-5. 功能測試：啟動迴圈、執行迭代、批量審核
+5. 功能測試：迴圈查詢與批量審核（⛔ 啟動迴圈／執行迭代的端點已不存在，見 `docs/api/loops_api.md`）
 
 **核心功能：**
 - ✅ **13 個 API 端點**：完整的迴圈生命週期管理

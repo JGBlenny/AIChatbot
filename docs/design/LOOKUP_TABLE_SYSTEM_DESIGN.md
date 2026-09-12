@@ -1086,50 +1086,11 @@ curl -s -X GET "$BASE_URL/api/lookup/categories?vendor_id=1" \
 echo "🧪 測試完整對話流程 - 電費查詢"
 echo "========================================"
 
-BASE_URL="http://localhost:8100"
-SESSION_ID="test_billing_$(date +%s)"
-
-# 第 1 輪: 提問
-echo -e "\n📝 第 1 輪: 用戶提問「電費怎麼繳」"
-response1=$(curl -s -X POST "$BASE_URL/api/v1/message" \
-    -H "Content-Type: application/json" \
-    -d "{
-        \"message\": \"電費怎麼繳\",
-        \"vendor_id\": 1,
-        \"user_role\": \"customer\",
-        \"user_id\": \"test_user\",
-        \"session_id\": \"$SESSION_ID\"
-    }")
-
-echo "$response1" | python3 -c "
-import sys, json
-data = json.load(sys.stdin)
-print('✅ 回應:', data.get('answer', '')[:100])
-print('📋 表單觸發:', data.get('form_triggered'))
-print('📋 表單 ID:', data.get('form_id'))
-"
-
-# 第 2 輪: 提供地址
-echo -e "\n📝 第 2 輪: 提供地址"
-response2=$(curl -s -X POST "$BASE_URL/api/v1/message" \
-    -H "Content-Type: application/json" \
-    -d "{
-        \"message\": \"新北市板橋區忠孝路48巷4弄8號二樓\",
-        \"vendor_id\": 1,
-        \"user_role\": \"customer\",
-        \"user_id\": \"test_user\",
-        \"session_id\": \"$SESSION_ID\"
-    }")
-
-echo "$response2" | python3 -c "
-import sys, json
-data = json.load(sys.stdin)
-print('✅ 最終回應:')
-print(data.get('answer', ''))
-print('\n📊 API 調用結果:', 'success' if '寄送區間' in data.get('answer', '') else 'failed')
-"
-
-echo -e "\n✅ 測試完成!"
+# 🔴 2026-09-12：原本這裡是兩輪 curl 對話腳本，打 POST /api/v1/message——
+# 該端點隨舊 REST 對話鏈於 2026-09-11 刪除，實測 404。
+# lookup 本身仍活（routers/lookup.py），但**不再由對話鏈消費**；
+# 新線要驗 lookup 請直接打 /api/v1/lookup/* 或走 /mcp 的工具。
+# 對話端到端驗收見 docs/deployment-runbook.md §5。
 ```
 
 ### Phase 6: 部署 (預計 30 分鐘)

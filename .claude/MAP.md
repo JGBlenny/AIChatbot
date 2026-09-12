@@ -300,7 +300,6 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 - 產線 | `docs/guides/features/PERMISSION_SYSTEM_QUICK_GUIDE.md` | RBAC 角色與權限怎麼設定
 - 產線 | `docs/guides/features/SOP_EXCEL_IMPORT_GUIDE.md` | SOP Excel 匯入的金流欄位怎麼處理
 - 規格 | `docs/guides/features/SOP_OPTIMIZATION_README.md` | SOP Group Embedding 優化解決什麼問題、檔案在哪
-- 規格 | `docs/guides/features/STREAMING_CHAT_GUIDE.md` | SSE 串流聊天的事件協議與適用場景
 
 ### 入門與速查
 
@@ -374,7 +373,7 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 - 規格 | `docs/features/sop/implementation/SOP_NEXT_ACTION_IMPLEMENTATION.md` | SOP 四種觸發模式與三種後續動作的實作範圍與未竟項
 - 決策 | `docs/features/sop/implementation/SOP_FLOW_STRICT_VALIDATION_2026-01-26.md` | 為何限制觸發模式與後續動作的有效組合,以及前後端各擋哪一段
 - 規格 | `docs/features/sop/optimization/SOP_KEYWORDS_COMPARISON.md` | `keywords` 與 `trigger_keywords` 差在哪、各自何時生效
-- 路由 | `docs/features/sop/SOP_TRIGGER_MODE_UPDATE_INDEX.md` | SOP 觸發模式 UI 更新(2026-02-03)涉及哪些文件
+- 判定 | `docs/features/sop/SOP_TRIGGER_MODE_UPDATE_INDEX.md` | 2026-02-03 的 SOP 觸發模式 UI 更新紀錄(歷史);⛔ 觸發模式在對話路徑上已不存在
 
 ### 目錄索引
 
@@ -451,7 +450,6 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 ### 架構
 
 - 規格 | `docs/architecture/SYSTEM_ARCHITECTURE.md` | **現況系統全景正本**(v4.0,2026-09-12):核心是 `AgentRuntime`、`/mcp` 只是四個門面之一;15 個 face 與六域隔離不對稱;知識兩條路(git canon 自動注入 vs `kb.search` 模型調用);`tenant` 在新線不存在。對話線內部見 `AGENTIC_MCP_ARCHITECTURE.md`
-- 規格 | `docs/architecture/developer_architecture.md` | 知識完善迴圈子系統的架構:分層、核心元件、資料流、非同步執行、成本追蹤;⚠️ 檔頭版本戳寫「backtest-knowledge-refinement v1.0」但**該 spec 目錄已不存在**;⛔ 它描述的執行機制(LoopCoordinator／非同步執行／成本追蹤)已於 2026-09 整組刪除,`services/knowledge_completion_loop/` 只剩 `embedding_client.py`
 
 ### 測試
 

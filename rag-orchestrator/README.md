@@ -1,16 +1,13 @@
 # 🤖 RAG Orchestrator - 智能問答協調器
 
-> ⚠️ **2026-09-11 舊鏈退役（讀者請先看這段）**：本檔「系統概述」「核心功能」
-> 「使用範例」三節描述的是**已刪除**的舊 REST 對話鏈（`/api/v1/message`、
-> `/api/v1/chat/stream` 等，2026-09-11 隨 31 個產品模組一併移除），包含意圖
-> 分類系統、Phase 3 LLM 答案優化、信心度評估等設計——這些**設計理由本身仍有
-> 參考價值**（保留於下方），但**程式已不存在**，⛔ 不要照著這些章節的 curl
-> 範例串接。對話能力現在**只**經 `/mcp` 門面（server-to-server），契約見
-> `docs/api/mcp-facade.md`；架構全貌見 `docs/architecture/AGENTIC_MCP_ARCHITECTURE.md`。
-> 「未釐清問題管理」「Redis 緩存系統」兩節與 API 文件表格中的
-> `/api/v1/unclear-questions*` 端點**仍存活**。
 
-RAG Orchestrator 是 AIChatbot 系統的核心智能問答引擎，負責協調意圖分類、知識檢索、信心度評估等多個服務，提供高品質的自動化客服回答。
+**對話核心是 `AgentRuntime`**（`services/agent/runtime.py`）：模型持有回合、自己決定
+呼叫哪支工具，輸出逐句經 Verifier 驗引用。**`/mcp` 是它的門面之一**，也是目前唯一
+掛著的對外入口（`routers/agent.py`）。本服務同時承載檢索與一批後台 CRUD 路由。
+
+⛔ 架構請讀 [`docs/architecture/SYSTEM_ARCHITECTURE.md`](../docs/architecture/SYSTEM_ARCHITECTURE.md)
+與 [`docs/architecture/AGENTIC_MCP_ARCHITECTURE.md`](../docs/architecture/AGENTIC_MCP_ARCHITECTURE.md)；
+`/mcp` 契約讀 [`docs/api/mcp-facade.md`](../docs/api/mcp-facade.md)。
 
 ## 📋 目錄
 
@@ -27,228 +24,30 @@ RAG Orchestrator 是 AIChatbot 系統的核心智能問答引擎，負責協調�
 
 ## 系統概述
 
-RAG Orchestrator 是一個基於 FastAPI 的微服務，整合了以下核心能力：
-
-1. **意圖分類**：使用 OpenAI Function Calling 自動識別使用者問題類型
-2. **RAG 檢索**：基於向量相似度搜尋相關知識
-3. **信心度評估**：多維度評估答案品質，決定回應策略
-4. **LLM 答案優化** (Phase 3)：使用 GPT-4o-mini 優化答案，提供自然對話體驗
-5. **未釐清問題管理**：記錄和追蹤低/中信心度問題
-
-### 工作流程
-
 ```
-使用者問題
-    │
-    ▼
-┌─────────────────┐
-│  意圖分類        │ ← OpenAI Function Calling
-│  (11 種意圖)    │
-└─────────────────┘
-    │
-    ▼
-┌─────────────────┐
-│  RAG 檢索        │ ← 向量相似度搜尋
-│  (知識庫)       │    (僅對 knowledge/hybrid 類型)
-└─────────────────┘
-    │
-    ▼
-┌─────────────────┐
-│  信心度評估      │ ← 相似度 (60%) + 結果數 (20%) + 關鍵字 (20%)
-│  (高/中/低)     │
-└─────────────────┘
-    │
-    ├─► 高信心度 (≥0.70) ──► LLM 答案優化 ──► 直接回答 ✨
-    │                      (GPT-4o-mini)
-    │
-    ├─► 中信心度 (0.50-0.70) ──► LLM 答案優化 ──► 回答 + 建議聯繫客服 + 記錄 ✨
-    │                           (GPT-4o-mini)
-    │
-    └─► 低信心度 (<0.50) ──► 記錄未釐清問題 + 轉人工
+POST /mcp  （唯一掛著的對外對話入口，X-API-Key 無條件必帶）
+   ↓ services/agent/mcp_facade.py —— 13 步進場契約、額度計量、照片前處理
+   ↓ services/agent/runtime.py::AgentRuntime.run_turn —— 核心（建構依賴裡沒有協定）
+        段一 turn_segments      六條程式終止路徑
+        段二 turn_context       九段注入（user_message 永遠最後）
+        段三 模型迴圈           registry.call（in-process）＋ Verifier 逐句驗引用
+        段四 exit_gates         四道閘依序，⛔ 順序即契約
+   ↓ 全回合共 13 個終止點
 ```
 
----
+**工具**：六域 `jgb2.query.*`（15 個 face）、`kb.search`／`kb.get`、`help.read`、
+寫入類與確認卡。**受眾**只有 `prospect` 與 `property_manager`。
 
-## 核心功能
+🔴 **⛔ 以下全部不存在**（2026-09-11 隨舊 REST 對話鏈刪除，DSP-046）：
+`/api/v1/message`、`/api/v1/chat/stream`（實測皆 404）、意圖分類（11 種意圖）、
+信心度評估、Phase 3 LLM 答案優化、SOP 編排、表單狀態機。
+⛔ 不要照它們設計新東西，也不要拿它們解釋現行行為。
 
-### 1. 意圖分類系統
+## 後台維護面（仍存活，但⛔ 不在對話回合路徑上）
 
-自動識別使用者問題的意圖類型，支援 11 種意圖分類：
-
-**知識查詢類**：
-- 退租流程、租約問題、押金處理等
-
-**資料查詢類**：
-- 租約查詢、繳費記錄、帳戶資訊等
-
-**操作執行類**：
-- 租約續約、繳費操作等
-
-**混合類**：
-- 需要知識 + 資料的複雜問題
-
-> 詳細意圖類型定義見 [config/intents.yaml](./config/intents.yaml)
-
-### 2. RAG 檢索引擎
-
-基於 pgvector 的向量相似度搜尋：
-
-- **向量生成**：透過 Embedding API 生成問題向量
-- **相似度搜尋**：使用餘弦距離 (`<=>`) 進行向量搜尋
-- **智能過濾**：可設定相似度閾值（預設 0.65）
-- **關鍵字備援**：當向量搜尋結果不足時，使用關鍵字搜尋
-
-### 3. 信心度評估
-
-多維度評估系統，決定最佳回應策略：
-
-| 評估維度 | 權重 | 說明 |
-|---------|------|------|
-| 相似度分數 | 60% | 最高相似度結果的分數 |
-| 結果數量 | 20% | 檢索到的結果數量 (歸一化) |
-| 關鍵字匹配率 | 20% | 問題關鍵字與結果的匹配程度 |
-
-**信心等級：**
-- 🟢 **高信心度** (≥0.70)：LLM 優化後直接回答
-- 🟡 **中信心度** (0.50-0.70)：LLM 優化後回答，附加警告並記錄
-- 🔴 **低信心度** (<0.50)：記錄未釐清問題，建議轉人工
-
-### 4. LLM 答案優化 (Phase 3) ✨
-
-使用 GPT-4o-mini 將知識庫內容優化成自然對話：
-
-**核心功能**：
-- **自動優化**：高/中信心度答案自動經過 LLM 優化
-- **Prompt Engineering**：針對不同意圖類型（知識/資料/操作）使用不同提示詞
-- **Token 控制**：每次請求最多 800 tokens，避免成本失控
-- **錯誤降級**：API 失敗時自動使用原始答案
-- **成本追蹤**：記錄每次優化的 token 使用量
-
-**配置選項**：
-```python
-{
-    "model": "gpt-4o-mini",
-    "temperature": 0.7,
-    "max_tokens": 800,
-    "enable_optimization": True,
-    "optimize_for_confidence": ["high", "medium"],
-    "fallback_on_error": True
-}
-```
-
-**優化效果對比**：
-
-| 項目 | Phase 2 (原始) | Phase 3 (LLM 優化) |
-|------|---------------|------------------|
-| 答案來源 | 直接複製知識庫文字 | GPT-4o-mini 重組優化 |
-| 語氣 | 正式、條列式 | 自然、對話式 |
-| 針對性 | 顯示完整知識庫條目 | 只回答問題相關部分 |
-| 用戶體驗 | ★★★☆☆ | ★★★★★ |
-
-### 5. 未釐清問題管理
-
-自動記錄和追蹤中/低信心度問題：
-
-- **自動記錄**：信心度 < 0.70 時自動記錄（包含中等和低信心度）
-- **頻率統計**：相同問題自動累加計數
-- **狀態管理**：pending → in_progress → resolved/ignored
-- **指派追蹤**：支援指派給特定人員處理
-- **批次操作**：支援批次更新狀態
-
-### 6. Redis 緩存系統 ⚡ (2025-10-21)
-
-3 層緩存架構，提升響應速度並降低成本：
-
-**緩存層級**：
-- **Layer 1: 問題緩存** - 相同問題直接返回答案（TTL: 1 小時）
-- **Layer 2: 向量緩存** - 常見問題 embedding 緩存（TTL: 2 小時）
-- **Layer 3: RAG 結果緩存** - 檢索結果緩存（TTL: 30 分鐘）
-
-**失效策略**：
-- **事件驅動失效**：Knowledge Admin 更新知識時自動清除相關緩存
-- **TTL 保底機制**：防止緩存失效通知失敗導致的過期數據
-- **關聯追蹤**：knowledge_id、intent_id、vendor_id 三維度關聯
-
-**緩存管理 API**：
-- `POST /api/v1/cache/invalidate` - 緩存失效通知
-- `DELETE /api/v1/cache/clear` - 清除所有緩存
-- `GET /api/v1/cache/stats` - 緩存統計
-- `GET /api/v1/cache/health` - 健康檢查
-
-**性能提升**：
-- ✅ 緩存命中時跳過 RAG 處理，響應時間減少 80-90%
-- ✅ 減少向量生成 API 調用，降低成本
-- ✅ 智能失效策略，確保數據一致性
-
----
-
-## 系統架構
-
-### 目錄結構
-
-⛔ **本檔不維護目錄樹**——單一正本在 [`.kiro/steering/structure.md`](../.kiro/steering/structure.md)，
-那棵樹依檔案系統維護。抄第二份的下場已經看過：這裡曾經留著 Phase 3 的舊結構，
-把 `chat.py`／`confidence_evaluator.py` 之類列成現況。
-
-一句話版：入口 `app.py` → `routers/agent.py` 掛 `/mcp` →
-`services/agent/mcp_facade.py` → `services/agent/runtime.py`（核心）。
-
-### 服務依賴
-
-```
-RAG Orchestrator (Port 8100)
-    │
-    ├─► PostgreSQL (Port 5432)
-    │   └─ knowledge_base 表
-    │   └─ conversation_logs 表
-    │   └─ unclear_questions 表
-    │
-    ├─► Embedding API (Port 5001)
-    │   └─ 向量生成服務
-    │
-    ├─► Semantic Model (Reranker)
-    │   └─ ⚠️ 會靜默永久停用，容器／稽核／健檢 API 三者都看不出來
-    │
-    └─► OpenAI API
-        └─ AGENT_MODEL（對話回合）／QUERY_REWRITE_MODEL／KNOWLEDGE_GEN_MODEL
-```
-
----
-
-## 意圖類型
-
-系統支援 11 種預定義意圖類型，可透過 `config/intents.yaml` 配置：
-
-### 知識查詢類 (knowledge)
-
-| 意圖名稱 | 關鍵字範例 | 需要 API |
-|---------|-----------|---------|
-| 退租流程 | 退租、解約、搬離 | ❌ |
-| 租約問題 | 租約、合約、期限 | ❌ |
-| 押金處理 | 押金、退還、扣除 | ❌ |
-| 維修報修 | 維修、報修、壞掉 | ❌ |
-| 繳費方式 | 繳費、付款、轉帳 | ❌ |
-| 設施使用 | 設施、健身房、停車 | ❌ |
-
-### 資料查詢類 (data_query)
-
-| 意圖名稱 | 關鍵字範例 | 需要 API |
-|---------|-----------|---------|
-| 租約查詢 | 查租約、到期日 | ✅ lease_system |
-| 繳費記錄 | 繳費記錄、付款歷史 | ✅ payment_system |
-| 個人資料 | 個人資料、聯絡方式 | ✅ user_system |
-
-### 操作執行類 (action)
-
-| 意圖名稱 | 關鍵字範例 | 需要 API |
-|---------|-----------|---------|
-| 租約續約 | 續約、延長 | ✅ lease_system |
-
-### 混合類 (hybrid)
-
-需要結合知識查詢和資料查詢的複雜問題。
-
----
+未釐清問題（`/api/v1/unclear-questions*`）、Redis 快取、知識匯入匯出、業者與 SOP
+後台 CRUD、表單後台 CRUD、迴圈查詢與審核。
+⚠️ **SOP 與表單改了不會影響機器人回答**——對話路徑對它們零讀取。
 
 ## API 文件
 
@@ -340,151 +139,6 @@ config = {
     "result_count_weight": 0.2,           # 結果數權重
     "keyword_match_weight": 0.2           # 關鍵字權重
 }
-```
-
----
-
-## 使用範例 ⚠️ 已退役（2026-09-11，見檔頭警語——下列 curl 打的是已刪除端點）
-
-### 1. 基本問答（含 Phase 3 LLM 優化 + 多業者支持）✨
-
-```bash
-curl -X POST http://localhost:8100/api/v1/message \
-  -H "Content-Type: application/json" \
-  -d '{
-    "message": "退租要怎麼辦理？",
-    "vendor_id": 1,
-    "user_role": "customer",
-    "user_id": "user123"
-  }'
-```
-
-**回應範例（LLM 優化後的自然對話）：**
-
-```json
-{
-  "question": "退租要怎麼辦理？",
-  "answer": "退租的流程如下：\n\n### 退租步驟\n\n1. **提前通知**：在預定的退租日期前30天，請以書面方式通知房東。\n2. **繳清費用**：確保所有的租金及水電費已經繳清。\n3. **房屋檢查**：與房東約定一個時間，進行房屋的檢查。\n4. **押金退還**：如果房屋狀況良好，房東應在7個工作天內退還押金。\n\n### 注意事項\n- 記得提前30天通知房東。\n- 所有費用必須繳清。\n- 房屋需恢復至原來的狀態。\n\n如果有其他問題，隨時可以詢問！\n\n⚠️ 注意：此答案信心度為中等（0.53），建議您聯繫客服人員進一步確認。\n您的問題已記錄，我們會持續改善答案品質。",
-  "confidence_score": 0.53,
-  "confidence_level": "medium",
-  "intent": {
-    "intent_type": "knowledge",
-    "intent_name": "退租流程",
-    "confidence": 0.9,
-    "keywords": ["退租", "辦理"]
-  },
-  "retrieved_docs": [
-    {
-      "id": 2,
-      "title": "退租流程說明",
-      "content": "...",
-      "similarity": 0.66
-    }
-  ],
-  "processing_time_ms": 7725,
-  "requires_human": true,
-  "unclear_question_id": 3
-}
-```
-
-**Phase 3 優化效果**：
-- ✨ 答案經過 GPT-4o-mini 優化，更加自然流暢
-- 🎯 自動提取關鍵資訊，避免顯示完整知識庫條目
-- 💬 使用對話式語氣，提升用戶體驗
-- ⚠️ 中等信心度自動附加警告訊息並記錄
-
-### 2. 低信心度問題
-
-```bash
-curl -X POST http://localhost:8100/api/v1/message \
-  -H "Content-Type: application/json" \
-  -d '{
-    "message": "請問這個月的電費怎麼計算？",
-    "vendor_id": 1,
-    "user_role": "customer",
-    "user_id": "user456"
-  }'
-```
-
-**回應範例：**
-
-```json
-{
-  "question": "請問這個月的電費怎麼計算？",
-  "answer": "抱歉，我對這個問題不太確定如何回答。\n\n您的問題已經記錄下來，我們會盡快處理。\n如需立即協助，請聯繫客服人員。",
-  "confidence_score": 0.45,
-  "confidence_level": "low",
-  "intent": {...},
-  "retrieved_docs": [],
-  "processing_time_ms": 180,
-  "requires_human": true,
-  "unclear_question_id": 123
-}
-```
-
-### 3. 查詢未釐清問題
-
-```bash
-# 取得待處理問題
-curl "http://localhost:8100/api/v1/unclear-questions?status=pending&order_by=frequency&limit=10"
-
-# 更新問題狀態
-curl -X PUT http://localhost:8100/api/v1/unclear-questions/123 \
-  -H "Content-Type: application/json" \
-  -d '{
-    "status": "resolved",
-    "resolution_note": "已新增電費計算相關知識",
-    "suggested_answers": ["電費採實際使用度數計算..."]
-  }'
-
-# 批次更新
-curl -X POST http://localhost:8100/api/v1/unclear-questions-batch-update \
-  -H "Content-Type: application/json" \
-  -d '{
-    "question_ids": [123, 124, 125],
-    "status": "in_progress",
-    "assigned_to": "admin"
-  }'
-```
-
-### 4. 取得統計資訊
-
-```bash
-curl http://localhost:8100/api/v1/unclear-questions-stats
-```
-
-**回應範例：**
-
-```json
-{
-  "total_unclear_questions": 45,
-  "by_status": {
-    "pending": 20,
-    "in_progress": 15,
-    "resolved": 8,
-    "ignored": 2
-  },
-  "top_frequent_questions": [
-    {
-      "id": 123,
-      "question": "電費怎麼計算？",
-      "frequency": 12,
-      "status": "in_progress"
-    }
-  ],
-  "avg_processing_time_ms": 230
-}
-```
-
-### 5. 提交反饋
-
-```bash
-curl -X POST http://localhost:8100/api/v1/conversations/789/feedback \
-  -H "Content-Type: application/json" \
-  -d '{
-    "rating": 5,
-    "feedback": "回答很清楚，解決了我的問題"
-  }'
 ```
 
 ---
@@ -639,7 +293,7 @@ curl http://localhost:8100/api/v1/stats
 
 ### 問題 1：OpenAI API 連線失敗
 
-**症狀**：意圖分類失敗
+**症狀**：對話回合起不來、`agent.turn` 回錯
 
 **解決方法**：
 ```bash
@@ -694,36 +348,19 @@ python -c "import yaml; yaml.safe_load(open('config/intents.yaml'))"
 
 ## 後續規劃
 
-### ✅ Phase 3: LLM 答案優化（已完成）
-- ✅ 使用 GPT-4o-mini 重新組織和優化答案
-- ✅ 提供更自然的對話體驗
-- ✅ Token 追蹤與成本控制
-- ✅ 錯誤自動降級處理
-- 📋 支援多輪對話（待實作）
-
-### Phase 4: 外部 API 整合
-- 租約系統整合
-- 繳費系統整合
-- 維修工單系統整合
-
-### Phase 5: 監控儀表板
-- 即時監控服務狀態
-- 對話品質分析
-- 知識庫覆蓋率分析
-
-詳見 [RAG 系統實作計畫](../docs/rag-system/RAG_IMPLEMENTATION_PLAN.md)
-
----
+⛔ **原本的 Phase 3／4／5 規劃已刪除（2026-09-12）**：Phase 3「LLM 答案優化」標著
+「✅ 已完成」，而 `llm_answer_optimizer.py` 2026-09-11 已刪；Phase 4／5 建立在
+同一條舊鏈上。現行路線圖見 `.kiro/specs/` 各 spec 與 `.claude/DECISIONS.md`。
 
 ## 參考文件
 
-- [RAG 系統實作計畫](../docs/rag-system/RAG_IMPLEMENTATION_PLAN.md)
-- [系統架構文件](../docs/architecture/SYSTEM_ARCHITECTURE.md)
+- [系統架構（現況全景）](../docs/architecture/SYSTEM_ARCHITECTURE.md) ⭐
+- [Agentic-MCP 對話架構](../docs/architecture/AGENTIC_MCP_ARCHITECTURE.md) ⭐（§2b 流程、§4b 轉人來源）
+- [`/mcp` 串接契約](../docs/api/mcp-facade.md)
 - [API 完整文件](http://localhost:8100/docs) (啟動後存取)
 - [知識管理系統說明](../knowledge-admin/README.md)
 
 ---
 
 **維護者**: Claude Code
-**最後更新**: 2025-10-10
-**版本**: 1.1.0 (Phase 2 + Phase 3 LLM 優化)
+**最後對碼**: 2026-09-12（agentic-MCP 單線）

@@ -140,23 +140,18 @@ curl http://localhost:8100/api/v1/health
 # "llm_answer_optimizer": "ready (Phase 3)"
 ```
 
-**發送問題測試（多業者 + 自動 LLM 優化）：**
+**發送問題測試（現行入口是 `/mcp`；⛔ `POST /api/v1/message` 已於 2026-09-11 刪除，實測 404）：**
 ```bash
-# 測試知識查詢 - 答案會經過 GPT-4o-mini 優化
-curl -X POST http://localhost:8100/api/v1/message \
-  -H "Content-Type: application/json" \
-  -d '{
-    "message": "退租要怎麼辦理？",
-    "vendor_id": 1,
-    "user_role": "customer",
-    "user_id": "test_user"
-  }' | python3 -m json.tool
+# 前置：read -rs RAG_API_KEY && export RAG_API_KEY   ⛔ 不要把金鑰寫進檔案
+# ① 金鑰閘（期望 401；若是 404 代表 /mcp 沒掛上）
+curl -sS -o /dev/null -w "%{http_code}\n" -X POST http://localhost:8100/mcp \
+  -H "Content-Type: application/json" -d '{}'
 
-# 你會看到：
-# - answer: 自然流暢的對話式回答（不是原始知識庫文字）
-# - confidence_score: 信心度評分
-# - requires_human: 是否需要人工處理
-# - unclear_question_id: 中/低信心度問題的記錄 ID
+# ② 列工具（期望 200、16 支）
+curl -sS -X POST http://localhost:8100/mcp \
+  -H "Content-Type: application/json" -H "X-API-Key: $RAG_API_KEY" \
+  -H 'X-JGB-Identity: {"vendor_id":2,"session_id":"qs1","mode":"b2b","target_user":"property_manager"}' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | python3 -m json.tool | head -30
 ```
 
 **Phase 3 LLM 優化特色**:

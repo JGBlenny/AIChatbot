@@ -1,16 +1,5 @@
 # Phase 1 API 參考文件
 
-> ⚠️ **2026-09-11 舊鏈退役**：下方「Chat API」整節（`POST /api/v1/message`、
-> `GET /api/v1/vendors/{vendor_id}/test`、`POST /api/v1/reload`）所描述的端點
-> **已刪除**——2026-09-11 砍除舊 REST 對話鏈（31 個產品模組），對話能力現在
-> **只**經 `/mcp` 門面（server-to-server，非公開 REST），契約見
-> `docs/api/mcp-facade.md`。⛔ 本節內容（curl 範例、回應格式）已死，勿依此串接。
-> ⚠️ 「Cache Management API」「Vendors API」兩節描述的路由模組
-> （`routers/cache.py`／`routers/vendors.py`）本身仍存活，但本輪未逐條核對其下
-> 每一支端點路徑與參數是否仍與程式一致（例如 `POST /api/v1/reload` 的實際路徑
-> 現為 `routers/knowledge.py` 的 `/api/v1/knowledge/reload`，`vendors.py` 查無
-> `/test` 路由）——這是本輪盤查中連帶發現、但非本次七條發現範圍內的既有落差，
-> 留待下一輪文件盤查核實，⛔ 不要假設本節其餘內容逐條準確。
 
 ## 基本資訊
 
@@ -24,8 +13,6 @@
 
 ## 目錄
 
-- [Chat API](#chat-api)
-  - [POST /api/v1/message](#post-apiv1message) - 聊天端點（支援串流與非串流）
 - [Cache Management API](#cache-management-api) ⭐ NEW
   - [POST /api/v1/cache/invalidate](#post-apiv1cacheinvalidate) - 失效特定緩存
   - [DELETE /api/v1/cache/clear](#delete-apiv1cacheclear) - 清空所有緩存
@@ -37,260 +24,17 @@
 
 ---
 
-## Chat API ⚠️ 已退役（2026-09-11，見檔頭警語）
+## 已刪除的端點（2026-09-12）
 
-### POST /api/v1/message ⛔ 已刪除，不存在此路由
+🔴 `POST /api/v1/message`（Chat）與 `POST /api/v1/reload` **實測 404**——隨舊 REST
+對話鏈於 2026-09-11 刪除（DSP-046）。本檔對應的兩節已移除，⛔ 不留退役標記。
+現行對話入口是 `/mcp`，契約見 [`mcp-facade.md`](./mcp-facade.md)。
 
-多業者通用聊天端點（標準回應）
+**本檔其餘各節（Vendors／Cache）2026-09-12 逐一實測仍在**：
+`GET /api/v1/vendors` 200、`GET /api/v1/cache/stats` 200、`GET /api/v1/cache/health` 200、
+`POST /api/v1/cache/invalidate` 422（缺 body，路由在）。
 
-#### 描述
-
-根據業者 ID 和使用者訊息，返回客製化的 AI 回應。系統會自動：
-1. 進行意圖分類
-2. 根據 user_role 檢索相關知識範圍（B2B/B2C 業務場景）
-3. 使用 LLM 智能參數注入，調整業者專屬參數
-4. 返回格式化答案
-
-#### 請求
-
-**URL:** `POST /api/v1/message`
-
-**Headers:**
-```
-Content-Type: application/json
-```
-
-**Body Parameters:**
-
-| 參數 | 類型 | 必填 | 說明 | 範例 |
-|------|------|------|------|------|
-| `message` | string | ✅ | 使用者訊息 | "每月繳費日期是什麼時候？" |
-| `vendor_id` | integer | ✅ | 業者 ID | 1 |
-| `target_user` | string | ❌ | 目標用戶角色（預設：tenant） 🆕 推薦 | "tenant", "landlord", "property_manager", "system_admin" |
-| `mode` | string | ❌ | 業務模式（預設：b2c） 🆕 推薦 | "b2c" (終端用戶), "b2b" (業者員工) |
-| `user_role` | string | ❌ | [已廢棄] 使用者角色，請改用 target_user ⚠️ 將於 2026-03 移除 | "customer" or "staff" |
-| `stream` | boolean | ❌ | 啟用串流模式（預設：false） 🆕 2026-02-14 | true |
-| `session_id` | string | ❌ | 會話 ID（用於追蹤） | "session_123" |
-| `user_id` | string | ❌ | 使用者 ID | "user_456" |
-| `top_k` | integer | ❌ | 返回知識數量（預設：5） | 5 |
-| `include_sources` | boolean | ❌ | 是否包含知識來源（預設：false） | true |
-| `include_debug_info` | boolean | ❌ | 是否包含調試資訊（預設：false）⚠️ 啟用時將跳過緩存 | false |
-| `disable_answer_synthesis` | boolean | ❌ | 禁用答案合成，僅用於回測（預設：false） | false |
-| `skip_sop` | boolean | ❌ | 跳過 SOP 檢索，僅用於回測（預設：false） | false |
-
-**stream 參數說明**（串流回應控制） 🆕 2026-02-14：
-
-| stream值 | 回應格式 | Content-Type | 使用場景 | 用戶體驗 |
-|---------|---------|--------------|---------|---------|
-| `false` (預設) | **標準 JSON** | application/json | API 整合、批次處理 | 等待完整回應 |
-| `true` | **Server-Sent Events** | text/event-stream | 即時聊天、網頁前端 | 逐字顯示（打字機效果） |
-
-**SSE 事件類型**（當 `stream=true` 時）：
-- `start` - 開始輸出（含 cached 狀態）
-- `intent` - 意圖分類結果
-- `answer_chunk` - 答案片段（逐字傳輸）
-- `metadata` - 完整元數據（表單、影片、來源等）
-- `done` - 串流完成
-
-**include_debug_info 參數說明**（調試模式） 🆕 2026-03-14：
-
-| include_debug_info值 | 緩存行為 | 回應時間 | 使用場景 | debug_info內容 |
-|---------------------|---------|---------|---------|--------------|
-| `false` (預設) | **使用緩存** | 100-500ms | 生產環境、正常使用 | null |
-| `true` | **跳過緩存** ⚠️ | 500-2000ms | 開發測試、問題診斷 | 詳細處理流程 |
-
-**為什麼啟用 debug 模式會跳過緩存？**
-- ✅ **保證數據準確性**：調試時需要最新、真實的處理流程數據
-- ✅ **避免緩存污染**：debug 響應體積大（含候選列表、元數據），不適合緩存
-- ✅ **符合測試需求**：測試場景對延遲不敏感，更關注數據正確性
-- ✅ **節省存儲成本**：debug 響應是普通響應的 4-7 倍大小
-
-**debug_info 包含的信息**（當 `include_debug_info=true` 時）：
-- `processing_path`: 處理路徑（sop_orchestrator / knowledge / rag_fallback）
-- `llm_strategy`: LLM 策略（orchestrated / direct / synthesis）
-- `sop_candidates`: SOP 候選列表（含相似度分數）
-- `knowledge_candidates`: 知識庫候選列表
-- `comparison_metadata`: SOP vs 知識庫比較元數據
-- `vendor_params`: 使用的業者參數
-- `used_param_keys`: 實際注入的參數鍵列表
-
-**target_user 參數說明**（目標用戶角色） 🆕 推薦：
-
-| target_user | 說明 | 典型使用場景 |
-|------------|------|-------------|
-| `tenant` | 租客（預設值） | 繳費查詢、報修申請、合約問題 |
-| `landlord` | 房東 | 收租資訊、物業管理、稅務相關 |
-| `property_manager` | 物業管理師 | 系統操作、內部流程、業務規範 |
-| `system_admin` | 系統管理員 | 系統配置、權限管理、技術支援 |
-
-**mode 參數說明**（業務模式控制） 🆕 推薦：
-
-| mode | 業務場景 | 知識範圍 | 使用者類型 | 典型問題 |
-|------|---------|---------|-----------|---------|
-| `b2c` | **B2C 終端用戶**（預設值） | external + both | 租客、房東 | 繳費、報修、合約續約 |
-| `b2b` | **B2B 業者員工** | internal + both | 物管師、系統管理員 | 系統操作、內部流程、業務規範 |
-
-**business_scope 說明**（知識庫的 business_scope 欄位）：
-- `external`: 僅限 B2C 終端用戶（mode=b2c）可存取
-- `internal`: 僅限 B2B 業者員工（mode=b2b）可存取
-- `both`: 雙方都可存取的通用知識
-
-**請求範例：**
-
-```json
-// B2C 場景 - 租客詢問繳費（推薦寫法）
-{
-  "message": "每月繳費日期是什麼時候？",
-  "vendor_id": 1,
-  "target_user": "tenant",
-  "mode": "b2c",
-  "stream": false,
-  "include_sources": true
-}
-
-// B2B 場景 - 物管師查詢內部流程（推薦寫法）
-{
-  "message": "租賃申請的審核流程是什麼？",
-  "vendor_id": 1,
-  "target_user": "property_manager",
-  "mode": "b2b",
-  "stream": false,
-  "include_sources": true
-}
-
-// 串流模式範例 - 租客詢問，逐字顯示答案
-{
-  "message": "租金每個月幾號要繳？",
-  "vendor_id": 1,
-  "target_user": "tenant",
-  "mode": "b2c",
-  "stream": true,
-  "session_id": "session_123",
-  "user_id": "tenant_456"
-}
-```
-
-#### 回應
-
-**成功回應 (200 OK):**
-
-```json
-{
-  "answer": "您的租金繳費日為每月 1 號，請務必在期限前完成繳費。如果超過繳費日 5 天仍未繳納，將加收 200 元的逾期手續費。",
-  "intent_name": "帳務查詢",
-  "intent_type": "knowledge",
-  "confidence": 0.95,
-  "all_intents": ["帳務查詢"],
-  "secondary_intents": [],
-  "intent_ids": [5],
-  "sources": [
-    {
-      "id": 123,
-      "question_summary": "每月繳費日期",
-      "answer": "您的租金繳費日為每月 5 號...",
-      "vendor_ids": null
-    }
-  ],
-  "source_count": 1,
-  "vendor_id": 1,
-  "mode": "b2c",
-  "session_id": null,
-  "timestamp": "2024-01-01T12:00:00.000000",
-  "llm_optimization": {
-    "optimization_applied": true,
-    "tokens_used": 456,
-    "processing_time_ms": 1234,
-    "vendor_params_injected": true
-  }
-}
-```
-
-**回應欄位說明：**
-
-| 欄位 | 類型 | 說明 |
-|------|------|------|
-| `answer` | string | AI 回答（已替換模板變數） |
-| `intent_name` | string | 主要意圖名稱 |
-| `intent_type` | string | 意圖類型（knowledge, data_query, action, hybrid） |
-| `confidence` | float | 意圖分類信心度 (0-1) |
-| `all_intents` | array[string] | 所有匹配的意圖名稱（包含主要 + 次要） ⭐ NEW |
-| `secondary_intents` | array[string] | 次要意圖名稱列表 ⭐ NEW |
-| `intent_ids` | array[integer] | 所有意圖的 ID 列表 ⭐ NEW |
-| `sources` | array | 知識來源列表 |
-| `sources[].id` | integer | 知識 ID |
-| `sources[].question_summary` | string | 問題摘要 |
-| `sources[].answer` | string | 答案（原始知識庫內容） |
-| `sources[].vendor_ids` | array[integer]/null | 業者 ID 列表（NULL=全域知識，非空陣列=業者專屬或多業者共享） |
-| `source_count` | integer | 知識來源數量 |
-| `vendor_id` | integer | 業者 ID |
-| `mode` | string | 模式 |
-| `session_id` | string | 會話 ID（如有提供） |
-| `timestamp` | string | 回應時間戳（ISO 8601） |
-| `llm_optimization` | object | LLM 優化資訊 |
-| `llm_optimization.optimization_applied` | boolean | 是否使用了 LLM 優化 |
-| `llm_optimization.tokens_used` | integer | 使用的 tokens 數 |
-| `llm_optimization.processing_time_ms` | integer | 處理時間（毫秒） |
-| `llm_optimization.vendor_params_injected` | boolean | 是否進行了業者參數注入 |
-
-**錯誤回應：**
-
-```json
-// 404 - 業者不存在
-{
-  "detail": "業者不存在: 999"
-}
-
-// 403 - 業者未啟用
-{
-  "detail": "業者未啟用: 1"
-}
-
-// 500 - 伺服器錯誤
-{
-  "detail": "處理聊天請求失敗: [錯誤訊息]"
-}
-```
-
-#### cURL 範例
-
-```bash
-# B2C 場景 - 租客詢問繳費日（標準 JSON 回應）
-curl -X POST http://localhost:8100/api/v1/message \
-  -H "Content-Type: application/json" \
-  -d '{
-    "message": "每月繳費日期是什麼時候？",
-    "vendor_id": 1,
-    "target_user": "tenant",
-    "mode": "b2c",
-    "stream": false,
-    "include_sources": true
-  }'
-
-# B2B 場景 - 物管師查詢內部流程（標準 JSON 回應）
-curl -X POST http://localhost:8100/api/v1/message \
-  -H "Content-Type: application/json" \
-  -d '{
-    "message": "租賃申請的審核流程是什麼？",
-    "vendor_id": 1,
-    "target_user": "property_manager",
-    "mode": "b2b",
-    "stream": false
-  }'
-
-# 串流模式 - 逐字返回答案（Server-Sent Events）
-curl -X POST http://localhost:8100/api/v1/message \
-  -H "Content-Type: application/json" \
-  -H "Accept: text/event-stream" \
-  -d '{
-    "message": "租金每個月幾號要繳？",
-    "vendor_id": 1,
-    "target_user": "tenant",
-    "mode": "b2c",
-    "stream": true
-  }'
-```
-
----
+## Vendors API（部分）
 
 ### GET /api/v1/vendors/{vendor_id}/test
 
@@ -354,38 +98,6 @@ curl -X POST http://localhost:8100/api/v1/message \
 
 ```bash
 curl http://localhost:8100/api/v1/vendors/1/test
-```
-
----
-
-### POST /api/v1/reload
-
-重新載入多業者服務
-
-#### 描述
-
-清除參數快取，用於業者配置更新後重新載入。
-
-#### 請求
-
-**URL:** `POST /api/v1/reload`
-
-#### 回應
-
-**成功回應 (200 OK):**
-
-```json
-{
-  "success": true,
-  "message": "多業者服務已重新載入",
-  "timestamp": "2024-01-01T12:00:00.000000"
-}
-```
-
-#### cURL 範例
-
-```bash
-curl -X POST http://localhost:8100/api/v1/reload
 ```
 
 ---
@@ -1292,55 +1004,23 @@ curl http://localhost:8100/api/v1/vendors/1/stats
 
 ```bash
 #!/bin/bash
-# test-api.sh - API 測試腳本
-
+# test-api.sh —— 2026-09-12 重寫：原本三段打 POST /api/v1/message，實測 404
 BASE_URL="http://localhost:8100"
+# 前置：read -rs RAG_API_KEY && export RAG_API_KEY   ⛔ 不要把金鑰寫進檔案
 
-echo "=== 測試 1: B2C 場景 - 租客詢問繳費日（標準 JSON） ==="
-curl -X POST "$BASE_URL/api/v1/message" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "message": "每月繳費日期是什麼時候？",
-    "vendor_id": 1,
-    "target_user": "tenant",
-    "mode": "b2c",
-    "stream": false
-  }' | jq '.answer'
+echo "=== 1. /mcp 金鑰閘（期望 401）==="
+curl -sS -o /dev/null -w "%{http_code}\n" -X POST "$BASE_URL/mcp" \
+  -H "Content-Type: application/json" -d '{}'
 
-echo -e "\n=== 測試 2: B2B 場景 - 物管師查詢內部流程（標準 JSON） ==="
-curl -X POST "$BASE_URL/api/v1/message" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "message": "租賃申請的審核流程是什麼？",
-    "vendor_id": 1,
-    "target_user": "property_manager",
-    "mode": "b2b",
-    "stream": false
-  }' | jq '.answer'
+echo "=== 2. /mcp tools/list（期望 200、16 支工具）==="
+curl -sS -X POST "$BASE_URL/mcp" \
+  -H "Content-Type: application/json" -H "X-API-Key: $RAG_API_KEY" \
+  -H 'X-JGB-Identity: {"vendor_id":2,"session_id":"t1","mode":"b2b","target_user":"property_manager"}' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | jq '.result.tools | length'
 
-echo -e "\n=== 測試 3: 串流模式聊天（前 20 個事件） ==="
-curl -X POST "$BASE_URL/api/v1/message" \
-  -H "Content-Type: application/json" \
-  -H "Accept: text/event-stream" \
-  -d '{
-    "message": "租金每個月幾號要繳？",
-    "vendor_id": 1,
-    "target_user": "tenant",
-    "mode": "b2c",
-    "stream": true
-  }' | head -20
-
-echo -e "\n=== 測試 4: 緩存健康檢查 ==="
-curl "$BASE_URL/api/v1/cache/health" | jq '.status, .redis_connected'
-
-echo -e "\n=== 測試 5: 緩存統計資訊 ==="
-curl "$BASE_URL/api/v1/cache/stats" | jq '.overall.hit_rate, .layers'
-
-echo -e "\n=== 測試 6: 獲取業者列表 ==="
-curl "$BASE_URL/api/v1/vendors" | jq '.[].name'
-
-echo -e "\n=== 測試 7: 測試業者配置 ==="
-curl "$BASE_URL/api/v1/vendors/1/test" | jq '.test_template'
+echo "=== 3. Cache / Vendors（本檔仍有效的兩節）==="
+curl -sS "$BASE_URL/api/v1/cache/health" | jq .
+curl -sS "$BASE_URL/api/v1/vendors" | jq '. | length'
 ```
 
 使用方法：

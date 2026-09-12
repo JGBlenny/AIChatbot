@@ -206,7 +206,7 @@ _apply_semantic_reranker: 過濾後送 HTTP 到 semantic-model
 
 | 指標 | 重構前（baseline） | 重構後目標 | 驗證方法 |
 |------|---------------|-----------|---------|
-| `/api/v1/message` 平均延遲 | 待測 | 差異 < 10% | 100 次相同 query 腳本 |
+| `/mcp` 的 `agent.turn` 平均延遲 | 待測 | 差異 < 10% | 100 次相同 query 腳本（⛔ 舊的 `/api/v1/message` 已刪） |
 | `_vector_search` 執行時間 | 待測 | 差異 < 20%（單筆增加 < 50ms） | log 抽樣 |
 | `_apply_semantic_reranker` 執行時間 | 待測 | 差異 < 30%（候選數增加） | log 抽樣 |
 

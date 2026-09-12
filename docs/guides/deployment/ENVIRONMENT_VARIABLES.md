@@ -21,7 +21,7 @@
 
 **使用位置**：
 - `embedding-service` - 生成向量嵌入
-- `rag-orchestrator` - 意圖分類、答案優化、知識生成
+- `rag-orchestrator` - 對話回合（`AGENT_MODEL`）、查詢改寫、知識生成、文件轉換
 - `knowledge-admin-api` - 回測框架
 
 **範例**：
@@ -149,7 +149,7 @@ RAG_API_URL=http://rag-orchestrator:8100
 | `OPENAI_MODEL` | RAG 答案生成的主模型 | `gpt-3.5-turbo` | ❌ |
 
 **使用位置**：
-- `rag-orchestrator` - 答案生成、參數注入、答案合成
+- `rag-orchestrator` - 對話回合的答案生成（⛔ 參數注入與答案合成的程式已於 2026-09-11 刪除）
 
 **可選值**：
 - `gpt-3.5-turbo` （預設，速度快 2-3 倍，成本低 70%）
@@ -231,122 +231,31 @@ RAG_API_AUTH_ENFORCE=true
 
 ## 📝 .env 文件範例
 
-### 最小配置（僅必需變數）
+⛔ **本檔不再抄一份 .env 範例。** 正本是 repo 根目錄的 `.env.example`——
+2026-09-12 已逐鍵對碼。抄第二份的代價已經看過：這裡曾留著一整批零讀者的鍵，
+而且是可以直接複製貼上的形態。
+
+```bash
+cp .env.example .env    # 然後至少填 OPENAI_API_KEY
+```
+
+新線（agentic-MCP）的模型與旗標組態見
+[`docs/architecture/AGENTIC_MCP_ARCHITECTURE.md`](../../architecture/AGENTIC_MCP_ARCHITECTURE.md) §6。
+
+## 最小配置（僅必需變數）
 
 ```bash
 # OpenAI API Key
 OPENAI_API_KEY=sk-proj-your-api-key-here
 ```
 
-### 完整配置（所有變數）⭐ 更新至 Phase 3
+### 完整配置
 
-```bash
-# ==========================================
-# OpenAI API
-# ==========================================
-OPENAI_API_KEY=sk-proj-your-api-key-here
+⛔ **本檔不抄第二份**——正本是 repo 根目錄的 `.env.example`（2026-09-12 逐鍵對碼過）。
 
-# ==========================================
-# PostgreSQL 資料庫
-# ==========================================
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=aichatbot_admin
-DB_USER=aichatbot
-DB_PASSWORD=aichatbot_password
-
-# ==========================================
-# Redis 連線
-# ==========================================
-REDIS_HOST=localhost
-REDIS_PORT=6379
-
-# ==========================================
-# Redis 緩存配置（Phase 3 三層架構）
-# ==========================================
-CACHE_ENABLED=true
-CACHE_TTL_QUESTION=3600       # Layer 1 問題緩存（1小時）
-CACHE_TTL_VECTOR=7200         # Layer 2 向量緩存（2小時）
-CACHE_TTL_RAG_RESULT=1800     # Layer 3 RAG 結果緩存（30分鐘）
-
-# ==========================================
-# API URLs（本地開發）
-# ==========================================
-EMBEDDING_API_URL=http://localhost:5001/api/v1/embeddings
-RAG_API_URL=http://localhost:8100
-
-# ==========================================
-# AI 模型配置
-# ==========================================
-OPENAI_MODEL=gpt-3.5-turbo    # 主 LLM 模型
-
-# 意圖分類器（Phase 3）
-
-# 知識生成
-KNOWLEDGE_GEN_MODEL=gpt-4o-mini
-
-# 規格書轉換
-DOCUMENT_CONVERTER_MODEL=gpt-4o
-
-# ==========================================
-# RAG 檢索配置（Phase 3）
-# ==========================================
-RAG_SIMILARITY_THRESHOLD=0.6
-
-# ==========================================
-# 答案合成配置（Phase 3 SOP 整合）
-# ==========================================
-ENABLE_ANSWER_SYNTHESIS=true
-SYNTHESIS_THRESHOLD=0.99
-SYNTHESIS_MIN_RESULTS=2
-SYNTHESIS_MAX_RESULTS=5
-SOP_SIMILARITY_SCORE=0.70
-
-# ==========================================
-# 信心度評估（Phase 3）
-# ==========================================
-CONFIDENCE_HIGH_THRESHOLD=0.85
-CONFIDENCE_MEDIUM_THRESHOLD=0.70
-
-# ==========================================
-# 條件式優化配置（Phase 3 智能路由）
-# ==========================================
-FAST_PATH_THRESHOLD=0.75
-TEMPLATE_MIN_SCORE=0.55
-TEMPLATE_MAX_SCORE=0.75
-LLM_PARAM_INJECTION_TEMP=0.1
-LLM_SYNTHESIS_TEMP=0.5
-
-# ==========================================
-# 意圖建議配置（Phase 3）
-# ==========================================
-INTENT_SUGGESTION_TEMP=0.2
-INTENT_SUGGESTION_MAX_TOKENS=800
-
-# ==========================================
-# 未釐清問題配置（Phase 3）
-# ==========================================
-UNCLEAR_SEMANTIC_THRESHOLD=0.80
-UNCLEAR_PINYIN_THRESHOLD=0.80
-
-# ==========================================
-# 回測框架
-# ==========================================
-BACKTEST_SELECTION_STRATEGY=incremental
-BACKTEST_QUALITY_MODE=basic
-BACKTEST_USE_DATABASE=true
-BACKTEST_NON_INTERACTIVE=true
-
-# ==========================================
-# 服務對服務認證
-# ==========================================
-RAG_API_AUTH_ENFORCE=false   # 開啟（true）後 rag 須帶 X-API-Key
-
-# ==========================================
-# 前端開發
-# ==========================================
-NODE_ENV=development
-```
+🔴 原本這裡有一份「Phase 3 完整配置」，其中九組鍵**全部零程式讀者**，
+且是可以直接複製貼上的形態——最危險的那種。2026-09-12 整段刪除。
+要看舊版：`git show HEAD:docs/guides/deployment/ENVIRONMENT_VARIABLES.md`。
 
 ## 🔒 安全注意事項
 
@@ -449,15 +358,9 @@ A: 檢查：
 
 ### v3.0 (2025-10-22) - Phase 3 完整更新
 
-**新增環境變數（23 個）**：
-- ✅ Redis 緩存配置（4 個）- 三層緩存架構
-- ✅ LLM 模型配置（4 個）- 意圖分類器獨立配置
-- ✅ RAG 檢索配置（1 個）- 相似度閾值
-- ✅ 答案合成配置（5 個）- SOP 整合
-- ✅ 信心度評估（2 個）- 高/中信心度閾值
-- ✅ 條件式優化（5 個）- 智能路由策略
-- ✅ 意圖建議（2 個）- 自動建議配置
-- ✅ 未釐清問題（2 個）- 語義去重閾值
+🔴 **2026-09-12：本節原列的「新增 23 個環境變數」清單已刪除**——其中意圖分類器、
+答案合成、信心度評估、條件式優化、意圖建議、未釐清問題共 6 組全部零程式讀者，
+主體隨舊 REST 對話鏈於 2026-09-11 刪除（DSP-046）。
 
 **文檔改進**：
 - 新增詳細的使用說明和範例

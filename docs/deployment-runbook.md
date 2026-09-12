@@ -94,95 +94,28 @@ semantic-model 重建說明（校正認知）：`/rerank`（檢索排序主路�
 cd semantic_model && DB_HOST=localhost DB_NAME=aichatbot_admin DB_USER=aichatbot DB_PASSWORD=<prod密碼> python3 scripts/extract_knowledge.py
 ```
 
-## 5. 煙囪驗證（⛔ **已失效，2026-09-11**）
+## 5. 煙囪驗證
 
-> 🔴 **本節整節不可執行。** 它走的「正式入口」是 `POST /api/v1/message`，
-> 該端點已隨舊 REST 對話鏈刪除（commit `7c905408`）；下表期望欄的「進對話面向」
-> 這個機制在新線也不存在（`services/agent/**` 查無 facet 進場）。
-> ⚠️ **上方〈現行部署路徑〉第 3 步指向本節——那一步目前沒有可執行的內容。**
->
-> **現況**：唯一入口是 `/mcp` 的 `agent.turn`。部署後的煙囪請走
-> `scripts/smoke/mcp_smoke.py`（見該檔用法），⛔ 不要照抄下表。
-> 下表保留為舊鏈時期的驗證題庫，⚠️ 不描述現況。
-
-### ~~5-0. 原 20 面向驗證表~~（歷史紀錄）
-
-| 面向 | 驗證句 | 期望 |
-|---|---|---|
-| 合約異動 | 我想改合約 內容要修改 | 進對話追問識別 |
-| 退租收尾 | 租客要退租了 接下來我要做什麼 | 進對話；ground 後含封存/點退步驟 |
-| 續約 | 合約快到期了要怎麼續約 | 進對話 |
-| 建約引導 | 我要簽新合約 怎麼開始建 | 進對話輕引導 |
-| 簽署排障 | 租客一直簽不了約怎麼辦 | 進對話；ground 後帶效期判斷 |
-| 狀態判斷 | 幫我看 {合約ID} 現在什麼狀態 | 直查機械解碼 |
-| 繳費金流排障 | 租客說錢繳了 可是帳一直沒進來 | 進對話；給帳單號後按狀態分支、金額原樣 |
-| 帳單異常 | 租客說他在系統裡看不到這期帳單 | 進對話；可見性機械判 |
-| 發票 | 這期的發票一直沒開出來 | 進對話；按 invoice_status 判 |
-| 滯納金 | 為什麼這個月滯納金收這麼多 | 進對話；兩機制講解 |
-| 帳單設定引導 | 我要怎麼設定每個月幾號出帳單 | 進對話兩輪分流 |
-| 註冊驗證排障 | 租客一直沒辦法註冊 卡住了 | 進對話分流；不得輸出驗證碼值 |
-| 登入排障 | 租客說他登不進去系統 | 進對話；給合約號後照帳號現值判分支 |
-| 帳號綁定異動 | 手機被綁定過了 要解綁換綁 | 進對話；收斂到申請書（service@jgbsmart.com） |
-| 團隊成員權限 | 加了團隊成員 他什麼都看不到 | 進對話；指向成員列表「變更角色」 |
-| 電表排障 | 電表一直離線 度數不動 | 進對話；照現值判因、不代操作 |
-| IoT設定引導 | 電表要怎麼串接進系統 | 進對話輕引導 |
-| 物件操作引導 | 改了對外顯示地址 怎麼還是顯示完整地址 | 進對話直答雙層行為（後台恆完整/對外頁才生效） |
-| 物件現況診斷 | 物件為什麼不能建立合約 缺什麼欄位 | 進對話追問識別；給物件名後照現值列缺欄；查無走「非刊登中」口徑不斷言刪除 |
-| 帳單診斷 | 帳單為什麼一直發不出去 | 進對話（**不得**觸發 v1.1 表單）；無編號→物件名→帳單候選→選序號→決定性判定（可否發送/取消/手動到帳） |
-
-對照組（不得誤進對話）：「點退押金的找補費用在哪裡操作」「帳單可以批次匯入嗎 怎麼操作」「帳號要怎麼註冊 流程是什麼」「門鎖可以用悠遊卡嗎」「進階搜尋怎麼用」→ 單發直答。
-物件域邊界對照：「這份合約的物件地址錯了要怎麼改」→ 不得進物件面向（合約域/資料異動方向）。
-
-## 6. 回測新架構（部署後任跑）
-
-前端需重建（dist 不入版控）：`cd knowledge-admin/frontend && npm run build`——8087 的「建立迴圈」表單才會出現「題庫（受眾）」選擇與回測結果的評級 UI。題庫選擇設計：建迴圈時選（業者=JGB知識/租客/售前），該迴圈的固定測試集即按題庫抽樣、下一批次自動繼承同題庫；回測請求形狀按題自動對應。
-
-程式版更後 8087 後台「回測」按鈕即走新架構（v3 多輪感知評審＋按題受眾形狀——上兩支 migration 提供題庫標注）。建議部署後對 4,643 全庫跑一次建立正式基準線；舊 run 的 pass_rate 與新語義不可比。
-
-## 7. usage-metering 使用量計量（2026-07-06）
-
-migration（`add_usage_events.sql`）已含於 §1 序列尾端，本節只剩 env 與驗證。
-
-- **env（皆有預設可不設）**：`USAGE_METERING_ENABLED`（預設 true；關=零行為差異）、
-  `LLM_PRICING_PATH`（外部單價 JSON，缺省用內建表）、`USAGE_RETENTION_MONTHS`（預設 18）
-- **版更檔（歷史，2026-07-06 當時）**：app.py（middleware）、routers/chat.py（路徑標記，（⚠️ 已隨舊鏈於 2026-09-11 退役，見 `.claude/DECISIONS.md` DSP-046））、services/llm_provider.py（token 鉤）、
-  services/usage_metering.py（新）、admin app.py（/api/usage/* 端點，掛載即生效）、前端 npm run build
-- **驗證**：真打一句 →`SELECT * FROM usage_events ORDER BY id DESC LIMIT 1` 事件到位（vendor/user_type/token/成本）；
-  跑一題回測 → `is_internal=true, internal_kind='backtest'`；後台「使用量統計」頁有數字；`make audit` 不變量 5 綠
-- **治理 SQL**：`scripts/usage/`（被遺忘權/內部重標/保留期清理，排程化掛帳）
-
-## 8. quota-management 額度管制（2026-07-06）
-
-migration（`add_vendor_quotas.sql`）已含於 §1 序列尾端。
-疊在 usage-metering 上，opt-in——**未設額度的團隊零行為差異**。版更檔：app.py（middleware 擴充）、
-services/usage_metering.py（quota 區段）、admin app.py（/api/usage/quotas CRUD）、前端 build。
-
-驗證（可選，用測試額度）：對某 vendor 設低額度（後台「使用量統計→額度管理」）→ 真打三段：
-正常→警示（b2b 回答尾端附 📊 額度提示）→ 達限（pm 加值引導/租客中性文案、action_type=quota_blocked、
-事件 status='blocked' 不計額度）→ 調高額度下一句即恢復 → **驗畢停用測試額度**。
-快取語義：warn/blocked 轉換最多延遲 60 秒；加值恢復即時（blocked 不走快取）。
-**警示通知（2026-07-06 改判）**：警示不進對話、改寄信——prod 需設 `QUOTA_SMTP_HOST/PORT/USER/PASS/FROM`
-＋`QUOTA_WARN_EMAIL_TO`（營運收件，逗號分隔；vendor 的 contact_email 有值會一併收）；
-未設 SMTP 僅記 log 不寄。每 vendor 每月首次跨閾值寄一次（vendor_quotas.last_warned_month 防重）。
-`QUOTA_WARN_IN_CHAT=true` 可重新啟用對話內附註（預設關）。
-
-## 9. 參數分工定案＋lookup 錨點（盤查 20260706）
-
-**分工**：`vendor_configs`＝通用資料（電話/LINE/營業時間等 vendor 級單值，param 模板注入）；
-`lookup_tables`＝案場級/清單級（管理費/電費/包裹/廠商，Excel 統一匯入，錨點消費）。
-
-- 版更檔：api_call_handler（key 空＋key2=全部＝整分類列出）、routers/lookup（匯入拒收「範例：」列）、
-  vendor_parameter_resolver（預設讀 configs；`VENDOR_PARAMS_FROM_LOOKUP=true` 保留切換能力）
-- **lookup 錨點 33 筆**：`python3 scripts/audit/reports/lookup-anchors-import.py`（冪等；需 embedding-api）
-  → semantic model 重抽（§4 已含）；知識 1403 客服專線已改 configs 模板直答（隨知識批次）
-- ⚠️ 前置：lookup 資料須業者核實（vendor 2 客服類疑似污染、vendor 3 configs demo 值），
-  且重匯時依分工歸位——lookup 內的通用類殘留（LINE/服務中心/服務時間/繳費方式）移 configs 或刪除
-- 驗證：「客服專線電話」→ configs 模板值；「管理員會代收包裹嗎」→ 該業者 lookup 明細
-
-## 10. 不變量稽核（部署收尾必跑）
+🔴 **舊煙囪已刪除（2026-09-12）**：原本打 `POST /api/v1/message`，該端點隨舊 REST
+對話鏈於 2026-09-11 刪除，實測 404。以下是新線（`/mcp`）的等價驗收。
 
 ```bash
-make audit   # = scripts/audit/check_invariants.sh，exit 非 0 = 有違規，修完重跑
+# 前置：把金鑰放進環境變數，⛔ 不要寫進指令歷史或文件
+#   read -rs RAG_API_KEY && export RAG_API_KEY
+# ① 閘門在不在（無金鑰必須 401，不是 404——404 代表路徑沒掛上）
+curl -sS -o /dev/null -w "no-key  -> %{http_code}  (期望 401)\n" \
+  -X POST http://localhost:8100/mcp -H "Content-Type: application/json" -d '{}'
+
+# ② 帶金鑰列工具（期望 200，且工具數為 16）
+curl -sS -X POST http://localhost:8100/mcp \
+  -H "Content-Type: application/json" -H "X-API-Key: $RAG_API_KEY" \
+  -H 'X-JGB-Identity: {"vendor_id":2,"session_id":"smoke_'"$(date +%s)"'","mode":"b2b","target_user":"property_manager"}' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | head -c 400; echo
+
+# ③ 每次呼叫都要落一列 usage_events
+docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c \
+  "SELECT created_at, vendor_id, endpoint FROM usage_events ORDER BY id DESC LIMIT 3;"
+# 期望：最新一列的時間戳對得上剛才那次呼叫
 ```
 
 六條不變量：動作知識必有面向接管（防「開關漏插」再犯——帳單診斷案根因）／
@@ -233,28 +166,8 @@ docker compose -f docker-compose.prod.yml up -d --build --no-deps rag-orchestrat
 
 **12-3 煙囪**（M2 之前必過）：
 
-> 🔴 **本小節的煙囪已不可執行（2026-09-11）**：它打 `POST /api/v1/message`，該端點隨舊 REST 對話鏈刪除（commit `7c905408`），實測 404。
-> 保留為當時的部署紀錄；⛔ 不要照跑，也不要拿它的「期望」欄當現行行為的依據。
-> 新線唯一入口是 `/mcp` 的 `agent.turn`，尚無等價的單行驗收指令。
-
-```bash
-# ① 一則真 b2c 請求（走 SOP↔知識檢索仲裁）→ 事件帶分數
-SID="smoke_tvd_$(date +%s)"
-curl -sS -X POST http://localhost:8100/api/v1/message -H "Content-Type: application/json" \
-  -d "{\"message\": \"我要繳房租\", \"vendor_id\": 2, \"mode\": \"b2c\", \"target_user\": \"tenant\", \"session_id\": \"$SID\"}"
-docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c \
-  "SELECT knowledge_score, sop_score, decision_case FROM usage_events ORDER BY id DESC LIMIT 1;"
-# 期望：分數欄帶 0–1 數值、decision_case 為既有仲裁識別字串
-# （knowledge_significantly_higher / sop_significantly_higher / only_knowledge_qualified …）
-
-# ② 短路路徑（b2b 請求，早退不經仲裁）→ 分數 NULL、事件其餘欄位照舊完整
-SID="smoke_tvd_b2b_$(date +%s)"
-curl -sS -X POST http://localhost:8100/api/v1/message -H "Content-Type: application/json" \
-  -d "{\"message\": \"我要繳房租\", \"vendor_id\": 2, \"mode\": \"b2b\", \"target_user\": \"property_manager\", \"role_id\": \"37305\", \"session_id\": \"$SID\"}"
-docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c \
-  "SELECT knowledge_score, sop_score, decision_case FROM usage_events ORDER BY id DESC LIMIT 1;"
-# 期望：三欄皆 NULL（vendor/token/成本等本體欄位仍齊全）
-```
+🔴 **舊煙囪已刪除（2026-09-12）**：原本打 `POST /api/v1/message`，該端點隨舊 REST
+對話鏈於 2026-09-11 刪除，實測 404。**新線的驗收指令見 §5 煙囪驗證**——本節不重複一份。
 
 ③（可選，完整驗證 manual 觸發全流程）——⚠️ 當時的自動化 e2e 已隨舊鏈刪除
 （commit `7c905408`），⛔ 沒有可跑的版本。現場驗證只能手動走同一流程：
@@ -331,21 +244,8 @@ docker compose -f docker-compose.prod.yml up -d --build --no-deps rag-orchestrat
 
 **13-4 煙囪**（M2 之前必過）：情境 A（單一租約、圖片高信心）真跑一輪，確認①面向接管報修對話②埋點入庫。
 
-> 🔴 **本小節的煙囪已不可執行（2026-09-11）**：它打 `POST /api/v1/message`，該端點隨舊 REST 對話鏈刪除（commit `7c905408`），實測 404。
-> 保留為當時的部署紀錄；⛔ 不要照跑，也不要拿它的「期望」欄當現行行為的依據。
-> 新線唯一入口是 `/mcp` 的 `agent.turn`，尚無等價的單行驗收指令。
-
-```bash
-SID="smoke_repair_$(date +%s)"
-# 直達面向：trigger_facet_key=repair_create（或以報修意圖問句命中錨點；正確鍵以 config registry 為準）
-curl -sS -X POST http://localhost:8100/api/v1/message -H "Content-Type: application/json" \
-  -d "{\"message\": \"我家冷氣壞了要報修\", \"vendor_id\": 1, \"mode\": \"b2c\", \"target_user\": \"tenant\", \"role_id\": \"<真租客 role>\", \"session_id\": \"$SID\", \"trigger_facet_key\": \"repair_create\"}"
-# 期望：回應為報修面向對話（澄清/確認摘要），非 FAQ 直答。
-# 埋點入庫確認：
-docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c \
-  "SELECT facet_key, turn_number, session_id FROM usage_events WHERE session_id='$SID' ORDER BY id DESC LIMIT 3;"
-# 期望：facet_key='repair'、turn_number 有值（隨輪次遞增）。
-```
+🔴 **舊煙囪已刪除（2026-09-12）**：原本打 `POST /api/v1/message`，該端點隨舊 REST
+對話鏈於 2026-09-11 刪除，實測 404。**新線的驗收指令見 §5 煙囪驗證**——本節不重複一份。
 
 ```bash
 # 13-5 M2（⚠️ 破壞性可逆：停 vendor 24 租客修繕 SOP，改由對話面向接管——
@@ -419,21 +319,8 @@ docker compose -f docker-compose.prod.yml up -d --build --no-deps rag-orchestrat
 
 **14-3 煙囪**（費用岔題實跑一輪，確認查庫落地＋埋點）：
 
-> 🔴 **本小節的煙囪已不可執行（2026-09-11）**：它打 `POST /api/v1/message`，該端點隨舊 REST 對話鏈刪除（commit `7c905408`），實測 404。
-> 保留為當時的部署紀錄；⛔ 不要照跑，也不要拿它的「期望」欄當現行行為的依據。
-> 新線唯一入口是 `/mcp` 的 `agent.turn`，尚無等價的單行驗收指令。
-
-```bash
-SID="smoke_kbtool_$(date +%s)"
-# 修繕面向對話中岔題問費用（先進面向、再岔題）——此處直接以直達參數進面向後問費用
-curl -sS -X POST http://localhost:8100/api/v1/message -H "Content-Type: application/json" \
-  -d "{\"message\": \"馬桶不通，這修理要收費嗎\", \"vendor_id\": 1, \"mode\": \"b2c\", \"target_user\": \"tenant\", \"role_id\": \"<真租客 role>\", \"session_id\": \"$SID\", \"trigger_facet_key\": \"repair_create\"}"
-# 期望：回應先答費用（與知識庫費用歸屬知識一致、非憑印象），再接回槽位收集。
-# 埋點入庫確認：
-docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c \
-  "SELECT search_kb_status, facet_key, session_id FROM usage_events WHERE session_id='$SID' ORDER BY id DESC LIMIT 3;"
-# 期望：該岔題輪 search_kb_status='hit'（庫中有費用知識時）或 'miss'（查無時誠實回退）。
-```
+🔴 **舊煙囪已刪除（2026-09-12）**：原本打 `POST /api/v1/message`，該端點隨舊 REST
+對話鏈於 2026-09-11 刪除，實測 404。**新線的驗收指令見 §5 煙囪驗證**——本節不重複一份。
 
 ### 14-4 環境變數與快速回退
 
@@ -631,24 +518,8 @@ docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c \
 
 ### 18-5. 驗證
 
-🔴 **本節原有的三條 curl 驗收已不可執行**：它們打 `POST /rag-api/v1/message`，
-該端點隨舊 REST 對話鏈於 2026-09-11 刪除（本機實測 `GET`／`POST` 皆 404；
-正對照 `/api/v1/agent/health` 與 `/mcp` 回 401 ＝存在但要金鑰）。
-
-⛔ 目前**沒有等價的線上驗收指令**：新線入口是 `/mcp` 的 `agent.turn`，
-走 MCP streamable HTTP，不是一條 curl 打得完的請求。要驗這三項
-（T-1 應進面向、B-1 fallback 不得含 `{{service_hotline}}` 字樣、
-R-33「已發送的帳單可以取消嗎」不得再答「無法撤回」）
-需先有 MCP 用戶端的驗收腳本——尚未落地。
-
-**prod 待驗（真 API 才能確認）**：bill_diagnosis 以合約編號搜帳單的實際效果（R-35 期望找到關帳帳單）、bill_detail 是否含收據金額（R-31）。驗完把登錄簿對應案例標「已入回測」。
-
-```bash
-# ④ 合約端點健康（登錄簿 J-2：preview 已因部署落後 500，prod 需確認無此問題）
-curl -s -o /dev/null -w "%{http_code}\n" \
-  "https://www.jgbsmart.com/api/external/v1/contracts/status-overview?role_id=<真role>" -H "X-API-Key: $JGB_KEY"
-# 預期 200；若 500 且錯誤含 early_termination_notice_date → 同 J-2，轉 jgb2 處理
-```
+🔴 **舊煙囪已刪除（2026-09-12）**：原本打 `POST /api/v1/message`，該端點隨舊 REST
+對話鏈於 2026-09-11 刪除，實測 404。**新線的驗收指令見 §5 煙囪驗證**——本節不重複一份。
 
 ## 19. agentic-mcp（M0–M1）部署（2026-09-05）
 

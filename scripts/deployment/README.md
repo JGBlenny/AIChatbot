@@ -177,10 +177,10 @@ docker-compose restart postgres redis rag-orchestrator
 
 ## 📚 相關文檔
 
-- [部署指南](../../docs/guides/DEPLOYMENT.md)
-- [Docker Compose 指南](../../docs/guides/DOCKER_COMPOSE_GUIDE.md)
-- [快速開始](../../QUICKSTART.md)
-- [開發工作流程](../../docs/guides/DEVELOPMENT_WORKFLOW.md)
+- 部署指南（檔已不存在）
+- Docker Compose 指南（檔已不存在）
+- 快速開始（檔已不存在）
+- 開發工作流程（檔已不存在）
 
 ## 🎯 最佳實踐
 

@@ -17,10 +17,14 @@
 | **複雜推理** | gpt-4o | 0.7 | 需更強推理能力 |
 | **測試題生成** | gpt-4o | 0.8 | 多樣性、創造性 |
 | **文件轉換**（Chat） | gpt-4o | 0.3 | 複雜文件需強推理、高確定性 |
-| **答案優化**（Chat） | gpt-4o-mini | 0.7 | 成本可控、品質足夠 |
-| **答案合成**（Chat） | gpt-4o-mini | 0.5 | 平衡創造性與一致性 |
-| **意圖分類**（Chat） | gpt-3.5-turbo | 0.1 | 速度優先、成本最低 |
-| **查詢改寫**（Chat） | gpt-3.5-turbo | 0.3 | 確定性、低延遲 |
+| **對話回合**（`AGENT_MODEL`） | gpt-4o-mini | — | `AgentRuntime` 的模型；另有 `AGENT_REASONING_EFFORT` |
+| **圖片辨識**（`IMAGE_RECOGNITION_MODEL`） | — | — | 報修照片前處理 |
+| **文件抽取**（`DOCUMENT_EXTRACTION_MODEL`） | — | — | 附件抽取 |
+| **查詢改寫**（`QUERY_REWRITE_MODEL`） | gpt-4o-mini | 0 | ⚠️ 程式預設與 prod compose 皆為 **0**，非 0.3 |
+
+🔴 **2026-09-12：「答案優化」與「意圖分類」兩列已刪**——`llm_answer_optimizer.py` 與
+`intent_classifier.py` 於 2026-09-11 隨舊 REST 對話鏈刪除，`ENABLE_ANSWER_SYNTHESIS`／
+`INTENT_CLASSIFIER_*` 全 repo 零程式讀者。⛔ 不要照舊表估成本或選模型。
 
 ### 模型特性
 

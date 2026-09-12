@@ -85,7 +85,6 @@ guides/
 | [SOP_EXCEL_IMPORT_GUIDE.md](./features/SOP_EXCEL_IMPORT_GUIDE.md) | SOP Excel 匯入指南 |
 | [SOP_GUIDE.md](./features/SOP_GUIDE.md) | SOP 系統完整指南 ⭐ |
 | [SOP_OPTIMIZATION_README.md](./features/SOP_OPTIMIZATION_README.md) | SOP 優化說明 |
-| [STREAMING_CHAT_GUIDE.md](./features/STREAMING_CHAT_GUIDE.md) | 串流對話功能指南 |
 
 ---
 

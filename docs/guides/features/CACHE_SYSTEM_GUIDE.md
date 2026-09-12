@@ -687,11 +687,10 @@ response = requests.post("http://localhost:8100/api/v1/message", json={
 # ✅ 緩存命中：50-200ms
 
 # Debug 請求（跳過緩存）
-response = requests.post("http://localhost:8100/api/v1/message", json={
-    "message": "租金何時繳？",
-    "vendor_id": 1,
-    "include_debug_info": True   # 啟用調試模式
-})
+# 🔴 2026-09-12：原範例打 POST /api/v1/message，該端點已刪（實測 404）。
+# 快取本身仍活，但⛔ **不在對話回合路徑上**——消費者只有 app.py／routers/vendors.py／
+# routers/cache.py。要看快取狀態請直接打 /api/v1/cache/stats（實測 200）。
+response = requests.get("http://localhost:8100/api/v1/cache/stats")
 # ⚠️ 跳過緩存：500-2000ms（執行完整檢索）
 # 📊 返回 debug_info：processing_path, sop_candidates, comparison_metadata 等
 ```

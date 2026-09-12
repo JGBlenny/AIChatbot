@@ -1,21 +1,33 @@
 # 📚 SOP 系統文檔索引
 
-**最後更新**: 2026-02-14
+**最後對碼**: 2026-09-12
 
-本目錄集中管理所有 SOP (Standard Operating Procedure) 系統相關文檔，包含設計、實作、測試和優化等完整資料。
+🔴 **SOP 的「影響對話」那一半已經沒有了。**
 
+| 這裡的文檔教的 | 現況 |
+|---|---|
+| 建立／編輯／複製 SOP 範本與項目、批次匯入、embedding 重算 | ✅ 仍可用（`routers/platform_sop.py` 15 條路由、`routers/vendors.py` 10 支 `/sop/*`、`sop_embedding_generator.py`） |
+| 觸發模式（none／manual／immediate／auto）、後續動作（form_fill／api_call／form_then_api）、關鍵詞觸發、SOP↔知識仲裁 | ⛔ **對話路徑零讀取**。`sop_orchestrator.py`／`sop_trigger_handler.py`／`form_manager.py` 已於 2026-09-11 刪除（DSP-046）。查證：`grep -rli "sop" rag-orchestrator/services/agent/` 為 0（正對照：同目錄 `kb` 13 檔、`verifier` 20 檔） |
+
+**結論：改 SOP 不會改變機器人的任何回答。** 以下各份文檔請套用上表閱讀——
+欄位存得進 DB，但沒有任何程式會在對話時查它們。
+現行對話走 `/mcp` 的 `agent.turn`，見
+[`docs/architecture/AGENTIC_MCP_ARCHITECTURE.md`](../../architecture/AGENTIC_MCP_ARCHITECTURE.md)。
+
+⚠️ 下方「目錄結構」的檔數（design 4／implementation 6／testing 3／optimization 2）
+是 2026-02 的快照；**實際現況**：`design/` 不存在、`implementation/` 3 份、
+`testing/` 1 份、`optimization/` 1 份。
 ---
 
 ## 🗂️ 目錄結構
 
 ```
 sop/
-├── README.md                           # 本文件：SOP 文檔索引
-├── SOP_TRIGGER_MODE_UPDATE_INDEX.md    # SOP 觸發模式更新總索引 ⭐
-├── design/                             # 設計文檔 (4 個文件)
-├── implementation/                     # 實作文檔 (6 個文件)
-├── testing/                            # 測試文檔 (3 個文件)
-└── optimization/                       # 優化文檔 (2 個文件)
+├── README.md                           # 本文件
+├── SOP_TRIGGER_MODE_UPDATE_INDEX.md    # 2026-02-03 的 UI 更新紀錄（歷史）
+├── implementation/                     # 3 份
+├── testing/                            # 1 份
+└── optimization/                       # 1 份
 ```
 
 ---
@@ -26,8 +38,8 @@ sop/
 
 | 文檔 | 用途 | 閱讀時間 |
 |------|------|---------|
-| [SOP_TRIGGER_MODE_UPDATE_INDEX.md](./SOP_TRIGGER_MODE_UPDATE_INDEX.md) | SOP 觸發模式更新總索引 | 5 分鐘 |
-| [SOP_GUIDE.md](../../guides/features/SOP_GUIDE.md) | SOP 系統完整使用指南 | 30 分鐘 |
+| [SOP_GUIDE.md](../../guides/features/SOP_GUIDE.md) | SOP 後台操作指南（⚠️ 觸發／後續動作那幾節對話路徑不讀） | 30 分鐘 |
+| [`docs/user-guides/VENDOR_SOP_USER_GUIDE.md`](../../user-guides/VENDOR_SOP_USER_GUIDE.md) | 業者端操作（檔頭有對碼表） | — |
 
 ---
 

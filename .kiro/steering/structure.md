@@ -289,40 +289,32 @@ from config.deduplication_config import DeduplicationConfig
 - `OPENAI_API_KEY`
 
 ### LLM 模型配置
-- `OPENAI_MODEL`: 答案優化模型 (預設 gpt-4o-mini)
-- `INTENT_CLASSIFIER_MODEL`: 意圖分類模型 (預設 gpt-3.5-turbo)
-- `KNOWLEDGE_GEN_MODEL`: 知識生成模型 (預設 gpt-4o-mini)
-- `DOCUMENT_CONVERTER_MODEL`: 文件轉換模型 (預設 gpt-4o)
-- `QUERY_REWRITE_MODEL`: 查詢改寫模型 (預設 gpt-3.5-turbo)
-- `EMBEDDING_MODEL`: Embedding 模型 (預設 text-embedding-3-small)
-- `LLM_ANSWER_TEMPERATURE`, `LLM_ANSWER_MAX_TOKENS`: 答案生成溫度/token
-- `INTENT_CLASSIFIER_TEMPERATURE`, `INTENT_CLASSIFIER_MAX_TOKENS`
-- `LLM_SYNTHESIS_TEMP`: 合成溫度 (預設 0.5)
 
-### 服務配置
-- `RAG_RETRIEVAL_LIMIT`: RAG 檢索限制 (預設 5)
-- `PRIORITY_BOOST`: 優先級加成 (預設 0.15)
-- `PRIORITY_QUALITY_THRESHOLD`: 優先級品質門檻 (預設 0.70)
-- `USE_SEMANTIC_RERANK`: 是否啟用語義重排序 (預設 false)
-- `ENABLE_ANSWER_SYNTHESIS`: 是否啟用答案合成 (預設 false)
-- `SYNTHESIS_THRESHOLD`: 答案合成閾值 (預設 0.80)
-- `PERFECT_MATCH_THRESHOLD`: 完美匹配閾值 (預設 0.90)
-- `FAST_PATH_THRESHOLD`: 快速路徑閾值 (預設 0.75)
-- `CONFIDENCE_HIGH_THRESHOLD`: 高信心度 (預設 0.85)
-- `CONFIDENCE_MEDIUM_THRESHOLD`: 中信心度 (預設 0.70)
-- `ENABLE_QUERY_REWRITE`: 是否啟用查詢改寫
-- `ENABLE_RERANKER`: 是否啟用 Reranker
-- `RERANKER_INPUT_LIMIT`: Reranker 輸入限制 (預設 20)
-- `SEMANTIC_API_URL`: 語義模型 API URL
+🔴 **2026-09-12 逐鍵對碼：以下每一顆都有 `rag-orchestrator` 非測試 `.py` 讀者。**
+同日刪掉 22 顆 0 命中的（意圖分類／答案合成／信心度／優先級加成／SOP 門檻／回測旗標
+等系列，主體隨舊鏈於 2026-09-11 刪除）。⛔ 不留退役標記，要看舊清單請 `git log`。
 
-### SOP 配置
-- `SOP_SIMILARITY_THRESHOLD`: SOP 相似度閾值 (預設 0.55)
-- `KB_SIMILARITY_THRESHOLD`: 知識庫相似度閾值 (預設 0.6)
+- `OPENAI_MODEL`: `runtime.py`／`query_rewriter.py` 用（預設 gpt-4o-mini）
+- `AGENT_MODEL`／`AGENT_REASONING_EFFORT`: 對話回合的模型與推理強度
+- `IMAGE_RECOGNITION_MODEL`: 報修照片前處理
+- `KNOWLEDGE_GEN_MODEL`: 知識生成（prod compose 預設 gpt-3.5-turbo，程式 fallback gpt-4o）
+- `DOCUMENT_CONVERTER_MODEL`: 文件轉換（預設 gpt-4o-mini）
+- `QUERY_REWRITE_MODEL`／`QUERY_REWRITE_TEMPERATURE`（**0**，非 0.3）／`QUERY_REWRITE_MAX_TOKENS`
+- `EMBEDDING_MODEL`: 預設 text-embedding-3-small（⛔ 只有 `llm_provider.py` 讀）
 
-### 回測配置
-- `VENDOR_ID`: 業者 ID
-- `BACKTEST_ONLY`: 僅執行回測模式 (true/false)
-- `BACKTEST_CONCURRENCY`, `BACKTEST_TIMEOUT`, `BACKTEST_QUALITY_MODE` 等
+### 檢索配置
+- `KB_SIMILARITY_THRESHOLD`: 0.65（⛔ 不得改回 0.55，見 `decision_layer.py` docstring）
+- `ENABLE_QUERY_REWRITE` / `ENABLE_QUERY_REWRITE_B2B`（⚠️ compose 兩份皆 false，**程式 fallback 是 true**）
+- `ENABLE_RERANKER` / `RERANKER_INPUT_LIMIT`(20) / `RERANKER_MIN_VECTOR_SIMILARITY`(0.3) / `RERANKER_HTTP_TIMEOUT`(60)
+
+### Agent 線配置
+- `AGENT_TURN_ENABLED` / `AGENT_STAGE` / `AGENT_VERIFIER_MODE`
+  （⚠️ compose 預設 `enforce`，與某些示範值相反）
+- `AGENT_WRITE_TOOLS_ENABLED`: 寫入類工具可見性
+- `JGB2_CANDIDATE_CAP`: 候選列表上限
+- `USE_MOCK_JGB_API`: true＝走 `services/jgb/transport.py` 的替身 15 端點
+- `AGENT_SHADOW_AUDIENCES` / `AGENT_SHADOW_MONTHLY_USD_CAP` / `AGENT_ATTEMPT_LOG_PATH`
+- `AGENT_AUDIENCES`: ⚠️ 仍被讀、兩份 compose 仍宣告，但**沒有生效對象**（分流入口不存在）
 
 ### Redis
 - `REDIS_HOST`, `REDIS_PORT`, `REDIS_DB`

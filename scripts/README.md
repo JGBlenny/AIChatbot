@@ -102,18 +102,18 @@ python scripts/process_line_chats.py
   - `test_scoring_quality.py` - 評分質量測試
   - 等等...
 
-- **`/rag-orchestrator/tests/`** - 單元測試（4 個測試）
-  - `test_answer_synthesis.py` - 答案合成測試
-  - `test_intent_manager.py` - 意圖管理測試
-  - 等等...
+- **`/rag-orchestrator/tests/`** - 單元測試
+  - 🔴 2026-09-12：實際跑法是 `make test-unit`（容器內，3,629 passed）。
+    原列的 `test_answer_synthesis.py`／`test_intent_manager.py` 兩支的受測物
+    （`llm_answer_optimizer`／`intent_manager.py`）已於 2026-09-11 刪除。
 
 運行測試：
 ```bash
 # 運行整合測試
 cd tests && bash run_business_logic_tests.sh
 
-# 運行單元測試
-cd rag-orchestrator/tests && python test_answer_synthesis.py
+# 運行單元測試（⛔ 一律容器內跑，host Python 3.9 會收集失敗）
+make test-unit
 ```
 
 ---
