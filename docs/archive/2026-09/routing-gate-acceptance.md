@@ -1,5 +1,23 @@
 # Pre-entry Routability Gate｜驗收契約（B 階段）
 
+> 🔴 **已封存 2026-09-12（D-005「前提滅但記錄決策 → 歸檔」）**
+>
+> 本檔是一份**凍結的驗收契約**（⛔ 指標定義與通過線不得改），而它的受測物已不存在：
+> - `_preentry_routable`：`rag-orchestrator/` 全樹 **0 命中**
+>   （正對照：同法搜 `def build_visibility_predicate` 1 命中 ⇒ 工具有效）
+> - `PREENTRY_ROUTABILITY_GATE`：程式端 **0 讀者**；⚠️ `docker-compose.prod.yml`／
+>   `docker-compose.dev.yml` **仍宣告此旗標**，讀 compose 會誤以為功能仍可開關
+> - §五邊界條款所護的 `services/llm_answer_optimizer.py`：**檔案不存在**
+>
+> ⚠️ **仍然成立、且是唯一出處的**：§二「241 未污染集 vs 14 診斷集不得混用」的方法論
+> 裁示；§七「R3 是 answerability 不是 routability」的結論與 11 筆同形狀病灶；
+> §七「R4 在 gate 建好前自行縮小八成（多半因 b2b 停用 query rewrite）」；
+> 契約自評「指標④⑤未量」。
+>
+> ⛔ **本次封存未改動任何指標定義或通過線**——那會違反本契約的凍結條款。
+> 已自 `.claude/MAP.md` 的 `dialogue-logic` 來源清單移除。
+
+
 > 訂立 2026-08-23，分支 `fix/retrieval-routing-stability`
 > **本契約在實作之前凍結。實作過程中不得修改指標定義或通過線。**
 > 依據：[參數台帳 §六](./retrieval-parameters.md)｜[盤查報告](./retrieval-recall-audit-20260822.md)

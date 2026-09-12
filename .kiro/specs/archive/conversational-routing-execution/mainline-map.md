@@ -1,4 +1,27 @@
-# 主線收束盤點（2026-08-29）
+# 主線收束盤點（2026-08-29）— **已封存 2026-09-12**
+
+> 🔴 **封存理由（D-005「前提滅但記錄決策 → 歸檔」）**：本檔記錄的受測物已隨舊 REST
+> 對話鏈於 2026-09-11 刪除（DSP-046）。逐條對碼：裁定 001 的四個 primitive
+> （`decision_source`／`face_precedence`／`entry_source`／`.stay` AST 守衛）在
+> `rag-orchestrator/**` **全數 0 命中**（正對照：同法搜 `skip_refine`／`repair_create`
+> 大量命中 ⇒ 掃描器可用）；§5 點名的 `services/conversational_engine.py` 與
+> `services/jgb/repair_prefill.py` 兩檔皆不存在；subscription 整組載體檔案
+> （`services/conversational/**/subscription.py`）不存在。
+>
+> ⚠️ **但本檔有兩段是全 repo 唯一的出處，⛔ 封存不等於失效**：
+>
+> 1. **§六 Release policy（2026-08-29 業主定案）**——「本地完整驗完以前，一律不 push／
+>    不進 main／不部署；unit 全綠、audit 全綠、smoke 通過**都不構成**『先上去收
+>    production data』的理由」。**查證：`.claude/DECISIONS.md` 查無此條**
+>    （搜「不 push」「不進 main」「BLOCKED_BY_VALIDATION」「2026-08-29」皆 0 命中；
+>    正對照「DSP-046」命中）。⇒ **這條裁決目前只存在於本檔。**
+> 2. **§七 U1 的「兩種合法結局，無第三種」**與 §末「形式上有接線 ≠ 語義上接對」
+>    的三例失敗模式（nomination≠authority／select=api≠capability equivalence／
+>    插點 A 填錯 estate_id）——教訓性敘述，無其他落點。
+>
+> 已自 `.claude/MAP.md` 的 `dialogue-logic` 來源清單移除（D-003：封存 spec
+> ⛔ 不得列前置必讀，改指 `archive/` 也不行）。
+
 
 分支 `fix/retrieval-routing-stability`｜領先 `main` **268 筆**｜**從未 push**（遠端含此 commit：0）
 

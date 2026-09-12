@@ -2,7 +2,7 @@
 
 > 建立 2026-08-23｜語言 zh-TW
 > 來源：2026-08-22~23 檢索盤查（[盤查報告](../../../docs/retrieval-recall-audit-20260822.md)、
-> [參數台帳](../../../docs/retrieval-parameters.md)、[驗收契約](../../../docs/routing-gate-acceptance.md)）
+> [參數台帳](../../../docs/retrieval-parameters.md)、[驗收契約](../../../docs/archive/2026-09/routing-gate-acceptance.md)（🔴 2026-09-12 已封存））
 > ⚠️ `.kiro/settings/rules/ears-format.md` 與 `templates/specs/requirements.md` 不存在，
 > 本文件採 WHEN/THEN/SHALL 內建結構，並以數字 ID 編號。
 

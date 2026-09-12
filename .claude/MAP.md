@@ -166,7 +166,6 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 - 規格 | `.kiro/specs/conversational-routing-execution/requirements.md` | 主線唯一 spec 的需求正本
 - 規格 | `.kiro/specs/conversational-routing-execution/design.md` | 責任/提名/授權架構設計正本
 - 決策 | `.kiro/specs/conversational-routing-execution/HANDOFF-20260901.md` | 現行交接:主線是什麼、哪些事實別再重查、已知錯誤文件與工具地雷
-- 決策 | `.kiro/specs/conversational-routing-execution/mainline-map.md` | 收束盤點:已 CLOSED／帶 claim ceiling／PAUSED 三態與 release policy
 - 決策 | `.kiro/specs/conversational-routing-execution/PLAN-retrieval-coverage.md` | 現行計畫 v2,逐筆事實以此為準
 - 判準 | `.kiro/specs/conversational-routing-execution/a03-retrieval-failure-taxonomy.md` | 檢索失敗分類:四種失敗類型的判定尺
 - 判準 | `.kiro/specs/conversational-routing-execution/b2b-batch-selection-rule.frozen.md` | b2b 批次選題規則(凍結)
@@ -178,7 +177,6 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 - 判準 | `.kiro/specs/conversational-routing-execution/b2b-doc-status-ledger.md` | b2b／檢索過濾／門檻主題的**文件可信度分流**:哪幾份可依據、哪幾份照做會出事
 - 規格 | `docs/architecture/COMPLETE_CONVERSATION_ARCHITECTURE.md` | 對話架構母圖(被主線 spec 引用 8 次);⚠️ §3 過濾公式與兩處門檻敘述已於 2026-09-01 對碼修正,決策樹本體與 `decide_arbitration` 逐條相符
 - 規格 | `docs/architecture/facet-architecture.md` | 面向化三層疊加的邏輯與資料佈局(取代 design.md 元件1/D2 的兩層版本)
-- 判準 | `docs/routing-gate-acceptance.md` | pre-entry routability gate 驗收契約——**實作前凍結,⛔ 指標定義與通過線不得改**
 - 實測 | `scripts/audit/reports/regrade291-triage.md` | **69.7% 基準的唯一出處**(548 題乾淨重跑;舊寬鬆基準 60.2%)
 - 規格 | `docs/features/conversational-presales.md` | 對話式回答模式本身:單次直答 → 多輪自適應收斂(prospect 為第一個套用者)
 - 規格 | `docs/api/conversational-api.md` | 對話式回答的對外串接指南
