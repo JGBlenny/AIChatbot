@@ -101,8 +101,11 @@ sop/
 2. 查看 [SOP_TYPES_ANALYSIS](../../archive/2026-06/sop/SOP_TYPES_ANALYSIS_2026-01-22.md)
 
 ### 任務 2: 我要配置 SOP 觸發模式
-1. 閱讀 [SOP_TRIGGER_MODE_UPDATE_INDEX.md](./SOP_TRIGGER_MODE_UPDATE_INDEX.md)
-2. 參考 [SOP_TRIGGER_MODE_UI_UPDATE](../../archive/2026-06/sop/SOP_TRIGGER_MODE_UI_UPDATE_2026-02-03.md)
+⛔ **這件事現在做了沒有效果**：觸發模式（none／manual／immediate／auto）在對話路徑上
+已無讀者——`sop_orchestrator.py`／`sop_trigger_handler.py` 於 2026-09-11 刪除。
+欄位存得進 DB，機器人不會因此改變回答。下面兩份是 2026-02 的 UI 更新紀錄（歷史）：
+1. [SOP_TRIGGER_MODE_UPDATE_INDEX.md](./SOP_TRIGGER_MODE_UPDATE_INDEX.md)
+2. [SOP_TRIGGER_MODE_UI_UPDATE](../../archive/2026-06/sop/SOP_TRIGGER_MODE_UI_UPDATE_2026-02-03.md)
 
 ### 任務 3: 我要測試 SOP 功能
 1. 使用 [SOP_TRIGGER_MODE_TEST_EXECUTION_GUIDE](./testing/SOP_TRIGGER_MODE_TEST_EXECUTION_GUIDE.md)
