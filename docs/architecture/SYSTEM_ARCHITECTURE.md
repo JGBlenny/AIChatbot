@@ -330,21 +330,26 @@ kb.get    → build_visibility_predicate ＋ canon.review_state.content_reviewed
 那個數字是假警報。上表用的是**執行期程式**這個較嚴的定義。
 查證：`SELECT tablename FROM pg_tables WHERE schemaname='public';` 再對程式做逐表 grep。
 
-**回合路徑上不讀的**（🔴 2026-09-12 逐條重驗——前一版寫「**全部零消費者**」是錯的，
-九條**全都還有非測試消費者**，只是不在對話回合路徑上。這種「把活的說成死的」比反方向
-更難發現，因為五把尺全都只找「把死的說成活的」）：
+**回合路徑上零消費者**（🔴 2026-09-12 用 **AST** 逐條驗——⚠️ 本節當天被我改錯過一次：
+我先用 `grep -rl` 的**檔案命中數**當消費者，把八條對的判成「文件說沒有但有」，
+再用 AST 數 `ast.Call`／`ast.Attribute` 才發現那些命中**全在註解與 docstring 裡**。
+⇒ **grep 命中數 ⛔ 不等於消費者**，這條教訓同 `build_toc` 那次）：
 
-| 符號 | 還在嗎 | 誰在用 | 回合路徑 |
-|---|---|---|---|
-| `config_for_category` | ✅ `conversational_config.py:273` | `tools/audit_config.py`（設定契約稽核）、`tools/seed_repair_facet_knowledge.py` | ⛔ 不呼叫 |
-| `build_toc` | ✅ `outline.py:426` | **無**——AST 數 `ast.Call` 真實呼叫 **0 處**（⛔ grep 會把 docstring 算進來）。活的是 canon 版 `build_canon_toc`（3 處） | ⛔ 不呼叫 |
-| `grounding_scope`／`persona_role`／`topic_scope`／`answer_rules`／`cta_rules` | ✅ 定義在 `conversational_config.py` | `tools/audit_config.py` 逐條稽核；`instance_applicability.py` 讀 `grounding_scope` | ⛔ 不讀這幾個鍵 |
-| `category_config` | — | **僅註解提及**（`services/jgb/estates.py:94`、`repairs.py:87` 各一行） | ⛔ 無程式讀取 |
-| `FORM_TRIGGER_THRESHOLD` | ✅ `decision_layer.py:77` 讀 env | ⚠️ 讀進來了但**欄位 `.form_trigger_threshold` 零讀取** | ⛔ 不讀 |
+| 符號 | AST 實測 | 判定 |
+|---|---|---|
+| `config_for_category` | 呼叫 **0**（`tools/audit_config.py`／`seed_repair_facet_knowledge.py` 的命中都在註解裡） | ✅ 零消費者 |
+| `build_toc` | 呼叫 **0**（活的是 canon 版 `build_canon_toc`，3 處） | ✅ 零消費者 |
+| `persona_role`／`topic_scope`／`answer_rules`／`cta_rules` | 屬性存取只出現在 `conversational_config.py` **自己的資料類建構**，無外部讀者 | ✅ 零消費者 |
+| `category_config` | 0（`services/jgb/estates.py`／`repairs.py` 各一行**註解**） | ✅ 零消費者 |
+| `FORM_TRIGGER_THRESHOLD` | env 有被 `DecisionConfig.load()` 讀，但欄位 `.form_trigger_threshold` 存取 **0** | ⚠️ 讀進來沒人取用 |
+| **`grounding_scope`** | **有真消費者**：`services/instance_applicability.py` 以 `getattr(config, "grounding_scope", None)`／`config.get("grounding_scope")` **動態讀** | ❌ **⛔ 不是零消費者**——動態存取，AST 屬性掃描也看不到，只能靠讀那一段 |
 
 ⚠️ **`conversational_config.py` 本身在回合路徑上**（`runtime.py`／`turn_context.py`／
 `tools/handoff.py`／`shadow.py` 都 import 它，用 `effective_handoff_message`／
-`config_for_target_user` 等）——⛔ 別把「這幾個鍵不讀」讀成「整個模組沒人用」。
+`config_for_target_user`）——⛔ 別把「這幾個鍵沒人讀」讀成「整個模組沒人用」。
+
+⚠️ **動態存取是三把尺的共同盲區**：`getattr(x, "name")`／`d.get("name")` 這種寫法，
+grep 會命中（含註解）、AST 屬性掃描會漏。判「有沒有人用」時三種都要看。
 
 ---
 

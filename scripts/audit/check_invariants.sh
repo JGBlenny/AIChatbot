@@ -804,6 +804,26 @@ else
 fi
 echo
 
+echo "═══ 不變量 39：文件說「這東西沒有了」時那件事必須是真的（反方向，前五把尺全看不到）═══"
+# 源起：五把尺全部只找「把死的說成活的」，反方向 2026-09-12 一天累積四次
+# （agent_session.py 被寫成「對碼查無此檔」實際 13 處呼叫、參數列、knowledge_min…）。
+# 為什麼更難發現：把死的說成活的，讀者照做會撞牆會回報；把活的說成死的，
+# 讀者只會**繞開它**——沒有人會回報「我沒用那個東西」。
+# ⚠️ 三類可機械驗：檔案不存在／env 零讀者／函式零呼叫端（後者**必須用 AST**，
+#    grep 會把 docstring 算進來）。⚠️ 動態存取（getattr/d.get）是已知盲區。
+DNC_CHECK="$REPO/scripts/audit/checks/doc_negative_claims.py"
+if ! python3 "$DNC_CHECK" --self-test >/dev/null 2>&1; then
+  echo "❌ FAIL：不變量 39 檢查器的自我測試未過（檢查器本身失效，其 PASS 不可信）"
+  python3 "$DNC_CHECK" --self-test
+  FAIL=1
+elif ! DNC_OUT=$(python3 "$DNC_CHECK" 2>&1); then
+  echo "$DNC_OUT"
+  FAIL=1
+else
+  echo "$DNC_OUT"
+fi
+echo
+
 echo "═══ 不變量 26：向量索引 ⛔ 不得用參數會崩塌的 IVFFlat ═══"
 # 為何需要（2026-09-01 b2b 35 題實測逼出）：
 #   idx_kb_embedding 為 ivfflat lists=100，而全表僅 992 筆向量 ⇒ 每 list 約 10 筆；
