@@ -408,7 +408,7 @@ flowchart LR
 
 **閾值定義**：
 - `SOP_MIN_THRESHOLD = 0.55`
-- `KB_SIMILARITY_THRESHOLD`：部署值 **0.65**（程式 fallback `0.55`，見 `decision_layer.DecisionConfig`）
+- `KB_SIMILARITY_THRESHOLD`：部署值 **0.65**；程式 fallback 2026-09-12 由 `0.55` 對齊為 **0.65**（`decision_layer.DecisionConfig`）
   ⚠️ 它與決策樹用的 `knowledge_min = 0.6` 是**兩顆不同的常數，⛔ 不可互相取代**：
   前者是檢索過濾門檻，後者是六 case 答題仲裁的最低分（**硬編碼、刻意不開 env**）。
   （舊版寫「`KNOWLEDGE_MIN_THRESHOLD = 0.6` 鍵名與值皆已過時」——**兩件事都錯**，2026-09-01 修正）

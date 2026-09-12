@@ -437,7 +437,7 @@ docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c \
 
 ### 14-4 環境變數與快速回退
 
-- **`KB_SIMILARITY_THRESHOLD`**（沿用既有，預設 0.55）：`search_kb` 與 FAQ 主路徑同源閾值，不另設。
+- **`KB_SIMILARITY_THRESHOLD`**（沿用既有，程式預設 2026-09-12 起為 0.65，與 compose 同值）：`search_kb` 與 FAQ 主路徑同源閾值，不另設。
 - **`SEARCH_KB_ENABLED`**（可選，預設 true）：設 `false` → 交易面向不注入工具＝**即時回退現行行為**（Brain 憑規則答岔題），
   免重推程式、免 migration 回復。prod 若發現工具圈延遲或幻覺異常，先關此開關止血再排查。
 

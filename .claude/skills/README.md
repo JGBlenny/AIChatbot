@@ -73,7 +73,7 @@
 - 線上狀態改了，**建表／migration 原始碼要一起改**——只改線上等於埋一顆重建時引爆的雷。
 
 **各線實例**：`ENABLE_RERANKER` 程式預設 false／compose true；
-`KB_SIMILARITY_THRESHOLD` 程式 0.55／compose 硬編 0.65；三顆不同用途的「0.6 系」門檻
+`KB_SIMILARITY_THRESHOLD` 程式與 compose 同為 0.65（2026-09-12 對齊；compose 硬編、`.env` 蓋不掉）；三顆不同用途的「0.6 系」門檻
 被文件混為一談（`b2b-doc-status-ledger.md` 錯誤熱點①）。
 
 ### ③ 先定調，再看數字

@@ -22,7 +22,7 @@
 | `RELEVANCE_GATE_SKIP_VEC` | ⚠️ 讀值處 `routers/chat.py` 已隨舊鏈於 2026-09-11 退役（見 DSP-046），線上路徑不再讀這個鍵：`os.getenv("RELEVANCE_GATE_SKIP_VEC")`（未設＝不跳過） | **無此鍵**，走程式 fallback（不跳過） |
 | `SCORE_SHIFT_PROBE` | `base_retriever.py`：`os.getenv("SCORE_SHIFT_PROBE")`（空字串視為未設定） | 顯式 `${SCORE_SHIFT_PROBE:-}`（僅平移基線量測時暫時設 0.10，量完拿掉） |
 | `FORM_TRIGGER_THRESHOLD` | `decision_layer.py`：`float(os.getenv("FORM_TRIGGER_THRESHOLD", "0.75"))` | 顯式 `${FORM_TRIGGER_THRESHOLD:-0.75}` |
-| `KB_SIMILARITY_THRESHOLD` | `decision_layer.py` 的 `kb_threshold`：`float(os.getenv("KB_SIMILARITY_THRESHOLD", "0.55"))` | 顯式寫死 `0.65`（不走 env 插值，且註明「涵蓋原 fallback 範圍」） |
+| `KB_SIMILARITY_THRESHOLD` | `decision_layer.py` 的 `kb_threshold`：`float(os.getenv("KB_SIMILARITY_THRESHOLD", "0.65"))`　✅ **2026-09-12 由 `0.55` 對齊，程式與部署現在同值** | 顯式寫死 `0.65`（不走 env 插值，且註明「涵蓋原 fallback 範圍」） |
 | `RERANKER_MIN_VECTOR_SIMILARITY` | `base_retriever.py`：`float(os.getenv("RERANKER_MIN_VECTOR_SIMILARITY", "0.3"))` | 顯式 `${RERANKER_MIN_VECTOR_SIMILARITY:-0.3}` |
 | `RERANKER_INPUT_LIMIT` | `base_retriever.py`：`int(os.getenv("RERANKER_INPUT_LIMIT", "20"))` | 顯式 `${RERANKER_INPUT_LIMIT:-20}` |
 | `ADVISOR_TEMP` | `llm_answer_optimizer.py`：`float(os.getenv("ADVISOR_TEMP", "0.4"))` | **無此鍵**，走程式 fallback（0.4） |

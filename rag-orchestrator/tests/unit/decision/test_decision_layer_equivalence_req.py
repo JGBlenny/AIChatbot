@@ -32,11 +32,20 @@ _FLAGS = list(itertools.product([False, True], repeat=4))  # cancelled/executed/
 
 @pytest.mark.req("retrieval-decision-layer:7.4")
 def test_config_defaults_match_legacy_values(monkeypatch):
-    """未設 env 時＝原散落讀值點的預設：KB 0.55、FORM 0.75、六 case 0.55/0.6/0.15。"""
+    """未設 env 時的程式預設：KB **0.65**、FORM 0.75、六 case 0.55/0.6/0.15。
+
+    🔴 **2026-09-12：`kb_threshold` 由 0.55 改為 0.65**（業主裁示）。原值是舊鏈散落
+    讀值點的歷史 fallback，與參數台帳及兩份 compose 的顯式 `0.65` 不一致——
+    該分歧已造成過一次事故（見 `tests/unit/_meta/test_env_parity_req.py` 檔頭：
+    測試容器不帶 `.env` 落回 0.55、production 跑 0.65，同一組題在兩個門檻下
+    紅的不同、結論相反）。⛔ 不得改回 0.55——失敗方向是門檻悄悄變鬆且無聲。
+    ⚠️ 六 case 的三顆（sop_min／knowledge_min／score_gap）**不動**：它們無 env、
+    也已無生產讀者，改它們沒有對齊對象。
+    """
     monkeypatch.delenv("KB_SIMILARITY_THRESHOLD", raising=False)
     monkeypatch.delenv("FORM_TRIGGER_THRESHOLD", raising=False)
     c = dl.DecisionConfig.load()
-    assert c.kb_threshold == 0.55
+    assert c.kb_threshold == 0.65
     assert c.form_trigger_threshold == 0.75
     assert (c.sop_min, c.knowledge_min, c.score_gap) == (0.55, 0.6, 0.15)
 

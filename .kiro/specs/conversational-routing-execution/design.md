@@ -33,15 +33,21 @@
 2. **「三處刻意不 fail-open」的判準**：僅當①發生在測試／量測路徑而非產品路徑，
    且②靜默通過會使結論失真或造成外部副作用。產品路徑的 gate 故障一律 fail-open。
 
-### ⚠️ 一個仍然成立、且已波及新線的發現
+### ✅ 一個已波及新線的發現——**2026-09-12 已修**
 
 〈門檻對碼結果〉節指出 `DecisionConfig` 的**程式預設 `0.55`** 與參數台帳／env 的 **`0.65`**
 不一致，當時列為「另立 follow-up」。**那個 follow-up 從未立案，而消費者已經換成新線**：
 `services/agent/tools/kb.py` 讀的就是 `DecisionConfig.load().kb_threshold`。
 ⇒ 任何 `KB_SIMILARITY_THRESHOLD` 未設的環境（新機器、新容器、CI），
-**新線的 `kb.search` 會靜默跑在 0.55**。實測（2026-09-12，本機容器）：
-`DecisionConfig.load()` ＝ `{kb_threshold: 0.65, form_trigger_threshold: 0.75, sop_min: 0.55,
-knowledge_min: 0.6, score_gap: 0.15}`，env 有設所以是 0.65。
+**新線的 `kb.search` 會靜默跑在 0.55**。
+
+**處置（2026-09-12，業主裁示）**：程式 fallback 由 `0.55` 對齊為 **`0.65`**。
+決定性依據是 `tests/unit/_meta/test_env_parity_req.py` 檔頭記載的事故——
+「任務 3.1 實跑逼出：測試容器不帶 `.env` ⇒ 落回 0.55、production 跑 0.65；
+同一組測試在兩個門檻下候選集不同、紅的題目也不同，用錯門檻做的對照會得出
+**完全相反的結論**」。⇒ 這條 follow-up 不只沒立案，它**已經害過一次**。
+釘住：`tests/unit/decision/test_decision_layer_equivalence_req.py`
+（突變驗證：退回 0.55 ⇒ `test_config_defaults_match_legacy_values` 轉紅）。
 
 ---
 

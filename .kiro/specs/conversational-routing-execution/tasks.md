@@ -1393,4 +1393,4 @@ integration   177 passed / 4 failed / 11 env-skipped / gate_skipped=0 / rc=1
 | 1 | harness 繞過 SOP 仲裁——`_diagnosis_config_for_knowledge` 僅在 `decision['type']=='knowledge'` 時可達；本 spec 無結果可證 SOP 勝出時的端到端行為 | 3.4 verifier A3（既有限制，非本輪引入）|
 | 2 | 「我的收據在哪」／「我這筆點退的錢怎麼怪怪的」進「帳單異常」而非「條件診斷：帳單」，**產品歸屬未定案** | `BILLING_INSTANCE_FACET_UNDECIDED` |
 | 3 | CI 無從零建 schema 的路徑（service container 為空庫，供裝腳本依賴本機來源庫做 schema dump）| 2.4（既有狀態）|
-| 4 | `DecisionConfig` 程式預設 `kb_threshold=0.55` 與參數台帳 `0.65` 不一致，靠 env 覆蓋而無害；env 未設的環境會靜默跑 0.55 | 3.1 對碼（範圍外，建議 follow-up）|
+| 4 | ✅ **2026-09-12 已修**（業主裁示）：`DecisionConfig` 程式預設 `kb_threshold` 由 `0.55` 對齊為 `0.65`，與參數台帳及兩份 compose 同值。原問題：env 未設的環境會靜默跑 0.55 | 3.1 對碼（範圍外，建議 follow-up）|
