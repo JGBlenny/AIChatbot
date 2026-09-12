@@ -24,42 +24,82 @@
 
 ---
 
-## 1. 唯一的對話路徑
+## 1. 核心是 `AgentRuntime`，`/mcp` 只是它的一個門面
+
+> ⛔ **外部串接不屬於本系統，⛔ 不進架構敘述。** jgb2 Web、LINE OA demo、回測工具
+> 之類是**部署時接上來的消費者**。誰持 key、哪些停用、實際流量多少是**部署事實**，
+> 要查去看 `api_keys` 與 `usage_events`，⛔ 不寫進本檔。
+>
+> 🔴 **2026-09-12 由程式重新推導，方向與前一版相反。** 前一版把 `/mcp` 畫成脊椎、
+> 把 runtime 當成它裡面的東西——那是照抄 `AGENTIC_MCP_ARCHITECTURE.md` 第一張
+> 「由外往內」的圖。**只要數一下誰呼叫 `run_turn`，方向立刻就反過來。**
+
+### 核心（不知道任何門面的存在）
 
 ```
-MCP client（持有效 API key 的上游／內部呼叫者）
-  → POST /rag-api/mcp        （X-API-Key + X-JGB-Identity；nginx auth_request）
-  → services/agent/mcp_facade.py::build_asgi_app → AGENT_TURN_SPEC → _agent_turn
-  → services/agent/runtime.py::AgentRuntime.run_turn
+AgentRuntime.__init__(provider, registry, verifier, assembler, budget,
+                      readonly_view, stage, clock, model, reasoning_effort,
+                      tool_timeout_s, status_interval_s, attempt_sink,
+                      candidate_selector, candidate_selectors, db_pool)
 ```
 
-🔴 **入口對呼叫端不設限、也不知道對方是誰**（2026-09-12 由程式重新推導，⛔ 不再照抄 demo 場景）。
-`mcp_facade.py` 的模組 docstring 自述：`/mcp` 是**非公開認證面**——只給
-**上游／內部呼叫者（jgb2 後端、回測工具、內部操作者）**。程式對呼叫端的全部要求是：
+**這張依賴清單裡沒有 `/mcp`、沒有 REST、沒有任何協定。** 核心由
+`services/agent/bootstrap.py::build_runtime` 組起來，`app.py` 在 lifespan 建兩份
+（正式一份、`readonly_view=True` 的影子一份）。組成：
 
-| 項 | 值（`mcp_facade.py` 常數） |
+| 部件 | 是什麼 |
 |---|---|
-| 掛載 | `Mount('/mcp', app=build_asgi_app(_mcp_server))` |
+| `provider` | LLM 出口 |
+| `registry` | `ToolRegistry`，16 支工具，四步閘（見 §2） |
+| `assembler` | `PromptAssembler`（system 整回合只有一則） |
+| `candidate_selector(s)` | 大綱候選選取，K=5（見 §2 路 A） |
+| `verifier` | `OutputVerifier`，九步 |
+| `budget` | 工具呼叫數／改寫數／deadline |
+
+### 門面（接在核心外面，⛔ 核心不依賴它們）
+
+非測試的 `run_turn` 呼叫端就是門面的完整清單：
+
+| 門面 | 檔案 | 現況 |
+|---|---|---|
+| **MCP** | `services/agent/mcp_facade.py::_agent_turn`（`AGENT_TURN_SPEC`，`facade_only`） | ✅ **唯一掛著的** |
+| **遷移橋**（⛔ 不是門面） | `routers/agent_entry.py::handle_agent_entry`／`_agent_sse` | **遷移橋（任務 2.2／R9）**，⛔ 不是端點：它站在舊鏈 `chat.py` 的請求路徑上分流（受眾在 `AGENT_AUDIENCES` ⇒ 走 runtime，否則回 `None` 讓舊鏈續跑）。⛔ **掛路由救不活**：上游的 `VendorChatRequest`／`VendorChatResponse`／`_conversational_to_response`／`sse_event`／`metered` 五樣全隨 `chat.py` 刪除，回退目標（舊鏈）也不在 |
+| 回測 | `tools/agent_eval.py` | 離線 |
+| 影子 | `services/agent/shadow.py`（`readonly_view=True`） | 隨 `app.py` 建 |
+
+`run_turn` 的簽名在 `mcp_facade` 裡被註解為「**REST／影子／回測共用的介面**」
+——共用，代表它不屬於任何一個門面。
+
+⚠️ **`/mcp` 是插座，不是對話架構**：它只做驗 key／驗身分／記帳三件事，**零對話邏輯**。
+⚠️ **本系統只有 MCP server，沒有對外的 MCP client**：`mcp.client`／`ClientSession`
+全 repo 只出現在兩支整合測試裡（拿 client 打自己的 server）；`runtime.py` **不 import `mcp`**，
+模型呼叫工具走 `registry.call`，**in-process**，與 MCP 協定無關。
+
+### MCP 門面收什麼（`mcp_facade.py` 常數）
+
+| 項 | 值 |
+|---|---|
+| 掛載 | `Mount('/mcp', app=build_asgi_app(_mcp_server))`（`app.py` 唯一的 Mount） |
 | 金鑰 | `x-api-key`（`_API_KEY_HEADER`）——無條件 401 |
 | 身分 | `x-jgb-identity`（`_IDENTITY_HEADER`），**明文 JSON**，必帶 `vendor_id`＋`session_id` |
 | 受眾值域 | `Audience = Literal['prospect','property_manager','tenant']`（封閉） |
-| 入口模式 | `ENTRY_MODES = ('b2b','b2c')`，預設 `b2c` |
+| 入口模式 | `ENTRY_MODES = ('b2b','b2c')`，預設 `b2c`；`target_user=='prospect'` 一律改寫 `b2b` |
 
-⚠️ **程式中查無任何 LINE 相依**：`line-bot`／`LIFF` 的出現全在註解與 docstring，
-語境是「line-bot 2026-09-10 **回報**」——那是回報問題的管道，⛔ 不是系統元件。
-「LINE OA 房東管家」是 **demo 期的一個呼叫端場景**（見 `inputs/demo-ledger-line-oa-*.md`），
-⛔ 不是本架構的入口定義。
+### 已不存在的門面
 
-⛔ **沒有第二條。** 特別是：
-
-| 曾經的入口 | 現況 |
+| | 現況 |
 |---|---|
-| `POST /api/v1/message`（jgb2 Web／租客 widget／售前 widget） | **不存在**。`routers/chat.py` 已刪 |
+| `POST /api/v1/message` | **不存在**。`routers/chat.py` 已刪 |
 | `POST /api/v1/chat/stream` | **不存在** |
-| `routers/agent_entry.py`（新線的 REST 轉接層） | **檔案在、未掛任何路由**——它需要的端點本體、請求模型、SSE 送出器隨 `chat.py` 一併刪除，尚未重建 |
+| `routers/agent_entry.py` | ⛔ **它從來不是門面**——是遷移橋（見上）。唯一還有價值的是 `_agent_sse` 的事件序（`start`／`intent`／`: keepalive`／`answer_chunk`／`metadata`／`done`），**全 repo 唯一的 SSE 契約實作** |
 
-⚠️ **後果**：用 HTTP 講話的呼叫端（jgb2 Web）目前沒有路。這是**缺口**，不是殘骸——
-`docs/jgb2-chat-integration.md` 檔頭已自記此事，spec R3.6／R9.3 仍要求 REST 面。
+⚠️ **這是門面的缺口，不是核心的缺口**：核心完好，缺的是一個 HTTP 面。
+spec R3.6／R9.3 仍要求它。
+
+### ⚠️ 一處反向耦合（已知債）
+
+`runtime.py` 有 `from services.agent.mcp_facade import current_stage`——**核心 import 了門面**。
+只讀一個 stage 環境值，但方向是錯的。⛔ 不在本檔處置，記下避免下一輪走查誤判。
 
 ### 1a. 誰到得了（三道閘的交集）
 
@@ -76,8 +116,9 @@ MCP client（持有效 API key 的上游／內部呼叫者）
 
 ### 1b. 一回合的形狀
 
-三個**程式段**永遠先於模型（機器值不進模型）：確認按鈕 → 清單點選 → 照片終止路徑。
-之後才是模型迴圈（工具呼叫 → Verifier → 四道出口閘 → 收尾）。
+**六條程式終止路徑**永遠先於模型（機器值不進模型，順序即契約）：文件回合禁寫 → 文件不可讀
+→ 照片失敗/逾時/低信心 → 確認按鈕 → 清單點選 → 同題重問重播。之後才是模型迴圈
+（工具呼叫 → Verifier 九步 → 四道出口閘 → 收尾）。🔴 前一版寫「三個程式段」是照抄舊圖，`turn_segments.py` 的 docstring 自己寫的是**六條**。
 **完整流程（每一個分岔與終止點）見 `AGENTIC_MCP_ARCHITECTURE.md` §2b。**
 
 ---

@@ -45,8 +45,10 @@ AIChatbot/
 │   │   ├── system_health.py            # 系統健康檢查
 │   │   └── error_middleware.py         # 錯誤處理中介
 │   │   （⚠️ 2026-09-11 舊鏈退役：`chat.py`／`chat_shared.py`／`platform_sop.py`／
-│   │    `intents.py`／`suggested_intents.py`／`agent_entry.py` 等 31 個舊 REST
-│   │    對話鏈模組已刪或未掛載，見 `.claude/DECISIONS.md` DSP-046）
+│   │    `intents.py`／`suggested_intents.py` 等 31 個舊 REST 對話鏈模組已刪，
+│   │    見 `.claude/DECISIONS.md` DSP-046）
+│   │   （🔴 2026-09-12 更正：`agent_entry.py` **不屬於**上面那 31 個——它是
+│   │    **新架構為遷移寫的橋**（任務 2.2／R9），檔案仍在但上游已滅，見下方註）
 │   │
 │   ├── services/                       # 業務邏輯層
 │   │   ├── form_contract.py            # 表單契約（結構化 schema，取代舊 form_manager）

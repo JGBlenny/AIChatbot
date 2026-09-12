@@ -240,7 +240,9 @@ curl -N -X POST {BASE}/v1/message -H 'Content-Type: application/json' -d '{
 
 🔴 **2026-09-12 對碼更正，三處**：
 
-1. **`routers/agent_entry.py` 檔案還在，但沒有 `APIRouter`、未掛任何路由、生產端零引用。**
+1. **`routers/agent_entry.py` 是遷移橋，⛔ 不是端點。** 它站在舊鏈 `chat.py` 的請求路徑上分流
+   （spec 任務 2.2／R9），**本來就沒有 `APIRouter`**；生產端零引用。⛔ **掛路由救不活**——
+   上游的 `VendorChatRequest`／`VendorChatResponse`／`sse_event`／`metered` 全隨 `chat.py` 刪除。
    `_agent_sse` 逐字實作了 start／intent／keepalive／answer_chunk／metadata／done 的序列，
    但**線上沒有 SSE**——唯一活的入口 `/mcp` 回單一 JSON。
 2. **「`answer_chunk` 逐字送出」不成立**：`_agent_sse` 是**一次送整段** `result.answer`，

@@ -6,19 +6,45 @@
 
 ## 0. 一句話
 
-呼叫端的一句話進 `/mcp` 的 `agent.turn`（**呼叫端＝任何持有效 API key 的上游／內部系統**；🔴 2026-09-12 更正：前一版寫「LINE 業務（房東管家）」——那是 **demo 期的場景**，程式對呼叫端不設限、查無任何 LINE 相依），Runtime 先用**程式**處理三種機器值（清單點選、確認按鈕、過期），其餘交模型在封閉工具清單裡查 JGB 替身資料；要寫入一律先出確認卡、按了才兌現；答案在 `grounding_observe` 模式的 Verifier 下**只有引用類只記不擋**，極性類與機敏類照擋（W6-b3，2026-09-09 落地）。
+🔴 **2026-09-12 方向更正（前一版的框架是反的）**：前一版由外往內寫「LINE 業務的一句話
+進 `/mcp`」，於是讀者（含我）把 `/mcp` 當成脊椎、把 Runtime 當成它裡面的東西。
+**核心是 `AgentRuntime`，`/mcp` 只是接在它外面的門面之一。**
+
+⛔ **外部串接（jgb2 Web、LINE OA demo、回測工具…）不屬於本系統**，⛔ 不進架構敘述。
+
+**核心**：`AgentRuntime` 收到一句話與一份會話狀態，先用**程式**處理機器值終止路徑
+（確認按鈕、清單點選、照片／文件），其餘交模型在封閉工具清單裡查資料；要寫入一律先出
+確認卡、按了才兌現；答案過 `OutputVerifier` 再過四道出口閘。它的建構依賴是
+`provider`／`registry`／`verifier`／`assembler`／`budget`／`candidate_selector`／`db_pool`
+——**⛔ 沒有任何協定或門面**。
+
+**門面**（非測試的 `run_turn` 呼叫端就是完整清單）：`mcp_facade._agent_turn`（✅ 唯一掛著）、
+`tools/agent_eval.py`（回測）、`shadow.py`（影子）。
+⚠️ `routers/agent_entry.py` **不在這張清單上**——它是**遷移橋**（任務 2.2／R9）：站在舊鏈 `chat.py` 的請求路徑上分流，⛔ 不是門面也不是端點；上游五樣相依全隨 `chat.py` 刪除，⛔ 掛路由救不活。
+`run_turn` 的簽名在 `mcp_facade` 裡被註解為「**REST／影子／回測共用的介面**」。
+
+⚠️ **本系統只有 MCP server，沒有對外的 MCP client**：`mcp.client`／`ClientSession` 全 repo
+只在兩支整合測試出現；`runtime.py` ⛔ 不 import `mcp`，模型呼叫工具走 `registry.call`，
+**in-process**。
 
 ## 1. 元件與責任
 
 ```mermaid
 flowchart LR
-  LB["呼叫端<br/>(持 API key 的上游/內部系統)"] -- "POST /rag-api/mcp\nX-API-Key / X-JGB-Identity" --> NG[nginx auth_request]
-  NG --> F[mcp_facade\n/mcp 門面]
+  subgraph FACES["門面（可插拔，⛔ 核心不依賴它們）"]
+    F["mcp_facade /mcp\n✅ 唯一掛著"]
+    RE["agent_entry 遷移橋\n⛔ 上游已滅"]
+    EV["agent_eval 回測"]
+    SH["shadow 影子"]
+  end
+  F --> RT
+  RE -.-> RT
+  EV -.-> RT
+  SH -.-> RT
   F --> ST[NamespacedStateStore\nform_sessions.collected_data]
   F --> IM[image_fetch\n抓檔/縮圖]
   IM --> VS[ImageRecognitionService\nOpenAI vision]
-  F --> RT[AgentRuntime.run_turn]
-  RT --> SEL[select 段]
+  RT["**AgentRuntime.run_turn**\n（核心）"] --> SEL[select 段]
   RT --> CF[confirm 段]
   RT --> LLM[OpenAI chat\ngpt-5-mini]
   RT --> REG[ToolRegistry\n可見性/速率/schema]
@@ -36,7 +62,8 @@ flowchart LR
 
 | 元件 | 檔案（符號） | 責任 | ⛔ 不做 |
 |---|---|---|---|
-| 門面 | `services/agent/mcp_facade.py`（`build_asgi_app`、`AGENT_TURN_SPEC`、`_agent_turn`、`AgentTurnOutput`、`check_and_record_agent_turn`） | 驗 key／Origin／身分 header、命名空間 `mcp:{api_key_id}:{vendor_id}:{session_id}`、每呼叫一列 `usage_events`、每小時上限、照片前處理、會話過期、呼叫 Runtime | 不判授權（DSP-011：授權由 JGB API 依 role 收口） |
+| **核心 Runtime** | `services/agent/runtime.py`（`AgentRuntime.run_turn`、`_run_turn_body` 四段接線） | **整個對話架構**：程式段、模型迴圈、Verifier、出口閘 | ⛔ 不知道任何協定或門面 |
+| 門面（其一） | `services/agent/mcp_facade.py`（`build_asgi_app`、`AGENT_TURN_SPEC`、`_agent_turn`、`AgentTurnOutput`、`check_and_record_agent_turn`） | 驗 key／Origin／身分 header、命名空間 `mcp:{api_key_id}:{vendor_id}:{session_id}`、每呼叫一列 `usage_events`、每小時上限、照片前處理、會話過期、呼叫 Runtime | 不判授權（DSP-011：授權由 JGB API 依 role 收口） |
 | 狀態 | `services/agent/state_store.py`（`NamespacedStateStore`、`stamp_last_turn`、`is_expired`、`SESSION_IDLE_TTL_S`） | 對話歷史、槽位、待確認表、過期戳，落 `form_sessions.collected_data` | 不存 token、不存照片 |
 | Runtime | `services/agent/runtime.py`（`AgentRuntime.run_turn`、`_run_confirm_segment`、`_run_select_segment`、`_enforce_tool_scope`、`_apply_scope_exit`、`_scope_gate_confirm_request`、`_begin_pending_confirm`、`_finalize`） | 機器值程式段、模型迴圈、工具結果包裝、範圍守門、固定句、trace | 不讓模型判「同一戶」「同意詞」 |
 | 工具註冊 | `services/agent/tools/registry.py`（`ToolRegistry.call`、`register`、`_validate_value`、`ToolError`） | 四步：可見性（stage×旗標）、速率、schema、執行；寫入工具強制 `mcp_only`＋已兌現 | schema 只有 `maxLength/enum/required/additionalProperties`，⛔ 無 `maxItems/pattern` |

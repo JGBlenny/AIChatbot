@@ -26,7 +26,7 @@
 > **後果**：若 jgb2 Web（b2b `useChat.ts`／b2c widget／售前 widget）目前仍照本文件
 > 打 `/rag-api/v1/message`，該串接在這個 commit 之後會**全面失敗**（HTTP 404 或
 > 反向代理層錯誤，視 nginx 設定而定，本輪未實測反代行為）。是否要（a）讓 jgb2 Web
-> 改走 `/mcp`、（b）在 `routers/agent_entry.py` 基礎上新開一個 REST 相容端點、或
+> 改走 `/mcp`、（b）新開一個 REST 相容端點——🔴 **2026-09-12 更正：⛔ 不是「在 `routers/agent_entry.py` 基礎上」**，那支是遷移橋不是端點，它上游的 `VendorChatRequest`／`VendorChatResponse`／`sse_event`／`metered` 五樣全滅；能重用的只有 `_agent_sse` 的事件序、或
 > （c）本次砍除本就包含「jgb2 Web 整合另案處理、目前先斷線」的既定安排——這是
 > **產品／部署時序決策**，不屬本輪文件整理範圍，本文件只據實記錄現況、不代為選邊。
 >

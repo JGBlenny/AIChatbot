@@ -813,7 +813,7 @@ docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c \
 | env | 預設 | 作用 | 何時才開 | 查證 |
 |---|---|---|---|---|
 | `AGENT_STAGE` | `M0`（非法值／未設回退 `M0`） | 部署里程碑；工具 `stage[audience] <= AGENT_STAGE` 才可見 | 隨 M0→M1→…推進逐步調高，⛔ 不超前實際完成的里程碑 | `services/agent/mcp_facade.py:current_stage` |
-| `AGENT_AUDIENCES` | 空 | ⚠️ **目前沒有掛載的 REST 入口可供它開關**：`routers/agent_entry.py` 仍在（實作 R9.3 的對外契約），但它需要的端點／請求模型／SSE 送出器隨 `routers/chat.py` 一併刪除，尚未重建 | ⛔ M3 切換演練前先重建入口 | `routers/agent_entry.py:agent_audiences` |
+| `AGENT_AUDIENCES` | 空 | ⚠️ **目前沒有生效對象**：`routers/agent_entry.py` 仍在，但它是**遷移橋不是端點**（⛔ 本來就沒有 `APIRouter`），它需要的端點／請求模型／SSE 送出器隨 `routers/chat.py` 一併刪除，尚未重建 | ⛔ M3 切換演練前先重建入口 | `routers/agent_entry.py:agent_audiences` |
 | `AGENT_TURN_ENABLED` | `false` | `agent.turn` MCP 工具是否註冊；關閉時 `tools/list` 看不到它 | 只在需要 MCP client 對話（Claude Code／jgb2 後端經 `/mcp` 跑整回合）時開。⚠️ 2026-09-12 起它也是 `agent_configured()` 的**唯一**判準 | `services/agent/mcp_facade.py:_AGENT_TURN_ENABLED_ENV` |
 | `AGENT_TURN_TIMEOUT_S` | `30.0` 秒 | `agent.turn` 單次呼叫逾時（刻意大於 `Budget.deadline_s`=20） | 隨 `AGENT_TURN_ENABLED` 一併評估，預設值通常免調 | `services/agent/mcp_facade.py:agent_turn_timeout_s` |
 | `AGENT_SHADOW_AUDIENCES` | 空 | ⚠️ `services/agent/shadow.py` 仍在（實作 R8），但影子的定義是「同時跑舊鏈與 agent 並比對」，舊鏈已刪 ⇒ **沒有比對對象**。R8 是否撤案待裁 | ⛔ 不要開 | `services/agent/shadow.py:_shadow_audiences` |
@@ -884,7 +884,7 @@ docker compose -f docker-compose.prod.yml up -d   # ⛔ 不加 --build，回切�
 > 原文寫「預期：≤5 分鐘內完成，**走舊鏈**」。**舊鏈已於 2026-09-11 整條刪除**
 > （31 個產品模組，commit `7c905408`）——關掉 `AGENT_TURN_ENABLED` 之後
 > **不會退回任何東西，而是完全沒有對話服務**。
-> `AGENT_AUDIENCES` 的唯一讀點 `routers/agent_entry.py` 仍在，但**未掛任何路由**——
+> `AGENT_AUDIENCES` 的唯一讀點 `routers/agent_entry.py` 仍在，但它是**遷移橋**、⛔ 從來不是路由——
 > 它需要的端點本體隨 `routers/chat.py` 一併刪除，⛔ 設這個鍵不會讓它活過來。
 >
 > ⛔ **不要把這段當退路。** 現在唯一的回退手段是**回滾版本**：

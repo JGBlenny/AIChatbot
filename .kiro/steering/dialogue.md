@@ -123,10 +123,13 @@ PAUSED → COLLECTING / CANCELLED（超時 30 分鐘）
 ⛔ **實際上沒有分流、沒有回退、沒有影子在運作**——但原因不是程式被刪：
 `routers/agent_entry.py`（REST 分流，實作 R9.3 對外契約）與 `services/agent/shadow.py`
 （影子，實作 R8）**都還在**，它們失去的是另一端——舊 REST 鏈。
-`agent_entry` 需要的端點／請求模型／SSE 送出器隨 `routers/chat.py` 一併刪除、尚未重建；
+`routers/agent_entry.py` 是**新架構為 strangler 遷移寫的橋**（spec 任務 2.2／R9）：站在舊鏈 `chat.py` 的請求路徑上分流，**⛔ 它不是端點、本來就沒有 `APIRouter`**。⛔ **掛路由救不活它**——上游需要的 `VendorChatRequest`／`VendorChatResponse`／`_conversational_to_response`／`sse_event`／`metered` **五樣全隨 `chat.py` 刪除**，回退目標（舊鏈）也不在。
 影子沒有第二條線可以比對。⚠️ R8／R9 仍在 spec 內未撤案。
 
-⚠️ `AGENT_AUDIENCES` 曾是分流開關，2026-09-12 連同它管的入口一併移除；
-現在 `agent_configured()` 的唯一判準是 `AGENT_TURN_ENABLED`
+🔴 **2026-09-12 更正**：前一版寫「`AGENT_AUDIENCES` 已連同它管的入口一併移除」——**那是錯的**
+（我先刪後還原，忘了把這句改回來）。實況：`agent_entry.py::agent_audiences()` 仍讀它、
+`mcp_facade._AGENT_CONFIGURED_ENV_KEYS` 仍含它、**兩份 compose 都仍宣告**。
+它只是**沒有生效對象**（要它分流的入口不存在），⛔ 不是被移除。
+`agent_configured()` 的判準是三把鍵任一有值：`AGENT_AUDIENCES`／`AGENT_SHADOW_AUDIENCES`／`AGENT_TURN_ENABLED`
 （查證：`services/agent/mcp_facade.py:_AGENT_CONFIGURED_ENV_KEYS`）。
 ⛔ 不要以「清空某個旗標就能回切」做決策——沒有可回切的對象，只能回滾版本。
