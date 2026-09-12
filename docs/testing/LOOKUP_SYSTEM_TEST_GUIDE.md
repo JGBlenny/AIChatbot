@@ -1,5 +1,14 @@
 # Lookup Table 系統測試指南
 
+🔴 **2026-09-12 逐支實測後更正（三類錯）**：
+
+1. **前綴錯**：本檔原寫 `/api/lookup/...`，實際掛在 `/api/v1`
+   （`routers/lookup.py` 的 `APIRouter(prefix="/api/v1")`）——原指令一律 404。
+   已全檔更正（8 處），複驗 `/api/v1/lookup/categories?vendor_id=1` → **200**。
+2. **死端點**：`POST /api/v1/message` 與 `GET /api/v1/knowledge/{id}` **實測 404**
+   （隨舊 REST 對話鏈於 2026-09-11 刪除）。相關步驟已移除。
+3. **腳本**：文末的 `test_lookup_system.py` repo 內沒有這個檔——原始碼就在本檔裡，要用自行存到 `/tmp` 執行（⛔ 一次性腳本不進版控）。
+
 **更新日期**: 2026-02-04
 **測試業者**: Vendor 1
 **數據量**: 220 筆電錶記錄
@@ -21,7 +30,7 @@
 
 ```bash
 # 使用 curl 測試
-curl "http://localhost:8100/api/lookup?category=billing_interval&key=台北市士林區中山北路六段768號二樓&vendor_id=1"
+curl "http://localhost:8100/api/v1/lookup?category=billing_interval&key=台北市士林區中山北路六段768號二樓&vendor_id=1"
 ```
 
 ### Python 測試腳本
@@ -30,7 +39,7 @@ curl "http://localhost:8100/api/lookup?category=billing_interval&key=台北市�
 import requests
 
 response = requests.get(
-    "http://localhost:8100/api/lookup",
+    "http://localhost:8100/api/v1/lookup",
     params={
         "category": "billing_interval",
         "key": "台北市士林區中山北路六段768號二樓",
@@ -82,13 +91,13 @@ print(f"相似度: {result.get('match_score', 1.0)}")
 
 ```bash
 # 測試 1: 部分地址
-curl "http://localhost:8100/api/lookup?category=billing_interval&key=台北市士林區&vendor_id=1"
+curl "http://localhost:8100/api/v1/lookup?category=billing_interval&key=台北市士林區&vendor_id=1"
 
 # 測試 2: 錯別字
-curl "http://localhost:8100/api/lookup?category=billing_interval&key=台北市大安區泰順街54巷25號&vendor_id=1"
+curl "http://localhost:8100/api/v1/lookup?category=billing_interval&key=台北市大安區泰順街54巷25號&vendor_id=1"
 
 # 測試 3: 樓層不同
-curl "http://localhost:8100/api/lookup?category=billing_interval&key=新北市板橋區忠孝路48巷4弄8號二樓&vendor_id=1"
+curl "http://localhost:8100/api/v1/lookup?category=billing_interval&key=新北市板橋區忠孝路48巷4弄8號二樓&vendor_id=1"
 # 應匹配: 新北市板橋區忠孝路48巷4弄8號一樓 (相似度 0.94)
 ```
 
@@ -104,8 +113,7 @@ curl "http://localhost:8100/api/lookup?category=billing_interval&key=新北市�
 1. **直接測試知識 ID 1296**
    ```bash
    # 查詢知識詳情
-   curl "http://localhost:8100/api/v1/knowledge/1296"
-   ```
+      ```
 
 2. **手動調整優先級**（如需要）
    ```sql
@@ -115,48 +123,12 @@ curl "http://localhost:8100/api/lookup?category=billing_interval&key=新北市�
    WHERE id = 1296;
    ```
 
-3. **測試對話流程**
-   > ⚠️ **2026-09-11 舊鏈退役**：下面這支 `curl` 打的 `/api/v1/message` 已刪除
-   > （2026-09-11 砍除舊 REST 對話鏈）。對話能力現在只經 `/mcp` 的 `agent.turn`
-   > 工具（server-to-server，見 `docs/api/mcp-facade.md` §7.1），不再是這種
-   > 裸 JSON POST 的形狀。
-   ```bash
-   # （已失效範例，僅供理解原始測試意圖）
-   curl -X POST "http://localhost:8100/api/v1/message" \
-     -H "Content-Type: application/json" \
-     -d '{
-       "message": "查詢電費寄送區間",
-       "vendor_id": 1,
-       "user_role": "customer",
-       "user_id": "test_user",
-       "session_id": "test_001"
-     }'
-   ```
-
-### 預期對話流程
-
-```
-用戶: 查詢電費寄送區間
-系統: [觸發表單 billing_address_form]
-      好的！我來協助您查詢電費寄送區間。請提供以下資訊：
-      請提供完整的物件地址（例如：新北市板橋區忠孝路48巷4弄8號二樓）
-
-用戶: 台北市士林區中山北路六段768號二樓
-系統: [調用 Lookup API 並格式化結果]
-      ✅ 查詢成功
-
-      📬 **寄送區間**: 雙月
-      💡 您的電費帳單將於每【雙月】寄送。
-```
-
----
-
 ## 📊 測試方式 3: API 端點測試
 
 ### 1. 查詢類別列表
 
 ```bash
-curl "http://localhost:8100/api/lookup/categories?vendor_id=1"
+curl "http://localhost:8100/api/v1/lookup/categories?vendor_id=1"
 ```
 
 **預期結果**:
@@ -178,7 +150,7 @@ curl "http://localhost:8100/api/lookup/categories?vendor_id=1"
 ### 2. 查詢統計資料
 
 ```bash
-curl "http://localhost:8100/api/lookup/stats?vendor_id=1&category=billing_interval"
+curl "http://localhost:8100/api/v1/lookup/stats?vendor_id=1&category=billing_interval"
 ```
 
 **預期結果**:
@@ -367,10 +339,11 @@ if __name__ == "__main__":
     print("=" * 60)
 ```
 
-保存為 `scripts/test_lookup_system.py` 並執行：
+上面這段是**完整原始碼**（repo 內沒有這個檔，要用請自行存檔）：
 
 ```bash
-python3 scripts/test_lookup_system.py
+# 存成一次性腳本後執行；⛔ 不要 commit 進 repo（一次性腳本不進產品程式碼）
+python3 /tmp/test_lookup_system.py
 ```
 
 ---
@@ -423,7 +396,7 @@ docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin \
 **調整相似度閾值**:
 ```bash
 # 降低閾值至 0.4
-curl "http://localhost:8100/api/lookup?category=billing_interval&key=地址&vendor_id=1&threshold=0.4"
+curl "http://localhost:8100/api/v1/lookup?category=billing_interval&key=地址&vendor_id=1&threshold=0.4"
 ```
 
 ---

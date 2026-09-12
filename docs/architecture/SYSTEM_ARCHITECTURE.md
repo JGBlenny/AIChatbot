@@ -262,6 +262,26 @@ kb.get    → build_visibility_predicate ＋ canon.review_state.content_reviewed
 | estates | 物件現況診斷 |
 | repairs | 修繕分類、修繕進度 |
 
+#### ⚠️ DB 的「對話規則」列與程式端 face **對不起來**（2026-09-12 實查，待裁決）
+
+`knowledge_base` 有 23 列 `category='對話規則'`（全 `is_active`）＋27 列 `系統脈絡`，
+但兩邊的面向名有雙向差集：
+
+| 方向 | 數量 | 名單 |
+|---|---|---|
+| **DB 有、程式沒有** | 11 | 售前顧問、合約診斷、註冊驗證排障、帳號綁定異動、IoT設定引導、物件操作引導、帳單設定引導、建約引導、帳單診斷、修繕報修、訂閱診斷 |
+| **程式有、DB 沒有** | 3 | 修繕分類、修繕進度、條件診斷：帳單 |
+
+**這 50 列目前沒有任何消費者**：讀 `系統脈絡` 的 `system_context.py` 已刪、
+`outline.build_toc` 真實呼叫 0 處（AST 驗，⛔ grep 命中會把 docstring 算進去）；
+讀 `對話規則` 的 `conversational_rules.load_rules` 已刪，
+`prompt_assembler` 的 DB 路徑未接線（任務 2.1）。
+兩個分類也都被 `build_visibility_predicate` 的 `IS DISTINCT FROM` 排除在檢索外。
+
+⛔ **本輪不動 DB**（業主「資料先不碰」）。要處置得先裁：這 11 列是**未來要接回的
+受眾／面向規劃**，還是**舊鏈殘留**？前者要留並補程式，後者該停用。
+查證：`SELECT question_summary FROM knowledge_base WHERE is_active AND category='對話規則' ORDER BY id;`
+
 **已經沒有的**（全部零消費者）：
 
 - 分類進場路由（`categories` → `config_for_category` → Face）

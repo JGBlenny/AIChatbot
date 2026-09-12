@@ -1,5 +1,11 @@
 # BacktestView.vue 現有頁面盤查與分析報告
 
+🔴 **2026-09-12：本檔是 2026-03-27 的需求快照，⛔ 不是現況。**
+它描述的迴圈操作按鈕（啟動新迴圈／執行迭代／驗證／暫停／取消）對應的後端端點
+**已於 2026-09 移除**——實測 `POST /api/v1/loops/start` → **405**、
+`/{id}/execute-iteration` → **404**（`grep -c "@router.post" rag-orchestrator/routers/loops.py` ＝ 0）。
+查詢與審核端點仍在，清單見 `docs/api/loops_api.md`。
+
 > **任務 11.1**：完整盤查現有 BacktestView.vue 的功能、程式碼結構與不足之處
 >
 > **文件建立時間**：2026-03-27
