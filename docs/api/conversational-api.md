@@ -52,8 +52,8 @@
 ## Response A — 非串流（`stream:false`）
 
 🔴 **2026-09-12 對碼：`class VendorChatResponse` 在 repo 程式碼 0 筆定義**
-（只剩 `docs/archive/**`、`.kiro/specs/**` 的文字，與 `routers/agent_entry.py` docstring
-裡的一句提及）。⇒ **本節是這份契約唯一的存世記錄，⛔ 不得刪**，但它也**不能直接當
+（只剩文件與 docstring 的文字提及：`docs/archive/**`、`.kiro/specs/**`、`CHANGELOG.md`、
+`routers/agent_entry.py` 與 `services/usage_metering.py` 的 docstring 等，⛔ 無任何 `class` 定義）。⇒ **本節是這份契約唯一的存世記錄，⛔ 不得刪**，但它也**不能直接當
 重建規格**——下表十欄，新線只對得上三欄：
 
 | 本契約欄位 | 新線 `mcp_facade.py::AgentTurnOutput` |
@@ -67,7 +67,9 @@
 
 ⚠️ **`quick_replies` 的 value 形狀已改**：本契約寫裸機器值 `confirm_submit`；
 新線是 `confirm_submit:<pending_id>`（`services/agent/tools/confirm.py::CONFIRM_VALUE_SEP`），
-且 Runtime 以**等值 `fullmatch`** 比對。前端若照本契約做等值比對 `confirm_submit` 會全部失效。
+且 Runtime 以 `^…$` 錨定比對（`runtime.py::_parse_confirm_value` 用 `re.match`，
+⚠️ **不是 `fullmatch`**，結尾換行會通過——見 `AGENTIC_MCP_ARCHITECTURE.md` §8）。
+前端若照本契約做等值比對 `confirm_submit` 會全部失效。
 
 ⚠️ **`trigger_facet_key` 請求參數在新線會被硬拒**：`AGENT_TURN_SPEC.input_schema`
 只收 `message`／`image_urls`／`context`／`attachment_purpose`／`file_urls`，

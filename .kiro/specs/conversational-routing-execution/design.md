@@ -15,10 +15,10 @@
 |---|---|---|
 | **元件 1** TestRunner 供裝 | ✅ **全落地且在用** | `rag-orchestrator/tests/conftest.py`：`ALLOWED_TEST_DATABASES={aichatbot_test, aichatbot_ci}`、`EXIT_STRUCTURAL_FAILURE=10`、`GATE_SKIP_PREFIX='[gate]'`、`ENV_SKIP_PREFIX='[env]'`、`assert_non_production_db`、`ProductionDatabaseRefused`；旗標注入在 `scripts/run-tests.sh` |
 | **元件 3** JGBMockTransport | ✅ **全落地，且已成為新線的承重牆** | `rag-orchestrator/services/jgb/transport.py`。端點從當初的 2 個長到 **15 個**（`MIGRATED_ENDPOINTS`）。`services/jgb_system_api.py` import 它，而 `services/agent/tools/jgb2.py` import `JGBSystemAPI` ⇒ **它是 agentic-MCP 線 `jgb2.query.*`／`jgb2.action.*` 唯一的替身層**（見 `docs/architecture/AGENTIC_MCP_ARCHITECTURE.md` §5「替身寫入：行程記憶體」） |
-| **元件 4** FaceClosureSuite | ✅ 落地 | `tests/support/chain_closure.py`、`tests/support/brain_grounding.py`；消費者 3 支測試，含 `v6_regression_ruler.py` |
+| **元件 4** FaceClosureSuite | ✅ 落地 | `tests/support/chain_closure.py`、`tests/support/brain_grounding.py`；消費者 3 支測試（`test_chain_closure_assertion_req.py`／`test_brain_grounding_assertion_req.py`／`test_v6_regression_ruler_req.py`） |
 | **元件 5** ContractSmoke | ✅ 落地（符號名與設計稿不同） | `tests/e2e/api/test_real_api_contract_smoke_req.py`（含假綠防護 `_MOCK_ON`） |
 | 元件 2 EntryRoutingHarness | ⛔ **零落地** | `route_via_production`／`RouteOutcome` 從未存在；`_diagnosis_config_for_knowledge` 隨 `routers/chat.py` 刪除 |
-| 元件 6 `scope` 救援 | ⛔ **零落地** | `StepResult`／`_parse_conversational_step`／`conversational_step_result`／`FACET_SCOPE_SALVAGE` 皆 0 命中；標的 `services/llm_answer_optimizer.py` 已不存在 |
+| 元件 6 `scope` 救援 | ⛔ **零落地** | `StepResult`／`_parse_conversational_step`／`conversational_step_result` 皆 0 命中；標的 `services/llm_answer_optimizer.py` 已不存在。⚠️ `FACET_SCOPE_SALVAGE` **不是 0**——`tests/unit/_meta/test_env_parity_req.py::ROUTING_PARAMS` 列名，且**兩份 compose 都仍宣告** `${FACET_SCOPE_SALVAGE:-false}`（同 `PREENTRY_ROUTABILITY_GATE` 的形狀：組態在、程式無讀者） |
 | 元件 7 `skip_refine` 語義定案 | ⚠️ **語義換了載體** | 鍵名還在，但改成 agent 工具的回傳鍵：`services/agent/tools/jgb2.py`（`skip_refine = status == "candidates_all"`）、`services/agent/runtime.py`。⛔ 不再是 `result_mapping` 裡的配置 |
 | 元件 8 `repair_create` 進場點 | ⛔ **零落地**（能力換形態） | `EntryPointChange` 0 命中。修繕改走硬編工具鏈：`services/agent/tools/action.py::REPAIR_CREATE_ACTION`＋`tools/confirm.py`＋`confirm_card.py` |
 | 元件 9 三層文件化 | ⚠️ 部分 | 對象文件仍在（母圖／`facet-architecture.md`／本 spec），皆已於 2026-09-12 逐條對碼更正 |

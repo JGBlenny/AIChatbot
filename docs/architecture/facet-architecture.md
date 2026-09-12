@@ -9,7 +9,7 @@
 > | 鍵 | `services/agent/` 內 | 實際讀者 |
 > |---|---|---|
 > | `grounding_scope` | ⛔ **0** | `services/instance_applicability.py`（不變量 10）、`tools/audit_config.py`（稽核） |
-> | `persona_role` | ⛔ **0** | 僅 `conversational_config._config_from_row` 解析後無下游 |
+> | `persona_role` | ⛔ **0** | `conversational_config._config_from_row` 解析後無下游；另 `tools/audit_config.py`（稽核） |
 > | `topic_scope` | ⛔ **0** | 同上 |
 > | `answer_rules`／`cta_rules` | ⛔ **0** | 同上 |
 > | `required_slots` | ⛔ **0** | **全 repo 非測試程式 0 支** |
@@ -240,11 +240,12 @@ psql "$DATABASE_URL" -f rag-orchestrator/database/migrations/backfill_contract_k
 
 ### 7.8 配置鍵全表（`grounding_scope` 內，全配置驅動）
 
-🔴 **2026-09-12 對碼：下表 14 鍵在 `rag-orchestrator/**/*.py` 全數 0 命中。**
+🔴 **2026-09-12 對碼（數字經獨立驗證後修正）：下表 14 鍵有 12 個 0 命中。**
+兩個例外：`required_slots` 只剩測試引用（非測試 0 支）；`facet_key` 非測試 3 支，但 `set_facet` **零生產呼叫端** ⇒ 函式與欄位在、埋點無人呼叫。
 前一版標題寫「全配置驅動」——那是舊鏈 `conversational_engine` 的事實，該引擎已刪。
 現行修繕改走**硬編工具鏈**：`services/agent/tools/action.py::REPAIR_CREATE_ACTION`
 ＋`services/agent/tools/confirm.py`＋`services/agent/confirm_card.py::render`。
-唯一還活著的是 `facet_key` 埋點（`services/usage_metering.py::set_facet`）。
+⚠️ `facet_key` 埋點（`services/usage_metering.py::set_facet`）**函式在但無人呼叫**，⛔ 不能算「還活著」。
 ⛔ 不得照本表寫面向配置：寫出來沒有任何程式會讀。以下為**歷史記錄**。
 
 | 鍵 | 用途 |

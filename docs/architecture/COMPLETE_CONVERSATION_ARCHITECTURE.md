@@ -1069,8 +1069,10 @@ flowchart LR
 
 ⚠️ **本表的退役標記已於 2026-09-12 補齊**：在此之前只標了 5 支，`Intent Classifier` 與
 `Confidence Evaluator` 漏標，讀者會合理推論「未標＝還在」，進而把 §2（意圖識別）與
-§4（信心度評估）整兩節當現況引用。**未標退役的三支（Knowledge Retriever／Cache Service／
-Base Retriever）是真的還在**，且新線仍在用。
+§4（信心度評估）整兩節當現況引用。**未標退役的三支（Knowledge Retriever／Cache Service／Base Retriever）是真的還在**。
+⚠️ 但「還在」≠「在新線的回合路徑上」：`vendor_knowledge_retriever_v2` 與 `base_retriever`
+確實被 `services/agent/**` 用到（`kb.search`）；`cache_service` 的消費者只有 `app.py`／
+`routers/vendors.py`／`routers/cache.py`，**不在對話回合路徑上**。
 
 ---
 
@@ -1098,10 +1100,12 @@ CONFIDENCE_HIGH_THRESHOLD: 0.85  # 高信心度
 CONFIDENCE_MEDIUM_THRESHOLD: 0.70 # 中信心度
 
 # LLM 模型配置（環境變數）
-# 🔴 2026-09-12 逐鍵對碼：以下標 ⛔ 者在 rag-orchestrator 的 .py 全數 0 命中
-OPENAI_MODEL: gpt-4o-mini              # ✅ 仍在（agent/runtime.py、llm_provider.py）
-KNOWLEDGE_GEN_MODEL: gpt-4o-mini       # ✅ 仍在（knowledge_generator.py 等 3 支）
-DOCUMENT_CONVERTER_MODEL: gpt-4o       # ✅ 仍在（fallback: KNOWLEDGE_GEN_MODEL）
+# 🔴 2026-09-12 逐鍵對碼（⚠️ 第一版只稽核了「鍵存不存在」、未驗值；值於同日獨立驗證後補正）
+OPENAI_MODEL: gpt-4o-mini              # ✅ 仍在（agent/runtime.py、query_rewriter.py）
+                                       #    ⛔ 不是 llm_provider.py——它只讀 EMBEDDING_MODEL
+KNOWLEDGE_GEN_MODEL: gpt-3.5-turbo     # ✅ 仍在。🔴 值更正：prod compose 預設是 gpt-3.5-turbo，
+                                       #    程式 fallback 是 gpt-4o（knowledge_import_service.py）——前稿寫 gpt-4o-mini 兩邊都不對
+DOCUMENT_CONVERTER_MODEL: gpt-4o-mini  # ✅ 仍在。🔴 值更正：prod compose 預設 gpt-4o-mini，前稿寫 gpt-4o
 QUERY_REWRITE_MODEL: gpt-4o-mini       # ✅ 仍在（query_rewriter.py）
 EMBEDDING_MODEL: text-embedding-3-small # ✅ 仍在（llm_provider.py）
 INTENT_CLASSIFIER_MODEL: ⛔ 不存在       # 意圖分類器已隨舊鏈刪除（services/intent_classifier.py 無檔）
@@ -1112,7 +1116,7 @@ RELEVANCE_GATE_MODEL: ⛔ 不存在          # 見下方「進場／閘門旗標
 # 🔴 2026-09-12 逐鍵對碼：答案優化與意圖分類的六顆溫度鍵全數 0 命中
 KNOWLEDGE_GEN_TEMPERATURE: 0.7         # ✅ 仍在（knowledge_generator.py）
 KNOWLEDGE_GEN_MAX_TOKENS: 800          # ✅ 仍在（knowledge_generator.py）
-QUERY_REWRITE_TEMPERATURE: 0.3         # ✅ 仍在（query_rewriter.py）
+QUERY_REWRITE_TEMPERATURE: 0           # ✅ 仍在。🔴 值更正：程式預設與 prod compose 皆為 0，前稿寫 0.3
 QUERY_REWRITE_MAX_TOKENS: 100          # ✅ 仍在（query_rewriter.py）
 LLM_ANSWER_TEMPERATURE: ⛔ 不存在        # 答案優化（llm_answer_optimizer.py）已隨舊鏈刪除
 LLM_ANSWER_MAX_TOKENS: ⛔ 不存在         # 同上
@@ -1161,8 +1165,12 @@ DIGRESSION_THRESHOLD: 0.7         # 離題判定閾值
 
 ### 交易面向配置鍵（`grounding_scope` 內，conversational-repair）
 
-🔴 **2026-09-12 對碼更正：下表 14 個鍵在 `rag-orchestrator/**/*.py` 全部 0 命中，
-一個都不存在。** 前一版寫「全配置驅動、引擎零硬編」——那是舊鏈 `conversational_engine`
+🔴 **2026-09-12 對碼更正（數字經獨立驗證後修正）：下表 14 個鍵有 12 個在
+`rag-orchestrator/**/*.py` 完全 0 命中。** 兩個例外：`required_slots` 只剩 3 支**測試**引用
+（非測試 0 支）；`facet_key` 非測試 3 支（`usage_metering.py`／`conversational_config.py`／
+`tools/audit_config.py`）——⚠️ **但 `set_facet` 零生產呼叫端**（正對照：同檔 `set_path`／
+`set_decision` 在 `services/agent/shadow.py`／`mcp_facade.py` 有生產呼叫）⇒ 正確說法是
+**函式與 DB 欄位仍在、埋點無人呼叫**。 前一版寫「全配置驅動、引擎零硬編」——那是舊鏈 `conversational_engine`
 時代的事實，該引擎已刪。**⛔ 不得照本表寫面向配置**：寫出來沒有任何程式會讀。
 
 現行等價能力改由**硬編的工具鏈**承擔，⛔ 不是配置鍵：
@@ -1173,7 +1181,7 @@ DIGRESSION_THRESHOLD: 0.7         # 離題判定閾值
 | `required_slots`／`confirm_template`／`confirm_qr_labels` | `services/agent/confirm_card.py::render`（程式決定性產卡文字） |
 | `execute_params`／`execute_result_path` | `services/agent/tools/action.py` 內的 payload 組裝與 `receipt` |
 | `enabled_gate`／`degraded_messages`／`contact_config_key` | 可見性改為 `AGENT_WRITE_TOOLS_ENABLED` AND `ToolSpec.stage`（DSP-038-1） |
-| `facet_key`（埋點） | ✅ **仍在**：`services/usage_metering.py::set_facet`、`_FACET_COLS=("facet_key","turn_number")` |
+| `facet_key`（埋點） | ⚠️ **函式與欄位在、無人呼叫**：`services/usage_metering.py::set_facet` 與 `_FACET_COLS=("facet_key","turn_number")` 都在，但 `set_facet` **零生產呼叫端** |
 | `prefill_api`／`candidate_max`／`inference_confidence` | 無對應；照片辨識分類改走 `runtime.IMAGE_SUGGESTION_KEY` 程式補值 |
 
 以下為**歷史記錄**（舊鏈 `grounding_scope` 內的鍵，⛔ 不是現況）：

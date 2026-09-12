@@ -15,7 +15,7 @@
 | 需求 | 狀態 | 依據 |
 |---|---|---|
 | **Req.1** 測試基礎設施 | ✅ **已修好，而且是現行程式的來歷正本** | `scripts/run-tests.sh` 有 `-e RUN_INTEGRATION=1`／`RUN_E2E=1`；`tests/conftest.py::_classify_skips`／`GATE_SKIP_PREFIX`／`assert_non_production_db`／`EXIT_STRUCTURAL_FAILURE=10` 全部落地，**程式註解直接回指本 spec 的任務編號** ⇒ ⛔ 刪掉本檔會讓那些註解變成孤兒 |
-| Req.2 面向進場回歸 | ⛔ **標的已滅** | `test_facet_*` 全樹 0 命中（正對照：`tests/integration/agent/` 仍有 28 檔） |
+| Req.2 面向進場回歸 | ⛔ **標的已滅** | `test_facet_*` 全樹 0 命中（正對照：`tests/integration/agent/` 仍有 **17** 檔，`tests/integration/` 全樹 28 檔——前稿把全樹數字寫成子目錄數字） |
 | Req.3 API-grounded 閉環 | ⚠️ **受測物換形態** | C4a／C4b 的斷言器仍在（`tests/support/chain_closure.py`／`brain_grounding.py`），但「面向」本身已不存在 |
 | **Req.4** Mock 保真度 | ✅ **已修好** | `jgb_system_api.py` 明載「任務 4.6：已移除 `if self.use_mock: return self._mock_get_bills(...)`」；替身下移至 `services/jgb/transport.py`，端點 2 → **15** |
 | **Req.4.4** Real API smoke | ✅ **已落地** | `tests/e2e/api/test_real_api_contract_smoke_req.py` |

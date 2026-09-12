@@ -19,7 +19,7 @@
 - 每個 scenario 的多輪對話共用同一個 `state` dict。
 - 身分改 `mode="b2b"`、`vendor_id=1`（售前池是 b2b 池，見
   `services/agent/outline.py:build_prospect_outline` 與
-  `routers/agent_entry.py` 的 `"b2b" if target_user == "prospect"`）。
+  `services/agent/identity.py:normalize_entry_mode`——prospect 一律 b2b）。
 - 無捏造（`no_fabrication`）的尺：`forbid_hit`。`verifier_rejects`／
   `rewrote_ok` 只是觀測值，不再判定這條硬線。
 - 固定句率的分母只算「非敏感、非邊界」子集，基準取自 manifest 的跨樣本基準。

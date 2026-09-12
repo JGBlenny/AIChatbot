@@ -45,7 +45,7 @@
 > | `vendor_id` | jgb2 不送 | **必填**。`_coerce_vendor_id` 取不到 ⇒ `McpRequestError(400, ERR_IDENTITY_NO_VENDOR)` |
 > | 不在 vendors 表 | — | `403 ERR_VENDOR_UNKNOWN` |
 > | 不在 API key 的 `vendor_ids` 範圍 | — | `403 ERR_VENDOR_OUT_OF_KEY_SCOPE` |
-> | 身分載體 | REST body 欄位 | `X-JGB-Identity` header（base64 JSON） |
+> | 身分載體 | REST body 欄位 | `X-JGB-Identity` header，**明文 JSON**（`parse_identity` 直接 `json.loads`，⛔ 無 base64——送 base64 會拿 `400 ERR_IDENTITY_MALFORMED`） |
 >
 > ⇒ **§8.1 的兩項「待補」（A `validate_vendor_id` 放寬、B `role_id`→`vendor_id` 反查）
 > 已失去意義**：新線不需要反查，它要求呼叫端直接給，並用 API key 的 `vendor_ids`
