@@ -287,7 +287,13 @@ while True:
       verdict.ok=True  ⇒ 組 TurnResult → finalize
 ```
 
-**Verifier 九步**（`OutputVerifier.verify`）：① fact_class／handoff 原因配對 → ① 敏感樣式表
+**Verifier：程式自述「七步」、本文列「九步」——⛔ 不是矛盾，是顆粒度不同。**
+`verifier.py` docstring 的七步是①敏感五類 ②白名單句型 ③覆蓋＋極性 ④來源可引用
+⑤導流白名單 ⑥禁詞（⑥′文件回合）⑦handoff 詞後置掃描；本文把第①步**拆成四個子步**
+（①／①敏感樣式表／①′／①-b，記號上也標了子步），③④在程式裡是同一支 `_ref_failures`。
+⚠️ 引用步數時**指明是哪一種顆粒度**，⛔ 不要只寫數字。
+
+逐步（本文顆粒度）：① fact_class／handoff 原因配對 → ① 敏感樣式表
 → ①′ `marker_in_answer` → ①-b `ask_target_invalid` → ② 逐筆 schema → ③④ `_ref_failures`
 → ⑤ `_verify_routes` → ⑥ `forbid`／⑥′ `docturn` → ⑦ `scan_handoff_mentions`。
 **擋或只記**由 `verdict_class()` × `_OBSERVED_CLASSES_BY_MODE` 查表決定，

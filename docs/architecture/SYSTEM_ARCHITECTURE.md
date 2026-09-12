@@ -53,7 +53,7 @@ AgentRuntime.__init__(provider, registry, verifier, assembler, budget,
 | `registry` | `ToolRegistry`，16 支工具，四步閘（見 §2） |
 | `assembler` | `PromptAssembler`（system 整回合只有一則） |
 | `candidate_selector(s)` | 大綱候選選取，K=5（見 §2 路 A） |
-| `verifier` | `OutputVerifier`，九步 |
+| `verifier` | `OutputVerifier`，程式自述**七步**（本文他處拆成九步列，⛔ 不是矛盾——見 `AGENTIC_MCP_ARCHITECTURE.md` §2b 段三） |
 | `budget` | 工具呼叫數／改寫數／deadline |
 
 ### 門面（接在核心外面，⛔ 核心不依賴它們）
@@ -177,7 +177,7 @@ jgb2 訂閱的 `estate_usage`（物件／合約數上限，由 jgb2 依 role 收
 
 **六條程式終止路徑**永遠先於模型（機器值不進模型，順序即契約）：文件回合禁寫 → 文件不可讀
 → 照片失敗/逾時/低信心 → 確認按鈕 → 清單點選 → 同題重問重播。之後才是模型迴圈
-（工具呼叫 → Verifier 九步 → 四道出口閘 → 收尾）。🔴 前一版寫「三個程式段」是照抄舊圖，`turn_segments.py` 的 docstring 自己寫的是**六條**。
+（工具呼叫 → Verifier **七步**（拆細可列九項）→ 四道出口閘 → 收尾）。🔴 前一版寫「三個程式段」是照抄舊圖，`turn_segments.py` 的 docstring 自己寫的是**六條**。
 **完整流程（每一個分岔與終止點）見 `AGENTIC_MCP_ARCHITECTURE.md` §2b。**
 
 ---
@@ -186,15 +186,148 @@ jgb2 訂閱的 `estate_usage`（物件／合約數上限，由 jgb2 依 role 收
 
 ### 路 A：每回合自動注入（主要供答來源，**不碰 `knowledge_base`**）
 
+🔴 **2026-09-12 補寫**：本節原本只有三行元件串接（`get_canon` → `visible_subset` →
+`select`），讀者問「大綱在哪、怎麼匹配、為什麼會匹配到」**一個都答不出來**——
+只好去讀程式。以下補到可以直接回答那三個問題。
+
+#### A-1 正本長什麼樣、在哪
+
+**在 git，⛔ 不在資料庫**：`rag-orchestrator/canon/`
+
+| 檔 | 大小 | 用途 |
+|---|---|---|
+| `prospect.md` ／ `prospect.json` | 43 KB ／ 82 KB | 售前受眾正本 |
+| `property_manager.md` ／ `.json` | 24 KB ／ 54 KB | 房東管家受眾正本 |
+
+**⚠️ 只有這兩份**——`tenant` 沒有正本，這就是 §1a「tenant 在新線不存在」的根。
+
+**一份正本的三層結構**（逐字取自 `canon/prospect.md`）：
+
 ```
-_build_turn_context → _select_outline
-  → canon_assembler.get_canon(audience)        ← git 正本 rag-orchestrator/canon/*.md + .json
-  → fine_index.FineIndex.visible_subset
-  → candidate_selector.CandidateSelector.select（K=5，餘弦）
-  → prompt_assembler.PromptAssembler（＋ agent_rules 政策文字）
+---                                    ← front matter
+audience: prospect
+version: 2026-09-07.6
+budget_tokens: 12000
+target_user: [prospect]
+business_types: [system_provider]
+---
+## A 產品基本盤 {#A}                    ← 粗目
+### 系統總覽與適不適合我 {#prospect/A/product-overview}   ← 細目（id 唯一）
+- phrasings:                           ← 講法：同一件事的各種真實問法
+  - {text: "合不合用",     source: "question_summary:3585", status: approved}
+  - {text: "適不適合我用", source: "question_summary:3585", status: approved}
+- sources: [kb:3585]                   ← 內容出處
+- reviewed: {by: owner, at: 2026-09-07}← 審核（⚠️ 沒有這行 ⇒ 整個細目永遠不可見）
+- instance_applicability: general
+金箍棒智慧物管能把物件、合約、收租對帳…   ← 內文（會被切成 content_units 逐句索引）
 ```
 
-**正本是 git 檔案，不是資料庫。** 啟動時由 `app._init_agent_runtime` → `outline.build_audience_outline` 載入。
+**「講法」⛔ 不是同義詞表**：每一條都標了 `source`（`question_summary:3585` ＝來自哪一筆
+真實流量問句／`gapmap:C46` ＝來自缺口地圖）與 `status`。**只有 `approved` 的進索引。**
+
+#### A-2 啟動時建什麼（`FineIndex.prepare`）
+
+每個細目建**三種向量鍵**，順序是決定性的（`_key_plan`：細目序 → 標題 → 講法序取
+`approved` → `content_units` 逐句）：
+
+| 鍵種 | 內部 id | 來源 |
+|---|---|---|
+| `title` | `title` | 細目標題 |
+| `phrasing` | `ph:<sha8>` | **只取 `status == approved`** 的講法 |
+| `content` | `ct:<sha8>` | 內文切句（`content_units`，parser 保證非空） |
+
+**三態，且「不以殘缺集合服務」**：
+
+| 狀態 | 意思 |
+|---|---|
+| `absent` | 從未 `prepare` |
+| `not_ready` | 任一向量 `None`／`NaN`／`inf`／零範數／維度不一致 ⇒ **整份丟棄**，⛔ 不留半份 |
+| `ready` | 全數成功；記 `prepared_key=(canon_sha256, phrasing_set_sha256)` |
+
+⚠️ `canon_sha256` 涵蓋整份 `.md` ⇒ **講法狀態翻一個字，sha 就變、索引就對不上**。
+⚠️ **快取只記成功的那一次**——把失敗也快取會讓一次瞬時 embedding 故障永久釘死成
+`not_ready`、再跑一次也救不回來。
+
+#### A-3 每一回合怎麼選（`CandidateSelector.select`，K=5）
+
+```
+查詢字串 = user_message ＋ dialog 裡最後一則 role=="user" 的 content（無則單句）
+           （`runtime._candidate_query`；⛔ 不 log 這個字串）
+   ↓
+① 索引不是 ready？／正本 sha 與索引不符？／查詢向量拿不到？ ⇒ 回 None（不服務）
+   ↓
+② 先切可見子集 `FineIndex.visible_subset` ⛔ 在算分之前
+   ↓
+③ 子集內每個細目取「三種鍵裡分數最高的那一個」（餘弦）
+   ↓
+④ 依 `(-score, fine_id)` 排序 ⇒ 取前 K=5
+   ↓
+⑤ 連同 `build_canon_toc` 的目錄，由 `_seed_outline_provenance` 預載成
+   **一筆 `tool_call_id="outline"` 的 provenance**（DSP-020）
+```
+
+**⑤ 這步為什麼必要**：不預載，模型會照鐵則引用大綱，而 Verifier 只認工具回傳
+⇒ 每次都 `QUOTE_NOT_VERBATIM` ⇒ 兩次改寫用完 ⇒ `budget_exhausted` 轉人。
+
+#### A-4 可見性怎麼判（`canon_visible`，與 SQL 謂詞同源）
+
+```
+① fine.reviewed_by is None          ⇒ ❌ 不可見（未審一律否）
+② is_b2b = target_user ∈ {property_manager, system_admin} 或 mode == "b2b"
+③ b2b 分支：fine.business_types 必須含 'system_provider'，否則 ❌
+            再看 fine.target_user 空（放行）或含正規化後的角色
+④ b2c 分支：fine.business_types 非空時必須與 vendor 的 business_types 有交集
+            再看 fine.target_user 空／含角色／含 'all_users'
+```
+
+⚠️ 角色正規化重用 `_effective_target_user`——**未知／`None` ⇒ 一律當 tenant**（fail-safe）。
+⚠️ 這與 `kb.search` 的 `build_visibility_predicate` **已驗過零分歧**（不變量 29b、3.2 收案）。
+
+#### A-5 為什麼會匹配到（一個例子）
+
+使用者問「**你們這系統我適合用嗎**」：
+
+1. 查詢向量 ← 這句話（＋上一則 user 訊息）
+2. 細目 `prospect/A/product-overview` 有 approved 講法「**合不合用**」「**適不適合我用**」
+3. 該細目的 `phrasing` 鍵分數最高 ⇒ 以該分數代表這個細目
+4. 排進前 5 ⇒ 內容進 prompt，且 **`citable=True`**（因為它有 `reviewed`）⇒ 模型可以引用它
+
+**⇒ 匹配成敗由三件事決定**：講法有沒有收錄（要從真流量來）、
+有沒有 `approved`、這個身分看不看得到。
+
+#### A-6 四條刻意的設計（⛔ 改動前先讀）
+
+| # | 設計 | 理由（程式註解逐字） |
+|---|---|---|
+| 1 | **沒有分數門檻，連常數都不定義** | 「K 名之內全給，該不該用由模型與 Verifier 守」；一個叫 `MIN_SCORE` 的常數會誘導後人寫 `score >= MIN_SCORE`，那是**第二道沒經過驗收的過濾器**」 |
+| 2 | **失敗只會變窄，⛔ 不會變寬** | 四種失敗一律 `None`，退回「可見細目全集＋toc」。⛔ 不得改成「拿不到向量就把可見細目全給」——那會讓一次 embedding 故障靜默變成「候選＝全部」 |
+| 3 | **可見性在算分之前切** | ⛔ 不在排序後再過濾——「那種寫法一旦有人動排序就會漏」 |
+| 4 | **⛔ 不記講法 id、⛔ 不 log 查詢** | 講法對照表就在 repo，記 `ph:<sha8>` 等於一次查表就還原出使用者原始問句；內文句是正本答案本文，同待遇。`Selection` 只帶 `winning_key_kind ∈ {title, phrasing, content}` |
+
+#### A-7 退化路徑與 trace 值域（四個 `miss_kind`）
+
+| 值 | 意思 |
+|---|---|
+| `hit` | 有候選 |
+| `none_visible` | 可見子集是空的（這個身分看不到任何細目） |
+| `no_candidate` | 可見子集非空但都沒索引項——⚠️ **`ready` 狀態下不可達**（每個細目至少有標題鍵），保留於列舉是為了讓 trace 值域封閉 |
+| `index_unavailable` | **`select` 本身⛔ 不回傳它**——索引不可用時回 `None`，由 runtime 在 trace 寫這個值 |
+
+⚠️ **兩種「沒有候選」要分清楚**（`_select_outline` docstring 明訂）：
+- **根本沒有候選機制**（單數與複數 selector 都沒設）⇒ 原樣整份大綱，⛔ 不記 violation
+- **有對照表但缺這個受眾**（DSP-037／S1b）⇒ **那是降級**，記 `candidate_fallback_full_outline`
+  ＋`miss_kind="index_unavailable"`。⛔ 兩者不得混為一談
+
+#### A-8 這條路上唯一能調鬆的旋鈕
+
+**`K = 5`**（`candidate_selector.K`，**程式常數、⛔ 不是 env**）——它直接決定
+「模型每回合拿得到幾條可引用事實」，也就直接決定「沒有可引用事實 ⇒ 轉人」的發生率。
+要改得動程式並重跑回測。
+
+查證：`grep -n "^K: int" rag-orchestrator/services/agent/canon/candidate_selector.py`；
+`grep -n "def _key_plan" -A 18 rag-orchestrator/services/agent/canon/fine_index.py`；
+`grep -n "def canon_visible" -A 30 rag-orchestrator/services/agent/canon/canon_assembler.py`；
+`grep -n "def _candidate_query" -A 12 rag-orchestrator/services/agent/runtime.py`。
 
 ### 路 B：模型主動呼叫工具
 
