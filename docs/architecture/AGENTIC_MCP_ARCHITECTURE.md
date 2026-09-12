@@ -174,6 +174,11 @@ nginx auth_request
 6. 不在 key 的 `vendor_ids` 內 ⇒ `403 ERR_VENDOR_OUT_OF_KEY_SCOPE`
 7. 回 `Identity(entry="mcp")`——**唯一**把 `entry` 設成 `"mcp"` 的真身分建構點
 
+⚠️ **這道閘只把 `vendor_id`／`session_id` 當必填，`role_id` 是選填（`_opt_str`）——
+但下游 `jgb2.query.bills`／`contracts` 對 property_manager 要求 `role_id`（`_identity_gate_ok`
+單證），缺就回 `NO_MATCH`。** 因此「身分通過第 3 道」⛔ 不等於「查得到資料」；缺 `role_id`
+的 pm 會一路走到轉人固定句（為什麼不是 `NO_DATA_TEXT`，見段四閘 4 下方的紅字）。
+
 **額度**：門面是 `usage_events` 的唯一寫入者（`begin()` → `quota_check()` → 呼叫 → `finalize()`）。
 這一層另有兩個出口：`uctx is None` ⇒ **`METERING_UNAVAILABLE`**（計量不可用一律**拒絕服務**，
 ⛔ 不靜默略過——額度是本系統對呼叫者的唯一控制）；`quota.state == "blocked"` ⇒ **`QUOTA_EXCEEDED`**（429）。
@@ -294,6 +299,17 @@ while True:
 | 3 | `ask_target_gate` | `kind=="ask"` ∧ `ask_target ∉ ASK_TARGETS` | 換指路固定句，並把 `ask_target` **歸零**——留著值域外字串會讓 `LAST_ASK_TARGET_KEY` 變成模型可塞任意字串的地方。⚠️ 這是**保底閘**：觀察模式下 Verifier 不擋，⛔ 不得假設「Verifier 過了就合法」 |
 | 4 | `handoff_data_exits` | 同閘 2 的封閉白名單條件，但 **有工具呼叫** | 全部 `empty` ⇒ `NO_DATA_TEXT`；否則 `NO_JUDGEMENT_TEXT`＋`ask_target="confirm_intent"`。⚠️ 任一筆 `status != "ok"` 或撞名保留 id ⇒ **整段不動**（那時 `empty` 不可信） |
 
+🔴 **閘 4 不是「查無」的保護網——最常見的一類查無根本走不到它。**
+`empty` 只在 `status=="ok"` 才可能為 `True`（`_tool_result_empty` 對 `error`／`timeout`／`rejected`
+**硬回 `False`**，因為「沒查成」不得講成「不存在」）。而 `jgb2.query.*` 六域查無時回的是
+`_no_match()`＝`{"ok": False, "error": "NO_MATCH"}` ⇒ `_tool_result_status` 判 `"error"` ⇒
+閘 4 第一個條件 `any(r.status != "ok")` 就早退。**結果：使用者看到的是轉人固定句，不是
+`NO_DATA_TEXT`。** 同一條鏈也吃掉身分不足——`_identity_gate_ok` 對 property_manager 要求
+`role_id`，缺就 `_no_match()`，而 `role_id` 在 `mcp_facade` 是選填（必填只有 `vendor_id`）。
+查證：`grep -n "def _no_match\|def _identity_gate_ok" rag-orchestrator/services/agent/tools/jgb2.py`；
+`grep -n "def _tool_result_empty" rag-orchestrator/services/agent/runtime.py`；
+`grep -n 'status != "ok"' rag-orchestrator/services/agent/exit_gates.py`。
+
 ⚠️ **閘 2／閘 4 另有 U2 例外**：模型自報敏感但被程式推翻時（`_sensitive_self_report_overridden`），
 即使 reason 不在白名單也照樣進閘，並多記一筆 `sensitive_self_report_overridden`。
 
@@ -385,6 +401,7 @@ pid 不在本 session（含過期後舊鍵）⇒ 固定句「這筆確認已失�
 | 預算耗盡 | Verifier **擋**（非觀察模式）兩次改寫仍不過 ⇒ `handoff_reason=budget_exhausted` | 同上固定句 | log 行 `agent_turn trace_id=… kind=handoff handoff_reason=budget_exhausted … verifier_rejects=2` |
 | 範圍退出 | 清單點選會話問別戶（L15） | `SCOPE_EXIT_TEXT` | `grep -n "def _apply_scope_exit" rag-orchestrator/services/agent/runtime.py` |
 | 程式降級（S4，2026-09-09） | 模型自報 `no_grounding` 但零工具呼叫、無範圍、非敏感類 ⇒ **不轉人**，改追問 `ASK_TARGET_TEXT` | 「想處理哪一戶或哪一筆？…」 | `grep -n "def _apply_handoff_without_lookup" rag-orchestrator/services/agent/runtime.py` |
+| **工具查無／身分不足**（實務上最常見） | `jgb2.query.*` 回 `NO_MATCH`（ref／keyword 對不到列，或 pm 缺 `role_id`）⇒ 該筆 `status="error"` ⇒ **閘 2（要求零工具呼叫）與閘 4（要求全 `ok`）都不接管** ⇒ 模型的 `no_grounding` 原樣送出 | 同轉人固定句 | `grep -n "def _no_match" rag-orchestrator/services/agent/tools/jgb2.py`；log 行 `tool_calls=1 … handoff_reason=no_grounding` |
 
 **B. 線上（demo）到底擋不擋：`AGENT_VERIFIER_MODE=grounding_observe`（runbook §20-2；W6-b3 於 2026-09-09 落地）**
 

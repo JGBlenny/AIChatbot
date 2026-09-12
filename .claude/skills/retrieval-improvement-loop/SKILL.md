@@ -109,11 +109,9 @@ G3 單一變因閘門                       ⛔ 一輪只動一類成因；跨�
 ### ① 完整對話流程——**這一份最重要**
 | 讀什麼 | 為什麼 |
 |---|---|
-| [`docs/architecture/COMPLETE_CONVERSATION_ARCHITECTURE.md`](../../../docs/architecture/COMPLETE_CONVERSATION_ARCHITECTURE.md) §0 三層責任分層、§1 總體對話流程、§3 決策樹 Case 0A–6 | 使用者的一句話會經過哪幾段、每段可能把它導去哪 |
-
-⛔ **同檔 §3 的過濾機制（業者/角色/業態隔離與門檻註記）五處全錯**——
-以 [`b2b-ground-truth.md`](../../../.kiro/specs/conversational-routing-execution/b2b-ground-truth.md) 為準。
-✅ 決策樹本體（Case 0A–6）已逐條對碼，可信。
+| [`docs/architecture/AGENTIC_MCP_ARCHITECTURE.md`](../../../docs/architecture/AGENTIC_MCP_ARCHITECTURE.md) §2b 完整流程（四段、13 個終止點） | 使用者的一句話會經過哪幾段、每段可能在哪裡結束 |
+| [`docs/architecture/COMPLETE_CONVERSATION_ARCHITECTURE.md`](../../../docs/architecture/COMPLETE_CONVERSATION_ARCHITECTURE.md) §0 三層責任分層、§3 檢索的過濾機制與加成 | 檢索這一段的責任邊界與三軸過濾公式（b2b `&&` 無 `IS NULL` 放行是刻意的隔離） |
+| [`docs/architecture/SYSTEM_ARCHITECTURE.md`](../../../docs/architecture/SYSTEM_ARCHITECTURE.md) §1／§3 | 核心是 `AgentRuntime`、`/mcp` 只是門面之一；15 個 face 與六域隔離不對稱 |
 
 ### ② 這一段的實作正本（⛔ 文件與程式衝突一律以程式為準）
 
@@ -122,10 +120,9 @@ services/agent/tools/kb.py         符號 kb.search／kb.get：檢索呼叫點�
 services/agent/verifier.py         引用驗證。**適用性**把關由它承接
                                     ⚠️ 拒因邏輯與舊線不同，⛔ 不要假設兩者行為等價，改動前重新查證
                                     ⛔ precision-first 的設計理由仍有效，勿在新線改回從寬
-services/decision_layer.py         符號 decide_arbitration：六 case 仲裁（agent 路徑不呼叫，見
-                                    docs/architecture/agent-path-retired-symbols.md）；
-                                    `DecisionConfig` 門檻仍被 services/agent/tools/kb.py 讀取，現行
-                                    ⚠️ knowledge_min=0.6 硬編、無 env
+services/decision_layer.py         `DecisionConfig` 門檻被 services/agent/tools/kb.py 讀取
+                                    ⚠️ knowledge_min=0.6 硬編、無 env；kb_threshold 讀
+                                    KB_SIMILARITY_THRESHOLD（預設 0.65，與部署值對齊）
 services/vendor_knowledge_retriever_v2.py  兩條檢索路與三軸過濾（現行，kb.search 經此檢索）
 ```
 

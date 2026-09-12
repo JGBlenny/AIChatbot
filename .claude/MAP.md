@@ -175,7 +175,7 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 - 判準 | `docs/retrieval-parameters.md` | 量測紀律:不要離線重建 pipeline、比較性結論 30 題起跳
 - 決策 | `docs/retrieval-recall-audit-20260822.md` | 前案裁決:precision-first、b2b 嚴格過濾勿改
 - 判準 | `.kiro/specs/conversational-routing-execution/b2b-doc-status-ledger.md` | b2b／檢索過濾／門檻主題的**文件可信度分流**:哪幾份可依據、哪幾份照做會出事
-- 規格 | `docs/architecture/COMPLETE_CONVERSATION_ARCHITECTURE.md` | 對話架構母圖(被主線 spec 引用 8 次);⚠️ §3 過濾公式與兩處門檻敘述已於 2026-09-01 對碼修正,決策樹本體與 `decide_arbitration` 逐條相符
+- 規格 | `docs/architecture/COMPLETE_CONVERSATION_ARCHITECTURE.md` | 舊 REST 對話鏈的架構母圖,2026-09-12 刪至只剩四節:§0 三層責任分層(概念)、§3 檢索過濾與加成、§11 系統角色、§12 參數速查;⛔ 其餘章節(意圖分類／信心度／SOP 編排／表單／仲裁)的程式已於 2026-09-11 刪除,章節一併移除。現況架構走 `SYSTEM_ARCHITECTURE.md` 與 `AGENTIC_MCP_ARCHITECTURE.md`
 - 規格 | `docs/architecture/facet-architecture.md` | 面向化三層疊加的邏輯與資料佈局(取代 design.md 元件1/D2 的兩層版本)
 - 實測 | `scripts/audit/reports/regrade291-triage.md` | **69.7% 基準的唯一出處**(548 題乾淨重跑;舊寬鬆基準 60.2%)
 - 規格 | `docs/features/conversational-presales.md` | 對話式回答模式本身:單次直答 → 多輪自適應收斂(prospect 為第一個套用者)
@@ -432,7 +432,6 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 
 ### 使用手冊
 
-- 產線 | `docs/user-guides/MAINTENANCE_FORM_USER_GUIDE.md` | 租戶維修請求的表單機制怎麼操作(業者管理／客服／系統操作員);🔴 **檔內 2026-07-12 現況註記逐字**:「b2c 租客報修已改走對話式修繕面向(conversational-repair,commit 646743a)……逐欄位表單機制**仍保留但不再是租客報修的主路徑**」;表單 schema `jgb_repair_create` 仍是欄位契約
 - 產線 | `docs/user-guides/VENDOR_SOP_USER_GUIDE.md` | Platform 與 Vendor 兩種角色各自怎麼配置 SOP 流程
 - 產線 | `docs/user-guides/knowledge_completion_loop.md` | 知識完善迴圈的標準使用手冊(概念＋操作＋最佳實踐＋FAQ)
 - 產線 | `docs/user-guides/knowledge_loop_workflow.md` | 同一迴圈的流程深度版:完整流程圖、逐步邏輯與實例
@@ -461,10 +460,8 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 
 ### 架構
 
-- 規格 | `docs/architecture/SYSTEM_ARCHITECTURE.md` | 整體系統的高階架構:SaaS 多租戶、RAG、Reranker、SOP、表單、知識庫、快取、API 整合、部署;⚠️ 與 `COMPLETE_CONVERSATION_ARCHITECTURE.md`(對話母圖)、`facet-architecture.md`、`retriever-pipeline.md`、`DATABASE_SCHEMA.md` 是**不同層次的互補**,⛔ **無任何一份明說取代關係**
+- 規格 | `docs/architecture/SYSTEM_ARCHITECTURE.md` | **現況系統全景正本**(v4.0,2026-09-12):核心是 `AgentRuntime`、`/mcp` 只是四個門面之一;15 個 face 與六域隔離不對稱;知識兩條路(git canon 自動注入 vs `kb.search` 模型調用);`tenant` 在新線不存在。對話線內部見 `AGENTIC_MCP_ARCHITECTURE.md`
 - 規格 | `docs/architecture/developer_architecture.md` | 知識完善迴圈子系統的架構:分層、核心元件、資料流、非同步執行、成本追蹤;⚠️ 檔頭版本戳寫「backtest-knowledge-refinement v1.0」但**該 spec 目錄已不存在**;⛔ 它描述的執行機制(LoopCoordinator／非同步執行／成本追蹤)已於 2026-09 整組刪除,`services/knowledge_completion_loop/` 只剩 `embedding_client.py`
-- 規格 | `docs/architecture/conversation-flow-business.md` | 業務版對話流程(八層次,給非技術讀者);其每條斷言的實碼出處在 `conversation-flow-evidence.md`
-- 實測 | `docs/architecture/conversation-flow-evidence.md` | 上一份的逐條對碼驗證:46 條斷言中 42 屬實、4 偏差(2026-07-16 四路獨立 scout)
 
 ### 測試
 
@@ -513,7 +510,7 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 ### 架構
 
 - 規格 | `docs/architecture-overview.md` | 系統現況總覽:三類使用者與路由順位、對話面向、資料體系分工、計量與額度、品質三層、已知債總表
-- 規格 | `docs/chat-architecture-overview.md` | 對話系統架構全貌(v2):入口矩陣、完整決策管線、機制對表、應然與實然的差距;⚠️ 檔內自述性質是「對碼查實的**實然**＋定案的**應然**＋設計方向判定」三者混寫,引用時要分清是哪一種
+- 判定 | `docs/chat-architecture-overview.md` | 2026-09-12 刪至 74 行,只剩診斷與裁決(§3–§6);⛔ 入口矩陣／決策管線／機制總表已隨舊 REST 鏈刪除。現況入口走 `SYSTEM_ARCHITECTURE.md`
 - 決策 | `docs/conversation-first-architecture-assessment.md` | 檢索中心骨架是否仍合適的評估與拍板:混合骨架候選 C 定案(2026-07-10)、P0–P3 四階段遷移;⚠️ **本檔是 2026-07-10 的評估快照,其拍板結論後續是否被 `agentic-mcp-orchestration` 主線取代,待裁**
 
 ### 設定

@@ -300,9 +300,17 @@ erDiagram
 - **vendor_configs** - 業者配置參數（繳費日、押金月數等）
 - 支援多租戶隔離和差異化配置
 
-### 2. 意圖分類模組 (Intent Classification)
+### 2. 意圖定義模組 (Intent Definitions)
 - **intents** - 意圖定義表（帳務查詢、退租流程等）
-- 用於表單流程的意圖分類
+- 🔴 **對話路徑不讀這張表**：分類器 `services/intent_classifier.py` 與整條舊 REST 鏈
+  已於 2026-09-11 刪除（DSP-046），`services/agent/**` 對 `intents` 零引用
+  （查證：`grep -rn "intents" rag-orchestrator/services/agent/` 為空；
+  正對照：同路徑 `kb.search` 在 `services/agent/tools/kb.py`）
+- 現行消費者只剩**知識維護動線**：匯入／匯出／文件轉換／後台（`knowledge_import_service.py`、
+  `knowledge_export_service.py`、`document_converter_service.py`、`routers/vendors.py`、
+  `routers/knowledge_export.py`、`routers/platform_sop.py`、`services/db_utils.py`）
+- `knowledge_intent_mapping` 仍被 `vendor_knowledge_retriever_v2.py` 以 `LEFT JOIN` 帶出，
+  但**只帶出、不加權**（加成公式是關鍵字加成，見 `base_retriever.py::_apply_keyword_boost`）
 
 ### 3. 知識庫模組 (Knowledge Base)
 - **knowledge_base** - 核心知識庫
@@ -1014,7 +1022,7 @@ knowledge_base (知識)
     └─ intent_id (FK) → intents (舊欄位，保留向後兼容)
 ```
 
-**說明**：知識庫改用主題分類（`categories[]` 多值）分類，intent_id 為舊欄位僅保留向後兼容。意圖分類功能目前僅用於表單流程。
+**說明**：知識庫改用主題分類（`categories[]` 多值）分類，intent_id 為舊欄位僅保留向後兼容。🔴 意圖分類**功能**已隨舊鏈刪除（2026-09-11 DSP-046）；`intents` 表只剩知識維護動線在讀，見 §2。
 
 ---
 

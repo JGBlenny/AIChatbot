@@ -79,22 +79,12 @@ LLM_PROVIDER=openai
 
 # ============================================================
 # 服務專屬 Provider 配置
+# ⚠️ 只有「有傳 service_name」的呼叫端才會查這一層。
+#    目前全 repo 只有一個：services/query_rewriter.py
 # ============================================================
 
-# 意圖分類 (30% 成本，可用 OpenRouter 降低成本)
-INTENT_CLASSIFIER_PROVIDER=openrouter
-
-# 答案優化 (58% 成本，需要高品質，可用 OpenRouter + Claude)
-ANSWER_OPTIMIZER_PROVIDER=openrouter
-
-# Embedding (0.2% 成本，適合用本地 Ollama)
-EMBEDDING_PROVIDER=ollama
-
-# 文件轉換 (10% 成本，可用 Ollama 大模型)
-DOCUMENT_CONVERTER_PROVIDER=ollama
-
-# 知識生成 (1% 成本，可用任何 Provider)
-KNOWLEDGE_GEN_PROVIDER=ollama
+# 查詢改寫（唯一可用的服務專屬鍵）
+QUERY_REWRITER_PROVIDER=openrouter
 
 # ============================================================
 # API Keys
@@ -114,11 +104,11 @@ OLLAMA_API_URL=http://localhost:11434
 ```bash
 # 若設定：
 LLM_PROVIDER=openai
-INTENT_CLASSIFIER_PROVIDER=openrouter
+QUERY_REWRITER_PROVIDER=openrouter
 
 # 則：
-- IntentClassifier → 使用 OpenRouter
-- 其他服務 → 使用 OpenAI (全域預設)
+- QueryRewriter → 使用 OpenRouter
+- 其他呼叫端 → 使用 OpenAI (全域預設)
 ```
 
 ---
@@ -131,10 +121,10 @@ INTENT_CLASSIFIER_PROVIDER=openrouter
 from services.llm_provider import get_llm_provider
 
 # 方式 1: 自動根據服務名稱選擇 Provider
-class IntentClassifier:
+class QueryRewriter:
     def __init__(self):
-        # 會查找 INTENT_CLASSIFIER_PROVIDER
-        self.llm_provider = get_llm_provider(service_name='intent_classifier')
+        # 會查找 QUERY_REWRITER_PROVIDER
+        self.llm_provider = get_llm_provider(service_name='query_rewriter')
 
 # 方式 2: 手動指定 Provider
 class CustomService:
@@ -151,13 +141,17 @@ class AnotherService:
 
 ### 支援的 service_name
 
-| service_name | 對應環境變數 | 服務說明 |
+🔴 **2026-09-12 逐一對碼：全 repo 只有一個呼叫端傳 `service_name`。**
+`{SERVICE}_PROVIDER` 是 `get_llm_provider(service_name=...)` 動態拼出來的
+（`env_key = f"{service_name.upper()}_PROVIDER"`），**沒有呼叫端傳就沒有那個鍵**。
+
+| service_name | 對應環境變數 | 呼叫端 |
 |-------------|-------------|---------|
-| `intent_classifier` | `INTENT_CLASSIFIER_PROVIDER` | 意圖分類服務 |
-| `answer_optimizer` | `ANSWER_OPTIMIZER_PROVIDER` | 答案優化服務 |
-| `embedding` | `EMBEDDING_PROVIDER` | 向量嵌入服務 |
-| `document_converter` | `DOCUMENT_CONVERTER_PROVIDER` | 文件轉換服務 |
-| `knowledge_gen` | `KNOWLEDGE_GEN_PROVIDER` | 知識生成服務 |
+| `query_rewriter` | `QUERY_REWRITER_PROVIDER` | `services/query_rewriter.py` |
+
+其餘呼叫端（`app.py`、`knowledge_import_service.py`、`document_converter_service.py`、
+`tools/agent_eval.py`）都是無參數 `get_llm_provider()` ⇒ **只吃全域 `LLM_PROVIDER`**。
+查證：`grep -rn "get_llm_provider(" rag-orchestrator --include="*.py" | grep -v /tests/`
 
 ---
 
@@ -171,7 +165,7 @@ class AnotherService:
 
 ```bash
 LLM_PROVIDER=openai
-INTENT_CLASSIFIER_PROVIDER=openrouter  # 遷移意圖分類
+QUERY_REWRITER_PROVIDER=openrouter  # 遷移查詢改寫（唯一可單獨切換的服務）
 OPENROUTER_API_KEY=sk-or-...
 ```
 
@@ -191,16 +185,14 @@ OPENROUTER_API_KEY=sk-or-...
 **成本節約**: 60-70%
 
 ```bash
-# 高品質需求 → OpenRouter + Claude
-ANSWER_OPTIMIZER_PROVIDER=openrouter
+# 全域走 Ollama（知識匯入／文件轉換／回測工具都吃這顆）
+LLM_PROVIDER=ollama
 
-# 簡單任務 → OpenRouter + Mistral
-INTENT_CLASSIFIER_PROVIDER=openrouter
+# 查詢改寫單獨留在雲端（唯一可單獨切換的服務）
+QUERY_REWRITER_PROVIDER=openrouter
 
-# 非關鍵任務 → Ollama (本地)
-EMBEDDING_PROVIDER=ollama
-DOCUMENT_CONVERTER_PROVIDER=ollama
-KNOWLEDGE_GEN_PROVIDER=ollama
+⚠️ 想「按服務分」必須先在該服務的 get_llm_provider() 補上 service_name 參數，
+   ⛔ 光設環境變數不會生效。
 ```
 
 **優點**:
@@ -266,12 +258,11 @@ ollama pull nomic-embed-text # Embedding 模型
 # 開始時全用 OpenAI
 LLM_PROVIDER=openai
 
-# 逐步遷移（第一週）
-INTENT_CLASSIFIER_PROVIDER=openrouter
+# 逐步遷移（第一週）——唯一可單獨切換的服務
+QUERY_REWRITER_PROVIDER=openrouter
 
-# 進階遷移（第二週）
-EMBEDDING_PROVIDER=ollama
-DOCUMENT_CONVERTER_PROVIDER=ollama
+# 進階遷移（第二週）：其餘呼叫端只吃全域值
+LLM_PROVIDER=ollama
 ```
 
 ### Step 4: 測試驗證
@@ -325,9 +316,8 @@ python3 /tmp/test_mixed_provider_config.py
 LLM_PROVIDER=openai
 OPENAI_API_KEY=sk-proj-...
 
-# 註解或刪除其他 Provider 配置
-# INTENT_CLASSIFIER_PROVIDER=...
-# ANSWER_OPTIMIZER_PROVIDER=...
+# 註解或刪除服務專屬配置
+# QUERY_REWRITER_PROVIDER=...
 ```
 
 ---

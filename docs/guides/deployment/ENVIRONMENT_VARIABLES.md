@@ -129,7 +129,6 @@ CACHE_TTL_RAG_RESULT=1800    # 30 分鐘
 |--------|------|--------|------|
 | `EMBEDDING_API_URL` | Embedding API 端點 | `http://localhost:5001/api/v1/embeddings` | ❌ |
 | `RAG_API_URL` | RAG Orchestrator 端點 | `http://localhost:8100` | ❌ |
-| `KNOWLEDGE_ADMIN_API_URL` | 知識管理 API 端點 | `http://localhost:8000/api` | ❌ |
 
 **使用位置**：
 - `rag-orchestrator` → `EMBEDDING_API_URL`
@@ -139,7 +138,6 @@ CACHE_TTL_RAG_RESULT=1800    # 30 分鐘
 ```bash
 EMBEDDING_API_URL=http://embedding-api:5000/api/v1/embeddings
 RAG_API_URL=http://rag-orchestrator:8100
-KNOWLEDGE_ADMIN_API_URL=http://knowledge-admin-api:8000/api
 ```
 
 ## 🤖 AI 模型配置
@@ -162,31 +160,6 @@ KNOWLEDGE_ADMIN_API_URL=http://knowledge-admin-api:8000/api
 **範例**：
 ```bash
 OPENAI_MODEL=gpt-3.5-turbo
-```
-
----
-
-### 意圖分類器模型 ⭐ NEW (Phase 3)
-
-| 變數名 | 說明 | 預設值 | 必需 |
-|--------|------|--------|------|
-| `INTENT_CLASSIFIER_MODEL` | 表單流程意圖分類使用的模型 | `gpt-3.5-turbo` | ❌ |
-| `INTENT_CLASSIFIER_TEMPERATURE` | 意圖分類溫度（0-2） | `0.1` | ❌ |
-| `INTENT_CLASSIFIER_MAX_TOKENS` | 意圖分類最大 tokens | `500` | ❌ |
-
-**使用位置**：
-- `rag-orchestrator` - 表單流程的意圖分類（僅用於 form flow intent classification）
-
-**說明**：
-- 此模型僅用於表單填寫流程中的意圖分類，不用於一般知識檢索
-- **Temperature 0.1**: 低溫度確保分類結果穩定
-- **Max Tokens 500**: 意圖分類回應較短，500 tokens 足夠
-
-**範例**：
-```bash
-INTENT_CLASSIFIER_MODEL=gpt-3.5-turbo
-INTENT_CLASSIFIER_TEMPERATURE=0.1
-INTENT_CLASSIFIER_MAX_TOKENS=500
 ```
 
 ---
@@ -236,249 +209,6 @@ KNOWLEDGE_GEN_MODEL=gpt-4o-mini
 DOCUMENT_CONVERTER_MODEL=gpt-4o
 ```
 
-## 🎯 RAG 檢索配置 ⭐ NEW (Phase 3)
-
-### 相似度閾值
-
-| 變數名 | 說明 | 預設值 | 必需 |
-|--------|------|--------|------|
-| `RAG_SIMILARITY_THRESHOLD` | RAG 向量檢索相似度閾值 | `0.6` | ❌ |
-
-**使用位置**：
-- `rag-orchestrator` - 控制知識檢索的最低相似度
-
-**說明**：
-- 向量相似度低於此閾值的知識不會被檢索
-- 閾值範圍：0.0 - 1.0
-- 較高閾值（0.7+）：更精準但可能漏掉相關知識
-- 較低閾值（0.5-）：更廣泛但可能包含不相關知識
-
-**範例**：
-```bash
-RAG_SIMILARITY_THRESHOLD=0.6
-```
-
----
-
-## 🎨 答案合成配置 ⭐ NEW (Phase 3 - SOP 整合)
-
-### 多來源答案合成
-
-當檢索到多個 SOP 項目時，系統可以使用 LLM 合成統一的答案。
-
-| 變數名 | 說明 | 預設值 | 必需 |
-|--------|------|--------|------|
-| `ENABLE_ANSWER_SYNTHESIS` | 是否啟用答案合成 | `true` | ❌ |
-| `SYNTHESIS_THRESHOLD` | 合成閾值（相似度） | `0.99` | ❌ |
-| `SYNTHESIS_MIN_RESULTS` | 最少合成來源數 | `2` | ❌ |
-| `SYNTHESIS_MAX_RESULTS` | 最多合成來源數 | `5` | ❌ |
-| `SOP_SIMILARITY_SCORE` | SOP 相似度分數 | `0.70` | ❌ |
-
-**使用位置**：
-- `rag-orchestrator` - SOP 多項目答案合成
-
-**說明**：
-- **SYNTHESIS_THRESHOLD**: SOP 相似度通常為 1.0，設為 0.99 可確保只合成 SOP 項目
-- **SYNTHESIS_MIN_RESULTS**: 至少 2 個來源才進行合成，避免單一來源浪費 LLM 呼叫
-- **SYNTHESIS_MAX_RESULTS**: 最多合成 5 個來源，避免過長的 prompt
-
-**範例**：
-```bash
-ENABLE_ANSWER_SYNTHESIS=true
-SYNTHESIS_THRESHOLD=0.99
-SYNTHESIS_MIN_RESULTS=2
-SYNTHESIS_MAX_RESULTS=5
-SOP_SIMILARITY_SCORE=0.70
-```
-
----
-
-## 🔍 信心度評估配置 ⭐ NEW (Phase 3)
-
-### 信心度閾值
-
-| 變數名 | 說明 | 預設值 | 必需 |
-|--------|------|--------|------|
-| `CONFIDENCE_HIGH_THRESHOLD` | 高信心度閾值 | `0.85` | ❌ |
-| `CONFIDENCE_MEDIUM_THRESHOLD` | 中等信心度閾值 | `0.70` | ❌ |
-
-**使用位置**：
-- `rag-orchestrator` - 意圖分類信心度評估
-
-**說明**：
-- **≥ 0.85**: 高信心度 → 直接使用分類結果
-- **0.70 - 0.85**: 中等信心度 → 使用但標記為不確定
-- **< 0.70**: 低信心度 → 標記為 unclear
-
-**範例**：
-```bash
-CONFIDENCE_HIGH_THRESHOLD=0.85
-CONFIDENCE_MEDIUM_THRESHOLD=0.70
-```
-
----
-
-## ⚡ 條件式優化配置 ⭐ NEW (Phase 3 - 智能路由)
-
-### 快速路徑與模板處理
-
-Phase 3 引入**智能路由策略**，根據相似度和信心度選擇最佳處理路徑。
-
-| 變數名 | 說明 | 預設值 | 必需 |
-|--------|------|--------|------|
-| `FAST_PATH_THRESHOLD` | 快速路徑閾值（跳過 LLM） | `0.75` | ❌ |
-| `TEMPLATE_MIN_SCORE` | 模板最低信心度 | `0.55` | ❌ |
-| `TEMPLATE_MAX_SCORE` | 模板最高信心度 | `0.75` | ❌ |
-| `LLM_PARAM_INJECTION_TEMP` | LLM 參數注入溫度 | `0.1` | ❌ |
-| `LLM_SYNTHESIS_TEMP` | LLM 答案合成溫度 | `0.5` | ❌ |
-
-**使用位置**：
-- `rag-orchestrator` - 智能路由決策
-
-**路徑決策邏輯**：
-```
-相似度 ≥ 0.75 → 快速路徑（直接返回，不呼叫 LLM）
-0.55 ≤ 相似度 < 0.75 → LLM 參數注入（溫度 0.1）
-相似度 < 0.55 → 完整 LLM 生成（溫度 0.5）
-```
-
-**範例**：
-```bash
-FAST_PATH_THRESHOLD=0.75
-TEMPLATE_MIN_SCORE=0.55
-TEMPLATE_MAX_SCORE=0.75
-LLM_PARAM_INJECTION_TEMP=0.1
-LLM_SYNTHESIS_TEMP=0.5
-```
-
-**效能影響**：
-- 快速路徑可節省 90% LLM API 成本
-- 平均回應時間從 2-3 秒降至 0.5-1 秒
-
----
-
-## 💡 意圖建議配置 ⭐ NEW (Phase 3)
-
-### 自動意圖建議
-
-| 變數名 | 說明 | 預設值 | 必需 |
-|--------|------|--------|------|
-| `INTENT_SUGGESTION_TEMP` | 意圖建議溫度 | `0.2` | ❌ |
-| `INTENT_SUGGESTION_MAX_TOKENS` | 意圖建議最大 tokens | `800` | ❌ |
-| `INTENT_SUGGESTION_SIMILARITY_THRESHOLD` | 🆕 語義相似度去重閾值 | `0.80` | ❌ |
-
-**使用位置**：
-- `rag-orchestrator` - 未釐清問題自動建議意圖
-
-**說明**：
-- 當問題無法分類為現有意圖時，系統會建議新的意圖
-- 低溫度（0.2）確保建議穩定且精準
-- 🆕 **語義相似度去重**：新建議與現有pending建議相似度 ≥ 0.80 時，更新頻率而非新增重複建議
-  - 使用 pgvector 餘弦相似度比對 `suggested_embedding` 欄位
-  - 降低閾值會提高去重靈敏度（更容易判定為重複）
-  - 提高閾值會降低去重靈敏度（僅非常相似的才判定為重複）
-
-**範例**：
-```bash
-INTENT_SUGGESTION_TEMP=0.2
-INTENT_SUGGESTION_MAX_TOKENS=800
-INTENT_SUGGESTION_SIMILARITY_THRESHOLD=0.80  # 語義去重閾值（推薦 0.75-0.85）
-```
-
----
-
-## ❓ 未釐清問題配置 ⭐ NEW (Phase 3)
-
-### 語義去重閾值
-
-| 變數名 | 說明 | 預設值 | 必需 |
-|--------|------|--------|------|
-| `UNCLEAR_SEMANTIC_THRESHOLD` | 語義相似度閾值 | `0.80` | ❌ |
-| `UNCLEAR_PINYIN_THRESHOLD` | 拼音相似度閾值 | `0.80` | ❌ |
-
-**使用位置**：
-- `rag-orchestrator` - 未釐清問題去重
-
-**說明**：
-- 新問題與現有未釐清問題相似度 ≥ 0.80 視為重複
-- 同時檢查語義（embedding）和拼音相似度
-- 避免相似問題重複提交到審核中心
-
-**範例**：
-```bash
-UNCLEAR_SEMANTIC_THRESHOLD=0.80
-UNCLEAR_PINYIN_THRESHOLD=0.80
-```
-
----
-
-### 知識優先級配置
-
-| 變數名 | 說明 | 預設值 | 必需 |
-|--------|------|--------|------|
-| `PRIORITY_BOOST` | 優先級加成值 | `0.15` | ❌ |
-| `PRIORITY_QUALITY_THRESHOLD` | 優先級品質門檻 | `0.70` | ❌ |
-
-**使用位置**：
-- `rag-orchestrator` - RAG 向量檢索引擎
-
-**說明**：
-- `PRIORITY_BOOST`: 對標記為優先的知識加分（固定加成值）
-- `PRIORITY_QUALITY_THRESHOLD`: 品質門檻，只有原始相似度 >= 此值的答案才能獲得優先級加分
-- **條件式加分機制**：防止低品質答案濫用優先級
-
-**加分邏輯**：
-```
-最終分數 = 原始相似度 * 意圖係數 +
-          (priority > 0 且 原始相似度 >= 0.70 ? 0.15 : 0)
-```
-
-**效果範例**（假設無意圖加成）：
-
-| 原始分數 | 是否優先 | 品質門檻 | 最終分數 | 說明 |
-|---------|---------|---------|---------|------|
-| 0.60 | 是 | 0.70 | 0.60 | 低於門檻，不加分 ❌ |
-| 0.65 | 是 | 0.70 | 0.65 | 低於門檻，不加分 ❌ |
-| 0.70 | 是 | 0.70 | 0.85 | 達到門檻，+0.15 ✅ |
-| 0.75 | 是 | 0.70 | 0.90 | 高品質，+0.15 ✅ |
-| 0.80 | 是 | 0.70 | 0.95 | 高品質，+0.15 ✅ |
-
-**範例**：
-```bash
-PRIORITY_BOOST=0.15                  # 加分值 0.15
-PRIORITY_QUALITY_THRESHOLD=0.70      # 品質門檻 0.70
-```
-
----
-
-## 🧪 回測框架變數
-
-### 回測配置
-
-| 變數名 | 說明 | 預設值 | 必需 |
-|--------|------|--------|------|
-| `BACKTEST_SELECTION_STRATEGY` | 測試選擇策略 | `full` | ❌ |
-| `BACKTEST_QUALITY_MODE` | 品質評估模式 | `basic` | ❌ |
-| `BACKTEST_USE_DATABASE` | 是否使用資料庫載入測試 | `false` | ❌ |
-| `BACKTEST_NON_INTERACTIVE` | 非互動模式 | `false` | ❌ |
-| `BACKTEST_SAMPLE_SIZE` | 樣本數量限制 | 無限制 | ❌ |
-| `BACKTEST_INCREMENTAL_LIMIT` | 增量測試數量 | `100` | ❌ |
-| `BACKTEST_FAILED_LIMIT` | 失敗測試數量 | `50` | ❌ |
-
-**詳細說明**：請參閱 回測環境變數參考
-
-## 🐳 前端開發變數
-
-### Node.js 環境
-
-| 變數名 | 說明 | 預設值 | 必需 |
-|--------|------|--------|------|
-| `NODE_ENV` | Node.js 環境模式 | `production` | ❌ |
-
-**可選值**：
-- `development` - 開發模式（熱重載、詳細錯誤）
-- `production` - 生產模式（優化、壓縮）
-
 ## 🔐 服務對服務認證
 
 ### rag API Key 認證
@@ -498,17 +228,6 @@ PRIORITY_QUALITY_THRESHOLD=0.70      # 品質門檻 0.70
 # 啟用 rag API Key 認證（正式環境建議開啟）
 RAG_API_AUTH_ENFORCE=true
 ```
-
-## 🛠️ 其他變數
-
-### 專案配置
-
-| 變數名 | 說明 | 預設值 | 必需 |
-|--------|------|--------|------|
-| `PROJECT_ROOT` | 專案根目錄路徑 | 自動檢測 | ❌ |
-
-**使用位置**：
-- `knowledge-admin-api` - 回測框架執行時需要專案路徑
 
 ## 📝 .env 文件範例
 
@@ -555,7 +274,6 @@ CACHE_TTL_RAG_RESULT=1800     # Layer 3 RAG 結果緩存（30分鐘）
 # ==========================================
 EMBEDDING_API_URL=http://localhost:5001/api/v1/embeddings
 RAG_API_URL=http://localhost:8100
-KNOWLEDGE_ADMIN_API_URL=http://localhost:8000/api
 
 # ==========================================
 # AI 模型配置
@@ -563,9 +281,6 @@ KNOWLEDGE_ADMIN_API_URL=http://localhost:8000/api
 OPENAI_MODEL=gpt-3.5-turbo    # 主 LLM 模型
 
 # 意圖分類器（Phase 3）
-INTENT_CLASSIFIER_MODEL=gpt-3.5-turbo
-INTENT_CLASSIFIER_TEMPERATURE=0.1
-INTENT_CLASSIFIER_MAX_TOKENS=500
 
 # 知識生成
 KNOWLEDGE_GEN_MODEL=gpt-4o-mini
@@ -712,27 +427,23 @@ A: 檢查：
 
 ## 📊 環境變數統計
 
-| 類別 | 變數數量 | Phase |
-|-----|---------|-------|
-| OpenAI API | 1 | Phase 1 |
-| PostgreSQL | 5 | Phase 1 |
-| Redis 連線 | 2 | Phase 1 |
-| **Redis 緩存** ⭐ | **4** | **Phase 3** |
-| API URLs | 3 | Phase 1 |
-| **LLM 模型** ⭐ | **5** | **Phase 1 + 3** |
-| **RAG 檢索** ⭐ | **1** | **Phase 3** |
-| **答案合成** ⭐ | **5** | **Phase 3** |
-| **信心度評估** ⭐ | **2** | **Phase 3** |
-| **條件式優化** ⭐ | **5** | **Phase 3** |
-| **意圖建議** ⭐ | **2** | **Phase 3** |
-| **未釐清問題** ⭐ | **2** | **Phase 3** |
-| 回測框架 | 7 | Phase 2 |
-| 前端開發 | 1 | Phase 1 |
-| **總計** | **45** | - |
+🔴 **2026-09-12 逐鍵對碼後，刪掉 9 個整節死掉的分類**（RAG 檢索、答案合成、信心度評估、
+條件式優化、意圖建議、未釐清問題、回測框架、前端開發、其他）——這些鍵在
+`rag-orchestrator` 非測試 `.py` 完全沒有讀者，主體隨舊 REST 對話鏈於 2026-09-11 刪除。
+**本檔現在列的每一個鍵都有非測試程式讀者**（`OPENAI_KEY` 例外，那是故障排除節刻意留的反例）。
 
-**Phase 3 新增**: **23 個環境變數** ⭐
+| 類別 | 變數數量 |
+|-----|---------|
+| OpenAI API | 1 |
+| PostgreSQL | 5 |
+| Redis（連線＋緩存） | 6 |
+| API URLs | 2 |
+| LLM 模型 | 3 |
+| 服務對服務認證 | 1 |
 
----
+⛔ 要看舊旋鈕請 `git show HEAD:docs/guides/deployment/ENVIRONMENT_VARIABLES.md`。
+新線（agentic-MCP）的模型與旗標組態見
+[`docs/architecture/AGENTIC_MCP_ARCHITECTURE.md`](../../architecture/AGENTIC_MCP_ARCHITECTURE.md) §6。
 
 ## 🔄 版本歷史
 

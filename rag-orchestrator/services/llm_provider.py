@@ -440,8 +440,10 @@ def get_llm_provider(
         provider = get_llm_provider()
 
         # 為特定服務使用專屬 Provider
-        provider = get_llm_provider(service_name='intent_classifier')
-        # 會查找 INTENT_CLASSIFIER_PROVIDER 環境變數
+        provider = get_llm_provider(service_name='query_rewriter')
+        # 會查找 QUERY_REWRITER_PROVIDER 環境變數
+        # ⚠️ 2026-09-12：這是全 repo 唯一有傳 service_name 的呼叫端
+        #    （services/query_rewriter.py）——其餘皆無參數、只吃 LLM_PROVIDER
 
         # 直接指定 Provider 類型
         provider = get_llm_provider(provider_type='openrouter')
