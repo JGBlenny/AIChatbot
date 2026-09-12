@@ -330,26 +330,33 @@ kb.get    → build_visibility_predicate ＋ canon.review_state.content_reviewed
 那個數字是假警報。上表用的是**執行期程式**這個較嚴的定義。
 查證：`SELECT tablename FROM pg_tables WHERE schemaname='public';` 再對程式做逐表 grep。
 
-**回合路徑上零消費者**（🔴 2026-09-12 用 **AST** 逐條驗——⚠️ 本節當天被我改錯過一次：
-我先用 `grep -rl` 的**檔案命中數**當消費者，把八條對的判成「文件說沒有但有」，
-再用 AST 數 `ast.Call`／`ast.Attribute` 才發現那些命中**全在註解與 docstring 裡**。
-⇒ **grep 命中數 ⛔ 不等於消費者**，這條教訓同 `build_toc` 那次）：
+**回合路徑上不讀的**（🔴 2026-09-12 **三種數法都跑過**才定案——這張表當天被我改錯兩次：
+第一次用 `grep -rl` 檔案命中數，把八條對的判成錯；第二次改用 AST 數呼叫／屬性，
+又漏掉 `getattr`／`dict.get` 的**動態存取**。⇒ 判「還有沒有人用」⛔ 不得只用一種數法）：
 
-| 符號 | AST 實測 | 判定 |
-|---|---|---|
-| `config_for_category` | 呼叫 **0**（`tools/audit_config.py`／`seed_repair_facet_knowledge.py` 的命中都在註解裡） | ✅ 零消費者 |
-| `build_toc` | 呼叫 **0**（活的是 canon 版 `build_canon_toc`，3 處） | ✅ 零消費者 |
-| `persona_role`／`topic_scope`／`answer_rules`／`cta_rules` | 屬性存取只出現在 `conversational_config.py` **自己的資料類建構**，無外部讀者 | ✅ 零消費者 |
-| `category_config` | 0（`services/jgb/estates.py`／`repairs.py` 各一行**註解**） | ✅ 零消費者 |
-| `FORM_TRIGGER_THRESHOLD` | env 有被 `DecisionConfig.load()` 讀，但欄位 `.form_trigger_threshold` 存取 **0** | ⚠️ 讀進來沒人取用 |
-| **`grounding_scope`** | **有真消費者**：`services/instance_applicability.py` 以 `getattr(config, "grounding_scope", None)`／`config.get("grounding_scope")` **動態讀** | ❌ **⛔ 不是零消費者**——動態存取，AST 屬性掃描也看不到，只能靠讀那一段 |
+| 符號 | grep 檔案 | AST 呼叫／屬性 | 動態存取（`getattr`／`.get`） | 判定 |
+|---|---|---|---|---|
+| `config_for_category` | 3（**全在註解**） | 0 | 0 | ✅ 零消費者 |
+| `build_toc` | 2（**全在 docstring**） | 0 | 0 | ✅ 零消費者（活的是 `build_canon_toc`，3 處） |
+| `category_config` | 2（**兩行註解**） | 0 | 0 | ✅ 零消費者 |
+| `cta_rules` | 1 | 只在 `conversational_config.py` 自身建構 | 只在自身 | ✅ 零消費者 |
+| `FORM_TRIGGER_THRESHOLD` | 1 | env 有讀，欄位 `.form_trigger_threshold` **0** | 0 | ⚠️ 讀進來沒人取用 |
+| **`persona_role`** | 2 | 自身建構 | **`tools/audit_config.py:101,126`** | ❌ **有消費者**（設定契約稽核） |
+| **`topic_scope`** | 2 | 自身建構 | **`tools/audit_config.py:107`** | ❌ **有消費者** |
+| **`answer_rules`** | 2 | 自身建構 | **`tools/audit_config.py:137`** | ❌ **有消費者** |
+| **`grounding_scope`** | 3 | 0 | **`services/instance_applicability.py:138,140`** | ❌ **有消費者** |
+
+⇒ **九條裡四條有真消費者**，全部只能靠「動態存取」這一欄看見——
+`tools/audit_config.py` 是設定契約稽核（knowledge-config-governance R2），
+它讀這些鍵是為了**檢查配置寫得對不對**，⛔ 不是回合路徑在用。
 
 ⚠️ **`conversational_config.py` 本身在回合路徑上**（`runtime.py`／`turn_context.py`／
 `tools/handoff.py`／`shadow.py` 都 import 它，用 `effective_handoff_message`／
 `config_for_target_user`）——⛔ 別把「這幾個鍵沒人讀」讀成「整個模組沒人用」。
 
-⚠️ **動態存取是三把尺的共同盲區**：`getattr(x, "name")`／`d.get("name")` 這種寫法，
-grep 會命中（含註解）、AST 屬性掃描會漏。判「有沒有人用」時三種都要看。
+⚠️ **盲區已掃過一輪**：把「判死的東西」（這 9 條＋14 個已刪 env＋13 張登記例外的表）
+全部拿去比對 599 個動態鍵，除上表四條外**其餘 0 命中**。
+查證：AST 收集 `getattr`／`.get`／`setattr`／`hasattr`／`pop` 的字串常數第一引數。
 
 ---
 
