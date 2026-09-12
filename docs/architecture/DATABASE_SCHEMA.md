@@ -1442,3 +1442,35 @@ psql -h postgres -U aichatbot -d aichatbot_admin < backup_20251022.sql
 **最後更新**: 2025-10-22
 **維護者**: Claude Code
 **版本**: v2.0
+
+---
+
+## 新線（agentic-MCP）實際在用、但本檔先前漏列的表
+
+🔴 **2026-09-12 發現**：`public` 有 63 張表，本檔原本只寫到 38 張。漏掉的 25 張裡，
+**12 張是執行期程式正在讀寫的**——包括每次 `/mcp` 呼叫都落一列的 `usage_events`。
+以下逐張補上（列數為 2026-09-12 實查）：
+
+| 表 | 列數 | 誰讀寫 | 用途 |
+|---|---|---|---|
+| `usage_events` | 14,422 | `app.py`、`routers/agent.py`、`services/usage_metering.py` | **每次 `/mcp` 呼叫一列**；`decision_snapshot` 存回合軌跡（⛔ 無原文，不變量 30） |
+| `agent_shadow_texts` | 1,811 | `services/agent/shadow.py` | 影子跑動的輸出文字 |
+| `openai_cost_tracking` | 1,709 | `services/image_recognition_service.py`、`services/agent/mcp_facade.py` | token／成本落帳 |
+| `loop_execution_logs` | 1,260 | `routers/loops.py`、`routers/loop_knowledge.py` | 迴圈迭代紀錄（⚠️ 執行面已拆，只剩查詢） |
+| `loop_generated_knowledge` | 915 | 同上 | 迴圈生成知識（**全 915 列已審完：469 核准／446 退回，0 待審**） |
+| `agent_confirmation_tokens` | 483 | `services/agent/confirm_card.py`、`mcp_facade.py` | 確認卡的 `pid`；機器值不承載意圖的落點 |
+| `knowledge_completion_loops` | 27 | `routers/loops.py` | 27 筆歷史迴圈 |
+| `unified_jobs` | 4 | `routers/knowledge_import.py`／`knowledge_export.py` | 背景任務 |
+| `help_center_pages` | 0 | `services/agent/tools/help.py`、`mcp_facade.py` | `help.read` 的來源；**目前 0 列** ⇒ 該工具現在取不到東西 |
+| `vendor_quotas` | 0 | `services/usage_metering.py`、`app.py` | 月額度；**目前 0 列** ⇒ 無業者設額度 |
+| `platform_sop_template_intents` | 0 | `routers/platform_sop.py`、`routers/vendors.py` | SOP 範本↔意圖關聯（⚠️ 後台可寫，對話路徑不讀） |
+| `vendor_sop_item_intents` | 0 | `routers/vendors.py` | 同上 |
+
+⚠️ **兩張 0 列的表值得注意**：`help_center_pages` 空 ⇒ `help.read` 工具註冊了但查無內容；
+`vendor_quotas` 空 ⇒ 額度機制在、沒有任何業者被設限。兩者都不是壞掉，是**未佈值**。
+
+⚠️ 另有 13 張執行期零引用的表（殘留／備份），處置與證據見
+[`SYSTEM_ARCHITECTURE.md`](./SYSTEM_ARCHITECTURE.md) §3。
+
+⛔ **新增資料表時必須回來補這張表或本檔其他節**——不變量 37 會擋
+（`scripts/audit/checks/db_table_documented.py`）。

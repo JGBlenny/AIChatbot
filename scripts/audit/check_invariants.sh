@@ -767,6 +767,25 @@ else
 fi
 echo
 
+echo "═══ 不變量 37：public 表要嘛有文件、要嘛明示登記例外（2026-09-12：實查 63 張只寫了 38 張）═══"
+# 源起：業主問「19 張零引用的表要不要處置」，而 DECISIONS／MAP／DATABASE_SCHEMA
+# 三者對其中三張都是 0 次提及——沒有任何地方記得住答案。逐一盤查才發現
+# DATABASE_SCHEMA.md 只寫 38/63，漏掉的 25 張裡有 12 張是執行期正在讀寫的
+# （含 usage_events 14,422 列、vendor_quotas）。⇒ 缺的是機制不是那幾張表。
+# ⚠️ 例外清單是**凍結債**不是垃圾桶：新表一律該寫文件，⛔ 不得靠加例外過關。
+DBT_CHECK="$REPO/scripts/audit/checks/db_table_documented.py"
+if ! python3 "$DBT_CHECK" --self-test >/dev/null 2>&1; then
+  echo "❌ FAIL：不變量 37 檢查器的自我測試未過（檢查器本身失效，其 PASS 不可信）"
+  python3 "$DBT_CHECK" --self-test
+  FAIL=1
+elif ! DBT_OUT=$(python3 "$DBT_CHECK" 2>&1); then
+  echo "$DBT_OUT"
+  FAIL=1
+else
+  echo "$DBT_OUT"
+fi
+echo
+
 echo "═══ 不變量 26：向量索引 ⛔ 不得用參數會崩塌的 IVFFlat ═══"
 # 為何需要（2026-09-01 b2b 35 題實測逼出）：
 #   idx_kb_embedding 為 ivfflat lists=100，而全表僅 992 筆向量 ⇒ 每 list 約 10 筆；
