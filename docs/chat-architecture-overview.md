@@ -1,160 +1,18 @@
-# Chat 對話系統架構全貌：知識／SOP／表單／API／對話面向／lookup
+# Chat 對話系統：觸發語彙盤點與設計方向判定
 
-> 版本：v2（2026-07-10）
-> 性質：對碼查實的「實然」＋定案的「應然」＋設計方向判定。關鍵事實均附 file:line；與既有記錄矛盾處（option-routing、pending_question）已親自核實以碼為準。
-> ⚠️ **行號僅供參考，以符號為準**——行號會隨 commit 漂移，引用前以檔名＋可 grep 的符號重新對碼。
+**最後對碼：2026-09-12**
+
+> 2026-09-12 刪掉全景架構圖、§0 入口矩陣、§1 決策管線、§2 機制總表——
+> 它們描述的 `routers/chat.py`／`conversational_engine.py`／`api_call_handler.py`／
+> `form_manager.py`／`sop_orchestrator.py` 已於 2026-09-11 刪除（DSP-046），
+> 且每個斷言都以 `chat.py:<行號>` 為據，指向不存在的檔。
+> ⛔ 不留「已退役」標記——實測證明沒人看。要看舊設計請 `git log`。
 >
-> ⚠️ **2026-09-11 更新**：本文描述的舊 REST 對話鏈生產程式碼（`routers/chat.py`／
-> `services/conversational_engine.py`／`services/api_call_handler.py`／
-> `services/form_manager.py`／`services/sop_orchestrator.py`／
-> `services/sop_trigger_handler.py`／`services/digression_detector.py`）已於
-> 2026-09-11 隨 commit `7c905408`／`10116570` 整批砍除，見 `.claude/DECISIONS.md`
-> DSP-046。本文架構圖與對碼結論是**該鏈存在時**的實然記錄，下方逐處標記已退役
-> 的模組；知識／lookup／業者 SOP 資料管理等仍活的子系統不受影響。現行唯一活線
-> 架構見 `docs/architecture/AGENTIC_MCP_ARCHITECTURE.md`。
-
-## 全景架構圖（實然＋終態，狀態標記：✅ 生產/已收案　🚧 已規劃有案　⬜ 未立案/待建）
-
-> 2026-07-11 補。骨架（回合歸屬→引擎/快路徑→工具箱→資料層）× 四維度（通路/角色/業者/業態）的完整圖；角色終態表與遷移路徑見 conversation-first-architecture-assessment.md §6.5。
-
-```mermaid
-flowchart TB
-    subgraph CH["通路層"]
-        WEB["Web 內嵌（jgb2）⚠️ 舊鏈端點已退役，見檔頭 2026-09-11 註記"]
-        LINE["LINE Bot 🚧 line-bot-integration-plan"]
-    end
-
-    subgraph ID["入口與身份正規化"]
-        PROXY["jgb2 後端代理 ✅<br/>session 覆寫 role_id/user_id・X-API-Key server 側"]
-        GW["LINE Gateway 🚧<br/>line_channels/bindings/sessions＋LIFF 綁定"]
-        NORM["VendorChatRequest（單一契約）<br/>mode × target_user × vendor_id × role_id/user_id（雙證）"]
-    end
-
-    subgraph OWN["回合歸屬層——維度：角色"]
-        S0["進行中會話攔截 ✅<br/>對話偽會話 ＞ 表單會話"]
-        IMG["損傷圖片 → 修繕 SOP ✅"]
-        BTN["按鈕 trigger_form_id ⬜ G9/LINE P1"]
-        RULE{"角色規則（§0 矩陣＋assessment §6.5 終態表）"}
-    end
-
-    subgraph ENG["對話引擎（擁有 ①進行中對話 ②交易/診斷 回合）"]
-        BRAIN["Brain 每輪決策 ✅<br/>ask/converge・face/scope 中途切換"]
-        CTX["三層系統脈絡＋槽位＋候選辨識 ✅<br/>面向＝DB 配置（加面向零改碼）"]
-        GRD["grounding ✅<br/>API facts→formatter 決定性解碼／向量/分類/ids 選材"]
-        P1CAP["調用表單能力 ⬜ P1（對話式報修 POC）"]
-    end
-
-    subgraph FAST["檢索快路徑（擁有 ③冷資訊問答 回合）"]
-        QR["query rewrite＋embedding 預計算 ✅"]
-        RET["SOP ∥ 知識並行檢索 ✅<br/>觸發配置透傳（P0 已修）"]
-        ARB["仲裁 ✅ SOP 0.55／知識 0.6／差距 0.15<br/>Case 3.1＝業者 SOP 覆蓋通用知識"]
-        DISP["action 分派 ✅<br/>direct│api_call│form_fill≥0.75│面向路由≥0.75<br/>（0.75 側門 → P2 改意圖規則）"]
-        CACHE["快取 ✅（動作類排除）"]
-    end
-
-    subgraph TOOLS["工具箱（兩邊共用，維度：業者×業態）"]
-        FORM["表單機 ✅ 8 狀態＋離題＋chaining＋option-routing<br/>（業者變體被 UNIQUE 債擋，需求出現才解）"]
-        API["JGB API ✅ 雙證個資（mock→真 API＝E1 gate）"]
-        LK["lookup 業者資料集 ✅"]
-        CFG["vendor_configs 業者參數 ✅<br/>（模組開關 repair_enabled ⬜修繕通用化）"]
-    end
-
-    subgraph DATA["資料層（歸屬×形狀）"]
-        KB[("knowledge_base<br/>vendor_ids 空＝通用・business_types 過濾業態<br/>對話規則列＝面向/persona 定義")]
-        SOPD[("vendor_sop_items<br/>嚴格業者維度")]
-        FS[("form_schemas<br/>vendor_id NULL＝通用")]
-        LKT[("lookup_tables<br/>UNIQUE(vendor,category,key)")]
-        JGBD[("JGB 平台<br/>合約/帳單/修繕個資")]
-        UE[("usage_events<br/>計量/額度/分數埋點 ✅P0")]
-    end
-
-    WEB --> PROXY --> NORM
-    LINE -.-> GW -.-> NORM
-    NORM --> S0 --> IMG --> RULE
-    BTN -.直達.-> FORM
-    RULE -->|"prospect ✅／業者員工診斷 ✅／租客 P2 ⬜"| BRAIN
-    RULE -->|"FAQ／未達診斷路由"| QR
-    QR --> RET --> ARB --> DISP
-    DISP -->|form_fill| FORM
-    DISP -->|api_call| API & LK
-    DISP -->|面向路由| BRAIN
-    DISP --> CACHE
-    BRAIN --> CTX --> GRD
-    GRD --> API & KB
-    P1CAP -.P1.-> FORM
-    FORM -->|完成 call_api| API
-    RET --> KB & SOPD
-    FORM --> FS
-    LK --> LKT
-    API --> JGBD
-    CFG -.參數注入.-> FORM & KB
-    NORM -.每則訊息計量.-> UE
-    ARB -.分數埋點.-> UE
-```
-
-**遷移進度尺**：P0 觸發語彙還債 ✅收案（18f64a4，待部署）→ P1 引擎調表單 ⬜ → P2 租客反轉 ⬜（前置：視角補全＋多輪基準＋灰帶數據）→ P3 表單機收斂 ⬜；並行：LINE Phase 1 🚧（等三拍板＋E2/E3）、修繕通用化 ⬜（零依賴可開）、E1 真 API＝上線 gate。
-
-⚠️ **以下 §0–§5 出現的 `chat.py`／`conversational_engine.py`／`api_call_handler.py`／`form_manager.py`／`sop_orchestrator.py`／`sop_trigger_handler.py`／`digression_detector.py`（含所有 `:行號` 引用）全部指向已隨舊鏈於 2026-09-11 退役的檔案**（見檔頭註記），逐行不再重覆標記；行號本身依既有鐵則本就僅供歷史對照、不當事實。
-
-## 0. 入口 × 角色矩陣
-
-| 角色 | mode | 進場路徑 | 能力邊界 |
-|---|---|---|---|
-| 租客/房東（b2c） | b2c | 完整管線（§1） | SOP＋知識＋表單＋API＋對話面向；個資雙證 |
-| 業者員工（b2b） | b2b | 跳過 SOP、只檢索 JGB 系統知識庫（chat.py:1742-1761），但知識命中診斷分類後**照樣進對話面向引擎**（分類路由無 mode 驗證，chat.py:646-659）——五面向 e2e 即以 b2b＋property_manager＋真 role_id 收案 | 問答＋診斷面向（含 JGB API facts）；無 SOP/表單 |
-| 潛在客戶（prospect） | b2b＋無 role_id | **engine-first**：優先進對話引擎（售前配置，chat.py:589） | 售前四鐵則，無個資能力 |
-
-## 1. 一則訊息的完整決策管線（實然）
-
-```
-請求（mode, vendor_id, role_id, user_id, session_id, message, image_urls）
-│
-├─ Step 0a  role_id 自動補全（vendors.settings.jgb_role_id，chat.py:3782）
-├─ Step 0   會話攔截（最優先，chat.py:3800-3822）——讀取順序：
-│           ①對話偽會話（form_id='conversational'）→ 續對話引擎
-│           ②表單會話 REVIEWING/EDITING → 確認/修改；COLLECTING → 續收欄位
-│           ※ 有進行中會話時，下面全部不跑
-├─ Step 0.5 圖片辨識（chat.py:3823）：損傷圖片→直接觸發修繕 SOP，非損傷降級文字
-├─ Step 1   業者驗證
-├─ Step 1.5 prospect engine-first（handle_conversational_entry，chat.py:589）
-├─ Step 2   快取（動作類 form_fill/api_call 不進快取；串流/debug 排除）
-├─ Step 3   query rewriting＋embedding 預計算（一次算好 SOP/KB 共用，chat.py:1770-1784）
-│
-├─ Step 4   檢索與仲裁
-│   ├─ 4a  b2b → 只走系統知識庫（chat.py:1742）
-│   ├─ 4b  b2c → SOP 與知識「並行」檢索（asyncio.gather，chat.py:1786-1812）
-│   ├─ 4c  分數仲裁（chat.py:1815-2104）：SOP 閾值 0.55、知識 0.6、差距線 0.15
-│   │       0A SOP 被取消→禮貌回應│0B SOP 已執行動作→絕對優先│SOP 等關鍵詞→讓知識答
-│   │       Case1 SOP 顯著高→SOP│Case2 KB 顯著高→知識│
-│   │       Case3 接近：SOP 有動作→SOP 優先（3.1，業者覆蓋語義實現點）；無動作→比分
-│   │       Case4/5 單方達標→該方│Case6 都不達→fallback
-│   ├─ 4e  知識勝出→分類路由（chat.py:769-788）：top1≥0.75 且分類命中診斷面向配置
-│   │       → 進對話引擎；錨點防呆濾空答案錨點（L791）；top1 不相關讓次筆晉位
-│   └─ 4f  action_type 分派（chat.py:2940-3069）：
-│           form_fill（需相似度≥FORM_TRIGGER_THRESHOLD 0.75，chat.py:2852）→ 表單
-│           api_call → lookup／jgb_*│form_then_api│direct_answer → LLM 優化
-│
-└─ Step 4g fallback 鏈：參數答案（check_param_question→vendor_configs）→ LLM 兜底
-```
-
-## 2. 機制總表
-
-| 機制 | 職責 | 業者維度 | 觸發 | 回答方式 | 關鍵位置 |
-|---|---|---|---|---|---|
-| **知識** | 語義錨點：直答或掛動作 | `vendor_ids` 陣列，空＝通用 | 向量檢索 ≥0.6；表單觸發另需 ≥0.75 | direct_answer 走 LLM 優化；掛動作交棒 | vendor_knowledge_retriever_v2.py:109 |
-| **SOP** | 業者客製路由＋開場 | 嚴格業者維度，無全域 | 向量 ≥0.55＋trigger_mode（none/manual/immediate）＋關鍵詞確認 | prompt＋next_action 交棒 | sop_trigger_handler.py:148-276 |
-| **表單** | 多輪槽位收集 | vendor_id，NULL＝通用（⚠️ UNIQUE 債） | 知識/SOP form_fill | 逐欄位＋quick_replies；完成走 on_complete_action（show_knowledge/call_api/both） | form_manager.py:34-43（8 狀態機） |
-| **form-chaining＋option-routing** | 表單接表單／選項分岔決策樹 | 隨表單 | 表單完成時 | 選項層路由（next_form_id/answer_kb）優先、表單層 fallback、深度上限 3 | form_manager.py:539-717 **已實作** |
-| **API** | 平台交易與個資（雙證） | 平台層 | api_call | 決定性 facts→formatter | api_call_handler.py:54-62 |
-| **lookup** | 業者結構化資料集 | 嚴格業者維度 | 知識錨點 api_call endpoint=lookup | 決定性組合無 LLM | lookup.py:172-199 |
-| **對話面向引擎** | 診斷/顧問類多輪 | 平台層配置＋業者資料 | prospect engine-first／b2c 分類路由（≥0.75） | 三層系統脈絡＋Brain 每輪決策＋facts 決定性 grounding→LLM 組話 | conversational_engine.py:117-828 |
-
-**對話面向引擎要點**（同一套引擎服務 prospect 與 b2c 診斷）：
-- 配置**全資料驅動**：knowledge_base `category='對話規則'` 的 JSON 配置，加面向＝加一筆配置列（conversational_config.py:27-45）
-- 偽會話共用 `form_sessions`（form_id='conversational'），與表單會話同表互斥，讀取順序對話優先（chat.py:422-495）
-- facts 兩路：`_ground_by_api`（JGB API＋formatter 決定性解碼，1 筆答/0 筆追問/N 筆列候選）或 `_converge_grounding`（ids/category/vector 選材）
-- 中途切換：face 切換（同會話換面向、重載脈絡）；scope switch（離題）→ 關會話回 None 重路由
-- 對話中觸發表單：**目前無此路**——面向與表單是平行機制，靠分類路由分流
+> 保留的是**診斷與裁決**：§3 觸發語彙碎片化的盤點（另有 spec
+> `trigger-vocabulary-debt`）、§4 關係規則、§5 應然 vs 實然差距、
+> §6 2026-07-10 的設計方向判定。
+>
+> 現況架構見 [`architecture/SYSTEM_ARCHITECTURE.md`](architecture/SYSTEM_ARCHITECTURE.md)。
 
 ## 3. 觸發語彙盤點（碎片化診斷）
 
