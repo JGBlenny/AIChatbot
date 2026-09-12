@@ -175,12 +175,16 @@ class BaseRetriever(ABC):
                 True 時跳過 application 端 threshold 過濾，回傳所有候選
                 （含 final similarity < threshold 的低分項目）。
                 仍會套用 top_k 與 final similarity 排序。
-                🔴 **2026-09-12：唯一的消費者 `chat.py` 的 debug 模式已於
-                2026-09-11 刪除，`include_debug_info` 全 repo 查無。**
-                本參數目前**沒有任何生產呼叫端傳 True**（`vendor_knowledge_retriever_v2`
-                只是原樣轉傳，`services/agent/**` 零引用），只剩
-                `tests/unit/retrieval/test_retrieve_pipeline_req.py` 在測。
-                ⚠️ 要不要連同這條旁路一起刪，待裁決——⛔ 先不要以為它還有人用。
+                ⚠️ **消費者換人了，⛔ 不是沒人用**：原本是 `chat.py` 的
+                `include_debug_info` debug 模式（已於 2026-09-11 隨舊鏈刪除），
+                現在的指定消費者是**離線量測**——
+                `.claude/skills/retrieval-improvement-loop/rules/量測管線自證.md`
+                明文要求用 `retrieve_knowledge_hybrid(return_unfiltered=True, …)`
+                取中間狀態。⛔ **不得刪除本參數**：拿掉它，做成因盤查的人只能自寫
+                SQL，而生產用 `ORDER BY (1 - (embedding <=> v)) DESC`（不走索引）、
+                自寫的多半是 `ORDER BY embedding <=> v`（走索引）⇒ **召回率差 70%**，
+                量到的是工具不是系統。
+                回合路徑上沒有呼叫端**是設計如此**（產線流量維持 False 預設）。
             unfiltered_sink: **觀測用出口**（預設 None＝完全不動）。傳入 list 時，
                 於 Step 7 過濾**之前**把候選原樣放進去（同一批 dict 物件，非複本）。
                 ⚠️ 存在的理由：`similarity_threshold` 把候選砍到 0 筆時，回傳值為空
@@ -388,12 +392,15 @@ class BaseRetriever(ABC):
 
         # 觀測出口：過濾**之前**先讓候選流出（⛔ 不影響下方任何判斷與回傳值）。
         # 全數落榜時回傳為空，`unfiltered_sink` 是唯一還留著那批分數的地方。
+        # ⚠️ 2026-09-12 對碼：**目前零呼叫端（含測試）**——那是因為門檻歸因（T 類）
+        #    那一輪還沒跑，⛔ 不是它被取代了。與 return_unfiltered 的差別：本出口
+        #    **不改回傳值**，所以可以開在產線流量上而不影響行為。
         if unfiltered_sink is not None:
             unfiltered_sink.extend(results)
 
         # Step 7: application 端 threshold 過濾（比對 final similarity）
         # followup-debug-visibility 選項 A：return_unfiltered=True 時跳過過濾。
-        # 🔴 原消費者 chat.py 的 debug 模式已刪（2026-09-11）；現無生產呼叫端傳 True。
+        # 消費者＝離線量測（retrieval-improvement-loop skill），⛔ 不是回合路徑。
         if not return_unfiltered:
             before_filter = len(results)
             results = [r for r in results if r.get('similarity', 0) >= similarity_threshold]
