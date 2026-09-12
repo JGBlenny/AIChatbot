@@ -2,7 +2,8 @@
 
 責任：
 1. 統一匯入路徑——讓測試可直接 `from services.x import ...` / `from routers.x import ...`，
-   以及既有以 `services/` 為根的 bare import（`from form_manager import ...`），
+   以及既有以 `services/` 為根的 bare import（例：`from cache_service import ...`；
+   🔴 2026-09-12 換範例——原寫 `form_manager`，該模組已於 2026-09-11 刪除），
    取代各檔案散落的 `sys.path.insert`（既有檔仍可保留，屬冗餘但無害；R9.1 不改其行為）。
 2. 提供共用 fixtures（mock_db_pool / mock_llm / anyio_backend），新測試可直接取用。
 

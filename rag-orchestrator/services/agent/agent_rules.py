@@ -57,8 +57,9 @@ _PERSONA_TEXT = (
 )
 
 #: pm（已在使用系統的業者）persona，附錄 A 定案（2026-09-07，130 字）。
-#: ⚠️ 事實：`AGENT_TURN_SPEC` 目前只開 prospect stage，這條分支今天無活流量，
-#: 仍實作以滿足 R4.7 與快照（Plan §1.1-3）。
+#: 🔴 2026-09-12 更正：前一版寫「`AGENT_TURN_SPEC` 目前只開 prospect stage」——
+#: 已過期，DSP-037（2026-09-07）開通 pm，現值是 `{"prospect": "M1", "property_manager": "M1"}`。
+#: 查證：`grep -n 'AGENT_TURN_SPEC' -A 80 rag-orchestrator/services/agent/mcp_facade.py | grep stage`
 _PERSONA_TEXT_PM = (
     "你是 JGB 智慧物業管理系統的客服助理，現在服務的對象是已在使用系統的業者"
     "（物業管理／包租代管／房東）：專業、簡潔，目標是解決對方在操作、帳務、"

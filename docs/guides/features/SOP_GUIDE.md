@@ -1,5 +1,15 @@
 # 📋 SOP 系統完整指南
 
+🔴 **2026-09-12：SOP 的「影響對話」那一半已經沒有了。**
+後台 CRUD、批次匯入、embedding 重算都還能用；但**對話路徑對 `vendor_sop_items` 零讀取**
+（`grep -rli "sop" rag-orchestrator/services/agent/` ＝ 0；正對照：同目錄 `kb` 13 檔、
+`verifier` 20 檔）。編排器與觸發器（`sop_orchestrator.py`／`sop_trigger_handler.py`）
+已於 2026-09-11 隨舊 REST 對話鏈刪除（`.claude/DECISIONS.md` DSP-046）。
+
+⇒ **業者改了 SOP 機器人不會變，這不是快取或生效時序問題，是沒有讀者。**
+下文的觸發模式／意圖關聯／智能檢索／故障排除各節請套用這條閱讀。
+現況對話見 [`docs/architecture/SYSTEM_ARCHITECTURE.md`](../../architecture/SYSTEM_ARCHITECTURE.md) §4。
+
 **最後更新**: 2025-10-23
 **版本**: v2.0（整合版）
 **適用對象**: 開發者、系統管理員、業者管理員

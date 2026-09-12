@@ -97,7 +97,7 @@ flowchart LR
   RTB --> TC["turn_context.py\nTurnAccumulator／ReservedCallIds\n九段資料注入"]
   RTB --> ML["_run_model_loop\n（runtime.py 內，工具迴圈＋Verifier）"]
   ML --> EG["exit_gates.py\nEXIT_GATES 四道閘"]
-  EG --> AS["agent_session.py\n（規劃中，R3 尚未落地）"]
+  EG --> AS["agent_session.py\n（已落地，13 處呼叫）"]
 ```
 
 - `turn_segments.py`：模型前的六條終止路徑（機器值程式段）。
@@ -105,7 +105,11 @@ flowchart LR
 - `exit_gates.py`：四道出口閘依序表 `EXIT_GATES`（`scope_exit` → `handoff_without_lookup` → `ask_target_gate` → `handoff_data_exits`，
   順序本身是契約，見該檔 docstring）與 `finalize`。
 - `limits.py`：DSP-045 額度封閉表（見 §6），與回合管線並行、非管線的一段。
-- `agent_session.py`（**規劃中，Plan R R3，對碼查無此檔**）：預計收攏 `state["agent"]` 11 個鍵的生命週期讀寫成單一類別
+- `agent_session.py`（🔴 **2026-09-12 更正：已落地，前一版寫「規劃中、對碼查無此檔」是假的**
+  ——該檔 347 行，`AgentSession()` 在 `runtime.py`／`exit_gates.py`／`turn_segments.py`／
+  `state_store.py`／`completed_actions.py` 共 **13 處**被呼叫。查證：以 `ast` 數 `ast.Call`，
+  ⛔ 不要用 grep 命中數，docstring 會混進來）：收攏 `state["agent"]` 鍵的生命週期讀寫成單一類別。
+  ⚠️ 唯獨 `begin_turn()` 本體仍是刻意的 no-op（門面尚未改叫它，見該檔註解）
   （`begin_turn()`／`end_turn()`／`prompt_segments()` 唯一寫讀點），⛔ 尚未執行，本節先記目標形態避免下一輪走查誤判。
 - 九個保留 id 前綴（Plan R 覆蓋矩陣列舉）：`img-`／`done-`／`entry-`／`aff-`／`ctx-`／`pre-`／`ref-`／`doc-`／`est-`。
 
