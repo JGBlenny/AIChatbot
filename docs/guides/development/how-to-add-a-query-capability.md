@@ -33,8 +33,10 @@
 - **face 只選 builder，⛔ 不選資料源。** 資料源硬編在 `services/agent/tools/jgb2.py`
   的 `query_<域>` 裡。加 face 不會讓它去查別張表。
 - **builder 簽名是單列** ⇒ 要多列一起算的東西，加 face 解不了（見 §3）。
-- **參數列被凍死**：`tests/unit/agent/test_to_openai_tools_strict_req.py` 釘死
-  `jgb2.query.*` 的 properties 就是 `face`(必填 enum)／`ref`／`keyword`(選填)。
+- **參數列被凍死**：`_jgb2_spec` 的 properties 就是 `face`（必填 enum）／`ref`／`keyword`，
+  `additionalProperties: False`。守它的測試是
+  `tests/unit/agent/test_session_confirm_tools_req.py`（對真 spec 斷言）；
+  ⚠️ `test_to_openai_tools_strict_req.py` 測的是**假 spec 的 strict 轉換形狀**，⛔ 不是參數列本身。
   ⛔ 想多收一個參數要先過那支測試，且只有 `repairs` 有例外
   （`JGB2_EXTRA_PROPERTIES` 多收 `estate_id`，那張表是唯一來源）。
 

@@ -60,7 +60,10 @@ class DecisionConfig:
       對齊為 `0.65`（＝參數台帳與兩份 compose 的值），理由見檔頭。
     - form_trigger_threshold ── FORM_TRIGGER_THRESHOLD（面向進場＋表單觸發同一顆）
     - sop_min / knowledge_min / score_gap ── 原六 case 仲裁的硬編碼常數（`decide_arbitration`
-  與 `chat.py` 皆已於 2026-09-11 刪除）；保留是為了 `knowledge_min` 仍被 `tools/kb.py` 讀
+  與 `chat.py` 皆已於 2026-09-11 刪除）。🔴 2026-09-12 更正：前一版寫「保留是為了
+  `knowledge_min` 仍被 `tools/kb.py` 讀」——**那是錯的**，`kb.py` 讀的是
+  `DecisionConfig.load().kb_threshold`；`.knowledge_min` 與 `.form_trigger_threshold`
+  兩個欄位**非測試讀取皆為 0**。它們現在只是被 `load()` 填進去、沒人取用
     """
     kb_threshold: float = 0.65        # 2026-09-12 由 0.55 對齊部署值，見檔頭
     form_trigger_threshold: float = 0.75

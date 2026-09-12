@@ -229,7 +229,7 @@ kb.get    → build_visibility_predicate ＋ canon.review_state.content_reviewed
 |---|---|---|
 | 1 | **face 只選 builder，⛔ 不選資料源** | 資料源**寫死在 `query_<domain>` 函式本體**。實測 `query_estates` 只呼叫 `get_estate_status`＋`get_estate_detail`，**⛔ 不依 `face` 分流**。加鍵拿不到新資料 |
 | 2 | **builder 簽名是單列** | `build_payment_flow_facts(bill, user_question)`、`build_estate_status_facts(estate, detail, user_question)`。多列一律走 `_ok_candidates` 變候選清單 ⇒ **跨列彙總（「這戶今年收了幾期」）在現行形狀下表達不出來** |
-| 3 | **參數列是封閉的** | `registry.to_openai_tools` 把 enum 生成 `Literal`；`test_to_openai_tools_strict_req.py` 釘住參數列為 `["ctx","face","ref","keyword"]`。只有 repairs 有 `JGB2_EXTRA_PROPERTIES` ⇒ 其餘域**傳不了額外參數** |
+| 3 | **參數列是封閉的** | `_jgb2_spec` 的 `properties` 是 `face`（必填 enum）／`ref`／`keyword`，`additionalProperties: False`。🔴 **2026-09-12 更正**：前一版寫「釘住參數列為 `["ctx","face","ref","keyword"]`」——**兩處都錯**：沒有 `ctx`，且 `test_to_openai_tools_strict_req.py` 測的是**檔內自建的假 spec**（驗 strict schema 轉換形狀），⛔ 不是真 spec。真正對 `_jgb2_spec` 做斷言的是 `test_session_confirm_tools_req.py`（驗 `extra_properties` 預設不變、只有 repairs 多 `estate_id`）。只有 repairs 有 `JGB2_EXTRA_PROPERTIES` ⇒ 其餘域**傳不了額外參數** |
 
 ⇒ 真要加能力，動的是 `query_<domain>` 的資料源與回傳形狀，**那是架構改動，不是加一個鍵**。
 
@@ -330,13 +330,21 @@ kb.get    → build_visibility_predicate ＋ canon.review_state.content_reviewed
 那個數字是假警報。上表用的是**執行期程式**這個較嚴的定義。
 查證：`SELECT tablename FROM pg_tables WHERE schemaname='public';` 再對程式做逐表 grep。
 
-**已經沒有的**（全部零消費者）：
+**回合路徑上不讀的**（🔴 2026-09-12 逐條重驗——前一版寫「**全部零消費者**」是錯的，
+九條**全都還有非測試消費者**，只是不在對話回合路徑上。這種「把活的說成死的」比反方向
+更難發現，因為五把尺全都只找「把死的說成活的」）：
 
-- 分類進場路由（`categories` → `config_for_category` → Face）
-- 三層系統脈絡疊加（`build_toc` 只有測試呼叫）
-- 對話規則 config 的 `grounding_scope`／`persona_role`／`topic_scope`／`answer_rules`／`cta_rules`
-- `category_config` 的父子骨架（`services/` 與 `routers/` 只剩兩行註解提及）
-- 進場門檻 `FORM_TRIGGER_THRESHOLD`
+| 符號 | 還在嗎 | 誰在用 | 回合路徑 |
+|---|---|---|---|
+| `config_for_category` | ✅ `conversational_config.py:273` | `tools/audit_config.py`（設定契約稽核）、`tools/seed_repair_facet_knowledge.py` | ⛔ 不呼叫 |
+| `build_toc` | ✅ `outline.py:426` | **無**——AST 數 `ast.Call` 真實呼叫 **0 處**（⛔ grep 會把 docstring 算進來）。活的是 canon 版 `build_canon_toc`（3 處） | ⛔ 不呼叫 |
+| `grounding_scope`／`persona_role`／`topic_scope`／`answer_rules`／`cta_rules` | ✅ 定義在 `conversational_config.py` | `tools/audit_config.py` 逐條稽核；`instance_applicability.py` 讀 `grounding_scope` | ⛔ 不讀這幾個鍵 |
+| `category_config` | — | **僅註解提及**（`services/jgb/estates.py:94`、`repairs.py:87` 各一行） | ⛔ 無程式讀取 |
+| `FORM_TRIGGER_THRESHOLD` | ✅ `decision_layer.py:77` 讀 env | ⚠️ 讀進來了但**欄位 `.form_trigger_threshold` 零讀取** | ⛔ 不讀 |
+
+⚠️ **`conversational_config.py` 本身在回合路徑上**（`runtime.py`／`turn_context.py`／
+`tools/handoff.py`／`shadow.py` 都 import 它，用 `effective_handoff_message`／
+`config_for_target_user` 等）——⛔ 別把「這幾個鍵不讀」讀成「整個模組沒人用」。
 
 ---
 
