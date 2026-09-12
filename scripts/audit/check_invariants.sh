@@ -748,6 +748,25 @@ else
 fi
 
 echo ""
+echo "═══ 不變量 36：文件的「查證」指令必須真的跑得出東西（2026-09-12 實跑逼出四類錯）═══"
+# 源起：CLAUDE.md 明寫「回報事實一律附可重跑的查證指令」，但從無機制驗過它們跑不跑得動。
+# 一輪實跑抓到：路徑少 rag-orchestrator/ 前綴、符號搬家（runtime.py→exit_gates.py）、
+# 引用已刪的 routers/knowledge.py、以及「容器內逐支讀」這種撞兩容器陷阱的寫法。
+# ⚠️ 掃描刻意排除有日期的紀錄（inputs／reviews／archive／changelog／research）——
+#    那些是當時快照，符號後來搬家不算它們的錯；⛔ 但 HANDOFF 與現況文件不在豁免內。
+DGC_CHECK="$REPO/scripts/audit/checks/doc_grep_citations.py"
+if ! python3 "$DGC_CHECK" --self-test >/dev/null 2>&1; then
+  echo "❌ FAIL：不變量 36 檢查器的自我測試未過（檢查器本身失效，其 PASS 不可信）"
+  python3 "$DGC_CHECK" --self-test
+  FAIL=1
+elif ! DGC_OUT=$(python3 "$DGC_CHECK" 2>&1); then
+  echo "$DGC_OUT"
+  FAIL=1
+else
+  echo "$DGC_OUT"
+fi
+echo
+
 echo "═══ 不變量 26：向量索引 ⛔ 不得用參數會崩塌的 IVFFlat ═══"
 # 為何需要（2026-09-01 b2b 35 題實測逼出）：
 #   idx_kb_embedding 為 ivfflat lists=100，而全表僅 992 筆向量 ⇒ 每 list 約 10 筆；

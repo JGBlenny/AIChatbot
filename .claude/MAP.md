@@ -428,7 +428,7 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 ### 使用手冊
 
 - 產線 | `docs/user-guides/VENDOR_SOP_USER_GUIDE.md` | Platform 與 Vendor 兩種角色各自怎麼配置 SOP 流程
-- 判定 | `docs/user-guides/knowledge-loop-status.md` | 知識完善迴圈剩下什麼:5 支 GET 查詢＋3 支審核端點(逐支實測);⛔ 啟動迴圈／執行迭代的端點已不存在(`grep -c "@router.post" routers/loops.py` ＝0);想跑改善輪走 `.claude/skills/retrieval-improvement-loop/`
+- 判定 | `docs/user-guides/knowledge-loop-status.md` | 知識完善迴圈剩下什麼:5 支 GET 查詢＋3 支審核端點(逐支實測);⛔ 啟動迴圈／執行迭代的端點已不存在(`grep -c "@router.post" rag-orchestrator/routers/loops.py` ＝0);想跑改善輪走 `.claude/skills/retrieval-improvement-loop/`
 
 ⚠️ 上三份是**同主題的入門／標準／深度三層**,同日(2026-05-18)更新,**無任何一份明說取代關係**。
 
