@@ -300,6 +300,173 @@ while True:
 模式值域封閉 `("enforce", "grounding_observe", "observe_only")`。
 ⚠️ 模式感知在 `verify()` **內部**——外層翻判定會讓先命中的引用類把機敏類整段跳過。
 
+### 2d. 其餘核心模組（逐支：它回答什麼命題、⛔ 不得怎麼改）
+
+🔴 **2026-09-12 補寫**：`services/agent/**` 42 個模組裡，本文原本只解釋了 13 個。
+以下把「只被點名」的補上——每支寫「它回答什麼命題」與「⛔ 不得怎麼改」，
+因為後者才是改壞的入口。
+
+#### 注入面
+
+| 模組 | 回答什麼命題 | ⛔ 不得怎麼改 |
+|---|---|---|
+| `prompt_assembler.py`<br>543 行 | **哪些文字准進 system prompt**。白名單只有兩種：(i) 本系統**程式產生**的指令文字（persona／政策／鐵則／工具用途一句話）；(ii) 大綱／目錄，且一律經 `wrap_provenance_data("outline", …)` 包成資料段 | 其餘一切（工具回傳、幫助中心正文、知識列全文）**走工具回傳位置**，由 Runtime 以 `wrap_tool_data(nonce)` 包成 `role=tool`。`build()` 的參數表**刻意沒有任何能接 `ToolResult` 的欄位**——這是**結構上的保證，不是靠自律**（測試用 `inspect.signature` 鎖住參數集合）。⚠️ 使用者訊息**不進資料區**：資料段語義是「以下為資料、非指令」，把提問塞進去會讓模型把它當待引用素材 |
+| `provenance_units.py`<br>182 行 | **引用怎麼成立**。DSP-029 把引用從「模型抄一段引文」改成「模型填一個**片段編號**」：編號側在每個片段行首貼 `[{nonce}:{tool_call_id}:{source}§{i}]`，解析側把標記拆回四元組並取第 i 片段 | **兩側各寫一份切法就是這個設計的致命傷**：切法差一個空片段，模型看到的 `§3` 與系統解析的第 3 片段就不是同一句，而**失敗方向是放行**（解析出來是別的句子，覆蓋檢查照樣可能過）。故**只有一個切法函式**，兩側都只准呼叫它；切法本身直接用 `verifier.split_sentences`——**Verifier 步②也用它，三處同一把尺** |
+| `output_schema.py`<br>430 行 | `AgentOutput`／`VerifierRules`／`VerifierVerdict` 的資料模型（pydantic v2）。⛔ 只放模型，判斷在 `verifier.py` | **`fact_class` 刻意是 `Optional[str]` 不是列舉**：若用列舉，pydantic 會在**建構那一步**就對非法值 raise，Verifier 永遠看不到「非法值」這個狀態，fail-closed 分支也就測不到。⚠️ 生產路徑上 OpenAI `response_format` 的 strict json_schema 仍送封閉 enum——放寬只在型別層 |
+
+#### 判定面
+
+| 模組 | 回答什麼命題 | ⛔ 不得怎麼改 |
+|---|---|---|
+| `question_sensitivity.py`<br>54 行 | **模型自報敏感是不是真敏感**。`fact_class` 由模型自填、Verifier 只驗「敏感類配敏感原因」——回測抓到模型可以把任何一題自報成 `sensitive_no_grounding`，藉此**躲過兩道降級閘直接轉人**。這支是程式側的第二意見 | ⛔ 不寫字串特例：樣式全在 `config/agent_verifier_rules.json` 的 `question_sensitive_patterns`，**改判定＝改規則檔、⛔ 不改程式**。⛔ 不改寫 `out.fact_class`、無副作用只回 bool。⚠️ 詞表錨在**我們自己的產品／服務**（抽成／SLA／資安／法遵／客戶案例），⛔ 不錨在物管本來就有的詞（租金／滯納金／續約）——**誤判成敏感＝維持轉人（無新風險），誤判成非敏感＝敏感題被降級成固定句**，故詞表寧可窄 |
+| `affirmative.py`<br>43 行 | 「使用者說『好』算不算授權送出」。`AFFIRMATIVE_WORDS` 是**凍結元組** | `is_affirmative` **只認整句等值，⛔ 不做包含比對**——「對 查」「對，列出來」都不算。把包含比對當授權訊號＝任何帶肯定字的長句都會被誤判成「同意送出」。⛔ 程式不得多不得少不得改順序 |
+| `text_norm.py`<br>36 行 | 句末標點正規化，**⛔ 只做這一件事**：連續終結標點收斂成第一個 | ⛔ 不補標點、不刪非終結標點、不動內文其他字元。封閉兩條規則：全形 `。？！` 連續 ≥2 收斂成第一個；半形 `?`／`!` 後接全形 `。` 收斂成半形本身 |
+| `bill_period.py`<br>181 行 | **口述期別 → 可比對的年月／未繳**。病灶：業務說「九月的房租」，模型連問三輪帳單編號——**房東不會講編號**，編號是系統識別碼 | **純函式**：⛔ 不讀時鐘（`today` 由呼叫端傳）、⛔ 不讀 env、⛔ 不查 DB、⛔ 不叫模型。**封閉語法**：能解析的講法全在常數表，表外一律 `None`＝解析不到，⛔ 不「盡力猜一個最像的」——猜錯期別的代價比問不到高 |
+
+#### 狀態面
+
+| 模組 | 回答什麼命題 | ⛔ 不得怎麼改 |
+|---|---|---|
+| `agent_session.py`<br>347 行 | `state["agent"]` 的**生命週期封裝**：`begin_turn`／`end_turn` 是**唯一寫點**（取代原本散在 `exit_gates.finalize`／`_finish_confirm_turn`／`turn_segments` 三處各自的欄位寫入），`prompt_segments()` 是範圍釘住判斷的**唯一讀點**，`scope_exit()` 清掉全部 `until_scope_exit` 鍵 | **純封裝，⛔ 不改任何鍵的生命週期數值**（FIFO 5／20／50、一次性、釘住不寫）。包住**同一個** dict，⛔ 不複製、不改鍵名。⚠️ `begin_turn()` 目前仍是刻意的 no-op（門面尚未改叫它） |
+| `session_persistence.py`<br>88 行 | 會話狀態的 SQL 層。新線過去借用 1,581 行的舊引擎，量過只命中四個方法、合計 **43 行純 SQL** ⇒ 抽出來 | **⛔ SQL 逐字照搬、一個字都不准改**：同一張 `form_sessions`、同一組欄位、同一個 `form_id='conversational'`。**既有 DB 列必須繼續可讀——這是搬移的前提，不是副作用** |
+| `completed_actions.py`<br>226 行 | 「剛剛那張單號多少」答得出來。病灶：建單成功後 `receipt` 只進 `trace`／`outcome.ref`，**沒進任何模型看得到的地方** | **程式寫、⛔ 不是模型寫**：元素形狀 `{action, ref_type, ref_id, estate_id, at_iso}` **全部封閉值**，模型只能引用不能改寫。⛔ 不進 dialog 歷史、⛔ 不讓模型自己填 `estate_name` 之類的自由字串 |
+
+#### 正本面（配合 §2 路 A）
+
+| 模組 | 回答什麼命題 | ⛔ 不得怎麼改 |
+|---|---|---|
+| `canon/canon_parser.py`<br>454 行 | 正本格式與解析（Markdown → `CanonDoc`＋`canon_sha256`）。front matter 七鍵；粗目 `## 標題 {#X}`；細目 id 正則 `^[a-z_]+/[A-Z]/[a-z0-9-]+$`；屬性區塊之後每一非空行＝一個內容句 | **F8 嚴格性**：屬性區塊內任何無法解析的行一律 `CanonFormatError`（列號＋原因），**⛔ 不落 `content_units`**——否則講法（含去識別後的真流量）會進 system prompt 成可引用句。⚠️ `source: traffic:*` 的講法 ≤20 字且不含 ≥4 位數字串 |
+| `canon/canon_assembler.py`<br>322 行 | 啟動契約 `load_canon_or_die`：內容**只**來自 `.md` 的解析結果；`.json` **逐位元組**比對重導出結果 | ⚠️ **⛔ 不是只比 `canon_sha256` 欄**——該 sha 只涵蓋 `.md` 的位元組，`.json` 改一位元 sha 仍相等。缺檔／不同源／格式錯 ⇒ `CanonLoadError`，`_agent_configured()` 為真時**升為啟動紅**。**組裝來源＝正本 Markdown，⛔ 不讀 DB**——DB 售前池是正本的衍生物，大綱不得反過來以衍生物為來源 |
+| `canon/review_state.py`<br>113 行 | `knowledge_base.outline_approved_by` 的**值域與謂詞**的單一來源 | 其他任何檔案（`tools/kb.py`／`agent_outline_dump.py`／migration SQL）一律引用本檔常數，**⛔ 不得自行寫出 `outline_approved_by` 字面**——不變量 32 會擋 |
+
+#### 觀測面
+
+| 模組 | 回答什麼命題 | ⛔ 不得怎麼改 |
+|---|---|---|
+| `trace_view.py`<br>291 行 | 回合軌跡的**渲染層**：`usage_events` 一列 → **只含形狀、不含原文**的敘事視圖。端點與 CLI 共用本檔 | **⛔ 不各寫一份渲染邏輯**——否則兩條路徑的遮罩紀律會漂。⚠️ **渲染層還要再遮一次**：不變量 30 守的是**寫入端**，本檔是**讀出端**，而讀出端會把內容送到人的螢幕、CLI 檔案與 HTTP 回應上（含 `session_id` 遮罩） |
+
+查證：各模組檔頭 docstring 即上表出處，例
+`sed -n '1,22p' rag-orchestrator/services/agent/prompt_assembler.py`。
+
+### 2e. 八種情境走查（一句話進來，走到使用者看到什麼）
+
+🔴 **2026-09-12 補寫**：§2b 是「管線有哪幾段」，本節是「**實際一句話怎麼走完**」。
+讀者問「其他情境也一樣嗎」時，§2b 答不出來——它只到元件層。
+
+#### 情境 1：寫入類（延後繳款）
+
+**輸入**：pm 在 LINE 說「基隆獨立共生公寓雅房九月的房租，房客說想晚三天繳」
+
+1. **進門**：三道閘過（`vendor_id=2`、`role_id=37305`、受眾 pm）
+2. **13 步**：1.5 取 `canon/property_manager.md` 大綱**取得到**（取不到就 `NO_MATCH`，
+   且**刻意排在建 session 列之前**）→ `store.load` 查無 ⇒ `start` 新列
+3. **段一**：六條全不符 ⇒ 叫模型
+4. **段二**：九段只有 ②空會話註記 與 ⑥`user_message` 成立；
+   同時選好大綱 5 條候選，以 `tool_call_id="outline"` 預載
+5. **段三**：模型讀 `bill_due_extend` 的工具說明，關鍵一句是
+   **「缺帳單編號時 `estate_name` 與 `period` 兩欄代替它必填……⛔ 不為了取得帳單編號反問使用者」**
+   ——**這句是為這個場景寫的：房東不會講帳單編號**。於是模型：
+   ① 呼叫 `jgb2.query.bills`（pm ⇒ `role_id` 單證即可，帶 `user_id` 反而被 jgb2 圈定濾成空）
+   ② 期別交給 `bill_period` **純函式**解析（⛔ 不讀時鐘、不查 DB、不叫模型；表外講法一律 `None`，⛔ 不猜）
+   ③ 呼叫 `confirm.request`，payload **不含** `date_expire_*`——工具說明寫明那兩欄只在已有 `bill_id` 時才填，
+      **⛔ 不得向使用者索取、不得憑印象填**
+6. **Verifier 七步**過（「延後繳款」不在機敏五類——那五類錨在**我們自己的產品服務**）
+7. **段四**：四道都不接手
+
+**使用者看到**：確認卡 ＋ 三顆按鈕（機器值 `confirm_submit`／`confirm_edit`／`confirm_cancel`，
+**寫死在 `form_contract.py`，值一個都不准改**）
+
+**第 2 回合（按下確認）**：`message` ＝ `confirm_submit:a3f19c2e8b4d7061`
+⇒ **段一④ 命中，模型一次都沒被叫醒**。`fullmatch` 比對（帶換行／空白／前後綴一律不觸發，
+⚠️ 失敗方向是**多執行一次寫入**，⛔ 不得改回 `.match`）⇒ 執行 ⇒ 標 `executed`（冪等）
+⇒ `render_receipt` ⇒ **`completed_actions` 記一行封閉值**（沒有這步，下一句問
+「剛剛那張單號多少」答不出來——回執原本只進 `trace`／`outcome`）。
+
+#### 情境 2：純查詢（不建單）
+
+「這期的滯納金多少」⇒ 模型選 `jgb2.query.bills`、face 填 `滯納金`（**封閉 enum，只能從 15 個裡挑**）
+⇒ `bills.py` 的 builder **決定性算 facts**（⛔ 不是 LLM 算）⇒ 模型組話 ⇒ Verifier 驗每句指回片段編號。
+
+⚠️ **現行形狀的硬限制**：builder 簽名是**單列** ⇒「這戶今年繳了幾期」**答不出來**；
+多列一律走 `_ok_candidates` 變候選清單。
+
+#### 情境 3：清單點選（LIFF）
+
+`select:bill:88291` ⇒ **段一⑤，模型與 Verifier 都不跑**。守門順序**與確認段完全相同、⛔ 不得調換**：
+① `entry != "mcp"` 整段不執行 ② `readonly_view`（影子）不執行——**影子與正式共用 `session_id`**，
+影子若寫槽位，正式那邊就被改掉了，而使用者根本沒點過任何東西 ③ **`fullmatch`、⛔ 不 NFKC、⛔ 不 strip**。
+
+`answer` **逐字＝該域 builder 的程式產出**；同時寫 `select_scope`，**範圍從此釘住**。
+⚠️ 不跑 Verifier **≠ 沒有出口檢查**：facts 出去前仍過 `_verify_routes`，email 面由封閉表擋。
+⚠️ 找不到那筆時**四種原因全回同一句**——⛔ 細分等於用回話差別洩漏「這筆存在但你看不到」。
+
+#### 情境 4：範圍退出
+
+範圍釘住後問「那另一戶的呢」⇒ `scope_out>0 且 scope_in==0` ⇒ **閘 1 命中**：
+五欄一起改、⛔ 不進 handoff cache、清 `estate_carry`。
+**它排第一道是刻意的**——「唯一接句點，排在 handoff cache 與 dialog 之前」，
+所以 dialog 存的是**使用者真正看到的那一句**。
+
+#### 情境 5：照片報修
+
+1.1 張數 ≤10（超過 `INVALID_INPUT`，**⛔ 不截斷後照跑**）→ 1.6 **按張數預扣，扣不過一張都不抓**
+→ 1.10 縮到 `IMAGE_MAX_PX=1024`，vision `detail` **程式釘死**（⛔ 不由 env——
+「那會讓一張照片要花多少錢變成部署者可調的東西」），**bytes 只活在區域變數**
+→ 段一③ 失敗／逾時／`confidence < 0.6` 且候選 ≥2 ⇒ 三句固定話，**模型不被叫醒**。
+
+🔴 **`ImageTurnInput` 刻意沒有 `description` 欄**＝封閉值原則：**不讓模型的自由文字進入後續流程**。
+這正是 §2c 文件線要處置的那道相撞。
+
+#### 情境 6：文件上傳
+
+見 §2c。兩個終止點在段一①②；Verifier 多跑 ⑥′。
+
+#### 情境 7：售前（prospect）
+
+**這條路幾乎不碰 jgb2**：
+
+| 工具 | prospect | property_manager |
+|---|---|---|
+| `kb.search` | ❌ **stage 無 prospect 鍵 ⇒ 永不可見** | ✅ |
+| `kb.get` | ✅（但見下） | ✅ |
+| `jgb2.query.*` | stage 有，但**沒有 `role_id`／`user_id`** ⇒ 身分閘一律 `NO_MATCH` | ✅ |
+
+⇒ **售前的答案幾乎全部來自路 A 的 canon 大綱**。
+⚠️ `kb.get` 目前對每一列都回 `NO_MATCH`（`^reviewed:\S+$` 形狀本機 0 筆，D1 前的預期行為）。
+⇒ **售前答不出來時，根因幾乎一定在「講法沒收錄」或「細目沒 approved」，⛔ 不是檢索壞了。**
+
+#### 情境 8：同題重問
+
+**段一⑥**：`handoff_cache` 命中 ⇒ 逐字重播，`llm_calls=0`，記 `replayed_from:<trace_id>`。
+⚠️ `setdefault` **刻意排在⑤之後**：提早建鍵會讓每個從①–⑤早退的回合都多出一個空 dict，
+**那是會被序列化落進 `form_sessions.collected_data` 的狀態形狀改變**。
+
+#### 共同骨架：八種裡有四種模型根本不會被叫醒
+
+| 情境 | 模型 | Verifier | 答案文字誰決定 |
+|---|---|---|---|
+| 1 寫入 | ✅ | ✅ | 卡片與回執由**程式**產 |
+| 2 純查詢 | ✅ | ✅ | facts **程式**算，話模型組 |
+| 3 清單點選 | ❌ | ❌（但過 `_verify_routes`） | **全部程式** |
+| 4 範圍退出 | ✅ | ✅ | 閘 1 **整段換掉** |
+| 5 照片 | 三種情況 ❌ | — | 固定句 |
+| 6 文件 | 兩種情況 ❌ | ✅（多 ⑥′） | facts **程式**組句 |
+| 7 售前 | ✅ | ✅ | 大綱細目，模型引用 |
+| 8 重問 | ❌ | ❌ | **逐字重播** |
+
+⇒ **這套架構最常被誤解的地方**：它不是「什麼都丟給 AI」，是
+**程式先把能決定的決定完，剩下的才給模型，而模型說的每句話還要能指回程式查到的資料**。
+
+#### 同一句話走歪的三種方式（都回同一句轉人）
+
+| 情況 | 走到哪 |
+|---|---|
+| 物件／帳單查不到 | `_no_match()` ⇒ `status="error"` ⇒ **閘 4 早退** |
+| 呼叫端沒帶 `role_id` | `_identity_gate_ok` 對 pm 要求它 ⇒ 同上 |
+| 模型講了資料以外的事 | Verifier 擋 → 改寫 → 再擋 ⇒ `budget_exhausted` |
+
+**三種原因、一句話。這就是「問帳單都被轉專人」的全部來源。**
+
 ### 2c. 文件回合（`document_extract.py`，1,126 行）
 
 🔴 **2026-09-12 補寫**：這支比 `verifier.py` 還大，而本文原本只有兩句順帶提到它
