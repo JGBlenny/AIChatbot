@@ -535,10 +535,9 @@ _agent_turn_calls: dict = {}
 
 def agent_turn_enabled() -> bool:
     """`AGENT_TURN_ENABLED`（**預設 false**）——關閉 ⇒ `build_registry` 不註冊，
-    `/mcp` 的 `tools/list` 就看不到它。
-    ⚠️ 2026-09-12 起這是 `agent_configured()` 的**唯一**判準——`AGENT_AUDIENCES`
-    連同它管的 REST 入口 `routers/agent_entry.py` 已刪除（design 1.4.6 的「互不管轄」
-    那句因此失去對照組，⛔ 不要據它推論還有第二條入口）。
+    `/mcp` 的 `tools/list` 就看不到它。與 `AGENT_AUDIENCES` 同性質的回切開關，
+    但兩者**互不管轄**：`AGENT_AUDIENCES` 只管 REST 入口（`routers/agent_entry.py`），
+    ⛔ 不左右 `agent.turn`（design 1.4.6）。
     """
     return (os.getenv(_AGENT_TURN_ENABLED_ENV) or "").strip().lower() in _ENFORCE_TRUTHY
 
@@ -577,17 +576,17 @@ def check_and_record_agent_turn(key: tuple, now: Optional[float] = None) -> bool
 
 #: `agent_configured()` 判準逐位元搬自 `app.py::_agent_configured`（任務 4.1／
 #: Plan §2.1-7）——`app.py` 之後改呼叫這裡的薄別名，名稱保留給既有測試。
-#: ⚠️ 2026-09-12 由三把縮為一把。原本還含 `AGENT_AUDIENCES`（管已刪的 REST 入口
-#: `routers/agent_entry.py`）與 `AGENT_SHADOW_AUDIENCES`（管已刪的影子模式）——
-#: 兩個功能都不存在了，留著會讓「設了旗標」與「啟用了什麼」脫鉤。
-#: ⛔ 加回任何一把之前先確認它真的有消費者。
-_AGENT_CONFIGURED_ENV_KEYS: tuple = ("AGENT_TURN_ENABLED",)
+_AGENT_CONFIGURED_ENV_KEYS: tuple = (
+    "AGENT_AUDIENCES", "AGENT_SHADOW_AUDIENCES", "AGENT_TURN_ENABLED",
+)
 
 
 def agent_configured() -> bool:
-    """`AGENT_TURN_ENABLED` `strip()` 後不在 `{"", "0", "false", "False"}` ⇒ 真。
+    """任一 agent 開關（`AGENT_AUDIENCES`／`AGENT_SHADOW_AUDIENCES`／
+    `AGENT_TURN_ENABLED`）`strip()` 後不在 `{"", "0", "false", "False"}` ⇒ 真。
 
-    ⚠️ 不是「有值」——`AGENT_TURN_ENABLED=0` 仍是未啟用。`health.py` 以**模組屬性**呼叫本函式（`mcp_facade.agent_configured()`，
+    ⚠️ 不是「任一有值」——`AGENT_TURN_ENABLED=0` 仍是未啟用（與 `app.py` 舊判準
+    逐位元相同）。`health.py` 以**模組屬性**呼叫本函式（`mcp_facade.agent_configured()`，
     ⛔ 不 `from … import`）讓 monkeypatch 生效；`agent_turn_enabled()` 語義不等價
     （只看 `AGENT_TURN_ENABLED`），⛔ 不可互相替代。
     """
@@ -1445,7 +1444,7 @@ def namespaced_identity(identity: Identity) -> Identity:
     `form_sessions.session_id` 的 100 字 ⇒ `ValueError`（由呼叫端轉成
     `INVALID_INPUT`）。⛔ 不得「退回裸 session_id」——那正是被擋掉的那條路。
 
-    ⚠️ 已刪除的 REST 路徑（`routers/agent_entry.py`，2026-09-12）**不呼叫本函式**：那條路的
+    ⚠️ REST 路徑（`routers/agent_entry.py`）**不呼叫本函式**：那條路的
     `session_id` 由 jgb2 上游 scope 過，且與舊鏈共用同一列
     （`form_sessions` 的 `config_key='agent:<audience>'`），加前綴會讓 REST 與
     舊鏈天然分池、續對話直接斷掉。兩條路徑的分池由「MCP 加前綴、REST 不加」

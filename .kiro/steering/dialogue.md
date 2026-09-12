@@ -120,8 +120,11 @@ PAUSED → COLLECTING / CANCELLED（超時 30 分鐘）
 ## 現行入口
 
 唯一入口是 `/mcp` 的 `agent.turn`（`services/agent/mcp_facade.py`）。
-⛔ **沒有分流、沒有回退、沒有影子**——三者的兩端（舊 REST 鏈、`routers/agent_entry.py`、
-`services/agent/shadow.py`）都已刪除。
+⛔ **實際上沒有分流、沒有回退、沒有影子在運作**——但原因不是程式被刪：
+`routers/agent_entry.py`（REST 分流，實作 R9.3 對外契約）與 `services/agent/shadow.py`
+（影子，實作 R8）**都還在**，它們失去的是另一端——舊 REST 鏈。
+`agent_entry` 需要的端點／請求模型／SSE 送出器隨 `routers/chat.py` 一併刪除、尚未重建；
+影子沒有第二條線可以比對。⚠️ R8／R9 仍在 spec 內未撤案。
 
 ⚠️ `AGENT_AUDIENCES` 曾是分流開關，2026-09-12 連同它管的入口一併移除；
 現在 `agent_configured()` 的唯一判準是 `AGENT_TURN_ENABLED`
