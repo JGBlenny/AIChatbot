@@ -4,6 +4,47 @@
 > 需求文件：[requirements.md](./requirements.md)｜研究記錄：[research.md](./research.md)
 > 發現流程：**Light Discovery**（功能擴展／既有系統整合；`.kiro/settings/rules/design-discovery-light.md`）
 
+---
+
+## 🔴 2026-09-12 對碼狀態（⛔ 讀本文件其餘部分之前先讀這節）
+
+舊 REST 對話鏈已於 2026-09-11 整條刪除（DSP-046）。但**本 spec 造出來的東西有一半活著，
+其中一個還是新線的承重牆**——所以本檔 ⛔ 不歸檔、⛔ 不刪。
+
+| 元件 | 落地狀況 | 現在住哪 |
+|---|---|---|
+| **元件 1** TestRunner 供裝 | ✅ **全落地且在用** | `rag-orchestrator/tests/conftest.py`：`ALLOWED_TEST_DATABASES={aichatbot_test, aichatbot_ci}`、`EXIT_STRUCTURAL_FAILURE=10`、`GATE_SKIP_PREFIX='[gate]'`、`ENV_SKIP_PREFIX='[env]'`、`assert_non_production_db`、`ProductionDatabaseRefused`；旗標注入在 `scripts/run-tests.sh` |
+| **元件 3** JGBMockTransport | ✅ **全落地，且已成為新線的承重牆** | `rag-orchestrator/services/jgb/transport.py`。端點從當初的 2 個長到 **15 個**（`MIGRATED_ENDPOINTS`）。`services/jgb_system_api.py` import 它，而 `services/agent/tools/jgb2.py` import `JGBSystemAPI` ⇒ **它是 agentic-MCP 線 `jgb2.query.*`／`jgb2.action.*` 唯一的替身層**（見 `docs/architecture/AGENTIC_MCP_ARCHITECTURE.md` §5「替身寫入：行程記憶體」） |
+| **元件 4** FaceClosureSuite | ✅ 落地 | `tests/support/chain_closure.py`、`tests/support/brain_grounding.py`；消費者 3 支測試，含 `v6_regression_ruler.py` |
+| **元件 5** ContractSmoke | ✅ 落地（符號名與設計稿不同） | `tests/e2e/api/test_real_api_contract_smoke_req.py`（含假綠防護 `_MOCK_ON`） |
+| 元件 2 EntryRoutingHarness | ⛔ **零落地** | `route_via_production`／`RouteOutcome` 從未存在；`_diagnosis_config_for_knowledge` 隨 `routers/chat.py` 刪除 |
+| 元件 6 `scope` 救援 | ⛔ **零落地** | `StepResult`／`_parse_conversational_step`／`conversational_step_result`／`FACET_SCOPE_SALVAGE` 皆 0 命中；標的 `services/llm_answer_optimizer.py` 已不存在 |
+| 元件 7 `skip_refine` 語義定案 | ⚠️ **語義換了載體** | 鍵名還在，但改成 agent 工具的回傳鍵：`services/agent/tools/jgb2.py`（`skip_refine = status == "candidates_all"`）、`services/agent/runtime.py`。⛔ 不再是 `result_mapping` 裡的配置 |
+| 元件 8 `repair_create` 進場點 | ⛔ **零落地**（能力換形態） | `EntryPointChange` 0 命中。修繕改走硬編工具鏈：`services/agent/tools/action.py::REPAIR_CREATE_ACTION`＋`tools/confirm.py`＋`confirm_card.py` |
+| 元件 9 三層文件化 | ⚠️ 部分 | 對象文件仍在（母圖／`facet-architecture.md`／本 spec），皆已於 2026-09-12 逐條對碼更正 |
+| 元件 10 對話品質基準 | ⛔ **零落地** | `FaceDialogueMetrics`／`GroundingUtilizationCase`／`RequiredSlotsFinding` 皆 0 命中 |
+
+### 本檔仍然成立、且是唯一來源的兩件事
+
+1. **架構主張「Mock 不准吃掉你正在驗的東西」＋三問判定式**（見〈邊界原則〉節）。
+   它今天仍然是判新線 golden 測試那四顆替身（`FakeProvider`／`FakeRegistry`／
+   `FakeVerifier`／`FakeAssembler`，見 `tests/unit/agent/test_pipeline_golden_req.py`）
+   **證到哪裡**的尺。
+2. **「三處刻意不 fail-open」的判準**：僅當①發生在測試／量測路徑而非產品路徑，
+   且②靜默通過會使結論失真或造成外部副作用。產品路徑的 gate 故障一律 fail-open。
+
+### ⚠️ 一個仍然成立、且已波及新線的發現
+
+〈門檻對碼結果〉節指出 `DecisionConfig` 的**程式預設 `0.55`** 與參數台帳／env 的 **`0.65`**
+不一致，當時列為「另立 follow-up」。**那個 follow-up 從未立案，而消費者已經換成新線**：
+`services/agent/tools/kb.py` 讀的就是 `DecisionConfig.load().kb_threshold`。
+⇒ 任何 `KB_SIMILARITY_THRESHOLD` 未設的環境（新機器、新容器、CI），
+**新線的 `kb.search` 會靜默跑在 0.55**。實測（2026-09-12，本機容器）：
+`DecisionConfig.load()` ＝ `{kb_threshold: 0.65, form_trigger_threshold: 0.75, sop_min: 0.55,
+knowledge_min: 0.6, score_gap: 0.15}`，env 有設所以是 0.65。
+
+---
+
 ## 概述
 
 ### 設計目標

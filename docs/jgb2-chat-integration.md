@@ -1,7 +1,7 @@
 # jgb2 AI 客服串接規格（正式版：業者 b2b／租客 b2c／售前 prospect）
 
 > 版本：v3（2026-07-07）　對象：jgb2 工程團隊
-> v1 僅涵蓋租客端（b2c）；v2 整合三種身分形狀；v3 定案 **vendor_id 由 AI 側經 role_id 關聯解出，JGB 端一律不送**（見 §4、§8）。
+> v1 僅涵蓋租客端（b2c）；v2 整合三種身分形狀；v3 定案 **vendor_id 由 AI 側經 role_id 關聯解出，JGB 端一律不送**（見 §4、§8）。🔴 **該定案已被新線反轉為「呼叫端必填、缺即 400」——見檔頭 2026-09-12 補正。**
 > 業者端（b2b）為現役已上線串接（HelpSystem `useChat.ts`），本文件同時列出前端與 AI 側**待補齊項**（§8）。
 
 > ⛔⛔⛔ **2026-09-11 重大更新：本文件描述的端點已不存在，jgb2 Web 目前沒有可用的 AI 對話後端。**
@@ -34,6 +34,33 @@
 > 跨業者隔離、vendor_id 解析設計理由）在新端點若要重建同等能力時仍是有效參考，
 > 故保留全文不刪；但**照此文件現在去打 API 會失敗**，這不是舊版本落差，是端點
 > 本體不存在。
+
+> 🔴 **2026-09-12 對碼補正：`vendor_id` 的定案在新線是「反轉」，不是「待補」。**
+>
+> v3 的定案（本檔 §4、§8.1、「一句話原則」）是「**jgb2 一律不送 `vendor_id`，
+> 由 AI 側經 `role_id` 關聯解出**」。新線 `/mcp` 的做法**恰好相反**：
+>
+> | | 本檔 v3 定案 | 新線實況（`services/agent/mcp_facade.py::parse_identity`） |
+> |---|---|---|
+> | `vendor_id` | jgb2 不送 | **必填**。`_coerce_vendor_id` 取不到 ⇒ `McpRequestError(400, ERR_IDENTITY_NO_VENDOR)` |
+> | 不在 vendors 表 | — | `403 ERR_VENDOR_UNKNOWN` |
+> | 不在 API key 的 `vendor_ids` 範圍 | — | `403 ERR_VENDOR_OUT_OF_KEY_SCOPE` |
+> | 身分載體 | REST body 欄位 | `X-JGB-Identity` header（base64 JSON） |
+>
+> ⇒ **§8.1 的兩項「待補」（A `validate_vendor_id` 放寬、B `role_id`→`vendor_id` 反查）
+> 已失去意義**：新線不需要反查，它要求呼叫端直接給，並用 API key 的 `vendor_ids`
+> 圈範圍。⛔ 不要照 §8.1 去補那條反查——那是在為一個已被相反方案取代的缺口施工。
+>
+> **另一處在新線不成立的**：§1／§3.3 描述的售前（prospect）取得知識的路徑。
+> 新線 prospect **看不到 `kb.search`**（`tools/kb.py::KB_SEARCH_SPEC` 的 `stage`
+> 只有 `property_manager`／`tenant`），也**看不到任何 `jgb2.*` 域工具**
+> （`_jgb2_spec` 的 `stage` 同樣無 prospect 鍵）。售前的知識改由每回合自動注入的
+> git 正本大綱供給（`services/agent/canon/`），⛔ 不是靠檢索。
+>
+> **仍然成立、且是本檔唯一出處的**：§4 的 `role_id`／`user_id` 雙證語義與
+> 「租客的 `role_id` 是所屬業者的 role id」、§6 的 session_id 計量排除前綴、
+> §7 的跨業者隔離紅線與「b2b 業態過濾無 `IS NULL` 放行是刻意設計」的**理由**
+> （程式只有 SQL 與註解，決策理由在這裡）。
 
 > **一句話原則**：jgb2 端送出的身分只有 `role_id`（＋`user_id`）；`vendor_id` 是 AI 側用 `role_id` 關聯解出，jgb2 不管、不送。
 

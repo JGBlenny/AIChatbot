@@ -102,9 +102,9 @@ kb.get    → build_visibility_predicate ＋ canon.review_state.content_reviewed
 ## 3. 面向（Face）：腦活著，骨架死了
 
 新線**不是**「載入面向設定 → 進場判定 → 決定性算 facts」，而是
-**「模型從一個封閉 enum 挑 `face` → 直呼對應 builder」**。
+**「模型從一個封閉 enum 挑 `face` → 直呼對應 builder」**——enum 由 `_jgb2_spec(domain, sorted(builders.keys()))` 在註冊當下由註冊表現算。
 
-六個域、13 個合法 `face`（＝各註冊表的鍵）：
+六個域、15 個合法 `face`（＝六張 `*_FACE_BUILDERS` 註冊表的鍵；查證：容器內逐表 `len`）：
 
 | 域 | face |
 |---|---|

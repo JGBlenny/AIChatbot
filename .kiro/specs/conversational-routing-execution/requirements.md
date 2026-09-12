@@ -6,6 +6,44 @@
 > ⚠️ `.kiro/settings/rules/ears-format.md` 與 `templates/specs/requirements.md` 不存在，
 > 本文件採 WHEN/THEN/SHALL 內建結構，並以數字 ID 編號。
 
+---
+
+## 🔴 2026-09-12 對碼狀態（⛔ 讀本文件其餘部分之前先讀這節）
+
+舊 REST 對話鏈已於 2026-09-11 整條刪除（DSP-046）。本文件逐項對碼結果：
+
+| 需求 | 狀態 | 依據 |
+|---|---|---|
+| **Req.1** 測試基礎設施 | ✅ **已修好，而且是現行程式的來歷正本** | `scripts/run-tests.sh` 有 `-e RUN_INTEGRATION=1`／`RUN_E2E=1`；`tests/conftest.py::_classify_skips`／`GATE_SKIP_PREFIX`／`assert_non_production_db`／`EXIT_STRUCTURAL_FAILURE=10` 全部落地，**程式註解直接回指本 spec 的任務編號** ⇒ ⛔ 刪掉本檔會讓那些註解變成孤兒 |
+| Req.2 面向進場回歸 | ⛔ **標的已滅** | `test_facet_*` 全樹 0 命中（正對照：`tests/integration/agent/` 仍有 28 檔） |
+| Req.3 API-grounded 閉環 | ⚠️ **受測物換形態** | C4a／C4b 的斷言器仍在（`tests/support/chain_closure.py`／`brain_grounding.py`），但「面向」本身已不存在 |
+| **Req.4** Mock 保真度 | ✅ **已修好** | `jgb_system_api.py` 明載「任務 4.6：已移除 `if self.use_mock: return self._mock_get_bills(...)`」；替身下移至 `services/jgb/transport.py`，端點 2 → **15** |
+| **Req.4.4** Real API smoke | ✅ **已落地** | `tests/e2e/api/test_real_api_contract_smoke_req.py` |
+| Req.5.1 `skip_refine` | ⚠️ 鍵名還在、語義換載體 | 現為 agent 工具回傳鍵（`services/agent/tools/jgb2.py`），⛔ 不再是 `result_mapping` 配置 |
+| Req.5.2 `conversational_step` 驗證順序 | ⛔ **標的整個模組不存在** | `services/llm_answer_optimizer.py` 無檔 |
+| Req.5.3 `repair_create` 零觸發點 | ⚠️ 換形態 | 改走工具鏈 `tools/action.py::REPAIR_CREATE_ACTION`，不再靠 KB routing 進場 |
+| Req.6 三層責任分層 | ⛔ **Routing Hint 層已滅** | `config_for_category` 生產端零消費（正對照：同檔 `config_for_target_user` 有生產呼叫端）；`services/agent/**` 對 `grounding_scope`／`persona_role`／`topic_scope`／`required_slots` 全部 0 命中 |
+| **Req.7／Req.8／Req.9** 橫向約束 | ✅ **仍然適用，且不綁任何已刪模組** | 見下 |
+| Req.10 面向對話品質 | ⛔ **受測物已滅** | 面向不存在；`FaceDialogueMetrics` 等 0 命中 |
+
+### 本檔仍然成立、且是唯一來源的事實（⛔ 這是不刪的理由）
+
+- **Req.8「明確不做」表的實測依據**：always-on query rewrite b2b「A/B 10 情境×3 次
+  **10/10 行為完全相同**、成本 600–800ms／次」；pre-entry routability gate
+  「上游凍結後實測錯路由攔截 **1/13**」；hybrid recall「21 筆中召回可救約 1 筆」。
+  ⇒ 刪掉這些數字，同樣的路會被重新提一次。
+- **Req.9.3**：比較性結論須 ≥30 個可判定案例（依據＝本輪三次「擴大樣本即翻盤」：
+  25 筆語料污染／72 筆標註失真／8 題改寫比較）；但 deterministic contract 驗證、
+  單一 bug 重現、已知 case 回歸**不受此限**。
+- **Req.9.4**：離線驗證須複刻該版本 production **實際啟用**的候選變換與執行順序；
+  被 flag 關閉的能力 ⛔ 不得在 runner 額外啟用；降級路徑 ⛔ 不得誤模擬為並行主路徑。
+- **Req.7.3**：分析標註優先由人／協作代理判斷，⛔ 不外包給大量 LLM 呼叫
+  （前例：43 案 × 6 次的 LLM 判定，事後複核發現誤判）。
+- **Req.3 的 A／B 二分**（deterministic control-flow mock E2E vs real API contract smoke
+  不得混為一談）——這正是 `test_real_api_contract_smoke_req.py` 存在的設計理由。
+
+---
+
 ## 架構定位（本 spec 的作用域）
 
 > ⚠️ **本 spec 不是在重建「完整對話架構」，而是改善其中一個接縫。**

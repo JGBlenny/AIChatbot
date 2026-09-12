@@ -2,10 +2,26 @@
 
 > 建立：2026-07-01。本檔記錄「per-領域系統脈絡」在實作審視後演進到「**面向化（facet）三層疊加**」的完整邏輯與資料佈局，取代 design.md 元件1/D2 的兩層版本（design.md 變更歷史已標注）。
 
-> ⚠️ **2026-09-11 更新**：本檔描述的**資料模型／設定概念**（`category_config`、
-> `conversational_config`、`grounding_scope`、`persona_role`、`topic_scope`）
-> 仍在用——agentic-MCP 新線（`services/agent/runtime.py`／`turn_context.py`／
-> `verifier.py`／`tools/handoff.py`）繼續讀這幾張表與這幾個鍵。但下文引用的
+> 🔴 **2026-09-12 對碼更正（前一版檔頭的核心斷言是錯的）**：前一版寫「`category_config`、
+> `conversational_config`、`grounding_scope`、`persona_role`、`topic_scope` 仍在用——
+> 新線繼續讀這幾張表與這幾個鍵」。**逐鍵掃 `services/agent/**`（排除測試）的實測是：**
+>
+> | 鍵 | `services/agent/` 內 | 實際讀者 |
+> |---|---|---|
+> | `grounding_scope` | ⛔ **0** | `services/instance_applicability.py`（不變量 10）、`tools/audit_config.py`（稽核） |
+> | `persona_role` | ⛔ **0** | 僅 `conversational_config._config_from_row` 解析後無下游 |
+> | `topic_scope` | ⛔ **0** | 同上 |
+> | `answer_rules`／`cta_rules` | ⛔ **0** | 同上 |
+> | `required_slots` | ⛔ **0** | **全 repo 非測試程式 0 支** |
+> | `category_config` | ⛔ **0** | 面向父子骨架無消費者 |
+> | `conversational_config`（模組） | ✅ 5 支 | **但只 import `effective_handoff_channel`／`effective_handoff_message`／`config_for_target_user`**——⛔ 不是本檔講的那些配置鍵 |
+>
+> （查證法：`ast`／字串掃 `rag-orchestrator/**/*.py` 去掉 `tests/`；正對照
+> `effective_handoff_message` 在 agent 內 5 支命中 ⇒ 掃描器可用。）
+>
+> ⇒ **本檔描述的面向骨架已無消費者。** 仍有價值的是**資料佈局規則與踩坑記錄**
+> （§三、半形/全形冒號、`target_user` 必須＝`persona_role` 的理由），
+> ⛔ 不是「照著設定就會生效」。下文引用的
 > **舊鏈執行程式**（`services/conversational_engine.py`、`services/system_context.py`、
 > `routers/chat.py`、`services/jgb/repair_prefill.py`）已隨舊 REST 對話鏈於
 > 2026-09-11 整批砍除（commit `7c905408`／`10116570`，見 `.claude/DECISIONS.md`
@@ -95,7 +111,21 @@ system_md = base ＋（沿領域鍵在 category_config 的父鏈，母共用在�
   - `_fetch_appends`：角色級鍵走 target_user 單層；面向鍵沿父鏈逐層取 categories 列，多層。
   - `get_system_context`：`base ＋ "\n\n".join(appends)`，per-key 快取。
 - `services/conversational_engine.py::_domain_key(config)`（⚠️ 已隨舊鏈於 2026-09-11 退役，見檔頭註記）：`topic_scope.mode=='category'` → `topic_scope.category`；否則 `persona_role`。prepare 兩處呼叫傳它。
-- `config_for_category`（chat.py 路由，⚠️ 已隨舊鏈於 2026-09-11 退役，見檔頭註記）：**無需改**——config 宣告子面向 `狀態判斷`、知識也掛 `狀態判斷`，精確命中。（若未來知識只掛更細子分類，再補子→母展開。）
+- `config_for_category`：🔴 **2026-09-12 對碼：函式本體與 `by_category` 索引都還在
+  （`services/conversational_config.py`），但呼叫端只剩兩支測試
+  （`tests/unit/conversational/test_config_for_category_req.py`、`test_api_config_roundtrip_req.py`），
+  `services/**` 零消費。** 前一版寫「**無需改**」會讓人以為它仍在路由——它沒有。
+  （正對照：同檔的 `config_for_target_user` 有生產呼叫端 `services/agent/tools/handoff.py`
+  ⇒ 不是掃描器壞了。）
+
+> 🔴 **本節主角 `狀態判斷` 不是現行的 face。** 新線的 face 是一個封閉枚舉，值域由六張
+> `*_FACE_BUILDERS` 註冊表的鍵**現算**（`mcp_facade._jgb2_spec(domain, sorted(builders.keys()))`），
+> 共 **15 個**：帳單異常／條件診斷：帳單／滯納金／發票／繳費金流排障（bills 5）、
+> 合約異動／簽署排障／續約／退租收尾（contracts 4）、團隊成員權限／登入排障（accounts 2）、
+> 電表排障（meters 1）、物件現況診斷（estates 1）、修繕分類／修繕進度（repairs 2）。
+> **`狀態判斷` 不在其中**，且 `tests/unit/conversational/test_face_builders_registry_req.py`
+> 明文釘住「『狀態判斷』永不註冊 → 走 fallback」。本檔 §二／§三以它為例，
+> 讀作**資料佈局的示範**，⛔ 不是可用的 face 名稱。
 
 ## 五、部署順序（migrations）
 
@@ -209,6 +239,13 @@ psql "$DATABASE_URL" -f rag-orchestrator/database/migrations/backfill_contract_k
 - 輪數定義＝使用者訊息數、開場算第 1 輪。
 
 ### 7.8 配置鍵全表（`grounding_scope` 內，全配置驅動）
+
+🔴 **2026-09-12 對碼：下表 14 鍵在 `rag-orchestrator/**/*.py` 全數 0 命中。**
+前一版標題寫「全配置驅動」——那是舊鏈 `conversational_engine` 的事實，該引擎已刪。
+現行修繕改走**硬編工具鏈**：`services/agent/tools/action.py::REPAIR_CREATE_ACTION`
+＋`services/agent/tools/confirm.py`＋`services/agent/confirm_card.py::render`。
+唯一還活著的是 `facet_key` 埋點（`services/usage_metering.py::set_facet`）。
+⛔ 不得照本表寫面向配置：寫出來沒有任何程式會讀。以下為**歷史記錄**。
 
 | 鍵 | 用途 |
 |---|---|

@@ -51,6 +51,30 @@
 
 ## Response A — 非串流（`stream:false`）
 
+🔴 **2026-09-12 對碼：`class VendorChatResponse` 在 repo 程式碼 0 筆定義**
+（只剩 `docs/archive/**`、`.kiro/specs/**` 的文字，與 `routers/agent_entry.py` docstring
+裡的一句提及）。⇒ **本節是這份契約唯一的存世記錄，⛔ 不得刪**，但它也**不能直接當
+重建規格**——下表十欄，新線只對得上三欄：
+
+| 本契約欄位 | 新線 `mcp_facade.py::AgentTurnOutput` |
+|---|---|
+| `answer` | ✅ `answer` |
+| `handoff` | ✅ `handoff` |
+| `quick_replies` | ✅ `quick_replies`（⚠️ value 形狀改了，見下） |
+| `intent_type` | ⛔ 無。角色由 `kind` ＋ `outcome.state`（八態封閉）承擔，**不是改名** |
+| `session_id`／`form_triggered`／`form_id`／`current_field`／`confidence`／`mode`／`timestamp` | ⛔ **七欄全無** |
+| — | ➕ 新增 `kind`、`trace_id`、`session_expired`、`outcome{state,expects,action,ref}` |
+
+⚠️ **`quick_replies` 的 value 形狀已改**：本契約寫裸機器值 `confirm_submit`；
+新線是 `confirm_submit:<pending_id>`（`services/agent/tools/confirm.py::CONFIRM_VALUE_SEP`），
+且 Runtime 以**等值 `fullmatch`** 比對。前端若照本契約做等值比對 `confirm_submit` 會全部失效。
+
+⚠️ **`trigger_facet_key` 請求參數在新線會被硬拒**：`AGENT_TURN_SPEC.input_schema`
+只收 `message`／`image_urls`／`context`／`attachment_purpose`／`file_urls`，
+且 `additionalProperties: False`。
+
+以下為**歷史契約形狀**：
+
 JSON（`VendorChatResponse`，重點欄位）：
 
 ```json
@@ -213,15 +237,19 @@ curl -N -X POST {BASE}/v1/message -H 'Content-Type: application/json' -d '{
 > start／intent／answer_chunk／metadata／done 事件序，工具呼叫期間以 SSE 註解行
 > （`: keepalive`）當心跳、⛔ 不新增事件型別。
 
-差異只有一點：agent 路徑**多回一個 `trace_id`**。
+🔴 **2026-09-12 對碼更正，三處**：
 
-- 非串流：回應物件多帶 `handoff`、`quick_replies`（與舊鏈同名同形，`None`/缺值時省略）；
-  查證見 `routers/agent_entry.py:128`（`payload = {"answer": ..., "handoff": ...,
-  "quick_replies": ..., "converged": False}`）。
-- 串流：`metadata` 事件多帶一個欄位 `trace_id`（值為 `result.trace.trace_id`），
-  以及既有的 `quick_replies`／`handoff`（有值才附）；查證見
-  `routers/agent_entry.py:159-163`（`metadata = {..., "trace_id": result.trace.trace_id}`，
-  隨後視 `result.quick_replies`／`result.handoff` 是否有值附加）。
+1. **`routers/agent_entry.py` 檔案還在，但沒有 `APIRouter`、未掛任何路由、生產端零引用。**
+   `_agent_sse` 逐字實作了 start／intent／keepalive／answer_chunk／metadata／done 的序列，
+   但**線上沒有 SSE**——唯一活的入口 `/mcp` 回單一 JSON。
+2. **「`answer_chunk` 逐字送出」不成立**：`_agent_sse` 是**一次送整段** `result.answer`，
+   ⛔ 不是逐字串流。
+3. **原本以行號當證據**（`agent_entry.py:128`／`159-163`）——行號已漂到 183-185／213-219。
+   ⛔ 不再寫行號，查證改指符號：`routers/agent_entry.py::_agent_sse`、`handle_agent_entry`。
+
+**`AGENT_AUDIENCES` 現在只管一個不存在的入口**：`mcp_facade.py` 自註「`AGENT_AUDIENCES`
+只管 REST 入口」，而 `/mcp` 走的是 `ToolSpec.stage` 表（prospect／property_manager ＝ M1），
+⛔ 不看 `AGENT_AUDIENCES`。
 
 `trace_id` 只在 agent 路徑出現，供事後以 `trace_view`／稽核工具回查該回合的
 工具呼叫與證據鏈（見 `services/agent/trace_view.py`），前端可忽略、不影響既有渲染。

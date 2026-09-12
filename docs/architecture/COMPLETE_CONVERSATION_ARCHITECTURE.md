@@ -1,7 +1,7 @@
 # 完整對話架構
 
-**最後更新**: 2026-08-25
-**版本**: 2.2（＋§0 三層責任分層；§12 參數回寫至實況）
+**最後更新**: 2026-09-12
+**版本**: 2.3（§11／§12 逐條對碼更正；§0 三層責任分層不變）
 
 > ⚠️ **2026-09-11 更新**：本檔描述的是**舊 REST 對話鏈**（`POST /api/v1/message`，
 > 以 `routers/chat.py` 為主入口的既有管線）。該鏈已於 2026-09-11 隨 commit
@@ -12,8 +12,24 @@
 > 等）對新線的檢索/知識治理仍可能有效參考價值，故保留不刪；但文中任何指向
 > `routers/chat.py`／`conversational_engine.py`／`sop_orchestrator.py`／
 > `form_manager.py`／`llm_answer_optimizer.py` 等舊鏈模組的段落，一律讀作
-> **歷史記錄**，⛔ 不是現況——這些檔案已不存在，逐行全面改寫工程過大，
-> 本輪只在關鍵處（§11 組件表等）加註記，未逐段標記的段落請以此檔頭聲明為準。
+> **歷史記錄**，⛔ 不是現況——這些檔案已不存在。
+>
+> **🔴 2026-09-12 逐條對碼（60 條斷言）後的更正，三處**（D-001：描述型文件描述錯了，
+> 以 runtime 為準逐行修正）：
+> 1. **§11 組件表補齊退役標記**——原本只標 5 支，`Intent Classifier` 與
+>    `Confidence Evaluator` 漏標，讀者會推論「未標＝還在」而把 §2／§4 當現況。
+> 2. **§12 `RELEVANCE_GATE_ENABLED` 從「現行值 true」更正為「⛔ 不存在」**——
+>    程式 0 命中、compose 兩份皆無宣告。**線上從來沒有這道「單發答題適用性把關」。**
+>    原標題「進場／閘門旗標（皆為現行值）」是錯的。
+> 3. **§12 交易面向配置鍵 14 鍵全數不存在**——原寫「全配置驅動、引擎零硬編」，
+>    現行修繕改走硬編工具鏈（`tools/action.py`＋`confirm_card.py`），已補新舊對應表。
+>
+> **仍未逐段對碼的區段**：§1 流程圖、§2、§4、§5、§6、§7、§8、§9、§10、§13、§14。
+> 這些整節依附於已刪模組，判定一律為歷史記錄；⛔ 未逐行標記，引用前先對碼。
+>
+> **對碼查證法**：`python3` 的 `ast` 掃 `rag-orchestrator/**/*.py` 收集定義名與字串，
+> 每次否定結論帶正對照組（本輪用 `USE_MOCK_JGB_API`／`AGENT_TURN_ENABLED`／
+> `KB_SIMILARITY_THRESHOLD`，3/3 命中才採信結果）。
 
 > **相關文件**：
 > - Retriever Pipeline 分數欄位：[retriever-pipeline.md](./retriever-pipeline.md)
@@ -1045,11 +1061,16 @@ flowchart LR
 | **SOP Orchestrator** (`services/sop_orchestrator.py`)（⚠️ 已隨舊鏈退役，見檔頭 2026-09-11 註記） | SOP 檢索與觸發管理 | 觸發模式判斷、關鍵詞匹配 |
 | **Knowledge Retriever** (`services/vendor_knowledge_retriever_v2.py`) | 知識庫檢索與過濾 | 向量相似度、意圖匹配 |
 | **Form Manager** (`services/form_manager.py`)（⚠️ 已隨舊鏈退役，見檔頭 2026-09-11 註記） | 表單生命週期管理 | 狀態轉換、欄位驗證 |
-| **Intent Classifier** (`services/intent_classifier.py`) | 意圖識別 | 多意圖支援、信心度評估 |
+| **Intent Classifier** (`services/intent_classifier.py`)（⚠️ 已隨舊鏈退役，見檔頭 2026-09-11 註記） | 意圖識別 | 多意圖支援、信心度評估 |
 | **LLM Optimizer** (`services/llm_answer_optimizer.py`)（⚠️ 已隨舊鏈退役，見檔頭 2026-09-11 註記） | 答案優化與合成 | 合成策略、參數注入 |
 | **Cache Service** (`services/cache_service.py`) | 三層緩存管理 | 緩存命中、過期策略 |
-| **Confidence Evaluator** (`services/confidence_evaluator.py`) | 品質評估 | 信心度計算、等級判定 |
+| **Confidence Evaluator** (`services/confidence_evaluator.py`)（⚠️ 已隨舊鏈退役，見檔頭 2026-09-11 註記） | 品質評估 | 信心度計算、等級判定 |
 | **Base Retriever** (`services/base_retriever.py`) | 統一檢索策略 | Pipeline stages、分數組合 |
+
+⚠️ **本表的退役標記已於 2026-09-12 補齊**：在此之前只標了 5 支，`Intent Classifier` 與
+`Confidence Evaluator` 漏標，讀者會合理推論「未標＝還在」，進而把 §2（意圖識別）與
+§4（信心度評估）整兩節當現況引用。**未標退役的三支（Knowledge Retriever／Cache Service／
+Base Retriever）是真的還在**，且新線仍在用。
 
 ---
 
@@ -1077,35 +1098,43 @@ CONFIDENCE_HIGH_THRESHOLD: 0.85  # 高信心度
 CONFIDENCE_MEDIUM_THRESHOLD: 0.70 # 中信心度
 
 # LLM 模型配置（環境變數）
-OPENAI_MODEL: gpt-4o-mini              # 答案優化模型（預設）
-INTENT_CLASSIFIER_MODEL: gpt-3.5-turbo # 意圖分類模型
-KNOWLEDGE_GEN_MODEL: gpt-4o-mini       # 知識生成模型
-DOCUMENT_CONVERTER_MODEL: gpt-4o       # 文件轉換模型（fallback: KNOWLEDGE_GEN_MODEL）
-QUERY_REWRITE_MODEL: gpt-4o-mini       # 查詢改寫模型（舊文寫 gpt-3.5-turbo，已過時）
-PRESALES_SYNTH_MODEL: gpt-4o           # 對話 brain（conversational_step）與推薦型合成
-RELEVANCE_GATE_MODEL: —                # 未設 → LLM_MODEL → OPENAI_MODEL（gpt-4o-mini）
-EMBEDDING_MODEL: text-embedding-3-small # Embedding 模型
+# 🔴 2026-09-12 逐鍵對碼：以下標 ⛔ 者在 rag-orchestrator 的 .py 全數 0 命中
+OPENAI_MODEL: gpt-4o-mini              # ✅ 仍在（agent/runtime.py、llm_provider.py）
+KNOWLEDGE_GEN_MODEL: gpt-4o-mini       # ✅ 仍在（knowledge_generator.py 等 3 支）
+DOCUMENT_CONVERTER_MODEL: gpt-4o       # ✅ 仍在（fallback: KNOWLEDGE_GEN_MODEL）
+QUERY_REWRITE_MODEL: gpt-4o-mini       # ✅ 仍在（query_rewriter.py）
+EMBEDDING_MODEL: text-embedding-3-small # ✅ 仍在（llm_provider.py）
+INTENT_CLASSIFIER_MODEL: ⛔ 不存在       # 意圖分類器已隨舊鏈刪除（services/intent_classifier.py 無檔）
+PRESALES_SYNTH_MODEL: ⛔ 不存在          # 對話 brain（conversational_step）已刪
+RELEVANCE_GATE_MODEL: ⛔ 不存在          # 見下方「進場／閘門旗標」——這道閘從未存在
 
 # LLM 溫度與 token 配置（環境變數）
-LLM_ANSWER_TEMPERATURE: 0.7            # 答案生成溫度
-LLM_ANSWER_MAX_TOKENS: 800             # 答案最大 token 數
-LLM_SYNTHESIS_TEMP: 0.1                # 合成專用溫度（部署值；程式 fallback 0.5）
-LLM_ANSWER_SYNTH_TEMP: 0.2             # 事實型收斂（factual/suppress）低溫
-ADVISOR_TEMP: 0.4                      # 對話 brain（conversational_step）溫度
-LLM_TONE_ADJUSTMENT_TEMP: 0.3          # 語氣調整溫度（已停用）
-INTENT_CLASSIFIER_TEMPERATURE: 0.1     # 意圖分類溫度
-INTENT_CLASSIFIER_MAX_TOKENS: 500      # 意圖分類最大 token 數
-KNOWLEDGE_GEN_TEMPERATURE: 0.7         # 知識生成溫度
-KNOWLEDGE_GEN_MAX_TOKENS: 800          # 知識生成最大 token 數
-QUERY_REWRITE_TEMPERATURE: 0.3         # 查詢改寫溫度
-QUERY_REWRITE_MAX_TOKENS: 100          # 查詢改寫最大 token 數
+# 🔴 2026-09-12 逐鍵對碼：答案優化與意圖分類的六顆溫度鍵全數 0 命中
+KNOWLEDGE_GEN_TEMPERATURE: 0.7         # ✅ 仍在（knowledge_generator.py）
+KNOWLEDGE_GEN_MAX_TOKENS: 800          # ✅ 仍在（knowledge_generator.py）
+QUERY_REWRITE_TEMPERATURE: 0.3         # ✅ 仍在（query_rewriter.py）
+QUERY_REWRITE_MAX_TOKENS: 100          # ✅ 仍在（query_rewriter.py）
+LLM_ANSWER_TEMPERATURE: ⛔ 不存在        # 答案優化（llm_answer_optimizer.py）已隨舊鏈刪除
+LLM_ANSWER_MAX_TOKENS: ⛔ 不存在         # 同上
+LLM_SYNTHESIS_TEMP: ⛔ 不存在            # 同上
+LLM_ANSWER_SYNTH_TEMP: ⛔ 不存在         # 同上
+ADVISOR_TEMP: ⛔ 不存在                  # 對話 brain 已刪
+LLM_TONE_ADJUSTMENT_TEMP: ⛔ 不存在       # 同上
+INTENT_CLASSIFIER_TEMPERATURE: ⛔ 不存在  # 意圖分類器已刪
+INTENT_CLASSIFIER_MAX_TOKENS: ⛔ 不存在   # 同上
+# 新線的模型組態改由 AGENT_MODEL／AGENT_REASONING_EFFORT／IMAGE_RECOGNITION_MODEL／
+# DOCUMENT_EXTRACTION_MODEL 管，見 docs/architecture/AGENTIC_MCP_ARCHITECTURE.md §6
 
-# 進場／閘門旗標（**皆為現行值**）
-ENABLE_QUERY_REWRITE_B2B: false        # b2b 查詢改寫（現行停用）
-PREENTRY_ROUTABILITY_GATE: false       # 進場前 scope 預判閘（現行停用；⚠️ 它與 in-session
-                                       #   取到的 system context **不同源**，不等於「同一判定提前」）
-RELEVANCE_GATE_ENABLED: true           # 單發答題的適用性把關
-RELEVANCE_GATE_SKIP_VEC: —             # 未設＝不跳過
+# 進場／閘門旗標（🔴 2026-09-12 逐鍵對碼更正，前一版寫「皆為現行值」是錯的）
+ENABLE_QUERY_REWRITE_B2B: false        # compose 兩份皆 false；⚠️ 程式 fallback 是 true
+                                       #   （services/base_retriever.py）——env 未設的環境會開著
+PREENTRY_ROUTABILITY_GATE: false       # ⛔ 已無程式讀者：compose 兩份仍宣告，但 rag-orchestrator
+                                       #   的 .py 只有 tests/unit/_meta/test_env_parity_req.py 列名。
+                                       #   受測物 `_preentry_routable` 隨 routers/chat.py 一併刪除
+RELEVANCE_GATE_ENABLED: ⛔ 不存在        # 🔴 程式 0 命中、compose 兩份皆無宣告。前一版寫「true，
+                                       #   單發答題的適用性把關」——**線上從來沒有這道閘**
+RELEVANCE_GATE_SKIP_VEC: ⛔ 不存在        # 同上
+RELEVANCE_GATE_MODEL: ⛔ 不存在          # 同上（原列於「LLM 模型配置」區塊）
 
 # 觸發配置
 DEFAULT_TRIGGER_KEYWORDS:
@@ -1132,7 +1161,22 @@ DIGRESSION_THRESHOLD: 0.7         # 離題判定閾值
 
 ### 交易面向配置鍵（`grounding_scope` 內，conversational-repair）
 
-宣告 `execute_endpoint` 即判定為交易面向；以下鍵全配置驅動、引擎零硬編：
+🔴 **2026-09-12 對碼更正：下表 14 個鍵在 `rag-orchestrator/**/*.py` 全部 0 命中，
+一個都不存在。** 前一版寫「全配置驅動、引擎零硬編」——那是舊鏈 `conversational_engine`
+時代的事實，該引擎已刪。**⛔ 不得照本表寫面向配置**：寫出來沒有任何程式會讀。
+
+現行等價能力改由**硬編的工具鏈**承擔，⛔ 不是配置鍵：
+
+| 舊配置鍵 | 現行對應（新線） |
+|---|---|
+| `execute_endpoint`（修繕＝create_repair） | `services/agent/tools/action.py::REPAIR_CREATE_ACTION`（字串常數 `"repair_create"`） |
+| `required_slots`／`confirm_template`／`confirm_qr_labels` | `services/agent/confirm_card.py::render`（程式決定性產卡文字） |
+| `execute_params`／`execute_result_path` | `services/agent/tools/action.py` 內的 payload 組裝與 `receipt` |
+| `enabled_gate`／`degraded_messages`／`contact_config_key` | 可見性改為 `AGENT_WRITE_TOOLS_ENABLED` AND `ToolSpec.stage`（DSP-038-1） |
+| `facet_key`（埋點） | ✅ **仍在**：`services/usage_metering.py::set_facet`、`_FACET_COLS=("facet_key","turn_number")` |
+| `prefill_api`／`candidate_max`／`inference_confidence` | 無對應；照片辨識分類改走 `runtime.IMAGE_SUGGESTION_KEY` 程式補值 |
+
+以下為**歷史記錄**（舊鏈 `grounding_scope` 內的鍵，⛔ 不是現況）：
 
 | 鍵 | 預設 | 用途 |
 |---|---|---|
@@ -1151,7 +1195,9 @@ DIGRESSION_THRESHOLD: 0.7         # 離題判定閾值
 | `confirm_qr_labels` | — | 確認 quick reply 顯示文字覆寫（機器值不變） |
 | `contact_config_key` | `service_hotline` | gate 關閉時客服管道鍵覆寫 |
 
-面向配置列鐵則：`target_user` 必須＝`persona_role`（修繕＝`tenant_repair`，`load_rules` 按 `persona_role` 查）。
+面向配置列鐵則（歷史）：`target_user` 必須＝`persona_role`（修繕＝`tenant_repair`，`load_rules` 按
+`persona_role` 查）。🔴 `services/conversational_rules.py::load_rules` 已於 2026-09-11 刪除；
+新線的規則正本是 `services/agent/agent_rules.py`，按受眾（非 persona_role）分支。
 
 ---
 
