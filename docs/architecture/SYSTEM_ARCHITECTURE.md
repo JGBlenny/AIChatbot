@@ -278,9 +278,28 @@ kb.get    → build_visibility_predicate ＋ canon.review_state.content_reviewed
 `prompt_assembler` 的 DB 路徑未接線（任務 2.1）。
 兩個分類也都被 `build_visibility_predicate` 的 `IS DISTINCT FROM` 排除在檢索外。
 
-⛔ **本輪不動 DB**（業主「資料先不碰」）。要處置得先裁：這 11 列是**未來要接回的
-受眾／面向規劃**，還是**舊鏈殘留**？前者要留並補程式，後者該停用。
+**2026-09-12 盤查結果（⛔ 不是「待裁決」，是查得到答案的）**：把這 11 個名字逐一
+拿去比對「非 archive 的 spec」，**10 個有對應的 spec，且那些 spec 都停在
+`tasks-generated`（任務寫了、沒實作）**：
+
+| 列 | 對應 spec | spec phase |
+|---|---|---|
+| 註冊驗證排障／帳號綁定異動 | `account-conversational-facets` | tasks-generated |
+| 帳單設定引導／建約引導 | `billing-conversational-facets` | tasks-generated |
+| 合約診斷 | `contract-conversational-facets` | tasks-generated |
+| 物件操作引導 | `estate-conversational-facets` | tasks-generated |
+| IoT設定引導 | `iot-conversational-facets` | tasks-generated |
+| 售前顧問／帳單診斷 | `agentic-mcp-orchestration` | tasks-approved |
+| 修繕報修 | `conversational-repair` | implementation-completed |
+| **訂閱診斷** | **無任何 spec** | — |
+
+⇒ **這 11 列絕大多數是「規劃了沒做完」，⛔ 不是舊鏈殘留。** 真正該問的不是要不要刪，
+而是：**那五份 `tasks-generated` 的面向 spec，寫的是舊的「資料驅動面向」做法
+（一筆 `category='對話規則'` ＝一個面向），而新線的 face 是程式驅動（`*_FACE_BUILDERS`）
+——這些 spec 要整份改寫成新做法，還是撤案？** 只有「訂閱診斷」無主，可單獨處置。
+⛔ 本輪不動 DB（業主「資料先不碰」）。
 查證：`SELECT question_summary FROM knowledge_base WHERE is_active AND category='對話規則' ORDER BY id;`
+以及 `grep -rln "<面向名>" .kiro/specs --include="*.md" | grep -v /archive/`。
 
 #### ⚠️ 19 張表在執行期程式零引用（2026-09-12 實查，待裁決）
 
@@ -293,6 +312,17 @@ kb.get    → build_visibility_predicate ＋ canon.review_state.content_reviewed
 | **迴圈執行面殘留** | `knowledge_gap_analysis`、`knowledge_import_jobs`、`knowledge_review_queue`、`loop_rollback_history`、`backtest_logic_changes`、`backtest_manual_reviews`、`test_collections`、`test_scenario_collections` | 2,662／33／—／… |
 | **備份／快照**（命名即自述） | `_category_phase2_snapshot`、`kb_rent_backup_20260419`、`knowledge_base_backup_dedup`、`knowledge_base_deleted_phase2` | 668／—／—／55 |
 | **非程式消費**（不是死的） | `schema_migrations`（97 列，runbook／shell 用）、`business_types_config`、`business_scope_config` | — |
+
+**2026-09-12 盤查結果**：這 19 張的處置**比對話規則列清楚得多**——
+① 它們服務的 8 個主體（`digression_detector.py`／`intent_suggestion_engine.py`／
+`chat.py`／`sop_orchestrator.py`／`gap_analyzer.py`／`coordinator.py`／
+`backtest_client.py` 等）**逐一 `find` 確認全部不存在**；
+② 拿表名去比對非 archive 的 spec，**沒有任何一張被列為待建**——只有三張被
+「當成盤查證據」提到（`knowledge_review_queue` 在 `routing-authority-model` 的
+盤點裡被記為「唯一具 approver 身分的機器化審批痕跡」，那是**稽核軌跡**的價值，
+⛔ 不是待建；`chat_history`／`test_scenario_collections` 被記為「本機為空／清單」）。
+
+⇒ **19 張全是殘留**，其中只有 `knowledge_review_queue` 有「保留當審批痕跡」的理由。
 
 ⚠️ **「零引用」≠「該刪」**：`schema_migrations` 是 migration 帳本、由 shell 與 runbook 使用；
 判死之前要先問「消費者是不是在**執行期程式以外**」（同 `return_unfiltered` 的教訓）。
