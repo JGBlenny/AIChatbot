@@ -824,6 +824,68 @@ else
 fi
 echo
 
+echo "═══ 不變量 40：架構正本 ⛔ 不得把呼叫端寫成本系統的一部分 ═══"
+# 源起（2026-09-12）：三份架構文各自寫了一段措辭不同的「外部串接不屬於本系統」宣告，
+# 但沒有**判準**，於是每遇到一個詞就要重新想一次它算哪邊，結果同一份文件裡
+# 有的清掉有的留著，看起來像混在一起。真正缺的是判準與歸屬表。
+# ⚠️ 兩分法（本系統／外部）判不動，實際是**三個桶**：
+#     ① 本系統（quick_replies、confirm_submit、outcome 八態——名字有外部血統但由本系統定義）
+#     ② 呼叫端（LIFF 畫面、通路 bot、jgb2 Web——換掉呼叫端本系統一行都不用改）⇒ 本尺只擋這類
+#     ③ 外部相依（IMAGE_URL_ALLOWLIST／relay——本系統自己的程式決定要去打，屬安全邊界，該寫）
+# ⛔ 詞表不得混入桶 ①，否則會反過來逼人刪掉本系統自己的對外契約（self-test ⑦ 釘住）。
+# 判準與歸屬表正本：docs/architecture/BOUNDARY.md
+DSB_CHECK="$REPO/scripts/audit/checks/doc_system_boundary.py"
+if ! python3 "$DSB_CHECK" --self-test >/dev/null 2>&1; then
+  echo "❌ FAIL：不變量 40 檢查器的自我測試未過（檢查器本身失效，其 PASS 不可信）"
+  python3 "$DSB_CHECK" --self-test
+  FAIL=1
+elif ! DSB_OUT=$(python3 "$DSB_CHECK" 2>&1); then
+  echo "$DSB_OUT"
+  FAIL=1
+else
+  echo "$DSB_OUT"
+fi
+echo
+
+echo "═══ 不變量 41：架構正本用反引號寫的識別字必須在程式碼庫找得到 ═══"
+# 源起（2026-09-12 對抗性演練）：文件寫「逐字重播，`llc_calls=0`」——全 repo 0 命中，
+# 真正的欄位是 `llm_calls`，而同一份文件另一節寫的是對的 ⇒ 同檔內部不一致。
+# ⚠️ **不變量 36 抓不到它**：36 只跑文件裡標為「查證」的 grep 指令，
+#    這個錯的符號寫在**敘述內文**裡，不在任何查證指令中 ⇒ 尺的覆蓋盲區。
+# ⚠️ 只認含底線的識別字——單字（`answer`／`kind`）會撞一般名詞，誤殺遠多於命中。
+# ⚠️ 例外走 scripts/audit/data/doc_symbols_absent_ok.txt，**每筆必須寫理由**
+#    （self-test ⑥ 釘住）；⛔ 不得用來塞「查不到所以先擋起來」。
+DIS_CHECK="$REPO/scripts/audit/checks/doc_inline_symbols.py"
+if ! python3 "$DIS_CHECK" --self-test >/dev/null 2>&1; then
+  echo "❌ FAIL：不變量 41 檢查器的自我測試未過（檢查器本身失效，其 PASS 不可信）"
+  python3 "$DIS_CHECK" --self-test
+  FAIL=1
+elif ! DIS_OUT=$(python3 "$DIS_CHECK" 2>&1); then
+  echo "$DIS_OUT"
+  FAIL=1
+else
+  echo "$DIS_OUT"
+fi
+echo
+
+echo "═══ 不變量 42：現況文件 ⛔ 不得用「一受眾一檔」時代的舊詞描述知識正本 ═══"
+# 源起（2026-09-16，業主）：DSP-058 後我照程式殘留符號說「pm 視圖／受眾正本」，業主連問三次
+# 「pm 不是被廢棄的規格嗎」——「只要一直沿用舊名稱，就無法判斷是否在做新架構」。靠人注意用詞不可靠。
+# 現行詞：九架正本 canon/jgb/、細目屬性 target_user、<身分>的篩選結果、每回合注入＝K=5 候選＋目錄。
+# 放行位置只有三種：詞彙表行、封存指引行、DECISIONS 的 DSP-047～057 歷史裁決列（self-test ⑥⑦⑧ 釘住）。
+DLT_CHECK="$REPO/scripts/audit/checks/doc_legacy_outline_terms.py"
+if ! python3 "$DLT_CHECK" --self-test >/dev/null 2>&1; then
+  echo "❌ FAIL：不變量 42 檢查器的自我測試未過（檢查器本身失效，其 PASS 不可信）"
+  python3 "$DLT_CHECK" --self-test
+  FAIL=1
+elif ! DLT_OUT=$(python3 "$DLT_CHECK" 2>&1); then
+  echo "$DLT_OUT"
+  FAIL=1
+else
+  echo "$DLT_OUT"
+fi
+echo
+
 echo "═══ 不變量 26：向量索引 ⛔ 不得用參數會崩塌的 IVFFlat ═══"
 # 為何需要（2026-09-01 b2b 35 題實測逼出）：
 #   idx_kb_embedding 為 ivfflat lists=100，而全表僅 992 筆向量 ⇒ 每 list 約 10 筆；

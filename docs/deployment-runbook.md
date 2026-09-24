@@ -689,9 +689,12 @@ docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c \
 | `AGENT_TURN_TIMEOUT_S` | `30.0` 秒 | `agent.turn` 單次呼叫逾時（刻意大於 `Budget.deadline_s`=20） | 隨 `AGENT_TURN_ENABLED` 一併評估，預設值通常免調 | `services/agent/mcp_facade.py:agent_turn_timeout_s` |
 | `AGENT_SHADOW_AUDIENCES` | 空 | ⚠️ `services/agent/shadow.py` 仍在（實作 R8），但影子的定義是「同時跑舊鏈與 agent 並比對」，舊鏈已刪 ⇒ **沒有比對對象**。R8 是否撤案待裁 | ⛔ 不要開 | `services/agent/shadow.py:_shadow_audiences` |
 | `AGENT_SHADOW_MONTHLY_USD_CAP` | `50.0`（USD） | 影子月成本上限。⚠️ 同上，影子目前無比對對象 | ⛔ 不要開 | `services/agent/shadow.py:_monthly_cap_usd` |
-| `AGENT_OUTLINE_TOKEN_LIMIT_PROSPECT` | `10000` | 售前大綱 token 預算上限 | 全程有效（M1 起，非里程碑開關） | `services/agent/outline.py:OUTLINE_TOKEN_LIMIT_ENV` |
-| `AGENT_OUTLINE_TOKEN_LIMIT_PM` | `8000` | pm 目錄 token 預算上限（子 spec 用） | 同上，M1 尚未消費（pm 另案） | 同上 |
-| `AGENT_OUTLINE_TOKEN_LIMIT_TENANT` | `8000` | tenant 目錄 token 預算上限（子 spec 用） | 同上 | 同上 |
+| `AGENT_OUTLINE_K_TOKEN_LIMIT_PROSPECT` | `12000` | 售前身分啟動預算：任 K=5 可引用節 token 最大和上限 | 全程有效（啟動即紅） | `services/agent/outline.py::default_k_token_limit` |
+| `AGENT_OUTLINE_K_TOKEN_LIMIT_PM` | `12000` | 業者身分同上尺 | 同上 | 同上 |
+| `AGENT_OUTLINE_K_TOKEN_LIMIT_TENANT` | `12000` | 租客身分同上尺（子 spec 用） | 同上 | 同上 |
+| `AGENT_OUTLINE_TOC_TOKEN_LIMIT_PROSPECT` | `8000` | 售前身分啟動預算：目錄 token 上限 | 全程有效（啟動即紅） | `services/agent/outline.py::default_toc_token_limit` |
+| `AGENT_OUTLINE_TOC_TOKEN_LIMIT_PM` | `8000` | 業者身分同上尺 | 同上 | 同上 |
+| `AGENT_OUTLINE_TOC_TOKEN_LIMIT_TENANT` | `8000` | 租客身分同上尺（子 spec 用） | 同上 | 同上 |
 | `AGENT_MODEL` | 未設 ⇒ 退回 `OPENAI_MODEL` ⇒ 再無則 `gpt-4o-mini` | agent runtime 呼叫的模型名 | 全程有效；未設時沿用專案既有 `OPENAI_MODEL` 慣例 | `services/agent/runtime.py`（`self._model = model or os.environ.get("AGENT_MODEL") or os.environ.get("OPENAI_MODEL", "gpt-4o-mini")`） |
 | `AGENT_TRACE_WINDOW_DAYS` | `7`（非法／非正數回退） | `agent_trace` 查詢與 CLI 的時間窗上限 | 全程有效 | `services/agent/trace_view.py:window_days` |
 | `MCP_ALLOWED_ORIGINS` | **無**（未設＝啟動即 raise） | `/mcp` 的 Origin 白名單三態判定 | 已於 1.7 落地必填，維持 `-`（見 §19-3） | `services/agent/mcp_facade.py:load_allowed_origins` |

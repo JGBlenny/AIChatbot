@@ -42,17 +42,20 @@ def _inputs(tmp_path):
     return str(kb), str(dr), str(co)
 
 
-def _proposal(angle="user_question_path"):
+def _proposal(angle="product_feature"):
     return {
         "angle": angle,
         "coarses": copy.deepcopy(COARSES["coarses"]),
         "fines": [
             {"id": "prospect/A/positioning", "coarse_id": "A", "title": "系統定位", "slug": "positioning",
-             "merge_of": ["tmp:kb:1"], "split_from": [], "moved_from": [], "reason": "定位問題獨立成題"},
+             "merge_of": ["tmp:kb:1"], "split_from": [], "moved_from": [], "reason": "定位問題獨立成題",
+             "target_user": ["prospect"]},
             {"id": "prospect/C/rent-collection", "coarse_id": "C", "title": "收租對帳", "slug": "rent-collection",
-             "merge_of": ["tmp:kb:2"], "split_from": [], "moved_from": [], "reason": "帳務模組"},
+             "merge_of": ["tmp:kb:2"], "split_from": [], "moved_from": [], "reason": "帳務模組",
+             "target_user": ["prospect"]},
             {"id": "prospect/D/trial", "coarse_id": "D", "title": "免費試用", "slug": "trial",
-             "merge_of": ["tmp:draft:1"], "split_from": [], "moved_from": [], "reason": "試用獨立"},
+             "merge_of": ["tmp:draft:1"], "split_from": [], "moved_from": [], "reason": "試用獨立",
+             "target_user": ["prospect"]},
         ],
         "id_map": [{"old": "tmp:kb:1", "new": "prospect/A/positioning", "op": "keep"},
                    {"old": "tmp:kb:2", "new": "prospect/C/rent-collection", "op": "keep"},
@@ -78,7 +81,7 @@ def test_prepare_writes_three_byte_stable_prompts_without_examples(tmp_path):
     r1 = _run(["structure_propose.py", "prepare", "--kb-rows", kb, "--drafts", dr, "--coarses", co, "--out-dir", str(out)])
     assert r1.returncode == 0, r1.stderr
     m1 = json.loads((out / "manifest.json").read_text(encoding="utf-8"))
-    assert set(m1["prompts"]) == {"user_question_path", "content_boundary", "audience_level"} and m1["items"] == 3
+    assert set(m1["prompts"]) == {"product_feature", "content_boundary", "audience_level"} and m1["items"] == 3
     texts = {k: open(v["path"], encoding="utf-8").read() for k, v in m1["prompts"].items()}
     for k, t in texts.items():
         assert "tmp:kb:1" in t and "tmp:draft:1" in t and "⛔ 不得增刪改" in t and k in t
@@ -123,7 +126,7 @@ def test_package_rejects_synthesis_with_new_fine_and_accepts_valid(tmp_path):
     kb, dr, co = _inputs(tmp_path)
     raw = tmp_path / "raw"; raw.mkdir()
     ps = []
-    for i, ang in enumerate(("user_question_path", "content_boundary", "audience_level")):
+    for i, ang in enumerate(("product_feature", "content_boundary", "audience_level")):
         p = raw / f"angle-{ang}.json"; p.write_text(json.dumps(_proposal(ang), ensure_ascii=False), encoding="utf-8"); ps.append(str(p))
     bad = _synthesis(); bad["fines"].append({"id": "prospect/A/extra", "coarse_id": "A", "title": "多出來", "slug": "extra",
                                             "merge_of": ["tmp:kb:1"], "split_from": [], "moved_from": [], "reason": "x"})
@@ -145,7 +148,7 @@ def test_package_rejects_synthesis_with_new_fine_and_accepts_valid(tmp_path):
 def test_synth_prompt_contains_three_proposals_and_no_examples(tmp_path):
     kb, dr, co = _inputs(tmp_path)
     ps = []
-    for ang in ("user_question_path", "content_boundary", "audience_level"):
+    for ang in ("product_feature", "content_boundary", "audience_level"):
         p = tmp_path / f"{ang}.json"; p.write_text(json.dumps(_proposal(ang), ensure_ascii=False), encoding="utf-8"); ps.append(str(p))
     r = _run(["structure_propose.py", "synth-prompt", "--kb-rows", kb, "--drafts", dr, "--coarses", co, "--proposals", *ps, "--out", str(tmp_path / "s.md")])
     assert r.returncode == 0, r.stderr

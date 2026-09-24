@@ -1,0 +1,639 @@
+{
+  "angle": "audience_level",
+  "coarses": [
+    {
+      "id": "A",
+      "title": "帳號與身分"
+    },
+    {
+      "id": "B",
+      "title": "團隊、人員與大房東"
+    },
+    {
+      "id": "C",
+      "title": "社區與物件"
+    },
+    {
+      "id": "D",
+      "title": "租約（含委託約子題）"
+    },
+    {
+      "id": "E",
+      "title": "帳務（含發票、收款金流、抄表）"
+    },
+    {
+      "id": "F",
+      "title": "修繕"
+    },
+    {
+      "id": "G",
+      "title": "裝置（IoT）"
+    },
+    {
+      "id": "H",
+      "title": "幫助中心"
+    },
+    {
+      "id": "I",
+      "title": "方案與導入"
+    }
+  ],
+  "fines": [
+    {
+      "id": "jgb/B/team-management-overview",
+      "coarse_id": "B",
+      "title": "團隊管理模組做什麼",
+      "slug": "team-management-overview",
+      "merge_of": [
+        "tmp:canon:jgb/B/team-management-overview"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "能力層：售前只需知道團隊管理能做什麼；成員新增、角色設定等操作層另見 add-team-member／member-role-permission-setup。",
+      "target_user": [
+        "prospect"
+      ],
+      "op": "keep"
+    },
+    {
+      "id": "jgb/B/role-permission-granularity",
+      "coarse_id": "B",
+      "title": "成員權限能不能細分（只看不改、看不到財務）",
+      "slug": "role-permission-granularity",
+      "merge_of": [
+        "tmp:canon:jgb/B/role-permission-granularity"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "能力層：售前問「能不能」；同主題的操作層（怎麼開、怎麼查誰有權限）另見 member-role-permission-setup，不併入以免同一細目混兩層級。",
+      "target_user": [
+        "prospect"
+      ],
+      "op": "keep"
+    },
+    {
+      "id": "jgb/B/what-is-owner-landlord",
+      "coarse_id": "B",
+      "title": "大房東是什麼",
+      "slug": "what-is-owner-landlord",
+      "merge_of": [
+        "tmp:canon:jgb/B/what-is-owner-landlord",
+        "tmp:kb:3463"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "概念層：3463 與既有細目同為「大房東是什麼、能看什麼、方案有上限」的概念說明，同受眾同層級併入；新增與授權的操作層另見 add-owner-landlord-and-access。",
+      "target_user": [
+        "prospect"
+      ],
+      "op": "merge"
+    },
+    {
+      "id": "jgb/B/owner-report-collection-remit",
+      "coarse_id": "B",
+      "title": "大房東報表與代收代付怎麼交代",
+      "slug": "owner-report-collection-remit",
+      "merge_of": [
+        "tmp:canon:jgb/B/owner-report-collection-remit"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "能力層：售前只需知道報表能自動整理並排程寄送；週期選項、預告信、手動上傳等操作層另見 owner-landlord-report-schedule。",
+      "target_user": [
+        "prospect"
+      ],
+      "op": "keep"
+    },
+    {
+      "id": "jgb/B/leasing-vs-management-business-model",
+      "coarse_id": "B",
+      "title": "包租業與代管業是什麼、差在哪",
+      "slug": "leasing-vs-management-business-model",
+      "merge_of": [
+        "tmp:kb:3084",
+        "tmp:kb:3085",
+        "tmp:kb:3086",
+        "tmp:kb:3087",
+        "tmp:kb:3091",
+        "tmp:kb:3303",
+        "tmp:kb:3304",
+        "tmp:kb:3305",
+        "tmp:kb:3306",
+        "tmp:kb:3308",
+        "tmp:kb:3309",
+        "tmp:draft:1"
+      ],
+      "split_from": [
+        "tmp:draft:1"
+      ],
+      "moved_from": [],
+      "reason": "概念層：多筆 kb 與 draft 第一、二節皆在回答「包租／代管各是什麼、簽約對象與控制權差異、房東該選哪個」，同受眾同層級合為一個主題；系統面差異的操作層另見 business-type-setting-and-system-differences。",
+      "target_user": [
+        "prospect"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/B/leasing-vs-management-liability-and-risk",
+      "coarse_id": "B",
+      "title": "包租與代管的法律責任與風險承擔差異",
+      "slug": "leasing-vs-management-liability-and-risk",
+      "merge_of": [
+        "tmp:kb:3095",
+        "tmp:kb:3096",
+        "tmp:kb:3254",
+        "tmp:kb:3255",
+        "tmp:kb:3307",
+        "tmp:kb:3310"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "權益層：誰對租客負責、誰承擔空置與損壞風險，是與「是什麼」不同的可獨立回答主題；同受眾只留此一層級，定義另見 leasing-vs-management-business-model。",
+      "target_user": [
+        "prospect"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/B/leasing-vs-management-fee-and-rent-collection",
+      "coarse_id": "B",
+      "title": "包租與代管的收費結構與租金收取方式",
+      "slug": "leasing-vs-management-fee-and-rent-collection",
+      "merge_of": [
+        "tmp:kb:3088",
+        "tmp:kb:3092",
+        "tmp:kb:3312",
+        "tmp:kb:3326",
+        "tmp:draft:1"
+      ],
+      "split_from": [
+        "tmp:draft:1"
+      ],
+      "moved_from": [],
+      "reason": "權益層：業者怎麼收費／怎麼賺（抽成 vs 租金差額、政府補貼）與租金由業者代收或房東直收，屬業態的商業模式而非 JGB 帳單計算，故留在本架；draft 第三節拆入此處。",
+      "target_user": [
+        "prospect"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/B/leasing-management-license-and-staff-qualification",
+      "coarse_id": "B",
+      "title": "如何成為合法包租代管業者與合格包管人員",
+      "slug": "leasing-management-license-and-staff-qualification",
+      "merge_of": [
+        "tmp:draft:1"
+      ],
+      "split_from": [
+        "tmp:draft:1"
+      ],
+      "moved_from": [],
+      "reason": "概念層：draft 第四、五節談業者許可申請流程與租賃住宅管理人員的訓練測驗資格，屬「人員」子題且可獨立回答，與商業模式分開。",
+      "target_user": [
+        "prospect"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/B/business-type-setting-and-system-differences",
+      "coarse_id": "B",
+      "title": "團隊業態（包租／代管）在系統裡怎麼設、差在哪",
+      "slug": "business-type-setting-and-system-differences",
+      "merge_of": [
+        "tmp:kb:4224"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "操作層：物管需要知道業態設定入口與系統面差異（合約模板、發票開立主體、差額發票）；差額發票的細節另見帳務架，概念層另見 leasing-vs-management-business-model。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/B/add-team-member",
+      "coarse_id": "B",
+      "title": "新增團隊成員（需先註冊、加入後指派角色）",
+      "slug": "add-team-member",
+      "merge_of": [
+        "tmp:kb:3439",
+        "tmp:kb:3544",
+        "tmp:kb:4251"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "操作層：三筆皆為「怎麼把人加進團隊」的步驟、前置條件（須為會員）與加入後必做的角色指派，同受眾同層級合一；成員加了卻看不到東西的排查另見 member-cannot-see-function-troubleshooting。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/B/member-role-permission-setup",
+      "coarse_id": "B",
+      "title": "成員角色與功能權限怎麼設定、怎麼查誰有權限",
+      "slug": "member-role-permission-setup",
+      "merge_of": [
+        "tmp:kb:3545",
+        "tmp:kb:4250",
+        "tmp:kb:3974",
+        "tmp:kb:3982",
+        "tmp:kb:3359"
+      ],
+      "split_from": [
+        "tmp:kb:3359"
+      ],
+      "moved_from": [],
+      "reason": "操作層：權限層級（查看／編輯／匯出）、範本與自訂角色、物件授權給成員、盤查誰有某操作權限，皆為物管的設定操作；3982 空內文只當入口；3359 的權限與物件授權段拆入此處；能力層另見 role-permission-granularity。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/B/member-cannot-see-function-troubleshooting",
+      "coarse_id": "B",
+      "title": "成員看不到功能或無法操作怎麼排查",
+      "slug": "member-cannot-see-function-troubleshooting",
+      "merge_of": [
+        "tmp:kb:3482",
+        "tmp:kb:3981"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "操作層：以「症狀」為入口的排查（未指派角色、角色限制、方案限制、功能開關），3981 空內文只當入口掛在此處；角色怎麼指派的操作另見 add-team-member／member-role-permission-setup。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/B/remove-team-member-data-retention",
+      "coarse_id": "B",
+      "title": "移除團隊成員後資料會不會留",
+      "slug": "remove-team-member-data-retention",
+      "merge_of": [
+        "tmp:kb:3546"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "操作層：移除操作與資料保留、預設身分清除，是離職處理時獨立可答的主題。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/B/account-in-multiple-teams",
+      "coarse_id": "B",
+      "title": "一個帳號加入多個團隊",
+      "slug": "account-in-multiple-teams",
+      "merge_of": [
+        "tmp:kb:3547"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "操作層：帳號可同時屬多團隊、各團隊權限獨立計算，屬團隊成員關係；身分切換與預設身分的機制本身歸帳號與身分架，此處只交叉引用。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/B/change-team-principal-or-phone",
+      "coarse_id": "B",
+      "title": "變更團隊主要負責人或綁定手機（異動單）",
+      "slug": "change-team-principal-or-phone",
+      "merge_of": [
+        "tmp:kb:3359"
+      ],
+      "split_from": [
+        "tmp:kb:3359"
+      ],
+      "moved_from": [],
+      "reason": "操作層：3359 末段的異動單申請是與權限設定無關、可獨立回答的團隊主體變更流程，故自 3359 拆出。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/B/add-owner-landlord-and-access",
+      "coarse_id": "B",
+      "title": "新增大房東與設定其可看的物件範圍",
+      "slug": "add-owner-landlord-and-access",
+      "merge_of": [
+        "tmp:kb:3464"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "操作層：新增步驟、授權範圍、邀請未註冊者，是物管的設定操作；概念層另見 what-is-owner-landlord。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/B/owner-landlord-report-schedule",
+      "coarse_id": "B",
+      "title": "大房東月報表怎麼看、怎麼排程寄送與手動上傳",
+      "slug": "owner-landlord-report-schedule",
+      "merge_of": [
+        "tmp:kb:3465",
+        "tmp:kb:3543"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "操作層：報表內容、排程週期、確認信與預告通知、手動上傳，兩筆同主題同層級合一；能力層另見 owner-report-collection-remit。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/B/owner-landlord-contact-book-import-export",
+      "coarse_id": "B",
+      "title": "大房東聯絡簿批次匯入匯出",
+      "slug": "owner-landlord-contact-book-import-export",
+      "merge_of": [
+        "tmp:kb:3467"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "操作層：Excel 匯入匯出是獨立的資料維護操作，與報表排程分開。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    }
+  ],
+  "id_map": [
+    {
+      "old": "tmp:canon:jgb/B/team-management-overview",
+      "new": "jgb/B/team-management-overview",
+      "op": "keep"
+    },
+    {
+      "old": "tmp:canon:jgb/B/role-permission-granularity",
+      "new": "jgb/B/role-permission-granularity",
+      "op": "keep"
+    },
+    {
+      "old": "tmp:canon:jgb/B/what-is-owner-landlord",
+      "new": "jgb/B/what-is-owner-landlord",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:3463",
+      "new": "jgb/B/what-is-owner-landlord",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:canon:jgb/B/owner-report-collection-remit",
+      "new": "jgb/B/owner-report-collection-remit",
+      "op": "keep"
+    },
+    {
+      "old": "tmp:kb:3084",
+      "new": "jgb/B/leasing-vs-management-business-model",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3085",
+      "new": "jgb/B/leasing-vs-management-business-model",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3086",
+      "new": "jgb/B/leasing-vs-management-business-model",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3087",
+      "new": "jgb/B/leasing-vs-management-business-model",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3091",
+      "new": "jgb/B/leasing-vs-management-business-model",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3303",
+      "new": "jgb/B/leasing-vs-management-business-model",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3304",
+      "new": "jgb/B/leasing-vs-management-business-model",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3305",
+      "new": "jgb/B/leasing-vs-management-business-model",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3306",
+      "new": "jgb/B/leasing-vs-management-business-model",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3308",
+      "new": "jgb/B/leasing-vs-management-business-model",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3309",
+      "new": "jgb/B/leasing-vs-management-business-model",
+      "op": "new"
+    },
+    {
+      "old": "tmp:draft:1",
+      "new": "jgb/B/leasing-vs-management-business-model",
+      "op": "split"
+    },
+    {
+      "old": "tmp:kb:3095",
+      "new": "jgb/B/leasing-vs-management-liability-and-risk",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3096",
+      "new": "jgb/B/leasing-vs-management-liability-and-risk",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3254",
+      "new": "jgb/B/leasing-vs-management-liability-and-risk",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3255",
+      "new": "jgb/B/leasing-vs-management-liability-and-risk",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3307",
+      "new": "jgb/B/leasing-vs-management-liability-and-risk",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3310",
+      "new": "jgb/B/leasing-vs-management-liability-and-risk",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3088",
+      "new": "jgb/B/leasing-vs-management-fee-and-rent-collection",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3092",
+      "new": "jgb/B/leasing-vs-management-fee-and-rent-collection",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3312",
+      "new": "jgb/B/leasing-vs-management-fee-and-rent-collection",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3326",
+      "new": "jgb/B/leasing-vs-management-fee-and-rent-collection",
+      "op": "new"
+    },
+    {
+      "old": "tmp:draft:1",
+      "new": "jgb/B/leasing-vs-management-fee-and-rent-collection",
+      "op": "split"
+    },
+    {
+      "old": "tmp:draft:1",
+      "new": "jgb/B/leasing-management-license-and-staff-qualification",
+      "op": "split"
+    },
+    {
+      "old": "tmp:kb:4224",
+      "new": "jgb/B/business-type-setting-and-system-differences",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3439",
+      "new": "jgb/B/add-team-member",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3544",
+      "new": "jgb/B/add-team-member",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:4251",
+      "new": "jgb/B/add-team-member",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3545",
+      "new": "jgb/B/member-role-permission-setup",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:4250",
+      "new": "jgb/B/member-role-permission-setup",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3974",
+      "new": "jgb/B/member-role-permission-setup",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3982",
+      "new": "jgb/B/member-role-permission-setup",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3359",
+      "new": "jgb/B/member-role-permission-setup",
+      "op": "split"
+    },
+    {
+      "old": "tmp:kb:3482",
+      "new": "jgb/B/member-cannot-see-function-troubleshooting",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3981",
+      "new": "jgb/B/member-cannot-see-function-troubleshooting",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3546",
+      "new": "jgb/B/remove-team-member-data-retention",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3547",
+      "new": "jgb/B/account-in-multiple-teams",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3359",
+      "new": "jgb/B/change-team-principal-or-phone",
+      "op": "split"
+    },
+    {
+      "old": "tmp:kb:3464",
+      "new": "jgb/B/add-owner-landlord-and-access",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3465",
+      "new": "jgb/B/owner-landlord-report-schedule",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3543",
+      "new": "jgb/B/owner-landlord-report-schedule",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3467",
+      "new": "jgb/B/owner-landlord-contact-book-import-export",
+      "op": "new"
+    }
+  ],
+  "out_of_shelf": [
+    {
+      "id": "tmp:kb:2980",
+      "suggested_shelf": "C",
+      "why": "租客在公共區域的使用權限屬物件／社區本身的規範，與團隊、人員、大房東無關。"
+    },
+    {
+      "id": "tmp:kb:3094",
+      "suggested_shelf": "D",
+      "why": "租金調整依租約條款決定，依歸位判準由合約條款決定的歸租約。"
+    },
+    {
+      "id": "tmp:kb:3360",
+      "suggested_shelf": "E",
+      "why": "收支明細表、差額發票收支表的匯出與收款品項設定屬帳務報表，不是大房東報表。"
+    },
+    {
+      "id": "tmp:kb:3438",
+      "suggested_shelf": "A",
+      "why": "房東／租客身分切換與預設身分是帳號與身分機制。"
+    },
+    {
+      "id": "tmp:kb:3480",
+      "suggested_shelf": "A",
+      "why": "房東／租客／大房東／團隊成員四種身分的功能範圍總表，主體是身分而非團隊；跨架命題只能歸一處。"
+    },
+    {
+      "id": "tmp:kb:4272",
+      "suggested_shelf": "C",
+      "why": "空內文入口，主題是社區管理員代收包裹，屬社區與物件；本架無可掛的細目。"
+    }
+  ]
+}

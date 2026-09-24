@@ -15,7 +15,7 @@ from services.ocr_mapping.models import DocuMindPage, FieldSource, OcrMappingReq
 from services.ocr_mapping.page_merger import merge_pages
 
 pytestmark = pytest.mark.unit
-IDENTITY = {"vendor_id": 1, "role_id": "20151", "user_id": "12291", "mode": "b2c", "target_user": "landlord",
+IDENTITY = {"vendor_id": 1, "role_id": "20151", "user_id": "12291", "mode": "b2c", "target_user": "tenant",
             "session_id": "backtest_session_ocr_rental"}
 
 

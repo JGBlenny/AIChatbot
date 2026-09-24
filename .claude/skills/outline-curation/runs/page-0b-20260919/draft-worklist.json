@@ -1,0 +1,623 @@
+{
+ "hold_for_owner": [
+  "page:estates.dashboard.sell",
+  "page:estates.edit.sell_contact",
+  "page:estates.edit.sell_detail",
+  "page:listings.map",
+  "page:listings.search",
+  "page:web:customers.demand",
+  "page:web:customers.tcloud",
+  "page:web:estates.sell-house",
+  "page:web:estates.sell-show"
+ ],
+ "topics": [
+  {
+   "unit_id": "page:bills.socialHousingSheets",
+   "shelf": "E",
+   "label": "bills.socialHousingSheets",
+   "path": "/bills/socialHousingSheets/:version?",
+   "component": "bills/socialHousingSheets/Index.vue",
+   "verdict": "missing",
+   "related_fine_ids": [],
+   "note": "需要一條細目說明社宅清冊/表單4、7、9、11 的用途、媒合編號與歸檔流程"
+  },
+  {
+   "unit_id": "page:communities.pick",
+   "shelf": "C",
+   "label": "communities.pick",
+   "path": "pick/:action",
+   "component": "communities/pick/Index.vue",
+   "verdict": "partial",
+   "related_fine_ids": [
+    "jgb/C/community-setup-and-property-binding"
+   ],
+   "note": "涵蓋歸戶邏輯，未描述挑選器介面操作"
+  },
+  {
+   "unit_id": "page:contracts.edit.buildingTranscript",
+   "shelf": "D",
+   "label": "contracts.edit.buildingTranscript",
+   "path": "buildingTranscript",
+   "component": "contracts/edit/buildingTranscript/General.vue",
+   "verdict": "missing",
+   "related_fine_ids": [],
+   "note": "需要一條細目說明建物謄本資訊分頁（地號建號、主建物面積等）的填寫方式"
+  },
+  {
+   "unit_id": "page:contracts.edit.facilities",
+   "shelf": "D",
+   "label": "contracts.edit.facilities",
+   "path": "facilities",
+   "component": "contracts/edit/facilities/Index.vue",
+   "verdict": "partial",
+   "related_fine_ids": [
+    "jgb/D/equipment-usage-under-lease"
+   ],
+   "note": "只講設備使用法規，未涵蓋合約編輯頁設備清單填寫操作"
+  },
+  {
+   "unit_id": "page:contracts.edit.rentAdjustment",
+   "shelf": "D",
+   "label": "contracts.edit.rentAdjustment",
+   "path": "rentAdjustment",
+   "component": "contracts/edit/rentAdjustment/Index.vue",
+   "verdict": "missing",
+   "related_fine_ids": [],
+   "note": "需要一條細目說明合約租金調幅（固定/百分比、調幅週期）怎麼批次設定"
+  },
+  {
+   "unit_id": "page:contracts.edit.situation",
+   "shelf": "D",
+   "label": "contracts.edit.situation",
+   "path": "situation",
+   "component": "contracts/edit/situation/Index.vue",
+   "verdict": "partial",
+   "related_fine_ids": [
+    "jgb/D/lease-clauses-interpretation"
+   ],
+   "note": "只講租約條款一般解釋，未涵蓋屋況/使用限制分頁的填寫操作"
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.attachments",
+   "shelf": "D",
+   "label": "contracts.edit.socialHousing.attachments",
+   "path": "attachments",
+   "component": "contracts/edit/attachments/Index.vue",
+   "verdict": "partial",
+   "related_fine_ids": [
+    "jgb/D/contract-attachments-notes-limits"
+   ],
+   "note": "只講一般合約附件上傳限制，未涵蓋社宅版指定附件項目清單"
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.buildingTranscript",
+   "shelf": "D",
+   "label": "contracts.edit.socialHousing.buildingTranscript",
+   "path": "buildingTranscript",
+   "component": "contracts/edit/buildingTranscript/SocialHousing.vue",
+   "verdict": "missing",
+   "related_fine_ids": [],
+   "note": "需要一條細目說明社宅建物謄本資訊分頁（建號地號、建物資訊）的填寫方式"
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.facilities",
+   "shelf": "D",
+   "label": "contracts.edit.socialHousing.facilities",
+   "path": "facilities",
+   "component": "contracts/edit/facilities/Index.vue",
+   "verdict": "partial",
+   "related_fine_ids": [
+    "jgb/D/equipment-usage-under-lease"
+   ],
+   "note": "只講設備使用法規，未涵蓋合約編輯頁設備清單填寫操作"
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.landlordBasic",
+   "shelf": "D",
+   "label": "contracts.edit.socialHousing.landlordBasic",
+   "path": "landlordBasic",
+   "component": "contracts/edit/landlordBasic/Index.vue",
+   "verdict": "missing",
+   "related_fine_ids": [],
+   "note": "需要一條細目說明社宅合約房東基本資料分頁（代理人、交付方式等）的填寫方式"
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.landlordLicense",
+   "shelf": "D",
+   "label": "contracts.edit.socialHousing.landlordLicense",
+   "path": "landlordLicense",
+   "component": "contracts/edit/landlordLicense/Index.vue",
+   "verdict": "missing",
+   "related_fine_ids": [],
+   "note": "需要一條細目說明社宅房東資格授權書分頁（公益出租人、代理人授權期間）的填寫規則"
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.moveIn",
+   "shelf": "D",
+   "label": "contracts.edit.socialHousing.moveIn",
+   "path": "moveIn",
+   "component": "contracts/edit/moveIn/Index.vue",
+   "verdict": "partial",
+   "related_fine_ids": [
+    "jgb/D/handover-checkin"
+   ],
+   "note": "只講一般點交流程，未涵蓋社宅合約編輯頁內建點交表單"
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.photos",
+   "shelf": "D",
+   "label": "contracts.edit.socialHousing.photos",
+   "path": "photos",
+   "component": "contracts/edit/photos/Index.vue",
+   "verdict": "missing",
+   "related_fine_ids": [],
+   "note": "需要一條細目說明社宅合約照片檢核（滅火器、火警警報器等）分頁的填寫方式"
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.situation",
+   "shelf": "D",
+   "label": "contracts.edit.socialHousing.situation",
+   "path": "situation",
+   "component": "contracts/edit/situation/Index.vue",
+   "verdict": "partial",
+   "related_fine_ids": [
+    "jgb/D/lease-clauses-interpretation"
+   ],
+   "note": "只講租約條款一般解釋，未涵蓋屋況/使用限制分頁的填寫操作"
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.subsidyTerms",
+   "shelf": "D",
+   "label": "contracts.edit.socialHousing.subsidyTerms",
+   "path": "subsidyTerms",
+   "component": "contracts/edit/subsidyTerms/Index.vue",
+   "verdict": "missing",
+   "related_fine_ids": [],
+   "note": "需要一條細目說明社宅租屋補貼修繕費項目分頁的填寫規則"
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.tenantAttachment",
+   "shelf": "D",
+   "label": "contracts.edit.socialHousing.tenantAttachment",
+   "path": "tenantAttachment",
+   "component": "contracts/edit/tenantAttachment/Index.vue",
+   "verdict": "missing",
+   "related_fine_ids": [],
+   "note": "需要一條細目說明社宅租客資格證明文件分頁（戶籍謄本、所得清單等）要求哪些附件"
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.tenantBasic",
+   "shelf": "D",
+   "label": "contracts.edit.socialHousing.tenantBasic",
+   "path": "tenantBasic",
+   "component": "contracts/edit/tenantBasic/Index.vue",
+   "verdict": "missing",
+   "related_fine_ids": [],
+   "note": "需要一條細目說明社宅租客資格分類（低收入戶等）分頁的填寫方式"
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.tenantHousehold",
+   "shelf": "D",
+   "label": "contracts.edit.socialHousing.tenantHousehold",
+   "path": "tenantHousehold",
+   "component": "contracts/edit/tenantHousehold/Index.vue",
+   "verdict": "missing",
+   "related_fine_ids": [],
+   "note": "需要一條細目說明社宅租客家庭與財產所得檢核分頁的填寫規則"
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.tenantLicense",
+   "shelf": "D",
+   "label": "contracts.edit.socialHousing.tenantLicense",
+   "path": "tenantLicense",
+   "component": "contracts/edit/tenantLicense/Index.vue",
+   "verdict": "missing",
+   "related_fine_ids": [],
+   "note": "需要一條細目說明社宅租客資格授權書分頁的填寫與授權規則"
+  },
+  {
+   "unit_id": "page:contracts.edit.taxAndInvoice",
+   "shelf": "D",
+   "label": "contracts.edit.taxAndInvoice",
+   "path": "taxAndInvoice",
+   "component": "contracts/edit/taxAndInvoice/index.jsx",
+   "verdict": "partial",
+   "related_fine_ids": [
+    "jgb/E/einvoice-issuing"
+   ],
+   "note": "只講電子發票開立時機與載具，未涵蓋合約內統編/免稅/開票商設定"
+  },
+  {
+   "unit_id": "page:controlPanel.index",
+   "shelf": "I",
+   "label": "controlPanel.index",
+   "path": "/controlPanel",
+   "component": "control-panel/Index.vue",
+   "verdict": "missing",
+   "related_fine_ids": [],
+   "note": "控制台總覽（連結任務管理／通知信）無對應細目"
+  },
+  {
+   "unit_id": "page:controlPanel.setting",
+   "shelf": "I",
+   "label": "controlPanel.setting",
+   "path": "/controlPanel/setting",
+   "component": "control-panel/setting/Index.jsx",
+   "verdict": "missing",
+   "related_fine_ids": [],
+   "note": "控制台設定頁無對應細目"
+  },
+  {
+   "unit_id": "page:estates.dashboard",
+   "shelf": "C",
+   "label": "estates.dashboard",
+   "path": "/estates/dashboard/:id",
+   "component": "estates/dashboard/Index.vue",
+   "verdict": "missing",
+   "related_fine_ids": [],
+   "note": "沒有描述物件儀表板總覽入口本身，內容都在各分頁"
+  },
+  {
+   "unit_id": "page:estates.dashboard.attachments",
+   "shelf": "C",
+   "label": "estates.dashboard.attachments",
+   "path": "attachments",
+   "component": "estates/dashboard/attachments/Index.vue",
+   "verdict": "missing",
+   "related_fine_ids": [],
+   "note": "缺物件附件（非合約附件）上傳管理的說明"
+  },
+  {
+   "unit_id": "page:estates.dashboard.memos",
+   "shelf": "C",
+   "label": "estates.dashboard.memos",
+   "path": "memos",
+   "component": "estates/dashboard/memos/Index.vue",
+   "verdict": "missing",
+   "related_fine_ids": [],
+   "note": "缺物件記事本（備註＋附件）功能的說明"
+  },
+  {
+   "unit_id": "page:estates.dashboard.rent",
+   "shelf": "C",
+   "label": "estates.dashboard.rent",
+   "path": "rent",
+   "component": "estates/dashboard/rent/Index.vue",
+   "verdict": "missing",
+   "related_fine_ids": [],
+   "note": "缺物件刊登瀏覽數據/成效統計的說明"
+  },
+  {
+   "unit_id": "page:estates.dashboard.runnings",
+   "shelf": "C",
+   "label": "estates.dashboard.runnings",
+   "path": "runnings",
+   "component": "estates/dashboard/runnings/Index.vue",
+   "verdict": "missing",
+   "related_fine_ids": [],
+   "note": "缺物件流水帳（自訂收支記錄）功能的說明"
+  },
+  {
+   "unit_id": "page:estates.edit.building_transcript",
+   "shelf": "C",
+   "label": "estates.edit.building_transcript",
+   "path": "buildingTranscript",
+   "component": "estates/edit/building_transcript/Index.vue",
+   "verdict": "missing",
+   "related_fine_ids": [],
+   "note": "缺建物謄本（違建登記）欄位填寫的說明"
+  },
+  {
+   "unit_id": "page:estates.edit.building_transcript_general",
+   "shelf": "C",
+   "label": "estates.edit.building_transcript_general",
+   "path": "buildingTranscriptGeneral",
+   "component": "estates/edit/buildingTranscriptGeneral/Index.vue",
+   "verdict": "missing",
+   "related_fine_ids": [],
+   "note": "缺一般物件建物謄本欄位填寫的說明"
+  },
+  {
+   "unit_id": "page:estates.edit.facilities",
+   "shelf": "C",
+   "label": "estates.edit.facilities",
+   "path": "facilities",
+   "component": "estates/edit/facilities/Index.vue",
+   "verdict": "missing",
+   "related_fine_ids": [],
+   "note": "缺物件設備清單填寫的說明"
+  },
+  {
+   "unit_id": "page:estates.edit.gallery",
+   "shelf": "C",
+   "label": "estates.edit.gallery",
+   "path": "gallery",
+   "component": "estates/edit/gallery/Index.vue",
+   "verdict": "missing",
+   "related_fine_ids": [],
+   "note": "缺物件照片上傳操作的說明"
+  },
+  {
+   "unit_id": "page:estates.edit.intro",
+   "shelf": "C",
+   "label": "estates.edit.intro",
+   "path": "intro",
+   "component": "estates/edit/intro/Index.vue",
+   "verdict": "missing",
+   "related_fine_ids": [],
+   "note": "缺物件介紹文字欄位填寫的說明"
+  },
+  {
+   "unit_id": "page:estates.edit.rent_contact",
+   "shelf": "C",
+   "label": "estates.edit.rent_contact",
+   "path": "rent_contact",
+   "component": "estates/edit/rent_contact/Index.vue",
+   "verdict": "missing",
+   "related_fine_ids": [],
+   "note": "缺租賃廣告聯絡資訊欄位填寫的說明"
+  },
+  {
+   "unit_id": "page:estates.edit.rent_detail",
+   "shelf": "C",
+   "label": "estates.edit.rent_detail",
+   "path": "rent_detail",
+   "component": "estates/edit/rent_detail/Index.jsx",
+   "verdict": "partial",
+   "related_fine_ids": [
+    "jgb/C/property-listing-conditions"
+   ],
+   "note": "只提租金為必填欄位，未涵蓋生活費用等細節設定"
+  },
+  {
+   "unit_id": "page:estates.edit.rent_verify",
+   "shelf": "C",
+   "label": "estates.edit.rent_verify",
+   "path": "rent_verify",
+   "component": "estates/edit/rent_verify/Index.vue",
+   "verdict": "missing",
+   "related_fine_ids": [],
+   "note": "缺違章建築/租賃住宅條例申報欄位的說明"
+  },
+  {
+   "unit_id": "page:estates.pick",
+   "shelf": "C",
+   "label": "estates.pick",
+   "path": "/estates/pick/:action",
+   "component": "estates/pick/Index.jsx",
+   "verdict": "partial",
+   "related_fine_ids": [
+    "jgb/C/property-advanced-search"
+   ],
+   "note": "涵蓋物件列表搜尋，未描述作為批次動作挑選器的用法"
+  },
+  {
+   "unit_id": "page:listings.demoForm",
+   "shelf": "I",
+   "label": "listings.demoForm",
+   "path": "/demo-form",
+   "component": "listings/DemoForm.vue",
+   "verdict": "missing",
+   "related_fine_ids": [],
+   "note": "缺預約 demo 表單流程的說明"
+  },
+  {
+   "unit_id": "page:listings.helpCenter",
+   "shelf": "H",
+   "label": "listings.helpCenter",
+   "path": "/help",
+   "component": "help-center/Index.vue",
+   "verdict": "missing",
+   "related_fine_ids": [],
+   "note": "H 幫助中心目前空架，無對應細目"
+  },
+  {
+   "unit_id": "page:listings.helpCenter.group",
+   "shelf": "H",
+   "label": "listings.helpCenter.group",
+   "path": "group/:slug?",
+   "component": "help-center/Group.vue",
+   "verdict": "missing",
+   "related_fine_ids": [],
+   "note": "H 幫助中心目前空架，無對應細目"
+  },
+  {
+   "unit_id": "page:listings.helpCenter.post",
+   "shelf": "H",
+   "label": "listings.helpCenter.post",
+   "path": "post/:slug?",
+   "component": "help-center/Post.vue",
+   "verdict": "missing",
+   "related_fine_ids": [],
+   "note": "H 幫助中心目前空架，無對應細目"
+  },
+  {
+   "unit_id": "page:listings.helpCenter.search",
+   "shelf": "H",
+   "label": "listings.helpCenter.search",
+   "path": "search",
+   "component": "help-center/Search.vue",
+   "verdict": "missing",
+   "related_fine_ids": [],
+   "note": "H 幫助中心目前空架，無對應細目"
+  },
+  {
+   "unit_id": "page:notificationMail",
+   "shelf": "I",
+   "label": "notificationMail",
+   "path": "notificationMail",
+   "component": "control-panel/notificationMail/Index.jsx",
+   "verdict": "missing",
+   "related_fine_ids": [],
+   "note": "通知信範本/類型設定無對應細目"
+  },
+  {
+   "unit_id": "page:repair.share",
+   "shelf": "F",
+   "label": "repair.share",
+   "path": "/repair/share/:id?",
+   "component": "repair/share/Index.vue",
+   "verdict": "partial",
+   "related_fine_ids": [
+    "jgb/F/repair-dispatch-and-close"
+   ],
+   "note": "涵蓋業者/廠商協作，未提報修單分享連結機制"
+  },
+  {
+   "unit_id": "page:taskManagement",
+   "shelf": "I",
+   "label": "taskManagement",
+   "path": "taskManagement",
+   "component": "control-panel/taskManagement/Index.vue",
+   "verdict": "missing",
+   "related_fine_ids": [],
+   "note": "自動化任務管理（排程通知/報修）無對應細目"
+  },
+  {
+   "unit_id": "page:taskManagement.create",
+   "shelf": "I",
+   "label": "taskManagement.create",
+   "path": "taskManagement/create",
+   "component": "control-panel/taskManagement/edit/Index.jsx",
+   "verdict": "missing",
+   "related_fine_ids": [],
+   "note": "自動化任務建立流程無對應細目"
+  },
+  {
+   "unit_id": "page:taskManagement.edit",
+   "shelf": "I",
+   "label": "taskManagement.edit",
+   "path": "taskManagement/edit/:id?",
+   "component": "control-panel/taskManagement/edit/Index.jsx",
+   "verdict": "missing",
+   "related_fine_ids": [],
+   "note": "自動化任務編輯流程無對應細目"
+  },
+  {
+   "unit_id": "page:tools.unlock",
+   "shelf": "I",
+   "label": "tools.unlock",
+   "path": "/unlock/:iotId/:batch",
+   "component": "tools/unlock/Index.vue",
+   "verdict": "partial",
+   "related_fine_ids": [
+    "jgb/G/smart-lock-functions"
+   ],
+   "note": "只涵蓋一般開門/密碼功能，未涵蓋此技師遠端解鎖工具頁"
+  },
+  {
+   "unit_id": "page:users.advance",
+   "shelf": "A",
+   "label": "users.advance",
+   "path": "advance",
+   "component": "users/advance/Index.jsx",
+   "verdict": "missing",
+   "related_fine_ids": [],
+   "note": "進階折扣/帳單設定頁無對應細目"
+  },
+  {
+   "unit_id": "page:users.approval",
+   "shelf": "A",
+   "label": "users.approval",
+   "path": "approval",
+   "component": "users/approval/Index.jsx",
+   "verdict": "missing",
+   "related_fine_ids": [],
+   "note": "內部簽核流程管理無對應細目"
+  },
+  {
+   "unit_id": "page:users.lesseeList",
+   "shelf": "A",
+   "label": "users.lesseeList",
+   "path": "/users/lesseeList",
+   "component": "users/lesseeList/Index.vue",
+   "verdict": "partial",
+   "related_fine_ids": [
+    "jgb/D/contract-lookup"
+   ],
+   "note": "只涵蓋合約查詢，未涵蓋租客名單列表/篩選頁本身"
+  },
+  {
+   "unit_id": "page:users.notification",
+   "shelf": "A",
+   "label": "users.notification",
+   "path": "notification",
+   "component": "users/notification/Index.vue",
+   "verdict": "partial",
+   "related_fine_ids": [
+    "jgb/A/account-profile-settings"
+   ],
+   "note": "只提到通知語言設定，未涵蓋通知中心列表本身"
+  },
+  {
+   "unit_id": "page:users.team.member.owned",
+   "shelf": "A",
+   "label": "users.team.member.owned",
+   "path": "team/member/owned/:category/:uid",
+   "component": "users/team/memberOwned/Index.jsx",
+   "verdict": "partial",
+   "related_fine_ids": [
+    "jgb/B/remove-team-member-data-retention"
+   ],
+   "note": "只答成員移除後資料歸屬，未涵蓋此列表頁操作介面"
+  },
+  {
+   "unit_id": "page:web:/help/{any?}/{slug?}",
+   "shelf": "H",
+   "label": "/help/{any?}/{slug?}",
+   "path": "/help/{any?}/{slug?}",
+   "component": "ListingController@index",
+   "verdict": "missing",
+   "related_fine_ids": [],
+   "note": "H 幫助中心目前空架，無任何細目"
+  },
+  {
+   "unit_id": "page:web:notifications.index",
+   "shelf": "A",
+   "label": "notifications.index",
+   "path": "/{type?}",
+   "component": "NotificationController@index",
+   "verdict": "partial",
+   "related_fine_ids": [
+    "jgb/A/account-profile-settings"
+   ],
+   "note": "只提到通知語言設定，未涵蓋通知中心列表本身"
+  },
+  {
+   "unit_id": "page:web:share",
+   "shelf": "I",
+   "label": "share",
+   "path": "/share/{action}/{id?}",
+   "component": "IndexController@share",
+   "verdict": "partial",
+   "related_fine_ids": [
+    "jgb/C/storefront-entry-share"
+   ],
+   "note": "只涵蓋招租店舖分享，未涵蓋物件廣告等其他分享類型"
+  },
+  {
+   "unit_id": "page:web:users.role",
+   "shelf": "A",
+   "label": "users.role",
+   "path": "/role",
+   "component": "UserController@role",
+   "verdict": "partial",
+   "related_fine_ids": [
+    "jgb/D/signer-identity-and-seal"
+   ],
+   "note": "只涵蓋簽署身分與大小章，未涵蓋此團隊/公司資訊頁其餘欄位"
+  },
+  {
+   "unit_id": "page:web:users.roleTenant",
+   "shelf": "A",
+   "label": "users.roleTenant",
+   "path": "/roleTenant",
+   "component": "UserController@roleTenant",
+   "verdict": "partial",
+   "related_fine_ids": [
+    "jgb/D/signer-identity-and-seal"
+   ],
+   "note": "只涵蓋簽署身分與大小章，未涵蓋此簽約資訊頁其餘欄位"
+  }
+ ]
+}

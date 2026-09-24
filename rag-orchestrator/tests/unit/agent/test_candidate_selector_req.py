@@ -82,6 +82,31 @@ def _doc(*blocks):
     return parse_canon_text(_FRONT_MATTER + "".join(blocks))
 
 
+_ALL_USERS = ("all_users",)
+_PARSER_SAFE_TU = ["tenant"]   # 佔位：parser 拒 all_users（DSP-053／9.1a），先以合法值過解析
+
+
+def _swap_to_all_users(doc, *slugs):
+    """把指定細目的 `target_user` 換成 `("all_users",)`——**繞過 parser 的值域檢查**。
+
+    ⚠️ 刻意的單向不對稱（同 `tests/integration/agent/test_visible_subset_sql_equiv_req.py::_doc`）：
+    正本 parser 的 `target_user` 值域**不含** `all_users`（DSP-053／9.1a），但 SQL／記憶體
+    的 **b2c 分支**合法把它當通用標記放行（`canon_visible` 的 `ALL_USERS_TOKEN`）。
+    這裡要測的是可見性語義、⛔ 不是 parser 值域，故文字先寫合法佔位值解析，再以
+    `dataclasses.replace` 換回。⛔ 不刪這格——它是「`all_users` ⛔ 不是 b2b 旁路」的鑑別列。
+    """
+    import dataclasses
+
+    want = {fid(s) for s in slugs}
+    assert want <= {f.id for f in doc.fines()}, f"要換的細目不在正本裡：{sorted(want)}"
+    coarses = tuple(
+        dataclasses.replace(c, fines=tuple(
+            dataclasses.replace(f, target_user=_ALL_USERS) if f.id in want else f
+            for f in c.fines))
+        for c in doc.coarses)
+    return dataclasses.replace(doc, coarses=coarses)
+
+
 def fid(slug: str) -> str:
     return f"prospect/A/{slug}"
 
@@ -509,6 +534,20 @@ async def test_index_unavailable_is_declared_but_never_returned_by_select():
         assert sel is None or sel["miss_kind"] != "index_unavailable"
 
 
+def test_miss_kind_is_exactly_five_closed_values():
+    """9.8 DSP-059 D′ S2 ⑤：`MissKind` 值域封閉，舊的「受眾不符」那個值已刪
+    （它的唯一產出點是 `runtime._select_outline` 比對預組 doc 的 audience 欄位，
+    S2 後不存在預組 doc）——⛔ 移除 `empty_toc` 或留著那個舊值的字面
+    都必須讓這條紅。每一值在計畫文內都有 S2 後的產出點：`select` 產
+    `hit`／`none_visible`／`no_candidate`；`runtime._select_outline` 產
+    `index_unavailable`／`empty_toc`。"""
+    from typing import get_args as _get_args
+
+    assert set(_get_args(MissKind)) == {
+        "hit", "none_visible", "no_candidate", "index_unavailable", "empty_toc",
+    }
+
+
 # ── 情境 5：visible_subset ＝ 逐細目 canon_visible ──────────────────────
 
 _VIS_TITLES = {
@@ -519,7 +558,7 @@ _VIS_TITLES = {
 
 def _doc_v():
     """六細目，刻意讓四組身分各看到**不同**的集合（否則等式「處處成立」沒有鑑別力）。"""
-    return _doc(
+    return _swap_to_all_users(_doc(
         _fine_block("vis-alpha", _VIS_TITLES["vis-alpha"], target_user=["prospect"],
                     business_types=["system_provider"]),
         _fine_block("hidden-pm", _VIS_TITLES["hidden-pm"], target_user=["property_manager"],
@@ -529,12 +568,12 @@ def _doc_v():
         # ⚠️ 嚴格分支的鑑別列：若 (property_manager, b2c) 誤走 b2c 分支，這列會變可見
         _fine_block("pm-rental", _VIS_TITLES["pm-rental"], target_user=["property_manager"],
                     business_types=["rental"]),
-        _fine_block("allusers-nobt", _VIS_TITLES["allusers-nobt"], target_user=["all_users"],
+        _fine_block("allusers-nobt", _VIS_TITLES["allusers-nobt"], target_user=_PARSER_SAFE_TU,
                     business_types=[]),
         # 未審：⛔ 記憶體側一律不可見（`canon_visible` 首行）
         _fine_block("nobody", _VIS_TITLES["nobody"], target_user=["prospect"],
                     business_types=["system_provider"], reviewed=False),
-    )
+    ), "allusers-nobt")
 
 
 _VIS_CASES = [

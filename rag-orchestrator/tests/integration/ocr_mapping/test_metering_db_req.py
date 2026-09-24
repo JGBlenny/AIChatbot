@@ -21,7 +21,7 @@ async def _run(session_id: str) -> dict:
         password=os.getenv("DB_PASSWORD", ""), min_size=1, max_size=2,
     )
     try:
-        um.begin({"mode": "b2c", "role_id": "20151", "target_user": "landlord", "vendor_id": 1, "session_id": session_id})
+        um.begin({"mode": "b2c", "role_id": "20151", "target_user": "tenant", "vendor_id": 1, "session_id": session_id})
         um.set_path("ocr_mapping")
         um.finalize(status="success", http_status=200, db_pool=pool)
         await asyncio.sleep(0.5)                                        # fire-and-forget 寫入

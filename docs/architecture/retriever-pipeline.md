@@ -5,7 +5,7 @@
 
 ## 概述
 
-本文件描述 rag-orchestrator 的 retriever pipeline 設計，包含各階段職責、分數欄位語意、環境變數閾值對應、以及 `PERFECT_MATCH_THRESHOLD` 校準歷史。
+本文件描述 rag-orchestrator 的 retriever pipeline 設計，包含各階段職責、分數欄位語意、環境變數閾值對應。
 
 ---
 
@@ -86,11 +86,6 @@ else:
 
 ## 環境變數閾值對應
 
-🔴 **2026-09-12：本表原列 5 顆，其中 4 顆在 `rag-orchestrator` 的 `.py` 完全 0 命中**
-（`PERFECT_MATCH_THRESHOLD`／`HIGH_QUALITY_THRESHOLD`／`SYNTHESIS_THRESHOLD` 的比對位置
-`llm_answer_optimizer` 已刪；`SOP_SIMILARITY_THRESHOLD` 的 SOP 檢索程式已刪）。
-**現在只剩一顆真的被讀。** 正對照：`KB_SIMILARITY_THRESHOLD` 有 5 個 `.py` 命中。
-
 | 環境變數 | 對應欄位 | 比對位置 | 預設值 |
 |---------|---------|---------|-------|
 | `KB_SIMILARITY_THRESHOLD` | `similarity`（final） | `services/decision_layer.py::DecisionConfig.load` → `services/agent/tools/kb.py` | 0.65 |
@@ -101,14 +96,9 @@ else:
 
 ## 下游消費者欄位語意
 
-🔴 **2026-09-12：舊鏈的 7 個消費者（`chat.py` debug_info 系列、`chat_shared`、
-`llm_answer_optimizer`）整批刪除，對應列一併移除。** score 欄位的計算來源
-（上方門檻表引用的 retriever 本體）未受影響。
-
 | 檔案 / 位置 | 欄位 | 對應來源 |
 |-----------|------|---------|
 | `services/agent/tools/kb.py::kb.search` | **只回 `id`／`question_summary`／`similarity`** —— ⛔ `vector_similarity` 與 `score_source` 在 retriever 內部算完就留在內部，不出口 | `similarity`（final） |
-| `backtest_framework_async` sources 注入 | final + 純向量 | `similarity`（主）+ `vector_similarity`（輔助） |
 
 ⚠️ **能力落差（非搬家）**：新線**沒有等價的 `debug_info` 呈現層**——
 舊鏈會把候選分數整包回給呼叫端，`/mcp` 不會。要看分數只能走
@@ -174,31 +164,6 @@ _apply_semantic_reranker: 過濾後送 HTTP 到 semantic-model
 ### 快取
 
 保留現有 Redis 快取；快取 key 不變。
-
----
-
-## 校準歷史
-
-### PERFECT_MATCH_THRESHOLD 校準
-
-> ⚠️ 重構後 `PERFECT_MATCH_THRESHOLD` 語意從「含 boost 的 similarity」改為「純 vector_similarity」，
-> 預估閾值映射 `0.90 → 0.82`，但實際值須依 staging 回測結果決定。
-
-| 日期 | 版本 | 閾值 | pass_rate | perfect_match_rate | 決策 |
-|------|------|------|-----------|-------------------|------|
-| _待測_ | baseline（重構前） | 0.90 | — | — | — |
-| _待測_ | refactored（重構後） | 0.90 | — | — | 預期下降，需校準 |
-| _待測_ | refactored（校準後） | 0.82（預估） | — | — | 依回測結果調整 |
-
-**校準流程**（詳見 `.kiro/specs/retriever-similarity-refactor/design.md` 決策 6）：
-
-1. **Step 1** — 以重構前版本跑 vendor_id=2 的 approved scenarios 回測，記錄為 `baseline_metrics.json`
-2. **Step 2** — 部署重構版本到 staging，跑相同測試集，記錄為 `refactored_metrics.json`
-3. **Step 3** — 比對：
-   - `pass_rate` 變化 ≤ ±5% 且 `perfect_match_rate` 變化 ≤ ±10% → ✅ 通過
-   - `perfect_match_rate` 大幅下降（> 10%）→ 降低 `PERFECT_MATCH_THRESHOLD`
-   - `pass_rate` 下降 > 5% → 檢查 retriever 排序邏輯
-4. **Step 4** — 更新 `.env.example` 與 `docker-compose.prod.yml` 的閾值，並在本文表格記錄決策
 
 ---
 

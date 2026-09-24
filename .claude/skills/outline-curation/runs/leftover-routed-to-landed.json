@@ -1,0 +1,172 @@
+[
+ {
+  "kb_id": "3438",
+  "to": "A",
+  "from": "B"
+ },
+ {
+  "kb_id": "3480",
+  "to": "A",
+  "from": "B"
+ },
+ {
+  "kb_id": "3358",
+  "to": "B",
+  "from": "C"
+ },
+ {
+  "kb_id": "3973",
+  "to": "B",
+  "from": "C"
+ },
+ {
+  "kb_id": "3456",
+  "to": "I",
+  "from": "C",
+  "note": "I 提案後才路由進來，未進提案"
+ },
+ {
+  "kb_id": "3341",
+  "to": "E",
+  "from": "D",
+  "note": "E 提案已在跑"
+ },
+ {
+  "kb_id": "3432",
+  "to": "C",
+  "from": "D",
+  "note": ""
+ },
+ {
+  "kb_id": "4144",
+  "to": "C",
+  "from": "D",
+  "note": ""
+ },
+ {
+  "kb_id": "5377",
+  "to": "I",
+  "from": "D",
+  "note": ""
+ },
+ {
+  "kb_id": "3199",
+  "to": "F",
+  "from": "D",
+  "note": ""
+ },
+ {
+  "kb_id": "3276",
+  "to": "F",
+  "from": "D",
+  "note": ""
+ },
+ {
+  "kb_id": "tmp:draft:1",
+  "to": "B",
+  "from": "D",
+  "note": ""
+ },
+ {
+  "kb_id": "tmp:draft:4",
+  "to": "C",
+  "from": "D",
+  "note": ""
+ },
+ {
+  "kb_id": "3514",
+  "to": "E",
+  "from": "E",
+  "note": "face 資料查詢"
+ },
+ {
+  "kb_id": "1388",
+  "to": "E",
+  "from": "E",
+  "note": "face 資料查詢"
+ },
+ {
+  "kb_id": "1391",
+  "to": "E",
+  "from": "E",
+  "note": "face 資料查詢"
+ },
+ {
+  "kb_id": "4281",
+  "to": "E",
+  "from": "E",
+  "note": "face 資料查詢"
+ },
+ {
+  "kb_id": "1393",
+  "to": "E",
+  "from": "E",
+  "note": "face 資料查詢"
+ },
+ {
+  "kb_id": "1394",
+  "to": "E",
+  "from": "E",
+  "note": "face 資料查詢"
+ },
+ {
+  "kb_id": "4261",
+  "to": "E",
+  "from": "E",
+  "note": "face 資料查詢"
+ },
+ {
+  "kb_id": "4275",
+  "to": "E",
+  "from": "E",
+  "note": "face 資料查詢"
+ },
+ {
+  "kb_id": "4640",
+  "to": "E",
+  "from": "E",
+  "note": "face 資料查詢"
+ },
+ {
+  "kb_id": "1408",
+  "to": "F",
+  "from": "E",
+  "note": ""
+ },
+ {
+  "kb_id": "3517",
+  "to": "D",
+  "from": "E",
+  "note": ""
+ },
+ {
+  "kb_id": "3899",
+  "to": "D",
+  "from": "E",
+  "note": ""
+ },
+ {
+  "kb_id": "4047",
+  "to": "G",
+  "from": "E",
+  "note": ""
+ },
+ {
+  "kb_id": "4564",
+  "to": "G",
+  "from": "E",
+  "note": ""
+ },
+ {
+  "kb_id": "4050",
+  "to": "G",
+  "from": "E",
+  "note": ""
+ },
+ {
+  "kb_id": "4059",
+  "to": "G",
+  "from": "E",
+  "note": ""
+ }
+]

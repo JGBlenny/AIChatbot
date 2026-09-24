@@ -1,0 +1,462 @@
+[
+  {
+    "audience": "prospect",
+    "candidate_ids": [
+      "jgb/B/team-management-overview",
+      "jgb/C/property-management-overview",
+      "jgb/F/repair-system",
+      "jgb/C/community-batch-create",
+      "jgb/I/individual-landlord-scale-fit"
+    ],
+    "fine_id": "jgb/B/team-management-overview",
+    "miss_kind": "hit",
+    "query": "團隊管理",
+    "section_ids": [
+      "jgb/B/team-management-overview",
+      "jgb/C/property-management-overview",
+      "jgb/F/repair-system",
+      "jgb/C/community-batch-create",
+      "jgb/I/individual-landlord-scale-fit",
+      "outline:toc"
+    ],
+    "text": "【jgb/B/team-management-overview】團隊管理模組做什麼\n人多、管不動？\n金箍棒的團隊管理支援多人帳號與角色權限，讓代管團隊分工協作，並提供大房東報表對業主交代。\n系統沒有叫「系統管理」的模組；成員、角色權限、訂閱方案這類設定都在團隊管理裡。\n想了解團隊方案可預約 demo 由專人說明。\n\n---\n\n【jgb/C/property-management-overview】房源管理模組做什麼（含自訂狀態標籤）\n物件多、資料分散難管？\n金箍棒的房源管理把所有物件集中：物件建檔、社區歸戶、批次上傳，還有招租公開頁與 VR 看屋連結，取代散落的 Excel。\n物件可以貼團隊自訂的狀態標籤（預設有可帶看、待清潔、待簽約、維修中、不出租、待完善六種），方便篩選與分工。\n想看實際畫面可預約 demo。\n\n---\n\n【jgb/F/repair-system】線上報修與進度追蹤\n報修處理慢、追蹤不易？\n金箍棒的修繕系統讓租客線上報修、房東與管理方追蹤處理進度，把報修流程數位化。\n想看實際流程可預約 demo。\n\n---\n\n【jgb/C/community-batch-create】社區建立與批次新增物件\n金箍棒用「社區」把同一棟或同一社區的物件歸戶管理。\n流程是先建立社區，再在「社區總表」選該社區，按右側的「批次新增」下載 Excel 模板、填入物件資料後上傳，就能一次把整批物件建進系統；單筆新增則在物件總表「新增物件」。\n想看實際畫面可預約 demo。\n\n---\n\n【jgb/I/individual-landlord-scale-fit】個人房東（約 10～30 戶）適配與建議做法\n管 10 間左右的個人房東，最花時間的通常是收租對帳和合約來回。\n金箍棒把物件、合約、帳務集中在一個系統：線上電子簽章簽約、自動產帳單與金流代收、收租對帳一條龍，取代 Excel 與 LINE 的零散作業，也能發租客通知、處理報修。\n建議先用免費試用一個月實際跑跑看；正式方案級距與費用調整中，可於定價頁(https://www.jgbsmart.com/pricing)查看或由專人為您說明，這裡不報數字。\n管到 20 間左右，帳單與對帳的量明顯變大、人工容易出錯。\n金箍棒的帳務模組（自動帳單、多元金流代收、電子發票、儲值金）能把收租對帳自動化，搭配物件管理、電子簽章合約、租客通知與修繕，讓一個人也管得動這個規模。\n可先免費試用一個月感受效率差異；方案級距與費用請見定價頁(https://www.jgbsmart.com/pricing)或由專人提供，這裡不報過時數字。\n管到 30 間左右，已接近個人經營的規模上限，物件與帳務都相當可觀；未來若開始多人協作或要對業主交報表，會很快需要團隊管理與大房東報表。\n金箍棒在這階段能用物件、合約、帳務的完整自動化撐住現有規模，並可平順銜接到團隊方案。\n建議先免費試用一個月；正式級距與費用調整中，請見定價頁(https://www.jgbsmart.com/pricing)或由專人為您盤點，這裡不直接報價。\n\n---\n\n【outline:toc】正本目錄\njgb/B/team-management-overview｜團隊管理模組做什麼\njgb/C/property-management-overview｜房源管理模組做什麼（含自訂狀態標籤）\njgb/C/community-batch-create｜社區建立與批次新增物件\njgb/C/rental-storefront-vr｜招租店舖與 VR 看屋\njgb/F/repair-system｜線上報修與進度追蹤\njgb/G/smart-meter-lock-iot｜智慧電錶與門鎖整合（售前）\njgb/I/competitor-comparison｜跟 Bananas、屋我也差在哪\njgb/I/dashboard-overview｜首頁儀表板顯示哪些數據\njgb/I/free-trial｜可以免費試用嗎\njgb/I/individual-landlord-scale-fit｜個人房東（約 10～30 戶）適配與建議做法\njgb/I/property-quota-limit｜方案物件額度上限與用滿怎麼辦\njgb/I/team-company-fit｜公司或包租代管團隊適合嗎\njgb/I/why-choose-jgb｜為什麼選金箍棒",
+    "toc_text": "jgb/B/team-management-overview｜團隊管理模組做什麼\njgb/C/property-management-overview｜房源管理模組做什麼（含自訂狀態標籤）\njgb/C/community-batch-create｜社區建立與批次新增物件\njgb/C/rental-storefront-vr｜招租店舖與 VR 看屋\njgb/F/repair-system｜線上報修與進度追蹤\njgb/G/smart-meter-lock-iot｜智慧電錶與門鎖整合（售前）\njgb/I/competitor-comparison｜跟 Bananas、屋我也差在哪\njgb/I/dashboard-overview｜首頁儀表板顯示哪些數據\njgb/I/free-trial｜可以免費試用嗎\njgb/I/individual-landlord-scale-fit｜個人房東（約 10～30 戶）適配與建議做法\njgb/I/property-quota-limit｜方案物件額度上限與用滿怎麼辦\njgb/I/team-company-fit｜公司或包租代管團隊適合嗎\njgb/I/why-choose-jgb｜為什麼選金箍棒"
+  },
+  {
+    "audience": "property_manager",
+    "candidate_ids": [
+      "jgb/F/repair-ticket-photo-count-limit",
+      "jgb/F/repair-ticket-reclassify",
+      "jgb/F/repair-ticket-after-submit",
+      "jgb/E/dunning-draft-not-auto-send",
+      "jgb/I/property-quota-limit"
+    ],
+    "fine_id": "jgb/B/team-management-overview",
+    "miss_kind": "hit",
+    "query": "團隊管理",
+    "section_ids": [
+      "jgb/F/repair-ticket-photo-count-limit",
+      "jgb/F/repair-ticket-reclassify",
+      "jgb/F/repair-ticket-after-submit",
+      "jgb/E/dunning-draft-not-auto-send",
+      "jgb/I/property-quota-limit",
+      "outline:toc"
+    ],
+    "text": "【jgb/F/repair-ticket-photo-count-limit】修繕辨識與附件的照片張數限制\n辨識一次最多用 3 張照片，多的由呼叫端先截；修繕單附件應保存全部照片（由呼叫端另帶完整清單），辨識仍只看前 3 張。\n\n---\n\n【jgb/F/repair-ticket-reclassify】確認卡上修改辨識結果的規則\n**確認卡尚在時**按「我要修改」只重新確認被改的項目（例如把「天花板」改成「馬桶後面的水管」），物件與急迫性不重問、不重跑辨識。\n\n---\n\n【jgb/F/repair-ticket-after-submit】確認送出後的單如何處理\n確認送出後，這張單不在對話裡修改：業務要改內容時，說明這張單已送出，並指到 JGB 的修繕單頁面處理。\n送出後再描述同一戶的另一個問題，視為另一張新單：物件不重問，依口述描述出新的確認摘要，仍只有按「確認送出」才建單。\n\n---\n\n【jgb/E/dunning-draft-not-auto-send】催繳草稿不可一鍵發送給租客\n不可以；草稿一律推給業務自己複製去傳，不設計一鍵發送，所有提醒都是給業務而不是給租客。\n\n---\n\n【jgb/I/property-quota-limit】方案物件額度上限與用滿怎麼辦\n金箍棒的方案是依可管理的物件數分級，物件額度用滿就無法再新增，可以升級方案、加購額度，或把不再使用的物件下架釋放額度；目前用量在「訂閱方案」頁看得到。\n各方案的物件數級距請以線上定價頁為準 [查看方案與費用](https://www.jgbsmart.com/pricing)。\n免費方案預設可建 5 個物件（免費試用一個月就是免費方案），實際額度以帳號內「訂閱方案」頁顯示為準。\n新帳號享有免費試用一個月，可先實際體驗再選方案。\n\n---\n\n【outline:toc】正本目錄\njgb/E/dunning-draft-not-auto-send｜催繳草稿不可一鍵發送給租客\njgb/F/repair-ticket-after-submit｜確認送出後的單如何處理\njgb/F/repair-ticket-mid-flow-cancel｜報修流程中途取消的規則\njgb/F/repair-ticket-photo-count-limit｜修繕辨識與附件的照片張數限制\njgb/F/repair-ticket-reclassify｜確認卡上修改辨識結果的規則\njgb/F/repair-ticket-submit-failure｜建單失敗時的處理與重試規則\njgb/F/repair-ticket-urgency-judgment｜修繕單急迫程度的判斷來源與值域\njgb/I/dashboard-overview｜首頁儀表板顯示哪些數據\njgb/I/property-quota-limit｜方案物件額度上限與用滿怎麼辦",
+    "toc_text": "jgb/E/dunning-draft-not-auto-send｜催繳草稿不可一鍵發送給租客\njgb/F/repair-ticket-after-submit｜確認送出後的單如何處理\njgb/F/repair-ticket-mid-flow-cancel｜報修流程中途取消的規則\njgb/F/repair-ticket-photo-count-limit｜修繕辨識與附件的照片張數限制\njgb/F/repair-ticket-reclassify｜確認卡上修改辨識結果的規則\njgb/F/repair-ticket-submit-failure｜建單失敗時的處理與重試規則\njgb/F/repair-ticket-urgency-judgment｜修繕單急迫程度的判斷來源與值域\njgb/I/dashboard-overview｜首頁儀表板顯示哪些數據\njgb/I/property-quota-limit｜方案物件額度上限與用滿怎麼辦"
+  },
+  {
+    "audience": "prospect",
+    "candidate_ids": [
+      "jgb/C/property-management-overview",
+      "jgb/I/dashboard-overview",
+      "jgb/I/individual-landlord-scale-fit",
+      "jgb/I/free-trial",
+      "jgb/F/repair-system"
+    ],
+    "fine_id": "jgb/C/property-management-overview",
+    "miss_kind": "hit",
+    "query": "VR看屋",
+    "section_ids": [
+      "jgb/C/property-management-overview",
+      "jgb/I/dashboard-overview",
+      "jgb/I/individual-landlord-scale-fit",
+      "jgb/I/free-trial",
+      "jgb/F/repair-system",
+      "outline:toc"
+    ],
+    "text": "【jgb/C/property-management-overview】房源管理模組做什麼（含自訂狀態標籤）\n物件多、資料分散難管？\n金箍棒的房源管理把所有物件集中：物件建檔、社區歸戶、批次上傳，還有招租公開頁與 VR 看屋連結，取代散落的 Excel。\n物件可以貼團隊自訂的狀態標籤（預設有可帶看、待清潔、待簽約、維修中、不出租、待完善六種），方便篩選與分工。\n想看實際畫面可預約 demo。\n\n---\n\n【jgb/I/dashboard-overview】首頁儀表板顯示哪些數據\n登入後的首頁儀表板有三塊：收支情況（圖表化呈現，可自訂時間區間看營運趨勢）、帳務情況（近期的逾期待收款帳單與待繳費帳單，可點「更多」看明細）、修繕情況（租客目前申請中的修繕單）。\n想看實際畫面可預約 demo。\n\n---\n\n【jgb/I/individual-landlord-scale-fit】個人房東（約 10～30 戶）適配與建議做法\n管 10 間左右的個人房東，最花時間的通常是收租對帳和合約來回。\n金箍棒把物件、合約、帳務集中在一個系統：線上電子簽章簽約、自動產帳單與金流代收、收租對帳一條龍，取代 Excel 與 LINE 的零散作業，也能發租客通知、處理報修。\n建議先用免費試用一個月實際跑跑看；正式方案級距與費用調整中，可於定價頁(https://www.jgbsmart.com/pricing)查看或由專人為您說明，這裡不報數字。\n管到 20 間左右，帳單與對帳的量明顯變大、人工容易出錯。\n金箍棒的帳務模組（自動帳單、多元金流代收、電子發票、儲值金）能把收租對帳自動化，搭配物件管理、電子簽章合約、租客通知與修繕，讓一個人也管得動這個規模。\n可先免費試用一個月感受效率差異；方案級距與費用請見定價頁(https://www.jgbsmart.com/pricing)或由專人提供，這裡不報過時數字。\n管到 30 間左右，已接近個人經營的規模上限，物件與帳務都相當可觀；未來若開始多人協作或要對業主交報表，會很快需要團隊管理與大房東報表。\n金箍棒在這階段能用物件、合約、帳務的完整自動化撐住現有規模，並可平順銜接到團隊方案。\n建議先免費試用一個月；正式級距與費用調整中，請見定價頁(https://www.jgbsmart.com/pricing)或由專人為您盤點，這裡不直接報價。\n\n---\n\n【jgb/I/free-trial】可以免費試用嗎\n可以，新帳號享有免費試用一個月，註冊即可開始，先實際用過再決定。\n需要協助開通可以留個聯絡方式，或直接預約 demo 由專人帶您看。\n\n---\n\n【jgb/F/repair-system】線上報修與進度追蹤\n報修處理慢、追蹤不易？\n金箍棒的修繕系統讓租客線上報修、房東與管理方追蹤處理進度，把報修流程數位化。\n想看實際流程可預約 demo。\n\n---\n\n【outline:toc】正本目錄\njgb/B/team-management-overview｜團隊管理模組做什麼\njgb/C/property-management-overview｜房源管理模組做什麼（含自訂狀態標籤）\njgb/C/community-batch-create｜社區建立與批次新增物件\njgb/C/rental-storefront-vr｜招租店舖與 VR 看屋\njgb/F/repair-system｜線上報修與進度追蹤\njgb/G/smart-meter-lock-iot｜智慧電錶與門鎖整合（售前）\njgb/I/competitor-comparison｜跟 Bananas、屋我也差在哪\njgb/I/dashboard-overview｜首頁儀表板顯示哪些數據\njgb/I/free-trial｜可以免費試用嗎\njgb/I/individual-landlord-scale-fit｜個人房東（約 10～30 戶）適配與建議做法\njgb/I/property-quota-limit｜方案物件額度上限與用滿怎麼辦\njgb/I/team-company-fit｜公司或包租代管團隊適合嗎\njgb/I/why-choose-jgb｜為什麼選金箍棒",
+    "toc_text": "jgb/B/team-management-overview｜團隊管理模組做什麼\njgb/C/property-management-overview｜房源管理模組做什麼（含自訂狀態標籤）\njgb/C/community-batch-create｜社區建立與批次新增物件\njgb/C/rental-storefront-vr｜招租店舖與 VR 看屋\njgb/F/repair-system｜線上報修與進度追蹤\njgb/G/smart-meter-lock-iot｜智慧電錶與門鎖整合（售前）\njgb/I/competitor-comparison｜跟 Bananas、屋我也差在哪\njgb/I/dashboard-overview｜首頁儀表板顯示哪些數據\njgb/I/free-trial｜可以免費試用嗎\njgb/I/individual-landlord-scale-fit｜個人房東（約 10～30 戶）適配與建議做法\njgb/I/property-quota-limit｜方案物件額度上限與用滿怎麼辦\njgb/I/team-company-fit｜公司或包租代管團隊適合嗎\njgb/I/why-choose-jgb｜為什麼選金箍棒"
+  },
+  {
+    "audience": "property_manager",
+    "candidate_ids": [
+      "jgb/I/dashboard-overview",
+      "jgb/F/repair-ticket-mid-flow-cancel",
+      "jgb/F/repair-ticket-submit-failure",
+      "jgb/F/repair-ticket-reclassify",
+      "jgb/I/property-quota-limit"
+    ],
+    "fine_id": "jgb/C/property-management-overview",
+    "miss_kind": "hit",
+    "query": "VR看屋",
+    "section_ids": [
+      "jgb/I/dashboard-overview",
+      "jgb/F/repair-ticket-mid-flow-cancel",
+      "jgb/F/repair-ticket-submit-failure",
+      "jgb/F/repair-ticket-reclassify",
+      "jgb/I/property-quota-limit",
+      "outline:toc"
+    ],
+    "text": "【jgb/I/dashboard-overview】首頁儀表板顯示哪些數據\n登入後的首頁儀表板有三塊：收支情況（圖表化呈現，可自訂時間區間看營運趨勢）、帳務情況（近期的逾期待收款帳單與待繳費帳單，可點「更多」看明細）、修繕情況（租客目前申請中的修繕單）。\n想看實際畫面可預約 demo。\n\n---\n\n【jgb/F/repair-ticket-mid-flow-cancel】報修流程中途取消的規則\n任一階段說取消（取消／不報了／不用了／算了／結束）即結束報修，JGB 不會產生新單。\n\n---\n\n【jgb/F/repair-ticket-submit-failure】建單失敗時的處理與重試規則\n建單 API 失敗時明講「尚未建立」，提供「再試一次」；重複按確認在同一會話只會建一張單。\n\n---\n\n【jgb/F/repair-ticket-reclassify】確認卡上修改辨識結果的規則\n**確認卡尚在時**按「我要修改」只重新確認被改的項目（例如把「天花板」改成「馬桶後面的水管」），物件與急迫性不重問、不重跑辨識。\n\n---\n\n【jgb/I/property-quota-limit】方案物件額度上限與用滿怎麼辦\n金箍棒的方案是依可管理的物件數分級，物件額度用滿就無法再新增，可以升級方案、加購額度，或把不再使用的物件下架釋放額度；目前用量在「訂閱方案」頁看得到。\n各方案的物件數級距請以線上定價頁為準 [查看方案與費用](https://www.jgbsmart.com/pricing)。\n免費方案預設可建 5 個物件（免費試用一個月就是免費方案），實際額度以帳號內「訂閱方案」頁顯示為準。\n新帳號享有免費試用一個月，可先實際體驗再選方案。\n\n---\n\n【outline:toc】正本目錄\njgb/E/dunning-draft-not-auto-send｜催繳草稿不可一鍵發送給租客\njgb/F/repair-ticket-after-submit｜確認送出後的單如何處理\njgb/F/repair-ticket-mid-flow-cancel｜報修流程中途取消的規則\njgb/F/repair-ticket-photo-count-limit｜修繕辨識與附件的照片張數限制\njgb/F/repair-ticket-reclassify｜確認卡上修改辨識結果的規則\njgb/F/repair-ticket-submit-failure｜建單失敗時的處理與重試規則\njgb/F/repair-ticket-urgency-judgment｜修繕單急迫程度的判斷來源與值域\njgb/I/dashboard-overview｜首頁儀表板顯示哪些數據\njgb/I/property-quota-limit｜方案物件額度上限與用滿怎麼辦",
+    "toc_text": "jgb/E/dunning-draft-not-auto-send｜催繳草稿不可一鍵發送給租客\njgb/F/repair-ticket-after-submit｜確認送出後的單如何處理\njgb/F/repair-ticket-mid-flow-cancel｜報修流程中途取消的規則\njgb/F/repair-ticket-photo-count-limit｜修繕辨識與附件的照片張數限制\njgb/F/repair-ticket-reclassify｜確認卡上修改辨識結果的規則\njgb/F/repair-ticket-submit-failure｜建單失敗時的處理與重試規則\njgb/F/repair-ticket-urgency-judgment｜修繕單急迫程度的判斷來源與值域\njgb/I/dashboard-overview｜首頁儀表板顯示哪些數據\njgb/I/property-quota-limit｜方案物件額度上限與用滿怎麼辦"
+  },
+  {
+    "audience": "prospect",
+    "candidate_ids": [
+      "jgb/C/community-batch-create",
+      "jgb/I/property-quota-limit",
+      "jgb/I/dashboard-overview",
+      "jgb/G/smart-meter-lock-iot",
+      "jgb/C/property-management-overview"
+    ],
+    "fine_id": "jgb/C/community-batch-create",
+    "miss_kind": "hit",
+    "query": "如何新增物件?",
+    "section_ids": [
+      "jgb/C/community-batch-create",
+      "jgb/I/property-quota-limit",
+      "jgb/I/dashboard-overview",
+      "jgb/G/smart-meter-lock-iot",
+      "jgb/C/property-management-overview",
+      "outline:toc"
+    ],
+    "text": "【jgb/C/community-batch-create】社區建立與批次新增物件\n金箍棒用「社區」把同一棟或同一社區的物件歸戶管理。\n流程是先建立社區，再在「社區總表」選該社區，按右側的「批次新增」下載 Excel 模板、填入物件資料後上傳，就能一次把整批物件建進系統；單筆新增則在物件總表「新增物件」。\n想看實際畫面可預約 demo。\n\n---\n\n【jgb/I/property-quota-limit】方案物件額度上限與用滿怎麼辦\n金箍棒的方案是依可管理的物件數分級，物件額度用滿就無法再新增，可以升級方案、加購額度，或把不再使用的物件下架釋放額度；目前用量在「訂閱方案」頁看得到。\n各方案的物件數級距請以線上定價頁為準 [查看方案與費用](https://www.jgbsmart.com/pricing)。\n免費方案預設可建 5 個物件（免費試用一個月就是免費方案），實際額度以帳號內「訂閱方案」頁顯示為準。\n新帳號享有免費試用一個月，可先實際體驗再選方案。\n\n---\n\n【jgb/I/dashboard-overview】首頁儀表板顯示哪些數據\n登入後的首頁儀表板有三塊：收支情況（圖表化呈現，可自訂時間區間看營運趨勢）、帳務情況（近期的逾期待收款帳單與待繳費帳單，可點「更多」看明細）、修繕情況（租客目前申請中的修繕單）。\n想看實際畫面可預約 demo。\n\n---\n\n【jgb/G/smart-meter-lock-iot】智慧電錶與門鎖整合（售前）\n現場抄電表、換門鎖很煩？\n金箍棒有整合智慧電錶（抄表可自動帶入帳單）與智慧門鎖，屬硬體設備，實際支援範圍、安裝與費用由專人為您說明。\n門鎖分兩型：「私人門鎖」是單一房間的門鎖，只綁一個物件，房東與租客各自設一組密碼；「共用門鎖」是大樓或住家大門，可綁多個物件，由房東設一組共用密碼給租客使用。\n可留資由專人與您聯絡。\n\n---\n\n【jgb/C/property-management-overview】房源管理模組做什麼（含自訂狀態標籤）\n物件多、資料分散難管？\n金箍棒的房源管理把所有物件集中：物件建檔、社區歸戶、批次上傳，還有招租公開頁與 VR 看屋連結，取代散落的 Excel。\n物件可以貼團隊自訂的狀態標籤（預設有可帶看、待清潔、待簽約、維修中、不出租、待完善六種），方便篩選與分工。\n想看實際畫面可預約 demo。\n\n---\n\n【outline:toc】正本目錄\njgb/B/team-management-overview｜團隊管理模組做什麼\njgb/C/property-management-overview｜房源管理模組做什麼（含自訂狀態標籤）\njgb/C/community-batch-create｜社區建立與批次新增物件\njgb/C/rental-storefront-vr｜招租店舖與 VR 看屋\njgb/F/repair-system｜線上報修與進度追蹤\njgb/G/smart-meter-lock-iot｜智慧電錶與門鎖整合（售前）\njgb/I/competitor-comparison｜跟 Bananas、屋我也差在哪\njgb/I/dashboard-overview｜首頁儀表板顯示哪些數據\njgb/I/free-trial｜可以免費試用嗎\njgb/I/individual-landlord-scale-fit｜個人房東（約 10～30 戶）適配與建議做法\njgb/I/property-quota-limit｜方案物件額度上限與用滿怎麼辦\njgb/I/team-company-fit｜公司或包租代管團隊適合嗎\njgb/I/why-choose-jgb｜為什麼選金箍棒",
+    "toc_text": "jgb/B/team-management-overview｜團隊管理模組做什麼\njgb/C/property-management-overview｜房源管理模組做什麼（含自訂狀態標籤）\njgb/C/community-batch-create｜社區建立與批次新增物件\njgb/C/rental-storefront-vr｜招租店舖與 VR 看屋\njgb/F/repair-system｜線上報修與進度追蹤\njgb/G/smart-meter-lock-iot｜智慧電錶與門鎖整合（售前）\njgb/I/competitor-comparison｜跟 Bananas、屋我也差在哪\njgb/I/dashboard-overview｜首頁儀表板顯示哪些數據\njgb/I/free-trial｜可以免費試用嗎\njgb/I/individual-landlord-scale-fit｜個人房東（約 10～30 戶）適配與建議做法\njgb/I/property-quota-limit｜方案物件額度上限與用滿怎麼辦\njgb/I/team-company-fit｜公司或包租代管團隊適合嗎\njgb/I/why-choose-jgb｜為什麼選金箍棒"
+  },
+  {
+    "audience": "property_manager",
+    "candidate_ids": [
+      "jgb/I/property-quota-limit",
+      "jgb/I/dashboard-overview",
+      "jgb/F/repair-ticket-after-submit",
+      "jgb/F/repair-ticket-photo-count-limit",
+      "jgb/E/dunning-draft-not-auto-send"
+    ],
+    "fine_id": "jgb/C/community-batch-create",
+    "miss_kind": "hit",
+    "query": "如何新增物件?",
+    "section_ids": [
+      "jgb/I/property-quota-limit",
+      "jgb/I/dashboard-overview",
+      "jgb/F/repair-ticket-after-submit",
+      "jgb/F/repair-ticket-photo-count-limit",
+      "jgb/E/dunning-draft-not-auto-send",
+      "outline:toc"
+    ],
+    "text": "【jgb/I/property-quota-limit】方案物件額度上限與用滿怎麼辦\n金箍棒的方案是依可管理的物件數分級，物件額度用滿就無法再新增，可以升級方案、加購額度，或把不再使用的物件下架釋放額度；目前用量在「訂閱方案」頁看得到。\n各方案的物件數級距請以線上定價頁為準 [查看方案與費用](https://www.jgbsmart.com/pricing)。\n免費方案預設可建 5 個物件（免費試用一個月就是免費方案），實際額度以帳號內「訂閱方案」頁顯示為準。\n新帳號享有免費試用一個月，可先實際體驗再選方案。\n\n---\n\n【jgb/I/dashboard-overview】首頁儀表板顯示哪些數據\n登入後的首頁儀表板有三塊：收支情況（圖表化呈現，可自訂時間區間看營運趨勢）、帳務情況（近期的逾期待收款帳單與待繳費帳單，可點「更多」看明細）、修繕情況（租客目前申請中的修繕單）。\n想看實際畫面可預約 demo。\n\n---\n\n【jgb/F/repair-ticket-after-submit】確認送出後的單如何處理\n確認送出後，這張單不在對話裡修改：業務要改內容時，說明這張單已送出，並指到 JGB 的修繕單頁面處理。\n送出後再描述同一戶的另一個問題，視為另一張新單：物件不重問，依口述描述出新的確認摘要，仍只有按「確認送出」才建單。\n\n---\n\n【jgb/F/repair-ticket-photo-count-limit】修繕辨識與附件的照片張數限制\n辨識一次最多用 3 張照片，多的由呼叫端先截；修繕單附件應保存全部照片（由呼叫端另帶完整清單），辨識仍只看前 3 張。\n\n---\n\n【jgb/E/dunning-draft-not-auto-send】催繳草稿不可一鍵發送給租客\n不可以；草稿一律推給業務自己複製去傳，不設計一鍵發送，所有提醒都是給業務而不是給租客。\n\n---\n\n【outline:toc】正本目錄\njgb/E/dunning-draft-not-auto-send｜催繳草稿不可一鍵發送給租客\njgb/F/repair-ticket-after-submit｜確認送出後的單如何處理\njgb/F/repair-ticket-mid-flow-cancel｜報修流程中途取消的規則\njgb/F/repair-ticket-photo-count-limit｜修繕辨識與附件的照片張數限制\njgb/F/repair-ticket-reclassify｜確認卡上修改辨識結果的規則\njgb/F/repair-ticket-submit-failure｜建單失敗時的處理與重試規則\njgb/F/repair-ticket-urgency-judgment｜修繕單急迫程度的判斷來源與值域\njgb/I/dashboard-overview｜首頁儀表板顯示哪些數據\njgb/I/property-quota-limit｜方案物件額度上限與用滿怎麼辦",
+    "toc_text": "jgb/E/dunning-draft-not-auto-send｜催繳草稿不可一鍵發送給租客\njgb/F/repair-ticket-after-submit｜確認送出後的單如何處理\njgb/F/repair-ticket-mid-flow-cancel｜報修流程中途取消的規則\njgb/F/repair-ticket-photo-count-limit｜修繕辨識與附件的照片張數限制\njgb/F/repair-ticket-reclassify｜確認卡上修改辨識結果的規則\njgb/F/repair-ticket-submit-failure｜建單失敗時的處理與重試規則\njgb/F/repair-ticket-urgency-judgment｜修繕單急迫程度的判斷來源與值域\njgb/I/dashboard-overview｜首頁儀表板顯示哪些數據\njgb/I/property-quota-limit｜方案物件額度上限與用滿怎麼辦"
+  },
+  {
+    "audience": "prospect",
+    "candidate_ids": [
+      "jgb/C/rental-storefront-vr",
+      "jgb/I/competitor-comparison",
+      "jgb/I/individual-landlord-scale-fit",
+      "jgb/B/team-management-overview",
+      "jgb/G/smart-meter-lock-iot"
+    ],
+    "fine_id": "jgb/C/rental-storefront-vr",
+    "miss_kind": "hit",
+    "query": "什麼是「房東對外首頁」(招租店舖)?",
+    "section_ids": [
+      "jgb/C/rental-storefront-vr",
+      "jgb/I/competitor-comparison",
+      "jgb/I/individual-landlord-scale-fit",
+      "jgb/B/team-management-overview",
+      "jgb/G/smart-meter-lock-iot",
+      "outline:toc"
+    ],
+    "text": "【jgb/C/rental-storefront-vr】招租店舖與 VR 看屋\n金箍棒每個帳號或團隊都有自己的「房東對外首頁」（招租店舖），刊登中的物件會出現在上面供房客瀏覽；團隊可以在團隊管理設定招租頁面的專屬網址與時區，強化品牌辨識。\n新增物件時可上傳 VR 物件連結，房客能在線上看屋。\n想看招租頁長什麼樣可預約 demo。\n\n---\n\n【jgb/I/competitor-comparison】跟 Bananas、屋我也差在哪\n同類的租賃管理系統還有 Bananas、屋我也，三者都做物件、合約、帳務，差異主要在合約類型廣度、金流、IoT 整合與適用場景。\n以公開官網可查的事實來說：金箍棒的合約類型較完整（涵蓋一般租賃、社會住宅、委託），金流支援多元（藍新／永豐／中信／國泰／愛金卡），並有智慧門鎖／電錶整合（硬體細節由專人說明）與大房東報表，適合社宅委託、需多元收款、要對業主交報表的代管團隊。\n對方官網未明確提及的功能，我們無法替他們確認，建議您直接向對方詢問。\n若想實際比較，歡迎預約 demo。\n\n---\n\n【jgb/I/individual-landlord-scale-fit】個人房東（約 10～30 戶）適配與建議做法\n管 10 間左右的個人房東，最花時間的通常是收租對帳和合約來回。\n金箍棒把物件、合約、帳務集中在一個系統：線上電子簽章簽約、自動產帳單與金流代收、收租對帳一條龍，取代 Excel 與 LINE 的零散作業，也能發租客通知、處理報修。\n建議先用免費試用一個月實際跑跑看；正式方案級距與費用調整中，可於定價頁(https://www.jgbsmart.com/pricing)查看或由專人為您說明，這裡不報數字。\n管到 20 間左右，帳單與對帳的量明顯變大、人工容易出錯。\n金箍棒的帳務模組（自動帳單、多元金流代收、電子發票、儲值金）能把收租對帳自動化，搭配物件管理、電子簽章合約、租客通知與修繕，讓一個人也管得動這個規模。\n可先免費試用一個月感受效率差異；方案級距與費用請見定價頁(https://www.jgbsmart.com/pricing)或由專人提供，這裡不報過時數字。\n管到 30 間左右，已接近個人經營的規模上限，物件與帳務都相當可觀；未來若開始多人協作或要對業主交報表，會很快需要團隊管理與大房東報表。\n金箍棒在這階段能用物件、合約、帳務的完整自動化撐住現有規模，並可平順銜接到團隊方案。\n建議先免費試用一個月；正式級距與費用調整中，請見定價頁(https://www.jgbsmart.com/pricing)或由專人為您盤點，這裡不直接報價。\n\n---\n\n【jgb/B/team-management-overview】團隊管理模組做什麼\n人多、管不動？\n金箍棒的團隊管理支援多人帳號與角色權限，讓代管團隊分工協作，並提供大房東報表對業主交代。\n系統沒有叫「系統管理」的模組；成員、角色權限、訂閱方案這類設定都在團隊管理裡。\n想了解團隊方案可預約 demo 由專人說明。\n\n---\n\n【jgb/G/smart-meter-lock-iot】智慧電錶與門鎖整合（售前）\n現場抄電表、換門鎖很煩？\n金箍棒有整合智慧電錶（抄表可自動帶入帳單）與智慧門鎖，屬硬體設備，實際支援範圍、安裝與費用由專人為您說明。\n門鎖分兩型：「私人門鎖」是單一房間的門鎖，只綁一個物件，房東與租客各自設一組密碼；「共用門鎖」是大樓或住家大門，可綁多個物件，由房東設一組共用密碼給租客使用。\n可留資由專人與您聯絡。\n\n---\n\n【outline:toc】正本目錄\njgb/B/team-management-overview｜團隊管理模組做什麼\njgb/C/property-management-overview｜房源管理模組做什麼（含自訂狀態標籤）\njgb/C/community-batch-create｜社區建立與批次新增物件\njgb/C/rental-storefront-vr｜招租店舖與 VR 看屋\njgb/F/repair-system｜線上報修與進度追蹤\njgb/G/smart-meter-lock-iot｜智慧電錶與門鎖整合（售前）\njgb/I/competitor-comparison｜跟 Bananas、屋我也差在哪\njgb/I/dashboard-overview｜首頁儀表板顯示哪些數據\njgb/I/free-trial｜可以免費試用嗎\njgb/I/individual-landlord-scale-fit｜個人房東（約 10～30 戶）適配與建議做法\njgb/I/property-quota-limit｜方案物件額度上限與用滿怎麼辦\njgb/I/team-company-fit｜公司或包租代管團隊適合嗎\njgb/I/why-choose-jgb｜為什麼選金箍棒",
+    "toc_text": "jgb/B/team-management-overview｜團隊管理模組做什麼\njgb/C/property-management-overview｜房源管理模組做什麼（含自訂狀態標籤）\njgb/C/community-batch-create｜社區建立與批次新增物件\njgb/C/rental-storefront-vr｜招租店舖與 VR 看屋\njgb/F/repair-system｜線上報修與進度追蹤\njgb/G/smart-meter-lock-iot｜智慧電錶與門鎖整合（售前）\njgb/I/competitor-comparison｜跟 Bananas、屋我也差在哪\njgb/I/dashboard-overview｜首頁儀表板顯示哪些數據\njgb/I/free-trial｜可以免費試用嗎\njgb/I/individual-landlord-scale-fit｜個人房東（約 10～30 戶）適配與建議做法\njgb/I/property-quota-limit｜方案物件額度上限與用滿怎麼辦\njgb/I/team-company-fit｜公司或包租代管團隊適合嗎\njgb/I/why-choose-jgb｜為什麼選金箍棒"
+  },
+  {
+    "audience": "property_manager",
+    "candidate_ids": [
+      "jgb/F/repair-ticket-after-submit",
+      "jgb/I/dashboard-overview",
+      "jgb/I/property-quota-limit",
+      "jgb/E/dunning-draft-not-auto-send",
+      "jgb/F/repair-ticket-reclassify"
+    ],
+    "fine_id": "jgb/C/rental-storefront-vr",
+    "miss_kind": "hit",
+    "query": "什麼是「房東對外首頁」(招租店舖)?",
+    "section_ids": [
+      "jgb/F/repair-ticket-after-submit",
+      "jgb/I/dashboard-overview",
+      "jgb/I/property-quota-limit",
+      "jgb/E/dunning-draft-not-auto-send",
+      "jgb/F/repair-ticket-reclassify",
+      "outline:toc"
+    ],
+    "text": "【jgb/F/repair-ticket-after-submit】確認送出後的單如何處理\n確認送出後，這張單不在對話裡修改：業務要改內容時，說明這張單已送出，並指到 JGB 的修繕單頁面處理。\n送出後再描述同一戶的另一個問題，視為另一張新單：物件不重問，依口述描述出新的確認摘要，仍只有按「確認送出」才建單。\n\n---\n\n【jgb/I/dashboard-overview】首頁儀表板顯示哪些數據\n登入後的首頁儀表板有三塊：收支情況（圖表化呈現，可自訂時間區間看營運趨勢）、帳務情況（近期的逾期待收款帳單與待繳費帳單，可點「更多」看明細）、修繕情況（租客目前申請中的修繕單）。\n想看實際畫面可預約 demo。\n\n---\n\n【jgb/I/property-quota-limit】方案物件額度上限與用滿怎麼辦\n金箍棒的方案是依可管理的物件數分級，物件額度用滿就無法再新增，可以升級方案、加購額度，或把不再使用的物件下架釋放額度；目前用量在「訂閱方案」頁看得到。\n各方案的物件數級距請以線上定價頁為準 [查看方案與費用](https://www.jgbsmart.com/pricing)。\n免費方案預設可建 5 個物件（免費試用一個月就是免費方案），實際額度以帳號內「訂閱方案」頁顯示為準。\n新帳號享有免費試用一個月，可先實際體驗再選方案。\n\n---\n\n【jgb/E/dunning-draft-not-auto-send】催繳草稿不可一鍵發送給租客\n不可以；草稿一律推給業務自己複製去傳，不設計一鍵發送，所有提醒都是給業務而不是給租客。\n\n---\n\n【jgb/F/repair-ticket-reclassify】確認卡上修改辨識結果的規則\n**確認卡尚在時**按「我要修改」只重新確認被改的項目（例如把「天花板」改成「馬桶後面的水管」），物件與急迫性不重問、不重跑辨識。\n\n---\n\n【outline:toc】正本目錄\njgb/E/dunning-draft-not-auto-send｜催繳草稿不可一鍵發送給租客\njgb/F/repair-ticket-after-submit｜確認送出後的單如何處理\njgb/F/repair-ticket-mid-flow-cancel｜報修流程中途取消的規則\njgb/F/repair-ticket-photo-count-limit｜修繕辨識與附件的照片張數限制\njgb/F/repair-ticket-reclassify｜確認卡上修改辨識結果的規則\njgb/F/repair-ticket-submit-failure｜建單失敗時的處理與重試規則\njgb/F/repair-ticket-urgency-judgment｜修繕單急迫程度的判斷來源與值域\njgb/I/dashboard-overview｜首頁儀表板顯示哪些數據\njgb/I/property-quota-limit｜方案物件額度上限與用滿怎麼辦",
+    "toc_text": "jgb/E/dunning-draft-not-auto-send｜催繳草稿不可一鍵發送給租客\njgb/F/repair-ticket-after-submit｜確認送出後的單如何處理\njgb/F/repair-ticket-mid-flow-cancel｜報修流程中途取消的規則\njgb/F/repair-ticket-photo-count-limit｜修繕辨識與附件的照片張數限制\njgb/F/repair-ticket-reclassify｜確認卡上修改辨識結果的規則\njgb/F/repair-ticket-submit-failure｜建單失敗時的處理與重試規則\njgb/F/repair-ticket-urgency-judgment｜修繕單急迫程度的判斷來源與值域\njgb/I/dashboard-overview｜首頁儀表板顯示哪些數據\njgb/I/property-quota-limit｜方案物件額度上限與用滿怎麼辦"
+  },
+  {
+    "audience": "prospect",
+    "candidate_ids": [
+      "jgb/F/repair-system",
+      "jgb/C/property-management-overview",
+      "jgb/B/team-management-overview",
+      "jgb/I/competitor-comparison",
+      "jgb/C/community-batch-create"
+    ],
+    "fine_id": "jgb/F/repair-system",
+    "miss_kind": "hit",
+    "query": "修繕系統",
+    "section_ids": [
+      "jgb/F/repair-system",
+      "jgb/C/property-management-overview",
+      "jgb/B/team-management-overview",
+      "jgb/I/competitor-comparison",
+      "jgb/C/community-batch-create",
+      "outline:toc"
+    ],
+    "text": "【jgb/F/repair-system】線上報修與進度追蹤\n報修處理慢、追蹤不易？\n金箍棒的修繕系統讓租客線上報修、房東與管理方追蹤處理進度，把報修流程數位化。\n想看實際流程可預約 demo。\n\n---\n\n【jgb/C/property-management-overview】房源管理模組做什麼（含自訂狀態標籤）\n物件多、資料分散難管？\n金箍棒的房源管理把所有物件集中：物件建檔、社區歸戶、批次上傳，還有招租公開頁與 VR 看屋連結，取代散落的 Excel。\n物件可以貼團隊自訂的狀態標籤（預設有可帶看、待清潔、待簽約、維修中、不出租、待完善六種），方便篩選與分工。\n想看實際畫面可預約 demo。\n\n---\n\n【jgb/B/team-management-overview】團隊管理模組做什麼\n人多、管不動？\n金箍棒的團隊管理支援多人帳號與角色權限，讓代管團隊分工協作，並提供大房東報表對業主交代。\n系統沒有叫「系統管理」的模組；成員、角色權限、訂閱方案這類設定都在團隊管理裡。\n想了解團隊方案可預約 demo 由專人說明。\n\n---\n\n【jgb/I/competitor-comparison】跟 Bananas、屋我也差在哪\n同類的租賃管理系統還有 Bananas、屋我也，三者都做物件、合約、帳務，差異主要在合約類型廣度、金流、IoT 整合與適用場景。\n以公開官網可查的事實來說：金箍棒的合約類型較完整（涵蓋一般租賃、社會住宅、委託），金流支援多元（藍新／永豐／中信／國泰／愛金卡），並有智慧門鎖／電錶整合（硬體細節由專人說明）與大房東報表，適合社宅委託、需多元收款、要對業主交報表的代管團隊。\n對方官網未明確提及的功能，我們無法替他們確認，建議您直接向對方詢問。\n若想實際比較，歡迎預約 demo。\n\n---\n\n【jgb/C/community-batch-create】社區建立與批次新增物件\n金箍棒用「社區」把同一棟或同一社區的物件歸戶管理。\n流程是先建立社區，再在「社區總表」選該社區，按右側的「批次新增」下載 Excel 模板、填入物件資料後上傳，就能一次把整批物件建進系統；單筆新增則在物件總表「新增物件」。\n想看實際畫面可預約 demo。\n\n---\n\n【outline:toc】正本目錄\njgb/B/team-management-overview｜團隊管理模組做什麼\njgb/C/property-management-overview｜房源管理模組做什麼（含自訂狀態標籤）\njgb/C/community-batch-create｜社區建立與批次新增物件\njgb/C/rental-storefront-vr｜招租店舖與 VR 看屋\njgb/F/repair-system｜線上報修與進度追蹤\njgb/G/smart-meter-lock-iot｜智慧電錶與門鎖整合（售前）\njgb/I/competitor-comparison｜跟 Bananas、屋我也差在哪\njgb/I/dashboard-overview｜首頁儀表板顯示哪些數據\njgb/I/free-trial｜可以免費試用嗎\njgb/I/individual-landlord-scale-fit｜個人房東（約 10～30 戶）適配與建議做法\njgb/I/property-quota-limit｜方案物件額度上限與用滿怎麼辦\njgb/I/team-company-fit｜公司或包租代管團隊適合嗎\njgb/I/why-choose-jgb｜為什麼選金箍棒",
+    "toc_text": "jgb/B/team-management-overview｜團隊管理模組做什麼\njgb/C/property-management-overview｜房源管理模組做什麼（含自訂狀態標籤）\njgb/C/community-batch-create｜社區建立與批次新增物件\njgb/C/rental-storefront-vr｜招租店舖與 VR 看屋\njgb/F/repair-system｜線上報修與進度追蹤\njgb/G/smart-meter-lock-iot｜智慧電錶與門鎖整合（售前）\njgb/I/competitor-comparison｜跟 Bananas、屋我也差在哪\njgb/I/dashboard-overview｜首頁儀表板顯示哪些數據\njgb/I/free-trial｜可以免費試用嗎\njgb/I/individual-landlord-scale-fit｜個人房東（約 10～30 戶）適配與建議做法\njgb/I/property-quota-limit｜方案物件額度上限與用滿怎麼辦\njgb/I/team-company-fit｜公司或包租代管團隊適合嗎\njgb/I/why-choose-jgb｜為什麼選金箍棒"
+  },
+  {
+    "audience": "property_manager",
+    "candidate_ids": [
+      "jgb/F/repair-ticket-reclassify",
+      "jgb/E/dunning-draft-not-auto-send",
+      "jgb/F/repair-ticket-photo-count-limit",
+      "jgb/F/repair-ticket-after-submit",
+      "jgb/I/property-quota-limit"
+    ],
+    "fine_id": "jgb/F/repair-system",
+    "miss_kind": "hit",
+    "query": "修繕系統",
+    "section_ids": [
+      "jgb/F/repair-ticket-reclassify",
+      "jgb/E/dunning-draft-not-auto-send",
+      "jgb/F/repair-ticket-photo-count-limit",
+      "jgb/F/repair-ticket-after-submit",
+      "jgb/I/property-quota-limit",
+      "outline:toc"
+    ],
+    "text": "【jgb/F/repair-ticket-reclassify】確認卡上修改辨識結果的規則\n**確認卡尚在時**按「我要修改」只重新確認被改的項目（例如把「天花板」改成「馬桶後面的水管」），物件與急迫性不重問、不重跑辨識。\n\n---\n\n【jgb/E/dunning-draft-not-auto-send】催繳草稿不可一鍵發送給租客\n不可以；草稿一律推給業務自己複製去傳，不設計一鍵發送，所有提醒都是給業務而不是給租客。\n\n---\n\n【jgb/F/repair-ticket-photo-count-limit】修繕辨識與附件的照片張數限制\n辨識一次最多用 3 張照片，多的由呼叫端先截；修繕單附件應保存全部照片（由呼叫端另帶完整清單），辨識仍只看前 3 張。\n\n---\n\n【jgb/F/repair-ticket-after-submit】確認送出後的單如何處理\n確認送出後，這張單不在對話裡修改：業務要改內容時，說明這張單已送出，並指到 JGB 的修繕單頁面處理。\n送出後再描述同一戶的另一個問題，視為另一張新單：物件不重問，依口述描述出新的確認摘要，仍只有按「確認送出」才建單。\n\n---\n\n【jgb/I/property-quota-limit】方案物件額度上限與用滿怎麼辦\n金箍棒的方案是依可管理的物件數分級，物件額度用滿就無法再新增，可以升級方案、加購額度，或把不再使用的物件下架釋放額度；目前用量在「訂閱方案」頁看得到。\n各方案的物件數級距請以線上定價頁為準 [查看方案與費用](https://www.jgbsmart.com/pricing)。\n免費方案預設可建 5 個物件（免費試用一個月就是免費方案），實際額度以帳號內「訂閱方案」頁顯示為準。\n新帳號享有免費試用一個月，可先實際體驗再選方案。\n\n---\n\n【outline:toc】正本目錄\njgb/E/dunning-draft-not-auto-send｜催繳草稿不可一鍵發送給租客\njgb/F/repair-ticket-after-submit｜確認送出後的單如何處理\njgb/F/repair-ticket-mid-flow-cancel｜報修流程中途取消的規則\njgb/F/repair-ticket-photo-count-limit｜修繕辨識與附件的照片張數限制\njgb/F/repair-ticket-reclassify｜確認卡上修改辨識結果的規則\njgb/F/repair-ticket-submit-failure｜建單失敗時的處理與重試規則\njgb/F/repair-ticket-urgency-judgment｜修繕單急迫程度的判斷來源與值域\njgb/I/dashboard-overview｜首頁儀表板顯示哪些數據\njgb/I/property-quota-limit｜方案物件額度上限與用滿怎麼辦",
+    "toc_text": "jgb/E/dunning-draft-not-auto-send｜催繳草稿不可一鍵發送給租客\njgb/F/repair-ticket-after-submit｜確認送出後的單如何處理\njgb/F/repair-ticket-mid-flow-cancel｜報修流程中途取消的規則\njgb/F/repair-ticket-photo-count-limit｜修繕辨識與附件的照片張數限制\njgb/F/repair-ticket-reclassify｜確認卡上修改辨識結果的規則\njgb/F/repair-ticket-submit-failure｜建單失敗時的處理與重試規則\njgb/F/repair-ticket-urgency-judgment｜修繕單急迫程度的判斷來源與值域\njgb/I/dashboard-overview｜首頁儀表板顯示哪些數據\njgb/I/property-quota-limit｜方案物件額度上限與用滿怎麼辦"
+  },
+  {
+    "audience": "prospect",
+    "candidate_ids": [
+      "jgb/I/why-choose-jgb",
+      "jgb/I/individual-landlord-scale-fit",
+      "jgb/B/team-management-overview",
+      "jgb/F/repair-system",
+      "jgb/I/competitor-comparison"
+    ],
+    "fine_id": "jgb/F/repair-ticket-after-submit",
+    "miss_kind": "hit",
+    "query": "我要改一下描述",
+    "section_ids": [
+      "jgb/I/why-choose-jgb",
+      "jgb/I/individual-landlord-scale-fit",
+      "jgb/B/team-management-overview",
+      "jgb/F/repair-system",
+      "jgb/I/competitor-comparison",
+      "outline:toc"
+    ],
+    "text": "【jgb/I/why-choose-jgb】為什麼選金箍棒\n選金箍棒的主要理由在「合約類型廣 + 多元金流 + IoT 整合 + 規模化團隊管理」：合約涵蓋一般／社會住宅／委託（社宅與委託代管尤其完整）、金流支援藍新／永豐／中信／國泰／愛金卡、可串接智慧門鎖／電錶（細節由專人說明）、多人權限搭配大房東報表方便對業主交代，另有押金設算息、VR 看屋、6 國語系等加值，且新帳號享免費試用一個月。\n想實際體驗可直接開試用或預約 demo。\n\n---\n\n【jgb/I/individual-landlord-scale-fit】個人房東（約 10～30 戶）適配與建議做法\n管 10 間左右的個人房東，最花時間的通常是收租對帳和合約來回。\n金箍棒把物件、合約、帳務集中在一個系統：線上電子簽章簽約、自動產帳單與金流代收、收租對帳一條龍，取代 Excel 與 LINE 的零散作業，也能發租客通知、處理報修。\n建議先用免費試用一個月實際跑跑看；正式方案級距與費用調整中，可於定價頁(https://www.jgbsmart.com/pricing)查看或由專人為您說明，這裡不報數字。\n管到 20 間左右，帳單與對帳的量明顯變大、人工容易出錯。\n金箍棒的帳務模組（自動帳單、多元金流代收、電子發票、儲值金）能把收租對帳自動化，搭配物件管理、電子簽章合約、租客通知與修繕，讓一個人也管得動這個規模。\n可先免費試用一個月感受效率差異；方案級距與費用請見定價頁(https://www.jgbsmart.com/pricing)或由專人提供，這裡不報過時數字。\n管到 30 間左右，已接近個人經營的規模上限，物件與帳務都相當可觀；未來若開始多人協作或要對業主交報表，會很快需要團隊管理與大房東報表。\n金箍棒在這階段能用物件、合約、帳務的完整自動化撐住現有規模，並可平順銜接到團隊方案。\n建議先免費試用一個月；正式級距與費用調整中，請見定價頁(https://www.jgbsmart.com/pricing)或由專人為您盤點，這裡不直接報價。\n\n---\n\n【jgb/B/team-management-overview】團隊管理模組做什麼\n人多、管不動？\n金箍棒的團隊管理支援多人帳號與角色權限，讓代管團隊分工協作，並提供大房東報表對業主交代。\n系統沒有叫「系統管理」的模組；成員、角色權限、訂閱方案這類設定都在團隊管理裡。\n想了解團隊方案可預約 demo 由專人說明。\n\n---\n\n【jgb/F/repair-system】線上報修與進度追蹤\n報修處理慢、追蹤不易？\n金箍棒的修繕系統讓租客線上報修、房東與管理方追蹤處理進度，把報修流程數位化。\n想看實際流程可預約 demo。\n\n---\n\n【jgb/I/competitor-comparison】跟 Bananas、屋我也差在哪\n同類的租賃管理系統還有 Bananas、屋我也，三者都做物件、合約、帳務，差異主要在合約類型廣度、金流、IoT 整合與適用場景。\n以公開官網可查的事實來說：金箍棒的合約類型較完整（涵蓋一般租賃、社會住宅、委託），金流支援多元（藍新／永豐／中信／國泰／愛金卡），並有智慧門鎖／電錶整合（硬體細節由專人說明）與大房東報表，適合社宅委託、需多元收款、要對業主交報表的代管團隊。\n對方官網未明確提及的功能，我們無法替他們確認，建議您直接向對方詢問。\n若想實際比較，歡迎預約 demo。\n\n---\n\n【outline:toc】正本目錄\njgb/B/team-management-overview｜團隊管理模組做什麼\njgb/C/property-management-overview｜房源管理模組做什麼（含自訂狀態標籤）\njgb/C/community-batch-create｜社區建立與批次新增物件\njgb/C/rental-storefront-vr｜招租店舖與 VR 看屋\njgb/F/repair-system｜線上報修與進度追蹤\njgb/G/smart-meter-lock-iot｜智慧電錶與門鎖整合（售前）\njgb/I/competitor-comparison｜跟 Bananas、屋我也差在哪\njgb/I/dashboard-overview｜首頁儀表板顯示哪些數據\njgb/I/free-trial｜可以免費試用嗎\njgb/I/individual-landlord-scale-fit｜個人房東（約 10～30 戶）適配與建議做法\njgb/I/property-quota-limit｜方案物件額度上限與用滿怎麼辦\njgb/I/team-company-fit｜公司或包租代管團隊適合嗎\njgb/I/why-choose-jgb｜為什麼選金箍棒",
+    "toc_text": "jgb/B/team-management-overview｜團隊管理模組做什麼\njgb/C/property-management-overview｜房源管理模組做什麼（含自訂狀態標籤）\njgb/C/community-batch-create｜社區建立與批次新增物件\njgb/C/rental-storefront-vr｜招租店舖與 VR 看屋\njgb/F/repair-system｜線上報修與進度追蹤\njgb/G/smart-meter-lock-iot｜智慧電錶與門鎖整合（售前）\njgb/I/competitor-comparison｜跟 Bananas、屋我也差在哪\njgb/I/dashboard-overview｜首頁儀表板顯示哪些數據\njgb/I/free-trial｜可以免費試用嗎\njgb/I/individual-landlord-scale-fit｜個人房東（約 10～30 戶）適配與建議做法\njgb/I/property-quota-limit｜方案物件額度上限與用滿怎麼辦\njgb/I/team-company-fit｜公司或包租代管團隊適合嗎\njgb/I/why-choose-jgb｜為什麼選金箍棒"
+  },
+  {
+    "audience": "property_manager",
+    "candidate_ids": [
+      "jgb/F/repair-ticket-after-submit",
+      "jgb/F/repair-ticket-reclassify",
+      "jgb/I/property-quota-limit",
+      "jgb/F/repair-ticket-urgency-judgment",
+      "jgb/I/dashboard-overview"
+    ],
+    "fine_id": "jgb/F/repair-ticket-after-submit",
+    "miss_kind": "hit",
+    "query": "我要改一下描述",
+    "section_ids": [
+      "jgb/F/repair-ticket-after-submit",
+      "jgb/F/repair-ticket-reclassify",
+      "jgb/I/property-quota-limit",
+      "jgb/F/repair-ticket-urgency-judgment",
+      "jgb/I/dashboard-overview",
+      "outline:toc"
+    ],
+    "text": "【jgb/F/repair-ticket-after-submit】確認送出後的單如何處理\n確認送出後，這張單不在對話裡修改：業務要改內容時，說明這張單已送出，並指到 JGB 的修繕單頁面處理。\n送出後再描述同一戶的另一個問題，視為另一張新單：物件不重問，依口述描述出新的確認摘要，仍只有按「確認送出」才建單。\n\n---\n\n【jgb/F/repair-ticket-reclassify】確認卡上修改辨識結果的規則\n**確認卡尚在時**按「我要修改」只重新確認被改的項目（例如把「天花板」改成「馬桶後面的水管」），物件與急迫性不重問、不重跑辨識。\n\n---\n\n【jgb/I/property-quota-limit】方案物件額度上限與用滿怎麼辦\n金箍棒的方案是依可管理的物件數分級，物件額度用滿就無法再新增，可以升級方案、加購額度，或把不再使用的物件下架釋放額度；目前用量在「訂閱方案」頁看得到。\n各方案的物件數級距請以線上定價頁為準 [查看方案與費用](https://www.jgbsmart.com/pricing)。\n免費方案預設可建 5 個物件（免費試用一個月就是免費方案），實際額度以帳號內「訂閱方案」頁顯示為準。\n新帳號享有免費試用一個月，可先實際體驗再選方案。\n\n---\n\n【jgb/F/repair-ticket-urgency-judgment】修繕單急迫程度的判斷來源與值域\n急迫與非急迫由辨識建議或業務口述；未表明時以非緊急建單，不得預設為急迫、也不為此反問；值域以 JGB 資料庫為準：2＝緊急、1＝非緊急。\n\n---\n\n【jgb/I/dashboard-overview】首頁儀表板顯示哪些數據\n登入後的首頁儀表板有三塊：收支情況（圖表化呈現，可自訂時間區間看營運趨勢）、帳務情況（近期的逾期待收款帳單與待繳費帳單，可點「更多」看明細）、修繕情況（租客目前申請中的修繕單）。\n想看實際畫面可預約 demo。\n\n---\n\n【outline:toc】正本目錄\njgb/E/dunning-draft-not-auto-send｜催繳草稿不可一鍵發送給租客\njgb/F/repair-ticket-after-submit｜確認送出後的單如何處理\njgb/F/repair-ticket-mid-flow-cancel｜報修流程中途取消的規則\njgb/F/repair-ticket-photo-count-limit｜修繕辨識與附件的照片張數限制\njgb/F/repair-ticket-reclassify｜確認卡上修改辨識結果的規則\njgb/F/repair-ticket-submit-failure｜建單失敗時的處理與重試規則\njgb/F/repair-ticket-urgency-judgment｜修繕單急迫程度的判斷來源與值域\njgb/I/dashboard-overview｜首頁儀表板顯示哪些數據\njgb/I/property-quota-limit｜方案物件額度上限與用滿怎麼辦",
+    "toc_text": "jgb/E/dunning-draft-not-auto-send｜催繳草稿不可一鍵發送給租客\njgb/F/repair-ticket-after-submit｜確認送出後的單如何處理\njgb/F/repair-ticket-mid-flow-cancel｜報修流程中途取消的規則\njgb/F/repair-ticket-photo-count-limit｜修繕辨識與附件的照片張數限制\njgb/F/repair-ticket-reclassify｜確認卡上修改辨識結果的規則\njgb/F/repair-ticket-submit-failure｜建單失敗時的處理與重試規則\njgb/F/repair-ticket-urgency-judgment｜修繕單急迫程度的判斷來源與值域\njgb/I/dashboard-overview｜首頁儀表板顯示哪些數據\njgb/I/property-quota-limit｜方案物件額度上限與用滿怎麼辦"
+  },
+  {
+    "audience": "prospect",
+    "candidate_ids": [
+      "jgb/B/team-management-overview",
+      "jgb/I/individual-landlord-scale-fit",
+      "jgb/C/rental-storefront-vr",
+      "jgb/C/community-batch-create",
+      "jgb/I/dashboard-overview"
+    ],
+    "fine_id": "jgb/F/repair-ticket-mid-flow-cancel",
+    "miss_kind": "hit",
+    "query": "取消",
+    "section_ids": [
+      "jgb/B/team-management-overview",
+      "jgb/I/individual-landlord-scale-fit",
+      "jgb/C/rental-storefront-vr",
+      "jgb/C/community-batch-create",
+      "jgb/I/dashboard-overview",
+      "outline:toc"
+    ],
+    "text": "【jgb/B/team-management-overview】團隊管理模組做什麼\n人多、管不動？\n金箍棒的團隊管理支援多人帳號與角色權限，讓代管團隊分工協作，並提供大房東報表對業主交代。\n系統沒有叫「系統管理」的模組；成員、角色權限、訂閱方案這類設定都在團隊管理裡。\n想了解團隊方案可預約 demo 由專人說明。\n\n---\n\n【jgb/I/individual-landlord-scale-fit】個人房東（約 10～30 戶）適配與建議做法\n管 10 間左右的個人房東，最花時間的通常是收租對帳和合約來回。\n金箍棒把物件、合約、帳務集中在一個系統：線上電子簽章簽約、自動產帳單與金流代收、收租對帳一條龍，取代 Excel 與 LINE 的零散作業，也能發租客通知、處理報修。\n建議先用免費試用一個月實際跑跑看；正式方案級距與費用調整中，可於定價頁(https://www.jgbsmart.com/pricing)查看或由專人為您說明，這裡不報數字。\n管到 20 間左右，帳單與對帳的量明顯變大、人工容易出錯。\n金箍棒的帳務模組（自動帳單、多元金流代收、電子發票、儲值金）能把收租對帳自動化，搭配物件管理、電子簽章合約、租客通知與修繕，讓一個人也管得動這個規模。\n可先免費試用一個月感受效率差異；方案級距與費用請見定價頁(https://www.jgbsmart.com/pricing)或由專人提供，這裡不報過時數字。\n管到 30 間左右，已接近個人經營的規模上限，物件與帳務都相當可觀；未來若開始多人協作或要對業主交報表，會很快需要團隊管理與大房東報表。\n金箍棒在這階段能用物件、合約、帳務的完整自動化撐住現有規模，並可平順銜接到團隊方案。\n建議先免費試用一個月；正式級距與費用調整中，請見定價頁(https://www.jgbsmart.com/pricing)或由專人為您盤點，這裡不直接報價。\n\n---\n\n【jgb/C/rental-storefront-vr】招租店舖與 VR 看屋\n金箍棒每個帳號或團隊都有自己的「房東對外首頁」（招租店舖），刊登中的物件會出現在上面供房客瀏覽；團隊可以在團隊管理設定招租頁面的專屬網址與時區，強化品牌辨識。\n新增物件時可上傳 VR 物件連結，房客能在線上看屋。\n想看招租頁長什麼樣可預約 demo。\n\n---\n\n【jgb/C/community-batch-create】社區建立與批次新增物件\n金箍棒用「社區」把同一棟或同一社區的物件歸戶管理。\n流程是先建立社區，再在「社區總表」選該社區，按右側的「批次新增」下載 Excel 模板、填入物件資料後上傳，就能一次把整批物件建進系統；單筆新增則在物件總表「新增物件」。\n想看實際畫面可預約 demo。\n\n---\n\n【jgb/I/dashboard-overview】首頁儀表板顯示哪些數據\n登入後的首頁儀表板有三塊：收支情況（圖表化呈現，可自訂時間區間看營運趨勢）、帳務情況（近期的逾期待收款帳單與待繳費帳單，可點「更多」看明細）、修繕情況（租客目前申請中的修繕單）。\n想看實際畫面可預約 demo。\n\n---\n\n【outline:toc】正本目錄\njgb/B/team-management-overview｜團隊管理模組做什麼\njgb/C/property-management-overview｜房源管理模組做什麼（含自訂狀態標籤）\njgb/C/community-batch-create｜社區建立與批次新增物件\njgb/C/rental-storefront-vr｜招租店舖與 VR 看屋\njgb/F/repair-system｜線上報修與進度追蹤\njgb/G/smart-meter-lock-iot｜智慧電錶與門鎖整合（售前）\njgb/I/competitor-comparison｜跟 Bananas、屋我也差在哪\njgb/I/dashboard-overview｜首頁儀表板顯示哪些數據\njgb/I/free-trial｜可以免費試用嗎\njgb/I/individual-landlord-scale-fit｜個人房東（約 10～30 戶）適配與建議做法\njgb/I/property-quota-limit｜方案物件額度上限與用滿怎麼辦\njgb/I/team-company-fit｜公司或包租代管團隊適合嗎\njgb/I/why-choose-jgb｜為什麼選金箍棒",
+    "toc_text": "jgb/B/team-management-overview｜團隊管理模組做什麼\njgb/C/property-management-overview｜房源管理模組做什麼（含自訂狀態標籤）\njgb/C/community-batch-create｜社區建立與批次新增物件\njgb/C/rental-storefront-vr｜招租店舖與 VR 看屋\njgb/F/repair-system｜線上報修與進度追蹤\njgb/G/smart-meter-lock-iot｜智慧電錶與門鎖整合（售前）\njgb/I/competitor-comparison｜跟 Bananas、屋我也差在哪\njgb/I/dashboard-overview｜首頁儀表板顯示哪些數據\njgb/I/free-trial｜可以免費試用嗎\njgb/I/individual-landlord-scale-fit｜個人房東（約 10～30 戶）適配與建議做法\njgb/I/property-quota-limit｜方案物件額度上限與用滿怎麼辦\njgb/I/team-company-fit｜公司或包租代管團隊適合嗎\njgb/I/why-choose-jgb｜為什麼選金箍棒"
+  },
+  {
+    "audience": "property_manager",
+    "candidate_ids": [
+      "jgb/F/repair-ticket-mid-flow-cancel",
+      "jgb/I/dashboard-overview",
+      "jgb/I/property-quota-limit",
+      "jgb/E/dunning-draft-not-auto-send",
+      "jgb/F/repair-ticket-reclassify"
+    ],
+    "fine_id": "jgb/F/repair-ticket-mid-flow-cancel",
+    "miss_kind": "hit",
+    "query": "取消",
+    "section_ids": [
+      "jgb/F/repair-ticket-mid-flow-cancel",
+      "jgb/I/dashboard-overview",
+      "jgb/I/property-quota-limit",
+      "jgb/E/dunning-draft-not-auto-send",
+      "jgb/F/repair-ticket-reclassify",
+      "outline:toc"
+    ],
+    "text": "【jgb/F/repair-ticket-mid-flow-cancel】報修流程中途取消的規則\n任一階段說取消（取消／不報了／不用了／算了／結束）即結束報修，JGB 不會產生新單。\n\n---\n\n【jgb/I/dashboard-overview】首頁儀表板顯示哪些數據\n登入後的首頁儀表板有三塊：收支情況（圖表化呈現，可自訂時間區間看營運趨勢）、帳務情況（近期的逾期待收款帳單與待繳費帳單，可點「更多」看明細）、修繕情況（租客目前申請中的修繕單）。\n想看實際畫面可預約 demo。\n\n---\n\n【jgb/I/property-quota-limit】方案物件額度上限與用滿怎麼辦\n金箍棒的方案是依可管理的物件數分級，物件額度用滿就無法再新增，可以升級方案、加購額度，或把不再使用的物件下架釋放額度；目前用量在「訂閱方案」頁看得到。\n各方案的物件數級距請以線上定價頁為準 [查看方案與費用](https://www.jgbsmart.com/pricing)。\n免費方案預設可建 5 個物件（免費試用一個月就是免費方案），實際額度以帳號內「訂閱方案」頁顯示為準。\n新帳號享有免費試用一個月，可先實際體驗再選方案。\n\n---\n\n【jgb/E/dunning-draft-not-auto-send】催繳草稿不可一鍵發送給租客\n不可以；草稿一律推給業務自己複製去傳，不設計一鍵發送，所有提醒都是給業務而不是給租客。\n\n---\n\n【jgb/F/repair-ticket-reclassify】確認卡上修改辨識結果的規則\n**確認卡尚在時**按「我要修改」只重新確認被改的項目（例如把「天花板」改成「馬桶後面的水管」），物件與急迫性不重問、不重跑辨識。\n\n---\n\n【outline:toc】正本目錄\njgb/E/dunning-draft-not-auto-send｜催繳草稿不可一鍵發送給租客\njgb/F/repair-ticket-after-submit｜確認送出後的單如何處理\njgb/F/repair-ticket-mid-flow-cancel｜報修流程中途取消的規則\njgb/F/repair-ticket-photo-count-limit｜修繕辨識與附件的照片張數限制\njgb/F/repair-ticket-reclassify｜確認卡上修改辨識結果的規則\njgb/F/repair-ticket-submit-failure｜建單失敗時的處理與重試規則\njgb/F/repair-ticket-urgency-judgment｜修繕單急迫程度的判斷來源與值域\njgb/I/dashboard-overview｜首頁儀表板顯示哪些數據\njgb/I/property-quota-limit｜方案物件額度上限與用滿怎麼辦",
+    "toc_text": "jgb/E/dunning-draft-not-auto-send｜催繳草稿不可一鍵發送給租客\njgb/F/repair-ticket-after-submit｜確認送出後的單如何處理\njgb/F/repair-ticket-mid-flow-cancel｜報修流程中途取消的規則\njgb/F/repair-ticket-photo-count-limit｜修繕辨識與附件的照片張數限制\njgb/F/repair-ticket-reclassify｜確認卡上修改辨識結果的規則\njgb/F/repair-ticket-submit-failure｜建單失敗時的處理與重試規則\njgb/F/repair-ticket-urgency-judgment｜修繕單急迫程度的判斷來源與值域\njgb/I/dashboard-overview｜首頁儀表板顯示哪些數據\njgb/I/property-quota-limit｜方案物件額度上限與用滿怎麼辦"
+  },
+  {
+    "audience": "prospect",
+    "candidate_ids": [
+      "jgb/F/repair-system",
+      "jgb/C/property-management-overview",
+      "jgb/I/property-quota-limit",
+      "jgb/B/team-management-overview",
+      "jgb/I/individual-landlord-scale-fit"
+    ],
+    "fine_id": "jgb/F/repair-ticket-reclassify",
+    "miss_kind": "hit",
+    "query": "報修分類改為水管",
+    "section_ids": [
+      "jgb/F/repair-system",
+      "jgb/C/property-management-overview",
+      "jgb/I/property-quota-limit",
+      "jgb/B/team-management-overview",
+      "jgb/I/individual-landlord-scale-fit",
+      "outline:toc"
+    ],
+    "text": "【jgb/F/repair-system】線上報修與進度追蹤\n報修處理慢、追蹤不易？\n金箍棒的修繕系統讓租客線上報修、房東與管理方追蹤處理進度，把報修流程數位化。\n想看實際流程可預約 demo。\n\n---\n\n【jgb/C/property-management-overview】房源管理模組做什麼（含自訂狀態標籤）\n物件多、資料分散難管？\n金箍棒的房源管理把所有物件集中：物件建檔、社區歸戶、批次上傳，還有招租公開頁與 VR 看屋連結，取代散落的 Excel。\n物件可以貼團隊自訂的狀態標籤（預設有可帶看、待清潔、待簽約、維修中、不出租、待完善六種），方便篩選與分工。\n想看實際畫面可預約 demo。\n\n---\n\n【jgb/I/property-quota-limit】方案物件額度上限與用滿怎麼辦\n金箍棒的方案是依可管理的物件數分級，物件額度用滿就無法再新增，可以升級方案、加購額度，或把不再使用的物件下架釋放額度；目前用量在「訂閱方案」頁看得到。\n各方案的物件數級距請以線上定價頁為準 [查看方案與費用](https://www.jgbsmart.com/pricing)。\n免費方案預設可建 5 個物件（免費試用一個月就是免費方案），實際額度以帳號內「訂閱方案」頁顯示為準。\n新帳號享有免費試用一個月，可先實際體驗再選方案。\n\n---\n\n【jgb/B/team-management-overview】團隊管理模組做什麼\n人多、管不動？\n金箍棒的團隊管理支援多人帳號與角色權限，讓代管團隊分工協作，並提供大房東報表對業主交代。\n系統沒有叫「系統管理」的模組；成員、角色權限、訂閱方案這類設定都在團隊管理裡。\n想了解團隊方案可預約 demo 由專人說明。\n\n---\n\n【jgb/I/individual-landlord-scale-fit】個人房東（約 10～30 戶）適配與建議做法\n管 10 間左右的個人房東，最花時間的通常是收租對帳和合約來回。\n金箍棒把物件、合約、帳務集中在一個系統：線上電子簽章簽約、自動產帳單與金流代收、收租對帳一條龍，取代 Excel 與 LINE 的零散作業，也能發租客通知、處理報修。\n建議先用免費試用一個月實際跑跑看；正式方案級距與費用調整中，可於定價頁(https://www.jgbsmart.com/pricing)查看或由專人為您說明，這裡不報數字。\n管到 20 間左右，帳單與對帳的量明顯變大、人工容易出錯。\n金箍棒的帳務模組（自動帳單、多元金流代收、電子發票、儲值金）能把收租對帳自動化，搭配物件管理、電子簽章合約、租客通知與修繕，讓一個人也管得動這個規模。\n可先免費試用一個月感受效率差異；方案級距與費用請見定價頁(https://www.jgbsmart.com/pricing)或由專人提供，這裡不報過時數字。\n管到 30 間左右，已接近個人經營的規模上限，物件與帳務都相當可觀；未來若開始多人協作或要對業主交報表，會很快需要團隊管理與大房東報表。\n金箍棒在這階段能用物件、合約、帳務的完整自動化撐住現有規模，並可平順銜接到團隊方案。\n建議先免費試用一個月；正式級距與費用調整中，請見定價頁(https://www.jgbsmart.com/pricing)或由專人為您盤點，這裡不直接報價。\n\n---\n\n【outline:toc】正本目錄\njgb/B/team-management-overview｜團隊管理模組做什麼\njgb/C/property-management-overview｜房源管理模組做什麼（含自訂狀態標籤）\njgb/C/community-batch-create｜社區建立與批次新增物件\njgb/C/rental-storefront-vr｜招租店舖與 VR 看屋\njgb/F/repair-system｜線上報修與進度追蹤\njgb/G/smart-meter-lock-iot｜智慧電錶與門鎖整合（售前）\njgb/I/competitor-comparison｜跟 Bananas、屋我也差在哪\njgb/I/dashboard-overview｜首頁儀表板顯示哪些數據\njgb/I/free-trial｜可以免費試用嗎\njgb/I/individual-landlord-scale-fit｜個人房東（約 10～30 戶）適配與建議做法\njgb/I/property-quota-limit｜方案物件額度上限與用滿怎麼辦\njgb/I/team-company-fit｜公司或包租代管團隊適合嗎\njgb/I/why-choose-jgb｜為什麼選金箍棒",
+    "toc_text": "jgb/B/team-management-overview｜團隊管理模組做什麼\njgb/C/property-management-overview｜房源管理模組做什麼（含自訂狀態標籤）\njgb/C/community-batch-create｜社區建立與批次新增物件\njgb/C/rental-storefront-vr｜招租店舖與 VR 看屋\njgb/F/repair-system｜線上報修與進度追蹤\njgb/G/smart-meter-lock-iot｜智慧電錶與門鎖整合（售前）\njgb/I/competitor-comparison｜跟 Bananas、屋我也差在哪\njgb/I/dashboard-overview｜首頁儀表板顯示哪些數據\njgb/I/free-trial｜可以免費試用嗎\njgb/I/individual-landlord-scale-fit｜個人房東（約 10～30 戶）適配與建議做法\njgb/I/property-quota-limit｜方案物件額度上限與用滿怎麼辦\njgb/I/team-company-fit｜公司或包租代管團隊適合嗎\njgb/I/why-choose-jgb｜為什麼選金箍棒"
+  },
+  {
+    "audience": "property_manager",
+    "candidate_ids": [
+      "jgb/F/repair-ticket-reclassify",
+      "jgb/E/dunning-draft-not-auto-send",
+      "jgb/I/property-quota-limit",
+      "jgb/F/repair-ticket-urgency-judgment",
+      "jgb/F/repair-ticket-photo-count-limit"
+    ],
+    "fine_id": "jgb/F/repair-ticket-reclassify",
+    "miss_kind": "hit",
+    "query": "報修分類改為水管",
+    "section_ids": [
+      "jgb/F/repair-ticket-reclassify",
+      "jgb/E/dunning-draft-not-auto-send",
+      "jgb/I/property-quota-limit",
+      "jgb/F/repair-ticket-urgency-judgment",
+      "jgb/F/repair-ticket-photo-count-limit",
+      "outline:toc"
+    ],
+    "text": "【jgb/F/repair-ticket-reclassify】確認卡上修改辨識結果的規則\n**確認卡尚在時**按「我要修改」只重新確認被改的項目（例如把「天花板」改成「馬桶後面的水管」），物件與急迫性不重問、不重跑辨識。\n\n---\n\n【jgb/E/dunning-draft-not-auto-send】催繳草稿不可一鍵發送給租客\n不可以；草稿一律推給業務自己複製去傳，不設計一鍵發送，所有提醒都是給業務而不是給租客。\n\n---\n\n【jgb/I/property-quota-limit】方案物件額度上限與用滿怎麼辦\n金箍棒的方案是依可管理的物件數分級，物件額度用滿就無法再新增，可以升級方案、加購額度，或把不再使用的物件下架釋放額度；目前用量在「訂閱方案」頁看得到。\n各方案的物件數級距請以線上定價頁為準 [查看方案與費用](https://www.jgbsmart.com/pricing)。\n免費方案預設可建 5 個物件（免費試用一個月就是免費方案），實際額度以帳號內「訂閱方案」頁顯示為準。\n新帳號享有免費試用一個月，可先實際體驗再選方案。\n\n---\n\n【jgb/F/repair-ticket-urgency-judgment】修繕單急迫程度的判斷來源與值域\n急迫與非急迫由辨識建議或業務口述；未表明時以非緊急建單，不得預設為急迫、也不為此反問；值域以 JGB 資料庫為準：2＝緊急、1＝非緊急。\n\n---\n\n【jgb/F/repair-ticket-photo-count-limit】修繕辨識與附件的照片張數限制\n辨識一次最多用 3 張照片，多的由呼叫端先截；修繕單附件應保存全部照片（由呼叫端另帶完整清單），辨識仍只看前 3 張。\n\n---\n\n【outline:toc】正本目錄\njgb/E/dunning-draft-not-auto-send｜催繳草稿不可一鍵發送給租客\njgb/F/repair-ticket-after-submit｜確認送出後的單如何處理\njgb/F/repair-ticket-mid-flow-cancel｜報修流程中途取消的規則\njgb/F/repair-ticket-photo-count-limit｜修繕辨識與附件的照片張數限制\njgb/F/repair-ticket-reclassify｜確認卡上修改辨識結果的規則\njgb/F/repair-ticket-submit-failure｜建單失敗時的處理與重試規則\njgb/F/repair-ticket-urgency-judgment｜修繕單急迫程度的判斷來源與值域\njgb/I/dashboard-overview｜首頁儀表板顯示哪些數據\njgb/I/property-quota-limit｜方案物件額度上限與用滿怎麼辦",
+    "toc_text": "jgb/E/dunning-draft-not-auto-send｜催繳草稿不可一鍵發送給租客\njgb/F/repair-ticket-after-submit｜確認送出後的單如何處理\njgb/F/repair-ticket-mid-flow-cancel｜報修流程中途取消的規則\njgb/F/repair-ticket-photo-count-limit｜修繕辨識與附件的照片張數限制\njgb/F/repair-ticket-reclassify｜確認卡上修改辨識結果的規則\njgb/F/repair-ticket-submit-failure｜建單失敗時的處理與重試規則\njgb/F/repair-ticket-urgency-judgment｜修繕單急迫程度的判斷來源與值域\njgb/I/dashboard-overview｜首頁儀表板顯示哪些數據\njgb/I/property-quota-limit｜方案物件額度上限與用滿怎麼辦"
+  },
+  {
+    "audience": "prospect",
+    "candidate_ids": [
+      "jgb/I/property-quota-limit",
+      "jgb/I/individual-landlord-scale-fit",
+      "jgb/G/smart-meter-lock-iot",
+      "jgb/C/rental-storefront-vr",
+      "jgb/B/team-management-overview"
+    ],
+    "fine_id": "jgb/F/repair-ticket-submit-failure",
+    "miss_kind": "hit",
+    "query": "確認送出重試",
+    "section_ids": [
+      "jgb/I/property-quota-limit",
+      "jgb/I/individual-landlord-scale-fit",
+      "jgb/G/smart-meter-lock-iot",
+      "jgb/C/rental-storefront-vr",
+      "jgb/B/team-management-overview",
+      "outline:toc"
+    ],
+    "text": "【jgb/I/property-quota-limit】方案物件額度上限與用滿怎麼辦\n金箍棒的方案是依可管理的物件數分級，物件額度用滿就無法再新增，可以升級方案、加購額度，或把不再使用的物件下架釋放額度；目前用量在「訂閱方案」頁看得到。\n各方案的物件數級距請以線上定價頁為準 [查看方案與費用](https://www.jgbsmart.com/pricing)。\n免費方案預設可建 5 個物件（免費試用一個月就是免費方案），實際額度以帳號內「訂閱方案」頁顯示為準。\n新帳號享有免費試用一個月，可先實際體驗再選方案。\n\n---\n\n【jgb/I/individual-landlord-scale-fit】個人房東（約 10～30 戶）適配與建議做法\n管 10 間左右的個人房東，最花時間的通常是收租對帳和合約來回。\n金箍棒把物件、合約、帳務集中在一個系統：線上電子簽章簽約、自動產帳單與金流代收、收租對帳一條龍，取代 Excel 與 LINE 的零散作業，也能發租客通知、處理報修。\n建議先用免費試用一個月實際跑跑看；正式方案級距與費用調整中，可於定價頁(https://www.jgbsmart.com/pricing)查看或由專人為您說明，這裡不報數字。\n管到 20 間左右，帳單與對帳的量明顯變大、人工容易出錯。\n金箍棒的帳務模組（自動帳單、多元金流代收、電子發票、儲值金）能把收租對帳自動化，搭配物件管理、電子簽章合約、租客通知與修繕，讓一個人也管得動這個規模。\n可先免費試用一個月感受效率差異；方案級距與費用請見定價頁(https://www.jgbsmart.com/pricing)或由專人提供，這裡不報過時數字。\n管到 30 間左右，已接近個人經營的規模上限，物件與帳務都相當可觀；未來若開始多人協作或要對業主交報表，會很快需要團隊管理與大房東報表。\n金箍棒在這階段能用物件、合約、帳務的完整自動化撐住現有規模，並可平順銜接到團隊方案。\n建議先免費試用一個月；正式級距與費用調整中，請見定價頁(https://www.jgbsmart.com/pricing)或由專人為您盤點，這裡不直接報價。\n\n---\n\n【jgb/G/smart-meter-lock-iot】智慧電錶與門鎖整合（售前）\n現場抄電表、換門鎖很煩？\n金箍棒有整合智慧電錶（抄表可自動帶入帳單）與智慧門鎖，屬硬體設備，實際支援範圍、安裝與費用由專人為您說明。\n門鎖分兩型：「私人門鎖」是單一房間的門鎖，只綁一個物件，房東與租客各自設一組密碼；「共用門鎖」是大樓或住家大門，可綁多個物件，由房東設一組共用密碼給租客使用。\n可留資由專人與您聯絡。\n\n---\n\n【jgb/C/rental-storefront-vr】招租店舖與 VR 看屋\n金箍棒每個帳號或團隊都有自己的「房東對外首頁」（招租店舖），刊登中的物件會出現在上面供房客瀏覽；團隊可以在團隊管理設定招租頁面的專屬網址與時區，強化品牌辨識。\n新增物件時可上傳 VR 物件連結，房客能在線上看屋。\n想看招租頁長什麼樣可預約 demo。\n\n---\n\n【jgb/B/team-management-overview】團隊管理模組做什麼\n人多、管不動？\n金箍棒的團隊管理支援多人帳號與角色權限，讓代管團隊分工協作，並提供大房東報表對業主交代。\n系統沒有叫「系統管理」的模組；成員、角色權限、訂閱方案這類設定都在團隊管理裡。\n想了解團隊方案可預約 demo 由專人說明。\n\n---\n\n【outline:toc】正本目錄\njgb/B/team-management-overview｜團隊管理模組做什麼\njgb/C/property-management-overview｜房源管理模組做什麼（含自訂狀態標籤）\njgb/C/community-batch-create｜社區建立與批次新增物件\njgb/C/rental-storefront-vr｜招租店舖與 VR 看屋\njgb/F/repair-system｜線上報修與進度追蹤\njgb/G/smart-meter-lock-iot｜智慧電錶與門鎖整合（售前）\njgb/I/competitor-comparison｜跟 Bananas、屋我也差在哪\njgb/I/dashboard-overview｜首頁儀表板顯示哪些數據\njgb/I/free-trial｜可以免費試用嗎\njgb/I/individual-landlord-scale-fit｜個人房東（約 10～30 戶）適配與建議做法\njgb/I/property-quota-limit｜方案物件額度上限與用滿怎麼辦\njgb/I/team-company-fit｜公司或包租代管團隊適合嗎\njgb/I/why-choose-jgb｜為什麼選金箍棒",
+    "toc_text": "jgb/B/team-management-overview｜團隊管理模組做什麼\njgb/C/property-management-overview｜房源管理模組做什麼（含自訂狀態標籤）\njgb/C/community-batch-create｜社區建立與批次新增物件\njgb/C/rental-storefront-vr｜招租店舖與 VR 看屋\njgb/F/repair-system｜線上報修與進度追蹤\njgb/G/smart-meter-lock-iot｜智慧電錶與門鎖整合（售前）\njgb/I/competitor-comparison｜跟 Bananas、屋我也差在哪\njgb/I/dashboard-overview｜首頁儀表板顯示哪些數據\njgb/I/free-trial｜可以免費試用嗎\njgb/I/individual-landlord-scale-fit｜個人房東（約 10～30 戶）適配與建議做法\njgb/I/property-quota-limit｜方案物件額度上限與用滿怎麼辦\njgb/I/team-company-fit｜公司或包租代管團隊適合嗎\njgb/I/why-choose-jgb｜為什麼選金箍棒"
+  },
+  {
+    "audience": "property_manager",
+    "candidate_ids": [
+      "jgb/F/repair-ticket-submit-failure",
+      "jgb/F/repair-ticket-photo-count-limit",
+      "jgb/F/repair-ticket-after-submit",
+      "jgb/I/property-quota-limit",
+      "jgb/I/dashboard-overview"
+    ],
+    "fine_id": "jgb/F/repair-ticket-submit-failure",
+    "miss_kind": "hit",
+    "query": "確認送出重試",
+    "section_ids": [
+      "jgb/F/repair-ticket-submit-failure",
+      "jgb/F/repair-ticket-photo-count-limit",
+      "jgb/F/repair-ticket-after-submit",
+      "jgb/I/property-quota-limit",
+      "jgb/I/dashboard-overview",
+      "outline:toc"
+    ],
+    "text": "【jgb/F/repair-ticket-submit-failure】建單失敗時的處理與重試規則\n建單 API 失敗時明講「尚未建立」，提供「再試一次」；重複按確認在同一會話只會建一張單。\n\n---\n\n【jgb/F/repair-ticket-photo-count-limit】修繕辨識與附件的照片張數限制\n辨識一次最多用 3 張照片，多的由呼叫端先截；修繕單附件應保存全部照片（由呼叫端另帶完整清單），辨識仍只看前 3 張。\n\n---\n\n【jgb/F/repair-ticket-after-submit】確認送出後的單如何處理\n確認送出後，這張單不在對話裡修改：業務要改內容時，說明這張單已送出，並指到 JGB 的修繕單頁面處理。\n送出後再描述同一戶的另一個問題，視為另一張新單：物件不重問，依口述描述出新的確認摘要，仍只有按「確認送出」才建單。\n\n---\n\n【jgb/I/property-quota-limit】方案物件額度上限與用滿怎麼辦\n金箍棒的方案是依可管理的物件數分級，物件額度用滿就無法再新增，可以升級方案、加購額度，或把不再使用的物件下架釋放額度；目前用量在「訂閱方案」頁看得到。\n各方案的物件數級距請以線上定價頁為準 [查看方案與費用](https://www.jgbsmart.com/pricing)。\n免費方案預設可建 5 個物件（免費試用一個月就是免費方案），實際額度以帳號內「訂閱方案」頁顯示為準。\n新帳號享有免費試用一個月，可先實際體驗再選方案。\n\n---\n\n【jgb/I/dashboard-overview】首頁儀表板顯示哪些數據\n登入後的首頁儀表板有三塊：收支情況（圖表化呈現，可自訂時間區間看營運趨勢）、帳務情況（近期的逾期待收款帳單與待繳費帳單，可點「更多」看明細）、修繕情況（租客目前申請中的修繕單）。\n想看實際畫面可預約 demo。\n\n---\n\n【outline:toc】正本目錄\njgb/E/dunning-draft-not-auto-send｜催繳草稿不可一鍵發送給租客\njgb/F/repair-ticket-after-submit｜確認送出後的單如何處理\njgb/F/repair-ticket-mid-flow-cancel｜報修流程中途取消的規則\njgb/F/repair-ticket-photo-count-limit｜修繕辨識與附件的照片張數限制\njgb/F/repair-ticket-reclassify｜確認卡上修改辨識結果的規則\njgb/F/repair-ticket-submit-failure｜建單失敗時的處理與重試規則\njgb/F/repair-ticket-urgency-judgment｜修繕單急迫程度的判斷來源與值域\njgb/I/dashboard-overview｜首頁儀表板顯示哪些數據\njgb/I/property-quota-limit｜方案物件額度上限與用滿怎麼辦",
+    "toc_text": "jgb/E/dunning-draft-not-auto-send｜催繳草稿不可一鍵發送給租客\njgb/F/repair-ticket-after-submit｜確認送出後的單如何處理\njgb/F/repair-ticket-mid-flow-cancel｜報修流程中途取消的規則\njgb/F/repair-ticket-photo-count-limit｜修繕辨識與附件的照片張數限制\njgb/F/repair-ticket-reclassify｜確認卡上修改辨識結果的規則\njgb/F/repair-ticket-submit-failure｜建單失敗時的處理與重試規則\njgb/F/repair-ticket-urgency-judgment｜修繕單急迫程度的判斷來源與值域\njgb/I/dashboard-overview｜首頁儀表板顯示哪些數據\njgb/I/property-quota-limit｜方案物件額度上限與用滿怎麼辦"
+  },
+  {
+    "audience": "prospect",
+    "candidate_ids": [
+      "jgb/G/smart-meter-lock-iot",
+      "jgb/B/team-management-overview",
+      "jgb/I/individual-landlord-scale-fit",
+      "jgb/C/community-batch-create",
+      "jgb/F/repair-system"
+    ],
+    "fine_id": "jgb/G/smart-meter-lock-iot",
+    "miss_kind": "hit",
+    "query": "IoT",
+    "section_ids": [
+      "jgb/G/smart-meter-lock-iot",
+      "jgb/B/team-management-overview",
+      "jgb/I/individual-landlord-scale-fit",
+      "jgb/C/community-batch-create",
+      "jgb/F/repair-system",
+      "outline:toc"
+    ],
+    "text": "【jgb/G/smart-meter-lock-iot】智慧電錶與門鎖整合（售前）\n現場抄電表、換門鎖很煩？\n金箍棒有整合智慧電錶（抄表可自動帶入帳單）與智慧門鎖，屬硬體設備，實際支援範圍、安裝與費用由專人為您說明。\n門鎖分兩型：「私人門鎖」是單一房間的門鎖，只綁一個物件，房東與租客各自設一組密碼；「共用門鎖」是大樓或住家大門，可綁多個物件，由房東設一組共用密碼給租客使用。\n可留資由專人與您聯絡。\n\n---\n\n【jgb/B/team-management-overview】團隊管理模組做什麼\n人多、管不動？\n金箍棒的團隊管理支援多人帳號與角色權限，讓代管團隊分工協作，並提供大房東報表對業主交代。\n系統沒有叫「系統管理」的模組；成員、角色權限、訂閱方案這類設定都在團隊管理裡。\n想了解團隊方案可預約 demo 由專人說明。\n\n---\n\n【jgb/I/individual-landlord-scale-fit】個人房東（約 10～30 戶）適配與建議做法\n管 10 間左右的個人房東，最花時間的通常是收租對帳和合約來回。\n金箍棒把物件、合約、帳務集中在一個系統：線上電子簽章簽約、自動產帳單與金流代收、收租對帳一條龍，取代 Excel 與 LINE 的零散作業，也能發租客通知、處理報修。\n建議先用免費試用一個月實際跑跑看；正式方案級距與費用調整中，可於定價頁(https://www.jgbsmart.com/pricing)查看或由專人為您說明，這裡不報數字。\n管到 20 間左右，帳單與對帳的量明顯變大、人工容易出錯。\n金箍棒的帳務模組（自動帳單、多元金流代收、電子發票、儲值金）能把收租對帳自動化，搭配物件管理、電子簽章合約、租客通知與修繕，讓一個人也管得動這個規模。\n可先免費試用一個月感受效率差異；方案級距與費用請見定價頁(https://www.jgbsmart.com/pricing)或由專人提供，這裡不報過時數字。\n管到 30 間左右，已接近個人經營的規模上限，物件與帳務都相當可觀；未來若開始多人協作或要對業主交報表，會很快需要團隊管理與大房東報表。\n金箍棒在這階段能用物件、合約、帳務的完整自動化撐住現有規模，並可平順銜接到團隊方案。\n建議先免費試用一個月；正式級距與費用調整中，請見定價頁(https://www.jgbsmart.com/pricing)或由專人為您盤點，這裡不直接報價。\n\n---\n\n【jgb/C/community-batch-create】社區建立與批次新增物件\n金箍棒用「社區」把同一棟或同一社區的物件歸戶管理。\n流程是先建立社區，再在「社區總表」選該社區，按右側的「批次新增」下載 Excel 模板、填入物件資料後上傳，就能一次把整批物件建進系統；單筆新增則在物件總表「新增物件」。\n想看實際畫面可預約 demo。\n\n---\n\n【jgb/F/repair-system】線上報修與進度追蹤\n報修處理慢、追蹤不易？\n金箍棒的修繕系統讓租客線上報修、房東與管理方追蹤處理進度，把報修流程數位化。\n想看實際流程可預約 demo。\n\n---\n\n【outline:toc】正本目錄\njgb/B/team-management-overview｜團隊管理模組做什麼\njgb/C/property-management-overview｜房源管理模組做什麼（含自訂狀態標籤）\njgb/C/community-batch-create｜社區建立與批次新增物件\njgb/C/rental-storefront-vr｜招租店舖與 VR 看屋\njgb/F/repair-system｜線上報修與進度追蹤\njgb/G/smart-meter-lock-iot｜智慧電錶與門鎖整合（售前）\njgb/I/competitor-comparison｜跟 Bananas、屋我也差在哪\njgb/I/dashboard-overview｜首頁儀表板顯示哪些數據\njgb/I/free-trial｜可以免費試用嗎\njgb/I/individual-landlord-scale-fit｜個人房東（約 10～30 戶）適配與建議做法\njgb/I/property-quota-limit｜方案物件額度上限與用滿怎麼辦\njgb/I/team-company-fit｜公司或包租代管團隊適合嗎\njgb/I/why-choose-jgb｜為什麼選金箍棒",
+    "toc_text": "jgb/B/team-management-overview｜團隊管理模組做什麼\njgb/C/property-management-overview｜房源管理模組做什麼（含自訂狀態標籤）\njgb/C/community-batch-create｜社區建立與批次新增物件\njgb/C/rental-storefront-vr｜招租店舖與 VR 看屋\njgb/F/repair-system｜線上報修與進度追蹤\njgb/G/smart-meter-lock-iot｜智慧電錶與門鎖整合（售前）\njgb/I/competitor-comparison｜跟 Bananas、屋我也差在哪\njgb/I/dashboard-overview｜首頁儀表板顯示哪些數據\njgb/I/free-trial｜可以免費試用嗎\njgb/I/individual-landlord-scale-fit｜個人房東（約 10～30 戶）適配與建議做法\njgb/I/property-quota-limit｜方案物件額度上限與用滿怎麼辦\njgb/I/team-company-fit｜公司或包租代管團隊適合嗎\njgb/I/why-choose-jgb｜為什麼選金箍棒"
+  },
+  {
+    "audience": "property_manager",
+    "candidate_ids": [
+      "jgb/E/dunning-draft-not-auto-send",
+      "jgb/F/repair-ticket-mid-flow-cancel",
+      "jgb/I/dashboard-overview",
+      "jgb/F/repair-ticket-reclassify",
+      "jgb/I/property-quota-limit"
+    ],
+    "fine_id": "jgb/G/smart-meter-lock-iot",
+    "miss_kind": "hit",
+    "query": "IoT",
+    "section_ids": [
+      "jgb/E/dunning-draft-not-auto-send",
+      "jgb/F/repair-ticket-mid-flow-cancel",
+      "jgb/I/dashboard-overview",
+      "jgb/F/repair-ticket-reclassify",
+      "jgb/I/property-quota-limit",
+      "outline:toc"
+    ],
+    "text": "【jgb/E/dunning-draft-not-auto-send】催繳草稿不可一鍵發送給租客\n不可以；草稿一律推給業務自己複製去傳，不設計一鍵發送，所有提醒都是給業務而不是給租客。\n\n---\n\n【jgb/F/repair-ticket-mid-flow-cancel】報修流程中途取消的規則\n任一階段說取消（取消／不報了／不用了／算了／結束）即結束報修，JGB 不會產生新單。\n\n---\n\n【jgb/I/dashboard-overview】首頁儀表板顯示哪些數據\n登入後的首頁儀表板有三塊：收支情況（圖表化呈現，可自訂時間區間看營運趨勢）、帳務情況（近期的逾期待收款帳單與待繳費帳單，可點「更多」看明細）、修繕情況（租客目前申請中的修繕單）。\n想看實際畫面可預約 demo。\n\n---\n\n【jgb/F/repair-ticket-reclassify】確認卡上修改辨識結果的規則\n**確認卡尚在時**按「我要修改」只重新確認被改的項目（例如把「天花板」改成「馬桶後面的水管」），物件與急迫性不重問、不重跑辨識。\n\n---\n\n【jgb/I/property-quota-limit】方案物件額度上限與用滿怎麼辦\n金箍棒的方案是依可管理的物件數分級，物件額度用滿就無法再新增，可以升級方案、加購額度，或把不再使用的物件下架釋放額度；目前用量在「訂閱方案」頁看得到。\n各方案的物件數級距請以線上定價頁為準 [查看方案與費用](https://www.jgbsmart.com/pricing)。\n免費方案預設可建 5 個物件（免費試用一個月就是免費方案），實際額度以帳號內「訂閱方案」頁顯示為準。\n新帳號享有免費試用一個月，可先實際體驗再選方案。\n\n---\n\n【outline:toc】正本目錄\njgb/E/dunning-draft-not-auto-send｜催繳草稿不可一鍵發送給租客\njgb/F/repair-ticket-after-submit｜確認送出後的單如何處理\njgb/F/repair-ticket-mid-flow-cancel｜報修流程中途取消的規則\njgb/F/repair-ticket-photo-count-limit｜修繕辨識與附件的照片張數限制\njgb/F/repair-ticket-reclassify｜確認卡上修改辨識結果的規則\njgb/F/repair-ticket-submit-failure｜建單失敗時的處理與重試規則\njgb/F/repair-ticket-urgency-judgment｜修繕單急迫程度的判斷來源與值域\njgb/I/dashboard-overview｜首頁儀表板顯示哪些數據\njgb/I/property-quota-limit｜方案物件額度上限與用滿怎麼辦",
+    "toc_text": "jgb/E/dunning-draft-not-auto-send｜催繳草稿不可一鍵發送給租客\njgb/F/repair-ticket-after-submit｜確認送出後的單如何處理\njgb/F/repair-ticket-mid-flow-cancel｜報修流程中途取消的規則\njgb/F/repair-ticket-photo-count-limit｜修繕辨識與附件的照片張數限制\njgb/F/repair-ticket-reclassify｜確認卡上修改辨識結果的規則\njgb/F/repair-ticket-submit-failure｜建單失敗時的處理與重試規則\njgb/F/repair-ticket-urgency-judgment｜修繕單急迫程度的判斷來源與值域\njgb/I/dashboard-overview｜首頁儀表板顯示哪些數據\njgb/I/property-quota-limit｜方案物件額度上限與用滿怎麼辦"
+  }
+]

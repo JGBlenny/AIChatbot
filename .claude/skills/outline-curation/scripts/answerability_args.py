@@ -47,6 +47,10 @@ KNOWN_SYSTEM_FIELDS = {
 _CELL_ALLOWED = frozenset({"id", "questions", "policy", "policy_ref"})
 _KB_ROW_ALLOWED = frozenset({"kb_id", "question_summary", "answer"})
 _DRAFT_ALLOWED = frozenset({"question", "answer"})
+#: 擴充模式（brief-9.7）drafts 形狀：幫助中心頁 `{id, summary, text?}`——與 `_DRAFT_ALLOWED`
+#: （batch2 草稿 `question`/`answer`）是兩種並存的 `--drafts` 輸入形狀，⛔ 互不相容、各自一個
+#: 候選建構函式（由呼叫端依模式二擇一呼叫，本檔不自動判形狀猜測）。
+_HELP_DRAFT_ALLOWED = frozenset({"id", "summary", "text"})
 _CANDIDATE_ALLOWED = frozenset({"id", "title", "content"})
 
 
@@ -66,6 +70,15 @@ def candidate_from_draft(draft: dict, n: int) -> dict:
     """batch2 草稿其中一筆 → 候選 {id,title,content}。id=`tmp:draft:<n>`（n＝原序，1-indexed）。"""
     _check_no_forbidden(draft, _DRAFT_ALLOWED, KNOWN_SYSTEM_FIELDS["draft"], "draft")
     return {"id": f"tmp:draft:{n}", "title": draft["question"], "content": draft["answer"]}
+
+
+def candidate_from_help_draft(draft: dict, n: int) -> dict:
+    """擴充模式（brief-9.7）草稿其中一筆（幫助中心頁 `{id, summary, text?}`）→ 候選
+    {id,title,content}。id=`tmp:draft:<n>`（n＝原序，1-indexed，與 `candidate_from_draft` 同編號規則）。
+    `text` 選填——缺（或空）⇒ 內容空字串（該材料只在提議判為新細目來源時才需要正文，
+    prompt 仍會附上 `summary` 供判斷去留；正文缺席不影響候選能否被引用為 `merge_of` 來源）。"""
+    _check_no_forbidden(draft, _HELP_DRAFT_ALLOWED, frozenset(), "help_draft")
+    return {"id": f"tmp:draft:{n}", "title": draft.get("summary", ""), "content": draft.get("text", "")}
 
 
 def project_cell(cell: dict) -> dict:
@@ -143,15 +156,15 @@ def _load_json(path: str):
 
 
 def candidates_from_canon(canon_path: str) -> tuple[list, str]:
-    """正本（或草稿）Markdown → 候選 {id,title,content}（2.4b：候選＝正本細目，id＝細目 id、content＝內容句換行相接）；回 (候選, canon_sha256)。
+    """正本（或草稿）Markdown（單檔或目錄，9.6 S4：`parse_canon_auto` 依路徑分派）→ 候選 {id,title,content}
+    （2.4b：候選＝正本細目，id＝細目 id、content＝內容句換行相接）；回 (候選, canon_sha256)。
     白名單投影：只取 id／title／content_units，⛔ 講法／sources／reviewed 不進判者 prompt（判者只看內容能不能答）。"""
     import sys as _sys
-    _rag = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "..", "rag-orchestrator"))
-    for cand in (_rag, "/app"):
-        if os.path.isdir(os.path.join(cand, "services")) and cand not in _sys.path:
-            _sys.path.insert(0, cand)
-    from services.agent.canon.canon_parser import parse_canon  # noqa: WPS433
-    doc = parse_canon(canon_path)
+    _here = os.path.dirname(os.path.abspath(__file__))
+    if _here not in _sys.path:
+        _sys.path.insert(0, _here)
+    import canon_items as _ci  # noqa: WPS433
+    doc = _ci.parse_canon_auto(canon_path)
     cands = [{"id": f.id, "title": f.title, "content": "\n".join(f.content_units)} for f in doc.fines()]
     return cands, doc.canon_sha256
 

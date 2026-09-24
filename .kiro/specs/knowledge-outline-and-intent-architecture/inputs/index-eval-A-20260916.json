@@ -1,0 +1,2157 @@
+{
+  "articles_with_gold": 37,
+  "by_type": {
+    "俗稱": 85,
+    "口語": 85,
+    "情境": 84,
+    "直接": 85,
+    "邊界": 83
+  },
+  "excluded_frozen_recomputed": 48,
+  "inputs_sha": {
+    "canon_sha256": "2e061ec88adb686b0932aadaf909c564d58f4de4021cd7fcd1345e21ec4251ce",
+    "helpcenter_dir_sha256": "8a040b783281f0eedf43fe1eb805d0f6e77b9b2396a5d9499fc8a4a43735661c",
+    "koyu_sha256": "1fc5bccd33726c9283d1b6d5daeeee97dec01818afa80a6d097c9e15bce8b25d",
+    "rule_file_declared_sha256": "b771a6e5c6c139d434e21c54f5a5c4fcade934aca6c50c104f2aaf7f4379a747",
+    "rule_file_sha256": "5fcb52b78ce29fa220c7d473a71160e7a9d94406c9430ccde060b31b16ef7d61",
+    "rule_sha256_note": "sha 原計法未留（raw/phrasing-20260906/ 下無計算腳本）",
+    "rule_sha256_recomputed": null,
+    "topics_v2_sha256": "f78344d65ebcdc7b9901c77b7bdf5a6b23b2548e2dea3729feba36ccb8868570"
+  },
+  "n": 422,
+  "results": {
+    "main": {
+      "article": {
+        "affected_sentences": 65,
+        "arms": {
+          "title": {
+            "俗稱": {
+              "limited": false,
+              "mappable": 37,
+              "recall_at_1": 0.3784,
+              "recall_at_3": 0.5946,
+              "recall_at_5": 0.7838,
+              "total": 85
+            },
+            "口語": {
+              "limited": false,
+              "mappable": 37,
+              "recall_at_1": 0.3784,
+              "recall_at_3": 0.6216,
+              "recall_at_5": 0.7297,
+              "total": 85
+            },
+            "情境": {
+              "limited": false,
+              "mappable": 36,
+              "recall_at_1": 0.2222,
+              "recall_at_3": 0.4722,
+              "recall_at_5": 0.6111,
+              "total": 84
+            },
+            "直接": {
+              "limited": false,
+              "mappable": 37,
+              "recall_at_1": 0.4595,
+              "recall_at_3": 0.6486,
+              "recall_at_5": 0.6486,
+              "total": 85
+            },
+            "邊界": {
+              "limited": false,
+              "mappable": 36,
+              "recall_at_1": 0.2222,
+              "recall_at_3": 0.4722,
+              "recall_at_5": 0.6389,
+              "total": 83
+            }
+          },
+          "title+phrasing": {
+            "俗稱": {
+              "limited": false,
+              "mappable": 37,
+              "recall_at_1": 0.2973,
+              "recall_at_3": 0.6216,
+              "recall_at_5": 0.7297,
+              "total": 85
+            },
+            "口語": {
+              "limited": false,
+              "mappable": 37,
+              "recall_at_1": 0.2703,
+              "recall_at_3": 0.5135,
+              "recall_at_5": 0.7027,
+              "total": 85
+            },
+            "情境": {
+              "limited": false,
+              "mappable": 36,
+              "recall_at_1": 0.25,
+              "recall_at_3": 0.4444,
+              "recall_at_5": 0.6944,
+              "total": 84
+            },
+            "直接": {
+              "limited": false,
+              "mappable": 37,
+              "recall_at_1": 0.4054,
+              "recall_at_3": 0.6216,
+              "recall_at_5": 0.7027,
+              "total": 85
+            },
+            "邊界": {
+              "limited": false,
+              "mappable": 36,
+              "recall_at_1": 0.3056,
+              "recall_at_3": 0.4444,
+              "recall_at_5": 0.5833,
+              "total": 83
+            }
+          },
+          "title+phrasing+content": {
+            "俗稱": {
+              "limited": false,
+              "mappable": 37,
+              "recall_at_1": 0.3243,
+              "recall_at_3": 0.7027,
+              "recall_at_5": 0.7838,
+              "total": 85
+            },
+            "口語": {
+              "limited": false,
+              "mappable": 37,
+              "recall_at_1": 0.2432,
+              "recall_at_3": 0.5946,
+              "recall_at_5": 0.7027,
+              "total": 85
+            },
+            "情境": {
+              "limited": false,
+              "mappable": 36,
+              "recall_at_1": 0.2778,
+              "recall_at_3": 0.4722,
+              "recall_at_5": 0.6944,
+              "total": 84
+            },
+            "直接": {
+              "limited": false,
+              "mappable": 37,
+              "recall_at_1": 0.4324,
+              "recall_at_3": 0.6757,
+              "recall_at_5": 0.7568,
+              "total": 85
+            },
+            "邊界": {
+              "limited": false,
+              "mappable": 36,
+              "recall_at_1": 0.2778,
+              "recall_at_3": 0.4167,
+              "recall_at_5": 0.5833,
+              "total": 83
+            }
+          }
+        },
+        "excluded_keys_total": 115,
+        "misrouted": [
+          {
+            "article": "Landlordonboarding00",
+            "gold": [
+              "jgb/B/owner-report-collection-remit",
+              "jgb/B/what-is-owner-landlord",
+              "jgb/I/dashboard-overview"
+            ],
+            "q": "我要看我的房子租出去沒",
+            "type": "口語",
+            "winning_fine_id": "jgb/E/overdue-reminder-late-fee"
+          },
+          {
+            "article": "Landlordonboarding00",
+            "gold": [
+              "jgb/B/owner-report-collection-remit",
+              "jgb/B/what-is-owner-landlord",
+              "jgb/I/dashboard-overview"
+            ],
+            "q": "我看不到帳務資料",
+            "type": "情境",
+            "winning_fine_id": "jgb/E/bill-contents-extra-fees"
+          },
+          {
+            "article": "Landlordonboarding01",
+            "gold": [
+              "jgb/A/account-profile-settings",
+              "jgb/A/account-registration",
+              "jgb/A/login-methods"
+            ],
+            "q": "我是個人房東不是公司",
+            "type": "口語",
+            "winning_fine_id": "jgb/I/individual-landlord-scale-fit"
+          },
+          {
+            "article": "Landlordonboarding01",
+            "gold": [
+              "jgb/A/account-profile-settings",
+              "jgb/A/account-registration",
+              "jgb/A/login-methods"
+            ],
+            "q": "個人房東註冊流程",
+            "type": "俗稱",
+            "winning_fine_id": "jgb/I/individual-landlord-scale-fit"
+          },
+          {
+            "article": "Landlordonboarding02",
+            "gold": [
+              "jgb/I/subscription-change-renewal"
+            ],
+            "q": "團隊成員要怎麼邀請",
+            "type": "直接",
+            "winning_fine_id": "jgb/D/contract-esign-flow"
+          },
+          {
+            "article": "Landlordonboarding02",
+            "gold": [
+              "jgb/I/subscription-change-renewal"
+            ],
+            "q": "我要把同事加進來",
+            "type": "口語",
+            "winning_fine_id": "jgb/B/team-management-overview"
+          },
+          {
+            "article": "Landlordonboarding02",
+            "gold": [
+              "jgb/I/subscription-change-renewal"
+            ],
+            "q": "邀請同事但系統說找不到人",
+            "type": "情境",
+            "winning_fine_id": "jgb/D/contract-esign-flow"
+          },
+          {
+            "article": "Landlordonboarding02",
+            "gold": [
+              "jgb/I/subscription-change-renewal"
+            ],
+            "q": "屋主帳號",
+            "type": "俗稱",
+            "winning_fine_id": "jgb/A/account-registration"
+          },
+          {
+            "article": "Landlordonboarding02",
+            "gold": [
+              "jgb/I/subscription-change-renewal"
+            ],
+            "q": "可以把團隊轉移給別人嗎",
+            "type": "邊界",
+            "winning_fine_id": "jgb/B/team-management-overview"
+          },
+          {
+            "article": "Landlordonboarding06Finance",
+            "gold": [
+              "jgb/A/account-registration",
+              "jgb/D/contract-esign-flow",
+              "jgb/E/overdue-reminder-late-fee"
+            ],
+            "q": "發出去的帳單可以取消嗎",
+            "type": "直接",
+            "winning_fine_id": "jgb/E/bill-format-customize"
+          },
+          {
+            "article": "Landlordonboarding06Finance",
+            "gold": [
+              "jgb/A/account-registration",
+              "jgb/D/contract-esign-flow",
+              "jgb/E/overdue-reminder-late-fee"
+            ],
+            "q": "不足月的租金怎麼算",
+            "type": "口語",
+            "winning_fine_id": "jgb/E/billing-overview"
+          },
+          {
+            "article": "Landlordonboarding06Finance",
+            "gold": [
+              "jgb/A/account-registration",
+              "jgb/D/contract-esign-flow",
+              "jgb/E/overdue-reminder-late-fee"
+            ],
+            "q": "取消帳單後租客會知道嗎",
+            "type": "邊界",
+            "winning_fine_id": "jgb/E/billing-overview"
+          },
+          {
+            "article": "TOFILL-repair",
+            "gold": [
+              "jgb/F/repair-system"
+            ],
+            "q": "修繕費用可以直接開帳單嗎",
+            "type": "邊界",
+            "winning_fine_id": "jgb/E/billing-overview"
+          },
+          {
+            "article": "advanced12",
+            "gold": [
+              "jgb/E/payment-gateway-options",
+              "jgb/E/virtual-account-prepaid"
+            ],
+            "q": "租客繳的錢在哪裡",
+            "type": "口語",
+            "winning_fine_id": "jgb/E/billing-overview"
+          },
+          {
+            "article": "advanced12",
+            "gold": [
+              "jgb/E/payment-gateway-options",
+              "jgb/E/virtual-account-prepaid"
+            ],
+            "q": "忘記藍新的密碼",
+            "type": "情境",
+            "winning_fine_id": "jgb/A/forgot-password"
+          },
+          {
+            "article": "advanced12",
+            "gold": [
+              "jgb/E/payment-gateway-options",
+              "jgb/E/virtual-account-prepaid"
+            ],
+            "q": "線上收的錢怎麼拿",
+            "type": "俗稱",
+            "winning_fine_id": "jgb/B/what-is-owner-landlord"
+          },
+          {
+            "article": "onboarding1",
+            "gold": [
+              "jgb/A/account-registration",
+              "jgb/A/login-methods",
+              "jgb/A/registered-vs-unregistered-tenant"
+            ],
+            "q": "一個email可以開幾個帳號",
+            "type": "邊界",
+            "winning_fine_id": "jgb/E/virtual-account-prepaid"
+          },
+          {
+            "article": "onboarding10",
+            "gold": [
+              "jgb/D/contract-batch-renewal",
+              "jgb/D/contract-esign-flow",
+              "jgb/D/contract-modify-after-sign",
+              "jgb/D/contract-templates",
+              "jgb/D/sublease-vs-management-contract"
+            ],
+            "q": "未繳的房租可以從押金扣嗎",
+            "type": "直接",
+            "winning_fine_id": "jgb/E/credit-card-rent-payment"
+          },
+          {
+            "article": "onboarding10",
+            "gold": [
+              "jgb/D/contract-batch-renewal",
+              "jgb/D/contract-esign-flow",
+              "jgb/D/contract-modify-after-sign",
+              "jgb/D/contract-templates",
+              "jgb/D/sublease-vs-management-contract"
+            ],
+            "q": "押金要退多少怎麼算",
+            "type": "口語",
+            "winning_fine_id": "jgb/C/property-status-meaning"
+          },
+          {
+            "article": "onboarding10",
+            "gold": [
+              "jgb/D/contract-batch-renewal",
+              "jgb/D/contract-esign-flow",
+              "jgb/D/contract-modify-after-sign",
+              "jgb/D/contract-templates",
+              "jgb/D/sublease-vs-management-contract"
+            ],
+            "q": "租客同意點退之後我要做什麼",
+            "type": "情境",
+            "winning_fine_id": "jgb/E/overdue-reminder-late-fee"
+          },
+          {
+            "article": "onboarding10",
+            "gold": [
+              "jgb/D/contract-batch-renewal",
+              "jgb/D/contract-esign-flow",
+              "jgb/D/contract-modify-after-sign",
+              "jgb/D/contract-templates",
+              "jgb/D/sublease-vs-management-contract"
+            ],
+            "q": "退租結算",
+            "type": "俗稱",
+            "winning_fine_id": "jgb/E/billing-overview"
+          },
+          {
+            "article": "onboarding10",
+            "gold": [
+              "jgb/D/contract-batch-renewal",
+              "jgb/D/contract-esign-flow",
+              "jgb/D/contract-modify-after-sign",
+              "jgb/D/contract-templates",
+              "jgb/D/sublease-vs-management-contract"
+            ],
+            "q": "租客不同意點退清單怎麼辦",
+            "type": "邊界",
+            "winning_fine_id": "jgb/E/overdue-reminder-late-fee"
+          },
+          {
+            "article": "onboarding14",
+            "gold": [
+              "jgb/E/bill-format-customize"
+            ],
+            "q": "租客也可以下載收據嗎",
+            "type": "直接",
+            "winning_fine_id": "jgb/A/registered-vs-unregistered-tenant"
+          },
+          {
+            "article": "onboarding14",
+            "gold": [
+              "jgb/E/bill-format-customize"
+            ],
+            "q": "我要印收據",
+            "type": "口語",
+            "winning_fine_id": "jgb/E/credit-card-rent-payment"
+          },
+          {
+            "article": "onboarding14",
+            "gold": [
+              "jgb/E/bill-format-customize"
+            ],
+            "q": "以前收據在上面現在找不到",
+            "type": "情境",
+            "winning_fine_id": "jgb/A/verification-code-not-received"
+          },
+          {
+            "article": "onboarding14",
+            "gold": [
+              "jgb/E/bill-format-customize"
+            ],
+            "q": "列印收據",
+            "type": "俗稱",
+            "winning_fine_id": "jgb/E/bill-contents-extra-fees"
+          },
+          {
+            "article": "onboarding2",
+            "gold": [
+              "jgb/A/account-profile-settings"
+            ],
+            "q": "大頭照怎麼換",
+            "type": "俗稱",
+            "winning_fine_id": "jgb/C/rental-storefront-vr"
+          },
+          {
+            "article": "onboarding2",
+            "gold": [
+              "jgb/A/account-profile-settings"
+            ],
+            "q": "租客看得到我哪些資料",
+            "type": "邊界",
+            "winning_fine_id": "jgb/A/login-methods"
+          },
+          {
+            "article": "onboarding4",
+            "gold": [
+              "jgb/C/community-batch-create"
+            ],
+            "q": "一次要建很多間",
+            "type": "口語",
+            "winning_fine_id": "jgb/I/property-quota-limit"
+          },
+          {
+            "article": "onboarding4",
+            "gold": [
+              "jgb/C/community-batch-create"
+            ],
+            "q": "批次上傳物件",
+            "type": "俗稱",
+            "winning_fine_id": "jgb/C/property-management-overview"
+          },
+          {
+            "article": "onboarding4",
+            "gold": [
+              "jgb/C/community-batch-create"
+            ],
+            "q": "VR怎麼製作",
+            "type": "邊界",
+            "winning_fine_id": "jgb/C/property-management-overview"
+          },
+          {
+            "article": "onboarding6",
+            "gold": [
+              "jgb/I/data-migration"
+            ],
+            "q": "公司自己的合約可以用嗎",
+            "type": "口語",
+            "winning_fine_id": "jgb/D/contract-history-retention"
+          },
+          {
+            "article": "onboarding6",
+            "gold": [
+              "jgb/I/data-migration"
+            ],
+            "q": "上傳完合約沒有成立",
+            "type": "情境",
+            "winning_fine_id": "jgb/D/contract-esign-flow"
+          },
+          {
+            "article": "onboarding6",
+            "gold": [
+              "jgb/I/data-migration"
+            ],
+            "q": "既存合約流程",
+            "type": "俗稱",
+            "winning_fine_id": "jgb/D/contract-history-retention"
+          },
+          {
+            "article": "onboarding6",
+            "gold": [
+              "jgb/I/data-migration"
+            ],
+            "q": "可以不用經過租客同意嗎",
+            "type": "邊界",
+            "winning_fine_id": "jgb/A/registered-vs-unregistered-tenant"
+          },
+          {
+            "article": "onboarding7",
+            "gold": [
+              "jgb/D/contract-batch-renewal",
+              "jgb/D/contract-esign-flow",
+              "jgb/D/contract-modify-after-sign",
+              "jgb/D/contract-templates",
+              "jgb/D/sublease-vs-management-contract"
+            ],
+            "q": "線上點交要怎麼做",
+            "type": "直接",
+            "winning_fine_id": "jgb/F/repair-system"
+          },
+          {
+            "article": "onboarding7",
+            "gold": [
+              "jgb/D/contract-batch-renewal",
+              "jgb/D/contract-esign-flow",
+              "jgb/D/contract-modify-after-sign",
+              "jgb/D/contract-templates",
+              "jgb/D/sublease-vs-management-contract"
+            ],
+            "q": "點交完要等租客同意嗎",
+            "type": "口語",
+            "winning_fine_id": "jgb/A/registered-vs-unregistered-tenant"
+          },
+          {
+            "article": "onboarding7",
+            "gold": [
+              "jgb/D/contract-batch-renewal",
+              "jgb/D/contract-esign-flow",
+              "jgb/D/contract-modify-after-sign",
+              "jgb/D/contract-templates",
+              "jgb/D/sublease-vs-management-contract"
+            ],
+            "q": "點交物件怎麼用",
+            "type": "俗稱",
+            "winning_fine_id": "jgb/C/property-status-meaning"
+          },
+          {
+            "article": "onboarding7",
+            "gold": [
+              "jgb/D/contract-batch-renewal",
+              "jgb/D/contract-esign-flow",
+              "jgb/D/contract-modify-after-sign",
+              "jgb/D/contract-templates",
+              "jgb/D/sublease-vs-management-contract"
+            ],
+            "q": "租客不同意點交怎麼辦",
+            "type": "邊界",
+            "winning_fine_id": "jgb/E/overdue-reminder-late-fee"
+          },
+          {
+            "article": "onboarding8",
+            "gold": [
+              "jgb/E/billing-overview",
+              "jgb/E/einvoice-issuing"
+            ],
+            "q": "帳單要自己一張一張開嗎",
+            "type": "口語",
+            "winning_fine_id": "jgb/E/bill-format-customize"
+          },
+          {
+            "article": "onboarding8",
+            "gold": [
+              "jgb/E/billing-overview",
+              "jgb/E/einvoice-issuing"
+            ],
+            "q": "可以一次發全部帳單嗎",
+            "type": "邊界",
+            "winning_fine_id": "jgb/E/bill-format-customize"
+          },
+          {
+            "article": "onboarding9-1",
+            "gold": [
+              "jgb/D/contract-batch-renewal",
+              "jgb/D/contract-esign-flow",
+              "jgb/D/contract-modify-after-sign",
+              "jgb/D/contract-templates",
+              "jgb/D/sublease-vs-management-contract"
+            ],
+            "q": "哪些合約不能提前解約",
+            "type": "直接",
+            "winning_fine_id": "jgb/D/contract-history-retention"
+          },
+          {
+            "article": "onboarding9-1",
+            "gold": [
+              "jgb/D/contract-batch-renewal",
+              "jgb/D/contract-esign-flow",
+              "jgb/D/contract-modify-after-sign",
+              "jgb/D/contract-templates",
+              "jgb/D/sublease-vs-management-contract"
+            ],
+            "q": "解約流程要多久",
+            "type": "口語",
+            "winning_fine_id": "jgb/C/property-status-meaning"
+          },
+          {
+            "article": "onboarding9-1",
+            "gold": [
+              "jgb/D/contract-batch-renewal",
+              "jgb/D/contract-esign-flow",
+              "jgb/D/contract-modify-after-sign",
+              "jgb/D/contract-templates",
+              "jgb/D/sublease-vs-management-contract"
+            ],
+            "q": "小齒輪裡面沒有提前解約",
+            "type": "情境",
+            "winning_fine_id": "jgb/D/contract-history-retention"
+          },
+          {
+            "article": "onboarding9-1",
+            "gold": [
+              "jgb/D/contract-batch-renewal",
+              "jgb/D/contract-esign-flow",
+              "jgb/D/contract-modify-after-sign",
+              "jgb/D/contract-templates",
+              "jgb/D/sublease-vs-management-contract"
+            ],
+            "q": "終止租約",
+            "type": "俗稱",
+            "winning_fine_id": "jgb/D/contract-history-retention"
+          },
+          {
+            "article": "onboarding9-1",
+            "gold": [
+              "jgb/D/contract-batch-renewal",
+              "jgb/D/contract-esign-flow",
+              "jgb/D/contract-modify-after-sign",
+              "jgb/D/contract-templates",
+              "jgb/D/sublease-vs-management-contract"
+            ],
+            "q": "解約後押金怎麼處理",
+            "type": "邊界",
+            "winning_fine_id": "jgb/C/property-status-meaning"
+          },
+          {
+            "article": "onboarding9-2",
+            "gold": [
+              "jgb/D/contract-batch-renewal",
+              "jgb/D/contract-esign-flow",
+              "jgb/D/contract-modify-after-sign",
+              "jgb/D/contract-templates",
+              "jgb/D/sublease-vs-management-contract"
+            ],
+            "q": "還有欠繳可以解約嗎",
+            "type": "直接",
+            "winning_fine_id": "jgb/E/overdue-reminder-late-fee"
+          },
+          {
+            "article": "onboarding9-2",
+            "gold": [
+              "jgb/D/contract-batch-renewal",
+              "jgb/D/contract-esign-flow",
+              "jgb/D/contract-modify-after-sign",
+              "jgb/D/contract-templates",
+              "jgb/D/sublease-vs-management-contract"
+            ],
+            "q": "解約之後多久生效",
+            "type": "口語",
+            "winning_fine_id": "jgb/C/property-status-meaning"
+          },
+          {
+            "article": "onboarding9-2",
+            "gold": [
+              "jgb/D/contract-batch-renewal",
+              "jgb/D/contract-esign-flow",
+              "jgb/D/contract-modify-after-sign",
+              "jgb/D/contract-templates",
+              "jgb/D/sublease-vs-management-contract"
+            ],
+            "q": "系統說我不能解約",
+            "type": "情境",
+            "winning_fine_id": "jgb/C/property-status-meaning"
+          },
+          {
+            "article": "onboarding9-2",
+            "gold": [
+              "jgb/D/contract-batch-renewal",
+              "jgb/D/contract-esign-flow",
+              "jgb/D/contract-modify-after-sign",
+              "jgb/D/contract-templates",
+              "jgb/D/sublease-vs-management-contract"
+            ],
+            "q": "七天審閱期",
+            "type": "俗稱",
+            "winning_fine_id": "jgb/I/free-trial"
+          },
+          {
+            "article": "onboarding9-2",
+            "gold": [
+              "jgb/D/contract-batch-renewal",
+              "jgb/D/contract-esign-flow",
+              "jgb/D/contract-modify-after-sign",
+              "jgb/D/contract-templates",
+              "jgb/D/sublease-vs-management-contract"
+            ],
+            "q": "解約可以取消嗎",
+            "type": "邊界",
+            "winning_fine_id": "jgb/C/property-status-meaning"
+          },
+          {
+            "article": "qa05",
+            "gold": [
+              "jgb/I/data-migration"
+            ],
+            "q": "上傳的合約有沒有法律效力",
+            "type": "直接",
+            "winning_fine_id": "jgb/D/contract-esign-flow"
+          },
+          {
+            "article": "qa05",
+            "gold": [
+              "jgb/I/data-migration"
+            ],
+            "q": "可以匯入我們公司的公版合約嗎",
+            "type": "口語",
+            "winning_fine_id": "jgb/A/account-profile-settings"
+          },
+          {
+            "article": "qa06",
+            "gold": [
+              "jgb/D/contract-templates",
+              "jgb/D/sublease-vs-management-contract",
+              "jgb/I/data-migration"
+            ],
+            "q": "既存合約是什麼",
+            "type": "直接",
+            "winning_fine_id": "jgb/D/contract-esign-flow"
+          },
+          {
+            "article": "qa06",
+            "gold": [
+              "jgb/D/contract-templates",
+              "jgb/D/sublease-vs-management-contract",
+              "jgb/I/data-migration"
+            ],
+            "q": "制式合約是什麼意思",
+            "type": "俗稱",
+            "winning_fine_id": "jgb/D/contract-esign-flow"
+          },
+          {
+            "article": "qa23",
+            "gold": [
+              "jgb/B/role-permission-granularity",
+              "jgb/B/team-management-overview"
+            ],
+            "q": "我想控管同事的權限",
+            "type": "口語",
+            "winning_fine_id": "jgb/I/team-company-fit"
+          },
+          {
+            "article": "qa23",
+            "gold": [
+              "jgb/B/role-permission-granularity",
+              "jgb/B/team-management-overview"
+            ],
+            "q": "怎麼開權限給員工",
+            "type": "俗稱",
+            "winning_fine_id": "jgb/I/team-company-fit"
+          },
+          {
+            "article": "qa23",
+            "gold": [
+              "jgb/B/role-permission-granularity",
+              "jgb/B/team-management-overview"
+            ],
+            "q": "權限可以事後修改嗎",
+            "type": "邊界",
+            "winning_fine_id": "jgb/I/team-company-fit"
+          },
+          {
+            "article": "qa27",
+            "gold": [
+              "jgb/E/billing-overview",
+              "jgb/E/einvoice-issuing"
+            ],
+            "q": "藍新金流要怎麼設定",
+            "type": "直接",
+            "winning_fine_id": "jgb/B/what-is-owner-landlord"
+          },
+          {
+            "article": "qa27",
+            "gold": [
+              "jgb/E/billing-overview",
+              "jgb/E/einvoice-issuing"
+            ],
+            "q": "線上金流怎麼開通",
+            "type": "口語",
+            "winning_fine_id": "jgb/B/what-is-owner-landlord"
+          },
+          {
+            "article": "slug02",
+            "gold": [
+              "jgb/A/forgot-password"
+            ],
+            "q": "可以用手機號碼重設密碼嗎",
+            "type": "直接",
+            "winning_fine_id": "jgb/A/login-methods"
+          },
+          {
+            "article": "slug02",
+            "gold": [
+              "jgb/A/forgot-password"
+            ],
+            "q": "驗證碼一直說錯誤",
+            "type": "情境",
+            "winning_fine_id": "jgb/A/verification-code-invalid"
+          },
+          {
+            "article": "slug03",
+            "gold": [
+              "jgb/E/overdue-reminder-late-fee"
+            ],
+            "q": "逾期帳單在哪裡看",
+            "type": "直接",
+            "winning_fine_id": "jgb/E/bill-contents-extra-fees"
+          },
+          {
+            "article": "slug03",
+            "gold": [
+              "jgb/E/overdue-reminder-late-fee"
+            ],
+            "q": "逾期之後系統會做什麼",
+            "type": "口語",
+            "winning_fine_id": "jgb/F/repair-system"
+          },
+          {
+            "article": "slug102",
+            "gold": [
+              "jgb/E/credit-card-rent-payment"
+            ],
+            "q": "繳完帳單會顯示什麼",
+            "type": "直接",
+            "winning_fine_id": "jgb/E/bill-contents-extra-fees"
+          },
+          {
+            "article": "slug102",
+            "gold": [
+              "jgb/E/credit-card-rent-payment"
+            ],
+            "q": "刷了但帳單還是未繳",
+            "type": "情境",
+            "winning_fine_id": "jgb/E/overdue-reminder-late-fee"
+          },
+          {
+            "article": "slug39",
+            "gold": [
+              "jgb/C/property-status-meaning"
+            ],
+            "q": "空房跟出租中差在哪",
+            "type": "口語",
+            "winning_fine_id": "jgb/D/sublease-vs-management-contract"
+          },
+          {
+            "article": "slug39",
+            "gold": [
+              "jgb/C/property-status-meaning"
+            ],
+            "q": "想刪除物件但找不到刪除鍵",
+            "type": "情境",
+            "winning_fine_id": "jgb/A/forgot-password"
+          },
+          {
+            "article": "slug39",
+            "gold": [
+              "jgb/C/property-status-meaning"
+            ],
+            "q": "狀態要怎麼手動改",
+            "type": "邊界",
+            "winning_fine_id": "jgb/A/account-profile-settings"
+          },
+          {
+            "article": "slug76",
+            "gold": [
+              "jgb/E/billing-overview",
+              "jgb/E/einvoice-issuing"
+            ],
+            "q": "帳單怎麼開跟怎麼發",
+            "type": "口語",
+            "winning_fine_id": "jgb/A/account-registration"
+          },
+          {
+            "article": "slug76",
+            "gold": [
+              "jgb/E/billing-overview",
+              "jgb/E/einvoice-issuing"
+            ],
+            "q": "租客說沒收到這個月的帳單",
+            "type": "情境",
+            "winning_fine_id": "jgb/E/overdue-reminder-late-fee"
+          },
+          {
+            "article": "slug76",
+            "gold": [
+              "jgb/E/billing-overview",
+              "jgb/E/einvoice-issuing"
+            ],
+            "q": "發錯的帳單可以收回嗎",
+            "type": "邊界",
+            "winning_fine_id": "jgb/A/account-registration"
+          },
+          {
+            "article": "slug78",
+            "gold": [
+              "jgb/E/bill-contents-extra-fees"
+            ],
+            "q": "房客收到的帳單會看到什麼",
+            "type": "口語",
+            "winning_fine_id": "jgb/I/data-migration"
+          },
+          {
+            "article": "slug78",
+            "gold": [
+              "jgb/E/bill-contents-extra-fees"
+            ],
+            "q": "不知道帳單現在到哪個階段",
+            "type": "情境",
+            "winning_fine_id": "jgb/A/forgot-account-email"
+          },
+          {
+            "article": "slug78",
+            "gold": [
+              "jgb/E/bill-contents-extra-fees"
+            ],
+            "q": "帳單可以下載PDF嗎",
+            "type": "邊界",
+            "winning_fine_id": "jgb/E/bill-format-customize"
+          },
+          {
+            "article": "slug79",
+            "gold": [
+              "jgb/E/bill-contents-extra-fees"
+            ],
+            "q": "加的費用會通知租客嗎",
+            "type": "邊界",
+            "winning_fine_id": "jgb/A/registered-vs-unregistered-tenant"
+          },
+          {
+            "article": "slug90",
+            "gold": [
+              "jgb/C/property-management-overview",
+              "jgb/C/rental-storefront-vr"
+            ],
+            "q": "可以把我的房子分享給別人看嗎",
+            "type": "口語",
+            "winning_fine_id": "jgb/I/individual-landlord-scale-fit"
+          },
+          {
+            "article": "slug90",
+            "gold": [
+              "jgb/C/property-management-overview",
+              "jgb/C/rental-storefront-vr"
+            ],
+            "q": "有些房子我不想公開",
+            "type": "情境",
+            "winning_fine_id": "jgb/I/individual-landlord-scale-fit"
+          },
+          {
+            "article": "slug90",
+            "gold": [
+              "jgb/C/property-management-overview",
+              "jgb/C/rental-storefront-vr"
+            ],
+            "q": "房東首頁是幹嘛的",
+            "type": "俗稱",
+            "winning_fine_id": "jgb/A/login-methods"
+          },
+          {
+            "article": "slug95",
+            "gold": [
+              "jgb/A/account-profile-settings"
+            ],
+            "q": "我換手機號碼了要更新",
+            "type": "口語",
+            "winning_fine_id": "jgb/A/login-methods"
+          },
+          {
+            "article": "slug95",
+            "gold": [
+              "jgb/A/account-profile-settings"
+            ],
+            "q": "我改了但沒有存檔",
+            "type": "情境",
+            "winning_fine_id": "jgb/C/rental-storefront-vr"
+          },
+          {
+            "article": "slug99",
+            "gold": [
+              "jgb/E/bill-format-customize"
+            ],
+            "q": "合約印出來沒有看到我們公司的章",
+            "type": "情境",
+            "winning_fine_id": "jgb/D/contract-templates"
+          },
+          {
+            "article": "slug99",
+            "gold": [
+              "jgb/E/bill-format-customize"
+            ],
+            "q": "LOGO大小章怎麼用",
+            "type": "俗稱",
+            "winning_fine_id": "jgb/I/product-overview"
+          },
+          {
+            "article": "tenantintro.register",
+            "gold": [
+              "jgb/A/account-registration"
+            ],
+            "q": "我用手機操作畫面不一樣",
+            "type": "情境",
+            "winning_fine_id": "jgb/A/login-methods"
+          },
+          {
+            "article": "tenantintro.register",
+            "gold": [
+              "jgb/A/account-registration"
+            ],
+            "q": "租客怎麼開帳號",
+            "type": "俗稱",
+            "winning_fine_id": "jgb/A/registered-vs-unregistered-tenant"
+          },
+          {
+            "article": "tenantintro.register",
+            "gold": [
+              "jgb/A/account-registration"
+            ],
+            "q": "不註冊可以簽約嗎",
+            "type": "邊界",
+            "winning_fine_id": "jgb/A/registered-vs-unregistered-tenant"
+          }
+        ]
+      },
+      "exact": {
+        "affected_sentences": 6,
+        "arms": {
+          "title": {
+            "俗稱": {
+              "limited": false,
+              "mappable": 37,
+              "recall_at_1": 0.3784,
+              "recall_at_3": 0.5946,
+              "recall_at_5": 0.7838,
+              "total": 85
+            },
+            "口語": {
+              "limited": false,
+              "mappable": 37,
+              "recall_at_1": 0.3784,
+              "recall_at_3": 0.6216,
+              "recall_at_5": 0.7297,
+              "total": 85
+            },
+            "情境": {
+              "limited": false,
+              "mappable": 36,
+              "recall_at_1": 0.2222,
+              "recall_at_3": 0.4722,
+              "recall_at_5": 0.6111,
+              "total": 84
+            },
+            "直接": {
+              "limited": false,
+              "mappable": 37,
+              "recall_at_1": 0.4595,
+              "recall_at_3": 0.6486,
+              "recall_at_5": 0.6486,
+              "total": 85
+            },
+            "邊界": {
+              "limited": false,
+              "mappable": 36,
+              "recall_at_1": 0.2222,
+              "recall_at_3": 0.4722,
+              "recall_at_5": 0.6389,
+              "total": 83
+            }
+          },
+          "title+phrasing": {
+            "俗稱": {
+              "limited": false,
+              "mappable": 37,
+              "recall_at_1": 0.3243,
+              "recall_at_3": 0.6757,
+              "recall_at_5": 0.7568,
+              "total": 85
+            },
+            "口語": {
+              "limited": false,
+              "mappable": 37,
+              "recall_at_1": 0.2703,
+              "recall_at_3": 0.5405,
+              "recall_at_5": 0.7297,
+              "total": 85
+            },
+            "情境": {
+              "limited": false,
+              "mappable": 36,
+              "recall_at_1": 0.2778,
+              "recall_at_3": 0.4167,
+              "recall_at_5": 0.7222,
+              "total": 84
+            },
+            "直接": {
+              "limited": false,
+              "mappable": 37,
+              "recall_at_1": 0.4054,
+              "recall_at_3": 0.6216,
+              "recall_at_5": 0.7568,
+              "total": 85
+            },
+            "邊界": {
+              "limited": false,
+              "mappable": 36,
+              "recall_at_1": 0.3056,
+              "recall_at_3": 0.5,
+              "recall_at_5": 0.6389,
+              "total": 83
+            }
+          },
+          "title+phrasing+content": {
+            "俗稱": {
+              "limited": false,
+              "mappable": 37,
+              "recall_at_1": 0.3514,
+              "recall_at_3": 0.7297,
+              "recall_at_5": 0.8108,
+              "total": 85
+            },
+            "口語": {
+              "limited": false,
+              "mappable": 37,
+              "recall_at_1": 0.2432,
+              "recall_at_3": 0.5946,
+              "recall_at_5": 0.7027,
+              "total": 85
+            },
+            "情境": {
+              "limited": false,
+              "mappable": 36,
+              "recall_at_1": 0.3056,
+              "recall_at_3": 0.4722,
+              "recall_at_5": 0.7222,
+              "total": 84
+            },
+            "直接": {
+              "limited": false,
+              "mappable": 37,
+              "recall_at_1": 0.4324,
+              "recall_at_3": 0.6486,
+              "recall_at_5": 0.7568,
+              "total": 85
+            },
+            "邊界": {
+              "limited": false,
+              "mappable": 36,
+              "recall_at_1": 0.2778,
+              "recall_at_3": 0.4722,
+              "recall_at_5": 0.6111,
+              "total": 83
+            }
+          }
+        },
+        "excluded_keys_total": 6,
+        "misrouted": [
+          {
+            "article": "Landlordonboarding00",
+            "gold": [
+              "jgb/B/owner-report-collection-remit",
+              "jgb/B/what-is-owner-landlord",
+              "jgb/I/dashboard-overview"
+            ],
+            "q": "我要看我的房子租出去沒",
+            "type": "口語",
+            "winning_fine_id": "jgb/E/overdue-reminder-late-fee"
+          },
+          {
+            "article": "Landlordonboarding00",
+            "gold": [
+              "jgb/B/owner-report-collection-remit",
+              "jgb/B/what-is-owner-landlord",
+              "jgb/I/dashboard-overview"
+            ],
+            "q": "我看不到帳務資料",
+            "type": "情境",
+            "winning_fine_id": "jgb/E/bill-contents-extra-fees"
+          },
+          {
+            "article": "Landlordonboarding01",
+            "gold": [
+              "jgb/A/account-profile-settings",
+              "jgb/A/account-registration",
+              "jgb/A/login-methods"
+            ],
+            "q": "我是個人房東不是公司",
+            "type": "口語",
+            "winning_fine_id": "jgb/I/individual-landlord-scale-fit"
+          },
+          {
+            "article": "Landlordonboarding01",
+            "gold": [
+              "jgb/A/account-profile-settings",
+              "jgb/A/account-registration",
+              "jgb/A/login-methods"
+            ],
+            "q": "個人房東註冊流程",
+            "type": "俗稱",
+            "winning_fine_id": "jgb/I/individual-landlord-scale-fit"
+          },
+          {
+            "article": "Landlordonboarding02",
+            "gold": [
+              "jgb/I/subscription-change-renewal"
+            ],
+            "q": "團隊成員要怎麼邀請",
+            "type": "直接",
+            "winning_fine_id": "jgb/D/contract-esign-flow"
+          },
+          {
+            "article": "Landlordonboarding02",
+            "gold": [
+              "jgb/I/subscription-change-renewal"
+            ],
+            "q": "我要把同事加進來",
+            "type": "口語",
+            "winning_fine_id": "jgb/B/team-management-overview"
+          },
+          {
+            "article": "Landlordonboarding02",
+            "gold": [
+              "jgb/I/subscription-change-renewal"
+            ],
+            "q": "邀請同事但系統說找不到人",
+            "type": "情境",
+            "winning_fine_id": "jgb/D/contract-esign-flow"
+          },
+          {
+            "article": "Landlordonboarding02",
+            "gold": [
+              "jgb/I/subscription-change-renewal"
+            ],
+            "q": "屋主帳號",
+            "type": "俗稱",
+            "winning_fine_id": "jgb/A/account-registration"
+          },
+          {
+            "article": "Landlordonboarding02",
+            "gold": [
+              "jgb/I/subscription-change-renewal"
+            ],
+            "q": "可以把團隊轉移給別人嗎",
+            "type": "邊界",
+            "winning_fine_id": "jgb/B/team-management-overview"
+          },
+          {
+            "article": "Landlordonboarding06Finance",
+            "gold": [
+              "jgb/A/account-registration",
+              "jgb/D/contract-esign-flow",
+              "jgb/E/overdue-reminder-late-fee"
+            ],
+            "q": "發出去的帳單可以取消嗎",
+            "type": "直接",
+            "winning_fine_id": "jgb/E/bill-format-customize"
+          },
+          {
+            "article": "Landlordonboarding06Finance",
+            "gold": [
+              "jgb/A/account-registration",
+              "jgb/D/contract-esign-flow",
+              "jgb/E/overdue-reminder-late-fee"
+            ],
+            "q": "不足月的租金怎麼算",
+            "type": "口語",
+            "winning_fine_id": "jgb/E/billing-overview"
+          },
+          {
+            "article": "Landlordonboarding06Finance",
+            "gold": [
+              "jgb/A/account-registration",
+              "jgb/D/contract-esign-flow",
+              "jgb/E/overdue-reminder-late-fee"
+            ],
+            "q": "取消帳單後租客會知道嗎",
+            "type": "邊界",
+            "winning_fine_id": "jgb/E/billing-overview"
+          },
+          {
+            "article": "TOFILL-repair",
+            "gold": [
+              "jgb/F/repair-system"
+            ],
+            "q": "修繕費用可以直接開帳單嗎",
+            "type": "邊界",
+            "winning_fine_id": "jgb/E/billing-overview"
+          },
+          {
+            "article": "advanced12",
+            "gold": [
+              "jgb/E/payment-gateway-options",
+              "jgb/E/virtual-account-prepaid"
+            ],
+            "q": "租客繳的錢在哪裡",
+            "type": "口語",
+            "winning_fine_id": "jgb/E/billing-overview"
+          },
+          {
+            "article": "advanced12",
+            "gold": [
+              "jgb/E/payment-gateway-options",
+              "jgb/E/virtual-account-prepaid"
+            ],
+            "q": "忘記藍新的密碼",
+            "type": "情境",
+            "winning_fine_id": "jgb/A/forgot-password"
+          },
+          {
+            "article": "advanced12",
+            "gold": [
+              "jgb/E/payment-gateway-options",
+              "jgb/E/virtual-account-prepaid"
+            ],
+            "q": "線上收的錢怎麼拿",
+            "type": "俗稱",
+            "winning_fine_id": "jgb/B/what-is-owner-landlord"
+          },
+          {
+            "article": "onboarding10",
+            "gold": [
+              "jgb/D/contract-batch-renewal",
+              "jgb/D/contract-esign-flow",
+              "jgb/D/contract-modify-after-sign",
+              "jgb/D/contract-templates",
+              "jgb/D/sublease-vs-management-contract"
+            ],
+            "q": "未繳的房租可以從押金扣嗎",
+            "type": "直接",
+            "winning_fine_id": "jgb/E/credit-card-rent-payment"
+          },
+          {
+            "article": "onboarding10",
+            "gold": [
+              "jgb/D/contract-batch-renewal",
+              "jgb/D/contract-esign-flow",
+              "jgb/D/contract-modify-after-sign",
+              "jgb/D/contract-templates",
+              "jgb/D/sublease-vs-management-contract"
+            ],
+            "q": "押金要退多少怎麼算",
+            "type": "口語",
+            "winning_fine_id": "jgb/C/property-status-meaning"
+          },
+          {
+            "article": "onboarding10",
+            "gold": [
+              "jgb/D/contract-batch-renewal",
+              "jgb/D/contract-esign-flow",
+              "jgb/D/contract-modify-after-sign",
+              "jgb/D/contract-templates",
+              "jgb/D/sublease-vs-management-contract"
+            ],
+            "q": "租客同意點退之後我要做什麼",
+            "type": "情境",
+            "winning_fine_id": "jgb/E/overdue-reminder-late-fee"
+          },
+          {
+            "article": "onboarding10",
+            "gold": [
+              "jgb/D/contract-batch-renewal",
+              "jgb/D/contract-esign-flow",
+              "jgb/D/contract-modify-after-sign",
+              "jgb/D/contract-templates",
+              "jgb/D/sublease-vs-management-contract"
+            ],
+            "q": "退租結算",
+            "type": "俗稱",
+            "winning_fine_id": "jgb/E/billing-overview"
+          },
+          {
+            "article": "onboarding10",
+            "gold": [
+              "jgb/D/contract-batch-renewal",
+              "jgb/D/contract-esign-flow",
+              "jgb/D/contract-modify-after-sign",
+              "jgb/D/contract-templates",
+              "jgb/D/sublease-vs-management-contract"
+            ],
+            "q": "租客不同意點退清單怎麼辦",
+            "type": "邊界",
+            "winning_fine_id": "jgb/E/overdue-reminder-late-fee"
+          },
+          {
+            "article": "onboarding14",
+            "gold": [
+              "jgb/E/bill-format-customize"
+            ],
+            "q": "租客也可以下載收據嗎",
+            "type": "直接",
+            "winning_fine_id": "jgb/A/registered-vs-unregistered-tenant"
+          },
+          {
+            "article": "onboarding14",
+            "gold": [
+              "jgb/E/bill-format-customize"
+            ],
+            "q": "我要印收據",
+            "type": "口語",
+            "winning_fine_id": "jgb/E/credit-card-rent-payment"
+          },
+          {
+            "article": "onboarding14",
+            "gold": [
+              "jgb/E/bill-format-customize"
+            ],
+            "q": "以前收據在上面現在找不到",
+            "type": "情境",
+            "winning_fine_id": "jgb/A/verification-code-not-received"
+          },
+          {
+            "article": "onboarding14",
+            "gold": [
+              "jgb/E/bill-format-customize"
+            ],
+            "q": "列印收據",
+            "type": "俗稱",
+            "winning_fine_id": "jgb/E/bill-contents-extra-fees"
+          },
+          {
+            "article": "onboarding2",
+            "gold": [
+              "jgb/A/account-profile-settings"
+            ],
+            "q": "大頭照怎麼換",
+            "type": "俗稱",
+            "winning_fine_id": "jgb/C/rental-storefront-vr"
+          },
+          {
+            "article": "onboarding2",
+            "gold": [
+              "jgb/A/account-profile-settings"
+            ],
+            "q": "租客看得到我哪些資料",
+            "type": "邊界",
+            "winning_fine_id": "jgb/A/login-methods"
+          },
+          {
+            "article": "onboarding4",
+            "gold": [
+              "jgb/C/community-batch-create"
+            ],
+            "q": "一次要建很多間",
+            "type": "口語",
+            "winning_fine_id": "jgb/I/property-quota-limit"
+          },
+          {
+            "article": "onboarding4",
+            "gold": [
+              "jgb/C/community-batch-create"
+            ],
+            "q": "批次上傳物件",
+            "type": "俗稱",
+            "winning_fine_id": "jgb/C/property-management-overview"
+          },
+          {
+            "article": "onboarding4",
+            "gold": [
+              "jgb/C/community-batch-create"
+            ],
+            "q": "VR怎麼製作",
+            "type": "邊界",
+            "winning_fine_id": "jgb/C/property-management-overview"
+          },
+          {
+            "article": "onboarding6",
+            "gold": [
+              "jgb/I/data-migration"
+            ],
+            "q": "公司自己的合約可以用嗎",
+            "type": "口語",
+            "winning_fine_id": "jgb/D/contract-history-retention"
+          },
+          {
+            "article": "onboarding6",
+            "gold": [
+              "jgb/I/data-migration"
+            ],
+            "q": "上傳完合約沒有成立",
+            "type": "情境",
+            "winning_fine_id": "jgb/D/contract-esign-flow"
+          },
+          {
+            "article": "onboarding6",
+            "gold": [
+              "jgb/I/data-migration"
+            ],
+            "q": "既存合約流程",
+            "type": "俗稱",
+            "winning_fine_id": "jgb/D/contract-history-retention"
+          },
+          {
+            "article": "onboarding6",
+            "gold": [
+              "jgb/I/data-migration"
+            ],
+            "q": "可以不用經過租客同意嗎",
+            "type": "邊界",
+            "winning_fine_id": "jgb/A/registered-vs-unregistered-tenant"
+          },
+          {
+            "article": "onboarding7",
+            "gold": [
+              "jgb/D/contract-batch-renewal",
+              "jgb/D/contract-esign-flow",
+              "jgb/D/contract-modify-after-sign",
+              "jgb/D/contract-templates",
+              "jgb/D/sublease-vs-management-contract"
+            ],
+            "q": "線上點交要怎麼做",
+            "type": "直接",
+            "winning_fine_id": "jgb/F/repair-system"
+          },
+          {
+            "article": "onboarding7",
+            "gold": [
+              "jgb/D/contract-batch-renewal",
+              "jgb/D/contract-esign-flow",
+              "jgb/D/contract-modify-after-sign",
+              "jgb/D/contract-templates",
+              "jgb/D/sublease-vs-management-contract"
+            ],
+            "q": "點交完要等租客同意嗎",
+            "type": "口語",
+            "winning_fine_id": "jgb/A/registered-vs-unregistered-tenant"
+          },
+          {
+            "article": "onboarding7",
+            "gold": [
+              "jgb/D/contract-batch-renewal",
+              "jgb/D/contract-esign-flow",
+              "jgb/D/contract-modify-after-sign",
+              "jgb/D/contract-templates",
+              "jgb/D/sublease-vs-management-contract"
+            ],
+            "q": "點交物件怎麼用",
+            "type": "俗稱",
+            "winning_fine_id": "jgb/C/property-status-meaning"
+          },
+          {
+            "article": "onboarding7",
+            "gold": [
+              "jgb/D/contract-batch-renewal",
+              "jgb/D/contract-esign-flow",
+              "jgb/D/contract-modify-after-sign",
+              "jgb/D/contract-templates",
+              "jgb/D/sublease-vs-management-contract"
+            ],
+            "q": "租客不同意點交怎麼辦",
+            "type": "邊界",
+            "winning_fine_id": "jgb/E/overdue-reminder-late-fee"
+          },
+          {
+            "article": "onboarding8",
+            "gold": [
+              "jgb/E/billing-overview",
+              "jgb/E/einvoice-issuing"
+            ],
+            "q": "帳單要自己一張一張開嗎",
+            "type": "口語",
+            "winning_fine_id": "jgb/E/bill-format-customize"
+          },
+          {
+            "article": "onboarding8",
+            "gold": [
+              "jgb/E/billing-overview",
+              "jgb/E/einvoice-issuing"
+            ],
+            "q": "可以一次發全部帳單嗎",
+            "type": "邊界",
+            "winning_fine_id": "jgb/E/bill-format-customize"
+          },
+          {
+            "article": "onboarding9-1",
+            "gold": [
+              "jgb/D/contract-batch-renewal",
+              "jgb/D/contract-esign-flow",
+              "jgb/D/contract-modify-after-sign",
+              "jgb/D/contract-templates",
+              "jgb/D/sublease-vs-management-contract"
+            ],
+            "q": "哪些合約不能提前解約",
+            "type": "直接",
+            "winning_fine_id": "jgb/D/contract-history-retention"
+          },
+          {
+            "article": "onboarding9-1",
+            "gold": [
+              "jgb/D/contract-batch-renewal",
+              "jgb/D/contract-esign-flow",
+              "jgb/D/contract-modify-after-sign",
+              "jgb/D/contract-templates",
+              "jgb/D/sublease-vs-management-contract"
+            ],
+            "q": "解約流程要多久",
+            "type": "口語",
+            "winning_fine_id": "jgb/C/property-status-meaning"
+          },
+          {
+            "article": "onboarding9-1",
+            "gold": [
+              "jgb/D/contract-batch-renewal",
+              "jgb/D/contract-esign-flow",
+              "jgb/D/contract-modify-after-sign",
+              "jgb/D/contract-templates",
+              "jgb/D/sublease-vs-management-contract"
+            ],
+            "q": "小齒輪裡面沒有提前解約",
+            "type": "情境",
+            "winning_fine_id": "jgb/D/contract-history-retention"
+          },
+          {
+            "article": "onboarding9-1",
+            "gold": [
+              "jgb/D/contract-batch-renewal",
+              "jgb/D/contract-esign-flow",
+              "jgb/D/contract-modify-after-sign",
+              "jgb/D/contract-templates",
+              "jgb/D/sublease-vs-management-contract"
+            ],
+            "q": "終止租約",
+            "type": "俗稱",
+            "winning_fine_id": "jgb/D/contract-history-retention"
+          },
+          {
+            "article": "onboarding9-1",
+            "gold": [
+              "jgb/D/contract-batch-renewal",
+              "jgb/D/contract-esign-flow",
+              "jgb/D/contract-modify-after-sign",
+              "jgb/D/contract-templates",
+              "jgb/D/sublease-vs-management-contract"
+            ],
+            "q": "解約後押金怎麼處理",
+            "type": "邊界",
+            "winning_fine_id": "jgb/C/property-status-meaning"
+          },
+          {
+            "article": "onboarding9-2",
+            "gold": [
+              "jgb/D/contract-batch-renewal",
+              "jgb/D/contract-esign-flow",
+              "jgb/D/contract-modify-after-sign",
+              "jgb/D/contract-templates",
+              "jgb/D/sublease-vs-management-contract"
+            ],
+            "q": "還有欠繳可以解約嗎",
+            "type": "直接",
+            "winning_fine_id": "jgb/E/overdue-reminder-late-fee"
+          },
+          {
+            "article": "onboarding9-2",
+            "gold": [
+              "jgb/D/contract-batch-renewal",
+              "jgb/D/contract-esign-flow",
+              "jgb/D/contract-modify-after-sign",
+              "jgb/D/contract-templates",
+              "jgb/D/sublease-vs-management-contract"
+            ],
+            "q": "解約之後多久生效",
+            "type": "口語",
+            "winning_fine_id": "jgb/C/property-status-meaning"
+          },
+          {
+            "article": "onboarding9-2",
+            "gold": [
+              "jgb/D/contract-batch-renewal",
+              "jgb/D/contract-esign-flow",
+              "jgb/D/contract-modify-after-sign",
+              "jgb/D/contract-templates",
+              "jgb/D/sublease-vs-management-contract"
+            ],
+            "q": "系統說我不能解約",
+            "type": "情境",
+            "winning_fine_id": "jgb/C/property-status-meaning"
+          },
+          {
+            "article": "onboarding9-2",
+            "gold": [
+              "jgb/D/contract-batch-renewal",
+              "jgb/D/contract-esign-flow",
+              "jgb/D/contract-modify-after-sign",
+              "jgb/D/contract-templates",
+              "jgb/D/sublease-vs-management-contract"
+            ],
+            "q": "七天審閱期",
+            "type": "俗稱",
+            "winning_fine_id": "jgb/I/free-trial"
+          },
+          {
+            "article": "onboarding9-2",
+            "gold": [
+              "jgb/D/contract-batch-renewal",
+              "jgb/D/contract-esign-flow",
+              "jgb/D/contract-modify-after-sign",
+              "jgb/D/contract-templates",
+              "jgb/D/sublease-vs-management-contract"
+            ],
+            "q": "解約可以取消嗎",
+            "type": "邊界",
+            "winning_fine_id": "jgb/C/property-status-meaning"
+          },
+          {
+            "article": "qa05",
+            "gold": [
+              "jgb/I/data-migration"
+            ],
+            "q": "上傳的合約有沒有法律效力",
+            "type": "直接",
+            "winning_fine_id": "jgb/D/contract-esign-flow"
+          },
+          {
+            "article": "qa05",
+            "gold": [
+              "jgb/I/data-migration"
+            ],
+            "q": "可以匯入我們公司的公版合約嗎",
+            "type": "口語",
+            "winning_fine_id": "jgb/A/account-profile-settings"
+          },
+          {
+            "article": "qa06",
+            "gold": [
+              "jgb/D/contract-templates",
+              "jgb/D/sublease-vs-management-contract",
+              "jgb/I/data-migration"
+            ],
+            "q": "既存合約是什麼",
+            "type": "直接",
+            "winning_fine_id": "jgb/D/contract-esign-flow"
+          },
+          {
+            "article": "qa06",
+            "gold": [
+              "jgb/D/contract-templates",
+              "jgb/D/sublease-vs-management-contract",
+              "jgb/I/data-migration"
+            ],
+            "q": "制式合約是什麼意思",
+            "type": "俗稱",
+            "winning_fine_id": "jgb/D/contract-esign-flow"
+          },
+          {
+            "article": "qa23",
+            "gold": [
+              "jgb/B/role-permission-granularity",
+              "jgb/B/team-management-overview"
+            ],
+            "q": "我想控管同事的權限",
+            "type": "口語",
+            "winning_fine_id": "jgb/I/team-company-fit"
+          },
+          {
+            "article": "qa23",
+            "gold": [
+              "jgb/B/role-permission-granularity",
+              "jgb/B/team-management-overview"
+            ],
+            "q": "怎麼開權限給員工",
+            "type": "俗稱",
+            "winning_fine_id": "jgb/I/team-company-fit"
+          },
+          {
+            "article": "qa23",
+            "gold": [
+              "jgb/B/role-permission-granularity",
+              "jgb/B/team-management-overview"
+            ],
+            "q": "權限可以事後修改嗎",
+            "type": "邊界",
+            "winning_fine_id": "jgb/I/team-company-fit"
+          },
+          {
+            "article": "qa27",
+            "gold": [
+              "jgb/E/billing-overview",
+              "jgb/E/einvoice-issuing"
+            ],
+            "q": "藍新金流要怎麼設定",
+            "type": "直接",
+            "winning_fine_id": "jgb/B/what-is-owner-landlord"
+          },
+          {
+            "article": "qa27",
+            "gold": [
+              "jgb/E/billing-overview",
+              "jgb/E/einvoice-issuing"
+            ],
+            "q": "線上金流怎麼開通",
+            "type": "口語",
+            "winning_fine_id": "jgb/B/what-is-owner-landlord"
+          },
+          {
+            "article": "slug01",
+            "gold": [
+              "jgb/A/forgot-account-email"
+            ],
+            "q": "可以用email找回帳號嗎",
+            "type": "邊界",
+            "winning_fine_id": "jgb/A/account-registration"
+          },
+          {
+            "article": "slug02",
+            "gold": [
+              "jgb/A/forgot-password"
+            ],
+            "q": "可以用手機號碼重設密碼嗎",
+            "type": "直接",
+            "winning_fine_id": "jgb/A/login-methods"
+          },
+          {
+            "article": "slug02",
+            "gold": [
+              "jgb/A/forgot-password"
+            ],
+            "q": "驗證碼一直說錯誤",
+            "type": "情境",
+            "winning_fine_id": "jgb/A/verification-code-invalid"
+          },
+          {
+            "article": "slug03",
+            "gold": [
+              "jgb/E/overdue-reminder-late-fee"
+            ],
+            "q": "逾期帳單在哪裡看",
+            "type": "直接",
+            "winning_fine_id": "jgb/E/bill-contents-extra-fees"
+          },
+          {
+            "article": "slug03",
+            "gold": [
+              "jgb/E/overdue-reminder-late-fee"
+            ],
+            "q": "逾期之後系統會做什麼",
+            "type": "口語",
+            "winning_fine_id": "jgb/F/repair-system"
+          },
+          {
+            "article": "slug102",
+            "gold": [
+              "jgb/E/credit-card-rent-payment"
+            ],
+            "q": "繳完帳單會顯示什麼",
+            "type": "直接",
+            "winning_fine_id": "jgb/E/bill-contents-extra-fees"
+          },
+          {
+            "article": "slug102",
+            "gold": [
+              "jgb/E/credit-card-rent-payment"
+            ],
+            "q": "刷了但帳單還是未繳",
+            "type": "情境",
+            "winning_fine_id": "jgb/E/overdue-reminder-late-fee"
+          },
+          {
+            "article": "slug39",
+            "gold": [
+              "jgb/C/property-status-meaning"
+            ],
+            "q": "空房跟出租中差在哪",
+            "type": "口語",
+            "winning_fine_id": "jgb/D/sublease-vs-management-contract"
+          },
+          {
+            "article": "slug39",
+            "gold": [
+              "jgb/C/property-status-meaning"
+            ],
+            "q": "想刪除物件但找不到刪除鍵",
+            "type": "情境",
+            "winning_fine_id": "jgb/A/forgot-password"
+          },
+          {
+            "article": "slug39",
+            "gold": [
+              "jgb/C/property-status-meaning"
+            ],
+            "q": "狀態要怎麼手動改",
+            "type": "邊界",
+            "winning_fine_id": "jgb/A/account-profile-settings"
+          },
+          {
+            "article": "slug76",
+            "gold": [
+              "jgb/E/billing-overview",
+              "jgb/E/einvoice-issuing"
+            ],
+            "q": "帳單怎麼開跟怎麼發",
+            "type": "口語",
+            "winning_fine_id": "jgb/A/account-registration"
+          },
+          {
+            "article": "slug76",
+            "gold": [
+              "jgb/E/billing-overview",
+              "jgb/E/einvoice-issuing"
+            ],
+            "q": "租客說沒收到這個月的帳單",
+            "type": "情境",
+            "winning_fine_id": "jgb/E/overdue-reminder-late-fee"
+          },
+          {
+            "article": "slug76",
+            "gold": [
+              "jgb/E/billing-overview",
+              "jgb/E/einvoice-issuing"
+            ],
+            "q": "發錯的帳單可以收回嗎",
+            "type": "邊界",
+            "winning_fine_id": "jgb/A/account-registration"
+          },
+          {
+            "article": "slug78",
+            "gold": [
+              "jgb/E/bill-contents-extra-fees"
+            ],
+            "q": "房客收到的帳單會看到什麼",
+            "type": "口語",
+            "winning_fine_id": "jgb/I/data-migration"
+          },
+          {
+            "article": "slug78",
+            "gold": [
+              "jgb/E/bill-contents-extra-fees"
+            ],
+            "q": "帳單可以下載PDF嗎",
+            "type": "邊界",
+            "winning_fine_id": "jgb/E/bill-format-customize"
+          },
+          {
+            "article": "slug79",
+            "gold": [
+              "jgb/E/bill-contents-extra-fees"
+            ],
+            "q": "加的費用會通知租客嗎",
+            "type": "邊界",
+            "winning_fine_id": "jgb/A/registered-vs-unregistered-tenant"
+          },
+          {
+            "article": "slug90",
+            "gold": [
+              "jgb/C/property-management-overview",
+              "jgb/C/rental-storefront-vr"
+            ],
+            "q": "可以把我的房子分享給別人看嗎",
+            "type": "口語",
+            "winning_fine_id": "jgb/I/individual-landlord-scale-fit"
+          },
+          {
+            "article": "slug90",
+            "gold": [
+              "jgb/C/property-management-overview",
+              "jgb/C/rental-storefront-vr"
+            ],
+            "q": "有些房子我不想公開",
+            "type": "情境",
+            "winning_fine_id": "jgb/I/individual-landlord-scale-fit"
+          },
+          {
+            "article": "slug90",
+            "gold": [
+              "jgb/C/property-management-overview",
+              "jgb/C/rental-storefront-vr"
+            ],
+            "q": "房東首頁是幹嘛的",
+            "type": "俗稱",
+            "winning_fine_id": "jgb/B/what-is-owner-landlord"
+          },
+          {
+            "article": "slug92",
+            "gold": [
+              "jgb/B/team-management-overview"
+            ],
+            "q": "經理人有哪些權限",
+            "type": "直接",
+            "winning_fine_id": "jgb/B/what-is-owner-landlord"
+          },
+          {
+            "article": "slug92",
+            "gold": [
+              "jgb/B/team-management-overview"
+            ],
+            "q": "經理人可以取消嗎",
+            "type": "邊界",
+            "winning_fine_id": "jgb/B/what-is-owner-landlord"
+          },
+          {
+            "article": "slug95",
+            "gold": [
+              "jgb/A/account-profile-settings"
+            ],
+            "q": "帳號資訊要怎麼改",
+            "type": "直接",
+            "winning_fine_id": "jgb/A/account-registration"
+          },
+          {
+            "article": "slug95",
+            "gold": [
+              "jgb/A/account-profile-settings"
+            ],
+            "q": "我換手機號碼了要更新",
+            "type": "口語",
+            "winning_fine_id": "jgb/A/login-methods"
+          },
+          {
+            "article": "slug95",
+            "gold": [
+              "jgb/A/account-profile-settings"
+            ],
+            "q": "我改了但沒有存檔",
+            "type": "情境",
+            "winning_fine_id": "jgb/C/rental-storefront-vr"
+          },
+          {
+            "article": "slug95",
+            "gold": [
+              "jgb/A/account-profile-settings"
+            ],
+            "q": "可以改登入帳號本身嗎",
+            "type": "邊界",
+            "winning_fine_id": "jgb/A/account-registration"
+          },
+          {
+            "article": "slug99",
+            "gold": [
+              "jgb/E/bill-format-customize"
+            ],
+            "q": "合約印出來沒有看到我們公司的章",
+            "type": "情境",
+            "winning_fine_id": "jgb/D/contract-templates"
+          },
+          {
+            "article": "slug99",
+            "gold": [
+              "jgb/E/bill-format-customize"
+            ],
+            "q": "LOGO大小章怎麼用",
+            "type": "俗稱",
+            "winning_fine_id": "jgb/I/product-overview"
+          },
+          {
+            "article": "tenantintro.register",
+            "gold": [
+              "jgb/A/account-registration"
+            ],
+            "q": "我用手機操作畫面不一樣",
+            "type": "情境",
+            "winning_fine_id": "jgb/A/login-methods"
+          },
+          {
+            "article": "tenantintro.register",
+            "gold": [
+              "jgb/A/account-registration"
+            ],
+            "q": "租客怎麼開帳號",
+            "type": "俗稱",
+            "winning_fine_id": "jgb/A/registered-vs-unregistered-tenant"
+          },
+          {
+            "article": "tenantintro.register",
+            "gold": [
+              "jgb/A/account-registration"
+            ],
+            "q": "不註冊可以簽約嗎",
+            "type": "邊界",
+            "winning_fine_id": "jgb/A/registered-vs-unregistered-tenant"
+          }
+        ]
+      }
+    },
+    "second_material": {
+      "article": {
+        "arms": {
+          "title": {
+            "limited": false,
+            "mappable": 49,
+            "recall_at_1": 0.0,
+            "recall_at_3": 0.0,
+            "recall_at_5": 0.0,
+            "total": 49
+          },
+          "title+phrasing": {
+            "limited": false,
+            "mappable": 49,
+            "recall_at_1": 0.0,
+            "recall_at_3": 0.0,
+            "recall_at_5": 0.0,
+            "total": 49
+          },
+          "title+phrasing+content": {
+            "limited": false,
+            "mappable": 49,
+            "recall_at_1": 0.0,
+            "recall_at_3": 0.0,
+            "recall_at_5": 0.0,
+            "total": 49
+          }
+        },
+        "excluded_deliberate": 6
+      },
+      "exact": {
+        "arms": {
+          "title": {
+            "limited": false,
+            "mappable": 49,
+            "recall_at_1": 0.0,
+            "recall_at_3": 0.0,
+            "recall_at_5": 0.0,
+            "total": 49
+          },
+          "title+phrasing": {
+            "limited": false,
+            "mappable": 49,
+            "recall_at_1": 0.0,
+            "recall_at_3": 0.0,
+            "recall_at_5": 0.0,
+            "total": 49
+          },
+          "title+phrasing+content": {
+            "limited": false,
+            "mappable": 49,
+            "recall_at_1": 0.0,
+            "recall_at_3": 0.0,
+            "recall_at_5": 0.0,
+            "total": 49
+          }
+        },
+        "excluded_deliberate": 6
+      }
+    }
+  },
+  "unresolved": [
+    "TOFILL-beike",
+    "TOFILL-repair",
+    "property（原"
+  ],
+  "unresolved_after_alias": []
+}

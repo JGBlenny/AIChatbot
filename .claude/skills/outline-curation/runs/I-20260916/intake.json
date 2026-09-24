@@ -1,0 +1,221 @@
+{
+  "cost": {
+    "agents": 0,
+    "completion_tokens": 0,
+    "prompt_tokens": 0,
+    "usd": 0.0,
+    "wall_s": 0.0
+  },
+  "deterministic": true,
+  "inputs_sha": {
+    "canon": "f51c0bd0fbf0fdbae0f4f73a3856118b93504f9112068ffc566f81f9526c5ca3",
+    "drafts": "7efd537803a1025b3c0de1e4263b812b986bae93f87bd12b0cc379cde4af39ce",
+    "kb": "3950e79023ac869eb33e6322cfefb053371810847642e08e28c4de77b3fac468"
+  },
+  "payload": {
+    "drafts": [
+      {
+        "id": "help:Landlordonboarding",
+        "summary": "房東教學：總論篇"
+      }
+    ],
+    "frozen_at": "2026-09-16T00:00:00Z",
+    "gapmap_cells": 0,
+    "kb_rows": [
+      {
+        "id": "jgb/I/competitor-comparison",
+        "question_summary": "跟 Bananas、屋我也差在哪"
+      },
+      {
+        "id": "jgb/I/competitor-neutrality",
+        "question_summary": "會評論競爭對手嗎"
+      },
+      {
+        "id": "jgb/I/dashboard-overview",
+        "question_summary": "首頁儀表板顯示哪些數據"
+      },
+      {
+        "id": "jgb/I/data-migration",
+        "question_summary": "舊系統資料能否匯入（可匯入範圍與不支援項目）"
+      },
+      {
+        "id": "jgb/I/free-trial",
+        "question_summary": "可以免費試用嗎"
+      },
+      {
+        "id": "jgb/I/individual-landlord-scale-fit",
+        "question_summary": "個人房東（約 10～30 戶）適配與建議做法"
+      },
+      {
+        "id": "jgb/I/pricing-plans",
+        "question_summary": "怎麼收費"
+      },
+      {
+        "id": "jgb/I/product-overview",
+        "question_summary": "系統總覽、能解決什麼問題與適不適合我"
+      },
+      {
+        "id": "jgb/I/property-quota-limit",
+        "question_summary": "方案物件額度上限與用滿怎麼辦"
+      },
+      {
+        "id": "jgb/I/subscription-change-renewal",
+        "question_summary": "升級、續約與取消訂閱"
+      },
+      {
+        "id": "jgb/I/team-company-fit",
+        "question_summary": "公司或包租代管團隊適合嗎"
+      },
+      {
+        "id": "jgb/I/why-choose-jgb",
+        "question_summary": "為什麼選金箍棒"
+      },
+      {
+        "id": "2909",
+        "question_summary": "租金行情參考"
+      },
+      {
+        "id": "2910",
+        "question_summary": "管理費"
+      },
+      {
+        "id": "2911",
+        "question_summary": "公共費用分攤"
+      },
+      {
+        "id": "2913",
+        "question_summary": "租金多繳溢繳退還處理"
+      },
+      {
+        "id": "2918",
+        "question_summary": "租金支付期限"
+      },
+      {
+        "id": "2920",
+        "question_summary": "租金折扣條件"
+      },
+      {
+        "id": "2921",
+        "question_summary": "租金支付證明"
+      },
+      {
+        "id": "2924",
+        "question_summary": "租金支付法律依據"
+      },
+      {
+        "id": "2925",
+        "question_summary": "租金市場變化"
+      },
+      {
+        "id": "2977",
+        "question_summary": "飼養寵物費用"
+      },
+      {
+        "id": "3006",
+        "question_summary": "租屋保險費用"
+      },
+      {
+        "id": "3035",
+        "question_summary": "戶籍遷移"
+      },
+      {
+        "id": "3047",
+        "question_summary": "居住證明費用"
+      },
+      {
+        "id": "3105",
+        "question_summary": "管理費用途"
+      },
+      {
+        "id": "3158",
+        "question_summary": "服務費用計算"
+      },
+      {
+        "id": "3207",
+        "question_summary": "租金少繳不足補繳"
+      },
+      {
+        "id": "3208",
+        "question_summary": "租金遲繳罰款"
+      },
+      {
+        "id": "3209",
+        "question_summary": "租金包含服務"
+      },
+      {
+        "id": "3210",
+        "question_summary": "租金爭議解決"
+      },
+      {
+        "id": "3356",
+        "question_summary": "訂閱 取消 方案"
+      },
+      {
+        "id": "3453",
+        "question_summary": "訂閱方案 種類差異"
+      },
+      {
+        "id": "3454",
+        "question_summary": "訂閱方案 升級更換"
+      },
+      {
+        "id": "3455",
+        "question_summary": "取消訂閱 退訂流程"
+      },
+      {
+        "id": "3457",
+        "question_summary": "訂閱付款紀錄 自動續訂"
+      },
+      {
+        "id": "3476",
+        "question_summary": "租客批次匯入 Excel"
+      },
+      {
+        "id": "3478",
+        "question_summary": "邀請租客 訂閱通知"
+      },
+      {
+        "id": "3509",
+        "question_summary": "訂閱扣款失敗導致功能異常"
+      },
+      {
+        "id": "3798",
+        "question_summary": "售前系統脈絡 append（競品協定/CTA/功能索引）"
+      },
+      {
+        "id": "3850",
+        "question_summary": "點退找補費用 操作位置"
+      },
+      {
+        "id": "4261",
+        "question_summary": "停車費 車位費用 月租車位"
+      },
+      {
+        "id": "4271",
+        "question_summary": "為什麼要收管理費 費用怎麼算"
+      },
+      {
+        "id": "4275",
+        "question_summary": "機車汽車停車位費用"
+      },
+      {
+        "id": "5376",
+        "question_summary": "費用怎麼算 一年多少錢 收費方式 月費 年費 要花多少"
+      }
+    ],
+    "mode": "expand",
+    "object_under_test": {
+      "approved_by": "",
+      "frozen_at": "2026-09-16T00:00:00Z",
+      "materials": [
+        ".claude/skills/outline-curation/runs/I-20260916/kb-rows.json",
+        ".claude/skills/outline-curation/runs/I-20260916/help-pages.json",
+        "../app/canon/jgb"
+      ]
+    },
+    "shelf": "I"
+  },
+  "raw_outputs_path": null,
+  "skill_version": "0.1.0",
+  "step": "intake"
+}

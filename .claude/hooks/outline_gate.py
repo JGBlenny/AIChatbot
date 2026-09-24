@@ -4,8 +4,14 @@
 五道判定（design 元件 3；tasks 1.2）：
   1. PreToolUse（Edit|Write 命中受眾正本白名單）：本 session 狀態檔須有 diff_report 且其
      inputs_sha.canon == 目標檔「動作前」的現 sha256（不存在的新檔以空字串比對），否則 exit 2 擋寫。
-  2. PostToolUse（同白名單）：寫入後的檔案做結構檢查（front matter 七鍵、粗目/細目標題與 id、
-     屬性區塊合法鍵）；任一錯 exit 2 印錯誤（⛔ 不還原檔案）。
+  2. PostToolUse（同白名單）：寫入後的檔案做結構檢查；任一錯 exit 2 印錯誤（⛔ 不還原檔案）。
+     依檔名分流（9.6 S1／DSP-058）：`canon/jgb/[A-I].md` 走**架規則**（front matter 恰六鍵、
+     一架至少一個粗目、粗目碼首字母＝檔名字母、檔內粗目碼不重複（跨架唯一由 parser 全域把關）、
+     細目 id 首段＝`jgb`、細目必填 `target_user`＋`business_types`）；
+     `canon/jgb/CATALOG.md` 是衍生物、跳過結構檢查；其餘 `canon/*.md` 走**舊七鍵受眾正本規則**（原封）。
+  2b. PostToolUse：講法唯一性——架檔（`canon/jgb/[A-I].md`）以**整個 `jgb/` 目錄**為作用域
+     （跨架同一句講法掛兩個細目 ⇒ exit 2；與 parser `_check_phrasing_unique` 同值），
+     其餘正本仍只掃自己那一檔。
   3. PostToolUse：細目 phrasings 各句與凍結題集合（samples-manifest.json 各 set）NFKC 正規化後
      交集非空 ⇒ exit 2（印命中的細目 id，⛔ 不印題句原文）。
   4. PostToolUse：命中 `.claude/skills/outline-curation/runs/` 或正本白名單 ⇒ 識別碼掃描
@@ -29,8 +35,11 @@ from typing import Optional
 # 路徑與白名單
 # ---------------------------------------------------------------------------
 
-# design 元件 3／tasks 1.2：受眾正本白名單，⛔ 不含 README.md。
-CANON_RE = re.compile(r'^rag-orchestrator/canon/[a-z_]+(-[a-z_]+)*\.md$')
+# design 元件 3／tasks 1.2：正本白名單，⛔ 不含 README.md（任何層）。
+# 9.6 S1（DSP-058）改寬成 `canon/` 底下任何 `.md`——不變量：**hook 覆蓋 ⊇ loader 讀取**。
+# ⛔ 不再用 `[a-z_]+` 收窄：那條會漏掉 `canon/jgb/A.md`（大寫檔名＋子目錄），
+# 於是新正本可以完全不經識別碼掃描就被寫進去。
+CANON_RE = re.compile(r'^rag-orchestrator/canon/.+\.md$')
 RUNS_RE = re.compile(r'^\.claude/skills/outline-curation/runs/')
 
 STATE_REL = os.path.join(".claude", "hooks", "state", "outline-gate", "session.json")
@@ -40,9 +49,26 @@ FRONT_MATTER_KEYS = (
     "budget_tokens", "target_user", "business_types",
 )
 
-# 細目 id：^<audience>/<粗目碼 A-Z>/<slug>$
+# --- 圖書館形態（DSP-058；與 canon_parser.py 同值，tests 守）-------------------
+CANON_NAME = "jgb"
+SHELF_FRONT_MATTER_KEYS = ("coarse", "title", "scope", "version", "reviewers", "language")
+#: 架檔：`rag-orchestrator/canon/jgb/A.md … I.md`（走架規則）
+SHELF_PATH_RE = re.compile(r'^rag-orchestrator/canon/' + CANON_NAME + r'/([A-I])\.md$')
+#: 衍生目錄：結構檢查跳過（它不是正本形狀），識別碼／講法掃描照跑。
+CATALOG_PATH_RE = re.compile(r'^rag-orchestrator/canon/' + CANON_NAME + r'/CATALOG\.md$')
+
+# 細目 id：^<正本名或受眾>/<粗目碼 A-Z>/<slug>$
 FINE_ID_RE = re.compile(r'^[a-z_]+/[A-Z]/[a-z0-9-]+$')
-COARSE_HEADING_RE = re.compile(r'^##\s+.+\{#([A-Z])\}\s*$')
+#: 舊七鍵受眾正本路徑（`shelf_coarse is None`）：容納裸字母（`{#A}`）與新形態（`{#A-slug}`）——
+#: 與 canon_parser.COARSE_HEADING_RE 同值放寬，⛔ 計畫 9.10 S5 不動這一條。
+COARSE_HEADING_RE = re.compile(r'^##\s+.+\{#([A-Z](?:-[a-z0-9-]+)?)\}\s*$')
+#: 架規則路徑（`shelf_coarse` 有值，計畫 9.10 S5／DSP-070）：⛔ 只認 `<架字母>-<slug>`。
+#: 與 canon_parser.SHELF_COARSE_HEADING_RE 同值。
+SHELF_COARSE_HEADING_RE = re.compile(r'^##\s+.+\{#([A-I]-[a-z0-9-]+)\}\s*$')
+#: 架規則路徑裸字母偵測——與 canon_parser.BARE_COARSE_HEADING_RE 同值。
+BARE_COARSE_HEADING_RE = re.compile(r'^##\s+.+\{#[A-Z]\}\s*$')
+#: 與 canon_parser.BARE_COARSE_DISABLED_MSG 同值（驗收逐字比對）。
+BARE_COARSE_DISABLED_MSG = "粗目 id 須為 `<架字母>-<slug>`，裸字母形態已於 DSP-067／S5 停用"
 FINE_HEADING_RE = re.compile(r'^###\s+.+\{#([^}]+)\}\s*$')
 
 # 細目屬性區塊允許的鍵（brief／design 元件 4 FineItem 欄位）
@@ -159,9 +185,23 @@ def _rel_path(file_path: str, project_dir: str) -> str:
 def _is_canon_target(rel: str) -> bool:
     if not CANON_RE.match(rel):
         return False
+    # README.md 在**任何層**都不是正本（`canon/README.md`、`canon/jgb/README.md`）。
     if os.path.basename(rel) == "README.md":
         return False
     return True
+
+
+def _shelf_coarse(rel: str) -> Optional[str]:
+    """命中架檔 ⇒ 回粗目碼（`canon/jgb/A.md` → `"A"`）；其他正本回 None（走舊七鍵規則）。"""
+    m = SHELF_PATH_RE.match(rel)
+    return m.group(1) if m else None
+
+
+def _is_catalog(rel: str) -> bool:
+    """衍生目錄 `canon/jgb/CATALOG.md`：結構檢查跳過（它不是正本形狀）。
+
+    ⚠️ CATALOG 與正本的同源控制點在**啟動期** `load_canon_or_die`，⛔ 不是這個 hook。"""
+    return bool(CATALOG_PATH_RE.match(rel))
 
 
 def _sha256_file(path: str) -> str:
@@ -267,27 +307,38 @@ def check_pre_tool_use(project_dir: str, abs_path: str) -> int:
 # ---------------------------------------------------------------------------
 
 def _parse_front_matter(lines: list) -> tuple:
-    """回 (front_matter_dict_keys_present, body_start_index, errors)。"""
+    """回 (front_matter_values_dict, body_start_index, errors)。值＝冒號後原字串（未去引號）。"""
     errors = []
     if not lines or lines[0].strip() != "---":
-        return set(), 0, ["缺 front matter（首行須為 ---）"]
-    keys_present = set()
+        return {}, 0, ["缺 front matter（首行須為 ---）"]
+    values: dict = {}
     idx = 1
     while idx < len(lines) and lines[idx].strip() != "---":
         line = lines[idx]
         stripped = line.strip()
         if stripped and ":" in stripped:
-            key = stripped.split(":", 1)[0].strip()
-            keys_present.add(key)
+            key, _, val = stripped.partition(":")
+            values[key.strip()] = val.strip()
         idx += 1
     if idx >= len(lines):
         errors.append("front matter 未閉合（缺結尾 ---）")
-        return keys_present, idx, errors
-    return keys_present, idx + 1, errors
+        return values, idx, errors
+    return values, idx + 1, errors
 
 
-def check_structure(abs_path: str) -> list:
-    """回錯誤訊息清單（列號＋原因）；空清單＝通過。"""
+#: 架檔細目必填的兩個可見性屬性（與 canon_parser `_build_fine(require_fine_attrs=True)` 同一條規則）。
+SHELF_REQUIRED_FINE_ATTRS = ("target_user", "business_types")
+_EMPTY_LIST_VALUES = ("", "[]")
+
+
+def check_structure(abs_path: str, shelf_coarse: Optional[str] = None) -> list:
+    """回錯誤訊息清單（列號＋原因）；空清單＝通過。
+
+    `shelf_coarse=None`（預設）＝舊七鍵受眾正本規則，**原封**。
+    `shelf_coarse="A"…"I"`＝圖書館架規則（DSP-058；一架多粗目計畫 9.10 S1）：front matter 恰六鍵、
+    每架至少一個粗目、粗目 id 首字母＝檔名字母（本函式只看單檔，跨架唯一由 parser 全域把關）、
+    細目 id 首段＝`CANON_NAME`、細目必填 `target_user`＋`business_types`。
+    """
     errors: list = []
     try:
         with open(abs_path, encoding="utf-8") as f:
@@ -295,33 +346,72 @@ def check_structure(abs_path: str) -> list:
     except OSError as exc:
         return [f"讀檔失敗：{exc}"]
 
+    is_shelf = shelf_coarse is not None
+    expected_keys = SHELF_FRONT_MATTER_KEYS if is_shelf else FRONT_MATTER_KEYS
+
     lines = text.split("\n")
-    keys_present, body_start, fm_errors = _parse_front_matter(lines)
+    fm_values, body_start, fm_errors = _parse_front_matter(lines)
     errors.extend(fm_errors)
-    missing_keys = [k for k in FRONT_MATTER_KEYS if k not in keys_present]
+    keys_present = set(fm_values)
+    missing_keys = [k for k in expected_keys if k not in keys_present]
     if missing_keys:
         errors.append(f"front matter 缺鍵：{', '.join(missing_keys)}")
+    if is_shelf:
+        extra_keys = sorted(k for k in keys_present if k not in expected_keys)
+        if extra_keys:
+            errors.append(f"架 front matter 不允許的鍵：{', '.join(extra_keys)}（恰六鍵）")
+        for key in ("title", "scope"):
+            if key in fm_values and not fm_values[key]:
+                errors.append(f"架 front matter {key} 不得為空")
+        if "coarse" in fm_values and fm_values["coarse"] != shelf_coarse:
+            errors.append(f"架 front matter coarse {fm_values['coarse']!r} 與檔名字母 {shelf_coarse!r} 不符")
 
     fine_ids_seen: dict = {}
-    current_coarse = None
+    coarse_ids_seen: list = []
     in_fine = False
+    current_fine: Optional[tuple] = None  # (fid, lineno, {已宣告的屬性鍵: 值})
+
+    def _close_fine():
+        """架規則：細目收尾時檢查兩個必填屬性（⛔ 缺／空都算錯）。"""
+        if not is_shelf or current_fine is None:
+            return
+        fid, fid_lineno, attrs = current_fine
+        for key in SHELF_REQUIRED_FINE_ATTRS:
+            if key not in attrs:
+                errors.append(f"第 {fid_lineno} 行：細目 {fid!r} 缺必填屬性 {key}（架無檔級預設）")
+            elif attrs[key].strip() in _EMPTY_LIST_VALUES:
+                errors.append(f"第 {fid_lineno} 行：細目 {fid!r} 的 {key} 不得為空清單")
 
     for i in range(body_start, len(lines)):
         lineno = i + 1
         line = lines[i]
 
-        coarse_m = COARSE_HEADING_RE.match(line)
+        if is_shelf and BARE_COARSE_HEADING_RE.match(line):
+            errors.append(f"第 {lineno} 行：{BARE_COARSE_DISABLED_MSG}")
+            continue
+
+        coarse_m = (SHELF_COARSE_HEADING_RE if is_shelf else COARSE_HEADING_RE).match(line)
         if coarse_m:
-            current_coarse = coarse_m.group(1)
+            _close_fine()
+            current_fine = None
+            coarse_ids_seen.append((coarse_m.group(1), lineno))
             in_fine = False
             continue
 
         fine_m = FINE_HEADING_RE.match(line)
         if fine_m:
+            _close_fine()
             fid = fine_m.group(1)
             in_fine = True
+            current_fine = (fid, lineno, {})
             if not FINE_ID_RE.match(fid):
                 errors.append(f"第 {lineno} 行：細目 id 不合法格式 {fid!r}")
+            elif is_shelf:
+                prefix, ccode, _slug = fid.split("/")
+                if prefix != CANON_NAME:
+                    errors.append(f"第 {lineno} 行：細目 id 首段 {prefix!r} 與正本名 {CANON_NAME!r} 不符")
+                if ccode != shelf_coarse:
+                    errors.append(f"第 {lineno} 行：細目 id 粗目碼 {ccode!r} 與檔名字母 {shelf_coarse!r} 不符")
             if fid in fine_ids_seen:
                 errors.append(f"第 {lineno} 行：細目 id 重複 {fid!r}（首見於第 {fine_ids_seen[fid]} 行）")
             else:
@@ -333,7 +423,12 @@ def check_structure(abs_path: str) -> list:
         if not line.strip():
             continue
         # 屬性區塊行：頂層鍵行或其延續行皆合法；其他非空行視為內容行（一句一行，不檢查）。
-        if ATTR_LINE_RE.match(line) or ATTR_CONTINUATION_RE.match(line):
+        attr_m = ATTR_LINE_RE.match(line)
+        if attr_m:
+            if current_fine is not None:
+                current_fine[2].setdefault(attr_m.group(1), line.partition(":")[2])
+            continue
+        if ATTR_CONTINUATION_RE.match(line):
             continue
         # 一行純文字內容（正文），非屬性區塊，跳過不視為錯誤——
         # 只有「看起來是屬性行但鍵不在白名單」才判錯：`- xxx:` 開頭且 xxx 不在允許清單。
@@ -341,14 +436,91 @@ def check_structure(abs_path: str) -> list:
         if stray_attr and stray_attr.group(1) not in ATTR_KEYS:
             errors.append(f"第 {lineno} 行：屬性區塊出現不允許的鍵 {stray_attr.group(1)!r}")
 
+    _close_fine()
+
+    if is_shelf:
+        # 計畫 9.10 S1，三條不變量（本函式單檔視野，跨架唯一由 parser 的 parse_canon_dir 全域把關）：
+        if not coarse_ids_seen:
+            errors.append("架至少須有一個粗目")
+        seen_coarse_ids: dict = {}
+        for cid, cid_lineno in coarse_ids_seen:
+            if not cid or cid[0] != shelf_coarse:
+                errors.append(f"第 {cid_lineno} 行：粗目 id {cid!r} 首字母與檔名字母 {shelf_coarse!r} 不符")
+            if cid in seen_coarse_ids:
+                errors.append(f"第 {cid_lineno} 行：粗目 id 重複 {cid!r}（首見於第 {seen_coarse_ids[cid]} 行）")
+            else:
+                seen_coarse_ids[cid] = cid_lineno
+
+    return errors
+
+
+# ---------------------------------------------------------------------------
+# 判定 2b：講法唯一性（同一正本內同一講法不得出現於 ≥2 個細目）
+# ---------------------------------------------------------------------------
+
+PHRASING_TEXT_RE = re.compile(r'text:\s*"((?:[^"\\]|\\.)*)"')
+
+
+def phrasing_scope_paths(abs_path: str, rel: str) -> list:
+    """講法唯一性的**作用域**：架檔 ⇒ 整個 `canon/jgb/` 目錄的九架；其餘 ⇒ 只有自己。
+
+    9.6 S3：圖書館形態下「一句講法掛兩個細目」可以跨**架**發生（A.md 一條、E.md 一條），
+    只掃被編輯的那一檔會整類漏掉。作用域與 parser 的 `_check_phrasing_unique`
+    （以 `parse_canon_dir` 的全部細目為範圍）同值。
+    ⚠️ 缺架不在這裡報（那是 parser／結構檢查的事）——本函式只收**存在**的架檔。
+    """
+    if not SHELF_PATH_RE.match(rel):
+        return [abs_path]
+    shelf_dir = os.path.dirname(abs_path)
+    paths = []
+    for letter in "ABCDEFGHI":
+        candidate = os.path.join(shelf_dir, f"{letter}.md")
+        if os.path.isfile(candidate):
+            paths.append(candidate)
+    # 被編輯的那一檔必在清單內（就算它剛好不是 A–I 之一也不漏掉）
+    return paths or [abs_path]
+
+
+def check_phrasing_unique(abs_path: str, scope_paths: Optional[list] = None) -> list:
+    """回錯誤訊息清單（含講法文字與兩個細目 id，NFKC 正規化後逐字比對）；空清單＝通過。
+
+    `scope_paths` 省略 ⇒ 只掃 `abs_path`（舊語義，單檔正本）；架檔由呼叫端傳入
+    `phrasing_scope_paths(...)` 的九架清單 ⇒ **跨架**比對（同值規則在 parser
+    `_check_phrasing_unique`）。
+    ⛔ 只做講法唯一這一條；see_also 檢查落在 parser（9.1a），不在 hook 重複做。"""
+    targets = scope_paths if scope_paths is not None else [abs_path]
+
+    seen: dict = {}  # nfkc_text -> (fine_id, raw_text)
+    errors: list = []
+    for path in targets:
+        try:
+            with open(path, encoding="utf-8") as f:
+                lines = f.read().split("\n")
+        except OSError as exc:
+            return [f"讀檔失敗：{exc}"]
+        current_fine_id = None
+        for line in lines:
+            fine_m = FINE_HEADING_RE.match(line)
+            if fine_m:
+                current_fine_id = fine_m.group(1)
+                continue
+            for m in PHRASING_TEXT_RE.finditer(line):
+                text = m.group(1)
+                norm = _nfkc_norm(text)
+                if norm in seen:
+                    prev_fid, _prev_text = seen[norm]
+                    if prev_fid != current_fine_id:
+                        errors.append(
+                            f"講法重複 {text!r}：細目 {prev_fid!r} 與 {current_fine_id!r}"
+                        )
+                else:
+                    seen[norm] = (current_fine_id, text)
     return errors
 
 
 # ---------------------------------------------------------------------------
 # 判定 3：講法 ∩ 凍結題
 # ---------------------------------------------------------------------------
-
-PHRASING_TEXT_RE = re.compile(r'text:\s*"((?:[^"\\]|\\.)*)"')
 
 
 def check_frozen_overlap(abs_path: str, project_dir: str) -> list:
@@ -575,10 +747,22 @@ def main() -> int:
 
     if hook_event == "PostToolUse":
         if is_canon:
-            struct_errors = check_structure(abs_path)
+            # 分流（9.6 S1）：架檔走架規則、CATALOG 跳過結構檢查、其餘正本走舊七鍵規則。
+            # ⚠️ 講法唯一／撞凍結題／識別碼掃描對**所有**命中檔照跑，⛔ 不因分流而少跑。
+            struct_errors = [] if _is_catalog(rel) else check_structure(abs_path, _shelf_coarse(rel))
             if struct_errors:
                 sys.stderr.write("[outline_gate] PostToolUse 結構檢查失敗：\n")
                 for e in struct_errors:
+                    sys.stderr.write(f"  - {e}\n")
+                return 2
+
+            # 9.6 S3：架檔的講法唯一性以整個 `jgb/` 目錄為作用域（跨架同值規則）。
+            phrasing_errors = check_phrasing_unique(
+                abs_path, phrasing_scope_paths(abs_path, rel)
+            )
+            if phrasing_errors:
+                sys.stderr.write("[outline_gate] PostToolUse 講法唯一性檢查失敗：\n")
+                for e in phrasing_errors:
                     sys.stderr.write(f"  - {e}\n")
                 return 2
 

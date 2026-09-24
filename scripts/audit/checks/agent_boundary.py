@@ -349,8 +349,14 @@ CANON_ASSEMBLER_REL = "services/agent/canon/canon_assembler.py"
 CANON_VISIBLE_FUNC = "canon_visible"
 #: `canon_visible` 必須引用的角色正規化 helper（design 元件 6 明訂重用、⛔ 不另寫一套）。
 TARGET_USER_NORMALIZER = "_effective_target_user"
-#: 兩個消費端：目錄與 `outline:*` 解析都必須經過同一個判準（F7 修補點）。
-CANON_VISIBLE_CALLERS = ("build_canon_toc", "resolve_canon_section")
+#: 四個消費端：目錄、`outline:*` 解析、受眾視圖組裝、每回合候選節組裝都必須經過
+#: 同一個判準（F7 修補點；DSP-058／9.6 S3 加 `build_outline`——視圖的 `citable`
+#: 由它決定，⛔ 不得改成自己看 `fine.reviewed_by`，那就是第二份可見性真相；
+#: 9.8 DSP-059 D′ S2 加 `build_canon_sections`——⛔ 不是 `outline.py` 內的
+#: `from_canon`，那支只轉呼叫，真正逐 id 判準在 `canon_assembler.py` 本檔）。
+CANON_VISIBLE_CALLERS = (
+    "build_canon_toc", "resolve_canon_section", "build_outline", "build_canon_sections",
+)
 #: **刻意不套**的 SQL 條件（正本無 vendor 欄／無上架旗標）——出現在
 #: `canon_visible` 內＝有人手抄 SQL 條件進記憶體版，一律 FAIL。
 _CANON_BANNED_LITERALS = ("vendor_ids", "is_active")
@@ -384,8 +390,10 @@ def check_29b_canon_visibility_single_source(rel=None):
     四條規則（缺一即 FAIL，⛔ 不 SKIP——這條的目標是**必須存在**的產線函式）：
     ① `canon_assembler.py:canon_visible` 存在；
     ② 它引用 `_effective_target_user`（角色正規化與 SQL 側同一支）；
-    ③ `build_canon_toc` 與 `resolve_canon_section` 都直接呼叫 `canon_visible`
-       （目錄與 `outline:*` 解析都要過同一道閘門）；
+    ③ `build_canon_toc`／`resolve_canon_section`／`build_outline` 都直接呼叫
+       `canon_visible`（目錄、`outline:*` 解析、受眾視圖都要過同一道閘門）；
+       ⚠️ `build_outline` 另外呼叫 `_axes_visible`（受眾＋業態兩軸，不看已審）——
+       那是**納入**判準，`canon_visible` 是**可引用**判準，⛔ 兩者不得互相取代。
     ④ `canon_visible` 內不得出現 `vendor_ids`／`is_active` 字面（含字串常數與識別字）
        ——那是刻意不套的 SQL 條件，出現＝手抄。
 
@@ -898,11 +906,27 @@ def _self_test_29b():
         "    return [f for f in doc.fines() if canon_visible(identity, f, vendor_business_types=vendor_business_types)]\n"
         "def resolve_canon_section(doc, identity, sid, *, vendor_business_types):\n"
         "    return canon_visible(identity, sid, vendor_business_types=vendor_business_types)\n"
+        "def build_outline(doc, audience, identity, *, vendor_business_types):\n"
+        "    return [f for f in doc.fines() if canon_visible(identity, f, vendor_business_types=vendor_business_types)]\n"
+        "def build_canon_sections(doc, identity, ids, *, vendor_business_types):\n"
+        "    return [f for f in doc.fines() if f.id in ids and canon_visible(identity, f, vendor_business_types=vendor_business_types)]\n"
     )
     missing_func = clean_src.replace("def canon_visible", "def _renamed_visible")
     one_caller = clean_src.replace(
         "    return canon_visible(identity, sid, vendor_business_types=vendor_business_types)\n",
         "    return True\n")
+    # DSP-058：第三個消費端（視圖組裝）漏掉閘門 ⇒ 必須紅（⛔ 不是「少一個無所謂」）。
+    no_view_caller = clean_src.replace(
+        "def build_outline(doc, audience, identity, *, vendor_business_types):\n"
+        "    return [f for f in doc.fines() if canon_visible(identity, f, vendor_business_types=vendor_business_types)]\n",
+        "def build_outline(doc, audience, identity, *, vendor_business_types):\n"
+        "    return [f for f in doc.fines() if f.reviewed_by is not None]\n")
+    # 9.8 DSP-059 D′ S2 F1：第四個消費端（每回合候選節組裝）漏掉閘門 ⇒ 必須紅。
+    no_sections_caller = clean_src.replace(
+        "def build_canon_sections(doc, identity, ids, *, vendor_business_types):\n"
+        "    return [f for f in doc.fines() if f.id in ids and canon_visible(identity, f, vendor_business_types=vendor_business_types)]\n",
+        "def build_canon_sections(doc, identity, ids, *, vendor_business_types):\n"
+        "    return [f for f in doc.fines() if f.id in ids]\n")
     banned_literal = clean_src.replace(
         "    return tu in fine.target_user\n",
         "    if 'vendor_ids' in fine.raw:\n        return False\n    return tu in fine.target_user\n")
@@ -917,6 +941,8 @@ def _self_test_29b():
         os.path.join(RAG, "services/_fake_canon_one_caller.py"): one_caller,
         os.path.join(RAG, "services/_fake_canon_banned.py"): banned_literal,
         os.path.join(RAG, "services/_fake_canon_no_norm.py"): no_normalizer,
+        os.path.join(RAG, "services/_fake_canon_no_view_caller.py"): no_view_caller,
+        os.path.join(RAG, "services/_fake_canon_no_sections_caller.py"): no_sections_caller,
     }
 
     def fake_read(path):
@@ -936,6 +962,10 @@ def _self_test_29b():
              check_29b_canon_visibility_single_source("services/_fake_canon_banned.py")[0] is False),
             ("29b 假樹：未引用 _effective_target_user → 必須紅",
              check_29b_canon_visibility_single_source("services/_fake_canon_no_norm.py")[0] is False),
+            ("29b 假樹：build_outline 改看 reviewed_by 不問 canon_visible → 必須紅",
+             check_29b_canon_visibility_single_source("services/_fake_canon_no_view_caller.py")[0] is False),
+            ("29b 假樹：build_canon_sections 未呼叫 canon_visible → 必須紅",
+             check_29b_canon_visibility_single_source("services/_fake_canon_no_sections_caller.py")[0] is False),
             ("29b 檔案讀不到 → 必須紅（⛔ 不是略過通過）",
              check_29b_canon_visibility_single_source("services/_fake_canon_absent.py")[0] is False),
         ]

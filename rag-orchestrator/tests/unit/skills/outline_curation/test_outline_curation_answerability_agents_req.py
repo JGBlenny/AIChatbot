@@ -89,7 +89,7 @@ def test_collect_reports_missing_then_third_then_reconciles(tmp_path):
     assert by["C02"]["label"] == "no_source" and len(by["C02"]["verdicts"]) == 3
     assert by["C03"]["label"] == "no_source"
     assert "C04" not in by and res["droppedCells"] == 1  # v2 壞 ⇒ 格丟（no silent caps）
-    assert res["total"] == 3 and res["agree"] == 2 and res["usage"]["provider"] == "claude-code-subagent" and res["usd"] is None
+    assert res["total"] == 3 and res["agree"] == 2 and res["usage"]["provider"] == "claude-code-subagent"
     assert res["needs_rubric_revision"] is True  # 2/3 < 0.80
 
 

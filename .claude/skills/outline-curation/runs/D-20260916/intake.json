@@ -1,0 +1,1101 @@
+{
+  "cost": {
+    "agents": 0,
+    "completion_tokens": 0,
+    "prompt_tokens": 0,
+    "usd": 0.0,
+    "wall_s": 0.0
+  },
+  "deterministic": true,
+  "inputs_sha": {
+    "canon": "f9f7222469c4db87b29dd0e5311035a74800ac7f01f435767d223238d6352f1d",
+    "drafts": "ea970716bfc9a2d61843a942f6507a7b4e96d1e64d6711a1f055701f9d7f0aaa",
+    "kb": "c324294bbbac87fd33ed338a7397aae2eeb5205f44d837322a2f6073ba93a42f"
+  },
+  "payload": {
+    "drafts": [
+      {
+        "id": "help:Landlordonboarding00phone",
+        "summary": "大房東教學：瀏覽物件、合約、帳務和修繕狀態（手機篇）"
+      },
+      {
+        "id": "help:landlordonboarding04lease",
+        "summary": "房東教學04：合約篇"
+      },
+      {
+        "id": "help:onboarding5",
+        "summary": "一分鐘上手 如何建立＆編輯合約"
+      },
+      {
+        "id": "help:property",
+        "summary": "房東教學03：物件篇"
+      },
+      {
+        "id": "help:qa04",
+        "summary": "合約附件、補充條款限制"
+      },
+      {
+        "id": "help:qa15",
+        "summary": "已點退的合約還在執行中？"
+      },
+      {
+        "id": "help:rent3",
+        "summary": "租約公證？房東房客都應該關注的保障"
+      },
+      {
+        "id": "help:slug10",
+        "summary": "未刊登的物件也可以新增合約嗎？"
+      },
+      {
+        "id": "help:slug12",
+        "summary": "編輯合約要從哪邊進入？"
+      },
+      {
+        "id": "help:slug13",
+        "summary": "如何寄送合約邀請？"
+      },
+      {
+        "id": "help:slug17",
+        "summary": "租客簽約後如何更改？"
+      },
+      {
+        "id": "help:slug20250612",
+        "summary": "管理者如何快速找到點交、點退與押金狀態的物件？"
+      },
+      {
+        "id": "help:slug27",
+        "summary": "點退押金的找補費用在哪裡操作呢？"
+      },
+      {
+        "id": "help:slug28",
+        "summary": "點退需要在租約30天內到期時，才能操作"
+      },
+      {
+        "id": "help:slug29",
+        "summary": "提前解約後何時可以進行點退？"
+      },
+      {
+        "id": "help:slug48",
+        "summary": "租客會收到什麼形式的簽約邀請？是否有時效？"
+      },
+      {
+        "id": "help:slug66",
+        "summary": "點退押金在做什麼？"
+      },
+      {
+        "id": "help:slug71",
+        "summary": "如何新增合約？"
+      },
+      {
+        "id": "help:slug84",
+        "summary": "租客該如何簽約？"
+      },
+      {
+        "id": "help:qa07",
+        "summary": "租客沒有上傳身分證，請問該怎麼辦？"
+      },
+      {
+        "id": "help:slug101",
+        "summary": "租客資料卡：查看聯絡方式與一鍵聯繫"
+      }
+    ],
+    "frozen_at": "2026-09-16T00:00:00Z",
+    "gapmap_cells": 0,
+    "kb_rows": [
+      {
+        "id": "jgb/D/contract-batch-renewal",
+        "question_summary": "續約能不能批次處理"
+      },
+      {
+        "id": "jgb/D/contract-esign-flow",
+        "question_summary": "建約方式與線上電子簽約流程（含時效、身分、社宅、簽約邀請通知、費用）"
+      },
+      {
+        "id": "jgb/D/contract-history-retention",
+        "question_summary": "歷史合約保留多久（含點退狀態）"
+      },
+      {
+        "id": "jgb/D/contract-modify-after-sign",
+        "question_summary": "合約送出或簽完後能不能修改"
+      },
+      {
+        "id": "jgb/D/contract-templates",
+        "question_summary": "合約範本有哪些可以選"
+      },
+      {
+        "id": "jgb/D/lease-expiry-followup-scope",
+        "question_summary": "合約到期追問可答範圍（導向續約面向）"
+      },
+      {
+        "id": "jgb/D/sublease-vs-management-contract",
+        "question_summary": "包租與代管在委託合約設定上的差別"
+      },
+      {
+        "id": "1392",
+        "question_summary": "押金金額和退還方式查詢"
+      },
+      {
+        "id": "2898",
+        "question_summary": "租賃契約續約"
+      },
+      {
+        "id": "2901",
+        "question_summary": "押金上限"
+      },
+      {
+        "id": "2903",
+        "question_summary": "違約責任"
+      },
+      {
+        "id": "2916",
+        "question_summary": "押金"
+      },
+      {
+        "id": "2926",
+        "question_summary": "押金規定"
+      },
+      {
+        "id": "2927",
+        "question_summary": "押金扣除"
+      },
+      {
+        "id": "2928",
+        "question_summary": "寵物押金"
+      },
+      {
+        "id": "2929",
+        "question_summary": "押金利息"
+      },
+      {
+        "id": "2930",
+        "question_summary": "押金用途說明"
+      },
+      {
+        "id": "2931",
+        "question_summary": "押金扣除爭議"
+      },
+      {
+        "id": "2932",
+        "question_summary": "押金轉讓"
+      },
+      {
+        "id": "2933",
+        "question_summary": "押金保管責任"
+      },
+      {
+        "id": "2934",
+        "question_summary": "押金條款"
+      },
+      {
+        "id": "2935",
+        "question_summary": "押金支付方式"
+      },
+      {
+        "id": "2936",
+        "question_summary": "押金約定"
+      },
+      {
+        "id": "2937",
+        "question_summary": "押金用途"
+      },
+      {
+        "id": "2938",
+        "question_summary": "入住注意事項"
+      },
+      {
+        "id": "2939",
+        "question_summary": "退租注意事項"
+      },
+      {
+        "id": "2940",
+        "question_summary": "退租義務"
+      },
+      {
+        "id": "2941",
+        "question_summary": "原狀回復要求"
+      },
+      {
+        "id": "2942",
+        "question_summary": "傢俱清點"
+      },
+      {
+        "id": "2943",
+        "question_summary": "退租清潔標準"
+      },
+      {
+        "id": "2944",
+        "question_summary": "退租清潔要求"
+      },
+      {
+        "id": "2945",
+        "question_summary": "租約延住"
+      },
+      {
+        "id": "2946",
+        "question_summary": "延住規定"
+      },
+      {
+        "id": "2947",
+        "question_summary": "遺留物品處理"
+      },
+      {
+        "id": "2948",
+        "question_summary": "退租物品處理"
+      },
+      {
+        "id": "2949",
+        "question_summary": "終止租約通知"
+      },
+      {
+        "id": "2950",
+        "question_summary": "租約到期物品處理"
+      },
+      {
+        "id": "2951",
+        "question_summary": "提前通知"
+      },
+      {
+        "id": "2952",
+        "question_summary": "搬遷要求"
+      },
+      {
+        "id": "2953",
+        "question_summary": "提前終止租約"
+      },
+      {
+        "id": "2954",
+        "question_summary": "違約金上限"
+      },
+      {
+        "id": "2955",
+        "question_summary": "提前解約通知"
+      },
+      {
+        "id": "2956",
+        "question_summary": "租約處理"
+      },
+      {
+        "id": "2957",
+        "question_summary": "租約有效性"
+      },
+      {
+        "id": "2958",
+        "question_summary": "提前解約規定"
+      },
+      {
+        "id": "2959",
+        "question_summary": "租約終止"
+      },
+      {
+        "id": "2960",
+        "question_summary": "違約金計算"
+      },
+      {
+        "id": "2961",
+        "question_summary": "提前解約證據"
+      },
+      {
+        "id": "2962",
+        "question_summary": "提前解約法律後果"
+      },
+      {
+        "id": "3021",
+        "question_summary": "押金法律規定"
+      },
+      {
+        "id": "3022",
+        "question_summary": "終止租約"
+      },
+      {
+        "id": "3028",
+        "question_summary": "租屋合約變更"
+      },
+      {
+        "id": "3034",
+        "question_summary": "合約條款解釋"
+      },
+      {
+        "id": "3043",
+        "question_summary": "戶籍登記與租約"
+      },
+      {
+        "id": "3077",
+        "question_summary": "押金處理"
+      },
+      {
+        "id": "3078",
+        "question_summary": "轉租租約條款"
+      },
+      {
+        "id": "3079",
+        "question_summary": "分租租約條款"
+      },
+      {
+        "id": "3089",
+        "question_summary": "租約類型差異"
+      },
+      {
+        "id": "3090",
+        "question_summary": "押金管理差異"
+      },
+      {
+        "id": "3093",
+        "question_summary": "租約終止條件"
+      },
+      {
+        "id": "3114",
+        "question_summary": "委託管理合約"
+      },
+      {
+        "id": "3115",
+        "question_summary": "委託管理合約期限"
+      },
+      {
+        "id": "3116",
+        "question_summary": "委託管理合約終止"
+      },
+      {
+        "id": "3117",
+        "question_summary": "管理費用計算"
+      },
+      {
+        "id": "3118",
+        "question_summary": "合約變更"
+      },
+      {
+        "id": "3119",
+        "question_summary": "續約流程"
+      },
+      {
+        "id": "3120",
+        "question_summary": "委託管理合約違約責任"
+      },
+      {
+        "id": "3121",
+        "question_summary": "管理師責任"
+      },
+      {
+        "id": "3122",
+        "question_summary": "委託管理合約權利"
+      },
+      {
+        "id": "3123",
+        "question_summary": "管理費用支付方式"
+      },
+      {
+        "id": "3124",
+        "question_summary": "終止合約程序"
+      },
+      {
+        "id": "3125",
+        "question_summary": "委託管理合約法律"
+      },
+      {
+        "id": "3126",
+        "question_summary": "合約爭議解決"
+      },
+      {
+        "id": "3131",
+        "question_summary": "社會住宅與租約差異"
+      },
+      {
+        "id": "3132",
+        "question_summary": "社會住宅租約期限"
+      },
+      {
+        "id": "3134",
+        "question_summary": "社會住宅租約終止"
+      },
+      {
+        "id": "3147",
+        "question_summary": "租約管理服務"
+      },
+      {
+        "id": "3153",
+        "question_summary": "租約續約"
+      },
+      {
+        "id": "3154",
+        "question_summary": "押金管理"
+      },
+      {
+        "id": "3159",
+        "question_summary": "合約條款"
+      },
+      {
+        "id": "3171",
+        "question_summary": "押金與損壞賠償"
+      },
+      {
+        "id": "3204",
+        "question_summary": "續約規定"
+      },
+      {
+        "id": "3211",
+        "question_summary": "押金抵扣租金"
+      },
+      {
+        "id": "3212",
+        "question_summary": "押金爭議解決"
+      },
+      {
+        "id": "3213",
+        "question_summary": "押金管理責任"
+      },
+      {
+        "id": "3214",
+        "question_summary": "押金投保"
+      },
+      {
+        "id": "3215",
+        "question_summary": "押金使用規定"
+      },
+      {
+        "id": "3216",
+        "question_summary": "原狀回復義務"
+      },
+      {
+        "id": "3217",
+        "question_summary": "租約終止通知"
+      },
+      {
+        "id": "3218",
+        "question_summary": "租客物品處理"
+      },
+      {
+        "id": "3239",
+        "question_summary": "租約條款解釋"
+      },
+      {
+        "id": "3259",
+        "question_summary": "委託管理合約服務"
+      },
+      {
+        "id": "3260",
+        "question_summary": "委託管理合約權益"
+      },
+      {
+        "id": "3261",
+        "question_summary": "委託管理合約轉讓"
+      },
+      {
+        "id": "3284",
+        "question_summary": "押金相關法律"
+      },
+      {
+        "id": "3285",
+        "question_summary": "提前解約後果"
+      },
+      {
+        "id": "3294",
+        "question_summary": "租屋合約違約責任"
+      },
+      {
+        "id": "3296",
+        "question_summary": "租屋合約條款解釋"
+      },
+      {
+        "id": "3316",
+        "question_summary": "委託管理合約責任"
+      },
+      {
+        "id": "3318",
+        "question_summary": "租約期限"
+      },
+      {
+        "id": "3328",
+        "question_summary": "合約審閱期 72小時"
+      },
+      {
+        "id": "3329",
+        "question_summary": "合約延長 付款方式變更 續約條件變更"
+      },
+      {
+        "id": "3330",
+        "question_summary": "歷史合約 保存期限"
+      },
+      {
+        "id": "3331",
+        "question_summary": "合約簽約邀請 期限 過期"
+      },
+      {
+        "id": "3332",
+        "question_summary": "合約建立 中途離開 未儲存"
+      },
+      {
+        "id": "3333",
+        "question_summary": "續約 租屋補助 租補過審"
+      },
+      {
+        "id": "3334",
+        "question_summary": "委託約 租賃約 差異"
+      },
+      {
+        "id": "3341",
+        "question_summary": "定金 押金 收取 管理"
+      },
+      {
+        "id": "3368",
+        "question_summary": "合約簽約邀請 發送邀請 為什麼不能發送"
+      },
+      {
+        "id": "3370",
+        "question_summary": "合約提前解約 可以解約嗎 提前終止"
+      },
+      {
+        "id": "3371",
+        "question_summary": "合約續約 可以續約嗎 延長合約"
+      },
+      {
+        "id": "3372",
+        "question_summary": "合約狀態查詢 目前狀態"
+      },
+      {
+        "id": "3373",
+        "question_summary": "合約狀態 12 階段總覽"
+      },
+      {
+        "id": "3374",
+        "question_summary": "合約建立 發送簽約邀請"
+      },
+      {
+        "id": "3375",
+        "question_summary": "合約簽署流程 雙方簽名"
+      },
+      {
+        "id": "3376",
+        "question_summary": "合約點交流程 搬入"
+      },
+      {
+        "id": "3377",
+        "question_summary": "合約點交需要哪些條件 點交前置條件說明"
+      },
+      {
+        "id": "3378",
+        "question_summary": "合約點退流程 搬出"
+      },
+      {
+        "id": "3379",
+        "question_summary": "合約點退 前置條件"
+      },
+      {
+        "id": "3380",
+        "question_summary": "提前解約 合約未到期退租"
+      },
+      {
+        "id": "3381",
+        "question_summary": "提前解約 租客發起"
+      },
+      {
+        "id": "3382",
+        "question_summary": "提前解約 房東發起"
+      },
+      {
+        "id": "3383",
+        "question_summary": "合約續約 流程步驟"
+      },
+      {
+        "id": "3384",
+        "question_summary": "合約續約 前置條件"
+      },
+      {
+        "id": "3385",
+        "question_summary": "歷史合約 過期與結案"
+      },
+      {
+        "id": "3386",
+        "question_summary": "合約取消 與歷史合約差異"
+      },
+      {
+        "id": "3387",
+        "question_summary": "押金計算 兩種模式"
+      },
+      {
+        "id": "3388",
+        "question_summary": "合約即將到期 到期提醒"
+      },
+      {
+        "id": "3389",
+        "question_summary": "合約執行中 包含狀態"
+      },
+      {
+        "id": "3390",
+        "question_summary": "合約 PDF 下載 各種文件"
+      },
+      {
+        "id": "3392",
+        "question_summary": "簽約連結打不開 電子簽章失敗"
+      },
+      {
+        "id": "3393",
+        "question_summary": "合約附件 上傳管理"
+      },
+      {
+        "id": "3394",
+        "question_summary": "合約複製 快速建立"
+      },
+      {
+        "id": "3432",
+        "question_summary": "物件帳務合約紀錄 Dashboard 儀表板"
+      },
+      {
+        "id": "3440",
+        "question_summary": "簽約身份管理 個人法人"
+      },
+      {
+        "id": "3442",
+        "question_summary": "收到簽約邀請 簽署步驟"
+      },
+      {
+        "id": "3471",
+        "question_summary": "委託合約 與出租合約差異"
+      },
+      {
+        "id": "3472",
+        "question_summary": "委託合約 建立簽署流程"
+      },
+      {
+        "id": "3473",
+        "question_summary": "委託合約提前終止 解除委託"
+      },
+      {
+        "id": "3474",
+        "question_summary": "委託合約 PDF 文件下載"
+      },
+      {
+        "id": "3484",
+        "question_summary": "發送簽約邀請 建立合約步驟"
+      },
+      {
+        "id": "3490",
+        "question_summary": "合約為什麼不能發送簽約邀請"
+      },
+      {
+        "id": "3491",
+        "question_summary": "合約為什麼不能點交"
+      },
+      {
+        "id": "3492",
+        "question_summary": "合約為什麼不能點退"
+      },
+      {
+        "id": "3493",
+        "question_summary": "合約為什麼不能提前解約"
+      },
+      {
+        "id": "3494",
+        "question_summary": "合約為什麼不能續約"
+      },
+      {
+        "id": "3507",
+        "question_summary": "物件為什麼不能建立合約"
+      },
+      {
+        "id": "3510",
+        "question_summary": "合約目前是什麼狀態"
+      },
+      {
+        "id": "3511",
+        "question_summary": "合約的點交/點退/提前解約/續約按鈕是否可用"
+      },
+      {
+        "id": "3512",
+        "question_summary": "為什麼不能取消點交或點退"
+      },
+      {
+        "id": "3513",
+        "question_summary": "為什麼不能取消或作廢合約"
+      },
+      {
+        "id": "3515",
+        "question_summary": "點交清單內容 設備分類與自訂項目"
+      },
+      {
+        "id": "3516",
+        "question_summary": "租客不同意點交 修改清單重發"
+      },
+      {
+        "id": "3518",
+        "question_summary": "點退清單填寫 費用與賠償項目"
+      },
+      {
+        "id": "3520",
+        "question_summary": "租客不同意點退 修改清單重發"
+      },
+      {
+        "id": "3521",
+        "question_summary": "點退金額有異議 租客拒絕確認"
+      },
+      {
+        "id": "3522",
+        "question_summary": "提前解約違約金計算 退租賠償金額"
+      },
+      {
+        "id": "3523",
+        "question_summary": "租客違約欠租 房東提前解約理由"
+      },
+      {
+        "id": "3524",
+        "question_summary": "提前解約違約金付款方 房東賠償租客"
+      },
+      {
+        "id": "3525",
+        "question_summary": "取消提前解約申請 反悔處理"
+      },
+      {
+        "id": "3526",
+        "question_summary": "提前解約生效後 點退與違約金結算"
+      },
+      {
+        "id": "3527",
+        "question_summary": "續約歷史紀錄 原合約保留查詢"
+      },
+      {
+        "id": "3528",
+        "question_summary": "續約資料保留與重置 重新簽署"
+      },
+      {
+        "id": "3529",
+        "question_summary": "免註冊租客續約 不需電子簽名"
+      },
+      {
+        "id": "3530",
+        "question_summary": "批次續約 多筆合約一起續 快速日期設定"
+      },
+      {
+        "id": "3814",
+        "question_summary": "合約怎麼還沒生效 生效了沒"
+      },
+      {
+        "id": "3815",
+        "question_summary": "合約卡在哪 卡住了 簽了沒動靜"
+      },
+      {
+        "id": "3838",
+        "question_summary": "合約修改 能不能改 三種出口"
+      },
+      {
+        "id": "3839",
+        "question_summary": "簽署中合約修改 取消退回再改"
+      },
+      {
+        "id": "3841",
+        "question_summary": "資料異動申請書 填寫與提交"
+      },
+      {
+        "id": "3842",
+        "question_summary": "編輯不了合約 權限不足"
+      },
+      {
+        "id": "3843",
+        "question_summary": "合約備註 50 行上限"
+      },
+      {
+        "id": "3845",
+        "question_summary": "合約內文用詞更新 內政部新制"
+      },
+      {
+        "id": "3846",
+        "question_summary": "合約刪除 作廢 條件"
+      },
+      {
+        "id": "3847",
+        "question_summary": "到期退租收尾 步驟總覽"
+      },
+      {
+        "id": "3851",
+        "question_summary": "提前解約回簽 效期30天"
+      },
+      {
+        "id": "3853",
+        "question_summary": "收尾完成 何時轉歷史合約"
+      },
+      {
+        "id": "3854",
+        "question_summary": "續約失敗 已達數量上限 方案配額"
+      },
+      {
+        "id": "3855",
+        "question_summary": "系統續約 vs 重建新約 取捨"
+      },
+      {
+        "id": "3856",
+        "question_summary": "續約增補文件 原合約分頁"
+      },
+      {
+        "id": "3858",
+        "question_summary": "續約重簽 邀請效期72小時"
+      },
+      {
+        "id": "3860",
+        "question_summary": "上傳既存合約 適用情境 效力"
+      },
+      {
+        "id": "3861",
+        "question_summary": "新增合約入口 物件刊登前提"
+      },
+      {
+        "id": "3862",
+        "question_summary": "一物件多合約 上限10份"
+      },
+      {
+        "id": "3864",
+        "question_summary": "公司大小章 Logo 合約呈現"
+      },
+      {
+        "id": "3865",
+        "question_summary": "電子合約 法律效力 簽章認證"
+      },
+      {
+        "id": "3866",
+        "question_summary": "大房東自己簽約 業者團隊身分"
+      },
+      {
+        "id": "3867",
+        "question_summary": "簽約邀請 發送通道 Email 簡訊"
+      },
+      {
+        "id": "3868",
+        "question_summary": "邀請過期 連結失效 資料清空"
+      },
+      {
+        "id": "3870",
+        "question_summary": "簽約瀏覽器建議 簽名載入失敗"
+      },
+      {
+        "id": "3872",
+        "question_summary": "簽署進度 查得到與查不到的"
+      },
+      {
+        "id": "3873",
+        "question_summary": "我想改合約 內容要修改"
+      },
+      {
+        "id": "3874",
+        "question_summary": "合約打錯了 填錯要改"
+      },
+      {
+        "id": "3875",
+        "question_summary": "簽出去的合約還能改嗎 改得了嗎"
+      },
+      {
+        "id": "3876",
+        "question_summary": "租客要退租了 接下來怎麼做"
+      },
+      {
+        "id": "3877",
+        "question_summary": "提前解約之後 還要處理什麼"
+      },
+      {
+        "id": "3878",
+        "question_summary": "退租跑到哪一步了 還缺什麼"
+      },
+      {
+        "id": "3879",
+        "question_summary": "合約快到期 要續約怎麼辦"
+      },
+      {
+        "id": "3880",
+        "question_summary": "租客要續租 合約怎麼延"
+      },
+      {
+        "id": "3881",
+        "question_summary": "要簽新合約 怎麼開始建"
+      },
+      {
+        "id": "3883",
+        "question_summary": "租客簽不了約 一直簽不成"
+      },
+      {
+        "id": "3884",
+        "question_summary": "租客說沒收到合約 找不到約"
+      },
+      {
+        "id": "3894",
+        "question_summary": "物件資料修改 既有合約不受影響 快照原則"
+      },
+      {
+        "id": "3896",
+        "question_summary": "租客修改信箱電話 合約與通知不同步"
+      },
+      {
+        "id": "3897",
+        "question_summary": "租客改名 合約顯示與PDF一致不變"
+      },
+      {
+        "id": "3898",
+        "question_summary": "更換承租人 需重簽新約"
+      },
+      {
+        "id": "4144",
+        "question_summary": "物件刪除 條件 歷史合約會消失嗎"
+      },
+      {
+        "id": "4149",
+        "question_summary": "點交 點退 押金狀態 物件快速篩選"
+      },
+      {
+        "id": "4153",
+        "question_summary": "物件為什麼不能建立合約 缺什麼欄位"
+      },
+      {
+        "id": "4216",
+        "question_summary": "退房後換新租客 點退押金 物件要重開嗎"
+      },
+      {
+        "id": "4218",
+        "question_summary": "既存合約 是什麼 簽署完成上傳備查"
+      },
+      {
+        "id": "4254",
+        "question_summary": "簽約前狀態 待發送 待租客簽回 待房東簽名 差別"
+      },
+      {
+        "id": "4255",
+        "question_summary": "取消點交邀請 取消點退邀請 收回邀請"
+      },
+      {
+        "id": "4263",
+        "question_summary": "押金資訊 押金多少 退還方式"
+      },
+      {
+        "id": "4278",
+        "question_summary": "押金要付多少 什麼時候退"
+      },
+      {
+        "id": "4279",
+        "question_summary": "退租押金怎麼退還"
+      },
+      {
+        "id": "4562",
+        "question_summary": "想改合約租期 租金要調整"
+      },
+      {
+        "id": "4563",
+        "question_summary": "合約狀態怪怪的 不太對勁"
+      },
+      {
+        "id": "4639",
+        "question_summary": "用租客姓名找合約 找某租客的租約 姓名反查合約編號"
+      },
+      {
+        "id": "4641",
+        "question_summary": "查詢合約資訊 合約編號查詢"
+      },
+      {
+        "id": "4644",
+        "question_summary": "租客簽名檢查 漏簽提醒 少簽防呆"
+      },
+      {
+        "id": "4645",
+        "question_summary": "雙人簽約 兩位承租人填寫方式"
+      },
+      {
+        "id": "4646",
+        "question_summary": "合約修改後更新 改租金要重填嗎 複製合約"
+      },
+      {
+        "id": "4655",
+        "question_summary": "物件總表篩選 快到期空房 本月到期 無合約"
+      },
+      {
+        "id": "4660",
+        "question_summary": "合約有沒有續約 下一份約"
+      },
+      {
+        "id": "5377",
+        "question_summary": "公司管一百多間 幾百間 物件跟合約很多 團隊分工 大量物件怎麼管"
+      },
+      {
+        "id": "2989",
+        "question_summary": "設備使用規範"
+      },
+      {
+        "id": "3191",
+        "question_summary": "設備處理"
+      },
+      {
+        "id": "3196",
+        "question_summary": "公共設備使用限制"
+      },
+      {
+        "id": "3201",
+        "question_summary": "公共設備使用規範"
+      },
+      {
+        "id": "3202",
+        "question_summary": "租客設備投保"
+      },
+      {
+        "id": "3273",
+        "question_summary": "設備狀況處理"
+      },
+      {
+        "id": "3290",
+        "question_summary": "租屋設備使用規範"
+      },
+      {
+        "id": "3094",
+        "question_summary": "租金調整政策"
+      },
+      {
+        "id": "3199",
+        "question_summary": "設備維護法律"
+      },
+      {
+        "id": "3276",
+        "question_summary": "設備維護法律依據"
+      },
+      {
+        "id": "2924",
+        "question_summary": "租金支付法律依據"
+      },
+      {
+        "id": "2977",
+        "question_summary": "飼養寵物費用"
+      },
+      {
+        "id": "3006",
+        "question_summary": "租屋保險費用"
+      },
+      {
+        "id": "3035",
+        "question_summary": "戶籍遷移"
+      },
+      {
+        "id": "3047",
+        "question_summary": "居住證明費用"
+      },
+      {
+        "id": "3158",
+        "question_summary": "服務費用計算"
+      },
+      {
+        "id": "3209",
+        "question_summary": "租金包含服務"
+      },
+      {
+        "id": "3210",
+        "question_summary": "租金爭議解決"
+      },
+      {
+        "id": "3850",
+        "question_summary": "點退找補費用 操作位置"
+      }
+    ],
+    "mode": "expand",
+    "object_under_test": {
+      "approved_by": "",
+      "frozen_at": "2026-09-16T00:00:00Z",
+      "materials": [
+        ".claude/skills/outline-curation/runs/D-20260916/kb-rows.json",
+        ".claude/skills/outline-curation/runs/D-20260916/help-pages.json",
+        "../app/canon/jgb"
+      ]
+    },
+    "shelf": "D"
+  },
+  "raw_outputs_path": null,
+  "skill_version": "0.1.0",
+  "step": "intake"
+}

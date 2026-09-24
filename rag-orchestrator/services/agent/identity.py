@@ -57,6 +57,10 @@ def audience_of(
       `is_b2b_mode` 同式，兩條件 OR）。
     - 其餘（含 `target_user is None`）⇒ tenant。
 
+    ⚠️ `system_admin` 的**正本可見性**等同 `property_manager`（DSP-053a）：折疊住在
+    `canon_assembler._axes_visible`（`CANON_TARGET_USER_FOLD`），⛔ 不在本函式、
+    ⛔ 不在 `kb.search` 的 SQL 謂詞（那側對 `system_admin` 回 0 列）。
+
     純函式、決定性——同輸入必同輸出，無副作用、不查任何外部狀態。
     """
     if target_user == "prospect":

@@ -30,9 +30,9 @@ STATUSES = ("verified_fact", "verified_absent", "owner_needed", "owner_decided")
 #: 證據形狀：`path:symbol`（行號只當輔助）或 `help:<slug>`／`docs:<path>#<anchor>`
 EVIDENCE_RE = re.compile(r"^(?:[\w./\-]+\.[A-Za-z0-9]{1,8}:\S.*|help:\S+|docs:\S+|config:\S+)$")
 DEFAULT_AUTHORITY = [
-    "code:/Users/lenny/jgb/project/jgb/jgb2 (master; git status 乾淨才算)",
-    "docs:/Users/lenny/jgb/project/jgb/jgb2/docs",
-    "help:/Users/lenny/jgb/幫助中心/JGB幫助中心_HTML_交付_20260818/*_zh-Hant.html",
+    "code:/Users/chenqinghuang/dev/work/jgb2/dev2 (git show master:<path>；兩身分共用)",
+    "docs:/Users/chenqinghuang/dev/work/jgb2/dev2 (git show master:docs/…)",
+    "help:/Users/chenqinghuang/dev/work/docs/幫助中心/JGB幫助中心_HTML_交付_20260818/*_zh-Hant.html",
     "ledger:docs/knowledge/jgb-product-facts.md",
 ]
 

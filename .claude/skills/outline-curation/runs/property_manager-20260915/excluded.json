@@ -1,0 +1,27 @@
+{
+ "excluded": [
+  "property_manager/C/followup-session-single-item-boundary",
+  "property_manager/C/followup-missing-data-in-jgb",
+  "property_manager/C/followup-session-end",
+  "property_manager/D/reply-tone-principles",
+  "property_manager/D/prohibited-statements",
+  "property_manager/E/number-data-provenance-rule",
+  "property_manager/E/when-to-decline",
+  "property_manager/E/identity-and-scope-boundary",
+  "property_manager/E/session-expiry-general-rule",
+  "property_manager/G/document-summary-rule",
+  "property_manager/G/document-content-boundary",
+  "property_manager/F/urgency-value-domain-pending",
+  "property_manager/F/repair-history-facet-pending",
+  "property_manager/F/dunning-endpoint-form",
+  "property_manager/F/followup-latency-budget",
+  "property_manager/F/contract-other-facets-scope-pending",
+  "property_manager/F/billing-other-facets-scope-pending",
+  "property_manager/F/account-domain-scope-pending",
+  "property_manager/F/iot-setup-scope-pending",
+  "property_manager/F/estate-domain-scope-pending",
+  "property_manager/F/subscription-domain-scope-pending"
+ ],
+ "why": "DSP-050 F 待裁移出；DSP-051 D／E 與 C 三條會話規則進 agent_rules；DSP-049 G 文件歸納進 agent_rules",
+ "source": "rag-orchestrator/canon/property_manager.md"
+}

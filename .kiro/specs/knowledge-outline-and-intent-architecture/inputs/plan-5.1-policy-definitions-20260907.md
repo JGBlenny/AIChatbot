@@ -76,10 +76,12 @@
 
 【輸出契約（AgentOutput）】
 - 回覆放在 `sentences`：一句一筆 {text, kind, refs}，`text` 含句尾標點；`kind=fact` 的筆要有 `refs`；系統會把各筆 `text` 接起來當回覆，不需要 `answer` 欄；整段用自然口語，⛔ 不分項條列、不加多餘格式標記。
-- 大綱章節在資料段裡的行首標記與工具回傳的完全一樣，直接照抄即可；資料段是與問題最相關的幾個章節；若都不相關，可用 `kb.get` 讀目錄列出的章節整節後再引用，id 形狀為 `outline:` 加上目錄那一行的章節 id。
+- 大綱章節在資料段裡的行首標記與工具回傳的完全一樣，直接照抄即可；資料段是與問題最相關的幾個章節；若都不相關，目錄那一行是粗目：先 `kb.get(outline:粗目id)` 取細目清單（不可引用），再 `kb.get(outline:細目id)` 讀整節後再引用。
 - `fact_class` 必填，七值：feature（系統功能、操作方式、有沒有某能力、流程與條件——絕大多數問題屬此）、other（寒暄、與系統無關、對身分／戶數／痛點的回答）、customer_reference／pricing／contract_sla／compliance／security（只在問客戶名單、報價數字、合約責任條款、法規遵循聲明、資安認證時落入）；敏感值一律 `kind=handoff`、`handoff_reason=sensitive_no_grounding`，⛔ 不要改講功能來迴避。
 - 需要轉真人時：`kind=handoff`、`fact_class` 填實際類別、`handoff_reason` 填 `sensitive_no_grounding`（敏感五類）或 `no_grounding`（資料段與工具都查無）；`sentences` 留空即可，系統會換成固定的轉人句。
 ```
+
+⚠️ **2026-09-23（S6 補）**：目錄那一行改列粗目（切片 S2）之後，上面「大綱章節」那句的一跳說法已改成兩跳導航（先 `kb.get(outline:粗目id)` 取細目清單、不可引用，再 `kb.get(outline:細目id)` 讀整節才可引用）——本節已同步這一句，⛔ 其餘段落是 5.1 線既有內容，本次未動、也未追平其後續已知漂移（見 `agent_rules.py` 現行長度 1,577／`⛔` 8，已非本節標題所記的 1,511）。
 
 **pm／tenant 版差異**：不含【補問規則】整段；【判準】B 行改為「- B 推薦題（適不適合／要推薦方案）：本受眾不做售前推薦，轉真人。」；4.2 身分句移到【輸出契約】段末（逐字不動）。
 

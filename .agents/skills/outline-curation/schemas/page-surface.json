@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "page-surface（步 0a 頁面樹基準 StepEnvelope，DSP-065）",
+  "type": "object",
+  "required": ["step", "skill_version", "inputs_sha", "deterministic", "raw_outputs_path", "cost", "payload"],
+  "properties": {
+    "inputs_sha": {"type": "object", "required": ["jgb2_sha", "map", "canon"]},
+    "payload": {"type": "object", "required": ["sources", "blade_stats", "counts", "units", "canon_titles"],
+      "properties": {
+        "sources": {"type": "object", "required": ["jgb2", "branch", "jgb2_sha", "map", "canon"]},
+        "counts": {"type": "object", "required": ["route_files", "spa_named_routes", "blade_pages", "units", "baseline", "tenant", "vendor_specific", "canon_fines"]},
+        "units": {"type": "array", "items": {"type": "object", "required": ["unit_id", "kind", "label", "path", "component", "source", "shelf", "side", "vendor_specific", "in_baseline"]}},
+        "canon_titles": {"type": "array", "items": {"type": "object", "required": ["id", "title", "shelf"]}}
+      }}
+  }
+}

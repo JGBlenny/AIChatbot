@@ -1,0 +1,1929 @@
+{
+ "shelf": "F",
+ "jgb2_sha": "b2ee2ac382ce06763798a7238e4fd5c9411fcfaa",
+ "coarses": [
+  {
+   "coarse": "修繕單列表與狀態（申請修繕、安排修繕、完成修繕、結單、封存）",
+   "unit_ids": [
+    "page:web:/repair/{any?}/{any2?}",
+    "page:repair",
+    "page:repair.apply",
+    "page:repair.assign",
+    "page:repair.complete",
+    "page:repair.finish",
+    "page:repair.archive"
+   ],
+   "fines": [
+    {
+     "proposed_id": "jgb/F/repair-status-tabs",
+     "askable": "修繕單總表有哪幾個狀態分頁，分別代表什麼意思",
+     "title": "修繕單總表有哪些狀態分頁？（申請修繕、安排修繕、完成修繕、結單、封存，各代表什麼階段）",
+     "unit_ids": [
+      "page:web:/repair/{any?}/{any2?}",
+      "page:repair",
+      "page:repair.apply",
+      "page:repair.assign",
+      "page:repair.complete",
+      "page:repair.finish",
+      "page:repair.archive"
+     ],
+     "target_user": [
+      "property_manager",
+      "prospect"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "修繕單有幾個狀態",
+      "修繕單分頁有哪些",
+      "修繕進度分幾個階段",
+      "修繕總表怎麼分類"
+     ],
+     "sentences": [
+      "修繕單總表分成五個狀態分頁：申請修繕、安排修繕、完成修繕、結單、封存，每張修繕單同一時間只會出現在其中一個分頁。",
+      "「申請修繕」是修繕單剛送出、還沒有人處理的狀態；「安排修繕」代表房東方正在確認或已經指派廠商；「完成修繕」代表廠商已經處理完、房東方在做結算與備註；「結單」代表這張修繕單的處理流程已經走完；「封存」是另外一個可以把修繕單移過去、也可以再移回其他狀態的分頁。",
+      "進入畫面後不需要自己選分頁，系統會直接停在「申請修繕」這個分頁。",
+      "修繕單總表這個頁面本身要先登入 JGB 帳號才能打開；但同樣屬於修繕功能的分享頁，並不受這條規則限制（另見「看修繕單分享頁需要先登入嗎」）。"
+     ],
+     "sources": [
+      "code:src/routes/repairs.js",
+      "code:src/pages/repair/Index.vue",
+      "code:app/Repair.php",
+      "code:routes/web.php"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/routes/repairs.js",
+       "quote_or_symbol": "labelKey: '安排修繕',"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Repair.php",
+       "quote_or_symbol": "const APPLY = 1; // 申請中（租客 or 房東）"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/repair/Index.vue",
+       "quote_or_symbol": "router.push({ name: 'repair.apply' })"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:routes/web.php",
+       "quote_or_symbol": "->name('repairs.index')->middleware('need_login');"
+      }
+     ],
+     "not_supported_greps": [
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -cF \"if (route.name === 'repair')\" b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- src/pages/repair/Index.vue  # 只有走到未指定分頁的總入口路由才會自動導向申請修繕，1 命中",
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -cF \"router.push({ name: 'repair.apply' })\" b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- src/pages/repair/Index.vue  # 正對照：緊接著的導向動作本身能被命中，1 命中",
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -n \"Route::match(\\['get', 'post'\\], '/api2/repairItem/share\" b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- routes/web.php | grep -cF \"middleware('need_login')\"  # 分享頁對應的資料 API 沒有掛登入中介層，佐證分享頁不受同一條規則限制：0 命中",
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -n \"Route::match(\\['get', 'post'\\], '/repair/\" b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- routes/web.php | grep -cF \"middleware('need_login')\"  # 正對照：修繕單總表／細節頁共用的頁面路由確實掛了 need_login，1 命中"
+     ],
+     "open_questions": [
+      "「封存」這個狀態實際的使用情境（例如什麼樣的修繕單會被封存、跟其他狀態相比差異是什麼）程式與幫助中心都沒有進一步說明，需業主補充。",
+      "程式裡另外定義了一個「進行中」狀態常數（Repair::PROCESS），但它不在總表這五個分頁對應的狀態清單裡，程式裡也沒有找到任何地方會真的把一張修繕單設成這個狀態——不確定這是還沒串接的功能、還是已經停用的舊狀態，需業主確認。"
+     ]
+    },
+    {
+     "proposed_id": "jgb/F/repair-list-search-filter",
+     "askable": "修繕單總表可以用什麼條件搜尋或篩選",
+     "title": "修繕單總表可以怎麼搜尋或篩選？（案名／地址／經理人／租客關鍵字，加上單一組「修繕單時間段」下拉：報修時間起訖／最後更新時間起訖／7 日內申請報修三選一，還有分類／項目／是否緊急）",
+     "unit_ids": [
+      "page:repair.apply",
+      "page:repair.assign",
+      "page:repair.complete",
+      "page:repair.finish",
+      "page:repair.archive"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "修繕單怎麼搜尋",
+      "修繕單列表篩選條件",
+      "怎麼找特定物件的修繕單",
+      "修繕單可以用日期篩選嗎",
+      "修繕單篩選條件怎麼重設"
+     ],
+     "sentences": [
+      "關鍵字搜尋可以指定用案名、地址、經理人或租客其中一種欄位去比對，如果不特別切換，預設是用案名去比對。",
+      "進階搜尋裡有一個「修繕單時間段」下拉選單，三個選項是「報修時間起訖」「最後更新時間起訖」「7 日內申請報修」，三選一，不是兩組各自獨立的日期區間。",
+      "切換這個下拉選單的選項時，另一種時間篩選會被清空，例如選了「最後更新時間起訖」，原本填的「報修時間起訖」就會被重設成空白，反之亦然。",
+      "進階搜尋視窗最下面有「重設條件」，點下去會把整個搜尋表單（關鍵字、時間段、分類、項目、是否緊急）都清回預設值。"
+     ],
+     "sources": [
+      "code:src/pages/repair/list/Index.vue",
+      "code:src/components/Lightbox/RepairAdvSearch.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/repair/list/Index.vue",
+       "quote_or_symbol": "default: 'estateName',"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/components/Lightbox/RepairAdvSearch.vue",
+       "quote_or_symbol": "withinSevenDays: t('[s1] 日內申請報修', [7])"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/components/Lightbox/RepairAdvSearch.vue",
+       "quote_or_symbol": "props.searchState.form.update_date_range = ['', '']"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/components/Lightbox/RepairAdvSearch.vue",
+       "quote_or_symbol": "}}>{ t('重設條件') }</div>"
+      }
+     ],
+     "not_supported_greps": [
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 show b2ee2ac382ce06763798a7238e4fd5c9411fcfaa:src/components/Lightbox/RepairAdvSearch.vue | sed -n '124,129p' | grep -cF 'date_range = '  # 切換下拉時 update_date_range 跟 apply_date_range 都會被清空重設：3 命中，不是各自獨立的兩組區間",
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -cF \"module: 'repairApplyDateRange'\" b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- src/pages/repair/list/Index.vue  # 正對照：同檔另一段獨立日期模組字串仍能被工具命中：1 命中"
+     ],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/F/repair-list-columns",
+     "askable": "修繕單總表的列表欄位分別顯示什麼",
+     "title": "修繕單總表的表格欄位顯示什麼？（物件地址、分類＆項目、報修日期、最後更新、結算金額、房東/管理者、租客）",
+     "unit_ids": [
+      "page:repair.apply",
+      "page:repair.assign",
+      "page:repair.complete",
+      "page:repair.finish",
+      "page:repair.archive"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "修繕單列表欄位說明",
+      "修繕單表格看得到什麼",
+      "修繕單總表欄位"
+     ],
+     "sentences": [
+      "每一列會顯示物件地址、分類＆項目、報修日期、「最後更新」、結算金額、房東/管理者、租客這幾個欄位。",
+      "「房東/管理者」這欄顯示的是被指派負責這張修繕單的房東方帳號；「租客」這欄顯示的是這張修繕單本身記錄到的租客資料，只有在提出這張報修申請的人是租客本人時才會有值——如果這張修繕單是房東方提出的，這欄就會是空的，系統不會另外去查這個物件目前實際的承租人是誰來補上。",
+      "如果這個分類目前尚未累積任何修繕單，表格會顯示「此分類目前尚未有修繕單」的提示文字，而不是報錯畫面。"
+     ],
+     "sources": [
+      "code:src/pages/repair/list/Index.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/repair/list/Index.vue",
+       "quote_or_symbol": "title: t('最後更新'),"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Repair.php",
+       "quote_or_symbol": "if (!empty($this->role_id) && !empty($this->to_user_id) && !empty($this->to_role_id)) {"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/RepairController.php",
+       "quote_or_symbol": "// 若是租客發起，還要填寫相對人"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/RepairController.php",
+       "quote_or_symbol": "'to_user_id'                      => null,"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/repair/list/Index.vue",
+       "quote_or_symbol": "{{ t('此分類目前尚未有修繕單') }}"
+      }
+     ],
+     "not_supported_greps": [
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -cF '此分類目前尚未有修繕單' b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- src/pages/repair/list/Index.vue  # 空清單提示文字確實存在、取代表格報錯畫面：1 命中",
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -cF 'dataSource' b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- src/pages/repair/list/Index.vue  # 正對照：表格資料來源設定同檔可命中：2 命中"
+     ],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/F/repair-list-sort-and-pagination",
+     "askable": "修繕單總表可以怎麼排序，一頁顯示幾筆",
+     "title": "修繕單總表怎麼排序、一頁看幾筆？（每頁 30／60／90 筆可選；排序選項裡的「結算金額」只有房東方帳號才看得到）",
+     "unit_ids": [
+      "page:repair.apply",
+      "page:repair.assign",
+      "page:repair.complete",
+      "page:repair.finish",
+      "page:repair.archive"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "修繕單一頁顯示幾筆",
+      "修繕單可以怎麼排序",
+      "租客可以用金額排序修繕單嗎"
+     ],
+     "sentences": [
+      "修繕單總表可以選擇每頁顯示 30、60 或 90 筆，沒有特別選擇的話預設是 30 筆。",
+      "排序選單裡有報修日期、最後更新時間、結算金額、分類、案名、租客這幾種排序方式，各自可以選由新到舊或由舊到新（或由大到小、由小到大）。",
+      "身分不是房東的帳號，排序選單裡不會出現「結算金額由大到小」跟「結算金額由小到大」這兩個選項。"
+     ],
+     "sources": [
+      "code:app/Http/Controllers/RepairController.php"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/RepairController.php",
+       "quote_or_symbol": "case 30:"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/RepairController.php",
+       "quote_or_symbol": "5 => ___('結算金額由大到小'),"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Controllers/RepairController.php",
+       "quote_or_symbol": "// 非房東則移除結算金額"
+      }
+     ],
+     "not_supported_greps": [
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -cF '// 非房東則移除結算金額' b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- app/Http/Controllers/RepairController.php  # 1 命中",
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -cF \"5 => ___('結算金額由大到小')\" b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- app/Http/Controllers/RepairController.php  # 正對照：排序選項陣列本身有定義這兩個選項，1 命中"
+     ],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/F/repair-create-button-visibility",
+     "askable": "修繕單總表右上角的「新增修繕單」按鈕什麼時候會出現",
+     "title": "「新增修繕單」按鈕誰看得到？（租客一定有；房東方要有「新增&編輯&刪除所屬」或「新增&編輯&刪除所有」修繕資料其中一項權限）",
+     "unit_ids": [
+      "page:repair.apply",
+      "page:repair.assign",
+      "page:repair.complete",
+      "page:repair.finish",
+      "page:repair.archive"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "新增修繕單按鈕在哪",
+      "誰可以新增修繕單",
+      "為什麼看不到新增修繕單按鈕"
+     ],
+     "sentences": [
+      "租客帳號登入都看得到「新增修繕單」按鈕。",
+      "房東方帳號要另外有「新增&編輯&刪除所屬修繕資料」或「新增&編輯&刪除所有修繕資料」其中一項權限，才會看到這顆按鈕。",
+      "點下去之後會先進入選擇物件的畫面，選好物件才能繼續填報修細節。"
+     ],
+     "sources": [
+      "code:src/pages/repair/list/Index.vue",
+      "code:app/Http/Controllers/UserController.php",
+      "code:src/pages/estates/pick/_parts/pick.jsx"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/repair/list/Index.vue",
+       "quote_or_symbol": "(store.state.userData?.role?.config_rule_type === 'tenant' || (store.state.userData?.role?.config_rule_type === 'landlord' && (store.state.userData?.permission?.edit_repair || store.state.userData?.permission?.edit_owner_repair)))"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "'label'=> '新增&編輯&刪除所屬修繕資料',"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/estates/pick/_parts/pick.jsx",
+       "quote_or_symbol": "case EstatePickAction.repairCreate:"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/F/repair-total-visibility",
+     "askable": "修繕單總表的結算總金額誰看得到、算的是什麼範圍",
+     "title": "「結算總金額」是什麼？（只有房東方帳號登入時才會顯示；這個數字只加總目前這一頁看得到的修繕單，換頁或換每頁筆數就會不一樣）",
+     "unit_ids": [
+      "page:repair.apply",
+      "page:repair.assign",
+      "page:repair.complete",
+      "page:repair.finish",
+      "page:repair.archive"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "修繕單結算總金額",
+      "誰看得到修繕總金額",
+      "結算總金額是全部加起來的嗎"
+     ],
+     "sentences": [
+      "「結算總金額：」這一行只有房東方帳號登入時才會顯示，租客帳號看不到。",
+      "這裡顯示的結算總金額，只是目前這一頁看得到的修繕單金額加總，不是這個分類篩選條件下全部修繕單的總和；換到下一頁或改每頁顯示筆數，這個數字就會跟著變。"
+     ],
+     "sources": [
+      "code:src/pages/repair/list/Index.vue",
+      "code:app/Http/Controllers/RepairController.php"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/repair/list/Index.vue",
+       "quote_or_symbol": "<div v-if=\"store.state.userData?.role?.config_rule_type == 'landlord'\" class=\"mb-2 lg:mb-0\">"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/RepairController.php",
+       "quote_or_symbol": "$repairs = $currentRepairsModel->paginate($perPage)->appends(request()->except('page'));"
+      }
+     ],
+     "not_supported_greps": [
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 show b2ee2ac382ce06763798a7238e4fd5c9411fcfaa:src/pages/repair/list/Index.vue | sed -n '248,256p' | grep -cF \"config_rule_type == 'tenant'\"  # 結算總金額這個區塊沒有另外針對租客身分開放的例外條件：0 命中",
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 show b2ee2ac382ce06763798a7238e4fd5c9411fcfaa:src/pages/repair/list/Index.vue | sed -n '248,256p' | grep -cF \"config_rule_type == 'landlord'\"  # 正對照（同一段落）：這個區塊確實是用 landlord 條件包起來，工具能命中：1 命中",
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -cF \"\\$listTotal += \\$repairTotal;\" b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- app/Http/Controllers/RepairController.php  # 加總迴圈在 foreach($repairs as $repair) 裡，$repairs 是分頁後的結果，不是全部篩選結果：1 命中",
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -cF \"'total' => currency_format('', \\$listTotal),\" b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- app/Http/Controllers/RepairController.php  # 正對照：total 欄位確實取自這個 $listTotal，1 命中"
+     ],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/F/repair-export-visibility",
+     "askable": "誰能匯出修繕單",
+     "title": "誰能匯出修繕單？（要另外有匯出修繕資料的權限；而且這顆按鈕只有在「新增修繕單」按鈕會出現的身分底下才會一起出現，單獨有匯出權限而沒有編輯權限的房東方帳號看不到它）",
+     "unit_ids": [
+      "page:repair.apply",
+      "page:repair.assign",
+      "page:repair.complete",
+      "page:repair.finish",
+      "page:repair.archive"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "怎麼匯出修繕單",
+      "修繕單可以匯出嗎",
+      "有匯出權限但看不到匯出按鈕"
+     ],
+     "sentences": [
+      "「匯出修繕單」這顆按鈕要另外有「匯出修繕資料」的權限才會出現。",
+      "這顆按鈕在畫面結構上是包在「新增修繕單」按鈕同一個區塊裡：只有身分是租客、或房東方帳號同時具備新增／編輯修繕權限時，這個區塊才會出現；房東方帳號如果只有匯出權限、沒有新增或編輯修繕的權限，就算有匯出權限也看不到「匯出修繕單」按鈕。",
+      "如果目前這個分類篩選條件下完全沒有修繕單，這顆「匯出修繕單」按鈕會變成無法點擊的灰階狀態。"
+     ],
+     "sources": [
+      "code:src/pages/repair/list/Index.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/repair/list/Index.vue",
+       "quote_or_symbol": "v-if=\"store.state.userData?.permission?.export_repair\""
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/repair/list/Index.vue",
+       "quote_or_symbol": "(store.state.userData?.role?.config_rule_type === 'tenant' || (store.state.userData?.role?.config_rule_type === 'landlord' && (store.state.userData?.permission?.edit_repair || store.state.userData?.permission?.edit_owner_repair)))"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/repair/list/Index.vue",
+       "quote_or_symbol": "{ 'disabled': searchState?.data?.pageNav?.total == 0 }"
+      }
+     ],
+     "not_supported_greps": [
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 show b2ee2ac382ce06763798a7238e4fd5c9411fcfaa:src/pages/repair/list/Index.vue | sed -n '256,283p' | grep -cF 'export_repair'  # 匯出按鈕的 v-if 出現在「新增修繕單」區塊(256行 col-auto ml-auto)內部，不是同一層並列：1 命中",
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 show b2ee2ac382ce06763798a7238e4fd5c9411fcfaa:src/pages/repair/list/Index.vue | sed -n '256,258p' | grep -cF 'col-auto ml-auto'  # 正對照：外層區塊開頭確實在 export_repair 判斷之前，1 命中"
+     ],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/F/repair-move-status-from-list",
+     "askable": "怎麼從修繕單總表把一張修繕單移到別的狀態分頁",
+     "title": "修繕單總表怎麼切換狀態？（每列右邊的齒輪選單有「移至」各個狀態的選項，封存後仍然可以再移回其他狀態）",
+     "unit_ids": [
+      "page:repair.apply",
+      "page:repair.assign",
+      "page:repair.complete",
+      "page:repair.finish",
+      "page:repair.archive"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "修繕單怎麼換分頁",
+      "怎麼把修繕單移到結單",
+      "修繕單狀態怎麼改",
+      "封存的修繕單可以移回來嗎"
+     ],
+     "sentences": [
+      "每一列右邊有一個齒輪選單，點開後會列出「移至『申請修繕』」「移至『安排修繕』」「移至『完成修繕』」「移至『結單』」「移至『封存』」這幾個選項（目前所在的那個狀態不會出現在清單裡）。",
+      "移動選單只給對這個物件有編輯修繕權限的房東方帳號使用；租客的齒輪選單沒有移動選項，只有一個查看／編輯用的按鈕。",
+      "封存不是最後不能回頭的狀態，被封存的修繕單一樣可以透過這個選單再移回申請修繕、安排修繕、完成修繕或結單；「結單」分頁的修繕單同樣可以再移回其他狀態，兩者在能不能移動這件事上沒有差別。",
+      "移動狀態成功之後，畫面上會跳出成功提示，並且直接把使用者帶到剛剛選擇的目標狀態分頁。"
+     ],
+     "sources": [
+      "code:app/Http/Controllers/RepairController.php"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/RepairController.php",
+       "quote_or_symbol": "'label'=> ___('移至「[s1]」', [___('封存')]),"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/RepairController.php",
+       "quote_or_symbol": "'type'=> 'edit', //move, edit"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Controllers/RepairController.php",
+       "quote_or_symbol": "'label'=> ___('移至「[s1]」', [___('申請修繕')]),"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/repair/list/Index.vue",
+       "quote_or_symbol": "window.globalNoticeShow(result.message)"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/repair/list/Index.vue",
+       "quote_or_symbol": "router.push({ name: to })"
+      }
+     ],
+     "not_supported_greps": [
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 show b2ee2ac382ce06763798a7238e4fd5c9411fcfaa:app/Http/Controllers/RepairController.php | sed -n '446,453p' | grep -cF \"'type'=> 'move'\"  # 租客分支：0 命中",
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 show b2ee2ac382ce06763798a7238e4fd5c9411fcfaa:app/Http/Controllers/RepairController.php | sed -n '409,444p' | grep -cF \"'type'=> 'move'\"  # 正對照：房東分支同一檔案同一寫法：5 命中"
+     ],
+     "open_questions": [
+      "「結單」跟「封存」兩個分頁在程式的權限判斷與移動選單邏輯上完全相同（見上面的移動邏輯），程式碼裡沒有找到任何額外規則差異；兩者在業務上除了名稱代表的意義（結單＝流程走完並與租客確認、封存＝收起來不常看）之外是否還有其他差別，需業主確認。",
+      "齒輪按鈕的文案預設是「編輯＆查看」，只有在目前登入者被判定為大房東（isBigLandlord）或是房東方裡「只能看不能編」的經理人身分時才會變成「查看」；租客分支的程式碼並沒有另外針對租客身分把文案降級成「查看」，只沿用同一顆預設變數。程式裡沒有追到 isBigLandlord 這個判斷式對租客登入的回傳值，所以無法確認租客的齒輪文案是不是永遠固定顯示「編輯＆查看」、完全不會出現「查看」，需業主確認。"
+     ]
+    },
+    {
+     "proposed_id": "jgb/F/repair-view-only-roles",
+     "askable": "哪些身分只能查看修繕單、不能編輯，哪些身分連列表都看不到",
+     "title": "哪些身分會看到「查看」而不是「編輯＆查看」的齒輪按鈕文字？（大房東角色，以及只有「顯示所屬」沒有「顯示所有」修繕資料權限的經理人帳號；這個文字只反映顯示修繕資料的權限，能不能移動狀態、能不能在細節頁編輯是另一組「編輯修繕」權限決定的，兩者互相獨立）",
+     "unit_ids": [
+      "page:repair.apply",
+      "page:repair.assign",
+      "page:repair.complete",
+      "page:repair.finish",
+      "page:repair.archive"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "大房東可以改修繕單嗎",
+      "誰只能看修繕單",
+      "查看跟編輯有什麼差別",
+      "為什麼列表裡少了幾張修繕單"
+     ],
+     "sentences": [
+      "齒輪選單裡開啟修繕單細節的按鈕，一般會顯示「編輯＆查看」；但登入身分是「大房東」時，這顆按鈕文字會變成「查看」。",
+      "房東方帳號如果對這個物件只有「顯示所屬修繕資料」的權限、還沒有「顯示所有修繕資料」的權限（也就是經理人身分），按鈕文字一樣會變成「查看」。",
+      "如果房東方帳號對這個物件連「顯示所屬修繕資料」都沒有，這張修繕單的那一列根本不會出現在列表裡，不是顯示成唯讀，是完全看不到這一列。",
+      "齒輪按鈕文字的「編輯＆查看」跟「查看」只反映顯示修繕資料的權限與是不是大房東身分；能不能移動狀態、能不能在細節頁編輯，要看另一組「編輯修繕」的權限，這兩件事是分開判斷的。大房東因為在細節頁的編輯判斷裡被直接排除，所以看到「查看」文字時也確實不能編輯或移動；但只有「顯示所屬」的經理人帳號如果同時具備編輯所屬修繕的權限，齒輪按鈕文字一樣會變成「查看」，卻仍然可以移動狀態、在細節頁編輯。"
+     ],
+     "sources": [
+      "code:app/Http/Controllers/RepairController.php",
+      "code:src/pages/repair/edit/Index.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/RepairController.php",
+       "quote_or_symbol": "$editText = ___('查看');"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/RepairController.php",
+       "quote_or_symbol": "if (!$showAllRepair && $showOwnerRepair) {"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Controllers/RepairController.php",
+       "quote_or_symbol": "if (!$showAllRepair && !$showOwnerRepair) {"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/repair/edit/Index.vue",
+       "quote_or_symbol": "&& !state.is_big_landlord"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Http/Controllers/RepairController.php",
+       "quote_or_symbol": "$canEditRepair = $this->isHasOwnerPermission($repair, 'edit_repair') || $this->isHasOwnerPermission($repair, 'edit_owner_repair');"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Http/Controllers/RepairController.php",
+       "quote_or_symbol": "if (!$showAllRepair && $showOwnerRepair) {"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Http/Controllers/RepairController.php",
+       "quote_or_symbol": "if ($canEditRepair) {"
+      }
+     ],
+     "not_supported_greps": [
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 show b2ee2ac382ce06763798a7238e4fd5c9411fcfaa:app/Http/Controllers/RepairController.php | sed -n '408,415p' | grep -cF \"'type'=> 'move'\"  # 沒有顯示所有權限、editText 變成查看的分支，往下走到加入動作那段之前，本身不含 move：0 命中",
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 show b2ee2ac382ce06763798a7238e4fd5c9411fcfaa:app/Http/Controllers/RepairController.php | sed -n '416,441p' | grep -cF \"'type'=> 'move'\"  # 正對照：緊接著的 if(\\$canEditRepair) 區塊裡確實有 5 個 move 動作：5 命中"
+     ],
+     "open_questions": [
+      "幫助中心的修繕教學不管實際權限是什麼，一律把這顆齒輪按鈕稱為「查看」（例如安排修繕、完成修繕教學都寫「選擇【查看】」），但程式預設的按鈕文字其實是「編輯＆查看」，只有大房東或只有顯示所屬權限的經理人才會看到「查看」兩個字；文件用語跟預設畫面不一致，需業主確認要不要更新教學文字。"
+     ]
+    },
+    {
+     "proposed_id": "jgb/F/repair-list-filter-category-item-urgent",
+     "askable": "修繕單總表的進階搜尋可以用分類、項目、是否緊急去篩選嗎",
+     "title": "修繕單總表可以用分類、項目、是否緊急篩選嗎？（可以；先選分類才能選項目，換分類會把已選的項目清空；「是否緊急」是一個勾選框，勾了才會加上這個條件）",
+     "unit_ids": [
+      "page:repair.apply",
+      "page:repair.assign",
+      "page:repair.complete",
+      "page:repair.finish",
+      "page:repair.archive"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "修繕單怎麼用分類篩選",
+      "修繕單搜尋可以選項目嗎",
+      "怎麼只看緊急修繕單",
+      "分類項目篩選怎麼用"
+     ],
+     "sentences": [
+      "進階搜尋裡有「分類」跟「項目」兩個下拉選單：在還沒選分類之前，「項目」裡沒有可選的選項；選了分類之後，「項目」才會變成可以選、而且選項只會列出這個分類底下的項目。",
+      "如果重新換選另一個分類，原本選的「項目」會被清空，需要重新選一次。",
+      "「是否為緊急項目」是一個勾選框，不勾就不會加上這個篩選條件；勾了之後，總表只會顯示被標記為緊急的修繕單。"
+     ],
+     "sources": [
+      "code:src/components/Lightbox/RepairAdvSearch.vue",
+      "code:src/pages/repair/list/Index.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/components/Lightbox/RepairAdvSearch.vue",
+       "quote_or_symbol": "isEmpty(state.itemOptions?.values) && ("
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/components/Lightbox/RepairAdvSearch.vue",
+       "quote_or_symbol": "props.searchState.form.item = ''"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/components/Lightbox/RepairAdvSearch.vue",
+       "quote_or_symbol": "['is_urgent'].map((key)=>{"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/repair/list/Index.vue",
+       "quote_or_symbol": "is_urgent: {"
+      }
+     ],
+     "not_supported_greps": [
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 show b2ee2ac382ce06763798a7238e4fd5c9411fcfaa:src/components/Lightbox/RepairAdvSearch.vue | sed -n '302,320p' | grep -cF \"form[key] = ''\"  # 是否緊急勾選框沒被勾選時，欄位值被設回空字串，不會帶進篩選條件：1 命中",
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 show b2ee2ac382ce06763798a7238e4fd5c9411fcfaa:src/components/Lightbox/RepairAdvSearch.vue | sed -n '302,320p' | grep -cF 'checkedValue'  # 正對照：同一段落勾選時要比對的 checkedValue 本身能被命中：2 命中"
+     ],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/F/repair-list-contact-card",
+     "askable": "修繕單總表點房東管理者或租客欄位會發生什麼事",
+     "title": "修繕單總表點「房東/管理者」或「租客」欄位會怎樣？（會彈出這個人的聯絡資訊卡）",
+     "unit_ids": [
+      "page:repair.apply",
+      "page:repair.assign",
+      "page:repair.complete",
+      "page:repair.finish",
+      "page:repair.archive"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "點房東管理者欄位會怎樣",
+      "修繕單列表點租客會出現什麼",
+      "怎麼看修繕單相關人的聯絡方式"
+     ],
+     "sentences": [
+      "點一下「房東/管理者」這一欄，會跳出一張聯絡資訊卡，顯示這個帳號的聯絡資訊；點「租客」這一欄也會跳出同樣形式的聯絡資訊卡，顯示這欄記錄到的租客聯絡資訊（如果這欄沒有聯絡人資料，畫面會跳出「沒有聯絡人資訊」的提示，另見「修繕單總表的表格欄位顯示什麼」）。"
+     ],
+     "sources": [
+      "code:src/pages/repair/list/Index.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/repair/list/Index.vue",
+       "quote_or_symbol": "@click=\"()=>contactCardState.open(agent, 'agent')\""
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/repair/list/Index.vue",
+       "quote_or_symbol": "@click=\"()=>contactCardState.open(tenant)\""
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/use/useContactCard.ts#open",
+       "quote_or_symbol": "window.globalErrorShow(t('沒有聯絡人資訊'))"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    }
+   ]
+  },
+  {
+   "coarse": "報修申請流程",
+   "unit_ids": [
+    "page:repair.applyProcess"
+   ],
+   "fines": [
+    {
+     "proposed_id": "jgb/F/repair-apply-flow-and-entry",
+     "askable": "怎麼開始申請一張新的修繕單、整體流程有哪幾步、入口在哪",
+     "title": "怎麼申請修繕單？（【修繕管理】>【修繕單總表】右上角「新增修繕單」進入，選物件→選分類項目→填報修細節→送出，按「上一步」「下一步」在步驟間切換）",
+     "unit_ids": [
+      "page:repair.applyProcess"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "怎麼新增修繕單",
+      "怎麼報修",
+      "申請修繕流程",
+      "修繕單申請入口在哪"
+     ],
+     "sentences": [
+      "申請修繕的入口在【修繕管理】>【修繕單總表】頁面右上角的「新增修繕單」按鈕。",
+      "申請修繕分成三步：先選要報修的物件，再選修繕分類與項目，最後填報修細節後送出；第一步（選物件）下方的按鈕是「取消」與「下一步」，第二步（選分類）是「上一步」與「下一步」，第三步（填細節）則是「上一步」與「申請修繕」。",
+      "租客可以自己在系統上申請報修，房東方也可以代租客申請，不管誰發起，雙方登入系統都看得到同一張修繕單的進度。",
+      "房東方帳號如果要用這個流程，帳號要有「新增&編輯&刪除所屬修繕資料」或「新增&編輯&刪除所有修繕資料」其中一項權限；租客帳號則不需要另外的權限，登入即可申請。",
+      "填完報修細節按下「申請修繕」送出後，系統會直接把使用者帶回修繕單總表的「申請修繕」分頁。",
+      "目前系統上沒有透過 LINE 直接發起報修的入口，LINE 只被用在修繕單建立之後的通知，以及把已經存在的修繕單分享出去。"
+     ],
+     "sources": [
+      "code:src/pages/repair/list/Index.vue",
+      "code:src/pages/repair/applyProcess/Index.vue",
+      "code:src/utils/constants/repair.constant.ts",
+      "code:routes/web.php",
+      "help:repair_zh-Hant.html"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "help:repair_zh-Hant.html",
+       "quote_or_symbol": "並點選右上方之【新增修繕單】"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/estates/pick/_parts/pick.jsx",
+       "quote_or_symbol": "prevText=\"取消\""
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/components/BottomNav.vue",
+       "quote_or_symbol": "default: '下一步',"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/utils/constants/repair.constant.ts",
+       "quote_or_symbol": "[ApplyProcessSteps.CATEGORIES]: '上一步',"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/utils/constants/repair.constant.ts",
+       "quote_or_symbol": "[ApplyProcessSteps.CATEGORIES]: '下一步',"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/utils/constants/repair.constant.ts",
+       "quote_or_symbol": "[ApplyProcessSteps.DETAIL]: '上一步',"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/utils/constants/repair.constant.ts",
+       "quote_or_symbol": "[ApplyProcessSteps.DETAIL]: '申請修繕',"
+      },
+      {
+       "sentence_index": 2,
+       "source": "help:repair_zh-Hant.html",
+       "quote_or_symbol": "不管是從哪一方發起「申請派修單」雙方都可以在系統上查看由管理者所安排的修繕進度。"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "'label'=> '新增&編輯&刪除所屬修繕資料',"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/pages/repair/applyProcess/Index.vue",
+       "quote_or_symbol": "router.push(redirectRoute.default)"
+      },
+      {
+       "sentence_index": 5,
+       "source": "code:src/pages/repair/edit/_parts/ApplicationDetail.vue",
+       "quote_or_symbol": "https://social-plugins.line.me/lineit/share?url="
+      }
+     ],
+     "not_supported_greps": [
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -rn 'line' b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- routes/web.php | grep -i repair  # 修繕相關路由裡沒有任何 LINE/LIFF 入口：0 命中",
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -cF 'icon_line2.svg' b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- src/pages/repair/edit/_parts/ApplicationDetail.vue  # 正對照：分享功能裡確實用了 LINE 圖示，工具能命中：1 命中",
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -c 'line' b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- routes/web.php  # 正對照（同路徑）：不限定 repair 篩選時，routes/web.php 裡關鍵字 line 本身確實能被命中，證明前一條 0 命中不是工具或路徑失效：13 命中"
+     ],
+     "open_questions": [
+      "幫助中心教學稱最後一步按鈕是「申請報修」，程式畫面上這顆按鈕的文字實際是「申請修繕」（見 repair.constant.ts），兩邊用語不一致，需業主確認何者為準、要不要統一。"
+     ]
+    },
+    {
+     "proposed_id": "jgb/F/repair-apply-without-contract",
+     "askable": "物件目前沒有租客在租，還可以申請修繕嗎",
+     "title": "沒有租約在跑的物件也能申請修繕嗎？（可以，房東方只要建好物件就能申請，不用先有合約）",
+     "unit_ids": [
+      "page:repair.applyProcess"
+     ],
+     "target_user": [
+      "property_manager",
+      "prospect"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "空屋可以報修嗎",
+      "沒租客的房子能修繕嗎",
+      "申請修繕要先有合約嗎"
+     ],
+     "sentences": [
+      "申請修繕不需要這個物件正在跑合約，房東方只要已經把物件建立在系統上，就可以幫這個物件新增修繕單；系統裡原本用合約找修繕對象的那段邏輯已經標註不再使用，改成一律以物件為主。",
+      "就算物件目前是空屋、尚無租客入住，房東方一樣可以幫這個物件申請修繕。",
+      "選擇物件那一步只需要挑物件本身，流程裡原本預留的合約欄位目前維持空白，並未被用來做任何限制或檢查。"
+     ],
+     "sources": [
+      "help:repair_zh-Hant.html",
+      "code:src/pages/repair/applyProcess/Index.vue",
+      "code:app/Http/Controllers/RepairController.php"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/RepairController.php",
+       "quote_or_symbol": "// 若有找到合約，以合約為主 2020.2.16 新需求全面綁物件，此段將不再使用"
+      },
+      {
+       "sentence_index": 1,
+       "source": "help:repair_zh-Hant.html",
+       "quote_or_symbol": "只要管理者有創好物件，都可以新增修繕單。"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/repair/applyProcess/Index.vue",
+       "quote_or_symbol": "contract: {},"
+      }
+     ],
+     "not_supported_greps": [
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -cF '// 若有找到合約，以合約為主 2020.2.16 新需求全面綁物件，此段將不再使用' b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- app/Http/Controllers/RepairController.php  # 1 命中",
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -cF '若有找到物件，以物件為主' b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- app/Http/Controllers/RepairController.php  # 正對照：緊接著的物件優先分支，1 命中",
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -n \"contract\" b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- src/pages/repair/applyProcess/  # 4 命中：Index.vue 只有表單初始化 `contract: {}`（沒有其他地方讀取它）；Detail.vue 的 `contracts?.length` 只用來決定要不要顯示『通知租客』開關，不是本題的合約限制；Pick.vue 裡還留著抓合約列表的程式（api2/repair/pick/contracts、<contract-item>），但 Index.vue 對它的匯入與樣板都整段註解掉（`// const Pick = ...`、`<!-- <Pick ... --> `），這段程式不會被載入",
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -cF 'contract: {},' b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- src/pages/repair/applyProcess/Index.vue  # 正對照：初始化那一行本身能被命中：1 命中"
+     ],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/F/repair-apply-category-item-other",
+     "askable": "報修分類項目怎麼選，找不到符合的項目時怎麼辦",
+     "title": "報修分類項目怎麼選？（分類與項目都是系統設定的清單，選好之後在報修細節可以按「編輯」回上一步重選；有一個特定分類會多出讓使用者自己輸入名稱的欄位）",
+     "unit_ids": [
+      "page:repair.applyProcess"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "修繕項目沒有我要的怎麼辦",
+      "報修分類怎麼選",
+      "自訂修繕項目名稱"
+     ],
+     "sentences": [
+      "選好報修物件後，系統會列出修繕分類跟項目讓使用者點選，項目是圖示卡片的形式；分類跟項目的清單內容是後台設定的資料，不是寫死在畫面上。",
+      "分類清單裡有一個分類被畫面認定為特殊分類：選到這個分類時，報修細節畫面會多出「自定義分類名稱」的輸入欄位，提示文字是「請輸入自定義分類名稱」，讓使用者自己打字說明要報修的項目。",
+      "選好分類和項目之後，在「報修細節」畫面上還可以點「編輯」，回到上一步重新挑選分類與項目。"
+     ],
+     "sources": [
+      "code:app/Repair.php",
+      "code:src/utils/enums/repair.enum.ts",
+      "code:src/pages/repair/applyProcess/_parts/Detail.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:app/Repair.php",
+       "quote_or_symbol": "$repairCategories = DB::table('repair_categories')->where('active', 1)->get();"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/repair/applyProcess/_parts/Detail.vue",
+       "quote_or_symbol": ":placeholder=\"t('請輸入自定義分類名稱')\""
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/repair/applyProcess/_parts/Detail.vue",
+       "quote_or_symbol": "{{ t('編輯') }}"
+      }
+     ],
+     "not_supported_greps": [
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -rn '其他' b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- database/migrations/ database/seeders/ 2>/dev/null | grep -i repair  # 修繕分類/項目的名稱完全來自 DB 查詢，程式與遷移檔裡沒有寫死的「其他」分類字串：0 命中",
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -rn '其他' b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- database/migrations/ database/seeders/ 2>/dev/null | wc -l  # 正對照（同路徑）：拿掉 repair 篩選後，同樣的路徑跟關鍵字工具確實能大量命中，證明前一條 0 命中不是路徑或工具失效：21 命中",
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -cF \"'label' => \\$repairCategory->name,\" b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- app/Repair.php  # 正對照：分類清單的 label 直接取自 DB 欄位，工具能命中：1 命中"
+     ],
+     "open_questions": [
+      "畫面用一個固定的分類 id（enum Categories.OTHER = 11）判斷要不要顯示自訂名稱欄位，但程式碼裡找不到任何字串證據證明資料庫裡 id 11 這筆分類目前真的叫「其他」——這個對應只存在於前端寫死的數字，需業主查證資料庫內容或提供對應說明。"
+     ]
+    },
+    {
+     "proposed_id": "jgb/F/repair-apply-detail-fields",
+     "askable": "報修細節要填哪些欄位，哪些是必填的",
+     "title": "報修細節要填什麼？（項目分類、問題必填；預約時段依身分決定是否必填；緊急修繕、佐證照片、備註選填；「通知及同步租客」是房東代租客申請時會看到的一個開關，但目前沒有實際作用）",
+     "unit_ids": [
+      "page:repair.applyProcess"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "修繕單要填哪些資料",
+      "報修細節必填欄位",
+      "申請修繕表單欄位"
+     ],
+     "sentences": [
+      "「項目分類」跟「問題」是必填欄位，問題可以從系統列出的選項裡選，也可以選「其他」自己輸入文字說明。",
+      "「緊急修繕」「佐證照片或影片」「備註」都是選填欄位，不是必填；「緊急修繕」旁邊的說明文字寫著：如果開啟「緊急修繕」，廠商將視狀況增加修繕費用，請斟酌使用。",
+      "如果是房東方幫目前有租客的物件申請修繕，畫面會多顯示一個標示為必填的「通知及同步租客」切換開關，說明文字是「本物件有租客承租中，是否要通知及同步於您租客的修繕單總表？」；但這個開關目前沒有接上任何切換或儲存的邏輯，點擊它不會改變畫面呈現，也不會影響送出的資料。",
+      "「緊急修繕」的勾選框同樣沒有接上切換邏輯，不管使用者有沒有點擊，這張修繕單送出後在系統裡都會被記錄成「非緊急」。",
+      "備註欄位是用來寫其他想讓維修師傅知道的注意事項。"
+     ],
+     "sources": [
+      "code:src/pages/repair/applyProcess/_parts/Detail.vue",
+      "code:src/pages/repair/applyProcess/Index.vue",
+      "code:src/components/SwitchButton.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/repair/applyProcess/_parts/Detail.vue",
+       "quote_or_symbol": "請定義問題，方便維修師傅快速了解狀況。"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/repair/applyProcess/_parts/Detail.vue",
+       "quote_or_symbol": "如果開啟「緊急修繕」，廠商將視狀況增加修繕費用，請斟酌使用。"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/repair/applyProcess/_parts/Detail.vue",
+       "quote_or_symbol": "<SwitchButton :model=\"repairForm.is_notice_tenant\" />"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/repair/applyProcess/_parts/Detail.vue",
+       "quote_or_symbol": "<input :model=\"repairForm.is_urgent\" class=\"block\" type=\"checkbox\" />"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/pages/repair/applyProcess/_parts/Detail.vue",
+       "quote_or_symbol": "如有其他狀況需要師傅知道的，請在備註欄內填寫。"
+      }
+     ],
+     "not_supported_greps": [
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -c 'v-model' b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- src/components/SwitchButton.vue  # SwitchButton 元件本身宣告的是 modelValue／update:modelValue，沒有叫做 model 的 prop：0 命中",
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -cF 'modelValue' b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- src/components/SwitchButton.vue  # 正對照：元件確實是用 modelValue 這個 prop 名稱，工具能命中：8 命中",
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -n 'is_notice_tenant' b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- src/pages/repair/applyProcess/Index.vue  # 表單初始值固定為 false，且這個檔案裡沒有其他地方把它設成 true：只在初始化那行出現 1 次",
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -n 'is_notice_tenant' b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- app/Role.php  # 正對照：租客清單真的用 is_notice_tenant=1 當篩選條件，工具能命中：1 命中"
+     ],
+     "open_questions": [
+      "「通知及同步租客」開關跟「緊急修繕」勾選框都只用 :model 綁定（元件實際的 prop 叫 modelValue），沒有接 v-model 或任何 change 事件，畫面上看得到、點了卻沒有效果；這會導致房東方申請修繕時，該張單永遠不會同步進租客自己的修繕單總表（is_notice_tenant 卡在預設值），緊急修繕也永遠送出「非緊急」。這是程式錯誤（bug）而非設計行為，需要業主確認要不要排入修復。",
+      "後端常數 Repair::EMERGENCY_STATUS 定義的註解寫「非緊急」，但 RepairController／UserController／RepairService 等呼叫端全部把它當「緊急」使用（is_urgent = (status === EMERGENCY_STATUS)），External/RepairApiController 甚至直接把它的中文對應寫成「非緊急」，跟 RepairService 裡同一個常數對應「緊急」互相矛盾；命名/註解跟實際用法顛倒，需業主確認正確語意，避免之後改程式的人被常數名稱誤導。"
+     ]
+    },
+    {
+     "proposed_id": "jgb/F/repair-apply-reservation-slots",
+     "askable": "預約修繕時段要怎麼填，租客跟房東的規則一樣嗎",
+     "title": "預約時段規則是什麼？（畫面上標示為必填，但實際上只有租客身分申請時系統才會擋下沒填的情況；房東申請時就算不填也能送出）",
+     "unit_ids": [
+      "page:repair.applyProcess"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "修繕預約時段怎麼填",
+      "租客要選維修時間嗎",
+      "可以約幾個修繕時段"
+     ],
+     "sentences": [
+      "「預約時段」這個欄位在畫面上一律標示為必填，但真正會擋下「沒填就不能送出」的檢查，只有在申請人身分是租客時才會生效；身分是房東方時，就算完全不填，送出按鈕一樣可以按。",
+      "每組時段可以選日期跟一段從幾點到幾點的時間，最多可以「新增時段」到 5 組。",
+      "頁面上會提醒這個物件所在的時區，方便使用者知道填的時間是以哪個時區為準。"
+     ],
+     "sources": [
+      "code:src/pages/repair/applyProcess/Index.vue",
+      "code:src/pages/repair/applyProcess/_parts/Detail.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/repair/applyProcess/Index.vue",
+       "quote_or_symbol": "return (store.state.userData?.role?.config_rule_type === 'tenant')"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/repair/applyProcess/_parts/Detail.vue",
+       "quote_or_symbol": "repairForm.tenant_order_times.length < 5"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/repair/applyProcess/_parts/Detail.vue",
+       "quote_or_symbol": "此物件的所在時區為：[s1]"
+      }
+     ],
+     "not_supported_greps": [
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 show b2ee2ac382ce06763798a7238e4fd5c9411fcfaa:src/pages/repair/applyProcess/Index.vue | sed -n '48,58p' | grep -cF ': true'  # 非租客身分時 isOrderTimeOk 三元運算式直接回傳 true，不檢查有沒有填：1 命中",
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 show b2ee2ac382ce06763798a7238e4fd5c9411fcfaa:src/pages/repair/applyProcess/Index.vue | sed -n '48,58p' | grep -cF \"config_rule_type === 'tenant'\"  # 正對照：同一段確實有租客身分判斷，工具能命中：1 命中"
+     ],
+     "open_questions": [
+      "「預約時段」欄位在畫面上（RepairDetailItemBlock 的 isRequired）一律顯示紅字必填提示，但實際送出驗證只針對租客身分生效，房東方申請時看到的必填標示跟系統實際行為不一致，需業主確認是要改成非租客也不顯示必填提示，還是要補上驗證。"
+     ]
+    },
+    {
+     "proposed_id": "jgb/F/repair-apply-photo-limit",
+     "askable": "報修時可以上傳照片或影片嗎，有沒有數量或格式限制",
+     "title": "報修可以附照片或影片嗎？（照片最多 10 張；影片最長 30 秒或 100MB；支援 jpeg／jpg／png 圖片與 mov／mp4／webm 影片）",
+     "unit_ids": [
+      "page:repair.applyProcess"
+     ],
+     "target_user": [
+      "property_manager",
+      "prospect"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "報修可以傳照片嗎",
+      "修繕單附件限制",
+      "報修影片大小限制",
+      "修繕照片幾張"
+     ],
+     "sentences": [
+      "申請修繕時可以上傳損壞處的照片或影片，方便維修師傅快速了解狀況；照片最多可以放 10 張，影片最長 30 秒或 100MB。",
+      "支援的圖片格式是 jpeg、jpg、png，影片格式是 mov、mp4、webm。",
+      "如果選擇的照片已經到 10 張的上限，上傳入口就會收起來，要先刪掉幾張才能繼續加。"
+     ],
+     "sources": [
+      "code:src/pages/repair/applyProcess/_parts/Detail.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/repair/applyProcess/_parts/Detail.vue",
+       "quote_or_symbol": "可上傳損壞處的照片或影片，方便維修師傅快速了解狀況，照片至多 10 張，影片最長 30 秒或 100MB。"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/repair/applyProcess/_parts/Detail.vue",
+       "quote_or_symbol": "可支援圖片格式：jpeg、jpg、png，影片格式：mov、mp4、webm。"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/repair/applyProcess/_parts/Detail.vue",
+       "quote_or_symbol": "repairForm.apply_photos.length<10"
+      }
+     ],
+     "not_supported_greps": [
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -n 'apply_photos.length<10' b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- src/pages/repair/applyProcess/_parts/Detail.vue  # 上傳入口只有在照片數量小於 10 張時才會顯示：1 命中",
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -n 'apply_photos.length>0' b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- src/pages/repair/applyProcess/_parts/Detail.vue  # 正對照（同檔）：同一個陣列另一種長度判斷式工具也能命中：1 命中"
+     ],
+     "open_questions": [
+      "說明文字把「照片至多 10 張」跟「影片最長 30 秒或 100MB」寫在同一句，但程式裡找不到證據顯示這是同一個總額度、以先到的限制為準——比較像是照片、影片各自獨立的兩條限制。這句話該怎麼理解需業主確認。"
+     ]
+    },
+    {
+     "proposed_id": "jgb/F/repair-apply-notifications",
+     "askable": "申請修繕送出後，誰會收到通知",
+     "title": "新增修繕單後誰會收到通知？（租客本人、團隊擁有者會收到 Email，租客如果有綁定 LINE 也會收到 LINE 通知）",
+     "unit_ids": [
+      "page:repair.applyProcess"
+     ],
+     "target_user": [
+      "property_manager",
+      "prospect"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "申請修繕會通知誰",
+      "報修後誰會知道",
+      "修繕單送出通知"
+     ],
+     "sentences": [
+      "新增修繕單成功之後，租客跟團隊擁有者都會收到 Email 通知，如果租客的帳號有綁定 LINE，也會另外收到 LINE 通知。",
+      "送出成功後，畫面上也會另外跳出成功提示訊息，讓使用者知道這張修繕單已經建立好了。",
+      "送出後系統會直接把畫面帶回修繕單總表的「申請修繕」分頁，不需要額外操作確認。"
+     ],
+     "sources": [
+      "help:repair_zh-Hant.html",
+      "code:src/pages/repair/applyProcess/Index.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "help:repair_zh-Hant.html",
+       "quote_or_symbol": "如【新增修繕單】成功，租客、團隊擁有者都會收到email的通知，如租客有綁定Line也會收到通知。"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/repair/applyProcess/Index.vue",
+       "quote_or_symbol": "window.globalNoticeShow(result.message)"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/repair/applyProcess/Index.vue",
+       "quote_or_symbol": "router.push(redirectRoute.default)"
+      }
+     ],
+     "not_supported_greps": [
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -n 'router.push(redirectRoute.default)' b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- src/pages/repair/applyProcess/Index.vue  # 這行字串在檔案裡共出現 3 次（161／172／178行），只有 161 行位在送出成功的分支內；172／178 行是路由守衛在網址缺少 step 參數時的重導，跟送出動作無關：3 命中",
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -cF 'globalNoticeShow' b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- src/pages/repair/applyProcess/Index.vue  # 正對照：同檔的成功提示呼叫確實能被命中：1 命中"
+     ],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/F/repair-notifications-by-stage",
+     "askable": "除了新增修繕單，安排廠商、完成修繕、結單這幾個時機還會通知誰",
+     "title": "安排廠商、完成修繕、結單時還會發哪些通知？（依幫助中心教學：填寫廠商資訊後、完成修繕儲存後、移到結單狀態時，租客或團隊都會再收到一次通知）",
+     "unit_ids": [
+      "page:repair.edit"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "安排修繕會通知租客嗎",
+      "完成修繕後誰會知道",
+      "修繕單結單會通知誰"
+     ],
+     "sentences": [
+      "管理者點「填寫廠商資訊」更新安排資訊時，如果物件有簽訂租約、租客有綁定 LINE，租客會在 LINE 跟系統右上角的通知中心收到通知。",
+      "管理者在「完成修繕」區塊儲存備註後，租客如果有綁定 LINE 會收到完成修繕的通知；沒有綁定 LINE 的話，登入系統也可以在右上角通知中心看到訊息。",
+      "管理者把修繕單的狀態移入「結單」時，租客、團隊管理者都會收到 Email、LINE、通知中心三種通知。"
+     ],
+     "sources": [
+      "help:repair_zh-Hant.html"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "help:repair_zh-Hant.html",
+       "quote_or_symbol": "如此物件有簽訂租約，並且租客有把帳號綁定Line，租客將在Line與登進系統右上角的通知中心收到通知。"
+      },
+      {
+       "sentence_index": 1,
+       "source": "help:repair_zh-Hant.html",
+       "quote_or_symbol": "管理者編輯儲存後，租客如有綁定Line將會收到完成修繕的通知，如沒有綁定Line，租客登進系統也可以於右上方的通知中心看到訊息，並可以進到修繕頁面進行驗收。"
+      },
+      {
+       "sentence_index": 2,
+       "source": "help:repair_zh-Hant.html",
+       "quote_or_symbol": "當管理者把修繕單的狀態移入【結單】狀態，租客、團隊管理者都會收到Email、Line、通知中心的通知。"
+      }
+     ],
+     "not_supported_greps": [
+      "grep -coF '如沒有綁定Line，租客登進系統也可以於右上方的通知中心看到訊息' '/Users/chenqinghuang/dev/work/docs/幫助中心/JGB幫助中心_HTML_交付_20260818/repair_zh-Hant.html'  # 沒綁 LINE 仍能在通知中心看到的段落確實存在：1 命中",
+      "grep -oF '分享主頁' '/Users/chenqinghuang/dev/work/docs/幫助中心/JGB幫助中心_HTML_交付_20260818/repair_zh-Hant.html' | wc -l  # 正對照：同一份文件裡另一段字串也能被命中（同一行出現兩次，用 -c 只算行數會誤植成 1，改用 -o 逐次計數）：2 命中"
+     ],
+     "open_questions": []
+    }
+   ]
+  },
+  {
+   "coarse": "修繕單編輯",
+   "unit_ids": [
+    "page:repair.edit"
+   ],
+   "fines": [
+    {
+     "proposed_id": "jgb/F/repair-edit-progress-timeline",
+     "askable": "修繕單細節頁的進度時間軸顯示什麼",
+     "title": "修繕單細節頁的進度時間軸顯示什麼？（申請修繕、安排修繕、完成修繕、結單、封存五個階段各自的日期，還沒到的階段不顯示日期）",
+     "unit_ids": [
+      "page:repair.edit"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "修繕單進度怎麼看",
+      "修繕單細節頁面",
+      "修繕單時間軸"
+     ],
+     "sentences": [
+      "點進一張修繕單的細節頁，最上面會有一條時間軸，依序是申請修繕、安排修繕、完成修繕、結單、封存五個階段，每個階段下面會顯示對應的日期，還沒到的階段則不顯示日期。",
+      "如果直接打開修繕單細節頁的網址、但網址裡沒有帶修繕單編號，系統會直接把使用者導回修繕單總表的「申請修繕」分頁。"
+     ],
+     "sources": [
+      "code:src/pages/repair/edit/Index.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/repair/edit/Index.vue",
+       "quote_or_symbol": "labelKey: '安排修繕',"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/repair/edit/Index.vue",
+       "quote_or_symbol": "if (isEmpty(route.params?.id)){"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/F/repair-edit-print",
+     "askable": "修繕單細節頁可以列印嗎",
+     "title": "修繕單細節頁怎麼列印？（右上角有「列印」按鈕，會叫出瀏覽器內建的列印視窗，可以印出來或存成 PDF）",
+     "unit_ids": [
+      "page:repair.edit"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "修繕單怎麼列印",
+      "修繕單可以存成 PDF 嗎"
+     ],
+     "sentences": [
+      "頁面右上角有「列印」按鈕，可以把這張修繕單的內容印出來。",
+      "點「列印」的時候，系統會叫出瀏覽器本身的列印視窗，讓使用者選擇要印出來還是存成 PDF。"
+     ],
+     "sources": [
+      "code:src/pages/repair/edit/Index.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/repair/edit/Index.vue",
+       "quote_or_symbol": "{{ t('列印') }}"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/repair/edit/Index.vue",
+       "quote_or_symbol": "window.print()"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/F/repair-edit-switch-status",
+     "askable": "在修繕單細節頁怎麼直接切換這張修繕單的狀態",
+     "title": "修繕單細節頁怎麼切換狀態？（下拉選單直接選要換到哪個階段，按「變更」儲存）",
+     "unit_ids": [
+      "page:repair.edit"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "修繕單細節頁怎麼改狀態",
+      "怎麼在修繕單裡面切換階段",
+      "細節頁的狀態下拉選單怎麼用",
+      "選了狀態沒按變更會生效嗎"
+     ],
+     "sentences": [
+      "有編輯權限的房東方帳號，在細節頁會看到「切換狀態」區塊，說明文字是「房東可根據實務狀況隨時切換修繕單的狀態。」，用下拉選單選好想要的階段後按「變更」就會儲存。",
+      "租客帳號跟大房東角色打開這個頁面時，看不到「切換狀態」這個區塊，只有具備編輯修繕權限的房東方帳號才看得到。",
+      "選好想要的階段之後要按「變更」這顆按鈕，系統才會真的儲存，不是選了就自動生效。"
+     ],
+     "sources": [
+      "code:src/pages/repair/edit/Index.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/repair/edit/Index.vue",
+       "quote_or_symbol": "{{ t('房東可根據實務狀況隨時切換修繕單的狀態。') }}"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/repair/edit/Index.vue",
+       "quote_or_symbol": "&& !state.is_big_landlord"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/repair/edit/Index.vue",
+       "quote_or_symbol": "{{ t('變更') }}"
+      }
+     ],
+     "not_supported_greps": [
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -cF 'v-if=\"canEditRepair\"' b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- src/pages/repair/edit/Index.vue  # 「切換狀態」區塊只有這一個 v-if 條件包住，1 命中",
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -cF 'const canEditRepair = computed' b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- src/pages/repair/edit/Index.vue  # 正對照：這顆 computed 的定義本身能被命中，1 命中"
+     ],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/F/repair-edit-cannot-edit-roles",
+     "askable": "哪些身分打開修繕單細節頁不能編輯、只能看",
+     "title": "誰不能編輯修繕單細節頁？（租客帳號、大房東角色都只能看，不能切換狀態、不能改廠商資訊、不能寫房東備註）",
+     "unit_ids": [
+      "page:repair.edit"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "租客可以改修繕單嗎",
+      "大房東可以編輯修繕單嗎",
+      "誰能改修繕單內容"
+     ],
+     "sentences": [
+      "租客帳號跟大房東角色打開修繕單細節頁，都只能看內容，看不到「切換狀態」區塊，也不能編輯安排修繕的廠商資訊或填寫房東備註。",
+      "房東方帳號要有「新增&編輯&刪除所屬修繕資料」或「新增&編輯&刪除所有修繕資料」其中一項權限，而且不是大房東角色，才能編輯這張修繕單。",
+      "在「安排修繕」廠商資訊那一塊，就算已經有安排紀錄，租客跟大房東角色一樣看不到可以重新編輯的圖示。"
+     ],
+     "sources": [
+      "code:src/pages/repair/edit/Index.vue",
+      "code:src/pages/repair/edit/_parts/VendorContactSection.vue",
+      "code:app/Http/Controllers/UserController.php"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/repair/edit/Index.vue",
+       "quote_or_symbol": "&& !state.is_big_landlord"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "'label'=> '新增&編輯&刪除所有修繕資料',"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/repair/edit/_parts/VendorContactSection.vue",
+       "quote_or_symbol": "!state.isTenant && !props.isBigLandlord && props?.canEditRepair"
+      }
+     ],
+     "not_supported_greps": [
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -n 'canEditRepair' b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- src/pages/repair/edit/Index.vue  # 切換狀態(v-if)、VendorContactSection、MemoArea(isAllowedEdit) 都吃同一顆 computed，且該 computed 排除 isTenant 與 is_big_landlord：4 命中（含 75 行定義）",
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 show b2ee2ac382ce06763798a7238e4fd5c9411fcfaa:src/pages/repair/edit/Index.vue | sed -n '75,79p' | grep -cF '!isTenant.value'  # 正對照：定義本身含 !isTenant.value，1 命中",
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -cF '!state.isTenant && !props.isBigLandlord && props?.canEditRepair' b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- src/pages/repair/edit/_parts/VendorContactSection.vue  # 廠商資訊重新編輯圖示的 v-if 同時排除三種情況：1 命中",
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -cF 'icon_edit_blue.svg' b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- src/pages/repair/edit/_parts/VendorContactSection.vue  # 正對照：編輯圖示本身確實存在於樣板裡：1 命中"
+     ],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/F/repair-edit-application-detail-readonly",
+     "askable": "修繕單細節頁上半段的報修資料顯示什麼",
+     "title": "修繕單細節頁顯示哪些報修時填的資料？（「細節補充」區塊底下：申請日期、是否緊急、照片、聯絡電話或 Email、物件區域與時區、分類項目、問題、備註、預約時段；房東方才看得到「細節補充」這個標題與說明文字）",
+     "unit_ids": [
+      "page:repair.edit"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "修繕單細節頁看得到什麼",
+      "修繕單申請內容在哪看",
+      "細節補充是什麼",
+      "報修資料能不能在細節頁改"
+     ],
+     "sentences": [
+      "報修資料連同安排修繕的廠商資訊，都放在「細節補充」這個大標題底下；這個標題跟說明文字「以下資訊房東可根據實務狀況補充填寫，如有提供，您的租客也會看到您提供的資訊。」只有房東方帳號看得到，租客登入看不到這個標題（但底下的報修資料內容租客一樣看得到）。",
+      "細節頁會原樣顯示報修時填的資料，包含物件區域、物件時區、分類項目、問題、備註、預約時段這幾個欄位，這一段是唯讀的，不能在這裡直接修改。",
+      "電話跟Email顯示的是這張修繕單的房東方身分：如果這張單所屬的房東方是「團隊」身分，這裡顯示的會是「公司電話」跟「公司Email」；如果是「個人房東」身分，則顯示「手機號碼」跟「Email」——這是根據修繕單本身記錄的房東方身分與帳號決定的，不是根據當初提出這張報修申請的人。",
+      "只有這張修繕單被標記為緊急，這裡才會在申請日期旁邊多顯示一個「緊急」的標籤；但目前透過網頁申請修繕的流程，「緊急修繕」勾選框並沒有接上實際邏輯，勾了也不會讓這張單被標記為緊急（另見「報修細節要填哪些欄位，哪些是必填的」）。"
+     ],
+     "sources": [
+      "code:src/pages/repair/edit/Index.vue",
+      "code:src/pages/repair/edit/_parts/ApplicationDetail.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/repair/edit/Index.vue",
+       "quote_or_symbol": "{{ t('細節補充') }}"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/repair/edit/_parts/ApplicationDetail.vue",
+       "quote_or_symbol": "{{ t('物件區域') }}"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Controllers/RepairController.php",
+       "quote_or_symbol": "// 電話＆email（根據該修繕單的對應房東身份＆使用者）"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Controllers/RepairController.php",
+       "quote_or_symbol": "'is_company' => ($repairRole->config_rule_key === 3), // 是否為團隊"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/repair/edit/_parts/ApplicationDetail.vue",
+       "quote_or_symbol": "v-show=\"is_urgent\""
+      }
+     ],
+     "not_supported_greps": [
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 show b2ee2ac382ce06763798a7238e4fd5c9411fcfaa:src/pages/repair/edit/Index.vue | sed -n '444,448p' | grep -cF 'v-if=\"!isTenant\"'  # 「細節補充」標題外層 div 對租客隱藏：1 命中",
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -cF \"<ApplicationDetail\" b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- src/pages/repair/edit/Index.vue  # 正對照：緊接著的 ApplicationDetail 元件本身沒有被同一個 v-if 包住，租客一樣看得到內容：1 命中"
+     ],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/F/repair-edit-vendor-assign",
+     "askable": "怎麼在修繕單裡填寫安排的廠商跟維修人員資訊",
+     "title": "怎麼安排修繕廠商？（填寫修繕時間、廠商名稱、維修人員、聯絡電話，儲存後會留下歷史紀錄可以展開查看）",
+     "unit_ids": [
+      "page:repair.edit"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "怎麼填廠商資訊",
+      "修繕單怎麼指派維修人員",
+      "廠商聯絡資料怎麼填"
+     ],
+     "sentences": [
+      "還沒安排廠商時，有編輯權限的帳號會看到「填寫廠商資訊」按鈕，不具編輯權限的帳號則只會看到「安排修繕廠商中」的文字。",
+      "填寫的欄位是修繕時間、廠商名稱、維修人員、聯絡電話，儲存後畫面會顯示這幾個欄位，並且多一個「編輯時間」記錄最後修改的時間。",
+      "如果同一張修繕單改派過不只一次廠商，可以點「展開歷史紀錄」看到之前每一次安排的紀錄。"
+     ],
+     "sources": [
+      "code:src/pages/repair/edit/_parts/VendorContactSection.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/repair/edit/_parts/VendorContactSection.vue",
+       "quote_or_symbol": "{{ t('填寫廠商資訊') }}"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/repair/edit/_parts/VendorContactSection.vue",
+       "quote_or_symbol": "label: t('編輯時間'),"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/repair/edit/_parts/VendorContactSection.vue",
+       "quote_or_symbol": "{{ t('展開歷史紀錄') }}"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/F/repair-edit-landlord-complete-memo",
+     "askable": "房東備註要填什麼",
+     "title": "「房東備註」要填什麼？（完成時間、備註文字最多 300 字、可以附照片，最多 10 張、單檔最大 10MB、支援 JPG／PNG／PDF；只有有編輯權限的房東方帳號能編輯）",
+     "unit_ids": [
+      "page:repair.edit"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "房東備註在哪填",
+      "房東備註可以放照片嗎",
+      "備註字數限制多少"
+     ],
+     "sentences": [
+      "「完成修繕」這個區塊分左右兩欄，左邊是「房東備註」，可以填完成時間、結算金額、備註文字跟照片，只有有編輯權限的房東方帳號能編輯。",
+      "備註文字最多可以輸入 300 字。",
+      "照片最多可以放 10 張，支援 JPG、PNG、PDF 檔，單一檔案大小最大 10MB。"
+     ],
+     "sources": [
+      "code:src/pages/repair/edit/Index.vue",
+      "code:src/pages/repair/_parts/MemoArea.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/repair/edit/Index.vue",
+       "quote_or_symbol": "{{ t('完成修繕') }}"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/repair/_parts/MemoArea.vue",
+       "quote_or_symbol": "{{ t('至多 [s1] 字。', [300]) }}"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/repair/_parts/MemoArea.vue",
+       "quote_or_symbol": "支援JPG、PNG、PDF檔，至多 [s1] 張，檔案大小最大 [s2] MB。"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/F/repair-edit-amount-visibility",
+     "askable": "修繕結算金額只有房東看得到嗎，填了金額之後有沒有帳單",
+     "title": "修繕結算金額誰看得到？（「結算金額」欄位只有身分是房東的帳號才會顯示，租客看不到；這筆金額目前只是修繕單自己的紀錄文字，沒有找到跟帳單模組串接的路徑）",
+     "unit_ids": [
+      "page:repair.edit"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "修繕結算金額怎麼填",
+      "完成修繕怎麼登記費用",
+      "修繕金額會變成帳單嗎"
+     ],
+     "sentences": [
+      "「結算金額」這個欄位只有身分是房東的帳號才會顯示，租客登入後看不到金額。",
+      "修繕單裡填的結算金額目前不會自動產生帳單，是修繕單自己的紀錄。"
+     ],
+     "sources": [
+      "code:src/pages/repair/edit/Index.vue",
+      "code:app/Http/Controllers/RepairController.php"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/repair/edit/Index.vue",
+       "quote_or_symbol": ":showAmount=\"store.state.userData?.role?.config_rule_type === 'landlord'\""
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/RepairController.php",
+       "quote_or_symbol": "'total' => isset($repair->total) ? exchange_currency($repair->currency, $repair->currency, $repair->total, ['suffixFormat' => true, 'thousandFormat' => true]) : null,"
+      }
+     ],
+     "not_supported_greps": [
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -cF 'Bill::' b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- app/Http/Controllers/RepairController.php  # 修繕單控制器完全沒有引用帳單 Model：0 命中",
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -cF 'Bill::' b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- app/Http/Controllers/ContractController.php  # 正對照：合約控制器確實大量使用 Bill::，工具能命中：18 命中"
+     ],
+     "open_questions": [
+      "修繕單裡的「結算金額」目前看起來只是紀錄用的文字欄位，程式碼裡沒有找到它跟帳單模組之間的任何串接，也就是說填了金額不會自動產生一筆帳單給房東或租客；這是否符合預期（例如帳單是另外手動開立），需業主確認。"
+     ]
+    },
+    {
+     "proposed_id": "jgb/F/repair-edit-tenant-memo",
+     "askable": "房客備註是什麼，什麼時候會有這個欄位",
+     "title": "「房客備註」是什麼？（右邊那一欄，只有這張修繕單有填過預約時段才會出現，沒有的話會顯示「此修繕單為房東發起，無房客備註」）",
+     "unit_ids": [
+      "page:repair.edit"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "房客備註在哪",
+      "修繕單為什麼沒有房客備註",
+      "租客可以留言嗎"
+     ],
+     "sentences": [
+      "「完成修繕」右邊那一欄是「房客備註」，只放備註文字跟照片，不包含完成時間或結算金額欄位。",
+      "只有這張修繕單當初有填過預約時段（代表是租客那邊發起，或房東幫忙填了預約時段），系統才會顯示房客備註區塊；如果是房東發起、尚未填寫預約時段，這一欄會改成顯示「此修繕單為房東發起，無房客備註。」。",
+      "房客備註只有租客自己的帳號能編輯，房東方帳號打開這一區只能查看，看不到編輯圖示。"
+     ],
+     "sources": [
+      "code:src/pages/repair/edit/Index.vue",
+      "code:src/pages/repair/_parts/MemoArea.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/repair/edit/Index.vue",
+       "quote_or_symbol": "{{ t('房客備註') }}"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/repair/edit/Index.vue",
+       "quote_or_symbol": "{{ t('此修繕單為房東發起，無房客備註。') }}"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/repair/edit/Index.vue",
+       "quote_or_symbol": ":isAllowedEdit=\"!state.tenantMemoEditing && isTenant\""
+      }
+     ],
+     "not_supported_greps": [
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -cF 'v-if=\"props?.isAllowedEdit && !props?.isEditing\"' b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- src/pages/repair/_parts/MemoArea.vue  # 編輯圖示由 isAllowedEdit 這顆 prop 單獨控制：1 命中",
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -cF 'icon_edit_' b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- src/pages/repair/_parts/MemoArea.vue  # 正對照：編輯圖示的圖檔本身確實存在於樣板裡：2 命中",
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -n 'isAllowedEdit=\"!state.tenantMemoEditing && isTenant\"' b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- src/pages/repair/edit/Index.vue  # 房東方帳號打開時 isTenant 為 false，isAllowedEdit 傳入 false：1 命中"
+     ],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/F/repair-edit-share-to-vendor",
+     "askable": "怎麼把修繕單分享給合作的水電廠商",
+     "title": "怎麼把修繕單分享出去給廠商？（在修繕單細節頁點「分享」，可以複製連結，也可以直接用 LINE 分享出去；廠商點開連結不需要登入 JGB 帳號）",
+     "unit_ids": [
+      "page:repair.edit"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "修繕單怎麼分享給廠商",
+      "怎麼把修繕單傳給水電行",
+      "修繕單連結怎麼複製"
+     ],
+     "sentences": [
+      "在修繕單細節頁裡，非租客身分的帳號會看到「分享訊息」區塊，說明文字是「如有配合的廠商，可使用下方分享功能，即可將申請單細節轉給廠商。」，點「分享」按鈕會開啟「分享修繕申請單」視窗。",
+      "分享視窗裡有兩種方式：複製修繕單連結，或是用 LINE 分享出去。",
+      "廠商拿到這個連結之後，打開它不需要先登入 JGB 帳號（另見「看修繕單分享頁需要先登入嗎」）。"
+     ],
+     "sources": [
+      "code:src/pages/repair/edit/_parts/ApplicationDetail.vue",
+      "code:app/Http/Middleware/LoginCheck.php"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/repair/edit/_parts/ApplicationDetail.vue",
+       "quote_or_symbol": "如有配合的廠商，可使用下方分享功能，即可將申請單細節轉給廠商。"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/repair/edit/_parts/ApplicationDetail.vue",
+       "quote_or_symbol": "複製修繕單連結"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Middleware/LoginCheck.php",
+       "quote_or_symbol": "$exceptApiUrls = ['/repair/share'];"
+      }
+     ],
+     "not_supported_greps": [
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -cF \"\\$exceptApiUrls = ['/repair/share'];\" b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- app/Http/Middleware/LoginCheck.php  # 分享頁網址被排除在登入檢查外，1 命中",
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -cF \"return redirect()->route('users.create'\" b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- app/Http/Middleware/LoginCheck.php  # 正對照：導去登入頁的程式碼本身確實存在，工具能命中：2 命中"
+     ],
+     "open_questions": [
+      "幫助中心把這個分享入口叫做「分享主頁」，但程式畫面上這個區塊的標題是「分享訊息」、按鈕是「分享」、彈窗標題是「分享修繕申請單」，三處都沒有「分享主頁」這個字串，用語對不上，需業主確認要不要統一。"
+     ]
+    }
+   ]
+  },
+  {
+   "coarse": "修繕單分享頁",
+   "unit_ids": [
+    "page:repair.share"
+   ],
+   "fines": [
+    {
+     "proposed_id": "jgb/F/repair-share-public-link",
+     "askable": "打開修繕單分享連結需不需要先登入 JGB",
+     "title": "修繕單分享頁需要先登入嗎？（不需要，這個連結是公開的，系統特別把它排除在登入檢查之外，任何拿到網址的人都可以直接打開）",
+     "unit_ids": [
+      "page:repair.share"
+     ],
+     "target_user": [
+      "property_manager",
+      "prospect"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "修繕分享連結要登入嗎",
+      "修繕單連結廠商打得開嗎",
+      "分享頁需要帳號嗎",
+      "修繕分享連結是公開的嗎"
+     ],
+     "sentences": [
+      "修繕單分享頁不需要登入 JGB 帳號就能打開；系統判斷「使用者有沒有登入、要不要導去登入頁」的規則裡，特別把分享頁的網址排除在外，所以沒有登入的人一樣可以直接看到內容。",
+      "這跟修繕功能的其他頁面不一樣：修繕單總表跟修繕單細節頁都被系統設定成需要先登入才能進入，只有分享頁被單獨排除。",
+      "如果連結裡的修繕單編號查無資料，系統會把使用者導去官網首頁，而不是顯示分享內容。"
+     ],
+     "sources": [
+      "code:app/Http/Middleware/LoginCheck.php",
+      "code:routes/web.php",
+      "code:src/pages/repair/share/Index.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Middleware/LoginCheck.php",
+       "quote_or_symbol": "$exceptApiUrls = ['/repair/share'];"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:routes/web.php",
+       "quote_or_symbol": "// api 3: 分享：因不需要登入，所以先獨立拆開"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/repair/share/Index.vue",
+       "quote_or_symbol": "const homePage = { name: 'listings.home' }"
+      }
+     ],
+     "not_supported_greps": [
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 show b2ee2ac382ce06763798a7238e4fd5c9411fcfaa:app/Http/Middleware/LoginCheck.php | sed -n '85,100p' | grep -cF \"return redirect()->route('users.create'\"  # 分享網址命中排除清單後 $isExcepted 設為 true 並 break 跳出迴圈（99-100行），緊接著 104 行 if (!$isExcepted) 判斷為 false，不會執行 108/110 行導去登入頁的程式碼；這段邏輯用的是 break，不是 continue：0 命中",
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -cF \"return redirect()->route('users.create'\" b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- app/Http/Middleware/LoginCheck.php  # 正對照：這段導去登入頁的程式碼在檔案裡確實存在，工具能命中：2 命中",
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -n \"Route::match(['get', 'post'], '/api2/repairItem/share\" b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- routes/web.php | grep -cF \"middleware('need_login')\"  # 分享資料 API 這一行本身沒有掛 need_login 中介層：0 命中",
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -n \"api2/repairItem\" b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- routes/web.php  # 正對照：同一份路由檔案裡，分享 API（891 行）沒有掛 need_login，緊接著的一般取得修繕資料 API（894 行）掛了 need_login，工具在同個關鍵字下確實能命中兩處宣告：891／894 命中"
+     ],
+     "open_questions": [
+      "幫助中心的修繕教學裡完全沒有提到分享連結不需要登入、任何拿到網址的人都能看到報修者聯絡方式與廠商電話這件事，程式行為（完全公開、無身分核對）跟文件揭露的落差算不算需要補充提醒，需業主確認。"
+     ]
+    },
+    {
+     "proposed_id": "jgb/F/repair-share-visibility-summary",
+     "askable": "分享連結誰看得到，看得到哪些資料",
+     "title": "分享連結誰看得到？（拿到網址的任何人都能看到這張修繕單房東方的手機／Email、物件所在區域、照片、廠商聯絡電話；金額只有在瀏覽者本人目前登入身分是房東時才會顯示，且不會核對是不是這張修繕單相關的房東或租客）",
+     "unit_ids": [
+      "page:repair.share"
+     ],
+     "target_user": [
+      "property_manager",
+      "prospect"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "分享連結誰都能看嗎",
+      "修繕分享頁會外流個資嗎",
+      "分享頁看得到金額嗎"
+     ],
+     "sentences": [
+      "只要拿到分享連結網址，不需要登入、也不需要跟這張修繕單有任何關係，就能看到這張修繕單房東方的手機號碼或Email（團隊身分顯示公司電話／公司Email，個人房東顯示手機號碼／Email，另見「修繕單細節頁顯示哪些報修時填的資料」）、物件所在區域（只到國家、縣市、行政區，不含街道門牌）、報修照片，以及安排的廠商聯絡電話。",
+      "「結算金額」在分享頁上要不要顯示，看的是瀏覽者目前自己登入 JGB 的身分是不是房東；如果瀏覽者根本沒有登入（分享頁本來就不需要登入），這個判斷會是否，所以看不到金額。",
+      "系統產生分享頁資料時，不會核對這個瀏覽者是不是這張修繕單相關的房東或租客——不管有沒有登入、登入的是誰，看到的內容都一樣。"
+     ],
+     "sources": [
+      "code:app/Http/Controllers/RepairController.php",
+      "code:src/pages/repair/share/Index.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/RepairController.php",
+       "quote_or_symbol": "// 電話＆email（根據該修繕單的對應房東身份＆使用者）"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/RepairController.php",
+       "quote_or_symbol": "$estateArea = Address::format($repair->estate_country_id, $repair->estate_city_id, $repair->estate_district_id, '', '', '', '', '', '', true);"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/repair/share/Index.vue",
+       "quote_or_symbol": ":showAmount=\"store.state.userData?.role?.config_rule_type === 'landlord'\""
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Controllers/RepairController.php",
+       "quote_or_symbol": "$repair = Repair::find($id);"
+      }
+     ],
+     "not_supported_greps": [
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 show b2ee2ac382ce06763798a7238e4fd5c9411fcfaa:app/Http/Controllers/RepairController.php | sed -n '610,677p' | grep -cF -- '->role'  # show() 函式裡 \\$isShare 分支（分享模式）沒有核對登入者角色/物件歸屬：0 命中",
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 show b2ee2ac382ce06763798a7238e4fd5c9411fcfaa:app/Http/Controllers/RepairController.php | sed -n '599,900p' | grep -cF -- '->role'  # 正對照：同一個 show() 函式的其餘部分（非分享模式）：6 命中",
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -cF \"unset(\\$data['data']['aside_panel']);\" b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- app/Http/Controllers/RepairController.php  # 分享模式會整段移除房東/租客資訊側欄，1 命中"
+     ],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/F/repair-share-no-expiry",
+     "askable": "修繕單分享連結會不會過期",
+     "title": "分享連結會過期嗎？（目前不會，系統一度寫過 30 天過期的檢查，但已經停用，現在沒有天數限制）",
+     "unit_ids": [
+      "page:repair.share"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "修繕分享連結會過期嗎",
+      "修繕單連結多久失效",
+      "分享連結有效期限"
+     ],
+     "sentences": [
+      "目前打開修繕單分享連結，並不會因為超過幾天就失效。",
+      "系統背後曾經寫過「如果超過 30 天就不給查看」的檢查，但這段檢查已經被停用，看得到內容並未受這條規則限制。",
+      "分享頁抓資料時只靠修繕單的編號去找，不受天數期限或物件目前狀態影響。"
+     ],
+     "sources": [
+      "code:app/Http/Controllers/RepairController.php"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/RepairController.php",
+       "quote_or_symbol": "// if ((strtotime($repair->apply_at) + 2592000) <= time()) {"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/RepairController.php",
+       "quote_or_symbol": "// 2023/08/22 Joanna 拿掉此限制"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Controllers/RepairController.php",
+       "quote_or_symbol": "$repair = Repair::find($id);"
+      }
+     ],
+     "not_supported_greps": [
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -n '2592000' b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- app/Http/Controllers/RepairController.php  # 唯一一處 30 天(2592000秒)判斷是註解，不是會執行的邏輯：1 命中",
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -c 'strtotime' b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- app/Http/Controllers/RepairController.php  # 正對照：strtotime 這個字同檔共出現 5 次（含 627 行那條註解本身），其餘 4 處都是會執行的有效程式碼，工具能正常命中：5 命中"
+     ],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/F/repair-share-content",
+     "askable": "修繕單分享頁裡看得到哪些內容",
+     "title": "修繕單分享頁看得到什麼？（修繕申請單標題與是否緊急、照片、報修細節、安排的廠商資訊、房東備註與房客備註，全部都是唯讀；不會顯示物件廣告連結、縮圖，也沒有房東／承租方資訊側欄）",
+     "unit_ids": [
+      "page:repair.share"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "分享頁看得到什麼",
+      "修繕單連結打開會看到什麼",
+      "廠商點連結能看到哪些資訊"
+     ],
+     "sentences": [
+      "分享頁最上面是「修繕申請單」標題跟申請日期，如果這張單被標記為緊急，旁邊會多顯示「緊急」標籤；但目前透過網頁申請修繕的流程，這個標記並不會因為勾選「緊急修繕」而被設定（另見「報修細節要填哪些欄位，哪些是必填的」）。",
+      "接下來會顯示報修時的照片、聯絡電話或Email、物件區域與時區、分類、問題、備註、預約時段等報修細節。",
+      "再來會顯示目前安排的廠商資訊（修繕時間、廠商名稱、維修人員、聯絡電話），以及房東備註跟房客備註。",
+      "分享頁上的廠商資訊跟備註全部都是唯讀，打開分享頁的人不能在這一頁編輯或留言。",
+      "分享頁不會顯示物件名稱、物件廣告連結、物件縮圖，也沒有一般細節頁右側那種列出房東方或承租方聯絡資訊的側欄，這幾項在分享模式下會被整段拿掉。"
+     ],
+     "sources": [
+      "code:src/pages/repair/share/Index.vue",
+      "code:app/Http/Controllers/RepairController.php"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/repair/share/Index.vue",
+       "quote_or_symbol": "{{ t('修繕申請單') }}"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/repair/share/Index.vue",
+       "quote_or_symbol": "labelKey: '物件區域',"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/repair/share/Index.vue",
+       "quote_or_symbol": ":canEditRepair=\"false\" />"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/repair/share/Index.vue",
+       "quote_or_symbol": ":isAllowedEdit=\"false\""
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:app/Http/Controllers/RepairController.php",
+       "quote_or_symbol": "unset($data['data']['aside_panel']);"
+      }
+     ],
+     "not_supported_greps": [
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -cF ':isAllowedEdit=\"false\"' b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- src/pages/repair/share/Index.vue  # 房東備註／房客備註兩個 MemoArea 都傳入 false：2 命中",
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -cF '<MemoArea' b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- src/pages/repair/share/Index.vue  # 正對照：MemoArea 元件確實用了兩次，工具能命中：2 命中",
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -cF \"unset(\\$data['data']['estate_name']);\" b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- app/Http/Controllers/RepairController.php  # 分享模式下這一行 unset 在同一段落被寫了兩次（1823／1826 行，第二次是重複語句，非另一個欄位)，物件名稱／連結／縮圖／側欄都被拿掉：2 命中",
+      "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -cF \"unset(\\$data['data']['aside_panel']);\" b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- app/Http/Controllers/RepairController.php  # 正對照：aside_panel 同一段確實被移除，工具能命中：1 命中"
+     ],
+     "open_questions": []
+    }
+   ]
+  }
+ ]
+}

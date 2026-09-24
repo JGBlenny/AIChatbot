@@ -1,0 +1,623 @@
+{
+  "angle": "user_question_path",
+  "coarses": [
+    {
+      "id": "A",
+      "title": "帳號與身分"
+    },
+    {
+      "id": "B",
+      "title": "團隊、人員與大房東"
+    },
+    {
+      "id": "C",
+      "title": "社區與物件"
+    },
+    {
+      "id": "D",
+      "title": "租約（含委託約子題）"
+    },
+    {
+      "id": "E",
+      "title": "帳務（含發票、收款金流、抄表）"
+    },
+    {
+      "id": "F",
+      "title": "修繕"
+    },
+    {
+      "id": "G",
+      "title": "裝置（IoT）"
+    },
+    {
+      "id": "H",
+      "title": "幫助中心"
+    },
+    {
+      "id": "I",
+      "title": "方案與導入"
+    }
+  ],
+  "fines": [
+    {
+      "id": "jgb/C/property-management-overview",
+      "coarse_id": "C",
+      "title": "房源管理模組做什麼（含自訂狀態標籤）",
+      "slug": "property-management-overview",
+      "merge_of": [
+        "tmp:canon:jgb/C/property-management-overview"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "潛在客戶問「房源管理能做什麼」的總覽入口；操作型問題（標籤怎麼建、怎麼匯入）各自成細目，不併入總覽。",
+      "target_user": [
+        "prospect"
+      ],
+      "op": "keep"
+    },
+    {
+      "id": "jgb/C/community-batch-create",
+      "coarse_id": "C",
+      "title": "社區建立與批次新增物件",
+      "slug": "community-batch-create",
+      "merge_of": [
+        "tmp:canon:jgb/C/community-batch-create"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "潛在客戶問「物件多能不能一次建、能不能按社區歸戶」的總覽入口；業者的逐步操作與填表注意事項另成 community-create-edit 與 property-batch-import，層級不同以另見處理。",
+      "target_user": [
+        "prospect"
+      ],
+      "op": "keep"
+    },
+    {
+      "id": "jgb/C/property-status-meaning",
+      "coarse_id": "C",
+      "title": "物件狀態（未刊登／刊登中／洽談中／合約中）是什麼意思",
+      "slug": "property-status-meaning",
+      "merge_of": [
+        "tmp:canon:jgb/C/property-status-meaning",
+        "tmp:kb:3428",
+        "tmp:kb:4154"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "「這個物件現在什麼狀態、租客看不看得到」是同一個問題；3428 的兩軸定義是既有細目的同命題補強，4154 為空內文入口只當講法吸收。",
+      "target_user": [
+        "prospect",
+        "property_manager"
+      ],
+      "op": "merge"
+    },
+    {
+      "id": "jgb/C/rental-storefront-vr",
+      "coarse_id": "C",
+      "title": "招租店舖與 VR 看屋",
+      "slug": "rental-storefront-vr",
+      "merge_of": [
+        "tmp:canon:jgb/C/rental-storefront-vr"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "潛在客戶問「有沒有對外招租頁、能不能線上看屋」的總覽入口；業者問入口在哪、怎麼分享、VR 怎麼綁各是不同問題，另成細目。",
+      "target_user": [
+        "prospect"
+      ],
+      "op": "keep"
+    },
+    {
+      "id": "jgb/C/community-create-edit",
+      "coarse_id": "C",
+      "title": "社區怎麼建立、編輯，物件怎麼歸屬社區",
+      "slug": "community-create-edit",
+      "merge_of": [
+        "tmp:kb:3468",
+        "tmp:kb:3469"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "業者問「社區怎麼建／改、物件怎麼掛到社區下、公共區域物件、社宅為何強制綁社區」為一組可獨立回答的操作問題，與批次匯入分開。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/C/property-batch-import",
+      "coarse_id": "C",
+      "title": "物件批次匯入：範本、表格填寫與上傳失敗",
+      "slug": "property-batch-import",
+      "merge_of": [
+        "tmp:kb:3431",
+        "tmp:kb:3357",
+        "tmp:draft:1"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "業者問「批次匯入怎麼做、表格怎麼填、為什麼上傳失敗、匯入後為何未刊登」落在同一路徑；三份來源分別是步驟、.xls 與貼上注意事項、欄位填法，合為一題。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/C/property-listing-conditions",
+      "coarse_id": "C",
+      "title": "物件要怎麼刊登上架、刊登需要什麼條件",
+      "slug": "property-listing-conditions",
+      "merge_of": [
+        "tmp:kb:3429",
+        "tmp:kb:4151"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "「怎麼刊登」與「為什麼不能刊登」是同一問題的正反兩面（方案、額度、必填欄位）；4151 為空內文入口只當講法。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/C/property-unlisting-reasons",
+      "coarse_id": "C",
+      "title": "物件怎麼下架、為什麼被自動下架",
+      "slug": "property-unlisting-reasons",
+      "merge_of": [
+        "tmp:kb:3430",
+        "tmp:kb:3506"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "業者問「怎麼手動下架」與「物件為什麼突然全部下架」都以下架為起點；3506 根因在方案續約失敗，但提問落在物件狀態，留在本架並另見方案架。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/C/property-edit-vs-publish",
+      "coarse_id": "C",
+      "title": "編輯物件與刊登物件差在哪、為什麼修改沒存到",
+      "slug": "property-edit-vs-publish",
+      "merge_of": [
+        "tmp:kb:4147"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "「我改了物件怎麼沒生效／沒存到」是獨立於刊登條件的問題：答案是編輯≠刊登、要按儲存、改物件不影響既有合約。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/C/property-add-blocked",
+      "coarse_id": "C",
+      "title": "為什麼不能新增物件",
+      "slug": "property-add-blocked",
+      "merge_of": [
+        "tmp:kb:3505"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "業者的提問以「新增物件按不了」為起點，本細目只做排查入口（額度滿→另見方案架、權限不足→另見團隊架），不在本架展開額度與角色機制。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/C/public-display-address",
+      "coarse_id": "C",
+      "title": "對外顯示地址改了為什麼後台還是完整地址",
+      "slug": "public-display-address",
+      "merge_of": [
+        "tmp:kb:4145",
+        "tmp:kb:4152"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "同一個誤解（以為設定沒生效）對應同一答案（只作用於對外廣告頁與地圖）；4152 為空內文入口只當講法。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/C/storefront-entry-share",
+      "coarse_id": "C",
+      "title": "招租店舖入口在哪、怎麼分享、為什麼物件沒出現",
+      "slug": "storefront-entry-share",
+      "merge_of": [
+        "tmp:kb:4146"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "業者的操作問題（入口、/p/ 網址、與帳號資訊連動、非刊登中不顯示）與潛在客戶的「有沒有招租頁」總覽是不同層級，另成細目。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/C/community-public-page",
+      "coarse_id": "C",
+      "title": "社區公開頁面是什麼、能拿來做什麼",
+      "slug": "community-public-page",
+      "merge_of": [
+        "tmp:kb:3470"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "「社區公開頁」與「招租店舖」是兩個不同的對外頁面，使用者會分開問；本細目只答社區頁，店舖另見。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/C/property-vr-tour",
+      "coarse_id": "C",
+      "title": "物件 VR 虛擬導覽怎麼綁、費用與拍攝找誰",
+      "slug": "property-vr-tour",
+      "merge_of": [
+        "tmp:kb:3433"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "業者問「VR 怎麼設定、拍攝／費用找誰」是操作與廠商分工問題，與招租店舖總覽層級不同，獨立成細目。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/C/property-custom-tags",
+      "coarse_id": "C",
+      "title": "物件自訂標籤怎麼建、怎麼用來篩選",
+      "slug": "property-custom-tags",
+      "merge_of": [
+        "tmp:kb:3434"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "「標籤在哪建、怎麼掛到物件、能不能篩選、租客看不看得到」是一組操作問題，與房源管理總覽分層。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/C/property-advanced-search",
+      "coarse_id": "C",
+      "title": "物件列表進階搜尋怎麼用",
+      "slug": "property-advanced-search",
+      "merge_of": [
+        "tmp:draft:2"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "「物件太多怎麼篩」是獨立的操作問題（空間類型、社區大樓、租金範圍、坪數），與標籤篩選是不同機制，各自一題。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/C/occupancy-rate-calculation",
+      "coarse_id": "C",
+      "title": "首頁即時物件出租率怎麼算、已出租數字從哪來",
+      "slug": "occupancy-rate-calculation",
+      "merge_of": [
+        "tmp:kb:4648"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "「出租率百分比怎麼算」是獨立問題，答案依物件狀態（合約中 ÷ 物件總數）計算，屬物件層統計，另見物件狀態細目。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    }
+  ],
+  "id_map": [
+    {
+      "old": "tmp:canon:jgb/C/property-management-overview",
+      "new": "jgb/C/property-management-overview",
+      "op": "keep"
+    },
+    {
+      "old": "tmp:canon:jgb/C/community-batch-create",
+      "new": "jgb/C/community-batch-create",
+      "op": "keep"
+    },
+    {
+      "old": "tmp:canon:jgb/C/property-status-meaning",
+      "new": "jgb/C/property-status-meaning",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:3428",
+      "new": "jgb/C/property-status-meaning",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:4154",
+      "new": "jgb/C/property-status-meaning",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:canon:jgb/C/rental-storefront-vr",
+      "new": "jgb/C/rental-storefront-vr",
+      "op": "keep"
+    },
+    {
+      "old": "tmp:kb:3468",
+      "new": "jgb/C/community-create-edit",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3469",
+      "new": "jgb/C/community-create-edit",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3431",
+      "new": "jgb/C/property-batch-import",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3357",
+      "new": "jgb/C/property-batch-import",
+      "op": "new"
+    },
+    {
+      "old": "tmp:draft:1",
+      "new": "jgb/C/property-batch-import",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3429",
+      "new": "jgb/C/property-listing-conditions",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:4151",
+      "new": "jgb/C/property-listing-conditions",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3430",
+      "new": "jgb/C/property-unlisting-reasons",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3506",
+      "new": "jgb/C/property-unlisting-reasons",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:4147",
+      "new": "jgb/C/property-edit-vs-publish",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3505",
+      "new": "jgb/C/property-add-blocked",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:4145",
+      "new": "jgb/C/public-display-address",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:4152",
+      "new": "jgb/C/public-display-address",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:4146",
+      "new": "jgb/C/storefront-entry-share",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3470",
+      "new": "jgb/C/community-public-page",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3433",
+      "new": "jgb/C/property-vr-tour",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3434",
+      "new": "jgb/C/property-custom-tags",
+      "op": "new"
+    },
+    {
+      "old": "tmp:draft:2",
+      "new": "jgb/C/property-advanced-search",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:4648",
+      "new": "jgb/C/occupancy-rate-calculation",
+      "op": "new"
+    }
+  ],
+  "out_of_shelf": [
+    {
+      "id": "tmp:kb:1396",
+      "suggested_shelf": "-",
+      "why": "租客受眾內容（稱呼「您作為租客」、導向「您的管理師」），jgb 受眾 prospect／property_manager 不會這樣問；主題雖屬社區域，但 A–I 九架皆為 jgb 受眾，無可歸之架，應交租客受眾正本處理。"
+    },
+    {
+      "id": "tmp:kb:2980",
+      "suggested_shelf": "-",
+      "why": "租客受眾內容（稱呼「您作為租客」、導向「您的管理師」），jgb 受眾 prospect／property_manager 不會這樣問；主題雖屬社區域，但 A–I 九架皆為 jgb 受眾，無可歸之架，應交租客受眾正本處理。"
+    },
+    {
+      "id": "tmp:kb:3011",
+      "suggested_shelf": "-",
+      "why": "租客受眾內容（「讓您作為租客享受到更優惠的租金」），主題是公益出租人稅賦，既非社區也非物件屬性；A–I 皆為 jgb 受眾且無稅務架，應交租客受眾正本處理。"
+    },
+    {
+      "id": "tmp:kb:3049",
+      "suggested_shelf": "-",
+      "why": "租客受眾內容（稱呼「您作為租客」、導向「您的管理師」），jgb 受眾 prospect／property_manager 不會這樣問；主題雖屬社區域，但 A–I 九架皆為 jgb 受眾，無可歸之架，應交租客受眾正本處理。"
+    },
+    {
+      "id": "tmp:kb:3050",
+      "suggested_shelf": "-",
+      "why": "租客受眾內容（稱呼「您作為租客」、導向「您的管理師」），jgb 受眾 prospect／property_manager 不會這樣問；主題雖屬社區域，但 A–I 九架皆為 jgb 受眾，無可歸之架，應交租客受眾正本處理。"
+    },
+    {
+      "id": "tmp:kb:3051",
+      "suggested_shelf": "-",
+      "why": "租客受眾內容（稱呼「您作為租客」、導向「您的管理師」），jgb 受眾 prospect／property_manager 不會這樣問；主題雖屬社區域，但 A–I 九架皆為 jgb 受眾，無可歸之架，應交租客受眾正本處理。"
+    },
+    {
+      "id": "tmp:kb:3052",
+      "suggested_shelf": "-",
+      "why": "租客受眾內容（稱呼「您作為租客」、導向「您的管理師」），jgb 受眾 prospect／property_manager 不會這樣問；主題雖屬社區域，但 A–I 九架皆為 jgb 受眾，無可歸之架，應交租客受眾正本處理。"
+    },
+    {
+      "id": "tmp:kb:3053",
+      "suggested_shelf": "-",
+      "why": "租客受眾內容（稱呼「您作為租客」、導向「您的管理師」），jgb 受眾 prospect／property_manager 不會這樣問；主題雖屬社區域，但 A–I 九架皆為 jgb 受眾，無可歸之架，應交租客受眾正本處理。"
+    },
+    {
+      "id": "tmp:kb:3054",
+      "suggested_shelf": "-",
+      "why": "租客受眾內容（稱呼「您作為租客」、導向「您的管理師」），jgb 受眾 prospect／property_manager 不會這樣問；主題雖屬社區域，但 A–I 九架皆為 jgb 受眾，無可歸之架，應交租客受眾正本處理。"
+    },
+    {
+      "id": "tmp:kb:3055",
+      "suggested_shelf": "-",
+      "why": "租客受眾內容（稱呼「您作為租客」、導向「您的管理師」），jgb 受眾 prospect／property_manager 不會這樣問；主題雖屬社區域，但 A–I 九架皆為 jgb 受眾，無可歸之架，應交租客受眾正本處理。"
+    },
+    {
+      "id": "tmp:kb:3056",
+      "suggested_shelf": "-",
+      "why": "租客受眾內容（稱呼「您作為租客」、導向「您的管理師」），jgb 受眾 prospect／property_manager 不會這樣問；主題雖屬社區域，但 A–I 九架皆為 jgb 受眾，無可歸之架，應交租客受眾正本處理。"
+    },
+    {
+      "id": "tmp:kb:3057",
+      "suggested_shelf": "-",
+      "why": "租客受眾內容（稱呼「您作為租客」、導向「您的管理師」），jgb 受眾 prospect／property_manager 不會這樣問；主題雖屬社區域，但 A–I 九架皆為 jgb 受眾，無可歸之架，應交租客受眾正本處理。"
+    },
+    {
+      "id": "tmp:kb:3058",
+      "suggested_shelf": "-",
+      "why": "租客受眾內容（稱呼「您作為租客」、導向「您的管理師」），jgb 受眾 prospect／property_manager 不會這樣問；主題雖屬社區域，但 A–I 九架皆為 jgb 受眾，無可歸之架，應交租客受眾正本處理。"
+    },
+    {
+      "id": "tmp:kb:3059",
+      "suggested_shelf": "-",
+      "why": "租客受眾內容（稱呼「您作為租客」、導向「您的管理師」），jgb 受眾 prospect／property_manager 不會這樣問；主題雖屬社區域，但 A–I 九架皆為 jgb 受眾，無可歸之架，應交租客受眾正本處理。"
+    },
+    {
+      "id": "tmp:kb:3060",
+      "suggested_shelf": "-",
+      "why": "租客受眾內容（稱呼「您作為租客」、導向「您的管理師」），jgb 受眾 prospect／property_manager 不會這樣問；主題雖屬社區域，但 A–I 九架皆為 jgb 受眾，無可歸之架，應交租客受眾正本處理。"
+    },
+    {
+      "id": "tmp:kb:3061",
+      "suggested_shelf": "-",
+      "why": "租客受眾內容（稱呼「您作為租客」、導向「您的管理師」），jgb 受眾 prospect／property_manager 不會這樣問；主題雖屬社區域，但 A–I 九架皆為 jgb 受眾，無可歸之架，應交租客受眾正本處理。"
+    },
+    {
+      "id": "tmp:kb:3062",
+      "suggested_shelf": "-",
+      "why": "租客受眾內容（稱呼「您作為租客」、導向「您的管理師」），jgb 受眾 prospect／property_manager 不會這樣問；主題雖屬社區域，但 A–I 九架皆為 jgb 受眾，無可歸之架，應交租客受眾正本處理。"
+    },
+    {
+      "id": "tmp:kb:3063",
+      "suggested_shelf": "-",
+      "why": "租客受眾內容（稱呼「您作為租客」、導向「您的管理師」），jgb 受眾 prospect／property_manager 不會這樣問；主題雖屬社區域，但 A–I 九架皆為 jgb 受眾，無可歸之架，應交租客受眾正本處理。"
+    },
+    {
+      "id": "tmp:kb:3064",
+      "suggested_shelf": "-",
+      "why": "租客受眾內容（稱呼「您作為租客」、導向「您的管理師」），jgb 受眾 prospect／property_manager 不會這樣問；主題雖屬社區域，但 A–I 九架皆為 jgb 受眾，無可歸之架，應交租客受眾正本處理。"
+    },
+    {
+      "id": "tmp:kb:3157",
+      "suggested_shelf": "-",
+      "why": "租客受眾內容（稱呼「您作為租客」、導向「您的管理師」），jgb 受眾 prospect／property_manager 不會這樣問；主題雖屬社區域，但 A–I 九架皆為 jgb 受眾，無可歸之架，應交租客受眾正本處理。"
+    },
+    {
+      "id": "tmp:kb:3245",
+      "suggested_shelf": "-",
+      "why": "租客受眾內容（稱呼「您作為租客」、導向「您的管理師」），jgb 受眾 prospect／property_manager 不會這樣問；主題雖屬社區域，但 A–I 九架皆為 jgb 受眾，無可歸之架，應交租客受眾正本處理。"
+    },
+    {
+      "id": "tmp:kb:3246",
+      "suggested_shelf": "-",
+      "why": "租客受眾內容（稱呼「您作為租客」、導向「您的管理師」），jgb 受眾 prospect／property_manager 不會這樣問；主題雖屬社區域，但 A–I 九架皆為 jgb 受眾，無可歸之架，應交租客受眾正本處理。"
+    },
+    {
+      "id": "tmp:kb:3247",
+      "suggested_shelf": "-",
+      "why": "租客受眾內容（稱呼「您作為租客」、導向「您的管理師」），jgb 受眾 prospect／property_manager 不會這樣問；主題雖屬社區域，但 A–I 九架皆為 jgb 受眾，無可歸之架，應交租客受眾正本處理。"
+    },
+    {
+      "id": "tmp:kb:3248",
+      "suggested_shelf": "-",
+      "why": "租客受眾內容（稱呼「您作為租客」、導向「您的管理師」），jgb 受眾 prospect／property_manager 不會這樣問；主題雖屬社區域，但 A–I 九架皆為 jgb 受眾，無可歸之架，應交租客受眾正本處理。"
+    },
+    {
+      "id": "tmp:kb:3249",
+      "suggested_shelf": "-",
+      "why": "租客受眾內容（稱呼「您作為租客」、導向「您的管理師」），jgb 受眾 prospect／property_manager 不會這樣問；主題雖屬社區域，但 A–I 九架皆為 jgb 受眾，無可歸之架，應交租客受眾正本處理。"
+    },
+    {
+      "id": "tmp:kb:3263",
+      "suggested_shelf": "-",
+      "why": "租客受眾內容（稱呼「您作為租客」、導向「您的管理師」），jgb 受眾 prospect／property_manager 不會這樣問；主題雖屬社區域，但 A–I 九架皆為 jgb 受眾，無可歸之架，應交租客受眾正本處理。"
+    },
+    {
+      "id": "tmp:kb:3299",
+      "suggested_shelf": "-",
+      "why": "租客受眾內容（稱呼「您作為租客」、導向「您的管理師」），jgb 受眾 prospect／property_manager 不會這樣問；主題雖屬社區域，但 A–I 九架皆為 jgb 受眾，無可歸之架，應交租客受眾正本處理。"
+    },
+    {
+      "id": "tmp:kb:3300",
+      "suggested_shelf": "-",
+      "why": "租客受眾內容（稱呼「您作為租客」、導向「您的管理師」），jgb 受眾 prospect／property_manager 不會這樣問；主題雖屬社區域，但 A–I 九架皆為 jgb 受眾，無可歸之架，應交租客受眾正本處理。"
+    },
+    {
+      "id": "tmp:kb:4262",
+      "suggested_shelf": "-",
+      "why": "租客受眾內容（稱呼「您作為租客」、導向「您的管理師」），jgb 受眾 prospect／property_manager 不會這樣問；主題雖屬社區域，但 A–I 九架皆為 jgb 受眾，無可歸之架，應交租客受眾正本處理。"
+    },
+    {
+      "id": "tmp:kb:4272",
+      "suggested_shelf": "-",
+      "why": "租客受眾內容（稱呼「您作為租客」、導向「您的管理師」），jgb 受眾 prospect／property_manager 不會這樣問；主題雖屬社區域，但 A–I 九架皆為 jgb 受眾，無可歸之架，應交租客受眾正本處理。"
+    },
+    {
+      "id": "tmp:kb:4276",
+      "suggested_shelf": "-",
+      "why": "租客受眾內容（稱呼「您作為租客」、導向「您的管理師」），jgb 受眾 prospect／property_manager 不會這樣問；主題雖屬社區域，但 A–I 九架皆為 jgb 受眾，無可歸之架，應交租客受眾正本處理。"
+    },
+    {
+      "id": "tmp:kb:3358",
+      "suggested_shelf": "B",
+      "why": "問的是「大房東怎麼邀請、怎麼授權物件看」，命題落在大房東帳號與授權，B 架標題即含大房東；物件只是被授權的客體。"
+    },
+    {
+      "id": "tmp:kb:3973",
+      "suggested_shelf": "B",
+      "why": "「成員看不到社區／物件、無法新增」的答案全在角色指派與可見範圍，命題屬團隊成員權限；物件只是症狀所在。"
+    },
+    {
+      "id": "tmp:kb:3456",
+      "suggested_shelf": "I",
+      "why": "「物件數量上限、額度不足怎麼辦」的答案是訂閱方案額度、升級、加購與用量查詢，命題屬方案；C 架僅以 property-add-blocked 做排查入口另見。"
+    }
+  ]
+}

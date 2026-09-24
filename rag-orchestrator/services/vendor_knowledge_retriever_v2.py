@@ -15,9 +15,10 @@ from .agent.identity import Identity
 class VendorKnowledgeRetrieverV2(BaseRetriever):
     """業者知識庫檢索器 - 統一架構版本"""
 
-    # 可信 target_user 角色（對齊 target_user_config + 售前 prospect）。
+    # 可信 target_user 角色（DSP-061）。JGB 房東側一律送 property_manager
+    # （`docs/knowledge/jgb-product-facts.md#landlord-is-the-manager`）⇒ 房東＝property_manager。
     # 非此集合（None / 空字串 / 未知角色）一律正規化為 tenant（最公開、最小權限的安全預設）。
-    KNOWN_TARGET_USERS = {'tenant', 'landlord', 'property_manager', 'system_admin', 'prospect'}
+    KNOWN_TARGET_USERS = {'tenant', 'property_manager', 'system_admin', 'prospect'}
 
     # 保留分類：掛此 category 的列為「系統注入用文件」（系統脈絡 md / 對話規則），
     # 一律排除於檢索之外，永不被當答案回傳（決策 11 / R19）。
@@ -442,9 +443,11 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
 # **手抄了 4 份且各不相同**（`_grounding_by_ids` 只有 is_active、
 # `_grounding_by_category`／`system_context._fetch_base` 無 vendor_ids）。
 # 手抄會漏掉的 9 條：①保留分類 ②`vendor_ids IS NULL OR &&` ③`is_active`
-# ④`_effective_target_user` fail-safe ⑤`is_b2b` 兩條件 OR ⑥**b2b 無 IS NULL
+# ④`_effective_target_user` fail-safe ⑤`is_b2b` 兩條件 OR ⑥**b2b 業態無 IS NULL
 # 放行**（D-002）⑦b2c 追加 `all_users` ⑧查無業者 `[]` fail-closed
-# ⑨`embedding`／`keywords` NOT NULL 的路徑差異。
+# ⑨`embedding`／`keywords` NOT NULL 的路徑差異
+# ⑩**b2b 角色也無 IS NULL 放行**（空＝不可見，DSP-052 (c)／2026-09-14）——
+#    這條與 ⑦ 是同一個 `target_user` 條件的兩個分支，⛔ 不得抽成共用一行。
 #
 # ⛔ **新增可見性條件一律加在這裡**，不得在任何消費點內嵌第二份字面 SQL
 #    （design 不變量 20）。
@@ -475,7 +478,8 @@ def build_visibility_predicate(identity, param_resolver=None):
     #   正規化只作用於參數側（條件 4），拿它判 b2b 會把未知角色一律降成 b2c。
     is_b2b_mode = (target_user in ['property_manager', 'system_admin']) or (mode == 'b2b')
 
-    # 條件 4：角色隔離（b2b 與 b2c 皆過濾；target_user IS NULL 一律放行；retrieval-fixes #5）
+    # 條件 4：角色隔離（b2b 與 b2c 皆過濾）。⚠️ **兩分支的 IS NULL 語義不同**，
+    #   b2b 分支自己覆寫 target_user_filter_sql（見下），⛔ 不要抽回共用一行。
     target_user_param = [VendorKnowledgeRetrieverV2._effective_target_user(target_user)]
     if is_b2b_mode:
         # 條件 6a／7：b2b 業態嚴格 system_provider。
@@ -483,6 +487,13 @@ def build_visibility_predicate(identity, param_resolver=None):
         #    `COMPLETE_CONVERSATION_ARCHITECTURE.md` §3 曾漏掉這條分支，照它補 IS NULL 會打穿隔離。
         vendor_business_types = ['system_provider']
         business_type_filter_sql = "kb.business_types && %s::text[]"
+        # 條件 4a：b2b 角色同樣**無 `IS NULL` 放行**——空＝不可見
+        #   （DSP-052 補救 (c)，業主 2026-09-14 裁；與記憶體側 `canon_visible` 同步）。
+        # ⛔ 不得改回 `IS NULL OR ...`：`tenant` 是合法值，帶 `mode=b2b` 時 `audience_of`
+        #   會路由到 pm 受眾，放行「未標角色」的列即跨受眾可見且靜默。
+        # ⚠️ 已知代價（業主 2026-09-14 明示接受）：線上 b2b 池 `target_user IS NULL`
+        #   的列因此暫時撈不到，另以資料面 UPDATE 補標角色，⛔ 不在程式側放寬。
+        target_user_filter_sql = "kb.target_user && %s::text[]"
     else:
         resolver = param_resolver if param_resolver is not None else _shared_param_resolver()
         vendor_info = resolver.get_vendor_info(vendor_id)
@@ -496,8 +507,8 @@ def build_visibility_predicate(identity, param_resolver=None):
         target_user_param = [
             VendorKnowledgeRetrieverV2._effective_target_user(target_user), 'all_users'
         ]
-
-    target_user_filter_sql = "(kb.target_user IS NULL OR kb.target_user && %s::text[])"
+        # 條件 4b：b2c 角色寬鬆（`IS NULL` 放行通用知識）——⛔ 本分支不動（DSP-052 (c)）。
+        target_user_filter_sql = "(kb.target_user IS NULL OR kb.target_user && %s::text[])"
 
     # 條件 1／2／3 ＋ 6 ＋ 4，順序即參數順序（⛔ 調整順序必須同步 params）
     conditions = [

@@ -1,0 +1,4307 @@
+{
+ "shelf": "B",
+ "jgb2_sha": "b2ee2ac382ce06763798a7238e4fd5c9411fcfaa",
+ "coarses": [
+  {
+   "coarse": "團隊資訊（團隊名稱、介紹、首頁、廣告頁聯絡資訊、刪除團隊）⇄ 由 A 移入",
+   "unit_ids": [
+    "page:web:users.role"
+   ],
+   "fines": [
+    {
+     "proposed_id": "jgb/B/team-basic-info",
+     "askable": "團隊資訊頁面可以設定哪些基本資料，例如團隊名稱、Logo、團隊介紹",
+     "title": "團隊資訊頁面可以設定什麼？（公司 Logo、團隊名稱、團隊介紹）",
+     "unit_ids": [
+      "page:web:users.role"
+     ],
+     "target_user": [
+      "property_manager",
+      "prospect"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "團隊資訊在哪裡設定",
+      "團隊名稱怎麼改",
+      "團隊介紹要寫什麼",
+      "團隊首頁的介紹文字在哪改",
+      "公司 Logo 怎麼上傳"
+     ],
+     "sentences": [
+      "團隊管理的「團隊資訊」頁面「基本資訊」區塊，可以上傳公司 Logo、設定團隊名稱，並撰寫團隊介紹。",
+      "團隊介紹是要讓未來租客認識這個團隊的自我介紹文字，填寫後會顯示在團隊首頁上。",
+      "沒有編輯團隊資訊權限的帳號，這個頁面的欄位只能檢視、不能修改。"
+     ],
+     "sources": [
+      "code:resources/views/users/role.blade.php",
+      "code:app/Http/Controllers/UserController.php"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:resources/views/users/role.blade.php",
+       "quote_or_symbol": "<div class=\"fieldTitle\">{{___('團隊名稱')}}</div>"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:resources/views/users/role.blade.php",
+       "quote_or_symbol": "<span class=\"align-middle pr-1.5\">{{___('團隊介紹')}}</span>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:resources/views/users/role.blade.php",
+       "quote_or_symbol": "以下資訊將呈現在您的 [s1] 內。"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:resources/views/users/role.blade.php",
+       "quote_or_symbol": "'.___('團隊首頁').'"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "'status-error' => ___('您目前登入的帳號無法使用編輯團隊資訊功能')"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/team-ad-contact",
+     "askable": "廣告頁聯絡資訊有哪些欄位、哪些是必填",
+     "title": "廣告頁聯絡資訊要填什麼？（Line ID、Facebook、WhatsApp 選填，公司電話與公司 Email 必填）",
+     "unit_ids": [
+      "page:web:users.role"
+     ],
+     "target_user": [
+      "property_manager",
+      "prospect"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "廣告頁聯絡資訊要填什麼",
+      "公司電話一定要填嗎",
+      "WhatsApp 怎麼填",
+      "廣告聯絡方式在哪設定"
+     ],
+     "sentences": [
+      "團隊資訊頁的「廣告頁聯絡資訊」會呈現在物件廣告上，讓租客可以透過更多管道與房東聯繫，提升簽約成功率。",
+      "這個區塊可以填寫 Line ID、Facebook 個人首頁連結；填寫 WhatsApp 時要包含國碼與電話號碼，國碼前面不需要打「+」。",
+      "公司電話與公司 Email 是這個區塊裡的必填欄位。"
+     ],
+     "sources": [
+      "code:resources/views/users/role.blade.php"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:resources/views/users/role.blade.php",
+       "quote_or_symbol": "以下資訊將會呈現在廣告上，租客可以透過更多管道與房東聯繫，提升簽約成功率！"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:resources/views/users/role.blade.php",
+       "quote_or_symbol": "請填寫國碼與電話號碼，國碼前面不需打「+」。"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:resources/views/users/role.blade.php",
+       "quote_or_symbol": "<div class=\"fieldTitle after-required\">{{___('公司電話')}}</div>"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:resources/views/users/role.blade.php",
+       "quote_or_symbol": "<div class=\"fieldTitle after-required\">{{___('公司Email')}}</div>"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/team-delete",
+     "askable": "怎麼刪除團隊、有什麼限制和刪除後果",
+     "title": "怎麼刪除團隊？（需先解除訂閱方案、輸入團隊名稱確認、刪除後資料無法恢復）",
+     "unit_ids": [
+      "page:web:users.role"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "怎麼刪除團隊",
+      "刪除團隊會怎樣",
+      "刪除團隊的條件",
+      "團隊解散流程"
+     ],
+     "sentences": [
+      "只有帳號本身擁有的團隊，團隊資訊頁才會顯示「刪除團隊」的入口。",
+      "如果團隊目前的訂閱方案尚未結束，系統會先提示要到「團隊管理」的「訂閱方案」解除現有訂閱，才能繼續刪除。",
+      "可以刪除時，畫面會列出這個團隊目前持有的物件數與合約數，並要求輸入團隊名稱才能按下刪除。",
+      "刪除團隊會同時清除這個團隊底下所有的物件、合約與帳務等資料，且無法恢復。"
+     ],
+     "sources": [
+      "code:resources/views/users/role.blade.php"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:resources/views/users/role.blade.php",
+       "quote_or_symbol": "@if(!$showDeleteRole) style=\"display:none\" @endif"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:resources/views/users/role.blade.php",
+       "quote_or_symbol": "如想刪除團隊，請先解除此團隊現有的訂閱方案，可前往「團隊管理」下的「訂閱方案」內調整。"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:resources/views/users/role.blade.php",
+       "quote_or_symbol": "「[s1]」[s2]目前持有 [s3] 個物件及 [s4] 份合約。"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:resources/views/users/role.blade.php",
+       "quote_or_symbol": "刪除[s1]將會同時清除該[s1]內所有的物件、合約和帳務等資料且無法恢復。"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/team-signer-personal-info",
+     "askable": "簽約資訊卡的個人資訊要填哪些欄位",
+     "title": "簽約資訊卡「個人資訊」區塊只有個人團隊看得到，要填什麼？（姓氏、名稱、身分證字號、Email、手機必填；戶籍地址／通訊地址／身分證正反面／其他附件選填或另有條件）",
+     "unit_ids": [
+      "page:web:users.role"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "簽約資訊個人欄位有哪些",
+      "身分證正反面要傳嗎",
+      "良民證要上傳嗎",
+      "戶籍地址跟通訊地址一樣可以嗎"
+     ],
+     "sentences": [
+      "簽約資訊卡的「個人資訊」區塊只有個人團隊看得到，法人團隊與社宅團隊不會顯示這個區塊；可以填寫這個團隊在刊登物件廣告與簽立合約時所需提供的個人資訊：姓氏、名稱、身分證字號、Email、手機號碼都是必填。",
+      "戶籍地址與通訊地址也要填寫，通訊地址可以點「同戶籍地址」直接帶入。",
+      "身分證正反面照片是選填，另外還有一個「其他附件(選填)」區塊，可以選填上傳工作名片/學生證、良民證、小章這三項附件。"
+     ],
+     "sources": [
+      "code:src/pages/users/team/_parts/SignerDetails.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "<template v-if=\"state.isIndividual\">"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "<h4 class=\"mb-4\">{{ t('個人資訊') }}</h4>"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "fieldTitleLabelKey: '身分證字號',"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "<h5 class=\"mb-2\">{{ t('戶籍地址') }}</h5>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "}\">{{ t('同戶籍地址') }}</span>"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "<h5 class=\"mb-2\">{{ t('身分證正反面照片(選填)') }}</h5>"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "<h5 class=\"mb-2\">{{ t('其他附件(選填)') }}</h5>"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "fieldTitleLabelKey: '工作名片/學生證',"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "fieldTitleLabelKey: '良民證',"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "fieldTitleLabelKey: '小章',"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/team-signer-company-info",
+     "askable": "簽約資訊卡的公司資訊要填哪些欄位",
+     "title": "簽約資訊卡的「公司資訊」要填什麼？（公司登記名稱上限 20 字、公司統編皆為必填；公司負責人只有社宅團隊必填；社宅團隊還要填必填的社宅業者編號與公司登記證號，公司登記證日期與縣市則不分團隊都是選填）",
+     "unit_ids": [
+      "page:web:users.role"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "公司登記名稱字數上限",
+      "社宅業者編號在哪填",
+      "公司登記證號要填嗎",
+      "公司統編格式錯誤怎麼辦"
+     ],
+     "sentences": [
+      "簽約資訊卡的「公司資訊」要填公司登記名稱（最多 20 字）與公司統編，這兩項不分一般團隊或社宅團隊都是必填。",
+      "「公司統編」欄位下方可以選擇統編類型是「公司統編(檢核)」還是「其他統編(不檢核)」，選「公司統編(檢核)」時會檢查統一編號格式，格式不對會顯示「公司統編格式錯誤」。",
+      "「公司負責人」只有社宅團隊是必填欄位，一般團隊則是選填。",
+      "「社宅業者編號」只有社宅團隊看得到，且是必填欄位；一般團隊沒有這一欄。",
+      "「公司登記證號」對社宅團隊是必填，一般團隊則是選填；「公司登記證日期」「公司登記證縣市」不論一般團隊或社宅團隊都是選填。"
+     ],
+     "sources": [
+      "code:src/pages/users/team/_parts/SignerDetails.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "fieldTitleLabelKey: '公司登記名稱',"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "errorMessageLabelParams: [`${ t('公司登記名稱') }`, 20],"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "fieldTitleLabelKey: '公司統編',"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "{ value: 'company', label: '公司統編(檢核)' },"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "errorMessageLabelKey: '公司統編格式錯誤',"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "isRequired: state.isSocialHousingTeam,"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "fieldTitleLabelKey: '公司負責人',"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "isFieldVisible: state.isSocialHousingTeam,"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "fieldTitleLabelKey: '社宅業者編號',"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "fieldTitleLabelKey: '公司登記證號',"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "isRequired: state.isSocialHousingTeam,"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "fieldTitleLabelKey: '公司登記證日期',"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "fieldTitleLabelKey: '公司登記證縣市',"
+      }
+     ],
+     "not_supported_greps": [
+      {
+       "grep": "git -C jgb2/dev2 show master:src/pages/users/team/_parts/SignerDetails.vue | sed -n '276p' | grep -c isSocialHousingTeam",
+       "result": "1 — 「公司負責人」欄位的 isRequired 被 state.isSocialHousingTeam 包住，一般團隊不是必填",
+       "control_term": "git -C jgb2/dev2 show master:src/pages/users/team/_parts/SignerDetails.vue | sed -n '226,230p' | grep -c '公司登記名稱' => 1（正對照組：同檔案永遠必填的「公司登記名稱」欄位定義確實命中，證明 grep 找得到這個檔案裡的東西）"
+      }
+     ],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/team-signer-agent-info",
+     "askable": "簽約資訊卡的經紀人資訊要填哪些欄位",
+     "title": "簽約資訊卡的「經紀人資訊」要填什麼？（經紀人／經紀業名稱與證號，名稱上限 15 字；社宅團隊多了經紀人聯絡電話與 Email，且都是必填）",
+     "unit_ids": [
+      "page:web:users.role"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "經紀人名稱字數上限",
+      "經紀業名稱可以不填嗎",
+      "經紀人聯絡電話什麼時候要填"
+     ],
+     "sentences": [
+      "簽約資訊卡有獨立的「經紀人資訊」區塊，可以填經紀人與經紀業各自的名稱、證號。",
+      "「經紀人名稱」與「經紀業名稱」都有 15 字的上限，超過會顯示已達上限的錯誤提示；一般團隊的經紀人名稱、證號、經紀業名稱、證號全部都是選填。",
+      "社宅團隊的經紀人名稱、經紀人證號會變成必填，還會多出「經紀人聯絡電話」「經紀人 Email」這兩個欄位、同樣必填；一般團隊看不到這兩個聯絡電話與 Email 欄位。"
+     ],
+     "sources": [
+      "code:src/pages/users/team/_parts/SignerDetails.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "<h4 class=\"mb-4\">{{ t('經紀人資訊') }}</h4>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "errorMessageLabelParams: [`${ t('經紀人名稱') }`, 15],"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "errorMessageLabelParams: [`${ t('經紀業名稱') }`, 15],"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "fieldTitleLabelKey: '經紀業名稱',"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "isRequired: state.isSocialHousingTeam,"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "fieldTitleLabelKey: '經紀人聯絡電話',"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "fieldTitleLabelKey: '經紀人 Email',"
+      }
+     ],
+     "not_supported_greps": [
+      {
+       "grep": "git -C jgb2/dev2 show master:src/pages/users/team/_parts/SignerDetails.vue | sed -n '405p' | grep -c isSocialHousingTeam",
+       "result": "1 — 「經紀人聯絡電話」欄位的 isFieldVisible 被 state.isSocialHousingTeam 包住，一般團隊不會渲染這個欄位（「經紀人 Email」在同一寫法的另一個欄位定義裡也一樣）",
+       "control_term": "git -C jgb2/dev2 show master:src/pages/users/team/_parts/SignerDetails.vue | sed -n '228p' | grep -c '公司登記名稱' => 1（正對照組：同檔案永遠顯示的「公司登記名稱」欄位定義確實命中，證明 grep 找得到這個檔案裡的東西）"
+      }
+     ],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/team-signer-manager-info",
+     "askable": "簽約資訊卡的租賃住宅管理人員資訊要填哪些欄位",
+     "title": "簽約資訊卡的「租賃住宅管理人員資訊」要填什麼？（姓名與證號；社宅團隊多了聯絡電話欄位，且姓名／證號／電話都是必填；沒有 Email 欄位）",
+     "unit_ids": [
+      "page:web:users.role"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "租賃管理人員要填哪些資料",
+      "租賃管理人員聯絡電話要填嗎",
+      "租賃住宅管理人員證號在哪填"
+     ],
+     "sentences": [
+      "簽約資訊卡有獨立的「租賃住宅管理人員資訊」區塊，可以填租賃管理人員的名稱與證號，一般團隊這兩項都是選填。",
+      "社宅團隊的租賃管理人員名稱、證號都變成必填，還會多出「租賃管理人員聯絡電話」欄位、同樣必填；這個區塊沒有 Email 欄位。"
+     ],
+     "sources": [
+      "code:src/pages/users/team/_parts/SignerDetails.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "<h4 class=\"mb-4\">{{ t('租賃住宅管理人員資訊') }}</h4>"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "fieldTitleLabelKey: '租賃管理人員名稱',"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "isRequired: state.isSocialHousingTeam,"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "fieldTitleLabelKey: '租賃管理人員聯絡電話',"
+      }
+     ],
+     "not_supported_greps": [
+      {
+       "grep": "git -C jgb2/dev2 show master:src/pages/users/team/_parts/SignerDetails.vue | grep -cF \"fieldTitleLabelKey: '租賃管理人員 Email',\"",
+       "result": "0 — 整個 SignerDetails.vue 沒有租賃管理人員 Email 欄位的定義",
+       "control_term": "git -C jgb2/dev2 show master:src/pages/users/team/_parts/SignerDetails.vue | grep -cF \"fieldTitleLabelKey: '經紀人 Email',\" => 1（正對照組：同檔案裡確實存在的「經紀人 Email」欄位定義確實命中，證明 grep 找得到這個檔案裡的東西）"
+      }
+     ],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/team-signer-stamps",
+     "askable": "簽約資訊卡可以上傳哪幾種圖章",
+     "title": "簽約資訊卡可以上傳哪幾種圖章？（法人或社宅團隊的簽約資訊卡才看得到「附件」與「電子簽約圖章」兩個區塊；「附件」有公司大章、公司小章、不動產經紀人章、不動產經紀業章、租賃管理員章五種，「電子簽約圖章」另外只有一個「圖章」欄位）",
+     "unit_ids": [
+      "page:web:users.role"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "圖章要上傳哪幾種",
+      "電子簽約圖章是什麼",
+      "公司大章小章差在哪"
+     ],
+     "sentences": [
+      "「附件」與「電子簽約圖章」這兩個區塊，只有簽約資訊卡屬於法人團隊或社宅團隊時才會出現；個人團隊的簽約資訊卡看不到這兩個區塊。",
+      "簽約資訊卡的「附件」區塊可以分別上傳公司大章、公司小章、不動產經紀人章、不動產經紀業章、租賃管理員章共五種圖章。",
+      "「電子簽約圖章」是另一個獨立區塊，只有一個「圖章」上傳欄位，跟「附件」區塊的五種圖章是不同的檔案；圖章上傳並儲存後，可以開啟「預設使用圖章取代親手簽名」，簽約時就會直接套用這個圖章。"
+     ],
+     "sources": [
+      "code:src/pages/users/team/_parts/SignerDetails.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "<template v-if=\"state.isCorporate\">"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "isCorporate: computed(()=>[3, 4].includes(store.state?.userData?.role?.config_rule_key)),"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "<h4 class=\"mb-4\">{{ t('附件') }}</h4>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "fieldTitleLabelKey: '公司大章',"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "fieldTitleLabelKey: '不動產經紀人章',"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "fieldTitleLabelKey: '不動產經紀業章',"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "fieldTitleLabelKey: '租賃管理員章',"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "<h4 class=\"mb-4\">{{ t('電子簽約圖章') }}</h4>"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "fieldTitleLabelKey: '圖章',"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "<div class=\"ml-2.5\">{{ t('預設使用圖章取代親手簽名') }}</div>"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/team-multi-company-info",
+     "askable": "一個團隊可以設定多組公司資訊嗎",
+     "title": "一個團隊可以管理多組公司資訊嗎？（可以在「團隊資訊管理」視窗新增與刪除，但清單第一筆不能刪除）",
+     "unit_ids": [
+      "page:web:users.role"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "可以設定多組公司資訊嗎",
+      "公司資訊怎麼新增",
+      "主要那組公司資訊可以刪除嗎"
+     ],
+     "sentences": [
+      "簽約資訊卡片旁的「管理」按鈕會開啟「團隊資訊管理」視窗，會列出這個團隊目前所有的公司資訊，可以點「新增」加入一組新的公司資訊。",
+      "清單上每組公司資訊旁都有一個可以點擊刪除的圖示，但清單的第一筆沒有這個刪除圖示，不能被刪除。"
+     ],
+     "sources": [
+      "code:src/pages/users/team/_parts/SignerDetails.vue",
+      "code:src/components/Lightbox/SignerInfosEdit.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "store.commit('lightbox','manageSingerProfile')"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/components/Lightbox/SignerInfosEdit.vue",
+       "quote_or_symbol": "<h3 class=\"mb-2\">{{ t('團隊資訊管理') }}</h3>"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/components/Lightbox/SignerInfosEdit.vue",
+       "quote_or_symbol": "<div class=\"btn btn-secondary mb-6\" @click=\"handleCreate\">{{ t('新增') }}</div>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/components/Lightbox/SignerInfosEdit.vue",
+       "quote_or_symbol": "<div v-if=\"index !== 0\" class=\"btn\""
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/team-info-no-view-permission",
+     "askable": "沒有查看團隊資訊權限會看到什麼",
+     "title": "沒有查看團隊資訊的權限，打開團隊資訊頁會怎樣？（提示「您目前登入的帳號無法查看團隊資訊功能」）",
+     "unit_ids": [
+      "page:web:users.role"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "沒有權限看團隊資訊會怎樣",
+      "團隊資訊頁打不開",
+      "無法查看團隊資訊功能是什麼意思"
+     ],
+     "sentences": [
+      "如果目前登入的帳號沒有查看團隊資訊的權限，系統會提示「您目前登入的帳號無法查看團隊資訊功能」。"
+     ],
+     "sources": [
+      "code:app/Http/Controllers/UserController.php"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "'status-error' => ___('您目前登入的帳號無法查看團隊資訊功能')"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/team-signer-address-groups",
+     "askable": "簽約資訊卡上有哪些地址欄位群",
+     "title": "簽約資訊卡上有哪些地址欄位群？（個人的戶籍地址／通訊地址、公司的登記地址／通訊地址，都有「同上」可以直接帶入；社宅團隊另有經紀人與租賃管理人員各自的通訊地址）",
+     "unit_ids": [
+      "page:web:users.role"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "簽約資訊有哪些地址欄位",
+      "通訊地址可以跟戶籍地址一樣嗎",
+      "公司通訊地址在哪填"
+     ],
+     "sentences": [
+      "個人資訊區塊有「戶籍地址」與「通訊地址」兩組地址欄位，通訊地址可以點「同戶籍地址」直接帶入戶籍地址的內容。",
+      "公司資訊區塊有「公司登記地址」與「公司通訊地址」兩組地址欄位，公司通訊地址可以點「同公司登記地址」直接帶入。",
+      "社宅團隊還會多出「經紀人通訊地址」與「租賃管理人員通訊地址」這兩組獨立的地址欄位，一般團隊看不到這兩組。"
+     ],
+     "sources": [
+      "code:src/pages/users/team/_parts/SignerDetails.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "<h5 class=\"mb-2\">{{ t('戶籍地址') }}</h5>"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "}\">{{ t('同戶籍地址') }}</span>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "<h5 class=\"mb-2\">{{ t('公司登記地址') }}</h5>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "}\">{{ t('同公司登記地址') }}</span>"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "<h5 class=\"mb-2\">{{ t('經紀人通訊地址') }}</h5>"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "<h5 class=\"mb-2\">{{ t('租賃管理人員通訊地址') }}</h5>"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "<div v-if=\"state.isSocialHousingTeam\" class=\"col-12 my-4\">"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/team-signer-profile-switch",
+     "askable": "怎麼在多組簽約資訊之間切換",
+     "title": "怎麼在多組簽約資訊之間切換？（頁面上方有分頁式選單，超過 5 組會收進「所有團隊」下拉選單）",
+     "unit_ids": [
+      "page:web:users.role"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "怎麼切換不同的簽約資訊",
+      "簽約資訊太多組要怎麼選",
+      "所有團隊下拉選單是什麼"
+     ],
+     "sentences": [
+      "團隊資訊管理裡新增的每一組公司資訊，都會在簽約資訊卡片上方變成一個可以點擊切換的分頁項目。",
+      "當公司資訊超過 5 組時，畫面會多出一個「所有團隊」的下拉選單；這個下拉選單列出的是全部組數（不是只有超過 5 組後多出來的部分），點選其中一項一樣可以切換過去。"
+     ],
+     "sources": [
+      "code:src/pages/users/team/_parts/SignerDetails.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "<ScrollNav v-if=\"state.scrollNavDetail?.isShowScrollBar\""
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "@click=\"(e: any)=>onClickScrollNav(e.index)\" />"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "<tooltip v-if=\"state.scrollNavDetail?.isMoreThan5\" class=\"col-auto\">"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "<div v-for=\"(node, index) in state.scrollNavDetail?.list\" :key=\"index\" class=\"my-4\">"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "list: productEntryState.role.companyInfoNav,"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    }
+   ]
+  },
+  {
+   "coarse": "成員列表（邀請、角色、成員名下資料）",
+   "unit_ids": [
+    "page:web:users.team",
+    "page:users.team.member.owned"
+   ],
+   "fines": [
+    {
+     "proposed_id": "jgb/B/member-list-overview",
+     "askable": "成員列表可以看到什麼資訊，例如人數、加入時間、角色",
+     "title": "成員列表可以看到什麼資訊？（成員總人數、加入時間、Email、手機號碼、目前的角色）",
+     "unit_ids": [
+      "page:web:users.team"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "成員列表看得到什麼",
+      "成員清單有哪些欄位",
+      "怎麼看成員的角色",
+      "成員名下有沒有物件怎麼看"
+     ],
+     "sentences": [
+      "成員列表頁面上方會顯示目前團隊的成員總人數（含團隊擁有者本人）。",
+      "清單上每位成員會顯示加入時間、Email、手機號碼，以及目前套用的角色名稱。"
+     ],
+     "sources": [
+      "code:resources/views/users/team/index.blade.php",
+      "code:app/Http/Controllers/UserController.php"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:resources/views/users/team/index.blade.php",
+       "quote_or_symbol": "@{{ t('[s1] 個成員', [$store.state.team.member_list.length+1]) }}"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:resources/views/users/team/index.blade.php",
+       "quote_or_symbol": "<div class=\"lg:col-2 shrink col-12 lg:mb-0 mb-2\">{{___('加入時間')}}</div>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:resources/views/users/team/index.blade.php",
+       "quote_or_symbol": "<span class=\"col\">{{___('Email')}}</span>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:resources/views/users/team/index.blade.php",
+       "quote_or_symbol": "<span class=\"col\">{{___('手機號碼')}}</span>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:resources/views/users/team/index.blade.php",
+       "quote_or_symbol": "{{___('角色')}}"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/member-invite",
+     "askable": "怎麼邀請新成員加入團隊",
+     "title": "怎麼邀請新成員加入團隊？（用 Email 或手機號碼搜尋，對方要先是 JGB 會員）",
+     "unit_ids": [
+      "page:web:users.team"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "怎麼邀請成員",
+      "新增成員流程",
+      "邀請成員要對方先註冊嗎",
+      "成員邀請用 email 還是手機"
+     ],
+     "sentences": [
+      "點擊成員列表的「邀請」按鈕會開啟「新增成員」視窗，可以選擇用 Email 或手機號碼搜尋要邀請的對象。",
+      "受邀請的對象如果還不是 JGB 會員，系統會提示這個帳號尚未成為 JGB 會員，不能把他新增為團隊成員。",
+      "可以一次搜尋加入多位對象到「即將新增成員」清單，確認後一次送出邀請。"
+     ],
+     "sources": [
+      "code:resources/views/users/team/index.blade.php"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:resources/views/users/team/index.blade.php",
+       "quote_or_symbol": "{{___('新增成員')}}"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:resources/views/users/team/index.blade.php",
+       "quote_or_symbol": "<span class=\"col\">{{___('手機號碼')}}</span>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:resources/views/users/team/index.blade.php",
+       "quote_or_symbol": "受邀請的對象如果不是 JGB 會員，將無法新增為團隊成員。"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:resources/views/users/team/index.blade.php",
+       "quote_or_symbol": "{{___('即將新增成員')}}"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/member-role-concept",
+     "askable": "成員的角色權限決定什麼範圍",
+     "title": "成員的「角色」權限決定什麼？（決定看得到與能編輯的物件、合約、帳務、修繕等範圍）",
+     "unit_ids": [
+      "page:web:users.team"
+     ],
+     "target_user": [
+      "property_manager",
+      "prospect"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "角色權限是什麼",
+      "角色能設定哪些權限",
+      "團隊擁有者的權限跟一般成員一樣嗎",
+      "成員權限範圍怎麼分"
+     ],
+     "sentences": [
+      "每位成員會被指派一個「角色」，角色的權限設定決定這位成員能不能查看、新增、編輯、刪除物件、合約、帳務、修繕等資料，以及看的是自己名下的還是整個團隊的。",
+      "除了物件、合約、帳務、修繕之外，角色權限也能授予查看團隊權限、查看或編輯團隊資訊、查看成員列表、查看大房東列表、查看租客列表等團隊管理相關功能。",
+      "團隊擁有者是創建這個團隊的人，權限固定，不能被編輯或刪除。"
+     ],
+     "sources": [
+      "code:app/Http/Controllers/UserController.php",
+      "code:resources/views/layouts/lightbox/character-capability-edit.blade.php"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "'label'=> '查看所有物件',"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "'label'=> '查看團隊資訊',"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "'label'=> '查看大房東列表',"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "'label'=> '查看租客列表',"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:resources/views/layouts/lightbox/character-capability-edit.blade.php",
+       "quote_or_symbol": "團隊擁有者為創建此團隊者，無法編輯與刪除。"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/member-role-manage",
+     "askable": "怎麼新增、編輯、刪除角色範本",
+     "title": "怎麼管理團隊的角色範本？（可新增、編輯、刪除，也能套用 JGB 內建的快速設定範本）",
+     "unit_ids": [
+      "page:web:users.team"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "角色管理在哪",
+      "怎麼新增角色",
+      "角色範本有哪些",
+      "刪除角色會怎樣"
+     ],
+     "sentences": [
+      "點擊成員列表的「角色管理」，可以看到團隊內所有角色，點「編輯」可以調整角色名稱與權限細節。",
+      "新增角色時可以直接點「快速設定」套用 JGB 提供的權限參考範本，例如店長、會計等內建範本，再自行微調。",
+      "角色刪除後無法恢復。"
+     ],
+     "sources": [
+      "code:resources/views/layouts/lightbox/character-capability-edit.blade.php",
+      "code:config/character.php"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:resources/views/layouts/lightbox/character-capability-edit.blade.php",
+       "quote_or_symbol": "以下為團隊內所有角色，如需調整角色名稱或權限細節，請點擊「編輯」。"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:resources/views/layouts/lightbox/character-capability-edit.blade.php",
+       "quote_or_symbol": "JGB 提供權限參考模板，可使用上方 “快速設定 ”套用權限。"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:config/character.php",
+       "quote_or_symbol": "'label'=> '店長',"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:resources/views/layouts/lightbox/character-capability-edit.blade.php",
+       "quote_or_symbol": "角色刪除後無法恢復，請問您確定要刪除角色嗎？"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/member-remove",
+     "askable": "移除成員會發生什麼、名下有物件合約時能不能刪",
+     "title": "怎麼移除成員？（列表右側的紅色 × 圖示開啟確認視窗，按「移除」才會真的刪除；名下還有物件或合約會被擋下）",
+     "unit_ids": [
+      "page:web:users.team",
+      "page:users.team.member.owned"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "怎麼移除成員",
+      "成員名下有物件不能刪怎麼辦",
+      "移除成員後果",
+      "成員擁有的物件怎麼轉移給別人"
+     ],
+     "sentences": [
+      "點成員列表這一列右側的紅色 × 圖示，會跳出「移除成員」確認視窗，按「移除」才會真的刪除這位成員。",
+      "如果這位成員名下還有綁定中的物件或合約，系統會先擋下移除，改跳出提示，要先指派其他經理人後才能進行移除動作。",
+      "這時候可以點進「〔成員姓名〕擁有的物件」或「擁有的合約」頁面，把每一筆物件或合約的授權移除，再回來移除這位成員。",
+      "成員移除後，對方將無法再存取這個團隊內的任何資訊。"
+     ],
+     "sources": [
+      "code:resources/views/users/team/index.blade.php",
+      "code:src/pages/users/team/memberOwned/Index.jsx"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:resources/views/users/team/index.blade.php",
+       "quote_or_symbol": "<div class=\"text-[21px] font-500 text-center mb-2\">{{___('移除成員')}}</div>"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:resources/views/users/team/index.blade.php",
+       "quote_or_symbol": "}\">{{___('移除')}}</div>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:resources/views/users/team/index.blade.php",
+       "quote_or_symbol": "{{___('尚有綁定中的物件或合約')}}"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:resources/views/users/team/index.blade.php",
+       "quote_or_symbol": "欲刪除的團隊成員，目前尚有綁定中的物件或合約，請先指派其他經理人後再行移除動作。"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/users/team/memberOwned/Index.jsx",
+       "quote_or_symbol": "route.params.category === 'estates' ? t('[s1] 擁有的物件', [route.query.name]) : t('[s1] 擁有的合約', [route.query.name])"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:resources/views/users/team/index.blade.php",
+       "quote_or_symbol": "成員移除後，對方將無法再存取團隊內的任何資訊，請問您確定要刪除[s1]嗎？"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/member-seat-limit",
+     "askable": "邀請成員有沒有名額上限",
+     "title": "邀請成員有名額上限嗎？（依訂閱方案而定，達上限要升級方案才能繼續邀請）",
+     "unit_ids": [
+      "page:web:users.team"
+     ],
+     "target_user": [
+      "property_manager",
+      "prospect"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "成員邀請有上限嗎",
+      "團隊成員人數上限",
+      "邀請額滿怎麼辦"
+     ],
+     "sentences": [
+      "團隊可以邀請的成員人數上限，是由目前的訂閱方案決定的。",
+      "達到上限後，點「邀請」不會開啟邀請視窗，而是提示已達到數量上限，並導引前往升級訂閱方案。"
+     ],
+     "sources": [
+      "code:resources/views/layouts/lightbox/general.blade.php"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:resources/views/layouts/lightbox/general.blade.php",
+       "quote_or_symbol": "isset($role->plan_team_limit) ? $role->plan_team_limit : '無上限']),"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:resources/views/layouts/lightbox/general.blade.php",
+       "quote_or_symbol": "'title'=> ___('已達到數量上限！'),"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:resources/views/layouts/lightbox/general.blade.php",
+       "quote_or_symbol": "$lightbox['subscribedPlanTeamIsFull']['description'] = ___('您的 [s1] 最多可邀請 [s2] 位成員，目前已到達上限，要升級方案嗎？', [!empty($role->plan_name) ? ___($role->plan_name) : '', isset($role->plan_team_limit) ? ___($role->plan_team_limit) : '無上限']);"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/member-assign-owned",
+     "askable": "怎麼指派物件或合約給成員",
+     "title": "怎麼指派物件或合約給成員？（點成員旁的鉛筆圖示選「編輯綁定物件」或「編輯綁定合約」）",
+     "unit_ids": [
+      "page:web:users.team",
+      "page:users.team.member.owned"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "怎麼指派物件給成員",
+      "編輯綁定合約在哪",
+      "成員名下物件怎麼調整"
+     ],
+     "sentences": [
+      "成員列表每一列右側有鉛筆圖示，點開可以選「編輯綁定物件」或「編輯綁定合約」，會跳到這位成員擁有的物件／合約頁面。",
+      "在「〔成員姓名〕擁有的物件」或「擁有的合約」頁面，可以點「授權更多物件／合約」加入新的授權，或點「移除所有授權」一次撤銷這位成員的所有物件／合約授權。"
+     ],
+     "sources": [
+      "code:resources/views/users/team/index.blade.php",
+      "code:src/pages/users/team/memberOwned/Index.jsx"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:resources/views/users/team/index.blade.php",
+       "quote_or_symbol": "<template v-slot:trigger><div class=\"icon-setting\" style=\"background-image: none;\"><img src=\"{{asset_static('img/icon_edit.svg')}}\"></div></template>"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:resources/views/users/team/index.blade.php",
+       "quote_or_symbol": "}\">{{___('編輯綁定物件')}}</div>"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:resources/views/users/team/index.blade.php",
+       "quote_or_symbol": "}\">{{___('編輯綁定合約')}}</div>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/team/memberOwned/Index.jsx",
+       "quote_or_symbol": "route.params.category === 'estates' ? t('[s1] 擁有的物件', [route.query.name]) : t('[s1] 擁有的合約', [route.query.name])"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/team/memberOwned/Index.jsx",
+       "quote_or_symbol": "<i class=\"bi bi-plus-lg\"></i> { route.params.category === 'estates' ? t('授權更多物件') : t('授權更多合約') }"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/team/memberOwned/Index.jsx",
+       "quote_or_symbol": "<i class=\"bi bi-x-lg\"></i>&nbsp;{ t('移除所有授權') }"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/member-role-permission-list",
+     "askable": "角色權限列表在哪裡看、裡面有什麼欄位",
+     "title": "怎麼查看每個角色能做什麼？（點「角色權限說明」的「這裡」開啟角色權限列表，每一列是一項權限、每一欄是一個角色，用勾號／叉號表示有沒有這項權限）",
+     "unit_ids": [
+      "page:web:users.team"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "角色權限列表在哪看",
+      "角色權限說明在哪",
+      "目前團隊還沒有角色怎麼辦"
+     ],
+     "sentences": [
+      "成員列表頁面點「角色權限說明請點擊這裡」，會開啟「角色權限列表」視窗，用表格列出團隊內每個角色目前擁有的權限：每一列是一項權限（部分權限旁邊有說明文字），每一欄對應一個角色，用綠色勾號或灰色叉號表示這個角色有沒有這項權限。",
+      "如果團隊目前還沒有建立任何角色，角色權限列表會顯示「目前團隊還沒有任何角色，您可以選擇：」，並提供「新增角色」的按鈕。"
+     ],
+     "sources": [
+      "code:resources/views/users/team/index.blade.php",
+      "code:resources/views/layouts/lightbox/character-capability-edit.blade.php"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:resources/views/users/team/index.blade.php",
+       "quote_or_symbol": "<div class=\"lg:mt-4 mt-2\">{!!___('角色權限說明請點擊 [s1]。', ['<span class=\"btn btn-text\" @click=\"lightboxOpen(\\'character--Table\\')\">' . ___('這裡') . '</span>'])!!}</div>"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:resources/views/layouts/lightbox/character-capability-edit.blade.php",
+       "quote_or_symbol": "<span class=\"lg:text-[28px] text-[22px]\">{{___('角色權限列表')}}</span>"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/store/modules/team/capabilityEdit.js",
+       "quote_or_symbol": "headerName: t('權限列表'),"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:resources/views/layouts/lightbox/character-capability-edit.blade.php",
+       "quote_or_symbol": "<div class=\"mb-6\">{{___('目前團隊還沒有任何角色，您可以選擇：')}}</div>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:resources/views/layouts/lightbox/character-capability-edit.blade.php",
+       "quote_or_symbol": "}\">{{___('新增角色')}}</div>"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/member-list-role-inline-change",
+     "askable": "成員列表可以直接在列表上改成員的角色嗎",
+     "title": "成員列表可以直接改成員的角色嗎？（列表每一列都有角色下拉選單可以直接切換；選單裡也有「+ 新增角色」，可以直接開「編輯角色」視窗）",
+     "unit_ids": [
+      "page:web:users.team"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "列表上怎麼改成員角色",
+      "角色下拉選單怎麼用",
+      "新增角色的入口在哪裡"
+     ],
+     "sentences": [
+      "成員列表每一列都有一個角色下拉選單，選擇要指派的角色後就會直接送出變更，不用另外打開編輯視窗。",
+      "這個下拉選單最下面有一個「+ 新增角色」選項，點選後會直接開啟「編輯角色」視窗，不用先離開成員列表。"
+     ],
+     "sources": [
+      "code:resources/views/users/team/index.blade.php"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:resources/views/users/team/index.blade.php",
+       "quote_or_symbol": ":model-value=\"member.character\""
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:resources/views/users/team/index.blade.php",
+       "quote_or_symbol": "window.$('#characterChangeForm').submit()"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:resources/views/users/team/index.blade.php",
+       "quote_or_symbol": "{ label: `+ ${t('新增角色')}`, value: 'addCharacter', className: 'text-secondary' }"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:resources/views/users/team/index.blade.php",
+       "quote_or_symbol": "$store.commit('lightbox', 'character--Edit')"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/member-role-edit-open-condition",
+     "askable": "編輯角色時的開啟條件是什麼意思、為什麼有些權限勾不起來",
+     "title": "編輯角色時的「開啟條件」是什麼？（要先勾選列出的其他權限，這個權限選項的勾選框才能點；沒先勾好之前，勾選框會維持鎖住）",
+     "unit_ids": [
+      "page:web:users.team"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "為什麼有些權限打不開",
+      "開啟條件是什麼意思",
+      "角色編輯畫面權限勾不起來"
+     ],
+     "sentences": [
+      "「編輯角色」視窗裡，部分權限選項旁邊會顯示「開啟條件」文字，列出必須先勾選的其他權限。",
+      "在還沒勾選完開啟條件列出的權限之前，這個選項的勾選框會維持鎖住、無法點選；全部勾好開啟條件之後，這個選項才能勾選。"
+     ],
+     "sources": [
+      "code:resources/views/layouts/lightbox/character-capability-edit.blade.php",
+      "code:src/store/modules/team/capabilityEdit.js"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:resources/views/layouts/lightbox/character-capability-edit.blade.php",
+       "quote_or_symbol": "<div class=\"ml-5\" v-if=\"['g_show_role','g_edit_role'].includes(capItem.requires[0])\"> {{___('開啟條件')}}: @{{ $store.getters['team/capabilityEdit/requireLabels'](capItem.requires).join('、') }} </div>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:resources/views/layouts/lightbox/character-capability-edit.blade.php",
+       "quote_or_symbol": ":disabled=\"$store.getters['team/capabilityEdit/isThisCapDisabled']({group:groupKey, capId:capItem_key})\""
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/store/modules/team/capabilityEdit.js",
+       "quote_or_symbol": "isThisCapDisabled: (state, getters, rootState)=>({ group, capId, capabilitiesSoruce })=>{"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/store/modules/team/capabilityEdit.js",
+       "quote_or_symbol": "const isInvalidRequire = matched.length < requires.length"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/member-role-edit-reset",
+     "askable": "編輯角色時的重設條件按鈕是做什麼的",
+     "title": "編輯角色時的「重設條件」按鈕是做什麼的？（把目前正在編輯、還沒儲存的勾選狀態還原）",
+     "unit_ids": [
+      "page:web:users.team"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "重設條件按鈕做什麼",
+      "角色編輯畫面的重設是什麼意思",
+      "角色勾選錯了怎麼還原"
+     ],
+     "sentences": [
+      "編輯角色或新增角色的視窗下方有「重設條件」按鈕，點下去會把所有權限勾選全部清空，包含編輯既有角色時原本已載入的勾選。"
+     ],
+     "sources": [
+      "code:resources/views/layouts/lightbox/character-capability-edit.blade.php"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/store/modules/team/capabilityEdit.js#reset",
+       "quote_or_symbol": "// 重設條件，全部取消句選"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/member-list-sort",
+     "askable": "成員列表可以怎麼排序",
+     "title": "成員列表可以怎麼排序？（姓名、加入時間、手機號碼、Email、角色名稱各有正反兩種排序）",
+     "unit_ids": [
+      "page:web:users.team"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "成員列表怎麼排序",
+      "可以依加入時間排序嗎",
+      "成員排序有哪些選項"
+     ],
+     "sentences": [
+      "成員列表可以依姓名（A-Z／Z-A）、加入時間（早／晚）、手機號碼（小／大）、Email（A-Z／Z-A）、角色名稱（A-Z／Z-A）排序，一共 10 種排序方式可以選。"
+     ],
+     "sources": [
+      "code:src/entry/team.js"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/entry/team.js",
+       "quote_or_symbol": "1: t('姓名(A-Z)'),"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/entry/team.js",
+       "quote_or_symbol": "3: t('加入時間(早)'),"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/entry/team.js",
+       "quote_or_symbol": "9: t('角色名稱(A-Z)'),"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/member-list-role-select-disabled",
+     "askable": "為什麼團隊擁有者和自己的角色下拉是灰的不能改",
+     "title": "為什麼「團隊擁有者」和自己那一列的角色下拉不能改？（這兩列是固定顯示在列表最上面、角色下拉是鎖住的，跟其他成員分開處理）",
+     "unit_ids": [
+      "page:web:users.team"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "團隊擁有者角色不能改嗎",
+      "自己的角色下拉是灰的",
+      "為什麼有一列選不了角色"
+     ],
+     "sentences": [
+      "成員列表最上面會固定顯示「團隊擁有者」與「自己（登入帳號本人）」各一列，如果登入帳號本人就是團隊擁有者則只顯示一列；這兩列各自的角色下拉選單是鎖住的、不能點選變更。",
+      "「團隊擁有者」是系統內建的固定角色，不會出現在成員的角色下拉選單裡。"
+     ],
+     "sources": [
+      "code:resources/views/users/team/index.blade.php",
+      "code:app/Http/Controllers/UserController.php"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:resources/views/users/team/index.blade.php",
+       "quote_or_symbol": "<div class=\"rounded py-3 lg:pl-2\" v-if=\"$store.state.team.owner && $store.state.team.owner.uid !== $store.state.team.self.uid\">"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:resources/views/users/team/index.blade.php",
+       "quote_or_symbol": "<div class=\"rounded py-3 lg:pl-2\" v-if=\"$store.state.team.self\">"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "'disabled'=> $LVuserId == $ownerKey ? true:false,"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:config/character.php",
+       "quote_or_symbol": "'label' => '團隊擁有者',"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/UserController.php#outputCharactersInfo",
+       "quote_or_symbol": "template_id == 0"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    }
+   ]
+  },
+  {
+   "coarse": "大房東列表與授權物件",
+   "unit_ids": [
+    "page:bigLandlords.index",
+    "page:bigLandlords.list",
+    "page:users.team.owned",
+    "page:web:users.team"
+   ],
+   "fines": [
+    {
+     "proposed_id": "jgb/B/biglandlord-list-overview",
+     "askable": "大房東列表可以看到哪些欄位",
+     "title": "大房東列表可以看到哪些欄位？（ID、姓名、會員註冊、身分證字號、生日、主要聯絡方式、帳戶資訊、合作方式、合作起迄、所屬物件）",
+     "unit_ids": [
+      "page:bigLandlords.list",
+      "page:bigLandlords.index"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "大房東列表有哪些欄位",
+      "大房東資料看得到什麼",
+      "大房東的合作起迄怎麼看"
+     ],
+     "sentences": [
+      "大房東列表的每一筆資料會顯示 ID、姓名、會員註冊、Email、手機號碼、身分證字號、地址、帳戶名稱與帳戶資訊。",
+      "另外還會顯示合作方式、合作起迄日期、這位大房東目前被授權的所屬物件數量，以及生日、主要聯絡方式。",
+      "點擊姓名可以開啟這位大房東的聯絡資訊卡。"
+     ],
+     "sources": [
+      "code:src/pages/bigLandlords/list/_parts/ListTable.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/bigLandlords/list/_parts/ListTable.vue",
+       "quote_or_symbol": "title: 'ID',"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/bigLandlords/list/_parts/ListTable.vue",
+       "quote_or_symbol": "title: t('會員註冊'),"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/bigLandlords/list/_parts/ListTable.vue",
+       "quote_or_symbol": "title: t('身分證字號'),"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/bigLandlords/list/_parts/ListTable.vue",
+       "quote_or_symbol": "title: t('合作方式'),"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/bigLandlords/list/_parts/ListTable.vue",
+       "quote_or_symbol": "title: t('生日'),"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/bigLandlords/list/_parts/ListTable.vue",
+       "quote_or_symbol": "title: t('主要聯絡方式'),"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/bigLandlords/list/_parts/ListTable.vue",
+       "quote_or_symbol": "import useContactCard, { ContactCard } from '@src/use/useContactCard'"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/biglandlord-add",
+     "askable": "怎麼新增大房東，已註冊和未註冊的差異",
+     "title": "怎麼新增大房東？（已註冊會員填 Email 即可，未註冊只要填姓氏與名稱，Email 選填）",
+     "unit_ids": [
+      "page:bigLandlords.list"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "怎麼新增大房東",
+      "大房東還沒註冊怎麼辦",
+      "新增大房東要填什麼"
+     ],
+     "sentences": [
+      "點擊大房東列表的「新增大房東」，系統會先問這位大房東是否已經註冊 JGB 帳號。",
+      "如果已經註冊，只要輸入對方的 Email 按「新增」就可以加入。",
+      "如果還沒註冊，姓氏與名稱是必填，Email 則是選填。"
+     ],
+     "sources": [
+      "code:src/components/Lightbox/MemberInvite.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/components/Lightbox/MemberInvite.vue",
+       "quote_or_symbol": "<div class=\"mb-4 text-center\"> {t('大房東是否已註冊帳號') + '?'}</div>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/components/Lightbox/MemberInvite.vue",
+       "quote_or_symbol": "value: 'registered'"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/components/Lightbox/MemberInvite.vue",
+       "quote_or_symbol": "<div class=\"after-required mb-1\">{t('大房東') + ' ' + t('Email')}</div>"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/components/Lightbox/MemberInvite.vue",
+       "quote_or_symbol": "<div class=\"after-required  mb-1\">{t('大房東') + ' ' + t('姓氏')}</div>"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/components/Lightbox/MemberInvite.vue",
+       "quote_or_symbol": "<div class=\"mb-1\">{t('大房東') + ' ' + t('Email')}</div>"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": [
+      "team/index.blade.php 的 id=\"inviteMember\" 燈箱（type=2）文案是「受邀請的對象如果不是 JGB 會員，將無法新增為大房東」，且只提供 Email／手機號碼搜尋既有會員，不像本細目引用的 MemberInvite.vue 有『未註冊』分支可直接填姓氏＋名稱建立非會員大房東；兩者是否對應同一個『新增大房東』入口、或分屬新舊兩套介面，待業主確認。"
+     ]
+    },
+    {
+     "proposed_id": "jgb/B/biglandlord-authorize-estates",
+     "askable": "大房東的授權物件怎麼設定、能看到什麼範圍",
+     "title": "大房東的「授權物件」怎麼設定？（逐筆物件勾選瀏覽廣告／合約／帳務／修繕；合約要先勾廣告，帳務要先勾廣告＋合約，修繕沒有前提）",
+     "unit_ids": [
+      "page:users.team.owned"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "大房東能看到哪些資料",
+      "怎麼授權物件給大房東",
+      "大房東權限怎麼設定",
+      "移除大房東的物件授權"
+     ],
+     "sentences": [
+      "點進「〔大房東姓名〕擁有的物件」頁面，可以看到目前授權給這位大房東的物件清單，並針對每一筆物件個別勾選「瀏覽物件廣告」「瀏覽物件所屬合約」「瀏覽物件所屬帳務」「瀏覽物件所屬修繕」這幾項權限。",
+      "「瀏覽物件所屬合約」要先勾選「瀏覽物件廣告」才能勾；「瀏覽物件所屬帳務」要先勾選「瀏覽物件廣告」與「瀏覽物件所屬合約」才能勾；「瀏覽物件所屬修繕」則沒有前提，可以直接勾選。",
+      "這個頁面也可以填寫這筆物件的「合作方式」與「合作起迄」日期備註。",
+      "點「授權更多物件」可以挑選其他物件加入授權；點「移除所有授權」會一次撤銷這位大房東的所有物件授權。"
+     ],
+     "sources": [
+      "code:src/pages/bigLandlords/list/_parts/owned.jsx",
+      "code:app/Http/Controllers/UserController.php"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/bigLandlords/list/_parts/owned.jsx",
+       "quote_or_symbol": "{t('[s1] 擁有的物件', [route.query.name])}"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "'label'=> ___('瀏覽物件廣告'),"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "'label'=> ___('瀏覽物件所屬合約'),"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "'requires'=> ['show_estate']"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "'label'=> ___('瀏覽物件所屬帳務'),"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "'requires'=> ['show_estate','show_contract']"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "'label'=> ___('瀏覽物件所屬修繕'),"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/bigLandlords/list/_parts/owned.jsx",
+       "quote_or_symbol": "{t('合作方式')}"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/bigLandlords/list/_parts/owned.jsx",
+       "quote_or_symbol": "<i class=\"bi bi-plus-lg\"></i> {t('授權更多物件')}"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/bigLandlords/list/_parts/owned.jsx",
+       "quote_or_symbol": "{ t('移除所有授權') }"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/biglandlord-import-export",
+     "askable": "大房東名單能不能批次匯入或匯出",
+     "title": "大房東名單可以批次匯入或匯出嗎？（可以，Excel 匯入新增、Excel 匯出下載）",
+     "unit_ids": [
+      "page:bigLandlords.list"
+     ],
+     "target_user": [
+      "property_manager",
+      "prospect"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "大房東可以批次匯入嗎",
+      "大房東資料怎麼匯出",
+      "大房東 excel 匯入匯出在哪"
+     ],
+     "sentences": [
+      "大房東列表的「新增大房東」按鈕旁有下拉選單，可以選擇「匯入大房東」開啟批次匯入視窗。",
+      "清單有資料時，同一個下拉選單也可以選「匯出大房東」，下載 Excel 格式的大房東資料。"
+     ],
+     "sources": [
+      "code:src/pages/bigLandlords/list/_parts/PageTop.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/bigLandlords/list/_parts/PageTop.vue",
+       "quote_or_symbol": "{{ t('匯入大房東') }}</a>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/bigLandlords/list/_parts/PageTop.vue",
+       "quote_or_symbol": ":href=\"`${store.state.APP_URL}/api/bigLandlord/record/excel/export`\""
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/biglandlord-actions-menu",
+     "askable": "大房東列表的操作選單有哪些功能",
+     "title": "大房東列表每一列的操作選單有哪些功能？（編輯所屬物件、編輯大房東、刪除大房東）",
+     "unit_ids": [
+      "page:bigLandlords.list"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "怎麼刪除大房東",
+      "移除大房東流程",
+      "大房東資料怎麼編輯"
+     ],
+     "sentences": [
+      "每一筆大房東資料旁的操作選單，可以選「編輯所屬物件」跳到授權物件頁面、「編輯大房東」修改資料，或「刪除大房東」移除這位大房東。"
+     ],
+     "sources": [
+      "code:src/use/config/useBigLandlordsTypes.ts"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/use/config/useBigLandlordsTypes.ts",
+       "quote_or_symbol": "label: t('編輯所屬物件'),"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/use/config/useBigLandlordsTypes.ts",
+       "quote_or_symbol": "label: t('編輯大房東'),"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/use/config/useBigLandlordsTypes.ts",
+       "quote_or_symbol": "label: t('刪除大房東'),"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/biglandlord-authorize-apply-step",
+     "askable": "授權物件的勾選為什麼要按套用才會生效",
+     "title": "授權物件頁取消勾選後，為什麼要按「套用」才會生效？（取消勾選只是待處理狀態，按套用才真的移除，按恢復可以取消這次變更）",
+     "unit_ids": [
+      "page:users.team.owned"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "授權物件取消勾選沒反應",
+      "套用按鈕是做什麼的",
+      "取消勾選可以復原嗎"
+     ],
+     "sentences": [
+      "在授權物件頁把某項權限取消勾選後，畫面只會先標示「「套用」後將移除此物件」，並不會立刻生效。",
+      "要按下頁面下方的「套用」按鈕，這次的變更才會真正送出；在按下套用之前，也可以點「恢復」把這次的取消勾選還原。"
+     ],
+     "sources": [
+      "code:src/pages/bigLandlords/list/_parts/owned.jsx"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/bigLandlords/list/_parts/owned.jsx",
+       "quote_or_symbol": "vHtml={t('「套用」後將移除此物件，或者 [s1]。', [`<span class=\"btn btn-text inline text-secondary-500\">${t('恢復')}</span>`])}"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/bigLandlords/list/_parts/owned.jsx",
+       "quote_or_symbol": "}}>{ t('套用') }</div>,"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/biglandlord-delete-confirm",
+     "askable": "刪除大房東的確認流程是什麼",
+     "title": "刪除大房東會發生什麼？（先跳出確認視窗，確認後這位大房東就無法再存取這個團隊的任何資訊）",
+     "unit_ids": [
+      "page:bigLandlords.list"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "刪除大房東會怎樣",
+      "大房東刪除確認視窗",
+      "刪除大房東後對方還能登入嗎"
+     ],
+     "sentences": [
+      "點操作選單的「刪除大房東」會先跳出「移除大房東」確認視窗，詢問是否確定要刪除。",
+      "確認刪除後，這位大房東就無法再存取這個團隊內的任何資訊。"
+     ],
+     "sources": [
+      "code:src/components/Lightbox/MemberDelete.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/components/Lightbox/MemberDelete.vue",
+       "quote_or_symbol": "<div class=\"mb-2 text-center text-[21px] font-500\">{t('移除大房東')}</div>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/components/Lightbox/MemberDelete.vue",
+       "quote_or_symbol": "成員移除後，對方將無法再存取團隊內的任何資訊，請問您確定要刪除[s1]嗎？"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/biglandlord-escrow-owner",
+     "askable": "所有權人／轉租人資料是做什麼用的",
+     "title": "大房東列表上方的「所有權人／轉租人」是做什麼用的？（記錄代管物件的所有權人或轉租人資料，加快編輯合約速度）",
+     "unit_ids": [
+      "page:web:users.team"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "所有權人轉租人是什麼",
+      "怎麼新增所有權人",
+      "轉租人資料在哪管理"
+     ],
+     "sentences": [
+      "大房東列表上方有「所有權人／轉租人」區塊，可以紀錄代管物件的所有權人或轉租人資料，提升日後編輯合約的效率。",
+      "可以點「新增」建立一筆，操作選單則有「編輯所有權人」與「刪除所有權人」；清單筆數多時可以點「載入更多」繼續往下載。"
+     ],
+     "sources": [
+      "code:resources/views/users/team/index.blade.php"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:resources/views/users/team/index.blade.php",
+       "quote_or_symbol": "<div class=\"lg:text-[28px] text-[24px] font-500 mb-4\">{{___('所有權人')}} / {{___('轉租人')}}</div>"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:resources/views/users/team/index.blade.php",
+       "quote_or_symbol": "{{___('可紀錄代管物件的所有權人/轉租人資料，提升編輯合約的效率。')}}"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:resources/views/users/team/index.blade.php",
+       "quote_or_symbol": "{{___('編輯所有權人')}}</div>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:resources/views/users/team/index.blade.php",
+       "quote_or_symbol": "{{___('刪除所有權人')}}"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:resources/views/users/team/index.blade.php",
+       "quote_or_symbol": "state.escrowUsersCurrentPage++"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/biglandlord-seat-limit",
+     "askable": "大房東名額有上限嗎",
+     "title": "大房東名額有上限嗎？（大房東列表頁的「新增大房東」目前沒有名額檢查；成員／大房東管理頁（團隊管理底下的大房東列表）的「邀請」按鈕才有，額滿時會提示升級方案）",
+     "unit_ids": [
+      "page:bigLandlords.list",
+      "page:web:users.team"
+     ],
+     "target_user": [
+      "property_manager",
+      "prospect"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "大房東可以新增幾位",
+      "大房東名額上限",
+      "大房東額滿怎麼辦"
+     ],
+     "sentences": [
+      "大房東列表頁上「新增大房東」按鈕背後的新增流程，沒有名額上限的檢查邏輯，目前可以持續新增。",
+      "另外還有一個「成員／大房東管理」頁面（團隊管理底下的大房東列表），上面「邀請」按鈕在名額已滿時會換成提示「已達到數量上限！」並導引前往升級方案；這個名額檢查是綁在按邀請送出的當下，不是綁在大房東列表頁的新增大房東流程上。"
+     ],
+     "sources": [
+      "code:resources/views/layouts/lightbox/general.blade.php"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/bigLandlords/list/_parts/PageTop.vue",
+       "quote_or_symbol": "{{ t('新增大房東') }}"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/components/Lightbox/MemberInvite.vue",
+       "quote_or_symbol": "const result = await ajax(`${store.state.APP_URL}/api/bigLandlord`, { ...state.form }, 'POST')"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:resources/views/users/team/index.blade.php",
+       "quote_or_symbol": "@if ($isFull)"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:resources/views/layouts/lightbox/general.blade.php",
+       "quote_or_symbol": "$lightbox['subscribedPlanBigLandlordIsFull']['title'] = ___('已達到數量上限！');"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Middleware/PremisesLimitCheck.php",
+       "quote_or_symbol": "case 'users.team': // 擋邀請團隊成員與大房東"
+      }
+     ],
+     "not_supported_greps": [
+      {
+       "grep": "git -C jgb2/dev2 show master:app/Http/Controllers/BiglandlordController.php | grep -ciE 'limit|上限'",
+       "result": "0 — BiglandlordController 全檔（22 個 public function，含新增大房東的 store()）沒有任何名額／上限檢查邏輯",
+       "control_term": "git -C jgb2/dev2 show master:app/Http/Controllers/BiglandlordController.php | grep -c 'public function' => 22（正對照組：同一檔案確實有 22 個 public function 被 grep 找到，證明檔案讀得到、不是查詢方式壞掉）"
+      }
+     ],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/biglandlord-list-empty",
+     "askable": "大房東列表沒有資料時會顯示什麼",
+     "title": "大房東列表沒有資料時會顯示什麼？（一開始沒有任何大房東顯示「尚無大房東」；用關鍵字搜尋卻沒有符合結果則顯示「沒有符合的結果😢」）",
+     "unit_ids": [
+      "page:bigLandlords.list"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "大房東列表是空的",
+      "還沒有大房東畫面長怎樣",
+      "搜尋不到大房東會顯示什麼"
+     ],
+     "sentences": [
+      "大房東列表目前一筆資料都沒有、而且沒有輸入搜尋關鍵字時，表格會顯示「尚無大房東」。",
+      "如果是用關鍵字搜尋、但搜尋不到符合的大房東，表格則會顯示「沒有符合的結果😢」。"
+     ],
+     "sources": [
+      "code:src/pages/bigLandlords/list/_parts/ListTable.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/bigLandlords/list/_parts/ListTable.vue",
+       "quote_or_symbol": "t(\"尚無大房東\")"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/bigLandlords/list/_parts/ListTable.vue",
+       "quote_or_symbol": "<span v-if=\"isEmpty(route.query?.keyword)\">{{"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/bigLandlords/list/_parts/ListTable.vue",
+       "quote_or_symbol": "<span v-else>{{ t(\"沒有符合的結果😢\") }}</span>"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/biglandlord-batch-template-fields",
+     "askable": "批次匯入大房東的 Excel 範本要填哪些欄位",
+     "title": "批次匯入大房東的 Excel 範本要填哪些欄位？（姓氏、名稱必填，其餘含 Email、手機、身分證字號、地址、帳戶資訊、合作方式與合作起迄都是選填）",
+     "unit_ids": [
+      "page:bigLandlords.list"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "大房東匯入範本欄位",
+      "批次新增大房東要填什麼",
+      "大房東匯入哪些欄位必填"
+     ],
+     "sentences": [
+      "「匯入大房東」的批次匯入範本裡，只有姓氏與名稱是必填欄位。",
+      "其餘 Email、手機號碼、身分證字號、國家／縣市／區域／地址、帳戶名稱、帳戶資訊、合作方式、合作起始與終止時間都是選填欄位。"
+     ],
+     "sources": [
+      "code:src/components/ImportPreview/configs/bigLandlord.ts"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/components/ImportPreview/configs/bigLandlord.ts",
+       "quote_or_symbol": "{ key: 'A', label: '姓氏', dataType: 'string', required: true, validationRules: [{ type: 'required' }] },"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/components/ImportPreview/configs/bigLandlord.ts",
+       "quote_or_symbol": "{ key: 'B', label: '名稱', dataType: 'string', required: true, validationRules: [{ type: 'required' }] },"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/components/ImportPreview/configs/bigLandlord.ts",
+       "quote_or_symbol": "{ key: 'C', label: 'Email', dataType: 'email', required: false, validationRules: [{ type: 'email' }] },"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/components/ImportPreview/configs/bigLandlord.ts",
+       "quote_or_symbol": "{ key: 'L', label: '合作方式', dataType: 'string', required: false },"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/biglandlord-list-sort",
+     "askable": "大房東列表可以用什麼排序",
+     "title": "大房東列表可以用什麼排序？（姓名、手機號碼、Email、身分證字號，各有正序與反序共 8 種排序方式）",
+     "unit_ids": [
+      "page:bigLandlords.list"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "大房東列表怎麼排序",
+      "可以用身分證字號排序嗎",
+      "大房東列表排序選項有哪些"
+     ],
+     "sentences": [
+      "大房東列表可以依姓名、手機號碼、Email、身分證字號這四個欄位排序，每個欄位都有正序（A-Z／小到大）與反序（Z-A／大到小）兩種方向，總共 8 種排序方式。"
+     ],
+     "sources": [
+      "code:app/Http/Controllers/BiglandlordController.php"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/BiglandlordController.php",
+       "quote_or_symbol": "1 => ___('姓名(A-Z)', $this->lang),"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/BiglandlordController.php",
+       "quote_or_symbol": "3 => ___('手機號碼(小)', $this->lang),"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/BiglandlordController.php",
+       "quote_or_symbol": "5 => ___('Email(A-Z)', $this->lang),"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/BiglandlordController.php",
+       "quote_or_symbol": "7 => ___('身分證字號(A-Z)', $this->lang),"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/bigLandlords/list/_parts/BigLandlordAdvanceSearchBlock.vue",
+       "quote_or_symbol": ":sortOptions=\"props.searchState.data.sortOptions\""
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    }
+   ]
+  },
+  {
+   "coarse": "大房東報表",
+   "unit_ids": [
+    "page:bigLandlords.report"
+   ],
+   "fines": [
+    {
+     "proposed_id": "jgb/B/biglandlord-report-overview",
+     "askable": "大房東報表可以看到什麼",
+     "title": "大房東報表可以看到什麼？（依大房東列出所屬物件、出租中物件與執行中合約租金總額）",
+     "unit_ids": [
+      "page:bigLandlords.report"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "大房東報表看得到什麼",
+      "大房東報表怎麼看",
+      "大房東的物件租金總額在哪查",
+      "大房東報表可以下載嗎"
+     ],
+     "sentences": [
+      "大房東報表清單會依大房東列出姓名、所屬物件數、出租中物件數，以及目前執行中合約的租金總額。",
+      "點開單一大房東的細節，可以進一步看到底下每個社區、每筆物件的租客、租期與租金明細，並能個別下載報表。",
+      "報表會用團隊在「進階設定」設定的結算幣別，把不同幣別的合約金額換算成同一種幣別做加總。"
+     ],
+     "sources": [
+      "code:src/pages/bigLandlords/report/_parts/ListTable.vue",
+      "code:src/pages/bigLandlords/report/_parts/BigLandlordItemDetail.jsx",
+      "code:src/pages/users/advance/Index.jsx"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/bigLandlords/report/_parts/ListTable.vue",
+       "quote_or_symbol": "title: t('大房東姓名'),"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/bigLandlords/report/_parts/ListTable.vue",
+       "quote_or_symbol": "title: t('出租中物件'),"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/bigLandlords/report/_parts/ListTable.vue",
+       "quote_or_symbol": "title: t('執行中合約租金總額'),"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/bigLandlords/report/_parts/BigLandlordItemDetail.jsx",
+       "quote_or_symbol": "}}>{ t('下載報表') }</RouterLink>"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "description={t('用於產製大房東報表，將多種幣別的合約資訊結算至統一幣別。')}"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/biglandlord-report-permission",
+     "askable": "誰看得到大房東報表",
+     "title": "誰看得到大房東報表？（需要「查看大房東報表」的角色權限）",
+     "unit_ids": [
+      "page:bigLandlords.report"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "大房東報表誰能看",
+      "查看大房東報表權限",
+      "為什麼看不到大房東報表"
+     ],
+     "sentences": [
+      "側邊選單裡的「大房東報表」項目，要這位成員的角色有查看大房東報表的功能權限，才不會在選單整理時被拿掉。"
+     ],
+     "sources": [
+      "code:app/Http/Controllers/UserController.php"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:app/Role.php",
+       "quote_or_symbol": "'大房東報表',"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Role.php",
+       "quote_or_symbol": "'show_biglandlord_report',"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Role.php",
+       "quote_or_symbol": "( $this->is_landlord && $this->is_team && !empty($currentPermission) && !empty($itemSub['permission']) && !$currentPermission[$itemSub['permission']] ) // 若有代入使用者，而且有載入權限表，確認此使用者無此功能權限"
+      }
+     ],
+     "not_supported_greps": [
+      {
+       "grep": "git -C jgb2/dev2 show master:app/Role.php | grep -nF 'if ($isBigLandlord || $isCurrentUser || $showBigLandlordReport) {'",
+       "result": "1（4141 行）— 這段只決定「大房東報表」子項目要不要先被加進選單陣列，加進去以後還會在下面的 foreach ($item['sub'] ...) 迴圈裡，用 itemSub['permission']（'show_biglandlord_report'）再檢查一次 $currentPermission，沒有這個權限一樣會被 unset 拿掉；真正決定使用者看不看得到的是這個 foreach 迴圈，不是 addSubItem 那一段",
+       "control_term": "git -C jgb2/dev2 show master:app/Role.php | grep -cF \"'大房東報表',\" => 1（正對照組：同一段 addSubItem 呼叫裡的選單文字「大房東報表」確實命中，證明 grep 找得到這段程式碼，不是查詢方式壞掉）"
+      }
+     ],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/biglandlord-report-community-rate",
+     "askable": "大房東報表可以依社區看嗎、匯率在哪顯示",
+     "title": "大房東報表可以依社區細看嗎？（報表清單有「社區」欄，細節頁還會顯示匯率）",
+     "unit_ids": [
+      "page:bigLandlords.report"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "大房東報表有社區欄嗎",
+      "大房東報表匯率在哪看",
+      "報表可以下載社區層級嗎"
+     ],
+     "sentences": [
+      "大房東報表清單有一欄「社區」，顯示這位大房東名下物件所屬的社區。",
+      "點開大房東報表細節，畫面上會顯示「匯率」欄，並且「所有物件」「社區」「物件」三個層級各自都有獨立的「下載報表」按鈕，可以分別下載對應範圍的報表。"
+     ],
+     "sources": [
+      "code:src/pages/bigLandlords/report/_parts/ListTable.vue",
+      "code:src/pages/bigLandlords/report/_parts/BigLandlordItemDetail.jsx"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/bigLandlords/report/_parts/ListTable.vue",
+       "quote_or_symbol": "title: t('社區'),"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/bigLandlords/report/_parts/BigLandlordItemDetail.jsx",
+       "quote_or_symbol": "<div className=\"hidden lg:block\">{t('匯率')}</div>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/bigLandlords/report/_parts/BigLandlordItemDetail.jsx",
+       "quote_or_symbol": "<h6 class=\"mb-2 text-grey-600\">{ t('所有物件') }</h6>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/bigLandlords/report/_parts/BigLandlordItemDetail.jsx",
+       "quote_or_symbol": "<h6 class=\"mb-2 text-grey-600\">{ t('社區') }</h6>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/bigLandlords/report/_parts/BigLandlordItemDetail.jsx",
+       "quote_or_symbol": "<h6 class=\"mb-2 text-grey-600\">{ t('物件') }</h6>"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    }
+   ]
+  },
+  {
+   "coarse": "大房東對帳表",
+   "unit_ids": [
+    "page:bigLandlords.sheet"
+   ],
+   "fines": [
+    {
+     "proposed_id": "jgb/B/biglandlord-sheet-overview",
+     "askable": "大房東對帳表在算什麼",
+     "title": "大房東對帳表在算什麼？（只有特定合作團隊看得到完整的押金、屋主資金、屋主提領、屋主直收等類別金額，其他團隊只看得到屋主租金收支；單月報表才有「上一月」「下一月」「下載」，整年度報表是「匯出報表」）",
+     "unit_ids": [
+      "page:bigLandlords.sheet"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "大房東對帳表看什麼",
+      "對帳表怎麼看押金收支",
+      "對帳表可以下載嗎",
+      "對帳表怎麼切換月份"
+     ],
+     "sentences": [
+      "對帳表以月份為單位列出各類別金額；只有特定合作團隊看得到完整的押金收入／支出、屋主資金收入／支出、屋主提領、屋主直收收入／支出等類別，其他團隊只看得到「屋主租金收入」「屋主租金支出」（部分團隊的用語會改顯示為「租金收入」「本期支出」）。",
+      "「上一月」「下一月」「下載」「取消」這幾個按鈕只出現在單月報表畫面（網址帶 1 到 12 月其中一個月份參數）；查看整年度對帳表時看到的不是這幾個按鈕，而是可以切換年份、匯出整年度資料的「匯出報表」按鈕。"
+     ],
+     "sources": [
+      "code:src/pages/bigLandlords/sheet/_parts/Sheet.vue",
+      "code:src/pages/bigLandlords/sheet/index.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/bigLandlords/sheet/index.vue",
+       "quote_or_symbol": "<div v-if=\"['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'].includes(String(route.query.month) as string)\""
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/bigLandlords/sheet/index.vue",
+       "quote_or_symbol": "@click=\"goPrevMonth\"><i class=\"bi bi-chevron-left\"></i> {{ t('上一月') }}</div>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/SelectBar.jsx",
+       "quote_or_symbol": "<div class=\"mr-2 text-[14px]\">{t('匯出報表')}</div>"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/Sheet.vue",
+       "quote_or_symbol": "return !!specialRolesState.getSpecialGroupsByRole(store.state.userData?.role?.id)?.includes('bigLandlordReportV2')"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/Sheet.vue",
+       "quote_or_symbol": ":title=\"t('押金收入')\""
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/Sheet.vue",
+       "quote_or_symbol": ":title=\"isLabelAdjust ? t('租金收入') : t('屋主租金收入')\""
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/Sheet.vue",
+       "quote_or_symbol": ":title=\"isLabelAdjust ? t('本期支出') : t('屋主租金支出')\""
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": [
+      "「年度累計」欄目前是刻意隱藏：SelectBar.jsx 的 `const SHOW_YEARLY_COLUMN = false`（註解「2026-04-30 Joanna 拍板暫時隱藏」）與 Sheet.vue 對應區塊的 `v-if=\"false\"` 都關閉了這一欄，畫面上不會顯示年度累計金額。是否要在知識裡提到這個欄位存在但目前關閉，或完全不提，待業主確認。",
+      "月報明細（monthlyReport/ReconciliationTerm.vue、EZoneCashflow.vue 等）裡「租金收入」「本期支出」這兩個標題，只在 isLabelAdjust（useBigLandlordLabelAdjust）為真的團隊才會顯示；不是這個條件的團隊看到的是「屋主租金收入」「屋主租金支出」（V2 角色則是「本期屋主資金收入」「本期屋主資金支出」）。這兩套標題語義是否要分開寫成兩條知識、或只取一種當作『對外說法』，待業主確認。"
+     ]
+    },
+    {
+     "proposed_id": "jgb/B/biglandlord-sheet-empty",
+     "askable": "對帳表顯示尚未被指派物件是什麼意思",
+     "title": "對帳表顯示「尚未被指派物件」是什麼意思？（這位大房東還沒被授權任何物件）",
+     "unit_ids": [
+      "page:bigLandlords.sheet"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "對帳表沒資料怎麼辦",
+      "大房東報表空白原因",
+      "大房東還沒授權物件會怎樣"
+     ],
+     "sentences": [
+      "如果這位大房東目前還沒有被授權任何物件，對帳表會提示這位大房東尚未被指派物件，需要先到「大房東管理」指派物件，才會有資料。"
+     ],
+     "sources": [
+      "code:src/pages/bigLandlords/sheet/index.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/bigLandlords/sheet/index.vue",
+       "quote_or_symbol": "|| t('這位大房東尚未被指派物件，請管理者先到「大房東管理」指派物件，報表才會有資料。')"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/biglandlord-sheet-multi-currency",
+     "askable": "對帳表出現多幣別提示是什麼意思",
+     "title": "對帳表出現「本月含多幣別帳單」提示是什麼意思？（該月的帳單有不同幣別，已用結算幣別加總）",
+     "unit_ids": [
+      "page:bigLandlords.sheet"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "對帳表多幣別提示是什麼",
+      "為什麼金額有換算過的字樣",
+      "多幣別合計怎麼算"
+     ],
+     "sentences": [
+      "如果某個月份的帳單含有不同幣別，對帳表會在該區塊顯示「本月含多幣別帳單（〔幣別列表〕），以〔結算幣別〕結算合計」的提示，代表這個小計已經把不同幣別換算成同一種幣別加總。"
+     ],
+     "sources": [
+      "code:src/pages/bigLandlords/sheet/_parts/SheetTemplate.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/SheetTemplate.vue",
+       "quote_or_symbol": "ⓘ {{ t('本月含多幣別帳單（[s1]），以 [s2] 結算合計', [(props.monthlyMixedInfo[month]?.mixed_currencies || []).join(' + '), props.monthlyTotals?.[month as Month]?.base_currency || '']) }}"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/biglandlord-sheet-hide-empty-rows",
+     "askable": "對帳表可以隱藏沒有金額的項目嗎",
+     "title": "對帳表可以隱藏沒有金額的項目嗎？（可以開關「隱藏空值項目」）",
+     "unit_ids": [
+      "page:bigLandlords.sheet"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "對帳表可以只看有金額的項目嗎",
+      "隱藏空值項目是什麼",
+      "對帳表列太多怎麼精簡"
+     ],
+     "sentences": [
+      "對帳表上方可以開關「隱藏空值項目」，開啟後金額為零的類別列不會顯示在表格上。"
+     ],
+     "sources": [
+      "code:src/pages/bigLandlords/sheet/_parts/SelectBar.jsx"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/SelectBar.jsx",
+       "quote_or_symbol": "<div class=\"w-auto shrink text-[14px]\">{ t('隱藏空值項目') }</div>"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/biglandlord-sheet-month-drilldown",
+     "askable": "對帳表怎麼從年表切到單一月份的月報",
+     "title": "對帳表怎麼從年表切到單一月份的月報？（點表頭的月份會進入該月月報，點「取消」回到年表）",
+     "unit_ids": [
+      "page:bigLandlords.sheet"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "對帳表年表怎麼看單月明細",
+      "月報怎麼回到年表",
+      "點月份沒反應"
+     ],
+     "sentences": [
+      "年度對帳表的表頭可以點某個月份，進入這個月的月報明細畫面。",
+      "在月報畫面下方點「取消」，會離開這個月份的明細，回到原本的年度對帳表。"
+     ],
+     "sources": [
+      "code:src/pages/bigLandlords/sheet/_parts/Sheet.vue",
+      "code:src/pages/bigLandlords/sheet/index.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/Sheet.vue",
+       "quote_or_symbol": "month: index+1,"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/bigLandlords/sheet/index.vue",
+       "quote_or_symbol": "const { month, ...restQuery } = route.query"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/bigLandlords/sheet/index.vue",
+       "quote_or_symbol": "{{ t('取消') }}"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/biglandlord-sheet-load-download-fail",
+     "askable": "對帳表載入或下載失敗會怎樣",
+     "title": "對帳表載入或下載失敗會怎樣？（載入失敗會顯示錯誤並提供「重試」，下載失敗只顯示錯誤訊息）",
+     "unit_ids": [
+      "page:bigLandlords.sheet"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "對帳表載入失敗怎麼辦",
+      "報表下載失敗怎麼辦",
+      "對帳表重試按鈕在哪"
+     ],
+     "sentences": [
+      "對帳表載入失敗時，畫面會顯示「報表載入失敗，請稍後再試」（或畫面顯示的錯誤訊息），並提供「重試」按鈕重新載入。",
+      "下載月報失敗時，畫面會顯示「報表下載失敗，請稍後再試」，但這個提示不提供重試按鈕，需要再次點擊「下載」。"
+     ],
+     "sources": [
+      "code:src/pages/bigLandlords/sheet/index.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/bigLandlords/sheet/index.vue",
+       "quote_or_symbol": "return ownerFundState.apiResponse?.message || t('報表載入失敗，請稍後再試')"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/bigLandlords/sheet/index.vue",
+       "quote_or_symbol": "<div class=\"btn btn-secondary-outline\" @click=\"handleRetryFetch\">{{ t('重試') }}</div>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/bigLandlords/sheet/index.vue",
+       "quote_or_symbol": "state.downloadErrorMessage = t('報表下載失敗，請稍後再試')"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/biglandlord-sheet-aside-and-loading",
+     "askable": "大房東對帳表頁面的側邊選單和載入畫面是什麼",
+     "title": "大房東對帳表頁面的側邊選單和載入畫面長怎樣？（左側有社區／物件選單，看單一物件報表時會顯示上次匯入時間，報表產生中會顯示載入百分比進度條）",
+     "unit_ids": [
+      "page:bigLandlords.sheet"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "對帳表左邊選單是什麼",
+      "上次匯入時間在哪看",
+      "對帳表載入畫面在跑什麼"
+     ],
+     "sentences": [
+      "對帳表頁面左側有一個側邊選單，可以選擇要看整個社區還是特定物件的對帳資料。",
+      "切換到看單一物件的報表時，畫面上會顯示這個物件資料「最後導入時間」；看社區整體報表時不會顯示這個時間。",
+      "報表資料在產生中的時候，畫面中間會顯示一個百分比進度條，數字會隨著報表產生進度往上跳動。"
+     ],
+     "sources": [
+      "code:src/pages/bigLandlords/sheet/index.vue",
+      "code:src/pages/bigLandlords/sheet/_parts/SelectBar.jsx"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/bigLandlords/sheet/index.vue",
+       "quote_or_symbol": "<SheetAsideMenu :list=\"state.asideMenuList\" />"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/bigLandlords/sheet/index.vue",
+       "quote_or_symbol": ":lastImport=\"ownerFundState.apiResponse?.last_import || ''\""
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/SelectBar.jsx",
+       "quote_or_symbol": "<div>{ t('最後導入時間') }</div>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/SelectBar.jsx",
+       "quote_or_symbol": "{!isEmpty(route.query.estate_id) && ("
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/bigLandlords/sheet/index.vue",
+       "quote_or_symbol": "<div class=\"mt-1 text-secondary text-center\" style=\"font-size: 12px;\">{{ ownerFundState.reportLoadPercent }}%</div>"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    }
+   ]
+  },
+  {
+   "coarse": "進階設定（費用項目、租金折扣、滯納金、補充條款範本、自訂標籤、時區語系；介面路徑「團隊管理 > 進階設定」）⇄ 由 A 移入",
+   "unit_ids": [
+    "page:users.advance"
+   ],
+   "fines": [
+    {
+     "proposed_id": "jgb/B/advance-fee-items",
+     "askable": "帳單的自訂費用項目怎麼設定",
+     "title": "帳單的「自訂費用項目」怎麼設定？（分收入類／支出類，必填性質與自定義名稱，會科品項代號選填）",
+     "unit_ids": [
+      "page:users.advance"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "費用項目怎麼設定",
+      "自訂費用分收入支出類嗎",
+      "帳單費用項目性質怎麼選",
+      "費用項目可以合併嗎"
+     ],
+     "sentences": [
+      "進階設定的「帳務管理」區塊可以設定帳單「自訂費用」的收付項目，分成「收入類」與「支出類」。",
+      "新增每個項目時要選擇「性質」（例如租金、押金、水費、電費、管理費、清潔費、網路費、滯納金、違約金、賠償金、押金設算息、其他），並填寫「自定義名稱」，這兩項都是必填。",
+      "「會科品項代號」是選填欄位，用來提供給 ERP／會計系統拋轉使用。"
+     ],
+     "sources": [
+      "code:src/pages/users/advance/_part/FeesItemManagement.vue",
+      "code:src/pages/users/advance/_part/FeePanel.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/advance/_part/FeesItemManagement.vue",
+       "quote_or_symbol": ":title=\"t('帳單自訂費用項目')\""
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/advance/_part/FeePanel.vue",
+       "quote_or_symbol": "const NATURE_OPTIONS = ['租金','押金','水費','電費','管理費','清潔費','網路費','滯納金','違約金','賠償金','押金設算息','其他']"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/advance/_part/FeePanel.vue",
+       "quote_or_symbol": "<div class=\"after-required mb-1 text-[13px]\">{{ t('自定義名稱') }}</div>"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/users/advance/_part/FeePanel.vue",
+       "quote_or_symbol": "{{ t('會科品項代號（選填，供 ERP／會計拋轉）') }}"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/advance-discount-items",
+     "askable": "進階設定的優惠項目是給誰用的",
+     "title": "進階設定的「優惠項目」是給誰用的？（只有統上或新北住都的合作團隊才看得到，可設定折扣套用在租金費用上）",
+     "unit_ids": [
+      "page:users.advance"
+     ],
+     "target_user": [
+      "property_manager",
+      "prospect"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "進階設定有租金折扣嗎",
+      "優惠項目怎麼設定"
+     ],
+     "sentences": [
+      "進階設定「合約管理」區塊的「優惠項目」只會顯示給統上或新北住都的合作團隊，一般團隊的進階設定沒有這個設定。",
+      "有這個設定的團隊最多可以建立 10 組優惠項目（新北住都合作團隊上限是 30 組），在計算租金費用時套用折扣。"
+     ],
+     "sources": [
+      "code:src/pages/users/advance/Index.jsx"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "(state.isTongSang || state.isNthurc) && <>"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "title={t('優惠項目')}"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "description={t('可設定至多[s1]組優惠項目，在計算租金費用時套用。', [state.isNthurc ? '三十' : '十'])}"
+      }
+     ],
+     "not_supported_greps": [
+      {
+       "grep": "git -C jgb2/dev2 show master:src/pages/users/advance/Index.jsx | sed -n '840,842p' | grep -c 'isTongSang\\|isNthurc'",
+       "result": "1 — 「優惠項目」FormBlock 整段被 (state.isTongSang || state.isNthurc) 包住，一般團隊不會渲染這個區塊",
+       "control_term": "git -C jgb2/dev2 show master:src/pages/users/advance/Index.jsx | sed -n '749,753p' | grep -c \"title={t('物件管理')}\" => 1（正對照組：緊接在後的「物件管理」區塊標題確實命中，證明 grep 本身能在這個檔案裡找到東西，不是查詢方式壞掉）"
+      }
+     ],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/advance-late-fee",
+     "askable": "進階設定的滯納金延遲金怎麼計算、誰看得到",
+     "title": "進階設定的「延遲金設置」怎麼計算？（只有統上合作團隊看得到，公式是租金 × (逾期天數 - 緩衝天數) × 延遲金%）",
+     "unit_ids": [
+      "page:users.advance"
+     ],
+     "target_user": [
+      "property_manager",
+      "prospect"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "進階設定有滯納金設定嗎",
+      "延遲金怎麼算",
+      "逾期繳費會產生什麼費用",
+      "延遲金設置在哪"
+     ],
+     "sentences": [
+      "「延遲金設置」只會出現在統上這個合作團隊的進階設定裡，一般團隊沒有這個設定。",
+      "有這個設定的團隊可以開啟或關閉延遲金功能，並設定緩衝天數與延遲金百分比。",
+      "開啟後，租客逾期繳租超過緩衝天數，系統會自動計算延遲金並產生一筆帳單，這筆帳單的繳費截止日就是合約的終止日；計算公式是：租金 ×（逾期天數 - 緩衝天數）× 延遲金百分比。"
+     ],
+     "sources": [
+      "code:src/pages/users/advance/Index.jsx"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "state.isTongSang && <FormBlock"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "<div className=\"col-auto\">{ t('延遲金設置') }</div>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "modelValue={penaltyState.enable_late_fee}"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "<div className=\"font-500\">{ t('緩衝天數') }</div>"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "description={t('租客逾期未繳租金時，若超過緩衝天數，則會產生延遲金。系統將會自動計算延遲金的金額並生成帳單，該筆帳單的繳費截止日為合約的終止日。[s1]計算公式：租金 × ( 逾期天數 - 緩衝天數) ×延遲金%', ['</br>'])}"
+      }
+     ],
+     "not_supported_greps": [
+      {
+       "grep": "git -C jgb2/dev2 show master:src/pages/users/advance/Index.jsx | sed -n '933,935p' | grep -c isTongSang",
+       "result": "1 — 「延遲金設置」FormBlock 整段被 state.isTongSang 包住，一般團隊不會渲染這個區塊",
+       "control_term": "git -C jgb2/dev2 show master:src/pages/users/advance/Index.jsx | sed -n '749,753p' | grep -c \"title={t('物件管理')}\" => 1（正對照組：緊接在後的「物件管理」區塊標題確實命中，證明 grep 本身能在這個檔案裡找到東西，不是查詢方式壞掉）"
+      }
+     ],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/advance-additional-terms",
+     "askable": "預設補充條款怎麼設定",
+     "title": "「預設補充條款」怎麼設定？（最多可以設 3 組，編輯合約時直接選用）",
+     "unit_ids": [
+      "page:users.advance"
+     ],
+     "target_user": [
+      "property_manager",
+      "prospect"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "補充條款範本怎麼設定",
+      "合約補充條款可以存幾組",
+      "預設條款在哪編輯"
+     ],
+     "sentences": [
+      "進階設定的「合約管理」區塊可以設定至多三組常用的「預設補充條款」，編輯合約時可以直接選用，不用每次重新輸入。",
+      "每一組條款都可以新增、編輯、預覽（會轉成 PDF 預覽），也可以刪除。"
+     ],
+     "sources": [
+      "code:src/pages/users/advance/Index.jsx"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "description={t('可設定至多三組常用補充條款，編輯合約時可直接選用。')}"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "<div class=\"option\" style=\"text-align:left;\" type=\"preview\">{ t('預覽') }</div>"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/advance-custom-label",
+     "askable": "自訂標籤怎麼設定、用在哪裡",
+     "title": "「標籤設定」是做什麼用的？（幫物件加自訂標籤，單個標籤上限 18 字元）",
+     "unit_ids": [
+      "page:users.advance"
+     ],
+     "target_user": [
+      "property_manager",
+      "prospect"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "自訂標籤怎麼設定",
+      "標籤字數上限是多少",
+      "物件標籤在哪加"
+     ],
+     "sentences": [
+      "進階設定的「物件管理」區塊有一個「標籤設定」，可以先在這裡建立自訂標籤。",
+      "設定好標籤後，可以到物件管理的物件總表，幫不同的物件加上這些自訂標籤。",
+      "單一個標籤最多可以輸入 18 字元（約 9 個中文字）。"
+     ],
+     "sources": [
+      "code:src/pages/users/advance/Index.jsx"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "description={t('標籤設定後可至物件管理>物件總表處為不同的物件加上自定義標籤，單個標籤上限為18字元(9個字)。')}"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "description={t('標籤設定後可至物件管理>物件總表處為不同的物件加上自定義標籤，單個標籤上限為18字元(9個字)。')}"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "description={t('標籤設定後可至物件管理>物件總表處為不同的物件加上自定義標籤，單個標籤上限為18字元(9個字)。')}"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/advance-device-binding",
+     "askable": "怎麼綁定智能裝置廠商",
+     "title": "怎麼綁定智能裝置廠商？（輸入裝置廠商帳號密碼完成綁定，之後可在 JGB 平台管理裝置）",
+     "unit_ids": [
+      "page:users.advance"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "智能裝置怎麼綁定",
+      "裝置管理在哪設定",
+      "裝置廠商綁定流程"
+     ],
+     "sentences": [
+      "進階設定的「裝置管理」區塊可以「綁定設備廠商」，綁定後就能在 JGB 平台內管理你的智能裝置。",
+      "點「開始綁定」後，要選擇裝置廠商並輸入該廠商的帳號密碼登入，才能完成綁定。",
+      "綁定完成的廠商會列在下方，每一筆都可以按「更新資料」重新取得裝置資料。"
+     ],
+     "sources": [
+      "code:src/pages/users/advance/Index.jsx"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "description={t('綁定設備廠商後，即可在 JGB 平台內管理您的智能裝置。')}"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "{t('開始綁定')}"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "}}>{t('更新資料')}</div>"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/advance-fee-items-merge",
+     "askable": "自訂費用項目可以合併嗎",
+     "title": "自訂費用項目可以合併嗎？（可以選多個已存在的品項合併成新品項，合併後無法回復）",
+     "unit_ids": [
+      "page:users.advance"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "怎麼合併費用項目",
+      "合併品項後可以回復嗎",
+      "自訂費用項目合併操作"
+     ],
+     "sentences": [
+      "在「帳單自訂費用項目」可以點「合併項目」，選擇多個已存在的收入類或支出類品項，合併成一個新品項，合併後金額會一併統計。",
+      "品項合併後無法回復，操作前系統會提醒要謹慎操作。"
+     ],
+     "sources": [
+      "code:src/pages/users/advance/_part/FeesItemManagement.vue",
+      "code:src/components/Lightbox/CustomFeeItemMerge.jsx"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/advance/_part/FeesItemManagement.vue",
+       "quote_or_symbol": ":description=\"t('可設定帳單「自訂費用」的收付項目，可執行 [s1]合併項目[s2]。', [`<span class='btn btn-text' onclick='openMergeLightBox()'>`, `</span>`])\""
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/components/Lightbox/CustomFeeItemMerge.jsx",
+       "quote_or_symbol": "<div>{t('可選擇多個已存在品項合併成新品項，品項合併後金額將會合併統計。')}</div>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/components/Lightbox/CustomFeeItemMerge.jsx",
+       "quote_or_symbol": "<div className=\"mt-2 mb-3 rounded p-2 py-2 px-4 text-[14px]\" style=\"background:var(--color-main-50);color:#da3932;\">{t('品項合併後將無法回復，請謹慎操作。')}</div>"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/advance-payment-cycle-discount",
+     "askable": "進階設定的繳費週期優惠是給誰用的",
+     "title": "進階設定的「繳費週期優惠」是給誰用的？（只有統上團隊才看得到，選比月繳更長的繳費週期就有折扣）",
+     "unit_ids": [
+      "page:users.advance"
+     ],
+     "target_user": [
+      "property_manager",
+      "prospect"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "選季繳有折扣嗎",
+      "誰看得到繳費週期優惠設定"
+     ],
+     "sentences": [
+      "進階設定「合約管理」區塊的「繳費週期優惠」只會顯示給統上這個合作團隊，一般團隊（含新北住都）的進階設定沒有這個設定。",
+      "有這個設定的團隊，編輯合約時選擇比月繳更長的繳費週期，就能獲得租金折扣。"
+     ],
+     "sources": [
+      "code:src/pages/users/advance/Index.jsx"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "state.isTongSang && <FormBlock"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "title={t('繳費週期優惠')}"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "description={t('編輯合約時可選擇比月繳更長的繳費週期，並獲得租金折扣。')}"
+      }
+     ],
+     "not_supported_greps": [
+      {
+       "grep": "git -C jgb2/dev2 show master:src/pages/users/advance/Index.jsx | sed -n '886,888p' | grep -c isTongSang",
+       "result": "1 — 「繳費週期優惠」FormBlock 只被 state.isTongSang 包住（不含 isNthurc），新北住都團隊不會渲染這個區塊",
+       "control_term": "git -C jgb2/dev2 show master:src/pages/users/advance/Index.jsx | sed -n '749,753p' | grep -c \"title={t('物件管理')}\" => 1（正對照組：緊接在後的「物件管理」區塊標題確實命中，證明 grep 本身能在這個檔案裡找到東西，不是查詢方式壞掉）"
+      }
+     ],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/advance-notification-locale",
+     "askable": "Email 通知語系在哪設定、誰看得到",
+     "title": "「Email 通知語系」在哪設定、誰看得到？（只有法人房東或社宅團隊看得到，決定代發通知信的預設語系）",
+     "unit_ids": [
+      "page:users.advance"
+     ],
+     "target_user": [
+      "property_manager",
+      "prospect"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "Email 通知語系怎麼設定",
+      "個人房東有語系設定嗎",
+      "租客收到的通知信語言怎麼決定"
+     ],
+     "sentences": [
+      "進階設定的「全域設定」區塊只會顯示給法人房東或社宅團隊的身分，個人房東的進階設定看不到這個區塊，也就沒有「Email 通知語系」可以設定。",
+      "「Email 通知語系」可以設定系統代發給租客的通知信預設語系。"
+     ],
+     "sources": [
+      "code:src/pages/users/advance/Index.jsx"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "title={t('全域設定')}"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "title={t('Email 通知語系')}"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "description={t('可設定系統代發給您的租客的通知信預設語系。')}"
+      }
+     ],
+     "not_supported_greps": [
+      {
+       "grep": "git -C jgb2/dev2 show master:src/pages/users/advance/Index.jsx | sed -n '548,551p' | grep -c '\\[3, 4\\].includes'",
+       "result": "1 — 「全域設定」整個區塊（含 Email 通知語系、時區設定、結算幣別）被 [3, 4].includes(role.config_rule_key) 包住，config_rule_key=2 的個人房東不會渲染這個區塊",
+       "control_term": "git -C jgb2/dev2 show master:src/pages/users/advance/Index.jsx | sed -n '749,753p' | grep -c \"title={t('物件管理')}\" => 1（正對照組：緊接在後的「物件管理」區塊標題確實命中，證明 grep 本身能在這個檔案裡找到東西，不是查詢方式壞掉）"
+      }
+     ],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/advance-timezone",
+     "askable": "時區設定會影響哪些通知",
+     "title": "「時區設定」會影響哪些通知？（只有法人房東或社宅團隊看得到，改變排程通知的發送時間）",
+     "unit_ids": [
+      "page:users.advance"
+     ],
+     "target_user": [
+      "property_manager",
+      "prospect"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "個人房東有時區設定嗎",
+      "改時區會影響什麼通知"
+     ],
+     "sentences": [
+      "「時區設定」跟「Email 通知語系」一樣在「全域設定」區塊，只有法人房東或社宅團隊看得到。",
+      "選擇非台灣時區後，像每日過期帳單通知、合約 30 天內到期提醒通知這類排程通知的發送時間，會改用所選的時區計算。"
+     ],
+     "sources": [
+      "code:src/pages/users/advance/Index.jsx"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "title={t('全域設定')}"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "title={t('時區設定')}"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "description={t('選擇非台灣時區後，系統會將此團隊/帳號收到的排程通知時間更改為您所選擇的時區。<br>（如：每日過期帳單通知、合約30天內到期提醒通知）')}"
+      }
+     ],
+     "not_supported_greps": [
+      {
+       "grep": "git -C jgb2/dev2 show master:src/pages/users/advance/Index.jsx | sed -n '548,551p' | grep -c '\\[3, 4\\].includes'",
+       "result": "1 — 「全域設定」整個區塊（含 Email 通知語系、時區設定、結算幣別）被 [3, 4].includes(role.config_rule_key) 包住，config_rule_key=2 的個人房東不會渲染這個區塊",
+       "control_term": "git -C jgb2/dev2 show master:src/pages/users/advance/Index.jsx | sed -n '749,753p' | grep -c \"title={t('物件管理')}\" => 1（正對照組：緊接在後的「物件管理」區塊標題確實命中，證明 grep 本身能在這個檔案裡找到東西，不是查詢方式壞掉）"
+      }
+     ],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/advance-settlement-currency",
+     "askable": "結算幣別是做什麼用的",
+     "title": "「結算幣別」是做什麼用的？（只有法人房東或社宅團隊看得到，把大房東報表的多幣別合約統一結算成一種幣別）",
+     "unit_ids": [
+      "page:users.advance"
+     ],
+     "target_user": [
+      "property_manager",
+      "prospect"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "結算幣別是什麼",
+      "多幣別報表怎麼算",
+      "結算幣別在哪設定"
+     ],
+     "sentences": [
+      "「結算幣別」也在「全域設定」區塊，只有法人房東或社宅團隊看得到。",
+      "這個設定用來把大房東報表裡多種幣別的合約資訊，統一結算成一種幣別。"
+     ],
+     "sources": [
+      "code:src/pages/users/advance/Index.jsx"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "title={t('全域設定')}"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "title={t('結算幣別')}"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "description={t('用於產製大房東報表，將多種幣別的合約資訊結算至統一幣別。')}"
+      }
+     ],
+     "not_supported_greps": [
+      {
+       "grep": "git -C jgb2/dev2 show master:src/pages/users/advance/Index.jsx | sed -n '548,551p' | grep -c '\\[3, 4\\].includes'",
+       "result": "1 — 「全域設定」整個區塊（含 Email 通知語系、時區設定、結算幣別）被 [3, 4].includes(role.config_rule_key) 包住，config_rule_key=2 的個人房東不會渲染這個區塊",
+       "control_term": "git -C jgb2/dev2 show master:src/pages/users/advance/Index.jsx | sed -n '749,753p' | grep -c \"title={t('物件管理')}\" => 1（正對照組：緊接在後的「物件管理」區塊標題確實命中，證明 grep 本身能在這個檔案裡找到東西，不是查詢方式壞掉）"
+      }
+     ],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/advance-device-binding-visibility",
+     "askable": "為什麼看不到裝置管理設定",
+     "title": "為什麼進階設定看不到「裝置管理」區塊？（訂閱方案要生效中，且不能是免費方案）",
+     "unit_ids": [
+      "page:users.advance"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "裝置管理不見了",
+      "免費方案可以綁裝置嗎",
+      "為什麼進階設定沒有裝置管理"
+     ],
+     "sentences": [
+      "進階設定的「裝置管理」區塊只有在訂閱方案生效中、且方案不是免費方案時才會顯示；訂閱未生效或使用免費方案的團隊看不到這個區塊。"
+     ],
+     "sources": [
+      "code:src/pages/users/advance/Index.jsx"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "return store.state.userData.role?.isSubscriptionActive && store.state.userData.role?.plan_name !== '免費方案'"
+      }
+     ],
+     "not_supported_greps": [
+      {
+       "grep": "git -C jgb2/dev2 show master:src/pages/users/advance/Index.jsx | sed -n '193,195p' | grep -c isSubscriptionActive",
+       "result": "1 — deviceState.isAllowUse 要求 role.isSubscriptionActive 且 plan_name 不是「免費方案」，兩個條件都要成立「裝置管理」區塊才會渲染",
+       "control_term": "git -C jgb2/dev2 show master:src/pages/users/advance/Index.jsx | sed -n '751p' | grep -c \"title={t('物件管理')}\" => 1（正對照組：同檔案裡沒有身分條件包住、必定渲染的「物件管理」區塊標題確實命中，證明 grep 找得到這個檔案裡的東西；原本用來當正對照組的「房東專屬帳號」其實也被 config_rule_key in [3,4] 的條件包住，不能拿來當「必定顯示」的正對照）"
+      }
+     ],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/advance-dedicated-account",
+     "askable": "房東專屬帳號是做什麼用的",
+     "title": "「房東專屬帳號」是做什麼用的？（只有法人房東或社宅團隊看得到；顯示在團隊首頁，且第一次儲存後不能自行修改，要洽 JGB 客服）",
+     "unit_ids": [
+      "page:users.advance"
+     ],
+     "target_user": [
+      "property_manager",
+      "prospect"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "房東專屬帳號是什麼",
+      "房東專屬帳號可以改嗎",
+      "房東專屬帳號在哪設定"
+     ],
+     "sentences": [
+      "「房東專屬帳號」欄位在「全域設定」區塊裡，這個區塊只有法人房東或社宅團隊的進階設定看得到，個人房東團隊沒有這個區塊。",
+      "進階設定「全域設定」區塊的「房東專屬帳號」會應用在這個團隊的「團隊首頁」上。",
+      "「房東專屬帳號」第一次儲存後就不能自行修改，要修改需要洽 JGB 客服人員處理。"
+     ],
+     "sources": [
+      "code:src/pages/users/advance/Index.jsx"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "[3, 4].includes(store.state.userData.role.config_rule_key) && <div class=\"mb-4 bg-white px-5 py-8 lg:px-10\">"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "title={t('房東專屬帳號')}"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "description={t('房東專屬帳號將會應用在：「您的團隊首頁」；成功儲存後若要修改請洽JGB客服人員。')}"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "description={t('房東專屬帳號將會應用在：「您的團隊首頁」；成功儲存後若要修改請洽JGB客服人員。')}"
+      }
+     ],
+     "not_supported_greps": [
+      {
+       "grep": "git -C jgb2/dev2 show master:src/pages/users/advance/Index.jsx | sed -n '548,551p' | grep -c '\\[3, 4\\].includes'",
+       "result": "1 — 「全域設定」整個區塊（含房東專屬帳號）被 [3, 4].includes(role.config_rule_key) 包住，config_rule_key=2 的個人房東不會渲染這個區塊",
+       "control_term": "git -C jgb2/dev2 show master:src/pages/users/advance/Index.jsx | sed -n '751p' | grep -c \"title={t('物件管理')}\" => 1（正對照組：同檔案裡沒有身分條件包住、必定渲染的「物件管理」區塊標題確實命中，證明 grep 找得到這個檔案裡的東西）"
+      }
+     ],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/advance-auto-publish-unpublish",
+     "askable": "招租廣告可以自動刊登或自動下架嗎",
+     "title": "招租廣告可以自動刊登或自動下架嗎？（可以，合約到期日前 N 天自動刊登，簽約後自動下架）",
+     "unit_ids": [
+      "page:users.advance"
+     ],
+     "target_user": [
+      "property_manager",
+      "prospect"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "招租廣告會自動上架嗎",
+      "簽約後廣告會自動下架嗎",
+      "自動刊登天數怎麼設定"
+     ],
+     "sentences": [
+      "進階設定「物件管理」區塊的「招租廣告自動刊登」啟用後，可以設定天數，物件的合約到期日在這個天數內時，系統會自動將這個物件的招租廣告刊登出去。",
+      "「招租廣告自動下架」啟用後，物件簽訂合約、進入執行中合約狀態時，系統會自動把這個物件的招租廣告下架。"
+     ],
+     "sources": [
+      "code:src/pages/users/advance/Index.jsx"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "title={t('招租廣告自動刊登')}"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "description={t('若物件的合約到期日在設定的天數內，系統會自動將刊登物件的招租廣告。')}"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "title={t('招租廣告自動下架')}"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "description={t('物件簽訂合約後 (合約狀態為執行中合約)，系統會自動下架物件的招租廣告。')}"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/advance-contract-label",
+     "askable": "合約管理也有標籤設定嗎，跟物件的標籤設定一樣嗎",
+     "title": "「合約管理」的標籤設定跟物件的標籤設定是同一個嗎？（不是，這是合約專用的另一組標籤）",
+     "unit_ids": [
+      "page:users.advance"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "合約可以加標籤嗎",
+      "合約標籤在哪設定",
+      "合約標籤跟物件標籤一樣嗎"
+     ],
+     "sentences": [
+      "進階設定「合約管理」區塊也有自己的「標籤設定」，用來建立合約專用的標籤，跟「物件管理」區塊那組給物件用的標籤設定是分開管理的兩組標籤。"
+     ],
+     "sources": [
+      "code:src/pages/users/advance/Index.jsx"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "title={t('合約管理')}"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "group=\"contract\""
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/advance-sales-item-code",
+     "askable": "銷貨單品項代號對應是什麼、誰有這個設定",
+     "title": "「銷貨單品項代號對應」是做什麼用的？（只有特定團隊才有，設定匯出「M 化銷貨單」時每個品項要帶的產品代號）",
+     "unit_ids": [
+      "page:users.advance"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "銷貨單品項代號對應是什麼",
+      "匯出銷貨單產品代號空白",
+      "哪些團隊有銷貨單品項代號設定"
+     ],
+     "sentences": [
+      "進階設定「帳務管理」區塊的「銷貨單品項代號對應」只有特定團隊的進階設定才會出現，是一項團隊層級的設定，不是每個團隊都有。",
+      "這個設定用來指定匯出「M 化銷貨單」時，每個費用品項要帶入的產品代號；沒有設定代號的品項，匯出檔案裡的產品代號會是空白，也可以指定哪些品項不要匯入銷貨單。"
+     ],
+     "sources": [
+      "code:src/pages/users/advance/_part/BillsManagement.vue",
+      "code:src/pages/users/advance/_part/WenzhongItemCodeManagement.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/advance/_part/BillsManagement.vue",
+       "quote_or_symbol": "return specialRolesState.getSpecialGroupsByRole(store.state.userData?.role?.id)?.includes('billExportPaymentDetail')"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/advance/_part/BillsManagement.vue",
+       "quote_or_symbol": "<WenzhongItemCodeManagement v-if=\"showWenzhongItemCode\" :feeItemsVersion=\"feeItemsVersion\" />"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/advance/_part/WenzhongItemCodeManagement.vue",
+       "quote_or_symbol": ":title=\"t('銷貨單品項代號對應')\""
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/advance/_part/WenzhongItemCodeManagement.vue",
+       "quote_or_symbol": ":description=\"t('匯出「M 化銷貨單」時，每個品項要帶入的產品代號。沒有代號的品項，匯出檔的產品代號會是空白；也可以指定哪些品項不要匯入銷貨單。')\""
+      }
+     ],
+     "not_supported_greps": [
+      {
+       "grep": "git -C jgb2/dev2 show master:src/pages/users/advance/_part/BillsManagement.vue | sed -n '20,22p' | grep -c billExportPaymentDetail",
+       "result": "1 — showWenzhongItemCode 只有角色特殊群組包含 billExportPaymentDetail 才會是 true，「銷貨單品項代號對應」元件用 v-if=\"showWenzhongItemCode\" 掛載，一般團隊不會渲染",
+       "control_term": "git -C jgb2/dev2 show master:src/pages/users/advance/_part/BillsManagement.vue | sed -n '34p' | grep -c '帳務管理' => 1（正對照組：同檔案永遠顯示的「帳務管理」標題確實命中，證明 grep 找得到這個檔案裡的東西）"
+      }
+     ],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/advance-community-labels",
+     "askable": "社區管理的城市、區域、位置設定是做什麼用的",
+     "title": "「社區管理」的城市／區域／位置設定是做什麼？（只有特定合作團隊看得到，用來建立社區篩選用的自訂標籤）",
+     "unit_ids": [
+      "page:users.advance"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "城市設定在哪",
+      "區域設定是什麼",
+      "位置設定跟標籤設定差在哪",
+      "誰看得到社區管理設定"
+     ],
+     "sentences": [
+      "進階設定的「社區管理」區塊只會顯示給特定合作團隊，一般團隊看不到這個區塊。",
+      "這個區塊有「城市設定」「區域設定」「位置設定」三組獨立的自訂標籤，設定好之後可以用來為物件加上對應的城市、區域、位置標籤。"
+     ],
+     "sources": [
+      "code:src/pages/users/advance/Index.jsx"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "state.isBeyond360 && <div class=\"mb-4 bg-white px-5 py-8 lg:px-10\">"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "title={t('社區管理')}"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "title={t('城市設定')}"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "title={t('區域設定')}"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "title={t('位置設定')}"
+      }
+     ],
+     "not_supported_greps": [
+      {
+       "grep": "git -C jgb2/dev2 show master:src/pages/users/advance/Index.jsx | sed -n '691,693p' | grep -c isBeyond360",
+       "result": "1 — 「社區管理」整個區塊被 state.isBeyond360 包住，一般團隊不會渲染這個區塊",
+       "control_term": "git -C jgb2/dev2 show master:src/pages/users/advance/Index.jsx | sed -n '749,753p' | grep -c \"title={t('物件管理')}\" => 1（正對照組：緊接在後的「物件管理」區塊標題確實命中，證明 grep 本身能在這個檔案裡找到東西，不是查詢方式壞掉）"
+      }
+     ],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/advance-short-lease-approval",
+     "askable": "進階設定的短租期核可流程是做什麼的",
+     "title": "進階設定的「短租期核可流程」是做什麼的？（只有統上合作團隊看得到；租期少於設定天數時，合約要先簽核通過才會發出邀請給租客）",
+     "unit_ids": [
+      "page:users.advance"
+     ],
+     "target_user": [
+      "property_manager",
+      "prospect"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "短租期核可流程是什麼",
+      "短租期簽核怎麼設定",
+      "租期太短要簽核嗎"
+     ],
+     "sentences": [
+      "進階設定「合約管理」區塊的「短租期核可流程」只會顯示給統上合作團隊，一般團隊的進階設定沒有這個設定。",
+      "啟用後，如果合約的租期少於設定的天數（短租期定義），這份合約在簽約前需要先進行簽核；簽核通過後，合約邀請才會發出給租客。"
+     ],
+     "sources": [
+      "code:src/pages/users/advance/Index.jsx"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "<div className=\"col-auto\">{ t('短租期核可流程') }</div>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "description={t('若租期少於設定的天數，則該合約在簽約前，需進行簽核。簽核通過後，合約邀請才會發出給租客。')}"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "<div>{ shortLeasePeriodState?.short_lease_period_days } { t('天') }</div>"
+      }
+     ],
+     "not_supported_greps": [
+      {
+       "grep": "git -C jgb2/dev2 show master:src/pages/users/advance/Index.jsx | sed -n '985p' | grep -c isTongSang",
+       "result": "1 — 「短租期核可流程」FormBlock 整段被 state.isTongSang 包住，一般團隊不會渲染這個區塊",
+       "control_term": "git -C jgb2/dev2 show master:src/pages/users/advance/Index.jsx | sed -n '751p' | grep -c \"title={t('物件管理')}\" => 1（正對照組：同檔案裡沒有身分條件包住、必定渲染的「物件管理」區塊標題確實命中，證明 grep 找得到這個檔案裡的東西）"
+      }
+     ],
+     "open_questions": []
+    }
+   ]
+  },
+  {
+   "coarse": "租客列表（當前租客／封存、準時繳租率、信用評價）⇄ 由 A 移入",
+   "unit_ids": [
+    "page:users.lesseeList"
+   ],
+   "fines": [
+    {
+     "proposed_id": "jgb/B/lessee-tabs",
+     "askable": "租客列表分幾種分頁、封存是什麼意思",
+     "title": "租客列表有哪兩個分頁？（當前租客／封存，封存代表這位租客已被移出列表且目前沒有進行中的合約）",
+     "unit_ids": [
+      "page:users.lesseeList"
+     ],
+     "target_user": [
+      "property_manager",
+      "prospect"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "租客列表分幾種",
+      "準時繳租率怎麼算",
+      "封存的租客是什麼"
+     ],
+     "sentences": [
+      "租客列表分成「當前租客」與「封存」兩個分頁，涵蓋簽約成功的租客，以及房東自行管理、還沒正式簽約的潛在租客。",
+      "把一位租客「封存」等於把他從當前租客列表移除；如果這位租客目前還有進行中的合約，系統會擋下這個動作、不能封存。"
+     ],
+     "sources": [
+      "code:src/pages/users/lesseeList/parts/ListTable.vue",
+      "code:src/pages/users/lesseeList/parts/PageTop.vue",
+      "code:app/Services/LesseeService.php"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/lesseeList/parts/ListTable.vue",
+       "quote_or_symbol": "label: t('當前租客'),"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/lesseeList/parts/ListTable.vue",
+       "quote_or_symbol": "label: t('封存'),"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/lesseeList/parts/PageTop.vue",
+       "quote_or_symbol": "<div className=\"col-auto\">{ t('租客聯絡簿，包含簽約成功的租客、與自行管理的潛在租客') }</div>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Services/LesseeService.php",
+       "quote_or_symbol": "'message' => ___('租客有進行中的合約，不能封存'),"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/lessee-credit-rating-visibility",
+     "askable": "信用評價欄位為什麼有些人看不到",
+     "title": "租客列表的「信用評價」欄位為什麼有些人看不到？（需要有查看租客信用評價的權限才會顯示這一欄）",
+     "unit_ids": [
+      "page:users.lesseeList"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "信用評價欄位不見了",
+      "為什麼看不到信用評價",
+      "租客信用評價需要什麼權限"
+     ],
+     "sentences": [
+      "租客列表可以顯示「信用評價」欄位，但只有擁有「查看租客信用評價」權限的成員，畫面上才會出現這一欄；沒有這個權限的人，整欄完全不會出現，也不會佔用表格版面。"
+     ],
+     "sources": [
+      "code:src/pages/users/lesseeList/parts/ListTable.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/lesseeList/parts/ListTable.vue",
+       "quote_or_symbol": "store.state.userData?.permission?.show_credit_rating ? [creditRating] : []"
+      }
+     ],
+     "not_supported_greps": [
+      {
+       "grep": "git -C jgb2/dev2 grep -c show_credit_rating master -- src/pages/users/lesseeList/parts/ListTable.vue",
+       "result": "1 — 「信用評價」欄位是唯一一個用 show_credit_rating 權限包住、沒有權限就整欄從陣列拿掉的欄位定義",
+       "control_term": "git -C jgb2/dev2 grep -c \"title: t('國籍')\" master -- src/pages/users/lesseeList/parts/ListTable.vue => 1（正對照組：同檔案「國籍」欄位定義確實命中，證明 grep 能在這個檔案找到東西；「國籍」欄位定義本身沒有任何權限判斷）"
+      }
+     ],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/lessee-crud",
+     "askable": "租客列表可以新增匯入匯出租客嗎",
+     "title": "租客列表可以新增、匯入、匯出租客嗎？（可以手動新增，也支援 Excel 匯入與匯出）",
+     "unit_ids": [
+      "page:users.lesseeList"
+     ],
+     "target_user": [
+      "property_manager",
+      "prospect"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "租客列表可以新增租客嗎",
+      "租客資料怎麼匯入匯出",
+      "已簽約的租客可以改名字嗎"
+     ],
+     "sentences": [
+      "租客列表可以「新增租客」手動加入一筆租客資料，也可以用「匯入租客」批次匯入，或「匯出租客」下載成 Excel。",
+      "已經有合約的租客，沒辦法在這裡編輯姓名，也不能被刪除。"
+     ],
+     "sources": [
+      "code:src/pages/users/lesseeList/parts/PageTop.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/lesseeList/parts/PageTop.vue",
+       "quote_or_symbol": "{ t('新增租客') }"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/lesseeList/parts/PageTop.vue",
+       "quote_or_symbol": "已有合約的租客，將無法編輯姓名，也無法被刪除。"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/lessee-notification-status-color",
+     "askable": "租客列表Email手機號碼顏色代表什麼",
+     "title": "租客列表裡 Email／手機號碼顯示藍色、橘色、灰色代表什麼？（驗證狀態：已驗證／等待驗證／未驗證）",
+     "unit_ids": [
+      "page:users.lesseeList"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "租客通知顏色代表什麼",
+      "Email 顯示灰色是什麼意思",
+      "手機號碼橘色代表什麼"
+     ],
+     "sentences": [
+      "藍色的 Email 或手機號碼代表這個聯絡方式已經被租客驗證過，可以接收合約與帳單通知；橘色代表正在等待租客驗證；灰色代表還沒驗證，沒驗證的 Email 或手機號碼收不到通知。"
+     ],
+     "sources": [
+      "code:src/pages/users/lesseeList/parts/PageTop.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/lesseeList/parts/PageTop.vue",
+       "quote_or_symbol": "藍色的 Email 與手機號碼，代表該通知方式已被租客驗證，可以接收合約與帳單通知；橘色代表該通知方式正在等待租客驗證、灰色代表該通知方式未驗證，尚未完成驗證的 Email / 簡訊無法接收通知。"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/lessee-verification-link-expiry",
+     "askable": "租客的驗證連結多久過期",
+     "title": "租客的 Email／手機驗證連結多久過期？（72 小時）",
+     "unit_ids": [
+      "page:users.lesseeList"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "驗證連結多久過期",
+      "驗證信有效期限",
+      "簡訊驗證連結會過期嗎"
+     ],
+     "sentences": [
+      "驗證通知寄出後，信件或簡訊裡連結的有效時間是 72 小時。"
+     ],
+     "sources": [
+      "code:src/pages/users/lesseeList/parts/PageTop.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/lesseeList/parts/PageTop.vue",
+       "quote_or_symbol": "驗證通知發出後，信件 / 簡訊中連結的有效時間為 72 小時，請提醒租客把握時間完成驗證。"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/lessee-notification-toggle-effect",
+     "askable": "租客的通知開關關閉會怎樣",
+     "title": "租客的通知開關關閉後會怎樣？（收不到任何合約或帳單的通知信件或簡訊）",
+     "unit_ids": [
+      "page:users.lesseeList"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "租客通知關閉會怎樣",
+      "關掉通知還收得到帳單信嗎",
+      "通知開關在哪裡設定"
+     ],
+     "sentences": [
+      "如果租客的通知開關被關閉，就不會收到任何合約或帳單的通知信件或簡訊。"
+     ],
+     "sources": [
+      "code:src/pages/users/lesseeList/parts/PageTop.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/lesseeList/parts/PageTop.vue",
+       "quote_or_symbol": "當通知開關關閉時，租客將無法收到所有的通知，包括合約與帳單的通知信件 / 簡訊。"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/lessee-on-time-pay-rate",
+     "askable": "準時繳租率怎麼算",
+     "title": "租客的「準時繳租率」怎麼算？（已到帳未逾期帳單數 ÷ 全部應計入帳單數）",
+     "unit_ids": [
+      "page:users.lesseeList"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "準時繳租率公式",
+      "繳租率是看哪些帳單",
+      "準時繳租率算式"
+     ],
+     "sentences": [
+      "租客列表會顯示每位租客的「準時繳租率」，計算方式是：已到帳未逾期帳單數 ÷（應到帳逾期帳單數 ＋ 已到帳未逾期帳單數 ＋ 已到帳逾期帳單數）。"
+     ],
+     "sources": [
+      "code:src/pages/users/lesseeList/parts/ListTable.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/lesseeList/parts/ListTable.vue",
+       "quote_or_symbol": "{{ t('準時繳租率') }}&nbsp;=&nbsp;{{ t('已到帳未逾期帳單數') }}&nbsp;/&nbsp;({{ t('應到帳逾期帳單數') }}&nbsp;+&nbsp;{{ t('已到帳未逾期帳單數') }}&nbsp;+&nbsp;{{ t('已到帳逾期帳單數') }})"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/lessee-list-columns",
+     "askable": "租客列表可以看到哪些欄位",
+     "title": "租客列表可以看到哪些欄位？（ID、姓名、會員註冊、Email - 通知、手機號碼 - 通知、註冊合約、免註冊合約、所屬修繕、準時繳租率、帳戶名稱、帳號資訊、操作）",
+     "unit_ids": [
+      "page:users.lesseeList"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "租客列表有哪些欄位",
+      "免註冊合約是什麼",
+      "所屬修繕欄位是什麼",
+      "帳號資訊欄位是什麼"
+     ],
+     "sentences": [
+      "租客列表預設會顯示 ID、姓名、會員註冊、Email - 通知、手機號碼 - 通知、註冊合約、免註冊合約、所屬修繕、準時繳租率、帳戶名稱、帳號資訊、操作這些欄位。",
+      "「註冊合約」是這位租客名下、對方已註冊 JGB 帳號的合約數量；「免註冊合約」是不用租客先註冊帳號、建檔時就標記為免註冊的合約數量。"
+     ],
+     "sources": [
+      "code:src/pages/users/lesseeList/parts/ListTable.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/lesseeList/parts/ListTable.vue",
+       "quote_or_symbol": "title: t('會員註冊'),"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/lesseeList/parts/ListTable.vue",
+       "quote_or_symbol": "title: `Email - ${ t('通知') }`,"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/lesseeList/parts/ListTable.vue",
+       "quote_or_symbol": "title: `${ t('手機號碼') } - ${ t('通知') }`,"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/lesseeList/parts/ListTable.vue",
+       "quote_or_symbol": "title: t('免註冊合約'),"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/lesseeList/parts/ListTable.vue",
+       "quote_or_symbol": "title: t('所屬修繕'),"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/lesseeList/parts/ListTable.vue",
+       "quote_or_symbol": "title: t('帳號資訊'),"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/lesseeList/parts/ListTable.vue",
+       "quote_or_symbol": "default: [id, name, ...creditRatingColumns, registerStatus, email, phone, registerContractAmount, exemptRegisterContractAmount, repairAmount, onTimePayRate, bankName, bankInfo, action],"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/lesseeList/parts/ListTable.vue",
+       "quote_or_symbol": "title: state.currentRole === ConfigRuleKey.socialHousing ? t('所屬總合約') : t('註冊合約'),"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Contract.php",
+       "quote_or_symbol": "$isExemptRegisterTenant = $this->is_tenant_registered !== null"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/lessee-list-columns-by-role",
+     "askable": "社宅團隊和特定合作團隊的租客列表欄位有什麼不一樣",
+     "title": "社宅團隊與特定合作團隊的租客列表欄位有什麼不一樣？（社宅團隊沒有「會員註冊」「免註冊合約」「操作」，「註冊合約」欄改叫「所屬總合約」；特定合作團隊多了國籍、生日、主要聯絡方式）",
+     "unit_ids": [
+      "page:users.lesseeList"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "社宅租客列表欄位差在哪",
+      "為什麼我看不到國籍欄位",
+      "租客列表沒有操作欄"
+     ],
+     "sentences": [
+      "社宅團隊的租客列表看不到「會員註冊」「免註冊合約」「操作」這三欄，「註冊合約」欄也會改叫「所屬總合約」。",
+      "只有特定合作團隊的租客列表才會多出「國籍」「生日」「主要聯絡方式」這三欄，一般團隊與社宅團隊都沒有這幾欄。"
+     ],
+     "sources": [
+      "code:src/pages/users/lesseeList/parts/ListTable.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/lesseeList/parts/ListTable.vue",
+       "quote_or_symbol": "[ConfigRuleKey.socialHousing]: [id, name, ...creditRatingColumns, emailForSocialHousing, phoneForSocialHousing, registerContractAmount, repairAmount, onTimePayRate, bankName, bankInfo],"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/lesseeList/parts/ListTable.vue",
+       "quote_or_symbol": "beyond360: [id, name, ...creditRatingColumns, registerStatus, email, phone, registerContractAmount, exemptRegisterContractAmount, repairAmount, onTimePayRate, nationality, birthday, primaryContact, bankName, bankInfo, action],"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/lesseeList/parts/ListTable.vue",
+       "quote_or_symbol": "default: [id, name, ...creditRatingColumns, registerStatus, email, phone, registerContractAmount, exemptRegisterContractAmount, repairAmount, onTimePayRate, bankName, bankInfo, action],"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/lessee-pending-verification-bill-draft",
+     "askable": "租客的Email或手機還在等待驗證時帳單會怎樣",
+     "title": "租客的 Email 或手機還在等待驗證時，帳單會怎樣？（帳單會停留在草稿分頁，等驗證完成或連結過期才能發送，也可以手動移動）",
+     "unit_ids": [
+      "page:users.lesseeList"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "帳單卡在草稿分頁怎麼辦",
+      "帳單一直沒發送原因"
+     ],
+     "sentences": [
+      "為避免租客無法收到帳單通知，若 Email 或手機號碼尚在等待租客驗證，管理者建立帳單時，系統會把帳單停留在草稿帳單分頁中，等租客完成驗證或驗證連結過期後，才能發送帳單。",
+      "管理者仍然可以手動把這張帳單從草稿移到應到帳或已到帳分頁。"
+     ],
+     "sources": [
+      "code:src/pages/users/lesseeList/parts/PageTop.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/lesseeList/parts/PageTop.vue",
+       "quote_or_symbol": "為避免租客無法收到帳單通知，若 Email / 手機號碼尚在等待租客驗證，則當管理者建立帳單時，系統會將帳單停留在草稿帳單分頁中，待租客完成驗證或驗證連結過期後，才能發送帳單。您仍可直接將帳單由草稿移至應到帳 / 已到帳。"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/lesseeList/parts/PageTop.vue",
+       "quote_or_symbol": "為避免租客無法收到帳單通知，若 Email / 手機號碼尚在等待租客驗證，則當管理者建立帳單時，系統會將帳單停留在草稿帳單分頁中，待租客完成驗證或驗證連結過期後，才能發送帳單。您仍可直接將帳單由草稿移至應到帳 / 已到帳。"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/lessee-bulk-notify",
+     "askable": "租客列表勾選多筆後可以做什麼批次操作",
+     "title": "租客列表勾選多筆租客後可以做什麼？（統上團隊可以批次發送通知，其他團隊沒有這個批次操作）",
+     "unit_ids": [
+      "page:users.lesseeList"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "租客列表勾選後能做什麼",
+      "怎麼批次通知租客",
+      "租客批次操作在哪"
+     ],
+     "sentences": [
+      "只有統上這個合作團隊，在租客列表勾選一筆以上租客後，畫面下方才會出現批次操作列，可以選「發送通知」一次通知這些租客；其他團隊勾選租客後沒有這個批次操作列。"
+     ],
+     "sources": [
+      "code:src/use/config/useLesseeTypes.ts",
+      "code:src/pages/users/lesseeList/parts/ListTable.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/use/config/useLesseeTypes.ts",
+       "quote_or_symbol": "label: t('發送通知'),"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/lesseeList/parts/ListTable.vue",
+       "quote_or_symbol": "v-if=\"!isEmpty(state.pickedItems) && !isEmpty(useLesseeTypesState.bulkActions)\""
+      }
+     ],
+     "not_supported_greps": [
+      {
+       "grep": "git -C jgb2/dev2 show master:src/use/config/useLesseeTypes.ts | grep -c 'SpecialRole.tongSang'",
+       "result": "1 — bulkActions 陣列只有一個条件分支，僅在角色屬於 SpecialRole.tongSang（統上）時才會塞入「發送通知」這個項目，其餘團隊該陣列為空",
+       "control_term": "git -C jgb2/dev2 show master:src/pages/users/lesseeList/parts/ListTable.vue | grep -c \"t('封存')\" => 1（正對照組：同檔案的「封存」分頁分頁籤所有團隊都會渲染，不受這個特殊角色判斷限制）"
+      }
+     ],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/lessee-export-entry-by-role",
+     "askable": "匯出租客的入口在哪、每個團隊都一樣嗎",
+     "title": "匯出租客的入口在哪？（一般房東用「新增租客」下拉選單裡的「匯出租客」；社宅團隊只有一顆「匯出」按鈕，沒有新增或匯入）",
+     "unit_ids": [
+      "page:users.lesseeList"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "匯出租客在哪",
+      "社宅團隊怎麼匯出租客",
+      "為什麼看不到新增租客按鈕"
+     ],
+     "sentences": [
+      "一般房東（含法人房東）在租客列表可以點「新增租客」按鈕旁的下拉選單，選「匯入租客」或「匯出租客」。",
+      "社宅團隊的租客列表沒有「新增租客」與「匯入租客」，只有一顆「匯出」按鈕，功能等同於一般房東的「匯出租客」。"
+     ],
+     "sources": [
+      "code:src/pages/users/lesseeList/parts/PageTop.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/lesseeList/parts/PageTop.vue",
+       "quote_or_symbol": "{ t('新增租客') }"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/lesseeList/parts/PageTop.vue",
+       "quote_or_symbol": "}}>{t('匯出租客')}</a>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/lesseeList/parts/PageTop.vue",
+       "quote_or_symbol": "store.state.userData?.role?.config_rule_key === 4 && <div class=\"col-auto\">"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/lesseeList/parts/PageTop.vue",
+       "quote_or_symbol": "}}>{ t('匯出') }</div>"
+      }
+     ],
+     "not_supported_greps": [
+      {
+       "grep": "git -C jgb2/dev2 show master:src/pages/users/lesseeList/parts/PageTop.vue | sed -n '142,144p' | grep -c \"config_rule_key === 4\"",
+       "result": "1 — config_rule_key===4（社宅團隊）的按鈕區塊只有一顆「匯出」按鈕；「新增租客」下拉選單則被包在另一個 (config_rule_key === 2 || config_rule_key === 3) 條件裡，兩段互斥渲染",
+       "control_term": "git -C jgb2/dev2 show master:src/pages/users/lesseeList/parts/PageTop.vue | sed -n '113,115p' | grep -c \"config_rule_key === 2\" => 1（正對照組：同檔案「新增租客」按鈕的角色判斷確實命中，證明 grep 找得到這段程式碼）"
+      }
+     ],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/lessee-list-search-and-pagination",
+     "askable": "租客列表可以怎麼搜尋篩選和調整每頁筆數",
+     "title": "租客列表可以怎麼搜尋篩選、每頁看幾筆？（可依姓名／Email／手機號碼／租客 ID 搜尋，用會員註冊與通知狀態篩選，每頁可選 30／60／90 筆）",
+     "unit_ids": [
+      "page:users.lesseeList"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "租客列表怎麼搜尋",
+      "可以用租客 ID 搜尋嗎",
+      "每頁可以看幾筆租客",
+      "租客列表可以篩選通知狀態嗎"
+     ],
+     "sentences": [
+      "租客列表的搜尋框可以選擇用姓名、Email、手機號碼、租客 ID 其中一種類型當關鍵字搜尋。",
+      "另外還可以用「會員註冊」（未註冊／已註冊）與「通知狀態」篩選租客；「通知狀態」的選項分成手機與 Email 兩組，各有「接受通知」「不接受通知」「驗證中」「未填寫聯繫方式」四種狀態，共八個選項。",
+      "列表下方可以選擇每頁顯示 30 項、60 項或 90 項。"
+     ],
+     "sources": [
+      "code:src/utils/constants/lessee.js",
+      "code:src/pages/users/lesseeList/parts/PageNav.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/utils/constants/lessee.js",
+       "quote_or_symbol": "optionTitle: '搜尋類型',"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/utils/constants/lessee.js",
+       "quote_or_symbol": "userId: '租客ID',"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/utils/constants/lessee.js",
+       "quote_or_symbol": "optionTitle: '會員註冊',"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/users/lesseeList/parts/PageNav.vue",
+       "quote_or_symbol": "'30': t('30項'),"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/users/lesseeList/parts/PageNav.vue",
+       "quote_or_symbol": "'90': t('90項'),"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/utils/constants/lessee.js",
+       "quote_or_symbol": "[NotifyStatus.phone_allow_notify]: '接受通知(手機)',"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/utils/constants/lessee.js",
+       "quote_or_symbol": "[NotifyStatus.phone_disallow_notify]: '不接受通知(手機)',"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/utils/constants/lessee.js",
+       "quote_or_symbol": "[NotifyStatus.phone_verifying]: '驗證中(手機)',"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/utils/constants/lessee.js",
+       "quote_or_symbol": "[NotifyStatus.phone_unknown]: '未填寫聯繫方式(手機)',"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/B/lessee-action-menu",
+     "askable": "租客列表每一列的操作選單有哪些功能",
+     "title": "租客列表每一列的操作選單有哪些功能？（建立電子合約、上傳紙本合約、編輯租客、封存租客；封存分頁裡則改成刪除租客）",
+     "unit_ids": [
+      "page:users.lesseeList"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "租客列表操作選單在哪",
+      "怎麼幫租客建立電子合約",
+      "封存分頁的租客要怎麼刪除"
+     ],
+     "sentences": [
+      "租客列表每一列右側的操作選單裡，可以選「建立電子合約」「上傳紙本合約」「編輯租客」。",
+      "在「當前租客」分頁看到的操作選單最後一項是「封存租客」；切到「封存」分頁後，同一個位置的選項會改成「刪除租客」。"
+     ],
+     "sources": [
+      "code:src/components/SurelyVue/Lessee/ActionCell.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/components/SurelyVue/Lessee/ActionCell.vue",
+       "quote_or_symbol": "labelKey: '建立電子合約',"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/components/SurelyVue/Lessee/ActionCell.vue",
+       "quote_or_symbol": "labelKey: '上傳紙本合約',"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/components/SurelyVue/Lessee/ActionCell.vue",
+       "quote_or_symbol": "labelKey: '編輯租客',"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/components/SurelyVue/Lessee/ActionCell.vue",
+       "quote_or_symbol": "labelKey: '封存租客',"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/components/SurelyVue/Lessee/ActionCell.vue",
+       "quote_or_symbol": "labelKey: '刪除租客',"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/components/SurelyVue/Lessee/ActionCell.vue",
+       "quote_or_symbol": "...route.query?.archived === '1'"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    }
+   ]
+  }
+ ]
+}

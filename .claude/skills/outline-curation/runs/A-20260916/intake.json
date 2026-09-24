@@ -1,0 +1,165 @@
+{
+  "cost": {
+    "agents": 0,
+    "completion_tokens": 0,
+    "prompt_tokens": 0,
+    "usd": 0.0,
+    "wall_s": 0.0
+  },
+  "deterministic": true,
+  "inputs_sha": {
+    "canon": "e6a289a446868709cc5f7ec481cf29abc13f522aeb127284c625c53be7dfe249",
+    "drafts": "200a9c67fb7c5aa2f720d99a77c24fedee19cfc1616d16b6f6a42af468c2d380",
+    "kb": "7b3cb9f11d8c714bf6407574e33521bbe30a24b3e10d64f71d174222a3091b4f"
+  },
+  "payload": {
+    "drafts": [
+      {
+        "id": "help:Landlordonboarding01",
+        "summary": "房東教學01：註冊篇(一) 個人房東"
+      },
+      {
+        "id": "help:Landlordonboarding02",
+        "summary": "房東教學02：註冊篇(二) 公司團隊篇"
+      },
+      {
+        "id": "help:onboarding1",
+        "summary": "註冊一套專屬你的租房管理"
+      },
+      {
+        "id": "help:onboarding2",
+        "summary": "帳號資訊設定 完成您的個人資料吧！"
+      },
+      {
+        "id": "help:qa07",
+        "summary": "租客沒有上傳身分證，請問該怎麼辦？"
+      },
+      {
+        "id": "help:slug00",
+        "summary": "註冊時收不到驗證信"
+      },
+      {
+        "id": "help:slug01",
+        "summary": "我忘記帳號怎麼辦？"
+      },
+      {
+        "id": "help:slug02",
+        "summary": "我忘記密碼怎麼辦？"
+      },
+      {
+        "id": "help:slug95",
+        "summary": "如何更改帳號資訊？"
+      },
+      {
+        "id": "help:tenantintro.register",
+        "summary": "租客系統操作教學—註冊篇"
+      }
+    ],
+    "frozen_at": "2026-09-16T00:00:00Z",
+    "gapmap_cells": 0,
+    "kb_rows": [
+      {
+        "id": "jgb/A/account-registration",
+        "question_summary": "怎麼註冊帳號（含驗證碼通知）"
+      },
+      {
+        "id": "3348",
+        "question_summary": "免註冊 註冊 租客 差異"
+      },
+      {
+        "id": "3349",
+        "question_summary": "email 大小寫 帳號 不同"
+      },
+      {
+        "id": "3350",
+        "question_summary": "簡訊 驗證碼 收不到"
+      },
+      {
+        "id": "3354",
+        "question_summary": "身分證 必填 租賃契約 上傳"
+      },
+      {
+        "id": "3435",
+        "question_summary": "註冊帳號 建立流程"
+      },
+      {
+        "id": "3436",
+        "question_summary": "忘記密碼 無法登入"
+      },
+      {
+        "id": "3437",
+        "question_summary": "Email 變更 手機驗證"
+      },
+      {
+        "id": "3869",
+        "question_summary": "租客看不到合約 登入信箱不符"
+      },
+      {
+        "id": "3871",
+        "question_summary": "驗證信 驗證碼收不到 排查"
+      },
+      {
+        "id": "3964",
+        "question_summary": "驗證碼一直失敗 重發 新舊碼"
+      },
+      {
+        "id": "3965",
+        "question_summary": "收不到驗證簡訊 改用信箱註冊"
+      },
+      {
+        "id": "3966",
+        "question_summary": "註冊顯示已註冊 該怎麼辦"
+      },
+      {
+        "id": "3967",
+        "question_summary": "LINE 快速登入 跳到註冊 登不進去"
+      },
+      {
+        "id": "3968",
+        "question_summary": "登入成功 看不到合約帳單電表"
+      },
+      {
+        "id": "3969",
+        "question_summary": "忘記當初註冊的信箱 查詢帳號"
+      },
+      {
+        "id": "3971",
+        "question_summary": "註冊名字與證件不同 改名 藍字"
+      },
+      {
+        "id": "3972",
+        "question_summary": "兩個帳號 合併 重複帳號"
+      },
+      {
+        "id": "3975",
+        "question_summary": "租客一直沒辦法註冊 卡住了"
+      },
+      {
+        "id": "3978",
+        "question_summary": "租客登入後什麼都看不到 畫面空空的"
+      },
+      {
+        "id": "3980",
+        "question_summary": "會員帳號資料要修改 信箱手機要換"
+      },
+      {
+        "id": "4561",
+        "question_summary": "註冊名字跟證件不符 要怎麼改資料"
+      }
+    ],
+    "mode": "expand",
+    "object_under_test": {
+      "approved_by": "",
+      "frozen_at": "2026-09-16T00:00:00Z",
+      "materials": [
+        ".claude/skills/outline-curation/runs/A-20260916/kb-rows.json",
+        ".claude/skills/outline-curation/runs/A-20260916/help-pages.json",
+        "../app/canon/jgb"
+      ]
+    },
+    "shelf": "A"
+  },
+  "raw_outputs_path": null,
+  "skill_version": "0.1.0",
+  "step": "intake"
+}

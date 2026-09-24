@@ -372,8 +372,14 @@ def test_outline_none_is_allowed_and_meta_is_empty():
     assert meta.outline_sha == "" and meta.outline_token_count == 0
 
 
-def test_outline_audience_mismatch_fails_closed():
-    """⛔ 不把別身分的大綱／目錄餵給這個身分（pm 目錄含業者列）。"""
+def test_prompt_assembler_rejects_outline_from_wrong_audience():
+    """⛔ 不把別身分的大綱／目錄餵給這個身分（pm 目錄含業者列）。
+
+    測的是 `PromptAssembler.build` 自己的受眾比對（`outline.audience !=
+    identity.resolved_audience()`）——與 `runtime._select_outline` 的候選機制
+    無關（9.8 DSP-059 D′ S2 後那邊已無「受眾不符」這個 `miss_kind`，隔離改釘
+    在 `test_library_view_req.py` 的四格），本檔這條測的是 `prompt_assembler.py`
+    自己那道獨立的 fail-closed 比對，S2 沒有動它。"""
     pm_outline = _Outline(audience="property_manager")
     with pytest.raises(ValueError):
         _assembler().build(_identity("prospect"), pm_outline, {}, [], [], NONCE_A)

@@ -1,0 +1,617 @@
+{
+ "batch": "3",
+ "shelves": [
+  "D",
+  "E"
+ ],
+ "units": [
+  {
+   "unit_id": "page:balanceInvoices.edit",
+   "kind": "spa",
+   "label": "balanceInvoices.edit",
+   "path": "/balanceinvoices/edit/:groupId",
+   "component": "balanceInvoices/edit/Index.vue",
+   "shelf": "E"
+  },
+  {
+   "unit_id": "page:balanceInvoices.edit.basicInfo",
+   "kind": "spa",
+   "label": "balanceInvoices.edit.basicInfo",
+   "path": "basicInfo/:isCreateNew",
+   "component": "balanceInvoices/edit/basicInfo/Index.vue",
+   "shelf": "E"
+  },
+  {
+   "unit_id": "page:balanceInvoices.edit.belongingEstates",
+   "kind": "spa",
+   "label": "balanceInvoices.edit.belongingEstates",
+   "path": "belongingEstates/:isCreateNew",
+   "component": "balanceInvoices/edit/belongingEstates/Index.vue",
+   "shelf": "E"
+  },
+  {
+   "unit_id": "page:balanceInvoices.edit.pickEstates",
+   "kind": "spa",
+   "label": "balanceInvoices.edit.pickEstates",
+   "path": "pickEstates/:isCreateNew",
+   "component": "balanceInvoices/edit/pickEstates/Index.vue",
+   "shelf": "E"
+  },
+  {
+   "unit_id": "page:balanceInvoices.groups",
+   "kind": "spa",
+   "label": "balanceInvoices.groups",
+   "path": "groups/:groupId?",
+   "component": "balanceInvoices/groups/Index.vue",
+   "shelf": "E"
+  },
+  {
+   "unit_id": "page:balanceInvoices.index",
+   "kind": "spa",
+   "label": "balanceInvoices.index",
+   "path": "/balanceinvoices",
+   "component": "balanceInvoices/Index.vue",
+   "shelf": "E"
+  },
+  {
+   "unit_id": "page:balanceInvoices.list",
+   "kind": "spa",
+   "label": "balanceInvoices.list",
+   "path": "list/:status?",
+   "component": "balanceInvoices/list/Index.vue",
+   "shelf": "E"
+  },
+  {
+   "unit_id": "page:bills.create",
+   "kind": "spa",
+   "label": "bills.create",
+   "path": "create",
+   "component": "bills/edit/Index.jsx",
+   "shelf": "E"
+  },
+  {
+   "unit_id": "page:bills.create.batch",
+   "kind": "spa",
+   "label": "bills.create.batch",
+   "path": "create/batch",
+   "component": "bills/edit/Index.jsx",
+   "shelf": "E"
+  },
+  {
+   "unit_id": "page:bills.create.cycleBatch",
+   "kind": "spa",
+   "label": "bills.create.cycleBatch",
+   "path": "create/cycleBatch",
+   "component": "bills/edit/Index.jsx",
+   "shelf": "E"
+  },
+  {
+   "unit_id": "page:bills.edit",
+   "kind": "spa",
+   "label": "bills.edit",
+   "path": "edit/:billId?",
+   "component": "bills/edit/Index.jsx",
+   "shelf": "E"
+  },
+  {
+   "unit_id": "page:bills.index",
+   "kind": "spa",
+   "label": "bills.index",
+   "path": "/bills",
+   "component": "bills/Index.jsx",
+   "shelf": "E"
+  },
+  {
+   "unit_id": "page:bills.list",
+   "kind": "spa",
+   "label": "bills.list",
+   "path": ":type?/:status?",
+   "component": "bills/list/Index.jsx",
+   "shelf": "E"
+  },
+  {
+   "unit_id": "page:bills.pick",
+   "kind": "spa",
+   "label": "bills.pick",
+   "path": "pick/:action?",
+   "component": "bills/pick/Index.jsx",
+   "shelf": "E"
+  },
+  {
+   "unit_id": "page:bills.sheet",
+   "kind": "spa",
+   "label": "bills.sheet",
+   "path": "/bills/sheet",
+   "component": "bills/sheet/Index.vue",
+   "shelf": "E"
+  },
+  {
+   "unit_id": "page:bills.socialHousingSheets",
+   "kind": "spa",
+   "label": "bills.socialHousingSheets",
+   "path": "/bills/socialHousingSheets/:version?",
+   "component": "bills/socialHousingSheets/Index.vue",
+   "shelf": "E"
+  },
+  {
+   "unit_id": "page:bills.stat",
+   "kind": "spa",
+   "label": "bills.stat",
+   "path": "stat/:target?",
+   "component": "bills/stat/Index.jsx",
+   "shelf": "E"
+  },
+  {
+   "unit_id": "page:contracts.edit",
+   "kind": "spa",
+   "label": "contracts.edit",
+   "path": "/contracts/edit/:id",
+   "component": "contracts/edit/Index.vue",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:contracts.edit.additionalConvention",
+   "kind": "spa",
+   "label": "contracts.edit.additionalConvention",
+   "path": "additionalConvention",
+   "component": "contracts/edit/additionalConvention/Index.vue",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:contracts.edit.billSetting",
+   "kind": "spa",
+   "label": "contracts.edit.billSetting",
+   "path": "billSetting",
+   "component": "contracts/edit/billSetting/Index.jsx",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:contracts.edit.buildingTranscript",
+   "kind": "spa",
+   "label": "contracts.edit.buildingTranscript",
+   "path": "buildingTranscript",
+   "component": "contracts/edit/buildingTranscript/General.vue",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:contracts.edit.dealerBasic",
+   "kind": "spa",
+   "label": "contracts.edit.dealerBasic",
+   "path": "dealerBasic",
+   "component": "contracts/edit/dealerBasic/Index.vue",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:contracts.edit.facilities",
+   "kind": "spa",
+   "label": "contracts.edit.facilities",
+   "path": "facilities",
+   "component": "contracts/edit/facilities/Index.vue",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:contracts.edit.landlordAttachment",
+   "kind": "spa",
+   "label": "contracts.edit.landlordAttachment",
+   "path": "landlordAttachment",
+   "component": "contracts/edit/landlordAttachment/Index.vue",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:contracts.edit.payment",
+   "kind": "spa",
+   "label": "contracts.edit.payment",
+   "path": "payment",
+   "component": "contracts/edit/payment/Index.vue",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:contracts.edit.publicNotary",
+   "kind": "spa",
+   "label": "contracts.edit.publicNotary",
+   "path": "publicNotary",
+   "component": "contracts/edit/publicNotary/Index.vue",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:contracts.edit.rent",
+   "kind": "spa",
+   "label": "contracts.edit.rent",
+   "path": "rent",
+   "component": "contracts/edit/rent/Index.jsx",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:contracts.edit.rentAdjustment",
+   "kind": "spa",
+   "label": "contracts.edit.rentAdjustment",
+   "path": "rentAdjustment",
+   "component": "contracts/edit/rentAdjustment/Index.vue",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:contracts.edit.rentBasic",
+   "kind": "spa",
+   "label": "contracts.edit.rentBasic",
+   "path": "basic",
+   "component": "contracts/edit/rentBasic/Index.vue",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:contracts.edit.situation",
+   "kind": "spa",
+   "label": "contracts.edit.situation",
+   "path": "situation",
+   "component": "contracts/edit/situation/Index.vue",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.attachments",
+   "kind": "spa",
+   "label": "contracts.edit.socialHousing.attachments",
+   "path": "attachments",
+   "component": "contracts/edit/attachments/Index.vue",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.buildingTranscript",
+   "kind": "spa",
+   "label": "contracts.edit.socialHousing.buildingTranscript",
+   "path": "buildingTranscript",
+   "component": "contracts/edit/buildingTranscript/SocialHousing.vue",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.dealerBasic",
+   "kind": "spa",
+   "label": "contracts.edit.socialHousing.dealerBasic",
+   "path": "dealerBasic",
+   "component": "contracts/edit/dealerBasic/Index.vue",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.facilities",
+   "kind": "spa",
+   "label": "contracts.edit.socialHousing.facilities",
+   "path": "facilities",
+   "component": "contracts/edit/facilities/Index.vue",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.landlordAttachment",
+   "kind": "spa",
+   "label": "contracts.edit.socialHousing.landlordAttachment",
+   "path": "landlordAttachment",
+   "component": "contracts/edit/landlordAttachment/Index.vue",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.landlordBasic",
+   "kind": "spa",
+   "label": "contracts.edit.socialHousing.landlordBasic",
+   "path": "landlordBasic",
+   "component": "contracts/edit/landlordBasic/Index.vue",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.landlordLicense",
+   "kind": "spa",
+   "label": "contracts.edit.socialHousing.landlordLicense",
+   "path": "landlordLicense",
+   "component": "contracts/edit/landlordLicense/Index.vue",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.moveIn",
+   "kind": "spa",
+   "label": "contracts.edit.socialHousing.moveIn",
+   "path": "moveIn",
+   "component": "contracts/edit/moveIn/Index.vue",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.payment",
+   "kind": "spa",
+   "label": "contracts.edit.socialHousing.payment",
+   "path": "payment",
+   "component": "contracts/edit/payment/Index.vue",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.photos",
+   "kind": "spa",
+   "label": "contracts.edit.socialHousing.photos",
+   "path": "photos",
+   "component": "contracts/edit/photos/Index.vue",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.publicNotary",
+   "kind": "spa",
+   "label": "contracts.edit.socialHousing.publicNotary",
+   "path": "publicNotary",
+   "component": "contracts/edit/publicNotary/Index.vue",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.rent",
+   "kind": "spa",
+   "label": "contracts.edit.socialHousing.rent",
+   "path": "rent",
+   "component": "contracts/edit/rent/Index.jsx",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.rentBasic",
+   "kind": "spa",
+   "label": "contracts.edit.socialHousing.rentBasic",
+   "path": "basic",
+   "component": "contracts/edit/rentBasic/Index.vue",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.situation",
+   "kind": "spa",
+   "label": "contracts.edit.socialHousing.situation",
+   "path": "situation",
+   "component": "contracts/edit/situation/Index.vue",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.subsidyTerms",
+   "kind": "spa",
+   "label": "contracts.edit.socialHousing.subsidyTerms",
+   "path": "subsidyTerms",
+   "component": "contracts/edit/subsidyTerms/Index.vue",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.tenantAttachment",
+   "kind": "spa",
+   "label": "contracts.edit.socialHousing.tenantAttachment",
+   "path": "tenantAttachment",
+   "component": "contracts/edit/tenantAttachment/Index.vue",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.tenantBasic",
+   "kind": "spa",
+   "label": "contracts.edit.socialHousing.tenantBasic",
+   "path": "tenantBasic",
+   "component": "contracts/edit/tenantBasic/Index.vue",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.tenantHousehold",
+   "kind": "spa",
+   "label": "contracts.edit.socialHousing.tenantHousehold",
+   "path": "tenantHousehold",
+   "component": "contracts/edit/tenantHousehold/Index.vue",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.tenantLicense",
+   "kind": "spa",
+   "label": "contracts.edit.socialHousing.tenantLicense",
+   "path": "tenantLicense",
+   "component": "contracts/edit/tenantLicense/Index.vue",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:contracts.edit.taxAndInvoice",
+   "kind": "spa",
+   "label": "contracts.edit.taxAndInvoice",
+   "path": "taxAndInvoice",
+   "component": "contracts/edit/taxAndInvoice/index.jsx",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:contracts.edit.tenantInfo",
+   "kind": "spa",
+   "label": "contracts.edit.tenantInfo",
+   "path": "tenantInfo",
+   "component": "contracts/edit/tenantInfo/Index.jsx",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:contracts.index",
+   "kind": "spa",
+   "label": "contracts.index",
+   "path": "/contracts/:status?",
+   "component": "contracts/Index.vue",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:contracts.list",
+   "kind": "spa",
+   "label": "contracts.list",
+   "path": "",
+   "component": "contracts/list/Index.vue",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:contracts.moveIn",
+   "kind": "spa",
+   "label": "contracts.moveIn",
+   "path": "/contracts/sh-move-in/:id",
+   "component": "contracts/move-in/Index.vue",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:contracts.moveOut",
+   "kind": "spa",
+   "label": "contracts.moveOut",
+   "path": "/contracts/move-out/:id",
+   "component": "contracts/move-out/Index.jsx",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:contracts.pick",
+   "kind": "spa",
+   "label": "contracts.pick",
+   "path": "pick/:action/:id?",
+   "component": "contracts/pick/Index.jsx",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:contracts.renew",
+   "kind": "spa",
+   "label": "contracts.renew",
+   "path": "renew",
+   "component": "contracts/renew/Index.vue",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:contracts.renew.preview",
+   "kind": "spa",
+   "label": "contracts.renew.preview",
+   "path": "renew/preview",
+   "component": "contracts/renew/Preview.vue",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:contracts.search",
+   "kind": "spa",
+   "label": "contracts.search",
+   "path": "search",
+   "component": "contracts/list/Index.vue",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:contracts.show",
+   "kind": "spa",
+   "label": "contracts.show",
+   "path": "/contracts/sh-show/:id",
+   "component": "contracts/show/Index.vue",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:entrustContracts.index",
+   "kind": "spa",
+   "label": "entrustContracts.index",
+   "path": "/entrustedContracts/:status?",
+   "component": "entrustedContracts/Index.jsx",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:entrustedContracts.edit",
+   "kind": "spa",
+   "label": "entrustedContracts.edit",
+   "path": "/entrustedContracts/:id/edit",
+   "component": "entrustedContracts/edit/Index.jsx",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:entrustedContracts.edit.basic",
+   "kind": "spa",
+   "label": "entrustedContracts.edit.basic",
+   "path": "basic",
+   "component": "entrustedContracts/edit/requirement/Basic.jsx",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:entrustedContracts.edit.fee",
+   "kind": "spa",
+   "label": "entrustedContracts.edit.fee",
+   "path": "fee",
+   "component": "entrustedContracts/edit/requirement/Fees.jsx",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:entrustedContracts.edit.landlord_info",
+   "kind": "spa",
+   "label": "entrustedContracts.edit.landlord_info",
+   "path": "landlord_info",
+   "component": "entrustedContracts/edit/landlordInfo/LandlordInfo.jsx",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:entrustedContracts.edit.manager_info",
+   "kind": "spa",
+   "label": "entrustedContracts.edit.manager_info",
+   "path": "manager_info",
+   "component": "entrustedContracts/edit/managerInfo/ManagerInfo.jsx",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:entrustedContracts.edit.payment",
+   "kind": "spa",
+   "label": "entrustedContracts.edit.payment",
+   "path": "payment",
+   "component": "entrustedContracts/edit/requirement/Payment.jsx",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:entrustedContracts.list",
+   "kind": "spa",
+   "label": "entrustedContracts.list",
+   "path": "",
+   "component": "entrustedContracts/list/Index.jsx",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:entrustedContracts.show",
+   "kind": "spa",
+   "label": "entrustedContracts.show",
+   "path": "/entrustedContracts/show/:id?",
+   "component": "entrustedContracts/show/Index.jsx",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:web:/pick/{action?}",
+   "kind": "blade",
+   "label": "/pick/{action?}",
+   "path": "/pick/{action?}",
+   "component": "BillController@pick",
+   "shelf": "E"
+  },
+  {
+   "unit_id": "page:web:bills.one",
+   "kind": "blade",
+   "label": "bills.one",
+   "path": "/one/{type}/{status}/{id}",
+   "component": "BillController@one",
+   "shelf": "E"
+  },
+  {
+   "unit_id": "page:web:contracts.early_termination",
+   "kind": "blade",
+   "label": "contracts.early_termination",
+   "path": "/early_termination/{id?}/{action?}",
+   "component": "ContractController@earlyTermination",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:web:contracts.move_in",
+   "kind": "blade",
+   "label": "contracts.move_in",
+   "path": "/move_in/{id?}/{action?}",
+   "component": "ContractController@moveIn",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:web:contracts.show",
+   "kind": "blade",
+   "label": "contracts.show",
+   "path": "/show/{id?}/{action?}",
+   "component": "ContractController@show",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:web:contracts.sign",
+   "kind": "blade",
+   "label": "contracts.sign",
+   "path": "/sign/{id?}/{action?}",
+   "component": "ContractController@sign",
+   "shelf": "D"
+  },
+  {
+   "unit_id": "page:web:contracts.thinkcloud",
+   "kind": "blade",
+   "label": "contracts.thinkcloud",
+   "path": "/thinkcloud/{id?}/{type?}/{action?}",
+   "component": "ContractController@thinkcloud",
+   "shelf": "D"
+  }
+ ]
+}

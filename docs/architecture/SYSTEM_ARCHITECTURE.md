@@ -26,9 +26,8 @@
 
 ## 1. 核心是 `AgentRuntime`，`/mcp` 只是它的一個門面
 
-> ⛔ **外部串接不屬於本系統，⛔ 不進架構敘述。** jgb2 Web、LINE OA demo、回測工具
-> 之類是**部署時接上來的消費者**。誰持 key、哪些停用、實際流量多少是**部署事實**，
-> 要查去看 `api_keys` 與 `usage_events`，⛔ 不寫進本檔。
+> 📐 **邊界規則見 `docs/architecture/BOUNDARY.md`（唯一正本）。** 三個桶：本系統／呼叫端／外部相依；
+> 一句話測試＝「把呼叫端整個換掉，這句話還成立嗎」。⛔ 不要在本檔另寫一份宣告。
 >
 > 🔴 **2026-09-12 由程式重新推導，方向與前一版相反。** 前一版把 `/mcp` 畫成脊椎、
 > 把 runtime 當成它裡面的東西——那是照抄 `AGENTIC_MCP_ARCHITECTURE.md` 第一張
@@ -50,7 +49,7 @@ AgentRuntime.__init__(provider, registry, verifier, assembler, budget,
 | 部件 | 是什麼 |
 |---|---|
 | `provider` | LLM 出口 |
-| `registry` | `ToolRegistry`，16 支工具，四步閘（見 §2） |
+| `registry` | `ToolRegistry`，**`build_registry` 無條件註冊 15 支**（7 基礎＋6 `jgb2.query.*`＋2 `ACTION_SPECS`）＋`agent.turn` 第 16 支**僅在 `AGENT_TURN_ENABLED` 為真時註冊、預設 false**（`mcp_facade.agent_turn_enabled` docstring 逐字），且它是門面自己的工具、⛔ 模型叫不到。四步閘見 §2 |
 | `assembler` | `PromptAssembler`（system 整回合只有一則） |
 | `candidate_selector(s)` | 大綱候選選取，K=5（見 §2 路 A） |
 | `verifier` | `OutputVerifier`，程式自述**七步**（本文他處拆成九步列，⛔ 不是矛盾——見 `AGENTIC_MCP_ARCHITECTURE.md` §2b 段三） |
@@ -160,14 +159,14 @@ jgb2 訂閱的 `estate_usage`（物件／合約數上限，由 jgb2 依 role 收
 
 🔴 **`tenant` 在新線完全不存在**（⛔ 不只是「叫不到 `agent.turn`」）：
 
-| 受眾 | canon 正本 | `AGENT_TURN_SPEC["stage"]` |
+| 受眾（細目屬性 `target_user`） | canon/jgb/ 九架正本 | `AGENT_TURN_SPEC["stage"]` |
 |---|---|---|
-| `prospect` | ✅ `canon/prospect.md` | ✅ M1 |
-| `property_manager` | ✅ `canon/property_manager.md` | ✅ M1 |
-| **`tenant`** | ❌ **無 `canon/tenant.md`** | ❌ **缺鍵** |
+| `prospect` | ✅ 有細目 `target_user=prospect` | ✅ M1 |
+| `property_manager` | ✅ 有細目 `target_user=property_manager` | ✅ M1 |
+| **`tenant`** | ❌ **無細目 `target_user=tenant`** | ❌ **缺鍵** |
 
-`app.py::_AGENT_OUTLINE_AUDIENCES = ("prospect", "property_manager")`；
-`build_audience_outline` 對 tenant 直接 `raise`；`build_toc`（讀 DB 的那條 tenant 路徑）
+`app.py::_AGENT_OUTLINE_AUDIENCES = ("prospect", "property_manager")`——啟動只對這兩個受眾跑
+`check_turn_budget`，tenant 不在其中，`app.state.agent_audiences` 永不含它；`build_toc`（讀 DB 的那條 tenant 路徑）
 **零生產呼叫端**。⇒ **接 tenant 不是接線，是一整個知識正本工程。**
 
 ⚠️ `jgb2.query.*`／`jgb2.action.*` 是**無條件註冊**的（不受 `AGENT_TURN_ENABLED` 管）——
@@ -194,35 +193,44 @@ jgb2 訂閱的 `estate_usage`（物件／合約數上限，由 jgb2 依 role 收
 
 **在 git，⛔ 不在資料庫**：`rag-orchestrator/canon/`
 
-| 檔 | 大小 | 用途 |
-|---|---|---|
-| `prospect.md` ／ `prospect.json` | 43 KB ／ 82 KB | 售前受眾正本 |
-| `property_manager.md` ／ `.json` | 24 KB ／ 54 KB | 房東管家受眾正本 |
+⚠️ **2026-09-15 起正本只有一份、圖書館形態**（DSP-058／計畫 9.6）：`canon/jgb/` 一目錄＋九架（2026-09-23 起：架→粗目→細目→講法，共 57 粗目／515 細目，DSP-067／069）
+（`A.md…I.md`，一架可多個粗目（現行 57 個）），⛔ 不是 `prospect.md`／`property_manager.md` 兩份單檔——舊的
+按受眾各一份已於 9.6 S1 併成這一份，`canon_parser.parse_canon_dir` 是唯一解析器。
+`canon/jgb/CATALOG.md`（衍生目錄）與 `canon/jgb.json`（衍生 JSON）皆逐位元組回讀比對，⛔ 不手改。
+**`tenant` 仍沒有正本**——`_STATIC_TOC_IDENTITY` 的鍵只有 prospect／property_manager，這就是
+§1a「tenant 在新線不存在」的根，圖書館形態沒有改變這件事。
 
-**⚠️ 只有這兩份**——`tenant` 沒有正本，這就是 §1a「tenant 在新線不存在」的根。
+| 檔 | 用途 |
+|---|---|
+| `canon/jgb/A.md`…`I.md` | 九架，**一架可有多個粗目**（現行共 57 個；`front matter` 六鍵：`coarse`／`title`／`scope`／`version`／`reviewers`／`language`） |
+| `canon/jgb/CATALOG.md` | 衍生目錄（`export_catalog`，人讀） |
+| `canon/jgb.json` | 衍生 JSON（`export_json`，逐位元組核對） |
 
-**一份正本的三層結構**（逐字取自 `canon/prospect.md`）：
+**一架的三層結構**（逐字取自 `canon/jgb/B.md`）：
 
 ```
----                                    ← front matter
-audience: prospect
-version: 2026-09-07.6
-budget_tokens: 12000
-target_user: [prospect]
-business_types: [system_provider]
+---                                    ← 架 front matter（六鍵，⛔ 無 budget_tokens／target_user／business_types 檔級預設）
+coarse: B
+title: 團隊、人員與大房東
+scope: 團隊建立與成員邀請、角色權限、人員管理、大房東記錄與代管關係；⛔ 帳號本身歸 A
+version: 2026-09-21.0
+reviewers: [owner]
+language: zh-TW
 ---
-## A 產品基本盤 {#A}                    ← 粗目
-### 系統總覽與適不適合我 {#prospect/A/product-overview}   ← 細目（id 唯一）
-- phrasings:                           ← 講法：同一件事的各種真實問法
-  - {text: "合不合用",     source: "question_summary:3585", status: approved}
-  - {text: "適不適合我用", source: "question_summary:3585", status: approved}
-- sources: [kb:3585]                   ← 內容出處
-- reviewed: {by: owner, at: 2026-09-07}← 審核（⚠️ 沒有這行 ⇒ 整個細目永遠不可見）
+## 團隊資訊（團隊名稱、介紹、首頁、廣告頁聯絡資訊、刪除團隊） {#B-team-profile}   ← 粗目＝產品功能，一架可多個，id＝<架字母>-<slug>
+### 團隊資訊頁面可以設定什麼？（公司 Logo、團隊名稱、團隊介紹） {#jgb/B/team-basic-info}   ← 細目，id 首段恆為正本名 jgb
+- phrasings:
+  - {text: "團隊資訊在哪裡設定", source: "draft:outline-20260920", status: proposed}
+- sources: [code:resources/views/users/role.blade.php, code:app/Http/Controllers/UserController.php]
+- target_user: [property_manager, prospect]     ← 必填非空，受眾是細目屬性
+- business_types: [system_provider]             ← 必填，須含 system_provider
 - instance_applicability: general
-金箍棒智慧物管能把物件、合約、收租對帳…   ← 內文（會被切成 content_units 逐句索引）
+內容句（一行一句；⛔ 無 reviewed ⇒ 未審 ⇒ 模型看不到）
 ```
 
-**「講法」⛔ 不是同義詞表**：每一條都標了 `source`（`question_summary:3585` ＝來自哪一筆
+⚠️ 逐字取自 2026-09-23 生成的 `canon/jgb/B.md`。現行 515 條細目**全部未審**（無 `reviewed:`）、講法全為 `proposed` ⇒ 索引與目錄皆為空，模型看不到任何一條。
+
+**「講法」⛔ 不是同義詞表**：每一條都標了 `source`（`question_summary:3602` ＝來自哪一筆
 真實流量問句／`gapmap:C46` ＝來自缺口地圖）與 `status`。**只有 `approved` 的進索引。**
 
 #### A-2 啟動時建什麼（`FineIndex.prepare`）
@@ -274,21 +282,24 @@ business_types: [system_provider]
 ```
 ① fine.reviewed_by is None          ⇒ ❌ 不可見（未審一律否）
 ② is_b2b = target_user ∈ {property_manager, system_admin} 或 mode == "b2b"
+②' 正本側的比對鑰匙把 system_admin 折成 property_manager（DSP-053a）；
+   kb.search 的 SQL 謂詞 ⛔ 不折（以 system_admin 查回 0 列）
 ③ b2b 分支：fine.business_types 必須含 'system_provider'，否則 ❌
-            再看 fine.target_user 空（放行）或含正規化後的角色
+            再看 fine.target_user 非空且含正規化後的角色（空＝不可見，DSP-052 補救 (c)：b2b 兩軸皆無空值放行）
 ④ b2c 分支：fine.business_types 非空時必須與 vendor 的 business_types 有交集
             再看 fine.target_user 空／含角色／含 'all_users'
 ```
 
 ⚠️ 角色正規化重用 `_effective_target_user`——**未知／`None` ⇒ 一律當 tenant**（fail-safe）。
-⚠️ 這與 `kb.search` 的 `build_visibility_predicate` **已驗過零分歧**（不變量 29b、3.2 收案）。
+⚠️ 這與 `kb.search` 的 `build_visibility_predicate` 在 pm／prospect／tenant 三組身分上**逐格相等**
+（不變量 29b、3.2 收案）；`system_admin` 那一格是上面 ②' 的刻意不對稱。
 
 #### A-5 為什麼會匹配到（一個例子）
 
 使用者問「**你們這系統我適合用嗎**」：
 
 1. 查詢向量 ← 這句話（＋上一則 user 訊息）
-2. 細目 `prospect/A/product-overview` 有 approved 講法「**合不合用**」「**適不適合我用**」
+2. 細目 `jgb/I/product-overview` 有 approved 講法「**合不合用**」「**適不適合我用**」（DSP-058 圖書館正本後 id 前綴恆為 `jgb`，⛔ 不是受眾名）。⚠️ **此例取自封存的舊 210 條**（2026-09-23 已移出工作樹；取回：`git show c06575a9:docs/archive/2026-09/canon-pre-dsp067/jgb/I.md`）——該細目不在 2026-09-23 換上的現行正本裡，且現行 515 條的講法**全為 `proposed`、approved 數＝0** ⇒ 這條路徑今天走不到，補審後才會生效。
 3. 該細目的 `phrasing` 鍵分數最高 ⇒ 以該分數代表這個細目
 4. 排進前 5 ⇒ 內容進 prompt，且 **`citable=True`**（因為它有 `reviewed`）⇒ 模型可以引用它
 
@@ -304,7 +315,10 @@ business_types: [system_provider]
 | 3 | **可見性在算分之前切** | ⛔ 不在排序後再過濾——「那種寫法一旦有人動排序就會漏」 |
 | 4 | **⛔ 不記講法 id、⛔ 不 log 查詢** | 講法對照表就在 repo，記 `ph:<sha8>` 等於一次查表就還原出使用者原始問句；內文句是正本答案本文，同待遇。`Selection` 只帶 `winning_key_kind ∈ {title, phrasing, content}` |
 
-#### A-7 退化路徑與 trace 值域（四個 `miss_kind`）
+#### A-7 退化路徑與 trace 值域（五個 `miss_kind`）
+
+`_select_outline` **不預組任何受眾的整份篩選結果**（9.8 DSP-059 D′／S2）：每回合直接
+`get_canon()` 現組 K=5 候選節＋目錄，⛔ 沒有預組的 `OutlineDoc` 可讀。
 
 | 值 | 意思 |
 |---|---|
@@ -312,22 +326,84 @@ business_types: [system_provider]
 | `none_visible` | 可見子集是空的（這個身分看不到任何細目） |
 | `no_candidate` | 可見子集非空但都沒索引項——⚠️ **`ready` 狀態下不可達**（每個細目至少有標題鍵），保留於列舉是為了讓 trace 值域封閉 |
 | `index_unavailable` | **`select` 本身⛔ 不回傳它**——索引不可用時回 `None`，由 runtime 在 trace 寫這個值 |
+| `empty_toc` | `build_canon_toc` 本身失敗（外層 guard）⇒ 回合仍完成、降級為此值＋violation `candidate_toc_error` |
 
 ⚠️ **兩種「沒有候選」要分清楚**（`_select_outline` docstring 明訂）：
-- **根本沒有候選機制**（單數與複數 selector 都沒設）⇒ 原樣整份大綱，⛔ 不記 violation
-- **有對照表但缺這個受眾**（DSP-037／S1b）⇒ **那是降級**，記 `candidate_fallback_full_outline`
-  ＋`miss_kind="index_unavailable"`。⛔ 兩者不得混為一談
+- **根本沒有候選機制**（單數與複數 selector 都沒設）⇒ `(None, None)`——這個回合完全沒有
+  outline 可注入，⛔ 不記 violation
+- **有對照表但缺這個受眾**（DSP-037／S1b），或選取器例外／候選 id 對這個身分不可見（F1）
+  ⇒ **那是降級**——一律**只注入目錄**（零細目節＋toc），記
+  `candidate_fallback_toc_only`（F1 額外記 `candidate_invisible_id`）＋`miss_kind="index_unavailable"`。
+  ⛔ 三者不得混為一談
 
 #### A-8 這條路上唯一能調鬆的旋鈕
 
 **`K = 5`**（`candidate_selector.K`，**程式常數、⛔ 不是 env**）——它直接決定
 「模型每回合拿得到幾條可引用事實」，也就直接決定「沒有可引用事實 ⇒ 轉人」的發生率。
-要改得動程式並重跑回測。
+
+🔴 **改它會弄紅兩支測試**（2026-09-12 對抗性演練逼出；前一版只寫「要改得動程式並重跑回測」，
+沒點名，而同檔對其他三個旋鈕都點了名——`IMAGE_CONFIDENCE_MIN`／`NON_SENSITIVE_HANDOFF_REASONS`／
+`_POLICY_TEXT`，所以這是漏寫不是體例）：
+
+| 測試 | 為什麼會紅 |
+|---|---|
+| `tests/unit/agent/test_candidate_selector_req.py::test_top_k_is_five` | 內有 `assert K == 5`，**硬斷言，改值即紅** |
+| `tests/unit/agent/test_candidate_outline_req.py` | 合成正本只有 **6 個**可見細目，靠「第 6 個落選」斷言 `內容ZZUNSELECTED` 不出現在 system prompt；K≥6 時第 6 個會被選上，斷言翻面 |
+
+⚠️ **這條路的預算守門在啟動期**（DSP-059 D′）：`app.py::_init_agent_runtime` 對每個受眾以靜態身分
+把 `canon_visible` 為真的細目交給 `canon_assembler.build_canon_sections` 現組節，再由 `outline.check_turn_budget`
+依 `candidate_selector.K` 算「任 K 條可引用節 token 最大和」（K 上界，⛔ 不量整份篩選結果），超過 `OUTLINE_K_TOKEN_LIMIT`
+（12,000＝5×2,400，DSP-059a）即 raise `OutlineBudgetExceeded`——**K 調大即啟動紅**，⛔ 不是「沒有任何
+東西擋」。目錄另有 `OUTLINE_TOC_TOKEN_LIMIT`（8,000）一把獨立的尺，兩尺互不抵銷。
+
+查證：`grep -n "assert K == 5" rag-orchestrator/tests/unit/agent/test_candidate_selector_req.py`；
+`grep -n "ZZUNSELECTED" rag-orchestrator/tests/unit/agent/test_candidate_outline_req.py`。
 
 查證：`grep -n "^K: int" rag-orchestrator/services/agent/canon/candidate_selector.py`；
 `grep -n "def _key_plan" -A 18 rag-orchestrator/services/agent/canon/fine_index.py`；
 `grep -n "def canon_visible" -A 30 rag-orchestrator/services/agent/canon/canon_assembler.py`；
 `grep -n "def _candidate_query" -A 12 rag-orchestrator/services/agent/runtime.py`。
+
+#### A-9 大綱是**誰組出來的**——`outline.py`（548 行，現役）
+
+🔴 **2026-09-12 補寫**：A-1～A-8 寫的是「正本長怎樣、怎麼選」，但**大綱這個物件是誰組的、
+預算多少、業態集合從哪來**三塊完全沒寫，讀者問「pm 為什麼少看到某些細目」答不出來。
+
+組裝順序（9.8 DSP-059 D′ 落地後）：`app.py::_init_agent_runtime` 依序
+`canon_assembler.load_canon_or_die`（用 `canon_parser.parse_canon_dir` 讀 `canon/jgb/`，一目錄＋九架）
+→ `register_canon` → `FineIndex.prepare` → 對每個受眾以 `_STATIC_TOC_IDENTITY`（受眾→靜態身分欄位表）
+跑一次 `check_turn_budget`（K 上界＋toc 兩尺，見 A-8）；⛔ **啟動不呼叫 `build_audience_outline`，
+不預組任何身分的整份篩選結果**。通過的受眾寫入 `app.state.agent_audiences: frozenset`
+（有沒有開＝屬性存在即權威）。每回合才由 `runtime.py::_select_outline(identity, get_canon())`
+現算 `canon_visible` 可見子集，`CandidateSelector.select` 在其中取 K=5（見 A-3）並由
+`canon_assembler.build_canon_sections` 直接從正本組出候選節。`build_audience_outline` 降為
+**離線工具函式**（`tools/agent_outline_dump.py`、`tools/agent_eval.py --candidates off` 用），
+`app.py` 不呼叫它。
+
+| 符號 | 它回答什麼命題 | ⛔ 不得怎麼改 |
+|---|---|---|
+| `resolve_vendor_business_types(identity, resolver)` | **業態集合的單一來源**，每回合最多呼叫一次；結果傳給 `build_canon_toc`／`candidate_outline`／`selector.select`／`resolve_canon_section` | ⛔ **不在 `FineIndex`／`canon_visible` 內部查 DB**（那會變成每個細目各查一次） |
+| `CandidateOutlineDoc` | **每回合真正進 prompt 的那個物件**（K 條候選＋目錄）；候選 id 對不到正本 ⇒ raise | `sha256` 刻意沿用九架正本的 `canon_sha256`，⛔ 不要改成候選集合的雜湊 |
+| `check_budget(doc, limit)` ／ `OutlineBudgetExceeded` | 純函式，離線工具／測試用；啟動預算已改由 `check_turn_budget` 守（K 上界＋toc 兩尺） | ⛔ 不得靜默截斷 |
+| `check_turn_budget(sections, toc, *, k_limit, toc_limit)` | **啟動即紅**（9.8 DSP-059 D′）：只量「任 K=5 可引用節 token 最大和」與「目錄 token」，⛔ 不量整份篩選結果 | K 調大即啟動紅 |
+| `OUTLINE_K_TOKEN_LIMIT` ／ `OUTLINE_TOC_TOKEN_LIMIT` | K 上界預算 `prospect`／`property_manager`／`tenant` 皆 12,000；目錄預算三者皆 8,000，可由 `AGENT_OUTLINE_K_TOKEN_LIMIT_PROSPECT`／`_PM`／`_TENANT`、`AGENT_OUTLINE_TOC_TOKEN_LIMIT_PROSPECT`／`_PM`／`_TENANT` 覆寫 | 本檔**只放預設值常數表、⛔ 自己不讀 env**——讀 env 的時機與位置屬接線層；env 只能調小 |
+| `make_outline_resolver()` | 建 `kb.get("outline:*")` 的 resolver（無參數：`app.py` 一律先 `register_canon` 再建它） | 正本未註冊 ⇒ `NO_MATCH`（fail-closed，⛔ 不回退成任何 cache 查找） |
+
+🔴 **最容易踩的一個坑：業態集合會靜默變空。**
+`resolve_vendor_business_types` 在三種情況 **fail-closed 回 `frozenset()`**：
+resolver 例外、查無業者、`business_types` 缺漏。⛔ **不 raise、⛔ 不放行**，
+只寫一行 `logger.warning("resolve_vendor_business_types_failed …")`。
+
+⇒ **後果**：業態限定的細目**全部不可見**，使用者看到的是「這題我這邊沒有可靠資料」轉人，
+而不是任何錯誤。⚠️ **要判斷是不是這個原因，只能去看那一行 warning log**
+——trace 的 `miss_kind` 會是 `none_visible`，⛔ 它不會告訴你可見子集為什麼是空的。
+
+⚠️ 另有兩種**刻意**回空集合、⛔ 不是故障：`identity.vendor_id` 為 `None`／`0`，
+或受眾是 `prospect`（prospect 走 b2b 分支，`canon_visible` 不看這個集合）——這兩種**不呼叫 resolver**。
+
+查證：`grep -n "def resolve_vendor_business_types" -A 28 rag-orchestrator/services/agent/outline.py`；
+`grep -n "OUTLINE_K_TOKEN_LIMIT_ENV" -A 5 rag-orchestrator/services/agent/outline.py`；
+`grep -n "class CandidateOutlineDoc" rag-orchestrator/services/agent/outline.py`。
 
 ### 路 B：模型主動呼叫工具
 

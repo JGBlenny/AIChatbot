@@ -9,7 +9,9 @@
    必然不存在的數字 `kb_id` 直呼（**不經 `registry.call()`**，避免混進速率限制／
    計量——這是健康探針，不是一次真實工具呼叫）。`ToolResult(error="NO_MATCH")`
    即代表 DB／可見性謂詞這條路線可達；探針本身丟例外（連線失敗等）才算紅。
-2. **大綱 version／sha**：`app.state.agent_runtime.outline_sha`（取不到 ⇒ `"pending"`）；
+2. **大綱 version／sha**：讀 `canon_state["sha256"]["jgb"]`（這個行程已註冊那份
+   正本的 `canon_sha256`，取不到 ⇒ `"pending"`；大綱每回合從正本現組，沒有
+   獨立的預組物件可另掛一份 sha）；
    **`canon`**（3.2）另印 `resolve_canon_dir()` 的 resolved path 與本行程**已註冊**正本的
    `canon_sha256`——「這台機器讀的是哪一份正本」要看得見（⛔ 不重讀檔重算）；
    **`canon.index`**（3.3a）再印每個受眾 `FineIndex` 的三態（`absent`／`not_ready`／`ready`）
@@ -196,16 +198,17 @@ def _rules_sha(get_runtime: Optional[Callable[[], Any]]) -> str:
     return str(getattr(runtime, "rules_sha", "") or "") or "pending"
 
 
-def _outline_sha(get_runtime: Optional[Callable[[], Any]]) -> str:
-    """同 `_rules_sha`：回這個行程實際載入的大綱 sha（`bootstrap.build_runtime` 外掛的
-    `runtime.outline_sha`），取不到 ⇒ `"pending"`。⛔ 不重組大綱來算。"""
-    if get_runtime is None:
+def _outline_sha(canon_state: dict) -> str:
+    """單一正本、無預組大綱——`outline_version` 讀 `canon_state["sha256"]["jgb"]`
+    （＝這個行程已註冊那份正本的 `canon_sha256`）。取不到 ⇒ `"pending"`。
+    ⛔ 不重組正本來算，沿用 `_canon_state()` 既有觀測值。
+    """
+    from services.agent.canon.canon_parser import CANON_NAME  # 循環相依 ⇒ 函式內 import
+
+    sha256_by_name = canon_state.get("sha256")
+    if not isinstance(sha256_by_name, dict):
         return "pending"
-    try:
-        runtime = get_runtime()
-    except Exception:  # noqa: BLE001
-        return "pending"
-    return str(getattr(runtime, "outline_sha", "") or "") or "pending"
+    return str(sha256_by_name.get(CANON_NAME, "") or "") or "pending"
 
 
 def _index_state() -> dict:
@@ -227,13 +230,20 @@ def _index_state() -> dict:
 
 
 def _canon_state() -> dict:
-    """`{"dir": …, "sha256": {audience: canon_sha256}, "index": {audience: {…}}}`（3.2＋3.3a）。
+    """`{"dir": …, "sha256": {正本名: canon_sha256}, "index": {audience: {…}}}`（3.2＋3.3a）。
 
     `dir` 是 `resolve_canon_dir()` 的 **resolved path**——`AGENT_CANON_DIR` 只在
     `DB_ENV=test` 生效，健檢印出實際採用的那一個，讓「這台機器讀的是哪份正本」
     可觀測（security-reviewer P3-1）。`sha256` 只讀**本行程已註冊**的正本，
     ⛔ 不重讀檔案重算（重算量到的是磁碟現況，不是行程實際帶的那份）。
     取不到 ⇒ 空值，⛔ 不致紅（「尚未建置」不是「建置後壞了」，與 `rules_sha` 同語義）。
+
+    ⚠️ **DSP-058／9.6 S3 起 `sha256` 的鍵是正本名**（恆為 `{"jgb": …}`，⛔ 不是受眾）
+    ——正本只有一份，兩個受眾視圖都由它切出。
+    ⚠️ `index` 那一層的 `entries`／`content_keys`／`prepared_sha`（`index_registry_states`）
+    對 `prospect` 與 `property_manager` **必然相同**：兩受眾共用同一個 `FineIndex`
+    （`app.py::_init_agent_runtime` 只建一次）。⛔ 不得把它當「受眾覆蓋率」指標讀——
+    它回答的是「這份正本的索引建好了沒」，不是「這個受眾看得到幾條」。
     """
     try:
         from services.agent.canon.canon_assembler import (
@@ -328,16 +338,24 @@ async def compute_agent_health(
     # 任務 4.1／Plan §2.1-7：agent 任一開關開著、且**任一受檢受眾**的索引非 ready
     # （`absent`／`not_ready`）⇒ 紅——「索引不在」在接線後代表產線正在降級服務。
     # DSP-037／S1b：受檢集合＝`prospect`（基準受眾，永遠檢；⛔ 不因註冊表是空的就
-    # 變綠——「不知道」不是 ready）∪ **本行程已註冊正本**的受眾（pm 正本上線後就會
-    # 多它一個）。tenant 沒有正本、也不會被註冊 ⇒ 不在集合內，語義與 S1b 前相同。
+    # 變綠——「不知道」不是 ready）∪（**正本已註冊**時）有 git 正本視圖的受眾。
+    # ⚠️ DSP-058／9.6 S3：`canon_registry_shas()` 的鍵改成正本名（`jgb`），⛔ 不能再
+    # 直接當受眾集合用——那會讓 `jgb` 進受檢集合、而它永遠沒有索引 ⇒ 恆紅。受眾集合
+    # 改取 `outline.CANON_VIEW_AUDIENCES`（＝`_STATIC_TOC_IDENTITY` 的鍵），語義仍是
+    # 「本行程載了正本 ⇒ 兩個視圖都該有 ready 索引」。tenant 沒有視圖 ⇒ 不在集合內。
     # ⚠️ 以**模組屬性**呼叫（`mcp_facade.agent_configured()`），⛔ `from … import`——
     # 讓 `monkeypatch.setattr(mcp_facade, "agent_configured", ...)` 生效。
     index_states = canon_state.get("index")
     index_states = index_states if isinstance(index_states, dict) else {}
     registered_shas = canon_state.get("sha256")
-    checked_audiences = {"prospect"} | set(
-        registered_shas if isinstance(registered_shas, dict) else {}
-    )
+    checked_audiences = {"prospect"}
+    if isinstance(registered_shas, dict) and registered_shas:
+        try:
+            from services.agent.outline import CANON_VIEW_AUDIENCES
+            checked_audiences |= set(CANON_VIEW_AUDIENCES)
+        except Exception as e:  # noqa: BLE001 — 健檢不因取值失敗而崩（受檢集合退回基準受眾）
+            print(f"⚠️ [agent] 取不到 CANON_VIEW_AUDIENCES，受檢受眾退回基準："
+                  f"{type(e).__name__}: {e}", file=sys.stderr)
 
     def _state_of(audience: str):
         observed = index_states.get(audience)
@@ -356,7 +374,7 @@ async def compute_agent_health(
                 "kb_get_reachable": kb_reachable,
                 "detail": kb_detail,
             },
-            "outline_version": _outline_sha(get_runtime),
+            "outline_version": _outline_sha(canon_state),
             "canon": canon_state,
             "rules_sha": rules_sha,
             "premise": {

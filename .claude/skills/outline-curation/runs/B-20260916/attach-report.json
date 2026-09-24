@@ -1,0 +1,95 @@
+{
+  "attached_fines": [
+    "jgb/B/account-in-multiple-teams",
+    "jgb/B/add-owner-landlord-and-access",
+    "jgb/B/add-team-member",
+    "jgb/B/business-type-fee-model",
+    "jgb/B/business-type-setting-and-system-differences",
+    "jgb/B/change-team-principal-or-phone",
+    "jgb/B/feature-not-visible-troubleshooting",
+    "jgb/B/leasing-management-license-and-staff-qualification",
+    "jgb/B/leasing-vs-management-business-model",
+    "jgb/B/leasing-vs-management-liability-and-risk",
+    "jgb/B/owner-landlord-contact-book-import-export",
+    "jgb/B/remove-team-member-data-retention",
+    "jgb/B/role-permission-granularity",
+    "jgb/B/who-has-permission-lookup"
+  ],
+  "attached_phrasings": 60,
+  "canon_sha256": "48b14e71247be7f7e8a351fc000563649f6393e4f9499c154733170dee822a81",
+  "dup_existing": {
+    "jgb/B/change-team-principal-or-phone": [
+      {
+        "already_on": "jgb/A/account-registration",
+        "text": "帳號資訊怎麼變更"
+      }
+    ],
+    "jgb/B/role-permission-granularity": [
+      {
+        "already_on": "jgb/B/team-management-overview",
+        "text": "角色權限"
+      }
+    ],
+    "jgb/B/team-management-overview": [
+      {
+        "already_on": "jgb/C/property-status-meaning",
+        "text": "洽談中的物件可以做什麼"
+      }
+    ],
+    "jgb/B/what-is-owner-landlord": [
+      {
+        "already_on": "jgb/B/what-is-owner-landlord",
+        "text": "房東對外首頁是什麼"
+      },
+      {
+        "already_on": "jgb/B/what-is-owner-landlord",
+        "text": "經理人是什麼"
+      },
+      {
+        "already_on": "jgb/B/what-is-owner-landlord",
+        "text": "我的帳號是什麼"
+      },
+      {
+        "already_on": "jgb/D/contract-history-retention",
+        "text": "既存合約是什麼"
+      },
+      {
+        "already_on": "jgb/B/what-is-owner-landlord",
+        "text": "樓盤字典是什麼"
+      },
+      {
+        "already_on": "jgb/D/contract-history-retention",
+        "text": "歷史合約是什麼?"
+      },
+      {
+        "already_on": "jgb/B/what-is-owner-landlord",
+        "text": "租約公證是什麼"
+      },
+      {
+        "already_on": "jgb/B/what-is-owner-landlord",
+        "text": "租賃專法是什麼"
+      },
+      {
+        "already_on": "jgb/B/what-is-owner-landlord",
+        "text": "虛擬帳號是什麼"
+      }
+    ]
+  },
+  "dup_in_proposal": {
+    "jgb/B/role-permission-granularity": [
+      {
+        "kept_on": "jgb/B/add-team-member",
+        "text": "團隊成員"
+      }
+    ]
+  },
+  "fines_without_phrasings": [],
+  "missing_fines": [],
+  "other_shelf_fines": {},
+  "phrasing_set_sha256": "0f8df038c351daa48d260bcbd52713234e83f19fa32975b23efb8c09e6c19ce6",
+  "skipped_fines": {
+    "jgb/B/owner-report-collection-remit": 4,
+    "jgb/B/team-management-overview": 9,
+    "jgb/B/what-is-owner-landlord": 3
+  }
+}

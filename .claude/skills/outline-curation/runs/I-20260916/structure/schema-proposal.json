@@ -1,0 +1,383 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "angle": {
+      "type": "string"
+    },
+    "coarses": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "enum": [
+              "A",
+              "B",
+              "C",
+              "D",
+              "E",
+              "F",
+              "G",
+              "H",
+              "I"
+            ],
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "fines": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "coarse_id": {
+            "enum": [
+              "A",
+              "B",
+              "C",
+              "D",
+              "E",
+              "F",
+              "G",
+              "H",
+              "I"
+            ],
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "merge_of": {
+            "items": {
+              "enum": [
+                "tmp:canon:jgb/I/competitor-comparison",
+                "tmp:canon:jgb/I/competitor-neutrality",
+                "tmp:canon:jgb/I/dashboard-overview",
+                "tmp:canon:jgb/I/data-migration",
+                "tmp:canon:jgb/I/free-trial",
+                "tmp:canon:jgb/I/individual-landlord-scale-fit",
+                "tmp:canon:jgb/I/pricing-plans",
+                "tmp:canon:jgb/I/product-overview",
+                "tmp:canon:jgb/I/property-quota-limit",
+                "tmp:canon:jgb/I/subscription-change-renewal",
+                "tmp:canon:jgb/I/team-company-fit",
+                "tmp:canon:jgb/I/why-choose-jgb",
+                "tmp:kb:2909",
+                "tmp:kb:2910",
+                "tmp:kb:2911",
+                "tmp:kb:2913",
+                "tmp:kb:2918",
+                "tmp:kb:2920",
+                "tmp:kb:2921",
+                "tmp:kb:2924",
+                "tmp:kb:2925",
+                "tmp:kb:2977",
+                "tmp:kb:3006",
+                "tmp:kb:3035",
+                "tmp:kb:3047",
+                "tmp:kb:3105",
+                "tmp:kb:3158",
+                "tmp:kb:3207",
+                "tmp:kb:3208",
+                "tmp:kb:3209",
+                "tmp:kb:3210",
+                "tmp:kb:3356",
+                "tmp:kb:3453",
+                "tmp:kb:3454",
+                "tmp:kb:3455",
+                "tmp:kb:3457",
+                "tmp:kb:3476",
+                "tmp:kb:3478",
+                "tmp:kb:3509",
+                "tmp:kb:3798",
+                "tmp:kb:3850",
+                "tmp:kb:4261",
+                "tmp:kb:4271",
+                "tmp:kb:4275",
+                "tmp:kb:5376",
+                "tmp:draft:1"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "moved_from": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "op": {
+            "enum": [
+              "keep",
+              "split",
+              "merge",
+              "move",
+              "new"
+            ],
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "split_from": {
+            "items": {
+              "enum": [
+                "tmp:canon:jgb/I/competitor-comparison",
+                "tmp:canon:jgb/I/competitor-neutrality",
+                "tmp:canon:jgb/I/dashboard-overview",
+                "tmp:canon:jgb/I/data-migration",
+                "tmp:canon:jgb/I/free-trial",
+                "tmp:canon:jgb/I/individual-landlord-scale-fit",
+                "tmp:canon:jgb/I/pricing-plans",
+                "tmp:canon:jgb/I/product-overview",
+                "tmp:canon:jgb/I/property-quota-limit",
+                "tmp:canon:jgb/I/subscription-change-renewal",
+                "tmp:canon:jgb/I/team-company-fit",
+                "tmp:canon:jgb/I/why-choose-jgb",
+                "tmp:kb:2909",
+                "tmp:kb:2910",
+                "tmp:kb:2911",
+                "tmp:kb:2913",
+                "tmp:kb:2918",
+                "tmp:kb:2920",
+                "tmp:kb:2921",
+                "tmp:kb:2924",
+                "tmp:kb:2925",
+                "tmp:kb:2977",
+                "tmp:kb:3006",
+                "tmp:kb:3035",
+                "tmp:kb:3047",
+                "tmp:kb:3105",
+                "tmp:kb:3158",
+                "tmp:kb:3207",
+                "tmp:kb:3208",
+                "tmp:kb:3209",
+                "tmp:kb:3210",
+                "tmp:kb:3356",
+                "tmp:kb:3453",
+                "tmp:kb:3454",
+                "tmp:kb:3455",
+                "tmp:kb:3457",
+                "tmp:kb:3476",
+                "tmp:kb:3478",
+                "tmp:kb:3509",
+                "tmp:kb:3798",
+                "tmp:kb:3850",
+                "tmp:kb:4261",
+                "tmp:kb:4271",
+                "tmp:kb:4275",
+                "tmp:kb:5376",
+                "tmp:draft:1"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "target_user": {
+            "items": {
+              "enum": [
+                "prospect",
+                "property_manager"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "coarse_id",
+          "title",
+          "slug",
+          "merge_of",
+          "split_from",
+          "moved_from",
+          "reason",
+          "target_user",
+          "op"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "id_map": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "new": {
+            "type": "string"
+          },
+          "old": {
+            "anyOf": [
+              {
+                "enum": [
+                  "tmp:canon:jgb/I/competitor-comparison",
+                  "tmp:canon:jgb/I/competitor-neutrality",
+                  "tmp:canon:jgb/I/dashboard-overview",
+                  "tmp:canon:jgb/I/data-migration",
+                  "tmp:canon:jgb/I/free-trial",
+                  "tmp:canon:jgb/I/individual-landlord-scale-fit",
+                  "tmp:canon:jgb/I/pricing-plans",
+                  "tmp:canon:jgb/I/product-overview",
+                  "tmp:canon:jgb/I/property-quota-limit",
+                  "tmp:canon:jgb/I/subscription-change-renewal",
+                  "tmp:canon:jgb/I/team-company-fit",
+                  "tmp:canon:jgb/I/why-choose-jgb",
+                  "tmp:kb:2909",
+                  "tmp:kb:2910",
+                  "tmp:kb:2911",
+                  "tmp:kb:2913",
+                  "tmp:kb:2918",
+                  "tmp:kb:2920",
+                  "tmp:kb:2921",
+                  "tmp:kb:2924",
+                  "tmp:kb:2925",
+                  "tmp:kb:2977",
+                  "tmp:kb:3006",
+                  "tmp:kb:3035",
+                  "tmp:kb:3047",
+                  "tmp:kb:3105",
+                  "tmp:kb:3158",
+                  "tmp:kb:3207",
+                  "tmp:kb:3208",
+                  "tmp:kb:3209",
+                  "tmp:kb:3210",
+                  "tmp:kb:3356",
+                  "tmp:kb:3453",
+                  "tmp:kb:3454",
+                  "tmp:kb:3455",
+                  "tmp:kb:3457",
+                  "tmp:kb:3476",
+                  "tmp:kb:3478",
+                  "tmp:kb:3509",
+                  "tmp:kb:3798",
+                  "tmp:kb:3850",
+                  "tmp:kb:4261",
+                  "tmp:kb:4271",
+                  "tmp:kb:4275",
+                  "tmp:kb:5376",
+                  "tmp:draft:1"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "op": {
+            "enum": [
+              "keep",
+              "split",
+              "merge",
+              "move",
+              "new"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "old",
+          "new",
+          "op"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "out_of_shelf": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "enum": [
+              "tmp:canon:jgb/I/competitor-comparison",
+              "tmp:canon:jgb/I/competitor-neutrality",
+              "tmp:canon:jgb/I/dashboard-overview",
+              "tmp:canon:jgb/I/data-migration",
+              "tmp:canon:jgb/I/free-trial",
+              "tmp:canon:jgb/I/individual-landlord-scale-fit",
+              "tmp:canon:jgb/I/pricing-plans",
+              "tmp:canon:jgb/I/product-overview",
+              "tmp:canon:jgb/I/property-quota-limit",
+              "tmp:canon:jgb/I/subscription-change-renewal",
+              "tmp:canon:jgb/I/team-company-fit",
+              "tmp:canon:jgb/I/why-choose-jgb",
+              "tmp:kb:2909",
+              "tmp:kb:2910",
+              "tmp:kb:2911",
+              "tmp:kb:2913",
+              "tmp:kb:2918",
+              "tmp:kb:2920",
+              "tmp:kb:2921",
+              "tmp:kb:2924",
+              "tmp:kb:2925",
+              "tmp:kb:2977",
+              "tmp:kb:3006",
+              "tmp:kb:3035",
+              "tmp:kb:3047",
+              "tmp:kb:3105",
+              "tmp:kb:3158",
+              "tmp:kb:3207",
+              "tmp:kb:3208",
+              "tmp:kb:3209",
+              "tmp:kb:3210",
+              "tmp:kb:3356",
+              "tmp:kb:3453",
+              "tmp:kb:3454",
+              "tmp:kb:3455",
+              "tmp:kb:3457",
+              "tmp:kb:3476",
+              "tmp:kb:3478",
+              "tmp:kb:3509",
+              "tmp:kb:3798",
+              "tmp:kb:3850",
+              "tmp:kb:4261",
+              "tmp:kb:4271",
+              "tmp:kb:4275",
+              "tmp:kb:5376",
+              "tmp:draft:1"
+            ],
+            "type": "string"
+          },
+          "suggested_shelf": {
+            "type": "string"
+          },
+          "why": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "suggested_shelf",
+          "why"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "angle",
+    "coarses",
+    "fines",
+    "id_map",
+    "out_of_shelf"
+  ],
+  "type": "object"
+}

@@ -1,0 +1,533 @@
+{
+  "cost": {
+    "agents": 0,
+    "completion_tokens": 0,
+    "prompt_tokens": 0,
+    "usd": 0.0,
+    "wall_s": 0.0
+  },
+  "deterministic": true,
+  "inputs_sha": {
+    "new_canon": "a859784b29d58d0d92c327e57cd96398e973ffc5447c117cc0a5295f5cac5317",
+    "old_canon": "689c890d232194dfbdf93186ce18b1d577db5126bc559c43acb5d781cc8afd93"
+  },
+  "payload": {
+    "id_map": [
+      {
+        "new": "property_manager/F/repair-ticket-open-and-confirm",
+        "old": "property_manager/A/repair-ticket-photo-flow",
+        "op": "move"
+      },
+      {
+        "new": "property_manager/F/repair-ticket-photo-recognition-uncertain",
+        "old": "property_manager/A/repair-ticket-low-confidence-candidates",
+        "op": "merge"
+      },
+      {
+        "new": "property_manager/F/repair-ticket-photo-recognition-uncertain",
+        "old": "property_manager/A/repair-ticket-unrecognizable-photo",
+        "op": "merge"
+      },
+      {
+        "new": "property_manager/F/repair-ticket-reclassify",
+        "old": "property_manager/A/repair-ticket-reclassify",
+        "op": "move"
+      },
+      {
+        "new": "property_manager/F/repair-ticket-photo-count-limit",
+        "old": "property_manager/A/repair-ticket-photo-count-limit",
+        "op": "move"
+      },
+      {
+        "new": "property_manager/F/repair-ticket-urgency-judgment",
+        "old": "property_manager/A/repair-ticket-urgency-judgment",
+        "op": "move"
+      },
+      {
+        "new": "property_manager/F/repair-ticket-no-lease",
+        "old": "property_manager/A/repair-ticket-agent-identity-lease-lookup",
+        "op": "merge"
+      },
+      {
+        "new": "property_manager/F/repair-ticket-no-lease",
+        "old": "property_manager/A/repair-ticket-vacant-no-lease",
+        "op": "merge"
+      },
+      {
+        "new": "property_manager/F/repair-ticket-mid-flow-cancel",
+        "old": "property_manager/A/repair-ticket-mid-flow-cancel",
+        "op": "move"
+      },
+      {
+        "new": "property_manager/F/repair-ticket-submit-failure",
+        "old": "property_manager/A/repair-ticket-submit-failure",
+        "op": "move"
+      },
+      {
+        "new": "property_manager/F/repair-ticket-after-submit",
+        "old": "property_manager/A/repair-ticket-after-submit",
+        "op": "move"
+      },
+      {
+        "new": "property_manager/F/repair-progress-followup-scope",
+        "old": "property_manager/C/urgent-repair-followup-scope",
+        "op": "move"
+      },
+      {
+        "new": "property_manager/E/dunning-draft-template-tone-late-fee",
+        "old": "property_manager/B/dunning-draft-generation",
+        "op": "merge"
+      },
+      {
+        "new": "property_manager/E/dunning-draft-template-tone-late-fee",
+        "old": "property_manager/B/dunning-draft-late-fee-mention",
+        "op": "merge"
+      },
+      {
+        "new": "property_manager/E/dunning-draft-not-auto-send",
+        "old": "property_manager/B/dunning-draft-not-auto-send",
+        "op": "move"
+      },
+      {
+        "new": "property_manager/E/overdue-bill-followup-scope",
+        "old": "property_manager/C/overdue-bill-followup-scope",
+        "op": "move"
+      },
+      {
+        "new": "property_manager/D/lease-expiry-followup-scope",
+        "old": "property_manager/C/lease-expiry-followup-scope",
+        "op": "move"
+      },
+      {
+        "new": "property_manager/G/meter-item-followup-scope",
+        "old": "property_manager/C/meter-item-followup-scope",
+        "op": "move"
+      }
+    ],
+    "replacements": [
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "merged_into",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "merged_into",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "merged_into",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "merged_into",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "merged_into",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "merged_into",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      }
+    ],
+    "structure_diff": {
+      "headings_added": [
+        {
+          "id": "H",
+          "level": "h2",
+          "title": "H 幫助中心"
+        },
+        {
+          "id": "I",
+          "level": "h2",
+          "title": "I 方案與導入"
+        },
+        {
+          "id": "property_manager/D/lease-expiry-followup-scope",
+          "level": "h3",
+          "title": "合約到期追問可答範圍（導向續約面向）"
+        },
+        {
+          "id": "property_manager/E/dunning-draft-not-auto-send",
+          "level": "h3",
+          "title": "催繳草稿不可一鍵發送給租客"
+        },
+        {
+          "id": "property_manager/E/dunning-draft-template-tone-late-fee",
+          "level": "h3",
+          "title": "催繳草稿的生成規則（模板、語氣分級與滯納金提及）"
+        },
+        {
+          "id": "property_manager/E/overdue-bill-followup-scope",
+          "level": "h3",
+          "title": "逾期帳單追問可答範圍"
+        },
+        {
+          "id": "property_manager/F/repair-progress-followup-scope",
+          "level": "h3",
+          "title": "修繕進度追問可答範圍"
+        },
+        {
+          "id": "property_manager/F/repair-ticket-after-submit",
+          "level": "h3",
+          "title": "確認送出後的單如何處理"
+        },
+        {
+          "id": "property_manager/F/repair-ticket-mid-flow-cancel",
+          "level": "h3",
+          "title": "報修流程中途取消的規則"
+        },
+        {
+          "id": "property_manager/F/repair-ticket-no-lease",
+          "level": "h3",
+          "title": "代開單時的租約查詢身分與空屋／無租約物件開單規則"
+        },
+        {
+          "id": "property_manager/F/repair-ticket-open-and-confirm",
+          "level": "h3",
+          "title": "開修繕單基本流程與確認機制（拍照進場／文字口述）"
+        },
+        {
+          "id": "property_manager/F/repair-ticket-photo-count-limit",
+          "level": "h3",
+          "title": "修繕辨識與附件的照片張數限制"
+        },
+        {
+          "id": "property_manager/F/repair-ticket-photo-recognition-uncertain",
+          "level": "h3",
+          "title": "照片辨識信心不足或看不出損壞時的處理"
+        },
+        {
+          "id": "property_manager/F/repair-ticket-reclassify",
+          "level": "h3",
+          "title": "確認卡上修改辨識結果的規則"
+        },
+        {
+          "id": "property_manager/F/repair-ticket-submit-failure",
+          "level": "h3",
+          "title": "建單失敗時的處理與重試規則"
+        },
+        {
+          "id": "property_manager/F/repair-ticket-urgency-judgment",
+          "level": "h3",
+          "title": "修繕單急迫程度的判斷來源與值域"
+        },
+        {
+          "id": "property_manager/G/meter-item-followup-scope",
+          "level": "h3",
+          "title": "電錶項目追問可答範圍（導向電表排障面向）"
+        }
+      ],
+      "headings_removed": [
+        {
+          "id": "property_manager/A/repair-ticket-after-submit",
+          "level": "h3",
+          "title": "確認送出後的單如何處理"
+        },
+        {
+          "id": "property_manager/A/repair-ticket-agent-identity-lease-lookup",
+          "level": "h3",
+          "title": "業務代開修繕單時的租約查詢身分規則"
+        },
+        {
+          "id": "property_manager/A/repair-ticket-low-confidence-candidates",
+          "level": "h3",
+          "title": "照片辨識信心不足時的候選類別流程"
+        },
+        {
+          "id": "property_manager/A/repair-ticket-mid-flow-cancel",
+          "level": "h3",
+          "title": "報修流程中途取消的規則"
+        },
+        {
+          "id": "property_manager/A/repair-ticket-photo-count-limit",
+          "level": "h3",
+          "title": "修繕辨識與附件的照片張數限制"
+        },
+        {
+          "id": "property_manager/A/repair-ticket-photo-flow",
+          "level": "h3",
+          "title": "開修繕單基本流程與確認機制（拍照進場／文字口述）"
+        },
+        {
+          "id": "property_manager/A/repair-ticket-reclassify",
+          "level": "h3",
+          "title": "分類辨識結果錯誤時如何修改"
+        },
+        {
+          "id": "property_manager/A/repair-ticket-submit-failure",
+          "level": "h3",
+          "title": "建單失敗時的處理與重試規則"
+        },
+        {
+          "id": "property_manager/A/repair-ticket-unrecognizable-photo",
+          "level": "h3",
+          "title": "照片看不出損壞時的留白規則"
+        },
+        {
+          "id": "property_manager/A/repair-ticket-urgency-judgment",
+          "level": "h3",
+          "title": "修繕單急迫程度的判斷來源"
+        },
+        {
+          "id": "property_manager/A/repair-ticket-vacant-no-lease",
+          "level": "h3",
+          "title": "空屋或無租約物件的開單規則"
+        },
+        {
+          "id": "property_manager/B/dunning-draft-generation",
+          "level": "h3",
+          "title": "催繳草稿的生成規則（模板＋語氣分級）"
+        },
+        {
+          "id": "property_manager/B/dunning-draft-late-fee-mention",
+          "level": "h3",
+          "title": "催繳草稿是否提及滯納金的規則"
+        },
+        {
+          "id": "property_manager/B/dunning-draft-not-auto-send",
+          "level": "h3",
+          "title": "催繳草稿不可一鍵發送給租客"
+        },
+        {
+          "id": "property_manager/C/followup-missing-data-in-jgb",
+          "level": "h3",
+          "title": "追問遇到 JGB 沒有的資料時怎麼回"
+        },
+        {
+          "id": "property_manager/C/followup-session-end",
+          "level": "h3",
+          "title": "追問結束與流程收尾"
+        },
+        {
+          "id": "property_manager/C/followup-session-single-item-boundary",
+          "level": "h3",
+          "title": "追問的單筆會話邊界（不跨戶回答）"
+        },
+        {
+          "id": "property_manager/C/lease-expiry-followup-scope",
+          "level": "h3",
+          "title": "合約到期追問可答範圍（導向續約面向）"
+        },
+        {
+          "id": "property_manager/C/meter-item-followup-scope",
+          "level": "h3",
+          "title": "電錶項目追問（導向電表排障面向）"
+        },
+        {
+          "id": "property_manager/C/overdue-bill-followup-scope",
+          "level": "h3",
+          "title": "逾期帳單追問可答範圍"
+        },
+        {
+          "id": "property_manager/C/urgent-repair-followup-scope",
+          "level": "h3",
+          "title": "緊急修繕追問範圍（目前無獨立面向）"
+        },
+        {
+          "id": "property_manager/D/prohibited-statements",
+          "level": "h3",
+          "title": "禁止項清單（不編造／不推算／不代決定）"
+        },
+        {
+          "id": "property_manager/D/reply-tone-principles",
+          "level": "h3",
+          "title": "回覆語氣與介面原則"
+        },
+        {
+          "id": "property_manager/E/identity-and-scope-boundary",
+          "level": "h3",
+          "title": "誰在跟系統對話與權限邊界"
+        },
+        {
+          "id": "property_manager/E/number-data-provenance-rule",
+          "level": "h3",
+          "title": "數字的來源規則（一律引用JGB，需推算須標明）"
+        },
+        {
+          "id": "property_manager/E/session-expiry-general-rule",
+          "level": "h3",
+          "title": "會話多久過期（一般規則）"
+        },
+        {
+          "id": "property_manager/E/when-to-decline",
+          "level": "h3",
+          "title": "什麼情況要拒答或退出"
+        },
+        {
+          "id": "property_manager/F/account-domain-scope-pending",
+          "level": "h3",
+          "title": "帳號領域（註冊／登入／綁定異動／團隊權限）系統知識是否納入本受眾範圍，待裁"
+        },
+        {
+          "id": "property_manager/F/billing-other-facets-scope-pending",
+          "level": "h3",
+          "title": "帳務其他子面向與對話規則是否納入本受眾範圍，待裁"
+        },
+        {
+          "id": "property_manager/F/contract-other-facets-scope-pending",
+          "level": "h3",
+          "title": "合約其他子面向與對話規則是否納入本受眾範圍，待裁"
+        },
+        {
+          "id": "property_manager/F/dunning-endpoint-form",
+          "level": "h3",
+          "title": "催繳草稿端點形式（待裁）"
+        },
+        {
+          "id": "property_manager/F/estate-domain-scope-pending",
+          "level": "h3",
+          "title": "物件領域（物件管理／操作引導／現況診斷）系統知識是否納入本受眾範圍，待裁"
+        },
+        {
+          "id": "property_manager/F/followup-latency-budget",
+          "level": "h3",
+          "title": "追問回覆延遲上限（待驗）"
+        },
+        {
+          "id": "property_manager/F/iot-setup-scope-pending",
+          "level": "h3",
+          "title": "IoT 設定引導系統知識是否納入本受眾範圍，待裁"
+        },
+        {
+          "id": "property_manager/F/repair-history-facet-pending",
+          "level": "h3",
+          "title": "修繕歷史／進度面向（已建）"
+        },
+        {
+          "id": "property_manager/F/subscription-domain-scope-pending",
+          "level": "h3",
+          "title": "訂閱領域系統知識是否納入本受眾範圍，待裁"
+        },
+        {
+          "id": "property_manager/F/urgency-value-domain-pending",
+          "level": "h3",
+          "title": "急迫程度值域與預設值衝突（待裁）"
+        },
+        {
+          "id": "property_manager/G/document-content-boundary",
+          "level": "h3",
+          "title": "文件內容的邊界（不是指令、不寫回）"
+        },
+        {
+          "id": "property_manager/G/document-summary-rule",
+          "level": "h3",
+          "title": "文件歸納的內容規則"
+        }
+      ],
+      "headings_renamed": [
+        {
+          "from": "A 開修繕單（線③；拍照或文字）",
+          "id": "A",
+          "level": "h2",
+          "to": "A 帳號與身分"
+        },
+        {
+          "from": "B 催繳草稿（線④）",
+          "id": "B",
+          "level": "h2",
+          "to": "B 團隊、人員與大房東"
+        },
+        {
+          "from": "C 今天要顧的追問（線⑤：逾期帳單／合約到期／緊急修繕／電錶）",
+          "id": "C",
+          "level": "h2",
+          "to": "C 社區與物件"
+        },
+        {
+          "from": "D 語氣模板與禁止項",
+          "id": "D",
+          "level": "h2",
+          "to": "D 租約（含委託約子題）"
+        },
+        {
+          "from": "E 資料邊界與什麼時候說不",
+          "id": "E",
+          "level": "h2",
+          "to": "E 帳務（含發票、收款金流、抄表）"
+        },
+        {
+          "from": "F 待裁與待驗",
+          "id": "F",
+          "level": "h2",
+          "to": "F 修繕"
+        },
+        {
+          "from": "G 文件歸納（上傳帳單憑證／合約副本的照片或 PDF）",
+          "id": "G",
+          "level": "h2",
+          "to": "G 裝置（IoT）"
+        }
+      ]
+    }
+  },
+  "raw_outputs_path": null,
+  "skill_version": "0.1.0",
+  "step": "diff"
+}

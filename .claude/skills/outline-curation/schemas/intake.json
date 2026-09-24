@@ -26,6 +26,8 @@
       "additionalProperties": false,
       "properties": {
         "frozen_at": {"type": "string"},
+        "mode": {"type": "string", "enum": ["expand"]},
+        "shelf": {"type": "string", "pattern": "^[A-I]$"},
         "kb_rows": {
           "type": "array",
           "items": {

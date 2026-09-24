@@ -144,8 +144,11 @@ def test_schedule_shadow_noop_without_runner_and_swallows_errors():
 
 
 @pytest.mark.unit
-def test_schedule_shadow_injects_outline_for_prospect_only():
-    """DSP-022 附帶：影子 state 要帶 `app.state.agent_outline`（prospect），tenant 不帶。"""
+def test_schedule_shadow_passes_snapshot_through_without_any_outline_key():
+    """9.8 DSP-059 D′ S2：影子 state **不再帶**任何大綱物件——`Runtime._select_outline`
+    每回合直接從已註冊的正本現組候選節，⛔ 沒有「進場前塞」這個步驟了。這裡改驗
+    `schedule_shadow` 原樣把快照傳給 `shadow.schedule`，且 `"agent"` 底下沒有
+    `"outline"` 鍵（無論 prospect 或 tenant）。"""
     seen = []
 
     class Runner:
@@ -155,31 +158,31 @@ def test_schedule_shadow_injects_outline_for_prospect_only():
         def schedule(self, identity, message, state, old_answer):
             seen.append(state)
 
-    outline = SimpleNamespace(sha256="abc", sections=[], token_count=1)
-    app = SimpleNamespace(state=SimpleNamespace(shadow_runner=Runner(), agent_outline=outline))
+    app = SimpleNamespace(state=SimpleNamespace(shadow_runner=Runner()))
     ae.schedule_shadow(app, _req(), {"collected_data": {"x": 1}}, "old")
-    assert seen[-1]["agent"]["outline"] is outline
+    assert "outline" not in seen[-1].get("agent", {})
     assert seen[-1]["collected_data"] == {"x": 1}                      # 其餘快照原樣帶過去
 
     tenant_req = _req(target_user="tenant")
     ae.schedule_shadow(app, tenant_req, None, "old")
-    assert "outline" not in seen[-1].get("agent", {})                # 正對照：prospect 有、tenant 沒有
+    assert "outline" not in seen[-1].get("agent", {})                # 正對照：兩者皆無
 
 
 @pytest.mark.unit
-def test_outline_injected_for_run_but_not_persisted(monkeypatch):
+def test_no_outline_key_ever_reaches_state_or_persisted_row(monkeypatch):
+    """9.8 DSP-059 D′ S2：`handle_agent_entry` 不再有「進場前塞、存檔前 pop」的
+    outline 步驟——`state["agent"]` 在整個過程中都不該出現 `"outline"` 鍵。"""
     monkeypatch.setenv("AGENT_AUDIENCES", "prospect")
     seen = {}
 
     class RT(FakeRuntime):
         async def run_turn(self, identity, message, state):
-            seen["outline"] = state["agent"].get("outline")
+            seen["outline_key_present"] = "outline" in state.get("agent", {})
             return await super().run_turn(identity, message, state)
     store, rt = FakeStore(), RT()
     app = _app(rt)
-    app.state.agent_outline = SimpleNamespace(sha256="abc", sections=[], token_count=1)
     asyncio.run(ae.handle_agent_entry(_req(), SimpleNamespace(app=app), None, store=store))
-    assert seen["outline"] is app.state.agent_outline          # 回合看得到
+    assert seen["outline_key_present"] is False                # 回合期間也沒有
     assert "outline" not in store.saved[-1]["agent"]           # 存檔沒有（正對照：agent 鍵存在）
     assert "agent" in store.saved[-1]
 

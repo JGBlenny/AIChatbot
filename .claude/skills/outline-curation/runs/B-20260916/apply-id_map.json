@@ -1,0 +1,452 @@
+{
+  "canon_sha256": "d8a87f7d4c5c63b6b187b6c08eb63bf21f2717ddd1fa10404b46a5812a48f4dd",
+  "fines": [
+    {
+      "from": [
+        "tmp:canon:jgb/B/owner-report-collection-remit"
+      ],
+      "new": "jgb/B/owner-report-collection-remit",
+      "ops": [
+        "keep",
+        "merge"
+      ],
+      "title": "大房東報表與代收代付怎麼交代（月報內容、提供方式、排程寄送）",
+      "units": 10
+    },
+    {
+      "from": [
+        "tmp:canon:jgb/B/role-permission-granularity"
+      ],
+      "new": "jgb/B/role-permission-granularity",
+      "ops": [
+        "keep",
+        "merge",
+        "split"
+      ],
+      "title": "成員權限能不能細分、怎麼設（角色範本、自訂角色、模組層級、物件授權）",
+      "units": 13
+    },
+    {
+      "from": [
+        "tmp:canon:jgb/B/team-management-overview"
+      ],
+      "new": "jgb/B/team-management-overview",
+      "ops": [
+        "keep"
+      ],
+      "title": "團隊管理模組做什麼",
+      "units": 4
+    },
+    {
+      "from": [
+        "tmp:canon:jgb/B/what-is-owner-landlord"
+      ],
+      "new": "jgb/B/what-is-owner-landlord",
+      "ops": [
+        "keep",
+        "merge"
+      ],
+      "title": "大房東是什麼",
+      "units": 8
+    },
+    {
+      "from": [
+        "tmp:kb:3084",
+        "tmp:kb:3085",
+        "tmp:kb:3086",
+        "tmp:kb:3087",
+        "tmp:kb:3091",
+        "tmp:kb:3303",
+        "tmp:kb:3304",
+        "tmp:kb:3305",
+        "tmp:kb:3306",
+        "tmp:kb:3308",
+        "tmp:kb:3309",
+        "tmp:draft:1"
+      ],
+      "new": "jgb/B/leasing-vs-management-business-model",
+      "ops": [
+        "new",
+        "split"
+      ],
+      "title": "包租業與代管業是什麼、差在哪（定義、簽約對象、誰管理、房東該選哪個）",
+      "units": 26
+    },
+    {
+      "from": [
+        "tmp:kb:3095",
+        "tmp:kb:3096",
+        "tmp:kb:3254",
+        "tmp:kb:3255",
+        "tmp:kb:3307",
+        "tmp:kb:3310"
+      ],
+      "new": "jgb/B/leasing-vs-management-liability-and-risk",
+      "ops": [
+        "new"
+      ],
+      "title": "包租與代管的法律責任與風險由誰承擔",
+      "units": 17
+    },
+    {
+      "from": [
+        "tmp:kb:3088",
+        "tmp:kb:3092",
+        "tmp:kb:3312",
+        "tmp:draft:1"
+      ],
+      "new": "jgb/B/business-type-fee-model",
+      "ops": [
+        "new",
+        "split"
+      ],
+      "title": "包租與代管怎麼收費、業者怎麼賺錢（租差、抽成、管理費範疇、政府補貼）",
+      "units": 7
+    },
+    {
+      "from": [
+        "tmp:kb:4224"
+      ],
+      "new": "jgb/B/business-type-setting-and-system-differences",
+      "ops": [
+        "new"
+      ],
+      "title": "團隊業態（包租／代管）在系統裡怎麼設、差在哪（合約模板、發票主體、差額發票）",
+      "units": 4
+    },
+    {
+      "from": [
+        "tmp:draft:1"
+      ],
+      "new": "jgb/B/leasing-management-license-and-staff-qualification",
+      "ops": [
+        "split"
+      ],
+      "title": "如何成為政府許可的包租代管業者與合格包管人員",
+      "units": 0
+    },
+    {
+      "from": [
+        "tmp:kb:3439",
+        "tmp:kb:3544",
+        "tmp:kb:4251",
+        "tmp:kb:3981"
+      ],
+      "new": "jgb/B/add-team-member",
+      "ops": [
+        "new"
+      ],
+      "title": "怎麼新增團隊成員（需先註冊、加入後要指派角色、加了看不到怎麼辦）",
+      "units": 9
+    },
+    {
+      "from": [
+        "tmp:kb:3974"
+      ],
+      "new": "jgb/B/who-has-permission-lookup",
+      "ops": [
+        "new"
+      ],
+      "title": "怎麼查團隊裡誰有某個操作權限",
+      "units": 3
+    },
+    {
+      "from": [
+        "tmp:kb:3546"
+      ],
+      "new": "jgb/B/remove-team-member-data-retention",
+      "ops": [
+        "new"
+      ],
+      "title": "移除團隊成員後他建的資料會怎樣",
+      "units": 3
+    },
+    {
+      "from": [
+        "tmp:kb:3547"
+      ],
+      "new": "jgb/B/account-in-multiple-teams",
+      "ops": [
+        "new"
+      ],
+      "title": "一個帳號可以加入多個團隊嗎、權限怎麼算",
+      "units": 2
+    },
+    {
+      "from": [
+        "tmp:kb:3359"
+      ],
+      "new": "jgb/B/change-team-principal-or-phone",
+      "ops": [
+        "split"
+      ],
+      "title": "怎麼變更團隊主要負責人或綁定手機（異動單）",
+      "units": 4
+    },
+    {
+      "from": [
+        "tmp:kb:3482"
+      ],
+      "new": "jgb/B/feature-not-visible-troubleshooting",
+      "ops": [
+        "new"
+      ],
+      "title": "找不到某功能或無法操作的可能原因",
+      "units": 2
+    },
+    {
+      "from": [
+        "tmp:kb:3464"
+      ],
+      "new": "jgb/B/add-owner-landlord-and-access",
+      "ops": [
+        "new"
+      ],
+      "title": "怎麼新增大房東並設定他能看的物件範圍",
+      "units": 4
+    },
+    {
+      "from": [
+        "tmp:kb:3467"
+      ],
+      "new": "jgb/B/owner-landlord-contact-book-import-export",
+      "ops": [
+        "new"
+      ],
+      "title": "大房東聯絡簿怎麼批次匯入匯出",
+      "units": 3
+    }
+  ],
+  "id_map": [
+    {
+      "new": "jgb/B/owner-report-collection-remit",
+      "old": "tmp:canon:jgb/B/owner-report-collection-remit",
+      "op": "keep"
+    },
+    {
+      "new": "jgb/B/owner-report-collection-remit",
+      "old": "tmp:kb:3465",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/B/owner-report-collection-remit",
+      "old": "tmp:kb:3543",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/B/role-permission-granularity",
+      "old": "tmp:canon:jgb/B/role-permission-granularity",
+      "op": "keep"
+    },
+    {
+      "new": "jgb/B/role-permission-granularity",
+      "old": "tmp:kb:3359",
+      "op": "split"
+    },
+    {
+      "new": "jgb/B/role-permission-granularity",
+      "old": "tmp:kb:3545",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/B/role-permission-granularity",
+      "old": "tmp:kb:3982",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/B/role-permission-granularity",
+      "old": "tmp:kb:4250",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/B/team-management-overview",
+      "old": "tmp:canon:jgb/B/team-management-overview",
+      "op": "keep"
+    },
+    {
+      "new": "jgb/B/what-is-owner-landlord",
+      "old": "tmp:canon:jgb/B/what-is-owner-landlord",
+      "op": "keep"
+    },
+    {
+      "new": "jgb/B/what-is-owner-landlord",
+      "old": "tmp:kb:3463",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/B/leasing-vs-management-business-model",
+      "old": "tmp:kb:3084",
+      "op": "new"
+    },
+    {
+      "new": "jgb/B/leasing-vs-management-business-model",
+      "old": "tmp:kb:3085",
+      "op": "new"
+    },
+    {
+      "new": "jgb/B/leasing-vs-management-business-model",
+      "old": "tmp:kb:3086",
+      "op": "new"
+    },
+    {
+      "new": "jgb/B/leasing-vs-management-business-model",
+      "old": "tmp:kb:3087",
+      "op": "new"
+    },
+    {
+      "new": "jgb/B/leasing-vs-management-business-model",
+      "old": "tmp:kb:3091",
+      "op": "new"
+    },
+    {
+      "new": "jgb/B/leasing-vs-management-business-model",
+      "old": "tmp:kb:3303",
+      "op": "new"
+    },
+    {
+      "new": "jgb/B/leasing-vs-management-business-model",
+      "old": "tmp:kb:3304",
+      "op": "new"
+    },
+    {
+      "new": "jgb/B/leasing-vs-management-business-model",
+      "old": "tmp:kb:3305",
+      "op": "new"
+    },
+    {
+      "new": "jgb/B/leasing-vs-management-business-model",
+      "old": "tmp:kb:3306",
+      "op": "new"
+    },
+    {
+      "new": "jgb/B/leasing-vs-management-business-model",
+      "old": "tmp:kb:3308",
+      "op": "new"
+    },
+    {
+      "new": "jgb/B/leasing-vs-management-business-model",
+      "old": "tmp:kb:3309",
+      "op": "new"
+    },
+    {
+      "new": "jgb/B/leasing-vs-management-business-model",
+      "old": "tmp:draft:1",
+      "op": "split"
+    },
+    {
+      "new": "jgb/B/leasing-vs-management-liability-and-risk",
+      "old": "tmp:kb:3095",
+      "op": "new"
+    },
+    {
+      "new": "jgb/B/leasing-vs-management-liability-and-risk",
+      "old": "tmp:kb:3096",
+      "op": "new"
+    },
+    {
+      "new": "jgb/B/leasing-vs-management-liability-and-risk",
+      "old": "tmp:kb:3254",
+      "op": "new"
+    },
+    {
+      "new": "jgb/B/leasing-vs-management-liability-and-risk",
+      "old": "tmp:kb:3255",
+      "op": "new"
+    },
+    {
+      "new": "jgb/B/leasing-vs-management-liability-and-risk",
+      "old": "tmp:kb:3307",
+      "op": "new"
+    },
+    {
+      "new": "jgb/B/leasing-vs-management-liability-and-risk",
+      "old": "tmp:kb:3310",
+      "op": "new"
+    },
+    {
+      "new": "jgb/B/business-type-fee-model",
+      "old": "tmp:kb:3088",
+      "op": "new"
+    },
+    {
+      "new": "jgb/B/business-type-fee-model",
+      "old": "tmp:kb:3092",
+      "op": "new"
+    },
+    {
+      "new": "jgb/B/business-type-fee-model",
+      "old": "tmp:kb:3312",
+      "op": "new"
+    },
+    {
+      "new": "jgb/B/business-type-fee-model",
+      "old": "tmp:draft:1",
+      "op": "split"
+    },
+    {
+      "new": "jgb/B/business-type-setting-and-system-differences",
+      "old": "tmp:kb:4224",
+      "op": "new"
+    },
+    {
+      "new": "jgb/B/leasing-management-license-and-staff-qualification",
+      "old": "tmp:draft:1",
+      "op": "split"
+    },
+    {
+      "new": "jgb/B/add-team-member",
+      "old": "tmp:kb:3439",
+      "op": "new"
+    },
+    {
+      "new": "jgb/B/add-team-member",
+      "old": "tmp:kb:3544",
+      "op": "new"
+    },
+    {
+      "new": "jgb/B/add-team-member",
+      "old": "tmp:kb:4251",
+      "op": "new"
+    },
+    {
+      "new": "jgb/B/add-team-member",
+      "old": "tmp:kb:3981",
+      "op": "new"
+    },
+    {
+      "new": "jgb/B/who-has-permission-lookup",
+      "old": "tmp:kb:3974",
+      "op": "new"
+    },
+    {
+      "new": "jgb/B/remove-team-member-data-retention",
+      "old": "tmp:kb:3546",
+      "op": "new"
+    },
+    {
+      "new": "jgb/B/account-in-multiple-teams",
+      "old": "tmp:kb:3547",
+      "op": "new"
+    },
+    {
+      "new": "jgb/B/change-team-principal-or-phone",
+      "old": "tmp:kb:3359",
+      "op": "split"
+    },
+    {
+      "new": "jgb/B/feature-not-visible-troubleshooting",
+      "old": "tmp:kb:3482",
+      "op": "new"
+    },
+    {
+      "new": "jgb/B/add-owner-landlord-and-access",
+      "old": "tmp:kb:3464",
+      "op": "new"
+    },
+    {
+      "new": "jgb/B/owner-landlord-contact-book-import-export",
+      "old": "tmp:kb:3467",
+      "op": "new"
+    }
+  ]
+}

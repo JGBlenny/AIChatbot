@@ -2,7 +2,7 @@
 
 > 本文檔提供任務導向的快速查找。技術演進與深度內容請查看 [README.md](./README.md)。
 
-**最後對碼**: 2026-09-12
+**最後對碼**: 2026-09-23
 
 ---
 
@@ -11,6 +11,7 @@
 | 想知道 | 讀哪份 |
 |---|---|
 | **系統現在怎麼跑**（核心／門面／15 個 face／知識兩條路／六域隔離不對稱） | [`architecture/SYSTEM_ARCHITECTURE.md`](./architecture/SYSTEM_ARCHITECTURE.md) — v4.0，2026-09-12 |
+| **這句話算本系統還是算呼叫端**（寫架構文前先看） | [`architecture/BOUNDARY.md`](./architecture/BOUNDARY.md) — 三個桶＋歸屬表，不變量 40 強制 |
 | **一回合的完整流程**、**為什麼被轉人**、每個分岔與終止點 | [`architecture/AGENTIC_MCP_ARCHITECTURE.md`](./architecture/AGENTIC_MCP_ARCHITECTURE.md) — §2b 是一回合四段的逐步流程，§4b 是轉人的五個來源 |
 | **`/mcp` 串接契約**（header、工具、錯誤碼、額度） | [`api/mcp-facade.md`](./api/mcp-facade.md) |
 | **怎麼加一個查詢能力／新 face／新域** | [`guides/development/how-to-add-a-query-capability.md`](./guides/development/how-to-add-a-query-capability.md) |
@@ -151,3 +152,13 @@ docs/
 - [Agentic MCP 對話線架構（demo 版）](architecture/AGENTIC_MCP_ARCHITECTURE.md) — `/mcp` `agent.turn`：門面（13 步）→Runtime 四段管線（段一**六條**程式終止路徑）→工具註冊→替身；寫入鏈、別戶邊界、照片線、組態、已知限制（2026-09-08 上線）
 - [LINE bot 串接資訊單](../.kiro/specs/knowledge-outline-and-intent-architecture/inputs/line-bot-integration-sheet-20260908.md) — 端點 `/rag-api/mcp`、header、機器值、select、照片、限制、自測
 - [HANDOFF 2026-09-09（agentic-mcp 大改版收案）](../.kiro/specs/knowledge-outline-and-intent-architecture/HANDOFF-20260909.md)
+
+## 知識大綱三層重建（DSP-067，2026-09-20；程式面 Plan 9.10，2026-09-21）
+- [HANDOFF 2026-09-23（本線交接正本）](../.kiro/specs/knowledge-outline-and-intent-architecture/HANDOFF-20260923.md) — 任務目標、三層產出、Plan 9.10 六片狀態、驗收成果、四件待裁、紀律與陷阱
+- [Plan 9.10 正本改三層](../.kiro/specs/knowledge-outline-and-intent-architecture/inputs/plan-9.10-three-level-canon-20260921.md) — S1–S6：解析器／目錄／生成腳本／量測／清除舊格式／提示詞兩跳
+- [粗目 id 凍結表（57 列）](../.kiro/specs/knowledge-outline-and-intent-architecture/inputs/coarse-ids-20260921.md) — 生成腳本的唯一來源，⛔ 生成後不可改
+- [定義文件](../.kiro/specs/knowledge-outline-and-intent-architecture/inputs/definitions-outline-baseline-20260919.md) — 目標、分母＝頁面樹、三層（架→粗目→細目→講法）、身分為屬性、來源與審核門、產物定位、順序
+- [骨架：九架 → 57 粗目](../.kiro/specs/knowledge-outline-and-intent-architecture/inputs/outline-skeleton-20260920.md) — 每頁恰歸一個粗目；10 頁排除、11 處換架
+- [九架起草總表與 81 條待裁](../.kiro/specs/knowledge-outline-and-intent-architecture/inputs/outline-summary-20260920.md) — 57 粗目／515 細目／1,327 句；文件與程式衝突、程式缺陷、查無來源，⛔ 未選邊
+- 九架人讀版草稿：[A](../.kiro/specs/knowledge-outline-and-intent-architecture/inputs/outline-A-draft-20260920.md)、[B](../.kiro/specs/knowledge-outline-and-intent-architecture/inputs/outline-B-draft-20260920.md)、[C](../.kiro/specs/knowledge-outline-and-intent-architecture/inputs/outline-C-draft-20260920.md)、[D](../.kiro/specs/knowledge-outline-and-intent-architecture/inputs/outline-D-draft-20260920.md)、[E](../.kiro/specs/knowledge-outline-and-intent-architecture/inputs/outline-E-draft-20260920.md)、[F](../.kiro/specs/knowledge-outline-and-intent-architecture/inputs/outline-F-draft-20260920.md)、[G](../.kiro/specs/knowledge-outline-and-intent-architecture/inputs/outline-G-draft-20260920.md)、[H](../.kiro/specs/knowledge-outline-and-intent-architecture/inputs/outline-H-draft-20260920.md)、[I](../.kiro/specs/knowledge-outline-and-intent-architecture/inputs/outline-I-draft-20260920.md) — 每句〔來源〕、否定查證、⚠️ 待裁
+- [JGB 產品事實帳本](knowledge/jgb-product-facts.md) — 2026-09-20 補：修繕分享頁公開、報修開關不生效、`EMERGENCY_STATUS` 反轉、`bills.sheet` 無入口、扣款失敗清方案、金流開通資格、收據範本閘、任務提前天數衝突、幫助中心 60 秒彈窗

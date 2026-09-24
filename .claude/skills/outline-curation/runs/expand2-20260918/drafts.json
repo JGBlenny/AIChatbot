@@ -1,0 +1,256 @@
+[
+  {
+    "kind": "append",
+    "shelf": "E",
+    "target_fine_id": "jgb/E/overdue-reminder-late-fee",
+    "proposed_id": null,
+    "title": "逾期滯納金與自動催繳通知（不支援分級補句）",
+    "target_user": ["property_manager", "prospect"],
+    "business_types": ["system_provider"],
+    "sentences": [
+      "系統無「逾期分級」機制，催繳提醒與滯納金規則不依嚴重度分等級。"
+    ],
+    "not_supported_notes": [
+      "逾期分級（依逾期嚴重度分級催繳強度或轉銷／法務）：jgb2 `app/Bill.php`、`BillAmercementNotify.php` 只見固定天數提醒（到期前五三一日＋逾期後每日）與單一滯納金費率／緩衝天數設定，無分級欄位或分級邏輯。"
+    ],
+    "evidence_greps": [
+      "git -C jgb2/dev2 grep -c late_fee_percent master -- app/Bill.php => 有命中（欄位存在）",
+      "git -C jgb2/dev2 grep -ic 分級 master -- app/Bill.php app/Console/Commands/BillAmercementNotify.php => 0（正對照：同兩檔 late_fee_percent/BillAmercementNotify 類名命中 >0）"
+    ]
+  },
+  {
+    "kind": "append",
+    "shelf": "D",
+    "target_fine_id": "jgb/D/delegation-vs-lease-contract",
+    "proposed_id": null,
+    "title": "委託約狀態自動更新與到期錯配補句",
+    "target_user": ["property_manager", "prospect"],
+    "business_types": ["system_provider"],
+    "sentences": [
+      "委託約狀態依排程自動更新，到期會自動標記為歷史狀態。",
+      "委託約提前終止在三十天緩衝期屆滿後由排程自動生效。",
+      "系統沒有委託約與租賃約到期日不一致的錯配預警。"
+    ],
+    "not_supported_notes": [
+      "雙合約到期錯配預警：jgb2 全庫無「錯配」「mismatch」相關的跨合約到期比對邏輯；`docs/knowledge/jgb-product-facts.md#single-vs-dual-contract` 確認委託約(EntrustedContract)與租賃約(Contract)為獨立兩份、無關聯預警欄位。"
+    ],
+    "evidence_greps": [
+      "git -C jgb2/dev2 show master:app/Console/Commands/EntrustedContractStatusUpdater.php | head -30 => history/early-termination 兩個排程動作皆存在",
+      "git -C jgb2/dev2 grep -n 錯配\\|mismatch master -- app/ resources/ => 0 筆委託約/租賃約跨約比對（正對照：同指令對 bill 對帳類 mismatch 指令有命中，工具正常）"
+    ]
+  },
+  {
+    "kind": "new",
+    "shelf": "C",
+    "target_fine_id": null,
+    "proposed_id": "jgb/C/community-roi-overview",
+    "title": "社區投報率怎麼算、看哪裡",
+    "target_user": ["property_manager", "prospect"],
+    "business_types": ["system_provider"],
+    "sentences": [
+      "社區投報率以整個社區為單位計算，不拆算到單一房間。",
+      "投報率＝當月社區獲利÷累計投入成本，逐月更新。",
+      "當月獲利為租客帳單收入扣除公共支出，裝潢等攤提費用另計。",
+      "投入成本包含業者手動登錄金額與公共區域已開立的支出帳單。",
+      "尚無投入成本的月份不強算比率，畫面顯示空白。",
+      "系統沒有拆到單一房間的利差或裝修攤提試算功能。"
+    ],
+    "not_supported_notes": [
+      "單間利差／裝修攤提試算：CommunityRoiService 明確以社區為唯一計算單位，無房間層級輸出。"
+    ],
+    "sources": [
+      "jgb2:app/Services/Communities/CommunityRoiService.php",
+      "jgb2:app/Http/Controllers/Api/CommunityRoiController.php",
+      "jgb2:routes/web.php:Route::prefix('roi')"
+    ],
+    "evidence_greps": [
+      "git -C jgb2/dev2 grep -ln CommunityRoiService master -- app/Http/Controllers => app/Http/Controllers/Api/CommunityRoiController.php（真有 API 入口，非死碼）"
+    ]
+  },
+  {
+    "kind": "new",
+    "shelf": "C",
+    "target_fine_id": null,
+    "proposed_id": "jgb/C/community-list-vacancy-sort",
+    "title": "社區列表能不能依空置數量排序",
+    "target_user": ["property_manager"],
+    "business_types": ["system_provider"],
+    "sentences": [
+      "社區列表可依空置數量由多到少或由少到多排序。",
+      "此排序選項在社區列表頁面的排序選單中提供。",
+      "系統沒有招租漏斗或平均空置天數的統計功能。"
+    ],
+    "not_supported_notes": [
+      "「出租狀態看板」（idle_chart 等圖表）查無 UI 入口：`resources/structures/estate/dashboard/rent_status.php` 全庫 0 處被 controller/route 引用，屬未串接的結構示意檔，⛔ 不寫入正本。",
+      "招租漏斗、平均空置天數：全庫查無對應欄位或計算邏輯。"
+    ],
+    "sources": [
+      "jgb2:app/Http/Controllers/CommunityController.php:sortOptionsMap"
+    ],
+    "evidence_greps": [
+      "git -C jgb2/dev2 grep -n withVacancySort master -- app/Http/Controllers/CommunityController.php => sortOptionsMap(true) 用於 webList()；routes/web.php 有 CommunityController::webList 真實路由",
+      "git -C jgb2/dev2 grep -rn 'structures/estate/dashboard\\|dashboard/rent_status' master -- app/ resources/ routes/ => 0 筆引用（正對照：同語法 resource_path('/structures/common/sortOptions.php') 在 BillController 等處有多筆真實引用，工具正常、非誤判）"
+    ]
+  },
+  {
+    "kind": "new",
+    "shelf": "I",
+    "target_fine_id": null,
+    "proposed_id": "jgb/I/task-manager-cycle-notification",
+    "title": "控制台的任務管理器能設定週期通知",
+    "target_user": ["property_manager"],
+    "business_types": ["system_provider"],
+    "sentences": [
+      "控制台的任務管理器可建立週期性通知任務。",
+      "週期單位可選年或月，並可設定僅一次、持續不停、到期日結束或重複次數結束。",
+      "任務類型目前只有「通知」，通知行為為寄送信件或站內通知。",
+      "系統沒有派工或業務指派用途的任務指派功能。"
+    ],
+    "not_supported_notes": [
+      "業務派單／佣金：Task 的 type 選項只有 notification，`repair` 類型在程式中被註解掉未啟用；`Commission` 全庫 0 命中。"
+    ],
+    "sources": [
+      "jgb2:app/Http/Controllers/ControlPanel/TaskManagementController.php",
+      "jgb2:app/Services/TaskService.php:getTypeOptions",
+      "jgb2:app/Services/TaskService.php:getCycleOptions",
+      "jgb2:app/Task.php",
+      "jgb2:routes/web.php:controlPanel/taskManagement"
+    ],
+    "evidence_greps": [
+      "git -C jgb2/dev2 grep -n taskManagement master -- routes/web.php => 位於 need_login 群組內（一般登入使用者可用，非後台限定）",
+      "git -C jgb2/dev2 grep -ic commission master -- app/ => 0（正對照：同批次查 EntrustedContract 命中 22 個檔）"
+    ]
+  },
+  {
+    "kind": "new",
+    "shelf": "I",
+    "target_fine_id": null,
+    "proposed_id": "jgb/I/notification-channels-and-events",
+    "title": "通知走哪些管道、能通知哪些事",
+    "target_user": ["property_manager", "prospect"],
+    "business_types": ["system_provider"],
+    "sentences": [
+      "通知管道有簡訊、系統內通知中心與Email三種。",
+      "租客帳號綁定LINE後，多數通知會同步發送LINE訊息。",
+      "會發通知的事件類別含物件、合約、帳務、修繕、裝置、大房東與訊息。"
+    ],
+    "not_supported_notes": [],
+    "sources": [
+      "jgb2:app/Notification.php:NOTIFICATION_TITLE",
+      "jgb2:app/Jobs/SmsJob.php",
+      "help:repair_zh-Hant.html#安排修繕（綁定Line會收到通知）"
+    ],
+    "evidence_greps": [
+      "git -C jgb2/dev2 show master:app/Notification.php | sed -n '15,54p' => NOTIFICATION_TITLE 七類事件常數與「通知渠道：簡訊、通知中心、email」註解"
+    ]
+  },
+  {
+    "kind": "new",
+    "shelf": "I",
+    "target_fine_id": null,
+    "proposed_id": "jgb/I/mobile-web-access",
+    "title": "手機能不能用、要不要另外裝App",
+    "target_user": ["prospect", "property_manager"],
+    "business_types": ["system_provider"],
+    "sentences": [
+      "JGB沒有另外的App，是純網頁系統，手機直接開瀏覽器登入即可。",
+      "手機版與電腦版是同一套系統、同一組功能，畫面依螢幕寬度自動調整排列。",
+      "手機版網址與電腦版相同，不需要另外下載安裝。"
+    ],
+    "not_supported_notes": [],
+    "sources": [
+      "help:Landlordonboarding00phone_zh-Hant.html（標題：大房東教學：瀏覽物件、合約、帳務和修繕狀態（手機篇）；原文「JGB 沒有另外的 APP，它是純網頁系統，手機請直接開啟瀏覽器登入，網址與電腦版相同」）",
+      "jgb2:resources/views/layouts/app.blade.php（viewport meta，響應式版面）"
+    ],
+    "evidence_greps": [
+      "grep -o 'JGB 沒有另外的 APP.\\{0,40\\}' 幫助中心/Landlordonboarding00phone_zh-Hant.html => 命中原句",
+      "git -C jgb2/dev2 grep -n viewport master -- resources/views/layouts/app.blade.php => 命中"
+    ]
+  },
+  {
+    "kind": "new",
+    "shelf": "I",
+    "target_fine_id": null,
+    "proposed_id": "jgb/I/ai-assistant-capabilities",
+    "title": "AI客服能答什麼、能查什麼、不做什麼",
+    "target_user": ["prospect", "property_manager"],
+    "business_types": ["system_provider"],
+    "sentences": [
+      "AI客服只依可引用的資料回答，查不到就明說查不到或轉真人。",
+      "業者身分可即時查詢帳單、合約、金流帳戶、電錶、物件與修繕六類資料。",
+      "售前身分不查詢任何個資，只能依系統知識與功能說明回答。",
+      "客戶案例、報價折扣、合約條款SLA、法遵與資安認證五類問題一律轉真人。",
+      "AI客服不主動點名或評論競品。"
+    ],
+    "not_supported_notes": [],
+    "sources": [
+      "rag-orchestrator:services/agent/agent_rules.py（四條鐵則、五類轉人、判準）",
+      "rag-orchestrator:services/agent/mcp_facade.py（jgb2.query 六域 bills/contracts/accounts/meters/estates/repairs；prospect 缺鍵於 jgb2.query 系列＝永不可見；kb.get/kb.search/help.read 三受眾皆 M0）",
+      "docs:api/mcp-facade.md"
+    ],
+    "evidence_greps": [
+      "grep -n '_jgb2_spec(' -A2 rag-orchestrator/services/agent/mcp_facade.py => domains = (bills, contracts, accounts, meters, estates, repairs)",
+      "grep -n 'prospect 缺鍵＝永不可見' rag-orchestrator/services/agent/mcp_facade.py => 命中（設計註解逐字）"
+    ]
+  },
+  {
+    "kind": "new",
+    "shelf": "I",
+    "target_fine_id": null,
+    "proposed_id": "jgb/I/unsupported-features",
+    "title": "目前不支援的功能（售前誠實答）",
+    "target_user": ["prospect"],
+    "business_types": ["system_provider"],
+    "sentences": [
+      "JGB目前沒有依逾期嚴重度分級的催繳等級功能。",
+      "JGB目前沒有分戶帳餘額的獨立查詢功能。",
+      "JGB目前沒有委託約與租賃約到期日不一致的錯配預警。",
+      "JGB目前沒有拆到單一房間的利差或裝修攤提試算，只有社區層級投報率。",
+      "JGB目前沒有提前解約損益的一鍵試算，只有違約金計算。",
+      "JGB目前沒有招租漏斗或平均空置天數統計，只有社區依空置數量排序。",
+      "JGB目前沒有業務派單或佣金計算功能。",
+      "JGB目前沒有月結關帳、分錄與稽核留痕的ERP財會功能。",
+      "JGB目前沒有客服案件中心或SLA管理功能。",
+      "JGB目前沒有多據點分區的權限管理功能。"
+    ],
+    "not_supported_notes": [],
+    "sources": [
+      ".kiro/specs/knowledge-outline-and-intent-architecture/inputs/segments-leasing-management-coverage-20260917.md#4"
+    ],
+    "evidence_greps": [
+      "git -C jgb2/dev2 grep -ic 分級 master -- app/Bill.php app/Console/Commands/BillAmercementNotify.php => 0",
+      "git -C jgb2/dev2 grep -n BigLandlordReportViewerScope master -- app/Http/Controllers/BiglandlordController.php => 有命中但只做可視範圍過濾、無餘額查詢；分戶帳/sub_ledger 關鍵字 0 命中",
+      "git -C jgb2/dev2 grep -rn 錯配\\|mismatch master -- app/EntrustedContract.php app/Contract.php => 0",
+      "git -C jgb2/dev2 grep -ic commission master -- app/ => 0（正對照 EntrustedContract 22 檔命中）",
+      "git -C jgb2/dev2 grep -c 'journal_entry\\|closing_period' master -- app/ database/migrations/ => 0",
+      "git -C jgb2/dev2 grep -ic '\\bsla\\b' master -- app/ => 0；git -C jgb2/dev2 grep -c SupportTicket master -- app/ => 0",
+      "git -C jgb2/dev2 grep -ic '分區權限\\|多據點' master -- app/ resources/ config/ => 0；git -C jgb2/dev2 show master:config/character.php 存在但無 zone/branch 欄位"
+    ]
+  },
+  {
+    "kind": "append",
+    "shelf": "I",
+    "target_fine_id": "jgb/I/team-company-fit",
+    "proposed_id": null,
+    "title": "社宅支援不主推、商務中心不在服務範圍（DSP-060a）",
+    "target_user": ["prospect"],
+    "business_types": ["system_provider"],
+    "sentences": [
+      "社會住宅業者可以使用，系統有社宅房東角色與對應的合約、修繕責任流程。",
+      "商務中心、共享辦公不在目前的服務範圍內。"
+    ],
+    "not_supported_notes": [
+      "第二句是售前範圍聲明（DSP-060），非產品功能陳述，⛔ 不可誤讀為「系統做不到」。"
+    ],
+    "sources": [
+      "jgb2:app/Role.php:RULE_KEY_LANDLORD_SOCIAL_HOUSING",
+      "canon:jgb/D/social-housing-lease",
+      "canon:jgb/F/social-housing-repair-responsibility",
+      "decisions:DSP-060",
+      "decisions:DSP-060a"
+    ],
+    "evidence_greps": [
+      "git -C jgb2/dev2 grep -n RULE_KEY_LANDLORD_SOCIAL_HOUSING master -- app/Role.php => const 定義與多處 allow_role_key 引用"
+    ]
+  }
+]

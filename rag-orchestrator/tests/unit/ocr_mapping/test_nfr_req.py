@@ -25,7 +25,7 @@ def _twenty_page_payload() -> dict:
     base = {k: v for k, v in base.items() if not k.startswith("_")}
     pages = base["pages"] + [copy.deepcopy(base["pages"][1 + i % 2]) | {"page_number": 4 + i} for i in range(17)]
     return base | {"pages": pages, "total_pages": len(pages), "vendor_id": 1, "role_id": "20151",
-                   "mode": "b2c", "target_user": "landlord", "session_id": "backtest_session_ocr_nfr"}
+                   "mode": "b2c", "target_user": "tenant", "session_id": "backtest_session_ocr_nfr"}
 
 
 @pytest.mark.req("documind-ocr-mapping:9.4")

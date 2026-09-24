@@ -1,0 +1,106 @@
+{
+  "attached_fines": [
+    "jgb/C/community-facilities-and-hours",
+    "jgb/C/community-facility-disputes",
+    "jgb/C/community-facility-usage-rules",
+    "jgb/C/community-garbage-disposal",
+    "jgb/C/community-public-page",
+    "jgb/C/community-services-and-events",
+    "jgb/C/community-setup-and-property-binding",
+    "jgb/C/occupancy-rate-calculation",
+    "jgb/C/property-add-blocked",
+    "jgb/C/property-advanced-search",
+    "jgb/C/property-batch-import",
+    "jgb/C/property-custom-tags",
+    "jgb/C/property-edit-vs-publish",
+    "jgb/C/property-listing-conditions",
+    "jgb/C/property-unlisting",
+    "jgb/C/property-vr-tour",
+    "jgb/C/public-display-address",
+    "jgb/C/storefront-entry-share"
+  ],
+  "attached_phrasings": 88,
+  "canon_sha256": "3458c2857b521793827b36d94307911a48a403c5e30fa8b82df04af09c5464e6",
+  "dup_existing": {
+    "jgb/C/community-batch-create": [
+      {
+        "already_on": "jgb/C/community-batch-create",
+        "text": "物件批次新增表格如何填寫?"
+      },
+      {
+        "already_on": "jgb/C/community-batch-create",
+        "text": "社區可以批次建立嗎"
+      }
+    ],
+    "jgb/C/property-add-blocked": [
+      {
+        "already_on": "jgb/C/community-batch-create",
+        "text": "如何新增物件?"
+      },
+      {
+        "already_on": "jgb/B/add-owner-landlord-and-access",
+        "text": "要怎麼新增物件"
+      },
+      {
+        "already_on": "jgb/B/add-owner-landlord-and-access",
+        "text": "物件怎麼新增"
+      },
+      {
+        "already_on": "jgb/B/what-is-owner-landlord",
+        "text": "物件分類是什麼"
+      },
+      {
+        "already_on": "jgb/C/property-status-meaning",
+        "text": "物件狀態有什麼差別"
+      }
+    ],
+    "jgb/C/property-advanced-search": [
+      {
+        "already_on": "jgb/A/account-registration",
+        "text": "屋主帳號怎麼用"
+      }
+    ],
+    "jgb/C/property-batch-import": [
+      {
+        "already_on": "jgb/I/data-migration",
+        "text": "批次匯入"
+      },
+      {
+        "already_on": "jgb/B/owner-landlord-contact-book-import-export",
+        "text": "批次匯入物件怎麼弄"
+      }
+    ],
+    "jgb/C/property-status-meaning": [
+      {
+        "already_on": "jgb/C/property-status-meaning",
+        "text": "未刊登是什麼意思"
+      }
+    ],
+    "jgb/C/rental-storefront-vr": [
+      {
+        "already_on": "jgb/C/rental-storefront-vr",
+        "text": "招租店舖是什麼"
+      }
+    ],
+    "jgb/C/storefront-entry-share": [
+      {
+        "already_on": "jgb/C/rental-storefront-vr",
+        "text": "什麼是「房東對外首頁」(招租店舖)?"
+      },
+      {
+        "already_on": "jgb/B/what-is-owner-landlord",
+        "text": "房東對外首頁是什麼"
+      }
+    ]
+  },
+  "dup_in_proposal": {},
+  "fines_without_phrasings": [],
+  "missing_fines": [],
+  "other_shelf_fines": {},
+  "phrasing_set_sha256": "0f8df038c351daa48d260bcbd52713234e83f19fa32975b23efb8c09e6c19ce6",
+  "skipped_fines": {
+    "jgb/C/community-batch-create": 7,
+    "jgb/C/property-status-meaning": 4,
+    "jgb/C/rental-storefront-vr": 2
+  }
+}

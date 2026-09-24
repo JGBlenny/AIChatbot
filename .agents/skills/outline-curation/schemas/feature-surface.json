@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "feature-surface（步 0a StepEnvelope）",
+  "type": "object",
+  "required": ["step", "skill_version", "inputs_sha", "deterministic", "raw_outputs_path", "cost", "payload"],
+  "properties": {
+    "step": {"const": "feature_surface"},
+    "deterministic": {"const": true},
+    "inputs_sha": {"type": "object", "required": ["jgb2_sha", "help_dir", "canon"]},
+    "payload": {
+      "type": "object",
+      "required": ["sources", "route_coverage", "counts", "units", "actions", "routes", "help_pages", "canon_titles"],
+      "properties": {
+        "sources": {"type": "object", "required": ["jgb2", "branch", "jgb2_sha", "help_dir", "canon"]},
+        "route_coverage": {"type": "object", "required": ["occurrences", "parsed", "unparsed"]},
+        "counts": {"type": "object", "required": ["actions", "routes", "controllers", "help_pages", "canon_fines", "units"]},
+        "units": {"type": "array", "items": {"type": "object", "required": ["unit_id", "kind", "label", "evidence", "side", "internal"], "properties": {"members": {"type": "array", "items": {"type": "string"}}}}},
+        "canon_titles": {"type": "array", "items": {"type": "object", "required": ["id", "title", "shelf"]}}
+      }
+    }
+  }
+}

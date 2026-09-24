@@ -27,8 +27,8 @@ def _skip_if_missing():
         pytest.skip(f"[env] 找不到 {_SKILL_MD}")
 
 
-def _write_journal_entry(journal_dir, name, step, n_agents, usd_each=0.01):
-    agents = [{"prompt_tokens": 10, "completion_tokens": 10, "usd": usd_each} for _ in range(n_agents)]
+def _write_journal_entry(journal_dir, name, step, n_agents):
+    agents = [{} for _ in range(n_agents)]
     with open(os.path.join(journal_dir, name), "w", encoding="utf-8") as f:
         json.dump({"step": step, "run_id": name, "agents": agents, "wall_s": 1.0}, f)
 
@@ -50,7 +50,7 @@ def test_110_agents_answerability_not_blocked(tmp_path):
     _skip_if_missing()
     journal_dir = tmp_path / "journal"
     journal_dir.mkdir()
-    _write_journal_entry(str(journal_dir), "a.json", "answerability", 110, usd_each=0.001)
+    _write_journal_entry(str(journal_dir), "a.json", "answerability", 110)
     out = tmp_path / "cost.json"
     r = _run(tmp_path, str(journal_dir), str(out))
     assert r.returncode == 0, r.stderr
@@ -63,7 +63,7 @@ def test_181_agents_answerability_is_blocked(tmp_path):
     _skip_if_missing()
     journal_dir = tmp_path / "journal"
     journal_dir.mkdir()
-    _write_journal_entry(str(journal_dir), "a.json", "answerability", 181, usd_each=0.001)
+    _write_journal_entry(str(journal_dir), "a.json", "answerability", 181)
     out = tmp_path / "cost.json"
     r = _run(tmp_path, str(journal_dir), str(out))
     assert r.returncode == 2
@@ -79,7 +79,7 @@ def test_total_241_agents_blocked(tmp_path):
     journal_dir = tmp_path / "journal"
     journal_dir.mkdir()
     # 用未在 budgets 命名的步驟名，跳過單步檢查，只測整案 total 檢查
-    _write_journal_entry(str(journal_dir), "misc.json", "reweigh", 241, usd_each=0.001)
+    _write_journal_entry(str(journal_dir), "misc.json", "reweigh", 241)
     out = tmp_path / "cost.json"
     r = _run(tmp_path, str(journal_dir), str(out))
     assert r.returncode == 2
@@ -147,8 +147,8 @@ def test_load_journal_filters_by_run_id_and_prefix_and_ignores_subdirs(tmp_path)
     spec = importlib.util.spec_from_file_location("cost_ledger", _SCRIPT); cl = importlib.util.module_from_spec(spec); spec.loader.exec_module(cl)
     j = tmp_path / "journal"; (j / "m-a-archive").mkdir(parents=True)
     for name, rid in (("a.json", "answerability-x-1"), ("b.json", "answerability-y-2"), ("c.json", "structure-x-1")):
-        (j / name).write_text(json.dumps({"step": "answerability", "run_id": rid, "agents": [{"usd": 1.0}], "wall_s": 0}), encoding="utf-8")
-    (j / "m-a-archive" / "old.json").write_text(json.dumps({"step": "answerability", "run_id": "answerability-x-0", "agents": [{"usd": 99.0}], "wall_s": 0}), encoding="utf-8")
+        (j / name).write_text(json.dumps({"step": "answerability", "run_id": rid, "agents": [{}], "wall_s": 0}), encoding="utf-8")
+    (j / "m-a-archive" / "old.json").write_text(json.dumps({"step": "answerability", "run_id": "answerability-x-0", "agents": [{}], "wall_s": 0}), encoding="utf-8")
     assert len(cl.load_journal(str(j))) == 3                                    # 正對照：不過濾＝頂層全部、子目錄不讀
     assert [e["run_id"] for e in cl.load_journal(str(j), run_ids=["answerability-y-2"])] == ["answerability-y-2"]
     assert sorted(e["run_id"] for e in cl.load_journal(str(j), run_prefixes=["answerability-x", "structure-x"])) == ["answerability-x-1", "structure-x-1"]

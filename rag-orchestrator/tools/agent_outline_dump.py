@@ -1,7 +1,7 @@
 """大綱人審 dump（spec agentic-mcp-orchestration・任務 3.5）。
 
 **組裝＝程式，⛔ 無 LLM**——本檔只呼叫 `services/agent/outline.py:
-build_prospect_outline`（3.2 已定案的決定性組裝）取得 `OutlineDoc`，
+build_audience_outline(<受眾>)`（3.2 已定案的決定性組裝；DSP-058 起輸出是**受眾視圖**）取得 `OutlineDoc`，
 再對每個 section 的 `source_ids` 補查逐列後設資料（`question_summary`／
 `categories`／`target_user`／`business_types`／`outline_approved_by`／
 `generation_metadata`），渲染成一份可人審的 markdown。
@@ -62,7 +62,7 @@ if str(_REPO_ROOT) not in sys.path:
 
 from services.agent.canon.review_state import COLUMN  # noqa: E402
 from services.agent.mcp_facade import LazyPsycopg2Pool  # noqa: E402
-from services.agent.outline import OutlineDoc, build_prospect_outline  # noqa: E402
+from services.agent.outline import OutlineDoc, build_audience_outline  # noqa: E402
 
 #: 講法批次檔（brief 指名的來源；`question` 欄位＝ import 時寫入的
 #: `question_summary` 逐字值，見 `presales-phrasing-batch-20260904.rollback.sql`
@@ -240,7 +240,7 @@ def render_markdown(
     batch_question_summaries: set[str],
 ) -> str:
     lines: list[str] = []
-    lines.append(f"# 售前大綱人審 dump（audience={doc.audience}）")
+    lines.append(f"# 大綱人審 dump（audience={doc.audience}）")
     lines.append("")
     lines.append(f"- version: {doc.version}")
     lines.append(f"- sha256: {doc.sha256}")
@@ -318,9 +318,9 @@ def render_markdown(
 # ---------------------------------------------------------------------------
 
 
-async def _run(out_path: Path, batch_file: Path) -> None:
+async def _run(out_path: Path, batch_file: Path, audience: str = "prospect") -> None:
     db_pool = LazyPsycopg2Pool()
-    doc = await build_prospect_outline(db_pool)
+    doc = await build_audience_outline(audience, db_pool)
     all_ids = sorted({sid for section in doc.sections for sid in section.source_ids})
     row_meta = fetch_row_meta(db_pool, all_ids)
     batch_question_summaries = load_batch_question_summaries(batch_file, required=True)
@@ -342,8 +342,8 @@ def main(argv: Optional[list[str]] = None) -> int:
     parser.add_argument(
         "--audience",
         default="prospect",
-        choices=["prospect"],
-        help="目前只支援 prospect（build_prospect_outline）",
+        choices=["prospect", "property_manager"],
+        help="受眾視圖（build_audience_outline）；⛔ tenant 無視圖",
     )
     parser.add_argument(
         "--batch-file",
@@ -356,7 +356,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         ),
     )
     args = parser.parse_args(argv)
-    asyncio.run(_run(Path(args.out), Path(args.batch_file)))
+    asyncio.run(_run(Path(args.out), Path(args.batch_file), args.audience))
     return 0
 
 

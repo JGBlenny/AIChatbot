@@ -60,7 +60,8 @@ REQUIRED_GROUPS = (
 #: notes-only 組（M4 開放 tenant 正本時納入必查；現階段 ⛔ 不列 bad）。
 NOTE_GROUP = ("b2c tenant (vendor 1)", {"vendor_id": 1, "target_user": "tenant", "mode": "b2c"})
 
-CANON_AUDIENCE = "prospect"
+#: DSP-058／9.6 S3：正本只有一份（`canon/jgb/`），`load_canon_or_die` 已無 audience 參數。
+#: 受眾差異由 `REQUIRED_GROUPS` 的兩組**身分**表達，⛔ 不再由「載入哪一份正本」表達。
 
 DERIVED_SQL = (
     "SELECT id::text || '~|~' || COALESCE(generation_metadata->>'canon_ref','')"
@@ -163,15 +164,15 @@ def default_predicate_visible_ids(identity_kwargs: dict) -> frozenset:
 
 def default_mem_visible_ids(identity_kwargs: dict, vendor_business_types: frozenset) -> frozenset:
     """記憶體側：以真正的 `FineIndex.visible_subset`（容器內執行）算這個身分在
-    `prospect` 正本上可見的**全部**細目 id（不限於已材料化到 kb 的那些——
-    與 kb 的交集由呼叫端算，見 `check_canon_visibility_reconcile`）。"""
+    **正本**（`canon/jgb/`，唯一一份）上可見的全部細目 id（不限於已材料化到 kb 的
+    那些——與 kb 的交集由呼叫端算，見 `check_canon_visibility_reconcile`）。"""
     script = (
         "import sys, json\n"
         "sys.path.insert(0, '/app')\n"
         "from services.agent.canon.canon_assembler import load_canon_or_die, resolve_canon_dir\n"
         "from services.agent.canon.fine_index import FineIndex\n"
         "from services.agent.identity import Identity\n"
-        f"doc = load_canon_or_die(resolve_canon_dir(), {CANON_AUDIENCE!r})\n"
+        "doc = load_canon_or_die(resolve_canon_dir())\n"
         f"identity = Identity(**{identity_kwargs!r})\n"
         "idx = FineIndex(backend=None)\n"
         f"ids = idx.visible_subset(identity, doc, vendor_business_types=frozenset({sorted(vendor_business_types)!r}))\n"
@@ -186,7 +187,7 @@ def default_canon_fine_map() -> dict:
         "import sys, json\n"
         "sys.path.insert(0, '/app')\n"
         "from services.agent.canon.canon_assembler import load_canon_or_die, resolve_canon_dir\n"
-        f"doc = load_canon_or_die(resolve_canon_dir(), {CANON_AUDIENCE!r})\n"
+        "doc = load_canon_or_die(resolve_canon_dir())\n"
         "out = {f.id: {'business_types': list(f.business_types), 'target_user': list(f.target_user)}"
         " for f in doc.fines()}\n"
         "print(json.dumps(out))\n"

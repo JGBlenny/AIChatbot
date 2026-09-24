@@ -1,6 +1,6 @@
 # 步 5：reweigh
 
-**輸入**：正本 Markdown、`demand-v2.json`、`map-v2.json`（缺口地圖）、`answerability.json`。
+**輸入**：正本目錄、缺口地圖格 `cells.json`（步 0 橋 `surface_to_cells.py` 產出，demand-v2 同形；兩身分共用）、量測層 `map.json`（同橋產出 stub，或實跑系統量測後的 map）、`answerability.json`。
 **輸出 schema**：`../schemas/coverage-reweigh.json`。
 **形態**：腳本（`reweigh.py`，呼叫 `tools/gapmap/coverage_map.py` 重量，決定性）。
 **出口條件**：每格皆有去向欄；無去向格數＝0。
@@ -11,8 +11,8 @@
 ```bash
 python3 .claude/skills/outline-curation/scripts/reweigh.py \
   --canon         <正本或草稿 .md> \
-  --demand        <demand-v2.json> \
-  --map           <map-v2.json（缺口地圖）> \
+  --demand        <cells.json（步 0 橋產出）> \
+  --map           <map.json（步 0 橋 stub 或實跑量測）> \
   --answerability .claude/skills/outline-curation/runs/<run>/answerability.json \
   --coverage-out  .claude/skills/outline-curation/runs/<run>/coverage-map.json \
   --out           .claude/skills/outline-curation/runs/<run>/coverage-reweigh.json

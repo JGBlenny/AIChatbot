@@ -4,12 +4,12 @@
 彙總 journal（目錄下 *.json）＋ SKILL.md front matter 的 budgets → cost.json。
 journal 檔案格式（本任務定義，1.4 對齊）：
     {"step": "structure"|"answerability", "run_id": "...",
-     "agents": [{"prompt_tokens": int, "completion_tokens": int, "usd": float}, ...],
+     "agents": [{}, ...],
      "wall_s": float}
 
-上限判定：每步（依 SKILL.md budgets 的 agents/usd）與整案（total）兩層。
-任一層超支 ⇒ 印哪一層、exit 2。並把狀態檔 `cost` 鍵寫成
-{"path": ..., "over_budget": bool}。
+`agents` 只計數（每則可為空 dict），代表用了幾個子代理；上限判定：每步（依 SKILL.md
+budgets 的 agents）與整案（total）兩層。任一層超支 ⇒ 印哪一層、exit 2。並把狀態檔
+`cost` 鍵寫成 {"path": ..., "over_budget": bool}。
 """
 from __future__ import annotations
 
@@ -113,14 +113,11 @@ def summarize(entries: list) -> dict:
     for entry in entries:
         step = entry.get("step", "unknown")
         agents = entry.get("agents", [])
-        acc = by_step.setdefault(step, {"agents": 0, "prompt_tokens": 0, "completion_tokens": 0, "usd": 0.0, "wall_s": 0.0})
+        acc = by_step.setdefault(step, {"agents": 0, "wall_s": 0.0})
         acc["agents"] += len(agents)
-        acc["prompt_tokens"] += sum(int(a.get("prompt_tokens", 0)) for a in agents)
-        acc["completion_tokens"] += sum(int(a.get("completion_tokens", 0)) for a in agents)
-        acc["usd"] += sum(float(a.get("usd", 0.0)) for a in agents)
         acc["wall_s"] += float(entry.get("wall_s", 0.0))
 
-    total = {"agents": 0, "prompt_tokens": 0, "completion_tokens": 0, "usd": 0.0, "wall_s": 0.0}
+    total = {"agents": 0, "wall_s": 0.0}
     for acc in by_step.values():
         for k in total:
             total[k] += acc[k]
@@ -133,18 +130,14 @@ def check_budget(summary: dict, budgets: dict) -> tuple[bool, list]:
     for step, limits in budgets.items():
         if step == "total":
             continue
-        actual = summary["by_step"].get(step, {"agents": 0, "usd": 0.0})
+        actual = summary["by_step"].get(step, {"agents": 0})
         if "agents" in limits and actual["agents"] > limits["agents"]:
             violations.append(f"step={step} agents={actual['agents']} > 上限 {limits['agents']}")
-        if "usd" in limits and actual["usd"] > limits["usd"]:
-            violations.append(f"step={step} usd={actual['usd']} > 上限 {limits['usd']}")
 
     total_limits = budgets.get("total", {})
     total_actual = summary["total"]
     if "agents" in total_limits and total_actual["agents"] > total_limits["agents"]:
         violations.append(f"整案 agents={total_actual['agents']} > 上限 {total_limits['agents']}")
-    if "usd" in total_limits and total_actual["usd"] > total_limits["usd"]:
-        violations.append(f"整案 usd={total_actual['usd']} > 上限 {total_limits['usd']}")
 
     return (len(violations) > 0), violations
 

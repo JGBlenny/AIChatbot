@@ -1,0 +1,75 @@
+{
+  "cost": {
+    "agents": 2,
+    "completion_tokens": 0,
+    "prompt_tokens": 0,
+    "usd": 0.0,
+    "wall_s": 70.0
+  },
+  "deterministic": false,
+  "inputs_sha": {
+    "canon": "2e061ec88adb686b0932aadaf909c564d58f4de4021cd7fcd1345e21ec4251ce",
+    "cells": "32607587028474caf015e63024f6f31d8a07a166354d31dac4408b725756e669",
+    "rubric": "3d1137476b7ff6898733133c28659231b098ece89b4c8f12e55b24db999c6bfd"
+  },
+  "payload": {
+    "labels": [
+      {
+        "cell_id": "C41",
+        "confidence": "high",
+        "evidence_unit": 5,
+        "fine_id": "jgb/E/overdue-reminder-late-fee",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C41",
+            "confidence": "high",
+            "evidence_unit": 5,
+            "fine_id": "jgb/E/overdue-reminder-late-fee",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C41",
+            "confidence": "high",
+            "evidence_unit": 5,
+            "fine_id": "jgb/E/overdue-reminder-late-fee",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C44",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "jgb/A/account-registration",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C44",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "jgb/A/account-registration",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C44",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "jgb/A/account-registration",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      }
+    ],
+    "needs_rubric_revision": false
+  },
+  "raw_outputs_path": "../journal/A-20260916.json",
+  "skill_version": "0.1.0",
+  "step": "answerability"
+}

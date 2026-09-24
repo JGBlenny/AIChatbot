@@ -1,0 +1,286 @@
+{
+  "canon_sha256": "066608eaecff4e76d73fd30ffab218687f3016dccfaefe7d38fee562f32b0085",
+  "fines": [
+    {
+      "from": [
+        "tmp:canon:jgb/I/competitor-comparison"
+      ],
+      "new": "jgb/I/competitor-comparison",
+      "ops": [
+        "keep"
+      ],
+      "title": "跟 Bananas、屋我也差在哪",
+      "units": 4
+    },
+    {
+      "from": [
+        "tmp:canon:jgb/I/competitor-neutrality"
+      ],
+      "new": "jgb/I/competitor-neutrality",
+      "ops": [
+        "merge",
+        "split"
+      ],
+      "title": "會評論競爭對手嗎",
+      "units": 33
+    },
+    {
+      "from": [
+        "tmp:canon:jgb/I/dashboard-overview"
+      ],
+      "new": "jgb/I/dashboard-overview",
+      "ops": [
+        "keep"
+      ],
+      "title": "首頁儀表板顯示哪些數據",
+      "units": 2
+    },
+    {
+      "from": [
+        "tmp:canon:jgb/I/data-migration"
+      ],
+      "new": "jgb/I/data-migration",
+      "ops": [
+        "merge"
+      ],
+      "title": "舊系統資料能否匯入（可匯入範圍、不支援項目與批次匯入做法）",
+      "units": 7
+    },
+    {
+      "from": [
+        "tmp:canon:jgb/I/free-trial"
+      ],
+      "new": "jgb/I/free-trial",
+      "ops": [
+        "keep"
+      ],
+      "title": "可以免費試用嗎",
+      "units": 2
+    },
+    {
+      "from": [
+        "tmp:canon:jgb/I/individual-landlord-scale-fit"
+      ],
+      "new": "jgb/I/individual-landlord-scale-fit",
+      "ops": [
+        "keep"
+      ],
+      "title": "個人房東（約 10～30 戶）適配與建議做法",
+      "units": 9
+    },
+    {
+      "from": [
+        "tmp:canon:jgb/I/pricing-plans"
+      ],
+      "new": "jgb/I/pricing-plans",
+      "ops": [
+        "merge"
+      ],
+      "title": "怎麼收費與方案分級差異",
+      "units": 10
+    },
+    {
+      "from": [
+        "tmp:canon:jgb/I/product-overview"
+      ],
+      "new": "jgb/I/product-overview",
+      "ops": [
+        "merge",
+        "split"
+      ],
+      "title": "系統總覽、能解決什麼問題與適不適合我",
+      "units": 35
+    },
+    {
+      "from": [
+        "tmp:canon:jgb/I/property-quota-limit"
+      ],
+      "new": "jgb/I/property-quota-limit",
+      "ops": [
+        "keep"
+      ],
+      "title": "方案物件額度上限與用滿怎麼辦",
+      "units": 4
+    },
+    {
+      "from": [
+        "tmp:canon:jgb/I/subscription-change-renewal"
+      ],
+      "new": "jgb/I/subscription-change-renewal",
+      "ops": [
+        "merge",
+        "split"
+      ],
+      "title": "升級、變更、續約與取消訂閱（含付款紀錄）",
+      "units": 20
+    },
+    {
+      "from": [
+        "tmp:kb:3509",
+        "tmp:kb:3457"
+      ],
+      "new": "jgb/I/subscription-payment-failure",
+      "ops": [
+        "new",
+        "split"
+      ],
+      "title": "訂閱扣款失敗：方案失效、物件下架與恢復",
+      "units": 7
+    },
+    {
+      "from": [
+        "tmp:canon:jgb/I/team-company-fit"
+      ],
+      "new": "jgb/I/team-company-fit",
+      "ops": [
+        "keep"
+      ],
+      "title": "公司或包租代管團隊適合嗎",
+      "units": 3
+    },
+    {
+      "from": [
+        "tmp:canon:jgb/I/why-choose-jgb"
+      ],
+      "new": "jgb/I/why-choose-jgb",
+      "ops": [
+        "keep"
+      ],
+      "title": "為什麼選金箍棒",
+      "units": 2
+    },
+    {
+      "from": [
+        "tmp:draft:1"
+      ],
+      "new": "jgb/I/onboarding-tutorial-index",
+      "ops": [
+        "new"
+      ],
+      "title": "房東新手教學總覽（從哪開始、各篇教學有哪些）",
+      "units": 0
+    }
+  ],
+  "id_map": [
+    {
+      "new": "jgb/I/competitor-comparison",
+      "old": "tmp:canon:jgb/I/competitor-comparison",
+      "op": "keep"
+    },
+    {
+      "new": "jgb/I/competitor-neutrality",
+      "old": "tmp:canon:jgb/I/competitor-neutrality",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/I/competitor-neutrality",
+      "old": "tmp:kb:3798",
+      "op": "split"
+    },
+    {
+      "new": "jgb/I/dashboard-overview",
+      "old": "tmp:canon:jgb/I/dashboard-overview",
+      "op": "keep"
+    },
+    {
+      "new": "jgb/I/data-migration",
+      "old": "tmp:canon:jgb/I/data-migration",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/I/data-migration",
+      "old": "tmp:kb:3476",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/I/free-trial",
+      "old": "tmp:canon:jgb/I/free-trial",
+      "op": "keep"
+    },
+    {
+      "new": "jgb/I/individual-landlord-scale-fit",
+      "old": "tmp:canon:jgb/I/individual-landlord-scale-fit",
+      "op": "keep"
+    },
+    {
+      "new": "jgb/I/pricing-plans",
+      "old": "tmp:canon:jgb/I/pricing-plans",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/I/pricing-plans",
+      "old": "tmp:kb:5376",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/I/pricing-plans",
+      "old": "tmp:kb:3453",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/I/product-overview",
+      "old": "tmp:canon:jgb/I/product-overview",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/I/product-overview",
+      "old": "tmp:kb:3798",
+      "op": "split"
+    },
+    {
+      "new": "jgb/I/property-quota-limit",
+      "old": "tmp:canon:jgb/I/property-quota-limit",
+      "op": "keep"
+    },
+    {
+      "new": "jgb/I/subscription-change-renewal",
+      "old": "tmp:canon:jgb/I/subscription-change-renewal",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/I/subscription-change-renewal",
+      "old": "tmp:kb:3454",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/I/subscription-change-renewal",
+      "old": "tmp:kb:3356",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/I/subscription-change-renewal",
+      "old": "tmp:kb:3455",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/I/subscription-change-renewal",
+      "old": "tmp:kb:3457",
+      "op": "split"
+    },
+    {
+      "new": "jgb/I/subscription-payment-failure",
+      "old": "tmp:kb:3457",
+      "op": "split"
+    },
+    {
+      "new": "jgb/I/subscription-payment-failure",
+      "old": "tmp:kb:3509",
+      "op": "new"
+    },
+    {
+      "new": "jgb/I/team-company-fit",
+      "old": "tmp:canon:jgb/I/team-company-fit",
+      "op": "keep"
+    },
+    {
+      "new": "jgb/I/why-choose-jgb",
+      "old": "tmp:canon:jgb/I/why-choose-jgb",
+      "op": "keep"
+    },
+    {
+      "new": "jgb/I/onboarding-tutorial-index",
+      "old": "tmp:draft:1",
+      "op": "new"
+    }
+  ]
+}

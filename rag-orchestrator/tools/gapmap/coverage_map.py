@@ -27,7 +27,7 @@ _HERE = os.path.dirname(os.path.abspath(__file__))
 _RAG = os.path.dirname(os.path.dirname(_HERE))
 if _RAG not in sys.path:
     sys.path.insert(0, _RAG)
-from services.agent.canon.canon_parser import CanonDoc, parse_canon  # noqa: E402
+from services.agent.canon.canon_parser import CanonDoc, parse_canon_dir  # noqa: E402
 
 DISPOSITIONS = ("fine", "not_available", "deliberate_no", "owner_decision")
 FIX_TYPES = ("add_knowledge", "add_phrasing", "list_not_available", "cross_audience_rewrite", "merge_similar", "owner_decision")
@@ -43,7 +43,7 @@ CROSS_AUDIENCE_STATE = "V"
 LEDGER_SOURCE_PREFIX = "docs:knowledge/jgb-product-facts.md#"
 
 #: demand-v2 `g0.authority` 是自由文字、55 格無一空值，「沒有」用哨兵（plan-verifier 第 3 輪）。
-AUTHORITY_YES_PREFIXES = ("kb:", "help:")
+AUTHORITY_YES_PREFIXES = ("kb:", "help:", "code:")
 AUTHORITY_NO_PREFIXES = ("none", "n/a")
 
 
@@ -122,7 +122,8 @@ def _decide(label: str, *, cause_state: str, coverage: str, authority: str, poli
     raise CoverageMapError(f"{cell_id}: label 非四值（{label!r}）")
 
 
-def reweigh(canon: CanonDoc, demand_path: str, map_path: str, answerability_path: str) -> list[dict]:
+def reweigh(canon: CanonDoc, demand_path: str, map_path: str, answerability_path: str,
+            *, audience: str = "") -> list[dict]:
     demand = _load_json(demand_path)
     measured = _load_json(map_path)
     ans = _load_json(answerability_path)
@@ -163,7 +164,7 @@ def reweigh(canon: CanonDoc, demand_path: str, map_path: str, answerability_path
         )
         out.append({
             "cell_id": cid,
-            "audience": canon.audience,
+            "audience": audience or canon.name,
             "topic": c.get("topic") or "",
             "cause_state": m.get("cause_state"),
             "entry_state": m.get("entry_state"),
@@ -220,9 +221,16 @@ def summarize(cells: list[dict]) -> dict:
     }
 
 
-def build_coverage_map(canon_path: str, demand_path: str, map_path: str, answerability_path: str) -> dict:
-    canon = parse_canon(canon_path)
-    cells = reweigh(canon, demand_path, map_path, answerability_path)
+def build_coverage_map(canon_path: str, demand_path: str, map_path: str,
+                       answerability_path: str, audience: str = "") -> dict:
+    """`canon_path` 是**正本目錄**（`rag-orchestrator/canon/jgb`，DSP-058／9.6 S3）。
+
+    ⚠️ `audience` 欄改由呼叫端（`--audience`）指定：`canon.audience` 在圖書館形態下
+    恆為正本名 `jgb`，⛔ 不是受眾——拿它填「這份覆蓋圖是給誰的」會是錯的。
+    未指定 ⇒ 落 `canon.name`（正本名），至少是一個誠實的值。
+    """
+    canon = parse_canon_dir(canon_path)
+    cells = reweigh(canon, demand_path, map_path, answerability_path, audience=audience)
     no_src = [f.id for f in canon.fines() if not f.sources]
     # 對碼標記（2026-09-07 業主：確認過的事要標）：細目任一 source 指向事實帳本錨點 ＝ 已對 jgb2 程式核對過。
     verified = sorted(f.id for f in canon.fines() if any(src.startswith(LEDGER_SOURCE_PREFIX) for src in f.sources))
@@ -233,7 +241,7 @@ def build_coverage_map(canon_path: str, demand_path: str, map_path: str, answera
             kinds[k] = kinds.get(k, 0) + 1
     meta = {
         "step": "reweigh",
-        "audience": canon.audience,
+        "audience": audience or canon.name,
         "inputs_sha": {
             "canon": canon.canon_sha256,
             "demand": sha256_file(demand_path),
@@ -255,14 +263,15 @@ def build_coverage_map(canon_path: str, demand_path: str, map_path: str, answera
 
 def main(argv: Optional[list[str]] = None) -> int:
     p = argparse.ArgumentParser(description="格 → 去向（決定性、$0、不碰 DB）")
-    p.add_argument("--canon", required=True)
+    p.add_argument("--canon", required=True, help="正本**目錄**（rag-orchestrator/canon/jgb）")
+    p.add_argument("--audience", default="", help="這份覆蓋圖給哪個受眾（填進 audience 欄；⛔ 不從正本推）")
     p.add_argument("--demand", required=True)
     p.add_argument("--map", required=True)
     p.add_argument("--answerability", required=True)
     p.add_argument("--out", required=True)
     a = p.parse_args(argv)
     try:
-        cm = build_coverage_map(a.canon, a.demand, a.map, a.answerability)
+        cm = build_coverage_map(a.canon, a.demand, a.map, a.answerability, a.audience)
     except CoverageMapError as e:
         print(f"[coverage_map] ⛔ {e}", file=sys.stderr)
         return 2

@@ -12,12 +12,19 @@
 ⚠️ **b2b 業態過濾是 `business_types && ARRAY['system_provider']`、⛔ 無 `IS NULL` 放行**。
 補上 `IS NULL` 會打穿刻意設計的跨業者隔離（專案既有鐵則）。
 
+⚠️ **角色（`target_user`）條件兩分支語義不同**（DSP-052 (c)／2026-09-14）：
+b2b 是 `kb.target_user && ARRAY[角色]`（空＝不可見），b2c 是
+`kb.target_user IS NULL OR kb.target_user && ARRAY[角色,'all_users']`（空＝放行）。
+⛔ 不得寫成「角色 `kb.target_user IS NULL OR …`」一句涵蓋兩分支——
+本檔是 `retrieval-improvement-loop` skill 指定的可見性唯一正本，語義漂掉會讓
+「這列為什麼檢索不到」答反。
+
 ⛔ 本檔只保留謂詞，⛔ 不含原檔的 psql／enrich／self_test——那些是回測流程，已隨回測退役。
 """
 from __future__ import annotations
 
 
-KNOWN_TARGET_USERS = {"tenant", "landlord", "property_manager", "system_admin", "prospect"}
+KNOWN_TARGET_USERS = {"tenant", "property_manager", "system_admin", "prospect"}
 
 #: 對齊 `SYSTEM_DOC_CATEGORY` / `RULES_DOC_CATEGORY`——這兩類是系統注入用文件，
 #: 檢索一律排除，永不被當答案回傳。
@@ -73,8 +80,8 @@ def visibility(kb_row: dict, *, mode: str, target_user, vendor_id: int,
                kb.category IS DISTINCT FROM '系統脈絡' / '對話規則'
                業態  b2b：kb.business_types && ARRAY['system_provider']  ⛔ **無 IS NULL 放行**
                      b2c：kb.business_types IS NULL OR ... && ARRAY[業者業態]
-               角色  kb.target_user IS NULL OR kb.target_user && ARRAY[角色]
-                     （b2c 另放行 'all_users'）
+               角色  b2b：kb.target_user && ARRAY[角色]  ⛔ **無 IS NULL 放行**
+                     b2c：kb.target_user IS NULL OR ... && ARRAY[角色,'all_users']
         向量路 kb.embedding IS NOT NULL
         詞面路 kb.keywords IS NOT NULL AND array_length(kb.keywords,1) > 0
 
@@ -85,6 +92,11 @@ def visibility(kb_row: dict, *, mode: str, target_user, vendor_id: int,
     ⚠️ b2b 業態那條沒有 `IS NULL` 放行是**刻意的跨業者隔離**
     （`docs/retrieval-recall-audit-20260822.md`）。
     ⛔ 判為不可見時的修法是改**那筆資料的歸屬**，⛔ 不是放寬過濾器。
+
+    ⚠️ b2b **角色**那條同樣沒有 `IS NULL` 放行（DSP-052 (c)／2026-09-14）：
+    `tenant` 是合法值，帶 `mode=b2b` 時受眾會被路由到 property_manager，
+    放行「未標角色」的列＝跨受眾可見且靜默。未標角色的列要補標角色（資料面），
+    ⛔ 不是在這裡放寬。b2c 分支**不動**（空仍放行通用知識）。
 
     ## ⚠️ 這把尺量的是**結構可見性的上界**，⛔ 不是「這一題撈得到」
 
@@ -121,11 +133,18 @@ def visibility(kb_row: dict, *, mode: str, target_user, vendor_id: int,
             common.append("business_types")
 
     tu = kb_row.get("target_user")
-    if tu is not None:
-        allowed = {effective_target_user(target_user)}
-        if not b2b:
-            allowed.add("all_users")
-        if not (set(tu) & allowed):
+    allowed = {effective_target_user(target_user)}
+    if b2b:
+        # DSP-052 (c)／2026-09-14：b2b 無 `IS NULL` 放行 ⇒ NULL 與空陣列皆不可見
+        # （對齊 SQL `kb.target_user && ARRAY[…]`：NULL 得 NULL、`{}` 得 false，兩者都不進）。
+        # ⛔ 不得改回「tu is None 就跳過」——那正是被 DSP-052 堵掉的跨受眾放行。
+        if not (tu and set(tu) & allowed):
+            common.append("target_user")
+    else:
+        # b2c 維持寬鬆：NULL 放行通用知識，並額外放行 'all_users'
+        # （空陣列 `{}` 仍不可見——`IS NULL` 為假、`&&` 為假）。
+        allowed.add("all_users")
+        if tu is not None and not (set(tu) & allowed):
             common.append("target_user")
 
     vector_blocked = list(common)

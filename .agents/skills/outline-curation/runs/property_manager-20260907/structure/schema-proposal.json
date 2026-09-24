@@ -1,0 +1,376 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "angle": {
+      "type": "string"
+    },
+    "coarses": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "enum": [
+              "A",
+              "B",
+              "C",
+              "D",
+              "E",
+              "F"
+            ],
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "fines": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "coarse_id": {
+            "enum": [
+              "A",
+              "B",
+              "C",
+              "D",
+              "E",
+              "F"
+            ],
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "merge_of": {
+            "items": {
+              "enum": [
+                "tmp:kb:3622",
+                "tmp:kb:3799",
+                "tmp:kb:3800",
+                "tmp:kb:3801",
+                "tmp:kb:3822",
+                "tmp:kb:3823",
+                "tmp:kb:3824",
+                "tmp:kb:3825",
+                "tmp:kb:3826",
+                "tmp:kb:3829",
+                "tmp:kb:3831",
+                "tmp:kb:3909",
+                "tmp:kb:3910",
+                "tmp:kb:3911",
+                "tmp:kb:3912",
+                "tmp:kb:3913",
+                "tmp:kb:3914",
+                "tmp:kb:3915",
+                "tmp:kb:3916",
+                "tmp:kb:3917",
+                "tmp:kb:3918",
+                "tmp:kb:3952",
+                "tmp:kb:3953",
+                "tmp:kb:3954",
+                "tmp:kb:3955",
+                "tmp:kb:3956",
+                "tmp:kb:3983",
+                "tmp:kb:3984",
+                "tmp:kb:3990",
+                "tmp:kb:4001",
+                "tmp:kb:4005",
+                "tmp:kb:4021",
+                "tmp:kb:4088",
+                "tmp:kb:4089",
+                "tmp:kb:4090",
+                "tmp:kb:4091",
+                "tmp:kb:4132",
+                "tmp:kb:4133",
+                "tmp:kb:4134",
+                "tmp:kb:4176",
+                "tmp:kb:4202",
+                "tmp:kb:4203",
+                "tmp:kb:4214",
+                "tmp:kb:4215",
+                "tmp:kb:4252",
+                "tmp:kb:5373",
+                "tmp:kb:5374",
+                "tmp:draft:1",
+                "tmp:draft:2",
+                "tmp:draft:3",
+                "tmp:draft:4",
+                "tmp:draft:5",
+                "tmp:draft:6",
+                "tmp:draft:7",
+                "tmp:draft:8",
+                "tmp:draft:9",
+                "tmp:draft:10",
+                "tmp:draft:11",
+                "tmp:draft:12",
+                "tmp:draft:13",
+                "tmp:draft:14",
+                "tmp:draft:15",
+                "tmp:draft:16",
+                "tmp:draft:17",
+                "tmp:draft:18",
+                "tmp:draft:19",
+                "tmp:draft:20",
+                "tmp:draft:21",
+                "tmp:draft:22",
+                "tmp:draft:23",
+                "tmp:draft:24",
+                "tmp:draft:25",
+                "tmp:draft:26",
+                "tmp:draft:27",
+                "tmp:draft:28",
+                "tmp:draft:29",
+                "tmp:draft:30"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "moved_from": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "split_from": {
+            "items": {
+              "enum": [
+                "tmp:kb:3622",
+                "tmp:kb:3799",
+                "tmp:kb:3800",
+                "tmp:kb:3801",
+                "tmp:kb:3822",
+                "tmp:kb:3823",
+                "tmp:kb:3824",
+                "tmp:kb:3825",
+                "tmp:kb:3826",
+                "tmp:kb:3829",
+                "tmp:kb:3831",
+                "tmp:kb:3909",
+                "tmp:kb:3910",
+                "tmp:kb:3911",
+                "tmp:kb:3912",
+                "tmp:kb:3913",
+                "tmp:kb:3914",
+                "tmp:kb:3915",
+                "tmp:kb:3916",
+                "tmp:kb:3917",
+                "tmp:kb:3918",
+                "tmp:kb:3952",
+                "tmp:kb:3953",
+                "tmp:kb:3954",
+                "tmp:kb:3955",
+                "tmp:kb:3956",
+                "tmp:kb:3983",
+                "tmp:kb:3984",
+                "tmp:kb:3990",
+                "tmp:kb:4001",
+                "tmp:kb:4005",
+                "tmp:kb:4021",
+                "tmp:kb:4088",
+                "tmp:kb:4089",
+                "tmp:kb:4090",
+                "tmp:kb:4091",
+                "tmp:kb:4132",
+                "tmp:kb:4133",
+                "tmp:kb:4134",
+                "tmp:kb:4176",
+                "tmp:kb:4202",
+                "tmp:kb:4203",
+                "tmp:kb:4214",
+                "tmp:kb:4215",
+                "tmp:kb:4252",
+                "tmp:kb:5373",
+                "tmp:kb:5374",
+                "tmp:draft:1",
+                "tmp:draft:2",
+                "tmp:draft:3",
+                "tmp:draft:4",
+                "tmp:draft:5",
+                "tmp:draft:6",
+                "tmp:draft:7",
+                "tmp:draft:8",
+                "tmp:draft:9",
+                "tmp:draft:10",
+                "tmp:draft:11",
+                "tmp:draft:12",
+                "tmp:draft:13",
+                "tmp:draft:14",
+                "tmp:draft:15",
+                "tmp:draft:16",
+                "tmp:draft:17",
+                "tmp:draft:18",
+                "tmp:draft:19",
+                "tmp:draft:20",
+                "tmp:draft:21",
+                "tmp:draft:22",
+                "tmp:draft:23",
+                "tmp:draft:24",
+                "tmp:draft:25",
+                "tmp:draft:26",
+                "tmp:draft:27",
+                "tmp:draft:28",
+                "tmp:draft:29",
+                "tmp:draft:30"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "coarse_id",
+          "title",
+          "slug",
+          "merge_of",
+          "split_from",
+          "moved_from",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "id_map": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "new": {
+            "type": "string"
+          },
+          "old": {
+            "anyOf": [
+              {
+                "enum": [
+                  "tmp:kb:3622",
+                  "tmp:kb:3799",
+                  "tmp:kb:3800",
+                  "tmp:kb:3801",
+                  "tmp:kb:3822",
+                  "tmp:kb:3823",
+                  "tmp:kb:3824",
+                  "tmp:kb:3825",
+                  "tmp:kb:3826",
+                  "tmp:kb:3829",
+                  "tmp:kb:3831",
+                  "tmp:kb:3909",
+                  "tmp:kb:3910",
+                  "tmp:kb:3911",
+                  "tmp:kb:3912",
+                  "tmp:kb:3913",
+                  "tmp:kb:3914",
+                  "tmp:kb:3915",
+                  "tmp:kb:3916",
+                  "tmp:kb:3917",
+                  "tmp:kb:3918",
+                  "tmp:kb:3952",
+                  "tmp:kb:3953",
+                  "tmp:kb:3954",
+                  "tmp:kb:3955",
+                  "tmp:kb:3956",
+                  "tmp:kb:3983",
+                  "tmp:kb:3984",
+                  "tmp:kb:3990",
+                  "tmp:kb:4001",
+                  "tmp:kb:4005",
+                  "tmp:kb:4021",
+                  "tmp:kb:4088",
+                  "tmp:kb:4089",
+                  "tmp:kb:4090",
+                  "tmp:kb:4091",
+                  "tmp:kb:4132",
+                  "tmp:kb:4133",
+                  "tmp:kb:4134",
+                  "tmp:kb:4176",
+                  "tmp:kb:4202",
+                  "tmp:kb:4203",
+                  "tmp:kb:4214",
+                  "tmp:kb:4215",
+                  "tmp:kb:4252",
+                  "tmp:kb:5373",
+                  "tmp:kb:5374",
+                  "tmp:draft:1",
+                  "tmp:draft:2",
+                  "tmp:draft:3",
+                  "tmp:draft:4",
+                  "tmp:draft:5",
+                  "tmp:draft:6",
+                  "tmp:draft:7",
+                  "tmp:draft:8",
+                  "tmp:draft:9",
+                  "tmp:draft:10",
+                  "tmp:draft:11",
+                  "tmp:draft:12",
+                  "tmp:draft:13",
+                  "tmp:draft:14",
+                  "tmp:draft:15",
+                  "tmp:draft:16",
+                  "tmp:draft:17",
+                  "tmp:draft:18",
+                  "tmp:draft:19",
+                  "tmp:draft:20",
+                  "tmp:draft:21",
+                  "tmp:draft:22",
+                  "tmp:draft:23",
+                  "tmp:draft:24",
+                  "tmp:draft:25",
+                  "tmp:draft:26",
+                  "tmp:draft:27",
+                  "tmp:draft:28",
+                  "tmp:draft:29",
+                  "tmp:draft:30"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "op": {
+            "enum": [
+              "keep",
+              "split",
+              "merge",
+              "move",
+              "new"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "old",
+          "new",
+          "op"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "angle",
+    "coarses",
+    "fines",
+    "id_map"
+  ],
+  "type": "object"
+}

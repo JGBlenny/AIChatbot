@@ -1,0 +1,637 @@
+{
+  "angle": "audience_level",
+  "coarses": [
+    {
+      "id": "A",
+      "title": "帳號與身分"
+    },
+    {
+      "id": "B",
+      "title": "團隊、人員與大房東"
+    },
+    {
+      "id": "C",
+      "title": "社區與物件"
+    },
+    {
+      "id": "D",
+      "title": "租約（含委託約子題）"
+    },
+    {
+      "id": "E",
+      "title": "帳務（含發票、收款金流、抄表）"
+    },
+    {
+      "id": "F",
+      "title": "修繕"
+    },
+    {
+      "id": "G",
+      "title": "裝置（IoT）"
+    },
+    {
+      "id": "H",
+      "title": "幫助中心"
+    },
+    {
+      "id": "I",
+      "title": "方案與導入"
+    }
+  ],
+  "fines": [
+    {
+      "id": "jgb/C/community-batch-create",
+      "coarse_id": "C",
+      "title": "社區建立與批次新增物件",
+      "slug": "community-batch-create",
+      "merge_of": [
+        "tmp:canon:jgb/C/community-batch-create"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "既有細目為 prospect 能力層級（社區歸戶＋批次新增能不能做）；同主題的業者操作層級另立 property-batch-import-howto 與 community-setup-and-property-binding，互為另見。",
+      "target_user": [
+        "prospect"
+      ],
+      "op": "keep"
+    },
+    {
+      "id": "jgb/C/property-management-overview",
+      "coarse_id": "C",
+      "title": "房源管理模組做什麼（含自訂狀態標籤）",
+      "slug": "property-management-overview",
+      "merge_of": [
+        "tmp:canon:jgb/C/property-management-overview"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "既有細目為 prospect 能力層級總覽；自訂標籤的操作層級另立 property-custom-tags-howto 作另見，不併入以免混層。",
+      "target_user": [
+        "prospect"
+      ],
+      "op": "keep"
+    },
+    {
+      "id": "jgb/C/property-status-meaning",
+      "coarse_id": "C",
+      "title": "物件狀態（未刊登／刊登中／洽談中／合約中）是什麼意思",
+      "slug": "property-status-meaning",
+      "merge_of": [
+        "tmp:canon:jgb/C/property-status-meaning",
+        "tmp:kb:3428",
+        "tmp:kb:4154"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "3428 與既有細目同命題同層級（四狀態＋刊登／合約兩軸），答案不因受眾而異故兩受眾共用；4154 為空內文入口（租客看不看得到＝刊登軸）併入不獨立。",
+      "target_user": [
+        "prospect",
+        "property_manager"
+      ],
+      "op": "merge"
+    },
+    {
+      "id": "jgb/C/rental-storefront-vr",
+      "coarse_id": "C",
+      "title": "招租店舖與 VR 看屋",
+      "slug": "rental-storefront-vr",
+      "merge_of": [
+        "tmp:canon:jgb/C/rental-storefront-vr"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "既有細目為 prospect 能力層級（有沒有招租頁與 VR）；業者操作層級拆為 storefront-and-community-page-sharing 與 property-vr-binding 作另見。",
+      "target_user": [
+        "prospect"
+      ],
+      "op": "keep"
+    },
+    {
+      "id": "jgb/C/property-batch-import-howto",
+      "coarse_id": "C",
+      "title": "物件批次匯入表格怎麼填、怎麼上傳",
+      "slug": "property-batch-import-howto",
+      "merge_of": [
+        "tmp:kb:3357",
+        "tmp:kb:3431",
+        "tmp:draft:1"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "三筆皆為業者操作層級的批次匯入步驟與表格填寫規則（.xls、純文字貼上、範本欄位、匯入後為未刊登），與 prospect 能力層級的 community-batch-create 分層另見。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/C/community-setup-and-property-binding",
+      "coarse_id": "C",
+      "title": "社區建立、編輯與物件歸戶（含公共區域物件、社宅強制綁定）",
+      "slug": "community-setup-and-property-binding",
+      "merge_of": [
+        "tmp:kb:3468",
+        "tmp:kb:3469"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "社區建檔步驟與社區↔物件一對多歸戶為同一操作層級主題；社區屬物件本身的歸屬屬性，歸 C。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/C/property-listing-publish-unpublish",
+      "coarse_id": "C",
+      "title": "物件刊登（上架）條件、下架條件與突然全部下架的原因",
+      "slug": "property-listing-publish-unpublish",
+      "merge_of": [
+        "tmp:kb:3429",
+        "tmp:kb:3430",
+        "tmp:kb:3506",
+        "tmp:kb:4151"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "上架條件、手動／自動下架、方案失效導致整批下架，皆為業者操作層級的刊登軸主題；4151 為空內文入口併入。刊登軸屬物件本身狀態，歸 C（合約軸另見 property-status-meaning）。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/C/property-edit-and-save",
+      "coarse_id": "C",
+      "title": "編輯物件與刊登物件的差別、儲存與對既有合約的影響",
+      "slug": "property-edit-and-save",
+      "merge_of": [
+        "tmp:kb:4147"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "編輯≠刊登、需按儲存、修改不影響合約快照——屬業者操作層級的物件編輯行為，與刊登條件主題分開以保持一主題一細目。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/C/public-display-address",
+      "coarse_id": "C",
+      "title": "對外顯示地址的作用範圍（後台永遠顯示完整地址）",
+      "slug": "public-display-address",
+      "merge_of": [
+        "tmp:kb:4145",
+        "tmp:kb:4152"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "對外顯示地址是物件本身的屬性設定，作用範圍是業者操作層級的常見疑問；4152 為空內文入口併入。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/C/storefront-and-community-page-sharing",
+      "coarse_id": "C",
+      "title": "招租店舖與社區公開頁面的入口、網址與分享",
+      "slug": "storefront-and-community-page-sharing",
+      "merge_of": [
+        "tmp:kb:3470",
+        "tmp:kb:4146"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "社區公開頁與招租店舖皆為對外展示頁，入口、專屬網址、分享與連動設定屬業者操作層級；與 prospect 能力層級的 rental-storefront-vr 分層另見。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/C/property-vr-binding",
+      "coarse_id": "C",
+      "title": "物件 VR 虛擬導覽綁定（iStaging）與服務範圍",
+      "slug": "property-vr-binding",
+      "merge_of": [
+        "tmp:kb:3433"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "VR 綁定操作與廠商服務邊界屬業者操作層級，獨立於招租店舖分享主題；prospect 能力層級見 rental-storefront-vr。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/C/property-custom-tags-howto",
+      "coarse_id": "C",
+      "title": "物件自訂標籤怎麼建立、勾選與篩選",
+      "slug": "property-custom-tags-howto",
+      "merge_of": [
+        "tmp:kb:3434"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "自訂標籤的建立／勾選／篩選／公開頁顯示為業者操作層級；prospect 能力層級已在 property-management-overview 提及，分層另見不重複。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/C/property-list-advanced-search",
+      "coarse_id": "C",
+      "title": "物件列表進階搜尋與篩選條件",
+      "slug": "property-list-advanced-search",
+      "merge_of": [
+        "tmp:draft:2"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "進階搜尋（空間類型、社區大樓、租金範圍、坪數）是物件列表的操作層級功能，與標籤篩選為不同主題。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/C/occupancy-rate-calculation",
+      "coarse_id": "C",
+      "title": "首頁即時物件出租率的百分比怎麼算",
+      "slug": "occupancy-rate-calculation",
+      "merge_of": [
+        "tmp:kb:4648"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "出租率＝合約中物件數÷物件總數，是物件總表層級的統計指標；分母分子皆為物件計數，歸物件屬性而非帳務或租約。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/C/community-facility-rules-and-entitlements",
+      "coarse_id": "C",
+      "title": "社區公共設施的使用權益、義務、規範、費用、開放時間、損壞與爭議處理",
+      "slug": "community-facility-rules-and-entitlements",
+      "merge_of": [
+        "tmp:kb:1396",
+        "tmp:kb:2980",
+        "tmp:kb:3049",
+        "tmp:kb:3050",
+        "tmp:kb:3056",
+        "tmp:kb:3057",
+        "tmp:kb:3058",
+        "tmp:kb:3059",
+        "tmp:kb:3060",
+        "tmp:kb:3061",
+        "tmp:kb:3062",
+        "tmp:kb:3063",
+        "tmp:kb:3064",
+        "tmp:kb:3245",
+        "tmp:kb:3246",
+        "tmp:kb:3247",
+        "tmp:kb:3248",
+        "tmp:kb:3249",
+        "tmp:kb:3299",
+        "tmp:kb:3300",
+        "tmp:kb:4262",
+        "tmp:kb:4276"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "這批來源全為租客權益層級的公共設施問答（使用權／義務／規範／安全／時間／變更／費用／損壞／罰則／爭議／保險），jgb 受眾無租客層級；依受眾層級歸為業者（管理師）需備妥並回覆的社區公共設施資訊一個主題，來源須改寫成業者層級；1396／4262／4276 為空內文或純查詢入口併入不獨立。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/C/community-living-services",
+      "coarse_id": "C",
+      "title": "社區生活服務與住戶規範（垃圾、洗衣烘衣、社區活動、包裹、社宅服務）",
+      "slug": "community-living-services",
+      "merge_of": [
+        "tmp:kb:3051",
+        "tmp:kb:3052",
+        "tmp:kb:3053",
+        "tmp:kb:3054",
+        "tmp:kb:3055",
+        "tmp:kb:3157",
+        "tmp:kb:3263",
+        "tmp:kb:4272"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "與公共設施使用規範同為租客權益層級，但主題是社區生活服務／住戶日常規範而非設施本身，故另立一細目；歸業者操作層級的社區資訊維護；4272 為空內文入口併入。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    }
+  ],
+  "id_map": [
+    {
+      "old": "tmp:canon:jgb/C/community-batch-create",
+      "new": "jgb/C/community-batch-create",
+      "op": "keep"
+    },
+    {
+      "old": "tmp:canon:jgb/C/property-management-overview",
+      "new": "jgb/C/property-management-overview",
+      "op": "keep"
+    },
+    {
+      "old": "tmp:canon:jgb/C/property-status-meaning",
+      "new": "jgb/C/property-status-meaning",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:3428",
+      "new": "jgb/C/property-status-meaning",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:4154",
+      "new": "jgb/C/property-status-meaning",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:canon:jgb/C/rental-storefront-vr",
+      "new": "jgb/C/rental-storefront-vr",
+      "op": "keep"
+    },
+    {
+      "old": "tmp:kb:3357",
+      "new": "jgb/C/property-batch-import-howto",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3431",
+      "new": "jgb/C/property-batch-import-howto",
+      "op": "new"
+    },
+    {
+      "old": "tmp:draft:1",
+      "new": "jgb/C/property-batch-import-howto",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3468",
+      "new": "jgb/C/community-setup-and-property-binding",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3469",
+      "new": "jgb/C/community-setup-and-property-binding",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3429",
+      "new": "jgb/C/property-listing-publish-unpublish",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3430",
+      "new": "jgb/C/property-listing-publish-unpublish",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3506",
+      "new": "jgb/C/property-listing-publish-unpublish",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:4151",
+      "new": "jgb/C/property-listing-publish-unpublish",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:4147",
+      "new": "jgb/C/property-edit-and-save",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:4145",
+      "new": "jgb/C/public-display-address",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:4152",
+      "new": "jgb/C/public-display-address",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3470",
+      "new": "jgb/C/storefront-and-community-page-sharing",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:4146",
+      "new": "jgb/C/storefront-and-community-page-sharing",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3433",
+      "new": "jgb/C/property-vr-binding",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3434",
+      "new": "jgb/C/property-custom-tags-howto",
+      "op": "new"
+    },
+    {
+      "old": "tmp:draft:2",
+      "new": "jgb/C/property-list-advanced-search",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:4648",
+      "new": "jgb/C/occupancy-rate-calculation",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:1396",
+      "new": "jgb/C/community-facility-rules-and-entitlements",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:2980",
+      "new": "jgb/C/community-facility-rules-and-entitlements",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3049",
+      "new": "jgb/C/community-facility-rules-and-entitlements",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3050",
+      "new": "jgb/C/community-facility-rules-and-entitlements",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3056",
+      "new": "jgb/C/community-facility-rules-and-entitlements",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3057",
+      "new": "jgb/C/community-facility-rules-and-entitlements",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3058",
+      "new": "jgb/C/community-facility-rules-and-entitlements",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3059",
+      "new": "jgb/C/community-facility-rules-and-entitlements",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3060",
+      "new": "jgb/C/community-facility-rules-and-entitlements",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3061",
+      "new": "jgb/C/community-facility-rules-and-entitlements",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3062",
+      "new": "jgb/C/community-facility-rules-and-entitlements",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3063",
+      "new": "jgb/C/community-facility-rules-and-entitlements",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3064",
+      "new": "jgb/C/community-facility-rules-and-entitlements",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3245",
+      "new": "jgb/C/community-facility-rules-and-entitlements",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3246",
+      "new": "jgb/C/community-facility-rules-and-entitlements",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3247",
+      "new": "jgb/C/community-facility-rules-and-entitlements",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3248",
+      "new": "jgb/C/community-facility-rules-and-entitlements",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3249",
+      "new": "jgb/C/community-facility-rules-and-entitlements",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3299",
+      "new": "jgb/C/community-facility-rules-and-entitlements",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3300",
+      "new": "jgb/C/community-facility-rules-and-entitlements",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:4262",
+      "new": "jgb/C/community-facility-rules-and-entitlements",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:4276",
+      "new": "jgb/C/community-facility-rules-and-entitlements",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3051",
+      "new": "jgb/C/community-living-services",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3052",
+      "new": "jgb/C/community-living-services",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3053",
+      "new": "jgb/C/community-living-services",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3054",
+      "new": "jgb/C/community-living-services",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3055",
+      "new": "jgb/C/community-living-services",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3157",
+      "new": "jgb/C/community-living-services",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3263",
+      "new": "jgb/C/community-living-services",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:4272",
+      "new": "jgb/C/community-living-services",
+      "op": "new"
+    }
+  ],
+  "out_of_shelf": [
+    {
+      "id": "tmp:kb:3011",
+      "suggested_shelf": "E",
+      "why": "公益出租人減稅是租金／稅務條件（錢怎麼算），且為租客受眾內容，不是社區或物件屬性。"
+    },
+    {
+      "id": "tmp:kb:3358",
+      "suggested_shelf": "B",
+      "why": "大房東邀請與物件授權是團隊／人員權限主題（大房東列表在團隊設定），非物件本身屬性。"
+    },
+    {
+      "id": "tmp:kb:3456",
+      "suggested_shelf": "I",
+      "why": "物件數量上限與加購額度由訂閱方案決定，內容全在方案頁與方案額度，非物件屬性。"
+    },
+    {
+      "id": "tmp:kb:3505",
+      "suggested_shelf": "I",
+      "why": "無法新增物件的兩個原因皆在他架：方案額度已滿（I）與角色權限不足（B），內容不含物件屬性；主因為方案故建議 I。"
+    },
+    {
+      "id": "tmp:kb:3973",
+      "suggested_shelf": "B",
+      "why": "成員看不到社區物件／無法新增的根因是角色未指派與可見範圍設定，屬團隊人員權限主題。"
+    }
+  ]
+}

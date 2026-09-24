@@ -47,9 +47,24 @@ def sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+def sha256_path(path: str) -> str:
+    """檔案或目錄皆可（9.6 S4：`--canon` 可能指到圖書館正本目錄）。目錄＝遞迴列舉一般檔案，
+    對「相對路徑:內容 sha256」清單（依相對路徑排序）整體再算一次 sha256——新增/刪除/改名/內容
+    任一變動都會改變值。單檔行為與 `sha256_file` 完全相同（不是它的別名，是同一套邏輯的超集）。"""
+    if os.path.isdir(path):
+        entries = []
+        for root, _dirs, files in os.walk(path):
+            for fn in files:
+                fp = os.path.join(root, fn)
+                rel = os.path.relpath(fp, path)
+                entries.append(f"{rel}:{sha256_file(fp)}")
+        return hashlib.sha256("\n".join(sorted(entries)).encode("utf-8")).hexdigest()
+    return sha256_file(path)
+
+
 # ---------- StepEnvelope ----------
 
-STEPS = ("intake", "structure", "phrasing", "answerability", "reweigh", "diff", "import")
+STEPS = ("page_surface", "feature_surface", "intake", "structure", "phrasing", "answerability", "reweigh", "diff", "import")
 
 
 def make_envelope(
@@ -70,7 +85,7 @@ def make_envelope(
         "inputs_sha": inputs_sha,
         "deterministic": deterministic,
         "raw_outputs_path": raw_outputs_path,
-        "cost": cost or {"agents": 0, "prompt_tokens": 0, "completion_tokens": 0, "usd": 0.0, "wall_s": 0.0},
+        "cost": cost or {"agents": 0, "wall_s": 0.0},
         "payload": payload,
     }
 

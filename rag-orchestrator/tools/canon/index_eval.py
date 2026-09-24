@@ -4,6 +4,12 @@ Plan `.kiro/specs/knowledge-outline-and-intent-architecture/inputs/plan-3.4-inde
 三臂（只標題／標題＋approved 講法／再加內文）對 38 細目量 recall@1/3/5，gold 由「文章→細目」決定性對映
 （細目 `sources` 含 `helpcenter:<slug>`），$0（本機 embedding，`EmbeddingUtilsBackend`）；⛔ 不派判者。
 
+⚠️ **`--canon` 收目錄或單檔**（DSP-058／9.6 S3）：目錄 ⇒ `parse_canon_dir`（圖書館正本
+`rag-orchestrator/canon/jgb`），單檔 ⇒ `parse_canon`（舊單檔正本，封存後仍可指給它）。
+`--target-user <值>` 只留 `fine.target_user` 含該值的細目——它是**母體切法**（要跟哪一批
+gold 對得上），⛔ 不是可見性判定：本工具不呼叫 `canon_visible`／`visible_subset`，
+⛔ 不得拿它的結果當「這個身分看得到什麼」的證據。
+
 `--dry-run` 是硬閘門：只做材料凍結／422 重生／gold 映射／可對映句計數，**不打 embedding**；
 全跑（打 embedding、寫 session 狀態）需要 `inputs/object-under-test.md` 核可欄非空。
 
@@ -162,6 +168,20 @@ class MaterialFreezeError(SystemExit):
         super().__init__(2)
 
 
+def _canon_sha(canon_path: str) -> str:
+    """材料凍結用的正本 sha：目錄 ⇒ `parse_canon_dir(...).canon_sha256`（九架全文 sha 串接再 sha，
+    與 `load_canon_or_die` 同一個值）；單檔 ⇒ 檔案位元組 sha（舊語義原封）。
+
+    ⚠️ 路徑不存在 ⇒ 與 `_load_canon_doc` 同一個 `MaterialFreezeError`（訊息說得出是哪個路徑），
+    ⛔ 不讓它落成 `sha256_file` 的裸 `FileNotFoundError`（那個 traceback 讀不出是 `--canon` 打錯）。
+    """
+    if os.path.isdir(canon_path):
+        return _load_canon_doc(canon_path).canon_sha256
+    if not os.path.isfile(canon_path):
+        raise MaterialFreezeError(f"--canon 指到的路徑不存在（既不是目錄也不是檔案）：{canon_path}")
+    return sha256_file(canon_path)
+
+
 def load_frozen_54(topics_path: str) -> list:
     """`topics-v2.json` 全部 `q`（遞迴收集，與判定 5 `_collect_q` 同一支）；回傳原始清單（保序、含重複）。"""
     doc = _load_json(topics_path)
@@ -176,7 +196,7 @@ def freeze_materials(canon_path: str, koyu_path: str, rule_path: str, topics_pat
     if not os.path.isdir(helpcenter_dir):
         raise MaterialFreezeError(f"--helpcenter-dir 不存在：{helpcenter_dir}")
 
-    canon_sha = sha256_file(canon_path)
+    canon_sha = _canon_sha(canon_path)
     koyu_sha = sha256_file(koyu_path)
     rule_sha = sha256_file(rule_path)
     topics_sha = sha256_file(topics_path)
@@ -640,7 +660,7 @@ def run_dry(args) -> int:
             print(f"  - {m}", file=sys.stderr)
         return 2
 
-    fines = _load_fines(canon_path)
+    fines = _load_fines(canon_path, getattr(args, "target_user", None))
 
     aliases = dict(DEFAULT_ALIASES)
     article_map = build_koyu_article_map(koyu_path, args.helpcenter_dir, fines, aliases)
@@ -677,13 +697,42 @@ def run_dry(args) -> int:
     return 0
 
 
-def _load_fines(canon_path: str):
+def _load_canon_doc(canon_path: str):
+    """`--canon` 指目錄 ⇒ `parse_canon_dir`；指單檔 ⇒ `parse_canon`。
+
+    兩者皆不存在 ⇒ **大聲失敗**（`MaterialFreezeError` → exit 2），⛔ 不靜默當成空母體
+    （打錯一個路徑就得到 0 細目、每條 recall 都是 0，那種綠是假的）。
+    """
     rag_root = _rag_root()
     if rag_root not in sys.path:
         sys.path.insert(0, rag_root)
-    from services.agent.canon.canon_parser import parse_canon  # noqa: E402
-    doc = parse_canon(canon_path)
-    return list(doc.fines())
+    from services.agent.canon.canon_parser import parse_canon, parse_canon_dir  # noqa: E402
+
+    if os.path.isdir(canon_path):
+        return parse_canon_dir(canon_path)
+    if os.path.isfile(canon_path):
+        return parse_canon(canon_path)
+    raise MaterialFreezeError(f"--canon 指到的路徑不存在（既不是目錄也不是檔案）：{canon_path}")
+
+
+def _load_fines(canon_path: str, target_user: str | None = None):
+    """細目清單；`target_user` 非空 ⇒ 只留 `fine.target_user` 含該值者（母體切法）。
+
+    ⚠️ ⛔ **不走 `canon_visible`**：那支還看 `reviewed_by` 與業態，會把「未審」也切掉，
+    而本工具要量的是檢索母體（未審細目一樣有標題與講法、一樣會被選中）。
+    篩完 0 條 ⇒ 大聲失敗（打錯值＝空母體＝假綠）。
+    """
+    doc = _load_canon_doc(canon_path)
+    fines = list(doc.fines())
+    if not target_user:
+        return fines
+    picked = [f for f in fines if target_user in f.target_user]
+    if not picked:
+        raise MaterialFreezeError(
+            f"--target-user {target_user!r} 篩完 0 條細目（母體 {len(fines)}）——"
+            "⛔ 不以空母體跑，請確認值域"
+        )
+    return picked
 
 
 # ---------------------------------------------------------------------------
@@ -718,7 +767,7 @@ def run_full(args) -> int:
             print(f"[index_eval] {m}", file=sys.stderr)
         return 2
 
-    fines = _load_fines(args.canon)
+    fines = _load_fines(args.canon, getattr(args, "target_user", None))
     aliases = dict(DEFAULT_ALIASES)
     article_map = build_koyu_article_map(args.koyu, args.helpcenter_dir, fines, aliases)
 
@@ -897,7 +946,10 @@ def render_report_md(report: dict) -> str:
 
 def build_arg_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    p.add_argument("--canon", default=os.path.join("rag-orchestrator", "canon", "prospect.md"))
+    p.add_argument("--canon", default=os.path.join("rag-orchestrator", "canon", "jgb"),
+                   help="正本：目錄（圖書館形態，parse_canon_dir）或單檔（舊形態，parse_canon）")
+    p.add_argument("--target-user", default=None,
+                   help="只留 fine.target_user 含此值的細目（母體切法；⛔ 不是可見性判定）")
     p.add_argument("--koyu", default=os.path.join(
         ".kiro", "specs", "presales-grounding-gate", "coverage-map", "sources", "koyu-v2-phrasings.json"))
     p.add_argument("--rule", default=os.path.join(

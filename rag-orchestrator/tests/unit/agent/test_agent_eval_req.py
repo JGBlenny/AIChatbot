@@ -26,6 +26,7 @@ from __future__ import annotations
 import hashlib
 import importlib
 import json
+import re
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -42,6 +43,35 @@ if str(_TOOLS_DIR) not in sys.path:
 agent_eval = importlib.import_module("agent_eval")
 
 pytestmark = pytest.mark.unit
+
+#: 計畫 9.10 S4：版控正本 515 條全未審（DSP-066：未審 ⇒ 模型不可見）⇒ `--candidates on`
+#: 對真正本永遠 `none_visible`，測不到「候選真的能命中」。造一份 `tmp_path` 下的
+#: 全審副本（⛔ 不動版控 `canon/`），透過 `AGENT_CANON_DIR`（僅 `DB_ENV=test` 生效）指向它。
+_CANON_DIR = _RAG_ROOT / "canon"
+_FINE_HEADING_RE = re.compile(r"^### .+\{#jgb/[A-Z]/[a-z0-9-]+\}\s*$", re.M)
+
+
+def _all_reviewed_canon_dir(tmp_path, name="all-reviewed-canon"):
+    from services.agent.canon.canon_parser import (
+        CANON_NAME, export_catalog, export_json, parse_canon_dir,
+    )
+
+    dst = tmp_path / name
+    shelf_dst = dst / CANON_NAME
+    shelf_dst.mkdir(parents=True)
+    for letter in "ABCDEFGHI":
+        text = (_CANON_DIR / CANON_NAME / f"{letter}.md").read_text(encoding="utf-8")
+        marked = _FINE_HEADING_RE.sub(
+            lambda m: m.group(0) + "\n- reviewed: {by: s4-measurement, at: 2026-09-23}",
+            text,
+        )
+        assert marked != text, f"{letter}.md 沒有任何細目被標 reviewed，注入沒生效"
+        (shelf_dst / f"{letter}.md").write_text(marked, encoding="utf-8")
+    doc = parse_canon_dir(str(shelf_dst))
+    assert all(f.reviewed_by is not None for f in doc.fines()), "仍有未審細目，注入失敗"
+    export_json(doc, str(dst / f"{CANON_NAME}.json"))
+    export_catalog(doc, str(shelf_dst / "CATALOG.md"))
+    return dst
 
 
 # ---------------------------------------------------------------------------
@@ -1055,16 +1085,32 @@ def test_candidates_off_every_row_has_no_candidate_mechanism(sample_root, tmp_pa
 
 
 @pytest.mark.req(_REQ_4_3)
-def test_candidates_on_hit_rows_have_bounded_candidate_ids_and_clean_report(sample_root, tmp_path):
+def test_candidates_on_hit_rows_have_bounded_candidate_ids_and_clean_report(
+    sample_root, tmp_path, monkeypatch,
+):
+    """計畫 9.10 S4：版控正本 515 條全未審 ⇒ `agent_eval.main` 走真正本時候選
+    必 `none_visible`，測不到「至少一列 hit」。改指向全審副本（⛔ 不動版控
+    `canon/`），`AGENT_CANON_DIR` 僅在 `DB_ENV=test` 生效。"""
+    from services.agent.canon.canon_assembler import reset_canon_registry
+
+    monkeypatch.setenv("DB_ENV", "test")
+    monkeypatch.setenv("AGENT_CANON_DIR", str(_all_reviewed_canon_dir(tmp_path)))
+    # `get_canon()` 是模組級單槽：前面任一條測試若已載過真正本（未審）並註冊，
+    # 這裡不重置就會沿用那份快取、env 覆寫形同虛設 ⇒ 顯式重置逼 `_resolve_prospect_canon`
+    # 重新走 `resolve_canon_dir()`（此刻已指到全審副本）。
+    reset_canon_registry()
     root, manifest_path = sample_root
     out_dir = tmp_path / "out_cand_on"
-    code = agent_eval.main(
-        [
-            "--set", "topics", "--out", str(out_dir),
-            "--provider", "fake", "--candidates", "on", "--limit", "3",
-            "--manifest", str(manifest_path), "--root", str(root),
-        ]
-    )
+    try:
+        code = agent_eval.main(
+            [
+                "--set", "topics", "--out", str(out_dir),
+                "--provider", "fake", "--candidates", "on", "--limit", "3",
+                "--manifest", str(manifest_path), "--root", str(root),
+            ]
+        )
+    finally:
+        reset_canon_registry()
     assert code == agent_eval.EXIT_OK
     rows = [json.loads(l) for l in (out_dir / "topics.jsonl").read_text(encoding="utf-8").strip().splitlines()]
     assert rows
@@ -1086,7 +1132,7 @@ def test_candidates_on_hit_rows_have_bounded_candidate_ids_and_clean_report(samp
 class _RaisingQueryBackend:
     """任務 4.3 §3.4-1 正對照 (a)：索引已 `prepare` 成功，但**查詢時**的後端
     呼叫一律 raise——`CandidateSelector._embed_query` 會接住並回 `None`，
-    走 `sel is None` 的降級路徑（`candidate_fallback_full_outline`）。"""
+    走 `sel is None` 的降級路徑（toc-only，violation `candidate_fallback_toc_only`）。"""
 
     async def embed(self, texts):
         raise RuntimeError("query embed failure（測試用，模擬後端在查詢時故障）")

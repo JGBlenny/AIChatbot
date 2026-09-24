@@ -1,0 +1,399 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "angle": {
+      "type": "string"
+    },
+    "coarses": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "enum": [
+              "A",
+              "B",
+              "C",
+              "D",
+              "E",
+              "F",
+              "G",
+              "H",
+              "I"
+            ],
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "fines": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "coarse_id": {
+            "enum": [
+              "A",
+              "B",
+              "C",
+              "D",
+              "E",
+              "F",
+              "G",
+              "H",
+              "I"
+            ],
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "merge_of": {
+            "items": {
+              "enum": [
+                "tmp:canon:jgb/B/owner-report-collection-remit",
+                "tmp:canon:jgb/B/role-permission-granularity",
+                "tmp:canon:jgb/B/team-management-overview",
+                "tmp:canon:jgb/B/what-is-owner-landlord",
+                "tmp:kb:2980",
+                "tmp:kb:3084",
+                "tmp:kb:3085",
+                "tmp:kb:3086",
+                "tmp:kb:3087",
+                "tmp:kb:3088",
+                "tmp:kb:3091",
+                "tmp:kb:3092",
+                "tmp:kb:3094",
+                "tmp:kb:3095",
+                "tmp:kb:3096",
+                "tmp:kb:3254",
+                "tmp:kb:3255",
+                "tmp:kb:3303",
+                "tmp:kb:3304",
+                "tmp:kb:3305",
+                "tmp:kb:3306",
+                "tmp:kb:3307",
+                "tmp:kb:3308",
+                "tmp:kb:3309",
+                "tmp:kb:3310",
+                "tmp:kb:3312",
+                "tmp:kb:3326",
+                "tmp:kb:3359",
+                "tmp:kb:3360",
+                "tmp:kb:3438",
+                "tmp:kb:3439",
+                "tmp:kb:3463",
+                "tmp:kb:3464",
+                "tmp:kb:3465",
+                "tmp:kb:3467",
+                "tmp:kb:3480",
+                "tmp:kb:3482",
+                "tmp:kb:3543",
+                "tmp:kb:3544",
+                "tmp:kb:3545",
+                "tmp:kb:3546",
+                "tmp:kb:3547",
+                "tmp:kb:3974",
+                "tmp:kb:3981",
+                "tmp:kb:3982",
+                "tmp:kb:4224",
+                "tmp:kb:4250",
+                "tmp:kb:4251",
+                "tmp:kb:4272",
+                "tmp:draft:1"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "moved_from": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "op": {
+            "enum": [
+              "keep",
+              "split",
+              "merge",
+              "move",
+              "new"
+            ],
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "split_from": {
+            "items": {
+              "enum": [
+                "tmp:canon:jgb/B/owner-report-collection-remit",
+                "tmp:canon:jgb/B/role-permission-granularity",
+                "tmp:canon:jgb/B/team-management-overview",
+                "tmp:canon:jgb/B/what-is-owner-landlord",
+                "tmp:kb:2980",
+                "tmp:kb:3084",
+                "tmp:kb:3085",
+                "tmp:kb:3086",
+                "tmp:kb:3087",
+                "tmp:kb:3088",
+                "tmp:kb:3091",
+                "tmp:kb:3092",
+                "tmp:kb:3094",
+                "tmp:kb:3095",
+                "tmp:kb:3096",
+                "tmp:kb:3254",
+                "tmp:kb:3255",
+                "tmp:kb:3303",
+                "tmp:kb:3304",
+                "tmp:kb:3305",
+                "tmp:kb:3306",
+                "tmp:kb:3307",
+                "tmp:kb:3308",
+                "tmp:kb:3309",
+                "tmp:kb:3310",
+                "tmp:kb:3312",
+                "tmp:kb:3326",
+                "tmp:kb:3359",
+                "tmp:kb:3360",
+                "tmp:kb:3438",
+                "tmp:kb:3439",
+                "tmp:kb:3463",
+                "tmp:kb:3464",
+                "tmp:kb:3465",
+                "tmp:kb:3467",
+                "tmp:kb:3480",
+                "tmp:kb:3482",
+                "tmp:kb:3543",
+                "tmp:kb:3544",
+                "tmp:kb:3545",
+                "tmp:kb:3546",
+                "tmp:kb:3547",
+                "tmp:kb:3974",
+                "tmp:kb:3981",
+                "tmp:kb:3982",
+                "tmp:kb:4224",
+                "tmp:kb:4250",
+                "tmp:kb:4251",
+                "tmp:kb:4272",
+                "tmp:draft:1"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "target_user": {
+            "items": {
+              "enum": [
+                "prospect",
+                "property_manager"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "coarse_id",
+          "title",
+          "slug",
+          "merge_of",
+          "split_from",
+          "moved_from",
+          "reason",
+          "target_user",
+          "op"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "id_map": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "new": {
+            "type": "string"
+          },
+          "old": {
+            "anyOf": [
+              {
+                "enum": [
+                  "tmp:canon:jgb/B/owner-report-collection-remit",
+                  "tmp:canon:jgb/B/role-permission-granularity",
+                  "tmp:canon:jgb/B/team-management-overview",
+                  "tmp:canon:jgb/B/what-is-owner-landlord",
+                  "tmp:kb:2980",
+                  "tmp:kb:3084",
+                  "tmp:kb:3085",
+                  "tmp:kb:3086",
+                  "tmp:kb:3087",
+                  "tmp:kb:3088",
+                  "tmp:kb:3091",
+                  "tmp:kb:3092",
+                  "tmp:kb:3094",
+                  "tmp:kb:3095",
+                  "tmp:kb:3096",
+                  "tmp:kb:3254",
+                  "tmp:kb:3255",
+                  "tmp:kb:3303",
+                  "tmp:kb:3304",
+                  "tmp:kb:3305",
+                  "tmp:kb:3306",
+                  "tmp:kb:3307",
+                  "tmp:kb:3308",
+                  "tmp:kb:3309",
+                  "tmp:kb:3310",
+                  "tmp:kb:3312",
+                  "tmp:kb:3326",
+                  "tmp:kb:3359",
+                  "tmp:kb:3360",
+                  "tmp:kb:3438",
+                  "tmp:kb:3439",
+                  "tmp:kb:3463",
+                  "tmp:kb:3464",
+                  "tmp:kb:3465",
+                  "tmp:kb:3467",
+                  "tmp:kb:3480",
+                  "tmp:kb:3482",
+                  "tmp:kb:3543",
+                  "tmp:kb:3544",
+                  "tmp:kb:3545",
+                  "tmp:kb:3546",
+                  "tmp:kb:3547",
+                  "tmp:kb:3974",
+                  "tmp:kb:3981",
+                  "tmp:kb:3982",
+                  "tmp:kb:4224",
+                  "tmp:kb:4250",
+                  "tmp:kb:4251",
+                  "tmp:kb:4272",
+                  "tmp:draft:1"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "op": {
+            "enum": [
+              "keep",
+              "split",
+              "merge",
+              "move",
+              "new"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "old",
+          "new",
+          "op"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "out_of_shelf": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "enum": [
+              "tmp:canon:jgb/B/owner-report-collection-remit",
+              "tmp:canon:jgb/B/role-permission-granularity",
+              "tmp:canon:jgb/B/team-management-overview",
+              "tmp:canon:jgb/B/what-is-owner-landlord",
+              "tmp:kb:2980",
+              "tmp:kb:3084",
+              "tmp:kb:3085",
+              "tmp:kb:3086",
+              "tmp:kb:3087",
+              "tmp:kb:3088",
+              "tmp:kb:3091",
+              "tmp:kb:3092",
+              "tmp:kb:3094",
+              "tmp:kb:3095",
+              "tmp:kb:3096",
+              "tmp:kb:3254",
+              "tmp:kb:3255",
+              "tmp:kb:3303",
+              "tmp:kb:3304",
+              "tmp:kb:3305",
+              "tmp:kb:3306",
+              "tmp:kb:3307",
+              "tmp:kb:3308",
+              "tmp:kb:3309",
+              "tmp:kb:3310",
+              "tmp:kb:3312",
+              "tmp:kb:3326",
+              "tmp:kb:3359",
+              "tmp:kb:3360",
+              "tmp:kb:3438",
+              "tmp:kb:3439",
+              "tmp:kb:3463",
+              "tmp:kb:3464",
+              "tmp:kb:3465",
+              "tmp:kb:3467",
+              "tmp:kb:3480",
+              "tmp:kb:3482",
+              "tmp:kb:3543",
+              "tmp:kb:3544",
+              "tmp:kb:3545",
+              "tmp:kb:3546",
+              "tmp:kb:3547",
+              "tmp:kb:3974",
+              "tmp:kb:3981",
+              "tmp:kb:3982",
+              "tmp:kb:4224",
+              "tmp:kb:4250",
+              "tmp:kb:4251",
+              "tmp:kb:4272",
+              "tmp:draft:1"
+            ],
+            "type": "string"
+          },
+          "suggested_shelf": {
+            "type": "string"
+          },
+          "why": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "suggested_shelf",
+          "why"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "angle",
+    "coarses",
+    "fines",
+    "id_map",
+    "out_of_shelf"
+  ],
+  "type": "object"
+}

@@ -259,7 +259,7 @@ Content-Type: application/json
 Request:
 { "document_type": "contract", "total_pages": 12, "pages": [ {…DocuMind 頁…} ],
   "needs_review": true, "review_item_id": "9856…", "stats": {"estimated_cost": 0.11},
-  "vendor_id": 1, "role_id": "20151", "user_id": "12291", "mode": "b2c", "target_user": "landlord",
+  "vendor_id": 1, "role_id": "20151", "user_id": "12291", "mode": "b2c", "target_user": "tenant",
   "session_id": "backtest_session_ocr_demo01" }
 
 Response 200:

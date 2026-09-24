@@ -555,7 +555,7 @@ async def test_registry_round_trip_and_reset():
 
 def test_register_index_rejects_unknown_audience():
     with pytest.raises(ValueError):
-        register_index("landlord", FineIndex(_FakeBackend()))
+        register_index("not_an_audience", FineIndex(_FakeBackend()))
     # 正對照：合法受眾確實收得下（不是每個值都被擋）
     register_index("tenant", FineIndex(_FakeBackend()))
     assert get_index("tenant") is not None

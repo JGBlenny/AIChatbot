@@ -1,0 +1,435 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "angle": {
+      "type": "string"
+    },
+    "coarses": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "enum": [
+              "A",
+              "B",
+              "C",
+              "D",
+              "E",
+              "F",
+              "G",
+              "H",
+              "I"
+            ],
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "fines": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "coarse_id": {
+            "enum": [
+              "A",
+              "B",
+              "C",
+              "D",
+              "E",
+              "F",
+              "G",
+              "H",
+              "I"
+            ],
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "merge_of": {
+            "items": {
+              "enum": [
+                "tmp:canon:jgb/C/community-batch-create",
+                "tmp:canon:jgb/C/property-management-overview",
+                "tmp:canon:jgb/C/property-status-meaning",
+                "tmp:canon:jgb/C/rental-storefront-vr",
+                "tmp:kb:1396",
+                "tmp:kb:2980",
+                "tmp:kb:3011",
+                "tmp:kb:3049",
+                "tmp:kb:3050",
+                "tmp:kb:3051",
+                "tmp:kb:3052",
+                "tmp:kb:3053",
+                "tmp:kb:3054",
+                "tmp:kb:3055",
+                "tmp:kb:3056",
+                "tmp:kb:3057",
+                "tmp:kb:3058",
+                "tmp:kb:3059",
+                "tmp:kb:3060",
+                "tmp:kb:3061",
+                "tmp:kb:3062",
+                "tmp:kb:3063",
+                "tmp:kb:3064",
+                "tmp:kb:3157",
+                "tmp:kb:3245",
+                "tmp:kb:3246",
+                "tmp:kb:3247",
+                "tmp:kb:3248",
+                "tmp:kb:3249",
+                "tmp:kb:3263",
+                "tmp:kb:3299",
+                "tmp:kb:3300",
+                "tmp:kb:3357",
+                "tmp:kb:3358",
+                "tmp:kb:3428",
+                "tmp:kb:3429",
+                "tmp:kb:3430",
+                "tmp:kb:3431",
+                "tmp:kb:3433",
+                "tmp:kb:3434",
+                "tmp:kb:3456",
+                "tmp:kb:3468",
+                "tmp:kb:3469",
+                "tmp:kb:3470",
+                "tmp:kb:3505",
+                "tmp:kb:3506",
+                "tmp:kb:3973",
+                "tmp:kb:4145",
+                "tmp:kb:4146",
+                "tmp:kb:4147",
+                "tmp:kb:4151",
+                "tmp:kb:4152",
+                "tmp:kb:4154",
+                "tmp:kb:4262",
+                "tmp:kb:4272",
+                "tmp:kb:4276",
+                "tmp:kb:4648",
+                "tmp:draft:1",
+                "tmp:draft:2"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "moved_from": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "op": {
+            "enum": [
+              "keep",
+              "split",
+              "merge",
+              "move",
+              "new"
+            ],
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "split_from": {
+            "items": {
+              "enum": [
+                "tmp:canon:jgb/C/community-batch-create",
+                "tmp:canon:jgb/C/property-management-overview",
+                "tmp:canon:jgb/C/property-status-meaning",
+                "tmp:canon:jgb/C/rental-storefront-vr",
+                "tmp:kb:1396",
+                "tmp:kb:2980",
+                "tmp:kb:3011",
+                "tmp:kb:3049",
+                "tmp:kb:3050",
+                "tmp:kb:3051",
+                "tmp:kb:3052",
+                "tmp:kb:3053",
+                "tmp:kb:3054",
+                "tmp:kb:3055",
+                "tmp:kb:3056",
+                "tmp:kb:3057",
+                "tmp:kb:3058",
+                "tmp:kb:3059",
+                "tmp:kb:3060",
+                "tmp:kb:3061",
+                "tmp:kb:3062",
+                "tmp:kb:3063",
+                "tmp:kb:3064",
+                "tmp:kb:3157",
+                "tmp:kb:3245",
+                "tmp:kb:3246",
+                "tmp:kb:3247",
+                "tmp:kb:3248",
+                "tmp:kb:3249",
+                "tmp:kb:3263",
+                "tmp:kb:3299",
+                "tmp:kb:3300",
+                "tmp:kb:3357",
+                "tmp:kb:3358",
+                "tmp:kb:3428",
+                "tmp:kb:3429",
+                "tmp:kb:3430",
+                "tmp:kb:3431",
+                "tmp:kb:3433",
+                "tmp:kb:3434",
+                "tmp:kb:3456",
+                "tmp:kb:3468",
+                "tmp:kb:3469",
+                "tmp:kb:3470",
+                "tmp:kb:3505",
+                "tmp:kb:3506",
+                "tmp:kb:3973",
+                "tmp:kb:4145",
+                "tmp:kb:4146",
+                "tmp:kb:4147",
+                "tmp:kb:4151",
+                "tmp:kb:4152",
+                "tmp:kb:4154",
+                "tmp:kb:4262",
+                "tmp:kb:4272",
+                "tmp:kb:4276",
+                "tmp:kb:4648",
+                "tmp:draft:1",
+                "tmp:draft:2"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "target_user": {
+            "items": {
+              "enum": [
+                "prospect",
+                "property_manager"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "coarse_id",
+          "title",
+          "slug",
+          "merge_of",
+          "split_from",
+          "moved_from",
+          "reason",
+          "target_user",
+          "op"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "id_map": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "new": {
+            "type": "string"
+          },
+          "old": {
+            "anyOf": [
+              {
+                "enum": [
+                  "tmp:canon:jgb/C/community-batch-create",
+                  "tmp:canon:jgb/C/property-management-overview",
+                  "tmp:canon:jgb/C/property-status-meaning",
+                  "tmp:canon:jgb/C/rental-storefront-vr",
+                  "tmp:kb:1396",
+                  "tmp:kb:2980",
+                  "tmp:kb:3011",
+                  "tmp:kb:3049",
+                  "tmp:kb:3050",
+                  "tmp:kb:3051",
+                  "tmp:kb:3052",
+                  "tmp:kb:3053",
+                  "tmp:kb:3054",
+                  "tmp:kb:3055",
+                  "tmp:kb:3056",
+                  "tmp:kb:3057",
+                  "tmp:kb:3058",
+                  "tmp:kb:3059",
+                  "tmp:kb:3060",
+                  "tmp:kb:3061",
+                  "tmp:kb:3062",
+                  "tmp:kb:3063",
+                  "tmp:kb:3064",
+                  "tmp:kb:3157",
+                  "tmp:kb:3245",
+                  "tmp:kb:3246",
+                  "tmp:kb:3247",
+                  "tmp:kb:3248",
+                  "tmp:kb:3249",
+                  "tmp:kb:3263",
+                  "tmp:kb:3299",
+                  "tmp:kb:3300",
+                  "tmp:kb:3357",
+                  "tmp:kb:3358",
+                  "tmp:kb:3428",
+                  "tmp:kb:3429",
+                  "tmp:kb:3430",
+                  "tmp:kb:3431",
+                  "tmp:kb:3433",
+                  "tmp:kb:3434",
+                  "tmp:kb:3456",
+                  "tmp:kb:3468",
+                  "tmp:kb:3469",
+                  "tmp:kb:3470",
+                  "tmp:kb:3505",
+                  "tmp:kb:3506",
+                  "tmp:kb:3973",
+                  "tmp:kb:4145",
+                  "tmp:kb:4146",
+                  "tmp:kb:4147",
+                  "tmp:kb:4151",
+                  "tmp:kb:4152",
+                  "tmp:kb:4154",
+                  "tmp:kb:4262",
+                  "tmp:kb:4272",
+                  "tmp:kb:4276",
+                  "tmp:kb:4648",
+                  "tmp:draft:1",
+                  "tmp:draft:2"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "op": {
+            "enum": [
+              "keep",
+              "split",
+              "merge",
+              "move",
+              "new"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "old",
+          "new",
+          "op"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "out_of_shelf": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "enum": [
+              "tmp:canon:jgb/C/community-batch-create",
+              "tmp:canon:jgb/C/property-management-overview",
+              "tmp:canon:jgb/C/property-status-meaning",
+              "tmp:canon:jgb/C/rental-storefront-vr",
+              "tmp:kb:1396",
+              "tmp:kb:2980",
+              "tmp:kb:3011",
+              "tmp:kb:3049",
+              "tmp:kb:3050",
+              "tmp:kb:3051",
+              "tmp:kb:3052",
+              "tmp:kb:3053",
+              "tmp:kb:3054",
+              "tmp:kb:3055",
+              "tmp:kb:3056",
+              "tmp:kb:3057",
+              "tmp:kb:3058",
+              "tmp:kb:3059",
+              "tmp:kb:3060",
+              "tmp:kb:3061",
+              "tmp:kb:3062",
+              "tmp:kb:3063",
+              "tmp:kb:3064",
+              "tmp:kb:3157",
+              "tmp:kb:3245",
+              "tmp:kb:3246",
+              "tmp:kb:3247",
+              "tmp:kb:3248",
+              "tmp:kb:3249",
+              "tmp:kb:3263",
+              "tmp:kb:3299",
+              "tmp:kb:3300",
+              "tmp:kb:3357",
+              "tmp:kb:3358",
+              "tmp:kb:3428",
+              "tmp:kb:3429",
+              "tmp:kb:3430",
+              "tmp:kb:3431",
+              "tmp:kb:3433",
+              "tmp:kb:3434",
+              "tmp:kb:3456",
+              "tmp:kb:3468",
+              "tmp:kb:3469",
+              "tmp:kb:3470",
+              "tmp:kb:3505",
+              "tmp:kb:3506",
+              "tmp:kb:3973",
+              "tmp:kb:4145",
+              "tmp:kb:4146",
+              "tmp:kb:4147",
+              "tmp:kb:4151",
+              "tmp:kb:4152",
+              "tmp:kb:4154",
+              "tmp:kb:4262",
+              "tmp:kb:4272",
+              "tmp:kb:4276",
+              "tmp:kb:4648",
+              "tmp:draft:1",
+              "tmp:draft:2"
+            ],
+            "type": "string"
+          },
+          "suggested_shelf": {
+            "type": "string"
+          },
+          "why": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "suggested_shelf",
+          "why"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "angle",
+    "coarses",
+    "fines",
+    "id_map",
+    "out_of_shelf"
+  ],
+  "type": "object"
+}

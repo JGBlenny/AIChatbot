@@ -1,0 +1,1756 @@
+{
+ "_meta": {
+  "scope": "產品功能面分母（DSP-064，兩身分共用）",
+  "source_surface_jgb2_sha": "b2ee2ac382ce06763798a7238e4fd5c9411fcfaa",
+  "kinds": [
+   "action",
+   "help"
+  ],
+  "n_cells": 290,
+  "states": {
+   "NOT_MEASURED": "尚未跑系統量測"
+  }
+ },
+ "cells": [
+  {
+   "id": "F001",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F002",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F003",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F004",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F005",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F006",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F007",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F008",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F009",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F010",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F011",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F012",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F013",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F014",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F015",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F016",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F017",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F018",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F019",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F020",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F021",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F022",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F023",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F024",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F025",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F026",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F027",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F028",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F029",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F030",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F031",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F032",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F033",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F034",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F035",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F036",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F037",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F038",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F039",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F040",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F041",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F042",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F043",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F044",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F045",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F046",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F047",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F048",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F049",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F050",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F051",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F052",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F053",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F054",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F055",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F056",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F057",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F058",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F059",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F060",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F061",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F062",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F063",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F064",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F065",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F066",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F067",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F068",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F069",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F070",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F071",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F072",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F073",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F074",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F075",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F076",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F077",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F078",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F079",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F080",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F081",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F082",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F083",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F084",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F085",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F086",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F087",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F088",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F089",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F090",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F091",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F092",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F093",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F094",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F095",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F096",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F097",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F098",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F099",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F100",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F101",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F102",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F103",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F104",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F105",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F106",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F107",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F108",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F109",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F110",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F111",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F112",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F113",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F114",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F115",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F116",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F117",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F118",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F119",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F120",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F121",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F122",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F123",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F124",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F125",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F126",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F127",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F128",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F129",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F130",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F131",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F132",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F133",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F134",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F135",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F136",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F137",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F138",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F139",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F140",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F141",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F142",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F143",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F144",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F145",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F146",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F147",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F148",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F149",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F150",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F151",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F152",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F153",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F154",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F155",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F156",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F157",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F158",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F159",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F160",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F161",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F162",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F163",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F164",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F165",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F166",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F167",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F168",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F169",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F170",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F171",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F172",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F173",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F174",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F175",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F176",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F177",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F178",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F179",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F180",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F181",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F182",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F183",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F184",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F185",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F186",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F187",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F188",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F189",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F190",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F191",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F192",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F193",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F194",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F195",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F196",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F197",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F198",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F199",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F200",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F201",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F202",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F203",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F204",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F205",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F206",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F207",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F208",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F209",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F210",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F211",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F212",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F213",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F214",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F215",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F216",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F217",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F218",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F219",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F220",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F221",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F222",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F223",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F224",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F225",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F226",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F227",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F228",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F229",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F230",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F231",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F232",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F233",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F234",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F235",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F236",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F237",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F238",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F239",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F240",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F241",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F242",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F243",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F244",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F245",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F246",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F247",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F248",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F249",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F250",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F251",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F252",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F253",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F254",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F255",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F256",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F257",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F258",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F259",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F260",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F261",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F262",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F263",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F264",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F265",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F266",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F267",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F268",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F269",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F270",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F271",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F272",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F273",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F274",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F275",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F276",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F277",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F278",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F279",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F280",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F281",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F282",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F283",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F284",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F285",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F286",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F287",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F288",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F289",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  },
+  {
+   "id": "F290",
+   "cause_state": "NOT_MEASURED",
+   "entry_state": "",
+   "coverage": ""
+  }
+ ]
+}

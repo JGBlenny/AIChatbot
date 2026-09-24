@@ -21,7 +21,7 @@ import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _envelope import find_repo_root, load_schema, make_envelope, sha256_file, update_state, validate, write_json  # noqa: E402
+from _envelope import find_repo_root, load_schema, make_envelope, sha256_path, update_state, validate, write_json  # noqa: E402
 
 SKILL_VERSION = "0.1.0"
 _SCHEMA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "schemas", "diff-report.json")
@@ -41,7 +41,20 @@ def _headings(text: str, pattern: re.Pattern) -> dict:
     return {m.group(2): m.group(1) for m in pattern.finditer(text)}
 
 
+#: 圖書館正本目錄的衍生檔（⛔ 不當正本讀）——與 canon_parser.SHELF_DERIVED_OK 同值，這裡不額外
+#: import services 只為了兩個常數，直接複寫同值（有測試釘住兩邊同值，見 test_canon_parser_req）。
+_SHELF_DERIVED_OK = ("CATALOG.md", "README.md")
+
+
 def _read_text(path: str) -> str:
+    """單檔照讀；目錄（9.6 S4：圖書館正本）＝依檔名字母序串接目錄下除衍生檔外的所有 .md（A.md…I.md）。"""
+    if os.path.isdir(path):
+        parts = []
+        for name in sorted(os.listdir(path)):
+            if name.endswith(".md") and name not in _SHELF_DERIVED_OK:
+                with open(os.path.join(path, name), encoding="utf-8") as f:
+                    parts.append(f.read())
+        return "\n".join(parts)
     with open(path, encoding="utf-8") as f:
         return f.read()
 
@@ -112,14 +125,14 @@ def main() -> int:
         return 2
 
     new_text = _read_text(args.new_canon)
-    old_text = _read_text(args.old_canon) if args.old_canon and os.path.isfile(args.old_canon) else None
+    old_text = _read_text(args.old_canon) if args.old_canon and (os.path.isfile(args.old_canon) or os.path.isdir(args.old_canon)) else None
 
     diff = structure_diff(old_text, new_text)
     replacements = build_replacements(id_map)
 
-    inputs_sha = {"new_canon": sha256_file(args.new_canon)}
-    if args.old_canon and os.path.isfile(args.old_canon):
-        inputs_sha["old_canon"] = sha256_file(args.old_canon)
+    inputs_sha = {"new_canon": sha256_path(args.new_canon)}
+    if args.old_canon and (os.path.isfile(args.old_canon) or os.path.isdir(args.old_canon)):
+        inputs_sha["old_canon"] = sha256_path(args.old_canon)
     else:
         inputs_sha["old_canon"] = None
 

@@ -184,14 +184,22 @@ def _runtime(provider, *, registry=None, verifier=None, budget=None, assembler=N
     )
 
 
-def _app(*, runtime=None, engine=None, outline=None, resolver=None):
+#: 9.8 DSP-059 D′ S2：`_outline_for_audience` 只認 `app.state.agent_audiences`
+#: （沒有預組大綱物件可塞了）——`_app` 預設把 prospect 標成就緒，絕大多數既有
+#: 測試都用預設 prospect 身分、不關心大綱本身。要測「這個受眾不可服務」的案例
+#: 改傳 `audiences=frozenset()`（或不含該受眾的集合）。
+_DEFAULT_TEST_AUDIENCES = frozenset({"prospect"})
+
+
+def _app(*, runtime=None, engine=None, resolver=None, audiences=None):
     state = SimpleNamespace()
     if runtime is not None:
         state.agent_runtime = runtime
     if engine is not None:
         state.agent_session_store = engine
-    if outline is not None:
-        state.agent_outline = outline
+    state.agent_audiences = (
+        audiences if audiences is not None else _DEFAULT_TEST_AUDIENCES
+    )
     if resolver is not None:
         state.outline_resolver = resolver
     return SimpleNamespace(state=state)
@@ -485,22 +493,64 @@ async def test_second_turn_sees_first_turn_state():
 
 
 @pytest.mark.req(_SPEC)
-async def test_outline_is_injected_for_the_turn_but_never_persisted():
-    """大綱進場前塞、存檔前 pop——⛔ 不得序列化進 `form_sessions.collected_data`。
-
-    這裡刻意用一個**不可 json 序列化**的假大綱物件：它若漏進 state，
-    `FakeEngine._save` 的 json 往返會當場炸（那正是真表 jsonb 會做的事）。
+async def test_outline_never_touches_persisted_state():
+    """9.8 DSP-059 D′ S2（F8）：大綱不再經過 `agent_state`——`_select_outline`
+    每回合直接從已註冊的正本現組候選節，⛔ 沒有「進場前塞、存檔前 pop」這個
+    步驟可測了。改驗兩件事：① assembler 真的收到一個 `CandidateOutlineDoc`
+    （正本現組不是空跑，不是恆為 `None`）；② 存進 `form_sessions` 的 state
+    完全沒有 `outline` 鍵（`FakeEngine.save` 的 json 往返若曾經塞進一個
+    pydantic 物件會當場炸，這裡驗的是它壓根沒機會被塞）。
     """
-    engine = FakeEngine()
-    assembler = FakeAssembler()
-    outline = SimpleNamespace(sha256="outline-sha", text="大綱本文")
-    runtime = _runtime(FakeProvider([_final_response(answer="好的。")]), assembler=assembler)
-    deps = _deps(_app(runtime=runtime, engine=engine, outline=outline))
+    from services.agent.canon.canon_assembler import register_canon, reset_canon_registry
+    from services.agent.canon.canon_parser import parse_canon_text
+    from services.agent.canon.candidate_selector import CandidateSelector
+    from services.agent.canon.fine_index import FineIndex, register_index, reset_index_registry
+    from services.agent.outline import CandidateOutlineDoc
 
-    result = await _call_agent_turn(_registry_with_agent_turn(deps), _identity(), "問題")
+    front = (
+        "---\naudience: prospect\nversion: v1\nreviewers: [t]\nlanguage: zh-TW\n"
+        "budget_tokens: 1000\ntarget_user: [prospect]\nbusiness_types: [system_provider]\n"
+        "---\n## 合成粗目 {#A}\n"
+    )
+    fine = (
+        "### 標題ZZOUTLINE {#prospect/A/x}\n"
+        "- sources: [kb:1]\n- target_user: [prospect]\n- business_types: [system_provider]\n"
+        "- reviewed: {by: test, at: 2026-09-07}\n- instance_applicability: general\n"
+        "內容ZZOUTLINE\n"
+    )
+    doc = parse_canon_text(front + fine)
+    reset_canon_registry()
+    reset_index_registry()
+    register_canon(doc)
+    try:
+        class _Backend:
+            async def embed(self, texts):
+                return [[1.0, 0.0] for _ in texts]
 
-    assert result.ok is True, result.error
-    assert assembler.last_outline is outline, "回合內模型組 prompt 時要拿得到大綱"
+        index = FineIndex(_Backend())
+        await index.prepare(doc)
+        register_index("prospect", index)
+        selector = CandidateSelector(index)
+
+        engine = FakeEngine()
+        assembler = FakeAssembler()
+        runtime = AgentRuntime(
+            FakeProvider([_final_response(answer="好的。")]), ToolRegistry(), FakeVerifier(),
+            assembler, Budget(), stage="M1", candidate_selector=selector,
+        )
+        deps = _deps(_app(runtime=runtime, engine=engine))
+
+        result = await _call_agent_turn(_registry_with_agent_turn(deps), _identity(), "問題")
+
+        assert result.ok is True, result.error
+        assert isinstance(assembler.last_outline, CandidateOutlineDoc), (
+            "回合內模型組 prompt 時要拿得到正本現組的候選大綱")
+        key = f"mcp:{API_KEY_ID}:{VENDOR_A}:{SESSION}"
+        saved_agent_state = engine.rows[key]["agent"]
+        assert "outline" not in saved_agent_state
+    finally:
+        reset_canon_registry()
+        reset_index_registry()
     key = f"mcp:{API_KEY_ID}:{VENDOR_A}:{SESSION}"
     assert "outline" not in engine.rows[key]["agent"]
     assert "outline-sha" not in json.dumps(engine.rows[key], ensure_ascii=False)

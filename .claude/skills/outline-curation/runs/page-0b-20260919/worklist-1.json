@@ -1,0 +1,476 @@
+{
+ "batch": "1",
+ "shelves": [
+  "A",
+  "B",
+  "G",
+  "H",
+  "I"
+ ],
+ "units": [
+  {
+   "unit_id": "page:bigLandlords.index",
+   "kind": "spa",
+   "label": "bigLandlords.index",
+   "path": "/bigLandlords",
+   "component": "bigLandlords/Index.jsx",
+   "shelf": "B"
+  },
+  {
+   "unit_id": "page:bigLandlords.list",
+   "kind": "spa",
+   "label": "bigLandlords.list",
+   "path": "/bigLandlords/list",
+   "component": "bigLandlords/list/Index.jsx",
+   "shelf": "B"
+  },
+  {
+   "unit_id": "page:bigLandlords.report",
+   "kind": "spa",
+   "label": "bigLandlords.report",
+   "path": "/bigLandlords/report",
+   "component": "bigLandlords/report/Index.vue",
+   "shelf": "B"
+  },
+  {
+   "unit_id": "page:bigLandlords.sheet",
+   "kind": "spa",
+   "label": "bigLandlords.sheet",
+   "path": "/bigLandlords/sheet/:bigLandlord_id/:role_id?",
+   "component": "bigLandlords/sheet/index.vue",
+   "shelf": "B"
+  },
+  {
+   "unit_id": "page:controlPanel.index",
+   "kind": "spa",
+   "label": "controlPanel.index",
+   "path": "/controlPanel",
+   "component": "control-panel/Index.vue",
+   "shelf": "I"
+  },
+  {
+   "unit_id": "page:controlPanel.setting",
+   "kind": "spa",
+   "label": "controlPanel.setting",
+   "path": "/controlPanel/setting",
+   "component": "control-panel/setting/Index.jsx",
+   "shelf": "I"
+  },
+  {
+   "unit_id": "page:listings.demoForm",
+   "kind": "spa",
+   "label": "listings.demoForm",
+   "path": "/demo-form",
+   "component": "listings/DemoForm.vue",
+   "shelf": "I"
+  },
+  {
+   "unit_id": "page:listings.helpCenter",
+   "kind": "spa",
+   "label": "listings.helpCenter",
+   "path": "/help",
+   "component": "help-center/Index.vue",
+   "shelf": "H"
+  },
+  {
+   "unit_id": "page:listings.helpCenter.group",
+   "kind": "spa",
+   "label": "listings.helpCenter.group",
+   "path": "group/:slug?",
+   "component": "help-center/Group.vue",
+   "shelf": "H"
+  },
+  {
+   "unit_id": "page:listings.helpCenter.post",
+   "kind": "spa",
+   "label": "listings.helpCenter.post",
+   "path": "post/:slug?",
+   "component": "help-center/Post.vue",
+   "shelf": "H"
+  },
+  {
+   "unit_id": "page:listings.helpCenter.search",
+   "kind": "spa",
+   "label": "listings.helpCenter.search",
+   "path": "search",
+   "component": "help-center/Search.vue",
+   "shelf": "H"
+  },
+  {
+   "unit_id": "page:listings.pricing",
+   "kind": "spa",
+   "label": "listings.pricing",
+   "path": "/pricing",
+   "component": "listings/pricing/Index.vue",
+   "shelf": "I"
+  },
+  {
+   "unit_id": "page:listings.pricing.TrialPlan",
+   "kind": "spa",
+   "label": "listings.pricing.TrialPlan",
+   "path": "/pricing/trial-plan",
+   "component": "listings/pricing/TrialPlan.vue",
+   "shelf": "I"
+  },
+  {
+   "unit_id": "page:notificationMail",
+   "kind": "spa",
+   "label": "notificationMail",
+   "path": "notificationMail",
+   "component": "control-panel/notificationMail/Index.jsx",
+   "shelf": "I"
+  },
+  {
+   "unit_id": "page:powerMeter.list",
+   "kind": "spa",
+   "label": "powerMeter.list",
+   "path": ":type",
+   "component": "iots/list/Index.jsx",
+   "shelf": "G"
+  },
+  {
+   "unit_id": "page:powerMeter.single",
+   "kind": "spa",
+   "label": "powerMeter.single",
+   "path": "single/:iotId",
+   "component": "iots/_parts/Single.vue",
+   "shelf": "G"
+  },
+  {
+   "unit_id": "page:taskManagement",
+   "kind": "spa",
+   "label": "taskManagement",
+   "path": "taskManagement",
+   "component": "control-panel/taskManagement/Index.vue",
+   "shelf": "I"
+  },
+  {
+   "unit_id": "page:taskManagement.create",
+   "kind": "spa",
+   "label": "taskManagement.create",
+   "path": "taskManagement/create",
+   "component": "control-panel/taskManagement/edit/Index.jsx",
+   "shelf": "I"
+  },
+  {
+   "unit_id": "page:taskManagement.edit",
+   "kind": "spa",
+   "label": "taskManagement.edit",
+   "path": "taskManagement/edit/:id?",
+   "component": "control-panel/taskManagement/edit/Index.jsx",
+   "shelf": "I"
+  },
+  {
+   "unit_id": "page:tools.unlock",
+   "kind": "spa",
+   "label": "tools.unlock",
+   "path": "/unlock/:iotId/:batch",
+   "component": "tools/unlock/Index.vue",
+   "shelf": "I"
+  },
+  {
+   "unit_id": "page:users.advance",
+   "kind": "spa",
+   "label": "users.advance",
+   "path": "advance",
+   "component": "users/advance/Index.jsx",
+   "shelf": "A"
+  },
+  {
+   "unit_id": "page:users.approval",
+   "kind": "spa",
+   "label": "users.approval",
+   "path": "approval",
+   "component": "users/approval/Index.jsx",
+   "shelf": "A"
+  },
+  {
+   "unit_id": "page:users.create",
+   "kind": "spa",
+   "label": "users.create",
+   "path": "/users/create",
+   "component": "users/auth/Create.vue",
+   "shelf": "A"
+  },
+  {
+   "unit_id": "page:users.dashboard",
+   "kind": "spa",
+   "label": "users.dashboard",
+   "path": "",
+   "component": "users/dashboard/Index.vue",
+   "shelf": "A"
+  },
+  {
+   "unit_id": "page:users.forget",
+   "kind": "spa",
+   "label": "users.forget",
+   "path": "/users/forget/:which?",
+   "component": "users/auth/Forget.vue",
+   "shelf": "A"
+  },
+  {
+   "unit_id": "page:users.forget.account",
+   "kind": "spa",
+   "label": "users.forget.account",
+   "path": "account",
+   "component": "users/auth/parts/forget/Account.vue",
+   "shelf": "A"
+  },
+  {
+   "unit_id": "page:users.forget.password",
+   "kind": "spa",
+   "label": "users.forget.password",
+   "path": "password/:type?",
+   "component": "users/auth/parts/forget/Password.vue",
+   "shelf": "A"
+  },
+  {
+   "unit_id": "page:users.index",
+   "kind": "spa",
+   "label": "users.index",
+   "path": "/users",
+   "component": "users/Index.vue",
+   "shelf": "A"
+  },
+  {
+   "unit_id": "page:users.lesseeList",
+   "kind": "spa",
+   "label": "users.lesseeList",
+   "path": "/users/lesseeList",
+   "component": "users/lesseeList/Index.vue",
+   "shelf": "A"
+  },
+  {
+   "unit_id": "page:users.login",
+   "kind": "spa",
+   "label": "users.login",
+   "path": "/users/login",
+   "component": "users/auth/Login.vue",
+   "shelf": "A"
+  },
+  {
+   "unit_id": "page:users.notification",
+   "kind": "spa",
+   "label": "users.notification",
+   "path": "notification",
+   "component": "users/notification/Index.vue",
+   "shelf": "A"
+  },
+  {
+   "unit_id": "page:users.orders",
+   "kind": "spa",
+   "label": "users.orders",
+   "path": "orders",
+   "component": "users/orders/Index.vue",
+   "shelf": "A"
+  },
+  {
+   "unit_id": "page:users.payment.add",
+   "kind": "spa",
+   "label": "users.payment.add",
+   "path": "add/:vendorKey?",
+   "component": "users/payment/routerView/Add.vue",
+   "shelf": "A"
+  },
+  {
+   "unit_id": "page:users.payment.detail",
+   "kind": "spa",
+   "label": "users.payment.detail",
+   "path": "detail/:vendorKey/:vendorId",
+   "component": "users/payment/routerView/Detail.vue",
+   "shelf": "A"
+  },
+  {
+   "unit_id": "page:users.payment.index",
+   "kind": "spa",
+   "label": "users.payment.index",
+   "path": "payment",
+   "component": "users/payment/Index.vue",
+   "shelf": "A"
+  },
+  {
+   "unit_id": "page:users.public",
+   "kind": "spa",
+   "label": "users.public",
+   "path": "/p/:encryptId?/:mode?/:premisesUseFor?",
+   "component": "users/public/Index.vue",
+   "shelf": "A"
+  },
+  {
+   "unit_id": "page:users.rechargeAccountList",
+   "kind": "spa",
+   "label": "users.rechargeAccountList",
+   "path": "/users/rechargeAccountList",
+   "component": "users/rechargeAccountList/Index.vue",
+   "shelf": "A"
+  },
+  {
+   "unit_id": "page:users.signer_info",
+   "kind": "spa",
+   "label": "users.signer_info",
+   "path": "signer_info",
+   "component": "users/signerInfo/Index.vue",
+   "shelf": "A"
+  },
+  {
+   "unit_id": "page:users.subscription",
+   "kind": "spa",
+   "label": "users.subscription",
+   "path": "/users/subscription",
+   "component": "users/subscription/Index.vue",
+   "shelf": "A"
+  },
+  {
+   "unit_id": "page:users.subscription.chose",
+   "kind": "spa",
+   "label": "users.subscription.chose",
+   "path": "/users/subscription/chose",
+   "component": "users/subscription/Index.vue",
+   "shelf": "A"
+  },
+  {
+   "unit_id": "page:users.subscription.unsubscribe",
+   "kind": "spa",
+   "label": "users.subscription.unsubscribe",
+   "path": "/users/subscription/unsubscribe",
+   "component": "users/subscription/Index.vue",
+   "shelf": "A"
+  },
+  {
+   "unit_id": "page:users.team.member.owned",
+   "kind": "spa",
+   "label": "users.team.member.owned",
+   "path": "team/member/owned/:category/:uid",
+   "component": "users/team/memberOwned/Index.jsx",
+   "shelf": "A"
+  },
+  {
+   "unit_id": "page:users.team.owned",
+   "kind": "spa",
+   "label": "users.team.owned",
+   "path": "/bigLandlords/owned/:id",
+   "component": "bigLandlords/list/_parts/owned.jsx",
+   "shelf": "B"
+  },
+  {
+   "unit_id": "page:users.verify",
+   "kind": "spa",
+   "label": "users.verify",
+   "path": "/users/verify/:which?",
+   "component": "users/auth/Verify.vue",
+   "shelf": "A"
+  },
+  {
+   "unit_id": "page:users.verify.phone",
+   "kind": "spa",
+   "label": "users.verify.phone",
+   "path": "phone",
+   "component": "users/auth/parts/PhoneVerify.vue",
+   "shelf": "A"
+  },
+  {
+   "unit_id": "page:web:/help/{any?}/{slug?}",
+   "kind": "blade",
+   "label": "/help/{any?}/{slug?}",
+   "path": "/help/{any?}/{slug?}",
+   "component": "ListingController@index",
+   "shelf": "H"
+  },
+  {
+   "unit_id": "page:web:/repair/{any?}/{any2?}",
+   "kind": "blade",
+   "label": "/repair/{any?}/{any2?}",
+   "path": "/repair/{any?}/{any2?}",
+   "component": "IndexController@repairIndex",
+   "shelf": "I"
+  },
+  {
+   "unit_id": "page:web:/{deviceType}/{params?}",
+   "kind": "blade",
+   "label": "/{deviceType}/{params?}",
+   "path": "/{deviceType}/{params?}",
+   "component": "IotController@index",
+   "shelf": "G"
+  },
+  {
+   "unit_id": "page:web:customers.demand",
+   "kind": "blade",
+   "label": "customers.demand",
+   "path": "/demand/{action?}/{id?}",
+   "component": "CustomerController@demand",
+   "shelf": "I"
+  },
+  {
+   "unit_id": "page:web:customers.tcloud",
+   "kind": "blade",
+   "label": "customers.tcloud",
+   "path": "/tcloud/{action?}/{id?}/{sign?}",
+   "component": "CustomerController@tcloud",
+   "shelf": "I"
+  },
+  {
+   "unit_id": "page:web:indexs",
+   "kind": "blade",
+   "label": "indexs",
+   "path": "/",
+   "component": "ListingController@index",
+   "shelf": "I"
+  },
+  {
+   "unit_id": "page:web:notifications.index",
+   "kind": "blade",
+   "label": "notifications.index",
+   "path": "/{type?}",
+   "component": "NotificationController@index",
+   "shelf": "A"
+  },
+  {
+   "unit_id": "page:web:share",
+   "kind": "blade",
+   "label": "share",
+   "path": "/share/{action}/{id?}",
+   "component": "IndexController@share",
+   "shelf": "I"
+  },
+  {
+   "unit_id": "page:web:users.account",
+   "kind": "blade",
+   "label": "users.account",
+   "path": "/account",
+   "component": "UserController@account",
+   "shelf": "A"
+  },
+  {
+   "unit_id": "page:web:users.add_merchant",
+   "kind": "blade",
+   "label": "users.add_merchant",
+   "path": "/add_merchant/{manufacturer?}",
+   "component": "UserController@addMerchant",
+   "shelf": "A"
+  },
+  {
+   "unit_id": "page:web:users.role",
+   "kind": "blade",
+   "label": "users.role",
+   "path": "/role",
+   "component": "UserController@role",
+   "shelf": "A"
+  },
+  {
+   "unit_id": "page:web:users.roleTenant",
+   "kind": "blade",
+   "label": "users.roleTenant",
+   "path": "/roleTenant",
+   "component": "UserController@roleTenant",
+   "shelf": "A"
+  },
+  {
+   "unit_id": "page:web:users.team",
+   "kind": "blade",
+   "label": "users.team",
+   "path": "/team/{type?}/{action?}/{actionType?}",
+   "component": "UserController@team",
+   "shelf": "A"
+  }
+ ]
+}

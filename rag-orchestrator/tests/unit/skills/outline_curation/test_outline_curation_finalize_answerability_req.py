@@ -73,9 +73,6 @@ def _run(tmp_path, run_result_path, out_path, journal_dir, run_id="testrun"):
         "--out", out_path,
         "--journal-dir", journal_dir,
         "--run-id", run_id,
-        "--usd", "0.3",
-        "--prompt-tokens", "600",
-        "--completion-tokens", "300",
         "--wall-s", "12.5",
     ]
     return subprocess.run(cmd, env=env, capture_output=True, text=True)
@@ -151,7 +148,7 @@ def test_agreement_0_5_exit_2_flag_true_but_file_still_written(tmp_path):
     assert state["answerability"]["needs_rubric_revision"] is True
 
 
-def test_token_and_usd_distributed_across_journal_agents(tmp_path):
+def test_journal_agents_count_matches_agents_used(tmp_path):
     _skip_if_missing()
     run_result = _run_result([("C01", "answerable", "answerable"), ("C02", "no_source", "no_source")])
     rr_path = tmp_path / "run_result.json"
@@ -161,6 +158,5 @@ def test_token_and_usd_distributed_across_journal_agents(tmp_path):
     r = _run(tmp_path, str(rr_path), str(out), str(journal_dir), run_id="testrun3")
     assert r.returncode == 0, r.stderr
     journal = json.loads((journal_dir / "testrun3.json").read_text(encoding="utf-8"))
-    assert sum(a["prompt_tokens"] for a in journal["agents"]) == 600
-    assert sum(a["completion_tokens"] for a in journal["agents"]) == 300
-    assert abs(sum(a["usd"] for a in journal["agents"]) - 0.3) < 1e-9
+    assert len(journal["agents"]) == run_result["agentsUsed"]
+    assert journal["agents"] == [{} for _ in range(run_result["agentsUsed"])]

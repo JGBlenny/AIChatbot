@@ -40,7 +40,7 @@ def test_make_envelope_shape():
     assert e["deterministic"] is True
     assert e["payload"] == {"x": 1}
     assert e["raw_outputs_path"] is None
-    assert set(e["cost"].keys()) == {"agents", "prompt_tokens", "completion_tokens", "usd", "wall_s"}
+    assert set(e["cost"].keys()) == {"agents", "wall_s"}
 
 
 def test_make_envelope_rejects_unknown_step():
@@ -59,7 +59,7 @@ def test_validate_cost_schema_missing_inputs_sha_is_red():
         # inputs_sha 缺
         "deterministic": True,
         "raw_outputs_path": None,
-        "cost": {"agents": 0, "prompt_tokens": 0, "completion_tokens": 0, "usd": 0.0, "wall_s": 0.0},
+        "cost": {"agents": 0, "wall_s": 0.0},
         "payload": {"by_step": {}, "total": {}, "over_budget": False},
     }
     with pytest.raises(env.SchemaError):
@@ -75,7 +75,7 @@ def test_validate_cost_schema_valid_instance_passes():
         "inputs_sha": {"skill": "abc"},
         "deterministic": True,
         "raw_outputs_path": None,
-        "cost": {"agents": 0, "prompt_tokens": 0, "completion_tokens": 0, "usd": 0.0, "wall_s": 0.0},
+        "cost": {"agents": 0, "wall_s": 0.0},
         "payload": {"by_step": {}, "total": {}, "over_budget": False},
     }
     env.validate(instance, schema)  # 不得 raise

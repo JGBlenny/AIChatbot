@@ -1,0 +1,199 @@
+{
+  "attached_fines": [
+    "jgb/E/bill-archive-after-termination",
+    "jgb/E/bill-recall-cancel",
+    "jgb/E/bill-receipt-pdf",
+    "jgb/E/bill-reports-export",
+    "jgb/E/bill-scheduled-auto-send",
+    "jgb/E/bill-send-failure",
+    "jgb/E/bill-status-reconciliation",
+    "jgb/E/cash-bank-account-collection",
+    "jgb/E/checkout-bill-settlement",
+    "jgb/E/convenience-store-payment",
+    "jgb/E/credit-card-auto-debit",
+    "jgb/E/deposit-imputed-interest",
+    "jgb/E/differential-invoice",
+    "jgb/E/dunning-draft-not-auto-send",
+    "jgb/E/fixed-virtual-account-management",
+    "jgb/E/invoice-not-issued-troubleshooting",
+    "jgb/E/invoice-void-reissue",
+    "jgb/E/landlord-owner-bills",
+    "jgb/E/late-fee-calculation",
+    "jgb/E/management-fee",
+    "jgb/E/manual-bill-creation",
+    "jgb/E/paid-but-status-not-updated",
+    "jgb/E/payment-amount-mismatch",
+    "jgb/E/payment-failure-troubleshooting",
+    "jgb/E/payment-fees-and-sms",
+    "jgb/E/payment-gateway-setup",
+    "jgb/E/periodic-bill-generation",
+    "jgb/E/prepaid-meter-topup-billing",
+    "jgb/E/rent-amount-calculation",
+    "jgb/E/rent-collection-agent-vs-direct",
+    "jgb/E/rent-market-discount-tax",
+    "jgb/E/tenant-cannot-see-bill",
+    "jgb/E/tenant-online-payment-steps",
+    "jgb/E/tenant-payment-methods",
+    "jgb/E/tenant-view-bills",
+    "jgb/E/utility-meter-billing-and-reading",
+    "jgb/E/virtual-account-transfer"
+  ],
+  "attached_phrasings": 244,
+  "canon_sha256": "bc391742d7cecf95e97d8f2f388dfde70b41952851289dde212a147c2c3ba4e6",
+  "dup_content": {
+    "jgb/E/periodic-bill-generation": [
+      {
+        "content_of": "substring",
+        "text": "這期帳單怎麼還沒出來"
+      }
+    ]
+  },
+  "dup_existing": {
+    "jgb/E/bill-archive-after-termination": [
+      {
+        "already_on": "jgb/D/early-termination-flow",
+        "text": "提前終止"
+      }
+    ],
+    "jgb/E/bill-receipt-pdf": [
+      {
+        "already_on": "jgb/D/contract-pdf-download",
+        "text": "PDF"
+      }
+    ],
+    "jgb/E/billing-overview": [
+      {
+        "already_on": "jgb/C/property-status-meaning",
+        "text": "洽談中的物件可以做什麼"
+      }
+    ],
+    "jgb/E/credit-card-rent-payment": [
+      {
+        "already_on": "jgb/E/credit-card-rent-payment",
+        "text": "租客能用信用卡繳納房租嗎?"
+      },
+      {
+        "already_on": "jgb/E/credit-card-rent-payment",
+        "text": "租客可以用信用卡繳房租嗎"
+      },
+      {
+        "already_on": "jgb/E/credit-card-rent-payment",
+        "text": "租客繳費方式(藍新信用卡)"
+      }
+    ],
+    "jgb/E/fixed-virtual-account-management": [
+      {
+        "already_on": "jgb/E/virtual-account-prepaid",
+        "text": "儲值金"
+      }
+    ],
+    "jgb/E/landlord-owner-bills": [
+      {
+        "already_on": "jgb/B/owner-report-collection-remit",
+        "text": "代收代付"
+      },
+      {
+        "already_on": "jgb/B/add-owner-landlord-and-access",
+        "text": "大房東要怎麼看自己的物件"
+      },
+      {
+        "already_on": "jgb/B/add-owner-landlord-and-access",
+        "text": "大房東要怎麼新增"
+      }
+    ],
+    "jgb/E/manual-bill-creation": [
+      {
+        "already_on": "jgb/C/property-batch-import",
+        "text": "Excel"
+      },
+      {
+        "already_on": "jgb/I/data-migration",
+        "text": "批次匯入"
+      }
+    ],
+    "jgb/E/rent-collection-agent-vs-direct": [
+      {
+        "already_on": "jgb/C/property-status-meaning",
+        "text": "物件狀態有什麼差別"
+      },
+      {
+        "already_on": "jgb/B/leasing-management-license-and-staff-qualification",
+        "text": "包租代管"
+      },
+      {
+        "already_on": "jgb/B/leasing-management-license-and-staff-qualification",
+        "text": "包租代管稅務優惠"
+      },
+      {
+        "already_on": "jgb/B/leasing-management-license-and-staff-qualification",
+        "text": "包租代管要證照嗎"
+      }
+    ],
+    "jgb/E/virtual-account-prepaid": [
+      {
+        "already_on": "jgb/B/what-is-owner-landlord",
+        "text": "虛擬帳號是什麼"
+      }
+    ]
+  },
+  "dup_in_proposal": {
+    "jgb/E/bill-scheduled-auto-send": [
+      {
+        "kept_on": "jgb/E/bill-recall-cancel",
+        "text": "帳單排定發送"
+      },
+      {
+        "kept_on": "jgb/E/bill-format-customize",
+        "text": "收款設置"
+      },
+      {
+        "kept_on": "jgb/E/bill-format-customize",
+        "text": "收訖章與帳單自動發送"
+      },
+      {
+        "kept_on": "jgb/E/bill-recall-cancel",
+        "text": "預約機制"
+      }
+    ],
+    "jgb/E/credit-card-rent-payment": [
+      {
+        "kept_on": "jgb/E/convenience-store-payment",
+        "text": "流程說明"
+      }
+    ],
+    "jgb/E/invoice-void-reissue": [
+      {
+        "kept_on": "jgb/E/convenience-store-payment",
+        "text": "流程說明"
+      }
+    ],
+    "jgb/E/tenant-payment-methods": [
+      {
+        "kept_on": "jgb/E/convenience-store-payment",
+        "text": "超商繳費"
+      }
+    ],
+    "jgb/E/virtual-account-transfer": [
+      {
+        "kept_on": "jgb/E/tenant-payment-methods",
+        "text": "繳費方式"
+      }
+    ]
+  },
+  "fines_without_phrasings": [],
+  "missing_fines": [],
+  "other_shelf_fines": {},
+  "phrasing_set_sha256": "0f8df038c351daa48d260bcbd52713234e83f19fa32975b23efb8c09e6c19ce6",
+  "skipped_fines": {
+    "jgb/E/bill-contents-extra-fees": 8,
+    "jgb/E/bill-format-customize": 2,
+    "jgb/E/billing-overview": 10,
+    "jgb/E/credit-card-rent-payment": 3,
+    "jgb/E/einvoice-issuing": 9,
+    "jgb/E/overdue-bill-followup-scope": 2,
+    "jgb/E/overdue-reminder-late-fee": 2,
+    "jgb/E/payment-gateway-options": 2,
+    "jgb/E/utility-split-calculation": 2,
+    "jgb/E/virtual-account-prepaid": 3
+  }
+}

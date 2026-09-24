@@ -277,18 +277,32 @@ def test_unknown_ref_type_is_not_rendered():
 # ═══════════════════════════════════════════════════════════════════
 # 2. 保留 tool_call id 集合——三個正對照組
 # ═══════════════════════════════════════════════════════════════════
-def _outline_state():
+def _outline_doc():
     from services.agent.outline import OutlineDoc, OutlineSection
-    return {"agent": {"outline": OutlineDoc(
+    return OutlineDoc(
         audience="prospect", version="v", sha256="s", token_count=10,
         sections=[OutlineSection(id="outline:lease", title="租約",
                                  text="金箍棒支援線上簽約。", source_ids=[1], citable=True)],
         text="x",
-    )}}
+    )
 
 
 @pytest.mark.req(_REQ)
-async def test_forged_outline_id_does_not_overwrite_the_seed():
+async def test_forged_outline_id_does_not_overwrite_the_seed(monkeypatch):
+    # 9.8 DSP-059 D′ S2：`_select_outline` 不再讀 `agent_state["outline"]`
+    # （那個鍵已隨預組大綱物件退役）——本測試測的是 provenance 種子的
+    # **保留**語義（DSP-020，與大綱怎麼被選出來是不同關注點），故短路
+    # `_select_outline` 讓它原樣回傳這裡給的靜態 `OutlineDoc`
+    # （同一手法見 `test_outline_citation_seed_req.py`）。
+    import services.agent.runtime as runtime_mod
+
+    outline = _outline_doc()
+
+    async def _stub(self, identity, user_message, dialog, violations):
+        return outline, None
+
+    monkeypatch.setattr(runtime_mod.AgentRuntime, "_select_outline", _stub)
+
     provider = FakeProvider(
         [_tool_call_response("kb.get", {"kb_id": "1"}, call_id=OUTLINE_TOOL_CALL_ID),
          _final_response(answer="好的")]
@@ -297,7 +311,7 @@ async def test_forged_outline_id_does_not_overwrite_the_seed():
     verifier = FakeVerifier()
     rt = _runtime_generic(provider=provider, registry=registry, verifier=verifier)
 
-    result = await rt.run_turn(_identity(entry="mcp"), "q", _outline_state())
+    result = await rt.run_turn(_identity(entry="mcp"), "q", {"agent": {}})
 
     seen = verifier.calls[0]["tool_results"]
     assert seen[OUTLINE_TOOL_CALL_ID].provenance[0].source == "outline:lease"

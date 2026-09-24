@@ -1,0 +1,4027 @@
+{
+ "surface_json": ".claude/skills/outline-curation/runs/page-0b-20260919/page-surface.json",
+ "surface_jgb2_sha": "b2ee2ac382ce06763798a7238e4fd5c9411fcfaa",
+ "cells": [
+  {
+   "unit_id": "page:404",
+   "by_identity": {
+    "prospect": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "非功能頁（D4：結果頁／匯入匯出／404／行銷頁）"
+    },
+    "property_manager": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "非功能頁（D4：結果頁／匯入匯出／404／行銷頁）"
+    }
+   }
+  },
+  {
+   "unit_id": "page:balanceInvoices.edit",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/E/differential-invoice"
+     ],
+     "note": "細目 target_user 不含 prospect，僅答房東操作面"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/E/differential-invoice"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:balanceInvoices.edit.basicInfo",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/E/differential-invoice"
+     ],
+     "note": "細目 target_user 不含 prospect，僅答房東操作面"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/E/differential-invoice"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:balanceInvoices.edit.belongingEstates",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/E/differential-invoice"
+     ],
+     "note": "細目 target_user 不含 prospect，僅答房東操作面"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/E/differential-invoice"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:balanceInvoices.edit.pickEstates",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/E/differential-invoice"
+     ],
+     "note": "細目 target_user 不含 prospect，僅答房東操作面"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/E/differential-invoice"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:balanceInvoices.groups",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/E/differential-invoice"
+     ],
+     "note": "細目 target_user 不含 prospect，僅答房東操作面"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/E/differential-invoice"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:balanceInvoices.index",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/E/differential-invoice"
+     ],
+     "note": "細目 target_user 不含 prospect，僅答房東操作面"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/E/differential-invoice"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:balanceInvoices.list",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/E/differential-invoice"
+     ],
+     "note": "細目 target_user 不含 prospect，僅答房東操作面"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/E/differential-invoice"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:bigLandlords.index",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/B/what-is-owner-landlord",
+      "jgb/B/owner-report-collection-remit"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/B/what-is-owner-landlord",
+      "jgb/B/owner-report-collection-remit"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:bigLandlords.list",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/B/what-is-owner-landlord"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/B/what-is-owner-landlord",
+      "jgb/B/add-owner-landlord-and-access"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:bigLandlords.report",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/B/owner-report-collection-remit"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/B/owner-report-collection-remit"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:bigLandlords.sheet",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/B/owner-report-collection-remit"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/B/owner-report-collection-remit"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:bills.create",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/E/billing-overview"
+     ],
+     "note": "只是帳務模組行銷總覽，未涵蓋建帳單操作細節"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/E/manual-bill-creation"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:bills.create.batch",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/E/billing-overview"
+     ],
+     "note": "只是帳務模組行銷總覽，未涵蓋建帳單操作細節"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/E/manual-bill-creation"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:bills.create.cycleBatch",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/E/billing-overview"
+     ],
+     "note": "只是行銷總覽，未涵蓋週期帳單建立操作"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/E/periodic-bill-generation"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:bills.edit",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/E/billing-overview"
+     ],
+     "note": "只是行銷總覽，未涵蓋編輯帳單操作"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/E/manual-bill-creation",
+      "jgb/E/bill-contents-extra-fees"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:bills.index",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/E/billing-overview"
+     ],
+     "note": "只是行銷總覽，未涵蓋帳單列表頁操作"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/E/bill-status-reconciliation"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:bills.list",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/E/billing-overview"
+     ],
+     "note": "只是行銷總覽，未涵蓋帳單列表篩選操作"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/E/bill-status-reconciliation"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:bills.pick",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/E/billing-overview"
+     ],
+     "note": "只是行銷總覽，未涵蓋批次排定發送操作"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/E/bill-scheduled-auto-send"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:bills.sheet",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/E/billing-overview"
+     ],
+     "note": "只是行銷總覽，未涵蓋財務報表匯出頁"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/E/bill-reports-export"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:bills.socialHousingSheets",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "需要一條細目說明社宅清冊/表單4、7、9、11 的用途與歸檔流程"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "需要一條細目說明社宅清冊/表單4、7、9、11 的用途、媒合編號與歸檔流程"
+    }
+   }
+  },
+  {
+   "unit_id": "page:bills.stat",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/E/billing-overview"
+     ],
+     "note": "只是行銷總覽，未涵蓋統計報表頁操作"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/E/bill-reports-export"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:communities.edit",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/C/property-management-overview"
+     ],
+     "note": "只有模組總覽，未涵蓋編輯欄位細節"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/C/community-setup-and-property-binding"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:communities.edit.balanceInvoice",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "缺差額發票機制的售前說明"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/E/differential-invoice"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:communities.edit.basic",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/C/property-management-overview"
+     ],
+     "note": "只有總覽，未涵蓋基本資料欄位"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/C/community-setup-and-property-binding"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:communities.edit.gallery",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/C/property-management-overview"
+     ],
+     "note": "只有總覽，未涵蓋照片上傳操作"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/C/community-setup-and-property-binding"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:communities.edit.intros",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/C/property-management-overview"
+     ],
+     "note": "只有總覽，未涵蓋介紹文字欄位"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/C/community-setup-and-property-binding"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:communities.estates",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/C/property-management-overview"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/C/community-setup-and-property-binding"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:communities.forceBinding",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "缺社宅強制綁定流程的售前說明"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/C/community-setup-and-property-binding"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:communities.forceBinding.edit",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "缺社宅強制綁定流程的售前說明"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/C/community-setup-and-property-binding"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:communities.forceBinding.edit.binding",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "缺社宅強制綁定流程的售前說明"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/C/community-setup-and-property-binding"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:communities.forceBinding.welcome",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "缺社宅強制綁定流程的售前說明"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/C/community-setup-and-property-binding"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:communities.index",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/C/property-management-overview"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/C/community-setup-and-property-binding"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:communities.list",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/C/property-management-overview"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/C/community-setup-and-property-binding"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:communities.pick",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "缺社區挑選器 UI 的售前說明"
+    },
+    "property_manager": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/C/community-setup-and-property-binding"
+     ],
+     "note": "涵蓋歸戶邏輯，未描述挑選器介面操作"
+    }
+   }
+  },
+  {
+   "unit_id": "page:communities.show",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/C/rental-storefront-vr"
+     ],
+     "note": "只涵蓋招租店舖/VR概念，未提社區公開頁"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/C/community-public-page"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:contracts.edit",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/D/contract-esign-flow"
+     ],
+     "note": "只答簽約流程，未涵蓋合約編輯頁總覽與狀態判讀"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/contract-status-overview",
+      "jgb/D/contract-modify-after-sign"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:contracts.edit.404",
+   "by_identity": {
+    "prospect": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "無頁面元件（父路由轉址／catch-all，DSP-065a）"
+    },
+    "property_manager": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "無頁面元件（父路由轉址／catch-all，DSP-065a）"
+    }
+   }
+  },
+  {
+   "unit_id": "page:contracts.edit.additionalConvention",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "需要一條細目說明補充條款分頁怎麼填、範本套用方式"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/contract-attachments-notes-limits"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:contracts.edit.billSetting",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/E/billing-overview"
+     ],
+     "note": "只是行銷總覽，未涵蓋合約內帳單設定分頁"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/E/periodic-bill-generation",
+      "jgb/E/bill-archive-after-termination"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:contracts.edit.buildingTranscript",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "需要一條細目說明建物謄本資訊分頁的用途與填寫方式"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "需要一條細目說明建物謄本資訊分頁（地號建號、主建物面積等）的填寫方式"
+    }
+   }
+  },
+  {
+   "unit_id": "page:contracts.edit.dealerBasic",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/D/signer-identity-and-seal"
+     ],
+     "note": "細目 target_user 不含 prospect"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/signer-identity-and-seal"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:contracts.edit.facilities",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "需要一條細目說明合約設備清單分頁怎麼新增/複製設備"
+    },
+    "property_manager": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/D/equipment-usage-under-lease"
+     ],
+     "note": "只講設備使用法規，未涵蓋合約編輯頁設備清單填寫操作"
+    }
+   }
+  },
+  {
+   "unit_id": "page:contracts.edit.landlordAttachment",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/D/contract-attachments-notes-limits"
+     ],
+     "note": "細目 target_user 不含 prospect"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/contract-attachments-notes-limits"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:contracts.edit.payment",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/E/tenant-payment-methods"
+     ],
+     "note": "細目 target_user 不含 prospect"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/E/tenant-payment-methods"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:contracts.edit.publicNotary",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/lease-notarization"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/lease-notarization"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:contracts.edit.rent",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/E/bill-contents-extra-fees"
+     ],
+     "note": "只答帳單費用品項，未涵蓋合約租金/押金/延遲金設定操作"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/deposit-setting-and-refund-system",
+      "jgb/E/late-fee-calculation",
+      "jgb/E/bill-contents-extra-fees"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:contracts.edit.rentAdjustment",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "需要一條細目說明合約租金調幅（固定/百分比、調幅週期）怎麼設定"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "需要一條細目說明合約租金調幅（固定/百分比、調幅週期）怎麼批次設定"
+    }
+   }
+  },
+  {
+   "unit_id": "page:contracts.edit.rentBasic",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/D/early-termination-penalty"
+     ],
+     "note": "細目 target_user 不含 prospect"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/early-termination-penalty",
+      "jgb/D/breach-penalty-rules",
+      "jgb/E/rent-amount-calculation",
+      "jgb/E/periodic-bill-generation",
+      "jgb/E/late-fee-calculation"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:contracts.edit.situation",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "需要一條細目說明合約屋況/使用限制（消防設備、公共處所計價）分頁填寫方式"
+    },
+    "property_manager": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/D/lease-clauses-interpretation"
+     ],
+     "note": "只講租約條款一般解釋，未涵蓋屋況/使用限制分頁的填寫操作"
+    }
+   }
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.attachments",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/D/contract-attachments-notes-limits"
+     ],
+     "note": "細目 target_user 不含 prospect，且未涵蓋社宅版附件項目"
+    },
+    "property_manager": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/D/contract-attachments-notes-limits"
+     ],
+     "note": "只講一般合約附件上傳限制，未涵蓋社宅版指定附件項目清單"
+    }
+   }
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.buildingTranscript",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "需要一條細目說明社宅建物謄本資訊分頁的填寫方式"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "需要一條細目說明社宅建物謄本資訊分頁（建號地號、建物資訊）的填寫方式"
+    }
+   }
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.dealerBasic",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/D/signer-identity-and-seal"
+     ],
+     "note": "細目 target_user 不含 prospect"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/signer-identity-and-seal"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.facilities",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "需要一條細目說明合約設備清單分頁怎麼新增/複製設備"
+    },
+    "property_manager": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/D/equipment-usage-under-lease"
+     ],
+     "note": "只講設備使用法規，未涵蓋合約編輯頁設備清單填寫操作"
+    }
+   }
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.landlordAttachment",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/D/contract-attachments-notes-limits"
+     ],
+     "note": "細目 target_user 不含 prospect"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/contract-attachments-notes-limits"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.landlordBasic",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "需要一條細目說明社宅合約房東基本資料分頁的填寫方式"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "需要一條細目說明社宅合約房東基本資料分頁（代理人、交付方式等）的填寫方式"
+    }
+   }
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.landlordLicense",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "需要一條細目說明社宅房東資格授權書分頁的用途與填寫規則"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "需要一條細目說明社宅房東資格授權書分頁（公益出租人、代理人授權期間）的填寫規則"
+    }
+   }
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.moveIn",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "需要一條細目說明社宅合約內建點交表單與一般點交流程的差異"
+    },
+    "property_manager": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/D/handover-checkin"
+     ],
+     "note": "只講一般點交流程，未涵蓋社宅合約編輯頁內建點交表單"
+    }
+   }
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.payment",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/E/tenant-payment-methods"
+     ],
+     "note": "細目 target_user 不含 prospect"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/E/tenant-payment-methods"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.photos",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "需要一條細目說明社宅合約照片檢核（滅火器、火警警報器等）分頁的用途"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "需要一條細目說明社宅合約照片檢核（滅火器、火警警報器等）分頁的填寫方式"
+    }
+   }
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.publicNotary",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/lease-notarization"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/lease-notarization"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.rent",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/E/bill-contents-extra-fees"
+     ],
+     "note": "只答帳單費用品項，未涵蓋合約租金/押金/延遲金設定操作"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/deposit-setting-and-refund-system",
+      "jgb/E/late-fee-calculation",
+      "jgb/E/bill-contents-extra-fees"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.rentBasic",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/D/early-termination-penalty"
+     ],
+     "note": "細目 target_user 不含 prospect"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/early-termination-penalty",
+      "jgb/D/breach-penalty-rules"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.situation",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "需要一條細目說明合約屋況/使用限制（消防設備、公共處所計價）分頁填寫方式"
+    },
+    "property_manager": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/D/lease-clauses-interpretation"
+     ],
+     "note": "只講租約條款一般解釋，未涵蓋屋況/使用限制分頁的填寫操作"
+    }
+   }
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.subsidyTerms",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "需要一條細目說明社宅租屋補貼修繕費項目分頁的用途"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "需要一條細目說明社宅租屋補貼修繕費項目分頁的填寫規則"
+    }
+   }
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.tenantAttachment",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "需要一條細目說明社宅租客資格證明文件分頁要求哪些附件"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "需要一條細目說明社宅租客資格證明文件分頁（戶籍謄本、所得清單等）要求哪些附件"
+    }
+   }
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.tenantBasic",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "需要一條細目說明社宅租客資格分類（低收入戶等）分頁的填寫方式"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "需要一條細目說明社宅租客資格分類（低收入戶等）分頁的填寫方式"
+    }
+   }
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.tenantHousehold",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "需要一條細目說明社宅租客家庭與財產所得檢核分頁的用途"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "需要一條細目說明社宅租客家庭與財產所得檢核分頁的填寫規則"
+    }
+   }
+  },
+  {
+   "unit_id": "page:contracts.edit.socialHousing.tenantLicense",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "需要一條細目說明社宅租客資格授權書分頁的用途"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "需要一條細目說明社宅租客資格授權書分頁的填寫與授權規則"
+    }
+   }
+  },
+  {
+   "unit_id": "page:contracts.edit.taxAndInvoice",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/E/einvoice-issuing"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/E/einvoice-issuing"
+     ],
+     "note": "只講電子發票開立時機與載具，未涵蓋合約內統編/免稅/開票商設定"
+    }
+   }
+  },
+  {
+   "unit_id": "page:contracts.edit.tenantInfo",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/D/signer-identity-and-seal"
+     ],
+     "note": "細目 target_user 不含 prospect"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/signer-identity-and-seal"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:contracts.index",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/D/contract-esign-flow"
+     ],
+     "note": "只答簽約流程，未涵蓋合約列表/狀態總覽頁"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/contract-status-overview",
+      "jgb/D/contract-filter-by-state"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:contracts.list",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/D/contract-esign-flow"
+     ],
+     "note": "只答簽約流程，未涵蓋合約列表查詢頁"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/contract-lookup",
+      "jgb/D/contract-filter-by-state"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:contracts.moveIn",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/D/handover-checkin"
+     ],
+     "note": "細目 target_user 不含 prospect"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/handover-checkin"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:contracts.moveOut",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/D/return-checkout"
+     ],
+     "note": "細目 target_user 不含 prospect"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/return-checkout"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:contracts.pick",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/D/contract-esign-flow"
+     ],
+     "note": "只答簽約流程，未涵蓋合約挑選頁"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/contract-lookup"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:contracts.renew",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/D/renewal-flow"
+     ],
+     "note": "細目 target_user 不含 prospect"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/renewal-flow"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:contracts.renew.preview",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/D/renewal-flow"
+     ],
+     "note": "細目 target_user 不含 prospect"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/renewal-flow"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:contracts.search",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/D/contract-esign-flow"
+     ],
+     "note": "只答簽約流程，未涵蓋合約搜尋頁"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/contract-lookup"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:contracts.show",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/D/contract-esign-flow"
+     ],
+     "note": "只答簽約流程，未涵蓋合約詳情頁狀態判讀"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/contract-status-overview",
+      "jgb/D/contract-lookup"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:controlPanel.index",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "控制台總覽（連結任務管理／通知信）無對應細目"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "控制台總覽（連結任務管理／通知信）無對應細目"
+    }
+   }
+  },
+  {
+   "unit_id": "page:controlPanel.setting",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "控制台設定頁無對應細目"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "控制台設定頁無對應細目"
+    }
+   }
+  },
+  {
+   "unit_id": "page:entrustContracts.index",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/delegation-vs-lease-contract",
+      "jgb/D/sublease-vs-management-contract"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/delegation-contract-flow"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:entrustedContracts.edit",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/delegation-vs-lease-contract",
+      "jgb/D/sublease-vs-management-contract"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/delegation-contract-flow"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:entrustedContracts.edit.404",
+   "by_identity": {
+    "prospect": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "無頁面元件（父路由轉址／catch-all，DSP-065a）"
+    },
+    "property_manager": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "無頁面元件（父路由轉址／catch-all，DSP-065a）"
+    }
+   }
+  },
+  {
+   "unit_id": "page:entrustedContracts.edit.basic",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/delegation-vs-lease-contract",
+      "jgb/D/sublease-vs-management-contract"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/delegation-contract-flow"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:entrustedContracts.edit.fee",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/D/sublease-vs-management-contract"
+     ],
+     "note": "只答包租代管差異，未涵蓋委託合約服務費計算設定"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/delegation-contract-terms-general"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:entrustedContracts.edit.landlord_info",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/delegation-vs-lease-contract",
+      "jgb/D/sublease-vs-management-contract"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/delegation-contract-flow"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:entrustedContracts.edit.manager_info",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/delegation-vs-lease-contract",
+      "jgb/D/sublease-vs-management-contract"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/delegation-contract-flow"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:entrustedContracts.edit.payment",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/D/sublease-vs-management-contract"
+     ],
+     "note": "只答包租代管差異，未涵蓋委託合約收付款帳戶設定"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/delegation-contract-terms-general"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:entrustedContracts.list",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/delegation-vs-lease-contract",
+      "jgb/D/sublease-vs-management-contract"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/delegation-contract-flow"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:entrustedContracts.show",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/delegation-vs-lease-contract",
+      "jgb/D/sublease-vs-management-contract"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/delegation-contract-flow"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:estates.dashboard",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "沒有描述物件儀表板總覽入口本身，內容都在各分頁"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "沒有描述物件儀表板總覽入口本身，內容都在各分頁"
+    }
+   }
+  },
+  {
+   "unit_id": "page:estates.dashboard.404",
+   "by_identity": {
+    "prospect": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "無頁面元件（父路由轉址／catch-all，DSP-065a）"
+    },
+    "property_manager": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "無頁面元件（父路由轉址／catch-all，DSP-065a）"
+    }
+   }
+  },
+  {
+   "unit_id": "page:estates.dashboard.attachments",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "缺物件附件上傳管理的說明"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "缺物件附件（非合約附件）上傳管理的說明"
+    }
+   }
+  },
+  {
+   "unit_id": "page:estates.dashboard.bills",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/E/billing-overview"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/E/periodic-bill-generation",
+      "jgb/E/bill-status-reconciliation",
+      "jgb/E/bill-reports-export"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:estates.dashboard.contractAttachments",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "缺合約附件管理的售前說明"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/contract-attachments-notes-limits"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:estates.dashboard.contracts",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/D/contract-esign-flow"
+     ],
+     "note": "只涵蓋簽約流程，缺合約查詢/狀態列表的售前總覽"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/contract-lookup",
+      "jgb/D/contract-status-overview",
+      "jgb/D/contract-filter-by-state"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:estates.dashboard.memos",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "缺物件記事本功能的售前說明"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "缺物件記事本（備註＋附件）功能的說明"
+    }
+   }
+  },
+  {
+   "unit_id": "page:estates.dashboard.monthlyReport",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/B/owner-report-collection-remit"
+     ],
+     "note": "只涵蓋大房東層級月報，未提個別物件每月報表"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/E/bill-reports-export"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:estates.dashboard.monthlyStatement",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/B/owner-report-collection-remit"
+     ],
+     "note": "只涵蓋大房東層級對帳單，未提個別物件對帳單"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/E/bill-reports-export"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:estates.dashboard.rent",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "缺刊登成效統計的售前說明"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "缺物件刊登瀏覽數據/成效統計的說明"
+    }
+   }
+  },
+  {
+   "unit_id": "page:estates.dashboard.repair",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/F/repair-system"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/F/repair-request-how-to-submit",
+      "jgb/F/repair-dispatch-and-close"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:estates.dashboard.runnings",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "缺流水帳功能的售前說明"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "缺物件流水帳（自訂收支記錄）功能的說明"
+    }
+   }
+  },
+  {
+   "unit_id": "page:estates.dashboard.sell",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "頁面顯示「即將推出」，功能尚未上線，無對應說明"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "頁面顯示「即將推出」，功能尚未上線，無對應說明"
+    }
+   }
+  },
+  {
+   "unit_id": "page:estates.edit",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/C/property-management-overview"
+     ],
+     "note": "只有模組總覽，未涵蓋編輯物件的操作流程"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/C/property-edit-vs-publish",
+      "jgb/C/property-listing-conditions"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:estates.edit.404",
+   "by_identity": {
+    "prospect": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "無頁面元件（父路由轉址／catch-all，DSP-065a）"
+    },
+    "property_manager": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "無頁面元件（父路由轉址／catch-all，DSP-065a）"
+    }
+   }
+  },
+  {
+   "unit_id": "page:estates.edit.basic",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/C/property-management-overview"
+     ],
+     "note": "只有總覽，未涵蓋基本欄位填寫細節"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/C/property-listing-conditions"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:estates.edit.building_transcript",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "缺建物謄本欄位的售前說明"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "缺建物謄本（違建登記）欄位填寫的說明"
+    }
+   }
+  },
+  {
+   "unit_id": "page:estates.edit.building_transcript_general",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "缺建物謄本欄位的售前說明"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "缺一般物件建物謄本欄位填寫的說明"
+    }
+   }
+  },
+  {
+   "unit_id": "page:estates.edit.facilities",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "缺物件設備清單的售前說明"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "缺物件設備清單填寫的說明"
+    }
+   }
+  },
+  {
+   "unit_id": "page:estates.edit.gallery",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "缺物件照片上傳的售前說明"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "缺物件照片上傳操作的說明"
+    }
+   }
+  },
+  {
+   "unit_id": "page:estates.edit.intro",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "缺物件介紹欄位的售前說明"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "缺物件介紹文字欄位填寫的說明"
+    }
+   }
+  },
+  {
+   "unit_id": "page:estates.edit.rent_contact",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "缺聯絡資訊欄位的售前說明"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "缺租賃廣告聯絡資訊欄位填寫的說明"
+    }
+   }
+  },
+  {
+   "unit_id": "page:estates.edit.rent_detail",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "缺租金/生活費用細節的售前說明"
+    },
+    "property_manager": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/C/property-listing-conditions"
+     ],
+     "note": "只提租金為必填欄位，未涵蓋生活費用等細節設定"
+    }
+   }
+  },
+  {
+   "unit_id": "page:estates.edit.rent_verify",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "缺違建申報欄位的售前說明"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "缺違章建築/租賃住宅條例申報欄位的說明"
+    }
+   }
+  },
+  {
+   "unit_id": "page:estates.edit.sell_contact",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "缺出售聯絡資訊的售前說明"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "缺出售廣告聯絡資訊欄位填寫的說明"
+    }
+   }
+  },
+  {
+   "unit_id": "page:estates.edit.sell_detail",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "缺出售明細的售前說明"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "缺出售物件明細欄位填寫的說明"
+    }
+   }
+  },
+  {
+   "unit_id": "page:estates.edit.vr",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/C/rental-storefront-vr"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/C/property-vr-tour"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:estates.index",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/C/property-management-overview"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/C/property-status-meaning",
+      "jgb/C/property-advanced-search"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:estates.list",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/C/property-management-overview"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/C/property-status-meaning",
+      "jgb/C/property-advanced-search"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:estates.monthlyUpload",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/B/owner-report-collection-remit"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/B/owner-report-collection-remit"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:estates.pick",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "缺物件挑選器 UI 的售前說明"
+    },
+    "property_manager": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/C/property-advanced-search"
+     ],
+     "note": "涵蓋物件列表搜尋，未描述作為批次動作挑選器的用法"
+    }
+   }
+  },
+  {
+   "unit_id": "page:listings.IOTDevice",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/G/smart-meter-lock-iot"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/G/meter-device-management",
+      "jgb/G/smart-lock-functions"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:listings.TA",
+   "by_identity": {
+    "prospect": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "非功能頁（D4：結果頁／匯入匯出／404／行銷頁）"
+    },
+    "property_manager": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "非功能頁（D4：結果頁／匯入匯出／404／行銷頁）"
+    }
+   }
+  },
+  {
+   "unit_id": "page:listings.about",
+   "by_identity": {
+    "prospect": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "非功能頁（D4：結果頁／匯入匯出／404／行銷頁）"
+    },
+    "property_manager": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "非功能頁（D4：結果頁／匯入匯出／404／行銷頁）"
+    }
+   }
+  },
+  {
+   "unit_id": "page:listings.advantages",
+   "by_identity": {
+    "prospect": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "非功能頁（D4：結果頁／匯入匯出／404／行銷頁）"
+    },
+    "property_manager": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "非功能頁（D4：結果頁／匯入匯出／404／行銷頁）"
+    }
+   }
+  },
+  {
+   "unit_id": "page:listings.demoForm",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "缺預約 demo 表單流程的說明"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "缺預約 demo 表單流程的說明"
+    }
+   }
+  },
+  {
+   "unit_id": "page:listings.features",
+   "by_identity": {
+    "prospect": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "非功能頁（D4：結果頁／匯入匯出／404／行銷頁）"
+    },
+    "property_manager": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "非功能頁（D4：結果頁／匯入匯出／404／行銷頁）"
+    }
+   }
+  },
+  {
+   "unit_id": "page:listings.helpCenter",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "H 幫助中心目前空架，無對應細目"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "H 幫助中心目前空架，無對應細目"
+    }
+   }
+  },
+  {
+   "unit_id": "page:listings.helpCenter.group",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "H 幫助中心目前空架，無對應細目"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "H 幫助中心目前空架，無對應細目"
+    }
+   }
+  },
+  {
+   "unit_id": "page:listings.helpCenter.post",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "H 幫助中心目前空架，無對應細目"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "H 幫助中心目前空架，無對應細目"
+    }
+   }
+  },
+  {
+   "unit_id": "page:listings.helpCenter.search",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "H 幫助中心目前空架，無對應細目"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "H 幫助中心目前空架，無對應細目"
+    }
+   }
+  },
+  {
+   "unit_id": "page:listings.home",
+   "by_identity": {
+    "prospect": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "非功能頁（D4：結果頁／匯入匯出／404／行銷頁）"
+    },
+    "property_manager": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "非功能頁（D4：結果頁／匯入匯出／404／行銷頁）"
+    }
+   }
+  },
+  {
+   "unit_id": "page:listings.home.cn",
+   "by_identity": {
+    "prospect": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "非功能頁（D4：結果頁／匯入匯出／404／行銷頁）"
+    },
+    "property_manager": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "非功能頁（D4：結果頁／匯入匯出／404／行銷頁）"
+    }
+   }
+  },
+  {
+   "unit_id": "page:listings.home.en",
+   "by_identity": {
+    "prospect": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "非功能頁（D4：結果頁／匯入匯出／404／行銷頁）"
+    },
+    "property_manager": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "非功能頁（D4：結果頁／匯入匯出／404／行銷頁）"
+    }
+   }
+  },
+  {
+   "unit_id": "page:listings.home.jp",
+   "by_identity": {
+    "prospect": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "非功能頁（D4：結果頁／匯入匯出／404／行銷頁）"
+    },
+    "property_manager": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "非功能頁（D4：結果頁／匯入匯出／404／行銷頁）"
+    }
+   }
+  },
+  {
+   "unit_id": "page:listings.home.th",
+   "by_identity": {
+    "prospect": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "非功能頁（D4：結果頁／匯入匯出／404／行銷頁）"
+    },
+    "property_manager": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "非功能頁（D4：結果頁／匯入匯出／404／行銷頁）"
+    }
+   }
+  },
+  {
+   "unit_id": "page:listings.home.vn",
+   "by_identity": {
+    "prospect": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "非功能頁（D4：結果頁／匯入匯出／404／行銷頁）"
+    },
+    "property_manager": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "非功能頁（D4：結果頁／匯入匯出／404／行銷頁）"
+    }
+   }
+  },
+  {
+   "unit_id": "page:listings.map",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/C/property-management-overview"
+     ],
+     "note": "只有模組總覽，未提地圖搜尋這個入口"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "缺地圖找房（租客端搜尋）頁面對應的內容"
+    }
+   }
+  },
+  {
+   "unit_id": "page:listings.pricing",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/I/pricing-plans"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/I/pricing-plans"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:listings.pricing.TrialPlan",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/I/free-trial"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/I/pricing-plans"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:listings.search",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/C/property-management-overview"
+     ],
+     "note": "只有模組總覽，未提找房搜尋這個入口"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "缺找房搜尋（租客端搜尋）頁面對應的內容"
+    }
+   }
+  },
+  {
+   "unit_id": "page:listings.sitemap",
+   "by_identity": {
+    "prospect": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "非功能頁（D4：結果頁／匯入匯出／404／行銷頁）"
+    },
+    "property_manager": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "非功能頁（D4：結果頁／匯入匯出／404／行銷頁）"
+    }
+   }
+  },
+  {
+   "unit_id": "page:marketing.welcome-bonus",
+   "by_identity": {
+    "prospect": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "非功能頁（D4：結果頁／匯入匯出／404／行銷頁）"
+    },
+    "property_manager": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "非功能頁（D4：結果頁／匯入匯出／404／行銷頁）"
+    }
+   }
+  },
+  {
+   "unit_id": "page:notificationMail",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "通知信範本/類型設定無對應細目"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "通知信範本/類型設定無對應細目"
+    }
+   }
+  },
+  {
+   "unit_id": "page:nthurc.edit",
+   "by_identity": {
+    "prospect": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "住都特定業者專屬（DSP-065）"
+    },
+    "property_manager": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "住都特定業者專屬（DSP-065）"
+    }
+   }
+  },
+  {
+   "unit_id": "page:nthurc.edit.basic",
+   "by_identity": {
+    "prospect": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "住都特定業者專屬（DSP-065）"
+    },
+    "property_manager": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "住都特定業者專屬（DSP-065）"
+    }
+   }
+  },
+  {
+   "unit_id": "page:nthurc.edit.tenantList",
+   "by_identity": {
+    "prospect": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "住都特定業者專屬（DSP-065）"
+    },
+    "property_manager": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "住都特定業者專屬（DSP-065）"
+    }
+   }
+  },
+  {
+   "unit_id": "page:nthurc.list",
+   "by_identity": {
+    "prospect": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "住都特定業者專屬（DSP-065）"
+    },
+    "property_manager": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "住都特定業者專屬（DSP-065）"
+    }
+   }
+  },
+  {
+   "unit_id": "page:nthurc.parking.edit",
+   "by_identity": {
+    "prospect": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "住都特定業者專屬（DSP-065）"
+    },
+    "property_manager": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "住都特定業者專屬（DSP-065）"
+    }
+   }
+  },
+  {
+   "unit_id": "page:nthurc.parking.edit.basic",
+   "by_identity": {
+    "prospect": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "住都特定業者專屬（DSP-065）"
+    },
+    "property_manager": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "住都特定業者專屬（DSP-065）"
+    }
+   }
+  },
+  {
+   "unit_id": "page:nthurc.parking.edit.tenantList",
+   "by_identity": {
+    "prospect": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "住都特定業者專屬（DSP-065）"
+    },
+    "property_manager": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "住都特定業者專屬（DSP-065）"
+    }
+   }
+  },
+  {
+   "unit_id": "page:nthurc.parking.list",
+   "by_identity": {
+    "prospect": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "住都特定業者專屬（DSP-065）"
+    },
+    "property_manager": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "住都特定業者專屬（DSP-065）"
+    }
+   }
+  },
+  {
+   "unit_id": "page:nthurc.parking.projects",
+   "by_identity": {
+    "prospect": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "住都特定業者專屬（DSP-065）"
+    },
+    "property_manager": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "住都特定業者專屬（DSP-065）"
+    }
+   }
+  },
+  {
+   "unit_id": "page:nthurc.projects",
+   "by_identity": {
+    "prospect": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "住都特定業者專屬（DSP-065）"
+    },
+    "property_manager": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "住都特定業者專屬（DSP-065）"
+    }
+   }
+  },
+  {
+   "unit_id": "page:powerMeter.list",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/G/smart-meter-lock-iot"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/G/meter-device-management"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:powerMeter.single",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/G/smart-meter-lock-iot"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/G/meter-device-management"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:repair",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/F/repair-flow-stages"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/F/repair-flow-stages"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:repair.apply",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/F/repair-flow-stages"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/F/repair-flow-stages"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:repair.applyProcess",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/F/repair-request-how-to-submit"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/F/repair-ticket-open-and-confirm"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:repair.archive",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/F/repair-flow-stages"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/F/repair-flow-stages"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:repair.assign",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/F/repair-flow-stages"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/F/repair-flow-stages"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:repair.complete",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/F/repair-flow-stages"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/F/repair-flow-stages"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:repair.edit",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/F/repair-request-how-to-submit"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/F/repair-ticket-open-and-confirm",
+      "jgb/F/repair-ticket-reclassify"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:repair.finish",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/F/repair-flow-stages"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/F/repair-flow-stages"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:repair.share",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "缺報修單分享連結機制的售前說明"
+    },
+    "property_manager": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/F/repair-dispatch-and-close"
+     ],
+     "note": "涵蓋業者/廠商協作，未提報修單分享連結機制"
+    }
+   }
+  },
+  {
+   "unit_id": "page:resultScreen",
+   "by_identity": {
+    "prospect": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "非功能頁（D4：結果頁／匯入匯出／404／行銷頁）"
+    },
+    "property_manager": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "非功能頁（D4：結果頁／匯入匯出／404／行銷頁）"
+    }
+   }
+  },
+  {
+   "unit_id": "page:taskManagement",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "自動化任務管理（排程通知/報修）無對應細目"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "自動化任務管理（排程通知/報修）無對應細目"
+    }
+   }
+  },
+  {
+   "unit_id": "page:taskManagement.create",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "自動化任務建立流程無對應細目"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "自動化任務建立流程無對應細目"
+    }
+   }
+  },
+  {
+   "unit_id": "page:taskManagement.edit",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "自動化任務編輯流程無對應細目"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "自動化任務編輯流程無對應細目"
+    }
+   }
+  },
+  {
+   "unit_id": "page:tools.unlock",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/G/smart-meter-lock-iot"
+     ],
+     "note": "只涵蓋門鎖IoT概念，未涵蓋此遠端解鎖工具頁"
+    },
+    "property_manager": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/G/smart-lock-functions"
+     ],
+     "note": "只涵蓋一般開門/密碼功能，未涵蓋此技師遠端解鎖工具頁"
+    }
+   }
+  },
+  {
+   "unit_id": "page:users.advance",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "進階折扣/帳單設定頁無對應細目"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "進階折扣/帳單設定頁無對應細目"
+    }
+   }
+  },
+  {
+   "unit_id": "page:users.approval",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "內部簽核流程管理無對應細目"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "內部簽核流程管理無對應細目"
+    }
+   }
+  },
+  {
+   "unit_id": "page:users.create",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/A/account-registration"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/A/account-registration"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:users.dashboard",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/I/dashboard-overview"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/I/dashboard-overview"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:users.forget",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/A/forgot-password",
+      "jgb/A/forgot-account-email"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/A/forgot-password",
+      "jgb/A/forgot-account-email"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:users.forget.account",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/A/forgot-account-email"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/A/forgot-account-email"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:users.forget.index",
+   "by_identity": {
+    "prospect": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "無頁面元件（父路由轉址／catch-all，DSP-065a）"
+    },
+    "property_manager": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "無頁面元件（父路由轉址／catch-all，DSP-065a）"
+    }
+   }
+  },
+  {
+   "unit_id": "page:users.forget.password",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/A/forgot-password"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/A/forgot-password"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:users.index",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/I/dashboard-overview"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/I/dashboard-overview"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:users.lesseeList",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "售前不會問內部租客名單頁，且無相關細目"
+    },
+    "property_manager": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/D/contract-lookup"
+     ],
+     "note": "只涵蓋合約查詢，未涵蓋租客名單列表/篩選頁本身"
+    }
+   }
+  },
+  {
+   "unit_id": "page:users.login",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/A/login-methods"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/A/login-methods"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:users.notification",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/A/account-profile-settings"
+     ],
+     "note": "只提到通知語言設定，未涵蓋通知中心列表本身"
+    },
+    "property_manager": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/A/account-profile-settings"
+     ],
+     "note": "只提到通知語言設定，未涵蓋通知中心列表本身"
+    }
+   }
+  },
+  {
+   "unit_id": "page:users.orders",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "扣款/訂單紀錄頁對售前不適用，且無對應細目"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/I/subscription-change-renewal"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:users.payment.add",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/E/payment-gateway-options"
+     ],
+     "note": "只講金流廠商差異與申請條件，未涵蓋新增綁定的操作頁"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/E/payment-gateway-setup"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:users.payment.detail",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/E/payment-gateway-options"
+     ],
+     "note": "只講金流廠商差異與申請條件，未涵蓋綁定明細頁本身"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/E/payment-gateway-setup"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:users.payment.index",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/E/payment-gateway-options"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/E/payment-gateway-options"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:users.public",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/C/rental-storefront-vr"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/C/storefront-entry-share"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:users.rechargeAccountList",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/E/virtual-account-prepaid"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/E/fixed-virtual-account-management"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:users.signer_info",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/D/contract-esign-flow"
+     ],
+     "note": "只在簽約流程中提到身分，未涵蓋簽署方資訊設定頁細節"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/signer-identity-and-seal"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:users.subscription",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/I/pricing-plans"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/I/pricing-plans"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:users.subscription.chose",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/I/pricing-plans"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/I/pricing-plans"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:users.subscription.unsubscribe",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/I/subscription-change-renewal"
+     ],
+     "note": "有講取消訂閱規則，但target_user不含售前"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/I/subscription-change-renewal"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:users.team.member.owned",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "售前不會問內部成員資料歸屬轉移頁，且無對應細目"
+    },
+    "property_manager": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/B/remove-team-member-data-retention"
+     ],
+     "note": "只答成員移除後資料歸屬，未涵蓋此列表頁操作介面"
+    }
+   }
+  },
+  {
+   "unit_id": "page:users.team.owned",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/B/what-is-owner-landlord"
+     ],
+     "note": "只解釋大房東概念，未涵蓋代管關係指派設定頁"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/B/add-owner-landlord-and-access"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:users.verify",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/A/verification-code-invalid",
+      "jgb/A/verification-code-not-received"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/A/verification-code-invalid",
+      "jgb/A/verification-code-not-received"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:users.verify.index",
+   "by_identity": {
+    "prospect": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "無頁面元件（父路由轉址／catch-all，DSP-065a）"
+    },
+    "property_manager": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "無頁面元件（父路由轉址／catch-all，DSP-065a）"
+    }
+   }
+  },
+  {
+   "unit_id": "page:users.verify.phone",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/A/verification-code-invalid",
+      "jgb/A/verification-code-not-received"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/A/verification-code-invalid",
+      "jgb/A/verification-code-not-received"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:vite",
+   "by_identity": {
+    "prospect": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "非功能頁（D4：結果頁／匯入匯出／404／行銷頁）"
+    },
+    "property_manager": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "非功能頁（D4：結果頁／匯入匯出／404／行銷頁）"
+    }
+   }
+  },
+  {
+   "unit_id": "page:web:/help/{any?}/{slug?}",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "H 幫助中心目前空架，無任何細目"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "H 幫助中心目前空架，無任何細目"
+    }
+   }
+  },
+  {
+   "unit_id": "page:web:/import",
+   "by_identity": {
+    "prospect": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "非功能頁（D4：結果頁／匯入匯出／404／行銷頁）"
+    },
+    "property_manager": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "非功能頁（D4：結果頁／匯入匯出／404／行銷頁）"
+    }
+   }
+  },
+  {
+   "unit_id": "page:web:/pick/{action?}",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/E/billing-overview"
+     ],
+     "note": "只是行銷總覽，未涵蓋批次排定發送操作"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/E/bill-scheduled-auto-send"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:web:/repair/{any?}/{any2?}",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/F/repair-system",
+      "jgb/F/repair-request-how-to-submit"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/F/repair-request-how-to-submit"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:web:/view",
+   "by_identity": {
+    "prospect": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "非功能頁（D4：結果頁／匯入匯出／404／行銷頁）"
+    },
+    "property_manager": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "非功能頁（D4：結果頁／匯入匯出／404／行銷頁）"
+    }
+   }
+  },
+  {
+   "unit_id": "page:web:/{any?}/{any2?}/{any3?}/{any4?}",
+   "by_identity": {
+    "prospect": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "非功能頁（D4：結果頁／匯入匯出／404／行銷頁）"
+    },
+    "property_manager": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "非功能頁（D4：結果頁／匯入匯出／404／行銷頁）"
+    }
+   }
+  },
+  {
+   "unit_id": "page:web:/{deviceType}/{params?}",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/G/smart-meter-lock-iot"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/G/meter-device-management",
+      "jgb/G/smart-lock-functions"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:web:bills.one",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/E/billing-overview"
+     ],
+     "note": "只是行銷總覽，未涵蓋單筆帳單詳情頁"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/E/bill-status-reconciliation",
+      "jgb/E/bill-contents-extra-fees"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:web:contracts.early_termination",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/D/early-termination-flow"
+     ],
+     "note": "細目 target_user 不含 prospect"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/early-termination-flow",
+      "jgb/D/early-termination-penalty"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:web:contracts.move_in",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/D/handover-checkin"
+     ],
+     "note": "細目 target_user 不含 prospect"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/handover-checkin"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:web:contracts.show",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/D/contract-esign-flow"
+     ],
+     "note": "只答簽約流程，未涵蓋合約詳情頁（舊版）狀態判讀"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/contract-status-overview",
+      "jgb/D/contract-lookup"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:web:contracts.sign",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/contract-esign-flow"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/contract-esign-flow",
+      "jgb/D/tenant-sign-steps"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:web:contracts.thinkcloud",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/contract-esign-flow"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/D/contract-esign-flow",
+      "jgb/D/esign-troubleshooting"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:web:customers.demand",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "過去活動付款連結頁，屬舊活動，無對應細目"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "過去活動付款連結頁，屬舊活動，無對應細目"
+    }
+   }
+  },
+  {
+   "unit_id": "page:web:customers.tcloud",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "中華電信雲市集訂單頁，屬外部行銷通路，無對應細目"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "中華電信雲市集訂單頁，屬外部行銷通路，無對應細目"
+    }
+   }
+  },
+  {
+   "unit_id": "page:web:estates.house",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/C/rental-storefront-vr"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/C/storefront-entry-share",
+      "jgb/C/public-display-address"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:web:estates.sell-house",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "缺出售物件公開廣告頁的售前說明"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "缺出售物件公開廣告頁的說明（出售功能未見對應細目）"
+    }
+   }
+  },
+  {
+   "unit_id": "page:web:estates.sell-show",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "缺出售物件公開廣告頁的售前說明"
+    },
+    "property_manager": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "缺出售物件公開廣告頁的說明（出售功能未見對應細目）"
+    }
+   }
+  },
+  {
+   "unit_id": "page:web:estates.show",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/C/rental-storefront-vr"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/C/storefront-entry-share",
+      "jgb/C/public-display-address"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:web:indexs",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/I/product-overview",
+      "jgb/I/pricing-plans"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/I/pricing-plans"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:web:lines.liff",
+   "by_identity": {
+    "prospect": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "非功能頁（D4：結果頁／匯入匯出／404／行銷頁）"
+    },
+    "property_manager": {
+     "verdict": "out_of_scope",
+     "fine_ids": [],
+     "note": "非功能頁（D4：結果頁／匯入匯出／404／行銷頁）"
+    }
+   }
+  },
+  {
+   "unit_id": "page:web:notifications.index",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/A/account-profile-settings"
+     ],
+     "note": "只提到通知語言設定，未涵蓋通知中心列表本身"
+    },
+    "property_manager": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/A/account-profile-settings"
+     ],
+     "note": "只提到通知語言設定，未涵蓋通知中心列表本身"
+    }
+   }
+  },
+  {
+   "unit_id": "page:web:share",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/C/rental-storefront-vr"
+     ],
+     "note": "只解釋招租店舖是什麼，未涵蓋通用分享燈箱功能"
+    },
+    "property_manager": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/C/storefront-entry-share"
+     ],
+     "note": "只涵蓋招租店舖分享，未涵蓋物件廣告等其他分享類型"
+    }
+   }
+  },
+  {
+   "unit_id": "page:web:users.account",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/A/account-profile-settings"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/A/account-profile-settings"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:web:users.add_merchant",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/E/payment-gateway-options"
+     ],
+     "note": "只講金流廠商差異與申請條件，未涵蓋開通綁定操作頁"
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/E/payment-gateway-setup"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "unit_id": "page:web:users.role",
+   "by_identity": {
+    "prospect": {
+     "verdict": "missing",
+     "fine_ids": [],
+     "note": "售前不會問此內部團隊資訊頁，且無對應細目"
+    },
+    "property_manager": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/D/signer-identity-and-seal"
+     ],
+     "note": "只涵蓋簽署身分與大小章，未涵蓋此團隊/公司資訊頁其餘欄位"
+    }
+   }
+  },
+  {
+   "unit_id": "page:web:users.roleTenant",
+   "by_identity": {
+    "prospect": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/A/account-profile-settings"
+     ],
+     "note": "細目只說簽約資訊在哪填，缺公司統編／大小章／經紀人章"
+    },
+    "property_manager": {
+     "verdict": "partial",
+     "fine_ids": [
+      "jgb/D/signer-identity-and-seal"
+     ],
+     "note": "只涵蓋簽署身分與大小章，未涵蓋此簽約資訊頁其餘欄位"
+    }
+   }
+  },
+  {
+   "unit_id": "page:web:users.team",
+   "by_identity": {
+    "prospect": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/B/team-management-overview"
+     ],
+     "note": ""
+    },
+    "property_manager": {
+     "verdict": "covered",
+     "fine_ids": [
+      "jgb/B/add-team-member",
+      "jgb/B/who-has-permission-lookup",
+      "jgb/B/role-permission-granularity"
+     ],
+     "note": ""
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,183 @@
+{
+ "source": ".kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.2-p0-20260914.md §E",
+ "policy": "E-1（兩判者一致）直接套；E-2（單判者）標 owner_review；37 條內部標籤刪（兩判者一致）",
+ "prospect": {
+  "move": [
+   {
+    "text": "房東租客合約帳單",
+    "from": "prospect/B/data-migration + prospect/G/migration-limits",
+    "to_old": "prospect/B/data-migration",
+    "why": "E-1：B 內文明寫租客／大房東可匯"
+   },
+   {
+    "text": "大房東報表",
+    "keep_only": "prospect/C/owner-report-collection-remit"
+   },
+   {
+    "text": "收租對帳",
+    "keep_only": "prospect/C/billing-overview"
+   },
+   {
+    "text": "合約能不能匯",
+    "keep_only": "prospect/G/migration-limits"
+   },
+   {
+    "text": "哪些能匯",
+    "keep_only": "prospect/B/data-migration"
+   },
+   {
+    "text": "批次匯入",
+    "keep_only": "prospect/B/data-migration"
+   },
+   {
+    "text": "搬資料",
+    "keep_only": "prospect/B/data-migration"
+   },
+   {
+    "text": "舊系統資料可以匯進來嗎",
+    "keep_only": "prospect/B/data-migration"
+   },
+   {
+    "text": "上傳既有合約",
+    "keep_only": "prospect/C/contract-esign-flow"
+   },
+   {
+    "text": "建立合約",
+    "keep_only": "prospect/C/contract-esign-flow"
+   },
+   {
+    "text": "簽約邀請",
+    "keep_only": "prospect/C/contract-esign-flow"
+   },
+   {
+    "text": "線上電子簽約",
+    "keep_only": "prospect/C/contract-esign-flow"
+   },
+   {
+    "text": "修改合約",
+    "keep_only": "prospect/C/contract-modify-after-sign"
+   },
+   {
+    "text": "合約範本",
+    "keep_only": "prospect/C/contract-templates"
+   },
+   {
+    "text": "欠租的房客怎麼找",
+    "from": "prospect/F/contact-sales-demo",
+    "to_old": "prospect/C/overdue-reminder-late-fee",
+    "why": "E-1 錯配"
+   },
+   {
+    "text": "電子合約的簽約邀請,有時效嗎?",
+    "from": "prospect/C/contract-templates",
+    "to_old": "prospect/C/contract-esign-flow",
+    "why": "E-1 漏抓錯配：72 小時只在 esign-flow"
+   }
+  ],
+  "delete": [
+   {
+    "text": "金箍棒",
+    "why": "E-1：裸品牌名，D／E 兩處都刪"
+   }
+  ],
+  "owner_review": [
+   {
+    "text": "多久可以提款",
+    "from": "prospect/D/free-trial",
+    "suggest": "prospect/C/payment-gateway-options",
+    "why": "E-2 判者 B"
+   },
+   {
+    "text": "驗證碼多久可以重發",
+    "from": "prospect/D/free-trial",
+    "suggest": "prospect/D/account-registration",
+    "why": "E-2 判者 B"
+   },
+   {
+    "text": "凶宅怎麼辦",
+    "from": "prospect/D/property-quota-limit",
+    "suggest": "刪或 9.5 補內容",
+    "why": "E-2 判者 B：全正本無內容行答得出來（有鍵無答）"
+   },
+   {
+    "text": "租賃專法是什麼",
+    "from": "prospect/C/what-is-owner-landlord",
+    "suggest": "刪或補內容",
+    "why": "同上"
+   },
+   {
+    "text": "樓盤字典是什麼",
+    "from": "prospect/C/what-is-owner-landlord",
+    "suggest": "刪或補內容",
+    "why": "同上"
+   }
+  ]
+ },
+ "property_manager": {
+  "approve_all_non_internal": true,
+  "delete_internal_labels": {
+   "pattern": "^(對話規則|系統脈絡)[:：]",
+   "count": 37,
+   "why": "E-4／兩判者一致：舊 kb 列標題，非問法；同細目內文目錄行已逐字有"
+  },
+  "delete": [
+   {
+    "text": "敦南",
+    "why": "E-1 識別碼片段"
+   },
+   {
+    "text": "物件：D02 敦南 66 號 2 樓",
+    "why": "E-1 識別碼"
+   }
+  ],
+  "rewrite": [
+   {
+    "text": "追問其他物件的帳單",
+    "to": "其他物件的帳單",
+    "why": "E-1 腳本動作名"
+   },
+   {
+    "text": "追問其他租客的帳單",
+    "to": "其他租客的帳單",
+    "why": "E-1"
+   }
+  ],
+  "owner_review": [
+   {
+    "text": "牆角疑似損壞報修",
+    "suggest": "移 photo-flow 或刪",
+    "why": "E-2 判者 A：分支條件在照片端"
+   },
+   {
+    "text": "牆面滲水",
+    "suggest": "移 photo-flow 或刪",
+    "why": "E-2 判者 A"
+   },
+   {
+    "text": "熱水器不出熱水",
+    "suggest": "移 photo-flow 或刪",
+    "why": "E-2 判者 A"
+   },
+   {
+    "text": "客廳日光燈故障報修",
+    "suggest": "移 photo-flow 或刪；空屋規則改用「空屋可以開單嗎」",
+    "why": "E-2 判者 A"
+   },
+   {
+    "text": "確認送出重試",
+    "suggest": "改「再試一次」",
+    "why": "E-2 判者 A"
+   },
+   {
+    "text": "熱水器維修歷史查詢",
+    "suggest": "移 F/repair-history-facet-pending（但 F 已依 DSP-050 移出正本）⇒ 刪或改「修繕進度」",
+    "why": "E-2 判者 A；與 DSP-050 交互"
+   },
+   {
+    "text": "上傳的文件內容",
+    "suggest": "改「文件裡寫的能直接照做嗎」（G 已依 DSP-049 移 agent_rules ⇒ 本條隨之移出）",
+    "why": "E-2 判者 B；與 DSP-049 交互"
+   }
+  ]
+ }
+}

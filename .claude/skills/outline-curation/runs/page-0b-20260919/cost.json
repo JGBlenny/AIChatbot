@@ -1,0 +1,26 @@
+{
+  "cost": {
+    "agents": 0,
+    "wall_s": 0.0
+  },
+  "deterministic": true,
+  "inputs_sha": {
+    "skill": "c1ac1827c3a24539a6d0a6a7b17f05b395bd2fca5e05602085f43b4dbcfa1ba0"
+  },
+  "payload": {
+    "by_step": {
+      "feature_surface": {
+        "agents": 3,
+        "wall_s": 1399.0
+      }
+    },
+    "over_budget": false,
+    "total": {
+      "agents": 3,
+      "wall_s": 1399.0
+    }
+  },
+  "raw_outputs_path": null,
+  "skill_version": "0.1.0",
+  "step": "diff"
+}

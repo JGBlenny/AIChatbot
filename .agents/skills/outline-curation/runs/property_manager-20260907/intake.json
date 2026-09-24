@@ -1,0 +1,219 @@
+{
+  "cost": {
+    "agents": 0,
+    "completion_tokens": 0,
+    "prompt_tokens": 0,
+    "usd": 0.0,
+    "wall_s": 0.0
+  },
+  "deterministic": true,
+  "inputs_sha": {
+    "canon": null,
+    "kb": "860efa9f97133a0f556eaa37122ce2220ba126b7e9f7f767fb3ce9beec92f17d"
+  },
+  "payload": {
+    "drafts": [],
+    "frozen_at": "2026-09-07T22:55:00+08:00",
+    "gapmap_cells": 0,
+    "kb_rows": [
+      {
+        "id": "3801",
+        "question_summary": "對話規則：合約診斷"
+      },
+      {
+        "id": "3829",
+        "question_summary": "對話規則：續約"
+      },
+      {
+        "id": "3831",
+        "question_summary": "對話規則：簽署排障"
+      },
+      {
+        "id": "3915",
+        "question_summary": "對話規則：繳費金流排障"
+      },
+      {
+        "id": "3916",
+        "question_summary": "對話規則：帳單異常"
+      },
+      {
+        "id": "3917",
+        "question_summary": "對話規則：發票"
+      },
+      {
+        "id": "3918",
+        "question_summary": "對話規則：滯納金"
+      },
+      {
+        "id": "3983",
+        "question_summary": "對話規則：註冊驗證排障"
+      },
+      {
+        "id": "3984",
+        "question_summary": "對話規則：帳號綁定異動"
+      },
+      {
+        "id": "3990",
+        "question_summary": "對話規則：登入排障"
+      },
+      {
+        "id": "4001",
+        "question_summary": "對話規則：團隊成員權限"
+      },
+      {
+        "id": "4005",
+        "question_summary": "對話規則：合約異動"
+      },
+      {
+        "id": "4089",
+        "question_summary": "對話規則：電表排障"
+      },
+      {
+        "id": "4090",
+        "question_summary": "對話規則：IoT設定引導"
+      },
+      {
+        "id": "4176",
+        "question_summary": "對話規則：物件現況診斷"
+      },
+      {
+        "id": "4202",
+        "question_summary": "對話規則：退租收尾"
+      },
+      {
+        "id": "4203",
+        "question_summary": "對話規則：物件操作引導"
+      },
+      {
+        "id": "4214",
+        "question_summary": "對話規則：帳單設定引導"
+      },
+      {
+        "id": "4215",
+        "question_summary": "對話規則：建約引導"
+      },
+      {
+        "id": "4252",
+        "question_summary": "對話規則：帳單診斷"
+      },
+      {
+        "id": "5374",
+        "question_summary": "對話規則：訂閱診斷"
+      },
+      {
+        "id": "3622",
+        "question_summary": "售前系統脈絡（系統注入用，勿檢索）"
+      },
+      {
+        "id": "3799",
+        "question_summary": "系統脈絡：合約領域-系統合約(母共用)"
+      },
+      {
+        "id": "3800",
+        "question_summary": "系統脈絡：合約領域-狀態判斷(子面向)"
+      },
+      {
+        "id": "3822",
+        "question_summary": "系統脈絡：合約領域-合約異動(子面向)"
+      },
+      {
+        "id": "3823",
+        "question_summary": "系統脈絡：合約領域-退租收尾(子面向)"
+      },
+      {
+        "id": "3824",
+        "question_summary": "系統脈絡：合約領域-續約(子面向)"
+      },
+      {
+        "id": "3825",
+        "question_summary": "系統脈絡：合約領域-建約引導(子面向)"
+      },
+      {
+        "id": "3826",
+        "question_summary": "系統脈絡：合約領域-簽署排障(子面向)"
+      },
+      {
+        "id": "3909",
+        "question_summary": "系統脈絡：帳務領域-系統帳務(母共用)"
+      },
+      {
+        "id": "3910",
+        "question_summary": "系統脈絡：帳務領域-繳費金流排障(子面向)"
+      },
+      {
+        "id": "3911",
+        "question_summary": "系統脈絡：帳務領域-帳單異常(子面向)"
+      },
+      {
+        "id": "3912",
+        "question_summary": "系統脈絡：帳務領域-發票(子面向)"
+      },
+      {
+        "id": "3913",
+        "question_summary": "系統脈絡：帳務領域-滯納金(子面向)"
+      },
+      {
+        "id": "3914",
+        "question_summary": "系統脈絡：帳務領域-帳單設定引導(子面向)"
+      },
+      {
+        "id": "3952",
+        "question_summary": "系統脈絡：帳號領域-帳號中心(母共用)"
+      },
+      {
+        "id": "3953",
+        "question_summary": "系統脈絡：帳號領域-註冊驗證排障(子面向)"
+      },
+      {
+        "id": "3954",
+        "question_summary": "系統脈絡：帳號領域-登入排障(子面向)"
+      },
+      {
+        "id": "3955",
+        "question_summary": "系統脈絡：帳號領域-帳號綁定異動(子面向)"
+      },
+      {
+        "id": "3956",
+        "question_summary": "系統脈絡：帳號領域-團隊成員權限(子面向)"
+      },
+      {
+        "id": "4021",
+        "question_summary": "系統脈絡：IoT領域-智慧設備(母共用)"
+      },
+      {
+        "id": "4088",
+        "question_summary": "系統脈絡：IoT領域-IoT設定引導(子面向)"
+      },
+      {
+        "id": "4091",
+        "question_summary": "系統脈絡：IoT領域-電表排障(子面向)"
+      },
+      {
+        "id": "4132",
+        "question_summary": "系統脈絡：物件領域-物件管理(母共用)"
+      },
+      {
+        "id": "4133",
+        "question_summary": "系統脈絡：物件領域-物件操作引導(子面向)"
+      },
+      {
+        "id": "4134",
+        "question_summary": "系統脈絡：物件領域-物件現況診斷(子面向)"
+      },
+      {
+        "id": "5373",
+        "question_summary": "系統脈絡：訂閱領域-條件診斷：訂閱(子面向)"
+      }
+    ],
+    "object_under_test": {
+      "approved_by": "",
+      "frozen_at": "2026-09-07T22:55:00+08:00",
+      "materials": [
+        ".claude/skills/outline-curation/raw/kb-property_manager-20260907.json"
+      ]
+    }
+  },
+  "raw_outputs_path": null,
+  "skill_version": "0.1.0",
+  "step": "intake"
+}

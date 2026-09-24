@@ -1,0 +1,267 @@
+[
+  {
+    "new": "jgb/A/account-registration",
+    "old": "prospect/A/account-registration",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/B/team-management-overview",
+    "old": "prospect/B/team-management-overview",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/B/role-permission-granularity",
+    "old": "prospect/B/role-permission-granularity",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/B/what-is-owner-landlord",
+    "old": "prospect/B/what-is-owner-landlord",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/B/owner-report-collection-remit",
+    "old": "prospect/B/owner-report-collection-remit",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/C/property-management-overview",
+    "old": "prospect/C/property-management-overview",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/C/community-batch-create",
+    "old": "prospect/C/community-batch-create",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/C/property-status-meaning",
+    "old": "prospect/C/property-status-meaning",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/C/rental-storefront-vr",
+    "old": "prospect/C/rental-storefront-vr",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/D/contract-esign-flow",
+    "old": "prospect/D/contract-esign-flow",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/D/contract-batch-renewal",
+    "old": "prospect/D/contract-batch-renewal",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/D/contract-templates",
+    "old": "prospect/D/contract-templates",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/D/sublease-vs-management-contract",
+    "old": "prospect/D/sublease-vs-management-contract",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/D/contract-modify-after-sign",
+    "old": "prospect/D/contract-modify-after-sign",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/D/contract-history-retention",
+    "old": "prospect/D/contract-history-retention",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/E/billing-overview",
+    "old": "prospect/E/billing-overview",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/E/einvoice-issuing",
+    "old": "prospect/E/einvoice-issuing",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/E/bill-contents-extra-fees",
+    "old": "prospect/E/bill-contents-extra-fees",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/E/bill-format-customize",
+    "old": "prospect/E/bill-format-customize",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/E/overdue-reminder-late-fee",
+    "old": "prospect/E/overdue-reminder-late-fee",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/E/payment-gateway-options",
+    "old": "prospect/E/payment-gateway-options",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/E/virtual-account-prepaid",
+    "old": "prospect/E/virtual-account-prepaid",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/E/credit-card-rent-payment",
+    "old": "prospect/E/credit-card-rent-payment",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/E/utility-split-calculation",
+    "old": "prospect/E/utility-split-calculation",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/F/repair-system",
+    "old": "prospect/F/repair-system",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/G/smart-meter-lock-iot",
+    "old": "prospect/G/smart-meter-lock-iot",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/I/product-overview",
+    "old": "prospect/I/product-overview",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/I/why-choose-jgb",
+    "old": "prospect/I/why-choose-jgb",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/I/dashboard-overview",
+    "old": "prospect/I/dashboard-overview",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/I/individual-landlord-scale-fit",
+    "old": "prospect/I/individual-landlord-scale-fit",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/I/team-company-fit",
+    "old": "prospect/I/team-company-fit",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/I/data-migration",
+    "old": "prospect/I/data-migration",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/I/free-trial",
+    "old": "prospect/I/free-trial",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/I/pricing-plans",
+    "old": "prospect/I/pricing-plans",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/I/property-quota-limit",
+    "old": "prospect/I/property-quota-limit",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/I/subscription-change-renewal",
+    "old": "prospect/I/subscription-change-renewal",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/I/competitor-comparison",
+    "old": "prospect/I/competitor-comparison",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/I/competitor-neutrality",
+    "old": "prospect/I/competitor-neutrality",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/D/lease-expiry-followup-scope",
+    "old": "property_manager/D/lease-expiry-followup-scope",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/E/dunning-draft-template-tone-late-fee",
+    "old": "property_manager/E/dunning-draft-template-tone-late-fee",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/E/dunning-draft-not-auto-send",
+    "old": "property_manager/E/dunning-draft-not-auto-send",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/E/overdue-bill-followup-scope",
+    "old": "property_manager/E/overdue-bill-followup-scope",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/F/repair-ticket-open-and-confirm",
+    "old": "property_manager/F/repair-ticket-open-and-confirm",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/F/repair-ticket-photo-recognition-uncertain",
+    "old": "property_manager/F/repair-ticket-photo-recognition-uncertain",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/F/repair-ticket-reclassify",
+    "old": "property_manager/F/repair-ticket-reclassify",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/F/repair-ticket-photo-count-limit",
+    "old": "property_manager/F/repair-ticket-photo-count-limit",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/F/repair-ticket-urgency-judgment",
+    "old": "property_manager/F/repair-ticket-urgency-judgment",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/F/repair-ticket-no-lease",
+    "old": "property_manager/F/repair-ticket-no-lease",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/F/repair-ticket-mid-flow-cancel",
+    "old": "property_manager/F/repair-ticket-mid-flow-cancel",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/F/repair-ticket-submit-failure",
+    "old": "property_manager/F/repair-ticket-submit-failure",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/F/repair-ticket-after-submit",
+    "old": "property_manager/F/repair-ticket-after-submit",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/F/repair-progress-followup-scope",
+    "old": "property_manager/F/repair-progress-followup-scope",
+    "op": "keep"
+  },
+  {
+    "new": "jgb/G/meter-item-followup-scope",
+    "old": "property_manager/G/meter-item-followup-scope",
+    "op": "keep"
+  }
+]

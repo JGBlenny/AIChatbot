@@ -1,0 +1,2933 @@
+{
+  "cost": {
+    "agents": 4,
+    "completion_tokens": 0,
+    "prompt_tokens": 0,
+    "usd": 0.0,
+    "wall_s": 0.0
+  },
+  "deterministic": false,
+  "inputs_sha": {
+    "coarses": "94e8d42ce3d7787e882ecab939b028fd1244792e92d3acb4f057400f4ffad301",
+    "kb": "da7be9406e5ffa0db381b3a92ff59ee1e98bf137097335fd1bea7512573ee32a"
+  },
+  "payload": {
+    "proposals": [
+      {
+        "angle": "user_question_path",
+        "coarses": [
+          {
+            "id": "A",
+            "title": "帳號與身分"
+          },
+          {
+            "id": "B",
+            "title": "團隊、人員與大房東"
+          },
+          {
+            "id": "C",
+            "title": "社區與物件"
+          },
+          {
+            "id": "D",
+            "title": "租約（含委託約子題）"
+          },
+          {
+            "id": "E",
+            "title": "帳務（含發票、收款金流、抄表）"
+          },
+          {
+            "id": "F",
+            "title": "修繕"
+          },
+          {
+            "id": "G",
+            "title": "裝置（IoT）"
+          },
+          {
+            "id": "H",
+            "title": "幫助中心"
+          },
+          {
+            "id": "I",
+            "title": "方案與導入"
+          }
+        ],
+        "fines": [
+          {
+            "coarse_id": "I",
+            "id": "prospect/I/product-overview",
+            "merge_of": [
+              "tmp:kb:prospect/A/product-overview",
+              "tmp:kb:prospect/A/pain-points"
+            ],
+            "moved_from": [],
+            "reason": "「你們是什麼系統／能解決什麼／適合我嗎」是同一個開場問題，答案都是模組總覽加追問狀況，故合併為導入前總覽。",
+            "slug": "product-overview",
+            "split_from": [],
+            "title": "系統總覽、能解決什麼問題、適不適合我"
+          },
+          {
+            "coarse_id": "I",
+            "id": "prospect/I/why-choose-jgb",
+            "merge_of": [
+              "tmp:kb:prospect/A/why-choose-jgb"
+            ],
+            "moved_from": [],
+            "reason": "「為什麼選你們」是獨立的選型問題，與總覽和競品比較的問法不同。",
+            "slug": "why-choose-jgb",
+            "split_from": [],
+            "title": "為什麼選金箍棒"
+          },
+          {
+            "coarse_id": "I",
+            "id": "prospect/I/dashboard-overview",
+            "merge_of": [
+              "tmp:kb:prospect/A/dashboard-overview"
+            ],
+            "moved_from": [],
+            "reason": "「登入後看得到什麼」是導入前的產品畫面問題，內容橫跨收支、帳務、修繕，不屬單一領域，歸方案與導入。",
+            "slug": "dashboard-overview",
+            "split_from": [],
+            "title": "登入後首頁儀表板顯示哪些數據"
+          },
+          {
+            "coarse_id": "I",
+            "id": "prospect/I/individual-landlord-fit",
+            "merge_of": [
+              "tmp:kb:prospect/B/individual-landlord-scale-fit"
+            ],
+            "moved_from": [],
+            "reason": "「我管十幾間適合嗎」是個人房東的適配問題，與團隊適配問法不同。",
+            "slug": "individual-landlord-fit",
+            "split_from": [],
+            "title": "個人房東（約 10～30 戶）適不適合"
+          },
+          {
+            "coarse_id": "I",
+            "id": "prospect/I/team-company-fit",
+            "merge_of": [
+              "tmp:kb:prospect/B/team-company-fit"
+            ],
+            "moved_from": [],
+            "reason": "「我們是公司／代管團隊適合嗎」是團隊規模的適配問題，獨立於個人房東適配。",
+            "slug": "team-company-fit",
+            "split_from": [],
+            "title": "公司或包租代管團隊適不適合"
+          },
+          {
+            "coarse_id": "I",
+            "id": "prospect/I/data-migration",
+            "merge_of": [
+              "tmp:kb:prospect/B/data-migration",
+              "tmp:kb:prospect/G/migration-limits"
+            ],
+            "moved_from": [],
+            "reason": "「舊資料能不能搬過來」一個問題就要同時答可匯入與不支援項目，故合併為單一導入問題。",
+            "slug": "data-migration",
+            "split_from": [],
+            "title": "舊系統資料能否匯入（可匯入與不支援項目）"
+          },
+          {
+            "coarse_id": "I",
+            "id": "prospect/I/free-trial",
+            "merge_of": [
+              "tmp:kb:prospect/D/free-trial"
+            ],
+            "moved_from": [],
+            "reason": "「能不能先試用」是獨立的方案問題。",
+            "slug": "free-trial",
+            "split_from": [],
+            "title": "可以免費試用嗎"
+          },
+          {
+            "coarse_id": "I",
+            "id": "prospect/I/pricing-plans",
+            "merge_of": [
+              "tmp:kb:prospect/D/pricing-plans"
+            ],
+            "moved_from": [],
+            "reason": "「多少錢／怎麼收費」是獨立的方案問題。",
+            "slug": "pricing-plans",
+            "split_from": [],
+            "title": "怎麼收費"
+          },
+          {
+            "coarse_id": "I",
+            "id": "prospect/I/property-quota-limit",
+            "merge_of": [
+              "tmp:kb:prospect/D/property-quota-limit"
+            ],
+            "moved_from": [],
+            "reason": "「可以管幾個物件／額度滿了怎麼辦」由方案級距決定，歸方案而非物件。",
+            "slug": "property-quota-limit",
+            "split_from": [],
+            "title": "方案物件額度上限與用滿怎麼辦"
+          },
+          {
+            "coarse_id": "I",
+            "id": "prospect/I/subscription-change-renewal",
+            "merge_of": [
+              "tmp:kb:prospect/D/subscription-change-renewal"
+            ],
+            "moved_from": [],
+            "reason": "「怎麼升級／取消／續約」是訂閱操作問題，與收費級距問法不同。",
+            "slug": "subscription-change-renewal",
+            "split_from": [],
+            "title": "升級、續約與取消訂閱"
+          },
+          {
+            "coarse_id": "I",
+            "id": "prospect/I/competitor-comparison",
+            "merge_of": [
+              "tmp:kb:prospect/E/competitor-comparison",
+              "tmp:kb:prospect/E/competitor-neutrality"
+            ],
+            "moved_from": [],
+            "reason": "「你們跟某某比怎樣」與「你覺得某某好不好」都落在同一個競品問題，中立原則是該回答的一部分，故合併。",
+            "slug": "competitor-comparison",
+            "split_from": [],
+            "title": "跟 Bananas、屋我也差在哪（含中立原則）"
+          },
+          {
+            "coarse_id": "A",
+            "id": "prospect/A/account-registration",
+            "merge_of": [
+              "tmp:kb:prospect/D/account-registration"
+            ],
+            "moved_from": [],
+            "reason": "「怎麼註冊」是帳號問題，註冊驗證碼走 Email 是通知投遞細節，歸它所通知的註冊領域。",
+            "slug": "account-registration",
+            "split_from": [
+              "tmp:kb:prospect/C/notification-channels"
+            ],
+            "title": "怎麼註冊帳號（含驗證碼通知）"
+          },
+          {
+            "coarse_id": "B",
+            "id": "prospect/B/team-management-overview",
+            "merge_of": [
+              "tmp:kb:prospect/C/team-management-overview"
+            ],
+            "moved_from": [],
+            "reason": "「多人怎麼一起用」是團隊管理的總覽問題。",
+            "slug": "team-management-overview",
+            "split_from": [],
+            "title": "團隊管理模組做什麼"
+          },
+          {
+            "coarse_id": "B",
+            "id": "prospect/B/role-permission-granularity",
+            "merge_of": [
+              "tmp:kb:prospect/C/role-permission-granularity"
+            ],
+            "moved_from": [],
+            "reason": "「能不能讓某人只看不改／看不到財務」是獨立的權限問題，與團隊總覽問法不同。",
+            "slug": "role-permission-granularity",
+            "split_from": [],
+            "title": "成員權限能不能細分"
+          },
+          {
+            "coarse_id": "B",
+            "id": "prospect/B/what-is-owner-landlord",
+            "merge_of": [
+              "tmp:kb:prospect/C/what-is-owner-landlord"
+            ],
+            "moved_from": [],
+            "reason": "「大房東是什麼意思」是名詞定義問題，獨立於報表功能。",
+            "slug": "what-is-owner-landlord",
+            "split_from": [],
+            "title": "大房東是什麼"
+          },
+          {
+            "coarse_id": "B",
+            "id": "prospect/B/owner-report-collection-remit",
+            "merge_of": [
+              "tmp:kb:prospect/C/owner-report-collection-remit"
+            ],
+            "moved_from": [],
+            "reason": "「怎麼跟業主交報表」是對大房東的問題，歸大房東領域。",
+            "slug": "owner-report-collection-remit",
+            "split_from": [],
+            "title": "大房東報表與代收代付怎麼交代"
+          },
+          {
+            "coarse_id": "C",
+            "id": "prospect/C/property-management-overview",
+            "merge_of": [
+              "tmp:kb:prospect/C/property-management-overview"
+            ],
+            "moved_from": [],
+            "reason": "「物件怎麼管」是物件的總覽問題，自訂標籤是物件本身屬性。",
+            "slug": "property-management-overview",
+            "split_from": [],
+            "title": "房源管理模組做什麼（含自訂狀態標籤）"
+          },
+          {
+            "coarse_id": "C",
+            "id": "prospect/C/community-batch-create",
+            "merge_of": [
+              "tmp:kb:prospect/C/community-batch-create"
+            ],
+            "moved_from": [],
+            "reason": "「怎麼一次建一整批物件」是獨立的操作問題。",
+            "slug": "community-batch-create",
+            "split_from": [],
+            "title": "社區建立與批次新增物件"
+          },
+          {
+            "coarse_id": "C",
+            "id": "prospect/C/property-status-meaning",
+            "merge_of": [
+              "tmp:kb:prospect/C/property-status-meaning"
+            ],
+            "moved_from": [],
+            "reason": "使用者是從物件總表的狀態欄發問，該欄以刊登軸為主並說明與合約軸獨立，歸物件並另見租約。",
+            "slug": "property-status-meaning",
+            "split_from": [],
+            "title": "物件狀態（未刊登／刊登中／洽談中／合約中）是什麼意思"
+          },
+          {
+            "coarse_id": "C",
+            "id": "prospect/C/rental-storefront-vr",
+            "merge_of": [
+              "tmp:kb:prospect/C/rental-storefront-vr"
+            ],
+            "moved_from": [],
+            "reason": "「有沒有對外招租頁／VR」是物件對外呈現的獨立問題。",
+            "slug": "rental-storefront-vr",
+            "split_from": [],
+            "title": "招租店舖與 VR 看屋"
+          },
+          {
+            "coarse_id": "D",
+            "id": "prospect/D/contract-esign-flow",
+            "merge_of": [
+              "tmp:kb:prospect/C/contract-esign-flow"
+            ],
+            "moved_from": [],
+            "reason": "「怎麼建約／怎麼線上簽」是一個問題，簽約邀請通知是它的投遞管道，時效、社宅、批次續約則是另外的問法，故拆出。",
+            "slug": "contract-esign-flow",
+            "split_from": [
+              "tmp:kb:prospect/C/notification-channels"
+            ],
+            "title": "建約方式與線上電子簽約流程（含身分、費用、邀請通知）"
+          },
+          {
+            "coarse_id": "D",
+            "id": "prospect/D/esign-invitation-validity",
+            "merge_of": [
+              "tmp:kb:prospect/C/contract-esign-flow"
+            ],
+            "moved_from": [],
+            "reason": "「邀請連結多久失效」是獨立可答的問題，從簽約流程拆出。",
+            "slug": "esign-invitation-validity",
+            "split_from": [
+              "tmp:kb:prospect/C/contract-esign-flow"
+            ],
+            "title": "簽約邀請多久有效、逾期怎麼辦"
+          },
+          {
+            "coarse_id": "D",
+            "id": "prospect/D/social-housing-contract",
+            "merge_of": [
+              "tmp:kb:prospect/C/contract-esign-flow"
+            ],
+            "moved_from": [],
+            "reason": "「社宅可以線上簽嗎」答案與一般流程相反，是獨立問題。",
+            "slug": "social-housing-contract",
+            "split_from": [
+              "tmp:kb:prospect/C/contract-esign-flow"
+            ],
+            "title": "社會住宅合約怎麼簽（公證與紙本上傳）"
+          },
+          {
+            "coarse_id": "D",
+            "id": "prospect/D/contract-renewal-batch",
+            "merge_of": [
+              "tmp:kb:prospect/C/contract-esign-flow"
+            ],
+            "moved_from": [],
+            "reason": "「續約可以一次多筆嗎」是獨立於建約流程的問題。",
+            "slug": "contract-renewal-batch",
+            "split_from": [
+              "tmp:kb:prospect/C/contract-esign-flow"
+            ],
+            "title": "續約能不能批次處理"
+          },
+          {
+            "coarse_id": "D",
+            "id": "prospect/D/contract-templates",
+            "merge_of": [
+              "tmp:kb:prospect/C/contract-templates"
+            ],
+            "moved_from": [],
+            "reason": "「有哪些範本」是獨立問題，包租與代管差別另拆為委託約子題。",
+            "slug": "contract-templates",
+            "split_from": [],
+            "title": "合約範本有哪些可以選"
+          },
+          {
+            "coarse_id": "D",
+            "id": "prospect/D/sublease-vs-management-contract",
+            "merge_of": [
+              "tmp:kb:prospect/C/contract-templates"
+            ],
+            "moved_from": [],
+            "reason": "「包租跟代管差在哪」是委託約子題的獨立問法，從範本清單拆出。",
+            "slug": "sublease-vs-management-contract",
+            "split_from": [
+              "tmp:kb:prospect/C/contract-templates"
+            ],
+            "title": "包租與代管在委託合約上的差別"
+          },
+          {
+            "coarse_id": "D",
+            "id": "prospect/D/contract-modify-after-sign",
+            "merge_of": [
+              "tmp:kb:prospect/C/contract-modify-after-sign"
+            ],
+            "moved_from": [],
+            "reason": "「簽完能不能改」是獨立問題。",
+            "slug": "contract-modify-after-sign",
+            "split_from": [],
+            "title": "合約送出或簽完後能不能修改"
+          },
+          {
+            "coarse_id": "D",
+            "id": "prospect/D/contract-history-retention",
+            "merge_of": [
+              "tmp:kb:prospect/C/contract-history-retention"
+            ],
+            "moved_from": [],
+            "reason": "「舊合約會不會被刪」是獨立問題。",
+            "slug": "contract-history-retention",
+            "split_from": [],
+            "title": "歷史合約保留多久"
+          },
+          {
+            "coarse_id": "E",
+            "id": "prospect/E/billing-overview",
+            "merge_of": [
+              "tmp:kb:prospect/C/billing-overview"
+            ],
+            "moved_from": [],
+            "reason": "「收租對帳怎麼做」是帳務總覽問題，電子發票自動開立是另一個問法故拆出。",
+            "slug": "billing-overview",
+            "split_from": [],
+            "title": "帳務管理模組做什麼"
+          },
+          {
+            "coarse_id": "E",
+            "id": "prospect/E/einvoice-issuing",
+            "merge_of": [
+              "tmp:kb:prospect/C/billing-overview"
+            ],
+            "moved_from": [],
+            "reason": "「發票可以自動開嗎」是獨立可答的問題，從帳務總覽拆出。",
+            "slug": "einvoice-issuing",
+            "split_from": [
+              "tmp:kb:prospect/C/billing-overview"
+            ],
+            "title": "電子發票能不能自動開、載具怎麼用"
+          },
+          {
+            "coarse_id": "E",
+            "id": "prospect/E/bill-contents-extra-fees",
+            "merge_of": [
+              "tmp:kb:prospect/C/bill-contents-extra-fees"
+            ],
+            "moved_from": [],
+            "reason": "「帳單有什麼／臨時費用怎麼加」是出現在帳單列上的問題，歸帳務。",
+            "slug": "bill-contents-extra-fees",
+            "split_from": [],
+            "title": "帳單內容與臨時加收費用"
+          },
+          {
+            "coarse_id": "E",
+            "id": "prospect/E/bill-format-customize",
+            "merge_of": [
+              "tmp:kb:prospect/C/bill-format-customize"
+            ],
+            "moved_from": [],
+            "reason": "「帳單能不能改版面」是獨立問題，與帳單內容問法不同。",
+            "slug": "bill-format-customize",
+            "split_from": [],
+            "title": "帳單版面能不能自訂"
+          },
+          {
+            "coarse_id": "E",
+            "id": "prospect/E/overdue-reminder-late-fee",
+            "merge_of": [
+              "tmp:kb:prospect/C/overdue-reminder-late-fee"
+            ],
+            "moved_from": [],
+            "reason": "「逾期怎麼催」是帳務問題，繳費提醒的通知管道與時機歸它所通知的帳單領域。",
+            "slug": "overdue-reminder-late-fee",
+            "split_from": [
+              "tmp:kb:prospect/C/notification-channels"
+            ],
+            "title": "租客逾期未繳怎麼辦（含繳費提醒通知）"
+          },
+          {
+            "coarse_id": "E",
+            "id": "prospect/E/payment-gateway-options",
+            "merge_of": [
+              "tmp:kb:prospect/C/payment-gateway-options"
+            ],
+            "moved_from": [],
+            "reason": "「哪家金流、怎麼申請」是收款金流問題，虛擬帳號與儲值金另拆。",
+            "slug": "payment-gateway-options",
+            "split_from": [],
+            "title": "金流廠商差別與申請條件"
+          },
+          {
+            "coarse_id": "E",
+            "id": "prospect/E/virtual-account-prepaid",
+            "merge_of": [
+              "tmp:kb:prospect/C/payment-gateway-options"
+            ],
+            "moved_from": [],
+            "reason": "「有沒有虛擬帳號／能不能儲值」是獨立的收款方式問題，從金流廠商拆出。",
+            "slug": "virtual-account-prepaid",
+            "split_from": [
+              "tmp:kb:prospect/C/payment-gateway-options"
+            ],
+            "title": "固定虛擬帳號與儲值金抵扣"
+          },
+          {
+            "coarse_id": "E",
+            "id": "prospect/E/credit-card-rent-payment",
+            "merge_of": [
+              "tmp:kb:prospect/C/credit-card-rent-payment"
+            ],
+            "moved_from": [],
+            "reason": "「能不能刷卡」是租客端最常見的獨立問法，歸收款金流。",
+            "slug": "credit-card-rent-payment",
+            "split_from": [],
+            "title": "租客能不能用信用卡繳房租"
+          },
+          {
+            "coarse_id": "E",
+            "id": "prospect/E/utility-split-calculation",
+            "merge_of": [
+              "tmp:kb:prospect/G/utility-split-advice"
+            ],
+            "moved_from": [],
+            "reason": "「水電怎麼算」是錢怎麼算的問題，歸帳務。",
+            "slug": "utility-split-calculation",
+            "split_from": [],
+            "title": "水電費怎麼分算"
+          },
+          {
+            "coarse_id": "F",
+            "id": "prospect/F/repair-system",
+            "merge_of": [
+              "tmp:kb:prospect/C/repair-system"
+            ],
+            "moved_from": [],
+            "reason": "「租客怎麼報修」是修繕領域的獨立問題。",
+            "slug": "repair-system",
+            "split_from": [],
+            "title": "線上報修與進度追蹤"
+          },
+          {
+            "coarse_id": "G",
+            "id": "prospect/G/smart-meter-lock-iot",
+            "merge_of": [
+              "tmp:kb:prospect/C/smart-meter-lock-iot"
+            ],
+            "moved_from": [],
+            "reason": "「有沒有支援門鎖／電錶」是裝置領域的獨立問題。",
+            "slug": "smart-meter-lock-iot",
+            "split_from": [],
+            "title": "智慧電錶與門鎖整合"
+          }
+        ],
+        "id_map": [
+          {
+            "new": "prospect/I/dashboard-overview",
+            "old": "tmp:kb:prospect/A/dashboard-overview",
+            "op": "keep"
+          },
+          {
+            "new": "prospect/I/product-overview",
+            "old": "tmp:kb:prospect/A/pain-points",
+            "op": "merge"
+          },
+          {
+            "new": "prospect/I/product-overview",
+            "old": "tmp:kb:prospect/A/product-overview",
+            "op": "merge"
+          },
+          {
+            "new": "prospect/I/why-choose-jgb",
+            "old": "tmp:kb:prospect/A/why-choose-jgb",
+            "op": "keep"
+          },
+          {
+            "new": "prospect/I/data-migration",
+            "old": "tmp:kb:prospect/B/data-migration",
+            "op": "merge"
+          },
+          {
+            "new": "prospect/I/individual-landlord-fit",
+            "old": "tmp:kb:prospect/B/individual-landlord-scale-fit",
+            "op": "keep"
+          },
+          {
+            "new": "prospect/I/team-company-fit",
+            "old": "tmp:kb:prospect/B/team-company-fit",
+            "op": "keep"
+          },
+          {
+            "new": "prospect/E/bill-contents-extra-fees",
+            "old": "tmp:kb:prospect/C/bill-contents-extra-fees",
+            "op": "keep"
+          },
+          {
+            "new": "prospect/E/bill-format-customize",
+            "old": "tmp:kb:prospect/C/bill-format-customize",
+            "op": "keep"
+          },
+          {
+            "new": "prospect/E/billing-overview",
+            "old": "tmp:kb:prospect/C/billing-overview",
+            "op": "split"
+          },
+          {
+            "new": "prospect/E/einvoice-issuing",
+            "old": "tmp:kb:prospect/C/billing-overview",
+            "op": "split"
+          },
+          {
+            "new": "prospect/C/community-batch-create",
+            "old": "tmp:kb:prospect/C/community-batch-create",
+            "op": "keep"
+          },
+          {
+            "new": "prospect/D/contract-esign-flow",
+            "old": "tmp:kb:prospect/C/contract-esign-flow",
+            "op": "split"
+          },
+          {
+            "new": "prospect/D/esign-invitation-validity",
+            "old": "tmp:kb:prospect/C/contract-esign-flow",
+            "op": "split"
+          },
+          {
+            "new": "prospect/D/social-housing-contract",
+            "old": "tmp:kb:prospect/C/contract-esign-flow",
+            "op": "split"
+          },
+          {
+            "new": "prospect/D/contract-renewal-batch",
+            "old": "tmp:kb:prospect/C/contract-esign-flow",
+            "op": "split"
+          },
+          {
+            "new": "prospect/D/contract-history-retention",
+            "old": "tmp:kb:prospect/C/contract-history-retention",
+            "op": "keep"
+          },
+          {
+            "new": "prospect/D/contract-modify-after-sign",
+            "old": "tmp:kb:prospect/C/contract-modify-after-sign",
+            "op": "keep"
+          },
+          {
+            "new": "prospect/D/contract-templates",
+            "old": "tmp:kb:prospect/C/contract-templates",
+            "op": "split"
+          },
+          {
+            "new": "prospect/D/sublease-vs-management-contract",
+            "old": "tmp:kb:prospect/C/contract-templates",
+            "op": "split"
+          },
+          {
+            "new": "prospect/E/credit-card-rent-payment",
+            "old": "tmp:kb:prospect/C/credit-card-rent-payment",
+            "op": "keep"
+          },
+          {
+            "new": "prospect/E/overdue-reminder-late-fee",
+            "old": "tmp:kb:prospect/C/notification-channels",
+            "op": "split"
+          },
+          {
+            "new": "prospect/D/contract-esign-flow",
+            "old": "tmp:kb:prospect/C/notification-channels",
+            "op": "split"
+          },
+          {
+            "new": "prospect/A/account-registration",
+            "old": "tmp:kb:prospect/C/notification-channels",
+            "op": "split"
+          },
+          {
+            "new": "prospect/E/overdue-reminder-late-fee",
+            "old": "tmp:kb:prospect/C/overdue-reminder-late-fee",
+            "op": "keep"
+          },
+          {
+            "new": "prospect/B/owner-report-collection-remit",
+            "old": "tmp:kb:prospect/C/owner-report-collection-remit",
+            "op": "keep"
+          },
+          {
+            "new": "prospect/E/payment-gateway-options",
+            "old": "tmp:kb:prospect/C/payment-gateway-options",
+            "op": "split"
+          },
+          {
+            "new": "prospect/E/virtual-account-prepaid",
+            "old": "tmp:kb:prospect/C/payment-gateway-options",
+            "op": "split"
+          },
+          {
+            "new": "prospect/C/property-management-overview",
+            "old": "tmp:kb:prospect/C/property-management-overview",
+            "op": "keep"
+          },
+          {
+            "new": "prospect/C/property-status-meaning",
+            "old": "tmp:kb:prospect/C/property-status-meaning",
+            "op": "keep"
+          },
+          {
+            "new": "prospect/C/rental-storefront-vr",
+            "old": "tmp:kb:prospect/C/rental-storefront-vr",
+            "op": "keep"
+          },
+          {
+            "new": "prospect/F/repair-system",
+            "old": "tmp:kb:prospect/C/repair-system",
+            "op": "keep"
+          },
+          {
+            "new": "prospect/B/role-permission-granularity",
+            "old": "tmp:kb:prospect/C/role-permission-granularity",
+            "op": "keep"
+          },
+          {
+            "new": "prospect/G/smart-meter-lock-iot",
+            "old": "tmp:kb:prospect/C/smart-meter-lock-iot",
+            "op": "keep"
+          },
+          {
+            "new": "prospect/B/team-management-overview",
+            "old": "tmp:kb:prospect/C/team-management-overview",
+            "op": "keep"
+          },
+          {
+            "new": "prospect/B/what-is-owner-landlord",
+            "old": "tmp:kb:prospect/C/what-is-owner-landlord",
+            "op": "keep"
+          },
+          {
+            "new": "prospect/A/account-registration",
+            "old": "tmp:kb:prospect/D/account-registration",
+            "op": "keep"
+          },
+          {
+            "new": "prospect/I/free-trial",
+            "old": "tmp:kb:prospect/D/free-trial",
+            "op": "keep"
+          },
+          {
+            "new": "prospect/I/pricing-plans",
+            "old": "tmp:kb:prospect/D/pricing-plans",
+            "op": "keep"
+          },
+          {
+            "new": "prospect/I/property-quota-limit",
+            "old": "tmp:kb:prospect/D/property-quota-limit",
+            "op": "keep"
+          },
+          {
+            "new": "prospect/I/subscription-change-renewal",
+            "old": "tmp:kb:prospect/D/subscription-change-renewal",
+            "op": "keep"
+          },
+          {
+            "new": "prospect/I/competitor-comparison",
+            "old": "tmp:kb:prospect/E/competitor-comparison",
+            "op": "merge"
+          },
+          {
+            "new": "prospect/I/competitor-comparison",
+            "old": "tmp:kb:prospect/E/competitor-neutrality",
+            "op": "merge"
+          },
+          {
+            "new": "prospect/I/data-migration",
+            "old": "tmp:kb:prospect/G/migration-limits",
+            "op": "merge"
+          },
+          {
+            "new": "prospect/E/utility-split-calculation",
+            "old": "tmp:kb:prospect/G/utility-split-advice",
+            "op": "keep"
+          }
+        ]
+      },
+      {
+        "angle": "content_boundary",
+        "coarses": [
+          {
+            "id": "A",
+            "title": "帳號與身分"
+          },
+          {
+            "id": "B",
+            "title": "團隊、人員與大房東"
+          },
+          {
+            "id": "C",
+            "title": "社區與物件"
+          },
+          {
+            "id": "D",
+            "title": "租約（含委託約子題）"
+          },
+          {
+            "id": "E",
+            "title": "帳務（含發票、收款金流、抄表）"
+          },
+          {
+            "id": "F",
+            "title": "修繕"
+          },
+          {
+            "id": "G",
+            "title": "裝置（IoT）"
+          },
+          {
+            "id": "H",
+            "title": "幫助中心"
+          },
+          {
+            "id": "I",
+            "title": "方案與導入"
+          }
+        ],
+        "fines": [
+          {
+            "coarse_id": "A",
+            "id": "prospect/A/account-registration",
+            "merge_of": [
+              "tmp:kb:prospect/D/account-registration",
+              "tmp:kb:prospect/C/notification-channels"
+            ],
+            "moved_from": [],
+            "reason": "註冊流程獨立成立；註冊驗證碼走 Email 是註冊流程的一部分，通知不自成細目，併入帳號領域。",
+            "slug": "account-registration",
+            "split_from": [
+              "tmp:kb:prospect/C/notification-channels"
+            ],
+            "title": "怎麼註冊帳號（含驗證碼通知）"
+          },
+          {
+            "coarse_id": "B",
+            "id": "prospect/B/team-management-overview",
+            "merge_of": [
+              "tmp:kb:prospect/C/team-management-overview"
+            ],
+            "moved_from": [],
+            "reason": "團隊模組總覽自身完整，主題為多人協作，歸團隊粗目。",
+            "slug": "team-management-overview",
+            "split_from": [],
+            "title": "團隊管理模組做什麼"
+          },
+          {
+            "coarse_id": "B",
+            "id": "prospect/B/role-permission-granularity",
+            "merge_of": [
+              "tmp:kb:prospect/C/role-permission-granularity"
+            ],
+            "moved_from": [],
+            "reason": "權限顆粒度與範本角色自身完整，與團隊總覽主題不同，獨立一細目。",
+            "slug": "role-permission-granularity",
+            "split_from": [],
+            "title": "成員權限能不能細分"
+          },
+          {
+            "coarse_id": "B",
+            "id": "prospect/B/what-is-owner-landlord",
+            "merge_of": [
+              "tmp:kb:prospect/C/what-is-owner-landlord"
+            ],
+            "moved_from": [],
+            "reason": "大房東定義、邀請與業主端可見範圍自身完整，與報表細目主題不同。",
+            "slug": "what-is-owner-landlord",
+            "split_from": [],
+            "title": "大房東是什麼"
+          },
+          {
+            "coarse_id": "B",
+            "id": "prospect/B/owner-report",
+            "merge_of": [
+              "tmp:kb:prospect/C/owner-report-collection-remit"
+            ],
+            "moved_from": [],
+            "reason": "報表內容與排程寄送可獨立成立；月結差額發票屬發票開立主題，各自完整故拆出。",
+            "slug": "owner-report",
+            "split_from": [
+              "tmp:kb:prospect/C/owner-report-collection-remit"
+            ],
+            "title": "大房東報表與排程寄送"
+          },
+          {
+            "coarse_id": "C",
+            "id": "prospect/C/property-management-overview",
+            "merge_of": [
+              "tmp:kb:prospect/C/property-management-overview"
+            ],
+            "moved_from": [],
+            "reason": "模組總覽與自訂標籤互相依賴才完整，屬同一細目；與系統四種物件狀態是不同主題。",
+            "slug": "property-management-overview",
+            "split_from": [],
+            "title": "房源管理模組做什麼（含自訂狀態標籤）"
+          },
+          {
+            "coarse_id": "C",
+            "id": "prospect/C/property-status-meaning",
+            "merge_of": [
+              "tmp:kb:prospect/C/property-status-meaning"
+            ],
+            "moved_from": [],
+            "reason": "四種系統狀態與刊登／合約雙軸自身完整，物件本身屬性歸社區與物件。",
+            "slug": "property-status-meaning",
+            "split_from": [],
+            "title": "物件狀態是什麼意思"
+          },
+          {
+            "coarse_id": "C",
+            "id": "prospect/C/community-batch-create",
+            "merge_of": [
+              "tmp:kb:prospect/C/community-batch-create"
+            ],
+            "moved_from": [],
+            "reason": "社區歸戶與批次新增流程互相依賴，自身完整。",
+            "slug": "community-batch-create",
+            "split_from": [],
+            "title": "社區建立與批次新增物件"
+          },
+          {
+            "coarse_id": "C",
+            "id": "prospect/C/rental-storefront-vr",
+            "merge_of": [
+              "tmp:kb:prospect/C/rental-storefront-vr"
+            ],
+            "moved_from": [],
+            "reason": "對外招租頁與 VR 連結自身完整，與物件建檔主題不同。",
+            "slug": "rental-storefront-vr",
+            "split_from": [],
+            "title": "招租店舖與 VR 看屋"
+          },
+          {
+            "coarse_id": "D",
+            "id": "prospect/D/contract-creation-esign-flow",
+            "merge_of": [
+              "tmp:kb:prospect/C/contract-esign-flow",
+              "tmp:kb:prospect/C/notification-channels"
+            ],
+            "moved_from": [],
+            "reason": "建約方式、流程、72 小時時效、身分、社宅公證與費用互相依賴才完整；簽約邀請通知歸它所通知的租約領域。",
+            "slug": "contract-creation-esign-flow",
+            "split_from": [
+              "tmp:kb:prospect/C/contract-esign-flow",
+              "tmp:kb:prospect/C/notification-channels"
+            ],
+            "title": "建約方式與線上電子簽約流程（含時效、身分、社宅、簽約邀請通知、費用）"
+          },
+          {
+            "coarse_id": "D",
+            "id": "prospect/D/contract-batch-renewal",
+            "merge_of": [
+              "tmp:kb:prospect/C/contract-esign-flow"
+            ],
+            "moved_from": [],
+            "reason": "批次續約與其排除條件可獨立回答，與建新約流程主題不同，故拆出。",
+            "slug": "contract-batch-renewal",
+            "split_from": [
+              "tmp:kb:prospect/C/contract-esign-flow"
+            ],
+            "title": "續約能不能批次處理"
+          },
+          {
+            "coarse_id": "D",
+            "id": "prospect/D/contract-modify-after-sign",
+            "merge_of": [
+              "tmp:kb:prospect/C/contract-modify-after-sign"
+            ],
+            "moved_from": [],
+            "reason": "各階段可否修改與資料異動申請自身完整，由合約條款決定歸租約。",
+            "slug": "contract-modify-after-sign",
+            "split_from": [],
+            "title": "合約送出或簽完後能不能修改"
+          },
+          {
+            "coarse_id": "D",
+            "id": "prospect/D/contract-history-retention",
+            "merge_of": [
+              "tmp:kb:prospect/C/contract-history-retention"
+            ],
+            "moved_from": [],
+            "reason": "歷史合約狀態與保留期限互相依賴才完整，屬同一細目。",
+            "slug": "contract-history-retention",
+            "split_from": [],
+            "title": "歷史合約保留多久（含點退狀態）"
+          },
+          {
+            "coarse_id": "D",
+            "id": "prospect/D/contract-templates",
+            "merge_of": [
+              "tmp:kb:prospect/C/contract-templates"
+            ],
+            "moved_from": [],
+            "reason": "12 種範本、特殊範本與身分可選範圍自身完整；包租／代管委託約差異是另一主題，故拆出。",
+            "slug": "contract-templates",
+            "split_from": [
+              "tmp:kb:prospect/C/contract-templates"
+            ],
+            "title": "合約範本有哪些可以選"
+          },
+          {
+            "coarse_id": "D",
+            "id": "prospect/D/entrust-contract-sublease-vs-management",
+            "merge_of": [
+              "tmp:kb:prospect/C/contract-templates"
+            ],
+            "moved_from": [],
+            "reason": "委託約的包租租金制度與代管服務費設定可獨立回答，屬租約粗目的委託約子題。",
+            "slug": "entrust-contract-sublease-vs-management",
+            "split_from": [
+              "tmp:kb:prospect/C/contract-templates"
+            ],
+            "title": "包租與代管在委託合約設定上的差別"
+          },
+          {
+            "coarse_id": "E",
+            "id": "prospect/E/billing-overview",
+            "merge_of": [
+              "tmp:kb:prospect/C/billing-overview"
+            ],
+            "moved_from": [],
+            "reason": "帳務模組總覽自身完整；電子發票自動開立與載具是獨立主題，故拆出。",
+            "slug": "billing-overview",
+            "split_from": [
+              "tmp:kb:prospect/C/billing-overview"
+            ],
+            "title": "帳務管理模組做什麼"
+          },
+          {
+            "coarse_id": "E",
+            "id": "prospect/E/einvoice-auto-issue-carrier",
+            "merge_of": [
+              "tmp:kb:prospect/C/billing-overview"
+            ],
+            "moved_from": [],
+            "reason": "發票開立時機與載具用途可獨立回答，與模組總覽主題不同。",
+            "slug": "einvoice-auto-issue-carrier",
+            "split_from": [
+              "tmp:kb:prospect/C/billing-overview"
+            ],
+            "title": "電子發票自動開立時機與載具"
+          },
+          {
+            "coarse_id": "E",
+            "id": "prospect/E/bill-contents-extra-fees",
+            "merge_of": [
+              "tmp:kb:prospect/C/bill-contents-extra-fees",
+              "tmp:kb:prospect/G/utility-split-advice"
+            ],
+            "moved_from": [],
+            "reason": "水電分算依合約帶入變動費用，單獨不成立，需依附帳單內容才完整；錢怎麼算歸帳務。",
+            "slug": "bill-contents-extra-fees",
+            "split_from": [],
+            "title": "帳單內容、臨時加收費用與水電分算"
+          },
+          {
+            "coarse_id": "E",
+            "id": "prospect/E/bill-format-customize",
+            "merge_of": [
+              "tmp:kb:prospect/C/bill-format-customize"
+            ],
+            "moved_from": [],
+            "reason": "可調內容與版式選項自身完整，與帳單內容主題不同。",
+            "slug": "bill-format-customize",
+            "split_from": [],
+            "title": "帳單版面能不能自訂"
+          },
+          {
+            "coarse_id": "E",
+            "id": "prospect/E/payment-gateway-options",
+            "merge_of": [
+              "tmp:kb:prospect/C/payment-gateway-options"
+            ],
+            "moved_from": [],
+            "reason": "四家金流的申請資格、費用與撥款自身完整；固定虛擬帳號與儲值金是另一收款機制，故拆出。錢怎麼進來歸收款金流。",
+            "slug": "payment-gateway-options",
+            "split_from": [
+              "tmp:kb:prospect/C/payment-gateway-options"
+            ],
+            "title": "金流廠商差別與申請條件"
+          },
+          {
+            "coarse_id": "E",
+            "id": "prospect/E/virtual-account-prepaid-balance",
+            "merge_of": [
+              "tmp:kb:prospect/C/payment-gateway-options"
+            ],
+            "moved_from": [],
+            "reason": "儲值抵扣機制可獨立回答，與金流廠商比較主題不同。",
+            "slug": "virtual-account-prepaid-balance",
+            "split_from": [
+              "tmp:kb:prospect/C/payment-gateway-options"
+            ],
+            "title": "固定虛擬帳號與儲值金抵扣"
+          },
+          {
+            "coarse_id": "E",
+            "id": "prospect/E/credit-card-rent-payment",
+            "merge_of": [
+              "tmp:kb:prospect/C/credit-card-rent-payment"
+            ],
+            "moved_from": [],
+            "reason": "信用卡繳租的前提與設定自身完整，主題與廠商比較不同，另見金流廠商細目。",
+            "slug": "credit-card-rent-payment",
+            "split_from": [],
+            "title": "租客能不能用信用卡繳房租"
+          },
+          {
+            "coarse_id": "E",
+            "id": "prospect/E/overdue-reminder-late-fee",
+            "merge_of": [
+              "tmp:kb:prospect/C/overdue-reminder-late-fee",
+              "tmp:kb:prospect/C/notification-channels"
+            ],
+            "moved_from": [],
+            "reason": "繳費提醒時點與管道是逾期處理的一部分，通知歸它所通知的帳務領域，不自成細目。",
+            "slug": "overdue-reminder-late-fee",
+            "split_from": [
+              "tmp:kb:prospect/C/notification-channels"
+            ],
+            "title": "租客逾期未繳怎麼辦（含繳費提醒通知）"
+          },
+          {
+            "coarse_id": "E",
+            "id": "prospect/E/owner-settlement-difference-invoice",
+            "merge_of": [
+              "tmp:kb:prospect/C/owner-report-collection-remit"
+            ],
+            "moved_from": [],
+            "reason": "月結差額發票群組的開立與重算可獨立回答，出現在帳務發票層面，歸帳務。",
+            "slug": "owner-settlement-difference-invoice",
+            "split_from": [
+              "tmp:kb:prospect/C/owner-report-collection-remit"
+            ],
+            "title": "代管月結差額發票"
+          },
+          {
+            "coarse_id": "F",
+            "id": "prospect/F/repair-system",
+            "merge_of": [
+              "tmp:kb:prospect/C/repair-system"
+            ],
+            "moved_from": [],
+            "reason": "修繕流程自身完整，歸修繕粗目。",
+            "slug": "repair-system",
+            "split_from": [],
+            "title": "線上報修與進度追蹤"
+          },
+          {
+            "coarse_id": "G",
+            "id": "prospect/G/smart-meter-lock-iot",
+            "merge_of": [
+              "tmp:kb:prospect/C/smart-meter-lock-iot"
+            ],
+            "moved_from": [],
+            "reason": "電錶與兩型門鎖的整合說明互相依賴才完整，歸裝置粗目。",
+            "slug": "smart-meter-lock-iot",
+            "split_from": [],
+            "title": "智慧電錶與門鎖整合"
+          },
+          {
+            "coarse_id": "H",
+            "id": "prospect/H/dashboard-overview",
+            "merge_of": [
+              "tmp:kb:prospect/A/dashboard-overview"
+            ],
+            "moved_from": [],
+            "reason": "首頁畫面說明橫跨帳務與修繕，是系統使用導覽而非帳號主題，自身完整歸幫助中心。",
+            "slug": "dashboard-overview",
+            "split_from": [],
+            "title": "首頁儀表板顯示哪些數據"
+          },
+          {
+            "coarse_id": "I",
+            "id": "prospect/I/product-overview",
+            "merge_of": [
+              "tmp:kb:prospect/A/product-overview",
+              "tmp:kb:prospect/A/pain-points"
+            ],
+            "moved_from": [],
+            "reason": "兩段都是引導了解需求的產品介紹開場，各自不完整且主題重疊，合併為一細目。",
+            "slug": "product-overview",
+            "split_from": [],
+            "title": "系統總覽、能解決什麼問題與適不適合我"
+          },
+          {
+            "coarse_id": "I",
+            "id": "prospect/I/why-choose-jgb",
+            "merge_of": [
+              "tmp:kb:prospect/A/why-choose-jgb"
+            ],
+            "moved_from": [],
+            "reason": "選擇理由自身完整，與總覽開場主題不同。",
+            "slug": "why-choose-jgb",
+            "split_from": [],
+            "title": "為什麼選金箍棒"
+          },
+          {
+            "coarse_id": "I",
+            "id": "prospect/I/individual-landlord-scale-fit",
+            "merge_of": [
+              "tmp:kb:prospect/B/individual-landlord-scale-fit"
+            ],
+            "moved_from": [],
+            "reason": "三個規模段的建議互相銜接才完整，屬導入適配主題。",
+            "slug": "individual-landlord-scale-fit",
+            "split_from": [],
+            "title": "個人房東（約 10～30 戶）適配與建議做法"
+          },
+          {
+            "coarse_id": "I",
+            "id": "prospect/I/team-company-fit",
+            "merge_of": [
+              "tmp:kb:prospect/B/team-company-fit"
+            ],
+            "moved_from": [],
+            "reason": "團隊適配自身完整，與個人房東適配受眾規模不同。",
+            "slug": "team-company-fit",
+            "split_from": [],
+            "title": "公司或包租代管團隊適合嗎"
+          },
+          {
+            "coarse_id": "I",
+            "id": "prospect/I/data-migration",
+            "merge_of": [
+              "tmp:kb:prospect/B/data-migration",
+              "tmp:kb:prospect/G/migration-limits"
+            ],
+            "moved_from": [],
+            "reason": "不支援項目已包含於可匯入範圍說明中，兩段互相依賴才完整，合併為導入主題。",
+            "slug": "data-migration",
+            "split_from": [],
+            "title": "舊系統資料能否匯入（可匯入與不支援範圍）"
+          },
+          {
+            "coarse_id": "I",
+            "id": "prospect/I/free-trial",
+            "merge_of": [
+              "tmp:kb:prospect/D/free-trial"
+            ],
+            "moved_from": [],
+            "reason": "免費試用自身完整，與收費與額度主題不同。",
+            "slug": "free-trial",
+            "split_from": [],
+            "title": "可以免費試用嗎"
+          },
+          {
+            "coarse_id": "I",
+            "id": "prospect/I/pricing-plans",
+            "merge_of": [
+              "tmp:kb:prospect/D/pricing-plans"
+            ],
+            "moved_from": [],
+            "reason": "訂閱制與分級原則自身完整，歸方案粗目。",
+            "slug": "pricing-plans",
+            "split_from": [],
+            "title": "怎麼收費"
+          },
+          {
+            "coarse_id": "I",
+            "id": "prospect/I/property-quota-limit",
+            "merge_of": [
+              "tmp:kb:prospect/D/property-quota-limit"
+            ],
+            "moved_from": [],
+            "reason": "額度用滿的處理與免費方案額度自身完整，與收費主題不同。",
+            "slug": "property-quota-limit",
+            "split_from": [],
+            "title": "方案物件額度上限"
+          },
+          {
+            "coarse_id": "I",
+            "id": "prospect/I/subscription-change-renewal",
+            "merge_of": [
+              "tmp:kb:prospect/D/subscription-change-renewal"
+            ],
+            "moved_from": [],
+            "reason": "方案變更、自動續約與取消操作互相依賴才完整，屬方案主題。",
+            "slug": "subscription-change-renewal",
+            "split_from": [],
+            "title": "升級、續約與取消訂閱"
+          },
+          {
+            "coarse_id": "I",
+            "id": "prospect/I/competitor-comparison",
+            "merge_of": [
+              "tmp:kb:prospect/E/competitor-comparison"
+            ],
+            "moved_from": [],
+            "reason": "差異事實比較自身完整，與評論立場主題不同。",
+            "slug": "competitor-comparison",
+            "split_from": [],
+            "title": "跟 Bananas、屋我也差在哪"
+          },
+          {
+            "coarse_id": "I",
+            "id": "prospect/I/competitor-neutrality",
+            "merge_of": [
+              "tmp:kb:prospect/E/competitor-neutrality"
+            ],
+            "moved_from": [],
+            "reason": "中立立場說明自身完整，與具體比較內容各自成立。",
+            "slug": "competitor-neutrality",
+            "split_from": [],
+            "title": "會評論競爭對手嗎"
+          }
+        ],
+        "id_map": [
+          {
+            "new": "prospect/H/dashboard-overview",
+            "old": "tmp:kb:prospect/A/dashboard-overview",
+            "op": "move"
+          },
+          {
+            "new": "prospect/I/product-overview",
+            "old": "tmp:kb:prospect/A/pain-points",
+            "op": "merge"
+          },
+          {
+            "new": "prospect/I/product-overview",
+            "old": "tmp:kb:prospect/A/product-overview",
+            "op": "merge"
+          },
+          {
+            "new": "prospect/I/why-choose-jgb",
+            "old": "tmp:kb:prospect/A/why-choose-jgb",
+            "op": "move"
+          },
+          {
+            "new": "prospect/I/data-migration",
+            "old": "tmp:kb:prospect/B/data-migration",
+            "op": "merge"
+          },
+          {
+            "new": "prospect/I/individual-landlord-scale-fit",
+            "old": "tmp:kb:prospect/B/individual-landlord-scale-fit",
+            "op": "move"
+          },
+          {
+            "new": "prospect/I/team-company-fit",
+            "old": "tmp:kb:prospect/B/team-company-fit",
+            "op": "move"
+          },
+          {
+            "new": "prospect/E/bill-contents-extra-fees",
+            "old": "tmp:kb:prospect/C/bill-contents-extra-fees",
+            "op": "merge"
+          },
+          {
+            "new": "prospect/E/bill-format-customize",
+            "old": "tmp:kb:prospect/C/bill-format-customize",
+            "op": "move"
+          },
+          {
+            "new": "prospect/E/billing-overview",
+            "old": "tmp:kb:prospect/C/billing-overview",
+            "op": "split"
+          },
+          {
+            "new": "prospect/E/einvoice-auto-issue-carrier",
+            "old": "tmp:kb:prospect/C/billing-overview",
+            "op": "split"
+          },
+          {
+            "new": "prospect/C/community-batch-create",
+            "old": "tmp:kb:prospect/C/community-batch-create",
+            "op": "keep"
+          },
+          {
+            "new": "prospect/D/contract-creation-esign-flow",
+            "old": "tmp:kb:prospect/C/contract-esign-flow",
+            "op": "split"
+          },
+          {
+            "new": "prospect/D/contract-batch-renewal",
+            "old": "tmp:kb:prospect/C/contract-esign-flow",
+            "op": "split"
+          },
+          {
+            "new": "prospect/D/contract-history-retention",
+            "old": "tmp:kb:prospect/C/contract-history-retention",
+            "op": "move"
+          },
+          {
+            "new": "prospect/D/contract-modify-after-sign",
+            "old": "tmp:kb:prospect/C/contract-modify-after-sign",
+            "op": "move"
+          },
+          {
+            "new": "prospect/D/contract-templates",
+            "old": "tmp:kb:prospect/C/contract-templates",
+            "op": "split"
+          },
+          {
+            "new": "prospect/D/entrust-contract-sublease-vs-management",
+            "old": "tmp:kb:prospect/C/contract-templates",
+            "op": "split"
+          },
+          {
+            "new": "prospect/E/credit-card-rent-payment",
+            "old": "tmp:kb:prospect/C/credit-card-rent-payment",
+            "op": "move"
+          },
+          {
+            "new": "prospect/E/overdue-reminder-late-fee",
+            "old": "tmp:kb:prospect/C/notification-channels",
+            "op": "split"
+          },
+          {
+            "new": "prospect/D/contract-creation-esign-flow",
+            "old": "tmp:kb:prospect/C/notification-channels",
+            "op": "split"
+          },
+          {
+            "new": "prospect/A/account-registration",
+            "old": "tmp:kb:prospect/C/notification-channels",
+            "op": "split"
+          },
+          {
+            "new": "prospect/E/overdue-reminder-late-fee",
+            "old": "tmp:kb:prospect/C/overdue-reminder-late-fee",
+            "op": "merge"
+          },
+          {
+            "new": "prospect/B/owner-report",
+            "old": "tmp:kb:prospect/C/owner-report-collection-remit",
+            "op": "split"
+          },
+          {
+            "new": "prospect/E/owner-settlement-difference-invoice",
+            "old": "tmp:kb:prospect/C/owner-report-collection-remit",
+            "op": "split"
+          },
+          {
+            "new": "prospect/E/payment-gateway-options",
+            "old": "tmp:kb:prospect/C/payment-gateway-options",
+            "op": "split"
+          },
+          {
+            "new": "prospect/E/virtual-account-prepaid-balance",
+            "old": "tmp:kb:prospect/C/payment-gateway-options",
+            "op": "split"
+          },
+          {
+            "new": "prospect/C/property-management-overview",
+            "old": "tmp:kb:prospect/C/property-management-overview",
+            "op": "keep"
+          },
+          {
+            "new": "prospect/C/property-status-meaning",
+            "old": "tmp:kb:prospect/C/property-status-meaning",
+            "op": "keep"
+          },
+          {
+            "new": "prospect/C/rental-storefront-vr",
+            "old": "tmp:kb:prospect/C/rental-storefront-vr",
+            "op": "keep"
+          },
+          {
+            "new": "prospect/F/repair-system",
+            "old": "tmp:kb:prospect/C/repair-system",
+            "op": "move"
+          },
+          {
+            "new": "prospect/B/role-permission-granularity",
+            "old": "tmp:kb:prospect/C/role-permission-granularity",
+            "op": "move"
+          },
+          {
+            "new": "prospect/G/smart-meter-lock-iot",
+            "old": "tmp:kb:prospect/C/smart-meter-lock-iot",
+            "op": "move"
+          },
+          {
+            "new": "prospect/B/team-management-overview",
+            "old": "tmp:kb:prospect/C/team-management-overview",
+            "op": "move"
+          },
+          {
+            "new": "prospect/B/what-is-owner-landlord",
+            "old": "tmp:kb:prospect/C/what-is-owner-landlord",
+            "op": "move"
+          },
+          {
+            "new": "prospect/A/account-registration",
+            "old": "tmp:kb:prospect/D/account-registration",
+            "op": "merge"
+          },
+          {
+            "new": "prospect/I/free-trial",
+            "old": "tmp:kb:prospect/D/free-trial",
+            "op": "move"
+          },
+          {
+            "new": "prospect/I/pricing-plans",
+            "old": "tmp:kb:prospect/D/pricing-plans",
+            "op": "move"
+          },
+          {
+            "new": "prospect/I/property-quota-limit",
+            "old": "tmp:kb:prospect/D/property-quota-limit",
+            "op": "move"
+          },
+          {
+            "new": "prospect/I/subscription-change-renewal",
+            "old": "tmp:kb:prospect/D/subscription-change-renewal",
+            "op": "move"
+          },
+          {
+            "new": "prospect/I/competitor-comparison",
+            "old": "tmp:kb:prospect/E/competitor-comparison",
+            "op": "move"
+          },
+          {
+            "new": "prospect/I/competitor-neutrality",
+            "old": "tmp:kb:prospect/E/competitor-neutrality",
+            "op": "move"
+          },
+          {
+            "new": "prospect/I/data-migration",
+            "old": "tmp:kb:prospect/G/migration-limits",
+            "op": "merge"
+          },
+          {
+            "new": "prospect/E/bill-contents-extra-fees",
+            "old": "tmp:kb:prospect/G/utility-split-advice",
+            "op": "merge"
+          }
+        ]
+      },
+      {
+        "angle": "audience_level",
+        "coarses": [
+          {
+            "id": "A",
+            "title": "帳號與身分"
+          },
+          {
+            "id": "B",
+            "title": "團隊、人員與大房東"
+          },
+          {
+            "id": "C",
+            "title": "社區與物件"
+          },
+          {
+            "id": "D",
+            "title": "租約（含委託約子題）"
+          },
+          {
+            "id": "E",
+            "title": "帳務（含發票、收款金流、抄表）"
+          },
+          {
+            "id": "F",
+            "title": "修繕"
+          },
+          {
+            "id": "G",
+            "title": "裝置（IoT）"
+          },
+          {
+            "id": "H",
+            "title": "幫助中心"
+          },
+          {
+            "id": "I",
+            "title": "方案與導入"
+          }
+        ],
+        "fines": [
+          {
+            "coarse_id": "A",
+            "id": "prospect/A/account-registration",
+            "merge_of": [
+              "tmp:kb:prospect/D/account-registration"
+            ],
+            "moved_from": [],
+            "reason": "潛在客戶對帳號主題只需操作層級（怎麼註冊、第三方登入、租客免註冊），歸帳號與身分。",
+            "slug": "account-registration",
+            "split_from": [],
+            "title": "怎麼註冊帳號"
+          },
+          {
+            "coarse_id": "B",
+            "id": "prospect/B/team-management-and-permissions",
+            "merge_of": [
+              "tmp:kb:prospect/C/team-management-overview",
+              "tmp:kb:prospect/C/role-permission-granularity"
+            ],
+            "moved_from": [],
+            "reason": "同一受眾對團隊管理主題只保留能力層級，模組總覽與權限細分同屬「多人分工能做到什麼」故合併為一細目。",
+            "slug": "team-management-and-permissions",
+            "split_from": [],
+            "title": "團隊協作與成員權限能做到什麼"
+          },
+          {
+            "coarse_id": "B",
+            "id": "prospect/B/owner-landlord-and-report",
+            "merge_of": [
+              "tmp:kb:prospect/C/what-is-owner-landlord",
+              "tmp:kb:prospect/C/owner-report-collection-remit"
+            ],
+            "moved_from": [],
+            "reason": "大房東定義與大房東報表對潛在客戶同屬能力層級的同一主題（如何對業主交代），合併歸人員與大房東；月結差額發票屬報表產出的一環，不另立帳務細目。",
+            "slug": "owner-landlord-and-report",
+            "split_from": [],
+            "title": "大房東是什麼與大房東報表"
+          },
+          {
+            "coarse_id": "C",
+            "id": "prospect/C/property-management-overview",
+            "merge_of": [
+              "tmp:kb:prospect/C/property-management-overview"
+            ],
+            "moved_from": [],
+            "reason": "物件集中管理與狀態標籤屬物件本身的能力層級說明，歸社區與物件。",
+            "slug": "property-management-overview",
+            "split_from": [],
+            "title": "房源管理模組做什麼"
+          },
+          {
+            "coarse_id": "C",
+            "id": "prospect/C/community-batch-create",
+            "merge_of": [
+              "tmp:kb:prospect/C/community-batch-create"
+            ],
+            "moved_from": [],
+            "reason": "社區歸戶與批次建檔是獨立主題，潛在客戶只需操作層級（先建社區、下載模板上傳），另見房源管理總覽。",
+            "slug": "community-batch-create",
+            "split_from": [],
+            "title": "社區建立與批次新增物件"
+          },
+          {
+            "coarse_id": "C",
+            "id": "prospect/C/property-status-meaning",
+            "merge_of": [
+              "tmp:kb:prospect/C/property-status-meaning"
+            ],
+            "moved_from": [],
+            "reason": "物件總表的四種狀態與刊登軸是物件本身屬性的能力層級解讀，歸社區與物件；合約驅動的狀態演變另見租約細目而不重複。",
+            "slug": "property-status-meaning",
+            "split_from": [],
+            "title": "物件狀態是什麼意思"
+          },
+          {
+            "coarse_id": "C",
+            "id": "prospect/C/rental-storefront-vr",
+            "merge_of": [
+              "tmp:kb:prospect/C/rental-storefront-vr"
+            ],
+            "moved_from": [],
+            "reason": "對外招租頁與 VR 連結是物件曝光的能力層級主題，歸社區與物件。",
+            "slug": "rental-storefront-vr",
+            "split_from": [],
+            "title": "招租店舖與 VR 看屋"
+          },
+          {
+            "coarse_id": "D",
+            "id": "prospect/D/contract-esign-flow",
+            "merge_of": [
+              "tmp:kb:prospect/C/contract-esign-flow"
+            ],
+            "moved_from": [],
+            "reason": "建約到簽署的流程、時效、身分與社宅例外對潛在客戶保留操作層級一個細目，歸租約。",
+            "slug": "contract-esign-flow",
+            "split_from": [],
+            "title": "建約方式與線上電子簽約流程"
+          },
+          {
+            "coarse_id": "D",
+            "id": "prospect/D/contract-templates",
+            "merge_of": [
+              "tmp:kb:prospect/C/contract-templates"
+            ],
+            "moved_from": [],
+            "reason": "可選範本種類與個人／法人差異是租約主題的權益層級（可用範圍），與流程細目分層並另見。",
+            "slug": "contract-templates",
+            "split_from": [],
+            "title": "合約範本有哪些可以選"
+          },
+          {
+            "coarse_id": "D",
+            "id": "prospect/D/contract-modify-after-sign",
+            "merge_of": [
+              "tmp:kb:prospect/C/contract-modify-after-sign"
+            ],
+            "moved_from": [],
+            "reason": "簽後修改規則由合約狀態決定，屬租約主題的操作層級獨立問題。",
+            "slug": "contract-modify-after-sign",
+            "split_from": [],
+            "title": "合約送出或簽完後能不能修改"
+          },
+          {
+            "coarse_id": "D",
+            "id": "prospect/D/contract-history-retention",
+            "merge_of": [
+              "tmp:kb:prospect/C/contract-history-retention"
+            ],
+            "moved_from": [],
+            "reason": "歷史合約保存期限與點退狀態是租約主題的權益層級（保留權益），歸租約。",
+            "slug": "contract-history-retention",
+            "split_from": [],
+            "title": "歷史合約保留多久"
+          },
+          {
+            "coarse_id": "E",
+            "id": "prospect/E/billing-overview",
+            "merge_of": [
+              "tmp:kb:prospect/C/billing-overview"
+            ],
+            "moved_from": [],
+            "reason": "自動帳單、代收、電子發票自動開立與載具屬帳務主題的能力層級總覽，歸帳務。",
+            "slug": "billing-overview",
+            "split_from": [],
+            "title": "帳務管理模組做什麼（含電子發票）"
+          },
+          {
+            "coarse_id": "E",
+            "id": "prospect/E/bill-contents-extra-fees",
+            "merge_of": [
+              "tmp:kb:prospect/C/bill-contents-extra-fees"
+            ],
+            "moved_from": [],
+            "reason": "出現在帳單列上的內容與臨時加收屬帳務，潛在客戶保留操作層級。",
+            "slug": "bill-contents-extra-fees",
+            "split_from": [],
+            "title": "帳單內容與臨時加收費用"
+          },
+          {
+            "coarse_id": "E",
+            "id": "prospect/E/bill-format-customize",
+            "merge_of": [
+              "tmp:kb:prospect/C/bill-format-customize"
+            ],
+            "moved_from": [],
+            "reason": "帳單版面可調範圍與收據版式是帳務主題中「能力邊界」的獨立問題，與帳單內容細目分開並另見。",
+            "slug": "bill-format-customize",
+            "split_from": [],
+            "title": "帳單版面能不能自訂"
+          },
+          {
+            "coarse_id": "E",
+            "id": "prospect/E/payment-gateway-options",
+            "merge_of": [
+              "tmp:kb:prospect/C/payment-gateway-options",
+              "tmp:kb:prospect/C/credit-card-rent-payment"
+            ],
+            "moved_from": [],
+            "reason": "錢怎麼進來歸收款金流子題；信用卡繳租是金流廠商選擇的一個結果（僅藍新支援），同層級同主題故合併，不重複。",
+            "slug": "payment-gateway-options",
+            "split_from": [],
+            "title": "金流廠商差別、申請條件與信用卡繳租"
+          },
+          {
+            "coarse_id": "E",
+            "id": "prospect/E/overdue-reminder-late-fee",
+            "merge_of": [
+              "tmp:kb:prospect/C/overdue-reminder-late-fee",
+              "tmp:kb:prospect/C/notification-channels"
+            ],
+            "moved_from": [],
+            "reason": "通知是投遞管道不自成細目，繳費提醒的管道與時機併入其所通知的逾期催繳主題（帳務能力層級）；簽約邀請與驗證碼通知另見租約與帳號細目。",
+            "slug": "overdue-reminder-late-fee",
+            "split_from": [],
+            "title": "租客逾期未繳怎麼辦（含繳費提醒通知）"
+          },
+          {
+            "coarse_id": "E",
+            "id": "prospect/E/utility-split-advice",
+            "merge_of": [
+              "tmp:kb:prospect/G/utility-split-advice"
+            ],
+            "moved_from": [],
+            "reason": "錢怎麼算歸帳務；水電分算依合約條件計入帳單，屬帳務能力層級而非裝置。",
+            "slug": "utility-split-advice",
+            "split_from": [],
+            "title": "水電費怎麼分算"
+          },
+          {
+            "coarse_id": "F",
+            "id": "prospect/F/repair-system",
+            "merge_of": [
+              "tmp:kb:prospect/C/repair-system"
+            ],
+            "moved_from": [],
+            "reason": "報修流程數位化屬修繕主題的能力層級，歸修繕。",
+            "slug": "repair-system",
+            "split_from": [],
+            "title": "線上報修與進度追蹤"
+          },
+          {
+            "coarse_id": "G",
+            "id": "prospect/G/smart-meter-lock-iot",
+            "merge_of": [
+              "tmp:kb:prospect/C/smart-meter-lock-iot"
+            ],
+            "moved_from": [],
+            "reason": "電錶與門鎖是硬體裝置的能力層級說明，歸裝置（IoT）；抄表帶入帳單另見帳務。",
+            "slug": "smart-meter-lock-iot",
+            "split_from": [],
+            "title": "智慧電錶與門鎖整合"
+          },
+          {
+            "coarse_id": "I",
+            "id": "prospect/I/product-overview",
+            "merge_of": [
+              "tmp:kb:prospect/A/product-overview",
+              "tmp:kb:prospect/A/pain-points"
+            ],
+            "moved_from": [],
+            "reason": "總覽與痛點對應同為潛在客戶導入評估的能力層級入口問題，同主題合併為一細目，歸方案與導入。",
+            "slug": "product-overview",
+            "split_from": [],
+            "title": "系統總覽、能解決什麼問題與適不適合我"
+          },
+          {
+            "coarse_id": "I",
+            "id": "prospect/I/dashboard-overview",
+            "merge_of": [
+              "tmp:kb:prospect/A/dashboard-overview"
+            ],
+            "moved_from": [],
+            "reason": "儀表板橫跨收支、帳務、修繕三模組，屬產品導入時的整體能力層級展示，不歸單一業務領域。",
+            "slug": "dashboard-overview",
+            "split_from": [],
+            "title": "首頁儀表板顯示哪些數據"
+          },
+          {
+            "coarse_id": "I",
+            "id": "prospect/I/why-choose-jgb",
+            "merge_of": [
+              "tmp:kb:prospect/A/why-choose-jgb",
+              "tmp:kb:prospect/E/competitor-comparison"
+            ],
+            "moved_from": [],
+            "reason": "選擇理由與競品差異講的是同一組差異化能力（合約廣度、金流、IoT、大房東報表），講法唯一故合併為導入評估的能力層級細目。",
+            "slug": "why-choose-jgb",
+            "split_from": [],
+            "title": "為什麼選金箍棒與同類系統的差異"
+          },
+          {
+            "coarse_id": "I",
+            "id": "prospect/I/competitor-neutrality",
+            "merge_of": [
+              "tmp:kb:prospect/E/competitor-neutrality"
+            ],
+            "moved_from": [],
+            "reason": "對同業的中立回答原則是導入諮詢時的獨立主題，與差異比較細目分開並另見。",
+            "slug": "competitor-neutrality",
+            "split_from": [],
+            "title": "會評論競爭對手嗎"
+          },
+          {
+            "coarse_id": "I",
+            "id": "prospect/I/individual-landlord-scale-fit",
+            "merge_of": [
+              "tmp:kb:prospect/B/individual-landlord-scale-fit"
+            ],
+            "moved_from": [],
+            "reason": "依規模判斷適不適合是導入評估的能力層級，屬方案與導入而非團隊管理。",
+            "slug": "individual-landlord-scale-fit",
+            "split_from": [],
+            "title": "個人房東（約 10～30 戶）適配與建議做法"
+          },
+          {
+            "coarse_id": "I",
+            "id": "prospect/I/team-company-fit",
+            "merge_of": [
+              "tmp:kb:prospect/B/team-company-fit"
+            ],
+            "moved_from": [],
+            "reason": "團隊型客戶的適配評估屬導入層級問題，歸方案與導入；團隊權限與大房東報表細節另見 B。",
+            "slug": "team-company-fit",
+            "split_from": [],
+            "title": "公司或包租代管團隊適合嗎"
+          },
+          {
+            "coarse_id": "I",
+            "id": "prospect/I/free-trial",
+            "merge_of": [
+              "tmp:kb:prospect/D/free-trial"
+            ],
+            "moved_from": [],
+            "reason": "免費試用是方案主題的權益層級，免費試用一個月的講法只掛此細目，其他細目以另見引用。",
+            "slug": "free-trial",
+            "split_from": [],
+            "title": "可以免費試用嗎"
+          },
+          {
+            "coarse_id": "I",
+            "id": "prospect/I/pricing-plans",
+            "merge_of": [
+              "tmp:kb:prospect/D/pricing-plans"
+            ],
+            "moved_from": [],
+            "reason": "訂閱制與分級方式是方案主題的權益層級（費用），歸方案與導入。",
+            "slug": "pricing-plans",
+            "split_from": [],
+            "title": "怎麼收費"
+          },
+          {
+            "coarse_id": "I",
+            "id": "prospect/I/property-quota-limit",
+            "merge_of": [
+              "tmp:kb:prospect/D/property-quota-limit"
+            ],
+            "moved_from": [],
+            "reason": "物件額度是方案權益層級的獨立問題（額度滿了怎麼辦），與收費細目分開並另見。",
+            "slug": "property-quota-limit",
+            "split_from": [],
+            "title": "方案物件額度上限"
+          },
+          {
+            "coarse_id": "I",
+            "id": "prospect/I/subscription-change-renewal",
+            "merge_of": [
+              "tmp:kb:prospect/D/subscription-change-renewal"
+            ],
+            "moved_from": [],
+            "reason": "方案變更與續約扣款屬方案主題的操作層級，與權益層級的收費、額度細目分層。",
+            "slug": "subscription-change-renewal",
+            "split_from": [],
+            "title": "升級、續約與取消訂閱"
+          },
+          {
+            "coarse_id": "I",
+            "id": "prospect/I/data-migration",
+            "merge_of": [
+              "tmp:kb:prospect/B/data-migration",
+              "tmp:kb:prospect/G/migration-limits"
+            ],
+            "moved_from": [],
+            "reason": "可匯入範圍與不支援項目是同一導入主題的能力層級正反兩面，講法重複故合併，歸方案與導入。",
+            "slug": "data-migration",
+            "split_from": [],
+            "title": "舊系統資料能否匯入（可匯入範圍與不支援項目）"
+          }
+        ],
+        "id_map": [
+          {
+            "new": "prospect/I/dashboard-overview",
+            "old": "tmp:kb:prospect/A/dashboard-overview",
+            "op": "move"
+          },
+          {
+            "new": "prospect/I/product-overview",
+            "old": "tmp:kb:prospect/A/pain-points",
+            "op": "merge"
+          },
+          {
+            "new": "prospect/I/product-overview",
+            "old": "tmp:kb:prospect/A/product-overview",
+            "op": "merge"
+          },
+          {
+            "new": "prospect/I/why-choose-jgb",
+            "old": "tmp:kb:prospect/A/why-choose-jgb",
+            "op": "merge"
+          },
+          {
+            "new": "prospect/I/data-migration",
+            "old": "tmp:kb:prospect/B/data-migration",
+            "op": "merge"
+          },
+          {
+            "new": "prospect/I/individual-landlord-scale-fit",
+            "old": "tmp:kb:prospect/B/individual-landlord-scale-fit",
+            "op": "move"
+          },
+          {
+            "new": "prospect/I/team-company-fit",
+            "old": "tmp:kb:prospect/B/team-company-fit",
+            "op": "move"
+          },
+          {
+            "new": "prospect/E/bill-contents-extra-fees",
+            "old": "tmp:kb:prospect/C/bill-contents-extra-fees",
+            "op": "move"
+          },
+          {
+            "new": "prospect/E/bill-format-customize",
+            "old": "tmp:kb:prospect/C/bill-format-customize",
+            "op": "move"
+          },
+          {
+            "new": "prospect/E/billing-overview",
+            "old": "tmp:kb:prospect/C/billing-overview",
+            "op": "move"
+          },
+          {
+            "new": "prospect/C/community-batch-create",
+            "old": "tmp:kb:prospect/C/community-batch-create",
+            "op": "keep"
+          },
+          {
+            "new": "prospect/D/contract-esign-flow",
+            "old": "tmp:kb:prospect/C/contract-esign-flow",
+            "op": "move"
+          },
+          {
+            "new": "prospect/D/contract-history-retention",
+            "old": "tmp:kb:prospect/C/contract-history-retention",
+            "op": "move"
+          },
+          {
+            "new": "prospect/D/contract-modify-after-sign",
+            "old": "tmp:kb:prospect/C/contract-modify-after-sign",
+            "op": "move"
+          },
+          {
+            "new": "prospect/D/contract-templates",
+            "old": "tmp:kb:prospect/C/contract-templates",
+            "op": "move"
+          },
+          {
+            "new": "prospect/E/payment-gateway-options",
+            "old": "tmp:kb:prospect/C/credit-card-rent-payment",
+            "op": "merge"
+          },
+          {
+            "new": "prospect/E/overdue-reminder-late-fee",
+            "old": "tmp:kb:prospect/C/notification-channels",
+            "op": "merge"
+          },
+          {
+            "new": "prospect/E/overdue-reminder-late-fee",
+            "old": "tmp:kb:prospect/C/overdue-reminder-late-fee",
+            "op": "merge"
+          },
+          {
+            "new": "prospect/B/owner-landlord-and-report",
+            "old": "tmp:kb:prospect/C/owner-report-collection-remit",
+            "op": "merge"
+          },
+          {
+            "new": "prospect/E/payment-gateway-options",
+            "old": "tmp:kb:prospect/C/payment-gateway-options",
+            "op": "merge"
+          },
+          {
+            "new": "prospect/C/property-management-overview",
+            "old": "tmp:kb:prospect/C/property-management-overview",
+            "op": "keep"
+          },
+          {
+            "new": "prospect/C/property-status-meaning",
+            "old": "tmp:kb:prospect/C/property-status-meaning",
+            "op": "keep"
+          },
+          {
+            "new": "prospect/C/rental-storefront-vr",
+            "old": "tmp:kb:prospect/C/rental-storefront-vr",
+            "op": "keep"
+          },
+          {
+            "new": "prospect/F/repair-system",
+            "old": "tmp:kb:prospect/C/repair-system",
+            "op": "move"
+          },
+          {
+            "new": "prospect/B/team-management-and-permissions",
+            "old": "tmp:kb:prospect/C/role-permission-granularity",
+            "op": "merge"
+          },
+          {
+            "new": "prospect/G/smart-meter-lock-iot",
+            "old": "tmp:kb:prospect/C/smart-meter-lock-iot",
+            "op": "move"
+          },
+          {
+            "new": "prospect/B/team-management-and-permissions",
+            "old": "tmp:kb:prospect/C/team-management-overview",
+            "op": "merge"
+          },
+          {
+            "new": "prospect/B/owner-landlord-and-report",
+            "old": "tmp:kb:prospect/C/what-is-owner-landlord",
+            "op": "merge"
+          },
+          {
+            "new": "prospect/A/account-registration",
+            "old": "tmp:kb:prospect/D/account-registration",
+            "op": "move"
+          },
+          {
+            "new": "prospect/I/free-trial",
+            "old": "tmp:kb:prospect/D/free-trial",
+            "op": "move"
+          },
+          {
+            "new": "prospect/I/pricing-plans",
+            "old": "tmp:kb:prospect/D/pricing-plans",
+            "op": "move"
+          },
+          {
+            "new": "prospect/I/property-quota-limit",
+            "old": "tmp:kb:prospect/D/property-quota-limit",
+            "op": "move"
+          },
+          {
+            "new": "prospect/I/subscription-change-renewal",
+            "old": "tmp:kb:prospect/D/subscription-change-renewal",
+            "op": "move"
+          },
+          {
+            "new": "prospect/I/why-choose-jgb",
+            "old": "tmp:kb:prospect/E/competitor-comparison",
+            "op": "merge"
+          },
+          {
+            "new": "prospect/I/competitor-neutrality",
+            "old": "tmp:kb:prospect/E/competitor-neutrality",
+            "op": "move"
+          },
+          {
+            "new": "prospect/I/data-migration",
+            "old": "tmp:kb:prospect/G/migration-limits",
+            "op": "merge"
+          },
+          {
+            "new": "prospect/E/utility-split-advice",
+            "old": "tmp:kb:prospect/G/utility-split-advice",
+            "op": "move"
+          }
+        ]
+      }
+    ],
+    "synthesis": {
+      "angle": "synthesis",
+      "coarses": [
+        {
+          "id": "A",
+          "title": "帳號與身分"
+        },
+        {
+          "id": "B",
+          "title": "團隊、人員與大房東"
+        },
+        {
+          "id": "C",
+          "title": "社區與物件"
+        },
+        {
+          "id": "D",
+          "title": "租約（含委託約子題）"
+        },
+        {
+          "id": "E",
+          "title": "帳務（含發票、收款金流、抄表）"
+        },
+        {
+          "id": "F",
+          "title": "修繕"
+        },
+        {
+          "id": "G",
+          "title": "裝置（IoT）"
+        },
+        {
+          "id": "H",
+          "title": "幫助中心"
+        },
+        {
+          "id": "I",
+          "title": "方案與導入"
+        }
+      ],
+      "fines": [
+        {
+          "coarse_id": "I",
+          "id": "prospect/I/product-overview",
+          "merge_of": [
+            "tmp:kb:prospect/A/product-overview",
+            "tmp:kb:prospect/A/pain-points"
+          ],
+          "moved_from": [],
+          "reason": "三份提議一致：總覽與痛點對應同為導入評估的開場問題，答案都是模組總覽加追問狀況，合併為一細目歸方案與導入。",
+          "slug": "product-overview",
+          "split_from": [],
+          "title": "系統總覽、能解決什麼問題與適不適合我"
+        },
+        {
+          "coarse_id": "I",
+          "id": "prospect/I/why-choose-jgb",
+          "merge_of": [
+            "tmp:kb:prospect/A/why-choose-jgb"
+          ],
+          "moved_from": [],
+          "reason": "「為什麼選你們」是自身理由的選型問題，與跟特定對手比較的問法不同，兩份提議皆獨立成立。",
+          "slug": "why-choose-jgb",
+          "split_from": [],
+          "title": "為什麼選金箍棒"
+        },
+        {
+          "coarse_id": "I",
+          "id": "prospect/I/dashboard-overview",
+          "merge_of": [
+            "tmp:kb:prospect/A/dashboard-overview"
+          ],
+          "moved_from": [],
+          "reason": "儀表板橫跨收支、帳務、修繕，不屬單一業務領域，是導入前的整體產品畫面問題，兩份提議歸方案與導入。",
+          "slug": "dashboard-overview",
+          "split_from": [],
+          "title": "首頁儀表板顯示哪些數據"
+        },
+        {
+          "coarse_id": "I",
+          "id": "prospect/I/individual-landlord-scale-fit",
+          "merge_of": [
+            "tmp:kb:prospect/B/individual-landlord-scale-fit"
+          ],
+          "moved_from": [],
+          "reason": "三份一致：依規模判斷適不適合是導入適配問題，三個規模段互相銜接才完整，歸方案與導入。",
+          "slug": "individual-landlord-scale-fit",
+          "split_from": [],
+          "title": "個人房東（約 10～30 戶）適配與建議做法"
+        },
+        {
+          "coarse_id": "I",
+          "id": "prospect/I/team-company-fit",
+          "merge_of": [
+            "tmp:kb:prospect/B/team-company-fit"
+          ],
+          "moved_from": [],
+          "reason": "三份一致：團隊型客戶的適配評估屬導入問題，與個人房東適配受眾規模不同，各自一細目。",
+          "slug": "team-company-fit",
+          "split_from": [],
+          "title": "公司或包租代管團隊適合嗎"
+        },
+        {
+          "coarse_id": "I",
+          "id": "prospect/I/data-migration",
+          "merge_of": [
+            "tmp:kb:prospect/B/data-migration",
+            "tmp:kb:prospect/G/migration-limits"
+          ],
+          "moved_from": [],
+          "reason": "三份一致：可匯入與不支援項目是同一導入問題的正反兩面且講法重複，合併為單一細目。",
+          "slug": "data-migration",
+          "split_from": [],
+          "title": "舊系統資料能否匯入（可匯入範圍與不支援項目）"
+        },
+        {
+          "coarse_id": "I",
+          "id": "prospect/I/free-trial",
+          "merge_of": [
+            "tmp:kb:prospect/D/free-trial"
+          ],
+          "moved_from": [],
+          "reason": "三份一致：免費試用是方案權益的獨立問題，「免費試用一個月」的講法只掛此細目，其他細目另見。",
+          "slug": "free-trial",
+          "split_from": [],
+          "title": "可以免費試用嗎"
+        },
+        {
+          "coarse_id": "I",
+          "id": "prospect/I/pricing-plans",
+          "merge_of": [
+            "tmp:kb:prospect/D/pricing-plans"
+          ],
+          "moved_from": [],
+          "reason": "三份一致：訂閱制與分級原則是方案主題的獨立費用問題。",
+          "slug": "pricing-plans",
+          "split_from": [],
+          "title": "怎麼收費"
+        },
+        {
+          "coarse_id": "I",
+          "id": "prospect/I/property-quota-limit",
+          "merge_of": [
+            "tmp:kb:prospect/D/property-quota-limit"
+          ],
+          "moved_from": [],
+          "reason": "三份一致：物件額度由方案級距決定，歸方案而非物件，與收費細目分開並另見。",
+          "slug": "property-quota-limit",
+          "split_from": [],
+          "title": "方案物件額度上限與用滿怎麼辦"
+        },
+        {
+          "coarse_id": "I",
+          "id": "prospect/I/subscription-change-renewal",
+          "merge_of": [
+            "tmp:kb:prospect/D/subscription-change-renewal"
+          ],
+          "moved_from": [],
+          "reason": "三份一致：方案變更、自動續約與取消是訂閱操作問題，與收費級距問法不同。",
+          "slug": "subscription-change-renewal",
+          "split_from": [],
+          "title": "升級、續約與取消訂閱"
+        },
+        {
+          "coarse_id": "I",
+          "id": "prospect/I/competitor-comparison",
+          "merge_of": [
+            "tmp:kb:prospect/E/competitor-comparison"
+          ],
+          "moved_from": [],
+          "reason": "與特定對手的事實差異比較自身完整，且 why-choose 與中立原則均已依多數獨立成立，故比較內容單獨一細目。",
+          "slug": "competitor-comparison",
+          "split_from": [],
+          "title": "跟 Bananas、屋我也差在哪"
+        },
+        {
+          "coarse_id": "I",
+          "id": "prospect/I/competitor-neutrality",
+          "merge_of": [
+            "tmp:kb:prospect/E/competitor-neutrality"
+          ],
+          "moved_from": [],
+          "reason": "兩份提議獨立：對同業的中立回答原則是立場說明，可獨立回答並被比較細目另見。",
+          "slug": "competitor-neutrality",
+          "split_from": [],
+          "title": "會評論競爭對手嗎"
+        },
+        {
+          "coarse_id": "A",
+          "id": "prospect/A/account-registration",
+          "merge_of": [
+            "tmp:kb:prospect/D/account-registration",
+            "tmp:kb:prospect/C/notification-channels"
+          ],
+          "moved_from": [],
+          "reason": "三份一致歸帳號；註冊驗證碼走 Email 是通知投遞細節，兩份提議依「通知歸它所通知的領域」併入註冊。",
+          "slug": "account-registration",
+          "split_from": [
+            "tmp:kb:prospect/C/notification-channels"
+          ],
+          "title": "怎麼註冊帳號（含驗證碼通知）"
+        },
+        {
+          "coarse_id": "B",
+          "id": "prospect/B/team-management-overview",
+          "merge_of": [
+            "tmp:kb:prospect/C/team-management-overview"
+          ],
+          "moved_from": [],
+          "reason": "兩份提議獨立：「多人怎麼一起用」是團隊管理的總覽問題，與權限細分問法不同。",
+          "slug": "team-management-overview",
+          "split_from": [],
+          "title": "團隊管理模組做什麼"
+        },
+        {
+          "coarse_id": "B",
+          "id": "prospect/B/role-permission-granularity",
+          "merge_of": [
+            "tmp:kb:prospect/C/role-permission-granularity"
+          ],
+          "moved_from": [],
+          "reason": "兩份提議獨立：權限顆粒度、範本角色與物件指派自身完整，是獨立可答的權限問題。",
+          "slug": "role-permission-granularity",
+          "split_from": [],
+          "title": "成員權限能不能細分（只看不改、看不到財務）"
+        },
+        {
+          "coarse_id": "B",
+          "id": "prospect/B/what-is-owner-landlord",
+          "merge_of": [
+            "tmp:kb:prospect/C/what-is-owner-landlord"
+          ],
+          "moved_from": [],
+          "reason": "兩份提議獨立：名詞定義、邀請與業主端可見範圍自身完整，與報表功能主題不同。",
+          "slug": "what-is-owner-landlord",
+          "split_from": [],
+          "title": "大房東是什麼"
+        },
+        {
+          "coarse_id": "B",
+          "id": "prospect/B/owner-report-collection-remit",
+          "merge_of": [
+            "tmp:kb:prospect/C/owner-report-collection-remit"
+          ],
+          "moved_from": [],
+          "reason": "「怎麼跟業主交報表」歸大房東領域；月結差額發票是報表產出的一環，兩份提議未拆出，保留於同一細目。",
+          "slug": "owner-report-collection-remit",
+          "split_from": [],
+          "title": "大房東報表與代收代付怎麼交代"
+        },
+        {
+          "coarse_id": "C",
+          "id": "prospect/C/property-management-overview",
+          "merge_of": [
+            "tmp:kb:prospect/C/property-management-overview"
+          ],
+          "moved_from": [],
+          "reason": "三份一致：物件集中管理與自訂標籤是物件本身屬性的總覽，歸社區與物件。",
+          "slug": "property-management-overview",
+          "split_from": [],
+          "title": "房源管理模組做什麼（含自訂狀態標籤）"
+        },
+        {
+          "coarse_id": "C",
+          "id": "prospect/C/community-batch-create",
+          "merge_of": [
+            "tmp:kb:prospect/C/community-batch-create"
+          ],
+          "moved_from": [],
+          "reason": "三份一致：社區歸戶與批次建檔互相依賴，是獨立的操作問題。",
+          "slug": "community-batch-create",
+          "split_from": [],
+          "title": "社區建立與批次新增物件"
+        },
+        {
+          "coarse_id": "C",
+          "id": "prospect/C/property-status-meaning",
+          "merge_of": [
+            "tmp:kb:prospect/C/property-status-meaning"
+          ],
+          "moved_from": [],
+          "reason": "三份一致：物件總表狀態以刊登軸為主，屬物件本身屬性，合約驅動的狀態另見租約而不重複。",
+          "slug": "property-status-meaning",
+          "split_from": [],
+          "title": "物件狀態（未刊登／刊登中／洽談中／合約中）是什麼意思"
+        },
+        {
+          "coarse_id": "C",
+          "id": "prospect/C/rental-storefront-vr",
+          "merge_of": [
+            "tmp:kb:prospect/C/rental-storefront-vr"
+          ],
+          "moved_from": [],
+          "reason": "三份一致：對外招租頁與 VR 連結是物件曝光的獨立問題。",
+          "slug": "rental-storefront-vr",
+          "split_from": [],
+          "title": "招租店舖與 VR 看屋"
+        },
+        {
+          "coarse_id": "D",
+          "id": "prospect/D/contract-esign-flow",
+          "merge_of": [
+            "tmp:kb:prospect/C/contract-esign-flow",
+            "tmp:kb:prospect/C/notification-channels"
+          ],
+          "moved_from": [],
+          "reason": "建約方式、流程、72 小時時效、身分、社宅公證與費用依附流程才完整（兩份併入），簽約邀請通知歸它所通知的租約領域；批次續約依多數拆出。",
+          "slug": "contract-esign-flow",
+          "split_from": [
+            "tmp:kb:prospect/C/contract-esign-flow",
+            "tmp:kb:prospect/C/notification-channels"
+          ],
+          "title": "建約方式與線上電子簽約流程（含時效、身分、社宅、簽約邀請通知、費用）"
+        },
+        {
+          "coarse_id": "D",
+          "id": "prospect/D/contract-batch-renewal",
+          "merge_of": [
+            "tmp:kb:prospect/C/contract-esign-flow"
+          ],
+          "moved_from": [],
+          "reason": "兩份提議拆出：批次續約與其排除條件可獨立回答，與建新約流程主題不同。",
+          "slug": "contract-batch-renewal",
+          "split_from": [
+            "tmp:kb:prospect/C/contract-esign-flow"
+          ],
+          "title": "續約能不能批次處理"
+        },
+        {
+          "coarse_id": "D",
+          "id": "prospect/D/contract-templates",
+          "merge_of": [
+            "tmp:kb:prospect/C/contract-templates"
+          ],
+          "moved_from": [],
+          "reason": "12 種範本、特殊範本與身分可選範圍自身完整；包租／代管委託約差異依兩份提議拆為委託約子題。",
+          "slug": "contract-templates",
+          "split_from": [
+            "tmp:kb:prospect/C/contract-templates"
+          ],
+          "title": "合約範本有哪些可以選"
+        },
+        {
+          "coarse_id": "D",
+          "id": "prospect/D/sublease-vs-management-contract",
+          "merge_of": [
+            "tmp:kb:prospect/C/contract-templates"
+          ],
+          "moved_from": [],
+          "reason": "兩份提議拆出：「包租跟代管差在哪」是委託約子題的獨立問法，包租租金制度與代管服務費設定可獨立回答。",
+          "slug": "sublease-vs-management-contract",
+          "split_from": [
+            "tmp:kb:prospect/C/contract-templates"
+          ],
+          "title": "包租與代管在委託合約設定上的差別"
+        },
+        {
+          "coarse_id": "D",
+          "id": "prospect/D/contract-modify-after-sign",
+          "merge_of": [
+            "tmp:kb:prospect/C/contract-modify-after-sign"
+          ],
+          "moved_from": [],
+          "reason": "三份一致：各階段可否修改與資料異動申請由合約狀態決定，歸租約。",
+          "slug": "contract-modify-after-sign",
+          "split_from": [],
+          "title": "合約送出或簽完後能不能修改"
+        },
+        {
+          "coarse_id": "D",
+          "id": "prospect/D/contract-history-retention",
+          "merge_of": [
+            "tmp:kb:prospect/C/contract-history-retention"
+          ],
+          "moved_from": [],
+          "reason": "三份一致：歷史合約狀態與保留期限互相依賴才完整，歸租約。",
+          "slug": "contract-history-retention",
+          "split_from": [],
+          "title": "歷史合約保留多久（含點退狀態）"
+        },
+        {
+          "coarse_id": "E",
+          "id": "prospect/E/billing-overview",
+          "merge_of": [
+            "tmp:kb:prospect/C/billing-overview"
+          ],
+          "moved_from": [],
+          "reason": "帳務模組總覽自身完整；電子發票自動開立與載具依兩份提議拆為獨立細目。",
+          "slug": "billing-overview",
+          "split_from": [
+            "tmp:kb:prospect/C/billing-overview"
+          ],
+          "title": "帳務管理模組做什麼"
+        },
+        {
+          "coarse_id": "E",
+          "id": "prospect/E/einvoice-issuing",
+          "merge_of": [
+            "tmp:kb:prospect/C/billing-overview"
+          ],
+          "moved_from": [],
+          "reason": "兩份提議拆出：發票開立時機與載具用途是獨立可答的問題，與模組總覽主題不同。",
+          "slug": "einvoice-issuing",
+          "split_from": [
+            "tmp:kb:prospect/C/billing-overview"
+          ],
+          "title": "電子發票能不能自動開、載具怎麼用"
+        },
+        {
+          "coarse_id": "E",
+          "id": "prospect/E/bill-contents-extra-fees",
+          "merge_of": [
+            "tmp:kb:prospect/C/bill-contents-extra-fees"
+          ],
+          "moved_from": [],
+          "reason": "出現在帳單列上的內容與臨時加收歸帳務，兩份提議保持與水電分算分開。",
+          "slug": "bill-contents-extra-fees",
+          "split_from": [],
+          "title": "帳單內容與臨時加收費用"
+        },
+        {
+          "coarse_id": "E",
+          "id": "prospect/E/bill-format-customize",
+          "merge_of": [
+            "tmp:kb:prospect/C/bill-format-customize"
+          ],
+          "moved_from": [],
+          "reason": "三份一致：可調內容與收據版式選項是帳務能力邊界的獨立問題，與帳單內容細目另見。",
+          "slug": "bill-format-customize",
+          "split_from": [],
+          "title": "帳單版面能不能自訂"
+        },
+        {
+          "coarse_id": "E",
+          "id": "prospect/E/overdue-reminder-late-fee",
+          "merge_of": [
+            "tmp:kb:prospect/C/overdue-reminder-late-fee",
+            "tmp:kb:prospect/C/notification-channels"
+          ],
+          "moved_from": [],
+          "reason": "三份一致：繳費提醒的管道與時機是逾期處理的一部分，通知不自成細目，歸它所通知的帳務領域。",
+          "slug": "overdue-reminder-late-fee",
+          "split_from": [
+            "tmp:kb:prospect/C/notification-channels"
+          ],
+          "title": "租客逾期未繳怎麼辦（含繳費提醒通知）"
+        },
+        {
+          "coarse_id": "E",
+          "id": "prospect/E/payment-gateway-options",
+          "merge_of": [
+            "tmp:kb:prospect/C/payment-gateway-options"
+          ],
+          "moved_from": [],
+          "reason": "四家金流的申請資格、費用與撥款自身完整，錢怎麼進來歸收款金流；虛擬帳號與儲值金依兩份提議拆出。",
+          "slug": "payment-gateway-options",
+          "split_from": [
+            "tmp:kb:prospect/C/payment-gateway-options"
+          ],
+          "title": "金流廠商差別與申請條件"
+        },
+        {
+          "coarse_id": "E",
+          "id": "prospect/E/virtual-account-prepaid",
+          "merge_of": [
+            "tmp:kb:prospect/C/payment-gateway-options"
+          ],
+          "moved_from": [],
+          "reason": "兩份提議拆出：儲值抵扣是另一收款機制，可獨立回答，與金流廠商比較主題不同。",
+          "slug": "virtual-account-prepaid",
+          "split_from": [
+            "tmp:kb:prospect/C/payment-gateway-options"
+          ],
+          "title": "固定虛擬帳號與儲值金抵扣"
+        },
+        {
+          "coarse_id": "E",
+          "id": "prospect/E/credit-card-rent-payment",
+          "merge_of": [
+            "tmp:kb:prospect/C/credit-card-rent-payment"
+          ],
+          "moved_from": [],
+          "reason": "兩份提議獨立：「能不能刷卡」是最常見的獨立問法，前提與設定自身完整，另見金流廠商細目。",
+          "slug": "credit-card-rent-payment",
+          "split_from": [],
+          "title": "租客能不能用信用卡繳房租"
+        },
+        {
+          "coarse_id": "E",
+          "id": "prospect/E/utility-split-calculation",
+          "merge_of": [
+            "tmp:kb:prospect/G/utility-split-advice"
+          ],
+          "moved_from": [],
+          "reason": "三份一致歸帳務（錢怎麼算）；兩份提議保持獨立細目，「水電怎麼算」是獨立問法而非帳單內容的附屬。",
+          "slug": "utility-split-calculation",
+          "split_from": [],
+          "title": "水電費怎麼分算"
+        },
+        {
+          "coarse_id": "F",
+          "id": "prospect/F/repair-system",
+          "merge_of": [
+            "tmp:kb:prospect/C/repair-system"
+          ],
+          "moved_from": [],
+          "reason": "三份一致：報修流程數位化屬修繕領域的獨立問題。",
+          "slug": "repair-system",
+          "split_from": [],
+          "title": "線上報修與進度追蹤"
+        },
+        {
+          "coarse_id": "G",
+          "id": "prospect/G/smart-meter-lock-iot",
+          "merge_of": [
+            "tmp:kb:prospect/C/smart-meter-lock-iot"
+          ],
+          "moved_from": [],
+          "reason": "三份一致：電錶與兩型門鎖是硬體裝置的整合說明，歸裝置（IoT），抄表帶入帳單另見帳務。",
+          "slug": "smart-meter-lock-iot",
+          "split_from": [],
+          "title": "智慧電錶與門鎖整合"
+        }
+      ],
+      "id_map": [
+        {
+          "new": "prospect/I/dashboard-overview",
+          "old": "tmp:kb:prospect/A/dashboard-overview",
+          "op": "move"
+        },
+        {
+          "new": "prospect/I/product-overview",
+          "old": "tmp:kb:prospect/A/pain-points",
+          "op": "merge"
+        },
+        {
+          "new": "prospect/I/product-overview",
+          "old": "tmp:kb:prospect/A/product-overview",
+          "op": "merge"
+        },
+        {
+          "new": "prospect/I/why-choose-jgb",
+          "old": "tmp:kb:prospect/A/why-choose-jgb",
+          "op": "move"
+        },
+        {
+          "new": "prospect/I/data-migration",
+          "old": "tmp:kb:prospect/B/data-migration",
+          "op": "merge"
+        },
+        {
+          "new": "prospect/I/individual-landlord-scale-fit",
+          "old": "tmp:kb:prospect/B/individual-landlord-scale-fit",
+          "op": "move"
+        },
+        {
+          "new": "prospect/I/team-company-fit",
+          "old": "tmp:kb:prospect/B/team-company-fit",
+          "op": "move"
+        },
+        {
+          "new": "prospect/E/bill-contents-extra-fees",
+          "old": "tmp:kb:prospect/C/bill-contents-extra-fees",
+          "op": "move"
+        },
+        {
+          "new": "prospect/E/bill-format-customize",
+          "old": "tmp:kb:prospect/C/bill-format-customize",
+          "op": "move"
+        },
+        {
+          "new": "prospect/E/billing-overview",
+          "old": "tmp:kb:prospect/C/billing-overview",
+          "op": "split"
+        },
+        {
+          "new": "prospect/E/einvoice-issuing",
+          "old": "tmp:kb:prospect/C/billing-overview",
+          "op": "split"
+        },
+        {
+          "new": "prospect/C/community-batch-create",
+          "old": "tmp:kb:prospect/C/community-batch-create",
+          "op": "keep"
+        },
+        {
+          "new": "prospect/D/contract-esign-flow",
+          "old": "tmp:kb:prospect/C/contract-esign-flow",
+          "op": "split"
+        },
+        {
+          "new": "prospect/D/contract-batch-renewal",
+          "old": "tmp:kb:prospect/C/contract-esign-flow",
+          "op": "split"
+        },
+        {
+          "new": "prospect/D/contract-history-retention",
+          "old": "tmp:kb:prospect/C/contract-history-retention",
+          "op": "move"
+        },
+        {
+          "new": "prospect/D/contract-modify-after-sign",
+          "old": "tmp:kb:prospect/C/contract-modify-after-sign",
+          "op": "move"
+        },
+        {
+          "new": "prospect/D/contract-templates",
+          "old": "tmp:kb:prospect/C/contract-templates",
+          "op": "split"
+        },
+        {
+          "new": "prospect/D/sublease-vs-management-contract",
+          "old": "tmp:kb:prospect/C/contract-templates",
+          "op": "split"
+        },
+        {
+          "new": "prospect/E/credit-card-rent-payment",
+          "old": "tmp:kb:prospect/C/credit-card-rent-payment",
+          "op": "move"
+        },
+        {
+          "new": "prospect/E/overdue-reminder-late-fee",
+          "old": "tmp:kb:prospect/C/notification-channels",
+          "op": "split"
+        },
+        {
+          "new": "prospect/D/contract-esign-flow",
+          "old": "tmp:kb:prospect/C/notification-channels",
+          "op": "split"
+        },
+        {
+          "new": "prospect/A/account-registration",
+          "old": "tmp:kb:prospect/C/notification-channels",
+          "op": "split"
+        },
+        {
+          "new": "prospect/E/overdue-reminder-late-fee",
+          "old": "tmp:kb:prospect/C/overdue-reminder-late-fee",
+          "op": "merge"
+        },
+        {
+          "new": "prospect/B/owner-report-collection-remit",
+          "old": "tmp:kb:prospect/C/owner-report-collection-remit",
+          "op": "move"
+        },
+        {
+          "new": "prospect/E/payment-gateway-options",
+          "old": "tmp:kb:prospect/C/payment-gateway-options",
+          "op": "split"
+        },
+        {
+          "new": "prospect/E/virtual-account-prepaid",
+          "old": "tmp:kb:prospect/C/payment-gateway-options",
+          "op": "split"
+        },
+        {
+          "new": "prospect/C/property-management-overview",
+          "old": "tmp:kb:prospect/C/property-management-overview",
+          "op": "keep"
+        },
+        {
+          "new": "prospect/C/property-status-meaning",
+          "old": "tmp:kb:prospect/C/property-status-meaning",
+          "op": "keep"
+        },
+        {
+          "new": "prospect/C/rental-storefront-vr",
+          "old": "tmp:kb:prospect/C/rental-storefront-vr",
+          "op": "keep"
+        },
+        {
+          "new": "prospect/F/repair-system",
+          "old": "tmp:kb:prospect/C/repair-system",
+          "op": "move"
+        },
+        {
+          "new": "prospect/B/role-permission-granularity",
+          "old": "tmp:kb:prospect/C/role-permission-granularity",
+          "op": "move"
+        },
+        {
+          "new": "prospect/G/smart-meter-lock-iot",
+          "old": "tmp:kb:prospect/C/smart-meter-lock-iot",
+          "op": "move"
+        },
+        {
+          "new": "prospect/B/team-management-overview",
+          "old": "tmp:kb:prospect/C/team-management-overview",
+          "op": "move"
+        },
+        {
+          "new": "prospect/B/what-is-owner-landlord",
+          "old": "tmp:kb:prospect/C/what-is-owner-landlord",
+          "op": "move"
+        },
+        {
+          "new": "prospect/A/account-registration",
+          "old": "tmp:kb:prospect/D/account-registration",
+          "op": "merge"
+        },
+        {
+          "new": "prospect/I/free-trial",
+          "old": "tmp:kb:prospect/D/free-trial",
+          "op": "move"
+        },
+        {
+          "new": "prospect/I/pricing-plans",
+          "old": "tmp:kb:prospect/D/pricing-plans",
+          "op": "move"
+        },
+        {
+          "new": "prospect/I/property-quota-limit",
+          "old": "tmp:kb:prospect/D/property-quota-limit",
+          "op": "move"
+        },
+        {
+          "new": "prospect/I/subscription-change-renewal",
+          "old": "tmp:kb:prospect/D/subscription-change-renewal",
+          "op": "move"
+        },
+        {
+          "new": "prospect/I/competitor-comparison",
+          "old": "tmp:kb:prospect/E/competitor-comparison",
+          "op": "move"
+        },
+        {
+          "new": "prospect/I/competitor-neutrality",
+          "old": "tmp:kb:prospect/E/competitor-neutrality",
+          "op": "move"
+        },
+        {
+          "new": "prospect/I/data-migration",
+          "old": "tmp:kb:prospect/G/migration-limits",
+          "op": "merge"
+        },
+        {
+          "new": "prospect/E/utility-split-calculation",
+          "old": "tmp:kb:prospect/G/utility-split-advice",
+          "op": "move"
+        }
+      ],
+      "rejected_alternatives": [
+        {
+          "alternative": "content_boundary 把首頁儀表板歸 H 幫助中心（prospect/H/dashboard-overview）。",
+          "reason": "另外兩份提議皆歸 I，且潛在客戶問的是導入前的產品畫面而非使用導覽，採多數歸方案與導入。"
+        },
+        {
+          "alternative": "audience_level 把競品比較併入為什麼選金箍棒（prospect/I/why-choose-jgb 含 competitor-comparison）。",
+          "reason": "另外兩份皆保持分開；「為什麼選你們」與「跟某某比差在哪」是不同問法，比較內容含對手名稱與中立限制，講法並不重複。"
+        },
+        {
+          "alternative": "user_question_path 把中立原則併入競品比較（prospect/I/competitor-comparison 含 competitor-neutrality）。",
+          "reason": "另外兩份皆獨立；「會不會評論對手」是立場說明，可獨立回答並被比較細目另見，合併會讓一句講法掛兩題。"
+        },
+        {
+          "alternative": "audience_level 把團隊管理總覽與成員權限細分合併為 prospect/B/team-management-and-permissions。",
+          "reason": "另外兩份皆分開；總覽與「能不能只看不改」是不同問法，權限顆粒度自身完整。"
+        },
+        {
+          "alternative": "audience_level 把大房東定義與大房東報表合併為 prospect/B/owner-landlord-and-report。",
+          "reason": "另外兩份皆分開；名詞定義與報表功能是不同層級的問題，以另見處理而非合併。"
+        },
+        {
+          "alternative": "content_boundary 把代管月結差額發票從大房東報表拆為 prospect/E/owner-settlement-difference-invoice。",
+          "reason": "僅一份提議拆出；該段只有一句，是報表產出的一環，單獨不足以成為可獨立回答的主題。"
+        },
+        {
+          "alternative": "user_question_path 再拆出 prospect/D/esign-invitation-validity（邀請 72 小時時效）與 prospect/D/social-housing-contract（社宅公證）。",
+          "reason": "另外兩份皆併入建約流程；時效與社宅例外依附流程才完整，拆出會產生與流程細目重複的講法。"
+        },
+        {
+          "alternative": "audience_level 把批次續約留在建約流程細目內不拆。",
+          "reason": "另外兩份皆拆出；「續約可以一次多筆嗎」與建新約流程主題不同，可獨立回答。"
+        },
+        {
+          "alternative": "audience_level 把包租／代管委託約差別留在合約範本細目內不拆。",
+          "reason": "另外兩份皆拆出；粗目 D 明列委託約子題，包租租金制度與代管服務費設定是獨立問法。"
+        },
+        {
+          "alternative": "audience_level 把電子發票自動開立與載具留在帳務總覽內不拆。",
+          "reason": "另外兩份皆拆出；「發票可以自動開嗎」是獨立可答的問題，與模組總覽主題不同。"
+        },
+        {
+          "alternative": "content_boundary 把水電分算併入帳單內容細目（prospect/E/bill-contents-extra-fees 含 utility-split-advice）。",
+          "reason": "另外兩份皆保持獨立；「水電怎麼分算」是獨立問法，併入會讓帳單內容細目承載不同主題。"
+        },
+        {
+          "alternative": "audience_level 把信用卡繳租併入金流廠商細目（prospect/E/payment-gateway-options 含 credit-card-rent-payment）。",
+          "reason": "另外兩份皆分開；「能不能刷卡」是最常見的獨立問法，前提與設定自身完整，以另見處理。"
+        },
+        {
+          "alternative": "audience_level 把固定虛擬帳號與儲值金留在金流廠商細目內不拆。",
+          "reason": "另外兩份皆拆出；儲值抵扣是另一收款機制，與廠商申請條件主題不同。"
+        },
+        {
+          "alternative": "audience_level 不把註冊驗證碼通知併入帳號註冊細目。",
+          "reason": "另外兩份皆併入；依「通知歸它所通知的領域」判準，驗證碼通知歸註冊，否則該句講法無處可掛。"
+        },
+        {
+          "alternative": "slug 分歧：individual-landlord-fit（user_question_path）、contract-creation-esign-flow（content_boundary）、contract-renewal-batch（user_question_path）、entrust-contract-sublease-vs-management（content_boundary）、einvoice-auto-issue-carrier（content_boundary）、virtual-account-prepaid-balance（content_boundary）、utility-split-advice（audience_level）。",
+          "reason": "主題歸屬一致僅命名不同，依多數或較短且對應主題內容（分算而非建議）者擇一，不影響細目互斥。"
+        }
+      ]
+    }
+  },
+  "raw_outputs_path": ".claude/skills/outline-curation/raw/structure-20260915/prospect",
+  "skill_version": "0.1.0",
+  "step": "structure"
+}

@@ -262,6 +262,83 @@ def test_gate2_posttooluse_illegal_attr_key_blocks(tmp_path):
 
 
 # ---------------------------------------------------------------------------
+# 判定 2c：講法唯一性（9.1c｜DSP-052／057）
+# ---------------------------------------------------------------------------
+
+_DUP_PHRASING_TEXT = "租金什麼時候要繳"
+
+
+def test_gate2c_posttooluse_duplicate_phrasing_across_fine_ids_blocks(tmp_path):
+    """紅：同一講法（逐字相同）出現在兩個不同細目 ⇒ exit 2，訊息含講法文字與兩個細目 id。"""
+    dup = _VALID_CANON + (
+        f'### 繳費時間 {{#prospect/A/pay-time}}\n'
+        f'- phrasings:\n'
+        f'  - {{text: "{_DUP_PHRASING_TEXT}", source: "manual", status: approved}}\n'
+        f'- sources: [kb:1234]\n'
+        f'可引用內容一句。\n'
+        f'### 繳費提醒 {{#prospect/A/pay-reminder}}\n'
+        f'- phrasings:\n'
+        f'  - {{text: "{_DUP_PHRASING_TEXT}", source: "manual", status: approved}}\n'
+        f'- sources: [kb:1235]\n'
+        f'可引用內容另一句。\n'
+    )
+    repo = _mk_repo(tmp_path)
+    target = repo / "rag-orchestrator" / "canon" / "prospect.md"
+    target.write_text(dup, encoding="utf-8")
+
+    proc = run_hook(repo, _post_event(str(target)))
+
+    assert proc.returncode == 2
+    assert _DUP_PHRASING_TEXT in proc.stderr
+    assert "prospect/A/pay-time" in proc.stderr
+    assert "prospect/A/pay-reminder" in proc.stderr
+
+
+def test_gate2c_posttooluse_single_phrasing_allows(tmp_path):
+    """綠（正對照）：同一講法只出現在單一細目 ⇒ exit 0（證明檢查本身不會誤判）。"""
+    single = _VALID_CANON + (
+        f'### 繳費時間 {{#prospect/A/pay-time}}\n'
+        f'- phrasings:\n'
+        f'  - {{text: "{_DUP_PHRASING_TEXT}", source: "manual", status: approved}}\n'
+        f'- sources: [kb:1234]\n'
+        f'可引用內容一句。\n'
+    )
+    repo = _mk_repo(tmp_path)
+    target = repo / "rag-orchestrator" / "canon" / "prospect.md"
+    target.write_text(single, encoding="utf-8")
+
+    proc = run_hook(repo, _post_event(str(target)))
+
+    assert proc.returncode == 0
+
+
+def test_gate2c_nfkc_normalization_catches_width_variant_duplicate(tmp_path):
+    """紅：兩細目講法只差全形/半形或前後空白，NFKC 正規化後仍須判定為重複。"""
+    variant_text = f"　{_DUP_PHRASING_TEXT}　"  # 全形空白包夾
+    dup = _VALID_CANON + (
+        f'### 繳費時間 {{#prospect/A/pay-time}}\n'
+        f'- phrasings:\n'
+        f'  - {{text: "{_DUP_PHRASING_TEXT}", source: "manual", status: approved}}\n'
+        f'- sources: [kb:1234]\n'
+        f'可引用內容一句。\n'
+        f'### 繳費提醒 {{#prospect/A/pay-reminder}}\n'
+        f'- phrasings:\n'
+        f'  - {{text: "{variant_text}", source: "manual", status: approved}}\n'
+        f'- sources: [kb:1235]\n'
+        f'可引用內容另一句。\n'
+    )
+    repo = _mk_repo(tmp_path)
+    target = repo / "rag-orchestrator" / "canon" / "prospect.md"
+    target.write_text(dup, encoding="utf-8")
+
+    proc = run_hook(repo, _post_event(str(target)))
+
+    assert proc.returncode == 2
+    assert "prospect/A/pay-time" in proc.stderr
+    assert "prospect/A/pay-reminder" in proc.stderr
+
+
+# ---------------------------------------------------------------------------
 # 判定 3：講法 ∩ 凍結題
 # ---------------------------------------------------------------------------
 
@@ -805,3 +882,235 @@ def test_gate4_phone_boundary_excludes_hex_not_all_alnum(hook):
     assert hook.PHONE_RE.search(sha) is None, "sha256 摘要被誤判為電話"
     # 純數字長串也不是電話 —— 證明綠不是「凡有數字一律放行」
     assert hook.PHONE_RE.search("3260758702847") is None
+
+
+# ---------------------------------------------------------------------------
+# 圖書館形態分流（DSP-058；計畫 9.6 S1 驗收 ⑪）
+#
+# CANON_RE 改寬成 `^rag-orchestrator/canon/.+\.md$`（不變量：hook 覆蓋 ⊇ loader 讀取），
+# README.md 由 `_is_canon_target` 在**任何層**扣掉；結構檢查依檔名分流：
+#   `canon/jgb/[A-I].md` → 架規則六鍵；`canon/jgb/CATALOG.md` → 跳過結構；其餘 → 舊七鍵規則。
+# ---------------------------------------------------------------------------
+
+_VALID_SHELF = """---
+coarse: A
+title: 帳號與身分
+scope: 註冊、登入、找回帳號、身分與個人資料變更
+version: 2026-09-15.0
+reviewers: [owner]
+language: zh-TW
+---
+## 帳號與身分 {#A-account}
+### 怎麼註冊帳號 {#jgb/A/account-registration}
+- phrasings:
+  - {text: "怎麼註冊帳號", source: "question_summary:3585", status: approved}
+- sources: [kb:3585]
+- target_user: [prospect, property_manager]
+- business_types: [system_provider]
+- instance_applicability: general
+註冊後系統會寄出驗證碼通知。
+"""
+
+_CATALOG_SAMPLE = """## A 帳號與身分 {#A}
+scope: 註冊、登入、找回帳號、身分與個人資料變更
+jgb/A/account-registration｜怎麼註冊帳號｜target_user=prospect,property_manager｜怎麼註冊帳號
+"""
+
+
+def _shelf_file(repo, name, text):
+    d = repo / "rag-orchestrator" / "canon" / "jgb"
+    d.mkdir(parents=True, exist_ok=True)
+    p = d / name
+    p.write_text(text, encoding="utf-8")
+    return p
+
+
+@pytest.mark.parametrize("rel, canon_re_hit, is_target, shelf, catalog", [
+    ("rag-orchestrator/canon/jgb/A.md", True, True, "A", False),
+    ("rag-orchestrator/canon/jgb/I.md", True, True, "I", False),
+    ("rag-orchestrator/canon/jgb/CATALOG.md", True, True, None, True),
+    ("rag-orchestrator/canon/foo.md", True, True, None, False),
+    ("rag-orchestrator/canon/prospect.md", True, True, None, False),
+    ("rag-orchestrator/canon/README.md", True, False, None, False),
+    ("rag-orchestrator/canon/jgb/README.md", True, False, None, False),
+    ("rag-orchestrator/services/agent/canon/canon_parser.py", False, False, None, False),
+])
+def test_canon_path_routing(hook, rel, canon_re_hit, is_target, shelf, catalog):
+    """⑪ 路徑分流表。⚠️ README.md **命中 CANON_RE**（regex 已改寬），由 `_is_canon_target` 扣掉——
+    「不受管」的判準是 `_is_canon_target`，⛔ 不是 regex 本身。"""
+    assert bool(hook.CANON_RE.match(rel)) is canon_re_hit
+    assert hook._is_canon_target(rel) is is_target
+    assert hook._shelf_coarse(rel) == shelf
+    assert hook._is_catalog(rel) is catalog
+
+
+def test_shelf_valid_passes(tmp_path):
+    repo = _mk_repo(tmp_path)
+    target = _shelf_file(repo, "A.md", _VALID_SHELF)
+    proc = run_hook(repo, _post_event(str(target)))
+    assert proc.returncode == 0, proc.stderr
+    assert proc.stderr == ""
+
+
+_VALID_SHELF_MULTI_COARSE = _VALID_SHELF.replace(
+    "## 帳號與身分 {#A-account}\n", "## 註冊帳號 {#A-account-registration}\n", 1,
+).rstrip("\n") + "\n\n## 登入 {#A-login}\n"
+
+
+def test_shelf_multi_coarse_new_shape_passes(tmp_path):
+    """計畫 9.10 S1 正對照：一架多個 `<字母>-<slug>` 粗目通過 `check_structure`。"""
+    repo = _mk_repo(tmp_path)
+    target = _shelf_file(repo, "A.md", _VALID_SHELF_MULTI_COARSE)
+    proc = run_hook(repo, _post_event(str(target)))
+    assert proc.returncode == 0, proc.stderr
+
+
+def test_legacy_canon_still_uses_seven_key_rule(tmp_path):
+    """正對照：`canon/prospect.md` 仍走舊七鍵規則且通過（S1 ⛔ 不動舊路徑）。"""
+    repo = _mk_repo(tmp_path)
+    target = repo / "rag-orchestrator" / "canon" / "prospect.md"
+    target.write_text(_VALID_CANON, encoding="utf-8")
+    proc = run_hook(repo, _post_event(str(target)))
+    assert proc.returncode == 0, proc.stderr
+
+
+def test_shelf_rejects_seven_key_front_matter(tmp_path):
+    """架檔放舊七鍵 front matter ⇒ 擋（缺六鍵＋多出不允許的鍵）。"""
+    repo = _mk_repo(tmp_path)
+    target = _shelf_file(repo, "A.md", _VALID_CANON)
+    proc = run_hook(repo, _post_event(str(target)))
+    assert proc.returncode == 2
+    assert "front matter" in proc.stderr
+
+
+@pytest.mark.parametrize("old, new, expect", [
+    ("- target_user: [prospect, property_manager]\n", "", "缺必填屬性 target_user"),
+    ("- target_user: [prospect, property_manager]", "- target_user: []", "不得為空清單"),
+    ("- business_types: [system_provider]\n", "", "缺必填屬性 business_types"),
+    ("coarse: A", "coarse: B", "與檔名字母 'A' 不符"),
+    ("{#A-account}", "{#B-account}", "與檔名字母 'A' 不符"),
+    ("{#jgb/A/account-registration}", "{#prospect/A/account-registration}", "首段 'prospect'"),
+    ("{#jgb/A/account-registration}", "{#jgb/B/account-registration}", "粗目碼 'B'"),
+    ("scope: 註冊、登入、找回帳號、身分與個人資料變更\n", "", "缺鍵：scope"),
+    ("scope: 註冊、登入、找回帳號、身分與個人資料變更", "scope:", "不得為空"),
+    ("## 帳號與身分 {#A-account}\n", "## 帳號與身分 {#A-account}\n## 又一個 {#A-account}\n", "粗目 id 重複"),
+    ("## 帳號與身分 {#A-account}\n", "", "至少須有一個粗目"),
+    ("## 帳號與身分 {#A-account}", "## 帳號與身分 {#B-account}", "首字母與檔名字母 'A' 不符"),
+    ("coarse: A", "coarse: A\nbudget_tokens: 12000", "不允許的鍵"),
+    ("## 帳號與身分 {#A-account}", "## 帳號與身分 {#A}",
+     "粗目 id 須為 `<架字母>-<slug>`，裸字母形態已於 DSP-067／S5 停用"),
+])
+def test_shelf_structure_violations_block(tmp_path, old, new, expect):
+    repo = _mk_repo(tmp_path)
+    assert old in _VALID_SHELF, old
+    target = _shelf_file(repo, "A.md", _VALID_SHELF.replace(old, new, 1))
+    proc = run_hook(repo, _post_event(str(target)))
+    assert proc.returncode == 2, proc.stdout + proc.stderr
+    assert expect in proc.stderr, proc.stderr
+
+
+def test_catalog_skips_structure_but_still_scans_identifiers(tmp_path):
+    """CATALOG 是衍生物：結構檢查跳過（⛔ 否則七鍵／六鍵都會紅），識別碼掃描照跑。"""
+    repo = _mk_repo(tmp_path)
+    target = _shelf_file(repo, "CATALOG.md", _CATALOG_SAMPLE)
+    proc = run_hook(repo, _post_event(str(target)))
+    assert proc.returncode == 0, proc.stderr
+
+    # 正對照 a：同一份內容放在架檔位置 ⇒ 結構檢查必紅（證明上面的綠是分流不是「檢查關掉了」）
+    shelf = _shelf_file(repo, "A.md", _CATALOG_SAMPLE)
+    assert run_hook(repo, _post_event(str(shelf))).returncode == 2
+
+    # 正對照 b：CATALOG 混進識別碼 ⇒ 仍擋
+    dirty = _shelf_file(repo, "CATALOG.md", _CATALOG_SAMPLE + "聯絡 someone@example.com\n")
+    proc2 = run_hook(repo, _post_event(str(dirty)))
+    assert proc2.returncode == 2 and "email" in proc2.stderr
+
+
+def test_shelf_identifier_scan_still_runs(tmp_path):
+    repo = _mk_repo(tmp_path)
+    target = _shelf_file(repo, "A.md", _VALID_SHELF + "請撥打 0912345678 聯繫。\n")
+    proc = run_hook(repo, _post_event(str(target)))
+    assert proc.returncode == 2 and "phone" in proc.stderr
+
+
+def test_shelf_phrasing_uniqueness_still_runs(tmp_path):
+    repo = _mk_repo(tmp_path)
+    dup = _VALID_SHELF + (
+        '### 另一條 {#jgb/A/another}\n'
+        '- phrasings:\n'
+        '  - {text: "怎麼註冊帳號", source: "question_summary:3999", status: approved}\n'
+        '- target_user: [prospect]\n'
+        '- business_types: [system_provider]\n'
+        '- instance_applicability: general\n'
+        '另一條內容。\n'
+    )
+    target = _shelf_file(repo, "A.md", dup)
+    proc = run_hook(repo, _post_event(str(target)))
+    assert proc.returncode == 2 and "講法重複" in proc.stderr
+
+
+def test_shelf_phrasing_uniqueness_is_scoped_to_the_whole_jgb_dir(tmp_path):
+    """9.6 S3：同一句講法掛在**兩架**的兩個細目 ⇒ 擋（單檔作用域看不到這種重複）。
+
+    ⚠️ 正對照在下一條：同樣兩架、講法不重複 ⇒ 放行（證明擋的是重複，不是「有兩架就擋」）。
+    """
+    repo = _mk_repo(tmp_path)
+    other_shelf = (
+        "---\ncoarse: C\ntitle: 社區與物件\nscope: 社區建檔\nversion: 2026-09-15.0\n"
+        "reviewers: [owner]\nlanguage: zh-TW\n---\n"
+        "## 社區與物件 {#C}\n"
+        "### 物件批次匯入 {#jgb/C/estate-import}\n"
+        "- phrasings:\n"
+        '  - {text: "怎麼註冊帳號", source: "question_summary:3700", status: approved}\n'
+        "- sources: [kb:3700]\n"
+        "- target_user: [prospect]\n"
+        "- business_types: [system_provider]\n"
+        "- instance_applicability: general\n"
+        "物件可以用試算表批次匯入。\n"
+    )
+    _shelf_file(repo, "C.md", other_shelf)
+    target = _shelf_file(repo, "A.md", _VALID_SHELF)
+    proc = run_hook(repo, _post_event(str(target)))
+    assert proc.returncode == 2 and "講法重複" in proc.stderr
+    assert "jgb/C/estate-import" in proc.stderr and "jgb/A/account-registration" in proc.stderr
+
+
+def test_shelf_phrasing_uniqueness_cross_shelf_positive_control(tmp_path):
+    repo = _mk_repo(tmp_path)
+    other_shelf = (
+        "---\ncoarse: C\ntitle: 社區與物件\nscope: 社區建檔\nversion: 2026-09-15.0\n"
+        "reviewers: [owner]\nlanguage: zh-TW\n---\n"
+        "## 社區與物件 {#C}\n"
+        "### 物件批次匯入 {#jgb/C/estate-import}\n"
+        "- phrasings:\n"
+        '  - {text: "批次匯入物件", source: "question_summary:3700", status: approved}\n'
+        "- sources: [kb:3700]\n"
+        "- target_user: [prospect]\n"
+        "- business_types: [system_provider]\n"
+        "- instance_applicability: general\n"
+        "物件可以用試算表批次匯入。\n"
+    )
+    _shelf_file(repo, "C.md", other_shelf)
+    target = _shelf_file(repo, "A.md", _VALID_SHELF)
+    proc = run_hook(repo, _post_event(str(target)))
+    assert proc.returncode == 0 and proc.stderr == ""
+
+
+def test_shelf_frozen_overlap_still_runs(tmp_path):
+    repo = _mk_repo(tmp_path)
+    _write_manifest(repo, ["怎麼註冊帳號"])
+    target = _shelf_file(repo, "A.md", _VALID_SHELF)
+    proc = run_hook(repo, _post_event(str(target)))
+    assert proc.returncode == 2 and "jgb/A/account-registration" in proc.stderr
+
+
+def test_shelf_readme_is_not_managed(tmp_path):
+    """`canon/jgb/README.md` 不是正本：結構／識別碼都不跑，exit 0 且零輸出。
+    正對照：同樣內容放 `canon/jgb/A.md` ⇒ 擋。"""
+    repo = _mk_repo(tmp_path)
+    readme = _shelf_file(repo, "README.md", "# 說明\n聯絡 someone@example.com\n")
+    proc = run_hook(repo, _post_event(str(readme)))
+    assert proc.returncode == 0 and proc.stderr == ""
+
+    shelf = _shelf_file(repo, "A.md", "# 說明\n聯絡 someone@example.com\n")
+    assert run_hook(repo, _post_event(str(shelf))).returncode == 2

@@ -26,38 +26,67 @@ _SCHEMA = os.path.join(_REPO, ".claude", "skills", "outline-curation", "schemas"
 sys.path.insert(0, _RAG)
 from tools.gapmap import coverage_map as cm  # noqa: E402
 
-_CANON = """---
-audience: prospect
+#: 合成正本＝**圖書館形態**（DSP-058／9.6 S3：`coverage_map` 改讀 `parse_canon_dir`）。
+#: A 架放三個細目，B–I 是空架（白名單九架全要在）。
+_SHELF_A = """---
+coarse: A
+title: 測試粗目
+scope: 測試用
 version: 2026-09-07.test
 reviewers: [owner]
 language: zh-TW
-budget_tokens: 1000
-target_user: [prospect]
-business_types: [system_provider]
 ---
-## A 測試粗目 {#A}
-### 細目一 {#prospect/A/one}
+## 測試粗目 {#A-test}
+### 細目一 {#jgb/A/one}
 - sources: [kb:1]
-- see_also: [prospect/A/two]
+- see_also: [jgb/A/two]
+- target_user: [prospect]
+- business_types: [system_provider]
 - instance_applicability: general
 第一句。
-### 細目二 {#prospect/A/two}
+### 細目二 {#jgb/A/two}
 - sources: [kb:2]
-- see_also: [prospect/A/one]
+- see_also: [jgb/A/one]
+- target_user: [prospect]
+- business_types: [system_provider]
 - instance_applicability: general
 第二句。
-### 刻意不補 {#prospect/A/no}
+### 刻意不補 {#jgb/A/no}
 - sources: [DECISIONS:DSP-009]
 - policy: deliberate_no
 - policy_ref: DECISIONS:DSP-009
+- target_user: [prospect]
+- business_types: [system_provider]
 - instance_applicability: general
 不答。
 """
 
+_EMPTY_SHELF = """---
+coarse: {letter}
+title: 空架 {letter}
+scope: 測試用空架
+version: 2026-09-07.test
+reviewers: [owner]
+language: zh-TW
+---
+## 空架 {letter} {{#{letter}-empty}}
+"""
 
-def _sha(path):
-    with open(path, "rb") as f:
-        return hashlib.sha256(f.read()).hexdigest()
+
+def _write_library(dir_path, shelf_a=_SHELF_A):
+    """寫出一個九架正本目錄，回傳目錄路徑（`--canon` 收目錄）。"""
+    os.makedirs(dir_path, exist_ok=True)
+    with open(os.path.join(dir_path, "A.md"), "w", encoding="utf-8") as f:
+        f.write(shelf_a)
+    for letter in "BCDEFGHI":
+        with open(os.path.join(dir_path, f"{letter}.md"), "w", encoding="utf-8") as f:
+            f.write(_EMPTY_SHELF.format(letter=letter))
+    return dir_path
+
+
+def _canon_sha(canon_dir):
+    """正本 sha＝`parse_canon_dir(...).canon_sha256`（⛔ 不是檔案位元組 sha——目錄有九個檔）。"""
+    return cm.parse_canon_dir(canon_dir).canon_sha256
 
 
 def _write(path, obj):
@@ -77,11 +106,11 @@ def _label(cell_id, label, fine_id=None, verdict_labels=None):
 
 #: 規則表每列一案（plan §3）。(cell, label, fine_id, cause_state, coverage, authority, policy_ref) → (disposition, fix_type, gaps)
 _ROWS = [
-    ("C01", "answerable", "prospect/A/one", "S_OK", "已覆蓋", "kb:1", None, "fine", None, []),
-    ("C02", "answerable", "prospect/A/one", "S_OK", "未覆蓋(回答未含必含)", "kb:1", None, "fine", "add_knowledge", ["content_gap"]),
-    ("C03", "answerable", "prospect/A/two", "V", "未覆蓋", "help:x", None, "fine", "add_phrasing", ["retrieval_gap"]),
-    ("C04", "answerable", "prospect/A/two", "UNSTABLE['S', 'S_OK']", "已覆蓋⚠️", "kb:2", None, "fine", "add_knowledge", ["content_gap", "retrieval_gap"]),
-    ("C05", "partial", "prospect/A/one", "S_OK", "已覆蓋", "kb:1", None, "fine", "add_knowledge", []),
+    ("C01", "answerable", "jgb/A/one", "S_OK", "已覆蓋", "kb:1", None, "fine", None, []),
+    ("C02", "answerable", "jgb/A/one", "S_OK", "未覆蓋(回答未含必含)", "kb:1", None, "fine", "add_knowledge", ["content_gap"]),
+    ("C03", "answerable", "jgb/A/two", "V", "未覆蓋", "help:x", None, "fine", "add_phrasing", ["retrieval_gap"]),
+    ("C04", "answerable", "jgb/A/two", "UNSTABLE['S', 'S_OK']", "已覆蓋⚠️", "kb:2", None, "fine", "add_knowledge", ["content_gap", "retrieval_gap"]),
+    ("C05", "partial", "jgb/A/one", "S_OK", "已覆蓋", "kb:1", None, "fine", "add_knowledge", []),
     ("C06", "no_source", None, "V", "未覆蓋", "none（池外）", None, "owner_decision", "cross_audience_rewrite", []),
     ("C07", "no_source", None, "FALSE_HIT", "未覆蓋", "kb:5373(池外)；help:y", None, "owner_decision", "add_knowledge", []),
     ("C08", "no_source", None, "UNCLASSIFIED(待G0)", "未覆蓋", "none（G0③未找到）", None, "not_available", "list_not_available", []),
@@ -91,15 +120,14 @@ _ROWS = [
 ]
 
 
-def _materials(tmp_path, rows=_ROWS, *, canon_text=_CANON, needs_rubric_revision=False, sha_override=None,
+def _materials(tmp_path, rows=_ROWS, *, canon_text=_SHELF_A, needs_rubric_revision=False, sha_override=None,
                drop_cell=None, bad_fine_id=None):
-    canon = tmp_path / "canon.md"
-    _write(canon, canon_text)
+    canon = _write_library(str(tmp_path / "jgb"), shelf_a=canon_text)
     demand = {"_meta": {}, "cells": [{"id": r[0], "topic": f"t{r[0]}", "questions": [f"q{r[0]}"], "policy": "answer",
                                       "policy_ref": r[6], "g0": {"authority": r[5]}} for r in rows]}
     measured = {"_meta": {}, "cells": [{"id": r[0], "cause_state": r[3], "entry_state": "answered", "coverage": r[4]} for r in rows]}
     labels = [_label(r[0], r[1], bad_fine_id if (bad_fine_id and r[0] == "C01") else r[2]) for r in rows if r[0] != drop_cell]
-    ans = {"step": "answerability", "skill_version": "0.1.0", "inputs_sha": {"canon": sha_override or _sha(canon)},
+    ans = {"step": "answerability", "skill_version": "0.1.0", "inputs_sha": {"canon": sha_override or _canon_sha(canon)},
            "deterministic": False, "raw_outputs_path": None, "cost": {},
            "payload": {"labels": labels, "needs_rubric_revision": needs_rubric_revision}}
     d, m, a = tmp_path / "demand.json", tmp_path / "map.json", tmp_path / "answerability.json"
@@ -120,7 +148,7 @@ def test_rule_table_every_row_hits_exactly_its_disposition(tmp_path):
     assert cells["C06"]["draft_path"] and cells["C06"]["fine_id"] is None
     # retrieval_gap 格不得 fix_type=null（plan-verifier 第 2 輪）
     assert not [k for k, c in cells.items() if "retrieval_gap" in c["gap_classes"] and c["fix_type"] is None]
-    assert cells["C01"]["min_verification"] == {"phrasings": ["qC01"], "expected_fine_id": "prospect/A/one"}
+    assert cells["C01"]["min_verification"] == {"phrasings": ["qC01"], "expected_fine_id": "jgb/A/one"}
 
 
 def test_deterministic_and_meta(tmp_path):
@@ -135,13 +163,13 @@ def test_deterministic_and_meta(tmp_path):
     # 對碼標記：fixture 三細目都是 kb:／DECISIONS: 來源 ⇒ 全未對碼；換一個成帳本錨點 ⇒ 進 verified（正對照）
     assert meta["fines_verified_against_code"] == [] and len(meta["fines_unverified"]) == 3
     (tmp_path / "v").mkdir(exist_ok=True)
-    canon2, d2, m2, a2 = _materials(tmp_path / "v", canon_text=_CANON.replace("- sources: [kb:1]", "- sources: [kb:1, docs:knowledge/jgb-product-facts.md#x]"))
-    assert cm.build_coverage_map(canon2, d2, m2, a2)["_meta"]["fines_verified_against_code"] == ["prospect/A/one"]
-    assert meta["merge_similar_candidates"] == [{"a": "prospect/A/one", "b": "prospect/A/two", "fix_type": "merge_similar", "status": "proposed"}]
+    canon2, d2, m2, a2 = _materials(tmp_path / "v", canon_text=_SHELF_A.replace("- sources: [kb:1]", "- sources: [kb:1, docs:knowledge/jgb-product-facts.md#x]"))
+    assert cm.build_coverage_map(canon2, d2, m2, a2)["_meta"]["fines_verified_against_code"] == ["jgb/A/one"]
+    assert meta["merge_similar_candidates"] == [{"a": "jgb/A/one", "b": "jgb/A/two", "fix_type": "merge_similar", "status": "proposed"}]
 
 
 def test_judge_agreement_per_cell_from_verdicts(tmp_path):
-    rows = [("C01", "answerable", "prospect/A/one", "S_OK", "已覆蓋", "kb:1", None, "fine", None, [])]
+    rows = [("C01", "answerable", "jgb/A/one", "S_OK", "已覆蓋", "kb:1", None, "fine", None, [])]
     canon, d, m, a = _materials(tmp_path, rows)
     ans = json.load(open(a, encoding="utf-8"))
     ans["payload"]["labels"][0]["verdicts"] = [
@@ -159,7 +187,7 @@ def test_judge_agreement_per_cell_from_verdicts(tmp_path):
 
 @pytest.mark.parametrize("kw,needle", [
     (dict(drop_cell="C03"), "判者裁定缺此格"),
-    (dict(bad_fine_id="prospect/A/nope"), "不在正本"),
+    (dict(bad_fine_id="jgb/A/nope"), "不在正本"),
     (dict(sha_override="0" * 64), "另一版正本"),
 ])
 def test_fail_loud_positive_controls(tmp_path, kw, needle):
@@ -227,10 +255,10 @@ def test_reweigh_script_needs_rubric_revision_exit2_positive_control(tmp_path):
 
 
 def test_fine_without_sources_blocks_exit(tmp_path):
-    canon_text = _CANON.replace("- sources: [kb:2]\n", "- sources: []\n")
+    canon_text = _SHELF_A.replace("- sources: [kb:2]\n", "- sources: []\n")
     canon, d, m, a = _materials(tmp_path, canon_text=canon_text)
     out = cm.build_coverage_map(canon, d, m, a)
-    assert out["_meta"]["fines_without_sources"] == ["prospect/A/two"]
+    assert out["_meta"]["fines_without_sources"] == ["jgb/A/two"]
     assert cm.main(["--canon", canon, "--demand", d, "--map", m, "--answerability", a, "--out", str(tmp_path / "o.json")]) == 2
 
 

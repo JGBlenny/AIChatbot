@@ -1,0 +1,330 @@
+{
+  "angle": "synthesis",
+  "coarses": [
+    {"id": "A", "title": "帳號與身分"},
+    {"id": "B", "title": "團隊、人員與大房東"},
+    {"id": "C", "title": "社區與物件"},
+    {"id": "D", "title": "租約（含委託約子題）"},
+    {"id": "E", "title": "帳務（含發票、收款金流、抄表）"},
+    {"id": "F", "title": "修繕"},
+    {"id": "G", "title": "裝置（IoT）"},
+    {"id": "H", "title": "幫助中心"},
+    {"id": "I", "title": "方案與導入"}
+  ],
+  "fines": [
+    {
+      "id": "jgb/A/account-registration",
+      "coarse_id": "A",
+      "title": "怎麼註冊帳號（Email 主路徑、驗證碼、SSO 第三方、租客從合約邀請註冊）",
+      "slug": "account-registration",
+      "merge_of": [
+        "tmp:canon:jgb/A/account-registration",
+        "tmp:kb:3435",
+        "tmp:draft:1",
+        "tmp:draft:3",
+        "tmp:draft:10"
+      ],
+      "split_from": ["tmp:draft:1", "tmp:draft:3"],
+      "moved_from": [],
+      "reason": "三角度一致：註冊步驟（Email→驗證碼→密碼→選身分→綁手機可跳過）、SSO 註冊與租客由電子合約邀請進入註冊是同一份「怎麼註冊」，與既有細目同主題故吸收而非另立；draft:1／draft:3 只取註冊段，登入段、帳號設置段與「租客可自選是否註冊」段各拆去對應細目。",
+      "target_user": ["prospect", "property_manager"],
+      "op": "merge"
+    },
+    {
+      "id": "jgb/A/login-methods",
+      "coarse_id": "A",
+      "title": "怎麼登入（Email／手機號碼／SSO 第三方、選擇房東或租客身分入口）",
+      "slug": "login-methods",
+      "merge_of": ["tmp:draft:1", "tmp:draft:3"],
+      "split_from": ["tmp:draft:1", "tmp:draft:3"],
+      "moved_from": [],
+      "reason": "「怎麼登入」與「怎麼註冊」是不同問題且註冊後獨立成立，三角度皆獨立成細目；來源為 draft:3 的房東／租客登入篇與 draft:1 的登入段。LINE 快速登入異常屬排障題，另見 line-login-redirects-to-register。",
+      "target_user": ["prospect", "property_manager"],
+      "op": "new"
+    },
+    {
+      "id": "jgb/A/line-login-redirects-to-register",
+      "coarse_id": "A",
+      "title": "用 LINE 快速登入卻被帶去註冊頁、登不進去（只認 LINE 註冊帳號、無事後綁定、改用帳密登入）",
+      "slug": "line-login-redirects-to-register",
+      "merge_of": ["tmp:kb:3967"],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "問法是登入異常而非登入方式說明，原因（LINE 只匹配以 LINE 註冊的帳號、無補綁）與處置（改帳密登入、換一般瀏覽器）可獨立回答；排障題與操作題分開，兩角度獨立、一角度併入登入方式，採獨立。",
+      "target_user": ["prospect", "property_manager"],
+      "op": "new"
+    },
+    {
+      "id": "jgb/A/account-profile-settings",
+      "coarse_id": "A",
+      "title": "帳號資訊在哪改、能改什麼（頭像、姓名、聯絡方式、偏好設定、簽約資訊與證件附件）",
+      "slug": "account-profile-settings",
+      "merge_of": ["tmp:draft:4", "tmp:draft:9", "tmp:draft:1"],
+      "split_from": ["tmp:draft:1"],
+      "moved_from": [],
+      "reason": "三角度一致：登入後到頭像「帳號資訊」可自助編輯的欄位與位置是獨立於註冊與登入的主題；draft:1 只取帳號設置段；draft:4 的團隊帳號篇屬 B 架團隊資訊，本細目只取房東／租客帳號篇，團隊段由 B 以另見處理。不能自改的識別欄位另見 change-email-or-phone／change-account-name。",
+      "target_user": ["prospect", "property_manager"],
+      "op": "new"
+    },
+    {
+      "id": "jgb/A/registered-vs-unregistered-tenant",
+      "coarse_id": "A",
+      "title": "租客一定要註冊嗎？註冊租客與免註冊租客差在哪（登入、通知、帳單寄送、到帳作業）",
+      "slug": "registered-vs-unregistered-tenant",
+      "merge_of": ["tmp:kb:3348", "tmp:draft:3"],
+      "split_from": ["tmp:draft:3"],
+      "moved_from": [],
+      "reason": "三角度皆獨立成細目：租客可自選是否註冊、註冊後能做什麼、免註冊會少什麼，是帳號存在與否的後果而非帳務規則，歸 A；draft:3 的「租客可自行選擇是否註冊」改版說明是此命題的來源故拆入，註冊步驟另見 account-registration。",
+      "target_user": ["prospect", "property_manager"],
+      "op": "new"
+    },
+    {
+      "id": "jgb/A/email-case-sensitivity",
+      "coarse_id": "A",
+      "title": "Email 大小寫算不同帳號嗎（Email 為帳號識別、大小寫視為不同帳號）",
+      "slug": "email-case-sensitivity",
+      "merge_of": ["tmp:kb:3349"],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "這是一條系統規則而非單一症狀，被「邀請大房東失敗（B 架）」「租客看不到合約」「誤建第二個帳號」多條問題共同引用；併入任一症狀細目都會讓其他症狀無處引用，故獨立成細目供各處另見。",
+      "target_user": ["property_manager"],
+      "op": "new"
+    },
+    {
+      "id": "jgb/A/verification-code-not-received",
+      "coarse_id": "A",
+      "title": "收不到驗證碼（Email 驗證信或簡訊）怎麼排查（含改走 Email／SSO、聯繫客服要帶的資訊）",
+      "slug": "verification-code-not-received",
+      "merge_of": [
+        "tmp:kb:3350",
+        "tmp:kb:3871",
+        "tmp:kb:3965",
+        "tmp:kb:3975",
+        "tmp:draft:6"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "三角度一致：「收不到驗證碼」的排查步驟（垃圾信匣、號碼／信箱正確、攔截 APP、訊號、120 秒冷卻與每日上限、改走 Email／SSO、聯繫客服要帶的資訊）散在多筆來源但缺一不全，屬同一主題；kb:3975「租客一直沒辦法註冊卡住了」無內文，依契約只當入口併入最常見的卡點細目，不獨立成空細目。",
+      "target_user": ["prospect", "property_manager"],
+      "op": "new"
+    },
+    {
+      "id": "jgb/A/verification-code-invalid",
+      "coarse_id": "A",
+      "title": "驗證碼一直輸入失敗（重發即換碼、三字母識別碼比對、5 分鐘效期、錯三次失效、120 秒冷卻）",
+      "slug": "verification-code-invalid",
+      "merge_of": ["tmp:kb:3964"],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "「收到了但驗不過」與「收不到」是不同命題：排查點是識別碼核對與新舊碼，而非投遞管道；兩角度獨立、一角度合併，採獨立，兩者以另見互指。",
+      "target_user": ["prospect", "property_manager"],
+      "op": "new"
+    },
+    {
+      "id": "jgb/A/forgot-password",
+      "coarse_id": "A",
+      "title": "忘記密碼怎麼重設（Email 或簡訊擇一驗證、錯三次失效、密碼規則）",
+      "slug": "forgot-password",
+      "merge_of": ["tmp:kb:3436", "tmp:draft:8"],
+      "split_from": ["tmp:kb:3436"],
+      "moved_from": [],
+      "reason": "重設密碼是獨立完整的自助流程；kb:3436 同時含「忘記帳號」段，拆出至 forgot-account-email，避免兩主題混在一筆；兩角度分開、一角度合併，採分開。",
+      "target_user": ["prospect", "property_manager"],
+      "op": "new"
+    },
+    {
+      "id": "jgb/A/forgot-account-email",
+      "coarse_id": "A",
+      "title": "忘記當初用哪個信箱註冊怎麼查（忘記帳號功能以手機驗證取得打星號提示、無綁手機找客服）",
+      "slug": "forgot-account-email",
+      "merge_of": ["tmp:kb:3436", "tmp:kb:3969", "tmp:draft:7"],
+      "split_from": ["tmp:kb:3436"],
+      "moved_from": [],
+      "reason": "「不知道帳號是哪個信箱」與「知道帳號但忘密碼」是兩個各自完整的問題，答案路徑不同（手機簡訊驗證取得提示 vs 重設密碼）；kb:3436 的忘記帳號段與 kb:3969、draft:7 合併。",
+      "target_user": ["prospect", "property_manager"],
+      "op": "new"
+    },
+    {
+      "id": "jgb/A/change-email-or-phone",
+      "coarse_id": "A",
+      "title": "要換帳號的信箱或手機號碼怎麼辦（Email 唯讀走客服、手機未綁可自助綁定、已綁換號走申請書）",
+      "slug": "change-email-or-phone",
+      "merge_of": ["tmp:kb:3437", "tmp:kb:3980"],
+      "split_from": ["tmp:kb:3437"],
+      "moved_from": [],
+      "reason": "信箱／手機這兩個登入識別的變更規則（Email 不可自改、手機未綁可自助、已綁改號走後台）是一份完整內容，與一般帳號資訊編輯及改姓名的判斷條件不同；kb:3437 內的申請書填寫細節屬共用流程，拆出至 data-change-request-form 另見；kb:3980 無內文，只當入口併入。",
+      "target_user": ["property_manager"],
+      "op": "new"
+    },
+    {
+      "id": "jgb/A/change-account-name",
+      "coarse_id": "A",
+      "title": "註冊名字與證件不符要怎麼改（合約簽署前自改藍字帶入、簽署後鎖定走申請書同步）",
+      "slug": "change-account-name",
+      "merge_of": ["tmp:kb:3971", "tmp:kb:4561"],
+      "split_from": ["tmp:kb:3971"],
+      "moved_from": [],
+      "reason": "姓名可否自改取決於合約是否已完成簽署，這組條件與信箱／手機變更的規則不同，故獨立成細目；申請書流程拆出至 data-change-request-form 另見；kb:4561 無內文，只當入口併入。",
+      "target_user": ["property_manager"],
+      "op": "new"
+    },
+    {
+      "id": "jgb/A/data-change-request-form",
+      "coarse_id": "A",
+      "title": "資料異動申請書怎麼申請（載明帳號識別、修改前後值、相關合約 ID，公司用印後寄客服信箱）",
+      "slug": "data-change-request-form",
+      "merge_of": ["tmp:kb:3437", "tmp:kb:3971", "tmp:kb:3972"],
+      "split_from": ["tmp:kb:3437", "tmp:kb:3971", "tmp:kb:3972"],
+      "moved_from": [],
+      "reason": "換信箱、換已綁手機、簽署後改名、合併重複帳號四個主題引用同一套申請書流程；依「不同層級以另見處理而非重複」與講法唯一原則抽成一細目供各主題引用，避免四處重複同一段流程。",
+      "target_user": ["property_manager"],
+      "op": "new"
+    },
+    {
+      "id": "jgb/A/duplicate-accounts-merge",
+      "coarse_id": "A",
+      "title": "不小心註冊了兩個帳號能不能合併（無自助合併、走客服後台，載明保留與處理的帳號）",
+      "slug": "duplicate-accounts-merge",
+      "merge_of": ["tmp:kb:3972"],
+      "split_from": ["tmp:kb:3972"],
+      "moved_from": [],
+      "reason": "重複帳號合併是已成事實後的處理主題，與註冊當下的「顯示已註冊」是不同時點的問題；兩角度獨立、一角度併入帳號唯一性規則，採獨立；申請書流程拆出另見，Email 大小寫規則另見 email-case-sensitivity。",
+      "target_user": ["property_manager"],
+      "op": "new"
+    },
+    {
+      "id": "jgb/A/already-registered-error",
+      "coarse_id": "A",
+      "title": "註冊時顯示此帳號／手機已註冊怎麼辦（本人改登入或重設密碼、被他人占用走解綁申請）",
+      "slug": "already-registered-error",
+      "merge_of": ["tmp:kb:3966"],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "「顯示已註冊」是註冊當下的明確問法，答案分本人改登入與被他人占用走解綁兩支；兩角度獨立、一角度併入帳號唯一性規則，採獨立。",
+      "target_user": ["prospect", "property_manager"],
+      "op": "new"
+    },
+    {
+      "id": "jgb/A/tenant-login-cannot-see-data",
+      "coarse_id": "A",
+      "title": "租客登入後看不到合約、帳單或電表怎麼排查（身分未切換、登入信箱與邀請信箱不一致、以合約查帳號狀態）",
+      "slug": "tenant-login-cannot-see-data",
+      "merge_of": ["tmp:kb:3968", "tmp:kb:3869", "tmp:kb:3978"],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "三角度一致為一細目：同一條問法「登入了卻什麼都看不到」，排查順序＝身分選單、登入信箱與邀請信箱是否一致、以合約查租客帳號狀態並退回改信箱重寄；根因在帳號對不上而非合約本身，歸 A；kb:3978 無內文，只當入口併入；Email 大小寫規則以另見引用不重複。",
+      "target_user": ["property_manager"],
+      "op": "new"
+    }
+  ],
+  "id_map": [
+    {"old": "tmp:canon:jgb/A/account-registration", "new": "jgb/A/account-registration", "op": "keep"},
+    {"old": "tmp:kb:3435", "new": "jgb/A/account-registration", "op": "merge"},
+    {"old": "tmp:draft:10", "new": "jgb/A/account-registration", "op": "merge"},
+    {"old": "tmp:draft:1", "new": "jgb/A/account-registration", "op": "split"},
+    {"old": "tmp:draft:1", "new": "jgb/A/login-methods", "op": "split"},
+    {"old": "tmp:draft:1", "new": "jgb/A/account-profile-settings", "op": "split"},
+    {"old": "tmp:draft:3", "new": "jgb/A/account-registration", "op": "split"},
+    {"old": "tmp:draft:3", "new": "jgb/A/login-methods", "op": "split"},
+    {"old": "tmp:draft:3", "new": "jgb/A/registered-vs-unregistered-tenant", "op": "split"},
+    {"old": "tmp:kb:3967", "new": "jgb/A/line-login-redirects-to-register", "op": "new"},
+    {"old": "tmp:draft:4", "new": "jgb/A/account-profile-settings", "op": "new"},
+    {"old": "tmp:draft:9", "new": "jgb/A/account-profile-settings", "op": "new"},
+    {"old": "tmp:kb:3348", "new": "jgb/A/registered-vs-unregistered-tenant", "op": "new"},
+    {"old": "tmp:kb:3349", "new": "jgb/A/email-case-sensitivity", "op": "new"},
+    {"old": "tmp:kb:3350", "new": "jgb/A/verification-code-not-received", "op": "new"},
+    {"old": "tmp:kb:3871", "new": "jgb/A/verification-code-not-received", "op": "new"},
+    {"old": "tmp:kb:3965", "new": "jgb/A/verification-code-not-received", "op": "new"},
+    {"old": "tmp:kb:3975", "new": "jgb/A/verification-code-not-received", "op": "new"},
+    {"old": "tmp:draft:6", "new": "jgb/A/verification-code-not-received", "op": "new"},
+    {"old": "tmp:kb:3964", "new": "jgb/A/verification-code-invalid", "op": "new"},
+    {"old": "tmp:kb:3436", "new": "jgb/A/forgot-password", "op": "split"},
+    {"old": "tmp:kb:3436", "new": "jgb/A/forgot-account-email", "op": "split"},
+    {"old": "tmp:draft:8", "new": "jgb/A/forgot-password", "op": "new"},
+    {"old": "tmp:kb:3969", "new": "jgb/A/forgot-account-email", "op": "new"},
+    {"old": "tmp:draft:7", "new": "jgb/A/forgot-account-email", "op": "new"},
+    {"old": "tmp:kb:3437", "new": "jgb/A/change-email-or-phone", "op": "split"},
+    {"old": "tmp:kb:3437", "new": "jgb/A/data-change-request-form", "op": "split"},
+    {"old": "tmp:kb:3980", "new": "jgb/A/change-email-or-phone", "op": "new"},
+    {"old": "tmp:kb:3971", "new": "jgb/A/change-account-name", "op": "split"},
+    {"old": "tmp:kb:3971", "new": "jgb/A/data-change-request-form", "op": "split"},
+    {"old": "tmp:kb:4561", "new": "jgb/A/change-account-name", "op": "new"},
+    {"old": "tmp:kb:3972", "new": "jgb/A/duplicate-accounts-merge", "op": "split"},
+    {"old": "tmp:kb:3972", "new": "jgb/A/data-change-request-form", "op": "split"},
+    {"old": "tmp:kb:3966", "new": "jgb/A/already-registered-error", "op": "new"},
+    {"old": "tmp:kb:3968", "new": "jgb/A/tenant-login-cannot-see-data", "op": "new"},
+    {"old": "tmp:kb:3869", "new": "jgb/A/tenant-login-cannot-see-data", "op": "new"},
+    {"old": "tmp:kb:3978", "new": "jgb/A/tenant-login-cannot-see-data", "op": "new"}
+  ],
+  "out_of_shelf": [
+    {
+      "id": "tmp:kb:3354",
+      "suggested_shelf": "D",
+      "why": "三角度一致：命題是租賃契約應記載事項與身分證影本是否必上傳、租客未上傳時退出簽名取消合約重寄，由合約簽署流程與法規決定，依歸位判準歸租約；身分證在此是合約文件而非帳號身分。"
+    },
+    {
+      "id": "tmp:draft:5",
+      "suggested_shelf": "D",
+      "why": "三角度一致：租客簽回未附身分證時出租方可取消邀請、簽署完成進入執行中合約後不可更動，是合約簽署階段的處置，不是帳號資料設定。"
+    },
+    {
+      "id": "tmp:draft:2",
+      "suggested_shelf": "B",
+      "why": "三角度一致：整篇為創建團隊、團隊資訊、角色與成員權限、大房東新增與授權、招租網址與時區，主體是團隊／人員／大房東（B）；訂閱方案段屬 I、收款設置段屬 E，皆非個人帳號與身分。"
+    }
+  ],
+  "rejected_alternatives": [
+    {
+      "alternative": "audience_level：把 kb:3964「驗證碼一直失敗」併入 verification-code-issues，與「收不到驗證碼」同一細目。",
+      "reason": "「收到了但驗不過」與「收不到」是不同命題（識別碼／新舊碼 vs 投遞管道），排障題可分開；user_question_path 與 content_boundary 皆分開，採分開並以另見互指。"
+    },
+    {
+      "alternative": "user_question_path：kb:3975「租客一直沒辦法註冊卡住了」獨立成 tenant-registration-stuck 分流入口細目。",
+      "reason": "來源無內文，契約明定空內文 kb 列只當入口併入最近細目、不獨立成空細目；最常見的卡點是驗證碼，故併入 verification-code-not-received（content_boundary 與 audience_level 亦如此）。"
+    },
+    {
+      "alternative": "audience_level：忘記密碼與忘記帳號合為一個 account-recovery 細目。",
+      "reason": "兩者答案路徑不同（重設密碼 vs 手機驗證取得打星號信箱提示），是兩個可獨立回答的問題；另兩角度皆分開，採分開。"
+    },
+    {
+      "alternative": "content_boundary：kb:3349 Email 大小寫規則併入 login-email-mismatch；audience_level：併入 account-identity-uniqueness。",
+      "reason": "該規則被邀請大房東失敗（B 架）、租客看不到合約、誤建第二帳號多條症狀共同引用，併入任一症狀細目會讓其他症狀無處引用；獨立成 email-case-sensitivity 供各處另見（user_question_path）。"
+    },
+    {
+      "alternative": "audience_level：kb:3967 LINE 快速登入異常併入 login-methods-and-identity。",
+      "reason": "排障題與操作題分開；LINE 登入被導去註冊的原因與處置可獨立回答，另兩角度皆獨立成細目。"
+    },
+    {
+      "alternative": "audience_level：account-data-change 把換信箱／換手機與改姓名合為一細目。",
+      "reason": "改姓名的可否取決於合約是否已簽署，換信箱／手機的規則取決於是否已綁定，判斷條件不同，是兩個命題；另兩角度皆分開。"
+    },
+    {
+      "alternative": "audience_level：account-identity-uniqueness 把 kb:3349／3966／3972 三者合為「帳號唯一性規則」一細目。",
+      "reason": "三者是不同問法（大小寫有沒有差、顯示已註冊怎麼辦、兩個帳號能不能合併），答案各自完整；另兩角度皆分開，採分開。"
+    },
+    {
+      "alternative": "user_question_path 與 audience_level：資料異動申請書流程留在換信箱、改姓名、合併帳號各細目內文，不另立 data-change-request-form。",
+      "reason": "同一段申請書流程會在四個細目重複，違反講法唯一與「不同層級以另見處理而非重複」；採 content_boundary 抽成共用細目，各主題以另見引用。"
+    },
+    {
+      "alternative": "content_boundary：draft:1 的常見問題段（收不到驗證信）額外拆入 verification-code-not-received，使 draft:1 拆成四處。",
+      "reason": "該段內容已被 draft:6 完整涵蓋且文字幾乎相同，拆入不增加命題；draft:1 維持註冊、登入、帳號設置三處拆分。"
+    },
+    {
+      "alternative": "user_question_path 與 content_boundary：draft:3 只拆入 account-registration 與 login-methods，「租客可自行選擇是否註冊」段留在註冊細目。",
+      "reason": "該段正是 registered-vs-unregistered-tenant 的命題來源，依 audience_level 拆入該細目，避免同一命題同時落在兩個細目。"
+    },
+    {
+      "alternative": "audience_level：既有細目 account-registration 列 op=keep。",
+      "reason": "擴充契約明定既有細目吸收新來源時 fine 層 op=merge（既有來源自身在 id_map 列 keep）。"
+    },
+    {
+      "alternative": "audience_level：forgot／profile-settings／change-email-or-phone 等細目 target_user 只列 property_manager；content_boundary：change-email-phone 列兩者。",
+      "reason": "註冊、登入、忘記密碼／帳號、帳號資訊設定是售前試用者也會問的操作題，依多數角度列兩者；換信箱／手機、改姓名、合併帳號、申請書、大小寫規則、租客登入看不到資料是業者管理情境，依多數角度只列 property_manager。"
+    },
+    {
+      "alternative": "同主題不同 id 命名：verification-code-rejected、forgot-account、change-email-phone、change-name-vs-contract、profile-settings、line-login-redirects-to-signup（content_boundary）；login-but-nothing-visible（user_question_path）；login-email-mismatch（content_boundary）；login-methods-and-identity、verification-code-issues、tenant-registration-choice（audience_level）。",
+      "reason": "同一主題只保留一個 id，優先採兩角度以上相同或最能描述命題的既有提議 id（verification-code-invalid、forgot-account-email、change-email-or-phone、change-account-name、account-profile-settings、line-login-redirects-to-register、tenant-login-cannot-see-data、login-methods、registered-vs-unregistered-tenant），未引入三份提議都沒有的 id。"
+    }
+  ]
+}

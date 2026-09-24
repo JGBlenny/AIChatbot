@@ -1,0 +1,195 @@
+#!/usr/bin/env python3
+"""步 6 cost_ledger（knowledge-outline-and-intent-architecture 任務 1.3｜design 元件 1）。
+
+彙總 journal（目錄下 *.json）＋ SKILL.md front matter 的 budgets → cost.json。
+journal 檔案格式（本任務定義，1.4 對齊）：
+    {"step": "structure"|"answerability", "run_id": "...",
+     "agents": [{}, ...],
+     "wall_s": float}
+
+`agents` 只計數（每則可為空 dict），代表用了幾個子代理；上限判定：每步（依 SKILL.md
+budgets 的 agents）與整案（total）兩層。任一層超支 ⇒ 印哪一層、exit 2。並把狀態檔
+`cost` 鍵寫成 {"path": ..., "over_budget": bool}。
+"""
+from __future__ import annotations
+
+import argparse
+import glob
+import json
+import os
+import re
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from _envelope import find_repo_root, load_schema, make_envelope, sha256_file, update_state, validate, write_json  # noqa: E402
+
+SKILL_VERSION = "0.1.0"
+_SCHEMA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "schemas", "cost.json")
+
+_FRONT_MATTER_RE = re.compile(r'^---\s*\n(.*?)\n---\s*\n', re.DOTALL)
+
+
+def _parse_front_matter(skill_md_path: str) -> dict:
+    """極簡 YAML front matter 解析——只需讀出 budgets 這個巢狀 dict，不引 PyYAML。"""
+    with open(skill_md_path, encoding="utf-8") as f:
+        text = f.read()
+    m = _FRONT_MATTER_RE.match(text)
+    if not m:
+        raise ValueError(f"{skill_md_path} 缺 front matter")
+    fm_text = m.group(1)
+    return _parse_simple_yaml(fm_text)
+
+
+def _parse_simple_yaml(text: str) -> dict:
+    """支援本 skill front matter 所需的最小子集：純量、巢狀 mapping（2 空白縮排），
+    及 `{a: 1, b: 2}` 內嵌 flow mapping（用於 budgets.<step>）。"""
+    root: dict = {}
+    stack = [(0, root)]
+    for raw_line in text.splitlines():
+        if not raw_line.strip() or raw_line.strip().startswith("#"):
+            continue
+        indent = len(raw_line) - len(raw_line.lstrip(" "))
+        line = raw_line.strip()
+        if ":" not in line:
+            continue
+        key, _, value = line.partition(":")
+        key = key.strip()
+        value = value.strip()
+        while stack and stack[-1][0] > indent and len(stack) > 1:
+            stack.pop()
+        parent = stack[-1][1]
+        if value == "" :
+            new_dict: dict = {}
+            parent[key] = new_dict
+            stack.append((indent + 2, new_dict))
+        elif value.startswith("{") and value.endswith("}"):
+            parent[key] = _parse_flow_mapping(value)
+        else:
+            parent[key] = _coerce_scalar(value)
+    return root
+
+
+def _parse_flow_mapping(value: str) -> dict:
+    inner = value.strip()[1:-1]
+    out = {}
+    for part in inner.split(","):
+        if ":" not in part:
+            continue
+        k, _, v = part.partition(":")
+        out[k.strip()] = _coerce_scalar(v.strip())
+    return out
+
+
+def _coerce_scalar(value: str):
+    value = value.strip().strip('"').strip("'")
+    if re.fullmatch(r"-?\d+", value):
+        return int(value)
+    try:
+        return float(value)
+    except ValueError:
+        return value
+
+
+def load_journal(journal_dir: str, run_ids: list | None = None, run_prefixes: list | None = None) -> list:
+    """讀 journal 頂層 *.json（子目錄如 m-a-archive/ 不讀）。
+
+    2026-09-07 業主裁 (a)：**預算是「每次 run」**，不是整案累進——第二次跑同一受眾或換受眾不得因前次帳而超支。
+    `run_ids`（精確）／`run_prefixes`（前綴）任一命中即納入；都不給 ⇒ 全部（向後相容，等於整案）。
+    """
+    entries = []
+    for path in sorted(glob.glob(os.path.join(journal_dir, "*.json"))):
+        with open(path, encoding="utf-8") as f:
+            entry = json.load(f)
+        rid = str(entry.get("run_id") or "")
+        if run_ids or run_prefixes:
+            if rid not in set(run_ids or []) and not any(rid.startswith(pfx) for pfx in (run_prefixes or [])):
+                continue
+        entries.append(entry)
+    return entries
+
+
+def summarize(entries: list) -> dict:
+    by_step: dict = {}
+    for entry in entries:
+        step = entry.get("step", "unknown")
+        agents = entry.get("agents", [])
+        acc = by_step.setdefault(step, {"agents": 0, "wall_s": 0.0})
+        acc["agents"] += len(agents)
+        acc["wall_s"] += float(entry.get("wall_s", 0.0))
+
+    total = {"agents": 0, "wall_s": 0.0}
+    for acc in by_step.values():
+        for k in total:
+            total[k] += acc[k]
+    return {"by_step": by_step, "total": total}
+
+
+def check_budget(summary: dict, budgets: dict) -> tuple[bool, list]:
+    """回 (over_budget, violations)。violations 為印給人看的字串清單。"""
+    violations = []
+    for step, limits in budgets.items():
+        if step == "total":
+            continue
+        actual = summary["by_step"].get(step, {"agents": 0})
+        if "agents" in limits and actual["agents"] > limits["agents"]:
+            violations.append(f"step={step} agents={actual['agents']} > 上限 {limits['agents']}")
+
+    total_limits = budgets.get("total", {})
+    total_actual = summary["total"]
+    if "agents" in total_limits and total_actual["agents"] > total_limits["agents"]:
+        violations.append(f"整案 agents={total_actual['agents']} > 上限 {total_limits['agents']}")
+
+    return (len(violations) > 0), violations
+
+
+def main() -> int:
+    p = argparse.ArgumentParser(description="彙總 journal＋provider usage → cost.json")
+    p.add_argument("--journal", required=True, help="journal 目錄（.claude/skills/outline-curation/journal/）")
+    p.add_argument("--skill", required=True, help="SKILL.md 路徑（讀 budgets）")
+    p.add_argument("--out", required=True)
+    p.add_argument("--run-id", action="append", default=None, help="只計這些 run_id（可重複；業主 2026-09-07：預算按每次 run）")
+    p.add_argument("--run-prefix", action="append", default=None, help="只計 run_id 以此前綴開頭者（可重複）")
+    args = p.parse_args()
+
+    front_matter = _parse_front_matter(args.skill)
+    budgets = front_matter.get("budgets", {})
+    if not budgets:
+        print(f"[cost_ledger] {args.skill} front matter 缺 budgets", file=sys.stderr)
+        return 2
+
+    entries = load_journal(args.journal, args.run_id, args.run_prefix)
+    summary = summarize(entries)
+    over_budget, violations = check_budget(summary, budgets)
+
+    if over_budget:
+        for v in violations:
+            print(f"[cost_ledger] 超支：{v}", file=sys.stderr)
+
+    payload = {
+        "by_step": summary["by_step"],
+        "total": summary["total"],
+        "over_budget": over_budget,
+    }
+    inputs_sha = {"skill": sha256_file(args.skill)}
+    envelope = make_envelope(
+        step="diff",
+        skill_version=SKILL_VERSION,
+        inputs_sha=inputs_sha,
+        deterministic=True,
+        payload=payload,
+    )
+    validate(envelope, load_schema(_SCHEMA_PATH))
+    write_json(args.out, envelope)
+
+    try:
+        repo_root = find_repo_root()
+        out_rel = os.path.relpath(os.path.abspath(args.out), repo_root)
+        update_state(repo_root, {"cost": {"path": out_rel, "over_budget": over_budget}})
+    except RuntimeError as e:
+        print(f"[cost_ledger] 警告：找不到 repo 根，跳過狀態檔寫入（{e}）", file=sys.stderr)
+
+    return 2 if over_budget else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

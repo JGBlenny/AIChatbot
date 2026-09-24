@@ -1,0 +1,839 @@
+{
+  "canon_sha256": "0f389bb6f930dc8a67df12388b1cfa1335e1a6498faa6ff9e79cf4bb2d637343",
+  "fines": [
+    {
+      "from": [
+        "tmp:draft:1"
+      ],
+      "new": "property_manager/A/repair-ticket-photo-flow",
+      "ops": [
+        "keep"
+      ],
+      "title": "拍照開修繕單基本流程與確認機制",
+      "units": 1
+    },
+    {
+      "from": [
+        "tmp:draft:2"
+      ],
+      "new": "property_manager/A/repair-ticket-reclassify",
+      "ops": [
+        "keep"
+      ],
+      "title": "分類辨識結果錯誤時如何修改",
+      "units": 1
+    },
+    {
+      "from": [
+        "tmp:draft:3"
+      ],
+      "new": "property_manager/A/repair-ticket-low-confidence-candidates",
+      "ops": [
+        "keep"
+      ],
+      "title": "照片辨識信心不足時的候選類別流程",
+      "units": 1
+    },
+    {
+      "from": [
+        "tmp:draft:4"
+      ],
+      "new": "property_manager/A/repair-ticket-unrecognizable-photo",
+      "ops": [
+        "keep"
+      ],
+      "title": "照片看不出損壞時的留白規則",
+      "units": 1
+    },
+    {
+      "from": [
+        "tmp:draft:5"
+      ],
+      "new": "property_manager/A/repair-ticket-photo-count-limit",
+      "ops": [
+        "keep"
+      ],
+      "title": "修繕辨識與附件的照片張數限制",
+      "units": 1
+    },
+    {
+      "from": [
+        "tmp:draft:6"
+      ],
+      "new": "property_manager/A/repair-ticket-agent-identity-lease-lookup",
+      "ops": [
+        "keep"
+      ],
+      "title": "業務代開修繕單時的租約查詢身分規則",
+      "units": 1
+    },
+    {
+      "from": [
+        "tmp:draft:7"
+      ],
+      "new": "property_manager/A/repair-ticket-urgency-judgment",
+      "ops": [
+        "keep"
+      ],
+      "title": "修繕單急迫程度的判斷來源",
+      "units": 1
+    },
+    {
+      "from": [
+        "tmp:draft:8"
+      ],
+      "new": "property_manager/A/repair-ticket-submit-failure",
+      "ops": [
+        "keep"
+      ],
+      "title": "建單失敗時的處理與重試規則",
+      "units": 1
+    },
+    {
+      "from": [
+        "tmp:draft:9"
+      ],
+      "new": "property_manager/A/repair-ticket-vacant-no-lease",
+      "ops": [
+        "keep"
+      ],
+      "title": "空屋或無租約物件的開單規則",
+      "units": 1
+    },
+    {
+      "from": [
+        "tmp:draft:10"
+      ],
+      "new": "property_manager/A/repair-ticket-mid-flow-cancel",
+      "ops": [
+        "keep"
+      ],
+      "title": "報修流程中途取消的規則",
+      "units": 1
+    },
+    {
+      "from": [
+        "tmp:draft:11"
+      ],
+      "new": "property_manager/B/dunning-draft-generation",
+      "ops": [
+        "keep"
+      ],
+      "title": "催繳草稿的生成規則（模板＋語氣分級）",
+      "units": 1
+    },
+    {
+      "from": [
+        "tmp:draft:12"
+      ],
+      "new": "property_manager/B/dunning-draft-not-auto-send",
+      "ops": [
+        "keep"
+      ],
+      "title": "催繳草稿不可一鍵發送給租客",
+      "units": 1
+    },
+    {
+      "from": [
+        "tmp:draft:13"
+      ],
+      "new": "property_manager/B/dunning-draft-late-fee-mention",
+      "ops": [
+        "keep"
+      ],
+      "title": "催繳草稿是否提及滯納金的規則",
+      "units": 1
+    },
+    {
+      "from": [
+        "tmp:draft:14",
+        "tmp:kb:3909",
+        "tmp:kb:3913"
+      ],
+      "new": "property_manager/C/overdue-bill-followup-scope",
+      "ops": [
+        "merge"
+      ],
+      "title": "逾期帳單追問可答範圍",
+      "units": 20
+    },
+    {
+      "from": [
+        "tmp:draft:15"
+      ],
+      "new": "property_manager/C/followup-session-single-item-boundary",
+      "ops": [
+        "keep"
+      ],
+      "title": "追問的單筆會話邊界（不跨戶回答）",
+      "units": 1
+    },
+    {
+      "from": [
+        "tmp:draft:16"
+      ],
+      "new": "property_manager/C/followup-missing-data-in-jgb",
+      "ops": [
+        "keep"
+      ],
+      "title": "追問遇到 JGB 沒有的資料時怎麼回",
+      "units": 1
+    },
+    {
+      "from": [
+        "tmp:draft:17",
+        "tmp:kb:3799",
+        "tmp:kb:3824",
+        "tmp:kb:3829"
+      ],
+      "new": "property_manager/C/lease-expiry-followup-scope",
+      "ops": [
+        "merge"
+      ],
+      "title": "合約到期追問可答範圍（導向續約面向）",
+      "units": 39
+    },
+    {
+      "from": [
+        "tmp:draft:18"
+      ],
+      "new": "property_manager/C/urgent-repair-followup-scope",
+      "ops": [
+        "keep"
+      ],
+      "title": "緊急修繕追問範圍（目前無獨立面向）",
+      "units": 1
+    },
+    {
+      "from": [
+        "tmp:draft:19",
+        "tmp:kb:4021",
+        "tmp:kb:4089",
+        "tmp:kb:4091"
+      ],
+      "new": "property_manager/C/meter-item-followup-scope",
+      "ops": [
+        "merge"
+      ],
+      "title": "電錶項目追問（導向電表排障面向）",
+      "units": 31
+    },
+    {
+      "from": [
+        "tmp:draft:20"
+      ],
+      "new": "property_manager/C/followup-session-end",
+      "ops": [
+        "keep"
+      ],
+      "title": "追問結束與流程收尾",
+      "units": 1
+    },
+    {
+      "from": [
+        "tmp:draft:21"
+      ],
+      "new": "property_manager/D/reply-tone-principles",
+      "ops": [
+        "keep"
+      ],
+      "title": "回覆語氣與介面原則",
+      "units": 1
+    },
+    {
+      "from": [
+        "tmp:draft:22"
+      ],
+      "new": "property_manager/D/prohibited-statements",
+      "ops": [
+        "keep"
+      ],
+      "title": "禁止項清單（不編造／不推算／不代決定）",
+      "units": 1
+    },
+    {
+      "from": [
+        "tmp:draft:23"
+      ],
+      "new": "property_manager/E/number-data-provenance-rule",
+      "ops": [
+        "keep"
+      ],
+      "title": "數字的來源規則（一律引用JGB，需推算須標明）",
+      "units": 1
+    },
+    {
+      "from": [
+        "tmp:draft:24"
+      ],
+      "new": "property_manager/E/when-to-decline",
+      "ops": [
+        "keep"
+      ],
+      "title": "什麼情況要拒答或退出",
+      "units": 1
+    },
+    {
+      "from": [
+        "tmp:draft:25"
+      ],
+      "new": "property_manager/E/identity-and-scope-boundary",
+      "ops": [
+        "keep"
+      ],
+      "title": "誰在跟系統對話與權限邊界",
+      "units": 1
+    },
+    {
+      "from": [
+        "tmp:draft:26"
+      ],
+      "new": "property_manager/E/session-expiry-general-rule",
+      "ops": [
+        "keep"
+      ],
+      "title": "會話多久過期（一般規則）",
+      "units": 1
+    },
+    {
+      "from": [
+        "tmp:kb:3622"
+      ],
+      "new": "property_manager/F/presales-context-exclude-pending",
+      "ops": [
+        "keep"
+      ],
+      "title": "售前系統脈絡誤入本受眾語料，應排除待裁",
+      "units": 23
+    },
+    {
+      "from": [
+        "tmp:draft:27"
+      ],
+      "new": "property_manager/F/urgency-value-domain-pending",
+      "ops": [
+        "keep"
+      ],
+      "title": "急迫程度值域與預設值衝突（待裁）",
+      "units": 1
+    },
+    {
+      "from": [
+        "tmp:draft:28"
+      ],
+      "new": "property_manager/F/repair-history-facet-pending",
+      "ops": [
+        "keep"
+      ],
+      "title": "修繕歷史／進度面向是否新建（待裁）",
+      "units": 1
+    },
+    {
+      "from": [
+        "tmp:draft:29"
+      ],
+      "new": "property_manager/F/dunning-endpoint-form",
+      "ops": [
+        "keep"
+      ],
+      "title": "催繳草稿端點形式（待裁）",
+      "units": 1
+    },
+    {
+      "from": [
+        "tmp:draft:30"
+      ],
+      "new": "property_manager/F/followup-latency-budget",
+      "ops": [
+        "keep"
+      ],
+      "title": "追問回覆延遲上限（待驗）",
+      "units": 1
+    },
+    {
+      "from": [
+        "tmp:kb:3800",
+        "tmp:kb:3801",
+        "tmp:kb:3822",
+        "tmp:kb:3823",
+        "tmp:kb:3825",
+        "tmp:kb:3826",
+        "tmp:kb:3831",
+        "tmp:kb:4005",
+        "tmp:kb:4202",
+        "tmp:kb:4215"
+      ],
+      "new": "property_manager/F/contract-other-facets-scope-pending",
+      "ops": [
+        "merge"
+      ],
+      "title": "合約其他子面向與對話規則是否納入本受眾範圍，待裁",
+      "units": 104
+    },
+    {
+      "from": [
+        "tmp:kb:3910",
+        "tmp:kb:3911",
+        "tmp:kb:3912",
+        "tmp:kb:3914",
+        "tmp:kb:3915",
+        "tmp:kb:3916",
+        "tmp:kb:3917",
+        "tmp:kb:3918",
+        "tmp:kb:4214",
+        "tmp:kb:4252"
+      ],
+      "new": "property_manager/F/billing-other-facets-scope-pending",
+      "ops": [
+        "merge"
+      ],
+      "title": "帳務其他子面向與對話規則是否納入本受眾範圍，待裁",
+      "units": 90
+    },
+    {
+      "from": [
+        "tmp:kb:3952",
+        "tmp:kb:3953",
+        "tmp:kb:3954",
+        "tmp:kb:3955",
+        "tmp:kb:3956",
+        "tmp:kb:3983",
+        "tmp:kb:3984",
+        "tmp:kb:3990",
+        "tmp:kb:4001"
+      ],
+      "new": "property_manager/F/account-domain-scope-pending",
+      "ops": [
+        "merge"
+      ],
+      "title": "帳號領域（註冊／登入／綁定異動／團隊權限）系統知識是否納入本受眾範圍，待裁",
+      "units": 84
+    },
+    {
+      "from": [
+        "tmp:kb:4088",
+        "tmp:kb:4090"
+      ],
+      "new": "property_manager/F/iot-setup-scope-pending",
+      "ops": [
+        "merge"
+      ],
+      "title": "IoT 設定引導系統知識是否納入本受眾範圍，待裁",
+      "units": 24
+    },
+    {
+      "from": [
+        "tmp:kb:4132",
+        "tmp:kb:4133",
+        "tmp:kb:4134",
+        "tmp:kb:4176",
+        "tmp:kb:4203"
+      ],
+      "new": "property_manager/F/estate-domain-scope-pending",
+      "ops": [
+        "merge"
+      ],
+      "title": "物件領域（物件管理／操作引導／現況診斷）系統知識是否納入本受眾範圍，待裁",
+      "units": 44
+    },
+    {
+      "from": [
+        "tmp:kb:5373",
+        "tmp:kb:5374"
+      ],
+      "new": "property_manager/F/subscription-domain-scope-pending",
+      "ops": [
+        "merge"
+      ],
+      "title": "訂閱領域系統知識是否納入本受眾範圍，待裁",
+      "units": 22
+    }
+  ],
+  "id_map": [
+    {
+      "new": "property_manager/A/repair-ticket-photo-flow",
+      "old": "tmp:draft:1",
+      "op": "keep"
+    },
+    {
+      "new": "property_manager/A/repair-ticket-reclassify",
+      "old": "tmp:draft:2",
+      "op": "keep"
+    },
+    {
+      "new": "property_manager/A/repair-ticket-low-confidence-candidates",
+      "old": "tmp:draft:3",
+      "op": "keep"
+    },
+    {
+      "new": "property_manager/A/repair-ticket-unrecognizable-photo",
+      "old": "tmp:draft:4",
+      "op": "keep"
+    },
+    {
+      "new": "property_manager/A/repair-ticket-photo-count-limit",
+      "old": "tmp:draft:5",
+      "op": "keep"
+    },
+    {
+      "new": "property_manager/A/repair-ticket-agent-identity-lease-lookup",
+      "old": "tmp:draft:6",
+      "op": "keep"
+    },
+    {
+      "new": "property_manager/A/repair-ticket-urgency-judgment",
+      "old": "tmp:draft:7",
+      "op": "keep"
+    },
+    {
+      "new": "property_manager/A/repair-ticket-submit-failure",
+      "old": "tmp:draft:8",
+      "op": "keep"
+    },
+    {
+      "new": "property_manager/A/repair-ticket-vacant-no-lease",
+      "old": "tmp:draft:9",
+      "op": "keep"
+    },
+    {
+      "new": "property_manager/A/repair-ticket-mid-flow-cancel",
+      "old": "tmp:draft:10",
+      "op": "keep"
+    },
+    {
+      "new": "property_manager/B/dunning-draft-generation",
+      "old": "tmp:draft:11",
+      "op": "keep"
+    },
+    {
+      "new": "property_manager/B/dunning-draft-not-auto-send",
+      "old": "tmp:draft:12",
+      "op": "keep"
+    },
+    {
+      "new": "property_manager/B/dunning-draft-late-fee-mention",
+      "old": "tmp:draft:13",
+      "op": "keep"
+    },
+    {
+      "new": "property_manager/C/overdue-bill-followup-scope",
+      "old": "tmp:draft:14",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/C/overdue-bill-followup-scope",
+      "old": "tmp:kb:3909",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/C/overdue-bill-followup-scope",
+      "old": "tmp:kb:3913",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/C/followup-session-single-item-boundary",
+      "old": "tmp:draft:15",
+      "op": "keep"
+    },
+    {
+      "new": "property_manager/C/followup-missing-data-in-jgb",
+      "old": "tmp:draft:16",
+      "op": "keep"
+    },
+    {
+      "new": "property_manager/C/lease-expiry-followup-scope",
+      "old": "tmp:draft:17",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/C/lease-expiry-followup-scope",
+      "old": "tmp:kb:3799",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/C/lease-expiry-followup-scope",
+      "old": "tmp:kb:3824",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/C/lease-expiry-followup-scope",
+      "old": "tmp:kb:3829",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/C/urgent-repair-followup-scope",
+      "old": "tmp:draft:18",
+      "op": "keep"
+    },
+    {
+      "new": "property_manager/C/meter-item-followup-scope",
+      "old": "tmp:draft:19",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/C/meter-item-followup-scope",
+      "old": "tmp:kb:4021",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/C/meter-item-followup-scope",
+      "old": "tmp:kb:4089",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/C/meter-item-followup-scope",
+      "old": "tmp:kb:4091",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/C/followup-session-end",
+      "old": "tmp:draft:20",
+      "op": "keep"
+    },
+    {
+      "new": "property_manager/D/reply-tone-principles",
+      "old": "tmp:draft:21",
+      "op": "keep"
+    },
+    {
+      "new": "property_manager/D/prohibited-statements",
+      "old": "tmp:draft:22",
+      "op": "keep"
+    },
+    {
+      "new": "property_manager/E/number-data-provenance-rule",
+      "old": "tmp:draft:23",
+      "op": "keep"
+    },
+    {
+      "new": "property_manager/E/when-to-decline",
+      "old": "tmp:draft:24",
+      "op": "keep"
+    },
+    {
+      "new": "property_manager/E/identity-and-scope-boundary",
+      "old": "tmp:draft:25",
+      "op": "keep"
+    },
+    {
+      "new": "property_manager/E/session-expiry-general-rule",
+      "old": "tmp:draft:26",
+      "op": "keep"
+    },
+    {
+      "new": "property_manager/F/presales-context-exclude-pending",
+      "old": "tmp:kb:3622",
+      "op": "keep"
+    },
+    {
+      "new": "property_manager/F/urgency-value-domain-pending",
+      "old": "tmp:draft:27",
+      "op": "keep"
+    },
+    {
+      "new": "property_manager/F/repair-history-facet-pending",
+      "old": "tmp:draft:28",
+      "op": "keep"
+    },
+    {
+      "new": "property_manager/F/dunning-endpoint-form",
+      "old": "tmp:draft:29",
+      "op": "keep"
+    },
+    {
+      "new": "property_manager/F/followup-latency-budget",
+      "old": "tmp:draft:30",
+      "op": "keep"
+    },
+    {
+      "new": "property_manager/F/contract-other-facets-scope-pending",
+      "old": "tmp:kb:3800",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/F/contract-other-facets-scope-pending",
+      "old": "tmp:kb:3801",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/F/contract-other-facets-scope-pending",
+      "old": "tmp:kb:3822",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/F/contract-other-facets-scope-pending",
+      "old": "tmp:kb:3823",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/F/contract-other-facets-scope-pending",
+      "old": "tmp:kb:3825",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/F/contract-other-facets-scope-pending",
+      "old": "tmp:kb:3826",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/F/contract-other-facets-scope-pending",
+      "old": "tmp:kb:3831",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/F/contract-other-facets-scope-pending",
+      "old": "tmp:kb:4005",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/F/contract-other-facets-scope-pending",
+      "old": "tmp:kb:4202",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/F/contract-other-facets-scope-pending",
+      "old": "tmp:kb:4215",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/F/billing-other-facets-scope-pending",
+      "old": "tmp:kb:3910",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/F/billing-other-facets-scope-pending",
+      "old": "tmp:kb:3911",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/F/billing-other-facets-scope-pending",
+      "old": "tmp:kb:3912",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/F/billing-other-facets-scope-pending",
+      "old": "tmp:kb:3914",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/F/billing-other-facets-scope-pending",
+      "old": "tmp:kb:3915",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/F/billing-other-facets-scope-pending",
+      "old": "tmp:kb:3916",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/F/billing-other-facets-scope-pending",
+      "old": "tmp:kb:3917",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/F/billing-other-facets-scope-pending",
+      "old": "tmp:kb:3918",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/F/billing-other-facets-scope-pending",
+      "old": "tmp:kb:4214",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/F/billing-other-facets-scope-pending",
+      "old": "tmp:kb:4252",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/F/account-domain-scope-pending",
+      "old": "tmp:kb:3952",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/F/account-domain-scope-pending",
+      "old": "tmp:kb:3953",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/F/account-domain-scope-pending",
+      "old": "tmp:kb:3954",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/F/account-domain-scope-pending",
+      "old": "tmp:kb:3955",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/F/account-domain-scope-pending",
+      "old": "tmp:kb:3956",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/F/account-domain-scope-pending",
+      "old": "tmp:kb:3983",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/F/account-domain-scope-pending",
+      "old": "tmp:kb:3984",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/F/account-domain-scope-pending",
+      "old": "tmp:kb:3990",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/F/account-domain-scope-pending",
+      "old": "tmp:kb:4001",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/F/iot-setup-scope-pending",
+      "old": "tmp:kb:4088",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/F/iot-setup-scope-pending",
+      "old": "tmp:kb:4090",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/F/estate-domain-scope-pending",
+      "old": "tmp:kb:4132",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/F/estate-domain-scope-pending",
+      "old": "tmp:kb:4133",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/F/estate-domain-scope-pending",
+      "old": "tmp:kb:4134",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/F/estate-domain-scope-pending",
+      "old": "tmp:kb:4176",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/F/estate-domain-scope-pending",
+      "old": "tmp:kb:4203",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/F/subscription-domain-scope-pending",
+      "old": "tmp:kb:5373",
+      "op": "merge"
+    },
+    {
+      "new": "property_manager/F/subscription-domain-scope-pending",
+      "old": "tmp:kb:5374",
+      "op": "merge"
+    }
+  ]
+}

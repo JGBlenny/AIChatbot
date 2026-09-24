@@ -198,6 +198,10 @@ _CANON_CLEAN_SRC = (
     "if canon_visible(identity, f, vendor_business_types=vendor_business_types)]\n"
     "def resolve_canon_section(doc, identity, sid, *, vendor_business_types):\n"
     "    return canon_visible(identity, sid, vendor_business_types=vendor_business_types)\n"
+    # DSP-058／9.6 S3 的第三個消費端：受眾視圖組裝（`citable` 由 `canon_visible` 決定）
+    "def build_outline(doc, audience, identity, *, vendor_business_types):\n"
+    "    return [f for f in doc.fines() "
+    "if canon_visible(identity, f, vendor_business_types=vendor_business_types)]\n"
 )
 
 
@@ -243,6 +247,22 @@ def test_29b_consumer_not_calling_canon_visible_is_caught(ab):
     ok, detail = _check_29b_on(ab, src)
     assert ok is False, detail
     assert "resolve_canon_section" in detail
+
+
+@pytest.mark.req(_SPEC_32)
+def test_29b_view_builder_not_calling_canon_visible_is_caught(ab):
+    """視圖組裝改成自己看 `reviewed_by`、不問 `canon_visible` ⇒ 紅（DSP-058 新增的第三個消費端）。"""
+    # ⚠️ 以**完整函式片段**替換（`build_canon_toc` 有同形的那一行，只換行會改錯人）。
+    src = _CANON_CLEAN_SRC.replace(
+        "def build_outline(doc, audience, identity, *, vendor_business_types):\n"
+        "    return [f for f in doc.fines() "
+        "if canon_visible(identity, f, vendor_business_types=vendor_business_types)]\n",
+        "def build_outline(doc, audience, identity, *, vendor_business_types):\n"
+        "    return [f for f in doc.fines() if f.reviewed_by is not None]\n",
+    )
+    ok, detail = _check_29b_on(ab, src)
+    assert ok is False, detail
+    assert "build_outline" in detail
 
 
 @pytest.mark.req(_SPEC_32)

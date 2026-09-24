@@ -62,7 +62,7 @@ def main() -> int:
         step="reweigh", skill_version=SKILL_VERSION, inputs_sha=dict(meta["inputs_sha"]), deterministic=True,
         payload={"cells": cm["cells"]},
         raw_outputs_path=os.path.relpath(os.path.abspath(a.coverage_out), repo_root) if repo_root else a.coverage_out,
-        cost={"agents": 0, "prompt_tokens": 0, "completion_tokens": 0, "usd": 0.0, "wall_s": 0.0},
+        cost={"agents": 0, "wall_s": 0.0},
     )
     validate(envelope, load_schema(_SCHEMA_PATH))
     write_json(a.out, envelope)

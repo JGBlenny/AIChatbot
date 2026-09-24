@@ -1,0 +1,269 @@
+{
+ "shelf": "C",
+ "rule": "每主題一條細目；只認 jgb2 程式＋幫助中心；candidate_fine_ids 只是候選句子來源，句子對得上來源才留",
+ "topics": [
+  {
+   "unit_id": "page:communities.edit",
+   "label": "communities.edit",
+   "path": "/communities/edit/:communityId",
+   "component": "communities/edit/Index.vue",
+   "candidate_fine_ids": [
+    "jgb/C/community-setup-and-property-binding"
+   ]
+  },
+  {
+   "unit_id": "page:communities.edit.balanceInvoice",
+   "label": "communities.edit.balanceInvoice",
+   "path": "balanceInvoice",
+   "component": "communities/edit/BalanceInvoice.jsx",
+   "candidate_fine_ids": [
+    "jgb/E/differential-invoice"
+   ]
+  },
+  {
+   "unit_id": "page:communities.edit.basic",
+   "label": "communities.edit.basic",
+   "path": "basic",
+   "component": "communities/edit/Basic.vue",
+   "candidate_fine_ids": [
+    "jgb/C/community-setup-and-property-binding"
+   ]
+  },
+  {
+   "unit_id": "page:communities.edit.gallery",
+   "label": "communities.edit.gallery",
+   "path": "gallery",
+   "component": "communities/edit/Gallery.vue",
+   "candidate_fine_ids": [
+    "jgb/C/community-setup-and-property-binding"
+   ]
+  },
+  {
+   "unit_id": "page:communities.edit.intros",
+   "label": "communities.edit.intros",
+   "path": "intros",
+   "component": "communities/edit/Intros.vue",
+   "candidate_fine_ids": [
+    "jgb/C/community-setup-and-property-binding"
+   ]
+  },
+  {
+   "unit_id": "page:communities.estates",
+   "label": "communities.estates",
+   "path": "estates/:communityId/:category?",
+   "component": "communities/estates/Index.vue",
+   "candidate_fine_ids": [
+    "jgb/C/community-setup-and-property-binding"
+   ]
+  },
+  {
+   "unit_id": "page:communities.forceBinding",
+   "label": "communities.forceBinding",
+   "path": "/communities/forceBinding",
+   "component": "communities/forceBinding/Index.vue",
+   "candidate_fine_ids": [
+    "jgb/C/community-setup-and-property-binding"
+   ]
+  },
+  {
+   "unit_id": "page:communities.forceBinding.edit",
+   "label": "communities.forceBinding.edit",
+   "path": "edit",
+   "component": "communities/forceBinding/edit/Index.vue",
+   "candidate_fine_ids": [
+    "jgb/C/community-setup-and-property-binding"
+   ]
+  },
+  {
+   "unit_id": "page:communities.forceBinding.edit.binding",
+   "label": "communities.forceBinding.edit.binding",
+   "path": "binding",
+   "component": "communities/forceBinding/edit/Binding.vue",
+   "candidate_fine_ids": [
+    "jgb/C/community-setup-and-property-binding"
+   ]
+  },
+  {
+   "unit_id": "page:communities.forceBinding.welcome",
+   "label": "communities.forceBinding.welcome",
+   "path": "",
+   "component": "communities/forceBinding/Welcome.vue",
+   "candidate_fine_ids": [
+    "jgb/C/community-setup-and-property-binding"
+   ]
+  },
+  {
+   "unit_id": "page:communities.index",
+   "label": "communities.index",
+   "path": "/communities",
+   "component": "communities/Index.vue",
+   "candidate_fine_ids": [
+    "jgb/C/community-setup-and-property-binding"
+   ]
+  },
+  {
+   "unit_id": "page:communities.list",
+   "label": "communities.list",
+   "path": "",
+   "component": "communities/list/Index.vue",
+   "candidate_fine_ids": [
+    "jgb/C/community-setup-and-property-binding"
+   ]
+  },
+  {
+   "unit_id": "page:communities.show",
+   "label": "communities.show",
+   "path": "/communities/show/:communityId",
+   "component": "communities/show/Index.vue",
+   "candidate_fine_ids": [
+    "jgb/C/community-public-page"
+   ]
+  },
+  {
+   "unit_id": "page:estates.dashboard.bills",
+   "label": "estates.dashboard.bills",
+   "path": "bills/:tab?",
+   "component": "estates/dashboard/bills/Index.vue",
+   "candidate_fine_ids": [
+    "jgb/E/periodic-bill-generation",
+    "jgb/E/bill-status-reconciliation",
+    "jgb/E/bill-reports-export"
+   ]
+  },
+  {
+   "unit_id": "page:estates.dashboard.contractAttachments",
+   "label": "estates.dashboard.contractAttachments",
+   "path": "contractAttachments",
+   "component": "estates/dashboard/contractAttachments/index.vue",
+   "candidate_fine_ids": [
+    "jgb/D/contract-attachments-notes-limits"
+   ]
+  },
+  {
+   "unit_id": "page:estates.dashboard.contracts",
+   "label": "estates.dashboard.contracts",
+   "path": "contracts",
+   "component": "estates/dashboard/contracts/Index.vue",
+   "candidate_fine_ids": [
+    "jgb/D/contract-lookup",
+    "jgb/D/contract-status-overview",
+    "jgb/D/contract-filter-by-state"
+   ]
+  },
+  {
+   "unit_id": "page:estates.dashboard.monthlyReport",
+   "label": "estates.dashboard.monthlyReport",
+   "path": "monthlyReport",
+   "component": "bills/stat/_parts/MonthlyReport.vue",
+   "candidate_fine_ids": [
+    "jgb/E/bill-reports-export"
+   ]
+  },
+  {
+   "unit_id": "page:estates.dashboard.monthlyStatement",
+   "label": "estates.dashboard.monthlyStatement",
+   "path": "monthlyStatement",
+   "component": "bills/stat/_parts/MonthlyReport.vue",
+   "candidate_fine_ids": [
+    "jgb/E/bill-reports-export"
+   ]
+  },
+  {
+   "unit_id": "page:estates.dashboard.repair",
+   "label": "estates.dashboard.repair",
+   "path": "repair",
+   "component": "estates/dashboard/repair/Index.vue",
+   "candidate_fine_ids": [
+    "jgb/F/repair-request-how-to-submit",
+    "jgb/F/repair-dispatch-and-close"
+   ]
+  },
+  {
+   "unit_id": "page:estates.edit",
+   "label": "estates.edit",
+   "path": "/estates/edit/:id",
+   "component": "estates/edit/Index.vue",
+   "candidate_fine_ids": [
+    "jgb/C/property-edit-vs-publish",
+    "jgb/C/property-listing-conditions"
+   ]
+  },
+  {
+   "unit_id": "page:estates.edit.basic",
+   "label": "estates.edit.basic",
+   "path": "basic",
+   "component": "estates/edit/basic/Index.vue",
+   "candidate_fine_ids": [
+    "jgb/C/property-listing-conditions"
+   ]
+  },
+  {
+   "unit_id": "page:estates.edit.vr",
+   "label": "estates.edit.vr",
+   "path": "vr",
+   "component": "estates/edit/vr/Index.vue",
+   "candidate_fine_ids": [
+    "jgb/C/property-vr-tour"
+   ]
+  },
+  {
+   "unit_id": "page:estates.index",
+   "label": "estates.index",
+   "path": "/estates/:category?",
+   "component": "estates/Index.vue",
+   "candidate_fine_ids": [
+    "jgb/C/property-status-meaning",
+    "jgb/C/property-advanced-search"
+   ]
+  },
+  {
+   "unit_id": "page:estates.list",
+   "label": "estates.list",
+   "path": "",
+   "component": "estates/list/Index.vue",
+   "candidate_fine_ids": [
+    "jgb/C/property-status-meaning",
+    "jgb/C/property-advanced-search"
+   ]
+  },
+  {
+   "unit_id": "page:estates.monthlyUpload",
+   "label": "estates.monthlyUpload",
+   "path": "/estates/monthlyUpload/:action",
+   "component": "estates/dashboard/_parts/MonthlyUpload.jsx",
+   "candidate_fine_ids": [
+    "jgb/B/owner-report-collection-remit"
+   ]
+  },
+  {
+   "unit_id": "page:listings.IOTDevice",
+   "label": "listings.IOTDevice",
+   "path": "/iot-device",
+   "component": "listings/IOTDevice.vue",
+   "candidate_fine_ids": [
+    "jgb/G/meter-device-management",
+    "jgb/G/smart-lock-functions"
+   ]
+  },
+  {
+   "unit_id": "page:web:estates.house",
+   "label": "estates.house",
+   "path": "/house/{no}/{action?}",
+   "component": "EstateController@house",
+   "candidate_fine_ids": [
+    "jgb/C/storefront-entry-share",
+    "jgb/C/public-display-address"
+   ]
+  },
+  {
+   "unit_id": "page:web:estates.show",
+   "label": "estates.show",
+   "path": "/show/{id}/{action?}",
+   "component": "EstateController@show",
+   "candidate_fine_ids": [
+    "jgb/C/storefront-entry-share",
+    "jgb/C/public-display-address"
+   ]
+  }
+ ]
+}

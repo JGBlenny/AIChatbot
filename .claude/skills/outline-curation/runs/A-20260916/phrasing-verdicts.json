@@ -1,0 +1,61 @@
+{
+ "run": "A-20260916",
+ "decided_by": "owner",
+ "at": "2026-09-16",
+ "rule": "照建議",
+ "drop": [
+  "LINE",
+  "email",
+  "Email",
+  "收不到",
+  "驗證碼",
+  "驗證信",
+  "卡住了",
+  "登入成功",
+  "該怎麼辦",
+  "手機驗證",
+  "大小寫"
+ ],
+ "move": {
+  "忘記密碼": "jgb/A/forgot-password",
+  "無法登入": "jgb/A/forgot-password",
+  "兩個帳號": "jgb/A/duplicate-accounts-merge",
+  "重複帳號": "jgb/A/duplicate-accounts-merge"
+ },
+ "add": {
+  "jgb/A/login-methods": [
+   "怎麼登入",
+   "登入方式",
+   "手機號碼登入",
+   "房東身分登入",
+   "租客登入入口"
+  ],
+  "jgb/A/account-profile-settings": [
+   "帳號資訊設定",
+   "個人資料在哪改",
+   "改頭像",
+   "通知語言設定",
+   "簽約資訊填寫"
+  ],
+  "jgb/A/duplicate-accounts-merge": [
+   "帳號重複註冊了"
+  ],
+  "jgb/A/email-case-sensitivity": [
+   "email大小寫"
+  ],
+  "jgb/A/registered-vs-unregistered-tenant": [
+   "租客一定要註冊嗎"
+  ],
+  "jgb/A/data-change-request-form": [
+   "資料異動申請書",
+   "申請書怎麼填"
+  ]
+ },
+ "approve_rest": true,
+ "result": {
+  "dropped": 11,
+  "moved": 4,
+  "approved_existing": 25,
+  "added": 19
+ }
+}

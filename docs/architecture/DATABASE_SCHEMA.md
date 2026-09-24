@@ -645,7 +645,7 @@ CREATE TABLE unclear_questions (
 **處理流程**:
 1. 系統無法回答 → 記錄到 `unclear_questions`
 2. 問題被問多次 → `frequency` 增加
-3. 高頻問題 → 創建 `test_scenario` 待審核
+3. 高頻問題 → 創建 `test_scenarios` 待審核
 4. 審核通過 → 生成 AI 知識候選
 5. 批准 → 加入正式知識庫
 
@@ -745,7 +745,7 @@ CREATE TABLE ai_generated_knowledge_candidates (
 **用途**: AI 自動生成知識的審核佇列，確保品質後才加入正式知識庫。
 
 **流程**:
-1. 從 `test_scenario` 生成知識候選
+1. 從 `test_scenarios` 生成知識候選
 2. AI 生成答案 + 信心度 + 警告
 3. 人工審核：批准/拒絕/要求修訂
 4. 批准後 → 轉為 `knowledge_base` 正式記錄

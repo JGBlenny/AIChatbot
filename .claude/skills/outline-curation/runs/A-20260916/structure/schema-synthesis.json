@@ -1,0 +1,347 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "angle": {
+      "type": "string"
+    },
+    "coarses": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "enum": [
+              "A",
+              "B",
+              "C",
+              "D",
+              "E",
+              "F",
+              "G",
+              "H",
+              "I"
+            ],
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "fines": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "coarse_id": {
+            "enum": [
+              "A",
+              "B",
+              "C",
+              "D",
+              "E",
+              "F",
+              "G",
+              "H",
+              "I"
+            ],
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "merge_of": {
+            "items": {
+              "enum": [
+                "tmp:canon:jgb/A/account-registration",
+                "tmp:kb:3348",
+                "tmp:kb:3349",
+                "tmp:kb:3350",
+                "tmp:kb:3354",
+                "tmp:kb:3435",
+                "tmp:kb:3436",
+                "tmp:kb:3437",
+                "tmp:kb:3869",
+                "tmp:kb:3871",
+                "tmp:kb:3964",
+                "tmp:kb:3965",
+                "tmp:kb:3966",
+                "tmp:kb:3967",
+                "tmp:kb:3968",
+                "tmp:kb:3969",
+                "tmp:kb:3971",
+                "tmp:kb:3972",
+                "tmp:kb:3975",
+                "tmp:kb:3978",
+                "tmp:kb:3980",
+                "tmp:kb:4561",
+                "tmp:draft:1",
+                "tmp:draft:2",
+                "tmp:draft:3",
+                "tmp:draft:4",
+                "tmp:draft:5",
+                "tmp:draft:6",
+                "tmp:draft:7",
+                "tmp:draft:8",
+                "tmp:draft:9",
+                "tmp:draft:10"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "moved_from": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "op": {
+            "enum": [
+              "keep",
+              "split",
+              "merge",
+              "move",
+              "new"
+            ],
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "split_from": {
+            "items": {
+              "enum": [
+                "tmp:canon:jgb/A/account-registration",
+                "tmp:kb:3348",
+                "tmp:kb:3349",
+                "tmp:kb:3350",
+                "tmp:kb:3354",
+                "tmp:kb:3435",
+                "tmp:kb:3436",
+                "tmp:kb:3437",
+                "tmp:kb:3869",
+                "tmp:kb:3871",
+                "tmp:kb:3964",
+                "tmp:kb:3965",
+                "tmp:kb:3966",
+                "tmp:kb:3967",
+                "tmp:kb:3968",
+                "tmp:kb:3969",
+                "tmp:kb:3971",
+                "tmp:kb:3972",
+                "tmp:kb:3975",
+                "tmp:kb:3978",
+                "tmp:kb:3980",
+                "tmp:kb:4561",
+                "tmp:draft:1",
+                "tmp:draft:2",
+                "tmp:draft:3",
+                "tmp:draft:4",
+                "tmp:draft:5",
+                "tmp:draft:6",
+                "tmp:draft:7",
+                "tmp:draft:8",
+                "tmp:draft:9",
+                "tmp:draft:10"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "target_user": {
+            "items": {
+              "enum": [
+                "prospect",
+                "property_manager"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "coarse_id",
+          "title",
+          "slug",
+          "merge_of",
+          "split_from",
+          "moved_from",
+          "reason",
+          "target_user",
+          "op"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "id_map": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "new": {
+            "type": "string"
+          },
+          "old": {
+            "anyOf": [
+              {
+                "enum": [
+                  "tmp:canon:jgb/A/account-registration",
+                  "tmp:kb:3348",
+                  "tmp:kb:3349",
+                  "tmp:kb:3350",
+                  "tmp:kb:3354",
+                  "tmp:kb:3435",
+                  "tmp:kb:3436",
+                  "tmp:kb:3437",
+                  "tmp:kb:3869",
+                  "tmp:kb:3871",
+                  "tmp:kb:3964",
+                  "tmp:kb:3965",
+                  "tmp:kb:3966",
+                  "tmp:kb:3967",
+                  "tmp:kb:3968",
+                  "tmp:kb:3969",
+                  "tmp:kb:3971",
+                  "tmp:kb:3972",
+                  "tmp:kb:3975",
+                  "tmp:kb:3978",
+                  "tmp:kb:3980",
+                  "tmp:kb:4561",
+                  "tmp:draft:1",
+                  "tmp:draft:2",
+                  "tmp:draft:3",
+                  "tmp:draft:4",
+                  "tmp:draft:5",
+                  "tmp:draft:6",
+                  "tmp:draft:7",
+                  "tmp:draft:8",
+                  "tmp:draft:9",
+                  "tmp:draft:10"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "op": {
+            "enum": [
+              "keep",
+              "split",
+              "merge",
+              "move",
+              "new"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "old",
+          "new",
+          "op"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "out_of_shelf": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "enum": [
+              "tmp:canon:jgb/A/account-registration",
+              "tmp:kb:3348",
+              "tmp:kb:3349",
+              "tmp:kb:3350",
+              "tmp:kb:3354",
+              "tmp:kb:3435",
+              "tmp:kb:3436",
+              "tmp:kb:3437",
+              "tmp:kb:3869",
+              "tmp:kb:3871",
+              "tmp:kb:3964",
+              "tmp:kb:3965",
+              "tmp:kb:3966",
+              "tmp:kb:3967",
+              "tmp:kb:3968",
+              "tmp:kb:3969",
+              "tmp:kb:3971",
+              "tmp:kb:3972",
+              "tmp:kb:3975",
+              "tmp:kb:3978",
+              "tmp:kb:3980",
+              "tmp:kb:4561",
+              "tmp:draft:1",
+              "tmp:draft:2",
+              "tmp:draft:3",
+              "tmp:draft:4",
+              "tmp:draft:5",
+              "tmp:draft:6",
+              "tmp:draft:7",
+              "tmp:draft:8",
+              "tmp:draft:9",
+              "tmp:draft:10"
+            ],
+            "type": "string"
+          },
+          "suggested_shelf": {
+            "type": "string"
+          },
+          "why": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "suggested_shelf",
+          "why"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "rejected_alternatives": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "alternative": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "alternative",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "angle",
+    "coarses",
+    "fines",
+    "id_map",
+    "out_of_shelf",
+    "rejected_alternatives"
+  ],
+  "type": "object"
+}

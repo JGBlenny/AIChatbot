@@ -2,7 +2,7 @@
 
 ⛔ **需業主授權（D1）**——本步 ⛔ 不得在無業主明確授權下執行。
 
-**輸入**：已核可正本、`diff-report.json`。
+**輸入**：已核可正本（`rag-orchestrator/canon/jgb/` 一目錄＋九架，DSP-058）、`diff-report.json`。
 **輸出**：`export_batch` → `import_facet_knowledge` 的執行結果＋rollback SQL。
 **形態**：腳本；DB 寫入／migration 執行由業主親跑。
 

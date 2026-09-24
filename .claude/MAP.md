@@ -189,6 +189,8 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 `conversational-routing-execution` 舊有 HTTP chat 路由主線——⛔ **該線已於 2026-09-11 整條退役**（`POST /api/v1/message` 與 31 個模組刪除，commit `7c905408`）；本節是現行**唯一**活線。
 
 - 規格 | `docs/architecture/SYSTEM_ARCHITECTURE.md` | **現況全景正本**（v4.0，2026-09-12）：核心是 `AgentRuntime`、`/mcp` 只是四個門面之一；六域 15 face；知識兩條路；六域隔離不對稱
+- 正本 | `rag-orchestrator/canon/jgb/CATALOG.md` | **知識正本目錄（衍生物，⛔ 不手改）**：架層兩行（`## <架> <標題>`＋`scope:`），粗目若帶 slug 則多一行 `### <粗目 id> <粗目標題>`，每細目一行 id｜標題｜target_user｜approved 講法（⚠️ 新正本講法全為 `proposed` ⇒ 第四欄目前全空）；由 `export_catalog` 重產，`load_canon_or_die` 啟動時與九架逐位元比對。DSP-058（2026-09-15）圖書館形態：一目錄＋九架，受眾＝細目必填屬性；舊兩份受眾檔封存：DSP-067 換正本前 `docs/archive/2026-09/canon-pre-dsp067/`（2026-09-23 已移出工作樹，內容在 git `c06575a9`）（舊 210 條，S1／S2 的正對照組，⛔ 未進 git）、9.6 圖書館化前 `canon-pre-library/`、9.5 重切前 `canon-pre-recut/`；舊版封存 `docs/archive/2026-09/canon-pre-recut/`；格式規則與審核流程見 `canon/README.md`；現行 **57 粗目／515 細目**（2026-09-23 生成）、**全未審**（目錄為空、模型看不到）
+- 判準 | `docs/architecture/BOUNDARY.md` | **系統邊界唯一正本**：三個桶（本系統／呼叫端／外部相依）＋易混詞歸屬表＋一句話測試「把呼叫端整個換掉這句話還成立嗎」。⚠️ `quick_replies`／`line_official`／`confirm_qr_labels` 名字有外部血統但**是本系統自己的契約**，⛔ 不得當外部名詞清掉；由不變量 40 機械強制
 - 產線 | `docs/guides/development/how-to-add-a-query-capability.md` | **怎麼加一個查詢能力**：先分「新 face／新域／跨列彙總」三類；加 face 的三個陷阱（face 只選 builder 不選資料源、builder 簽名是單列、參數列被 strict 測試凍死）；⛔ 跨列彙總在現行形狀下表達不出來
 - 規格 | `docs/architecture/AGENTIC_MCP_ARCHITECTURE.md` | 總覽：`/mcp` `agent.turn` 門面→四段管線（Plan R R1 後：`turn_segments`／`turn_context`／模型迴圈／`exit_gates`）→工具註冊→替身；組態、已知限制、模型行為假設表
 - 規格 | `.kiro/specs/agentic-mcp-orchestration/requirements.md` | 需求正本，含 D2 延遲／答到率驗收線
@@ -198,8 +200,8 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 - 產線 | `rag-orchestrator/services/agent/verifier.py` | `OutputVerifier`，`AGENT_VERIFIER_MODE` 三態（`enforce`／`grounding_observe`／`observe_only`）
 - 產線 | `rag-orchestrator/services/agent/mcp_facade.py` | `/mcp` 門面：驗 key／Origin／身分 header、命名空間、每呼叫記錄
 - 規格 | `docs/api/mcp-facade.md` | **`/mcp` 對外串接契約**：三道閘（401／403／400）、`X-JGB-Identity` 明文 JSON（⛔ 無 base64）、16 支工具與各自 `stage`、錯誤碼、額度
-- 正本 | `rag-orchestrator/canon/prospect.md` | **會進模型脈絡的售前知識正本**（路 A：每回合自動注入）；⛔ 改它等於改模型看到的內容，配套 `.json` 的 sha 由 `load_canon_or_die` 啟動時比對
-- 正本 | `rag-orchestrator/canon/property_manager.md` | 同上，房東管家受眾。⚠️ **只有這兩份**——`tenant` 無正本，`agent.turn` 對 tenant 永不可見
+- 正本 | `rag-orchestrator/canon/jgb/A.md` | **會進模型脈絡的知識正本（九架之一，A 帳號與身分；B…I 同形）**：一架可容**多個粗目**（`## 標題 {#A-slug}`，Plan 9.10 S1 起；裸字母 `{#A}` 已於 S5（2026-09-24）停用、目錄路徑大聲拒絕）、細目帶必填 `target_user`／`business_types`，id `jgb/<架>/<slug>`；agent 啟動時 `load_canon_or_die` 讀九架、依靜態身分（`_STATIC_TOC_IDENTITY`）只驗兩尺預算（`check_turn_budget`），不預組任何身分的整份篩選結果；每回合 `build_canon_sections` 現組 K=5 節（未審／不可見 id raise）；⛔ 改它等於改模型看到的內容，配套 `canon/jgb.json`＋`CATALOG.md` 由 `load_canon_or_die` 啟動時逐位元比對；跨架講法重複 parser 與 hook 都擋
+- 衍生物 | `rag-orchestrator/canon/jgb.json` | `export_json(parse_canon_dir("canon/jgb"))` 的導出，⛔ 不手改；CI `test_canon_export_sync_req` 與啟動期 `load_canon_or_die` 逐位元比對。⚠️ 售前／業者身分只涵蓋 prospect／property_manager（`outline.CANON_VIEW_AUDIENCES`）——`tenant` 無篩選結果，`make_outline_resolver` 對它一律 `NO_MATCH`；跨受眾隔離只在 `canon_assembler.canon_visible` 一道（`build_canon_sections` 對不可見 id raise ⇒ 降級只注入目錄）
 - 判定 | `docs/architecture/agent-path-retired-symbols.md` | agent 路徑上已退役的符號帳本（查「這個還在不在」先看這裡）
 - 產線 | `rag-orchestrator/services/agent/limits.py` | DSP-045 額度封閉表（⛔ 不讀 env 覆寫）
 - 產線 | `rag-orchestrator/services/agent/session_persistence.py` | `AgentSessionStore`：會話狀態層（`get_state`／`start`／`save`／`close`）。⚠️ 2026-09-11 自舊引擎抽出，SQL 逐字照搬，同一張 `form_sessions`、同一個 `form_id='conversational'`
@@ -209,6 +211,21 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 - 判準 | `scripts/smoke/` | 真模型 smoke 對照計分尺（`mcp_smoke.py`／`b4_score.py`／`liff_score.py`）
 - 決策 | `.claude/DECISIONS.md` | DSP-037～045（pm 受眾開放、寫入工具正本、Verifier 兩類拒因、DSP-040 引用類絆線、W7 語音、W8 LIFF、outcome 七鍵、DSP-044 照片文字撤銷、DSP-045 額度封閉表）
 - 實測 | `.kiro/specs/knowledge-outline-and-intent-architecture/inputs/demo-ledger-line-oa-20260907.md` | demo 帳本：模型換測（luna／terra）、延遲量測、病灶審查
+
+## 大綱三層重建（DSP-067；現行九架正本的來源）{#outline-drafting}
+
+- 定義 | `.kiro/specs/knowledge-outline-and-intent-architecture/inputs/definitions-outline-baseline-20260919.md` | 目標、分母 D1、三層 D2、身分 D3、來源 D6、審核 D7、產物定位 D8、順序 D10（DSP-067 後已改寫）
+- 骨架 | `.kiro/specs/knowledge-outline-and-intent-architecture/inputs/outline-skeleton-20260920.md` | 九架 → 57 粗目 → 頁；10 頁排除、11 處換架（業主「同意」）
+- 總表 | `.kiro/specs/knowledge-outline-and-intent-architecture/inputs/outline-summary-20260920.md` | 九架條數（57／515／1,327）＋ 81 條待裁 open_questions（⛔ 未選邊）
+- 草稿 | `.claude/skills/outline-curation/runs/outline-20260920/` | drafts-A…I.json（每句 evidence 逐字、否定句 not_supported_greps；jgb2 `b2ee2ac382ce`）；人讀版 `inputs/outline-<架>-draft-20260920.md`
+- 規約 | `.claude/skills/outline-curation/steps/00c-topic-first-drafting.md` | 起草與逐句對源規則（釘住 commit、死碼掃描、標籤取自 `t()`、實作字眼只進 evidence、衝突不選邊）
+- 分母 | `.claude/skills/outline-curation/steps/00-feature-surface.md` | 步 0a 頁面樹 183 頁（`page_surface.py`）；0b 頁×身分只作粒度對照（有細目≠答對）
+- 決策 | `.claude/DECISIONS.md` | DSP-065／065a（分母＝頁面樹、剔除無頁路由）、DSP-066（代理先審業主終審）、DSP-067（三層、57 粗目、210 條不當材料）
+- 交接 | `.kiro/specs/knowledge-outline-and-intent-architecture/HANDOFF-20260923.md` | 本線交接正本：任務目標、三層產出、Plan 9.10 六片狀態、驗收成果與可重跑證據、四件待裁、紀律與陷阱
+- 計畫 | `.kiro/specs/knowledge-outline-and-intent-architecture/inputs/plan-9.10-three-level-canon-20260921.md` | 正本改三層的程式面 Plan（S1–S6，各片擁有檔案／驗收／停止條件；量測表）
+- 對照 | `.kiro/specs/knowledge-outline-and-intent-architecture/inputs/coarse-ids-20260921.md` | 粗目 id 凍結表 57 列（生成腳本的唯一來源，⛔ 不機械轉寫、⛔ 生成後不可改）
+
+⚠️ **工作樹的 `rag-orchestrator/canon/jgb/` 已於 2026-09-23 換成新正本**（57 粗目／515 細目，`canon_sha256 = 9b67e763…`，S3 完成並驗過）；舊 210 條封存於 `docs/archive/2026-09/canon-pre-dsp067/`（2026-09-23 已移出工作樹，內容在 git `c06575a9`）。⚠️ 新正本 **515 條全未審 ⇒ 模型一條都看不到**，目錄為空 ⇒ 線上行為與部署版本不變。S1／S2／S3／S4／S6 已落地並各經 verifier CONFIRMED，**只剩 S5 清除舊格式**；預算常數表經量測**不改**。⛔ 未進產線——提示詞規則仍是一跳引用，見 HANDOFF §5-2。
 
 ## jgb2 串接契約 {#jgb2-chat-integration}
 

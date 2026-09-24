@@ -19,7 +19,7 @@
 - **審核旗標已有兩個先例可對齊**：`knowledge_base.outline_approved_by`（DSP-012 R11.6，值為標記者字串）與 `help_center_pages.citable_requires_approval`（CHECK 約束：`citable=false OR approved_by IS NOT NULL`）。R2.7「池標記 vs 內容已審」以**值域約定**即可落地（`pool-marked-*` 前綴＝池標記；其餘＝內容已審），⛔ 不需新欄位、不需 migration。
 - **Workflow 與 hook 在本 repo 零先例是刻意保留**（業主 2026-09-06 核可時定向）：使用者層 `~/.claude/settings.json` 已有 `PreToolUse(Read|Edit|Write)`／`PostToolUse(Edit|Write)`／`Stop` 三類 hook 掛 `~/.claude/canon/*.py` 的成熟樣板，本 spec 在 repo 層 `.claude/settings.json` 複製同形狀即可；Workflow 規約明訂 `meta` 純字面、`pipeline()` 預設、`schema` 強制結構化輸出、`agent()` 可掛 `agentType`，判者 fan-out 正是它的標準用例（adversarial verify／judge panel）。
 - **live DB 對數（2026-09-06 實查，正對照 `active_all`）**：`outline_approved_by IS NOT NULL`＝**29**（與 F2 一致）、`is_active AND 'prospect'=ANY(target_user)`＝**25**（＝F2 的 21 已標＋4 未標）、`is_active` 全體＝**926**（PLAN v2 記 922，+4 為 2026-09-04 後新增，不影響本 spec）。查證：`docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -tAc "SELECT (SELECT count(*) FROM knowledge_base WHERE outline_approved_by IS NOT NULL),(SELECT count(*) FROM knowledge_base WHERE is_active AND 'prospect'=ANY(target_user)),(SELECT count(*) FROM knowledge_base WHERE is_active)"`。
-- **幫助中心頁面在交付目錄是扁平檔名**（`*_zh-Hant.html` 92 份、`*_en.html` 79 份），⛔ 不是 `zh-Hant/` 子目錄；R7／R3 的分母工具要以檔名後綴切語系。查證：`ls "/Users/lenny/jgb/幫助中心/JGB幫助中心_HTML_交付_20260818" | grep -c "_zh-Hant.html"` ⇒ 92。
+- **幫助中心頁面在交付目錄是扁平檔名**（`*_zh-Hant.html` 92 份、`*_en.html` 79 份），⛔ 不是 `zh-Hant/` 子目錄；R7／R3 的分母工具要以檔名後綴切語系。查證：`ls "/Users/chenqinghuang/dev/work/docs/幫助中心/JGB幫助中心_HTML_交付_20260818" | grep -c "_zh-Hant.html"` ⇒ 92。
 
 ## 研究主題
 
@@ -32,7 +32,7 @@
 - `runtime.run_turn`：`outline = agent_state.get("outline")` → `_seed_outline_provenance(outline)` 建 `tool_results_by_id["outline"]` → `assembler.build_messages(identity, outline, slots, dialog, tool_specs, nonce)`；`_build_fixed` 用 `effective_handoff_message(None)`（F5：DB 設定從未被讀）。
 - `app.py::_init_agent_runtime` 於啟動建 `agent_outline`＋`outline_resolver`；`agent_entry.handle_agent_entry` 只對 prospect 把 `app.state.agent_outline` 放進 `state["agent"]["outline"]`（記憶體，不落地）。
 **結論與建議**：
-- 新增 `services/agent/canon/`（parser／assembler／fine_index／candidate_selector），`build_prospect_outline` 改為薄包裝呼叫 `canon_assembler.build_outline(canon_doc)`；`SIX_MODULES`／`_classify_row`／`_CTA_TEXT`／`DSP009_DELIBERATE_GAPS`／`_extract_boundary_sentences` 隨正本 G／F 粗目退役（R2.6）。
+- 新增 `services/agent/canon/`（parser／assembler／fine_index／candidate_selector），`build_prospect_outline` 改為薄包裝呼叫 `canon_assembler.build_outline(canon_doc)`；`SIX_MODULES`／`_classify_row`／`_CTA_TEXT`／`DSP009_DELIBERATE_GAPS`／`_extract_boundary_sentences` 隨正本退役、內容改由 I 架承接（R2.6）。
 - runtime 只加三處：回合前 `CandidateSelector.select()` 建 `CandidateOutlineDoc`（沿 Plan v3 路徑 (a)）、身分槽位派生、CTA 程式端附加；`effective_handoff_message(cfg)` 改吃 `config_for_target_user` 的設定（R4.6）。
 
 ### 主題 2：DSP-035 Plan v3 可沿用的零件與必須改的地方
@@ -58,7 +58,7 @@
 **調查問題**：R2.7／R5.4「只放行內容已審」要動哪些讀取點？
 **研究方法**：讀 `tools/kb.py::fetch_visible_row`、`outline.py::_fetch_prospect_pool_rows`、`vendor_knowledge_retriever_v2.build_visibility_predicate`、`help_center_pages` migration。
 **發現**：`fetch_visible_row` 只拼 `build_visibility_predicate`，不看 `outline_approved_by`（F14）；`build_visibility_predicate` 刻意不含相關性條件（docstring 明寫）；不變量 29 要求可見性謂詞單一來源（`check_29_predicate_single_source` 掃 `_vector_search`／`_keyword_search`／`fetch_visible_row`）。
-**結論**：新增 `services/agent/canon/review_state.py::content_reviewed_predicate()`（回 `AND kb.outline_approved_by IS NOT NULL AND kb.outline_approved_by NOT LIKE 'pool-marked-%'`）作**第二個單一來源**，只在 agent 路徑的 `fetch_visible_row` 與正本組裝拼接；⛔ 不併進 `build_visibility_predicate`（那會影響舊鏈檢索）。不變量新增一條掃 `kb.get` 路徑必拼此謂詞（R8.4 需求票）。
+**結論**：新增 `services/agent/canon/review_state.py::content_reviewed_predicate()`（落地版為**正向白名單** regex `^reviewed:[^[:space:]]+$`；⛔ 早期草案的否定式 `NOT LIKE 'pool-marked-%'` 已因 fail-open 被 security-reviewer 否決，⛔ 不得回抄）作**第二個單一來源**，只在 agent 路徑的 `fetch_visible_row` 與正本組裝拼接；⛔ 不併進 `build_visibility_predicate`（那會影響舊鏈檢索）。不變量新增一條掃 `kb.get` 路徑必拼此謂詞（R8.4 需求票）。
 
 ### 主題 5：驗證材料與工具鏈的對接
 **調查問題**：R6 四步各用哪支工具、缺什麼？
@@ -133,7 +133,7 @@
 | 指標 | 目標值 | 測試方法 | 備註 |
 |---|---|---|---|
 | `run_turn` p95 | ≤ 6 s（現行 4.5 s＋一次查詢 embedding） | `agent_eval` `latency_p95_ms` | 冷啟不存在（啟動時 prepare） |
-| 啟動 prepare | ≤ 2k 句、每批 ≤8 ⇒ 約 250 次呼叫 | 啟動日誌 | 失敗 ⇒ `not_ready` 紅、回合走整份正本 |
+| 啟動 prepare | ≤ 2k 句、每批 ≤8 ⇒ 約 250 次呼叫 | 啟動日誌 | 失敗 ⇒ `not_ready` 紅、該回合降級為只注入目錄（`candidate_fallback_toc_only`） |
 | 上下文 | 候選細目 K=5 ⇒ 約 500–800 字（vs 現行 3,078 tokens 整份） | trace `prompt_tokens` | 目錄（citable=False）另佔 ≤ 300 字 |
 
 ### 瓶頸分析

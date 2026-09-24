@@ -473,13 +473,15 @@ class FacadeDeps:
     - `get_outline_resolver`：回 `tools/kb.py:OutlineResolver`（`(identity, "outline:x")
       -> ToolResult`）或 `None`，給 `kb.get("outline:*")`。`None` ⇒ `kb.get` 對
       `outline:*` 一律 `NO_MATCH`（fail-closed，⛔ 不退化成查 KB 整數 id）。
-      正產線由 `app.py` 以 `services.agent.outline.make_outline_resolver(cache)`
+      正產線由 `app.py` 以 `services.agent.outline.make_outline_resolver()`
       建好放 `app.state.outline_resolver`，這個 getter 讀它。
     - `get_app`：回 FastAPI/Starlette 的 app 物件（`agent.turn` 用）。門面靠它讀
       `app.state.agent_runtime`（2.2 建的 `AgentRuntime`）、
       `app.state.agent_session_store`（狀態存取用的 `AgentSessionStore`，
       舊鏈隔離 S3 取代原本的 `conversational_engine`）、
-      `app.state.agent_outline`（行程級大綱物件）。⛔ 門面**不自建** runtime——
+      `app.state.agent_audiences`（已通過啟動預算的受眾集合，`frozenset`——
+      每回合的候選節由 `Runtime._select_outline` 從正本現組，門面本身不持有
+      任何大綱物件）。⛔ 門面**不自建** runtime——
       `bootstrap.build_runtime` 的 Verifier 自證只跑在啟動路徑上，就地新建一個
       等於帶著一把沒驗過的尺上線。缺 ⇒ `ToolError("AGENT_UNAVAILABLE")`。
     """
@@ -1372,9 +1374,9 @@ AGENT_TURN_SPEC: ToolSpec = {
     "facade_only": True,
     # 本 spec 的對話對象＝有 git 正本的兩個受眾（範圍聲明）；**tenant 缺鍵＝永不可見**
     # （它沒有正本，⛔ 不得順手補鍵）。
-    # DSP-037（業主 2026-09-07 裁）：`property_manager` 於 M1 開放——pm 正本
-    # （`canon/property_manager.md`，36 細目全 reviewed）已上線，門面依受眾取
-    # `app.state.agent_outlines[audience]`，取不到一律 `AGENT_UNAVAILABLE`，
+    # DSP-037（業主 2026-09-07 裁）：`property_manager` 於 M1 開放——
+    # 業者身分走同一份九架正本（`canon/jgb/`，可見細目由 `canon_visible` 篩），門面依受眾查
+    # `app.state.agent_audiences`（9.8 DSP-059 D′ S2），不在其中一律 `AGENT_UNAVAILABLE`，
     # ⛔ 不塞 prospect 大綱（見 `_make_agent_turn`／`_agent_turn_preflight`）。
     "stage": {"prospect": "M1", "property_manager": "M1"},
 }
@@ -1389,26 +1391,24 @@ def _app_state(deps: FacadeDeps, name: str) -> Any:
     return getattr(state, name, None) if state is not None else None
 
 
-#: `_outline_for_audience` 的第三種回答：「這個受眾沒有大綱」——與「這台機器根本
-#: 沒接大綱」（回 `None`，維持 3.2 以來的既有行為：不塞、照跑）區分開。
+#: `_outline_for_audience` 的第二種回答：「這個受眾對這台機器不可服務」（服務沒接好
+#: ／該受眾啟動預算未過）——與「就緒」（回 `None`）區分開。
 _OUTLINE_UNAVAILABLE = object()
 
 
 def _outline_for_audience(deps: FacadeDeps, audience: str) -> Any:
-    """該受眾的行程級大綱（DSP-037／S1b）。
+    """該受眾是否已就緒。
 
-    - `app.state.agent_outlines`（複數）是**權威對照表**：非空 ⇒ 查無該受眾一律
-      `_OUTLINE_UNAVAILABLE`（fail-closed，⛔ 不回退到 prospect）。
-    - 沒有複數對照表（3.2～S1b 前的舊形狀、以及只塞單數的測試替身）⇒ 只有
-      prospect 讀得到 `app.state.agent_outline`；其餘受眾一律 `_OUTLINE_UNAVAILABLE`
-      ——⚠️ 這正是 S1b 修掉的洞：舊碼對**任何**受眾都塞那份售前大綱。
+    `app.state.agent_audiences` 是**唯一權威來源**（`frozenset`，由
+    `app.py::_init_agent_runtime` 逐受眾跑過 `check_turn_budget` 才收進去）：
+    屬性缺席／`None`／非集合／空集合／不含該受眾 ⇒ `_OUTLINE_UNAVAILABLE`
+    （fail-closed，⛔ 不回退到 prospect、⛔ 對任何 falsy 形狀放行）；否則就緒
+    （回 `None`）。本函式只回答「可不可以服務」——每回合的候選節由
+    `runtime._select_outline` 從正本現組，門面不持有任何大綱物件。
     """
-    outlines = _app_state(deps, "agent_outlines")
-    if isinstance(outlines, dict) and outlines:
-        doc = outlines.get(audience)
-        return doc if doc is not None else _OUTLINE_UNAVAILABLE
-    if audience == "prospect":
-        return _app_state(deps, "agent_outline")
+    audiences = _app_state(deps, "agent_audiences")
+    if isinstance(audiences, (set, frozenset)) and audiences and audience in audiences:
+        return None
     return _OUTLINE_UNAVAILABLE
 
 
@@ -1517,17 +1517,15 @@ def _make_agent_turn(
             # 代表有人繞過門面直接呼 `registry.call()` ⇒ 用封閉錯誤值域裡的
             # `NO_MATCH`，⛔ 不在對模型可見的值域上多開一個碼。
             return ToolResult(ok=False, error="NO_MATCH")
-        # 大綱是**行程級共用物件**（`app.state.agent_outlines[audience]`），**依受眾取**
-        # （DSP-037／S1b）：取不到一律 fail-closed，⛔ 不塞別的受眾（尤其 prospect）
-        # 的大綱——那等於把售前正本餵給 pm 回合。
+        # 這個受眾是否就緒——由 `app.state.agent_audiences`（frozenset）判定，
+        # 取不到一律 fail-closed。
         # ⚠️ 這一關刻意排在 `store.load`／`store.start` **之前**：判不通過的回合
         # ⛔ 不該先在 `form_sessions` 留下一列半開的 session。
         # 錯誤碼用 `NO_MATCH`：`ToolError` 是封閉值域，`AGENT_UNAVAILABLE` 不在其中，
         # 且 ⛔ 不在對模型可見的值域上多開一個碼（同上方 runtime 缺席的處置）。
         # 呼叫端看到的 `AGENT_UNAVAILABLE` 由 `_agent_turn_preflight` 給——
         # 這裡是繞過門面直呼 `registry.call()` 時的第二道網。
-        outline = _outline_for_audience(deps, identity.resolved_audience())
-        if outline is _OUTLINE_UNAVAILABLE:
+        if _outline_for_audience(deps, identity.resolved_audience()) is _OUTLINE_UNAVAILABLE:
             return ToolResult(ok=False, error="NO_MATCH")
 
         # ③ 張數配額（`LIMITS.images_per_hour`／`LIMITS.files_per_hour`——DSP-045
@@ -1587,11 +1585,8 @@ def _make_agent_turn(
             )
 
         agent_state = state.setdefault("agent", {})
-        # Runtime 從 `state["agent"]["outline"]` 取，故這裡進場前塞、存檔前 pop——
-        # ⛔ 不得讓它被序列化進 `form_sessions.collected_data`（每個 session 存一份
-        # 幾千字的大綱，而且會就此凍結在舊版本）。
-        if outline is not None:
-            agent_state["outline"] = outline
+        # `Runtime._select_outline` 每回合直接從已註冊的正本現組候選節，
+        # ⛔ 不經 session 狀態傳遞——`agent_state` 因此沒有大綱鍵可放。
 
         # ── W8 (2)：照片（抓檔→縮圖→辨識）在**進 run_turn 之前**跑完 ──
         # 交給 Runtime 的是 `ImageTurnInput`（全封閉值）；bytes 到這一行為止
@@ -1675,7 +1670,6 @@ def _make_agent_turn(
         # （與 `has_document` 那四鍵同樣的處置，那四鍵也不在快照白名單裡）。
         if attachment_purpose_ignored:
             result.trace.attachment_purpose_ignored = True
-        agent_state.pop("outline", None)
         # W8 (5)：過期戳**在存檔前才蓋**——逾時／取消的回合走不到這裡，
         # 那一列的戳因此停在上一個真正跑完的回合，⛔ 不會被一次失敗的呼叫續命。
         stamp_last_turn(agent_state)
@@ -2050,12 +2044,11 @@ def _agent_turn_preflight(deps: FacadeDeps, identity: Identity) -> Optional[str]
         deps, "agent_session_store"
     ) is None:
         return ERR_AGENT_UNAVAILABLE
-    # DSP-037／S1b：`agent.turn` 已對 pm 可見，但 pm 正本可能沒上線（`app.py` 只跳過
-    # 該受眾、⛔ 不掛啟動）⇒ 沒有這個受眾的大綱＝服務對他沒接好，回 ① 同一個碼。
-    # ⚠️ 判準見 `_outline_for_audience`：prospect 在舊形狀（只有單數 `agent_outline`、
-    # 或兩者皆無）下**永遠不會**落到這一條 ⇒ 既有 prospect 語義逐字不變，⛔ 不新增
-    # 外顯失敗；會落到這裡的只有「有對照表卻缺該受眾」與「舊形狀下的非 prospect」，
-    # 兩者都是 fail-closed 的正確答案（⛔ 不得改成放行後塞 prospect 大綱）。
+    # DSP-037／S1b：`agent.turn` 已對 pm 可見，但業者身分可能未通過啟動預算（`app.py` 只跳過
+    # 該受眾、⛔ 不掛啟動）⇒ 這個受眾不在 `agent_audiences` ＝服務對他沒接好，
+    # 回 ① 同一個碼（9.8 DSP-059 D′ S2：判準見 `_outline_for_audience`——
+    # `agent_audiences` 缺席／非集合／空集合／不含該受眾一律 fail-closed，
+    # ⛔ 不得改成放行後塞 prospect 大綱）。
     if _outline_for_audience(deps, identity.resolved_audience()) is _OUTLINE_UNAVAILABLE:
         return ERR_AGENT_UNAVAILABLE
     try:

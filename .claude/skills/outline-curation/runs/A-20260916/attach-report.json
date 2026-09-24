@@ -1,0 +1,93 @@
+{
+  "attached_fines": [
+    "jgb/A/already-registered-error",
+    "jgb/A/change-account-name",
+    "jgb/A/change-email-or-phone",
+    "jgb/A/data-change-request-form",
+    "jgb/A/email-case-sensitivity",
+    "jgb/A/forgot-account-email",
+    "jgb/A/forgot-password",
+    "jgb/A/line-login-redirects-to-register",
+    "jgb/A/registered-vs-unregistered-tenant",
+    "jgb/A/tenant-login-cannot-see-data",
+    "jgb/A/verification-code-invalid",
+    "jgb/A/verification-code-not-received"
+  ],
+  "attached_phrasings": 40,
+  "canon_sha256": "dce01137d5f846c6d8f09204c122affbf9fc83c7d6aaed5fcff835af0db1d7ec",
+  "dup_existing": {
+    "jgb/A/account-registration": [
+      {
+        "already_on": "jgb/D/contract-esign-flow",
+        "text": "簽約邀請是用簡訊還是email"
+      }
+    ],
+    "jgb/A/email-case-sensitivity": [
+      {
+        "already_on": "jgb/A/account-registration",
+        "text": "我要改我的email"
+      },
+      {
+        "already_on": "jgb/E/overdue-reminder-late-fee",
+        "text": "可以從email直接繳嗎"
+      }
+    ],
+    "jgb/A/login-methods": [
+      {
+        "already_on": "jgb/A/account-registration",
+        "text": "email打錯了怎麼辦"
+      },
+      {
+        "already_on": "jgb/A/account-registration",
+        "text": "註冊要用email還是手機"
+      }
+    ]
+  },
+  "dup_in_proposal": {
+    "jgb/A/data-change-request-form": [
+      {
+        "kept_on": "jgb/A/change-email-or-phone",
+        "text": "Email"
+      },
+      {
+        "kept_on": "jgb/A/change-email-or-phone",
+        "text": "手機驗證"
+      },
+      {
+        "kept_on": "jgb/A/change-account-name",
+        "text": "註冊名字與證件不同"
+      }
+    ],
+    "jgb/A/duplicate-accounts-merge": [
+      {
+        "kept_on": "jgb/A/data-change-request-form",
+        "text": "兩個帳號"
+      },
+      {
+        "kept_on": "jgb/A/data-change-request-form",
+        "text": "重複帳號"
+      }
+    ],
+    "jgb/A/forgot-password": [
+      {
+        "kept_on": "jgb/A/forgot-account-email",
+        "text": "忘記密碼"
+      },
+      {
+        "kept_on": "jgb/A/forgot-account-email",
+        "text": "無法登入"
+      }
+    ]
+  },
+  "fines_without_phrasings": [
+    "jgb/A/login-methods",
+    "jgb/A/account-profile-settings",
+    "jgb/A/duplicate-accounts-merge"
+  ],
+  "missing_fines": [],
+  "other_shelf_fines": {},
+  "phrasing_set_sha256": "13fbc467628a1620424131088e5277bbde029e176df39bfd5aa7d27ee63d43db",
+  "skipped_fines": {
+    "jgb/A/account-registration": 2
+  }
+}

@@ -129,7 +129,7 @@
 2. THE SYSTEM SHALL 對 prospect 回合預設不呼叫 `kb.search`；模型仍可呼叫 `kb.get` 取大綱引用的列全文作引用來源。
 3. THE SYSTEM SHALL 對 pm／tenant 身分把系統脈絡（`category='系統脈絡'`，現 27 列）組成目錄放入 system prompt；細節 SHALL 由模型以 `kb.get`／`help.read` 按章節讀取。
 4. THE SYSTEM SHALL 把大綱與目錄的組裝規則寫成可重跑的程式（含版本戳與 sha256），⛔ 不得由 LLM 自動摘要生成大綱（沿用 D3：自動摘要不得成 truth）。
-5. THE SYSTEM SHALL 對大綱做 token 預算檢查：prospect 大綱 ≤ 10K token、pm／tenant 目錄 ≤ 8K token；超過 SHALL 大聲失敗（啟動時），⛔ 不得靜默截斷。
+5. THE SYSTEM SHALL 對大綱做 token 預算檢查：prospect 大綱 ≤ 10K token、pm／tenant 目錄 ≤ 8K token；超過 SHALL 大聲失敗（啟動時），⛔ 不得靜默截斷。（design 1.12 起 prospect 改為 12,000；env 只能調小，不能調大）
 
 ### Requirement 6：輸出契約與 Output Verifier（零捏造的結構性保證）
 

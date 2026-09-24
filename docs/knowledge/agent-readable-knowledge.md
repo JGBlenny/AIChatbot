@@ -16,7 +16,7 @@
 
 - **主題頁列**：`outline_approved_by` 是 `reviewed:<who>` 的列。
   ⚠️ **2026-09-07（任務 3.2）起這個旗標不再決定大綱**：售前大綱改由 git 正本
-  （`rag-orchestrator/canon/prospect.md`）逐細目組裝，DB 售前池是正本匯入後的
+  （`rag-orchestrator/canon/jgb/` 九架正本，售前身分細目帶 `target_user=prospect`）逐細目組裝，DB 售前池是正本匯入後的
   衍生物，⛔ 大綱不以衍生物為來源。這個旗標現在決定的是**另一件事**：模型用
   `kb.get(<整數 id>)` 取單列時取不取得到（未審一律 `NO_MATCH`）。
   「一筆知識要不要進大綱」現在的答案是「去正本裡開一個細目」，⛔ 不是在 DB 標旗標。
@@ -133,9 +133,9 @@ Verifier 的引用比對是「一句答案 + 一段引文（quote）」對「某
 `售前競品`）各自成一節，命不中則落兜底桶。**那張分類表、那個兜底桶、以及
 「`categories` 沒填會影響大綱」這件事，全部退役。**
 
-現在的分段來源是**正本自己的層級**：粗目（`## 標題 {#A}`）與細目
-（`### 標題 {#prospect/A/slug}`），一細目一節、節 id 就是細目 id。要調整大綱
-怎麼分段，改的是正本的粗目／細目，⛔ 不是改 DB 的 `categories`。
+現在的分段來源是**正本自己的層級**：粗目（`## 標題 {#<架字母>-<slug>}`，例 `{#A-registration}`；裸字母 `{#A}` 已於 S5 停用，DSP-070）與細目
+（`### 標題 {#jgb/A/slug}`，DSP-058 圖書館正本後 id 前綴恆為 `jgb`），一細目一節、節 id 就是
+細目 id。要調整大綱怎麼分段，改的是正本的粗目／細目，⛔ 不是改 DB 的 `categories`。
 
 `categories` 仍然有用，但只在**檢索**那一側（`kb.search`／舊鏈的主題分類），
 以及匯入時對回正本細目。寫知識時照既有慣例填即可：
@@ -145,7 +145,7 @@ Verifier 的引用比對是「一句答案 + 一段引文（quote）」對「某
 依據：`rag-orchestrator/services/agent/canon/canon_assembler.py:build_outline`
 （一細目一節）；`rag-orchestrator/services/agent/canon/canon_parser.py:COARSE_HEADING_RE`／
 `FINE_HEADING_RE`（粗目／細目的層級定義）；正本本體
-`rag-orchestrator/canon/prospect.md`。
+`rag-orchestrator/canon/jgb/`（九架正本，售前身分細目帶 `target_user=prospect`）。
 
 ## 六、Verifier 逐字引用對句子完整度的要求
 
@@ -221,7 +221,7 @@ Verifier 的引用比對是「一句答案 + 一段引文（quote）」對「某
       選邊改寫。
 - [ ] `categories` 已填值（不留 NULL）——它現在服務檢索與匯入對帳，
       ⛔ 不再決定這筆會落到大綱的哪一節（那由正本的粗目／細目決定）。
-- [ ] 若這件事要進大綱，去 `rag-orchestrator/canon/prospect.md` 開／改細目，
+- [ ] 若這件事要進大綱，去 `rag-orchestrator/canon/jgb/` 開／改細目（帶 `target_user=prospect`），
       並照 `rag-orchestrator/canon/README.md` 重導出同源的 `.json`
       （⚠️ 只改 `.md` 沒重導出 ⇒ 啟動時 `load_canon_or_die` 直接紅）。
 

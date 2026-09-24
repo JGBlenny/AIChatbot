@@ -70,6 +70,39 @@ def _spy_on_nonce(monkeypatch):
     return _NONCE_SPY
 
 
+#: 9.8 DSP-059 D′ S2：`_select_outline` 不再讀 `agent_state["outline"]`（那個鍵
+#: 已隨預組大綱物件退役）——它每回合從**已註冊的正本**現組。本檔測的是
+#: provenance／citation 的**種子與解析**機制（DSP-020），與「大綱怎麼被選出來」
+#: 是不同的關注點（後者在 `test_candidate_outline_req.py`），故這裡改用一個
+#: test-local stub 把 `_select_outline` 短路成「原樣回傳測試給的 `OutlineDoc`」
+#: ——⛔ 只在本檔生效（fixture 有 `monkeypatch`，測試結束自動還原），既有的
+#: `_outline()` 呼叫端與斷言逐字不變。
+_STUBBED_OUTLINE: dict = {"value": None}
+
+
+@pytest.fixture(autouse=True)
+def _stub_select_outline(monkeypatch):
+    import services.agent.runtime as runtime_mod
+
+    async def _stub(self, identity, user_message, dialog, violations):
+        return _STUBBED_OUTLINE["value"], None
+
+    monkeypatch.setattr(runtime_mod.AgentRuntime, "_select_outline", _stub)
+    yield
+    _STUBBED_OUTLINE["value"] = None
+
+
+def _state(outline=None, **extra) -> dict:
+    """`{"agent": {...}}` 建構器──同時把 `outline` 塞進 `_STUBBED_OUTLINE`
+    供上面的 stub 讀（`agent_state` 裡仍保留 `outline` 鍵只是相容顯示，
+    `_select_outline` 本身不再讀它）。"""
+    _STUBBED_OUTLINE["value"] = outline
+    agent: dict = dict(extra)
+    if outline is not None:
+        agent["outline"] = outline
+    return {"agent": agent}
+
+
 def _outline() -> OutlineDoc:
     return OutlineDoc(
         audience="prospect",
@@ -131,7 +164,7 @@ async def test_runtime_seeds_outline_into_tool_results_before_first_model_call()
     verifier = FakeVerifier()
     runtime = _runtime(provider=provider, registry=registry, verifier=verifier)
 
-    result = await runtime.run_turn(_identity(), "可以線上簽約嗎", {"agent": {"outline": _outline()}})
+    result = await runtime.run_turn(_identity(), "可以線上簽約嗎", _state(outline=_outline()))
 
     assert result.kind == "answer"
     assert result.trace.tool_calls == []            # 0 次工具呼叫仍可引用
@@ -152,7 +185,7 @@ async def test_model_forged_tool_call_id_outline_does_not_overwrite_seed():
     verifier = FakeVerifier()
     runtime = _runtime(provider=provider, registry=registry, verifier=verifier)
 
-    result = await runtime.run_turn(_identity(), "q", {"agent": {"outline": _outline()}})
+    result = await runtime.run_turn(_identity(), "q", _state(outline=_outline()))
 
     seen = verifier.calls[0]["tool_results"]
     assert seen[OUTLINE_TOOL_CALL_ID].provenance[0].source == "outline:lease"   # 種子沒被蓋
@@ -305,7 +338,7 @@ async def test_runtime_replaces_model_handoff_text_with_fixed_sentence_in_one_ll
     verifier = OutputVerifier(VerifierRules.load(_RULES_PATH))
     runtime = _runtime(provider=provider, registry=FakeRegistry(call_results=[]), verifier=verifier)
 
-    result = await runtime.run_turn(_identity(), "一個月多少錢", {"agent": {"outline": _outline()}})
+    result = await runtime.run_turn(_identity(), "一個月多少錢", _state(outline=_outline()))
 
     assert result.kind == "handoff"
     assert result.trace.llm_calls == 1                       # 不再兩拒耗盡
@@ -324,7 +357,7 @@ async def test_runtime_uses_fixed_sentence_even_when_handoff_carries_fabricated_
     verifier = OutputVerifier(VerifierRules.load(_RULES_PATH))
     runtime = _runtime(provider=provider, registry=FakeRegistry(call_results=[]), verifier=verifier)
 
-    result = await runtime.run_turn(_identity(), "一個月多少錢", {"agent": {"outline": _outline()}})
+    result = await runtime.run_turn(_identity(), "一個月多少錢", _state(outline=_outline()))
 
     assert result.kind == "handoff"
     assert result.answer == effective_handoff_message(None)
@@ -367,7 +400,7 @@ async def test_runtime_rejects_prefixless_outline_source_now_that_ref_is_copied_
     verifier = OutputVerifier(VerifierRules.load(_RULES_PATH))
     runtime = _runtime(provider=provider, registry=FakeRegistry(call_results=[]), verifier=verifier)
 
-    result = await runtime.run_turn(_identity(), "可以線上簽約嗎", {"agent": {"outline": _outline()}})
+    result = await runtime.run_turn(_identity(), "可以線上簽約嗎", _state(outline=_outline()))
 
     assert result.trace.verifier[0].reason == "SCHEMA"
     assert result.trace.verifier[0].schema_cause == "ref_source_not_found"
@@ -386,7 +419,7 @@ async def test_current_user_message_is_last_message_sent_to_model():
     provider = FakeProvider([_final_with_citation()])
     runtime = _runtime(provider=provider, registry=FakeRegistry(call_results=[]), verifier=FakeVerifier())
 
-    await runtime.run_turn(_identity(), "可以線上簽約嗎", {"agent": {"outline": _outline()}})
+    await runtime.run_turn(_identity(), "可以線上簽約嗎", _state(outline=_outline()))
 
     sent = provider.calls[0]["messages"]
     assert sent[-1] == {"role": "user", "content": "可以線上簽約嗎"}
@@ -400,7 +433,7 @@ async def test_turn_writes_user_and_assistant_into_dialog_and_next_turn_replays_
     assembler = FakeAssembler()
     runtime = _runtime(provider=provider, registry=FakeRegistry(call_results=[]),
                        verifier=FakeVerifier(), assembler=assembler)
-    state = {"agent": {"outline": _outline()}}
+    state = _state(outline=_outline())
 
     r1 = await runtime.run_turn(_identity(), "第一句", state)
     assert state["agent"]["dialog"] == [
@@ -422,7 +455,7 @@ async def test_dialog_is_trimmed_to_max_messages_and_fixed_sentence_is_recorded(
                        verifier=FakeVerifier([VerifierVerdict(ok=False, reason="SCHEMA")] * 3))
     old = [{"role": "user", "content": f"u{i}"} if i % 2 == 0 else {"role": "assistant", "content": f"a{i}"}
            for i in range(DIALOG_MAX_MESSAGES)]
-    state = {"agent": {"outline": _outline(), "dialog": list(old)}}
+    state = _state(outline=_outline(), dialog=list(old))
 
     # 預算 max_rewrites=2：第一次拒後就固定句（FakeProvider 只給一則回應，第二則不該被要）
     from services.agent.budget import Budget
@@ -488,7 +521,7 @@ async def test_schema_reject_feedback_names_the_actual_cause(first_response, exp
     verifier = OutputVerifier(VerifierRules.load(_RULES_PATH))
     runtime = _runtime(provider=provider, registry=FakeRegistry(call_results=[]), verifier=verifier)
 
-    result = await runtime.run_turn(_identity(), "可以線上簽約嗎", {"agent": {"outline": _outline()}})
+    result = await runtime.run_turn(_identity(), "可以線上簽約嗎", _state(outline=_outline()))
 
     assert result.trace.verifier[0].reason == "SCHEMA"
     feedback = provider.calls[1]["messages"][-1]
@@ -524,7 +557,7 @@ async def test_coverage_reject_feedback_tells_model_to_fix_unit_not_to_handoff()
     verifier = OutputVerifier(VerifierRules.load(_RULES_PATH))
     runtime = _runtime(provider=provider, registry=FakeRegistry(call_results=[]), verifier=verifier)
 
-    result = await runtime.run_turn(_identity(), "可以線上簽約嗎", {"agent": {"outline": _outline()}})
+    result = await runtime.run_turn(_identity(), "可以線上簽約嗎", _state(outline=_outline()))
 
     assert result.kind == "answer"
     fb = provider.calls[1]["messages"][-1]["content"]

@@ -1,0 +1,273 @@
+{
+  "cost": {
+    "agents": 0,
+    "completion_tokens": 0,
+    "prompt_tokens": 0,
+    "usd": 0.0,
+    "wall_s": 0.0
+  },
+  "deterministic": true,
+  "inputs_sha": {
+    "canon": "eea59cb97b580e9d073a80173f2e776959d94ecd575780056ff328ae2782bf0a",
+    "drafts": "37048dc7a5754049ecd19144fc6fac000e54b7df26d1274fe75e5284690f5bf9",
+    "kb": "a1cd8d1dad897f93af246a26fa1d1268fc71699a251a68a28b1d26b48ad9701c"
+  },
+  "payload": {
+    "drafts": [
+      {
+        "id": "help:qa01_zh-Hant拷貝.html",
+        "summary": "物件批次新增表格如何填寫？"
+      },
+      {
+        "id": "help:slug93",
+        "summary": "進階搜尋功能如何用?"
+      }
+    ],
+    "frozen_at": "2026-09-16T00:00:00Z",
+    "gapmap_cells": 0,
+    "kb_rows": [
+      {
+        "id": "jgb/C/community-batch-create",
+        "question_summary": "社區建立與批次新增物件"
+      },
+      {
+        "id": "jgb/C/property-management-overview",
+        "question_summary": "房源管理模組做什麼（含自訂狀態標籤）"
+      },
+      {
+        "id": "jgb/C/property-status-meaning",
+        "question_summary": "物件狀態（未刊登／刊登中／洽談中／合約中）是什麼意思"
+      },
+      {
+        "id": "jgb/C/rental-storefront-vr",
+        "question_summary": "招租店舖與 VR 看屋"
+      },
+      {
+        "id": "1396",
+        "question_summary": "社區公共設施有哪些"
+      },
+      {
+        "id": "3011",
+        "question_summary": "公益出租人減稅"
+      },
+      {
+        "id": "3049",
+        "question_summary": "公共設施使用權"
+      },
+      {
+        "id": "3050",
+        "question_summary": "公共設施義務"
+      },
+      {
+        "id": "3051",
+        "question_summary": "洗衣機使用規範"
+      },
+      {
+        "id": "3052",
+        "question_summary": "烘衣機使用規範"
+      },
+      {
+        "id": "3053",
+        "question_summary": "垃圾分類規範"
+      },
+      {
+        "id": "3054",
+        "question_summary": "垃圾回收時間"
+      },
+      {
+        "id": "3055",
+        "question_summary": "大型廢棄物處理"
+      },
+      {
+        "id": "3056",
+        "question_summary": "公共設施開放時間"
+      },
+      {
+        "id": "3057",
+        "question_summary": "公共設施損壞"
+      },
+      {
+        "id": "3058",
+        "question_summary": "公共設施使用"
+      },
+      {
+        "id": "3059",
+        "question_summary": "公共設施使用費用"
+      },
+      {
+        "id": "3060",
+        "question_summary": "公共設施規範"
+      },
+      {
+        "id": "3061",
+        "question_summary": "公共設施使用規範"
+      },
+      {
+        "id": "3062",
+        "question_summary": "公共設施爭議解決"
+      },
+      {
+        "id": "3063",
+        "question_summary": "公共設施使用變更"
+      },
+      {
+        "id": "3064",
+        "question_summary": "公共設施保險"
+      },
+      {
+        "id": "3157",
+        "question_summary": "社區活動"
+      },
+      {
+        "id": "3245",
+        "question_summary": "公共設施使用義務"
+      },
+      {
+        "id": "3246",
+        "question_summary": "社區設施開放"
+      },
+      {
+        "id": "3247",
+        "question_summary": "公共設施使用規則"
+      },
+      {
+        "id": "3248",
+        "question_summary": "公共設施安全規範"
+      },
+      {
+        "id": "3249",
+        "question_summary": "公共設施爭議"
+      },
+      {
+        "id": "3263",
+        "question_summary": "社會住宅社區服務"
+      },
+      {
+        "id": "3299",
+        "question_summary": "公共設施費用"
+      },
+      {
+        "id": "3300",
+        "question_summary": "公共設施投保"
+      },
+      {
+        "id": "3357",
+        "question_summary": "物件 批次匯入 上傳"
+      },
+      {
+        "id": "3358",
+        "question_summary": "大房東 邀請 授權 物件"
+      },
+      {
+        "id": "3428",
+        "question_summary": "物件狀態 定義條件"
+      },
+      {
+        "id": "3429",
+        "question_summary": "物件刊登 上架條件"
+      },
+      {
+        "id": "3430",
+        "question_summary": "物件下架 條件流程"
+      },
+      {
+        "id": "3431",
+        "question_summary": "物件批次匯入 Excel 建立"
+      },
+      {
+        "id": "3433",
+        "question_summary": "物件 VR 虛擬導覽"
+      },
+      {
+        "id": "3434",
+        "question_summary": "物件自訂標籤 分類管理"
+      },
+      {
+        "id": "3456",
+        "question_summary": "物件數量上限 額度不足"
+      },
+      {
+        "id": "3468",
+        "question_summary": "社區管理 建立編輯"
+      },
+      {
+        "id": "3469",
+        "question_summary": "社區與物件關係 綁定"
+      },
+      {
+        "id": "3470",
+        "question_summary": "社區公開頁面 廣告展示"
+      },
+      {
+        "id": "3505",
+        "question_summary": "為什麼不能新增物件"
+      },
+      {
+        "id": "3506",
+        "question_summary": "物件為什麼突然全部下架"
+      },
+      {
+        "id": "3973",
+        "question_summary": "成員看不到社區物件 無法新增"
+      },
+      {
+        "id": "4145",
+        "question_summary": "對外顯示地址 沒生效 還是完整地址"
+      },
+      {
+        "id": "4146",
+        "question_summary": "招租店舖 房東對外首頁 入口 分享"
+      },
+      {
+        "id": "4147",
+        "question_summary": "編輯物件 刊登物件 差異 儲存"
+      },
+      {
+        "id": "4151",
+        "question_summary": "物件要怎麼刊登 上架流程"
+      },
+      {
+        "id": "4152",
+        "question_summary": "改了對外顯示地址 怎麼還是顯示完整地址"
+      },
+      {
+        "id": "4154",
+        "question_summary": "這個物件現在什麼狀態 租客看得到嗎"
+      },
+      {
+        "id": "4262",
+        "question_summary": "社區設施 公共設施 健身房 交誼廳"
+      },
+      {
+        "id": "4276",
+        "question_summary": "社區有哪些公共設施可以用"
+      },
+      {
+        "id": "4648",
+        "question_summary": "即時物件出租率 百分比怎麼算 已出租數字來源"
+      },
+      {
+        "id": "2980",
+        "question_summary": "公共區域使用權限"
+      },
+      {
+        "id": "4272",
+        "question_summary": "管理員會代收包裹嗎"
+      }
+    ],
+    "mode": "expand",
+    "object_under_test": {
+      "approved_by": "",
+      "frozen_at": "2026-09-16T00:00:00Z",
+      "materials": [
+        ".claude/skills/outline-curation/runs/C-20260916/kb-rows.json",
+        ".claude/skills/outline-curation/runs/C-20260916/help-pages.json",
+        "../app/canon/jgb"
+      ]
+    },
+    "shelf": "C"
+  },
+  "raw_outputs_path": null,
+  "skill_version": "0.1.0",
+  "step": "intake"
+}

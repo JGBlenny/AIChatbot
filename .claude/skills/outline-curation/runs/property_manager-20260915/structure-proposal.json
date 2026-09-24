@@ -1,0 +1,1297 @@
+{
+  "cost": {
+    "agents": 4,
+    "completion_tokens": 0,
+    "prompt_tokens": 0,
+    "usd": 0.0,
+    "wall_s": 0.0
+  },
+  "deterministic": false,
+  "inputs_sha": {
+    "coarses": "75473ff6721563385aa3c8de723a8ac16492a2efd624a7a26641ecae5cf8ebe2",
+    "kb": "3fa692117de4b2d49d0f65aac2f9e044897a9e0db5c1fbdebc8df75788a899f3"
+  },
+  "payload": {
+    "proposals": [
+      {
+        "angle": "user_question_path",
+        "coarses": [
+          {
+            "id": "A",
+            "title": "帳號與身分"
+          },
+          {
+            "id": "B",
+            "title": "團隊、人員與大房東"
+          },
+          {
+            "id": "C",
+            "title": "社區與物件"
+          },
+          {
+            "id": "D",
+            "title": "租約（含委託約子題）"
+          },
+          {
+            "id": "E",
+            "title": "帳務（含發票、收款金流、抄表）"
+          },
+          {
+            "id": "F",
+            "title": "修繕"
+          },
+          {
+            "id": "G",
+            "title": "裝置（IoT）"
+          },
+          {
+            "id": "H",
+            "title": "幫助中心"
+          },
+          {
+            "id": "I",
+            "title": "方案與導入"
+          }
+        ],
+        "fines": [
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/repair-ticket-open-and-confirm",
+            "merge_of": [
+              "tmp:kb:property_manager/A/repair-ticket-photo-flow"
+            ],
+            "moved_from": [],
+            "reason": "使用者問「怎麼報修／要不要拍照／什麼時候才算建單」落此一處，主題是修繕故歸 F。",
+            "slug": "repair-ticket-open-and-confirm",
+            "split_from": [],
+            "title": "怎麼開修繕單：拍照或口述進場與確認送出機制"
+          },
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/repair-ticket-photo-recognition-uncertain",
+            "merge_of": [
+              "tmp:kb:property_manager/A/repair-ticket-low-confidence-candidates",
+              "tmp:kb:property_manager/A/repair-ticket-unrecognizable-photo"
+            ],
+            "moved_from": [],
+            "reason": "使用者問「照片認不出來怎麼辦」是同一個問題路徑，信心不足給候選與完全看不出留白是同一答案的兩個分支。",
+            "slug": "repair-ticket-photo-recognition-uncertain",
+            "split_from": [],
+            "title": "照片辨識不確定或看不出損壞時系統怎麼處理"
+          },
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/repair-ticket-reclassify",
+            "merge_of": [
+              "tmp:kb:property_manager/A/repair-ticket-reclassify"
+            ],
+            "moved_from": [],
+            "reason": "「分類錯了要怎麼改」是確認卡尚在時的獨立問題，與辨識不確定的處理不同。",
+            "slug": "repair-ticket-reclassify",
+            "split_from": [],
+            "title": "辨識分類錯了怎麼修改"
+          },
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/repair-ticket-photo-count-limit",
+            "merge_of": [
+              "tmp:kb:property_manager/A/repair-ticket-photo-count-limit"
+            ],
+            "moved_from": [],
+            "reason": "「可以傳幾張照片、多的會不會留」是獨立可答的單一問題。",
+            "slug": "repair-ticket-photo-count-limit",
+            "split_from": [],
+            "title": "報修可以傳幾張照片"
+          },
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/repair-ticket-urgency-judgment",
+            "merge_of": [
+              "tmp:kb:property_manager/A/repair-ticket-urgency-judgment"
+            ],
+            "moved_from": [],
+            "reason": "「急不急是誰決定的、沒說會怎樣」是獨立問題。",
+            "slug": "repair-ticket-urgency-judgment",
+            "split_from": [],
+            "title": "修繕單的急迫程度怎麼判定"
+          },
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/repair-ticket-no-lease",
+            "merge_of": [
+              "tmp:kb:property_manager/A/repair-ticket-agent-identity-lease-lookup",
+              "tmp:kb:property_manager/A/repair-ticket-vacant-no-lease"
+            ],
+            "moved_from": [],
+            "reason": "「空屋／查不到租約能不能開單」是同一問題路徑，答案同為合約欄位留空照開且開單人由系統帶入。",
+            "slug": "repair-ticket-no-lease",
+            "split_from": [],
+            "title": "沒有租約或查不到租約可以開修繕單嗎"
+          },
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/repair-ticket-mid-flow-cancel",
+            "merge_of": [
+              "tmp:kb:property_manager/A/repair-ticket-mid-flow-cancel"
+            ],
+            "moved_from": [],
+            "reason": "「中途不報了會不會留單」是獨立問題。",
+            "slug": "repair-ticket-mid-flow-cancel",
+            "split_from": [],
+            "title": "報修進行到一半想取消"
+          },
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/repair-ticket-submit-failure",
+            "merge_of": [
+              "tmp:kb:property_manager/A/repair-ticket-submit-failure"
+            ],
+            "moved_from": [],
+            "reason": "「送出失敗要怎麼重試、會不會重複建單」是獨立問題。",
+            "slug": "repair-ticket-submit-failure",
+            "split_from": [],
+            "title": "建單失敗或重複按確認會怎樣"
+          },
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/repair-ticket-after-submit",
+            "merge_of": [
+              "tmp:kb:property_manager/A/repair-ticket-after-submit"
+            ],
+            "moved_from": [],
+            "reason": "「已送出的單還能改嗎、再報一個算新單嗎」是送出後的獨立問題。",
+            "slug": "repair-ticket-after-submit",
+            "split_from": [],
+            "title": "送出後想改內容或再報同一戶另一個問題"
+          },
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/repair-ticket-status-inquiry",
+            "merge_of": [
+              "tmp:kb:property_manager/C/urgent-repair-followup-scope"
+            ],
+            "moved_from": [],
+            "reason": "「我的修繕單現在怎樣了」是查詢範圍問題，主題是修繕故歸 F。",
+            "slug": "repair-ticket-status-inquiry",
+            "split_from": [],
+            "title": "修繕進度可以查到什麼"
+          },
+          {
+            "coarse_id": "E",
+            "id": "property_manager/E/dunning-draft-generation",
+            "merge_of": [
+              "tmp:kb:property_manager/B/dunning-draft-generation"
+            ],
+            "moved_from": [],
+            "reason": "「幫我寫催繳、語氣怎麼定、數字從哪來」落此一處，催繳是收款金流子題故歸 E。",
+            "slug": "dunning-draft-generation",
+            "split_from": [],
+            "title": "催繳草稿怎麼產生與語氣分級"
+          },
+          {
+            "coarse_id": "E",
+            "id": "property_manager/E/dunning-draft-late-fee-mention",
+            "merge_of": [
+              "tmp:kb:property_manager/B/dunning-draft-late-fee-mention"
+            ],
+            "moved_from": [],
+            "reason": "「催繳會不會寫滯納金」是獨立追問，隨催繳草稿歸 E。",
+            "slug": "dunning-draft-late-fee-mention",
+            "split_from": [],
+            "title": "催繳草稿會不會提到滯納金"
+          },
+          {
+            "coarse_id": "E",
+            "id": "property_manager/E/dunning-draft-not-auto-send",
+            "merge_of": [
+              "tmp:kb:property_manager/B/dunning-draft-not-auto-send"
+            ],
+            "moved_from": [],
+            "reason": "「能不能一鍵發送」是獨立問題，隨催繳草稿歸 E。",
+            "slug": "dunning-draft-not-auto-send",
+            "split_from": [],
+            "title": "催繳草稿可以直接發給租客嗎"
+          },
+          {
+            "coarse_id": "E",
+            "id": "property_manager/E/overdue-bill-inquiry",
+            "merge_of": [
+              "tmp:kb:property_manager/C/overdue-bill-followup-scope"
+            ],
+            "moved_from": [],
+            "reason": "「哪些帳單逾期、逾期幾天、滯納金多少」出現在帳單列上故歸 E。",
+            "slug": "overdue-bill-inquiry",
+            "split_from": [],
+            "title": "逾期帳單可以問到什麼"
+          },
+          {
+            "coarse_id": "D",
+            "id": "property_manager/D/lease-expiry-renewal-inquiry",
+            "merge_of": [
+              "tmp:kb:property_manager/C/lease-expiry-followup-scope"
+            ],
+            "moved_from": [],
+            "reason": "「預告期到了沒、距到期幾天、租客要不要續」由合約條款決定故歸 D。",
+            "slug": "lease-expiry-renewal-inquiry",
+            "split_from": [],
+            "title": "合約快到期可以問到什麼"
+          },
+          {
+            "coarse_id": "G",
+            "id": "property_manager/G/meter-balance-inquiry",
+            "merge_of": [
+              "tmp:kb:property_manager/C/meter-item-followup-scope"
+            ],
+            "moved_from": [],
+            "reason": "「電錶還有多少度、還能用幾天」是裝置查詢問題故歸 G。",
+            "slug": "meter-balance-inquiry",
+            "split_from": [],
+            "title": "電錶餘額與供電可以問到什麼"
+          }
+        ],
+        "id_map": [
+          {
+            "new": "property_manager/F/repair-ticket-open-and-confirm",
+            "old": "tmp:kb:property_manager/A/repair-ticket-photo-flow",
+            "op": "move"
+          },
+          {
+            "new": "property_manager/F/repair-ticket-photo-recognition-uncertain",
+            "old": "tmp:kb:property_manager/A/repair-ticket-low-confidence-candidates",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/repair-ticket-photo-recognition-uncertain",
+            "old": "tmp:kb:property_manager/A/repair-ticket-unrecognizable-photo",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/repair-ticket-reclassify",
+            "old": "tmp:kb:property_manager/A/repair-ticket-reclassify",
+            "op": "move"
+          },
+          {
+            "new": "property_manager/F/repair-ticket-photo-count-limit",
+            "old": "tmp:kb:property_manager/A/repair-ticket-photo-count-limit",
+            "op": "move"
+          },
+          {
+            "new": "property_manager/F/repair-ticket-urgency-judgment",
+            "old": "tmp:kb:property_manager/A/repair-ticket-urgency-judgment",
+            "op": "move"
+          },
+          {
+            "new": "property_manager/F/repair-ticket-no-lease",
+            "old": "tmp:kb:property_manager/A/repair-ticket-agent-identity-lease-lookup",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/repair-ticket-no-lease",
+            "old": "tmp:kb:property_manager/A/repair-ticket-vacant-no-lease",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/repair-ticket-mid-flow-cancel",
+            "old": "tmp:kb:property_manager/A/repair-ticket-mid-flow-cancel",
+            "op": "move"
+          },
+          {
+            "new": "property_manager/F/repair-ticket-submit-failure",
+            "old": "tmp:kb:property_manager/A/repair-ticket-submit-failure",
+            "op": "move"
+          },
+          {
+            "new": "property_manager/F/repair-ticket-after-submit",
+            "old": "tmp:kb:property_manager/A/repair-ticket-after-submit",
+            "op": "move"
+          },
+          {
+            "new": "property_manager/F/repair-ticket-status-inquiry",
+            "old": "tmp:kb:property_manager/C/urgent-repair-followup-scope",
+            "op": "move"
+          },
+          {
+            "new": "property_manager/E/dunning-draft-generation",
+            "old": "tmp:kb:property_manager/B/dunning-draft-generation",
+            "op": "move"
+          },
+          {
+            "new": "property_manager/E/dunning-draft-late-fee-mention",
+            "old": "tmp:kb:property_manager/B/dunning-draft-late-fee-mention",
+            "op": "move"
+          },
+          {
+            "new": "property_manager/E/dunning-draft-not-auto-send",
+            "old": "tmp:kb:property_manager/B/dunning-draft-not-auto-send",
+            "op": "move"
+          },
+          {
+            "new": "property_manager/E/overdue-bill-inquiry",
+            "old": "tmp:kb:property_manager/C/overdue-bill-followup-scope",
+            "op": "move"
+          },
+          {
+            "new": "property_manager/D/lease-expiry-renewal-inquiry",
+            "old": "tmp:kb:property_manager/C/lease-expiry-followup-scope",
+            "op": "move"
+          },
+          {
+            "new": "property_manager/G/meter-balance-inquiry",
+            "old": "tmp:kb:property_manager/C/meter-item-followup-scope",
+            "op": "move"
+          }
+        ]
+      },
+      {
+        "angle": "content_boundary",
+        "coarses": [
+          {
+            "id": "A",
+            "title": "帳號與身分"
+          },
+          {
+            "id": "B",
+            "title": "團隊、人員與大房東"
+          },
+          {
+            "id": "C",
+            "title": "社區與物件"
+          },
+          {
+            "id": "D",
+            "title": "租約（含委託約子題）"
+          },
+          {
+            "id": "E",
+            "title": "帳務（含發票、收款金流、抄表）"
+          },
+          {
+            "id": "F",
+            "title": "修繕"
+          },
+          {
+            "id": "G",
+            "title": "裝置（IoT）"
+          },
+          {
+            "id": "H",
+            "title": "幫助中心"
+          },
+          {
+            "id": "I",
+            "title": "方案與導入"
+          }
+        ],
+        "fines": [
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/repair-ticket-open-flow-confirm",
+            "merge_of": [
+              "tmp:kb:property_manager/A/repair-ticket-photo-flow"
+            ],
+            "moved_from": [],
+            "reason": "進場方式與「只有確認送出才建單」的確認機制互相依賴才完整，獨立成一細目；主題是修繕開單，歸修繕。",
+            "slug": "repair-ticket-open-flow-confirm",
+            "split_from": [],
+            "title": "開修繕單基本流程與確認機制（拍照進場／文字口述）"
+          },
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/repair-ticket-mid-flow-cancel",
+            "merge_of": [
+              "tmp:kb:property_manager/A/repair-ticket-mid-flow-cancel"
+            ],
+            "moved_from": [],
+            "reason": "取消觸發詞與結果可獨立回答，與開單流程主題不同，不併入。",
+            "slug": "repair-ticket-mid-flow-cancel",
+            "split_from": [],
+            "title": "報修流程中途取消的規則"
+          },
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/repair-ticket-after-submit",
+            "merge_of": [
+              "tmp:kb:property_manager/A/repair-ticket-after-submit"
+            ],
+            "moved_from": [],
+            "reason": "送出後不可對話修改與同戶另一問題視為新單，兩句同屬「送出後」邊界且互相補足，自成一細目。",
+            "slug": "repair-ticket-after-submit",
+            "split_from": [],
+            "title": "確認送出後的單如何處理"
+          },
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/repair-ticket-reclassify",
+            "merge_of": [
+              "tmp:kb:property_manager/A/repair-ticket-reclassify"
+            ],
+            "moved_from": [],
+            "reason": "「我要修改」只重確認被改項目可獨立成立，與送出後處理是不同階段的主題。",
+            "slug": "repair-ticket-reclassify",
+            "split_from": [],
+            "title": "確認卡上修改辨識結果的規則"
+          },
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/repair-ticket-submit-failure",
+            "merge_of": [
+              "tmp:kb:property_manager/A/repair-ticket-submit-failure"
+            ],
+            "moved_from": [],
+            "reason": "失敗告知、再試一次、同會話不重複建單三句互相依賴才完整，獨立為一細目。",
+            "slug": "repair-ticket-submit-failure",
+            "split_from": [],
+            "title": "建單失敗時的處理與重試規則"
+          },
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/repair-ticket-urgency-judgment",
+            "merge_of": [
+              "tmp:kb:property_manager/A/repair-ticket-urgency-judgment"
+            ],
+            "moved_from": [],
+            "reason": "急迫來源、預設非緊急與資料庫值域同屬一個可獨立回答的主題。",
+            "slug": "repair-ticket-urgency-judgment",
+            "split_from": [],
+            "title": "修繕單急迫程度的判斷來源與值域"
+          },
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/repair-ticket-photo-count-limit",
+            "merge_of": [
+              "tmp:kb:property_manager/A/repair-ticket-photo-count-limit"
+            ],
+            "moved_from": [],
+            "reason": "辨識用 3 張與附件保存全部照片互為對照才完整，且與辨識結果處理主題不同。",
+            "slug": "repair-ticket-photo-count-limit",
+            "split_from": [],
+            "title": "修繕辨識與附件的照片張數限制"
+          },
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/repair-ticket-low-confidence-candidates",
+            "merge_of": [
+              "tmp:kb:property_manager/A/repair-ticket-low-confidence-candidates"
+            ],
+            "moved_from": [],
+            "reason": "信心不足給候選類別可獨立成立，與「看不出損壞」的留白規則結果不同，不合併。",
+            "slug": "repair-ticket-low-confidence-candidates",
+            "split_from": [],
+            "title": "照片辨識信心不足時的候選類別流程"
+          },
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/repair-ticket-unrecognizable-photo",
+            "merge_of": [
+              "tmp:kb:property_manager/A/repair-ticket-unrecognizable-photo"
+            ],
+            "moved_from": [],
+            "reason": "看不出損壞則描述留空、不得推測，自身完整且主題與候選類別流程不同。",
+            "slug": "repair-ticket-unrecognizable-photo",
+            "split_from": [],
+            "title": "照片看不出損壞時的留白規則"
+          },
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/repair-ticket-no-lease-open",
+            "merge_of": [
+              "tmp:kb:property_manager/A/repair-ticket-agent-identity-lease-lookup",
+              "tmp:kb:property_manager/A/repair-ticket-vacant-no-lease"
+            ],
+            "moved_from": [],
+            "reason": "兩項內容重疊於「查不到租約時合約欄位留空、照常開單」，互相依賴才完整，合併為一細目。",
+            "slug": "repair-ticket-no-lease-open",
+            "split_from": [],
+            "title": "代開單時的租約查詢身分與無租約物件開單規則"
+          },
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/repair-progress-followup-scope",
+            "merge_of": [
+              "tmp:kb:property_manager/C/urgent-repair-followup-scope"
+            ],
+            "moved_from": [],
+            "reason": "修繕進度可查欄位為獨立可答主題，屬修繕領域而非社區與物件。",
+            "slug": "repair-progress-followup-scope",
+            "split_from": [],
+            "title": "修繕進度追問可答範圍"
+          },
+          {
+            "coarse_id": "E",
+            "id": "property_manager/E/dunning-draft-template-tone-late-fee",
+            "merge_of": [
+              "tmp:kb:property_manager/B/dunning-draft-generation",
+              "tmp:kb:property_manager/B/dunning-draft-late-fee-mention"
+            ],
+            "moved_from": [],
+            "reason": "滯納金提及規則引用語氣分級才能成立，兩者互相依賴才完整，合併；催繳屬收款金流，歸帳務。",
+            "slug": "dunning-draft-template-tone-late-fee",
+            "split_from": [],
+            "title": "催繳草稿的生成規則（模板、語氣分級與滯納金提及）"
+          },
+          {
+            "coarse_id": "E",
+            "id": "property_manager/E/dunning-draft-not-auto-send",
+            "merge_of": [
+              "tmp:kb:property_manager/B/dunning-draft-not-auto-send"
+            ],
+            "moved_from": [],
+            "reason": "草稿只給業務、不設一鍵發送可獨立回答，與草稿內容生成主題不同。",
+            "slug": "dunning-draft-not-auto-send",
+            "split_from": [],
+            "title": "催繳草稿不可一鍵發送給租客"
+          },
+          {
+            "coarse_id": "E",
+            "id": "property_manager/E/overdue-bill-followup-scope",
+            "merge_of": [
+              "tmp:kb:property_manager/C/overdue-bill-followup-scope"
+            ],
+            "moved_from": [],
+            "reason": "帳單狀態、金額、逾期明細與滯納金推算為獨立可答主題，出現在帳單列上歸帳務。",
+            "slug": "overdue-bill-followup-scope",
+            "split_from": [],
+            "title": "逾期帳單追問可答範圍"
+          },
+          {
+            "coarse_id": "D",
+            "id": "property_manager/D/lease-expiry-followup-scope",
+            "merge_of": [
+              "tmp:kb:property_manager/C/lease-expiry-followup-scope"
+            ],
+            "moved_from": [],
+            "reason": "預告期與到期天數由合約條款決定，獨立可答，歸租約。",
+            "slug": "lease-expiry-followup-scope",
+            "split_from": [],
+            "title": "合約到期追問可答範圍（導向續約面向）"
+          },
+          {
+            "coarse_id": "G",
+            "id": "property_manager/G/meter-item-followup-scope",
+            "merge_of": [
+              "tmp:kb:property_manager/C/meter-item-followup-scope"
+            ],
+            "moved_from": [],
+            "reason": "電錶餘額、供電與推算天數為獨立可答主題，屬智慧設備領域，歸裝置。",
+            "slug": "meter-item-followup-scope",
+            "split_from": [],
+            "title": "電錶項目追問可答範圍（導向電表排障面向）"
+          }
+        ],
+        "id_map": [
+          {
+            "new": "property_manager/F/repair-ticket-open-flow-confirm",
+            "old": "tmp:kb:property_manager/A/repair-ticket-photo-flow",
+            "op": "move"
+          },
+          {
+            "new": "property_manager/F/repair-ticket-mid-flow-cancel",
+            "old": "tmp:kb:property_manager/A/repair-ticket-mid-flow-cancel",
+            "op": "move"
+          },
+          {
+            "new": "property_manager/F/repair-ticket-after-submit",
+            "old": "tmp:kb:property_manager/A/repair-ticket-after-submit",
+            "op": "move"
+          },
+          {
+            "new": "property_manager/F/repair-ticket-reclassify",
+            "old": "tmp:kb:property_manager/A/repair-ticket-reclassify",
+            "op": "move"
+          },
+          {
+            "new": "property_manager/F/repair-ticket-submit-failure",
+            "old": "tmp:kb:property_manager/A/repair-ticket-submit-failure",
+            "op": "move"
+          },
+          {
+            "new": "property_manager/F/repair-ticket-urgency-judgment",
+            "old": "tmp:kb:property_manager/A/repair-ticket-urgency-judgment",
+            "op": "move"
+          },
+          {
+            "new": "property_manager/F/repair-ticket-photo-count-limit",
+            "old": "tmp:kb:property_manager/A/repair-ticket-photo-count-limit",
+            "op": "move"
+          },
+          {
+            "new": "property_manager/F/repair-ticket-low-confidence-candidates",
+            "old": "tmp:kb:property_manager/A/repair-ticket-low-confidence-candidates",
+            "op": "move"
+          },
+          {
+            "new": "property_manager/F/repair-ticket-unrecognizable-photo",
+            "old": "tmp:kb:property_manager/A/repair-ticket-unrecognizable-photo",
+            "op": "move"
+          },
+          {
+            "new": "property_manager/F/repair-ticket-no-lease-open",
+            "old": "tmp:kb:property_manager/A/repair-ticket-agent-identity-lease-lookup",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/repair-ticket-no-lease-open",
+            "old": "tmp:kb:property_manager/A/repair-ticket-vacant-no-lease",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/repair-progress-followup-scope",
+            "old": "tmp:kb:property_manager/C/urgent-repair-followup-scope",
+            "op": "move"
+          },
+          {
+            "new": "property_manager/E/dunning-draft-template-tone-late-fee",
+            "old": "tmp:kb:property_manager/B/dunning-draft-generation",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/E/dunning-draft-template-tone-late-fee",
+            "old": "tmp:kb:property_manager/B/dunning-draft-late-fee-mention",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/E/dunning-draft-not-auto-send",
+            "old": "tmp:kb:property_manager/B/dunning-draft-not-auto-send",
+            "op": "move"
+          },
+          {
+            "new": "property_manager/E/overdue-bill-followup-scope",
+            "old": "tmp:kb:property_manager/C/overdue-bill-followup-scope",
+            "op": "move"
+          },
+          {
+            "new": "property_manager/D/lease-expiry-followup-scope",
+            "old": "tmp:kb:property_manager/C/lease-expiry-followup-scope",
+            "op": "move"
+          },
+          {
+            "new": "property_manager/G/meter-item-followup-scope",
+            "old": "tmp:kb:property_manager/C/meter-item-followup-scope",
+            "op": "move"
+          }
+        ]
+      },
+      {
+        "angle": "audience_level",
+        "coarses": [
+          {
+            "id": "A",
+            "title": "帳號與身分"
+          },
+          {
+            "id": "B",
+            "title": "團隊、人員與大房東"
+          },
+          {
+            "id": "C",
+            "title": "社區與物件"
+          },
+          {
+            "id": "D",
+            "title": "租約（含委託約子題）"
+          },
+          {
+            "id": "E",
+            "title": "帳務（含發票、收款金流、抄表）"
+          },
+          {
+            "id": "F",
+            "title": "修繕"
+          },
+          {
+            "id": "G",
+            "title": "裝置（IoT）"
+          },
+          {
+            "id": "H",
+            "title": "幫助中心"
+          },
+          {
+            "id": "I",
+            "title": "方案與導入"
+          }
+        ],
+        "fines": [
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/repair-ticket-confirm-flow",
+            "merge_of": [
+              "tmp:kb:property_manager/A/repair-ticket-photo-flow",
+              "tmp:kb:property_manager/A/repair-ticket-reclassify",
+              "tmp:kb:property_manager/A/repair-ticket-mid-flow-cancel"
+            ],
+            "moved_from": [],
+            "reason": "同為業務在送出前的操作層動作（進場出確認摘要、我要修改、取消），同一主題只留操作層一個細目；辨識能力與身分條件另見。",
+            "slug": "repair-ticket-confirm-flow",
+            "split_from": [],
+            "title": "開修繕單的確認流程（操作層：進場、修改、取消）"
+          },
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/repair-ticket-after-submit-handling",
+            "merge_of": [
+              "tmp:kb:property_manager/A/repair-ticket-after-submit",
+              "tmp:kb:property_manager/A/repair-ticket-submit-failure"
+            ],
+            "moved_from": [],
+            "reason": "同為按下確認送出之後的操作層處理（已送出不改、同戶另問視為新單、失敗重試不重複建單），與送出前流程分主題。",
+            "slug": "repair-ticket-after-submit-handling",
+            "split_from": [],
+            "title": "修繕單送出後與建單失敗的處理（操作層）"
+          },
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/repair-ticket-photo-recognition-capability",
+            "merge_of": [
+              "tmp:kb:property_manager/A/repair-ticket-photo-count-limit",
+              "tmp:kb:property_manager/A/repair-ticket-low-confidence-candidates",
+              "tmp:kb:property_manager/A/repair-ticket-unrecognizable-photo"
+            ],
+            "moved_from": [],
+            "reason": "三者都在描述系統辨識能做到哪裡、做不到時怎麼留白，屬能力層同一主題，合併為一；確認流程的操作步驟另見。",
+            "slug": "repair-ticket-photo-recognition-capability",
+            "split_from": [],
+            "title": "照片辨識能力與邊界（能力層：張數上限、信心不足、看不出損壞）"
+          },
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/repair-ticket-urgency-rule",
+            "merge_of": [
+              "tmp:kb:property_manager/A/repair-ticket-urgency-judgment"
+            ],
+            "moved_from": [],
+            "reason": "急迫程度是系統欄位的判定規則與值域，屬能力層獨立主題，不併入照片辨識能力。",
+            "slug": "repair-ticket-urgency-rule",
+            "split_from": [],
+            "title": "修繕單急迫程度的判定來源與預設值（能力層）"
+          },
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/repair-ticket-lease-identity-condition",
+            "merge_of": [
+              "tmp:kb:property_manager/A/repair-ticket-agent-identity-lease-lookup",
+              "tmp:kb:property_manager/A/repair-ticket-vacant-no-lease"
+            ],
+            "moved_from": [],
+            "reason": "兩者都在回答業務能否在無租約／非本人身分下開單，屬權益層同一主題（查不到租約不中止、合約欄位留空），合併為一。",
+            "slug": "repair-ticket-lease-identity-condition",
+            "split_from": [],
+            "title": "業務代開修繕單的身分與租約條件（權益層）"
+          },
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/repair-ticket-progress-query-scope",
+            "merge_of": [
+              "tmp:kb:property_manager/C/urgent-repair-followup-scope"
+            ],
+            "moved_from": [],
+            "reason": "回答業務對既有修繕單能追問到哪些欄位，屬能力層；開單操作另見確認流程細目。",
+            "slug": "repair-ticket-progress-query-scope",
+            "split_from": [],
+            "title": "修繕進度可查範圍（能力層）"
+          },
+          {
+            "coarse_id": "E",
+            "id": "property_manager/E/dunning-draft-content-rules",
+            "merge_of": [
+              "tmp:kb:property_manager/B/dunning-draft-generation",
+              "tmp:kb:property_manager/B/dunning-draft-late-fee-mention"
+            ],
+            "moved_from": [],
+            "reason": "催繳是收款金流子題歸帳務；模板結構、語氣分級與是否提滯納金都是系統生成草稿的能力層規則，同一主題合併為一。",
+            "slug": "dunning-draft-content-rules",
+            "split_from": [],
+            "title": "催繳草稿內容規則（能力層：模板、語氣分級、滯納金提及）"
+          },
+          {
+            "coarse_id": "E",
+            "id": "property_manager/E/dunning-draft-recipient-rights",
+            "merge_of": [
+              "tmp:kb:property_manager/B/dunning-draft-not-auto-send"
+            ],
+            "moved_from": [],
+            "reason": "誰能收到草稿、能否直接發送是權益層命題，與草稿內容能力層分主題；內容規則另見。",
+            "slug": "dunning-draft-recipient-rights",
+            "split_from": [],
+            "title": "催繳草稿只給業務、不可一鍵發送租客（權益層）"
+          },
+          {
+            "coarse_id": "E",
+            "id": "property_manager/E/overdue-bill-query-scope",
+            "merge_of": [
+              "tmp:kb:property_manager/C/overdue-bill-followup-scope"
+            ],
+            "moved_from": [],
+            "reason": "帳單狀態、金額、到期日與逾期明細出現在帳單列上歸帳務；本細目是業務能查到什麼的能力層。",
+            "slug": "overdue-bill-query-scope",
+            "split_from": [],
+            "title": "逾期帳單可查範圍（能力層）"
+          },
+          {
+            "coarse_id": "D",
+            "id": "property_manager/D/lease-expiry-renewal-query-scope",
+            "merge_of": [
+              "tmp:kb:property_manager/C/lease-expiry-followup-scope"
+            ],
+            "moved_from": [],
+            "reason": "預告期與距到期天數由合約條款決定歸租約；本細目是系統能依合約答到哪裡、哪些需業務自問的能力層。",
+            "slug": "lease-expiry-renewal-query-scope",
+            "split_from": [],
+            "title": "合約到期與續約追問可答範圍（能力層）"
+          },
+          {
+            "coarse_id": "G",
+            "id": "property_manager/G/meter-balance-query-scope",
+            "merge_of": [
+              "tmp:kb:property_manager/C/meter-item-followup-scope"
+            ],
+            "moved_from": [],
+            "reason": "電錶餘額、可用度數、是否供電是裝置本身的資料歸 IoT；本細目是系統能查與能推算的能力層邊界。",
+            "slug": "meter-balance-query-scope",
+            "split_from": [],
+            "title": "電錶餘額與供電追問可答範圍（能力層）"
+          }
+        ],
+        "id_map": [
+          {
+            "new": "property_manager/F/repair-ticket-confirm-flow",
+            "old": "tmp:kb:property_manager/A/repair-ticket-photo-flow",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/repair-ticket-confirm-flow",
+            "old": "tmp:kb:property_manager/A/repair-ticket-reclassify",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/repair-ticket-confirm-flow",
+            "old": "tmp:kb:property_manager/A/repair-ticket-mid-flow-cancel",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/repair-ticket-after-submit-handling",
+            "old": "tmp:kb:property_manager/A/repair-ticket-after-submit",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/repair-ticket-after-submit-handling",
+            "old": "tmp:kb:property_manager/A/repair-ticket-submit-failure",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/repair-ticket-photo-recognition-capability",
+            "old": "tmp:kb:property_manager/A/repair-ticket-photo-count-limit",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/repair-ticket-photo-recognition-capability",
+            "old": "tmp:kb:property_manager/A/repair-ticket-low-confidence-candidates",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/repair-ticket-photo-recognition-capability",
+            "old": "tmp:kb:property_manager/A/repair-ticket-unrecognizable-photo",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/repair-ticket-urgency-rule",
+            "old": "tmp:kb:property_manager/A/repair-ticket-urgency-judgment",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/F/repair-ticket-lease-identity-condition",
+            "old": "tmp:kb:property_manager/A/repair-ticket-agent-identity-lease-lookup",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/repair-ticket-lease-identity-condition",
+            "old": "tmp:kb:property_manager/A/repair-ticket-vacant-no-lease",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/repair-ticket-progress-query-scope",
+            "old": "tmp:kb:property_manager/C/urgent-repair-followup-scope",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/E/dunning-draft-content-rules",
+            "old": "tmp:kb:property_manager/B/dunning-draft-generation",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/E/dunning-draft-content-rules",
+            "old": "tmp:kb:property_manager/B/dunning-draft-late-fee-mention",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/E/dunning-draft-recipient-rights",
+            "old": "tmp:kb:property_manager/B/dunning-draft-not-auto-send",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/E/overdue-bill-query-scope",
+            "old": "tmp:kb:property_manager/C/overdue-bill-followup-scope",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/D/lease-expiry-renewal-query-scope",
+            "old": "tmp:kb:property_manager/C/lease-expiry-followup-scope",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/G/meter-balance-query-scope",
+            "old": "tmp:kb:property_manager/C/meter-item-followup-scope",
+            "op": "keep"
+          }
+        ]
+      }
+    ],
+    "synthesis": {
+      "angle": "synthesis",
+      "coarses": [
+        {
+          "id": "A",
+          "title": "帳號與身分"
+        },
+        {
+          "id": "B",
+          "title": "團隊、人員與大房東"
+        },
+        {
+          "id": "C",
+          "title": "社區與物件"
+        },
+        {
+          "id": "D",
+          "title": "租約（含委託約子題）"
+        },
+        {
+          "id": "E",
+          "title": "帳務（含發票、收款金流、抄表）"
+        },
+        {
+          "id": "F",
+          "title": "修繕"
+        },
+        {
+          "id": "G",
+          "title": "裝置（IoT）"
+        },
+        {
+          "id": "H",
+          "title": "幫助中心"
+        },
+        {
+          "id": "I",
+          "title": "方案與導入"
+        }
+      ],
+      "fines": [
+        {
+          "coarse_id": "F",
+          "id": "property_manager/F/repair-ticket-open-and-confirm",
+          "merge_of": [
+            "tmp:kb:property_manager/A/repair-ticket-photo-flow"
+          ],
+          "moved_from": [],
+          "reason": "三角度一致：進場方式與「只有確認送出才建單」互相依賴才完整，獨立一細目；主題是修繕開單，歸 F。",
+          "slug": "repair-ticket-open-and-confirm",
+          "split_from": [],
+          "title": "開修繕單基本流程與確認機制（拍照進場／文字口述）"
+        },
+        {
+          "coarse_id": "F",
+          "id": "property_manager/F/repair-ticket-photo-recognition-uncertain",
+          "merge_of": [
+            "tmp:kb:property_manager/A/repair-ticket-low-confidence-candidates",
+            "tmp:kb:property_manager/A/repair-ticket-unrecognizable-photo"
+          ],
+          "moved_from": [],
+          "reason": "兩角度合併：使用者問「照片認不出來怎麼辦」是同一問題路徑，給候選類別與留白是同一答案依信心程度的兩個分支。",
+          "slug": "repair-ticket-photo-recognition-uncertain",
+          "split_from": [],
+          "title": "照片辨識信心不足或看不出損壞時的處理"
+        },
+        {
+          "coarse_id": "F",
+          "id": "property_manager/F/repair-ticket-reclassify",
+          "merge_of": [
+            "tmp:kb:property_manager/A/repair-ticket-reclassify"
+          ],
+          "moved_from": [],
+          "reason": "兩角度獨立：「分類錯了要怎麼改」是確認卡尚在時的獨立問題，與進場流程及辨識不確定處理是不同主題。",
+          "slug": "repair-ticket-reclassify",
+          "split_from": [],
+          "title": "確認卡上修改辨識結果的規則"
+        },
+        {
+          "coarse_id": "F",
+          "id": "property_manager/F/repair-ticket-photo-count-limit",
+          "merge_of": [
+            "tmp:kb:property_manager/A/repair-ticket-photo-count-limit"
+          ],
+          "moved_from": [],
+          "reason": "兩角度獨立：「可以傳幾張、多的會不會留」是張數與附件的單一問題，與辨識結果處理無關。",
+          "slug": "repair-ticket-photo-count-limit",
+          "split_from": [],
+          "title": "修繕辨識與附件的照片張數限制"
+        },
+        {
+          "coarse_id": "F",
+          "id": "property_manager/F/repair-ticket-urgency-judgment",
+          "merge_of": [
+            "tmp:kb:property_manager/A/repair-ticket-urgency-judgment"
+          ],
+          "moved_from": [],
+          "reason": "三角度一致：急迫來源、預設非緊急與資料庫值域同屬一個可獨立回答的主題。",
+          "slug": "repair-ticket-urgency-judgment",
+          "split_from": [],
+          "title": "修繕單急迫程度的判斷來源與值域"
+        },
+        {
+          "coarse_id": "F",
+          "id": "property_manager/F/repair-ticket-no-lease",
+          "merge_of": [
+            "tmp:kb:property_manager/A/repair-ticket-agent-identity-lease-lookup",
+            "tmp:kb:property_manager/A/repair-ticket-vacant-no-lease"
+          ],
+          "moved_from": [],
+          "reason": "三角度一致合併：兩項答案重疊於「查不到租約時合約欄位留空、照常開單、開單人由系統帶入」。",
+          "slug": "repair-ticket-no-lease",
+          "split_from": [],
+          "title": "代開單時的租約查詢身分與空屋／無租約物件開單規則"
+        },
+        {
+          "coarse_id": "F",
+          "id": "property_manager/F/repair-ticket-mid-flow-cancel",
+          "merge_of": [
+            "tmp:kb:property_manager/A/repair-ticket-mid-flow-cancel"
+          ],
+          "moved_from": [],
+          "reason": "兩角度獨立：取消觸發詞與「不會產生新單」可獨立回答，不併入開單流程。",
+          "slug": "repair-ticket-mid-flow-cancel",
+          "split_from": [],
+          "title": "報修流程中途取消的規則"
+        },
+        {
+          "coarse_id": "F",
+          "id": "property_manager/F/repair-ticket-submit-failure",
+          "merge_of": [
+            "tmp:kb:property_manager/A/repair-ticket-submit-failure"
+          ],
+          "moved_from": [],
+          "reason": "兩角度獨立：失敗告知、再試一次、同會話不重複建單三句互相依賴才完整，與送出成功後的處理是不同問題。",
+          "slug": "repair-ticket-submit-failure",
+          "split_from": [],
+          "title": "建單失敗時的處理與重試規則"
+        },
+        {
+          "coarse_id": "F",
+          "id": "property_manager/F/repair-ticket-after-submit",
+          "merge_of": [
+            "tmp:kb:property_manager/A/repair-ticket-after-submit"
+          ],
+          "moved_from": [],
+          "reason": "兩角度獨立：已送出不在對話修改與同戶另一問題視為新單同屬「送出後」邊界，自成一細目。",
+          "slug": "repair-ticket-after-submit",
+          "split_from": [],
+          "title": "確認送出後的單如何處理"
+        },
+        {
+          "coarse_id": "F",
+          "id": "property_manager/F/repair-progress-followup-scope",
+          "merge_of": [
+            "tmp:kb:property_manager/C/urgent-repair-followup-scope"
+          ],
+          "moved_from": [],
+          "reason": "三角度一致：修繕進度可查欄位是獨立可答主題，屬修繕領域而非社區與物件，歸 F。",
+          "slug": "repair-progress-followup-scope",
+          "split_from": [],
+          "title": "修繕進度追問可答範圍"
+        },
+        {
+          "coarse_id": "E",
+          "id": "property_manager/E/dunning-draft-template-tone-late-fee",
+          "merge_of": [
+            "tmp:kb:property_manager/B/dunning-draft-generation",
+            "tmp:kb:property_manager/B/dunning-draft-late-fee-mention"
+          ],
+          "moved_from": [],
+          "reason": "兩角度合併：滯納金提及規則引用語氣分級（第 1 級不提）才能成立，互相依賴才完整；催繳屬收款金流子題，歸 E。",
+          "slug": "dunning-draft-template-tone-late-fee",
+          "split_from": [],
+          "title": "催繳草稿的生成規則（模板、語氣分級與滯納金提及）"
+        },
+        {
+          "coarse_id": "E",
+          "id": "property_manager/E/dunning-draft-not-auto-send",
+          "merge_of": [
+            "tmp:kb:property_manager/B/dunning-draft-not-auto-send"
+          ],
+          "moved_from": [],
+          "reason": "三角度一致：草稿只給業務、不設一鍵發送是誰能收到的命題，與草稿內容生成分主題，隨催繳歸 E。",
+          "slug": "dunning-draft-not-auto-send",
+          "split_from": [],
+          "title": "催繳草稿不可一鍵發送給租客"
+        },
+        {
+          "coarse_id": "E",
+          "id": "property_manager/E/overdue-bill-followup-scope",
+          "merge_of": [
+            "tmp:kb:property_manager/C/overdue-bill-followup-scope"
+          ],
+          "moved_from": [],
+          "reason": "三角度一致：帳單狀態、金額、逾期明細與滯納金推算出現在帳單列上，歸 E。",
+          "slug": "overdue-bill-followup-scope",
+          "split_from": [],
+          "title": "逾期帳單追問可答範圍"
+        },
+        {
+          "coarse_id": "D",
+          "id": "property_manager/D/lease-expiry-followup-scope",
+          "merge_of": [
+            "tmp:kb:property_manager/C/lease-expiry-followup-scope"
+          ],
+          "moved_from": [],
+          "reason": "三角度一致：預告期與距到期天數由合約條款決定，歸 D。",
+          "slug": "lease-expiry-followup-scope",
+          "split_from": [],
+          "title": "合約到期追問可答範圍（導向續約面向）"
+        },
+        {
+          "coarse_id": "G",
+          "id": "property_manager/G/meter-item-followup-scope",
+          "merge_of": [
+            "tmp:kb:property_manager/C/meter-item-followup-scope"
+          ],
+          "moved_from": [],
+          "reason": "三角度一致：電錶餘額、可用度數、是否供電是裝置本身的資料，歸 G。",
+          "slug": "meter-item-followup-scope",
+          "split_from": [],
+          "title": "電錶項目追問可答範圍（導向電表排障面向）"
+        }
+      ],
+      "id_map": [
+        {
+          "new": "property_manager/F/repair-ticket-open-and-confirm",
+          "old": "tmp:kb:property_manager/A/repair-ticket-photo-flow",
+          "op": "move"
+        },
+        {
+          "new": "property_manager/F/repair-ticket-photo-recognition-uncertain",
+          "old": "tmp:kb:property_manager/A/repair-ticket-low-confidence-candidates",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/F/repair-ticket-photo-recognition-uncertain",
+          "old": "tmp:kb:property_manager/A/repair-ticket-unrecognizable-photo",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/F/repair-ticket-reclassify",
+          "old": "tmp:kb:property_manager/A/repair-ticket-reclassify",
+          "op": "move"
+        },
+        {
+          "new": "property_manager/F/repair-ticket-photo-count-limit",
+          "old": "tmp:kb:property_manager/A/repair-ticket-photo-count-limit",
+          "op": "move"
+        },
+        {
+          "new": "property_manager/F/repair-ticket-urgency-judgment",
+          "old": "tmp:kb:property_manager/A/repair-ticket-urgency-judgment",
+          "op": "move"
+        },
+        {
+          "new": "property_manager/F/repair-ticket-no-lease",
+          "old": "tmp:kb:property_manager/A/repair-ticket-agent-identity-lease-lookup",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/F/repair-ticket-no-lease",
+          "old": "tmp:kb:property_manager/A/repair-ticket-vacant-no-lease",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/F/repair-ticket-mid-flow-cancel",
+          "old": "tmp:kb:property_manager/A/repair-ticket-mid-flow-cancel",
+          "op": "move"
+        },
+        {
+          "new": "property_manager/F/repair-ticket-submit-failure",
+          "old": "tmp:kb:property_manager/A/repair-ticket-submit-failure",
+          "op": "move"
+        },
+        {
+          "new": "property_manager/F/repair-ticket-after-submit",
+          "old": "tmp:kb:property_manager/A/repair-ticket-after-submit",
+          "op": "move"
+        },
+        {
+          "new": "property_manager/F/repair-progress-followup-scope",
+          "old": "tmp:kb:property_manager/C/urgent-repair-followup-scope",
+          "op": "move"
+        },
+        {
+          "new": "property_manager/E/dunning-draft-template-tone-late-fee",
+          "old": "tmp:kb:property_manager/B/dunning-draft-generation",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/E/dunning-draft-template-tone-late-fee",
+          "old": "tmp:kb:property_manager/B/dunning-draft-late-fee-mention",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/E/dunning-draft-not-auto-send",
+          "old": "tmp:kb:property_manager/B/dunning-draft-not-auto-send",
+          "op": "move"
+        },
+        {
+          "new": "property_manager/E/overdue-bill-followup-scope",
+          "old": "tmp:kb:property_manager/C/overdue-bill-followup-scope",
+          "op": "move"
+        },
+        {
+          "new": "property_manager/D/lease-expiry-followup-scope",
+          "old": "tmp:kb:property_manager/C/lease-expiry-followup-scope",
+          "op": "move"
+        },
+        {
+          "new": "property_manager/G/meter-item-followup-scope",
+          "old": "tmp:kb:property_manager/C/meter-item-followup-scope",
+          "op": "move"
+        }
+      ],
+      "rejected_alternatives": [
+        {
+          "alternative": "audience_level：把 photo-flow、reclassify、mid-flow-cancel 合併為單一「確認流程（操作層）」細目。",
+          "reason": "三者是不同階段的獨立問題（怎麼進場、分類錯了怎麼改、中途不報了會不會留單），user_question_path 與 content_boundary 兩角度皆獨立，合併會讓單一問法對應到過大的答案。"
+        },
+        {
+          "alternative": "audience_level：把 after-submit 與 submit-failure 合併為「送出後與建單失敗處理」細目。",
+          "reason": "「已送出能不能改」與「送出失敗要怎麼重試」是不同問題路徑且答案互不依賴，兩角度皆獨立；合併違反一細目一可獨立回答主題。"
+        },
+        {
+          "alternative": "audience_level：把 photo-count-limit 併入照片辨識能力細目（與信心不足、看不出損壞同列）。",
+          "reason": "張數上限與附件保存是數量／附件問題，不依賴辨識結果即可完整回答，兩角度皆獨立；只合併信心不足與看不出損壞。"
+        },
+        {
+          "alternative": "content_boundary：low-confidence-candidates 與 unrecognizable-photo 各自獨立成細目。",
+          "reason": "兩者對使用者是同一個問題「照片認不出來怎麼辦」，答案依信心程度分為給候選或留白兩個分支，另兩角度皆合併；拆開會讓同一講法掛兩個細目。"
+        },
+        {
+          "alternative": "user_question_path：dunning-draft-generation 與 dunning-draft-late-fee-mention 各自獨立成細目。",
+          "reason": "滯納金提及規則以「語氣第 1 級不提」引用分級定義，單獨無法完整回答，另兩角度皆合併；獨立會造成兩細目重複語氣分級內容。"
+        },
+        {
+          "alternative": "audience_level：對粗目已從 A／B／C 改到 F／E／D／G 的單一來源項目標 op=keep。",
+          "reason": "粗目歸屬已變動，依定義應為 move；keep 會讓 id_map 看不出跨粗目搬移。"
+        }
+      ]
+    }
+  },
+  "raw_outputs_path": ".claude/skills/outline-curation/raw/structure-20260915/property_manager",
+  "skill_version": "0.1.0",
+  "step": "structure"
+}

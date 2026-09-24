@@ -1,0 +1,282 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "angle": {
+      "type": "string"
+    },
+    "coarses": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "enum": [
+              "A",
+              "B",
+              "C",
+              "D",
+              "E",
+              "F",
+              "G",
+              "H",
+              "I"
+            ],
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "fines": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "coarse_id": {
+            "enum": [
+              "A",
+              "B",
+              "C",
+              "D",
+              "E",
+              "F",
+              "G",
+              "H",
+              "I"
+            ],
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "merge_of": {
+            "items": {
+              "enum": [
+                "tmp:kb:prospect/A/dashboard-overview",
+                "tmp:kb:prospect/A/pain-points",
+                "tmp:kb:prospect/A/product-overview",
+                "tmp:kb:prospect/A/why-choose-jgb",
+                "tmp:kb:prospect/B/data-migration",
+                "tmp:kb:prospect/B/individual-landlord-scale-fit",
+                "tmp:kb:prospect/B/team-company-fit",
+                "tmp:kb:prospect/C/bill-contents-extra-fees",
+                "tmp:kb:prospect/C/bill-format-customize",
+                "tmp:kb:prospect/C/billing-overview",
+                "tmp:kb:prospect/C/community-batch-create",
+                "tmp:kb:prospect/C/contract-esign-flow",
+                "tmp:kb:prospect/C/contract-history-retention",
+                "tmp:kb:prospect/C/contract-modify-after-sign",
+                "tmp:kb:prospect/C/contract-templates",
+                "tmp:kb:prospect/C/credit-card-rent-payment",
+                "tmp:kb:prospect/C/notification-channels",
+                "tmp:kb:prospect/C/overdue-reminder-late-fee",
+                "tmp:kb:prospect/C/owner-report-collection-remit",
+                "tmp:kb:prospect/C/payment-gateway-options",
+                "tmp:kb:prospect/C/property-management-overview",
+                "tmp:kb:prospect/C/property-status-meaning",
+                "tmp:kb:prospect/C/rental-storefront-vr",
+                "tmp:kb:prospect/C/repair-system",
+                "tmp:kb:prospect/C/role-permission-granularity",
+                "tmp:kb:prospect/C/smart-meter-lock-iot",
+                "tmp:kb:prospect/C/team-management-overview",
+                "tmp:kb:prospect/C/what-is-owner-landlord",
+                "tmp:kb:prospect/D/account-registration",
+                "tmp:kb:prospect/D/free-trial",
+                "tmp:kb:prospect/D/pricing-plans",
+                "tmp:kb:prospect/D/property-quota-limit",
+                "tmp:kb:prospect/D/subscription-change-renewal",
+                "tmp:kb:prospect/E/competitor-comparison",
+                "tmp:kb:prospect/E/competitor-neutrality",
+                "tmp:kb:prospect/G/migration-limits",
+                "tmp:kb:prospect/G/utility-split-advice"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "moved_from": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "split_from": {
+            "items": {
+              "enum": [
+                "tmp:kb:prospect/A/dashboard-overview",
+                "tmp:kb:prospect/A/pain-points",
+                "tmp:kb:prospect/A/product-overview",
+                "tmp:kb:prospect/A/why-choose-jgb",
+                "tmp:kb:prospect/B/data-migration",
+                "tmp:kb:prospect/B/individual-landlord-scale-fit",
+                "tmp:kb:prospect/B/team-company-fit",
+                "tmp:kb:prospect/C/bill-contents-extra-fees",
+                "tmp:kb:prospect/C/bill-format-customize",
+                "tmp:kb:prospect/C/billing-overview",
+                "tmp:kb:prospect/C/community-batch-create",
+                "tmp:kb:prospect/C/contract-esign-flow",
+                "tmp:kb:prospect/C/contract-history-retention",
+                "tmp:kb:prospect/C/contract-modify-after-sign",
+                "tmp:kb:prospect/C/contract-templates",
+                "tmp:kb:prospect/C/credit-card-rent-payment",
+                "tmp:kb:prospect/C/notification-channels",
+                "tmp:kb:prospect/C/overdue-reminder-late-fee",
+                "tmp:kb:prospect/C/owner-report-collection-remit",
+                "tmp:kb:prospect/C/payment-gateway-options",
+                "tmp:kb:prospect/C/property-management-overview",
+                "tmp:kb:prospect/C/property-status-meaning",
+                "tmp:kb:prospect/C/rental-storefront-vr",
+                "tmp:kb:prospect/C/repair-system",
+                "tmp:kb:prospect/C/role-permission-granularity",
+                "tmp:kb:prospect/C/smart-meter-lock-iot",
+                "tmp:kb:prospect/C/team-management-overview",
+                "tmp:kb:prospect/C/what-is-owner-landlord",
+                "tmp:kb:prospect/D/account-registration",
+                "tmp:kb:prospect/D/free-trial",
+                "tmp:kb:prospect/D/pricing-plans",
+                "tmp:kb:prospect/D/property-quota-limit",
+                "tmp:kb:prospect/D/subscription-change-renewal",
+                "tmp:kb:prospect/E/competitor-comparison",
+                "tmp:kb:prospect/E/competitor-neutrality",
+                "tmp:kb:prospect/G/migration-limits",
+                "tmp:kb:prospect/G/utility-split-advice"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "coarse_id",
+          "title",
+          "slug",
+          "merge_of",
+          "split_from",
+          "moved_from",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "id_map": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "new": {
+            "type": "string"
+          },
+          "old": {
+            "anyOf": [
+              {
+                "enum": [
+                  "tmp:kb:prospect/A/dashboard-overview",
+                  "tmp:kb:prospect/A/pain-points",
+                  "tmp:kb:prospect/A/product-overview",
+                  "tmp:kb:prospect/A/why-choose-jgb",
+                  "tmp:kb:prospect/B/data-migration",
+                  "tmp:kb:prospect/B/individual-landlord-scale-fit",
+                  "tmp:kb:prospect/B/team-company-fit",
+                  "tmp:kb:prospect/C/bill-contents-extra-fees",
+                  "tmp:kb:prospect/C/bill-format-customize",
+                  "tmp:kb:prospect/C/billing-overview",
+                  "tmp:kb:prospect/C/community-batch-create",
+                  "tmp:kb:prospect/C/contract-esign-flow",
+                  "tmp:kb:prospect/C/contract-history-retention",
+                  "tmp:kb:prospect/C/contract-modify-after-sign",
+                  "tmp:kb:prospect/C/contract-templates",
+                  "tmp:kb:prospect/C/credit-card-rent-payment",
+                  "tmp:kb:prospect/C/notification-channels",
+                  "tmp:kb:prospect/C/overdue-reminder-late-fee",
+                  "tmp:kb:prospect/C/owner-report-collection-remit",
+                  "tmp:kb:prospect/C/payment-gateway-options",
+                  "tmp:kb:prospect/C/property-management-overview",
+                  "tmp:kb:prospect/C/property-status-meaning",
+                  "tmp:kb:prospect/C/rental-storefront-vr",
+                  "tmp:kb:prospect/C/repair-system",
+                  "tmp:kb:prospect/C/role-permission-granularity",
+                  "tmp:kb:prospect/C/smart-meter-lock-iot",
+                  "tmp:kb:prospect/C/team-management-overview",
+                  "tmp:kb:prospect/C/what-is-owner-landlord",
+                  "tmp:kb:prospect/D/account-registration",
+                  "tmp:kb:prospect/D/free-trial",
+                  "tmp:kb:prospect/D/pricing-plans",
+                  "tmp:kb:prospect/D/property-quota-limit",
+                  "tmp:kb:prospect/D/subscription-change-renewal",
+                  "tmp:kb:prospect/E/competitor-comparison",
+                  "tmp:kb:prospect/E/competitor-neutrality",
+                  "tmp:kb:prospect/G/migration-limits",
+                  "tmp:kb:prospect/G/utility-split-advice"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "op": {
+            "enum": [
+              "keep",
+              "split",
+              "merge",
+              "move",
+              "new"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "old",
+          "new",
+          "op"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "rejected_alternatives": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "alternative": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "alternative",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "angle",
+    "coarses",
+    "fines",
+    "id_map",
+    "rejected_alternatives"
+  ],
+  "type": "object"
+}

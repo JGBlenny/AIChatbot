@@ -51,6 +51,8 @@ _SINK_NAMES = frozenset({
     "canon_visible",
     "build_canon_toc",
     "resolve_canon_section",
+    "build_canon_sections",         # 9.8 DSP-059 D′ S2：每回合候選節組裝（F4）
+    "from_canon",                   # 9.8 DSP-059 D′ S2：CandidateOutlineDoc 的正本現組建構子（F4）
     "visible_subset",
     "query_bills",
     "query_contracts",
@@ -220,6 +222,16 @@ _POSITIVE_CONTROLS = {
         "def f(index, doc, slots):\n"
         "    return index.visible_subset(slots['identity'], doc)\n",
         "visible_subset",
+    ),
+    "build_canon_sections": (
+        "def f(doc, slots, ids):\n"
+        "    return build_canon_sections(doc, slots['identity'], ids)\n",
+        "build_canon_sections",
+    ),
+    "from_canon": (
+        "def f(canon, slots, ids, toc):\n"
+        "    return CandidateOutlineDoc.from_canon(canon, slots['identity'], ids, toc)\n",
+        "from_canon",
     ),
     "CandidateSelector.select": (
         "async def f(selector, doc, slots, q):\n"

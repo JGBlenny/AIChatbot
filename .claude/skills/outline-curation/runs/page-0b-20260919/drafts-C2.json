@@ -1,0 +1,693 @@
+[
+  {
+    "shelf": "C",
+    "unit_id": "page:communities.edit.basic",
+    "unit_ids": ["page:communities.edit", "page:communities.edit.basic"],
+    "askable": "社區基本資料要填哪些欄位（社區名稱、地址、建築類型、總樓層、屋齡）",
+    "proposed_id": "jgb/C/community-basic-info-fields",
+    "title": "社區基本資料要填哪些欄位（社區名稱必填限30字、詳細地址vs對外顯示地址、建築類型、總樓層、屋齡）",
+    "target_user": ["property_manager"], "business_types": ["system_provider"], "instance_applicability": "general",
+    "sentences": [
+      "社區編輯頁的「基本資料」分頁用來填寫社區的基本資訊。",
+      "「社區名稱」為必填欄位，且輸入框有限制不得超過 30 個字。",
+      "新增社區時可選擇「全新社區」或「既有社區」；若團隊訂閱方案可新增的社區數量已達上限，系統只允許選擇既有社區。",
+      "地址分成「詳細地址」與「對外顯示地址」兩組，「對外顯示地址」欄位下方提示文字說明它會標記在 Google 地圖上。",
+      "其餘欄位包含建築類型、總樓層與屋齡，其中總樓層與屋齡的輸入框限制只能輸入純數字。",
+      "社區細節區塊還可以填寫該社區所在的「大樓」名稱。"
+    ],
+    "sources": [
+      "code:src/pages/communities/edit/Basic.vue"
+    ],
+    "evidence": [
+      {"sentence_index": 0, "source": "code:src/pages/communities/edit/Basic.vue", "quote_or_symbol": "t('社區名稱')"},
+      {"sentence_index": 1, "source": "code:src/pages/communities/edit/Basic.vue", "quote_or_symbol": "t('根據您的訂閱方案，可新增的社區數量已達到上限，僅能選擇既有社區。'); placeholder t('請告訴客戶您的社區名稱為何。限制 [s1] 個字', [30])"},
+      {"sentence_index": 2, "source": "code:src/pages/communities/edit/Basic.vue", "quote_or_symbol": "0: t('全新社區'), 1: t('既有社區')"},
+      {"sentence_index": 3, "source": "code:src/pages/communities/edit/Basic.vue", "quote_or_symbol": "props.type === 1 ? t('詳細地址') : t('對外顯示地址'); t('對外顯示地址將會標記在 Google 地圖上')"},
+      {"sentence_index": 4, "source": "code:src/pages/communities/edit/Basic.vue", "quote_or_symbol": "t('建築類型'); t('總樓層'); t('屋齡'); placeholder t('限純數字')"},
+      {"sentence_index": 5, "source": "code:src/pages/communities/edit/Basic.vue", "quote_or_symbol": "t('社區細節'); t('大樓')"}
+    ],
+    "harvested_from_candidates": [
+      {"fine_id": "jgb/C/community-setup-and-property-binding", "kept": 1, "dropped": 3, "dropped_examples": ["填寫基本資訊（社區名稱、地址、介紹、交通資訊）——介紹/交通實際在另一分頁（Intros.vue），不在 Basic.vue", "上傳社區照片——實際在 Gallery.vue 分頁，非 Basic.vue"]}
+    ],
+    "not_supported_greps": [],
+    "open_questions": []
+  },
+  {
+    "shelf": "C",
+    "unit_id": "page:communities.edit.gallery",
+    "unit_ids": ["page:communities.edit.gallery"],
+    "askable": "社區相簿照片怎麼上傳、格式與大小限制",
+    "proposed_id": "jgb/C/community-gallery-photo-upload",
+    "title": "社區相簿照片怎麼上傳（單張上傳、限JPG/PNG、單檔最大10MB）",
+    "target_user": ["property_manager"], "business_types": ["system_provider"], "instance_applicability": "general",
+    "sentences": [
+      "社區編輯頁的「相簿」分頁用來上傳社區的照片。",
+      "上傳採單張方式，每次點選上傳區塊只能選一張圖片再重複操作。",
+      "上傳欄位只接受 JPG、PNG 格式的圖片檔案。",
+      "畫面提示單張檔案大小最大為 10MB。",
+      "相簿張數有系統設定的上限（`galleryMaxLength`），達到上限後上傳按鈕的區塊就不會再顯示。",
+      "儲存後畫面會提示「社區：[名稱] 已更新」或「創建成功」的通知訊息。"
+    ],
+    "sources": ["code:src/pages/communities/edit/Gallery.vue"],
+    "evidence": [
+      {"sentence_index": 0, "source": "code:src/pages/communities/edit/Gallery.vue", "quote_or_symbol": "upload_for=\"gallery\""},
+      {"sentence_index": 1, "source": "code:src/pages/communities/edit/Gallery.vue", "quote_or_symbol": "t('支援JPG、PNG檔，至多 [s1] 張，檔案大小最大 [s2]。', [1, '10MB'])"},
+      {"sentence_index": 2, "source": "code:src/pages/communities/edit/Gallery.vue", "quote_or_symbol": "accept=\"image/jpeg,image/png\""},
+      {"sentence_index": 3, "source": "code:src/pages/communities/edit/Gallery.vue", "quote_or_symbol": "'10MB' in t('支援JPG、PNG檔，至多 [s1] 張，檔案大小最大 [s2]。', [1, '10MB'])"},
+      {"sentence_index": 4, "source": "code:src/pages/communities/edit/Gallery.vue", "quote_or_symbol": "editStore.form.gallery.length < state.galleryMaxLength"},
+      {"sentence_index": 5, "source": "code:src/pages/communities/edit/Gallery.vue", "quote_or_symbol": "window.globalNoticeShow(`${t('社區')}: ${editStore.form.name} ${t('已更新')}`)"}
+    ],
+    "harvested_from_candidates": [
+      {"fine_id": "jgb/C/community-setup-and-property-binding", "kept": 1, "dropped": 0, "dropped_examples": []}
+    ],
+    "not_supported_greps": [],
+    "open_questions": ["galleryMaxLength 的具體上限數值在此檔未定義（來自 store/API 設定），未查證確切數字，故未在句子中寫死"]
+  },
+  {
+    "shelf": "C",
+    "unit_id": "page:communities.edit.intros",
+    "unit_ids": ["page:communities.edit.intros"],
+    "askable": "社區簡介與鄰近交通/捷運站怎麼填",
+    "proposed_id": "jgb/C/community-intro-and-transit",
+    "title": "社區簡介與鄰近交通/捷運站怎麼填",
+    "target_user": ["property_manager"], "business_types": ["system_provider"], "instance_applicability": "general",
+    "sentences": [
+      "社區編輯頁的「簡介」分頁分成「社區簡介」「鄰近交通」「鄰近捷運站」三個區塊。",
+      "頁面說明填寫社區介紹的目的是讓客戶更了解社區細節。",
+      "「鄰近捷運站」可以新增多筆資料，每筆要選擇捷運線與該線的停靠站。",
+      "可以重複點選「新增鄰近捷運站」加入多筆捷運站資訊。"
+    ],
+    "sources": ["code:src/pages/communities/edit/Intros.vue"],
+    "evidence": [
+      {"sentence_index": 0, "source": "code:src/pages/communities/edit/Intros.vue", "quote_or_symbol": "t('社區簡介'); t('鄰近交通'); t('鄰近捷運站')"},
+      {"sentence_index": 1, "source": "code:src/pages/communities/edit/Intros.vue", "quote_or_symbol": "t('提供社區的介紹，讓您的客戶更了解細節。')"},
+      {"sentence_index": 2, "source": "code:src/pages/communities/edit/Intros.vue", "quote_or_symbol": "t('捷運線'); t('停靠站')"},
+      {"sentence_index": 3, "source": "code:src/pages/communities/edit/Intros.vue", "quote_or_symbol": "t('新增鄰近捷運站')"}
+    ],
+    "harvested_from_candidates": [
+      {"fine_id": "jgb/C/community-setup-and-property-binding", "kept": 1, "dropped": 0, "dropped_examples": []}
+    ],
+    "not_supported_greps": [],
+    "open_questions": []
+  },
+  {
+    "shelf": "C",
+    "unit_id": "page:communities.edit.balanceInvoice",
+    "unit_ids": ["page:communities.edit.balanceInvoice"],
+    "askable": "社區的差額發票怎麼設定、什麼時候會自動開立",
+    "proposed_id": "jgb/C/community-balance-invoice-setting",
+    "title": "社區的差額發票怎麼設定（開關、底租總額幣別與每月租金）",
+    "target_user": ["property_manager"], "business_types": ["system_provider"], "instance_applicability": "general",
+    "sentences": [
+      "社區編輯頁有「是否開設差額發票」的開關設定，位於「balanceInvoice」分頁。",
+      "頁面說明：開啟差額發票功能後，當此社區下所有物件的每月總租金金額大於每月底租金額時，系統將自動開立差額發票。",
+      "設定「底租總額」時需要指定幣別，並填寫每月租金金額。",
+      "「每月租金」欄位限制輸入純數字。",
+      "只有在開關被開啟時，「每月租金」欄位才會顯示可輸入的提示文字，關閉時欄位提示為空。"
+    ],
+    "sources": ["code:src/pages/communities/edit/BalanceInvoice.jsx"],
+    "evidence": [
+      {"sentence_index": 0, "source": "code:src/pages/communities/edit/BalanceInvoice.jsx", "quote_or_symbol": "t('是否開設差額發票')"},
+      {"sentence_index": 1, "source": "code:src/pages/communities/edit/BalanceInvoice.jsx", "quote_or_symbol": "t('開啟差額發票功能後，當此社區下所有物件的每月總租金金額大於每月底租金額時，系統將自動開立差額發票')"},
+      {"sentence_index": 2, "source": "code:src/pages/communities/edit/BalanceInvoice.jsx", "quote_or_symbol": "t('底租總額'); t('幣別'); t('每月租金')"},
+      {"sentence_index": 3, "source": "code:src/pages/communities/edit/BalanceInvoice.jsx", "quote_or_symbol": "placeholder t('限純數字')"},
+      {"sentence_index": 4, "source": "code:src/pages/communities/edit/BalanceInvoice.jsx", "quote_or_symbol": "editStore.form.balance_invoice.enabled ? t('限純數字') : ''"}
+    ],
+    "harvested_from_candidates": [
+      {"fine_id": "jgb/E/differential-invoice", "kept": 0, "dropped": 0, "dropped_examples": []}
+    ],
+    "not_supported_greps": [],
+    "open_questions": []
+  },
+  {
+    "shelf": "C",
+    "unit_id": "page:communities.estates",
+    "unit_ids": ["page:communities.estates"],
+    "askable": "社區底下的物件清單頁能做什麼（總覽/招租/買賣、新增、批次新增、複製物件）",
+    "proposed_id": "jgb/C/community-estate-list-tab",
+    "title": "社區底下的物件清單頁能做什麼（總覽/招租/買賣分頁、新增/批次新增/複製物件、編輯或刪除社區）",
+    "target_user": ["property_manager"], "business_types": ["system_provider"], "instance_applicability": "general",
+    "sentences": [
+      "進入某個社區後可以看到該社區底下「所有物件」的清單頁，分成「總覽」「招租」「買賣」三個分頁。",
+      "頁面上可以直接點選「新增物件」，也可以用「批次新增」一次建立多筆物件。",
+      "也可以選擇「複製現有物件」的方式建立新物件。",
+      "頁面同時提供「編輯社區」「預覽廣告頁」「刪除社區」的操作項目。",
+      "若訂閱方案的物件數量已達上限，系統會跳出提示視窗阻擋繼續新增。",
+      "清單支援每頁顯示 30、60、90 筆的分頁設定。"
+    ],
+    "sources": ["code:src/pages/communities/estates/Index.vue"],
+    "evidence": [
+      {"sentence_index": 0, "source": "code:src/pages/communities/estates/Index.vue", "quote_or_symbol": "{ label: t('總覽-1'), value: '1' }, { label: t('招租'), value: '2' }, { label: t('買賣'), value: '3' }"},
+      {"sentence_index": 1, "source": "code:src/pages/communities/estates/Index.vue", "quote_or_symbol": "t('新增物件'); onClick={handleBatchAddEstate}...t('批次新增')"},
+      {"sentence_index": 2, "source": "code:src/pages/communities/estates/Index.vue", "quote_or_symbol": "t('複製現有物件')"},
+      {"sentence_index": 3, "source": "code:src/pages/communities/estates/Index.vue", "quote_or_symbol": "t('編輯社區'); t('預覽廣告頁'); t('刪除社區')"},
+      {"sentence_index": 4, "source": "code:src/pages/communities/estates/Index.vue", "quote_or_symbol": "store.commit('lightbox', 'subscribedPlanIsFull')"},
+      {"sentence_index": 5, "source": "code:src/pages/communities/estates/Index.vue", "quote_or_symbol": "30: t('30項'), 60: t('60項'), 90: t('90項')"}
+    ],
+    "harvested_from_candidates": [
+      {"fine_id": "jgb/C/community-setup-and-property-binding", "kept": 1, "dropped": 1, "dropped_examples": ["「物件歸屬社區後，可在社區頁面統一查看該社區下的所有物件清單」——粒度太粗，真正頁面能做的是新增/批次新增/複製/刪除等具體操作"]}
+    ],
+    "not_supported_greps": [],
+    "open_questions": []
+  },
+  {
+    "shelf": "C",
+    "unit_id": "page:communities.forceBinding",
+    "unit_ids": ["page:communities.forceBinding", "page:communities.forceBinding.edit", "page:communities.forceBinding.edit.binding", "page:communities.forceBinding.welcome"],
+    "askable": "為什麼系統要求先把物件綁定社區、強制綁定流程怎麼操作、有什麼限制",
+    "proposed_id": "jgb/C/community-force-binding-flow",
+    "title": "為什麼系統要求先把物件綁定社區（強制綁定流程；只有團隊擁有者能操作；確認綁定後不能修改）",
+    "target_user": ["property_manager"], "business_types": ["system_provider"], "instance_applicability": "general",
+    "sentences": [
+      "系統升級新增「社區」功能後，畫面會提示「物件需全數綁定至社區才能使用系統」。",
+      "進入強制綁定流程會先顯示目前「尚未綁定至社區」與「已成功綁定至社區」的物件數量。",
+      "這個綁定流程只有「團隊擁有者」能執行，其他角色進入會看到「權限不足」的提示訊息。",
+      "綁定流程需要先建立或選擇既有社區，填寫社區名稱、地址、對外顯示地址、建築類型、屋齡、總樓層、簡介、鄰近交通與相簿等資料。",
+      "接著在物件清單中勾選要綁定到該社區的物件（可用關鍵字搜尋、可跨頁勾選）。",
+      "畫面明確提示「確認綁定物件後，即不能修改」，確認後即完成該批物件的綁定且無法再改。",
+      "全部物件都完成綁定後，畫面會顯示「恭喜！你已經成功綁定所有物件」。"
+    ],
+    "sources": [
+      "code:src/pages/communities/forceBinding/Welcome.vue",
+      "code:src/pages/communities/forceBinding/Index.vue",
+      "code:src/pages/communities/forceBinding/edit/Binding.vue"
+    ],
+    "evidence": [
+      {"sentence_index": 0, "source": "code:src/pages/communities/forceBinding/Welcome.vue", "quote_or_symbol": "t('物件需全數綁定至社區才能使用系統。')"},
+      {"sentence_index": 1, "source": "code:src/pages/communities/forceBinding/Welcome.vue", "quote_or_symbol": "t('尚未綁定至社區'); t('已成功綁定至社區')"},
+      {"sentence_index": 2, "source": "code:src/pages/communities/forceBinding/Welcome.vue", "quote_or_symbol": "t('此次系統更新，執行物件綁定社區動作需為<b>團隊擁有者</b>。'); t('權限不足')"},
+      {"sentence_index": 3, "source": "code:src/pages/communities/forceBinding/Index.vue", "quote_or_symbol": "editStore.defaultForm: {name, address, display_address, building, age, floor_all, intros, traffic_additional, MRT, gallery}"},
+      {"sentence_index": 4, "source": "code:src/pages/communities/forceBinding/edit/Binding.vue", "quote_or_symbol": "editStore.state.estatesPicked"},
+      {"sentence_index": 5, "source": "code:src/pages/communities/forceBinding/edit/Binding.vue", "quote_or_symbol": "t('確認綁定物件後，即不能修改')"},
+      {"sentence_index": 6, "source": "code:src/pages/communities/forceBinding/edit/Binding.vue", "quote_or_symbol": "t('恭喜！你已經成功綁定所有物件')"}
+    ],
+    "harvested_from_candidates": [
+      {"fine_id": "jgb/C/community-setup-and-property-binding", "kept": 1, "dropped": 0, "dropped_examples": []}
+    ],
+    "not_supported_greps": [],
+    "open_questions": []
+  },
+  {
+    "shelf": "C",
+    "unit_id": "page:communities.index",
+    "unit_ids": ["page:communities.index", "page:communities.list"],
+    "askable": "社區總表在哪裡、怎麼新增/批次新增/複製/匯出社區",
+    "proposed_id": "jgb/C/community-table-and-batch-add",
+    "title": "社區總表在哪裡、怎麼新增/批次新增/複製現有社區/匯出社區",
+    "target_user": ["property_manager"], "business_types": ["system_provider"], "instance_applicability": "general",
+    "sentences": [
+      "「社區總表」頁面列出團隊目前所有的社區。",
+      "頁面上有「新增社區」按鈕，也有「批次新增」功能可開啟批次新增社區的視窗。",
+      "也可以選擇「複製現有社區」的方式快速建立新社區。",
+      "頁面提供「匯出社區」的功能可將社區資料匯出。",
+      "若訂閱方案可新增的社區數量已達上限，系統會跳出提示視窗阻擋新增。",
+      "若該分類尚未有社區，畫面會提示「此分類尚未有社區」，並提供「批次新增」「新增社區」的入口。",
+      "清單同樣支援每頁 30、60、90 筆的分頁設定。"
+    ],
+    "sources": ["code:src/pages/communities/list/Index.vue"],
+    "evidence": [
+      {"sentence_index": 0, "source": "code:src/pages/communities/list/Index.vue", "quote_or_symbol": "t('社區總表')"},
+      {"sentence_index": 1, "source": "code:src/pages/communities/list/Index.vue", "quote_or_symbol": "t('新增社區'); store.commit('lightbox', 'CommunitiesBatchAdd')...t('批次新增')"},
+      {"sentence_index": 2, "source": "code:src/pages/communities/list/Index.vue", "quote_or_symbol": "t('複製現有社區')"},
+      {"sentence_index": 3, "source": "code:src/pages/communities/list/Index.vue", "quote_or_symbol": "t('匯出社區')"},
+      {"sentence_index": 4, "source": "code:src/pages/communities/list/Index.vue", "quote_or_symbol": "store.commit('lightbox', 'subscribedPlanCommunityIsFull')"},
+      {"sentence_index": 5, "source": "code:src/pages/communities/list/Index.vue", "quote_or_symbol": "t('此分類尚未有社區，您可以選擇😎：')"},
+      {"sentence_index": 6, "source": "code:src/pages/communities/list/Index.vue", "quote_or_symbol": "30: t('30項'), 60: t('60項'), 90: t('90項')"}
+    ],
+    "harvested_from_candidates": [
+      {"fine_id": "jgb/C/community-setup-and-property-binding", "kept": 1, "dropped": 1, "dropped_examples": ["「也支援批次匯入方式一次建立多個社區」——實際按鈕文字為「批次新增」（開視窗建立），非「匯入」語意，用詞已修正"]}
+    ],
+    "not_supported_greps": [],
+    "open_questions": []
+  },
+  {
+    "shelf": "C",
+    "unit_id": "page:communities.show",
+    "unit_ids": ["page:communities.show"],
+    "askable": "社區公開頁面顯示什麼內容、房東在這頁能做什麼",
+    "proposed_id": "jgb/C/community-public-page-content",
+    "title": "社區公開頁面顯示什麼內容（基本資訊、交通設施、刊登物件統計）、房東登入後能做什麼",
+    "target_user": ["property_manager"], "business_types": ["system_provider"], "instance_applicability": "general",
+    "sentences": [
+      "社區公開頁會顯示「社區基本資訊」，包含類型、總樓層數、屋齡。",
+      "也會顯示「社區交通與環境設施」，包含鄰近捷運站與鄰近交通說明。",
+      "頁面有「社區介紹」區塊，呈現社區的介紹文字。",
+      "頁面下方會列出「社區所有刊登中物件」，並分別統計招租與買賣的刊登物件數量。",
+      "頁面上另外會顯示本社區的 JGB 編號。",
+      "已登入的房東在這個頁面上會看到「編輯」「社區詳情」「社區總表」的操作連結，可直接切回編輯或列表頁。",
+      "頁面底部附有內政部房屋租賃定型化契約應記載及不得記載事項的法規提醒文字。"
+    ],
+    "sources": ["code:src/pages/communities/show/Index.vue"],
+    "evidence": [
+      {"sentence_index": 0, "source": "code:src/pages/communities/show/Index.vue", "quote_or_symbol": "t('社區基本資訊'); t('類型'); t('總樓層數'); t('屋齡')"},
+      {"sentence_index": 1, "source": "code:src/pages/communities/show/Index.vue", "quote_or_symbol": "t('社區交通與環境設施'); t('鄰近捷運站'); t('鄰近交通')"},
+      {"sentence_index": 2, "source": "code:src/pages/communities/show/Index.vue", "quote_or_symbol": "t('社區介紹')"},
+      {"sentence_index": 3, "source": "code:src/pages/communities/show/Index.vue", "quote_or_symbol": "t('社區所有刊登中物件'); t('招租')...state.data?.quantities_of_rent; t('買賣')...state.data?.quantities_of_sell"},
+      {"sentence_index": 4, "source": "code:src/pages/communities/show/Index.vue", "quote_or_symbol": "t('本社區之 JGB 編號')"},
+      {"sentence_index": 5, "source": "code:src/pages/communities/show/Index.vue", "quote_or_symbol": "t('編輯'); t('社區詳情'); t('社區總表')"},
+      {"sentence_index": 6, "source": "code:src/pages/communities/show/Index.vue", "quote_or_symbol": "t('內政部已公告【房屋租賃定型化契約應記載及不得記載事項】')"}
+    ],
+    "harvested_from_candidates": [
+      {"fine_id": "jgb/C/community-public-page", "kept": 2, "dropped": 2, "dropped_examples": ["「此頁面可作為招租的行銷工具，將連結分享給有意租屋的人瀏覽」——本頁未見分享連結機制，分享機制在招租店舖（見另一細目）", "「頁面顯示的內容會隨物件刊登狀態即時更新」——未在程式中直接查得即時性描述，屬推測"]}
+    ],
+    "not_supported_greps": [],
+    "open_questions": []
+  },
+  {
+    "shelf": "C",
+    "unit_id": "page:estates.dashboard.bills",
+    "unit_ids": ["page:estates.dashboard.bills"],
+    "askable": "物件底下的帳務收支頁籤看什麼（收款情況、支出情況統計、帳單列表）",
+    "proposed_id": "jgb/C/estate-dashboard-bills-tab",
+    "title": "物件底下的帳務收支頁籤看什麼（預計總收款/已到帳/未收款、預計總支出/已支出、帳單列表）",
+    "target_user": ["property_manager"], "business_types": ["system_provider"], "instance_applicability": "general",
+    "sentences": [
+      "物件 Dashboard 的「帳務收支」頁籤分成統計與帳單列表兩個部分。",
+      "統計畫面上方會提示「以下將統計繳費週期落在 [區間] 內的所有帳單」。",
+      "「收款情況」區塊顯示「預計總收款」（＝應到帳＋待對帳＋已到帳）、「已到帳」與「未收款」（＝應到帳＋待對帳）三個數字。",
+      "「支出情況」區塊顯示「預計總支出」（＝應支出＋已支出）與「已支出」的數字。",
+      "若該分類目前沒有任何帳單，畫面會顯示「此分類目前尚未有任何帳單」的提示。",
+      "帳單列表分頁則以表格列出該物件所有帳單明細。"
+    ],
+    "sources": [
+      "code:src/pages/estates/dashboard/bills/StatNow.jsx",
+      "code:src/pages/estates/dashboard/bills/Total.vue",
+      "code:src/pages/estates/dashboard/bills/_parts/PageTop.jsx",
+      "code:app/Bill.php"
+    ],
+    "evidence": [
+      {"sentence_index": 0, "source": "code:src/pages/estates/dashboard/bills/Index.vue", "quote_or_symbol": "pageTitle={t('帳務收支')}"},
+      {"sentence_index": 1, "source": "code:src/pages/estates/dashboard/bills/_parts/PageTop.jsx", "quote_or_symbol": "t('以下將統計<b>繳費週期</b>落在 [s1] 內的所有帳單', [e.rangeString])"},
+      {"sentence_index": 2, "source": "code:src/pages/estates/dashboard/bills/StatNow.jsx", "quote_or_symbol": "t('預計總收款')：${t('應到帳')} + ${t('待對帳')} + ${t('已到帳')}"},
+      {"sentence_index": 3, "source": "code:src/pages/estates/dashboard/bills/StatNow.jsx", "quote_or_symbol": "t('預計總支出')：${t('應支出')} + ${t('已支出')}"},
+      {"sentence_index": 4, "source": "code:src/pages/estates/dashboard/bills/StatNow.jsx", "quote_or_symbol": "t('此分類目前尚未有任何帳單💰')"},
+      {"sentence_index": 5, "source": "code:src/pages/estates/dashboard/bills/Total.vue", "quote_or_symbol": "ListTable from src/pages/bills/_parts/ListTable.jsx"}
+    ],
+    "harvested_from_candidates": [
+      {"fine_id": "jgb/E/bill-status-reconciliation", "kept": 0, "dropped": 3, "dropped_examples": ["帳單共有 6 種狀態的細分描述——本頁未展示狀態細分列表，屬另一個頁面/流程的知識", "既存合約首月帳單相關敘述——與這個頁籤無關"]},
+      {"fine_id": "jgb/E/bill-reports-export", "kept": 0, "dropped": 1, "dropped_examples": ["「儀表板總覽：顯示總收入、總支出、總結餘、總押金結餘四大數字」——本頁實際欄位是預計總收款/已到帳/未收款/預計總支出/已支出，沒有「總結餘」「總押金結餘」欄位"]}
+    ],
+    "not_supported_greps": [],
+    "open_questions": []
+  },
+  {
+    "shelf": "C",
+    "unit_id": "page:estates.dashboard.contractAttachments",
+    "unit_ids": ["page:estates.dashboard.contractAttachments"],
+    "askable": "物件底下的合約附件頁籤要上傳哪些文件、格式與檔案限制",
+    "proposed_id": "jgb/C/estate-dashboard-contract-attachments",
+    "title": "物件底下的合約附件頁籤要上傳哪些文件（授權同意書/產權證明/使用執照等）、格式與大小限制",
+    "target_user": ["property_manager"], "business_types": ["system_provider"], "instance_applicability": "general",
+    "sentences": [
+      "「合約附件」頁籤說明：如有以下附件，可上傳圖片做補充，以避免日後爭議。",
+      "可上傳的項目包含：授權代理人簽約同意書、建物所有權/有權出租之證明文件、使用執照影本、出租方同意轉租確認書、房屋位置格局示意圖、社區管理規約與住戶生活規約，以及其他附註條款或稅籍證明等。",
+      "另外還有「出租方身份證明文件影本」項目，若出租方為法人（公司），需改上傳公司設立登記表。",
+      "頁面提示圖片僅支援 JPG、PNG 檔格式。",
+      "檔案大小限制最大 10MB。",
+      "每個項目限制的可上傳檔案數量各不相同，頁面提醒需留意。"
+    ],
+    "sources": ["code:src/pages/estates/dashboard/contractAttachments/index.vue"],
+    "evidence": [
+      {"sentence_index": 0, "source": "code:src/pages/estates/dashboard/contractAttachments/index.vue", "quote_or_symbol": "t('如有以下附件，可上傳圖片做補充，以避免日後爭議。')"},
+      {"sentence_index": 1, "source": "code:src/pages/estates/dashboard/contractAttachments/index.vue", "quote_or_symbol": "t('授權代理人簽約同意書'); t('建物所有權/有權出租之證明文件'); t('使用執照影本'); t('出租方同意轉租確認書'); t('房屋位置格局示意圖'); t('社區管理規約'); t('住戶生活規約'); t('其他(附註條款、稅籍證明等)')"},
+      {"sentence_index": 2, "source": "code:src/pages/estates/dashboard/contractAttachments/index.vue", "quote_or_symbol": "t('出租方身份證明文件影本'); t('若為法人(公司)，請上傳公司設立登記表')"},
+      {"sentence_index": 3, "source": "code:src/pages/estates/dashboard/contractAttachments/index.vue", "quote_or_symbol": "t('(圖片僅支援JPG、PNG檔')"},
+      {"sentence_index": 4, "source": "code:src/pages/estates/dashboard/contractAttachments/index.vue", "quote_or_symbol": "t('檔案大小最大10MB')"},
+      {"sentence_index": 5, "source": "code:src/pages/estates/dashboard/contractAttachments/index.vue", "quote_or_symbol": "t('每個項目限制的上傳檔案數量不同，請留意。')"}
+    ],
+    "harvested_from_candidates": [
+      {"fine_id": "jgb/D/contract-attachments-notes-limits", "kept": 2, "dropped": 3, "dropped_examples": ["「單一合約 PDF 上傳上限為 15MB」——此頁圖片上限查得為 10MB，非 15MB，且此頁是圖片上傳而非合約整份PDF", "「合約備註最多寫 50 行」「補充條款至多 1 頁 A4」——這兩點屬合約編輯頁的另一功能，非本附件頁籤"]}
+    ],
+    "not_supported_greps": [],
+    "open_questions": ["候選細目提到的『15MB PDF 上限』『備註50行』『補充條款1頁A4』屬合約編輯（contracts.edit）頁的內容，不在本次 C2 worklist 範圍內，未查證，留待後續合約相關頁面盤查"]
+  },
+  {
+    "shelf": "C",
+    "unit_id": "page:estates.dashboard.contracts",
+    "unit_ids": ["page:estates.dashboard.contracts"],
+    "askable": "物件底下的合約歷程頁籤看得到什麼欄位",
+    "proposed_id": "jgb/C/estate-dashboard-contracts-tab",
+    "title": "物件底下的合約歷程頁籤看得到什麼欄位（狀態、簽約類型、出租人/承租人、租期）",
+    "target_user": ["property_manager"], "business_types": ["system_provider"], "instance_applicability": "general",
+    "sentences": [
+      "物件 Dashboard 的「合約歷程」頁籤以表格列出這個物件曾經簽過的所有合約。",
+      "表格欄位包含：狀態、簽約類型、物件、出租人或承租人（依目前角色不同顯示不同標籤）、租期。",
+      "若目前角色不是出租方，表格還會多顯示「是否通知」欄位。",
+      "列表也會顯示每筆合約的合約名稱與承租人資訊。",
+      "清單支援每頁顯示 30、60、90 筆的分頁設定。"
+    ],
+    "sources": ["code:src/pages/estates/dashboard/contracts/Index.vue"],
+    "evidence": [
+      {"sentence_index": 0, "source": "code:src/pages/estates/dashboard/contracts/Index.vue", "quote_or_symbol": "t('合約歷程')"},
+      {"sentence_index": 1, "source": "code:src/pages/estates/dashboard/contracts/Index.vue", "quote_or_symbol": "t('狀態'); t('簽約類型'); t('物件'); store.state.userData?.role?.config_rule_key === 1 ? t('出租人') : t('承租人'); t('租期')"},
+      {"sentence_index": 2, "source": "code:src/pages/estates/dashboard/contracts/Index.vue", "quote_or_symbol": "config_rule_key !== 1 ? t('是否通知') : null"},
+      {"sentence_index": 3, "source": "code:src/pages/estates/dashboard/contracts/Index.vue", "quote_or_symbol": "t('合約名稱'); t('承租人')"},
+      {"sentence_index": 4, "source": "code:src/pages/estates/dashboard/contracts/Index.vue", "quote_or_symbol": "'30': t('30項'), '60': t('60項'), '90': t('90項')"}
+    ],
+    "harvested_from_candidates": [
+      {"fine_id": "jgb/D/contract-lookup", "kept": 0, "dropped": 2, "dropped_examples": ["「智能助手目前無法直接用租客姓名反查合約編號」——與本頁畫面內容無關，屬對話助手行為，非此頁面能力"]},
+      {"fine_id": "jgb/D/contract-status-overview", "kept": 0, "dropped": 1, "dropped_examples": ["「12 種狀態分 4 大階段」——本頁只顯示『狀態』欄位文字，未在此頁程式碼查到完整枚舉，不屬本頁能驗證的內容"]},
+      {"fine_id": "jgb/D/contract-filter-by-state", "kept": 0, "dropped": 1, "dropped_examples": ["「點交點退」篩選分頁——此為『合約總表』(contracts列表) 的功能，非本物件 Dashboard 的合約歷程頁籤"]}
+    ],
+    "not_supported_greps": [],
+    "open_questions": []
+  },
+  {
+    "shelf": "C",
+    "unit_id": "page:estates.dashboard.monthlyReport",
+    "unit_ids": ["page:estates.dashboard.monthlyReport", "page:estates.dashboard.monthlyStatement"],
+    "askable": "物件底下的每月報表/每月對帳單頁籤怎麼看、怎麼下載",
+    "proposed_id": "jgb/C/estate-dashboard-monthly-report",
+    "title": "物件底下的每月報表/每月對帳單頁籤怎麼看、怎麼下載（同一元件依路由切換標題）",
+    "target_user": ["property_manager"], "business_types": ["system_provider"], "instance_applicability": "general",
+    "sentences": [
+      "「每月報表」與「每月對帳單」其實是同一個畫面元件（`MonthlyReport.vue`），依路由名稱切換標題文字。",
+      "頁面可以先選擇「社區」，再選擇要查看的「物件」。",
+      "選定物件後畫面分成「物件報表」與「物件對帳單」兩個區塊，各自有「新增報表」「新增對帳單」的按鈕。",
+      "若尚未上傳過任何檔案，畫面會顯示「尚未上傳任何報表」。",
+      "已上傳的檔案提供「下載全部」的功能一次下載。",
+      "若還沒選擇物件就想操作，畫面會提示「請選擇物件」的錯誤訊息。"
+    ],
+    "sources": ["code:src/pages/bills/stat/_parts/MonthlyReport.vue"],
+    "evidence": [
+      {"sentence_index": 0, "source": "code:src/pages/bills/stat/_parts/MonthlyReport.vue", "quote_or_symbol": "route.name === 'estates.dashboard.monthlyReport' ? t('每月報表') : t('每月對帳單')"},
+      {"sentence_index": 1, "source": "code:src/pages/bills/stat/_parts/MonthlyReport.vue", "quote_or_symbol": "t('社區'); t('物件')"},
+      {"sentence_index": 2, "source": "code:src/pages/bills/stat/_parts/MonthlyReport.vue", "quote_or_symbol": "t('物件報表'); t('新增報表'); t('物件對帳單'); t('新增對帳單')"},
+      {"sentence_index": 3, "source": "code:src/pages/bills/stat/_parts/MonthlyReport.vue", "quote_or_symbol": "t('尚未上傳任何報表')"},
+      {"sentence_index": 4, "source": "code:src/pages/bills/stat/_parts/MonthlyReport.vue", "quote_or_symbol": "t('下載全部')"},
+      {"sentence_index": 5, "source": "code:src/pages/bills/stat/_parts/MonthlyReport.vue", "quote_or_symbol": "errors={[t('請選擇物件。')]}"}
+    ],
+    "harvested_from_candidates": [
+      {"fine_id": "jgb/E/bill-reports-export", "kept": 0, "dropped": 1, "dropped_examples": ["「收支圓餅圖/柱狀統計圖」等統計報表描述——那是帳單管理裡另一個『統計報表』功能，非本頁面（本頁面是上傳/下載檔案清單，不是圖表）"]}
+    ],
+    "not_supported_greps": [],
+    "open_questions": []
+  },
+  {
+    "shelf": "C",
+    "unit_id": "page:estates.dashboard.repair",
+    "unit_ids": ["page:estates.dashboard.repair"],
+    "askable": "物件底下的修繕記錄頁籤看什麼欄位、怎麼依狀態篩選",
+    "proposed_id": "jgb/C/estate-dashboard-repair-tab",
+    "title": "物件底下的修繕記錄頁籤看什麼欄位、怎麼依狀態（申請/安排/完成/結單）篩選",
+    "target_user": ["property_manager"], "business_types": ["system_provider"], "instance_applicability": "general",
+    "sentences": [
+      "物件 Dashboard 的「修繕記錄」頁籤以表格列出這個物件的維修紀錄。",
+      "可依修繕狀態切換分頁：申請修繕、安排修繕、完成修繕、結單。",
+      "表格欄位包含：報修日期、最後更新、分類與項目、物件地址、結算金額、房東/管理者、租客。",
+      "清單支援每頁顯示 30、60、90 筆的分頁設定。"
+    ],
+    "sources": ["code:src/pages/estates/dashboard/repair/Index.vue"],
+    "evidence": [
+      {"sentence_index": 0, "source": "code:src/pages/estates/dashboard/repair/Index.vue", "quote_or_symbol": "t('修繕記錄')"},
+      {"sentence_index": 1, "source": "code:src/pages/estates/dashboard/repair/Index.vue", "quote_or_symbol": "{ label: t('申請修繕'), value: 'apply_repairs' }, { label: t('安排修繕'), value: 'assign_repairs' }, { label: t('完成修繕'), value: 'complete_repairs' }, { label: t('結單'), value: 'finish_repairs' }"},
+      {"sentence_index": 2, "source": "code:src/pages/estates/dashboard/repair/Index.vue", "quote_or_symbol": "t('報修日期'); t('最後更新'); t('分類＆項目'); t('物件地址'); t('結算金額'); t('房東/管理者'); t('租客')"},
+      {"sentence_index": 3, "source": "code:src/pages/estates/dashboard/repair/Index.vue", "quote_or_symbol": "'30': t('30項'), '60': t('60項'), '90': t('90項')"}
+    ],
+    "harvested_from_candidates": [
+      {"fine_id": "jgb/F/repair-request-how-to-submit", "kept": 0, "dropped": 1, "dropped_examples": ["「租客提出修繕申請步驟」——本頁是查看紀錄的列表頁，不是申請表單頁，申請流程在別的頁面（repair/applyProcess），不屬此 unit_id 範圍"]},
+      {"fine_id": "jgb/F/repair-dispatch-and-close", "kept": 0, "dropped": 1, "dropped_examples": ["「安排廠商：填入維修日期、時段、廠商名稱」等派工細節——那是修繕編輯頁（repair/edit）的操作，本頁只是列表，未見這些欄位"]}
+    ],
+    "not_supported_greps": [],
+    "open_questions": []
+  },
+  {
+    "shelf": "C",
+    "unit_id": "page:estates.edit",
+    "unit_ids": ["page:estates.edit"],
+    "askable": "編輯物件跟刊登（招租/買賣）物件的差別、修改會不會影響已簽的合約",
+    "proposed_id": "jgb/C/estate-edit-vs-publish",
+    "title": "編輯物件跟刊登（開啟招租/買賣選項）差在哪、修改會不會影響已簽的合約",
+    "target_user": ["property_manager"], "business_types": ["system_provider"], "instance_applicability": "general",
+    "sentences": [
+      "物件編輯頁裡「開啟招租選項」與「開啟買賣選項」是各自獨立的刊登開關，跟編輯物件的內容資料是不同的動作。",
+      "這兩個開關分別控制物件的招租刊登狀態與買賣刊登狀態，畫面上以「刊登中」「未刊登」呈現目前狀態。",
+      "修改物件的編輯資料不會影響既有已經簽署的合約內容。",
+      "這是因為合約建立時會把當時的物件資料以序列化方式獨立保存一份快照（`Contract::estate_serialized`），之後合約讀取的是這份快照，不會跟著物件後續的編輯而改變。",
+      "合約物件也提供 `estateSnapshot()` 方法，就是用來還原這份簽約當下保存的物件快照。"
+    ],
+    "sources": ["code:src/pages/estates/edit/_parts/EditMenu.vue", "code:app/Contract.php"],
+    "evidence": [
+      {"sentence_index": 0, "source": "code:src/pages/estates/edit/_parts/EditMenu.vue", "quote_or_symbol": "vModel={props.editStore.form.is_open_rent_form}; t('開啟招租選項')"},
+      {"sentence_index": 1, "source": "code:src/pages/estates/edit/_parts/EditMenu.vue", "quote_or_symbol": "t('刊登中'); t('未刊登')"},
+      {"sentence_index": 2, "source": "code:app/Contract.php", "quote_or_symbol": "public function estateSnapshot()"},
+      {"sentence_index": 3, "source": "code:app/Contract.php", "quote_or_symbol": "$estateSnapshot = unserialize($this->estate_serialized);"},
+      {"sentence_index": 4, "source": "code:app/Contract.php", "quote_or_symbol": "if (! $estateSnapshot instanceof Estate) { $estateSnapshot = new Estate(); }"}
+    ],
+    "harvested_from_candidates": [
+      {"fine_id": "jgb/C/property-edit-vs-publish", "kept": 2, "dropped": 1, "dropped_examples": ["「編輯後務必按「儲存」再離開頁面：直接切換頁面不會自動儲存」——未在本頁（EditMenu.vue／is_open 開關）程式中查到自動儲存/離開提示邏輯，未查證"]}
+    ],
+    "not_supported_greps": [],
+    "open_questions": []
+  },
+  {
+    "shelf": "C",
+    "unit_id": "page:estates.edit.basic",
+    "unit_ids": ["page:estates.edit.basic"],
+    "askable": "物件編輯頁『基本資料』分頁要填哪些必填欄位",
+    "proposed_id": "jgb/C/estate-edit-basic-fields",
+    "title": "物件編輯頁『基本資料』分頁要填哪些必填欄位（類型、房型、用途、格局、建築類型、樓層、物件狀態、物件來源）",
+    "target_user": ["property_manager"], "business_types": ["system_provider"], "instance_applicability": "general",
+    "sentences": [
+      "物件編輯頁的「基本資料」分頁列出物件的核心欄位，必填欄位在畫面上以「＊為必填」的樣式標示。",
+      "必填欄位包含「Type of Property」「Room Type」「用途」「格局」「建築類型」。",
+      "樓層區塊底下的「所在樓層」與「總樓層」也是必填欄位。",
+      "在特定條件（`isBeyond360`）成立時，原本非必填的兩個欄位也會變成必填。",
+      "這個分頁另外還有「物件狀態」與「物件來源」兩個必填欄位。",
+      "這個分頁不包含租金、押金與坪數等定價欄位，那些欄位屬於物件編輯頁的「租金與押金」相關分頁，不在本分頁內。"
+    ],
+    "sources": ["code:src/pages/estates/edit/basic/Index.vue", "code:src/pages/estates/edit/rent_detail/Index.jsx"],
+    "evidence": [
+      {"sentence_index": 0, "source": "code:src/pages/estates/edit/basic/Index.vue", "quote_or_symbol": "class=\"fieldTitle after-required"},
+      {"sentence_index": 1, "source": "code:src/pages/estates/edit/basic/Index.vue", "quote_or_symbol": "after-required mb-1\">{{ t('Type of Property') }}...{{ t('Room Type') }}...{{ t('用途') }}...{{ t('格局') }}...{{ t('建築類型') }}"},
+      {"sentence_index": 2, "source": "code:src/pages/estates/edit/basic/Index.vue", "quote_or_symbol": "after-required mb-1\">{{ t('所在樓層') }}...{{ t('總樓層') }}"},
+      {"sentence_index": 3, "source": "code:src/pages/estates/edit/basic/Index.vue", "quote_or_symbol": ":class=\"{'after-required': state.isBeyond360}\""},
+      {"sentence_index": 4, "source": "code:src/pages/estates/edit/basic/Index.vue", "quote_or_symbol": "after-required mb-2\">{{ t('物件狀態') }}...{{ t('物件來源') }}"},
+      {"sentence_index": 5, "source": "code:src/pages/estates/edit/rent_detail/Index.jsx", "quote_or_symbol": "after-required mb-2\">{ t('面積') }...t('租金與押金')"}
+    ],
+    "harvested_from_candidates": [
+      {"fine_id": "jgb/C/property-listing-conditions", "kept": 0, "dropped": 2, "dropped_examples": ["「必填欄位包含物件名稱、租金、押金、坪數、樓層」——在 basic/Index.vue 全文搜尋『坪數』『租金』『押金』均查無，這些欄位實際在 rent_detail/Index.jsx（不在本次 basic 分頁範圍）", "「未訂閱方案無法刊登」等上架條件——未在 basic 分頁本身查到，屬另一機制"]}
+    ],
+    "not_supported_greps": [
+      "git -C jgb2/dev2 grep -c '坪數\\|租金\\|押金' master -- src/pages/estates/edit/basic/Index.vue => 0 ; positive control '用途' => 1"
+    ],
+    "open_questions": ["property-listing-conditions 候選細目所述的租金/押金/坪數必填與上架資格判斷，實際欄位落在 estates/edit/rent_detail（不在本次 C2 worklist），建議另開頁面盤查該分頁再補完整的『上架條件』細目"]
+  },
+  {
+    "shelf": "C",
+    "unit_id": "page:estates.edit.vr",
+    "unit_ids": ["page:estates.edit.vr"],
+    "askable": "物件 VR 虛擬導覽怎麼綁定、要先準備什麼",
+    "proposed_id": "jgb/C/estate-vr-tour-binding",
+    "title": "物件 VR 虛擬導覽怎麼綁定、要先準備什麼（VR Maker App、訂閱方案權限）",
+    "target_user": ["property_manager"], "business_types": ["system_provider"], "instance_applicability": "general",
+    "sentences": [
+      "物件編輯頁的「VR」分頁用來設定「720 VR 全景照」。",
+      "拍攝前需要先安裝「VR Maker」App，頁面提供 iOS 與 Android 的下載連結與 QR Code。",
+      "若目前訂閱方案沒有 VR 權限，開啟「顯示 VR」的選項會被系統擋下、跳出「方案未支援」的提示視窗，同時該選項會自動關閉。",
+      "若還沒完成 VR 設定，畫面會提示「尚未完成 VR 設定，請接續流程」。"
+    ],
+    "sources": ["code:src/pages/estates/edit/vr/Index.vue"],
+    "evidence": [
+      {"sentence_index": 0, "source": "code:src/pages/estates/edit/vr/Index.vue", "quote_or_symbol": "t('720 VR 全景照')"},
+      {"sentence_index": 1, "source": "code:src/pages/estates/edit/vr/Index.vue", "quote_or_symbol": "t('拍攝 720 VR 全景照之前，請先確認已安裝「VR Maker」。'); href=\"https://apps.apple.com/tw/app/vr-maker/id1104856442\"; href=\"https://play.google.com/store/apps/details?id=com.iStaging.vrcameraphone\""},
+      {"sentence_index": 2, "source": "code:src/pages/estates/edit/vr/Index.vue", "quote_or_symbol": "if (!props.editStore.options.vrPermission && props.editStore.form.is_show_vr){ lightboxOpen('subscribedPlanNotAllow'); props.editStore.form.is_show_vr = false }"},
+      {"sentence_index": 3, "source": "code:src/pages/estates/edit/vr/Index.vue", "quote_or_symbol": "t('尚未完成 VR 設定，請接續流程')"}
+    ],
+    "harvested_from_candidates": [
+      {"fine_id": "jgb/C/property-vr-tour", "kept": 0, "dropped": 1, "dropped_examples": ["「VR 裝置申請、拍攝方式、marker 操作與費用等屬 iStaging 廠商服務範圍，請直接洽 iStaging」——畫面上實際呈現的品牌是『VR Maker』App，未見『iStaging』字樣顯示給使用者，僅在下載連結網址內含 iStaging 套件名稱，故不採用『請洽 iStaging 客服』這個未經證實的操作建議"]}
+    ],
+    "not_supported_greps": [],
+    "open_questions": []
+  },
+  {
+    "shelf": "C",
+    "unit_id": "page:estates.index",
+    "unit_ids": ["page:estates.index", "page:estates.list"],
+    "askable": "物件的『刊登狀態』跟『合約狀態』是兩條不同的軸，各自有哪些狀態",
+    "proposed_id": "jgb/C/estate-status-two-axes",
+    "title": "物件的『刊登狀態』（刊登中/未刊登）跟『合約狀態』（無租約/洽談中/租約中）是兩條不同的軸",
+    "target_user": ["property_manager"], "business_types": ["system_provider"], "instance_applicability": "general",
+    "sentences": [
+      "物件的刊登狀態只有「刊登中」「未刊登」兩種，由物件是否對外招租決定。",
+      "物件的合約狀態是另一條軸，即時合約狀態分成「無租約」「洽談中」「租約中」三種。",
+      "建立合約進行洽談時物件顯示「洽談中」，雙方完成簽約後才會變成「租約中」。",
+      "這兩條軸互相獨立：租約中的物件也可以同時是刊登中，兩者不衝突。",
+      "建立合約時，刊登狀態為「未刊登」的物件不能被選取來建約。"
+    ],
+    "sources": [
+      "code:src/use/search/modules/contractStatus.js",
+      "code:src/pages/estates/dashboard/_parts/TabNav.vue",
+      "code:src/pages/estates/pick/_parts/pickBatch.jsx"
+    ],
+    "evidence": [
+      {"sentence_index": 0, "source": "code:src/pages/estates/dashboard/_parts/TabNav.vue", "quote_or_symbol": "t('刊登中'); t('未刊登')"},
+      {"sentence_index": 1, "source": "code:src/use/search/modules/contractStatus.js", "quote_or_symbol": "pairs = {1: t('無租約'), 2: t('洽談中'), 3: t('租約中')}"},
+      {"sentence_index": 2, "source": "code:src/use/search/modules/contractStatus.js", "quote_or_symbol": "2: t('洽談中'), 3: t('租約中')"},
+      {"sentence_index": 3, "source": "code:src/pages/users/dashboard/parts/Block_Vacancy.vue", "quote_or_symbol": "t('即時出租率') = t('租約中的物件總數量') / t('物件總數量')"},
+      {"sentence_index": 4, "source": "code:src/pages/estates/pick/_parts/pickBatch.jsx", "quote_or_symbol": "// 專為建立合約所設計，物件廣告刊登狀態為未刊登時，不能選取"}
+    ],
+    "harvested_from_candidates": [
+      {"fine_id": "jgb/C/property-status-meaning", "kept": 1, "dropped": 2, "dropped_examples": ["「物件總表把物件分成四種狀態：未刊登/刊登中/洽談中/合約中」——查證後系統實際命名是『合約中』應為『租約中』，且四狀態其實是刊登軸(2值)與合約軸(3值)混在一起講，非單一四值列舉，已依程式重新拆成兩軸敘述", "「合約軸四狀態：(1)未刊登(2)刊登中(3)洽談中(4)租約中」——『未刊登/刊登中』屬刊登軸不屬合約軸，混淆已在本細目更正"]}
+    ],
+    "not_supported_greps": [
+      "git -C jgb2/dev2 grep -c '合約中' master -- src/use/search/modules/contractStatus.js => 0 ; positive control '洽談中' => 1"
+    ],
+    "open_questions": []
+  },
+  {
+    "shelf": "C",
+    "unit_id": "page:estates.list",
+    "unit_ids": ["page:estates.index", "page:estates.list"],
+    "askable": "物件列表的進階搜尋可以用哪些條件篩選",
+    "proposed_id": "jgb/C/estate-advanced-search-filters",
+    "title": "物件列表的進階搜尋可以用哪些條件篩選（空間類型、社區、租金範圍、坪數範圍）",
+    "target_user": ["property_manager"], "business_types": ["system_provider"], "instance_applicability": "general",
+    "sentences": [
+      "物件列表除了關鍵字搜尋外，另外提供「進階搜尋」的篩選區塊。",
+      "進階搜尋可用的篩選條件包含：空間類型、社區、租金範圍、坪數範圍。",
+      "一般搜尋列可切換要用哪個欄位當關鍵字，包含：案名、地址、租客、ID、手機、信箱。",
+      "篩選結果會在畫面顯示符合的筆數與總筆數。"
+    ],
+    "sources": [
+      "code:src/pages/estates/list/_parts/EstatesAdvanceSearchBlock.jsx",
+      "code:src/use/search/modules/rentRange.js",
+      "code:src/use/search/modules/space_type.js",
+      "code:src/use/search/modules/sizeRange.js",
+      "code:src/use/search/modules/community.js"
+    ],
+    "evidence": [
+      {"sentence_index": 0, "source": "code:src/pages/estates/list/Index.vue", "quote_or_symbol": "EstatesAdvanceSearchBlock; EstatesAdvanceSearchBlockM"},
+      {"sentence_index": 1, "source": "code:src/use/search/modules/rentRange.js", "quote_or_symbol": "const optionTitle = t('租金')"},
+      {"sentence_index": 2, "source": "code:src/pages/estates/list/_parts/EstatesAdvanceSearchBlock.jsx", "quote_or_symbol": "estateName: t('案名'), address: t('地址'), tenant: t('租客'), id: t('ID'), phone: t('手機'), email: t('信箱')"},
+      {"sentence_index": 3, "source": "code:src/pages/estates/list/_parts/EstatesAdvanceSearchBlock.jsx", "quote_or_symbol": "t('篩選結果')"}
+    ],
+    "harvested_from_candidates": [
+      {"fine_id": "jgb/C/property-advanced-search", "kept": 2, "dropped": 0, "dropped_examples": []}
+    ],
+    "not_supported_greps": [],
+    "open_questions": []
+  },
+  {
+    "shelf": "C",
+    "unit_id": "page:estates.monthlyUpload",
+    "unit_ids": ["page:estates.monthlyUpload"],
+    "askable": "怎麼幫大房東批次上傳每月報表/對帳單",
+    "proposed_id": "jgb/C/estate-monthly-upload-for-owner",
+    "title": "怎麼批次上傳每月報表/對帳單給大房東看（選年月、限PDF 10MB、指定物件、舊檔會被覆蓋）",
+    "target_user": ["property_manager"], "business_types": ["system_provider"], "instance_applicability": "general",
+    "sentences": [
+      "這個頁面讓房東/物管批次上傳「物件報表」或「物件對帳單」的檔案，供其他團隊成員或大房東查看。",
+      "上傳前要先選擇「選擇年份」與「選擇月份」，兩者皆為必填。",
+      "只能上傳 PDF 檔案，畫面提示檔案大小限制為 10MB。",
+      "上傳前需要「指定物件」，可以全選或勾選特定多筆物件。",
+      "頁面提醒：若該月有已上傳的檔案，則舊檔案會被新上傳的檔案覆蓋。",
+      "上傳完成後，其他團隊成員或大房東可以從「帳務管理 > 統計報表 > 每月報表」，或「物件管理 > 物件Dashboard > 與大房東共享 > 每月報表」查看（每月對帳單走對應的另一條路徑）。"
+    ],
+    "sources": ["code:src/pages/estates/dashboard/_parts/MonthlyUpload.jsx"],
+    "evidence": [
+      {"sentence_index": 0, "source": "code:src/pages/estates/dashboard/_parts/MonthlyUpload.jsx", "quote_or_symbol": "t('批次上傳物件報表'); t('批次上傳對帳單')"},
+      {"sentence_index": 1, "source": "code:src/pages/estates/dashboard/_parts/MonthlyUpload.jsx", "quote_or_symbol": "fieldTitle after-required mb-2\">{t('選擇年份')}...{t('選擇月份')}"},
+      {"sentence_index": 2, "source": "code:src/pages/estates/dashboard/_parts/MonthlyUpload.jsx", "quote_or_symbol": "t('僅能上傳 PDF，檔案大小限制 10MB。')"},
+      {"sentence_index": 3, "source": "code:src/pages/estates/dashboard/_parts/MonthlyUpload.jsx", "quote_or_symbol": "fieldTitle after-required mb-2\">{t('指定物件')}"},
+      {"sentence_index": 4, "source": "code:src/pages/estates/dashboard/_parts/MonthlyUpload.jsx", "quote_or_symbol": "t('請注意，若該月有已上傳的檔案，則舊檔案會被新上傳的檔案覆蓋。')"},
+      {"sentence_index": 5, "source": "code:src/pages/estates/dashboard/_parts/MonthlyUpload.jsx", "quote_or_symbol": "t('檔案上傳後，其他團隊成員 / 大房東可由 [s1] 或', [`<a href=\"/bills/stat/monthlyReport\"...`])"}
+    ],
+    "harvested_from_candidates": [
+      {"fine_id": "jgb/B/owner-report-collection-remit", "kept": 1, "dropped": 2, "dropped_examples": ["「排程自動寄送」「週期可選每月/每季/每半年/每年」——本頁（MonthlyUpload.jsx）是手動批次上傳單次檔案，未見排程寄送設定，屬另一個大房東管理功能，非本頁", "「代管業者對房東的月結差額，系統每月自動整理成差額發票群組」——與本頁無關，屬 balanceInvoice 機制"]}
+    ],
+    "not_supported_greps": [],
+    "open_questions": []
+  },
+  {
+    "shelf": "C",
+    "unit_id": "page:listings.IOTDevice",
+    "unit_ids": ["page:listings.IOTDevice"],
+    "askable": "『房東硬體設備推薦』頁面在介紹什麼、怎麼詢價或試用",
+    "proposed_id": "jgb/C/iot-device-showcase-page",
+    "title": "『房東硬體設備推薦』頁面在介紹什麼（智慧門鎖、智慧電錶）、怎麼詢價或申請試用",
+    "target_user": ["property_manager"], "business_types": ["system_provider"], "instance_applicability": "general",
+    "sentences": [
+      "這是一個介紹「與系統互相搭配」硬體設備的頁面，標題為「房東硬體設備推薦」。",
+      "頁面展示的硬體分成「智慧門鎖」（含電控門鎖類、WV40 型號、公寓大門鎖對講機）與智慧電錶（Smartmeter）兩大類。",
+      "頁面有「如何與系統搭配？」的說明區塊，用圖示展示這些設備串接系統後的運作方式。",
+      "頁面提供「聯繫詢價」按鈕，讓有興趣的使用者主動聯繫洽詢報價。",
+      "頁面也有「免費試用」「免費諮詢」與「加LINE詢價」等入口，另外還有「查看價格方案」的連結。",
+      "畫面提醒「商品圖片僅供參考，請以實物為準」。"
+    ],
+    "sources": ["code:src/pages/listings/IOTDevice.vue"],
+    "evidence": [
+      {"sentence_index": 0, "source": "code:src/pages/listings/IOTDevice.vue", "quote_or_symbol": "t('房東硬體設備推薦', null, store.state.listingsI18n)"},
+      {"sentence_index": 1, "source": "code:src/pages/listings/IOTDevice.vue", "quote_or_symbol": "titleKey: '智慧門鎖'; titleKey: '智慧門鎖 - WV40'; titleKey: '公寓大門鎖（對講機）'; imgUri: '/assets/img/IOTDevice/icon/Smartmeter.png'"},
+      {"sentence_index": 2, "source": "code:src/pages/listings/IOTDevice.vue", "quote_or_symbol": "t('如何與系統搭配？', null, store.state.listingsI18n)"},
+      {"sentence_index": 3, "source": "code:src/pages/listings/IOTDevice.vue", "quote_or_symbol": "t('聯繫詢價', null, store.state.listingsI18n)"},
+      {"sentence_index": 4, "source": "code:src/pages/listings/IOTDevice.vue", "quote_or_symbol": "t('免費試用'...); t('免費諮詢'...); t('加LINE詢價'...); t('查看價格方案', null, store.state.listingsI18n)"},
+      {"sentence_index": 5, "source": "code:src/pages/listings/IOTDevice.vue", "quote_or_symbol": "t('商品圖片僅供參考，請以實物為準', null, store.state.listingsI18n)"}
+    ],
+    "harvested_from_candidates": [
+      {"fine_id": "jgb/G/meter-device-management", "kept": 0, "dropped": 1, "dropped_examples": ["「到裝置管理→智慧電錶逐顆編輯綁定物件」等操作說明——這個頁面（listings/IOTDevice.vue）是行銷介紹頁，不是裝置管理操作頁；裝置管理頁不在本次 C2 worklist 範圍內，未查證"]},
+      {"fine_id": "jgb/G/smart-lock-functions", "kept": 0, "dropped": 1, "dropped_examples": ["「QR Code 開門」——在 jgb2 全庫搜尋門鎖相關 blade/vue 檔均未查得 QR Code 開門功能字樣，已查得的是密碼開門機制（私人門鎖/共用門鎖），未採用此候選句"]}
+    ],
+    "not_supported_greps": [
+      "git -C jgb2/dev2 grep -c 'QR' master -- resources/views/iot/doorlock/ => 0 ; positive control '密碼' => 1"
+    ],
+    "open_questions": ["listings.IOTDevice 是行銷/詢價頁，實際的智慧鎖/電錶操作管理頁（resources/views/iot/doorlock/*.blade.php 等）不在本次 C2 worklist 內，未被指派為獨立 page 主題，建議後續盤查該操作頁另立細目"]
+  },
+  {
+    "shelf": "C",
+    "unit_id": "page:web:estates.house",
+    "unit_ids": ["page:web:estates.house", "page:web:estates.show"],
+    "askable": "招租/買賣物件的公開分享網址在哪裡、house 跟 show 兩種網址差在哪",
+    "proposed_id": "jgb/C/storefront-entry-and-share",
+    "title": "物件的公開分享網址（/house/{no} 與 /show/{id} 其實是同一個頁面，only 網址格式不同）",
+    "target_user": ["property_manager"], "business_types": ["system_provider"], "instance_applicability": "general",
+    "sentences": [
+      "物件的公開頁有兩種網址格式：`/house/{no}/{action?}`（用 JGB 編號）與 `/show/{id}/{action?}`（用資料庫 id）。",
+      "`EstateController` 的 `house` 方法內部其實是直接呼叫 `show` 方法產生同一份頁面內容，等於是同一個公開頁的兩種網址寫法。",
+      "若物件正處於「刊登中」狀態、且是透過 `show` 網址進入、且沒有帶其他動作參數，系統會自動導向 `estates.house` 的網址。",
+      "公開頁會產生一個「招租刊登網址」（`estates.open` 路由）供對外分享；若是合約快照且物件本身已無 id，則不會產生這個網址。",
+      "若合約是續約合約，透過 `house` 網址並帶入合約 id 進來時，系統會直接導向該合約的簽名頁，而不是顯示物件公開頁。"
+    ],
+    "sources": ["code:app/Http/Controllers/EstateController.php"],
+    "evidence": [
+      {"sentence_index": 0, "source": "code:app/Http/Controllers/EstateController.php", "quote_or_symbol": "public function house(Request $request, $no, $action = '', $estate = '')"},
+      {"sentence_index": 1, "source": "code:app/Http/Controllers/EstateController.php", "quote_or_symbol": "return $this->show($request, $id, $action);"},
+      {"sentence_index": 2, "source": "code:app/Http/Controllers/EstateController.php", "quote_or_symbol": "if (request()->routeIs('estates.show') && empty($action) && !$isArchive && $estate->is_open) { ... return redirect()->route('estates.house', ['no' => $no]); }"},
+      {"sentence_index": 3, "source": "code:app/Http/Controllers/EstateController.php", "quote_or_symbol": "$premisesOpenUrl = $estate->id ? route('estates.open', ['id' => $estate->id]) : '';"},
+      {"sentence_index": 4, "source": "code:app/Http/Controllers/EstateController.php", "quote_or_symbol": "if (!empty($contract = Contract::find($action))) { if ($contract->isRenewContract()) { ... return redirect()->route('contracts.show', ...); } }"}
+    ],
+    "harvested_from_candidates": [
+      {"fine_id": "jgb/C/storefront-entry-share", "kept": 0, "dropped": 2, "dropped_examples": ["「招租店舖（房東對外首頁）...網址是 /p/ 開頭」——這是另一個對象（房東個人店舖頁），跟本主題 house/show（單一物件公開頁）不是同一個頁面；此候選句不屬於 page:web:estates.house / estates.show 這兩個 unit_id 的範圍", "「把店舖連結分享到 FB、LINE 就是現成的招租頁」——同上，屬房東店舖頁而非本物件公開頁"]}
+    ],
+    "not_supported_greps": [],
+    "open_questions": ["候選細目 jgb/C/storefront-entry-share 描述的其實是『房東對外首頁／招租店舖』（/p/ 開頭網址），跟本次 worklist 指定的 EstateController 的 house／show 方法（單一物件頁）是不同頁面；房東店舖頁的實際路由與元件不在本次 C2 worklist，未查證，建議另立主題"]
+  },
+  {
+    "shelf": "C",
+    "unit_id": "page:web:estates.show",
+    "unit_ids": ["page:web:estates.house", "page:web:estates.show"],
+    "askable": "設定的『對外顯示地址』會顯示在哪裡、為什麼後台看到的還是完整地址",
+    "proposed_id": "jgb/C/public-display-address-scope",
+    "title": "設定的『對外顯示地址』只在公開頁與地圖上生效，後台編輯畫面永遠顯示完整地址",
+    "target_user": ["property_manager"], "business_types": ["system_provider"], "instance_applicability": "general",
+    "sentences": [
+      "物件（與社區）都各自有「詳細地址」與「對外顯示地址」兩組地址欄位。",
+      "「對外顯示地址」欄位下方的提示文字說明它會標記在 Google 地圖上，用途是給對外看的頁面與地圖使用。",
+      "後台的編輯畫面是給房東/物管自己管理用的介面，欄位顯示的是「詳細地址」而非對外顯示地址。",
+      "要確認「對外顯示地址」實際呈現的樣子，需要另外開啟物件的公開頁面（`/house/...` 或 `/show/...`）查看，而不是看後台編輯畫面。"
+    ],
+    "sources": ["code:src/pages/communities/edit/Basic.vue", "code:app/Http/Controllers/EstateController.php"],
+    "evidence": [
+      {"sentence_index": 0, "source": "code:src/pages/communities/edit/Basic.vue", "quote_or_symbol": "props.type === 1 ? t('詳細地址') : t('對外顯示地址')"},
+      {"sentence_index": 1, "source": "code:src/pages/communities/edit/Basic.vue", "quote_or_symbol": "t('對外顯示地址將會標記在 Google 地圖上')"},
+      {"sentence_index": 2, "source": "code:src/pages/communities/edit/Basic.vue", "quote_or_symbol": "h4 class=\"shrink pr-2\">{ props.type === 1 ? t('詳細地址') : t('對外顯示地址') }"},
+      {"sentence_index": 3, "source": "code:app/Http/Controllers/EstateController.php", "quote_or_symbol": "public function show(Request $request, $id, $action = '', $estate = '')"}
+    ],
+    "harvested_from_candidates": [
+      {"fine_id": "jgb/C/public-display-address", "kept": 1, "dropped": 1, "dropped_examples": ["「業者自己的後台介面永遠顯示完整地址」原句在 EstateController 的 show／house 方法本身查無此邏輯的直接程式碼證據（該邏輯落在編輯頁 Basic.vue 的 type===1/else 分支，已改用該處程式作為證據）"]}
+    ],
+    "not_supported_greps": [],
+    "open_questions": []
+  }
+]
+

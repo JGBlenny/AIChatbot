@@ -6,7 +6,7 @@ Plan `.kiro/specs/knowledge-outline-and-intent-architecture/inputs/plan-3.7-fine
 三把尺：
 1. 合成正本——`FineIndex` 送去 embed 的鍵文字多重集合＝`index_eval` 內文臂（`title+phrasing+content`）
    的鍵文字多重集合。
-2. 真正本（`rag-orchestrator/canon/prospect.md`）——同一等式，⛔ assert 訊息只印數量／布林＋細目
+2. 真正本（`rag-orchestrator/canon/jgb/` 九架，`parse_canon_dir`）——同一等式，⛔ assert 訊息只印數量／布林＋細目
    id，不印鍵文字（正本講法是去識別後的真流量）。
 3. 突變控制——用 3.4 凍結的 embedding 快取重放第二份材料 49 格：有內文鍵 r@5 必須高於拿掉內文鍵，
    且兩者都要對齊 3.4 報告 `second_material.article` 臂的數字。前置兩道 SKIP 閘門（快取不在本機／
@@ -32,7 +32,7 @@ _REPO = os.path.dirname(_RAG)  # rag-orchestrator の親＝repo 根（容器內�
 sys.path.insert(0, _RAG)
 from tools.canon import index_eval as ie  # noqa: E402
 
-from services.agent.canon.canon_parser import parse_canon, parse_canon_text
+from services.agent.canon.canon_parser import parse_canon_dir, parse_canon_text
 from services.agent.canon.candidate_selector import CandidateSelector
 from services.agent.canon.fine_index import FineIndex
 from services.agent.identity import Identity
@@ -66,7 +66,27 @@ class _FakeBackend:
 
 
 def _real_canon_path() -> str:
-    return os.path.join(_RAG, "canon", "prospect.md")
+    """版控正本＝**目錄**（DSP-058／9.6 S3；⛔ 不再是 `canon/prospect.md`，那份已封存）。"""
+    return os.path.join(_RAG, "canon", "jgb")
+
+
+#: ⚠️ 計畫 9.10 S4 查證（2026-09-23）：反證交裁——這條 skip **不是**計畫／HANDOFF
+#: 認定的「因 S3 換正本而自己 skip」。`report["inputs_sha"]["canon_sha256"]`＝
+#: `240e1a50…`，既不等於現行正本 sha（`9b67e763…`）也不等於 S3 封存的舊 210 條
+#: 正本 sha（`b94acd638e35…`）——`inputs/plan-3.4-index-eval-20260907.json` 凍結於
+#: 2026-09-07，而 210 條正本是 9.7（2026-09-16）逐架擴充後的狀態，兩者本來就不同源；
+#: `tasks.md` 9.3（2026-09-14）另建了 id 重映工具正是因為這件事——sha 對不上、
+#: 這條測試自 2026-09-07 以來就一路 skip，早於 DSP-067／S3。⇒ 本片**不**強行讓它
+#: 「對新 sha 生效」（那需要重新真跑 3.4 全套 embedding，屬未授權支出，S4 範圍
+#: 明訂 ⛔ 不做）；改法：仍指到（更貼近凍結材料世代的）S3 封存正本
+#: `docs/archive/2026-09/canon-pre-dsp067/`（⛔ 不再跟著現行 `canon/jgb/` 的 sha
+#: 漂走），skip 訊息改寫成真正的成因，避免下一個 session 誤以為這是 S4 的鍋。
+_ARCHIVED_CANON_SHA_PREFIX = "b94acd638e35"
+
+
+def _archived_canon_path() -> str:
+    """⚠️ 2026-09-23 起此目錄已移出工作樹；取回：`git show c06575a9:docs/archive/2026-09/canon-pre-dsp067/jgb/<架>.md`。"""
+    return os.path.join(_REPO, "docs", "archive", "2026-09", "canon-pre-dsp067", "jgb")
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -160,7 +180,7 @@ async def test_synthetic_doc_embedded_key_multiset_matches_index_eval_content_ar
 # ═══════════════════════════════════════════════════════════════════════════
 
 async def test_real_canon_embedded_key_multiset_matches_index_eval_content_arm_counts_only():
-    doc = parse_canon(_real_canon_path())
+    doc = parse_canon_dir(_real_canon_path())
     backend = _FakeBackend()
     index = FineIndex(backend)
     await index.prepare(doc)
@@ -251,17 +271,34 @@ def _real_canon_secrets(doc) -> list[str]:
 
 
 async def test_second_material_recall_with_content_keys_beats_without_and_matches_report(caplog):
+    """計畫 9.10 S4：改指向封存的舊 210 條正本（見上方模組註解），⛔ 不再跟著
+    `canon/jgb/` 的 sha 漂走——那份正本已換成新的 515 條全未審正本，凍結材料／
+    快取仍是對舊 210 條算的，指到新正本只會讓這條測試在換正本後永遠 skip。"""
     cache_path, report_path, map_v2_path, canon_v3_path = _repo_paths()
 
     if not os.path.isfile(cache_path):
         pytest.skip("3.4 embedding 快取不在本機（gitignored）")
 
-    doc = parse_canon(_real_canon_path())
-
+    # 2026-09-23 業主裁定：封存正本移出工作樹（內容在 git c06575a9）。報告 sha 與封存
+    # sha 本來就不同 ⇒ 先比 sha 再讀目錄，行為與移除前相同（一路停在這道 skip）；
+    # 哪天報告改對到封存 sha，下面讀目錄會大聲失敗，提醒先從 git 取回封存。
     with open(report_path, encoding="utf-8") as f:
         report = json.load(f)
-    if doc.canon_sha256 != report["inputs_sha"]["canon_sha256"]:
-        pytest.skip("正本已變（sha 不符 3.4 報告）、需重跑 3.4 全跑更新快取與報告")
+    report_sha = report["inputs_sha"]["canon_sha256"]
+    if not report_sha.startswith(_ARCHIVED_CANON_SHA_PREFIX):
+        pytest.skip(
+            f"3.4 報告（2026-09-07 凍結，sha={report_sha[:12]}）"
+            f"與封存正本（S3 封存的 9.7 擴充後 210 條，sha={_ARCHIVED_CANON_SHA_PREFIX}）本來就不同源"
+            "——⚠️ 這與計畫 9.10 S3 換正本無關，是 2026-09-07 之後兩輪逐架擴充（9.7）留下的"
+            "既有落差（見 tasks.md 9.3 的 id 重映說明）；要重新生效須重跑 3.4 全套 embedding"
+            "（真支出，S4 範圍未授權）"
+        )
+
+    doc = parse_canon_dir(_archived_canon_path())
+    assert doc.canon_sha256 == report_sha, (
+        f"封存正本 sha={doc.canon_sha256[:12]} 不等於報告 sha={report_sha[:12]}"
+        "——封存複本本身被動過，這不是量尺該吞的狀況"
+    )
 
     with open(cache_path, encoding="utf-8") as f:
         cache = json.load(f)

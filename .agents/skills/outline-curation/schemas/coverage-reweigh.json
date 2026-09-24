@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "outline-curation/schemas/coverage-reweigh.json",
+  "type": "object",
+  "required": ["step", "skill_version", "inputs_sha", "deterministic", "raw_outputs_path", "cost", "payload"],
+  "additionalProperties": false,
+  "properties": {
+    "step": {"type": "string", "enum": ["reweigh"]},
+    "skill_version": {"type": "string"},
+    "inputs_sha": {"type": "object"},
+    "deterministic": {"type": "boolean", "enum": [true]},
+    "raw_outputs_path": {"type": ["string", "null"]},
+    "cost": {"type": "object"},
+    "payload": {
+      "type": "object",
+      "required": ["cells"],
+      "additionalProperties": false,
+      "properties": {
+        "cells": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["cell_id", "audience", "topic", "disposition", "fine_id", "fix_type", "gap_classes", "min_verification", "judge_agreement"],
+            "properties": {
+              "cell_id": {"type": "string"},
+              "audience": {"type": "string"},
+              "topic": {"type": "string"},
+              "disposition": {"type": "string", "enum": ["fine", "not_available", "deliberate_no", "owner_decision"]},
+              "fine_id": {"type": ["string", "null"]},
+              "fix_type": {"type": ["string", "null"], "enum": ["add_knowledge", "add_phrasing", "list_not_available", "cross_audience_rewrite", "merge_similar", "owner_decision", null]},
+              "gap_classes": {"type": "array", "items": {"type": "string", "enum": ["content_gap", "retrieval_gap"]}},
+              "min_verification": {"type": "object"},
+              "judge_label": {"type": "string", "enum": ["answerable", "partial", "no_source", "deliberate_no"]},
+              "judge_agreement": {"type": ["number", "null"]}
+            }
+          }
+        }
+      }
+    }
+  }
+}

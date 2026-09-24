@@ -196,6 +196,93 @@ def test_three_way_freeze_mismatch_detected(tmp_path):
 
 
 # ---------------------------------------------------------------------------
+# `--canon` 收目錄／單檔 ＋ `--target-user` 母體切法（DSP-058／9.6 S3）
+# ---------------------------------------------------------------------------
+
+_LIB_SHELF_A = """---
+coarse: A
+title: 測試粗目
+scope: 測試用
+version: 2026-09-15.0
+reviewers: [owner]
+language: zh-TW
+---
+## 測試粗目 {#A-test}
+### 售前細目 {#jgb/A/pros}
+- sources: [helpcenter:art1]
+- target_user: [prospect]
+- business_types: [system_provider]
+- instance_applicability: general
+內容句一。
+### 業者細目 {#jgb/A/pm}
+- sources: [helpcenter:art2]
+- target_user: [property_manager]
+- business_types: [system_provider]
+- instance_applicability: general
+內容句二。
+"""
+
+_LIB_EMPTY = """---
+coarse: {letter}
+title: 空架 {letter}
+scope: 測試用空架
+version: 2026-09-15.0
+reviewers: [owner]
+language: zh-TW
+---
+## 空架 {letter} {{#{letter}-empty}}
+"""
+
+
+def _make_library(tmp_path, name="jgb"):
+    d = tmp_path / name
+    d.mkdir()
+    (d / "A.md").write_text(_LIB_SHELF_A, encoding="utf-8")
+    for letter in "BCDEFGHI":
+        (d / f"{letter}.md").write_text(_LIB_EMPTY.format(letter=letter), encoding="utf-8")
+    return str(d)
+
+
+def test_load_fines_accepts_dir_and_file(tmp_path):
+    """目錄 ⇒ `parse_canon_dir`；單檔 ⇒ `parse_canon`（正對照：兩條路都真的載到細目）。"""
+    lib = _make_library(tmp_path)
+    assert [f.id for f in ie._load_fines(lib)] == ["jgb/A/pros", "jgb/A/pm"]
+
+    single = str(tmp_path / "prospect.md")
+    _write(single, _CANON_TEXT)
+    assert [f.id for f in ie._load_fines(single)][0].startswith("prospect/")
+
+
+def test_load_fines_target_user_filters_population(tmp_path):
+    lib = _make_library(tmp_path)
+    assert [f.id for f in ie._load_fines(lib, "prospect")] == ["jgb/A/pros"]
+    # 正對照：另一個值切到另一條（⛔ 不是「篩了就空」）
+    assert [f.id for f in ie._load_fines(lib, "property_manager")] == ["jgb/A/pm"]
+    # 值域外 ⇒ 空母體 ⇒ 大聲失敗（`MaterialFreezeError` 是 `SystemExit`，code 2）
+    with pytest.raises(SystemExit) as ei:
+        ie._load_fines(lib, "not_a_target_user")
+    assert ei.value.code == 2
+
+
+def test_missing_canon_path_fails_loudly(tmp_path):
+    with pytest.raises(SystemExit) as ei:
+        ie._load_fines(str(tmp_path / "no-such-canon-dir"))
+    assert ei.value.code == 2
+
+
+def test_canon_sha_for_dir_is_the_parsed_canon_sha256(tmp_path):
+    """目錄的材料凍結 sha ＝`parse_canon_dir(...).canon_sha256`（⛔ 不是某個檔的位元組 sha）。"""
+    from services.agent.canon.canon_parser import parse_canon_dir
+
+    lib = _make_library(tmp_path)
+    assert ie._canon_sha(lib) == parse_canon_dir(lib).canon_sha256
+    # 正對照：單檔仍是檔案位元組 sha（舊語義原封）
+    single = str(tmp_path / "prospect.md")
+    _write(single, _CANON_TEXT)
+    assert ie._canon_sha(single) == ie.sha256_file(single)
+
+
+# ---------------------------------------------------------------------------
 # gold 映射：別名、一對多、unresolved raw／after-alias、對不到細目的句子排除計數
 # ---------------------------------------------------------------------------
 

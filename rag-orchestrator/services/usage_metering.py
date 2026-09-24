@@ -94,7 +94,8 @@ INTERNAL_RULES = [
     ("smoke",    lambda r: (r.get("session_id") or "").startswith(_SMOKE_PREFIXES)),
 ]
 
-_KNOWN_USER_TYPES = ("tenant", "landlord", "property_manager", "system_admin", "prospect")
+# 值域外的 target_user（例如 `landlord`）不落此分支，改由下方推導鏈決定：b2c 外部流量記為 tenant。
+_KNOWN_USER_TYPES = ("tenant", "property_manager", "system_admin", "prospect")
 
 
 @dataclass

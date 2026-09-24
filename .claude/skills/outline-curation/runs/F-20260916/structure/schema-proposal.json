@@ -1,0 +1,479 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "angle": {
+      "type": "string"
+    },
+    "coarses": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "enum": [
+              "A",
+              "B",
+              "C",
+              "D",
+              "E",
+              "F",
+              "G",
+              "H",
+              "I"
+            ],
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "fines": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "coarse_id": {
+            "enum": [
+              "A",
+              "B",
+              "C",
+              "D",
+              "E",
+              "F",
+              "G",
+              "H",
+              "I"
+            ],
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "merge_of": {
+            "items": {
+              "enum": [
+                "tmp:canon:jgb/F/repair-progress-followup-scope",
+                "tmp:canon:jgb/F/repair-system",
+                "tmp:canon:jgb/F/repair-ticket-after-submit",
+                "tmp:canon:jgb/F/repair-ticket-mid-flow-cancel",
+                "tmp:canon:jgb/F/repair-ticket-no-lease",
+                "tmp:canon:jgb/F/repair-ticket-open-and-confirm",
+                "tmp:canon:jgb/F/repair-ticket-photo-count-limit",
+                "tmp:canon:jgb/F/repair-ticket-photo-recognition-uncertain",
+                "tmp:canon:jgb/F/repair-ticket-reclassify",
+                "tmp:canon:jgb/F/repair-ticket-submit-failure",
+                "tmp:canon:jgb/F/repair-ticket-urgency-judgment",
+                "tmp:kb:1558",
+                "tmp:kb:2963",
+                "tmp:kb:2964",
+                "tmp:kb:2965",
+                "tmp:kb:2966",
+                "tmp:kb:2967",
+                "tmp:kb:2968",
+                "tmp:kb:2969",
+                "tmp:kb:2970",
+                "tmp:kb:2971",
+                "tmp:kb:2972",
+                "tmp:kb:2973",
+                "tmp:kb:2974",
+                "tmp:kb:2975",
+                "tmp:kb:3029",
+                "tmp:kb:3030",
+                "tmp:kb:3145",
+                "tmp:kb:3186",
+                "tmp:kb:3187",
+                "tmp:kb:3188",
+                "tmp:kb:3189",
+                "tmp:kb:3190",
+                "tmp:kb:3192",
+                "tmp:kb:3193",
+                "tmp:kb:3194",
+                "tmp:kb:3195",
+                "tmp:kb:3197",
+                "tmp:kb:3198",
+                "tmp:kb:3199",
+                "tmp:kb:3200",
+                "tmp:kb:3203",
+                "tmp:kb:3219",
+                "tmp:kb:3220",
+                "tmp:kb:3221",
+                "tmp:kb:3222",
+                "tmp:kb:3272",
+                "tmp:kb:3274",
+                "tmp:kb:3275",
+                "tmp:kb:3276",
+                "tmp:kb:3277",
+                "tmp:kb:3286",
+                "tmp:kb:3287",
+                "tmp:kb:3288",
+                "tmp:kb:3289",
+                "tmp:kb:3320",
+                "tmp:kb:3365",
+                "tmp:kb:3424",
+                "tmp:kb:3425",
+                "tmp:kb:3426",
+                "tmp:kb:3427",
+                "tmp:kb:3446",
+                "tmp:kb:3488",
+                "tmp:kb:4249",
+                "tmp:kb:4416",
+                "tmp:kb:4418",
+                "tmp:kb:4420",
+                "tmp:kb:4421",
+                "tmp:kb:4422",
+                "tmp:kb:4654"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "moved_from": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "op": {
+            "enum": [
+              "keep",
+              "split",
+              "merge",
+              "move",
+              "new"
+            ],
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "split_from": {
+            "items": {
+              "enum": [
+                "tmp:canon:jgb/F/repair-progress-followup-scope",
+                "tmp:canon:jgb/F/repair-system",
+                "tmp:canon:jgb/F/repair-ticket-after-submit",
+                "tmp:canon:jgb/F/repair-ticket-mid-flow-cancel",
+                "tmp:canon:jgb/F/repair-ticket-no-lease",
+                "tmp:canon:jgb/F/repair-ticket-open-and-confirm",
+                "tmp:canon:jgb/F/repair-ticket-photo-count-limit",
+                "tmp:canon:jgb/F/repair-ticket-photo-recognition-uncertain",
+                "tmp:canon:jgb/F/repair-ticket-reclassify",
+                "tmp:canon:jgb/F/repair-ticket-submit-failure",
+                "tmp:canon:jgb/F/repair-ticket-urgency-judgment",
+                "tmp:kb:1558",
+                "tmp:kb:2963",
+                "tmp:kb:2964",
+                "tmp:kb:2965",
+                "tmp:kb:2966",
+                "tmp:kb:2967",
+                "tmp:kb:2968",
+                "tmp:kb:2969",
+                "tmp:kb:2970",
+                "tmp:kb:2971",
+                "tmp:kb:2972",
+                "tmp:kb:2973",
+                "tmp:kb:2974",
+                "tmp:kb:2975",
+                "tmp:kb:3029",
+                "tmp:kb:3030",
+                "tmp:kb:3145",
+                "tmp:kb:3186",
+                "tmp:kb:3187",
+                "tmp:kb:3188",
+                "tmp:kb:3189",
+                "tmp:kb:3190",
+                "tmp:kb:3192",
+                "tmp:kb:3193",
+                "tmp:kb:3194",
+                "tmp:kb:3195",
+                "tmp:kb:3197",
+                "tmp:kb:3198",
+                "tmp:kb:3199",
+                "tmp:kb:3200",
+                "tmp:kb:3203",
+                "tmp:kb:3219",
+                "tmp:kb:3220",
+                "tmp:kb:3221",
+                "tmp:kb:3222",
+                "tmp:kb:3272",
+                "tmp:kb:3274",
+                "tmp:kb:3275",
+                "tmp:kb:3276",
+                "tmp:kb:3277",
+                "tmp:kb:3286",
+                "tmp:kb:3287",
+                "tmp:kb:3288",
+                "tmp:kb:3289",
+                "tmp:kb:3320",
+                "tmp:kb:3365",
+                "tmp:kb:3424",
+                "tmp:kb:3425",
+                "tmp:kb:3426",
+                "tmp:kb:3427",
+                "tmp:kb:3446",
+                "tmp:kb:3488",
+                "tmp:kb:4249",
+                "tmp:kb:4416",
+                "tmp:kb:4418",
+                "tmp:kb:4420",
+                "tmp:kb:4421",
+                "tmp:kb:4422",
+                "tmp:kb:4654"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "target_user": {
+            "items": {
+              "enum": [
+                "prospect",
+                "property_manager"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "coarse_id",
+          "title",
+          "slug",
+          "merge_of",
+          "split_from",
+          "moved_from",
+          "reason",
+          "target_user",
+          "op"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "id_map": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "new": {
+            "type": "string"
+          },
+          "old": {
+            "anyOf": [
+              {
+                "enum": [
+                  "tmp:canon:jgb/F/repair-progress-followup-scope",
+                  "tmp:canon:jgb/F/repair-system",
+                  "tmp:canon:jgb/F/repair-ticket-after-submit",
+                  "tmp:canon:jgb/F/repair-ticket-mid-flow-cancel",
+                  "tmp:canon:jgb/F/repair-ticket-no-lease",
+                  "tmp:canon:jgb/F/repair-ticket-open-and-confirm",
+                  "tmp:canon:jgb/F/repair-ticket-photo-count-limit",
+                  "tmp:canon:jgb/F/repair-ticket-photo-recognition-uncertain",
+                  "tmp:canon:jgb/F/repair-ticket-reclassify",
+                  "tmp:canon:jgb/F/repair-ticket-submit-failure",
+                  "tmp:canon:jgb/F/repair-ticket-urgency-judgment",
+                  "tmp:kb:1558",
+                  "tmp:kb:2963",
+                  "tmp:kb:2964",
+                  "tmp:kb:2965",
+                  "tmp:kb:2966",
+                  "tmp:kb:2967",
+                  "tmp:kb:2968",
+                  "tmp:kb:2969",
+                  "tmp:kb:2970",
+                  "tmp:kb:2971",
+                  "tmp:kb:2972",
+                  "tmp:kb:2973",
+                  "tmp:kb:2974",
+                  "tmp:kb:2975",
+                  "tmp:kb:3029",
+                  "tmp:kb:3030",
+                  "tmp:kb:3145",
+                  "tmp:kb:3186",
+                  "tmp:kb:3187",
+                  "tmp:kb:3188",
+                  "tmp:kb:3189",
+                  "tmp:kb:3190",
+                  "tmp:kb:3192",
+                  "tmp:kb:3193",
+                  "tmp:kb:3194",
+                  "tmp:kb:3195",
+                  "tmp:kb:3197",
+                  "tmp:kb:3198",
+                  "tmp:kb:3199",
+                  "tmp:kb:3200",
+                  "tmp:kb:3203",
+                  "tmp:kb:3219",
+                  "tmp:kb:3220",
+                  "tmp:kb:3221",
+                  "tmp:kb:3222",
+                  "tmp:kb:3272",
+                  "tmp:kb:3274",
+                  "tmp:kb:3275",
+                  "tmp:kb:3276",
+                  "tmp:kb:3277",
+                  "tmp:kb:3286",
+                  "tmp:kb:3287",
+                  "tmp:kb:3288",
+                  "tmp:kb:3289",
+                  "tmp:kb:3320",
+                  "tmp:kb:3365",
+                  "tmp:kb:3424",
+                  "tmp:kb:3425",
+                  "tmp:kb:3426",
+                  "tmp:kb:3427",
+                  "tmp:kb:3446",
+                  "tmp:kb:3488",
+                  "tmp:kb:4249",
+                  "tmp:kb:4416",
+                  "tmp:kb:4418",
+                  "tmp:kb:4420",
+                  "tmp:kb:4421",
+                  "tmp:kb:4422",
+                  "tmp:kb:4654"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "op": {
+            "enum": [
+              "keep",
+              "split",
+              "merge",
+              "move",
+              "new"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "old",
+          "new",
+          "op"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "out_of_shelf": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "enum": [
+              "tmp:canon:jgb/F/repair-progress-followup-scope",
+              "tmp:canon:jgb/F/repair-system",
+              "tmp:canon:jgb/F/repair-ticket-after-submit",
+              "tmp:canon:jgb/F/repair-ticket-mid-flow-cancel",
+              "tmp:canon:jgb/F/repair-ticket-no-lease",
+              "tmp:canon:jgb/F/repair-ticket-open-and-confirm",
+              "tmp:canon:jgb/F/repair-ticket-photo-count-limit",
+              "tmp:canon:jgb/F/repair-ticket-photo-recognition-uncertain",
+              "tmp:canon:jgb/F/repair-ticket-reclassify",
+              "tmp:canon:jgb/F/repair-ticket-submit-failure",
+              "tmp:canon:jgb/F/repair-ticket-urgency-judgment",
+              "tmp:kb:1558",
+              "tmp:kb:2963",
+              "tmp:kb:2964",
+              "tmp:kb:2965",
+              "tmp:kb:2966",
+              "tmp:kb:2967",
+              "tmp:kb:2968",
+              "tmp:kb:2969",
+              "tmp:kb:2970",
+              "tmp:kb:2971",
+              "tmp:kb:2972",
+              "tmp:kb:2973",
+              "tmp:kb:2974",
+              "tmp:kb:2975",
+              "tmp:kb:3029",
+              "tmp:kb:3030",
+              "tmp:kb:3145",
+              "tmp:kb:3186",
+              "tmp:kb:3187",
+              "tmp:kb:3188",
+              "tmp:kb:3189",
+              "tmp:kb:3190",
+              "tmp:kb:3192",
+              "tmp:kb:3193",
+              "tmp:kb:3194",
+              "tmp:kb:3195",
+              "tmp:kb:3197",
+              "tmp:kb:3198",
+              "tmp:kb:3199",
+              "tmp:kb:3200",
+              "tmp:kb:3203",
+              "tmp:kb:3219",
+              "tmp:kb:3220",
+              "tmp:kb:3221",
+              "tmp:kb:3222",
+              "tmp:kb:3272",
+              "tmp:kb:3274",
+              "tmp:kb:3275",
+              "tmp:kb:3276",
+              "tmp:kb:3277",
+              "tmp:kb:3286",
+              "tmp:kb:3287",
+              "tmp:kb:3288",
+              "tmp:kb:3289",
+              "tmp:kb:3320",
+              "tmp:kb:3365",
+              "tmp:kb:3424",
+              "tmp:kb:3425",
+              "tmp:kb:3426",
+              "tmp:kb:3427",
+              "tmp:kb:3446",
+              "tmp:kb:3488",
+              "tmp:kb:4249",
+              "tmp:kb:4416",
+              "tmp:kb:4418",
+              "tmp:kb:4420",
+              "tmp:kb:4421",
+              "tmp:kb:4422",
+              "tmp:kb:4654"
+            ],
+            "type": "string"
+          },
+          "suggested_shelf": {
+            "type": "string"
+          },
+          "why": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "suggested_shelf",
+          "why"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "angle",
+    "coarses",
+    "fines",
+    "id_map",
+    "out_of_shelf"
+  ],
+  "type": "object"
+}

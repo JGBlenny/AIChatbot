@@ -14,8 +14,11 @@ Plan `inputs/plan-3.3-fine-index-selector-20260907.md` §1.7／§4.6。
 另加**一列未審**細目當單向正對照。DB 側插等價列，
 `generation_metadata->>'canon_ref'` ＝細目 id（回映用）。
 
-⚠️ **空清單一律寫 NULL**（業主 2026-09-07 §8.2 裁）：記憶體規則的「空＝不設限」對應
-SQL 的 `IS NULL` 放行；寫成 `'{}'` 空陣列會讓 `&&` 恆假、兩側立刻分歧。
+⚠️ **空清單一律寫 NULL**（業主 2026-09-07 §8.2 裁）：記憶體側的「空」對應 SQL 的 `IS NULL`；
+寫成 `'{}'` 空陣列會讓兩側對不上同一個語義格。
+⚠️ **2026-09-14（DSP-052 補救 (c)）起，`target_user` 空在 b2b 分支＝不可見**（兩側同步取消
+`IS NULL` 放行）；b2c 分支與 `business_types` 軸不動（空仍放行）。故 `cell-notu-*` 兩格
+只對 b2c 身分可見。⛔ 不刪格——格還在才證明得了「兩側同時改了」。
 ⚠️ 匯入工具 `tools/import_facet_knowledge.py` 目前把空 `business_types` 預設成
 `["system_provider"]`——與此假設**方向相反**，對帳留給不變量 33（3.5），本片不動它。
 
@@ -23,6 +26,11 @@ SQL 的 `IS NULL` 放行；寫成 `'{}'` 空陣列會讓 `&&` 恆假、兩側立
 `canon_visible` 首行以 `reviewed_by` 閘門，`build_visibility_predicate` **刻意沒有**
 審核謂詞（正本無上架旗標，「未審＝不可引用」由 `reviewed_by` 承擔）。故未審細目
 **只出現在 SQL 側**。比對集合一律取「已審細目」的交集，未審那列另以斷言釘住方向。
+
+第二處：`system_admin`（DSP-053a，業主 2026-09-17 裁）。正本側 `_axes_visible` 把鑰匙
+折成 `property_manager`（`CANON_TARGET_USER_FOLD`），SQL 側 ⛔ 不折 ⇒
+`kb.target_user && ARRAY['system_admin']` 回 0 列。逐格相等的三組身分（pm／prospect／
+tenant）⛔ 不含它，`test_system_admin_fold_is_canon_only` 分別釘住兩側各自的期望值。
 
 ## 量尺自證
 - `test_matrix_discriminates`：三組身分必須撈到**不同**且**非空**的集合，
@@ -41,7 +49,7 @@ import psycopg2
 import pytest
 from unittest.mock import MagicMock
 
-from services.agent.canon.canon_parser import parse_canon, parse_canon_text
+from services.agent.canon.canon_parser import parse_canon_dir, parse_canon_text
 from services.agent.canon.fine_index import FineIndex
 from services.agent.identity import Identity
 from services.vendor_knowledge_retriever_v2 import build_visibility_predicate
@@ -128,8 +136,35 @@ def _canon_text(overrides=None):
     return _FRONT_MATTER + "".join(blocks)
 
 
+_ALL_USERS = ("all_users",)
+_PARSER_SAFE_TU = ("tenant",)  # 佔位：parser 拒 all_users（DSP-052），先以合法值通過解析再換回
+
+
+def _intended(overrides=None) -> dict:
+    overrides = overrides or {}
+    return {_cell_slug(tu, bt): overrides.get(_cell_slug(tu, bt), (tu, bt)) for tu, bt in _cells()}
+
+
 def _doc(overrides=None):
-    return parse_canon_text(_canon_text(overrides))
+    """⚠️ 第二條刻意的單向不對稱（DSP-052／9.1a）：正本 parser 拒 `all_users`，但 SQL b2c 分支
+    合法放行它。矩陣要證的是 SQL 語義，故 `all_users` 格**繞過 parser**——文字先寫佔位值解析，
+    再以 `dataclasses.replace` 換回 `("all_users",)`。⛔ 不刪格。
+    """
+    import dataclasses
+    intended = _intended(overrides)
+    swapped = {slug: (o_tu, o_bt) for slug, (o_tu, o_bt) in intended.items() if o_tu == _ALL_USERS}
+    text_overrides = dict(overrides or {})
+    for slug, (_, o_bt) in swapped.items():
+        text_overrides[slug] = (_PARSER_SAFE_TU, o_bt)
+    doc = parse_canon_text(_canon_text(text_overrides))
+    if not swapped:
+        return doc
+    want = {_fid(slug) for slug in swapped}
+    coarses = tuple(
+        dataclasses.replace(c, fines=tuple(
+            dataclasses.replace(f, target_user=_ALL_USERS) if f.id in want else f for f in c.fines))
+        for c in doc.coarses)
+    return dataclasses.replace(doc, coarses=coarses)
 
 
 def _reviewed_ids(doc) -> frozenset:
@@ -145,6 +180,10 @@ IDENTITIES = {
     "b2b-prospect": Identity(vendor_id=VENDOR_ID, target_user="prospect", mode="b2b"),
     "b2c-tenant": Identity(vendor_id=VENDOR_ID, target_user="tenant", mode="b2c"),
 }
+#: `system_admin`（DSP-053a）：正本側折成 `property_manager`、SQL 側不折 ⇒ 兩側**刻意不相等**。
+#: ⛔ 不放進 `IDENTITIES`——那組是「逐格相等」的比對母體，把不對稱的格塞進去會讓等式測試
+#: 失去意義；這一格由 `test_system_admin_fold_is_canon_only` 單獨釘住兩側各自的期望值。
+SYSTEM_ADMIN_IDENTITY = Identity(vendor_id=VENDOR_ID, target_user="system_admin", mode="b2b")
 #: 記憶體側的業者業態；b2b 分支不看它（嚴格 `system_provider`），b2c 分支才用得到。
 MEM_VENDOR_BT = frozenset(VENDOR_BT)
 
@@ -310,9 +349,12 @@ def test_reviewed_sets_are_equal(matrix, sets, label):
 
 @pytest.mark.req(_SPEC)
 @pytest.mark.parametrize("label,expected", [
-    # b2b：嚴格業態 `system_provider`（⛔ 無 IS NULL 放行，D-002）＋角色相符或 target_user 空
-    ("b2b-pm", {"cell-pm-sysprov", "cell-notu-sysprov"}),
-    ("b2b-prospect", {"cell-prospect-sysprov", "cell-notu-sysprov"}),
+    # b2b：嚴格業態 `system_provider`（⛔ 無 IS NULL 放行，D-002）＋**角色必須相符**。
+    # ⚠️ `cell-notu-*`（空 target_user ⇒ DB 寫 NULL）2026-09-14 起**兩側都不可見**
+    #    （DSP-052 補救 (c)：b2b 分支取消「空＝放行」）——⛔ 不得把它加回期望集合，
+    #    那正是「合法值 tenant＋mode=b2b 拿 tenant 鑰匙開別人的細目」那條洞。
+    ("b2b-pm", {"cell-pm-sysprov"}),
+    ("b2b-prospect", {"cell-prospect-sysprov"}),
     # b2c：業態寬鬆（空放行）＋角色 tenant／all_users／空
     ("b2c-tenant", {
         "cell-tenant-rental", "cell-tenant-nobt",
@@ -324,6 +366,29 @@ def test_expected_sets_are_pinned_literally(matrix, sets, label, expected):
     """⚠️ 期望值寫死：⛔ 不得只比「兩側相等」——兩側同時錯成一樣時那條會綠。"""
     mem, _sql = sets[label]
     assert mem == frozenset(_fid(s) for s in expected), sorted(mem)
+
+
+@pytest.mark.req(_SPEC)
+def test_system_admin_fold_is_canon_only(matrix, sets):
+    """DSP-053a：`system_admin` 的正本可見集合＝pm 的那一份；`kb.search` 側對它回 0 列。
+
+    ⚠️ 這是**刻意的單向不對稱**，與未審細目那條同性質——⛔ 不得以「收斂兩側」為由
+    把折疊補進 SQL 謂詞，也 ⛔ 不得把這一格加進 `IDENTITIES` 的逐格相等比對。
+    正對照：pm 那一組本身非空（否則「兩邊都是空集合」也會讓這條綠）。
+    """
+    doc, ids = matrix
+    pm_mem, _pm_sql = sets["b2b-pm"]
+    assert pm_mem, "pm 記憶體側是空集合 ⇒ 本條沒有比對意義"
+
+    sa_mem = _mem_visible(doc, SYSTEM_ADMIN_IDENTITY)
+    assert sa_mem == pm_mem, f"system_admin 正本可見集合應等於 pm：{sorted(sa_mem ^ pm_mem)}"
+
+    conn = _connect()
+    try:
+        sa_sql = _sql_visible(conn, SYSTEM_ADMIN_IDENTITY, ids)
+    finally:
+        conn.close()
+    assert sa_sql == frozenset(), f"SQL 側對 system_admin 應撈到 0 列，實得 {sorted(sa_sql)}"
 
 
 @pytest.mark.req(_SPEC)
@@ -433,24 +498,49 @@ def test_mutation_control_db_only_change_makes_the_equality_fail(matrix):
 # ════════════════════════════════════════════════════════════════════
 
 CANON_DIR = Path(__file__).resolve().parents[3] / "canon"
-#: 版控正本現況細目數（⛔ 不寫成 `len(fines)` 自證——那會讓「正本被砍剩 1 個」也綠）
-CANON_FINE_COUNT = 38
+#: 版控正本現況細目數（⛔ 不寫成 `len(fines)` 自證——那會讓「正本被砍剩 1 個」也綠）。
+#: 2026-09-16 9.7 七架連跑後：210（程式 `canon.fines()` 計數與逐架 `.md` `### ` 節標題
+#: 總數交叉核一致，見 plan-9.8-turn-budget-dprime S1 完成報告）。
+CANON_FINE_COUNT = 210
+#: 兩軸視圖交叉核：`build_outline` 節數與 `CATALOG.md` `target_user=` 含該受眾列數一致。
+CANON_PROSPECT_FINES = 59
+CANON_PM_FINES = 192
+#: 兩個受眾的**未審**條數（`canon_visible` 一律否；canon/README R2.9）——交叉核一致。
+CANON_PROSPECT_UNREVIEWED = 46
+CANON_PM_UNREVIEWED = 183
 
 
 @pytest.mark.req(_SPEC)
 def test_real_prospect_canon_visibility():
-    """b2b prospect ⇒ 全 38；b2b pm ⇒ ∅。
+    """版控正本（一份）在兩個身分下的可見集合——**兩邊都非空、且互斥**。
 
-    ⚠️ **pm 那一半不具鑑別力**：售前正本每一列都是 `target_user: [prospect]`，
-    pm 本來就撈不到任何一列，空集合＝空集合。⛔ 不得拿它當「規則有生效」的證據——
-    真正的鑑別力在上面的 15 格合成矩陣（`test_expected_sets_are_pinned_literally`）。
+    ⚠️ DSP-058 之後這條**有**鑑別力了（9.6 之前 pm 對售前正本恆為空集合，空＝空）：
+    同一份正本、兩個身分各自看到自己那一半，交集必須是空的。
+    ⚠️ 未審細目 ⛔ 不在可見集合內（`canon_visible` 看 `reviewed_by`）——故期望值是
+    「該受眾條數 − 該受眾未審條數」，⛔ 不是整份視圖。
     ⚠️ 本條只讀正本的**中繼資料**（id／角色／業態），⛔ 不讀也不印任何講法文字。
     """
-    doc = parse_canon(str(CANON_DIR / "prospect.md"))
+    doc = parse_canon_dir(str(CANON_DIR / "jgb"))
     assert len(doc.fines()) == CANON_FINE_COUNT, [f.id for f in doc.fines()]
 
-    prospect = _mem_visible(doc, IDENTITIES["b2b-prospect"])
-    assert prospect == frozenset(f.id for f in doc.fines())
-    assert len(prospect) == CANON_FINE_COUNT
+    prospect_fines = frozenset(f.id for f in doc.fines() if "prospect" in f.target_user)
+    pm_fines = frozenset(f.id for f in doc.fines() if "property_manager" in f.target_user)
+    assert len(prospect_fines) == CANON_PROSPECT_FINES
+    assert len(pm_fines) == CANON_PM_FINES
+    # DSP-058：共用細目明列兩受眾（9.7 起存在，A 架 10 條）——兩軸**可以**重疊，互斥斷言改成
+    # 「只屬一方的細目絕不出現在另一方的可見集合」＋「交集恰好＝已審的共用細目」。
+    shared_fines = prospect_fines & pm_fines
+    prospect_only = prospect_fines - pm_fines
+    pm_only = pm_fines - prospect_fines
+    assert prospect_only and pm_only and shared_fines, "三類都要非空，否則下方斷言有一類是空跑"
 
-    assert _mem_visible(doc, IDENTITIES["b2b-pm"]) == frozenset()
+    prospect = _mem_visible(doc, IDENTITIES["b2b-prospect"])
+    pm = _mem_visible(doc, IDENTITIES["b2b-pm"])
+    assert prospect == prospect_fines & _reviewed_ids(doc)
+    assert len(prospect) == CANON_PROSPECT_FINES - CANON_PROSPECT_UNREVIEWED
+    assert pm == pm_fines & _reviewed_ids(doc)
+    assert len(pm) == CANON_PM_FINES - CANON_PM_UNREVIEWED
+    # 受眾隔離（DSP-058）：只屬一方的細目不得出現在另一方；交集恰好是已審的共用細目
+    assert not (prospect & pm_only), sorted(prospect & pm_only)
+    assert not (pm & prospect_only), sorted(pm & prospect_only)
+    assert (prospect & pm) == (shared_fines & _reviewed_ids(doc)), sorted((prospect & pm) ^ (shared_fines & _reviewed_ids(doc)))

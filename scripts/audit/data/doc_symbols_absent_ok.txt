@@ -1,0 +1,25 @@
+# 不變量 41 例外表：架構正本裡以反引號寫出、但程式碼庫 0 命中**且這是對的**的識別字。
+# 每行格式：<識別字><tab><為什麼 0 命中是對的>
+# ⛔ 不得用來放「查不到所以先擋起來」——那正是這把尺要抓的東西。
+auth_request	nginx 指令，不是本庫符號
+backtest_logic_changes	§4「19 張執行期零引用表」清單成員——0 命中正是該清單的定義
+backtest_manual_reviews	同上
+business_scope_config	同上
+business_types_config	同上
+chat_history	同上
+kb_rent_backup_20260419	同上
+knowledge_base_backup_dedup	同上
+knowledge_base_deleted_phase2	同上
+knowledge_gap_analysis	同上
+knowledge_import_jobs	同上
+knowledge_review_queue	同上
+loop_rollback_history	同上
+suggested_intents	同上
+test_collections	同上
+test_scenario_collections	同上
+vendor_sop_overrides	同上
+OWNER_EXISTS_BUT_NOT_PROPOSED	COMPLETE_CONVERSATION_ARCHITECTURE.md 的分析分類標籤，非程式字面常數
+auto_generated	DATABASE_SCHEMA.md test_scenarios.source_type 的文件敘述值，未在程式或 SQL CHECK 內硬編字面
+contact_config_key	COMPLETE_CONVERSATION_ARCHITECTURE.md §12 舊配置鍵→現行機制對照表列（DSP-038-1），對照表本身就是要列已不存在的鍵
+is_nomination_admissible	agent-path-retired-symbols.md 本身即退役符號帳本的定義成員——0 命中正是該帳本要記的事
+select_nominated	agent-path-retired-symbols.md 本身即退役符號帳本的定義成員——同 is_nomination_admissible

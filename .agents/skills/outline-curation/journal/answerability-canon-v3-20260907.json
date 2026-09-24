@@ -1,0 +1,117 @@
+{
+  "agents": [
+    {
+      "completion_tokens": 0,
+      "prompt_tokens": 0,
+      "usd": 0.0
+    },
+    {
+      "completion_tokens": 0,
+      "prompt_tokens": 0,
+      "usd": 0.0
+    },
+    {
+      "completion_tokens": 0,
+      "prompt_tokens": 0,
+      "usd": 0.0
+    },
+    {
+      "completion_tokens": 0,
+      "prompt_tokens": 0,
+      "usd": 0.0
+    },
+    {
+      "completion_tokens": 0,
+      "prompt_tokens": 0,
+      "usd": 0.0
+    },
+    {
+      "completion_tokens": 0,
+      "prompt_tokens": 0,
+      "usd": 0.0
+    },
+    {
+      "completion_tokens": 0,
+      "prompt_tokens": 0,
+      "usd": 0.0
+    },
+    {
+      "completion_tokens": 0,
+      "prompt_tokens": 0,
+      "usd": 0.0
+    },
+    {
+      "completion_tokens": 0,
+      "prompt_tokens": 0,
+      "usd": 0.0
+    },
+    {
+      "completion_tokens": 0,
+      "prompt_tokens": 0,
+      "usd": 0.0
+    },
+    {
+      "completion_tokens": 0,
+      "prompt_tokens": 0,
+      "usd": 0.0
+    },
+    {
+      "completion_tokens": 0,
+      "prompt_tokens": 0,
+      "usd": 0.0
+    },
+    {
+      "completion_tokens": 0,
+      "prompt_tokens": 0,
+      "usd": 0.0
+    },
+    {
+      "completion_tokens": 0,
+      "prompt_tokens": 0,
+      "usd": 0.0
+    },
+    {
+      "completion_tokens": 0,
+      "prompt_tokens": 0,
+      "usd": 0.0
+    },
+    {
+      "completion_tokens": 0,
+      "prompt_tokens": 0,
+      "usd": 0.0
+    },
+    {
+      "completion_tokens": 0,
+      "prompt_tokens": 0,
+      "usd": 0.0
+    },
+    {
+      "completion_tokens": 0,
+      "prompt_tokens": 0,
+      "usd": 0.0
+    },
+    {
+      "completion_tokens": 0,
+      "prompt_tokens": 0,
+      "usd": 0.0
+    },
+    {
+      "completion_tokens": 0,
+      "prompt_tokens": 0,
+      "usd": 0.0
+    },
+    {
+      "completion_tokens": 0,
+      "prompt_tokens": 0,
+      "usd": 0.0
+    },
+    {
+      "completion_tokens": 0,
+      "prompt_tokens": 0,
+      "usd": 0.0
+    }
+  ],
+  "run_id": "answerability-canon-v3-20260907",
+  "step": "answerability",
+  "wall_s": 0.0
+}

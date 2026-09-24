@@ -1,0 +1,78 @@
+{
+  "agentsUsed": 2,
+  "agree": 2,
+  "agreementRate": 1.0,
+  "droppedCells": 0,
+  "frozenAt": "2026-09-16T00:00:00Z",
+  "inputsSha": {
+    "canon": "2e061ec88adb686b0932aadaf909c564d58f4de4021cd7fcd1345e21ec4251ce",
+    "cells": "32607587028474caf015e63024f6f31d8a07a166354d31dac4408b725756e669",
+    "rubric": "3d1137476b7ff6898733133c28659231b098ece89b4c8f12e55b24db999c6bfd"
+  },
+  "labels": [
+    {
+      "cell_id": "C41",
+      "confidence": "high",
+      "evidence_unit": 5,
+      "fine_id": "jgb/E/overdue-reminder-late-fee",
+      "label": "answerable",
+      "provisional": true,
+      "verdicts": [
+        {
+          "cell_id": "C41",
+          "confidence": "high",
+          "evidence_unit": 5,
+          "fine_id": "jgb/E/overdue-reminder-late-fee",
+          "label": "answerable",
+          "provisional": true
+        },
+        {
+          "cell_id": "C41",
+          "confidence": "high",
+          "evidence_unit": 5,
+          "fine_id": "jgb/E/overdue-reminder-late-fee",
+          "label": "answerable",
+          "provisional": true
+        }
+      ]
+    },
+    {
+      "cell_id": "C44",
+      "confidence": "high",
+      "evidence_unit": 1,
+      "fine_id": "jgb/A/account-registration",
+      "label": "answerable",
+      "provisional": true,
+      "verdicts": [
+        {
+          "cell_id": "C44",
+          "confidence": "high",
+          "evidence_unit": 1,
+          "fine_id": "jgb/A/account-registration",
+          "label": "answerable",
+          "provisional": true
+        },
+        {
+          "cell_id": "C44",
+          "confidence": "high",
+          "evidence_unit": 1,
+          "fine_id": "jgb/A/account-registration",
+          "label": "answerable",
+          "provisional": true
+        }
+      ]
+    }
+  ],
+  "needs_rubric_revision": false,
+  "rubricSha": "3d1137476b7ff6898733133c28659231b098ece89b4c8f12e55b24db999c6bfd",
+  "step": "answerability",
+  "total": 2,
+  "usage": {
+    "agents": 2,
+    "cellsPerAgent": 5,
+    "groups": 1,
+    "note": "token 由 harness 計，此處不估",
+    "provider": "claude-code-subagent"
+  },
+  "usd": null
+}

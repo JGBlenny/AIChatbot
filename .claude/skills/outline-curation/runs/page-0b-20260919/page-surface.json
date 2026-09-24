@@ -1,0 +1,4062 @@
+{
+  "cost": {
+    "agents": 0,
+    "wall_s": 0.0
+  },
+  "deterministic": true,
+  "inputs_sha": {
+    "canon": "84e6265bc9fc0c7a234a55bf47c07736ad1a222d5c25d09ec29afd82b153d907",
+    "jgb2_sha": "b2ee2ac382ce06763798a7238e4fd5c9411fcfaa",
+    "map": "8d89bda8fb710e3f6d859e4f708760efa01fe2dda28882d45a95dee9547d7921"
+  },
+  "payload": {
+    "blade_stats": {
+      "api_path": 56,
+      "controller_missing": 8,
+      "get_routes": 536,
+      "internal": 172,
+      "no_view": 217,
+      "vue_index": 55
+    },
+    "canon_titles": [
+      {
+        "id": "jgb/A/account-registration",
+        "shelf": "A",
+        "title": "怎麼註冊帳號（Email 主路徑、驗證碼、SSO 第三方、租客從合約邀請註冊）"
+      },
+      {
+        "id": "jgb/A/login-methods",
+        "shelf": "A",
+        "title": "怎麼登入（Email／手機號碼／SSO 第三方、選擇房東或租客身分入口）"
+      },
+      {
+        "id": "jgb/A/line-login-redirects-to-register",
+        "shelf": "A",
+        "title": "用 LINE 快速登入卻被帶去註冊頁、登不進去（只認 LINE 註冊帳號、無事後綁定、改用帳密登入）"
+      },
+      {
+        "id": "jgb/A/account-profile-settings",
+        "shelf": "A",
+        "title": "帳號資訊在哪改、能改什麼（頭像、姓名、聯絡方式、偏好設定、簽約資訊與證件附件）"
+      },
+      {
+        "id": "jgb/A/registered-vs-unregistered-tenant",
+        "shelf": "A",
+        "title": "租客一定要註冊嗎？註冊租客與免註冊租客差在哪（登入、通知、帳單寄送、到帳作業）"
+      },
+      {
+        "id": "jgb/A/email-case-sensitivity",
+        "shelf": "A",
+        "title": "Email 大小寫算不同帳號嗎（Email 為帳號識別、大小寫視為不同帳號）"
+      },
+      {
+        "id": "jgb/A/verification-code-not-received",
+        "shelf": "A",
+        "title": "收不到驗證碼（Email 驗證信或簡訊）怎麼排查（含改走 Email／SSO、聯繫客服要帶的資訊）"
+      },
+      {
+        "id": "jgb/A/verification-code-invalid",
+        "shelf": "A",
+        "title": "驗證碼一直輸入失敗（重發即換碼、三字母識別碼比對、5 分鐘效期、錯三次失效、120 秒冷卻）"
+      },
+      {
+        "id": "jgb/A/forgot-password",
+        "shelf": "A",
+        "title": "忘記密碼怎麼重設（Email 或簡訊擇一驗證、錯三次失效、密碼規則）"
+      },
+      {
+        "id": "jgb/A/forgot-account-email",
+        "shelf": "A",
+        "title": "忘記當初用哪個信箱註冊怎麼查（忘記帳號功能以手機驗證取得打星號提示、無綁手機找客服）"
+      },
+      {
+        "id": "jgb/A/change-email-or-phone",
+        "shelf": "A",
+        "title": "要換帳號的信箱或手機號碼怎麼辦（Email 唯讀走客服、手機未綁可自助綁定、已綁換號走申請書）"
+      },
+      {
+        "id": "jgb/A/change-account-name",
+        "shelf": "A",
+        "title": "註冊名字與證件不符要怎麼改（合約簽署前自改藍字帶入、簽署後鎖定走申請書同步）"
+      },
+      {
+        "id": "jgb/A/data-change-request-form",
+        "shelf": "A",
+        "title": "資料異動申請書怎麼申請（載明帳號識別、修改前後值、相關合約 ID，公司用印後寄客服信箱）"
+      },
+      {
+        "id": "jgb/A/duplicate-accounts-merge",
+        "shelf": "A",
+        "title": "不小心註冊了兩個帳號能不能合併（無自助合併、走客服後台，載明保留與處理的帳號）"
+      },
+      {
+        "id": "jgb/A/already-registered-error",
+        "shelf": "A",
+        "title": "註冊時顯示此帳號／手機已註冊怎麼辦（本人改登入或重設密碼、被他人占用走解綁申請）"
+      },
+      {
+        "id": "jgb/A/tenant-login-cannot-see-data",
+        "shelf": "A",
+        "title": "租客登入後看不到合約、帳單或電表怎麼排查（身分未切換、登入信箱與邀請信箱不一致、以合約查帳號狀態）"
+      },
+      {
+        "id": "jgb/B/owner-report-collection-remit",
+        "shelf": "B",
+        "title": "大房東報表與代收代付怎麼交代（月報內容、提供方式、排程寄送）"
+      },
+      {
+        "id": "jgb/B/role-permission-granularity",
+        "shelf": "B",
+        "title": "成員權限能不能細分、怎麼設（角色範本、自訂角色、模組層級、物件授權）"
+      },
+      {
+        "id": "jgb/B/team-management-overview",
+        "shelf": "B",
+        "title": "團隊管理模組做什麼"
+      },
+      {
+        "id": "jgb/B/what-is-owner-landlord",
+        "shelf": "B",
+        "title": "大房東是什麼"
+      },
+      {
+        "id": "jgb/B/leasing-vs-management-business-model",
+        "shelf": "B",
+        "title": "包租業與代管業是什麼、差在哪（定義、簽約對象、誰管理、房東該選哪個）"
+      },
+      {
+        "id": "jgb/B/leasing-vs-management-liability-and-risk",
+        "shelf": "B",
+        "title": "包租與代管的法律責任與風險由誰承擔"
+      },
+      {
+        "id": "jgb/B/business-type-fee-model",
+        "shelf": "B",
+        "title": "包租與代管怎麼收費、業者怎麼賺錢（租差、抽成、管理費範疇、政府補貼）"
+      },
+      {
+        "id": "jgb/B/business-type-setting-and-system-differences",
+        "shelf": "B",
+        "title": "團隊業態（包租／代管）在系統裡怎麼設、差在哪（合約模板、發票主體、差額發票）"
+      },
+      {
+        "id": "jgb/B/leasing-management-license-and-staff-qualification",
+        "shelf": "B",
+        "title": "如何成為政府許可的包租代管業者與合格包管人員"
+      },
+      {
+        "id": "jgb/B/add-team-member",
+        "shelf": "B",
+        "title": "怎麼新增團隊成員（需先註冊、加入後要指派角色、加了看不到怎麼辦）"
+      },
+      {
+        "id": "jgb/B/who-has-permission-lookup",
+        "shelf": "B",
+        "title": "怎麼查團隊裡誰有某個操作權限"
+      },
+      {
+        "id": "jgb/B/remove-team-member-data-retention",
+        "shelf": "B",
+        "title": "移除團隊成員後他建的資料會怎樣"
+      },
+      {
+        "id": "jgb/B/account-in-multiple-teams",
+        "shelf": "B",
+        "title": "一個帳號可以加入多個團隊嗎、權限怎麼算"
+      },
+      {
+        "id": "jgb/B/change-team-principal-or-phone",
+        "shelf": "B",
+        "title": "怎麼變更團隊主要負責人或綁定手機（異動單）"
+      },
+      {
+        "id": "jgb/B/feature-not-visible-troubleshooting",
+        "shelf": "B",
+        "title": "找不到某功能或無法操作的可能原因"
+      },
+      {
+        "id": "jgb/B/add-owner-landlord-and-access",
+        "shelf": "B",
+        "title": "怎麼新增大房東並設定他能看的物件範圍"
+      },
+      {
+        "id": "jgb/B/owner-landlord-contact-book-import-export",
+        "shelf": "B",
+        "title": "大房東聯絡簿怎麼批次匯入匯出"
+      },
+      {
+        "id": "jgb/C/property-management-overview",
+        "shelf": "C",
+        "title": "房源管理模組做什麼（含自訂狀態標籤）"
+      },
+      {
+        "id": "jgb/C/community-batch-create",
+        "shelf": "C",
+        "title": "社區建立與批次新增物件"
+      },
+      {
+        "id": "jgb/C/property-status-meaning",
+        "shelf": "C",
+        "title": "物件狀態（未刊登／刊登中／洽談中／合約中）是什麼意思"
+      },
+      {
+        "id": "jgb/C/rental-storefront-vr",
+        "shelf": "C",
+        "title": "招租店舖與 VR 看屋"
+      },
+      {
+        "id": "jgb/C/community-setup-and-property-binding",
+        "shelf": "C",
+        "title": "社區建立、編輯與物件歸戶（含公共區域物件、社宅強制綁定）"
+      },
+      {
+        "id": "jgb/C/property-batch-import",
+        "shelf": "C",
+        "title": "物件批次匯入：範本、表格填寫與上傳失敗"
+      },
+      {
+        "id": "jgb/C/property-listing-conditions",
+        "shelf": "C",
+        "title": "物件要怎麼刊登上架、刊登需要什麼條件"
+      },
+      {
+        "id": "jgb/C/property-unlisting",
+        "shelf": "C",
+        "title": "物件怎麼下架、為什麼突然全部下架"
+      },
+      {
+        "id": "jgb/C/property-edit-vs-publish",
+        "shelf": "C",
+        "title": "編輯物件與刊登物件差在哪、為什麼修改沒存到"
+      },
+      {
+        "id": "jgb/C/property-add-blocked",
+        "shelf": "C",
+        "title": "為什麼不能新增物件"
+      },
+      {
+        "id": "jgb/C/public-display-address",
+        "shelf": "C",
+        "title": "對外顯示地址改了為什麼後台還是完整地址"
+      },
+      {
+        "id": "jgb/C/storefront-entry-share",
+        "shelf": "C",
+        "title": "招租店舖入口在哪、怎麼分享、為什麼物件沒出現"
+      },
+      {
+        "id": "jgb/C/community-public-page",
+        "shelf": "C",
+        "title": "社區公開頁面是什麼、能拿來做什麼"
+      },
+      {
+        "id": "jgb/C/property-vr-tour",
+        "shelf": "C",
+        "title": "物件 VR 虛擬導覽怎麼綁、費用與拍攝找誰"
+      },
+      {
+        "id": "jgb/C/property-custom-tags",
+        "shelf": "C",
+        "title": "物件自訂標籤怎麼建、怎麼用來篩選"
+      },
+      {
+        "id": "jgb/C/property-advanced-search",
+        "shelf": "C",
+        "title": "物件列表進階搜尋怎麼用"
+      },
+      {
+        "id": "jgb/C/occupancy-rate-calculation",
+        "shelf": "C",
+        "title": "首頁即時物件出租率怎麼算、已出租數字從哪來"
+      },
+      {
+        "id": "jgb/C/community-facilities-and-hours",
+        "shelf": "C",
+        "title": "社區有哪些公共設施、開放時間、費用與變更通知"
+      },
+      {
+        "id": "jgb/C/community-facility-usage-rules",
+        "shelf": "C",
+        "title": "公共設施使用規範：權利、義務、安全規範與違規後果"
+      },
+      {
+        "id": "jgb/C/community-garbage-disposal",
+        "shelf": "C",
+        "title": "社區垃圾分類、回收時間、大型廢棄物與洗衣烘衣使用規範"
+      },
+      {
+        "id": "jgb/C/community-facility-disputes",
+        "shelf": "C",
+        "title": "公共設施損壞責任、使用爭議處理與責任保險"
+      },
+      {
+        "id": "jgb/C/community-services-and-events",
+        "shelf": "C",
+        "title": "社區生活服務與活動（社區活動、包裹代收、社宅社區服務）"
+      },
+      {
+        "id": "jgb/D/contract-esign-flow",
+        "shelf": "D",
+        "title": "建約方式與線上電子簽約流程（含時效、身分、社宅、簽約邀請通知、費用）"
+      },
+      {
+        "id": "jgb/D/contract-batch-renewal",
+        "shelf": "D",
+        "title": "續約能不能批次處理（含快速日期設定、紙本上傳、通知分流）"
+      },
+      {
+        "id": "jgb/D/contract-history-retention",
+        "shelf": "D",
+        "title": "歷史合約保留多久與何時轉歷史（含點退狀態、過期結案排程）"
+      },
+      {
+        "id": "jgb/D/contract-modify-after-sign",
+        "shelf": "D",
+        "title": "合約送出或簽完後能不能修改（三種出口，含編輯不了的權限排查）"
+      },
+      {
+        "id": "jgb/D/contract-templates",
+        "shelf": "D",
+        "title": "合約範本有哪些可以選（含內文隨內政部新制更新）"
+      },
+      {
+        "id": "jgb/D/lease-expiry-followup-scope",
+        "shelf": "D",
+        "title": "合約到期追問可答範圍與到期提醒（導向續約面向）"
+      },
+      {
+        "id": "jgb/D/sublease-vs-management-contract",
+        "shelf": "D",
+        "title": "包租與代管的差別（委託合約設定、租約簽訂方、押金管理、終止條件、租金調整）"
+      },
+      {
+        "id": "jgb/D/contract-create-entry-and-prereq",
+        "shelf": "D",
+        "title": "新增合約從哪進、物件為什麼不能建約（須刊登中、必填欄位）、一物件多合約上限、編輯入口"
+      },
+      {
+        "id": "jgb/D/contract-copy",
+        "shelf": "D",
+        "title": "合約複製快速建立相似合約"
+      },
+      {
+        "id": "jgb/D/upload-existing-contract",
+        "shelf": "D",
+        "title": "上傳既存（紙本）合約：適用情境、效力、入口、檔案上限"
+      },
+      {
+        "id": "jgb/D/contract-attachments-notes-limits",
+        "shelf": "D",
+        "title": "合約附件上傳、備註 50 行與補充條款限制"
+      },
+      {
+        "id": "jgb/D/contract-pdf-download",
+        "shelf": "D",
+        "title": "合約相關 PDF 下載（合約書、摘要、點交／點退清單、提前解約文件）"
+      },
+      {
+        "id": "jgb/D/signer-identity-and-seal",
+        "shelf": "D",
+        "title": "簽約身分與簽署方資訊：個人／法人、公司大小章與 Logo、大房東以業者身分簽約、兩位承租人填法"
+      },
+      {
+        "id": "jgb/D/contract-send-invite",
+        "shelf": "D",
+        "title": "發送簽約邀請：通道（Email／簡訊）、租客會收到什麼、為什麼不能發送（欄位未填完整）"
+      },
+      {
+        "id": "jgb/D/esign-invite-expiry",
+        "shelf": "D",
+        "title": "簽約邀請效期 72 小時、逾期退回與租客資料清空、可申請延長"
+      },
+      {
+        "id": "jgb/D/esign-troubleshooting",
+        "shelf": "D",
+        "title": "租客簽不了、沒收到、卡住：連結打不開、簽名板載入失敗、瀏覽器建議、簽署進度查得到什麼、漏簽防呆"
+      },
+      {
+        "id": "jgb/D/tenant-sign-steps",
+        "shelf": "D",
+        "title": "租客收到簽約邀請後的簽署步驟（租客視角）"
+      },
+      {
+        "id": "jgb/D/esign-legal-validity",
+        "shelf": "D",
+        "title": "電子合約法律效力、簽章認證與 72 小時審閱期"
+      },
+      {
+        "id": "jgb/D/contract-status-overview",
+        "shelf": "D",
+        "title": "合約狀態總覽：12 狀態 4 階段、簽約前三狀態、執行中五細分、按鈕能不能按的前置判讀"
+      },
+      {
+        "id": "jgb/D/contract-lookup",
+        "shelf": "D",
+        "title": "查詢合約資訊：以合約編號／物件名稱查、不能用租客姓名反查、租客資料卡"
+      },
+      {
+        "id": "jgb/D/contract-filter-by-state",
+        "shelf": "D",
+        "title": "依合約狀態篩選物件（點交點退、待退押金、本月到期、無合約）"
+      },
+      {
+        "id": "jgb/D/contract-data-change-form",
+        "shelf": "D",
+        "title": "資料異動申請書的填寫與提交"
+      },
+      {
+        "id": "jgb/D/contract-snapshot-independence",
+        "shelf": "D",
+        "title": "合約快照原則：物件資料、租客聯絡方式或姓名事後修改，合約與通知都不連動"
+      },
+      {
+        "id": "jgb/D/tenant-change-new-contract",
+        "shelf": "D",
+        "title": "更換承租人／退房後換新租客：只能新建合約，舊約收尾與物件重刊登"
+      },
+      {
+        "id": "jgb/D/contract-cancel-delete",
+        "shelf": "D",
+        "title": "合約刪除、取消、作廢的條件與取消 vs 歷史合約差異"
+      },
+      {
+        "id": "jgb/D/handover-checkin",
+        "shelf": "D",
+        "title": "點交（搬入）：流程、前置條件、為什麼不能點交、清單內容與自訂項目、租客不同意重發"
+      },
+      {
+        "id": "jgb/D/return-checkout",
+        "shelf": "D",
+        "title": "點退（搬出）：流程、前置條件與時機、為什麼不能點退、清單費用賠償、押金找補與點退帳單、租客不同意或有異議"
+      },
+      {
+        "id": "jgb/D/handover-return-cancel-invite",
+        "shelf": "D",
+        "title": "取消／收回點交或點退邀請，為什麼不能取消"
+      },
+      {
+        "id": "jgb/D/lease-end-checkout-overview",
+        "shelf": "D",
+        "title": "租客要退租了接下來怎麼做：到期收尾步驟總覽（點退→帳單→封存→轉歷史）與退租跑到哪一步"
+      },
+      {
+        "id": "jgb/D/early-termination-flow",
+        "shelf": "D",
+        "title": "提前解約（JGB 流程）：發起條件、租客發起、房東發起與法定理由、回簽效期、取消申請、為什麼不能提前解約"
+      },
+      {
+        "id": "jgb/D/early-termination-penalty",
+        "shelf": "D",
+        "title": "提前解約違約金怎麼算（預告期）、由誰付"
+      },
+      {
+        "id": "jgb/D/early-termination-aftermath",
+        "shelf": "D",
+        "title": "提前解約生效後：何時可點退、違約金與押金一併結算、之後還要處理什麼"
+      },
+      {
+        "id": "jgb/D/renewal-flow",
+        "shelf": "D",
+        "title": "合約續約（JGB 流程）：步驟、前置條件、為什麼不能續約、資料沿用與重簽、免註冊租客、已達數量上限"
+      },
+      {
+        "id": "jgb/D/renewal-vs-new-contract",
+        "shelf": "D",
+        "title": "系統續約 vs 重建新約的取捨（條件變更、租屋補助審核）"
+      },
+      {
+        "id": "jgb/D/renewal-history-and-addendum",
+        "shelf": "D",
+        "title": "續約後原合約去哪了：續約歷史、增補文件分頁、有沒有下一份約"
+      },
+      {
+        "id": "jgb/D/delegation-vs-lease-contract",
+        "shelf": "D",
+        "title": "委託約與租賃約的差別（系統分開管理）"
+      },
+      {
+        "id": "jgb/D/delegation-contract-flow",
+        "shelf": "D",
+        "title": "委託合約的建立簽署、提前終止與 PDF 下載"
+      },
+      {
+        "id": "jgb/D/delegation-contract-terms-general",
+        "shelf": "D",
+        "title": "委託管理合約一般內容：定義、期限、服務範圍、管理師責任與租客權益、管理費計算與支付、適用法律"
+      },
+      {
+        "id": "jgb/D/delegation-contract-change-termination",
+        "shelf": "D",
+        "title": "委託管理合約的變更、續約、終止、轉讓、違約與爭議解決"
+      },
+      {
+        "id": "jgb/D/deposit-setting-and-refund-system",
+        "shelf": "D",
+        "title": "合約押金設定（月數／固定金額）與押金查詢、退還時點（點退結算）"
+      },
+      {
+        "id": "jgb/D/deposit-legal-limits",
+        "shelf": "D",
+        "title": "押金一般規範：上限兩個月、無利息、法源、用途、支付方式、約定修改、轉讓、不得抵租"
+      },
+      {
+        "id": "jgb/D/deposit-deduction-refund",
+        "shelf": "D",
+        "title": "押金扣除、退還與爭議：扣款條件、明細告知、保管責任、退還期限、爭議處理"
+      },
+      {
+        "id": "jgb/D/tenant-pet-clauses",
+        "shelf": "D",
+        "title": "租約中的寵物押金與飼養寵物費用"
+      },
+      {
+        "id": "jgb/D/tenant-rental-insurance",
+        "shelf": "D",
+        "title": "租屋相關保險：租屋保險費用、租客設備投保、押金投保"
+      },
+      {
+        "id": "jgb/D/move-in-inspection",
+        "shelf": "D",
+        "title": "入住注意事項與傢俱清點"
+      },
+      {
+        "id": "jgb/D/tenant-move-out-obligations",
+        "shelf": "D",
+        "title": "退租義務：原狀回復、清潔標準、設備狀況、遺留物品處理、物品搬出"
+      },
+      {
+        "id": "jgb/D/lease-termination-notice-rules",
+        "shelf": "D",
+        "title": "終止租約的通知期與合法事由（租客／房東、不定期租約、租客失蹤）"
+      },
+      {
+        "id": "jgb/D/breach-penalty-rules",
+        "shelf": "D",
+        "title": "違約責任與違約金一般規範：上限、計算、提前解約後果、證據保留"
+      },
+      {
+        "id": "jgb/D/tenant-renewal-and-extension-rights",
+        "shelf": "D",
+        "title": "租約續約與延住的一般約定：要不要提前通知、依原合約條件、業者會不會協助"
+      },
+      {
+        "id": "jgb/D/lease-clauses-interpretation",
+        "shelf": "D",
+        "title": "租約條款有哪些、怎麼解釋與變更（租金法律依據、租金包含項目、租金爭議）"
+      },
+      {
+        "id": "jgb/D/equipment-usage-under-lease",
+        "shelf": "D",
+        "title": "租約中的設備與公共設備使用規範"
+      },
+      {
+        "id": "jgb/D/household-registration-under-lease",
+        "shelf": "D",
+        "title": "租屋期間戶籍遷移與居住證明"
+      },
+      {
+        "id": "jgb/D/sublease-and-shared-lease-terms",
+        "shelf": "D",
+        "title": "轉租與分租的租約條款與押金處理"
+      },
+      {
+        "id": "jgb/D/social-housing-lease",
+        "shelf": "D",
+        "title": "社會住宅租約與一般租約的差異、期限與終止"
+      },
+      {
+        "id": "jgb/D/lease-notarization",
+        "shelf": "D",
+        "title": "租約公證：是什麼、去哪辦、費用、對房東房客的保障、與租補關係、公證合約如何上傳"
+      },
+      {
+        "id": "jgb/E/billing-overview",
+        "shelf": "E",
+        "title": "帳務管理模組做什麼"
+      },
+      {
+        "id": "jgb/E/bill-contents-extra-fees",
+        "shelf": "E",
+        "title": "帳單內容、費用品項與臨時加收（六種費用、自訂品項、品名、未發送批次調整）"
+      },
+      {
+        "id": "jgb/E/bill-format-customize",
+        "shelf": "E",
+        "title": "帳單版面、收據版式與收訖章能不能自訂"
+      },
+      {
+        "id": "jgb/E/credit-card-rent-payment",
+        "shelf": "E",
+        "title": "租客能不能用信用卡繳房租（限藍新、流程與限制）"
+      },
+      {
+        "id": "jgb/E/dunning-draft-not-auto-send",
+        "shelf": "E",
+        "title": "催繳草稿不可一鍵發送給租客"
+      },
+      {
+        "id": "jgb/E/dunning-draft-template-tone-late-fee",
+        "shelf": "E",
+        "title": "催繳草稿的生成規則（模板、語氣分級與滯納金提及）"
+      },
+      {
+        "id": "jgb/E/einvoice-issuing",
+        "shelf": "E",
+        "title": "電子發票何時開、自動開立設定、載具類型與一物件一發票"
+      },
+      {
+        "id": "jgb/E/overdue-bill-followup-scope",
+        "shelf": "E",
+        "title": "逾期帳單追問可答範圍（依帳單編號查狀態、金額、逾期明細）"
+      },
+      {
+        "id": "jgb/E/overdue-reminder-late-fee",
+        "shelf": "E",
+        "title": "租客逾期未繳怎麼辦（繳費提醒、催繳通知條件、逾期標示與訂閱通知）"
+      },
+      {
+        "id": "jgb/E/payment-gateway-options",
+        "shelf": "E",
+        "title": "金流廠商差別、支援付款方式與申請條件"
+      },
+      {
+        "id": "jgb/E/utility-split-calculation",
+        "shelf": "E",
+        "title": "水電與公共費用怎麼分算（依合約）"
+      },
+      {
+        "id": "jgb/E/virtual-account-prepaid",
+        "shelf": "E",
+        "title": "固定虛擬帳號與儲值金抵扣是什麼、跟一般虛擬帳號差在哪"
+      },
+      {
+        "id": "jgb/E/rent-amount-calculation",
+        "shelf": "E",
+        "title": "租金金額怎麼算（以合約租金快照為準、不足月按比例）"
+      },
+      {
+        "id": "jgb/E/utility-meter-billing-and-reading",
+        "shelf": "E",
+        "title": "水電計費方式與度數（六種電費模式、度數×單價、夏季電價、度數登記錯誤重算）"
+      },
+      {
+        "id": "jgb/E/management-fee",
+        "shelf": "E",
+        "title": "管理費是什麼、用途與怎麼算"
+      },
+      {
+        "id": "jgb/E/periodic-bill-generation",
+        "shelf": "E",
+        "title": "週期帳單何時產生、三種建立方式與續約／補簽起算"
+      },
+      {
+        "id": "jgb/E/bill-scheduled-auto-send",
+        "shelf": "E",
+        "title": "帳單什麼時候發、排定發送與自動發送設定（提前天數、整點批次、草稿）"
+      },
+      {
+        "id": "jgb/E/bill-send-failure",
+        "shelf": "E",
+        "title": "帳單為什麼發不出去（狀態、金額、度數未填、租客聯絡方式未驗證）"
+      },
+      {
+        "id": "jgb/E/bill-recall-cancel",
+        "shelf": "E",
+        "title": "帳單發出去想收回、取消或設失效（可用狀態與繳費資訊斷開）"
+      },
+      {
+        "id": "jgb/E/bill-archive-after-termination",
+        "shelf": "E",
+        "title": "提前終止／退租後多產生的帳單要封存、封存後怎麼退回"
+      },
+      {
+        "id": "jgb/E/manual-bill-creation",
+        "shelf": "E",
+        "title": "手動新增帳單、負值退款、Excel 批次匯入與補建紀錄"
+      },
+      {
+        "id": "jgb/E/checkout-bill-settlement",
+        "shelf": "E",
+        "title": "點退帳單怎麼算（未結費用、賠償、押金互抵、多退少補）"
+      },
+      {
+        "id": "jgb/E/bill-status-reconciliation",
+        "shelf": "E",
+        "title": "帳單與付款狀態流程、線上自動對帳 vs 線下手動到帳"
+      },
+      {
+        "id": "jgb/E/paid-but-status-not-updated",
+        "shelf": "E",
+        "title": "租客說繳了但錢還沒進來／帳單卡在待對帳"
+      },
+      {
+        "id": "jgb/E/cash-bank-account-collection",
+        "shelf": "E",
+        "title": "現金／銀行帳戶收款：帳戶設定、租客通知已匯款與業者手動確認入帳"
+      },
+      {
+        "id": "jgb/E/payment-gateway-setup",
+        "shelf": "E",
+        "title": "線上金流怎麼申請與綁定（藍新／永豐／國泰／中信、只能一家、收款帳戶銀行、一元測試）"
+      },
+      {
+        "id": "jgb/E/payment-fees-and-sms",
+        "shelf": "E",
+        "title": "金流手續費誰負擔、費率多少與帳單簡訊是否收費"
+      },
+      {
+        "id": "jgb/E/tenant-payment-methods",
+        "shelf": "E",
+        "title": "租客有哪些繳費方式、繳費日與通道怎麼調整（團隊層／合約層）"
+      },
+      {
+        "id": "jgb/E/tenant-online-payment-steps",
+        "shelf": "E",
+        "title": "租客線上繳費操作步驟（信用卡、虛擬 ATM）"
+      },
+      {
+        "id": "jgb/E/tenant-view-bills",
+        "shelf": "E",
+        "title": "租客在哪裡看帳單、繳費狀態與付款入口"
+      },
+      {
+        "id": "jgb/E/tenant-cannot-see-bill",
+        "shelf": "E",
+        "title": "租客說看不到帳單（可見三條件與信箱錯配）"
+      },
+      {
+        "id": "jgb/E/bill-reports-export",
+        "shelf": "E",
+        "title": "帳單報表匯出、統計圖表與儀表板"
+      },
+      {
+        "id": "jgb/E/credit-card-auto-debit",
+        "shelf": "E",
+        "title": "信用卡自動扣款授權設定與扣款失敗處理"
+      },
+      {
+        "id": "jgb/E/virtual-account-transfer",
+        "shelf": "E",
+        "title": "虛擬帳號轉帳怎麼繳、效期、臨櫃匯款、逾期後可否繳與用帳號查交易"
+      },
+      {
+        "id": "jgb/E/payment-failure-troubleshooting",
+        "shelf": "E",
+        "title": "租客繳不了費／轉帳或刷卡一直失敗怎麼排查"
+      },
+      {
+        "id": "jgb/E/payment-amount-mismatch",
+        "shelf": "E",
+        "title": "付款金額不符、重複轉帳、多繳少繳怎麼處理"
+      },
+      {
+        "id": "jgb/E/convenience-store-payment",
+        "shelf": "E",
+        "title": "超商代碼／條碼繳費流程與入帳撥付時程"
+      },
+      {
+        "id": "jgb/E/fixed-virtual-account-management",
+        "shelf": "E",
+        "title": "固定虛擬帳號怎麼開通設定、入帳沖銷與餘額歷程查詢"
+      },
+      {
+        "id": "jgb/E/prepaid-meter-topup-billing",
+        "shelf": "E",
+        "title": "儲值電表的儲值帳單、入帳與電費預付收取"
+      },
+      {
+        "id": "jgb/E/late-fee-calculation",
+        "shelf": "E",
+        "title": "滯納金／延遲金怎麼算、何時產生與客製版本（延遲金、階梯式、固定金額）"
+      },
+      {
+        "id": "jgb/E/invoice-not-issued-troubleshooting",
+        "shelf": "E",
+        "title": "發票為什麼還沒開、顯示已開卻沒號碼的排查"
+      },
+      {
+        "id": "jgb/E/invoice-void-reissue",
+        "shelf": "E",
+        "title": "發票開錯了怎麼作廢、補開與作廢不了"
+      },
+      {
+        "id": "jgb/E/differential-invoice",
+        "shelf": "E",
+        "title": "差額發票（群組綁定、底租、金額計算與虧損結轉、開立匯出）"
+      },
+      {
+        "id": "jgb/E/deposit-imputed-interest",
+        "shelf": "E",
+        "title": "押金設算息怎麼算、利率設定與年度一次限制"
+      },
+      {
+        "id": "jgb/E/landlord-owner-bills",
+        "shelf": "E",
+        "title": "大房東帳單（代收代付）怎麼看與建立"
+      },
+      {
+        "id": "jgb/E/bill-receipt-pdf",
+        "shelf": "E",
+        "title": "帳單收據 PDF 下載與繳費證明"
+      },
+      {
+        "id": "jgb/E/rent-collection-agent-vs-direct",
+        "shelf": "E",
+        "title": "包租代管租金代收與房東直收有什麼差別"
+      },
+      {
+        "id": "jgb/E/rent-market-discount-tax",
+        "shelf": "E",
+        "title": "租金行情、折扣條件與公益出租人減稅（租客視角）"
+      },
+      {
+        "id": "jgb/F/repair-progress-followup-scope",
+        "shelf": "F",
+        "title": "修繕進度追問可答範圍與查詢方式"
+      },
+      {
+        "id": "jgb/F/repair-system",
+        "shelf": "F",
+        "title": "線上報修與進度追蹤"
+      },
+      {
+        "id": "jgb/F/repair-ticket-after-submit",
+        "shelf": "F",
+        "title": "確認送出後的單如何處理"
+      },
+      {
+        "id": "jgb/F/repair-ticket-mid-flow-cancel",
+        "shelf": "F",
+        "title": "報修流程中途取消的規則"
+      },
+      {
+        "id": "jgb/F/repair-ticket-no-lease",
+        "shelf": "F",
+        "title": "代開單時的租約查詢身分與空屋／無租約物件開單規則"
+      },
+      {
+        "id": "jgb/F/repair-ticket-open-and-confirm",
+        "shelf": "F",
+        "title": "開修繕單基本流程與確認機制（拍照進場／文字口述）"
+      },
+      {
+        "id": "jgb/F/repair-ticket-photo-count-limit",
+        "shelf": "F",
+        "title": "修繕辨識與附件的照片張數限制"
+      },
+      {
+        "id": "jgb/F/repair-ticket-photo-recognition-uncertain",
+        "shelf": "F",
+        "title": "照片辨識信心不足或看不出損壞時的處理"
+      },
+      {
+        "id": "jgb/F/repair-ticket-reclassify",
+        "shelf": "F",
+        "title": "確認卡上修改辨識結果的規則"
+      },
+      {
+        "id": "jgb/F/repair-ticket-submit-failure",
+        "shelf": "F",
+        "title": "建單失敗時的處理與重試規則"
+      },
+      {
+        "id": "jgb/F/repair-ticket-urgency-judgment",
+        "shelf": "F",
+        "title": "修繕單急迫程度的判斷來源與值域"
+      },
+      {
+        "id": "jgb/F/repair-responsibility-landlord-vs-tenant",
+        "shelf": "F",
+        "title": "房屋修繕責任劃分（房東與租客各負責什麼、費用誰出）"
+      },
+      {
+        "id": "jgb/F/common-equipment-maintenance-responsibility",
+        "shelf": "F",
+        "title": "公共設備的維護、損壞、更新、費用與檢查紀錄責任"
+      },
+      {
+        "id": "jgb/F/tenant-equipment-maintenance-responsibility",
+        "shelf": "F",
+        "title": "租客設備的使用、維護、損壞賠償、更新與費用責任"
+      },
+      {
+        "id": "jgb/F/tenant-repair-notification-duty",
+        "shelf": "F",
+        "title": "租客發現需修繕時的通知義務與要求合理期限修繕的權利"
+      },
+      {
+        "id": "jgb/F/tenant-emergency-self-repair",
+        "shelf": "F",
+        "title": "緊急情況下租客自行修繕的條件、事後通知與費用報銷"
+      },
+      {
+        "id": "jgb/F/emergency-repair-flag-and-handling",
+        "shelf": "F",
+        "title": "緊急修繕的標記、優先處理與回應時效"
+      },
+      {
+        "id": "jgb/F/neighbor-leak-responsibility",
+        "shelf": "F",
+        "title": "鄰居漏水的修繕責任與處理"
+      },
+      {
+        "id": "jgb/F/repair-responsibility-dispute",
+        "shelf": "F",
+        "title": "修繕責任有爭議時的處理"
+      },
+      {
+        "id": "jgb/F/repair-warranty-period",
+        "shelf": "F",
+        "title": "修繕後的保固期"
+      },
+      {
+        "id": "jgb/F/social-housing-repair-responsibility",
+        "shelf": "F",
+        "title": "社會住宅的維修責任"
+      },
+      {
+        "id": "jgb/F/repair-flow-stages",
+        "shelf": "F",
+        "title": "修繕流程六階段與各狀態意義"
+      },
+      {
+        "id": "jgb/F/repair-cost-recording-and-settlement",
+        "shelf": "F",
+        "title": "修繕費用的記錄、分擔與結單自動產生修繕費帳單"
+      },
+      {
+        "id": "jgb/F/repair-request-how-to-submit",
+        "shelf": "F",
+        "title": "在系統提出修繕申請的步驟與需填資料（租客／房東）"
+      },
+      {
+        "id": "jgb/F/repair-dispatch-and-close",
+        "shelf": "F",
+        "title": "業者受理報修、安排廠商、完工登錄到結單封存的操作"
+      },
+      {
+        "id": "jgb/F/repair-multiple-items-one-ticket",
+        "shelf": "F",
+        "title": "多個品項是否分開報修（合併在一張報修單）"
+      },
+      {
+        "id": "jgb/G/meter-item-followup-scope",
+        "shelf": "G",
+        "title": "電錶項目追問可答範圍（餘額、可用度數、供電、低電量警報）"
+      },
+      {
+        "id": "jgb/G/smart-meter-lock-iot",
+        "shelf": "G",
+        "title": "智慧電錶與門鎖整合（售前）"
+      },
+      {
+        "id": "jgb/G/meter-vendor-binding",
+        "shelf": "G",
+        "title": "電表串接：綁定設備廠商帳號與裝置自動同步（含已被綁定處理）"
+      },
+      {
+        "id": "jgb/G/meter-device-management",
+        "shelf": "G",
+        "title": "智慧電錶裝置管理：命名、供電／斷電、綁定物件、查看用電度數"
+      },
+      {
+        "id": "jgb/G/tenant-meter-visibility",
+        "shelf": "G",
+        "title": "租客端看到即時電表與自行儲值的前提設定"
+      },
+      {
+        "id": "jgb/G/meter-data-sync-gap",
+        "shelf": "G",
+        "title": "電錶實體度數與 JGB 顯示不同／長期不更新"
+      },
+      {
+        "id": "jgb/G/iot-offline-troubleshooting",
+        "shelf": "G",
+        "title": "IoT 設備（門鎖／電表）無法連線的排查順序"
+      },
+      {
+        "id": "jgb/G/smart-lock-functions",
+        "shelf": "G",
+        "title": "智慧門鎖功能：租客密碼、QR Code、開門紀錄與密碼管理"
+      },
+      {
+        "id": "jgb/G/smart-lock-share-password",
+        "shelf": "G",
+        "title": "分享門鎖密碼：訪客／維修／清潔人員臨時存取"
+      },
+      {
+        "id": "jgb/G/smart-lock-password-rules",
+        "shelf": "G",
+        "title": "IoT 設定：門鎖預設密碼規則與連結起始日的生效範圍"
+      },
+      {
+        "id": "jgb/G/smart-lock-hardware-vendor",
+        "shelf": "G",
+        "title": "門鎖硬體功能（悠遊卡／磁扣／電池／音量）屬廠商範疇"
+      },
+      {
+        "id": "jgb/G/smart-lock-failure",
+        "shelf": "G",
+        "title": "門鎖 QR Code／密碼失靈開不了門的排查"
+      },
+      {
+        "id": "jgb/I/competitor-comparison",
+        "shelf": "I",
+        "title": "跟 Bananas、屋我也差在哪"
+      },
+      {
+        "id": "jgb/I/competitor-neutrality",
+        "shelf": "I",
+        "title": "會評論競爭對手嗎"
+      },
+      {
+        "id": "jgb/I/dashboard-overview",
+        "shelf": "I",
+        "title": "首頁儀表板顯示哪些數據"
+      },
+      {
+        "id": "jgb/I/data-migration",
+        "shelf": "I",
+        "title": "舊系統資料能否匯入（可匯入範圍、不支援項目與批次匯入做法）"
+      },
+      {
+        "id": "jgb/I/free-trial",
+        "shelf": "I",
+        "title": "可以免費試用嗎"
+      },
+      {
+        "id": "jgb/I/individual-landlord-scale-fit",
+        "shelf": "I",
+        "title": "個人房東（約 10～30 戶）適配與建議做法"
+      },
+      {
+        "id": "jgb/I/pricing-plans",
+        "shelf": "I",
+        "title": "怎麼收費與方案分級差異"
+      },
+      {
+        "id": "jgb/I/product-overview",
+        "shelf": "I",
+        "title": "系統總覽、能解決什麼問題與適不適合我"
+      },
+      {
+        "id": "jgb/I/property-quota-limit",
+        "shelf": "I",
+        "title": "方案物件額度上限與用滿怎麼辦"
+      },
+      {
+        "id": "jgb/I/subscription-change-renewal",
+        "shelf": "I",
+        "title": "升級、變更、續約與取消訂閱（含付款紀錄）"
+      },
+      {
+        "id": "jgb/I/subscription-payment-failure",
+        "shelf": "I",
+        "title": "訂閱扣款失敗：方案失效、物件下架與恢復"
+      },
+      {
+        "id": "jgb/I/team-company-fit",
+        "shelf": "I",
+        "title": "公司或包租代管團隊適合嗎"
+      },
+      {
+        "id": "jgb/I/why-choose-jgb",
+        "shelf": "I",
+        "title": "為什麼選金箍棒"
+      },
+      {
+        "id": "jgb/I/onboarding-tutorial-index",
+        "shelf": "I",
+        "title": "房東新手教學總覽（從哪開始、各篇教學有哪些）"
+      }
+    ],
+    "counts": {
+      "baseline": 193,
+      "blade_pages": 28,
+      "canon_fines": 210,
+      "no_page": 6,
+      "not_counted": 25,
+      "route_files": 15,
+      "spa_named_routes": 200,
+      "tenant": 0,
+      "units": 228,
+      "vendor_specific": 10
+    },
+    "sources": {
+      "branch": "master",
+      "canon": "rag-orchestrator/canon/jgb",
+      "jgb2": "/Users/chenqinghuang/dev/work/jgb2/dev2",
+      "jgb2_sha": "b2ee2ac382ce06763798a7238e4fd5c9411fcfaa",
+      "map": ".claude/skills/outline-curation/schemas/page-shelf-map.json"
+    },
+    "units": [
+      {
+        "component": "ListingController@index",
+        "in_baseline": true,
+        "kind": "blade",
+        "label": "/help/{any?}/{slug?}",
+        "no_page": false,
+        "path": "/help/{any?}/{slug?}",
+        "shelf": "H",
+        "side": "房東側",
+        "source": "routes/web.php",
+        "unit_id": "page:web:/help/{any?}/{slug?}",
+        "vendor_specific": false
+      },
+      {
+        "component": "MondayStatisticController@showImportPage",
+        "in_baseline": false,
+        "kind": "blade",
+        "label": "/import",
+        "no_page": false,
+        "path": "/import",
+        "shelf": "-",
+        "side": "房東側",
+        "source": "routes/web.php",
+        "unit_id": "page:web:/import",
+        "vendor_specific": false
+      },
+      {
+        "component": "BillController@pick",
+        "in_baseline": true,
+        "kind": "blade",
+        "label": "/pick/{action?}",
+        "no_page": false,
+        "path": "/pick/{action?}",
+        "shelf": "E",
+        "side": "房東側",
+        "source": "routes/web.php",
+        "unit_id": "page:web:/pick/{action?}",
+        "vendor_specific": false
+      },
+      {
+        "component": "IndexController@repairIndex",
+        "in_baseline": true,
+        "kind": "blade",
+        "label": "/repair/{any?}/{any2?}",
+        "no_page": false,
+        "path": "/repair/{any?}/{any2?}",
+        "shelf": "I",
+        "side": "房東側",
+        "source": "routes/web.php",
+        "unit_id": "page:web:/repair/{any?}/{any2?}",
+        "vendor_specific": false
+      },
+      {
+        "component": "MondayStatisticController@showViewPage",
+        "in_baseline": false,
+        "kind": "blade",
+        "label": "/view",
+        "no_page": false,
+        "path": "/view",
+        "shelf": "-",
+        "side": "房東側",
+        "source": "routes/web.php",
+        "unit_id": "page:web:/view",
+        "vendor_specific": false
+      },
+      {
+        "component": "ListingController@index",
+        "in_baseline": false,
+        "kind": "blade",
+        "label": "/{any?}/{any2?}/{any3?}/{any4?}",
+        "no_page": false,
+        "path": "/{any?}/{any2?}/{any3?}/{any4?}",
+        "shelf": "-",
+        "side": "房東側",
+        "source": "routes/web.php",
+        "unit_id": "page:web:/{any?}/{any2?}/{any3?}/{any4?}",
+        "vendor_specific": false
+      },
+      {
+        "component": "IotController@index",
+        "in_baseline": true,
+        "kind": "blade",
+        "label": "/{deviceType}/{params?}",
+        "no_page": false,
+        "path": "/{deviceType}/{params?}",
+        "shelf": "G",
+        "side": "房東側",
+        "source": "routes/web.php",
+        "unit_id": "page:web:/{deviceType}/{params?}",
+        "vendor_specific": false
+      },
+      {
+        "component": "BillController@one",
+        "in_baseline": true,
+        "kind": "blade",
+        "label": "bills.one",
+        "no_page": false,
+        "path": "/one/{type}/{status}/{id}",
+        "shelf": "E",
+        "side": "房東側",
+        "source": "routes/web.php",
+        "unit_id": "page:web:bills.one",
+        "vendor_specific": false
+      },
+      {
+        "component": "ContractController@earlyTermination",
+        "in_baseline": true,
+        "kind": "blade",
+        "label": "contracts.early_termination",
+        "no_page": false,
+        "path": "/early_termination/{id?}/{action?}",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "routes/web.php",
+        "unit_id": "page:web:contracts.early_termination",
+        "vendor_specific": false
+      },
+      {
+        "component": "ContractController@moveIn",
+        "in_baseline": true,
+        "kind": "blade",
+        "label": "contracts.move_in",
+        "no_page": false,
+        "path": "/move_in/{id?}/{action?}",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "routes/web.php",
+        "unit_id": "page:web:contracts.move_in",
+        "vendor_specific": false
+      },
+      {
+        "component": "ContractController@show",
+        "in_baseline": true,
+        "kind": "blade",
+        "label": "contracts.show",
+        "no_page": false,
+        "path": "/show/{id?}/{action?}",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "routes/web.php",
+        "unit_id": "page:web:contracts.show",
+        "vendor_specific": false
+      },
+      {
+        "component": "ContractController@sign",
+        "in_baseline": true,
+        "kind": "blade",
+        "label": "contracts.sign",
+        "no_page": false,
+        "path": "/sign/{id?}/{action?}",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "routes/web.php",
+        "unit_id": "page:web:contracts.sign",
+        "vendor_specific": false
+      },
+      {
+        "component": "ContractController@thinkcloud",
+        "in_baseline": true,
+        "kind": "blade",
+        "label": "contracts.thinkcloud",
+        "no_page": false,
+        "path": "/thinkcloud/{id?}/{type?}/{action?}",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "routes/web.php",
+        "unit_id": "page:web:contracts.thinkcloud",
+        "vendor_specific": false
+      },
+      {
+        "component": "CustomerController@demand",
+        "in_baseline": true,
+        "kind": "blade",
+        "label": "customers.demand",
+        "no_page": false,
+        "path": "/demand/{action?}/{id?}",
+        "shelf": "I",
+        "side": "房東側",
+        "source": "routes/web.php",
+        "unit_id": "page:web:customers.demand",
+        "vendor_specific": false
+      },
+      {
+        "component": "CustomerController@tcloud",
+        "in_baseline": true,
+        "kind": "blade",
+        "label": "customers.tcloud",
+        "no_page": false,
+        "path": "/tcloud/{action?}/{id?}/{sign?}",
+        "shelf": "I",
+        "side": "房東側",
+        "source": "routes/web.php",
+        "unit_id": "page:web:customers.tcloud",
+        "vendor_specific": false
+      },
+      {
+        "component": "EstateController@house",
+        "in_baseline": true,
+        "kind": "blade",
+        "label": "estates.house",
+        "no_page": false,
+        "path": "/house/{no}/{action?}",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "routes/web.php",
+        "unit_id": "page:web:estates.house",
+        "vendor_specific": false
+      },
+      {
+        "component": "EstateController@sellHouse",
+        "in_baseline": true,
+        "kind": "blade",
+        "label": "estates.sell-house",
+        "no_page": false,
+        "path": "/sell-house/{no}/{action?}",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "routes/web.php",
+        "unit_id": "page:web:estates.sell-house",
+        "vendor_specific": false
+      },
+      {
+        "component": "EstateController@sellShow",
+        "in_baseline": true,
+        "kind": "blade",
+        "label": "estates.sell-show",
+        "no_page": false,
+        "path": "/sell-show/{id}/{action?}",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "routes/web.php",
+        "unit_id": "page:web:estates.sell-show",
+        "vendor_specific": false
+      },
+      {
+        "component": "EstateController@show",
+        "in_baseline": true,
+        "kind": "blade",
+        "label": "estates.show",
+        "no_page": false,
+        "path": "/show/{id}/{action?}",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "routes/web.php",
+        "unit_id": "page:web:estates.show",
+        "vendor_specific": false
+      },
+      {
+        "component": "ListingController@index",
+        "in_baseline": true,
+        "kind": "blade",
+        "label": "indexs",
+        "no_page": false,
+        "path": "/",
+        "shelf": "I",
+        "side": "房東側",
+        "source": "routes/web.php",
+        "unit_id": "page:web:indexs",
+        "vendor_specific": false
+      },
+      {
+        "component": "LineController@liff",
+        "in_baseline": false,
+        "kind": "blade",
+        "label": "lines.liff",
+        "no_page": false,
+        "path": "/liff",
+        "shelf": "-",
+        "side": "房東側",
+        "source": "routes/web.php",
+        "unit_id": "page:web:lines.liff",
+        "vendor_specific": false
+      },
+      {
+        "component": "NotificationController@index",
+        "in_baseline": true,
+        "kind": "blade",
+        "label": "notifications.index",
+        "no_page": false,
+        "path": "/{type?}",
+        "shelf": "A",
+        "side": "房東側",
+        "source": "routes/web.php",
+        "unit_id": "page:web:notifications.index",
+        "vendor_specific": false
+      },
+      {
+        "component": "IndexController@share",
+        "in_baseline": true,
+        "kind": "blade",
+        "label": "share",
+        "no_page": false,
+        "path": "/share/{action}/{id?}",
+        "shelf": "I",
+        "side": "房東側",
+        "source": "routes/web.php",
+        "unit_id": "page:web:share",
+        "vendor_specific": false
+      },
+      {
+        "component": "UserController@account",
+        "in_baseline": true,
+        "kind": "blade",
+        "label": "users.account",
+        "no_page": false,
+        "path": "/account",
+        "shelf": "A",
+        "side": "房東側",
+        "source": "routes/web.php",
+        "unit_id": "page:web:users.account",
+        "vendor_specific": false
+      },
+      {
+        "component": "UserController@addMerchant",
+        "in_baseline": true,
+        "kind": "blade",
+        "label": "users.add_merchant",
+        "no_page": false,
+        "path": "/add_merchant/{manufacturer?}",
+        "shelf": "A",
+        "side": "房東側",
+        "source": "routes/web.php",
+        "unit_id": "page:web:users.add_merchant",
+        "vendor_specific": false
+      },
+      {
+        "component": "UserController@role",
+        "in_baseline": true,
+        "kind": "blade",
+        "label": "users.role",
+        "no_page": false,
+        "path": "/role",
+        "shelf": "A",
+        "side": "房東側",
+        "source": "routes/web.php",
+        "unit_id": "page:web:users.role",
+        "vendor_specific": false
+      },
+      {
+        "component": "UserController@roleTenant",
+        "in_baseline": true,
+        "kind": "blade",
+        "label": "users.roleTenant",
+        "no_page": false,
+        "path": "/roleTenant",
+        "shelf": "A",
+        "side": "房東側",
+        "source": "routes/web.php",
+        "unit_id": "page:web:users.roleTenant",
+        "vendor_specific": false
+      },
+      {
+        "component": "UserController@team",
+        "in_baseline": true,
+        "kind": "blade",
+        "label": "users.team",
+        "no_page": false,
+        "path": "/team/{type?}/{action?}/{actionType?}",
+        "shelf": "A",
+        "side": "房東側",
+        "source": "routes/web.php",
+        "unit_id": "page:web:users.team",
+        "vendor_specific": false
+      },
+      {
+        "component": "balanceInvoices/edit/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "balanceInvoices.edit",
+        "no_page": false,
+        "path": "/balanceinvoices/edit/:groupId",
+        "shelf": "E",
+        "side": "房東側",
+        "source": "balanceInvoices.js",
+        "unit_id": "page:balanceInvoices.edit",
+        "vendor_specific": false
+      },
+      {
+        "component": "balanceInvoices/edit/basicInfo/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "balanceInvoices.edit.basicInfo",
+        "no_page": false,
+        "path": "basicInfo/:isCreateNew",
+        "shelf": "E",
+        "side": "房東側",
+        "source": "balanceInvoices.js",
+        "unit_id": "page:balanceInvoices.edit.basicInfo",
+        "vendor_specific": false
+      },
+      {
+        "component": "balanceInvoices/edit/belongingEstates/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "balanceInvoices.edit.belongingEstates",
+        "no_page": false,
+        "path": "belongingEstates/:isCreateNew",
+        "shelf": "E",
+        "side": "房東側",
+        "source": "balanceInvoices.js",
+        "unit_id": "page:balanceInvoices.edit.belongingEstates",
+        "vendor_specific": false
+      },
+      {
+        "component": "balanceInvoices/edit/pickEstates/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "balanceInvoices.edit.pickEstates",
+        "no_page": false,
+        "path": "pickEstates/:isCreateNew",
+        "shelf": "E",
+        "side": "房東側",
+        "source": "balanceInvoices.js",
+        "unit_id": "page:balanceInvoices.edit.pickEstates",
+        "vendor_specific": false
+      },
+      {
+        "component": "balanceInvoices/groups/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "balanceInvoices.groups",
+        "no_page": false,
+        "path": "groups/:groupId?",
+        "shelf": "E",
+        "side": "房東側",
+        "source": "balanceInvoices.js",
+        "unit_id": "page:balanceInvoices.groups",
+        "vendor_specific": false
+      },
+      {
+        "component": "balanceInvoices/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "balanceInvoices.index",
+        "no_page": false,
+        "path": "/balanceinvoices",
+        "shelf": "E",
+        "side": "房東側",
+        "source": "balanceInvoices.js",
+        "unit_id": "page:balanceInvoices.index",
+        "vendor_specific": false
+      },
+      {
+        "component": "balanceInvoices/list/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "balanceInvoices.list",
+        "no_page": false,
+        "path": "list/:status?",
+        "shelf": "E",
+        "side": "房東側",
+        "source": "balanceInvoices.js",
+        "unit_id": "page:balanceInvoices.list",
+        "vendor_specific": false
+      },
+      {
+        "component": "bigLandlords/Index.jsx",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "bigLandlords.index",
+        "no_page": false,
+        "path": "/bigLandlords",
+        "shelf": "B",
+        "side": "房東側",
+        "source": "bigLandlords.js",
+        "unit_id": "page:bigLandlords.index",
+        "vendor_specific": false
+      },
+      {
+        "component": "bigLandlords/list/Index.jsx",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "bigLandlords.list",
+        "no_page": false,
+        "path": "/bigLandlords/list",
+        "shelf": "B",
+        "side": "房東側",
+        "source": "bigLandlords.js",
+        "unit_id": "page:bigLandlords.list",
+        "vendor_specific": false
+      },
+      {
+        "component": "bigLandlords/report/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "bigLandlords.report",
+        "no_page": false,
+        "path": "/bigLandlords/report",
+        "shelf": "B",
+        "side": "房東側",
+        "source": "bigLandlords.js",
+        "unit_id": "page:bigLandlords.report",
+        "vendor_specific": false
+      },
+      {
+        "component": "bigLandlords/sheet/index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "bigLandlords.sheet",
+        "no_page": false,
+        "path": "/bigLandlords/sheet/:bigLandlord_id/:role_id?",
+        "shelf": "B",
+        "side": "房東側",
+        "source": "bigLandlords.js",
+        "unit_id": "page:bigLandlords.sheet",
+        "vendor_specific": false
+      },
+      {
+        "component": "bigLandlords/list/_parts/owned.jsx",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "users.team.owned",
+        "no_page": false,
+        "path": "/bigLandlords/owned/:id",
+        "shelf": "B",
+        "side": "房東側",
+        "source": "bigLandlords.js",
+        "unit_id": "page:users.team.owned",
+        "vendor_specific": false
+      },
+      {
+        "component": "bills/edit/Index.jsx",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "bills.create",
+        "no_page": false,
+        "path": "create",
+        "shelf": "E",
+        "side": "房東側",
+        "source": "bills.js",
+        "unit_id": "page:bills.create",
+        "vendor_specific": false
+      },
+      {
+        "component": "bills/edit/Index.jsx",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "bills.create.batch",
+        "no_page": false,
+        "path": "create/batch",
+        "shelf": "E",
+        "side": "房東側",
+        "source": "bills.js",
+        "unit_id": "page:bills.create.batch",
+        "vendor_specific": false
+      },
+      {
+        "component": "bills/edit/Index.jsx",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "bills.create.cycleBatch",
+        "no_page": false,
+        "path": "create/cycleBatch",
+        "shelf": "E",
+        "side": "房東側",
+        "source": "bills.js",
+        "unit_id": "page:bills.create.cycleBatch",
+        "vendor_specific": false
+      },
+      {
+        "component": "bills/edit/Index.jsx",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "bills.edit",
+        "no_page": false,
+        "path": "edit/:billId?",
+        "shelf": "E",
+        "side": "房東側",
+        "source": "bills.js",
+        "unit_id": "page:bills.edit",
+        "vendor_specific": false
+      },
+      {
+        "component": "bills/Index.jsx",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "bills.index",
+        "no_page": false,
+        "path": "/bills",
+        "shelf": "E",
+        "side": "房東側",
+        "source": "bills.js",
+        "unit_id": "page:bills.index",
+        "vendor_specific": false
+      },
+      {
+        "component": "bills/list/Index.jsx",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "bills.list",
+        "no_page": false,
+        "path": ":type?/:status?",
+        "shelf": "E",
+        "side": "房東側",
+        "source": "bills.js",
+        "unit_id": "page:bills.list",
+        "vendor_specific": false
+      },
+      {
+        "component": "bills/pick/Index.jsx",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "bills.pick",
+        "no_page": false,
+        "path": "pick/:action?",
+        "shelf": "E",
+        "side": "房東側",
+        "source": "bills.js",
+        "unit_id": "page:bills.pick",
+        "vendor_specific": false
+      },
+      {
+        "component": "bills/sheet/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "bills.sheet",
+        "no_page": false,
+        "path": "/bills/sheet",
+        "shelf": "E",
+        "side": "房東側",
+        "source": "bills.js",
+        "unit_id": "page:bills.sheet",
+        "vendor_specific": false
+      },
+      {
+        "component": "bills/socialHousingSheets/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "bills.socialHousingSheets",
+        "no_page": false,
+        "path": "/bills/socialHousingSheets/:version?",
+        "shelf": "E",
+        "side": "房東側",
+        "source": "bills.js",
+        "unit_id": "page:bills.socialHousingSheets",
+        "vendor_specific": false
+      },
+      {
+        "component": "bills/stat/Index.jsx",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "bills.stat",
+        "no_page": false,
+        "path": "stat/:target?",
+        "shelf": "E",
+        "side": "房東側",
+        "source": "bills.js",
+        "unit_id": "page:bills.stat",
+        "vendor_specific": false
+      },
+      {
+        "component": "communities/edit/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "communities.edit",
+        "no_page": false,
+        "path": "/communities/edit/:communityId",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "communities.js",
+        "unit_id": "page:communities.edit",
+        "vendor_specific": false
+      },
+      {
+        "component": "communities/edit/BalanceInvoice.jsx",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "communities.edit.balanceInvoice",
+        "no_page": false,
+        "path": "balanceInvoice",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "communities.js",
+        "unit_id": "page:communities.edit.balanceInvoice",
+        "vendor_specific": false
+      },
+      {
+        "component": "communities/edit/Basic.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "communities.edit.basic",
+        "no_page": false,
+        "path": "basic",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "communities.js",
+        "unit_id": "page:communities.edit.basic",
+        "vendor_specific": false
+      },
+      {
+        "component": "communities/edit/Gallery.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "communities.edit.gallery",
+        "no_page": false,
+        "path": "gallery",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "communities.js",
+        "unit_id": "page:communities.edit.gallery",
+        "vendor_specific": false
+      },
+      {
+        "component": "communities/edit/Intros.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "communities.edit.intros",
+        "no_page": false,
+        "path": "intros",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "communities.js",
+        "unit_id": "page:communities.edit.intros",
+        "vendor_specific": false
+      },
+      {
+        "component": "communities/estates/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "communities.estates",
+        "no_page": false,
+        "path": "estates/:communityId/:category?",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "communities.js",
+        "unit_id": "page:communities.estates",
+        "vendor_specific": false
+      },
+      {
+        "component": "communities/forceBinding/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "communities.forceBinding",
+        "no_page": false,
+        "path": "/communities/forceBinding",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "communities.js",
+        "unit_id": "page:communities.forceBinding",
+        "vendor_specific": false
+      },
+      {
+        "component": "communities/forceBinding/edit/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "communities.forceBinding.edit",
+        "no_page": false,
+        "path": "edit",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "communities.js",
+        "unit_id": "page:communities.forceBinding.edit",
+        "vendor_specific": false
+      },
+      {
+        "component": "communities/forceBinding/edit/Binding.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "communities.forceBinding.edit.binding",
+        "no_page": false,
+        "path": "binding",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "communities.js",
+        "unit_id": "page:communities.forceBinding.edit.binding",
+        "vendor_specific": false
+      },
+      {
+        "component": "communities/forceBinding/Welcome.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "communities.forceBinding.welcome",
+        "no_page": false,
+        "path": "",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "communities.js",
+        "unit_id": "page:communities.forceBinding.welcome",
+        "vendor_specific": false
+      },
+      {
+        "component": "communities/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "communities.index",
+        "no_page": false,
+        "path": "/communities",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "communities.js",
+        "unit_id": "page:communities.index",
+        "vendor_specific": false
+      },
+      {
+        "component": "communities/list/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "communities.list",
+        "no_page": false,
+        "path": "",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "communities.js",
+        "unit_id": "page:communities.list",
+        "vendor_specific": false
+      },
+      {
+        "component": "communities/pick/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "communities.pick",
+        "no_page": false,
+        "path": "pick/:action",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "communities.js",
+        "unit_id": "page:communities.pick",
+        "vendor_specific": false
+      },
+      {
+        "component": "communities/show/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "communities.show",
+        "no_page": false,
+        "path": "/communities/show/:communityId",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "communities.js",
+        "unit_id": "page:communities.show",
+        "vendor_specific": false
+      },
+      {
+        "component": "contracts/edit/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "contracts.edit",
+        "no_page": false,
+        "path": "/contracts/edit/:id",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "contracts.js",
+        "unit_id": "page:contracts.edit",
+        "vendor_specific": false
+      },
+      {
+        "component": "",
+        "in_baseline": false,
+        "kind": "spa",
+        "label": "contracts.edit.404",
+        "no_page": true,
+        "path": ":pathMatch(.*)*",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "contracts.js",
+        "unit_id": "page:contracts.edit.404",
+        "vendor_specific": false
+      },
+      {
+        "component": "contracts/edit/additionalConvention/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "contracts.edit.additionalConvention",
+        "no_page": false,
+        "path": "additionalConvention",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "contracts.js",
+        "unit_id": "page:contracts.edit.additionalConvention",
+        "vendor_specific": false
+      },
+      {
+        "component": "contracts/edit/billSetting/Index.jsx",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "contracts.edit.billSetting",
+        "no_page": false,
+        "path": "billSetting",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "contracts.js",
+        "unit_id": "page:contracts.edit.billSetting",
+        "vendor_specific": false
+      },
+      {
+        "component": "contracts/edit/buildingTranscript/General.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "contracts.edit.buildingTranscript",
+        "no_page": false,
+        "path": "buildingTranscript",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "contracts.js",
+        "unit_id": "page:contracts.edit.buildingTranscript",
+        "vendor_specific": false
+      },
+      {
+        "component": "contracts/edit/dealerBasic/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "contracts.edit.dealerBasic",
+        "no_page": false,
+        "path": "dealerBasic",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "contracts.js",
+        "unit_id": "page:contracts.edit.dealerBasic",
+        "vendor_specific": false
+      },
+      {
+        "component": "contracts/edit/facilities/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "contracts.edit.facilities",
+        "no_page": false,
+        "path": "facilities",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "contracts.js",
+        "unit_id": "page:contracts.edit.facilities",
+        "vendor_specific": false
+      },
+      {
+        "component": "contracts/edit/landlordAttachment/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "contracts.edit.landlordAttachment",
+        "no_page": false,
+        "path": "landlordAttachment",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "contracts.js",
+        "unit_id": "page:contracts.edit.landlordAttachment",
+        "vendor_specific": false
+      },
+      {
+        "component": "contracts/edit/payment/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "contracts.edit.payment",
+        "no_page": false,
+        "path": "payment",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "contracts.js",
+        "unit_id": "page:contracts.edit.payment",
+        "vendor_specific": false
+      },
+      {
+        "component": "contracts/edit/publicNotary/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "contracts.edit.publicNotary",
+        "no_page": false,
+        "path": "publicNotary",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "contracts.js",
+        "unit_id": "page:contracts.edit.publicNotary",
+        "vendor_specific": false
+      },
+      {
+        "component": "contracts/edit/rent/Index.jsx",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "contracts.edit.rent",
+        "no_page": false,
+        "path": "rent",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "contracts.js",
+        "unit_id": "page:contracts.edit.rent",
+        "vendor_specific": false
+      },
+      {
+        "component": "contracts/edit/rentAdjustment/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "contracts.edit.rentAdjustment",
+        "no_page": false,
+        "path": "rentAdjustment",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "contracts.js",
+        "unit_id": "page:contracts.edit.rentAdjustment",
+        "vendor_specific": false
+      },
+      {
+        "component": "contracts/edit/rentBasic/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "contracts.edit.rentBasic",
+        "no_page": false,
+        "path": "basic",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "contracts.js",
+        "unit_id": "page:contracts.edit.rentBasic",
+        "vendor_specific": false
+      },
+      {
+        "component": "contracts/edit/situation/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "contracts.edit.situation",
+        "no_page": false,
+        "path": "situation",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "contracts.js",
+        "unit_id": "page:contracts.edit.situation",
+        "vendor_specific": false
+      },
+      {
+        "component": "contracts/edit/attachments/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "contracts.edit.socialHousing.attachments",
+        "no_page": false,
+        "path": "attachments",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "contracts.js",
+        "unit_id": "page:contracts.edit.socialHousing.attachments",
+        "vendor_specific": false
+      },
+      {
+        "component": "contracts/edit/buildingTranscript/SocialHousing.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "contracts.edit.socialHousing.buildingTranscript",
+        "no_page": false,
+        "path": "buildingTranscript",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "contracts.js",
+        "unit_id": "page:contracts.edit.socialHousing.buildingTranscript",
+        "vendor_specific": false
+      },
+      {
+        "component": "contracts/edit/dealerBasic/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "contracts.edit.socialHousing.dealerBasic",
+        "no_page": false,
+        "path": "dealerBasic",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "contracts.js",
+        "unit_id": "page:contracts.edit.socialHousing.dealerBasic",
+        "vendor_specific": false
+      },
+      {
+        "component": "contracts/edit/facilities/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "contracts.edit.socialHousing.facilities",
+        "no_page": false,
+        "path": "facilities",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "contracts.js",
+        "unit_id": "page:contracts.edit.socialHousing.facilities",
+        "vendor_specific": false
+      },
+      {
+        "component": "contracts/edit/landlordAttachment/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "contracts.edit.socialHousing.landlordAttachment",
+        "no_page": false,
+        "path": "landlordAttachment",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "contracts.js",
+        "unit_id": "page:contracts.edit.socialHousing.landlordAttachment",
+        "vendor_specific": false
+      },
+      {
+        "component": "contracts/edit/landlordBasic/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "contracts.edit.socialHousing.landlordBasic",
+        "no_page": false,
+        "path": "landlordBasic",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "contracts.js",
+        "unit_id": "page:contracts.edit.socialHousing.landlordBasic",
+        "vendor_specific": false
+      },
+      {
+        "component": "contracts/edit/landlordLicense/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "contracts.edit.socialHousing.landlordLicense",
+        "no_page": false,
+        "path": "landlordLicense",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "contracts.js",
+        "unit_id": "page:contracts.edit.socialHousing.landlordLicense",
+        "vendor_specific": false
+      },
+      {
+        "component": "contracts/edit/moveIn/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "contracts.edit.socialHousing.moveIn",
+        "no_page": false,
+        "path": "moveIn",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "contracts.js",
+        "unit_id": "page:contracts.edit.socialHousing.moveIn",
+        "vendor_specific": false
+      },
+      {
+        "component": "contracts/edit/payment/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "contracts.edit.socialHousing.payment",
+        "no_page": false,
+        "path": "payment",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "contracts.js",
+        "unit_id": "page:contracts.edit.socialHousing.payment",
+        "vendor_specific": false
+      },
+      {
+        "component": "contracts/edit/photos/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "contracts.edit.socialHousing.photos",
+        "no_page": false,
+        "path": "photos",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "contracts.js",
+        "unit_id": "page:contracts.edit.socialHousing.photos",
+        "vendor_specific": false
+      },
+      {
+        "component": "contracts/edit/publicNotary/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "contracts.edit.socialHousing.publicNotary",
+        "no_page": false,
+        "path": "publicNotary",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "contracts.js",
+        "unit_id": "page:contracts.edit.socialHousing.publicNotary",
+        "vendor_specific": false
+      },
+      {
+        "component": "contracts/edit/rent/Index.jsx",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "contracts.edit.socialHousing.rent",
+        "no_page": false,
+        "path": "rent",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "contracts.js",
+        "unit_id": "page:contracts.edit.socialHousing.rent",
+        "vendor_specific": false
+      },
+      {
+        "component": "contracts/edit/rentBasic/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "contracts.edit.socialHousing.rentBasic",
+        "no_page": false,
+        "path": "basic",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "contracts.js",
+        "unit_id": "page:contracts.edit.socialHousing.rentBasic",
+        "vendor_specific": false
+      },
+      {
+        "component": "contracts/edit/situation/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "contracts.edit.socialHousing.situation",
+        "no_page": false,
+        "path": "situation",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "contracts.js",
+        "unit_id": "page:contracts.edit.socialHousing.situation",
+        "vendor_specific": false
+      },
+      {
+        "component": "contracts/edit/subsidyTerms/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "contracts.edit.socialHousing.subsidyTerms",
+        "no_page": false,
+        "path": "subsidyTerms",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "contracts.js",
+        "unit_id": "page:contracts.edit.socialHousing.subsidyTerms",
+        "vendor_specific": false
+      },
+      {
+        "component": "contracts/edit/tenantAttachment/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "contracts.edit.socialHousing.tenantAttachment",
+        "no_page": false,
+        "path": "tenantAttachment",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "contracts.js",
+        "unit_id": "page:contracts.edit.socialHousing.tenantAttachment",
+        "vendor_specific": false
+      },
+      {
+        "component": "contracts/edit/tenantBasic/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "contracts.edit.socialHousing.tenantBasic",
+        "no_page": false,
+        "path": "tenantBasic",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "contracts.js",
+        "unit_id": "page:contracts.edit.socialHousing.tenantBasic",
+        "vendor_specific": false
+      },
+      {
+        "component": "contracts/edit/tenantHousehold/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "contracts.edit.socialHousing.tenantHousehold",
+        "no_page": false,
+        "path": "tenantHousehold",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "contracts.js",
+        "unit_id": "page:contracts.edit.socialHousing.tenantHousehold",
+        "vendor_specific": false
+      },
+      {
+        "component": "contracts/edit/tenantLicense/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "contracts.edit.socialHousing.tenantLicense",
+        "no_page": false,
+        "path": "tenantLicense",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "contracts.js",
+        "unit_id": "page:contracts.edit.socialHousing.tenantLicense",
+        "vendor_specific": false
+      },
+      {
+        "component": "contracts/edit/taxAndInvoice/index.jsx",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "contracts.edit.taxAndInvoice",
+        "no_page": false,
+        "path": "taxAndInvoice",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "contracts.js",
+        "unit_id": "page:contracts.edit.taxAndInvoice",
+        "vendor_specific": false
+      },
+      {
+        "component": "contracts/edit/tenantInfo/Index.jsx",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "contracts.edit.tenantInfo",
+        "no_page": false,
+        "path": "tenantInfo",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "contracts.js",
+        "unit_id": "page:contracts.edit.tenantInfo",
+        "vendor_specific": false
+      },
+      {
+        "component": "contracts/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "contracts.index",
+        "no_page": false,
+        "path": "/contracts/:status?",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "contracts.js",
+        "unit_id": "page:contracts.index",
+        "vendor_specific": false
+      },
+      {
+        "component": "contracts/list/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "contracts.list",
+        "no_page": false,
+        "path": "",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "contracts.js",
+        "unit_id": "page:contracts.list",
+        "vendor_specific": false
+      },
+      {
+        "component": "contracts/move-in/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "contracts.moveIn",
+        "no_page": false,
+        "path": "/contracts/sh-move-in/:id",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "contracts.js",
+        "unit_id": "page:contracts.moveIn",
+        "vendor_specific": false
+      },
+      {
+        "component": "contracts/move-out/Index.jsx",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "contracts.moveOut",
+        "no_page": false,
+        "path": "/contracts/move-out/:id",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "contracts.js",
+        "unit_id": "page:contracts.moveOut",
+        "vendor_specific": false
+      },
+      {
+        "component": "contracts/pick/Index.jsx",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "contracts.pick",
+        "no_page": false,
+        "path": "pick/:action/:id?",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "contracts.js",
+        "unit_id": "page:contracts.pick",
+        "vendor_specific": false
+      },
+      {
+        "component": "contracts/renew/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "contracts.renew",
+        "no_page": false,
+        "path": "renew",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "contracts.js",
+        "unit_id": "page:contracts.renew",
+        "vendor_specific": false
+      },
+      {
+        "component": "contracts/renew/Preview.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "contracts.renew.preview",
+        "no_page": false,
+        "path": "renew/preview",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "contracts.js",
+        "unit_id": "page:contracts.renew.preview",
+        "vendor_specific": false
+      },
+      {
+        "component": "contracts/list/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "contracts.search",
+        "no_page": false,
+        "path": "search",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "contracts.js",
+        "unit_id": "page:contracts.search",
+        "vendor_specific": false
+      },
+      {
+        "component": "contracts/show/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "contracts.show",
+        "no_page": false,
+        "path": "/contracts/sh-show/:id",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "contracts.js",
+        "unit_id": "page:contracts.show",
+        "vendor_specific": false
+      },
+      {
+        "component": "control-panel/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "controlPanel.index",
+        "no_page": false,
+        "path": "/controlPanel",
+        "shelf": "I",
+        "side": "房東側",
+        "source": "controlPanel.js",
+        "unit_id": "page:controlPanel.index",
+        "vendor_specific": false
+      },
+      {
+        "component": "control-panel/setting/Index.jsx",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "controlPanel.setting",
+        "no_page": false,
+        "path": "/controlPanel/setting",
+        "shelf": "I",
+        "side": "房東側",
+        "source": "controlPanel.js",
+        "unit_id": "page:controlPanel.setting",
+        "vendor_specific": false
+      },
+      {
+        "component": "control-panel/notificationMail/Index.jsx",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "notificationMail",
+        "no_page": false,
+        "path": "notificationMail",
+        "shelf": "I",
+        "side": "房東側",
+        "source": "controlPanel.js",
+        "unit_id": "page:notificationMail",
+        "vendor_specific": false
+      },
+      {
+        "component": "control-panel/taskManagement/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "taskManagement",
+        "no_page": false,
+        "path": "taskManagement",
+        "shelf": "I",
+        "side": "房東側",
+        "source": "controlPanel.js",
+        "unit_id": "page:taskManagement",
+        "vendor_specific": false
+      },
+      {
+        "component": "control-panel/taskManagement/edit/Index.jsx",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "taskManagement.create",
+        "no_page": false,
+        "path": "taskManagement/create",
+        "shelf": "I",
+        "side": "房東側",
+        "source": "controlPanel.js",
+        "unit_id": "page:taskManagement.create",
+        "vendor_specific": false
+      },
+      {
+        "component": "control-panel/taskManagement/edit/Index.jsx",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "taskManagement.edit",
+        "no_page": false,
+        "path": "taskManagement/edit/:id?",
+        "shelf": "I",
+        "side": "房東側",
+        "source": "controlPanel.js",
+        "unit_id": "page:taskManagement.edit",
+        "vendor_specific": false
+      },
+      {
+        "component": "entrustedContracts/Index.jsx",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "entrustContracts.index",
+        "no_page": false,
+        "path": "/entrustedContracts/:status?",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "entrustedContracts.js",
+        "unit_id": "page:entrustContracts.index",
+        "vendor_specific": false
+      },
+      {
+        "component": "entrustedContracts/edit/Index.jsx",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "entrustedContracts.edit",
+        "no_page": false,
+        "path": "/entrustedContracts/:id/edit",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "entrustedContracts.js",
+        "unit_id": "page:entrustedContracts.edit",
+        "vendor_specific": false
+      },
+      {
+        "component": "",
+        "in_baseline": false,
+        "kind": "spa",
+        "label": "entrustedContracts.edit.404",
+        "no_page": true,
+        "path": ":pathMatch(.*)*",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "entrustedContracts.js",
+        "unit_id": "page:entrustedContracts.edit.404",
+        "vendor_specific": false
+      },
+      {
+        "component": "entrustedContracts/edit/requirement/Basic.jsx",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "entrustedContracts.edit.basic",
+        "no_page": false,
+        "path": "basic",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "entrustedContracts.js",
+        "unit_id": "page:entrustedContracts.edit.basic",
+        "vendor_specific": false
+      },
+      {
+        "component": "entrustedContracts/edit/requirement/Fees.jsx",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "entrustedContracts.edit.fee",
+        "no_page": false,
+        "path": "fee",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "entrustedContracts.js",
+        "unit_id": "page:entrustedContracts.edit.fee",
+        "vendor_specific": false
+      },
+      {
+        "component": "entrustedContracts/edit/landlordInfo/LandlordInfo.jsx",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "entrustedContracts.edit.landlord_info",
+        "no_page": false,
+        "path": "landlord_info",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "entrustedContracts.js",
+        "unit_id": "page:entrustedContracts.edit.landlord_info",
+        "vendor_specific": false
+      },
+      {
+        "component": "entrustedContracts/edit/managerInfo/ManagerInfo.jsx",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "entrustedContracts.edit.manager_info",
+        "no_page": false,
+        "path": "manager_info",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "entrustedContracts.js",
+        "unit_id": "page:entrustedContracts.edit.manager_info",
+        "vendor_specific": false
+      },
+      {
+        "component": "entrustedContracts/edit/requirement/Payment.jsx",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "entrustedContracts.edit.payment",
+        "no_page": false,
+        "path": "payment",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "entrustedContracts.js",
+        "unit_id": "page:entrustedContracts.edit.payment",
+        "vendor_specific": false
+      },
+      {
+        "component": "entrustedContracts/list/Index.jsx",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "entrustedContracts.list",
+        "no_page": false,
+        "path": "",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "entrustedContracts.js",
+        "unit_id": "page:entrustedContracts.list",
+        "vendor_specific": false
+      },
+      {
+        "component": "entrustedContracts/show/Index.jsx",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "entrustedContracts.show",
+        "no_page": false,
+        "path": "/entrustedContracts/show/:id?",
+        "shelf": "D",
+        "side": "房東側",
+        "source": "entrustedContracts.js",
+        "unit_id": "page:entrustedContracts.show",
+        "vendor_specific": false
+      },
+      {
+        "component": "estates/dashboard/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "estates.dashboard",
+        "no_page": false,
+        "path": "/estates/dashboard/:id",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "estates.js",
+        "unit_id": "page:estates.dashboard",
+        "vendor_specific": false
+      },
+      {
+        "component": "",
+        "in_baseline": false,
+        "kind": "spa",
+        "label": "estates.dashboard.404",
+        "no_page": true,
+        "path": ":pathMatch(.*)*",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "estates.js",
+        "unit_id": "page:estates.dashboard.404",
+        "vendor_specific": false
+      },
+      {
+        "component": "estates/dashboard/attachments/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "estates.dashboard.attachments",
+        "no_page": false,
+        "path": "attachments",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "estates.js",
+        "unit_id": "page:estates.dashboard.attachments",
+        "vendor_specific": false
+      },
+      {
+        "component": "estates/dashboard/bills/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "estates.dashboard.bills",
+        "no_page": false,
+        "path": "bills/:tab?",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "estates.js",
+        "unit_id": "page:estates.dashboard.bills",
+        "vendor_specific": false
+      },
+      {
+        "component": "estates/dashboard/contractAttachments/index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "estates.dashboard.contractAttachments",
+        "no_page": false,
+        "path": "contractAttachments",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "estates.js",
+        "unit_id": "page:estates.dashboard.contractAttachments",
+        "vendor_specific": false
+      },
+      {
+        "component": "estates/dashboard/contracts/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "estates.dashboard.contracts",
+        "no_page": false,
+        "path": "contracts",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "estates.js",
+        "unit_id": "page:estates.dashboard.contracts",
+        "vendor_specific": false
+      },
+      {
+        "component": "estates/dashboard/memos/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "estates.dashboard.memos",
+        "no_page": false,
+        "path": "memos",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "estates.js",
+        "unit_id": "page:estates.dashboard.memos",
+        "vendor_specific": false
+      },
+      {
+        "component": "bills/stat/_parts/MonthlyReport.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "estates.dashboard.monthlyReport",
+        "no_page": false,
+        "path": "monthlyReport",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "estates.js",
+        "unit_id": "page:estates.dashboard.monthlyReport",
+        "vendor_specific": false
+      },
+      {
+        "component": "bills/stat/_parts/MonthlyReport.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "estates.dashboard.monthlyStatement",
+        "no_page": false,
+        "path": "monthlyStatement",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "estates.js",
+        "unit_id": "page:estates.dashboard.monthlyStatement",
+        "vendor_specific": false
+      },
+      {
+        "component": "estates/dashboard/rent/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "estates.dashboard.rent",
+        "no_page": false,
+        "path": "rent",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "estates.js",
+        "unit_id": "page:estates.dashboard.rent",
+        "vendor_specific": false
+      },
+      {
+        "component": "estates/dashboard/repair/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "estates.dashboard.repair",
+        "no_page": false,
+        "path": "repair",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "estates.js",
+        "unit_id": "page:estates.dashboard.repair",
+        "vendor_specific": false
+      },
+      {
+        "component": "estates/dashboard/runnings/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "estates.dashboard.runnings",
+        "no_page": false,
+        "path": "runnings",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "estates.js",
+        "unit_id": "page:estates.dashboard.runnings",
+        "vendor_specific": false
+      },
+      {
+        "component": "estates/dashboard/sell/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "estates.dashboard.sell",
+        "no_page": false,
+        "path": "sell",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "estates.js",
+        "unit_id": "page:estates.dashboard.sell",
+        "vendor_specific": false
+      },
+      {
+        "component": "estates/edit/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "estates.edit",
+        "no_page": false,
+        "path": "/estates/edit/:id",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "estates.js",
+        "unit_id": "page:estates.edit",
+        "vendor_specific": false
+      },
+      {
+        "component": "",
+        "in_baseline": false,
+        "kind": "spa",
+        "label": "estates.edit.404",
+        "no_page": true,
+        "path": ":pathMatch(.*)*",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "estates.js",
+        "unit_id": "page:estates.edit.404",
+        "vendor_specific": false
+      },
+      {
+        "component": "estates/edit/basic/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "estates.edit.basic",
+        "no_page": false,
+        "path": "basic",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "estates.js",
+        "unit_id": "page:estates.edit.basic",
+        "vendor_specific": false
+      },
+      {
+        "component": "estates/edit/building_transcript/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "estates.edit.building_transcript",
+        "no_page": false,
+        "path": "buildingTranscript",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "estates.js",
+        "unit_id": "page:estates.edit.building_transcript",
+        "vendor_specific": false
+      },
+      {
+        "component": "estates/edit/buildingTranscriptGeneral/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "estates.edit.building_transcript_general",
+        "no_page": false,
+        "path": "buildingTranscriptGeneral",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "estates.js",
+        "unit_id": "page:estates.edit.building_transcript_general",
+        "vendor_specific": false
+      },
+      {
+        "component": "estates/edit/facilities/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "estates.edit.facilities",
+        "no_page": false,
+        "path": "facilities",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "estates.js",
+        "unit_id": "page:estates.edit.facilities",
+        "vendor_specific": false
+      },
+      {
+        "component": "estates/edit/gallery/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "estates.edit.gallery",
+        "no_page": false,
+        "path": "gallery",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "estates.js",
+        "unit_id": "page:estates.edit.gallery",
+        "vendor_specific": false
+      },
+      {
+        "component": "estates/edit/intro/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "estates.edit.intro",
+        "no_page": false,
+        "path": "intro",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "estates.js",
+        "unit_id": "page:estates.edit.intro",
+        "vendor_specific": false
+      },
+      {
+        "component": "estates/edit/rent_contact/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "estates.edit.rent_contact",
+        "no_page": false,
+        "path": "rent_contact",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "estates.js",
+        "unit_id": "page:estates.edit.rent_contact",
+        "vendor_specific": false
+      },
+      {
+        "component": "estates/edit/rent_detail/Index.jsx",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "estates.edit.rent_detail",
+        "no_page": false,
+        "path": "rent_detail",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "estates.js",
+        "unit_id": "page:estates.edit.rent_detail",
+        "vendor_specific": false
+      },
+      {
+        "component": "estates/edit/rent_verify/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "estates.edit.rent_verify",
+        "no_page": false,
+        "path": "rent_verify",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "estates.js",
+        "unit_id": "page:estates.edit.rent_verify",
+        "vendor_specific": false
+      },
+      {
+        "component": "estates/edit/sell_contact/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "estates.edit.sell_contact",
+        "no_page": false,
+        "path": "sell_contact",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "estates.js",
+        "unit_id": "page:estates.edit.sell_contact",
+        "vendor_specific": false
+      },
+      {
+        "component": "estates/edit/sell_detail/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "estates.edit.sell_detail",
+        "no_page": false,
+        "path": "sell_detail",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "estates.js",
+        "unit_id": "page:estates.edit.sell_detail",
+        "vendor_specific": false
+      },
+      {
+        "component": "estates/edit/vr/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "estates.edit.vr",
+        "no_page": false,
+        "path": "vr",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "estates.js",
+        "unit_id": "page:estates.edit.vr",
+        "vendor_specific": false
+      },
+      {
+        "component": "estates/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "estates.index",
+        "no_page": false,
+        "path": "/estates/:category?",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "estates.js",
+        "unit_id": "page:estates.index",
+        "vendor_specific": false
+      },
+      {
+        "component": "estates/list/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "estates.list",
+        "no_page": false,
+        "path": "",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "estates.js",
+        "unit_id": "page:estates.list",
+        "vendor_specific": false
+      },
+      {
+        "component": "estates/dashboard/_parts/MonthlyUpload.jsx",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "estates.monthlyUpload",
+        "no_page": false,
+        "path": "/estates/monthlyUpload/:action",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "estates.js",
+        "unit_id": "page:estates.monthlyUpload",
+        "vendor_specific": false
+      },
+      {
+        "component": "estates/pick/Index.jsx",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "estates.pick",
+        "no_page": false,
+        "path": "/estates/pick/:action",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "estates.js",
+        "unit_id": "page:estates.pick",
+        "vendor_specific": false
+      },
+      {
+        "component": "404.vue",
+        "in_baseline": false,
+        "kind": "spa",
+        "label": "404",
+        "no_page": false,
+        "path": "/:pathMatch(.*)*",
+        "shelf": "-",
+        "side": "房東側",
+        "source": "index.js",
+        "unit_id": "page:404",
+        "vendor_specific": false
+      },
+      {
+        "component": "marketing/WelcomeBonus.vue",
+        "in_baseline": false,
+        "kind": "spa",
+        "label": "marketing.welcome-bonus",
+        "no_page": false,
+        "path": "/welcome-bonus",
+        "shelf": "-",
+        "side": "房東側",
+        "source": "index.js",
+        "unit_id": "page:marketing.welcome-bonus",
+        "vendor_specific": false
+      },
+      {
+        "component": "vite/Index.vue",
+        "in_baseline": false,
+        "kind": "spa",
+        "label": "vite",
+        "no_page": false,
+        "path": "/vite",
+        "shelf": "-",
+        "side": "房東側",
+        "source": "index.js",
+        "unit_id": "page:vite",
+        "vendor_specific": false
+      },
+      {
+        "component": "iots/list/Index.jsx",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "powerMeter.list",
+        "no_page": false,
+        "path": ":type",
+        "shelf": "G",
+        "side": "房東側",
+        "source": "iots.js",
+        "unit_id": "page:powerMeter.list",
+        "vendor_specific": false
+      },
+      {
+        "component": "iots/_parts/Single.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "powerMeter.single",
+        "no_page": false,
+        "path": "single/:iotId",
+        "shelf": "G",
+        "side": "房東側",
+        "source": "iots.js",
+        "unit_id": "page:powerMeter.single",
+        "vendor_specific": false
+      },
+      {
+        "component": "listings/IOTDevice.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "listings.IOTDevice",
+        "no_page": false,
+        "path": "/iot-device",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "listings.js",
+        "unit_id": "page:listings.IOTDevice",
+        "vendor_specific": false
+      },
+      {
+        "component": "listings/TA.vue",
+        "in_baseline": false,
+        "kind": "spa",
+        "label": "listings.TA",
+        "no_page": false,
+        "path": "/TA",
+        "shelf": "-",
+        "side": "房東側",
+        "source": "listings.js",
+        "unit_id": "page:listings.TA",
+        "vendor_specific": false
+      },
+      {
+        "component": "listings/About.vue",
+        "in_baseline": false,
+        "kind": "spa",
+        "label": "listings.about",
+        "no_page": false,
+        "path": "/about",
+        "shelf": "-",
+        "side": "房東側",
+        "source": "listings.js",
+        "unit_id": "page:listings.about",
+        "vendor_specific": false
+      },
+      {
+        "component": "listings/Advantages.vue",
+        "in_baseline": false,
+        "kind": "spa",
+        "label": "listings.advantages",
+        "no_page": false,
+        "path": "/advantages",
+        "shelf": "-",
+        "side": "房東側",
+        "source": "listings.js",
+        "unit_id": "page:listings.advantages",
+        "vendor_specific": false
+      },
+      {
+        "component": "listings/DemoForm.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "listings.demoForm",
+        "no_page": false,
+        "path": "/demo-form",
+        "shelf": "I",
+        "side": "房東側",
+        "source": "listings.js",
+        "unit_id": "page:listings.demoForm",
+        "vendor_specific": false
+      },
+      {
+        "component": "listings/Features.vue",
+        "in_baseline": false,
+        "kind": "spa",
+        "label": "listings.features",
+        "no_page": false,
+        "path": "/features",
+        "shelf": "-",
+        "side": "房東側",
+        "source": "listings.js",
+        "unit_id": "page:listings.features",
+        "vendor_specific": false
+      },
+      {
+        "component": "help-center/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "listings.helpCenter",
+        "no_page": false,
+        "path": "/help",
+        "shelf": "H",
+        "side": "房東側",
+        "source": "listings.js",
+        "unit_id": "page:listings.helpCenter",
+        "vendor_specific": false
+      },
+      {
+        "component": "help-center/Group.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "listings.helpCenter.group",
+        "no_page": false,
+        "path": "group/:slug?",
+        "shelf": "H",
+        "side": "房東側",
+        "source": "listings.js",
+        "unit_id": "page:listings.helpCenter.group",
+        "vendor_specific": false
+      },
+      {
+        "component": "help-center/Post.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "listings.helpCenter.post",
+        "no_page": false,
+        "path": "post/:slug?",
+        "shelf": "H",
+        "side": "房東側",
+        "source": "listings.js",
+        "unit_id": "page:listings.helpCenter.post",
+        "vendor_specific": false
+      },
+      {
+        "component": "help-center/Search.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "listings.helpCenter.search",
+        "no_page": false,
+        "path": "search",
+        "shelf": "H",
+        "side": "房東側",
+        "source": "listings.js",
+        "unit_id": "page:listings.helpCenter.search",
+        "vendor_specific": false
+      },
+      {
+        "component": "listings/Home.vue",
+        "in_baseline": false,
+        "kind": "spa",
+        "label": "listings.home",
+        "no_page": false,
+        "path": "/",
+        "shelf": "-",
+        "side": "房東側",
+        "source": "listings.js",
+        "unit_id": "page:listings.home",
+        "vendor_specific": false
+      },
+      {
+        "component": "listings/Home.vue",
+        "in_baseline": false,
+        "kind": "spa",
+        "label": "listings.home.cn",
+        "no_page": false,
+        "path": "/cn",
+        "shelf": "-",
+        "side": "房東側",
+        "source": "listings.js",
+        "unit_id": "page:listings.home.cn",
+        "vendor_specific": false
+      },
+      {
+        "component": "listings/Home.vue",
+        "in_baseline": false,
+        "kind": "spa",
+        "label": "listings.home.en",
+        "no_page": false,
+        "path": "/en",
+        "shelf": "-",
+        "side": "房東側",
+        "source": "listings.js",
+        "unit_id": "page:listings.home.en",
+        "vendor_specific": false
+      },
+      {
+        "component": "listings/Home.vue",
+        "in_baseline": false,
+        "kind": "spa",
+        "label": "listings.home.jp",
+        "no_page": false,
+        "path": "/jp",
+        "shelf": "-",
+        "side": "房東側",
+        "source": "listings.js",
+        "unit_id": "page:listings.home.jp",
+        "vendor_specific": false
+      },
+      {
+        "component": "listings/Home.vue",
+        "in_baseline": false,
+        "kind": "spa",
+        "label": "listings.home.th",
+        "no_page": false,
+        "path": "/th",
+        "shelf": "-",
+        "side": "房東側",
+        "source": "listings.js",
+        "unit_id": "page:listings.home.th",
+        "vendor_specific": false
+      },
+      {
+        "component": "listings/Home.vue",
+        "in_baseline": false,
+        "kind": "spa",
+        "label": "listings.home.vn",
+        "no_page": false,
+        "path": "/vn",
+        "shelf": "-",
+        "side": "房東側",
+        "source": "listings.js",
+        "unit_id": "page:listings.home.vn",
+        "vendor_specific": false
+      },
+      {
+        "component": "listings/Map.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "listings.map",
+        "no_page": false,
+        "path": "/map",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "listings.js",
+        "unit_id": "page:listings.map",
+        "vendor_specific": false
+      },
+      {
+        "component": "listings/pricing/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "listings.pricing",
+        "no_page": false,
+        "path": "/pricing",
+        "shelf": "I",
+        "side": "房東側",
+        "source": "listings.js",
+        "unit_id": "page:listings.pricing",
+        "vendor_specific": false
+      },
+      {
+        "component": "listings/pricing/TrialPlan.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "listings.pricing.TrialPlan",
+        "no_page": false,
+        "path": "/pricing/trial-plan",
+        "shelf": "I",
+        "side": "房東側",
+        "source": "listings.js",
+        "unit_id": "page:listings.pricing.TrialPlan",
+        "vendor_specific": false
+      },
+      {
+        "component": "listings/Search.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "listings.search",
+        "no_page": false,
+        "path": "/search",
+        "shelf": "C",
+        "side": "房東側",
+        "source": "listings.js",
+        "unit_id": "page:listings.search",
+        "vendor_specific": false
+      },
+      {
+        "component": "listings/Sitemap.vue",
+        "in_baseline": false,
+        "kind": "spa",
+        "label": "listings.sitemap",
+        "no_page": false,
+        "path": "/sitemap",
+        "shelf": "-",
+        "side": "房東側",
+        "source": "listings.js",
+        "unit_id": "page:listings.sitemap",
+        "vendor_specific": false
+      },
+      {
+        "component": "repair/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "repair",
+        "no_page": false,
+        "path": "/repair",
+        "shelf": "F",
+        "side": "房東側",
+        "source": "repairs.js",
+        "unit_id": "page:repair",
+        "vendor_specific": false
+      },
+      {
+        "component": "repair/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "repair.apply",
+        "no_page": false,
+        "path": "/repair/apply",
+        "shelf": "F",
+        "side": "房東側",
+        "source": "repairs.js",
+        "unit_id": "page:repair.apply",
+        "vendor_specific": false
+      },
+      {
+        "component": "repair/applyProcess/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "repair.applyProcess",
+        "no_page": false,
+        "path": "/repair/applyProcess/:step?",
+        "shelf": "F",
+        "side": "房東側",
+        "source": "repairs.js",
+        "unit_id": "page:repair.applyProcess",
+        "vendor_specific": false
+      },
+      {
+        "component": "repair/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "repair.archive",
+        "no_page": false,
+        "path": "/repair/archive",
+        "shelf": "F",
+        "side": "房東側",
+        "source": "repairs.js",
+        "unit_id": "page:repair.archive",
+        "vendor_specific": false
+      },
+      {
+        "component": "repair/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "repair.assign",
+        "no_page": false,
+        "path": "/repair/assign",
+        "shelf": "F",
+        "side": "房東側",
+        "source": "repairs.js",
+        "unit_id": "page:repair.assign",
+        "vendor_specific": false
+      },
+      {
+        "component": "repair/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "repair.complete",
+        "no_page": false,
+        "path": "/repair/complete",
+        "shelf": "F",
+        "side": "房東側",
+        "source": "repairs.js",
+        "unit_id": "page:repair.complete",
+        "vendor_specific": false
+      },
+      {
+        "component": "repair/edit/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "repair.edit",
+        "no_page": false,
+        "path": "/repair/edit/:id?",
+        "shelf": "F",
+        "side": "房東側",
+        "source": "repairs.js",
+        "unit_id": "page:repair.edit",
+        "vendor_specific": false
+      },
+      {
+        "component": "repair/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "repair.finish",
+        "no_page": false,
+        "path": "/repair/finish",
+        "shelf": "F",
+        "side": "房東側",
+        "source": "repairs.js",
+        "unit_id": "page:repair.finish",
+        "vendor_specific": false
+      },
+      {
+        "component": "repair/share/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "repair.share",
+        "no_page": false,
+        "path": "/repair/share/:id?",
+        "shelf": "F",
+        "side": "房東側",
+        "source": "repairs.js",
+        "unit_id": "page:repair.share",
+        "vendor_specific": false
+      },
+      {
+        "component": "result-screen/Index.jsx",
+        "in_baseline": false,
+        "kind": "spa",
+        "label": "resultScreen",
+        "no_page": false,
+        "path": "/resultScreen/:page",
+        "shelf": "-",
+        "side": "房東側",
+        "source": "resultScreen.js",
+        "unit_id": "page:resultScreen",
+        "vendor_specific": false
+      },
+      {
+        "component": "tools/unlock/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "tools.unlock",
+        "no_page": false,
+        "path": "/unlock/:iotId/:batch",
+        "shelf": "I",
+        "side": "房東側",
+        "source": "tools.js",
+        "unit_id": "page:tools.unlock",
+        "vendor_specific": false
+      },
+      {
+        "component": "nthurc/edit/Index.jsx",
+        "in_baseline": false,
+        "kind": "spa",
+        "label": "nthurc.edit",
+        "no_page": false,
+        "path": "/nthurc/projects/edit/:projectId",
+        "shelf": "A",
+        "side": "房東側",
+        "source": "users.js",
+        "unit_id": "page:nthurc.edit",
+        "vendor_specific": true
+      },
+      {
+        "component": "nthurc/edit/Basic.jsx",
+        "in_baseline": false,
+        "kind": "spa",
+        "label": "nthurc.edit.basic",
+        "no_page": false,
+        "path": "basic",
+        "shelf": "A",
+        "side": "房東側",
+        "source": "users.js",
+        "unit_id": "page:nthurc.edit.basic",
+        "vendor_specific": true
+      },
+      {
+        "component": "nthurc/edit/TenantList.vue",
+        "in_baseline": false,
+        "kind": "spa",
+        "label": "nthurc.edit.tenantList",
+        "no_page": false,
+        "path": "tenantList/:type?",
+        "shelf": "A",
+        "side": "房東側",
+        "source": "users.js",
+        "unit_id": "page:nthurc.edit.tenantList",
+        "vendor_specific": true
+      },
+      {
+        "component": "nthurc/list/Index.jsx",
+        "in_baseline": false,
+        "kind": "spa",
+        "label": "nthurc.list",
+        "no_page": false,
+        "path": "",
+        "shelf": "A",
+        "side": "房東側",
+        "source": "users.js",
+        "unit_id": "page:nthurc.list",
+        "vendor_specific": true
+      },
+      {
+        "component": "nthurc-parking/edit/Index.jsx",
+        "in_baseline": false,
+        "kind": "spa",
+        "label": "nthurc.parking.edit",
+        "no_page": false,
+        "path": "/nthurc-parking/projects/edit/:projectId",
+        "shelf": "A",
+        "side": "房東側",
+        "source": "users.js",
+        "unit_id": "page:nthurc.parking.edit",
+        "vendor_specific": true
+      },
+      {
+        "component": "nthurc-parking/edit/Basic.jsx",
+        "in_baseline": false,
+        "kind": "spa",
+        "label": "nthurc.parking.edit.basic",
+        "no_page": false,
+        "path": "basic",
+        "shelf": "A",
+        "side": "房東側",
+        "source": "users.js",
+        "unit_id": "page:nthurc.parking.edit.basic",
+        "vendor_specific": true
+      },
+      {
+        "component": "nthurc-parking/edit/TenantList.vue",
+        "in_baseline": false,
+        "kind": "spa",
+        "label": "nthurc.parking.edit.tenantList",
+        "no_page": false,
+        "path": "tenantList/:type?",
+        "shelf": "A",
+        "side": "房東側",
+        "source": "users.js",
+        "unit_id": "page:nthurc.parking.edit.tenantList",
+        "vendor_specific": true
+      },
+      {
+        "component": "nthurc-parking/list/Index.jsx",
+        "in_baseline": false,
+        "kind": "spa",
+        "label": "nthurc.parking.list",
+        "no_page": false,
+        "path": "",
+        "shelf": "A",
+        "side": "房東側",
+        "source": "users.js",
+        "unit_id": "page:nthurc.parking.list",
+        "vendor_specific": true
+      },
+      {
+        "component": "nthurc-parking/Index.jsx",
+        "in_baseline": false,
+        "kind": "spa",
+        "label": "nthurc.parking.projects",
+        "no_page": false,
+        "path": "/nthurc-parking/projects",
+        "shelf": "A",
+        "side": "房東側",
+        "source": "users.js",
+        "unit_id": "page:nthurc.parking.projects",
+        "vendor_specific": true
+      },
+      {
+        "component": "nthurc/Index.jsx",
+        "in_baseline": false,
+        "kind": "spa",
+        "label": "nthurc.projects",
+        "no_page": false,
+        "path": "/nthurc/projects",
+        "shelf": "A",
+        "side": "房東側",
+        "source": "users.js",
+        "unit_id": "page:nthurc.projects",
+        "vendor_specific": true
+      },
+      {
+        "component": "users/advance/Index.jsx",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "users.advance",
+        "no_page": false,
+        "path": "advance",
+        "shelf": "A",
+        "side": "房東側",
+        "source": "users.js",
+        "unit_id": "page:users.advance",
+        "vendor_specific": false
+      },
+      {
+        "component": "users/approval/Index.jsx",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "users.approval",
+        "no_page": false,
+        "path": "approval",
+        "shelf": "A",
+        "side": "房東側",
+        "source": "users.js",
+        "unit_id": "page:users.approval",
+        "vendor_specific": false
+      },
+      {
+        "component": "users/auth/Create.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "users.create",
+        "no_page": false,
+        "path": "/users/create",
+        "shelf": "A",
+        "side": "房東側",
+        "source": "users.js",
+        "unit_id": "page:users.create",
+        "vendor_specific": false
+      },
+      {
+        "component": "users/dashboard/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "users.dashboard",
+        "no_page": false,
+        "path": "",
+        "shelf": "A",
+        "side": "房東側",
+        "source": "users.js",
+        "unit_id": "page:users.dashboard",
+        "vendor_specific": false
+      },
+      {
+        "component": "users/auth/Forget.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "users.forget",
+        "no_page": false,
+        "path": "/users/forget/:which?",
+        "shelf": "A",
+        "side": "房東側",
+        "source": "users.js",
+        "unit_id": "page:users.forget",
+        "vendor_specific": false
+      },
+      {
+        "component": "users/auth/parts/forget/Account.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "users.forget.account",
+        "no_page": false,
+        "path": "account",
+        "shelf": "A",
+        "side": "房東側",
+        "source": "users.js",
+        "unit_id": "page:users.forget.account",
+        "vendor_specific": false
+      },
+      {
+        "component": "",
+        "in_baseline": false,
+        "kind": "spa",
+        "label": "users.forget.index",
+        "no_page": true,
+        "path": "",
+        "shelf": "A",
+        "side": "房東側",
+        "source": "users.js",
+        "unit_id": "page:users.forget.index",
+        "vendor_specific": false
+      },
+      {
+        "component": "users/auth/parts/forget/Password.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "users.forget.password",
+        "no_page": false,
+        "path": "password/:type?",
+        "shelf": "A",
+        "side": "房東側",
+        "source": "users.js",
+        "unit_id": "page:users.forget.password",
+        "vendor_specific": false
+      },
+      {
+        "component": "users/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "users.index",
+        "no_page": false,
+        "path": "/users",
+        "shelf": "A",
+        "side": "房東側",
+        "source": "users.js",
+        "unit_id": "page:users.index",
+        "vendor_specific": false
+      },
+      {
+        "component": "users/lesseeList/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "users.lesseeList",
+        "no_page": false,
+        "path": "/users/lesseeList",
+        "shelf": "A",
+        "side": "房東側",
+        "source": "users.js",
+        "unit_id": "page:users.lesseeList",
+        "vendor_specific": false
+      },
+      {
+        "component": "users/auth/Login.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "users.login",
+        "no_page": false,
+        "path": "/users/login",
+        "shelf": "A",
+        "side": "房東側",
+        "source": "users.js",
+        "unit_id": "page:users.login",
+        "vendor_specific": false
+      },
+      {
+        "component": "users/notification/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "users.notification",
+        "no_page": false,
+        "path": "notification",
+        "shelf": "A",
+        "side": "房東側",
+        "source": "users.js",
+        "unit_id": "page:users.notification",
+        "vendor_specific": false
+      },
+      {
+        "component": "users/orders/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "users.orders",
+        "no_page": false,
+        "path": "orders",
+        "shelf": "A",
+        "side": "房東側",
+        "source": "users.js",
+        "unit_id": "page:users.orders",
+        "vendor_specific": false
+      },
+      {
+        "component": "users/payment/routerView/Add.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "users.payment.add",
+        "no_page": false,
+        "path": "add/:vendorKey?",
+        "shelf": "A",
+        "side": "房東側",
+        "source": "users.js",
+        "unit_id": "page:users.payment.add",
+        "vendor_specific": false
+      },
+      {
+        "component": "users/payment/routerView/Detail.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "users.payment.detail",
+        "no_page": false,
+        "path": "detail/:vendorKey/:vendorId",
+        "shelf": "A",
+        "side": "房東側",
+        "source": "users.js",
+        "unit_id": "page:users.payment.detail",
+        "vendor_specific": false
+      },
+      {
+        "component": "users/payment/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "users.payment.index",
+        "no_page": false,
+        "path": "payment",
+        "shelf": "A",
+        "side": "房東側",
+        "source": "users.js",
+        "unit_id": "page:users.payment.index",
+        "vendor_specific": false
+      },
+      {
+        "component": "users/public/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "users.public",
+        "no_page": false,
+        "path": "/p/:encryptId?/:mode?/:premisesUseFor?",
+        "shelf": "A",
+        "side": "房東側",
+        "source": "users.js",
+        "unit_id": "page:users.public",
+        "vendor_specific": false
+      },
+      {
+        "component": "users/rechargeAccountList/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "users.rechargeAccountList",
+        "no_page": false,
+        "path": "/users/rechargeAccountList",
+        "shelf": "A",
+        "side": "房東側",
+        "source": "users.js",
+        "unit_id": "page:users.rechargeAccountList",
+        "vendor_specific": false
+      },
+      {
+        "component": "users/signerInfo/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "users.signer_info",
+        "no_page": false,
+        "path": "signer_info",
+        "shelf": "A",
+        "side": "房東側",
+        "source": "users.js",
+        "unit_id": "page:users.signer_info",
+        "vendor_specific": false
+      },
+      {
+        "component": "users/subscription/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "users.subscription",
+        "no_page": false,
+        "path": "/users/subscription",
+        "shelf": "A",
+        "side": "房東側",
+        "source": "users.js",
+        "unit_id": "page:users.subscription",
+        "vendor_specific": false
+      },
+      {
+        "component": "users/subscription/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "users.subscription.chose",
+        "no_page": false,
+        "path": "/users/subscription/chose",
+        "shelf": "A",
+        "side": "房東側",
+        "source": "users.js",
+        "unit_id": "page:users.subscription.chose",
+        "vendor_specific": false
+      },
+      {
+        "component": "users/subscription/Index.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "users.subscription.unsubscribe",
+        "no_page": false,
+        "path": "/users/subscription/unsubscribe",
+        "shelf": "A",
+        "side": "房東側",
+        "source": "users.js",
+        "unit_id": "page:users.subscription.unsubscribe",
+        "vendor_specific": false
+      },
+      {
+        "component": "users/team/memberOwned/Index.jsx",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "users.team.member.owned",
+        "no_page": false,
+        "path": "team/member/owned/:category/:uid",
+        "shelf": "A",
+        "side": "房東側",
+        "source": "users.js",
+        "unit_id": "page:users.team.member.owned",
+        "vendor_specific": false
+      },
+      {
+        "component": "users/auth/Verify.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "users.verify",
+        "no_page": false,
+        "path": "/users/verify/:which?",
+        "shelf": "A",
+        "side": "房東側",
+        "source": "users.js",
+        "unit_id": "page:users.verify",
+        "vendor_specific": false
+      },
+      {
+        "component": "",
+        "in_baseline": false,
+        "kind": "spa",
+        "label": "users.verify.index",
+        "no_page": true,
+        "path": "",
+        "shelf": "A",
+        "side": "房東側",
+        "source": "users.js",
+        "unit_id": "page:users.verify.index",
+        "vendor_specific": false
+      },
+      {
+        "component": "users/auth/parts/PhoneVerify.vue",
+        "in_baseline": true,
+        "kind": "spa",
+        "label": "users.verify.phone",
+        "no_page": false,
+        "path": "phone",
+        "shelf": "A",
+        "side": "房東側",
+        "source": "users.js",
+        "unit_id": "page:users.verify.phone",
+        "vendor_specific": false
+      }
+    ]
+  },
+  "raw_outputs_path": null,
+  "skill_version": "0.1-page-surface",
+  "step": "page_surface"
+}

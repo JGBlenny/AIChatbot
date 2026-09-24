@@ -12,9 +12,9 @@
 ```
 skill（先有）：分析內容 → 提議粗目／細目 → 掛講法與缺口格 → 獨立判者標可答性 → 重量 → 差異給業主核 → 入庫
   每步 schema 輸出、閘門強制紀律、可回放、記成本；首次建立與日後重切同一條流程
-大綱正本（每受眾一份，人審、版控、程式組裝、有 sha）
-  售前：A 產品基本盤／B 適配／C 六大模組／D 方案試用／E 競品／F 導流／G 現有不足
-  業者／LINE OA：依 chatai 文件與系統脈絡另定區塊，⛔ 不套售前切法
+大綱正本（一份目錄＋九架：架→粗目→細目→講法，受眾是細目屬性；人審、版控、程式組裝、有 sha）
+  九架共用：A 帳號與身分／B 團隊、人員與大房東／C 社區與物件／D 租約（含委託約子題）／E 帳務（含發票、收款金流、抄表）／F 修繕／G 裝置（IoT）／H 幫助中心／I 方案與導入
+  受眾（售前／業者／LINE OA）＝細目的 `target_user` 屬性，⛔ 不分檔、⛔ 不各自切架
 對話：入口帶身分 → 程式預填槽位 → 檢索選候選細目（標題＋講法向量）→ 模型判意圖／分叉才問／組話
       → Verifier 不放過捏造 → 可「部分回答＋帶理由轉人」（待裁 D2）
 驗證：每個命題最小材料＋一把尺＋推翻條件，免費的先做；沒定義完受測物不開跑；材料以業主正本為優先
@@ -27,7 +27,7 @@ skill（先有）：分析內容 → 提議粗目／細目 → 掛講法與缺�
 | F1 | 現行「售前大綱」＝`build_prospect_outline` 把 `outline_approved_by IS NOT NULL` 的列依 `SIX_MODULES` 分類表重排，另有 `NON_MODULE_CATEGORY_SECTIONS` 四類小節、`_MODULE_FALLBACK_SLUG` 兜底、`_extract_boundary_sentences` 邊界句段、`DSP009_DELIBERATE_GAPS` 刻意不補段、`_CTA_TEXT` 自寫 CTA 段（⛔ 不 import `PRESALES_CTA_RULES`），合計 14 節 | `rag-orchestrator/services/agent/outline.py` 上列符號 |
 | F2 | 已標記列 **29**＝21 列 `target_user ∋ prospect` ＋ **8 列 `target_user IS NULL` 全域業者知識**（3335 對帳流程／3340 催繳／3342 繳費期限／3353 電表儲值／3355 生活公約／3356 訂閱取消／3357 物件批次匯入／3358 大房東授權），由 `IS NULL OR &&` 謂詞撈進售前大綱；4 列 prospect 未標（3645 對話規則列、3798 系統脈絡 append、5376／5377 依 DSP-026 取消）。⇒ 現行大綱混入業者操作知識，是「那不是售前大綱」的具體證據。舊文件的 31／32 為歷史值 | `SELECT count(*) FROM knowledge_base WHERE outline_approved_by IS NOT NULL`（29）；`…AND 'prospect'=ANY(target_user)`（21）；`…AND NOT ('prospect'=ANY(coalesce(target_user,'{}')))`（8，列 id 如左） |
 | F3 | `outline_approved_by='owner-20260905'` 來自 tasks 3.3 一次性 UPDATE（業主「幫我加」＝DB 寫入授權），**不是內容審核**；業主不認其為售前大綱 | `agentic-mcp-orchestration/sql/mark-prospect-pool-approved-20260905.sql`；tasks.md 3.3 收案註記 |
-| F4 | 售前知識原稿 `jgb2/docs/presales-kb/01–03.md`（A–F）：本機三個 jgb2 checkout 未見；`git log --all --diff-filter=D` 於 jgb_1/jgb2 查刪除紀錄 0 筆（正對照：同指令列出其他已刪檔如 `tests/Unit/BillActivityLogCancelledBillIdMapTest.php`，查法有效）⇒ **未曾提交或在其他 repo**；記憶 `reference_presales_kb_source` 的路徑已失效，列 dispute。現存唯一正本＝F2 的 kb 列 | `find /Users/lenny/jgb -name '01-product-and-fit.md'`；`git -C …/jgb_1/jgb2 log --all --diff-filter=D --name-only` |
+| F4 | 售前知識原稿 `jgb2/docs/presales-kb/01–03.md`（A–F）：本機三個 jgb2 checkout 未見；`git log --all --diff-filter=D` 於 jgb_1/jgb2 查刪除紀錄 0 筆（正對照：同指令列出其他已刪檔如 `tests/Unit/BillActivityLogCancelledBillIdMapTest.php`，查法有效）⇒ **未曾提交或在其他 repo**；記憶 `reference_presales_kb_source` 的路徑已失效，列 dispute。現存唯一正本＝F2 的 kb 列 | `find /Users/chenqinghuang/dev/work/jgb2/dev2 -name '01-product-and-fit.md'`；`git -C …/jgb_1/jgb2 log --all --diff-filter=D --name-only` |
 | F5 | 線上售前對話邏輯正本＝kb 3645「對話規則：售前顧問」（DB 覆寫程式預設 `PRESALES_CONFIG`）：每輪 A 事實題直答／B 推薦題補問；五欄位 identity／scale／team／pain／interested，一次一題、先同理再問、不重問、基本資訊門檻（identity＋scale 或 pain）、已推薦後三種回應、中途岔題；**fact_class 封閉七值每輪必填、「句形不是判準」（陳述句也算 feature）**；CTA 排版收束；不報價、競品中立、IoT 不主動；轉人訊息與通道由設定供給。**agent 路徑未搬**：`agent_rules.py::_POLICY_TEXT` 只有四條鐵則＋輸出契約（含一份 `_SENSITIVE_LINE` 由 `presales_gate.SENSITIVE` 反射）；`SlotKey` 六值（contract_ref／bill_ref／estate_ref／repair_ref／unit_count／business_type）無身分槽；`slots_set` 對無 `COLLECTING` 會話回 NO_MATCH、⛔ 不建列；`AgentOutput.kind` 有 ask／recommend 但無判準；agent 路徑轉人訊息硬掛 code 常數（`runtime.py` 兩處 `effective_handoff_message(None)`），DB metadata 從未被讀 | scratchpad `kb3645_presales_rules.md`；`services/agent/{agent_rules,runtime,tools/session}.py` |
 | F6 | 入口已帶 `mode`／`target_user`／`role_id`／`user_id`／`vendor_id`（jgb2 面板、LINE 業務）；`Identity.resolved_audience()` 切工具範圍與可見謂詞；官網售前匿名 prospect、子身分未知；`agent_entry` 對缺值填 `vendor_id=0`、`target_user="tenant"`；模型端只收固定 persona 文字；`session.slots` 以 nonce 資料段渲染 | `routers/agent_entry.py`；`services/agent/prompt_assembler.py::_slot_blocks` |
 | F7 | 同題不同受眾已分池：「合約／簽約／建約」pm 專屬 13 列＋面向列 4215（建約引導）／3825（系統脈絡建約子面向）；tenant 專屬 20 列；prospect 1 段（3600）；由 `build_visibility_predicate` 的 `target_user IS NULL OR &&`、業態、vendor 切。同池內身分子類分叉（法人 12 種範本／個人 4 種）未處理 | SQL：`is_active AND 'property_manager'=ANY(target_user) AND NOT 'tenant'=ANY(target_user) AND question_summary ILIKE ANY('{%建立合約%,%新增合約%,%建約%,%簽約%}')` ⇒ 13；tenant 同法 ⇒ 20 |
@@ -35,8 +35,8 @@ skill（先有）：分析內容 → 提議粗目／細目 → 掛講法與缺�
 | F9 | 問法正本 `coverage-map/sources/koyu-v2-phrasings.json`＝業主提供 85 篇 1,546 句（**幫助中心受眾**），型別 直接 268／口語 266／情境 269／俗稱 255／邊界 170／操作 318；附「必先確認」6 條、缺口 28 條、規則 3 條；先前只用 12 篇合約文章抽 54 句凍結集 | 檔內 `_meta`、`articles.*.phrasings[].type` 計數 |
 | F10 | 檢索上限（免費量測，**代替品**）：以自動切 59 段＋**段落內文向量**對 49 題 answerable／partial，recall@1／3／5＝51／71／86%，top-5 約 490 字；整節層 top-3 94%；reranker 無增益（82% vs 86%）。細目標題匹配未量。agent 現況 answerable 39 題答到 34%（舊鏈 71%），未答 155 回合＝Verifier 拒到預算 48%／模型自報查無 44%／誤標敏感 8%；依問法型 直接 51／俗稱 42／口語 19／情境 12% | `agentic-mcp-orchestration/eval/perf-agent-regression-20260905/round9-dsp033/README.md` 附錄；段落資產與可答性標籤**僅在 scratchpad／容器、⛔ 未入版控** |
 | F11 | Verifier 現行尺（DSP-034 後）＝DSP-029a ratio 0.5 ∧ 絕對下限 4 ∧ 全極性；同批盲標抓到 62.3%／誤殺 13.9%；NLI 已撤出線上 | DECISIONS DSP-034；round9 README |
-| F12 | LINE OA 三線（chatai 四份文件；代管業務、同殼 `/rag-api/v1/message`、**不帶 `vendor_id`**、`mode=b2b`、`target_user=property_manager`）：知識需求＝③ 損壞分類樹／信心門檻／損壞判定／照片限制／會話過期；⑤ 帳單狀態語義／滯納金規則／資料邊界（無入帳日）／跨戶邊界；④ 三級語氣模板／8 佔位符／數字禁止／滯納金條件。API 實值（帳單明細、逾期次數、租約到期、電表、estate_id、emergency_status）⛔ 不入大綱。21 個驗收案例：表單流程 7／契約欄位 4／API 實值 5／知識 5。**阻擋事項**（chatai A1–A3：發 key、業務身分不查租約 `contract_id` 留空、回應補 quick_replies／form_completed）屬各面向 spec；**待驗／矛盾**：emergency_status 值域相反（C1）、直達路徑不回 image_recognition（C2）、`status-overview` 以 `to_user_id` 過濾（repair-capture-spec §0 警語） | `/Users/lenny/jgb/line-bot-platform/docs/chatai-*.md`（scout 盤點四表） |
-| F13 | 既有資產：`.claude/skills/retrieval-improvement-loop`、`tools/agent_eval.py`（**四組**樣本骨架 topics／scenarios／sensitive／traffic，traffic 現況缺席）、`tools/agent_attempts_report.py`、缺口地圖工具、`build_toc`（依 vendor／target_user 過濾，系統脈絡列現查 26，⛔ 非常數）、`OUTLINE_TOKEN_LIMIT_DEFAULTS`（prospect 10k／pm 8k／tenant 8k） | 各檔案；`SELECT count(*) FROM knowledge_base WHERE is_active AND question_summary LIKE '系統脈絡%'` ⇒ 26 |
+| F12 | LINE OA 三線（chatai 四份文件；代管業務、同殼 `/rag-api/v1/message`、**不帶 `vendor_id`**、`mode=b2b`、`target_user=property_manager`）：知識需求＝③ 損壞分類樹／信心門檻／損壞判定／照片限制／會話過期；⑤ 帳單狀態語義／滯納金規則／資料邊界（無入帳日）／跨戶邊界；④ 三級語氣模板／8 佔位符／數字禁止／滯納金條件。API 實值（帳單明細、逾期次數、租約到期、電表、estate_id、emergency_status）⛔ 不入大綱。21 個驗收案例：表單流程 7／契約欄位 4／API 實值 5／知識 5。**阻擋事項**（chatai A1–A3：發 key、業務身分不查租約 `contract_id` 留空、回應補 quick_replies／form_completed）屬各面向 spec；**待驗／矛盾**：emergency_status 值域相反（C1）、直達路徑不回 image_recognition（C2）、`status-overview` 以 `to_user_id` 過濾（repair-capture-spec §0 警語） | `/Users/chenqinghuang/dev/work/line-bot-platform/docs/chatai-*.md`（scout 盤點四表） |
+| F13 | 既有資產：`.claude/skills/retrieval-improvement-loop`、`tools/agent_eval.py`（**四組**樣本骨架 topics／scenarios／sensitive／traffic，traffic 現況缺席）、`tools/agent_attempts_report.py`、缺口地圖工具、`build_toc`（依 vendor／target_user 過濾，系統脈絡列現查 26，⛔ 非常數）、`OUTLINE_K_TOKEN_LIMIT`／`OUTLINE_TOC_TOKEN_LIMIT`（prospect／pm／tenant 三身分皆 K 上界 12,000、toc 8,000；DSP-059a 由 2,500 調高） | 各檔案；`SELECT count(*) FROM knowledge_base WHERE is_active AND question_summary LIKE '系統脈絡%'` ⇒ 26 |
 | F14 | `kb.get(整數 id)` 走 `tools/kb.py::fetch_visible_row`，**與 `outline_approved_by` 無關**（未審列可被直取） | `services/agent/outline.py::build_prospect_outline` docstring |
 | F15 | agentic-mcp tasks 與本 spec 重疊：4.6 S1 候選段落注入（Plan v3 READY 未派工）、4.7 S2 多向量講法錨點、4.8 fact_class 覆寫、5.5 `retrieval-improvement-loop` skill 升版 | `agentic-mcp-orchestration/tasks.md` |
 
@@ -45,7 +45,7 @@ skill（先有）：分析內容 → 提議粗目／細目 → 掛講法與缺�
 | # | 裁定 | 出處 |
 |---|---|---|
 | 1 | 三支柱；skill 先有（切售前、補文件缺口都靠它） | 業主 2026-09-06 |
-| 2 | 售前大綱＝原 A–F 切法的擴充（競品更多、現有不足）；其他受眾不套此切法 | 業主 2026-09-06 |
+| 2 | ~~售前大綱＝原 A–F 切法的擴充（競品更多、現有不足）；其他受眾不套此切法~~ **已由 DSP-067 取代：九架共用、受眾＝細目屬性、粗目由頁面樹推出** | 業主 2026-09-06；DSP-067 2026-09-20 |
 | 3 | 缺口地圖未覆蓋格應能補足「現有不足」；完善 skill 要能按受眾知道缺口或有能力補齊 | 業主 2026-09-06 |
 | 4 | 索引目錄不索引內容（圖書館法）；粗目／細目／講法；重切走同一 skill 流程以保一致 | 業主 2026-09-06 |
 | 5 | 口語由檢索層吃、意圖由模型判、敏感由程式兜；先匹配主題、知識分叉且身分未知才反問；入口帶身分則不重問 | 業主 2026-09-06 |
@@ -73,7 +73,7 @@ skill（先有）：分析內容 → 提議粗目／細目 → 掛講法與缺�
 
 | 項 | 處置 |
 |---|---|
-| 售前正本怎麼建 | skill 第一次跑：以 F2 的 21 列 prospect 為輸入（8 列 `IS NULL` 業者列不屬售前，排除），依 A–G 切草稿；「現有不足」每格一句說法與競品段（只用既有來源）一併產出 → **業主審草稿**，不先裁方法 |
+| 正本怎麼建 | ~~skill 第一次跑：以 F2 的 21 列 prospect 為輸入，依 A–G 切草稿~~ **已由 DSP-067 取代**：從 jgb2 頁面樹推出九架 57 粗目，每個粗目下列出使用者會問的事成細目，每句對回釘住 commit 或幫助中心；「目前不支援的功能」歸 I 架 → **業主審草稿**，不先裁方法 |
 | agentic-mcp 收窄、DSP-035 撤回、4.6 撤／4.7 4.8 5.5 移交 | 依業主「開新 spec、平台層留著」照做，以一條 DSP 收尾 |
 | 資料模型：格＝(受眾, 主題)、細目帶受眾維度、同受眾內互斥、跨受眾同主題＝各自細目＋「另見」 | design 決定並寫理由 |
 | 匹配鍵：預設細目標題＋講法向量；內文向量作第三對照臂由 R6 步 1 量測 | design／步 1 |
@@ -85,7 +85,7 @@ skill（先有）：分析內容 → 提議粗目／細目 → 掛講法與缺�
 
 - **skill（完善大綱流程）**：建立與重切大綱正本的單一流程，每步有 schema 輸出與閘門；⛔ 不是一份叮嚀文。
 - **大綱正本**：某受眾可引用知識的人審文件（版控 Markdown），含粗目、細目、講法、內容項目、來源、審核者；程式由正本組裝成上下文文件（有 sha、token 預算）。⛔ 程式重排的 kb dump 不是正本。
-- **粗目**：正本一級章節（區塊）；**細目**：粗目下一個可獨立回答的主題，有標題、講法、內容、受眾維度（設計決策：細目帶受眾維度）、穩定 id、內容 sha；檢索與覆蓋的基本單位。內容裡的句是引用單位（DSP-029a unit）。
+- **架**：九個正本檔之一（A…I）；**粗目**：架底下的一個產品功能（頁面或功能區），名稱用產品介面標籤；**細目**：粗目底下一件可被問的事，有標題、講法、內容、受眾屬性 `target_user`、穩定 id、內容 sha，是檢索的基本單位；**講法**：使用者問法，掛在細目下。內容裡的句是引用單位（DSP-029a unit）。
 - **講法**：掛在細目上的口語別名向量，只進打分面、不進 answer；有出處（question_summary／幫助中心／正本／真流量）、狀態（proposed／approved／retired）、命中數。
 - **現有不足**：目前沒有的功能／沒有的資料／刻意不答的五類，含對外一句說法與出口；來源＝缺口地圖 N／待 G0／刻意不補格。
 - **受測物定義清單**：開跑前一頁：知識正本、對話邏輯正本、覆蓋來源與閉環、材料能證什麼不能證什麼、事實 vs 待裁。
@@ -119,21 +119,21 @@ skill（先有）：分析內容 → 提議粗目／細目 → 掛講法與缺�
 
 ### Requirement 2：大綱正本與區塊定義
 **使用者故事**：作為知識維護者，我要知道某受眾的大綱有哪些粗目、細目，每細目含什麼、來源是誰審的，而不是看程式碼怎麼分類。
-- R2.1 THE SYSTEM SHALL 為每個受眾維護一份人審大綱正本（版控），列出粗目、細目、每細目的標題／講法／內容項目／來源（kb id／幫助中心 slug／業主宣告）／審核者與日期。審核者角色與流程依 R2.9。
-- R2.2 售前正本 SHALL 採 A 產品基本盤／B 適配判斷／C 六大模組／D 方案與試用／E 競品事實與差異／F 導流 CTA／G 現有不足；其他受眾的粗目 SHALL 另以正本定義，⛔ 不得沿用售前切法。（正本草稿由 skill 產出、業主審）
-- R2.3 正本 SHALL 有粗目／細目兩層；細目 SHALL 有標題、講法（多個、各有出處與狀態）、內容（可引用句）、受眾維度（設計決策：細目帶受眾維度）。細目 SHALL 是檢索與覆蓋的基本單位。
-- R2.4 缺口地圖的格 SHALL 與細目對應：格＝(受眾, 主題)、細目帶受眾維度 ⇒ 一格對一細目（設計決策，design 記理由）。
+- R2.1 THE SYSTEM SHALL 維護一份人審大綱正本（一目錄＋九架；受眾是細目屬性，⛔ 不分檔）（版控），列出粗目、細目、每細目的標題／講法／內容項目／來源（kb id／幫助中心 slug／業主宣告）／審核者與日期。審核者角色與流程依 R2.9。
+- R2.2 粗目 SHALL 由 jgb2 頁面樹推出、以產品介面標籤命名（57 個，DSP-065／067），⛔ 不依受眾切；「目前不支援的功能」由 I 架一條細目承接，⛔ 不得沿用售前切法（此條已由 DSP-067 取代：九架共用）。（正本草稿由 skill 產出、業主審）
+- R2.3 正本 SHALL 有架／粗目／細目三層＋講法：架＝九個 `.md` 檔；粗目＝產品功能（`## 標題 {#<架字母>-<slug>}`，一架可多個）；細目＝一件可被問的事，SHALL 有標題、講法（多個、各有出處與狀態）、內容（可引用句、一行一句）、受眾屬性 `target_user`。細目 SHALL 是檢索的基本單位；覆蓋以粗目為單位判。
+- R2.4 覆蓋基準 SHALL 為 jgb2 使用者可到達的頁面樹（183 頁，DSP-065／065a）；每個粗目底下「使用者會問的事」各一條細目，⛔ 不是一頁一條。身分是細目屬性，⛔ 不是缺口維度。
 - R2.5 同一受眾內細目 SHALL 互斥：一個可獨立回答的主題只有一個細目；相似或重疊者 SHALL 合併或以「另見」交叉引用；正本入庫時 SHALL 檢查細目標題（含講法）向量兩兩相似度，過近者列待審（處置依 R1.8）。跨受眾同主題不同層級（能力／操作／權益）⛔ 不視為重複。
-- R2.6 THE SYSTEM SHALL 由正本以程式組裝上下文文件（無 LLM、版本戳、sha256、token 預算檢查——沿用 `OUTLINE_TOKEN_LIMIT_DEFAULTS` 或於 design 明寫新值），⛔ 不得由 kb 列自動分類重排充當正本；現有 `outline:boundary`／`deliberate-gaps`／`cta` 三段 SHALL 併入正本的 G 與 F 粗目，⛔ 不並存兩套。
+- R2.6 THE SYSTEM SHALL 由正本以程式組裝上下文文件（無 LLM、版本戳、sha256、token 預算檢查——沿用 `OUTLINE_K_TOKEN_LIMIT`／`OUTLINE_TOC_TOKEN_LIMIT` 或於 design 明寫新值），⛔ 不得由 kb 列自動分類重排充當正本；現有 `outline:boundary`／`deliberate-gaps`／`cta` 三段 SHALL 併入 I 架（「目前不支援的功能」與導流細目），⛔ 不並存兩套。
 - R2.7 THE SYSTEM SHALL 以不同標記值區分「池標記」與「內容已審」（待裁 D1，執行時），組裝與 `kb.get(整數 id)` 直取路徑（F14）SHALL 只放行「內容已審」的細目來源列。
 - R2.8 THE SYSTEM SHALL 對每個細目給穩定 id 與內容 sha；細目內容變更 SHALL 使依賴它的講法與測試進入待審，⛔ 不得靜默沿用。
 - R2.9 正本寫入權 SHALL 視為 system prompt 寫入權（裁定 16）：變更 SHALL 走版控＋code review＋可 revert；審核者身分與時間 SHALL 入正本與稽核；⛔ 不得由 DB 直接 UPDATE 繞過正本。
-- R2.10 正本 SHALL 明列「現有不足」（G 粗目）：每格一句對外說法與出口（專人／定價頁／demo／留資），可被引用，使模型能有據地說「目前沒有」。（說法由 skill 草擬、業主審）
+- R2.10 正本 SHALL 明列「目前不支援的功能」（I 架一條細目）：每項一句對外說法與出口（專人／定價頁／demo／留資），每項附 jgb2 查證與一個正對照命中，可被引用，使模型能有據地說「目前沒有」。（說法由 skill 草擬、業主審）
 
 ### Requirement 3：覆蓋閉環（缺口地圖 → 大綱）
 **使用者故事**：作為業主，我要每個未覆蓋格都有去向，且缺口按受眾判——入口帶了身分，缺口仍是該身分大綱的缺口。
 - R3.1 THE SYSTEM SHALL 為每格記錄去向 ∈ {已進細目 id, 現有不足, 刻意不補, 待業主裁}，⛔ 不得有無去向的未覆蓋格。
-- R3.2 覆蓋 SHALL 以受眾×主題為單位維護，⛔ 不得以任一受眾的覆蓋代表全體。
+- R3.2 覆蓋 SHALL 以粗目（產品功能）為單位維護；受眾是細目屬性，⛔ 不得以任一受眾的覆蓋代表全體。
 - R3.3 WHEN 一批知識放行並進正本，THE SYSTEM SHALL 重組上下文文件並重量缺口地圖，報告格狀態變化。
 - R3.4 覆蓋判定 SHALL 獨立於被驗系統：正解細目由人或獨立判者標（裁定 10）；報告 SHALL 附判者一致率。
 - R3.5 THE SYSTEM SHALL 把「回答未含必含」（內容修正）與「有知識但撈不到」（檢索／講法）分開報。

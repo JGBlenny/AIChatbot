@@ -34,7 +34,6 @@ def build_runtime(
     provider: Any,
     registry: ToolRegistry,
     *,
-    outline_doc: Optional[Any] = None,
     budget: Optional[Budget] = None,
     rules_path: Union[Path, str] = DEFAULT_RULES_PATH,
     fixtures_dir: Union[Path, str] = DEFAULT_FIXTURES_DIR,
@@ -52,10 +51,12 @@ def build_runtime(
        來源見 `services/agent/agent_rules.py`（程式常數、進版控＝已審核）。
     5. `AgentRuntime(provider, registry, verifier, assembler, budget, **runtime_kwargs)`。
 
-    回傳的 `AgentRuntime` 額外掛上 `rules_sha`／`outline_sha` 屬性（design
-    附錄／任務 brief「並暴露 rules_sha／outline_sha 給 health」）——這兩個屬性
+    回傳的 `AgentRuntime` 額外掛上 `rules_sha` 屬性（design 附錄／任務 brief）——
     不是 `AgentRuntime.__init__` 的正式參數，是本函式組裝完成後外掛的唯讀
-    快照值，供健康檢查或其他觀測端讀取；`AgentRuntime` 本體邏輯不依賴它們。
+    快照值，供健康檢查或其他觀測端讀取；`AgentRuntime` 本體邏輯不依賴它。
+    ⚠️ 本函式 ⛔ 不掛 `outline_sha`：單一正本、每回合現組，沒有預組 `OutlineDoc`
+    可供計算 sha——健檢的 `outline_version` 讀的是 `canon_state["sha256"]["jgb"]`
+    （見 `health.py::_outline_sha`），與本函式無關。
 
     `db_pool` 自 DSP-038／W3 起**真的被消費**：交給 `AgentRuntime`，那一段
     確認兌現（`redeem_pending` 單述句）是 Runtime 自己下的 SQL，⛔ 不經模型、
@@ -84,7 +85,6 @@ def build_runtime(
     # 供健檢／觀測讀（與 `rules_sha`／`outline_sha` 同慣例：⛔ 不重讀 env 重算，
     # 重算量到的是「現在 env 是什麼」，不是「這個行程啟動時帶的是什麼」）。
     runtime.write_tools_enabled = write_tools_enabled()
-    runtime.outline_sha = str(getattr(outline_doc, "sha256", "") or "") if outline_doc is not None else ""
     return runtime
 
 

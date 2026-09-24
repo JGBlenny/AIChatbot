@@ -1,0 +1,237 @@
+{
+  "cost": {
+    "agents": 0,
+    "completion_tokens": 0,
+    "prompt_tokens": 0,
+    "usd": 0.0,
+    "wall_s": 0.0
+  },
+  "deterministic": true,
+  "inputs_sha": {
+    "canon": "f51c0bd0fbf0fdbae0f4f73a3856118b93504f9112068ffc566f81f9526c5ca3",
+    "drafts": "a187cc76189b438d1a5160bcd7de2393f1916ede8ac7e2ec248f3fdde2b1cee0",
+    "kb": "f75e0337af7d7b6340bd5d18faf55acad96afd7211f2cd485aa90d504956c0ae"
+  },
+  "payload": {
+    "drafts": [
+      {
+        "id": "help:rentallaw.pt3",
+        "summary": "租賃專法下的包租代管業"
+      }
+    ],
+    "frozen_at": "2026-09-16T00:00:00Z",
+    "gapmap_cells": 0,
+    "kb_rows": [
+      {
+        "id": "jgb/B/owner-report-collection-remit",
+        "question_summary": "大房東報表與代收代付怎麼交代"
+      },
+      {
+        "id": "jgb/B/role-permission-granularity",
+        "question_summary": "成員權限能不能細分（只看不改、看不到財務）"
+      },
+      {
+        "id": "jgb/B/team-management-overview",
+        "question_summary": "團隊管理模組做什麼"
+      },
+      {
+        "id": "jgb/B/what-is-owner-landlord",
+        "question_summary": "大房東是什麼"
+      },
+      {
+        "id": "2980",
+        "question_summary": "公共區域使用權限"
+      },
+      {
+        "id": "3084",
+        "question_summary": "包租業定義"
+      },
+      {
+        "id": "3085",
+        "question_summary": "代管業介紹"
+      },
+      {
+        "id": "3086",
+        "question_summary": "包租代管差異"
+      },
+      {
+        "id": "3087",
+        "question_summary": "包租與代管差異"
+      },
+      {
+        "id": "3088",
+        "question_summary": "收費結構差異"
+      },
+      {
+        "id": "3091",
+        "question_summary": "包租業與代管業差異"
+      },
+      {
+        "id": "3092",
+        "question_summary": "管理費用差異"
+      },
+      {
+        "id": "3094",
+        "question_summary": "租金調整政策"
+      },
+      {
+        "id": "3095",
+        "question_summary": "包租業與代管業"
+      },
+      {
+        "id": "3096",
+        "question_summary": "風險管理策略"
+      },
+      {
+        "id": "3254",
+        "question_summary": "法律責任差異"
+      },
+      {
+        "id": "3255",
+        "question_summary": "風險管理差異"
+      },
+      {
+        "id": "3303",
+        "question_summary": "包租業介紹"
+      },
+      {
+        "id": "3304",
+        "question_summary": "代管業定義"
+      },
+      {
+        "id": "3305",
+        "question_summary": "包租代管服務差異"
+      },
+      {
+        "id": "3306",
+        "question_summary": "包租業與代管業比較"
+      },
+      {
+        "id": "3307",
+        "question_summary": "包租代管法律責任"
+      },
+      {
+        "id": "3308",
+        "question_summary": "包租代管業務差異"
+      },
+      {
+        "id": "3309",
+        "question_summary": "包租代管關係"
+      },
+      {
+        "id": "3310",
+        "question_summary": "包租與代管風險管理"
+      },
+      {
+        "id": "3312",
+        "question_summary": "代管服務費"
+      },
+      {
+        "id": "3326",
+        "question_summary": "包租代管租金代收與房東直收差異"
+      },
+      {
+        "id": "3359",
+        "question_summary": "團隊 權限 成員 管理"
+      },
+      {
+        "id": "3360",
+        "question_summary": "匯出 報表 收支明細"
+      },
+      {
+        "id": "3438",
+        "question_summary": "角色切換 房東租客"
+      },
+      {
+        "id": "3439",
+        "question_summary": "團隊成員 新增管理"
+      },
+      {
+        "id": "3463",
+        "question_summary": "大房東 概念說明"
+      },
+      {
+        "id": "3464",
+        "question_summary": "大房東新增 權限設定"
+      },
+      {
+        "id": "3465",
+        "question_summary": "大房東月報表 報表功能"
+      },
+      {
+        "id": "3467",
+        "question_summary": "大房東聯絡簿 批次匯入匯出"
+      },
+      {
+        "id": "3480",
+        "question_summary": "房東租客大房東 各角色功能範圍"
+      },
+      {
+        "id": "3482",
+        "question_summary": "看不到功能 權限不足"
+      },
+      {
+        "id": "3543",
+        "question_summary": "大房東報表排程 自動寄送設定"
+      },
+      {
+        "id": "3544",
+        "question_summary": "新增團隊成員 需先註冊帳號"
+      },
+      {
+        "id": "3545",
+        "question_summary": "團隊成員權限 只能查看不能編輯"
+      },
+      {
+        "id": "3546",
+        "question_summary": "移除團隊成員 資料保留處理"
+      },
+      {
+        "id": "3547",
+        "question_summary": "一個帳號加入多個團隊 身分切換"
+      },
+      {
+        "id": "3974",
+        "question_summary": "誰有權限 操作權限 盤查"
+      },
+      {
+        "id": "3981",
+        "question_summary": "加了團隊成員 他什麼都看不到"
+      },
+      {
+        "id": "3982",
+        "question_summary": "成員權限怎麼開 只能看不能改"
+      },
+      {
+        "id": "4224",
+        "question_summary": "包租 代管 差別 系統功能"
+      },
+      {
+        "id": "4250",
+        "question_summary": "團隊成員 角色權限 有哪些選擇"
+      },
+      {
+        "id": "4251",
+        "question_summary": "新增團隊成員 邀請流程"
+      },
+      {
+        "id": "4272",
+        "question_summary": "管理員會代收包裹嗎"
+      }
+    ],
+    "mode": "expand",
+    "object_under_test": {
+      "approved_by": "",
+      "frozen_at": "2026-09-16T00:00:00Z",
+      "materials": [
+        ".claude/skills/outline-curation/runs/B-20260916/kb-rows.json",
+        ".claude/skills/outline-curation/runs/B-20260916/help-pages.json",
+        "../app/canon/jgb"
+      ]
+    },
+    "shelf": "B"
+  },
+  "raw_outputs_path": null,
+  "skill_version": "0.1.0",
+  "step": "intake"
+}

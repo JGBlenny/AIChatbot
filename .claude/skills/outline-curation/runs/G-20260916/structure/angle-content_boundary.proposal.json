@@ -1,0 +1,475 @@
+{
+  "angle": "content_boundary",
+  "coarses": [
+    {
+      "id": "A",
+      "title": "帳號與身分"
+    },
+    {
+      "id": "B",
+      "title": "團隊、人員與大房東"
+    },
+    {
+      "id": "C",
+      "title": "社區與物件"
+    },
+    {
+      "id": "D",
+      "title": "租約（含委託約子題）"
+    },
+    {
+      "id": "E",
+      "title": "帳務（含發票、收款金流、抄表）"
+    },
+    {
+      "id": "F",
+      "title": "修繕"
+    },
+    {
+      "id": "G",
+      "title": "裝置（IoT）"
+    },
+    {
+      "id": "H",
+      "title": "幫助中心"
+    },
+    {
+      "id": "I",
+      "title": "方案與導入"
+    }
+  ],
+  "fines": [
+    {
+      "id": "jgb/G/meter-item-followup-scope",
+      "coarse_id": "G",
+      "title": "電錶項目追問可答範圍（餘額、可用度數、供電、低電量警報）",
+      "slug": "meter-item-followup-scope",
+      "merge_of": [
+        "tmp:canon:jgb/G/meter-item-followup-scope",
+        "tmp:kb:3460"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "既有細目 id 不變；kb:3460 低電量警報是「電錶餘額不足」這個命題的投遞管道（通知不自成細目、歸它所通知的領域），與餘額／可用度數／供電同屬一個可獨立回答的主題，故吸收為 merge；「還能用幾天」仍標明為推算。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "merge"
+    },
+    {
+      "id": "jgb/G/smart-meter-lock-iot",
+      "coarse_id": "G",
+      "title": "智慧電錶與門鎖整合（售前）",
+      "slug": "smart-meter-lock-iot",
+      "merge_of": [
+        "tmp:canon:jgb/G/smart-meter-lock-iot"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "既有細目原樣保留：售前層級的「有沒有整合、門鎖兩型、留資由專人說明」自成完整內容；draft:1 雖有相同產品賣點，但受眾為房東操作教學、答案因受眾而異，依「各受眾各一細目」不併入。",
+      "target_user": [
+        "prospect"
+      ],
+      "op": "keep"
+    },
+    {
+      "id": "jgb/G/meter-vendor-binding",
+      "coarse_id": "G",
+      "title": "電表串接：綁定設備廠商帳號與裝置自動同步",
+      "slug": "meter-vendor-binding",
+      "merge_of": [
+        "tmp:kb:4049",
+        "tmp:kb:4058",
+        "tmp:kb:3508",
+        "tmp:draft:1"
+      ],
+      "split_from": [
+        "tmp:kb:4049",
+        "tmp:draft:1"
+      ],
+      "moved_from": [],
+      "reason": "「怎麼把電表串進 JGB」自成一個完整命題：團隊管理→進階設定→綁定設備廠商、驗證後自動同步裝置清單、一個廠商帳號只能綁一個團隊、已被綁定時的換綁處理（kb:3508 的查 DB role 是同一命題的內部處置）。kb:4058 內文為空，只作入口併入；draft:1 的「綁定與串接需由 JGB 業務協助」段拆入此處。kb:4049 尾段「合約電費欄選依儲值電錶設定」屬租約／收款金流（D／E），本架不收、另見。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/G/meter-device-management",
+      "coarse_id": "G",
+      "title": "智慧電錶裝置管理：命名、供電／斷電、綁定物件、查看用電度數",
+      "slug": "meter-device-management",
+      "merge_of": [
+        "tmp:kb:4049",
+        "tmp:draft:1"
+      ],
+      "split_from": [
+        "tmp:kb:4049",
+        "tmp:draft:1"
+      ],
+      "moved_from": [],
+      "reason": "裝置管理→智慧電錶頁的操作（命名、供電/斷電、綁定物件、日／週度數折線圖）不依賴廠商綁定步驟即可獨立回答，故自 kb:4049 與 draft:1 拆出成細目；draft:1 的版本警語「僅可操作智慧電表」屬本頁範圍。draft:1「智慧電錶綁帳單」段（帳務管理→待發送帳單自動算電費）出現在帳單列上、屬 E 抄表／帳務，本架不收、另見。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/G/tenant-meter-visibility",
+      "coarse_id": "G",
+      "title": "租客端看到即時電表與自行儲值的前提",
+      "slug": "tenant-meter-visibility",
+      "merge_of": [
+        "tmp:kb:4051"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "「租客為什麼看不到電表」是獨立的排查命題，答案自帶前提（電表已關聯物件、合約已綁租客），不需引用裝置管理步驟即完整；登入身分問題明示屬帳號範疇（A）另行排查，不在此細目。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/G/meter-data-sync-gap",
+      "coarse_id": "G",
+      "title": "電錶實體度數與 JGB 不同／長期不更新",
+      "slug": "meter-data-sync-gap",
+      "merge_of": [
+        "tmp:kb:4044"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "「度數落差」是與「離線」不同的命題：答案由每小時同步、以最後同步值為準、長期不動時重新驗證廠商帳號三段構成，自身完整；與 iot-offline-troubleshooting 共用同一補救動作但問題不同，各自保留、另見。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/G/iot-offline-troubleshooting",
+      "coarse_id": "G",
+      "title": "IoT 設備（門鎖／電表）無法連線的排查順序",
+      "slug": "iot-offline-troubleshooting",
+      "merge_of": [
+        "tmp:kb:3461"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "連線排查是跨門鎖與電表的獨立命題：電源→現場網路→台科電帳號重新驗證→聯繫廠商，四步互相依賴才構成完整答案，故不再拆；門鎖「開不了門」另屬 smart-lock-failure。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/G/smart-lock-functions",
+      "coarse_id": "G",
+      "title": "智慧門鎖功能：租客密碼、QR Code、開門紀錄與密碼管理",
+      "slug": "smart-lock-functions",
+      "merge_of": [
+        "tmp:kb:3458"
+      ],
+      "split_from": [
+        "tmp:kb:3458"
+      ],
+      "moved_from": [],
+      "reason": "門鎖三項功能與房東的密碼管理是一組彼此依賴的功能說明，自成一題；kb:3458 尾句「無法開啟時確認密碼／電量／網路」屬排障命題，拆到 smart-lock-failure。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/G/smart-lock-share-password",
+      "coarse_id": "G",
+      "title": "分享門鎖密碼：訪客／維修人員臨時存取",
+      "slug": "smart-lock-share-password",
+      "merge_of": [
+        "tmp:kb:3462"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "分享密碼的操作步驟、次數／時間限制、僅房東或有權限成員可操作，是可獨立回答的操作命題；smart-lock-functions 僅一句提及，屬不同層級，以另見處理而非重複。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/G/smart-lock-password-rules",
+      "coarse_id": "G",
+      "title": "IoT 設定：門鎖預設密碼規則與連結起始日的生效範圍",
+      "slug": "smart-lock-password-rules",
+      "merge_of": [
+        "tmp:kb:4052"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "預設密碼規則與連結起始日的生效時點是設定層級命題，與功能說明、排障皆不重疊，自身完整。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/G/smart-lock-hardware-vendor",
+      "coarse_id": "G",
+      "title": "門鎖硬體功能（悠遊卡／磁扣／電池／音量）屬廠商範疇",
+      "slug": "smart-lock-hardware-vendor",
+      "merge_of": [
+        "tmp:kb:4054"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "「JGB 端能管什麼、硬體規格找誰」是邊界命題，答案自身完整，與軟體功能細目不重疊。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/G/smart-lock-failure",
+      "coarse_id": "G",
+      "title": "門鎖 QRCode／密碼失靈開不了門的排查",
+      "slug": "smart-lock-failure",
+      "merge_of": [
+        "tmp:kb:4055",
+        "tmp:kb:3458"
+      ],
+      "split_from": [
+        "tmp:kb:3458"
+      ],
+      "moved_from": [],
+      "reason": "「開不了門」是獨立排障命題：電池→效期→重新產生 QRCode→聯繫廠商→備用開門程序，需整段才完整；kb:3458 的排障尾句拆入此處；與 iot-offline-troubleshooting（無法連線）是不同故障面，各自保留。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    }
+  ],
+  "id_map": [
+    {
+      "old": "tmp:canon:jgb/G/meter-item-followup-scope",
+      "new": "jgb/G/meter-item-followup-scope",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:3460",
+      "new": "jgb/G/meter-item-followup-scope",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:canon:jgb/G/smart-meter-lock-iot",
+      "new": "jgb/G/smart-meter-lock-iot",
+      "op": "keep"
+    },
+    {
+      "old": "tmp:kb:4049",
+      "new": "jgb/G/meter-vendor-binding",
+      "op": "split"
+    },
+    {
+      "old": "tmp:kb:4049",
+      "new": "jgb/G/meter-device-management",
+      "op": "split"
+    },
+    {
+      "old": "tmp:draft:1",
+      "new": "jgb/G/meter-vendor-binding",
+      "op": "split"
+    },
+    {
+      "old": "tmp:draft:1",
+      "new": "jgb/G/meter-device-management",
+      "op": "split"
+    },
+    {
+      "old": "tmp:kb:4058",
+      "new": "jgb/G/meter-vendor-binding",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:3508",
+      "new": "jgb/G/meter-vendor-binding",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:4051",
+      "new": "jgb/G/tenant-meter-visibility",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:4044",
+      "new": "jgb/G/meter-data-sync-gap",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3461",
+      "new": "jgb/G/iot-offline-troubleshooting",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3458",
+      "new": "jgb/G/smart-lock-functions",
+      "op": "split"
+    },
+    {
+      "old": "tmp:kb:3458",
+      "new": "jgb/G/smart-lock-failure",
+      "op": "split"
+    },
+    {
+      "old": "tmp:kb:3462",
+      "new": "jgb/G/smart-lock-share-password",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:4052",
+      "new": "jgb/G/smart-lock-password-rules",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:4054",
+      "new": "jgb/G/smart-lock-hardware-vendor",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:4055",
+      "new": "jgb/G/smart-lock-failure",
+      "op": "new"
+    }
+  ],
+  "out_of_shelf": [
+    {
+      "id": "tmp:kb:2989",
+      "suggested_shelf": "D：租約（含委託約子題）",
+      "why": "受眾為租客的一般設備責任知識（非 IoT 裝置、非 prospect／property_manager），設備使用規範由合約條款約定，歸租約。"
+    },
+    {
+      "id": "tmp:kb:3186",
+      "suggested_shelf": "F：修繕",
+      "why": "受眾為租客的一般設備責任知識（非 IoT 裝置、非 prospect／property_manager），公共設備維護／報修責任歸修繕。"
+    },
+    {
+      "id": "tmp:kb:3187",
+      "suggested_shelf": "F：修繕",
+      "why": "受眾為租客的一般設備責任知識（非 IoT 裝置、非 prospect／property_manager），租客與房東的維修責任分配歸修繕。"
+    },
+    {
+      "id": "tmp:kb:3188",
+      "suggested_shelf": "F：修繕",
+      "why": "受眾為租客的一般設備責任知識（非 IoT 裝置、非 prospect／property_manager），公共設備損壞的維修責任歸修繕。"
+    },
+    {
+      "id": "tmp:kb:3189",
+      "suggested_shelf": "F：修繕",
+      "why": "受眾為租客的一般設備責任知識（非 IoT 裝置、非 prospect／property_manager），設備損壞的修繕費用責任歸修繕。"
+    },
+    {
+      "id": "tmp:kb:3190",
+      "suggested_shelf": "F：修繕",
+      "why": "受眾為租客的一般設備責任知識（非 IoT 裝置、非 prospect／property_manager），公共設備檢查頻率屬維護作業，歸修繕。"
+    },
+    {
+      "id": "tmp:kb:3191",
+      "suggested_shelf": "D：租約（含委託約子題）",
+      "why": "受眾為租客的一般設備責任知識（非 IoT 裝置、非 prospect／property_manager），退租時設備狀況與押金退還由租約流程決定，歸租約。"
+    },
+    {
+      "id": "tmp:kb:3192",
+      "suggested_shelf": "F：修繕",
+      "why": "受眾為租客的一般設備責任知識（非 IoT 裝置、非 prospect／property_manager），公共設備維護費用的負擔方屬維修責任分配，歸修繕。"
+    },
+    {
+      "id": "tmp:kb:3193",
+      "suggested_shelf": "F：修繕",
+      "why": "受眾為租客的一般設備責任知識（非 IoT 裝置、非 prospect／property_manager），租屋內設備維護費用負擔方屬維修責任分配，歸修繕。"
+    },
+    {
+      "id": "tmp:kb:3194",
+      "suggested_shelf": "F：修繕",
+      "why": "受眾為租客的一般設備責任知識（非 IoT 裝置、非 prospect／property_manager），公共設備更新責任歸修繕。"
+    },
+    {
+      "id": "tmp:kb:3195",
+      "suggested_shelf": "F：修繕",
+      "why": "受眾為租客的一般設備責任知識（非 IoT 裝置、非 prospect／property_manager），設備更新責任歸修繕。"
+    },
+    {
+      "id": "tmp:kb:3196",
+      "suggested_shelf": "D：租約（含委託約子題）",
+      "why": "受眾為租客的一般設備責任知識（非 IoT 裝置、非 prospect／property_manager），公共設備使用限制在租約中列明，歸租約。"
+    },
+    {
+      "id": "tmp:kb:3197",
+      "suggested_shelf": "F：修繕",
+      "why": "受眾為租客的一般設備責任知識（非 IoT 裝置、非 prospect／property_manager），設備維護記錄屬維護作業，歸修繕。"
+    },
+    {
+      "id": "tmp:kb:3198",
+      "suggested_shelf": "F：修繕",
+      "why": "受眾為租客的一般設備責任知識（非 IoT 裝置、非 prospect／property_manager），不當使用造成損壞的修繕責任歸修繕。"
+    },
+    {
+      "id": "tmp:kb:3199",
+      "suggested_shelf": "F：修繕",
+      "why": "受眾為租客的一般設備責任知識（非 IoT 裝置、非 prospect／property_manager），設備維護的法律依據與報修權利歸修繕。"
+    },
+    {
+      "id": "tmp:kb:3200",
+      "suggested_shelf": "F：修繕",
+      "why": "受眾為租客的一般設備責任知識（非 IoT 裝置、非 prospect／property_manager），設備損壞賠償屬修繕費用責任，歸修繕。"
+    },
+    {
+      "id": "tmp:kb:3201",
+      "suggested_shelf": "D：租約（含委託約子題）",
+      "why": "受眾為租客的一般設備責任知識（非 IoT 裝置、非 prospect／property_manager），公共設備使用規範由租約約定，歸租約。"
+    },
+    {
+      "id": "tmp:kb:3202",
+      "suggested_shelf": "D：租約（含委託約子題）",
+      "why": "受眾為租客的一般設備責任知識（非 IoT 裝置、非 prospect／property_manager），租客設備投保與否由租約約定，歸租約。"
+    },
+    {
+      "id": "tmp:kb:3203",
+      "suggested_shelf": "F：修繕",
+      "why": "受眾為租客的一般設備責任知識（非 IoT 裝置、非 prospect／property_manager），房東維護責任範圍歸修繕。"
+    },
+    {
+      "id": "tmp:kb:3272",
+      "suggested_shelf": "F：修繕",
+      "why": "受眾為租客的一般設備責任知識（非 IoT 裝置、非 prospect／property_manager），租客設備維護責任歸修繕。"
+    },
+    {
+      "id": "tmp:kb:3273",
+      "suggested_shelf": "D：租約（含委託約子題）",
+      "why": "受眾為租客的一般設備責任知識（非 IoT 裝置、非 prospect／property_manager），退租時設備狀況處理與押金扣除由租約流程決定，歸租約。"
+    },
+    {
+      "id": "tmp:kb:3274",
+      "suggested_shelf": "F：修繕",
+      "why": "受眾為租客的一般設備責任知識（非 IoT 裝置、非 prospect／property_manager），公共設備維護費用負擔方屬維修責任分配，歸修繕。"
+    },
+    {
+      "id": "tmp:kb:3275",
+      "suggested_shelf": "F：修繕",
+      "why": "受眾為租客的一般設備責任知識（非 IoT 裝置、非 prospect／property_manager），租客設備責任與修復費用歸修繕。"
+    },
+    {
+      "id": "tmp:kb:3276",
+      "suggested_shelf": "F：修繕",
+      "why": "受眾為租客的一般設備責任知識（非 IoT 裝置、非 prospect／property_manager），設備維護法律依據歸修繕。"
+    },
+    {
+      "id": "tmp:kb:3277",
+      "suggested_shelf": "F：修繕",
+      "why": "受眾為租客的一般設備責任知識（非 IoT 裝置、非 prospect／property_manager），房東維護責任範圍歸修繕。"
+    },
+    {
+      "id": "tmp:kb:3290",
+      "suggested_shelf": "D：租約（含委託約子題）",
+      "why": "受眾為租客的一般設備責任知識（非 IoT 裝置、非 prospect／property_manager），租屋設備使用規範由合約約定，歸租約。"
+    }
+  ]
+}

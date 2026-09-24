@@ -2,11 +2,16 @@
 任務 2.5）。
 
 覆蓋：
-- 正常路徑：真規則檔＋真 fixtures ⇒ 組出 `AgentRuntime`，且 `rules_sha`／
-  `outline_sha` 被掛在回傳物件上（暴露給 health 用，見任務 brief）。
+- 正常路徑：真規則檔＋真 fixtures ⇒ 組出 `AgentRuntime`，且 `rules_sha`
+  被掛在回傳物件上（暴露給 health 用，見任務 brief）。
 - 自證失敗（壞 fixture：`known_fabrications.json` 裡放一個實際會被判 `ok=True`
   的案例）⇒ `build_runtime` 直接 raise（啟動紅，⛔ 不吞例外續跑）。
-- `outline_doc` 給了就把它的 `sha256` 帶到 `runtime.outline_sha`；不給則空字串。
+
+## 2026-09-16（9.8 DSP-059 D′ S2）改寫範圍
+`build_runtime` **不再吃 `outline_doc=`**（單一正本、每回合現組，沒有預組
+`OutlineDoc` 可掛 sha）——`runtime.outline_sha` 改由呼叫端（`app.py`）在組好
+runtime 後自己 `runtime.outline_sha = canon.canon_sha256`，本函式不再碰這個
+屬性，見 `bootstrap.py` docstring。
 
 全部離線：不呼叫真 OpenAI、不接觸真 DB（`db_pool` 只是原樣收下的參數）。
 """
@@ -42,14 +47,19 @@ def test_build_runtime_with_real_rules_and_fixtures_succeeds():
 
     assert isinstance(runtime, AgentRuntime)
     assert isinstance(runtime.rules_sha, str) and runtime.rules_sha
-    assert runtime.outline_sha == ""  # 沒給 outline_doc
+    assert not hasattr(runtime, "outline_sha"), (
+        "9.8 DSP-059 D′ S2：build_runtime 不再自己掛 outline_sha——"
+        "那是呼叫端（app.py）組好 runtime 後自己指派的")
 
 
-def test_build_runtime_exposes_outline_sha_when_outline_doc_given():
-    outline_doc = SimpleNamespace(sha256="outline-sha-abc")
-    runtime = build_runtime(None, _fake_provider(), _fake_registry(), outline_doc=outline_doc)
-
-    assert runtime.outline_sha == "outline-sha-abc"
+def test_build_runtime_does_not_accept_outline_doc_kwarg():
+    """9.8 DSP-059 D′ S2：`outline_doc=` 參數已刪——傳它必須 TypeError
+    （⛔ 不是靜默忽略，那樣舊呼叫端會誤以為還有效）。"""
+    with pytest.raises(TypeError):
+        build_runtime(
+            None, _fake_provider(), _fake_registry(),
+            outline_doc=SimpleNamespace(sha256="x"),
+        )
 
 
 def test_build_runtime_passes_through_runtime_kwargs():

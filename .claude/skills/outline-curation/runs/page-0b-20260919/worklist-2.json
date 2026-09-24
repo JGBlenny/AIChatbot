@@ -1,0 +1,481 @@
+{
+ "batch": "2",
+ "shelves": [
+  "C",
+  "F"
+ ],
+ "units": [
+  {
+   "unit_id": "page:communities.edit",
+   "kind": "spa",
+   "label": "communities.edit",
+   "path": "/communities/edit/:communityId",
+   "component": "communities/edit/Index.vue",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:communities.edit.balanceInvoice",
+   "kind": "spa",
+   "label": "communities.edit.balanceInvoice",
+   "path": "balanceInvoice",
+   "component": "communities/edit/BalanceInvoice.jsx",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:communities.edit.basic",
+   "kind": "spa",
+   "label": "communities.edit.basic",
+   "path": "basic",
+   "component": "communities/edit/Basic.vue",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:communities.edit.gallery",
+   "kind": "spa",
+   "label": "communities.edit.gallery",
+   "path": "gallery",
+   "component": "communities/edit/Gallery.vue",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:communities.edit.intros",
+   "kind": "spa",
+   "label": "communities.edit.intros",
+   "path": "intros",
+   "component": "communities/edit/Intros.vue",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:communities.estates",
+   "kind": "spa",
+   "label": "communities.estates",
+   "path": "estates/:communityId/:category?",
+   "component": "communities/estates/Index.vue",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:communities.forceBinding",
+   "kind": "spa",
+   "label": "communities.forceBinding",
+   "path": "/communities/forceBinding",
+   "component": "communities/forceBinding/Index.vue",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:communities.forceBinding.edit",
+   "kind": "spa",
+   "label": "communities.forceBinding.edit",
+   "path": "edit",
+   "component": "communities/forceBinding/edit/Index.vue",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:communities.forceBinding.edit.binding",
+   "kind": "spa",
+   "label": "communities.forceBinding.edit.binding",
+   "path": "binding",
+   "component": "communities/forceBinding/edit/Binding.vue",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:communities.forceBinding.welcome",
+   "kind": "spa",
+   "label": "communities.forceBinding.welcome",
+   "path": "",
+   "component": "communities/forceBinding/Welcome.vue",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:communities.index",
+   "kind": "spa",
+   "label": "communities.index",
+   "path": "/communities",
+   "component": "communities/Index.vue",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:communities.list",
+   "kind": "spa",
+   "label": "communities.list",
+   "path": "",
+   "component": "communities/list/Index.vue",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:communities.pick",
+   "kind": "spa",
+   "label": "communities.pick",
+   "path": "pick/:action",
+   "component": "communities/pick/Index.vue",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:communities.show",
+   "kind": "spa",
+   "label": "communities.show",
+   "path": "/communities/show/:communityId",
+   "component": "communities/show/Index.vue",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:estates.dashboard",
+   "kind": "spa",
+   "label": "estates.dashboard",
+   "path": "/estates/dashboard/:id",
+   "component": "estates/dashboard/Index.vue",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:estates.dashboard.attachments",
+   "kind": "spa",
+   "label": "estates.dashboard.attachments",
+   "path": "attachments",
+   "component": "estates/dashboard/attachments/Index.vue",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:estates.dashboard.bills",
+   "kind": "spa",
+   "label": "estates.dashboard.bills",
+   "path": "bills/:tab?",
+   "component": "estates/dashboard/bills/Index.vue",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:estates.dashboard.contractAttachments",
+   "kind": "spa",
+   "label": "estates.dashboard.contractAttachments",
+   "path": "contractAttachments",
+   "component": "estates/dashboard/contractAttachments/index.vue",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:estates.dashboard.contracts",
+   "kind": "spa",
+   "label": "estates.dashboard.contracts",
+   "path": "contracts",
+   "component": "estates/dashboard/contracts/Index.vue",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:estates.dashboard.memos",
+   "kind": "spa",
+   "label": "estates.dashboard.memos",
+   "path": "memos",
+   "component": "estates/dashboard/memos/Index.vue",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:estates.dashboard.monthlyReport",
+   "kind": "spa",
+   "label": "estates.dashboard.monthlyReport",
+   "path": "monthlyReport",
+   "component": "bills/stat/_parts/MonthlyReport.vue",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:estates.dashboard.monthlyStatement",
+   "kind": "spa",
+   "label": "estates.dashboard.monthlyStatement",
+   "path": "monthlyStatement",
+   "component": "bills/stat/_parts/MonthlyReport.vue",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:estates.dashboard.rent",
+   "kind": "spa",
+   "label": "estates.dashboard.rent",
+   "path": "rent",
+   "component": "estates/dashboard/rent/Index.vue",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:estates.dashboard.repair",
+   "kind": "spa",
+   "label": "estates.dashboard.repair",
+   "path": "repair",
+   "component": "estates/dashboard/repair/Index.vue",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:estates.dashboard.runnings",
+   "kind": "spa",
+   "label": "estates.dashboard.runnings",
+   "path": "runnings",
+   "component": "estates/dashboard/runnings/Index.vue",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:estates.dashboard.sell",
+   "kind": "spa",
+   "label": "estates.dashboard.sell",
+   "path": "sell",
+   "component": "estates/dashboard/sell/Index.vue",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:estates.edit",
+   "kind": "spa",
+   "label": "estates.edit",
+   "path": "/estates/edit/:id",
+   "component": "estates/edit/Index.vue",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:estates.edit.basic",
+   "kind": "spa",
+   "label": "estates.edit.basic",
+   "path": "basic",
+   "component": "estates/edit/basic/Index.vue",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:estates.edit.building_transcript",
+   "kind": "spa",
+   "label": "estates.edit.building_transcript",
+   "path": "buildingTranscript",
+   "component": "estates/edit/building_transcript/Index.vue",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:estates.edit.building_transcript_general",
+   "kind": "spa",
+   "label": "estates.edit.building_transcript_general",
+   "path": "buildingTranscriptGeneral",
+   "component": "estates/edit/buildingTranscriptGeneral/Index.vue",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:estates.edit.facilities",
+   "kind": "spa",
+   "label": "estates.edit.facilities",
+   "path": "facilities",
+   "component": "estates/edit/facilities/Index.vue",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:estates.edit.gallery",
+   "kind": "spa",
+   "label": "estates.edit.gallery",
+   "path": "gallery",
+   "component": "estates/edit/gallery/Index.vue",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:estates.edit.intro",
+   "kind": "spa",
+   "label": "estates.edit.intro",
+   "path": "intro",
+   "component": "estates/edit/intro/Index.vue",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:estates.edit.rent_contact",
+   "kind": "spa",
+   "label": "estates.edit.rent_contact",
+   "path": "rent_contact",
+   "component": "estates/edit/rent_contact/Index.vue",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:estates.edit.rent_detail",
+   "kind": "spa",
+   "label": "estates.edit.rent_detail",
+   "path": "rent_detail",
+   "component": "estates/edit/rent_detail/Index.jsx",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:estates.edit.rent_verify",
+   "kind": "spa",
+   "label": "estates.edit.rent_verify",
+   "path": "rent_verify",
+   "component": "estates/edit/rent_verify/Index.vue",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:estates.edit.sell_contact",
+   "kind": "spa",
+   "label": "estates.edit.sell_contact",
+   "path": "sell_contact",
+   "component": "estates/edit/sell_contact/Index.vue",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:estates.edit.sell_detail",
+   "kind": "spa",
+   "label": "estates.edit.sell_detail",
+   "path": "sell_detail",
+   "component": "estates/edit/sell_detail/Index.vue",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:estates.edit.vr",
+   "kind": "spa",
+   "label": "estates.edit.vr",
+   "path": "vr",
+   "component": "estates/edit/vr/Index.vue",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:estates.index",
+   "kind": "spa",
+   "label": "estates.index",
+   "path": "/estates/:category?",
+   "component": "estates/Index.vue",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:estates.list",
+   "kind": "spa",
+   "label": "estates.list",
+   "path": "",
+   "component": "estates/list/Index.vue",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:estates.monthlyUpload",
+   "kind": "spa",
+   "label": "estates.monthlyUpload",
+   "path": "/estates/monthlyUpload/:action",
+   "component": "estates/dashboard/_parts/MonthlyUpload.jsx",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:estates.pick",
+   "kind": "spa",
+   "label": "estates.pick",
+   "path": "/estates/pick/:action",
+   "component": "estates/pick/Index.jsx",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:listings.IOTDevice",
+   "kind": "spa",
+   "label": "listings.IOTDevice",
+   "path": "/iot-device",
+   "component": "listings/IOTDevice.vue",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:listings.map",
+   "kind": "spa",
+   "label": "listings.map",
+   "path": "/map",
+   "component": "listings/Map.vue",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:listings.search",
+   "kind": "spa",
+   "label": "listings.search",
+   "path": "/search",
+   "component": "listings/Search.vue",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:repair",
+   "kind": "spa",
+   "label": "repair",
+   "path": "/repair",
+   "component": "repair/Index.vue",
+   "shelf": "F"
+  },
+  {
+   "unit_id": "page:repair.apply",
+   "kind": "spa",
+   "label": "repair.apply",
+   "path": "/repair/apply",
+   "component": "repair/Index.vue",
+   "shelf": "F"
+  },
+  {
+   "unit_id": "page:repair.applyProcess",
+   "kind": "spa",
+   "label": "repair.applyProcess",
+   "path": "/repair/applyProcess/:step?",
+   "component": "repair/applyProcess/Index.vue",
+   "shelf": "F"
+  },
+  {
+   "unit_id": "page:repair.archive",
+   "kind": "spa",
+   "label": "repair.archive",
+   "path": "/repair/archive",
+   "component": "repair/Index.vue",
+   "shelf": "F"
+  },
+  {
+   "unit_id": "page:repair.assign",
+   "kind": "spa",
+   "label": "repair.assign",
+   "path": "/repair/assign",
+   "component": "repair/Index.vue",
+   "shelf": "F"
+  },
+  {
+   "unit_id": "page:repair.complete",
+   "kind": "spa",
+   "label": "repair.complete",
+   "path": "/repair/complete",
+   "component": "repair/Index.vue",
+   "shelf": "F"
+  },
+  {
+   "unit_id": "page:repair.edit",
+   "kind": "spa",
+   "label": "repair.edit",
+   "path": "/repair/edit/:id?",
+   "component": "repair/edit/Index.vue",
+   "shelf": "F"
+  },
+  {
+   "unit_id": "page:repair.finish",
+   "kind": "spa",
+   "label": "repair.finish",
+   "path": "/repair/finish",
+   "component": "repair/Index.vue",
+   "shelf": "F"
+  },
+  {
+   "unit_id": "page:repair.share",
+   "kind": "spa",
+   "label": "repair.share",
+   "path": "/repair/share/:id?",
+   "component": "repair/share/Index.vue",
+   "shelf": "F"
+  },
+  {
+   "unit_id": "page:web:estates.house",
+   "kind": "blade",
+   "label": "estates.house",
+   "path": "/house/{no}/{action?}",
+   "component": "EstateController@house",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:web:estates.sell-house",
+   "kind": "blade",
+   "label": "estates.sell-house",
+   "path": "/sell-house/{no}/{action?}",
+   "component": "EstateController@sellHouse",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:web:estates.sell-show",
+   "kind": "blade",
+   "label": "estates.sell-show",
+   "path": "/sell-show/{id}/{action?}",
+   "component": "EstateController@sellShow",
+   "shelf": "C"
+  },
+  {
+   "unit_id": "page:web:estates.show",
+   "kind": "blade",
+   "label": "estates.show",
+   "path": "/show/{id}/{action?}",
+   "component": "EstateController@show",
+   "shelf": "C"
+  }
+ ]
+}

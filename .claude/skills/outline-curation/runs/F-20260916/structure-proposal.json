@@ -1,0 +1,3498 @@
+{
+  "cost": {
+    "agents": 4,
+    "completion_tokens": 0,
+    "prompt_tokens": 0,
+    "usd": 0.0,
+    "wall_s": 0.0
+  },
+  "deterministic": false,
+  "inputs_sha": {
+    "canon": "03f9c8b3caa93c11f03d4c4877bb0408876172555156552ca0a6a997bbb8c736",
+    "coarses": "e74114859d963f3639b5ed861e45ac367e3bbe846c903a9408291fd853fcdf73",
+    "drafts": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "kb": "dbcaa3ef447365951854f9736aed97aeb3e77d229b1157a49869d4170d684291"
+  },
+  "payload": {
+    "proposals": [
+      {
+        "angle": "user_question_path",
+        "coarses": [
+          {
+            "id": "A",
+            "title": "帳號與身分"
+          },
+          {
+            "id": "B",
+            "title": "團隊、人員與大房東"
+          },
+          {
+            "id": "C",
+            "title": "社區與物件"
+          },
+          {
+            "id": "D",
+            "title": "租約（含委託約子題）"
+          },
+          {
+            "id": "E",
+            "title": "帳務（含發票、收款金流、抄表）"
+          },
+          {
+            "id": "F",
+            "title": "修繕"
+          },
+          {
+            "id": "G",
+            "title": "裝置（IoT）"
+          },
+          {
+            "id": "H",
+            "title": "幫助中心"
+          },
+          {
+            "id": "I",
+            "title": "方案與導入"
+          }
+        ],
+        "fines": [
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-progress-followup-scope",
+            "merge_of": [
+              "tmp:canon:jgb/F/repair-progress-followup-scope",
+              "tmp:kb:1558",
+              "tmp:kb:3365",
+              "tmp:kb:4420"
+            ],
+            "moved_from": [],
+            "op": "merge",
+            "reason": "使用者問「修得怎樣了／處理到哪／查維修進度」只落這一細目；kb 1558、4420 與空內文入口 3365 都是同一提問路徑，吸收後 id 不變。",
+            "slug": "repair-progress-followup-scope",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "修繕進度追問可答範圍"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-system",
+            "merge_of": [
+              "tmp:canon:jgb/F/repair-system"
+            ],
+            "moved_from": [],
+            "op": "keep",
+            "reason": "售前問「你們有沒有線上報修／能不能追蹤進度」的入口，維持既有細目。",
+            "slug": "repair-system",
+            "split_from": [],
+            "target_user": [
+              "prospect"
+            ],
+            "title": "線上報修與進度追蹤"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-ticket-after-submit",
+            "merge_of": [
+              "tmp:canon:jgb/F/repair-ticket-after-submit"
+            ],
+            "moved_from": [],
+            "op": "keep",
+            "reason": "問「送出後還能改嗎／同一戶再報一個算不算新單」落此，維持既有。",
+            "slug": "repair-ticket-after-submit",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "確認送出後的單如何處理"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-ticket-mid-flow-cancel",
+            "merge_of": [
+              "tmp:canon:jgb/F/repair-ticket-mid-flow-cancel"
+            ],
+            "moved_from": [],
+            "op": "keep",
+            "reason": "問「不報了／取消」的處理只落此，維持既有。",
+            "slug": "repair-ticket-mid-flow-cancel",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "報修流程中途取消的規則"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-ticket-no-lease",
+            "merge_of": [
+              "tmp:canon:jgb/F/repair-ticket-no-lease"
+            ],
+            "moved_from": [],
+            "op": "keep",
+            "reason": "問「空屋／查不到租約能不能開單」落此，維持既有。",
+            "slug": "repair-ticket-no-lease",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "代開單時的租約查詢身分與空屋／無租約物件開單規則"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-ticket-open-and-confirm",
+            "merge_of": [
+              "tmp:canon:jgb/F/repair-ticket-open-and-confirm",
+              "tmp:kb:4416",
+              "tmp:kb:4418",
+              "tmp:kb:4421",
+              "tmp:kb:4422"
+            ],
+            "moved_from": [],
+            "op": "merge",
+            "reason": "使用者以「我要報修／馬桶不通／漏水／冷氣壞了」開口即進入對話開單流程；4416、4418、4421、4422 為空內文入口，只當進場講法掛在此細目，不獨立成細目。",
+            "slug": "repair-ticket-open-and-confirm",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "開修繕單基本流程與確認機制（拍照進場／文字口述）"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-ticket-photo-count-limit",
+            "merge_of": [
+              "tmp:canon:jgb/F/repair-ticket-photo-count-limit"
+            ],
+            "moved_from": [],
+            "op": "keep",
+            "reason": "問「可以傳幾張照片」落此，維持既有。",
+            "slug": "repair-ticket-photo-count-limit",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "修繕辨識與附件的照片張數限制"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-ticket-photo-recognition-uncertain",
+            "merge_of": [
+              "tmp:canon:jgb/F/repair-ticket-photo-recognition-uncertain"
+            ],
+            "moved_from": [],
+            "op": "keep",
+            "reason": "問「照片看不出來怎麼辦」落此，維持既有。",
+            "slug": "repair-ticket-photo-recognition-uncertain",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "照片辨識信心不足或看不出損壞時的處理"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-ticket-reclassify",
+            "merge_of": [
+              "tmp:canon:jgb/F/repair-ticket-reclassify"
+            ],
+            "moved_from": [],
+            "op": "keep",
+            "reason": "問「辨識錯了要改分類」落此，維持既有。",
+            "slug": "repair-ticket-reclassify",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "確認卡上修改辨識結果的規則"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-ticket-submit-failure",
+            "merge_of": [
+              "tmp:canon:jgb/F/repair-ticket-submit-failure"
+            ],
+            "moved_from": [],
+            "op": "keep",
+            "reason": "問「建單失敗／要不要再按一次」落此，維持既有。",
+            "slug": "repair-ticket-submit-failure",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "建單失敗時的處理與重試規則"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-ticket-urgency-judgment",
+            "merge_of": [
+              "tmp:canon:jgb/F/repair-ticket-urgency-judgment"
+            ],
+            "moved_from": [],
+            "op": "keep",
+            "reason": "問「開單時急迫程度怎麼判／預設是什麼」落此，維持既有；「緊急修繕怎麼處理」另見 jgb/F/emergency-repair-handling。",
+            "slug": "repair-ticket-urgency-judgment",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "修繕單急迫程度的判斷來源與值域"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "merge_of": [
+              "tmp:kb:2963",
+              "tmp:kb:2964",
+              "tmp:kb:2968",
+              "tmp:kb:2969",
+              "tmp:kb:2971",
+              "tmp:kb:2973",
+              "tmp:kb:3029",
+              "tmp:kb:3030",
+              "tmp:kb:3203",
+              "tmp:kb:3221",
+              "tmp:kb:3222",
+              "tmp:kb:3277",
+              "tmp:kb:3287",
+              "tmp:kb:3289"
+            ],
+            "moved_from": [],
+            "op": "new",
+            "reason": "「房東要修什麼／租客要自己處理什麼／修繕費誰出／租約通常怎麼約定」都是同一條劃分規則的不同問法，一個主題一個細目；業者會被租客問到，標 property_manager；3221 修繕後維持責任併入同一規則。",
+            "slug": "repair-responsibility-landlord-vs-tenant",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "房屋修繕責任劃分（房東與租客各負責什麼、費用誰出）"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/common-equipment-maintenance-responsibility",
+            "merge_of": [
+              "tmp:kb:2970",
+              "tmp:kb:3186",
+              "tmp:kb:3188",
+              "tmp:kb:3190",
+              "tmp:kb:3192",
+              "tmp:kb:3194",
+              "tmp:kb:3197",
+              "tmp:kb:3274"
+            ],
+            "moved_from": [],
+            "op": "new",
+            "reason": "以「公共設備」為主詞的提問（誰維護／壞了誰修／誰出錢／多久檢查／要不要留紀錄）答案同源，合為一細目；與房屋修繕責任的差別在主詞是公共設備而非房屋本體。",
+            "slug": "common-equipment-maintenance-responsibility",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "公共設備的維護、損壞、更新、費用與檢查紀錄責任"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/tenant-equipment-maintenance-responsibility",
+            "merge_of": [
+              "tmp:kb:3187",
+              "tmp:kb:3189",
+              "tmp:kb:3193",
+              "tmp:kb:3195",
+              "tmp:kb:3198",
+              "tmp:kb:3200",
+              "tmp:kb:3272",
+              "tmp:kb:3275"
+            ],
+            "moved_from": [],
+            "op": "new",
+            "reason": "以「租客設備」為主詞的提問（日常保養誰做／弄壞了要不要賠、賠多少／更新誰負責／維護費誰出）合為一細目，與公共設備分開因答案依設備歸屬而異。",
+            "slug": "tenant-equipment-maintenance-responsibility",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "租客設備的維護、損壞賠償、更新與費用責任"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/tenant-repair-notification-duty",
+            "merge_of": [
+              "tmp:kb:2966",
+              "tmp:kb:3219",
+              "tmp:kb:3286"
+            ],
+            "moved_from": [],
+            "op": "new",
+            "reason": "「租客有沒有義務通知房東」三筆同題，一個細目。",
+            "slug": "tenant-repair-notification-duty",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "租客發現需修繕時的通知義務"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/tenant-self-repair-in-emergency",
+            "merge_of": [
+              "tmp:kb:3220",
+              "tmp:kb:3288"
+            ],
+            "moved_from": [],
+            "op": "new",
+            "reason": "「租客能不能自己先修／修完能不能報銷」是獨立於責任劃分的一問，兩筆合一。",
+            "slug": "tenant-self-repair-in-emergency",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "緊急情況下租客自行修繕與費用報銷"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/emergency-repair-handling",
+            "merge_of": [
+              "tmp:kb:2965",
+              "tmp:kb:3145",
+              "tmp:kb:3426"
+            ],
+            "moved_from": [],
+            "op": "new",
+            "reason": "「什麼算緊急／有沒有緊急維修服務／緊急件怎麼標記與優先處理」同一提問路徑；售前與業者問法不同但答案同一機制，故兩受眾共用；開單時急迫值域另見 jgb/F/repair-ticket-urgency-judgment。",
+            "slug": "emergency-repair-handling",
+            "split_from": [],
+            "target_user": [
+              "prospect",
+              "property_manager"
+            ],
+            "title": "緊急修繕的判定、標記與處理時效"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/neighbor-leak-responsibility",
+            "merge_of": [
+              "tmp:kb:2967"
+            ],
+            "moved_from": [],
+            "op": "new",
+            "reason": "「鄰居漏水誰負責」答案是漏水方負責，與一般房東／租客劃分不同，獨立一問；「漏水我要報修」的入口則掛開單細目。",
+            "slug": "neighbor-leak-responsibility",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "鄰居漏水的修繕責任與處理"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-responsibility-dispute",
+            "merge_of": [
+              "tmp:kb:2974"
+            ],
+            "moved_from": [],
+            "op": "new",
+            "reason": "「跟房東對修繕責任有爭議怎麼辦」是處理程序題，與劃分規則本身分開。",
+            "slug": "repair-responsibility-dispute",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "修繕責任有爭議時的處理"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-warranty-period",
+            "merge_of": [
+              "tmp:kb:2975"
+            ],
+            "moved_from": [],
+            "op": "new",
+            "reason": "「修好了保固多久」獨立可答。",
+            "slug": "repair-warranty-period",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "修繕後的保固期"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/social-housing-repair-responsibility",
+            "merge_of": [
+              "tmp:kb:3320"
+            ],
+            "moved_from": [],
+            "op": "new",
+            "reason": "「社宅維修誰負責」答案為管理單位，與一般租屋劃分不同，獨立一問。",
+            "slug": "social-housing-repair-responsibility",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "社會住宅的維修責任"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-flow-stages",
+            "merge_of": [
+              "tmp:kb:3424"
+            ],
+            "moved_from": [],
+            "op": "new",
+            "reason": "「修繕流程有哪些階段／狀態是什麼意思」售前與業者都會問且答案相同；與售前入口 repair-system 分層（入口 vs 階段說明）。",
+            "slug": "repair-flow-stages",
+            "split_from": [],
+            "target_user": [
+              "prospect",
+              "property_manager"
+            ],
+            "title": "修繕流程六階段與各狀態意義"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-fee-recording-and-billing",
+            "merge_of": [
+              "tmp:kb:3425"
+            ],
+            "moved_from": [],
+            "op": "new",
+            "reason": "「修繕費用怎麼結算／怎麼分擔」在修繕流程內提問，費用記錄是安排修繕與結單的步驟；帳單本身的收款歸 E，此處只答修繕流程如何記錄與觸發帳單。",
+            "slug": "repair-fee-recording-and-billing",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "修繕費用的記錄、分擔與結單自動產生帳單"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-request-how-to-submit",
+            "merge_of": [
+              "tmp:kb:2972",
+              "tmp:kb:3427",
+              "tmp:kb:3446"
+            ],
+            "moved_from": [],
+            "op": "new",
+            "reason": "「報修要填什麼／在系統怎麼報修」三筆同題；與對話開單細目分層（系統頁面步驟 vs 對話確認機制）。",
+            "slug": "repair-request-how-to-submit",
+            "split_from": [],
+            "target_user": [
+              "prospect",
+              "property_manager"
+            ],
+            "title": "在系統提出修繕申請的步驟與需填資料"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-dispatch-and-close-by-manager",
+            "merge_of": [
+              "tmp:kb:3488",
+              "tmp:kb:4249"
+            ],
+            "moved_from": [],
+            "op": "new",
+            "reason": "「收到租客報修怎麼受理／怎麼派工／怎麼結單」是業者端操作題，兩筆合一。",
+            "slug": "repair-dispatch-and-close-by-manager",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "業者受理報修、安排廠商到結單封存的操作"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-multiple-items-one-ticket",
+            "merge_of": [
+              "tmp:kb:4654"
+            ],
+            "moved_from": [],
+            "op": "new",
+            "reason": "「好幾樣壞了要分開報嗎」獨立可答。",
+            "slug": "repair-multiple-items-one-ticket",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "多個品項是否分開報修"
+          }
+        ],
+        "id_map": [
+          {
+            "new": "jgb/F/repair-progress-followup-scope",
+            "old": "tmp:canon:jgb/F/repair-progress-followup-scope",
+            "op": "merge"
+          },
+          {
+            "new": "jgb/F/repair-progress-followup-scope",
+            "old": "tmp:kb:1558",
+            "op": "merge"
+          },
+          {
+            "new": "jgb/F/repair-progress-followup-scope",
+            "old": "tmp:kb:3365",
+            "op": "merge"
+          },
+          {
+            "new": "jgb/F/repair-progress-followup-scope",
+            "old": "tmp:kb:4420",
+            "op": "merge"
+          },
+          {
+            "new": "jgb/F/repair-system",
+            "old": "tmp:canon:jgb/F/repair-system",
+            "op": "keep"
+          },
+          {
+            "new": "jgb/F/repair-ticket-after-submit",
+            "old": "tmp:canon:jgb/F/repair-ticket-after-submit",
+            "op": "keep"
+          },
+          {
+            "new": "jgb/F/repair-ticket-mid-flow-cancel",
+            "old": "tmp:canon:jgb/F/repair-ticket-mid-flow-cancel",
+            "op": "keep"
+          },
+          {
+            "new": "jgb/F/repair-ticket-no-lease",
+            "old": "tmp:canon:jgb/F/repair-ticket-no-lease",
+            "op": "keep"
+          },
+          {
+            "new": "jgb/F/repair-ticket-open-and-confirm",
+            "old": "tmp:canon:jgb/F/repair-ticket-open-and-confirm",
+            "op": "merge"
+          },
+          {
+            "new": "jgb/F/repair-ticket-open-and-confirm",
+            "old": "tmp:kb:4416",
+            "op": "merge"
+          },
+          {
+            "new": "jgb/F/repair-ticket-open-and-confirm",
+            "old": "tmp:kb:4418",
+            "op": "merge"
+          },
+          {
+            "new": "jgb/F/repair-ticket-open-and-confirm",
+            "old": "tmp:kb:4421",
+            "op": "merge"
+          },
+          {
+            "new": "jgb/F/repair-ticket-open-and-confirm",
+            "old": "tmp:kb:4422",
+            "op": "merge"
+          },
+          {
+            "new": "jgb/F/repair-ticket-photo-count-limit",
+            "old": "tmp:canon:jgb/F/repair-ticket-photo-count-limit",
+            "op": "keep"
+          },
+          {
+            "new": "jgb/F/repair-ticket-photo-recognition-uncertain",
+            "old": "tmp:canon:jgb/F/repair-ticket-photo-recognition-uncertain",
+            "op": "keep"
+          },
+          {
+            "new": "jgb/F/repair-ticket-reclassify",
+            "old": "tmp:canon:jgb/F/repair-ticket-reclassify",
+            "op": "keep"
+          },
+          {
+            "new": "jgb/F/repair-ticket-submit-failure",
+            "old": "tmp:canon:jgb/F/repair-ticket-submit-failure",
+            "op": "keep"
+          },
+          {
+            "new": "jgb/F/repair-ticket-urgency-judgment",
+            "old": "tmp:canon:jgb/F/repair-ticket-urgency-judgment",
+            "op": "keep"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "old": "tmp:kb:2963",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "old": "tmp:kb:2964",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "old": "tmp:kb:2968",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "old": "tmp:kb:2969",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "old": "tmp:kb:2971",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "old": "tmp:kb:2973",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "old": "tmp:kb:3029",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "old": "tmp:kb:3030",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "old": "tmp:kb:3203",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "old": "tmp:kb:3221",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "old": "tmp:kb:3222",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "old": "tmp:kb:3277",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "old": "tmp:kb:3287",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "old": "tmp:kb:3289",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/common-equipment-maintenance-responsibility",
+            "old": "tmp:kb:2970",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/common-equipment-maintenance-responsibility",
+            "old": "tmp:kb:3186",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/common-equipment-maintenance-responsibility",
+            "old": "tmp:kb:3188",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/common-equipment-maintenance-responsibility",
+            "old": "tmp:kb:3190",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/common-equipment-maintenance-responsibility",
+            "old": "tmp:kb:3192",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/common-equipment-maintenance-responsibility",
+            "old": "tmp:kb:3194",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/common-equipment-maintenance-responsibility",
+            "old": "tmp:kb:3197",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/common-equipment-maintenance-responsibility",
+            "old": "tmp:kb:3274",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/tenant-equipment-maintenance-responsibility",
+            "old": "tmp:kb:3187",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/tenant-equipment-maintenance-responsibility",
+            "old": "tmp:kb:3189",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/tenant-equipment-maintenance-responsibility",
+            "old": "tmp:kb:3193",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/tenant-equipment-maintenance-responsibility",
+            "old": "tmp:kb:3195",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/tenant-equipment-maintenance-responsibility",
+            "old": "tmp:kb:3198",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/tenant-equipment-maintenance-responsibility",
+            "old": "tmp:kb:3200",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/tenant-equipment-maintenance-responsibility",
+            "old": "tmp:kb:3272",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/tenant-equipment-maintenance-responsibility",
+            "old": "tmp:kb:3275",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/tenant-repair-notification-duty",
+            "old": "tmp:kb:2966",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/tenant-repair-notification-duty",
+            "old": "tmp:kb:3219",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/tenant-repair-notification-duty",
+            "old": "tmp:kb:3286",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/tenant-self-repair-in-emergency",
+            "old": "tmp:kb:3220",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/tenant-self-repair-in-emergency",
+            "old": "tmp:kb:3288",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/emergency-repair-handling",
+            "old": "tmp:kb:2965",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/emergency-repair-handling",
+            "old": "tmp:kb:3145",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/emergency-repair-handling",
+            "old": "tmp:kb:3426",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/neighbor-leak-responsibility",
+            "old": "tmp:kb:2967",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-dispute",
+            "old": "tmp:kb:2974",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-warranty-period",
+            "old": "tmp:kb:2975",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/social-housing-repair-responsibility",
+            "old": "tmp:kb:3320",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-flow-stages",
+            "old": "tmp:kb:3424",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-fee-recording-and-billing",
+            "old": "tmp:kb:3425",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-request-how-to-submit",
+            "old": "tmp:kb:2972",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-request-how-to-submit",
+            "old": "tmp:kb:3427",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-request-how-to-submit",
+            "old": "tmp:kb:3446",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-dispatch-and-close-by-manager",
+            "old": "tmp:kb:3488",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-dispatch-and-close-by-manager",
+            "old": "tmp:kb:4249",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-multiple-items-one-ticket",
+            "old": "tmp:kb:4654",
+            "op": "new"
+          }
+        ],
+        "out_of_shelf": [
+          {
+            "id": "tmp:kb:3199",
+            "suggested_shelf": "D",
+            "why": "純法律條文（民法／租賃法規）依據，屬租約層而非修繕操作。"
+          },
+          {
+            "id": "tmp:kb:3276",
+            "suggested_shelf": "D",
+            "why": "純法律條文（民法第 655 條、租屋條例）依據，屬租約層而非修繕操作。"
+          }
+        ]
+      },
+      {
+        "angle": "content_boundary",
+        "coarses": [
+          {
+            "id": "A",
+            "title": "帳號與身分"
+          },
+          {
+            "id": "B",
+            "title": "團隊、人員與大房東"
+          },
+          {
+            "id": "C",
+            "title": "社區與物件"
+          },
+          {
+            "id": "D",
+            "title": "租約（含委託約子題）"
+          },
+          {
+            "id": "E",
+            "title": "帳務（含發票、收款金流、抄表）"
+          },
+          {
+            "id": "F",
+            "title": "修繕"
+          },
+          {
+            "id": "G",
+            "title": "裝置（IoT）"
+          },
+          {
+            "id": "H",
+            "title": "幫助中心"
+          },
+          {
+            "id": "I",
+            "title": "方案與導入"
+          }
+        ],
+        "fines": [
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-progress-followup-scope",
+            "merge_of": [
+              "tmp:canon:jgb/F/repair-progress-followup-scope",
+              "tmp:kb:1558",
+              "tmp:kb:3365",
+              "tmp:kb:4420"
+            ],
+            "moved_from": [],
+            "op": "merge",
+            "reason": "三筆新材料都是「查修繕進度」的入口與答法（提供物件、查名下報修單、沒有單就轉報修），與既有可答範圍互相依賴才完整，吸收為同一細目；3365 空內文只作入口。",
+            "slug": "repair-progress-followup-scope",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "修繕進度追問可答範圍"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-system",
+            "merge_of": [
+              "tmp:canon:jgb/F/repair-system"
+            ],
+            "moved_from": [],
+            "op": "keep",
+            "reason": "售前功能介紹，內容自成一體，無新材料需吸收。",
+            "slug": "repair-system",
+            "split_from": [],
+            "target_user": [
+              "prospect"
+            ],
+            "title": "線上報修與進度追蹤"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-ticket-after-submit",
+            "merge_of": [
+              "tmp:canon:jgb/F/repair-ticket-after-submit"
+            ],
+            "moved_from": [],
+            "op": "keep",
+            "reason": "送出後修改與同戶另一問題的規則自成一體。",
+            "slug": "repair-ticket-after-submit",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "確認送出後的單如何處理"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-ticket-mid-flow-cancel",
+            "merge_of": [
+              "tmp:canon:jgb/F/repair-ticket-mid-flow-cancel"
+            ],
+            "moved_from": [],
+            "op": "keep",
+            "reason": "取消規則自成一體。",
+            "slug": "repair-ticket-mid-flow-cancel",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "報修流程中途取消的規則"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-ticket-no-lease",
+            "merge_of": [
+              "tmp:canon:jgb/F/repair-ticket-no-lease"
+            ],
+            "moved_from": [],
+            "op": "keep",
+            "reason": "無租約開單規則自成一體。",
+            "slug": "repair-ticket-no-lease",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "代開單時的租約查詢身分與空屋／無租約物件開單規則"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-ticket-open-and-confirm",
+            "merge_of": [
+              "tmp:canon:jgb/F/repair-ticket-open-and-confirm",
+              "tmp:kb:4416",
+              "tmp:kb:4418",
+              "tmp:kb:4421",
+              "tmp:kb:4422"
+            ],
+            "moved_from": [],
+            "op": "merge",
+            "reason": "四筆空內文 kb 列（想報修／馬桶不通／漏水／冷氣壞）都是「東西壞了要開單」的進場講法，只作本細目入口，不獨立成細目。",
+            "slug": "repair-ticket-open-and-confirm",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "開修繕單基本流程與確認機制（拍照進場／文字口述）"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-ticket-photo-count-limit",
+            "merge_of": [
+              "tmp:canon:jgb/F/repair-ticket-photo-count-limit"
+            ],
+            "moved_from": [],
+            "op": "keep",
+            "reason": "張數限制自成一體。",
+            "slug": "repair-ticket-photo-count-limit",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "修繕辨識與附件的照片張數限制"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-ticket-photo-recognition-uncertain",
+            "merge_of": [
+              "tmp:canon:jgb/F/repair-ticket-photo-recognition-uncertain"
+            ],
+            "moved_from": [],
+            "op": "keep",
+            "reason": "辨識失敗處理自成一體。",
+            "slug": "repair-ticket-photo-recognition-uncertain",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "照片辨識信心不足或看不出損壞時的處理"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-ticket-reclassify",
+            "merge_of": [
+              "tmp:canon:jgb/F/repair-ticket-reclassify"
+            ],
+            "moved_from": [],
+            "op": "keep",
+            "reason": "修改辨識結果規則自成一體。",
+            "slug": "repair-ticket-reclassify",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "確認卡上修改辨識結果的規則"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-ticket-submit-failure",
+            "merge_of": [
+              "tmp:canon:jgb/F/repair-ticket-submit-failure"
+            ],
+            "moved_from": [],
+            "op": "keep",
+            "reason": "失敗重試規則自成一體。",
+            "slug": "repair-ticket-submit-failure",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "建單失敗時的處理與重試規則"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-ticket-urgency-judgment",
+            "merge_of": [
+              "tmp:canon:jgb/F/repair-ticket-urgency-judgment"
+            ],
+            "moved_from": [],
+            "op": "keep",
+            "reason": "對話建單時急迫值的來源與值域，是建單規則層；系統緊急標記的意義另立細目（emergency-repair-flag-and-handling）。",
+            "slug": "repair-ticket-urgency-judgment",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "修繕單急迫程度的判斷來源與值域"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "merge_of": [
+              "tmp:kb:2963",
+              "tmp:kb:2964",
+              "tmp:kb:2968",
+              "tmp:kb:2969",
+              "tmp:kb:2971",
+              "tmp:kb:2973",
+              "tmp:kb:3029",
+              "tmp:kb:3030",
+              "tmp:kb:3203",
+              "tmp:kb:3221",
+              "tmp:kb:3222",
+              "tmp:kb:3277",
+              "tmp:kb:3287",
+              "tmp:kb:3289"
+            ],
+            "moved_from": [],
+            "op": "new",
+            "reason": "14 筆講同一命題：結構與固定設施歸房東、日常小修與使用不當歸租客、以租約為準；各筆單獨皆不完整（只講其中一方或一種情形），合起來才是一個可獨立回答的主題。",
+            "slug": "repair-responsibility-landlord-vs-tenant",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "房屋與設施修繕責任劃分（房東／租客）"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/tenant-equipment-responsibility",
+            "merge_of": [
+              "tmp:kb:3187",
+              "tmp:kb:3189",
+              "tmp:kb:3193",
+              "tmp:kb:3195",
+              "tmp:kb:3198",
+              "tmp:kb:3200",
+              "tmp:kb:3272",
+              "tmp:kb:3275"
+            ],
+            "moved_from": [],
+            "op": "new",
+            "reason": "以「租客設備」為主體：使用義務、正常磨損 vs 不當使用的損壞歸屬、賠償標準、維護費用與更新責任互相依賴才完整；與房屋結構層級的責任劃分主題不同，故分立。",
+            "slug": "tenant-equipment-responsibility",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "租客設備的使用、損壞賠償與更新責任"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/common-facility-maintenance",
+            "merge_of": [
+              "tmp:kb:2970",
+              "tmp:kb:3186",
+              "tmp:kb:3188",
+              "tmp:kb:3190",
+              "tmp:kb:3192",
+              "tmp:kb:3194",
+              "tmp:kb:3197",
+              "tmp:kb:3274"
+            ],
+            "moved_from": [],
+            "op": "new",
+            "reason": "以「公共設備」為主體：維護／損壞／費用／更新責任、檢查頻率、維護紀錄皆環繞同一主體，各筆單看不完整，合為一題；主體與租客設備、房屋結構不同，故分立。",
+            "slug": "common-facility-maintenance",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "公共設備的維護、費用、更新、檢查與紀錄責任"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/tenant-repair-notice-obligation",
+            "merge_of": [
+              "tmp:kb:2966",
+              "tmp:kb:3219",
+              "tmp:kb:3286"
+            ],
+            "moved_from": [],
+            "op": "new",
+            "reason": "三筆同一命題（租客有通知義務、可要求合理期限內修繕），內容自成一體，與責任劃分是不同主題。",
+            "slug": "tenant-repair-notice-obligation",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "租客發現需修繕時的通知義務"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/tenant-emergency-self-repair",
+            "merge_of": [
+              "tmp:kb:2965",
+              "tmp:kb:3220",
+              "tmp:kb:3288"
+            ],
+            "moved_from": [],
+            "op": "new",
+            "reason": "三筆同一命題（緊急可先自行修繕、事後通知、保留收據請款），自成一體；與系統緊急標記是不同層。",
+            "slug": "tenant-emergency-self-repair",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "緊急情況下租客自行修繕的條件與事後處理"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/emergency-repair-flag-and-handling",
+            "merge_of": [
+              "tmp:kb:3145",
+              "tmp:kb:3426"
+            ],
+            "moved_from": [],
+            "op": "new",
+            "reason": "業者提供緊急維修服務與系統緊急標記的意義／處理順序互相依賴才完整；此為系統與服務面，與對話建單急迫值來源（urgency-judgment）及租客自行修繕分立。",
+            "slug": "emergency-repair-flag-and-handling",
+            "split_from": [],
+            "target_user": [
+              "prospect",
+              "property_manager"
+            ],
+            "title": "緊急修繕的標記、優先處理與回應時效"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/neighbor-leak-responsibility",
+            "merge_of": [
+              "tmp:kb:2967"
+            ],
+            "moved_from": [],
+            "op": "new",
+            "reason": "第三方（鄰居）漏水歸漏水方負責，主體與房東／租客責任劃分不同，自成一題；漏水入口講法（4421）屬開單流程不屬此。",
+            "slug": "neighbor-leak-responsibility",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "鄰居漏水的修繕責任與處理"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-responsibility-dispute",
+            "merge_of": [
+              "tmp:kb:2974"
+            ],
+            "moved_from": [],
+            "op": "new",
+            "reason": "爭議處理（查租約、管理師調解、留紀錄）自成一體，不依賴責任劃分內容即可回答。",
+            "slug": "repair-responsibility-dispute",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "修繕責任有爭議時的處理"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-warranty-period",
+            "merge_of": [
+              "tmp:kb:2975"
+            ],
+            "moved_from": [],
+            "op": "new",
+            "reason": "保固期是修繕完成後的獨立命題，自成一題。",
+            "slug": "repair-warranty-period",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "修繕後保固期"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/social-housing-repair-responsibility",
+            "merge_of": [
+              "tmp:kb:3320"
+            ],
+            "moved_from": [],
+            "op": "new",
+            "reason": "社會住宅由管理單位負責維修，主體與一般房東／租客劃分不同，自成一題。",
+            "slug": "social-housing-repair-responsibility",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "社會住宅的維修責任"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-flow-stages",
+            "merge_of": [
+              "tmp:kb:3424"
+            ],
+            "moved_from": [],
+            "op": "new",
+            "reason": "狀態模型（申請中→安排→進行中→完成→結單→封存）是獨立可答的定義題；業者的操作步驟另立細目。",
+            "slug": "repair-flow-stages",
+            "split_from": [],
+            "target_user": [
+              "prospect",
+              "property_manager"
+            ],
+            "title": "修繕流程六個狀態階段說明"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-cost-recording-and-settlement",
+            "merge_of": [
+              "tmp:kb:3425"
+            ],
+            "moved_from": [],
+            "op": "new",
+            "reason": "修繕模組內的預估／實際費用欄位與結單自動開帳單、分擔由房東決定，是修繕流程的一環自成一題；帳單本身的帳務規則另見 E。",
+            "slug": "repair-cost-recording-and-settlement",
+            "split_from": [],
+            "target_user": [
+              "prospect",
+              "property_manager"
+            ],
+            "title": "修繕費用的記錄、結單自動產生帳單與分擔方式"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-request-submission-in-system",
+            "merge_of": [
+              "tmp:kb:2972",
+              "tmp:kb:3427",
+              "tmp:kb:3446"
+            ],
+            "moved_from": [],
+            "op": "new",
+            "reason": "三筆都是系統 UI 提出修繕申請要填什麼、步驟與提交後通知，互相補足才完整；與對話式開單（open-and-confirm）是不同介面層，分立。",
+            "slug": "repair-request-submission-in-system",
+            "split_from": [],
+            "target_user": [
+              "prospect",
+              "property_manager"
+            ],
+            "title": "在系統中提出修繕申請的方式與步驟（租客／房東）"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-intake-and-dispatch",
+            "merge_of": [
+              "tmp:kb:3488",
+              "tmp:kb:4249"
+            ],
+            "moved_from": [],
+            "op": "new",
+            "reason": "兩筆都是業者端受理→派工→完工→結單→封存的操作步驟，內容重疊互補，合為一題；與狀態定義題分立。",
+            "slug": "repair-intake-and-dispatch",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "業者受理修繕申請、安排廠商與結案操作"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-multiple-items-one-ticket",
+            "merge_of": [
+              "tmp:kb:4654"
+            ],
+            "moved_from": [],
+            "op": "new",
+            "reason": "多品項用「其他」合寫一張單是獨立的操作問答，不依賴其他內容即可回答。",
+            "slug": "repair-multiple-items-one-ticket",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "多個品項合併在一張報修單"
+          }
+        ],
+        "id_map": [
+          {
+            "new": "jgb/F/repair-progress-followup-scope",
+            "old": "tmp:canon:jgb/F/repair-progress-followup-scope",
+            "op": "merge"
+          },
+          {
+            "new": "jgb/F/repair-progress-followup-scope",
+            "old": "tmp:kb:1558",
+            "op": "merge"
+          },
+          {
+            "new": "jgb/F/repair-progress-followup-scope",
+            "old": "tmp:kb:3365",
+            "op": "merge"
+          },
+          {
+            "new": "jgb/F/repair-progress-followup-scope",
+            "old": "tmp:kb:4420",
+            "op": "merge"
+          },
+          {
+            "new": "jgb/F/repair-system",
+            "old": "tmp:canon:jgb/F/repair-system",
+            "op": "keep"
+          },
+          {
+            "new": "jgb/F/repair-ticket-after-submit",
+            "old": "tmp:canon:jgb/F/repair-ticket-after-submit",
+            "op": "keep"
+          },
+          {
+            "new": "jgb/F/repair-ticket-mid-flow-cancel",
+            "old": "tmp:canon:jgb/F/repair-ticket-mid-flow-cancel",
+            "op": "keep"
+          },
+          {
+            "new": "jgb/F/repair-ticket-no-lease",
+            "old": "tmp:canon:jgb/F/repair-ticket-no-lease",
+            "op": "keep"
+          },
+          {
+            "new": "jgb/F/repair-ticket-open-and-confirm",
+            "old": "tmp:canon:jgb/F/repair-ticket-open-and-confirm",
+            "op": "merge"
+          },
+          {
+            "new": "jgb/F/repair-ticket-open-and-confirm",
+            "old": "tmp:kb:4416",
+            "op": "merge"
+          },
+          {
+            "new": "jgb/F/repair-ticket-open-and-confirm",
+            "old": "tmp:kb:4418",
+            "op": "merge"
+          },
+          {
+            "new": "jgb/F/repair-ticket-open-and-confirm",
+            "old": "tmp:kb:4421",
+            "op": "merge"
+          },
+          {
+            "new": "jgb/F/repair-ticket-open-and-confirm",
+            "old": "tmp:kb:4422",
+            "op": "merge"
+          },
+          {
+            "new": "jgb/F/repair-ticket-photo-count-limit",
+            "old": "tmp:canon:jgb/F/repair-ticket-photo-count-limit",
+            "op": "keep"
+          },
+          {
+            "new": "jgb/F/repair-ticket-photo-recognition-uncertain",
+            "old": "tmp:canon:jgb/F/repair-ticket-photo-recognition-uncertain",
+            "op": "keep"
+          },
+          {
+            "new": "jgb/F/repair-ticket-reclassify",
+            "old": "tmp:canon:jgb/F/repair-ticket-reclassify",
+            "op": "keep"
+          },
+          {
+            "new": "jgb/F/repair-ticket-submit-failure",
+            "old": "tmp:canon:jgb/F/repair-ticket-submit-failure",
+            "op": "keep"
+          },
+          {
+            "new": "jgb/F/repair-ticket-urgency-judgment",
+            "old": "tmp:canon:jgb/F/repair-ticket-urgency-judgment",
+            "op": "keep"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "old": "tmp:kb:2963",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "old": "tmp:kb:2964",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "old": "tmp:kb:2968",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "old": "tmp:kb:2969",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "old": "tmp:kb:2971",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "old": "tmp:kb:2973",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "old": "tmp:kb:3029",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "old": "tmp:kb:3030",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "old": "tmp:kb:3203",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "old": "tmp:kb:3221",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "old": "tmp:kb:3222",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "old": "tmp:kb:3277",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "old": "tmp:kb:3287",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "old": "tmp:kb:3289",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/tenant-equipment-responsibility",
+            "old": "tmp:kb:3187",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/tenant-equipment-responsibility",
+            "old": "tmp:kb:3189",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/tenant-equipment-responsibility",
+            "old": "tmp:kb:3193",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/tenant-equipment-responsibility",
+            "old": "tmp:kb:3195",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/tenant-equipment-responsibility",
+            "old": "tmp:kb:3198",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/tenant-equipment-responsibility",
+            "old": "tmp:kb:3200",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/tenant-equipment-responsibility",
+            "old": "tmp:kb:3272",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/tenant-equipment-responsibility",
+            "old": "tmp:kb:3275",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/common-facility-maintenance",
+            "old": "tmp:kb:2970",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/common-facility-maintenance",
+            "old": "tmp:kb:3186",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/common-facility-maintenance",
+            "old": "tmp:kb:3188",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/common-facility-maintenance",
+            "old": "tmp:kb:3190",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/common-facility-maintenance",
+            "old": "tmp:kb:3192",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/common-facility-maintenance",
+            "old": "tmp:kb:3194",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/common-facility-maintenance",
+            "old": "tmp:kb:3197",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/common-facility-maintenance",
+            "old": "tmp:kb:3274",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/tenant-repair-notice-obligation",
+            "old": "tmp:kb:2966",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/tenant-repair-notice-obligation",
+            "old": "tmp:kb:3219",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/tenant-repair-notice-obligation",
+            "old": "tmp:kb:3286",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/tenant-emergency-self-repair",
+            "old": "tmp:kb:2965",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/tenant-emergency-self-repair",
+            "old": "tmp:kb:3220",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/tenant-emergency-self-repair",
+            "old": "tmp:kb:3288",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/emergency-repair-flag-and-handling",
+            "old": "tmp:kb:3145",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/emergency-repair-flag-and-handling",
+            "old": "tmp:kb:3426",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/neighbor-leak-responsibility",
+            "old": "tmp:kb:2967",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-dispute",
+            "old": "tmp:kb:2974",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-warranty-period",
+            "old": "tmp:kb:2975",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/social-housing-repair-responsibility",
+            "old": "tmp:kb:3320",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-flow-stages",
+            "old": "tmp:kb:3424",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-cost-recording-and-settlement",
+            "old": "tmp:kb:3425",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-request-submission-in-system",
+            "old": "tmp:kb:2972",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-request-submission-in-system",
+            "old": "tmp:kb:3427",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-request-submission-in-system",
+            "old": "tmp:kb:3446",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-intake-and-dispatch",
+            "old": "tmp:kb:3488",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-intake-and-dispatch",
+            "old": "tmp:kb:4249",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-multiple-items-one-ticket",
+            "old": "tmp:kb:4654",
+            "op": "new"
+          }
+        ],
+        "out_of_shelf": [
+          {
+            "id": "tmp:kb:3199",
+            "suggested_shelf": "D",
+            "why": "純法律條文（民法與租賃法規對房東維護義務的規範），屬租約／法規層而非修繕操作或責任劃分講法。"
+          },
+          {
+            "id": "tmp:kb:3276",
+            "suggested_shelf": "D",
+            "why": "純法律條文（民法第 655 條、租屋條例），屬租約／法規層而非修繕操作或責任劃分講法。"
+          }
+        ]
+      },
+      {
+        "angle": "audience_level",
+        "coarses": [
+          {
+            "id": "A",
+            "title": "帳號與身分"
+          },
+          {
+            "id": "B",
+            "title": "團隊、人員與大房東"
+          },
+          {
+            "id": "C",
+            "title": "社區與物件"
+          },
+          {
+            "id": "D",
+            "title": "租約（含委託約子題）"
+          },
+          {
+            "id": "E",
+            "title": "帳務（含發票、收款金流、抄表）"
+          },
+          {
+            "id": "F",
+            "title": "修繕"
+          },
+          {
+            "id": "G",
+            "title": "裝置（IoT）"
+          },
+          {
+            "id": "H",
+            "title": "幫助中心"
+          },
+          {
+            "id": "I",
+            "title": "方案與導入"
+          }
+        ],
+        "fines": [
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-system",
+            "merge_of": [
+              "tmp:canon:jgb/F/repair-system"
+            ],
+            "moved_from": [],
+            "op": "keep",
+            "reason": "售前能力層級：向潛在客戶說明修繕系統能做什麼，屬 prospect 的能力層；操作與權益層另見 property_manager 細目。",
+            "slug": "repair-system",
+            "split_from": [],
+            "target_user": [
+              "prospect"
+            ],
+            "title": "線上報修與進度追蹤"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-ticket-open-and-confirm",
+            "merge_of": [
+              "tmp:canon:jgb/F/repair-ticket-open-and-confirm"
+            ],
+            "moved_from": [],
+            "op": "keep",
+            "reason": "業者操作層級：對話代開修繕單的既有規則，受眾為業者（業務）；本次無新材料涉及此命題，原樣保留。",
+            "slug": "repair-ticket-open-and-confirm",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "開修繕單基本流程與確認機制（拍照進場／文字口述）"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-ticket-after-submit",
+            "merge_of": [
+              "tmp:canon:jgb/F/repair-ticket-after-submit"
+            ],
+            "moved_from": [],
+            "op": "keep",
+            "reason": "業者操作層級：對話代開修繕單的既有規則，受眾為業者（業務）；本次無新材料涉及此命題，原樣保留。",
+            "slug": "repair-ticket-after-submit",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "確認送出後的單如何處理"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-ticket-mid-flow-cancel",
+            "merge_of": [
+              "tmp:canon:jgb/F/repair-ticket-mid-flow-cancel"
+            ],
+            "moved_from": [],
+            "op": "keep",
+            "reason": "業者操作層級：對話代開修繕單的既有規則，受眾為業者（業務）；本次無新材料涉及此命題，原樣保留。",
+            "slug": "repair-ticket-mid-flow-cancel",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "報修流程中途取消的規則"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-ticket-no-lease",
+            "merge_of": [
+              "tmp:canon:jgb/F/repair-ticket-no-lease"
+            ],
+            "moved_from": [],
+            "op": "keep",
+            "reason": "業者操作層級：對話代開修繕單的既有規則，受眾為業者（業務）；本次無新材料涉及此命題，原樣保留。",
+            "slug": "repair-ticket-no-lease",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "代開單時的租約查詢身分與空屋／無租約物件開單規則"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-ticket-photo-count-limit",
+            "merge_of": [
+              "tmp:canon:jgb/F/repair-ticket-photo-count-limit"
+            ],
+            "moved_from": [],
+            "op": "keep",
+            "reason": "業者操作層級：對話代開修繕單的既有規則，受眾為業者（業務）；本次無新材料涉及此命題，原樣保留。",
+            "slug": "repair-ticket-photo-count-limit",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "修繕辨識與附件的照片張數限制"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-ticket-photo-recognition-uncertain",
+            "merge_of": [
+              "tmp:canon:jgb/F/repair-ticket-photo-recognition-uncertain"
+            ],
+            "moved_from": [],
+            "op": "keep",
+            "reason": "業者操作層級：對話代開修繕單的既有規則，受眾為業者（業務）；本次無新材料涉及此命題，原樣保留。",
+            "slug": "repair-ticket-photo-recognition-uncertain",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "照片辨識信心不足或看不出損壞時的處理"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-ticket-reclassify",
+            "merge_of": [
+              "tmp:canon:jgb/F/repair-ticket-reclassify"
+            ],
+            "moved_from": [],
+            "op": "keep",
+            "reason": "業者操作層級：對話代開修繕單的既有規則，受眾為業者（業務）；本次無新材料涉及此命題，原樣保留。",
+            "slug": "repair-ticket-reclassify",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "確認卡上修改辨識結果的規則"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-ticket-submit-failure",
+            "merge_of": [
+              "tmp:canon:jgb/F/repair-ticket-submit-failure"
+            ],
+            "moved_from": [],
+            "op": "keep",
+            "reason": "業者操作層級：對話代開修繕單的既有規則，受眾為業者（業務）；本次無新材料涉及此命題，原樣保留。",
+            "slug": "repair-ticket-submit-failure",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "建單失敗時的處理與重試規則"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-ticket-urgency-judgment",
+            "merge_of": [
+              "tmp:canon:jgb/F/repair-ticket-urgency-judgment"
+            ],
+            "moved_from": [],
+            "op": "keep",
+            "reason": "業者操作層級：對話代開修繕單的既有規則，受眾為業者（業務）；本次無新材料涉及此命題，原樣保留。",
+            "slug": "repair-ticket-urgency-judgment",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "修繕單急迫程度的判斷來源與值域"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-progress-followup-scope",
+            "merge_of": [
+              "tmp:canon:jgb/F/repair-progress-followup-scope",
+              "tmp:kb:1558",
+              "tmp:kb:3365",
+              "tmp:kb:4420"
+            ],
+            "moved_from": [],
+            "op": "merge",
+            "reason": "同一主題（查修繕進度）同一受眾同一層級（操作）：既有細目定可答欄位，新材料補查詢入口與無單時導向報修的講法；3365 為空內文列，只作入口吸收，不獨立成細目。",
+            "slug": "repair-progress-followup-scope",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "修繕進度追問可答範圍與查詢方式"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-flow-stages",
+            "merge_of": [
+              "tmp:kb:3424"
+            ],
+            "moved_from": [],
+            "op": "new",
+            "reason": "能力層級：六階段狀態定義對潛在客戶（了解系統能力）與業者（判讀狀態）答案相同，故共用一細目；各階段的操作步驟另見 repair-dispatch-and-close。",
+            "slug": "repair-flow-stages",
+            "split_from": [],
+            "target_user": [
+              "prospect",
+              "property_manager"
+            ],
+            "title": "修繕流程六階段與狀態說明"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-cost-record-and-bill",
+            "merge_of": [
+              "tmp:kb:3425"
+            ],
+            "moved_from": [],
+            "op": "new",
+            "reason": "業者操作層級：預估／實際費用在修繕流程中如何記錄、結單時何時自動產生帳單、分擔由房東自行決定；帳單本身的計費與收款另見 E 架，誰負擔的權益層另見 repair-responsibility-landlord-vs-tenant。",
+            "slug": "repair-cost-record-and-bill",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "修繕費用的記錄與結單自動產生修繕費帳單"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-emergency-flag-and-priority",
+            "merge_of": [
+              "tmp:kb:3426",
+              "tmp:kb:3145"
+            ],
+            "moved_from": [],
+            "op": "new",
+            "reason": "能力／操作層級：系統提供緊急標記供業者優先排序、回應時間由業者自訂，對潛在客戶與業者答案相同；租客可否自行緊急修繕屬權益層，另見 repair-tenant-emergency-self-repair。",
+            "slug": "repair-emergency-flag-and-priority",
+            "split_from": [],
+            "target_user": [
+              "prospect",
+              "property_manager"
+            ],
+            "title": "緊急修繕的標記、優先處理與回應時間"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-request-submit-steps",
+            "merge_of": [
+              "tmp:kb:3427",
+              "tmp:kb:3446",
+              "tmp:kb:2972",
+              "tmp:kb:4416",
+              "tmp:kb:4418",
+              "tmp:kb:4421",
+              "tmp:kb:4422"
+            ],
+            "moved_from": [],
+            "op": "new",
+            "reason": "操作層級：報修需填的欄位（類別、原因描述、照片、緊急程度）與提交後的通知與追蹤；4416／4418／4421／4422 為空內文症狀入口列，只作入口吸收；售前的能力層級另見 repair-system。",
+            "slug": "repair-request-submit-steps",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "租客／房東在系統提出修繕申請的方式與步驟"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-request-multiple-items",
+            "merge_of": [
+              "tmp:kb:4654"
+            ],
+            "moved_from": [],
+            "op": "new",
+            "reason": "操作層級：多品項可用「其他」自行輸入整合於同一張報修單，屬獨立可答的操作規則，與一般報修步驟分開。",
+            "slug": "repair-request-multiple-items",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "同一次報修多個品項是否需分開建單"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-dispatch-and-close",
+            "merge_of": [
+              "tmp:kb:3488",
+              "tmp:kb:4249"
+            ],
+            "moved_from": [],
+            "op": "new",
+            "reason": "業者操作層級：從申請到結單封存的逐步操作、各步系統通知租客、只有業者能推進狀態；階段定義另見 repair-flow-stages。",
+            "slug": "repair-dispatch-and-close",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "業者受理修繕申請、安排廠商、完工登錄與結單封存"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "merge_of": [
+              "tmp:kb:2963",
+              "tmp:kb:2964",
+              "tmp:kb:2968",
+              "tmp:kb:2969",
+              "tmp:kb:2971",
+              "tmp:kb:2973",
+              "tmp:kb:3029",
+              "tmp:kb:3030",
+              "tmp:kb:3203",
+              "tmp:kb:3222",
+              "tmp:kb:3277",
+              "tmp:kb:3287",
+              "tmp:kb:3289",
+              "tmp:kb:3221",
+              "tmp:kb:3320"
+            ],
+            "moved_from": [],
+            "op": "new",
+            "reason": "權益層級：業者會被租客問到的責任劃分通則（房東負責結構與主要設施、租客負責日常小修與不當使用損壞、依租約為準），十餘列近重複講法合為一細目；3320 為社會住宅由管理單位負擔的變體，3221 為修繕後維持狀態責任，同一命題併入。",
+            "slug": "repair-responsibility-landlord-vs-tenant",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "房東與租客的修繕責任劃分（結構設施 vs 日常小修與不當使用）"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-tenant-equipment-responsibility",
+            "merge_of": [
+              "tmp:kb:3187",
+              "tmp:kb:3189",
+              "tmp:kb:3193",
+              "tmp:kb:3195",
+              "tmp:kb:3198",
+              "tmp:kb:3200",
+              "tmp:kb:3272",
+              "tmp:kb:3275"
+            ],
+            "moved_from": [],
+            "op": "new",
+            "reason": "權益層級：以「租客設備」為對象的責任問題（日常保養、正常磨損由房東、不當使用由租客賠償、更新與維護費由房東），與總則分開避免混淆對象；賠償金額由管理師評估屬責任歸屬不屬計費。",
+            "slug": "repair-tenant-equipment-responsibility",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "租客設備的使用、維護、更新與損壞賠償責任"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-common-facility-responsibility",
+            "merge_of": [
+              "tmp:kb:2970",
+              "tmp:kb:3186",
+              "tmp:kb:3188",
+              "tmp:kb:3190",
+              "tmp:kb:3192",
+              "tmp:kb:3194",
+              "tmp:kb:3197",
+              "tmp:kb:3274"
+            ],
+            "moved_from": [],
+            "op": "new",
+            "reason": "權益層級：以公共設備為對象的責任問題（維護／更新／費用由房東或管理方、檢查頻率依管理規定、需保留維護紀錄），與租客設備及總則分開。",
+            "slug": "repair-common-facility-responsibility",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "公共設備的維護、檢查、費用、更新與紀錄責任"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-notify-duty-and-timely-repair-right",
+            "merge_of": [
+              "tmp:kb:2966",
+              "tmp:kb:3219",
+              "tmp:kb:3286"
+            ],
+            "moved_from": [],
+            "op": "new",
+            "reason": "權益層級：租客發現需修繕時有通知義務、並有權要求房東於合理時間內修繕；此為租客的法定義務與權利命題，非系統通知投遞管道，故獨立成細目。",
+            "slug": "repair-notify-duty-and-timely-repair-right",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "租客的修繕通知義務與要求合理期限修繕的權利"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-tenant-emergency-self-repair",
+            "merge_of": [
+              "tmp:kb:2965",
+              "tmp:kb:3220",
+              "tmp:kb:3288"
+            ],
+            "moved_from": [],
+            "op": "new",
+            "reason": "權益層級：緊急情況（漏水、電力故障）租客可先行修繕、事後通知並保留收據由房東負擔合理費用；與系統的緊急標記（操作層）分屬不同層級，以另見處理。",
+            "slug": "repair-tenant-emergency-self-repair",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "租客緊急情況自行修繕與費用報銷"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-responsibility-dispute",
+            "merge_of": [
+              "tmp:kb:2974"
+            ],
+            "moved_from": [],
+            "op": "new",
+            "reason": "權益層級：責任認定有爭議時查租約條款、由管理師調解並保留溝通紀錄，為獨立可答的處理程序。",
+            "slug": "repair-responsibility-dispute",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "修繕責任爭議的處理方式"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-warranty-period",
+            "merge_of": [
+              "tmp:kb:2975"
+            ],
+            "moved_from": [],
+            "op": "new",
+            "reason": "權益層級：修繕完成後的保固期通常一年、依合約而異，屬修繕結果的保障，非租約條款本身，留本架。",
+            "slug": "repair-warranty-period",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "修繕後的保固期"
+          },
+          {
+            "coarse_id": "F",
+            "id": "jgb/F/repair-neighbor-leak-responsibility",
+            "merge_of": [
+              "tmp:kb:2967"
+            ],
+            "moved_from": [],
+            "op": "new",
+            "reason": "權益層級：鄰損（鄰居漏水）由漏水方負責、透過管理師協調並儘快報修，責任對象為第三方，與房東／租客總則分開。",
+            "slug": "repair-neighbor-leak-responsibility",
+            "split_from": [],
+            "target_user": [
+              "property_manager"
+            ],
+            "title": "鄰居漏水的修繕責任與處理"
+          }
+        ],
+        "id_map": [
+          {
+            "new": "jgb/F/repair-system",
+            "old": "tmp:canon:jgb/F/repair-system",
+            "op": "keep"
+          },
+          {
+            "new": "jgb/F/repair-ticket-open-and-confirm",
+            "old": "tmp:canon:jgb/F/repair-ticket-open-and-confirm",
+            "op": "keep"
+          },
+          {
+            "new": "jgb/F/repair-ticket-after-submit",
+            "old": "tmp:canon:jgb/F/repair-ticket-after-submit",
+            "op": "keep"
+          },
+          {
+            "new": "jgb/F/repair-ticket-mid-flow-cancel",
+            "old": "tmp:canon:jgb/F/repair-ticket-mid-flow-cancel",
+            "op": "keep"
+          },
+          {
+            "new": "jgb/F/repair-ticket-no-lease",
+            "old": "tmp:canon:jgb/F/repair-ticket-no-lease",
+            "op": "keep"
+          },
+          {
+            "new": "jgb/F/repair-ticket-photo-count-limit",
+            "old": "tmp:canon:jgb/F/repair-ticket-photo-count-limit",
+            "op": "keep"
+          },
+          {
+            "new": "jgb/F/repair-ticket-photo-recognition-uncertain",
+            "old": "tmp:canon:jgb/F/repair-ticket-photo-recognition-uncertain",
+            "op": "keep"
+          },
+          {
+            "new": "jgb/F/repair-ticket-reclassify",
+            "old": "tmp:canon:jgb/F/repair-ticket-reclassify",
+            "op": "keep"
+          },
+          {
+            "new": "jgb/F/repair-ticket-submit-failure",
+            "old": "tmp:canon:jgb/F/repair-ticket-submit-failure",
+            "op": "keep"
+          },
+          {
+            "new": "jgb/F/repair-ticket-urgency-judgment",
+            "old": "tmp:canon:jgb/F/repair-ticket-urgency-judgment",
+            "op": "keep"
+          },
+          {
+            "new": "jgb/F/repair-progress-followup-scope",
+            "old": "tmp:canon:jgb/F/repair-progress-followup-scope",
+            "op": "merge"
+          },
+          {
+            "new": "jgb/F/repair-progress-followup-scope",
+            "old": "tmp:kb:1558",
+            "op": "merge"
+          },
+          {
+            "new": "jgb/F/repair-progress-followup-scope",
+            "old": "tmp:kb:3365",
+            "op": "merge"
+          },
+          {
+            "new": "jgb/F/repair-progress-followup-scope",
+            "old": "tmp:kb:4420",
+            "op": "merge"
+          },
+          {
+            "new": "jgb/F/repair-flow-stages",
+            "old": "tmp:kb:3424",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-cost-record-and-bill",
+            "old": "tmp:kb:3425",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-emergency-flag-and-priority",
+            "old": "tmp:kb:3426",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-emergency-flag-and-priority",
+            "old": "tmp:kb:3145",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-request-submit-steps",
+            "old": "tmp:kb:3427",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-request-submit-steps",
+            "old": "tmp:kb:3446",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-request-submit-steps",
+            "old": "tmp:kb:2972",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-request-submit-steps",
+            "old": "tmp:kb:4416",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-request-submit-steps",
+            "old": "tmp:kb:4418",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-request-submit-steps",
+            "old": "tmp:kb:4421",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-request-submit-steps",
+            "old": "tmp:kb:4422",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-request-multiple-items",
+            "old": "tmp:kb:4654",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-dispatch-and-close",
+            "old": "tmp:kb:3488",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-dispatch-and-close",
+            "old": "tmp:kb:4249",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "old": "tmp:kb:2963",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "old": "tmp:kb:2964",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "old": "tmp:kb:2968",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "old": "tmp:kb:2969",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "old": "tmp:kb:2971",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "old": "tmp:kb:2973",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "old": "tmp:kb:3029",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "old": "tmp:kb:3030",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "old": "tmp:kb:3203",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "old": "tmp:kb:3222",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "old": "tmp:kb:3277",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "old": "tmp:kb:3287",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "old": "tmp:kb:3289",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "old": "tmp:kb:3221",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+            "old": "tmp:kb:3320",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-tenant-equipment-responsibility",
+            "old": "tmp:kb:3187",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-tenant-equipment-responsibility",
+            "old": "tmp:kb:3189",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-tenant-equipment-responsibility",
+            "old": "tmp:kb:3193",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-tenant-equipment-responsibility",
+            "old": "tmp:kb:3195",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-tenant-equipment-responsibility",
+            "old": "tmp:kb:3198",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-tenant-equipment-responsibility",
+            "old": "tmp:kb:3200",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-tenant-equipment-responsibility",
+            "old": "tmp:kb:3272",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-tenant-equipment-responsibility",
+            "old": "tmp:kb:3275",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-common-facility-responsibility",
+            "old": "tmp:kb:2970",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-common-facility-responsibility",
+            "old": "tmp:kb:3186",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-common-facility-responsibility",
+            "old": "tmp:kb:3188",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-common-facility-responsibility",
+            "old": "tmp:kb:3190",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-common-facility-responsibility",
+            "old": "tmp:kb:3192",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-common-facility-responsibility",
+            "old": "tmp:kb:3194",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-common-facility-responsibility",
+            "old": "tmp:kb:3197",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-common-facility-responsibility",
+            "old": "tmp:kb:3274",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-notify-duty-and-timely-repair-right",
+            "old": "tmp:kb:2966",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-notify-duty-and-timely-repair-right",
+            "old": "tmp:kb:3219",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-notify-duty-and-timely-repair-right",
+            "old": "tmp:kb:3286",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-tenant-emergency-self-repair",
+            "old": "tmp:kb:2965",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-tenant-emergency-self-repair",
+            "old": "tmp:kb:3220",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-tenant-emergency-self-repair",
+            "old": "tmp:kb:3288",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-responsibility-dispute",
+            "old": "tmp:kb:2974",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-warranty-period",
+            "old": "tmp:kb:2975",
+            "op": "new"
+          },
+          {
+            "new": "jgb/F/repair-neighbor-leak-responsibility",
+            "old": "tmp:kb:2967",
+            "op": "new"
+          }
+        ],
+        "out_of_shelf": [
+          {
+            "id": "tmp:kb:3199",
+            "suggested_shelf": "D",
+            "why": "純法律條文（民法及租賃法規對房東維持租賃物狀態的義務），屬租約權益的法源，非修繕操作或責任實務。"
+          },
+          {
+            "id": "tmp:kb:3276",
+            "suggested_shelf": "D",
+            "why": "純法律條文引用（民法第 655 條、租屋條例），屬租約法源，非修繕實務。"
+          }
+        ]
+      }
+    ],
+    "synthesis": {
+      "angle": "synthesis",
+      "coarses": [
+        {
+          "id": "A",
+          "title": "帳號與身分"
+        },
+        {
+          "id": "B",
+          "title": "團隊、人員與大房東"
+        },
+        {
+          "id": "C",
+          "title": "社區與物件"
+        },
+        {
+          "id": "D",
+          "title": "租約（含委託約子題）"
+        },
+        {
+          "id": "E",
+          "title": "帳務（含發票、收款金流、抄表）"
+        },
+        {
+          "id": "F",
+          "title": "修繕"
+        },
+        {
+          "id": "G",
+          "title": "裝置（IoT）"
+        },
+        {
+          "id": "H",
+          "title": "幫助中心"
+        },
+        {
+          "id": "I",
+          "title": "方案與導入"
+        }
+      ],
+      "fines": [
+        {
+          "coarse_id": "F",
+          "id": "jgb/F/repair-progress-followup-scope",
+          "merge_of": [
+            "tmp:canon:jgb/F/repair-progress-followup-scope",
+            "tmp:kb:1558",
+            "tmp:kb:3365",
+            "tmp:kb:4420"
+          ],
+          "moved_from": [],
+          "op": "merge",
+          "reason": "三角度一致：查修繕進度是同一主題同一受眾同一層級，既有細目定可答欄位，1558／4420 補查詢入口與無單時導向報修的講法，3365 空內文只當入口；id 不變。",
+          "slug": "repair-progress-followup-scope",
+          "split_from": [],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "修繕進度追問可答範圍與查詢方式"
+        },
+        {
+          "coarse_id": "F",
+          "id": "jgb/F/repair-system",
+          "merge_of": [
+            "tmp:canon:jgb/F/repair-system"
+          ],
+          "moved_from": [],
+          "op": "keep",
+          "reason": "三角度一致：售前能力層入口，無新材料需吸收。",
+          "slug": "repair-system",
+          "split_from": [],
+          "target_user": [
+            "prospect"
+          ],
+          "title": "線上報修與進度追蹤"
+        },
+        {
+          "coarse_id": "F",
+          "id": "jgb/F/repair-ticket-after-submit",
+          "merge_of": [
+            "tmp:canon:jgb/F/repair-ticket-after-submit"
+          ],
+          "moved_from": [],
+          "op": "keep",
+          "reason": "三角度一致：對話代開單送出後的修改與同戶另一問題規則自成一體，無新材料。",
+          "slug": "repair-ticket-after-submit",
+          "split_from": [],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "確認送出後的單如何處理"
+        },
+        {
+          "coarse_id": "F",
+          "id": "jgb/F/repair-ticket-mid-flow-cancel",
+          "merge_of": [
+            "tmp:canon:jgb/F/repair-ticket-mid-flow-cancel"
+          ],
+          "moved_from": [],
+          "op": "keep",
+          "reason": "三角度一致：取消規則自成一體，無新材料。",
+          "slug": "repair-ticket-mid-flow-cancel",
+          "split_from": [],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "報修流程中途取消的規則"
+        },
+        {
+          "coarse_id": "F",
+          "id": "jgb/F/repair-ticket-no-lease",
+          "merge_of": [
+            "tmp:canon:jgb/F/repair-ticket-no-lease"
+          ],
+          "moved_from": [],
+          "op": "keep",
+          "reason": "三角度一致：無租約開單規則自成一體，無新材料。",
+          "slug": "repair-ticket-no-lease",
+          "split_from": [],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "代開單時的租約查詢身分與空屋／無租約物件開單規則"
+        },
+        {
+          "coarse_id": "F",
+          "id": "jgb/F/repair-ticket-open-and-confirm",
+          "merge_of": [
+            "tmp:canon:jgb/F/repair-ticket-open-and-confirm",
+            "tmp:kb:4416",
+            "tmp:kb:4418",
+            "tmp:kb:4421",
+            "tmp:kb:4422"
+          ],
+          "moved_from": [],
+          "op": "merge",
+          "reason": "採 user_question_path 與 content_boundary 多數：四筆空內文症狀列（想報修／馬桶不通／漏水／冷氣壞）是使用者在對話裡開口即進入對話開單流程的入口講法，只當本細目入口不獨立成細目；id 不變。",
+          "slug": "repair-ticket-open-and-confirm",
+          "split_from": [],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "開修繕單基本流程與確認機制（拍照進場／文字口述）"
+        },
+        {
+          "coarse_id": "F",
+          "id": "jgb/F/repair-ticket-photo-count-limit",
+          "merge_of": [
+            "tmp:canon:jgb/F/repair-ticket-photo-count-limit"
+          ],
+          "moved_from": [],
+          "op": "keep",
+          "reason": "三角度一致：張數限制自成一體，無新材料。",
+          "slug": "repair-ticket-photo-count-limit",
+          "split_from": [],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "修繕辨識與附件的照片張數限制"
+        },
+        {
+          "coarse_id": "F",
+          "id": "jgb/F/repair-ticket-photo-recognition-uncertain",
+          "merge_of": [
+            "tmp:canon:jgb/F/repair-ticket-photo-recognition-uncertain"
+          ],
+          "moved_from": [],
+          "op": "keep",
+          "reason": "三角度一致：辨識失敗處理自成一體，無新材料。",
+          "slug": "repair-ticket-photo-recognition-uncertain",
+          "split_from": [],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "照片辨識信心不足或看不出損壞時的處理"
+        },
+        {
+          "coarse_id": "F",
+          "id": "jgb/F/repair-ticket-reclassify",
+          "merge_of": [
+            "tmp:canon:jgb/F/repair-ticket-reclassify"
+          ],
+          "moved_from": [],
+          "op": "keep",
+          "reason": "三角度一致：修改辨識結果規則自成一體，無新材料。",
+          "slug": "repair-ticket-reclassify",
+          "split_from": [],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "確認卡上修改辨識結果的規則"
+        },
+        {
+          "coarse_id": "F",
+          "id": "jgb/F/repair-ticket-submit-failure",
+          "merge_of": [
+            "tmp:canon:jgb/F/repair-ticket-submit-failure"
+          ],
+          "moved_from": [],
+          "op": "keep",
+          "reason": "三角度一致：失敗重試規則自成一體，無新材料。",
+          "slug": "repair-ticket-submit-failure",
+          "split_from": [],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "建單失敗時的處理與重試規則"
+        },
+        {
+          "coarse_id": "F",
+          "id": "jgb/F/repair-ticket-urgency-judgment",
+          "merge_of": [
+            "tmp:canon:jgb/F/repair-ticket-urgency-judgment"
+          ],
+          "moved_from": [],
+          "op": "keep",
+          "reason": "三角度一致：對話建單時急迫值的來源與值域屬建單規則層；系統緊急標記與優先處理另見 jgb/F/emergency-repair-flag-and-handling。",
+          "slug": "repair-ticket-urgency-judgment",
+          "split_from": [],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "修繕單急迫程度的判斷來源與值域"
+        },
+        {
+          "coarse_id": "F",
+          "id": "jgb/F/repair-responsibility-landlord-vs-tenant",
+          "merge_of": [
+            "tmp:kb:2963",
+            "tmp:kb:2964",
+            "tmp:kb:2968",
+            "tmp:kb:2969",
+            "tmp:kb:2971",
+            "tmp:kb:2973",
+            "tmp:kb:3029",
+            "tmp:kb:3030",
+            "tmp:kb:3203",
+            "tmp:kb:3221",
+            "tmp:kb:3222",
+            "tmp:kb:3277",
+            "tmp:kb:3287",
+            "tmp:kb:3289"
+          ],
+          "moved_from": [],
+          "op": "new",
+          "reason": "三角度同 id：14 筆講同一命題（結構與固定設施歸房東、日常小修與使用不當歸租客、以租約為準）各自只講一方，合為一題；租客責任題留 F 標 property_manager；3221 修繕後維持狀態責任併入；社宅變體另立細目（採 A／B 多數）。",
+          "slug": "repair-responsibility-landlord-vs-tenant",
+          "split_from": [],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "房屋修繕責任劃分（房東與租客各負責什麼、費用誰出）"
+        },
+        {
+          "coarse_id": "F",
+          "id": "jgb/F/common-equipment-maintenance-responsibility",
+          "merge_of": [
+            "tmp:kb:2970",
+            "tmp:kb:3186",
+            "tmp:kb:3188",
+            "tmp:kb:3190",
+            "tmp:kb:3192",
+            "tmp:kb:3194",
+            "tmp:kb:3197",
+            "tmp:kb:3274"
+          ],
+          "moved_from": [],
+          "op": "new",
+          "reason": "三角度來源集合一致：以「公共設備」為主體的責任問題（維護／損壞／更新／費用由房東或管理方、檢查頻率依管理規定、需留維護紀錄）合為一題，主體與房屋本體、租客設備不同故分立；slug 採 user_question_path。",
+          "slug": "common-equipment-maintenance-responsibility",
+          "split_from": [],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "公共設備的維護、損壞、更新、費用與檢查紀錄責任"
+        },
+        {
+          "coarse_id": "F",
+          "id": "jgb/F/tenant-equipment-maintenance-responsibility",
+          "merge_of": [
+            "tmp:kb:3187",
+            "tmp:kb:3189",
+            "tmp:kb:3193",
+            "tmp:kb:3195",
+            "tmp:kb:3198",
+            "tmp:kb:3200",
+            "tmp:kb:3272",
+            "tmp:kb:3275"
+          ],
+          "moved_from": [],
+          "op": "new",
+          "reason": "三角度來源集合一致：以「租客設備」為主體（日常保養、正常磨損由房東、不當使用由租客賠償、賠償標準由管理師評估、更新與維護費由房東）合為一題；賠償金額屬責任歸屬不屬計費故留 F；slug 採 user_question_path。",
+          "slug": "tenant-equipment-maintenance-responsibility",
+          "split_from": [],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "租客設備的使用、維護、損壞賠償、更新與費用責任"
+        },
+        {
+          "coarse_id": "F",
+          "id": "jgb/F/tenant-repair-notification-duty",
+          "merge_of": [
+            "tmp:kb:2966",
+            "tmp:kb:3219",
+            "tmp:kb:3286"
+          ],
+          "moved_from": [],
+          "op": "new",
+          "reason": "三角度來源集合一致：租客的通知義務與要求合理期限修繕的權利是法定義務／權利命題，非系統通知投遞管道，故獨立成細目；slug 採 user_question_path。",
+          "slug": "tenant-repair-notification-duty",
+          "split_from": [],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "租客發現需修繕時的通知義務與要求合理期限修繕的權利"
+        },
+        {
+          "coarse_id": "F",
+          "id": "jgb/F/tenant-emergency-self-repair",
+          "merge_of": [
+            "tmp:kb:2965",
+            "tmp:kb:3220",
+            "tmp:kb:3288"
+          ],
+          "moved_from": [],
+          "op": "new",
+          "reason": "採 content_boundary 與 audience_level 多數：2965（租客可於影響安全健康時緊急修繕並保留證據）與 3220／3288 同屬租客權益層，三筆合一；與系統緊急標記分屬不同層，以另見處理。",
+          "slug": "tenant-emergency-self-repair",
+          "split_from": [],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "緊急情況下租客自行修繕的條件、事後通知與費用報銷"
+        },
+        {
+          "coarse_id": "F",
+          "id": "jgb/F/emergency-repair-flag-and-handling",
+          "merge_of": [
+            "tmp:kb:3145",
+            "tmp:kb:3426"
+          ],
+          "moved_from": [],
+          "op": "new",
+          "reason": "三角度一致（來源 3145＋3426、兩受眾共用）：業者提供緊急維修服務與系統緊急標記的意義／排序互相依賴才完整，對潛在客戶與業者答案相同；對話建單急迫值域另見 repair-ticket-urgency-judgment，租客自行修繕另見 tenant-emergency-self-repair。",
+          "slug": "emergency-repair-flag-and-handling",
+          "split_from": [],
+          "target_user": [
+            "prospect",
+            "property_manager"
+          ],
+          "title": "緊急修繕的標記、優先處理與回應時效"
+        },
+        {
+          "coarse_id": "F",
+          "id": "jgb/F/neighbor-leak-responsibility",
+          "merge_of": [
+            "tmp:kb:2967"
+          ],
+          "moved_from": [],
+          "op": "new",
+          "reason": "三角度一致獨立：鄰損由漏水方負責，責任對象為第三方，與房東／租客總則不同；漏水入口講法（4421）屬開單流程不屬此。",
+          "slug": "neighbor-leak-responsibility",
+          "split_from": [],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "鄰居漏水的修繕責任與處理"
+        },
+        {
+          "coarse_id": "F",
+          "id": "jgb/F/repair-responsibility-dispute",
+          "merge_of": [
+            "tmp:kb:2974"
+          ],
+          "moved_from": [],
+          "op": "new",
+          "reason": "三角度一致：爭議處理（查租約、管理師調解、留紀錄）是處理程序題，與劃分規則分開。",
+          "slug": "repair-responsibility-dispute",
+          "split_from": [],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "修繕責任有爭議時的處理"
+        },
+        {
+          "coarse_id": "F",
+          "id": "jgb/F/repair-warranty-period",
+          "merge_of": [
+            "tmp:kb:2975"
+          ],
+          "moved_from": [],
+          "op": "new",
+          "reason": "三角度一致：修繕完成後的保固屬修繕結果的保障，非租約條款本身，留本架。",
+          "slug": "repair-warranty-period",
+          "split_from": [],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "修繕後的保固期"
+        },
+        {
+          "coarse_id": "F",
+          "id": "jgb/F/social-housing-repair-responsibility",
+          "merge_of": [
+            "tmp:kb:3320"
+          ],
+          "moved_from": [],
+          "op": "new",
+          "reason": "採 user_question_path 與 content_boundary 多數：社宅維修主體是管理單位，答案與一般房東／租客劃分不同，獨立一問。",
+          "slug": "social-housing-repair-responsibility",
+          "split_from": [],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "社會住宅的維修責任"
+        },
+        {
+          "coarse_id": "F",
+          "id": "jgb/F/repair-flow-stages",
+          "merge_of": [
+            "tmp:kb:3424"
+          ],
+          "moved_from": [],
+          "op": "new",
+          "reason": "三角度一致：狀態模型（申請中→安排修繕→進行中→完成修繕→結單→封存）是定義題，售前與業者答案相同故共用；操作步驟另見 repair-dispatch-and-close。",
+          "slug": "repair-flow-stages",
+          "split_from": [],
+          "target_user": [
+            "prospect",
+            "property_manager"
+          ],
+          "title": "修繕流程六階段與各狀態意義"
+        },
+        {
+          "coarse_id": "F",
+          "id": "jgb/F/repair-cost-recording-and-settlement",
+          "merge_of": [
+            "tmp:kb:3425"
+          ],
+          "moved_from": [],
+          "op": "new",
+          "reason": "三角度同意留 F：預估／實際費用在修繕流程中如何記錄、結單時自動產生帳單、分擔由房東自行決定，是修繕模組的一環；帳單本身的計費與收款另見 E；受眾採 A／C 多數 property_manager（業者操作步驟）。",
+          "slug": "repair-cost-recording-and-settlement",
+          "split_from": [],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "修繕費用的記錄、分擔與結單自動產生修繕費帳單"
+        },
+        {
+          "coarse_id": "F",
+          "id": "jgb/F/repair-request-how-to-submit",
+          "merge_of": [
+            "tmp:kb:2972",
+            "tmp:kb:3427",
+            "tmp:kb:3446"
+          ],
+          "moved_from": [],
+          "op": "new",
+          "reason": "採 user_question_path 與 content_boundary 多數：三筆都是系統頁面報修要填什麼、步驟與提交後的通知追蹤，與對話開單細目是不同介面層；售前會問租客怎麼報修故兩受眾共用。",
+          "slug": "repair-request-how-to-submit",
+          "split_from": [],
+          "target_user": [
+            "prospect",
+            "property_manager"
+          ],
+          "title": "在系統提出修繕申請的步驟與需填資料（租客／房東）"
+        },
+        {
+          "coarse_id": "F",
+          "id": "jgb/F/repair-dispatch-and-close",
+          "merge_of": [
+            "tmp:kb:3488",
+            "tmp:kb:4249"
+          ],
+          "moved_from": [],
+          "op": "new",
+          "reason": "三角度一致合併：兩筆都是業者端受理→派工→完工→結單→封存的操作步驟，互補合一；階段定義另見 repair-flow-stages；slug 採 audience_level。",
+          "slug": "repair-dispatch-and-close",
+          "split_from": [],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "業者受理報修、安排廠商、完工登錄到結單封存的操作"
+        },
+        {
+          "coarse_id": "F",
+          "id": "jgb/F/repair-multiple-items-one-ticket",
+          "merge_of": [
+            "tmp:kb:4654"
+          ],
+          "moved_from": [],
+          "op": "new",
+          "reason": "三角度一致獨立：多品項用「其他」自行輸入合寫一張單，是獨立可答的操作規則。",
+          "slug": "repair-multiple-items-one-ticket",
+          "split_from": [],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "多個品項是否分開報修（合併在一張報修單）"
+        }
+      ],
+      "id_map": [
+        {
+          "new": "jgb/F/repair-progress-followup-scope",
+          "old": "tmp:canon:jgb/F/repair-progress-followup-scope",
+          "op": "keep"
+        },
+        {
+          "new": "jgb/F/repair-progress-followup-scope",
+          "old": "tmp:kb:1558",
+          "op": "merge"
+        },
+        {
+          "new": "jgb/F/repair-progress-followup-scope",
+          "old": "tmp:kb:3365",
+          "op": "merge"
+        },
+        {
+          "new": "jgb/F/repair-progress-followup-scope",
+          "old": "tmp:kb:4420",
+          "op": "merge"
+        },
+        {
+          "new": "jgb/F/repair-system",
+          "old": "tmp:canon:jgb/F/repair-system",
+          "op": "keep"
+        },
+        {
+          "new": "jgb/F/repair-ticket-after-submit",
+          "old": "tmp:canon:jgb/F/repair-ticket-after-submit",
+          "op": "keep"
+        },
+        {
+          "new": "jgb/F/repair-ticket-mid-flow-cancel",
+          "old": "tmp:canon:jgb/F/repair-ticket-mid-flow-cancel",
+          "op": "keep"
+        },
+        {
+          "new": "jgb/F/repair-ticket-no-lease",
+          "old": "tmp:canon:jgb/F/repair-ticket-no-lease",
+          "op": "keep"
+        },
+        {
+          "new": "jgb/F/repair-ticket-open-and-confirm",
+          "old": "tmp:canon:jgb/F/repair-ticket-open-and-confirm",
+          "op": "keep"
+        },
+        {
+          "new": "jgb/F/repair-ticket-open-and-confirm",
+          "old": "tmp:kb:4416",
+          "op": "merge"
+        },
+        {
+          "new": "jgb/F/repair-ticket-open-and-confirm",
+          "old": "tmp:kb:4418",
+          "op": "merge"
+        },
+        {
+          "new": "jgb/F/repair-ticket-open-and-confirm",
+          "old": "tmp:kb:4421",
+          "op": "merge"
+        },
+        {
+          "new": "jgb/F/repair-ticket-open-and-confirm",
+          "old": "tmp:kb:4422",
+          "op": "merge"
+        },
+        {
+          "new": "jgb/F/repair-ticket-photo-count-limit",
+          "old": "tmp:canon:jgb/F/repair-ticket-photo-count-limit",
+          "op": "keep"
+        },
+        {
+          "new": "jgb/F/repair-ticket-photo-recognition-uncertain",
+          "old": "tmp:canon:jgb/F/repair-ticket-photo-recognition-uncertain",
+          "op": "keep"
+        },
+        {
+          "new": "jgb/F/repair-ticket-reclassify",
+          "old": "tmp:canon:jgb/F/repair-ticket-reclassify",
+          "op": "keep"
+        },
+        {
+          "new": "jgb/F/repair-ticket-submit-failure",
+          "old": "tmp:canon:jgb/F/repair-ticket-submit-failure",
+          "op": "keep"
+        },
+        {
+          "new": "jgb/F/repair-ticket-urgency-judgment",
+          "old": "tmp:canon:jgb/F/repair-ticket-urgency-judgment",
+          "op": "keep"
+        },
+        {
+          "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+          "old": "tmp:kb:2963",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+          "old": "tmp:kb:2964",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+          "old": "tmp:kb:2968",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+          "old": "tmp:kb:2969",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+          "old": "tmp:kb:2971",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+          "old": "tmp:kb:2973",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+          "old": "tmp:kb:3029",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+          "old": "tmp:kb:3030",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+          "old": "tmp:kb:3203",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+          "old": "tmp:kb:3221",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+          "old": "tmp:kb:3222",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+          "old": "tmp:kb:3277",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+          "old": "tmp:kb:3287",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/repair-responsibility-landlord-vs-tenant",
+          "old": "tmp:kb:3289",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/common-equipment-maintenance-responsibility",
+          "old": "tmp:kb:2970",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/common-equipment-maintenance-responsibility",
+          "old": "tmp:kb:3186",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/common-equipment-maintenance-responsibility",
+          "old": "tmp:kb:3188",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/common-equipment-maintenance-responsibility",
+          "old": "tmp:kb:3190",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/common-equipment-maintenance-responsibility",
+          "old": "tmp:kb:3192",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/common-equipment-maintenance-responsibility",
+          "old": "tmp:kb:3194",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/common-equipment-maintenance-responsibility",
+          "old": "tmp:kb:3197",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/common-equipment-maintenance-responsibility",
+          "old": "tmp:kb:3274",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/tenant-equipment-maintenance-responsibility",
+          "old": "tmp:kb:3187",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/tenant-equipment-maintenance-responsibility",
+          "old": "tmp:kb:3189",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/tenant-equipment-maintenance-responsibility",
+          "old": "tmp:kb:3193",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/tenant-equipment-maintenance-responsibility",
+          "old": "tmp:kb:3195",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/tenant-equipment-maintenance-responsibility",
+          "old": "tmp:kb:3198",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/tenant-equipment-maintenance-responsibility",
+          "old": "tmp:kb:3200",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/tenant-equipment-maintenance-responsibility",
+          "old": "tmp:kb:3272",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/tenant-equipment-maintenance-responsibility",
+          "old": "tmp:kb:3275",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/tenant-repair-notification-duty",
+          "old": "tmp:kb:2966",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/tenant-repair-notification-duty",
+          "old": "tmp:kb:3219",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/tenant-repair-notification-duty",
+          "old": "tmp:kb:3286",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/tenant-emergency-self-repair",
+          "old": "tmp:kb:2965",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/tenant-emergency-self-repair",
+          "old": "tmp:kb:3220",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/tenant-emergency-self-repair",
+          "old": "tmp:kb:3288",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/emergency-repair-flag-and-handling",
+          "old": "tmp:kb:3145",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/emergency-repair-flag-and-handling",
+          "old": "tmp:kb:3426",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/neighbor-leak-responsibility",
+          "old": "tmp:kb:2967",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/repair-responsibility-dispute",
+          "old": "tmp:kb:2974",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/repair-warranty-period",
+          "old": "tmp:kb:2975",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/social-housing-repair-responsibility",
+          "old": "tmp:kb:3320",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/repair-flow-stages",
+          "old": "tmp:kb:3424",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/repair-cost-recording-and-settlement",
+          "old": "tmp:kb:3425",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/repair-request-how-to-submit",
+          "old": "tmp:kb:2972",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/repair-request-how-to-submit",
+          "old": "tmp:kb:3427",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/repair-request-how-to-submit",
+          "old": "tmp:kb:3446",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/repair-dispatch-and-close",
+          "old": "tmp:kb:3488",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/repair-dispatch-and-close",
+          "old": "tmp:kb:4249",
+          "op": "new"
+        },
+        {
+          "new": "jgb/F/repair-multiple-items-one-ticket",
+          "old": "tmp:kb:4654",
+          "op": "new"
+        }
+      ],
+      "out_of_shelf": [
+        {
+          "id": "tmp:kb:3199",
+          "suggested_shelf": "D",
+          "why": "三角度一致：純法律條文（民法及租賃法規對房東維持租賃物狀態的義務），屬租約權益的法源，非修繕操作或責任實務。"
+        },
+        {
+          "id": "tmp:kb:3276",
+          "suggested_shelf": "D",
+          "why": "三角度一致：純法律條文引用（民法第 655 條、租屋條例），屬租約法源，非修繕實務。"
+        }
+      ],
+      "rejected_alternatives": [
+        {
+          "alternative": "audience_level：把空內文症狀列 4416／4418／4421／4422 掛到系統報修步驟細目（repair-request-submit-steps）而非對話開單細目。",
+          "reason": "這四筆是使用者在對話裡開口的入口講法，開口即進入對話代開單流程；user_question_path 與 content_boundary 多數皆掛 repair-ticket-open-and-confirm，且空內文列只當入口。"
+        },
+        {
+          "alternative": "user_question_path：把 kb 2965（緊急修繕）併入緊急標記細目 emergency-repair-handling（三受眾共用）。",
+          "reason": "2965 講的是租客可於影響安全健康時自行緊急修繕並保留證據，屬租客權益層而非系統標記層；content_boundary 與 audience_level 多數併入租客自行修繕細目。"
+        },
+        {
+          "alternative": "audience_level：把 kb 3320（社會住宅維修責任）併入 repair-responsibility-landlord-vs-tenant。",
+          "reason": "社宅答案主體是管理單位，與房東／租客通則不同，併入會混淆對象；user_question_path 與 content_boundary 多數獨立成細目。"
+        },
+        {
+          "alternative": "content_boundary：kb 3425 修繕費用記錄細目 target_user 標 prospect＋property_manager。",
+          "reason": "費用欄位記錄與結單開帳單是業者操作步驟，售前能力層已由 repair-system 承接；user_question_path 與 audience_level 多數標 property_manager。"
+        },
+        {
+          "alternative": "audience_level：系統報修步驟細目 target_user 只標 property_manager，且吸收 7 筆來源。",
+          "reason": "售前會問「租客怎麼報修」且答案相同，user_question_path 與 content_boundary 多數標兩受眾；來源以 2972／3427／3446 三筆為準（症狀列另歸對話開單）。"
+        },
+        {
+          "alternative": "content_boundary 與 audience_level 為既有 repair-progress-followup-scope 的標題分歧：A／B 沿用「修繕進度追問可答範圍」。",
+          "reason": "新材料補入查詢入口講法，採 audience_level 的標題「…與查詢方式」以反映吸收後範圍；id 不變。"
+        },
+        {
+          "alternative": "slug 分歧（緊急標記）：user_question_path emergency-repair-handling、audience_level repair-emergency-flag-and-priority。",
+          "reason": "採 content_boundary 的 emergency-repair-flag-and-handling，因其來源集合（3145＋3426）與多數裁決一致且名稱明示「標記」以與 urgency-judgment 區隔。"
+        },
+        {
+          "alternative": "slug 分歧（租客自行修繕）：user_question_path tenant-self-repair-in-emergency、audience_level repair-tenant-emergency-self-repair。",
+          "reason": "採 content_boundary 的 tenant-emergency-self-repair，來源集合與多數裁決一致；三者語義相同，擇一即可。"
+        },
+        {
+          "alternative": "slug 分歧（公共設備／租客設備）：content_boundary common-facility-maintenance／tenant-equipment-responsibility、audience_level repair-common-facility-responsibility／repair-tenant-equipment-responsibility。",
+          "reason": "採 user_question_path 的 common-equipment-maintenance-responsibility／tenant-equipment-maintenance-responsibility，兩者對稱命名且與材料標題「公共設備／租客設備」用字一致。"
+        },
+        {
+          "alternative": "slug 分歧（通知義務）：content_boundary tenant-repair-notice-obligation、audience_level repair-notify-duty-and-timely-repair-right。",
+          "reason": "採 user_question_path 的 tenant-repair-notification-duty；標題補「要求合理期限修繕的權利」以涵蓋 3219／2969 的權利面。"
+        },
+        {
+          "alternative": "slug 分歧（費用記錄）：user_question_path repair-fee-recording-and-billing、audience_level repair-cost-record-and-bill。",
+          "reason": "採 content_boundary 的 repair-cost-recording-and-settlement，與材料標題「結算方式」對應。"
+        },
+        {
+          "alternative": "slug 分歧（系統報修步驟）：content_boundary repair-request-submission-in-system、audience_level repair-request-submit-steps。",
+          "reason": "採 user_question_path 的 repair-request-how-to-submit，貼近使用者問法。"
+        },
+        {
+          "alternative": "slug 分歧（業者派工）：user_question_path repair-dispatch-and-close-by-manager、content_boundary repair-intake-and-dispatch。",
+          "reason": "採 audience_level 的 repair-dispatch-and-close，最短且涵蓋受理到結單封存全程。"
+        },
+        {
+          "alternative": "slug 分歧（多品項、鄰損）：audience_level repair-request-multiple-items、repair-neighbor-leak-responsibility。",
+          "reason": "採 user_question_path 與 content_boundary 共同使用的 repair-multiple-items-one-ticket、neighbor-leak-responsibility（兩角度一致）。"
+        }
+      ]
+    }
+  },
+  "raw_outputs_path": "../raw/F-20260916",
+  "skill_version": "0.1.0",
+  "step": "structure"
+}

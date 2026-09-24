@@ -37,7 +37,7 @@ def _page(n: int = 1, **sd) -> dict:
 
 def _identity() -> dict:
     return {"vendor_id": 1, "role_id": "20151", "user_id": "12291",
-            "mode": "b2c", "target_user": "landlord", "session_id": "backtest_session_ocr_t"}
+            "mode": "b2c", "target_user": "tenant", "session_id": "backtest_session_ocr_t"}
 
 
 # ── R1.1：接受 DocuMind 回應全文＋身分 ────────────────────────────────────────

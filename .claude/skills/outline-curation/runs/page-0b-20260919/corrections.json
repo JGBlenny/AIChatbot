@@ -1,0 +1,20 @@
+{
+ "source": "verifier spot-check 2026-09-19（F1／F2）",
+ "changes": [
+  {
+   "unit_id": "page:web:users.roleTenant",
+   "identity": "prospect",
+   "from": "missing",
+   "to": "partial",
+   "fine_ids": [
+    "jgb/A/account-profile-settings"
+   ]
+  },
+  {
+   "unit_id": "page:contracts.edit.rentBasic",
+   "identity": "property_manager",
+   "from": "covered(2 penalty fines)",
+   "to": "covered(+rent-amount-calculation, periodic-bill-generation, late-fee-calculation)"
+  }
+ ]
+}

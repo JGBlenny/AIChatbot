@@ -1,0 +1,333 @@
+{
+  "audience": "jgb",
+  "budget_tokens": 0,
+  "business_types": [],
+  "canon_sha256": "8b6c00b964fc64bb0f55338208640027346dc82f0c96d9d948ffa5edd12dc2ee",
+  "coarses": [
+    {
+      "fines": [
+        {
+          "business_types": [
+            "system_provider"
+          ],
+          "categories": [
+            "帳號"
+          ],
+          "coarse_id": "A-account",
+          "content_sha256": "628b2e5b099e31121b443fd51d956cb88789c6a6e8d22226217b3fd52dbb09bf",
+          "content_units": [
+            "註冊後系統會寄出驗證碼通知。",
+            "驗證完成才能建立第一個社區。"
+          ],
+          "id": "jgb/A/account-registration",
+          "instance_applicability": "general",
+          "phrasings": [
+            {
+              "source": "question_summary:3585",
+              "status": "approved",
+              "text": "怎麼註冊帳號"
+            },
+            {
+              "source": "koyu:03#12",
+              "status": "proposed",
+              "text": "註冊要多久"
+            }
+          ],
+          "policy": "answerable",
+          "policy_ref": null,
+          "reviewed_at": "2026-09-15",
+          "reviewed_by": "owner",
+          "see_also": [
+            "jgb/C/estate-import"
+          ],
+          "sources": [
+            "kb:3585"
+          ],
+          "target_user": [
+            "prospect",
+            "property_manager"
+          ],
+          "title": "怎麼註冊帳號"
+        },
+        {
+          "business_types": [
+            "system_provider"
+          ],
+          "categories": [],
+          "coarse_id": "A-account",
+          "content_sha256": "65a1b228049eb69001b404590f3bd3fdcad5d300e84b6672e12887b9e6c3bd65",
+          "content_units": [
+            "忘記密碼可在登入頁重設。"
+          ],
+          "id": "jgb/A/password-reset",
+          "instance_applicability": "general",
+          "phrasings": [
+            {
+              "source": "question_summary:3586",
+              "status": "approved",
+              "text": "忘記密碼"
+            }
+          ],
+          "policy": "answerable",
+          "policy_ref": null,
+          "reviewed_at": null,
+          "reviewed_by": null,
+          "see_also": [],
+          "sources": [
+            "kb:3586"
+          ],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "忘記密碼怎麼辦"
+        }
+      ],
+      "id": "A-account",
+      "title": "帳號與身分"
+    },
+    {
+      "fines": [
+        {
+          "business_types": [
+            "system_provider"
+          ],
+          "categories": [],
+          "coarse_id": "B-team",
+          "content_sha256": "303e0fe656005c21486367baa80ef3e16d71503d5fa3ea1ebda3221fb158c054",
+          "content_units": [
+            "團隊管理頁可以寄出邀請信。"
+          ],
+          "id": "jgb/B/team-invite",
+          "instance_applicability": "general",
+          "phrasings": [
+            {
+              "source": "question_summary:3600",
+              "status": "approved",
+              "text": "邀請同事"
+            }
+          ],
+          "policy": "answerable",
+          "policy_ref": null,
+          "reviewed_at": "2026-09-15",
+          "reviewed_by": "owner",
+          "see_also": [],
+          "sources": [
+            "kb:3600"
+          ],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "怎麼邀請團隊成員"
+        },
+        {
+          "business_types": [
+            "system_provider"
+          ],
+          "categories": [],
+          "coarse_id": "B-team",
+          "content_sha256": "b3bda3041d8fd91a6f4425052e59bb3bd397c3b0042c0d17f00e373bfd09b1a6",
+          "content_units": [
+            "代管關係的細節依各業者設定而異。"
+          ],
+          "id": "jgb/B/landlord-record",
+          "instance_applicability": "instance",
+          "phrasings": [],
+          "policy": "deliberate_no",
+          "policy_ref": "DSP-009",
+          "reviewed_at": null,
+          "reviewed_by": null,
+          "see_also": [],
+          "sources": [
+            "kb:fixture-landlord-record"
+          ],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "大房東代管關係"
+        }
+      ],
+      "id": "B-team",
+      "title": "團隊、人員與大房東"
+    },
+    {
+      "fines": [
+        {
+          "business_types": [
+            "system_provider"
+          ],
+          "categories": [],
+          "coarse_id": "C-community",
+          "content_sha256": "f4ac87c4f89b6cefadb281495526235e75b081e8fb1e1b6fe1cb1b8ae5163b33",
+          "content_units": [
+            "物件可以用試算表批次匯入。"
+          ],
+          "id": "jgb/C/estate-import",
+          "instance_applicability": "general",
+          "phrasings": [
+            {
+              "source": "question_summary:3700",
+              "status": "approved",
+              "text": "批次匯入物件"
+            }
+          ],
+          "policy": "answerable",
+          "policy_ref": null,
+          "reviewed_at": "2026-09-15",
+          "reviewed_by": "owner",
+          "see_also": [
+            "jgb/A/account-registration"
+          ],
+          "sources": [
+            "kb:3700"
+          ],
+          "target_user": [
+            "prospect"
+          ],
+          "title": "物件批次匯入"
+        },
+        {
+          "business_types": [
+            "system_provider"
+          ],
+          "categories": [],
+          "coarse_id": "C-community",
+          "content_sha256": "95be400d3c12fea92b6ad6515d638b51abfdc0a667683a9f915c47464b76ee4d",
+          "content_units": [
+            "社區建檔後才能掛上物件。"
+          ],
+          "id": "jgb/C/community-setup",
+          "instance_applicability": "general",
+          "phrasings": [],
+          "policy": "answerable",
+          "policy_ref": null,
+          "reviewed_at": null,
+          "reviewed_by": null,
+          "see_also": [],
+          "sources": [
+            "kb:3701"
+          ],
+          "target_user": [
+            "prospect"
+          ],
+          "title": "社區怎麼建檔"
+        }
+      ],
+      "id": "C-community",
+      "title": "社區與物件"
+    },
+    {
+      "fines": [],
+      "id": "D-lease",
+      "title": "租約（含委託約子題）"
+    },
+    {
+      "fines": [],
+      "id": "E-billing",
+      "title": "帳務（含發票、收款金流、抄表）"
+    },
+    {
+      "fines": [],
+      "id": "F-repair",
+      "title": "修繕"
+    },
+    {
+      "fines": [],
+      "id": "G-device",
+      "title": "裝置"
+    },
+    {
+      "fines": [],
+      "id": "H-help",
+      "title": "幫助中心"
+    },
+    {
+      "fines": [],
+      "id": "I-plan",
+      "title": "方案與導入"
+    }
+  ],
+  "language": "zh-TW",
+  "name": "jgb",
+  "phrasing_set_sha256": "ce05914f243cdefb3ed7f1779b4d4e66a8946775abeae8c7d6b1eb315bc19874",
+  "reviewers": [
+    "owner"
+  ],
+  "scopes": [
+    [
+      "A",
+      "註冊、登入、找回帳號、身分與個人資料變更；⛔ 團隊成員權限歸 B"
+    ],
+    [
+      "B",
+      "團隊建立與成員邀請、角色權限、大房東記錄與代管關係；⛔ 帳號本身歸 A"
+    ],
+    [
+      "C",
+      "社區建檔、物件新增與批次匯入、刊登與銷售；⛔ 物件上的租約歸 D、抄表歸 E"
+    ],
+    [
+      "D",
+      "合約建立、簽署、狀態與階段、續約、退租；⛔ 帳單與押金金流歸 E"
+    ],
+    [
+      "E",
+      "帳單產生與週期、催繳、滯納金、發票、抄表；⛔ 修繕流程歸 F"
+    ],
+    [
+      "F",
+      "報修、派工、進度與狀態、修繕通知；⛔ 費用入帳歸 E"
+    ],
+    [
+      "G",
+      "IoT 門鎖、密碼、裝置廠商與狀態；⛔ 抄表歸 E"
+    ],
+    [
+      "H",
+      "幫助中心入口與使用方式、教學文件位置；目前空架"
+    ],
+    [
+      "I",
+      "方案比較與試用、功能矩陣、導入與資料遷移；⛔ 找真人走 handoff"
+    ]
+  ],
+  "shelf_titles": [
+    [
+      "A",
+      "帳號與身分"
+    ],
+    [
+      "B",
+      "團隊、人員與大房東"
+    ],
+    [
+      "C",
+      "社區與物件"
+    ],
+    [
+      "D",
+      "租約（含委託約子題）"
+    ],
+    [
+      "E",
+      "帳務（含發票、收款金流、抄表）"
+    ],
+    [
+      "F",
+      "修繕"
+    ],
+    [
+      "G",
+      "裝置"
+    ],
+    [
+      "H",
+      "幫助中心"
+    ],
+    [
+      "I",
+      "方案與導入"
+    ]
+  ],
+  "target_user": [],
+  "version": "2026-09-15.0"
+}

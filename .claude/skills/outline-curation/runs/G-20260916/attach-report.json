@@ -1,0 +1,87 @@
+{
+  "attached_fines": [
+    "jgb/G/iot-offline-troubleshooting",
+    "jgb/G/meter-data-sync-gap",
+    "jgb/G/meter-device-management",
+    "jgb/G/meter-vendor-binding",
+    "jgb/G/smart-lock-failure",
+    "jgb/G/smart-lock-hardware-vendor",
+    "jgb/G/smart-lock-password-rules",
+    "jgb/G/smart-lock-share-password",
+    "jgb/G/tenant-meter-visibility"
+  ],
+  "attached_phrasings": 20,
+  "canon_sha256": "efed50ba166122624af55e3191c21eb73e42c04a2af32913ac912c2ac355c9f6",
+  "dup_existing": {
+    "jgb/G/iot-offline-troubleshooting": [
+      {
+        "already_on": "jgb/G/smart-meter-lock-iot",
+        "text": "IoT"
+      },
+      {
+        "already_on": "jgb/G/smart-meter-lock-iot",
+        "text": "IOT設備"
+      }
+    ],
+    "jgb/G/meter-vendor-binding": [
+      {
+        "already_on": "jgb/G/smart-meter-lock-iot",
+        "text": "IoT"
+      }
+    ],
+    "jgb/G/smart-lock-failure": [
+      {
+        "already_on": "jgb/G/smart-meter-lock-iot",
+        "text": "智慧門鎖"
+      }
+    ],
+    "jgb/G/smart-lock-functions": [
+      {
+        "already_on": "jgb/G/smart-meter-lock-iot",
+        "text": "智慧門鎖"
+      }
+    ],
+    "jgb/G/smart-lock-password-rules": [
+      {
+        "already_on": "jgb/G/smart-meter-lock-iot",
+        "text": "IoT"
+      }
+    ],
+    "jgb/G/smart-meter-lock-iot": [
+      {
+        "already_on": "jgb/G/smart-meter-lock-iot",
+        "text": "智慧電表"
+      }
+    ]
+  },
+  "dup_in_proposal": {
+    "jgb/G/meter-vendor-binding": [
+      {
+        "kept_on": "jgb/G/meter-device-management",
+        "text": "電表串接"
+      }
+    ],
+    "jgb/G/smart-lock-functions": [
+      {
+        "kept_on": "jgb/G/smart-lock-failure",
+        "text": "使用說明"
+      }
+    ],
+    "jgb/G/tenant-meter-visibility": [
+      {
+        "kept_on": "jgb/G/meter-device-management",
+        "text": "電表串接"
+      }
+    ]
+  },
+  "fines_without_phrasings": [
+    "jgb/G/smart-lock-functions"
+  ],
+  "missing_fines": [],
+  "other_shelf_fines": {},
+  "phrasing_set_sha256": "0f8df038c351daa48d260bcbd52713234e83f19fa32975b23efb8c09e6c19ce6",
+  "skipped_fines": {
+    "jgb/G/meter-item-followup-scope": 1,
+    "jgb/G/smart-meter-lock-iot": 2
+  }
+}

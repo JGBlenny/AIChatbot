@@ -1,0 +1,8669 @@
+{
+ "_meta": {
+  "scope": "產品功能面分母（DSP-064，兩身分共用）",
+  "source_surface_jgb2_sha": "b2ee2ac382ce06763798a7238e4fd5c9411fcfaa",
+  "kinds": [
+   "action",
+   "help"
+  ],
+  "n_cells": 290,
+  "trace": [
+   {
+    "id": "F001",
+    "unit_id": "action:add_bill",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/manual-bill-creation",
+     "jgb/E/bill-contents-extra-fees"
+    ]
+   },
+   {
+    "id": "F002",
+    "unit_id": "action:add_contract",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/contract-create-entry-and-prereq"
+    ]
+   },
+   {
+    "id": "F003",
+    "unit_id": "action:add_estate",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/C/property-add-blocked",
+     "jgb/C/property-batch-import"
+    ]
+   },
+   {
+    "id": "F004",
+    "unit_id": "action:assign_contract",
+    "verdict_0b": "partial",
+    "fine_ids_0b": [
+     "jgb/D/contract-esign-flow"
+    ]
+   },
+   {
+    "id": "F005",
+    "unit_id": "action:assign_estate",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/B/role-permission-granularity"
+    ]
+   },
+   {
+    "id": "F006",
+    "unit_id": "action:chart_bill",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/bill-reports-export"
+    ]
+   },
+   {
+    "id": "F007",
+    "unit_id": "action:chart_owner_bill",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/bill-reports-export",
+     "jgb/E/landlord-owner-bills"
+    ]
+   },
+   {
+    "id": "F008",
+    "unit_id": "action:edit_biglandlord",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/B/add-owner-landlord-and-access"
+    ]
+   },
+   {
+    "id": "F009",
+    "unit_id": "action:edit_contract",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/contract-modify-after-sign"
+    ]
+   },
+   {
+    "id": "F010",
+    "unit_id": "action:edit_estate",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/C/property-edit-vs-publish"
+    ]
+   },
+   {
+    "id": "F011",
+    "unit_id": "action:edit_notification",
+    "verdict_0b": "missing",
+    "fine_ids_0b": []
+   },
+   {
+    "id": "F012",
+    "unit_id": "action:edit_owner_repair",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/F/repair-request-how-to-submit",
+     "jgb/F/repair-ticket-open-and-confirm"
+    ]
+   },
+   {
+    "id": "F013",
+    "unit_id": "action:edit_repair",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/F/repair-dispatch-and-close",
+     "jgb/F/repair-flow-stages"
+    ]
+   },
+   {
+    "id": "F014",
+    "unit_id": "action:edit_role",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/A/account-profile-settings",
+     "jgb/I/subscription-change-renewal",
+     "jgb/B/role-permission-granularity"
+    ]
+   },
+   {
+    "id": "F015",
+    "unit_id": "action:edit_role_team",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/B/role-permission-granularity",
+     "jgb/B/add-team-member"
+    ]
+   },
+   {
+    "id": "F016",
+    "unit_id": "action:edit_social_housing_sheet",
+    "verdict_0b": "missing",
+    "fine_ids_0b": []
+   },
+   {
+    "id": "F017",
+    "unit_id": "action:export_bill",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/bill-reports-export"
+    ]
+   },
+   {
+    "id": "F018",
+    "unit_id": "action:export_contract",
+    "verdict_0b": "partial",
+    "fine_ids_0b": [
+     "jgb/D/contract-pdf-download"
+    ]
+   },
+   {
+    "id": "F019",
+    "unit_id": "action:export_estate",
+    "verdict_0b": "missing",
+    "fine_ids_0b": []
+   },
+   {
+    "id": "F020",
+    "unit_id": "action:export_repair",
+    "verdict_0b": "missing",
+    "fine_ids_0b": []
+   },
+   {
+    "id": "F021",
+    "unit_id": "action:owner_bill",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/landlord-owner-bills"
+    ]
+   },
+   {
+    "id": "F022",
+    "unit_id": "action:pay_bill",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/bill-status-reconciliation",
+     "jgb/E/cash-bank-account-collection"
+    ]
+   },
+   {
+    "id": "F023",
+    "unit_id": "action:public_estate",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/C/property-listing-conditions",
+     "jgb/C/property-unlisting"
+    ]
+   },
+   {
+    "id": "F024",
+    "unit_id": "action:receive_bill",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/bill-status-reconciliation",
+     "jgb/E/paid-but-status-not-updated"
+    ]
+   },
+   {
+    "id": "F025",
+    "unit_id": "action:send_contract_invitation",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/contract-send-invite",
+     "jgb/D/esign-invite-expiry"
+    ]
+   },
+   {
+    "id": "F026",
+    "unit_id": "action:show_biglandlord",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/B/add-owner-landlord-and-access",
+     "jgb/B/what-is-owner-landlord"
+    ]
+   },
+   {
+    "id": "F027",
+    "unit_id": "action:show_biglandlord_report",
+    "verdict_0b": "partial",
+    "fine_ids_0b": [
+     "jgb/B/owner-report-collection-remit"
+    ]
+   },
+   {
+    "id": "F028",
+    "unit_id": "action:show_bill",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/billing-overview",
+     "jgb/E/bill-contents-extra-fees"
+    ]
+   },
+   {
+    "id": "F029",
+    "unit_id": "action:show_contract",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/contract-lookup",
+     "jgb/D/contract-status-overview"
+    ]
+   },
+   {
+    "id": "F030",
+    "unit_id": "action:show_contract_history",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/contract-history-retention"
+    ]
+   },
+   {
+    "id": "F031",
+    "unit_id": "action:show_contract_signed",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/contract-status-overview"
+    ]
+   },
+   {
+    "id": "F032",
+    "unit_id": "action:show_email_log",
+    "verdict_0b": "partial",
+    "fine_ids_0b": [
+     "jgb/A/verification-code-not-received"
+    ]
+   },
+   {
+    "id": "F033",
+    "unit_id": "action:show_estate",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/C/property-management-overview",
+     "jgb/C/property-advanced-search"
+    ]
+   },
+   {
+    "id": "F034",
+    "unit_id": "action:show_lessee",
+    "verdict_0b": "partial",
+    "fine_ids_0b": [
+     "jgb/D/contract-lookup"
+    ]
+   },
+   {
+    "id": "F035",
+    "unit_id": "action:show_notification",
+    "verdict_0b": "partial",
+    "fine_ids_0b": [
+     "jgb/B/role-permission-granularity"
+    ]
+   },
+   {
+    "id": "F036",
+    "unit_id": "action:show_owner_bill",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/landlord-owner-bills"
+    ]
+   },
+   {
+    "id": "F037",
+    "unit_id": "action:show_owner_contract",
+    "verdict_0b": "partial",
+    "fine_ids_0b": [
+     "jgb/B/add-owner-landlord-and-access"
+    ]
+   },
+   {
+    "id": "F038",
+    "unit_id": "action:show_owner_contract_history",
+    "verdict_0b": "partial",
+    "fine_ids_0b": [
+     "jgb/B/add-owner-landlord-and-access",
+     "jgb/D/contract-history-retention"
+    ]
+   },
+   {
+    "id": "F039",
+    "unit_id": "action:show_owner_contract_signed",
+    "verdict_0b": "partial",
+    "fine_ids_0b": [
+     "jgb/B/add-owner-landlord-and-access"
+    ]
+   },
+   {
+    "id": "F040",
+    "unit_id": "action:show_owner_estate",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/B/add-owner-landlord-and-access"
+    ]
+   },
+   {
+    "id": "F041",
+    "unit_id": "action:show_owner_repair",
+    "verdict_0b": "partial",
+    "fine_ids_0b": [
+     "jgb/B/add-owner-landlord-and-access",
+     "jgb/F/repair-progress-followup-scope"
+    ]
+   },
+   {
+    "id": "F042",
+    "unit_id": "action:show_repair",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/F/repair-progress-followup-scope",
+     "jgb/F/repair-system"
+    ]
+   },
+   {
+    "id": "F043",
+    "unit_id": "action:show_role",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/B/role-permission-granularity",
+     "jgb/B/who-has-permission-lookup"
+    ]
+   },
+   {
+    "id": "F044",
+    "unit_id": "action:show_role_team",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/B/role-permission-granularity",
+     "jgb/B/add-team-member"
+    ]
+   },
+   {
+    "id": "F045",
+    "unit_id": "action:sign_contract",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/contract-esign-flow",
+     "jgb/D/esign-legal-validity"
+    ]
+   },
+   {
+    "id": "F046",
+    "unit_id": "help:Landlordonboarding00_zh-Hant.html#加入團隊",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/B/add-team-member",
+     "jgb/B/add-owner-landlord-and-access"
+    ]
+   },
+   {
+    "id": "F047",
+    "unit_id": "help:Landlordonboarding00_zh-Hant.html#瀏覽物件所屬修繕",
+    "verdict_0b": "partial",
+    "fine_ids_0b": [
+     "jgb/B/add-owner-landlord-and-access",
+     "jgb/B/owner-report-collection-remit"
+    ]
+   },
+   {
+    "id": "F048",
+    "unit_id": "help:Landlordonboarding00_zh-Hant.html#瀏覽物件所屬合約",
+    "verdict_0b": "partial",
+    "fine_ids_0b": [
+     "jgb/B/add-owner-landlord-and-access",
+     "jgb/B/owner-report-collection-remit"
+    ]
+   },
+   {
+    "id": "F049",
+    "unit_id": "help:Landlordonboarding00_zh-Hant.html#瀏覽物件所屬帳務",
+    "verdict_0b": "partial",
+    "fine_ids_0b": [
+     "jgb/B/add-owner-landlord-and-access",
+     "jgb/B/owner-report-collection-remit"
+    ]
+   },
+   {
+    "id": "F050",
+    "unit_id": "help:Landlordonboarding00_zh-Hant.html#瀏覽物件資訊",
+    "verdict_0b": "partial",
+    "fine_ids_0b": [
+     "jgb/B/add-owner-landlord-and-access",
+     "jgb/B/owner-report-collection-remit"
+    ]
+   },
+   {
+    "id": "F051",
+    "unit_id": "help:Landlordonboarding00_zh-Hant.html#總覽資訊",
+    "verdict_0b": "partial",
+    "fine_ids_0b": [
+     "jgb/B/add-owner-landlord-and-access",
+     "jgb/B/owner-report-collection-remit"
+    ]
+   },
+   {
+    "id": "F052",
+    "unit_id": "help:Landlordonboarding00phone_zh-Hant.html#加入團隊",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/B/add-team-member",
+     "jgb/B/add-owner-landlord-and-access"
+    ]
+   },
+   {
+    "id": "F053",
+    "unit_id": "help:Landlordonboarding00phone_zh-Hant.html#瀏覽物件所屬修繕",
+    "verdict_0b": "partial",
+    "fine_ids_0b": [
+     "jgb/B/add-owner-landlord-and-access",
+     "jgb/B/owner-report-collection-remit"
+    ]
+   },
+   {
+    "id": "F054",
+    "unit_id": "help:Landlordonboarding00phone_zh-Hant.html#瀏覽物件所屬合約",
+    "verdict_0b": "partial",
+    "fine_ids_0b": [
+     "jgb/B/add-owner-landlord-and-access",
+     "jgb/B/owner-report-collection-remit"
+    ]
+   },
+   {
+    "id": "F055",
+    "unit_id": "help:Landlordonboarding00phone_zh-Hant.html#瀏覽物件所屬帳務",
+    "verdict_0b": "partial",
+    "fine_ids_0b": [
+     "jgb/B/add-owner-landlord-and-access",
+     "jgb/B/owner-report-collection-remit"
+    ]
+   },
+   {
+    "id": "F056",
+    "unit_id": "help:Landlordonboarding00phone_zh-Hant.html#瀏覽物件資訊",
+    "verdict_0b": "partial",
+    "fine_ids_0b": [
+     "jgb/B/add-owner-landlord-and-access",
+     "jgb/B/owner-report-collection-remit"
+    ]
+   },
+   {
+    "id": "F057",
+    "unit_id": "help:Landlordonboarding00phone_zh-Hant.html#總覽資訊",
+    "verdict_0b": "partial",
+    "fine_ids_0b": [
+     "jgb/B/add-owner-landlord-and-access",
+     "jgb/B/owner-report-collection-remit"
+    ]
+   },
+   {
+    "id": "F058",
+    "unit_id": "help:Landlordonboarding01_zh-Hant.html#創建帳號",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/A/account-registration"
+    ]
+   },
+   {
+    "id": "F059",
+    "unit_id": "help:Landlordonboarding01_zh-Hant.html#帳號設置",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/A/account-profile-settings"
+    ]
+   },
+   {
+    "id": "F060",
+    "unit_id": "help:Landlordonboarding01_zh-Hant.html#📌 小提醒",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/A/account-registration"
+    ]
+   },
+   {
+    "id": "F061",
+    "unit_id": "help:Landlordonboarding02_zh-Hant.html#⚠️ 版本更新",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/I/onboarding-tutorial-index"
+    ]
+   },
+   {
+    "id": "F062",
+    "unit_id": "help:Landlordonboarding02_zh-Hant.html#創建團隊",
+    "verdict_0b": "partial",
+    "fine_ids_0b": [
+     "jgb/B/team-management-overview"
+    ]
+   },
+   {
+    "id": "F063",
+    "unit_id": "help:Landlordonboarding02_zh-Hant.html#功能重點：專業級股東報告，雲端式屋主回報",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/B/owner-report-collection-remit"
+    ]
+   },
+   {
+    "id": "F064",
+    "unit_id": "help:Landlordonboarding02_zh-Hant.html#團隊成員管理",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/B/add-team-member",
+     "jgb/B/role-permission-granularity"
+    ]
+   },
+   {
+    "id": "F065",
+    "unit_id": "help:Landlordonboarding02_zh-Hant.html#團隊設置",
+    "verdict_0b": "partial",
+    "fine_ids_0b": [
+     "jgb/B/team-management-overview",
+     "jgb/A/account-profile-settings"
+    ]
+   },
+   {
+    "id": "F066",
+    "unit_id": "help:Landlordonboarding02_zh-Hant.html#常見問題",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/B/feature-not-visible-troubleshooting"
+    ]
+   },
+   {
+    "id": "F067",
+    "unit_id": "help:Landlordonboarding02_zh-Hant.html#新增大房東（所有權人/轉租人）：",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/B/add-owner-landlord-and-access",
+     "jgb/B/what-is-owner-landlord"
+    ]
+   },
+   {
+    "id": "F068",
+    "unit_id": "help:Landlordonboarding02_zh-Hant.html#新增＆管理大房東",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/B/add-owner-landlord-and-access"
+    ]
+   },
+   {
+    "id": "F069",
+    "unit_id": "help:Landlordonboarding02_zh-Hant.html#查看＆變更現行的訂閱方案",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/I/subscription-change-renewal",
+     "jgb/I/pricing-plans"
+    ]
+   },
+   {
+    "id": "F070",
+    "unit_id": "help:Landlordonboarding02_zh-Hant.html#設定團隊招租頁面網址＆時區",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/C/rental-storefront-vr",
+     "jgb/C/storefront-entry-share"
+    ]
+   },
+   {
+    "id": "F071",
+    "unit_id": "help:Landlordonboarding02_zh-Hant.html#請各位擅用 【Ctrl+F】的搜索功能。",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/I/onboarding-tutorial-index"
+    ]
+   },
+   {
+    "id": "F072",
+    "unit_id": "help:Landlordonboarding02_zh-Hant.html#📌 小提醒",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/B/add-team-member",
+     "jgb/B/role-permission-granularity"
+    ]
+   },
+   {
+    "id": "F073",
+    "unit_id": "help:Landlordonboarding06Finance_zh-Hant.html#批次發送帳單",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/bill-scheduled-auto-send"
+    ]
+   },
+   {
+    "id": "F074",
+    "unit_id": "help:Landlordonboarding06Finance_zh-Hant.html#批次編輯帳單",
+    "verdict_0b": "partial",
+    "fine_ids_0b": [
+     "jgb/E/bill-contents-extra-fees"
+    ]
+   },
+   {
+    "id": "F075",
+    "unit_id": "help:Landlordonboarding06Finance_zh-Hant.html#新增帳單",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/manual-bill-creation"
+    ]
+   },
+   {
+    "id": "F076",
+    "unit_id": "help:Landlordonboarding06Finance_zh-Hant.html#新增帳單-導覽＆介面介紹",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/manual-bill-creation"
+    ]
+   },
+   {
+    "id": "F077",
+    "unit_id": "help:Landlordonboarding06Finance_zh-Hant.html#此篇新手上路，將分別告訴你",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/billing-overview"
+    ]
+   },
+   {
+    "id": "F078",
+    "unit_id": "help:Landlordonboarding06Finance_zh-Hant.html#確認帳單",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/bill-status-reconciliation"
+    ]
+   },
+   {
+    "id": "F079",
+    "unit_id": "help:Landlordonboarding06Finance_zh-Hant.html#租金帳單",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/rent-amount-calculation",
+     "jgb/E/periodic-bill-generation"
+    ]
+   },
+   {
+    "id": "F080",
+    "unit_id": "help:Landlordonboarding06Finance_zh-Hant.html#編輯帳單-導覽＆介面介紹",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/bill-contents-extra-fees"
+    ]
+   },
+   {
+    "id": "F081",
+    "unit_id": "help:Landlordonboarding06Finance_zh-Hant.html#📌 小提醒",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/billing-overview",
+     "jgb/E/manual-bill-creation"
+    ]
+   },
+   {
+    "id": "F082",
+    "unit_id": "help:Landlordonboarding08Device_zh-Hant.html#⚠️ 版本更新",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/G/meter-device-management"
+    ]
+   },
+   {
+    "id": "F083",
+    "unit_id": "help:Landlordonboarding08Device_zh-Hant.html#智慧電錶",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/G/smart-meter-lock-iot",
+     "jgb/G/meter-device-management"
+    ]
+   },
+   {
+    "id": "F084",
+    "unit_id": "help:Landlordonboarding08Device_zh-Hant.html#智慧電錶綁帳單",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/utility-meter-billing-and-reading"
+    ]
+   },
+   {
+    "id": "F085",
+    "unit_id": "help:Landlordonboarding08Device_zh-Hant.html#查看用電度數",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/G/meter-device-management",
+     "jgb/E/utility-meter-billing-and-reading"
+    ]
+   },
+   {
+    "id": "F086",
+    "unit_id": "help:Landlordonboarding08Device_zh-Hant.html#系統功能＆介面展示",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/G/meter-device-management"
+    ]
+   },
+   {
+    "id": "F087",
+    "unit_id": "help:Landlordonboarding08Device_zh-Hant.html#非台科電電錶的基本設定及綁定物件",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/G/meter-vendor-binding",
+     "jgb/G/meter-device-management"
+    ]
+   },
+   {
+    "id": "F088",
+    "unit_id": "help:Landlordonboarding08Device_zh-Hant.html#📌 小提醒",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/G/meter-device-management"
+    ]
+   },
+   {
+    "id": "F089",
+    "unit_id": "help:Landlordonboarding09Socialhousing_zh-Hant.html#一般生活費用、修繕費用⋯等單一帳單產生",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/manual-bill-creation"
+    ]
+   },
+   {
+    "id": "F090",
+    "unit_id": "help:Landlordonboarding09Socialhousing_zh-Hant.html#創建社宅合約",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/social-housing-lease"
+    ]
+   },
+   {
+    "id": "F091",
+    "unit_id": "help:Landlordonboarding09Socialhousing_zh-Hant.html#創建社宅團隊",
+    "verdict_0b": "partial",
+    "fine_ids_0b": [
+     "jgb/D/social-housing-lease"
+    ]
+   },
+   {
+    "id": "F092",
+    "unit_id": "help:Landlordonboarding09Socialhousing_zh-Hant.html#創建社宅物件",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/C/property-batch-import",
+     "jgb/C/community-setup-and-property-binding"
+    ]
+   },
+   {
+    "id": "F093",
+    "unit_id": "help:Landlordonboarding09Socialhousing_zh-Hant.html#押租金帳單產生＆發送",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/deposit-setting-and-refund-system",
+     "jgb/E/manual-bill-creation"
+    ]
+   },
+   {
+    "id": "F094",
+    "unit_id": "help:Landlordonboarding09Socialhousing_zh-Hant.html#清冊列表功能",
+    "verdict_0b": "missing",
+    "fine_ids_0b": []
+   },
+   {
+    "id": "F095",
+    "unit_id": "help:Landlordonboarding09Socialhousing_zh-Hant.html#社宅帳務功能",
+    "verdict_0b": "partial",
+    "fine_ids_0b": [
+     "jgb/E/differential-invoice"
+    ]
+   },
+   {
+    "id": "F096",
+    "unit_id": "help:Landlordonboarding09Socialhousing_zh-Hant.html#📌 小提醒",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/social-housing-lease"
+    ]
+   },
+   {
+    "id": "F097",
+    "unit_id": "help:Landlordonboarding_zh-Hant.html#修繕篇",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/I/onboarding-tutorial-index",
+     "jgb/F/repair-flow-stages"
+    ]
+   },
+   {
+    "id": "F098",
+    "unit_id": "help:Landlordonboarding_zh-Hant.html#合約篇",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/I/onboarding-tutorial-index",
+     "jgb/D/contract-esign-flow"
+    ]
+   },
+   {
+    "id": "F099",
+    "unit_id": "help:Landlordonboarding_zh-Hant.html#帳務篇",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/I/onboarding-tutorial-index",
+     "jgb/E/billing-overview"
+    ]
+   },
+   {
+    "id": "F100",
+    "unit_id": "help:Landlordonboarding_zh-Hant.html#收款設置篇",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/I/onboarding-tutorial-index",
+     "jgb/E/payment-gateway-setup"
+    ]
+   },
+   {
+    "id": "F101",
+    "unit_id": "help:Landlordonboarding_zh-Hant.html#物件篇",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/I/onboarding-tutorial-index",
+     "jgb/C/property-management-overview"
+    ]
+   },
+   {
+    "id": "F102",
+    "unit_id": "help:Landlordonboarding_zh-Hant.html#社宅篇",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/I/onboarding-tutorial-index",
+     "jgb/D/social-housing-lease"
+    ]
+   },
+   {
+    "id": "F103",
+    "unit_id": "help:Landlordonboarding_zh-Hant.html#設備篇",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/I/onboarding-tutorial-index",
+     "jgb/G/meter-device-management"
+    ]
+   },
+   {
+    "id": "F104",
+    "unit_id": "help:Landlordonboarding_zh-Hant.html#註冊篇（ㄧ）— 個人房東篇",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/I/onboarding-tutorial-index"
+    ]
+   },
+   {
+    "id": "F105",
+    "unit_id": "help:Landlordonboarding_zh-Hant.html#註冊篇（二）— 公司團隊篇",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/I/onboarding-tutorial-index"
+    ]
+   },
+   {
+    "id": "F106",
+    "unit_id": "help:advanced12_zh-Hant.html#⚠️ 版本更新",
+    "verdict_0b": "partial",
+    "fine_ids_0b": [
+     "jgb/E/payment-gateway-setup"
+    ]
+   },
+   {
+    "id": "F107",
+    "unit_id": "help:advanced12_zh-Hant.html#企業會員帳號：統一編號",
+    "verdict_0b": "partial",
+    "fine_ids_0b": [
+     "jgb/E/payment-gateway-setup"
+    ]
+   },
+   {
+    "id": "F108",
+    "unit_id": "help:advanced12_zh-Hant.html#個人房東預設密碼：身分證字號",
+    "verdict_0b": "partial",
+    "fine_ids_0b": [
+     "jgb/E/payment-gateway-setup"
+    ]
+   },
+   {
+    "id": "F109",
+    "unit_id": "help:advanced12_zh-Hant.html#個人房東：登入藍新後台",
+    "verdict_0b": "partial",
+    "fine_ids_0b": [
+     "jgb/E/payment-gateway-setup"
+    ]
+   },
+   {
+    "id": "F110",
+    "unit_id": "help:advanced12_zh-Hant.html#法人（團隊）房東：登入藍新後台",
+    "verdict_0b": "partial",
+    "fine_ids_0b": [
+     "jgb/E/payment-gateway-setup"
+    ]
+   },
+   {
+    "id": "F111",
+    "unit_id": "help:advanced12_zh-Hant.html#藍新後台提款方法：",
+    "verdict_0b": "partial",
+    "fine_ids_0b": [
+     "jgb/E/payment-gateway-setup"
+    ]
+   },
+   {
+    "id": "F112",
+    "unit_id": "help:billexpired_zh-Hant.html#儲值前請先確認三個條件",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/C/property-status-meaning",
+     "jgb/E/bill-recall-cancel"
+    ]
+   },
+   {
+    "id": "F113",
+    "unit_id": "help:contract_review_period_zh-Hant.html#1.契約審閱權",
+    "verdict_0b": "partial",
+    "fine_ids_0b": [
+     "jgb/D/esign-legal-validity"
+    ]
+   },
+   {
+    "id": "F114",
+    "unit_id": "help:contract_review_period_zh-Hant.html#2.不動產租賃相關契約至少之審閱天數",
+    "verdict_0b": "partial",
+    "fine_ids_0b": [
+     "jgb/D/esign-legal-validity"
+    ]
+   },
+   {
+    "id": "F115",
+    "unit_id": "help:einvoice_zh-Hant.html#Step 1：確認功能已啟用",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/einvoice-issuing",
+     "jgb/E/invoice-void-reissue",
+     "jgb/E/invoice-not-issued-troubleshooting"
+    ]
+   },
+   {
+    "id": "F116",
+    "unit_id": "help:einvoice_zh-Hant.html#Step 2：選擇發票開立模式",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/einvoice-issuing",
+     "jgb/E/invoice-void-reissue",
+     "jgb/E/invoice-not-issued-troubleshooting"
+    ]
+   },
+   {
+    "id": "F117",
+    "unit_id": "help:einvoice_zh-Hant.html#Step 3：設定合約的「稅與發票」",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/einvoice-issuing",
+     "jgb/E/invoice-void-reissue",
+     "jgb/E/invoice-not-issued-troubleshooting"
+    ]
+   },
+   {
+    "id": "F118",
+    "unit_id": "help:einvoice_zh-Hant.html#Step 4：帳單開立與查看發票",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/einvoice-issuing",
+     "jgb/E/invoice-void-reissue",
+     "jgb/E/invoice-not-issued-troubleshooting"
+    ]
+   },
+   {
+    "id": "F119",
+    "unit_id": "help:einvoice_zh-Hant.html#作廢與重開發票",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/invoice-void-reissue"
+    ]
+   },
+   {
+    "id": "F120",
+    "unit_id": "help:einvoice_zh-Hant.html#使用前需要先確認三件事",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/einvoice-issuing",
+     "jgb/E/invoice-void-reissue",
+     "jgb/E/invoice-not-issued-troubleshooting"
+    ]
+   },
+   {
+    "id": "F121",
+    "unit_id": "help:einvoice_zh-Hant.html#名詞說明",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/einvoice-issuing",
+     "jgb/E/invoice-void-reissue",
+     "jgb/E/invoice-not-issued-troubleshooting"
+    ]
+   },
+   {
+    "id": "F122",
+    "unit_id": "help:einvoice_zh-Hant.html#常見問題",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/invoice-not-issued-troubleshooting"
+    ]
+   },
+   {
+    "id": "F123",
+    "unit_id": "help:einvoice_zh-Hant.html#這個功能可以做什麼",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/einvoice-issuing",
+     "jgb/E/invoice-void-reissue",
+     "jgb/E/invoice-not-issued-troubleshooting"
+    ]
+   },
+   {
+    "id": "F124",
+    "unit_id": "help:einvoice_zh-Hant.html#需要協助時找誰",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/einvoice-issuing",
+     "jgb/E/invoice-void-reissue",
+     "jgb/E/invoice-not-issued-troubleshooting"
+    ]
+   },
+   {
+    "id": "F125",
+    "unit_id": "help:einvoice_zh-Hant.html#📌 小提醒",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/einvoice-issuing",
+     "jgb/E/invoice-void-reissue",
+     "jgb/E/invoice-not-issued-troubleshooting"
+    ]
+   },
+   {
+    "id": "F126",
+    "unit_id": "help:landlordonboarding04lease_zh-Hant.html#⚠️ 版本更新",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/contract-templates"
+    ]
+   },
+   {
+    "id": "F127",
+    "unit_id": "help:landlordonboarding04lease_zh-Hant.html#上傳（既有）合約",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/upload-existing-contract"
+    ]
+   },
+   {
+    "id": "F128",
+    "unit_id": "help:landlordonboarding04lease_zh-Hant.html#合約簽訂",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/contract-esign-flow"
+    ]
+   },
+   {
+    "id": "F129",
+    "unit_id": "help:landlordonboarding04lease_zh-Hant.html#常見問題",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/esign-troubleshooting"
+    ]
+   },
+   {
+    "id": "F130",
+    "unit_id": "help:landlordonboarding04lease_zh-Hant.html#建立合約",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/contract-create-entry-and-prereq"
+    ]
+   },
+   {
+    "id": "F131",
+    "unit_id": "help:landlordonboarding04lease_zh-Hant.html#批次續約",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/contract-batch-renewal",
+     "jgb/D/renewal-flow"
+    ]
+   },
+   {
+    "id": "F132",
+    "unit_id": "help:landlordonboarding04lease_zh-Hant.html#提前終止合約",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/early-termination-flow"
+    ]
+   },
+   {
+    "id": "F133",
+    "unit_id": "help:landlordonboarding04lease_zh-Hant.html#提前終止合約流程：",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/early-termination-flow"
+    ]
+   },
+   {
+    "id": "F134",
+    "unit_id": "help:landlordonboarding04lease_zh-Hant.html#此篇新手上路，將分別告訴你如何",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/contract-esign-flow"
+    ]
+   },
+   {
+    "id": "F135",
+    "unit_id": "help:landlordonboarding04lease_zh-Hant.html#點交/點退",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/handover-checkin",
+     "jgb/D/return-checkout"
+    ]
+   },
+   {
+    "id": "F136",
+    "unit_id": "help:landlordonboarding04lease_zh-Hant.html#點退流程",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/return-checkout"
+    ]
+   },
+   {
+    "id": "F137",
+    "unit_id": "help:landlordonboarding04lease_zh-Hant.html#📌 小提醒",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/contract-esign-flow"
+    ]
+   },
+   {
+    "id": "F138",
+    "unit_id": "help:landlordonboarding05Paymentsettings_zh-Hant.html#JGB 支援哪幾家線上金流？",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/payment-gateway-options"
+    ]
+   },
+   {
+    "id": "F139",
+    "unit_id": "help:landlordonboarding05Paymentsettings_zh-Hant.html#中國信託（中信）",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/payment-gateway-setup",
+     "jgb/E/payment-gateway-options"
+    ]
+   },
+   {
+    "id": "F140",
+    "unit_id": "help:landlordonboarding05Paymentsettings_zh-Hant.html#單一金流設定多組帳號",
+    "verdict_0b": "partial",
+    "fine_ids_0b": [
+     "jgb/E/payment-gateway-setup"
+    ]
+   },
+   {
+    "id": "F141",
+    "unit_id": "help:landlordonboarding05Paymentsettings_zh-Hant.html#國泰（虛擬ATM）",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/payment-gateway-setup",
+     "jgb/E/payment-gateway-options"
+    ]
+   },
+   {
+    "id": "F142",
+    "unit_id": "help:landlordonboarding05Paymentsettings_zh-Hant.html#常見問題",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/payment-fees-and-sms"
+    ]
+   },
+   {
+    "id": "F143",
+    "unit_id": "help:landlordonboarding05Paymentsettings_zh-Hant.html#永豐（虛擬ATM）",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/payment-gateway-setup",
+     "jgb/E/payment-gateway-options"
+    ]
+   },
+   {
+    "id": "F144",
+    "unit_id": "help:landlordonboarding05Paymentsettings_zh-Hant.html#現金收款帳戶",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/cash-bank-account-collection"
+    ]
+   },
+   {
+    "id": "F145",
+    "unit_id": "help:landlordonboarding05Paymentsettings_zh-Hant.html#藍新（信用卡、超商代碼、虛擬ATM）",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/payment-gateway-setup",
+     "jgb/E/payment-gateway-options"
+    ]
+   },
+   {
+    "id": "F146",
+    "unit_id": "help:landlordonboarding05Paymentsettings_zh-Hant.html#虛擬 ATM 帳號分成兩種",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/virtual-account-prepaid",
+     "jgb/E/fixed-virtual-account-management"
+    ]
+   },
+   {
+    "id": "F147",
+    "unit_id": "help:landlordonboarding05Paymentsettings_zh-Hant.html#請各位擅用 【Ctrl+F】的搜索功能。",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/I/onboarding-tutorial-index"
+    ]
+   },
+   {
+    "id": "F148",
+    "unit_id": "help:landlordonboarding05Paymentsettings_zh-Hant.html#開通線上金流教程",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/payment-gateway-setup",
+     "jgb/E/payment-gateway-options"
+    ]
+   },
+   {
+    "id": "F149",
+    "unit_id": "help:landlordonboarding05Paymentsettings_zh-Hant.html#📌 小提醒",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/payment-gateway-setup",
+     "jgb/E/payment-gateway-options"
+    ]
+   },
+   {
+    "id": "F150",
+    "unit_id": "help:law20250520_zh-Hant.html#一、租賃契約書的保存期限（法律雖無明文強制，實務仍建議保留）",
+    "verdict_0b": "partial",
+    "fine_ids_0b": [
+     "jgb/D/contract-history-retention"
+    ]
+   },
+   {
+    "id": "F151",
+    "unit_id": "help:law20250520_zh-Hant.html#二、相關法律追溯期（請求權時效）",
+    "verdict_0b": "partial",
+    "fine_ids_0b": [
+     "jgb/D/contract-history-retention"
+    ]
+   },
+   {
+    "id": "F152",
+    "unit_id": "help:law20250520_zh-Hant.html#總結建議",
+    "verdict_0b": "partial",
+    "fine_ids_0b": [
+     "jgb/D/contract-history-retention"
+    ]
+   },
+   {
+    "id": "F153",
+    "unit_id": "help:onboarding10_zh-Hant.html",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/return-checkout"
+    ]
+   },
+   {
+    "id": "F154",
+    "unit_id": "help:onboarding11_zh-Hant.html#📌 小提醒",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/manual-bill-creation"
+    ]
+   },
+   {
+    "id": "F155",
+    "unit_id": "help:onboarding12_zh-Hant.html#📌 小提醒",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/bill-scheduled-auto-send"
+    ]
+   },
+   {
+    "id": "F156",
+    "unit_id": "help:onboarding13_zh-Hant.html#⚠️ 版本更新",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/manual-bill-creation",
+     "jgb/E/bill-status-reconciliation"
+    ]
+   },
+   {
+    "id": "F157",
+    "unit_id": "help:onboarding13_zh-Hant.html#📌 小提醒",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/manual-bill-creation",
+     "jgb/E/bill-status-reconciliation"
+    ]
+   },
+   {
+    "id": "F158",
+    "unit_id": "help:onboarding14_zh-Hant.html#⚠️ 版本更新",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/bill-receipt-pdf"
+    ]
+   },
+   {
+    "id": "F159",
+    "unit_id": "help:onboarding14_zh-Hant.html#一、收款帳單 - 收據下載",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/bill-receipt-pdf"
+    ]
+   },
+   {
+    "id": "F160",
+    "unit_id": "help:onboarding14_zh-Hant.html#二、繳款帳單 - 收據下載",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/bill-receipt-pdf"
+    ]
+   },
+   {
+    "id": "F161",
+    "unit_id": "help:onboarding1_zh-Hant.html#⚠️ 版本更新",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/A/account-registration",
+     "jgb/A/login-methods"
+    ]
+   },
+   {
+    "id": "F162",
+    "unit_id": "help:onboarding1_zh-Hant.html#一、註冊篇",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/A/account-registration",
+     "jgb/A/login-methods"
+    ]
+   },
+   {
+    "id": "F163",
+    "unit_id": "help:onboarding1_zh-Hant.html#三、房東登入篇",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/A/account-registration",
+     "jgb/A/login-methods"
+    ]
+   },
+   {
+    "id": "F164",
+    "unit_id": "help:onboarding1_zh-Hant.html#二、租客電子合約邀請註冊",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/A/account-registration",
+     "jgb/A/registered-vs-unregistered-tenant"
+    ]
+   },
+   {
+    "id": "F165",
+    "unit_id": "help:onboarding1_zh-Hant.html#四、租客登入篇",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/A/login-methods",
+     "jgb/A/tenant-login-cannot-see-data"
+    ]
+   },
+   {
+    "id": "F166",
+    "unit_id": "help:onboarding1_zh-Hant.html#驗證碼會傳到Email信箱內",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/A/verification-code-not-received",
+     "jgb/A/verification-code-invalid"
+    ]
+   },
+   {
+    "id": "F167",
+    "unit_id": "help:onboarding1_zh-Hant.html#📌 小提醒",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/A/account-registration",
+     "jgb/A/login-methods"
+    ]
+   },
+   {
+    "id": "F168",
+    "unit_id": "help:onboarding2_zh-Hant.html#一、房東帳號篇：",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/A/account-profile-settings"
+    ]
+   },
+   {
+    "id": "F169",
+    "unit_id": "help:onboarding2_zh-Hant.html#三、租客帳號篇：",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/A/account-profile-settings"
+    ]
+   },
+   {
+    "id": "F170",
+    "unit_id": "help:onboarding2_zh-Hant.html#二、團隊帳號篇：",
+    "verdict_0b": "partial",
+    "fine_ids_0b": [
+     "jgb/A/account-profile-settings",
+     "jgb/B/team-management-overview"
+    ]
+   },
+   {
+    "id": "F171",
+    "unit_id": "help:onboarding4_zh-Hant.html#⚠️ 版本更新",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/C/property-add-blocked",
+     "jgb/C/property-batch-import"
+    ]
+   },
+   {
+    "id": "F172",
+    "unit_id": "help:onboarding4_zh-Hant.html#一、新增物件",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/C/property-add-blocked",
+     "jgb/C/property-batch-import"
+    ]
+   },
+   {
+    "id": "F173",
+    "unit_id": "help:onboarding4_zh-Hant.html#三、批次上傳物件",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/C/property-batch-import"
+    ]
+   },
+   {
+    "id": "F174",
+    "unit_id": "help:onboarding4_zh-Hant.html#二、複製現有物件",
+    "verdict_0b": "missing",
+    "fine_ids_0b": []
+   },
+   {
+    "id": "F175",
+    "unit_id": "help:onboarding4_zh-Hant.html#另外由於JGB系統已於 2022/05/12 新增社區功能",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/C/community-setup-and-property-binding"
+    ]
+   },
+   {
+    "id": "F176",
+    "unit_id": "help:onboarding4_zh-Hant.html#📌 小提醒",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/C/property-add-blocked",
+     "jgb/C/property-batch-import"
+    ]
+   },
+   {
+    "id": "F177",
+    "unit_id": "help:onboarding5_zh-Hant.html#一、建立合約",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/contract-create-entry-and-prereq",
+     "jgb/D/contract-modify-after-sign"
+    ]
+   },
+   {
+    "id": "F178",
+    "unit_id": "help:onboarding5_zh-Hant.html#二、編輯合約",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/contract-create-entry-and-prereq",
+     "jgb/D/contract-modify-after-sign"
+    ]
+   },
+   {
+    "id": "F179",
+    "unit_id": "help:onboarding5_zh-Hant.html#租客視角",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/tenant-sign-steps"
+    ]
+   },
+   {
+    "id": "F180",
+    "unit_id": "help:onboarding5_zh-Hant.html#📌 小提醒",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/contract-create-entry-and-prereq",
+     "jgb/D/contract-modify-after-sign"
+    ]
+   },
+   {
+    "id": "F181",
+    "unit_id": "help:onboarding6_zh-Hant.html#⚠️ 版本更新",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/upload-existing-contract"
+    ]
+   },
+   {
+    "id": "F182",
+    "unit_id": "help:onboarding6_zh-Hant.html#📌 小提醒",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/upload-existing-contract"
+    ]
+   },
+   {
+    "id": "F183",
+    "unit_id": "help:onboarding7_zh-Hant.html#如果租客不同意點交呢？",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/handover-checkin"
+    ]
+   },
+   {
+    "id": "F184",
+    "unit_id": "help:onboarding7_zh-Hant.html#📌 小提醒",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/handover-checkin"
+    ]
+   },
+   {
+    "id": "F185",
+    "unit_id": "help:onboarding8_zh-Hant.html#一、編輯帳單並送出",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/manual-bill-creation",
+     "jgb/E/bill-scheduled-auto-send"
+    ]
+   },
+   {
+    "id": "F186",
+    "unit_id": "help:onboarding8_zh-Hant.html#三、收據確認",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/bill-receipt-pdf"
+    ]
+   },
+   {
+    "id": "F187",
+    "unit_id": "help:onboarding8_zh-Hant.html#二、租客付款",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/tenant-payment-methods"
+    ]
+   },
+   {
+    "id": "F188",
+    "unit_id": "help:onboarding8_zh-Hant.html#📌 小提醒",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/manual-bill-creation",
+     "jgb/E/bill-scheduled-auto-send"
+    ]
+   },
+   {
+    "id": "F189",
+    "unit_id": "help:onboarding9-1_zh-Hant.html#📌 小提醒",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/early-termination-flow"
+    ]
+   },
+   {
+    "id": "F190",
+    "unit_id": "help:paymentapply_zh-Hant.html#先確認您的身分是否符合",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/payment-gateway-options"
+    ]
+   },
+   {
+    "id": "F191",
+    "unit_id": "help:paymentapply_zh-Hant.html#款項會匯到哪裡？",
+    "verdict_0b": "partial",
+    "fine_ids_0b": [
+     "jgb/E/payment-gateway-options",
+     "jgb/E/payment-gateway-setup"
+    ]
+   },
+   {
+    "id": "F192",
+    "unit_id": "help:paymentapply_zh-Hant.html#款項要怎麼提領？",
+    "verdict_0b": "partial",
+    "fine_ids_0b": [
+     "jgb/E/payment-gateway-options",
+     "jgb/E/payment-gateway-setup"
+    ]
+   },
+   {
+    "id": "F193",
+    "unit_id": "help:property_zh-Hant.html#創建社區",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/C/community-setup-and-property-binding"
+    ]
+   },
+   {
+    "id": "F194",
+    "unit_id": "help:property_zh-Hant.html#常見問題",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/C/community-setup-and-property-binding",
+     "jgb/C/property-add-blocked"
+    ]
+   },
+   {
+    "id": "F195",
+    "unit_id": "help:property_zh-Hant.html#建立物件",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/C/community-setup-and-property-binding",
+     "jgb/C/property-add-blocked"
+    ]
+   },
+   {
+    "id": "F196",
+    "unit_id": "help:property_zh-Hant.html#批次新增物件",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/C/property-batch-import"
+    ]
+   },
+   {
+    "id": "F197",
+    "unit_id": "help:property_zh-Hant.html#批次新增社區",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/C/community-batch-create"
+    ]
+   },
+   {
+    "id": "F198",
+    "unit_id": "help:property_zh-Hant.html#招租",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/C/property-listing-conditions"
+    ]
+   },
+   {
+    "id": "F199",
+    "unit_id": "help:property_zh-Hant.html#查看/編輯已建立之物件",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/C/property-edit-vs-publish"
+    ]
+   },
+   {
+    "id": "F200",
+    "unit_id": "help:property_zh-Hant.html#查看/編輯已建立社區",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/C/community-setup-and-property-binding"
+    ]
+   },
+   {
+    "id": "F201",
+    "unit_id": "help:property_zh-Hant.html#買賣",
+    "verdict_0b": "missing",
+    "fine_ids_0b": []
+   },
+   {
+    "id": "F202",
+    "unit_id": "help:qa01_zh-Hant.html",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/C/property-batch-import"
+    ]
+   },
+   {
+    "id": "F203",
+    "unit_id": "help:qa04_zh-Hant.html#📌 小提醒",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/contract-attachments-notes-limits"
+    ]
+   },
+   {
+    "id": "F204",
+    "unit_id": "help:qa05_zh-Hant.html#📌 小提醒",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/upload-existing-contract"
+    ]
+   },
+   {
+    "id": "F205",
+    "unit_id": "help:qa06_zh-Hant.html#JGB 提供哪些公版合約？",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/contract-templates"
+    ]
+   },
+   {
+    "id": "F206",
+    "unit_id": "help:qa06_zh-Hant.html#為什麼我的選單裡沒有這麼多種？",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/contract-templates",
+     "jgb/B/business-type-setting-and-system-differences"
+    ]
+   },
+   {
+    "id": "F207",
+    "unit_id": "help:qa07_zh-Hant.html#📌 小提醒",
+    "verdict_0b": "partial",
+    "fine_ids_0b": [
+     "jgb/A/account-profile-settings",
+     "jgb/D/contract-esign-flow"
+    ]
+   },
+   {
+    "id": "F208",
+    "unit_id": "help:qa15_zh-Hant.html",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/return-checkout",
+     "jgb/D/contract-status-overview"
+    ]
+   },
+   {
+    "id": "F209",
+    "unit_id": "help:qa21_zh-Hant.html",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/bill-receipt-pdf"
+    ]
+   },
+   {
+    "id": "F210",
+    "unit_id": "help:qa23_zh-Hant.html#有兩組權限沒開，選單會整個看不見",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/B/feature-not-visible-troubleshooting",
+     "jgb/B/role-permission-granularity"
+    ]
+   },
+   {
+    "id": "F211",
+    "unit_id": "help:qa23_zh-Hant.html#為什麼權限勾了卻沒有作用？",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/B/feature-not-visible-troubleshooting"
+    ]
+   },
+   {
+    "id": "F212",
+    "unit_id": "help:qa23_zh-Hant.html#📌 小提醒",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/B/role-permission-granularity",
+     "jgb/B/feature-not-visible-troubleshooting"
+    ]
+   },
+   {
+    "id": "F213",
+    "unit_id": "help:qa27_zh-Hant.html#ATM付款",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/virtual-account-transfer"
+    ]
+   },
+   {
+    "id": "F214",
+    "unit_id": "help:qa27_zh-Hant.html#信用卡付款",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/credit-card-rent-payment"
+    ]
+   },
+   {
+    "id": "F215",
+    "unit_id": "help:qa27_zh-Hant.html#線上金流要收多少費用？",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/payment-fees-and-sms"
+    ]
+   },
+   {
+    "id": "F216",
+    "unit_id": "help:rent3_zh-Hant.html#一、什麼是租約公證？",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/lease-notarization"
+    ]
+   },
+   {
+    "id": "F217",
+    "unit_id": "help:rent3_zh-Hant.html#三、租約公證費用大約多少？",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/lease-notarization"
+    ]
+   },
+   {
+    "id": "F218",
+    "unit_id": "help:rent3_zh-Hant.html#二、公證單位去哪找？",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/lease-notarization"
+    ]
+   },
+   {
+    "id": "F219",
+    "unit_id": "help:rent3_zh-Hant.html#五、申請租金補貼一定要將租約公證嗎？",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/lease-notarization",
+     "jgb/E/rent-market-discount-tax"
+    ]
+   },
+   {
+    "id": "F220",
+    "unit_id": "help:rent3_zh-Hant.html#四、租約公證對房東和租客的好處及保障？",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/lease-notarization"
+    ]
+   },
+   {
+    "id": "F221",
+    "unit_id": "help:rentallaw.pt1_zh-Hant.html",
+    "verdict_0b": "missing",
+    "fine_ids_0b": []
+   },
+   {
+    "id": "F222",
+    "unit_id": "help:rentallaw.pt2_zh-Hant.html#一、對房東的影響——房東常見的租屋糾紛是否能以租賃專法保障？",
+    "verdict_0b": "missing",
+    "fine_ids_0b": []
+   },
+   {
+    "id": "F223",
+    "unit_id": "help:rentallaw.pt2_zh-Hant.html#二、對租客的影響——租客常見的租屋糾紛是否能以租賃專法保障？",
+    "verdict_0b": "missing",
+    "fine_ids_0b": []
+   },
+   {
+    "id": "F224",
+    "unit_id": "help:rentallaw.pt3_zh-Hant.html#一、什麼是包租業？又什麼是代管業？",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/B/leasing-vs-management-business-model",
+     "jgb/B/business-type-fee-model",
+     "jgb/B/leasing-management-license-and-staff-qualification"
+    ]
+   },
+   {
+    "id": "F225",
+    "unit_id": "help:rentallaw.pt3_zh-Hant.html#三、包租代管業者怎麼賺錢？",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/B/leasing-vs-management-business-model",
+     "jgb/B/business-type-fee-model",
+     "jgb/B/leasing-management-license-and-staff-qualification"
+    ]
+   },
+   {
+    "id": "F226",
+    "unit_id": "help:rentallaw.pt3_zh-Hant.html#二、包租跟代管的優勢分別是什麼？如果我是房東又該選擇哪個？",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/B/leasing-vs-management-business-model",
+     "jgb/B/business-type-fee-model",
+     "jgb/B/leasing-management-license-and-staff-qualification"
+    ]
+   },
+   {
+    "id": "F227",
+    "unit_id": "help:rentallaw.pt3_zh-Hant.html#五、要如何成為一名專業包管人員？",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/B/leasing-vs-management-business-model",
+     "jgb/B/business-type-fee-model",
+     "jgb/B/leasing-management-license-and-staff-qualification"
+    ]
+   },
+   {
+    "id": "F228",
+    "unit_id": "help:rentallaw.pt3_zh-Hant.html#代管",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/B/leasing-vs-management-business-model",
+     "jgb/B/business-type-fee-model",
+     "jgb/B/leasing-management-license-and-staff-qualification"
+    ]
+   },
+   {
+    "id": "F229",
+    "unit_id": "help:rentallaw.pt3_zh-Hant.html#包租",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/B/leasing-vs-management-business-model",
+     "jgb/B/business-type-fee-model",
+     "jgb/B/leasing-management-license-and-staff-qualification"
+    ]
+   },
+   {
+    "id": "F230",
+    "unit_id": "help:rentallaw.pt3_zh-Hant.html#四、如果想成政府許可的包管業者，該如何申請？",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/B/leasing-vs-management-business-model",
+     "jgb/B/business-type-fee-model",
+     "jgb/B/leasing-management-license-and-staff-qualification"
+    ]
+   },
+   {
+    "id": "F231",
+    "unit_id": "help:rentallaw.pt3_zh-Hant.html#報名資格",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/B/leasing-vs-management-business-model",
+     "jgb/B/business-type-fee-model",
+     "jgb/B/leasing-management-license-and-staff-qualification"
+    ]
+   },
+   {
+    "id": "F232",
+    "unit_id": "help:rentallaw.pt3_zh-Hant.html#申請流程",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/B/leasing-vs-management-business-model",
+     "jgb/B/business-type-fee-model",
+     "jgb/B/leasing-management-license-and-staff-qualification"
+    ]
+   },
+   {
+    "id": "F233",
+    "unit_id": "help:rentallaw.pt3_zh-Hant.html#訓練期程",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/B/leasing-vs-management-business-model",
+     "jgb/B/business-type-fee-model",
+     "jgb/B/leasing-management-license-and-staff-qualification"
+    ]
+   },
+   {
+    "id": "F234",
+    "unit_id": "help:rentallaw.pt3_zh-Hant.html#（一）主要收入來源",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/B/leasing-vs-management-business-model",
+     "jgb/B/business-type-fee-model",
+     "jgb/B/leasing-management-license-and-staff-qualification"
+    ]
+   },
+   {
+    "id": "F235",
+    "unit_id": "help:rentallaw.pt3_zh-Hant.html#（二）租賃專法補貼",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/B/leasing-vs-management-business-model",
+     "jgb/B/business-type-fee-model",
+     "jgb/B/leasing-management-license-and-staff-qualification"
+    ]
+   },
+   {
+    "id": "F236",
+    "unit_id": "help:rentallaw.pt5_zh-Hant.html#【公益出租人】",
+    "verdict_0b": "missing",
+    "fine_ids_0b": []
+   },
+   {
+    "id": "F237",
+    "unit_id": "help:rentallaw.pt5_zh-Hant.html#【委託包租代管的一般房東】",
+    "verdict_0b": "missing",
+    "fine_ids_0b": []
+   },
+   {
+    "id": "F238",
+    "unit_id": "help:rentallaw.pt5_zh-Hant.html#【社宅包租代管房東】",
+    "verdict_0b": "missing",
+    "fine_ids_0b": []
+   },
+   {
+    "id": "F239",
+    "unit_id": "help:repair_zh-Hant.html#安排修繕",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/F/repair-dispatch-and-close",
+     "jgb/F/repair-flow-stages"
+    ]
+   },
+   {
+    "id": "F240",
+    "unit_id": "help:repair_zh-Hant.html#完成修繕",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/F/repair-dispatch-and-close",
+     "jgb/F/repair-flow-stages"
+    ]
+   },
+   {
+    "id": "F241",
+    "unit_id": "help:repair_zh-Hant.html#此篇新手上路，將分別告訴你如何",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/F/repair-dispatch-and-close",
+     "jgb/F/repair-flow-stages"
+    ]
+   },
+   {
+    "id": "F242",
+    "unit_id": "help:repair_zh-Hant.html#結單",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/F/repair-dispatch-and-close",
+     "jgb/F/repair-flow-stages"
+    ]
+   },
+   {
+    "id": "F243",
+    "unit_id": "help:repair_zh-Hant.html#📌 小提醒",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/F/repair-dispatch-and-close",
+     "jgb/F/repair-flow-stages"
+    ]
+   },
+   {
+    "id": "F244",
+    "unit_id": "help:slug00_zh-Hant.html#收不到E-mail驗證信？",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/A/verification-code-not-received"
+    ]
+   },
+   {
+    "id": "F245",
+    "unit_id": "help:slug00_zh-Hant.html#收不到手機簡訊驗證碼？",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/A/verification-code-not-received"
+    ]
+   },
+   {
+    "id": "F246",
+    "unit_id": "help:slug01_zh-Hant.html",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/A/forgot-account-email"
+    ]
+   },
+   {
+    "id": "F247",
+    "unit_id": "help:slug02_zh-Hant.html",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/A/forgot-password"
+    ]
+   },
+   {
+    "id": "F248",
+    "unit_id": "help:slug03_zh-Hant.html",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/overdue-reminder-late-fee",
+     "jgb/E/late-fee-calculation"
+    ]
+   },
+   {
+    "id": "F249",
+    "unit_id": "help:slug100_zh-Hant.html#⚠️ 版本更新",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/tenant-online-payment-steps",
+     "jgb/E/virtual-account-transfer"
+    ]
+   },
+   {
+    "id": "F250",
+    "unit_id": "help:slug101_zh-Hant.html#📌 小提醒",
+    "verdict_0b": "partial",
+    "fine_ids_0b": [
+     "jgb/D/contract-lookup"
+    ]
+   },
+   {
+    "id": "F251",
+    "unit_id": "help:slug102_zh-Hant.html#⚠️ 版本更新",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/credit-card-rent-payment",
+     "jgb/E/tenant-online-payment-steps"
+    ]
+   },
+   {
+    "id": "F252",
+    "unit_id": "help:slug103_zh-Hant.html#⚠️ 版本更新",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/virtual-account-transfer",
+     "jgb/E/tenant-online-payment-steps"
+    ]
+   },
+   {
+    "id": "F253",
+    "unit_id": "help:slug104_zh-Hant.html#⚠️ 版本更新",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/cash-bank-account-collection",
+     "jgb/E/tenant-payment-methods"
+    ]
+   },
+   {
+    "id": "F254",
+    "unit_id": "help:slug10_zh-Hant.html",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/contract-create-entry-and-prereq"
+    ]
+   },
+   {
+    "id": "F255",
+    "unit_id": "help:slug12_zh-Hant.html",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/contract-modify-after-sign",
+     "jgb/D/contract-create-entry-and-prereq"
+    ]
+   },
+   {
+    "id": "F256",
+    "unit_id": "help:slug13_zh-Hant.html#簽約邀請逾期了怎麼辦？",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/esign-invite-expiry"
+    ]
+   },
+   {
+    "id": "F257",
+    "unit_id": "help:slug13_zh-Hant.html#重新發送前請留意",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/esign-invite-expiry",
+     "jgb/D/contract-send-invite"
+    ]
+   },
+   {
+    "id": "F258",
+    "unit_id": "help:slug15_zh-Hant.html#⚠️ 版本更新",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/contract-history-retention"
+    ]
+   },
+   {
+    "id": "F259",
+    "unit_id": "help:slug15_zh-Hant.html#歷史合約與帳單會保留多久？",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/contract-history-retention"
+    ]
+   },
+   {
+    "id": "F260",
+    "unit_id": "help:slug17_zh-Hant.html",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/contract-modify-after-sign"
+    ]
+   },
+   {
+    "id": "F261",
+    "unit_id": "help:slug1_zh-Hant.html#⚠️ 版本更新",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/C/property-add-blocked",
+     "jgb/C/community-setup-and-property-binding"
+    ]
+   },
+   {
+    "id": "F262",
+    "unit_id": "help:slug1_zh-Hant.html#前往「社區總表」，選擇社區",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/C/community-setup-and-property-binding"
+    ]
+   },
+   {
+    "id": "F263",
+    "unit_id": "help:slug20250612_zh-Hant.html",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/contract-filter-by-state"
+    ]
+   },
+   {
+    "id": "F264",
+    "unit_id": "help:slug20_zh-Hant.html#一、線下付款",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/cash-bank-account-collection"
+    ]
+   },
+   {
+    "id": "F265",
+    "unit_id": "help:slug20_zh-Hant.html#二、線上付款（藍新、國泰、永豐、中信）",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/tenant-online-payment-steps",
+     "jgb/E/virtual-account-transfer"
+    ]
+   },
+   {
+    "id": "F266",
+    "unit_id": "help:slug21_zh-Hant.html#房東多久會確認收款？系統會自動確認嗎？",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/bill-status-reconciliation",
+     "jgb/E/paid-but-status-not-updated"
+    ]
+   },
+   {
+    "id": "F267",
+    "unit_id": "help:slug22_zh-Hant.html#帳單分為兩種模式：線上 / 線下",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/bill-status-reconciliation"
+    ]
+   },
+   {
+    "id": "F268",
+    "unit_id": "help:slug24_zh-Hant.html",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/overdue-reminder-late-fee"
+    ]
+   },
+   {
+    "id": "F269",
+    "unit_id": "help:slug27_zh-Hant.html",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/return-checkout",
+     "jgb/E/checkout-bill-settlement"
+    ]
+   },
+   {
+    "id": "F270",
+    "unit_id": "help:slug28_zh-Hant.html#📌 小提醒",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/return-checkout"
+    ]
+   },
+   {
+    "id": "F271",
+    "unit_id": "help:slug29_zh-Hant.html#📌 小提醒",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/early-termination-aftermath"
+    ]
+   },
+   {
+    "id": "F272",
+    "unit_id": "help:slug39_zh-Hant.html#物件狀態是怎麼判斷的？",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/C/property-status-meaning"
+    ]
+   },
+   {
+    "id": "F273",
+    "unit_id": "help:slug48_zh-Hant.html#📌 小提醒",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/contract-send-invite",
+     "jgb/D/esign-invite-expiry"
+    ]
+   },
+   {
+    "id": "F274",
+    "unit_id": "help:slug66_zh-Hant.html",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/return-checkout",
+     "jgb/D/deposit-deduction-refund"
+    ]
+   },
+   {
+    "id": "F275",
+    "unit_id": "help:slug71_zh-Hant.html#📌 小提醒",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/contract-create-entry-and-prereq"
+    ]
+   },
+   {
+    "id": "F276",
+    "unit_id": "help:slug73_zh-Hant.html",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/esign-invite-expiry"
+    ]
+   },
+   {
+    "id": "F277",
+    "unit_id": "help:slug75_zh-Hant.html#線上付款（自動對帳） - 管理方視角：",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/bill-status-reconciliation"
+    ]
+   },
+   {
+    "id": "F278",
+    "unit_id": "help:slug75_zh-Hant.html#線下付款 - 管理方視角：",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/cash-bank-account-collection"
+    ]
+   },
+   {
+    "id": "F279",
+    "unit_id": "help:slug75_zh-Hant.html#📌 小提醒",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/bill-status-reconciliation",
+     "jgb/E/cash-bank-account-collection"
+    ]
+   },
+   {
+    "id": "F280",
+    "unit_id": "help:slug76_zh-Hant.html#📌 小提醒",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/manual-bill-creation",
+     "jgb/E/bill-scheduled-auto-send"
+    ]
+   },
+   {
+    "id": "F281",
+    "unit_id": "help:slug78_zh-Hant.html",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/bill-contents-extra-fees"
+    ]
+   },
+   {
+    "id": "F282",
+    "unit_id": "help:slug79_zh-Hant.html",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/bill-contents-extra-fees"
+    ]
+   },
+   {
+    "id": "F283",
+    "unit_id": "help:slug84_zh-Hant.html",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/tenant-sign-steps"
+    ]
+   },
+   {
+    "id": "F284",
+    "unit_id": "help:slug86_zh-Hant.html",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/credit-card-rent-payment"
+    ]
+   },
+   {
+    "id": "F285",
+    "unit_id": "help:slug88_zh-Hant.html",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/E/tenant-view-bills",
+     "jgb/E/paid-but-status-not-updated"
+    ]
+   },
+   {
+    "id": "F286",
+    "unit_id": "help:slug90_zh-Hant.html",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/C/rental-storefront-vr",
+     "jgb/C/storefront-entry-share"
+    ]
+   },
+   {
+    "id": "F287",
+    "unit_id": "help:slug92_zh-Hant.html",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/B/role-permission-granularity"
+    ]
+   },
+   {
+    "id": "F288",
+    "unit_id": "help:slug93_zh-Hant.html",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/C/property-advanced-search"
+    ]
+   },
+   {
+    "id": "F289",
+    "unit_id": "help:slug95_zh-Hant.html",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/A/account-profile-settings"
+    ]
+   },
+   {
+    "id": "F290",
+    "unit_id": "help:slug99_zh-Hant.html",
+    "verdict_0b": "covered",
+    "fine_ids_0b": [
+     "jgb/D/signer-identity-and-seal"
+    ]
+   }
+  ],
+  "inputs_sha": {
+   "surface": "f152627e7b0530c9671ab737dc57602d138fe52a94d69445dba4bfbfb33a2080",
+   "coverage": "56f0ef6f655fe8fadebc850bdd1964a2e79a0884e370d6a6d7001e68cf09c7d2"
+  }
+ },
+ "cells": [
+  {
+   "id": "F001",
+   "module": "E",
+   "topic": "add_bill",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'add_bill'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'add_bill'"
+   }
+  },
+  {
+   "id": "F002",
+   "module": "D",
+   "topic": "add_contract",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'add_contract'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'add_contract'"
+   }
+  },
+  {
+   "id": "F003",
+   "module": "C",
+   "topic": "add_estate",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'add_estate'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'add_estate'"
+   }
+  },
+  {
+   "id": "F004",
+   "module": "D",
+   "topic": "assign_contract",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'assign_contract'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "只寫建約時在「經理人資訊」選；缺已建合約怎麼改派經理人",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'assign_contract'"
+   }
+  },
+  {
+   "id": "F005",
+   "module": "B",
+   "topic": "assign_estate",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'assign_estate'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'assign_estate'"
+   }
+  },
+  {
+   "id": "F006",
+   "module": "E",
+   "topic": "chart_bill",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'chart_bill'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'chart_bill'"
+   }
+  },
+  {
+   "id": "F007",
+   "module": "E",
+   "topic": "chart_owner_bill",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'chart_owner_bill'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'chart_owner_bill'"
+   }
+  },
+  {
+   "id": "F008",
+   "module": "B",
+   "topic": "edit_biglandlord",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'edit_biglandlord'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'edit_biglandlord'"
+   }
+  },
+  {
+   "id": "F009",
+   "module": "D",
+   "topic": "edit_contract",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'edit_contract'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'edit_contract'"
+   }
+  },
+  {
+   "id": "F010",
+   "module": "C",
+   "topic": "edit_estate",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'edit_estate'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'edit_estate'"
+   }
+  },
+  {
+   "id": "F011",
+   "module": "",
+   "topic": "edit_notification",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'edit_notification'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "無細目：團隊通知信怎麼編輯、系統會發哪些通知",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'edit_notification'"
+   }
+  },
+  {
+   "id": "F012",
+   "module": "F",
+   "topic": "edit_owner_repair",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'edit_owner_repair'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'edit_owner_repair'"
+   }
+  },
+  {
+   "id": "F013",
+   "module": "F",
+   "topic": "edit_repair",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'edit_repair'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'edit_repair'"
+   }
+  },
+  {
+   "id": "F014",
+   "module": "A",
+   "topic": "edit_role",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'edit_role'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'edit_role'"
+   }
+  },
+  {
+   "id": "F015",
+   "module": "B",
+   "topic": "edit_role_team",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'edit_role_team'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'edit_role_team'"
+   }
+  },
+  {
+   "id": "F016",
+   "module": "",
+   "topic": "edit_social_housing_sheet",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'edit_social_housing_sheet'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "無細目：社宅清冊列表怎麼產生、編輯、匯出",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'edit_social_housing_sheet'"
+   }
+  },
+  {
+   "id": "F017",
+   "module": "E",
+   "topic": "export_bill",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'export_bill'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'export_bill'"
+   }
+  },
+  {
+   "id": "F018",
+   "module": "D",
+   "topic": "export_contract",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'export_contract'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "只答單份合約 PDF；缺合約清單匯出 Excel 的入口與欄位",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'export_contract'"
+   }
+  },
+  {
+   "id": "F019",
+   "module": "",
+   "topic": "export_estate",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'export_estate'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "無細目：物件清單怎麼匯出、匯出哪些欄位",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'export_estate'"
+   }
+  },
+  {
+   "id": "F020",
+   "module": "",
+   "topic": "export_repair",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'export_repair'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "無細目：修繕清單怎麼匯出",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'export_repair'"
+   }
+  },
+  {
+   "id": "F021",
+   "module": "E",
+   "topic": "owner_bill",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'owner_bill'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'owner_bill'"
+   }
+  },
+  {
+   "id": "F022",
+   "module": "E",
+   "topic": "pay_bill",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'pay_bill'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'pay_bill'"
+   }
+  },
+  {
+   "id": "F023",
+   "module": "C",
+   "topic": "public_estate",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'public_estate'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'public_estate'"
+   }
+  },
+  {
+   "id": "F024",
+   "module": "E",
+   "topic": "receive_bill",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'receive_bill'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'receive_bill'"
+   }
+  },
+  {
+   "id": "F025",
+   "module": "D",
+   "topic": "send_contract_invitation",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'send_contract_invitation'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'send_contract_invitation'"
+   }
+  },
+  {
+   "id": "F026",
+   "module": "B",
+   "topic": "show_biglandlord",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'show_biglandlord'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'show_biglandlord'"
+   }
+  },
+  {
+   "id": "F027",
+   "module": "B",
+   "topic": "show_biglandlord_report",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'show_biglandlord_report'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "只答「有報表、可排程寄送」；缺報表頁在哪、寄送對象怎麼挑、寄送結果怎麼查",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'show_biglandlord_report'"
+   }
+  },
+  {
+   "id": "F028",
+   "module": "E",
+   "topic": "show_bill",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'show_bill'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'show_bill'"
+   }
+  },
+  {
+   "id": "F029",
+   "module": "D",
+   "topic": "show_contract",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'show_contract'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'show_contract'"
+   }
+  },
+  {
+   "id": "F030",
+   "module": "D",
+   "topic": "show_contract_history",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'show_contract_history'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'show_contract_history'"
+   }
+  },
+  {
+   "id": "F031",
+   "module": "D",
+   "topic": "show_contract_signed",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'show_contract_signed'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'show_contract_signed'"
+   }
+  },
+  {
+   "id": "F032",
+   "module": "A",
+   "topic": "show_email_log",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'show_email_log'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "細目只教「聯繫客服查發送紀錄」；缺業者自己在哪查 E-mail 發送紀錄",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'show_email_log'"
+   }
+  },
+  {
+   "id": "F033",
+   "module": "C",
+   "topic": "show_estate",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'show_estate'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'show_estate'"
+   }
+  },
+  {
+   "id": "F034",
+   "module": "D",
+   "topic": "show_lessee",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'show_lessee'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "只提到租客資料卡；缺租客名單模組本身（新增／封存／狀態／一鍵聯繫）",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'show_lessee'"
+   }
+  },
+  {
+   "id": "F035",
+   "module": "B",
+   "topic": "show_notification",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'show_notification'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "權限細目列有「通知」模組；缺通知中心在哪看、有哪些通知",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'show_notification'"
+   }
+  },
+  {
+   "id": "F036",
+   "module": "E",
+   "topic": "show_owner_bill",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'show_owner_bill'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'show_owner_bill'"
+   }
+  },
+  {
+   "id": "F037",
+   "module": "B",
+   "topic": "show_owner_contract",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'show_owner_contract'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "缺大房東登入後看得到哪些合約分頁",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'show_owner_contract'"
+   }
+  },
+  {
+   "id": "F038",
+   "module": "B",
+   "topic": "show_owner_contract_history",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'show_owner_contract_history'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "缺大房東端歷史合約檢視範圍",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'show_owner_contract_history'"
+   }
+  },
+  {
+   "id": "F039",
+   "module": "B",
+   "topic": "show_owner_contract_signed",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'show_owner_contract_signed'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "缺大房東端已簽署合約檢視範圍",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'show_owner_contract_signed'"
+   }
+  },
+  {
+   "id": "F040",
+   "module": "B",
+   "topic": "show_owner_estate",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'show_owner_estate'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'show_owner_estate'"
+   }
+  },
+  {
+   "id": "F041",
+   "module": "B",
+   "topic": "show_owner_repair",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'show_owner_repair'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "缺大房東端修繕檢視範圍",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'show_owner_repair'"
+   }
+  },
+  {
+   "id": "F042",
+   "module": "F",
+   "topic": "show_repair",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'show_repair'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'show_repair'"
+   }
+  },
+  {
+   "id": "F043",
+   "module": "B",
+   "topic": "show_role",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'show_role'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'show_role'"
+   }
+  },
+  {
+   "id": "F044",
+   "module": "B",
+   "topic": "show_role_team",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'show_role_team'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'show_role_team'"
+   }
+  },
+  {
+   "id": "F045",
+   "module": "D",
+   "topic": "sign_contract",
+   "questions": [],
+   "keywords": [],
+   "sources": [
+    "config/character.php:'sign_contract'"
+   ],
+   "help_center": [],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "code:config/character.php:'sign_contract'"
+   }
+  },
+  {
+   "id": "F046",
+   "module": "B",
+   "topic": "大房東教學：瀏覽物件、合約、帳務和修繕狀態／加入團隊",
+   "questions": [
+    "大房東教學：瀏覽物件、合約、帳務和修繕狀態"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding00_zh-Hant.html#加入團隊"
+   ],
+   "help_center": [
+    "Landlordonboarding00_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding00_zh-Hant.html#加入團隊"
+   }
+  },
+  {
+   "id": "F047",
+   "module": "B",
+   "topic": "大房東教學：瀏覽物件、合約、帳務和修繕狀態／瀏覽物件所屬修繕",
+   "questions": [
+    "大房東教學：瀏覽物件、合約、帳務和修繕狀態"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding00_zh-Hant.html#瀏覽物件所屬修繕"
+   ],
+   "help_center": [
+    "Landlordonboarding00_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "缺「大房東登入後看得到哪些分頁、手機版怎麼看」",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding00_zh-Hant.html#瀏覽物件所屬修繕"
+   }
+  },
+  {
+   "id": "F048",
+   "module": "B",
+   "topic": "大房東教學：瀏覽物件、合約、帳務和修繕狀態／瀏覽物件所屬合約",
+   "questions": [
+    "大房東教學：瀏覽物件、合約、帳務和修繕狀態"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding00_zh-Hant.html#瀏覽物件所屬合約"
+   ],
+   "help_center": [
+    "Landlordonboarding00_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "缺「大房東登入後看得到哪些分頁、手機版怎麼看」",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding00_zh-Hant.html#瀏覽物件所屬合約"
+   }
+  },
+  {
+   "id": "F049",
+   "module": "B",
+   "topic": "大房東教學：瀏覽物件、合約、帳務和修繕狀態／瀏覽物件所屬帳務",
+   "questions": [
+    "大房東教學：瀏覽物件、合約、帳務和修繕狀態"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding00_zh-Hant.html#瀏覽物件所屬帳務"
+   ],
+   "help_center": [
+    "Landlordonboarding00_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "缺「大房東登入後看得到哪些分頁、手機版怎麼看」",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding00_zh-Hant.html#瀏覽物件所屬帳務"
+   }
+  },
+  {
+   "id": "F050",
+   "module": "B",
+   "topic": "大房東教學：瀏覽物件、合約、帳務和修繕狀態／瀏覽物件資訊",
+   "questions": [
+    "大房東教學：瀏覽物件、合約、帳務和修繕狀態"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding00_zh-Hant.html#瀏覽物件資訊"
+   ],
+   "help_center": [
+    "Landlordonboarding00_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "缺「大房東登入後看得到哪些分頁、手機版怎麼看」",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding00_zh-Hant.html#瀏覽物件資訊"
+   }
+  },
+  {
+   "id": "F051",
+   "module": "B",
+   "topic": "大房東教學：瀏覽物件、合約、帳務和修繕狀態／總覽資訊",
+   "questions": [
+    "大房東教學：瀏覽物件、合約、帳務和修繕狀態"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding00_zh-Hant.html#總覽資訊"
+   ],
+   "help_center": [
+    "Landlordonboarding00_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "缺「大房東登入後看得到哪些分頁、手機版怎麼看」",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding00_zh-Hant.html#總覽資訊"
+   }
+  },
+  {
+   "id": "F052",
+   "module": "B",
+   "topic": "大房東教學：瀏覽物件、合約、帳務和修繕狀態（手機篇）／加入團隊",
+   "questions": [
+    "大房東教學：瀏覽物件、合約、帳務和修繕狀態（手機篇）"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding00phone_zh-Hant.html#加入團隊"
+   ],
+   "help_center": [
+    "Landlordonboarding00phone_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding00phone_zh-Hant.html#加入團隊"
+   }
+  },
+  {
+   "id": "F053",
+   "module": "B",
+   "topic": "大房東教學：瀏覽物件、合約、帳務和修繕狀態（手機篇）／瀏覽物件所屬修繕",
+   "questions": [
+    "大房東教學：瀏覽物件、合約、帳務和修繕狀態（手機篇）"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding00phone_zh-Hant.html#瀏覽物件所屬修繕"
+   ],
+   "help_center": [
+    "Landlordonboarding00phone_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "缺「大房東手機版看得到什麼」",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding00phone_zh-Hant.html#瀏覽物件所屬修繕"
+   }
+  },
+  {
+   "id": "F054",
+   "module": "B",
+   "topic": "大房東教學：瀏覽物件、合約、帳務和修繕狀態（手機篇）／瀏覽物件所屬合約",
+   "questions": [
+    "大房東教學：瀏覽物件、合約、帳務和修繕狀態（手機篇）"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding00phone_zh-Hant.html#瀏覽物件所屬合約"
+   ],
+   "help_center": [
+    "Landlordonboarding00phone_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "缺「大房東手機版看得到什麼」",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding00phone_zh-Hant.html#瀏覽物件所屬合約"
+   }
+  },
+  {
+   "id": "F055",
+   "module": "B",
+   "topic": "大房東教學：瀏覽物件、合約、帳務和修繕狀態（手機篇）／瀏覽物件所屬帳務",
+   "questions": [
+    "大房東教學：瀏覽物件、合約、帳務和修繕狀態（手機篇）"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding00phone_zh-Hant.html#瀏覽物件所屬帳務"
+   ],
+   "help_center": [
+    "Landlordonboarding00phone_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "缺「大房東手機版看得到什麼」",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding00phone_zh-Hant.html#瀏覽物件所屬帳務"
+   }
+  },
+  {
+   "id": "F056",
+   "module": "B",
+   "topic": "大房東教學：瀏覽物件、合約、帳務和修繕狀態（手機篇）／瀏覽物件資訊",
+   "questions": [
+    "大房東教學：瀏覽物件、合約、帳務和修繕狀態（手機篇）"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding00phone_zh-Hant.html#瀏覽物件資訊"
+   ],
+   "help_center": [
+    "Landlordonboarding00phone_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "缺「大房東手機版看得到什麼」",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding00phone_zh-Hant.html#瀏覽物件資訊"
+   }
+  },
+  {
+   "id": "F057",
+   "module": "B",
+   "topic": "大房東教學：瀏覽物件、合約、帳務和修繕狀態（手機篇）／總覽資訊",
+   "questions": [
+    "大房東教學：瀏覽物件、合約、帳務和修繕狀態（手機篇）"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding00phone_zh-Hant.html#總覽資訊"
+   ],
+   "help_center": [
+    "Landlordonboarding00phone_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "缺「大房東手機版看得到什麼」",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding00phone_zh-Hant.html#總覽資訊"
+   }
+  },
+  {
+   "id": "F058",
+   "module": "A",
+   "topic": "房東教學01：註冊篇(一) 個人房東／創建帳號",
+   "questions": [
+    "房東教學01：註冊篇(一) 個人房東"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding01_zh-Hant.html#創建帳號"
+   ],
+   "help_center": [
+    "Landlordonboarding01_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding01_zh-Hant.html#創建帳號"
+   }
+  },
+  {
+   "id": "F059",
+   "module": "A",
+   "topic": "房東教學01：註冊篇(一) 個人房東／帳號設置",
+   "questions": [
+    "房東教學01：註冊篇(一) 個人房東"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding01_zh-Hant.html#帳號設置"
+   ],
+   "help_center": [
+    "Landlordonboarding01_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding01_zh-Hant.html#帳號設置"
+   }
+  },
+  {
+   "id": "F060",
+   "module": "A",
+   "topic": "房東教學01：註冊篇(一) 個人房東／📌 小提醒",
+   "questions": [
+    "房東教學01：註冊篇(一) 個人房東"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding01_zh-Hant.html#📌 小提醒"
+   ],
+   "help_center": [
+    "Landlordonboarding01_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding01_zh-Hant.html#📌 小提醒"
+   }
+  },
+  {
+   "id": "F061",
+   "module": "I",
+   "topic": "房東教學02：註冊篇(二) 公司團隊篇／⚠️ 版本更新",
+   "questions": [
+    "房東教學02：註冊篇(二) 公司團隊篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding02_zh-Hant.html#⚠️ 版本更新"
+   ],
+   "help_center": [
+    "Landlordonboarding02_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding02_zh-Hant.html#⚠️ 版本更新"
+   }
+  },
+  {
+   "id": "F062",
+   "module": "B",
+   "topic": "房東教學02：註冊篇(二) 公司團隊篇／創建團隊",
+   "questions": [
+    "房東教學02：註冊篇(二) 公司團隊篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding02_zh-Hant.html#創建團隊"
+   ],
+   "help_center": [
+    "Landlordonboarding02_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "缺「怎麼建團隊」的業者操作步驟（現有細目是售前語氣）",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding02_zh-Hant.html#創建團隊"
+   }
+  },
+  {
+   "id": "F063",
+   "module": "B",
+   "topic": "房東教學02：註冊篇(二) 公司團隊篇／功能重點：專業級股東報告，雲端式屋主回報",
+   "questions": [
+    "房東教學02：註冊篇(二) 公司團隊篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding02_zh-Hant.html#功能重點：專業級股東報告，雲端式屋主回報"
+   ],
+   "help_center": [
+    "Landlordonboarding02_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding02_zh-Hant.html#功能重點：專業級股東報告，雲端式屋主回報"
+   }
+  },
+  {
+   "id": "F064",
+   "module": "B",
+   "topic": "房東教學02：註冊篇(二) 公司團隊篇／團隊成員管理",
+   "questions": [
+    "房東教學02：註冊篇(二) 公司團隊篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding02_zh-Hant.html#團隊成員管理"
+   ],
+   "help_center": [
+    "Landlordonboarding02_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding02_zh-Hant.html#團隊成員管理"
+   }
+  },
+  {
+   "id": "F065",
+   "module": "B",
+   "topic": "房東教學02：註冊篇(二) 公司團隊篇／團隊設置",
+   "questions": [
+    "房東教學02：註冊篇(二) 公司團隊篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding02_zh-Hant.html#團隊設置"
+   ],
+   "help_center": [
+    "Landlordonboarding02_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "缺「團隊資訊有哪些欄位、在哪改」",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding02_zh-Hant.html#團隊設置"
+   }
+  },
+  {
+   "id": "F066",
+   "module": "B",
+   "topic": "房東教學02：註冊篇(二) 公司團隊篇／常見問題",
+   "questions": [
+    "房東教學02：註冊篇(二) 公司團隊篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding02_zh-Hant.html#常見問題"
+   ],
+   "help_center": [
+    "Landlordonboarding02_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding02_zh-Hant.html#常見問題"
+   }
+  },
+  {
+   "id": "F067",
+   "module": "B",
+   "topic": "房東教學02：註冊篇(二) 公司團隊篇／新增大房東（所有權人/轉租人）：",
+   "questions": [
+    "房東教學02：註冊篇(二) 公司團隊篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding02_zh-Hant.html#新增大房東（所有權人/轉租人）："
+   ],
+   "help_center": [
+    "Landlordonboarding02_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding02_zh-Hant.html#新增大房東（所有權人/轉租人）："
+   }
+  },
+  {
+   "id": "F068",
+   "module": "B",
+   "topic": "房東教學02：註冊篇(二) 公司團隊篇／新增＆管理大房東",
+   "questions": [
+    "房東教學02：註冊篇(二) 公司團隊篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding02_zh-Hant.html#新增＆管理大房東"
+   ],
+   "help_center": [
+    "Landlordonboarding02_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding02_zh-Hant.html#新增＆管理大房東"
+   }
+  },
+  {
+   "id": "F069",
+   "module": "I",
+   "topic": "房東教學02：註冊篇(二) 公司團隊篇／查看＆變更現行的訂閱方案",
+   "questions": [
+    "房東教學02：註冊篇(二) 公司團隊篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding02_zh-Hant.html#查看＆變更現行的訂閱方案"
+   ],
+   "help_center": [
+    "Landlordonboarding02_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding02_zh-Hant.html#查看＆變更現行的訂閱方案"
+   }
+  },
+  {
+   "id": "F070",
+   "module": "C",
+   "topic": "房東教學02：註冊篇(二) 公司團隊篇／設定團隊招租頁面網址＆時區",
+   "questions": [
+    "房東教學02：註冊篇(二) 公司團隊篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding02_zh-Hant.html#設定團隊招租頁面網址＆時區"
+   ],
+   "help_center": [
+    "Landlordonboarding02_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding02_zh-Hant.html#設定團隊招租頁面網址＆時區"
+   }
+  },
+  {
+   "id": "F071",
+   "module": "I",
+   "topic": "房東教學02：註冊篇(二) 公司團隊篇／請各位擅用 【Ctrl+F】的搜索功能。",
+   "questions": [
+    "房東教學02：註冊篇(二) 公司團隊篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding02_zh-Hant.html#請各位擅用 【Ctrl+F】的搜索功能。"
+   ],
+   "help_center": [
+    "Landlordonboarding02_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding02_zh-Hant.html#請各位擅用 【Ctrl+F】的搜索功能。"
+   }
+  },
+  {
+   "id": "F072",
+   "module": "B",
+   "topic": "房東教學02：註冊篇(二) 公司團隊篇／📌 小提醒",
+   "questions": [
+    "房東教學02：註冊篇(二) 公司團隊篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding02_zh-Hant.html#📌 小提醒"
+   ],
+   "help_center": [
+    "Landlordonboarding02_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding02_zh-Hant.html#📌 小提醒"
+   }
+  },
+  {
+   "id": "F073",
+   "module": "E",
+   "topic": "房東教學06：帳務篇／批次發送帳單",
+   "questions": [
+    "房東教學06：帳務篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding06Finance_zh-Hant.html#批次發送帳單"
+   ],
+   "help_center": [
+    "Landlordonboarding06Finance_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding06Finance_zh-Hant.html#批次發送帳單"
+   }
+  },
+  {
+   "id": "F074",
+   "module": "E",
+   "topic": "房東教學06：帳務篇／批次編輯帳單",
+   "questions": [
+    "房東教學06：帳務篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding06Finance_zh-Hant.html#批次編輯帳單"
+   ],
+   "help_center": [
+    "Landlordonboarding06Finance_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "缺批次編輯帳單費用的入口與可改範圍",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding06Finance_zh-Hant.html#批次編輯帳單"
+   }
+  },
+  {
+   "id": "F075",
+   "module": "E",
+   "topic": "房東教學06：帳務篇／新增帳單",
+   "questions": [
+    "房東教學06：帳務篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding06Finance_zh-Hant.html#新增帳單"
+   ],
+   "help_center": [
+    "Landlordonboarding06Finance_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding06Finance_zh-Hant.html#新增帳單"
+   }
+  },
+  {
+   "id": "F076",
+   "module": "E",
+   "topic": "房東教學06：帳務篇／新增帳單-導覽＆介面介紹",
+   "questions": [
+    "房東教學06：帳務篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding06Finance_zh-Hant.html#新增帳單-導覽＆介面介紹"
+   ],
+   "help_center": [
+    "Landlordonboarding06Finance_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding06Finance_zh-Hant.html#新增帳單-導覽＆介面介紹"
+   }
+  },
+  {
+   "id": "F077",
+   "module": "E",
+   "topic": "房東教學06：帳務篇／此篇新手上路，將分別告訴你",
+   "questions": [
+    "房東教學06：帳務篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding06Finance_zh-Hant.html#此篇新手上路，將分別告訴你"
+   ],
+   "help_center": [
+    "Landlordonboarding06Finance_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding06Finance_zh-Hant.html#此篇新手上路，將分別告訴你"
+   }
+  },
+  {
+   "id": "F078",
+   "module": "E",
+   "topic": "房東教學06：帳務篇／確認帳單",
+   "questions": [
+    "房東教學06：帳務篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding06Finance_zh-Hant.html#確認帳單"
+   ],
+   "help_center": [
+    "Landlordonboarding06Finance_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding06Finance_zh-Hant.html#確認帳單"
+   }
+  },
+  {
+   "id": "F079",
+   "module": "E",
+   "topic": "房東教學06：帳務篇／租金帳單",
+   "questions": [
+    "房東教學06：帳務篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding06Finance_zh-Hant.html#租金帳單"
+   ],
+   "help_center": [
+    "Landlordonboarding06Finance_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding06Finance_zh-Hant.html#租金帳單"
+   }
+  },
+  {
+   "id": "F080",
+   "module": "E",
+   "topic": "房東教學06：帳務篇／編輯帳單-導覽＆介面介紹",
+   "questions": [
+    "房東教學06：帳務篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding06Finance_zh-Hant.html#編輯帳單-導覽＆介面介紹"
+   ],
+   "help_center": [
+    "Landlordonboarding06Finance_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding06Finance_zh-Hant.html#編輯帳單-導覽＆介面介紹"
+   }
+  },
+  {
+   "id": "F081",
+   "module": "E",
+   "topic": "房東教學06：帳務篇／📌 小提醒",
+   "questions": [
+    "房東教學06：帳務篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding06Finance_zh-Hant.html#📌 小提醒"
+   ],
+   "help_center": [
+    "Landlordonboarding06Finance_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding06Finance_zh-Hant.html#📌 小提醒"
+   }
+  },
+  {
+   "id": "F082",
+   "module": "G",
+   "topic": "房東教學08：IOT設備篇／⚠️ 版本更新",
+   "questions": [
+    "房東教學08：IOT設備篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding08Device_zh-Hant.html#⚠️ 版本更新"
+   ],
+   "help_center": [
+    "Landlordonboarding08Device_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding08Device_zh-Hant.html#⚠️ 版本更新"
+   }
+  },
+  {
+   "id": "F083",
+   "module": "G",
+   "topic": "房東教學08：IOT設備篇／智慧電錶",
+   "questions": [
+    "房東教學08：IOT設備篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding08Device_zh-Hant.html#智慧電錶"
+   ],
+   "help_center": [
+    "Landlordonboarding08Device_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding08Device_zh-Hant.html#智慧電錶"
+   }
+  },
+  {
+   "id": "F084",
+   "module": "E",
+   "topic": "房東教學08：IOT設備篇／智慧電錶綁帳單",
+   "questions": [
+    "房東教學08：IOT設備篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding08Device_zh-Hant.html#智慧電錶綁帳單"
+   ],
+   "help_center": [
+    "Landlordonboarding08Device_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding08Device_zh-Hant.html#智慧電錶綁帳單"
+   }
+  },
+  {
+   "id": "F085",
+   "module": "G",
+   "topic": "房東教學08：IOT設備篇／查看用電度數",
+   "questions": [
+    "房東教學08：IOT設備篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding08Device_zh-Hant.html#查看用電度數"
+   ],
+   "help_center": [
+    "Landlordonboarding08Device_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding08Device_zh-Hant.html#查看用電度數"
+   }
+  },
+  {
+   "id": "F086",
+   "module": "G",
+   "topic": "房東教學08：IOT設備篇／系統功能＆介面展示",
+   "questions": [
+    "房東教學08：IOT設備篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding08Device_zh-Hant.html#系統功能＆介面展示"
+   ],
+   "help_center": [
+    "Landlordonboarding08Device_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding08Device_zh-Hant.html#系統功能＆介面展示"
+   }
+  },
+  {
+   "id": "F087",
+   "module": "G",
+   "topic": "房東教學08：IOT設備篇／非台科電電錶的基本設定及綁定物件",
+   "questions": [
+    "房東教學08：IOT設備篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding08Device_zh-Hant.html#非台科電電錶的基本設定及綁定物件"
+   ],
+   "help_center": [
+    "Landlordonboarding08Device_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding08Device_zh-Hant.html#非台科電電錶的基本設定及綁定物件"
+   }
+  },
+  {
+   "id": "F088",
+   "module": "G",
+   "topic": "房東教學08：IOT設備篇／📌 小提醒",
+   "questions": [
+    "房東教學08：IOT設備篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding08Device_zh-Hant.html#📌 小提醒"
+   ],
+   "help_center": [
+    "Landlordonboarding08Device_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding08Device_zh-Hant.html#📌 小提醒"
+   }
+  },
+  {
+   "id": "F089",
+   "module": "E",
+   "topic": "房東教學09：社會住宅篇／一般生活費用、修繕費用⋯等單一帳單產生",
+   "questions": [
+    "房東教學09：社會住宅篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding09Socialhousing_zh-Hant.html#一般生活費用、修繕費用⋯等單一帳單產生"
+   ],
+   "help_center": [
+    "Landlordonboarding09Socialhousing_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding09Socialhousing_zh-Hant.html#一般生活費用、修繕費用⋯等單一帳單產生"
+   }
+  },
+  {
+   "id": "F090",
+   "module": "D",
+   "topic": "房東教學09：社會住宅篇／創建社宅合約",
+   "questions": [
+    "房東教學09：社會住宅篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding09Socialhousing_zh-Hant.html#創建社宅合約"
+   ],
+   "help_center": [
+    "Landlordonboarding09Socialhousing_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding09Socialhousing_zh-Hant.html#創建社宅合約"
+   }
+  },
+  {
+   "id": "F091",
+   "module": "D",
+   "topic": "房東教學09：社會住宅篇／創建社宅團隊",
+   "questions": [
+    "房東教學09：社會住宅篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding09Socialhousing_zh-Hant.html#創建社宅團隊"
+   ],
+   "help_center": [
+    "Landlordonboarding09Socialhousing_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "缺「社宅團隊怎麼建、跟一般團隊差在哪」",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding09Socialhousing_zh-Hant.html#創建社宅團隊"
+   }
+  },
+  {
+   "id": "F092",
+   "module": "C",
+   "topic": "房東教學09：社會住宅篇／創建社宅物件",
+   "questions": [
+    "房東教學09：社會住宅篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding09Socialhousing_zh-Hant.html#創建社宅物件"
+   ],
+   "help_center": [
+    "Landlordonboarding09Socialhousing_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding09Socialhousing_zh-Hant.html#創建社宅物件"
+   }
+  },
+  {
+   "id": "F093",
+   "module": "D",
+   "topic": "房東教學09：社會住宅篇／押租金帳單產生＆發送",
+   "questions": [
+    "房東教學09：社會住宅篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding09Socialhousing_zh-Hant.html#押租金帳單產生＆發送"
+   ],
+   "help_center": [
+    "Landlordonboarding09Socialhousing_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding09Socialhousing_zh-Hant.html#押租金帳單產生＆發送"
+   }
+  },
+  {
+   "id": "F094",
+   "module": "",
+   "topic": "房東教學09：社會住宅篇／清冊列表功能",
+   "questions": [
+    "房東教學09：社會住宅篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding09Socialhousing_zh-Hant.html#清冊列表功能"
+   ],
+   "help_center": [
+    "Landlordonboarding09Socialhousing_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "無細目：社宅清冊列表怎麼產生、編輯、匯出",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding09Socialhousing_zh-Hant.html#清冊列表功能"
+   }
+  },
+  {
+   "id": "F095",
+   "module": "E",
+   "topic": "房東教學09：社會住宅篇／社宅帳務功能",
+   "questions": [
+    "房東教學09：社會住宅篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding09Socialhousing_zh-Hant.html#社宅帳務功能"
+   ],
+   "help_center": [
+    "Landlordonboarding09Socialhousing_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "缺社宅帳務模組（清冊、押租金、補貼分帳）的操作",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding09Socialhousing_zh-Hant.html#社宅帳務功能"
+   }
+  },
+  {
+   "id": "F096",
+   "module": "D",
+   "topic": "房東教學09：社會住宅篇／📌 小提醒",
+   "questions": [
+    "房東教學09：社會住宅篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding09Socialhousing_zh-Hant.html#📌 小提醒"
+   ],
+   "help_center": [
+    "Landlordonboarding09Socialhousing_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding09Socialhousing_zh-Hant.html#📌 小提醒"
+   }
+  },
+  {
+   "id": "F097",
+   "module": "I",
+   "topic": "房東教學：總論篇／修繕篇",
+   "questions": [
+    "房東教學：總論篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding_zh-Hant.html#修繕篇"
+   ],
+   "help_center": [
+    "Landlordonboarding_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding_zh-Hant.html#修繕篇"
+   }
+  },
+  {
+   "id": "F098",
+   "module": "I",
+   "topic": "房東教學：總論篇／合約篇",
+   "questions": [
+    "房東教學：總論篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding_zh-Hant.html#合約篇"
+   ],
+   "help_center": [
+    "Landlordonboarding_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding_zh-Hant.html#合約篇"
+   }
+  },
+  {
+   "id": "F099",
+   "module": "I",
+   "topic": "房東教學：總論篇／帳務篇",
+   "questions": [
+    "房東教學：總論篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding_zh-Hant.html#帳務篇"
+   ],
+   "help_center": [
+    "Landlordonboarding_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding_zh-Hant.html#帳務篇"
+   }
+  },
+  {
+   "id": "F100",
+   "module": "I",
+   "topic": "房東教學：總論篇／收款設置篇",
+   "questions": [
+    "房東教學：總論篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding_zh-Hant.html#收款設置篇"
+   ],
+   "help_center": [
+    "Landlordonboarding_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding_zh-Hant.html#收款設置篇"
+   }
+  },
+  {
+   "id": "F101",
+   "module": "I",
+   "topic": "房東教學：總論篇／物件篇",
+   "questions": [
+    "房東教學：總論篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding_zh-Hant.html#物件篇"
+   ],
+   "help_center": [
+    "Landlordonboarding_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding_zh-Hant.html#物件篇"
+   }
+  },
+  {
+   "id": "F102",
+   "module": "I",
+   "topic": "房東教學：總論篇／社宅篇",
+   "questions": [
+    "房東教學：總論篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding_zh-Hant.html#社宅篇"
+   ],
+   "help_center": [
+    "Landlordonboarding_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding_zh-Hant.html#社宅篇"
+   }
+  },
+  {
+   "id": "F103",
+   "module": "I",
+   "topic": "房東教學：總論篇／設備篇",
+   "questions": [
+    "房東教學：總論篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding_zh-Hant.html#設備篇"
+   ],
+   "help_center": [
+    "Landlordonboarding_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding_zh-Hant.html#設備篇"
+   }
+  },
+  {
+   "id": "F104",
+   "module": "I",
+   "topic": "房東教學：總論篇／註冊篇（ㄧ）— 個人房東篇",
+   "questions": [
+    "房東教學：總論篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding_zh-Hant.html#註冊篇（ㄧ）— 個人房東篇"
+   ],
+   "help_center": [
+    "Landlordonboarding_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding_zh-Hant.html#註冊篇（ㄧ）— 個人房東篇"
+   }
+  },
+  {
+   "id": "F105",
+   "module": "I",
+   "topic": "房東教學：總論篇／註冊篇（二）— 公司團隊篇",
+   "questions": [
+    "房東教學：總論篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "Landlordonboarding_zh-Hant.html#註冊篇（二）— 公司團隊篇"
+   ],
+   "help_center": [
+    "Landlordonboarding_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:Landlordonboarding_zh-Hant.html#註冊篇（二）— 公司團隊篇"
+   }
+  },
+  {
+   "id": "F106",
+   "module": "E",
+   "topic": "線上金流：藍新Newebpay 登入後台提款／⚠️ 版本更新",
+   "questions": [
+    "線上金流：藍新Newebpay 登入後台提款"
+   ],
+   "keywords": [],
+   "sources": [
+    "advanced12_zh-Hant.html#⚠️ 版本更新"
+   ],
+   "help_center": [
+    "advanced12_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "缺「款項撥到哪、何時撥、金流後台怎麼提款」",
+   "rubric": "",
+   "g0": {
+    "authority": "help:advanced12_zh-Hant.html#⚠️ 版本更新"
+   }
+  },
+  {
+   "id": "F107",
+   "module": "E",
+   "topic": "線上金流：藍新Newebpay 登入後台提款／企業會員帳號：統一編號",
+   "questions": [
+    "線上金流：藍新Newebpay 登入後台提款"
+   ],
+   "keywords": [],
+   "sources": [
+    "advanced12_zh-Hant.html#企業會員帳號：統一編號"
+   ],
+   "help_center": [
+    "advanced12_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "缺金流後台登入與帳號規則說明",
+   "rubric": "",
+   "g0": {
+    "authority": "help:advanced12_zh-Hant.html#企業會員帳號：統一編號"
+   }
+  },
+  {
+   "id": "F108",
+   "module": "E",
+   "topic": "線上金流：藍新Newebpay 登入後台提款／個人房東預設密碼：身分證字號",
+   "questions": [
+    "線上金流：藍新Newebpay 登入後台提款"
+   ],
+   "keywords": [],
+   "sources": [
+    "advanced12_zh-Hant.html#個人房東預設密碼：身分證字號"
+   ],
+   "help_center": [
+    "advanced12_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "缺金流後台登入與預設密碼說明",
+   "rubric": "",
+   "g0": {
+    "authority": "help:advanced12_zh-Hant.html#個人房東預設密碼：身分證字號"
+   }
+  },
+  {
+   "id": "F109",
+   "module": "E",
+   "topic": "線上金流：藍新Newebpay 登入後台提款／個人房東：登入藍新後台",
+   "questions": [
+    "線上金流：藍新Newebpay 登入後台提款"
+   ],
+   "keywords": [],
+   "sources": [
+    "advanced12_zh-Hant.html#個人房東：登入藍新後台"
+   ],
+   "help_center": [
+    "advanced12_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "缺「款項撥到哪、何時撥、金流後台怎麼提款」",
+   "rubric": "",
+   "g0": {
+    "authority": "help:advanced12_zh-Hant.html#個人房東：登入藍新後台"
+   }
+  },
+  {
+   "id": "F110",
+   "module": "E",
+   "topic": "線上金流：藍新Newebpay 登入後台提款／法人（團隊）房東：登入藍新後台",
+   "questions": [
+    "線上金流：藍新Newebpay 登入後台提款"
+   ],
+   "keywords": [],
+   "sources": [
+    "advanced12_zh-Hant.html#法人（團隊）房東：登入藍新後台"
+   ],
+   "help_center": [
+    "advanced12_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "缺「款項撥到哪、何時撥、金流後台怎麼提款」",
+   "rubric": "",
+   "g0": {
+    "authority": "help:advanced12_zh-Hant.html#法人（團隊）房東：登入藍新後台"
+   }
+  },
+  {
+   "id": "F111",
+   "module": "E",
+   "topic": "線上金流：藍新Newebpay 登入後台提款／藍新後台提款方法：",
+   "questions": [
+    "線上金流：藍新Newebpay 登入後台提款"
+   ],
+   "keywords": [],
+   "sources": [
+    "advanced12_zh-Hant.html#藍新後台提款方法："
+   ],
+   "help_center": [
+    "advanced12_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "缺「款項撥到哪、何時撥、金流後台怎麼提款」",
+   "rubric": "",
+   "g0": {
+    "authority": "help:advanced12_zh-Hant.html#藍新後台提款方法："
+   }
+  },
+  {
+   "id": "F112",
+   "module": "C",
+   "topic": "帳單狀態顯示「已失效」是什麼意思？／儲值前請先確認三個條件",
+   "questions": [
+    "帳單狀態顯示「已失效」是什麼意思？"
+   ],
+   "keywords": [],
+   "sources": [
+    "billexpired_zh-Hant.html#儲值前請先確認三個條件"
+   ],
+   "help_center": [
+    "billexpired_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:billexpired_zh-Hant.html#儲值前請先確認三個條件"
+   }
+  },
+  {
+   "id": "F113",
+   "module": "D",
+   "topic": "何謂「契約審閱權」？／1.契約審閱權",
+   "questions": [
+    "何謂「契約審閱權」？"
+   ],
+   "keywords": [],
+   "sources": [
+    "contract_review_period_zh-Hant.html#1.契約審閱權"
+   ],
+   "help_center": [
+    "contract_review_period_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "細目只寫電子簽約 72 小時審閱期；缺法定契約審閱權與各類契約最少審閱天數",
+   "rubric": "",
+   "g0": {
+    "authority": "help:contract_review_period_zh-Hant.html#1.契約審閱權"
+   }
+  },
+  {
+   "id": "F114",
+   "module": "D",
+   "topic": "何謂「契約審閱權」？／2.不動產租賃相關契約至少之審閱天數",
+   "questions": [
+    "何謂「契約審閱權」？"
+   ],
+   "keywords": [],
+   "sources": [
+    "contract_review_period_zh-Hant.html#2.不動產租賃相關契約至少之審閱天數"
+   ],
+   "help_center": [
+    "contract_review_period_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "細目只寫電子簽約 72 小時審閱期；缺法定契約審閱權與各類契約最少審閱天數",
+   "rubric": "",
+   "g0": {
+    "authority": "help:contract_review_period_zh-Hant.html#2.不動產租賃相關契約至少之審閱天數"
+   }
+  },
+  {
+   "id": "F115",
+   "module": "E",
+   "topic": "帳單可以自動開立電子發票嗎？／Step 1：確認功能已啟用",
+   "questions": [
+    "帳單可以自動開立電子發票嗎？"
+   ],
+   "keywords": [],
+   "sources": [
+    "einvoice_zh-Hant.html#Step 1：確認功能已啟用"
+   ],
+   "help_center": [
+    "einvoice_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:einvoice_zh-Hant.html#Step 1：確認功能已啟用"
+   }
+  },
+  {
+   "id": "F116",
+   "module": "E",
+   "topic": "帳單可以自動開立電子發票嗎？／Step 2：選擇發票開立模式",
+   "questions": [
+    "帳單可以自動開立電子發票嗎？"
+   ],
+   "keywords": [],
+   "sources": [
+    "einvoice_zh-Hant.html#Step 2：選擇發票開立模式"
+   ],
+   "help_center": [
+    "einvoice_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:einvoice_zh-Hant.html#Step 2：選擇發票開立模式"
+   }
+  },
+  {
+   "id": "F117",
+   "module": "E",
+   "topic": "帳單可以自動開立電子發票嗎？／Step 3：設定合約的「稅與發票」",
+   "questions": [
+    "帳單可以自動開立電子發票嗎？"
+   ],
+   "keywords": [],
+   "sources": [
+    "einvoice_zh-Hant.html#Step 3：設定合約的「稅與發票」"
+   ],
+   "help_center": [
+    "einvoice_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:einvoice_zh-Hant.html#Step 3：設定合約的「稅與發票」"
+   }
+  },
+  {
+   "id": "F118",
+   "module": "E",
+   "topic": "帳單可以自動開立電子發票嗎？／Step 4：帳單開立與查看發票",
+   "questions": [
+    "帳單可以自動開立電子發票嗎？"
+   ],
+   "keywords": [],
+   "sources": [
+    "einvoice_zh-Hant.html#Step 4：帳單開立與查看發票"
+   ],
+   "help_center": [
+    "einvoice_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:einvoice_zh-Hant.html#Step 4：帳單開立與查看發票"
+   }
+  },
+  {
+   "id": "F119",
+   "module": "E",
+   "topic": "帳單可以自動開立電子發票嗎？／作廢與重開發票",
+   "questions": [
+    "帳單可以自動開立電子發票嗎？"
+   ],
+   "keywords": [],
+   "sources": [
+    "einvoice_zh-Hant.html#作廢與重開發票"
+   ],
+   "help_center": [
+    "einvoice_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:einvoice_zh-Hant.html#作廢與重開發票"
+   }
+  },
+  {
+   "id": "F120",
+   "module": "E",
+   "topic": "帳單可以自動開立電子發票嗎？／使用前需要先確認三件事",
+   "questions": [
+    "帳單可以自動開立電子發票嗎？"
+   ],
+   "keywords": [],
+   "sources": [
+    "einvoice_zh-Hant.html#使用前需要先確認三件事"
+   ],
+   "help_center": [
+    "einvoice_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:einvoice_zh-Hant.html#使用前需要先確認三件事"
+   }
+  },
+  {
+   "id": "F121",
+   "module": "E",
+   "topic": "帳單可以自動開立電子發票嗎？／名詞說明",
+   "questions": [
+    "帳單可以自動開立電子發票嗎？"
+   ],
+   "keywords": [],
+   "sources": [
+    "einvoice_zh-Hant.html#名詞說明"
+   ],
+   "help_center": [
+    "einvoice_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:einvoice_zh-Hant.html#名詞說明"
+   }
+  },
+  {
+   "id": "F122",
+   "module": "E",
+   "topic": "帳單可以自動開立電子發票嗎？／常見問題",
+   "questions": [
+    "帳單可以自動開立電子發票嗎？"
+   ],
+   "keywords": [],
+   "sources": [
+    "einvoice_zh-Hant.html#常見問題"
+   ],
+   "help_center": [
+    "einvoice_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:einvoice_zh-Hant.html#常見問題"
+   }
+  },
+  {
+   "id": "F123",
+   "module": "E",
+   "topic": "帳單可以自動開立電子發票嗎？／這個功能可以做什麼",
+   "questions": [
+    "帳單可以自動開立電子發票嗎？"
+   ],
+   "keywords": [],
+   "sources": [
+    "einvoice_zh-Hant.html#這個功能可以做什麼"
+   ],
+   "help_center": [
+    "einvoice_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:einvoice_zh-Hant.html#這個功能可以做什麼"
+   }
+  },
+  {
+   "id": "F124",
+   "module": "E",
+   "topic": "帳單可以自動開立電子發票嗎？／需要協助時找誰",
+   "questions": [
+    "帳單可以自動開立電子發票嗎？"
+   ],
+   "keywords": [],
+   "sources": [
+    "einvoice_zh-Hant.html#需要協助時找誰"
+   ],
+   "help_center": [
+    "einvoice_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:einvoice_zh-Hant.html#需要協助時找誰"
+   }
+  },
+  {
+   "id": "F125",
+   "module": "E",
+   "topic": "帳單可以自動開立電子發票嗎？／📌 小提醒",
+   "questions": [
+    "帳單可以自動開立電子發票嗎？"
+   ],
+   "keywords": [],
+   "sources": [
+    "einvoice_zh-Hant.html#📌 小提醒"
+   ],
+   "help_center": [
+    "einvoice_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:einvoice_zh-Hant.html#📌 小提醒"
+   }
+  },
+  {
+   "id": "F126",
+   "module": "D",
+   "topic": "房東教學04：合約篇／⚠️ 版本更新",
+   "questions": [
+    "房東教學04：合約篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "landlordonboarding04lease_zh-Hant.html#⚠️ 版本更新"
+   ],
+   "help_center": [
+    "landlordonboarding04lease_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:landlordonboarding04lease_zh-Hant.html#⚠️ 版本更新"
+   }
+  },
+  {
+   "id": "F127",
+   "module": "D",
+   "topic": "房東教學04：合約篇／上傳（既有）合約",
+   "questions": [
+    "房東教學04：合約篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "landlordonboarding04lease_zh-Hant.html#上傳（既有）合約"
+   ],
+   "help_center": [
+    "landlordonboarding04lease_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:landlordonboarding04lease_zh-Hant.html#上傳（既有）合約"
+   }
+  },
+  {
+   "id": "F128",
+   "module": "D",
+   "topic": "房東教學04：合約篇／合約簽訂",
+   "questions": [
+    "房東教學04：合約篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "landlordonboarding04lease_zh-Hant.html#合約簽訂"
+   ],
+   "help_center": [
+    "landlordonboarding04lease_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:landlordonboarding04lease_zh-Hant.html#合約簽訂"
+   }
+  },
+  {
+   "id": "F129",
+   "module": "D",
+   "topic": "房東教學04：合約篇／常見問題",
+   "questions": [
+    "房東教學04：合約篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "landlordonboarding04lease_zh-Hant.html#常見問題"
+   ],
+   "help_center": [
+    "landlordonboarding04lease_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:landlordonboarding04lease_zh-Hant.html#常見問題"
+   }
+  },
+  {
+   "id": "F130",
+   "module": "D",
+   "topic": "房東教學04：合約篇／建立合約",
+   "questions": [
+    "房東教學04：合約篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "landlordonboarding04lease_zh-Hant.html#建立合約"
+   ],
+   "help_center": [
+    "landlordonboarding04lease_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:landlordonboarding04lease_zh-Hant.html#建立合約"
+   }
+  },
+  {
+   "id": "F131",
+   "module": "D",
+   "topic": "房東教學04：合約篇／批次續約",
+   "questions": [
+    "房東教學04：合約篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "landlordonboarding04lease_zh-Hant.html#批次續約"
+   ],
+   "help_center": [
+    "landlordonboarding04lease_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:landlordonboarding04lease_zh-Hant.html#批次續約"
+   }
+  },
+  {
+   "id": "F132",
+   "module": "D",
+   "topic": "房東教學04：合約篇／提前終止合約",
+   "questions": [
+    "房東教學04：合約篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "landlordonboarding04lease_zh-Hant.html#提前終止合約"
+   ],
+   "help_center": [
+    "landlordonboarding04lease_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:landlordonboarding04lease_zh-Hant.html#提前終止合約"
+   }
+  },
+  {
+   "id": "F133",
+   "module": "D",
+   "topic": "房東教學04：合約篇／提前終止合約流程：",
+   "questions": [
+    "房東教學04：合約篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "landlordonboarding04lease_zh-Hant.html#提前終止合約流程："
+   ],
+   "help_center": [
+    "landlordonboarding04lease_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:landlordonboarding04lease_zh-Hant.html#提前終止合約流程："
+   }
+  },
+  {
+   "id": "F134",
+   "module": "D",
+   "topic": "房東教學04：合約篇／此篇新手上路，將分別告訴你如何",
+   "questions": [
+    "房東教學04：合約篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "landlordonboarding04lease_zh-Hant.html#此篇新手上路，將分別告訴你如何"
+   ],
+   "help_center": [
+    "landlordonboarding04lease_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:landlordonboarding04lease_zh-Hant.html#此篇新手上路，將分別告訴你如何"
+   }
+  },
+  {
+   "id": "F135",
+   "module": "D",
+   "topic": "房東教學04：合約篇／點交/點退",
+   "questions": [
+    "房東教學04：合約篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "landlordonboarding04lease_zh-Hant.html#點交/點退"
+   ],
+   "help_center": [
+    "landlordonboarding04lease_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:landlordonboarding04lease_zh-Hant.html#點交/點退"
+   }
+  },
+  {
+   "id": "F136",
+   "module": "D",
+   "topic": "房東教學04：合約篇／點退流程",
+   "questions": [
+    "房東教學04：合約篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "landlordonboarding04lease_zh-Hant.html#點退流程"
+   ],
+   "help_center": [
+    "landlordonboarding04lease_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:landlordonboarding04lease_zh-Hant.html#點退流程"
+   }
+  },
+  {
+   "id": "F137",
+   "module": "D",
+   "topic": "房東教學04：合約篇／📌 小提醒",
+   "questions": [
+    "房東教學04：合約篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "landlordonboarding04lease_zh-Hant.html#📌 小提醒"
+   ],
+   "help_center": [
+    "landlordonboarding04lease_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:landlordonboarding04lease_zh-Hant.html#📌 小提醒"
+   }
+  },
+  {
+   "id": "F138",
+   "module": "E",
+   "topic": "房東教學05：收款設置篇／JGB 支援哪幾家線上金流？",
+   "questions": [
+    "房東教學05：收款設置篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "landlordonboarding05Paymentsettings_zh-Hant.html#JGB 支援哪幾家線上金流？"
+   ],
+   "help_center": [
+    "landlordonboarding05Paymentsettings_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:landlordonboarding05Paymentsettings_zh-Hant.html#JGB 支援哪幾家線上金流？"
+   }
+  },
+  {
+   "id": "F139",
+   "module": "E",
+   "topic": "房東教學05：收款設置篇／中國信託（中信）",
+   "questions": [
+    "房東教學05：收款設置篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "landlordonboarding05Paymentsettings_zh-Hant.html#中國信託（中信）"
+   ],
+   "help_center": [
+    "landlordonboarding05Paymentsettings_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:landlordonboarding05Paymentsettings_zh-Hant.html#中國信託（中信）"
+   }
+  },
+  {
+   "id": "F140",
+   "module": "E",
+   "topic": "房東教學05：收款設置篇／單一金流設定多組帳號",
+   "questions": [
+    "房東教學05：收款設置篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "landlordonboarding05Paymentsettings_zh-Hant.html#單一金流設定多組帳號"
+   ],
+   "help_center": [
+    "landlordonboarding05Paymentsettings_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "細目寫「只能綁一家」；「單一金流設定多組帳號」說法需對碼",
+   "rubric": "",
+   "g0": {
+    "authority": "help:landlordonboarding05Paymentsettings_zh-Hant.html#單一金流設定多組帳號"
+   }
+  },
+  {
+   "id": "F141",
+   "module": "E",
+   "topic": "房東教學05：收款設置篇／國泰（虛擬ATM）",
+   "questions": [
+    "房東教學05：收款設置篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "landlordonboarding05Paymentsettings_zh-Hant.html#國泰（虛擬ATM）"
+   ],
+   "help_center": [
+    "landlordonboarding05Paymentsettings_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:landlordonboarding05Paymentsettings_zh-Hant.html#國泰（虛擬ATM）"
+   }
+  },
+  {
+   "id": "F142",
+   "module": "E",
+   "topic": "房東教學05：收款設置篇／常見問題",
+   "questions": [
+    "房東教學05：收款設置篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "landlordonboarding05Paymentsettings_zh-Hant.html#常見問題"
+   ],
+   "help_center": [
+    "landlordonboarding05Paymentsettings_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:landlordonboarding05Paymentsettings_zh-Hant.html#常見問題"
+   }
+  },
+  {
+   "id": "F143",
+   "module": "E",
+   "topic": "房東教學05：收款設置篇／永豐（虛擬ATM）",
+   "questions": [
+    "房東教學05：收款設置篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "landlordonboarding05Paymentsettings_zh-Hant.html#永豐（虛擬ATM）"
+   ],
+   "help_center": [
+    "landlordonboarding05Paymentsettings_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:landlordonboarding05Paymentsettings_zh-Hant.html#永豐（虛擬ATM）"
+   }
+  },
+  {
+   "id": "F144",
+   "module": "E",
+   "topic": "房東教學05：收款設置篇／現金收款帳戶",
+   "questions": [
+    "房東教學05：收款設置篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "landlordonboarding05Paymentsettings_zh-Hant.html#現金收款帳戶"
+   ],
+   "help_center": [
+    "landlordonboarding05Paymentsettings_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:landlordonboarding05Paymentsettings_zh-Hant.html#現金收款帳戶"
+   }
+  },
+  {
+   "id": "F145",
+   "module": "E",
+   "topic": "房東教學05：收款設置篇／藍新（信用卡、超商代碼、虛擬ATM）",
+   "questions": [
+    "房東教學05：收款設置篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "landlordonboarding05Paymentsettings_zh-Hant.html#藍新（信用卡、超商代碼、虛擬ATM）"
+   ],
+   "help_center": [
+    "landlordonboarding05Paymentsettings_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:landlordonboarding05Paymentsettings_zh-Hant.html#藍新（信用卡、超商代碼、虛擬ATM）"
+   }
+  },
+  {
+   "id": "F146",
+   "module": "E",
+   "topic": "房東教學05：收款設置篇／虛擬 ATM 帳號分成兩種",
+   "questions": [
+    "房東教學05：收款設置篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "landlordonboarding05Paymentsettings_zh-Hant.html#虛擬 ATM 帳號分成兩種"
+   ],
+   "help_center": [
+    "landlordonboarding05Paymentsettings_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:landlordonboarding05Paymentsettings_zh-Hant.html#虛擬 ATM 帳號分成兩種"
+   }
+  },
+  {
+   "id": "F147",
+   "module": "I",
+   "topic": "房東教學05：收款設置篇／請各位擅用 【Ctrl+F】的搜索功能。",
+   "questions": [
+    "房東教學05：收款設置篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "landlordonboarding05Paymentsettings_zh-Hant.html#請各位擅用 【Ctrl+F】的搜索功能。"
+   ],
+   "help_center": [
+    "landlordonboarding05Paymentsettings_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:landlordonboarding05Paymentsettings_zh-Hant.html#請各位擅用 【Ctrl+F】的搜索功能。"
+   }
+  },
+  {
+   "id": "F148",
+   "module": "E",
+   "topic": "房東教學05：收款設置篇／開通線上金流教程",
+   "questions": [
+    "房東教學05：收款設置篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "landlordonboarding05Paymentsettings_zh-Hant.html#開通線上金流教程"
+   ],
+   "help_center": [
+    "landlordonboarding05Paymentsettings_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:landlordonboarding05Paymentsettings_zh-Hant.html#開通線上金流教程"
+   }
+  },
+  {
+   "id": "F149",
+   "module": "E",
+   "topic": "房東教學05：收款設置篇／📌 小提醒",
+   "questions": [
+    "房東教學05：收款設置篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "landlordonboarding05Paymentsettings_zh-Hant.html#📌 小提醒"
+   ],
+   "help_center": [
+    "landlordonboarding05Paymentsettings_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:landlordonboarding05Paymentsettings_zh-Hant.html#📌 小提醒"
+   }
+  },
+  {
+   "id": "F150",
+   "module": "D",
+   "topic": "【租房法律知識】租賃契約保存期限與民法追溯期懶人包／一、租賃契約書的保存期限（法律雖無明文強制，實務仍建議保留）",
+   "questions": [
+    "【租房法律知識】租賃契約保存期限與民法追溯期懶人包"
+   ],
+   "keywords": [],
+   "sources": [
+    "law20250520_zh-Hant.html#一、租賃契約書的保存期限（法律雖無明文強制，實務仍建議保留）"
+   ],
+   "help_center": [
+    "law20250520_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "細目講系統內歷史合約保留；缺法定契約保存期限與請求權時效",
+   "rubric": "",
+   "g0": {
+    "authority": "help:law20250520_zh-Hant.html#一、租賃契約書的保存期限（法律雖無明文強制，實務仍建議保留）"
+   }
+  },
+  {
+   "id": "F151",
+   "module": "D",
+   "topic": "【租房法律知識】租賃契約保存期限與民法追溯期懶人包／二、相關法律追溯期（請求權時效）",
+   "questions": [
+    "【租房法律知識】租賃契約保存期限與民法追溯期懶人包"
+   ],
+   "keywords": [],
+   "sources": [
+    "law20250520_zh-Hant.html#二、相關法律追溯期（請求權時效）"
+   ],
+   "help_center": [
+    "law20250520_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "細目講系統內歷史合約保留；缺法定契約保存期限與請求權時效",
+   "rubric": "",
+   "g0": {
+    "authority": "help:law20250520_zh-Hant.html#二、相關法律追溯期（請求權時效）"
+   }
+  },
+  {
+   "id": "F152",
+   "module": "D",
+   "topic": "【租房法律知識】租賃契約保存期限與民法追溯期懶人包／總結建議",
+   "questions": [
+    "【租房法律知識】租賃契約保存期限與民法追溯期懶人包"
+   ],
+   "keywords": [],
+   "sources": [
+    "law20250520_zh-Hant.html#總結建議"
+   ],
+   "help_center": [
+    "law20250520_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "細目講系統內歷史合約保留；缺法定契約保存期限與請求權時效",
+   "rubric": "",
+   "g0": {
+    "authority": "help:law20250520_zh-Hant.html#總結建議"
+   }
+  },
+  {
+   "id": "F153",
+   "module": "D",
+   "topic": "合約篇：點退流程",
+   "questions": [
+    "合約篇：點退流程"
+   ],
+   "keywords": [],
+   "sources": [
+    "onboarding10_zh-Hant.html"
+   ],
+   "help_center": [
+    "onboarding10_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:onboarding10_zh-Hant.html"
+   }
+  },
+  {
+   "id": "F154",
+   "module": "E",
+   "topic": "帳務篇：新增單一帳單／📌 小提醒",
+   "questions": [
+    "帳務篇：新增單一帳單"
+   ],
+   "keywords": [],
+   "sources": [
+    "onboarding11_zh-Hant.html#📌 小提醒"
+   ],
+   "help_center": [
+    "onboarding11_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:onboarding11_zh-Hant.html#📌 小提醒"
+   }
+  },
+  {
+   "id": "F155",
+   "module": "E",
+   "topic": "帳務篇：批次發送帳單／📌 小提醒",
+   "questions": [
+    "帳務篇：批次發送帳單"
+   ],
+   "keywords": [],
+   "sources": [
+    "onboarding12_zh-Hant.html#📌 小提醒"
+   ],
+   "help_center": [
+    "onboarding12_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:onboarding12_zh-Hant.html#📌 小提醒"
+   }
+  },
+  {
+   "id": "F156",
+   "module": "E",
+   "topic": "既存合約的歷史帳單如何移至已到帳／⚠️ 版本更新",
+   "questions": [
+    "既存合約的歷史帳單如何移至已到帳"
+   ],
+   "keywords": [],
+   "sources": [
+    "onboarding13_zh-Hant.html#⚠️ 版本更新"
+   ],
+   "help_center": [
+    "onboarding13_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:onboarding13_zh-Hant.html#⚠️ 版本更新"
+   }
+  },
+  {
+   "id": "F157",
+   "module": "E",
+   "topic": "既存合約的歷史帳單如何移至已到帳／📌 小提醒",
+   "questions": [
+    "既存合約的歷史帳單如何移至已到帳"
+   ],
+   "keywords": [],
+   "sources": [
+    "onboarding13_zh-Hant.html#📌 小提醒"
+   ],
+   "help_center": [
+    "onboarding13_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:onboarding13_zh-Hant.html#📌 小提醒"
+   }
+  },
+  {
+   "id": "F158",
+   "module": "E",
+   "topic": "帳務篇：收據PDF下載／⚠️ 版本更新",
+   "questions": [
+    "帳務篇：收據PDF下載"
+   ],
+   "keywords": [],
+   "sources": [
+    "onboarding14_zh-Hant.html#⚠️ 版本更新"
+   ],
+   "help_center": [
+    "onboarding14_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:onboarding14_zh-Hant.html#⚠️ 版本更新"
+   }
+  },
+  {
+   "id": "F159",
+   "module": "E",
+   "topic": "帳務篇：收據PDF下載／一、收款帳單 - 收據下載",
+   "questions": [
+    "帳務篇：收據PDF下載"
+   ],
+   "keywords": [],
+   "sources": [
+    "onboarding14_zh-Hant.html#一、收款帳單 - 收據下載"
+   ],
+   "help_center": [
+    "onboarding14_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:onboarding14_zh-Hant.html#一、收款帳單 - 收據下載"
+   }
+  },
+  {
+   "id": "F160",
+   "module": "E",
+   "topic": "帳務篇：收據PDF下載／二、繳款帳單 - 收據下載",
+   "questions": [
+    "帳務篇：收據PDF下載"
+   ],
+   "keywords": [],
+   "sources": [
+    "onboarding14_zh-Hant.html#二、繳款帳單 - 收據下載"
+   ],
+   "help_center": [
+    "onboarding14_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:onboarding14_zh-Hant.html#二、繳款帳單 - 收據下載"
+   }
+  },
+  {
+   "id": "F161",
+   "module": "A",
+   "topic": "註冊一套專屬你的租房管理／⚠️ 版本更新",
+   "questions": [
+    "註冊一套專屬你的租房管理"
+   ],
+   "keywords": [],
+   "sources": [
+    "onboarding1_zh-Hant.html#⚠️ 版本更新"
+   ],
+   "help_center": [
+    "onboarding1_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:onboarding1_zh-Hant.html#⚠️ 版本更新"
+   }
+  },
+  {
+   "id": "F162",
+   "module": "A",
+   "topic": "註冊一套專屬你的租房管理／一、註冊篇",
+   "questions": [
+    "註冊一套專屬你的租房管理"
+   ],
+   "keywords": [],
+   "sources": [
+    "onboarding1_zh-Hant.html#一、註冊篇"
+   ],
+   "help_center": [
+    "onboarding1_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:onboarding1_zh-Hant.html#一、註冊篇"
+   }
+  },
+  {
+   "id": "F163",
+   "module": "A",
+   "topic": "註冊一套專屬你的租房管理／三、房東登入篇",
+   "questions": [
+    "註冊一套專屬你的租房管理"
+   ],
+   "keywords": [],
+   "sources": [
+    "onboarding1_zh-Hant.html#三、房東登入篇"
+   ],
+   "help_center": [
+    "onboarding1_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:onboarding1_zh-Hant.html#三、房東登入篇"
+   }
+  },
+  {
+   "id": "F164",
+   "module": "A",
+   "topic": "註冊一套專屬你的租房管理／二、租客電子合約邀請註冊",
+   "questions": [
+    "註冊一套專屬你的租房管理"
+   ],
+   "keywords": [],
+   "sources": [
+    "onboarding1_zh-Hant.html#二、租客電子合約邀請註冊"
+   ],
+   "help_center": [
+    "onboarding1_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:onboarding1_zh-Hant.html#二、租客電子合約邀請註冊"
+   }
+  },
+  {
+   "id": "F165",
+   "module": "A",
+   "topic": "註冊一套專屬你的租房管理／四、租客登入篇",
+   "questions": [
+    "註冊一套專屬你的租房管理"
+   ],
+   "keywords": [],
+   "sources": [
+    "onboarding1_zh-Hant.html#四、租客登入篇"
+   ],
+   "help_center": [
+    "onboarding1_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:onboarding1_zh-Hant.html#四、租客登入篇"
+   }
+  },
+  {
+   "id": "F166",
+   "module": "A",
+   "topic": "註冊一套專屬你的租房管理／驗證碼會傳到Email信箱內",
+   "questions": [
+    "註冊一套專屬你的租房管理"
+   ],
+   "keywords": [],
+   "sources": [
+    "onboarding1_zh-Hant.html#驗證碼會傳到Email信箱內"
+   ],
+   "help_center": [
+    "onboarding1_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:onboarding1_zh-Hant.html#驗證碼會傳到Email信箱內"
+   }
+  },
+  {
+   "id": "F167",
+   "module": "A",
+   "topic": "註冊一套專屬你的租房管理／📌 小提醒",
+   "questions": [
+    "註冊一套專屬你的租房管理"
+   ],
+   "keywords": [],
+   "sources": [
+    "onboarding1_zh-Hant.html#📌 小提醒"
+   ],
+   "help_center": [
+    "onboarding1_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:onboarding1_zh-Hant.html#📌 小提醒"
+   }
+  },
+  {
+   "id": "F168",
+   "module": "A",
+   "topic": "帳號資訊設定 完成您的個人資料吧！／一、房東帳號篇：",
+   "questions": [
+    "帳號資訊設定 完成您的個人資料吧！"
+   ],
+   "keywords": [],
+   "sources": [
+    "onboarding2_zh-Hant.html#一、房東帳號篇："
+   ],
+   "help_center": [
+    "onboarding2_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:onboarding2_zh-Hant.html#一、房東帳號篇："
+   }
+  },
+  {
+   "id": "F169",
+   "module": "A",
+   "topic": "帳號資訊設定 完成您的個人資料吧！／三、租客帳號篇：",
+   "questions": [
+    "帳號資訊設定 完成您的個人資料吧！"
+   ],
+   "keywords": [],
+   "sources": [
+    "onboarding2_zh-Hant.html#三、租客帳號篇："
+   ],
+   "help_center": [
+    "onboarding2_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:onboarding2_zh-Hant.html#三、租客帳號篇："
+   }
+  },
+  {
+   "id": "F170",
+   "module": "A",
+   "topic": "帳號資訊設定 完成您的個人資料吧！／二、團隊帳號篇：",
+   "questions": [
+    "帳號資訊設定 完成您的個人資料吧！"
+   ],
+   "keywords": [],
+   "sources": [
+    "onboarding2_zh-Hant.html#二、團隊帳號篇："
+   ],
+   "help_center": [
+    "onboarding2_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "缺「團隊資訊有哪些欄位、在哪改」",
+   "rubric": "",
+   "g0": {
+    "authority": "help:onboarding2_zh-Hant.html#二、團隊帳號篇："
+   }
+  },
+  {
+   "id": "F171",
+   "module": "C",
+   "topic": "一分鐘上手 如何新建物件／⚠️ 版本更新",
+   "questions": [
+    "一分鐘上手 如何新建物件"
+   ],
+   "keywords": [],
+   "sources": [
+    "onboarding4_zh-Hant.html#⚠️ 版本更新"
+   ],
+   "help_center": [
+    "onboarding4_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:onboarding4_zh-Hant.html#⚠️ 版本更新"
+   }
+  },
+  {
+   "id": "F172",
+   "module": "C",
+   "topic": "一分鐘上手 如何新建物件／一、新增物件",
+   "questions": [
+    "一分鐘上手 如何新建物件"
+   ],
+   "keywords": [],
+   "sources": [
+    "onboarding4_zh-Hant.html#一、新增物件"
+   ],
+   "help_center": [
+    "onboarding4_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:onboarding4_zh-Hant.html#一、新增物件"
+   }
+  },
+  {
+   "id": "F173",
+   "module": "C",
+   "topic": "一分鐘上手 如何新建物件／三、批次上傳物件",
+   "questions": [
+    "一分鐘上手 如何新建物件"
+   ],
+   "keywords": [],
+   "sources": [
+    "onboarding4_zh-Hant.html#三、批次上傳物件"
+   ],
+   "help_center": [
+    "onboarding4_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:onboarding4_zh-Hant.html#三、批次上傳物件"
+   }
+  },
+  {
+   "id": "F174",
+   "module": "",
+   "topic": "一分鐘上手 如何新建物件／二、複製現有物件",
+   "questions": [
+    "一分鐘上手 如何新建物件"
+   ],
+   "keywords": [],
+   "sources": [
+    "onboarding4_zh-Hant.html#二、複製現有物件"
+   ],
+   "help_center": [
+    "onboarding4_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "無細目：複製現有物件怎麼做（正本只有合約複製，沒有物件複製）",
+   "rubric": "",
+   "g0": {
+    "authority": "help:onboarding4_zh-Hant.html#二、複製現有物件"
+   }
+  },
+  {
+   "id": "F175",
+   "module": "C",
+   "topic": "一分鐘上手 如何新建物件／另外由於JGB系統已於 2022/05/12 新增社區功能",
+   "questions": [
+    "一分鐘上手 如何新建物件"
+   ],
+   "keywords": [],
+   "sources": [
+    "onboarding4_zh-Hant.html#另外由於JGB系統已於 2022/05/12 新增社區功能"
+   ],
+   "help_center": [
+    "onboarding4_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:onboarding4_zh-Hant.html#另外由於JGB系統已於 2022/05/12 新增社區功能"
+   }
+  },
+  {
+   "id": "F176",
+   "module": "C",
+   "topic": "一分鐘上手 如何新建物件／📌 小提醒",
+   "questions": [
+    "一分鐘上手 如何新建物件"
+   ],
+   "keywords": [],
+   "sources": [
+    "onboarding4_zh-Hant.html#📌 小提醒"
+   ],
+   "help_center": [
+    "onboarding4_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:onboarding4_zh-Hant.html#📌 小提醒"
+   }
+  },
+  {
+   "id": "F177",
+   "module": "D",
+   "topic": "一分鐘上手 如何建立＆編輯合約／一、建立合約",
+   "questions": [
+    "一分鐘上手 如何建立＆編輯合約"
+   ],
+   "keywords": [],
+   "sources": [
+    "onboarding5_zh-Hant.html#一、建立合約"
+   ],
+   "help_center": [
+    "onboarding5_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:onboarding5_zh-Hant.html#一、建立合約"
+   }
+  },
+  {
+   "id": "F178",
+   "module": "D",
+   "topic": "一分鐘上手 如何建立＆編輯合約／二、編輯合約",
+   "questions": [
+    "一分鐘上手 如何建立＆編輯合約"
+   ],
+   "keywords": [],
+   "sources": [
+    "onboarding5_zh-Hant.html#二、編輯合約"
+   ],
+   "help_center": [
+    "onboarding5_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:onboarding5_zh-Hant.html#二、編輯合約"
+   }
+  },
+  {
+   "id": "F179",
+   "module": "D",
+   "topic": "一分鐘上手 如何建立＆編輯合約／租客視角",
+   "questions": [
+    "一分鐘上手 如何建立＆編輯合約"
+   ],
+   "keywords": [],
+   "sources": [
+    "onboarding5_zh-Hant.html#租客視角"
+   ],
+   "help_center": [
+    "onboarding5_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:onboarding5_zh-Hant.html#租客視角"
+   }
+  },
+  {
+   "id": "F180",
+   "module": "D",
+   "topic": "一分鐘上手 如何建立＆編輯合約／📌 小提醒",
+   "questions": [
+    "一分鐘上手 如何建立＆編輯合約"
+   ],
+   "keywords": [],
+   "sources": [
+    "onboarding5_zh-Hant.html#📌 小提醒"
+   ],
+   "help_center": [
+    "onboarding5_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:onboarding5_zh-Hant.html#📌 小提醒"
+   }
+  },
+  {
+   "id": "F181",
+   "module": "D",
+   "topic": "上傳既存合約／⚠️ 版本更新",
+   "questions": [
+    "上傳既存合約"
+   ],
+   "keywords": [],
+   "sources": [
+    "onboarding6_zh-Hant.html#⚠️ 版本更新"
+   ],
+   "help_center": [
+    "onboarding6_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:onboarding6_zh-Hant.html#⚠️ 版本更新"
+   }
+  },
+  {
+   "id": "F182",
+   "module": "D",
+   "topic": "上傳既存合約／📌 小提醒",
+   "questions": [
+    "上傳既存合約"
+   ],
+   "keywords": [],
+   "sources": [
+    "onboarding6_zh-Hant.html#📌 小提醒"
+   ],
+   "help_center": [
+    "onboarding6_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:onboarding6_zh-Hant.html#📌 小提醒"
+   }
+  },
+  {
+   "id": "F183",
+   "module": "D",
+   "topic": "線上點交物件／如果租客不同意點交呢？",
+   "questions": [
+    "線上點交物件"
+   ],
+   "keywords": [],
+   "sources": [
+    "onboarding7_zh-Hant.html#如果租客不同意點交呢？"
+   ],
+   "help_center": [
+    "onboarding7_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:onboarding7_zh-Hant.html#如果租客不同意點交呢？"
+   }
+  },
+  {
+   "id": "F184",
+   "module": "D",
+   "topic": "線上點交物件／📌 小提醒",
+   "questions": [
+    "線上點交物件"
+   ],
+   "keywords": [],
+   "sources": [
+    "onboarding7_zh-Hant.html#📌 小提醒"
+   ],
+   "help_center": [
+    "onboarding7_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:onboarding7_zh-Hant.html#📌 小提醒"
+   }
+  },
+  {
+   "id": "F185",
+   "module": "E",
+   "topic": "一分鐘上手 發送租金帳單／一、編輯帳單並送出",
+   "questions": [
+    "一分鐘上手 發送租金帳單"
+   ],
+   "keywords": [],
+   "sources": [
+    "onboarding8_zh-Hant.html#一、編輯帳單並送出"
+   ],
+   "help_center": [
+    "onboarding8_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:onboarding8_zh-Hant.html#一、編輯帳單並送出"
+   }
+  },
+  {
+   "id": "F186",
+   "module": "E",
+   "topic": "一分鐘上手 發送租金帳單／三、收據確認",
+   "questions": [
+    "一分鐘上手 發送租金帳單"
+   ],
+   "keywords": [],
+   "sources": [
+    "onboarding8_zh-Hant.html#三、收據確認"
+   ],
+   "help_center": [
+    "onboarding8_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:onboarding8_zh-Hant.html#三、收據確認"
+   }
+  },
+  {
+   "id": "F187",
+   "module": "E",
+   "topic": "一分鐘上手 發送租金帳單／二、租客付款",
+   "questions": [
+    "一分鐘上手 發送租金帳單"
+   ],
+   "keywords": [],
+   "sources": [
+    "onboarding8_zh-Hant.html#二、租客付款"
+   ],
+   "help_center": [
+    "onboarding8_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:onboarding8_zh-Hant.html#二、租客付款"
+   }
+  },
+  {
+   "id": "F188",
+   "module": "E",
+   "topic": "一分鐘上手 發送租金帳單／📌 小提醒",
+   "questions": [
+    "一分鐘上手 發送租金帳單"
+   ],
+   "keywords": [],
+   "sources": [
+    "onboarding8_zh-Hant.html#📌 小提醒"
+   ],
+   "help_center": [
+    "onboarding8_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:onboarding8_zh-Hant.html#📌 小提醒"
+   }
+  },
+  {
+   "id": "F189",
+   "module": "D",
+   "topic": "9-1. 合約篇：房東提前解約／📌 小提醒",
+   "questions": [
+    "9-1. 合約篇：房東提前解約"
+   ],
+   "keywords": [],
+   "sources": [
+    "onboarding9-1_zh-Hant.html#📌 小提醒"
+   ],
+   "help_center": [
+    "onboarding9-1_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:onboarding9-1_zh-Hant.html#📌 小提醒"
+   }
+  },
+  {
+   "id": "F190",
+   "module": "E",
+   "topic": "國泰、永豐、中信的金流要怎麼申請與提領？／先確認您的身分是否符合",
+   "questions": [
+    "國泰、永豐、中信的金流要怎麼申請與提領？"
+   ],
+   "keywords": [],
+   "sources": [
+    "paymentapply_zh-Hant.html#先確認您的身分是否符合"
+   ],
+   "help_center": [
+    "paymentapply_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:paymentapply_zh-Hant.html#先確認您的身分是否符合"
+   }
+  },
+  {
+   "id": "F191",
+   "module": "E",
+   "topic": "國泰、永豐、中信的金流要怎麼申請與提領？／款項會匯到哪裡？",
+   "questions": [
+    "國泰、永豐、中信的金流要怎麼申請與提領？"
+   ],
+   "keywords": [],
+   "sources": [
+    "paymentapply_zh-Hant.html#款項會匯到哪裡？"
+   ],
+   "help_center": [
+    "paymentapply_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "缺「款項匯到哪、怎麼提領」的獨立細目",
+   "rubric": "",
+   "g0": {
+    "authority": "help:paymentapply_zh-Hant.html#款項會匯到哪裡？"
+   }
+  },
+  {
+   "id": "F192",
+   "module": "E",
+   "topic": "國泰、永豐、中信的金流要怎麼申請與提領？／款項要怎麼提領？",
+   "questions": [
+    "國泰、永豐、中信的金流要怎麼申請與提領？"
+   ],
+   "keywords": [],
+   "sources": [
+    "paymentapply_zh-Hant.html#款項要怎麼提領？"
+   ],
+   "help_center": [
+    "paymentapply_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "缺「款項匯到哪、怎麼提領」的獨立細目",
+   "rubric": "",
+   "g0": {
+    "authority": "help:paymentapply_zh-Hant.html#款項要怎麼提領？"
+   }
+  },
+  {
+   "id": "F193",
+   "module": "C",
+   "topic": "房東教學03：物件篇／創建社區",
+   "questions": [
+    "房東教學03：物件篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "property_zh-Hant.html#創建社區"
+   ],
+   "help_center": [
+    "property_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:property_zh-Hant.html#創建社區"
+   }
+  },
+  {
+   "id": "F194",
+   "module": "C",
+   "topic": "房東教學03：物件篇／常見問題",
+   "questions": [
+    "房東教學03：物件篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "property_zh-Hant.html#常見問題"
+   ],
+   "help_center": [
+    "property_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:property_zh-Hant.html#常見問題"
+   }
+  },
+  {
+   "id": "F195",
+   "module": "C",
+   "topic": "房東教學03：物件篇／建立物件",
+   "questions": [
+    "房東教學03：物件篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "property_zh-Hant.html#建立物件"
+   ],
+   "help_center": [
+    "property_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:property_zh-Hant.html#建立物件"
+   }
+  },
+  {
+   "id": "F196",
+   "module": "C",
+   "topic": "房東教學03：物件篇／批次新增物件",
+   "questions": [
+    "房東教學03：物件篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "property_zh-Hant.html#批次新增物件"
+   ],
+   "help_center": [
+    "property_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:property_zh-Hant.html#批次新增物件"
+   }
+  },
+  {
+   "id": "F197",
+   "module": "C",
+   "topic": "房東教學03：物件篇／批次新增社區",
+   "questions": [
+    "房東教學03：物件篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "property_zh-Hant.html#批次新增社區"
+   ],
+   "help_center": [
+    "property_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:property_zh-Hant.html#批次新增社區"
+   }
+  },
+  {
+   "id": "F198",
+   "module": "C",
+   "topic": "房東教學03：物件篇／招租",
+   "questions": [
+    "房東教學03：物件篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "property_zh-Hant.html#招租"
+   ],
+   "help_center": [
+    "property_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:property_zh-Hant.html#招租"
+   }
+  },
+  {
+   "id": "F199",
+   "module": "C",
+   "topic": "房東教學03：物件篇／查看/編輯已建立之物件",
+   "questions": [
+    "房東教學03：物件篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "property_zh-Hant.html#查看/編輯已建立之物件"
+   ],
+   "help_center": [
+    "property_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:property_zh-Hant.html#查看/編輯已建立之物件"
+   }
+  },
+  {
+   "id": "F200",
+   "module": "C",
+   "topic": "房東教學03：物件篇／查看/編輯已建立社區",
+   "questions": [
+    "房東教學03：物件篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "property_zh-Hant.html#查看/編輯已建立社區"
+   ],
+   "help_center": [
+    "property_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:property_zh-Hant.html#查看/編輯已建立社區"
+   }
+  },
+  {
+   "id": "F201",
+   "module": "",
+   "topic": "房東教學03：物件篇／買賣",
+   "questions": [
+    "房東教學03：物件篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "property_zh-Hant.html#買賣"
+   ],
+   "help_center": [
+    "property_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "無細目：買賣物件怎麼刊登、與招租差在哪",
+   "rubric": "",
+   "g0": {
+    "authority": "help:property_zh-Hant.html#買賣"
+   }
+  },
+  {
+   "id": "F202",
+   "module": "C",
+   "topic": "物件批次新增表格如何填寫？",
+   "questions": [
+    "物件批次新增表格如何填寫？"
+   ],
+   "keywords": [],
+   "sources": [
+    "qa01_zh-Hant.html"
+   ],
+   "help_center": [
+    "qa01_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:qa01_zh-Hant.html"
+   }
+  },
+  {
+   "id": "F203",
+   "module": "D",
+   "topic": "合約附件、補充條款限制／📌 小提醒",
+   "questions": [
+    "合約附件、補充條款限制"
+   ],
+   "keywords": [],
+   "sources": [
+    "qa04_zh-Hant.html#📌 小提醒"
+   ],
+   "help_center": [
+    "qa04_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:qa04_zh-Hant.html#📌 小提醒"
+   }
+  },
+  {
+   "id": "F204",
+   "module": "D",
+   "topic": "可以上傳自己原有的合約嗎？在哪裡上傳？／📌 小提醒",
+   "questions": [
+    "可以上傳自己原有的合約嗎？在哪裡上傳？"
+   ],
+   "keywords": [],
+   "sources": [
+    "qa05_zh-Hant.html#📌 小提醒"
+   ],
+   "help_center": [
+    "qa05_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:qa05_zh-Hant.html#📌 小提醒"
+   }
+  },
+  {
+   "id": "F205",
+   "module": "D",
+   "topic": "既存合約（上傳合約）與JGB制式合約哪裡不同？／JGB 提供哪些公版合約？",
+   "questions": [
+    "既存合約（上傳合約）與JGB制式合約哪裡不同？"
+   ],
+   "keywords": [],
+   "sources": [
+    "qa06_zh-Hant.html#JGB 提供哪些公版合約？"
+   ],
+   "help_center": [
+    "qa06_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:qa06_zh-Hant.html#JGB 提供哪些公版合約？"
+   }
+  },
+  {
+   "id": "F206",
+   "module": "D",
+   "topic": "既存合約（上傳合約）與JGB制式合約哪裡不同？／為什麼我的選單裡沒有這麼多種？",
+   "questions": [
+    "既存合約（上傳合約）與JGB制式合約哪裡不同？"
+   ],
+   "keywords": [],
+   "sources": [
+    "qa06_zh-Hant.html#為什麼我的選單裡沒有這麼多種？"
+   ],
+   "help_center": [
+    "qa06_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:qa06_zh-Hant.html#為什麼我的選單裡沒有這麼多種？"
+   }
+  },
+  {
+   "id": "F207",
+   "module": "A",
+   "topic": "租客沒有上傳身分證，請問該怎麼辦？／📌 小提醒",
+   "questions": [
+    "租客沒有上傳身分證，請問該怎麼辦？"
+   ],
+   "keywords": [],
+   "sources": [
+    "qa07_zh-Hant.html#📌 小提醒"
+   ],
+   "help_center": [
+    "qa07_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "缺「租客沒上傳身分證時怎麼繼續簽約」",
+   "rubric": "",
+   "g0": {
+    "authority": "help:qa07_zh-Hant.html#📌 小提醒"
+   }
+  },
+  {
+   "id": "F208",
+   "module": "D",
+   "topic": "已點退的合約還在執行中？",
+   "questions": [
+    "已點退的合約還在執行中？"
+   ],
+   "keywords": [],
+   "sources": [
+    "qa15_zh-Hant.html"
+   ],
+   "help_center": [
+    "qa15_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:qa15_zh-Hant.html"
+   }
+  },
+  {
+   "id": "F209",
+   "module": "E",
+   "topic": "可以不檢附收據嗎？",
+   "questions": [
+    "可以不檢附收據嗎？"
+   ],
+   "keywords": [],
+   "sources": [
+    "qa21_zh-Hant.html"
+   ],
+   "help_center": [
+    "qa21_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:qa21_zh-Hant.html"
+   }
+  },
+  {
+   "id": "F210",
+   "module": "B",
+   "topic": "沒有權限的團隊成員，可否進行簽約、點交、點退？／有兩組權限沒開，選單會整個看不見",
+   "questions": [
+    "沒有權限的團隊成員，可否進行簽約、點交、點退？"
+   ],
+   "keywords": [],
+   "sources": [
+    "qa23_zh-Hant.html#有兩組權限沒開，選單會整個看不見"
+   ],
+   "help_center": [
+    "qa23_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:qa23_zh-Hant.html#有兩組權限沒開，選單會整個看不見"
+   }
+  },
+  {
+   "id": "F211",
+   "module": "B",
+   "topic": "沒有權限的團隊成員，可否進行簽約、點交、點退？／為什麼權限勾了卻沒有作用？",
+   "questions": [
+    "沒有權限的團隊成員，可否進行簽約、點交、點退？"
+   ],
+   "keywords": [],
+   "sources": [
+    "qa23_zh-Hant.html#為什麼權限勾了卻沒有作用？"
+   ],
+   "help_center": [
+    "qa23_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:qa23_zh-Hant.html#為什麼權限勾了卻沒有作用？"
+   }
+  },
+  {
+   "id": "F212",
+   "module": "B",
+   "topic": "沒有權限的團隊成員，可否進行簽約、點交、點退？／📌 小提醒",
+   "questions": [
+    "沒有權限的團隊成員，可否進行簽約、點交、點退？"
+   ],
+   "keywords": [],
+   "sources": [
+    "qa23_zh-Hant.html#📌 小提醒"
+   ],
+   "help_center": [
+    "qa23_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:qa23_zh-Hant.html#📌 小提醒"
+   }
+  },
+  {
+   "id": "F213",
+   "module": "E",
+   "topic": "藍新金流如何設置？／ATM付款",
+   "questions": [
+    "藍新金流如何設置？"
+   ],
+   "keywords": [],
+   "sources": [
+    "qa27_zh-Hant.html#ATM付款"
+   ],
+   "help_center": [
+    "qa27_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:qa27_zh-Hant.html#ATM付款"
+   }
+  },
+  {
+   "id": "F214",
+   "module": "E",
+   "topic": "藍新金流如何設置？／信用卡付款",
+   "questions": [
+    "藍新金流如何設置？"
+   ],
+   "keywords": [],
+   "sources": [
+    "qa27_zh-Hant.html#信用卡付款"
+   ],
+   "help_center": [
+    "qa27_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:qa27_zh-Hant.html#信用卡付款"
+   }
+  },
+  {
+   "id": "F215",
+   "module": "E",
+   "topic": "藍新金流如何設置？／線上金流要收多少費用？",
+   "questions": [
+    "藍新金流如何設置？"
+   ],
+   "keywords": [],
+   "sources": [
+    "qa27_zh-Hant.html#線上金流要收多少費用？"
+   ],
+   "help_center": [
+    "qa27_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:qa27_zh-Hant.html#線上金流要收多少費用？"
+   }
+  },
+  {
+   "id": "F216",
+   "module": "D",
+   "topic": "租約公證？房東房客都應該關注的保障／一、什麼是租約公證？",
+   "questions": [
+    "租約公證？房東房客都應該關注的保障"
+   ],
+   "keywords": [],
+   "sources": [
+    "rent3_zh-Hant.html#一、什麼是租約公證？"
+   ],
+   "help_center": [
+    "rent3_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:rent3_zh-Hant.html#一、什麼是租約公證？"
+   }
+  },
+  {
+   "id": "F217",
+   "module": "D",
+   "topic": "租約公證？房東房客都應該關注的保障／三、租約公證費用大約多少？",
+   "questions": [
+    "租約公證？房東房客都應該關注的保障"
+   ],
+   "keywords": [],
+   "sources": [
+    "rent3_zh-Hant.html#三、租約公證費用大約多少？"
+   ],
+   "help_center": [
+    "rent3_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:rent3_zh-Hant.html#三、租約公證費用大約多少？"
+   }
+  },
+  {
+   "id": "F218",
+   "module": "D",
+   "topic": "租約公證？房東房客都應該關注的保障／二、公證單位去哪找？",
+   "questions": [
+    "租約公證？房東房客都應該關注的保障"
+   ],
+   "keywords": [],
+   "sources": [
+    "rent3_zh-Hant.html#二、公證單位去哪找？"
+   ],
+   "help_center": [
+    "rent3_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:rent3_zh-Hant.html#二、公證單位去哪找？"
+   }
+  },
+  {
+   "id": "F219",
+   "module": "D",
+   "topic": "租約公證？房東房客都應該關注的保障／五、申請租金補貼一定要將租約公證嗎？",
+   "questions": [
+    "租約公證？房東房客都應該關注的保障"
+   ],
+   "keywords": [],
+   "sources": [
+    "rent3_zh-Hant.html#五、申請租金補貼一定要將租約公證嗎？"
+   ],
+   "help_center": [
+    "rent3_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:rent3_zh-Hant.html#五、申請租金補貼一定要將租約公證嗎？"
+   }
+  },
+  {
+   "id": "F220",
+   "module": "D",
+   "topic": "租約公證？房東房客都應該關注的保障／四、租約公證對房東和租客的好處及保障？",
+   "questions": [
+    "租約公證？房東房客都應該關注的保障"
+   ],
+   "keywords": [],
+   "sources": [
+    "rent3_zh-Hant.html#四、租約公證對房東和租客的好處及保障？"
+   ],
+   "help_center": [
+    "rent3_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:rent3_zh-Hant.html#四、租約公證對房東和租客的好處及保障？"
+   }
+  },
+  {
+   "id": "F221",
+   "module": "",
+   "topic": "租賃專法的重點大補帖",
+   "questions": [
+    "租賃專法的重點大補帖"
+   ],
+   "keywords": [],
+   "sources": [
+    "rentallaw.pt1_zh-Hant.html"
+   ],
+   "help_center": [
+    "rentallaw.pt1_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "無細目：租賃專法重點",
+   "rubric": "",
+   "g0": {
+    "authority": "help:rentallaw.pt1_zh-Hant.html"
+   }
+  },
+  {
+   "id": "F222",
+   "module": "",
+   "topic": "房東和租屋族都必須了解的租賃專法／一、對房東的影響——房東常見的租屋糾紛是否能以租賃專法保障？",
+   "questions": [
+    "房東和租屋族都必須了解的租賃專法"
+   ],
+   "keywords": [],
+   "sources": [
+    "rentallaw.pt2_zh-Hant.html#一、對房東的影響——房東常見的租屋糾紛是否能以租賃專法保障？"
+   ],
+   "help_center": [
+    "rentallaw.pt2_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "無細目：租賃專法對房東／租客各自的影響與常見糾紛保障",
+   "rubric": "",
+   "g0": {
+    "authority": "help:rentallaw.pt2_zh-Hant.html#一、對房東的影響——房東常見的租屋糾紛是否能以租賃專法保障？"
+   }
+  },
+  {
+   "id": "F223",
+   "module": "",
+   "topic": "房東和租屋族都必須了解的租賃專法／二、對租客的影響——租客常見的租屋糾紛是否能以租賃專法保障？",
+   "questions": [
+    "房東和租屋族都必須了解的租賃專法"
+   ],
+   "keywords": [],
+   "sources": [
+    "rentallaw.pt2_zh-Hant.html#二、對租客的影響——租客常見的租屋糾紛是否能以租賃專法保障？"
+   ],
+   "help_center": [
+    "rentallaw.pt2_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "無細目：租賃專法對房東／租客各自的影響與常見糾紛保障",
+   "rubric": "",
+   "g0": {
+    "authority": "help:rentallaw.pt2_zh-Hant.html#二、對租客的影響——租客常見的租屋糾紛是否能以租賃專法保障？"
+   }
+  },
+  {
+   "id": "F224",
+   "module": "B",
+   "topic": "租賃專法下的包租代管業／一、什麼是包租業？又什麼是代管業？",
+   "questions": [
+    "租賃專法下的包租代管業"
+   ],
+   "keywords": [],
+   "sources": [
+    "rentallaw.pt3_zh-Hant.html#一、什麼是包租業？又什麼是代管業？"
+   ],
+   "help_center": [
+    "rentallaw.pt3_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:rentallaw.pt3_zh-Hant.html#一、什麼是包租業？又什麼是代管業？"
+   }
+  },
+  {
+   "id": "F225",
+   "module": "B",
+   "topic": "租賃專法下的包租代管業／三、包租代管業者怎麼賺錢？",
+   "questions": [
+    "租賃專法下的包租代管業"
+   ],
+   "keywords": [],
+   "sources": [
+    "rentallaw.pt3_zh-Hant.html#三、包租代管業者怎麼賺錢？"
+   ],
+   "help_center": [
+    "rentallaw.pt3_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:rentallaw.pt3_zh-Hant.html#三、包租代管業者怎麼賺錢？"
+   }
+  },
+  {
+   "id": "F226",
+   "module": "B",
+   "topic": "租賃專法下的包租代管業／二、包租跟代管的優勢分別是什麼？如果我是房東又該選擇哪個？",
+   "questions": [
+    "租賃專法下的包租代管業"
+   ],
+   "keywords": [],
+   "sources": [
+    "rentallaw.pt3_zh-Hant.html#二、包租跟代管的優勢分別是什麼？如果我是房東又該選擇哪個？"
+   ],
+   "help_center": [
+    "rentallaw.pt3_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:rentallaw.pt3_zh-Hant.html#二、包租跟代管的優勢分別是什麼？如果我是房東又該選擇哪個？"
+   }
+  },
+  {
+   "id": "F227",
+   "module": "B",
+   "topic": "租賃專法下的包租代管業／五、要如何成為一名專業包管人員？",
+   "questions": [
+    "租賃專法下的包租代管業"
+   ],
+   "keywords": [],
+   "sources": [
+    "rentallaw.pt3_zh-Hant.html#五、要如何成為一名專業包管人員？"
+   ],
+   "help_center": [
+    "rentallaw.pt3_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:rentallaw.pt3_zh-Hant.html#五、要如何成為一名專業包管人員？"
+   }
+  },
+  {
+   "id": "F228",
+   "module": "B",
+   "topic": "租賃專法下的包租代管業／代管",
+   "questions": [
+    "租賃專法下的包租代管業"
+   ],
+   "keywords": [],
+   "sources": [
+    "rentallaw.pt3_zh-Hant.html#代管"
+   ],
+   "help_center": [
+    "rentallaw.pt3_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:rentallaw.pt3_zh-Hant.html#代管"
+   }
+  },
+  {
+   "id": "F229",
+   "module": "B",
+   "topic": "租賃專法下的包租代管業／包租",
+   "questions": [
+    "租賃專法下的包租代管業"
+   ],
+   "keywords": [],
+   "sources": [
+    "rentallaw.pt3_zh-Hant.html#包租"
+   ],
+   "help_center": [
+    "rentallaw.pt3_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:rentallaw.pt3_zh-Hant.html#包租"
+   }
+  },
+  {
+   "id": "F230",
+   "module": "B",
+   "topic": "租賃專法下的包租代管業／四、如果想成政府許可的包管業者，該如何申請？",
+   "questions": [
+    "租賃專法下的包租代管業"
+   ],
+   "keywords": [],
+   "sources": [
+    "rentallaw.pt3_zh-Hant.html#四、如果想成政府許可的包管業者，該如何申請？"
+   ],
+   "help_center": [
+    "rentallaw.pt3_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:rentallaw.pt3_zh-Hant.html#四、如果想成政府許可的包管業者，該如何申請？"
+   }
+  },
+  {
+   "id": "F231",
+   "module": "B",
+   "topic": "租賃專法下的包租代管業／報名資格",
+   "questions": [
+    "租賃專法下的包租代管業"
+   ],
+   "keywords": [],
+   "sources": [
+    "rentallaw.pt3_zh-Hant.html#報名資格"
+   ],
+   "help_center": [
+    "rentallaw.pt3_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:rentallaw.pt3_zh-Hant.html#報名資格"
+   }
+  },
+  {
+   "id": "F232",
+   "module": "B",
+   "topic": "租賃專法下的包租代管業／申請流程",
+   "questions": [
+    "租賃專法下的包租代管業"
+   ],
+   "keywords": [],
+   "sources": [
+    "rentallaw.pt3_zh-Hant.html#申請流程"
+   ],
+   "help_center": [
+    "rentallaw.pt3_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:rentallaw.pt3_zh-Hant.html#申請流程"
+   }
+  },
+  {
+   "id": "F233",
+   "module": "B",
+   "topic": "租賃專法下的包租代管業／訓練期程",
+   "questions": [
+    "租賃專法下的包租代管業"
+   ],
+   "keywords": [],
+   "sources": [
+    "rentallaw.pt3_zh-Hant.html#訓練期程"
+   ],
+   "help_center": [
+    "rentallaw.pt3_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:rentallaw.pt3_zh-Hant.html#訓練期程"
+   }
+  },
+  {
+   "id": "F234",
+   "module": "B",
+   "topic": "租賃專法下的包租代管業／（一）主要收入來源",
+   "questions": [
+    "租賃專法下的包租代管業"
+   ],
+   "keywords": [],
+   "sources": [
+    "rentallaw.pt3_zh-Hant.html#（一）主要收入來源"
+   ],
+   "help_center": [
+    "rentallaw.pt3_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:rentallaw.pt3_zh-Hant.html#（一）主要收入來源"
+   }
+  },
+  {
+   "id": "F235",
+   "module": "B",
+   "topic": "租賃專法下的包租代管業／（二）租賃專法補貼",
+   "questions": [
+    "租賃專法下的包租代管業"
+   ],
+   "keywords": [],
+   "sources": [
+    "rentallaw.pt3_zh-Hant.html#（二）租賃專法補貼"
+   ],
+   "help_center": [
+    "rentallaw.pt3_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:rentallaw.pt3_zh-Hant.html#（二）租賃專法補貼"
+   }
+  },
+  {
+   "id": "F236",
+   "module": "",
+   "topic": "北市房東的節稅秘籍／【公益出租人】",
+   "questions": [
+    "北市房東的節稅秘籍"
+   ],
+   "keywords": [],
+   "sources": [
+    "rentallaw.pt5_zh-Hant.html#【公益出租人】"
+   ],
+   "help_center": [
+    "rentallaw.pt5_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "無細目：房東節稅（一般房東／公益出租人／社宅包管）",
+   "rubric": "",
+   "g0": {
+    "authority": "help:rentallaw.pt5_zh-Hant.html#【公益出租人】"
+   }
+  },
+  {
+   "id": "F237",
+   "module": "",
+   "topic": "北市房東的節稅秘籍／【委託包租代管的一般房東】",
+   "questions": [
+    "北市房東的節稅秘籍"
+   ],
+   "keywords": [],
+   "sources": [
+    "rentallaw.pt5_zh-Hant.html#【委託包租代管的一般房東】"
+   ],
+   "help_center": [
+    "rentallaw.pt5_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "無細目：房東節稅（一般房東／公益出租人／社宅包管）",
+   "rubric": "",
+   "g0": {
+    "authority": "help:rentallaw.pt5_zh-Hant.html#【委託包租代管的一般房東】"
+   }
+  },
+  {
+   "id": "F238",
+   "module": "",
+   "topic": "北市房東的節稅秘籍／【社宅包租代管房東】",
+   "questions": [
+    "北市房東的節稅秘籍"
+   ],
+   "keywords": [],
+   "sources": [
+    "rentallaw.pt5_zh-Hant.html#【社宅包租代管房東】"
+   ],
+   "help_center": [
+    "rentallaw.pt5_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "無細目：房東節稅（一般房東／公益出租人／社宅包管）",
+   "rubric": "",
+   "g0": {
+    "authority": "help:rentallaw.pt5_zh-Hant.html#【社宅包租代管房東】"
+   }
+  },
+  {
+   "id": "F239",
+   "module": "F",
+   "topic": "房東教學07：修繕篇／安排修繕",
+   "questions": [
+    "房東教學07：修繕篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "repair_zh-Hant.html#安排修繕"
+   ],
+   "help_center": [
+    "repair_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:repair_zh-Hant.html#安排修繕"
+   }
+  },
+  {
+   "id": "F240",
+   "module": "F",
+   "topic": "房東教學07：修繕篇／完成修繕",
+   "questions": [
+    "房東教學07：修繕篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "repair_zh-Hant.html#完成修繕"
+   ],
+   "help_center": [
+    "repair_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:repair_zh-Hant.html#完成修繕"
+   }
+  },
+  {
+   "id": "F241",
+   "module": "F",
+   "topic": "房東教學07：修繕篇／此篇新手上路，將分別告訴你如何",
+   "questions": [
+    "房東教學07：修繕篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "repair_zh-Hant.html#此篇新手上路，將分別告訴你如何"
+   ],
+   "help_center": [
+    "repair_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:repair_zh-Hant.html#此篇新手上路，將分別告訴你如何"
+   }
+  },
+  {
+   "id": "F242",
+   "module": "F",
+   "topic": "房東教學07：修繕篇／結單",
+   "questions": [
+    "房東教學07：修繕篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "repair_zh-Hant.html#結單"
+   ],
+   "help_center": [
+    "repair_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:repair_zh-Hant.html#結單"
+   }
+  },
+  {
+   "id": "F243",
+   "module": "F",
+   "topic": "房東教學07：修繕篇／📌 小提醒",
+   "questions": [
+    "房東教學07：修繕篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "repair_zh-Hant.html#📌 小提醒"
+   ],
+   "help_center": [
+    "repair_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:repair_zh-Hant.html#📌 小提醒"
+   }
+  },
+  {
+   "id": "F244",
+   "module": "A",
+   "topic": "註冊時收不到驗證信／收不到E-mail驗證信？",
+   "questions": [
+    "註冊時收不到驗證信"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug00_zh-Hant.html#收不到E-mail驗證信？"
+   ],
+   "help_center": [
+    "slug00_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug00_zh-Hant.html#收不到E-mail驗證信？"
+   }
+  },
+  {
+   "id": "F245",
+   "module": "A",
+   "topic": "註冊時收不到驗證信／收不到手機簡訊驗證碼？",
+   "questions": [
+    "註冊時收不到驗證信"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug00_zh-Hant.html#收不到手機簡訊驗證碼？"
+   ],
+   "help_center": [
+    "slug00_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug00_zh-Hant.html#收不到手機簡訊驗證碼？"
+   }
+  },
+  {
+   "id": "F246",
+   "module": "A",
+   "topic": "我忘記帳號怎麼辦？",
+   "questions": [
+    "我忘記帳號怎麼辦？"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug01_zh-Hant.html"
+   ],
+   "help_center": [
+    "slug01_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug01_zh-Hant.html"
+   }
+  },
+  {
+   "id": "F247",
+   "module": "A",
+   "topic": "我忘記密碼怎麼辦？",
+   "questions": [
+    "我忘記密碼怎麼辦？"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug02_zh-Hant.html"
+   ],
+   "help_center": [
+    "slug02_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug02_zh-Hant.html"
+   }
+  },
+  {
+   "id": "F248",
+   "module": "E",
+   "topic": "租客教學:租金逾期篇",
+   "questions": [
+    "租客教學:租金逾期篇"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug03_zh-Hant.html"
+   ],
+   "help_center": [
+    "slug03_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug03_zh-Hant.html"
+   }
+  },
+  {
+   "id": "F249",
+   "module": "E",
+   "topic": "租客繳費方式（藍新ATM）／⚠️ 版本更新",
+   "questions": [
+    "租客繳費方式（藍新ATM）"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug100_zh-Hant.html#⚠️ 版本更新"
+   ],
+   "help_center": [
+    "slug100_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug100_zh-Hant.html#⚠️ 版本更新"
+   }
+  },
+  {
+   "id": "F250",
+   "module": "D",
+   "topic": "租客資料卡：查看聯絡方式與一鍵聯繫／📌 小提醒",
+   "questions": [
+    "租客資料卡：查看聯絡方式與一鍵聯繫"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug101_zh-Hant.html#📌 小提醒"
+   ],
+   "help_center": [
+    "slug101_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "缺「租客資料卡看得到哪些聯絡方式、一鍵聯繫怎麼用」",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug101_zh-Hant.html#📌 小提醒"
+   }
+  },
+  {
+   "id": "F251",
+   "module": "E",
+   "topic": "租客繳費方式（藍新信用卡）／⚠️ 版本更新",
+   "questions": [
+    "租客繳費方式（藍新信用卡）"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug102_zh-Hant.html#⚠️ 版本更新"
+   ],
+   "help_center": [
+    "slug102_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug102_zh-Hant.html#⚠️ 版本更新"
+   }
+  },
+  {
+   "id": "F252",
+   "module": "E",
+   "topic": "租客繳費方式（國泰ATM）／⚠️ 版本更新",
+   "questions": [
+    "租客繳費方式（國泰ATM）"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug103_zh-Hant.html#⚠️ 版本更新"
+   ],
+   "help_center": [
+    "slug103_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug103_zh-Hant.html#⚠️ 版本更新"
+   }
+  },
+  {
+   "id": "F253",
+   "module": "E",
+   "topic": "租客繳費方式（線下付款）／⚠️ 版本更新",
+   "questions": [
+    "租客繳費方式（線下付款）"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug104_zh-Hant.html#⚠️ 版本更新"
+   ],
+   "help_center": [
+    "slug104_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug104_zh-Hant.html#⚠️ 版本更新"
+   }
+  },
+  {
+   "id": "F254",
+   "module": "D",
+   "topic": "未刊登的物件也可以新增合約嗎？",
+   "questions": [
+    "未刊登的物件也可以新增合約嗎？"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug10_zh-Hant.html"
+   ],
+   "help_center": [
+    "slug10_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug10_zh-Hant.html"
+   }
+  },
+  {
+   "id": "F255",
+   "module": "D",
+   "topic": "編輯合約要從哪邊進入？",
+   "questions": [
+    "編輯合約要從哪邊進入？"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug12_zh-Hant.html"
+   ],
+   "help_center": [
+    "slug12_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug12_zh-Hant.html"
+   }
+  },
+  {
+   "id": "F256",
+   "module": "D",
+   "topic": "如何寄送合約邀請？／簽約邀請逾期了怎麼辦？",
+   "questions": [
+    "如何寄送合約邀請？"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug13_zh-Hant.html#簽約邀請逾期了怎麼辦？"
+   ],
+   "help_center": [
+    "slug13_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug13_zh-Hant.html#簽約邀請逾期了怎麼辦？"
+   }
+  },
+  {
+   "id": "F257",
+   "module": "D",
+   "topic": "如何寄送合約邀請？／重新發送前請留意",
+   "questions": [
+    "如何寄送合約邀請？"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug13_zh-Hant.html#重新發送前請留意"
+   ],
+   "help_center": [
+    "slug13_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug13_zh-Hant.html#重新發送前請留意"
+   }
+  },
+  {
+   "id": "F258",
+   "module": "D",
+   "topic": "歷史合約是什麼？／⚠️ 版本更新",
+   "questions": [
+    "歷史合約是什麼？"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug15_zh-Hant.html#⚠️ 版本更新"
+   ],
+   "help_center": [
+    "slug15_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug15_zh-Hant.html#⚠️ 版本更新"
+   }
+  },
+  {
+   "id": "F259",
+   "module": "D",
+   "topic": "歷史合約是什麼？／歷史合約與帳單會保留多久？",
+   "questions": [
+    "歷史合約是什麼？"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug15_zh-Hant.html#歷史合約與帳單會保留多久？"
+   ],
+   "help_center": [
+    "slug15_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug15_zh-Hant.html#歷史合約與帳單會保留多久？"
+   }
+  },
+  {
+   "id": "F260",
+   "module": "D",
+   "topic": "租客簽約後如何更改？",
+   "questions": [
+    "租客簽約後如何更改？"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug17_zh-Hant.html"
+   ],
+   "help_center": [
+    "slug17_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug17_zh-Hant.html"
+   }
+  },
+  {
+   "id": "F261",
+   "module": "C",
+   "topic": "如何新增物件？／⚠️ 版本更新",
+   "questions": [
+    "如何新增物件？"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug1_zh-Hant.html#⚠️ 版本更新"
+   ],
+   "help_center": [
+    "slug1_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug1_zh-Hant.html#⚠️ 版本更新"
+   }
+  },
+  {
+   "id": "F262",
+   "module": "C",
+   "topic": "如何新增物件？／前往「社區總表」，選擇社區",
+   "questions": [
+    "如何新增物件？"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug1_zh-Hant.html#前往「社區總表」，選擇社區"
+   ],
+   "help_center": [
+    "slug1_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug1_zh-Hant.html#前往「社區總表」，選擇社區"
+   }
+  },
+  {
+   "id": "F263",
+   "module": "D",
+   "topic": "管理者如何快速找到點交、點退與押金狀態的物件？",
+   "questions": [
+    "管理者如何快速找到點交、點退與押金狀態的物件？"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug20250612_zh-Hant.html"
+   ],
+   "help_center": [
+    "slug20250612_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug20250612_zh-Hant.html"
+   }
+  },
+  {
+   "id": "F264",
+   "module": "E",
+   "topic": "租客如何即時確認繳費帳單狀況？／一、線下付款",
+   "questions": [
+    "租客如何即時確認繳費帳單狀況？"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug20_zh-Hant.html#一、線下付款"
+   ],
+   "help_center": [
+    "slug20_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug20_zh-Hant.html#一、線下付款"
+   }
+  },
+  {
+   "id": "F265",
+   "module": "E",
+   "topic": "租客如何即時確認繳費帳單狀況？／二、線上付款（藍新、國泰、永豐、中信）",
+   "questions": [
+    "租客如何即時確認繳費帳單狀況？"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug20_zh-Hant.html#二、線上付款（藍新、國泰、永豐、中信）"
+   ],
+   "help_center": [
+    "slug20_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug20_zh-Hant.html#二、線上付款（藍新、國泰、永豐、中信）"
+   }
+  },
+  {
+   "id": "F266",
+   "module": "E",
+   "topic": "當租客完成匯款時，要如何通知並請房東確認到帳？／房東多久會確認收款？系統會自動確認嗎？",
+   "questions": [
+    "當租客完成匯款時，要如何通知並請房東確認到帳？"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug21_zh-Hant.html#房東多久會確認收款？系統會自動確認嗎？"
+   ],
+   "help_center": [
+    "slug21_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug21_zh-Hant.html#房東多久會確認收款？系統會自動確認嗎？"
+   }
+  },
+  {
+   "id": "F267",
+   "module": "E",
+   "topic": "房東如何確認向租客收租的帳單及款項細節？／帳單分為兩種模式：線上 / 線下",
+   "questions": [
+    "房東如何確認向租客收租的帳單及款項細節？"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug22_zh-Hant.html#帳單分為兩種模式：線上 / 線下"
+   ],
+   "help_center": [
+    "slug22_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug22_zh-Hant.html#帳單分為兩種模式：線上 / 線下"
+   }
+  },
+  {
+   "id": "F268",
+   "module": "E",
+   "topic": "房東及租客要如何辨認「逾期帳單」?",
+   "questions": [
+    "房東及租客要如何辨認「逾期帳單」?"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug24_zh-Hant.html"
+   ],
+   "help_center": [
+    "slug24_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug24_zh-Hant.html"
+   }
+  },
+  {
+   "id": "F269",
+   "module": "D",
+   "topic": "點退押金的找補費用在哪裡操作呢？",
+   "questions": [
+    "點退押金的找補費用在哪裡操作呢？"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug27_zh-Hant.html"
+   ],
+   "help_center": [
+    "slug27_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug27_zh-Hant.html"
+   }
+  },
+  {
+   "id": "F270",
+   "module": "D",
+   "topic": "點退需要在租約30天內到期時，才能操作／📌 小提醒",
+   "questions": [
+    "點退需要在租約30天內到期時，才能操作"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug28_zh-Hant.html#📌 小提醒"
+   ],
+   "help_center": [
+    "slug28_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug28_zh-Hant.html#📌 小提醒"
+   }
+  },
+  {
+   "id": "F271",
+   "module": "D",
+   "topic": "提前解約後何時可以進行點退？／📌 小提醒",
+   "questions": [
+    "提前解約後何時可以進行點退？"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug29_zh-Hant.html#📌 小提醒"
+   ],
+   "help_center": [
+    "slug29_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug29_zh-Hant.html#📌 小提醒"
+   }
+  },
+  {
+   "id": "F272",
+   "module": "C",
+   "topic": "物件的狀態影響什麼功能？／物件狀態是怎麼判斷的？",
+   "questions": [
+    "物件的狀態影響什麼功能？"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug39_zh-Hant.html#物件狀態是怎麼判斷的？"
+   ],
+   "help_center": [
+    "slug39_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug39_zh-Hant.html#物件狀態是怎麼判斷的？"
+   }
+  },
+  {
+   "id": "F273",
+   "module": "D",
+   "topic": "租客會收到什麼形式的簽約邀請？是否有時效？／📌 小提醒",
+   "questions": [
+    "租客會收到什麼形式的簽約邀請？是否有時效？"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug48_zh-Hant.html#📌 小提醒"
+   ],
+   "help_center": [
+    "slug48_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug48_zh-Hant.html#📌 小提醒"
+   }
+  },
+  {
+   "id": "F274",
+   "module": "D",
+   "topic": "點退押金在做什麼？",
+   "questions": [
+    "點退押金在做什麼？"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug66_zh-Hant.html"
+   ],
+   "help_center": [
+    "slug66_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug66_zh-Hant.html"
+   }
+  },
+  {
+   "id": "F275",
+   "module": "D",
+   "topic": "如何新增合約？／📌 小提醒",
+   "questions": [
+    "如何新增合約？"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug71_zh-Hant.html#📌 小提醒"
+   ],
+   "help_center": [
+    "slug71_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug71_zh-Hant.html#📌 小提醒"
+   }
+  },
+  {
+   "id": "F276",
+   "module": "D",
+   "topic": "電子合約的簽約邀請，有時效嗎？",
+   "questions": [
+    "電子合約的簽約邀請，有時效嗎？"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug73_zh-Hant.html"
+   ],
+   "help_center": [
+    "slug73_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug73_zh-Hant.html"
+   }
+  },
+  {
+   "id": "F277",
+   "module": "E",
+   "topic": "「線上金流」&「現金/轉帳匯款」收款的最大差異是什麼？／線上付款（自動對帳） - 管理方視角：",
+   "questions": [
+    "「線上金流」&「現金/轉帳匯款」收款的最大差異是什麼？"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug75_zh-Hant.html#線上付款（自動對帳） - 管理方視角："
+   ],
+   "help_center": [
+    "slug75_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug75_zh-Hant.html#線上付款（自動對帳） - 管理方視角："
+   }
+  },
+  {
+   "id": "F278",
+   "module": "E",
+   "topic": "「線上金流」&「現金/轉帳匯款」收款的最大差異是什麼？／線下付款 - 管理方視角：",
+   "questions": [
+    "「線上金流」&「現金/轉帳匯款」收款的最大差異是什麼？"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug75_zh-Hant.html#線下付款 - 管理方視角："
+   ],
+   "help_center": [
+    "slug75_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug75_zh-Hant.html#線下付款 - 管理方視角："
+   }
+  },
+  {
+   "id": "F279",
+   "module": "E",
+   "topic": "「線上金流」&「現金/轉帳匯款」收款的最大差異是什麼？／📌 小提醒",
+   "questions": [
+    "「線上金流」&「現金/轉帳匯款」收款的最大差異是什麼？"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug75_zh-Hant.html#📌 小提醒"
+   ],
+   "help_center": [
+    "slug75_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug75_zh-Hant.html#📌 小提醒"
+   }
+  },
+  {
+   "id": "F280",
+   "module": "E",
+   "topic": "如何新增及發送帳單？／📌 小提醒",
+   "questions": [
+    "如何新增及發送帳單？"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug76_zh-Hant.html#📌 小提醒"
+   ],
+   "help_center": [
+    "slug76_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug76_zh-Hant.html#📌 小提醒"
+   }
+  },
+  {
+   "id": "F281",
+   "module": "E",
+   "topic": "帳單內有哪些資訊？",
+   "questions": [
+    "帳單內有哪些資訊？"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug78_zh-Hant.html"
+   ],
+   "help_center": [
+    "slug78_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug78_zh-Hant.html"
+   }
+  },
+  {
+   "id": "F282",
+   "module": "E",
+   "topic": "如何在帳單內添加臨時增收費用？",
+   "questions": [
+    "如何在帳單內添加臨時增收費用？"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug79_zh-Hant.html"
+   ],
+   "help_center": [
+    "slug79_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug79_zh-Hant.html"
+   }
+  },
+  {
+   "id": "F283",
+   "module": "D",
+   "topic": "租客該如何簽約？",
+   "questions": [
+    "租客該如何簽約？"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug84_zh-Hant.html"
+   ],
+   "help_center": [
+    "slug84_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug84_zh-Hant.html"
+   }
+  },
+  {
+   "id": "F284",
+   "module": "E",
+   "topic": "租客能用信用卡繳納房租嗎？",
+   "questions": [
+    "租客能用信用卡繳納房租嗎？"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug86_zh-Hant.html"
+   ],
+   "help_center": [
+    "slug86_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug86_zh-Hant.html"
+   }
+  },
+  {
+   "id": "F285",
+   "module": "E",
+   "topic": "租客該如何追蹤現金/轉帳匯款完成的帳單後續？",
+   "questions": [
+    "租客該如何追蹤現金/轉帳匯款完成的帳單後續？"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug88_zh-Hant.html"
+   ],
+   "help_center": [
+    "slug88_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug88_zh-Hant.html"
+   }
+  },
+  {
+   "id": "F286",
+   "module": "C",
+   "topic": "什麼是「房東對外首頁」（招租店舖）？",
+   "questions": [
+    "什麼是「房東對外首頁」（招租店舖）？"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug90_zh-Hant.html"
+   ],
+   "help_center": [
+    "slug90_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug90_zh-Hant.html"
+   }
+  },
+  {
+   "id": "F287",
+   "module": "B",
+   "topic": "設定經理人之後會怎樣？",
+   "questions": [
+    "設定經理人之後會怎樣？"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug92_zh-Hant.html"
+   ],
+   "help_center": [
+    "slug92_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug92_zh-Hant.html"
+   }
+  },
+  {
+   "id": "F288",
+   "module": "C",
+   "topic": "進階搜尋功能如何用?",
+   "questions": [
+    "進階搜尋功能如何用?"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug93_zh-Hant.html"
+   ],
+   "help_center": [
+    "slug93_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug93_zh-Hant.html"
+   }
+  },
+  {
+   "id": "F289",
+   "module": "A",
+   "topic": "如何更改帳號資訊？",
+   "questions": [
+    "如何更改帳號資訊？"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug95_zh-Hant.html"
+   ],
+   "help_center": [
+    "slug95_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug95_zh-Hant.html"
+   }
+  },
+  {
+   "id": "F290",
+   "module": "D",
+   "topic": "Logo大小章&合約呈現方式",
+   "questions": [
+    "Logo大小章&合約呈現方式"
+   ],
+   "keywords": [],
+   "sources": [
+    "slug99_zh-Hant.html"
+   ],
+   "help_center": [
+    "slug99_zh-Hant.html"
+   ],
+   "intent": "",
+   "policy": "",
+   "note": "",
+   "rubric": "",
+   "g0": {
+    "authority": "help:slug99_zh-Hant.html"
+   }
+  }
+ ]
+}

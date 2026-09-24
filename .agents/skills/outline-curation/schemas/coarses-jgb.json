@@ -1,0 +1,42 @@
+{
+  "_note": "JGB 領域脊椎 9 粗目（業主 2026-09-14 定案 DSP-047；圖書館正本 DSP-058／計畫 9.6 後兩受眾共用同一份粗目，不再分 coarses-prospect.json／coarses-property_manager.json——兩檔內容原本就相同的 9 條，受眾差異在細目 target_user，DSP-052）。售前漏斗內容（產品基本盤／適配／方案試用／競品）併入 I；導流不是知識（DSP-048）。步 2 結構提議只提細目與歸屬，⛔ 不改粗目。依據 docs/knowledge/jgb-domain-map.md v2。",
+  "audience": "jgb",
+  "coarses": [
+    {
+      "id": "A",
+      "title": "帳號與身分"
+    },
+    {
+      "id": "B",
+      "title": "團隊、人員與大房東"
+    },
+    {
+      "id": "C",
+      "title": "社區與物件"
+    },
+    {
+      "id": "D",
+      "title": "租約（含委託約子題）"
+    },
+    {
+      "id": "E",
+      "title": "帳務（含發票、收款金流、抄表）"
+    },
+    {
+      "id": "F",
+      "title": "修繕"
+    },
+    {
+      "id": "G",
+      "title": "裝置（IoT）"
+    },
+    {
+      "id": "H",
+      "title": "幫助中心"
+    },
+    {
+      "id": "I",
+      "title": "方案與導入"
+    }
+  ]
+}

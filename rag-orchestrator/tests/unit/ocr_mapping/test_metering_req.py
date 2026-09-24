@@ -15,7 +15,7 @@ from services import usage_metering as um
 
 pytestmark = pytest.mark.unit
 FIX = Path(__file__).parent / "fixtures"
-IDENTITY = {"vendor_id": 1, "role_id": "20151", "user_id": "12291", "mode": "b2c", "target_user": "landlord"}
+IDENTITY = {"vendor_id": 1, "role_id": "20151", "user_id": "12291", "mode": "b2c", "target_user": "tenant"}
 
 
 @pytest.fixture()
@@ -47,7 +47,7 @@ def test_success_path_meters_exactly_once(client, spy):
     assert r.status_code == 200
     assert len(spy["begin"]) == 1 and spy["set_path"] == ["ocr_mapping"] and spy["finalize"] == [("success", 200)]
     b = spy["begin"][0]
-    assert {b["mode"], b["role_id"], b["target_user"], b["vendor_id"], b["session_id"]} == {"b2c", "20151", "landlord", 1, "backtest_session_m1"}
+    assert {b["mode"], b["role_id"], b["target_user"], b["vendor_id"], b["session_id"]} == {"b2c", "20151", "tenant", 1, "backtest_session_m1"}
 
 
 # ── R9.3 拒絕路徑亦計量：status="rejected"＋對應 http_status ───────────────────
@@ -76,7 +76,7 @@ def test_internal_flag_follows_session_prefix_rules():
     um.begin({**IDENTITY, "session_id": "backtest_session_ocr_x"})
     assert um._ctx.get().is_internal is True and um._ctx.get().internal_kind == "backtest"
     um.begin({**IDENTITY})                                             # 未帶 session_id ⇒ 外部
-    assert um._ctx.get().is_internal is False and um._ctx.get().user_type == "landlord"
+    assert um._ctx.get().is_internal is False and um._ctx.get().user_type == "tenant"
     um.begin({**IDENTITY, "session_id": "line-6d0d1320"})              # 真實 LINE session ⇒ 外部（正對照）
     assert um._ctx.get().is_internal is False
 

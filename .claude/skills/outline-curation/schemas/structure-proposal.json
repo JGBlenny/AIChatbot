@@ -17,7 +17,24 @@
       "additionalProperties": false,
       "properties": {
         "proposals": {"type": "array", "items": {"type": "object"}},
-        "synthesis": {"type": "object"}
+        "synthesis": {
+          "type": "object",
+          "properties": {
+            "fines": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["target_user"],
+                "properties": {
+                  "target_user": {
+                    "type": "array",
+                    "items": {"enum": ["prospect", "property_manager"]}
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     }
   }

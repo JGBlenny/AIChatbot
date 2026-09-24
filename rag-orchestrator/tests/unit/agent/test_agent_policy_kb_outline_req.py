@@ -4,6 +4,10 @@
 
 ⛔ 不改 `kb_get` 路由／錯誤碼——本檔只是把既有路由行為釘成回歸測試，
 證明政策句講的「id 形狀為 `outline:` 加上目錄那一行的章節 id」與實際程式一致。
+
+⚠️ 本檔的合成正本刻意走**單檔** `parse_canon_text`（9.6 之後仍在的舊路徑）——這裡要測的是
+`kb_get` 的**路由與錯誤碼**，與正本是一份還是九架無關；`register_canon(doc)` 是 DSP-058
+的單槽簽名。受眾視圖的正反例在 `test_library_view_req.py`。
 """
 from __future__ import annotations
 
@@ -68,6 +72,23 @@ def test_policy_text_drops_ban_and_states_outline_prefix_shape():
     assert "outline:" in text
 
 
+#: 兩跳導航逐字句（S6：目錄行是粗目，`kb.get` 粗目 id 只取細目清單不可引用，
+#: 再 `kb.get` 細目 id 讀整節後再引用）——⛔ 不得以任一份代表兩份，兩份政策文
+#: 各自成立才算過。
+_TWO_HOP_OUTLINE_NAV_EXPECTED = (
+    "目錄那一行是粗目：先 `kb.get(outline:粗目id)` 取細目清單（不可引用），"
+    "再 `kb.get(outline:細目id)` 讀整節後再引用。"
+)
+
+
+def test_policy_text_prospect_states_two_hop_outline_navigation():
+    assert _TWO_HOP_OUTLINE_NAV_EXPECTED in agent_rules._POLICY_TEXT
+
+
+def test_policy_text_non_prospect_states_two_hop_outline_navigation():
+    assert _TWO_HOP_OUTLINE_NAV_EXPECTED in agent_rules._POLICY_TEXT_NON_PROSPECT
+
+
 # ---------------------------------------------------------------------------
 # `kb_get`：`outline:` 前綴命中 vs 裸 id INVALID_INPUT
 # ---------------------------------------------------------------------------
@@ -75,8 +96,8 @@ def test_policy_text_drops_ban_and_states_outline_prefix_shape():
 
 async def test_kb_get_hits_with_outline_prefix_and_rejects_bare_id():
     doc = parse_canon_text(_FRONT_MATTER)
-    register_canon("prospect", doc)
-    resolver = make_outline_resolver({})
+    register_canon(doc)
+    resolver = make_outline_resolver()
 
     ok_result = await kb_get(
         B2B_PROSPECT, {"kb_id": f"outline:{_BARE_FINE_ID}"},
@@ -96,7 +117,7 @@ def test_resolve_canon_section_returns_no_match_for_bare_id():
     """裸 id 對 `resolve_canon_section` 是 `NO_MATCH`（不是 `INVALID_INPUT`——
     那是 `kb_get` 路由層自己的判斷，⛔ 兩者不得混為一談）。"""
     doc = parse_canon_text(_FRONT_MATTER)
-    register_canon("prospect", doc)
+    register_canon(doc)
     result = resolve_canon_section(
         doc, B2B_PROSPECT, _BARE_FINE_ID, vendor_business_types=frozenset()
     )
@@ -105,8 +126,8 @@ def test_resolve_canon_section_returns_no_match_for_bare_id():
 
 async def test_kb_get_toc_is_not_citable():
     doc = parse_canon_text(_FRONT_MATTER)
-    register_canon("prospect", doc)
-    resolver = make_outline_resolver({})
+    register_canon(doc)
+    resolver = make_outline_resolver()
     result = await kb_get(
         B2B_PROSPECT, {"kb_id": "outline:toc"}, db_pool=None, outline_resolver=resolver,
     )

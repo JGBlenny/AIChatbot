@@ -1,0 +1,28 @@
+{
+  "audience": "property_manager",
+  "coarses": ".claude/skills/outline-curation/schemas/coarses-property_manager.json",
+  "drafts": null,
+  "inputs_sha": {
+    "coarses": "75473ff6721563385aa3c8de723a8ac16492a2efd624a7a26641ecae5cf8ebe2",
+    "kb": "3fa692117de4b2d49d0f65aac2f9e044897a9e0db5c1fbdebc8df75788a899f3"
+  },
+  "items": 18,
+  "kb_rows": ".claude/skills/outline-curation/runs/property_manager-20260915/kb-rows.json",
+  "prompts": {
+    "audience_level": {
+      "chars": 8535,
+      "path": ".claude/skills/outline-curation/runs/property_manager-20260915/structure/angle-audience_level.prompt.md",
+      "sha256": "7e59c4c7c9345434b25b2cc07687a17d7c272074518f35a8a3df2077f8a664f8"
+    },
+    "content_boundary": {
+      "chars": 8539,
+      "path": ".claude/skills/outline-curation/runs/property_manager-20260915/structure/angle-content_boundary.prompt.md",
+      "sha256": "165563728dfb1862582da24544b792ade2c8fb9adfd743d302d654c90b8c925c"
+    },
+    "user_question_path": {
+      "chars": 8537,
+      "path": ".claude/skills/outline-curation/runs/property_manager-20260915/structure/angle-user_question_path.prompt.md",
+      "sha256": "eb77f99684f1bce32f0098e2d08f597be912482612fcb68a6d835ba8089ee5d1"
+    }
+  }
+}

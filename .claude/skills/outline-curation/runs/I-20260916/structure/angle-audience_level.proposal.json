@@ -1,0 +1,513 @@
+{
+  "angle": "audience_level",
+  "coarses": [
+    {
+      "id": "A",
+      "title": "帳號與身分"
+    },
+    {
+      "id": "B",
+      "title": "團隊、人員與大房東"
+    },
+    {
+      "id": "C",
+      "title": "社區與物件"
+    },
+    {
+      "id": "D",
+      "title": "租約（含委託約子題）"
+    },
+    {
+      "id": "E",
+      "title": "帳務（含發票、收款金流、抄表）"
+    },
+    {
+      "id": "F",
+      "title": "修繕"
+    },
+    {
+      "id": "G",
+      "title": "裝置（IoT）"
+    },
+    {
+      "id": "H",
+      "title": "幫助中心"
+    },
+    {
+      "id": "I",
+      "title": "方案與導入"
+    }
+  ],
+  "fines": [
+    {
+      "id": "jgb/I/competitor-comparison",
+      "coarse_id": "I",
+      "title": "跟 Bananas、屋我也差在哪",
+      "slug": "competitor-comparison",
+      "merge_of": [
+        "tmp:canon:jgb/I/competitor-comparison"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "售前權益／能力層：潛在客戶問差異；競品內容不擴充，policy 由既有 deliberate_no 規則處理。",
+      "target_user": [
+        "prospect"
+      ],
+      "op": "keep"
+    },
+    {
+      "id": "jgb/I/competitor-neutrality",
+      "coarse_id": "I",
+      "title": "會評論競爭對手嗎",
+      "slug": "competitor-neutrality",
+      "merge_of": [
+        "tmp:canon:jgb/I/competitor-neutrality"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "售前立場層：只回應是否評論同業，與競品比較分屬不同命題；policy 由既有 deliberate_no 規則處理。",
+      "target_user": [
+        "prospect"
+      ],
+      "op": "keep"
+    },
+    {
+      "id": "jgb/I/dashboard-overview",
+      "coarse_id": "I",
+      "title": "首頁儀表板顯示哪些數據",
+      "slug": "dashboard-overview",
+      "merge_of": [
+        "tmp:canon:jgb/I/dashboard-overview"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "能力層：儀表板呈現什麼，潛在客戶與已使用管理者答案相同，共用一細目。",
+      "target_user": [
+        "prospect",
+        "property_manager"
+      ],
+      "op": "keep"
+    },
+    {
+      "id": "jgb/I/data-migration",
+      "coarse_id": "I",
+      "title": "舊系統資料能否匯入（可匯入範圍與不支援項目）",
+      "slug": "data-migration",
+      "merge_of": [
+        "tmp:canon:jgb/I/data-migration"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "能力層：導入時哪些資料可搬、哪些不行；實際批次匯入操作步驟另見 jgb/I/bulk-import-operations（操作層）。",
+      "target_user": [
+        "prospect",
+        "property_manager"
+      ],
+      "op": "keep"
+    },
+    {
+      "id": "jgb/I/free-trial",
+      "coarse_id": "I",
+      "title": "可以免費試用嗎",
+      "slug": "free-trial",
+      "merge_of": [
+        "tmp:canon:jgb/I/free-trial"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "售前權益層：試用資格與期間；額度細節另見 jgb/I/property-quota-limit。",
+      "target_user": [
+        "prospect"
+      ],
+      "op": "keep"
+    },
+    {
+      "id": "jgb/I/individual-landlord-scale-fit",
+      "coarse_id": "I",
+      "title": "個人房東（約 10～30 戶）適配與建議做法",
+      "slug": "individual-landlord-scale-fit",
+      "merge_of": [
+        "tmp:canon:jgb/I/individual-landlord-scale-fit"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "售前適配層：受眾為個人房東規模的潛在客戶，與團隊適配分屬不同受眾段。",
+      "target_user": [
+        "prospect"
+      ],
+      "op": "keep"
+    },
+    {
+      "id": "jgb/I/pricing-plans",
+      "coarse_id": "I",
+      "title": "怎麼收費與方案分級差異",
+      "slug": "pricing-plans",
+      "merge_of": [
+        "tmp:canon:jgb/I/pricing-plans",
+        "tmp:kb:5376",
+        "tmp:kb:3453"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "權益層：收費方式與各級方案差在哪（物件數、大房東數、進階功能）是同一命題；kb:5376 與既有內容逐字相同、kb:3453 補方案分級差異；升級操作另見 jgb/I/subscription-change-renewal。",
+      "target_user": [
+        "prospect",
+        "property_manager"
+      ],
+      "op": "merge"
+    },
+    {
+      "id": "jgb/I/product-overview",
+      "coarse_id": "I",
+      "title": "系統總覽、能解決什麼問題與適不適合我",
+      "slug": "product-overview",
+      "merge_of": [
+        "tmp:canon:jgb/I/product-overview",
+        "tmp:kb:3798"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "售前能力層：情境→模組對照；kb:3798 的功能對照索引併入此細目，其競品協定段為既有 deliberate_no policy 已涵蓋、CTA 出口表為路由慣例非知識內容，均不新增內容。",
+      "target_user": [
+        "prospect"
+      ],
+      "op": "merge"
+    },
+    {
+      "id": "jgb/I/property-quota-limit",
+      "coarse_id": "I",
+      "title": "方案物件額度上限與用滿怎麼辦",
+      "slug": "property-quota-limit",
+      "merge_of": [
+        "tmp:canon:jgb/I/property-quota-limit"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "權益層：額度規則與用滿的選項，潛在客戶問免費額度、管理者問用滿怎麼辦，答案同源；方案變更操作另見 jgb/I/subscription-change-renewal。",
+      "target_user": [
+        "prospect",
+        "property_manager"
+      ],
+      "op": "keep"
+    },
+    {
+      "id": "jgb/I/subscription-change-renewal",
+      "coarse_id": "I",
+      "title": "升級、續約、取消訂閱與扣款失敗處理",
+      "slug": "subscription-change-renewal",
+      "merge_of": [
+        "tmp:canon:jgb/I/subscription-change-renewal",
+        "tmp:kb:3356",
+        "tmp:kb:3454",
+        "tmp:kb:3455",
+        "tmp:kb:3457",
+        "tmp:kb:3509"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "操作層：管理者對訂閱的變更、取消、自動續訂／付款紀錄、扣款失敗復原都是同一主題「訂閱管理」的操作，同受眾同層級只留一細目；kb 3356/3454/3455/3457/3509 併入（其中 3455 與 3457 對取消／扣款失敗後果的描述與既有內容不一致，留待內容審核，本步不判真偽）。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "merge"
+    },
+    {
+      "id": "jgb/I/team-company-fit",
+      "coarse_id": "I",
+      "title": "公司或包租代管團隊適合嗎",
+      "slug": "team-company-fit",
+      "merge_of": [
+        "tmp:canon:jgb/I/team-company-fit"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "售前適配層：受眾為公司／團隊規模的潛在客戶。",
+      "target_user": [
+        "prospect"
+      ],
+      "op": "keep"
+    },
+    {
+      "id": "jgb/I/why-choose-jgb",
+      "coarse_id": "I",
+      "title": "為什麼選金箍棒",
+      "slug": "why-choose-jgb",
+      "merge_of": [
+        "tmp:canon:jgb/I/why-choose-jgb"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "售前價值層：選擇理由，與系統總覽（情境→模組）分屬不同命題。",
+      "target_user": [
+        "prospect"
+      ],
+      "op": "keep"
+    },
+    {
+      "id": "jgb/I/bulk-import-operations",
+      "coarse_id": "I",
+      "title": "批次匯入的操作步驟（租客 Excel 範本）",
+      "slug": "bulk-import-operations",
+      "merge_of": [
+        "tmp:kb:3476"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "操作層：與 data-migration（能力層：能不能匯入）同主題但不同層級，依角度另立細目並互相另見，不重複能力層內容。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/I/landlord-onboarding-guide",
+      "coarse_id": "I",
+      "title": "房東新手導入教學總覽（各篇索引）",
+      "slug": "landlord-onboarding-guide",
+      "merge_of": [
+        "tmp:draft:1"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "操作層入口：新加入管理者的導入教學總覽，只保留各篇索引與導入順序；各篇實際操作內容分屬 A/B/C/D/E/F/G 架，此細目以另見引用、不重複。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    }
+  ],
+  "id_map": [
+    {
+      "old": "tmp:canon:jgb/I/competitor-comparison",
+      "new": "jgb/I/competitor-comparison",
+      "op": "keep"
+    },
+    {
+      "old": "tmp:canon:jgb/I/competitor-neutrality",
+      "new": "jgb/I/competitor-neutrality",
+      "op": "keep"
+    },
+    {
+      "old": "tmp:canon:jgb/I/dashboard-overview",
+      "new": "jgb/I/dashboard-overview",
+      "op": "keep"
+    },
+    {
+      "old": "tmp:canon:jgb/I/data-migration",
+      "new": "jgb/I/data-migration",
+      "op": "keep"
+    },
+    {
+      "old": "tmp:canon:jgb/I/free-trial",
+      "new": "jgb/I/free-trial",
+      "op": "keep"
+    },
+    {
+      "old": "tmp:canon:jgb/I/individual-landlord-scale-fit",
+      "new": "jgb/I/individual-landlord-scale-fit",
+      "op": "keep"
+    },
+    {
+      "old": "tmp:canon:jgb/I/pricing-plans",
+      "new": "jgb/I/pricing-plans",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:5376",
+      "new": "jgb/I/pricing-plans",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:3453",
+      "new": "jgb/I/pricing-plans",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:canon:jgb/I/product-overview",
+      "new": "jgb/I/product-overview",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:3798",
+      "new": "jgb/I/product-overview",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:canon:jgb/I/property-quota-limit",
+      "new": "jgb/I/property-quota-limit",
+      "op": "keep"
+    },
+    {
+      "old": "tmp:canon:jgb/I/subscription-change-renewal",
+      "new": "jgb/I/subscription-change-renewal",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:3356",
+      "new": "jgb/I/subscription-change-renewal",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:3454",
+      "new": "jgb/I/subscription-change-renewal",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:3455",
+      "new": "jgb/I/subscription-change-renewal",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:3457",
+      "new": "jgb/I/subscription-change-renewal",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:3509",
+      "new": "jgb/I/subscription-change-renewal",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:canon:jgb/I/team-company-fit",
+      "new": "jgb/I/team-company-fit",
+      "op": "keep"
+    },
+    {
+      "old": "tmp:canon:jgb/I/why-choose-jgb",
+      "new": "jgb/I/why-choose-jgb",
+      "op": "keep"
+    },
+    {
+      "old": "tmp:kb:3476",
+      "new": "jgb/I/bulk-import-operations",
+      "op": "new"
+    },
+    {
+      "old": "tmp:draft:1",
+      "new": "jgb/I/landlord-onboarding-guide",
+      "op": "new"
+    }
+  ],
+  "out_of_shelf": [
+    {
+      "id": "tmp:kb:2909",
+      "suggested_shelf": "E",
+      "why": "租客受眾的租金行情參考，屬錢怎麼算（帳務）而非售前方案與導入。"
+    },
+    {
+      "id": "tmp:kb:2910",
+      "suggested_shelf": "E",
+      "why": "租客受眾的管理費是什麼，出現在帳單列上歸帳務。"
+    },
+    {
+      "id": "tmp:kb:2911",
+      "suggested_shelf": "E",
+      "why": "公共費用分攤怎麼算歸帳務。"
+    },
+    {
+      "id": "tmp:kb:2913",
+      "suggested_shelf": "E",
+      "why": "租金溢繳退還屬帳務收款處理。"
+    },
+    {
+      "id": "tmp:kb:2918",
+      "suggested_shelf": "D",
+      "why": "租金支付期限由合約條款決定，歸租約。"
+    },
+    {
+      "id": "tmp:kb:2920",
+      "suggested_shelf": "D",
+      "why": "租金折扣條件由合約條款決定，歸租約。"
+    },
+    {
+      "id": "tmp:kb:2921",
+      "suggested_shelf": "E",
+      "why": "租金支付證明（收據／發票／交易紀錄）歸帳務含發票子題。"
+    },
+    {
+      "id": "tmp:kb:2924",
+      "suggested_shelf": "D",
+      "why": "租金支付法律依據來自租賃契約，歸租約。"
+    },
+    {
+      "id": "tmp:kb:2925",
+      "suggested_shelf": "E",
+      "why": "租客受眾的租金市場變化，與 kb:2909 同題，歸帳務錢怎麼算。"
+    },
+    {
+      "id": "tmp:kb:2977",
+      "suggested_shelf": "D",
+      "why": "寵物費用取決於租約條款，歸租約。"
+    },
+    {
+      "id": "tmp:kb:3006",
+      "suggested_shelf": "D",
+      "why": "租客租屋保險屬租住須知，非 JGB 方案；若保留歸租約子題。"
+    },
+    {
+      "id": "tmp:kb:3035",
+      "suggested_shelf": "D",
+      "why": "戶籍遷移屬租住權益、以租約有效性為主體，歸租約。"
+    },
+    {
+      "id": "tmp:kb:3047",
+      "suggested_shelf": "D",
+      "why": "居住證明申請屬租住權益，歸租約。"
+    },
+    {
+      "id": "tmp:kb:3105",
+      "suggested_shelf": "E",
+      "why": "管理費用途與 kb:2910 同題，歸帳務。"
+    },
+    {
+      "id": "tmp:kb:3158",
+      "suggested_shelf": "D",
+      "why": "業者向房東收取的代管服務費由委託約決定，歸租約的委託約子題；非 JGB 訂閱收費。"
+    },
+    {
+      "id": "tmp:kb:3207",
+      "suggested_shelf": "E",
+      "why": "租金少繳補繳屬帳務收款處理。"
+    },
+    {
+      "id": "tmp:kb:3208",
+      "suggested_shelf": "E",
+      "why": "遲繳罰款（滯納金）出現在帳單列上，歸帳務。"
+    },
+    {
+      "id": "tmp:kb:3209",
+      "suggested_shelf": "D",
+      "why": "租金包含哪些項目由合約條款決定，歸租約。"
+    },
+    {
+      "id": "tmp:kb:3210",
+      "suggested_shelf": "D",
+      "why": "租金爭議解決屬租約權益層，歸租約。"
+    },
+    {
+      "id": "tmp:kb:3478",
+      "suggested_shelf": "A",
+      "why": "邀請租客訂閱通知屬租客帳號綁定；通知是投遞管道不自成細目，歸它所通知的帳號身分領域。"
+    },
+    {
+      "id": "tmp:kb:3850",
+      "suggested_shelf": "D",
+      "why": "點退找補在合約細節的點退清單操作，由合約驅動，歸租約；產生的帳單另見帳務。"
+    },
+    {
+      "id": "tmp:kb:4261",
+      "suggested_shelf": "E",
+      "why": "空內文入口，停車費屬錢怎麼算歸帳務；空列不獨立成細目。"
+    },
+    {
+      "id": "tmp:kb:4271",
+      "suggested_shelf": "E",
+      "why": "空內文入口，管理費怎麼算與 kb:2910/3105 同題歸帳務；空列不獨立成細目。"
+    },
+    {
+      "id": "tmp:kb:4275",
+      "suggested_shelf": "E",
+      "why": "空內文入口，車位費用與 kb:4261 同題歸帳務；空列不獨立成細目。"
+    }
+  ]
+}

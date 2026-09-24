@@ -18,16 +18,19 @@ for cand in (_RAG, "/app"):
     if os.path.isdir(os.path.join(cand, "services")) and cand not in sys.path:
         sys.path.insert(0, cand)
 
+if _HERE not in sys.path:
+    sys.path.insert(0, _HERE)
 try:
-    from services.agent.canon.canon_parser import parse_canon  # noqa: E402
+    import canon_items as _ci  # noqa: E402
 except ImportError as exc:  # pragma: no cover
     print(f"[canon_source_check] 無法匯入 rag-orchestrator services（{type(exc).__name__}）：請在 repo 根或容器內執行", file=sys.stderr)
     raise SystemExit(2)
 
 
 def find_missing_helpcenter_sources(canon_path: str) -> list[dict]:
-    """回傳有問題的細目清單：[{fine_id, phrasing_sources}]（有 helpcenter: 講法但 sources 缺對應項目）。"""
-    doc = parse_canon(canon_path)
+    """回傳有問題的細目清單：[{fine_id, phrasing_sources}]（有 helpcenter: 講法但 sources 缺對應項目）。
+    正本可以是單檔或目錄（9.6 S4：`parse_canon_auto` 依路徑分派）。"""
+    doc = _ci.parse_canon_auto(canon_path)
     problems = []
     for f in doc.fines():
         hc_phrasing_sources = sorted({p.source for p in f.phrasings if p.source.startswith("helpcenter:")})

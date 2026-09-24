@@ -1,0 +1,244 @@
+{
+  "canon_sha256": "03ad0ad029b32aa5ddd1410f06725a9d00a3eb9f3b084e7920254cee393b732d",
+  "fines": [
+    {
+      "from": [
+        "tmp:canon:jgb/G/meter-item-followup-scope"
+      ],
+      "new": "jgb/G/meter-item-followup-scope",
+      "ops": [
+        "keep",
+        "merge"
+      ],
+      "title": "電錶項目追問可答範圍（餘額、可用度數、供電、低電量警報）",
+      "units": 7
+    },
+    {
+      "from": [
+        "tmp:canon:jgb/G/smart-meter-lock-iot"
+      ],
+      "new": "jgb/G/smart-meter-lock-iot",
+      "ops": [
+        "keep"
+      ],
+      "title": "智慧電錶與門鎖整合（售前）",
+      "units": 4
+    },
+    {
+      "from": [
+        "tmp:kb:4049",
+        "tmp:kb:4058",
+        "tmp:kb:3508",
+        "tmp:draft:1"
+      ],
+      "new": "jgb/G/meter-vendor-binding",
+      "ops": [
+        "new",
+        "split"
+      ],
+      "title": "電表串接：綁定設備廠商帳號與裝置自動同步（含已被綁定處理）",
+      "units": 5
+    },
+    {
+      "from": [
+        "tmp:kb:4049",
+        "tmp:draft:1"
+      ],
+      "new": "jgb/G/meter-device-management",
+      "ops": [
+        "split"
+      ],
+      "title": "智慧電錶裝置管理：命名、供電／斷電、綁定物件、查看用電度數",
+      "units": 4
+    },
+    {
+      "from": [
+        "tmp:kb:4051",
+        "tmp:kb:4049"
+      ],
+      "new": "jgb/G/tenant-meter-visibility",
+      "ops": [
+        "new",
+        "split"
+      ],
+      "title": "租客端看到即時電表與自行儲值的前提設定",
+      "units": 7
+    },
+    {
+      "from": [
+        "tmp:kb:4044"
+      ],
+      "new": "jgb/G/meter-data-sync-gap",
+      "ops": [
+        "new"
+      ],
+      "title": "電錶實體度數與 JGB 顯示不同／長期不更新",
+      "units": 3
+    },
+    {
+      "from": [
+        "tmp:kb:3461"
+      ],
+      "new": "jgb/G/iot-offline-troubleshooting",
+      "ops": [
+        "new"
+      ],
+      "title": "IoT 設備（門鎖／電表）無法連線的排查順序",
+      "units": 3
+    },
+    {
+      "from": [
+        "tmp:kb:3458"
+      ],
+      "new": "jgb/G/smart-lock-functions",
+      "ops": [
+        "split"
+      ],
+      "title": "智慧門鎖功能：租客密碼、QR Code、開門紀錄與密碼管理",
+      "units": 3
+    },
+    {
+      "from": [
+        "tmp:kb:3462"
+      ],
+      "new": "jgb/G/smart-lock-share-password",
+      "ops": [
+        "new"
+      ],
+      "title": "分享門鎖密碼：訪客／維修／清潔人員臨時存取",
+      "units": 4
+    },
+    {
+      "from": [
+        "tmp:kb:4052"
+      ],
+      "new": "jgb/G/smart-lock-password-rules",
+      "ops": [
+        "new"
+      ],
+      "title": "IoT 設定：門鎖預設密碼規則與連結起始日的生效範圍",
+      "units": 3
+    },
+    {
+      "from": [
+        "tmp:kb:4054"
+      ],
+      "new": "jgb/G/smart-lock-hardware-vendor",
+      "ops": [
+        "new"
+      ],
+      "title": "門鎖硬體功能（悠遊卡／磁扣／電池／音量）屬廠商範疇",
+      "units": 3
+    },
+    {
+      "from": [
+        "tmp:kb:4055",
+        "tmp:kb:3458"
+      ],
+      "new": "jgb/G/smart-lock-failure",
+      "ops": [
+        "new",
+        "split"
+      ],
+      "title": "門鎖 QR Code／密碼失靈開不了門的排查",
+      "units": 5
+    }
+  ],
+  "id_map": [
+    {
+      "new": "jgb/G/meter-item-followup-scope",
+      "old": "tmp:canon:jgb/G/meter-item-followup-scope",
+      "op": "keep"
+    },
+    {
+      "new": "jgb/G/meter-item-followup-scope",
+      "old": "tmp:kb:3460",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/G/smart-meter-lock-iot",
+      "old": "tmp:canon:jgb/G/smart-meter-lock-iot",
+      "op": "keep"
+    },
+    {
+      "new": "jgb/G/meter-vendor-binding",
+      "old": "tmp:kb:4049",
+      "op": "split"
+    },
+    {
+      "new": "jgb/G/meter-device-management",
+      "old": "tmp:kb:4049",
+      "op": "split"
+    },
+    {
+      "new": "jgb/G/tenant-meter-visibility",
+      "old": "tmp:kb:4049",
+      "op": "split"
+    },
+    {
+      "new": "jgb/G/meter-vendor-binding",
+      "old": "tmp:draft:1",
+      "op": "split"
+    },
+    {
+      "new": "jgb/G/meter-device-management",
+      "old": "tmp:draft:1",
+      "op": "split"
+    },
+    {
+      "new": "jgb/G/meter-vendor-binding",
+      "old": "tmp:kb:4058",
+      "op": "new"
+    },
+    {
+      "new": "jgb/G/meter-vendor-binding",
+      "old": "tmp:kb:3508",
+      "op": "new"
+    },
+    {
+      "new": "jgb/G/tenant-meter-visibility",
+      "old": "tmp:kb:4051",
+      "op": "new"
+    },
+    {
+      "new": "jgb/G/meter-data-sync-gap",
+      "old": "tmp:kb:4044",
+      "op": "new"
+    },
+    {
+      "new": "jgb/G/iot-offline-troubleshooting",
+      "old": "tmp:kb:3461",
+      "op": "new"
+    },
+    {
+      "new": "jgb/G/smart-lock-functions",
+      "old": "tmp:kb:3458",
+      "op": "split"
+    },
+    {
+      "new": "jgb/G/smart-lock-failure",
+      "old": "tmp:kb:3458",
+      "op": "split"
+    },
+    {
+      "new": "jgb/G/smart-lock-failure",
+      "old": "tmp:kb:4055",
+      "op": "new"
+    },
+    {
+      "new": "jgb/G/smart-lock-share-password",
+      "old": "tmp:kb:3462",
+      "op": "new"
+    },
+    {
+      "new": "jgb/G/smart-lock-password-rules",
+      "old": "tmp:kb:4052",
+      "op": "new"
+    },
+    {
+      "new": "jgb/G/smart-lock-hardware-vendor",
+      "old": "tmp:kb:4054",
+      "op": "new"
+    }
+  ]
+}

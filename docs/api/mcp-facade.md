@@ -101,7 +101,7 @@ POST /mcp                       （MCP streamable HTTP；方法與 body 由 MCP 
 | `vendor_id` | int（或整數字串） | ✅ | 業者 ID；必須存在於 `vendors` 表 |
 | `session_id` | str | ✅ | 對話／呼叫串識別碼，**由呼叫端產生**，見 §4.1 |
 | `mode` | `"b2b"` \| `"b2c"` | — | 缺或非法 ⇒ 正規化為 `"b2c"` |
-| `target_user` | str | — | `tenant`／`landlord`／`property_manager`／`system_admin`／`prospect`；未知或缺 ⇒ 正規化為 `tenant` |
+| `target_user` | str | — | `tenant`／`property_manager`／`system_admin`／`prospect`；未知或缺 ⇒ 正規化為 `tenant`。JGB 房東側一律送 `property_manager` |
 | `role_id` | str \| null | — | jgb2 雙證之一，見 §4.2 |
 | `user_id` | str \| null | — | jgb2 雙證之二；同時是 `viewer_user_id`（bills／contracts 的圈定依據） |
 
@@ -160,6 +160,10 @@ X-JGB-Identity: {"vendor_id":1,"session_id":"jgb2-web-8f3c…","mode":"b2c",
 | `tenant`（含 `target_user` 缺／未知） | **雙證**：`role_id`＋`user_id`，缺一即 `NO_MATCH` | **雙證**，缺一即 `NO_MATCH` |
 | `prospect` | **雙證**（實務上工具本身對 prospect 永不可見——`stage` 缺 prospect 鍵） | 同左 |
 | `property_manager`（含 `mode="b2b"`） | **單證**：`role_id` 即可；`user_id` 可缺 | **雙證**，缺一即 `NO_MATCH` |
+
+- **`target_user="system_admin"`**：受眾推導為 `property_manager`（證件要求同上列）。
+  正本（`kb.get("outline:*")`／候選細目）給的是 **property_manager 的那一份**（DSP-053a 折疊）；
+  `kb.search` 的 SQL 謂詞 ⛔ 不折 ⇒ 以 `system_admin` 查知識庫**回 0 列**。
 
 - **為什麼 pm 是單證**：pm 查的是自己名下**整個 role**的帳單／合約。帶了 `user_id`
   反而會讓 jgb2 用 `viewer_user_id` 圈定成「這個 user 看得到的」，把 pm 自己的查詢
@@ -241,8 +245,8 @@ M0 階段：
 `identity.entry == "mcp"` **且** `AGENT_WRITE_TOOLS_ENABLED=true` 才可見（DSP-038-1）。
 ⚠️ **`agent.turn` 受 `AGENT_TURN_ENABLED`（預設 false）管**——關閉時**根本不註冊**，
 `tools/list`／`registry.call` 三處同時看不到（回切要整條路徑消失）。
-⚠️ **`tenant` 缺 `agent.turn` 鍵＝永不可見**；且 `tenant` 沒有 canon 正本
-（只有 `canon/prospect.md`／`canon/property_manager.md`）⇒ **tenant 在新線不存在**。
+⚠️ **`tenant` 缺 `agent.turn` 鍵＝永不可見**；且 `canon/jgb/` 九架正本裡沒有任何細目的
+`target_user` 含 `tenant`（只有 `prospect`／`property_manager`）⇒ **tenant 在新線不存在**。
 
 工具錯誤以 MCP `ToolError` 拋出，**訊息只含業務代碼**（⛔ 無 SQL、無例外文字、
 無身分、無原文）：`NO_MATCH`／`TOOL_TIMEOUT`／`INVALID_INPUT`／`RATE_LIMITED`／
@@ -262,8 +266,10 @@ M0 階段：
 使用者說的話，服務端跑完「模型選工具 → 取事實 → 產出 → Output Verifier 逐句驗
 引用 → 過不了就固定句＋轉人」整條鏈，回你一段可以直接顯示的答覆。
 
-**M1 只開 prospect（售前）身分。** 租客／業者的對話能力在子 spec
-（`agent-tenant-audience`），此處 `stage` 缺鍵＝**永不可見**，⛔ 不是「還沒開」。
+**M1 開 prospect（售前）與 property_manager（業者）兩個身分**（DSP-037，2026-09-07）。租客（tenant）
+在三處都缺鍵——`app.py::_AGENT_OUTLINE_AUDIENCES`、`outline.py::_STATIC_TOC_IDENTITY`、本檔 `AGENT_TURN_SPEC["stage"]`——
+缺鍵＝**永不可見**，⛔ 不是「還沒開」；九架正本也沒有任何細目的 `target_user` 含 tenant（DSP-054）。租客對話能力屬 roadmap 的
+`agent-tenant-audience`（M4），尚未立案。
 
 ### 輸入
 
@@ -400,9 +406,12 @@ DSP-011 成立的前提是「`/mcp` 只有上游／內部呼叫者」。以下�
 | `AGENT_AUDIENCES` | 空 | ⚠️ **2026-09-11 舊鏈退役**：原本是 REST 入口（已刪除的 `/api/v1/message`）分流用，`routers/agent_entry.router` 現未掛載於 `app.py`，**目前無生效路徑**；**不影響** `/mcp`／`agent.turn` 的可見性（見 §7.1「回切開關」段） |
 | `AGENT_SHADOW_AUDIENCES` | 空 | 影子跑動的 audience 白名單（`services/agent/shadow.py`） |
 | `AGENT_SHADOW_MONTHLY_USD_CAP` | `50.0`（USD） | 影子月成本上限，超過自動關 |
-| `AGENT_OUTLINE_TOKEN_LIMIT_PROSPECT` | `10000` | 售前大綱 token 預算（`services/agent/outline.py`） |
-| `AGENT_OUTLINE_TOKEN_LIMIT_PM` | `8000` | pm 目錄 token 預算（子 spec 用，M1 尚未消費） |
-| `AGENT_OUTLINE_TOKEN_LIMIT_TENANT` | `8000` | tenant 目錄 token 預算（子 spec 用） |
+| `AGENT_OUTLINE_K_TOKEN_LIMIT_PROSPECT` | `12000` | 售前身分啟動兩尺之一：任 K=5 可引用節 token 最大和上限（env 只縮不放，非法值啟動即紅；`services/agent/outline.py`） |
+| `AGENT_OUTLINE_K_TOKEN_LIMIT_PM` | `12000` | 業者身分同上尺 |
+| `AGENT_OUTLINE_K_TOKEN_LIMIT_TENANT` | `12000` | 租客身分同上尺（子 spec 用） |
+| `AGENT_OUTLINE_TOC_TOKEN_LIMIT_PROSPECT` | `8000` | 售前身分啟動兩尺之二：目錄 token 上限（env 只縮不放，非法值啟動即紅） |
+| `AGENT_OUTLINE_TOC_TOKEN_LIMIT_PM` | `8000` | 業者身分同上尺 |
+| `AGENT_OUTLINE_TOC_TOKEN_LIMIT_TENANT` | `8000` | 租客身分同上尺（子 spec 用） |
 | `AGENT_MODEL` | 未設 ⇒ 退回 `OPENAI_MODEL` ⇒ 再無則 `gpt-4o-mini` | agent runtime 模型名（`services/agent/runtime.py`） |
 | `AGENT_TRACE_WINDOW_DAYS` | `7` | `agent_trace` 查詢時間窗（`services/agent/trace_view.py`） |
 | `JGB2_CANDIDATE_CAP` | `5` | `jgb2.query.*` 候選列筆數上限（`services/agent/tools/jgb2.py`） |

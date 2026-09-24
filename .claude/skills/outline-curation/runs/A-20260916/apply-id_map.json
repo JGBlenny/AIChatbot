@@ -1,0 +1,393 @@
+{
+  "canon_sha256": "018f7b7ffc198dbc0776682b15603fdf4c89c2722b9546b060ff67f885b10ade",
+  "fines": [
+    {
+      "from": [
+        "tmp:canon:jgb/A/account-registration"
+      ],
+      "new": "jgb/A/account-registration",
+      "ops": [
+        "keep",
+        "merge",
+        "split"
+      ],
+      "title": "怎麼註冊帳號（Email 主路徑、驗證碼、SSO 第三方、租客從合約邀請註冊）",
+      "units": 5
+    },
+    {
+      "from": [
+        "tmp:draft:1",
+        "tmp:draft:3"
+      ],
+      "new": "jgb/A/login-methods",
+      "ops": [
+        "split"
+      ],
+      "title": "怎麼登入（Email／手機號碼／SSO 第三方、選擇房東或租客身分入口）",
+      "units": 0
+    },
+    {
+      "from": [
+        "tmp:kb:3967"
+      ],
+      "new": "jgb/A/line-login-redirects-to-register",
+      "ops": [
+        "new"
+      ],
+      "title": "用 LINE 快速登入卻被帶去註冊頁、登不進去（只認 LINE 註冊帳號、無事後綁定、改用帳密登入）",
+      "units": 3
+    },
+    {
+      "from": [
+        "tmp:draft:4",
+        "tmp:draft:9",
+        "tmp:draft:1"
+      ],
+      "new": "jgb/A/account-profile-settings",
+      "ops": [
+        "new",
+        "split"
+      ],
+      "title": "帳號資訊在哪改、能改什麼（頭像、姓名、聯絡方式、偏好設定、簽約資訊與證件附件）",
+      "units": 0
+    },
+    {
+      "from": [
+        "tmp:kb:3348",
+        "tmp:draft:3"
+      ],
+      "new": "jgb/A/registered-vs-unregistered-tenant",
+      "ops": [
+        "new",
+        "split"
+      ],
+      "title": "租客一定要註冊嗎？註冊租客與免註冊租客差在哪（登入、通知、帳單寄送、到帳作業）",
+      "units": 11
+    },
+    {
+      "from": [
+        "tmp:kb:3349"
+      ],
+      "new": "jgb/A/email-case-sensitivity",
+      "ops": [
+        "new"
+      ],
+      "title": "Email 大小寫算不同帳號嗎（Email 為帳號識別、大小寫視為不同帳號）",
+      "units": 6
+    },
+    {
+      "from": [
+        "tmp:kb:3350",
+        "tmp:kb:3871",
+        "tmp:kb:3965",
+        "tmp:kb:3975",
+        "tmp:draft:6"
+      ],
+      "new": "jgb/A/verification-code-not-received",
+      "ops": [
+        "new"
+      ],
+      "title": "收不到驗證碼（Email 驗證信或簡訊）怎麼排查（含改走 Email／SSO、聯繫客服要帶的資訊）",
+      "units": 11
+    },
+    {
+      "from": [
+        "tmp:kb:3964"
+      ],
+      "new": "jgb/A/verification-code-invalid",
+      "ops": [
+        "new"
+      ],
+      "title": "驗證碼一直輸入失敗（重發即換碼、三字母識別碼比對、5 分鐘效期、錯三次失效、120 秒冷卻）",
+      "units": 4
+    },
+    {
+      "from": [
+        "tmp:kb:3436",
+        "tmp:draft:8"
+      ],
+      "new": "jgb/A/forgot-password",
+      "ops": [
+        "new",
+        "split"
+      ],
+      "title": "忘記密碼怎麼重設（Email 或簡訊擇一驗證、錯三次失效、密碼規則）",
+      "units": 3
+    },
+    {
+      "from": [
+        "tmp:kb:3436",
+        "tmp:kb:3969",
+        "tmp:draft:7"
+      ],
+      "new": "jgb/A/forgot-account-email",
+      "ops": [
+        "new",
+        "split"
+      ],
+      "title": "忘記當初用哪個信箱註冊怎麼查（忘記帳號功能以手機驗證取得打星號提示、無綁手機找客服）",
+      "units": 5
+    },
+    {
+      "from": [
+        "tmp:kb:3437",
+        "tmp:kb:3980"
+      ],
+      "new": "jgb/A/change-email-or-phone",
+      "ops": [
+        "new",
+        "split"
+      ],
+      "title": "要換帳號的信箱或手機號碼怎麼辦（Email 唯讀走客服、手機未綁可自助綁定、已綁換號走申請書）",
+      "units": 3
+    },
+    {
+      "from": [
+        "tmp:kb:3971",
+        "tmp:kb:4561"
+      ],
+      "new": "jgb/A/change-account-name",
+      "ops": [
+        "new",
+        "split"
+      ],
+      "title": "註冊名字與證件不符要怎麼改（合約簽署前自改藍字帶入、簽署後鎖定走申請書同步）",
+      "units": 2
+    },
+    {
+      "from": [
+        "tmp:kb:3437",
+        "tmp:kb:3971",
+        "tmp:kb:3972"
+      ],
+      "new": "jgb/A/data-change-request-form",
+      "ops": [
+        "split"
+      ],
+      "title": "資料異動申請書怎麼申請（載明帳號識別、修改前後值、相關合約 ID，公司用印後寄客服信箱）",
+      "units": 8
+    },
+    {
+      "from": [
+        "tmp:kb:3972"
+      ],
+      "new": "jgb/A/duplicate-accounts-merge",
+      "ops": [
+        "split"
+      ],
+      "title": "不小心註冊了兩個帳號能不能合併（無自助合併、走客服後台，載明保留與處理的帳號）",
+      "units": 3
+    },
+    {
+      "from": [
+        "tmp:kb:3966"
+      ],
+      "new": "jgb/A/already-registered-error",
+      "ops": [
+        "new"
+      ],
+      "title": "註冊時顯示此帳號／手機已註冊怎麼辦（本人改登入或重設密碼、被他人占用走解綁申請）",
+      "units": 2
+    },
+    {
+      "from": [
+        "tmp:kb:3968",
+        "tmp:kb:3869",
+        "tmp:kb:3978"
+      ],
+      "new": "jgb/A/tenant-login-cannot-see-data",
+      "ops": [
+        "new"
+      ],
+      "title": "租客登入後看不到合約、帳單或電表怎麼排查（身分未切換、登入信箱與邀請信箱不一致、以合約查帳號狀態）",
+      "units": 3
+    }
+  ],
+  "id_map": [
+    {
+      "new": "jgb/A/account-registration",
+      "old": "tmp:canon:jgb/A/account-registration",
+      "op": "keep"
+    },
+    {
+      "new": "jgb/A/account-registration",
+      "old": "tmp:kb:3435",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/A/account-registration",
+      "old": "tmp:draft:10",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/A/account-registration",
+      "old": "tmp:draft:1",
+      "op": "split"
+    },
+    {
+      "new": "jgb/A/login-methods",
+      "old": "tmp:draft:1",
+      "op": "split"
+    },
+    {
+      "new": "jgb/A/account-profile-settings",
+      "old": "tmp:draft:1",
+      "op": "split"
+    },
+    {
+      "new": "jgb/A/account-registration",
+      "old": "tmp:draft:3",
+      "op": "split"
+    },
+    {
+      "new": "jgb/A/login-methods",
+      "old": "tmp:draft:3",
+      "op": "split"
+    },
+    {
+      "new": "jgb/A/registered-vs-unregistered-tenant",
+      "old": "tmp:draft:3",
+      "op": "split"
+    },
+    {
+      "new": "jgb/A/line-login-redirects-to-register",
+      "old": "tmp:kb:3967",
+      "op": "new"
+    },
+    {
+      "new": "jgb/A/account-profile-settings",
+      "old": "tmp:draft:4",
+      "op": "new"
+    },
+    {
+      "new": "jgb/A/account-profile-settings",
+      "old": "tmp:draft:9",
+      "op": "new"
+    },
+    {
+      "new": "jgb/A/registered-vs-unregistered-tenant",
+      "old": "tmp:kb:3348",
+      "op": "new"
+    },
+    {
+      "new": "jgb/A/email-case-sensitivity",
+      "old": "tmp:kb:3349",
+      "op": "new"
+    },
+    {
+      "new": "jgb/A/verification-code-not-received",
+      "old": "tmp:kb:3350",
+      "op": "new"
+    },
+    {
+      "new": "jgb/A/verification-code-not-received",
+      "old": "tmp:kb:3871",
+      "op": "new"
+    },
+    {
+      "new": "jgb/A/verification-code-not-received",
+      "old": "tmp:kb:3965",
+      "op": "new"
+    },
+    {
+      "new": "jgb/A/verification-code-not-received",
+      "old": "tmp:kb:3975",
+      "op": "new"
+    },
+    {
+      "new": "jgb/A/verification-code-not-received",
+      "old": "tmp:draft:6",
+      "op": "new"
+    },
+    {
+      "new": "jgb/A/verification-code-invalid",
+      "old": "tmp:kb:3964",
+      "op": "new"
+    },
+    {
+      "new": "jgb/A/forgot-password",
+      "old": "tmp:kb:3436",
+      "op": "split"
+    },
+    {
+      "new": "jgb/A/forgot-account-email",
+      "old": "tmp:kb:3436",
+      "op": "split"
+    },
+    {
+      "new": "jgb/A/forgot-password",
+      "old": "tmp:draft:8",
+      "op": "new"
+    },
+    {
+      "new": "jgb/A/forgot-account-email",
+      "old": "tmp:kb:3969",
+      "op": "new"
+    },
+    {
+      "new": "jgb/A/forgot-account-email",
+      "old": "tmp:draft:7",
+      "op": "new"
+    },
+    {
+      "new": "jgb/A/change-email-or-phone",
+      "old": "tmp:kb:3437",
+      "op": "split"
+    },
+    {
+      "new": "jgb/A/data-change-request-form",
+      "old": "tmp:kb:3437",
+      "op": "split"
+    },
+    {
+      "new": "jgb/A/change-email-or-phone",
+      "old": "tmp:kb:3980",
+      "op": "new"
+    },
+    {
+      "new": "jgb/A/change-account-name",
+      "old": "tmp:kb:3971",
+      "op": "split"
+    },
+    {
+      "new": "jgb/A/data-change-request-form",
+      "old": "tmp:kb:3971",
+      "op": "split"
+    },
+    {
+      "new": "jgb/A/change-account-name",
+      "old": "tmp:kb:4561",
+      "op": "new"
+    },
+    {
+      "new": "jgb/A/duplicate-accounts-merge",
+      "old": "tmp:kb:3972",
+      "op": "split"
+    },
+    {
+      "new": "jgb/A/data-change-request-form",
+      "old": "tmp:kb:3972",
+      "op": "split"
+    },
+    {
+      "new": "jgb/A/already-registered-error",
+      "old": "tmp:kb:3966",
+      "op": "new"
+    },
+    {
+      "new": "jgb/A/tenant-login-cannot-see-data",
+      "old": "tmp:kb:3968",
+      "op": "new"
+    },
+    {
+      "new": "jgb/A/tenant-login-cannot-see-data",
+      "old": "tmp:kb:3869",
+      "op": "new"
+    },
+    {
+      "new": "jgb/A/tenant-login-cannot-see-data",
+      "old": "tmp:kb:3978",
+      "op": "new"
+    }
+  ]
+}

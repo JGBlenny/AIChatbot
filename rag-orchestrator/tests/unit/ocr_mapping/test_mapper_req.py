@@ -14,7 +14,7 @@ from services.ocr_mapping.models import (
 
 pytestmark = pytest.mark.unit
 FIX = Path(__file__).parent / "fixtures"
-IDENTITY = {"vendor_id": 1, "role_id": "20151", "user_id": "12291", "mode": "b2c", "target_user": "landlord"}
+IDENTITY = {"vendor_id": 1, "role_id": "20151", "user_id": "12291", "mode": "b2c", "target_user": "tenant"}
 
 
 def _req(name: str, **override) -> OcrMappingRequest:

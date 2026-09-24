@@ -52,9 +52,9 @@ class TestAudienceOfThreeCriteria:
     def test_target_user_none_is_tenant(self):
         assert audience_of(mode="b2c", target_user=None, role_id=None) == "tenant"
 
-    def test_target_user_landlord_is_tenant(self):
+    def test_target_user_outside_value_domain_is_tenant(self):
         """既非 prospect 也非 pm/system_admin/b2b ⇒ 落 tenant（其餘一律 tenant）。"""
-        assert audience_of(mode="b2c", target_user="landlord", role_id=None) == "tenant"
+        assert audience_of(mode="b2c", target_user="unknown_role", role_id=None) == "tenant"
 
     def test_role_id_alone_never_changes_non_prospect_outcome(self):
         """role_id 對 property_manager／tenant 判定同樣不參與。"""

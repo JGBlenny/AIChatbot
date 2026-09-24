@@ -66,7 +66,7 @@ def test_prospect_always_normalizes_to_b2b(mode):
     assert normalize_entry_mode("prospect", mode) == "b2b"
 
 
-@pytest.mark.parametrize("target_user", ["tenant", "property_manager", "system_admin", "landlord"])
+@pytest.mark.parametrize("target_user", ["tenant", "property_manager", "system_admin", "unknown_role"])
 @pytest.mark.parametrize("mode,expected", [
     (None, "b2c"),
     ("", "b2c"),

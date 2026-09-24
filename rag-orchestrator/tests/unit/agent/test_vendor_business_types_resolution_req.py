@@ -175,35 +175,28 @@ def test_scoped_fine_invisible_when_resolver_fails_closed():
 
 # ---------------------------------------------------------------------------
 # (b) 續：`AgentRuntime._select_outline` 三個呼叫點都收到同一份解析結果
-#     （`build_canon_toc`／`candidate_outline`＝`selector.index.visible_subset`／
-#     `selector.select`）——用 fake 驗參數，不驗完整候選邏輯（那是 4.1 的範圍）。
+#     （`build_canon_toc`／`selector.select`／`build_canon_sections`——9.8
+#     DSP-059 D′ S2：`build_canon_sections` 取代舊的 `selector.index.visible_subset`
+#     ——降級改成 toc-only，`CandidateOutlineDoc.from_canon` 內部逐 id 過
+#     `build_canon_sections`，⛔ 不再有 `_fallback_visible`／`visible_subset`
+#     這條路）——用 fake 驗參數，不驗完整候選邏輯（那是 4.1 的範圍）。
 # ---------------------------------------------------------------------------
-
-
-class _FakeIndex:
-    def __init__(self):
-        self.visible_subset_calls: list[frozenset] = []
-
-    def visible_subset(self, identity, canon, *, vendor_business_types):
-        self.visible_subset_calls.append(vendor_business_types)
-        return frozenset()
 
 
 class _FakeSelector:
     def __init__(self):
-        self.index = _FakeIndex()
         self.select_calls: list[frozenset] = []
 
     async def select(self, canon, identity, query, *, vendor_business_types):
         self.select_calls.append(vendor_business_types)
-        # 回 None ⇒ `_select_outline` 落到 `_fallback_visible()`，
-        # 連帶行使 `self.index.visible_subset`（三個呼叫點都會被打到）。
+        # 回 None ⇒ `_select_outline` 降級為 toc-only（`CandidateOutlineDoc.from_canon`
+        # 以空 id 列表呼叫，連帶行使 `build_canon_sections`——三個呼叫點都會被打到）。
         return None
 
 
 def _pm_canon_and_outline():
     fine = FineItem(
-        id="property_manager/A/one",
+        id="jgb/A/one",
         coarse_id="A",
         title="標題",
         phrasings=(),
@@ -215,31 +208,38 @@ def _pm_canon_and_outline():
         see_also=(),
         policy="answerable",
         policy_ref=None,
+        # ⚠️ b2c 身分（本檔的受測身分）走 b2c 分支：`business_types` 空＝不設限、
+        # `target_user` 空＝不設限 ⇒ 這個細目在 pm 視圖裡，三個呼叫點才打得到。
         target_user=(),
         business_types=(),
         categories=(),
         instance_applicability="general",
     )
     canon = CanonDoc(
-        audience="property_manager",
+        audience="jgb",
         version="v1",
         reviewers=("owner",),
         language="zh-TW",
-        budget_tokens=10_000,
+        budget_tokens=0,
         target_user=(),
         business_types=(),
         coarses=(CoarseItem(id="A", title="grp", fines=(fine,)),),
         canon_sha256="0" * 64,
         phrasing_set_sha256="0" * 64,
+        name="jgb",
+        library=True,
     )
-    return canon, build_outline(canon)
+    identity = Identity(vendor_id=7, target_user="property_manager", mode="b2c")
+    return canon, build_outline(
+        canon, "property_manager", identity, vendor_business_types=frozenset()
+    )
 
 
 async def test_select_outline_forwards_resolved_vendor_business_types_to_all_three_call_sites(
     monkeypatch,
 ):
-    canon, outline = _pm_canon_and_outline()
-    register_canon("property_manager", canon)
+    canon, _outline = _pm_canon_and_outline()
+    register_canon(canon)
 
     sentinel = frozenset({"ZZ_SENTINEL_TYPE"})
     monkeypatch.setattr(runtime_mod, "resolve_vendor_business_types", lambda identity: sentinel)
@@ -253,6 +253,17 @@ async def test_select_outline_forwards_resolved_vendor_business_types_to_all_thr
 
     monkeypatch.setattr(runtime_mod, "build_canon_toc", _spy_build_canon_toc)
 
+    sections_calls: list[frozenset] = []
+    real_build_canon_sections = canon_assembler_mod.build_canon_sections
+
+    def _spy_build_canon_sections(canon_arg, identity_arg, ids_arg, *, vendor_business_types):
+        sections_calls.append(vendor_business_types)
+        return real_build_canon_sections(
+            canon_arg, identity_arg, ids_arg, vendor_business_types=vendor_business_types
+        )
+
+    monkeypatch.setattr(canon_assembler_mod, "build_canon_sections", _spy_build_canon_sections)
+
     selector = _FakeSelector()
     runtime = runtime_mod.AgentRuntime.__new__(runtime_mod.AgentRuntime)
     runtime._candidate_selector = selector
@@ -264,12 +275,26 @@ async def test_select_outline_forwards_resolved_vendor_business_types_to_all_thr
     violations: list[str] = []
 
     result_outline, sel_meta = await runtime._select_outline(
-        identity, outline, "使用者問題", [], violations
+        identity, "使用者問題", [], violations
     )
 
     assert toc_calls == [sentinel]
     assert selector.select_calls == [sentinel]
-    assert selector.index.visible_subset_calls == [sentinel]
+    assert sections_calls == [sentinel]
     assert result_outline is not None
     assert sel_meta["miss_kind"] == "index_unavailable"
-    assert "candidate_fallback_full_outline" in violations
+    assert "candidate_fallback_toc_only" in violations
+    # F5：`resolve_vendor_business_types` 在 `_select_outline` 範圍內只呼叫一次
+    # （patch 掉的替身沒有記次數，這裡改用「三個呼叫點收到同一個 sentinel 物件」
+    # 間接證明——若解析了不只一次，patch 仍回同一個 sentinel，故另加一條直接計數）。
+    call_count = []
+    orig = runtime_mod.resolve_vendor_business_types
+
+    def _counting(identity_arg):
+        call_count.append(1)
+        return sentinel
+
+    monkeypatch.setattr(runtime_mod, "resolve_vendor_business_types", _counting)
+    violations2: list[str] = []
+    await runtime._select_outline(identity, "使用者問題", [], violations2)
+    assert len(call_count) == 1, f"resolve_vendor_business_types 被呼叫 {len(call_count)} 次，預期 1 次"

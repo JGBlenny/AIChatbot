@@ -1,0 +1,24 @@
+# 不變量 37 的凍結例外清單：public schema 裡「刻意不寫進 DATABASE_SCHEMA.md」的表。
+#
+# ⛔ 加一行進來 = 宣告「這張表不需要文件」，要說得出理由。⛔ 不得用來藏新表。
+# 判準（2026-09-12 建立時）：執行期程式（.py/.ts/.js/.vue，排除 tests）零引用，
+# 且比對非 archive 的 spec 後沒有任何一張被列為待建。
+# 處置與逐張證據見 docs/architecture/SYSTEM_ARCHITECTURE.md §3。
+#
+# ── 舊鏈殘留（主體已於 2026-09-11 刪除）
+digression_config
+suggested_intents
+# ── 迴圈執行面殘留（執行器 2026-09 移除）
+knowledge_gap_analysis
+knowledge_review_queue
+loop_rollback_history
+backtest_logic_changes
+backtest_manual_reviews
+# ── 備份／快照（命名即自述）
+_category_phase2_snapshot
+kb_rent_backup_20260419
+knowledge_base_backup_dedup
+knowledge_base_deleted_phase2
+# ── 非程式消費，⛔ 不是死的
+schema_migrations
+business_scope_config

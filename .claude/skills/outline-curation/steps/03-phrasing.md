@@ -3,6 +3,12 @@
 **輸入**：`structure-proposal.json`、講法來源（question_summary／幫助中心／問法正本）、凍結題 manifest。
 **輸出 schema**：`../schemas/phrasing-map.json`。
 **形態**：腳本＋人審（相似細目只出待審清單，⛔ 不自動合併）。
+
+補審前先跑 `docker compose -f docker-compose.dev.yml run --rm -T rag-orchestrator python tools/canon_fine_size_lint.py`（DSP-059a），>1,500 tokens 的細目先拆。
+
+⚠️ **重切模式**（任務 9.3⑤，`apply_proposal.py --canon` 產出時）先讀 `pending-phrasings.json`：
+拆分來源的講法沒有自動歸位（每筆帶 `candidates`＝拆出的子細目清單），人審後才掛回其中一個子細目；
+同時核對 `pending-see_also.json`（被丟棄的 `see_also` 目標，需人工決定改指向哪個子細目或直接刪除）。
 **出口條件**：`phrasings[]` 每筆狀態為 `proposed`；`similar_pairs[]` 待人審裁決前不得視為已解決；
 `unassigned[]` 每筆要有去向（掛哪個細目／不要）才進步 4。
 

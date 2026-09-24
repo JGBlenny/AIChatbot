@@ -7,12 +7,23 @@
 `import file mismatch`，整個 unit 層一題都跑不到（單獨跑
 `tests/unit/agent` 不會踩到，容易誤判為綠）。
 
+## 2026-09-15（DSP-058／9.6 S3）改寫範圍
+正本只有一份（`canon/jgb/`），`build_outline(doc, audience, identity, …)` 改切**受眾視圖**；
+`register_canon(doc)`／`get_canon()` 改單槽。本檔的合成正本因此一律 `audience="jgb"`、
+細目 id 首段 `jgb/`；視圖隔離的完整正反例在 `test_library_view_req.py`（本檔只覆蓋組裝規則）。
+
+## 2026-09-16（9.8 DSP-059 D′ S2）改寫範圍
+`make_outline_resolver()` **不再吃 `cache` 參數**（F8：cache 分支已刪——`app.py`
+一律先 `register_canon` 再建 resolver，⛔ 不再有「正本尚未註冊」的窗口）；正本未
+註冊 ⇒ `NO_MATCH`（fail-closed），⛔ 不回退成任何 cache 查找。
+
 ## 2026-09-07（任務 3.2）改寫範圍
 售前大綱的來源從「DB 售前池列＋六模組分類表」改成「git 正本逐細目」：
 `SIX_MODULES`／`_classify_row`／`_extract_boundary_sentences`／`DSP009_DELIBERATE_GAPS`／
 `_CTA_TEXT` 已退役，對應的測試一併退役（⛔ 不是刪測達成綠——換成
 `build_outline`／`canon_visible`／`build_canon_toc`／`resolve_canon_section` 的正反例）。
-**`build_toc`（pm／tenant 的 DB 目錄）與 `make_outline_resolver` 的 cache 路徑照舊測。**
+**`build_toc`（pm／tenant 的 DB 目錄）照舊測；`make_outline_resolver` 的 cache
+路徑已隨 9.8 S2（F8）刪除，見下方對應區塊改寫。**
 """
 from datetime import datetime, timezone
 
@@ -106,7 +117,7 @@ def _pool(rows):
 
 
 def _fine(
-    fid="prospect/A/alpha",
+    fid="jgb/A/alpha",
     *,
     title="細目標題",
     units=("這是一句可引用的內容。",),
@@ -134,23 +145,33 @@ def _fine(
     )
 
 
-def _canon(fines, *, audience="prospect", version="2026-09-07.1", budget_tokens=10_000):
+def _canon(fines, *, version="2026-09-07.1"):
+    """合成正本（圖書館形態）：`audience`／`name` 恆為 `jgb`，⛔ 無檔級 target_user 預設。"""
     return CanonDoc(
-        audience=audience,
+        audience="jgb",
         version=version,
         reviewers=("owner",),
         language="zh-TW",
-        budget_tokens=budget_tokens,
-        target_user=("prospect",),
-        business_types=("system_provider",),
+        budget_tokens=0,
+        target_user=(),
+        business_types=(),
         coarses=(CoarseItem(id="A", title="粗目 A", fines=tuple(fines)),),
         canon_sha256="a" * 64,
         phrasing_set_sha256="b" * 64,
+        name="jgb",
+        library=True,
     )
 
 
 def _prospect_identity():
     return Identity(vendor_id=0, target_user="prospect", mode="b2b")
+
+
+def _view(doc, audience="prospect", identity=None):
+    """受眾視圖（新簽名的薄包裝——本檔大多數斷言只在乎「組裝規則」那一面）。"""
+    return build_outline(
+        doc, audience, identity or _prospect_identity(), vendor_business_types=frozenset()
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -160,9 +181,9 @@ def _prospect_identity():
 
 @pytest.mark.req(_SPEC)
 def test_build_outline_one_section_per_fine_with_fine_id():
-    doc = _canon([_fine("prospect/A/alpha"), _fine("prospect/A/beta", title="第二個")])
-    outline = build_outline(doc)
-    assert [s.id for s in outline.sections] == ["prospect/A/alpha", "prospect/A/beta"]
+    doc = _canon([_fine("jgb/A/alpha"), _fine("jgb/A/beta", title="第二個")])
+    outline = _view(doc)
+    assert [s.id for s in outline.sections] == ["jgb/A/alpha", "jgb/A/beta"]
     assert outline.audience == "prospect"
     assert outline.version == doc.version
 
@@ -170,17 +191,17 @@ def test_build_outline_one_section_per_fine_with_fine_id():
 @pytest.mark.req(_SPEC)
 def test_build_outline_title_line_carries_fine_id_marker_once():
     """`_build_doc` 已自動加 `【<id>】`（DSP-020）——⛔ 標題本身不得重複帶 id。"""
-    doc = _canon([_fine("prospect/A/alpha", title="系統總覽")])
-    outline = build_outline(doc)
-    assert "【prospect/A/alpha】系統總覽" in outline.text
-    assert outline.text.count("prospect/A/alpha") == 1
+    doc = _canon([_fine("jgb/A/alpha", title="系統總覽")])
+    outline = _view(doc)
+    assert "【jgb/A/alpha】系統總覽" in outline.text
+    assert outline.text.count("jgb/A/alpha") == 1
     assert outline.sections[0].title == "系統總覽"
 
 
 @pytest.mark.req(_SPEC)
 def test_build_outline_reviewed_fine_is_citable_with_content():
     doc = _canon([_fine(units=("第一句。", "第二句。"))])
-    section = build_outline(doc).sections[0]
+    section = _view(doc).sections[0]
     assert section.citable is True
     assert section.text == "第一句。\n第二句。"
 
@@ -188,16 +209,16 @@ def test_build_outline_reviewed_fine_is_citable_with_content():
 @pytest.mark.req(_SPEC)
 def test_build_outline_unreviewed_fine_is_title_only_and_not_citable():
     doc = _canon([_fine(reviewed_by=None, units=("這句不該出現在大綱裡。",))])
-    section = build_outline(doc).sections[0]
+    section = _view(doc).sections[0]
     assert section.citable is False
     assert section.text == ""
-    assert "這句不該出現在大綱裡" not in build_outline(doc).text
+    assert "這句不該出現在大綱裡" not in _view(doc).text
 
 
 @pytest.mark.req(_SPEC)
 def test_build_outline_is_deterministic():
-    doc = _canon([_fine(), _fine("prospect/A/beta")])
-    assert build_outline(doc).sha256 == build_outline(doc).sha256
+    doc = _canon([_fine(), _fine("jgb/A/beta")])
+    assert _view(doc).sha256 == _view(doc).sha256
 
 
 # ---------------------------------------------------------------------------
@@ -230,9 +251,59 @@ def test_canon_visible_b2b_target_user_mismatch_is_invisible():
 
 
 @pytest.mark.req(_SPEC)
-def test_canon_visible_b2b_empty_target_user_is_visible():
+def test_canon_visible_b2b_empty_target_user_is_invisible():
+    """b2b 分支**空 `target_user` ⇒ 不可見**（DSP-052 補救 (c)，業主 2026-09-14 裁）。
+
+    ⚠️ 這條 2026-09-14 之前斷言 True（「空＝不設限」）——⛔ 不得改回：`tenant` 是合法值，
+    帶 `mode=b2b` 時 `audience_of` 會把它路由到 pm 正本、b2b 分支又拿 tenant 當鑰匙，
+    放行空細目即跨受眾可見。b2c 分支的空放行是另一條分支，⛔ 不受本條影響。
+    """
     fine = _fine(target_user=())
-    assert canon_visible(_prospect_identity(), fine, vendor_business_types=frozenset()) is True
+    assert canon_visible(_prospect_identity(), fine, vendor_business_types=frozenset()) is False
+
+
+@pytest.mark.req(_SPEC)
+def test_canon_visible_b2b_tenant_key_cannot_open_empty_or_foreign_fines():
+    """U3（security-reviewer 2026-09-14 病灶形狀）：合法值 `tenant`＋`mode=b2b`。
+
+    `audience_of` 靠 `or mode == "b2b"` 把這個身分路由到 pm 正本，b2b 分支因此拿到
+    `tenant` 當鑰匙。補救 (c) 後：`target_user` 空 ⇒ False、標別人的角色 ⇒ False。
+    ⚠️ 正對照在 U4（`test_canon_visible_b2b_matching_role_is_visible`）——那條必須是 True，
+    否則這兩條只是因為 b2b 分支整個壞掉而綠。
+    """
+    identity = Identity(vendor_id=0, target_user="tenant", mode="b2b")
+    empty = _fine(target_user=())
+    foreign = _fine(target_user=("system_provider",))
+    assert canon_visible(identity, empty, vendor_business_types=frozenset()) is False
+    assert canon_visible(identity, foreign, vendor_business_types=frozenset()) is False
+
+
+@pytest.mark.req(_SPEC)
+def test_canon_visible_b2b_matching_role_is_visible():
+    """U4：作者**明標**的角色仍然可見——⛔ 這不是洞，是 b2b 分支的正常放行。
+
+    b2b 側業者向的鑰匙收斂成 `property_manager`：`property_manager` 本人、以及
+    折成 pm 的 `system_admin`（DSP-053a），對 `target_user: [property_manager]` 的細目 ⇒ True。
+    ⚠️ 反面正對照在 U3（`tenant` 鑰匙開不了這一格），否則這條只是因為 b2b 分支全放行而綠。
+    """
+    fine = _fine(target_user=("property_manager",))
+    pm = Identity(vendor_id=0, target_user="property_manager", mode="b2b")
+    system_admin = Identity(vendor_id=0, target_user="system_admin", mode="b2b")
+    assert canon_visible(pm, fine, vendor_business_types=frozenset()) is True
+    assert canon_visible(system_admin, fine, vendor_business_types=frozenset()) is True
+
+
+@pytest.mark.req(_SPEC)
+def test_canon_visible_b2b_list_target_user_is_normalized_not_typeerror():
+    """U5：`target_user` 被傳成 list ⇒ 走 `_effective_target_user` 取首值，⛔ 不再 TypeError。
+
+    ⚠️ 分支判準改讀正規化後的值才修得掉這個——原本 `list in frozenset` 會
+    `TypeError: unhashable type: 'list'`。⚠️ SQL 側 `is_b2b_mode` 用 `in [...]` 清單比對，
+    list 輸入會落 b2c 分支；`/mcp` 入口 `parse_identity` 已先正規化成純量，正常路徑到不了。
+    """
+    identity = Identity(vendor_id=0, target_user=["property_manager"], mode="b2b")
+    fine = _fine(target_user=("property_manager",))
+    assert canon_visible(identity, fine, vendor_business_types=frozenset()) is True
 
 
 @pytest.mark.req(_SPEC)
@@ -281,7 +352,7 @@ def test_canon_visible_none_target_user_normalizes_to_tenant():
     """`target_user=None` 走 `_effective_target_user` ⇒ tenant（fail-safe，與 SQL 同一支）。"""
     identity = Identity(vendor_id=1, target_user=None, mode="b2c")
     visible = _fine(business_types=(), target_user=("tenant",))
-    invisible = _fine(business_types=(), target_user=("landlord",))
+    invisible = _fine(business_types=(), target_user=("property_manager",))
     assert canon_visible(identity, visible, vendor_business_types=frozenset()) is True
     assert canon_visible(identity, invisible, vendor_business_types=frozenset()) is False
 
@@ -299,23 +370,30 @@ def test_canon_visible_all_users_is_not_a_b2b_bypass():
 
 
 @pytest.mark.req(_SPEC)
-def test_build_canon_toc_lists_only_visible_reviewed_fines():
+def test_build_canon_toc_lists_coarse_row_with_visible_reviewed_count():
+    """計畫 9.10 S2：目錄改列**粗目**（`<粗目 id>｜<粗目標題>｜<可見細目數>`），⛔ 不列細目。
+
+    這個粗目底下 1 個可見已審（alpha）＋1 個未審（beta，不計數）＋1 個別角色（不計數）
+    ⇒ 可見細目數＝1；且行裡不得出現任何細目 id（負對照）。
+    """
     doc = _canon([
-        _fine("prospect/A/alpha", title="可見"),
-        _fine("prospect/A/beta", title="未審", reviewed_by=None),
+        _fine("jgb/A/alpha", title="可見"),
+        _fine("jgb/A/beta", title="未審", reviewed_by=None),
         _fine("prospect/A/gamma", title="別的角色", target_user=("tenant",)),
     ])
     toc = build_canon_toc(doc, _prospect_identity(), vendor_business_types=frozenset())
     assert toc.id == TOC_SECTION_ID
     assert toc.citable is False
-    assert toc.text == "prospect/A/alpha｜可見"
+    assert toc.text == "A｜粗目 A｜1"
+    assert "jgb/A/alpha" not in toc.text  # 負對照：目錄不得出現細目 id
 
 
 @pytest.mark.req(_SPEC)
-def test_build_canon_toc_line_format_is_id_then_title():
-    doc = _canon([_fine("prospect/A/alpha", title="系統總覽")])
+def test_build_canon_toc_line_format_is_coarse_id_title_count():
+    doc = _canon([_fine("jgb/A/alpha", title="系統總覽")])
     toc = build_canon_toc(doc, _prospect_identity(), vendor_business_types=frozenset())
-    assert toc.text.splitlines() == ["prospect/A/alpha｜系統總覽"]
+    assert toc.text.splitlines() == ["A｜粗目 A｜1"]
+    assert "系統總覽" not in toc.text  # 負對照：細目標題不得出現在目錄（那是粗目標題的層級）
 
 
 # ---------------------------------------------------------------------------
@@ -327,7 +405,7 @@ def test_build_canon_toc_line_format_is_id_then_title():
 def test_resolve_canon_section_returns_content_for_visible_reviewed_fine():
     doc = _canon([_fine(units=("金箍棒把物件與合約集中管理。",))])
     result = resolve_canon_section(
-        doc, _prospect_identity(), "outline:prospect/A/alpha", vendor_business_types=frozenset()
+        doc, _prospect_identity(), "outline:jgb/A/alpha", vendor_business_types=frozenset()
     )
     assert isinstance(result, ToolResult)
     assert result.ok is True
@@ -340,10 +418,10 @@ def test_resolve_canon_section_returns_content_for_visible_reviewed_fine():
 @pytest.mark.parametrize(
     "fine,section_id",
     [
-        (_fine(reviewed_by=None), "outline:prospect/A/alpha"),          # 未審
-        (_fine(target_user=("tenant",)), "outline:prospect/A/alpha"),   # 不可見
+        (_fine(reviewed_by=None), "outline:jgb/A/alpha"),          # 未審
+        (_fine(target_user=("tenant",)), "outline:jgb/A/alpha"),   # 不可見
         (_fine(), "outline:prospect/A/does-not-exist"),                 # 不存在
-        (_fine(), "prospect/A/alpha"),                                  # 裸 id（非 outline: 前綴）
+        (_fine(), "jgb/A/alpha"),                                  # 裸 id（非 outline: 前綴）
     ],
 )
 def test_resolve_canon_section_no_match_cases(fine, section_id):
@@ -373,17 +451,17 @@ def test_resolve_canon_section_toc_is_not_citable():
 @pytest.mark.req(_SPEC)
 def test_resolver_uses_registered_canon_and_applies_visibility():
     doc = _canon([
-        _fine("prospect/A/alpha", units=("可引用的一句。",)),
-        _fine("prospect/A/beta", reviewed_by=None, units=("未審的一句。",)),
+        _fine("jgb/A/alpha", units=("可引用的一句。",)),
+        _fine("jgb/A/beta", reviewed_by=None, units=("未審的一句。",)),
     ])
-    register_canon("prospect", doc)
-    resolver = make_outline_resolver({})       # ⚠️ cache 空：正本路徑不吃 cache
+    register_canon(doc)
+    resolver = make_outline_resolver()
     identity = _prospect_identity()
 
-    hit = resolver(identity, "outline:prospect/A/alpha")
+    hit = resolver(identity, "outline:jgb/A/alpha")
     assert hit.ok is True and hit.provenance[0].citable is True
 
-    for miss_id in ("outline:prospect/A/beta", "outline:prospect/A/nope"):
+    for miss_id in ("outline:jgb/A/beta", "outline:prospect/A/nope"):
         miss = resolver(identity, miss_id)
         assert miss.ok is False and miss.error == "NO_MATCH", miss_id
 
@@ -394,12 +472,12 @@ def test_resolver_uses_registered_canon_and_applies_visibility():
 @pytest.mark.req(_SPEC)
 def test_resolver_matches_resolve_canon_section_for_same_inputs():
     """接線證明：經工廠建出的 resolver 與直呼 `resolve_canon_section` 同結果。"""
-    doc = _canon([_fine("prospect/A/alpha"), _fine("prospect/A/beta", target_user=("tenant",))])
-    register_canon("prospect", doc)
-    resolver = make_outline_resolver({})
+    doc = _canon([_fine("jgb/A/alpha"), _fine("jgb/A/beta", target_user=("tenant",))])
+    register_canon(doc)
+    resolver = make_outline_resolver()
     identity = _prospect_identity()
     for section_id in (
-        "outline:prospect/A/alpha", "outline:prospect/A/beta", TOC_SECTION_ID, "outline:nope",
+        "outline:jgb/A/alpha", "outline:jgb/A/beta", TOC_SECTION_ID, "outline:nope",
     ):
         direct = resolve_canon_section(
             doc, identity, section_id, vendor_business_types=frozenset()
@@ -410,12 +488,12 @@ def test_resolver_matches_resolve_canon_section_for_same_inputs():
 @pytest.mark.req(_SPEC)
 def test_resolver_identity_is_per_call_not_bound_to_factory():
     """同一個 resolver、兩種身分 ⇒ 兩種結果（⛔ 身分不得綁在工廠上）。"""
-    doc = _canon([_fine("prospect/A/alpha", target_user=("prospect",))])
-    register_canon("prospect", doc)
-    resolver = make_outline_resolver({})
-    assert resolver(_prospect_identity(), "outline:prospect/A/alpha").ok is True
+    doc = _canon([_fine("jgb/A/alpha", target_user=("prospect",))])
+    register_canon(doc)
+    resolver = make_outline_resolver()
+    assert resolver(_prospect_identity(), "outline:jgb/A/alpha").ok is True
     other = Identity(vendor_id=1, target_user="system_admin", mode="b2b", audience="prospect")
-    assert resolver(other, "outline:prospect/A/alpha").ok is False
+    assert resolver(other, "outline:jgb/A/alpha").ok is False
 
 
 # ---------------------------------------------------------------------------
@@ -487,7 +565,8 @@ async def test_build_toc_rejects_prospect_audience():
 
 
 # ---------------------------------------------------------------------------
-# make_outline_resolver：未註冊正本的受眾（pm／tenant）維持 cache 查找
+# make_outline_resolver（9.8 DSP-059 D′ S2）：tenant 一律 NO_MATCH；
+# 正本未註冊 ⇒ NO_MATCH（fail-closed——cache 分支已刪，F8）
 # ---------------------------------------------------------------------------
 
 
@@ -496,40 +575,33 @@ def _identity(target_user="prospect"):
 
 
 @pytest.mark.req(_SPEC)
-def test_resolver_returns_tool_result_hit_from_cache_when_no_canon():
-    section = OutlineSection(
-        id="outline:toc:9001", title="系統整體介紹", text="系統簡介。", source_ids=[9001], citable=False,
-    )
-    doc = OutlineDoc(
-        audience="tenant", version="v1", sha256="y" * 64, token_count=5,
-        sections=[section], text="系統簡介。",
-    )
-    resolver = make_outline_resolver({"tenant": doc})
-    result = resolver(_identity("tenant"), "outline:toc:9001")
+def test_resolver_tenant_is_fail_closed_even_with_canon_registered():
+    """DSP-058：tenant 沒有正本視圖 ⇒ **一律 `NO_MATCH`**，即使正本已註冊——
+    單一正本形態下，「拿別人的大綱來查」是跨受眾外洩的入口。"""
+    doc = _canon([_fine("jgb/A/alpha")])
+    register_canon(doc)
+    resolver = make_outline_resolver()
+    result = resolver(_identity("tenant"), "outline:toc")
     assert isinstance(result, ToolResult)
-    assert result.ok is True
-    assert result.data == {
-        "id": "outline:toc:9001", "question_summary": "系統整體介紹", "answer": "系統簡介。",
-    }
-    assert result.provenance[0].source == "outline:toc:9001"
-    assert result.provenance[0].citable is False
-    assert result.text_for_model == "系統簡介。"
+    assert result.ok is False and result.error == "NO_MATCH"
 
 
 @pytest.mark.req(_SPEC)
-def test_resolver_no_match_when_section_missing():
-    doc = OutlineDoc(
-        audience="tenant", version="v1", sha256="x" * 64, token_count=1, sections=[], text="",
-    )
-    resolver = make_outline_resolver({"tenant": doc})
-    result = resolver(_identity("tenant"), "outline:not-exist")
+def test_resolver_no_match_when_canon_not_registered():
+    """9.8 DSP-059 D′ S2（F8）：正本未註冊 ⇒ 一律 `NO_MATCH`（⛔ 不回退成任何
+    cache——那個分支已刪；產線 `app.py` 一律先 `register_canon` 再建 resolver，
+    這個窗口在產線不會出現，這裡只驗函式本身的 fail-closed 語義）。"""
+    resolver = make_outline_resolver()
+    result = resolver(_identity("property_manager"), "outline:toc")
     assert result.ok is False
     assert result.error == "NO_MATCH"
 
 
 @pytest.mark.req(_SPEC)
-def test_resolver_no_match_when_cache_empty_for_audience():
-    resolver = make_outline_resolver({})
-    result = resolver(_identity("tenant"), "outline:toc:9001")
+def test_resolver_no_match_when_section_missing():
+    doc = _canon([_fine("jgb/A/alpha", target_user=("property_manager",))])
+    register_canon(doc)
+    resolver = make_outline_resolver()
+    result = resolver(_identity("property_manager"), "outline:not-exist")
     assert result.ok is False
     assert result.error == "NO_MATCH"

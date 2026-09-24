@@ -1,0 +1,1045 @@
+{
+ "cost": {
+  "agents": 0,
+  "completion_tokens": 0,
+  "prompt_tokens": 0,
+  "usd": 0.0,
+  "wall_s": 0.0
+ },
+ "deterministic": true,
+ "inputs_sha": {
+  "frozen_manifest": "4d093ffb8ea077764879129cd4f70e34a39e0037d64257d5bc18239335d3a0a1",
+  "helpcenter_dir": "8a040b783281f0eedf43fe1eb805d0f6e77b9b2396a5d9499fc8a4a43735661c",
+  "kb_rows": "a39997e07deb1f92a090d16150b707568a1ee6e609af3d9823fb171df3e1a7eb",
+  "koyu": null,
+  "structure": "1e5ae3b6f4b0030d21ed92d69b6cc387a7fd3461fa34be793d093bae33500b53"
+ },
+ "payload": {
+  "counts": {
+   "assigned": 63,
+   "candidates_helpcenter": 92,
+   "candidates_koyu": 0,
+   "candidates_question_summary": 38,
+   "candidates_total": 130,
+   "dropped_deidentified_empty": 0,
+   "dropped_duplicate": 0,
+   "dropped_frozen": 0,
+   "dropped_over_cap": 0,
+   "dropped_term_too_long": 9,
+   "fines": 37,
+   "frozen_questions": 105,
+   "koyu_excluded_by_type": {},
+   "unassigned": 92,
+   "candidates_line_doc": 25
+  },
+  "helpcenter_files": 92,
+  "params": {
+   "cap_per_fine": 12,
+   "frozen_at": "2026-09-07T23:20:00+08:00",
+   "method": "char_bigram_jaccard",
+   "min_score": 0.12
+  },
+  "phrasings": [
+   {
+    "fine_id": "property_manager/C/lease-expiry-followup-scope",
+    "score": 1.0,
+    "source": "question_summary:3799",
+    "status": "proposed",
+    "text": "系統脈絡:合約領域-系統合約(母共用)"
+   },
+   {
+    "fine_id": "property_manager/C/lease-expiry-followup-scope",
+    "score": 1.0,
+    "source": "question_summary:3824",
+    "status": "proposed",
+    "text": "系統脈絡:合約領域-續約(子面向)"
+   },
+   {
+    "fine_id": "property_manager/C/lease-expiry-followup-scope",
+    "score": 1.0,
+    "source": "question_summary:3829",
+    "status": "proposed",
+    "text": "對話規則:續約"
+   },
+   {
+    "fine_id": "property_manager/C/meter-item-followup-scope",
+    "score": 1.0,
+    "source": "question_summary:4021",
+    "status": "proposed",
+    "text": "系統脈絡:IoT領域-智慧設備(母共用)"
+   },
+   {
+    "fine_id": "property_manager/C/meter-item-followup-scope",
+    "score": 1.0,
+    "source": "question_summary:4089",
+    "status": "proposed",
+    "text": "對話規則:電表排障"
+   },
+   {
+    "fine_id": "property_manager/C/meter-item-followup-scope",
+    "score": 1.0,
+    "source": "question_summary:4091",
+    "status": "proposed",
+    "text": "系統脈絡:IoT領域-電表排障(子面向)"
+   },
+   {
+    "fine_id": "property_manager/C/overdue-bill-followup-scope",
+    "score": 1.0,
+    "source": "question_summary:3909",
+    "status": "proposed",
+    "text": "系統脈絡:帳務領域-系統帳務(母共用)"
+   },
+   {
+    "fine_id": "property_manager/C/overdue-bill-followup-scope",
+    "score": 1.0,
+    "source": "question_summary:3913",
+    "status": "proposed",
+    "text": "系統脈絡:帳務領域-滯納金(子面向)"
+   },
+   {
+    "fine_id": "property_manager/F/account-domain-scope-pending",
+    "score": 1.0,
+    "source": "question_summary:3952",
+    "status": "proposed",
+    "text": "系統脈絡:帳號領域-帳號中心(母共用)"
+   },
+   {
+    "fine_id": "property_manager/F/account-domain-scope-pending",
+    "score": 1.0,
+    "source": "question_summary:3954",
+    "status": "proposed",
+    "text": "系統脈絡:帳號領域-登入排障(子面向)"
+   },
+   {
+    "fine_id": "property_manager/F/account-domain-scope-pending",
+    "score": 1.0,
+    "source": "question_summary:3983",
+    "status": "proposed",
+    "text": "對話規則:註冊驗證排障"
+   },
+   {
+    "fine_id": "property_manager/F/account-domain-scope-pending",
+    "score": 1.0,
+    "source": "question_summary:3984",
+    "status": "proposed",
+    "text": "對話規則:帳號綁定異動"
+   },
+   {
+    "fine_id": "property_manager/F/account-domain-scope-pending",
+    "score": 1.0,
+    "source": "question_summary:3990",
+    "status": "proposed",
+    "text": "對話規則:登入排障"
+   },
+   {
+    "fine_id": "property_manager/F/account-domain-scope-pending",
+    "score": 1.0,
+    "source": "question_summary:4001",
+    "status": "proposed",
+    "text": "對話規則:團隊成員權限"
+   },
+   {
+    "fine_id": "property_manager/F/billing-other-facets-scope-pending",
+    "score": 1.0,
+    "source": "question_summary:3911",
+    "status": "proposed",
+    "text": "系統脈絡:帳務領域-帳單異常(子面向)"
+   },
+   {
+    "fine_id": "property_manager/F/billing-other-facets-scope-pending",
+    "score": 1.0,
+    "source": "question_summary:3912",
+    "status": "proposed",
+    "text": "系統脈絡:帳務領域-發票(子面向)"
+   },
+   {
+    "fine_id": "property_manager/F/billing-other-facets-scope-pending",
+    "score": 1.0,
+    "source": "question_summary:3915",
+    "status": "proposed",
+    "text": "對話規則:繳費金流排障"
+   },
+   {
+    "fine_id": "property_manager/F/billing-other-facets-scope-pending",
+    "score": 1.0,
+    "source": "question_summary:3916",
+    "status": "proposed",
+    "text": "對話規則:帳單異常"
+   },
+   {
+    "fine_id": "property_manager/F/billing-other-facets-scope-pending",
+    "score": 1.0,
+    "source": "question_summary:3917",
+    "status": "proposed",
+    "text": "對話規則:發票"
+   },
+   {
+    "fine_id": "property_manager/F/billing-other-facets-scope-pending",
+    "score": 1.0,
+    "source": "question_summary:3918",
+    "status": "proposed",
+    "text": "對話規則:滯納金"
+   },
+   {
+    "fine_id": "property_manager/F/billing-other-facets-scope-pending",
+    "score": 1.0,
+    "source": "question_summary:4214",
+    "status": "proposed",
+    "text": "對話規則:帳單設定引導"
+   },
+   {
+    "fine_id": "property_manager/F/billing-other-facets-scope-pending",
+    "score": 1.0,
+    "source": "question_summary:4252",
+    "status": "proposed",
+    "text": "對話規則:帳單診斷"
+   },
+   {
+    "fine_id": "property_manager/F/contract-other-facets-scope-pending",
+    "score": 1.0,
+    "source": "question_summary:3800",
+    "status": "proposed",
+    "text": "系統脈絡:合約領域-狀態判斷(子面向)"
+   },
+   {
+    "fine_id": "property_manager/F/contract-other-facets-scope-pending",
+    "score": 1.0,
+    "source": "question_summary:3801",
+    "status": "proposed",
+    "text": "對話規則:合約診斷"
+   },
+   {
+    "fine_id": "property_manager/F/contract-other-facets-scope-pending",
+    "score": 1.0,
+    "source": "question_summary:3822",
+    "status": "proposed",
+    "text": "系統脈絡:合約領域-合約異動(子面向)"
+   },
+   {
+    "fine_id": "property_manager/F/contract-other-facets-scope-pending",
+    "score": 1.0,
+    "source": "question_summary:3823",
+    "status": "proposed",
+    "text": "系統脈絡:合約領域-退租收尾(子面向)"
+   },
+   {
+    "fine_id": "property_manager/F/contract-other-facets-scope-pending",
+    "score": 1.0,
+    "source": "question_summary:3825",
+    "status": "proposed",
+    "text": "系統脈絡:合約領域-建約引導(子面向)"
+   },
+   {
+    "fine_id": "property_manager/F/contract-other-facets-scope-pending",
+    "score": 1.0,
+    "source": "question_summary:3826",
+    "status": "proposed",
+    "text": "系統脈絡:合約領域-簽署排障(子面向)"
+   },
+   {
+    "fine_id": "property_manager/F/contract-other-facets-scope-pending",
+    "score": 1.0,
+    "source": "question_summary:3831",
+    "status": "proposed",
+    "text": "對話規則:簽署排障"
+   },
+   {
+    "fine_id": "property_manager/F/contract-other-facets-scope-pending",
+    "score": 1.0,
+    "source": "question_summary:4005",
+    "status": "proposed",
+    "text": "對話規則:合約異動"
+   },
+   {
+    "fine_id": "property_manager/F/contract-other-facets-scope-pending",
+    "score": 1.0,
+    "source": "question_summary:4202",
+    "status": "proposed",
+    "text": "對話規則:退租收尾"
+   },
+   {
+    "fine_id": "property_manager/F/contract-other-facets-scope-pending",
+    "score": 1.0,
+    "source": "question_summary:4215",
+    "status": "proposed",
+    "text": "對話規則:建約引導"
+   },
+   {
+    "fine_id": "property_manager/F/estate-domain-scope-pending",
+    "score": 1.0,
+    "source": "question_summary:4132",
+    "status": "proposed",
+    "text": "系統脈絡:物件領域-物件管理(母共用)"
+   },
+   {
+    "fine_id": "property_manager/F/estate-domain-scope-pending",
+    "score": 1.0,
+    "source": "question_summary:4176",
+    "status": "proposed",
+    "text": "對話規則:物件現況診斷"
+   },
+   {
+    "fine_id": "property_manager/F/estate-domain-scope-pending",
+    "score": 1.0,
+    "source": "question_summary:4203",
+    "status": "proposed",
+    "text": "對話規則:物件操作引導"
+   },
+   {
+    "fine_id": "property_manager/F/iot-setup-scope-pending",
+    "score": 1.0,
+    "source": "question_summary:4090",
+    "status": "proposed",
+    "text": "對話規則:IoT設定引導"
+   },
+   {
+    "fine_id": "property_manager/F/presales-context-exclude-pending",
+    "score": 1.0,
+    "source": "question_summary:3622",
+    "status": "proposed",
+    "text": "售前系統脈絡(系統注入用,勿檢索)"
+   },
+   {
+    "fine_id": "property_manager/F/subscription-domain-scope-pending",
+    "score": 1.0,
+    "source": "question_summary:5374",
+    "status": "proposed",
+    "text": "對話規則:訂閱診斷"
+   },
+   {
+    "fine_id": "property_manager/A/repair-ticket-photo-flow",
+    "text": "敦南",
+    "source": "line-doc:③#A",
+    "status": "proposed",
+    "score": 0.7
+   },
+   {
+    "fine_id": "property_manager/A/repair-ticket-photo-flow",
+    "text": "確認送出",
+    "source": "line-doc:③#A",
+    "status": "proposed",
+    "score": 0.9
+   },
+   {
+    "fine_id": "property_manager/A/repair-ticket-reclassify",
+    "text": "我要修改",
+    "source": "line-doc:③#B",
+    "status": "proposed",
+    "score": 0.9
+   },
+   {
+    "fine_id": "property_manager/A/repair-ticket-reclassify",
+    "text": "報修分類改為水管",
+    "source": "line-doc:③#B",
+    "status": "proposed",
+    "score": 0.9
+   },
+   {
+    "fine_id": "property_manager/A/repair-ticket-low-confidence-candidates",
+    "text": "牆面滲水",
+    "source": "line-doc:③#C",
+    "status": "proposed",
+    "score": 0.9
+   },
+   {
+    "fine_id": "property_manager/A/repair-ticket-unrecognizable-photo",
+    "text": "熱水器不出熱水",
+    "source": "line-doc:③#D",
+    "status": "proposed",
+    "score": 0.9
+   },
+   {
+    "fine_id": "property_manager/A/repair-ticket-mid-flow-cancel",
+    "text": "取消",
+    "source": "line-doc:③#G",
+    "status": "proposed",
+    "score": 0.9
+   },
+   {
+    "fine_id": "property_manager/A/repair-ticket-submit-failure",
+    "text": "確認送出重試",
+    "source": "line-doc:③#I",
+    "status": "proposed",
+    "score": 0.9
+   },
+   {
+    "fine_id": "property_manager/A/repair-ticket-photo-flow",
+    "text": "浴室天花板漏水報修",
+    "source": "line-doc:③#A",
+    "status": "proposed",
+    "score": 0.9
+   },
+   {
+    "fine_id": "property_manager/C/overdue-bill-followup-scope",
+    "text": "租客過去繳款紀錄",
+    "source": "line-doc:⑤#-",
+    "status": "proposed",
+    "score": 0.9
+   },
+   {
+    "fine_id": "property_manager/B/dunning-draft-generation",
+    "text": "產生催繳草稿",
+    "source": "line-doc:④#-",
+    "status": "proposed",
+    "score": 0.9
+   },
+   {
+    "fine_id": "property_manager/C/followup-session-single-item-boundary",
+    "text": "追問其他物件的帳單",
+    "source": "line-doc:⑤#-",
+    "status": "proposed",
+    "score": 0.9
+   },
+   {
+    "fine_id": "property_manager/C/overdue-bill-followup-scope",
+    "text": "本期滯納金金額",
+    "source": "line-doc:⑤#A",
+    "status": "proposed",
+    "score": 0.9
+   },
+   {
+    "fine_id": "property_manager/C/followup-session-single-item-boundary",
+    "text": "追問其他租客的帳單",
+    "source": "line-doc:⑤#C",
+    "status": "proposed",
+    "score": 0.9
+   },
+   {
+    "fine_id": "property_manager/C/followup-missing-data-in-jgb",
+    "text": "帳單入帳日期查詢",
+    "source": "line-doc:⑤#D",
+    "status": "proposed",
+    "score": 0.9
+   },
+   {
+    "fine_id": "property_manager/C/lease-expiry-followup-scope",
+    "text": "合約預告期是否已到",
+    "source": "line-doc:⑤#E",
+    "status": "proposed",
+    "score": 0.9
+   },
+   {
+    "fine_id": "property_manager/C/lease-expiry-followup-scope",
+    "text": "租客續約意願查詢",
+    "source": "line-doc:⑤#E",
+    "status": "proposed",
+    "score": 0.9
+   },
+   {
+    "fine_id": "property_manager/C/urgent-repair-followup-scope",
+    "text": "熱水器維修歷史查詢",
+    "source": "line-doc:⑤#F",
+    "status": "proposed",
+    "score": 0.9
+   },
+   {
+    "fine_id": "property_manager/C/followup-session-end",
+    "text": "好了",
+    "source": "line-doc:⑤#G",
+    "status": "proposed",
+    "score": 0.9
+   },
+   {
+    "fine_id": "property_manager/A/repair-ticket-low-confidence-candidates",
+    "text": "牆角疑似損壞報修",
+    "source": "line-doc:③#C",
+    "status": "proposed",
+    "score": 0.9
+   },
+   {
+    "fine_id": "property_manager/A/repair-ticket-unrecognizable-photo",
+    "text": "物件：D02 敦南 66 號 2 樓",
+    "source": "line-doc:③#D",
+    "status": "proposed",
+    "score": 0.7
+   },
+   {
+    "fine_id": "property_manager/A/repair-ticket-photo-flow",
+    "text": "廚房水槽下方漏水報修",
+    "source": "line-doc:③#F",
+    "status": "proposed",
+    "score": 0.7
+   },
+   {
+    "fine_id": "property_manager/A/repair-ticket-vacant-no-lease",
+    "text": "客廳日光燈故障報修",
+    "source": "line-doc:③#K",
+    "status": "proposed",
+    "score": 0.9
+   },
+   {
+    "fine_id": "property_manager/C/meter-item-followup-scope",
+    "text": "電表餘額與斷電時間查詢",
+    "source": "line-doc:⑤#-",
+    "status": "proposed",
+    "score": 0.9
+   },
+   {
+    "fine_id": "property_manager/C/followup-session-end",
+    "text": "結束",
+    "source": "line-doc:⑤#G",
+    "status": "proposed",
+    "score": 0.9
+   }
+  ],
+  "redaction_counts": {},
+  "similar_pairs": [],
+  "unassigned": [
+   {
+    "best_fine_id": null,
+    "score": 0.0,
+    "source": "helpcenter:Landlordonboarding",
+    "text": "房東教學:總論篇"
+   },
+   {
+    "best_fine_id": "property_manager/A/repair-ticket-urgency-judgment",
+    "score": 0.0333,
+    "source": "helpcenter:Landlordonboarding00",
+    "text": "大房東教學:瀏覽物件、合約、帳務和修繕狀態"
+   },
+   {
+    "best_fine_id": "property_manager/A/repair-ticket-urgency-judgment",
+    "score": 0.0286,
+    "source": "helpcenter:Landlordonboarding00phone",
+    "text": "大房東教學:瀏覽物件、合約、帳務和修繕狀態(手機篇)"
+   },
+   {
+    "best_fine_id": "property_manager/E/session-expiry-general-rule",
+    "score": 0.04,
+    "source": "helpcenter:Landlordonboarding01",
+    "text": "房東教學01:註冊篇(一) 個人房東"
+   },
+   {
+    "best_fine_id": "property_manager/F/account-domain-scope-pending",
+    "score": 0.0337,
+    "source": "helpcenter:Landlordonboarding02",
+    "text": "房東教學02:註冊篇(二) 公司團隊篇"
+   },
+   {
+    "best_fine_id": "property_manager/C/overdue-bill-followup-scope",
+    "score": 0.0476,
+    "source": "helpcenter:Landlordonboarding06Finance",
+    "text": "房東教學06:帳務篇"
+   },
+   {
+    "best_fine_id": "property_manager/F/iot-setup-scope-pending",
+    "score": 0.1111,
+    "source": "helpcenter:Landlordonboarding08Device",
+    "text": "房東教學08:IOT設備篇"
+   },
+   {
+    "best_fine_id": null,
+    "score": 0.0,
+    "source": "helpcenter:Landlordonboarding09Socialhousing",
+    "text": "房東教學09:社會住宅篇"
+   },
+   {
+    "best_fine_id": "property_manager/F/billing-other-facets-scope-pending",
+    "score": 0.0118,
+    "source": "helpcenter:advanced12",
+    "text": "線上金流:藍新Newebpay 登入後台提款"
+   },
+   {
+    "best_fine_id": null,
+    "score": 0.0,
+    "source": "helpcenter:beike",
+    "text": "貝殼抄襲鏈家?那是你不懂!"
+   },
+   {
+    "best_fine_id": "property_manager/E/when-to-decline",
+    "score": 0.0435,
+    "source": "helpcenter:billexpired",
+    "text": "帳單狀態顯示「已失效」是什麼意思?"
+   },
+   {
+    "best_fine_id": null,
+    "score": 0.0,
+    "source": "helpcenter:contract_review_period",
+    "text": "何謂「契約審閱權」?"
+   },
+   {
+    "best_fine_id": "property_manager/F/billing-other-facets-scope-pending",
+    "score": 0.0263,
+    "source": "helpcenter:einvoice",
+    "text": "帳單可以自動開立電子發票嗎?"
+   },
+   {
+    "best_fine_id": "property_manager/E/when-to-decline",
+    "score": 0.0312,
+    "source": "helpcenter:esg",
+    "text": "時下最夯的話題「ESG」– 一篇文章帶你搞懂什麼是ESG"
+   },
+   {
+    "best_fine_id": "property_manager/C/lease-expiry-followup-scope",
+    "score": 0.0408,
+    "source": "helpcenter:landlordonboarding04lease",
+    "text": "房東教學04:合約篇"
+   },
+   {
+    "best_fine_id": null,
+    "score": 0.0,
+    "source": "helpcenter:landlordonboarding05Paymentsettings",
+    "text": "房東教學05:收款設置篇"
+   },
+   {
+    "best_fine_id": "property_manager/F/subscription-domain-scope-pending",
+    "score": 0.02,
+    "source": "helpcenter:law20250520",
+    "text": "【租房法律知識】租賃契約保存期限與民法追溯期懶人包"
+   },
+   {
+    "best_fine_id": "property_manager/A/repair-ticket-agent-identity-lease-lookup",
+    "score": 0.0385,
+    "source": "helpcenter:onboarding1",
+    "text": "註冊一套專屬你的租房管理"
+   },
+   {
+    "best_fine_id": "property_manager/C/followup-session-end",
+    "score": 0.0714,
+    "source": "helpcenter:onboarding10",
+    "text": "合約篇:點退流程"
+   },
+   {
+    "best_fine_id": "property_manager/C/overdue-bill-followup-scope",
+    "score": 0.0476,
+    "source": "helpcenter:onboarding11",
+    "text": "帳務篇:新增單一帳單"
+   },
+   {
+    "best_fine_id": "property_manager/B/dunning-draft-not-auto-send",
+    "score": 0.05,
+    "source": "helpcenter:onboarding12",
+    "text": "帳務篇:批次發送帳單"
+   },
+   {
+    "best_fine_id": "property_manager/A/repair-ticket-reclassify",
+    "score": 0.0385,
+    "source": "helpcenter:onboarding13",
+    "text": "既存合約的歷史帳單如何移至已到帳"
+   },
+   {
+    "best_fine_id": "property_manager/C/overdue-bill-followup-scope",
+    "score": 0.0227,
+    "source": "helpcenter:onboarding14",
+    "text": "帳務篇:收據PDF下載"
+   },
+   {
+    "best_fine_id": "property_manager/C/followup-missing-data-in-jgb",
+    "score": 0.0357,
+    "source": "helpcenter:onboarding2",
+    "text": "帳號資訊設定 完成您的個人資料吧!"
+   },
+   {
+    "best_fine_id": "property_manager/B/dunning-draft-not-auto-send",
+    "score": 0.0455,
+    "source": "helpcenter:onboarding3",
+    "text": "租客線上與現金之繳費方式"
+   },
+   {
+    "best_fine_id": "property_manager/A/repair-ticket-reclassify",
+    "score": 0.0476,
+    "source": "helpcenter:onboarding4",
+    "text": "一分鐘上手 如何新建物件"
+   },
+   {
+    "best_fine_id": "property_manager/A/repair-ticket-reclassify",
+    "score": 0.0417,
+    "source": "helpcenter:onboarding5",
+    "text": "一分鐘上手 如何建立&編輯合約"
+   },
+   {
+    "best_fine_id": "property_manager/C/lease-expiry-followup-scope",
+    "score": 0.0217,
+    "source": "helpcenter:onboarding6",
+    "text": "上傳既存合約"
+   },
+   {
+    "best_fine_id": "property_manager/A/repair-ticket-vacant-no-lease",
+    "score": 0.0625,
+    "source": "helpcenter:onboarding7",
+    "text": "線上點交物件"
+   },
+   {
+    "best_fine_id": "property_manager/B/dunning-draft-not-auto-send",
+    "score": 0.0476,
+    "source": "helpcenter:onboarding8",
+    "text": "一分鐘上手 發送租金帳單"
+   },
+   {
+    "best_fine_id": "property_manager/C/lease-expiry-followup-scope",
+    "score": 0.0185,
+    "source": "helpcenter:onboarding9-1",
+    "text": "9-1. 合約篇:房東提前解約"
+   },
+   {
+    "best_fine_id": "property_manager/B/dunning-draft-not-auto-send",
+    "score": 0.0417,
+    "source": "helpcenter:onboarding9-2",
+    "text": "9-2. 合約篇:租客提前解約"
+   },
+   {
+    "best_fine_id": "property_manager/C/followup-missing-data-in-jgb",
+    "score": 0.0312,
+    "source": "helpcenter:paymentapply",
+    "text": "國泰、永豐、中信的金流要怎麼申請與提領?"
+   },
+   {
+    "best_fine_id": "property_manager/A/repair-ticket-vacant-no-lease",
+    "score": 0.05,
+    "source": "helpcenter:property",
+    "text": "房東教學03:物件篇"
+   },
+   {
+    "best_fine_id": null,
+    "score": 0.0,
+    "source": "helpcenter:propmarket2",
+    "text": "想在房地產界贏過別人?你需要這麼做!"
+   },
+   {
+    "best_fine_id": "property_manager/A/repair-ticket-reclassify",
+    "score": 0.0455,
+    "source": "helpcenter:qa01",
+    "text": "物件批次新增表格如何填寫?"
+   },
+   {
+    "best_fine_id": "property_manager/A/repair-ticket-photo-count-limit",
+    "score": 0.0952,
+    "source": "helpcenter:qa04",
+    "text": "合約附件、補充條款限制"
+   },
+   {
+    "best_fine_id": "property_manager/C/followup-missing-data-in-jgb",
+    "score": 0.0333,
+    "source": "helpcenter:qa05",
+    "text": "可以上傳自己原有的合約嗎?在哪裡上傳?"
+   },
+   {
+    "best_fine_id": "property_manager/C/followup-missing-data-in-jgb",
+    "score": 0.0625,
+    "source": "helpcenter:qa06",
+    "text": "既存合約(上傳合約)與JGB制式合約哪裡不同?"
+   },
+   {
+    "best_fine_id": "property_manager/C/followup-missing-data-in-jgb",
+    "score": 0.0714,
+    "source": "helpcenter:qa07",
+    "text": "租客沒有上傳身分證,請問該怎麼辦?"
+   },
+   {
+    "best_fine_id": "property_manager/C/lease-expiry-followup-scope",
+    "score": 0.0196,
+    "source": "helpcenter:qa15",
+    "text": "已點退的合約還在執行中?"
+   },
+   {
+    "best_fine_id": null,
+    "score": 0.0,
+    "source": "helpcenter:qa21",
+    "text": "可以不檢附收據嗎?"
+   },
+   {
+    "best_fine_id": "property_manager/F/account-domain-scope-pending",
+    "score": 0.044,
+    "source": "helpcenter:qa23",
+    "text": "沒有權限的團隊成員,可否進行簽約、點交、點退?"
+   },
+   {
+    "best_fine_id": "property_manager/A/repair-ticket-reclassify",
+    "score": 0.0556,
+    "source": "helpcenter:qa27",
+    "text": "藍新金流如何設置?"
+   },
+   {
+    "best_fine_id": "property_manager/A/repair-ticket-vacant-no-lease",
+    "score": 0.037,
+    "source": "helpcenter:rent3",
+    "text": "租約公證?房東房客都應該關注的保障"
+   },
+   {
+    "best_fine_id": null,
+    "score": 0.0,
+    "source": "helpcenter:rentallaw.pt1",
+    "text": "租賃專法的重點大補帖"
+   },
+   {
+    "best_fine_id": "property_manager/A/repair-ticket-agent-identity-lease-lookup",
+    "score": 0.0333,
+    "source": "helpcenter:rentallaw.pt2",
+    "text": "房東和租屋族都必須了解的租賃專法"
+   },
+   {
+    "best_fine_id": null,
+    "score": 0.0,
+    "source": "helpcenter:rentallaw.pt3",
+    "text": "租賃專法下的包租代管業"
+   },
+   {
+    "best_fine_id": null,
+    "score": 0.0,
+    "source": "helpcenter:rentallaw.pt5",
+    "text": "北市房東的節稅秘籍"
+   },
+   {
+    "best_fine_id": "property_manager/A/repair-ticket-urgency-judgment",
+    "score": 0.0526,
+    "source": "helpcenter:repair",
+    "text": "房東教學07:修繕篇"
+   },
+   {
+    "best_fine_id": null,
+    "score": 0.0,
+    "source": "helpcenter:sea-internet",
+    "text": "東南亞飆升的網際網路市場:Google 數位化時代 SEA 2021關鍵報告心得"
+   },
+   {
+    "best_fine_id": "property_manager/F/account-domain-scope-pending",
+    "score": 0.0247,
+    "source": "helpcenter:slug00",
+    "text": "註冊時收不到驗證信"
+   },
+   {
+    "best_fine_id": "property_manager/C/followup-missing-data-in-jgb",
+    "score": 0.0476,
+    "source": "helpcenter:slug01",
+    "text": "我忘記帳號怎麼辦?"
+   },
+   {
+    "best_fine_id": "property_manager/C/followup-missing-data-in-jgb",
+    "score": 0.0476,
+    "source": "helpcenter:slug02",
+    "text": "我忘記密碼怎麼辦?"
+   },
+   {
+    "best_fine_id": "property_manager/B/dunning-draft-not-auto-send",
+    "score": 0.05,
+    "source": "helpcenter:slug03",
+    "text": "租客教學:租金逾期篇"
+   },
+   {
+    "best_fine_id": "property_manager/A/repair-ticket-reclassify",
+    "score": 0.0625,
+    "source": "helpcenter:slug1",
+    "text": "如何新增物件?"
+   },
+   {
+    "best_fine_id": "property_manager/A/repair-ticket-vacant-no-lease",
+    "score": 0.0417,
+    "source": "helpcenter:slug10",
+    "text": "未刊登的物件也可以新增合約嗎?"
+   },
+   {
+    "best_fine_id": "property_manager/F/dunning-endpoint-form",
+    "score": 0.0455,
+    "source": "helpcenter:slug100",
+    "text": "租客繳費方式(藍新ATM)"
+   },
+   {
+    "best_fine_id": "property_manager/B/dunning-draft-not-auto-send",
+    "score": 0.0769,
+    "source": "helpcenter:slug101",
+    "text": "租客資料卡:查看聯絡方式與一鍵聯繫"
+   },
+   {
+    "best_fine_id": "property_manager/F/dunning-endpoint-form",
+    "score": 0.0455,
+    "source": "helpcenter:slug102",
+    "text": "租客繳費方式(藍新信用卡)"
+   },
+   {
+    "best_fine_id": "property_manager/F/dunning-endpoint-form",
+    "score": 0.0455,
+    "source": "helpcenter:slug103",
+    "text": "租客繳費方式(國泰ATM)"
+   },
+   {
+    "best_fine_id": "property_manager/F/dunning-endpoint-form",
+    "score": 0.0476,
+    "source": "helpcenter:slug104",
+    "text": "租客繳費方式(線下付款)"
+   },
+   {
+    "best_fine_id": "property_manager/C/lease-expiry-followup-scope",
+    "score": 0.02,
+    "source": "helpcenter:slug12",
+    "text": "編輯合約要從哪邊進入?"
+   },
+   {
+    "best_fine_id": "property_manager/A/repair-ticket-reclassify",
+    "score": 0.0556,
+    "source": "helpcenter:slug13",
+    "text": "如何寄送合約邀請?"
+   },
+   {
+    "best_fine_id": "property_manager/E/when-to-decline",
+    "score": 0.0714,
+    "source": "helpcenter:slug15",
+    "text": "歷史合約是什麼?"
+   },
+   {
+    "best_fine_id": "property_manager/A/repair-ticket-reclassify",
+    "score": 0.0526,
+    "source": "helpcenter:slug17",
+    "text": "租客簽約後如何更改?"
+   },
+   {
+    "best_fine_id": "property_manager/A/repair-ticket-reclassify",
+    "score": 0.0417,
+    "source": "helpcenter:slug20",
+    "text": "租客如何即時確認繳費帳單狀況?"
+   },
+   {
+    "best_fine_id": "property_manager/A/repair-ticket-reclassify",
+    "score": 0.0312,
+    "source": "helpcenter:slug20250612",
+    "text": "管理者如何快速找到點交、點退與押金狀態的物件?"
+   },
+   {
+    "best_fine_id": "property_manager/A/repair-ticket-reclassify",
+    "score": 0.0312,
+    "source": "helpcenter:slug21",
+    "text": "當租客完成匯款時,要如何通知並請房東確認到帳?"
+   },
+   {
+    "best_fine_id": "property_manager/A/repair-ticket-reclassify",
+    "score": 0.0345,
+    "source": "helpcenter:slug22",
+    "text": "房東如何確認向租客收租的帳單及款項細節?"
+   },
+   {
+    "best_fine_id": "property_manager/C/overdue-bill-followup-scope",
+    "score": 0.0638,
+    "source": "helpcenter:slug24",
+    "text": "房東及租客要如何辨認「逾期帳單」?"
+   },
+   {
+    "best_fine_id": "property_manager/B/dunning-draft-late-fee-mention",
+    "score": 0.0385,
+    "source": "helpcenter:slug27",
+    "text": "點退押金的找補費用在哪裡操作呢?"
+   },
+   {
+    "best_fine_id": "property_manager/A/repair-ticket-vacant-no-lease",
+    "score": 0.0345,
+    "source": "helpcenter:slug28",
+    "text": "點退需要在租約30天內到期時,才能操作"
+   },
+   {
+    "best_fine_id": null,
+    "score": 0.0,
+    "source": "helpcenter:slug29",
+    "text": "提前解約後何時可以進行點退?"
+   },
+   {
+    "best_fine_id": "property_manager/A/repair-ticket-vacant-no-lease",
+    "score": 0.1,
+    "source": "helpcenter:slug39",
+    "text": "物件的狀態影響什麼功能?"
+   },
+   {
+    "best_fine_id": "property_manager/E/when-to-decline",
+    "score": 0.037,
+    "source": "helpcenter:slug48",
+    "text": "租客會收到什麼形式的簽約邀請?是否有時效?"
+   },
+   {
+    "best_fine_id": "property_manager/E/when-to-decline",
+    "score": 0.0667,
+    "source": "helpcenter:slug66",
+    "text": "點退押金在做什麼?"
+   },
+   {
+    "best_fine_id": "property_manager/A/repair-ticket-reclassify",
+    "score": 0.0625,
+    "source": "helpcenter:slug71",
+    "text": "如何新增合約?"
+   },
+   {
+    "best_fine_id": "property_manager/C/lease-expiry-followup-scope",
+    "score": 0.0185,
+    "source": "helpcenter:slug73",
+    "text": "電子合約的簽約邀請,有時效嗎?"
+   },
+   {
+    "best_fine_id": "property_manager/E/when-to-decline",
+    "score": 0.0303,
+    "source": "helpcenter:slug75",
+    "text": "「線上金流」&「現金/轉帳匯款」收款的最大差異是什麼?"
+   },
+   {
+    "best_fine_id": "property_manager/A/repair-ticket-reclassify",
+    "score": 0.0526,
+    "source": "helpcenter:slug76",
+    "text": "如何新增及發送帳單?"
+   },
+   {
+    "best_fine_id": "property_manager/C/overdue-bill-followup-scope",
+    "score": 0.0244,
+    "source": "helpcenter:slug78",
+    "text": "帳單內有哪些資訊?"
+   },
+   {
+    "best_fine_id": "property_manager/A/repair-ticket-reclassify",
+    "score": 0.0417,
+    "source": "helpcenter:slug79",
+    "text": "如何在帳單內添加臨時增收費用?"
+   },
+   {
+    "best_fine_id": "property_manager/A/repair-ticket-reclassify",
+    "score": 0.0588,
+    "source": "helpcenter:slug84",
+    "text": "租客該如何簽約?"
+   },
+   {
+    "best_fine_id": "property_manager/B/dunning-draft-not-auto-send",
+    "score": 0.0455,
+    "source": "helpcenter:slug86",
+    "text": "租客能用信用卡繳納房租嗎?"
+   },
+   {
+    "best_fine_id": "property_manager/A/repair-ticket-reclassify",
+    "score": 0.0323,
+    "source": "helpcenter:slug88",
+    "text": "租客該如何追蹤現金/轉帳匯款完成的帳單後續?"
+   },
+   {
+    "best_fine_id": "property_manager/E/when-to-decline",
+    "score": 0.0417,
+    "source": "helpcenter:slug90",
+    "text": "什麼是「房東對外首頁」(招租店舖)?"
+   },
+   {
+    "best_fine_id": "property_manager/F/iot-setup-scope-pending",
+    "score": 0.0278,
+    "source": "helpcenter:slug92",
+    "text": "設定經理人之後會怎樣?"
+   },
+   {
+    "best_fine_id": "property_manager/A/repair-ticket-reclassify",
+    "score": 0.0526,
+    "source": "helpcenter:slug93",
+    "text": "進階搜尋功能如何用?"
+   },
+   {
+    "best_fine_id": "property_manager/A/repair-ticket-reclassify",
+    "score": 0.0556,
+    "source": "helpcenter:slug95",
+    "text": "如何更改帳號資訊?"
+   },
+   {
+    "best_fine_id": "property_manager/C/lease-expiry-followup-scope",
+    "score": 0.0185,
+    "source": "helpcenter:slug99",
+    "text": "Logo大小章&合約呈現方式"
+   },
+   {
+    "best_fine_id": "property_manager/E/identity-and-scope-boundary",
+    "score": 0.0476,
+    "source": "helpcenter:tenantintro.register",
+    "text": "租客系統操作教學—註冊篇"
+   }
+  ]
+ },
+ "raw_outputs_path": ".claude/skills/outline-curation/raw/phrasing-property_manager-20260907",
+ "skill_version": "0.1.0",
+ "step": "phrasing"
+}

@@ -19,10 +19,13 @@ Union[ToolResult, Awaitable[ToolResult]]]`——`kb_get()` 對 `outline:*` 直�
 裸 dict——這是已合併程式碼定的實際契約（CANON：程式如何跑，程式說了算），
 本檔對齊它。
 
-## 售前大綱＝正本組裝（任務 3.2，2026-09-07 業主核）
-`build_prospect_outline` **不再讀 DB**：它讀 git 正本（`rag-orchestrator/canon/prospect.md`
-＋同源 `.json`），逐細目組成章節，並附一節 `outline:toc`。組裝規則、可見性與啟動失敗語義
+## 受眾視圖＝一份正本切出來的（任務 3.2；DSP-058／計畫 9.6 S3）
+`build_audience_outline(audience)` **不讀 DB**：它讀 git 正本（`rag-orchestrator/canon/jgb/`
+九架＋同源 `jgb.json`／`CATALOG.md`），對該受眾切出**視圖**（只含 `target_user`／
+`business_types` 兩軸可見的細目），並附一節 `outline:toc`。組裝規則、可見性與啟動失敗語義
 都在 `services/agent/canon/canon_assembler.py`（design 元件 5）。
+⚠️ 兩個受眾**共用同一份 `CanonDoc`**（第一個受眾載入並註冊，第二個沿用）——
+⛔ 不再「一個受眾一份正本」，受眾隔離全靠視圖過濾。
 ⚠️ 舊的「六模組分類表＋邊界句抽取＋DSP-009／CTA 固定節」已**退役**：粗目 G／F 在正本內
 承接那兩節的角色。`build_toc(db_pool, audience, vendor_id)`（pm／tenant 的『系統脈絡』目錄）
 **保留現役**，它有 vendor 過濾，⛔ 不得拿掉。
@@ -33,13 +36,14 @@ import hashlib
 import logging
 import os
 import re
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Optional
 
 from pydantic import BaseModel
 
 from services.agent.identity import Audience, Identity
-from services.agent.tools.registry import Provenance, ToolResult
+from services.agent.tools.registry import ToolResult
 from services.vendor_knowledge_retriever_v2 import VendorKnowledgeRetrieverV2
 
 logger = logging.getLogger(__name__)
@@ -143,13 +147,19 @@ class CandidateOutlineDoc(BaseModel):
     與 `OutlineDoc` 同型別家族、滿足同一個 `OutlineDocLike` Protocol——`PromptAssembler`
     只看結構型別，不在乎具體類別。兩個建構子（`from_selection`／`from_visible`）都
     **複製 `full` 的 `audience`／`version`／`sha256`**（⛔ 不重算、不填
-    `identity.resolved_audience()`——否則 `test_outline_audience_mismatch_fails_closed`
-    會恆真），只有 `sections`／`text`／`token_count`／`token_count_approx` 是這一回合
+    `identity.resolved_audience()`——否則 `test_prompt_assembler_req.py::
+    test_prompt_assembler_rejects_outline_from_wrong_audience` 會恆真），只有 `sections`／`text`／`token_count`／`token_count_approx` 是這一回合
     當場重算的。
 
     ⛔ 兩者都不含 `full` 自帶的 `outline:toc` 以外的非細目節——`sections` 一律是
     候選／可見細目（來自 `full.sections`）＋呼叫端當回合算好的 `toc` 一節，
     `full` 若自帶啟動期靜態 toc 不會被沿用（它從來不在候選／可見集合裡）。
+
+    ⚠️ 9.8 DSP-059 D′ S2：產線 `_select_outline` 改走第三個建構子 `from_canon`
+    （正本現組，⛔ 不吃預組的 `full: OutlineDoc`）——`from_selection`／
+    `from_visible`／`_from_sections` **保留逐位元不動**，只當離線工具
+    （`build_audience_outline` 的舊消費端、S2 ① 凍結題的 OLD 側比對）用，
+    ⛔ 新程式不得呼叫它們。
     """
 
     audience: Audience
@@ -202,6 +212,50 @@ class CandidateOutlineDoc(BaseModel):
             audience=full.audience,
             version=full.version,
             sha256=full.sha256,
+            token_count=assembled.token_count,
+            sections=assembled.sections,
+            text=assembled.text,
+            token_count_approx=assembled.token_count_approx,
+        )
+
+    @classmethod
+    def from_canon(
+        cls,
+        canon,
+        identity: Identity,
+        ids: list[str],
+        toc: OutlineSection,
+        *,
+        vendor_business_types: "frozenset[str]",
+    ) -> "CandidateOutlineDoc":
+        """9.8 DSP-059 D′ S2：**不預組整份篩選結果**——每回合從正本現組。
+
+        `audience`／`version`／`sha256` 只由 `identity`／`canon` 推導
+        （⛔ 沒有 `audience` 參數）：`audience=identity.resolved_audience()`、
+        `version=canon.version`、`sha256=canon.canon_sha256`。
+
+        `vendor_business_types` 由呼叫端（`runtime._select_outline`）**已解析好**
+        傳入（⛔ 本函式不自己呼叫 `resolve_vendor_business_types`——那會讓一回合
+        內解析兩次，違反元件 6／F5「每回合最多解析一次」）。
+
+        `ids` 逐一交 `canon_assembler.build_canon_sections`（不可見的 id ⇒ raise
+        `CanonSectionInvisibleError`，⛔ 由呼叫端 `runtime._select_outline` 接住、
+        ⛔ 本函式不吞）。`sections` ＝ 這些節 ＋ `toc`（複用 `_build_doc` 同款組法）。
+        """
+        from services.agent.canon.canon_assembler import build_canon_sections
+
+        picked = build_canon_sections(
+            canon, identity, ids, vendor_business_types=vendor_business_types
+        )
+        assembled = _build_doc(
+            audience=identity.resolved_audience(),
+            sections=list(picked) + [toc],
+            version=canon.version,
+        )
+        return cls(
+            audience=identity.resolved_audience(),
+            version=canon.version,
+            sha256=canon.canon_sha256,
             token_count=assembled.token_count,
             sections=assembled.sections,
             text=assembled.text,
@@ -336,14 +390,15 @@ def _build_doc(
     )
 
 
-#: 啟動期組 `outline:toc` 用的**靜態身分**（受眾 → `Identity` 欄位）。
-#: ⛔ 只列有 git 正本的受眾：tenant 沒有正本，且 b2c 靜態身分在啟動時解析不出
-#: 業態（`vendor_id=0` 只是佔位）⇒ 缺鍵＝不可組裝，`build_audience_outline` 直接 raise。
-#: prospect 那一列的三個值 ⛔ 不得更動——它是 3.2 起 `build_prospect_outline` 逐位元
-#: 相同輸出的一部分（售前＝b2b ＋ 無 role_id；勿改回 b2c，見下方 `build_audience_outline`）。
+#: 啟動期組**受眾視圖**與 `outline:toc` 用的**靜態身分**（受眾 → `Identity` 欄位）。
+#: ⛔ 只列有 git 正本視圖的受眾：tenant 在正本裡沒有任何細目（`target_user` 無 tenant），
+#: 且 b2c 靜態身分在啟動時解析不出業態（`vendor_id=0` 只是佔位）⇒ 缺鍵＝不可組裝，
+#: `build_audience_outline` 直接 raise。
+#: prospect 那一列的三個值 ⛔ 不得更動（售前＝b2b ＋ 無 role_id；勿改回 b2c，
+#: 見下方 `build_audience_outline`）。
 _STATIC_TOC_IDENTITY: dict[str, dict] = {
     "prospect": {"vendor_id": 0, "target_user": "prospect", "mode": "b2b"},
-    # DSP-037（業主 2026-09-07）：pm 正本上線。pm 走 b2b 分支（正本 front matter
+    # DSP-037（業主 2026-09-07）：業者身分開放。業者走 b2b 分支（正本 front matter
     # `business_types: [system_provider]`／`target_user: [property_manager]`），
     # 故 `mode="b2b"`＋`target_user="property_manager"` ⇒ `canon_visible` 兩條件都成立。
     "property_manager": {
@@ -351,29 +406,37 @@ _STATIC_TOC_IDENTITY: dict[str, dict] = {
     },
 }
 
+#: 有 git 正本視圖的受眾集合（＝`_STATIC_TOC_IDENTITY` 的鍵）——`runtime._select_outline`
+#: 與 `health` 的取用點。⛔ 不要另寫第二份清單：它與靜態身分表必須同進同出。
+CANON_VIEW_AUDIENCES: frozenset = frozenset(_STATIC_TOC_IDENTITY)
+
 
 async def build_audience_outline(audience: Audience, db_pool=None) -> OutlineDoc:
-    """R2.6／R5.4：git 正本（`canon/<audience>.md`）→ 逐細目章節 ＋ `outline:toc`。
+    """R2.6／R5.4：git 正本（`canon/jgb/`）→ 該受眾的**視圖**章節 ＋ `outline:toc`。
 
     ⚠️ **`db_pool` 保留於簽名但不再使用**（`app.py` 不改；3.2 起大綱不讀 DB）。
-    步驟（design 元件 5「呼叫鏈與失敗語義」）：
+    步驟（design 元件 5「呼叫鏈與失敗語義」；DSP-058 改為單一正本）：
 
-    1. `load_canon_or_die(resolve_canon_dir(), audience)`——`.md` 解析＋`.json`
-       逐位元組同源比對；缺檔／不同源／格式錯 ⇒ raise（呼叫端決定升成啟動紅或跳過）。
-    2. `register_canon(audience, doc)`——`make_outline_resolver` 每回合要用同一份
-       `CanonDoc` 套可見性（`OutlineDoc` 是 pydantic，⛔ 不掛在它身上）。
-    3. `build_outline(doc)` ＋ 附 `outline:toc` 節（**啟動時**以該受眾的**靜態身分**
-       算一次，見 `_STATIC_TOC_IDENTITY`。⚠️ 每回合的候選子集與動態 toc 是 4.1
+    1. `get_canon()`——已註冊就沿用（第二個受眾不重讀檔、不重算 sha）；否則
+       `load_canon_or_die(resolve_canon_dir())`（九架解析＋`.json`／`CATALOG.md`
+       逐位元組同源比對）後 `register_canon(doc)`。缺檔／不同源／格式錯 ⇒ raise
+       （呼叫端決定升成啟動紅或跳過）。
+    2. `build_outline(canon, audience, static_identity, …)`——**受眾視圖**：只納
+       兩軸可見的細目，未審者只出標題（見 `canon_assembler.build_outline`）。
+    3. 附 `outline:toc` 節（**啟動時**以該受眾的**靜態身分**算一次，見
+       `_STATIC_TOC_IDENTITY`。⚠️ 每回合的候選子集與動態 toc 是 4.1
        `CandidateOutlineDoc`，⛔ 不在本片）。
-    4. `check_budget(min(env 上限, 正本 budget_tokens))`——正本自帶的預算是上限之一，
-       ⛔ 不讓 env 單方面把上限開大（security-reviewer P2-3）。
-
-    ⚠️ **本函式是 `build_prospect_outline` 的泛化**（DSP-037／S1b）：prospect 的
-    輸出必須逐位元不變（`test_build_prospect_outline_registers_same_doc_and_leaves_sha_unchanged`
-    是那條線的釘子），故步驟、順序、靜態身分、`_build_doc` 參數一字未動。
+    4. `check_turn_budget(doc.sections, toc, k_limit=…, toc_limit=…)`（9.8 DSP-059
+       D′／S1）——只量「任 K=5 可引用節 token 最大和」與「目錄 token」兩尺，⛔ 不再量
+       整份視圖（圖書館形態擴架後未審標題節會把視圖 token_count 撐爆，那與每回合真正
+       注入模型的內容無關）；上限由 `OUTLINE_K_TOKEN_LIMIT`／`OUTLINE_TOC_TOKEN_LIMIT`
+       管，env ⛔ 不得把上限開大（見 `default_k_token_limit`／`default_toc_token_limit`）。
+       ⚠️ 啟動只呼叫這**一次**（`app.py::_init_agent_runtime` 不再另呼叫舊
+       `check_budget`——那支已降為離線工具／測試用的純函式）。
     """
     from services.agent.canon.canon_assembler import (  # 循環相依 ⇒ 函式內 import
-        build_canon_toc, build_outline, load_canon_or_die, register_canon, resolve_canon_dir,
+        build_canon_toc, build_outline, get_canon, load_canon_or_die, register_canon,
+        resolve_canon_dir,
     )
 
     identity_fields = _STATIC_TOC_IDENTITY.get(audience)
@@ -383,34 +446,43 @@ async def build_audience_outline(audience: Audience, db_pool=None) -> OutlineDoc
             f"（合法值 {sorted(_STATIC_TOC_IDENTITY)}；tenant 走 build_toc 的 DB 目錄）"
         )
 
-    canon = load_canon_or_die(resolve_canon_dir(), audience)
-    register_canon(audience, canon)
+    canon = get_canon()
+    if canon is None:
+        canon = load_canon_or_die(resolve_canon_dir())
+        register_canon(canon)
 
-    doc = build_outline(canon)
     # 靜態身分見 `_STATIC_TOC_IDENTITY`：兩個受眾都是 b2b ＋ 無 role_id
     # （售前 memory project_presales_target_user_routing；jgb2 面板送 prospect 時 mode=b2b）。
     # ⛔ 勿改回 b2c——那會走 vendor 業態分支，而啟動時沒有真實 vendor 可解析
     # （`vendor_id=0` 只是佔位，`resolve_vendor_business_types` 對它回空集合且不查 DB）。
     static_identity = Identity(**identity_fields)
+    vendor_business_types = resolve_vendor_business_types(static_identity)
+
+    doc = build_outline(
+        canon, audience, static_identity, vendor_business_types=vendor_business_types
+    )
     toc = build_canon_toc(
-        canon,
-        static_identity,
-        vendor_business_types=resolve_vendor_business_types(static_identity),
+        canon, static_identity, vendor_business_types=vendor_business_types
     )
     doc = _build_doc(
-        audience=canon.audience,
+        audience=audience,
         sections=list(doc.sections) + [toc],
         version=canon.version,
     )
-    check_budget(doc, min(default_token_limit(audience), canon.budget_tokens))
+    toc_in_doc = next((s for s in doc.sections if s.id == toc.id), None)
+    check_turn_budget(
+        doc.sections, toc_in_doc,
+        k_limit=default_k_token_limit(audience),
+        toc_limit=default_toc_token_limit(audience),
+    )
     return doc
 
 
 async def build_prospect_outline(db_pool) -> OutlineDoc:
     """`build_audience_outline("prospect", …)` 的**薄別名**（DSP-037／S1b 前的唯一入口）。
 
-    ⛔ 不在此重寫第二份組裝式——輸出必須與泛化前逐位元相同。既有呼叫端
-    （`scripts/`、測試、`app.py` 舊路徑）保留這個名字。
+    ⛔ 不在此重寫第二份組裝式。既有呼叫端（`tools/`、測試）保留這個名字。
+    輸出＝售前身分依 `canon_visible` 從九架正本篩出的細目＋toc（離線工具用），⛔ 不是整份正本。
     """
     return await build_audience_outline("prospect", db_pool)
 
@@ -445,7 +517,14 @@ async def build_toc(db_pool, audience: Audience, vendor_id: int) -> OutlineDoc:
 
 
 def check_budget(doc: OutlineDoc, limit_tokens: int) -> None:
-    """R5.5：`doc.token_count > limit_tokens` ⇒ raise（啟動即紅，⛔ 不靜默截斷）。"""
+    """R5.5：`doc.token_count > limit_tokens` ⇒ raise（啟動即紅，⛔ 不靜默截斷）。
+
+    ⚠️ **啟動不再呼叫這支**（9.8 DSP-059 D′／S1）：它量的是整份受眾視圖
+    （含未審標題節），圖書館形態擴架後這一尺會把業者身分的篩選結果判成永遠超標
+    （190 條未審標題節撐大 token_count，與每回合真正注入模型的內容無關）。
+    保留為**純函式**只給離線工具／測試釘（`test_outline_unit_req.py`）用，
+    啟動期的守門一律走 `check_turn_budget`。
+    """
     if doc.token_count > limit_tokens:
         raise OutlineBudgetExceeded(
             f"{doc.audience} 大綱／目錄 token_count={doc.token_count} 超過上限 "
@@ -453,35 +532,123 @@ def check_budget(doc: OutlineDoc, limit_tokens: int) -> None:
         )
 
 
-#: R5.5 env 對應表（呼叫端在啟動時讀，傳給 `check_budget`；本檔只提供預設值
-#: 常數表，⛔ 自己讀 env——讀 env 的時機與位置屬 2.5 接線範圍）。
-OUTLINE_TOKEN_LIMIT_DEFAULTS: dict[str, int] = {
+@dataclass(frozen=True)
+class TurnBudget:
+    """`check_turn_budget` 的量測結果——啟動 log 印這三數（K 上界／toc tokens／toc 行數）。"""
+
+    k_upper: int
+    toc_tokens: int
+    toc_lines: int
+
+
+def check_turn_budget(
+    sections: list["OutlineSection"],
+    toc_section: Optional["OutlineSection"],
+    *,
+    k_limit: int,
+    toc_limit: int,
+) -> TurnBudget:
+    """R5.5（9.8 DSP-059 D′）：啟動只量**每回合真正可能注入的量**，⛔ 不量整份視圖。
+
+    量測式（S1 起與 S2 每回合現組共用同一支函式，⛔ 兩式各寫一份）：
+    - **K 上界**＝只取 `citable=True` 且 `id != TOC_SECTION_ID` 的節，每節 token 用
+      `_build_doc` 同款組法（`【id】title\\ntext`，節間分隔字元不計）算 `_count_tokens`，
+      取最大的 `min(K, n)` 個之和——`K` 沿 `candidate_selector.K`，⛔ 不另寫常數
+      （這就是「一回合最多會被塞進模型的最壞情況」）。
+    - **toc tokens**＝`toc_section.text` 的 `_count_tokens`（`toc_section is None` ⇒ 0），
+      獨立對 `toc_limit` 比較，不併進 K 上界（目錄與候選細目是兩段不同的注入）。
+    - 任一超過上限 ⇒ raise `OutlineBudgetExceeded`（沿用既有例外型別），訊息點名
+      是哪一把尺（K 上界／toc）超標多少。
+    """
+    from services.agent.canon.canon_assembler import TOC_SECTION_ID  # 循環相依 ⇒ 函式內 import
+    from services.agent.canon.candidate_selector import K
+
+    per_section_tokens = sorted(
+        (
+            _count_tokens(f"【{s.id}】{s.title}\n{s.text}")[0]
+            for s in sections
+            if s.citable and s.id != TOC_SECTION_ID
+        ),
+        reverse=True,
+    )
+    k_upper = sum(per_section_tokens[: min(K, len(per_section_tokens))])
+
+    if toc_section is not None:
+        toc_tokens = _count_tokens(toc_section.text)[0]
+        toc_lines = sum(1 for line in toc_section.text.splitlines() if line.strip())
+    else:
+        toc_tokens = 0
+        toc_lines = 0
+
+    if k_upper > k_limit:
+        raise OutlineBudgetExceeded(
+            f"K 上界（K={K} 節 token 最大和）k_upper={k_upper} 超過上限 {k_limit}"
+        )
+    if toc_tokens > toc_limit:
+        raise OutlineBudgetExceeded(
+            f"目錄（toc）token_count={toc_tokens} 超過上限 {toc_limit}"
+        )
+
+    return TurnBudget(k_upper=k_upper, toc_tokens=toc_tokens, toc_lines=toc_lines)
+
+
+#: R5.5 兩張常數表（9.8 DSP-059 D′）：啟動只量「任 K=5 可引用節 token 最大和」與
+#: 「目錄 token」，⛔ 不再量整份受眾視圖（圖書館形態下未審標題節會把視圖撐爆，
+#: 與每回合真正注入模型的內容無關——見 `check_turn_budget` docstring）。
+#: env 對應表在呼叫端讀（本檔只提供預設值常數表，⛔ 自己讀 env）。
+#: K 上界 = 5 × 2,400（每節上限）＝ 12,000，DSP-059a：涵蓋補審後最壞加總實測
+#: （售前 8,862／業者 10,023，單條最長細目 2,345 tokens，`jgb/D/contract-esign-flow`）。
+#: ⛔ 不做每節截斷；單條細目過長改用 `tools/canon_fine_size_lint.py` 標記後拆。
+OUTLINE_K_TOKEN_LIMIT: dict[str, int] = {
     "prospect": 12_000,
+    "property_manager": 12_000,
+    "tenant": 12_000,
+}
+OUTLINE_TOC_TOKEN_LIMIT: dict[str, int] = {
+    "prospect": 8_000,
     "property_manager": 8_000,
     "tenant": 8_000,
 }
-# 🔴 2026-09-07 實測：整份售前正本大綱（38 細目＋toc）cl100k 為 10,336 tokens，中文約 1.1 字元/token（research 假設 1.6 是錯的）；
-# 10,000 是估錯的數字 ⇒ 業主裁 12,000（正本 budget_tokens 同步），4.1 後每回合只注入 K 候選、整份正本是退路。
-OUTLINE_TOKEN_LIMIT_ENV: dict[str, str] = {
-    "prospect": "AGENT_OUTLINE_TOKEN_LIMIT_PROSPECT",
-    "property_manager": "AGENT_OUTLINE_TOKEN_LIMIT_PM",
-    "tenant": "AGENT_OUTLINE_TOKEN_LIMIT_TENANT",
+OUTLINE_K_TOKEN_LIMIT_ENV: dict[str, str] = {
+    "prospect": "AGENT_OUTLINE_K_TOKEN_LIMIT_PROSPECT",
+    "property_manager": "AGENT_OUTLINE_K_TOKEN_LIMIT_PM",
+    "tenant": "AGENT_OUTLINE_K_TOKEN_LIMIT_TENANT",
+}
+OUTLINE_TOC_TOKEN_LIMIT_ENV: dict[str, str] = {
+    "prospect": "AGENT_OUTLINE_TOC_TOKEN_LIMIT_PROSPECT",
+    "property_manager": "AGENT_OUTLINE_TOC_TOKEN_LIMIT_PM",
+    "tenant": "AGENT_OUTLINE_TOC_TOKEN_LIMIT_TENANT",
 }
 
 
-def default_token_limit(audience: Audience) -> int:
-    """`OUTLINE_TOKEN_LIMIT_ENV[audience]` 覆寫，缺省用 `OUTLINE_TOKEN_LIMIT_DEFAULTS`。"""
-    env_key = OUTLINE_TOKEN_LIMIT_ENV.get(audience)
-    default = OUTLINE_TOKEN_LIMIT_DEFAULTS.get(audience)
+def _default_limit(audience: Audience, table: dict[str, int], env_table: dict[str, str]) -> int:
+    """`min(env 覆寫 or 常數, table[audience])`——**env 只能把上限調小，⛔ 不能調大**
+
+    （security-reviewer P2-3 的原意——常數表本身是硬上限，env 只在更小時生效；
+    env 設了但不是合法整數 ⇒ **raise**，
+    ⛔ 不靜默忽略——一個打錯字的 env 值不該悄悄變成「當作沒設」）。
+    """
+    env_key = env_table.get(audience)
+    default = table.get(audience)
     if default is None:
         raise ValueError(f"未知 audience={audience!r}")
     raw = os.environ.get(env_key or "", "").strip()
     if not raw:
         return default
     try:
-        return int(raw)
+        return min(int(raw), default)
     except ValueError as exc:
         raise ValueError(f"{env_key}={raw!r} 不是合法整數") from exc
+
+
+def default_k_token_limit(audience: Audience) -> int:
+    """該受眾的 K 上界 token 上限（`OUTLINE_K_TOKEN_LIMIT`，env 只能調小）。"""
+    return _default_limit(audience, OUTLINE_K_TOKEN_LIMIT, OUTLINE_K_TOKEN_LIMIT_ENV)
+
+
+def default_toc_token_limit(audience: Audience) -> int:
+    """該受眾的目錄 token 上限（`OUTLINE_TOC_TOKEN_LIMIT`，env 只能調小）。"""
+    return _default_limit(audience, OUTLINE_TOC_TOKEN_LIMIT, OUTLINE_TOC_TOKEN_LIMIT_ENV)
 
 
 # ---------------------------------------------------------------------------
@@ -489,22 +656,23 @@ def default_token_limit(audience: Audience) -> int:
 # ---------------------------------------------------------------------------
 
 
-def make_outline_resolver(cache: dict):
+def make_outline_resolver():
     """回傳 `Callable[[Identity, str], ToolResult]`，供 `kb_get(outline_resolver=...)`。
 
-    `cache` 形狀：`{audience: OutlineDoc}`（`Audience` → 該身分目前生效的
-    大綱／目錄）。由呼叫端（2.5）維護——重跑 `build_prospect_outline`／
-    `build_toc` 後覆寫對應鍵即可失效重建，本函式只做**查找**，⛔ 自己不重建、
-    不持有 db_pool（重建時機屬 Runtime／排程，不是 resolver 的職責）。
+    `app.py` 一律 `register_canon` 在先，正本啟動時就已註冊——⛔ 本函式因此
+    ⛔ 不吃 `cache` 參數、⛔ 不維護行程級 `{audience: OutlineDoc}` 表：任何
+    「未註冊時退回 cache」的分支都會對 requester 不套 `canon_visible`、讓
+    未審節當 `ok=True`，是繞過可見性的側門，⛔ 不得加回。
 
-    ⚠️ **已註冊正本的受眾走正本**（3.2）：`canon_assembler.get_canon(audience)` 有值時
-    改呼叫 `resolve_canon_section`，每回合套 `canon_visible`（未審／不可見／不存在
-    一律 `NO_MATCH`）；未註冊（pm／tenant 的 DB TOC）維持下列 cache 查找邏輯。
+    ⚠️ **受眾 ∉ `_STATIC_TOC_IDENTITY`（tenant）⇒ 一律 `NO_MATCH`**（DSP-058）：
+    正本裡沒有任何 tenant 細目——單一正本形態下，任何「拿別人的大綱來查」的
+    路徑都是跨受眾外洩的入口，這裡直接關掉。
 
-    找不到大綱（cache 未就緒）或找不到該 section id ⇒ `ToolResult(ok=False,
+    ⚠️ **正本未註冊 ⇒ `NO_MATCH`**（fail-closed，⛔ 不回退成任何形式的 cache）。
+
+    找不到大綱（正本未註冊）或找不到該 section id ⇒ `ToolResult(ok=False,
     error="NO_MATCH")`——與 `kb.py` 池外查詢同一錯誤語意，⛔ 對模型區分兩種
-    「找不到」（design：不對模型洩漏「不存在」與「無權限」的差異，這裡延伸為
-    「不存在」與「大綱還沒建好」同樣不區分）。
+    「找不到」（design：不對模型洩漏「不存在」與「無權限」的差異）。
     """
 
     def resolver(identity: Identity, kb_id: str) -> ToolResult:
@@ -513,36 +681,22 @@ def make_outline_resolver(cache: dict):
         )
 
         audience = identity.resolved_audience()
-        canon = get_canon(audience)
-        if canon is not None:
-            # F7 修補的產線接線點：目錄與 `outline:<fine id>` 都**每回合**套可見性，
-            # identity 逐次傳入（⛔ 不綁在工廠——工廠只建一次，身分每回合不同）。
-            # `vendor_business_types` 每回合最多解析一次（元件 6，tasks 6.2 前置
-            # P3-b）：prospect／vendor_id 缺 ⇒ `resolve_vendor_business_types`
-            # 回空集合且不呼叫 resolver；b2c 受眾解析真實業態。
-            return resolve_canon_section(
-                canon,
-                identity,
-                kb_id,
-                vendor_business_types=resolve_vendor_business_types(identity),
-            )
-        doc = cache.get(audience)
-        if doc is None:
+        if audience not in _STATIC_TOC_IDENTITY:
+            # tenant：正本無其細目，⛔ 不回內容（fail-closed）。
             return ToolResult(ok=False, error="NO_MATCH")
-        for section in doc.sections:
-            if section.id == kb_id:
-                return ToolResult(
-                    ok=True,
-                    data={
-                        "id": section.id,
-                        "question_summary": section.title,
-                        "answer": section.text,
-                    },
-                    provenance=[
-                        Provenance(source=section.id, text=section.text, citable=section.citable)
-                    ],
-                    text_for_model=section.text,
-                )
-        return ToolResult(ok=False, error="NO_MATCH")
+        canon = get_canon()
+        if canon is None:
+            return ToolResult(ok=False, error="NO_MATCH")
+        # 目錄與 `outline:<fine id>` 都**每回合**套可見性，identity 逐次傳入
+        # （⛔ 不綁在工廠——工廠只建一次，身分每回合不同）。
+        # `vendor_business_types` 每回合最多解析一次（元件 6，tasks 6.2 前置
+        # P3-b）：prospect／vendor_id 缺 ⇒ `resolve_vendor_business_types`
+        # 回空集合且不呼叫 resolver；b2c 受眾解析真實業態。
+        return resolve_canon_section(
+            canon,
+            identity,
+            kb_id,
+            vendor_business_types=resolve_vendor_business_types(identity),
+        )
 
     return resolver

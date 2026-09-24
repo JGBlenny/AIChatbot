@@ -444,7 +444,7 @@ STRIDE 見 research.md；1.1 處置見附錄 C。實作點：不變量 18–21�
 - e2e（`RUN_E2E=1`）：三組凍結樣本；契約測試 `tests/unit/chat_flow` 全綠；派獨立 verifier（收案鐵則）。
 
 ## 部署考量
-新 env：`AGENT_STAGE`、`AGENT_TURN_ENABLED`（預設 false）、`AGENT_AUDIENCES`、`AGENT_SHADOW_AUDIENCES`、`AGENT_SHADOW_MONTHLY_USD_CAP`、`AGENT_BUDGET_TOOL_CALLS/REWRITES/DEADLINE_S`、`AGENT_OUTLINE_TOKEN_LIMIT_PROSPECT`、`MCP_ALLOWED_ORIGINS`、`RATE_PER_MIN`、`KB_GET_SESSION_CAP`；依賴 `mcp==2.1.1`、`tiktoken==0.14.0`；migration：三張新表。步驟同現行 runbook；⛔ 線上由業主執行。監控：每回合成本 > ×3、影子月上限、Verifier 拒率分佈、`tool_unavailable` 率、p95。
+新 env：`AGENT_STAGE`、`AGENT_TURN_ENABLED`（預設 false）、`AGENT_AUDIENCES`、`AGENT_SHADOW_AUDIENCES`、`AGENT_SHADOW_MONTHLY_USD_CAP`、`AGENT_BUDGET_TOOL_CALLS/REWRITES/DEADLINE_S`、`AGENT_OUTLINE_K_TOKEN_LIMIT_PROSPECT`、`AGENT_OUTLINE_TOC_TOKEN_LIMIT_PROSPECT`、`MCP_ALLOWED_ORIGINS`、`RATE_PER_MIN`、`KB_GET_SESSION_CAP`；依賴 `mcp==2.1.1`、`tiktoken==0.14.0`；migration：三張新表。步驟同現行 runbook；⛔ 線上由業主執行。監控：每回合成本 > ×3、影子月上限、Verifier 拒率分佈、`tool_unavailable` 率、p95。
 
 ## 風險與挑戰
 | 風險 | 影響 | 機率 | 緩解 |
@@ -523,7 +523,7 @@ Identity／Audience／ToolSpec／ToolResult／AgentOutput／Citation／VerifierR
 | P2 | `/mcp` 計量雙落點可能一呼叫兩列 | tasks 備註：**唯一寫入者＝門面**，middleware 只短路（額度拒）不 begin/finalize | 元件 4 |
 | P2 | `KB_GET_CAP` vs `KB_GET_SESSION_CAP` | tasks 備註：統一 `KB_GET_CAP`（每 key 每小時） | 非功能／部署 |
 | P2 | `AGENT_STAGE` 未列 env | tasks 備註：加入部署清單 | 部署 |
-| P2 | R5.5 pm／tenant 目錄 8K 無落點 | tasks 備註：`AGENT_OUTLINE_TOKEN_LIMIT_PM`／`_TENANT`（預設 8000） | 部署、元件 5 |
+| P2 | R5.5 pm／tenant 目錄 8K 無落點 | tasks 備註：`AGENT_OUTLINE_K_TOKEN_LIMIT_PM`／`_TENANT`（預設 2500）與 `AGENT_OUTLINE_TOC_TOKEN_LIMIT_PM`／`_TENANT`（預設 8000） | 部署、元件 5 |
 | P2 | `X-JGB-Identity` `mode` 缺／非法未定 | tasks 備註：正規化 `b2c`（與 kwargs 預設同），`is_b2b` 仍由 target_user 決定 | 元件 4 |
 | P2 | `verify_api_key` 只回 `{id,name}` | tasks 備註：回 `is_internal`／`vendor_ids` 並傳到下游 | 決策 13 |
 | P2 | R10.2 trace_id 未串進 SSE | tasks 備註：`metadata` 事件帶 `trace_id` | 元件 1 |

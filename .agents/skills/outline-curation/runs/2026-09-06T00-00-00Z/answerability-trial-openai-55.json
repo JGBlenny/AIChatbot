@@ -1,0 +1,1470 @@
+{
+  "cost": {
+    "agents": 112,
+    "completion_tokens": 3815,
+    "prompt_tokens": 832123,
+    "usd": 0.0,
+    "wall_s": 0.0
+  },
+  "deterministic": false,
+  "inputs_sha": {
+    "cells": "32607587028474caf015e63024f6f31d8a07a166354d31dac4408b725756e669",
+    "drafts": "4cc0feb8d2f476ccc26f76f3193af2e6bde0c2fb66e68bdbec8b704616f3ddfd",
+    "kbRows": "4a17038c97627e8f82cbd9b0d0eea710c369aa66d85a9df4caeca899a29cd26d",
+    "rubric": "3d1137476b7ff6898733133c28659231b098ece89b4c8f12e55b24db999c6bfd"
+  },
+  "payload": {
+    "labels": [
+      {
+        "cell_id": "C01",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "tmp:kb:3606",
+        "label": "partial",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C01",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:3606",
+            "label": "partial",
+            "provisional": true
+          },
+          {
+            "cell_id": "C01",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:3585",
+            "label": "partial",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C02",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "tmp:kb:3606",
+        "label": "partial",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C02",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:3606",
+            "label": "partial",
+            "provisional": true
+          },
+          {
+            "cell_id": "C02",
+            "confidence": "medium",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:3584",
+            "label": "partial",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C03",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "tmp:kb:3602",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C03",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:3602",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C03",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:3602",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C04",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "tmp:draft:2",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C04",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:draft:2",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C04",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:draft:2",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C05",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "tmp:kb:3610",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C05",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:3610",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C05",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:3610",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C06",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "tmp:kb:3607",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C06",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:3607",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C06",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:3607",
+            "label": "partial",
+            "provisional": true
+          },
+          {
+            "cell_id": "C06",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:3607",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C07",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "tmp:draft:3",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C07",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:draft:3",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C07",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:draft:3",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C08",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "tmp:draft:4",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C08",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:draft:4",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C08",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:draft:4",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C09",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "tmp:kb:3611",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C09",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:3611",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C09",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:3611",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C10",
+        "confidence": "high",
+        "evidence_unit": null,
+        "fine_id": null,
+        "label": "deliberate_no",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C10",
+            "confidence": "high",
+            "evidence_unit": null,
+            "fine_id": null,
+            "label": "deliberate_no",
+            "provisional": true
+          },
+          {
+            "cell_id": "C10",
+            "confidence": "high",
+            "evidence_unit": null,
+            "fine_id": null,
+            "label": "deliberate_no",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C11",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "tmp:kb:3599",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C11",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:3599",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C11",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:3599",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C12",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "tmp:draft:5",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C12",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:draft:5",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C12",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:draft:5",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C13",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "tmp:draft:6",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C13",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:draft:6",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C13",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:draft:6",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C14",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "tmp:draft:7",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C14",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:draft:7",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C14",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:draft:7",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C15",
+        "confidence": "high",
+        "evidence_unit": null,
+        "fine_id": null,
+        "label": "no_source",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C15",
+            "confidence": "high",
+            "evidence_unit": null,
+            "fine_id": null,
+            "label": "no_source",
+            "provisional": true
+          },
+          {
+            "cell_id": "C15",
+            "confidence": "high",
+            "evidence_unit": null,
+            "fine_id": null,
+            "label": "no_source",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C16",
+        "confidence": "high",
+        "evidence_unit": 3,
+        "fine_id": "tmp:kb:3596",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C16",
+            "confidence": "high",
+            "evidence_unit": 3,
+            "fine_id": "tmp:kb:3596",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C16",
+            "confidence": "high",
+            "evidence_unit": 3,
+            "fine_id": "tmp:kb:3596",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C17",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "tmp:draft:9",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C17",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:draft:9",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C17",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:draft:9",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C18",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "tmp:kb:3600",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C18",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:3600",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C18",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:3600",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C19",
+        "confidence": "high",
+        "evidence_unit": null,
+        "fine_id": null,
+        "label": "no_source",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C19",
+            "confidence": "high",
+            "evidence_unit": null,
+            "fine_id": null,
+            "label": "no_source",
+            "provisional": true
+          },
+          {
+            "cell_id": "C19",
+            "confidence": "high",
+            "evidence_unit": null,
+            "fine_id": null,
+            "label": "no_source",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C20",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "tmp:kb:3600",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C20",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:3600",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C20",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:3600",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C21",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "tmp:draft:10",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C21",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:draft:10",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C21",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:draft:10",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C22",
+        "confidence": "high",
+        "evidence_unit": null,
+        "fine_id": null,
+        "label": "no_source",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C22",
+            "confidence": "high",
+            "evidence_unit": null,
+            "fine_id": null,
+            "label": "no_source",
+            "provisional": true
+          },
+          {
+            "cell_id": "C22",
+            "confidence": "high",
+            "evidence_unit": null,
+            "fine_id": null,
+            "label": "no_source",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C23",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "tmp:kb:3596",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C23",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:3596",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C23",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:3596",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C24",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "tmp:kb:3601",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C24",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:3601",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C24",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:3601",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C25",
+        "confidence": "high",
+        "evidence_unit": null,
+        "fine_id": null,
+        "label": "no_source",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C25",
+            "confidence": "high",
+            "evidence_unit": null,
+            "fine_id": null,
+            "label": "no_source",
+            "provisional": true
+          },
+          {
+            "cell_id": "C25",
+            "confidence": "high",
+            "evidence_unit": null,
+            "fine_id": null,
+            "label": "no_source",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C26",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "tmp:kb:5380",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C26",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:5380",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C26",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:5380",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C27",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "tmp:draft:11",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C27",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:draft:11",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C27",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:draft:11",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C28",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "tmp:kb:5378",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C28",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:5378",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C28",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:5378",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C29",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "tmp:kb:3601",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C29",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:3601",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C29",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:3601",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C30",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "tmp:draft:18",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C30",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:draft:18",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C30",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:draft:18",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C31",
+        "confidence": "high",
+        "evidence_unit": null,
+        "fine_id": null,
+        "label": "no_source",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C31",
+            "confidence": "high",
+            "evidence_unit": null,
+            "fine_id": null,
+            "label": "no_source",
+            "provisional": true
+          },
+          {
+            "cell_id": "C31",
+            "confidence": "high",
+            "evidence_unit": null,
+            "fine_id": null,
+            "label": "no_source",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C32",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "tmp:draft:12",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C32",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:draft:12",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C32",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:draft:12",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C33",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "tmp:draft:12",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C33",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:draft:12",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C33",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:draft:12",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C34",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "tmp:draft:13",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C34",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:draft:13",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C34",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:draft:13",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C35",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "tmp:kb:3610",
+        "label": "partial",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C35",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:3610",
+            "label": "partial",
+            "provisional": true
+          },
+          {
+            "cell_id": "C35",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:3601",
+            "label": "partial",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C36",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "tmp:kb:3602",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C36",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:3602",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C36",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:3602",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C37",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "tmp:draft:14",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C37",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:draft:14",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C37",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:draft:14",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C38",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "tmp:kb:3603",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C38",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:3603",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C38",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:3603",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C39",
+        "confidence": "high",
+        "evidence_unit": null,
+        "fine_id": null,
+        "label": "no_source",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C39",
+            "confidence": "high",
+            "evidence_unit": null,
+            "fine_id": null,
+            "label": "no_source",
+            "provisional": true
+          },
+          {
+            "cell_id": "C39",
+            "confidence": "high",
+            "evidence_unit": null,
+            "fine_id": null,
+            "label": "no_source",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C40",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "tmp:kb:3605",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C40",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:3605",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C40",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:3605",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C41",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "tmp:draft:15",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C41",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:draft:15",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C41",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:draft:15",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C42",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "tmp:draft:15",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C42",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:draft:15",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C42",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:draft:15",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C43",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "tmp:kb:5379",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C43",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:5379",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C43",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:5379",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C44",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "tmp:draft:16",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C44",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:draft:16",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C44",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:draft:16",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C45",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "tmp:kb:3607",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C45",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:3607",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C45",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:3607",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C46",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "tmp:kb:3608",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C46",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:3608",
+            "label": "partial",
+            "provisional": true
+          },
+          {
+            "cell_id": "C46",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:3608",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C46",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:3608",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C47",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "tmp:draft:17",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C47",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:draft:17",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C47",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:draft:17",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C48",
+        "confidence": "high",
+        "evidence_unit": null,
+        "fine_id": null,
+        "label": "deliberate_no",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C48",
+            "confidence": "high",
+            "evidence_unit": null,
+            "fine_id": null,
+            "label": "deliberate_no",
+            "provisional": true
+          },
+          {
+            "cell_id": "C48",
+            "confidence": "high",
+            "evidence_unit": null,
+            "fine_id": null,
+            "label": "deliberate_no",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C49",
+        "confidence": "high",
+        "evidence_unit": null,
+        "fine_id": null,
+        "label": "deliberate_no",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C49",
+            "confidence": "high",
+            "evidence_unit": null,
+            "fine_id": null,
+            "label": "deliberate_no",
+            "provisional": true
+          },
+          {
+            "cell_id": "C49",
+            "confidence": "high",
+            "evidence_unit": null,
+            "fine_id": null,
+            "label": "deliberate_no",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C50",
+        "confidence": "high",
+        "evidence_unit": null,
+        "fine_id": null,
+        "label": "deliberate_no",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C50",
+            "confidence": "high",
+            "evidence_unit": null,
+            "fine_id": null,
+            "label": "deliberate_no",
+            "provisional": true
+          },
+          {
+            "cell_id": "C50",
+            "confidence": "high",
+            "evidence_unit": null,
+            "fine_id": null,
+            "label": "deliberate_no",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C51",
+        "confidence": "high",
+        "evidence_unit": null,
+        "fine_id": null,
+        "label": "deliberate_no",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C51",
+            "confidence": "high",
+            "evidence_unit": null,
+            "fine_id": null,
+            "label": "deliberate_no",
+            "provisional": true
+          },
+          {
+            "cell_id": "C51",
+            "confidence": "high",
+            "evidence_unit": null,
+            "fine_id": null,
+            "label": "deliberate_no",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C52",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "tmp:kb:3602",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C52",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:3602",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C52",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:kb:3602",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C53",
+        "confidence": "low",
+        "evidence_unit": null,
+        "fine_id": null,
+        "label": "no_source",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C53",
+            "confidence": "low",
+            "evidence_unit": null,
+            "fine_id": null,
+            "label": "no_source",
+            "provisional": true
+          },
+          {
+            "cell_id": "C53",
+            "confidence": "high",
+            "evidence_unit": null,
+            "fine_id": null,
+            "label": "no_source",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C54",
+        "confidence": "high",
+        "evidence_unit": 1,
+        "fine_id": "tmp:draft:13",
+        "label": "answerable",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C54",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:draft:13",
+            "label": "answerable",
+            "provisional": true
+          },
+          {
+            "cell_id": "C54",
+            "confidence": "high",
+            "evidence_unit": 1,
+            "fine_id": "tmp:draft:13",
+            "label": "answerable",
+            "provisional": true
+          }
+        ]
+      },
+      {
+        "cell_id": "C55",
+        "confidence": "high",
+        "evidence_unit": null,
+        "fine_id": null,
+        "label": "no_source",
+        "provisional": true,
+        "verdicts": [
+          {
+            "cell_id": "C55",
+            "confidence": "high",
+            "evidence_unit": null,
+            "fine_id": null,
+            "label": "no_source",
+            "provisional": true
+          },
+          {
+            "cell_id": "C55",
+            "confidence": "high",
+            "evidence_unit": null,
+            "fine_id": null,
+            "label": "no_source",
+            "provisional": true
+          }
+        ]
+      }
+    ],
+    "needs_rubric_revision": false
+  },
+  "raw_outputs_path": ".claude/skills/outline-curation/journal/answerability-trial-20260906-openai-55.json",
+  "skill_version": "0.1.0",
+  "step": "answerability"
+}

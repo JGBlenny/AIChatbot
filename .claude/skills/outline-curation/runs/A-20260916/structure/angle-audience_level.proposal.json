@@ -1,0 +1,175 @@
+{
+  "angle": "audience_level",
+  "coarses": [
+    {"id": "A", "title": "帳號與身分"},
+    {"id": "B", "title": "團隊、人員與大房東"},
+    {"id": "C", "title": "社區與物件"},
+    {"id": "D", "title": "租約（含委託約子題）"},
+    {"id": "E", "title": "帳務（含發票、收款金流、抄表）"},
+    {"id": "F", "title": "修繕"},
+    {"id": "G", "title": "裝置（IoT）"},
+    {"id": "H", "title": "幫助中心"},
+    {"id": "I", "title": "方案與導入"}
+  ],
+  "fines": [
+    {
+      "id": "jgb/A/account-registration",
+      "coarse_id": "A",
+      "title": "怎麼註冊帳號（含驗證碼通知）",
+      "slug": "account-registration",
+      "merge_of": ["tmp:canon:jgb/A/account-registration", "tmp:kb:3435", "tmp:draft:1", "tmp:draft:3", "tmp:draft:10"],
+      "split_from": ["tmp:draft:1", "tmp:draft:3"],
+      "moved_from": [],
+      "reason": "操作層級：註冊步驟（Email 主路徑、驗證碼、設密碼、選身分、綁手機、SSO）對房東與租客相同，租客從合約邀請進入後的註冊步驟亦同，故 kb:3435、draft:1 註冊段、draft:3 註冊段與 draft:10 併入既有細目；租客要不要註冊（權益層級）另見 tenant-registration-choice，收不到驗證碼另見 verification-code-issues。",
+      "target_user": ["prospect", "property_manager"],
+      "op": "keep"
+    },
+    {
+      "id": "jgb/A/tenant-registration-choice",
+      "coarse_id": "A",
+      "title": "租客要不要註冊：註冊租客與免註冊租客的差異",
+      "slug": "tenant-registration-choice",
+      "merge_of": ["tmp:kb:3348", "tmp:draft:3"],
+      "split_from": ["tmp:draft:3"],
+      "moved_from": [],
+      "reason": "權益／能力層級：管理者需要知道租客可自選是否註冊、註冊後能做什麼、免註冊會少什麼（無法登入、需人員管理驗證 email、帳單附件寄送、手動到帳），與註冊步驟（操作層級）是不同層級，故獨立成細目、步驟另見 account-registration。",
+      "target_user": ["prospect", "property_manager"],
+      "op": "new"
+    },
+    {
+      "id": "jgb/A/login-methods-and-identity",
+      "coarse_id": "A",
+      "title": "怎麼登入：Email／手機／第三方登入與房東租客身分",
+      "slug": "login-methods-and-identity",
+      "merge_of": ["tmp:draft:3", "tmp:kb:3967"],
+      "split_from": ["tmp:draft:3"],
+      "moved_from": [],
+      "reason": "能力層級：登入管道有哪些（Email、綁定手機、SSO）、登入時要選房東或租客身分、以及 LINE 快速登入只認 LINE 註冊帳號且無法事後補綁的限制，這些是受眾要知道「能不能」的層級，與註冊步驟分開。",
+      "target_user": ["prospect", "property_manager"],
+      "op": "new"
+    },
+    {
+      "id": "jgb/A/verification-code-issues",
+      "coarse_id": "A",
+      "title": "驗證碼收不到或一直失敗（Email／簡訊）",
+      "slug": "verification-code-issues",
+      "merge_of": ["tmp:kb:3350", "tmp:kb:3871", "tmp:kb:3964", "tmp:kb:3965", "tmp:kb:3975", "tmp:draft:6"],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "操作層級排查：收不到驗證信／簡訊與驗證碼輸入失敗（新舊碼、識別碼、5 分鐘效期、三次失效、120 秒冷卻、改走 Email）是同一受眾同一主題的排查流程，kb:3975「租客一直沒辦法註冊卡住了」為此主題的入口講法，故合併為一細目。",
+      "target_user": ["prospect", "property_manager"],
+      "op": "new"
+    },
+    {
+      "id": "jgb/A/account-recovery",
+      "coarse_id": "A",
+      "title": "忘記密碼或忘記帳號怎麼找回",
+      "slug": "account-recovery",
+      "merge_of": ["tmp:kb:3436", "tmp:kb:3969", "tmp:draft:7", "tmp:draft:8"],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "操作層級：忘記密碼（Email／簡訊擇一驗證後重設，密碼規則）與忘記帳號（手機簡訊驗證後顯示打星號信箱，無綁手機找客服）互相引用、同一受眾同一主題，故合併為一個找回帳號的細目。",
+      "target_user": ["property_manager"],
+      "op": "new"
+    },
+    {
+      "id": "jgb/A/account-profile-settings",
+      "coarse_id": "A",
+      "title": "帳號資訊設定：可自助編輯的欄位與位置",
+      "slug": "account-profile-settings",
+      "merge_of": ["tmp:draft:1", "tmp:draft:4", "tmp:draft:9"],
+      "split_from": ["tmp:draft:1"],
+      "moved_from": [],
+      "reason": "操作層級：登入後到頭像「帳號資訊」可自行編輯的內容（基本資訊、聯絡資訊、偏好設定、簽約資訊）與儲存方式，draft:1 帳號設置段拆入此處；draft:4 團隊帳號篇屬 B 架團隊資訊，此處只取房東與租客帳號段；不能自改的識別欄位另見 account-data-change。",
+      "target_user": ["property_manager"],
+      "op": "new"
+    },
+    {
+      "id": "jgb/A/account-data-change",
+      "coarse_id": "A",
+      "title": "換信箱、換手機、改姓名：哪些能自改、哪些要走資料異動申請書",
+      "slug": "account-data-change",
+      "merge_of": ["tmp:kb:3437", "tmp:kb:3980", "tmp:kb:3971", "tmp:kb:4561"],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "權益／能力層級：Email 唯讀不可自改、手機未綁可自助綁定但換號需申請書、姓名在合約簽署完成後鎖定需申請書同步，這些是「帳號識別資料能否自改」的邊界與客服申請流程，與可自助編輯的一般帳號資訊（操作層級）不同層級，kb:3980 與 kb:4561 為此主題的入口講法。",
+      "target_user": ["property_manager"],
+      "op": "new"
+    },
+    {
+      "id": "jgb/A/account-identity-uniqueness",
+      "coarse_id": "A",
+      "title": "帳號識別規則：Email 大小寫、已註冊提示與重複帳號合併",
+      "slug": "account-identity-uniqueness",
+      "merge_of": ["tmp:kb:3349", "tmp:kb:3966", "tmp:kb:3972"],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "能力層級：Email 為帳號識別且大小寫視為不同帳號、註冊顯示已註冊代表帳號已存在（本人改登入或他人占用走解綁）、誤建兩個帳號無自助合併需申請書，三者都是「帳號唯一性」的系統規則，故合為一細目；由此造成的租客看不到合約症狀另見 tenant-login-cannot-see-data。",
+      "target_user": ["property_manager"],
+      "op": "new"
+    },
+    {
+      "id": "jgb/A/tenant-login-cannot-see-data",
+      "coarse_id": "A",
+      "title": "租客登入後看不到合約、帳單或電表的排查",
+      "slug": "tenant-login-cannot-see-data",
+      "merge_of": ["tmp:kb:3869", "tmp:kb:3968", "tmp:kb:3978"],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "操作層級排查：租客登入成功卻看不到資料，依序檢查身分選單是否切到租客、登入信箱是否與邀請信箱完全一致、必要時以合約查租客帳號狀態並退回修改信箱重發邀請；根因在帳號對不上而非合約本身，故歸帳號架，kb:3978 為此主題的入口講法。",
+      "target_user": ["property_manager"],
+      "op": "new"
+    }
+  ],
+  "id_map": [
+    {"old": "tmp:canon:jgb/A/account-registration", "new": "jgb/A/account-registration", "op": "keep"},
+    {"old": "tmp:kb:3435", "new": "jgb/A/account-registration", "op": "merge"},
+    {"old": "tmp:draft:1", "new": "jgb/A/account-registration", "op": "split"},
+    {"old": "tmp:draft:1", "new": "jgb/A/account-profile-settings", "op": "split"},
+    {"old": "tmp:draft:3", "new": "jgb/A/account-registration", "op": "split"},
+    {"old": "tmp:draft:3", "new": "jgb/A/tenant-registration-choice", "op": "split"},
+    {"old": "tmp:draft:3", "new": "jgb/A/login-methods-and-identity", "op": "split"},
+    {"old": "tmp:draft:10", "new": "jgb/A/account-registration", "op": "merge"},
+    {"old": "tmp:kb:3348", "new": "jgb/A/tenant-registration-choice", "op": "merge"},
+    {"old": "tmp:kb:3967", "new": "jgb/A/login-methods-and-identity", "op": "merge"},
+    {"old": "tmp:kb:3350", "new": "jgb/A/verification-code-issues", "op": "merge"},
+    {"old": "tmp:kb:3871", "new": "jgb/A/verification-code-issues", "op": "merge"},
+    {"old": "tmp:kb:3964", "new": "jgb/A/verification-code-issues", "op": "merge"},
+    {"old": "tmp:kb:3965", "new": "jgb/A/verification-code-issues", "op": "merge"},
+    {"old": "tmp:kb:3975", "new": "jgb/A/verification-code-issues", "op": "merge"},
+    {"old": "tmp:draft:6", "new": "jgb/A/verification-code-issues", "op": "merge"},
+    {"old": "tmp:kb:3436", "new": "jgb/A/account-recovery", "op": "merge"},
+    {"old": "tmp:kb:3969", "new": "jgb/A/account-recovery", "op": "merge"},
+    {"old": "tmp:draft:7", "new": "jgb/A/account-recovery", "op": "merge"},
+    {"old": "tmp:draft:8", "new": "jgb/A/account-recovery", "op": "merge"},
+    {"old": "tmp:draft:4", "new": "jgb/A/account-profile-settings", "op": "merge"},
+    {"old": "tmp:draft:9", "new": "jgb/A/account-profile-settings", "op": "merge"},
+    {"old": "tmp:kb:3437", "new": "jgb/A/account-data-change", "op": "merge"},
+    {"old": "tmp:kb:3980", "new": "jgb/A/account-data-change", "op": "merge"},
+    {"old": "tmp:kb:3971", "new": "jgb/A/account-data-change", "op": "merge"},
+    {"old": "tmp:kb:4561", "new": "jgb/A/account-data-change", "op": "merge"},
+    {"old": "tmp:kb:3349", "new": "jgb/A/account-identity-uniqueness", "op": "merge"},
+    {"old": "tmp:kb:3966", "new": "jgb/A/account-identity-uniqueness", "op": "merge"},
+    {"old": "tmp:kb:3972", "new": "jgb/A/account-identity-uniqueness", "op": "merge"},
+    {"old": "tmp:kb:3869", "new": "jgb/A/tenant-login-cannot-see-data", "op": "merge"},
+    {"old": "tmp:kb:3968", "new": "jgb/A/tenant-login-cannot-see-data", "op": "merge"},
+    {"old": "tmp:kb:3978", "new": "jgb/A/tenant-login-cannot-see-data", "op": "merge"}
+  ],
+  "out_of_shelf": [
+    {
+      "id": "tmp:draft:2",
+      "suggested_shelf": "B",
+      "why": "整篇為創建團隊、團隊設置、成員角色權限、大房東管理（另含訂閱方案段屬 I、收款設置段屬 E），主體是團隊與人員，不是個人帳號與身分。"
+    },
+    {
+      "id": "tmp:kb:3354",
+      "suggested_shelf": "D",
+      "why": "命題是租賃契約應記載事項與身分證影本是否必上傳、未上傳時退出簽名取消合約重寄，由合約簽署流程與法規決定，依歸位判準歸租約。"
+    },
+    {
+      "id": "tmp:draft:5",
+      "suggested_shelf": "D",
+      "why": "租客簽回未附身分證時出租方可取消邀請、簽署完成後不可更動，是合約簽署階段的處置，不是帳號資料設定。"
+    }
+  ]
+}

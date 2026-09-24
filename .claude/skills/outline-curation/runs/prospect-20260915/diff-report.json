@@ -1,0 +1,865 @@
+{
+  "cost": {
+    "agents": 0,
+    "completion_tokens": 0,
+    "prompt_tokens": 0,
+    "usd": 0.0,
+    "wall_s": 0.0
+  },
+  "deterministic": true,
+  "inputs_sha": {
+    "new_canon": "3582950df671e32147d1769f061c1e70c49939b804b1f6d423c3103906de5492",
+    "old_canon": "240e1a502a85621799bdd5f850c41ce6cb90784a2911ccc3f12a76decba2763c"
+  },
+  "payload": {
+    "id_map": [
+      {
+        "new": "prospect/I/dashboard-overview",
+        "old": "prospect/A/dashboard-overview",
+        "op": "move"
+      },
+      {
+        "new": "prospect/I/product-overview",
+        "old": "prospect/A/pain-points",
+        "op": "merge"
+      },
+      {
+        "new": "prospect/I/product-overview",
+        "old": "prospect/A/product-overview",
+        "op": "merge"
+      },
+      {
+        "new": "prospect/I/why-choose-jgb",
+        "old": "prospect/A/why-choose-jgb",
+        "op": "move"
+      },
+      {
+        "new": "prospect/I/data-migration",
+        "old": "prospect/B/data-migration",
+        "op": "merge"
+      },
+      {
+        "new": "prospect/I/individual-landlord-scale-fit",
+        "old": "prospect/B/individual-landlord-scale-fit",
+        "op": "move"
+      },
+      {
+        "new": "prospect/I/team-company-fit",
+        "old": "prospect/B/team-company-fit",
+        "op": "move"
+      },
+      {
+        "new": "prospect/E/bill-contents-extra-fees",
+        "old": "prospect/C/bill-contents-extra-fees",
+        "op": "move"
+      },
+      {
+        "new": "prospect/E/bill-format-customize",
+        "old": "prospect/C/bill-format-customize",
+        "op": "move"
+      },
+      {
+        "new": "prospect/E/billing-overview",
+        "old": "prospect/C/billing-overview",
+        "op": "split"
+      },
+      {
+        "new": "prospect/E/einvoice-issuing",
+        "old": "prospect/C/billing-overview",
+        "op": "split"
+      },
+      {
+        "new": "prospect/C/community-batch-create",
+        "old": "prospect/C/community-batch-create",
+        "op": "keep"
+      },
+      {
+        "new": "prospect/D/contract-esign-flow",
+        "old": "prospect/C/contract-esign-flow",
+        "op": "split"
+      },
+      {
+        "new": "prospect/D/contract-batch-renewal",
+        "old": "prospect/C/contract-esign-flow",
+        "op": "split"
+      },
+      {
+        "new": "prospect/D/contract-history-retention",
+        "old": "prospect/C/contract-history-retention",
+        "op": "move"
+      },
+      {
+        "new": "prospect/D/contract-modify-after-sign",
+        "old": "prospect/C/contract-modify-after-sign",
+        "op": "move"
+      },
+      {
+        "new": "prospect/D/contract-templates",
+        "old": "prospect/C/contract-templates",
+        "op": "split"
+      },
+      {
+        "new": "prospect/D/sublease-vs-management-contract",
+        "old": "prospect/C/contract-templates",
+        "op": "split"
+      },
+      {
+        "new": "prospect/E/credit-card-rent-payment",
+        "old": "prospect/C/credit-card-rent-payment",
+        "op": "move"
+      },
+      {
+        "new": "prospect/E/overdue-reminder-late-fee",
+        "old": "prospect/C/notification-channels",
+        "op": "split"
+      },
+      {
+        "new": "prospect/D/contract-esign-flow",
+        "old": "prospect/C/notification-channels",
+        "op": "split"
+      },
+      {
+        "new": "prospect/A/account-registration",
+        "old": "prospect/C/notification-channels",
+        "op": "split"
+      },
+      {
+        "new": "prospect/E/overdue-reminder-late-fee",
+        "old": "prospect/C/overdue-reminder-late-fee",
+        "op": "merge"
+      },
+      {
+        "new": "prospect/B/owner-report-collection-remit",
+        "old": "prospect/C/owner-report-collection-remit",
+        "op": "move"
+      },
+      {
+        "new": "prospect/E/payment-gateway-options",
+        "old": "prospect/C/payment-gateway-options",
+        "op": "split"
+      },
+      {
+        "new": "prospect/E/virtual-account-prepaid",
+        "old": "prospect/C/payment-gateway-options",
+        "op": "split"
+      },
+      {
+        "new": "prospect/C/property-management-overview",
+        "old": "prospect/C/property-management-overview",
+        "op": "keep"
+      },
+      {
+        "new": "prospect/C/property-status-meaning",
+        "old": "prospect/C/property-status-meaning",
+        "op": "keep"
+      },
+      {
+        "new": "prospect/C/rental-storefront-vr",
+        "old": "prospect/C/rental-storefront-vr",
+        "op": "keep"
+      },
+      {
+        "new": "prospect/F/repair-system",
+        "old": "prospect/C/repair-system",
+        "op": "move"
+      },
+      {
+        "new": "prospect/B/role-permission-granularity",
+        "old": "prospect/C/role-permission-granularity",
+        "op": "move"
+      },
+      {
+        "new": "prospect/G/smart-meter-lock-iot",
+        "old": "prospect/C/smart-meter-lock-iot",
+        "op": "move"
+      },
+      {
+        "new": "prospect/B/team-management-overview",
+        "old": "prospect/C/team-management-overview",
+        "op": "move"
+      },
+      {
+        "new": "prospect/B/what-is-owner-landlord",
+        "old": "prospect/C/what-is-owner-landlord",
+        "op": "move"
+      },
+      {
+        "new": "prospect/A/account-registration",
+        "old": "prospect/D/account-registration",
+        "op": "merge"
+      },
+      {
+        "new": "prospect/I/free-trial",
+        "old": "prospect/D/free-trial",
+        "op": "move"
+      },
+      {
+        "new": "prospect/I/pricing-plans",
+        "old": "prospect/D/pricing-plans",
+        "op": "move"
+      },
+      {
+        "new": "prospect/I/property-quota-limit",
+        "old": "prospect/D/property-quota-limit",
+        "op": "move"
+      },
+      {
+        "new": "prospect/I/subscription-change-renewal",
+        "old": "prospect/D/subscription-change-renewal",
+        "op": "move"
+      },
+      {
+        "new": "prospect/I/competitor-comparison",
+        "old": "prospect/E/competitor-comparison",
+        "op": "move"
+      },
+      {
+        "new": "prospect/I/competitor-neutrality",
+        "old": "prospect/E/competitor-neutrality",
+        "op": "move"
+      },
+      {
+        "new": "prospect/I/data-migration",
+        "old": "prospect/G/migration-limits",
+        "op": "merge"
+      },
+      {
+        "new": "prospect/E/utility-split-calculation",
+        "old": "prospect/G/utility-split-advice",
+        "op": "move"
+      }
+    ],
+    "replacements": [
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "merged_into",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "merged_into",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "merged_into",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "merged_into",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "merged_into",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "merged_into",
+        "old_kb_id": ""
+      },
+      {
+        "fine_id": "",
+        "how": "content",
+        "old_kb_id": ""
+      }
+    ],
+    "structure_diff": {
+      "headings_added": [
+        {
+          "id": "H",
+          "level": "h2",
+          "title": "H 幫助中心"
+        },
+        {
+          "id": "I",
+          "level": "h2",
+          "title": "I 方案與導入"
+        },
+        {
+          "id": "prospect/A/account-registration",
+          "level": "h3",
+          "title": "怎麼註冊帳號（含驗證碼通知）"
+        },
+        {
+          "id": "prospect/B/owner-report-collection-remit",
+          "level": "h3",
+          "title": "大房東報表與代收代付怎麼交代"
+        },
+        {
+          "id": "prospect/B/role-permission-granularity",
+          "level": "h3",
+          "title": "成員權限能不能細分（只看不改、看不到財務）"
+        },
+        {
+          "id": "prospect/B/team-management-overview",
+          "level": "h3",
+          "title": "團隊管理模組做什麼"
+        },
+        {
+          "id": "prospect/B/what-is-owner-landlord",
+          "level": "h3",
+          "title": "大房東是什麼"
+        },
+        {
+          "id": "prospect/D/contract-batch-renewal",
+          "level": "h3",
+          "title": "續約能不能批次處理"
+        },
+        {
+          "id": "prospect/D/contract-esign-flow",
+          "level": "h3",
+          "title": "建約方式與線上電子簽約流程（含時效、身分、社宅、簽約邀請通知、費用）"
+        },
+        {
+          "id": "prospect/D/contract-history-retention",
+          "level": "h3",
+          "title": "歷史合約保留多久（含點退狀態）"
+        },
+        {
+          "id": "prospect/D/contract-modify-after-sign",
+          "level": "h3",
+          "title": "合約送出或簽完後能不能修改"
+        },
+        {
+          "id": "prospect/D/contract-templates",
+          "level": "h3",
+          "title": "合約範本有哪些可以選"
+        },
+        {
+          "id": "prospect/D/sublease-vs-management-contract",
+          "level": "h3",
+          "title": "包租與代管在委託合約設定上的差別"
+        },
+        {
+          "id": "prospect/E/bill-contents-extra-fees",
+          "level": "h3",
+          "title": "帳單內容與臨時加收費用"
+        },
+        {
+          "id": "prospect/E/bill-format-customize",
+          "level": "h3",
+          "title": "帳單版面能不能自訂"
+        },
+        {
+          "id": "prospect/E/billing-overview",
+          "level": "h3",
+          "title": "帳務管理模組做什麼"
+        },
+        {
+          "id": "prospect/E/credit-card-rent-payment",
+          "level": "h3",
+          "title": "租客能不能用信用卡繳房租"
+        },
+        {
+          "id": "prospect/E/einvoice-issuing",
+          "level": "h3",
+          "title": "電子發票能不能自動開、載具怎麼用"
+        },
+        {
+          "id": "prospect/E/overdue-reminder-late-fee",
+          "level": "h3",
+          "title": "租客逾期未繳怎麼辦（含繳費提醒通知）"
+        },
+        {
+          "id": "prospect/E/payment-gateway-options",
+          "level": "h3",
+          "title": "金流廠商差別與申請條件"
+        },
+        {
+          "id": "prospect/E/utility-split-calculation",
+          "level": "h3",
+          "title": "水電費怎麼分算"
+        },
+        {
+          "id": "prospect/E/virtual-account-prepaid",
+          "level": "h3",
+          "title": "固定虛擬帳號與儲值金抵扣"
+        },
+        {
+          "id": "prospect/F/repair-system",
+          "level": "h3",
+          "title": "線上報修與進度追蹤"
+        },
+        {
+          "id": "prospect/G/smart-meter-lock-iot",
+          "level": "h3",
+          "title": "智慧電錶與門鎖整合"
+        },
+        {
+          "id": "prospect/I/competitor-comparison",
+          "level": "h3",
+          "title": "跟 Bananas、屋我也差在哪"
+        },
+        {
+          "id": "prospect/I/competitor-neutrality",
+          "level": "h3",
+          "title": "會評論競爭對手嗎"
+        },
+        {
+          "id": "prospect/I/dashboard-overview",
+          "level": "h3",
+          "title": "首頁儀表板顯示哪些數據"
+        },
+        {
+          "id": "prospect/I/data-migration",
+          "level": "h3",
+          "title": "舊系統資料能否匯入（可匯入範圍與不支援項目）"
+        },
+        {
+          "id": "prospect/I/free-trial",
+          "level": "h3",
+          "title": "可以免費試用嗎"
+        },
+        {
+          "id": "prospect/I/individual-landlord-scale-fit",
+          "level": "h3",
+          "title": "個人房東（約 10～30 戶）適配與建議做法"
+        },
+        {
+          "id": "prospect/I/pricing-plans",
+          "level": "h3",
+          "title": "怎麼收費"
+        },
+        {
+          "id": "prospect/I/product-overview",
+          "level": "h3",
+          "title": "系統總覽、能解決什麼問題與適不適合我"
+        },
+        {
+          "id": "prospect/I/property-quota-limit",
+          "level": "h3",
+          "title": "方案物件額度上限與用滿怎麼辦"
+        },
+        {
+          "id": "prospect/I/subscription-change-renewal",
+          "level": "h3",
+          "title": "升級、續約與取消訂閱"
+        },
+        {
+          "id": "prospect/I/team-company-fit",
+          "level": "h3",
+          "title": "公司或包租代管團隊適合嗎"
+        },
+        {
+          "id": "prospect/I/why-choose-jgb",
+          "level": "h3",
+          "title": "為什麼選金箍棒"
+        }
+      ],
+      "headings_removed": [
+        {
+          "id": "prospect/A/dashboard-overview",
+          "level": "h3",
+          "title": "首頁儀表板顯示哪些數據"
+        },
+        {
+          "id": "prospect/A/pain-points",
+          "level": "h3",
+          "title": "你們能解決什麼問題（痛點對應模組）"
+        },
+        {
+          "id": "prospect/A/product-overview",
+          "level": "h3",
+          "title": "系統總覽與適不適合我"
+        },
+        {
+          "id": "prospect/A/why-choose-jgb",
+          "level": "h3",
+          "title": "為什麼選金箍棒"
+        },
+        {
+          "id": "prospect/B/data-migration",
+          "level": "h3",
+          "title": "舊系統資料能否匯入（可匯入範圍）"
+        },
+        {
+          "id": "prospect/B/individual-landlord-scale-fit",
+          "level": "h3",
+          "title": "個人房東（約 10～30 戶）適配與建議做法"
+        },
+        {
+          "id": "prospect/B/team-company-fit",
+          "level": "h3",
+          "title": "公司或包租代管團隊適合嗎"
+        },
+        {
+          "id": "prospect/C/bill-contents-extra-fees",
+          "level": "h3",
+          "title": "帳單內容與臨時加收費用"
+        },
+        {
+          "id": "prospect/C/bill-format-customize",
+          "level": "h3",
+          "title": "帳單版面能不能自訂"
+        },
+        {
+          "id": "prospect/C/billing-overview",
+          "level": "h3",
+          "title": "帳務管理模組做什麼"
+        },
+        {
+          "id": "prospect/C/contract-esign-flow",
+          "level": "h3",
+          "title": "建約方式與線上電子簽約流程（含時效、身分、社宅、批次續約）"
+        },
+        {
+          "id": "prospect/C/contract-history-retention",
+          "level": "h3",
+          "title": "歷史合約保留多久"
+        },
+        {
+          "id": "prospect/C/contract-modify-after-sign",
+          "level": "h3",
+          "title": "合約送出或簽完後能不能修改"
+        },
+        {
+          "id": "prospect/C/contract-templates",
+          "level": "h3",
+          "title": "合約範本有哪些可以選"
+        },
+        {
+          "id": "prospect/C/credit-card-rent-payment",
+          "level": "h3",
+          "title": "租客能不能用信用卡繳房租"
+        },
+        {
+          "id": "prospect/C/notification-channels",
+          "level": "h3",
+          "title": "系統通知管道與時機"
+        },
+        {
+          "id": "prospect/C/overdue-reminder-late-fee",
+          "level": "h3",
+          "title": "租客逾期未繳怎麼辦"
+        },
+        {
+          "id": "prospect/C/owner-report-collection-remit",
+          "level": "h3",
+          "title": "大房東報表與代收代付"
+        },
+        {
+          "id": "prospect/C/payment-gateway-options",
+          "level": "h3",
+          "title": "金流廠商差別與申請條件"
+        },
+        {
+          "id": "prospect/C/repair-system",
+          "level": "h3",
+          "title": "線上報修與進度追蹤"
+        },
+        {
+          "id": "prospect/C/role-permission-granularity",
+          "level": "h3",
+          "title": "成員權限能不能細分（只看不改、看不到財務）"
+        },
+        {
+          "id": "prospect/C/smart-meter-lock-iot",
+          "level": "h3",
+          "title": "智慧電錶與門鎖整合"
+        },
+        {
+          "id": "prospect/C/team-management-overview",
+          "level": "h3",
+          "title": "團隊管理模組做什麼"
+        },
+        {
+          "id": "prospect/C/what-is-owner-landlord",
+          "level": "h3",
+          "title": "大房東是什麼"
+        },
+        {
+          "id": "prospect/D/account-registration",
+          "level": "h3",
+          "title": "怎麼註冊帳號"
+        },
+        {
+          "id": "prospect/D/free-trial",
+          "level": "h3",
+          "title": "可以免費試用嗎"
+        },
+        {
+          "id": "prospect/D/pricing-plans",
+          "level": "h3",
+          "title": "怎麼收費"
+        },
+        {
+          "id": "prospect/D/property-quota-limit",
+          "level": "h3",
+          "title": "方案物件額度上限"
+        },
+        {
+          "id": "prospect/D/subscription-change-renewal",
+          "level": "h3",
+          "title": "升級、續約與取消訂閱"
+        },
+        {
+          "id": "prospect/E/competitor-comparison",
+          "level": "h3",
+          "title": "跟 Bananas、屋我也差在哪"
+        },
+        {
+          "id": "prospect/E/competitor-neutrality",
+          "level": "h3",
+          "title": "會評論競爭對手嗎"
+        },
+        {
+          "id": "prospect/F/contact-sales-demo",
+          "level": "h3",
+          "title": "找真人或預約 demo"
+        },
+        {
+          "id": "prospect/G/migration-limits",
+          "level": "h3",
+          "title": "資料搬遷目前不支援的項目（合約與歷史帳單）"
+        },
+        {
+          "id": "prospect/G/utility-split-advice",
+          "level": "h3",
+          "title": "水電費怎麼分算與大概多少錢"
+        }
+      ],
+      "headings_renamed": [
+        {
+          "from": "A 產品基本盤",
+          "id": "A",
+          "level": "h2",
+          "to": "A 帳號與身分"
+        },
+        {
+          "from": "B 適配",
+          "id": "B",
+          "level": "h2",
+          "to": "B 團隊、人員與大房東"
+        },
+        {
+          "from": "C 六大模組",
+          "id": "C",
+          "level": "h2",
+          "to": "C 社區與物件"
+        },
+        {
+          "from": "D 方案試用",
+          "id": "D",
+          "level": "h2",
+          "to": "D 租約（含委託約子題）"
+        },
+        {
+          "from": "E 競品",
+          "id": "E",
+          "level": "h2",
+          "to": "E 帳務（含發票、收款金流、抄表）"
+        },
+        {
+          "from": "F 導流",
+          "id": "F",
+          "level": "h2",
+          "to": "F 修繕"
+        },
+        {
+          "from": "G 現有不足",
+          "id": "G",
+          "level": "h2",
+          "to": "G 裝置（IoT）"
+        },
+        {
+          "from": "房源管理模組做什麼",
+          "id": "prospect/C/property-management-overview",
+          "level": "h3",
+          "to": "房源管理模組做什麼（含自訂狀態標籤）"
+        },
+        {
+          "from": "物件狀態是什麼意思",
+          "id": "prospect/C/property-status-meaning",
+          "level": "h3",
+          "to": "物件狀態（未刊登／刊登中／洽談中／合約中）是什麼意思"
+        }
+      ]
+    }
+  },
+  "raw_outputs_path": null,
+  "skill_version": "0.1.0",
+  "step": "diff"
+}

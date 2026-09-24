@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "outline-curation/schemas/source-audit.json",
+  "type": "object",
+  "required": ["step", "coverage_map_sha", "authority_sources", "records"],
+  "additionalProperties": false,
+  "properties": {
+    "step": {"type": "string", "enum": ["source_audit"]},
+    "coverage_map_sha": {"type": "string"},
+    "audited_at": {"type": "string"},
+    "authority_sources": {"type": "array", "items": {"type": "string"}},
+    "records": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["cell_id", "status"],
+        "additionalProperties": false,
+        "properties": {
+          "cell_id": {"type": "string"},
+          "status": {"type": "string", "enum": ["verified_fact", "verified_absent", "owner_needed", "owner_decided"]},
+          "evidence": {"type": "array", "items": {"type": "string"}},
+          "positive_control": {"type": "string"},
+          "ledger_anchor": {"type": "string"},
+          "why_unresolvable": {"type": "string"},
+          "owner_decision": {"type": "string"},
+          "note": {"type": "string"}
+        }
+      }
+    }
+  }
+}

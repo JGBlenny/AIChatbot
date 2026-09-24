@@ -4,7 +4,8 @@
 是否正確組裝：
 - 保留分類排除（系統脈絡 / 對話規則）—— 任何模式都必須在
 - is_b2b_mode 判定（target_user∈{property_manager,system_admin} 或 mode==b2b）
-- b2b：嚴格 business_types(&&) + target_user 過濾（NULL 放行）
+- b2b：嚴格 business_types(&&) + 嚴格 target_user(&&)——⛔ **兩者皆無 NULL 放行**
+  （角色那條自 DSP-052 (c)／2026-09-14 起取消放行：空＝不可見）
 - b2c：寬鬆 business_types(IS NULL OR &&) + target_user 過濾(預設 tenant + all_users 放行;retrieval-fixes #5)
 
 ⚠️ 範圍：驗「過濾子句有無正確組進 SQL」（改壞離線即紅）；
@@ -74,12 +75,20 @@ async def test_reserved_categories_always_excluded():
 
 @pytest.mark.req("unit-coverage-rebuild:5")
 async def test_b2b_role_applies_target_user_and_strict_business_types():
-    """b2b（target_user=property_manager）：嚴格 business_types && + target_user 過濾（NULL 放行）。"""
+    """b2b（target_user=property_manager）：嚴格 business_types && + 嚴格 target_user &&。
+
+    ⚠️ 角色那條自 DSP-052 (c)／2026-09-14 起**無 NULL 放行**：未標角色的列對 b2b
+    不可見。理由是 `tenant`＋`mode=b2b` 會被路由到 pm 受眾，放行未標角色的列
+    ＝跨受眾可見且靜默。⛔ 不得把 `IS NULL OR` 加回來讓本條變綠。
+    """
     store = {}
     r = _make_retriever(store)
     await _run(r, target_user="property_manager")
     sql = store["sql"]
-    assert "kb.target_user IS NULL OR kb.target_user && %s::text[]" in sql, "b2b 應套 target_user 過濾"
+    assert "kb.target_user && %s::text[]" in sql, "b2b 應套 target_user 過濾"
+    assert "kb.target_user IS NULL" not in sql, (
+        "b2b target_user 不應有 NULL 放行（DSP-052 (c)：空＝不可見）"
+    )
     assert "kb.business_types && %s::text[]" in sql, "b2b 應有 business_types 過濾"
     # 關鍵：b2b 為「嚴格」——business_types 不得有 IS NULL 放行（否則角色隔離被放寬）
     assert "kb.business_types IS NULL OR" not in sql, "b2b business_types 不應有 NULL 放行（須嚴格）"
@@ -95,7 +104,10 @@ async def test_mode_b2b_triggers_b2b_path_even_for_tenant():
     r = _make_retriever(store)
     await _run(r, target_user="tenant", mode="b2b")
     sql = store["sql"]
-    assert "kb.target_user IS NULL OR kb.target_user && %s::text[]" in sql
+    # DSP-052 (c)／2026-09-14：走 b2b 路徑即嚴格——業態與角色兩條都無 NULL 放行。
+    # ⚠️ 本格正是該裁決要堵的形狀（合法值 tenant ＋ mode=b2b ⇒ 路由到 pm 受眾）。
+    assert "kb.target_user && %s::text[]" in sql
+    assert "kb.target_user IS NULL" not in sql, "mode=b2b 也須嚴格 target_user"
     assert "kb.business_types && %s::text[]" in sql
     assert "kb.business_types IS NULL OR" not in sql, "mode=b2b 也須嚴格 business_types"
 
@@ -126,9 +138,9 @@ async def test_b2c_unknown_target_user_normalized_to_tenant():
 
 
 @pytest.mark.req("retrieval-fixes:5")
-async def test_b2c_landlord_role_preserved_not_forced_tenant():
-    """b2c：landlord 為已知角色,不應被正規化成 tenant（房東看房東知識）。"""
+async def test_b2c_known_role_preserved_not_forced_tenant():
+    """b2c：值域內的角色不應被正規化成 tenant（正對照組；否則上一條是把所有輸入都變 tenant 的瞎尺）。"""
     store = {}
     r = _make_retriever(store, vendor_business_types=["landlord_individual"])
-    await _run(r, target_user="landlord", mode="b2c")
-    assert ["landlord", "all_users"] in store["params"], "landlord 應保留,不被強制 tenant"
+    await _run(r, target_user="prospect", mode="b2c")
+    assert ["prospect", "all_users"] in store["params"], "值域內角色應保留,不被強制 tenant"

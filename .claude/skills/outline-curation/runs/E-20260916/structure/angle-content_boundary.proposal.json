@@ -1,0 +1,1875 @@
+{
+  "angle": "content_boundary",
+  "coarses": [
+    {
+      "id": "A",
+      "title": "帳號與身分"
+    },
+    {
+      "id": "B",
+      "title": "團隊、人員與大房東"
+    },
+    {
+      "id": "C",
+      "title": "社區與物件"
+    },
+    {
+      "id": "D",
+      "title": "租約（含委託約子題）"
+    },
+    {
+      "id": "E",
+      "title": "帳務（含發票、收款金流、抄表）"
+    },
+    {
+      "id": "F",
+      "title": "修繕"
+    },
+    {
+      "id": "G",
+      "title": "裝置（IoT）"
+    },
+    {
+      "id": "H",
+      "title": "幫助中心"
+    },
+    {
+      "id": "I",
+      "title": "方案與導入"
+    }
+  ],
+  "fines": [
+    {
+      "id": "jgb/E/billing-overview",
+      "coarse_id": "E",
+      "title": "帳務管理模組做什麼",
+      "slug": "billing-overview",
+      "merge_of": [
+        "tmp:canon:jgb/E/billing-overview"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "售前總覽自成一段、不依賴任何子題，其他材料都是各自完整的子題，故不併入。",
+      "target_user": [
+        "prospect"
+      ],
+      "op": "keep"
+    },
+    {
+      "id": "jgb/E/bill-contents-extra-fees",
+      "coarse_id": "E",
+      "title": "帳單內容、費用品項與臨時加收",
+      "slug": "bill-contents-extra-fees",
+      "merge_of": [
+        "tmp:canon:jgb/E/bill-contents-extra-fees",
+        "tmp:kb:3396",
+        "tmp:kb:3405",
+        "tmp:kb:4642",
+        "tmp:kb:4647",
+        "tmp:kb:4261",
+        "tmp:kb:4275"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "帳單列上有哪些費用、品項名稱怎麼來、臨時加收怎麼補——都在講「帳單上的品項」，彼此互補才完整；停車位費兩則空列只當品項入口。",
+      "target_user": [
+        "prospect",
+        "property_manager"
+      ],
+      "op": "merge"
+    },
+    {
+      "id": "jgb/E/bill-format-customize",
+      "coarse_id": "E",
+      "title": "帳單版面、收據版式與收訖章",
+      "slug": "bill-format-customize",
+      "merge_of": [
+        "tmp:canon:jgb/E/bill-format-customize",
+        "tmp:kb:3553",
+        "tmp:draft:1"
+      ],
+      "split_from": [
+        "tmp:kb:3553",
+        "tmp:draft:1"
+      ],
+      "moved_from": [],
+      "reason": "版面/收據版式/收訖章是同一組「輸出樣式」設定；3553 與 draft:1 只取其收據版式與收款章段落，其餘段落拆給發送與金流細目。",
+      "target_user": [
+        "prospect",
+        "property_manager"
+      ],
+      "op": "merge"
+    },
+    {
+      "id": "jgb/E/credit-card-rent-payment",
+      "coarse_id": "E",
+      "title": "租客能不能用信用卡繳房租（流程、限制與付款失敗）",
+      "slug": "credit-card-rent-payment",
+      "merge_of": [
+        "tmp:canon:jgb/E/credit-card-rent-payment",
+        "tmp:kb:3347",
+        "tmp:kb:3409",
+        "tmp:kb:3500"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "能不能刷、走哪家、流程與失敗屬同一次性刷卡主題；自動扣款需授權與續扣機制，內容獨立故另立細目。",
+      "target_user": [
+        "prospect",
+        "property_manager"
+      ],
+      "op": "merge"
+    },
+    {
+      "id": "jgb/E/dunning-draft-not-auto-send",
+      "coarse_id": "E",
+      "title": "催繳草稿不可一鍵發送給租客",
+      "slug": "dunning-draft-not-auto-send",
+      "merge_of": [
+        "tmp:canon:jgb/E/dunning-draft-not-auto-send"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "單一契約命題，無新材料觸及。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "keep"
+    },
+    {
+      "id": "jgb/E/dunning-draft-template-tone-late-fee",
+      "coarse_id": "E",
+      "title": "催繳草稿的生成規則（模板、語氣分級與滯納金提及）",
+      "slug": "dunning-draft-template-tone-late-fee",
+      "merge_of": [
+        "tmp:canon:jgb/E/dunning-draft-template-tone-late-fee"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "生成規則自成一段，滯納金計算另有細目、不重疊。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "keep"
+    },
+    {
+      "id": "jgb/E/einvoice-issuing",
+      "coarse_id": "E",
+      "title": "電子發票開立時機、載具與自動開立前提",
+      "slug": "einvoice-issuing",
+      "merge_of": [
+        "tmp:canon:jgb/E/einvoice-issuing",
+        "tmp:kb:3418",
+        "tmp:kb:4257",
+        "tmp:kb:3419",
+        "tmp:kb:3414",
+        "tmp:kb:3338"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "開立模式、觸發時點、載具格式與「一物件一帳單一發票」前提互相依賴才說得完整；未開出的排查與作廢補開各自完整，另立。",
+      "target_user": [
+        "prospect",
+        "property_manager"
+      ],
+      "op": "merge"
+    },
+    {
+      "id": "jgb/E/overdue-bill-followup-scope",
+      "coarse_id": "E",
+      "title": "逾期帳單追問可答範圍（含以帳單編號指定）",
+      "slug": "overdue-bill-followup-scope",
+      "merge_of": [
+        "tmp:canon:jgb/E/overdue-bill-followup-scope",
+        "tmp:kb:4656"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "單筆帳單以編號指定查詢即本細目定義的可答範圍，4656 空列只當入口。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "merge"
+    },
+    {
+      "id": "jgb/E/overdue-reminder-late-fee",
+      "coarse_id": "E",
+      "title": "租客逾期未繳怎麼辦（繳費提醒、催繳通知與逾期標示）",
+      "slug": "overdue-reminder-late-fee",
+      "merge_of": [
+        "tmp:canon:jgb/E/overdue-reminder-late-fee",
+        "tmp:kb:3340",
+        "tmp:draft:12",
+        "tmp:kb:3478",
+        "tmp:kb:3337"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "提醒/催繳通知、逾期紅字標示、通知訂閱與簡訊是否收費都是「逾期怎麼被提醒」的投遞面；通知歸其所通知的領域，不自成細目。",
+      "target_user": [
+        "prospect",
+        "property_manager"
+      ],
+      "op": "merge"
+    },
+    {
+      "id": "jgb/E/payment-gateway-options",
+      "coarse_id": "E",
+      "title": "金流廠商差別、申請條件與收款設置綁定",
+      "slug": "payment-gateway-options",
+      "merge_of": [
+        "tmp:canon:jgb/E/payment-gateway-options",
+        "tmp:kb:3413",
+        "tmp:kb:3548",
+        "tmp:kb:3549",
+        "tmp:kb:3550",
+        "tmp:kb:3555",
+        "tmp:kb:3554",
+        "tmp:kb:4221",
+        "tmp:kb:3942",
+        "tmp:kb:3930",
+        "tmp:draft:1"
+      ],
+      "split_from": [
+        "tmp:draft:1"
+      ],
+      "moved_from": [],
+      "reason": "選哪家、誰能申請、各家怎麼綁定參數、只能綁一家、收款帳戶銀行限制與開通後一元測試，缺一段就答不完整；draft:1 只取金流開通段落。",
+      "target_user": [
+        "prospect",
+        "property_manager"
+      ],
+      "op": "merge"
+    },
+    {
+      "id": "jgb/E/utility-split-calculation",
+      "coarse_id": "E",
+      "title": "水電費怎麼算（收費模式、度數、電價與抄表更正）",
+      "slug": "utility-split-calculation",
+      "merge_of": [
+        "tmp:canon:jgb/E/utility-split-calculation",
+        "tmp:kb:3352",
+        "tmp:kb:3398",
+        "tmp:kb:4217",
+        "tmp:kb:4222",
+        "tmp:kb:2911",
+        "tmp:kb:1388",
+        "tmp:kb:4265",
+        "tmp:kb:4282",
+        "tmp:kb:4283",
+        "tmp:kb:4285"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "六種電費模式、度數×單價、夏季電價、度數登記錯誤重算與公共費用分攤都是「水電這條帳單列怎麼算出來」；空列只當入口。",
+      "target_user": [
+        "prospect",
+        "property_manager"
+      ],
+      "op": "merge"
+    },
+    {
+      "id": "jgb/E/virtual-account-prepaid",
+      "coarse_id": "E",
+      "title": "固定虛擬帳號與儲值金抵扣",
+      "slug": "virtual-account-prepaid",
+      "merge_of": [
+        "tmp:canon:jgb/E/virtual-account-prepaid",
+        "tmp:kb:3417",
+        "tmp:kb:3539",
+        "tmp:kb:3540",
+        "tmp:kb:3541",
+        "tmp:kb:3542"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "固定帳號不過期、開通與模式權限、入帳/自動沖銷、餘額歷程查詢都圍繞同一套儲值金機制；一次性虛擬帳號效期規則不同，另立。",
+      "target_user": [
+        "prospect",
+        "property_manager"
+      ],
+      "op": "merge"
+    },
+    {
+      "id": "jgb/E/bill-status-reconciliation",
+      "coarse_id": "E",
+      "title": "帳單狀態流程與對帳（線上自動對帳 vs 線下手動到帳）",
+      "slug": "bill-status-reconciliation",
+      "merge_of": [
+        "tmp:kb:3335",
+        "tmp:kb:3395",
+        "tmp:kb:3412",
+        "tmp:kb:3485",
+        "tmp:draft:9",
+        "tmp:draft:11",
+        "tmp:draft:13",
+        "tmp:kb:3499",
+        "tmp:kb:3361",
+        "tmp:kb:3366",
+        "tmp:kb:3497",
+        "tmp:kb:3931",
+        "tmp:kb:3932"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "六種帳單狀態、付款狀態、線上/線下對帳差異與「付了狀態沒跳」都要靠同一條狀態機解釋，拆開任何一段都答不完整；空列只當入口。",
+      "target_user": [
+        "prospect",
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/E/cash-bank-account-collection",
+      "coarse_id": "E",
+      "title": "現金／銀行帳戶收款與租客「通知已匯款」",
+      "slug": "cash-bank-account-collection",
+      "merge_of": [
+        "tmp:kb:3552",
+        "tmp:draft:8",
+        "tmp:draft:10",
+        "tmp:draft:14",
+        "tmp:draft:1"
+      ],
+      "split_from": [
+        "tmp:draft:1"
+      ],
+      "moved_from": [],
+      "reason": "線下收款帳戶的建立、租客回報後五碼、房東手動確認是一條完整的線下流程；draft:1 只取現金收款帳戶段落。",
+      "target_user": [
+        "prospect",
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/E/recurring-bill-generation",
+      "coarse_id": "E",
+      "title": "週期帳單自動產生規則與出現時點",
+      "slug": "recurring-bill-generation",
+      "merge_of": [
+        "tmp:kb:3399",
+        "tmp:kb:3401",
+        "tmp:kb:3928",
+        "tmp:kb:3935",
+        "tmp:kb:3857",
+        "tmp:draft:4",
+        "tmp:kb:3941",
+        "tmp:kb:4651"
+      ],
+      "split_from": [
+        "tmp:kb:4651"
+      ],
+      "moved_from": [],
+      "reason": "週期選項、提前一個月產生、續約/既存合約補產、年繳無法拆分都是「帳單什麼時候、怎麼被系統生出來」；4651 只取年繳拆分段。",
+      "target_user": [
+        "prospect",
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/E/rent-proration-and-amount-source",
+      "coarse_id": "E",
+      "title": "租金計費比例與帳單金額來源",
+      "slug": "rent-proration-and-amount-source",
+      "merge_of": [
+        "tmp:kb:3397",
+        "tmp:kb:3895",
+        "tmp:kb:3934"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "未滿月比例算法與「金額來自合約租金而非刊登價」共同回答「這期租金為什麼是這個數」，與水電費算法主題不同。",
+      "target_user": [
+        "prospect",
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/E/bill-scheduled-send",
+      "coarse_id": "E",
+      "title": "帳單發送日、排定發送與自動發送",
+      "slug": "bill-scheduled-send",
+      "merge_of": [
+        "tmp:kb:3336",
+        "tmp:kb:3342",
+        "tmp:kb:4220",
+        "tmp:draft:3",
+        "tmp:kb:3403",
+        "tmp:kb:3553",
+        "tmp:draft:1"
+      ],
+      "split_from": [
+        "tmp:kb:3403",
+        "tmp:kb:3553",
+        "tmp:draft:1"
+      ],
+      "moved_from": [],
+      "reason": "提前天數設定、每日 07:00 排入與整點批次、草稿會不會自動寄，互相依賴才完整；3403/3553/draft:1 只取排定發送段落。",
+      "target_user": [
+        "prospect",
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/E/bill-recall-cancel-archive",
+      "coarse_id": "E",
+      "title": "帳單收回、取消、失效與封存",
+      "slug": "bill-recall-cancel-archive",
+      "merge_of": [
+        "tmp:kb:3403",
+        "tmp:kb:3926",
+        "tmp:kb:3496",
+        "tmp:kb:3327",
+        "tmp:kb:3852",
+        "tmp:kb:4653"
+      ],
+      "split_from": [
+        "tmp:kb:3403"
+      ],
+      "moved_from": [],
+      "reason": "已發出的帳單怎麼收回/哪些狀態能取消/退租後多餘帳單要封存/封存後怎麼退回，是「讓帳單退場」的同一組動作；3403 只取收回段。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/E/bill-send-failure",
+      "coarse_id": "E",
+      "title": "帳單為什麼發不出去",
+      "slug": "bill-send-failure",
+      "merge_of": [
+        "tmp:kb:3495",
+        "tmp:kb:4643"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "發送被擋的原因（狀態、金額、度數、租客聯絡方式未驗證）自成一張排查清單，不依賴排程規則。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/E/manual-bill-creation",
+      "coarse_id": "E",
+      "title": "手動新增帳單與 Excel 批次匯入",
+      "slug": "manual-bill-creation",
+      "merge_of": [
+        "tmp:draft:2",
+        "tmp:kb:4650",
+        "tmp:kb:3404",
+        "tmp:kb:4638",
+        "tmp:kb:4649"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "單筆新增、負值退款、批次匯入與補建紀錄都是「不靠週期、人工開帳單」的操作，內容彼此互補。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/E/tenant-payment-methods",
+      "coarse_id": "E",
+      "title": "租客可用的繳費方式與通道設定",
+      "slug": "tenant-payment-methods",
+      "merge_of": [
+        "tmp:kb:3408",
+        "tmp:kb:4256",
+        "tmp:kb:4268",
+        "tmp:kb:4288",
+        "tmp:kb:4289",
+        "tmp:draft:5",
+        "tmp:kb:3443",
+        "tmp:kb:1391",
+        "tmp:kb:4281",
+        "tmp:kb:2918"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "有哪些通道、由團隊層與合約層兩層設定決定、租客端付款步驟與繳費日資訊是同一個問題的正反面；三則模板與空列合併為入口。",
+      "target_user": [
+        "prospect",
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/E/tenant-bill-visibility",
+      "coarse_id": "E",
+      "title": "租客在哪裡看帳單、為什麼看不到",
+      "slug": "tenant-bill-visibility",
+      "merge_of": [
+        "tmp:kb:3447",
+        "tmp:kb:3927",
+        "tmp:kb:3936",
+        "tmp:kb:4223"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "可見三條件與信箱錯配是「看不到帳單」唯一完整的解釋鏈，與付款流程無關。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/E/virtual-account-atm-transfer",
+      "coarse_id": "E",
+      "title": "一次性虛擬帳號轉帳繳費（效期、臨櫃、查交易）",
+      "slug": "virtual-account-atm-transfer",
+      "merge_of": [
+        "tmp:kb:3410",
+        "tmp:kb:3344",
+        "tmp:kb:3925",
+        "tmp:draft:6",
+        "tmp:draft:7",
+        "tmp:kb:4637",
+        "tmp:kb:4651"
+      ],
+      "split_from": [
+        "tmp:kb:4651"
+      ],
+      "moved_from": [],
+      "reason": "各家效期、永豐帳號格式、臨櫃可行方式、逾期後仍可繳、用虛擬帳號回查交易，都是同一種一次性帳號的用法；4651 只取逾期帳號段。",
+      "target_user": [
+        "prospect",
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/E/transfer-failure-troubleshooting",
+      "coarse_id": "E",
+      "title": "租客轉不了帳、虛擬帳號失效的排查",
+      "slug": "transfer-failure-troubleshooting",
+      "merge_of": [
+        "tmp:kb:3502",
+        "tmp:kb:3924",
+        "tmp:kb:3933"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "收回重發、一元測試、額度上限三步排查自成一體，與帳號用法說明分開。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/E/payment-amount-mismatch",
+      "coarse_id": "E",
+      "title": "付款金額不符、多繳少繳與重複轉帳處理",
+      "slug": "payment-amount-mismatch",
+      "merge_of": [
+        "tmp:kb:3416",
+        "tmp:kb:2913",
+        "tmp:kb:3207"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "金額不一致被退回、多繳退還、少繳補繳都是「錢數對不上」的處理，主題與轉帳失敗不同。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/E/convenience-store-payment",
+      "coarse_id": "E",
+      "title": "超商代碼／條碼繳費與撥付時程",
+      "slug": "convenience-store-payment",
+      "merge_of": [
+        "tmp:kb:3411",
+        "tmp:kb:3343",
+        "tmp:kb:3923"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "超商流程與「停在待對帳是撥付時程」互相依賴才說得清，3343 與 3923 為近重複。",
+      "target_user": [
+        "prospect",
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/E/credit-card-auto-debit",
+      "coarse_id": "E",
+      "title": "信用卡自動扣款授權與失敗處理",
+      "slug": "credit-card-auto-debit",
+      "merge_of": [
+        "tmp:kb:3391",
+        "tmp:kb:3415",
+        "tmp:kb:3501"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "授權設定、續扣、失敗通知與改付方式是一套機制，與單次刷卡分開。",
+      "target_user": [
+        "prospect",
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/E/gateway-fees",
+      "coarse_id": "E",
+      "title": "金流手續費誰負擔、費率多少",
+      "slug": "gateway-fees",
+      "merge_of": [
+        "tmp:kb:3346",
+        "tmp:kb:3551"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "手續費歸屬與費率是獨立的成本問題，不依賴申請流程。",
+      "target_user": [
+        "prospect",
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/E/late-fee-calculation",
+      "coarse_id": "E",
+      "title": "逾期費／滯納金怎麼算與滯納金帳單",
+      "slug": "late-fee-calculation",
+      "merge_of": [
+        "tmp:kb:3400",
+        "tmp:kb:3531",
+        "tmp:kb:3532",
+        "tmp:kb:3939",
+        "tmp:kb:3940",
+        "tmp:kb:3208"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "公式、延遲金/階梯/固定三版差異與獨立滯納金帳單互相依賴；租客「遲繳罰款」提問留 E 作入口。",
+      "target_user": [
+        "prospect",
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/E/move-out-settlement-bill",
+      "coarse_id": "E",
+      "title": "點退帳單金額與押金結算",
+      "slug": "move-out-settlement-bill",
+      "merge_of": [
+        "tmp:kb:3402",
+        "tmp:kb:3519",
+        "tmp:kb:4657"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "點退帳單內容與正負結算算法為同一命題；點交清單本身歸租約。",
+      "target_user": [
+        "prospect",
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/E/deposit-imputed-interest",
+      "coarse_id": "E",
+      "title": "押金設算息利率與帳單",
+      "slug": "deposit-imputed-interest",
+      "merge_of": [
+        "tmp:kb:3533",
+        "tmp:kb:3534"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "設算息計算與年度一次利率限制彼此依賴，自成客製主題。",
+      "target_user": [
+        "prospect",
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/E/differential-invoice",
+      "coarse_id": "E",
+      "title": "差額發票群組、金額計算與開立匯出",
+      "slug": "differential-invoice",
+      "merge_of": [
+        "tmp:kb:3422",
+        "tmp:kb:3535",
+        "tmp:kb:3536",
+        "tmp:kb:3537",
+        "tmp:kb:3538"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "群組綁定、底租、虧損結轉與開立匯出是同一功能的連續段落，拆開會失去計算脈絡。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/E/einvoice-not-issued-troubleshooting",
+      "coarse_id": "E",
+      "title": "發票沒開出來、顯示已開卻無號碼的排查",
+      "slug": "einvoice-not-issued-troubleshooting",
+      "merge_of": [
+        "tmp:kb:3420",
+        "tmp:kb:3503",
+        "tmp:kb:3929",
+        "tmp:kb:3362",
+        "tmp:kb:3937"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "排查步驟自成清單，可獨立於開立模式說明回答。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/E/einvoice-void-reissue",
+      "coarse_id": "E",
+      "title": "發票作廢與補開",
+      "slug": "einvoice-void-reissue",
+      "merge_of": [
+        "tmp:kb:3421",
+        "tmp:kb:3423",
+        "tmp:kb:3504",
+        "tmp:kb:3938"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "作廢與補開是成對的修正動作，與開立時機、未開排查分開。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/E/bill-receipt-pdf",
+      "coarse_id": "E",
+      "title": "帳單收據 PDF 與繳費證明",
+      "slug": "bill-receipt-pdf",
+      "merge_of": [
+        "tmp:kb:3406",
+        "tmp:kb:2921",
+        "tmp:kb:4640"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "收據下載與可作為證明的文件是同一命題；收據版式設定屬版面細目。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/E/bill-reports-export",
+      "coarse_id": "E",
+      "title": "帳單報表匯出與收支統計",
+      "slug": "bill-reports-export",
+      "merge_of": [
+        "tmp:kb:3360",
+        "tmp:kb:3407",
+        "tmp:kb:4150",
+        "tmp:kb:3489"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "報表種類、篩選限制、匯出等待與儀表板/統計圖是「彙總輸出」的同一組功能。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/E/landlord-owner-bills",
+      "coarse_id": "E",
+      "title": "大房東帳單（代收代付）",
+      "slug": "landlord-owner-bills",
+      "merge_of": [
+        "tmp:kb:3466"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "大房東帳單出現在帳單列上歸帳務，與租客帳單流程不重疊。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/E/rent-collection-agent-vs-direct",
+      "coarse_id": "E",
+      "title": "包租代管租金代收與房東直收差異",
+      "slug": "rent-collection-agent-vs-direct",
+      "merge_of": [
+        "tmp:kb:3326"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "代收制度的概念說明獨立成立，不屬任何操作流程。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/E/management-fee-tenant",
+      "coarse_id": "E",
+      "title": "管理費是什麼、用途與怎麼算",
+      "slug": "management-fee-tenant",
+      "merge_of": [
+        "tmp:kb:2910",
+        "tmp:kb:3105",
+        "tmp:kb:4271",
+        "tmp:kb:1393"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "管理費定義與用途為租客視角費用權益題，留 E；空列只當入口。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/E/rent-level-reference-tenant",
+      "coarse_id": "E",
+      "title": "租金行情、折扣條件與公益出租減稅（租客視角）",
+      "slug": "rent-level-reference-tenant",
+      "merge_of": [
+        "tmp:kb:2909",
+        "tmp:kb:2925",
+        "tmp:kb:2920",
+        "tmp:kb:3011"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "四則都在回答「租金水準為何如此」，各自不成獨立主題、合為一段完整；租客視角留 E。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    },
+    {
+      "id": "jgb/E/prepaid-meter-topup-billing",
+      "coarse_id": "E",
+      "title": "儲值電表的儲值帳單、入帳與復電",
+      "slug": "prepaid-meter-topup-billing",
+      "merge_of": [
+        "tmp:kb:3353",
+        "tmp:kb:3459",
+        "tmp:kb:4053",
+        "tmp:kb:4086",
+        "tmp:kb:4047",
+        "tmp:kb:4564"
+      ],
+      "split_from": [],
+      "moved_from": [],
+      "reason": "儲值帳單產生、四天效期、付款入帳與未復電的對帳補認是同一條金流鏈；單價設定屬裝置端，另列出架。",
+      "target_user": [
+        "property_manager"
+      ],
+      "op": "new"
+    }
+  ],
+  "id_map": [
+    {
+      "old": "tmp:canon:jgb/E/billing-overview",
+      "new": "jgb/E/billing-overview",
+      "op": "keep"
+    },
+    {
+      "old": "tmp:canon:jgb/E/bill-contents-extra-fees",
+      "new": "jgb/E/bill-contents-extra-fees",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:3396",
+      "new": "jgb/E/bill-contents-extra-fees",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:3405",
+      "new": "jgb/E/bill-contents-extra-fees",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:4642",
+      "new": "jgb/E/bill-contents-extra-fees",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:4647",
+      "new": "jgb/E/bill-contents-extra-fees",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:4261",
+      "new": "jgb/E/bill-contents-extra-fees",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:4275",
+      "new": "jgb/E/bill-contents-extra-fees",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:canon:jgb/E/bill-format-customize",
+      "new": "jgb/E/bill-format-customize",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:3553",
+      "new": "jgb/E/bill-format-customize",
+      "op": "split"
+    },
+    {
+      "old": "tmp:draft:1",
+      "new": "jgb/E/bill-format-customize",
+      "op": "split"
+    },
+    {
+      "old": "tmp:canon:jgb/E/credit-card-rent-payment",
+      "new": "jgb/E/credit-card-rent-payment",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:3347",
+      "new": "jgb/E/credit-card-rent-payment",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:3409",
+      "new": "jgb/E/credit-card-rent-payment",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:3500",
+      "new": "jgb/E/credit-card-rent-payment",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:canon:jgb/E/dunning-draft-not-auto-send",
+      "new": "jgb/E/dunning-draft-not-auto-send",
+      "op": "keep"
+    },
+    {
+      "old": "tmp:canon:jgb/E/dunning-draft-template-tone-late-fee",
+      "new": "jgb/E/dunning-draft-template-tone-late-fee",
+      "op": "keep"
+    },
+    {
+      "old": "tmp:canon:jgb/E/einvoice-issuing",
+      "new": "jgb/E/einvoice-issuing",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:3418",
+      "new": "jgb/E/einvoice-issuing",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:4257",
+      "new": "jgb/E/einvoice-issuing",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:3419",
+      "new": "jgb/E/einvoice-issuing",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:3414",
+      "new": "jgb/E/einvoice-issuing",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:3338",
+      "new": "jgb/E/einvoice-issuing",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:canon:jgb/E/overdue-bill-followup-scope",
+      "new": "jgb/E/overdue-bill-followup-scope",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:4656",
+      "new": "jgb/E/overdue-bill-followup-scope",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:canon:jgb/E/overdue-reminder-late-fee",
+      "new": "jgb/E/overdue-reminder-late-fee",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:3340",
+      "new": "jgb/E/overdue-reminder-late-fee",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:draft:12",
+      "new": "jgb/E/overdue-reminder-late-fee",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:3478",
+      "new": "jgb/E/overdue-reminder-late-fee",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:3337",
+      "new": "jgb/E/overdue-reminder-late-fee",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:canon:jgb/E/payment-gateway-options",
+      "new": "jgb/E/payment-gateway-options",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:3413",
+      "new": "jgb/E/payment-gateway-options",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:3548",
+      "new": "jgb/E/payment-gateway-options",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:3549",
+      "new": "jgb/E/payment-gateway-options",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:3550",
+      "new": "jgb/E/payment-gateway-options",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:3555",
+      "new": "jgb/E/payment-gateway-options",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:3554",
+      "new": "jgb/E/payment-gateway-options",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:4221",
+      "new": "jgb/E/payment-gateway-options",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:3942",
+      "new": "jgb/E/payment-gateway-options",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:3930",
+      "new": "jgb/E/payment-gateway-options",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:draft:1",
+      "new": "jgb/E/payment-gateway-options",
+      "op": "split"
+    },
+    {
+      "old": "tmp:canon:jgb/E/utility-split-calculation",
+      "new": "jgb/E/utility-split-calculation",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:3352",
+      "new": "jgb/E/utility-split-calculation",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:3398",
+      "new": "jgb/E/utility-split-calculation",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:4217",
+      "new": "jgb/E/utility-split-calculation",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:4222",
+      "new": "jgb/E/utility-split-calculation",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:2911",
+      "new": "jgb/E/utility-split-calculation",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:1388",
+      "new": "jgb/E/utility-split-calculation",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:4265",
+      "new": "jgb/E/utility-split-calculation",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:4282",
+      "new": "jgb/E/utility-split-calculation",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:4283",
+      "new": "jgb/E/utility-split-calculation",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:4285",
+      "new": "jgb/E/utility-split-calculation",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:canon:jgb/E/virtual-account-prepaid",
+      "new": "jgb/E/virtual-account-prepaid",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:3417",
+      "new": "jgb/E/virtual-account-prepaid",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:3539",
+      "new": "jgb/E/virtual-account-prepaid",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:3540",
+      "new": "jgb/E/virtual-account-prepaid",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:3541",
+      "new": "jgb/E/virtual-account-prepaid",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:3542",
+      "new": "jgb/E/virtual-account-prepaid",
+      "op": "merge"
+    },
+    {
+      "old": "tmp:kb:3335",
+      "new": "jgb/E/bill-status-reconciliation",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3395",
+      "new": "jgb/E/bill-status-reconciliation",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3412",
+      "new": "jgb/E/bill-status-reconciliation",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3485",
+      "new": "jgb/E/bill-status-reconciliation",
+      "op": "new"
+    },
+    {
+      "old": "tmp:draft:9",
+      "new": "jgb/E/bill-status-reconciliation",
+      "op": "new"
+    },
+    {
+      "old": "tmp:draft:11",
+      "new": "jgb/E/bill-status-reconciliation",
+      "op": "new"
+    },
+    {
+      "old": "tmp:draft:13",
+      "new": "jgb/E/bill-status-reconciliation",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3499",
+      "new": "jgb/E/bill-status-reconciliation",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3361",
+      "new": "jgb/E/bill-status-reconciliation",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3366",
+      "new": "jgb/E/bill-status-reconciliation",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3497",
+      "new": "jgb/E/bill-status-reconciliation",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3931",
+      "new": "jgb/E/bill-status-reconciliation",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3932",
+      "new": "jgb/E/bill-status-reconciliation",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3552",
+      "new": "jgb/E/cash-bank-account-collection",
+      "op": "new"
+    },
+    {
+      "old": "tmp:draft:8",
+      "new": "jgb/E/cash-bank-account-collection",
+      "op": "new"
+    },
+    {
+      "old": "tmp:draft:10",
+      "new": "jgb/E/cash-bank-account-collection",
+      "op": "new"
+    },
+    {
+      "old": "tmp:draft:14",
+      "new": "jgb/E/cash-bank-account-collection",
+      "op": "new"
+    },
+    {
+      "old": "tmp:draft:1",
+      "new": "jgb/E/cash-bank-account-collection",
+      "op": "split"
+    },
+    {
+      "old": "tmp:kb:3399",
+      "new": "jgb/E/recurring-bill-generation",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3401",
+      "new": "jgb/E/recurring-bill-generation",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3928",
+      "new": "jgb/E/recurring-bill-generation",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3935",
+      "new": "jgb/E/recurring-bill-generation",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3857",
+      "new": "jgb/E/recurring-bill-generation",
+      "op": "new"
+    },
+    {
+      "old": "tmp:draft:4",
+      "new": "jgb/E/recurring-bill-generation",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3941",
+      "new": "jgb/E/recurring-bill-generation",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:4651",
+      "new": "jgb/E/recurring-bill-generation",
+      "op": "split"
+    },
+    {
+      "old": "tmp:kb:3397",
+      "new": "jgb/E/rent-proration-and-amount-source",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3895",
+      "new": "jgb/E/rent-proration-and-amount-source",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3934",
+      "new": "jgb/E/rent-proration-and-amount-source",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3336",
+      "new": "jgb/E/bill-scheduled-send",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3342",
+      "new": "jgb/E/bill-scheduled-send",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:4220",
+      "new": "jgb/E/bill-scheduled-send",
+      "op": "new"
+    },
+    {
+      "old": "tmp:draft:3",
+      "new": "jgb/E/bill-scheduled-send",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3403",
+      "new": "jgb/E/bill-scheduled-send",
+      "op": "split"
+    },
+    {
+      "old": "tmp:kb:3553",
+      "new": "jgb/E/bill-scheduled-send",
+      "op": "split"
+    },
+    {
+      "old": "tmp:draft:1",
+      "new": "jgb/E/bill-scheduled-send",
+      "op": "split"
+    },
+    {
+      "old": "tmp:kb:3403",
+      "new": "jgb/E/bill-recall-cancel-archive",
+      "op": "split"
+    },
+    {
+      "old": "tmp:kb:3926",
+      "new": "jgb/E/bill-recall-cancel-archive",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3496",
+      "new": "jgb/E/bill-recall-cancel-archive",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3327",
+      "new": "jgb/E/bill-recall-cancel-archive",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3852",
+      "new": "jgb/E/bill-recall-cancel-archive",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:4653",
+      "new": "jgb/E/bill-recall-cancel-archive",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3495",
+      "new": "jgb/E/bill-send-failure",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:4643",
+      "new": "jgb/E/bill-send-failure",
+      "op": "new"
+    },
+    {
+      "old": "tmp:draft:2",
+      "new": "jgb/E/manual-bill-creation",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:4650",
+      "new": "jgb/E/manual-bill-creation",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3404",
+      "new": "jgb/E/manual-bill-creation",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:4638",
+      "new": "jgb/E/manual-bill-creation",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:4649",
+      "new": "jgb/E/manual-bill-creation",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3408",
+      "new": "jgb/E/tenant-payment-methods",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:4256",
+      "new": "jgb/E/tenant-payment-methods",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:4268",
+      "new": "jgb/E/tenant-payment-methods",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:4288",
+      "new": "jgb/E/tenant-payment-methods",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:4289",
+      "new": "jgb/E/tenant-payment-methods",
+      "op": "new"
+    },
+    {
+      "old": "tmp:draft:5",
+      "new": "jgb/E/tenant-payment-methods",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3443",
+      "new": "jgb/E/tenant-payment-methods",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:1391",
+      "new": "jgb/E/tenant-payment-methods",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:4281",
+      "new": "jgb/E/tenant-payment-methods",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:2918",
+      "new": "jgb/E/tenant-payment-methods",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3447",
+      "new": "jgb/E/tenant-bill-visibility",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3927",
+      "new": "jgb/E/tenant-bill-visibility",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3936",
+      "new": "jgb/E/tenant-bill-visibility",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:4223",
+      "new": "jgb/E/tenant-bill-visibility",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3410",
+      "new": "jgb/E/virtual-account-atm-transfer",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3344",
+      "new": "jgb/E/virtual-account-atm-transfer",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3925",
+      "new": "jgb/E/virtual-account-atm-transfer",
+      "op": "new"
+    },
+    {
+      "old": "tmp:draft:6",
+      "new": "jgb/E/virtual-account-atm-transfer",
+      "op": "new"
+    },
+    {
+      "old": "tmp:draft:7",
+      "new": "jgb/E/virtual-account-atm-transfer",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:4637",
+      "new": "jgb/E/virtual-account-atm-transfer",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:4651",
+      "new": "jgb/E/virtual-account-atm-transfer",
+      "op": "split"
+    },
+    {
+      "old": "tmp:kb:3502",
+      "new": "jgb/E/transfer-failure-troubleshooting",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3924",
+      "new": "jgb/E/transfer-failure-troubleshooting",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3933",
+      "new": "jgb/E/transfer-failure-troubleshooting",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3416",
+      "new": "jgb/E/payment-amount-mismatch",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:2913",
+      "new": "jgb/E/payment-amount-mismatch",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3207",
+      "new": "jgb/E/payment-amount-mismatch",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3411",
+      "new": "jgb/E/convenience-store-payment",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3343",
+      "new": "jgb/E/convenience-store-payment",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3923",
+      "new": "jgb/E/convenience-store-payment",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3391",
+      "new": "jgb/E/credit-card-auto-debit",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3415",
+      "new": "jgb/E/credit-card-auto-debit",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3501",
+      "new": "jgb/E/credit-card-auto-debit",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3346",
+      "new": "jgb/E/gateway-fees",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3551",
+      "new": "jgb/E/gateway-fees",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3400",
+      "new": "jgb/E/late-fee-calculation",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3531",
+      "new": "jgb/E/late-fee-calculation",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3532",
+      "new": "jgb/E/late-fee-calculation",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3939",
+      "new": "jgb/E/late-fee-calculation",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3940",
+      "new": "jgb/E/late-fee-calculation",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3208",
+      "new": "jgb/E/late-fee-calculation",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3402",
+      "new": "jgb/E/move-out-settlement-bill",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3519",
+      "new": "jgb/E/move-out-settlement-bill",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:4657",
+      "new": "jgb/E/move-out-settlement-bill",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3533",
+      "new": "jgb/E/deposit-imputed-interest",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3534",
+      "new": "jgb/E/deposit-imputed-interest",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3422",
+      "new": "jgb/E/differential-invoice",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3535",
+      "new": "jgb/E/differential-invoice",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3536",
+      "new": "jgb/E/differential-invoice",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3537",
+      "new": "jgb/E/differential-invoice",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3538",
+      "new": "jgb/E/differential-invoice",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3420",
+      "new": "jgb/E/einvoice-not-issued-troubleshooting",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3503",
+      "new": "jgb/E/einvoice-not-issued-troubleshooting",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3929",
+      "new": "jgb/E/einvoice-not-issued-troubleshooting",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3362",
+      "new": "jgb/E/einvoice-not-issued-troubleshooting",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3937",
+      "new": "jgb/E/einvoice-not-issued-troubleshooting",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3421",
+      "new": "jgb/E/einvoice-void-reissue",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3423",
+      "new": "jgb/E/einvoice-void-reissue",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3504",
+      "new": "jgb/E/einvoice-void-reissue",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3938",
+      "new": "jgb/E/einvoice-void-reissue",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3406",
+      "new": "jgb/E/bill-receipt-pdf",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:2921",
+      "new": "jgb/E/bill-receipt-pdf",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:4640",
+      "new": "jgb/E/bill-receipt-pdf",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3360",
+      "new": "jgb/E/bill-reports-export",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3407",
+      "new": "jgb/E/bill-reports-export",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:4150",
+      "new": "jgb/E/bill-reports-export",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3489",
+      "new": "jgb/E/bill-reports-export",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3466",
+      "new": "jgb/E/landlord-owner-bills",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3326",
+      "new": "jgb/E/rent-collection-agent-vs-direct",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:2910",
+      "new": "jgb/E/management-fee-tenant",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3105",
+      "new": "jgb/E/management-fee-tenant",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:4271",
+      "new": "jgb/E/management-fee-tenant",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:1393",
+      "new": "jgb/E/management-fee-tenant",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:2909",
+      "new": "jgb/E/rent-level-reference-tenant",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:2925",
+      "new": "jgb/E/rent-level-reference-tenant",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:2920",
+      "new": "jgb/E/rent-level-reference-tenant",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3011",
+      "new": "jgb/E/rent-level-reference-tenant",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3353",
+      "new": "jgb/E/prepaid-meter-topup-billing",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:3459",
+      "new": "jgb/E/prepaid-meter-topup-billing",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:4053",
+      "new": "jgb/E/prepaid-meter-topup-billing",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:4086",
+      "new": "jgb/E/prepaid-meter-topup-billing",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:4047",
+      "new": "jgb/E/prepaid-meter-topup-billing",
+      "op": "new"
+    },
+    {
+      "old": "tmp:kb:4564",
+      "new": "jgb/E/prepaid-meter-topup-billing",
+      "op": "new"
+    }
+  ],
+  "out_of_shelf": [
+    {
+      "id": "tmp:kb:1408",
+      "suggested_shelf": "F",
+      "why": "推薦水電維修廠商屬修繕，無帳務內容。"
+    },
+    {
+      "id": "tmp:kb:3517",
+      "suggested_shelf": "D",
+      "why": "點交清單不符如何處理是合約點交流程，非帳單計算。"
+    },
+    {
+      "id": "tmp:kb:3899",
+      "suggested_shelf": "D",
+      "why": "租客同意點交後的下一步屬合約生命週期；水電基準一句可由水電細目另見。"
+    },
+    {
+      "id": "tmp:kb:3514",
+      "suggested_shelf": "E",
+      "why": "查詢租客概況（合約/帳單/修繕）為彙總資料查詢，face 資料查詢，不成細目。"
+    },
+    {
+      "id": "tmp:kb:1394",
+      "suggested_shelf": "E",
+      "why": "停車費金額查詢為個別資料查詢（需車位編號），face 資料查詢，不成細目。"
+    },
+    {
+      "id": "tmp:kb:4050",
+      "suggested_shelf": "G",
+      "why": "儲值單價在台科電端設定、JGB 僅鏡像顯示，屬裝置設定。"
+    },
+    {
+      "id": "tmp:kb:4059",
+      "suggested_shelf": "G",
+      "why": "空列，題意為儲值單價設定位置，隨 4050 歸裝置。"
+    }
+  ]
+}

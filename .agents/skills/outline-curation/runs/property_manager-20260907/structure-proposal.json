@@ -1,0 +1,4024 @@
+{
+  "cost": {
+    "agents": 4,
+    "completion_tokens": 0,
+    "prompt_tokens": 0,
+    "usd": 0.0,
+    "wall_s": 0.0
+  },
+  "deterministic": false,
+  "inputs_sha": {
+    "coarses": "a21cf7d0aa96918910b7e5e1096ec1dd5c9064026d63e3e22711de4ef9f18ecd",
+    "drafts": "e858194f162ddfb5a8a8623cdf2f6f008d4a2eb998cd619f144dc050d7190ea4",
+    "kb": "c29a752c24e65640ae9c619dc441dddbabf1ff4b22b46d33a6a1f62ace045b0c"
+  },
+  "payload": {
+    "proposals": [
+      {
+        "angle": "user_question_path",
+        "coarses": [
+          {
+            "id": "A",
+            "title": "拍照開修繕單（線③）"
+          },
+          {
+            "id": "B",
+            "title": "催繳草稿（線④）"
+          },
+          {
+            "id": "C",
+            "title": "今天要顧的追問（線⑤：逾期帳單／合約到期／緊急修繕／電錶）"
+          },
+          {
+            "id": "D",
+            "title": "語氣模板與禁止項"
+          },
+          {
+            "id": "E",
+            "title": "資料邊界與什麼時候說不"
+          },
+          {
+            "id": "F",
+            "title": "待裁與待驗"
+          }
+        ],
+        "fines": [
+          {
+            "coarse_id": "A",
+            "id": "property_manager/A/repair-ticket-photo-flow",
+            "merge_of": [
+              "tmp:draft:1"
+            ],
+            "moved_from": [],
+            "reason": "使用者上傳修繕照片後的完整確認流程，是可獨立回答的單一問題。",
+            "slug": "repair-ticket-photo-flow",
+            "split_from": [],
+            "title": "拍照開修繕單基本流程"
+          },
+          {
+            "coarse_id": "A",
+            "id": "property_manager/A/repair-classification-correction",
+            "merge_of": [
+              "tmp:draft:2"
+            ],
+            "moved_from": [],
+            "reason": "按『我要修改』後如何局部修正辨識結果，屬單一追問。",
+            "slug": "repair-classification-correction",
+            "split_from": [],
+            "title": "分類辨識結果錯誤時如何修改"
+          },
+          {
+            "coarse_id": "A",
+            "id": "property_manager/A/repair-photo-low-confidence",
+            "merge_of": [
+              "tmp:draft:3"
+            ],
+            "moved_from": [],
+            "reason": "辨識信心不足時如何給候選類別讓業務選，屬單一追問。",
+            "slug": "repair-photo-low-confidence",
+            "split_from": [],
+            "title": "照片辨識信心不足時的候選選擇"
+          },
+          {
+            "coarse_id": "A",
+            "id": "property_manager/A/repair-photo-no-damage-visible",
+            "merge_of": [
+              "tmp:draft:4"
+            ],
+            "moved_from": [],
+            "reason": "照片看不出損壞時不得編造描述的處理方式，屬單一追問。",
+            "slug": "repair-photo-no-damage-visible",
+            "split_from": [],
+            "title": "照片看不出損壞時的處理"
+          },
+          {
+            "coarse_id": "A",
+            "id": "property_manager/A/repair-photo-count-limit",
+            "merge_of": [
+              "tmp:draft:5"
+            ],
+            "moved_from": [],
+            "reason": "辨識用照片張數上限與附件保存規則，屬單一追問。",
+            "slug": "repair-photo-count-limit",
+            "split_from": [],
+            "title": "修繕辨識照片張數限制"
+          },
+          {
+            "coarse_id": "A",
+            "id": "property_manager/A/repair-ticket-no-lease-check",
+            "merge_of": [
+              "tmp:draft:6"
+            ],
+            "moved_from": [],
+            "reason": "業務代租客開單時是否以自身身分查租約，屬單一追問。",
+            "slug": "repair-ticket-no-lease-check",
+            "split_from": [],
+            "title": "業務開單是否需查租約"
+          },
+          {
+            "coarse_id": "A",
+            "id": "property_manager/A/repair-urgency-judgement",
+            "merge_of": [
+              "tmp:draft:7"
+            ],
+            "moved_from": [],
+            "reason": "急迫程度由辨識建議、缺值不得預設急迫，屬單一追問。",
+            "slug": "repair-urgency-judgement",
+            "split_from": [],
+            "title": "急迫程度如何判斷"
+          },
+          {
+            "coarse_id": "A",
+            "id": "property_manager/A/repair-ticket-creation-failure",
+            "merge_of": [
+              "tmp:draft:8"
+            ],
+            "moved_from": [],
+            "reason": "建單 API 失敗時如何明講與重試，屬單一追問。",
+            "slug": "repair-ticket-creation-failure",
+            "split_from": [],
+            "title": "建單失敗時的處理"
+          },
+          {
+            "coarse_id": "A",
+            "id": "property_manager/A/repair-vacant-unit-no-lease",
+            "merge_of": [
+              "tmp:draft:9"
+            ],
+            "moved_from": [],
+            "reason": "空屋或無租約物件開單時合約欄位留空是否可行，屬單一追問。",
+            "slug": "repair-vacant-unit-no-lease",
+            "split_from": [],
+            "title": "空屋無租約物件能否開單"
+          },
+          {
+            "coarse_id": "A",
+            "id": "property_manager/A/repair-ticket-cancel-midway",
+            "merge_of": [
+              "tmp:draft:10"
+            ],
+            "moved_from": [],
+            "reason": "任一階段表態取消即結束報修的規則，屬單一追問。",
+            "slug": "repair-ticket-cancel-midway",
+            "split_from": [],
+            "title": "中途取消報修"
+          },
+          {
+            "coarse_id": "B",
+            "id": "property_manager/B/dunning-draft-generation",
+            "merge_of": [
+              "tmp:draft:11"
+            ],
+            "moved_from": [],
+            "reason": "催繳草稿依逾期次數分級與佔位符填值規則，屬單一追問。",
+            "slug": "dunning-draft-generation",
+            "split_from": [],
+            "title": "催繳草稿如何產生"
+          },
+          {
+            "coarse_id": "B",
+            "id": "property_manager/B/dunning-draft-not-auto-send",
+            "merge_of": [
+              "tmp:draft:12"
+            ],
+            "moved_from": [],
+            "reason": "草稿一律推給業務複製發送、不設一鍵發送，屬單一追問。",
+            "slug": "dunning-draft-not-auto-send",
+            "split_from": [],
+            "title": "催繳草稿能否直接發給租客"
+          },
+          {
+            "coarse_id": "B",
+            "id": "property_manager/B/dunning-draft-late-fee-mention",
+            "merge_of": [
+              "tmp:draft:13"
+            ],
+            "moved_from": [],
+            "reason": "合約有無滯納金條款與語氣等級決定是否提及滯納金，屬單一追問。",
+            "slug": "dunning-draft-late-fee-mention",
+            "split_from": [],
+            "title": "催繳草稿是否要寫滯納金"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/contract-status-inquiry",
+            "merge_of": [
+              "tmp:kb:3799",
+              "tmp:kb:3800",
+              "tmp:kb:3801"
+            ],
+            "moved_from": [],
+            "reason": "使用者查某份合約現況、可否點交點退續約時，依系統判定回答的單一主題。",
+            "slug": "contract-status-inquiry",
+            "split_from": [],
+            "title": "合約狀態查詢與判讀"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/contract-amendment",
+            "merge_of": [
+              "tmp:kb:3822",
+              "tmp:kb:4005"
+            ],
+            "moved_from": [],
+            "reason": "使用者想改合約內容（租期/租金/承租人）的出口判斷，單一主題。",
+            "slug": "contract-amendment",
+            "split_from": [],
+            "title": "合約異動（改合約內容）"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/lease-closeout",
+            "merge_of": [
+              "tmp:kb:3823",
+              "tmp:kb:4202"
+            ],
+            "moved_from": [],
+            "reason": "退租、提前解約、帳單封存、轉歷史的收尾流程，單一主題。",
+            "slug": "lease-closeout",
+            "split_from": [],
+            "title": "退租收尾（點退／解約／轉歷史）"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/lease-renewal",
+            "merge_of": [
+              "tmp:kb:3824",
+              "tmp:kb:3829"
+            ],
+            "moved_from": [],
+            "reason": "合約到期後能否走系統續約、重建新約與重簽方式，單一主題。",
+            "slug": "lease-renewal",
+            "split_from": [],
+            "title": "續約（系統續約與重建新約）"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/lease-creation-guidance",
+            "merge_of": [
+              "tmp:kb:3825",
+              "tmp:kb:4215"
+            ],
+            "moved_from": [],
+            "reason": "建立新合約前的方式與對象型態分流，單一主題。",
+            "slug": "lease-creation-guidance",
+            "split_from": [],
+            "title": "建約引導"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/contract-signing-troubleshoot",
+            "merge_of": [
+              "tmp:kb:3826",
+              "tmp:kb:3831"
+            ],
+            "moved_from": [],
+            "reason": "簽約邀請與簽署卡關的排查，單一主題。",
+            "slug": "contract-signing-troubleshoot",
+            "split_from": [],
+            "title": "簽署排障"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/payment-flow-troubleshoot",
+            "merge_of": [
+              "tmp:kb:3909",
+              "tmp:kb:3910",
+              "tmp:kb:3915"
+            ],
+            "moved_from": [],
+            "reason": "租客繳費後款項卡在待對帳等金流問題，單一主題。",
+            "slug": "payment-flow-troubleshoot",
+            "split_from": [],
+            "title": "繳費金流排障"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/bill-anomaly-diagnosis",
+            "merge_of": [
+              "tmp:kb:3911",
+              "tmp:kb:3916"
+            ],
+            "moved_from": [],
+            "reason": "帳單金額不對、沒產生、租客看不到的診斷，單一主題。",
+            "slug": "bill-anomaly-diagnosis",
+            "split_from": [],
+            "title": "帳單異常診斷（金額／未產生／看不到）"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/invoice-status",
+            "merge_of": [
+              "tmp:kb:3912",
+              "tmp:kb:3917"
+            ],
+            "moved_from": [],
+            "reason": "發票何時開立、異常原因、補開規則，單一主題。",
+            "slug": "invoice-status",
+            "split_from": [],
+            "title": "發票狀態與補開"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/late-fee-mechanism",
+            "merge_of": [
+              "tmp:kb:3913",
+              "tmp:kb:3918"
+            ],
+            "moved_from": [],
+            "reason": "滯納金兩種機制的計算與適用判斷，單一主題。",
+            "slug": "late-fee-mechanism",
+            "split_from": [],
+            "title": "滯納金機制與計算"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/billing-setup-guidance",
+            "merge_of": [
+              "tmp:kb:3914",
+              "tmp:kb:4214"
+            ],
+            "moved_from": [],
+            "reason": "收款帳戶、繳費週期、發送規則等設定引導，單一主題。",
+            "slug": "billing-setup-guidance",
+            "split_from": [],
+            "title": "帳單設定引導"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/bill-operation-diagnosis",
+            "merge_of": [
+              "tmp:kb:4252"
+            ],
+            "moved_from": [],
+            "reason": "單筆帳單能否發送/取消/手動到帳的操作診斷，單一主題。",
+            "slug": "bill-operation-diagnosis",
+            "split_from": [],
+            "title": "帳單操作可否診斷（發送／取消／手動到帳）"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/account-registration-verification",
+            "merge_of": [
+              "tmp:kb:3952",
+              "tmp:kb:3953",
+              "tmp:kb:3983"
+            ],
+            "moved_from": [],
+            "reason": "租客註冊與驗證碼相關排障，單一主題。",
+            "slug": "account-registration-verification",
+            "split_from": [],
+            "title": "帳號註冊與驗證排障"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/account-login-troubleshoot",
+            "merge_of": [
+              "tmp:kb:3954",
+              "tmp:kb:3990"
+            ],
+            "moved_from": [],
+            "reason": "租客登入問題排障，單一主題。",
+            "slug": "account-login-troubleshoot",
+            "split_from": [],
+            "title": "登入排障"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/account-binding-change",
+            "merge_of": [
+              "tmp:kb:3955",
+              "tmp:kb:3984"
+            ],
+            "moved_from": [],
+            "reason": "帳號資料換綁、合併等異動流程，單一主題。",
+            "slug": "account-binding-change",
+            "split_from": [],
+            "title": "帳號綁定異動"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/team-member-permission",
+            "merge_of": [
+              "tmp:kb:3956",
+              "tmp:kb:4001"
+            ],
+            "moved_from": [],
+            "reason": "團隊成員權限指派與可見範圍判讀，單一主題。",
+            "slug": "team-member-permission",
+            "split_from": [],
+            "title": "團隊成員權限"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/iot-setup-guidance",
+            "merge_of": [
+              "tmp:kb:4021",
+              "tmp:kb:4088",
+              "tmp:kb:4090"
+            ],
+            "moved_from": [],
+            "reason": "電表串接、儲值單價、門鎖規則等設定引導，單一主題。",
+            "slug": "iot-setup-guidance",
+            "split_from": [],
+            "title": "IoT 設定引導（電表串接／儲值單價／門鎖）"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/meter-troubleshoot",
+            "merge_of": [
+              "tmp:kb:4089",
+              "tmp:kb:4091"
+            ],
+            "moved_from": [],
+            "reason": "電表離線、斷電、度數異常的判因與排障，單一主題。",
+            "slug": "meter-troubleshoot",
+            "split_from": [],
+            "title": "電表排障（離線／斷電／度數異常）"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/property-status-diagnosis",
+            "merge_of": [
+              "tmp:kb:4132",
+              "tmp:kb:4134",
+              "tmp:kb:4176"
+            ],
+            "moved_from": [],
+            "reason": "物件在對外刊登清單的現況與能否建約，單一主題。",
+            "slug": "property-status-diagnosis",
+            "split_from": [],
+            "title": "物件現況診斷（能否建約／是否刊登）"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/property-operation-guidance",
+            "merge_of": [
+              "tmp:kb:4133",
+              "tmp:kb:4203"
+            ],
+            "moved_from": [],
+            "reason": "物件編輯、刊登、招租店舖等操作引導，單一主題。",
+            "slug": "property-operation-guidance",
+            "split_from": [],
+            "title": "物件操作引導（編輯／刊登／招租店舖）"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/subscription-diagnosis",
+            "merge_of": [
+              "tmp:kb:5373",
+              "tmp:kb:5374"
+            ],
+            "moved_from": [],
+            "reason": "訂閱方案額度、扣款失敗導致的功能異常診斷，單一主題。",
+            "slug": "subscription-diagnosis",
+            "split_from": [],
+            "title": "訂閱方案額度與扣款診斷"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/followup-overdue-bill",
+            "merge_of": [
+              "tmp:draft:14",
+              "tmp:draft:15"
+            ],
+            "moved_from": [],
+            "reason": "LINE 追問清單中『逾期帳單』項目能回答的範圍與別戶排除，單一主題。",
+            "slug": "followup-overdue-bill",
+            "split_from": [],
+            "title": "追問清單—逾期帳單能答什麼"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/followup-lease-expiry",
+            "merge_of": [
+              "tmp:draft:17"
+            ],
+            "moved_from": [],
+            "reason": "LINE 追問清單中『合約到期』項目轉入續約面向的回答範圍，單一主題。",
+            "slug": "followup-lease-expiry",
+            "split_from": [],
+            "title": "追問清單—合約到期能答什麼"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/followup-emergency-repair",
+            "merge_of": [
+              "tmp:draft:18"
+            ],
+            "moved_from": [],
+            "reason": "LINE 追問清單中『緊急修繕』項目目前僅列示、不開追問的範圍，單一主題。",
+            "slug": "followup-emergency-repair",
+            "split_from": [],
+            "title": "追問清單—緊急修繕能答什麼"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/followup-meter-item-routing",
+            "merge_of": [
+              "tmp:draft:19"
+            ],
+            "moved_from": [],
+            "reason": "LINE 追問清單中電錶項目以 id 路由到電表排障面向，單一主題。",
+            "slug": "followup-meter-item-routing",
+            "split_from": [],
+            "title": "追問清單—電錶項目如何路由"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/followup-session-timeout",
+            "merge_of": [
+              "tmp:draft:20",
+              "tmp:draft:26"
+            ],
+            "moved_from": [],
+            "reason": "追問會話按結束鈕或 30 分鐘無動作逾時的行為規則，單一主題。",
+            "slug": "followup-session-timeout",
+            "split_from": [],
+            "title": "追問會話結束與逾時規則"
+          },
+          {
+            "coarse_id": "D",
+            "id": "property_manager/D/tone-principles",
+            "merge_of": [
+              "tmp:draft:21"
+            ],
+            "moved_from": [],
+            "reason": "對現場單手用手機使用者的語氣與呈現原則，單一主題。",
+            "slug": "tone-principles",
+            "split_from": [],
+            "title": "回覆語氣原則"
+          },
+          {
+            "coarse_id": "D",
+            "id": "property_manager/D/forbidden-behaviors",
+            "merge_of": [
+              "tmp:draft:22"
+            ],
+            "moved_from": [],
+            "reason": "不可出現的內容與行為清單，單一主題。",
+            "slug": "forbidden-behaviors",
+            "split_from": [],
+            "title": "禁止項（不編造／不推算／不代決定）"
+          },
+          {
+            "coarse_id": "E",
+            "id": "property_manager/E/data-not-in-jgb",
+            "merge_of": [
+              "tmp:draft:16",
+              "tmp:draft:23"
+            ],
+            "moved_from": [],
+            "reason": "系統沒有的欄位或數字時如何回答、不推算不冒充，兩則同一原則合併為單一主題。",
+            "slug": "data-not-in-jgb",
+            "split_from": [],
+            "title": "JGB 沒有的資料如何回應"
+          },
+          {
+            "coarse_id": "E",
+            "id": "property_manager/E/when-to-decline",
+            "merge_of": [
+              "tmp:draft:24"
+            ],
+            "moved_from": [],
+            "reason": "三種必須拒答或退出的情況，單一主題。",
+            "slug": "when-to-decline",
+            "split_from": [],
+            "title": "什麼情況要拒答或退出"
+          },
+          {
+            "coarse_id": "E",
+            "id": "property_manager/E/identity-and-scope-boundary",
+            "merge_of": [
+              "tmp:draft:25"
+            ],
+            "moved_from": [],
+            "reason": "呼叫方身分推出與可見範圍界定，單一主題。",
+            "slug": "identity-and-scope-boundary",
+            "split_from": [],
+            "title": "誰在跟系統對話與權限邊界"
+          },
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/presales-context-scope-check",
+            "merge_of": [
+              "tmp:kb:3622"
+            ],
+            "moved_from": [],
+            "reason": "此則標記為售前系統注入用內容，是否屬於 property_manager 受眾待業主裁定。",
+            "slug": "presales-context-scope-check",
+            "split_from": [],
+            "title": "售前脈絡文件是否誤入本受眾（待裁）"
+          },
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/urgency-domain-value-conflict",
+            "merge_of": [
+              "tmp:draft:27"
+            ],
+            "moved_from": [],
+            "reason": "急迫程度值域定義程式與舊表單相反、且缺值預設待裁定正確方向。",
+            "slug": "urgency-domain-value-conflict",
+            "split_from": [],
+            "title": "急迫程度值域與預設值衝突（待裁）"
+          },
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/repair-history-facet-gap",
+            "merge_of": [
+              "tmp:draft:28"
+            ],
+            "moved_from": [],
+            "reason": "是否新建修繕歷史／進度面向待裁，第一版尚未開放。",
+            "slug": "repair-history-facet-gap",
+            "split_from": [],
+            "title": "修繕歷史／進度面向是否新建（待裁）"
+          },
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/dunning-endpoint-form",
+            "merge_of": [
+              "tmp:draft:29"
+            ],
+            "moved_from": [],
+            "reason": "催繳草稿要做成面向內動作或獨立端點的技術形式待裁。",
+            "slug": "dunning-endpoint-form",
+            "split_from": [],
+            "title": "催繳草稿端點形式（待裁）"
+          },
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/followup-latency-budget",
+            "merge_of": [
+              "tmp:draft:30"
+            ],
+            "moved_from": [],
+            "reason": "追問回覆的 p95 延遲尚無實測數據待驗。",
+            "slug": "followup-latency-budget",
+            "split_from": [],
+            "title": "追問回覆延遲上限（待驗）"
+          }
+        ],
+        "id_map": [
+          {
+            "new": "property_manager/F/presales-context-scope-check",
+            "old": "tmp:kb:3622",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/C/contract-status-inquiry",
+            "old": "tmp:kb:3799",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/contract-status-inquiry",
+            "old": "tmp:kb:3800",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/contract-status-inquiry",
+            "old": "tmp:kb:3801",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/contract-amendment",
+            "old": "tmp:kb:3822",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/lease-closeout",
+            "old": "tmp:kb:3823",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/lease-renewal",
+            "old": "tmp:kb:3824",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/lease-creation-guidance",
+            "old": "tmp:kb:3825",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/contract-signing-troubleshoot",
+            "old": "tmp:kb:3826",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/lease-renewal",
+            "old": "tmp:kb:3829",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/contract-signing-troubleshoot",
+            "old": "tmp:kb:3831",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/payment-flow-troubleshoot",
+            "old": "tmp:kb:3909",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/payment-flow-troubleshoot",
+            "old": "tmp:kb:3910",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/bill-anomaly-diagnosis",
+            "old": "tmp:kb:3911",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/invoice-status",
+            "old": "tmp:kb:3912",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/late-fee-mechanism",
+            "old": "tmp:kb:3913",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/billing-setup-guidance",
+            "old": "tmp:kb:3914",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/payment-flow-troubleshoot",
+            "old": "tmp:kb:3915",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/bill-anomaly-diagnosis",
+            "old": "tmp:kb:3916",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/invoice-status",
+            "old": "tmp:kb:3917",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/late-fee-mechanism",
+            "old": "tmp:kb:3918",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/account-registration-verification",
+            "old": "tmp:kb:3952",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/account-registration-verification",
+            "old": "tmp:kb:3953",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/account-login-troubleshoot",
+            "old": "tmp:kb:3954",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/account-binding-change",
+            "old": "tmp:kb:3955",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/team-member-permission",
+            "old": "tmp:kb:3956",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/account-registration-verification",
+            "old": "tmp:kb:3983",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/account-binding-change",
+            "old": "tmp:kb:3984",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/account-login-troubleshoot",
+            "old": "tmp:kb:3990",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/team-member-permission",
+            "old": "tmp:kb:4001",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/contract-amendment",
+            "old": "tmp:kb:4005",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/iot-setup-guidance",
+            "old": "tmp:kb:4021",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/iot-setup-guidance",
+            "old": "tmp:kb:4088",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/meter-troubleshoot",
+            "old": "tmp:kb:4089",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/iot-setup-guidance",
+            "old": "tmp:kb:4090",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/meter-troubleshoot",
+            "old": "tmp:kb:4091",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/property-status-diagnosis",
+            "old": "tmp:kb:4132",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/property-operation-guidance",
+            "old": "tmp:kb:4133",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/property-status-diagnosis",
+            "old": "tmp:kb:4134",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/property-status-diagnosis",
+            "old": "tmp:kb:4176",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/lease-closeout",
+            "old": "tmp:kb:4202",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/property-operation-guidance",
+            "old": "tmp:kb:4203",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/billing-setup-guidance",
+            "old": "tmp:kb:4214",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/lease-creation-guidance",
+            "old": "tmp:kb:4215",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/bill-operation-diagnosis",
+            "old": "tmp:kb:4252",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/C/subscription-diagnosis",
+            "old": "tmp:kb:5373",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/subscription-diagnosis",
+            "old": "tmp:kb:5374",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/A/repair-ticket-photo-flow",
+            "old": "tmp:draft:1",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/A/repair-classification-correction",
+            "old": "tmp:draft:2",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/A/repair-photo-low-confidence",
+            "old": "tmp:draft:3",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/A/repair-photo-no-damage-visible",
+            "old": "tmp:draft:4",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/A/repair-photo-count-limit",
+            "old": "tmp:draft:5",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/A/repair-ticket-no-lease-check",
+            "old": "tmp:draft:6",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/A/repair-urgency-judgement",
+            "old": "tmp:draft:7",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/A/repair-ticket-creation-failure",
+            "old": "tmp:draft:8",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/A/repair-vacant-unit-no-lease",
+            "old": "tmp:draft:9",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/A/repair-ticket-cancel-midway",
+            "old": "tmp:draft:10",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/B/dunning-draft-generation",
+            "old": "tmp:draft:11",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/B/dunning-draft-not-auto-send",
+            "old": "tmp:draft:12",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/B/dunning-draft-late-fee-mention",
+            "old": "tmp:draft:13",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/C/followup-overdue-bill",
+            "old": "tmp:draft:14",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/followup-overdue-bill",
+            "old": "tmp:draft:15",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/E/data-not-in-jgb",
+            "old": "tmp:draft:16",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/followup-lease-expiry",
+            "old": "tmp:draft:17",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/C/followup-emergency-repair",
+            "old": "tmp:draft:18",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/C/followup-meter-item-routing",
+            "old": "tmp:draft:19",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/C/followup-session-timeout",
+            "old": "tmp:draft:20",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/D/tone-principles",
+            "old": "tmp:draft:21",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/D/forbidden-behaviors",
+            "old": "tmp:draft:22",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/E/data-not-in-jgb",
+            "old": "tmp:draft:23",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/E/when-to-decline",
+            "old": "tmp:draft:24",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/E/identity-and-scope-boundary",
+            "old": "tmp:draft:25",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/C/followup-session-timeout",
+            "old": "tmp:draft:26",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/urgency-domain-value-conflict",
+            "old": "tmp:draft:27",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/F/repair-history-facet-gap",
+            "old": "tmp:draft:28",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/F/dunning-endpoint-form",
+            "old": "tmp:draft:29",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/F/followup-latency-budget",
+            "old": "tmp:draft:30",
+            "op": "keep"
+          }
+        ]
+      },
+      {
+        "angle": "content_boundary",
+        "coarses": [
+          {
+            "id": "A",
+            "title": "拍照開修繕單（線③）"
+          },
+          {
+            "id": "B",
+            "title": "催繳草稿（線④）"
+          },
+          {
+            "id": "C",
+            "title": "今天要顧的追問（線⑤：逾期帳單／合約到期／緊急修繕／電錶）"
+          },
+          {
+            "id": "D",
+            "title": "語氣模板與禁止項"
+          },
+          {
+            "id": "E",
+            "title": "資料邊界與什麼時候說不"
+          },
+          {
+            "id": "F",
+            "title": "待裁與待驗"
+          }
+        ],
+        "fines": [
+          {
+            "coarse_id": "A",
+            "id": "property_manager/A/repair-ticket-photo-flow",
+            "merge_of": [
+              "tmp:draft:1"
+            ],
+            "moved_from": [],
+            "reason": "獨立完整描述上傳照片到三顆按鈕確認建單的整體流程，不依賴其他項目即可理解。",
+            "slug": "repair-ticket-photo-flow",
+            "split_from": [],
+            "title": "拍照開修繕單基本流程與確認步驟"
+          },
+          {
+            "coarse_id": "A",
+            "id": "property_manager/A/repair-ticket-reclassify",
+            "merge_of": [
+              "tmp:draft:2"
+            ],
+            "moved_from": [],
+            "reason": "只針對「按我要修改」這個特定分支的行為，主題與整體流程不同，獨立成目。",
+            "slug": "repair-ticket-reclassify",
+            "split_from": [],
+            "title": "修繕單分類猜錯的修改方式"
+          },
+          {
+            "coarse_id": "A",
+            "id": "property_manager/A/repair-ticket-low-confidence-candidates",
+            "merge_of": [
+              "tmp:draft:3"
+            ],
+            "moved_from": [],
+            "reason": "描述辨識信心不足這一特定情境的處理方式，可獨立成立。",
+            "slug": "repair-ticket-low-confidence-candidates",
+            "split_from": [],
+            "title": "照片辨識信心不足時的候選類別流程"
+          },
+          {
+            "coarse_id": "A",
+            "id": "property_manager/A/repair-ticket-unrecognizable-photo",
+            "merge_of": [
+              "tmp:draft:4"
+            ],
+            "moved_from": [],
+            "reason": "與「信心不足」不同：這是完全看不出損壞、且明文禁止編造描述的情境，主題不重疊，獨立成目。",
+            "slug": "repair-ticket-unrecognizable-photo",
+            "split_from": [],
+            "title": "照片看不出損壞時的處理方式"
+          },
+          {
+            "coarse_id": "A",
+            "id": "property_manager/A/repair-ticket-photo-count-limit",
+            "merge_of": [
+              "tmp:draft:5"
+            ],
+            "moved_from": [],
+            "reason": "只講張數上限這一個獨立技術限制，與流程、分類無關。",
+            "slug": "repair-ticket-photo-count-limit",
+            "split_from": [],
+            "title": "修繕單辨識與附件的照片張數限制"
+          },
+          {
+            "coarse_id": "A",
+            "id": "property_manager/A/repair-ticket-agent-identity-lease-lookup",
+            "merge_of": [
+              "tmp:draft:6"
+            ],
+            "moved_from": [],
+            "reason": "主題是「用誰的身分查租約」，與空屋無租約（另一情境）不同觸發條件，獨立成目。",
+            "slug": "repair-ticket-agent-identity-lease-lookup",
+            "split_from": [],
+            "title": "業務代開修繕單時的租約查詢身分規則"
+          },
+          {
+            "coarse_id": "A",
+            "id": "property_manager/A/repair-ticket-urgency-judgment",
+            "merge_of": [
+              "tmp:draft:7"
+            ],
+            "moved_from": [],
+            "reason": "描述急迫程度在本功能內如何取值，與F類的值域定義爭議屬不同層級，另見F而不重複。",
+            "slug": "repair-ticket-urgency-judgment",
+            "split_from": [],
+            "title": "修繕單急迫程度的判斷來源"
+          },
+          {
+            "coarse_id": "A",
+            "id": "property_manager/A/repair-ticket-submit-failure",
+            "merge_of": [
+              "tmp:draft:8"
+            ],
+            "moved_from": [],
+            "reason": "獨立描述建單API失敗與重複送出的行為，可獨立成立。",
+            "slug": "repair-ticket-submit-failure",
+            "split_from": [],
+            "title": "修繕單建單失敗的處理與重試規則"
+          },
+          {
+            "coarse_id": "A",
+            "id": "property_manager/A/repair-ticket-vacant-no-lease",
+            "merge_of": [
+              "tmp:draft:9"
+            ],
+            "moved_from": [],
+            "reason": "觸發條件是物件本身無租約（非身分查詢問題），與另一細目主題不同，獨立成目。",
+            "slug": "repair-ticket-vacant-no-lease",
+            "split_from": [],
+            "title": "空屋或無租約物件的開單規則"
+          },
+          {
+            "coarse_id": "A",
+            "id": "property_manager/A/repair-ticket-mid-flow-cancel",
+            "merge_of": [
+              "tmp:draft:10"
+            ],
+            "moved_from": [],
+            "reason": "獨立描述任一階段取消的行為，主題完整不依賴其他項目。",
+            "slug": "repair-ticket-mid-flow-cancel",
+            "split_from": [],
+            "title": "報修流程中途取消的規則"
+          },
+          {
+            "coarse_id": "B",
+            "id": "property_manager/B/rent-reminder-draft-generation",
+            "merge_of": [
+              "tmp:draft:11"
+            ],
+            "moved_from": [],
+            "reason": "獨立描述語氣分級與佔位符填值機制，主題完整。",
+            "slug": "rent-reminder-draft-generation",
+            "split_from": [],
+            "title": "催繳草稿的生成規則（模板＋語氣分級）"
+          },
+          {
+            "coarse_id": "B",
+            "id": "property_manager/B/rent-reminder-no-direct-send",
+            "merge_of": [
+              "tmp:draft:12"
+            ],
+            "moved_from": [],
+            "reason": "與草稿如何生成是不同主題（生成規則 vs 發送邊界），獨立成目。",
+            "slug": "rent-reminder-no-direct-send",
+            "split_from": [],
+            "title": "催繳草稿不可一鍵發送給租客"
+          },
+          {
+            "coarse_id": "B",
+            "id": "property_manager/B/rent-reminder-late-fee-mention",
+            "merge_of": [
+              "tmp:draft:13"
+            ],
+            "moved_from": [],
+            "reason": "只針對滯納金這一項目內容規則，與生成機制、發送規則主題不同。",
+            "slug": "rent-reminder-late-fee-mention",
+            "split_from": [],
+            "title": "催繳草稿是否提及滯納金的規則"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/contract-domain-shared-knowledge",
+            "merge_of": [
+              "tmp:kb:3799"
+            ],
+            "moved_from": [],
+            "reason": "為合約到期等追問所需的通用名詞與階段對照，內容自成一體，獨立成目。",
+            "slug": "contract-domain-shared-knowledge",
+            "split_from": [],
+            "title": "合約領域共用知識（12里程碑／續約父子鏈／關鍵欄位）"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/contract-status-diagnosis",
+            "merge_of": [
+              "tmp:kb:3800",
+              "tmp:kb:3801"
+            ],
+            "moved_from": [],
+            "reason": "對話規則（3801）明講「參考系統脈絡的階段說明」而不重述判斷規則（3800），兩段互相依賴才完整，合併為同一細目。",
+            "slug": "contract-status-diagnosis",
+            "split_from": [],
+            "title": "合約狀態診斷怎麼問怎麼答"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/contract-renewal",
+            "merge_of": [
+              "tmp:kb:3824",
+              "tmp:kb:3829"
+            ],
+            "moved_from": [],
+            "reason": "對話規則依賴子面向的續約判斷規則才完整，合併同一細目；內容直接支撐C的「合約到期」追問。",
+            "slug": "contract-renewal",
+            "split_from": [],
+            "title": "續約：可否系統續約與重簽方式"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/billing-domain-shared-knowledge",
+            "merge_of": [
+              "tmp:kb:3909"
+            ],
+            "moved_from": [],
+            "reason": "逾期帳單追問所需的狀態名詞對照，內容自成一體。",
+            "slug": "billing-domain-shared-knowledge",
+            "split_from": [],
+            "title": "帳務領域共用知識（帳單狀態表）"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/bill-payment-flow-troubleshooting",
+            "merge_of": [
+              "tmp:kb:3910",
+              "tmp:kb:3915"
+            ],
+            "moved_from": [],
+            "reason": "對話規則未重述金流判斷細節、僅引用子面向內容，兩者互相依賴，合併同一細目。",
+            "slug": "bill-payment-flow-troubleshooting",
+            "split_from": [],
+            "title": "繳費金流排障（含超商撥付時程）"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/bill-anomaly-diagnosis",
+            "merge_of": [
+              "tmp:kb:3911",
+              "tmp:kb:3916"
+            ],
+            "moved_from": [],
+            "reason": "對話規則依賴子面向的存值組成規則才完整，合併同一細目。",
+            "slug": "bill-anomaly-diagnosis",
+            "split_from": [],
+            "title": "帳單異常診斷（金額／沒產生／看不到）"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/bill-operability-diagnosis",
+            "merge_of": [
+              "tmp:kb:4252"
+            ],
+            "moved_from": [],
+            "reason": "無對應的子面向知識項目可合併，且主題（單筆操作可否）與帳單異常不同，獨立成目；內容含逾期費，與C主題相關。",
+            "slug": "bill-operability-diagnosis",
+            "split_from": [],
+            "title": "帳單操作可否診斷（發送／取消／逾期費／手動到帳）"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/late-fee-explanation",
+            "merge_of": [
+              "tmp:kb:3913",
+              "tmp:kb:3918"
+            ],
+            "moved_from": [],
+            "reason": "對話規則依賴子面向的兩種機制規則才完整，合併同一細目；直接支撐逾期帳單追問。",
+            "slug": "late-fee-explanation",
+            "split_from": [],
+            "title": "滯納金機制說明與查詢"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/iot-domain-shared-knowledge",
+            "merge_of": [
+              "tmp:kb:4021"
+            ],
+            "moved_from": [],
+            "reason": "電錶追問所需的通用名詞對照，內容自成一體。",
+            "slug": "iot-domain-shared-knowledge",
+            "split_from": [],
+            "title": "智慧設備領域共用知識（電表類型／儲值模式）"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/meter-troubleshooting",
+            "merge_of": [
+              "tmp:kb:4091",
+              "tmp:kb:4089"
+            ],
+            "moved_from": [],
+            "reason": "對話規則依賴子面向的判定順序與規則才完整，合併同一細目；直接對應draft:19所指的轉接目標。",
+            "slug": "meter-troubleshooting",
+            "split_from": [],
+            "title": "電表排障（離線／供電／同步異常）"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/overdue-bill-followup-scope",
+            "merge_of": [
+              "tmp:draft:14"
+            ],
+            "moved_from": [],
+            "reason": "定義本功能對逾期帳單這個清單項目的回答邊界，主題獨立完整。",
+            "slug": "overdue-bill-followup-scope",
+            "split_from": [],
+            "title": "逾期帳單追問可回答的範圍"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/followup-other-tenant-restriction",
+            "merge_of": [
+              "tmp:draft:15"
+            ],
+            "moved_from": [],
+            "reason": "獨立的會話邊界規則（單筆項目獨立會話），與回答內容範圍不同主題。",
+            "slug": "followup-other-tenant-restriction",
+            "split_from": [],
+            "title": "追問時問到別戶的處理"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/followup-missing-jgb-data",
+            "merge_of": [
+              "tmp:draft:16"
+            ],
+            "moved_from": [],
+            "reason": "獨立說明缺欄位時不得杜撰或誤用其他欄位頂替，主題完整可獨立成立。",
+            "slug": "followup-missing-jgb-data",
+            "split_from": [],
+            "title": "JGB沒有的資料欄位怎麼回答"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/contract-expiry-followup-scope",
+            "merge_of": [
+              "tmp:draft:17"
+            ],
+            "moved_from": [],
+            "reason": "定義本功能對合約到期這個清單項目的回答邊界，並指明轉入續約而非退租收尾面向。",
+            "slug": "contract-expiry-followup-scope",
+            "split_from": [],
+            "title": "合約到期追問可回答的範圍"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/emergency-repair-no-history-facet",
+            "merge_of": [
+              "tmp:draft:18"
+            ],
+            "moved_from": [],
+            "reason": "說明第一版緊急修繕僅列示、不開追問，主題獨立；與F類「是否新建面向」的待裁決策層級不同，另見F不重複。",
+            "slug": "emergency-repair-no-history-facet",
+            "split_from": [],
+            "title": "緊急修繕目前沒有歷史追問面向"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/meter-followup-routing",
+            "merge_of": [
+              "tmp:draft:19"
+            ],
+            "moved_from": [],
+            "reason": "描述電錶清單項目如何以id直接轉入電表排障面向，主題獨立完整。",
+            "slug": "meter-followup-routing",
+            "split_from": [],
+            "title": "電錶項目追問的轉接規則"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/followup-session-end",
+            "merge_of": [
+              "tmp:draft:20"
+            ],
+            "moved_from": [],
+            "reason": "本細目描述追問功能內結束鈕與過期重進場的具體行為，是E類一般會話過期規則在C功能內的具體應用，屬不同層級，另見E不重複。",
+            "slug": "followup-session-end",
+            "split_from": [],
+            "title": "追問結束與逾期會話重新進場的處理"
+          },
+          {
+            "coarse_id": "D",
+            "id": "property_manager/D/presales-context-tone-and-hard-rules",
+            "merge_of": [
+              "tmp:kb:3622"
+            ],
+            "moved_from": [],
+            "reason": "內容標明為售前受眾使用，但主題（品牌語氣＋不報價／不誇大／不杜撰等禁止項）與D類主題最貼近；是否適用本受眾（房東管家非售前）待業主裁定，暫置此供比對。",
+            "slug": "presales-context-tone-and-hard-rules",
+            "split_from": [],
+            "title": "售前系統脈絡：品牌語氣與合規鐵則（供比對參考）"
+          },
+          {
+            "coarse_id": "D",
+            "id": "property_manager/D/reply-tone-principles",
+            "merge_of": [
+              "tmp:draft:21"
+            ],
+            "moved_from": [],
+            "reason": "獨立描述整體回覆風格原則，可獨立成立。",
+            "slug": "reply-tone-principles",
+            "split_from": [],
+            "title": "回覆語氣原則（短、先結論、按鈕優先）"
+          },
+          {
+            "coarse_id": "D",
+            "id": "property_manager/D/prohibited-statements",
+            "merge_of": [
+              "tmp:draft:22"
+            ],
+            "moved_from": [],
+            "reason": "與語氣風格不同主題，這是明確的禁止行為清單，獨立成目。",
+            "slug": "prohibited-statements",
+            "split_from": [],
+            "title": "哪些話不能說（禁止項清單）"
+          },
+          {
+            "coarse_id": "E",
+            "id": "property_manager/E/contract-amendment",
+            "merge_of": [
+              "tmp:kb:3822",
+              "tmp:kb:4005"
+            ],
+            "moved_from": [],
+            "reason": "對話規則依賴子面向的異動出口判斷才完整，合併同一細目；非C所列四項追問主題，歸入一般資料邊界知識。",
+            "slug": "contract-amendment",
+            "split_from": [],
+            "title": "合約異動：可編輯範圍與申請書出口"
+          },
+          {
+            "coarse_id": "E",
+            "id": "property_manager/E/lease-closeout",
+            "merge_of": [
+              "tmp:kb:3823",
+              "tmp:kb:4202"
+            ],
+            "moved_from": [],
+            "reason": "對話規則依賴子面向的步驟鏈判斷才完整，合併同一細目；非「合約到期」本身而是另一獨立流程，不歸入C。",
+            "slug": "lease-closeout",
+            "split_from": [],
+            "title": "退租收尾：點退／帳單封存／轉歷史流程"
+          },
+          {
+            "coarse_id": "E",
+            "id": "property_manager/E/new-contract-guidance",
+            "merge_of": [
+              "tmp:kb:3825",
+              "tmp:kb:4215"
+            ],
+            "moved_from": [],
+            "reason": "對話規則依賴子面向的分流規則才完整，合併同一細目；主題是新建合約而非既有合約追問，不屬C。",
+            "slug": "new-contract-guidance",
+            "split_from": [],
+            "title": "建約引導：建約方式與對象型態分流"
+          },
+          {
+            "coarse_id": "E",
+            "id": "property_manager/E/esignature-troubleshooting",
+            "merge_of": [
+              "tmp:kb:3826",
+              "tmp:kb:3831"
+            ],
+            "moved_from": [],
+            "reason": "對話規則依賴子面向的排障規則才完整，合併同一細目；非C四項追問主題之一。",
+            "slug": "esignature-troubleshooting",
+            "split_from": [],
+            "title": "簽署排障：邀請效期與信箱綁定問題"
+          },
+          {
+            "coarse_id": "E",
+            "id": "property_manager/E/invoice-status",
+            "merge_of": [
+              "tmp:kb:3912",
+              "tmp:kb:3917"
+            ],
+            "moved_from": [],
+            "reason": "對話規則依賴子面向的開立時點與補開規則才完整，合併同一細目；發票非「逾期帳單」本身，不歸入C。",
+            "slug": "invoice-status",
+            "split_from": [],
+            "title": "發票狀態與補開規則"
+          },
+          {
+            "coarse_id": "E",
+            "id": "property_manager/E/billing-setup-guidance",
+            "merge_of": [
+              "tmp:kb:3914",
+              "tmp:kb:4214"
+            ],
+            "moved_from": [],
+            "reason": "對話規則依賴子面向的設定框架才完整，合併同一細目；主題是設定而非追問既有帳單，不歸入C。",
+            "slug": "billing-setup-guidance",
+            "split_from": [],
+            "title": "帳單設定引導：收款帳戶與繳費週期"
+          },
+          {
+            "coarse_id": "E",
+            "id": "property_manager/E/account-domain-shared-knowledge",
+            "merge_of": [
+              "tmp:kb:3952"
+            ],
+            "moved_from": [],
+            "reason": "獨立的帳號通用名詞對照，與C四項追問主題無直接關聯。",
+            "slug": "account-domain-shared-knowledge",
+            "split_from": [],
+            "title": "帳號領域共用知識（一人一帳號／身分選單）"
+          },
+          {
+            "coarse_id": "E",
+            "id": "property_manager/E/registration-verification-troubleshooting",
+            "merge_of": [
+              "tmp:kb:3953",
+              "tmp:kb:3983"
+            ],
+            "moved_from": [],
+            "reason": "對話規則依賴子面向的機制規則才完整，合併同一細目。",
+            "slug": "registration-verification-troubleshooting",
+            "split_from": [],
+            "title": "租客註冊驗證排障（管理者代為排查）"
+          },
+          {
+            "coarse_id": "E",
+            "id": "property_manager/E/login-troubleshooting",
+            "merge_of": [
+              "tmp:kb:3954",
+              "tmp:kb:3990"
+            ],
+            "moved_from": [],
+            "reason": "對話規則依賴子面向的判斷規則才完整，合併同一細目。",
+            "slug": "login-troubleshooting",
+            "split_from": [],
+            "title": "租客登入排障（管理者代為排查）"
+          },
+          {
+            "coarse_id": "E",
+            "id": "property_manager/E/account-data-change",
+            "merge_of": [
+              "tmp:kb:3955",
+              "tmp:kb:3984"
+            ],
+            "moved_from": [],
+            "reason": "對話規則依賴子面向的分流判定表才完整，合併同一細目。",
+            "slug": "account-data-change",
+            "split_from": [],
+            "title": "帳號資料異動：可自助與需申請項目"
+          },
+          {
+            "coarse_id": "E",
+            "id": "property_manager/E/team-member-permissions",
+            "merge_of": [
+              "tmp:kb:3956",
+              "tmp:kb:4001"
+            ],
+            "moved_from": [],
+            "reason": "對話規則依賴子面向的權限判斷才完整，合併同一細目。",
+            "slug": "team-member-permissions",
+            "split_from": [],
+            "title": "團隊成員權限查詢與分流"
+          },
+          {
+            "coarse_id": "E",
+            "id": "property_manager/E/estate-domain-shared-knowledge",
+            "merge_of": [
+              "tmp:kb:4132"
+            ],
+            "moved_from": [],
+            "reason": "獨立的物件通用概念，與C四項追問主題無直接關聯。",
+            "slug": "estate-domain-shared-knowledge",
+            "split_from": [],
+            "title": "物件領域共用知識（合約軸與刊登軸）"
+          },
+          {
+            "coarse_id": "E",
+            "id": "property_manager/E/estate-operation-guidance",
+            "merge_of": [
+              "tmp:kb:4133",
+              "tmp:kb:4203"
+            ],
+            "moved_from": [],
+            "reason": "對話規則依賴子面向的操作框架才完整，合併同一細目。",
+            "slug": "estate-operation-guidance",
+            "split_from": [],
+            "title": "物件操作引導：編輯／刊登／刪除條件"
+          },
+          {
+            "coarse_id": "E",
+            "id": "property_manager/E/estate-status-diagnosis",
+            "merge_of": [
+              "tmp:kb:4134",
+              "tmp:kb:4176"
+            ],
+            "moved_from": [],
+            "reason": "對話規則依賴子面向的狀態轉譯規則才完整，合併同一細目；物件現況非C四項追問主題之一。",
+            "slug": "estate-status-diagnosis",
+            "split_from": [],
+            "title": "物件現況診斷：能否建約與查無狀態的口徑"
+          },
+          {
+            "coarse_id": "E",
+            "id": "property_manager/E/iot-setup-guidance",
+            "merge_of": [
+              "tmp:kb:4088",
+              "tmp:kb:4090"
+            ],
+            "moved_from": [],
+            "reason": "對話規則依賴子面向的設定路徑才完整，合併同一細目；主題是設定引導而非既有電表排障，與C的電表排障細目分開。",
+            "slug": "iot-setup-guidance",
+            "split_from": [],
+            "title": "IoT設定引導：電表串接與儲值設定"
+          },
+          {
+            "coarse_id": "E",
+            "id": "property_manager/E/subscription-diagnosis",
+            "merge_of": [
+              "tmp:kb:5373",
+              "tmp:kb:5374"
+            ],
+            "moved_from": [],
+            "reason": "對話規則依賴子面向的區辨規則才完整，合併同一細目；非C四項追問主題之一。",
+            "slug": "subscription-diagnosis",
+            "split_from": [],
+            "title": "訂閱診斷：額度／扣款失敗與物件下架"
+          },
+          {
+            "coarse_id": "E",
+            "id": "property_manager/E/number-data-provenance-rule",
+            "merge_of": [
+              "tmp:draft:23"
+            ],
+            "moved_from": [],
+            "reason": "獨立的資料邊界通則，適用於所有功能而非單一功能，獨立成目。",
+            "slug": "number-data-provenance-rule",
+            "split_from": [],
+            "title": "數字的來源規則（一律引用JGB，需推算須標明）"
+          },
+          {
+            "coarse_id": "E",
+            "id": "property_manager/E/when-to-decline",
+            "merge_of": [
+              "tmp:draft:24"
+            ],
+            "moved_from": [],
+            "reason": "獨立列舉三種一律拒答／退出情境，主題與其他資料邊界規則不同，獨立成目。",
+            "slug": "when-to-decline",
+            "split_from": [],
+            "title": "什麼時候要說不（三種拒答情境）"
+          },
+          {
+            "coarse_id": "E",
+            "id": "property_manager/E/caller-identity-and-scope",
+            "merge_of": [
+              "tmp:draft:25"
+            ],
+            "moved_from": [],
+            "reason": "獨立說明呼叫方身分推導與可見範圍邊界，主題完整。",
+            "slug": "caller-identity-and-scope",
+            "split_from": [],
+            "title": "誰在跟系統對話（身分與權限邊界）"
+          },
+          {
+            "coarse_id": "E",
+            "id": "property_manager/E/session-expiry-general-rule",
+            "merge_of": [
+              "tmp:draft:26"
+            ],
+            "moved_from": [],
+            "reason": "系統層級的一般會話過期規則，與C功能內具體應用（追問結束細目）屬不同層級，另見C不重複。",
+            "slug": "session-expiry-general-rule",
+            "split_from": [],
+            "title": "會話多久過期（一般規則）"
+          },
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/urgency-value-domain-pending",
+            "merge_of": [
+              "tmp:draft:27"
+            ],
+            "moved_from": [],
+            "reason": "獨立的待裁事項（程式註解與舊表單值域相反、預設值待改），與A類「怎麼判」的現行規則屬不同層級，另見A不重複。",
+            "slug": "urgency-value-domain-pending",
+            "split_from": [],
+            "title": "急迫值域定義待裁"
+          },
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/repair-history-facet-pending",
+            "merge_of": [
+              "tmp:draft:28"
+            ],
+            "moved_from": [],
+            "reason": "獨立的待裁事項，與C類「目前沒有此面向」的現況說明屬不同層級，另見C不重複。",
+            "slug": "repair-history-facet-pending",
+            "split_from": [],
+            "title": "修繕歷史／進度面向是否新建待裁"
+          },
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/rent-reminder-endpoint-form-pending",
+            "merge_of": [
+              "tmp:draft:29"
+            ],
+            "moved_from": [],
+            "reason": "獨立的技術實作形式待裁事項，與B類的內容規則主題不同。",
+            "slug": "rent-reminder-endpoint-form-pending",
+            "split_from": [],
+            "title": "催繳草稿端點形式待裁"
+          },
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/followup-latency-slo-pending",
+            "merge_of": [
+              "tmp:draft:30"
+            ],
+            "moved_from": [],
+            "reason": "獨立的效能待驗事項，尚無實測數據，主題完整可獨立成立。",
+            "slug": "followup-latency-slo-pending",
+            "split_from": [],
+            "title": "追問延遲上限待驗"
+          }
+        ],
+        "id_map": [
+          {
+            "new": "property_manager/A/repair-ticket-photo-flow",
+            "old": "tmp:draft:1",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/A/repair-ticket-reclassify",
+            "old": "tmp:draft:2",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/A/repair-ticket-low-confidence-candidates",
+            "old": "tmp:draft:3",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/A/repair-ticket-unrecognizable-photo",
+            "old": "tmp:draft:4",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/A/repair-ticket-photo-count-limit",
+            "old": "tmp:draft:5",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/A/repair-ticket-agent-identity-lease-lookup",
+            "old": "tmp:draft:6",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/A/repair-ticket-urgency-judgment",
+            "old": "tmp:draft:7",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/A/repair-ticket-submit-failure",
+            "old": "tmp:draft:8",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/A/repair-ticket-vacant-no-lease",
+            "old": "tmp:draft:9",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/A/repair-ticket-mid-flow-cancel",
+            "old": "tmp:draft:10",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/B/rent-reminder-draft-generation",
+            "old": "tmp:draft:11",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/B/rent-reminder-no-direct-send",
+            "old": "tmp:draft:12",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/B/rent-reminder-late-fee-mention",
+            "old": "tmp:draft:13",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/C/contract-domain-shared-knowledge",
+            "old": "tmp:kb:3799",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/C/contract-status-diagnosis",
+            "old": "tmp:kb:3800",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/contract-status-diagnosis",
+            "old": "tmp:kb:3801",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/contract-renewal",
+            "old": "tmp:kb:3824",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/contract-renewal",
+            "old": "tmp:kb:3829",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/billing-domain-shared-knowledge",
+            "old": "tmp:kb:3909",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/C/bill-payment-flow-troubleshooting",
+            "old": "tmp:kb:3910",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/bill-payment-flow-troubleshooting",
+            "old": "tmp:kb:3915",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/bill-anomaly-diagnosis",
+            "old": "tmp:kb:3911",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/bill-anomaly-diagnosis",
+            "old": "tmp:kb:3916",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/bill-operability-diagnosis",
+            "old": "tmp:kb:4252",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/C/late-fee-explanation",
+            "old": "tmp:kb:3913",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/late-fee-explanation",
+            "old": "tmp:kb:3918",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/iot-domain-shared-knowledge",
+            "old": "tmp:kb:4021",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/C/meter-troubleshooting",
+            "old": "tmp:kb:4091",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/meter-troubleshooting",
+            "old": "tmp:kb:4089",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/overdue-bill-followup-scope",
+            "old": "tmp:draft:14",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/C/followup-other-tenant-restriction",
+            "old": "tmp:draft:15",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/C/followup-missing-jgb-data",
+            "old": "tmp:draft:16",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/C/contract-expiry-followup-scope",
+            "old": "tmp:draft:17",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/C/emergency-repair-no-history-facet",
+            "old": "tmp:draft:18",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/C/meter-followup-routing",
+            "old": "tmp:draft:19",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/C/followup-session-end",
+            "old": "tmp:draft:20",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/D/presales-context-tone-and-hard-rules",
+            "old": "tmp:kb:3622",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/D/reply-tone-principles",
+            "old": "tmp:draft:21",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/D/prohibited-statements",
+            "old": "tmp:draft:22",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/E/contract-amendment",
+            "old": "tmp:kb:3822",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/E/contract-amendment",
+            "old": "tmp:kb:4005",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/E/lease-closeout",
+            "old": "tmp:kb:3823",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/E/lease-closeout",
+            "old": "tmp:kb:4202",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/E/new-contract-guidance",
+            "old": "tmp:kb:3825",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/E/new-contract-guidance",
+            "old": "tmp:kb:4215",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/E/esignature-troubleshooting",
+            "old": "tmp:kb:3826",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/E/esignature-troubleshooting",
+            "old": "tmp:kb:3831",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/E/invoice-status",
+            "old": "tmp:kb:3912",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/E/invoice-status",
+            "old": "tmp:kb:3917",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/E/billing-setup-guidance",
+            "old": "tmp:kb:3914",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/E/billing-setup-guidance",
+            "old": "tmp:kb:4214",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/E/account-domain-shared-knowledge",
+            "old": "tmp:kb:3952",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/E/registration-verification-troubleshooting",
+            "old": "tmp:kb:3953",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/E/registration-verification-troubleshooting",
+            "old": "tmp:kb:3983",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/E/login-troubleshooting",
+            "old": "tmp:kb:3954",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/E/login-troubleshooting",
+            "old": "tmp:kb:3990",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/E/account-data-change",
+            "old": "tmp:kb:3955",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/E/account-data-change",
+            "old": "tmp:kb:3984",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/E/team-member-permissions",
+            "old": "tmp:kb:3956",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/E/team-member-permissions",
+            "old": "tmp:kb:4001",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/E/estate-domain-shared-knowledge",
+            "old": "tmp:kb:4132",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/E/estate-operation-guidance",
+            "old": "tmp:kb:4133",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/E/estate-operation-guidance",
+            "old": "tmp:kb:4203",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/E/estate-status-diagnosis",
+            "old": "tmp:kb:4134",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/E/estate-status-diagnosis",
+            "old": "tmp:kb:4176",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/E/iot-setup-guidance",
+            "old": "tmp:kb:4088",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/E/iot-setup-guidance",
+            "old": "tmp:kb:4090",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/E/subscription-diagnosis",
+            "old": "tmp:kb:5373",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/E/subscription-diagnosis",
+            "old": "tmp:kb:5374",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/E/number-data-provenance-rule",
+            "old": "tmp:draft:23",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/E/when-to-decline",
+            "old": "tmp:draft:24",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/E/caller-identity-and-scope",
+            "old": "tmp:draft:25",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/E/session-expiry-general-rule",
+            "old": "tmp:draft:26",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/F/urgency-value-domain-pending",
+            "old": "tmp:draft:27",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/F/repair-history-facet-pending",
+            "old": "tmp:draft:28",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/F/rent-reminder-endpoint-form-pending",
+            "old": "tmp:draft:29",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/F/followup-latency-slo-pending",
+            "old": "tmp:draft:30",
+            "op": "keep"
+          }
+        ]
+      },
+      {
+        "angle": "audience_level",
+        "coarses": [
+          {
+            "id": "A",
+            "title": "拍照開修繕單（線③）"
+          },
+          {
+            "id": "B",
+            "title": "催繳草稿（線④）"
+          },
+          {
+            "id": "C",
+            "title": "今天要顧的追問（線⑤：逾期帳單／合約到期／緊急修繕／電錶）"
+          },
+          {
+            "id": "D",
+            "title": "語氣模板與禁止項"
+          },
+          {
+            "id": "E",
+            "title": "資料邊界與什麼時候說不"
+          },
+          {
+            "id": "F",
+            "title": "待裁與待驗"
+          }
+        ],
+        "fines": [
+          {
+            "coarse_id": "A",
+            "id": "property_manager/A/photo-repair-flow-basic",
+            "merge_of": [
+              "tmp:draft:1"
+            ],
+            "moved_from": [],
+            "reason": "操作層級：開單流程本身，未經確認鍵一律不得建單，此為本受眾唯一需要的操作層級敘述。",
+            "slug": "photo-repair-flow-basic",
+            "split_from": [],
+            "title": "拍照開修繕單基本流程與確認機制"
+          },
+          {
+            "coarse_id": "A",
+            "id": "property_manager/A/category-correction",
+            "merge_of": [
+              "tmp:draft:2"
+            ],
+            "moved_from": [],
+            "reason": "操作層級：修正辨識結果時只重確認被改項目，物件與急迫性不重問，屬同一開單流程下的例外分支。",
+            "slug": "category-correction",
+            "split_from": [],
+            "title": "分類辨識結果被修改時的收斂規則"
+          },
+          {
+            "coarse_id": "A",
+            "id": "property_manager/A/low-confidence-candidates",
+            "merge_of": [
+              "tmp:draft:3"
+            ],
+            "moved_from": [],
+            "reason": "操作層級：信心不足時給候選類別而非下拉選單或編造描述，與分類修改（category-correction）是同層級但不同觸發情境，保留為獨立可回答主題。",
+            "slug": "low-confidence-candidates",
+            "split_from": [],
+            "title": "辨識信心不足時的候選選單"
+          },
+          {
+            "coarse_id": "A",
+            "id": "property_manager/A/no-visible-damage-blank",
+            "merge_of": [
+              "tmp:draft:4"
+            ],
+            "moved_from": [],
+            "reason": "操作層級：看不出損壞時描述留空、不得推測編寫，因描述會原樣進單，屬能力邊界而非單純措辭問題，故獨立於分類修改之外。",
+            "slug": "no-visible-damage-blank",
+            "split_from": [],
+            "title": "照片看不出損壞時的留白規則"
+          },
+          {
+            "coarse_id": "A",
+            "id": "property_manager/A/photo-count-limit",
+            "merge_of": [
+              "tmp:draft:5"
+            ],
+            "moved_from": [],
+            "reason": "操作層級的技術限制：辨識僅看前 3 張，附件另保存全部，與流程本身區分開避免混淆。",
+            "slug": "photo-count-limit",
+            "split_from": [],
+            "title": "辨識照片張數限制"
+          },
+          {
+            "coarse_id": "A",
+            "id": "property_manager/A/agent-open-ticket-lease-scope",
+            "merge_of": [
+              "tmp:draft:6"
+            ],
+            "moved_from": [],
+            "reason": "權限／範圍層級：業務不以自己身分查租約、查不到租約不算錯誤，這是誰能看什麼資料的邊界問題，非單純操作步驟。",
+            "slug": "agent-open-ticket-lease-scope",
+            "split_from": [],
+            "title": "業務代開單時的租約查詢範圍"
+          },
+          {
+            "coarse_id": "A",
+            "id": "property_manager/A/urgency-judgment-source",
+            "merge_of": [
+              "tmp:draft:7"
+            ],
+            "moved_from": [],
+            "reason": "操作層級：急迫與否由辨識建議、缺值不得預設急迫；其值域與程式碼相反的爭議已收斂在 F（另見 property_manager/F/urgency-value-domain-pending），此處只留正常操作層級敘述，避免同主題重複兩個層級。",
+            "slug": "urgency-judgment-source",
+            "split_from": [],
+            "title": "急迫程度的判斷來源"
+          },
+          {
+            "coarse_id": "A",
+            "id": "property_manager/A/create-ticket-failure-retry",
+            "merge_of": [
+              "tmp:draft:8"
+            ],
+            "moved_from": [],
+            "reason": "操作層級：API 失敗時明講尚未建立並可重試，同會話重複確認不會建立多張單，屬單一可獨立回答的異常處理主題。",
+            "slug": "create-ticket-failure-retry",
+            "split_from": [],
+            "title": "建單失敗的處理"
+          },
+          {
+            "coarse_id": "A",
+            "id": "property_manager/A/vacant-unit-no-lease-allowed",
+            "merge_of": [
+              "tmp:draft:9"
+            ],
+            "moved_from": [],
+            "reason": "權限／範圍層級：合約欄位可留空、不因查無租約而中止開單，界定的是「什麼情況仍在受理範圍內」而非操作步驟。",
+            "slug": "vacant-unit-no-lease-allowed",
+            "split_from": [],
+            "title": "空屋無租約仍可開單"
+          },
+          {
+            "coarse_id": "A",
+            "id": "property_manager/A/cancel-midway",
+            "merge_of": [
+              "tmp:draft:10"
+            ],
+            "moved_from": [],
+            "reason": "操作層級：任一階段表達取消即結束、不產生新單，屬開單流程的終止分支。",
+            "slug": "cancel-midway",
+            "split_from": [],
+            "title": "中途取消報修"
+          },
+          {
+            "coarse_id": "B",
+            "id": "property_manager/B/draft-generation-tone-tiers",
+            "merge_of": [
+              "tmp:draft:11"
+            ],
+            "moved_from": [],
+            "reason": "操作層級：依逾期次數分三級語氣、數字一律由呼叫端帶入槽位，模板本身不得出現數字，此為草稿生成機制的唯一層級。",
+            "slug": "draft-generation-tone-tiers",
+            "split_from": [],
+            "title": "催繳草稿生成邏輯：語氣分級與槽位規則"
+          },
+          {
+            "coarse_id": "B",
+            "id": "property_manager/B/draft-not-auto-send",
+            "merge_of": [
+              "tmp:draft:12"
+            ],
+            "moved_from": [],
+            "reason": "權限層級：草稿只推給業務自行複製傳送，不設計一鍵發送，界定的是誰能對租客發出訊息，非生成邏輯本身。",
+            "slug": "draft-not-auto-send",
+            "split_from": [],
+            "title": "草稿使用邊界：不可一鍵發送給租客"
+          },
+          {
+            "coarse_id": "B",
+            "id": "property_manager/B/late-fee-clause-in-draft",
+            "merge_of": [
+              "tmp:draft:13"
+            ],
+            "moved_from": [],
+            "reason": "操作層級：依合約是否有滯納金條款與語氣等級決定是否提及，屬草稿內容組成規則的獨立可答主題。",
+            "slug": "late-fee-clause-in-draft",
+            "split_from": [],
+            "title": "滯納金條款是否寫入草稿"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/overdue-bill-followup-scope",
+            "merge_of": [
+              "tmp:draft:14",
+              "tmp:kb:3909",
+              "tmp:kb:3913"
+            ],
+            "moved_from": [],
+            "reason": "操作層級：業務對選定帳單可問到的近一年逾期明細與滯納金推算標註，需要帳單狀態與滯納金機制作為支撐事實才能作答，故將對應系統脈絡併入同一可答主題；不含既有帳務對話面向（繳費金流排障/帳單異常/發票/帳單設定/帳單診斷）的完整多輪代理層級，那是更深一層的操作能力，另見 property_manager/F/billing-other-facets-scope-pending。",
+            "slug": "overdue-bill-followup-scope",
+            "split_from": [],
+            "title": "逾期帳單追問可答範圍"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/lease-expiry-followup-scope",
+            "merge_of": [
+              "tmp:draft:17",
+              "tmp:kb:3799",
+              "tmp:kb:3824",
+              "tmp:kb:3829"
+            ],
+            "moved_from": [],
+            "reason": "操作層級：追問明確進續約面向（非退租收尾），需要合約里程碑與續約判定機制、以及被重用的續約對話規則本身，三者是同一回答能力的必要組成，故合併；合約其他面向（狀態判斷/合約診斷/合約異動/退租收尾/建約引導/簽署排障）不在本追問範圍內，另見 property_manager/F/contract-other-facets-scope-pending。",
+            "slug": "lease-expiry-followup-scope",
+            "split_from": [],
+            "title": "合約到期追問可答範圍（導向續約面向）"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/urgent-repair-followup-scope",
+            "merge_of": [
+              "tmp:draft:18"
+            ],
+            "moved_from": [],
+            "reason": "操作層級：緊急修繕僅在清單照列，第一版不開追問，是否新增修繕歷史面向屬待裁事項，已另立 property_manager/F/repair-history-facet-pending，此處只留現行（無）層級的事實。",
+            "slug": "urgent-repair-followup-scope",
+            "split_from": [],
+            "title": "緊急修繕追問範圍（目前無獨立面向）"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/meter-item-followup-scope",
+            "merge_of": [
+              "tmp:draft:19",
+              "tmp:kb:4021",
+              "tmp:kb:4089",
+              "tmp:kb:4091"
+            ],
+            "moved_from": [],
+            "reason": "操作層級：電錶項目以 id 直接進槽位、走既有電表排障面向，需要智慧設備名詞、電表排障判因機制與被重用的對話規則本身，四者是同一回答能力的必要組成，故合併；IoT 設定引導（串接/單價/門鎖規則）不是追問查詢範圍，另見 property_manager/F/iot-setup-scope-pending。",
+            "slug": "meter-item-followup-scope",
+            "split_from": [],
+            "title": "電錶項目追問（導向電表排障面向）"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/followup-session-single-item-boundary",
+            "merge_of": [
+              "tmp:draft:15"
+            ],
+            "moved_from": [],
+            "reason": "權限／範圍層級：每筆清單項目是獨立會話，問到別戶時退出並導回清單，界定的是這輪對話能看到誰的資料，橫跨 C 的四個主題共用。",
+            "slug": "followup-session-single-item-boundary",
+            "split_from": [],
+            "title": "追問的單筆會話邊界（不跨戶回答）"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/followup-missing-data-in-jgb",
+            "merge_of": [
+              "tmp:draft:16"
+            ],
+            "moved_from": [],
+            "reason": "能力層級：明講答不出來、不冒充不推算，是 C 四個追問主題共通的能力邊界原則，非特定於某一筆帳單，故獨立於 overdue-bill-followup-scope 之外。",
+            "slug": "followup-missing-data-in-jgb",
+            "split_from": [],
+            "title": "追問遇到 JGB 沒有的資料時怎麼回"
+          },
+          {
+            "coarse_id": "C",
+            "id": "property_manager/C/followup-session-end",
+            "merge_of": [
+              "tmp:draft:20"
+            ],
+            "moved_from": [],
+            "reason": "操作層級：結束鈕與 30 分鐘過期後的重新進場規則，是 C 追問流程的通用終止與逾時分支。",
+            "slug": "followup-session-end",
+            "split_from": [],
+            "title": "追問結束與流程收尾"
+          },
+          {
+            "coarse_id": "D",
+            "id": "property_manager/D/reply-tone-principles",
+            "merge_of": [
+              "tmp:draft:21"
+            ],
+            "moved_from": [],
+            "reason": "介面／語氣層級：對象是現場單手用手機的業務或房東，回答短、先給結論、按鈕優先，是統一的表達層級原則。",
+            "slug": "reply-tone-principles",
+            "split_from": [],
+            "title": "回覆語氣與介面原則"
+          },
+          {
+            "coarse_id": "D",
+            "id": "property_manager/D/prohibited-statements",
+            "merge_of": [
+              "tmp:draft:22"
+            ],
+            "moved_from": [],
+            "reason": "禁止項層級：不編描述、不推算、不冒充、不代決定、不跨戶、不自動送出寫入動作，六條紅線彙整為一個可獨立查核的主題。",
+            "slug": "prohibited-statements",
+            "split_from": [],
+            "title": "禁止事項清單"
+          },
+          {
+            "coarse_id": "D",
+            "id": "property_manager/D/number-sourcing-rule",
+            "merge_of": [
+              "tmp:draft:23"
+            ],
+            "moved_from": [],
+            "reason": "禁止項／措辭層級：金額、天數、次數、日期一律來自 JGB，推算必須標明並註明以 JGB 為準，屬回覆用語的通則而非某一主題的資料事實。",
+            "slug": "number-sourcing-rule",
+            "split_from": [],
+            "title": "數字的來源規則"
+          },
+          {
+            "coarse_id": "E",
+            "id": "property_manager/E/refuse-or-exit-conditions",
+            "merge_of": [
+              "tmp:draft:24"
+            ],
+            "moved_from": [],
+            "reason": "邊界層級：問到 JGB 沒有的資料、會話範圍以外的物件或人、需寫入但未確認的動作，三種情況一律拒答或退出，是何時說不的核心判準。",
+            "slug": "refuse-or-exit-conditions",
+            "split_from": [],
+            "title": "拒答或退出的情境"
+          },
+          {
+            "coarse_id": "E",
+            "id": "property_manager/E/identity-and-permission-boundary",
+            "merge_of": [
+              "tmp:draft:25"
+            ],
+            "moved_from": [],
+            "reason": "權限層級：呼叫方是代管業務或自管房東而非租客，身分由 LINE 綁定推出、只能看自己權限內的物件，是誰在說話與看得到什麼的根本邊界。",
+            "slug": "identity-and-permission-boundary",
+            "split_from": [],
+            "title": "身分與權限邊界"
+          },
+          {
+            "coarse_id": "E",
+            "id": "property_manager/E/session-expiry-window",
+            "merge_of": [
+              "tmp:draft:26"
+            ],
+            "moved_from": [],
+            "reason": "邊界層級：30 分鐘無動作即清除、過期後不得靜默當新對話處理，界定的是資料邊界的時間維度。",
+            "slug": "session-expiry-window",
+            "split_from": [],
+            "title": "會話存續時間"
+          },
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/urgency-value-domain-pending",
+            "merge_of": [
+              "tmp:draft:27"
+            ],
+            "moved_from": [],
+            "reason": "待裁：程式註解與舊表單值域相反、且缺值預設為急迫；與 property_manager/A/urgency-judgment-source 同一主題不同層級（一個是正常操作敘述、一個是需要裁定的矛盾），另見交叉引用。",
+            "slug": "urgency-value-domain-pending",
+            "split_from": [],
+            "title": "急迫值域定義相反，待以 JGB 資料庫裁定"
+          },
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/repair-history-facet-pending",
+            "merge_of": [
+              "tmp:draft:28"
+            ],
+            "moved_from": [],
+            "reason": "待裁：目前沒有對應面向，第一版不開，是否新建屬待業主裁決事項；與 property_manager/C/urgent-repair-followup-scope 同一主題的擴充層級。",
+            "slug": "repair-history-facet-pending",
+            "split_from": [],
+            "title": "修繕歷史／進度面向是否新建，待裁"
+          },
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/draft-endpoint-form-pending",
+            "merge_of": [
+              "tmp:draft:29"
+            ],
+            "moved_from": [],
+            "reason": "待裁：做成面向內動作或獨立同步端點二選一，屬實作形式選擇，不影響輸出內容規則（模板加語氣等級）。",
+            "slug": "draft-endpoint-form-pending",
+            "split_from": [],
+            "title": "催繳草稿端點形式待裁"
+          },
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/followup-latency-unverified",
+            "merge_of": [
+              "tmp:draft:30"
+            ],
+            "moved_from": [],
+            "reason": "待驗：呼叫端逾時 30 秒但追問回覆 p95 尚無實測數據，屬效能待量測而非內容缺口。",
+            "slug": "followup-latency-unverified",
+            "split_from": [],
+            "title": "追問延遲上限待驗"
+          },
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/contract-other-facets-scope-pending",
+            "merge_of": [
+              "tmp:kb:3800",
+              "tmp:kb:3801",
+              "tmp:kb:3822",
+              "tmp:kb:3823",
+              "tmp:kb:3825",
+              "tmp:kb:3826",
+              "tmp:kb:3831",
+              "tmp:kb:4005",
+              "tmp:kb:4202",
+              "tmp:kb:4215"
+            ],
+            "moved_from": [],
+            "reason": "待裁：合約狀態判斷／合約診斷／合約異動／退租收尾／建約引導／簽署排障是既有多輪對話代理的完整操作層級，服務對象與介面（extracted_fields/scope 切換多面向）與本受眾單筆照片或單筆帳單快速追問的層級不同；C 只在合約到期一項明確導向續約面向（見 property_manager/C/lease-expiry-followup-scope），其餘合約子面向是否、以何種層級開放給此 LINE OA 受眾，待業主裁決。",
+            "slug": "contract-other-facets-scope-pending",
+            "split_from": [],
+            "title": "合約其他子面向與對話規則是否納入本受眾範圍，待裁"
+          },
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/billing-other-facets-scope-pending",
+            "merge_of": [
+              "tmp:kb:3910",
+              "tmp:kb:3911",
+              "tmp:kb:3912",
+              "tmp:kb:3914",
+              "tmp:kb:3915",
+              "tmp:kb:3916",
+              "tmp:kb:3917",
+              "tmp:kb:3918",
+              "tmp:kb:4214",
+              "tmp:kb:4252"
+            ],
+            "moved_from": [],
+            "reason": "待裁：繳費金流排障／帳單異常／發票／帳單設定引導／帳單診斷及其對話規則是既有多輪帳務診斷代理的完整層級；C 的逾期帳單追問只需帳單狀態與滯納金機制兩項事實即可作答（見 property_manager/C/overdue-bill-followup-scope），未明確要求導向這些既有面向，是否納入待裁。",
+            "slug": "billing-other-facets-scope-pending",
+            "split_from": [],
+            "title": "帳務其他子面向與對話規則是否納入本受眾範圍，待裁"
+          },
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/account-domain-scope-pending",
+            "merge_of": [
+              "tmp:kb:3952",
+              "tmp:kb:3953",
+              "tmp:kb:3954",
+              "tmp:kb:3955",
+              "tmp:kb:3956",
+              "tmp:kb:3983",
+              "tmp:kb:3984",
+              "tmp:kb:3990",
+              "tmp:kb:4001"
+            ],
+            "moved_from": [],
+            "reason": "待裁：A–E 全部粗目均未提及租客或業務自身的註冊、登入、綁定或團隊權限排障，此整組屬完全不同的主題與服務對象（多為代管理者轉述給租客的排障內容），與本受眾的「拍照開單／催繳／今日追問」層級不同，是否收錄待裁。",
+            "slug": "account-domain-scope-pending",
+            "split_from": [],
+            "title": "帳號領域（註冊／登入／綁定異動／團隊權限）系統知識是否納入本受眾範圍，待裁"
+          },
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/iot-setup-scope-pending",
+            "merge_of": [
+              "tmp:kb:4088",
+              "tmp:kb:4090"
+            ],
+            "moved_from": [],
+            "reason": "待裁：電表串接、儲值單價調整、門鎖密碼規則屬設定引導層級，C 的電錶追問只需要電表排障（現況判因）層級即可作答（見 property_manager/C/meter-item-followup-scope），設定引導是否也要開放給此受眾待裁。",
+            "slug": "iot-setup-scope-pending",
+            "split_from": [],
+            "title": "IoT 設定引導系統知識是否納入本受眾範圍，待裁"
+          },
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/estate-domain-scope-pending",
+            "merge_of": [
+              "tmp:kb:4132",
+              "tmp:kb:4133",
+              "tmp:kb:4134",
+              "tmp:kb:4176",
+              "tmp:kb:4203"
+            ],
+            "moved_from": [],
+            "reason": "待裁：物件刊登、編輯、招租店舖等操作與現況診斷不在 A–E 任一粗目範圍內，屬完全不同的主題，是否收錄待裁。",
+            "slug": "estate-domain-scope-pending",
+            "split_from": [],
+            "title": "物件領域（物件管理／操作引導／現況診斷）系統知識是否納入本受眾範圍，待裁"
+          },
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/subscription-domain-scope-pending",
+            "merge_of": [
+              "tmp:kb:5373",
+              "tmp:kb:5374"
+            ],
+            "moved_from": [],
+            "reason": "待裁：訂閱額度與扣款異常診斷不在 A–E 任一粗目範圍內，屬完全不同的主題，是否收錄待裁。",
+            "slug": "subscription-domain-scope-pending",
+            "split_from": [],
+            "title": "訂閱領域系統知識是否納入本受眾範圍，待裁"
+          },
+          {
+            "coarse_id": "F",
+            "id": "property_manager/F/presales-context-exclude-pending",
+            "merge_of": [
+              "tmp:kb:3622"
+            ],
+            "moved_from": [],
+            "reason": "待裁：本受眾明確非售前（brief 已載明⛔不是售前），此則內容為「系統注入用、勿檢索」的售前定位與合規鐵則，與本受眾層級不符，建議排除，交由業主裁決是否移除。",
+            "slug": "presales-context-exclude-pending",
+            "split_from": [],
+            "title": "售前系統脈絡誤入本受眾語料，應排除待裁"
+          }
+        ],
+        "id_map": [
+          {
+            "new": "property_manager/A/photo-repair-flow-basic",
+            "old": "tmp:draft:1",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/A/category-correction",
+            "old": "tmp:draft:2",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/A/low-confidence-candidates",
+            "old": "tmp:draft:3",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/A/no-visible-damage-blank",
+            "old": "tmp:draft:4",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/A/photo-count-limit",
+            "old": "tmp:draft:5",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/A/agent-open-ticket-lease-scope",
+            "old": "tmp:draft:6",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/A/urgency-judgment-source",
+            "old": "tmp:draft:7",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/A/create-ticket-failure-retry",
+            "old": "tmp:draft:8",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/A/vacant-unit-no-lease-allowed",
+            "old": "tmp:draft:9",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/A/cancel-midway",
+            "old": "tmp:draft:10",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/B/draft-generation-tone-tiers",
+            "old": "tmp:draft:11",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/B/draft-not-auto-send",
+            "old": "tmp:draft:12",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/B/late-fee-clause-in-draft",
+            "old": "tmp:draft:13",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/C/overdue-bill-followup-scope",
+            "old": "tmp:draft:14",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/overdue-bill-followup-scope",
+            "old": "tmp:kb:3909",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/overdue-bill-followup-scope",
+            "old": "tmp:kb:3913",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/lease-expiry-followup-scope",
+            "old": "tmp:draft:17",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/lease-expiry-followup-scope",
+            "old": "tmp:kb:3799",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/lease-expiry-followup-scope",
+            "old": "tmp:kb:3824",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/lease-expiry-followup-scope",
+            "old": "tmp:kb:3829",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/urgent-repair-followup-scope",
+            "old": "tmp:draft:18",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/C/meter-item-followup-scope",
+            "old": "tmp:draft:19",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/meter-item-followup-scope",
+            "old": "tmp:kb:4021",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/meter-item-followup-scope",
+            "old": "tmp:kb:4089",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/meter-item-followup-scope",
+            "old": "tmp:kb:4091",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/C/followup-session-single-item-boundary",
+            "old": "tmp:draft:15",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/C/followup-missing-data-in-jgb",
+            "old": "tmp:draft:16",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/C/followup-session-end",
+            "old": "tmp:draft:20",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/D/reply-tone-principles",
+            "old": "tmp:draft:21",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/D/prohibited-statements",
+            "old": "tmp:draft:22",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/D/number-sourcing-rule",
+            "old": "tmp:draft:23",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/E/refuse-or-exit-conditions",
+            "old": "tmp:draft:24",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/E/identity-and-permission-boundary",
+            "old": "tmp:draft:25",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/E/session-expiry-window",
+            "old": "tmp:draft:26",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/F/urgency-value-domain-pending",
+            "old": "tmp:draft:27",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/F/repair-history-facet-pending",
+            "old": "tmp:draft:28",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/F/draft-endpoint-form-pending",
+            "old": "tmp:draft:29",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/F/followup-latency-unverified",
+            "old": "tmp:draft:30",
+            "op": "keep"
+          },
+          {
+            "new": "property_manager/F/contract-other-facets-scope-pending",
+            "old": "tmp:kb:3800",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/contract-other-facets-scope-pending",
+            "old": "tmp:kb:3801",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/contract-other-facets-scope-pending",
+            "old": "tmp:kb:3822",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/contract-other-facets-scope-pending",
+            "old": "tmp:kb:3823",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/contract-other-facets-scope-pending",
+            "old": "tmp:kb:3825",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/contract-other-facets-scope-pending",
+            "old": "tmp:kb:3826",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/contract-other-facets-scope-pending",
+            "old": "tmp:kb:3831",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/contract-other-facets-scope-pending",
+            "old": "tmp:kb:4005",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/contract-other-facets-scope-pending",
+            "old": "tmp:kb:4202",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/contract-other-facets-scope-pending",
+            "old": "tmp:kb:4215",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/billing-other-facets-scope-pending",
+            "old": "tmp:kb:3910",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/billing-other-facets-scope-pending",
+            "old": "tmp:kb:3911",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/billing-other-facets-scope-pending",
+            "old": "tmp:kb:3912",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/billing-other-facets-scope-pending",
+            "old": "tmp:kb:3914",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/billing-other-facets-scope-pending",
+            "old": "tmp:kb:3915",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/billing-other-facets-scope-pending",
+            "old": "tmp:kb:3916",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/billing-other-facets-scope-pending",
+            "old": "tmp:kb:3917",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/billing-other-facets-scope-pending",
+            "old": "tmp:kb:3918",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/billing-other-facets-scope-pending",
+            "old": "tmp:kb:4214",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/billing-other-facets-scope-pending",
+            "old": "tmp:kb:4252",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/account-domain-scope-pending",
+            "old": "tmp:kb:3952",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/account-domain-scope-pending",
+            "old": "tmp:kb:3953",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/account-domain-scope-pending",
+            "old": "tmp:kb:3954",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/account-domain-scope-pending",
+            "old": "tmp:kb:3955",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/account-domain-scope-pending",
+            "old": "tmp:kb:3956",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/account-domain-scope-pending",
+            "old": "tmp:kb:3983",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/account-domain-scope-pending",
+            "old": "tmp:kb:3984",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/account-domain-scope-pending",
+            "old": "tmp:kb:3990",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/account-domain-scope-pending",
+            "old": "tmp:kb:4001",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/iot-setup-scope-pending",
+            "old": "tmp:kb:4088",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/iot-setup-scope-pending",
+            "old": "tmp:kb:4090",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/estate-domain-scope-pending",
+            "old": "tmp:kb:4132",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/estate-domain-scope-pending",
+            "old": "tmp:kb:4133",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/estate-domain-scope-pending",
+            "old": "tmp:kb:4134",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/estate-domain-scope-pending",
+            "old": "tmp:kb:4176",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/estate-domain-scope-pending",
+            "old": "tmp:kb:4203",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/subscription-domain-scope-pending",
+            "old": "tmp:kb:5373",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/subscription-domain-scope-pending",
+            "old": "tmp:kb:5374",
+            "op": "merge"
+          },
+          {
+            "new": "property_manager/F/presales-context-exclude-pending",
+            "old": "tmp:kb:3622",
+            "op": "merge"
+          }
+        ]
+      }
+    ],
+    "synthesis": {
+      "angle": "synthesis",
+      "coarses": [
+        {
+          "id": "A",
+          "title": "拍照開修繕單（線③）"
+        },
+        {
+          "id": "B",
+          "title": "催繳草稿（線④）"
+        },
+        {
+          "id": "C",
+          "title": "今天要顧的追問（線⑤：逾期帳單／合約到期／緊急修繕／電錶）"
+        },
+        {
+          "id": "D",
+          "title": "語氣模板與禁止項"
+        },
+        {
+          "id": "E",
+          "title": "資料邊界與什麼時候說不"
+        },
+        {
+          "id": "F",
+          "title": "待裁與待驗"
+        }
+      ],
+      "fines": [
+        {
+          "coarse_id": "A",
+          "id": "property_manager/A/repair-ticket-photo-flow",
+          "merge_of": [
+            "tmp:draft:1"
+          ],
+          "moved_from": [],
+          "reason": "上傳照片後辨識→確認摘要→三顆按鈕的完整流程，未經確認一律不得建單；三角度一致視為單一可獨立回答主題。",
+          "slug": "repair-ticket-photo-flow",
+          "split_from": [],
+          "title": "拍照開修繕單基本流程與確認機制"
+        },
+        {
+          "coarse_id": "A",
+          "id": "property_manager/A/repair-ticket-reclassify",
+          "merge_of": [
+            "tmp:draft:2"
+          ],
+          "moved_from": [],
+          "reason": "按「我要修改」後只重新確認被改項目、不重跑辨識，三角度一致獨立成目。",
+          "slug": "repair-ticket-reclassify",
+          "split_from": [],
+          "title": "分類辨識結果錯誤時如何修改"
+        },
+        {
+          "coarse_id": "A",
+          "id": "property_manager/A/repair-ticket-low-confidence-candidates",
+          "merge_of": [
+            "tmp:draft:3"
+          ],
+          "moved_from": [],
+          "reason": "信心不足給候選類別而非下拉選單或編造描述，三角度一致獨立成目。",
+          "slug": "repair-ticket-low-confidence-candidates",
+          "split_from": [],
+          "title": "照片辨識信心不足時的候選類別流程"
+        },
+        {
+          "coarse_id": "A",
+          "id": "property_manager/A/repair-ticket-unrecognizable-photo",
+          "merge_of": [
+            "tmp:draft:4"
+          ],
+          "moved_from": [],
+          "reason": "看不出損壞時描述必須留空、不得推測編寫（描述會原樣寫進修繕單），觸發情境與信心不足不同，三角度一致獨立成目。",
+          "slug": "repair-ticket-unrecognizable-photo",
+          "split_from": [],
+          "title": "照片看不出損壞時的留白規則"
+        },
+        {
+          "coarse_id": "A",
+          "id": "property_manager/A/repair-ticket-photo-count-limit",
+          "merge_of": [
+            "tmp:draft:5"
+          ],
+          "moved_from": [],
+          "reason": "辨識僅看前3張、附件另保存全部照片，純技術限制，三角度一致獨立成目。",
+          "slug": "repair-ticket-photo-count-limit",
+          "split_from": [],
+          "title": "修繕辨識與附件的照片張數限制"
+        },
+        {
+          "coarse_id": "A",
+          "id": "property_manager/A/repair-ticket-agent-identity-lease-lookup",
+          "merge_of": [
+            "tmp:draft:6"
+          ],
+          "moved_from": [],
+          "reason": "業務代租客開單不以自身身分查租約、查不到不算錯誤，三角度一致獨立成目。",
+          "slug": "repair-ticket-agent-identity-lease-lookup",
+          "split_from": [],
+          "title": "業務代開修繕單時的租約查詢身分規則"
+        },
+        {
+          "coarse_id": "A",
+          "id": "property_manager/A/repair-ticket-urgency-judgment",
+          "merge_of": [
+            "tmp:draft:7"
+          ],
+          "moved_from": [],
+          "reason": "急迫與否由辨識建議、缺值不得預設急迫；值域本身的矛盾另見F/urgency-value-domain-pending，此處只留現行操作層級敘述，三角度一致採此切法。",
+          "slug": "repair-ticket-urgency-judgment",
+          "split_from": [],
+          "title": "修繕單急迫程度的判斷來源"
+        },
+        {
+          "coarse_id": "A",
+          "id": "property_manager/A/repair-ticket-submit-failure",
+          "merge_of": [
+            "tmp:draft:8"
+          ],
+          "moved_from": [],
+          "reason": "API失敗明講尚未建立、可重試，同會話重複確認只建一張單，三角度一致獨立成目。",
+          "slug": "repair-ticket-submit-failure",
+          "split_from": [],
+          "title": "建單失敗時的處理與重試規則"
+        },
+        {
+          "coarse_id": "A",
+          "id": "property_manager/A/repair-ticket-vacant-no-lease",
+          "merge_of": [
+            "tmp:draft:9"
+          ],
+          "moved_from": [],
+          "reason": "合約欄位可留空、不因查無租約中止開單，觸發條件與業務身分查詢問題不同，三角度一致獨立成目。",
+          "slug": "repair-ticket-vacant-no-lease",
+          "split_from": [],
+          "title": "空屋或無租約物件的開單規則"
+        },
+        {
+          "coarse_id": "A",
+          "id": "property_manager/A/repair-ticket-mid-flow-cancel",
+          "merge_of": [
+            "tmp:draft:10"
+          ],
+          "moved_from": [],
+          "reason": "任一階段表態取消即結束、不產生新單，三角度一致獨立成目。",
+          "slug": "repair-ticket-mid-flow-cancel",
+          "split_from": [],
+          "title": "報修流程中途取消的規則"
+        },
+        {
+          "coarse_id": "B",
+          "id": "property_manager/B/dunning-draft-generation",
+          "merge_of": [
+            "tmp:draft:11"
+          ],
+          "moved_from": [],
+          "reason": "依近一年逾期次數分三級語氣、數字一律由呼叫端帶入佔位符、模板本身不得出現數字，三角度一致獨立成目。",
+          "slug": "dunning-draft-generation",
+          "split_from": [],
+          "title": "催繳草稿的生成規則（模板＋語氣分級）"
+        },
+        {
+          "coarse_id": "B",
+          "id": "property_manager/B/dunning-draft-not-auto-send",
+          "merge_of": [
+            "tmp:draft:12"
+          ],
+          "moved_from": [],
+          "reason": "草稿一律推給業務自行複製傳送、不設一鍵發送，是發送邊界而非生成規則，三角度一致獨立成目。",
+          "slug": "dunning-draft-not-auto-send",
+          "split_from": [],
+          "title": "催繳草稿不可一鍵發送給租客"
+        },
+        {
+          "coarse_id": "B",
+          "id": "property_manager/B/dunning-draft-late-fee-mention",
+          "merge_of": [
+            "tmp:draft:13"
+          ],
+          "moved_from": [],
+          "reason": "合約有滯納金條款且語氣達一定等級才提及、第1級不提，三角度一致獨立成目。",
+          "slug": "dunning-draft-late-fee-mention",
+          "split_from": [],
+          "title": "催繳草稿是否提及滯納金的規則"
+        },
+        {
+          "coarse_id": "C",
+          "id": "property_manager/C/overdue-bill-followup-scope",
+          "merge_of": [
+            "tmp:draft:14",
+            "tmp:kb:3909",
+            "tmp:kb:3913"
+          ],
+          "moved_from": [],
+          "reason": "業務對選定帳單可問到的近一年逾期明細與滯納金推算標註，需要帳單狀態表與滯納金機制作為支撐事實才能作答，三者是同一回答能力的必要組成（採audience_level角度原案合併）；完整滯納金多輪診斷面向（tmp:kb:3918）與其餘帳務子面向超出本追問範圍，另見F/billing-other-facets-scope-pending。",
+          "slug": "overdue-bill-followup-scope",
+          "split_from": [],
+          "title": "逾期帳單追問可答範圍"
+        },
+        {
+          "coarse_id": "C",
+          "id": "property_manager/C/followup-session-single-item-boundary",
+          "merge_of": [
+            "tmp:draft:15"
+          ],
+          "moved_from": [],
+          "reason": "每筆清單項目是獨立會話，問到別戶時退出並導回清單；此規則橫跨逾期帳單／合約到期／緊急修繕／電錶四主題共用，不專屬單一主題，故獨立成目（採content_boundary／audience_level角度，不併入單一主題內）。",
+          "slug": "followup-session-single-item-boundary",
+          "split_from": [],
+          "title": "追問的單筆會話邊界（不跨戶回答）"
+        },
+        {
+          "coarse_id": "C",
+          "id": "property_manager/C/followup-missing-data-in-jgb",
+          "merge_of": [
+            "tmp:draft:16"
+          ],
+          "moved_from": [],
+          "reason": "JGB帳單只有已繳／未繳、沒有入帳日期，問到沒有的欄位就明講答不出來、不得冒充或推算；此規則具體對應追問情境（非通用資料邊界原則），故置於C（採content_boundary／audience_level角度）。",
+          "slug": "followup-missing-data-in-jgb",
+          "split_from": [],
+          "title": "追問遇到 JGB 沒有的資料時怎麼回"
+        },
+        {
+          "coarse_id": "C",
+          "id": "property_manager/C/lease-expiry-followup-scope",
+          "merge_of": [
+            "tmp:draft:17",
+            "tmp:kb:3799",
+            "tmp:kb:3824",
+            "tmp:kb:3829"
+          ],
+          "moved_from": [],
+          "reason": "追問明確導向續約面向（非退租收尾），需要合約里程碑名詞、續約判定機制、以及被重用的續約對話規則本身，三者是同一回答能力的必要組成（採audience_level角度原案合併）；合約其餘子面向（狀態判斷／合約診斷／異動／退租收尾／建約引導／簽署排障）超出本追問範圍，另見F/contract-other-facets-scope-pending。",
+          "slug": "lease-expiry-followup-scope",
+          "split_from": [],
+          "title": "合約到期追問可答範圍（導向續約面向）"
+        },
+        {
+          "coarse_id": "C",
+          "id": "property_manager/C/urgent-repair-followup-scope",
+          "merge_of": [
+            "tmp:draft:18"
+          ],
+          "moved_from": [],
+          "reason": "緊急修繕在清單上照列，第一版不開追問；是否新建修繕歷史面向屬待裁事項，另見F/repair-history-facet-pending，此處只留現行（無）層級事實，三角度一致。",
+          "slug": "urgent-repair-followup-scope",
+          "split_from": [],
+          "title": "緊急修繕追問範圍（目前無獨立面向）"
+        },
+        {
+          "coarse_id": "C",
+          "id": "property_manager/C/meter-item-followup-scope",
+          "merge_of": [
+            "tmp:draft:19",
+            "tmp:kb:4021",
+            "tmp:kb:4089",
+            "tmp:kb:4091"
+          ],
+          "moved_from": [],
+          "reason": "電錶項目以id直接進槽位、走既有電表排障面向，需要智慧設備名詞、電表排障判因機制與被重用的對話規則本身，四者是同一回答能力的必要組成（採audience_level角度原案合併）；IoT設定引導（串接／單價／門鎖）不是追問查詢範圍，另見F/iot-setup-scope-pending。",
+          "slug": "meter-item-followup-scope",
+          "split_from": [],
+          "title": "電錶項目追問（導向電表排障面向）"
+        },
+        {
+          "coarse_id": "C",
+          "id": "property_manager/C/followup-session-end",
+          "merge_of": [
+            "tmp:draft:20"
+          ],
+          "moved_from": [],
+          "reason": "結束鈕送出「結束」即關閉該筆項目會話並回清單；與E類「會話多久過期」的一般規則屬不同層級（此為C功能內的具體終止分支），故不重複合併，採content_boundary／audience_level角度分置。",
+          "slug": "followup-session-end",
+          "split_from": [],
+          "title": "追問結束與流程收尾"
+        },
+        {
+          "coarse_id": "D",
+          "id": "property_manager/D/reply-tone-principles",
+          "merge_of": [
+            "tmp:draft:21"
+          ],
+          "moved_from": [],
+          "reason": "對象是現場單手用手機的業務或房東，回答短、先給結論、按鈕優先於自由輸入，三角度一致獨立成目。",
+          "slug": "reply-tone-principles",
+          "split_from": [],
+          "title": "回覆語氣與介面原則"
+        },
+        {
+          "coarse_id": "D",
+          "id": "property_manager/D/prohibited-statements",
+          "merge_of": [
+            "tmp:draft:22"
+          ],
+          "moved_from": [],
+          "reason": "不編損壞描述、不推算JGB沒有的數字、不用系統時間冒充事實、不替租客做決定、不回答別戶資料、不自動送出寫入動作六條紅線，三角度一致獨立成目。",
+          "slug": "prohibited-statements",
+          "split_from": [],
+          "title": "禁止項清單（不編造／不推算／不代決定）"
+        },
+        {
+          "coarse_id": "E",
+          "id": "property_manager/E/number-data-provenance-rule",
+          "merge_of": [
+            "tmp:draft:23"
+          ],
+          "moved_from": [],
+          "reason": "帳單金額、逾期天數、次數、合約日期一律來自JGB資料，需要推算的必須標明是推算並註明以JGB為準，是適用於所有功能的通用資料邊界規則（非單一主題事實），採content_boundary角度獨立置於E而不併入D的措辭層級或C的單一主題。",
+          "slug": "number-data-provenance-rule",
+          "split_from": [],
+          "title": "數字的來源規則（一律引用JGB，需推算須標明）"
+        },
+        {
+          "coarse_id": "E",
+          "id": "property_manager/E/when-to-decline",
+          "merge_of": [
+            "tmp:draft:24"
+          ],
+          "moved_from": [],
+          "reason": "問到JGB沒有的資料、會話範圍以外的物件或人、需寫入但未確認的動作，三種情況一律拒答或退出，三角度一致獨立成目。",
+          "slug": "when-to-decline",
+          "split_from": [],
+          "title": "什麼情況要拒答或退出"
+        },
+        {
+          "coarse_id": "E",
+          "id": "property_manager/E/identity-and-scope-boundary",
+          "merge_of": [
+            "tmp:draft:25"
+          ],
+          "moved_from": [],
+          "reason": "呼叫方是代管業務或自管房東而非租客，身分由LINE綁定推出、只能看自己權限內的物件，三角度一致獨立成目。",
+          "slug": "identity-and-scope-boundary",
+          "split_from": [],
+          "title": "誰在跟系統對話與權限邊界"
+        },
+        {
+          "coarse_id": "E",
+          "id": "property_manager/E/session-expiry-general-rule",
+          "merge_of": [
+            "tmp:draft:26"
+          ],
+          "moved_from": [],
+          "reason": "系統端會話30分鐘無動作即清除、過期後不得靜默當新對話處理；此為系統層級一般規則，與C功能內具體終止分支（followup-session-end）屬不同層級，故不合併重複，採content_boundary／audience_level角度分置。",
+          "slug": "session-expiry-general-rule",
+          "split_from": [],
+          "title": "會話多久過期（一般規則）"
+        },
+        {
+          "coarse_id": "F",
+          "id": "property_manager/F/presales-context-exclude-pending",
+          "merge_of": [
+            "tmp:kb:3622"
+          ],
+          "moved_from": [],
+          "reason": "本受眾明確非售前（b2b房東管家），此則內容標明「系統注入用、勿檢索」且為售前定位與合規鐵則，層級與本受眾不符，採audience_level角度建議排除、交業主裁決是否移除。",
+          "slug": "presales-context-exclude-pending",
+          "split_from": [],
+          "title": "售前系統脈絡誤入本受眾語料，應排除待裁"
+        },
+        {
+          "coarse_id": "F",
+          "id": "property_manager/F/urgency-value-domain-pending",
+          "merge_of": [
+            "tmp:draft:27"
+          ],
+          "moved_from": [],
+          "reason": "值域定義程式註解與舊表單相反、且缺值時預設為急迫，需以JGB資料庫為準裁定並改預設，三角度一致列為待裁、與A類現行操作敘述分屬不同層級。",
+          "slug": "urgency-value-domain-pending",
+          "split_from": [],
+          "title": "急迫程度值域與預設值衝突（待裁）"
+        },
+        {
+          "coarse_id": "F",
+          "id": "property_manager/F/repair-history-facet-pending",
+          "merge_of": [
+            "tmp:draft:28"
+          ],
+          "moved_from": [],
+          "reason": "目前沒有修繕歷史／進度面向，第一版不開，是否新建屬待業主裁決事項，三角度一致列為待裁、與C類「目前無此面向」的現況說明分屬不同層級。",
+          "slug": "repair-history-facet-pending",
+          "split_from": [],
+          "title": "修繕歷史／進度面向是否新建（待裁）"
+        },
+        {
+          "coarse_id": "F",
+          "id": "property_manager/F/dunning-endpoint-form",
+          "merge_of": [
+            "tmp:draft:29"
+          ],
+          "moved_from": [],
+          "reason": "催繳草稿要做成面向內動作或獨立同步端點二選一，屬技術實作形式待裁，不影響B類已定案的內容規則，三角度一致列為待裁。",
+          "slug": "dunning-endpoint-form",
+          "split_from": [],
+          "title": "催繳草稿端點形式（待裁）"
+        },
+        {
+          "coarse_id": "F",
+          "id": "property_manager/F/followup-latency-budget",
+          "merge_of": [
+            "tmp:draft:30"
+          ],
+          "moved_from": [],
+          "reason": "呼叫端逾時30秒，但追問回覆的p95尚無實測數據，屬效能待量測而非內容缺口，三角度一致列為待驗。",
+          "slug": "followup-latency-budget",
+          "split_from": [],
+          "title": "追問回覆延遲上限（待驗）"
+        },
+        {
+          "coarse_id": "F",
+          "id": "property_manager/F/contract-other-facets-scope-pending",
+          "merge_of": [
+            "tmp:kb:3800",
+            "tmp:kb:3801",
+            "tmp:kb:3822",
+            "tmp:kb:3823",
+            "tmp:kb:3825",
+            "tmp:kb:3826",
+            "tmp:kb:3831",
+            "tmp:kb:4005",
+            "tmp:kb:4202",
+            "tmp:kb:4215"
+          ],
+          "moved_from": [],
+          "reason": "待裁：合約狀態判斷／合約診斷／合約異動／退租收尾／建約引導／簽署排障是既有多輪對話代理的完整操作層級，服務對象與介面（extracted_fields／scope切換多面向）與本受眾單筆照片或單筆帳單快速追問的層級不同；C只在合約到期一項明確導向續約面向（見property_manager/C/lease-expiry-followup-scope），其餘合約子面向是否、以何種層級開放給此LINE OA受眾，待業主裁決（直接沿用audience_level角度原案id與merge_of）。",
+          "slug": "contract-other-facets-scope-pending",
+          "split_from": [],
+          "title": "合約其他子面向與對話規則是否納入本受眾範圍，待裁"
+        },
+        {
+          "coarse_id": "F",
+          "id": "property_manager/F/billing-other-facets-scope-pending",
+          "merge_of": [
+            "tmp:kb:3910",
+            "tmp:kb:3911",
+            "tmp:kb:3912",
+            "tmp:kb:3914",
+            "tmp:kb:3915",
+            "tmp:kb:3916",
+            "tmp:kb:3917",
+            "tmp:kb:3918",
+            "tmp:kb:4214",
+            "tmp:kb:4252"
+          ],
+          "moved_from": [],
+          "reason": "待裁：繳費金流排障／帳單異常／發票／帳單設定引導／帳單診斷及其對話規則是既有多輪帳務診斷代理的完整層級；C的逾期帳單追問只需帳單狀態與滯納金機制兩項事實即可作答（見property_manager/C/overdue-bill-followup-scope），未明確要求導向這些既有面向，是否納入待裁（直接沿用audience_level角度原案id與merge_of）。",
+          "slug": "billing-other-facets-scope-pending",
+          "split_from": [],
+          "title": "帳務其他子面向與對話規則是否納入本受眾範圍，待裁"
+        },
+        {
+          "coarse_id": "F",
+          "id": "property_manager/F/account-domain-scope-pending",
+          "merge_of": [
+            "tmp:kb:3952",
+            "tmp:kb:3953",
+            "tmp:kb:3954",
+            "tmp:kb:3955",
+            "tmp:kb:3956",
+            "tmp:kb:3983",
+            "tmp:kb:3984",
+            "tmp:kb:3990",
+            "tmp:kb:4001"
+          ],
+          "moved_from": [],
+          "reason": "待裁：A–E全部粗目均未提及租客或業務自身的註冊、登入、綁定或團隊權限排障，此整組屬完全不同的主題與服務對象（多為代管理者轉述給租客的排障內容），與本受眾的「拍照開單／催繳／今日追問」層級不同，是否收錄待裁（直接沿用audience_level角度原案id與merge_of）。",
+          "slug": "account-domain-scope-pending",
+          "split_from": [],
+          "title": "帳號領域（註冊／登入／綁定異動／團隊權限）系統知識是否納入本受眾範圍，待裁"
+        },
+        {
+          "coarse_id": "F",
+          "id": "property_manager/F/iot-setup-scope-pending",
+          "merge_of": [
+            "tmp:kb:4088",
+            "tmp:kb:4090"
+          ],
+          "moved_from": [],
+          "reason": "待裁：電表串接、儲值單價調整、門鎖密碼規則屬設定引導層級，C的電錶追問只需要電表排障（現況判因）層級即可作答（見property_manager/C/meter-item-followup-scope），設定引導是否也要開放給此受眾待裁（直接沿用audience_level角度原案id與merge_of）。",
+          "slug": "iot-setup-scope-pending",
+          "split_from": [],
+          "title": "IoT 設定引導系統知識是否納入本受眾範圍，待裁"
+        },
+        {
+          "coarse_id": "F",
+          "id": "property_manager/F/estate-domain-scope-pending",
+          "merge_of": [
+            "tmp:kb:4132",
+            "tmp:kb:4133",
+            "tmp:kb:4134",
+            "tmp:kb:4176",
+            "tmp:kb:4203"
+          ],
+          "moved_from": [],
+          "reason": "待裁：物件刊登、編輯、招租店舖等操作與現況診斷不在A–E任一粗目範圍內，屬完全不同的主題，是否收錄待裁（直接沿用audience_level角度原案id與merge_of）。",
+          "slug": "estate-domain-scope-pending",
+          "split_from": [],
+          "title": "物件領域（物件管理／操作引導／現況診斷）系統知識是否納入本受眾範圍，待裁"
+        },
+        {
+          "coarse_id": "F",
+          "id": "property_manager/F/subscription-domain-scope-pending",
+          "merge_of": [
+            "tmp:kb:5373",
+            "tmp:kb:5374"
+          ],
+          "moved_from": [],
+          "reason": "待裁：訂閱額度與扣款異常診斷不在A–E任一粗目範圍內，屬完全不同的主題，是否收錄待裁（直接沿用audience_level角度原案id與merge_of）。",
+          "slug": "subscription-domain-scope-pending",
+          "split_from": [],
+          "title": "訂閱領域系統知識是否納入本受眾範圍，待裁"
+        }
+      ],
+      "id_map": [
+        {
+          "new": "property_manager/A/repair-ticket-photo-flow",
+          "old": "tmp:draft:1",
+          "op": "keep"
+        },
+        {
+          "new": "property_manager/A/repair-ticket-reclassify",
+          "old": "tmp:draft:2",
+          "op": "keep"
+        },
+        {
+          "new": "property_manager/A/repair-ticket-low-confidence-candidates",
+          "old": "tmp:draft:3",
+          "op": "keep"
+        },
+        {
+          "new": "property_manager/A/repair-ticket-unrecognizable-photo",
+          "old": "tmp:draft:4",
+          "op": "keep"
+        },
+        {
+          "new": "property_manager/A/repair-ticket-photo-count-limit",
+          "old": "tmp:draft:5",
+          "op": "keep"
+        },
+        {
+          "new": "property_manager/A/repair-ticket-agent-identity-lease-lookup",
+          "old": "tmp:draft:6",
+          "op": "keep"
+        },
+        {
+          "new": "property_manager/A/repair-ticket-urgency-judgment",
+          "old": "tmp:draft:7",
+          "op": "keep"
+        },
+        {
+          "new": "property_manager/A/repair-ticket-submit-failure",
+          "old": "tmp:draft:8",
+          "op": "keep"
+        },
+        {
+          "new": "property_manager/A/repair-ticket-vacant-no-lease",
+          "old": "tmp:draft:9",
+          "op": "keep"
+        },
+        {
+          "new": "property_manager/A/repair-ticket-mid-flow-cancel",
+          "old": "tmp:draft:10",
+          "op": "keep"
+        },
+        {
+          "new": "property_manager/B/dunning-draft-generation",
+          "old": "tmp:draft:11",
+          "op": "keep"
+        },
+        {
+          "new": "property_manager/B/dunning-draft-not-auto-send",
+          "old": "tmp:draft:12",
+          "op": "keep"
+        },
+        {
+          "new": "property_manager/B/dunning-draft-late-fee-mention",
+          "old": "tmp:draft:13",
+          "op": "keep"
+        },
+        {
+          "new": "property_manager/C/overdue-bill-followup-scope",
+          "old": "tmp:draft:14",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/C/overdue-bill-followup-scope",
+          "old": "tmp:kb:3909",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/C/overdue-bill-followup-scope",
+          "old": "tmp:kb:3913",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/C/followup-session-single-item-boundary",
+          "old": "tmp:draft:15",
+          "op": "keep"
+        },
+        {
+          "new": "property_manager/C/followup-missing-data-in-jgb",
+          "old": "tmp:draft:16",
+          "op": "keep"
+        },
+        {
+          "new": "property_manager/C/lease-expiry-followup-scope",
+          "old": "tmp:draft:17",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/C/lease-expiry-followup-scope",
+          "old": "tmp:kb:3799",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/C/lease-expiry-followup-scope",
+          "old": "tmp:kb:3824",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/C/lease-expiry-followup-scope",
+          "old": "tmp:kb:3829",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/C/urgent-repair-followup-scope",
+          "old": "tmp:draft:18",
+          "op": "keep"
+        },
+        {
+          "new": "property_manager/C/meter-item-followup-scope",
+          "old": "tmp:draft:19",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/C/meter-item-followup-scope",
+          "old": "tmp:kb:4021",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/C/meter-item-followup-scope",
+          "old": "tmp:kb:4089",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/C/meter-item-followup-scope",
+          "old": "tmp:kb:4091",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/C/followup-session-end",
+          "old": "tmp:draft:20",
+          "op": "keep"
+        },
+        {
+          "new": "property_manager/D/reply-tone-principles",
+          "old": "tmp:draft:21",
+          "op": "keep"
+        },
+        {
+          "new": "property_manager/D/prohibited-statements",
+          "old": "tmp:draft:22",
+          "op": "keep"
+        },
+        {
+          "new": "property_manager/E/number-data-provenance-rule",
+          "old": "tmp:draft:23",
+          "op": "keep"
+        },
+        {
+          "new": "property_manager/E/when-to-decline",
+          "old": "tmp:draft:24",
+          "op": "keep"
+        },
+        {
+          "new": "property_manager/E/identity-and-scope-boundary",
+          "old": "tmp:draft:25",
+          "op": "keep"
+        },
+        {
+          "new": "property_manager/E/session-expiry-general-rule",
+          "old": "tmp:draft:26",
+          "op": "keep"
+        },
+        {
+          "new": "property_manager/F/presales-context-exclude-pending",
+          "old": "tmp:kb:3622",
+          "op": "keep"
+        },
+        {
+          "new": "property_manager/F/urgency-value-domain-pending",
+          "old": "tmp:draft:27",
+          "op": "keep"
+        },
+        {
+          "new": "property_manager/F/repair-history-facet-pending",
+          "old": "tmp:draft:28",
+          "op": "keep"
+        },
+        {
+          "new": "property_manager/F/dunning-endpoint-form",
+          "old": "tmp:draft:29",
+          "op": "keep"
+        },
+        {
+          "new": "property_manager/F/followup-latency-budget",
+          "old": "tmp:draft:30",
+          "op": "keep"
+        },
+        {
+          "new": "property_manager/F/contract-other-facets-scope-pending",
+          "old": "tmp:kb:3800",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/F/contract-other-facets-scope-pending",
+          "old": "tmp:kb:3801",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/F/contract-other-facets-scope-pending",
+          "old": "tmp:kb:3822",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/F/contract-other-facets-scope-pending",
+          "old": "tmp:kb:3823",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/F/contract-other-facets-scope-pending",
+          "old": "tmp:kb:3825",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/F/contract-other-facets-scope-pending",
+          "old": "tmp:kb:3826",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/F/contract-other-facets-scope-pending",
+          "old": "tmp:kb:3831",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/F/contract-other-facets-scope-pending",
+          "old": "tmp:kb:4005",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/F/contract-other-facets-scope-pending",
+          "old": "tmp:kb:4202",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/F/contract-other-facets-scope-pending",
+          "old": "tmp:kb:4215",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/F/billing-other-facets-scope-pending",
+          "old": "tmp:kb:3910",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/F/billing-other-facets-scope-pending",
+          "old": "tmp:kb:3911",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/F/billing-other-facets-scope-pending",
+          "old": "tmp:kb:3912",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/F/billing-other-facets-scope-pending",
+          "old": "tmp:kb:3914",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/F/billing-other-facets-scope-pending",
+          "old": "tmp:kb:3915",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/F/billing-other-facets-scope-pending",
+          "old": "tmp:kb:3916",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/F/billing-other-facets-scope-pending",
+          "old": "tmp:kb:3917",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/F/billing-other-facets-scope-pending",
+          "old": "tmp:kb:3918",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/F/billing-other-facets-scope-pending",
+          "old": "tmp:kb:4214",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/F/billing-other-facets-scope-pending",
+          "old": "tmp:kb:4252",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/F/account-domain-scope-pending",
+          "old": "tmp:kb:3952",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/F/account-domain-scope-pending",
+          "old": "tmp:kb:3953",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/F/account-domain-scope-pending",
+          "old": "tmp:kb:3954",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/F/account-domain-scope-pending",
+          "old": "tmp:kb:3955",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/F/account-domain-scope-pending",
+          "old": "tmp:kb:3956",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/F/account-domain-scope-pending",
+          "old": "tmp:kb:3983",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/F/account-domain-scope-pending",
+          "old": "tmp:kb:3984",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/F/account-domain-scope-pending",
+          "old": "tmp:kb:3990",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/F/account-domain-scope-pending",
+          "old": "tmp:kb:4001",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/F/iot-setup-scope-pending",
+          "old": "tmp:kb:4088",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/F/iot-setup-scope-pending",
+          "old": "tmp:kb:4090",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/F/estate-domain-scope-pending",
+          "old": "tmp:kb:4132",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/F/estate-domain-scope-pending",
+          "old": "tmp:kb:4133",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/F/estate-domain-scope-pending",
+          "old": "tmp:kb:4134",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/F/estate-domain-scope-pending",
+          "old": "tmp:kb:4176",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/F/estate-domain-scope-pending",
+          "old": "tmp:kb:4203",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/F/subscription-domain-scope-pending",
+          "old": "tmp:kb:5373",
+          "op": "merge"
+        },
+        {
+          "new": "property_manager/F/subscription-domain-scope-pending",
+          "old": "tmp:kb:5374",
+          "op": "merge"
+        }
+      ],
+      "rejected_alternatives": [
+        {
+          "alternative": "user_question_path 把合約／帳務／帳號／物件／IoT／訂閱等既有多輪診斷代理知識（共38則）全部併入C（今天要顧的追問）",
+          "reason": "C的粗目標題已明定僅涵蓋逾期帳單／合約到期／緊急修繕／電錶四項追問，其餘完整診斷代理服務對象與介面層級不同，硬塞進C會違反粗目本身的範圍定義；改採audience_level角度歸入F待業主裁決是否納入受眾範圍。"
+        },
+        {
+          "alternative": "content_boundary 把上述38則中的多數（22則，含合約異動／退租收尾／建約引導／簽署排障／發票／帳單設定／帳號全部／物件全部／IoT設定／訂閱）併入E（資料邊界與什麼時候該說不）",
+          "reason": "E的粗目標題是『資料邊界與什麼時候該說不』，指的是拒答/退出/身分/會話過期等判準，不是完整的操作型領域知識；把整組領域知識塞進E會使E失去語義一致性，改採audience_level角度歸入F。"
+        },
+        {
+          "alternative": "content_boundary 把 tmp:kb:3622（售前系統脈絡）留在D，當作語氣風格的比對參考",
+          "reason": "本受眾brief已明定非售前（b2b房東管家），此則標明系統注入用、勿檢索，屬售前合規鐵則而非本受眾的語氣模板，採audience_level角度建議排除、歸入F待裁而非D。"
+        },
+        {
+          "alternative": "user_question_path 把 tmp:kb:3622 中性標記為F/presales-context-scope-check（不主動建議排除）",
+          "reason": "audience_level角度已引用brief證據明確論證此則與受眾層級不符，直接標註建議排除更利於業主決斷，故採此版本。"
+        },
+        {
+          "alternative": "user_question_path 把 tmp:draft:23（數字來源規則）與 tmp:draft:16（JGB沒有的資料）合併為單一E細目 data-not-in-jgb",
+          "reason": "兩者觸發情境不同：draft:16是追問情境下特定欄位缺失的具體應答（歸C），draft:23是適用所有功能的通用資料溯源通則（歸E）；分置更利於各自獨立查核，採content_boundary角度的拆分。"
+        },
+        {
+          "alternative": "audience_level 把 tmp:draft:23 歸入D（措辭/禁止項層級）",
+          "reason": "多數角度（user_question_path、content_boundary）認為此則本質是資料邊界規則而非語氣措辭，採多數意見置於E。"
+        },
+        {
+          "alternative": "user_question_path 把 tmp:draft:16 併入E的通用資料邊界細目 data-not-in-jgb",
+          "reason": "多數角度（content_boundary、audience_level）認為此則具體對應追問情境下的特定欄位缺失，非通用資料邊界原則，故置於C。"
+        },
+        {
+          "alternative": "user_question_path 把 tmp:draft:15（追問問到別戶）併入 followup-overdue-bill 這個單一主題細目",
+          "reason": "此規則是C四項追問共用的會話邊界，不專屬逾期帳單一項，採content_boundary／audience_level角度獨立成目。"
+        },
+        {
+          "alternative": "user_question_path 把 tmp:draft:20（追問結束）與 tmp:draft:26（會話過期一般規則）合併為單一C細目 followup-session-timeout",
+          "reason": "多數角度（content_boundary、audience_level）認為兩者層級不同：draft:20是C功能內結束鈕的具體終止分支，draft:26是系統層級的一般會話過期規則，合併會使E失去這條通用規則的獨立引用點，故拆分為C與E各一。"
+        },
+        {
+          "alternative": "初稿曾將F的六大類（contract/billing/account/iot/estate/subscription）依user_question_path／content_boundary的成對切法拆成19個更細的F細目（如F/contract-status-diagnosis、F/account-binding-change、F/late-fee-dialogue-facet-pending等）",
+          "reason": "這些細目雖沿用角度提案的slug命名，但coarse_id改為F後即成為三份角度提議都未曾出現過的id（該slug原僅存在於角度1／2的C或E底下），違反『合成只能從三個角度已提出的細目id中選擇/合併，不得新造id』的規則；改為直接沿用audience_level角度已提出的6個F大類細目（id、coarse_id、merge_of完全比照原案），犧牲細分粒度以符合規則。"
+        }
+      ]
+    }
+  },
+  "raw_outputs_path": ".claude/skills/outline-curation/raw/structure-property_manager-20260907",
+  "skill_version": "0.1.0",
+  "step": "structure"
+}

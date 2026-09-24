@@ -44,7 +44,7 @@
 | `answer` | 答案內容 | `租金繳納方式有...` | ✅ |
 | `vendor_id` | 業者 ID（NULL=全域, 非NULL=業者專屬） | `2` 或留空 | ❌ |
 | `business_types` | 業態類型（逗號分隔） | `租賃,物業管理` | ❌ |
-| `target_user` | 目標用戶 | `tenant` / `landlord` | ❌ |
+| `target_user` | 目標用戶 | `tenant` / `property_manager` | ❌ |
 | `intent_names` | 意圖名稱 | `租金繳納` | ❌ |
 | `keywords` | 關鍵字（逗號分隔） | `租金,繳費,付款` | ❌ |
 | `priority` | 優先級 | `0` / `1` | ❌ |
@@ -312,8 +312,7 @@ curl -X POST http://localhost:8100/api/v1/knowledge-import/upload \
 | 值 | 說明 |
 |---|------|
 | `tenant` | 租客 |
-| `landlord` | 房東 |
-| `property_manager` | 物業管理師 |
+| `property_manager` | 房東／管理者 |
 | `all` | 所有用戶 |
 
 #### vendor_id（業者 ID）

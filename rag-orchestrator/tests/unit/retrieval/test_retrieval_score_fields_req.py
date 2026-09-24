@@ -73,4 +73,4 @@ def test_known_target_users_include_prospect():
     """target_user 路由：prospect 與業者角色皆為可信角色（區分售前/業者）。"""
     known = VendorKnowledgeRetrieverV2.KNOWN_TARGET_USERS
     assert "prospect" in known
-    assert {"tenant", "landlord", "property_manager"} <= known
+    assert {"tenant", "property_manager", "system_admin"} <= known

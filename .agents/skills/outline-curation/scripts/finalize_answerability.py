@@ -1,0 +1,114 @@
+#!/usr/bin/env python3
+"""步 4 answerability 收尾（knowledge-outline-and-intent-architecture 任務 1.4｜design 元件 2）。
+
+把判者結果（`run_result` JSON：現行主要輸入是 `answerability_agents.py collect` 的輸出；
+`.claude/workflows/outline-curation.js` `step:'answerability'` 的回傳為 Workflow 版留參考、同形狀）包成
+`StepEnvelope`、通過 `schemas/answerability.json`；同時把原始輸出寫成 journal 檔
+（1.3 定義的格式）供 `cost_ledger.py` 彙總；並把狀態檔 `answerability` 鍵寫成
+`{"path": ..., "needs_rubric_revision": bool}`（元件 3 Stop hook 讀）。
+
+`needs_rubric_revision=true`：仍寫檔（保留證據），但 exit 2 並印原因——「停下回主 session」
+是機制不是叮嚀（design 元件 2 Reconcile／E6）。
+
+⛔ 不呼叫 LLM、不跑 Workflow。
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from _envelope import find_repo_root, make_envelope, update_state, validate, load_schema, write_json  # noqa: E402
+
+SKILL_VERSION = "0.1.0"
+
+_SCHEMA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "schemas", "answerability.json")
+
+
+def _load_json(path: str):
+    with open(path, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def build_journal_entry(run_result: dict, run_id: str, *, wall_s: float) -> dict:
+    """journal 檔格式（1.3 定義）：{"step","run_id","agents":[{}...],"wall_s"}。
+
+    代理數＝run_result["agentsUsed"]；`agents` 只計數，每則為空 dict。
+    """
+    n = int(run_result.get("agentsUsed", 0))
+    agents = [{} for _ in range(n)]
+    return {"step": "answerability", "run_id": run_id, "agents": agents, "wall_s": wall_s}
+
+
+def build_envelope(run_result: dict, journal_path: str) -> dict:
+    inputs_sha = dict(run_result.get("inputsSha") or {})
+    labels = run_result.get("labels", [])
+    needs_rubric_revision = bool(run_result.get("needs_rubric_revision", False))
+    n_agents = int(run_result.get("agentsUsed", 0))
+
+    payload = {"labels": labels, "needs_rubric_revision": needs_rubric_revision}
+    cost = {
+        "agents": n_agents,
+        "wall_s": 0.0,
+    }
+    return make_envelope(
+        step="answerability",
+        skill_version=SKILL_VERSION,
+        inputs_sha=inputs_sha,
+        deterministic=False,
+        payload=payload,
+        raw_outputs_path=journal_path,
+        cost=cost,
+    )
+
+
+def main() -> int:
+    p = argparse.ArgumentParser(description="把判者結果（answerability_agents.py collect 輸出；Workflow 回傳留參考同形狀）包成 StepEnvelope＋寫 journal")
+    p.add_argument("--run-result", required=True, help="判者結果 JSON 檔路徑（answerability_agents.py collect 輸出，或 Workflow 回傳）")
+    p.add_argument("--out", required=True, help="輸出 answerability.json（StepEnvelope）路徑")
+    p.add_argument("--journal-dir", required=False,
+                    default=os.path.join(".claude", "skills", "outline-curation", "journal"))
+    p.add_argument("--run-id", required=False, default=None)
+    p.add_argument("--wall-s", required=False, type=float, default=0.0)
+    args = p.parse_args()
+
+    run_result = _load_json(args.run_result)
+    run_id = args.run_id or f"answerability-{run_result.get('frozenAt', 'unknown').replace(':', '').replace('-', '')}"
+
+    journal_entry = build_journal_entry(run_result, run_id, wall_s=args.wall_s)
+    os.makedirs(args.journal_dir, exist_ok=True)
+    journal_path = os.path.join(args.journal_dir, f"{run_id}.json")
+    write_json(journal_path, journal_entry)
+
+    envelope = build_envelope(run_result, journal_path)
+    envelope["cost"]["wall_s"] = args.wall_s
+
+    validate(envelope, load_schema(_SCHEMA_PATH))
+    write_json(args.out, envelope)
+
+    needs_rubric_revision = envelope["payload"]["needs_rubric_revision"]
+
+    try:
+        repo_root = find_repo_root()
+        out_rel = os.path.relpath(os.path.abspath(args.out), repo_root)
+        update_state(repo_root, {
+            "answerability": {
+                "path": out_rel,
+                "needs_rubric_revision": needs_rubric_revision,
+            }
+        })
+    except RuntimeError as e:
+        print(f"[finalize_answerability] 警告：找不到 repo 根，跳過狀態檔寫入（{e}）", file=sys.stderr)
+
+    if needs_rubric_revision:
+        print("[finalize_answerability] needs_rubric_revision=true——一致率 <0.80（門檻，2026-09-06 業主裁），"
+              "回主 session 回修 rubric（新 readiness epoch），⛔ 不進正本、不進地圖", file=sys.stderr)
+        return 2
+
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -83,7 +83,11 @@ from services.agent.confirm_card import (
 )
 from services.agent.canon.candidate_selector import CandidateSelector
 from services.agent.canon.candidate_selector import K as _CANDIDATE_K
-from services.agent.canon.canon_assembler import build_canon_toc, canon_visible, get_canon
+from services.agent.canon.canon_assembler import (
+    CanonSectionInvisibleError,
+    build_canon_toc,
+    get_canon,
+)
 from services.agent.document_extract import DocumentTurnInput
 from services.agent.identity import (
     DEFAULT_ENTRY_CHANNEL,
@@ -92,7 +96,11 @@ from services.agent.identity import (
     derive_identity_source,
 )
 from services.agent.mcp_facade import current_stage
-from services.agent.outline import CandidateOutlineDoc, resolve_vendor_business_types
+from services.agent.outline import (
+    CANON_VIEW_AUDIENCES,
+    CandidateOutlineDoc,
+    resolve_vendor_business_types,
+)
 from services.agent.output_schema import ASK_TARGETS, AgentOutput, VerifierVerdict
 from services.agent.prompt_assembler import new_nonce, wrap_provenance_data, wrap_tool_data
 from services.agent.question_sensitivity import question_sensitive
@@ -1434,63 +1442,71 @@ class AgentRuntime:
     async def _select_outline(
         self,
         identity: Identity,
-        outline: Any,
         user_message: str,
         dialog: list,
         violations: list,
     ) -> tuple[Any, Optional[dict]]:
-        """任務 4.1（Plan §2.1-2）：把整份 `outline` 換成這一回合的候選子集。
+        """Plan §2.1-2：每回合從正本現組 K=5 候選節＋目錄（受眾只由
+        `identity.resolved_audience()` 推導，⛔ 不當參數）。
 
-        適用條件：`outline` 非 None、`get_canon(outline.audience)` 已註冊、
-        `outline.audience` 與 `identity.resolved_audience()` 相同，且
-        `_selector_for(audience)` 取得到 selector；不適用 ⇒ 原 `outline` 原樣、
-        `sel_meta=None`（這**不是**降級——是這條路根本沒有候選機制）。
+        適用條件：`identity.resolved_audience()` 是有 git 正本視圖的受眾
+        （`CANON_VIEW_AUDIENCES`）、正本已註冊（`get_canon()`），且
+        `_selector_for(audience)` 取得到 selector 或至少設了對照表；
+        canon 未註冊／根本沒有候選機制 ⇒ `(None, None)`（這**不是**降級——
+        是這條路根本沒有候選機制）。
 
-        ⚠️ DSP-037／S1b 的例外：對照表（`candidate_selectors`）**有設但缺這個受眾**
-        ⇒ 那是降級（可見細目全集＋toc）＋`candidate_fallback_full_outline`，
-        ⛔ 不與「根本沒有候選機制」混為一談。
+        命中 ⇒ `CandidateOutlineDoc.from_canon(canon, identity, candidate_ids, toc,
+        vendor_business_types=...)`（內部呼叫 `canon_assembler.build_canon_sections`，
+        逐 id 過 `canon_visible`，不可見 ⇒ raise `CanonSectionInvisibleError`——
+        由本函式的外層 `except` 接住，⛔ 不產生空節）。
+
+        任何未命中／失敗（`none_visible`／`no_candidate`／索引不可用／selector
+        例外／F1 的 `CanonSectionInvisibleError`）⇒ **降級只注入目錄**
+        （`from_canon(canon, identity, [], toc, ...)`，零細目節＋toc），violation
+        `candidate_fallback_toc_only`（F1 額外記 `candidate_invisible_id`）。
+
+        外層 guard：`build_canon_toc` 本身失敗 ⇒ `(None, {"miss_kind": "empty_toc"})`
+        ＋violation `candidate_toc_error`——例外不逸出這個回合。
 
         回傳 `(outline, sel_meta)`；`sel_meta` 為 `None` 或
         `{"candidate_ids", "winning_key_kind", "miss_kind"}`。
         """
-        if outline is None:
-            return outline, None
-        audience = getattr(outline, "audience", None)
-        canon = get_canon(audience) if audience is not None else None
-        if canon is None or audience != identity.resolved_audience():
-            return outline, None
+        audience = identity.resolved_audience()
+        canon = get_canon() if audience in CANON_VIEW_AUDIENCES else None
+        if canon is None:
+            return None, None
         selector = self._selector_for(audience)
         if selector is None and not self._candidate_selectors:
-            # 這條路根本沒有候選機制（單數與複數都沒設）⇒ 原樣，⛔ 不記 violation。
-            return outline, None
+            # 這條路根本沒有候選機制（單數與複數都沒設）⇒ 無 outline，⛔ 不記 violation。
+            return None, None
 
-        # `vendor_business_types` 每回合最多解析一次（元件 6，tasks 6.2 前置 P3-b），
-        # 結果傳給下面三個呼叫點——⛔ 不在 FineIndex／canon_visible 內部查 DB。
+        # `vendor_business_types` 每回合最多解析一次（元件 6／F5），
+        # 結果傳給下面三個呼叫點——⛔ 不在 FineIndex／canon_visible／from_canon 內部再解析。
         vendor_business_types = resolve_vendor_business_types(identity)
-        toc = build_canon_toc(canon, identity, vendor_business_types=vendor_business_types)
 
-        def _fallback_visible() -> Any:
-            if selector is not None:
-                visible = selector.index.visible_subset(
-                    identity, canon, vendor_business_types=vendor_business_types
-                )
-            else:
-                # 沒有該受眾的索引 ⇒ 直接問 3.2 的 `canon_visible`（`visible_subset`
-                # 本身就是它的薄集合包裝，⛔ 這不是第二份可見性真相）。
-                visible = frozenset(
-                    fine.id
-                    for fine in canon.fines()
-                    if canon_visible(
-                        identity, fine, vendor_business_types=vendor_business_types
-                    )
-                )
-            return CandidateOutlineDoc.from_visible(outline, visible, toc)
+        try:
+            toc = build_canon_toc(canon, identity, vendor_business_types=vendor_business_types)
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:  # noqa: BLE001 — 外層 guard：toc 失敗，回合仍要完成
+            logger.warning(
+                "agent_select_outline_toc_failed reason=%s", type(exc).__name__
+            )
+            violations.append("candidate_toc_error")
+            return None, {
+                "candidate_ids": [], "winning_key_kind": {}, "miss_kind": "empty_toc",
+            }
+
+        def _toc_only() -> Any:
+            return CandidateOutlineDoc.from_canon(
+                canon, identity, [], toc, vendor_business_types=vendor_business_types
+            )
 
         if selector is None:
-            # 有對照表、卻缺這個受眾 ⇒ 產線正在降級服務（可見細目全集＋toc），
+            # 有對照表、卻缺這個受眾 ⇒ 產線正在降級服務（目錄only），
             # 與「索引不可用」同一個 trace 值域，⛔ 不靜默當成「沒有候選機制」。
-            violations.append("candidate_fallback_full_outline")
-            return _fallback_visible(), {
+            violations.append("candidate_fallback_toc_only")
+            return _toc_only(), {
                 "candidate_ids": [], "winning_key_kind": {}, "miss_kind": "index_unavailable",
             }
 
@@ -1501,37 +1517,51 @@ class AgentRuntime:
             )
 
             if sel is None:
-                violations.append("candidate_fallback_full_outline")
-                return _fallback_visible(), {
+                violations.append("candidate_fallback_toc_only")
+                return _toc_only(), {
                     "candidate_ids": [], "winning_key_kind": {}, "miss_kind": "index_unavailable",
                 }
 
             miss_kind = sel["miss_kind"]
             if miss_kind == "none_visible":
                 violations.append("candidate_none_visible")
-                return CandidateOutlineDoc.from_visible(outline, frozenset(), toc), {
+                return _toc_only(), {
                     "candidate_ids": [], "winning_key_kind": {}, "miss_kind": miss_kind,
                 }
             if miss_kind == "no_candidate":
                 # `ready` 狀態下不可達（見 candidate_selector.py 模組 docstring），
                 # 保留於列舉是為了讓 trace 值域封閉；不記 violation（不是機制故障）。
-                return _fallback_visible(), {
+                return _toc_only(), {
                     "candidate_ids": [], "winning_key_kind": {}, "miss_kind": miss_kind,
                 }
 
-            return CandidateOutlineDoc.from_selection(outline, sel, toc), {
+            return CandidateOutlineDoc.from_canon(
+                canon, identity, sel["candidate_ids"], toc,
+                vendor_business_types=vendor_business_types,
+            ), {
                 "candidate_ids": sel["candidate_ids"],
                 "winning_key_kind": sel["winning_key_kind"],
                 "miss_kind": "hit",
             }
         except asyncio.CancelledError:
             raise
-        except Exception as exc:  # noqa: BLE001 — 一回合內：選取失敗一律退回可見子集
+        except CanonSectionInvisibleError as exc:
+            # F1：命中後的候選 id 裡有一個對這個身分不可見／未審——⛔ 不產空節，
+            # 整回合降級為 toc-only，且**額外**記 `candidate_invisible_id`。
+            logger.warning(
+                "agent_select_outline_invisible_id reason=%s", type(exc).__name__
+            )
+            violations.append("candidate_invisible_id")
+            violations.append("candidate_fallback_toc_only")
+            return _toc_only(), {
+                "candidate_ids": [], "winning_key_kind": {}, "miss_kind": "index_unavailable",
+            }
+        except Exception as exc:  # noqa: BLE001 — 一回合內：選取失敗一律退回 toc-only
             logger.warning(
                 "agent_select_outline_failed reason=%s", type(exc).__name__
             )
             violations.append("candidate_selector_error")
-            return _fallback_visible(), {
+            return _toc_only(), {
                 "candidate_ids": [], "winning_key_kind": {}, "miss_kind": "index_unavailable",
             }
 
@@ -2596,12 +2626,11 @@ class AgentRuntime:
         slots["identity"] = identity.resolved_audience()
         slots["identity_source"] = derive_identity_source(identity)
         dialog = agent_state.get("dialog", [])
-        outline = agent_state.get("outline")
-        # 任務 4.1（Plan §2.1-2）：把整份 outline 換成這一回合的候選子集（或降級的
-        # 可見子集）；**同一個** outline 物件接著餵 `_seed_outline_provenance` 與
-        # `assembler.build_messages`（下方）。
+        # `_select_outline` 每回合從正本現組 K=5 候選節＋目錄（或降級的
+        # toc-only）；**同一個** outline 物件接著餵 `_seed_outline_provenance`
+        # 與 `assembler.build_messages`（下方）。
         outline, sel_meta = await self._select_outline(
-            identity, outline, user_message, dialog, acc.violations
+            identity, user_message, dialog, acc.violations
         )
         # Plan §0c r2 #4：段落產生後寫入、之後唯讀的 trace 輸入。
         acc.snapshot = TurnInputsSnapshot(

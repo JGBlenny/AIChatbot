@@ -81,6 +81,8 @@ data/
 !semantic_model/data/
 semantic_model/data/*
 !semantic_model/data/.gitkeep
+# 稽核例外表要進版控（不變量 41／db_table_documented 讀它們）
+!scripts/audit/data/
 
 # 前端測試文件
 knowledge-admin/frontend/public/test-*.html

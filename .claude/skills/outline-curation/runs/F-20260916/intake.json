@@ -1,0 +1,316 @@
+{
+  "cost": {
+    "agents": 0,
+    "completion_tokens": 0,
+    "prompt_tokens": 0,
+    "usd": 0.0,
+    "wall_s": 0.0
+  },
+  "deterministic": true,
+  "inputs_sha": {
+    "canon": "9128b78ed2ac9337cd5d2fbf0e35b885b40296cee3e38546894a087d1544c47a",
+    "drafts": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "kb": "dbcaa3ef447365951854f9736aed97aeb3e77d229b1157a49869d4170d684291"
+  },
+  "payload": {
+    "drafts": [],
+    "frozen_at": "2026-09-16T00:00:00Z",
+    "gapmap_cells": 0,
+    "kb_rows": [
+      {
+        "id": "jgb/F/repair-progress-followup-scope",
+        "question_summary": "修繕進度追問可答範圍"
+      },
+      {
+        "id": "jgb/F/repair-system",
+        "question_summary": "線上報修與進度追蹤"
+      },
+      {
+        "id": "jgb/F/repair-ticket-after-submit",
+        "question_summary": "確認送出後的單如何處理"
+      },
+      {
+        "id": "jgb/F/repair-ticket-mid-flow-cancel",
+        "question_summary": "報修流程中途取消的規則"
+      },
+      {
+        "id": "jgb/F/repair-ticket-no-lease",
+        "question_summary": "代開單時的租約查詢身分與空屋／無租約物件開單規則"
+      },
+      {
+        "id": "jgb/F/repair-ticket-open-and-confirm",
+        "question_summary": "開修繕單基本流程與確認機制（拍照進場／文字口述）"
+      },
+      {
+        "id": "jgb/F/repair-ticket-photo-count-limit",
+        "question_summary": "修繕辨識與附件的照片張數限制"
+      },
+      {
+        "id": "jgb/F/repair-ticket-photo-recognition-uncertain",
+        "question_summary": "照片辨識信心不足或看不出損壞時的處理"
+      },
+      {
+        "id": "jgb/F/repair-ticket-reclassify",
+        "question_summary": "確認卡上修改辨識結果的規則"
+      },
+      {
+        "id": "jgb/F/repair-ticket-submit-failure",
+        "question_summary": "建單失敗時的處理與重試規則"
+      },
+      {
+        "id": "jgb/F/repair-ticket-urgency-judgment",
+        "question_summary": "修繕單急迫程度的判斷來源與值域"
+      },
+      {
+        "id": "1558",
+        "question_summary": "維修進度查詢"
+      },
+      {
+        "id": "2963",
+        "question_summary": "房屋修繕責任"
+      },
+      {
+        "id": "2964",
+        "question_summary": "修繕責任"
+      },
+      {
+        "id": "2965",
+        "question_summary": "緊急修繕"
+      },
+      {
+        "id": "2966",
+        "question_summary": "修繕通知"
+      },
+      {
+        "id": "2967",
+        "question_summary": "漏水修繕責任"
+      },
+      {
+        "id": "2968",
+        "question_summary": "修繕費用負擔"
+      },
+      {
+        "id": "2969",
+        "question_summary": "修繕條款"
+      },
+      {
+        "id": "2970",
+        "question_summary": "公共設施維護"
+      },
+      {
+        "id": "2971",
+        "question_summary": "維護責任"
+      },
+      {
+        "id": "2972",
+        "question_summary": "修繕請求"
+      },
+      {
+        "id": "2973",
+        "question_summary": "修繕義務"
+      },
+      {
+        "id": "2974",
+        "question_summary": "修繕責任爭議"
+      },
+      {
+        "id": "2975",
+        "question_summary": "修繕保固期"
+      },
+      {
+        "id": "3029",
+        "question_summary": "維修責任"
+      },
+      {
+        "id": "3030",
+        "question_summary": "房屋維修責任"
+      },
+      {
+        "id": "3145",
+        "question_summary": "緊急維修服務"
+      },
+      {
+        "id": "3219",
+        "question_summary": "修繕通知義務"
+      },
+      {
+        "id": "3220",
+        "question_summary": "自行修繕"
+      },
+      {
+        "id": "3221",
+        "question_summary": "修繕維護責任"
+      },
+      {
+        "id": "3222",
+        "question_summary": "租屋設施維護責任"
+      },
+      {
+        "id": "3286",
+        "question_summary": "修繕通知責任"
+      },
+      {
+        "id": "3287",
+        "question_summary": "修繕費用分擔"
+      },
+      {
+        "id": "3288",
+        "question_summary": "修繕權限"
+      },
+      {
+        "id": "3289",
+        "question_summary": "修繕責任約定"
+      },
+      {
+        "id": "3320",
+        "question_summary": "社會住宅維修責任"
+      },
+      {
+        "id": "3365",
+        "question_summary": "修繕進度 修繕查詢"
+      },
+      {
+        "id": "3424",
+        "question_summary": "修繕流程 狀態說明"
+      },
+      {
+        "id": "3425",
+        "question_summary": "修繕費用 結算方式"
+      },
+      {
+        "id": "3426",
+        "question_summary": "緊急修繕 判定處理"
+      },
+      {
+        "id": "3427",
+        "question_summary": "修繕申請 報修方式"
+      },
+      {
+        "id": "3446",
+        "question_summary": "提出修繕 報修步驟"
+      },
+      {
+        "id": "3488",
+        "question_summary": "修繕受理派工 安排廠商"
+      },
+      {
+        "id": "4249",
+        "question_summary": "收到租客修繕申請 怎麼受理處理"
+      },
+      {
+        "id": "4416",
+        "question_summary": "報修 修繕 東西壞了 想報修"
+      },
+      {
+        "id": "4418",
+        "question_summary": "馬桶不通 排水堵塞 水管堵住"
+      },
+      {
+        "id": "4420",
+        "question_summary": "修繕進度 報修單 修得怎樣了 處理到哪"
+      },
+      {
+        "id": "4421",
+        "question_summary": "漏水 滲水 天花板漏水 水管漏水"
+      },
+      {
+        "id": "4422",
+        "question_summary": "冷氣壞了 電器壞了 家電故障"
+      },
+      {
+        "id": "4654",
+        "question_summary": "報修多個品項 都壞了分開報嗎 一張報修單"
+      },
+      {
+        "id": "3186",
+        "question_summary": "公共設備維護"
+      },
+      {
+        "id": "3187",
+        "question_summary": "租客設備維護"
+      },
+      {
+        "id": "3188",
+        "question_summary": "公共設備損壞責任"
+      },
+      {
+        "id": "3189",
+        "question_summary": "設備損壞責任"
+      },
+      {
+        "id": "3190",
+        "question_summary": "公共設備檢查"
+      },
+      {
+        "id": "3192",
+        "question_summary": "公共設備維護費"
+      },
+      {
+        "id": "3193",
+        "question_summary": "設備維護費用"
+      },
+      {
+        "id": "3194",
+        "question_summary": "公共設備更新責任"
+      },
+      {
+        "id": "3195",
+        "question_summary": "設備更新責任"
+      },
+      {
+        "id": "3197",
+        "question_summary": "設備維護記錄"
+      },
+      {
+        "id": "3198",
+        "question_summary": "設備使用責任"
+      },
+      {
+        "id": "3199",
+        "question_summary": "設備維護法律"
+      },
+      {
+        "id": "3200",
+        "question_summary": "設備損壞賠償"
+      },
+      {
+        "id": "3203",
+        "question_summary": "維護責任範圍"
+      },
+      {
+        "id": "3272",
+        "question_summary": "設備維護責任"
+      },
+      {
+        "id": "3274",
+        "question_summary": "公共設備維護費用"
+      },
+      {
+        "id": "3275",
+        "question_summary": "租客設備責任"
+      },
+      {
+        "id": "3276",
+        "question_summary": "設備維護法律依據"
+      },
+      {
+        "id": "3277",
+        "question_summary": "房東維護責任"
+      }
+    ],
+    "mode": "expand",
+    "object_under_test": {
+      "approved_by": "",
+      "frozen_at": "2026-09-16T00:00:00Z",
+      "materials": [
+        ".claude/skills/outline-curation/runs/F-20260916/kb-rows.json",
+        ".claude/skills/outline-curation/runs/F-20260916/help-pages.json",
+        "../app/canon/jgb"
+      ]
+    },
+    "shelf": "F"
+  },
+  "raw_outputs_path": null,
+  "skill_version": "0.1.0",
+  "step": "intake"
+}

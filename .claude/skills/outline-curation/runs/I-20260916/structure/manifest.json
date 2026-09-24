@@ -1,0 +1,33 @@
+{
+  "audience": "jgb",
+  "canon": "/app/canon/jgb",
+  "coarses": "../schemas/coarses-jgb.json",
+  "drafts": "../runs/I-20260916/help-pages.json",
+  "inputs_sha": {
+    "canon": "f51c0bd0fbf0fdbae0f4f73a3856118b93504f9112068ffc566f81f9526c5ca3",
+    "coarses": "e74114859d963f3639b5ed861e45ac367e3bbe846c903a9408291fd853fcdf73",
+    "drafts": "7efd537803a1025b3c0de1e4263b812b986bae93f87bd12b0cc379cde4af39ce",
+    "kb": "3950e79023ac869eb33e6322cfefb053371810847642e08e28c4de77b3fac468"
+  },
+  "items": 46,
+  "kb_rows": "../runs/I-20260916/kb-rows.json",
+  "mode": "expand",
+  "prompts": {
+    "audience_level": {
+      "chars": 15852,
+      "path": "../runs/I-20260916/structure/angle-audience_level.prompt.md",
+      "sha256": "a2cdc178109eccc1d26af1ab81388fa78be26cb6b9a62680176814409e43e73c"
+    },
+    "content_boundary": {
+      "chars": 15856,
+      "path": "../runs/I-20260916/structure/angle-content_boundary.prompt.md",
+      "sha256": "3216c69b0a67842645c7002a9f0832982abb06d713d66efdfaa097ea724dfc44"
+    },
+    "user_question_path": {
+      "chars": 15854,
+      "path": "../runs/I-20260916/structure/angle-user_question_path.prompt.md",
+      "sha256": "8069608a585df689d14bab25b4fc9899abc3978a4caa395e70ac68d79983ad03"
+    }
+  },
+  "shelf": "I"
+}

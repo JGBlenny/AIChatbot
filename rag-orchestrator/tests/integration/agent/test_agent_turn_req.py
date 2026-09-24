@@ -195,27 +195,19 @@ def _make_runtime(pool, script):
     return build_runtime(pool, FakeProvider(script), ToolRegistry(), budget=None)
 
 
-def _app(pool, runtime, *, outlines=None):
-    """`outlines`（DSP-037）：`app.state.agent_outlines` 的受眾對照表。
+#: 9.8 DSP-059 D′ S2：`_outline_for_audience` 只認 `app.state.agent_audiences`
+#: （frozenset，沒有大綱物件可讀了）——`_app` 預設把 prospect 標成就緒（本檔
+#: 多數案例是 prospect，維持原樣），pm 的案例要自己帶一份，⛔ 不得由本函式
+#: 偷偷補一個回退給所有受眾。
+_DEFAULT_AUDIENCES = frozenset({"prospect"})
 
-    ⚠️ 預設 `None` ＝**不設**這個屬性：`_outline_for_audience` 於是走舊形狀
-    （只有 prospect 讀得到單數 `agent_outline`，其餘受眾一律
-    `_OUTLINE_UNAVAILABLE`）——本檔多數案例是 prospect，維持原樣。
-    pm 的案例要自己帶一份，⛔ 不得由本函式偷偷補一個回退大綱給所有受眾。
-    """
+
+def _app(pool, runtime, *, audiences=None):
+    """`audiences`：`app.state.agent_audiences` 的就緒受眾集合，預設僅 prospect。"""
     state = SimpleNamespace(agent_runtime=runtime, agent_session_store=_engine(pool),
-                            db_pool=pool)
-    if outlines is not None:
-        state.agent_outlines = outlines
+                            db_pool=pool,
+                            agent_audiences=audiences if audiences is not None else _DEFAULT_AUDIENCES)
     return SimpleNamespace(state=state)
-
-
-def _stub_outline(audience):
-    """最小可用的大綱替身：`assembler.build_messages` 只讀 `audience`／`sections`／
-    `sha256`／`version`／`token_count` 四類屬性（`sections` 空 ⇒ 不預載任何引文）。
-    ⛔ 不用真正本大綱——那需要註冊 canon 與候選索引，不屬本檔的受測物。"""
-    return SimpleNamespace(audience=audience, sections=[], sha256="stub-outline-sha",
-                           version="stub", token_count=0)
 
 
 def _deps(app, pool):
@@ -466,8 +458,7 @@ async def test_property_manager_identity_is_visible_and_callable(pool, env):
     """
     session_id = _session()
     runtime = _make_runtime(pool, [_fake_response(_agent_output(answer="您好。"))])
-    app = _app(pool, runtime,
-               outlines={"property_manager": _stub_outline("property_manager")})
+    app = _app(pool, runtime, audiences=frozenset({"property_manager"}))
     deps = _deps(app, pool)
     invoke = F._make_invoke(_registry(deps), deps)
     ctx = _FakeCtx({"x-api-key": _PLAIN_KEY_A,

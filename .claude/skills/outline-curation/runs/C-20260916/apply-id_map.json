@@ -1,0 +1,555 @@
+{
+  "canon_sha256": "2fbec9566e8d0b3cb1365a3638175e90796c0d0c9359e7e300117aed771aa3fb",
+  "fines": [
+    {
+      "from": [
+        "tmp:canon:jgb/C/property-management-overview"
+      ],
+      "new": "jgb/C/property-management-overview",
+      "ops": [
+        "keep"
+      ],
+      "title": "房源管理模組做什麼（含自訂狀態標籤）",
+      "units": 4
+    },
+    {
+      "from": [
+        "tmp:canon:jgb/C/community-batch-create"
+      ],
+      "new": "jgb/C/community-batch-create",
+      "ops": [
+        "keep"
+      ],
+      "title": "社區建立與批次新增物件",
+      "units": 3
+    },
+    {
+      "from": [
+        "tmp:canon:jgb/C/property-status-meaning"
+      ],
+      "new": "jgb/C/property-status-meaning",
+      "ops": [
+        "merge"
+      ],
+      "title": "物件狀態（未刊登／刊登中／洽談中／合約中）是什麼意思",
+      "units": 7
+    },
+    {
+      "from": [
+        "tmp:canon:jgb/C/rental-storefront-vr"
+      ],
+      "new": "jgb/C/rental-storefront-vr",
+      "ops": [
+        "keep"
+      ],
+      "title": "招租店舖與 VR 看屋",
+      "units": 3
+    },
+    {
+      "from": [
+        "tmp:kb:3468",
+        "tmp:kb:3469"
+      ],
+      "new": "jgb/C/community-setup-and-property-binding",
+      "ops": [
+        "new"
+      ],
+      "title": "社區建立、編輯與物件歸戶（含公共區域物件、社宅強制綁定）",
+      "units": 9
+    },
+    {
+      "from": [
+        "tmp:kb:3431",
+        "tmp:kb:3357",
+        "tmp:draft:1"
+      ],
+      "new": "jgb/C/property-batch-import",
+      "ops": [
+        "new"
+      ],
+      "title": "物件批次匯入：範本、表格填寫與上傳失敗",
+      "units": 8
+    },
+    {
+      "from": [
+        "tmp:kb:3429",
+        "tmp:kb:4151"
+      ],
+      "new": "jgb/C/property-listing-conditions",
+      "ops": [
+        "new"
+      ],
+      "title": "物件要怎麼刊登上架、刊登需要什麼條件",
+      "units": 3
+    },
+    {
+      "from": [
+        "tmp:kb:3430",
+        "tmp:kb:3506"
+      ],
+      "new": "jgb/C/property-unlisting",
+      "ops": [
+        "new"
+      ],
+      "title": "物件怎麼下架、為什麼突然全部下架",
+      "units": 6
+    },
+    {
+      "from": [
+        "tmp:kb:4147"
+      ],
+      "new": "jgb/C/property-edit-vs-publish",
+      "ops": [
+        "new"
+      ],
+      "title": "編輯物件與刊登物件差在哪、為什麼修改沒存到",
+      "units": 3
+    },
+    {
+      "from": [
+        "tmp:kb:3505"
+      ],
+      "new": "jgb/C/property-add-blocked",
+      "ops": [
+        "new"
+      ],
+      "title": "為什麼不能新增物件",
+      "units": 2
+    },
+    {
+      "from": [
+        "tmp:kb:4145",
+        "tmp:kb:4152"
+      ],
+      "new": "jgb/C/public-display-address",
+      "ops": [
+        "new"
+      ],
+      "title": "對外顯示地址改了為什麼後台還是完整地址",
+      "units": 2
+    },
+    {
+      "from": [
+        "tmp:kb:4146"
+      ],
+      "new": "jgb/C/storefront-entry-share",
+      "ops": [
+        "new"
+      ],
+      "title": "招租店舖入口在哪、怎麼分享、為什麼物件沒出現",
+      "units": 4
+    },
+    {
+      "from": [
+        "tmp:kb:3470"
+      ],
+      "new": "jgb/C/community-public-page",
+      "ops": [
+        "new"
+      ],
+      "title": "社區公開頁面是什麼、能拿來做什麼",
+      "units": 5
+    },
+    {
+      "from": [
+        "tmp:kb:3433"
+      ],
+      "new": "jgb/C/property-vr-tour",
+      "ops": [
+        "new"
+      ],
+      "title": "物件 VR 虛擬導覽怎麼綁、費用與拍攝找誰",
+      "units": 2
+    },
+    {
+      "from": [
+        "tmp:kb:3434"
+      ],
+      "new": "jgb/C/property-custom-tags",
+      "ops": [
+        "new"
+      ],
+      "title": "物件自訂標籤怎麼建、怎麼用來篩選",
+      "units": 5
+    },
+    {
+      "from": [
+        "tmp:draft:2"
+      ],
+      "new": "jgb/C/property-advanced-search",
+      "ops": [
+        "new"
+      ],
+      "title": "物件列表進階搜尋怎麼用",
+      "units": 0
+    },
+    {
+      "from": [
+        "tmp:kb:4648"
+      ],
+      "new": "jgb/C/occupancy-rate-calculation",
+      "ops": [
+        "new"
+      ],
+      "title": "首頁即時物件出租率怎麼算、已出租數字從哪來",
+      "units": 1
+    },
+    {
+      "from": [
+        "tmp:kb:1396",
+        "tmp:kb:4262",
+        "tmp:kb:4276",
+        "tmp:kb:3056",
+        "tmp:kb:3058",
+        "tmp:kb:3246",
+        "tmp:kb:3063",
+        "tmp:kb:3059",
+        "tmp:kb:3299"
+      ],
+      "new": "jgb/C/community-facilities-and-hours",
+      "ops": [
+        "new"
+      ],
+      "title": "社區有哪些公共設施、開放時間、費用與變更通知",
+      "units": 12
+    },
+    {
+      "from": [
+        "tmp:kb:2980",
+        "tmp:kb:3049",
+        "tmp:kb:3050",
+        "tmp:kb:3245",
+        "tmp:kb:3061",
+        "tmp:kb:3248",
+        "tmp:kb:3060",
+        "tmp:kb:3247"
+      ],
+      "new": "jgb/C/community-facility-usage-rules",
+      "ops": [
+        "new"
+      ],
+      "title": "公共設施使用規範：權利、義務、安全規範與違規後果",
+      "units": 19
+    },
+    {
+      "from": [
+        "tmp:kb:3053",
+        "tmp:kb:3054",
+        "tmp:kb:3055",
+        "tmp:kb:3051",
+        "tmp:kb:3052"
+      ],
+      "new": "jgb/C/community-garbage-disposal",
+      "ops": [
+        "new"
+      ],
+      "title": "社區垃圾分類、回收時間、大型廢棄物與洗衣烘衣使用規範",
+      "units": 14
+    },
+    {
+      "from": [
+        "tmp:kb:3057",
+        "tmp:kb:3062",
+        "tmp:kb:3249",
+        "tmp:kb:3064",
+        "tmp:kb:3300"
+      ],
+      "new": "jgb/C/community-facility-disputes",
+      "ops": [
+        "new"
+      ],
+      "title": "公共設施損壞責任、使用爭議處理與責任保險",
+      "units": 13
+    },
+    {
+      "from": [
+        "tmp:kb:3157",
+        "tmp:kb:3263",
+        "tmp:kb:4272"
+      ],
+      "new": "jgb/C/community-services-and-events",
+      "ops": [
+        "new"
+      ],
+      "title": "社區生活服務與活動（社區活動、包裹代收、社宅社區服務）",
+      "units": 4
+    }
+  ],
+  "id_map": [
+    {
+      "new": "jgb/C/property-management-overview",
+      "old": "tmp:canon:jgb/C/property-management-overview",
+      "op": "keep"
+    },
+    {
+      "new": "jgb/C/community-batch-create",
+      "old": "tmp:canon:jgb/C/community-batch-create",
+      "op": "keep"
+    },
+    {
+      "new": "jgb/C/property-status-meaning",
+      "old": "tmp:canon:jgb/C/property-status-meaning",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/C/property-status-meaning",
+      "old": "tmp:kb:3428",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/C/property-status-meaning",
+      "old": "tmp:kb:4154",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/C/rental-storefront-vr",
+      "old": "tmp:canon:jgb/C/rental-storefront-vr",
+      "op": "keep"
+    },
+    {
+      "new": "jgb/C/community-setup-and-property-binding",
+      "old": "tmp:kb:3468",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/community-setup-and-property-binding",
+      "old": "tmp:kb:3469",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/property-batch-import",
+      "old": "tmp:kb:3431",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/property-batch-import",
+      "old": "tmp:kb:3357",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/property-batch-import",
+      "old": "tmp:draft:1",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/property-listing-conditions",
+      "old": "tmp:kb:3429",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/property-listing-conditions",
+      "old": "tmp:kb:4151",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/property-unlisting",
+      "old": "tmp:kb:3430",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/property-unlisting",
+      "old": "tmp:kb:3506",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/property-edit-vs-publish",
+      "old": "tmp:kb:4147",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/property-add-blocked",
+      "old": "tmp:kb:3505",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/public-display-address",
+      "old": "tmp:kb:4145",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/public-display-address",
+      "old": "tmp:kb:4152",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/storefront-entry-share",
+      "old": "tmp:kb:4146",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/community-public-page",
+      "old": "tmp:kb:3470",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/property-vr-tour",
+      "old": "tmp:kb:3433",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/property-custom-tags",
+      "old": "tmp:kb:3434",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/property-advanced-search",
+      "old": "tmp:draft:2",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/occupancy-rate-calculation",
+      "old": "tmp:kb:4648",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/community-facilities-and-hours",
+      "old": "tmp:kb:1396",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/community-facilities-and-hours",
+      "old": "tmp:kb:4262",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/community-facilities-and-hours",
+      "old": "tmp:kb:4276",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/community-facilities-and-hours",
+      "old": "tmp:kb:3056",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/community-facilities-and-hours",
+      "old": "tmp:kb:3058",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/community-facilities-and-hours",
+      "old": "tmp:kb:3246",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/community-facilities-and-hours",
+      "old": "tmp:kb:3063",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/community-facilities-and-hours",
+      "old": "tmp:kb:3059",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/community-facilities-and-hours",
+      "old": "tmp:kb:3299",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/community-facility-usage-rules",
+      "old": "tmp:kb:2980",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/community-facility-usage-rules",
+      "old": "tmp:kb:3049",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/community-facility-usage-rules",
+      "old": "tmp:kb:3050",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/community-facility-usage-rules",
+      "old": "tmp:kb:3245",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/community-facility-usage-rules",
+      "old": "tmp:kb:3061",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/community-facility-usage-rules",
+      "old": "tmp:kb:3248",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/community-facility-usage-rules",
+      "old": "tmp:kb:3060",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/community-facility-usage-rules",
+      "old": "tmp:kb:3247",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/community-garbage-disposal",
+      "old": "tmp:kb:3053",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/community-garbage-disposal",
+      "old": "tmp:kb:3054",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/community-garbage-disposal",
+      "old": "tmp:kb:3055",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/community-garbage-disposal",
+      "old": "tmp:kb:3051",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/community-garbage-disposal",
+      "old": "tmp:kb:3052",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/community-facility-disputes",
+      "old": "tmp:kb:3057",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/community-facility-disputes",
+      "old": "tmp:kb:3062",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/community-facility-disputes",
+      "old": "tmp:kb:3249",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/community-facility-disputes",
+      "old": "tmp:kb:3064",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/community-facility-disputes",
+      "old": "tmp:kb:3300",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/community-services-and-events",
+      "old": "tmp:kb:3157",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/community-services-and-events",
+      "old": "tmp:kb:3263",
+      "op": "new"
+    },
+    {
+      "new": "jgb/C/community-services-and-events",
+      "old": "tmp:kb:4272",
+      "op": "new"
+    }
+  ]
+}

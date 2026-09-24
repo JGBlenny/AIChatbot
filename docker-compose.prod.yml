@@ -273,7 +273,9 @@ services:
       #   AGENT_TURN_ENABLED（預設 false；/mcp 的 agent.turn 工具回切開關——現在是
       #     agent_configured() 的**唯一**判準）
       #   AGENT_TURN_TIMEOUT_S（預設 30 秒）
-      #   AGENT_OUTLINE_TOKEN_LIMIT_PROSPECT（預設 10000）／_PM（預設 8000）／_TENANT（預設 8000）
+      #   AGENT_OUTLINE_K_TOKEN_LIMIT_PROSPECT|PM|TENANT（預設各 12000；任 K=5 可引用節 token 最大和上限）
+      #   AGENT_OUTLINE_TOC_TOKEN_LIMIT_PROSPECT|PM|TENANT（預設各 8000；目錄 token 上限）
+      #     這六把只能調小，⛔ 不能調大，非法值啟動即紅（outline.py::default_k_token_limit／default_toc_token_limit 取 min(env, 常數)）
       #   AGENT_MODEL（未設回退 OPENAI_MODEL，再無則 gpt-4o-mini）
       #   AGENT_TRACE_WINDOW_DAYS（預設 7；agent_trace 查詢時間窗）
       #   JGB2_CANDIDATE_CAP（預設 5；jgb2.query.* 候選列筆數）

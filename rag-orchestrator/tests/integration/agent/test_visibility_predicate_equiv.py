@@ -23,6 +23,14 @@ unit 只驗條件表逐條產出，⛔ 不證明「對真實資料回同一批�
   否則「處處相同」只是因為謂詞根本沒作用。
 - `test_oracle_detects_a_planted_difference`：把 oracle 故意改一條（b2b 補 IS NULL 放行
   ＝ D-002 禁止的那個改動），比對必須**紅**。
+
+## ⚠️ b2b 分支的角色條件無 `IS NULL` 放行（DSP-052 (c)／2026-09-14）
+
+`_oracle_branch` 的 `target_user_filter_sql` **依分支各寫一行**：b2b 是
+`kb.target_user && %s::text[]`（空＝不可見），b2c 維持 `IS NULL OR ...`。
+理由：`tenant` 是合法值，帶 `mode=b2b` 時 `audience_of` 會路由到 pm 受眾，
+放行未標角色的列＝跨受眾可見且靜默。⛔ 不得把兩行抽回共用，
+⛔ 不得為了讓列集合比對變綠而把 `IS NULL OR` 加回 b2b。
 """
 import os
 
@@ -87,12 +95,16 @@ def _oracle_branch(kind, target_user, mode, vendor_business_types, *, b2b_null_p
             f"{lead}(kb.business_types IS NULL OR kb.business_types && %s::text[])"
             if b2b_null_pass else f"{lead}kb.business_types && %s::text[]"
         )
+        # DSP-052 (c)／2026-09-14：b2b 分支的角色條件**無 `IS NULL` 放行**（空＝不可見）。
+        # ⛔ 兩分支刻意各寫一行、⛔ 不抽回共用——語義本來就不同（b2c 仍放行）。
+        target_user_filter_sql = "AND kb.target_user && %s::text[]"
     else:
         bt = vendor_business_types
         business_type_filter_sql = (
             f"{lead}(kb.business_types IS NULL OR kb.business_types && %s::text[])")
         target_user_param = [_oracle_effective_target_user(target_user), 'all_users']
-    target_user_filter_sql = "AND (kb.target_user IS NULL OR kb.target_user && %s::text[])"
+        # b2c 分支維持 `IS NULL` 放行（⛔ DSP-052 (c) 不動 b2c）。
+        target_user_filter_sql = "AND (kb.target_user IS NULL OR kb.target_user && %s::text[])"
     return business_type_filter_sql, target_user_filter_sql, bt, target_user_param
 
 

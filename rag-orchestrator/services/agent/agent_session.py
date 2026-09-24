@@ -17,11 +17,11 @@ test_outline_citation_seed_req.py` 直接 `from services.agent.runtime import
 DIALOG_MAX_MESSAGES`）。本檔若去 import 那些模組的常數，會在
 `runtime.py`／`completed_actions.py`／`state_store.py` 三者都要「反過來 import
 `agent_session`」時繞出一個環（它們也需要 `AgentSession` 類別本身）。故本檔的
-11 個鍵名與上限**各自重複宣告一份純字面值**，`tests/unit/agent/
+10 個鍵名與上限**各自重複宣告一份純字面值**，`tests/unit/agent/
 test_agent_session_req.py` 另有一條「與各檔既有常數逐一相等」的正對照守著
 不讓兩邊漂移，⛔ 不是「重複了就沒事」。
 
-## 11 個鍵與六種生命週期（KEY_SPECS，封閉表）
+## 10 個鍵與六種生命週期（KEY_SPECS，封閉表）
 `turn`（每回合覆寫或回合內暫存）／`once`（一次性，用掉即清）／
 `until_scope_exit`（黏到 `scope_exit()`）／`fifo(n)`（FIFO 上限 n）／
 `stamp`（時間戳）／`session`（整個 session 累加，不受回合或範圍影響）。
@@ -57,7 +57,6 @@ class KeySpec:
 # `test_agent_session_req.py` 有逐一相等的正對照）。
 # ---------------------------------------------------------------------------
 DIALOG_KEY = "dialog"
-OUTLINE_KEY = "outline"
 HANDOFF_CACHE_KEY = "handoff_cache"
 FIXED_STREAK_KEY = "fixed_streak"
 PENDING_CONFIRM_KEY = "pending_confirm"
@@ -79,7 +78,6 @@ COMPLETED_ACTIONS_MAX = 5
 
 KEY_SPECS: dict[str, KeySpec] = {
     DIALOG_KEY: KeySpec(DIALOG_KEY, Lifetime.FIFO, DIALOG_MAX_MESSAGES),
-    OUTLINE_KEY: KeySpec(OUTLINE_KEY, Lifetime.TURN),
     HANDOFF_CACHE_KEY: KeySpec(HANDOFF_CACHE_KEY, Lifetime.FIFO, HANDOFF_CACHE_MAX),
     FIXED_STREAK_KEY: KeySpec(FIXED_STREAK_KEY, Lifetime.SESSION),
     PENDING_CONFIRM_KEY: KeySpec(PENDING_CONFIRM_KEY, Lifetime.FIFO, PENDING_CONFIRM_MAX),
@@ -91,7 +89,7 @@ KEY_SPECS: dict[str, KeySpec] = {
     LAST_TURN_AT_KEY: KeySpec(LAST_TURN_AT_KEY, Lifetime.STAMP),
 }
 
-assert len(KEY_SPECS) == 11, "KEY_SPECS 是封閉表——11 個鍵，多一個少一個都要回頭對帳"
+assert len(KEY_SPECS) == 10, "KEY_SPECS 是封閉表——10 個鍵，多一個少一個都要回頭對帳"
 
 
 class AgentSession:
@@ -134,12 +132,6 @@ class AgentSession:
         dialog.append({"role": "user", "content": user_message})
         dialog.append({"role": "assistant", "content": answer})
         self._trim_fifo_list(dialog, DIALOG_MAX_MESSAGES)
-
-    # ── outline（回合內暫存；由呼叫端門面寫入前塞、存檔前 pop，R3b 待辦
-    #    ——`mcp_facade.py` 不在 R3 擁有的檔案清單內，這裡只提供讀點）────────
-    @property
-    def outline(self) -> Any:
-        return self._state.get(OUTLINE_KEY)
 
     # ── handoff_cache（FIFO 50；鍵＝同題重問的 cache_key） ──────────────────
     def handoff_cache(self) -> dict:
@@ -330,7 +322,6 @@ __all__ = [
     "KEY_SPECS",
     "AgentSession",
     "DIALOG_KEY",
-    "OUTLINE_KEY",
     "HANDOFF_CACHE_KEY",
     "FIXED_STREAK_KEY",
     "PENDING_CONFIRM_KEY",

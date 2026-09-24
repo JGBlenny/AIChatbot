@@ -1,0 +1,149 @@
+{
+  "attached_fines": [
+    "jgb/D/breach-penalty-rules",
+    "jgb/D/contract-attachments-notes-limits",
+    "jgb/D/contract-batch-renewal",
+    "jgb/D/contract-cancel-delete",
+    "jgb/D/contract-copy",
+    "jgb/D/contract-create-entry-and-prereq",
+    "jgb/D/contract-data-change-form",
+    "jgb/D/contract-filter-by-state",
+    "jgb/D/contract-lookup",
+    "jgb/D/contract-pdf-download",
+    "jgb/D/contract-send-invite",
+    "jgb/D/contract-snapshot-independence",
+    "jgb/D/contract-status-overview",
+    "jgb/D/delegation-contract-change-termination",
+    "jgb/D/delegation-contract-flow",
+    "jgb/D/delegation-contract-terms-general",
+    "jgb/D/delegation-vs-lease-contract",
+    "jgb/D/deposit-deduction-refund",
+    "jgb/D/deposit-legal-limits",
+    "jgb/D/deposit-setting-and-refund-system",
+    "jgb/D/early-termination-aftermath",
+    "jgb/D/early-termination-flow",
+    "jgb/D/early-termination-penalty",
+    "jgb/D/equipment-usage-under-lease",
+    "jgb/D/esign-invite-expiry",
+    "jgb/D/esign-legal-validity",
+    "jgb/D/esign-troubleshooting",
+    "jgb/D/handover-checkin",
+    "jgb/D/handover-return-cancel-invite",
+    "jgb/D/household-registration-under-lease",
+    "jgb/D/lease-clauses-interpretation",
+    "jgb/D/lease-end-checkout-overview",
+    "jgb/D/lease-notarization",
+    "jgb/D/lease-termination-notice-rules",
+    "jgb/D/move-in-inspection",
+    "jgb/D/renewal-flow",
+    "jgb/D/renewal-history-and-addendum",
+    "jgb/D/renewal-vs-new-contract",
+    "jgb/D/return-checkout",
+    "jgb/D/signer-identity-and-seal",
+    "jgb/D/social-housing-lease",
+    "jgb/D/sublease-and-shared-lease-terms",
+    "jgb/D/tenant-change-new-contract",
+    "jgb/D/tenant-move-out-obligations",
+    "jgb/D/tenant-pet-clauses",
+    "jgb/D/tenant-renewal-and-extension-rights",
+    "jgb/D/tenant-rental-insurance",
+    "jgb/D/tenant-sign-steps",
+    "jgb/D/upload-existing-contract"
+  ],
+  "attached_phrasings": 309,
+  "canon_sha256": "ec70832bf0eaa6a01cf9a17a28db860a37adbf2a1c500f1692e95243dc85a1e1",
+  "dup_existing": {
+    "jgb/D/contract-data-change-form": [
+      {
+        "already_on": "jgb/A/data-change-request-form",
+        "text": "資料異動申請書"
+      }
+    ],
+    "jgb/D/contract-modify-after-sign": [
+      {
+        "already_on": "jgb/B/feature-not-visible-troubleshooting",
+        "text": "權限不足"
+      }
+    ],
+    "jgb/D/contract-send-invite": [
+      {
+        "already_on": "jgb/D/contract-esign-flow",
+        "text": "簽約邀請"
+      },
+      {
+        "already_on": "jgb/D/contract-esign-flow",
+        "text": "簽約邀請是用簡訊還是email"
+      }
+    ],
+    "jgb/D/handover-return-cancel-invite": [
+      {
+        "already_on": "jgb/C/property-add-blocked",
+        "text": "為什麼現在不能點退"
+      },
+      {
+        "already_on": "jgb/C/property-add-blocked",
+        "text": "未刊登的物件為什麼不能簽約"
+      }
+    ],
+    "jgb/D/lease-notarization": [
+      {
+        "already_on": "jgb/B/what-is-owner-landlord",
+        "text": "租約公證是什麼"
+      }
+    ],
+    "jgb/D/tenant-sign-steps": [
+      {
+        "already_on": "jgb/D/contract-esign-flow",
+        "text": "電子合約的簽約邀請,有時效嗎?"
+      }
+    ],
+    "jgb/D/upload-existing-contract": [
+      {
+        "already_on": "jgb/D/contract-history-retention",
+        "text": "既存合約是什麼"
+      }
+    ]
+  },
+  "dup_in_proposal": {
+    "jgb/D/delegation-contract-flow": [
+      {
+        "kept_on": "jgb/D/contract-pdf-download",
+        "text": "PDF"
+      }
+    ],
+    "jgb/D/delegation-vs-lease-contract": [
+      {
+        "kept_on": "jgb/D/delegation-contract-flow",
+        "text": "委託合約"
+      }
+    ],
+    "jgb/D/esign-invite-expiry": [
+      {
+        "kept_on": "jgb/D/contract-send-invite",
+        "text": "合約簽約邀請"
+      }
+    ],
+    "jgb/D/return-checkout": [
+      {
+        "kept_on": "jgb/D/handover-checkin",
+        "text": "修改清單重發"
+      },
+      {
+        "kept_on": "jgb/D/renewal-flow",
+        "text": "前置條件"
+      }
+    ]
+  },
+  "fines_without_phrasings": [],
+  "missing_fines": [],
+  "other_shelf_fines": {},
+  "phrasing_set_sha256": "0f8df038c351daa48d260bcbd52713234e83f19fa32975b23efb8c09e6c19ce6",
+  "skipped_fines": {
+    "jgb/D/contract-esign-flow": 7,
+    "jgb/D/contract-history-retention": 5,
+    "jgb/D/contract-modify-after-sign": 11,
+    "jgb/D/contract-templates": 2,
+    "jgb/D/lease-expiry-followup-scope": 2,
+    "jgb/D/sublease-vs-management-contract": 4
+  }
+}

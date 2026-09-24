@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "outline-curation/schemas/answerability.json",
+  "type": "object",
+  "required": ["step", "skill_version", "inputs_sha", "deterministic", "raw_outputs_path", "cost", "payload"],
+  "additionalProperties": false,
+  "properties": {
+    "step": {"type": "string", "enum": ["answerability"]},
+    "skill_version": {"type": "string"},
+    "inputs_sha": {"type": "object"},
+    "deterministic": {"type": "boolean", "enum": [false]},
+    "raw_outputs_path": {"type": "string"},
+    "cost": {"type": "object"},
+    "payload": {
+      "type": "object",
+      "required": ["labels", "needs_rubric_revision"],
+      "additionalProperties": false,
+      "properties": {
+        "labels": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["cell_id", "label", "fine_id", "evidence_unit", "confidence", "provisional"],
+            "properties": {
+              "cell_id": {"type": "string"},
+              "label": {"type": "string", "enum": ["answerable", "partial", "no_source", "deliberate_no"]},
+              "fine_id": {"type": ["string", "null"]},
+              "evidence_unit": {"type": ["integer", "null"]},
+              "confidence": {"type": "string", "enum": ["high", "medium", "low"]},
+              "provisional": {"type": "boolean", "enum": [true]}
+            }
+          }
+        },
+        "needs_rubric_revision": {"type": "boolean"}
+      }
+    }
+  }
+}

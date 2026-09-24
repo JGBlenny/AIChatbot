@@ -39,9 +39,9 @@ graph TD
         SK --> WF[元件 2 判者／提議執行形態<br/>結構提議＝子代理 panel／可答性＝API 判者 fan-out]
         WF --> SK
         HK[元件 3 hooks outline_gate.py<br/>PreToolUse／PostToolUse／Stop] -. 閘門 .-> SK
-        SK --> CANON[(canon/&lt;audience&gt;.md 正本<br/>版控＋code review)]
+        SK --> CANON[(canon/jgb/A.md…I.md 九架正本<br/>版控＋code review)]
     end
-    CANON -->|parser 決定性導出| CJ[canon/&lt;audience&gt;.json<br/>canon_sha256]
+    CANON -->|parse_canon_dir 決定性導出| CJ[canon/jgb.json＋canon/jgb/CATALOG.md<br/>canon_sha256]
     CJ --> ASM[元件 5 canon_assembler<br/>→ OutlineDoc（沿用 _build_doc／check_budget）]
     CJ --> IDX[元件 6 FineIndex<br/>標題／講法／內文句向量，取最大]
     CJ -->|export_batch| IMP[元件 8 import_facet_knowledge<br/>kb 衍生列＋approved_by／replaces]
@@ -58,7 +58,7 @@ graph TD
         VER --> HO[handoff：effective_handoff_message(cfg)]
         SEL --> TR[trace：candidate_ids／winning_phrasing_id／miss_kind（R8.3）]
     end
-    ASM -.整份正本＝降級路徑.-> COD
+    ASM -.九架正本現組節＝降級只注入目錄.-> COD
     KB -.kb.get 整數 id 受 content_reviewed_predicate（R8.4）.-> LLM
     subgraph VAL["驗證（元件 9–10）"]
         GM[coverage_map.py 格→細目去向] --> CANON
@@ -133,10 +133,10 @@ class StepEnvelope(TypedDict):
     payload: dict                      # 該步 schema 的本體
 
 class StepCost(TypedDict):
-    agents: int; prompt_tokens: int; completion_tokens: int; usd: float; wall_s: float
+    agents: int; wall_s: float          # DSP-063：只計代理數，無 token／usd 欄
 ```
 **可回放** [需求 1.6]：`inputs_sha`＋`skill_version` 相同 ⇒ 決定性步輸出逐位元相同（unit 測試）；非決定性步以 journal key（prompt sha＋slot）續跑、原始輸出留 journal（原設計為 Workflow `resumeFromRunId`）。
-**預算** [需求 1.7]（E4）：分「每步上限」與「整案上限」兩層，皆為 **初值、M-a 試作後由業主核定**：步 2 structure ≤ 6 代理／$0.5；步 4 answerability ≤ 180 代理／$3（55 格×2＋不一致第 3 判者 ≤ 55）；整案 ≤ 240 代理／$6。`cost_ledger.py` 任一層超支 ⇒ exit 2 並在 Stop hook 擋。unit：以 110 代理的假 journal 驗步 4 不誤擋、以 181 代理驗必擋（正對照）。
+**代理數上限** [需求 1.7]（E4；DSP-063：skill 只用 Claude Code 子代理，無 API 費用，⛔ 不設美元／token 層）：分「每步上限」與「整案上限」兩層（每次 run 計）：步 0 feature_surface ≤ 4；步 2 structure ≤ 6；步 4 answerability ≤ 180（格數×2 判者＋不一致第 3 判者）；整案 ≤ 240。`cost_ledger.py` 任一層超支 ⇒ exit 2 並在 Stop hook 擋。unit：以 110 代理的假 journal 驗步 4 不誤擋、以 181 代理驗必擋（正對照）。
 **取代規則** [需求 1.9]：`diff-report.json.replacements[]`＝`{old_kb_id, fine_id, how: "content"|"merged_into"|"phrasing_only"}`；首跑輸入＝21 列 prospect＋18 筆草稿；8 列 `IS NULL` 業者列 ⛔ 不進售前正本。
 **與既有 skill 整合** [需求 1.10]：`retrieval-improvement-loop` 的 G0／G2／G4 閘門在本 skill 的 steps/05／06 引用同一份 `rules/`（連結，不複製）；`agent_eval` 以細目為單位重跑（元件 10）。
 
@@ -175,47 +175,46 @@ class AnswerabilityVerdict(TypedDict):
 
 | hook 事件 | matcher | 判定 | 違反時 |
 |---|---|---|---|
-| `PreToolUse` | `Edit\|Write` 且目標路徑（相對 `CLAUDE_PROJECT_DIR` 的完整相對路徑）匹配 `rag-orchestrator/canon/*.md` | 本 session 必須已產出 `diff-report.json`（含 id 對應表）且其 `inputs_sha.canon` ＝ 目標檔現 sha | exit 2（擋寫） |
-| `PostToolUse` | `Edit\|Write` 且目標路徑匹配 `rag-orchestrator/canon/*.md` | parser 能解析、schema 通過、細目 id 唯一、講法 ∩ 凍結題集合＝∅（`.kiro/specs/agentic-mcp-orchestration/eval/samples-manifest.json` 各 set 題句，跨 spec 依賴） | 印錯誤、exit 2 |
+| `PreToolUse` | `Edit\|Write` 且目標路徑（相對 `CLAUDE_PROJECT_DIR` 的完整相對路徑）匹配 `^rag-orchestrator/canon/.+\.md$`（`outline_gate.py::CANON_RE`；`_is_canon_target` 另扣掉任一層的 `README.md`） | 本 session 必須已產出 `diff-report.json`（含 id 對應表）且其 `inputs_sha.canon` ＝ 目標檔現 sha | exit 2（擋寫） |
+| `PostToolUse` | `Edit\|Write` 且目標路徑匹配 `^rag-orchestrator/canon/.+\.md$`（`outline_gate.py::CANON_RE`；`_is_canon_target` 另扣掉任一層的 `README.md`） | parser 能解析、schema 通過、細目 id 唯一、講法 ∩ 凍結題集合＝∅（`.kiro/specs/agentic-mcp-orchestration/eval/samples-manifest.json` 各 set 題句，跨 spec 依賴） | 印錯誤、exit 2 |
 | `Stop` | — | 本 session 若跑過 `agent_eval`／`index_eval`：`inputs/object-under-test.md` 存在且核可欄非空；材料 sha 已凍結（manifest）；`cost.json` 未超支（每步／整案兩層）；本 session 若有 `answerability.json` 且 `needs_rubric_revision=true` ⇒ 擋（E6） | 列出未滿足條件、擋回合結束 |
 
 - 形狀複製 CANON 樣板：`sh -c '[ -f "$CLAUDE_PROJECT_DIR/.claude/hooks/outline_gate.py" ] && exec python3 "$CLAUDE_PROJECT_DIR/.claude/hooks/outline_gate.py" || exit 0'`——變數名 `CLAUDE_PROJECT_DIR` 由使用者層 CANON hook 實際在用（`~/.claude/canon/_canon.py`「hook 執行時 `CLAUDE_PROJECT_DIR` 會被設好」、`~/.claude/hooks/spec_gate.py` 讀它），⛔ 不用 `$REPO`（那只是 `check_invariants.sh` 內部變數）；**M-a 首件事＝一次實跑讓 hook 印出 `CLAUDE_PROJECT_DIR` 與解析到的腳本路徑**，⛔ 不憑文件。缺檔放行；只在目標路徑命中時動作（噪音會訓練人略過）。
 - 狀態檔：`.claude/hooks/state/outline-gate/<session>.json`、Workflow journal、講法原始候選——**全部進 `.gitignore`**（現況 `.gitignore` 對 `claude`／`canon` 零命中，本 spec 補）。
 - **閘門防意外、⛔ 不防對抗**：判定材料與 hook 腳本都在同一個可寫檔案系統內，想繞過者自寫一份即過；PostToolUse 在寫入後才跑、不還原檔案。R2.9 的真正保障是 git review ＋ 元件 5 的啟動 sha 重算，⛔ 不是 hook。
 - hook 腳本約束：零第三方依賴、⛔ 不讀網路、⛔ 不讀 `.env`、只讀 stdin 事件與 repo 內檔案；review checklist 標明「`.claude/settings.json`／`.claude/hooks/` 變更＝高風險 diff」。
-- 自證：`tests/unit/_meta/test_outline_gate_req.py` 以假事件驅動**五種**違反各紅一次（含 `needs_rubric_revision`）、五種合規各綠一次（正對照）；**假事件的 `file_path` 一律用完整相對路徑 `rag-orchestrator/canon/prospect.md`，並含一條「repo 根 `canon/prospect.md` ⇒ 不命中」的負對照**（r2 #1）；**另一條 meta 測試驗接線而非腳本**：解析 `.claude/settings.json` 每條 hook command，`$CLAUDE_PROJECT_DIR` 代入 repo 根後檔案必須存在，正對照＝故意改壞路徑必紅。
+- 自證：`tests/unit/_meta/test_outline_gate_req.py` 以假事件驅動**五種**違反各紅一次（含 `needs_rubric_revision`）、五種合規各綠一次（正對照）；**假事件的 `file_path` 一律用完整相對路徑 `rag-orchestrator/canon/jgb/A.md`，並含一條「repo 根 `canon/jgb/A.md` ⇒ 不命中」的負對照**（r2 #1）；**另一條 meta 測試驗接線而非腳本**：解析 `.claude/settings.json` 每條 hook command，`$CLAUDE_PROJECT_DIR` 代入 repo 根後檔案必須存在，正對照＝故意改壞路徑必紅。
 - **與 CANON 的關係**：CANON hook 住使用者層、管跨專案紀律；本 hook 住 repo 層、只管正本與驗證材料；兩者同時生效、互不取代。
 
 ### 元件 4：`services/agent/canon/canon_parser.py` — 正本格式與解析
-**責任**：Markdown 正本 → `CanonDoc`（決定性、附 `canon_sha256`）；同時導出 `canon/<audience>.json`。[需求 2.1, 2.2, 2.3, 2.5, 2.8, 2.10, 7.1, 7.3]
+**責任**：Markdown 正本 → `CanonDoc`（決定性、附 `canon_sha256`）；同時導出 `canon/jgb.json` 與 `canon/jgb/CATALOG.md`。[需求 2.1, 2.2, 2.3, 2.5, 2.8, 2.10, 7.1, 7.3]
 
-**正本格式**（`rag-orchestrator/canon/prospect.md`；LINE 業者為 `rag-orchestrator/canon/property_manager-line.md`）：
+**正本格式**（`rag-orchestrator/canon/jgb/` 九架；LINE 業者知識＝其中標 `target_user: [property_manager]` 的細目，⛔ 不另立檔）：
 ```markdown
 ---
-audience: prospect
-version: 2026-09-06.1
+coarse: A
+title: 帳號與身分
+scope: 註冊、登入、找回帳號、身分與個人資料、聯絡方式變更；⛔ 團隊成員權限歸 B
+version: 2026-09-21.0
 reviewers: [owner]
 language: zh-TW
-budget_tokens: 12000
 ---
-## A 產品基本盤 {#A}
-### 系統定位與適用對象 {#prospect/A/positioning}
+## 註冊帳號 {#A-registration}
+### 怎麼用 Email 註冊 {#jgb/A/email-register}
 - phrasings:
-  - {text: "你們系統適合我嗎", source: "question_summary:3585", status: approved}
-  - {text: "適不適合小房東", source: "koyu:03#12", status: proposed}
-- sources: [kb:3585, kb:3602]
-- reviewed: {by: owner, at: 2026-09-06}
-- see_also: [prospect/B/fit-by-scale]
-金箍棒是……（可引用句，一句一行；句尾標點）
+  - {text: "怎麼開帳號", source: "draft:outline-20260920", status: proposed}
+- sources: [code:src/pages/users/create/Index.vue]
+- target_user: [property_manager, prospect]
+- business_types: [system_provider]
+- instance_applicability: general
+到 JGB 網站點「註冊」，輸入 Email 收驗證碼，填基本資料就完成。
 ### …
-## G 現有不足 {#G}
-### 客製開發與計價 {#prospect/G/custom-dev}
-- policy: deliberate_no
-- policy_ref: DSP-009
-- exit: handoff
-目前不提供客製開發報價；可點下方「找真人」由專人說明。
+## 登入 {#A-login}
+### …
 ```
-- **粗目**＝`##` 標題＋`{#<粗目碼>}`；**細目**＝`###` 標題＋`{#<audience>/<粗目碼>/<slug>}`；id 穩定、重切保留（R2.8）。
+
+架 front matter **恰六鍵**（`coarse`／`title`／`scope`／`version`／`reviewers`／`language`，多鍵缺鍵皆 raise；⛔ 無 `audience`、⛔ 無 `budget_tokens`）；一架可有多個粗目（`{#<架字母>-<slug>}`，裸字母為過渡鷹架）；細目 id 首段恆為正本名 `jgb`；`target_user`／`business_types`／`sources`／`instance_applicability` 為細目必填非空。
+- **三層（DSP-067）**——**架**＝一個 `.md` 檔（A…I），front matter 帶 `coarse`／`title`／`scope`；**粗目**＝`##` 標題＋`{#<架字母>-<slug>}`，一架可有多個（裸字母 `{#A}` 是過渡鷹架）；**細目**＝`###` 標題＋`{#jgb/<架字母>/<slug>}`；**講法**掛在細目屬性。id 穩定、重切保留（R2.8）。
 - 細目屬性以固定鍵的 YAML 風格清單；內容＝屬性後的純文字行，**每行一句**＝引用單位（`provenance_units` 切法對它是恆等）。
 - `see_also`＝跨受眾／跨細目「另見」；同受眾互斥由 `similar_items.py` 產待審（R2.5）。
 
@@ -233,7 +232,7 @@ class Phrasing:
 
 @dataclass(frozen=True)
 class FineItem:
-    id: str                    # "<audience>/<coarse>/<slug>"，正則 ^[a-z_]+/[A-Z]/[a-z0-9-]+$
+    id: str                    # "jgb/<架字母>/<slug>"（首段＝正本名，⛔ 不是受眾），正則 ^[a-z_]+/[A-Z]/[a-z0-9-]+$
     coarse_id: str; title: str
     phrasings: tuple[Phrasing, ...]
     content_units: tuple[str, ...]      # 一行一句；⛔ 不再切
@@ -272,40 +271,21 @@ def export_json(doc: CanonDoc, out_path: str) -> str: ...   # 回 canon_sha256�
 - **LINE 正本** [需求 7.1, 7.2, 7.3]：粗目另定（依 chatai 四文件：③損壞分類與判定、④語氣模板與禁止項、⑤帳單狀態語義與資料邊界、⑥「什麼時候說不」清單、⑦待裁／待驗）；API 實值以 `policy: not_available`＋`sources: [jgb2:<endpoint>]` 標「來自 JGB API」，內容只寫邊界句。
 
 ### 元件 5：`services/agent/canon/canon_assembler.py`＋`review_state.py` — 組裝與審核狀態
-**責任**：`CanonDoc` → `OutlineDoc`（沿用 `_build_doc`／`check_budget`／`make_outline_resolver`）；只組已審細目；定義「內容已審」謂詞。[需求 2.6, 2.7, 5.4]
+**責任**：`CanonDoc` → 每回合 `CandidateOutlineDoc`（`build_canon_sections` 現組 K=5 節＋`build_canon_toc`；`make_outline_resolver` 供 `kb.get`）；不可見／未審 id 一律 raise，不產空節；定義「內容已審」謂詞。[需求 2.6, 2.7, 5.4]
 
+**現況（DSP-059 D′ 落地後）**：`canon_assembler.py::load_canon_or_die(canon_dir)` 一次讀整份九架正本（無 `audience` 參數）；`register_canon` 登記後 `canon_assembler.py::build_canon_sections(canon, identity, ids, *, vendor_business_types)` 逐 id 從正本現組節（`id=fine.id`、`title=fine.title`、`text="\n".join(fine.content_units)`、`citable=True`；`canon_visible` 為假 ⇒ raise，⛔ 不產空節、⛔ 不靜默 skip）；`canon_assembler.py::build_canon_toc(canon, identity, *, vendor_business_types)` 對每個「含 ≥1 條可見已審細目」的**粗目**出一行 `<粗目 id>｜<粗目標題>｜<可見細目數>`，⛔ 不含任何細目 id（9.10 S2）。啟動不預組任何身分的整份篩選結果：`app.py::_init_agent_runtime` 依序 `load_canon_or_die` → `register_canon` → `FineIndex.prepare` → 對每個受眾以靜態身分跑 `outline.py::check_turn_budget(sections, toc_section, *, k_limit, toc_limit)`——量測對象＝該受眾 `canon_visible` 為真的全部已審細目節（任 K=5 節 token 最大和）與該受眾 toc，兩尺分別對 `OUTLINE_K_TOKEN_LIMIT[audience]`（預設 12,000）／`OUTLINE_TOC_TOKEN_LIMIT[audience]`（預設 8,000）比對，任一超過即 raise（啟動即紅）；通過的受眾寫入 `app.state.agent_audiences: frozenset`。`outline.py::default_k_token_limit`／`default_toc_token_limit`（env `AGENT_OUTLINE_K_TOKEN_LIMIT_*`／`AGENT_OUTLINE_TOC_TOKEN_LIMIT_*` 只縮不放，`min(int(raw), default)`）。每回合由 `runtime.py::_select_outline(identity, get_canon())` 現組 K=5 候選節＋toc（`CandidateOutlineDoc.from_canon`），沒有「整份篩選結果」這個物件；`outline.py::build_audience_outline` 降為離線工具函式（`tools/agent_outline_dump.py`、`tools/agent_eval.py --candidates off` 用），`app.py` 不呼叫它。
 ```python
-def build_outline(doc: CanonDoc, *, include_unreviewed_titles: bool = True) -> OutlineDoc:
-    """每細目一節：id=fine.id、title、text="\n".join(content_units)、source_ids=kb ids、citable=(reviewed_by is not None)。
-    未審細目：include_unreviewed_titles ⇒ 只出標題行、text=""、citable=False（模型能說「此部分目前無資料」）。
-    version=doc.version；sha=_build_doc（涵蓋 version＋text）。⛔ 無 LLM。"""
-
-def build_toc(doc: CanonDoc, visible: frozenset[str]) -> OutlineSection:
-    """id="outline:toc"、citable=False、text=每細目一行 "<fine.id>｜<title>"——**只列 visible（FineIndex.visible_subset）內且已審者**（F7）；
-    既有 build_toc(db_pool, audience, vendor_id) 有 vendor 過濾，本函式不得拿掉這道控制。"""
-
-def load_canon_or_die(canon_dir: str, audience: Audience) -> CanonDoc:
-    """啟動：同時讀 canon/<audience>.md 與 .json；由 .md 位元組**重算** sha 並與 .json 內 canon_sha256 比對，
-    不符 ⇒ raise（啟動即紅，與 check_budget 同款；F1）。映像 COPY 兩者。canon_dir 只接受映像內固定目錄；
-    `AGENT_CANON_DIR` 覆寫僅在 `DB_ENV=test` 生效、其餘環境拒絕並印 resolved path 進 health（F2）。"""
-
-# 3.2 落地（業主 2026-09-07 核）：`build_toc(doc, visible)` 改為 `build_canon_toc(doc, identity, *, vendor_business_types)`（另名，⛔ 不與 pm／tenant 現役的
-# `outline.build_toc(db_pool, audience, vendor_id)` 同名，後者保留）；可見性以逐細目 `canon_visible(identity, fine, *, vendor_business_types)`
-# 實作（元件 6 `visible_subset` 的前身，同規則：分支判準與 SQL `is_b2b_mode` 同式、重用 `_effective_target_user`；刻意不套 `vendor_ids`／`is_active`／保留分類，
-# 不新增受眾比對——隔離靠載入哪份正本）；`outline:*` 解析在 `outline.make_outline_resolver` 內每回合套 `resolve_canon_section`（identity per-call）；
-# `CanonDoc` 載體＝assembler 模組層 `register_canon／get_canon`（`OutlineDoc` 為 pydantic，⛔ 不掛屬性）；`.json` 同源以 `export_json` 重導出位元組比對（sha 只算 `.md`）；
-# `check_budget(min(env, doc.budget_tokens))`；啟動 toc 用售前靜態身分算一次，每回合候選子集與 toc 是 4.1；不變量 29 另立 29b（`canon_visible` 存在、引用 helper、toc 與 resolver 皆呼叫、無 `vendor_ids`／`is_active` 字面）。
 # review_state.py（F4：白名單、fail-closed）
 REVIEWED_PREFIX = "reviewed:"        # 內容已審＝ "reviewed:<reviewer>"
 POOL_MARK_PREFIX = "pool-marked-"    # 池標記＝ "pool-marked-<date>"（D1 時由 owner-20260905 改寫）
 def content_reviewed_predicate() -> tuple[str, list]:
-    """回 (" AND kb.outline_approved_by LIKE %s", [REVIEWED_PREFIX + "%"])——**正向白名單**：值域外任何值（含現況 29 列的
+    """回 (" AND kb.outline_approved_by ~ %s", [REVIEWED_REGEX])——**正向白名單**：值域外任何值（含現況 29 列的
     `owner-20260905`、大小寫變體、前導空白）一律視為未審。⇒ D1 執行前 agent 路徑對整個池視為未審，這是預期行為、不是回歸。
     ⛔ 只在 agent 路徑拼接（fetch_visible_row、正本衍生列查詢）；⛔ 不併入 build_visibility_predicate。
     值域由 migration `CHECK (outline_approved_by IS NULL OR outline_approved_by ~ '^(reviewed:[^[:space:]]+|pool-marked-[0-9]{8})$')` 鎖（3.1；`NOT VALID` 先加、D1 改寫 29 列後 `VALIDATE`）。
     ⚠️ 謂詞用 `~ REVIEWED_REGEX`（`^reviewed:[^[:space:]]+$`）而非 `LIKE`——`LIKE` 的 `_` 會吃空白，`reviewed: alice` 會被放行（plan-verifier 2026-09-07）。"""
 ```
-- **呼叫鏈與失敗語義（寫死，E1）**：`app.py::_init_agent_runtime` → `build_prospect_outline(db_pool)` **首行** `doc = load_canon_or_die(canon_dir, "prospect")`（同時讀 `.md` 與 `.json`、由 `.md` 位元組重算 sha 比對 `.json.canon_sha256`）→ `build_outline(doc)` → `check_budget(default_token_limit)`。`.md` 缺檔／sha 不符／格式錯 ⇒ **raise**，與既有 `check_budget` 同一條例外路徑：`_agent_configured()` 為真時啟動紅、否則 agent 停用（既有語義，⛔ 不新增降級）。正本目錄＝`rag-orchestrator/canon/`（Dockerfile `COPY . .` 自然進映像 `/app/canon`；建置脈絡是 `./rag-orchestrator`，repo 根的 `canon/` 不會進映像），`AGENT_CANON_DIR` 預設＝`<rag root>/canon`；`SIX_MODULES`／`_classify_row`／`_CTA_TEXT`／`DSP009_DELIBERATE_GAPS`／`_extract_boundary_sentences` 退役（G／F 粗目承接，R2.6）。
+- **呼叫鏈與失敗語義（寫死，E1）**：`app.py::_init_agent_runtime` → `load_canon_or_die(canon_dir)`（同時讀 `.md` 與 `.json`、由 `.md` 位元組重算 sha 比對 `.json.canon_sha256`；`canon_dir` 由 `resolve_canon_dir()` 解析——**`AGENT_CANON_DIR` 覆寫只在 `DB_ENV=test` 生效**，其餘環境拒絕覆寫並把 resolved path 印進 health，F2）→ `register_canon` → `FineIndex.prepare` → 對每個受眾以靜態身分跑 `check_turn_budget`（K 上界＋toc 兩尺）；⛔ 不預組任何身分的整份篩選結果。`.md` 缺檔／sha 不符／格式錯 ⇒ **raise**，與 `check_turn_budget` 同一條例外路徑：`_agent_configured()` 為真時啟動紅、否則 agent 停用（既有語義，⛔ 不新增降級）。正本目錄＝`rag-orchestrator/canon/`（Dockerfile `COPY . .` 自然進映像 `/app/canon`；建置脈絡是 `./rag-orchestrator`，repo 根的 `canon/` 不會進映像），`AGENT_CANON_DIR` 預設＝`<rag root>/canon`；`SIX_MODULES`／`_classify_row`／`_CTA_TEXT`／`DSP009_DELIBERATE_GAPS`／`_extract_boundary_sentences` 退役（I 架承接，R2.6）。
 - `tools/kb.py::fetch_visible_row` 加 `content_reviewed_predicate()`（R8.4 票；不變量 32 掃）。**`kb.search` 刻意不套**（F6，ACCEPT）：它只回 `question_summary` 且 `citable=False`，事實句仍需 refs；殘留＝模型可讀到未審列摘要並改寫成非事實句，由 Verifier 步②／④ 守。
 - `make_outline_resolver`（`kb.get("outline:<fine_id>")`）改為在回傳前套 `visible_subset`：不可見或未審一律 `NO_MATCH`（與既有「不區分不存在／無權限」語義一致；F7）。
 
@@ -313,9 +293,9 @@ def content_reviewed_predicate() -> tuple[str, list]:
 **責任**：啟動時為每細目建「標題向量＋approved 講法向量」；回合前依可見性切子集、取 top-K 細目；三態降級；記 `candidate_ids`／`winning_phrasing_id`／`miss_kind`。[需求 5.1, 5.2, 5.3, 5.5, 5.6, 5.9, 5.10, 5.11]
 
 ```python
-class IndexEntry(TypedDict):
-    fine_id: str; key_id: str            # key_id: "title" | "ph:<sha8>"
-    vector: list[float]
+# 索引項的形狀（實作為內部 tuple，⛔ 無 IndexEntry 類別）：
+#   內部 self._entries[fine_id] = ((key_kind, key_id, vector), …)   key_id: "title" | "ph:<sha8>" | "ct:<sha8>"
+#   對外 entries_for(fine_id) -> [(key_kind, vector), …]            ⛔ 不回傳內部 key_id；vector 為 tuple
 
 class EmbeddingBackend(Protocol):   # 3.3：既有 services/embedding_utils.EmbeddingClient 無 ≤8 批次／無 timeout／失敗 print，故以 Protocol 包裝：自行分批、asyncio.wait_for、失敗回 None、⛔ 不印文字
     async def embed(self, texts: list[str]) -> list[list[float] | None]: ...
@@ -338,28 +318,29 @@ class Selection(TypedDict):
     candidate_ids: list[str]             # ≤K，依分數降冪、同分 id 字典序
     winning_key_kind: dict[str, Literal["title", "phrasing", "content"]]   # 3.3（業主 2026-09-07 裁 F18）：⛔ 不記 ph:<sha8>／ct:<sha8>——對照表在 repo，記 id＝可還原問句；同分序 title > phrasing > content（3.7）
     scores: dict[str, float]
-    miss_kind: Literal["hit", "none_visible", "no_candidate", "index_unavailable"]   # no_candidate＝visible 非空但無索引項（ready 下不可達）；不設分數門檻、不定義 MIN_SCORE
+    miss_kind: Literal["hit", "none_visible", "no_candidate", "index_unavailable", "empty_toc"]   # no_candidate＝visible 非空但無索引項（ready 下不可達）；empty_toc＝目錄組裝失敗（`runtime._select_outline` 寫）；不設分數門檻、不定義 MIN_SCORE
+
+K: Final[int] = 5                      # ⚠️ 模組層常數，⛔ 不是 CandidateSelector 的類別屬性（`CandidateSelector.K` 會 AttributeError）
+QUERY_EMBED_TIMEOUT_S: Final[float] = 3.0
 
 class CandidateSelector:
-    K: Final[int] = 5
-    QUERY_EMBED_TIMEOUT_S: Final[float] = 3.0
     def __init__(self, index: FineIndex) -> None: ...
     async def select(self, doc: CanonDoc, identity: Identity, query: str) -> Selection | None:
         """首行 doc.canon_sha256 != index.prepared_sha ⇒ None（P1-2）。查詢＝當前 user 訊息＋上一則 user 訊息（程式規則，R5.10）。
         每細目分數＝max(cos(query, title), max cos(query, phrasing_i))；只在 visible_subset 內排序（R5.3）。
-        回 None ⇒ runtime 走整份正本（降級，資訊更多不是更鬆）。⛔ 不 log 查詢字串。"""
+        回 None ⇒ runtime 降級只注入目錄（零細目節＋toc，內容走 kb.get）。⛔ 不 log 查詢字串。"""
 ```
 - **匹配鍵預設**＝標題＋講法＋內文句取最大（R5.2；**2026-09-07 決策 5 修訂**：步 1 內文臂 +9.1 點納入；task 3.7 落地前程式仍為標題＋講法）。
 - **講法治理** [需求 5.6]：trace 只記 `winning_key_kind ∈ {title, phrasing, content}`＋`fine_id`（F18：`ph:<sha8>` 對照表就在 repo，記它等於一次查表還原問句，解析度高於 Plan v3 P3-2 已接受的段落 id）；離線 SQL 聚合到**細目層**的 `hit_count`／`phrasing_hit_ratio`。講法層的命中與誤掛改由元件 10 的 `index_eval.py --report misrouted`（離線、材料凍結）計算，「勝出講法所屬細目 ≠ 判者正解」列為 `misrouted_phrasing[]` 待退役；零命中退役規則改為「該細目 phrasing 命中比 <5%（≥30 回合）且 index_eval 無該講法命中」。退役＝正本內 `status: retired`（可 revert）。**取捨**：線上失去單一講法的命中數，換取 trace 不可還原問句；記入收案取捨表。每細目講法上限 **12**、同細目講法兩兩去重（NFKC＋去空白相等即重複）。
 - **reranker** [需求 5.11]：⛔ 不接；步 1 後若 top-5 增益 ≥5 點且 p95 不退步才另立 slice。
-- **第二次機會** [需求 5.9]：目錄節 `outline:toc`（citable=False）＋ `kb.get("outline:<fine_id>")` 讀整細目（既有 resolver 依 section id 查）；`miss_kind` 分 `none_visible`（有細目但不可見）／`no_candidate`（可見但分數全低於 `MIN_SCORE=0.0`——⛔ 不設門檻，K 內全給，由模型與 Verifier 守）／`index_unavailable`。
+- **第二次機會** [需求 5.9]：目錄節 `outline:toc`（citable=False）只列粗目 ⇒ **兩跳**：先 `kb.get("outline:<粗目 id>")` 取該粗目的細目清單（`citable=False`；粗目存在但零可見細目 ⇒ 與不存在同樣回 `NO_MATCH`），再 `kb.get("outline:<細目 id>")` 讀整細目並引用；`miss_kind` 分 `none_visible`（有細目但不可見）／`no_candidate`（可見子集非空但無任何索引項，`ready` 下不可達；⛔ 不設分數門檻、⛔ 不定義 `MIN_SCORE`——`candidate_selector` 刻意連常數都不定義，K 內全給，由模型與 Verifier 守）／`index_unavailable`。
 
 ### 元件 7：`runtime.py`／`agent_rules.py`／`tools/session.py` 接線 — 對話邏輯與身分
 **責任**：身分預填、對話邏輯定義、CTA 程式端、handoff 設定接線、persona 分支。[需求 4.1–4.7, 5.7, 5.8]
 
 | 接線 | 位置 | 內容 |
 |---|---|---|
-| 候選注入 | `run_turn`：`outline = agent_state.get("outline")` 之後 | `sel = await selector.select(doc, identity, q)`；`outline = CandidateOutlineDoc.from_selection(doc_outline, sel, toc)` 或降級 `from_visible(可見細目全集, toc)`（**1.16 修訂：不是未過濾整份**）＋`violations.append("candidate_fallback_full_outline")`；同一物件餵 `_seed_outline_provenance` 與 `build_messages` |
+| 候選注入 | `run_turn`：`_select_outline(identity, get_canon())` | `sel = await selector.select(doc, identity, q)`；命中 ⇒ `CandidateOutlineDoc.from_canon(canon, identity, sel["candidate_ids"], toc)`（現組 K 節＋toc）；任何未命中／失敗 ⇒ 降級只注入目錄：`from_canon(canon, identity, [], toc)`（零細目節＋toc）＋`violations.append("candidate_fallback_toc_only")`；同一物件餵 `_seed_outline_provenance` 與 `build_messages` |
 | 身分派生 | `_slots_for_prompt(state)` 之後 | **強制覆寫** `slots["identity"] = identity.resolved_audience()`（F9：⛔ 不用 `setdefault`——DB 攤平在前，setdefault 會讓模型寫的值勝出）；`identity_source ∈ {entry, anonymous}`（**1.17 修訂**：有 `role_id` 或 `user_id` 為 entry、否則 anonymous，⛔ 不看 `vendor_id`——jgb2 契約 prospect 不帶雙證且 vendor_id 由 AI 側解；F10）；⛔ 不寫 DB。**`identity` ⛔ 不在 `SlotKey` 內**，模型寫不到；模型可寫的子身分用另一鍵 `identity_detail`。契約測試：模型經 `slots_set` 寫入任何值後，prompt 的 `identity` 仍為 entry 派生值 |
 | `SlotKey` 擴充 | `tools/session.py` | 加 `identity_detail`／`team`／`pain`／`interested`（`scale`＝既有 `unit_count`）；R8.2 票收窄為 enum 擴充 |
 | 身分槽位用途護欄 | `agent_rules.py`、測試 | `identity`／`identity_detail` 只供對話控制（persona 分支、不重問、CTA），⛔ 不得作為任何資料可見性或查詢範圍依據（DSP-011：可見性仍由謂詞守）；測試以 AST 掃 `services/agent/` 禁止 `slots["identity"]` 流向 `jgb2.*`／`kb.*` 參數（F10） |
@@ -372,17 +353,22 @@ class CandidateSelector:
 
 **CandidateOutlineDoc**（滿足 `OutlineDocLike`）：
 ```python
-@dataclass(frozen=True)
-class CandidateOutlineDoc:
+class CandidateOutlineDoc(BaseModel):          # pydantic，與 OutlineDoc 同一個 OutlineDocLike Protocol 家族
     audience: Audience; version: str; sha256: str; token_count: int
-    sections: tuple[OutlineSection, ...]   # K 細目節（id=fine_id、citable=True）＋ toc（citable=False）
+    sections: list[OutlineSection]         # K 細目節（id=fine_id、citable=True）＋ toc（citable=False）
+    token_count_approx: bool = False       # 真 tokenizer 不可用時為 True
     text: str
     @classmethod
-    def from_selection(cls, full: OutlineDoc, sel: Selection) -> "CandidateOutlineDoc":
-        """audience／version／sha256 一律複製自 full（P1-2）；sections 依 sel.candidate_ids 順序取 full.sections；末尾接 toc。"""
+    def from_selection(cls, full: OutlineDoc, sel, toc: OutlineSection) -> "CandidateOutlineDoc": ...
+    @classmethod
+    def from_visible(cls, full: OutlineDoc, visible_ids: frozenset[str], toc: OutlineSection) -> "CandidateOutlineDoc": ...
+    @classmethod
+    def from_canon(cls, canon, identity, ids: list[str], toc: OutlineSection, *, vendor_business_types) -> "CandidateOutlineDoc": ...
+    # ⚠️ 產線走 `from_canon`（`runtime._select_outline` 命中與 toc-only 降級兩處都用它）；
+    #    `from_selection`／`from_visible` 供離線與降級路徑。audience／version／sha256 一律複製自 full（P1-2）；末尾接 toc。
 ```
 
-### 元件 8：`tools/canon/export_batch.py`＋`import_facet_knowledge.py` 擴充 — 正本入庫
+### 元件 8：`tools/canon/export_batch.py`＋`import_facet_knowledge.py` 擴充 — 正本入庫（任務 7.1／7.2，**尚未實作**；以下為目標形狀）
 **責任**：正本 → 匯入批次 JSON（沿用既有格式）；舊列退役標記；`outline_approved_by` 語義切換（D1）。[需求 1.9, 2.7, 2.9]
 
 ```python
@@ -399,18 +385,18 @@ class CanonBatchEntry(TypedDict):        # 對應 import 工具 knowledge[] 一�
 def export_batch(doc: CanonDoc, replacements: list[Replacement]) -> dict:
     """輸出 {spec, produced_at(由 args 傳入), canon_sha256, knowledge: [...], updates: [{id, generation_metadata: {replaced_by, ...}, outline_approved_by: "pool-marked-20260905"}], rollback}"""
 ```
-- 匯入工具擴充（**fail-closed**，F3）：批次頂層 `canon_sha256` 必須等於工具當下由 `canon/<audience>.md` 重算的 sha，且每筆 `answer` 與 `canon_ref` 對應細目 `content_units` 逐字相符、`approved_by` 必須等於該細目 `reviewed_by`——任一不符整批不寫、exit 2；`--dry-run` 印逐筆比對結果。`approved_by` ⇒ 寫 `outline_approved_by = "reviewed:<reviewer>"`；`replaces` ⇒ 對舊列 `UPDATE generation_metadata = generation_metadata || {"replaced_by": fine_id}`、`outline_approved_by='pool-marked-<date>'`。
+- 匯入工具擴充（**fail-closed**，F3）：批次頂層 `canon_sha256` 必須等於工具當下由 `canon/jgb/` 九架（`parse_canon_dir`）重算的 sha，且每筆 `answer` 與 `canon_ref` 對應細目 `content_units` 逐字相符、`approved_by` 必須等於該細目 `reviewed_by`——任一不符整批不寫、exit 2；`--dry-run` 印逐筆比對結果。`approved_by` ⇒ 寫 `outline_approved_by = "reviewed:<reviewer>"`；`replaces` ⇒ 對舊列 `UPDATE generation_metadata = generation_metadata || {"replaced_by": fine_id}`、`outline_approved_by='pool-marked-<date>'`。
 - rollback SQL 由 export 當下對每筆受影響列的 **pre-image SELECT 快照**生成（逐列還原 `outline_approved_by`／`generation_metadata` 原值，⛔ 不是設 NULL；F15）；批次 UPDATE 會撞 `updated_at` trigger ⇒ 不變量 10 連鎖（記憶 `project_kb_updated_at_trigger_trap`），部署步驟前後各跑 `make audit` 並在 runbook 標明預期反應。
 - **首批 ⛔ 不寫 `keywords`**（F16）：講法進舊鏈詞面路徑的排序副作用未量（既知飽和塌陷病灶）；要開必須先對舊鏈同批回歸；此取捨進收案表。
 - 冪等鍵改為 `canon_ref`：既有 `SELECT id FROM knowledge_base WHERE question_summary=$1` 兩處改為 `WHERE generation_metadata->>'canon_ref'=$1`（`run()` 的 knowledge／anchors 兩段）；`updates[]`（舊列退役）路徑亦 fail-closed：對每筆先讀 DB 現值，`outline_approved_by` 現值必須等於批次 `expect_current`（export 當下快照），不符即拒（plan-verifier d 殘留）。
 - ⛔ 不動 `seeds.manifest` 的 `always regenerate_all_embeddings`（PLAN v2 §5 禁用）；新列 embedding 由匯入工具逐筆算（既有）。
 
 ### 元件 9：`tools/gapmap/coverage_map.py` — 覆蓋閉環
-**責任**：格 →（cause_state／entry_state）→ **去向**；受眾×主題維護；跨受眾缺口提案；判者一致率。[需求 3.1–3.7]
+**責任**：粗目 →（cause_state／entry_state）→ **去向**；以粗目（產品功能）為單位維護、受眾是細目屬性；跨受眾缺口提案；判者一致率。[需求 3.1–3.7]
 
 ```python
 Disposition = Literal["fine", "not_available", "deliberate_no", "owner_decision"]
-class CellRecord(TypedDict):
+class CellRecord(TypedDict):   # ⛔ 無此類別，實作回純 dict（`coverage_map.reweigh`）；以下只是欄位形狀
     cell_id: str; audience: Audience; topic: str
     cause_state: str; entry_state: str; coverage: str          # 沿 demand-v2 _meta.states
     disposition: Disposition; fine_id: str | None
@@ -419,8 +405,9 @@ class CellRecord(TypedDict):
     min_verification: dict                                       # {"phrasings": [...], "expected_fine_id": ...}
     judge_agreement: float | None
 
-def reweigh(canon: CanonDoc, demand_path: str, map_path: str, answerability_path: str) -> list[CellRecord]: ...   # map_path＝map-v2.json 量測層（cause/entry/coverage），2.6 新增：沒有它 R3.5 兩類分報無法決定性算
+def reweigh(canon: CanonDoc, demand_path: str, map_path: str, answerability_path: str, *, audience: str = "") -> list[dict]: ...   # ⛔ 無 CellRecord 類別，回 dict   # map_path＝量測層（cause/entry/coverage），2.6 新增：沒有它 R3.5 兩類分報無法決定性算
 ```
+- **基準從哪來（DSP-065／065a）**：覆蓋基準＝jgb2 使用者可到達的頁面樹（`page_surface.py`，183 頁；DSP-065a 剔除無頁路由），權限 action 與幫助中心段降為粒度對照；agent 回合拿問句比對細目、不預測客戶會問什麼，真實問句只在步 3 當講法證據掛回格。`map_path` 未實跑量測時為橋產出的 stub（`cause_state="NOT_MEASURED"`，不判任何 gap）。
 - 判「已覆蓋」的正解細目來自元件 2 判者（⛔ 不用被驗系統排序，裁定 10）；`answered`／`answered_handoff` 的 entry 仍由 `agent_eval` 實跑回填。
 - 無去向格＝0 為元件 1 步 5 的出口條件（Stop hook 亦查）。
 - 跨受眾缺口：同 topic 在 Y 有細目、X 無 ⇒ `fix_type=cross_audience_rewrite`＋草稿路徑（改寫為 X 的層級；⛔ 不直接開放 Y 的列）。**初版判準（2.6，只有一份正本時）**＝map-v2 `cause_state=="V"`（對題列只在 X 池外）；第二份正本出現後改為「Y 正本有細目」＝新 readiness epoch。
@@ -441,7 +428,7 @@ def reweigh(canon: CanonDoc, demand_path: str, map_path: str, answerability_path
 - **受測物定義清單**（`inputs/object-under-test.md`，元件 3 Stop hook 查）：知識正本 sha、對話邏輯正本（`agent_rules.py` 版本）、覆蓋來源與閉環、材料能證什麼／證不了什麼、事實 vs 待裁、假設表（命題／最小材料／尺／推翻條件／費用）。
 - 幫助中心問法只證檢索層承載力（R6.7）；報表標明 arm 的 production 組態（R6.6）。
 
-### 元件 11：`rag-orchestrator/canon/property_manager-line.md` — LINE OA 知識區塊
+### 元件 11：LINE OA 知識區塊（落在 `canon/jgb/` 九架，以 `target_user: [property_manager]` 標記）
 **責任**：LINE 業務受眾的知識層正本；可見細目集合契約測試。[需求 7.1–7.6]
 - 受眾＝`property_manager`（`mode=b2b`、`target_user=property_manager`、`vendor_id` 缺→入口填 0 ⇒ b2b 嚴格 `system_provider` 過濾）；正本 front matter `audience: property_manager`、`channel: line`。
 - 契約測試 `tests/unit/agent/test_line_visibility_req.py`：以 `Identity(vendor_id=0, target_user="property_manager", mode="b2b")` 對 `FineIndex.visible_subset` 與 `build_visibility_predicate` 各算一次可見集合，兩者相等（不變量 33 的單元版）。
@@ -459,8 +446,9 @@ def reweigh(canon: CanonDoc, demand_path: str, map_path: str, answerability_path
 ### 資料模型
 新增資料**只有兩類檔案**，DB 零新表：
 ```text
-rag-orchestrator/canon/<audience>.md    人審正本（版控；在 rag-orchestrator 建置脈絡內 ⇒ `COPY . .` 進映像 `/app/canon`）
-rag-orchestrator/canon/<audience>.json  parser 導出（版控；CI unit 驗與 .md 同 sha）
+rag-orchestrator/canon/jgb/A.md…I.md   人審正本九架（版控；在 rag-orchestrator 建置脈絡內 ⇒ `COPY . .` 進映像 `/app/canon`）
+rag-orchestrator/canon/jgb.json         parse_canon_dir 導出（版控；CI unit 驗與九架逐位元同源）
+rag-orchestrator/canon/jgb/CATALOG.md   export_catalog 導出（版控；同上）
 .claude/skills/outline-curation/runs/<frozenAt>/  各步 StepEnvelope JSON（版控；⛔ 只含已去識別文字，講法原始候選不在此）
 .claude/skills/outline-curation/raw/               真流量原句與講法原始候選（**gitignore**；D3：保留 90 天由 `raw_purge.py` 依檔名日期刪除）
 inputs/object-under-test.md  受測物定義清單（每次驗證一份）
@@ -470,7 +458,8 @@ inputs/object-under-test.md  受測物定義清單（每次驗證一份）
 
 ### API 設計
 對外 `POST /api/v1/message` 契約不變。內部新增：
-- `GET /api/v1/agent/health` 加 `canon: {audience, canon_sha256, phrasing_set_sha256, index_state, fine_items, approved_fine_items}`（每受眾一筆）。
+- `GET /api/v1/agent/health` 加 `canon: {dir, sha256: {jgb}, index: {<受眾>: {state, prepared_sha, entries, dim, content_keys}}}`（正本只有一份，鍵為正本名 `jgb`）。
+  程式現況（`health.py::_canon_state`）回 `{dir, sha256: {jgb}, index: {audience: {state, prepared_sha, entries, dim, content_keys}}}`，⛔ 無 `fine_items`／`approved_fine_items`／`phrasing_set_sha256` 鍵。
 - `tools/agent_trace.py`／`trace_view` 顯示 `candidate_ids`／`miss_kind`（id，無原文）。
 
 ## 資料流程
@@ -491,10 +480,10 @@ sequenceDiagram
     R->>S: select(doc, identity, q=當前＋上一則 user)
     alt index ready 且 sha 相符
         S-->>R: Selection{candidate_ids≤5, winning_key, miss_kind}
-        R->>R: outline ← CandidateOutlineDoc.from_selection(full, sel)
-    else 三態任一失敗
+        R->>R: outline ← CandidateOutlineDoc.from_canon(canon, identity, sel["candidate_ids"], toc)
+    else 任何未命中／失敗
         S-->>R: None
-        R->>R: outline ← 整份正本；violations += candidate_fallback_full_outline
+        R->>R: outline ← 零細目節＋目錄（CandidateOutlineDoc.from_canon(canon, identity, [], toc)；降級只注入目錄，9.8 DSP-059 D′）；violations += candidate_fallback_toc_only
     end
     R->>R: tool_results_by_id["outline"] ← _seed_outline_provenance(outline)
     R->>P: build_messages(identity, outline, slots, dialog, tool_specs, nonce)
@@ -513,10 +502,10 @@ sequenceDiagram
 flowchart LR
     A[kb 21 列＋18 草稿＋缺口地圖] --> B[skill 步 1–6<br/>API 判者／子代理提議]
     B --> C{業主審 diff-report}
-    C -- 核可 --> D[canon/prospect.md commit<br/>code review]
-    D --> E[parser → canon/prospect.json（同 sha）]
+    C -- 核可 --> D[canon/jgb/ commit<br/>code review]
+    D --> E[parse_canon_dir → canon/jgb.json＋CATALOG.md（同 sha）]
     E --> F[export_batch → import（D1 業主跑）]
-    E --> G[啟動：build_outline＋FineIndex.prepare]
+    E --> G[啟動：load_canon_or_die＋FineIndex.prepare＋check_turn_budget]
     F --> H[(kb 衍生列 approved_by／replaced_by)]
     G --> I[health canon_sha／index_state]
     C -- 退回 --> B
@@ -524,8 +513,7 @@ flowchart LR
 
 ### 資料轉換
 - Markdown → `CanonDoc`：決定性；`content_units` 一行一句，⛔ 不再切（`provenance_units` 對它恆等，Verifier 引用單位＝正本行）。
-- `CanonDoc` → `OutlineDoc`：每細目一節；`text` 以 `_SECTION_SEP` 接、標題行帶 `【fine_id】`（DSP-020 沿用）；sha 涵蓋 version＋text。
-- `OutlineDoc` → `CandidateOutlineDoc`：子集＋toc；audience／version／sha 複製自母 doc。
+- `CanonDoc` → `CandidateOutlineDoc`：每回合依身分＋候選 id 直接由 `fine.content_units` 現組節，標題行帶 `【fine_id】`（DSP-020 沿用）；`version=canon.version`、`sha256=canon.canon_sha256`。
 - `CanonDoc` → 匯入批次：`title→question`、`content→answer`、講法→`keywords`、`reviewed_by→outline_approved_by`。
 
 ## 技術決策
@@ -534,7 +522,7 @@ flowchart LR
 **問題**：人審與機器讀取要同一份真相。**選項**：A 純 Markdown／B 純 JSON／C 混合單向。**決定**：C。**理由**：R2.9 把寫入權等同 prompt 寫入權，審核必須在 diff 可讀介面；JSON 為衍生物並帶同一 `canon_sha256`，CI 驗兩者同源。**參考**：research 選型 1。
 
 ### 決策 2：細目索引在記憶體、啟動 prepare、三態降級
-**決定**：沿 agentic-mcp tasks 4.6 S1 候選段落提案 v3 P1-3（`reviews/plan-dsp035-s1-candidate-paragraphs-v3-WITHDRAWN.md`；⚠️ 與 `.claude/DECISIONS.md` 的 DSP-035「模型組態定案」是不同東西）；快取鍵＝正本 sha＋講法集 sha。**理由**：≤2k 向量、零 migration、決定性；失敗方向是「可見細目全集＋toc」（1.16 修訂：⛔ 不是未過濾整份正本）。**參考**：research 選型 2、主題 2。
+**決定**：沿 agentic-mcp tasks 4.6 S1 候選段落提案 v3 P1-3（`reviews/plan-dsp035-s1-candidate-paragraphs-v3-WITHDRAWN.md`；⚠️ 與 `.claude/DECISIONS.md` 的 DSP-035「模型組態定案」是不同東西）；快取鍵＝正本 sha＋講法集 sha。**理由**：≤2k 向量、零 migration、決定性；失敗方向是「降級只注入目錄」（零細目節＋toc，9.8 DSP-059 D′）。**參考**：research 選型 2、主題 2。
 
 ### 決策 3：講法存正本、命中數走 trace
 **決定**：tasks 4.7 的新表改為升級路徑。**理由**：治理走 review；退役可 revert；命中數是觀測值，不是正本的一部分。**參考**：research 選型 3。
@@ -545,7 +533,7 @@ flowchart LR
 ### 決策 5：匹配鍵預設＝標題向量＋講法向量取最大；內文向量為量測臂（**2026-09-07 修訂：內文句納入線上匹配鍵**）
 **決定**：線上不用內文向量直到 R6 步 1。**理由**：圖書館法（索引目錄不索引內容）；F10 的 86% 是內文代替品，⛔ 不得沿用為停損線。
 
-**修訂（2026-09-07，3.6 業主裁 (a)）：線上匹配鍵改為標題向量＋講法向量＋內文句向量三者取最大；內文句＝正本細目 `content_units` 每句一鍵（售前 38 細目 131 句）。** 依據＝3.4 步 1（`inputs/m-c-index-eval-20260907.md`）：真問法 153 句、剔同文章鍵後 r@5 title .582／+phrasing .621／+content .673——內文臂 +9.1 點（俗稱 +19、情境 +13、五型無退步），講法臂僅 +3.9 點（<10 點，觸發風險表「加內文臂或增講法密度」），reranker 無數字 ⛔ 不接、⛔ 不調 K。圖書館法的「不索引內容」改讀為「內容不切段落、不進 DB 檢索」，內文句作匹配鍵不改變細目＝檢索單位。**講法密度目標**：每細目 approved 講法 ≥3（現 0 講法細目 2 個：`prospect/C/role-permission-granularity`、`prospect/D/subscription-change-renewal`，補講法＝正本內容改動、業主核）、上限 12 不變；misrouted 81/153 交 5.6 治理。實作：`FineIndex` `KeyKind` 加 `content`（task 3.7，4.1 前）；`winning_key_kind` 值域同步加 `content`。
+**修訂（2026-09-07，3.6 業主裁 (a)）：線上匹配鍵改為標題向量＋講法向量＋內文句向量三者取最大；內文句＝正本細目 `content_units` 每句一鍵（當時售前 38 細目 131 句）。** 依據＝3.4 步 1（`inputs/m-c-index-eval-20260907.md`）：真問法 153 句、剔同文章鍵後 r@5 title .582／+phrasing .621／+content .673——內文臂 +9.1 點（俗稱 +19、情境 +13、五型無退步），講法臂僅 +3.9 點（<10 點，觸發風險表「加內文臂或增講法密度」），reranker 無數字 ⛔ 不接、⛔ 不調 K。圖書館法的「不索引內容」改讀為「內容不切段落、不進 DB 檢索」，內文句作匹配鍵不改變細目＝檢索單位。**講法密度目標**：每細目 approved 講法 ≥3（現 0 講法細目 2 個：`prospect/C/role-permission-granularity`、`prospect/D/subscription-change-renewal`，補講法＝正本內容改動、業主核）、上限 12 不變；misrouted 81/153 交 5.6 治理。實作：`FineIndex` `KeyKind` 加 `content`（task 3.7，4.1 前）；`winning_key_kind` 值域同步加 `content`。
 
 **適用範圍（2026-09-06 補明，業主問）**：本決策的匹配鍵（標題向量＋講法向量取最大、細目＝檢索單位、top-K 候選、第二次機會）**只實作在 agent 路徑**（元件 6 `FineIndex`／`CandidateSelector`，M-c／M-d）。**舊鏈（`routers/chat.py`）不改檢索邏輯**：它只經元件 8 入庫拿到「一細目一列」（`question`＝標題、`answer`＝內容句），仍是一列一向量的既有檢索；講法首批不寫 `keywords`（F16），所以舊鏈得到更乾淨的知識、得不到講法匹配。⇒ 影子對照若只換知識不切路徑，量到的是知識品質不是本決策；本決策的效果以 M-c 步 1 三臂（標題／講法／內文）與 M-d 步 2 探針證明。
 
@@ -565,33 +553,33 @@ flowchart LR
 ### 決策 9：舊列退役＝標記不刪、舊鏈不受影響
 **決定**：`generation_metadata.replaced_by`＋`pool-marked`；`is_active` 不動。**理由**：舊鏈仍讀 kb（範圍外硬約束）；agent 路徑由謂詞排除。**參考**：research 開放問題 1。
 
-### 決策 10：LINE 受眾正本另立、粗目依 chatai 文件定；**其他受眾大綱等售前驗證有效後才開**（業主 2026-09-06）
-**決定**：`canon/property_manager-line.md`；API 實值以 `policy: not_available` 標來源。**理由**：裁定 2（不套售前切法）、R7.1。
+### 決策 10：LINE 業者專用正本另立、粗目依 chatai 文件定；**其他受眾大綱等售前驗證有效後才開**（業主 2026-09-06）
+**決定**：LINE 業者知識落在九架、以 `target_user` 標記，⛔ 不另立檔；API 實值以 `policy: not_available` 標來源。**理由**：裁定 2（不套售前切法）、R7.1。
 
 ## 非功能性設計
 
 ### 效能考量
-- `run_turn` p95 ≤ 6 s（每回合多一次查詢 embedding，本機 50–100 ms）；上下文由整份 3,078 tokens 降至 K=5 細目≈500–800 字＋toc ≤300 字。
-- 啟動 prepare ≤ 2k 句、每批 8；失敗 ⇒ `not_ready`、回合走可見細目全集＋toc（`CandidateOutlineDoc.from_visible`）；health 紅。
+- `run_turn` p95 ≤ 6 s（每回合多一次查詢 embedding，本機 50–100 ms）；每回合注入段＝K=5 候選節＋toc（2026-09-16 實測，含 nonce 標記）：售前身分 1,960–3,449 tokens、業者身分 1,337–1,851 tokens。啟動只量兩尺（無標記 cl100k）：任 K=5 可引用節 token 最大和（`OUTLINE_K_TOKEN_LIMIT[audience]`，預設 12,000，DSP-059a）與 toc token（`OUTLINE_TOC_TOKEN_LIMIT[audience]`，預設 8,000），啟動不預組任何身分的整份篩選結果、不量它；toc 行數＝該身分可引用細目數，補審會使它線性成長。單條細目 >1,500 tokens 由 `tools/canon_fine_size_lint.py` 標記、審核時拆。
+- 啟動 prepare ≤ 2k 句、每批 8；失敗 ⇒ `not_ready`、每回合只注入目錄（零細目節＋toc，violation `candidate_fallback_toc_only`，內容走 `kb.get`）；health 紅。
 - 判者：55 格×2 判者≈110 個獨立 API 請求（實測 gpt-4o-mini 107 請求 ≈$0.10）；原 Workflow 估 110 子代理 16 併發≈7 輪已作廢（實測 44 格 $15.84、整機重開）。
 
 ### 安全性設計
 - 正本＝system prompt 一部分：只在 git、review 合併；DB 為衍生；`kb.get` 整數路徑受 `content_reviewed_predicate`。
 - 注入面：候選細目經既有 `wrap_provenance_data`（nonce）；toc `citable=False`；selector ⛔ 不 log 查詢字串；`candidate_ids` 是低解析度代理（Plan v3 P3-2 已接受）。
-- D3 落地（F13／F14，⛔ 不重開 D3 裁定，只把預設做對）：真流量原句只進 `raw/`（gitignored、90 天刪）；進 Workflow 或 `runs/` 的任何文字必須**已去識別**（步 3 的去識別在任何 agent 呼叫之前執行）；識別碼樣式掃描擴為：人名／地址／合約號／電話＋email／LINE id／統編／房號戶名／社區與物件名／車牌／金額＋日期組合，掛 PostToolUse（`rag-orchestrator/canon/*.md`、`.claude/skills/outline-curation/runs/`）與 CI unit，正對照＝故意塞一個 email 必紅；進 canon 的講法必須是人改寫過的短主題詞（`source: traffic:*` 者 parser 額外檢查 ≤ 20 字且不含數字串 ≥4 位）。
+- D3 落地（F13／F14，⛔ 不重開 D3 裁定，只把預設做對）：真流量原句只進 `raw/`（gitignored、90 天刪）；進 Workflow 或 `runs/` 的任何文字必須**已去識別**（步 3 的去識別在任何 agent 呼叫之前執行）；識別碼樣式掃描擴為：人名／地址／合約號／電話＋email／LINE id／統編／房號戶名／社區與物件名／車牌／金額＋日期組合，掛 PostToolUse（`^rag-orchestrator/canon/.+\.md$`（`outline_gate.py::CANON_RE`；`_is_canon_target` 另扣掉任一層的 `README.md`）、`.claude/skills/outline-curation/runs/`）與 CI unit，正對照＝故意塞一個 email 必紅；進 canon 的講法必須是人改寫過的短主題詞（`source: traffic:*` 者 parser 額外檢查 ≤ 20 字且不含數字串 ≥4 位）。
 - 敏感五類：程式 `sensitive_patterns` 為準（R5.7）。
 
 ### 可擴展性
-- 新受眾＝新 `canon/<audience>.md`＋front matter；組裝／索引／匯入零改程式。
+- 新受眾＝擴 `target_user` 值域＋在既有九架掛細目；⛔ 不另開正本檔。組裝／索引／匯入零改程式。
 - 講法量超過檔案可承受（>5k）⇒ 升級為 pgvector 表（選型 2／3 的升級路徑，另立 slice）。
 - 新判者角度／新 rubric＝改 `answerability_args.py` 產出的 args／rubric 檔與 schema，不改流程骨架。
 
 ### 錯誤處理
 | 情況 | 行為 |
 |---|---|
-| 正本格式錯 | `CanonFormatError`（列號＋原因）；PostToolUse hook 擋；啟動 `check_budget` 同款「即紅」 |
-| 索引未就緒／sha 不符／查詢逾時 | `select` 回 None ⇒ 可見細目全集＋toc＋violation；health `not_ready`／`absent` 紅 |
-| selector 例外 | `except Exception` ⇒ 可見細目全集＋toc＋`candidate_selector_error`（與 fallback 分開） |
+| 正本格式錯 | `CanonFormatError`（列號＋原因）；PostToolUse hook 擋；啟動 `check_turn_budget` 同款「即紅」 |
+| 索引未就緒／sha 不符／查詢逾時 | `select` 回 None ⇒ 只注入目錄（零細目節＋toc）＋`candidate_fallback_toc_only`；health `not_ready`／`absent` 紅 |
+| selector 例外 | `except Exception` ⇒ 只注入目錄＋`candidate_selector_error`（與 fallback 分開）；目錄組裝失敗 ⇒ `miss_kind="empty_toc"`＋`candidate_toc_error`，例外不逸出回合 |
 | 未審細目被引用 | `citable=False` ⇒ Verifier `SOURCE_NOT_CITABLE`（既有） |
 | 判者不一致 | 第 3 判者；一致率 <0.80 ⇒ `needs_rubric_revision` 停下回主 session（R6.2） |
 | 預算超支 | `cost_ledger` exit 2；Stop hook 擋 |
@@ -600,12 +588,12 @@ flowchart LR
 
 ### 單元測試（容器內，`tests/unit/agent/`、`tests/unit/_meta/`）
 - parser：固定 Markdown ↔ `CanonDoc` 決定性；格式錯誤列號；`content_units` 與 `provenance_units` 恆等；id 正則；`see_also` 解析。
-- assembler：`build_outline` 每細目一節、未審只出標題且 `citable=False`；sha 涵蓋 version；toc 形狀。
+- assembler：`canon_assembler.build_outline(doc, audience, identity, *, vendor_business_types)` 每細目一節、未審只出標題且 `citable=False`；sha 涵蓋 version；toc 形狀（`outline.build_audience_outline` 只是它的離線薄殼）。
 - index／selector：同查詢同向量兩次相同；同分序；`visible_subset` 與 `build_visibility_predicate` 等價（元件 11 契約）；三態；`doc.sha` 不符回 None；⛔ 不 log 查詢（caplog）。
 - runtime：`CandidateOutlineDoc` 同一物件餵兩側（`is`）；身分派生與 DB 值優先序；CTA 只在 `recommend`／明確要行動；handoff 讀設定；`candidate_ids` 形狀（`re.fullmatch(r"[a-z_]+/[A-Z]/[a-z0-9-]+")`、長度 ≤K）。
 - hooks：四種違反各紅、四種合規各綠（正對照）。
 - export／import：`replaces` 產 pre-image rollback；冪等鍵 `canon_ref`；`approved_by` 寫入 `reviewed:` 前綴；批次 sha／逐筆內容不符 ⇒ exit 2（正對照：改一字必紅）。
-- **正本同源硬把關（F1，CI unit 層硬擋）**：`export_json(parse_canon("rag-orchestrator/canon/<a>.md"))` 與版控 `rag-orchestrator/canon/<a>.json` 逐位元相等；`load_canon_or_die` 對 sha 不符 raise。
+- **正本同源硬把關（F1，CI unit 層硬擋）**：`export_json(parse_canon_dir("rag-orchestrator/canon/jgb"))` 與版控 `rag-orchestrator/canon/jgb.json`、`export_catalog` 與 `canon/jgb/CATALOG.md` 皆逐位元相等；`load_canon_or_die` 對 sha 不符 raise。
 - 個資掃描：`tests/unit/_meta/test_pii_scan_req.py` 對 `rag-orchestrator/canon/`、`.claude/skills/outline-curation/runs/` 全掃，故意塞 email／電話必紅。
 - hook 接線 meta 測試（元件 3）。
 - 追溯標記：新測試一律 `@pytest.mark.req("knowledge-outline-and-intent-architecture:<n.m>")`。
@@ -621,7 +609,7 @@ flowchart LR
 
 ## 部署考量
 ### 環境需求
-- `AGENT_CANON_DIR`（預設 `<rag root>/canon`，容器內 `/app/canon`）；映像**同時含** `canon/*.md` 與 `canon/*.json`（既有 `COPY . .` 涵蓋；E1）；embedding-api 啟動時可達（否則 index `not_ready` 紅、回合走可見細目全集）。
+- `AGENT_CANON_DIR`（預設 `<rag root>/canon`，容器內 `/app/canon`）；映像**同時含** `canon/*.md` 與 `canon/*.json`（既有 `COPY . .` 涵蓋；E1）；embedding-api 啟動時可達（否則 index `not_ready` 紅、每回合只注入目錄）。
 - `AGENT_REASONING_EFFORT`（未設不送；封閉值域 minimal／low／medium／high，經 `extra_body` 送出）、`OPENAI_TIMEOUT_S`（未設維持 SDK 預設 600 s）、`AGENT_BUDGET_REWRITES`（允許 0＝第一次輸出為準）——DSP-035 開發基線＝gpt-5-mini＋`low`＋0＋60（2026-09-07）。
 ### 部署步驟（給業主逐條；⛔ 本 spec 不代跑）
 1. `git pull` → 重建 `rag-orchestrator`（含 `canon/`）。
@@ -630,8 +618,9 @@ flowchart LR
 4. semantic-model 重建（記憶 `project_deploy_semantic_model`；舊鏈仍讀 kb 衍生列）。
 ### 監控與告警
 - health：`index_state≠ready` 紅；`canon_sha256` 與版控不符紅。
-- trace：`candidate_fallback_full_outline`／`candidate_selector_error` 比率（影子期只觀測，視窗告警上線前另裁）。
-- ⚠️ `PromptMeta.outline_sha` 複製自母 doc（Plan v3 P1-2），**不再標識本回合實際注入的文字**；要還原「這回合看了什麼」只能靠 `candidate_ids`（F19，ACCEPT）。
+- trace：`candidate_fallback_toc_only`／`candidate_selector_error`／`candidate_invisible_id`／`candidate_toc_error` 比率（影子期只觀測，視窗告警上線前另裁）。
+- `PromptMeta.outline_sha` ＝正本 `canon_sha256`（單一來源，與 health `checks.canon.sha256.jgb` 同值）；要還原「這回合看了什麼」靠 `candidate_ids`。
+- ⚠️ `PromptMeta.outline_token_count` 量的是**無 nonce 標記**的文字，實際注入段（經 `wrap_provenance_data` 逐句加標記）大約多 30–45%（2026-09-16 實測，見 inputs/factsheet-outline-injection-crosscheck-20260916.md §3-6）。
 
 ## 風險與挑戰
 | 風險 | 影響 | 機率 | 緩解策略 |
@@ -653,7 +642,7 @@ flowchart LR
 ## 附錄
 
 ### A. 名詞
-粗目／細目／講法／正本／受測物定義清單／命題與推翻條件：見 requirements.md「名詞定義」。**候選細目**：回合前由程式選出、注入為可引用資料段的 K 個細目。**降級整份正本**：selector 三態任一失敗時注入整份 `OutlineDoc`。
+粗目／細目／講法／正本／受測物定義清單／命題與推翻條件：見 requirements.md「名詞定義」。**候選細目**：回合前由程式選出、注入為可引用資料段的 K 個細目。**降級只注入目錄**：selector 未命中或失敗時注入**零細目節＋toc**（`CandidateOutlineDoc.from_canon(canon, identity, [], toc)`；內容經 `kb.get` 補讀；9.8 DSP-059 D′）。
 
 ### B. 新增不變量（編號接續 27–31）
 | # | 名稱 | 檢查 |
@@ -664,12 +653,12 @@ flowchart LR
 
 ### C. 里程碑與 done 條件（供 tasks 切分；依賴順序）
 1. **M-a 機制**（A1–A4）：元件 3 hooks＋元件 2 Workflow 最小試作（可答性，**以臨時細目集合跑**：F2 的 21 列＋18 筆草稿，`fine_id=tmp:*`、verdict `provisional=true`，⛔ 不進正本）＋元件 1 步 1／4／6 腳本。
-   - **prerequisites**：不需 `canon/prospect.md`；需 `inputs/` 三檔＋缺口地圖 v2.1。
+   - **prerequisites**：不需 `canon/jgb/`；需 `inputs/` 三檔＋缺口地圖 v2.1。
    - **done（可證偽）**：① hook 接線實跑印出 `CLAUDE_PROJECT_DIR` 與腳本路徑；② hooks 自證 5 違反各紅（含 `needs_rubric_revision`）、5 合規各綠；③ 試作一致率 ≥0.80（原 0.90；2026-09-06 業主裁 1.5 實測 0.841 可接受 ⇒ 門檻改 0.80，見 D. 1.4；否則出口＝回修 rubric，⛔ 不算通過）；④ `resumeFromRunId`（Workflow 工具的既有參數，本 session 工具 schema 實證；tasks 起手再以一次乾跑確認）續跑快取命中＝100%；⑤ **單次**試作代理數 ≤180、usd ≤3——一致率 <0.80 的重跑不計入此上限，重跑前回主 session 重核預算（r2 M-a #2）；⑥ `intake.py`／`diff_report.py` 決定性 unit 綠（同輸入兩次逐位元相等）；⑦ `cost_ledger` 超支必 exit 2（正對照）。
    - **獨佔檔案**：`.claude/settings.json`、`.claude/hooks/**`、`.claude/workflows/**`、`.claude/skills/outline-curation/**`、`.gitignore`（本 slice 內不得有他線同時改）。
    - **rollback**：移除 `.claude/settings.json` 對應 hook 條目（單檔 revert）；Workflow／skill 目錄可整目錄刪。
    - **stops**：自證或試作出現**非目標路徑被 hook 擋**（任何 `rag-orchestrator/canon/`、`.claude/skills/outline-curation/runs/` 以外的 Edit／Stop 被擋）⇒ 立即停用該條目、回主 session；一致率 <0.80 ⇒ 停下修 rubric。
-2. **M-b 正本**：元件 4 parser＋元件 1 全七步首跑（售前）→ done：`canon/prospect.md` 草稿＋diff-report 交業主審；步 0 出口（無去向格＝0）。
+2. **M-b 正本**：元件 4 parser＋元件 1 全七步首跑（售前）→ done：`canon/jgb/`（售前身分細目）草稿＋diff-report 交業主審；步 0 出口（無去向格＝0）。
 3. **M-c 組裝與索引**：元件 5＋6＋票 D → done：health 三 sha；步 1 三臂結果；決策 5 定案。
 4. **M-d 回合接線**：元件 7＋票 B／C → done：步 2 探針；契約測試綠。
 5. **M-e 對話邏輯**：元件 7 定義搬遷＋CTA／handoff → done：步 3 劇本。
@@ -746,7 +735,7 @@ flowchart LR
 
 **已定、⛔ 不再端上來（2026-09-06 業主指正）**：
 - M-a 試作（1.5 sonnet 44 格、1.6 gpt-4o-mini 55 格）的 verdict 皆 `provisional`，⛔ 不進正本、不進地圖、不需在兩者間擇一「為準」；2.4b 以正本細目為候選、用 H7 的子代理判者（`answerability_agents.py`）重跑。
-- 步 4 預算上限 $3 維持（API 判者實測 55 格 ≈$0.10 在內）；usd 依 OpenAI 公告牌價計，不另對帳。
+- 步 4 上限只計代理數（DSP-063）；判者為 Claude Code 子代理，無 API 費用層。
 
 **待裁**：
 | # | 問題 | 影響 |

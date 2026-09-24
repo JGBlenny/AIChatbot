@@ -1,0 +1,205 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "angle": {
+      "type": "string"
+    },
+    "coarses": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "enum": [
+              "A",
+              "B",
+              "C",
+              "D",
+              "E",
+              "F",
+              "G",
+              "H",
+              "I"
+            ],
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "fines": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "coarse_id": {
+            "enum": [
+              "A",
+              "B",
+              "C",
+              "D",
+              "E",
+              "F",
+              "G",
+              "H",
+              "I"
+            ],
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "merge_of": {
+            "items": {
+              "enum": [
+                "tmp:kb:property_manager/A/repair-ticket-after-submit",
+                "tmp:kb:property_manager/A/repair-ticket-agent-identity-lease-lookup",
+                "tmp:kb:property_manager/A/repair-ticket-low-confidence-candidates",
+                "tmp:kb:property_manager/A/repair-ticket-mid-flow-cancel",
+                "tmp:kb:property_manager/A/repair-ticket-photo-count-limit",
+                "tmp:kb:property_manager/A/repair-ticket-photo-flow",
+                "tmp:kb:property_manager/A/repair-ticket-reclassify",
+                "tmp:kb:property_manager/A/repair-ticket-submit-failure",
+                "tmp:kb:property_manager/A/repair-ticket-unrecognizable-photo",
+                "tmp:kb:property_manager/A/repair-ticket-urgency-judgment",
+                "tmp:kb:property_manager/A/repair-ticket-vacant-no-lease",
+                "tmp:kb:property_manager/B/dunning-draft-generation",
+                "tmp:kb:property_manager/B/dunning-draft-late-fee-mention",
+                "tmp:kb:property_manager/B/dunning-draft-not-auto-send",
+                "tmp:kb:property_manager/C/lease-expiry-followup-scope",
+                "tmp:kb:property_manager/C/meter-item-followup-scope",
+                "tmp:kb:property_manager/C/overdue-bill-followup-scope",
+                "tmp:kb:property_manager/C/urgent-repair-followup-scope"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "moved_from": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "split_from": {
+            "items": {
+              "enum": [
+                "tmp:kb:property_manager/A/repair-ticket-after-submit",
+                "tmp:kb:property_manager/A/repair-ticket-agent-identity-lease-lookup",
+                "tmp:kb:property_manager/A/repair-ticket-low-confidence-candidates",
+                "tmp:kb:property_manager/A/repair-ticket-mid-flow-cancel",
+                "tmp:kb:property_manager/A/repair-ticket-photo-count-limit",
+                "tmp:kb:property_manager/A/repair-ticket-photo-flow",
+                "tmp:kb:property_manager/A/repair-ticket-reclassify",
+                "tmp:kb:property_manager/A/repair-ticket-submit-failure",
+                "tmp:kb:property_manager/A/repair-ticket-unrecognizable-photo",
+                "tmp:kb:property_manager/A/repair-ticket-urgency-judgment",
+                "tmp:kb:property_manager/A/repair-ticket-vacant-no-lease",
+                "tmp:kb:property_manager/B/dunning-draft-generation",
+                "tmp:kb:property_manager/B/dunning-draft-late-fee-mention",
+                "tmp:kb:property_manager/B/dunning-draft-not-auto-send",
+                "tmp:kb:property_manager/C/lease-expiry-followup-scope",
+                "tmp:kb:property_manager/C/meter-item-followup-scope",
+                "tmp:kb:property_manager/C/overdue-bill-followup-scope",
+                "tmp:kb:property_manager/C/urgent-repair-followup-scope"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "coarse_id",
+          "title",
+          "slug",
+          "merge_of",
+          "split_from",
+          "moved_from",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "id_map": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "new": {
+            "type": "string"
+          },
+          "old": {
+            "anyOf": [
+              {
+                "enum": [
+                  "tmp:kb:property_manager/A/repair-ticket-after-submit",
+                  "tmp:kb:property_manager/A/repair-ticket-agent-identity-lease-lookup",
+                  "tmp:kb:property_manager/A/repair-ticket-low-confidence-candidates",
+                  "tmp:kb:property_manager/A/repair-ticket-mid-flow-cancel",
+                  "tmp:kb:property_manager/A/repair-ticket-photo-count-limit",
+                  "tmp:kb:property_manager/A/repair-ticket-photo-flow",
+                  "tmp:kb:property_manager/A/repair-ticket-reclassify",
+                  "tmp:kb:property_manager/A/repair-ticket-submit-failure",
+                  "tmp:kb:property_manager/A/repair-ticket-unrecognizable-photo",
+                  "tmp:kb:property_manager/A/repair-ticket-urgency-judgment",
+                  "tmp:kb:property_manager/A/repair-ticket-vacant-no-lease",
+                  "tmp:kb:property_manager/B/dunning-draft-generation",
+                  "tmp:kb:property_manager/B/dunning-draft-late-fee-mention",
+                  "tmp:kb:property_manager/B/dunning-draft-not-auto-send",
+                  "tmp:kb:property_manager/C/lease-expiry-followup-scope",
+                  "tmp:kb:property_manager/C/meter-item-followup-scope",
+                  "tmp:kb:property_manager/C/overdue-bill-followup-scope",
+                  "tmp:kb:property_manager/C/urgent-repair-followup-scope"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "op": {
+            "enum": [
+              "keep",
+              "split",
+              "merge",
+              "move",
+              "new"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "old",
+          "new",
+          "op"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "angle",
+    "coarses",
+    "fines",
+    "id_map"
+  ],
+  "type": "object"
+}

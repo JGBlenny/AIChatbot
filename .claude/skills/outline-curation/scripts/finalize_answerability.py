@@ -32,24 +32,13 @@ def _load_json(path: str):
         return json.load(f)
 
 
-def build_journal_entry(run_result: dict, run_id: str, *, usd: float, prompt_tokens: int,
-                         completion_tokens: int, wall_s: float) -> dict:
-    """journal 檔格式（1.3 定義）：{"step","run_id","agents":[{prompt_tokens,completion_tokens,usd}],"wall_s"}。
+def build_journal_entry(run_result: dict, run_id: str, *, wall_s: float) -> dict:
+    """journal 檔格式（1.3 定義）：{"step","run_id","agents":[{}...],"wall_s"}。
 
-    代理數＝run_result["agentsUsed"]；token／usd 由參數平均分攤給每個代理，未給則 0。
+    代理數＝run_result["agentsUsed"]；`agents` 只計數，每則為空 dict。
     """
     n = int(run_result.get("agentsUsed", 0))
-    if n > 0:
-        pt = prompt_tokens // n
-        ct = completion_tokens // n
-        u = usd / n
-        agents = [{"prompt_tokens": pt, "completion_tokens": ct, "usd": u} for _ in range(n)]
-        # 餘數併入最後一個代理，讓總和精確對得上輸入參數
-        agents[-1]["prompt_tokens"] += prompt_tokens - pt * n
-        agents[-1]["completion_tokens"] += completion_tokens - ct * n
-        agents[-1]["usd"] += usd - u * n
-    else:
-        agents = []
+    agents = [{} for _ in range(n)]
     return {"step": "answerability", "run_id": run_id, "agents": agents, "wall_s": wall_s}
 
 
@@ -62,9 +51,6 @@ def build_envelope(run_result: dict, journal_path: str) -> dict:
     payload = {"labels": labels, "needs_rubric_revision": needs_rubric_revision}
     cost = {
         "agents": n_agents,
-        "prompt_tokens": 0,
-        "completion_tokens": 0,
-        "usd": 0.0,
         "wall_s": 0.0,
     }
     return make_envelope(
@@ -85,28 +71,18 @@ def main() -> int:
     p.add_argument("--journal-dir", required=False,
                     default=os.path.join(".claude", "skills", "outline-curation", "journal"))
     p.add_argument("--run-id", required=False, default=None)
-    p.add_argument("--usd", required=False, type=float, default=0.0)
-    p.add_argument("--prompt-tokens", required=False, type=int, default=0)
-    p.add_argument("--completion-tokens", required=False, type=int, default=0)
     p.add_argument("--wall-s", required=False, type=float, default=0.0)
     args = p.parse_args()
 
     run_result = _load_json(args.run_result)
     run_id = args.run_id or f"answerability-{run_result.get('frozenAt', 'unknown').replace(':', '').replace('-', '')}"
 
-    journal_entry = build_journal_entry(
-        run_result, run_id,
-        usd=args.usd, prompt_tokens=args.prompt_tokens,
-        completion_tokens=args.completion_tokens, wall_s=args.wall_s,
-    )
+    journal_entry = build_journal_entry(run_result, run_id, wall_s=args.wall_s)
     os.makedirs(args.journal_dir, exist_ok=True)
     journal_path = os.path.join(args.journal_dir, f"{run_id}.json")
     write_json(journal_path, journal_entry)
 
     envelope = build_envelope(run_result, journal_path)
-    envelope["cost"]["prompt_tokens"] = args.prompt_tokens
-    envelope["cost"]["completion_tokens"] = args.completion_tokens
-    envelope["cost"]["usd"] = args.usd
     envelope["cost"]["wall_s"] = args.wall_s
 
     validate(envelope, load_schema(_SCHEMA_PATH))

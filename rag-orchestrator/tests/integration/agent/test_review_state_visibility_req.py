@@ -287,8 +287,9 @@ def _prospect_row_kwargs():
     )
 
 
-#: 版控正本現況細目數＋1 個 `outline:toc`（與 `test_outline_req.py` 同一個釘死值）。
-CANON_SECTION_COUNT = 38 + 1
+#: 版控正本現況細目數＋1 個 `outline:toc`（與 `test_outline_req.py` 同一個釘死值；
+#: 2026-09-16 9.7 七架連跑後 prospect 視圖 59 條，交叉核見該檔 `PROSPECT_VIEW_FINE_COUNT`）。
+CANON_SECTION_COUNT = 59 + 1
 
 
 @pytest.mark.req("knowledge-outline-and-intent-architecture:3.2")

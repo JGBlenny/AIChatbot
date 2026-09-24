@@ -1,0 +1,7 @@
+{
+ "excluded": [
+  "prospect/F/contact-sales-demo"
+ ],
+ "why": "DSP-048 導流不是知識",
+ "source": "rag-orchestrator/canon/prospect.md"
+}

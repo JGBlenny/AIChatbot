@@ -1,0 +1,147 @@
+{
+  "attached_fines": [
+    "jgb/I/onboarding-tutorial-index",
+    "jgb/I/subscription-payment-failure"
+  ],
+  "attached_phrasings": 4,
+  "canon_sha256": "74323192240f604da9abd29b8527c8d4be305de4f10be8c413c58b419ceee824",
+  "dup_existing": {
+    "jgb/I/dashboard-overview": [
+      {
+        "already_on": "jgb/I/dashboard-overview",
+        "text": "對外首頁會顯示哪些物件"
+      }
+    ],
+    "jgb/I/data-migration": [
+      {
+        "already_on": "jgb/C/property-batch-import",
+        "text": "Excel"
+      },
+      {
+        "already_on": "jgb/C/property-batch-import",
+        "text": "匯入excel怎麼做"
+      }
+    ],
+    "jgb/I/property-quota-limit": [
+      {
+        "already_on": "jgb/I/property-quota-limit",
+        "text": "凶宅怎麼辦"
+      },
+      {
+        "already_on": "jgb/C/property-advanced-search",
+        "text": "物件怎麼建"
+      },
+      {
+        "already_on": "jgb/B/add-owner-landlord-and-access",
+        "text": "物件怎麼新增"
+      }
+    ],
+    "jgb/I/subscription-change-renewal": [
+      {
+        "already_on": "jgb/I/subscription-change-renewal",
+        "text": "升級更換"
+      },
+      {
+        "already_on": "jgb/I/subscription-change-renewal",
+        "text": "取消訂閱"
+      },
+      {
+        "already_on": "jgb/I/subscription-change-renewal",
+        "text": "自動續訂"
+      },
+      {
+        "already_on": "jgb/I/subscription-change-renewal",
+        "text": "訂閱付款紀錄"
+      },
+      {
+        "already_on": "jgb/I/subscription-change-renewal",
+        "text": "退訂流程"
+      }
+    ],
+    "jgb/I/subscription-payment-failure": [
+      {
+        "already_on": "jgb/I/subscription-change-renewal",
+        "text": "自動續訂"
+      },
+      {
+        "already_on": "jgb/I/subscription-change-renewal",
+        "text": "訂閱付款紀錄"
+      }
+    ],
+    "jgb/I/team-company-fit": [
+      {
+        "already_on": "jgb/B/leasing-management-license-and-staff-qualification",
+        "text": "包租代管"
+      },
+      {
+        "already_on": "jgb/B/leasing-management-license-and-staff-qualification",
+        "text": "包租代管稅務優惠"
+      },
+      {
+        "already_on": "jgb/B/leasing-management-license-and-staff-qualification",
+        "text": "包租代管要證照嗎"
+      },
+      {
+        "already_on": "jgb/B/leasing-management-license-and-staff-qualification",
+        "text": "租賃專法下的包租代管業"
+      },
+      {
+        "already_on": "jgb/B/leasing-management-license-and-staff-qualification",
+        "text": "要怎麼成為包租代管業者"
+      },
+      {
+        "already_on": "jgb/D/sublease-vs-management-contract",
+        "text": "包租跟代管差在哪"
+      }
+    ],
+    "jgb/I/why-choose-jgb": [
+      {
+        "already_on": "jgb/C/property-add-blocked",
+        "text": "為什麼現在不能點退"
+      },
+      {
+        "already_on": "jgb/C/property-add-blocked",
+        "text": "為什麼有些按鈕不見了"
+      },
+      {
+        "already_on": "jgb/C/property-add-blocked",
+        "text": "貝殼為什麼成長那麼快"
+      },
+      {
+        "already_on": "jgb/C/property-add-blocked",
+        "text": "未刊登的物件為什麼不能簽約"
+      },
+      {
+        "already_on": "jgb/C/property-add-blocked",
+        "text": "為什麼我這間房子不能建合約"
+      }
+    ]
+  },
+  "dup_in_proposal": {
+    "jgb/I/product-overview": [
+      {
+        "kept_on": "jgb/I/competitor-neutrality",
+        "text": "售前系統脈絡"
+      }
+    ],
+    "jgb/I/subscription-change-renewal": [
+      {
+        "kept_on": "jgb/I/pricing-plans",
+        "text": "訂閱方案"
+      }
+    ]
+  },
+  "fines_without_phrasings": [],
+  "missing_fines": [],
+  "other_shelf_fines": {},
+  "phrasing_set_sha256": "0f8df038c351daa48d260bcbd52713234e83f19fa32975b23efb8c09e6c19ce6",
+  "skipped_fines": {
+    "jgb/I/competitor-neutrality": 1,
+    "jgb/I/data-migration": 1,
+    "jgb/I/free-trial": 1,
+    "jgb/I/individual-landlord-scale-fit": 3,
+    "jgb/I/pricing-plans": 5,
+    "jgb/I/team-company-fit": 3,
+    "jgb/I/why-choose-jgb": 4
+  }
+}

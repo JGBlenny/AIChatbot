@@ -1,0 +1,42 @@
+{
+  "attached_fines": [
+    "jgb/F/common-equipment-maintenance-responsibility",
+    "jgb/F/emergency-repair-flag-and-handling",
+    "jgb/F/neighbor-leak-responsibility",
+    "jgb/F/repair-cost-recording-and-settlement",
+    "jgb/F/repair-dispatch-and-close",
+    "jgb/F/repair-flow-stages",
+    "jgb/F/repair-multiple-items-one-ticket",
+    "jgb/F/repair-request-how-to-submit",
+    "jgb/F/repair-responsibility-dispute",
+    "jgb/F/repair-responsibility-landlord-vs-tenant",
+    "jgb/F/repair-warranty-period",
+    "jgb/F/social-housing-repair-responsibility",
+    "jgb/F/tenant-emergency-self-repair",
+    "jgb/F/tenant-equipment-maintenance-responsibility",
+    "jgb/F/tenant-repair-notification-duty"
+  ],
+  "attached_phrasings": 60,
+  "canon_sha256": "2a6de9f2304d4d967ec904f19dffba63308ad24fb5e48e3b26f7c547e4d09d1c",
+  "dup_existing": {},
+  "dup_in_proposal": {
+    "jgb/F/tenant-emergency-self-repair": [
+      {
+        "kept_on": "jgb/F/emergency-repair-flag-and-handling",
+        "text": "緊急修繕"
+      }
+    ]
+  },
+  "fines_without_phrasings": [
+    "jgb/F/repair-ticket-photo-count-limit",
+    "jgb/F/repair-ticket-urgency-judgment"
+  ],
+  "missing_fines": [],
+  "other_shelf_fines": {},
+  "phrasing_set_sha256": "0f8df038c351daa48d260bcbd52713234e83f19fa32975b23efb8c09e6c19ce6",
+  "skipped_fines": {
+    "jgb/F/repair-progress-followup-scope": 6,
+    "jgb/F/repair-ticket-mid-flow-cancel": 1,
+    "jgb/F/repair-ticket-open-and-confirm": 10
+  }
+}

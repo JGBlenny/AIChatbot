@@ -13,7 +13,7 @@ from services.ocr_mapping.models import DocumentType, OcrMappingRequest
 pytestmark = pytest.mark.unit
 FIXTURES = Path(__file__).parent / "fixtures"
 IDENTITY = {"vendor_id": 1, "role_id": "20151", "user_id": "12291", "mode": "b2c",
-            "target_user": "landlord", "session_id": "backtest_session_ocr_fixture"}
+            "target_user": "tenant", "session_id": "backtest_session_ocr_fixture"}
 
 
 def load(name: str) -> dict:

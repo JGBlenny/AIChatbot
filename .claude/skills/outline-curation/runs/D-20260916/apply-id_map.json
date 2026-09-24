@@ -1,0 +1,2121 @@
+{
+  "canon_sha256": "e2fbf568870661e9bd48545ba0ae839c0773079eaaf6dcccf4e6465abf8e44d2",
+  "fines": [
+    {
+      "from": [
+        "tmp:canon:jgb/D/contract-esign-flow"
+      ],
+      "new": "jgb/D/contract-esign-flow",
+      "ops": [
+        "merge",
+        "split"
+      ],
+      "title": "建約方式與線上電子簽約流程（含時效、身分、社宅、簽約邀請通知、費用）",
+      "units": 25
+    },
+    {
+      "from": [
+        "tmp:canon:jgb/D/contract-batch-renewal"
+      ],
+      "new": "jgb/D/contract-batch-renewal",
+      "ops": [
+        "merge",
+        "split"
+      ],
+      "title": "續約能不能批次處理（含快速日期設定、紙本上傳、通知分流）",
+      "units": 5
+    },
+    {
+      "from": [
+        "tmp:canon:jgb/D/contract-history-retention"
+      ],
+      "new": "jgb/D/contract-history-retention",
+      "ops": [
+        "merge"
+      ],
+      "title": "歷史合約保留多久與何時轉歷史（含點退狀態、過期結案排程）",
+      "units": 9
+    },
+    {
+      "from": [
+        "tmp:canon:jgb/D/contract-modify-after-sign"
+      ],
+      "new": "jgb/D/contract-modify-after-sign",
+      "ops": [
+        "merge"
+      ],
+      "title": "合約送出或簽完後能不能修改（三種出口，含編輯不了的權限排查）",
+      "units": 12
+    },
+    {
+      "from": [
+        "tmp:canon:jgb/D/contract-templates"
+      ],
+      "new": "jgb/D/contract-templates",
+      "ops": [
+        "merge"
+      ],
+      "title": "合約範本有哪些可以選（含內文隨內政部新制更新）",
+      "units": 6
+    },
+    {
+      "from": [
+        "tmp:canon:jgb/D/lease-expiry-followup-scope"
+      ],
+      "new": "jgb/D/lease-expiry-followup-scope",
+      "ops": [
+        "merge"
+      ],
+      "title": "合約到期追問可答範圍與到期提醒（導向續約面向）",
+      "units": 6
+    },
+    {
+      "from": [
+        "tmp:canon:jgb/D/sublease-vs-management-contract"
+      ],
+      "new": "jgb/D/sublease-vs-management-contract",
+      "ops": [
+        "merge"
+      ],
+      "title": "包租與代管的差別（委託合約設定、租約簽訂方、押金管理、終止條件、租金調整）",
+      "units": 16
+    },
+    {
+      "from": [
+        "tmp:kb:3861",
+        "tmp:kb:3507",
+        "tmp:kb:4153",
+        "tmp:kb:3862",
+        "tmp:kb:3881",
+        "tmp:draft:8",
+        "tmp:draft:9",
+        "tmp:draft:18"
+      ],
+      "new": "jgb/D/contract-create-entry-and-prereq",
+      "ops": [
+        "new"
+      ],
+      "title": "新增合約從哪進、物件為什麼不能建約（須刊登中、必填欄位）、一物件多合約上限、編輯入口",
+      "units": 6
+    },
+    {
+      "from": [
+        "tmp:kb:3394"
+      ],
+      "new": "jgb/D/contract-copy",
+      "ops": [
+        "new"
+      ],
+      "title": "合約複製快速建立相似合約",
+      "units": 4
+    },
+    {
+      "from": [
+        "tmp:kb:3860",
+        "tmp:kb:4218",
+        "tmp:draft:2"
+      ],
+      "new": "jgb/D/upload-existing-contract",
+      "ops": [
+        "new",
+        "split"
+      ],
+      "title": "上傳既存（紙本）合約：適用情境、效力、入口、檔案上限",
+      "units": 6
+    },
+    {
+      "from": [
+        "tmp:kb:3393",
+        "tmp:kb:3843",
+        "tmp:draft:5"
+      ],
+      "new": "jgb/D/contract-attachments-notes-limits",
+      "ops": [
+        "new"
+      ],
+      "title": "合約附件上傳、備註 50 行與補充條款限制",
+      "units": 7
+    },
+    {
+      "from": [
+        "tmp:kb:3390"
+      ],
+      "new": "jgb/D/contract-pdf-download",
+      "ops": [
+        "new"
+      ],
+      "title": "合約相關 PDF 下載（合約書、摘要、點交／點退清單、提前解約文件）",
+      "units": 3
+    },
+    {
+      "from": [
+        "tmp:kb:3440",
+        "tmp:kb:3864",
+        "tmp:kb:3866",
+        "tmp:kb:4645"
+      ],
+      "new": "jgb/D/signer-identity-and-seal",
+      "ops": [
+        "new"
+      ],
+      "title": "簽約身分與簽署方資訊：個人／法人、公司大小章與 Logo、大房東以業者身分簽約、兩位承租人填法",
+      "units": 10
+    },
+    {
+      "from": [
+        "tmp:kb:3867",
+        "tmp:kb:3368",
+        "tmp:kb:3490",
+        "tmp:draft:10",
+        "tmp:draft:16"
+      ],
+      "new": "jgb/D/contract-send-invite",
+      "ops": [
+        "new",
+        "split"
+      ],
+      "title": "發送簽約邀請：通道（Email／簡訊）、租客會收到什麼、為什麼不能發送（欄位未填完整）",
+      "units": 5
+    },
+    {
+      "from": [
+        "tmp:kb:3331",
+        "tmp:kb:3868",
+        "tmp:draft:10"
+      ],
+      "new": "jgb/D/esign-invite-expiry",
+      "ops": [
+        "new",
+        "split"
+      ],
+      "title": "簽約邀請效期 72 小時、逾期退回與租客資料清空、可申請延長",
+      "units": 6
+    },
+    {
+      "from": [
+        "tmp:kb:3392",
+        "tmp:kb:3870",
+        "tmp:kb:3872",
+        "tmp:kb:3883",
+        "tmp:kb:3884",
+        "tmp:kb:3814",
+        "tmp:kb:3815",
+        "tmp:kb:4644"
+      ],
+      "new": "jgb/D/esign-troubleshooting",
+      "ops": [
+        "new"
+      ],
+      "title": "租客簽不了、沒收到、卡住：連結打不開、簽名板載入失敗、瀏覽器建議、簽署進度查得到什麼、漏簽防呆",
+      "units": 8
+    },
+    {
+      "from": [
+        "tmp:kb:3442",
+        "tmp:draft:19"
+      ],
+      "new": "jgb/D/tenant-sign-steps",
+      "ops": [
+        "new"
+      ],
+      "title": "租客收到簽約邀請後的簽署步驟（租客視角）",
+      "units": 2
+    },
+    {
+      "from": [
+        "tmp:kb:3865",
+        "tmp:kb:3328"
+      ],
+      "new": "jgb/D/esign-legal-validity",
+      "ops": [
+        "new"
+      ],
+      "title": "電子合約法律效力、簽章認證與 72 小時審閱期",
+      "units": 7
+    },
+    {
+      "from": [
+        "tmp:kb:3373",
+        "tmp:kb:3389",
+        "tmp:kb:4254",
+        "tmp:kb:3372",
+        "tmp:kb:3510",
+        "tmp:kb:3511",
+        "tmp:kb:4563"
+      ],
+      "new": "jgb/D/contract-status-overview",
+      "ops": [
+        "new"
+      ],
+      "title": "合約狀態總覽：12 狀態 4 階段、簽約前三狀態、執行中五細分、按鈕能不能按的前置判讀",
+      "units": 12
+    },
+    {
+      "from": [
+        "tmp:kb:4639",
+        "tmp:kb:4641",
+        "tmp:draft:21"
+      ],
+      "new": "jgb/D/contract-lookup",
+      "ops": [
+        "new"
+      ],
+      "title": "查詢合約資訊：以合約編號／物件名稱查、不能用租客姓名反查、租客資料卡",
+      "units": 2
+    },
+    {
+      "from": [
+        "tmp:kb:4149",
+        "tmp:kb:4655",
+        "tmp:draft:12"
+      ],
+      "new": "jgb/D/contract-filter-by-state",
+      "ops": [
+        "new"
+      ],
+      "title": "依合約狀態篩選物件（點交點退、待退押金、本月到期、無合約）",
+      "units": 3
+    },
+    {
+      "from": [
+        "tmp:kb:3841"
+      ],
+      "new": "jgb/D/contract-data-change-form",
+      "ops": [
+        "new"
+      ],
+      "title": "資料異動申請書的填寫與提交",
+      "units": 3
+    },
+    {
+      "from": [
+        "tmp:kb:3894",
+        "tmp:kb:3896",
+        "tmp:kb:3897"
+      ],
+      "new": "jgb/D/contract-snapshot-independence",
+      "ops": [
+        "new"
+      ],
+      "title": "合約快照原則：物件資料、租客聯絡方式或姓名事後修改，合約與通知都不連動",
+      "units": 10
+    },
+    {
+      "from": [
+        "tmp:kb:3898",
+        "tmp:kb:4216"
+      ],
+      "new": "jgb/D/tenant-change-new-contract",
+      "ops": [
+        "new"
+      ],
+      "title": "更換承租人／退房後換新租客：只能新建合約，舊約收尾與物件重刊登",
+      "units": 4
+    },
+    {
+      "from": [
+        "tmp:kb:3846",
+        "tmp:kb:3513",
+        "tmp:kb:3386"
+      ],
+      "new": "jgb/D/contract-cancel-delete",
+      "ops": [
+        "new"
+      ],
+      "title": "合約刪除、取消、作廢的條件與取消 vs 歷史合約差異",
+      "units": 6
+    },
+    {
+      "from": [
+        "tmp:kb:3376",
+        "tmp:kb:3377",
+        "tmp:kb:3491",
+        "tmp:kb:3515",
+        "tmp:kb:3516",
+        "tmp:draft:2"
+      ],
+      "new": "jgb/D/handover-checkin",
+      "ops": [
+        "new",
+        "split"
+      ],
+      "title": "點交（搬入）：流程、前置條件、為什麼不能點交、清單內容與自訂項目、租客不同意重發",
+      "units": 12
+    },
+    {
+      "from": [
+        "tmp:kb:3378",
+        "tmp:kb:3379",
+        "tmp:kb:3492",
+        "tmp:kb:3518",
+        "tmp:kb:3520",
+        "tmp:kb:3521",
+        "tmp:kb:3850",
+        "tmp:draft:13",
+        "tmp:draft:14",
+        "tmp:draft:17",
+        "tmp:draft:2"
+      ],
+      "new": "jgb/D/return-checkout",
+      "ops": [
+        "new",
+        "split"
+      ],
+      "title": "點退（搬出）：流程、前置條件與時機、為什麼不能點退、清單費用賠償、押金找補與點退帳單、租客不同意或有異議",
+      "units": 18
+    },
+    {
+      "from": [
+        "tmp:kb:3512",
+        "tmp:kb:4255"
+      ],
+      "new": "jgb/D/handover-return-cancel-invite",
+      "ops": [
+        "new"
+      ],
+      "title": "取消／收回點交或點退邀請，為什麼不能取消",
+      "units": 2
+    },
+    {
+      "from": [
+        "tmp:kb:3847",
+        "tmp:kb:3876",
+        "tmp:kb:3878"
+      ],
+      "new": "jgb/D/lease-end-checkout-overview",
+      "ops": [
+        "new"
+      ],
+      "title": "租客要退租了接下來怎麼做：到期收尾步驟總覽（點退→帳單→封存→轉歷史）與退租跑到哪一步",
+      "units": 2
+    },
+    {
+      "from": [
+        "tmp:kb:3380",
+        "tmp:kb:3381",
+        "tmp:kb:3382",
+        "tmp:kb:3370",
+        "tmp:kb:3493",
+        "tmp:kb:3523",
+        "tmp:kb:3525",
+        "tmp:kb:3851",
+        "tmp:draft:2"
+      ],
+      "new": "jgb/D/early-termination-flow",
+      "ops": [
+        "new",
+        "split"
+      ],
+      "title": "提前解約（JGB 流程）：發起條件、租客發起、房東發起與法定理由、回簽效期、取消申請、為什麼不能提前解約",
+      "units": 19
+    },
+    {
+      "from": [
+        "tmp:kb:3522",
+        "tmp:kb:3524"
+      ],
+      "new": "jgb/D/early-termination-penalty",
+      "ops": [
+        "new"
+      ],
+      "title": "提前解約違約金怎麼算（預告期）、由誰付",
+      "units": 9
+    },
+    {
+      "from": [
+        "tmp:kb:3526",
+        "tmp:kb:3877",
+        "tmp:draft:15"
+      ],
+      "new": "jgb/D/early-termination-aftermath",
+      "ops": [
+        "new"
+      ],
+      "title": "提前解約生效後：何時可點退、違約金與押金一併結算、之後還要處理什麼",
+      "units": 3
+    },
+    {
+      "from": [
+        "tmp:kb:3383",
+        "tmp:kb:3384",
+        "tmp:kb:3494",
+        "tmp:kb:3371",
+        "tmp:kb:3879",
+        "tmp:kb:3880",
+        "tmp:kb:3528",
+        "tmp:kb:3529",
+        "tmp:kb:3858",
+        "tmp:kb:3854"
+      ],
+      "new": "jgb/D/renewal-flow",
+      "ops": [
+        "new"
+      ],
+      "title": "合約續約（JGB 流程）：步驟、前置條件、為什麼不能續約、資料沿用與重簽、免註冊租客、已達數量上限",
+      "units": 17
+    },
+    {
+      "from": [
+        "tmp:kb:3855",
+        "tmp:kb:3329",
+        "tmp:kb:3333"
+      ],
+      "new": "jgb/D/renewal-vs-new-contract",
+      "ops": [
+        "new"
+      ],
+      "title": "系統續約 vs 重建新約的取捨（條件變更、租屋補助審核）",
+      "units": 11
+    },
+    {
+      "from": [
+        "tmp:kb:3527",
+        "tmp:kb:3856",
+        "tmp:kb:4660"
+      ],
+      "new": "jgb/D/renewal-history-and-addendum",
+      "ops": [
+        "new"
+      ],
+      "title": "續約後原合約去哪了：續約歷史、增補文件分頁、有沒有下一份約",
+      "units": 5
+    },
+    {
+      "from": [
+        "tmp:kb:3334",
+        "tmp:kb:3471"
+      ],
+      "new": "jgb/D/delegation-vs-lease-contract",
+      "ops": [
+        "new"
+      ],
+      "title": "委託約與租賃約的差別（系統分開管理）",
+      "units": 6
+    },
+    {
+      "from": [
+        "tmp:kb:3472",
+        "tmp:kb:3473",
+        "tmp:kb:3474"
+      ],
+      "new": "jgb/D/delegation-contract-flow",
+      "ops": [
+        "new"
+      ],
+      "title": "委託合約的建立簽署、提前終止與 PDF 下載",
+      "units": 11
+    },
+    {
+      "from": [
+        "tmp:kb:3114",
+        "tmp:kb:3115",
+        "tmp:kb:3121",
+        "tmp:kb:3122",
+        "tmp:kb:3125",
+        "tmp:kb:3147",
+        "tmp:kb:3259",
+        "tmp:kb:3260",
+        "tmp:kb:3117",
+        "tmp:kb:3123",
+        "tmp:kb:3158"
+      ],
+      "new": "jgb/D/delegation-contract-terms-general",
+      "ops": [
+        "new"
+      ],
+      "title": "委託管理合約一般內容：定義、期限、服務範圍、管理師責任與租客權益、管理費計算與支付、適用法律",
+      "units": 23
+    },
+    {
+      "from": [
+        "tmp:kb:3116",
+        "tmp:kb:3118",
+        "tmp:kb:3119",
+        "tmp:kb:3120",
+        "tmp:kb:3124",
+        "tmp:kb:3126",
+        "tmp:kb:3261",
+        "tmp:kb:3316"
+      ],
+      "new": "jgb/D/delegation-contract-change-termination",
+      "ops": [
+        "new"
+      ],
+      "title": "委託管理合約的變更、續約、終止、轉讓、違約與爭議解決",
+      "units": 17
+    },
+    {
+      "from": [
+        "tmp:kb:3387",
+        "tmp:kb:1392",
+        "tmp:kb:4263",
+        "tmp:kb:4278",
+        "tmp:kb:4279"
+      ],
+      "new": "jgb/D/deposit-setting-and-refund-system",
+      "ops": [
+        "new"
+      ],
+      "title": "合約押金設定（月數／固定金額）與押金查詢、退還時點（點退結算）",
+      "units": 3
+    },
+    {
+      "from": [
+        "tmp:kb:2901",
+        "tmp:kb:2916",
+        "tmp:kb:2926",
+        "tmp:kb:2929",
+        "tmp:kb:2932",
+        "tmp:kb:2934",
+        "tmp:kb:2935",
+        "tmp:kb:2936",
+        "tmp:kb:2937",
+        "tmp:kb:3021",
+        "tmp:kb:3211",
+        "tmp:kb:3215",
+        "tmp:kb:3284"
+      ],
+      "new": "jgb/D/deposit-legal-limits",
+      "ops": [
+        "new"
+      ],
+      "title": "押金一般規範：上限兩個月、無利息、法源、用途、支付方式、約定修改、轉讓、不得抵租",
+      "units": 30
+    },
+    {
+      "from": [
+        "tmp:kb:2927",
+        "tmp:kb:2930",
+        "tmp:kb:2931",
+        "tmp:kb:2933",
+        "tmp:kb:3154",
+        "tmp:kb:3171",
+        "tmp:kb:3212",
+        "tmp:kb:3213"
+      ],
+      "new": "jgb/D/deposit-deduction-refund",
+      "ops": [
+        "new"
+      ],
+      "title": "押金扣除、退還與爭議：扣款條件、明細告知、保管責任、退還期限、爭議處理",
+      "units": 18
+    },
+    {
+      "from": [
+        "tmp:kb:2928",
+        "tmp:kb:2977"
+      ],
+      "new": "jgb/D/tenant-pet-clauses",
+      "ops": [
+        "new"
+      ],
+      "title": "租約中的寵物押金與飼養寵物費用",
+      "units": 5
+    },
+    {
+      "from": [
+        "tmp:kb:3006",
+        "tmp:kb:3202",
+        "tmp:kb:3214"
+      ],
+      "new": "jgb/D/tenant-rental-insurance",
+      "ops": [
+        "new"
+      ],
+      "title": "租屋相關保險：租屋保險費用、租客設備投保、押金投保",
+      "units": 8
+    },
+    {
+      "from": [
+        "tmp:kb:2938",
+        "tmp:kb:2942"
+      ],
+      "new": "jgb/D/move-in-inspection",
+      "ops": [
+        "new"
+      ],
+      "title": "入住注意事項與傢俱清點",
+      "units": 7
+    },
+    {
+      "from": [
+        "tmp:kb:2939",
+        "tmp:kb:2940",
+        "tmp:kb:2941",
+        "tmp:kb:2943",
+        "tmp:kb:2944",
+        "tmp:kb:2947",
+        "tmp:kb:2948",
+        "tmp:kb:2950",
+        "tmp:kb:3191",
+        "tmp:kb:3216",
+        "tmp:kb:3218",
+        "tmp:kb:3273"
+      ],
+      "new": "jgb/D/tenant-move-out-obligations",
+      "ops": [
+        "new"
+      ],
+      "title": "退租義務：原狀回復、清潔標準、設備狀況、遺留物品處理、物品搬出",
+      "units": 32
+    },
+    {
+      "from": [
+        "tmp:kb:2949",
+        "tmp:kb:2951",
+        "tmp:kb:2952",
+        "tmp:kb:2953",
+        "tmp:kb:2955",
+        "tmp:kb:2956",
+        "tmp:kb:2957",
+        "tmp:kb:2958",
+        "tmp:kb:2959",
+        "tmp:kb:3022",
+        "tmp:kb:3217"
+      ],
+      "new": "jgb/D/lease-termination-notice-rules",
+      "ops": [
+        "new"
+      ],
+      "title": "終止租約的通知期與合法事由（租客／房東、不定期租約、租客失蹤）",
+      "units": 25
+    },
+    {
+      "from": [
+        "tmp:kb:2903",
+        "tmp:kb:2954",
+        "tmp:kb:2960",
+        "tmp:kb:2961",
+        "tmp:kb:2962",
+        "tmp:kb:3285",
+        "tmp:kb:3294"
+      ],
+      "new": "jgb/D/breach-penalty-rules",
+      "ops": [
+        "new"
+      ],
+      "title": "違約責任與違約金一般規範：上限、計算、提前解約後果、證據保留",
+      "units": 17
+    },
+    {
+      "from": [
+        "tmp:kb:2898",
+        "tmp:kb:2945",
+        "tmp:kb:2946",
+        "tmp:kb:3153",
+        "tmp:kb:3204"
+      ],
+      "new": "jgb/D/tenant-renewal-and-extension-rights",
+      "ops": [
+        "new"
+      ],
+      "title": "租約續約與延住的一般約定：要不要提前通知、依原合約條件、業者會不會協助",
+      "units": 14
+    },
+    {
+      "from": [
+        "tmp:kb:2924",
+        "tmp:kb:3028",
+        "tmp:kb:3034",
+        "tmp:kb:3159",
+        "tmp:kb:3209",
+        "tmp:kb:3210",
+        "tmp:kb:3239",
+        "tmp:kb:3296"
+      ],
+      "new": "jgb/D/lease-clauses-interpretation",
+      "ops": [
+        "new"
+      ],
+      "title": "租約條款有哪些、怎麼解釋與變更（租金法律依據、租金包含項目、租金爭議）",
+      "units": 24
+    },
+    {
+      "from": [
+        "tmp:kb:2989",
+        "tmp:kb:3290",
+        "tmp:kb:3196",
+        "tmp:kb:3201"
+      ],
+      "new": "jgb/D/equipment-usage-under-lease",
+      "ops": [
+        "new"
+      ],
+      "title": "租約中的設備與公共設備使用規範",
+      "units": 8
+    },
+    {
+      "from": [
+        "tmp:kb:3035",
+        "tmp:kb:3043",
+        "tmp:kb:3047"
+      ],
+      "new": "jgb/D/household-registration-under-lease",
+      "ops": [
+        "new"
+      ],
+      "title": "租屋期間戶籍遷移與居住證明",
+      "units": 7
+    },
+    {
+      "from": [
+        "tmp:kb:3077",
+        "tmp:kb:3078",
+        "tmp:kb:3079"
+      ],
+      "new": "jgb/D/sublease-and-shared-lease-terms",
+      "ops": [
+        "new"
+      ],
+      "title": "轉租與分租的租約條款與押金處理",
+      "units": 7
+    },
+    {
+      "from": [
+        "tmp:kb:3131",
+        "tmp:kb:3132",
+        "tmp:kb:3134",
+        "tmp:kb:3318"
+      ],
+      "new": "jgb/D/social-housing-lease",
+      "ops": [
+        "new"
+      ],
+      "title": "社會住宅租約與一般租約的差異、期限與終止",
+      "units": 9
+    },
+    {
+      "from": [
+        "tmp:draft:7"
+      ],
+      "new": "jgb/D/lease-notarization",
+      "ops": [
+        "new"
+      ],
+      "title": "租約公證：是什麼、去哪辦、費用、對房東房客的保障、與租補關係、公證合約如何上傳",
+      "units": 0
+    }
+  ],
+  "id_map": [
+    {
+      "new": "jgb/D/contract-esign-flow",
+      "old": "tmp:canon:jgb/D/contract-esign-flow",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/D/contract-esign-flow",
+      "old": "tmp:kb:3374",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/D/contract-esign-flow",
+      "old": "tmp:kb:3375",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/D/contract-esign-flow",
+      "old": "tmp:kb:3484",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/D/contract-esign-flow",
+      "old": "tmp:kb:3332",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/D/contract-esign-flow",
+      "old": "tmp:draft:3",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/D/contract-esign-flow",
+      "old": "tmp:draft:2",
+      "op": "split"
+    },
+    {
+      "new": "jgb/D/contract-batch-renewal",
+      "old": "tmp:canon:jgb/D/contract-batch-renewal",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/D/contract-batch-renewal",
+      "old": "tmp:kb:3530",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/D/contract-batch-renewal",
+      "old": "tmp:draft:2",
+      "op": "split"
+    },
+    {
+      "new": "jgb/D/contract-history-retention",
+      "old": "tmp:canon:jgb/D/contract-history-retention",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/D/contract-history-retention",
+      "old": "tmp:kb:3330",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/D/contract-history-retention",
+      "old": "tmp:kb:3385",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/D/contract-history-retention",
+      "old": "tmp:kb:3853",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/D/contract-history-retention",
+      "old": "tmp:draft:6",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/D/contract-modify-after-sign",
+      "old": "tmp:canon:jgb/D/contract-modify-after-sign",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/D/contract-modify-after-sign",
+      "old": "tmp:kb:3838",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/D/contract-modify-after-sign",
+      "old": "tmp:kb:3839",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/D/contract-modify-after-sign",
+      "old": "tmp:kb:3842",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/D/contract-modify-after-sign",
+      "old": "tmp:kb:3873",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/D/contract-modify-after-sign",
+      "old": "tmp:kb:3874",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/D/contract-modify-after-sign",
+      "old": "tmp:kb:3875",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/D/contract-modify-after-sign",
+      "old": "tmp:kb:4562",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/D/contract-modify-after-sign",
+      "old": "tmp:kb:4646",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/D/contract-modify-after-sign",
+      "old": "tmp:draft:11",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/D/contract-modify-after-sign",
+      "old": "tmp:draft:20",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/D/contract-templates",
+      "old": "tmp:canon:jgb/D/contract-templates",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/D/contract-templates",
+      "old": "tmp:kb:3845",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/D/lease-expiry-followup-scope",
+      "old": "tmp:canon:jgb/D/lease-expiry-followup-scope",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/D/lease-expiry-followup-scope",
+      "old": "tmp:kb:3388",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/D/sublease-vs-management-contract",
+      "old": "tmp:canon:jgb/D/sublease-vs-management-contract",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/D/sublease-vs-management-contract",
+      "old": "tmp:kb:3089",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/D/sublease-vs-management-contract",
+      "old": "tmp:kb:3090",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/D/sublease-vs-management-contract",
+      "old": "tmp:kb:3093",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/D/sublease-vs-management-contract",
+      "old": "tmp:kb:3094",
+      "op": "merge"
+    },
+    {
+      "new": "jgb/D/contract-create-entry-and-prereq",
+      "old": "tmp:kb:3861",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/contract-create-entry-and-prereq",
+      "old": "tmp:kb:3507",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/contract-create-entry-and-prereq",
+      "old": "tmp:kb:4153",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/contract-create-entry-and-prereq",
+      "old": "tmp:kb:3862",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/contract-create-entry-and-prereq",
+      "old": "tmp:kb:3881",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/contract-create-entry-and-prereq",
+      "old": "tmp:draft:8",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/contract-create-entry-and-prereq",
+      "old": "tmp:draft:9",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/contract-create-entry-and-prereq",
+      "old": "tmp:draft:18",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/contract-copy",
+      "old": "tmp:kb:3394",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/upload-existing-contract",
+      "old": "tmp:kb:3860",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/upload-existing-contract",
+      "old": "tmp:kb:4218",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/upload-existing-contract",
+      "old": "tmp:draft:2",
+      "op": "split"
+    },
+    {
+      "new": "jgb/D/contract-attachments-notes-limits",
+      "old": "tmp:kb:3393",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/contract-attachments-notes-limits",
+      "old": "tmp:kb:3843",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/contract-attachments-notes-limits",
+      "old": "tmp:draft:5",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/contract-pdf-download",
+      "old": "tmp:kb:3390",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/signer-identity-and-seal",
+      "old": "tmp:kb:3440",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/signer-identity-and-seal",
+      "old": "tmp:kb:3864",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/signer-identity-and-seal",
+      "old": "tmp:kb:3866",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/signer-identity-and-seal",
+      "old": "tmp:kb:4645",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/contract-send-invite",
+      "old": "tmp:kb:3867",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/contract-send-invite",
+      "old": "tmp:kb:3368",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/contract-send-invite",
+      "old": "tmp:kb:3490",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/contract-send-invite",
+      "old": "tmp:draft:10",
+      "op": "split"
+    },
+    {
+      "new": "jgb/D/contract-send-invite",
+      "old": "tmp:draft:16",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/esign-invite-expiry",
+      "old": "tmp:kb:3331",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/esign-invite-expiry",
+      "old": "tmp:kb:3868",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/esign-invite-expiry",
+      "old": "tmp:draft:10",
+      "op": "split"
+    },
+    {
+      "new": "jgb/D/esign-troubleshooting",
+      "old": "tmp:kb:3392",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/esign-troubleshooting",
+      "old": "tmp:kb:3870",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/esign-troubleshooting",
+      "old": "tmp:kb:3872",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/esign-troubleshooting",
+      "old": "tmp:kb:3883",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/esign-troubleshooting",
+      "old": "tmp:kb:3884",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/esign-troubleshooting",
+      "old": "tmp:kb:3814",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/esign-troubleshooting",
+      "old": "tmp:kb:3815",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/esign-troubleshooting",
+      "old": "tmp:kb:4644",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/tenant-sign-steps",
+      "old": "tmp:kb:3442",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/tenant-sign-steps",
+      "old": "tmp:draft:19",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/esign-legal-validity",
+      "old": "tmp:kb:3865",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/esign-legal-validity",
+      "old": "tmp:kb:3328",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/contract-status-overview",
+      "old": "tmp:kb:3373",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/contract-status-overview",
+      "old": "tmp:kb:3389",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/contract-status-overview",
+      "old": "tmp:kb:4254",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/contract-status-overview",
+      "old": "tmp:kb:3372",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/contract-status-overview",
+      "old": "tmp:kb:3510",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/contract-status-overview",
+      "old": "tmp:kb:3511",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/contract-status-overview",
+      "old": "tmp:kb:4563",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/contract-lookup",
+      "old": "tmp:kb:4639",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/contract-lookup",
+      "old": "tmp:kb:4641",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/contract-lookup",
+      "old": "tmp:draft:21",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/contract-filter-by-state",
+      "old": "tmp:kb:4149",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/contract-filter-by-state",
+      "old": "tmp:kb:4655",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/contract-filter-by-state",
+      "old": "tmp:draft:12",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/contract-data-change-form",
+      "old": "tmp:kb:3841",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/contract-snapshot-independence",
+      "old": "tmp:kb:3894",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/contract-snapshot-independence",
+      "old": "tmp:kb:3896",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/contract-snapshot-independence",
+      "old": "tmp:kb:3897",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/tenant-change-new-contract",
+      "old": "tmp:kb:3898",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/tenant-change-new-contract",
+      "old": "tmp:kb:4216",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/contract-cancel-delete",
+      "old": "tmp:kb:3846",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/contract-cancel-delete",
+      "old": "tmp:kb:3513",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/contract-cancel-delete",
+      "old": "tmp:kb:3386",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/handover-checkin",
+      "old": "tmp:kb:3376",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/handover-checkin",
+      "old": "tmp:kb:3377",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/handover-checkin",
+      "old": "tmp:kb:3491",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/handover-checkin",
+      "old": "tmp:kb:3515",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/handover-checkin",
+      "old": "tmp:kb:3516",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/handover-checkin",
+      "old": "tmp:draft:2",
+      "op": "split"
+    },
+    {
+      "new": "jgb/D/return-checkout",
+      "old": "tmp:kb:3378",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/return-checkout",
+      "old": "tmp:kb:3379",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/return-checkout",
+      "old": "tmp:kb:3492",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/return-checkout",
+      "old": "tmp:kb:3518",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/return-checkout",
+      "old": "tmp:kb:3520",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/return-checkout",
+      "old": "tmp:kb:3521",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/return-checkout",
+      "old": "tmp:kb:3850",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/return-checkout",
+      "old": "tmp:draft:13",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/return-checkout",
+      "old": "tmp:draft:14",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/return-checkout",
+      "old": "tmp:draft:17",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/return-checkout",
+      "old": "tmp:draft:2",
+      "op": "split"
+    },
+    {
+      "new": "jgb/D/handover-return-cancel-invite",
+      "old": "tmp:kb:3512",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/handover-return-cancel-invite",
+      "old": "tmp:kb:4255",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/lease-end-checkout-overview",
+      "old": "tmp:kb:3847",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/lease-end-checkout-overview",
+      "old": "tmp:kb:3876",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/lease-end-checkout-overview",
+      "old": "tmp:kb:3878",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/early-termination-flow",
+      "old": "tmp:kb:3380",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/early-termination-flow",
+      "old": "tmp:kb:3381",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/early-termination-flow",
+      "old": "tmp:kb:3382",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/early-termination-flow",
+      "old": "tmp:kb:3370",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/early-termination-flow",
+      "old": "tmp:kb:3493",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/early-termination-flow",
+      "old": "tmp:kb:3523",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/early-termination-flow",
+      "old": "tmp:kb:3525",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/early-termination-flow",
+      "old": "tmp:kb:3851",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/early-termination-flow",
+      "old": "tmp:draft:2",
+      "op": "split"
+    },
+    {
+      "new": "jgb/D/early-termination-penalty",
+      "old": "tmp:kb:3522",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/early-termination-penalty",
+      "old": "tmp:kb:3524",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/early-termination-aftermath",
+      "old": "tmp:kb:3526",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/early-termination-aftermath",
+      "old": "tmp:kb:3877",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/early-termination-aftermath",
+      "old": "tmp:draft:15",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/renewal-flow",
+      "old": "tmp:kb:3383",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/renewal-flow",
+      "old": "tmp:kb:3384",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/renewal-flow",
+      "old": "tmp:kb:3494",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/renewal-flow",
+      "old": "tmp:kb:3371",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/renewal-flow",
+      "old": "tmp:kb:3879",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/renewal-flow",
+      "old": "tmp:kb:3880",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/renewal-flow",
+      "old": "tmp:kb:3528",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/renewal-flow",
+      "old": "tmp:kb:3529",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/renewal-flow",
+      "old": "tmp:kb:3858",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/renewal-flow",
+      "old": "tmp:kb:3854",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/renewal-vs-new-contract",
+      "old": "tmp:kb:3855",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/renewal-vs-new-contract",
+      "old": "tmp:kb:3329",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/renewal-vs-new-contract",
+      "old": "tmp:kb:3333",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/renewal-history-and-addendum",
+      "old": "tmp:kb:3527",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/renewal-history-and-addendum",
+      "old": "tmp:kb:3856",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/renewal-history-and-addendum",
+      "old": "tmp:kb:4660",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/delegation-vs-lease-contract",
+      "old": "tmp:kb:3334",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/delegation-vs-lease-contract",
+      "old": "tmp:kb:3471",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/delegation-contract-flow",
+      "old": "tmp:kb:3472",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/delegation-contract-flow",
+      "old": "tmp:kb:3473",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/delegation-contract-flow",
+      "old": "tmp:kb:3474",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/delegation-contract-terms-general",
+      "old": "tmp:kb:3114",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/delegation-contract-terms-general",
+      "old": "tmp:kb:3115",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/delegation-contract-terms-general",
+      "old": "tmp:kb:3121",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/delegation-contract-terms-general",
+      "old": "tmp:kb:3122",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/delegation-contract-terms-general",
+      "old": "tmp:kb:3125",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/delegation-contract-terms-general",
+      "old": "tmp:kb:3147",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/delegation-contract-terms-general",
+      "old": "tmp:kb:3259",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/delegation-contract-terms-general",
+      "old": "tmp:kb:3260",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/delegation-contract-terms-general",
+      "old": "tmp:kb:3117",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/delegation-contract-terms-general",
+      "old": "tmp:kb:3123",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/delegation-contract-terms-general",
+      "old": "tmp:kb:3158",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/delegation-contract-change-termination",
+      "old": "tmp:kb:3116",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/delegation-contract-change-termination",
+      "old": "tmp:kb:3118",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/delegation-contract-change-termination",
+      "old": "tmp:kb:3119",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/delegation-contract-change-termination",
+      "old": "tmp:kb:3120",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/delegation-contract-change-termination",
+      "old": "tmp:kb:3124",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/delegation-contract-change-termination",
+      "old": "tmp:kb:3126",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/delegation-contract-change-termination",
+      "old": "tmp:kb:3261",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/delegation-contract-change-termination",
+      "old": "tmp:kb:3316",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/deposit-setting-and-refund-system",
+      "old": "tmp:kb:3387",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/deposit-setting-and-refund-system",
+      "old": "tmp:kb:1392",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/deposit-setting-and-refund-system",
+      "old": "tmp:kb:4263",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/deposit-setting-and-refund-system",
+      "old": "tmp:kb:4278",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/deposit-setting-and-refund-system",
+      "old": "tmp:kb:4279",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/deposit-legal-limits",
+      "old": "tmp:kb:2901",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/deposit-legal-limits",
+      "old": "tmp:kb:2916",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/deposit-legal-limits",
+      "old": "tmp:kb:2926",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/deposit-legal-limits",
+      "old": "tmp:kb:2929",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/deposit-legal-limits",
+      "old": "tmp:kb:2932",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/deposit-legal-limits",
+      "old": "tmp:kb:2934",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/deposit-legal-limits",
+      "old": "tmp:kb:2935",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/deposit-legal-limits",
+      "old": "tmp:kb:2936",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/deposit-legal-limits",
+      "old": "tmp:kb:2937",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/deposit-legal-limits",
+      "old": "tmp:kb:3021",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/deposit-legal-limits",
+      "old": "tmp:kb:3211",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/deposit-legal-limits",
+      "old": "tmp:kb:3215",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/deposit-legal-limits",
+      "old": "tmp:kb:3284",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/deposit-deduction-refund",
+      "old": "tmp:kb:2927",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/deposit-deduction-refund",
+      "old": "tmp:kb:2930",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/deposit-deduction-refund",
+      "old": "tmp:kb:2931",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/deposit-deduction-refund",
+      "old": "tmp:kb:2933",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/deposit-deduction-refund",
+      "old": "tmp:kb:3154",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/deposit-deduction-refund",
+      "old": "tmp:kb:3171",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/deposit-deduction-refund",
+      "old": "tmp:kb:3212",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/deposit-deduction-refund",
+      "old": "tmp:kb:3213",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/tenant-pet-clauses",
+      "old": "tmp:kb:2928",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/tenant-pet-clauses",
+      "old": "tmp:kb:2977",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/tenant-rental-insurance",
+      "old": "tmp:kb:3006",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/tenant-rental-insurance",
+      "old": "tmp:kb:3202",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/tenant-rental-insurance",
+      "old": "tmp:kb:3214",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/move-in-inspection",
+      "old": "tmp:kb:2938",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/move-in-inspection",
+      "old": "tmp:kb:2942",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/tenant-move-out-obligations",
+      "old": "tmp:kb:2939",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/tenant-move-out-obligations",
+      "old": "tmp:kb:2940",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/tenant-move-out-obligations",
+      "old": "tmp:kb:2941",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/tenant-move-out-obligations",
+      "old": "tmp:kb:2943",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/tenant-move-out-obligations",
+      "old": "tmp:kb:2944",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/tenant-move-out-obligations",
+      "old": "tmp:kb:2947",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/tenant-move-out-obligations",
+      "old": "tmp:kb:2948",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/tenant-move-out-obligations",
+      "old": "tmp:kb:2950",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/tenant-move-out-obligations",
+      "old": "tmp:kb:3191",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/tenant-move-out-obligations",
+      "old": "tmp:kb:3216",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/tenant-move-out-obligations",
+      "old": "tmp:kb:3218",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/tenant-move-out-obligations",
+      "old": "tmp:kb:3273",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/lease-termination-notice-rules",
+      "old": "tmp:kb:2949",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/lease-termination-notice-rules",
+      "old": "tmp:kb:2951",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/lease-termination-notice-rules",
+      "old": "tmp:kb:2952",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/lease-termination-notice-rules",
+      "old": "tmp:kb:2953",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/lease-termination-notice-rules",
+      "old": "tmp:kb:2955",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/lease-termination-notice-rules",
+      "old": "tmp:kb:2956",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/lease-termination-notice-rules",
+      "old": "tmp:kb:2957",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/lease-termination-notice-rules",
+      "old": "tmp:kb:2958",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/lease-termination-notice-rules",
+      "old": "tmp:kb:2959",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/lease-termination-notice-rules",
+      "old": "tmp:kb:3022",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/lease-termination-notice-rules",
+      "old": "tmp:kb:3217",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/breach-penalty-rules",
+      "old": "tmp:kb:2903",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/breach-penalty-rules",
+      "old": "tmp:kb:2954",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/breach-penalty-rules",
+      "old": "tmp:kb:2960",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/breach-penalty-rules",
+      "old": "tmp:kb:2961",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/breach-penalty-rules",
+      "old": "tmp:kb:2962",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/breach-penalty-rules",
+      "old": "tmp:kb:3285",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/breach-penalty-rules",
+      "old": "tmp:kb:3294",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/tenant-renewal-and-extension-rights",
+      "old": "tmp:kb:2898",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/tenant-renewal-and-extension-rights",
+      "old": "tmp:kb:2945",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/tenant-renewal-and-extension-rights",
+      "old": "tmp:kb:2946",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/tenant-renewal-and-extension-rights",
+      "old": "tmp:kb:3153",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/tenant-renewal-and-extension-rights",
+      "old": "tmp:kb:3204",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/lease-clauses-interpretation",
+      "old": "tmp:kb:2924",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/lease-clauses-interpretation",
+      "old": "tmp:kb:3028",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/lease-clauses-interpretation",
+      "old": "tmp:kb:3034",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/lease-clauses-interpretation",
+      "old": "tmp:kb:3159",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/lease-clauses-interpretation",
+      "old": "tmp:kb:3209",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/lease-clauses-interpretation",
+      "old": "tmp:kb:3210",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/lease-clauses-interpretation",
+      "old": "tmp:kb:3239",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/lease-clauses-interpretation",
+      "old": "tmp:kb:3296",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/equipment-usage-under-lease",
+      "old": "tmp:kb:2989",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/equipment-usage-under-lease",
+      "old": "tmp:kb:3290",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/equipment-usage-under-lease",
+      "old": "tmp:kb:3196",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/equipment-usage-under-lease",
+      "old": "tmp:kb:3201",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/household-registration-under-lease",
+      "old": "tmp:kb:3035",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/household-registration-under-lease",
+      "old": "tmp:kb:3043",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/household-registration-under-lease",
+      "old": "tmp:kb:3047",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/sublease-and-shared-lease-terms",
+      "old": "tmp:kb:3077",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/sublease-and-shared-lease-terms",
+      "old": "tmp:kb:3078",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/sublease-and-shared-lease-terms",
+      "old": "tmp:kb:3079",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/social-housing-lease",
+      "old": "tmp:kb:3131",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/social-housing-lease",
+      "old": "tmp:kb:3132",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/social-housing-lease",
+      "old": "tmp:kb:3134",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/social-housing-lease",
+      "old": "tmp:kb:3318",
+      "op": "new"
+    },
+    {
+      "new": "jgb/D/lease-notarization",
+      "old": "tmp:draft:7",
+      "op": "new"
+    }
+  ]
+}

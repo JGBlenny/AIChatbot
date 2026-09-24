@@ -13,12 +13,12 @@
 5.x 修訂重點（獨立審查 REVISE 後的修法，⛔ 別再退回 4.2 骨架的做法）：
 - `--provider openai` 不再無條件拒絕：`build_real_runtime()` 接上真
   `services.llm_provider.get_llm_provider()`／`services.agent.outline
-  .build_prospect_outline`／`services.agent.bootstrap.build_runtime`
+  .build_audience_outline`／`services.agent.bootstrap.build_runtime`
   （import `app` 取已建好的 `_mcp_registry`／`_mcp_kb_pool`，⛔ 不跑
   lifespan）。缺 `OPENAI_API_KEY` 時在**任何網路呼叫之前**明確拒絕。
 - 每個 scenario 的多輪對話共用同一個 `state` dict。
 - 身分改 `mode="b2b"`、`vendor_id=1`（售前池是 b2b 池，見
-  `services/agent/outline.py:build_prospect_outline` 與
+  `services/agent/outline.py:build_audience_outline` 與
   `services/agent/identity.py:normalize_entry_mode`——prospect 一律 b2b）。
 - 無捏造（`no_fabrication`）的尺：`forbid_hit`。`verifier_rejects`／
   `rewrote_ok` 只是觀測值，不再判定這條硬線。
@@ -95,7 +95,7 @@ class IndexNotReady(RuntimeError):
     接住並轉成 `EXIT_INDEX_NOT_READY`。⛔ 不以降級臂充當 on 臂：這是「機制沒
     準備好」，不是「候選沒用」，兩者混在一起會把故障量成效果。"""
 
-#: 售前池是 b2b 池（見 services/agent/outline.py:build_prospect_outline 的
+#: 售前池是 b2b 池（見 services/agent/outline.py:build_audience_outline 的
 #: `Identity(vendor_id=1, target_user="prospect", mode="b2b")` 與其
 #: 「⛔ 勿改回 b2c」註解；同一條正規化的正本是
 #: services/agent/identity.py:normalize_entry_mode——prospect 一律 b2b，
@@ -652,17 +652,21 @@ class _DeterministicBackend:
 
 
 async def _resolve_prospect_canon() -> Any:
-    """`get_canon("prospect")` 若未註冊則從 git 正本載入並註冊——假 provider
-    路徑與真 provider 路徑（`_build_prospect_index`）同一式，⛔ 不依賴呼叫端
-    是否先跑過 `build_prospect_outline`。"""
+    """`get_canon()` 若未註冊則從 git 正本載入並註冊——假 provider 路徑與真 provider
+    路徑（`_build_prospect_index`）同一式，⛔ 不依賴呼叫端是否先跑過
+    `build_audience_outline`。
+
+    ⚠️ DSP-058：正本只有一份（`canon/jgb/`），這裡取的是**整份正本**（索引對整份建；
+    受眾過濾由 `CandidateSelector` 每回合的 `visible_subset` 做），⛔ 不是 prospect 專屬那份。
+    """
     from services.agent.canon.canon_assembler import (
         get_canon, load_canon_or_die, register_canon, resolve_canon_dir,
     )
 
-    canon = get_canon("prospect")
+    canon = get_canon()
     if canon is None:
-        canon = load_canon_or_die(resolve_canon_dir(), "prospect")
-        register_canon("prospect", canon)
+        canon = load_canon_or_die(resolve_canon_dir())
+        register_canon(canon)
     return canon
 
 
@@ -701,14 +705,37 @@ async def _build_fake_candidate_selector() -> "CandidateSelector":
     return CandidateSelector(index)
 
 
-def _set_outline_on_state(state: dict, outline_doc: Any) -> dict:
-    """回傳 `state["agent"]`；若有大綱則塞入 `outline`（Runtime 從
-    `state["agent"]["outline"]` 讀，見 `services/agent/mcp_facade.py:_agent_turn`
-    同一做法）。"""
-    agent_state = state.setdefault("agent", {})
-    if outline_doc is not None:
-        agent_state["outline"] = outline_doc
-    return agent_state
+async def _offline_full_view_outline(canon: Any, identity: Any) -> Any:
+    """`--candidates off` 離線臂：可見已審全集＋toc，明標**離線**——產線
+    `_select_outline` 沒有候選機制時回 `(None, None)`（零細目），這支只給
+    評估工具的「off」臂一個可比較的基準，⛔ 不是產線行為。"""
+    from services.agent.canon.canon_assembler import build_canon_sections, build_canon_toc, canon_visible
+    from services.agent.outline import CandidateOutlineDoc, resolve_vendor_business_types
+
+    vendor_business_types = resolve_vendor_business_types(identity)
+    toc = build_canon_toc(canon, identity, vendor_business_types=vendor_business_types)
+    ids = [
+        fine.id for fine in canon.fines()
+        if canon_visible(identity, fine, vendor_business_types=vendor_business_types)
+    ]
+    sections = build_canon_sections(
+        canon, identity, ids, vendor_business_types=vendor_business_types
+    )
+    return CandidateOutlineDoc.from_canon(
+        canon, identity, [s.id for s in sections], toc,
+        vendor_business_types=vendor_business_types,
+    )
+
+
+def _bind_offline_select_outline(runtime: Any, canon: Any) -> None:
+    """把 `runtime._select_outline` 換成 `_offline_full_view_outline` 的薄包裝
+    （只給 `--candidates off` 臂用；`on` 臂沿用真正的 `AgentRuntime._select_outline`，
+    ⛔ 這個替換只在評估工具內生效，不影響產線）。"""
+
+    async def _stub(identity, user_message, dialog, violations):
+        return await _offline_full_view_outline(canon, identity), None
+
+    runtime._select_outline = _stub
 
 
 def _estimate_cost_usd(model: str, prompt_tokens: int, completion_tokens: int) -> float:
@@ -754,11 +781,13 @@ async def _run_scenario_agent(
     identity: Any,
     turns: list["Turn"],
     *,
-    outline_doc: Any = None,
     attempts_buffer: Optional[list] = None,
 ) -> list[tuple["Turn", Any, int, list]]:
     """單一 scenario 逐輪呼叫 `run_turn`，**同一個 `state` dict**貫穿全程
     （P0 必修 2：多輪帶歷史）。回傳 `[(turn, TurnResult, latency_ms, attempts), ...]`。
+
+    `Runtime._select_outline` 每回合直接從已註冊的正本現組（`on` 臂）或呼叫端
+    已 bind 好的離線替身（`off` 臂，見 `_bind_offline_select_outline`）。
 
     tasks 4.3c：`attempts_buffer`（若有）是呼叫端傳給 `AgentRuntime(attempt_sink=...)`
     的同一個 list——`run_turn` 是逐輪 `await` 序列呼叫（非併發），故在每輪呼叫前
@@ -766,7 +795,6 @@ async def _run_scenario_agent(
     state: dict = {}
     out: list[tuple["Turn", Any, int, list]] = []
     for t in turns:
-        _set_outline_on_state(state, outline_doc)
         if attempts_buffer is not None:
             attempts_buffer.clear()
         t0 = time.monotonic()
@@ -777,7 +805,6 @@ async def _run_scenario_agent(
             # ⛔ 不吞 CancelledError（BaseException）。列上無原文、只有例外型別名。
             result = _provider_error_result(exc)
         latency_ms = int((time.monotonic() - t0) * 1000)
-        state.setdefault("agent", {}).pop("outline", None)
         attempts = list(attempts_buffer) if attempts_buffer is not None else []
         out.append((t, result, latency_ms, attempts))
     return out
@@ -821,10 +848,12 @@ def _refs_for_dump(attempts: list[dict]) -> list[str]:
 #: 只有 violations 分得開）。
 _CANDIDATE_VIOLATION_KINDS = frozenset(
     {
-        "candidate_fallback_full_outline",
+        "candidate_fallback_toc_only",
         "candidate_selector_error",
         "candidate_none_visible",
         "candidate_ids_shape_invalid",
+        "candidate_invisible_id",
+        "candidate_toc_error",
     }
 )
 
@@ -905,12 +934,10 @@ async def _run_agent_chain_fake(
     scenarios: list[Scenario], *, set_name: str, repeat: int, dump_sink: Optional[list[dict]] = None,
     candidates: str = "off",
 ) -> tuple[list[EvalRecord], dict]:
-    # 任務 4.3（Plan §3.1）：`on`／`off` 兩臂在假 provider 路徑都要塞
-    # `outline_doc`（原本 `outline_doc=None` 讓 S1 的候選適用條件恆不成立），
-    # 否則 `--candidates on` 也選不到任何東西。只有 `on` 才建 selector。
-    from services.agent.outline import build_prospect_outline
-
-    outline_doc = await build_prospect_outline(None)
+    # `on` 臂靠真正的 `candidate_selector`（`AgentRuntime._select_outline`
+    # 每回合從已註冊正本現組）；`off` 臂綁 `_bind_offline_select_outline`
+    # （離線「可見已審全集＋toc」臂）。兩臂都需要正本已註冊。
+    canon = await _resolve_prospect_canon()
     selector = None
     candidates_backend = "none"
     if candidates == "on":
@@ -931,9 +958,11 @@ async def _run_agent_chain_fake(
             runtime_kwargs = {"attempt_sink": attempts_buffer.append} if attempts_buffer is not None else {}
             runtime_kwargs["candidate_selector"] = selector
             runtime = build_runtime(db_pool=None, provider=provider, registry=registry, **runtime_kwargs)
+            if candidates != "on":
+                _bind_offline_select_outline(runtime, canon)
             identity = make_agent_identity(session_id=eval_session_id(set_name, sc.idx, rep))
             for t, result, latency_ms, attempts in await _run_scenario_agent(
-                runtime, identity, sc.turns, outline_doc=outline_doc, attempts_buffer=attempts_buffer,
+                runtime, identity, sc.turns, attempts_buffer=attempts_buffer,
             ):
                 records.append(
                     _build_agent_record(
@@ -942,13 +971,16 @@ async def _run_agent_chain_fake(
                         dump_sink=dump_sink, attempts=attempts, candidates_mode=candidates,
                     )
                 )
-    return records, {"outline_sha": "", "candidates_mode": candidates, "candidates_backend": candidates_backend}
+    return records, {
+        "outline_sha": canon.canon_sha256, "candidates_mode": candidates,
+        "candidates_backend": candidates_backend,
+    }
 
 
 @dataclass
 class _RealRuntimeHandle:
     runtime: Any
-    outline_doc: Any
+    canon: Any
     db_pool: Any
     owns_pool: bool
 
@@ -990,10 +1022,11 @@ async def build_real_runtime(
        /DB_PASSWORD` env 建一個 asyncpg pool 塞回去（`FacadeDeps.get_db_pool`
        讀的就是這個屬性）。
     4. `provider = services.llm_provider.get_llm_provider()`。
-    5. `outline_doc = await services.agent.outline.build_prospect_outline(
-       appmod._mcp_kb_pool)`。
+    5. `canon = await _resolve_prospect_canon()`（載入並註冊正本；
+       `Runtime._select_outline` 每回合直接從已註冊正本現組，本函式不組
+       大綱物件）。
     6. `services.agent.bootstrap.build_runtime(db_pool, provider,
-       appmod._mcp_registry, outline_doc=outline_doc, readonly_view=True)`
+       appmod._mcp_registry, readonly_view=True)`
        （`readonly_view=True`：評估工具不得真的寫使用者可見的狀態列）。
 
     ⚠️ **可注入／可 monkeypatch**（P1 必修 11）：本函式是模組層名稱
@@ -1005,7 +1038,6 @@ async def build_real_runtime(
     import app as appmod  # noqa: F401 — import 期建好 _mcp_registry／_mcp_kb_pool
     from services import llm_provider as llm_provider_mod
     from services.agent import bootstrap as bootstrap_mod
-    from services.agent import outline as outline_mod
 
     db_pool = getattr(appmod.app.state, "db_pool", None)
     owns_pool = False
@@ -1023,19 +1055,20 @@ async def build_real_runtime(
         owns_pool = True
 
     provider = llm_provider_mod.get_llm_provider()
-    outline_doc = await outline_mod.build_prospect_outline(appmod._mcp_kb_pool)
+    canon = await _resolve_prospect_canon()
     # tasks 4.3c：`attempt_sink` 只在 `--dump-texts` 開啟時由呼叫端傳入；
     # 預設 None ⇒ 不傳進 `build_runtime`（與正式路徑同一份 kwargs 慣例）。
     # 任務 4.3（Plan §3.1 修訂）：`candidate_selector` 是本片唯一動到本函式簽名
     # 的地方——`--candidates on` 時由呼叫端先備妥已 `prepare` 的索引再傳進來；
-    # 預設 `None` ⇒ 沿用既有行為（`AgentRuntime._candidate_selector` 留空）。
+    # 預設 `None` ⇒ 沿用既有行為（`AgentRuntime._candidate_selector` 留空，
+    # 呼叫端須另外 `_bind_offline_select_outline` 才有離線 off 臂）。
     extra_kwargs = {"attempt_sink": attempt_sink} if attempt_sink is not None else {}
     runtime = bootstrap_mod.build_runtime(
-        db_pool, provider, appmod._mcp_registry, outline_doc=outline_doc, readonly_view=True,
+        db_pool, provider, appmod._mcp_registry, readonly_view=True,
         candidate_selector=candidate_selector,
         **extra_kwargs,
     )
-    return _RealRuntimeHandle(runtime=runtime, outline_doc=outline_doc, db_pool=db_pool, owns_pool=owns_pool)
+    return _RealRuntimeHandle(runtime=runtime, canon=canon, db_pool=db_pool, owns_pool=owns_pool)
 
 
 async def _run_agent_chain_openai(
@@ -1082,13 +1115,19 @@ async def _run_agent_chain_openai(
         candidates_backend = "embedding"
 
     handle = await build_real_runtime(**build_kwargs)
+    if candidates != "on" and getattr(handle, "canon", None) is not None:
+        # 離線 off 臂——見 `_bind_offline_select_outline`。
+        # ⚠️ `getattr` 防禦：測試常用整支替換的假 handle，沒有 `.canon` 屬性時
+        # 就沿用 `AgentRuntime._select_outline` 的既有語義（無候選機制 ⇒ 無 outline），
+        # ⛔ 不是新增第二套降級判斷。
+        _bind_offline_select_outline(handle.runtime, handle.canon)
     try:
         records: list[EvalRecord] = []
         for rep in range(repeat):
             for sc in scenarios:
                 identity = make_agent_identity(session_id=eval_session_id(set_name, sc.idx, rep))
                 for t, result, latency_ms, attempts in await _run_scenario_agent(
-                    handle.runtime, identity, sc.turns, outline_doc=handle.outline_doc,
+                    handle.runtime, identity, sc.turns,
                     attempts_buffer=attempts_buffer,
                 ):
                     records.append(
@@ -1098,7 +1137,7 @@ async def _run_agent_chain_openai(
                             dump_sink=dump_sink, attempts=attempts, candidates_mode=candidates,
                         )
                     )
-        outline_sha = str(getattr(handle.outline_doc, "sha256", "") or "")
+        outline_sha = str(getattr(getattr(handle, "canon", None), "canon_sha256", "") or "")
         return records, {
             "outline_sha": outline_sha,
             "candidates_mode": candidates,
@@ -1264,7 +1303,7 @@ def _candidates_report_stats(records: list[EvalRecord]) -> dict:
     violations 分得開）；`avg_candidates` 只算 `miss_kind is not None`（真的
     跑過候選機制）那些回合；`gold_in_candidates_rate` 只算非 `None` 的回合。"""
     n = len(records) or 1
-    fallback_n = sum(1 for r in records if "candidate_fallback_full_outline" in r.candidate_violations)
+    fallback_n = sum(1 for r in records if "candidate_fallback_toc_only" in r.candidate_violations)
     selector_error_n = sum(1 for r in records if "candidate_selector_error" in r.candidate_violations)
     none_visible_n = sum(1 for r in records if "candidate_none_visible" in r.candidate_violations)
     with_miss_kind = [r for r in records if r.miss_kind is not None]
@@ -1305,7 +1344,7 @@ def render_report_md(
     lines = ["# agent_eval report", ""]
     lines.append(f"- samples_sha: `{json.dumps(samples_sha, ensure_ascii=False)}`")
     lines.append(f"- rules_sha: `{rules_sha}`")
-    lines.append(f"- outline_sha: `{outline_sha}`（fake provider 路徑無真大綱，此欄可能為空）")
+    lines.append(f"- outline_sha: `{outline_sha}`（＝正本 `canon_sha256`）")
     lines.append(f"- git HEAD: `{git_head}`")
     lines.append("")
     if dump_texts:
@@ -1559,7 +1598,7 @@ def _repeat_summary(records: list[EvalRecord]) -> dict:
     answered_rates = _rate_per_rep(lambda r: r.answered)
     boundary_ok_rates = _rate_per_rep(lambda r: bool(r.boundary_ok), subset_pred=lambda r: r.boundary_expected)
     candidate_fallback_rates = _rate_per_rep(
-        lambda r: "candidate_fallback_full_outline" in r.candidate_violations
+        lambda r: "candidate_fallback_toc_only" in r.candidate_violations
     )
     gold_in_candidates_rates = _rate_per_rep(
         lambda r: bool(r.gold_in_candidates), subset_pred=lambda r: r.gold_in_candidates is not None

@@ -1,0 +1,337 @@
+{
+  "cost": {
+    "agents": 0,
+    "completion_tokens": 0,
+    "prompt_tokens": 0,
+    "usd": 0.0,
+    "wall_s": 0.0
+  },
+  "deterministic": true,
+  "inputs_sha": {
+    "phrasing_map": "bd4ac27e9795a0fbe4b7b3246be4f4c9e2d947cbfa5205ce22374935878683e9",
+    "structure": "1e5ae3b6f4b0030d21ed92d69b6cc387a7fd3461fa34be793d093bae33500b53"
+  },
+  "payload": {
+    "params": {
+      "fines": 37,
+      "merged_phrasing_map": true,
+      "method": "char_bigram_jaccard",
+      "threshold": 0.3
+    },
+    "phrasings": [
+      {
+        "fine_id": "property_manager/C/lease-expiry-followup-scope",
+        "score": 1.0,
+        "source": "question_summary:3799",
+        "status": "proposed",
+        "text": "系統脈絡:合約領域-系統合約(母共用)"
+      },
+      {
+        "fine_id": "property_manager/C/lease-expiry-followup-scope",
+        "score": 1.0,
+        "source": "question_summary:3824",
+        "status": "proposed",
+        "text": "系統脈絡:合約領域-續約(子面向)"
+      },
+      {
+        "fine_id": "property_manager/C/lease-expiry-followup-scope",
+        "score": 1.0,
+        "source": "question_summary:3829",
+        "status": "proposed",
+        "text": "對話規則:續約"
+      },
+      {
+        "fine_id": "property_manager/C/meter-item-followup-scope",
+        "score": 1.0,
+        "source": "question_summary:4021",
+        "status": "proposed",
+        "text": "系統脈絡:IoT領域-智慧設備(母共用)"
+      },
+      {
+        "fine_id": "property_manager/C/meter-item-followup-scope",
+        "score": 1.0,
+        "source": "question_summary:4089",
+        "status": "proposed",
+        "text": "對話規則:電表排障"
+      },
+      {
+        "fine_id": "property_manager/C/meter-item-followup-scope",
+        "score": 1.0,
+        "source": "question_summary:4091",
+        "status": "proposed",
+        "text": "系統脈絡:IoT領域-電表排障(子面向)"
+      },
+      {
+        "fine_id": "property_manager/C/overdue-bill-followup-scope",
+        "score": 1.0,
+        "source": "question_summary:3909",
+        "status": "proposed",
+        "text": "系統脈絡:帳務領域-系統帳務(母共用)"
+      },
+      {
+        "fine_id": "property_manager/C/overdue-bill-followup-scope",
+        "score": 1.0,
+        "source": "question_summary:3913",
+        "status": "proposed",
+        "text": "系統脈絡:帳務領域-滯納金(子面向)"
+      },
+      {
+        "fine_id": "property_manager/F/account-domain-scope-pending",
+        "score": 1.0,
+        "source": "question_summary:3952",
+        "status": "proposed",
+        "text": "系統脈絡:帳號領域-帳號中心(母共用)"
+      },
+      {
+        "fine_id": "property_manager/F/account-domain-scope-pending",
+        "score": 1.0,
+        "source": "question_summary:3954",
+        "status": "proposed",
+        "text": "系統脈絡:帳號領域-登入排障(子面向)"
+      },
+      {
+        "fine_id": "property_manager/F/account-domain-scope-pending",
+        "score": 1.0,
+        "source": "question_summary:3983",
+        "status": "proposed",
+        "text": "對話規則:註冊驗證排障"
+      },
+      {
+        "fine_id": "property_manager/F/account-domain-scope-pending",
+        "score": 1.0,
+        "source": "question_summary:3984",
+        "status": "proposed",
+        "text": "對話規則:帳號綁定異動"
+      },
+      {
+        "fine_id": "property_manager/F/account-domain-scope-pending",
+        "score": 1.0,
+        "source": "question_summary:3990",
+        "status": "proposed",
+        "text": "對話規則:登入排障"
+      },
+      {
+        "fine_id": "property_manager/F/account-domain-scope-pending",
+        "score": 1.0,
+        "source": "question_summary:4001",
+        "status": "proposed",
+        "text": "對話規則:團隊成員權限"
+      },
+      {
+        "fine_id": "property_manager/F/billing-other-facets-scope-pending",
+        "score": 1.0,
+        "source": "question_summary:3911",
+        "status": "proposed",
+        "text": "系統脈絡:帳務領域-帳單異常(子面向)"
+      },
+      {
+        "fine_id": "property_manager/F/billing-other-facets-scope-pending",
+        "score": 1.0,
+        "source": "question_summary:3912",
+        "status": "proposed",
+        "text": "系統脈絡:帳務領域-發票(子面向)"
+      },
+      {
+        "fine_id": "property_manager/F/billing-other-facets-scope-pending",
+        "score": 1.0,
+        "source": "question_summary:3915",
+        "status": "proposed",
+        "text": "對話規則:繳費金流排障"
+      },
+      {
+        "fine_id": "property_manager/F/billing-other-facets-scope-pending",
+        "score": 1.0,
+        "source": "question_summary:3916",
+        "status": "proposed",
+        "text": "對話規則:帳單異常"
+      },
+      {
+        "fine_id": "property_manager/F/billing-other-facets-scope-pending",
+        "score": 1.0,
+        "source": "question_summary:3917",
+        "status": "proposed",
+        "text": "對話規則:發票"
+      },
+      {
+        "fine_id": "property_manager/F/billing-other-facets-scope-pending",
+        "score": 1.0,
+        "source": "question_summary:3918",
+        "status": "proposed",
+        "text": "對話規則:滯納金"
+      },
+      {
+        "fine_id": "property_manager/F/billing-other-facets-scope-pending",
+        "score": 1.0,
+        "source": "question_summary:4214",
+        "status": "proposed",
+        "text": "對話規則:帳單設定引導"
+      },
+      {
+        "fine_id": "property_manager/F/billing-other-facets-scope-pending",
+        "score": 1.0,
+        "source": "question_summary:4252",
+        "status": "proposed",
+        "text": "對話規則:帳單診斷"
+      },
+      {
+        "fine_id": "property_manager/F/contract-other-facets-scope-pending",
+        "score": 1.0,
+        "source": "question_summary:3800",
+        "status": "proposed",
+        "text": "系統脈絡:合約領域-狀態判斷(子面向)"
+      },
+      {
+        "fine_id": "property_manager/F/contract-other-facets-scope-pending",
+        "score": 1.0,
+        "source": "question_summary:3801",
+        "status": "proposed",
+        "text": "對話規則:合約診斷"
+      },
+      {
+        "fine_id": "property_manager/F/contract-other-facets-scope-pending",
+        "score": 1.0,
+        "source": "question_summary:3822",
+        "status": "proposed",
+        "text": "系統脈絡:合約領域-合約異動(子面向)"
+      },
+      {
+        "fine_id": "property_manager/F/contract-other-facets-scope-pending",
+        "score": 1.0,
+        "source": "question_summary:3823",
+        "status": "proposed",
+        "text": "系統脈絡:合約領域-退租收尾(子面向)"
+      },
+      {
+        "fine_id": "property_manager/F/contract-other-facets-scope-pending",
+        "score": 1.0,
+        "source": "question_summary:3825",
+        "status": "proposed",
+        "text": "系統脈絡:合約領域-建約引導(子面向)"
+      },
+      {
+        "fine_id": "property_manager/F/contract-other-facets-scope-pending",
+        "score": 1.0,
+        "source": "question_summary:3826",
+        "status": "proposed",
+        "text": "系統脈絡:合約領域-簽署排障(子面向)"
+      },
+      {
+        "fine_id": "property_manager/F/contract-other-facets-scope-pending",
+        "score": 1.0,
+        "source": "question_summary:3831",
+        "status": "proposed",
+        "text": "對話規則:簽署排障"
+      },
+      {
+        "fine_id": "property_manager/F/contract-other-facets-scope-pending",
+        "score": 1.0,
+        "source": "question_summary:4005",
+        "status": "proposed",
+        "text": "對話規則:合約異動"
+      },
+      {
+        "fine_id": "property_manager/F/contract-other-facets-scope-pending",
+        "score": 1.0,
+        "source": "question_summary:4202",
+        "status": "proposed",
+        "text": "對話規則:退租收尾"
+      },
+      {
+        "fine_id": "property_manager/F/contract-other-facets-scope-pending",
+        "score": 1.0,
+        "source": "question_summary:4215",
+        "status": "proposed",
+        "text": "對話規則:建約引導"
+      },
+      {
+        "fine_id": "property_manager/F/estate-domain-scope-pending",
+        "score": 1.0,
+        "source": "question_summary:4132",
+        "status": "proposed",
+        "text": "系統脈絡:物件領域-物件管理(母共用)"
+      },
+      {
+        "fine_id": "property_manager/F/estate-domain-scope-pending",
+        "score": 1.0,
+        "source": "question_summary:4176",
+        "status": "proposed",
+        "text": "對話規則:物件現況診斷"
+      },
+      {
+        "fine_id": "property_manager/F/estate-domain-scope-pending",
+        "score": 1.0,
+        "source": "question_summary:4203",
+        "status": "proposed",
+        "text": "對話規則:物件操作引導"
+      },
+      {
+        "fine_id": "property_manager/F/iot-setup-scope-pending",
+        "score": 1.0,
+        "source": "question_summary:4090",
+        "status": "proposed",
+        "text": "對話規則:IoT設定引導"
+      },
+      {
+        "fine_id": "property_manager/F/presales-context-exclude-pending",
+        "score": 1.0,
+        "source": "question_summary:3622",
+        "status": "proposed",
+        "text": "售前系統脈絡(系統注入用,勿檢索)"
+      },
+      {
+        "fine_id": "property_manager/F/subscription-domain-scope-pending",
+        "score": 1.0,
+        "source": "question_summary:5374",
+        "status": "proposed",
+        "text": "對話規則:訂閱診斷"
+      }
+    ],
+    "similar_pairs": [
+      {
+        "a": "property_manager/F/iot-setup-scope-pending",
+        "b": "property_manager/F/subscription-domain-scope-pending",
+        "method": "char_bigram_jaccard",
+        "score": 0.5714
+      },
+      {
+        "a": "property_manager/F/billing-other-facets-scope-pending",
+        "b": "property_manager/F/contract-other-facets-scope-pending",
+        "method": "char_bigram_jaccard",
+        "score": 0.3737
+      },
+      {
+        "a": "property_manager/F/estate-domain-scope-pending",
+        "b": "property_manager/F/subscription-domain-scope-pending",
+        "method": "char_bigram_jaccard",
+        "score": 0.3729
+      },
+      {
+        "a": "property_manager/C/lease-expiry-followup-scope",
+        "b": "property_manager/C/overdue-bill-followup-scope",
+        "method": "char_bigram_jaccard",
+        "score": 0.3684
+      },
+      {
+        "a": "property_manager/C/lease-expiry-followup-scope",
+        "b": "property_manager/C/meter-item-followup-scope",
+        "method": "char_bigram_jaccard",
+        "score": 0.3485
+      },
+      {
+        "a": "property_manager/F/estate-domain-scope-pending",
+        "b": "property_manager/F/iot-setup-scope-pending",
+        "method": "char_bigram_jaccard",
+        "score": 0.3443
+      },
+      {
+        "a": "property_manager/F/account-domain-scope-pending",
+        "b": "property_manager/F/estate-domain-scope-pending",
+        "method": "char_bigram_jaccard",
+        "score": 0.3131
+      }
+    ]
+  },
+  "raw_outputs_path": null,
+  "skill_version": "0.1.0",
+  "step": "phrasing"
+}

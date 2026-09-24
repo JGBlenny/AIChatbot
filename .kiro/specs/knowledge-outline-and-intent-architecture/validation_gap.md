@@ -3,7 +3,7 @@
 > 依 requirements v2（R1–R8）對碼；⚠️ `.kiro/settings/rules/gap-analysis.md` 不存在，沿用 agentic-mcp 的分析結構。資訊與選項為主，⛔ 不在此定案。查證來源：本 session 對碼＋scout 盤點（六節，附檔案／符號）。
 
 ## 0. 一句話
-既有系統有「組裝」「匯入」「回測」「可見性」四塊可直接用；缺的是三個新物件——**正本（粗目／細目／講法）**、**細目索引**、**skill 流程機制（schema／閘門／回放）**——以及對話邏輯從 kb 3645 搬進 agent 的接線。
+既有系統有「組裝」「匯入」「回測」「可見性」四塊可直接用；缺的是三個新物件——**正本（架／粗目／細目／講法）**、**細目索引**、**skill 流程機制（schema／閘門／回放）**——以及對話邏輯從 kb 3645 搬進 agent 的接線。
 
 ## 1. 既有元件對照（R → 可用／要改／缺）
 
@@ -11,7 +11,7 @@
 |---|---|---|---|
 | R1 skill | `.claude/skills/retrieval-improvement-loop/SKILL.md`（七步、五閘門 G0–G4、成因八類、`g2_selftest.py`、rules/／steps/）；`scripts/status.py` 母體正本 | **可延伸**：閘門與成因分類思想直接沿用 | 無輸入輸出 schema；閘門靠 SKILL.md 文字不靠 hook；無「正本結構變更」步；無回放（輸入 sha→輸出）；無成本記錄 |
 | R1 執行形態 | `.claude/agents/` 與 `.claude/workflows/` 於本 repo **不存在**（角色定義在使用者層）；canon-audit 閘門實作在 `~/.claude/canon/`（使用者層）；`.claude/settings.local.json` 只有 allow 清單、無 hooks | **缺** | 若採 hook 閘門須在 repo 層新增 hooks 設定；若採 Workflow 須新建 `.claude/workflows/`；兩者皆無先例於本 repo |
-| R2 正本 | `outline.py::build_prospect_outline`／`build_toc`／`_build_doc`／`OutlineDoc{audience,version,sha256,token_count,sections,text}`／`check_budget`／`OUTLINE_TOKEN_LIMIT_DEFAULTS`（prospect 10k／pm 8k／tenant 8k） | **組裝機制可用，資料來源要換**：現由 kb 列＋`SIX_MODULES` 分類表產節；改為讀正本 | 無正本檔格式；無粗目／細目／講法資料結構；`OutlineSection` 缺 audience／approval／paragraph 層；`_CTA_TEXT`／`DSP009_DELIBERATE_GAPS`／`_extract_boundary_sentences` 三段要併入正本 G／F |
+| R2 正本 | `outline.py::build_prospect_outline`／`build_toc`／`_build_doc`／`OutlineDoc{audience,version,sha256,token_count,sections,text}`／`check_budget`／`OUTLINE_K_TOKEN_LIMIT`／`OUTLINE_TOC_TOKEN_LIMIT`（三身分皆 12,000／8,000；舊 `OUTLINE_TOKEN_LIMIT_DEFAULTS` 已移除） | **組裝機制可用，資料來源要換**：現由 kb 列＋`SIX_MODULES` 分類表產節；改為讀正本 | 無正本檔格式；無粗目／細目／講法資料結構；`OutlineSection` 缺 audience／approval／paragraph 層；`_CTA_TEXT`／`DSP009_DELIBERATE_GAPS`／`_extract_boundary_sentences` 三段要併入 I 架 |
 | R2.7／R5.4 審核狀態 | `knowledge_base.outline_approved_by`（一次性 UPDATE 標記）；`tools/kb.py::fetch_visible_row` 走 `build_visibility_predicate` **不看**該旗標 | **要改** | 旗標語義（池標記 vs 內容已審）；`kb.get(整數 id)` 直取須受約束（R8.4 需求票） |
 | R2.9 治理 | 知識匯入 `tools/import_facet_knowledge.py`（dry-run、冪等、rollback SQL、`instance_applicability` 強制、question 改重算 embedding）；`scripts/knowledge-batches/README.md` | **可用**：正本入庫可走同一工具的批次格式 | 正本（版控 Markdown）→ 批次 JSON 的轉換器缺；「正本寫入權＝prompt 寫入權」的 code review 閘門缺 |
 | R3 覆蓋閉環 | 缺口地圖成品 `coverage-map/map-v2.{json,md}`、`demand-v2.json`（55 格）；**無**獨立生成腳本（人審凍結／臨時腳本） | **缺工具** | 格→細目對應、去向欄、受眾維度、重量腳本皆缺；判者一致率報表缺 |
@@ -26,8 +26,8 @@
 ## 2. 取代規則：skill 產出細目取代既有 kb 列與草稿（R1.9）
 
 ```
-首跑讀取：21 列 prospect kb ＋ 18 筆草稿（舊形狀）
-skill 產出：粗目／細目／講法／內容 ＋ 取代對應表（舊 id → 細目 id）
+起草讀取：jgb2 釘住 commit 的頁面程式與幫助中心（⛔ 既有 210 條不當基準不當材料，DSP-067）
+skill 產出：架／粗目／細目／講法／內容 ＋ 取代對應表（舊 id → 細目 id）
 之後：舊列標「由細目取代」退役，不再作索引或內容來源；kb 內容列由正本匯入衍生（匯入工具沿用）
   question_summary 關鍵字 → 併入細目講法（各一向量；⛔ 不再是一條匹配摘要）
   answer 文字            → 細目內容（可引用句），或併入既有細目
@@ -68,7 +68,7 @@ skill 產出：粗目／細目／講法／內容 ＋ 取代對應表（舊 id �
 沿用 DSP-035 Plan v3 的形狀（runtime 建 `CandidateOutlineDoc` 走既有 `outline` 參數、audience/sha 從母 doc 複製、同一物件餵渲染與解析側），把「段落」換成「細目」；三輪審查的 P1 處置（政策文允許 kb.get、select 綁 doc sha、app.py 主／影子共用 selector、fallback 三態、health 三態）仍適用。
 
 ## 4. 風險與研究項
-- **正本無原稿**：售前 A–F 只能由 21 列 prospect 重排；E 競品內容單薄（現存 1 列）；需業主提供或標「現有不足」。
+- **正本無原稿**：售前 A–F 只能由 21 列 prospect 重排（該切法已由 DSP-067 取代）；E 競品內容單薄（現存 1 列）；需業主提供或標「現有不足」。
 - **細目標題匹配未量**：F10 的 86% 是內文匹配的代替品；R6 步 1 三臂（標題／標題＋講法／＋內文）決定 R5.2。
 - **判者變異**：兩批盲標對同尺評價差距曾達 9 點；R6.5 的一致率門檻與第三判者機制要先定。
 - **LINE 受眾可見性**：入口對缺 vendor_id 填 0 的實際可見集合未實查（需一次 SQL 對照）。

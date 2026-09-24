@@ -2,7 +2,9 @@
 
 一回合的流程：**先切可見子集、再在子集內算分**，取 `(-score, fine_id)` 排序的前
 `K` 名。索引不可用／正本 sha 不符／查詢 embedding 失敗一律回 `None`——
-呼叫端（4.1）據此退回可見細目全集＋toc（`CandidateOutlineDoc.from_visible`，1.16；⛔ 不是未過濾整份大綱），⛔ 本模組不回半成品。
+呼叫端（`runtime._select_outline`）據此降級為 toc-only（9.8 DSP-059 D′ S2：
+`CandidateOutlineDoc.from_canon(canon, identity, [], toc, …)`，⛔ 不是未過濾整份大綱），
+⛔ 本模組不回半成品。
 
 ## 三條硬規則（⛔ 這三條是本檔存在的理由，改動前先看 Plan §1.6／§4.7）
 
@@ -12,7 +14,7 @@
    靜默變成「候選＝全部」。
 2. **不可見的細目一律不出現在 `candidate_ids`**，即使它分數最高。可見性在算分**之前**
    就切掉（`FineIndex.visible_subset` → `canon_assembler.canon_visible`，3.2 已與
-   `build_visibility_predicate` 驗過零分歧），⛔ 不在排序後再過濾（那種寫法一旦
+   `build_visibility_predicate` 零分歧，唯一例外＝`system_admin` 正本側折成 `property_manager`，DSP-053a），⛔ 不在排序後再過濾（那種寫法一旦
    有人動排序就會漏）。
 3. **⛔ 不記講法 id、⛔ 不 log 查詢**（F18／業主 2026-09-07 §8.1；任務 3.7 擴及內文句）：
    `Selection` 只帶 `winning_key_kind ∈ {"title","phrasing","content"}`。講法對照表就在
@@ -24,7 +26,8 @@ design 決議：K 名之內全給，該不該用由模型與 Verifier 守。餘�
 一個叫 `MIN_SCORE` 的常數會誘導後人寫 `score >= MIN_SCORE`，那是**第二道**沒有經過
 驗收的過濾器。故本檔連常數都不定義。
 
-## `miss_kind` 的四個值
+## `miss_kind` 的五個值（封閉集；值域相等由 `test_candidate_selector_req.py::
+## test_miss_kind_is_exactly_five_closed_values` 釘）
 - `hit`：有候選。
 - `none_visible`：可見子集是空的（身分看不到任何細目）。
 - `no_candidate`：可見子集非空、但沒有任何可見細目有索引項。
@@ -32,7 +35,10 @@ design 決議：K 名之內全給，該不該用由模型與 Verifier 守。餘�
   且任一鍵失敗就整份丟成 `not_ready`。保留於列舉是為了讓 4.1 的 trace 值域封閉；
   以測試釘住「只有刻意構造的索引才走得到」。
 - `index_unavailable`：**本函式⛔ 不回傳它**。索引不可用時 `select` 回 `None`，
-  由 4.1 在 trace 上寫這個值（Plan §1.6：「`index_unavailable` 由 runtime 以 `None` 判讀」）。
+  由 `runtime._select_outline` 在 trace 上寫這個值。
+- `empty_toc`：**本函式⛔ 不回傳它**（同上，由 `runtime._select_outline` 寫）。
+  `build_canon_toc` 本身失敗（外層 guard）⇒ 回合仍完成、降級為此值；列在這裡
+  是為了讓 trace 的 `miss_kind` 值域封閉，⛔ 不是選取器的一種結果。
 """
 from __future__ import annotations
 
@@ -51,7 +57,9 @@ K: int = 5
 #: 這是對「一回合不得為了選候選而卡住」的保護，不是可調旋鈕）。
 QUERY_EMBED_TIMEOUT_S: float = 3.0
 
-MissKind = Literal["hit", "none_visible", "no_candidate", "index_unavailable"]
+MissKind = Literal[
+    "hit", "none_visible", "no_candidate", "index_unavailable", "empty_toc",
+]
 
 
 class Selection(TypedDict):

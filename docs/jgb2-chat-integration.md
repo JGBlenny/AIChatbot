@@ -66,11 +66,11 @@
 >
 > 本檔 §1「一支 API，三種身分形狀」在新線**不成立**。逐項對碼：
 >
-> | 受眾 | canon 正本 | `AGENT_TURN_SPEC["stage"]` | 結論 |
+> | 受眾（細目屬性 `target_user`） | canon/jgb/ 九架正本 | `AGENT_TURN_SPEC["stage"]` | 結論 |
 > |---|---|---|---|
-> | `prospect` | ✅ `canon/prospect.md` | ✅ M1 | 可用 |
-> | `property_manager` | ✅ `canon/property_manager.md` | ✅ M1 | 可用 |
-> | **`tenant`** | ❌ **沒有 `canon/tenant.md`** | ❌ **缺鍵＝永不可見** | ⛔ **完全不存在** |
+> | `prospect` | ✅ 有細目 `target_user=prospect` | ✅ M1 | 可用 |
+> | `property_manager` | ✅ 有細目 `target_user=property_manager` | ✅ M1 | 可用 |
+> | **`tenant`** | ❌ **無細目 `target_user=tenant`** | ❌ **缺鍵＝永不可見** | ⛔ **完全不存在** |
 >
 > 查證：`app.py::_AGENT_OUTLINE_AUDIENCES = ("prospect", "property_manager")`；
 > `ls rag-orchestrator/canon/*.md` 只有兩份；`AGENT_TURN_SPEC` 的

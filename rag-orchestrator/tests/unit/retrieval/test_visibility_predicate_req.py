@@ -7,6 +7,11 @@
 ⚠️ 本檔最重要的一條是 `test_b2b_business_types_has_no_null_pass`：
    b2b 業態 `&&` **無 `IS NULL` 放行**是刻意的跨業者隔離（D-002），
    補上去會打穿隔離。⛔ 這條變紅時該做的是把改動改回去，不是改測試。
+
+⚠️ **b2b 分支的角色（`target_user`）條件同樣無 `IS NULL` 放行**
+   （DSP-052 (c)／2026-09-14）：`tenant`＋`mode=b2b` 會被 `audience_of` 路由到
+   pm 受眾，放行未標角色的列＝跨受眾可見且靜默。b2c 分支**不動**（仍放行）。
+   ⛔ 兩分支語義不同，不得抽成共用一行。
 """
 import pytest
 from unittest.mock import MagicMock
@@ -90,11 +95,22 @@ def test_b2c_uses_vendor_business_types_not_system_provider():
 # ── 條件 4：target_user ────────────────────────────────────────────────
 
 @pytest.mark.req(_SPEC)
-def test_target_user_null_always_passes():
-    """`kb.target_user IS NULL` 一律放行（通用知識），兩種模式都是。"""
-    for mode in ("b2b", "b2c"):
-        sql, _params = _build(mode=mode)
-        assert "(kb.target_user IS NULL OR kb.target_user && %s::text[])" in sql
+def test_target_user_null_pass_is_b2c_only():
+    """`kb.target_user` 空的放行**只在 b2c**；b2b 分支空＝不可見。
+
+    DSP-052 (c)／2026-09-14：b2b 分支取消 `IS NULL` 放行。`tenant` 是合法值，
+    帶 `mode=b2b` 時 `audience_of` 會路由到 pm 受眾，放行「未標角色」的列
+    ＝跨受眾可見且靜默。⛔ 不得把 `IS NULL OR` 加回 b2b 分支；
+    線上 b2b 池未標角色的列以資料面 UPDATE 補標，⛔ 不在程式側放寬。
+    """
+    b2b_sql, _ = _build(mode="b2b")
+    assert "kb.target_user && %s::text[]" in b2b_sql
+    assert "kb.target_user IS NULL" not in b2b_sql, (
+        f"b2b 分支出現 target_user IS NULL 放行——跨受眾外洩（DSP-052 (c)）：{b2b_sql}"
+    )
+    # 正對照組：b2c 分支仍放行（⛔ 本次不動），否則上一條可能只是「兩邊都沒過濾」
+    b2c_sql, _ = _build(mode="b2c")
+    assert "(kb.target_user IS NULL OR kb.target_user && %s::text[])" in b2c_sql
 
 
 @pytest.mark.req(_SPEC)
@@ -123,8 +139,8 @@ def test_unknown_target_user_normalized_to_tenant(raw):
 @pytest.mark.req(_SPEC)
 def test_known_role_not_forced_to_tenant():
     """正對照組：已知角色不得被正規化掉（否則上一條是把所有輸入都變 tenant 的瞎尺）。"""
-    _sql, params = _build(mode="b2c", target_user="landlord")
-    assert ["landlord", "all_users"] in params
+    _sql, params = _build(mode="b2c", target_user="prospect")
+    assert ["prospect", "all_users"] in params
 
 
 # ── 條件 5：is_b2b 兩條件 OR ───────────────────────────────────────────
@@ -136,7 +152,7 @@ def test_known_role_not_forced_to_tenant():
     ("b2b", "tenant", True),
     ("b2b", "prospect", True),
     ("b2c", "tenant", False),
-    ("b2c", "landlord", False),
+    ("b2c", "unknown_role", False),
     ("b2c", "prospect", False),
 ])
 def test_is_b2b_is_two_condition_or(mode, target_user, expect_b2b):
@@ -231,12 +247,16 @@ def _unit_oracle_branch(kind, target_user, mode, vendor_business_types):
     if is_b2b_mode:
         bt = ['system_provider']
         business_type_filter_sql = f"{lead}kb.business_types && %s::text[]"
+        # DSP-052 (c)／2026-09-14：b2b 分支的角色條件**無 `IS NULL` 放行**（空＝不可見）。
+        # ⛔ 兩分支的角色條件刻意各寫一行、不抽回共用——語義本來就不同。
+        target_user_filter_sql = "AND kb.target_user && %s::text[]"
     else:
         bt = vendor_business_types
         business_type_filter_sql = (
             f"{lead}(kb.business_types IS NULL OR kb.business_types && %s::text[])")
         target_user_param = [_unit_oracle_effective_target_user(target_user), 'all_users']
-    target_user_filter_sql = "AND (kb.target_user IS NULL OR kb.target_user && %s::text[])"
+        # b2c 分支維持 `IS NULL` 放行（⛔ DSP-052 (c) 不動 b2c）。
+        target_user_filter_sql = "AND (kb.target_user IS NULL OR kb.target_user && %s::text[])"
     return business_type_filter_sql, target_user_filter_sql, bt, target_user_param
 
 

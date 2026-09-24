@@ -1,0 +1,801 @@
+{
+  "cost": {
+    "agents": 0,
+    "completion_tokens": 0,
+    "prompt_tokens": 0,
+    "usd": 0.0,
+    "wall_s": 0.0
+  },
+  "deterministic": true,
+  "inputs_sha": {
+    "canon": "f9f7222469c4db87b29dd0e5311035a74800ac7f01f435767d223238d6352f1d",
+    "drafts": "ef9f537d55f704a19ae8b192548ac2589f7cfab3ecae97d56ef842f90a39af57",
+    "kb": "7c3318c1c8dea13745771330815057243423fa62f5cd4ab4852fc9193ebcba6f"
+  },
+  "payload": {
+    "drafts": [
+      {
+        "id": "help:landlordonboarding05Paymentsettings",
+        "summary": "房東教學05：收款設置篇"
+      },
+      {
+        "id": "help:onboarding11",
+        "summary": "帳務篇：新增單一帳單"
+      },
+      {
+        "id": "help:onboarding12",
+        "summary": "帳務篇：批次發送帳單"
+      },
+      {
+        "id": "help:onboarding13",
+        "summary": "既存合約的歷史帳單如何移至已到帳"
+      },
+      {
+        "id": "help:onboarding3",
+        "summary": "租客線上與現金之繳費方式"
+      },
+      {
+        "id": "help:slug100",
+        "summary": "租客繳費方式（藍新ATM）"
+      },
+      {
+        "id": "help:slug103",
+        "summary": "租客繳費方式（國泰ATM）"
+      },
+      {
+        "id": "help:slug104",
+        "summary": "租客繳費方式（線下付款）"
+      },
+      {
+        "id": "help:slug20",
+        "summary": "租客如何即時確認繳費帳單狀況？"
+      },
+      {
+        "id": "help:slug21",
+        "summary": "當租客完成匯款時，要如何通知並請房東確認到帳？"
+      },
+      {
+        "id": "help:slug22",
+        "summary": "房東如何確認向租客收租的帳單及款項細節？"
+      },
+      {
+        "id": "help:slug24",
+        "summary": "房東及租客要如何辨認「逾期帳單」?"
+      },
+      {
+        "id": "help:slug75",
+        "summary": "「線上金流」&「現金/轉帳匯款」收款的最大差異是什麼？"
+      },
+      {
+        "id": "help:slug88",
+        "summary": "租客該如何追蹤現金/轉帳匯款完成的帳單後續？"
+      }
+    ],
+    "frozen_at": "2026-09-16T00:00:00Z",
+    "gapmap_cells": 0,
+    "kb_rows": [
+      {
+        "id": "jgb/E/bill-contents-extra-fees",
+        "question_summary": "帳單內容與臨時加收費用"
+      },
+      {
+        "id": "jgb/E/bill-format-customize",
+        "question_summary": "帳單版面能不能自訂"
+      },
+      {
+        "id": "jgb/E/billing-overview",
+        "question_summary": "帳務管理模組做什麼"
+      },
+      {
+        "id": "jgb/E/credit-card-rent-payment",
+        "question_summary": "租客能不能用信用卡繳房租"
+      },
+      {
+        "id": "jgb/E/dunning-draft-not-auto-send",
+        "question_summary": "催繳草稿不可一鍵發送給租客"
+      },
+      {
+        "id": "jgb/E/dunning-draft-template-tone-late-fee",
+        "question_summary": "催繳草稿的生成規則（模板、語氣分級與滯納金提及）"
+      },
+      {
+        "id": "jgb/E/einvoice-issuing",
+        "question_summary": "電子發票能不能自動開、載具怎麼用"
+      },
+      {
+        "id": "jgb/E/overdue-bill-followup-scope",
+        "question_summary": "逾期帳單追問可答範圍"
+      },
+      {
+        "id": "jgb/E/overdue-reminder-late-fee",
+        "question_summary": "租客逾期未繳怎麼辦（含繳費提醒通知）"
+      },
+      {
+        "id": "jgb/E/payment-gateway-options",
+        "question_summary": "金流廠商差別與申請條件"
+      },
+      {
+        "id": "jgb/E/utility-split-calculation",
+        "question_summary": "水電費怎麼分算"
+      },
+      {
+        "id": "jgb/E/virtual-account-prepaid",
+        "question_summary": "固定虛擬帳號與儲值金抵扣"
+      },
+      {
+        "id": "1388",
+        "question_summary": "電費資訊和寄送區間查詢"
+      },
+      {
+        "id": "1391",
+        "question_summary": "租金資訊查詢：金額和繳費日期"
+      },
+      {
+        "id": "1393",
+        "question_summary": "管理費金額和繳費方式查詢"
+      },
+      {
+        "id": "1394",
+        "question_summary": "停車費金額和繳費方式查詢"
+      },
+      {
+        "id": "1408",
+        "question_summary": "推薦水電維修廠商"
+      },
+      {
+        "id": "3327",
+        "question_summary": "提前終止 帳單封存 退租"
+      },
+      {
+        "id": "3335",
+        "question_summary": "對帳流程 帳單狀態 應到帳 待對帳 已到帳"
+      },
+      {
+        "id": "3336",
+        "question_summary": "帳單排定發送 自動發送 草稿帳單"
+      },
+      {
+        "id": "3337",
+        "question_summary": "帳單簡訊 費用 收費"
+      },
+      {
+        "id": "3338",
+        "question_summary": "物件 帳單 發票 對應關係"
+      },
+      {
+        "id": "3340",
+        "question_summary": "催繳 逾期 通知"
+      },
+      {
+        "id": "3342",
+        "question_summary": "帳單繳費期限 發送日 設定"
+      },
+      {
+        "id": "3343",
+        "question_summary": "國泰 超商繳費 狀態流程"
+      },
+      {
+        "id": "3344",
+        "question_summary": "永豐 臨櫃匯款 虛擬帳號格式"
+      },
+      {
+        "id": "3346",
+        "question_summary": "金流 手續費 誰支付"
+      },
+      {
+        "id": "3347",
+        "question_summary": "信用卡 繳費 定期扣款 刷卡"
+      },
+      {
+        "id": "3352",
+        "question_summary": "電費 計算 夏季 非夏季 電價"
+      },
+      {
+        "id": "3353",
+        "question_summary": "電表 儲值 雲端電表"
+      },
+      {
+        "id": "3361",
+        "question_summary": "帳單沒到帳 帳單狀態"
+      },
+      {
+        "id": "3362",
+        "question_summary": "發票沒開 發票狀態"
+      },
+      {
+        "id": "3366",
+        "question_summary": "繳費成功 繳費紀錄"
+      },
+      {
+        "id": "3391",
+        "question_summary": "信用卡自動扣款 授權設定"
+      },
+      {
+        "id": "3395",
+        "question_summary": "帳單狀態流程 對帳機制"
+      },
+      {
+        "id": "3396",
+        "question_summary": "帳單收費項目 六種費用"
+      },
+      {
+        "id": "3397",
+        "question_summary": "租金計費方式 週期比例"
+      },
+      {
+        "id": "3398",
+        "question_summary": "電費計費方式 度數計算"
+      },
+      {
+        "id": "3399",
+        "question_summary": "週期帳單 自動產生規則"
+      },
+      {
+        "id": "3400",
+        "question_summary": "逾期費計算 催繳通知"
+      },
+      {
+        "id": "3401",
+        "question_summary": "帳單建立方式 手動自動"
+      },
+      {
+        "id": "3402",
+        "question_summary": "點退帳單 自動產生 費用結算"
+      },
+      {
+        "id": "3403",
+        "question_summary": "帳單排定發送 預約機制"
+      },
+      {
+        "id": "3404",
+        "question_summary": "大量建立帳單 Excel 批次匯入"
+      },
+      {
+        "id": "3405",
+        "question_summary": "自訂費用品項 管理設定"
+      },
+      {
+        "id": "3406",
+        "question_summary": "帳單收據 繳費證明 PDF 下載"
+      },
+      {
+        "id": "3407",
+        "question_summary": "帳單統計報表 收支分析"
+      },
+      {
+        "id": "3408",
+        "question_summary": "繳租金方式 信用卡超商轉帳"
+      },
+      {
+        "id": "3409",
+        "question_summary": "信用卡繳費 流程說明"
+      },
+      {
+        "id": "3410",
+        "question_summary": "虛擬帳號轉帳 繳費方式"
+      },
+      {
+        "id": "3411",
+        "question_summary": "超商代碼繳費 流程說明"
+      },
+      {
+        "id": "3412",
+        "question_summary": "付款狀態 流轉說明"
+      },
+      {
+        "id": "3413",
+        "question_summary": "金流商 各家特性"
+      },
+      {
+        "id": "3414",
+        "question_summary": "付款成功 自動開發票"
+      },
+      {
+        "id": "3415",
+        "question_summary": "信用卡自動扣款 失敗處理"
+      },
+      {
+        "id": "3416",
+        "question_summary": "付款金額錯誤 重複轉帳"
+      },
+      {
+        "id": "3417",
+        "question_summary": "儲值金 回充帳戶功能"
+      },
+      {
+        "id": "3418",
+        "question_summary": "發票開立時機 觸發條件"
+      },
+      {
+        "id": "3419",
+        "question_summary": "電子發票 類型格式"
+      },
+      {
+        "id": "3420",
+        "question_summary": "發票未收到 排查步驟"
+      },
+      {
+        "id": "3421",
+        "question_summary": "發票作廢 流程說明"
+      },
+      {
+        "id": "3422",
+        "question_summary": "差額發票 功能說明"
+      },
+      {
+        "id": "3423",
+        "question_summary": "發票補開 特殊處理"
+      },
+      {
+        "id": "3443",
+        "question_summary": "線上繳費 付款步驟"
+      },
+      {
+        "id": "3447",
+        "question_summary": "查看合約帳單 資訊查詢"
+      },
+      {
+        "id": "3459",
+        "question_summary": "儲值電表 使用儲值"
+      },
+      {
+        "id": "3466",
+        "question_summary": "大房東帳單 代收代付"
+      },
+      {
+        "id": "3485",
+        "question_summary": "帳單發送收款 催繳管理"
+      },
+      {
+        "id": "3489",
+        "question_summary": "合約帳單管理 查詢統計"
+      },
+      {
+        "id": "3495",
+        "question_summary": "帳單為什麼發不出去"
+      },
+      {
+        "id": "3496",
+        "question_summary": "帳單為什麼取消不了"
+      },
+      {
+        "id": "3497",
+        "question_summary": "已付款但帳單狀態沒有更新"
+      },
+      {
+        "id": "3499",
+        "question_summary": "帳單手動到帳或標記已收款失敗"
+      },
+      {
+        "id": "3500",
+        "question_summary": "信用卡付款失敗"
+      },
+      {
+        "id": "3501",
+        "question_summary": "信用卡自動扣款失敗"
+      },
+      {
+        "id": "3502",
+        "question_summary": "虛擬帳號過期或轉帳失敗"
+      },
+      {
+        "id": "3503",
+        "question_summary": "發票為什麼沒有開出來"
+      },
+      {
+        "id": "3504",
+        "question_summary": "發票為什麼作廢不了"
+      },
+      {
+        "id": "3514",
+        "question_summary": "查詢租客概況 合約帳單修繕"
+      },
+      {
+        "id": "3517",
+        "question_summary": "點交清單與現況不符 水電度數設備有誤"
+      },
+      {
+        "id": "3519",
+        "question_summary": "點退帳單金額計算 押金結算"
+      },
+      {
+        "id": "3531",
+        "question_summary": "滯納金帳單產生 付款後結算規則"
+      },
+      {
+        "id": "3532",
+        "question_summary": "滯納金客製版本 固定金額階梯式"
+      },
+      {
+        "id": "3533",
+        "question_summary": "押金設算息 利率計算與帳單"
+      },
+      {
+        "id": "3534",
+        "question_summary": "押金設算息利率設定 年度一次限制"
+      },
+      {
+        "id": "3535",
+        "question_summary": "差額發票金額計算 租金品項底租"
+      },
+      {
+        "id": "3536",
+        "question_summary": "差額發票金額變少 前期虧損結轉"
+      },
+      {
+        "id": "3537",
+        "question_summary": "差額發票群組 物件綁定底租設定"
+      },
+      {
+        "id": "3538",
+        "question_summary": "差額發票開立匯出 自動排程收支明細"
+      },
+      {
+        "id": "3539",
+        "question_summary": "固定虛擬帳號不會過期 與一般帳號差別"
+      },
+      {
+        "id": "3540",
+        "question_summary": "固定虛擬帳號設定 銀行模式權限"
+      },
+      {
+        "id": "3541",
+        "question_summary": "固定虛擬帳號入帳 自動扣款對帳"
+      },
+      {
+        "id": "3542",
+        "question_summary": "固定虛擬帳號查詢 餘額變動歷程"
+      },
+      {
+        "id": "3548",
+        "question_summary": "申請線上金流 先確認金流商"
+      },
+      {
+        "id": "3549",
+        "question_summary": "藍新金流申請 資料與審核時間"
+      },
+      {
+        "id": "3550",
+        "question_summary": "永豐金流設定 店舖編號加密因子"
+      },
+      {
+        "id": "3551",
+        "question_summary": "信用卡ATM收款手續費 房東負擔"
+      },
+      {
+        "id": "3552",
+        "question_summary": "現金銀行帳戶收款設定 手動確認入帳"
+      },
+      {
+        "id": "3553",
+        "question_summary": "收款設置 收訖章與帳單自動發送"
+      },
+      {
+        "id": "3554",
+        "question_summary": "線上金流只能綁一家 更換與未設定"
+      },
+      {
+        "id": "3555",
+        "question_summary": "國泰世華金流設定 ATM前綴加密因子"
+      },
+      {
+        "id": "3852",
+        "question_summary": "提前終止後帳單仍產生 需封存"
+      },
+      {
+        "id": "3857",
+        "question_summary": "續約帳單 起算時點"
+      },
+      {
+        "id": "3895",
+        "question_summary": "物件刊登租金調整 帳單金額不變"
+      },
+      {
+        "id": "3899",
+        "question_summary": "租客同意點交後 下一步 水電基準"
+      },
+      {
+        "id": "3923",
+        "question_summary": "超商繳費 狀態沒跳 撥付時程"
+      },
+      {
+        "id": "3924",
+        "question_summary": "租客轉帳失敗 匯款上限 資訊核對"
+      },
+      {
+        "id": "3925",
+        "question_summary": "臨櫃匯款 虛擬帳號 可行方式"
+      },
+      {
+        "id": "3926",
+        "question_summary": "帳單收回重發 發出去想收回 影響與時機"
+      },
+      {
+        "id": "3927",
+        "question_summary": "租客看不到帳單 三條件與信箱情境"
+      },
+      {
+        "id": "3928",
+        "question_summary": "帳單還沒出現 產生時點規則"
+      },
+      {
+        "id": "3929",
+        "question_summary": "發票顯示已開 卻沒有號碼"
+      },
+      {
+        "id": "3930",
+        "question_summary": "新收款帳戶驗證 一元帳單測試"
+      },
+      {
+        "id": "3931",
+        "question_summary": "租客說繳了 錢還沒進來"
+      },
+      {
+        "id": "3932",
+        "question_summary": "帳單卡在待對帳 狀態一直沒跳"
+      },
+      {
+        "id": "3933",
+        "question_summary": "租客繳不了費 一直失敗"
+      },
+      {
+        "id": "3934",
+        "question_summary": "帳單金額怪怪的 跟預期不一樣"
+      },
+      {
+        "id": "3935",
+        "question_summary": "這期帳單怎麼還沒出來"
+      },
+      {
+        "id": "3936",
+        "question_summary": "租客說看不到帳單 找不到"
+      },
+      {
+        "id": "3937",
+        "question_summary": "發票怎麼還沒開 沒收到發票"
+      },
+      {
+        "id": "3938",
+        "question_summary": "發票開錯了 要作廢重開"
+      },
+      {
+        "id": "3939",
+        "question_summary": "滯納金怎麼收這麼多"
+      },
+      {
+        "id": "3940",
+        "question_summary": "這筆延遲金是怎麼算的"
+      },
+      {
+        "id": "3941",
+        "question_summary": "要開始收租 帳單要怎麼設定"
+      },
+      {
+        "id": "3942",
+        "question_summary": "收款帳戶怎麼綁 金流怎麼申請"
+      },
+      {
+        "id": "4047",
+        "question_summary": "儲值完成 電還沒來 沒復電"
+      },
+      {
+        "id": "4050",
+        "question_summary": "儲值單價 每度金額 設定"
+      },
+      {
+        "id": "4053",
+        "question_summary": "租客儲值教學 操作步驟"
+      },
+      {
+        "id": "4059",
+        "question_summary": "儲值單價要在哪裡設定"
+      },
+      {
+        "id": "4086",
+        "question_summary": "儲值電表 電費收取 租客預付"
+      },
+      {
+        "id": "4150",
+        "question_summary": "報表匯出 帳單報表 大量資料"
+      },
+      {
+        "id": "4217",
+        "question_summary": "電費 收費方式 設定 包租金 另外收"
+      },
+      {
+        "id": "4220",
+        "question_summary": "草稿帳單 會自動發送嗎 封存哪裡看"
+      },
+      {
+        "id": "4221",
+        "question_summary": "收款帳戶 銀行有限制嗎 台新"
+      },
+      {
+        "id": "4222",
+        "question_summary": "電表度數登記錯誤 修改 重算"
+      },
+      {
+        "id": "4223",
+        "question_summary": "帳單在哪裡看 繳費"
+      },
+      {
+        "id": "4256",
+        "question_summary": "調整收款方式 線上付款方式設定 租客繳費通道"
+      },
+      {
+        "id": "4257",
+        "question_summary": "發票自動開立時點 何時開發票 開立時間"
+      },
+      {
+        "id": "4265",
+        "question_summary": "電費 計費方式 每度電價 電錶"
+      },
+      {
+        "id": "4268",
+        "question_summary": "繳費方式 怎麼繳費 轉帳帳戶 超商繳費"
+      },
+      {
+        "id": "4281",
+        "question_summary": "每月租金繳費資訊"
+      },
+      {
+        "id": "4282",
+        "question_summary": "電費怎麼算 一度多少錢"
+      },
+      {
+        "id": "4283",
+        "question_summary": "電費帳單計費方式"
+      },
+      {
+        "id": "4285",
+        "question_summary": "水費帳單計費方式"
+      },
+      {
+        "id": "4288",
+        "question_summary": "可以用什麼方式繳費 有哪些繳費管道"
+      },
+      {
+        "id": "4289",
+        "question_summary": "可以超商繳費或轉帳嗎"
+      },
+      {
+        "id": "4564",
+        "question_summary": "租客儲值了電還是沒有來 沒復電"
+      },
+      {
+        "id": "4637",
+        "question_summary": "帳單總表 虛擬帳號查交易 銀行抽查入帳"
+      },
+      {
+        "id": "4638",
+        "question_summary": "帳單批次匯入 整批電費帳單 批次建立"
+      },
+      {
+        "id": "4640",
+        "question_summary": "帳單收據金額 收據多少錢"
+      },
+      {
+        "id": "4642",
+        "question_summary": "帳單品名修改 租金改停車位費"
+      },
+      {
+        "id": "4643",
+        "question_summary": "帳單無法寄送 租客聯絡方式未驗證"
+      },
+      {
+        "id": "4647",
+        "question_summary": "未發送帳單一次編輯 批次調整範圍"
+      },
+      {
+        "id": "4649",
+        "question_summary": "租客直接匯款 補建帳單紀錄"
+      },
+      {
+        "id": "4650",
+        "question_summary": "新增帳單 手動開帳單給租客 操作入口"
+      },
+      {
+        "id": "4651",
+        "question_summary": "逾期帳單虛擬帳號 可否繳款 年繳拆分"
+      },
+      {
+        "id": "4653",
+        "question_summary": "帳單封存後退回 重開帳單"
+      },
+      {
+        "id": "4656",
+        "question_summary": "查帳單 帳單編號查詢"
+      },
+      {
+        "id": "4657",
+        "question_summary": "合約的點退帳單金額 查點退金額"
+      },
+      {
+        "id": "3326",
+        "question_summary": "包租代管租金代收與房東直收差異"
+      },
+      {
+        "id": "3360",
+        "question_summary": "匯出 報表 收支明細"
+      },
+      {
+        "id": "3011",
+        "question_summary": "公益出租人減稅"
+      },
+      {
+        "id": "2909",
+        "question_summary": "租金行情參考"
+      },
+      {
+        "id": "2910",
+        "question_summary": "管理費"
+      },
+      {
+        "id": "2911",
+        "question_summary": "公共費用分攤"
+      },
+      {
+        "id": "2913",
+        "question_summary": "租金多繳溢繳退還處理"
+      },
+      {
+        "id": "2918",
+        "question_summary": "租金支付期限"
+      },
+      {
+        "id": "2920",
+        "question_summary": "租金折扣條件"
+      },
+      {
+        "id": "2921",
+        "question_summary": "租金支付證明"
+      },
+      {
+        "id": "2925",
+        "question_summary": "租金市場變化"
+      },
+      {
+        "id": "3105",
+        "question_summary": "管理費用途"
+      },
+      {
+        "id": "3207",
+        "question_summary": "租金少繳不足補繳"
+      },
+      {
+        "id": "3208",
+        "question_summary": "租金遲繳罰款"
+      },
+      {
+        "id": "3478",
+        "question_summary": "邀請租客 訂閱通知"
+      },
+      {
+        "id": "4261",
+        "question_summary": "停車費 車位費用 月租車位"
+      },
+      {
+        "id": "4271",
+        "question_summary": "為什麼要收管理費 費用怎麼算"
+      },
+      {
+        "id": "4275",
+        "question_summary": "機車汽車停車位費用"
+      }
+    ],
+    "mode": "expand",
+    "object_under_test": {
+      "approved_by": "",
+      "frozen_at": "2026-09-16T00:00:00Z",
+      "materials": [
+        ".claude/skills/outline-curation/runs/E-20260916/kb-rows.json",
+        ".claude/skills/outline-curation/runs/E-20260916/help-pages.json",
+        "../app/canon/jgb"
+      ]
+    },
+    "shelf": "E"
+  },
+  "raw_outputs_path": null,
+  "skill_version": "0.1.0",
+  "step": "intake"
+}

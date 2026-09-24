@@ -1,0 +1,28 @@
+{
+  "audience": "prospect",
+  "coarses": ".claude/skills/outline-curation/schemas/coarses-prospect.json",
+  "drafts": null,
+  "inputs_sha": {
+    "coarses": "94e8d42ce3d7787e882ecab939b028fd1244792e92d3acb4f057400f4ffad301",
+    "kb": "da7be9406e5ffa0db381b3a92ff59ee1e98bf137097335fd1bea7512573ee32a"
+  },
+  "items": 37,
+  "kb_rows": ".claude/skills/outline-curation/runs/prospect-20260915/kb-rows.json",
+  "prompts": {
+    "audience_level": {
+      "chars": 15730,
+      "path": ".claude/skills/outline-curation/runs/prospect-20260915/structure/angle-audience_level.prompt.md",
+      "sha256": "842f2cc279abe21590ba66bdd6a658ef9b88d3d5ab08a01f28b065f350fc1217"
+    },
+    "content_boundary": {
+      "chars": 15734,
+      "path": ".claude/skills/outline-curation/runs/prospect-20260915/structure/angle-content_boundary.prompt.md",
+      "sha256": "411a6b9fadbd0f1d877d11c14c54dfd62cfda52d0273a52069837fbf26031058"
+    },
+    "user_question_path": {
+      "chars": 15732,
+      "path": ".claude/skills/outline-curation/runs/prospect-20260915/structure/angle-user_question_path.prompt.md",
+      "sha256": "50cc91358934428306fe540472fb6576506160803a46042be34612ea3a527739"
+    }
+  }
+}

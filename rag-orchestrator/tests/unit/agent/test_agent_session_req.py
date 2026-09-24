@@ -3,7 +3,7 @@
 
 被測的五件事：
 
-1. **`KEY_SPECS` 封閉且覆蓋 11 鍵**——與各檔既有常數逐一相等的正對照（避免
+1. **`KEY_SPECS` 封閉且覆蓋 10 鍵**——與各檔既有常數逐一相等的正對照（避免
    `agent_session.py` 的字面值與 `turn_context.py`／`completed_actions.py`／
    `runtime.py` 各自的權威定義漂移，見 `agent_session` 模組 docstring）。
 2. **六種生命週期各一案**：`fifo(n)` 的修剪數值（dialog 20／handoff_cache 50／
@@ -14,10 +14,12 @@
 3. **`prompt_segments` 範圍門檻**：釘住時不回會話實體段，正對照未釘住時有。
 4. **`begin_turn`／`end_turn` 是唯一寫點**：AST 掃描 `services/agent/**`
    找 `agent_state[...] = `／`.pop(`／`.setdefault(` 的直接寫入，斷言殘留只在
-   `mcp_facade.py`（R3 擁有檔案清單外，⛔ 不碰，見任務 brief）與
    `turn_context._append_dialog`（R1 遺留、三個回合收尾寫點已全部改走
    `AgentSession.end_turn`，這支函式目前是死碼，僅為既有 re-export 路徑保留）
-   ——兩者皆列出並說明，⛔ 不是「找不到就算過」。
+   ——列出並說明，⛔ 不是「找不到就算過」。
+   ⚠️ 9.8 DSP-059 D′ S2（F8）起 `mcp_facade.py` 已從殘留清單移除：它唯一的
+   直接寫入（`agent_state["outline"] = …`／`agent_state.pop("outline", None)`）
+   隨大綱物件退役一併刪除，該檔現在對 `agent_state` 已無任何直接寫入。
 5. **L8**：`NamespacedStateStore.start()` 依受眾組 `config_key`（pm ⇒
    `agent:property_manager`），舊列（不傳 `audience`）讀取相容。
 """
@@ -44,7 +46,6 @@ from services.agent.agent_session import (
     KEY_SPECS,
     LAST_ASK_TARGET_KEY,
     LAST_TURN_AT_KEY,
-    OUTLINE_KEY,
     PENDING_CONFIRM_KEY,
     PENDING_CONFIRM_MAX,
     SELECT_SCOPE_KEY,
@@ -59,13 +60,13 @@ _REQ = "knowledge-outline-and-intent-architecture:R3"
 
 
 # ---------------------------------------------------------------------------
-# 1. KEY_SPECS 封閉且覆蓋 11 鍵 ＋ 與各檔權威定義逐一相等
+# 1. KEY_SPECS 封閉且覆蓋 10 鍵 ＋ 與各檔權威定義逐一相等
 # ---------------------------------------------------------------------------
 @pytest.mark.req(_REQ)
-def test_key_specs_covers_exactly_eleven_keys():
-    assert len(KEY_SPECS) == 11
+def test_key_specs_covers_exactly_ten_keys():
+    assert len(KEY_SPECS) == 10
     assert set(KEY_SPECS) == {
-        DIALOG_KEY, OUTLINE_KEY, HANDOFF_CACHE_KEY, FIXED_STREAK_KEY,
+        DIALOG_KEY, HANDOFF_CACHE_KEY, FIXED_STREAK_KEY,
         PENDING_CONFIRM_KEY, SELECT_SCOPE_KEY, LAST_ASK_TARGET_KEY,
         COMPLETED_ACTIONS_KEY, IMAGE_SUGGESTION_KEY, ESTATE_CARRY_KEY,
         LAST_TURN_AT_KEY,
@@ -235,10 +236,9 @@ def test_prompt_segments_shows_entity_segments_when_not_pinned():
 _AGENT_STATE_PARAM_NAMES = {"agent_state"}
 
 #: 允許殘留的 (檔名, 說明) ——⛔ 不是「找不到就算過」，是逐一列名並交代理由。
+#: ⚠️ 9.8 DSP-059 D′ S2（F8）起 `mcp_facade.py` 已從此表移除：它唯一的直接
+#: 寫入（`agent_state["outline"]` 的塞入／pop）隨大綱物件退役一併刪除。
 _ALLOWED_RESIDUALS = {
-    # R3 擁有檔案清單明列外（任務 brief）：「⛔ 不碰 verifier.py／mcp_facade.py
-    # （門面若直接寫 agent_state，列成 R3b 待辦，不在本片）」。
-    "mcp_facade.py",
     # R1 遺留的 `_append_dialog`／`_trim_handoff_cache`：三個回合收尾寫點
     # （`exit_gates.finalize`／`runtime._finish_confirm_turn`／
     # `turn_segments` 的 handoff_cache 重播）R3 已全部改走
@@ -291,8 +291,7 @@ def test_agent_state_direct_writes_are_confined_to_allowed_files():
         f"發現未列名的直接寫入殘留（應改走 AgentSession，或加進 "
         f"_ALLOWED_RESIDUALS 並說明理由）：{unexplained}"
     )
-    # 正對照：至少要抓得到已知的兩處殘留，證明這支掃描真的在動（不是空跑）。
-    assert any(Path(n).name == "mcp_facade.py" for n in offenders)
+    # 正對照：至少要抓得到已知的殘留，證明這支掃描真的在動（不是空跑）。
     assert any(Path(n).name == "turn_context.py" for n in offenders)
 
 

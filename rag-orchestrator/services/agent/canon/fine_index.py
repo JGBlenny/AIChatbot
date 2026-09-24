@@ -270,7 +270,8 @@ class FineIndex:
         """這個身分看得到的細目 id 集合（任務 3.3b；Plan §1.5）。
 
         **薄集合包裝**：規則⛔ 一條都不在這裡——逐細目一律問 3.2 的
-        `canon_assembler.canon_visible`（已與 `build_visibility_predicate` 驗過零分歧）。
+        `canon_assembler.canon_visible`（與 `build_visibility_predicate` 零分歧，唯一例外：
+        正本側把 `system_admin` 折成 `property_manager`，SQL 側不折，DSP-053a）。
         在這裡再寫一套判準，就會出現第二份可見性真相，⚠️ 兩份遲早走岔。
 
         ⚠️ **與索引本身無關**：不看 `self._entries`、不看 `state`、⛔ 不查 DB、⛔ 不打 embedding。

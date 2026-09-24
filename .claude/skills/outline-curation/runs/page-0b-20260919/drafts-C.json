@@ -1,0 +1,569 @@
+[
+  {
+    "kind": "append",
+    "shelf": "C",
+    "unit_ids": ["page:communities.pick"],
+    "target_fine_id": "jgb/C/community-setup-and-property-binding",
+    "askable": "新增物件、複製社區、複製物件時的『選擇社區』挑選器怎麼用",
+    "title": "新增物件或複製社區時跳出的『選擇社區』挑選器怎麼用（單選、搜尋、選完後去哪）",
+    "target_user": ["property_manager"],
+    "business_types": ["system_provider"],
+    "instance_applicability": "general",
+    "sentences": [
+      "在新增物件（先選歸屬社區再進入新增物件流程）、複製社區、以及複製物件並指定新社區這三種情境，系統都會先跳出一個「社區挑選器」頁面讓你選一個社區。",
+      "這三種情境在挑選器裡都只能單選一個社區，選了新的社區會自動取代前一個已選的。",
+      "挑選器可以用「案名」或「地址」關鍵字搜尋社區，也支援進階搜尋與排序，每頁顯示 30、60 或 90 筆。",
+      "「複製社區」情境選好社區後，會把整個社區複製成一份新的社區資料，並直接帶你進入這份新社區的編輯頁。",
+      "「新增物件」情境選好社區後，會直接開啟在該社區底下新增物件的頁面。",
+      "「複製物件」情境選好社區後，會再導向「選擇物件」挑選器，讓你接著選一筆要複製的既有物件。"
+    ],
+    "sources": [
+      "code:src/pages/communities/pick/Index.vue",
+      "code:src/use/scopeStore/usePickModule.js"
+    ],
+    "evidence": [
+      {"sentence_index": 0, "source": "code:src/pages/communities/pick/Index.vue", "quote_or_symbol": "case 'communityCopy': return t('請選擇要複製的社區') / case 'estateCreate': return t('請選擇要新增物件的社區') / case 'estateCopy': return t('請選擇要複製物件的社區')"},
+      {"sentence_index": 1, "source": "code:src/use/scopeStore/usePickModule.js", "quote_or_symbol": "case 'communities.pick': switch (route.params?.action){ case 'estateCreate': case 'estateCopy': case 'communityCopy': return 1 }"},
+      {"sentence_index": 2, "source": "code:src/pages/communities/pick/Index.vue", "quote_or_symbol": "keyword_for: { values: ['communityName','address'], pairs: { communityName:'案名', address:'地址' } } / options: [{label:t('30項'),value:'30'},{label:t('60項'),value:'60'},{label:t('90項'),value:'90'}]"},
+      {"sentence_index": 3, "source": "code:src/pages/communities/pick/Index.vue", "quote_or_symbol": "ajax(`${store.state.APP_URL}/api3/communities/single`, { copy: 1, communityId: picked[0] }, 'POST') ... router.push({ name: 'communities.edit', params: { communityId: result?.data?.communityId } })"},
+      {"sentence_index": 4, "source": "code:src/pages/communities/pick/Index.vue", "quote_or_symbol": "case 'estateCreate': window.location.href = `${store.state.APP_URL}/api2/estate/create?communityId=${communitiesScopeStore.pick.picked[0]}`"},
+      {"sentence_index": 5, "source": "code:src/pages/communities/pick/Index.vue", "quote_or_symbol": "case 'estateCopy': router.push({ name: 'estates.pick', params: { action: 'estateCopy' }, query: { communityId: communitiesScopeStore.pick.picked[0] } })"}
+    ],
+    "not_supported_greps": [],
+    "open_questions": []
+  },
+  {
+    "kind": "new",
+    "shelf": "C",
+    "unit_ids": ["page:estates.dashboard"],
+    "proposed_id": "jgb/C/estate-dashboard-overview",
+    "askable": "物件儀表板總覽入口在哪、裡面分成哪些分頁",
+    "title": "物件儀表板總覽在哪裡看、有哪些分頁（招租廣告狀態、限管理者查看／與大房東共享）",
+    "target_user": ["property_manager"],
+    "business_types": ["system_provider"],
+    "instance_applicability": "general",
+    "sentences": [
+      "「物件儀表板」是以單一物件為單位的資訊總覽頁，網址是 /estates/dashboard/:id，一進去預設會導到「招租表現」分頁。",
+      "頁面最上方會顯示物件縮圖與地址，以及「招租廣告」「買賣廣告」目前是刊登中還是未刊登，並各自提供預覽連結，若有編輯權限還會有捷徑可以直接跳去編輯招租或買賣詳情。",
+      "分頁分成「限管理者查看」與「與大房東共享」兩組，桌機版顯示成上方的分頁籤，手機版則是可以用左右箭頭切換、也能點開清單直接選分頁。",
+      "「限管理者查看」這組包含招租表現、銷售表現；「與大房東共享」這組則有合約歷程、帳務收支、修繕紀錄、附件清單、房東流水帳、物件記事本等分頁。",
+      "如果目前登入的角色本身就是大房東，畫面就不會再顯示「限管理者查看」這組分頁籤。"
+    ],
+    "sources": [
+      "code:src/pages/estates/dashboard/Index.vue",
+      "code:src/pages/estates/dashboard/_parts/TabNav.vue",
+      "code:src/routes/estates.js"
+    ],
+    "evidence": [
+      {"sentence_index": 0, "source": "code:src/routes/estates.js", "quote_or_symbol": "name: 'estates.dashboard', path: '/estates/dashboard/:id', ... redirect: { name: 'estates.dashboard.rent' }"},
+      {"sentence_index": 1, "source": "code:src/pages/estates/dashboard/_parts/TabNav.vue", "quote_or_symbol": "{{ t('招租廣告') }} ... status?.code == 100 → '刊登中' / status?.code == 700 → '未刊登' ... router-link :to=\"{name:'estates.edit.rent_detail'...}\" v-if=\"isAgent && permission?.add_estate\""},
+      {"sentence_index": 2, "source": "code:src/pages/estates/dashboard/_parts/TabNav.vue", "quote_or_symbol": "tabGroup == 'admin' ? '限管理者查看' : ... tabGroup == 'share' ? '與大房東共享' ; genParamsWithTabChecker, prevTab/nextTab, lightboxOpen('tabNavMobile')"},
+      {"sentence_index": 3, "source": "code:src/routes/estates.js", "quote_or_symbol": "estates.dashboard.rent meta.tabGroup:'admin' label:'招租表現' / estates.dashboard.sell tabGroup:'admin' / estates.dashboard.contracts,bills,repair,attachments,runnings,memos tabGroup:'share'"},
+      {"sentence_index": 4, "source": "code:src/pages/estates/dashboard/_parts/TabNav.vue", "quote_or_symbol": "v-if=\"!dashboardStore.state?.isBigLandlord\" ... {{ t('限管理者查看') }}"}
+    ],
+    "not_supported_greps": [],
+    "open_questions": []
+  },
+  {
+    "kind": "new",
+    "shelf": "C",
+    "unit_ids": ["page:estates.dashboard.attachments"],
+    "proposed_id": "jgb/C/estate-attachments",
+    "askable": "物件附件（非合約附件）要怎麼上傳、有什麼張數與大小限制",
+    "title": "物件附件怎麼上傳、有什麼限制（儲存空間上限、單檔 10MB、下載刪除與附件備註）",
+    "target_user": ["property_manager"],
+    "business_types": ["system_provider"],
+    "instance_applicability": "general",
+    "sentences": [
+      "「附件清單」分頁用來存放這個物件相關的檔案，支援 JPG、PNG、PDF 格式，跟合約附件是分開管理的獨立功能。",
+      "儲存空間有上限，畫面上方會顯示目前已用檔案數與總可上傳檔案數，超過上限會跳出「儲存空間已滿」的提示。",
+      "每個檔案大小上限是 10MB，超過會跳出提醒，要求重新上傳小於 10MB 的檔案。",
+      "檔案清單會顯示名稱、擁有者、修改時間與檔案大小，可以下載，有權限的人也可以刪除，刪除前會再跳出一次確認視窗並顯示檔案名稱。",
+      "只有團隊擁有者、有物件編輯權限、或（該物件屬於大房東名下時）有新增物件權限的人，才能上傳或刪除附件。",
+      "頁面下方另外有一個「附件備註」欄位，可以編輯一段文字說明，是跟附件檔案分開儲存的。"
+    ],
+    "sources": [
+      "code:src/pages/estates/dashboard/attachments/Index.vue"
+    ],
+    "evidence": [
+      {"sentence_index": 0, "source": "code:src/pages/estates/dashboard/attachments/Index.vue", "quote_or_symbol": "accept=\"image/jpeg,image/png,application/pdf\" ... {{ t('附件清單') }}"},
+      {"sentence_index": 1, "source": "code:src/pages/estates/dashboard/attachments/Index.vue", "quote_or_symbol": "{{ t('儲存空間([s1])', [`${dataFetcher?.data?.total}/${dataFetcher?.data?.max}`]) }} ... lightbox id=\"spcaeIsFull\" 儲存空間已滿"},
+      {"sentence_index": 2, "source": "code:src/pages/estates/dashboard/attachments/Index.vue", "quote_or_symbol": "uploadSizeLimit: 10 ... lightbox id=\"uploadSizeLimit_aaa\" 檔案大小超過 {{state.uploadSizeLimit}}MB"},
+      {"sentence_index": 3, "source": "code:src/pages/estates/dashboard/attachments/Index.vue", "quote_or_symbol": "colName/colOwn/colDate/colSize ... lightbox id=\"deleteing\" 確定要刪除檔案嗎？"},
+      {"sentence_index": 4, "source": "code:src/pages/estates/dashboard/attachments/Index.vue", "quote_or_symbol": "hasUpdateFilePermission: computed(()=>{ return store.state.userData?.is_team_owner || store.state.userData?.permission?.edit_estate || (props.dashboardStore.state?.isAgent && store.state.userData?.permission?.add_estate) })"},
+      {"sentence_index": 5, "source": "code:src/pages/estates/dashboard/attachments/Index.vue", "quote_or_symbol": "{{ t('附件備註') }} ... editFormHandler() 呼叫 edit_attachments_form"}
+    ],
+    "not_supported_greps": [],
+    "open_questions": []
+  },
+  {
+    "kind": "new",
+    "shelf": "C",
+    "unit_ids": ["page:estates.dashboard.memos"],
+    "proposed_id": "jgb/C/estate-memos",
+    "askable": "物件記事本是什麼、怎麼新增與匯出",
+    "title": "物件記事本是什麼、怎麼用（時間／說明／對象欄位、最多 3 個附件、可匯出）",
+    "target_user": ["property_manager"],
+    "business_types": ["system_provider"],
+    "instance_applicability": "general",
+    "sentences": [
+      "「物件記事本」讓你紀錄這個物件的事件、溝通紀錄與現場備註。",
+      "每一筆記事包含「時間」「說明」「對象」三個欄位，另外最多可以附加 3 個檔案。",
+      "記事新增之後還可以再編輯或刪除。",
+      "記事清單可以整批匯出成檔案。"
+    ],
+    "sources": [
+      "code:src/pages/estates/dashboard/memos/Index.vue",
+      "code:src/pages/estates/dashboard/memos/_parts/MemoContainer.vue",
+      "code:src/pages/estates/dashboard/memos/_parts/PageTop.vue"
+    ],
+    "evidence": [
+      {"sentence_index": 0, "source": "code:src/pages/estates/dashboard/memos/_parts/PageTop.vue", "quote_or_symbol": "{{ t('物件記事本') }} / {{ t('讓您紀錄此物件的事件、溝通與現場備註。') }}"},
+      {"sentence_index": 1, "source": "code:src/pages/estates/dashboard/memos/_parts/MemoContainer.vue", "quote_or_symbol": "formConfig: [{key:'date',labelKey:'時間'},{key:'note',labelKey:'說明'},{key:'target_name',labelKey:'對象'}]"},
+      {"sentence_index": 1, "source": "code:src/pages/estates/dashboard/memos/Index.vue", "quote_or_symbol": "const MAX_FILES = 3"},
+      {"sentence_index": 2, "source": "code:src/pages/estates/dashboard/memos/Index.vue", "quote_or_symbol": "api = { get:.../memos, addMemo:.../add_memo, deleteMemo:.../delete_memo/${id}, editMemo:.../edit_memo/${id} }"},
+      {"sentence_index": 3, "source": "code:src/pages/estates/dashboard/memos/_parts/PageTop.vue", "quote_or_symbol": "function handleExportClick(){ if (props.exportHref){ window.location.href = props.exportHref } }"}
+    ],
+    "not_supported_greps": [],
+    "open_questions": []
+  },
+  {
+    "kind": "new",
+    "shelf": "C",
+    "unit_ids": ["page:estates.dashboard.rent"],
+    "proposed_id": "jgb/C/estate-rent-performance",
+    "askable": "物件的招租成效與瀏覽數據要去哪裡看",
+    "title": "物件的招租成效數據在哪裡看（空置天數、廣告瀏覽次數、帳務與合約摘要）",
+    "target_user": ["property_manager"],
+    "business_types": ["system_provider"],
+    "instance_applicability": "general",
+    "sentences": [
+      "「招租表現」分頁提供這個物件的成效數據，可以切換查詢區間：近 7 天、近 30 天、近 90 天或近 6 個月，預設是近 6 個月。",
+      "「空置天數」用圓餅圖顯示這段期間內出租天數與空置天數各佔幾天。",
+      "「廣告瀏覽次數」用長條圖顯示每天的瀏覽次數，並額外顯示這段期間的平均頁面瀏覽次數。",
+      "下方會摘要「帳務表現」的總收入、總支出、總結餘，點「更多」可以連到這個物件的「帳務收支」分頁。",
+      "也會摘要「合約歷程」，但這裡只列出執行中和歷史合約，不含其他狀態的合約。"
+    ],
+    "sources": [
+      "code:src/pages/estates/dashboard/rent/Index.vue"
+    ],
+    "evidence": [
+      {"sentence_index": 0, "source": "code:src/pages/estates/dashboard/rent/Index.vue", "quote_or_symbol": "dateRangeOptions: [{scale:7,unit:'days'},{scale:30,unit:'days'},{scale:90,unit:'days'},{scale:6,unit:'months'}] ... defaultQueryRange = scaleToDateRange(6,'months', queryRangeOffset)"},
+      {"sentence_index": 1, "source": "code:src/pages/estates/dashboard/rent/Index.vue", "quote_or_symbol": "{{ t('空置天數') }} ... PieChart chartData idle_chart.columns[0]/[1] 出租/空置"},
+      {"sentence_index": 2, "source": "code:src/pages/estates/dashboard/rent/Index.vue", "quote_or_symbol": "{{ t('廣告瀏覽次數') }} ... {{ t('平均頁面瀏覽次數：') }}{{ dataFetcher.data?.ad_chart?.average_string }}"},
+      {"sentence_index": 3, "source": "code:src/pages/estates/dashboard/rent/Index.vue", "quote_or_symbol": "{{ t('帳務表現') }} ... {{ t('總收入') }}/{{ t('總支出') }}/{{ t('總結餘') }} ... router-link :to=\"{name:'estates.dashboard.bills', params:{tab:'Total'}}\">{{ t('更多') }}"},
+      {"sentence_index": 4, "source": "code:src/pages/estates/dashboard/rent/Index.vue", "quote_or_symbol": "{{ t('合約歷程') }} ... tooltip content: {{ t('此列表只會顯示執行中 & 歷史合約。') }}"}
+    ],
+    "not_supported_greps": [],
+    "open_questions": []
+  },
+  {
+    "kind": "new",
+    "shelf": "C",
+    "unit_ids": ["page:estates.dashboard.runnings"],
+    "proposed_id": "jgb/C/estate-owner-ledger",
+    "askable": "房東流水帳是什麼、怎麼記錄收支",
+    "title": "房東流水帳是什麼、怎麼記帳（時間／說明／對象／收支類型／幣別／金額、匯出方式）",
+    "target_user": ["property_manager"],
+    "business_types": ["system_provider"],
+    "instance_applicability": "general",
+    "sentences": [
+      "「房東流水帳」讓大房東記錄物件相關的儲值金收支紀錄，是跟系統自動產生的帳務收支分開的一份手動流水帳。",
+      "每一筆流水帳要填時間、說明、對象、收支類型（收入或支出）、幣別與金額，最多可以附加 3 個檔案。",
+      "幣別欄位預設會帶入系統目前設定的幣別符號。",
+      "流水帳資料可以匯出；如果登入角色屬於 Beyond360 系列角色，匯出會走另一個專屬的匯出視窗，其他角色則是直接下載匯出連結。"
+    ],
+    "sources": [
+      "code:src/pages/estates/dashboard/runnings/Index.vue",
+      "code:src/pages/estates/dashboard/runnings/_parts/PageTop.vue",
+      "code:src/pages/estates/dashboard/runnings/_parts/LedgerContainer.vue"
+    ],
+    "evidence": [
+      {"sentence_index": 0, "source": "code:src/pages/estates/dashboard/runnings/_parts/PageTop.vue", "quote_or_symbol": "{{ t('房東流水帳') }} / {{ t('讓您紀錄大房東的儲值金收支紀錄。') }}"},
+      {"sentence_index": 1, "source": "code:src/pages/estates/dashboard/runnings/_parts/LedgerContainer.vue", "quote_or_symbol": "income: '收入', expense: '支出' ... labelKey: '時間'/'說明'/'對象'"},
+      {"sentence_index": 1, "source": "code:src/pages/estates/dashboard/runnings/Index.vue", "quote_or_symbol": "const MAX_FILES = 3"},
+      {"sentence_index": 2, "source": "code:src/pages/estates/dashboard/runnings/Index.vue", "quote_or_symbol": "if (!formCurrency && dollarSign){ state.form.currencySelected = dollarSign }"},
+      {"sentence_index": 3, "source": "code:src/pages/estates/dashboard/runnings/_parts/PageTop.vue", "quote_or_symbol": "isBeyond360LedgerExport ... if (isBeyond360LedgerExport.value) { store.commit('lightbox','ledgerExportLightbox') } else { window.location.href = props.exportHref }"}
+    ],
+    "not_supported_greps": [],
+    "open_questions": []
+  },
+  {
+    "kind": "new",
+    "shelf": "C",
+    "unit_ids": ["page:estates.edit.building_transcript"],
+    "proposed_id": "jgb/C/building-transcript-social-housing",
+    "askable": "社宅物件的建物謄本要填哪些欄位",
+    "title": "社宅物件的建物謄本要填哪些欄位（申請日期、面積算法、地號建號、核實訊息）",
+    "target_user": ["property_manager"],
+    "business_types": ["system_provider"],
+    "instance_applicability": "general",
+    "sentences": [
+      "「建物謄本」分頁只有在社宅物件（用途為社宅）才會顯示，用來先登記合約會用到的產權資料，這裡填的內容不會顯示在物件廣告上。",
+      "必填欄位包括「申請謄本日期」與「建築完成日期」（皆用日期選擇器），以及「謄本面積」，其算法是主建物面積加附屬建物面積加持分公設面積再減車位面積（平方公尺）。",
+      "也要填「地號」（段小段中文、地號）與「建號」（段小段中文、建號）兩組資料，都是必填。",
+      "這個頁面同時包含「核實訊息」：產權登記是「已辦理」或「未辦理」，以及「租賃標的法定用途」文字欄位，最多 500 字。",
+      "未登記的改建、增建、加建、違建面積在這裡是單一數字欄位（平方公尺），限填純數字、最多到小數點後兩位，跟一般物件的建物謄本用四個位置分開填不同。"
+    ],
+    "sources": [
+      "code:src/pages/estates/edit/building_transcript/Index.vue",
+      "code:src/routes/estates.js"
+    ],
+    "evidence": [
+      {"sentence_index": 0, "source": "code:src/routes/estates.js", "quote_or_symbol": "name: 'estates.edit.building_transcript' ... display_property_purpose_key: [2]"},
+      {"sentence_index": 0, "source": "code:src/pages/estates/edit/building_transcript/Index.vue", "quote_or_symbol": "{{ t('為方便未來完備合約資料，請先提供以下資料，資料將不會顯示於物件廣告上。') }}"},
+      {"sentence_index": 1, "source": "code:src/pages/estates/edit/building_transcript/Index.vue", "quote_or_symbol": "h5 after-required 申請謄本日期 / 建築完成日期 ... {{ t('請以建物謄本所載面積為準') }}(= 主建物面積 + 附屬建物面積 + 持分公設面積 - 車位面積)"},
+      {"sentence_index": 2, "source": "code:src/pages/estates/edit/building_transcript/Index.vue", "quote_or_symbol": "fieldTitle after-required 段小段中文 / 地號 ... 段小段中文 / 建號"},
+      {"sentence_index": 3, "source": "code:src/pages/estates/edit/building_transcript/Index.vue", "quote_or_symbol": "h5 產權登記 ... radio value=\"y\"/\"n\" ... 租賃標的法定用途 input maxlength=\"500\""},
+      {"sentence_index": 4, "source": "code:src/pages/estates/edit/building_transcript/Index.vue", "quote_or_symbol": "isNaN(editStore.form.ad_building_area) || getDecimalPlace(editStore.form.ad_building_area)>2 ... {{ t('最多至小數點後第二位') }}"}
+    ],
+    "not_supported_greps": [],
+    "open_questions": []
+  },
+  {
+    "kind": "new",
+    "shelf": "C",
+    "unit_ids": ["page:estates.edit.building_transcript_general"],
+    "proposed_id": "jgb/C/building-transcript-general",
+    "askable": "一般物件的建物謄本要填哪些欄位",
+    "title": "一般物件的建物謄本要填哪些欄位（土地標的清冊、主附屬建物層次面積、他項權利、查封登記）",
+    "target_user": ["property_manager"],
+    "business_types": ["system_provider"],
+    "instance_applicability": "general",
+    "sentences": [
+      "「建物謄本」分頁只在一般物件（非社宅）才會顯示，是共用元件在「顯示所有欄位」模式下的版本，欄位比社宅物件的建物謄本頁更完整。",
+      "「土地標的清冊」（供實價登錄使用）最多可以填 3 筆，每筆包含段、小段、地號、面積與都市土地使用分區（住/商/工/農/其他）。",
+      "「主建物」「附屬建物」要依樓層分別填「層次」與「面積」，一般範本最多 3 層，部分內政部範本最多 4 層；附屬建物另外有「持分面積」欄位。",
+      "要填「他項權利」是否存在，若有則要另外填一段最多 30 字的說明，還有「查封登記」欄位要填。"
+    ],
+    "sources": [
+      "code:src/pages/estates/edit/buildingTranscriptGeneral/Index.vue",
+      "code:src/pages/contracts/edit/buildingTranscript/General.vue",
+      "code:src/routes/estates.js"
+    ],
+    "evidence": [
+      {"sentence_index": 0, "source": "code:src/pages/estates/edit/buildingTranscriptGeneral/Index.vue", "quote_or_symbol": "此頁面僅對一般物件（property_purpose_key: 1）顯示 ... <General :editStore=\"editStore\" :showAllFields=\"true\" />"},
+      {"sentence_index": 1, "source": "code:src/pages/contracts/edit/buildingTranscript/General.vue", "quote_or_symbol": "emptyLandEntry = () => ({ section, subsection, land_no, land_area, land_use, land_use_text }) ... if (landInventory.value.length < 3) ... landUseOptions: 住/商/工/農/其他 ... {{ t('都市土地使用分區') }}"},
+      {"sentence_index": 2, "source": "code:src/pages/contracts/edit/buildingTranscript/General.vue", "quote_or_symbol": "Array.from(Array(isMOITemplate.value ? 4 : 3), ...) ... { title: t('持分面積'), key: 'public_possession_area' } ... {{ t('主建物') }} / {{ t('附屬建物') }}"},
+      {"sentence_index": 3, "source": "code:src/pages/contracts/edit/buildingTranscript/General.vue", "quote_or_symbol": "editStore.form.other_right = { has_other_right: 0, other_right_note: '' } ... other_right_note maxlength=\"30\" ... {{ t('查封登記') }}"}
+    ],
+    "not_supported_greps": [],
+    "open_questions": []
+  },
+  {
+    "kind": "new",
+    "shelf": "C",
+    "unit_ids": ["page:estates.edit.facilities"],
+    "proposed_id": "jgb/C/facilities-general",
+    "askable": "一般物件的傢俱／設備清單要怎麼填",
+    "title": "一般物件的附設傢俱要怎麼填（依格局列家電傢俱、自訂設備上限、座位數、戶內共用空間）",
+    "target_user": ["property_manager"],
+    "business_types": ["system_provider"],
+    "instance_applicability": "general",
+    "sentences": [
+      "「附設傢俱」分頁在一般物件會顯示，依「格局」（如客廳、房間、廚房等空間）分別列出家電、傢俱清單，用數量下拉選單填寫。",
+      "每個空間格局都可以額外新增最多 10 項「自訂設備」，用自動完成輸入名稱並填數量。",
+      "商用類型物件（非店面／辦公室）改成只填「座位數」，範圍是 0 到 999。",
+      "套房或雅房類型的物件，除了各房間的設備外，還要另外填一組「戶內共用空間」的設備清單（同樣分家電、傢俱、自訂）。",
+      "數量填 0 的設備項目，不會顯示在物件的招租廣告頁上。",
+      "每個空間格局的清單可以收合或展開來查看目前已設定的內容。"
+    ],
+    "sources": [
+      "code:src/pages/estates/edit/facilities/Index.vue",
+      "code:src/pages/estates/edit/facilities/_parts/General.vue"
+    ],
+    "evidence": [
+      {"sentence_index": 0, "source": "code:src/pages/estates/edit/facilities/Index.vue", "quote_or_symbol": "<General v-if=\"[1].includes(parseInt(editStore.options?.property_purpose_key))\" .../>"},
+      {"sentence_index": 0, "source": "code:src/pages/estates/edit/facilities/_parts/General.vue", "quote_or_symbol": "h4 格局(${state.spaceTypeLabels[...]}) ... Multiselect v-model=\"pattern.count\" :options=\"pattern.options || [0,1,2,3,4,5,6,7,8,9]\""},
+      {"sentence_index": 1, "source": "code:src/pages/estates/edit/facilities/_parts/General.vue", "quote_or_symbol": "if( patternItems_cat.length >= 10 ){ return } patternItems_cat.push({label:'', count:1}) ... ( {{ patternItems_cat.length }} / 10 )"},
+      {"sentence_index": 2, "source": "code:src/pages/estates/edit/facilities/_parts/General.vue", "quote_or_symbol": "premises_use_for === 'business' && !isRetailShopOrOfficeFlat ... {{ t('座位數') }} ... {{ t('最小可為 [s1]，至多為 [s2]。', [0, 999]) }}"},
+      {"sentence_index": 3, "source": "code:src/pages/estates/edit/facilities/_parts/General.vue", "quote_or_symbol": "editStore.form.space_type === 'studio' || editStore.form.space_type === 'room' ... <h4>{{ t('戶內共用空間') }}</h4> ... editStore.form.share_facilities"},
+      {"sentence_index": 4, "source": "code:src/pages/estates/edit/facilities/_parts/General.vue", "quote_or_symbol": "{{ t('數量為 0 者不會顯示在物件廣告頁上。') }}"},
+      {"sentence_index": 5, "source": "code:src/pages/estates/edit/facilities/_parts/General.vue", "quote_or_symbol": "patternSliders ... {{ t('收合') }} / {{ t('展開') }}"}
+    ],
+    "not_supported_greps": [],
+    "open_questions": []
+  },
+  {
+    "kind": "new",
+    "shelf": "C",
+    "unit_ids": ["page:estates.edit.facilities"],
+    "proposed_id": "jgb/C/facilities-social-housing",
+    "askable": "社宅物件的格局數量要怎麼填",
+    "title": "社宅物件的格局數量要怎麼填（房間陽台衛浴等五種、套房與雅房的固定規則）",
+    "target_user": ["property_manager"],
+    "business_types": ["system_provider"],
+    "instance_applicability": "general",
+    "sentences": [
+      "社宅物件的「附設傢俱」分頁只需要設定「格局」數量，不像一般物件要逐一列家電和傢俱。",
+      "格局分成房間、陽台、衛浴、客廳/餐廳、廚房五種，各自用下拉選單選數量。",
+      "如果空間類型是「套房」，房間數量選單只能選「套」或 0 到 9；如果是「雅房」，房間數固定為 1 間，衛浴、客廳/餐廳、廚房這三項都不會顯示。",
+      "切換空間類型為「套房」或「雅房」時，系統會自動把客廳、廚房、衛浴的數量重設為 0（雅房的房間則固定重設為 1）。"
+    ],
+    "sources": [
+      "code:src/pages/estates/edit/facilities/Index.vue",
+      "code:src/pages/estates/edit/facilities/_parts/SocialHousing.vue"
+    ],
+    "evidence": [
+      {"sentence_index": 0, "source": "code:src/pages/estates/edit/facilities/Index.vue", "quote_or_symbol": "<SocialHousing v-if=\"[2].includes(parseInt(editStore.options?.property_purpose_key))\" .../>"},
+      {"sentence_index": 1, "source": "code:src/pages/estates/edit/facilities/_parts/SocialHousing.vue", "quote_or_symbol": "patternLabels: { room:'房間', balcony:'陽台', bathroom:'衛浴', living_room:'客廳/餐廳', kitchen:'廚房' }"},
+      {"sentence_index": 2, "source": "code:src/pages/estates/edit/facilities/_parts/SocialHousing.vue", "quote_or_symbol": "case 'studio': return { room: { options: [t('套'),0,1,2,3,4,5,6,7,8,9] } } / case 'room': return { room: { disabled:true, options:[1] }, bathroom:{display:false}, living_room:{display:false}, kitchen:{display:false} }"},
+      {"sentence_index": 3, "source": "code:src/pages/estates/edit/facilities/_parts/SocialHousing.vue", "quote_or_symbol": "case 'studio': social_housing_pattern_count.living_room=0; kitchen=0; bathroom=0; room=0 / case 'room': ...room=1"}
+    ],
+    "not_supported_greps": [],
+    "open_questions": []
+  },
+  {
+    "kind": "new",
+    "shelf": "C",
+    "unit_ids": ["page:estates.edit.gallery"],
+    "proposed_id": "jgb/C/estate-title-fields",
+    "askable": "物件標題與物件公開標題要怎麼填",
+    "title": "物件標題與物件公開標題怎麼填（各限 60 字、公開標題預設關閉）",
+    "target_user": ["property_manager"],
+    "business_types": ["system_provider"],
+    "instance_applicability": "general",
+    "sentences": [
+      "「標題與照片」分頁用來設定物件標題與物件公開標題，是編輯物件流程「物件資訊」分類下的一個分頁，一般物件與社宅物件都會顯示。",
+      "「物件標題」是必填欄位，最長 60 個字。",
+      "「物件公開標題」預設是關閉的，要勾選「啟用」才能編輯，最長也是 60 個字；把它停用時會清空這個欄位的內容。",
+      "啟用公開標題但欄位還是空的時候，系統會先帶入目前的物件標題當作預設值。"
+    ],
+    "sources": [
+      "code:src/pages/estates/edit/gallery/Index.vue",
+      "code:src/routes/estates.js"
+    ],
+    "evidence": [
+      {"sentence_index": 0, "source": "code:src/routes/estates.js", "quote_or_symbol": "name: 'estates.edit.gallery' ... label: '標題與照片', group: '物件資訊', display_property_purpose_key: [1, 2]"},
+      {"sentence_index": 1, "source": "code:src/pages/estates/edit/gallery/Index.vue", "quote_or_symbol": "<h4 class=\"after-required mb-2\">{ t('物件標題') }</h4> ... maxlength=\"60\" ... {{ t('標題最長 [s1] 字', [60]) }}"},
+      {"sentence_index": 2, "source": "code:src/pages/estates/edit/gallery/Index.vue", "quote_or_symbol": "{ t('物件公開標題') } ... checked={state.is_show_display_premises_title} ... else { props.editStore.form.display_premises_title = '' }"},
+      {"sentence_index": 3, "source": "code:src/pages/estates/edit/gallery/Index.vue", "quote_or_symbol": "if (!props.editStore.form.display_premises_title){ props.editStore.form.display_premises_title = props.editStore.form.premises_title }"}
+    ],
+    "not_supported_greps": [],
+    "open_questions": []
+  },
+  {
+    "kind": "new",
+    "shelf": "C",
+    "unit_ids": ["page:estates.edit.gallery"],
+    "proposed_id": "jgb/C/estate-photo-upload",
+    "askable": "物件照片與平面圖要怎麼上傳（張數、格式、封面照片）",
+    "title": "物件照片怎麼上傳與排序（最多 15 張、封面照片是第一張、平面圖另外最多 5 個檔案）",
+    "target_user": ["property_manager"],
+    "business_types": ["system_provider"],
+    "instance_applicability": "general",
+    "sentences": [
+      "物件照片最多可以上傳 15 張，支援 JPG、PNG 格式，每張檔案大小上限 15MB。",
+      "上傳的第一張照片會自動被系統標記為「封面照片」。",
+      "照片清單可以拖曳排序，排序後排在第一位的永遠是封面照片。",
+      "每張照片可以額外填寫一段文字描述。",
+      "物件平面圖是另一個獨立的上傳區塊，最多可以上傳 5 個檔案，支援 JPG、PNG、PDF，每個檔案大小上限一樣是 15MB。",
+      "平面圖檔案同樣可以拖曳排序、也可以個別加上文字描述，但沒有封面照片的概念。"
+    ],
+    "sources": [
+      "code:src/pages/estates/edit/gallery/Index.vue"
+    ],
+    "evidence": [
+      {"sentence_index": 0, "source": "code:src/pages/estates/edit/gallery/Index.vue", "quote_or_symbol": "size_limit={15} max_length={15} ... accept=\"image/jpeg,image/png\" ... {{ t('支援JPG、PNG檔，至多 [s1] 張，檔案大小最大 [s2] MB。', [15, 15]) }}"},
+      {"sentence_index": 1, "source": "code:src/pages/estates/edit/gallery/Index.vue", "quote_or_symbol": "index == 0 && <div ...>{ t('封面照片') }</div>"},
+      {"sentence_index": 2, "source": "code:src/pages/estates/edit/gallery/Index.vue", "quote_or_symbol": "<Draggable ... handle='.dragTrigger' vModel={props.editStore.form.gallery} />"},
+      {"sentence_index": 3, "source": "code:src/pages/estates/edit/gallery/Index.vue", "quote_or_symbol": "<textarea vModel={element.description} placeholder={t('替你的[s1]加點吸引人的敘述吧！', [t('照片')])} />"},
+      {"sentence_index": 4, "source": "code:src/pages/estates/edit/gallery/Index.vue", "quote_or_symbol": "max_length={5} accept=\"image/jpeg,image/png,application/pdf\" ... {{ t('支援JPG、PNG、PDF檔，至多 [s1] 張，檔案大小最大 [s2] MB。', [5, 15]) }}"},
+      {"sentence_index": 5, "source": "code:src/pages/estates/edit/gallery/Index.vue", "quote_or_symbol": "<Draggable ... vModel={props.editStore.form.floor_plan} /> ... <textarea vModel={element.description} .../> (no 封面照片 badge in this block)"}
+    ],
+    "not_supported_greps": [],
+    "open_questions": []
+  },
+  {
+    "kind": "new",
+    "shelf": "C",
+    "unit_ids": ["page:estates.edit.intro"],
+    "proposed_id": "jgb/C/estate-intro-text",
+    "askable": "物件介紹的房源簡介和鄰近交通文字欄位有沒有字數限制",
+    "title": "物件介紹的房源簡介與鄰近交通要怎麼填（房源簡介 1500 字、鄰近交通 500 字）",
+    "target_user": ["property_manager"],
+    "business_types": ["system_provider"],
+    "instance_applicability": "general",
+    "sentences": [
+      "「物件介紹」分頁讓你填寫房源簡介和鄰近交通說明，這兩段文字都會顯示在物件的招租廣告上。",
+      "「房源簡介」欄位最多可以輸入 1500 個字，超過的部分會被系統自動截斷。",
+      "「鄰近交通」欄位最多可以輸入 500 個字，一樣超過會被截斷。"
+    ],
+    "sources": [
+      "code:src/pages/estates/edit/intro/Index.vue"
+    ],
+    "evidence": [
+      {"sentence_index": 0, "source": "code:src/pages/estates/edit/intro/Index.vue", "quote_or_symbol": "<h4 class=\"mb-2\">{ t('物件介紹') }</h4> ... {{ t('提供物件的介紹，讓您的客戶更了解細節。') }}"},
+      {"sentence_index": 1, "source": "code:src/pages/estates/edit/intro/Index.vue", "quote_or_symbol": "limitTextArea(e.target ,1500) ... {{ editStore.form?.source_additional?.length }}/1500"},
+      {"sentence_index": 2, "source": "code:src/pages/estates/edit/intro/Index.vue", "quote_or_symbol": "limitTextArea(e.target,500) ... {{ editStore.form?.traffic_additional?.length }}/500"}
+    ],
+    "not_supported_greps": [],
+    "open_questions": []
+  },
+  {
+    "kind": "new",
+    "shelf": "C",
+    "unit_ids": ["page:estates.edit.intro"],
+    "proposed_id": "jgb/C/estate-intro-mrt",
+    "askable": "物件介紹的鄰近捷運站要怎麼設定",
+    "title": "物件介紹的鄰近捷運站要怎麼設定（限台灣馬來西亞泰國、每條線只能加一次）",
+    "target_user": ["property_manager"],
+    "business_types": ["system_provider"],
+    "instance_applicability": "general",
+    "sentences": [
+      "只有物件地址國家是台灣、馬來西亞或泰國，「物件介紹」頁才會顯示「鄰近捷運站」設定區塊。",
+      "每一筆鄰近捷運站資料要先選捷運線，再從該線的站名清單勾選一個以上的停靠站；捷運線和站名清單會依國家帶入對應資料。",
+      "同一條捷運線只能新增一次，已經選過的線會在下拉選單裡被停用，不能重複選。",
+      "如果目前這一筆的捷運線或停靠站還沒選完，「新增鄰近捷運站」按鈕會被停用，不能再加下一筆。",
+      "可以個別刪除已經新增的捷運線資料列。"
+    ],
+    "sources": [
+      "code:src/pages/estates/edit/intro/Index.vue"
+    ],
+    "evidence": [
+      {"sentence_index": 0, "source": "code:src/pages/estates/edit/intro/Index.vue", "quote_or_symbol": "hasMRTConfig: computed(()=>{ return ['TW', 'MY', 'TH'].includes(props.editStore.form.address.country) })"},
+      {"sentence_index": 1, "source": "code:src/pages/estates/edit/intro/Index.vue", "quote_or_symbol": "getMRTData: switch(country){ case 'TW': import('/config/MRT') case 'MY': import('/config/MY_MRT') case 'TH': import('/config/TH_MRT') } ... Multiselect mode=\"tags\""},
+      {"sentence_index": 2, "source": "code:src/pages/estates/edit/intro/Index.vue", "quote_or_symbol": "MRTLineOptions: ...disabled: state.selectedLines.includes(key)"},
+      {"sentence_index": 3, "source": "code:src/pages/estates/edit/intro/Index.vue", "quote_or_symbol": "isMRTaddButtonDisabled: ...const isInProcess = !isEmpty(lastItem) && (isEmpty(lastItem?.line) || isEmpty(lastItem?.stations)); return isFull || isInProcess"},
+      {"sentence_index": 4, "source": "code:src/pages/estates/edit/intro/Index.vue", "quote_or_symbol": "editStore.form.MRT = editStore.form.MRT.filter((node, node_i)=>{ return node_i !== MRTItem_i })"}
+    ],
+    "not_supported_greps": [],
+    "open_questions": []
+  },
+  {
+    "kind": "new",
+    "shelf": "C",
+    "unit_ids": ["page:estates.edit.rent_contact"],
+    "proposed_id": "jgb/C/rent-contact-info",
+    "askable": "招租廣告的『刊登主資訊』要填什麼、怎麼隱藏聯絡資訊",
+    "title": "招租廣告的刊登主資訊要填什麼（經理人、法人房東公司資料、隱藏姓名電話Email）",
+    "target_user": ["property_manager"],
+    "business_types": ["system_provider"],
+    "instance_applicability": "general",
+    "sentences": [
+      "「刊登主資訊」是編輯物件「廣告資訊／招租」分類下的一個分頁，目的是讓租客知道刊登者的身分。",
+      "個人房東只需要指定要顯示的「經理人」，畫面會帶出該經理人的姓名、電話與 Email。",
+      "法人房東除了經理人資訊外，還會顯示公司資訊區塊：公司名稱、電話、Email、經紀人名稱與證號、租賃管理人員名稱與證號、登記證號、Facebook、Line ID，缺漏的欄位會用紅字標示「尚未提供」。",
+      "法人房東要選「經理人」（可複選）與「廣告顯示經理人」（單選，決定廣告上顯示的那一位）。",
+      "不論個人或法人房東，都可以勾選「在廣告上隱藏名稱」「在廣告上隱藏聯絡電話」「在廣告上隱藏Email」三個開關，控制對外顯示的聯絡資訊。",
+      "公司資訊與經理人帳號資訊要分別到「團隊資訊」與「帳號資訊」頁面修改，這個頁面本身不能編輯這兩塊資料。",
+      "存檔後按「預覽招租廣告」會直接開啟這個物件的招租廣告頁面。"
+    ],
+    "sources": [
+      "code:src/pages/estates/edit/rent_contact/Index.vue",
+      "code:src/routes/estates.js"
+    ],
+    "evidence": [
+      {"sentence_index": 0, "source": "code:src/routes/estates.js", "quote_or_symbol": "name: 'estates.edit.rent_contact' ... label: '刊登主資訊', group: '廣告資訊', subGroup: '招租'"},
+      {"sentence_index": 0, "source": "code:src/pages/estates/edit/rent_contact/Index.vue", "quote_or_symbol": "{{ t('為提供租客與房東更安心的租屋體驗，金箍棒平台希望租賃雙方提供以下資訊。') }}"},
+      {"sentence_index": 1, "source": "code:src/pages/estates/edit/rent_contact/Index.vue", "quote_or_symbol": "!state.isCompany ... {{ state.agentInfo?.name }} / {{ state.agentInfo?.phone }} / {{ state.agentInfo?.email }}"},
+      {"sentence_index": 2, "source": "code:src/pages/estates/edit/rent_contact/Index.vue", "quote_or_symbol": "isCompany: [3,4].includes(role.config_rule_key) ... {{ t('經紀人名稱') }} / {{ t('經紀人證號') }} / {{ t('租賃管理人員名稱') }} / {{ t('租賃管理人員證號') }} / {{ t('登記證號') }} / Facebook / Line ID ... t('尚未提供')"},
+      {"sentence_index": 3, "source": "code:src/pages/estates/edit/rent_contact/Index.vue", "quote_or_symbol": "{{ t('經理人') }} ... :multiple=\"true\" ... {{ t('廣告顯示經理人') }} ... editStore.form.main_agent_user_id = option.value"},
+      {"sentence_index": 4, "source": "code:src/pages/estates/edit/rent_contact/Index.vue", "quote_or_symbol": "v-model=\"editStore.form.show_first_name_only\" ...{{ t('在廣告上隱藏名稱') }} / hide_phone ...{{ t('在廣告上隱藏聯絡電話') }} / hide_email ...{{ t('在廣告上隱藏Email') }}"},
+      {"sentence_index": 5, "source": "code:src/pages/estates/edit/rent_contact/Index.vue", "quote_or_symbol": "v-html=\"t('如有需要修改以下資訊，請前往 [s1] 進行修改。', [`<a ... href='${store.state.siteOptions?.backendRoutes?.['users.role']}'>${t('團隊資訊')}</a>`])\""},
+      {"sentence_index": 6, "source": "code:src/pages/estates/edit/rent_contact/Index.vue", "quote_or_symbol": "next-text=\"t('預覽招租廣告')\" :next=\"{ onClick: ()=>{ editStore.saver.save().then(()=>{ window.location.href = editStore.options?.links?.show_rent }) } }\""}
+    ],
+    "not_supported_greps": [],
+    "open_questions": []
+  },
+  {
+    "kind": "new",
+    "shelf": "C",
+    "unit_ids": ["page:estates.edit.rent_verify"],
+    "proposed_id": "jgb/C/rent-verify-info",
+    "askable": "物件的核實訊息（產權登記、法定用途、違建面積）要填什麼",
+    "title": "物件的核實訊息要填什麼（產權登記已辦理／未辦理、法定用途、違建面積四個位置）",
+    "target_user": ["property_manager"],
+    "business_types": ["system_provider"],
+    "instance_applicability": "general",
+    "sentences": [
+      "「核實訊息」是編輯物件「物件資訊」分類下的一個分頁，只有一般物件才會顯示。",
+      "要選填「產權登記」是「已辦理」還是「未辦理」，代表這個租賃標的在地政機關有沒有產權登記。",
+      "台灣使用者會看到依「住宅租賃市場發展條例」要求核實廣告內容的提示文字，並附上內政部地籍圖資查詢系統的連結。",
+      "「租賃標的法定用途」是一個文字欄位，最多可以輸入 500 個字。",
+      "「未登記之改建、增建、加建、違建部分」要分別填壹樓、所在樓層、頂樓、其他處所的面積（平方公尺），每個面積數值最大可以到 1000000。",
+      "只要這四組面積或「樓層加面積」其中一組有填，系統就會自動把「是否有未登記建物」標記為是，全部留空則標記為否。"
+    ],
+    "sources": [
+      "code:src/pages/estates/edit/rent_verify/Index.vue",
+      "code:src/routes/estates.js"
+    ],
+    "evidence": [
+      {"sentence_index": 0, "source": "code:src/routes/estates.js", "quote_or_symbol": "name: 'estates.edit.rent_verify' ... label: '核實訊息', display_property_purpose_key: [1]"},
+      {"sentence_index": 1, "source": "code:src/pages/estates/edit/rent_verify/Index.vue", "quote_or_symbol": "v-model=\"editStore.form.is_registration\" ... value=\"y\">{{ t('已辦理') }} / value=\"n\">{{ t('未辦理') }}"},
+      {"sentence_index": 2, "source": "code:src/pages/estates/edit/rent_verify/Index.vue", "quote_or_symbol": "{{ t('內政部依照《[s1]》要求發佈廣告內容應與事實相符...', [住宅租賃市場發展條例, 地籍圖資網路便民服務系統]) }} v-if=\"store.state.userData?.user?.country == 'TW'\""},
+      {"sentence_index": 3, "source": "code:src/pages/estates/edit/rent_verify/Index.vue", "quote_or_symbol": "{{ t('租賃標的法定用途') }} ... maxlength=\"500\""},
+      {"sentence_index": 4, "source": "code:src/pages/estates/edit/rent_verify/Index.vue", "quote_or_symbol": "illegalConstructionsInputHandle: /^(?:0|[1-9][0-9]{0,5}|1000000)$/ ... 壹樓/所在樓層/頂樓/其他處所"},
+      {"sentence_index": 5, "source": "code:src/pages/estates/edit/rent_verify/Index.vue", "quote_or_symbol": "if (!isEmpty(newVal[0]) || !isEmpty(newVal[1]) || !isEmpty(newVal[2]) || (!isEmpty(newVal[3]) && !isEmpty(newVal[4]))){ has_unregistered = 1 } else { has_unregistered = 0 }"}
+    ],
+    "not_supported_greps": [],
+    "open_questions": []
+  },
+  {
+    "kind": "append",
+    "shelf": "C",
+    "unit_ids": ["page:estates.edit.rent_detail"],
+    "target_fine_id": "jgb/C/property-listing-conditions",
+    "askable": "招租詳情裡的生活費用（水電瓦斯等）要怎麼設定",
+    "title": "招租詳情的生活費用要怎麼設定（收費方式、儲值電錶、電費法定上限、自訂項目）",
+    "target_user": ["property_manager"],
+    "business_types": ["system_provider"],
+    "instance_applicability": "general",
+    "sentences": [
+      "招租詳情頁除了租金等必填欄位外，還有一個「生活費用」區塊，可以逐項開關電費、水費、瓦斯費等多種費用項目。",
+      "每個費用項目要選「收費方式」，選項包含每月、租客自繳、包含在租金內、以及「其他」；電費、水費、瓦斯費另外多一個「一度」（依用量計費）的選項，電費還可以再選「依儲值電錶設定」。",
+      "選「一度」或「每月」時要填單價；選「其他」時要再選一種計費方式，並可以填一段最多 35 個中文字的自訂說明文字。",
+      "電費選「依儲值電錶設定」時，畫面會提示儲值電錶的收款方式要比照合約收款方式，且只能用信用卡、ATM 或現金。",
+      "電費項目旁邊會有一則提醒：依規定不得收取超過台電夏季電費最高每度 6.41 元。",
+      "除了系統內建的費用項目，還可以另外新增自訂收費或支出項目，數量上限由後台設定值決定。"
+    ],
+    "sources": [
+      "code:src/pages/estates/edit/rent_detail/LivingFeesSection.jsx"
+    ],
+    "evidence": [
+      {"sentence_index": 0, "source": "code:src/pages/estates/edit/rent_detail/LivingFeesSection.jsx", "quote_or_symbol": "SwitchButton vModel={feesTogglerList[feeKey]} ... const supportMeterFees = ['電費', '水費', '瓦斯費', '__FULL']"},
+      {"sentence_index": 1, "source": "code:src/pages/estates/edit/rent_detail/LivingFeesSection.jsx", "quote_or_symbol": "option = [{label:t('每月'),value:'month'},{label:t('租客自繳'),value:'self'},{label:t('包含在租金內'),value:'rent_include'}] ... option.unshift({label:t('一度'),value:'meter'}) ... option.push({label:t('依儲值電錶設定'),value:'topup_meter'})"},
+      {"sentence_index": 2, "source": "code:src/pages/estates/edit/rent_detail/LivingFeesSection.jsx", "quote_or_symbol": "['meter','month'].includes(feesUnitList[feeKey]) && <PrefixInput .../> ... maxlength=\"35\" placeholder={t('自定義文字，長度限制約 [s1] 個中文字', [35])}"},
+      {"sentence_index": 3, "source": "code:src/pages/estates/edit/rent_detail/LivingFeesSection.jsx", "quote_or_symbol": "{{ t('儲值電錶注意事項') }} ... 儲值電錶的收款方式，比照合約設定的收款方式 ... 請使用 [信用卡]、[ATM] 或 [現金]"},
+      {"sentence_index": 4, "source": "code:src/pages/estates/edit/rent_detail/LivingFeesSection.jsx", "quote_or_symbol": "t('提醒：內政部2019年6月1日起實施「住宅包租契約應約定及不得約定事項」...包租業不得收取超過台電夏季電費最高一度6.41元。')"},
+      {"sentence_index": 5, "source": "code:src/pages/estates/edit/rent_detail/LivingFeesSection.jsx", "quote_or_symbol": "if (props.editStore.form.customFees?.length < props.editStore.options.customFeesLengthLimit){ ...push(...) }"}
+    ],
+    "not_supported_greps": [],
+    "open_questions": []
+  },
+  {
+    "kind": "append",
+    "shelf": "C",
+    "unit_ids": ["page:estates.pick"],
+    "target_fine_id": "jgb/C/property-advanced-search",
+    "askable": "批次動作跳出的『選擇物件』挑選器跟一般物件列表搜尋差在哪",
+    "title": "批次動作用的『選擇物件』挑選器怎麼用（單選或多選依動作而定、跟物件列表共用進階搜尋）",
+    "target_user": ["property_manager"],
+    "business_types": ["system_provider"],
+    "instance_applicability": "general",
+    "sentences": [
+      "除了物件總表的一般瀏覽外，系統在多種批次動作（例如建立合約、新增帳單、複製物件資料等）會另外跳出一個「選擇物件」挑選器頁面。",
+      "這個挑選器依動作類型分成兩種版面：一種是給單選或勾選清單用（Pick），另一種是給特定批次操作用（PickBatch）。",
+      "大部分動作（例如複製合約資料、建立帳單、綁定物件等）在這個挑選器裡只能選一筆物件，選新的會取代原本選的。",
+      "只有部分批次動作（例如月報表、月對帳單、任務指派、業主自有物件盤點）允許一次勾選多筆物件。",
+      "這個挑選器內部用的是跟物件總表相同的進階搜尋清單元件。"
+    ],
+    "sources": [
+      "code:src/pages/estates/pick/Index.jsx",
+      "code:src/use/scopeStore/usePickModule.js",
+      "code:src/utils/constants/estate.js",
+      "code:src/pages/estates/pick/_parts/pick.jsx"
+    ],
+    "evidence": [
+      {"sentence_index": 0, "source": "code:src/routes/estates.js", "quote_or_symbol": "name: 'estates.pick', path: '/estates/pick/:action'"},
+      {"sentence_index": 1, "source": "code:src/pages/estates/pick/Index.jsx", "quote_or_symbol": "const isPickBatchLayout = computed(()=>Object.values(EstatePickBatchAction).includes(route.params.action) || Object.values(EstatePickOnBatchAction).includes(route.params.action)) ... isPickBatchLayout.value ? <PickBatch /> : <Pick />"},
+      {"sentence_index": 2, "source": "code:src/use/scopeStore/usePickModule.js", "quote_or_symbol": "case 'estates.pick': switch (route.params?.action){ case 'estateCopy': case 'contractUpload': case 'contractCreate': ... case 'estateBind': ... return 1 }"},
+      {"sentence_index": 3, "source": "code:src/utils/constants/estate.js", "quote_or_symbol": "export const hasOnlyEstateOptionActions = [EstatePickBatchAction.monthlyReport, EstatePickBatchAction.monthlyStatement, EstatePickBatchAction.taskManagement, EstatePickBatchAction.userOwnedEstate]"},
+      {"sentence_index": 4, "source": "code:src/pages/estates/pick/_parts/pick.jsx", "quote_or_symbol": "<ListSearchBar ... onFocus/onSubmit store.commit('lightbox', 'EstateAdvSearch') /> <LightboxEstateAdvSearch searchState={estateListState} />"}
+    ],
+    "not_supported_greps": [],
+    "open_questions": [
+      "hasOnlyEstateOptionActions／hasMultipleOptionsActions 之外、未落在任一清單的批次動作（例如 memberOwnedEstate、memberOwnedContract、balanceInvoicesAddEstate 等）在挑選器裡究竟是單選還是多選，程式沒有明確標示，須實際操作或問業主確認。"
+    ]
+  }
+]

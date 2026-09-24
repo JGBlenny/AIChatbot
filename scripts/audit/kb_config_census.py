@@ -45,7 +45,7 @@ ELIGIBLE = ("is_active AND COALESCE(category,'') NOT IN ('系統脈絡','對話�
             "AND id <> 4253 AND answer IS NOT NULL AND btrim(answer) <> ''")
 
 #: 對齊 `VendorKnowledgeRetrieverV2.KNOWN_TARGET_USERS`（⛔ 不各自定義）。
-KNOWN_TARGET_USERS = ("tenant", "landlord", "property_manager", "system_admin", "prospect")
+KNOWN_TARGET_USERS = ("tenant", "property_manager", "system_admin", "prospect")
 
 #: 平台操作的詞面訊號（⚠️ 訊號不是判定）。取自實際誤標樣本 3327-3360 的共同語彙。
 PLATFORM_RE = r"團隊設定|團隊資訊|團隊管理|後台|收款設置|合約總表|帳單總表|物件總表|進階設定|批次匯入|排定發送|系統會自動|點選「|至「|進入【"

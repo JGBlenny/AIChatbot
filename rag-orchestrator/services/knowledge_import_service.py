@@ -362,7 +362,7 @@ class KnowledgeImportService(UnifiedJobService):
 
         Returns:
             映射字典 {中文顯示名稱/英文值: 英文值}
-            例如: {'租客': 'tenant', 'tenant': 'tenant', '房東': 'landlord', ...}
+            例如: {'租客': 'tenant', 'tenant': 'tenant', '房東': 'property_manager', ...}
         """
         # 使用 5 分鐘緩存
         if self._target_user_config_cache is not None:
@@ -406,15 +406,14 @@ class KnowledgeImportService(UnifiedJobService):
             return {
                 'tenant': 'tenant',
                 '租客': 'tenant',
-                'landlord': 'landlord',
-                '房東': 'landlord',
+                '房東': 'property_manager',
                 'property_manager': 'property_manager',
                 '物業管理師': 'property_manager',
                 'system_admin': 'system_admin',
                 '系統管理員': 'system_admin',
             }
 
-    async def _normalize_target_user(self, audience: str) -> str:
+    async def _normalize_target_user(self, audience: str, row_ref: Optional[str] = None) -> str:
         """
         將中文或英文 audience 轉換為標準的英文 target_user 值
 
@@ -423,9 +422,15 @@ class KnowledgeImportService(UnifiedJobService):
 
         Args:
             audience: 中文或英文的對象描述
+            row_ref: 來源列識別（列號／題目），只用於錯誤訊息定位
 
         Returns:
-            標準化的英文值（從資料庫 target_user_config.user_value 取得）
+            標準化的英文值（值域＝`VendorKnowledgeRetrieverV2.KNOWN_TARGET_USERS`）
+
+        Raises:
+            ValueError: 解析出的值不在值域內（例如 `target_user_config` 仍有 `landlord`
+                這類設定列）。⛔ 不靜默改值匯入——寫進 `knowledge_base.target_user` 的
+                值域外字串會讓該列對所有身分永遠不可見，且檢索端無 log（靜默失敗）。
         """
         if not audience:
             return 'tenant'  # 默認值
@@ -438,11 +443,28 @@ class KnowledgeImportService(UnifiedJobService):
 
         # 查找映射
         if key in mapping:
-            return mapping[key]
+            return self._require_known_target_user(mapping[key], audience, row_ref)
 
         # 如果沒有匹配，默認返回 tenant
         print(f"   ⚠️  未知的目標用戶值: {audience}，使用默認值 tenant")
         return 'tenant'
+
+    @staticmethod
+    def _require_known_target_user(value: str, audience: str, row_ref: Optional[str]) -> str:
+        """值域閘門：解析出的 target_user 必須 ∈ `KNOWN_TARGET_USERS`，否則大聲失敗。
+
+        ⛔ 不在此寫第二份值域字面——唯一來源是檢索器那份（它同時是 `kb.search` SQL 謂詞的值域）。
+        """
+        from services.vendor_knowledge_retriever_v2 import VendorKnowledgeRetrieverV2
+
+        known = VendorKnowledgeRetrieverV2.KNOWN_TARGET_USERS
+        if value in known:
+            return value
+        where = f"（來源列：{row_ref}）" if row_ref else ""
+        raise ValueError(
+            f"target_user 值不在值域 {sorted(known)} 內：{value!r}"
+            f"（原始對象欄值 {audience!r}）{where}"
+        )
 
     def _clean_html(self, html_text: str) -> str:
         """
@@ -631,9 +653,7 @@ class KnowledgeImportService(UnifiedJobService):
             audience = 'tenant'  # 預設英文值
             if audience_col and pd.notna(row[audience_col]):
                 audience = str(row[audience_col]).strip()
-                audience = await self._normalize_target_user(audience)
-            else:
-                audience = await self._normalize_target_user(audience)
+            audience = await self._normalize_target_user(audience, row_ref=f"第 {idx} 列")
 
             # 解析關鍵字
             keywords = []
@@ -776,9 +796,7 @@ class KnowledgeImportService(UnifiedJobService):
                 audience = 'tenant'  # 預設英文值
                 if audience_col and pd.notna(row[audience_col]):
                     audience = str(row[audience_col]).strip()
-                    audience = await self._normalize_target_user(audience)
-                else:
-                    audience = await self._normalize_target_user(audience)
+                audience = await self._normalize_target_user(audience, row_ref=f"第 {idx} 列")
 
                 # === 6. 解析關鍵字 ===
                 keywords = []
@@ -963,7 +981,7 @@ class KnowledgeImportService(UnifiedJobService):
     {
       "question_summary": "問題摘要（15字以內）",
       "answer": "完整答案（已泛化）",
-      "target_user": "tenant|landlord|property_manager",
+      "target_user": "tenant|property_manager|prospect",
       "keywords": ["關鍵字1", "關鍵字2"],
       "warnings": ["警告訊息（如果有特定內容被泛化或無法泛化）"]
     }
@@ -975,7 +993,7 @@ class KnowledgeImportService(UnifiedJobService):
 - 如果某條資訊過於特定（如：通知某人某事），不要提取
 - 問題摘要要簡潔（15字以內）
 - 答案要完整且實用
-- target_user 必須使用英文值（tenant=租客, landlord=房東, property_manager=管理師）
+- target_user 必須使用英文值（tenant=租客, property_manager=房東／管理者, prospect=潛在客戶）
 - warnings 為選填，沒有警告可省略
 """
 
@@ -1132,7 +1150,7 @@ class KnowledgeImportService(UnifiedJobService):
             raise Exception("無法識別 JSON 格式。預期包含 'knowledge' 或 'knowledge_list' 欄位")
 
         knowledge_list = []
-        for item in raw_list:
+        for item_idx, item in enumerate(raw_list):
             # 欄位映射
             question = item.get('question') or item.get('question_summary') or item.get('title')
             answer = item.get('answer') or item.get('response') or item.get('content')
@@ -1142,7 +1160,9 @@ class KnowledgeImportService(UnifiedJobService):
 
             # 獲取並標準化 target_user
             raw_audience = item.get('audience') or item.get('target_user') or 'tenant'
-            normalized_target_user = await self._normalize_target_user(raw_audience)
+            normalized_target_user = await self._normalize_target_user(
+                raw_audience, row_ref=f"第 {item_idx} 筆"
+            )
 
             knowledge_list.append({
                 'question_summary': question,
@@ -1915,7 +1935,7 @@ class KnowledgeImportService(UnifiedJobService):
         """
         為 B2C 對象的知識建立測試情境建議（需求 2）
 
-        B2C 對象包括：tenant（租客）、landlord（房東）（所有外部業務範圍）
+        B2C 對象＝tenant（租客）；房東側走 property_manager，屬 b2b 池
 
         Args:
             knowledge_list: 知識列表
@@ -1927,7 +1947,7 @@ class KnowledgeImportService(UnifiedJobService):
         print(f"🧪 檢查 B2C 知識並建立測試情境建議...")
 
         # B2C 對象列表（使用英文標準值）
-        b2c_target_users = ['tenant', 'landlord']
+        b2c_target_users = ['tenant']
 
         created_count = 0
 

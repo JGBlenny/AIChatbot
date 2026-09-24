@@ -77,7 +77,7 @@
             <input
               v-model="formData.user_value"
               required
-              placeholder="例如：tenant, landlord, property_manager"
+              placeholder="例如：tenant, property_manager, prospect"
               :disabled="editingItem"
               maxlength="50"
               pattern="[a-z_]+"
