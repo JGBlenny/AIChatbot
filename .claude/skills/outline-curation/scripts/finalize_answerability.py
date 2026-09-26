@@ -20,7 +20,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _envelope import find_repo_root, make_envelope, update_state, validate, load_schema, write_json  # noqa: E402
+from _envelope import find_repo_root, make_envelope, state_relpath, update_state, validate, load_schema, write_json  # noqa: E402
 
 SKILL_VERSION = "0.1.0"
 
@@ -72,6 +72,8 @@ def main() -> int:
                     default=os.path.join(".claude", "skills", "outline-curation", "journal"))
     p.add_argument("--run-id", required=False, default=None)
     p.add_argument("--wall-s", required=False, type=float, default=0.0)
+    p.add_argument("--state-file", required=False, default=None,
+                   help="狀態檔路徑（Plan 9.14 S1-4；預設＝repo 根 .claude/hooks/state/outline-gate/session.json，行為不變）")
     args = p.parse_args()
 
     run_result = _load_json(args.run_result)
@@ -91,14 +93,14 @@ def main() -> int:
     needs_rubric_revision = envelope["payload"]["needs_rubric_revision"]
 
     try:
-        repo_root = find_repo_root()
-        out_rel = os.path.relpath(os.path.abspath(args.out), repo_root)
+        repo_root = None if args.state_file else find_repo_root()
+        out_rel = state_relpath(args.out, repo_root, args.state_file)
         update_state(repo_root, {
             "answerability": {
                 "path": out_rel,
                 "needs_rubric_revision": needs_rubric_revision,
             }
-        })
+        }, path=args.state_file)
     except RuntimeError as e:
         print(f"[finalize_answerability] 警告：找不到 repo 根，跳過狀態檔寫入（{e}）", file=sys.stderr)
 

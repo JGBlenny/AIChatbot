@@ -28,6 +28,7 @@ _RAG = os.path.dirname(os.path.dirname(_HERE))
 if _RAG not in sys.path:
     sys.path.insert(0, _RAG)
 from services.agent.canon.canon_parser import CanonDoc, parse_canon_dir  # noqa: E402
+from tools import text_containment  # noqa: E402  Plan 9.14 S1-3：唯一守門實作（同層 tools/），無條件 import，缺席即 raise
 
 DISPOSITIONS = ("fine", "not_available", "deliberate_no", "owner_decision")
 FIX_TYPES = ("add_knowledge", "add_phrasing", "list_not_available", "cross_audience_rewrite", "merge_similar", "owner_decision")
@@ -258,6 +259,10 @@ def build_coverage_map(canon_path: str, demand_path: str, map_path: str,
         "summary": summarize(cells),
         "note": "cause_state／entry_state／coverage 來自 map-v2（對 kb 量測），不是對正本索引；add_phrasing 的最小驗證＝正本索引建好後重跑檢索（元件 10 步 1）。",
     }
+    # Plan 9.14 S1-3：demand 的 `_meta.text_policy` 原樣帶進 `_meta`（單一旗標鍵）；沒有就不加，輸出逐位元不變
+    text_policy = text_containment.text_policy_of([demand_path])
+    if text_policy is not None:
+        meta["text_policy"] = text_policy
     return {"_meta": meta, "cells": cells}
 
 
@@ -270,6 +275,11 @@ def main(argv: Optional[list[str]] = None) -> int:
     p.add_argument("--answerability", required=True)
     p.add_argument("--out", required=True)
     a = p.parse_args(argv)
+    try:  # Plan 9.14 S1-3：--out 含問句（min_verification.phrasings）
+        text_containment.guard([a.demand, a.map, a.answerability], [a.out])
+    except text_containment.TextContainmentError as e:
+        print(f"[coverage_map] ⛔ {e}", file=sys.stderr)
+        return 2
     try:
         cm = build_coverage_map(a.canon, a.demand, a.map, a.answerability, a.audience)
     except CoverageMapError as e:

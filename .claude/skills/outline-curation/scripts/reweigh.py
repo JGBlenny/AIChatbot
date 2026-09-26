@@ -15,7 +15,9 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _envelope import find_repo_root, load_schema, make_envelope, update_state, validate, write_json  # noqa: E402
+from _envelope import (  # noqa: E402
+    find_repo_root, load_schema, make_envelope, state_relpath, text_containment, update_state, validate, write_json,
+)
 
 SKILL_VERSION = "0.1.0"
 _SCHEMA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "schemas", "coverage-reweigh.json")
@@ -36,7 +38,17 @@ def main() -> int:
     p.add_argument("--answerability", required=True)
     p.add_argument("--coverage-out", required=True, help="coverage-map.json（含 _meta）")
     p.add_argument("--out", required=True, help="coverage-reweigh.json（StepEnvelope）")
+    p.add_argument("--state-file", default=None,
+                   help="狀態檔路徑（Plan 9.14 S1-4；預設＝repo 根 .claude/hooks/state/outline-gate/session.json，行為不變）")
     a = p.parse_args()
+
+    # Plan 9.14 S1-3：兩個寫出點都含問句（coverage-map 的 min_verification.phrasings；envelope 的 payload.cells）
+    tc = text_containment()
+    try:
+        tc.guard([a.demand, a.map, a.answerability], [a.coverage_out, a.out])
+    except tc.TextContainmentError as e:
+        print(f"[reweigh] ⛔ {e}", file=sys.stderr)
+        return 2
 
     try:
         repo_root = find_repo_root()
@@ -70,13 +82,13 @@ def main() -> int:
     without = int(meta["summary"]["cells_without_disposition"])
     needs_audit = sum(1 for c in cm["cells"] if c.get("disposition") in ("not_available", "owner_decision"))
     no_src = len(meta["fines_without_sources"])
-    if repo_root:
+    if repo_root or a.state_file:
         update_state(repo_root, {"reweigh": {
-            "path": os.path.relpath(os.path.abspath(a.out), repo_root),
+            "path": state_relpath(a.out, repo_root, a.state_file),
             "cells_without_disposition": without,
             "fines_without_sources": no_src,
             "needs_source_audit": needs_audit,
-        }})
+        }}, path=a.state_file)
     s = meta["summary"]
     print(f"[reweigh] total={s['total']} by_disposition={s['by_disposition']} by_fix_type={s['by_fix_type']} "
           f"gap={s['gap_classes']} agreement={s['judge_agreement_global']} fines_without_sources={no_src}")

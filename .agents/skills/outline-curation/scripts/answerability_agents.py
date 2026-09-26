@@ -124,7 +124,20 @@ def build_group_prompt(args: dict, cells: list) -> str:
     return "".join(parts) if False else "\n".join(p.rstrip("\n") for p in parts) + "\n"
 
 
+def _guard(tc, inputs: list, outputs: list) -> bool:
+    """Plan 9.14 S1-3：輸入帶外部文字旗標／位於圍欄內 ⇒ 輸出必須在圍欄內；否則印原因回 False（呼叫端非 0）。"""
+    try:
+        tc.guard(inputs, outputs)
+    except tc.TextContainmentError as e:
+        print(f"[answerability_agents] ⛔ {e}", file=sys.stderr)
+        return False
+    return True
+
+
 def cmd_prepare(a) -> int:
+    tc = _env.text_containment()  # 每次都載入唯一守門實作；缺席即 raise
+    if not _guard(tc, [a.args], [a.out_dir]):
+        return 2
     args = _env_load(a.args)
     for k in ("promptHead", "candidatesBlock", "cells", "fineIdEnum"):
         if k not in args:
@@ -140,6 +153,9 @@ def cmd_prepare(a) -> int:
     os.makedirs(os.path.join(a.out_dir, "verdicts"), exist_ok=True)
     manifest = {"step": "answerability", "frozenAt": args["frozenAt"], "rubricSha": args["rubricSha"], "inputsSha": args["inputsSha"],
                 "fineIdEnum": args["fineIdEnum"], "cellsPerAgent": a.cells_per_agent, "groups": []}
+    text_policy = tc.text_policy_of([a.args])
+    if text_policy is not None:  # 單一旗標鍵原樣往下傳（collect 讀 manifest 也會觸發）；沒有就不加，manifest 逐位元不變
+        manifest["_meta"] = {"text_policy": text_policy}
     for g in groups:
         text = build_group_prompt(args, [by_id[cid] for cid in g["cell_ids"]])
         sha = hashlib.sha256(text.encode("utf-8")).hexdigest()
@@ -188,6 +204,10 @@ def load_verdicts_file(path: str, expected_cells: list, fine_id_enum: list) -> d
 
 
 def cmd_collect(a) -> int:
+    tc = _env.text_containment()
+    # 寫出點＝--out-dir（third.prompt.md、third-cells.json）；--out 經 validate_verdict 白名單、不含文字（Plan 9.14 §2 S1-3）
+    if not _guard(tc, [a.args, os.path.join(a.out_dir, "manifest.json")], [a.out_dir]):
+        return 2
     m = _env_load(os.path.join(a.out_dir, "manifest.json"))
     enum = m["fineIdEnum"]
     vdir = os.path.join(a.out_dir, "verdicts")

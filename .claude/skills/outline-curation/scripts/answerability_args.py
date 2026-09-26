@@ -22,7 +22,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _envelope import sha256_file, write_json  # noqa: E402
+from _envelope import sha256_file, text_containment, write_json  # noqa: E402
 
 SKILL_VERSION = "0.1.0"
 
@@ -99,7 +99,14 @@ def _check_candidate_shape(c: dict) -> None:
         raise ForbiddenFieldError(f"candidate 缺必要欄位 {sorted(missing)}")
 
 
-def build_prompt_parts(cell: dict, candidates: list, rubric_text: str) -> dict:
+def candidates_header(n: int, target_user: str | None = None) -> str:
+    """候選區塊標頭。未篩選＝現行字樣逐字不變（既有 prompt sha 不變）；`--target-user` 篩選時改寫，⛔ 不再宣稱未篩選。"""
+    if target_user:
+        return f"## 候選（{n} 筆，依受眾篩選（target_user={target_user}）、原序列舉、未排序）"
+    return f"## 候選（{n} 筆，原序列舉，未排序未篩選）"
+
+
+def build_prompt_parts(cell: dict, candidates: list, rubric_text: str, target_user: str | None = None) -> dict:
     """把判者 prompt 拆成四段（共用頭／每格待判塊／共用候選塊／每格輸出說明），供 Workflow 端純字串拼接。
 
     拼接等式（測試守著）：promptHead + cellBlock + candidatesBlock + cellTail == build_judge_prompt(...)。
@@ -120,7 +127,7 @@ def build_prompt_parts(cell: dict, candidates: list, rubric_text: str) -> dict:
         cell_lines.append(f"policy_ref：{projected['policyRef']}")
     cell_block = "\n".join(cell_lines) + "\n\n"
 
-    cand_lines = [f"## 候選（{len(candidates)} 筆，原序列舉，未排序未篩選）"]
+    cand_lines = [candidates_header(len(candidates), target_user)]
     for c in candidates:
         cand_lines.append(f"### {c['id']}")
         cand_lines.append(f"標題：{c['title']}")
@@ -138,7 +145,7 @@ def build_prompt_parts(cell: dict, candidates: list, rubric_text: str) -> dict:
     return {"promptHead": head, "cellBlock": cell_block, "candidatesBlock": candidates_block, "cellTail": cell_tail}
 
 
-def build_judge_prompt(cell: dict, candidates: list, rubric_text: str) -> str:
+def build_judge_prompt(cell: dict, candidates: list, rubric_text: str, target_user: str | None = None) -> str:
     """組裝單一格的判者 prompt：rubric 全文＋代表問句＋全部候選（id/title/content，原序，⛔ 不排序不篩選）。
 
     白名單投影：cell 只取 id/questions[0]/policy/policy_ref；候選只取 id/title/content。
@@ -146,7 +153,7 @@ def build_judge_prompt(cell: dict, candidates: list, rubric_text: str) -> str:
     per_question，已知系統欄位除外）出現 ⇒ raise ForbiddenFieldError。決定性：同輸入兩次逐位元相同。
     實作＝四段拼接（見 build_prompt_parts）。
     """
-    parts = build_prompt_parts(cell, candidates, rubric_text)
+    parts = build_prompt_parts(cell, candidates, rubric_text, target_user)
     return parts["promptHead"] + parts["cellBlock"] + parts["candidatesBlock"] + parts["cellTail"]
 
 
@@ -155,23 +162,27 @@ def _load_json(path: str):
         return json.load(f)
 
 
-def candidates_from_canon(canon_path: str) -> tuple[list, str]:
+def candidates_from_canon(canon_path: str, target_user: str | None = None) -> tuple[list, str]:
     """正本（或草稿）Markdown（單檔或目錄，9.6 S4：`parse_canon_auto` 依路徑分派）→ 候選 {id,title,content}
     （2.4b：候選＝正本細目，id＝細目 id、content＝內容句換行相接）；回 (候選, canon_sha256)。
-    白名單投影：只取 id／title／content_units，⛔ 講法／sources／reviewed 不進判者 prompt（判者只看內容能不能答）。"""
+    白名單投影：只取 id／title／content_units，⛔ 講法／sources／reviewed 不進判者 prompt（判者只看內容能不能答）。
+    `target_user`（Plan 9.14 S1-2，選填）：只留 `target_user` 含該受眾的細目，原序不變；不給＝全部（現行）。"""
     import sys as _sys
     _here = os.path.dirname(os.path.abspath(__file__))
     if _here not in _sys.path:
         _sys.path.insert(0, _here)
     import canon_items as _ci  # noqa: WPS433
     doc = _ci.parse_canon_auto(canon_path)
-    cands = [{"id": f.id, "title": f.title, "content": "\n".join(f.content_units)} for f in doc.fines()]
+    fines = doc.fines()
+    if target_user:
+        fines = [f for f in fines if target_user in (f.target_user or ())]
+    cands = [{"id": f.id, "title": f.title, "content": "\n".join(f.content_units)} for f in fines]
     return cands, doc.canon_sha256
 
 
 def build_args(cells_path: str, kb_rows_path: str | None, drafts_path: str | None, rubric_path: str,
                 frozen_at: str, cell_ids_filter: set | None = None, slim: bool = False,
-                canon_path: str | None = None) -> dict:
+                canon_path: str | None = None, target_user: str | None = None) -> dict:
     cells_doc = _load_json(cells_path)
     all_cells = cells_doc["cells"] if isinstance(cells_doc, dict) else cells_doc
 
@@ -180,7 +191,7 @@ def build_args(cells_path: str, kb_rows_path: str | None, drafts_path: str | Non
 
     canon_sha = None
     if canon_path:
-        candidates, canon_sha = candidates_from_canon(canon_path)
+        candidates, canon_sha = candidates_from_canon(canon_path, target_user)
     else:
         kb_doc = _load_json(kb_rows_path)
         kb_rows = kb_doc["rows"] if isinstance(kb_doc, dict) else kb_doc
@@ -202,7 +213,7 @@ def build_args(cells_path: str, kb_rows_path: str | None, drafts_path: str | Non
     prompt_head = None
     candidates_block = None
     for cell in selected_cells:
-        parts = build_prompt_parts(cell, candidates, rubric_text)
+        parts = build_prompt_parts(cell, candidates, rubric_text, target_user)
         prompt_head = parts["promptHead"]
         candidates_block = parts["candidatesBlock"]
         entry = {
@@ -213,7 +224,7 @@ def build_args(cells_path: str, kb_rows_path: str | None, drafts_path: str | Non
             "cellTail": parts["cellTail"],
         }
         if not slim:
-            entry["judgePrompt"] = build_judge_prompt(cell, candidates, rubric_text)
+            entry["judgePrompt"] = build_judge_prompt(cell, candidates, rubric_text, target_user)
         if cell.get("policy_ref") is not None:
             entry["policyRef"] = cell["policy_ref"]
         cells_out.append(entry)
@@ -224,11 +235,17 @@ def build_args(cells_path: str, kb_rows_path: str | None, drafts_path: str | Non
     }
     if canon_path:
         inputs_sha["canon"] = canon_sha
+        if target_user:
+            inputs_sha["candidateFilter"] = f"target_user={target_user}"
     else:
         inputs_sha["kbRows"] = sha256_file(kb_rows_path)
         inputs_sha["drafts"] = sha256_file(drafts_path)
 
+    # Plan 9.14 S1-2：cells 的 `_meta.text_policy` 原樣帶進 args 頂層 `_meta`（單一旗標鍵）；沒有就不加（現行輸出逐位元不變）
+    meta = cells_doc.get("_meta") if isinstance(cells_doc, dict) else None
+    text_policy = meta.get("text_policy") if isinstance(meta, dict) else None
     return {
+        **({"_meta": {"text_policy": text_policy}} if text_policy is not None else {}),
         "step": "answerability",
         "frozenAt": frozen_at,
         "rubricSha": inputs_sha["rubric"],
@@ -252,13 +269,26 @@ def main() -> int:
     p.add_argument("--out", required=True)
     p.add_argument("--cell-ids", required=False, default=None, help="逗號分隔的格 id 子集，用於乾跑（如 C01,C02）")
     p.add_argument("--slim", action="store_true", help="省略 judgePrompt 與 candidates（Workflow 端以四段拼接；55 格 args 才傳得進工具參數）")
+    p.add_argument("--target-user", default=None,
+                   help="只取 target_user 含此受眾的細目當候選（Plan 9.14；須配 --canon）；不給＝全部細目（現行）")
     args = p.parse_args()
+
+    tc = text_containment()  # 每次都載入唯一守門實作（Plan 9.14 S1-3）；缺席即 raise
 
     cell_ids_filter = set(x.strip() for x in args.cell_ids.split(",")) if args.cell_ids else None
     if not args.canon and not (args.kb_rows and args.drafts):
         print("[answerability_args] 需 --canon，或 --kb-rows＋--drafts", file=sys.stderr)
         return 2
-    payload = build_args(args.cells, args.kb_rows, args.drafts, args.rubric, args.frozen_at, cell_ids_filter, slim=args.slim, canon_path=args.canon)
+    if args.target_user and not args.canon:
+        print("[answerability_args] --target-user 只適用 --canon（候選＝正本細目）", file=sys.stderr)
+        return 2
+    try:
+        tc.guard([args.cells, args.kb_rows, args.drafts], [args.out])
+    except tc.TextContainmentError as e:
+        print(f"[answerability_args] ⛔ {e}", file=sys.stderr)
+        return 2
+    payload = build_args(args.cells, args.kb_rows, args.drafts, args.rubric, args.frozen_at, cell_ids_filter, slim=args.slim,
+                         canon_path=args.canon, target_user=args.target_user)
     write_json(args.out, payload)
     return 0
 

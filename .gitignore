@@ -149,3 +149,9 @@ rag-orchestrator/tmp_outline_judge/
 
 # canon 決策簿的併發鎖（0 byte，執行期產物）——⛔ 不進版控
 .claude/DECISIONS.md.lock
+
+# Plan 9.14 S0（2026-09-25）：`.agents/` 鏡像的講法原始候選與 Workflow journal、Codex hook 狀態——
+# 與上方 `.claude/` 同名目錄同理，含去識別前原句或 session 暫態，⛔ 不進版控（目錄內既有檔去留另由業主定）
+.agents/skills/outline-curation/raw/
+.agents/skills/outline-curation/journal/
+.codex/hooks/state/

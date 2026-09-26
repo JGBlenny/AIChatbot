@@ -155,3 +155,285 @@
 ### 幫助中心首頁停留 60 秒彈「立即免費試用」視窗 {#help-center-trial-popup}
 - 事實：只在路由名等於幫助中心首頁時起計時（`src/entry/listings.js`：`if ('listings.helpCenter'.includes(route.name))`）；分類／文章／搜尋頁不觸發。視窗文案「現在註冊享有免費試用30天」，四欄（公司名/姓名、電話、Email、簡述您有興趣的原因）都填才可送出（`return notDoneFields.length == 0`），右上角可關閉。
 - 引用：`src/pages/help-center/Index.vue`；`src/entry/listings.js`。釘住 commit `b2ee2ac382ce`，2026-09-20。
+
+## Plan 9.14 對源事實（2026-09-25，jgb2 `b2ee2ac382ce`） {#p914}
+
+> 來源：Plan 9.14 S3（步 5b）對 145 個真實問句缺口格的唯讀盤查；每條皆過機械複驗（證據為釘住 commit 內某行的逐字子字串）。「對應格」是 repo 外 run 目錄的 `cell_id`，⛔ 題目原文不進 repo。引用同本檔慣例：路徑＋可 grep 的符號或字串。
+> ⚠️ 主 session 抽查時更正兩條：`p914-email-encrypted-no-lowercase`（scout 原判「定序不分大小寫」被推翻）與 `p914-account-phone-bound`（原句「系統無自助改手機入口」超出證據，已收窄）；fresh verifier 再推翻一條：`p914-renewal-deposit-diff`（只限新北住都延長續約）。
+
+### 合約
+
+#### 同一合約可加「其他租客」，上限 10 筆 {#p914-contract-additional-tenants}
+- 事實：合約編輯頁租客資訊區有「新增租客」，每筆記暱稱與證件字號，存於 `additional_tenant`，達 10 筆即不能再加；可用來讓第二位以上承租人出現在同一份合約上。這是業者頁面，不是內部後台的 `addTenantToContract`。
+- 引用：`src/pages/contracts/edit/tenantInfo/Index.jsx:addAdditionalTenant`、`additional_tenant?.length >= 10`。
+- 對應格：`32e60ab5d92d`、`90170e3f51de`、`c528fcf3fd47`。
+
+#### 租客資料逐筆記錄 {#p914-lessee-records}
+- 事實：租客資料以逐筆承租人紀錄（`existed_lessee`／`prospective_lessee`）建立，姓名、公司名稱、身分類型、聯絡方式逐筆填寫。
+- 引用：`app/Services/LesseeService.php`（`'lessee_name as name'`）。
+- 對應格：`217194eecdb1`。
+
+#### 合約可加代理人，最多 3 位 {#p914-contract-agents}
+- 事實：合約編輯的租客資料頁有「新增代理人」，存於 `to_user_pdf_agents`，未滿 3 位才可新增；關係選項含父、母、監護人。
+- 引用：`src/pages/contracts/edit/tenantBasic/Index.vue`（`新增代理人`、`to_user_pdf_agents.length < 3`）。
+- 對應格：`d799d0d69999`。
+
+#### 送出簽約邀請時才比對既有會員，之後註冊不回頭綁定 {#p914-contract-invite-account-match}
+- 事實：送出邀請時，以合約填的租客 Email 比對已註冊會員（比對到才代入該會員資料，並把合約上的租客 Email 改成會員的註冊 Email）；以電話比對時只認已完成手機驗證（`phone_verified_at` 非空）的帳號。比對只在送出當下做，租客事後才註冊不會自動綁回先前的合約。
+- 事實：承租人 Email 存在各合約自己的 `to_user_email`，程式未見「同一 Email 跨合約須唯一」的檢查。
+- 引用：`app/Http/Controllers/ContractController.php`（`User::where('email', xxtea_base64_encrypt($contract->to_user_email))`、`$contract->to_user_email = $user->email;`、`whereNotNull('phone_verified_at')`）。
+- 對應格：`1e16fa69fcc7`、`94fead8a36a8`、`c46c210386be`。
+
+#### 會員 Email 加密存放，比對前不轉小寫 {#p914-email-encrypted-no-lowercase}
+- 事實：`User::setEmailAttribute` 以 XXTEA 加密後存入 `email`；比對會員時以加密後字串做相等查詢（`where('email', xxtea_base64_encrypt(…))`），`setEmailAttribute` 寫入前與合約邀請比對前都未轉小寫 ⇒ 資料庫定序「不分大小寫」不適用於這個比對，大小寫不同會被當成不同 Email。email 相關的 `strtolower` 只出現在統計／匯出報表、內部後台（`Admin/*`）與外部 API（`External/TeamMemberApiController`），不在業者端的邀請比對路徑上；內部後台 `Admin/TenantInfoUpdateController::emailMatchCandidates` 的註解另指出 `users.email` 目前明文與密文並存。
+- 引用：`app/User.php:setEmailAttribute`；`app/Libraries/XXTEA.php:xxtea_base64_encrypt`；`app/Http/Controllers/ContractController.php`。
+- ⚠️ 主 session 對碼更正：scout 原以 `config/database.php` 的 `utf8mb4_unicode_ci` 判「本來就不分大小寫」——錯，欄位存的是密文。登入流程未逐檔追到，若要對外講「登入是否分大小寫」需再對碼。
+- 對應格：`77cba6a26bca`。
+
+#### 新合約不動舊合約；同一物件最多 10 份使用中合約 {#p914-contract-new-vs-old}
+- 事實：建立新合約不會自動作廢或改動既有合約；舊合約只有在使用者明確「刪除合約」「取消邀請」時才停用（`active = 0`）。同一物件使用中合約達 `MAX_ACTIVE_CONTRACTS_COUNT`（10）才擋新增，不檢查新舊租期是否重疊。
+- 引用：`app/Http/Controllers/ContractController.php`（`$contract->active = 0;`、`'cancelInvite' => [`、`activeContracts()->count() >= self::MAX_ACTIVE_CONTRACTS_COUNT`）。
+- 對應格：`10e43c55dc28`、`2d5a4c136de5`。
+
+#### 只有「待發送」的合約可刪除 {#p914-contract-delete-draft-only}
+- 事實：刪除合約僅限待發送狀態，且需有編輯合約權限；已進入其他流程狀態的合約不能刪。
+- 引用：`app/Http/Controllers/ContractController.php`（`僅能刪除待發送狀態的合約`）；`routes/web.php` 的 `contracts.delete`。
+- 對應格：`8fdbb638e81c`。
+
+#### 免註冊租客的合約成立即為已簽名 {#p914-contract-exempt-register-signed}
+- 事實：租客免註冊的合約，成立行為（`CONTRACT_CONFIRM_LOG`）直接把狀態設為 `CONTRACT_SIGNED`，不經過「待租客簽回」（`CONTRACT_INVITING`）與「待管理者簽名」（`CONTRACT_INVITING_NEXT`）。
+- 引用：`app/Services/ContractService.php`（`免註冊合約不用簽約流程`）。
+- 對應格：`2db2376f49f4`。
+
+#### 租賃範圍由物件空間型態決定 {#p914-contract-lease-scope}
+- 事實：物件空間型態為整戶（`flat`／`office_flat`）時合約租賃範圍為「全部」，其餘一律「部分」，不由使用者另外勾選。
+- 引用：`app/Contract.php`（`若物件的空間型態為整戶，則租賃範圍為全部，其他狀況下必是部分`）。
+- 對應格：`4953441607e2`。
+
+#### 合約範本清單與限制 {#p914-contract-templates}
+- 事實：可選範本由後端結構檔 `contract_template_options` 定義，含內政部住宅租賃契約（原房東）、內政部轉租契約（包租轉租）、內政部英文版／英泰文版／英越文版、新北住都、Meta Capital 等，各對應 `individual`／`corporation`／`management`。
+- 事實：轉租合約是一般合約實體的一種範本（`config/contract.php` 的 `轉租合約`）；合約列表的 ID 欄即該合約紀錄主鍵，唯一。
+- 事實：內政部英文版範本在版位設定裡沒有補充條款（`additional_terms`）的印製座標，解析結果為 null ⇒ 補充條款不會印在該範本上。
+- 引用：`resources/structures/contract/edit/options.php:contract_template_options`；`config/contract.php`（`內政部英文版 住宅租賃契約書`、`'label' => '轉租合約'`）；`tests/Unit/ContractController/ResolveAdditionalTermsPositionTest.php`；`src/pages/contracts/list/_parts/ListTable.vue`（`ContractColumnKey.ID`）。
+- 對應格：`7b5c41b4e638`、`5736c4b359de`、`9df22ffd2431`。
+
+#### 合約起始日是使用者填的 `date_start` {#p914-contract-date-start}
+- 事實：合約起始日取使用者填寫的 `date_start`，帳務以它為起算基準，與合約資料建立進系統的時間無關。
+- 引用：`app/Contract.php`（`'date_start',`）；`app/Services/BalanceInvoiceService.php`（`$activeContract->date_start`）。
+- 對應格：`0e7435239e8e`。
+
+#### 合約可設「第四台」費用項 {#p914-contract-cable-tv-fee}
+- 事實：合約費用項目有「第四台」，可設金額、是否由房客自行負擔、是否內含於租金。
+- 引用：`resources/structures/contract/edit/form.php`（`"第四台"=> [`）。
+- 對應格：`48d6f1f589a7`。
+
+#### 執行中合約的齒輪選單順序 {#p914-contract-gear-menu}
+- 事實：合約執行中（雙方簽名完成／點交／點退各階段）時，齒輪選單依序為查看物件、點交物件、點退押金、續約、提前解約。
+- 引用：`app/Http/Controllers/ContractController.php`（`'text' => ___('點交物件'),`）。
+- 對應格：`a288657cdbab`。
+
+#### 續約＝複製出一份全新合約，確認成立即生效 {#p914-contract-renewal}
+- 事實：續約以 `replicate()` 建立全新合約紀錄，並剝除從舊合約繼承的「歷史合約」位元；租客簽署確認當下即設為 `CONTRACT_SIGNED`，不等舊合約到期。
+- 引用：`app/Services/ContractService.php`（`$renewContract = $contract->replicate();`、`續約合約為全新合約，去掉自父合約繼承來的「歷史合約」位元`、`$renewContract->status = Contract::CONTRACT_SIGNED;`）。
+- 對應格：`ac9b1fdb963f`、`7b6556bf7ee8`。
+
+#### 押金差額入帳只限新北住都延長續約 {#p914-renewal-deposit-diff}
+- 事實：押金差額只由新北住都延長續約寫入原押金（`ContractService::nthurcExtension` 寫 `previous_deposit_amount`）。第一張帳單以新押金減原押金：一般押金差額為負列「退押金」（支出）、為正列「押金」補收；**車位押金**不走退押金分支，差額為負時列負數的「車位押金」。
+- 事實：非新北住都團隊的一般續約（`ContractService::renew`），第一張帳單不列押金品項（`empty($prevBill) && !$this->isRenewContract()` 才加押金）。
+- 邊界：押金區塊的守衛是 `canSeeNthurcSocialHousing() && isRenewContract() && empty($prevBill)`，只看「新北住都綁定團隊＋續約」，沒限定來自 `nthurcExtension`；新北住都團隊的合約若走一般續約，會進這個區塊、原押金缺值時以 0 計（＝列全額押金）。齒輪選單對社宅用途合約不顯示「續約」，但新北住都團隊的非社宅合約能否走到一般續約**未追證**。
+- 引用：`app/Contract.php`（`新北住都續約第一筆帳單繳押金計算方式`、`$addToDataForDeposit = function`、`if ($title === '押金' && $isRenewMethod){`、`'title'  => '退押金',`）；`app/Services/ContractService.php:nthurcExtension`；`app/Http/Controllers/ContractController.php`（`property_purpose_key != Contract::SOCIAL_HOUSING`）。
+- ⚠️ 主 session 初寫成「續約通用」，fresh verifier 以上述守衛條件推翻（2026-09-26），已收窄；邊界與車位押金兩點是收尾 verifier 的 P3／P4 建議，主 session 對碼後補上。
+- 對應格：無（原掛的格改判，見 `p914-no-deposit-carryover`）。
+
+#### 押金不能轉入另一份新合約 {#p914-no-deposit-carryover}
+- 事實：系統沒有把舊合約押金移轉到另一份新合約的功能；非續約的新合約第一張帳單一律列全額押金，舊合約的押金走「點退押金」結算。唯一會用原押金算差額的是新北住都延長續約（`p914-renewal-deposit-diff`）。
+- 引用：`app/Contract.php`（`if (empty($prevBill) && !$this->isRenewContract()) {`）；`app/Http/Controllers/ContractController.php`（`點退押金`）。
+- 否定查詢：`押金轉入|押金轉至|轉押金|押金移轉|沿用押金|押金沿用|押金帶入|transferDeposit` 於 `app`、`src`、`resources`（排除後台與 i18n）0 命中；同範圍正對照「點退押金」65 命中。
+- 對應格：`30961bcd1289`（absent，主 session 重新對源）。
+
+#### 提前解約後的帳單 {#p914-early-termination-bills}
+- 事實：提前解約確認時把合約 `date_end` 改寫為解約日；每日排程 `bill:gen` 只對 `date_end` 不早於當天的合約產生下一期租金帳單 ⇒ 解約日之後不會再自動產生新帳單。
+- 事實：排程會提前產生最多到下個月的帳單；確認解約的流程未見刪除或封存既有帳單 ⇒ 確認前已產生、期間落在解約日之後的帳單，要業者自行封存。
+- 引用：`app/Services/ContractService.php`（`$contract->date_end = $contract->early_termination_wish_date_end;`）；`app/Console/Commands/CreateRentBill.php`（`$contractsQ->where('date_end', '>=', $now);`、`帳單起始日不得超過本月＋1 月`）；`app/Http/Controllers/BillController.php:archive`。
+- 對應格：`c18cbfb4fdc7`、`e093019fff73`。
+
+#### 租客不確認點退時，只能由房東取消點退邀請重發 {#p914-moveout-cancel}
+- 事實：租客遲不確認點退結果時，系統沒有逾期自動放行；房東可手動取消點退邀請（`cancelMoveOutInvite`，紀錄為「取消點退邀請」），合約退回點退送出前，再重新發送點退清單。
+- 引用：`app/Contract.php:CONTRACT_MOVE_OUT_CANCEL_LOG`；`app/Services/ContractService.php:cancelMoveOut`；`app/Http/Controllers/ContractController.php`（`cancelMoveOutInvite`）。
+- 對應格：`ebdf63d65846`。
+
+#### 合約匯出 Excel {#p914-contract-export}
+- 事實：業者在合約列表勾選後按「匯出合約」（需 `export_contract` 權限），以批次任務（`/api2/getBatchCode` → `JgbJob` → `ContractService::generateReportExcel`）產出 Excel；欄位含租期、每期租金、合約押金等，沒有名為「戶號」的欄位。
+- 引用：`src/pages/contracts/list/Index.vue`（`job_name: 'contract_export'`、`permission?.export_contract`）；`app/Jobs/JgbJob.php`（`generateReportExcel`）；`app/Services/ContractService.php`（`___('合約押金', $lang)`）。
+- 對應格：`32bef8bcfc9a`、`f481e3a449af`。
+
+#### 合約列表的「標籤」與「是否通知」是兩件事 {#p914-contract-list-tags}
+- 事實：合約列表「標籤」欄可逐筆加註（`SurelyVueEstateLabelsCell` 編輯 `record.labels`），與「是否通知」是各自獨立的設定。
+- 引用：`src/pages/contracts/list/_parts/ListTable.vue`（`ContractColumnKey.TAGS`）；`src/pages/estates/dashboard/contracts/Index.vue`（`是否通知`）。
+- 對應格：`12a91709003b`。
+
+#### 實價登錄匯出 {#p914-real-price-registration}
+- 事實：匯出時申報義務人身分可選「不動產經紀業」或「租賃住宅包租業」。
+- 事實：建號以物件的 `building_serial_no` 為主，空白時才從物件的建物謄本資料（`building_registration_transcript`）取，不以合約上另填的建號為主。
+- 引用：`src/components/Lightbox/EstateTransactionExport.vue`（`不動產經紀業`、`租賃住宅包租業`）；`app/Services/ContractService.php`（`$estate->building_serial_no`、`building_registration_transcript`）。
+- 對應格：`b720ccce05ea`、`d5cf3bfccf2d`。
+
+### 帳單、收款與發票
+
+#### 帳單通知的管道與對象 {#p914-bill-notify}
+- 事實：帳單通知可分別開關 Email 與簡訊（`should_send_sms` 取自租客的 `lessee_phone_notify_status`）；管理者可在租客列表直接用「通知開關」關閉某位租客的全部通知。
+- 事實：通知對象是帳單記錄的單一承租人使用者（`bill.user_id`），以其名下的手機與 Email 發送，不會同時發給合約上另一位掛名承租人。
+- 引用：`app/Services/BillService.php`（`'should_send_sms' => (bool)$lessee->lessee_phone_notify_status`）；`app/Jobs/BillReadyJob.php`（`$lesseeUserId = $bill->user_id;`）；`src/pages/users/lesseeList/parts/PageTop.vue`（`當通知開關關閉時，租客將無法收到所有的通知`）。
+- 對應格：`085a8e26b78d`、`9def85e08184`、`ac0d6e0e0d61`。
+
+#### 發票在帳單收款時逐張開立 {#p914-invoice-per-bill}
+- 事實：發票在帳單被標記已收款的當下開立，一張帳單對應一張發票 ⇒ 多個物件各自出帳單就各自開票。
+- 引用：`app/Services/InvoiceService.php`（`發票只在「帳單被標記已收款的那一瞬間」開立`）。
+- 對應格：`2a20291a87fa`。
+
+#### 線上作廢發票只支援 ezPay {#p914-invoice-void-ezpay}
+- 事實：業者可在帳單詳細頁作廢該帳單已開立的發票，但只支援 ezPay；其他發票廠商會被擋下。已開立折讓的發票依 ezPay 規則不可作廢，退費要改走折讓。
+- 引用：`app/Services/InvoiceService.php`（`作廢帳單已開立的發票`、`僅支援 ezPay 作廢`）；`app/Http/Controllers/BillController.php:voidInvoice`。
+- 對應格：`d7510c45674f`。
+
+#### 差額發票收支表的退款／減免記負數 {#p914-balance-invoice-refund}
+- 事實：差額發票收支表把租金退款／減免列在「租金增(減)(B)」欄、以負數（括號）表示，以符合 `F=(A+B)-(C+D)`。
+- 引用：`app/Services/BalanceInvoiceService.php`（`記負數(減)以符合 F=(A+B)-(C+D)`）。
+- 對應格：`c108fb6b2760`。
+
+#### 不足月租金按該期天數比例 {#p914-proration}
+- 事實：不足月租金＝月租金 × 實際入住天數 ／ 該期帳單的天數，不是固定除以 30 或 31。
+- 引用：`app/Services/ContractService.php`（`$realTotalDays / $billTotalDays`）。
+- 對應格：`51f2b99334dd`。
+
+#### 退押金等付給租客的帳單不走固定虛擬帳號 {#p914-refund-bill-account}
+- 事實：收款方為租客的支出帳單（如退押金）顯示租客本人的收款銀行帳戶，不使用固定虛擬帳號（那是租客繳款給業者用的）。
+- 引用：`app/Http/Controllers/BillController.php`（`固定虛擬帳號是租客繳款用的業者收款帳戶，不適用於退款方向`）。
+- 對應格：`4430c67bb850`。
+
+#### 藍新 ATM 虛擬帳號有效 180 天 {#p914-newebpay-atm-expiry}
+- 事實：租客線上繳費走藍新取號產生的 ATM 虛擬帳號，呼叫端明帶 `addExpireDays` 180（程式註解記由預設 7 天改為 180 天）；`Payment.php` 的通用預設 7 天只在呼叫端未指定時使用。這是單筆取號的效期，與固定虛擬帳號不同。
+- 引用：`app/Http/Controllers/BillController.php`（`'addExpireDays' => 180,`）；`app/Payment.php`（`strtotime('+7 days', $this->payment_ts)`）。
+- 對應格：`50586cf08df3`。
+
+#### 信用卡分期是付款方式之一 {#p914-credit-installment}
+- 事實：帳單繳費支援信用卡分期（`credit_inst_active`），歸在信用卡類付款方式，依角色的付款設定啟用。
+- 引用：`app/Http/Controllers/BillController.php`（`credit_inst_active`）。
+- 對應格：`6e235e575ae0`。
+
+#### 「通知已匯款」只出現在非線上收款帳單 {#p914-notify-remittance}
+- 事實：租客在「我的帳單」→「待繳帳單」按「通知已匯款」，輸入匯款帳號後五碼送出，也可上傳繳款證明。
+- 事實：帳單改走線上金流收款後，「通知已匯款」按鈕與上傳證明畫面都不顯示（`!props.is_online_payment`）。
+- 引用：幫助中心 `slug21_zh-Hant.html`；`src/components/Lightbox/BillPayInfo.vue`（`labelKey: '通知已匯款',`、`!props.is_online_payment`）。
+- 對應格：`71396382186b`、`7e397e6901b7`、`71e19718ea13`。
+
+#### ATM 匯款金額與帳單不符＝轉待對帳並通知房東 {#p914-atm-amount-mismatch}
+- 事實：虛擬帳號收到與帳單金額不符的匯款，帳單轉入待對帳，並寄「收款差額通知」給房東，請其與承租方聯繫或到待對帳確認；這是設計內的正式情境，不是設定異常。
+- 引用：`app/Notification.php`（`租客匯款金額不匹配（國泰ATM），發送通知給房東`）。
+- 對應格：`b1bee098e0f1`。
+
+#### 租客重複匯款時系統怎麼處理 {#p914-duplicate-remittance}
+- 事實：匯到**單筆帳單的國泰 ATM 帳號**，若該筆付款已完成（`payment_completed_at` 有值），再入金只記錄「該訂單已被處理」並略過，不會沖到任何帳單。
+- 事實：匯到**固定虛擬帳號**的錢一律進該帳號的儲值餘額（`RechargeAccount::recharge()`，內含自動銷帳），多匯的部分留作餘額抵扣後續帳單；同一筆銀行入帳通知重送時以指紋去重，不會重複儲值。
+- 引用：`app/Payment.php`（`該訂單已被處理`、`儲值歷程已有本筆指紋，不重複儲值`）；`app/Services/Payment/SinopacVaNotifyService.php`（`把錢加進該固定虛擬帳號的餘額`）。
+- 未證：業者端是否有「退還重複匯款」的操作，未追證。
+- 對應格：`31b33da327f0`（主 session 重新對源）。
+
+#### 帳單到帳時自動寄收據給租客，前端沒有重寄按鈕 {#p914-receipt-email}
+- 事實：帳單轉為已付款（線上付款，或業者手動移至已到帳）時，系統寄款項確認 email 給租客並附收據 PDF（特定客製角色改附其專屬押金收據或不附）；前端沒有「重寄收據」的按鈕。
+- 引用：`app/Notification.php`（`case 'bill_paid': // 線上已付款 or 線下按下移至已到帳`、`['Receipt' => $receipt]`）；`app/Bill.php:suppressReceiptEmailAttachment`。
+- 否定查詢：`重寄|重新寄送|再次寄送|resend` 於 `src` 0 命中；同範圍正對照「寄送」72 命中。
+- 對應格：`b360fbefe4b2`（主 session 重新對源）。
+
+#### 待發送與已到帳帳單都可直接封存 {#p914-bill-archive-states}
+- 事實：封存允許「待發送」與「已到帳」兩種狀態，不需先把待發送改成已到帳。
+- 引用：`app/Bill.php`（`待發送 & 已到帳 狀態訂單可封存`）。
+- 對應格：`b8e89b124c27`。
+
+#### 押金收據號碼手動填，不自動編號 {#p914-deposit-receipt-no}
+- 事實：押金收據號碼（`deposit_receipt_no`）由 xlsx 匯出／匯入手動填寫，系統不自動產生流水號。
+- 引用：`app/Services/Bills/BillDepositReceiptService.php`（`deposit_receipt_no`）。
+- 對應格：`d0e5d8d61fa4`。
+
+#### 草稿帳單電費度數留空、發送不重抓 {#p914-power-reading-draft}
+- 事實：草稿帳單的電費度數預設留空，由管理者在編輯頁按「取得即時電錶度數」帶入；發送（手動與排定批次）一律沿用畫面上的度數，不在發送當下重抓電表覆寫（`refetchMeterReadingOnSend` 已停用、直接回 false）。
+- 引用：`app/Bill.php`（`現在草稿階段度數留空`、`WYSIWYG：帳單發送一律寫入「管理者在編輯頁看到的當期度數」`）。
+- 對應格：`e6f52da32989`。
+
+#### 常用現金收款帳戶可刪除 {#p914-cash-account-delete}
+- 事實：「現金收款帳戶」頁可刪除常用收款帳戶，確認彈窗按「刪除」後即從清單移除。
+- 引用：`resources/views/users/payment.blade.php`（`willDeleteCashBank`）。
+- 對應格：`4fd26264af84`。
+
+### 物件
+
+#### 真實地址與對外顯示地址是兩個欄位 {#p914-estate-address-fields}
+- 事實：物件有 `address`（真實地址）與 `display_address`（對外顯示地址）兩個獨立欄位，改顯示地址不影響真實地址。
+- 引用：`resources/structures/estate/edit/form.php`（`'address' => [`、`'display_address' => [`）。
+- 對應格：`df73d4aec5d8`。
+
+#### 養寵物／開伙是物件的出租條件，不帶進合約 {#p914-estate-pet-cooking}
+- 事實：物件出租資料可設「養寵物」「開伙」條件（`pet_limit`／`fires_limit`），用於招租搜尋篩選，也會出現在合約匯出報表的「條件要求」欄；合約本身（合約資料、範本版位、合約編輯頁）不帶這兩個欄位。要在合約上約定，只能寫進合約的「補充條款」。
+- 引用：`app/Estate.php`（`// 是否可養寵物`）；`src/pages/estates/edit/rent_detail/Index.jsx`（`t('養寵物')`）；`app/Jobs/ContractsAllExportJob.php`（`條件要求-養寵物`）；`src/pages/contracts/edit/additionalConvention/Index.vue`（`t('補充條款')`）。
+- 否定查詢：`pet_limit|fires_limit` 於 `app/Contract.php`、`config/contract.php`、`app/Services/ContractService.php`、`resources/views/contract`、`src/pages/contracts` 0 命中；同範圍正對照 `deposit` 350 命中。
+- 對應格：`c79cb91a25c7`（主 session 重新對源）。
+
+#### 出租與出售刊登是兩個獨立狀態 {#p914-estate-rent-sell}
+- 事實：物件以 `is_open`（出租刊登中）與 `sell_is_open`（出售刊登中）兩個欄位分別控制，搜尋可各自篩選。
+- 引用：`app/Http/Controllers/EstateController.php`（`"sell_is_open",`、`$searchCriteria['is_open'] = true;`）。
+- 對應格：`3c3b910c76d8`。
+
+#### 物件列表可批次刊登／取消刊登 {#p914-estate-batch-listing}
+- 事實：物件列表可勾選多筆，批次刊登或批次取消刊登招租廣告。
+- 引用：`src/utils/constants/estate.js`（`closeRent: 'estate_batch_close_rent'`）；`src/pages/estates/list/_parts/ListTable.vue`（`批次取消刊登招租廣告`）。
+- 對應格：`980f642804b8`。
+
+#### 用途改成車位後看不到「建立合約」 {#p914-estate-parking-create-contract}
+- 事實：物件能否建立合約由一組必填欄位（含格局 `space_type`）決定；用途切成車位（`parking_space`）時格局被清空、多數角色看不到該欄 ⇒ 檢查不過、不顯示「建立合約」；改回住宅類用途並填格局即恢復。
+- 引用：`app/Estate.php`（`"space_type", // 格局`）；`src/pages/estates/edit/basic/Index.vue`（`editStore.form.space_type = ''`、`premises_use_for === 'parking_space'`）。
+- 對應格：`c31398b39a74`。
+
+#### 社區 id 依建立順序遞增 {#p914-community-id}
+- 事實：社區資料表 `role_communities` 的 `id` 為自動遞增，依建立順序產生。
+- 引用：jgb2 `docs/4-database.md`（`role_communities` 的 `AUTO_INCREMENT`；來源為 jgb2 自帶的 schema 文件，非 migration）。
+- 對應格：`97dfb61d7ba5`。
+
+#### 儀表板出租率＝租約中物件數／物件數 {#p914-dashboard-vacancy}
+- 事實：儀表板「即時物件出租率」於頁面載入時呼叫 `/api3/users/landlord/vacancy` 取數，公式寫在畫面提示：租約中的物件數量除以物件數量。
+- 引用：`src/pages/users/dashboard/parts/Block_Vacancy.vue`（`api3/users/landlord/vacancy`）。
+- 對應格：`6daeac687fa1`。
+
+### 帳號、團隊與入口
+
+#### 已綁定的手機在帳號設定頁唯讀 {#p914-account-phone-bound}
+- 事實：帳號設定頁手機欄在已綁定時是唯讀停用的輸入框；「前往綁定」按鈕只在未綁定時出現（連到 `users.verify`）。綁定後可用手機號碼登入。
+- 邊界：這只證明「帳號設定頁上沒有修改入口」；`/users/verify/phone` 路由本身未限定只給未綁定者，已綁定者能否經由它換號未追證 ⇒ ⛔ 不得說「系統不能改手機」。
+- 引用：`resources/views/users/account.blade.php`（`@if( $infoBasic['is_phone_verified'] )`、`前往綁定`）；`routes/web.php:users.verify`；`src/pages/users/auth/parts/PhoneVerify.vue`（`未來可使用電話號碼進行登入`）。
+- 對應格：`6b5e55ab0fed`、`f8aefdcdf204`。
+
+#### 團隊成員與大房東分兩頁新增 {#p914-team-vs-big-landlord}
+- 事實：團隊頁依路由 `type` 分成「成員」與「大房東」兩頁，同一個新增彈窗依頁面類型只會是其中一種，要分別到兩頁新增。
+- 引用：`routes/web.php`（`'/team/{type?}/{action?}/{actionType?}'`）；`resources/views/users/team/index.blade.php`（`USER_RELATED_TYPE_BIG_LANDLORD`）。
+- 對應格：`f0130cf80871`。
+
+#### 用瀏覽器使用，沒有原生 APP {#p914-web-not-app}
+- 事實：客戶端是瀏覽器存取的 Vue 3 單頁應用（`createWebHistory()`），不是原生手機 APP。
+- 引用：`src/routes/index.js`（`createWebHistory()`）。
+- 對應格：`cb3aaadfc2e7`。
+
+#### 幫助中心有租客註冊教學文 {#p914-help-tenant-register}
+- 事實：幫助中心有「租客系統操作教學—註冊篇」，說明租客收到合約邀請後如何註冊，可分享給租客。
+- 引用：幫助中心 `tenantintro.register_zh-Hant.html`。
+- 對應格：`c1b660dda7d0`。
+
+### 智慧設備
+
+#### 租客看得到自己合約物件綁定的設備 {#p914-iot-tenant-devices}
+- 事實：租客登入後，系統依其執行中的合約找到物件，列出該物件已綁定的 IoT 設備（含電表）。
+- 引用：`app/Http/Controllers/IotController.php`（`房客需要從目前執行中的合約找到物件在看是否有綁定iot設備`）。
+- 對應格：`612da4251cf4`。
+
+#### 租客專屬門鎖密碼開關掛在裝置上 {#p914-doorlock-tenant-password}
+- 事實：租客專屬密碼（預設手機末四碼，租客可自改、房東不能改）的啟用開關是門鎖裝置本身的 `enable_tenant_setlock`，切換即改寫該裝置，沒有依合約生效日或新舊合約區分的邏輯。
+- 引用：`resources/views/iot/doorlock/password.blade.php`（`此組預設密碼為租客手機號碼末四碼`）；`app/Http/Controllers/IotController.php`（`$iot->enable_tenant_setlock = $passwordEnable;`）。
+- 對應格：`f0da808c0df7`。

@@ -199,9 +199,12 @@ def state_file_path(repo_root: str) -> str:
     return os.path.join(repo_root, ".claude", "hooks", "state", "outline-gate", "session.json")
 
 
-def update_state(repo_root: str, updates: dict) -> dict:
-    """讀舊 JSON → 只更新 updates 內的鍵 → 原子寫回。不存在的鍵不清除。"""
-    path = state_file_path(repo_root)
+def update_state(repo_root: str | None, updates: dict, *, path: str | None = None) -> dict:
+    """讀舊 JSON → 只更新 updates 內的鍵 → 原子寫回。不存在的鍵不清除。
+
+    `path`（Plan 9.14 S1-4 `--state-file`）：給了就寫這一份、⛔ 不碰預設 session.json；不給＝現行行為。"""
+    if path is None:
+        path = state_file_path(repo_root)
     state: dict = {}
     if os.path.isfile(path):
         with open(path, encoding="utf-8") as f:
@@ -213,3 +216,48 @@ def update_state(repo_root: str, updates: dict) -> dict:
         state[k] = v
     write_json(path, state)
     return state
+
+
+def state_relpath(target: str, repo_root: str | None, state_file: str | None) -> str:
+    """狀態檔內記的相對路徑：給了 `--state-file` ⇒ 相對該狀態檔所在目錄；否則相對 repo 根（現行）。"""
+    base = os.path.dirname(os.path.abspath(state_file)) if state_file else repo_root
+    return os.path.relpath(os.path.abspath(target), base)
+
+
+# ---------- 客戶文字守門（Plan 9.14 S1-3）----------
+
+_HERE = os.path.dirname(os.path.abspath(__file__))
+#: 僅供測試：把定位器指向另一個 rag root（該處必須有 `tools/text_containment.py`，否則 raise，⛔ 不退回預設）。
+TEXT_CONTAINMENT_RAG_ENV = "OUTLINE_CURATION_TEST_RAG_ROOT"
+_TEXT_CONTAINMENT = None
+
+
+def containment_rag_root() -> str:
+    """定位 `rag-orchestrator`：照 `canon_items.py` 以 `__file__` 為基準（主機與 `.agents` 鏡像皆
+    `<repo>/rag-orchestrator`），不存在就退 `/app`（容器）。⛔ 不用 `reweigh.py::_rag_root`（依賴 cwd）。"""
+    override = os.environ.get(TEXT_CONTAINMENT_RAG_ENV)
+    if override:
+        root = os.path.abspath(override)
+    else:
+        root = os.path.abspath(os.path.join(_HERE, "..", "..", "..", "..", "rag-orchestrator"))
+        if not os.path.isdir(root):
+            root = "/app"
+    if not os.path.isfile(os.path.join(root, "tools", "text_containment.py")):
+        raise RuntimeError(f"找不到 {root}/tools/text_containment.py——客戶文字守門缺席，⛔ 不執行（fail-closed）")
+    return root
+
+
+def text_containment():
+    """載入唯一實作 `rag-orchestrator/tools/text_containment.py`。七個呼叫點每次執行都呼叫（不論是否觸發）；
+    找不到或 import 失敗 ⇒ raise。"""
+    global _TEXT_CONTAINMENT
+    if _TEXT_CONTAINMENT is None:
+        import importlib.util
+        path = os.path.join(containment_rag_root(), "tools", "text_containment.py")
+        spec = importlib.util.spec_from_file_location("_outline_text_containment", path)
+        if spec is None or spec.loader is None:
+            raise RuntimeError(f"無法載入 {path}")
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        _TEXT_CONTAINMENT = mod
+    return _TEXT_CONTAINMENT

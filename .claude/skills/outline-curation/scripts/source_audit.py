@@ -22,7 +22,7 @@ import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _envelope import find_repo_root, load_schema, update_state, validate, write_json  # noqa: E402
+from _envelope import find_repo_root, load_schema, state_relpath, text_containment, update_state, validate, write_json  # noqa: E402
 
 _SCHEMA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "schemas", "source-audit.json")
 NEEDS_AUDIT = ("not_available", "owner_decision")
@@ -67,7 +67,11 @@ def build_worklist(coverage_path: str, authority_sources: list[str] | None = Non
             "judge_label": c.get("judge_label"), "cause_state": c.get("cause_state"),
             "required": "verified_fact｜verified_absent（附正對照）｜owner_needed（附 why_unresolvable）",
         })
-    return {"step": "source_audit_worklist", "coverage_map_sha": _sha(coverage_path),
+    # Plan 9.14 S1-3：coverage-map 的 `_meta.text_policy` 原樣帶進 worklist（單一旗標鍵）；沒有就不加，輸出逐位元不變
+    meta = cm.get("_meta")
+    text_policy = meta.get("text_policy") if isinstance(meta, dict) else None
+    return {**({"_meta": {"text_policy": text_policy}} if text_policy is not None else {}),
+            "step": "source_audit_worklist", "coverage_map_sha": _sha(coverage_path),
             "authority_sources": authority_sources if authority_sources else DEFAULT_AUTHORITY, "count": len(items), "items": items,
             "brief": "每格對權威來源盤查；否定結論必帶正對照（同一掃描必須命中一個已知存在的符號）；"
                      "事實寫進帳本並回填 ledger_anchor；只有 owner_needed 才交業主。"}
@@ -135,8 +139,16 @@ def main(argv=None) -> int:
                          + "；".join(DEFAULT_AUTHORITY))
     c = sub.add_parser("check"); c.add_argument("--coverage", required=True); c.add_argument("--audit", required=True)
     c.add_argument("--ledger", default=None, help="事實帳本路徑（預設：repo 根 docs/knowledge/jgb-product-facts.md；F11 ⛔ 不相對 cwd）")
+    c.add_argument("--state-file", default=None,
+                   help="狀態檔路徑（Plan 9.14 S1-4；預設＝repo 根 .claude/hooks/state/outline-gate/session.json，行為不變）")
     a = p.parse_args(argv)
     if a.cmd == "worklist":
+        tc = text_containment()  # Plan 9.14 S1-3：worklist 的 items[].question 含問句
+        try:
+            tc.guard([a.coverage], [a.out])
+        except tc.TextContainmentError as e:
+            print(f"[source_audit] ⛔ {e}", file=sys.stderr)
+            return 2
         wl = build_worklist(a.coverage, a.authority)
         write_json(a.out, wl)
         print(f"[source_audit] 需核對 {wl['count']} 格 → {a.out}")
@@ -152,9 +164,10 @@ def main(argv=None) -> int:
     except SourceAuditError as e:
         print(f"[source_audit] ⛔ {e}", file=sys.stderr); return 2
     try:
-        root = find_repo_root()
-        update_state(root, {"source_audit": {"path": os.path.relpath(os.path.abspath(a.audit), root),
-                                             "unaudited": s["unaudited"], "owner_needed": len(s["owner_needed_cells"])}})
+        root = None if a.state_file else find_repo_root()
+        update_state(root, {"source_audit": {"path": state_relpath(a.audit, root, a.state_file),
+                                             "unaudited": s["unaudited"], "owner_needed": len(s["owner_needed_cells"])}},
+                     path=a.state_file)
     except RuntimeError as e:
         print(f"[source_audit] 警告：找不到 repo 根，跳過狀態檔（{e}）", file=sys.stderr)
     print(f"[source_audit] needs={s['needs_audit']} by_status={s['by_status']} owner_needed={s['owner_needed_cells']} unaudited={s['unaudited']}")
