@@ -17,12 +17,14 @@ import glob
 import hashlib
 import json
 import os
+import re
 import sys
 import tempfile
 import unicodedata
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", ".."))
 CANON_GLOB_REL = "rag-orchestrator/canon/*.json"
+HASH_PREFIX = "sha256:"
 MANIFEST_REL = ".kiro/specs/agentic-mcp-orchestration/eval/samples-manifest.json"
 
 
@@ -56,6 +58,21 @@ def _resolve_repo_root() -> str:
 def _norm(s: str) -> str:
     """NFKC 正規化＋去頭尾空白（全形／半形、間距差異都視為同一句）。"""
     return unicodedata.normalize("NFKC", s).strip()
+
+
+_HN_WS_RE = re.compile(r"\s+")
+_HN_TRAILING_PUNCT_RE = re.compile(r"[?？!！。.．,，;；:：~～…]+$")
+
+
+def hash_norm(text: str) -> str:
+    """Plan 9.13 §4 **唯一**正規化＋雜湊（題目文字不進 git 的留出集只登記這個值）。
+
+    ＝`sha256(NFKC → 去全部空白 → 去句尾標點)`，與 `phrasing_map.norm` 同一套規則（句尾加問號、
+    中間加空白都算同一句）。產 index、`ruler_eval.py --text-file` 驗證、本檢查三處 ⛔ 只准用這一個符號。
+    """
+    t = unicodedata.normalize("NFKC", text)
+    t = _HN_TRAILING_PUNCT_RE.sub("", _HN_WS_RE.sub("", t))
+    return hashlib.sha256(t.encode("utf-8")).hexdigest()
 
 
 def _read_json(path: str) -> dict:
@@ -112,7 +129,19 @@ def _extract_questions(shape_key: str, data: dict) -> list[str]:
                 if isinstance(t.get("q"), str):
                     qs.append(t["q"])
         return qs
-    raise RuntimeError(f"未知的 manifest set 名稱 {shape_key!r}——本檢查只認得 topics／scenarios／sensitive／outline-probe"
+    if shape_key == "ruler-9.13":
+        # Plan 9.13 真實客服留出集：題目文字不進 git，只登記 `items[].q_sha256`（`hash_norm`）。
+        # 回傳以 `HASH_PREFIX` 標記的雜湊，由 `check_*` 與講法的 `hash_norm` 比對。
+        # 只取留出集（Plan 9.13 §4「正本講法 ∩ 留出集 ＝∅」）：`material` 是講法素材池，本來就可能成為講法，⛔ 不是洩題。
+        items = data.get("items", [])
+        if any(it.get("split") not in ("holdout", "material") for it in items):
+            raise RuntimeError("ruler-9.13 index 有題目缺 split 或值域外（應為 holdout／material）——⛔ 不猜哪些算留出集")
+        return [HASH_PREFIX + it["q_sha256"] for it in items
+                if it.get("split") == "holdout" and isinstance(it.get("q_sha256"), str)]
+    if shape_key == "ruler-9.12":
+        # Plan 9.12 檢索量尺（knowledge-outline-and-intent-architecture）：單題 `items[].q`。
+        return [it["q"] for it in data.get("items", []) if isinstance(it.get("q"), str)]
+    raise RuntimeError(f"未知的 manifest set 名稱 {shape_key!r}——本檢查只認得 topics／scenarios／sensitive／outline-probe／ruler-9.12／ruler-9.13"
                        "（shape 與抽取規則須同步擴充，⛔ 不可默默略過新 set）")
 
 
@@ -152,7 +181,7 @@ def collect_frozen_questions(manifest_abs: str, verify_sha: bool = True):
         data = json.loads(raw_bytes.decode("utf-8"))
         qs = _extract_questions(name, data)
         for q in qs:
-            frozen.add(_norm(q))
+            frozen.add(q if q.startswith(HASH_PREFIX) else _norm(q))
         counts[name] = len(qs)
         files_checked.append(abs_path)
     return frozenset(frozen), counts, files_checked
@@ -176,7 +205,11 @@ def check_canon_phrasing_frozen_disjoint(
     except Exception as e:  # noqa: BLE001
         return False, f"凍結題句收集失敗（{e}）"
 
-    overlap = sorted(phrasings & frozen)
+    frozen_hashes = {q[len(HASH_PREFIX):] for q in frozen if q.startswith(HASH_PREFIX)}
+    frozen_texts = {q for q in frozen if not q.startswith(HASH_PREFIX)}
+    overlap = sorted(phrasings & frozen_texts)
+    if frozen_hashes:
+        overlap += sorted(f"（hash 留出題）{p}" for p in phrasings if hash_norm(p) in frozen_hashes)
     detail_base = (
         f"講法 {len(phrasings)}（{len(canon_files)} 個正本 JSON）、"
         f"凍結題 {len(frozen)}（{counts}，{len(sample_files)} 個樣本檔）"
@@ -315,6 +348,52 @@ def self_test() -> int:
         ok5, detail5 = check_canon_phrasing_frozen_disjoint(
             canon_glob_abs=os.path.join(canon_dir, "*.json"), manifest_abs=manifest_path)
         cases.append(("⑤ 正本 JSON 掃到 0 個檔 ⇒ FAIL（正對照，不當成 0 句）", ok5 is False))
+
+    with tempfile.TemporaryDirectory() as td:
+        # ⑥ ruler-9.12 形狀：講法撞量尺題 ⇒ FAIL；不撞 ⇒ PASS（正對照：新 set 真的被讀進交集）
+        canon_dir = os.path.join(td, "canon")
+        manifest_dir = os.path.join(td, "manifest")
+        os.makedirs(canon_dir)
+        os.makedirs(manifest_dir)
+        sample_path = os.path.join(manifest_dir, "ruler.json")
+        with open(sample_path, "w", encoding="utf-8") as f:
+            json.dump({"_meta": {}, "items": [{"id": "r:0", "q": "量尺測試題"}]}, f, ensure_ascii=False)
+        with open(sample_path, "rb") as f:
+            sha = hashlib.sha256(f.read()).hexdigest()
+        manifest_path = os.path.join(manifest_dir, "samples-manifest.json")
+        with open(manifest_path, "w", encoding="utf-8") as f:
+            json.dump({"sets": {"ruler-9.12": {"available": True, "path": "ruler.json", "sha256": sha}}}, f)
+        _write_canon(canon_dir, ["量尺測試題"])
+        ok6, _d6 = check_canon_phrasing_frozen_disjoint(
+            canon_glob_abs=os.path.join(canon_dir, "*.json"), manifest_abs=manifest_path)
+        cases.append(("⑥ ruler-9.12 題句撞講法 ⇒ FAIL", ok6 is False))
+        _write_canon(canon_dir, ["別的講法"])
+        ok6b, _d6b = check_canon_phrasing_frozen_disjoint(
+            canon_glob_abs=os.path.join(canon_dir, "*.json"), manifest_abs=manifest_path)
+        cases.append(("⑥ ruler-9.12 題句不撞 ⇒ PASS", ok6b is True))
+
+    with tempfile.TemporaryDirectory() as td:
+        # ⑦ ruler-9.13 hash 形狀：講法「X？」／中間有空白 vs 題目 hash_norm(X) ⇒ FAIL；不撞 ⇒ PASS
+        canon_dir = os.path.join(td, "canon")
+        manifest_dir = os.path.join(td, "manifest")
+        os.makedirs(canon_dir)
+        os.makedirs(manifest_dir)
+        sample_path = os.path.join(manifest_dir, "idx.json")
+        with open(sample_path, "w", encoding="utf-8") as f:
+            json.dump({"_meta": {}, "items": [{"id": "h:0", "split": "holdout", "q_sha256": hash_norm("合約可以續約嗎")},
+                                               {"id": "m:0", "split": "material", "q_sha256": hash_norm("押金怎麼退")}]}, f)
+        with open(sample_path, "rb") as f:
+            sha = hashlib.sha256(f.read()).hexdigest()
+        manifest_path = os.path.join(manifest_dir, "samples-manifest.json")
+        with open(manifest_path, "w", encoding="utf-8") as f:
+            json.dump({"sets": {"ruler-9.13": {"available": True, "path": "idx.json", "sha256": sha}}}, f)
+        for label, ph, expect in (("同句", "合約可以續約嗎", False), ("句尾全形？", "合約可以續約嗎？", False),
+                                  ("中間空白", "合約 可以 續約嗎", False), ("不撞", "帳單怎麼開", True),
+                                  ("撞講法素材池（material）", "押金怎麼退", True)):
+            _write_canon(canon_dir, [ph])
+            ok7, _d7 = check_canon_phrasing_frozen_disjoint(
+                canon_glob_abs=os.path.join(canon_dir, "*.json"), manifest_abs=manifest_path)
+            cases.append((f"⑦ ruler-9.13 hash：{label} ⇒ {'PASS' if expect else 'FAIL'}", ok7 is expect))
 
     # ── 正對照：現樹真的掃到東西（⛔ 不是空跑）──
     real_phrasings, real_files = collect_canon_phrasings(_resolve_canon_glob())

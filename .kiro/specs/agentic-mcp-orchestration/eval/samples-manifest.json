@@ -58,6 +58,31 @@
         "turns_total": 49
       },
       "note": "knowledge-outline-and-intent-architecture 4.4a 凍結（2026-09-07；規則 inputs/outline-probe-selection-rule.json；業主核 gold 表）。⛔ 抽完不得改（R6.2）。"
+    },
+    "ruler-9.12": {
+      "available": true,
+      "path": ".kiro/specs/knowledge-outline-and-intent-architecture/inputs/ruler-9.12-questions.json",
+      "sha256": "95e75a1165dda9c6546ede25e96baaa02ea2f63615d704bc2f00604d42f72621",
+      "how_to_verify": "python3 -c \"import hashlib;print(hashlib.sha256(open('.kiro/specs/knowledge-outline-and-intent-architecture/inputs/ruler-9.12-questions.json','rb').read()).hexdigest())\"",
+      "shape": "{_meta, items:[{id,q,fine_id,also_ok,coarse_id,shelf,type,audience,origin,leak,selected_fine}]}",
+      "count": {
+        "items": 337
+      },
+      "note": "2026-09-24 業主核可凍結（Plan 9.12 §5）：三層正本檢索量尺；跨 spec 登記由 knowledge-outline-and-intent-architecture 擁有，僅供不變量 34 防題句入講法。⛔ 此檔永不修改；正本 id 變動走只能追加的 ruler-9.12-remap-<sha8>.json。"
+    },
+    "ruler-9.13": {
+      "available": true,
+      "path": ".kiro/specs/knowledge-outline-and-intent-architecture/inputs/ruler-9.13-index.json",
+      "sha256": "6b27c06db15ebcad473284229293631bcd6fa05dddf83e1ef1ea3ee2f34f1564",
+      "how_to_verify": "python3 -c \"import hashlib;print(hashlib.sha256(open('.kiro/specs/knowledge-outline-and-intent-architecture/inputs/ruler-9.13-index.json','rb').read()).hexdigest())\"",
+      "shape": "{_meta, items:[{id,fine_id,also_ok,audience,form,category,split,near,q_sha256}]}（⛔ 無題目文字；文字檔在 repo 外 ~/jgb-archive/ruler-9.13/questions.json）",
+      "count": {
+        "items": 197,
+        "holdout": 99,
+        "material": 98,
+        "no_canon": 184
+      },
+      "note": "2026-09-25 業主核可凍結（Plan 9.13 §4；owner_gold30.json 業主覆核「OK」，審題者修正已套用：4 題改 no_canon、4 題補 also_ok、1 題 no_canon→gold）。真實客服提問留出集；題目文字不進 git，只登記 `q_sha256`（`hash_norm`，見 scripts/audit/checks/canon_phrasing_frozen_disjoint.py）。holdout 99 < 150 ⇒ 依 Plan §4 架構比較記 INCONCLUSIVE，只作描述性報告。⛔ 此檔永不修改；正本 id 變動走只能追加的 remap 檔。"
     }
   },
   "baseline": {
