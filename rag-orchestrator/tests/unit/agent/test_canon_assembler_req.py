@@ -95,12 +95,21 @@ _FINE_HEADING_RE = re.compile(r"^### .+\{#(jgb/[A-Z]/[a-z0-9-]+)\}\s*$", re.M)
 
 
 def _mark_reviewed_except(shelf_text: str, skip_ids: frozenset) -> str:
-    def _sub(m: "re.Match") -> str:
-        if m.group(1) in skip_ids:
-            return m.group(0)
-        return m.group(0) + "\n- reviewed: {by: s4-measurement, at: 2026-09-23}"
-
-    return _FINE_HEADING_RE.sub(_sub, shelf_text)
+    """`skip_ids` 刻意留白；已經有 `reviewed` 的細目也一律跳過（⛔ 無條件附加會撞
+    `canon_parser` 的『屬性重複 reviewed』——S4 之後 D／E 會混入真的 `reviewed`）。
+    """
+    matches = list(_FINE_HEADING_RE.finditer(shelf_text))
+    pieces, cursor = [], 0
+    for i, m in enumerate(matches):
+        next_start = matches[i + 1].start() if i + 1 < len(matches) else len(shelf_text)
+        pieces.append(shelf_text[cursor:m.end()])
+        block = shelf_text[m.end():next_start]
+        already_reviewed = bool(re.search(r"^- reviewed:", block, re.M))
+        if m.group(1) not in skip_ids and not already_reviewed:
+            pieces.append("\n- reviewed: {by: s4-measurement, at: 2026-09-23}")
+        cursor = m.end()
+    pieces.append(shelf_text[cursor:])
+    return "".join(pieces)
 
 
 def all_reviewed_canon_dir(tmp_path: Path, *, skip_ids: frozenset = frozenset(),
@@ -142,8 +151,17 @@ def test_load_canon_or_die_accepts_versioned_canon():
     assert doc.audience == CANON_NAME and doc.name == CANON_NAME
     grep_total = _grep_total_fines()
     assert len(doc.fines()) == grep_total > 0, (len(doc.fines()), grep_total)
+    # Plan 9.15 S3b：不再寫死「全未審」——已審集合＝parser 讀出的集合，用一條與
+    # `load_canon_or_die` 完全獨立的第二管道（grep `- reviewed:` 行數）交叉核對，
+    # 兩邊不一致代表 parser 漏收／多收了 reviewed 屬性。Plan 9.15 S4（2026-09-27）起有已審細目，
+    # ⛔ 再寫死 0：數量由兩條管道互相核對，另要求每條已審細目的 reviewed_at 都有值。
     reviewed = [f.id for f in doc.fines() if f.reviewed_by is not None]
-    assert reviewed == [], reviewed  # 換正本後全未審
+    grep_reviewed = sum(
+        len(re.findall(r"^- reviewed:", (SHELF_DIR / f"{letter}.md").read_text(encoding="utf-8"), re.M))
+        for letter in "ABCDEFGHI"
+    )
+    assert len(reviewed) == grep_reviewed, (reviewed, grep_reviewed)
+    assert all(f.reviewed_at for f in doc.fines() if f.reviewed_by is not None)
 
 
 def test_load_canon_or_die_reads_content_only_from_markdown(tmp_canon):

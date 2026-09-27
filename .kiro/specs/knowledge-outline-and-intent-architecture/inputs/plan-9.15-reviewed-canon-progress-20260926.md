@@ -2,7 +2,7 @@
 
 > 狀態：**業主 2026-09-27 核可**（接受 S3b 修法、不再審大綱；先做 S1；D1＝逐架交審；S1 規則措辭照原文）。ASK 模式。
 > **終點指標（本計畫起點，可重跑）**：已審細目 **0／515**（pm 0／509、prospect 0／112）；頁面樹 183 頁中有已審細目的 **0**。
-> **本計畫預期**：S1＝0（工具，業主 2026-09-26「A，照建議」已明示同意）；S4 完成時 D＋E 兩架最多 **+174**（D 97＋E 77，以業主審過為準）。
+> **本計畫預期**：S1＝0（工具，業主 2026-09-26「A，照建議」已明示同意）；S4 完成時 D＋E 兩架 **pm 最多 +200、prospect 最多 +30**（S3 後 D 104＋E 96；`endpoint_progress.py`：pm 0／535、prospect 0／121，D 104／9、E 96／21；以業主審過為準）。
 > 上游：HANDOFF §1 終點；Plan 9.14 §10（64 條對源事實、37 格部分缺口、51 則業主題）；記憶 `feedback_endpoint_metric_first`。
 
 ## 0. 為什麼有這份
@@ -103,7 +103,7 @@
 - 驗收：在暫存的正本副本上**預先把一條 D 細目標成已審**，上列輔助與 `ruler_eval` 的已審副本全部載入不報錯；全套單元測試紅燈數不增加；此檢查記在本計畫 §6，且須在 S4 開始前成立。
 - 回滾：還原上列檔案。
 
-### S4 — D／E 代理先審＋業主終審 ⇒ 標 `reviewed_by`（**預期終點 +最多 174**）
+### S4 — D／E 代理先審＋業主終審 ⇒ 標 `reviewed_by`（**終點現值 pm 0／535、prospect 0／121；預期 pm +最多 200、prospect +最多 30**）
 
 - **前置**：§3 D1 業主核可，且主 session 已把 DSP-066 修訂寫進 `.claude/DECISIONS.md`（見 §3 D1 的執行步驟）；S3b 驗收成立；未滿足 ⇒ S4 不開。
 - 代理先審（逐句對源＋可答性，DSP-066），產審核單；業主終審；審過的細目在 `D.md`／`E.md` 加一行 `- reviewed: {by: owner, at: YYYY-MM-DD}`（`canon_parser.py` 的 `reviewed` 屬性格式）。
@@ -113,6 +113,25 @@
   - 釘該 sha 的測試（`grep -rln canon_sha256 rag-orchestrator/tests` 列出者）同步改新值
   - 兩條「全未審」現況斷言改成「已審集合＝業主通過集合」：`tests/unit/agent/test_library_view_req.py`、`tests/unit/agent/test_canon_assembler_req.py` 的 `assert reviewed == []`
 - 驗收：`endpoint_progress.py` 的 D、E 兩架已審數＝業主通過數；`canon_visible` 對這些細目回真；上列測試全綠；`make audit` 綠。
+
+**S4 細部（業主 2026-09-27「依粗目整組審」）**
+- **前置**：S3（`950922ac`）與 S3b 完成 ✓；DSP-066 已改逐架交審 ✓。
+- **步驟 1 代理先審（唯讀 verifier，序列、一次一位）**：D 10 粗目、E 7 粗目，每位負責 2～3 個粗目（約 7 位）。對每條細目：
+  - 逐句對源（依 `sources`／`evidence`，⛔ 抽樣；業主裁決句依審核單編號判）
+  - 可答性：句子是否回答了該細目的標題／`askable`
+  - 本線已知錯型：絕對句漏例外（預覽帳單預設、註冊／免註冊、既存／電子範本、社宅、特定團隊、銀行別）、多流程混一、路由對錯函式、標籤自取、實作詞、客戶名
+  - 產出每條細目：`pass` 或 `doubt`（附句序、理由、證據）；⛔ 改檔
+- **步驟 2 審核單**（主 session）：`inputs/review-sheet-9.15-S4-DE-20260927.md`，依 17 個粗目分組；每組列細目 id＋標題、該組 `doubt` 清單（理由一句）；`pass` 的只列標題。
+- **步驟 3 業主終審**：每組回「過」＝該組 `pass` 細目全數標已審；`doubt` 細目逐條由業主選「本批不審」或「照原樣過」。⛔ 本片不改細目內容；要修的細目列入 Plan 9.16 待修清單（修正走 drafts→重生成，須先有保留 `reviewed` 的生成器）。
+- **步驟 4 寫入**（主 session）：只在 `rag-orchestrator/canon/jgb/D.md`／`E.md` 業主通過的細目屬性區加一行 `- reviewed: {by: owner, at: 2026-MM-DD}`；以 `export_json`／`export_catalog` 重匯出 `jgb.json`／`CATALOG.md`（⛔ 重跑 `drafts_to_canon.py`，它會抹掉 `reviewed`）。
+- **驗收**：
+  - `git diff` 的 D.md／E.md 只有新增 `- reviewed:` 行（刪除行 0）；七架與 `CATALOG.md` 依 §5 規則
+  - `endpoint_progress.py` D／E 已審數＝業主通過數（>0）；`load_canon_or_die` 通過；`canon_visible` 對通過細目回真
+  - 全套單元紅燈＝既有 9 條；`make audit` PASS
+  - fresh outcome verifier 驗上述
+- **預算**：步驟 1 約 1.5M（累計會碰 4M 停點 ⇒ 到時停交業主看剩餘量）
+- **停止**：累計達 4M；任一粗目 `doubt` 比例 >30% ⇒ 該組照送審核單但標明「建議整組本批不審、列 9.16 修正」，由業主決定；寫入後已審數與業主通過數不符。
+- **回滾**：寫入前把 `rag-orchestrator/canon/jgb/D.md`、`E.md`、`CATALOG.md`、`rag-orchestrator/canon/jgb.json` 與本片要改的測試檔（釘 `canon_sha256` 者，`grep -rln canon_sha256 rag-orchestrator/tests`；其中 3 支含 S3b／9.11 未提交改動）備份到 session scratchpad `p915-s4-backup/`；回滾＝以備份還原（⛔ `git checkout`，避免抹掉未提交的 S3b／9.11 改動）。⚠️ 回滾會讓已審數下降，屬 §5「M1 下降 ⇒ 停」⇒ 須業主明示指示才執行。
 
 ## 3. ⏳ 待業主裁
 
@@ -134,7 +153,7 @@
 - 任一片的實際終點變化與預期不符且無法解釋 ⇒ 停下交業主。
 - 正本 sha 只准在 S3（重跑生成）與 S4（只新增 `reviewed` 行＋`jgb.json` 整份重匯出，diff 限 S4 所列）變動；其他片或超出允許 diff 的變動 ⇒ 停。
 - **已審細目數（M1）任何時候下降 ⇒ 停下交業主**（防重跑抹掉標記）。
-- **預算**：S2～S4 合計 `subagent_tokens` ≤ **5M**（S3 生成＋逐句對源約 2M、S4 代理先審 174 條約 2M、fresh verifier 預留 1M；估法：Plan 9.14 對源約 1.5 萬 token／格）；本機 8GB ⇒ **一次只跑一個代理、⛔ 多判者並行**。記在 `cost.json` 式帳本；累計達 4M 先停交業主看剩餘工作量，超過 5M ⇒ 停。
+- **預算**：S2～S4 合計 `subagent_tokens` ≤ **5M**（S3 生成＋逐句對源約 2M、S4 代理先審 200 條約 1.5～2M（2026-09-27 依 S3 後條數更新；截至 S3b 已用 2.39M，預期會碰 4M 停點）、fresh verifier 預留 1M；估法：Plan 9.14 對源約 1.5 萬 token／格）；本機 8GB ⇒ **一次只跑一個代理、⛔ 多判者並行**。記在 `cost.json` 式帳本；累計達 4M 先停交業主看剩餘工作量，超過 5M ⇒ 停。
 - D1 被否決或未裁 ⇒ 依 §3 D1 分支：S4 不開、S3 後停。
 
 ## 6. 就緒審查紀錄
@@ -189,7 +208,16 @@
   - ⚠️ 本輪合計 16 條帳本要更正，已記入記憶 `project_ledger_p914_scope_errors`；S3b 執行者曾與複核並行、違反 §5「一次一位」⇒ 主 session 發現後停掉（未改任何檔），待複核完成再派
   - 更正驗證 fresh verifier＝REFUTED（主 session 自己引入 2 條 P2：「是否通知」隱藏角色寫反〔`config_rule_key 1`＝租客〕、事後註冊認領漏「同一瀏覽器、工作階段 120 分鐘內」條件）＋2 條 P3（LINE／FB 推播限已綁定、「位元」實作詞）⇒ 全修、重生成 ⇒ **targeted fresh verifier＝CONFIRMED**；另把 18 條過時的帳本 evidence 引文換成現行事實文字（正本逐位元組不變，evidence 不進正本）
   - 外洩掃描：規則一只命中業主已放行的產品用語（「待租客簽回」等、既有範本名）
+  - 更正 commit `950922ac`（未 push）
+  - **S3b 完成**（executor）：`test_agent_eval_req`／`test_agent_turn_pm_outline_req`／`test_canon_assembler_req`／`test_library_view_req`／`tools/canon/ruler_eval.py` 的已審注入改為「已有 `reviewed` 就跳過」；兩處 `assert reviewed == []` 改成 parser 與 grep 兩條獨立管道交叉核對；預算尺斷言依「可見細目是否有已審」分支（現況仍 0，不變弱）。可重入驗收：tmp 副本預先標已審後 5 個流程全數載入無 `CanonFormatError`；變異（拿掉跳過）⇒ 變紅 ✓。全套單元 3928 passed／9 failed（既有名單）✓。另 6 支測試的 `reviewed` 只注入自建合成 fixture，不受影響（主 session 逐檔確認）。⚠️ `test_agent_eval_req.py` 同檔含 9.11 未提交改動 ⇒ S3b 暫不 commit，待 9.11 一起處理或以非互動方式只加本片 hunk
+  - **S4**：就緒審查第 2 輪 READY ⇒ 代理先審 B1～B6（15／17 粗目、176 條；每批一位 fresh verifier、序列）：**pass 115／doubt 61（35%）**；doubt 多數是 9.10 原稿（本輪未動）的同型範圍錯（既存 vs 電子範本、社宅各範本、註冊 vs 免註冊、特定合作團隊、權限、舊元件／幫助中心舊標籤）。8 組 doubt >30% 標 ⚠️。審核單 `inputs/review-sheet-9.15-S4-DE-20260927.md`。B7（虛擬帳號＋金流開通 24 條）因預算未跑
+  - 兩位 verifier 對「事後以 Email 註冊能否自動認領合約」見解相反 ⇒ 主 session 對碼：`receiveContractInvitation('email')` 以明文比對已加密的 `to_user_email`，新資料應比不到（疑 jgb2 缺陷，列交產品）
+  - **業主（2026-09-27）「安全組過、⚠️組不審」「先寫入已審，B7 之後」**：7 組（D-contract-list、D-move-in、D-renew、E-bill-list、E-bill-stats、E-social-housing-report、E-balance-invoice）的 pass 細目 **62 條**寫入 `- reviewed: {by: owner, at: 2026-09-27}`（備份 `scratchpad/p915-s4-backup/`）；D.md／E.md 只新增 62 行、刪除 0；`export_json`／`export_catalog` 重匯出，`jgb.json` 只變 reviewed 欄位＋sha，`CATALOG.md` 不變；`load_canon_or_die` 通過
+  - **🎯 終點指標首次移動：`已審細目 pm 62／535、prospect 10／121；頁面 pm 24／183、prospect 7／183`**；`make audit` PASS
+  - 全套單元多紅 1 條 `test_load_canon_or_die_accepts_versioned_canon`：S3b 改寫時仍留 `== 0` 寫死 ⇒ S4 依計畫擁有此斷言，改為 parser 與 grep 兩管道互核＋`reviewed_at` 非空；該檔重跑只剩既有紅 1 條 ⇒ 送 fresh outcome verifier
+  - S2～S4 累計 3.86M（含 S3 後帳本複核與修正）
   - G1 裁決的第二半「文件／文案待修清單」原本漏交（E1 verifier A3 指出）⇒ 主 session 補交 `inputs/doc-fix-list-9.15-G1-20260927.md`（9 條＋1 條 jgb2 程式缺陷）
   - **連帶更正已 commit 的帳本 2 條**（同根因，主 session 自己改、非 S3 擁有檔，屬本線先前引入的錯）：`p914-contract-gear-menu` 改依 `webList`（補查看帳單、兩個取消邀請、社宅／權限條件）；`p914-contract-agents` 限定社宅合約
+- **S4 就緒審查第 1 輪＝REVISE P2×3**（全 FIX）：終點預期仍寫 174 ⇒ 改 pm +最多 200／prospect +最多 30（依 `endpoint_progress.py` 現值）；「修」分支違反 S4 只准加 `reviewed` 行的規則 ⇒ 移除，doubt 只能本批不審或照原樣過、修正列 9.16；缺回滾 ⇒ 加備份還原（不用 git，檔案含未提交 S3b／9.11）
 - **S3 第 2 輪＝REVISE P2×3**；已達第 2 次 ⇒ 停止自動重送，主 session 逐條裁決**全 FIX**，開新就緒週期、只送一次收尾審查：業主裁決句無合法來源 ⇒ 定來源形式（審核單＃編號）與 verifier 判法；E 驗收數 74→73；裁決落地無驗收 ⇒ 加 63 列對照表與 `--expect-open-questions`。
 - **S1 第 1 輪＝REVISE P2×2**：① M2 比對規則未定義、驗收抓不到壞掉的比對器 ⇒ FIX（§1 寫明 SPA／blade 規則、正對照 132／183、`--ignore-review`、合成 M2 測試）；② 大綱尚未 READY ⇒ 程序性，隨大綱裁決。

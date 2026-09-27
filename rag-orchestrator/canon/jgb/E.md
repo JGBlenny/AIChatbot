@@ -14,6 +14,7 @@ language: zh-TW
   - {text: "帳單總表跟草稿帳單差在哪", source: "draft:outline-20260920", status: proposed}
   - {text: "帳單有哪些分頁", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/use/config/useBillTypes.js, code:src/pages/bills/list/Index.jsx]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -27,6 +28,7 @@ language: zh-TW
   - {text: "應到帳待對帳已到帳", source: "draft:outline-20260920", status: proposed}
   - {text: "應支出已支出已失效", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/use/config/useBillTypes.js]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -40,6 +42,7 @@ language: zh-TW
   - {text: "租客帳單分頁", source: "draft:outline-20260920", status: proposed}
   - {text: "租客帳單狀態", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/use/config/useBillTypes.js]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -67,6 +70,7 @@ language: zh-TW
   - {text: "排定發送可以取消嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "取消排定發送", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/use/config/useBillTypes.js]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -76,6 +80,7 @@ language: zh-TW
   - {text: "封存的帳單能做什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "封存後還能操作嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/use/config/useBillTypes.js]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -126,6 +131,7 @@ language: zh-TW
   - {text: "應支出可以做什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "租客怎麼付款", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/use/config/useBillTypes.js]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -134,6 +140,7 @@ language: zh-TW
 - phrasings:
   - {text: "待對帳支出帳單", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/use/config/useBillTypes.js]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -144,6 +151,7 @@ language: zh-TW
   - {text: "退款對帳單怎麼看", source: "draft:outline-20260920", status: proposed}
   - {text: "已支出可以封存嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/use/config/useBillTypes.js]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -156,6 +164,7 @@ language: zh-TW
   - {text: "帳單已失效要補繳嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "電錶儲值帳單失效", source: "draft:outline-20260920", status: proposed}
 - sources: [help:billexpired_zh-Hant.html]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -170,6 +179,7 @@ language: zh-TW
   - {text: "用虛擬帳號查帳單", source: "draft:outline-20260920", status: proposed}
   - {text: "用租客名字找帳單", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/bills/list/Index.jsx]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -183,6 +193,7 @@ language: zh-TW
   - {text: "匯出帳單要先勾選嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "全選匯出跟勾選匯出差在哪", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/use/config/useBillTypes.js]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -196,6 +207,7 @@ language: zh-TW
   - {text: "帳單總表批次操作交集", source: "draft:outline-20260920", status: proposed}
   - {text: "混合狀態帳單批次動作", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/use/config/useBillTypes.js]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -217,6 +229,7 @@ language: zh-TW
   - {text: "匯出租客繳費證明", source: "draft:outline-20260920", status: proposed}
   - {text: "社會住宅匯出證明", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/use/config/useBillTypes.js, code:app/Role.php]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -228,6 +241,7 @@ language: zh-TW
   - {text: "匯出收據", source: "draft:outline-20260920", status: proposed}
   - {text: "批次匯出收據", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/use/config/useBillTypes.js]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -238,6 +252,7 @@ language: zh-TW
   - {text: "匯出收支明細表", source: "draft:outline-20260920", status: proposed}
   - {text: "總收支匯出子選項", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/use/config/useBillTypes.js]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -250,6 +265,7 @@ language: zh-TW
   - {text: "批次編輯帳單", source: "draft:outline-20260920", status: proposed}
   - {text: "批次編輯帳單特定團隊視窗不一樣", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/use/config/useBillTypes.js]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -265,6 +281,7 @@ language: zh-TW
   - {text: "水電度數沒填能排定發送嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "帳單幾點統一發送", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/bills/pick/Index.jsx]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -304,6 +321,7 @@ language: zh-TW
   - {text: "帳單通知會發給誰", source: "draft:outline-20260920", status: proposed}
   - {text: "關閉租客所有通知", source: "draft:outline-20260920", status: proposed}
 - sources: [docs:knowledge/jgb-product-facts.md#p914-bill-notify]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -316,6 +334,7 @@ language: zh-TW
   - {text: "折讓後還能作廢嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "ezPay作廢發票", source: "draft:outline-20260920", status: proposed}
 - sources: [docs:knowledge/jgb-product-facts.md#p914-invoice-void-ezpay]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -339,6 +358,7 @@ language: zh-TW
   - {text: "批次封存帳單", source: "draft:outline-20260920", status: proposed}
   - {text: "封存順序怎麼安排", source: "draft:outline-20260920", status: proposed}
 - sources: [docs:knowledge/jgb-product-facts.md#p914-bill-archive-states, code:src/use/config/useBillTypes.js]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -350,6 +370,7 @@ language: zh-TW
   - {text: "押金收據號碼會自動產生嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "押金收據匯入匯出", source: "draft:outline-20260920", status: proposed}
 - sources: [docs:knowledge/jgb-product-facts.md#p914-deposit-receipt-no]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -361,6 +382,7 @@ language: zh-TW
   - {text: "排定發送帳單順序", source: "draft:outline-20260920", status: proposed}
   - {text: "合約到期未來帳單擋不擋", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Services/Bills/ContractEndedRentBillGuard.php, code:app/Console/Commands/BillBatchSend.php]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -373,6 +395,7 @@ language: zh-TW
   - {text: "客服可以幫忙催繳嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "重新寄催繳通知", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/UserController.php, docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#111, code:app/Console/Commands/BillNotifyOverdue.php]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -384,6 +407,7 @@ language: zh-TW
   - {text: "超商代碼逾期入帳", source: "draft:outline-20260920", status: proposed}
   - {text: "超商繳費逾期", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/PaymentController.php, docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#114]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -594,6 +618,7 @@ language: zh-TW
   - {text: "支出情況怎麼算", source: "draft:outline-20260920", status: proposed}
   - {text: "預計總收款是什麼", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/bills/stat/Index.jsx, code:src/pages/bills/stat/_parts/Stat.jsx]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -606,6 +631,7 @@ language: zh-TW
   - {text: "每月對帳單在哪", source: "draft:outline-20260920", status: proposed}
   - {text: "統計報表分頁不見了", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/bills/stat/Index.jsx]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -619,6 +645,7 @@ language: zh-TW
   - {text: "報表還沒上傳", source: "draft:outline-20260920", status: proposed}
   - {text: "每月報表社區物件篩選", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/bills/stat/_parts/MonthlyReport.vue]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -636,6 +663,7 @@ language: zh-TW
   - {text: "社宅表單哪個沒有額外欄位", source: "draft:outline-20260920", status: proposed}
   - {text: "社宅表單全選", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/bills/socialHousingSheets/Index.vue]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -650,6 +678,7 @@ language: zh-TW
   - {text: "社宅報表版本切換", source: "draft:outline-20260920", status: proposed}
   - {text: "社宅合約版本網址", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/routes/bills.js, code:src/pages/bills/socialHousingSheets/Index.vue]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -662,6 +691,7 @@ language: zh-TW
   - {text: "製作表單按鈕", source: "draft:outline-20260920", status: proposed}
   - {text: "社宅表單團隊紀錄", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/bills/socialHousingSheets/Index.vue]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -674,6 +704,7 @@ language: zh-TW
   - {text: "社宅表單匯出紀錄上限", source: "draft:outline-20260920", status: proposed}
   - {text: "匯出歷史看多少筆", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/bills/socialHousingSheets/Index.vue]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -686,6 +717,7 @@ language: zh-TW
   - {text: "確定歸檔按鈕", source: "draft:outline-20260920", status: proposed}
   - {text: "舊紀錄表單能下載嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/bills/socialHousingSheets/Index.vue]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -725,6 +757,7 @@ JGB 把「社會住宅」設計成一種團隊身份，跟「個人房東/代理
   - {text: "差額發票尚未生效", source: "draft:outline-20260920", status: proposed}
   - {text: "差額發票封存", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/utils/constants/balanceInvoices.ts, code:src/pages/balanceInvoices/list/_parts/ListTable.vue]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -738,6 +771,7 @@ JGB 把「社會住宅」設計成一種團隊身份，跟「個人房東/代理
   - {text: "差額發票累積收入", source: "draft:outline-20260920", status: proposed}
   - {text: "差額發票本月發票狀態", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/balanceInvoices/list/_parts/ListTable.vue]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -751,6 +785,7 @@ JGB 把「社會住宅」設計成一種團隊身份，跟「個人房東/代理
   - {text: "前期餘額怎麼填", source: "draft:outline-20260920", status: proposed}
   - {text: "房屋稅籍編號填在哪", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/balanceInvoices/edit/basicInfo/Index.vue]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -780,6 +815,7 @@ JGB 把「社會住宅」設計成一種團隊身份，跟「個人房東/代理
   - {text: "本月應收金額", source: "draft:outline-20260920", status: proposed}
   - {text: "差額總表在哪看", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/balanceInvoices/groups/Index.vue, code:src/pages/balanceInvoices/groups/_parts/ReportTable.vue]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -807,6 +843,7 @@ JGB 把「社會住宅」設計成一種團隊身份，跟「個人房東/代理
   - {text: "差額發票狀態多久更新一次", source: "draft:outline-20260920", status: proposed}
   - {text: "差額發票每2小時", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Models/BalanceInvoiceGroup.php, code:app/Console/Kernel.php]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -835,6 +872,7 @@ JGB 把「社會住宅」設計成一種團隊身份，跟「個人房東/代理
   - {text: "差額發票租金增減欄", source: "draft:outline-20260920", status: proposed}
   - {text: "差額發票減免怎麼記", source: "draft:outline-20260920", status: proposed}
 - sources: [docs:knowledge/jgb-product-facts.md#p914-balance-invoice-refund]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -845,6 +883,7 @@ JGB 把「社會住宅」設計成一種團隊身份，跟「個人房東/代理
   - {text: "退租帳單科目重複計入", source: "draft:outline-20260920", status: proposed}
   - {text: "差額收支表怎麼認租金", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Services/BalanceInvoiceService.php]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -856,6 +895,7 @@ JGB 把「社會住宅」設計成一種團隊身份，跟「個人房東/代理
   - {text: "差額群組身分切換", source: "draft:outline-20260920", status: proposed}
   - {text: "差額發票身分變更", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Services/BalanceInvoiceService.php]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -866,6 +906,7 @@ JGB 把「社會住宅」設計成一種團隊身份，跟「個人房東/代理
   - {text: "合約未簽回押金收據", source: "draft:outline-20260920", status: proposed}
   - {text: "簽約中可以開發票嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [docs:knowledge/jgb-product-facts.md#p914-invoice-per-bill, docs:knowledge/jgb-product-facts.md#p914-receipt-email]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -878,6 +919,7 @@ JGB 把「社會住宅」設計成一種團隊身份，跟「個人房東/代理
   - {text: "發票異常盤查名單", source: "draft:outline-20260920", status: proposed}
   - {text: "帳單不在差額群組", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/Admin/InvoiceFailureController.php]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general

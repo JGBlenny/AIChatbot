@@ -51,6 +51,25 @@ _CANON_DIR = _RAG_ROOT / "canon"
 _FINE_HEADING_RE = re.compile(r"^### .+\{#jgb/[A-Z]/[a-z0-9-]+\}\s*$", re.M)
 
 
+def _mark_all_unreviewed(text: str) -> str:
+    """把尚未有 `reviewed` 的細目補一行；已經有的跳過。
+
+    Plan 9.15 S3b：S4 之後 D／E 會混入真的 `reviewed`，若無條件對每個標題都附加，
+    會撞 `canon_parser` 的『屬性重複 reviewed』——⛔ 不能只在「現況全未審」下才對。
+    """
+    matches = list(_FINE_HEADING_RE.finditer(text))
+    pieces, cursor = [], 0
+    for i, m in enumerate(matches):
+        next_start = matches[i + 1].start() if i + 1 < len(matches) else len(text)
+        pieces.append(text[cursor:m.end()])
+        block = text[m.end():next_start]
+        if not re.search(r"^- reviewed:", block, re.M):
+            pieces.append("\n- reviewed: {by: s4-measurement, at: 2026-09-23}")
+        cursor = m.end()
+    pieces.append(text[cursor:])
+    return "".join(pieces)
+
+
 def _all_reviewed_canon_dir(tmp_path, name="all-reviewed-canon"):
     from services.agent.canon.canon_parser import (
         CANON_NAME, export_catalog, export_json, parse_canon_dir,
@@ -61,11 +80,7 @@ def _all_reviewed_canon_dir(tmp_path, name="all-reviewed-canon"):
     shelf_dst.mkdir(parents=True)
     for letter in "ABCDEFGHI":
         text = (_CANON_DIR / CANON_NAME / f"{letter}.md").read_text(encoding="utf-8")
-        marked = _FINE_HEADING_RE.sub(
-            lambda m: m.group(0) + "\n- reviewed: {by: s4-measurement, at: 2026-09-23}",
-            text,
-        )
-        assert marked != text, f"{letter}.md 沒有任何細目被標 reviewed，注入沒生效"
+        marked = _mark_all_unreviewed(text)
         (shelf_dst / f"{letter}.md").write_text(marked, encoding="utf-8")
     doc = parse_canon_dir(str(shelf_dst))
     assert all(f.reviewed_by is not None for f in doc.fines()), "仍有未審細目，注入失敗"

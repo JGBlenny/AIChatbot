@@ -14,6 +14,7 @@ language: zh-TW
   - {text: "合約總表分頁", source: "draft:outline-20260920", status: proposed}
   - {text: "合約狀態頁籤", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/contracts/list/_parts/PageTop.vue, code:src/routes/contracts.js]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -27,6 +28,7 @@ language: zh-TW
   - {text: "進階搜尋合約", source: "draft:outline-20260920", status: proposed}
   - {text: "合約搜尋結果頁面", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/contracts/list/Index.vue, code:src/pages/contracts/list/_parts/PageTop.vue, code:src/components/Lightbox/ContractsAdvSearch.vue]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -55,6 +57,7 @@ language: zh-TW
   - {text: "沒有上架的物件可以簽約嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "建立合約的物件條件", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/ContractController.php]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -65,6 +68,7 @@ language: zh-TW
   - {text: "合約列表小齒輪可以做什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "合約列表的齒輪按鈕能做什麼", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/ContractController.php, code:routes/web.php, code:src/pages/contracts/list/Index.vue, code:app/Contract.php, code:src/components/SurelyVue/Contract/ActionCell.jsx]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -81,6 +85,7 @@ language: zh-TW
   - {text: "合約列表怎麼排序", source: "draft:outline-20260920", status: proposed}
   - {text: "合約排序選單", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/ContractController.php]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -100,6 +105,7 @@ language: zh-TW
   - {text: "待退押金提示是什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "合約列表押金提示燈號", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/contracts/list/_parts/stickerLabelBlock.jsx]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -109,6 +115,7 @@ language: zh-TW
   - {text: "合約列表帳單幣別欄", source: "draft:outline-20260920", status: proposed}
   - {text: "帳單幣別什麼時候出現", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/contracts/list/_parts/ListTable.vue]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -132,6 +139,7 @@ language: zh-TW
   - {text: "合約總表下載", source: "draft:outline-20260920", status: proposed}
   - {text: "匯出合約權限", source: "draft:outline-20260920", status: proposed}
 - sources: [docs:knowledge/jgb-product-facts.md#p914-contract-export]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -765,6 +773,7 @@ JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄�
   - {text: "點交責任歸屬", source: "draft:outline-20260920", status: proposed}
   - {text: "點交備註字數限制", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/contract/move-in.blade.php, code:src/pages/contracts/move-in/Index.vue, code:src/pages/contracts/edit/facilities/General.vue]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -778,6 +787,7 @@ JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄�
   - {text: "點交起始度數", source: "draft:outline-20260920", status: proposed}
   - {text: "點交後帳單怎麼算電費", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/contract/move-in.blade.php, help:landlordonboarding04lease_zh-Hant.html]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -799,6 +809,7 @@ JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄�
   - {text: "點交完成能重新點交嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "取消點交邀請", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Contract.php]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -809,6 +820,7 @@ JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄�
   - {text: "點交邀請可以取消嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "已送出的點交怎麼收回", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Contract.php]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -818,6 +830,7 @@ JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄�
   - {text: "點交結果PDF", source: "draft:outline-20260920", status: proposed}
   - {text: "點交可以下載嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:routes/web.php]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -828,6 +841,7 @@ JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄�
   - {text: "什麼時候可以點交", source: "draft:outline-20260920", status: proposed}
   - {text: "不點交可以發帳單嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [help:landlordonboarding04lease_zh-Hant.html]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -923,6 +937,7 @@ JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄�
   - {text: "續約可以選哪些合約", source: "draft:outline-20260920", status: proposed}
   - {text: "哪些合約不能續約", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/contracts/pick/Index.jsx, help:landlordonboarding04lease_zh-Hant.html]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -957,6 +972,7 @@ JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄�
   - {text: "續約帳單什麼時候產生", source: "draft:outline-20260920", status: proposed}
   - {text: "確認續約帳單頁面", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/contracts/renew/Preview.vue]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -969,6 +985,7 @@ JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄�
   - {text: "租客簽回續約後要做什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "續約怎麼完成", source: "draft:outline-20260920", status: proposed}
 - sources: [help:landlordonboarding04lease_zh-Hant.html, docs:knowledge/jgb-product-facts.md#p914-contract-renewal]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -980,6 +997,7 @@ JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄�
   - {text: "續約邀請幾天內要簽", source: "draft:outline-20260920", status: proposed}
   - {text: "續約審閱天數", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Services/ContractService.php]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -989,6 +1007,7 @@ JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄�
   - {text: "續約會沿用舊合約資料嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "續約聯絡資料會更新嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Services/ContractService.php, code:src/pages/contracts/renew/Index.vue, code:src/pages/contracts/renew/Preview.vue]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -1001,6 +1020,7 @@ JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄�
   - {text: "押金可以轉到新合約嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "續約要不要重收押金", source: "draft:outline-20260920", status: proposed}
 - sources: [docs:knowledge/jgb-product-facts.md#p914-renewal-deposit-diff, docs:knowledge/jgb-product-facts.md#p914-no-deposit-carryover]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general

@@ -131,26 +131,41 @@ def composition(rows: list[dict]) -> dict:
 
 
 def build_fullreview_copy(canon_src: str, dst_root: str):
-    """把 `canon_src`（九架目錄）複製到 `dst_root/jgb`、每個細目補 reviewed，回 `(doc, marked)`。"""
+    """把 `canon_src`（九架目錄）複製到 `dst_root/jgb`、每個尚未審的細目補 `reviewed`
+    （已經有的跳過——S4 之後 D／E 會混入真的 `reviewed`，無條件附加會撞 `canon_parser`
+    的『屬性重複 reviewed』），回 `(doc, marked)`（`marked`＝本次新插入的條數）。
+    """
     from services.agent.canon.canon_parser import FINE_HEADING_RE, export_catalog, export_json, parse_canon_dir
 
     dst = os.path.join(dst_root, "jgb")
     os.makedirs(dst)
     pat = re.compile(FINE_HEADING_RE.pattern, re.M)
     marked = 0
+    total_headings = 0
     for name in sorted(os.listdir(canon_src)):
         if re.fullmatch(r"[A-I]\.md", name):
             text = open(os.path.join(canon_src, name), encoding="utf-8").read()
-            text, k = pat.subn(lambda m: m.group(0) + REVIEW_MARK, text)
-            marked += k
-            open(os.path.join(dst, name), "w", encoding="utf-8").write(text)
-    if marked == 0:
+            matches = list(pat.finditer(text))
+            total_headings += len(matches)
+            pieces, cursor = [], 0
+            for i, m in enumerate(matches):
+                next_start = matches[i + 1].start() if i + 1 < len(matches) else len(text)
+                pieces.append(text[cursor:m.end()])
+                block = text[m.end():next_start]
+                if not re.search(r"^- reviewed:", block, re.M):
+                    pieces.append(REVIEW_MARK)
+                    marked += 1
+                cursor = m.end()
+            pieces.append(text[cursor:])
+            open(os.path.join(dst, name), "w", encoding="utf-8").write("".join(pieces))
+    if total_headings == 0:
         raise RulerError("全審副本一個細目都沒標到（FINE_HEADING_RE 對不上？）")
     doc = parse_canon_dir(dst)
     export_json(doc, os.path.join(dst_root, "jgb.json"))
     export_catalog(doc, os.path.join(dst, "CATALOG.md"))
-    if marked != len(doc.fines()) or any(f.reviewed_by is None for f in doc.fines()):
-        raise RulerError(f"全審副本標記數 {marked} ≠ 細目數 {len(doc.fines())} 或仍有未審細目")
+    still_unreviewed = sum(1 for f in doc.fines() if f.reviewed_by is None)
+    if still_unreviewed:
+        raise RulerError(f"全審副本仍有 {still_unreviewed} 條未審細目")
     return doc, marked
 
 

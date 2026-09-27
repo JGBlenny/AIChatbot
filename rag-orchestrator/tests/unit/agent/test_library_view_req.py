@@ -526,12 +526,41 @@ _SHELF_DIR = os.path.join(_RAG, "canon", "jgb")
 _FINE_HEADING_RE = re.compile(r"^### .+\{#jgb/[A-Z]/[a-z0-9-]+\}\s*$", re.M)
 
 
+def _grep_reviewed_count(shelf_dir=None) -> int:
+    """獨立於 parser 的第二條管道：直接數 `.md` 原始文字裡的 `- reviewed:` 行數。"""
+    d = shelf_dir or _SHELF_DIR
+    total = 0
+    for fname in sorted(os.listdir(d)):
+        if len(fname) == 4 and fname.endswith(".md"):
+            text = open(os.path.join(d, fname), encoding="utf-8").read()
+            total += len(re.findall(r"^- reviewed:", text, re.M))
+    return total
+
+
+def _mark_first_unreviewed(text: str) -> tuple[str, bool]:
+    """在第一個「尚未被標 reviewed」的細目後插入一行；已經有的跳過。回傳 (新文字, 是否插入)。"""
+    matches = list(_FINE_HEADING_RE.finditer(text))
+    for i, m in enumerate(matches):
+        next_start = matches[i + 1].start() if i + 1 < len(matches) else len(text)
+        block = text[m.end():next_start]
+        if re.search(r"^- reviewed:", block, re.M):
+            continue
+        return (
+            text[:m.end()] + "\n- reviewed: {by: s4-measurement, at: 2026-09-23}" + text[m.end():],
+            True,
+        )
+    return text, False
+
+
 def _single_reviewed_canon_copy(tmp_path):
-    """版控正本的 tmp 複本，**只**把第一條細目標 `reviewed`（⛔ 不動版控 `canon/`）。
+    """版控正本的 tmp 複本，只把**現樹尚未已審**的細目中的第一條標 `reviewed`
+    （⛔ 不動版控 `canon/`；已審的細目跳過，⛔ 無條件附加會撞 `canon_parser` 的
+    『屬性重複 reviewed』——S4 之後 D／E 會混入真的 `reviewed`）。
 
     用途：證明 `test_real_views_fit_the_budget` 的「未審 ⇒ 兩把尺皆 0」斷言不是
     恆零的空判斷——只要正本裡多出一條已審細目，量尺就必須量到非零。
     """
+    baseline = _grep_reviewed_count()
     dst = tmp_path / "single-reviewed-canon"
     shelf_dst = dst / CANON_NAME
     shelf_dst.mkdir(parents=True)
@@ -541,17 +570,14 @@ def _single_reviewed_canon_copy(tmp_path):
             continue
         text = open(os.path.join(_SHELF_DIR, fname), encoding="utf-8").read()
         if not marked_once:
-            new_text, n = _FINE_HEADING_RE.subn(
-                lambda m: m.group(0) + "\n- reviewed: {by: s4-measurement, at: 2026-09-23}",
-                text, count=1,
-            )
-            if n:
+            new_text, inserted = _mark_first_unreviewed(text)
+            if inserted:
                 text = new_text
                 marked_once = True
         (shelf_dst / fname).write_text(text, encoding="utf-8")
-    assert marked_once, "沒有標到任何一條細目，注入沒生效"
+    assert marked_once, "沒有標到任何一條細目（可能全部細目皆已審），注入沒生效"
     doc = parse_canon_dir(str(shelf_dst))
-    assert sum(1 for f in doc.fines() if f.reviewed_by is not None) == 1
+    assert sum(1 for f in doc.fines() if f.reviewed_by is not None) == baseline + 1
     export_json(doc, str(dst / f"{CANON_NAME}.json"))
     export_catalog(doc, str(shelf_dst / "CATALOG.md"))
     return dst
@@ -579,8 +605,18 @@ async def test_real_views_fit_the_budget(monkeypatch, tmp_path):
     monkeypatch.delenv("AGENT_OUTLINE_TOC_TOKEN_LIMIT_PM", raising=False)
 
     canon = load_canon_or_die(resolve_canon_dir())
-    reviewed = [f.id for f in canon.fines() if f.reviewed_by is not None]
-    assert reviewed == [], reviewed  # 現況正對照：本測試假設的「全未審」必須先成立
+    # Plan 9.15 S3b：不再寫死「全未審」——已審集合＝parser 讀出的集合，與一條獨立
+    # 管道（grep `- reviewed:` 行數）交叉核對；再以現樹已審集合（而非寫死 0）為基準：
+    # 該受眾看得到的細目中只要有一條已審，量尺就該非零；一條都沒有才是 0。
+    # 現況兩邊皆為 0，斷言在現況下照樣成立、不變弱。
+    reviewed_ids = [f.id for f in canon.fines() if f.reviewed_by is not None]
+    assert len(reviewed_ids) == _grep_reviewed_count(), (reviewed_ids, _grep_reviewed_count())
+    prospect_has_reviewed = any(
+        f.reviewed_by is not None and "prospect" in f.target_user for f in canon.fines()
+    )
+    pm_has_reviewed = any(
+        f.reviewed_by is not None and "property_manager" in f.target_user for f in canon.fines()
+    )
 
     prospect_doc = await build_audience_outline("prospect")
     pm_doc = await build_audience_outline("property_manager")
@@ -599,11 +635,18 @@ async def test_real_views_fit_the_budget(monkeypatch, tmp_path):
         toc_limit=default_toc_token_limit("property_manager"),
     )
 
-    # 全未審 ⇒ 兩把尺對兩受眾皆為 0（可見性判斷壞掉 ⇒ 任一項非零，見量測 (a)）。
-    assert prospect_budget.k_upper == 0
-    assert prospect_budget.toc_tokens == 0
-    assert pm_budget.k_upper == 0
-    assert pm_budget.toc_tokens == 0
+    # 該受眾已審集合非空 ⇒ 兩把尺該非零；現況全未審 ⇒ 仍是 0（可見性判斷壞掉 ⇒
+    # 某一項與這裡的期望值對不上，見量測 (a)）。
+    if prospect_has_reviewed:
+        assert prospect_budget.k_upper > 0 and prospect_budget.toc_tokens > 0
+    else:
+        assert prospect_budget.k_upper == 0
+        assert prospect_budget.toc_tokens == 0
+    if pm_has_reviewed:
+        assert pm_budget.k_upper > 0 and pm_budget.toc_tokens > 0
+    else:
+        assert pm_budget.k_upper == 0
+        assert pm_budget.toc_tokens == 0
 
     # 正對照：k_limit=-1（不依賴 k_upper 實際值）⇒ `check_turn_budget` 必 raise。
     with pytest.raises(OutlineBudgetExceeded):
