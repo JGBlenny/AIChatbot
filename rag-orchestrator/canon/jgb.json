@@ -2,7 +2,7 @@
   "audience": "jgb",
   "budget_tokens": 0,
   "business_types": [],
-  "canon_sha256": "4a94b6fb2a2e7e5b855d32c3b3de58815711324c53acf263504f357e514a9c7e",
+  "canon_sha256": "2cb40985c270a7e7cd50b2d6d9c6a26ed29f8814033e65721c52fc52a97bea5d",
   "coarses": [
     {
       "fines": [
@@ -18798,10 +18798,12 @@
           ],
           "categories": [],
           "coarse_id": "E-payment-onboarding",
-          "content_sha256": "c78a1ec5658fdeae9ebb008371bfc6e555b745ba6e8556e872a8b07196a70162",
+          "content_sha256": "a016b2fad70205062a8e035d07389bddd7aeec7e22d74fbf7e6f9e8d11b09e04",
           "content_units": [
-            "國泰世華、永豐銀行是自行向銀行申請，兩者都有「首次設定費 5,000 元」；中國信託、藍新 NewebPay 是在 JGB 系統線上申請，都是免費的。",
-            "入帳帳戶也有限制：國泰世華只能匯入國泰世華的實體帳戶，永豐銀行只能匯入永豐銀行的實體帳戶；中國信託跟藍新則可以指定任一實體帳戶收款。"
+            "國泰世華、永豐銀行是自行向銀行申請，兩者都有「首次設定費 5,000 元」；中國信託、藍新 NewebPay 是在 JGB 系統線上申請，申請本身不收費。",
+            "入帳帳戶也有限制：國泰世華只能匯入國泰世華的實體帳戶，永豐銀行只能匯入永豐銀行的實體帳戶；中國信託跟藍新則可以指定任一實體帳戶收款。",
+            "藍新的款項會先留在藍新帳戶中，要自行登入藍新後台辦理提款，前 5 次免費，之後每次收取 10 元。",
+            "藍新的交易手續費，開通畫面的條款寫明「費率以藍新科技股份有限公司本服務會員系統公告為依據」。"
           ],
           "id": "jgb/E/payment-gateway-fees",
           "instance_applicability": "general",
@@ -18829,17 +18831,18 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-27",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
-            "help:paymentapply_zh-Hant.html"
+            "help:paymentapply_zh-Hant.html",
+            "code:src/pages/users/payment/_parts/Newebpay.vue"
           ],
           "target_user": [
             "property_manager",
             "prospect"
           ],
-          "title": "各家收款金流的費率跟入帳帳戶限制是什麼？（國泰世華／永豐銀行首次設定費 5,000 元且限本行帳戶；中國信託／藍新免費且不限本行帳戶）"
+          "title": "各家收款金流的申請費用跟入帳帳戶限制是什麼？（國泰世華／永豐銀行首次設定費 5,000 元且限本行帳戶；中國信託／藍新線上申請不收申請費、可指定任一實體帳戶）"
         },
         {
           "business_types": [

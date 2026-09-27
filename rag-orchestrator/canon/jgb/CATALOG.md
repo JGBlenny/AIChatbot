@@ -469,7 +469,7 @@ jgb/E/recharge-account-mismatch-and-duplicate｜租客重複匯款時系統怎�
 jgb/E/recharge-account-regenerate-expired｜逾期的虛擬帳號能不能重新產生？（此操作需由 JGB 客服協助，業者端沒有自助入口）｜target_user=property_manager｜
 ### E-payment-onboarding 線上金流收款帳號開通（藍新、中信；入口在「線上智能整合收款」頁的「開通帳號」） {#E-payment-onboarding}
 jgb/E/payment-gateway-options｜JGB 支援哪些收款金流？身分限制是什麼？（國泰世華／永豐銀行／中國信託／藍新／愛金卡；個人房東不能開通藍新、國泰世華、永豐銀行）｜target_user=property_manager,prospect｜
-jgb/E/payment-gateway-fees｜各家收款金流的費率跟入帳帳戶限制是什麼？（國泰世華／永豐銀行首次設定費 5,000 元且限本行帳戶；中國信託／藍新免費且不限本行帳戶）｜target_user=property_manager,prospect｜
+jgb/E/payment-gateway-fees｜各家收款金流的申請費用跟入帳帳戶限制是什麼？（國泰世華／永豐銀行首次設定費 5,000 元且限本行帳戶；中國信託／藍新線上申請不收申請費、可指定任一實體帳戶）｜target_user=property_manager,prospect｜
 jgb/E/newebpay-precondition｜開通藍新智付通前要準備什麼？（申請表要自填 09 開頭的台灣手機號碼）｜target_user=property_manager｜
 jgb/E/newebpay-required-fields｜開通藍新智付通前，個人房東跟團隊各自要先填完哪些資料？｜target_user=property_manager｜
 jgb/E/newebpay-payment-methods｜藍新開通時可以勾選哪些付款方式？（信用卡／Google Pay／Samsung Pay／ATM／超商代碼；國外卡要另外申請）｜target_user=property_manager,prospect｜

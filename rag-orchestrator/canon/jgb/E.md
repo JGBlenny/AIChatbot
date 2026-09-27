@@ -1145,18 +1145,21 @@ JGB 把「社會住宅」設計成一種團隊身份，跟「個人房東/代理
 JGB 的線上收款金流有國泰世華、永豐銀行、中國信託、藍新 NewebPay 與愛金卡。
 個人房東不能開通藍新、國泰世華、永豐銀行，選項會顯示「您無法開通此收款方式，若有問題請洽詢JGB客服」；團隊如果是免費方案或體驗方案，則不能開通國泰世華與永豐銀行。
 中國信託的租客必須有中信帳戶，並透過中信 APP 繳費，申請前建議先確認租客是否方便使用。
-### 各家收款金流的費率跟入帳帳戶限制是什麼？（國泰世華／永豐銀行首次設定費 5,000 元且限本行帳戶；中國信託／藍新免費且不限本行帳戶） {#jgb/E/payment-gateway-fees}
+### 各家收款金流的申請費用跟入帳帳戶限制是什麼？（國泰世華／永豐銀行首次設定費 5,000 元且限本行帳戶；中國信託／藍新線上申請不收申請費、可指定任一實體帳戶） {#jgb/E/payment-gateway-fees}
 - phrasings:
   - {text: "金流申請要收費嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "首次設定費多少", source: "draft:outline-20260920", status: proposed}
   - {text: "入帳帳戶有限制嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "國泰世華入帳帳戶", source: "draft:outline-20260920", status: proposed}
-- sources: [help:paymentapply_zh-Hant.html]
+- sources: [help:paymentapply_zh-Hant.html, code:src/pages/users/payment/_parts/Newebpay.vue]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
-國泰世華、永豐銀行是自行向銀行申請，兩者都有「首次設定費 5,000 元」；中國信託、藍新 NewebPay 是在 JGB 系統線上申請，都是免費的。
+國泰世華、永豐銀行是自行向銀行申請，兩者都有「首次設定費 5,000 元」；中國信託、藍新 NewebPay 是在 JGB 系統線上申請，申請本身不收費。
 入帳帳戶也有限制：國泰世華只能匯入國泰世華的實體帳戶，永豐銀行只能匯入永豐銀行的實體帳戶；中國信託跟藍新則可以指定任一實體帳戶收款。
+藍新的款項會先留在藍新帳戶中，要自行登入藍新後台辦理提款，前 5 次免費，之後每次收取 10 元。
+藍新的交易手續費，開通畫面的條款寫明「費率以藍新科技股份有限公司本服務會員系統公告為依據」。
 ### 開通藍新智付通前要準備什麼？（申請表要自填 09 開頭的台灣手機號碼） {#jgb/E/newebpay-precondition}
 - phrasings:
   - {text: "藍新開通前提條件", source: "draft:outline-20260920", status: proposed}
