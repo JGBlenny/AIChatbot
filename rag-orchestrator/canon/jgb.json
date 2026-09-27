@@ -2,7 +2,7 @@
   "audience": "jgb",
   "budget_tokens": 0,
   "business_types": [],
-  "canon_sha256": "520d6a4d585c5f293c4ddf7871944d013bb52bded8f91e374bbb87fa78a29ec2",
+  "canon_sha256": "4a94b6fb2a2e7e5b855d32c3b3de58815711324c53acf263504f357e514a9c7e",
   "coarses": [
     {
       "fines": [
@@ -18829,8 +18829,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-27",
-          "reviewed_by": "owner",
+          "reviewed_at": null,
+          "reviewed_by": null,
           "see_also": [],
           "sources": [
             "help:paymentapply_zh-Hant.html"

@@ -177,6 +177,14 @@ Plan 9.15 只讓 D／E 200 條中的 62 條通過（目標最多 200）。剩下
 - 成本：S4 plan-verifier 約 0.06M、outcome verifier 約 0.09M；**9.16 累計約 2.99M／4M**（未達 3.2M 停點）。
 - **9.16 收案**：D／E 200 條中已審 137（pm 對象全數 137；prospect 18／30）；未審 63 條＝⚠️ 5 組 23 條 pass＋40 條 doubt，另案處理（建議 Plan 9.17：先修 40 條 doubt——含 S2 自己寫錯的社宅範本名稱 6 條——再對 ⚠️ 組重審）。
 
+### 收案後抽驗（2026-09-27，業主要求）
+
+- 從 S4 核可 75 條分層固定種子抽 10（`scratchpad/p916-spot-sample.json`，seed 20260927）：S2 親修層（母體 46）抽 5、原稿層（母體 29）抽 5；fresh verifier 整條重核。
+- 結果：**pass 9／fail 1**；親修層 5／5 過；原稿層 1 條 P2——`jgb/E/payment-gateway-fees` 標題寫「中國信託／藍新免費」，來源只證申請免費、無交易費率，且藍新提款前 5 次免費後每次 10 元。無 P1。
+- 連帶發現待裁：`jgb/E/bill-power-reading-draft-defaults`（排定發送時空白度數系統自動補抓，依帳本 #p914-power-reading-draft 與 app/Bill.php `prepareIotMeterForSend`）與已審的 `jgb/E/bill-scheduled-send-rule`（「只有度數填完的帳單才能排定」）看似矛盾，未對碼、不自行選邊，列 9.17。
+- 成本約 0.14M；9.16 含抽驗累計約 3.13M。
+- **業主裁決「撤」（2026-09-27）**：刪除 `payment-gateway-fees` 的 `- reviewed:` 行（E.md 刪 1 行）、重匯出（`jgb.json` 只變該條 reviewed 欄位＋sha，CATALOG 不變）；`load_canon_or_die` 通過；終點指標 `已審細目 pm 136／535、prospect 17／121`；全套單元紅燈＝既有 9 條；`make audit` PASS。該條列 9.17 修正後重審（備份 `scratchpad/p916-unreview-backup/`）。
+
 - 另記（verifier 附帶、未改）：`newebpay-precondition` 句 0「系統不再檢查帳號綁定手機」只適用現行 `getPaymentVendor`，舊 `addMerchant` 仍檢查（舊路徑、現行頁面不呼叫）；藍新開通勾選框未綁 enabled，實際開通以後端預設為準。兩者留 S3 先審再看。
 - 過程中發現、另案處理的 jgb2／文件不一致：委託合約檢視頁上傳區畫面寫 6MB、元件實際上限 10MB；幫助中心 `paymentapply` 寫個人房東可選藍新，程式對個人房東停用藍新／國泰／永豐；`bills.one` 舊路由仍在但通知連結已改走列表 `?id=`。
 - 累計成本約 1.45M／4M（S1 verifier 0.1、plan-verifier ×3 0.16、B7 0.21、D1 0.17、D2 0.19、E1 0.19、E2 0.2、E 複核 0.12、最終 3 項 0.08）。

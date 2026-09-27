@@ -1152,7 +1152,6 @@ JGB 的線上收款金流有國泰世華、永豐銀行、中國信託、藍新 
   - {text: "入帳帳戶有限制嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "國泰世華入帳帳戶", source: "draft:outline-20260920", status: proposed}
 - sources: [help:paymentapply_zh-Hant.html]
-- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
