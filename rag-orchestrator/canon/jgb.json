@@ -2,7 +2,7 @@
   "audience": "jgb",
   "budget_tokens": 0,
   "business_types": [],
-  "canon_sha256": "9b67e763e9c50b04f0eaf9ce30981ce90f149ddb2704cd50b781145eeade4e25",
+  "canon_sha256": "32289cff61741d028cc6f2b3393afca7dba158c326c8d71c66b026c17e62e2d2",
   "coarses": [
     {
       "fines": [
@@ -10177,12 +10177,14 @@
           ],
           "categories": [],
           "coarse_id": "D-contract-list",
-          "content_sha256": "29346bf1d4578d006924b1c0da7fc1945ac082d29c81c2506d196d6333f25174",
+          "content_sha256": "98db74cda77143279d15f1ef497013639233ff363a37437e00bf800657f5a741",
           "content_units": [
             "在合約管理的合約總表頁面，點選右上角的「建立合約」按鈕，選取想建立合約的物件並按下一步，即可開始建立合約。",
             "也可以在物件管理的物件總表中，對想建立合約的物件點選小齒輪，選擇「建立合約」直接進入。",
             "建立合約時可以選擇「電子合約（公版）」「電子合約（客製化契約書）」或「紙本簽約」三種建立方式。",
-            "一個物件最多可以綁定 10 份合約，例如同一物件的舊租約仍在執行中，也可以先跟新租客預先簽下一份合約，等舊約到期銜接。"
+            "一個物件最多可以綁定 10 份合約，例如同一物件的舊租約仍在執行中，也可以先跟新租客預先簽下一份合約，等舊約到期銜接。",
+            "建立一份新合約不會自動作廢或改動同一物件上其他既有的合約，舊合約只有在使用者自己操作（例如刪除合約、取消邀請）時才會停用。",
+            "系統在建立合約時不會檢查同一物件不同合約的租期是否重疊，只用「同一物件的使用中合約數」這個門檻（最多 10 份）來擋新增；至於同一物件底下要怎麼建立、命名多個房號，需要洽客服協助個案安排。"
           ],
           "id": "jgb/D/contract-create-entry",
           "instance_applicability": "general",
@@ -10214,7 +10216,9 @@
           "reviewed_by": null,
           "see_also": [],
           "sources": [
-            "help:landlordonboarding04lease_zh-Hant.html"
+            "help:landlordonboarding04lease_zh-Hant.html",
+            "docs:knowledge/jgb-product-facts.md#p914-contract-new-vs-old",
+            "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#109"
           ],
           "target_user": [
             "property_manager"
@@ -10270,9 +10274,16 @@
           ],
           "categories": [],
           "coarse_id": "D-contract-list",
-          "content_sha256": "927b5a35b1780586aa40993eeda774f4096de60e133e1a9ce8a5b1630e957bc6",
+          "content_sha256": "52c2e7d687b05cf20d2a9d157c8d6463b864724f7d6bba87ad6b45185d009318",
           "content_units": [
-            "合約總表每一列可以點選小齒輪，依合約目前狀態顯示「編輯合約」「刪除合約」「取消簽名」等動作，實際顯示哪些動作要看目前狀態與權限。"
+            "合約總表每一列的小齒輪內容，是依這份合約目前的狀態、登入身分與權限來決定的。",
+            "不論合約狀態，只要有查看物件的權限，小齒輪都會顯示「查看物件」。",
+            "不論合約狀態，小齒輪都會顯示「查看帳單」，點進去可以看到這份合約（含它整條續約鏈）產生過的所有帳單；如果這條續約鏈目前完全沒有帳單，這個選項會顯示但不能點選。",
+            "如果目前登入身分是租客，而且這份合約已經綁定信用卡自動扣款，小齒輪還會額外顯示「更換綁定信用卡」，可以重新走一次授權綁定。",
+            "狀態是「待租客簽回」或「待房東簽名」時，如果有簽合約權限，小齒輪依情況只會顯示一個取消選項：這份合約正在續約中顯示「取消續約」，正在提前解約中顯示「取消提前解約」，兩者都不是的話顯示「取消邀請」。",
+            "狀態是「執行中合約」的各個階段（雙方簽名完成、點交送出、點交完成、點退送出、點退完成）時，如果有權限，社宅包租範本會額外顯示「新增轉租契約書」；如果目前登入身分不是租客，還會顯示「點交物件」「取消點交邀請」「點退押金」「取消點退邀請」（能不能點選要看合約目前是否符合條件）——租客身分看不到這四個選項；非社宅用途的合約，登入身分不是租客時還會顯示「續約」。",
+            "狀態是「提前解約中」時，有權限的話小齒輪會顯示無法點選的「點交物件」（目前畫面會重複出現兩次），以及可以點選的「取消提前解約」。",
+            "狀態是「歷史合約」或合約已結束時，有權限的話小齒輪會顯示「點退押金」，能不能點選要看是否符合點退條件；正常情況下歷史合約看不到「續約」，但系統另外有一份例外名單，名單內的合約即使已經變成歷史合約，只要登入身分不是租客、且是非社宅用途，還是會補回「續約」這個選項。"
           ],
           "id": "jgb/D/contract-list-row-gear-actions",
           "instance_applicability": "general",
@@ -10294,12 +10305,16 @@
           "reviewed_by": null,
           "see_also": [],
           "sources": [
-            "code:app/Http/Controllers/ContractController.php"
+            "code:app/Http/Controllers/ContractController.php",
+            "code:routes/web.php",
+            "code:src/pages/contracts/list/Index.vue",
+            "code:app/Contract.php",
+            "code:src/components/SurelyVue/Contract/ActionCell.jsx"
           ],
           "target_user": [
             "property_manager"
           ],
-          "title": "合約總表列的小齒輪可以做什麼操作？（依合約目前狀態與權限顯示「編輯合約」「刪除合約」「取消簽名」等動作）"
+          "title": "合約總表列的小齒輪可以做什麼操作？（不論狀態都有「查看物件」「查看帳單」；其餘依合約狀態、身分與權限增減）"
         },
         {
           "business_types": [
@@ -10344,9 +10359,10 @@
           ],
           "categories": [],
           "coarse_id": "D-contract-list",
-          "content_sha256": "05c358e7b314c4ca4a350f9f894bd6d28735a5deaab78eed8a940200d999ea4e",
+          "content_sha256": "bb1a1c6f576e79c6e5839ec9e1f389a5131ca9aaaeea0a2037fc0c5e13788e98",
           "content_units": [
-            "合約總表有一欄「標籤」，顯示團隊在合約上設定的自訂標籤。"
+            "合約總表有一欄「標籤」，顯示團隊在合約上設定的自訂標籤。",
+            "合約上的「標籤」可以逐筆自訂加註，跟物件儀表板合約分頁上的「是否通知」是兩個各自獨立的設定，不是同一件事。"
           ],
           "id": "jgb/D/contract-list-columns",
           "instance_applicability": "general",
@@ -10368,7 +10384,9 @@
           "reviewed_by": null,
           "see_also": [],
           "sources": [
-            "code:src/pages/contracts/list/_parts/ListTable.vue"
+            "code:src/pages/contracts/list/_parts/ListTable.vue",
+            "docs:knowledge/jgb-product-facts.md#p914-contract-list-tags",
+            "code:src/pages/estates/dashboard/contracts/Index.vue"
           ],
           "target_user": [
             "property_manager"
@@ -10455,10 +10473,13 @@
           ],
           "categories": [],
           "coarse_id": "D-contract-list",
-          "content_sha256": "1a460f834727c28ec9c6894cf0edd50012a2e10c60e47d67ec3938f7976eef56",
+          "content_sha256": "2ffa3a7e9571cc720a20dd3c8359c456106cb17f31dd3fcebc34f95909a4eb26",
           "content_units": [
             "合約總表右上角有「匯出實價登錄資料」按鈕，點下去會開啟一個彈窗，可以匯出符合條件的合約資料，供之後申報實價登錄使用。",
-            "這個按鈕只有在「執行中合約」頁籤、網站語言是中文、而且團隊有開通這個功能時才會顯示；如果篩選結果目前是 0 筆，按鈕會呈現不能點的狀態。"
+            "這個按鈕只有在「執行中合約」頁籤、網站語言是中文、而且團隊有開通這個功能時才會顯示；如果篩選結果目前是 0 筆，按鈕會呈現不能點的狀態。",
+            "匯出實價登錄資料時，可以選擇申報義務人身分是「不動產經紀業」或「租賃住宅包租業」。",
+            "匯出資料的建號，系統優先用物件本身填的建號欄位；只有這個欄位是空的時候，才會改從物件的建物謄本資料去抓建號，不是以合約上另外填寫的建號為主。",
+            "目前系統已經提供「匯出實價登錄資料」功能；如果詢問的是全新改版的實價登錄功能或介面，目前沒有公開時程。"
           ],
           "id": "jgb/D/contract-list-export-declaration",
           "instance_applicability": "general",
@@ -10480,12 +10501,58 @@
           "reviewed_by": null,
           "see_also": [],
           "sources": [
-            "code:src/pages/contracts/list/_parts/PageTop.vue"
+            "code:src/pages/contracts/list/_parts/PageTop.vue",
+            "docs:knowledge/jgb-product-facts.md#p914-real-price-registration",
+            "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#115"
           ],
           "target_user": [
             "property_manager"
           ],
           "title": "合約總表可以匯出實價登錄資料嗎？（只有在「執行中合約」頁籤、中文站台、且團隊開通此功能時才會出現按鈕）"
+        },
+        {
+          "business_types": [
+            "system_provider"
+          ],
+          "categories": [],
+          "coarse_id": "D-contract-list",
+          "content_sha256": "a9672cec4a7a7cc01b55376e87243d332d995b8a82c9452c9c4f5713103b7e25",
+          "content_units": [
+            "在合約總表勾選要匯出的合約後，可以點選「匯出合約」，系統會以批次任務的方式產生一份 Excel。",
+            "使用這個功能需要有「匯出合約」的權限。",
+            "匯出的欄位包含租期、每期租金、合約押金等資訊，目前沒有叫做「戶號」的欄位。"
+          ],
+          "id": "jgb/D/contract-list-export-excel",
+          "instance_applicability": "general",
+          "phrasings": [
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "合約匯出excel"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "合約總表下載"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "匯出合約權限"
+            }
+          ],
+          "policy": "answerable",
+          "policy_ref": null,
+          "reviewed_at": null,
+          "reviewed_by": null,
+          "see_also": [],
+          "sources": [
+            "docs:knowledge/jgb-product-facts.md#p914-contract-export"
+          ],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "合約總表可以匯出 Excel 嗎？（勾選後按「匯出合約」，需要匯出合約權限，內容含租期、每期租金、合約押金等欄位）"
         }
       ],
       "id": "D-contract-list",
@@ -10499,14 +10566,15 @@
           ],
           "categories": [],
           "coarse_id": "D-contract-edit-general",
-          "content_sha256": "b879e17d6f01a9629c82fc19aa250ceabf04764852bc2bdd0c199f04a24d0f4c",
+          "content_sha256": "51564cab44d7fb7af713c46c2300cce844ec5befb1613d6e73b7acd71ccfb0f9",
           "content_units": [
             "建立一般住宅合約的編輯畫面依序分成「承租方資訊」「租賃契約」「點交」「出租方資訊」與「選填」五個分組，合計 14 個分頁。",
             "「租賃契約」分組底下依序是基本條件、租金費用、租金調幅設定、稅與發票、帳單設定、收款方式六個分頁。",
             "「點交」分組底下是附設傢俱與現況補充兩個分頁；「選填」分組底下是建物謄本、公證、合約附件、補充條款四個分頁。",
             "分頁旁邊打勾圖示代表必填分頁；租金調幅設定、稅與發票、附設傢俱、現況補充、建物謄本、公證、合約附件、補充條款這 8 頁沒有打勾圖示，屬於選填分頁。",
             "實際會顯示哪些分頁不是固定的，會依合約範本、物件用途（例如車位）、是否為既存（紙本／DIY）合約等條件動態增減。",
-            "「租金調幅設定」分頁只有具備特定角色權限的團隊才會顯示；一般團隊看不到這個分頁，實際編輯合約時只會看到 13 個分頁，不是 14 個。"
+            "「租金調幅設定」分頁只有具備特定角色權限的團隊才會顯示，多數團隊看不到這個分頁。",
+            "分頁會不會顯示，不只受「租金調幅設定」這一項影響：「帳單設定」對特定幾個團隊目前是被拿掉的；「稅與發票」則是團隊沒有開通自動產生發票功能時才會被拿掉。"
           ],
           "id": "jgb/D/contract-edit-tabs-overview",
           "instance_applicability": "general",
@@ -10552,12 +10620,15 @@
           ],
           "categories": [],
           "coarse_id": "D-contract-edit-general",
-          "content_sha256": "c5a172e7025816717db62cca9a5261caeda203797fd1f5f3406e62d4ee53446a",
+          "content_sha256": "9b573fb3833ddb4fc5d9c02899e39f9c8358d8e88c4d605f5a9fdb5ef5fb4a54",
           "content_units": [
             "「基本資料」分頁用來填寫承租方的簽約資料，可以選擇租客身份是「個人租客」或「法人租客」。",
             "系統提供「租客註冊」與「租客免註冊」兩種模式：租客註冊代表租客會自己註冊 JGB 會員並填妥承租方資訊；租客免註冊代表租客不需要註冊會員，改由管理者代為填寫承租方資訊。",
             "這個分頁也可以新增租客的緊急聯絡人，填寫姓名、關係與聯絡號碼。",
-            "分頁上會提示，這裡填寫的租客資料會謄寫進合約內容，過程經過加密處理。"
+            "分頁上會提示，這裡填寫的租客資料會謄寫進合約內容，過程經過加密處理。",
+            "合約編輯的租客資訊分頁還有「新增租客」功能，可以加入其他共同承租人，每筆記錄暱稱與證件字號，最多可以加到 10 筆；這也是目前多人共同簽約的做法——如果問的是更完整的多人簽約功能規劃，目前沒有公開時程。",
+            "每一位承租人的姓名、公司名稱、身分類型、聯絡方式，系統是逐筆分開記錄，不是把所有租客資料塞在同一個欄位裡。",
+            "選擇「租客免註冊」的合約，只要合約成立就直接視為已完成簽名，不會經過「待租客簽回」或「待管理者簽名」這兩個狀態。"
           ],
           "id": "jgb/D/contract-tenant-basic-info",
           "instance_applicability": "general",
@@ -10589,7 +10660,12 @@
           "reviewed_by": null,
           "see_also": [],
           "sources": [
-            "code:src/pages/contracts/edit/tenantInfo/Index.jsx"
+            "code:src/pages/contracts/edit/tenantInfo/Index.jsx",
+            "docs:knowledge/jgb-product-facts.md#p914-contract-additional-tenants",
+            "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#85",
+            "docs:knowledge/jgb-product-facts.md#p914-lessee-records",
+            "docs:knowledge/jgb-product-facts.md#p914-contract-agents",
+            "docs:knowledge/jgb-product-facts.md#p914-contract-exempt-register-signed"
           ],
           "target_user": [
             "property_manager"
@@ -10602,13 +10678,17 @@
           ],
           "categories": [],
           "coarse_id": "D-contract-edit-general",
-          "content_sha256": "bd87e17344d213bb924e9e0925ec68d1f0d8054a9ee6442ab8ad0af187fba028",
+          "content_sha256": "a458083fc2f9683caba5e84042d2091d4a0d788a3f72a2fdb4bf8dccd9b6cf1d",
           "content_units": [
             "「基本條件」分頁要先選擇「合約類型」與「合約範本」，決定這份合約要用哪一種定型化契約內容。",
             "分頁上要設定「合約起迄日期」，也就是這份合約的租期起訖。",
             "另外還有「租賃訂約日期」欄位，用來記錄雙方實際簽訂這份合約的日期，跟合約起迄日期是不同的欄位。",
             "一般團隊建立一般住宅合約時，可選的合約範本共有 12 種：「114年內政部住宅租賃契約(原房東)」「113年內政部轉租契約(包租轉租)」「代租代管契約(參考114年租賃契約)」「內政部英文版 租賃契約書 原房東」「內政部英文版 租賃契約書 包租業」「內政部英文版 租賃契約書 代租代管」「英越文版 租賃契約書」「英泰文版 租賃契約書 原房東」「英泰文版 租賃契約書 代租代管」「公會中文版 租賃契約書 原房東」「公會中文版 租賃契約書 包租業」「公會中文版 租賃契約書 代租代管」。",
-            "如果登入身分是個人房東角色，可選範本會縮減成 4 種：「114年內政部住宅租賃契約(原房東)」「內政部英文版 租賃契約書 原房東」「英泰文版 租賃契約書 原房東」「公會中文版 租賃契約書 原房東」。"
+            "如果登入身分是個人房東角色，可選範本會縮減成 4 種：「114年內政部住宅租賃契約(原房東)」「內政部英文版 租賃契約書 原房東」「英泰文版 租賃契約書 原房東」「公會中文版 租賃契約書 原房東」。",
+            "「轉租合約」本身也是一般合約範本可以選擇的其中一種，不是另外一套獨立機制；如果選的是內政部英文版範本，系統的版位設定裡沒有補充條款的印製座標，所以就算補充條款分頁有填寫內容，也不會印在這份合約文件上。",
+            "合約的起始日就是這裡填的「合約起迄日期」起日，之後計算帳務的起算基準都是用這個欄位，跟這份合約資料是什麼時候建立到系統裡沒有關係。",
+            "系統對「租賃訂約日期」（簽約日）與「合約起迄日期」（起租日）之間的先後關係沒有做強制檢查或提示；簽約日晚於起租日是否需要向主管機關另外說明，屬於外部規定的認定範圍，系統不判斷。",
+            "系統的合約類型／範本只有原房東、包租業、代租代管三種分類，沒有「二房東」這個選項；二房東應該算原房東還是包租業，屬於業態的法律定性問題，系統不判斷。"
           ],
           "id": "jgb/D/contract-rentbasic-template-and-dates",
           "instance_applicability": "general",
@@ -10627,11 +10707,6 @@
               "source": "draft:outline-20260920",
               "status": "proposed",
               "text": "租賃訂約日期是什麼"
-            },
-            {
-              "source": "draft:outline-20260920",
-              "status": "proposed",
-              "text": "合約範本有哪幾種"
             }
           ],
           "policy": "answerable",
@@ -10644,7 +10719,11 @@
             "code:app/Http/Controllers/ContractController.php",
             "code:config/contract.php",
             "code:app/Role.php",
-            "help:landlordonboarding04lease_zh-Hant.html"
+            "help:landlordonboarding04lease_zh-Hant.html",
+            "docs:knowledge/jgb-product-facts.md#p914-contract-templates",
+            "docs:knowledge/jgb-product-facts.md#p914-contract-date-start",
+            "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#91",
+            "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#101"
           ],
           "target_user": [
             "property_manager"
@@ -10882,7 +10961,8 @@
           "see_also": [],
           "sources": [
             "code:src/pages/contracts/edit/billSetting/Index.jsx",
-            "code:src/pages/contracts/edit/rent/Index.jsx"
+            "code:src/pages/contracts/edit/rent/Index.jsx",
+            "docs:knowledge/jgb-product-facts.md#p914-contract-cable-tv-fee"
           ],
           "target_user": [
             "property_manager"
@@ -11213,12 +11293,14 @@
           ],
           "categories": [],
           "coarse_id": "D-contract-edit-general",
-          "content_sha256": "8c0e6d1cdf848b61f7f2e3fead10790d4ae0ded0964fef78e02ae3c49d0f84e6",
+          "content_sha256": "38fb3795fea53b6a54d2091f955e660bc9788e4f5b5000a7edfd1b84d5a4d09c",
           "content_units": [
             "「出租方基本資料」分頁如果是個人房東，需要填妥電話、Email、身分證字號、戶籍地址、通訊地址。",
             "如果是用團隊方式建立合約，出租方資料（公司登記名稱、統一編號、電話、Email、公司登記地址、公司通訊地址）會自動帶入先前團隊資訊填寫的內容，需要修改的話要回到「團隊資訊」編輯。",
             "填妥出租方資料後，要在「經理人資訊」選擇這份合約由團隊中哪一位經理人負責管理。",
-            "分頁最下方可以選擇新增電子簽名圖章取代手動簽名；如果先前沒有上傳過電子圖章，需要先到「團隊資訊」設定才能使用這個功能。"
+            "分頁最下方可以選擇新增電子簽名圖章取代手動簽名；如果先前沒有上傳過電子圖章，需要先到「團隊資訊」設定才能使用這個功能。",
+            "代租代管合約在這個分頁可以逐份選擇「出租人資訊」：從出租人清單選擇出租人，並選擇身份是「所有權人」或「轉租人」；個人房東、團隊本身的出租方資料則是帳號層級的設定。",
+            "其餘關於要用哪個帳號簽約的個案安排，可洽客服協助。"
           ],
           "id": "jgb/D/contract-landlord-dealer-basic",
           "instance_applicability": "general",
@@ -11251,7 +11333,8 @@
           "see_also": [],
           "sources": [
             "code:src/pages/contracts/edit/dealerBasic/Index.vue",
-            "help:landlordonboarding04lease_zh-Hant.html"
+            "help:landlordonboarding04lease_zh-Hant.html",
+            "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#100"
           ],
           "target_user": [
             "property_manager"
@@ -11264,10 +11347,11 @@
           ],
           "categories": [],
           "coarse_id": "D-contract-edit-general",
-          "content_sha256": "0a78d90709ac1cf41ede76ec55fd1760681eac679295a7fadb77dc3a157574eb",
+          "content_sha256": "974822a05a4fa540889e42e87968184061ba640c44c395102241c412f2071d3e",
           "content_units": [
             "「建物謄本」分頁是選填分頁，用來補充建物的謄本資訊，讓合約內容更完備。",
-            "這個分頁的資訊只是為了合約內容完備，並不會刊登在物件的網頁廣告上，可以放心填寫。"
+            "這個分頁的資訊只是為了合約內容完備，並不會刊登在物件的網頁廣告上，可以放心填寫。",
+            "這個分頁填寫的建物謄本資訊（例如地號、土地標的清冊），在物件對外的公開廣告頁面上完全查不到對應欄位，確認不會顯示在廣告頁上。"
           ],
           "id": "jgb/D/contract-building-transcript-optional",
           "instance_applicability": "general",
@@ -11295,7 +11379,8 @@
           "see_also": [],
           "sources": [
             "code:src/routes/contracts.js",
-            "help:Landlordonboarding09Socialhousing_zh-Hant.html"
+            "help:Landlordonboarding09Socialhousing_zh-Hant.html",
+            "code:src/pages/estates/show/Index.jsx"
           ],
           "target_user": [
             "property_manager"
@@ -11353,12 +11438,13 @@
           ],
           "categories": [],
           "coarse_id": "D-contract-edit-general",
-          "content_sha256": "f0e9acd4e97d7ccb9cf021b3e341884ec2b2843e1c65864bbacf4eeac4e68dff",
+          "content_sha256": "12a00af62d732d9ac642ce8d10c7c3255b7fcc0e2d5b570a903988965fe6476e",
           "content_units": [
             "「補充條款」分頁最多可以寫 50 行，每行限制 50 個字。",
             "補充條款是因為系統的電子合約使用政府提供的公版定型化契約，如果需要補充其他合約條款，可以在這裡描述，系統會自動把條款內容帶入合約當中。",
             "如果內容超過 50 行限制，建議另外寫成文字檔或圖片檔，改放在「合約附件」的「其他」項目上傳。",
-            "這個分頁也提供「預設補充條款」範本可以套用，或是選擇「複製現有合約資料」把其他合約已填寫的補充條款複製過來。"
+            "這個分頁也提供「預設補充條款」範本可以套用，或是選擇「複製現有合約資料」把其他合約已填寫的補充條款複製過來。",
+            "這個分頁另外還會提示「補充條款至多僅限 1 頁 A4 內容，請務必執行『預覽結果』以確認最終呈現」，這是排版後的頁數提示，跟前面「最多 50 行、每行 50 字」的輸入框字元數上限是兩件事，兩者可能同時成立：字數在上限內，仍可能因為排版超過 1 頁。"
           ],
           "id": "jgb/D/contract-additional-convention",
           "instance_applicability": "general",
@@ -11482,6 +11568,92 @@
             "property_manager"
           ],
           "title": "「建物謄本」分頁什麼時候不會顯示？（只有選中／未選合約範本時才顯示，選到英越文或泰文版就會被拿掉）"
+        },
+        {
+          "business_types": [
+            "system_provider"
+          ],
+          "categories": [],
+          "coarse_id": "D-contract-edit-general",
+          "content_sha256": "3aff13f3da2f4813ea94e015ff1070e1fdb9ab22ca8661384a0d6faa4317cc45",
+          "content_units": [
+            "合約的「租賃範圍」是全部還是部分，是由物件的空間型態決定的，不是使用者在合約上自己勾選的欄位。",
+            "物件空間型態是「整戶」或「整層空間」時，合約的租賃範圍會自動判定為「全部」；其他空間型態（例如套房、雅房等分租情境）一律判定為「部分」。"
+          ],
+          "id": "jgb/D/contract-lease-scope-by-space-type",
+          "instance_applicability": "general",
+          "phrasings": [
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "租賃範圍怎麼決定"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "合約全部還是部分怎麼判斷"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "租賃範圍會自動判斷嗎"
+            }
+          ],
+          "policy": "answerable",
+          "policy_ref": null,
+          "reviewed_at": null,
+          "reviewed_by": null,
+          "see_also": [],
+          "sources": [
+            "docs:knowledge/jgb-product-facts.md#p914-contract-lease-scope",
+            "code:config/estate.php"
+          ],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "合約的租賃範圍怎麼決定？（物件空間型態為整戶時自動為「全部」，其餘一律「部分」，不用使用者勾選）"
+        },
+        {
+          "business_types": [
+            "system_provider"
+          ],
+          "categories": [],
+          "coarse_id": "D-contract-edit-general",
+          "content_sha256": "6a43b7aeea498965583208bfa1dc7c92678066b39d392a478291fe937f2ee7ea",
+          "content_units": [
+            "承租人編碼如果需要異動，此操作需由 JGB 客服協助。"
+          ],
+          "id": "jgb/D/contract-tenant-code-change",
+          "instance_applicability": "general",
+          "phrasings": [
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "承租人編碼異動"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "租客編碼改不了"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "承租人代號怎麼改"
+            }
+          ],
+          "policy": "answerable",
+          "policy_ref": null,
+          "reviewed_at": null,
+          "reviewed_by": null,
+          "see_also": [],
+          "sources": [
+            "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#123"
+          ],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "承租人編碼要異動怎麼辦？（此操作需由 JGB 客服協助）"
         }
       ],
       "id": "D-contract-edit-general",
@@ -11495,10 +11667,11 @@
           ],
           "categories": [],
           "coarse_id": "D-contract-edit-social-housing",
-          "content_sha256": "a1fb4cfbb6ae9853c2e1581d1d6463c8ad6446a70b4c57ba52be44c8289f2422",
+          "content_sha256": "a5b89b555e5575e6d4f52efbb2abdd51a1268939ab2b9b2d08da91205f6a3682",
           "content_units": [
             "社宅合約的「建物標的」分組包含建物細節（建物資訊／建物謄本）、現況補充、現況照片、附設傢俱四個分頁。",
-            "建物細節分頁主要呈現物件建立時填寫的資料，如果資料有誤，需要回到物件編輯修改，不能直接在合約分頁改。"
+            "建物細節分頁主要呈現物件建立時填寫的資料，如果資料有誤，需要回到物件編輯修改，不能直接在合約分頁改。",
+            "「現況補充」分頁是一份建物現況檢查清單，內容包含是否有海砂屋、輻射屋、消防安全檢查、混凝土氯離子含量檢測等勾選項目，沒有勾選視為沒有這個情形或設備；分頁最上方固定會提示「如有需要，可執行：複製現有合約資料」，這個提示是固定顯示在頁首，不是只對沒勾選的項目才出現。"
           ],
           "id": "jgb/D/social-housing-building-detail",
           "instance_applicability": "general",
@@ -11520,7 +11693,8 @@
           "reviewed_by": null,
           "see_also": [],
           "sources": [
-            "help:Landlordonboarding09Socialhousing_zh-Hant.html"
+            "help:Landlordonboarding09Socialhousing_zh-Hant.html",
+            "code:src/pages/contracts/edit/situation/SocialHousing.vue"
           ],
           "target_user": [
             "property_manager"
@@ -11859,10 +12033,11 @@
           ],
           "categories": [],
           "coarse_id": "D-contract-edit-social-housing",
-          "content_sha256": "b847b5b506939aba7ab6660e2c29c78e713c52548fb211adfbd9ca5e58417b1d",
+          "content_sha256": "daf1cb985b24cb78d99ccc5bccc573651770e9a88116dcc4a9f0aa227ee1d8e3",
           "content_units": [
             "「補助申請」分組主要配合政府的社會住宅包租代管 333 補貼政策：出租方有房屋稅、地價稅、租金所得稅三種稅費減免，承租方有公證費、修繕費、居家安全相關保險費三項費用補助，業者則有仲介費、代管費由政府全額補助的三年免費專業服務。",
-            "補助申請分頁要填寫補助費用申請日期、住宅出租修繕費、公證費、承租人租金補助等條件。"
+            "補助申請分頁要填寫補助費用申請日期、住宅出租修繕費、公證費、承租人租金補助等條件。",
+            "同一份合約要不要、能不能列多名租金補貼申請人，屬於政府補助規定的認定範圍，系統不判斷。"
           ],
           "id": "jgb/D/social-housing-subsidy-terms-tab",
           "instance_applicability": "general",
@@ -11884,7 +12059,8 @@
           "reviewed_by": null,
           "see_also": [],
           "sources": [
-            "help:Landlordonboarding09Socialhousing_zh-Hant.html"
+            "help:Landlordonboarding09Socialhousing_zh-Hant.html",
+            "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#99"
           ],
           "target_user": [
             "property_manager"
@@ -12009,9 +12185,10 @@
           ],
           "categories": [],
           "coarse_id": "D-contract-edit-social-housing",
-          "content_sha256": "d547d87bbc49c0b45447269428d1f88302a2b158c6d1d8c2f5dc0d4f80dda539",
+          "content_sha256": "a74a5d2b3e1175517175efa872aee64a993931e063c191b6e01c178a995d751f",
           "content_units": [
-            "基本資料分頁要勾選承租方身分別，選項包含一般戶、低收入戶、中低收入戶、六十五歲以上之老人（限申請人本人）、住宅政策補貼戶等，或勾選「以上均無」。"
+            "基本資料分頁要勾選承租方身分別，選項包含一般戶、低收入戶、中低收入戶、六十五歲以上之老人（限申請人本人）、住宅政策補貼戶等，或勾選「以上均無」。",
+            "社宅合約的「基本資料」分頁另外有「新增代理人」功能，可以填寫最多 3 位法定代理人（父、母、監護人三選一），這個功能只在社宅合約有，一般合約的承租方資料分頁沒有這個功能。"
           ],
           "id": "jgb/D/social-housing-tenant-basic-status",
           "instance_applicability": "general",
@@ -12198,10 +12375,11 @@
           ],
           "categories": [],
           "coarse_id": "D-contract-edit-social-housing",
-          "content_sha256": "7c4a997fa01fd2eef83292c95b1d97ed67b92ce92734e8a9108690e54072b4c6",
+          "content_sha256": "ca80a9e476d3329c0f4497d16b89433d893ca30ce7c96c7b3b60f965914b230c",
           "content_units": [
             "如果合約範本選擇「包租包管」範本，承租方分組下的「家庭＆財產」「授權」「附件」三個分頁不會顯示。",
-            "如果合約範本選擇「轉租」範本，出租方分組下的「授權」「附件」兩個分頁不會顯示。"
+            "如果合約範本選擇「轉租」範本，出租方分組下的「授權」「附件」兩個分頁不會顯示。",
+            "社宅合約範本其實有三種（代租代管、包租包管、轉租），只有包租包管跟轉租各自有拿掉分頁的規則；選「代租代管」範本時看到的是完整的分頁清單，沒有被額外拿掉任何分頁。"
           ],
           "id": "jgb/D/social-housing-charter-sublet-tab-hiding",
           "instance_applicability": "general",
@@ -12243,11 +12421,15 @@
           ],
           "categories": [],
           "coarse_id": "D-contract-sign-view",
-          "content_sha256": "af182be05c727ade2ef3c2795c638018d28cb5f72d6417b35d5a96a000e9cb35",
+          "content_sha256": "407fa137ffe0dfeb17817cdc1550b4390fb993ace4e993e60f33b51512ba7f0a",
           "content_units": [
             "房東送出合約邀請後，系統會給租客一段審閱期才能簽約；天數其實是讀團隊設定，沒有設定才用預設的 3 天（72 小時）。",
             "這個審閱天數設定屬於團隊層級，不同團隊可以各自覆蓋預設值。",
-            "從發送邀請時開始計算，租客如果沒有在期限內完成簽約，這個合約邀請連結就會失效。"
+            "從發送邀請時開始計算，租客如果沒有在期限內完成簽約，這個合約邀請連結就會失效。",
+            "送出合約邀請時，系統會用合約上填的租客 Email 去比對是否為已經註冊的會員，比對到的話會自動代入該會員的資料，並把合約上的租客 Email 改成該會員的註冊 Email；用電話比對時，只認已經完成手機驗證的帳號。",
+            "這個比對只在送出邀請的當下做一次，租客如果是事後才註冊會員，不會自動回頭綁定到先前已經送出的合約邀請。",
+            "比對會員 Email 時，大小寫不同會被當成不同的 Email，系統沒有把 Email 統一轉成小寫再比對。",
+            "租客帳號登入後看不看得到某份合約的邀請，取決於這個帳號與這份合約在資料庫裡實際的綁定關係；如果遇到租客反映看不到邀請，需要查該筆合約與帳號的個案資料，可洽客服協助。"
           ],
           "id": "jgb/D/contract-invite-and-review-period",
           "instance_applicability": "general",
@@ -12281,7 +12463,10 @@
           "sources": [
             "code:app/Http/Controllers/ContractController.php",
             "code:app/Http/Controllers/Internal/ContractWriteController.php",
-            "help:landlordonboarding04lease_zh-Hant.html"
+            "help:landlordonboarding04lease_zh-Hant.html",
+            "docs:knowledge/jgb-product-facts.md#p914-contract-invite-account-match",
+            "docs:knowledge/jgb-product-facts.md#p914-email-encrypted-no-lowercase",
+            "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#113"
           ],
           "target_user": [
             "property_manager",
@@ -12295,14 +12480,15 @@
           ],
           "categories": [],
           "coarse_id": "D-contract-sign-view",
-          "content_sha256": "3ea86c14610b661201390a2531ca26ef0eac8764c7c5aa854881a34bc9ca023d",
+          "content_sha256": "f198caa8658139513da8fb5decd65d925728df33d0e2d6204e31f7ca3a640951",
           "content_units": [
             "租客簽約頁面第一步要填寫「承租方簽約資料」，並選擇「簽約身份」。",
             "頁面會要求上傳承租方身份證明文件影本；另外還有「工作名片/學生證」（同一個上傳欄位）與「良民證」等其他證明文件的上傳欄位，各自獨立、不能互相替代。",
             "印章上傳依簽約身份不同而異：租客身份要上傳「小章」；法人身份（非租客）則要上傳「大章」與「小章」兩個欄位。",
-            "如果這份合約是 GTB 契約範本，簽約前會多一個步驟：畫面下方會出現 5 個條款確認選項（詳閱契約條款、無法更改內容、續約通知天數、履約保證金退還天數、吸菸罰緩等規定），要全部勾選才能繼續；一般合約範本沒有這個額外勾選步驟。",
-            "確認資料無誤後，如果是 GTB 契約，要先點「下一步，同意合約條款」進到條款頁勾完 5 個確認選項，再點「下一步，前往簽名」才會進入雲想科技（Thinkcloud）的簽約畫面；一般合約範本只有一個「下一步」按鈕，點選後直接進入雲想科技簽約畫面。",
-            "整個瀏覽、簽名過程都有時間戳記與 IP 紀錄。"
+            "部分客戶使用專屬的客製合約範本；用這類範本簽約時，簽約前會多一個步驟：畫面下方會出現 5 個條款確認選項（詳閱契約條款、無法更改內容、續約通知天數、履約保證金退還天數、吸菸罰緩等規定），要全部勾選才能繼續；一般合約範本沒有這個額外勾選步驟。",
+            "確認資料無誤後，如果是上述客製合約範本，要先點「下一步，同意合約條款」進到條款頁勾完 5 個確認選項，再點「下一步，前往簽名」才會進入雲想科技（Thinkcloud）的簽約畫面；一般合約範本只有一個「下一步」按鈕，點選後直接進入雲想科技簽約畫面。",
+            "整個瀏覽、簽名過程都有時間戳記與 IP 紀錄。",
+            "簽約過程系統只負責記錄簽名當下的時間戳記與 IP 位置這些客觀資訊；簽名內容跟登記姓名是否一致所產生的法律效力，屬於法律問題，系統不判斷。"
           ],
           "id": "jgb/D/contract-sign-flow-steps",
           "instance_applicability": "general",
@@ -12337,7 +12523,9 @@
             "code:resources/views/contract/sign.blade.php",
             "code:src/entry/contract-sign.js",
             "code:src/pages/contracts/edit/_methods/getFormDataForStepDone.js",
-            "help:contract_review_period_zh-Hant.html"
+            "help:contract_review_period_zh-Hant.html",
+            "code:app/Http/Controllers/ContractController.php",
+            "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#103"
           ],
           "target_user": [
             "property_manager"
@@ -12350,10 +12538,11 @@
           ],
           "categories": [],
           "coarse_id": "D-contract-sign-view",
-          "content_sha256": "31e096a9111183a94b006059dda56e5d7ab2d01bf22429c3ec1bdcd4cf35e158",
+          "content_sha256": "ae4136f9b145b7bf4216a64e6683023b28c9c7bce9279f5677be1afe8568fefc",
           "content_units": [
             "JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄裡沒有任何費用或點數欄位。",
-            "租客的簽約頁流程沒有付費或加購的畫面元素。"
+            "租客的簽約頁流程沒有付費或加購的畫面元素。",
+            "系統內不另收簽章費，方案內容以方案頁為準。"
           ],
           "id": "jgb/D/contract-esign-no-extra-fee",
           "instance_applicability": "general",
@@ -12381,7 +12570,8 @@
           "see_also": [],
           "sources": [
             "code:database/migrations/2026_06_17_000002_create_contract_esign_table.php",
-            "code:resources/views/contract/sign.blade.php"
+            "code:resources/views/contract/sign.blade.php",
+            "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#32"
           ],
           "target_user": [
             "property_manager",
@@ -12604,6 +12794,50 @@
             "prospect"
           ],
           "title": "上傳既有合約跟建立電子合約差在哪？（既存合約用於已簽好或有自己公版合約的情境，皆可續用系統帳務／修繕追蹤）"
+        },
+        {
+          "business_types": [
+            "system_provider"
+          ],
+          "categories": [],
+          "coarse_id": "D-contract-sign-view",
+          "content_sha256": "b82688d6553b7279447e7d7f08470268386ed4912a345f91184cec1744c716fa",
+          "content_units": [
+            "租客在簽約頁面填寫緊急聯絡人資料時，同一個區塊也可以填寫「連帶保證人」，這是簽約流程本身就提供的欄位。",
+            "如果合約已經簽約完成，之後才想要補加保證人，業者端目前沒有自助的操作入口，此操作需由 JGB 客服協助。"
+          ],
+          "id": "jgb/D/contract-guarantor-add-after-signing",
+          "instance_applicability": "general",
+          "phrasings": [
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "簽約後加保證人"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "補簽保證人"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "簽約完成後能加連帶保證人嗎"
+            }
+          ],
+          "policy": "answerable",
+          "policy_ref": null,
+          "reviewed_at": null,
+          "reviewed_by": null,
+          "see_also": [],
+          "sources": [
+            "code:src/pages/contracts/sign/_parts/EmergencyContact.jsx",
+            "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#122"
+          ],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "簽約後可以補加保證人嗎？（租客簽約流程本身就能加連帶保證人；簽約完成後要補加，業者端沒有自助功能，需洽 JGB 客服協助）"
         }
       ],
       "id": "D-contract-sign-view",
@@ -12964,11 +13198,12 @@
           ],
           "categories": [],
           "coarse_id": "D-move-out",
-          "content_sha256": "3b0b113680dfd7fb422804e92a731282dd9ee039ee1c8150f8732e65de402db6",
+          "content_sha256": "5913e0584449969b8e05d46882eaf8bdd66ee63c35b6553271aa7c6fc3782a33",
           "content_units": [
             "點退流程分兩步：第一步確認點交清單、填寫損壞賠償金額，第二步才會進入「點退找補費用」頁面產生帳單。",
             "點退確認清單、填完損壞賠償金額之後，系統會製作點退帳單，內容包含提前解約金、點退押金、賠償金，並要填入帳單期限。",
-            "帳單設定完成後要發送給租客，等租客確認點退內容並完成繳款，才算完成點退程序。"
+            "帳單設定完成後要發送給租客，等租客確認點退內容並完成繳款，才算完成點退程序。",
+            "點退結算單會不會跟先前已經開立過的發票重複，要看個案的帳單與發票資料，可洽客服協助。"
           ],
           "id": "jgb/D/move-out-bill-generation",
           "instance_applicability": "general",
@@ -12996,7 +13231,8 @@
           "see_also": [],
           "sources": [
             "help:landlordonboarding04lease_zh-Hant.html",
-            "code:src/pages/contracts/move-out/Index.jsx"
+            "code:src/pages/contracts/move-out/Index.jsx",
+            "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#132"
           ],
           "target_user": [
             "property_manager"
@@ -13179,6 +13415,49 @@
             "property_manager"
           ],
           "title": "點退第二步「點退找補費用」頁面要填什麼？（傢俱賠償、應退費用、違約金，另可填備註、期限、附件）"
+        },
+        {
+          "business_types": [
+            "system_provider"
+          ],
+          "categories": [],
+          "coarse_id": "D-move-out",
+          "content_sha256": "79681e797225c0e7d532a78a458fc38026fd132000b72753ce4f08ba19d8fcf3",
+          "content_units": [
+            "如果點退清單送出後，租客遲遲沒有確認，系統本身沒有設計逾期自動放行的機制，不會因為時間到了就自動當作租客同意。",
+            "遇到這種情況，房東可以手動取消已送出的點退邀請，系統會記錄這個「取消點退邀請」的動作，合約會退回到還沒送出點退的狀態，之後可以重新編輯並再送出一次點退清單。"
+          ],
+          "id": "jgb/D/move-out-tenant-no-response-cancel",
+          "instance_applicability": "general",
+          "phrasings": [
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "租客不確認點退"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "點退會自動過期放行嗎"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "點退邀請可以取消重發嗎"
+            }
+          ],
+          "policy": "answerable",
+          "policy_ref": null,
+          "reviewed_at": null,
+          "reviewed_by": null,
+          "see_also": [],
+          "sources": [
+            "docs:knowledge/jgb-product-facts.md#p914-moveout-cancel"
+          ],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "租客不確認點退時要怎麼辦？（系統不會逾期自動放行，只能由房東取消點退邀請後重新發送）"
         }
       ],
       "id": "D-move-out",
@@ -13364,10 +13643,11 @@
           ],
           "categories": [],
           "coarse_id": "D-renew",
-          "content_sha256": "327a527b09b2c6b41b742226e0ccc25f080a3e0b33aad60f2d68d2889f933518",
+          "content_sha256": "50c39d372c5211b9b9eb6cee2a297cbd865ac5ac14aff37f3107f6a09b6dbfc0",
           "content_units": [
             "設定完續約日期後，系統會將續約邀請發送給租客，可以在「待租客簽回」欄位中查找這份合約。",
-            "租客簽回後，房東方確認資料無誤，就可以點選「立即簽名」並完成簽約程序，最後即完成該合約的續約。"
+            "租客簽回後，房東方確認資料無誤，就可以點選「立即簽名」並完成簽約程序，最後即完成該合約的續約。",
+            "續約在系統裡是用「複製」原合約的方式產生一份全新的合約紀錄，並且會把從舊合約繼承來的「歷史合約」狀態位元拿掉；租客完成簽署確認的當下，新合約就直接是「簽署完成」狀態，不需要等到舊合約到期才生效。"
           ],
           "id": "jgb/D/renew-signing-flow",
           "instance_applicability": "general",
@@ -13394,7 +13674,8 @@
           "reviewed_by": null,
           "see_also": [],
           "sources": [
-            "help:landlordonboarding04lease_zh-Hant.html"
+            "help:landlordonboarding04lease_zh-Hant.html",
+            "docs:knowledge/jgb-product-facts.md#p914-contract-renewal"
           ],
           "target_user": [
             "property_manager"
@@ -13444,10 +13725,11 @@
           ],
           "categories": [],
           "coarse_id": "D-renew",
-          "content_sha256": "7a35e4a401287ec3d7453474b76e2374f5020db10d154f4dc33f485ff48fff39",
+          "content_sha256": "9ca1bde3b642ec503a36efeae96dd0f34270730ef34bb0ad4d191f0560e1e9aa",
           "content_units": [
             "續約時系統會複製原合約產生新合約，並用出租方、承租方目前最新的角色或會員資料，更新聯絡電話、Email 等欄位，不是直接照抄舊合約當時填寫的資料。",
-            "繳費週期、帳單週期制度等設定，如果續約頁面有調整就用新的值，沒調整則沿用原合約設定。"
+            "繳費週期、帳單週期制度等設定，如果續約頁面有調整就用新的值，沒調整則沿用原合約設定。",
+            "續約不會像新建合約一樣進入完整的合約編輯分頁：續約頁面（快速設定或個別指定續約日）只能設定續約日期、繳費週期、帳單週期制度與簽約方式，沒有「租金費用」分頁可以編輯，所以租金金額本身不能在續約流程裡直接修改；續約流程另外有一個「續約預覽」頁面，可以預先編輯這次續約要產生的帳單草稿內容與金額。"
           ],
           "id": "jgb/D/renew-data-carryover-rules",
           "instance_applicability": "general",
@@ -13469,12 +13751,59 @@
           "reviewed_by": null,
           "see_also": [],
           "sources": [
-            "code:app/Services/ContractService.php"
+            "code:app/Services/ContractService.php",
+            "code:src/pages/contracts/renew/Index.vue",
+            "code:src/pages/contracts/renew/Preview.vue"
           ],
           "target_user": [
             "property_manager"
           ],
           "title": "續約時資料怎麼沿用？（新合約由舊合約複製，並更新出租方/承租方最新資料；週期設定有調整就用新的、沒調整就沿用）"
+        },
+        {
+          "business_types": [
+            "system_provider"
+          ],
+          "categories": [],
+          "coarse_id": "D-renew",
+          "content_sha256": "090f540dc1884ba060ffbbe5ecc2cc0caeaee48ca1f7d0044624bdc5af6aa9fc",
+          "content_units": [
+            "一般團隊的續約流程，第一張帳單不會列出押金這個品項。",
+            "只有特定合作團隊使用「延長續約」時，系統才會拿原合約記錄的押金金額跟新合約設定的押金金額比較差額：差額為正時在帳單上補收差額押金，差額為負時列為「退押金」支出；車位押金的處理不同，差額為負時是直接列一筆負數的「車位押金」，不是退押金。",
+            "如果是全新建立、不是續約的合約，系統沒辦法把舊合約的押金直接轉移過來，第一張帳單一律列出全額押金；舊合約要拿回押金，需要走「點退押金」的結算流程。"
+          ],
+          "id": "jgb/D/renew-deposit-difference-handling",
+          "instance_applicability": "general",
+          "phrasings": [
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "續約押金差額"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "押金可以轉到新合約嗎"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "續約要不要重收押金"
+            }
+          ],
+          "policy": "answerable",
+          "policy_ref": null,
+          "reviewed_at": null,
+          "reviewed_by": null,
+          "see_also": [],
+          "sources": [
+            "docs:knowledge/jgb-product-facts.md#p914-renewal-deposit-diff",
+            "docs:knowledge/jgb-product-facts.md#p914-no-deposit-carryover"
+          ],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "續約押金差額怎麼處理？（一般續約第一張帳單不列押金；只有特定合作團隊的延長續約會用原押金算差額；新合約無法直接沿用舊合約押金，一律列全額押金）"
         }
       ],
       "id": "D-renew",
@@ -13703,6 +14032,50 @@
             "prospect"
           ],
           "title": "提前解約後多久可以點退？（依新合約終止日往前推 30 天內即可執行點退押金）"
+        },
+        {
+          "business_types": [
+            "system_provider"
+          ],
+          "categories": [],
+          "coarse_id": "D-early-termination",
+          "content_sha256": "030d46ab5a4915bcfc5e8fe4c708e77ae37966ccc164b6dea9357217b27f25aa",
+          "content_units": [
+            "提前解約確認後，系統會把合約的到期日直接改成這次解約後的到期日。",
+            "帳單產生的排程只會對到期日還沒到的合約產生下一期租金帳單，所以解約日之後不會再自動產生新的租金帳單。",
+            "帳單排程本身會提前產生最多到下個月的帳單，而且確認解約當下不會自動刪除或封存已經產生的帳單；如果解約前已經先產生了、期間落在解約日之後的帳單，需要業者自己手動封存，系統不會幫忙處理。"
+          ],
+          "id": "jgb/D/early-termination-billing-after",
+          "instance_applicability": "general",
+          "phrasings": [
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "提前解約後帳單"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "解約後還會出帳單嗎"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "解約後帳單要自己處理嗎"
+            }
+          ],
+          "policy": "answerable",
+          "policy_ref": null,
+          "reviewed_at": null,
+          "reviewed_by": null,
+          "see_also": [],
+          "sources": [
+            "docs:knowledge/jgb-product-facts.md#p914-early-termination-bills"
+          ],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "提前解約後還會出新帳單嗎？（解約日之後系統不會再自動產生新租金帳單，但解約前已產生、落在解約日後的帳單要業者自行封存）"
         }
       ],
       "id": "D-early-termination",
@@ -14633,9 +15006,10 @@
           ],
           "categories": [],
           "coarse_id": "E-bill-list",
-          "content_sha256": "4187fae71da599b6d7acf7434fe4c2831e29c219ecf92287cd5b2ed13cf17f7f",
+          "content_sha256": "a2c300fbac454eb4384f48f936b450742a9a62e6c1045d3b22e7241ff8e3f0cb",
           "content_units": [
-            "待對帳狀態的收款帳單一律可以「退至應到帳」或「移至已到帳」，選單裡不會有「取消帳單」；「開立發票」的顯示條件跟應到帳狀態相同（合約設定自動開立發票、帳單本身設定自動開立發票、且發票尚未完成），不是每一張待對帳帳單都看得到。"
+            "待對帳狀態的收款帳單一律可以「退至應到帳」或「移至已到帳」，選單裡不會有「取消帳單」；「開立發票」的顯示條件跟應到帳狀態相同（合約設定自動開立發票、帳單本身設定自動開立發票、且發票尚未完成），不是每一張待對帳帳單都看得到。",
+            "在帳單總表或收款帳單分頁勾選多筆「待對帳」帳單時，批次操作列會有「移至已到帳」，有匯出權限時另有「匯出」；「開立發票」只有開通手動開立發票功能的團隊才會出現；批次操作列不會有「退至應到帳」。"
           ],
           "id": "jgb/E/bill-actions-progress",
           "instance_applicability": "general",
@@ -14675,7 +15049,7 @@
           ],
           "categories": [],
           "coarse_id": "E-bill-list",
-          "content_sha256": "b131b25bde6346c21ca8c803956f8a4521ae24c58a45f532f571702d47b2b9f0",
+          "content_sha256": "4cf74672101fe05a3e2572fb57b10b86bd18bcad82342bbd52bfa82ce5659a38",
           "content_units": [
             "已到帳的收款帳單可以「編輯收款備註」。",
             "已到帳的收款帳單，如果帳單本身有設定自動開立發票、且已經產生發票，齒輪選單裡會列出對應的「發票」按鈕（一張以上會依張數編號），點下去可以打開對應的發票連結；已經作廢的那張後面會加註「（已作廢）」。",
@@ -14683,7 +15057,8 @@
             "只有這張帳單本身是反轉帳單（房東退款給租客）時，齒輪選單才會多出「退款對帳單」。",
             "已到帳的收款帳單只要本身有設定自動開立發票，就會常駐顯示「重開發票」，不論目前發票狀態為何。",
             "只有在這張帳單有已開立且未作廢的發票時，齒輪選單才會出現「作廢發票」。",
-            "已到帳的收款帳單一律可以「封存帳單」。"
+            "已到帳的收款帳單一律可以「封存帳單」。",
+            "帳單轉為已付款（不論是線上付款、或業者手動移至已到帳）時，系統會自動寄一封附收據 PDF 的通知信給租客；前端目前沒有「重寄收據」的按鈕可以手動再發一次。"
           ],
           "id": "jgb/E/bill-actions-received",
           "instance_applicability": "general",
@@ -15398,6 +15773,427 @@
             "property_manager"
           ],
           "title": "「總收支」分頁的用途是什麼？（同時看全部已到帳、已支出、應到帳、應支出的帳單）"
+        },
+        {
+          "business_types": [
+            "system_provider"
+          ],
+          "categories": [],
+          "coarse_id": "E-bill-list",
+          "content_sha256": "238755160d47f56e67afa2764d10769f6bbd67073ca426ef3f80d0b933b01152",
+          "content_units": [
+            "帳單通知可以分別開關 Email 跟簡訊；業者也可以直接在租客列表用「通知開關」整個關掉某一位租客的全部通知。",
+            "帳單通知的收件對象只認這張帳單記錄上的那一位承租人，只會發到這個人的手機跟 Email，不會同時發給合約上另一位掛名的承租人。"
+          ],
+          "id": "jgb/E/bill-notify-channels",
+          "instance_applicability": "general",
+          "phrasings": [
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "帳單通知怎麼關"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "簡訊通知在哪關掉"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "帳單通知會發給誰"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "關閉租客所有通知"
+            }
+          ],
+          "policy": "answerable",
+          "policy_ref": null,
+          "reviewed_at": null,
+          "reviewed_by": null,
+          "see_also": [],
+          "sources": [
+            "docs:knowledge/jgb-product-facts.md#p914-bill-notify"
+          ],
+          "target_user": [
+            "property_manager",
+            "prospect"
+          ],
+          "title": "帳單通知走哪些管道？通知對象是誰？（Email／簡訊可分別開關；只發給帳單本身的那位承租人，不會同時發給合約上另一位承租人）"
+        },
+        {
+          "business_types": [
+            "system_provider"
+          ],
+          "categories": [],
+          "coarse_id": "E-bill-list",
+          "content_sha256": "b0b9410dc95b2e0ca4a1df44c0c0e0f180d3ce716b203f21424d134c347b02cf",
+          "content_units": [
+            "業者可以在帳單詳細頁把該帳單已開立的發票作廢，但這個功能只支援 ezPay 開出來的發票，其他發票廠商的發票會被擋下、作廢不了。",
+            "如果這張發票已經開立過折讓單，依 ezPay 的規則就不能再作廢，要退費得改走折讓那條路徑。"
+          ],
+          "id": "jgb/E/bill-invoice-void-limitation",
+          "instance_applicability": "general",
+          "phrasings": [
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "發票怎麼作廢"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "作廢發票支援哪些金流商"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "折讓後還能作廢嗎"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "ezPay作廢發票"
+            }
+          ],
+          "policy": "answerable",
+          "policy_ref": null,
+          "reviewed_at": null,
+          "reviewed_by": null,
+          "see_also": [],
+          "sources": [
+            "docs:knowledge/jgb-product-facts.md#p914-invoice-void-ezpay"
+          ],
+          "target_user": [
+            "property_manager",
+            "prospect"
+          ],
+          "title": "發票可以線上作廢嗎？（可在帳單詳細頁作廢，但只支援 ezPay；其他金流商的發票作廢不了，已開折讓的發票也不能再作廢）"
+        },
+        {
+          "business_types": [
+            "system_provider"
+          ],
+          "categories": [],
+          "coarse_id": "E-bill-list",
+          "content_sha256": "36ddaa6348089830e608bcfb5149353fdea0f0166423310a0faf5e96d9b48856",
+          "content_units": [
+            "租客在「我的帳單」的「待繳帳單」可以按「通知已匯款」，輸入匯款帳號後五碼送出，也可以另外上傳繳款證明。",
+            "如果這張帳單改走線上金流收款，「通知已匯款」按鈕跟上傳證明的畫面就不會出現。"
+          ],
+          "id": "jgb/E/bill-notify-remittance-visibility",
+          "instance_applicability": "general",
+          "phrasings": [
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "通知已匯款在哪"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "通知已匯款不見了"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "線上收款還要通知已匯款嗎"
+            }
+          ],
+          "policy": "answerable",
+          "policy_ref": null,
+          "reviewed_at": null,
+          "reviewed_by": null,
+          "see_also": [],
+          "sources": [
+            "docs:knowledge/jgb-product-facts.md#p914-notify-remittance"
+          ],
+          "target_user": [
+            "property_manager",
+            "prospect"
+          ],
+          "title": "「通知已匯款」按鈕什麼時候才會出現？（只在非線上金流收款的帳單才有，改走線上金流收款就不顯示）"
+        },
+        {
+          "business_types": [
+            "system_provider"
+          ],
+          "categories": [],
+          "coarse_id": "E-bill-list",
+          "content_sha256": "ac81f61f94b5563630fd327c77c2c78fd031e37f79f4decbac25fe070d4ad411",
+          "content_units": [
+            "封存這個動作允許在「待發送」（草稿）跟「已到帳」兩種狀態下直接執行，不需要先把待發送的帳單轉成已到帳才能封存。",
+            "帳單總表、收款帳單這類分頁都可以勾選多筆同狀態的帳單一次封存。"
+          ],
+          "id": "jgb/E/bill-archive-precondition",
+          "instance_applicability": "general",
+          "phrasings": [
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "草稿可以直接封存嗎"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "封存要先變已到帳嗎"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "批次封存帳單"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "封存順序怎麼安排"
+            }
+          ],
+          "policy": "answerable",
+          "policy_ref": null,
+          "reviewed_at": null,
+          "reviewed_by": null,
+          "see_also": [],
+          "sources": [
+            "docs:knowledge/jgb-product-facts.md#p914-bill-archive-states",
+            "code:src/use/config/useBillTypes.js"
+          ],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "帳單要什麼狀態才可以直接封存？（「待發送」跟「已到帳」都可以直接封存，不用先轉成已到帳；可勾選多筆一次封存）"
+        },
+        {
+          "business_types": [
+            "system_provider"
+          ],
+          "categories": [],
+          "coarse_id": "E-bill-list",
+          "content_sha256": "5303996bc474195afd223f02511709332fe0a91ebf880c4da157844cebc7f3a1",
+          "content_units": [
+            "押金收據號碼不是系統自動產生的流水號，而是業者用 Excel 匯出、自己填好號碼後再匯入系統寫回去。"
+          ],
+          "id": "jgb/E/bill-deposit-receipt-no",
+          "instance_applicability": "general",
+          "phrasings": [
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "押金收據號碼怎麼填"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "押金收據號碼會自動產生嗎"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "押金收據匯入匯出"
+            }
+          ],
+          "policy": "answerable",
+          "policy_ref": null,
+          "reviewed_at": null,
+          "reviewed_by": null,
+          "see_also": [],
+          "sources": [
+            "docs:knowledge/jgb-product-facts.md#p914-deposit-receipt-no"
+          ],
+          "target_user": [
+            "property_manager",
+            "prospect"
+          ],
+          "title": "押金收據號碼是系統自動產生的嗎？（不是，號碼要透過 Excel 匯出／匯入手動填寫，系統不會自動編流水號）"
+        },
+        {
+          "business_types": [
+            "system_provider"
+          ],
+          "categories": [],
+          "coarse_id": "E-bill-list",
+          "content_sha256": "556eb33c25801d10fe9961925e9acf166d40f49c23a1d6d95bca866798b8252c",
+          "content_units": [
+            "如果一般租金帳單的計費期間起日晚於它所屬合約的結束日，系統每天自動排定發送、自動寄出這兩段流程都會直接跳過這張帳單、不自動寄出，但帳單不會被刪除。",
+            "這個攔截只作用在系統自動執行的那兩段流程；業者自己手動把這張帳單按下排定發送，不受這個規則限制。",
+            "系統批次寄出排定發送帳單時，是依帳單 id 由小到大遞增處理，沒有可以另外指定發送順序的設定。"
+          ],
+          "id": "jgb/E/bill-scheduled-contract-ended-guard",
+          "instance_applicability": "general",
+          "phrasings": [
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "合約結束後帳單還會自動寄嗎"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "解約後草稿帳單會怎樣"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "排定發送帳單順序"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "合約到期未來帳單擋不擋"
+            }
+          ],
+          "policy": "answerable",
+          "policy_ref": null,
+          "reviewed_at": null,
+          "reviewed_by": null,
+          "see_also": [],
+          "sources": [
+            "code:app/Services/Bills/ContractEndedRentBillGuard.php",
+            "code:app/Console/Commands/BillBatchSend.php"
+          ],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "合約已結束、但底下還留著未來計費期間的租金帳單，系統排定發送時會怎麼處理？（系統自動排定發送／自動寄出都會跳過不寄，但不會刪除帳單；業者手動排定發送則不受這條規則限制；批次寄出依帳單 id 由小到大處理，沒有可指定的發送順序）"
+        },
+        {
+          "business_types": [
+            "system_provider"
+          ],
+          "categories": [],
+          "coarse_id": "E-bill-list",
+          "content_sha256": "4c0ddabbb0326db4f4d480aba80541836e8e9d7abadc135ab9c88cb3b2f01c33",
+          "content_units": [
+            "逾期未繳的帳單，系統會從逾期隔天起每隔一天自動寄送催繳通知，逾期超過 65 天後停止寄送；業者端沒有自己重新發送催繳通知的按鈕或介面。",
+            "此操作需由 JGB 客服協助。"
+          ],
+          "id": "jgb/E/bill-remind-resend-by-support",
+          "instance_applicability": "general",
+          "phrasings": [
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "催繳通知可以重發嗎"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "客服可以幫忙催繳嗎"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "重新寄催繳通知"
+            }
+          ],
+          "policy": "answerable",
+          "policy_ref": null,
+          "reviewed_at": null,
+          "reviewed_by": null,
+          "see_also": [],
+          "sources": [
+            "code:app/Http/Controllers/UserController.php",
+            "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#111",
+            "code:app/Console/Commands/BillNotifyOverdue.php"
+          ],
+          "target_user": [
+            "property_manager",
+            "prospect"
+          ],
+          "title": "業者可以請 JGB 客服代發催繳通知嗎？（此操作需由 JGB 客服協助；業者端沒有自助重發催繳的介面）"
+        },
+        {
+          "business_types": [
+            "system_provider"
+          ],
+          "categories": [],
+          "coarse_id": "E-bill-list",
+          "content_sha256": "f40b57977eeb25c75d11cd71bb533d89489428fdb3f64b6966efc1180dd3adce",
+          "content_units": [
+            "系統收到超商代碼繳費的付款結果通知時，只看金流商回傳的交易狀態是不是成功，沒有另外檢查這組代碼是不是已經過了繳費期限。",
+            "代碼過期後還能不能拿去超商繳費、繳了算不算數，屬於金流商自己的規定，系統不判斷這件事。"
+          ],
+          "id": "jgb/E/bill-cvs-barcode-overdue-payment",
+          "instance_applicability": "general",
+          "phrasings": [
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "超商代碼過期還能繳嗎"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "超商代碼逾期入帳"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "超商繳費逾期"
+            }
+          ],
+          "policy": "answerable",
+          "policy_ref": null,
+          "reviewed_at": null,
+          "reviewed_by": null,
+          "see_also": [],
+          "sources": [
+            "code:app/Http/Controllers/PaymentController.php",
+            "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#114"
+          ],
+          "target_user": [
+            "property_manager",
+            "prospect"
+          ],
+          "title": "超商代碼繳費逾期後才繳，帳單還會入帳嗎？（系統不檢查代碼期限，完全依金流商回傳的付款結果；代碼逾期後是否還能繳費屬外部規定，系統不判斷）"
+        },
+        {
+          "business_types": [
+            "system_provider"
+          ],
+          "categories": [],
+          "coarse_id": "E-bill-list",
+          "content_sha256": "14671f30fd9e20a88b82139e5221cc5821fee4c769008212d63e7a4b65e24ad3",
+          "content_units": [
+            "現在已到帳的收款帳單，齒輪選單一律看得到「收據」；帳單轉為已付款時，系統也會自動寄送附收據 PDF 的通知信給租客。",
+            "目前沒有公開的收據功能開發時程。"
+          ],
+          "id": "jgb/E/bill-receipt-feature-roadmap",
+          "instance_applicability": "general",
+          "phrasings": [
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "收據功能會不會更新"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "收據還有新功能嗎"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "收據開發時程"
+            }
+          ],
+          "policy": "answerable",
+          "policy_ref": null,
+          "reviewed_at": null,
+          "reviewed_by": null,
+          "see_also": [],
+          "sources": [
+            "code:src/use/config/useBillTypes.js",
+            "docs:knowledge/jgb-product-facts.md#p914-receipt-email",
+            "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#117"
+          ],
+          "target_user": [
+            "property_manager",
+            "prospect"
+          ],
+          "title": "收據功能還會不會有新的開發？（現行已到帳帳單一律可以看到系統寄送的收據，目前沒有公開的後續開發時程）"
         }
       ],
       "id": "E-bill-list",
@@ -15695,7 +16491,7 @@
           "target_user": [
             "property_manager"
           ],
-          "title": "帳單費用細目填寫有什麼規則？（度數欄位最多小數點後 2 位、電水瓦斯金額欄位限制小數點後 2 位、當期度數要大於上期度數）"
+          "title": "帳單費用細目填寫有什麼規則？（度數欄位最多小數點後 2 位、電水瓦斯金額欄位限制小數點後 2 位、當期度數不可小於上期度數）"
         },
         {
           "business_types": [
@@ -16034,6 +16830,92 @@
             "property_manager"
           ],
           "title": "新增帳單選租客當對象時，付款方式會自動帶入合約的收款設定嗎？（會，但帳戶已停用/不可取號等情況不會亂猜）"
+        },
+        {
+          "business_types": [
+            "system_provider"
+          ],
+          "categories": [],
+          "coarse_id": "E-bill-create-edit",
+          "content_sha256": "95ce83bb68c29c03f2284e16c090de9fcb51d7b1380b3b0d8520f93dde21f32c",
+          "content_units": [
+            "不足一個月的租金，是用「月租金 × 這一期實際入住的天數 ÷ 這一期帳單本身的天數」去算，不是固定除以 30 天或 31 天。"
+          ],
+          "id": "jgb/E/bill-partial-month-proration",
+          "instance_applicability": "general",
+          "phrasings": [
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "不足月租金怎麼算"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "點退帳單租金怎麼算"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "入住天數比例分攤"
+            }
+          ],
+          "policy": "answerable",
+          "policy_ref": null,
+          "reviewed_at": null,
+          "reviewed_by": null,
+          "see_also": [],
+          "sources": [
+            "docs:knowledge/jgb-product-facts.md#p914-proration"
+          ],
+          "target_user": [
+            "property_manager",
+            "prospect"
+          ],
+          "title": "不足一個月的租金怎麼算？（按該期帳單天數比例分攤：月租金 × 實際入住天數 ÷ 該期帳單天數，不是固定除以 30 或 31）"
+        },
+        {
+          "business_types": [
+            "system_provider"
+          ],
+          "categories": [],
+          "coarse_id": "E-bill-create-edit",
+          "content_sha256": "1ef2a99cab4d0ddf580c8985cfcfcbaefd67ca5459e2103d3baf4bbe028476e5",
+          "content_units": [
+            "草稿帳單的電費度數欄位預設是空的，業者可以在編輯頁按「取得即時電錶度數」先把度數帶進來。"
+          ],
+          "id": "jgb/E/bill-power-reading-draft-defaults",
+          "instance_applicability": "general",
+          "phrasings": [
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "電費度數怎麼帶入"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "電表度數會重抓嗎"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "草稿帳單度數空白"
+            }
+          ],
+          "policy": "answerable",
+          "policy_ref": null,
+          "reviewed_at": null,
+          "reviewed_by": null,
+          "see_also": [],
+          "sources": [
+            "docs:knowledge/jgb-product-facts.md#p914-power-reading-draft",
+            "code:app/Bill.php"
+          ],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "草稿帳單的電費度數要自己填嗎？（草稿階段度數預設留空，可在編輯頁按「取得即時電錶度數」先帶入）"
         }
       ],
       "id": "E-bill-create-edit",
@@ -16185,185 +17067,6 @@
             "property_manager"
           ],
           "title": "「每月報表」跟「每月對帳單」分頁在做什麼？（依社區/物件上傳與下載每月的物件報表、對帳單檔案）"
-        },
-        {
-          "business_types": [
-            "system_provider"
-          ],
-          "categories": [],
-          "coarse_id": "E-bill-stats",
-          "content_sha256": "f81c703387886c95b2ed01396ee5fcc807162f7e49917a939869f644b4a43328",
-          "content_units": [
-            "「財務報表」跟前面「統計報表」的「當前表現」是不同頁面：網址沒有指定月份時標題顯示「年度財務報表」，網址有指定年月時標題顯示「每月財務報表」。",
-            "財務報表頁面右上角有「下載」字樣，但目前點了沒有任何動作。",
-            "報表下方依照開啟時的檢視方式（按物件或按項目）呈現不同的表格內容，頁面上沒有切換器。"
-          ],
-          "id": "jgb/E/bill-sheet-report-title",
-          "instance_applicability": "general",
-          "phrasings": [
-            {
-              "source": "draft:outline-20260920",
-              "status": "proposed",
-              "text": "年度財務報表"
-            },
-            {
-              "source": "draft:outline-20260920",
-              "status": "proposed",
-              "text": "每月財務報表"
-            },
-            {
-              "source": "draft:outline-20260920",
-              "status": "proposed",
-              "text": "財務報表怎麼下載"
-            },
-            {
-              "source": "draft:outline-20260920",
-              "status": "proposed",
-              "text": "帳單報表在哪"
-            }
-          ],
-          "policy": "answerable",
-          "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
-          "see_also": [],
-          "sources": [
-            "code:src/pages/bills/sheet/Index.vue"
-          ],
-          "target_user": [
-            "property_manager"
-          ],
-          "title": "「財務報表」（年度／每月）跟「統計報表」是不同頁面？（年度／每月收支總表；頁面上的「下載」目前沒有動作）"
-        },
-        {
-          "business_types": [
-            "system_provider"
-          ],
-          "categories": [],
-          "coarse_id": "E-bill-stats",
-          "content_sha256": "d64ce1546babd14c81e3b174ec3a7b18c2dd503346ebeae61855b55a7737ba13",
-          "content_units": [
-            "財務報表依打開頁面時網址帶的參數決定顯示哪一種檢視：預設情況顯示「按物件」檢視，每個物件一列，最右邊有一欄「收支小計」加總這個物件全年（或該月）的收支。",
-            "如果網址帶特定參數指定要看「依項目統計」，則改顯示「按項目」檢視，這時會分別列出「已收入」跟「已支出」兩張表，各自依項目名稱、逐月呈現金額。",
-            "「按項目」檢視會用「已收入」跟「已支出」兩個色塊標籤區分兩張表格，方便分辨目前看的是收入項目還是支出項目。"
-          ],
-          "id": "jgb/E/bill-sheet-two-views",
-          "instance_applicability": "general",
-          "phrasings": [
-            {
-              "source": "draft:outline-20260920",
-              "status": "proposed",
-              "text": "財務報表按物件看"
-            },
-            {
-              "source": "draft:outline-20260920",
-              "status": "proposed",
-              "text": "財務報表按項目看"
-            },
-            {
-              "source": "draft:outline-20260920",
-              "status": "proposed",
-              "text": "收支小計怎麼看"
-            },
-            {
-              "source": "draft:outline-20260920",
-              "status": "proposed",
-              "text": "已收入已支出分項"
-            }
-          ],
-          "policy": "answerable",
-          "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
-          "see_also": [],
-          "sources": [
-            "code:src/pages/bills/sheet/Index.vue"
-          ],
-          "target_user": [
-            "property_manager"
-          ],
-          "title": "財務報表可以用哪兩種方式檢視？（按物件檢視、按項目檢視）"
-        },
-        {
-          "business_types": [
-            "system_provider"
-          ],
-          "categories": [],
-          "coarse_id": "E-bill-stats",
-          "content_sha256": "68a218e15b27e6b16e32bebaeae72876d8110b10cf7eec7d0b3838d305de4a85",
-          "content_units": [
-            "財務報表最上方會顯示「收入總計」「支出總計」「收支總計」三張卡片，「收支總計」＝收入總計－支出總計，反映該年度（或該月）的淨收支。",
-            "「按物件」檢視時，表格最後會多出一列「項目總計」，把所有物件的各項金額加總起來。",
-            "「按項目」檢視時，收入表跟支出表各自也會多一列「收入總計」或「支出總計」。"
-          ],
-          "id": "jgb/E/bill-sheet-total-cards",
-          "instance_applicability": "general",
-          "phrasings": [
-            {
-              "source": "draft:outline-20260920",
-              "status": "proposed",
-              "text": "財務報表收入總計"
-            },
-            {
-              "source": "draft:outline-20260920",
-              "status": "proposed",
-              "text": "財務報表支出總計"
-            },
-            {
-              "source": "draft:outline-20260920",
-              "status": "proposed",
-              "text": "收支總計怎麼算"
-            }
-          ],
-          "policy": "answerable",
-          "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
-          "see_also": [],
-          "sources": [
-            "code:src/pages/bills/sheet/Index.vue"
-          ],
-          "target_user": [
-            "property_manager"
-          ],
-          "title": "財務報表上方的三張總計卡片是怎麼算的？（收入總計／支出總計／收支總計）"
-        },
-        {
-          "business_types": [
-            "system_provider"
-          ],
-          "categories": [],
-          "coarse_id": "E-bill-stats",
-          "content_sha256": "f6e4e9dad72c4c7cd6e228aa7c31cd3e65f69b732691c8da5e26ee3d6d70e7f0",
-          "content_units": [
-            "財務報表頁面右上角有一個帶下載圖示的「下載」按鈕。"
-          ],
-          "id": "jgb/E/bill-sheet-download-button",
-          "instance_applicability": "general",
-          "phrasings": [
-            {
-              "source": "draft:outline-20260920",
-              "status": "proposed",
-              "text": "財務報表下載按鈕"
-            },
-            {
-              "source": "draft:outline-20260920",
-              "status": "proposed",
-              "text": "財務報表怎麼匯出"
-            }
-          ],
-          "policy": "answerable",
-          "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
-          "see_also": [],
-          "sources": [
-            "code:src/pages/bills/sheet/Index.vue"
-          ],
-          "target_user": [
-            "property_manager"
-          ],
-          "title": "財務報表右上角的「下載」按鈕可以下載什麼？"
         }
       ],
       "id": "E-bill-stats",
@@ -16617,6 +17320,49 @@
             "property_manager"
           ],
           "title": "社宅報表的「歸檔」是什麼意思？（操作按鈕是「確定歸檔」；綠色「歸檔」標籤只在已歸檔後才出現）"
+        },
+        {
+          "business_types": [
+            "system_provider"
+          ],
+          "categories": [],
+          "coarse_id": "E-social-housing-report",
+          "content_sha256": "1532b0bbf146fc0a5b0c46d23cd10827bab66a61ca77a2774a9b3cfb9a958244",
+          "content_units": [
+            "JGB 把「社會住宅」設計成一種團隊身份，跟「個人房東/代理人」「法人房東(公司)」並列，可以建立多筆，但只開放台灣（幣別新台幣、地區台灣）使用。",
+            "至於這個身份能不能對應到某個地方政府推出的特定社宅方案，屬地方政府社宅政策認定，系統不判斷。"
+          ],
+          "id": "jgb/E/social-housing-sheet-program-scope",
+          "instance_applicability": "general",
+          "phrasings": [
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "社宅報表適用哪個社宅方案"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "社會住宅身份限制"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "社宅報表限台灣嗎"
+            }
+          ],
+          "policy": "answerable",
+          "policy_ref": null,
+          "reviewed_at": null,
+          "reviewed_by": null,
+          "see_also": [],
+          "sources": [
+            "code:config/role.php"
+          ],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "社宅報表的「社會住宅」身份可以對應到哪個地方政府的社宅方案？（系統只定義身份類別，不判斷方案適配）"
         }
       ],
       "id": "E-social-housing-report",
@@ -17077,6 +17823,220 @@
             "property_manager"
           ],
           "title": "差額發票群組列表的動作選單有哪些選項？各自什麼時候會被停用？（編輯群組／開立發票／封存群組／刪除群組；另有查看歷程圖示）"
+        },
+        {
+          "business_types": [
+            "system_provider"
+          ],
+          "categories": [],
+          "coarse_id": "E-balance-invoice",
+          "content_sha256": "d47081aaaf1362292686df4a039b4f449467f6f97a599f71fcc493fbb6159512",
+          "content_units": [
+            "「報表發票下載」分頁裡的收支表，租金退款或減免會列在「租金增(減)(B)」這一欄，並以負數（括號）表示。"
+          ],
+          "id": "jgb/E/balance-invoice-refund-report-column",
+          "instance_applicability": "general",
+          "phrasings": [
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "差額發票收支表退款"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "差額發票租金增減欄"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "差額發票減免怎麼記"
+            }
+          ],
+          "policy": "answerable",
+          "policy_ref": null,
+          "reviewed_at": null,
+          "reviewed_by": null,
+          "see_also": [],
+          "sources": [
+            "docs:knowledge/jgb-product-facts.md#p914-balance-invoice-refund"
+          ],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "差額發票收支表的租金退款／減免怎麼呈現？（列在「租金增(減)(B)」欄，以負數表示）"
+        },
+        {
+          "business_types": [
+            "system_provider"
+          ],
+          "categories": [],
+          "coarse_id": "E-balance-invoice",
+          "content_sha256": "96aadcab2ab8e2a75533949b09d6dee3615ce9ca704e9b4b9ba22594720319aa",
+          "content_units": [
+            "差額發票收支表判斷一筆帳單品項算不算「租金」收入：系統預設品項看品項名稱是不是「租金」或「退租金」；業者自訂的品項則看品項性質是不是「租金」，自訂品項即使取名「租金」、性質不是租金也不算；判斷依據不是這筆帳單是哪一種帳單（例如退租結算單）。",
+            "如果個案帳單的品項命名方式跟預繳租金重複，會不會造成收支表重複計入，屬記帳命名上的判斷，需要依個案帳單資料確認。"
+          ],
+          "id": "jgb/E/balance-invoice-rent-item-rule",
+          "instance_applicability": "general",
+          "phrasings": [
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "差額發票租金品項判定"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "退租帳單科目重複計入"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "差額收支表怎麼認租金"
+            }
+          ],
+          "policy": "answerable",
+          "policy_ref": null,
+          "reviewed_at": null,
+          "reviewed_by": null,
+          "see_also": [],
+          "sources": [
+            "code:app/Services/BalanceInvoiceService.php"
+          ],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "差額發票收支表怎麼判斷一個帳單品項算不算「租金」收入？（系統預設品項看名稱是不是「租金」「退租金」；自訂品項看品項性質）"
+        },
+        {
+          "business_types": [
+            "system_provider"
+          ],
+          "categories": [],
+          "coarse_id": "E-balance-invoice",
+          "content_sha256": "712ec7675b743a2d89ce0a455e5d021b088fc9b64959dca289a4f3fdec341a50",
+          "content_units": [
+            "差額發票的計算與開票邏輯裡，沒有針對「法人改成自然人」這種身分變更設計專屬的處理規則，結果要看個案在系統上實際填寫、切換的資料，需要依個案情況確認。"
+          ],
+          "id": "jgb/E/balance-invoice-entity-type-change",
+          "instance_applicability": "general",
+          "phrasings": [
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "差額發票法人改自然人"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "差額群組身分切換"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "差額發票身分變更"
+            }
+          ],
+          "policy": "answerable",
+          "policy_ref": null,
+          "reviewed_at": null,
+          "reviewed_by": null,
+          "see_also": [],
+          "sources": [
+            "code:app/Services/BalanceInvoiceService.php"
+          ],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "身分從法人改成自然人後，差額發票群組要怎麼重新設定？（系統沒有專用的身分切換規則）"
+        },
+        {
+          "business_types": [
+            "system_provider"
+          ],
+          "categories": [],
+          "coarse_id": "E-balance-invoice",
+          "content_sha256": "f96b3e12102b730546000d41ce87db7ae269d1c15d9880baeac2eff8950e7372",
+          "content_units": [
+            "發票什麼時候開立，是依合約與團隊的開票設定決定（例如是否開啟「預先開立發票」、有沒有立即開立權限），不是直接看合約有沒有簽回。",
+            "押金收據則是看這筆帳單本身有沒有被標記為已到帳；帳單到帳後系統寄給租客的通知信會附上收據（部分特定合作團隊另有處理方式）。",
+            "至於合約還沒簽署完成時，這些規則會不會被連動擋下，屬個案情況，需要查詢個案的合約與帳單資料確認。"
+          ],
+          "id": "jgb/E/balance-invoice-unsigned-contract",
+          "instance_applicability": "general",
+          "phrasings": [
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "合約未簽回能開發票嗎"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "合約未簽回押金收據"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "簽約中可以開發票嗎"
+            }
+          ],
+          "policy": "answerable",
+          "policy_ref": null,
+          "reviewed_at": null,
+          "reviewed_by": null,
+          "see_also": [],
+          "sources": [
+            "docs:knowledge/jgb-product-facts.md#p914-invoice-per-bill",
+            "docs:knowledge/jgb-product-facts.md#p914-receipt-email"
+          ],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "合約還沒簽回時能不能開發票或收據？（發票看合約的開票設定、押金收據看帳單是否到帳，簽署狀態是否連動要看個案）"
+        },
+        {
+          "business_types": [
+            "system_provider"
+          ],
+          "categories": [],
+          "coarse_id": "E-balance-invoice",
+          "content_sha256": "850cd3537a07b3f61db51a435a7f96cd611f78d7e63940a2d48f10ee5ebb2054",
+          "content_units": [
+            "帳單不屬於任何差額發票群組、又出現開票異常的情況時，系統會把它列進內部「發票異常盤查」名單；業者端在帳單列表可以用「發票異常」狀態篩選看到這類帳單，但實際盤查與處理只在 JGB 內部客服後台進行，此操作需由 JGB 客服協助。"
+          ],
+          "id": "jgb/E/balance-invoice-anomaly-list",
+          "instance_applicability": "general",
+          "phrasings": [
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "帳單沒有差額群組怎麼辦"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "發票異常盤查名單"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "帳單不在差額群組"
+            }
+          ],
+          "policy": "answerable",
+          "policy_ref": null,
+          "reviewed_at": null,
+          "reviewed_by": null,
+          "see_also": [],
+          "sources": [
+            "code:app/Http/Controllers/Admin/InvoiceFailureController.php"
+          ],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "帳單不在任何差額發票群組內時，JGB 怎麼處理？（列進內部「發票異常盤查」名單，處理需洽客服）"
         }
       ],
       "id": "E-balance-invoice",
@@ -17558,6 +18518,176 @@
             "property_manager"
           ],
           "title": "固定虛擬帳號的入帳是怎麼自動比對到帳單的？（每日凌晨 03:00 排程沖銷；限特定合作團隊才會自動比對；餘額不夠不會變成已到帳）"
+        },
+        {
+          "business_types": [
+            "system_provider"
+          ],
+          "categories": [],
+          "coarse_id": "E-virtual-account",
+          "content_sha256": "b8a09795292bb403a493402bc5161c5e9f293bc628bbb675ffc3daf76f21c44d",
+          "content_units": [
+            "收款方是租客本人的支出帳單（例如退押金），畫面顯示的是租客本人的收款銀行帳戶，不會使用「固定虛擬帳號管理」裡設定的帳號；固定虛擬帳號只用在租客要繳款給業者的方向。"
+          ],
+          "id": "jgb/E/recharge-account-refund-excluded",
+          "instance_applicability": "general",
+          "phrasings": [
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "退押金走虛擬帳號嗎"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "支出帳單收款帳戶"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "退款方向虛擬帳號"
+            }
+          ],
+          "policy": "answerable",
+          "policy_ref": null,
+          "reviewed_at": null,
+          "reviewed_by": null,
+          "see_also": [],
+          "sources": [
+            "docs:knowledge/jgb-product-facts.md#p914-refund-bill-account"
+          ],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "退押金這類要付給租客的帳單，也走固定虛擬帳號嗎？（不會，顯示的是租客本人的收款帳戶）"
+        },
+        {
+          "business_types": [
+            "system_provider"
+          ],
+          "categories": [],
+          "coarse_id": "E-virtual-account",
+          "content_sha256": "d8d48ae776a474b11356a02f885d951c4ff5e67b2d1791b596eeecd863189e50",
+          "content_units": [
+            "「固定虛擬帳號管理」頁面管理的是可以重複收款、要手動建立的固定帳號；租客在「我的帳單」線上繳費時，走藍新取號產生的 ATM 虛擬帳號是另一種、系統即時產生的單筆帳號，效期 180 天，過期後要重新走一次繳費流程才會再產生新的一組，不會出現在「固定虛擬帳號管理」列表裡。"
+          ],
+          "id": "jgb/E/recharge-account-vs-single-use-atm",
+          "instance_applicability": "general",
+          "phrasings": [
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "ATM虛擬帳號跟固定虛擬帳號差在哪"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "線上繳費ATM虛擬帳號效期"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "固定虛擬帳號會過期嗎"
+            }
+          ],
+          "policy": "answerable",
+          "policy_ref": null,
+          "reviewed_at": null,
+          "reviewed_by": null,
+          "see_also": [],
+          "sources": [
+            "docs:knowledge/jgb-product-facts.md#p914-newebpay-atm-expiry"
+          ],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "「固定虛擬帳號管理」跟租客線上繳費產生的 ATM 虛擬帳號是同一種嗎？（不是，ATM 那組是單筆繳費用、效期 180 天）"
+        },
+        {
+          "business_types": [
+            "system_provider"
+          ],
+          "categories": [],
+          "coarse_id": "E-virtual-account",
+          "content_sha256": "44e6fd390c5e35fe120ecead22635dbb9352045f3b1bd8a36fe9abe538d4724d",
+          "content_units": [
+            "如果同一筆單筆帳單的付款已經完成，租客又重複匯款進來，系統只會記錄「該筆訂單已被處理」並略過，不會再沖到任何帳單。",
+            "匯到固定虛擬帳號的錢則一律先進這組帳號的儲值餘額，系統自動銷帳，多匯的部分留作餘額，用來抵扣後續帳單；同一筆銀行入帳通知重複收到時，系統會用指紋比對去重，不會重複儲值。"
+          ],
+          "id": "jgb/E/recharge-account-mismatch-and-duplicate",
+          "instance_applicability": "general",
+          "phrasings": [
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "虛擬帳號匯款金額不符"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "虛擬帳號重複匯款"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "虛擬帳號多匯的錢去哪"
+            }
+          ],
+          "policy": "answerable",
+          "policy_ref": null,
+          "reviewed_at": null,
+          "reviewed_by": null,
+          "see_also": [],
+          "sources": [
+            "docs:knowledge/jgb-product-facts.md#p914-atm-amount-mismatch",
+            "docs:knowledge/jgb-product-facts.md#p914-duplicate-remittance"
+          ],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "租客重複匯款時系統怎麼處理？（單筆帳單已付款後重複匯入會略過；固定虛擬帳號多匯的部分留作餘額）"
+        },
+        {
+          "business_types": [
+            "system_provider"
+          ],
+          "categories": [],
+          "coarse_id": "E-virtual-account",
+          "content_sha256": "26be3714750709f276931226b767fc035c8a40dd4ef9c09d206992b8de9db41b",
+          "content_units": [
+            "虛擬帳號逾期需要重新產生時，業者端目前沒有自助重新產生的入口，此操作需由 JGB 客服協助。"
+          ],
+          "id": "jgb/E/recharge-account-regenerate-expired",
+          "instance_applicability": "general",
+          "phrasings": [
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "逾期虛擬帳號重新產生"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "虛擬帳號過期怎麼辦"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "虛擬帳號重發"
+            }
+          ],
+          "policy": "answerable",
+          "policy_ref": null,
+          "reviewed_at": null,
+          "reviewed_by": null,
+          "see_also": [],
+          "sources": [
+            "code:src/pages/users/rechargeAccountList/Index.vue"
+          ],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "逾期的虛擬帳號能不能重新產生？（此操作需由 JGB 客服協助，業者端沒有自助入口）"
         }
       ],
       "id": "E-virtual-account",
@@ -17801,7 +18931,9 @@
           "reviewed_by": null,
           "see_also": [],
           "sources": [
-            "code:app/Http/Controllers/UserController.php"
+            "code:app/Http/Controllers/UserController.php",
+            "docs:knowledge/jgb-product-facts.md#p914-credit-installment",
+            "code:config/rolepayment.php"
           ],
           "target_user": [
             "property_manager",
@@ -17910,10 +19042,11 @@
           ],
           "categories": [],
           "coarse_id": "E-payment-onboarding",
-          "content_sha256": "b1e095c791fe6daec9241e25299eeb050a0f7fae38fa8044bb8d31098880a0ac",
+          "content_sha256": "c2d8683fa8b15682b788cd7d943244bb50dc83c7329dc00b97af84f7340ee019",
           "content_units": [
             "藍新的款項會先留在藍新帳戶中，需要自行登入藍新後台辦理提款，前 5 次免費，之後每次收取 10 元手續費。",
-            "藍新提款是在藍新自己的後台辦理，不是在 JGB 系統內操作。"
+            "藍新提款是在藍新自己的後台辦理，不是在 JGB 系統內操作。",
+            "國泰世華、永豐銀行、中國信託的提領方式與審核工作天，請洽客服。"
           ],
           "id": "jgb/E/payment-gateway-withdrawal",
           "instance_applicability": "general",
@@ -17940,13 +19073,100 @@
           "reviewed_by": null,
           "see_also": [],
           "sources": [
-            "help:paymentapply_zh-Hant.html"
+            "help:paymentapply_zh-Hant.html",
+            "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#47"
           ],
           "target_user": [
             "property_manager",
             "prospect"
           ],
           "title": "各家金流的款項要怎麼提領？（藍新要自己登入後台辦理，前 5 次免費之後每次 10 元）"
+        },
+        {
+          "business_types": [
+            "system_provider"
+          ],
+          "categories": [],
+          "coarse_id": "E-payment-onboarding",
+          "content_sha256": "1dc0ac2320137f5dda4beaccc4b34fadd189ba6ad2ef49ab65ae6c197b276310",
+          "content_units": [
+            "開通線上金流後，系統負責收款與依規則開立發票；資金運用是否涉及稅務申報風險，屬稅捐機關與業者自身的稅務規劃，系統不判斷。"
+          ],
+          "id": "jgb/E/payment-onboarding-tax-risk",
+          "instance_applicability": "general",
+          "phrasings": [
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "金流收款稅務風險"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "線上收款要報稅嗎"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "資金流向申報"
+            }
+          ],
+          "policy": "answerable",
+          "policy_ref": null,
+          "reviewed_at": null,
+          "reviewed_by": null,
+          "see_also": [],
+          "sources": [
+            "code:app/Http/Controllers/UserController.php"
+          ],
+          "target_user": [
+            "property_manager",
+            "prospect"
+          ],
+          "title": "線上金流收款的資金流向會不會有稅務申報風險？（系統負責收款與開票；稅務風險屬稅捐機關與業者自身規劃，系統不判斷）"
+        },
+        {
+          "business_types": [
+            "system_provider"
+          ],
+          "categories": [],
+          "coarse_id": "E-payment-onboarding",
+          "content_sha256": "fd8497d5053502b81b47ae3927434b3a6c45f3777a9973379a4b2109bbed27a4",
+          "content_units": [
+            "「線上智能整合收款」頁（也就是「開通帳號」按鈕所在的同一頁）裡另外有一個「現金收款帳戶」清單，可以新增常用的收款帳戶，供沒有走線上金流的帳單使用。",
+            "已經建立的常用現金收款帳戶可以刪除，在確認彈窗按下「刪除」後就會從清單移除。"
+          ],
+          "id": "jgb/E/cash-payment-account-management",
+          "instance_applicability": "general",
+          "phrasings": [
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "現金收款帳戶怎麼設定"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "現金收款帳戶可以刪除嗎"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "常用收款帳戶管理"
+            }
+          ],
+          "policy": "answerable",
+          "policy_ref": null,
+          "reviewed_at": null,
+          "reviewed_by": null,
+          "see_also": [],
+          "sources": [
+            "code:resources/views/users/payment.blade.php"
+          ],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "「線上智能整合收款」頁的「現金收款帳戶」怎麼管理？（可以新增常用收款帳戶，也可以刪除）"
         }
       ],
       "id": "E-payment-onboarding",

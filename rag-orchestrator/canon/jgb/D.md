@@ -39,7 +39,7 @@ language: zh-TW
   - {text: "合約要去哪裡建立", source: "draft:outline-20260920", status: proposed}
   - {text: "一個物件可以簽幾份合約", source: "draft:outline-20260920", status: proposed}
   - {text: "新增合約入口", source: "draft:outline-20260920", status: proposed}
-- sources: [help:landlordonboarding04lease_zh-Hant.html]
+- sources: [help:landlordonboarding04lease_zh-Hant.html, docs:knowledge/jgb-product-facts.md#p914-contract-new-vs-old, docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#109]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -47,6 +47,8 @@ language: zh-TW
 也可以在物件管理的物件總表中，對想建立合約的物件點選小齒輪，選擇「建立合約」直接進入。
 建立合約時可以選擇「電子合約（公版）」「電子合約（客製化契約書）」或「紙本簽約」三種建立方式。
 一個物件最多可以綁定 10 份合約，例如同一物件的舊租約仍在執行中，也可以先跟新租客預先簽下一份合約，等舊約到期銜接。
+建立一份新合約不會自動作廢或改動同一物件上其他既有的合約，舊合約只有在使用者自己操作（例如刪除合約、取消邀請）時才會停用。
+系統在建立合約時不會檢查同一物件不同合約的租期是否重疊，只用「同一物件的使用中合約數」這個門檻（最多 10 份）來擋新增；至於同一物件底下要怎麼建立、命名多個房號，需要洽客服協助個案安排。
 ### 物件要先刊登廣告才能建立合約嗎？（現行規則是必填欄位要填齊，不是看刊登狀態） {#jgb/D/contract-create-estate-completeness-requirement}
 - phrasings:
   - {text: "物件要刊登才能建約嗎", source: "draft:outline-20260920", status: proposed}
@@ -58,15 +60,22 @@ language: zh-TW
 - instance_applicability: general
 建立合約前，系統會先檢查該物件的必填欄位是否已經填寫齊全，沒填齊會擋下並提示「請先完善物件所有必填欄位」。
 建立合約的檢查條件曾經改過：早期是看物件「是否已刊登」來決定能不能建立合約，2024/11/13 已經改成看「物件必填資料是否填齊」，以前用刊登狀態當條件的做法目前已經不再套用。
-### 合約總表列的小齒輪可以做什麼操作？（依合約目前狀態與權限顯示「編輯合約」「刪除合約」「取消簽名」等動作） {#jgb/D/contract-list-row-gear-actions}
+### 合約總表列的小齒輪可以做什麼操作？（不論狀態都有「查看物件」「查看帳單」；其餘依合約狀態、身分與權限增減） {#jgb/D/contract-list-row-gear-actions}
 - phrasings:
   - {text: "合約列表小齒輪可以做什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "合約列表的齒輪按鈕能做什麼", source: "draft:outline-20260920", status: proposed}
-- sources: [code:app/Http/Controllers/ContractController.php]
+- sources: [code:app/Http/Controllers/ContractController.php, code:routes/web.php, code:src/pages/contracts/list/Index.vue, code:app/Contract.php, code:src/components/SurelyVue/Contract/ActionCell.jsx]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-合約總表每一列可以點選小齒輪，依合約目前狀態顯示「編輯合約」「刪除合約」「取消簽名」等動作，實際顯示哪些動作要看目前狀態與權限。
+合約總表每一列的小齒輪內容，是依這份合約目前的狀態、登入身分與權限來決定的。
+不論合約狀態，只要有查看物件的權限，小齒輪都會顯示「查看物件」。
+不論合約狀態，小齒輪都會顯示「查看帳單」，點進去可以看到這份合約（含它整條續約鏈）產生過的所有帳單；如果這條續約鏈目前完全沒有帳單，這個選項會顯示但不能點選。
+如果目前登入身分是租客，而且這份合約已經綁定信用卡自動扣款，小齒輪還會額外顯示「更換綁定信用卡」，可以重新走一次授權綁定。
+狀態是「待租客簽回」或「待房東簽名」時，如果有簽合約權限，小齒輪依情況只會顯示一個取消選項：這份合約正在續約中顯示「取消續約」，正在提前解約中顯示「取消提前解約」，兩者都不是的話顯示「取消邀請」。
+狀態是「執行中合約」的各個階段（雙方簽名完成、點交送出、點交完成、點退送出、點退完成）時，如果有權限，社宅包租範本會額外顯示「新增轉租契約書」；如果目前登入身分不是租客，還會顯示「點交物件」「取消點交邀請」「點退押金」「取消點退邀請」（能不能點選要看合約目前是否符合條件）——租客身分看不到這四個選項；非社宅用途的合約，登入身分不是租客時還會顯示「續約」。
+狀態是「提前解約中」時，有權限的話小齒輪會顯示無法點選的「點交物件」（目前畫面會重複出現兩次），以及可以點選的「取消提前解約」。
+狀態是「歷史合約」或合約已結束時，有權限的話小齒輪會顯示「點退押金」，能不能點選要看是否符合點退條件；正常情況下歷史合約看不到「續約」，但系統另外有一份例外名單，名單內的合約即使已經變成歷史合約，只要登入身分不是租客、且是非社宅用途，還是會補回「續約」這個選項。
 ### 合約總表可以怎麼排序？（依名稱、更新時間、合約起始日、終止日、成立日，各分新舊／早晚，共 5 種依據） {#jgb/D/contract-list-row-sort-options}
 - phrasings:
   - {text: "合約列表怎麼排序", source: "draft:outline-20260920", status: proposed}
@@ -80,11 +89,12 @@ language: zh-TW
 - phrasings:
   - {text: "合約列表標籤欄", source: "draft:outline-20260920", status: proposed}
   - {text: "合約總表欄位", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/contracts/list/_parts/ListTable.vue]
+- sources: [code:src/pages/contracts/list/_parts/ListTable.vue, docs:knowledge/jgb-product-facts.md#p914-contract-list-tags, code:src/pages/estates/dashboard/contracts/Index.vue]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
 合約總表有一欄「標籤」，顯示團隊在合約上設定的自訂標籤。
+合約上的「標籤」可以逐筆自訂加註，跟物件儀表板合約分頁上的「是否通知」是兩個各自獨立的設定，不是同一件事。
 ### 合約總表的待退押金提示燈號是什麼意思？（合約到期前 30 天才能點退） {#jgb/D/contract-list-deposit-alert}
 - phrasings:
   - {text: "待退押金提示是什麼", source: "draft:outline-20260920", status: proposed}
@@ -107,12 +117,27 @@ language: zh-TW
 - phrasings:
   - {text: "匯出實價登錄資料", source: "draft:outline-20260920", status: proposed}
   - {text: "合約列表怎麼匯出實價登錄", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/contracts/list/_parts/PageTop.vue]
+- sources: [code:src/pages/contracts/list/_parts/PageTop.vue, docs:knowledge/jgb-product-facts.md#p914-real-price-registration, docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#115]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
 合約總表右上角有「匯出實價登錄資料」按鈕，點下去會開啟一個彈窗，可以匯出符合條件的合約資料，供之後申報實價登錄使用。
 這個按鈕只有在「執行中合約」頁籤、網站語言是中文、而且團隊有開通這個功能時才會顯示；如果篩選結果目前是 0 筆，按鈕會呈現不能點的狀態。
+匯出實價登錄資料時，可以選擇申報義務人身分是「不動產經紀業」或「租賃住宅包租業」。
+匯出資料的建號，系統優先用物件本身填的建號欄位；只有這個欄位是空的時候，才會改從物件的建物謄本資料去抓建號，不是以合約上另外填寫的建號為主。
+目前系統已經提供「匯出實價登錄資料」功能；如果詢問的是全新改版的實價登錄功能或介面，目前沒有公開時程。
+### 合約總表可以匯出 Excel 嗎？（勾選後按「匯出合約」，需要匯出合約權限，內容含租期、每期租金、合約押金等欄位） {#jgb/D/contract-list-export-excel}
+- phrasings:
+  - {text: "合約匯出excel", source: "draft:outline-20260920", status: proposed}
+  - {text: "合約總表下載", source: "draft:outline-20260920", status: proposed}
+  - {text: "匯出合約權限", source: "draft:outline-20260920", status: proposed}
+- sources: [docs:knowledge/jgb-product-facts.md#p914-contract-export]
+- target_user: [property_manager]
+- business_types: [system_provider]
+- instance_applicability: general
+在合約總表勾選要匯出的合約後，可以點選「匯出合約」，系統會以批次任務的方式產生一份 Excel。
+使用這個功能需要有「匯出合約」的權限。
+匯出的欄位包含租期、每期租金、合約押金等資訊，目前沒有叫做「戶號」的欄位。
 ## 建立與編輯一般合約（13 個分頁：基本資料、基本條件、租金費用、租金調幅設定、稅與發票、帳單設定、收款方式、附設傢俱、現況補充、出租方基本資料、建物謄本、合約附件、補充條款） {#D-contract-edit-general}
 ### 建立一般合約有哪些分頁？（承租方資訊、租賃契約六項、點交兩項、出租方資訊、選填四項共 14 頁） {#jgb/D/contract-edit-tabs-overview}
 - phrasings:
@@ -129,14 +154,15 @@ language: zh-TW
 「點交」分組底下是附設傢俱與現況補充兩個分頁；「選填」分組底下是建物謄本、公證、合約附件、補充條款四個分頁。
 分頁旁邊打勾圖示代表必填分頁；租金調幅設定、稅與發票、附設傢俱、現況補充、建物謄本、公證、合約附件、補充條款這 8 頁沒有打勾圖示，屬於選填分頁。
 實際會顯示哪些分頁不是固定的，會依合約範本、物件用途（例如車位）、是否為既存（紙本／DIY）合約等條件動態增減。
-「租金調幅設定」分頁只有具備特定角色權限的團隊才會顯示；一般團隊看不到這個分頁，實際編輯合約時只會看到 13 個分頁，不是 14 個。
+「租金調幅設定」分頁只有具備特定角色權限的團隊才會顯示，多數團隊看不到這個分頁。
+分頁會不會顯示，不只受「租金調幅設定」這一項影響：「帳單設定」對特定幾個團隊目前是被拿掉的；「稅與發票」則是團隊沒有開通自動產生發票功能時才會被拿掉。
 ### 承租方基本資料怎麼填？（個人／法人租客、租客註冊或免註冊、緊急聯絡人） {#jgb/D/contract-tenant-basic-info}
 - phrasings:
   - {text: "承租方基本資料怎麼填", source: "draft:outline-20260920", status: proposed}
   - {text: "租客要註冊帳號才能簽約嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "法人租客怎麼填", source: "draft:outline-20260920", status: proposed}
   - {text: "緊急聯絡人", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/contracts/edit/tenantInfo/Index.jsx]
+- sources: [code:src/pages/contracts/edit/tenantInfo/Index.jsx, docs:knowledge/jgb-product-facts.md#p914-contract-additional-tenants, docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#85, docs:knowledge/jgb-product-facts.md#p914-lessee-records, docs:knowledge/jgb-product-facts.md#p914-contract-agents, docs:knowledge/jgb-product-facts.md#p914-contract-exempt-register-signed]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -144,13 +170,15 @@ language: zh-TW
 系統提供「租客註冊」與「租客免註冊」兩種模式：租客註冊代表租客會自己註冊 JGB 會員並填妥承租方資訊；租客免註冊代表租客不需要註冊會員，改由管理者代為填寫承租方資訊。
 這個分頁也可以新增租客的緊急聯絡人，填寫姓名、關係與聯絡號碼。
 分頁上會提示，這裡填寫的租客資料會謄寫進合約內容，過程經過加密處理。
+合約編輯的租客資訊分頁還有「新增租客」功能，可以加入其他共同承租人，每筆記錄暱稱與證件字號，最多可以加到 10 筆；這也是目前多人共同簽約的做法——如果問的是更完整的多人簽約功能規劃，目前沒有公開時程。
+每一位承租人的姓名、公司名稱、身分類型、聯絡方式，系統是逐筆分開記錄，不是把所有租客資料塞在同一個欄位裡。
+選擇「租客免註冊」的合約，只要合約成立就直接視為已完成簽名，不會經過「待租客簽回」或「待管理者簽名」這兩個狀態。
 ### 「基本條件」分頁的合約範本與日期要怎麼設定？（合約範本／類型、合約起迄日期、租賃訂約日期） {#jgb/D/contract-rentbasic-template-and-dates}
 - phrasings:
   - {text: "合約範本怎麼選", source: "draft:outline-20260920", status: proposed}
   - {text: "合約起迄日期怎麼設定", source: "draft:outline-20260920", status: proposed}
   - {text: "租賃訂約日期是什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "合約範本有哪幾種", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/contracts/edit/rentBasic/General.vue, code:app/Http/Controllers/ContractController.php, code:config/contract.php, code:app/Role.php, help:landlordonboarding04lease_zh-Hant.html]
+- sources: [code:src/pages/contracts/edit/rentBasic/General.vue, code:app/Http/Controllers/ContractController.php, code:config/contract.php, code:app/Role.php, help:landlordonboarding04lease_zh-Hant.html, docs:knowledge/jgb-product-facts.md#p914-contract-templates, docs:knowledge/jgb-product-facts.md#p914-contract-date-start, docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#91, docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#101]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -159,6 +187,10 @@ language: zh-TW
 另外還有「租賃訂約日期」欄位，用來記錄雙方實際簽訂這份合約的日期，跟合約起迄日期是不同的欄位。
 一般團隊建立一般住宅合約時，可選的合約範本共有 12 種：「114年內政部住宅租賃契約(原房東)」「113年內政部轉租契約(包租轉租)」「代租代管契約(參考114年租賃契約)」「內政部英文版 租賃契約書 原房東」「內政部英文版 租賃契約書 包租業」「內政部英文版 租賃契約書 代租代管」「英越文版 租賃契約書」「英泰文版 租賃契約書 原房東」「英泰文版 租賃契約書 代租代管」「公會中文版 租賃契約書 原房東」「公會中文版 租賃契約書 包租業」「公會中文版 租賃契約書 代租代管」。
 如果登入身分是個人房東角色，可選範本會縮減成 4 種：「114年內政部住宅租賃契約(原房東)」「內政部英文版 租賃契約書 原房東」「英泰文版 租賃契約書 原房東」「公會中文版 租賃契約書 原房東」。
+「轉租合約」本身也是一般合約範本可以選擇的其中一種，不是另外一套獨立機制；如果選的是內政部英文版範本，系統的版位設定裡沒有補充條款的印製座標，所以就算補充條款分頁有填寫內容，也不會印在這份合約文件上。
+合約的起始日就是這裡填的「合約起迄日期」起日，之後計算帳務的起算基準都是用這個欄位，跟這份合約資料是什麼時候建立到系統裡沒有關係。
+系統對「租賃訂約日期」（簽約日）與「合約起迄日期」（起租日）之間的先後關係沒有做強制檢查或提示；簽約日晚於起租日是否需要向主管機關另外說明，屬於外部規定的認定範圍，系統不判斷。
+系統的合約類型／範本只有原房東、包租業、代租代管三種分類，沒有「二房東」這個選項；二房東應該算原房東還是包租業，屬於業態的法律定性問題，系統不判斷。
 ### 「基本條件」分頁的繳費週期與帳單週期制度怎麼設定？（繳費週期／繳費截止日、當月分算或跨月計算、分算日） {#jgb/D/contract-rentbasic-billing-cycle}
 - phrasings:
   - {text: "繳費週期怎麼設定", source: "draft:outline-20260920", status: proposed}
@@ -214,7 +246,7 @@ language: zh-TW
   - {text: "自訂費用收入支出", source: "draft:outline-20260920", status: proposed}
   - {text: "繳費週期優惠", source: "draft:outline-20260920", status: proposed}
   - {text: "租金優惠跟繳費週期優惠差在哪", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/contracts/edit/billSetting/Index.jsx, code:src/pages/contracts/edit/rent/Index.jsx]
+- sources: [code:src/pages/contracts/edit/billSetting/Index.jsx, code:src/pages/contracts/edit/rent/Index.jsx, docs:knowledge/jgb-product-facts.md#p914-contract-cable-tv-fee]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -318,7 +350,7 @@ language: zh-TW
   - {text: "經理人資訊怎麼設定", source: "draft:outline-20260920", status: proposed}
   - {text: "電子簽名圖章", source: "draft:outline-20260920", status: proposed}
   - {text: "團隊資料自動帶入", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/contracts/edit/dealerBasic/Index.vue, help:landlordonboarding04lease_zh-Hant.html]
+- sources: [code:src/pages/contracts/edit/dealerBasic/Index.vue, help:landlordonboarding04lease_zh-Hant.html, docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#100]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -326,17 +358,20 @@ language: zh-TW
 如果是用團隊方式建立合約，出租方資料（公司登記名稱、統一編號、電話、Email、公司登記地址、公司通訊地址）會自動帶入先前團隊資訊填寫的內容，需要修改的話要回到「團隊資訊」編輯。
 填妥出租方資料後，要在「經理人資訊」選擇這份合約由團隊中哪一位經理人負責管理。
 分頁最下方可以選擇新增電子簽名圖章取代手動簽名；如果先前沒有上傳過電子圖章，需要先到「團隊資訊」設定才能使用這個功能。
+代租代管合約在這個分頁可以逐份選擇「出租人資訊」：從出租人清單選擇出租人，並選擇身份是「所有權人」或「轉租人」；個人房東、團隊本身的出租方資料則是帳號層級的設定。
+其餘關於要用哪個帳號簽約的個案安排，可洽客服協助。
 ### 建物謄本分頁是選填的嗎？（選填，僅供合約內容完備使用，不會顯示在廣告頁） {#jgb/D/contract-building-transcript-optional}
 - phrasings:
   - {text: "建物謄本要填嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "謄本資訊會公開嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "建物謄本是選填的嗎", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/routes/contracts.js, help:Landlordonboarding09Socialhousing_zh-Hant.html]
+- sources: [code:src/routes/contracts.js, help:Landlordonboarding09Socialhousing_zh-Hant.html, code:src/pages/estates/show/Index.jsx]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
 「建物謄本」分頁是選填分頁，用來補充建物的謄本資訊，讓合約內容更完備。
 這個分頁的資訊只是為了合約內容完備，並不會刊登在物件的網頁廣告上，可以放心填寫。
+這個分頁填寫的建物謄本資訊（例如地號、土地標的清冊），在物件對外的公開廣告頁面上完全查不到對應欄位，確認不會顯示在廣告頁上。
 ### 合約附件分頁能上傳什麼？（各類文件圖片或 PDF，最大 10MB） {#jgb/D/contract-attachments-optional}
 - phrasings:
   - {text: "合約附件可以放什麼", source: "draft:outline-20260920", status: proposed}
@@ -364,6 +399,7 @@ language: zh-TW
 補充條款是因為系統的電子合約使用政府提供的公版定型化契約，如果需要補充其他合約條款，可以在這裡描述，系統會自動把條款內容帶入合約當中。
 如果內容超過 50 行限制，建議另外寫成文字檔或圖片檔，改放在「合約附件」的「其他」項目上傳。
 這個分頁也提供「預設補充條款」範本可以套用，或是選擇「複製現有合約資料」把其他合約已填寫的補充條款複製過來。
+這個分頁另外還會提示「補充條款至多僅限 1 頁 A4 內容，請務必執行『預覽結果』以確認最終呈現」，這是排版後的頁數提示，跟前面「最多 50 行、每行 50 字」的輸入框字元數上限是兩件事，兩者可能同時成立：字數在上限內，仍可能因為排版超過 1 頁。
 ### 合約編輯分頁會依什麼條件增減？（紙本／DIY 合約、車位、Meta Capital 範本、稅務發票資格皆會影響） {#jgb/D/contract-edit-tabs-conditional-rules}
 - phrasings:
   - {text: "合約分頁為什麼變少", source: "draft:outline-20260920", status: proposed}
@@ -388,17 +424,39 @@ language: zh-TW
 - business_types: [system_provider]
 - instance_applicability: general
 一般住宅合約的「建物謄本」分頁只有在還沒選合約範本，或是選到「114年內政部住宅租賃契約(原房東)」「113年內政部轉租契約(包租轉租)」「代租代管契約(參考114年租賃契約)」這三種公版、或對應的公會中文版這三種時才會顯示；選到英文版、英越文版、英泰文版等其他範本時，這個分頁不會出現。
+### 合約的租賃範圍怎麼決定？（物件空間型態為整戶時自動為「全部」，其餘一律「部分」，不用使用者勾選） {#jgb/D/contract-lease-scope-by-space-type}
+- phrasings:
+  - {text: "租賃範圍怎麼決定", source: "draft:outline-20260920", status: proposed}
+  - {text: "合約全部還是部分怎麼判斷", source: "draft:outline-20260920", status: proposed}
+  - {text: "租賃範圍會自動判斷嗎", source: "draft:outline-20260920", status: proposed}
+- sources: [docs:knowledge/jgb-product-facts.md#p914-contract-lease-scope, code:config/estate.php]
+- target_user: [property_manager]
+- business_types: [system_provider]
+- instance_applicability: general
+合約的「租賃範圍」是全部還是部分，是由物件的空間型態決定的，不是使用者在合約上自己勾選的欄位。
+物件空間型態是「整戶」或「整層空間」時，合約的租賃範圍會自動判定為「全部」；其他空間型態（例如套房、雅房等分租情境）一律判定為「部分」。
+### 承租人編碼要異動怎麼辦？（此操作需由 JGB 客服協助） {#jgb/D/contract-tenant-code-change}
+- phrasings:
+  - {text: "承租人編碼異動", source: "draft:outline-20260920", status: proposed}
+  - {text: "租客編碼改不了", source: "draft:outline-20260920", status: proposed}
+  - {text: "承租人代號怎麼改", source: "draft:outline-20260920", status: proposed}
+- sources: [docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#123]
+- target_user: [property_manager]
+- business_types: [system_provider]
+- instance_applicability: general
+承租人編碼如果需要異動，此操作需由 JGB 客服協助。
 ## 建立與編輯社宅合約（房東基本資料與授權書、租客資格與證明文件、家庭與所得檢核、補貼修繕項目、照片檢核、點交，其餘分頁同一般） {#D-contract-edit-social-housing}
 ### 社宅合約「建物標的」分組有哪些分頁？（建物細節、現況補充、現況照片、附設傢俱四個分頁） {#jgb/D/social-housing-building-detail}
 - phrasings:
   - {text: "社宅合約建物標的怎麼填", source: "draft:outline-20260920", status: proposed}
   - {text: "建物細節填錯怎麼改", source: "draft:outline-20260920", status: proposed}
-- sources: [help:Landlordonboarding09Socialhousing_zh-Hant.html]
+- sources: [help:Landlordonboarding09Socialhousing_zh-Hant.html, code:src/pages/contracts/edit/situation/SocialHousing.vue]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
 社宅合約的「建物標的」分組包含建物細節（建物資訊／建物謄本）、現況補充、現況照片、附設傢俱四個分頁。
 建物細節分頁主要呈現物件建立時填寫的資料，如果資料有誤，需要回到物件編輯修改，不能直接在合約分頁改。
+「現況補充」分頁是一份建物現況檢查清單，內容包含是否有海砂屋、輻射屋、消防安全檢查、混凝土氯離子含量檢測等勾選項目，沒有勾選視為沒有這個情形或設備；分頁最上方固定會提示「如有需要，可執行：複製現有合約資料」，這個提示是固定顯示在頁首，不是只對沒勾選的項目才出現。
 ### 社宅合約「現況照片」分頁一定要上傳嗎？（部分照片為必填，用來證明社宅內部現況設備存在） {#jgb/D/social-housing-photos-tab}
 - phrasings:
   - {text: "現況照片一定要上傳嗎", source: "draft:outline-20260920", status: proposed}
@@ -488,12 +546,13 @@ language: zh-TW
 - phrasings:
   - {text: "社宅333補貼政策", source: "draft:outline-20260920", status: proposed}
   - {text: "社宅補助申請怎麼填", source: "draft:outline-20260920", status: proposed}
-- sources: [help:Landlordonboarding09Socialhousing_zh-Hant.html]
+- sources: [help:Landlordonboarding09Socialhousing_zh-Hant.html, docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#99]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
 「補助申請」分組主要配合政府的社會住宅包租代管 333 補貼政策：出租方有房屋稅、地價稅、租金所得稅三種稅費減免，承租方有公證費、修繕費、居家安全相關保險費三項費用補助，業者則有仲介費、代管費由政府全額補助的三年免費專業服務。
 補助申請分頁要填寫補助費用申請日期、住宅出租修繕費、公證費、承租人租金補助等條件。
+同一份合約要不要、能不能列多名租金補貼申請人，屬於政府補助規定的認定範圍，系統不判斷。
 ### 社宅合約「出租方」分組有哪些分頁？（基本資料、授權、附件三個分頁） {#jgb/D/social-housing-landlord-tabs-overview}
 - phrasings:
   - {text: "社宅出租方分頁有哪些", source: "draft:outline-20260920", status: proposed}
@@ -531,6 +590,7 @@ language: zh-TW
 - business_types: [system_provider]
 - instance_applicability: general
 基本資料分頁要勾選承租方身分別，選項包含一般戶、低收入戶、中低收入戶、六十五歲以上之老人（限申請人本人）、住宅政策補貼戶等，或勾選「以上均無」。
+社宅合約的「基本資料」分頁另外有「新增代理人」功能，可以填寫最多 3 位法定代理人（父、母、監護人三選一），這個功能只在社宅合約有，一般合約的承租方資料分頁沒有這個功能。
 ### 社宅合約「家庭＆財產」分頁要登記什麼？（家庭成員、不動產與動產總額、最近年所得） {#jgb/D/social-housing-tenant-household}
 - phrasings:
   - {text: "社宅家庭財產申報", source: "draft:outline-20260920", status: proposed}
@@ -580,6 +640,7 @@ language: zh-TW
 - instance_applicability: general
 如果合約範本選擇「包租包管」範本，承租方分組下的「家庭＆財產」「授權」「附件」三個分頁不會顯示。
 如果合約範本選擇「轉租」範本，出租方分組下的「授權」「附件」兩個分頁不會顯示。
+社宅合約範本其實有三種（代租代管、包租包管、轉租），只有包租包管跟轉租各自有拿掉分頁的規則；選「代租代管」範本時看到的是完整的分頁清單，沒有被額外拿掉任何分頁。
 ## 簽約與合約檢視 {#D-contract-sign-view}
 ### 合約邀請發出後租客有多久審閱期？（預設 3 天／72 小時，逾期連結失效，天數為團隊可調整設定） {#jgb/D/contract-invite-and-review-period}
 - phrasings:
@@ -587,40 +648,46 @@ language: zh-TW
   - {text: "合約邀請多久會過期", source: "draft:outline-20260920", status: proposed}
   - {text: "租客沒簽約連結失效", source: "draft:outline-20260920", status: proposed}
   - {text: "審閱期天數", source: "draft:outline-20260920", status: proposed}
-- sources: [code:app/Http/Controllers/ContractController.php, code:app/Http/Controllers/Internal/ContractWriteController.php, help:landlordonboarding04lease_zh-Hant.html]
+- sources: [code:app/Http/Controllers/ContractController.php, code:app/Http/Controllers/Internal/ContractWriteController.php, help:landlordonboarding04lease_zh-Hant.html, docs:knowledge/jgb-product-facts.md#p914-contract-invite-account-match, docs:knowledge/jgb-product-facts.md#p914-email-encrypted-no-lowercase, docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#113]
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
 房東送出合約邀請後，系統會給租客一段審閱期才能簽約；天數其實是讀團隊設定，沒有設定才用預設的 3 天（72 小時）。
 這個審閱天數設定屬於團隊層級，不同團隊可以各自覆蓋預設值。
 從發送邀請時開始計算，租客如果沒有在期限內完成簽約，這個合約邀請連結就會失效。
+送出合約邀請時，系統會用合約上填的租客 Email 去比對是否為已經註冊的會員，比對到的話會自動代入該會員的資料，並把合約上的租客 Email 改成該會員的註冊 Email；用電話比對時，只認已經完成手機驗證的帳號。
+這個比對只在送出邀請的當下做一次，租客如果是事後才註冊會員，不會自動回頭綁定到先前已經送出的合約邀請。
+比對會員 Email 時，大小寫不同會被當成不同的 Email，系統沒有把 Email 統一轉成小寫再比對。
+租客帳號登入後看不看得到某份合約的邀請，取決於這個帳號與這份合約在資料庫裡實際的綁定關係；如果遇到租客反映看不到邀請，需要查該筆合約與帳號的個案資料，可洽客服協助。
 ### 租客簽約要經過哪些步驟？（承租方簽約資料、上傳身分證明文件與印章、部分合約範本另有條款勾選、雲想科技畫面簽名） {#jgb/D/contract-sign-flow-steps}
 - phrasings:
   - {text: "租客怎麼簽約", source: "draft:outline-20260920", status: proposed}
   - {text: "簽約要填什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "簽約要傳哪些印章", source: "draft:outline-20260920", status: proposed}
   - {text: "簽名過程有紀錄嗎", source: "draft:outline-20260920", status: proposed}
-- sources: [code:resources/views/contract/sign.blade.php, code:src/entry/contract-sign.js, code:src/pages/contracts/edit/_methods/getFormDataForStepDone.js, help:contract_review_period_zh-Hant.html]
+- sources: [code:resources/views/contract/sign.blade.php, code:src/entry/contract-sign.js, code:src/pages/contracts/edit/_methods/getFormDataForStepDone.js, help:contract_review_period_zh-Hant.html, code:app/Http/Controllers/ContractController.php, docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#103]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
 租客簽約頁面第一步要填寫「承租方簽約資料」，並選擇「簽約身份」。
 頁面會要求上傳承租方身份證明文件影本；另外還有「工作名片/學生證」（同一個上傳欄位）與「良民證」等其他證明文件的上傳欄位，各自獨立、不能互相替代。
 印章上傳依簽約身份不同而異：租客身份要上傳「小章」；法人身份（非租客）則要上傳「大章」與「小章」兩個欄位。
-如果這份合約是 GTB 契約範本，簽約前會多一個步驟：畫面下方會出現 5 個條款確認選項（詳閱契約條款、無法更改內容、續約通知天數、履約保證金退還天數、吸菸罰緩等規定），要全部勾選才能繼續；一般合約範本沒有這個額外勾選步驟。
-確認資料無誤後，如果是 GTB 契約，要先點「下一步，同意合約條款」進到條款頁勾完 5 個確認選項，再點「下一步，前往簽名」才會進入雲想科技（Thinkcloud）的簽約畫面；一般合約範本只有一個「下一步」按鈕，點選後直接進入雲想科技簽約畫面。
+部分客戶使用專屬的客製合約範本；用這類範本簽約時，簽約前會多一個步驟：畫面下方會出現 5 個條款確認選項（詳閱契約條款、無法更改內容、續約通知天數、履約保證金退還天數、吸菸罰緩等規定），要全部勾選才能繼續；一般合約範本沒有這個額外勾選步驟。
+確認資料無誤後，如果是上述客製合約範本，要先點「下一步，同意合約條款」進到條款頁勾完 5 個確認選項，再點「下一步，前往簽名」才會進入雲想科技（Thinkcloud）的簽約畫面；一般合約範本只有一個「下一步」按鈕，點選後直接進入雲想科技簽約畫面。
 整個瀏覽、簽名過程都有時間戳記與 IP 紀錄。
+簽約過程系統只負責記錄簽名當下的時間戳記與 IP 位置這些客觀資訊；簽名內容跟登記姓名是否一致所產生的法律效力，屬於法律問題，系統不判斷。
 ### 電子簽章簽約要另外收費嗎？（系統內沒有簽章計費機制，簽約流程無付費／加購畫面） {#jgb/D/contract-esign-no-extra-fee}
 - phrasings:
   - {text: "電子簽章要收費嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "簽約要加購嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "電子簽章計費", source: "draft:outline-20260920", status: proposed}
-- sources: [code:database/migrations/2026_06_17_000002_create_contract_esign_table.php, code:resources/views/contract/sign.blade.php]
+- sources: [code:database/migrations/2026_06_17_000002_create_contract_esign_table.php, code:resources/views/contract/sign.blade.php, docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#32]
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
 JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄裡沒有任何費用或點數欄位。
 租客的簽約頁流程沒有付費或加購的畫面元素。
+系統內不另收簽章費，方案內容以方案頁為準。
 ### 合約簽約後可以修改嗎？（送出前可編輯、簽名前可取消簽名重編，簽署完成即無法更改，需重新簽一份新合約） {#jgb/D/contract-locked-after-signing}
 - phrasings:
   - {text: "合約簽名後可以改嗎", source: "draft:outline-20260920", status: proposed}
@@ -678,6 +745,17 @@ JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄�
 「上傳合約」適用於已經跟租客簽署完的合約，或是業者本身特有的公版合約，讓已有合約的房東也能無縫接軌使用系統。
 不論是上傳既有合約或使用 JGB 內政部公版合約，之後都可以透過系統做後續合約、帳務、修繕追蹤。
 如果掃描的合約 PDF 檔案大於 10MB，建議先在印表機端調整掃描品質，或使用線上壓縮工具縮小檔案再上傳。
+### 簽約後可以補加保證人嗎？（租客簽約流程本身就能加連帶保證人；簽約完成後要補加，業者端沒有自助功能，需洽 JGB 客服協助） {#jgb/D/contract-guarantor-add-after-signing}
+- phrasings:
+  - {text: "簽約後加保證人", source: "draft:outline-20260920", status: proposed}
+  - {text: "補簽保證人", source: "draft:outline-20260920", status: proposed}
+  - {text: "簽約完成後能加連帶保證人嗎", source: "draft:outline-20260920", status: proposed}
+- sources: [code:src/pages/contracts/sign/_parts/EmergencyContact.jsx, docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#122]
+- target_user: [property_manager]
+- business_types: [system_provider]
+- instance_applicability: general
+租客在簽約頁面填寫緊急聯絡人資料時，同一個區塊也可以填寫「連帶保證人」，這是簽約流程本身就提供的欄位。
+如果合約已經簽約完成，之後才想要補加保證人，業者端目前沒有自助的操作入口，此操作需由 JGB 客服協助。
 ## 點交 {#D-move-in}
 ### 點交清單怎麼確認？（依合約約定的傢俱項目逐一上傳照片、標註出租方或承租方負責） {#jgb/D/move-in-checklist-and-responsibility}
 - phrasings:
@@ -773,13 +851,14 @@ JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄�
   - {text: "點退帳單包含什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "點退押金怎麼退", source: "draft:outline-20260920", status: proposed}
   - {text: "點退完成的條件", source: "draft:outline-20260920", status: proposed}
-- sources: [help:landlordonboarding04lease_zh-Hant.html, code:src/pages/contracts/move-out/Index.jsx]
+- sources: [help:landlordonboarding04lease_zh-Hant.html, code:src/pages/contracts/move-out/Index.jsx, docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#132]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
 點退流程分兩步：第一步確認點交清單、填寫損壞賠償金額，第二步才會進入「點退找補費用」頁面產生帳單。
 點退確認清單、填完損壞賠償金額之後，系統會製作點退帳單，內容包含提前解約金、點退押金、賠償金，並要填入帳單期限。
 帳單設定完成後要發送給租客，等租客確認點退內容並完成繳款，才算完成點退程序。
+點退結算單會不會跟先前已經開立過的發票重複，要看個案的帳單與發票資料，可洽客服協助。
 ### 什麼合約可以點退？（合約狀態須為執行中／點交完成／歷史合約、須綁定 JGB 租客帳號，免註冊租客除外） {#jgb/D/move-out-eligibility-conditions}
 - phrasings:
   - {text: "什麼合約可以點退", source: "draft:outline-20260920", status: proposed}
@@ -825,6 +904,17 @@ JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄�
 - instance_applicability: general
 點退流程的第二步會進入「點退找補費用」頁面，這裡才是真正產生帳單的畫面，跟第一步的點交確認清單是分開的兩個步驟。
 這個頁面要填的收費／退費項目包含「傢俱賠償」、「應退費用」、「違約金」，另外還可以填寫備註、繳費期限、附件。
+### 租客不確認點退時要怎麼辦？（系統不會逾期自動放行，只能由房東取消點退邀請後重新發送） {#jgb/D/move-out-tenant-no-response-cancel}
+- phrasings:
+  - {text: "租客不確認點退", source: "draft:outline-20260920", status: proposed}
+  - {text: "點退會自動過期放行嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "點退邀請可以取消重發嗎", source: "draft:outline-20260920", status: proposed}
+- sources: [docs:knowledge/jgb-product-facts.md#p914-moveout-cancel]
+- target_user: [property_manager]
+- business_types: [system_provider]
+- instance_applicability: general
+如果點退清單送出後，租客遲遲沒有確認，系統本身沒有設計逾期自動放行的機制，不會因為時間到了就自動當作租客同意。
+遇到這種情況，房東可以手動取消已送出的點退邀請，系統會記錄這個「取消點退邀請」的動作，合約會退回到還沒送出點退的狀態，之後可以重新編輯並再送出一次點退清單。
 ## 續約 {#D-renew}
 ### 怎麼一次幫多筆合約續約？（合約總表「建立合約」旁選批次續約，異動中的合約不能選） {#jgb/D/renew-batch-entry-and-selection}
 - phrasings:
@@ -877,12 +967,13 @@ JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄�
   - {text: "續約簽約流程", source: "draft:outline-20260920", status: proposed}
   - {text: "租客簽回續約後要做什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "續約怎麼完成", source: "draft:outline-20260920", status: proposed}
-- sources: [help:landlordonboarding04lease_zh-Hant.html]
+- sources: [help:landlordonboarding04lease_zh-Hant.html, docs:knowledge/jgb-product-facts.md#p914-contract-renewal]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
 設定完續約日期後，系統會將續約邀請發送給租客，可以在「待租客簽回」欄位中查找這份合約。
 租客簽回後，房東方確認資料無誤，就可以點選「立即簽名」並完成簽約程序，最後即完成該合約的續約。
+續約在系統裡是用「複製」原合約的方式產生一份全新的合約紀錄，並且會把從舊合約繼承來的「歷史合約」狀態位元拿掉；租客完成簽署確認的當下，新合約就直接是「簽署完成」狀態，不需要等到舊合約到期才生效。
 ### 續約邀請效期是幾天？（預設 3 天，團隊可覆蓋設定） {#jgb/D/renew-invite-review-days}
 - phrasings:
   - {text: "續約邀請幾天內要簽", source: "draft:outline-20260920", status: proposed}
@@ -896,12 +987,25 @@ JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄�
 - phrasings:
   - {text: "續約會沿用舊合約資料嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "續約聯絡資料會更新嗎", source: "draft:outline-20260920", status: proposed}
-- sources: [code:app/Services/ContractService.php]
+- sources: [code:app/Services/ContractService.php, code:src/pages/contracts/renew/Index.vue, code:src/pages/contracts/renew/Preview.vue]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
 續約時系統會複製原合約產生新合約，並用出租方、承租方目前最新的角色或會員資料，更新聯絡電話、Email 等欄位，不是直接照抄舊合約當時填寫的資料。
 繳費週期、帳單週期制度等設定，如果續約頁面有調整就用新的值，沒調整則沿用原合約設定。
+續約不會像新建合約一樣進入完整的合約編輯分頁：續約頁面（快速設定或個別指定續約日）只能設定續約日期、繳費週期、帳單週期制度與簽約方式，沒有「租金費用」分頁可以編輯，所以租金金額本身不能在續約流程裡直接修改；續約流程另外有一個「續約預覽」頁面，可以預先編輯這次續約要產生的帳單草稿內容與金額。
+### 續約押金差額怎麼處理？（一般續約第一張帳單不列押金；只有特定合作團隊的延長續約會用原押金算差額；新合約無法直接沿用舊合約押金，一律列全額押金） {#jgb/D/renew-deposit-difference-handling}
+- phrasings:
+  - {text: "續約押金差額", source: "draft:outline-20260920", status: proposed}
+  - {text: "押金可以轉到新合約嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "續約要不要重收押金", source: "draft:outline-20260920", status: proposed}
+- sources: [docs:knowledge/jgb-product-facts.md#p914-renewal-deposit-diff, docs:knowledge/jgb-product-facts.md#p914-no-deposit-carryover]
+- target_user: [property_manager]
+- business_types: [system_provider]
+- instance_applicability: general
+一般團隊的續約流程，第一張帳單不會列出押金這個品項。
+只有特定合作團隊使用「延長續約」時，系統才會拿原合約記錄的押金金額跟新合約設定的押金金額比較差額：差額為正時在帳單上補收差額押金，差額為負時列為「退押金」支出；車位押金的處理不同，差額為負時是直接列一筆負數的「車位押金」，不是退押金。
+如果是全新建立、不是續約的合約，系統沒辦法把舊合約的押金直接轉移過來，第一張帳單一律列出全額押金；舊合約要拿回押金，需要走「點退押金」的結算流程。
 ## 提前解約 {#D-early-termination}
 ### 房東申請提前解約要選什麼理由？（新版中文合約有 10 項法定理由可選，其餘合約只能選「其他」） {#jgb/D/early-termination-reasons}
 - phrasings:
@@ -961,6 +1065,18 @@ JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄�
 - instance_applicability: general
 成功提前終止合約後，合約終止日會依新的日期更新，在租期到期前 30 天，就可以執行「點退押金」。
 點退時系統會依照合約條件，自動帶入並判斷是否有違約金，房東可以依照實際狀況調整數字。
+### 提前解約後還會出新帳單嗎？（解約日之後系統不會再自動產生新租金帳單，但解約前已產生、落在解約日後的帳單要業者自行封存） {#jgb/D/early-termination-billing-after}
+- phrasings:
+  - {text: "提前解約後帳單", source: "draft:outline-20260920", status: proposed}
+  - {text: "解約後還會出帳單嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "解約後帳單要自己處理嗎", source: "draft:outline-20260920", status: proposed}
+- sources: [docs:knowledge/jgb-product-facts.md#p914-early-termination-bills]
+- target_user: [property_manager]
+- business_types: [system_provider]
+- instance_applicability: general
+提前解約確認後，系統會把合約的到期日直接改成這次解約後的到期日。
+帳單產生的排程只會對到期日還沒到的合約產生下一期租金帳單，所以解約日之後不會再自動產生新的租金帳單。
+帳單排程本身會提前產生最多到下個月的帳單，而且確認解約當下不會自動刪除或封存已經產生的帳單；如果解約前已經先產生了、期間落在解約日之後的帳單，需要業者自己手動封存，系統不會幫忙處理。
 ## 租約公證（公證分頁與公證服務） {#D-notary}
 ### 一般合約的「公證」分頁怎麼設定？（是否辦理公證，同意時可複選三項應逕受強制執行事項，僅支援中文合約） {#jgb/D/general-contract-notary-tab}
 - phrasings:

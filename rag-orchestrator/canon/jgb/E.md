@@ -101,6 +101,7 @@ language: zh-TW
 - business_types: [system_provider]
 - instance_applicability: general
 待對帳狀態的收款帳單一律可以「退至應到帳」或「移至已到帳」，選單裡不會有「取消帳單」；「開立發票」的顯示條件跟應到帳狀態相同（合約設定自動開立發票、帳單本身設定自動開立發票、且發票尚未完成），不是每一張待對帳帳單都看得到。
+在帳單總表或收款帳單分頁勾選多筆「待對帳」帳單時，批次操作列會有「移至已到帳」，有匯出權限時另有「匯出」；「開立發票」只有開通手動開立發票功能的團隊才會出現；批次操作列不會有「退至應到帳」。
 ### 「已到帳」狀態的收款帳單可以做哪些動作？（收款備註／發票／收據／退款對帳單） {#jgb/E/bill-actions-received}
 - phrasings:
   - {text: "已到帳能做什麼", source: "draft:outline-20260920", status: proposed}
@@ -119,6 +120,7 @@ language: zh-TW
 已到帳的收款帳單只要本身有設定自動開立發票，就會常駐顯示「重開發票」，不論目前發票狀態為何。
 只有在這張帳單有已開立且未作廢的發票時，齒輪選單才會出現「作廢發票」。
 已到帳的收款帳單一律可以「封存帳單」。
+帳單轉為已付款（不論是線上付款、或業者手動移至已到帳）時，系統會自動寄一封附收據 PDF 的通知信給租客；前端目前沒有「重寄收據」的按鈕可以手動再發一次。
 ### 「應支出」狀態的支出帳單，房東跟租客各能做什麼？（房東：前往付款／通知已匯款／取消帳單；租客：付款） {#jgb/E/bill-actions-expense-unpaid}
 - phrasings:
   - {text: "應支出可以做什麼", source: "draft:outline-20260920", status: proposed}
@@ -295,6 +297,109 @@ language: zh-TW
 「總收支」分頁底下分「全部」「已到帳」「已支出」「應到帳」「應支出」，可以在同一個分頁把收款帳單跟支出帳單放在一起看。
 「總收支」分頁跟「帳單總表」不同：總收支只列收款/支出這幾個狀態的帳單，帳單總表是列出全部帳單不分狀態。
 「總收支」分頁裡「已到帳」「已支出」「應到帳」「應支出」這四個狀態頁籤都有本頁小計功能，因為金額欄顯示的是「這張帳單在本分頁那一邊的金額」，所以才需要本頁小計，跟上方彙總卡片的數字對得起來；「全部」頁籤本身沒有這個小計。
+### 帳單通知走哪些管道？通知對象是誰？（Email／簡訊可分別開關；只發給帳單本身的那位承租人，不會同時發給合約上另一位承租人） {#jgb/E/bill-notify-channels}
+- phrasings:
+  - {text: "帳單通知怎麼關", source: "draft:outline-20260920", status: proposed}
+  - {text: "簡訊通知在哪關掉", source: "draft:outline-20260920", status: proposed}
+  - {text: "帳單通知會發給誰", source: "draft:outline-20260920", status: proposed}
+  - {text: "關閉租客所有通知", source: "draft:outline-20260920", status: proposed}
+- sources: [docs:knowledge/jgb-product-facts.md#p914-bill-notify]
+- target_user: [property_manager, prospect]
+- business_types: [system_provider]
+- instance_applicability: general
+帳單通知可以分別開關 Email 跟簡訊；業者也可以直接在租客列表用「通知開關」整個關掉某一位租客的全部通知。
+帳單通知的收件對象只認這張帳單記錄上的那一位承租人，只會發到這個人的手機跟 Email，不會同時發給合約上另一位掛名的承租人。
+### 發票可以線上作廢嗎？（可在帳單詳細頁作廢，但只支援 ezPay；其他金流商的發票作廢不了，已開折讓的發票也不能再作廢） {#jgb/E/bill-invoice-void-limitation}
+- phrasings:
+  - {text: "發票怎麼作廢", source: "draft:outline-20260920", status: proposed}
+  - {text: "作廢發票支援哪些金流商", source: "draft:outline-20260920", status: proposed}
+  - {text: "折讓後還能作廢嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "ezPay作廢發票", source: "draft:outline-20260920", status: proposed}
+- sources: [docs:knowledge/jgb-product-facts.md#p914-invoice-void-ezpay]
+- target_user: [property_manager, prospect]
+- business_types: [system_provider]
+- instance_applicability: general
+業者可以在帳單詳細頁把該帳單已開立的發票作廢，但這個功能只支援 ezPay 開出來的發票，其他發票廠商的發票會被擋下、作廢不了。
+如果這張發票已經開立過折讓單，依 ezPay 的規則就不能再作廢，要退費得改走折讓那條路徑。
+### 「通知已匯款」按鈕什麼時候才會出現？（只在非線上金流收款的帳單才有，改走線上金流收款就不顯示） {#jgb/E/bill-notify-remittance-visibility}
+- phrasings:
+  - {text: "通知已匯款在哪", source: "draft:outline-20260920", status: proposed}
+  - {text: "通知已匯款不見了", source: "draft:outline-20260920", status: proposed}
+  - {text: "線上收款還要通知已匯款嗎", source: "draft:outline-20260920", status: proposed}
+- sources: [docs:knowledge/jgb-product-facts.md#p914-notify-remittance]
+- target_user: [property_manager, prospect]
+- business_types: [system_provider]
+- instance_applicability: general
+租客在「我的帳單」的「待繳帳單」可以按「通知已匯款」，輸入匯款帳號後五碼送出，也可以另外上傳繳款證明。
+如果這張帳單改走線上金流收款，「通知已匯款」按鈕跟上傳證明的畫面就不會出現。
+### 帳單要什麼狀態才可以直接封存？（「待發送」跟「已到帳」都可以直接封存，不用先轉成已到帳；可勾選多筆一次封存） {#jgb/E/bill-archive-precondition}
+- phrasings:
+  - {text: "草稿可以直接封存嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "封存要先變已到帳嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "批次封存帳單", source: "draft:outline-20260920", status: proposed}
+  - {text: "封存順序怎麼安排", source: "draft:outline-20260920", status: proposed}
+- sources: [docs:knowledge/jgb-product-facts.md#p914-bill-archive-states, code:src/use/config/useBillTypes.js]
+- target_user: [property_manager]
+- business_types: [system_provider]
+- instance_applicability: general
+封存這個動作允許在「待發送」（草稿）跟「已到帳」兩種狀態下直接執行，不需要先把待發送的帳單轉成已到帳才能封存。
+帳單總表、收款帳單這類分頁都可以勾選多筆同狀態的帳單一次封存。
+### 押金收據號碼是系統自動產生的嗎？（不是，號碼要透過 Excel 匯出／匯入手動填寫，系統不會自動編流水號） {#jgb/E/bill-deposit-receipt-no}
+- phrasings:
+  - {text: "押金收據號碼怎麼填", source: "draft:outline-20260920", status: proposed}
+  - {text: "押金收據號碼會自動產生嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "押金收據匯入匯出", source: "draft:outline-20260920", status: proposed}
+- sources: [docs:knowledge/jgb-product-facts.md#p914-deposit-receipt-no]
+- target_user: [property_manager, prospect]
+- business_types: [system_provider]
+- instance_applicability: general
+押金收據號碼不是系統自動產生的流水號，而是業者用 Excel 匯出、自己填好號碼後再匯入系統寫回去。
+### 合約已結束、但底下還留著未來計費期間的租金帳單，系統排定發送時會怎麼處理？（系統自動排定發送／自動寄出都會跳過不寄，但不會刪除帳單；業者手動排定發送則不受這條規則限制；批次寄出依帳單 id 由小到大處理，沒有可指定的發送順序） {#jgb/E/bill-scheduled-contract-ended-guard}
+- phrasings:
+  - {text: "合約結束後帳單還會自動寄嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "解約後草稿帳單會怎樣", source: "draft:outline-20260920", status: proposed}
+  - {text: "排定發送帳單順序", source: "draft:outline-20260920", status: proposed}
+  - {text: "合約到期未來帳單擋不擋", source: "draft:outline-20260920", status: proposed}
+- sources: [code:app/Services/Bills/ContractEndedRentBillGuard.php, code:app/Console/Commands/BillBatchSend.php]
+- target_user: [property_manager]
+- business_types: [system_provider]
+- instance_applicability: general
+如果一般租金帳單的計費期間起日晚於它所屬合約的結束日，系統每天自動排定發送、自動寄出這兩段流程都會直接跳過這張帳單、不自動寄出，但帳單不會被刪除。
+這個攔截只作用在系統自動執行的那兩段流程；業者自己手動把這張帳單按下排定發送，不受這個規則限制。
+系統批次寄出排定發送帳單時，是依帳單 id 由小到大遞增處理，沒有可以另外指定發送順序的設定。
+### 業者可以請 JGB 客服代發催繳通知嗎？（此操作需由 JGB 客服協助；業者端沒有自助重發催繳的介面） {#jgb/E/bill-remind-resend-by-support}
+- phrasings:
+  - {text: "催繳通知可以重發嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "客服可以幫忙催繳嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "重新寄催繳通知", source: "draft:outline-20260920", status: proposed}
+- sources: [code:app/Http/Controllers/UserController.php, docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#111, code:app/Console/Commands/BillNotifyOverdue.php]
+- target_user: [property_manager, prospect]
+- business_types: [system_provider]
+- instance_applicability: general
+逾期未繳的帳單，系統會從逾期隔天起每隔一天自動寄送催繳通知，逾期超過 65 天後停止寄送；業者端沒有自己重新發送催繳通知的按鈕或介面。
+此操作需由 JGB 客服協助。
+### 超商代碼繳費逾期後才繳，帳單還會入帳嗎？（系統不檢查代碼期限，完全依金流商回傳的付款結果；代碼逾期後是否還能繳費屬外部規定，系統不判斷） {#jgb/E/bill-cvs-barcode-overdue-payment}
+- phrasings:
+  - {text: "超商代碼過期還能繳嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "超商代碼逾期入帳", source: "draft:outline-20260920", status: proposed}
+  - {text: "超商繳費逾期", source: "draft:outline-20260920", status: proposed}
+- sources: [code:app/Http/Controllers/PaymentController.php, docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#114]
+- target_user: [property_manager, prospect]
+- business_types: [system_provider]
+- instance_applicability: general
+系統收到超商代碼繳費的付款結果通知時，只看金流商回傳的交易狀態是不是成功，沒有另外檢查這組代碼是不是已經過了繳費期限。
+代碼過期後還能不能拿去超商繳費、繳了算不算數，屬於金流商自己的規定，系統不判斷這件事。
+### 收據功能還會不會有新的開發？（現行已到帳帳單一律可以看到系統寄送的收據，目前沒有公開的後續開發時程） {#jgb/E/bill-receipt-feature-roadmap}
+- phrasings:
+  - {text: "收據功能會不會更新", source: "draft:outline-20260920", status: proposed}
+  - {text: "收據還有新功能嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "收據開發時程", source: "draft:outline-20260920", status: proposed}
+- sources: [code:src/use/config/useBillTypes.js, docs:knowledge/jgb-product-facts.md#p914-receipt-email, docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#117]
+- target_user: [property_manager, prospect]
+- business_types: [system_provider]
+- instance_applicability: general
+現在已到帳的收款帳單，齒輪選單一律看得到「收據」；帳單轉為已付款時，系統也會自動寄送附收據 PDF 的通知信給租客。
+目前沒有公開的收據功能開發時程。
 ## 建立與編輯帳單（單筆、批次、週期批次） {#E-bill-create-edit}
 ### 新增帳單有哪幾種頁面？（新增帳單／新增批次帳單／新增週期帳單／編輯帳單） {#jgb/E/bill-create-modes}
 - phrasings:
@@ -360,7 +465,7 @@ language: zh-TW
 「總額（自動分攤）」欄位只出現在新增週期帳單頁面，而且團隊要開通社區投報率功能才會顯示。
 「總額（自動分攤）」開啟後可以直接填一筆總金額，讓系統自動拆分到各期金額，不需要像預設模式一樣逐期分別填寫金額。
 「總額（自動分攤）」的分攤方式是把填入的總金額平均分成各期，除不盡的零頭全部加在最後一期，不是依比例或依天數分攤。
-### 帳單費用細目填寫有什麼規則？（度數欄位最多小數點後 2 位、電水瓦斯金額欄位限制小數點後 2 位、當期度數要大於上期度數） {#jgb/E/bill-fee-item-rules}
+### 帳單費用細目填寫有什麼規則？（度數欄位最多小數點後 2 位、電水瓦斯金額欄位限制小數點後 2 位、當期度數不可小於上期度數） {#jgb/E/bill-fee-item-rules}
 - phrasings:
   - {text: "費用細目怎麼填", source: "draft:outline-20260920", status: proposed}
   - {text: "水電費當期度數錯誤", source: "draft:outline-20260920", status: proposed}
@@ -461,6 +566,26 @@ language: zh-TW
 只有「新增帳單」（單筆）在對象選租客時，才會依該租客合約的收款設定自動帶入付款方式與收款帳戶。
 如果合約帶出來的帳戶已經停用、不可取號、是自訂現金或屬於舊制/儲值等不符合判準的情況，系統不會亂猜一個值，付款方式會維持未選。
 這個自動帶入的機制只在對象是「租客」時才會啟動，選其他對象（大房東、物件、其他）不會嘗試帶入合約付款設定。
+### 不足一個月的租金怎麼算？（按該期帳單天數比例分攤：月租金 × 實際入住天數 ÷ 該期帳單天數，不是固定除以 30 或 31） {#jgb/E/bill-partial-month-proration}
+- phrasings:
+  - {text: "不足月租金怎麼算", source: "draft:outline-20260920", status: proposed}
+  - {text: "點退帳單租金怎麼算", source: "draft:outline-20260920", status: proposed}
+  - {text: "入住天數比例分攤", source: "draft:outline-20260920", status: proposed}
+- sources: [docs:knowledge/jgb-product-facts.md#p914-proration]
+- target_user: [property_manager, prospect]
+- business_types: [system_provider]
+- instance_applicability: general
+不足一個月的租金，是用「月租金 × 這一期實際入住的天數 ÷ 這一期帳單本身的天數」去算，不是固定除以 30 天或 31 天。
+### 草稿帳單的電費度數要自己填嗎？（草稿階段度數預設留空，可在編輯頁按「取得即時電錶度數」先帶入） {#jgb/E/bill-power-reading-draft-defaults}
+- phrasings:
+  - {text: "電費度數怎麼帶入", source: "draft:outline-20260920", status: proposed}
+  - {text: "電表度數會重抓嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "草稿帳單度數空白", source: "draft:outline-20260920", status: proposed}
+- sources: [docs:knowledge/jgb-product-facts.md#p914-power-reading-draft, code:app/Bill.php]
+- target_user: [property_manager]
+- business_types: [system_provider]
+- instance_applicability: general
+草稿帳單的電費度數欄位預設是空的，業者可以在編輯頁按「取得即時電錶度數」先把度數帶進來。
 ## 帳單統計與報表 {#E-bill-stats}
 ### 「統計報表」的「當前表現」分頁顯示什麼？（收款情況／支出情況卡片） {#jgb/E/bill-stat-overview}
 - phrasings:
@@ -501,53 +626,6 @@ language: zh-TW
 「每月對帳單」分頁底下是「物件對帳單」，一樣可以篩選後按「新增對帳單」上傳。
 選定的物件如果還沒有人上傳過報表，畫面會顯示「尚未上傳任何報表」。
 「物件報表」要先選「社區」再選「物件」兩層下拉篩選，選定物件後才會抓這個物件的報表清單；如果選了社區但還沒選物件，畫面會用「尚未上傳任何報表」搭配「請選擇物件」提示，不是真的代表這個社區沒有任何報表。
-### 「財務報表」（年度／每月）跟「統計報表」是不同頁面？（年度／每月收支總表；頁面上的「下載」目前沒有動作） {#jgb/E/bill-sheet-report-title}
-- phrasings:
-  - {text: "年度財務報表", source: "draft:outline-20260920", status: proposed}
-  - {text: "每月財務報表", source: "draft:outline-20260920", status: proposed}
-  - {text: "財務報表怎麼下載", source: "draft:outline-20260920", status: proposed}
-  - {text: "帳單報表在哪", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/bills/sheet/Index.vue]
-- target_user: [property_manager]
-- business_types: [system_provider]
-- instance_applicability: general
-「財務報表」跟前面「統計報表」的「當前表現」是不同頁面：網址沒有指定月份時標題顯示「年度財務報表」，網址有指定年月時標題顯示「每月財務報表」。
-財務報表頁面右上角有「下載」字樣，但目前點了沒有任何動作。
-報表下方依照開啟時的檢視方式（按物件或按項目）呈現不同的表格內容，頁面上沒有切換器。
-### 財務報表可以用哪兩種方式檢視？（按物件檢視、按項目檢視） {#jgb/E/bill-sheet-two-views}
-- phrasings:
-  - {text: "財務報表按物件看", source: "draft:outline-20260920", status: proposed}
-  - {text: "財務報表按項目看", source: "draft:outline-20260920", status: proposed}
-  - {text: "收支小計怎麼看", source: "draft:outline-20260920", status: proposed}
-  - {text: "已收入已支出分項", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/bills/sheet/Index.vue]
-- target_user: [property_manager]
-- business_types: [system_provider]
-- instance_applicability: general
-財務報表依打開頁面時網址帶的參數決定顯示哪一種檢視：預設情況顯示「按物件」檢視，每個物件一列，最右邊有一欄「收支小計」加總這個物件全年（或該月）的收支。
-如果網址帶特定參數指定要看「依項目統計」，則改顯示「按項目」檢視，這時會分別列出「已收入」跟「已支出」兩張表，各自依項目名稱、逐月呈現金額。
-「按項目」檢視會用「已收入」跟「已支出」兩個色塊標籤區分兩張表格，方便分辨目前看的是收入項目還是支出項目。
-### 財務報表上方的三張總計卡片是怎麼算的？（收入總計／支出總計／收支總計） {#jgb/E/bill-sheet-total-cards}
-- phrasings:
-  - {text: "財務報表收入總計", source: "draft:outline-20260920", status: proposed}
-  - {text: "財務報表支出總計", source: "draft:outline-20260920", status: proposed}
-  - {text: "收支總計怎麼算", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/bills/sheet/Index.vue]
-- target_user: [property_manager]
-- business_types: [system_provider]
-- instance_applicability: general
-財務報表最上方會顯示「收入總計」「支出總計」「收支總計」三張卡片，「收支總計」＝收入總計－支出總計，反映該年度（或該月）的淨收支。
-「按物件」檢視時，表格最後會多出一列「項目總計」，把所有物件的各項金額加總起來。
-「按項目」檢視時，收入表跟支出表各自也會多一列「收入總計」或「支出總計」。
-### 財務報表右上角的「下載」按鈕可以下載什麼？ {#jgb/E/bill-sheet-download-button}
-- phrasings:
-  - {text: "財務報表下載按鈕", source: "draft:outline-20260920", status: proposed}
-  - {text: "財務報表怎麼匯出", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/bills/sheet/Index.vue]
-- target_user: [property_manager]
-- business_types: [system_provider]
-- instance_applicability: general
-財務報表頁面右上角有一個帶下載圖示的「下載」按鈕。
 ## 社宅報表 {#E-social-housing-report}
 ### 社宅報表的「清冊列表」在列什麼？（每個媒合編號底下的表單勾選與修繕費、申請期數） {#jgb/E/social-housing-sheet-list}
 - phrasings:
@@ -615,6 +693,17 @@ language: zh-TW
 確認視窗說明執行歸檔後，資料會同步至資料庫且無法修改，要繼續才按「確認」。
 綠色帶勾勾圖示的「歸檔」標籤，只會在這筆紀錄已經完成歸檔之後才顯示；已經歸檔的紀錄，「確定歸檔」按鈕會保留在畫面上但變成無法點擊的停用狀態，不是完全消失，也沒有另外一個單獨叫「歸檔」的按鈕。
 在「其餘筆」（非最新一筆）的歷史紀錄裡，如果這筆還沒歸檔，該列的表單欄位只會用文字＋頓號列出表單名稱，不會出現可以下載的按鈕；只有已經歸檔的紀錄，表單名稱才會變成可以點擊下載的按鈕。
+### 社宅報表的「社會住宅」身份可以對應到哪個地方政府的社宅方案？（系統只定義身份類別，不判斷方案適配） {#jgb/E/social-housing-sheet-program-scope}
+- phrasings:
+  - {text: "社宅報表適用哪個社宅方案", source: "draft:outline-20260920", status: proposed}
+  - {text: "社會住宅身份限制", source: "draft:outline-20260920", status: proposed}
+  - {text: "社宅報表限台灣嗎", source: "draft:outline-20260920", status: proposed}
+- sources: [code:config/role.php]
+- target_user: [property_manager]
+- business_types: [system_provider]
+- instance_applicability: general
+JGB 把「社會住宅」設計成一種團隊身份，跟「個人房東/代理人」「法人房東(公司)」並列，可以建立多筆，但只開放台灣（幣別新台幣、地區台灣）使用。
+至於這個身份能不能對應到某個地方政府推出的特定社宅方案，屬地方政府社宅政策認定，系統不判斷。
 ## 差額發票（群組、底租、社區層開關） {#E-balance-invoice}
 ### 社區怎麼開啟差額發票功能？（社區編輯頁的開關，設定底租總額幣別與每月租金） {#jgb/E/balance-invoice-community-switch}
 - phrasings:
@@ -740,6 +829,59 @@ language: zh-TW
 「封存群組」只要這個群組目前的狀態還不是「封存」就能點；已經是封存狀態時，這個選項會顯示但無法點擊。
 「刪除群組」只有在這個群組本身允許刪除時才能點，否則顯示但無法點擊；能不能刪除是系統依群組狀態判定的。
 動作選單旁邊另外有一個獨立的「查看歷程」圖示按鈕，不在下拉選單裡，點下去可以看這個群組的操作紀錄。
+### 差額發票收支表的租金退款／減免怎麼呈現？（列在「租金增(減)(B)」欄，以負數表示） {#jgb/E/balance-invoice-refund-report-column}
+- phrasings:
+  - {text: "差額發票收支表退款", source: "draft:outline-20260920", status: proposed}
+  - {text: "差額發票租金增減欄", source: "draft:outline-20260920", status: proposed}
+  - {text: "差額發票減免怎麼記", source: "draft:outline-20260920", status: proposed}
+- sources: [docs:knowledge/jgb-product-facts.md#p914-balance-invoice-refund]
+- target_user: [property_manager]
+- business_types: [system_provider]
+- instance_applicability: general
+「報表發票下載」分頁裡的收支表，租金退款或減免會列在「租金增(減)(B)」這一欄，並以負數（括號）表示。
+### 差額發票收支表怎麼判斷一個帳單品項算不算「租金」收入？（系統預設品項看名稱是不是「租金」「退租金」；自訂品項看品項性質） {#jgb/E/balance-invoice-rent-item-rule}
+- phrasings:
+  - {text: "差額發票租金品項判定", source: "draft:outline-20260920", status: proposed}
+  - {text: "退租帳單科目重複計入", source: "draft:outline-20260920", status: proposed}
+  - {text: "差額收支表怎麼認租金", source: "draft:outline-20260920", status: proposed}
+- sources: [code:app/Services/BalanceInvoiceService.php]
+- target_user: [property_manager]
+- business_types: [system_provider]
+- instance_applicability: general
+差額發票收支表判斷一筆帳單品項算不算「租金」收入：系統預設品項看品項名稱是不是「租金」或「退租金」；業者自訂的品項則看品項性質是不是「租金」，自訂品項即使取名「租金」、性質不是租金也不算；判斷依據不是這筆帳單是哪一種帳單（例如退租結算單）。
+如果個案帳單的品項命名方式跟預繳租金重複，會不會造成收支表重複計入，屬記帳命名上的判斷，需要依個案帳單資料確認。
+### 身分從法人改成自然人後，差額發票群組要怎麼重新設定？（系統沒有專用的身分切換規則） {#jgb/E/balance-invoice-entity-type-change}
+- phrasings:
+  - {text: "差額發票法人改自然人", source: "draft:outline-20260920", status: proposed}
+  - {text: "差額群組身分切換", source: "draft:outline-20260920", status: proposed}
+  - {text: "差額發票身分變更", source: "draft:outline-20260920", status: proposed}
+- sources: [code:app/Services/BalanceInvoiceService.php]
+- target_user: [property_manager]
+- business_types: [system_provider]
+- instance_applicability: general
+差額發票的計算與開票邏輯裡，沒有針對「法人改成自然人」這種身分變更設計專屬的處理規則，結果要看個案在系統上實際填寫、切換的資料，需要依個案情況確認。
+### 合約還沒簽回時能不能開發票或收據？（發票看合約的開票設定、押金收據看帳單是否到帳，簽署狀態是否連動要看個案） {#jgb/E/balance-invoice-unsigned-contract}
+- phrasings:
+  - {text: "合約未簽回能開發票嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "合約未簽回押金收據", source: "draft:outline-20260920", status: proposed}
+  - {text: "簽約中可以開發票嗎", source: "draft:outline-20260920", status: proposed}
+- sources: [docs:knowledge/jgb-product-facts.md#p914-invoice-per-bill, docs:knowledge/jgb-product-facts.md#p914-receipt-email]
+- target_user: [property_manager]
+- business_types: [system_provider]
+- instance_applicability: general
+發票什麼時候開立，是依合約與團隊的開票設定決定（例如是否開啟「預先開立發票」、有沒有立即開立權限），不是直接看合約有沒有簽回。
+押金收據則是看這筆帳單本身有沒有被標記為已到帳；帳單到帳後系統寄給租客的通知信會附上收據（部分特定合作團隊另有處理方式）。
+至於合約還沒簽署完成時，這些規則會不會被連動擋下，屬個案情況，需要查詢個案的合約與帳單資料確認。
+### 帳單不在任何差額發票群組內時，JGB 怎麼處理？（列進內部「發票異常盤查」名單，處理需洽客服） {#jgb/E/balance-invoice-anomaly-list}
+- phrasings:
+  - {text: "帳單沒有差額群組怎麼辦", source: "draft:outline-20260920", status: proposed}
+  - {text: "發票異常盤查名單", source: "draft:outline-20260920", status: proposed}
+  - {text: "帳單不在差額群組", source: "draft:outline-20260920", status: proposed}
+- sources: [code:app/Http/Controllers/Admin/InvoiceFailureController.php]
+- target_user: [property_manager]
+- business_types: [system_provider]
+- instance_applicability: general
+帳單不屬於任何差額發票群組、又出現開票異常的情況時，系統會把它列進內部「發票異常盤查」名單；業者端在帳單列表可以用「發票異常」狀態篩選看到這類帳單，但實際盤查與處理只在 JGB 內部客服後台進行，此操作需由 JGB 客服協助。
 ## 固定虛擬帳號管理（租客虛擬帳號、餘額、歷程） {#E-virtual-account}
 ### 「固定虛擬帳號管理」列表看得到哪些資訊？（帳號設定開啟時才有租客與物件相關欄位；虛擬帳號、餘額、歷程一律都有） {#jgb/E/recharge-account-list-columns}
 - phrasings:
@@ -870,6 +1012,47 @@ language: zh-TW
 系統每天凌晨 03:00 會跑一個排程，把固定虛擬帳號收到的款項自動沖銷、比對到對應的帳單。
 這個自動比對只會處理特定合作團隊的帳單，其他團隊的固定虛擬帳號帳單不會被這個排程自動處理，仍要靠人工對帳。
 如果虛擬帳號的餘額不夠支付某張帳單，這張帳單會維持原本的「應到帳」狀態，不會被標記成「已到帳」；排程之後每天還會再重新比對一次。
+### 退押金這類要付給租客的帳單，也走固定虛擬帳號嗎？（不會，顯示的是租客本人的收款帳戶） {#jgb/E/recharge-account-refund-excluded}
+- phrasings:
+  - {text: "退押金走虛擬帳號嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "支出帳單收款帳戶", source: "draft:outline-20260920", status: proposed}
+  - {text: "退款方向虛擬帳號", source: "draft:outline-20260920", status: proposed}
+- sources: [docs:knowledge/jgb-product-facts.md#p914-refund-bill-account]
+- target_user: [property_manager]
+- business_types: [system_provider]
+- instance_applicability: general
+收款方是租客本人的支出帳單（例如退押金），畫面顯示的是租客本人的收款銀行帳戶，不會使用「固定虛擬帳號管理」裡設定的帳號；固定虛擬帳號只用在租客要繳款給業者的方向。
+### 「固定虛擬帳號管理」跟租客線上繳費產生的 ATM 虛擬帳號是同一種嗎？（不是，ATM 那組是單筆繳費用、效期 180 天） {#jgb/E/recharge-account-vs-single-use-atm}
+- phrasings:
+  - {text: "ATM虛擬帳號跟固定虛擬帳號差在哪", source: "draft:outline-20260920", status: proposed}
+  - {text: "線上繳費ATM虛擬帳號效期", source: "draft:outline-20260920", status: proposed}
+  - {text: "固定虛擬帳號會過期嗎", source: "draft:outline-20260920", status: proposed}
+- sources: [docs:knowledge/jgb-product-facts.md#p914-newebpay-atm-expiry]
+- target_user: [property_manager]
+- business_types: [system_provider]
+- instance_applicability: general
+「固定虛擬帳號管理」頁面管理的是可以重複收款、要手動建立的固定帳號；租客在「我的帳單」線上繳費時，走藍新取號產生的 ATM 虛擬帳號是另一種、系統即時產生的單筆帳號，效期 180 天，過期後要重新走一次繳費流程才會再產生新的一組，不會出現在「固定虛擬帳號管理」列表裡。
+### 租客重複匯款時系統怎麼處理？（單筆帳單已付款後重複匯入會略過；固定虛擬帳號多匯的部分留作餘額） {#jgb/E/recharge-account-mismatch-and-duplicate}
+- phrasings:
+  - {text: "虛擬帳號匯款金額不符", source: "draft:outline-20260920", status: proposed}
+  - {text: "虛擬帳號重複匯款", source: "draft:outline-20260920", status: proposed}
+  - {text: "虛擬帳號多匯的錢去哪", source: "draft:outline-20260920", status: proposed}
+- sources: [docs:knowledge/jgb-product-facts.md#p914-atm-amount-mismatch, docs:knowledge/jgb-product-facts.md#p914-duplicate-remittance]
+- target_user: [property_manager]
+- business_types: [system_provider]
+- instance_applicability: general
+如果同一筆單筆帳單的付款已經完成，租客又重複匯款進來，系統只會記錄「該筆訂單已被處理」並略過，不會再沖到任何帳單。
+匯到固定虛擬帳號的錢則一律先進這組帳號的儲值餘額，系統自動銷帳，多匯的部分留作餘額，用來抵扣後續帳單；同一筆銀行入帳通知重複收到時，系統會用指紋比對去重，不會重複儲值。
+### 逾期的虛擬帳號能不能重新產生？（此操作需由 JGB 客服協助，業者端沒有自助入口） {#jgb/E/recharge-account-regenerate-expired}
+- phrasings:
+  - {text: "逾期虛擬帳號重新產生", source: "draft:outline-20260920", status: proposed}
+  - {text: "虛擬帳號過期怎麼辦", source: "draft:outline-20260920", status: proposed}
+  - {text: "虛擬帳號重發", source: "draft:outline-20260920", status: proposed}
+- sources: [code:src/pages/users/rechargeAccountList/Index.vue]
+- target_user: [property_manager]
+- business_types: [system_provider]
+- instance_applicability: general
+虛擬帳號逾期需要重新產生時，業者端目前沒有自助重新產生的入口，此操作需由 JGB 客服協助。
 ## 線上金流收款帳號開通（藍新、中信；入口在「線上智能整合收款」頁的「開通帳號」） {#E-payment-onboarding}
 ### JGB 支援哪些收款金流？身分限制是什麼？（國泰世華／永豐銀行僅法人；中國信託／藍新法人與個人皆可） {#jgb/E/payment-gateway-options}
 - phrasings:
@@ -929,7 +1112,7 @@ JGB 目前支援國泰世華、永豐銀行、中國信託、藍新 NewebPay 四
   - {text: "超商代碼繳費金額限制", source: "draft:outline-20260920", status: proposed}
   - {text: "國外卡要另外申請嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "藍新付款方式預設開哪些", source: "draft:outline-20260920", status: proposed}
-- sources: [code:app/Http/Controllers/UserController.php]
+- sources: [code:app/Http/Controllers/UserController.php, docs:knowledge/jgb-product-facts.md#p914-credit-installment, code:config/rolepayment.php]
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -968,9 +1151,31 @@ JGB 目前支援國泰世華、永豐銀行、中國信託、藍新 NewebPay 四
   - {text: "藍新款項怎麼提領", source: "draft:outline-20260920", status: proposed}
   - {text: "藍新提款手續費", source: "draft:outline-20260920", status: proposed}
   - {text: "收到的錢在哪裡領", source: "draft:outline-20260920", status: proposed}
-- sources: [help:paymentapply_zh-Hant.html]
+- sources: [help:paymentapply_zh-Hant.html, docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#47]
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
 藍新的款項會先留在藍新帳戶中，需要自行登入藍新後台辦理提款，前 5 次免費，之後每次收取 10 元手續費。
 藍新提款是在藍新自己的後台辦理，不是在 JGB 系統內操作。
+國泰世華、永豐銀行、中國信託的提領方式與審核工作天，請洽客服。
+### 線上金流收款的資金流向會不會有稅務申報風險？（系統負責收款與開票；稅務風險屬稅捐機關與業者自身規劃，系統不判斷） {#jgb/E/payment-onboarding-tax-risk}
+- phrasings:
+  - {text: "金流收款稅務風險", source: "draft:outline-20260920", status: proposed}
+  - {text: "線上收款要報稅嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "資金流向申報", source: "draft:outline-20260920", status: proposed}
+- sources: [code:app/Http/Controllers/UserController.php]
+- target_user: [property_manager, prospect]
+- business_types: [system_provider]
+- instance_applicability: general
+開通線上金流後，系統負責收款與依規則開立發票；資金運用是否涉及稅務申報風險，屬稅捐機關與業者自身的稅務規劃，系統不判斷。
+### 「線上智能整合收款」頁的「現金收款帳戶」怎麼管理？（可以新增常用收款帳戶，也可以刪除） {#jgb/E/cash-payment-account-management}
+- phrasings:
+  - {text: "現金收款帳戶怎麼設定", source: "draft:outline-20260920", status: proposed}
+  - {text: "現金收款帳戶可以刪除嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "常用收款帳戶管理", source: "draft:outline-20260920", status: proposed}
+- sources: [code:resources/views/users/payment.blade.php]
+- target_user: [property_manager]
+- business_types: [system_provider]
+- instance_applicability: general
+「線上智能整合收款」頁（也就是「開通帳號」按鈕所在的同一頁）裡另外有一個「現金收款帳戶」清單，可以新增常用的收款帳戶，供沒有走線上金流的帳單使用。
+已經建立的常用現金收款帳戶可以刪除，在確認彈窗按下「刪除」後就會從清單移除。

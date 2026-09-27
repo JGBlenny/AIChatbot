@@ -173,9 +173,10 @@
 - 引用：`app/Services/LesseeService.php`（`'lessee_name as name'`）。
 - 對應格：`217194eecdb1`。
 
-#### 合約可加代理人，最多 3 位 {#p914-contract-agents}
-- 事實：合約編輯的租客資料頁有「新增代理人」，存於 `to_user_pdf_agents`，未滿 3 位才可新增；關係選項含父、母、監護人。
-- 引用：`src/pages/contracts/edit/tenantBasic/Index.vue`（`新增代理人`、`to_user_pdf_agents.length < 3`）。
+#### 社宅合約可加代理人，最多 3 位 {#p914-contract-agents}
+- 事實：**社宅合約**編輯的租客資料頁（路由 `contracts.edit.socialHousing.tenantBasic`）有「新增代理人」，存於 `to_user_pdf_agents`，未滿 3 位才可新增；關係選項為父、母、監護人（法定代理）。一般合約的租客資訊頁（`tenantInfo`）沒有這個功能。
+- 引用：`src/pages/contracts/edit/tenantBasic/Index.vue`（`新增代理人`、`to_user_pdf_agents.length < 3`）；`src/routes/contracts.js`（`contracts.edit.socialHousing.tenantBasic`）。
+- ⚠️ 2026-09-27 更正：原句未限定社宅合約（Plan 9.15 S3 D 架 verifier 發現）。
 - 對應格：`d799d0d69999`。
 
 #### 送出簽約邀請時才比對既有會員，之後註冊不回頭綁定 {#p914-contract-invite-account-match}
@@ -228,8 +229,9 @@
 - 對應格：`48d6f1f589a7`。
 
 #### 執行中合約的齒輪選單順序 {#p914-contract-gear-menu}
-- 事實：合約執行中（雙方簽名完成／點交／點退各階段）時，齒輪選單依序為查看物件、點交物件、點退押金、續約、提前解約。
-- 引用：`app/Http/Controllers/ContractController.php`（`'text' => ___('點交物件'),`）。
+- 事實：合約總表（`ContractController@webList`）對執行中合約（雙方簽名完成／點交／點退各階段）的齒輪選單依序為：查看物件（有查看物件權限時）、查看帳單（一律出現，整條續約鏈沒有帳單時停用）；社宅包租另有「新增轉租契約書」；房東方（租客身分看不到）再依序為點交物件、取消點交邀請、點退押金、取消點退邀請；非社宅合約另有續約、提前解約。各項依狀態與權限可能是停用狀態。
+- 引用：`app/Http/Controllers/ContractController.php`（`定義 $actions 這段應該挪到前端`、`'text' => ___('查看帳單'),`、`'text' => ___('取消點交邀請'),`、`$this->roleType !== 'tenant'`）；`routes/web.php`（`/api2/contract/list/{action?}/{status?}` → `webList`）。
+- ⚠️ 2026-09-27 更正：原句只列五項，取自非合約總表的 `index()`，漏了查看帳單與兩個取消邀請（Plan 9.15 S3 D 架 verifier 發現）。
 - 對應格：`a288657cdbab`。
 
 #### 續約＝複製出一份全新合約，確認成立即生效 {#p914-contract-renewal}
@@ -286,9 +288,11 @@
 - 引用：`app/Services/BillService.php`（`'should_send_sms' => (bool)$lessee->lessee_phone_notify_status`）；`app/Jobs/BillReadyJob.php`（`$lesseeUserId = $bill->user_id;`）；`src/pages/users/lesseeList/parts/PageTop.vue`（`當通知開關關閉時，租客將無法收到所有的通知`）。
 - 對應格：`085a8e26b78d`、`9def85e08184`、`ac0d6e0e0d61`。
 
-#### 發票在帳單收款時逐張開立 {#p914-invoice-per-bill}
-- 事實：發票在帳單被標記已收款的當下開立，一張帳單對應一張發票 ⇒ 多個物件各自出帳單就各自開票。
-- 引用：`app/Services/InvoiceService.php`（`發票只在「帳單被標記已收款的那一瞬間」開立`）。
+#### 發票預設在帳單收款時開立、依帳單各自開立 {#p914-invoice-per-bill}
+- 事實：**預設**發票在帳單被標記已收款時開立；發票依帳單各自開立，不會把不同物件的帳單合併成一張 ⇒ 多個物件各自出帳單就各自開票。
+- 例外（程式可證，細節未逐條追）：團隊開啟「預先開立發票」時可選在發送帳單等時機先開；有立即開立權限的團隊可跳過到帳檢查手動先開；有多張發票功能的團隊一張帳單可拆成多張發票。
+- 引用：`app/Services/InvoiceService.php`（`發票只在「帳單被標記已收款的那一瞬間」開立`、`// 有立即開立權限的團隊可以跳過到帳檢查`、`isMultiInvoiceEnabledForTeam`）；`src/pages/users/payment/_parts/Invoice.vue`（`labelKey: '預先開立發票',`）。
+- ⚠️ 2026-09-27 更正：原句「一張帳單對應一張發票」「收款當下開立」寫成絕對，漏了三種例外（Plan 9.15 S3 E1 verifier 發現）。
 - 對應格：`2a20291a87fa`。
 
 #### 線上作廢發票只支援 ezPay {#p914-invoice-void-ezpay}
@@ -327,9 +331,10 @@
 - 引用：幫助中心 `slug21_zh-Hant.html`；`src/components/Lightbox/BillPayInfo.vue`（`labelKey: '通知已匯款',`、`!props.is_online_payment`）。
 - 對應格：`71396382186b`、`7e397e6901b7`、`71e19718ea13`。
 
-#### ATM 匯款金額與帳單不符＝轉待對帳並通知房東 {#p914-atm-amount-mismatch}
-- 事實：虛擬帳號收到與帳單金額不符的匯款，帳單轉入待對帳，並寄「收款差額通知」給房東，請其與承租方聯繫或到待對帳確認；這是設計內的正式情境，不是設定異常。
-- 引用：`app/Notification.php`（`租客匯款金額不匹配（國泰ATM），發送通知給房東`）。
+#### ATM 匯款金額與帳單不符：國泰／中信／永豐轉待對帳，藍新不動帳 {#p914-atm-amount-mismatch}
+- 事實：國泰、中信、永豐的虛擬帳號收到與帳單金額不符的匯款時，帳單轉入待對帳，並寄「收款差額通知」給房東，請其與承租方聯繫或到待對帳確認；這是設計內的正式情境，不是設定異常。**藍新 ATM** 金額不符時刻意不把帳單標成已付款，帳單維持應到帳（仍會通知）。
+- 引用：`app/Notification.php`（`租客匯款金額不匹配（國泰ATM），發送通知給房東`）；`app/Payment.php`、`app/Http/Controllers/InternalController.php`（`setAbnormal` 後 `setPaid`）；`app/Http/Controllers/PaymentController.php`（`刻意不自動把帳單標成已付款`）。
+- ⚠️ 2026-09-27 更正：原句未分銀行，漏了藍新 ATM 的例外（Plan 9.15 S3 E2 verifier 發現）。
 - 對應格：`b1bee098e0f1`。
 
 #### 租客重複匯款時系統怎麼處理 {#p914-duplicate-remittance}
@@ -355,9 +360,11 @@
 - 引用：`app/Services/Bills/BillDepositReceiptService.php`（`deposit_receipt_no`）。
 - 對應格：`d0e5d8d61fa4`。
 
-#### 草稿帳單電費度數留空、發送不重抓 {#p914-power-reading-draft}
-- 事實：草稿帳單的電費度數預設留空，由管理者在編輯頁按「取得即時電錶度數」帶入；發送（手動與排定批次）一律沿用畫面上的度數，不在發送當下重抓電表覆寫（`refetchMeterReadingOnSend` 已停用、直接回 false）。
-- 引用：`app/Bill.php`（`現在草稿階段度數留空`、`WYSIWYG：帳單發送一律寫入「管理者在編輯頁看到的當期度數」`）。
+#### 草稿帳單電費度數留空、排定／發送時補抓空值、不覆寫已有度數 {#p914-power-reading-draft}
+- 事實：草稿帳單的電費度數預設留空，管理者可在編輯頁按「取得即時電錶度數」先帶入；**走排定發送**的帳單（每日自動排定、業者手動排入排定發送清單，以及排定批次寄出）在度數仍為空或 0 時由 `prepareIotMeterForSend()` 自動補抓；已有非 0 度數者不重抓覆寫。**業者直接立即發送**（單張或批次「發送帳單」）不補抓，以畫面現值寄出（`refetchMeterReadingOnSend` 已停用、直接回 false）。
+- 引用：`app/Bill.php`（`現在草稿階段度數留空`、`排定發送則由 prepareIotMeterForSend() 補值。`、`if (!is_null($detail->measurement_after) && $detail->measurement_after != 0) continue;`）；呼叫端 `app/Console/Commands/BillAutoBatchSend.php`、`app/Http/Controllers/BillController.php`、`app/Console/Commands/BillBatchSend.php`（`prepareIotMeterForSend()`）。
+- 另引：`app/Http/Controllers/BillController.php`（`人工排入排定發送清單時也補入 IoT 電費度數`、`// 注意：本（手動批次）路徑無補值機制`）。
+- ⚠️ 2026-09-27 更正兩次：原句「發送一律沿用畫面上的度數」漏了排定發送會補空值；第一次更正寫成「發送當下也補抓」又過頭——立即發送不補（Plan 9.15 S3 E1 兩位 verifier 發現）。
 - 對應格：`e6f52da32989`。
 
 #### 常用現金收款帳戶可刪除 {#p914-cash-account-delete}

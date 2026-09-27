@@ -389,7 +389,8 @@
       "待對帳能取消嗎"
      ],
      "sentences": [
-      "待對帳狀態的收款帳單一律可以「退至應到帳」或「移至已到帳」，選單裡不會有「取消帳單」；「開立發票」的顯示條件跟應到帳狀態相同（合約設定自動開立發票、帳單本身設定自動開立發票、且發票尚未完成），不是每一張待對帳帳單都看得到。"
+      "待對帳狀態的收款帳單一律可以「退至應到帳」或「移至已到帳」，選單裡不會有「取消帳單」；「開立發票」的顯示條件跟應到帳狀態相同（合約設定自動開立發票、帳單本身設定自動開立發票、且發票尚未完成），不是每一張待對帳帳單都看得到。",
+      "在帳單總表或收款帳單分頁勾選多筆「待對帳」帳單時，批次操作列會有「移至已到帳」，有匯出權限時另有「匯出」；「開立發票」只有開通手動開立發票功能的團隊才會出現；批次操作列不會有「退至應到帳」。"
      ],
      "sources": [
       "code:src/use/config/useBillTypes.js"
@@ -414,6 +415,21 @@
        "sentence_index": 0,
        "source": "code:src/use/config/useBillTypes.js",
        "quote_or_symbol": "result = filterOptionByKey(result, 'invoiced')"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/use/config/useBillTypes.js",
+       "quote_or_symbol": "case 'income-progress':"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/use/config/useBillTypes.js",
+       "quote_or_symbol": "filteredBillActions.get('toReceived'),"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/use/config/useBillTypes.js",
+       "quote_or_symbol": "if (isManualInvoiceEnabled.value){"
       }
      ],
      "not_supported_greps": [
@@ -423,9 +439,7 @@
        "positive_control": "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -n -A 6 \"case 'income-unreceived':\" master -- src/use/config/useBillTypes.js → 5 處命中，其中對應區塊（約行 1231）含 filteredBillActions.get('cancel')，證明同一支 grep 在「有取消」的狀態上能命中"
       }
      ],
-     "open_questions": [
-      "本條講的是單張帳單齒輪選單（`genSingleActions`，約行 1578：[退至應到帳／移至已到帳／開立發票]）；帳單總表勾選『多筆待對帳帳單』時，批次操作列走的是另一段靜態設定（`bulkActions` computed，約行 1255），那裡待對帳狀態只組出 [移至已到帳／開立發票] 兩個動作，沒有「退至應到帳」，跟單張齒輪選單不完全一樣。"
-     ]
+     "open_questions": []
     },
     {
      "proposed_id": "jgb/E/bill-actions-received",
@@ -455,7 +469,8 @@
       "只有這張帳單本身是反轉帳單（房東退款給租客）時，齒輪選單才會多出「退款對帳單」。",
       "已到帳的收款帳單只要本身有設定自動開立發票，就會常駐顯示「重開發票」，不論目前發票狀態為何。",
       "只有在這張帳單有已開立且未作廢的發票時，齒輪選單才會出現「作廢發票」。",
-      "已到帳的收款帳單一律可以「封存帳單」。"
+      "已到帳的收款帳單一律可以「封存帳單」。",
+      "帳單轉為已付款（不論是線上付款、或業者手動移至已到帳）時，系統會自動寄一封附收據 PDF 的通知信給租客；前端目前沒有「重寄收據」的按鈕可以手動再發一次。"
      ],
      "sources": [
       "code:src/use/config/useBillTypes.js"
@@ -510,9 +525,20 @@
        "sentence_index": 6,
        "source": "code:src/use/config/useBillTypes.js",
        "quote_or_symbol": "filteredBillActions.get('archive')"
+      },
+      {
+       "sentence_index": 7,
+       "source": "docs:knowledge/jgb-product-facts.md#p914-receipt-email",
+       "quote_or_symbol": "帳單轉為已付款（線上付款，或業者手動移至已到帳）時，系統寄款項確認 email 給租客並附收據 PDF"
       }
      ],
-     "not_supported_greps": [],
+     "not_supported_greps": [
+      {
+       "grep": "grep -rEc \"重寄|重新寄送|再次寄送|resend\" src（jgb2 釘住匯出，加總各檔命中數）",
+       "result": "0 命中——前端程式碼裡沒有任何重寄／resend 收據相關文字或函式",
+       "positive_control": "grep -rc \"寄送\" src（同一份匯出，加總各檔命中數）→ 72 命中，確認 grep 在這個目錄範圍能正常大量命中"
+      }
+     ],
      "open_questions": []
     },
     {
@@ -776,9 +802,7 @@
       }
      ],
      "not_supported_greps": [],
-     "open_questions": [
-      "「合約帳單」（contractChain）在程式裡的中文註解寫「僅供合約列表齒輪深連結顯示，不加入 values 下拉」，但它其實跟其他 8 個選項一樣被放進同一份 `keyword_for.values` 白名單陣列，畫面下拉選單實際上會出現這個選項；註解與行為不一致，本條以程式實際行為（9 個選項都在下拉）為準，不選邊採信註解。"
-     ]
+     "open_questions": []
     },
     {
      "proposed_id": "jgb/E/bill-list-export",
@@ -1345,6 +1369,431 @@
       }
      ],
      "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/E/bill-notify-channels",
+     "askable": "帳單通知走哪些管道，通知對象是誰",
+     "title": "帳單通知走哪些管道？通知對象是誰？（Email／簡訊可分別開關；只發給帳單本身的那位承租人，不會同時發給合約上另一位承租人）",
+     "unit_ids": [
+      "page:bills.list"
+     ],
+     "target_user": [
+      "property_manager",
+      "prospect"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "帳單通知怎麼關",
+      "簡訊通知在哪關掉",
+      "帳單通知會發給誰",
+      "關閉租客所有通知"
+     ],
+     "sentences": [
+      "帳單通知可以分別開關 Email 跟簡訊；業者也可以直接在租客列表用「通知開關」整個關掉某一位租客的全部通知。",
+      "帳單通知的收件對象只認這張帳單記錄上的那一位承租人，只會發到這個人的手機跟 Email，不會同時發給合約上另一位掛名的承租人。"
+     ],
+     "sources": [
+      "docs:knowledge/jgb-product-facts.md#p914-bill-notify"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "docs:knowledge/jgb-product-facts.md#p914-bill-notify",
+       "quote_or_symbol": "管理者可在租客列表直接用「通知開關」關閉某位租客的全部通知"
+      },
+      {
+       "sentence_index": 1,
+       "source": "docs:knowledge/jgb-product-facts.md#p914-bill-notify",
+       "quote_or_symbol": "通知對象是帳單記錄的單一承租人使用者"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/E/bill-invoice-void-limitation",
+     "askable": "發票可以線上作廢嗎，有沒有金流商限制",
+     "title": "發票可以線上作廢嗎？（可在帳單詳細頁作廢，但只支援 ezPay；其他金流商的發票作廢不了，已開折讓的發票也不能再作廢）",
+     "unit_ids": [
+      "page:bills.list"
+     ],
+     "target_user": [
+      "property_manager",
+      "prospect"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "發票怎麼作廢",
+      "作廢發票支援哪些金流商",
+      "折讓後還能作廢嗎",
+      "ezPay作廢發票"
+     ],
+     "sentences": [
+      "業者可以在帳單詳細頁把該帳單已開立的發票作廢，但這個功能只支援 ezPay 開出來的發票，其他發票廠商的發票會被擋下、作廢不了。",
+      "如果這張發票已經開立過折讓單，依 ezPay 的規則就不能再作廢，要退費得改走折讓那條路徑。"
+     ],
+     "sources": [
+      "docs:knowledge/jgb-product-facts.md#p914-invoice-void-ezpay"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "docs:knowledge/jgb-product-facts.md#p914-invoice-void-ezpay",
+       "quote_or_symbol": "僅支援 ezPay 作廢"
+      },
+      {
+       "sentence_index": 1,
+       "source": "docs:knowledge/jgb-product-facts.md#p914-invoice-void-ezpay",
+       "quote_or_symbol": "已開立折讓的發票依 ezPay 規則不可作廢，退費要改走折讓"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/E/bill-notify-remittance-visibility",
+     "askable": "通知已匯款的按鈕什麼時候才會出現",
+     "title": "「通知已匯款」按鈕什麼時候才會出現？（只在非線上金流收款的帳單才有，改走線上金流收款就不顯示）",
+     "unit_ids": [
+      "page:bills.list"
+     ],
+     "target_user": [
+      "property_manager",
+      "prospect"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "通知已匯款在哪",
+      "通知已匯款不見了",
+      "線上收款還要通知已匯款嗎"
+     ],
+     "sentences": [
+      "租客在「我的帳單」的「待繳帳單」可以按「通知已匯款」，輸入匯款帳號後五碼送出，也可以另外上傳繳款證明。",
+      "如果這張帳單改走線上金流收款，「通知已匯款」按鈕跟上傳證明的畫面就不會出現。"
+     ],
+     "sources": [
+      "docs:knowledge/jgb-product-facts.md#p914-notify-remittance"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "docs:knowledge/jgb-product-facts.md#p914-notify-remittance",
+       "quote_or_symbol": "在「我的帳單」→「待繳帳單」按「通知已匯款」，輸入匯款帳號後五碼送出，也可上傳繳款證明"
+      },
+      {
+       "sentence_index": 1,
+       "source": "docs:knowledge/jgb-product-facts.md#p914-notify-remittance",
+       "quote_or_symbol": "帳單改走線上金流收款後，「通知已匯款」按鈕與上傳證明畫面都不顯示"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/E/bill-archive-precondition",
+     "askable": "帳單要什麼狀態才可以直接封存，封存有沒有順序規定",
+     "title": "帳單要什麼狀態才可以直接封存？（「待發送」跟「已到帳」都可以直接封存，不用先轉成已到帳；可勾選多筆一次封存）",
+     "unit_ids": [
+      "page:bills.list"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "草稿可以直接封存嗎",
+      "封存要先變已到帳嗎",
+      "批次封存帳單",
+      "封存順序怎麼安排"
+     ],
+     "sentences": [
+      "封存這個動作允許在「待發送」（草稿）跟「已到帳」兩種狀態下直接執行，不需要先把待發送的帳單轉成已到帳才能封存。",
+      "帳單總表、收款帳單這類分頁都可以勾選多筆同狀態的帳單一次封存。"
+     ],
+     "sources": [
+      "docs:knowledge/jgb-product-facts.md#p914-bill-archive-states",
+      "code:src/use/config/useBillTypes.js"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "docs:knowledge/jgb-product-facts.md#p914-bill-archive-states",
+       "quote_or_symbol": "封存允許「待發送」與「已到帳」兩種狀態，不需先把待發送改成已到帳"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/use/config/useBillTypes.js",
+       "quote_or_symbol": "filteredBillActions.get('archive')"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/E/bill-deposit-receipt-no",
+     "askable": "押金收據號碼是系統自動產生的嗎",
+     "title": "押金收據號碼是系統自動產生的嗎？（不是，號碼要透過 Excel 匯出／匯入手動填寫，系統不會自動編流水號）",
+     "unit_ids": [
+      "page:bills.list"
+     ],
+     "target_user": [
+      "property_manager",
+      "prospect"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "押金收據號碼怎麼填",
+      "押金收據號碼會自動產生嗎",
+      "押金收據匯入匯出"
+     ],
+     "sentences": [
+      "押金收據號碼不是系統自動產生的流水號，而是業者用 Excel 匯出、自己填好號碼後再匯入系統寫回去。"
+     ],
+     "sources": [
+      "docs:knowledge/jgb-product-facts.md#p914-deposit-receipt-no"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "docs:knowledge/jgb-product-facts.md#p914-deposit-receipt-no",
+       "quote_or_symbol": "由 xlsx 匯出／匯入手動填寫，系統不自動產生流水號"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/E/bill-scheduled-contract-ended-guard",
+     "askable": "合約已經結束但底下還有未來期間的租金帳單，系統排定發送時會怎麼處理",
+     "title": "合約已結束、但底下還留著未來計費期間的租金帳單，系統排定發送時會怎麼處理？（系統自動排定發送／自動寄出都會跳過不寄，但不會刪除帳單；業者手動排定發送則不受這條規則限制；批次寄出依帳單 id 由小到大處理，沒有可指定的發送順序）",
+     "unit_ids": [
+      "page:bills.list"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "合約結束後帳單還會自動寄嗎",
+      "解約後草稿帳單會怎樣",
+      "排定發送帳單順序",
+      "合約到期未來帳單擋不擋"
+     ],
+     "sentences": [
+      "如果一般租金帳單的計費期間起日晚於它所屬合約的結束日，系統每天自動排定發送、自動寄出這兩段流程都會直接跳過這張帳單、不自動寄出，但帳單不會被刪除。",
+      "這個攔截只作用在系統自動執行的那兩段流程；業者自己手動把這張帳單按下排定發送，不受這個規則限制。",
+      "系統批次寄出排定發送帳單時，是依帳單 id 由小到大遞增處理，沒有可以另外指定發送順序的設定。"
+     ],
+     "sources": [
+      "code:app/Services/Bills/ContractEndedRentBillGuard.php",
+      "code:app/Console/Commands/BillBatchSend.php"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:app/Services/Bills/ContractEndedRentBillGuard.php",
+       "quote_or_symbol": "一般租金帳單（type=1）的「計費期間起日」晚於「所屬合約的結束日」→ 不自動寄。"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Console/Commands/BillBatchSend.php",
+       "quote_or_symbol": "只跳過不送出、留 error log，帳單維持排定發送"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Services/Bills/ContractEndedRentBillGuard.php",
+       "quote_or_symbol": "人工仍然可以強制送出，只擋系統自動的那段"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Console/Commands/BillBatchSend.php",
+       "quote_or_symbol": "用 chunkById（依 id 遞增分頁）而非 chunk（OFFSET 分頁）。"
+      }
+     ],
+     "not_supported_greps": [
+      {
+       "grep": "grep -rn \"發送順序|寄送順序|排序.*排定發送|sortOrder.*bill\" src（jgb2 釘住匯出）",
+       "result": "0 命中——前端找不到任何可以指定排定發送順序的設定項",
+       "positive_control": "grep -c \"orderBy|chunkById\" app/Console/Commands/BillBatchSend.php → 3 命中，確認 grep 在這支檔案能正常命中排序相關字串"
+      }
+     ],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/E/bill-remind-resend-by-support",
+     "askable": "業者可以請 JGB 客服代發催繳通知嗎",
+     "title": "業者可以請 JGB 客服代發催繳通知嗎？（此操作需由 JGB 客服協助；業者端沒有自助重發催繳的介面）",
+     "unit_ids": [
+      "page:bills.list"
+     ],
+     "target_user": [
+      "property_manager",
+      "prospect"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "催繳通知可以重發嗎",
+      "客服可以幫忙催繳嗎",
+      "重新寄催繳通知"
+     ],
+     "sentences": [
+      "逾期未繳的帳單，系統會從逾期隔天起每隔一天自動寄送催繳通知，逾期超過 65 天後停止寄送；業者端沒有自己重新發送催繳通知的按鈕或介面。",
+      "此操作需由 JGB 客服協助。"
+     ],
+     "sources": [
+      "code:app/Http/Controllers/UserController.php",
+      "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#111",
+      "code:app/Console/Commands/BillNotifyOverdue.php"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "系統會自動寄送催繳通知給名列以下的租客們"
+      },
+      {
+       "sentence_index": 1,
+       "source": "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#111",
+       "quote_or_symbol": "採用：寫「此操作需由 JGB 客服協助」"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Console/Commands/BillNotifyOverdue.php",
+       "quote_or_symbol": "$maxOverdueDays = 65; // 逾期超過65天不發送Email"
+      }
+     ],
+     "not_supported_greps": [
+      {
+       "grep": "grep -rEc \"重發催繳|重新催繳|補發催繳|再次催繳\" src app（jgb2 釘住匯出，加總各檔命中數）",
+       "result": "0 命中——找不到任何業者端自助重發催繳的按鈕或函式",
+       "positive_control": "grep -rl \"催繳\" src（同一份匯出）→ 8 個檔案命中，確認 grep 在這個範圍能正常命中「催繳」字串"
+      }
+     ],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/E/bill-cvs-barcode-overdue-payment",
+     "askable": "超商代碼繳費逾期後才繳，帳單還會入帳嗎",
+     "title": "超商代碼繳費逾期後才繳，帳單還會入帳嗎？（系統不檢查代碼期限，完全依金流商回傳的付款結果；代碼逾期後是否還能繳費屬外部規定，系統不判斷）",
+     "unit_ids": [
+      "page:bills.list"
+     ],
+     "target_user": [
+      "property_manager",
+      "prospect"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "超商代碼過期還能繳嗎",
+      "超商代碼逾期入帳",
+      "超商繳費逾期"
+     ],
+     "sentences": [
+      "系統收到超商代碼繳費的付款結果通知時，只看金流商回傳的交易狀態是不是成功，沒有另外檢查這組代碼是不是已經過了繳費期限。",
+      "代碼過期後還能不能拿去超商繳費、繳了算不算數，屬於金流商自己的規定，系統不判斷這件事。"
+     ],
+     "sources": [
+      "code:app/Http/Controllers/PaymentController.php",
+      "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#114"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/PaymentController.php",
+       "quote_or_symbol": "case 'newebpay-cvs':"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/PaymentController.php",
+       "quote_or_symbol": "if (empty($requestData['Status'])) { $fieldErrors[] = '無回傳狀態'; }"
+      },
+      {
+       "sentence_index": 1,
+       "source": "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#114",
+       "quote_or_symbol": "採用：寫系統側事實＋「屬外部規定，系統不判斷」"
+      }
+     ],
+     "not_supported_greps": [
+      {
+       "grep": "sed -n '1446,1530p' app/Http/Controllers/PaymentController.php | grep -c \"逾期|過期|expire|ExpireDate\"（jgb2 釘住匯出，超商代碼付款回傳處理區塊）",
+       "result": "0 命中——這段付款結果回傳處理完全沒有檢查代碼期限的邏輯",
+       "positive_control": "grep -n \"Status.*SUCCESS|無回傳狀態\" app/Http/Controllers/PaymentController.php → 多筆命中，確認 grep 在此檔案能正常命中同類型的狀態檢查字串"
+      }
+     ],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/E/bill-receipt-feature-roadmap",
+     "askable": "收據功能還會不會有新的開發",
+     "title": "收據功能還會不會有新的開發？（現行已到帳帳單一律可以看到系統寄送的收據，目前沒有公開的後續開發時程）",
+     "unit_ids": [
+      "page:bills.list"
+     ],
+     "target_user": [
+      "property_manager",
+      "prospect"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "收據功能會不會更新",
+      "收據還有新功能嗎",
+      "收據開發時程"
+     ],
+     "sentences": [
+      "現在已到帳的收款帳單，齒輪選單一律看得到「收據」；帳單轉為已付款時，系統也會自動寄送附收據 PDF 的通知信給租客。",
+      "目前沒有公開的收據功能開發時程。"
+     ],
+     "sources": [
+      "code:src/use/config/useBillTypes.js",
+      "docs:knowledge/jgb-product-facts.md#p914-receipt-email",
+      "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#117"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/use/config/useBillTypes.js",
+       "quote_or_symbol": "filteredBillActions.get('receipt'),"
+      },
+      {
+       "sentence_index": 0,
+       "source": "docs:knowledge/jgb-product-facts.md#p914-receipt-email",
+       "quote_or_symbol": "系統寄款項確認 email 給租客並附收據 PDF"
+      },
+      {
+       "sentence_index": 1,
+       "source": "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#117",
+       "quote_or_symbol": "採用：寫現行功能＋「目前沒有公開時程」"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
     }
    ]
   },
@@ -1630,7 +2079,7 @@
     {
      "proposed_id": "jgb/E/bill-fee-item-rules",
      "askable": "帳單費用細目填寫有什麼規則",
-     "title": "帳單費用細目填寫有什麼規則？（度數欄位最多小數點後 2 位、電水瓦斯金額欄位限制小數點後 2 位、當期度數要大於上期度數）",
+     "title": "帳單費用細目填寫有什麼規則？（度數欄位最多小數點後 2 位、電水瓦斯金額欄位限制小數點後 2 位、當期度數不可小於上期度數）",
      "unit_ids": [
       "page:bills.create",
       "page:bills.edit"
@@ -1696,9 +2145,7 @@
        "positive_control": "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -c -F \"feeNode.errors.subtotal.push\" master -- src/pages/bills/edit/_parts/FeesBlock.jsx → 1 hit，確認 grep 在此檔案能命中同一段判斷式的動作"
       }
      ],
-     "open_questions": [
-      "錯誤文案寫『當期度數必須大於上期度數』，但實際判斷式是嚴格小於（<）才報錯，等於上期度數（度數 0）不會報錯——文案與判準不一致，待業主確認何者才是正確設計。"
-     ]
+     "open_questions": []
     },
     {
      "proposed_id": "jgb/E/bill-title-field",
@@ -2089,14 +2536,87 @@
       }
      ],
      "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/E/bill-partial-month-proration",
+     "askable": "不足月的租金怎麼算",
+     "title": "不足一個月的租金怎麼算？（按該期帳單天數比例分攤：月租金 × 實際入住天數 ÷ 該期帳單天數，不是固定除以 30 或 31）",
+     "unit_ids": [
+      "page:bills.create",
+      "page:bills.edit"
+     ],
+     "target_user": [
+      "property_manager",
+      "prospect"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "不足月租金怎麼算",
+      "點退帳單租金怎麼算",
+      "入住天數比例分攤"
+     ],
+     "sentences": [
+      "不足一個月的租金，是用「月租金 × 這一期實際入住的天數 ÷ 這一期帳單本身的天數」去算，不是固定除以 30 天或 31 天。"
+     ],
+     "sources": [
+      "docs:knowledge/jgb-product-facts.md#p914-proration"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "docs:knowledge/jgb-product-facts.md#p914-proration",
+       "quote_or_symbol": "不足月租金＝月租金 × 實際入住天數 ／ 該期帳單的天數，不是固定除以 30 或 31"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/E/bill-power-reading-draft-defaults",
+     "askable": "草稿帳單的電費度數要自己填嗎，發送時會不會重新抓電表",
+     "title": "草稿帳單的電費度數要自己填嗎？（草稿階段度數預設留空，可在編輯頁按「取得即時電錶度數」先帶入）",
+     "unit_ids": [
+      "page:bills.create",
+      "page:bills.edit"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "電費度數怎麼帶入",
+      "電表度數會重抓嗎",
+      "草稿帳單度數空白"
+     ],
+     "sentences": [
+      "草稿帳單的電費度數欄位預設是空的，業者可以在編輯頁按「取得即時電錶度數」先把度數帶進來。"
+     ],
+     "sources": [
+      "docs:knowledge/jgb-product-facts.md#p914-power-reading-draft",
+      "code:app/Bill.php"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:app/Bill.php",
+       "quote_or_symbol": "現在草稿階段度數留空（管理者可用編輯頁「取得即時電錶"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
     }
    ]
   },
   {
    "coarse": "帳單統計與報表",
    "unit_ids": [
-    "page:bills.stat",
-    "page:bills.sheet"
+    "page:bills.stat"
    ],
    "fines": [
     {
@@ -2260,196 +2780,6 @@
       }
      ],
      "open_questions": []
-    },
-    {
-     "proposed_id": "jgb/E/bill-sheet-report-title",
-     "askable": "帳單報表跟統計報表是同一個頁面嗎",
-     "title": "「財務報表」（年度／每月）跟「統計報表」是不同頁面？（年度／每月收支總表；頁面上的「下載」目前沒有動作）",
-     "unit_ids": [
-      "page:bills.sheet"
-     ],
-     "target_user": [
-      "property_manager"
-     ],
-     "business_types": [
-      "system_provider"
-     ],
-     "instance_applicability": "general",
-     "phrasings": [
-      "年度財務報表",
-      "每月財務報表",
-      "財務報表怎麼下載",
-      "帳單報表在哪"
-     ],
-     "sentences": [
-      "「財務報表」跟前面「統計報表」的「當前表現」是不同頁面：網址沒有指定月份時標題顯示「年度財務報表」，網址有指定年月時標題顯示「每月財務報表」。",
-      "財務報表頁面右上角有「下載」字樣，但目前點了沒有任何動作。",
-      "報表下方依照開啟時的檢視方式（按物件或按項目）呈現不同的表格內容，頁面上沒有切換器。"
-     ],
-     "sources": [
-      "code:src/pages/bills/sheet/Index.vue"
-     ],
-     "evidence": [
-      {
-       "sentence_index": 0,
-       "source": "code:src/pages/bills/sheet/Index.vue",
-       "quote_or_symbol": ": <div class=\"mb-3 text-[28px] font-bold\">{t('年度財務報表')} : {route.query.year}</div>"
-      },
-      {
-       "sentence_index": 1,
-       "source": "code:src/pages/bills/sheet/Index.vue",
-       "quote_or_symbol": "<div class=\"mr-2 text-secondary\">{t('下載')}</div>"
-      },
-      {
-       "sentence_index": 2,
-       "source": "code:src/pages/bills/sheet/Index.vue",
-       "quote_or_symbol": "route.query.rowType == 'by_items'"
-      }
-     ],
-     "not_supported_greps": [
-      {
-       "grep": "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -cF 'route.query.month && route.query.year' master -- src/pages/bills/sheet/Index.vue",
-       "result": "1 hit — 標題只有這一個三元判斷式，帶月份參數才走「每月財務報表」分支，否則就是「年度財務報表」",
-       "positive_control": "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -cF 'route.query' master -- src/pages/bills/sheet/Index.vue → 7 hits，確認 grep 在此檔案能正常命中"
-      }
-     ],
-     "open_questions": [
-      "整個前端程式碼裡找不到任何連到 `bills.sheet` 路由（`/bills/sheet`）的連結或選單項目，只有路由定義本身跟頁面自己會出現這個路由名稱；目前不確定使用者實際上是從哪個入口進入這個頁面（幫助中心也查無相關頁面說明），記為待裁。",
-      "頁面右上角「下載」只是文字、沒有綁任何動作；連同沒有入口，疑似整頁尚未接線，待裁是否列入大綱。"
-     ]
-    },
-    {
-     "proposed_id": "jgb/E/bill-sheet-two-views",
-     "askable": "財務報表可以用哪兩種方式檢視",
-     "title": "財務報表可以用哪兩種方式檢視？（按物件檢視、按項目檢視）",
-     "unit_ids": [
-      "page:bills.sheet"
-     ],
-     "target_user": [
-      "property_manager"
-     ],
-     "business_types": [
-      "system_provider"
-     ],
-     "instance_applicability": "general",
-     "phrasings": [
-      "財務報表按物件看",
-      "財務報表按項目看",
-      "收支小計怎麼看",
-      "已收入已支出分項"
-     ],
-     "sentences": [
-      "財務報表依打開頁面時網址帶的參數決定顯示哪一種檢視：預設情況顯示「按物件」檢視，每個物件一列，最右邊有一欄「收支小計」加總這個物件全年（或該月）的收支。",
-      "如果網址帶特定參數指定要看「依項目統計」，則改顯示「按項目」檢視，這時會分別列出「已收入」跟「已支出」兩張表，各自依項目名稱、逐月呈現金額。",
-      "「按項目」檢視會用「已收入」跟「已支出」兩個色塊標籤區分兩張表格，方便分辨目前看的是收入項目還是支出項目。"
-     ],
-     "sources": [
-      "code:src/pages/bills/sheet/Index.vue"
-     ],
-     "evidence": [
-      {
-       "sentence_index": 0,
-       "source": "code:src/pages/bills/sheet/Index.vue",
-       "quote_or_symbol": "headerName: t('收支小計'),"
-      },
-      {
-       "sentence_index": 1,
-       "source": "code:src/pages/bills/sheet/Index.vue",
-       "quote_or_symbol": "route.query.rowType == 'by_items'"
-      },
-      {
-       "sentence_index": 2,
-       "source": "code:src/pages/bills/sheet/Index.vue",
-       "quote_or_symbol": "<div class=\"my-4 rounded-full py-1 text-center text-[14px]\" style=\"background:var(--color-cyan-100); color:var(--color-cyan-600);width:58px\">{t('已收入')}</div>"
-      }
-     ],
-     "not_supported_greps": [],
-     "open_questions": [
-      "頁面本身沒有任何按鈕或下拉選單可以切換 `rowType`：程式裡這個參數只被讀取（`route.query.rowType`），整份程式碼裡沒有任何地方對它賦值或用 `router.push` 帶這個參數導向；要看哪一種檢視必須靠外部帶的網址參數決定，畫面上沒有切換入口，且目前找不到任何連到這個頁面的入口（見 `bill-sheet-report-title` 的 open_question）。"
-     ]
-    },
-    {
-     "proposed_id": "jgb/E/bill-sheet-total-cards",
-     "askable": "財務報表上方的收支總計卡片是怎麼算的",
-     "title": "財務報表上方的三張總計卡片是怎麼算的？（收入總計／支出總計／收支總計）",
-     "unit_ids": [
-      "page:bills.sheet"
-     ],
-     "target_user": [
-      "property_manager"
-     ],
-     "business_types": [
-      "system_provider"
-     ],
-     "instance_applicability": "general",
-     "phrasings": [
-      "財務報表收入總計",
-      "財務報表支出總計",
-      "收支總計怎麼算"
-     ],
-     "sentences": [
-      "財務報表最上方會顯示「收入總計」「支出總計」「收支總計」三張卡片，「收支總計」＝收入總計－支出總計，反映該年度（或該月）的淨收支。",
-      "「按物件」檢視時，表格最後會多出一列「項目總計」，把所有物件的各項金額加總起來。",
-      "「按項目」檢視時，收入表跟支出表各自也會多一列「收入總計」或「支出總計」。"
-     ],
-     "sources": [
-      "code:src/pages/bills/sheet/Index.vue"
-     ],
-     "evidence": [
-      {
-       "sentence_index": 0,
-       "source": "code:src/pages/bills/sheet/Index.vue",
-       "quote_or_symbol": "state.totalSum.total = state.totalSum.income - state.totalSum.expense // 收支總計"
-      },
-      {
-       "sentence_index": 1,
-       "source": "code:src/pages/bills/sheet/Index.vue",
-       "quote_or_symbol": "rowTotalSum.estateName = t('項目總計')"
-      },
-      {
-       "sentence_index": 2,
-       "source": "code:src/pages/bills/sheet/Index.vue",
-       "quote_or_symbol": "rowSum.project = t('收入總計')"
-      }
-     ],
-     "not_supported_greps": [],
-     "open_questions": []
-    },
-    {
-     "proposed_id": "jgb/E/bill-sheet-download-button",
-     "askable": "財務報表右上角的下載按鈕可以下載什麼",
-     "title": "財務報表右上角的「下載」按鈕可以下載什麼？",
-     "unit_ids": [
-      "page:bills.sheet"
-     ],
-     "target_user": [
-      "property_manager"
-     ],
-     "business_types": [
-      "system_provider"
-     ],
-     "instance_applicability": "general",
-     "phrasings": [
-      "財務報表下載按鈕",
-      "財務報表怎麼匯出"
-     ],
-     "sentences": [
-      "財務報表頁面右上角有一個帶下載圖示的「下載」按鈕。"
-     ],
-     "sources": [
-      "code:src/pages/bills/sheet/Index.vue"
-     ],
-     "evidence": [
-      {
-       "sentence_index": 0,
-       "source": "code:src/pages/bills/sheet/Index.vue",
-       "quote_or_symbol": "<div class=\"mr-2 text-secondary\">{t('下載')}</div>"
-      }
-     ],
-     "not_supported_greps": [],
-     "open_questions": [
-      "查遍 src/pages/bills/sheet/Index.vue，這個「下載」文字跟它旁邊的下載圖示所在的整個 <div> 都沒有找到任何 @click／onClick 綁定，無法確認按下去實際會做什麼（甚至可能目前沒有接線）。回答使用者「按下去會下載什麼格式」之前，需要業主或工程確認這顆按鈕是否已經上線可用。"
-     ]
     }
    ]
   },
@@ -2756,6 +3086,47 @@
        "positive_control": "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -c -F \"{{ t('\" master -- src/pages/bills/socialHousingSheets/Index.vue → 多筆命中，確認 grep 在此檔案能正常運作"
       }
      ],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/E/social-housing-sheet-program-scope",
+     "askable": "社宅報表能不能對應到地方政府的社宅方案",
+     "title": "社宅報表的「社會住宅」身份可以對應到哪個地方政府的社宅方案？（系統只定義身份類別，不判斷方案適配）",
+     "unit_ids": [
+      "page:bills.socialHousingSheets"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "社宅報表適用哪個社宅方案",
+      "社會住宅身份限制",
+      "社宅報表限台灣嗎"
+     ],
+     "sentences": [
+      "JGB 把「社會住宅」設計成一種團隊身份，跟「個人房東/代理人」「法人房東(公司)」並列，可以建立多筆，但只開放台灣（幣別新台幣、地區台灣）使用。",
+      "至於這個身份能不能對應到某個地方政府推出的特定社宅方案，屬地方政府社宅政策認定，系統不判斷。"
+     ],
+     "sources": [
+      "code:config/role.php"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:config/role.php",
+       "quote_or_symbol": "'name' => '社會住宅',"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:config/role.php",
+       "quote_or_symbol": "'allowed_country' => ['TW'],"
+      }
+     ],
+     "not_supported_greps": [],
      "open_questions": []
     }
    ]
@@ -3158,9 +3529,7 @@
       }
      ],
      "not_supported_greps": [],
-     "open_questions": [
-      "「物件」「租客」「空房」三個欄位在 InvoiceTable.vue 是被整段 Vue 註解（<!-- -->）包住的死碼，畫面實際不會顯示——已排除，不寫入句子。"
-     ]
+     "open_questions": []
     },
     {
      "proposed_id": "jgb/E/balance-invoice-timing",
@@ -3220,9 +3589,7 @@
       }
      ],
      "not_supported_greps": [],
-     "open_questions": [
-      "差額發票的使用目的／是否排除租客端，程式與幫助中心都查無明文說明（幫助中心沒有差額發票頁面），只能從『這一整個功能群組的頁面都在房東側路由、沒有租客可進入的入口』推斷，未直接寫入句子。"
-     ]
+     "open_questions": []
     },
     {
      "proposed_id": "jgb/E/balance-invoice-group-action-menu",
@@ -3302,6 +3669,212 @@
        "sentence_index": 5,
        "source": "code:src/components/SurelyVue/BalanceInvoices/ActionsCell.vue",
        "quote_or_symbol": "title=\"查看歷程\""
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/E/balance-invoice-refund-report-column",
+     "askable": "差額發票收支表的退款或減免怎麼呈現",
+     "title": "差額發票收支表的租金退款／減免怎麼呈現？（列在「租金增(減)(B)」欄，以負數表示）",
+     "unit_ids": [
+      "page:balanceInvoices.groups"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "差額發票收支表退款",
+      "差額發票租金增減欄",
+      "差額發票減免怎麼記"
+     ],
+     "sentences": [
+      "「報表發票下載」分頁裡的收支表，租金退款或減免會列在「租金增(減)(B)」這一欄，並以負數（括號）表示。"
+     ],
+     "sources": [
+      "docs:knowledge/jgb-product-facts.md#p914-balance-invoice-refund"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "docs:knowledge/jgb-product-facts.md#p914-balance-invoice-refund",
+       "quote_or_symbol": "把租金退款／減免列在「租金增(減)(B)」欄、以負數（括號）表示"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/E/balance-invoice-rent-item-rule",
+     "askable": "退租帳單的科目怎麼避免跟預繳租金重複計入收支表",
+     "title": "差額發票收支表怎麼判斷一個帳單品項算不算「租金」收入？（系統預設品項看名稱是不是「租金」「退租金」；自訂品項看品項性質）",
+     "unit_ids": [
+      "page:balanceInvoices.groups"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "差額發票租金品項判定",
+      "退租帳單科目重複計入",
+      "差額收支表怎麼認租金"
+     ],
+     "sentences": [
+      "差額發票收支表判斷一筆帳單品項算不算「租金」收入：系統預設品項看品項名稱是不是「租金」或「退租金」；業者自訂的品項則看品項性質是不是「租金」，自訂品項即使取名「租金」、性質不是租金也不算；判斷依據不是這筆帳單是哪一種帳單（例如退租結算單）。",
+      "如果個案帳單的品項命名方式跟預繳租金重複，會不會造成收支表重複計入，屬記帳命名上的判斷，需要依個案帳單資料確認。"
+     ],
+     "sources": [
+      "code:app/Services/BalanceInvoiceService.php"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:app/Services/BalanceInvoiceService.php",
+       "quote_or_symbol": "return config('item.balance_invoice_rent_names', ['租金', '退租金']);"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Services/BalanceInvoiceService.php",
+       "quote_or_symbol": "return $item->nature === '租金';"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/E/balance-invoice-entity-type-change",
+     "askable": "法人改成自然人後差額發票群組要怎麼設定",
+     "title": "身分從法人改成自然人後，差額發票群組要怎麼重新設定？（系統沒有專用的身分切換規則）",
+     "unit_ids": [
+      "page:balanceInvoices.groups",
+      "page:balanceInvoices.edit.basicInfo"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "差額發票法人改自然人",
+      "差額群組身分切換",
+      "差額發票身分變更"
+     ],
+     "sentences": [
+      "差額發票的計算與開票邏輯裡，沒有針對「法人改成自然人」這種身分變更設計專屬的處理規則，結果要看個案在系統上實際填寫、切換的資料，需要依個案情況確認。"
+     ],
+     "sources": [
+      "code:app/Services/BalanceInvoiceService.php"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:app/Services/BalanceInvoiceService.php",
+       "quote_or_symbol": "previous_balance_amount"
+      }
+     ],
+     "not_supported_greps": [
+      {
+       "grep": "grep -n '法人\\|自然人\\|is_company' /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/b25be7ef-5fc0-4028-9b08-9dae212f6dca/scratchpad/jgb2-b2ee2ac/app/Services/BalanceInvoiceService.php",
+       "result": "0 hits——差額發票服務裡完全沒有依『法人／自然人』分流的邏輯",
+       "positive_control": "grep -c previous_balance_amount /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/b25be7ef-5fc0-4028-9b08-9dae212f6dca/scratchpad/jgb2-b2ee2ac/app/Services/BalanceInvoiceService.php → 7 hits，確認 grep 在此檔案能正常運作"
+      }
+     ],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/E/balance-invoice-unsigned-contract",
+     "askable": "合約還沒簽回時能不能開發票或收據",
+     "title": "合約還沒簽回時能不能開發票或收據？（發票看合約的開票設定、押金收據看帳單是否到帳，簽署狀態是否連動要看個案）",
+     "unit_ids": [
+      "page:balanceInvoices.groups"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "合約未簽回能開發票嗎",
+      "合約未簽回押金收據",
+      "簽約中可以開發票嗎"
+     ],
+     "sentences": [
+      "發票什麼時候開立，是依合約與團隊的開票設定決定（例如是否開啟「預先開立發票」、有沒有立即開立權限），不是直接看合約有沒有簽回。",
+      "押金收據則是看這筆帳單本身有沒有被標記為已到帳；帳單到帳後系統寄給租客的通知信會附上收據（部分特定合作團隊另有處理方式）。",
+      "至於合約還沒簽署完成時，這些規則會不會被連動擋下，屬個案情況，需要查詢個案的合約與帳單資料確認。"
+     ],
+     "sources": [
+      "docs:knowledge/jgb-product-facts.md#p914-invoice-per-bill",
+      "docs:knowledge/jgb-product-facts.md#p914-receipt-email"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "docs:knowledge/jgb-product-facts.md#p914-invoice-per-bill",
+       "quote_or_symbol": "團隊開啟「預先開立發票」時可選在發送帳單等時機先開"
+      },
+      {
+       "sentence_index": 1,
+       "source": "docs:knowledge/jgb-product-facts.md#p914-receipt-email",
+       "quote_or_symbol": "帳單轉為已付款（線上付款，或業者手動移至已到帳）時，系統寄款項確認 email 給租客並附收據 PDF"
+      },
+      {
+       "sentence_index": 2,
+       "source": "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#121",
+       "quote_or_symbol": "採用：只寫程式證實的系統行為，其餘走個案客服"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/E/balance-invoice-anomaly-list",
+     "askable": "帳單不在差額發票群組內時JGB怎麼處理",
+     "title": "帳單不在任何差額發票群組內時，JGB 怎麼處理？（列進內部「發票異常盤查」名單，處理需洽客服）",
+     "unit_ids": [
+      "page:balanceInvoices.groups"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "帳單沒有差額群組怎麼辦",
+      "發票異常盤查名單",
+      "帳單不在差額群組"
+     ],
+     "sentences": [
+      "帳單不屬於任何差額發票群組、又出現開票異常的情況時，系統會把它列進內部「發票異常盤查」名單；業者端在帳單列表可以用「發票異常」狀態篩選看到這類帳單，但實際盤查與處理只在 JGB 內部客服後台進行，此操作需由 JGB 客服協助。"
+     ],
+     "sources": [
+      "code:app/Http/Controllers/Admin/InvoiceFailureController.php"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/Admin/InvoiceFailureController.php",
+       "quote_or_symbol": "$pageSetting['title'] = '發票異常盤查';"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/use/search/modules/billInvoiceStatus.js",
+       "quote_or_symbol": "發票異常"
       }
      ],
      "not_supported_greps": [],
@@ -3888,6 +4461,161 @@
       }
      ],
      "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/E/recharge-account-refund-excluded",
+     "askable": "退押金的帳單也走固定虛擬帳號嗎",
+     "title": "退押金這類要付給租客的帳單，也走固定虛擬帳號嗎？（不會，顯示的是租客本人的收款帳戶）",
+     "unit_ids": [
+      "page:users.rechargeAccountList"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "退押金走虛擬帳號嗎",
+      "支出帳單收款帳戶",
+      "退款方向虛擬帳號"
+     ],
+     "sentences": [
+      "收款方是租客本人的支出帳單（例如退押金），畫面顯示的是租客本人的收款銀行帳戶，不會使用「固定虛擬帳號管理」裡設定的帳號；固定虛擬帳號只用在租客要繳款給業者的方向。"
+     ],
+     "sources": [
+      "docs:knowledge/jgb-product-facts.md#p914-refund-bill-account"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "docs:knowledge/jgb-product-facts.md#p914-refund-bill-account",
+       "quote_or_symbol": "顯示租客本人的收款銀行帳戶，不使用固定虛擬帳號"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/E/recharge-account-vs-single-use-atm",
+     "askable": "固定虛擬帳號跟線上繳費的ATM虛擬帳號是同一種嗎",
+     "title": "「固定虛擬帳號管理」跟租客線上繳費產生的 ATM 虛擬帳號是同一種嗎？（不是，ATM 那組是單筆繳費用、效期 180 天）",
+     "unit_ids": [
+      "page:users.rechargeAccountList"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "ATM虛擬帳號跟固定虛擬帳號差在哪",
+      "線上繳費ATM虛擬帳號效期",
+      "固定虛擬帳號會過期嗎"
+     ],
+     "sentences": [
+      "「固定虛擬帳號管理」頁面管理的是可以重複收款、要手動建立的固定帳號；租客在「我的帳單」線上繳費時，走藍新取號產生的 ATM 虛擬帳號是另一種、系統即時產生的單筆帳號，效期 180 天，過期後要重新走一次繳費流程才會再產生新的一組，不會出現在「固定虛擬帳號管理」列表裡。"
+     ],
+     "sources": [
+      "docs:knowledge/jgb-product-facts.md#p914-newebpay-atm-expiry"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "docs:knowledge/jgb-product-facts.md#p914-newebpay-atm-expiry",
+       "quote_or_symbol": "這是單筆取號的效期，與固定虛擬帳號不同。"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/E/recharge-account-mismatch-and-duplicate",
+     "askable": "虛擬帳號匯款金額不符或租客重複匯款時系統怎麼處理",
+     "title": "租客重複匯款時系統怎麼處理？（單筆帳單已付款後重複匯入會略過；固定虛擬帳號多匯的部分留作餘額）",
+     "unit_ids": [
+      "page:users.rechargeAccountList"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "虛擬帳號匯款金額不符",
+      "虛擬帳號重複匯款",
+      "虛擬帳號多匯的錢去哪"
+     ],
+     "sentences": [
+      "如果同一筆單筆帳單的付款已經完成，租客又重複匯款進來，系統只會記錄「該筆訂單已被處理」並略過，不會再沖到任何帳單。",
+      "匯到固定虛擬帳號的錢則一律先進這組帳號的儲值餘額，系統自動銷帳，多匯的部分留作餘額，用來抵扣後續帳單；同一筆銀行入帳通知重複收到時，系統會用指紋比對去重，不會重複儲值。"
+     ],
+     "sources": [
+      "docs:knowledge/jgb-product-facts.md#p914-atm-amount-mismatch",
+      "docs:knowledge/jgb-product-facts.md#p914-duplicate-remittance"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "docs:knowledge/jgb-product-facts.md#p914-duplicate-remittance",
+       "quote_or_symbol": "再入金只記錄「該訂單已被處理」並略過，不會沖到任何帳單"
+      },
+      {
+       "sentence_index": 1,
+       "source": "docs:knowledge/jgb-product-facts.md#p914-duplicate-remittance",
+       "quote_or_symbol": "多匯的部分留作餘額抵扣後續帳單；同一筆銀行入帳通知重送時以指紋去重，不會重複儲值"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/E/recharge-account-regenerate-expired",
+     "askable": "逾期的虛擬帳號能不能重新產生",
+     "title": "逾期的虛擬帳號能不能重新產生？（此操作需由 JGB 客服協助，業者端沒有自助入口）",
+     "unit_ids": [
+      "page:users.rechargeAccountList"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "逾期虛擬帳號重新產生",
+      "虛擬帳號過期怎麼辦",
+      "虛擬帳號重發"
+     ],
+     "sentences": [
+      "虛擬帳號逾期需要重新產生時，業者端目前沒有自助重新產生的入口，此操作需由 JGB 客服協助。"
+     ],
+     "sources": [
+      "code:src/pages/users/rechargeAccountList/Index.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/rechargeAccountList/Index.vue",
+       "quote_or_symbol": "onClick={() => openDeleteLightbox(record)}>"
+      }
+     ],
+     "not_supported_greps": [
+      {
+       "grep": "grep -n '逾期\\|expire' /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/b25be7ef-5fc0-4028-9b08-9dae212f6dca/scratchpad/jgb2-b2ee2ac/src/pages/users/rechargeAccountList/Index.vue /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/b25be7ef-5fc0-4028-9b08-9dae212f6dca/scratchpad/jgb2-b2ee2ac/app/Http/Controllers/RechargeAccountListController.php",
+       "result": "0 hits——業者端頁面與其後端控制器裡都找不到任何處理『逾期』虛擬帳號的自助功能",
+       "positive_control": "grep -c openDeleteLightbox /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/b25be7ef-5fc0-4028-9b08-9dae212f6dca/scratchpad/jgb2-b2ee2ac/src/pages/users/rechargeAccountList/Index.vue → 2 hits，確認 grep 在此檔案能正常抓到業者端真正有的『刪除』操作"
+      }
+     ],
+     "open_questions": [
+      "同題另兩個子問（逾期虛擬帳號是否仍可收款、年繳帳單可否拆年度）未追完，待後續補查。"
+     ]
     }
    ]
   },
@@ -4077,9 +4805,7 @@
        "positive_control": "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -c -F \"getHasVerifiedPhone()\" master -- app/Http/Controllers/UserController.php → 4 hits，證明這個檔案裡別的地方確實有在用『是否已驗證手機』的檢查、grep 抓得到，藍新這段區塊裡就是沒有用到"
       }
      ],
-     "open_questions": [
-      "程式判斷條件只檢查『手機號碼欄位是否為空』(empty($this->role->user->phone))，但錯誤訊息文字寫的是『請先完成手機號碼驗證』——沒有另外檢查手機是否已通過驗證流程，訊息文字與實際判準不一致，待業主確認何者才是正確設計。"
-     ]
+     "open_questions": []
     },
     {
      "proposed_id": "jgb/E/newebpay-required-fields",
@@ -4161,7 +4887,9 @@
       "「國外卡」預設是關閉的，如果一開始沒有勾選開通，之後要開通須另外透過 JGB 向藍新金流申請，耗時約 5 到 7 個工作天；同一組付款方式清單裡，只有「超商代碼」跟「國外卡」帶有提示文字，其餘信用卡／Google Pay／Samsung Pay／ATM 四個選項沒有提示文字。"
      ],
      "sources": [
-      "code:app/Http/Controllers/UserController.php"
+      "code:app/Http/Controllers/UserController.php",
+      "docs:knowledge/jgb-product-facts.md#p914-credit-installment",
+      "code:config/rolepayment.php"
      ],
      "evidence": [
       {
@@ -4197,9 +4925,7 @@
        "positive_control": "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -c -F \"'enabled' => true, // 預設開啟\" master -- app/Http/Controllers/UserController.php → 11 hits，確認 grep 在此檔案能正常運作"
       }
      ],
-     "open_questions": [
-      "「開通帳號」（addMerchant，UserController.php）給的付款方式清單只有 6 種，沒有「超商條碼」；但另一支給編輯畫面用的「取得金流廠商設定」（getPaymentVendor，UserController.php）付款方式清單有 7 種，多了「超商條碼」（PAYMENT_CVS_BARCODE_KEY）。兩份清單是否本來就該一致、或「超商條碼」本來就是開通後才會在編輯畫面出現的選項，程式與幫助中心都查無明文說明，記為待裁。"
-     ]
+     "open_questions": []
     },
     {
      "proposed_id": "jgb/E/ctbc-apply-flow",
@@ -4336,10 +5062,12 @@
      ],
      "sentences": [
       "藍新的款項會先留在藍新帳戶中，需要自行登入藍新後台辦理提款，前 5 次免費，之後每次收取 10 元手續費。",
-      "藍新提款是在藍新自己的後台辦理，不是在 JGB 系統內操作。"
+      "藍新提款是在藍新自己的後台辦理，不是在 JGB 系統內操作。",
+      "國泰世華、永豐銀行、中國信託的提領方式與審核工作天，請洽客服。"
      ],
      "sources": [
-      "help:paymentapply_zh-Hant.html"
+      "help:paymentapply_zh-Hant.html",
+      "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#47"
      ],
      "evidence": [
       {
@@ -4351,12 +5079,97 @@
        "sentence_index": 1,
        "source": "help:paymentapply_zh-Hant.html",
        "quote_or_symbol": "<h3>款項要怎麼提領？</h3>"
+      },
+      {
+       "sentence_index": 2,
+       "source": "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#47",
+       "quote_or_symbol": "改寫：業主未提供提領方式與工作天數字 ⇒ 寫「請洽客服」"
       }
      ],
      "not_supported_greps": [],
-     "open_questions": [
-      "國泰世華／永豐銀行／中國信託的提領方式與審核工作天，幫助中心原文標註「待業務提供後補寫」，目前查無資料，需業主/業務補齊後才能回答。"
-     ]
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/E/payment-onboarding-tax-risk",
+     "askable": "線上金流收款的資金流向會不會有稅務申報風險",
+     "title": "線上金流收款的資金流向會不會有稅務申報風險？（系統負責收款與開票；稅務風險屬稅捐機關與業者自身規劃，系統不判斷）",
+     "unit_ids": [
+      "page:web:users.add_merchant"
+     ],
+     "target_user": [
+      "property_manager",
+      "prospect"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "金流收款稅務風險",
+      "線上收款要報稅嗎",
+      "資金流向申報"
+     ],
+     "sentences": [
+      "開通線上金流後，系統負責收款與依規則開立發票；資金運用是否涉及稅務申報風險，屬稅捐機關與業者自身的稅務規劃，系統不判斷。"
+     ],
+     "sources": [
+      "code:app/Http/Controllers/UserController.php"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "'status-error' => ___('您已開通過商店')"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/E/cash-payment-account-management",
+     "askable": "現金收款帳戶怎麼管理",
+     "title": "「線上智能整合收款」頁的「現金收款帳戶」怎麼管理？（可以新增常用收款帳戶，也可以刪除）",
+     "unit_ids": [
+      "page:web:users.add_merchant"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "現金收款帳戶怎麼設定",
+      "現金收款帳戶可以刪除嗎",
+      "常用收款帳戶管理"
+     ],
+     "sentences": [
+      "「線上智能整合收款」頁（也就是「開通帳號」按鈕所在的同一頁）裡另外有一個「現金收款帳戶」清單，可以新增常用的收款帳戶，供沒有走線上金流的帳單使用。",
+      "已經建立的常用現金收款帳戶可以刪除，在確認彈窗按下「刪除」後就會從清單移除。"
+     ],
+     "sources": [
+      "code:resources/views/users/payment.blade.php"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:resources/views/users/payment.blade.php",
+       "quote_or_symbol": "{{___('現金收款帳戶')}}"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:resources/views/users/payment.blade.php",
+       "quote_or_symbol": "route('users.add_merchant', ['manufacturer' => 'newebpay'])"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:resources/views/users/payment.blade.php",
+       "quote_or_symbol": "willDeleteCashBank"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
     }
    ]
   }

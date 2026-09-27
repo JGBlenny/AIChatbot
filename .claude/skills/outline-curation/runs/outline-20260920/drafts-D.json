@@ -63,11 +63,15 @@
        "grep": "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -cF 'const allows = ['\"'\"'1'\"'\"', '\"'\"'2'\"'\"', '\"'\"'3'\"'\"', '\"'\"'4'\"'\"', '\"'\"'5'\"'\"']' master -- src/routes/contracts.js",
        "result": "1 筆命中",
        "positive_control": "同一 fine 的另一筆證據（code:src/routes/contracts.js）「window.location.href = '/users...」grep 命中 1 筆，證明 grep 條件與檔案存取本身有效"
+      },
+      {
+       "claim": "Tenant.vue 裡查無寫死的「首頁」標題字串",
+       "grep": "grep -n \"首頁\" <jgb2釘住匯出>/src/pages/users/dashboard/Tenant.vue",
+       "result": "0 筆",
+       "positive_control": "同樣的 grep 條件在 Landlord.vue 命中 1 筆（label: t('首頁'),），證明 grep 條件與檔案存取本身有效，不是查詢方式的問題"
       }
      ],
-     "open_questions": [
-      "「登入後的首頁」對應的路由是 users.dashboard；這個路由依角色渲染不同元件（租客走 Tenant.vue，房東／社宅走 Landlord.vue），本細目描述的是租客被導轉後的畫面，但「首頁」這個標籤字串（t('首頁')）只在 Landlord.vue 的麵包屑找到證據，Tenant.vue 本身沒有對應的標題文字，交回裁決是否需要另外查證租客視角的頁面標題。"
-     ]
+     "open_questions": []
     },
     {
      "proposed_id": "jgb/D/contract-search-keyword-scope",
@@ -145,10 +149,14 @@
       "在合約管理的合約總表頁面，點選右上角的「建立合約」按鈕，選取想建立合約的物件並按下一步，即可開始建立合約。",
       "也可以在物件管理的物件總表中，對想建立合約的物件點選小齒輪，選擇「建立合約」直接進入。",
       "建立合約時可以選擇「電子合約（公版）」「電子合約（客製化契約書）」或「紙本簽約」三種建立方式。",
-      "一個物件最多可以綁定 10 份合約，例如同一物件的舊租約仍在執行中，也可以先跟新租客預先簽下一份合約，等舊約到期銜接。"
+      "一個物件最多可以綁定 10 份合約，例如同一物件的舊租約仍在執行中，也可以先跟新租客預先簽下一份合約，等舊約到期銜接。",
+      "建立一份新合約不會自動作廢或改動同一物件上其他既有的合約，舊合約只有在使用者自己操作（例如刪除合約、取消邀請）時才會停用。",
+      "系統在建立合約時不會檢查同一物件不同合約的租期是否重疊，只用「同一物件的使用中合約數」這個門檻（最多 10 份）來擋新增；至於同一物件底下要怎麼建立、命名多個房號，需要洽客服協助個案安排。"
      ],
      "sources": [
-      "help:landlordonboarding04lease_zh-Hant.html"
+      "help:landlordonboarding04lease_zh-Hant.html",
+      "docs:knowledge/jgb-product-facts.md#p914-contract-new-vs-old",
+      "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#109"
      ],
      "evidence": [
       {
@@ -170,6 +178,21 @@
        "sentence_index": 3,
        "source": "help:landlordonboarding04lease_zh-Hant.html",
        "quote_or_symbol": "一個物件可以綁定至多十個合約。"
+      },
+      {
+       "sentence_index": 4,
+       "source": "docs:knowledge/jgb-product-facts.md#p914-contract-new-vs-old",
+       "quote_or_symbol": "新合約不動舊合約；同一物件最多 10 份使用中合約"
+      },
+      {
+       "sentence_index": 5,
+       "source": "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#109",
+       "quote_or_symbol": "採用：只寫程式證實的系統行為，其餘走個案客服"
+      },
+      {
+       "sentence_index": 5,
+       "source": "docs:knowledge/jgb-product-facts.md#p914-contract-new-vs-old",
+       "quote_or_symbol": "不檢查新舊租期是否重疊"
       }
      ],
      "not_supported_greps": [],
@@ -215,14 +238,12 @@
       }
      ],
      "not_supported_greps": [],
-     "open_questions": [
-      "幫助中心 landlordonboarding04lease_zh-Hant.html FAQ 寫「未刊登的物件代表物件還在編輯中，並不會顯示在公開廣告也無法新增合約」，但 app/Http/Controllers/ContractController.php 顯示 2024/11/13 已將建約條件由『物件已刊登（is_open）』改成『物件必填欄位齊全（isCurrentDataCanCreateContract）』，舊的判斷條件已經停用不再生效。兩者是否等價（欄位填齊是否等同已刊登）未經查證，交回裁決。"
-     ]
+     "open_questions": []
     },
     {
      "proposed_id": "jgb/D/contract-list-row-gear-actions",
      "askable": "合約總表每一列的小齒輪可以做什麼動作",
-     "title": "合約總表列的小齒輪可以做什麼操作？（依合約目前狀態與權限顯示「編輯合約」「刪除合約」「取消簽名」等動作）",
+     "title": "合約總表列的小齒輪可以做什麼操作？（不論狀態都有「查看物件」「查看帳單」；其餘依合約狀態、身分與權限增減）",
      "unit_ids": [
       "page:contracts.list"
      ],
@@ -238,22 +259,78 @@
       "合約列表的齒輪按鈕能做什麼"
      ],
      "sentences": [
-      "合約總表每一列可以點選小齒輪，依合約目前狀態顯示「編輯合約」「刪除合約」「取消簽名」等動作，實際顯示哪些動作要看目前狀態與權限。"
+      "合約總表每一列的小齒輪內容，是依這份合約目前的狀態、登入身分與權限來決定的。",
+      "不論合約狀態，只要有查看物件的權限，小齒輪都會顯示「查看物件」。",
+      "不論合約狀態，小齒輪都會顯示「查看帳單」，點進去可以看到這份合約（含它整條續約鏈）產生過的所有帳單；如果這條續約鏈目前完全沒有帳單，這個選項會顯示但不能點選。",
+      "如果目前登入身分是租客，而且這份合約已經綁定信用卡自動扣款，小齒輪還會額外顯示「更換綁定信用卡」，可以重新走一次授權綁定。",
+      "狀態是「待租客簽回」或「待房東簽名」時，如果有簽合約權限，小齒輪依情況只會顯示一個取消選項：這份合約正在續約中顯示「取消續約」，正在提前解約中顯示「取消提前解約」，兩者都不是的話顯示「取消邀請」。",
+      "狀態是「執行中合約」的各個階段（雙方簽名完成、點交送出、點交完成、點退送出、點退完成）時，如果有權限，社宅包租範本會額外顯示「新增轉租契約書」；如果目前登入身分不是租客，還會顯示「點交物件」「取消點交邀請」「點退押金」「取消點退邀請」（能不能點選要看合約目前是否符合條件）——租客身分看不到這四個選項；非社宅用途的合約，登入身分不是租客時還會顯示「續約」。",
+      "狀態是「提前解約中」時，有權限的話小齒輪會顯示無法點選的「點交物件」（目前畫面會重複出現兩次），以及可以點選的「取消提前解約」。",
+      "狀態是「歷史合約」或合約已結束時，有權限的話小齒輪會顯示「點退押金」，能不能點選要看是否符合點退條件；正常情況下歷史合約看不到「續約」，但系統另外有一份例外名單，名單內的合約即使已經變成歷史合約，只要登入身分不是租客、且是非社宅用途，還是會補回「續約」這個選項。"
      ],
      "sources": [
-      "code:app/Http/Controllers/ContractController.php"
+      "code:app/Http/Controllers/ContractController.php",
+      "code:routes/web.php",
+      "code:src/pages/contracts/list/Index.vue",
+      "code:app/Contract.php",
+      "code:src/components/SurelyVue/Contract/ActionCell.jsx"
      ],
      "evidence": [
       {
-       "sentence_index": 0,
+       "sentence_index": 1,
        "source": "code:app/Http/Controllers/ContractController.php",
-       "quote_or_symbol": "'text' => ___('編輯合約'),"
+       "quote_or_symbol": "'text' => ___('查看物件'),"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Controllers/ContractController.php",
+       "quote_or_symbol": "'text' => ___('查看帳單'),"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Http/Controllers/ContractController.php",
+       "quote_or_symbol": "'text' => ___('更換綁定信用卡'),"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:app/Http/Controllers/ContractController.php",
+       "quote_or_symbol": "'text' => ___('取消邀請'),"
+      },
+      {
+       "sentence_index": 5,
+       "source": "code:app/Http/Controllers/ContractController.php",
+       "quote_or_symbol": "'text' => ___('取消點交邀請'),"
+      },
+      {
+       "sentence_index": 5,
+       "source": "code:app/Http/Controllers/ContractController.php",
+       "quote_or_symbol": "'text' => ___('取消點退邀請'),"
+      },
+      {
+       "sentence_index": 7,
+       "source": "code:app/Http/Controllers/ContractController.php",
+       "quote_or_symbol": "續約例外名單：租期已過而被歸為歷史合約，原本齒輪選單不會出現「續約」"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:routes/web.php",
+       "quote_or_symbol": "Route::match(['get', 'post'], '/api2/contract/list/{action?}/{status?}', 'ContractController@webList')"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/contracts/list/Index.vue",
+       "quote_or_symbol": "api2/contract/list/getList"
       }
      ],
-     "not_supported_greps": [],
-     "open_questions": [
-      "小齒輪動作（編輯合約／刪除合約／取消簽名／取消續約／取消提前解約／點交物件等）在 ContractController.php index() 內依合約狀態組成陣列，本細目只列出最常見的幾種，完整清單依合約狀態、身分、權限而異，未逐一列舉。"
-     ]
+     "not_supported_greps": [
+      {
+       "claim": "目前合約總表前端實際呼叫的是 ContractController@webList，不是舊版的 list() 或更早的 index()（三支方法同檔都存在同名齒輪組裝邏輯，webList 才是現行路由指到的那一支）",
+       "grep": "grep -n \"api2/contract/list\" <jgb2釘住匯出>/routes/web.php",
+       "result": "命中 2 行：一行是被註解掉的 'ContractController@list'，緊接著未註解那行指到 'ContractController@webList'",
+       "positive_control": "同一段程式碼裡另兩支方法 list()／index() 也各自定義類似的齒輪陣列，可對照證明三支方法確實並存、容易誤認，只有 webList 是現行路由實際指到的那一支"
+      }
+     ],
+     "open_questions": []
     },
     {
      "proposed_id": "jgb/D/contract-list-row-sort-options",
@@ -308,16 +385,24 @@
       "合約總表欄位"
      ],
      "sentences": [
-      "合約總表有一欄「標籤」，顯示團隊在合約上設定的自訂標籤。"
+      "合約總表有一欄「標籤」，顯示團隊在合約上設定的自訂標籤。",
+      "合約上的「標籤」可以逐筆自訂加註，跟物件儀表板合約分頁上的「是否通知」是兩個各自獨立的設定，不是同一件事。"
      ],
      "sources": [
-      "code:src/pages/contracts/list/_parts/ListTable.vue"
+      "code:src/pages/contracts/list/_parts/ListTable.vue",
+      "docs:knowledge/jgb-product-facts.md#p914-contract-list-tags",
+      "code:src/pages/estates/dashboard/contracts/Index.vue"
      ],
      "evidence": [
       {
        "sentence_index": 0,
        "source": "code:src/pages/contracts/list/_parts/ListTable.vue",
        "quote_or_symbol": "titleKey: (state: IState)=>'標籤',"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/estates/dashboard/contracts/Index.vue",
+       "quote_or_symbol": "{{ t('是否通知') }}"
       }
      ],
      "not_supported_greps": [],
@@ -418,10 +503,15 @@
      ],
      "sentences": [
       "合約總表右上角有「匯出實價登錄資料」按鈕，點下去會開啟一個彈窗，可以匯出符合條件的合約資料，供之後申報實價登錄使用。",
-      "這個按鈕只有在「執行中合約」頁籤、網站語言是中文、而且團隊有開通這個功能時才會顯示；如果篩選結果目前是 0 筆，按鈕會呈現不能點的狀態。"
+      "這個按鈕只有在「執行中合約」頁籤、網站語言是中文、而且團隊有開通這個功能時才會顯示；如果篩選結果目前是 0 筆，按鈕會呈現不能點的狀態。",
+      "匯出實價登錄資料時，可以選擇申報義務人身分是「不動產經紀業」或「租賃住宅包租業」。",
+      "匯出資料的建號，系統優先用物件本身填的建號欄位；只有這個欄位是空的時候，才會改從物件的建物謄本資料去抓建號，不是以合約上另外填寫的建號為主。",
+      "目前系統已經提供「匯出實價登錄資料」功能；如果詢問的是全新改版的實價登錄功能或介面，目前沒有公開時程。"
      ],
      "sources": [
-      "code:src/pages/contracts/list/_parts/PageTop.vue"
+      "code:src/pages/contracts/list/_parts/PageTop.vue",
+      "docs:knowledge/jgb-product-facts.md#p914-real-price-registration",
+      "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#115"
      ],
      "evidence": [
       {
@@ -443,6 +533,68 @@
        "sentence_index": 1,
        "source": "code:src/pages/contracts/list/_parts/PageTop.vue",
        "quote_or_symbol": "{ 'disabled': searchState?.data?.pageNav?.total == 0 }"
+      },
+      {
+       "sentence_index": 2,
+       "source": "docs:knowledge/jgb-product-facts.md#p914-real-price-registration",
+       "quote_or_symbol": "實價登錄匯出"
+      },
+      {
+       "sentence_index": 3,
+       "source": "docs:knowledge/jgb-product-facts.md#p914-real-price-registration",
+       "quote_or_symbol": "建號以物件的 building_serial_no 為主"
+      },
+      {
+       "sentence_index": 4,
+       "source": "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#115",
+       "quote_or_symbol": "採用：寫現行功能＋「目前沒有公開時程」"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/D/contract-list-export-excel",
+     "askable": "合約總表可以把資料匯出成 Excel 嗎",
+     "title": "合約總表可以匯出 Excel 嗎？（勾選後按「匯出合約」，需要匯出合約權限，內容含租期、每期租金、合約押金等欄位）",
+     "unit_ids": [
+      "page:contracts.list"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "合約匯出excel",
+      "合約總表下載",
+      "匯出合約權限"
+     ],
+     "sentences": [
+      "在合約總表勾選要匯出的合約後，可以點選「匯出合約」，系統會以批次任務的方式產生一份 Excel。",
+      "使用這個功能需要有「匯出合約」的權限。",
+      "匯出的欄位包含租期、每期租金、合約押金等資訊，目前沒有叫做「戶號」的欄位。"
+     ],
+     "sources": [
+      "docs:knowledge/jgb-product-facts.md#p914-contract-export"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "docs:knowledge/jgb-product-facts.md#p914-contract-export",
+       "quote_or_symbol": "job_name: 'contract_export'"
+      },
+      {
+       "sentence_index": 1,
+       "source": "docs:knowledge/jgb-product-facts.md#p914-contract-export",
+       "quote_or_symbol": "permission?.export_contract"
+      },
+      {
+       "sentence_index": 2,
+       "source": "docs:knowledge/jgb-product-facts.md#p914-contract-export",
+       "quote_or_symbol": "沒有名為「戶號」的欄位"
       }
      ],
      "not_supported_greps": [],
@@ -495,7 +647,8 @@
       "「點交」分組底下是附設傢俱與現況補充兩個分頁；「選填」分組底下是建物謄本、公證、合約附件、補充條款四個分頁。",
       "分頁旁邊打勾圖示代表必填分頁；租金調幅設定、稅與發票、附設傢俱、現況補充、建物謄本、公證、合約附件、補充條款這 8 頁沒有打勾圖示，屬於選填分頁。",
       "實際會顯示哪些分頁不是固定的，會依合約範本、物件用途（例如車位）、是否為既存（紙本／DIY）合約等條件動態增減。",
-      "「租金調幅設定」分頁只有具備特定角色權限的團隊才會顯示；一般團隊看不到這個分頁，實際編輯合約時只會看到 13 個分頁，不是 14 個。"
+      "「租金調幅設定」分頁只有具備特定角色權限的團隊才會顯示，多數團隊看不到這個分頁。",
+      "分頁會不會顯示，不只受「租金調幅設定」這一項影響：「帳單設定」對特定幾個團隊目前是被拿掉的；「稅與發票」則是團隊沒有開通自動產生發票功能時才會被拿掉。"
      ],
      "sources": [
       "code:src/routes/contracts.js",
@@ -531,6 +684,16 @@
        "sentence_index": 5,
        "source": "code:src/use/useEditStore.js",
        "quote_or_symbol": "if (!specialRoles.currentSpecialRole.includes('rentAdjustment')){"
+      },
+      {
+       "sentence_index": 6,
+       "source": "code:src/use/useEditStore.js",
+       "quote_or_symbol": "myRoutes = myRoutes.filter((node)=>node?.meta?.label !== '帳單設定')"
+      },
+      {
+       "sentence_index": 6,
+       "source": "code:src/use/useEditStore.js",
+       "quote_or_symbol": "if (!editStore.options?.can_auto_generate_invoice){"
       }
      ],
      "not_supported_greps": [
@@ -541,9 +704,7 @@
        "positive_control": "同一段範圍 grep -c 'checkedIcon: true' 命中 6 筆，8+6=14 剛好等於分頁總數，可交叉驗證兩者加總沒有漏記"
       }
      ],
-     "open_questions": [
-      "「稅與發票」「帳單設定」等其他選填分頁是否也有類似的一般團隊預設不顯示的隱藏規則，本細目未逐一查證每個選填分頁，只確認了租金調幅設定這一項，交回裁決是否需要逐項查證。"
-     ]
+     "open_questions": []
     },
     {
      "proposed_id": "jgb/D/contract-tenant-basic-info",
@@ -569,10 +730,18 @@
       "「基本資料」分頁用來填寫承租方的簽約資料，可以選擇租客身份是「個人租客」或「法人租客」。",
       "系統提供「租客註冊」與「租客免註冊」兩種模式：租客註冊代表租客會自己註冊 JGB 會員並填妥承租方資訊；租客免註冊代表租客不需要註冊會員，改由管理者代為填寫承租方資訊。",
       "這個分頁也可以新增租客的緊急聯絡人，填寫姓名、關係與聯絡號碼。",
-      "分頁上會提示，這裡填寫的租客資料會謄寫進合約內容，過程經過加密處理。"
+      "分頁上會提示，這裡填寫的租客資料會謄寫進合約內容，過程經過加密處理。",
+      "合約編輯的租客資訊分頁還有「新增租客」功能，可以加入其他共同承租人，每筆記錄暱稱與證件字號，最多可以加到 10 筆；這也是目前多人共同簽約的做法——如果問的是更完整的多人簽約功能規劃，目前沒有公開時程。",
+      "每一位承租人的姓名、公司名稱、身分類型、聯絡方式，系統是逐筆分開記錄，不是把所有租客資料塞在同一個欄位裡。",
+      "選擇「租客免註冊」的合約，只要合約成立就直接視為已完成簽名，不會經過「待租客簽回」或「待管理者簽名」這兩個狀態。"
      ],
      "sources": [
-      "code:src/pages/contracts/edit/tenantInfo/Index.jsx"
+      "code:src/pages/contracts/edit/tenantInfo/Index.jsx",
+      "docs:knowledge/jgb-product-facts.md#p914-contract-additional-tenants",
+      "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#85",
+      "docs:knowledge/jgb-product-facts.md#p914-lessee-records",
+      "docs:knowledge/jgb-product-facts.md#p914-contract-agents",
+      "docs:knowledge/jgb-product-facts.md#p914-contract-exempt-register-signed"
      ],
      "evidence": [
       {
@@ -594,6 +763,26 @@
        "sentence_index": 3,
        "source": "code:src/pages/contracts/edit/tenantInfo/Index.jsx",
        "quote_or_symbol": "t('系統會將以下租客資料騰寫到合約內，過程經加密處理，不讓資料外流。')"
+      },
+      {
+       "sentence_index": 4,
+       "source": "docs:knowledge/jgb-product-facts.md#p914-contract-additional-tenants",
+       "quote_or_symbol": "同一合約可加「其他租客」，上限 10 筆"
+      },
+      {
+       "sentence_index": 4,
+       "source": "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#85",
+       "quote_or_symbol": "採用：寫現行功能＋「目前沒有公開時程」"
+      },
+      {
+       "sentence_index": 5,
+       "source": "docs:knowledge/jgb-product-facts.md#p914-lessee-records",
+       "quote_or_symbol": "租客資料逐筆記錄"
+      },
+      {
+       "sentence_index": 6,
+       "source": "docs:knowledge/jgb-product-facts.md#p914-contract-exempt-register-signed",
+       "quote_or_symbol": "免註冊租客的合約成立即為已簽名"
       }
      ],
      "not_supported_greps": [],
@@ -616,22 +805,29 @@
      "phrasings": [
       "合約範本怎麼選",
       "合約起迄日期怎麼設定",
-      "租賃訂約日期是什麼",
-      "合約範本有哪幾種"
+      "租賃訂約日期是什麼"
      ],
      "sentences": [
       "「基本條件」分頁要先選擇「合約類型」與「合約範本」，決定這份合約要用哪一種定型化契約內容。",
       "分頁上要設定「合約起迄日期」，也就是這份合約的租期起訖。",
       "另外還有「租賃訂約日期」欄位，用來記錄雙方實際簽訂這份合約的日期，跟合約起迄日期是不同的欄位。",
       "一般團隊建立一般住宅合約時，可選的合約範本共有 12 種：「114年內政部住宅租賃契約(原房東)」「113年內政部轉租契約(包租轉租)」「代租代管契約(參考114年租賃契約)」「內政部英文版 租賃契約書 原房東」「內政部英文版 租賃契約書 包租業」「內政部英文版 租賃契約書 代租代管」「英越文版 租賃契約書」「英泰文版 租賃契約書 原房東」「英泰文版 租賃契約書 代租代管」「公會中文版 租賃契約書 原房東」「公會中文版 租賃契約書 包租業」「公會中文版 租賃契約書 代租代管」。",
-      "如果登入身分是個人房東角色，可選範本會縮減成 4 種：「114年內政部住宅租賃契約(原房東)」「內政部英文版 租賃契約書 原房東」「英泰文版 租賃契約書 原房東」「公會中文版 租賃契約書 原房東」。"
+      "如果登入身分是個人房東角色，可選範本會縮減成 4 種：「114年內政部住宅租賃契約(原房東)」「內政部英文版 租賃契約書 原房東」「英泰文版 租賃契約書 原房東」「公會中文版 租賃契約書 原房東」。",
+      "「轉租合約」本身也是一般合約範本可以選擇的其中一種，不是另外一套獨立機制；如果選的是內政部英文版範本，系統的版位設定裡沒有補充條款的印製座標，所以就算補充條款分頁有填寫內容，也不會印在這份合約文件上。",
+      "合約的起始日就是這裡填的「合約起迄日期」起日，之後計算帳務的起算基準都是用這個欄位，跟這份合約資料是什麼時候建立到系統裡沒有關係。",
+      "系統對「租賃訂約日期」（簽約日）與「合約起迄日期」（起租日）之間的先後關係沒有做強制檢查或提示；簽約日晚於起租日是否需要向主管機關另外說明，屬於外部規定的認定範圍，系統不判斷。",
+      "系統的合約類型／範本只有原房東、包租業、代租代管三種分類，沒有「二房東」這個選項；二房東應該算原房東還是包租業，屬於業態的法律定性問題，系統不判斷。"
      ],
      "sources": [
       "code:src/pages/contracts/edit/rentBasic/General.vue",
       "code:app/Http/Controllers/ContractController.php",
       "code:config/contract.php",
       "code:app/Role.php",
-      "help:landlordonboarding04lease_zh-Hant.html"
+      "help:landlordonboarding04lease_zh-Hant.html",
+      "docs:knowledge/jgb-product-facts.md#p914-contract-templates",
+      "docs:knowledge/jgb-product-facts.md#p914-contract-date-start",
+      "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#91",
+      "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#101"
      ],
      "evidence": [
       {
@@ -673,12 +869,30 @@
        "sentence_index": 4,
        "source": "code:app/Role.php",
        "quote_or_symbol": "const RULE_KEY_LANDLORD_INDIVIDUAL     = 2;"
+      },
+      {
+       "sentence_index": 5,
+       "source": "docs:knowledge/jgb-product-facts.md#p914-contract-templates",
+       "quote_or_symbol": "合約範本清單與限制"
+      },
+      {
+       "sentence_index": 6,
+       "source": "docs:knowledge/jgb-product-facts.md#p914-contract-date-start",
+       "quote_or_symbol": "合約起始日是使用者填的 date_start"
+      },
+      {
+       "sentence_index": 7,
+       "source": "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#91",
+       "quote_or_symbol": "採用：寫系統側事實＋「屬外部規定，系統不判斷」"
+      },
+      {
+       "sentence_index": 8,
+       "source": "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#101",
+       "quote_or_symbol": "採用：寫系統側事實＋「屬外部規定，系統不判斷」"
       }
      ],
      "not_supported_greps": [],
-     "open_questions": [
-      "幫助中心 landlordonboarding04lease_zh-Hant.html 說「內政部所規範的五種合約範本」（且列舉的是原房東中文版／包租業中文版／代租代管中文版／英文版／英越文版共 5 個名目），但程式（app/Http/Controllers/ContractController.php 的範本組裝邏輯＋config/contract.php 的範本標籤）顯示一般團隊實際可選 12 種、個人房東身分可選 4 種，兩者皆非 5 種；文件與程式衝突，交回裁決以何者為準。"
-     ]
+     "open_questions": []
     },
     {
      "proposed_id": "jgb/D/contract-rentbasic-billing-cycle",
@@ -915,7 +1129,8 @@
      ],
      "sources": [
       "code:src/pages/contracts/edit/billSetting/Index.jsx",
-      "code:src/pages/contracts/edit/rent/Index.jsx"
+      "code:src/pages/contracts/edit/rent/Index.jsx",
+      "docs:knowledge/jgb-product-facts.md#p914-contract-cable-tv-fee"
      ],
      "evidence": [
       {
@@ -1360,11 +1575,13 @@
       "「出租方基本資料」分頁如果是個人房東，需要填妥電話、Email、身分證字號、戶籍地址、通訊地址。",
       "如果是用團隊方式建立合約，出租方資料（公司登記名稱、統一編號、電話、Email、公司登記地址、公司通訊地址）會自動帶入先前團隊資訊填寫的內容，需要修改的話要回到「團隊資訊」編輯。",
       "填妥出租方資料後，要在「經理人資訊」選擇這份合約由團隊中哪一位經理人負責管理。",
-      "分頁最下方可以選擇新增電子簽名圖章取代手動簽名；如果先前沒有上傳過電子圖章，需要先到「團隊資訊」設定才能使用這個功能。"
+      "分頁最下方可以選擇新增電子簽名圖章取代手動簽名；如果先前沒有上傳過電子圖章，需要先到「團隊資訊」設定才能使用這個功能。",
+      "代租代管合約在這個分頁可以逐份選擇「出租人資訊」：從出租人清單選擇出租人，並選擇身份是「所有權人」或「轉租人」；個人房東、團隊本身的出租方資料則是帳號層級的設定。其餘關於要用哪個帳號簽約的個案安排，可洽客服協助。"
      ],
      "sources": [
       "code:src/pages/contracts/edit/dealerBasic/Index.vue",
-      "help:landlordonboarding04lease_zh-Hant.html"
+      "help:landlordonboarding04lease_zh-Hant.html",
+      "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#100"
      ],
      "evidence": [
       {
@@ -1386,6 +1603,11 @@
        "sentence_index": 3,
        "source": "code:src/pages/contracts/edit/dealerBasic/Index.vue",
        "quote_or_symbol": "t('使用電子簽名圖章取代親手簽名')"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/pages/contracts/edit/dealerBasic/Index.vue",
+       "quote_or_symbol": "{ label: t('所有權人'), value: '0' },"
       }
      ],
      "not_supported_greps": [
@@ -1419,11 +1641,13 @@
      ],
      "sentences": [
       "「建物謄本」分頁是選填分頁，用來補充建物的謄本資訊，讓合約內容更完備。",
-      "這個分頁的資訊只是為了合約內容完備，並不會刊登在物件的網頁廣告上，可以放心填寫。"
+      "這個分頁的資訊只是為了合約內容完備，並不會刊登在物件的網頁廣告上，可以放心填寫。",
+      "這個分頁填寫的建物謄本資訊（例如地號、土地標的清冊），在物件對外的公開廣告頁面上完全查不到對應欄位，確認不會顯示在廣告頁上。"
      ],
      "sources": [
       "code:src/routes/contracts.js",
-      "help:Landlordonboarding09Socialhousing_zh-Hant.html"
+      "help:Landlordonboarding09Socialhousing_zh-Hant.html",
+      "code:src/pages/estates/show/Index.jsx"
      ],
      "evidence": [
       {
@@ -1445,9 +1669,7 @@
        "positive_control": "同範圍 grep -c 租金 master -- src/pages/estates/show/_parts/FeesTable.vue 命中 2 筆，證明該公開頁面元件讀得到內容、grep 條件有效"
       }
      ],
-     "open_questions": [
-      "「不會刊登在網頁廣告上」的原句出自社宅合約教學頁對物件建立步驟中的建物謄本欄位，用在一般合約「建立與編輯」分頁的建物謄本（buildingTranscript/General.vue）上屬同名同性質欄位的合理外推，未直接對到一般合約分頁的說明文字，列此供覆核。"
-     ]
+     "open_questions": []
     },
     {
      "proposed_id": "jgb/D/contract-attachments-optional",
@@ -1533,7 +1755,8 @@
       "「補充條款」分頁最多可以寫 50 行，每行限制 50 個字。",
       "補充條款是因為系統的電子合約使用政府提供的公版定型化契約，如果需要補充其他合約條款，可以在這裡描述，系統會自動把條款內容帶入合約當中。",
       "如果內容超過 50 行限制，建議另外寫成文字檔或圖片檔，改放在「合約附件」的「其他」項目上傳。",
-      "這個分頁也提供「預設補充條款」範本可以套用，或是選擇「複製現有合約資料」把其他合約已填寫的補充條款複製過來。"
+      "這個分頁也提供「預設補充條款」範本可以套用，或是選擇「複製現有合約資料」把其他合約已填寫的補充條款複製過來。",
+      "這個分頁另外還會提示「補充條款至多僅限 1 頁 A4 內容，請務必執行『預覽結果』以確認最終呈現」，這是排版後的頁數提示，跟前面「最多 50 行、每行 50 字」的輸入框字元數上限是兩件事，兩者可能同時成立：字數在上限內，仍可能因為排版超過 1 頁。"
      ],
      "sources": [
       "code:src/pages/contracts/edit/additionalConvention/Index.vue",
@@ -1560,6 +1783,11 @@
        "sentence_index": 3,
        "source": "code:src/pages/contracts/edit/additionalConvention/Index.vue",
        "quote_or_symbol": "t('複製現有合約資料')"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/pages/contracts/edit/additionalConvention/Index.vue",
+       "quote_or_symbol": "補充條款至多僅限 [s1] 頁 A4 內容，請務必執行「預覽結果」以確認最終呈現。"
       }
      ],
      "not_supported_greps": [
@@ -1570,9 +1798,7 @@
        "positive_control": "同檔 termLines 命中 1 筆，數值為 50，兩個限制數字皆可在同一檔案 grep 到，非誤植"
       }
      ],
-     "open_questions": [
-      "src/pages/contracts/edit/additionalConvention/Index.vue 另外還有一句提示「補充條款至多僅限 1 頁 A4 內容，請務必執行「預覽結果」以確認最終呈現。」，跟本細目已收錄的「最多 50 行、每行 50 字」是不同的限制描述（前者是排版後的頁數提示，後者是輸入框的字元數上限），兩者可能同時成立（字數在上限內仍可能因排版超過 1 頁），交回裁決是否要在正本中一併說明兩種限制描述的關係。"
-     ]
+     "open_questions": []
     },
     {
      "proposed_id": "jgb/D/contract-edit-tabs-conditional-rules",
@@ -1696,6 +1922,83 @@
       }
      ],
      "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/D/contract-lease-scope-by-space-type",
+     "askable": "合約的租賃範圍是全部還是部分，要自己選嗎",
+     "title": "合約的租賃範圍怎麼決定？（物件空間型態為整戶時自動為「全部」，其餘一律「部分」，不用使用者勾選）",
+     "unit_ids": [
+      "page:contracts.edit.rentBasic"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "租賃範圍怎麼決定",
+      "合約全部還是部分怎麼判斷",
+      "租賃範圍會自動判斷嗎"
+     ],
+     "sentences": [
+      "合約的「租賃範圍」是全部還是部分，是由物件的空間型態決定的，不是使用者在合約上自己勾選的欄位。",
+      "物件空間型態是「整戶」或「整層空間」時，合約的租賃範圍會自動判定為「全部」；其他空間型態（例如套房、雅房等分租情境）一律判定為「部分」。"
+     ],
+     "sources": [
+      "docs:knowledge/jgb-product-facts.md#p914-contract-lease-scope",
+      "code:config/estate.php"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 1,
+       "source": "docs:knowledge/jgb-product-facts.md#p914-contract-lease-scope",
+       "quote_or_symbol": "若物件的空間型態為整戶，則租賃範圍為全部，其他狀況下必是部分"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:config/estate.php",
+       "quote_or_symbol": "'office_flat' => '整層空間',"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/D/contract-tenant-code-change",
+     "askable": "承租人的編碼打錯了或需要異動，業者可以自己改嗎",
+     "title": "承租人編碼要異動怎麼辦？（此操作需由 JGB 客服協助）",
+     "unit_ids": [
+      "page:contracts.edit.tenantInfo"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "承租人編碼異動",
+      "租客編碼改不了",
+      "承租人代號怎麼改"
+     ],
+     "sentences": [
+      "承租人編碼如果需要異動，此操作需由 JGB 客服協助。"
+     ],
+     "sources": [
+      "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#123"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#123",
+       "quote_or_symbol": "採用：寫「此操作需由 JGB 客服協助」"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
     }
    ]
   },
@@ -1744,10 +2047,12 @@
      ],
      "sentences": [
       "社宅合約的「建物標的」分組包含建物細節（建物資訊／建物謄本）、現況補充、現況照片、附設傢俱四個分頁。",
-      "建物細節分頁主要呈現物件建立時填寫的資料，如果資料有誤，需要回到物件編輯修改，不能直接在合約分頁改。"
+      "建物細節分頁主要呈現物件建立時填寫的資料，如果資料有誤，需要回到物件編輯修改，不能直接在合約分頁改。",
+      "「現況補充」分頁是一份建物現況檢查清單，內容包含是否有海砂屋、輻射屋、消防安全檢查、混凝土氯離子含量檢測等勾選項目，沒有勾選視為沒有這個情形或設備；分頁最上方固定會提示「如有需要，可執行：複製現有合約資料」，這個提示是固定顯示在頁首，不是只對沒勾選的項目才出現。"
      ],
      "sources": [
-      "help:Landlordonboarding09Socialhousing_zh-Hant.html"
+      "help:Landlordonboarding09Socialhousing_zh-Hant.html",
+      "code:src/pages/contracts/edit/situation/SocialHousing.vue"
      ],
      "evidence": [
       {
@@ -1759,12 +2064,30 @@
        "sentence_index": 1,
        "source": "help:Landlordonboarding09Socialhousing_zh-Hant.html",
        "quote_or_symbol": "建物細節（建物資訊/建物謄本）：此處資訊主要針對該物件創建時之資料進行呈現，若資料有誤，需針對該物件進行編輯"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/contracts/edit/situation/SocialHousing.vue",
+       "quote_or_symbol": "t('海砂屋')"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/contracts/edit/situation/SocialHousing.vue",
+       "quote_or_symbol": "t('輻射屋')"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/contracts/edit/situation/SocialHousing.vue",
+       "quote_or_symbol": "t('定期消防安全檢查')"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/contracts/edit/situation/SocialHousing.vue",
+       "quote_or_symbol": "t('若有以下情形或設備，請勾選符合的項目，沒有勾選將視為沒有此情形或設備。')"
       }
      ],
      "not_supported_greps": [],
-     "open_questions": [
-      "幫助中心只列出「現況補充」為建物標的分組下的一個分頁名稱，沒有針對這個分頁本身的欄位/規則另外撰寫說明文字，本細目暫未補上該分頁的細節內容，交回裁決是否需要另外查證。"
-     ]
+     "open_questions": []
     },
     {
      "proposed_id": "jgb/D/social-housing-photos-tab",
@@ -2075,9 +2398,7 @@
        "positive_control": "同一 fine 的另一筆證據（code:src/pages/contracts/edit/publicNotary/SocialHousing.vue）grep 命中 1 筆，證明 grep 條件與檔案存取本身有效"
       }
      ],
-     "open_questions": [
-      "幫助中心 Landlordonboarding09Socialhousing_zh-Hant.html 說「公證是必要的程序，故無法於線上即完成簽約」，但 src/pages/contracts/edit/publicNotary/SocialHousing.vue 有 t('不辦理公證理由') 欄位，文案也寫「租賃雙方因以下事由同意不辦理公證者，視同自願放棄公證費申請之權益」，顯示程式上其實存在『同意不辦理公證』的路徑（代價是放棄公證費補助），跟幫助中心『必要程序、無法線上完成』的說法不完全一致，交回裁決是否已過期或屬於例外選項。"
-     ]
+     "open_questions": []
     },
     {
      "proposed_id": "jgb/D/social-housing-attachments-tab",
@@ -2135,10 +2456,12 @@
      ],
      "sentences": [
       "「補助申請」分組主要配合政府的社會住宅包租代管 333 補貼政策：出租方有房屋稅、地價稅、租金所得稅三種稅費減免，承租方有公證費、修繕費、居家安全相關保險費三項費用補助，業者則有仲介費、代管費由政府全額補助的三年免費專業服務。",
-      "補助申請分頁要填寫補助費用申請日期、住宅出租修繕費、公證費、承租人租金補助等條件。"
+      "補助申請分頁要填寫補助費用申請日期、住宅出租修繕費、公證費、承租人租金補助等條件。",
+      "同一份合約要不要、能不能列多名租金補貼申請人，屬於政府補助規定的認定範圍，系統不判斷。"
      ],
      "sources": [
-      "help:Landlordonboarding09Socialhousing_zh-Hant.html"
+      "help:Landlordonboarding09Socialhousing_zh-Hant.html",
+      "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#99"
      ],
      "evidence": [
       {
@@ -2150,6 +2473,11 @@
        "sentence_index": 1,
        "source": "help:Landlordonboarding09Socialhousing_zh-Hant.html",
        "quote_or_symbol": "條件（補助費用申請日期/住宅出租修繕費/公證費/承租人租金補助）"
+      },
+      {
+       "sentence_index": 2,
+       "source": "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#99",
+       "quote_or_symbol": "採用：寫系統側事實＋「屬外部規定，系統不判斷」"
       }
      ],
      "not_supported_greps": [],
@@ -2287,7 +2615,8 @@
       "社宅租客資格怎麼審核"
      ],
      "sentences": [
-      "基本資料分頁要勾選承租方身分別，選項包含一般戶、低收入戶、中低收入戶、六十五歲以上之老人（限申請人本人）、住宅政策補貼戶等，或勾選「以上均無」。"
+      "基本資料分頁要勾選承租方身分別，選項包含一般戶、低收入戶、中低收入戶、六十五歲以上之老人（限申請人本人）、住宅政策補貼戶等，或勾選「以上均無」。",
+      "社宅合約的「基本資料」分頁另外有「新增代理人」功能，可以填寫最多 3 位法定代理人（父、母、監護人三選一），這個功能只在社宅合約有，一般合約的承租方資料分頁沒有這個功能。"
      ],
      "sources": [
       "code:src/pages/contracts/edit/tenantBasic/Index.vue"
@@ -2297,6 +2626,16 @@
        "sentence_index": 0,
        "source": "code:src/pages/contracts/edit/tenantBasic/Index.vue",
        "quote_or_symbol": "t('六十五歲以上之老人。（限申請人本人）')"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/contracts/edit/tenantBasic/Index.vue",
+       "quote_or_symbol": "+ {{ t('新增代理人') }}({{ editStore.form.to_user_pdf_agents.length }}/3)"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/contracts/edit/tenantBasic/Index.vue",
+       "quote_or_symbol": "{ label:t('父'), value:1,"
       }
      ],
      "not_supported_greps": [],
@@ -2481,7 +2820,8 @@
      ],
      "sentences": [
       "如果合約範本選擇「包租包管」範本，承租方分組下的「家庭＆財產」「授權」「附件」三個分頁不會顯示。",
-      "如果合約範本選擇「轉租」範本，出租方分組下的「授權」「附件」兩個分頁不會顯示。"
+      "如果合約範本選擇「轉租」範本，出租方分組下的「授權」「附件」兩個分頁不會顯示。",
+      "社宅合約範本其實有三種（代租代管、包租包管、轉租），只有包租包管跟轉租各自有拿掉分頁的規則；選「代租代管」範本時看到的是完整的分頁清單，沒有被額外拿掉任何分頁。"
      ],
      "sources": [
       "code:src/use/useEditStore.js",
@@ -2521,11 +2861,15 @@
        "grep": "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -cF 'if (editStore.form.contract_template_selected === '\"'\"'sublet'\"'\"'){' master -- src/use/useEditStore.js",
        "result": "1 筆命中",
        "positive_control": "同一 fine 的另一筆證據（code:src/use/useEditStore.js）「if (editStore.form.contract_te...」grep 命中 1 筆，證明 grep 條件與檔案存取本身有效"
+      },
+      {
+       "claim": "分頁過濾規則檔（useEditStore.js）裡查無 'management' 這個範本代號對應的任何過濾規則",
+       "grep": "grep -in \"'management'\\|'charter'\\|'sublet'\" <jgb2釘住匯出>/src/use/useEditStore.js",
+       "result": "命中 2 筆，皆為 'charter' 與 'sublet' 各一次；'management' 0 筆",
+       "positive_control": "同一個 grep 條件確實命中 charter／sublet 各一次，證明查詢語法有效，不是條件寫錯導致 0 命中"
       }
      ],
-     "open_questions": [
-      "社宅合約範本其實有三個值：management（代租代管）、charter（包租包管）、sublet（轉租）；useEditStore.js 只對 charter／sublet 有額外拿掉分頁的規則，grep 不到 'management' 這個字串，研判選「代租代管」範本時看到的是完整分頁，未逐一查證交回裁決是否需要補一條說明。"
-     ]
+     "open_questions": []
     }
    ]
   },
@@ -2561,12 +2905,18 @@
      "sentences": [
       "房東送出合約邀請後，系統會給租客一段審閱期才能簽約；天數其實是讀團隊設定，沒有設定才用預設的 3 天（72 小時）。",
       "這個審閱天數設定屬於團隊層級，不同團隊可以各自覆蓋預設值。",
-      "從發送邀請時開始計算，租客如果沒有在期限內完成簽約，這個合約邀請連結就會失效。"
+      "從發送邀請時開始計算，租客如果沒有在期限內完成簽約，這個合約邀請連結就會失效。",
+      "送出合約邀請時，系統會用合約上填的租客 Email 去比對是否為已經註冊的會員，比對到的話會自動代入該會員的資料，並把合約上的租客 Email 改成該會員的註冊 Email；用電話比對時，只認已經完成手機驗證的帳號。這個比對只在送出邀請的當下做一次，租客如果是事後才註冊會員，不會自動回頭綁定到先前已經送出的合約邀請。",
+      "比對會員 Email 時，大小寫不同會被當成不同的 Email，系統沒有把 Email 統一轉成小寫再比對。",
+      "租客帳號登入後看不看得到某份合約的邀請，取決於這個帳號與這份合約在資料庫裡實際的綁定關係；如果遇到租客反映看不到邀請，需要查該筆合約與帳號的個案資料，可洽客服協助。"
      ],
      "sources": [
       "code:app/Http/Controllers/ContractController.php",
       "code:app/Http/Controllers/Internal/ContractWriteController.php",
-      "help:landlordonboarding04lease_zh-Hant.html"
+      "help:landlordonboarding04lease_zh-Hant.html",
+      "docs:knowledge/jgb-product-facts.md#p914-contract-invite-account-match",
+      "docs:knowledge/jgb-product-facts.md#p914-email-encrypted-no-lowercase",
+      "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#113"
      ],
      "evidence": [
       {
@@ -2583,6 +2933,21 @@
        "sentence_index": 2,
        "source": "help:landlordonboarding04lease_zh-Hant.html",
        "quote_or_symbol": "從您發送邀請時開始計算，租客需要在72小時內進行簽約，否則該連結就會失效。"
+      },
+      {
+       "sentence_index": 3,
+       "source": "docs:knowledge/jgb-product-facts.md#p914-contract-invite-account-match",
+       "quote_or_symbol": "送出簽約邀請時才比對既有會員，之後註冊不回頭綁定"
+      },
+      {
+       "sentence_index": 4,
+       "source": "docs:knowledge/jgb-product-facts.md#p914-email-encrypted-no-lowercase",
+       "quote_or_symbol": "會員 Email 加密存放，比對前不轉小寫"
+      },
+      {
+       "sentence_index": 5,
+       "source": "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#113",
+       "quote_or_symbol": "採用：只寫程式證實的系統行為，其餘走個案客服"
       }
      ],
      "not_supported_greps": [
@@ -2599,9 +2964,7 @@
        "positive_control": "同一 fine 的另一筆證據（code:app/Http/Controllers/ContractController.php）「->getSettings('contract_review_renew_period', (int) optional($this->role)->id)['review_days'] ?? 3);」grep -cF 命中 2 筆，證明 grep 條件與檔案存取本身有效"
       }
      ],
-     "open_questions": [
-      "app/Http/Controllers/Internal/ContractWriteController.php 另有一條寫死 72 小時（+72 HOUR）的路徑，數值恰好與預設值相同，但走的是內部/API 寫入流程而非本細目描述的主要送出邀請流程，本細目未收錄此路徑，交回裁決是否兩條路徑需要分開說明。"
-     ]
+     "open_questions": []
     },
     {
      "proposed_id": "jgb/D/contract-sign-flow-steps",
@@ -2627,14 +2990,17 @@
       "租客簽約頁面第一步要填寫「承租方簽約資料」，並選擇「簽約身份」。",
       "頁面會要求上傳承租方身份證明文件影本；另外還有「工作名片/學生證」（同一個上傳欄位）與「良民證」等其他證明文件的上傳欄位，各自獨立、不能互相替代。",
       "印章上傳依簽約身份不同而異：租客身份要上傳「小章」；法人身份（非租客）則要上傳「大章」與「小章」兩個欄位。",
-      "如果這份合約是 GTB 契約範本，簽約前會多一個步驟：畫面下方會出現 5 個條款確認選項（詳閱契約條款、無法更改內容、續約通知天數、履約保證金退還天數、吸菸罰緩等規定），要全部勾選才能繼續；一般合約範本沒有這個額外勾選步驟。",
-      "確認資料無誤後，如果是 GTB 契約，要先點「下一步，同意合約條款」進到條款頁勾完 5 個確認選項，再點「下一步，前往簽名」才會進入雲想科技（Thinkcloud）的簽約畫面；一般合約範本只有一個「下一步」按鈕，點選後直接進入雲想科技簽約畫面。整個瀏覽、簽名過程都有時間戳記與 IP 紀錄。"
+      "部分客戶使用專屬的客製合約範本；用這類範本簽約時，簽約前會多一個步驟：畫面下方會出現 5 個條款確認選項（詳閱契約條款、無法更改內容、續約通知天數、履約保證金退還天數、吸菸罰緩等規定），要全部勾選才能繼續；一般合約範本沒有這個額外勾選步驟。",
+      "確認資料無誤後，如果是上述客製合約範本，要先點「下一步，同意合約條款」進到條款頁勾完 5 個確認選項，再點「下一步，前往簽名」才會進入雲想科技（Thinkcloud）的簽約畫面；一般合約範本只有一個「下一步」按鈕，點選後直接進入雲想科技簽約畫面。整個瀏覽、簽名過程都有時間戳記與 IP 紀錄。",
+      "簽約過程系統只負責記錄簽名當下的時間戳記與 IP 位置這些客觀資訊；簽名內容跟登記姓名是否一致所產生的法律效力，屬於法律問題，系統不判斷。"
      ],
      "sources": [
       "code:resources/views/contract/sign.blade.php",
       "code:src/entry/contract-sign.js",
       "code:src/pages/contracts/edit/_methods/getFormDataForStepDone.js",
-      "help:contract_review_period_zh-Hant.html"
+      "help:contract_review_period_zh-Hant.html",
+      "code:app/Http/Controllers/ContractController.php",
+      "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#103"
      ],
      "evidence": [
       {
@@ -2696,6 +3062,11 @@
        "sentence_index": 2,
        "source": "code:resources/views/contract/sign.blade.php",
        "quote_or_symbol": "<div class=\"field-title\">{{___('小章')}}</div>"
+      },
+      {
+       "sentence_index": 5,
+       "source": "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#103",
+       "quote_or_symbol": "採用：寫系統側事實＋「屬外部規定，系統不判斷」"
       }
      ],
      "not_supported_greps": [
@@ -2706,9 +3077,7 @@
        "positive_control": "同範圍 grep -c '電子簽' 命中 19 個檔案，證明 grep 與範圍本身是有效的、不是查詢條件本身有問題"
       }
      ],
-     "open_questions": [
-      "isGTBContract（src/entry/contract-sign.js computed）在 resources/views/contract/sign.blade.php 裡有 11 處消費端，會控制「下一步，前往簽名」按鈕、承租方身份證明文件影本必填星號、實際入住人／履約保證金退款整個區塊、電子簽約圖章區塊，不是未接線的死碼。GTB 這個範本代號本身，程式裡除了一則註解「// GTB 大翰」（src/pages/contracts/edit/_methods/getFormDataForStepDone.js）外，找不到把它翻譯成正式產品用語的地方，交回裁決 GTB 契約在商業上該怎麼向使用者稱呼或介紹。"
-     ]
+     "open_questions": []
     },
     {
      "proposed_id": "jgb/D/contract-esign-no-extra-fee",
@@ -2732,11 +3101,13 @@
      ],
      "sentences": [
       "JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄裡沒有任何費用或點數欄位。",
-      "租客的簽約頁流程沒有付費或加購的畫面元素。"
+      "租客的簽約頁流程沒有付費或加購的畫面元素。",
+      "系統內不另收簽章費，方案內容以方案頁為準。"
      ],
      "sources": [
       "code:database/migrations/2026_06_17_000002_create_contract_esign_table.php",
-      "code:resources/views/contract/sign.blade.php"
+      "code:resources/views/contract/sign.blade.php",
+      "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#32"
      ],
      "evidence": [
       {
@@ -2748,6 +3119,11 @@
        "sentence_index": 1,
        "source": "code:resources/views/contract/sign.blade.php",
        "quote_or_symbol": "{{___('承租方簽約資料')}}<sup class=\"text-main-500\">*</sup>"
+      },
+      {
+       "sentence_index": 2,
+       "source": "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#32",
+       "quote_or_symbol": "寫「系統內不另收簽章費，方案內容以方案頁為準」"
       }
      ],
      "not_supported_greps": [
@@ -2764,9 +3140,7 @@
        "positive_control": "同檔 grep -c 簽約 命中 7 筆，證明檔案讀得到內容、不是空檔案或路徑寫錯"
       }
      ],
-     "open_questions": [
-      "這只證明系統內沒有簽章計費機制，不證明 JGB 方案價目表沒有把電子簽章列為方案內容——方案內容以 /pricing 頁為準，售前不應直接報價。"
-     ]
+     "open_questions": []
     },
     {
      "proposed_id": "jgb/D/contract-locked-after-signing",
@@ -3002,6 +3376,48 @@
        "sentence_index": 2,
        "source": "help:landlordonboarding04lease_zh-Hant.html",
        "quote_or_symbol": "當初JGB在規劃系統時會把上傳合約的檔案規定為10MB內"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/D/contract-guarantor-add-after-signing",
+     "askable": "簽約完成後可以再幫租客加保證人嗎",
+     "title": "簽約後可以補加保證人嗎？（租客簽約流程本身就能加連帶保證人；簽約完成後要補加，業者端沒有自助功能，需洽 JGB 客服協助）",
+     "unit_ids": [
+      "page:web:contracts.sign"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "簽約後加保證人",
+      "補簽保證人",
+      "簽約完成後能加連帶保證人嗎"
+     ],
+     "sentences": [
+      "租客在簽約頁面填寫緊急聯絡人資料時，同一個區塊也可以填寫「連帶保證人」，這是簽約流程本身就提供的欄位。",
+      "如果合約已經簽約完成，之後才想要補加保證人，業者端目前沒有自助的操作入口，此操作需由 JGB 客服協助。"
+     ],
+     "sources": [
+      "code:src/pages/contracts/sign/_parts/EmergencyContact.jsx",
+      "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#122"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/contracts/sign/_parts/EmergencyContact.jsx",
+       "quote_or_symbol": "coGuarantor: '連帶保證人'"
+      },
+      {
+       "sentence_index": 1,
+       "source": "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#122",
+       "quote_or_symbol": "採用：寫「此操作需由 JGB 客服協助」"
       }
      ],
      "not_supported_greps": [],
@@ -3445,11 +3861,13 @@
      "sentences": [
       "點退流程分兩步：第一步確認點交清單、填寫損壞賠償金額，第二步才會進入「點退找補費用」頁面產生帳單。",
       "點退確認清單、填完損壞賠償金額之後，系統會製作點退帳單，內容包含提前解約金、點退押金、賠償金，並要填入帳單期限。",
-      "帳單設定完成後要發送給租客，等租客確認點退內容並完成繳款，才算完成點退程序。"
+      "帳單設定完成後要發送給租客，等租客確認點退內容並完成繳款，才算完成點退程序。",
+      "點退結算單會不會跟先前已經開立過的發票重複，要看個案的帳單與發票資料，可洽客服協助。"
      ],
      "sources": [
       "help:landlordonboarding04lease_zh-Hant.html",
-      "code:src/pages/contracts/move-out/Index.jsx"
+      "code:src/pages/contracts/move-out/Index.jsx",
+      "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#132"
      ],
      "evidence": [
       {
@@ -3466,6 +3884,11 @@
        "sentence_index": 2,
        "source": "help:landlordonboarding04lease_zh-Hant.html",
        "quote_or_symbol": "待租客確認點退和繳款後即完成點退之程序。"
+      },
+      {
+       "sentence_index": 3,
+       "source": "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#132",
+       "quote_or_symbol": "採用：只寫程式證實的系統行為，其餘走個案客服"
       }
      ],
      "not_supported_greps": [],
@@ -3571,9 +3994,7 @@
        "positive_control": "同檔 grep -n '\\$startTs' 命中 2 筆——定義那行，以及 if ($now < $startTs || $now > INF) 的判斷式裡確實被使用，可對照證明 $endTs 是「定義但未使用」而非 grep 語法本身有問題"
       }
      ],
-     "open_questions": [
-      "幫助中心 landlordonboarding04lease_zh-Hant.html 只說「租約將於30天內到期或是已解約之歷史合約，可進行點退」，沒有明確講到期日之後是否有上限；程式 app/Contract.php canMoveOut() 的上界判斷式 `$now > INF` 恆為 false（即無上限），下界仍是到期日前 30 天，兩者不衝突，但幫助中心未提及『無上限』這件事，列此供覆核是否需要在對外說法補充。"
-     ]
+     "open_questions": []
     },
     {
      "proposed_id": "jgb/D/move-out-remains-in-active-list",
@@ -3666,6 +4087,42 @@
        "sentence_index": 1,
        "source": "code:src/pages/contracts/move-out/_parts/__LiquidatedDamages.vue",
        "quote_or_symbol": "{{ t('違約金') }}"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/D/move-out-tenant-no-response-cancel",
+     "askable": "點退送出後租客一直不確認，系統會不會自動放行，還是要怎麼處理",
+     "title": "租客不確認點退時要怎麼辦？（系統不會逾期自動放行，只能由房東取消點退邀請後重新發送）",
+     "unit_ids": [
+      "page:contracts.moveOut"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "租客不確認點退",
+      "點退會自動過期放行嗎",
+      "點退邀請可以取消重發嗎"
+     ],
+     "sentences": [
+      "如果點退清單送出後，租客遲遲沒有確認，系統本身沒有設計逾期自動放行的機制，不會因為時間到了就自動當作租客同意。",
+      "遇到這種情況，房東可以手動取消已送出的點退邀請，系統會記錄這個「取消點退邀請」的動作，合約會退回到還沒送出點退的狀態，之後可以重新編輯並再送出一次點退清單。"
+     ],
+     "sources": [
+      "docs:knowledge/jgb-product-facts.md#p914-moveout-cancel"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 1,
+       "source": "docs:knowledge/jgb-product-facts.md#p914-moveout-cancel",
+       "quote_or_symbol": "房東可手動取消點退邀請（cancelMoveOutInvite，紀錄為「取消點退邀請」）"
       }
      ],
      "not_supported_greps": [],
@@ -3914,10 +4371,12 @@
      ],
      "sentences": [
       "設定完續約日期後，系統會將續約邀請發送給租客，可以在「待租客簽回」欄位中查找這份合約。",
-      "租客簽回後，房東方確認資料無誤，就可以點選「立即簽名」並完成簽約程序，最後即完成該合約的續約。"
+      "租客簽回後，房東方確認資料無誤，就可以點選「立即簽名」並完成簽約程序，最後即完成該合約的續約。",
+      "續約在系統裡是用「複製」原合約的方式產生一份全新的合約紀錄，並且會把從舊合約繼承來的「歷史合約」狀態位元拿掉；租客完成簽署確認的當下，新合約就直接是「簽署完成」狀態，不需要等到舊合約到期才生效。"
      ],
      "sources": [
-      "help:landlordonboarding04lease_zh-Hant.html"
+      "help:landlordonboarding04lease_zh-Hant.html",
+      "docs:knowledge/jgb-product-facts.md#p914-contract-renewal"
      ],
      "evidence": [
       {
@@ -3929,6 +4388,11 @@
        "sentence_index": 1,
        "source": "help:landlordonboarding04lease_zh-Hant.html",
        "quote_or_symbol": "租客簽回後，房東方若確認資料無誤，即可點選【立即簽名】，並完成簽約程序，最後即完成該合約的續約。"
+      },
+      {
+       "sentence_index": 2,
+       "source": "docs:knowledge/jgb-product-facts.md#p914-contract-renewal",
+       "quote_or_symbol": "續約＝複製出一份全新合約，確認成立即生效"
       }
      ],
      "not_supported_greps": [],
@@ -3988,10 +4452,13 @@
      ],
      "sentences": [
       "續約時系統會複製原合約產生新合約，並用出租方、承租方目前最新的角色或會員資料，更新聯絡電話、Email 等欄位，不是直接照抄舊合約當時填寫的資料。",
-      "繳費週期、帳單週期制度等設定，如果續約頁面有調整就用新的值，沒調整則沿用原合約設定。"
+      "繳費週期、帳單週期制度等設定，如果續約頁面有調整就用新的值，沒調整則沿用原合約設定。",
+      "續約不會像新建合約一樣進入完整的合約編輯分頁：續約頁面（快速設定或個別指定續約日）只能設定續約日期、繳費週期、帳單週期制度與簽約方式，沒有「租金費用」分頁可以編輯，所以租金金額本身不能在續約流程裡直接修改；續約流程另外有一個「續約預覽」頁面，可以預先編輯這次續約要產生的帳單草稿內容與金額。"
      ],
      "sources": [
-      "code:app/Services/ContractService.php"
+      "code:app/Services/ContractService.php",
+      "code:src/pages/contracts/renew/Index.vue",
+      "code:src/pages/contracts/renew/Preview.vue"
      ],
      "evidence": [
       {
@@ -4003,12 +4470,80 @@
        "sentence_index": 1,
        "source": "code:app/Services/ContractService.php",
        "quote_or_symbol": "若續約頁有調整（$cycleSettings 帶入非空值）則覆寫，未帶則沿用原合約設定。"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/contracts/renew/Index.vue",
+       "quote_or_symbol": "t('請設定續約日期')"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/contracts/renew/Index.vue",
+       "quote_or_symbol": "t('繳費週期')"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/contracts/renew/Preview.vue",
+       "quote_or_symbol": "t('帳單標題')"
+      }
+     ],
+     "not_supported_greps": [
+      {
+       "claim": "續約流程使用的續約頁面（renew/Index.vue、renew/Preview.vue）裡沒有出現「租金費用」分頁對應的欄位（例如押金、自訂費用等 rent 分頁專屬欄位），只有續約日期、繳費週期、帳單週期制度與帳單草稿欄位",
+       "grep": "grep -n \"t('租金')\\|t('押金')\" <jgb2釘住匯出>/src/pages/contracts/renew/Index.vue <jgb2釘住匯出>/src/pages/contracts/renew/Preview.vue",
+       "result": "0 筆",
+       "positive_control": "同兩個檔案對「繳費週期」「帳單標題」等欄位的 grep 都能命中，證明查詢語法有效、不是路徑寫錯導致 0 命中"
+      }
+     ],
+     "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/D/renew-deposit-difference-handling",
+     "askable": "續約時如果押金金額有調整，差額怎麼處理，舊合約的押金可以直接轉進新合約嗎",
+     "title": "續約押金差額怎麼處理？（一般續約第一張帳單不列押金；只有特定合作團隊的延長續約會用原押金算差額；新合約無法直接沿用舊合約押金，一律列全額押金）",
+     "unit_ids": [
+      "page:contracts.renew"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "續約押金差額",
+      "押金可以轉到新合約嗎",
+      "續約要不要重收押金"
+     ],
+     "sentences": [
+      "一般團隊的續約流程，第一張帳單不會列出押金這個品項。",
+      "只有特定合作團隊使用「延長續約」時，系統才會拿原合約記錄的押金金額跟新合約設定的押金金額比較差額：差額為正時在帳單上補收差額押金，差額為負時列為「退押金」支出；車位押金的處理不同，差額為負時是直接列一筆負數的「車位押金」，不是退押金。",
+      "如果是全新建立、不是續約的合約，系統沒辦法把舊合約的押金直接轉移過來，第一張帳單一律列出全額押金；舊合約要拿回押金，需要走「點退押金」的結算流程。"
+     ],
+     "sources": [
+      "docs:knowledge/jgb-product-facts.md#p914-renewal-deposit-diff",
+      "docs:knowledge/jgb-product-facts.md#p914-no-deposit-carryover"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "docs:knowledge/jgb-product-facts.md#p914-renewal-deposit-diff",
+       "quote_or_symbol": "非新北住都團隊的一般續約（ContractService::renew），第一張帳單不列押金品項"
+      },
+      {
+       "sentence_index": 1,
+       "source": "docs:knowledge/jgb-product-facts.md#p914-renewal-deposit-diff",
+       "quote_or_symbol": "押金差額只由新北住都延長續約寫入原押金"
+      },
+      {
+       "sentence_index": 2,
+       "source": "docs:knowledge/jgb-product-facts.md#p914-no-deposit-carryover",
+       "quote_or_symbol": "系統沒有把舊合約押金移轉到另一份新合約的功能"
       }
      ],
      "not_supported_greps": [],
-     "open_questions": [
-      "本細目未查證續約流程是否允許直接修改租金金額（rent），只確認到繳費週期/帳單週期設定與出租承租方聯絡資料的更新規則，交回裁決是否需要另外查證「續約可否改租金」。"
-     ]
+     "open_questions": []
     }
    ]
   },
@@ -4264,6 +4799,53 @@
      ],
      "not_supported_greps": [],
      "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/D/early-termination-billing-after",
+     "askable": "提前解約確定後，還會不會繼續出下一期的租金帳單",
+     "title": "提前解約後還會出新帳單嗎？（解約日之後系統不會再自動產生新租金帳單，但解約前已產生、落在解約日後的帳單要業者自行封存）",
+     "unit_ids": [
+      "page:contracts.earlyTermination"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "提前解約後帳單",
+      "解約後還會出帳單嗎",
+      "解約後帳單要自己處理嗎"
+     ],
+     "sentences": [
+      "提前解約確認後，系統會把合約的到期日直接改成這次解約後的到期日。",
+      "帳單產生的排程只會對到期日還沒到的合約產生下一期租金帳單，所以解約日之後不會再自動產生新的租金帳單。",
+      "帳單排程本身會提前產生最多到下個月的帳單，而且確認解約當下不會自動刪除或封存已經產生的帳單；如果解約前已經先產生了、期間落在解約日之後的帳單，需要業者自己手動封存，系統不會幫忙處理。"
+     ],
+     "sources": [
+      "docs:knowledge/jgb-product-facts.md#p914-early-termination-bills"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "docs:knowledge/jgb-product-facts.md#p914-early-termination-bills",
+       "quote_or_symbol": "$contract->date_end = $contract->early_termination_wish_date_end;"
+      },
+      {
+       "sentence_index": 1,
+       "source": "docs:knowledge/jgb-product-facts.md#p914-early-termination-bills",
+       "quote_or_symbol": "$contractsQ->where('date_end', '>=', $now);"
+      },
+      {
+       "sentence_index": 2,
+       "source": "docs:knowledge/jgb-product-facts.md#p914-early-termination-bills",
+       "quote_or_symbol": "確認解約的流程未見刪除或封存既有帳單"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
     }
    ]
   },
@@ -4366,9 +4948,7 @@
       }
      ],
      "not_supported_greps": [],
-     "open_questions": [
-      "此頁面（雲想科技簽署頁面）在骨架中被歸類於「租約公證」粗目，但依程式內容，它實際承載的是 Thinkcloud 電子簽署 iframe，功能上更接近『簽約與合約檢視』的簽署機制本身，跟公證（notary）是否辦理是兩件事；本細目依骨架既定分類撰寫內容真實描述其功能，未強行改寫成公證服務，是否要調整粗目歸屬交回裁決。"
-     ]
+     "open_questions": []
     },
     {
      "proposed_id": "jgb/D/contract-thinkcloud-signing-variants",

@@ -263,12 +263,13 @@ jgb/D/contract-list-status-tabs｜合約列表有哪些狀態頁籤？（待發�
 jgb/D/contract-search-keyword-scope｜合約列表怎麼搜尋合約？（案名／地址／租客／ID／手機／信箱六種關鍵字，另有進階搜尋）｜target_user=property_manager｜
 jgb/D/contract-create-entry｜怎麼建立一份新合約？（合約總表右上角「建立合約」，或物件總表小齒輪選建立合約）｜target_user=property_manager｜
 jgb/D/contract-create-estate-completeness-requirement｜物件要先刊登廣告才能建立合約嗎？（現行規則是必填欄位要填齊，不是看刊登狀態）｜target_user=property_manager｜
-jgb/D/contract-list-row-gear-actions｜合約總表列的小齒輪可以做什麼操作？（依合約目前狀態與權限顯示「編輯合約」「刪除合約」「取消簽名」等動作）｜target_user=property_manager｜
+jgb/D/contract-list-row-gear-actions｜合約總表列的小齒輪可以做什麼操作？（不論狀態都有「查看物件」「查看帳單」；其餘依合約狀態、身分與權限增減）｜target_user=property_manager｜
 jgb/D/contract-list-row-sort-options｜合約總表可以怎麼排序？（依名稱、更新時間、合約起始日、終止日、成立日，各分新舊／早晚，共 5 種依據）｜target_user=property_manager｜
 jgb/D/contract-list-columns｜合約總表有哪些欄位？（含團隊自訂的「標籤」欄）｜target_user=property_manager｜
 jgb/D/contract-list-deposit-alert｜合約總表的待退押金提示燈號是什麼意思？（合約到期前 30 天才能點退）｜target_user=property_manager｜
 jgb/D/contract-list-bill-currency-column｜合約總表什麼時候會多出「帳單幣別」欄？（只有在批次建立帳單、挑選合約的頁面才會出現，一般檢視沒有這一欄）｜target_user=property_manager｜
 jgb/D/contract-list-export-declaration｜合約總表可以匯出實價登錄資料嗎？（只有在「執行中合約」頁籤、中文站台、且團隊開通此功能時才會出現按鈕）｜target_user=property_manager｜
+jgb/D/contract-list-export-excel｜合約總表可以匯出 Excel 嗎？（勾選後按「匯出合約」，需要匯出合約權限，內容含租期、每期租金、合約押金等欄位）｜target_user=property_manager｜
 ### D-contract-edit-general 建立與編輯一般合約（13 個分頁：基本資料、基本條件、租金費用、租金調幅設定、稅與發票、帳單設定、收款方式、附設傢俱、現況補充、出租方基本資料、建物謄本、合約附件、補充條款） {#D-contract-edit-general}
 jgb/D/contract-edit-tabs-overview｜建立一般合約有哪些分頁？（承租方資訊、租賃契約六項、點交兩項、出租方資訊、選填四項共 14 頁）｜target_user=property_manager｜
 jgb/D/contract-tenant-basic-info｜承租方基本資料怎麼填？（個人／法人租客、租客註冊或免註冊、緊急聯絡人）｜target_user=property_manager｜
@@ -291,6 +292,8 @@ jgb/D/contract-attachments-optional｜合約附件分頁能上傳什麼？（各
 jgb/D/contract-additional-convention｜補充條款有字數限制嗎？（最多 50 行、每行 50 字，可套用範本與複製其他合約）｜target_user=property_manager｜
 jgb/D/contract-edit-tabs-conditional-rules｜合約編輯分頁會依什麼條件增減？（紙本／DIY 合約、車位、Meta Capital 範本、稅務發票資格皆會影響）｜target_user=property_manager｜
 jgb/D/contract-edit-building-transcript-visibility｜「建物謄本」分頁什麼時候不會顯示？（只有選中／未選合約範本時才顯示，選到英越文或泰文版就會被拿掉）｜target_user=property_manager｜
+jgb/D/contract-lease-scope-by-space-type｜合約的租賃範圍怎麼決定？（物件空間型態為整戶時自動為「全部」，其餘一律「部分」，不用使用者勾選）｜target_user=property_manager｜
+jgb/D/contract-tenant-code-change｜承租人編碼要異動怎麼辦？（此操作需由 JGB 客服協助）｜target_user=property_manager｜
 ### D-contract-edit-social-housing 建立與編輯社宅合約（房東基本資料與授權書、租客資格與證明文件、家庭與所得檢核、補貼修繕項目、照片檢核、點交，其餘分頁同一般） {#D-contract-edit-social-housing}
 jgb/D/social-housing-building-detail｜社宅合約「建物標的」分組有哪些分頁？（建物細節、現況補充、現況照片、附設傢俱四個分頁）｜target_user=property_manager｜
 jgb/D/social-housing-photos-tab｜社宅合約「現況照片」分頁一定要上傳嗎？（部分照片為必填，用來證明社宅內部現況設備存在）｜target_user=property_manager｜
@@ -320,6 +323,7 @@ jgb/D/contract-show-panels｜合約檢視頁面看得到什麼？（出／承租
 jgb/D/contract-show-paper-upload-archive｜上傳既有（紙本）合約檔案有什麼限制？（PDF、最大 10MB，依合約／續約／終止合約分類歸檔）｜target_user=property_manager｜
 jgb/D/contract-show-creditcard-auth-prompt｜合約檢視頁面會提示信用卡自動扣款授權嗎？（收款設定需要信用卡自動扣款時才會提示前往授權）｜target_user=property_manager｜
 jgb/D/contract-upload-existing-vs-electronic｜上傳既有合約跟建立電子合約差在哪？（既存合約用於已簽好或有自己公版合約的情境，皆可續用系統帳務／修繕追蹤）｜target_user=property_manager,prospect｜
+jgb/D/contract-guarantor-add-after-signing｜簽約後可以補加保證人嗎？（租客簽約流程本身就能加連帶保證人；簽約完成後要補加，業者端沒有自助功能，需洽 JGB 客服協助）｜target_user=property_manager｜
 ### D-move-in 點交 {#D-move-in}
 jgb/D/move-in-checklist-and-responsibility｜點交清單怎麼確認？（依合約約定的傢俱項目逐一上傳照片、標註出租方或承租方負責）｜target_user=property_manager｜
 jgb/D/move-in-meter-readings｜點交要填另計費用起始度數嗎？（依合約設定另計的費用項目要輸入起始度數，會直接帶入日後帳單計算）｜target_user=property_manager｜
@@ -335,6 +339,7 @@ jgb/D/move-out-eligibility-conditions｜什麼合約可以點退？（合約狀�
 jgb/D/move-out-timing-window｜點退的時間限制是什麼？（合約到期前 30 天起可以點退，過了到期日之後目前沒有再設上限）｜target_user=property_manager｜
 jgb/D/move-out-remains-in-active-list｜點退完成的合約為什麼還在「執行中合約」？（只要還沒到合約到期日就會留在執行中，到期後才轉入歷史合約）｜target_user=property_manager,prospect｜
 jgb/D/move-out-fee-adjustment-step｜點退第二步「點退找補費用」頁面要填什麼？（傢俱賠償、應退費用、違約金，另可填備註、期限、附件）｜target_user=property_manager｜
+jgb/D/move-out-tenant-no-response-cancel｜租客不確認點退時要怎麼辦？（系統不會逾期自動放行，只能由房東取消點退邀請後重新發送）｜target_user=property_manager｜
 ### D-renew 續約 {#D-renew}
 jgb/D/renew-batch-entry-and-selection｜怎麼一次幫多筆合約續約？（合約總表「建立合約」旁選批次續約，異動中的合約不能選）｜target_user=property_manager｜
 jgb/D/renew-date-setting-modes｜續約日期怎麼設定？（快速日期設定一次套用全部，或個別指定每份合約的續約日）｜target_user=property_manager｜
@@ -343,12 +348,14 @@ jgb/D/renew-preview-bill-generation｜續約可以預先編輯帳單嗎？（續
 jgb/D/renew-signing-flow｜續約邀請發出後流程是什麼？（租客簽回後可在「待租客簽回」查找，房東確認無誤後立即簽名完成續約）｜target_user=property_manager｜
 jgb/D/renew-invite-review-days｜續約邀請效期是幾天？（預設 3 天，團隊可覆蓋設定）｜target_user=property_manager｜
 jgb/D/renew-data-carryover-rules｜續約時資料怎麼沿用？（新合約由舊合約複製，並更新出租方/承租方最新資料；週期設定有調整就用新的、沒調整就沿用）｜target_user=property_manager｜
+jgb/D/renew-deposit-difference-handling｜續約押金差額怎麼處理？（一般續約第一張帳單不列押金；只有特定合作團隊的延長續約會用原押金算差額；新合約無法直接沿用舊合約押金，一律列全額押金）｜target_user=property_manager｜
 ### D-early-termination 提前解約 {#D-early-termination}
 jgb/D/early-termination-reasons｜房東申請提前解約要選什麼理由？（新版中文合約有 10 項法定理由可選，其餘合約只能選「其他」）｜target_user=property_manager｜
 jgb/D/early-termination-form-fields｜申請提前解約要填什麼？（欲提前解約日須早於原合約到期日、違約金由誰付、佐證資料）｜target_user=property_manager｜
 jgb/D/early-termination-tenant-cancel｜誰可以取消已送出的提前解約申請？（房東透過小齒輪取消，租客只有在提前解約確認中狀態才能取消）｜target_user=property_manager｜
 jgb/D/early-termination-eligibility｜什麼合約可以提前解約？（合約狀態須為成立或點交完成、沒有申請過或已完成過提前解約；「可否提前解約」設定只限制租客發起，不影響房東發起）｜target_user=property_manager｜
 jgb/D/early-termination-effect-move-out｜提前解約後多久可以點退？（依新合約終止日往前推 30 天內即可執行點退押金）｜target_user=property_manager,prospect｜
+jgb/D/early-termination-billing-after｜提前解約後還會出新帳單嗎？（解約日之後系統不會再自動產生新租金帳單，但解約前已產生、落在解約日後的帳單要業者自行封存）｜target_user=property_manager｜
 ### D-notary 租約公證（公證分頁與公證服務） {#D-notary}
 jgb/D/general-contract-notary-tab｜一般合約的「公證」分頁怎麼設定？（是否辦理公證，同意時可複選三項應逕受強制執行事項，僅支援中文合約）｜target_user=property_manager｜
 jgb/D/contract-thinkcloud-esign-service｜簽約時進入的雲想科技頁面是做什麼的？（承載 Thinkcloud 電子簽署流程的內嵌頁面，一般合約、委託合約皆會用到）｜target_user=property_manager｜
@@ -393,13 +400,22 @@ jgb/E/bill-list-batch-shortcuts｜「草稿帳單」分頁右上角有哪些批�
 jgb/E/bill-scheduled-send-rule｜「排定發送帳單」有什麼限制？（只有度數填完的帳單才能排，每天中午 12 點統一發送）｜target_user=property_manager｜
 jgb/E/bill-single-notification-deeplink｜帳單通知信裡的連結點進去會看到什麼？（單張帳單以彈窗顯示，不會跳到完整列表）｜target_user=property_manager｜
 jgb/E/bill-balance-tab｜「總收支」分頁的用途是什麼？（同時看全部已到帳、已支出、應到帳、應支出的帳單）｜target_user=property_manager｜
+jgb/E/bill-notify-channels｜帳單通知走哪些管道？通知對象是誰？（Email／簡訊可分別開關；只發給帳單本身的那位承租人，不會同時發給合約上另一位承租人）｜target_user=property_manager,prospect｜
+jgb/E/bill-invoice-void-limitation｜發票可以線上作廢嗎？（可在帳單詳細頁作廢，但只支援 ezPay；其他金流商的發票作廢不了，已開折讓的發票也不能再作廢）｜target_user=property_manager,prospect｜
+jgb/E/bill-notify-remittance-visibility｜「通知已匯款」按鈕什麼時候才會出現？（只在非線上金流收款的帳單才有，改走線上金流收款就不顯示）｜target_user=property_manager,prospect｜
+jgb/E/bill-archive-precondition｜帳單要什麼狀態才可以直接封存？（「待發送」跟「已到帳」都可以直接封存，不用先轉成已到帳；可勾選多筆一次封存）｜target_user=property_manager｜
+jgb/E/bill-deposit-receipt-no｜押金收據號碼是系統自動產生的嗎？（不是，號碼要透過 Excel 匯出／匯入手動填寫，系統不會自動編流水號）｜target_user=property_manager,prospect｜
+jgb/E/bill-scheduled-contract-ended-guard｜合約已結束、但底下還留著未來計費期間的租金帳單，系統排定發送時會怎麼處理？（系統自動排定發送／自動寄出都會跳過不寄，但不會刪除帳單；業者手動排定發送則不受這條規則限制；批次寄出依帳單 id 由小到大處理，沒有可指定的發送順序）｜target_user=property_manager｜
+jgb/E/bill-remind-resend-by-support｜業者可以請 JGB 客服代發催繳通知嗎？（此操作需由 JGB 客服協助；業者端沒有自助重發催繳的介面）｜target_user=property_manager,prospect｜
+jgb/E/bill-cvs-barcode-overdue-payment｜超商代碼繳費逾期後才繳，帳單還會入帳嗎？（系統不檢查代碼期限，完全依金流商回傳的付款結果；代碼逾期後是否還能繳費屬外部規定，系統不判斷）｜target_user=property_manager,prospect｜
+jgb/E/bill-receipt-feature-roadmap｜收據功能還會不會有新的開發？（現行已到帳帳單一律可以看到系統寄送的收據，目前沒有公開的後續開發時程）｜target_user=property_manager,prospect｜
 ### E-bill-create-edit 建立與編輯帳單（單筆、批次、週期批次） {#E-bill-create-edit}
 jgb/E/bill-create-modes｜新增帳單有哪幾種頁面？（新增帳單／新增批次帳單／新增週期帳單／編輯帳單）｜target_user=property_manager,prospect｜
 jgb/E/bill-create-target｜新增帳單時「對象」可以選哪些？（租客／大房東／物件／其他）｜target_user=property_manager｜
 jgb/E/bill-batch-vs-cycle｜「新增批次帳單」跟「新增週期帳單」有什麼不同？（挑租客合約 vs 挑物件）｜target_user=property_manager,prospect｜
 jgb/E/bill-cycle-schedule-fields｜新增週期帳單的「繳費週期」設定要填哪些欄位？（繳費週期／繳費截止日／截止日設定／帳單週期制度）｜target_user=property_manager｜
 jgb/E/bill-cycle-amortization｜「總額（自動分攤）」欄位什麼時候才會出現？（只有新增週期帳單、且團隊開通社區投報率時）｜target_user=property_manager｜
-jgb/E/bill-fee-item-rules｜帳單費用細目填寫有什麼規則？（度數欄位最多小數點後 2 位、電水瓦斯金額欄位限制小數點後 2 位、當期度數要大於上期度數）｜target_user=property_manager｜
+jgb/E/bill-fee-item-rules｜帳單費用細目填寫有什麼規則？（度數欄位最多小數點後 2 位、電水瓦斯金額欄位限制小數點後 2 位、當期度數不可小於上期度數）｜target_user=property_manager｜
 jgb/E/bill-title-field｜「帳單標題」最多可以輸入幾個字？（45 個字）｜target_user=property_manager｜
 jgb/E/bill-remark-field｜「帳單備註」最多可以輸入幾個字？（150 個字）｜target_user=property_manager｜
 jgb/E/bill-internal-note-field｜「內部備註」最多可以輸入幾個字？誰看得到？（100 個字，僅供業者團隊成員查看／編輯，租客看不到）｜target_user=property_manager｜
@@ -408,20 +424,19 @@ jgb/E/bill-payment-method-account-pair｜新增帳單時付款方式跟收款帳
 jgb/E/bill-tenant-unverified-draft-lock｜租客還沒完成驗證時，發給他的帳單會怎樣？（帳單卡在草稿分頁，發不出去；但可以手動移至應到帳/已到帳）｜target_user=property_manager,prospect｜
 jgb/E/bill-submit-button-behavior｜新增帳單頁面下方送出按鈕的文字跟行為會依情境改變（送出／發送簽核／簽核中／預覽帳單）｜target_user=property_manager｜
 jgb/E/bill-contract-payment-prefill｜新增帳單選租客當對象時，付款方式會自動帶入合約的收款設定嗎？（會，但帳戶已停用/不可取號等情況不會亂猜）｜target_user=property_manager｜
+jgb/E/bill-partial-month-proration｜不足一個月的租金怎麼算？（按該期帳單天數比例分攤：月租金 × 實際入住天數 ÷ 該期帳單天數，不是固定除以 30 或 31）｜target_user=property_manager,prospect｜
+jgb/E/bill-power-reading-draft-defaults｜草稿帳單的電費度數要自己填嗎？（草稿階段度數預設留空，可在編輯頁按「取得即時電錶度數」先帶入）｜target_user=property_manager｜
 ### E-bill-stats 帳單統計與報表 {#E-bill-stats}
 jgb/E/bill-stat-overview｜「統計報表」的「當前表現」分頁顯示什麼？（收款情況／支出情況卡片）｜target_user=property_manager,prospect｜
 jgb/E/bill-stat-monthly-tabs｜統計報表除了「當前表現」，還有「每月報表」「每月對帳單」分頁，但只有特定合作團隊看得到｜target_user=property_manager｜
 jgb/E/bill-monthly-report-upload｜「每月報表」跟「每月對帳單」分頁在做什麼？（依社區/物件上傳與下載每月的物件報表、對帳單檔案）｜target_user=property_manager｜
-jgb/E/bill-sheet-report-title｜「財務報表」（年度／每月）跟「統計報表」是不同頁面？（年度／每月收支總表；頁面上的「下載」目前沒有動作）｜target_user=property_manager｜
-jgb/E/bill-sheet-two-views｜財務報表可以用哪兩種方式檢視？（按物件檢視、按項目檢視）｜target_user=property_manager｜
-jgb/E/bill-sheet-total-cards｜財務報表上方的三張總計卡片是怎麼算的？（收入總計／支出總計／收支總計）｜target_user=property_manager｜
-jgb/E/bill-sheet-download-button｜財務報表右上角的「下載」按鈕可以下載什麼？｜target_user=property_manager｜
 ### E-social-housing-report 社宅報表 {#E-social-housing-report}
 jgb/E/social-housing-sheet-list｜社宅報表的「清冊列表」在列什麼？（每個媒合編號底下的表單勾選與修繕費、申請期數）｜target_user=property_manager｜
 jgb/E/social-housing-sheet-contract-version｜社宅報表上方的合約版本切換列是做什麼用的？（切換不同版本的社宅合約，每次查詢都會帶著這個版本一起送出）｜target_user=property_manager｜
 jgb/E/social-housing-sheet-make-form｜社宅報表怎麼製作表單？（填撥款日、勾選表單後按「製作表單」，會記錄成清冊紀錄）｜target_user=property_manager｜
 jgb/E/social-housing-sheet-export-history｜社宅報表的「匯出歷史」會記錄幾筆匯出動作？（系統至多記錄近 30 筆）｜target_user=property_manager｜
 jgb/E/social-housing-sheet-archive｜社宅報表的「歸檔」是什麼意思？（操作按鈕是「確定歸檔」；綠色「歸檔」標籤只在已歸檔後才出現）｜target_user=property_manager｜
+jgb/E/social-housing-sheet-program-scope｜社宅報表的「社會住宅」身份可以對應到哪個地方政府的社宅方案？（系統只定義身份類別，不判斷方案適配）｜target_user=property_manager｜
 ### E-balance-invoice 差額發票（群組、底租、社區層開關） {#E-balance-invoice}
 jgb/E/balance-invoice-community-switch｜社區怎麼開啟差額發票功能？（社區編輯頁的開關，設定底租總額幣別與每月租金）｜target_user=property_manager,prospect｜
 jgb/E/balance-invoice-group-statuses｜差額發票群組總表有哪些狀態？（尚未生效／進行中／歷史／封存）｜target_user=property_manager｜
@@ -432,6 +447,11 @@ jgb/E/balance-invoice-group-detail-tabs｜差額發票群組詳細頁面看得�
 jgb/E/balance-invoice-monthly-invoice-table｜「差額總表」裡每個月的差額怎麼看、怎麼開發票？（累積成本、累積收入、差額、是否開發票、發票金額、發票字軌）｜target_user=property_manager｜
 jgb/E/balance-invoice-timing｜差額發票什麼時候自動產生？（一般業者每月 1 日 03:00 開立上月發票；特定團隊另有自己的時程）｜target_user=property_manager｜
 jgb/E/balance-invoice-group-action-menu｜差額發票群組列表的動作選單有哪些選項？各自什麼時候會被停用？（編輯群組／開立發票／封存群組／刪除群組；另有查看歷程圖示）｜target_user=property_manager｜
+jgb/E/balance-invoice-refund-report-column｜差額發票收支表的租金退款／減免怎麼呈現？（列在「租金增(減)(B)」欄，以負數表示）｜target_user=property_manager｜
+jgb/E/balance-invoice-rent-item-rule｜差額發票收支表怎麼判斷一個帳單品項算不算「租金」收入？（系統預設品項看名稱是不是「租金」「退租金」；自訂品項看品項性質）｜target_user=property_manager｜
+jgb/E/balance-invoice-entity-type-change｜身分從法人改成自然人後，差額發票群組要怎麼重新設定？（系統沒有專用的身分切換規則）｜target_user=property_manager｜
+jgb/E/balance-invoice-unsigned-contract｜合約還沒簽回時能不能開發票或收據？（發票看合約的開票設定、押金收據看帳單是否到帳，簽署狀態是否連動要看個案）｜target_user=property_manager｜
+jgb/E/balance-invoice-anomaly-list｜帳單不在任何差額發票群組內時，JGB 怎麼處理？（列進內部「發票異常盤查」名單，處理需洽客服）｜target_user=property_manager｜
 ### E-virtual-account 固定虛擬帳號管理（租客虛擬帳號、餘額、歷程） {#E-virtual-account}
 jgb/E/recharge-account-list-columns｜「固定虛擬帳號管理」列表看得到哪些資訊？（帳號設定開啟時才有租客與物件相關欄位；虛擬帳號、餘額、歷程一律都有）｜target_user=property_manager｜
 jgb/E/recharge-account-delete｜固定虛擬帳號要怎麼刪除？（列表操作選單選「刪除」，跳出確認視窗後才會真的刪掉）｜target_user=property_manager｜
@@ -443,6 +463,10 @@ jgb/E/recharge-account-immutable｜虛擬帳號建立後，銀行跟帳號可以
 jgb/E/recharge-account-estate-binding-validation｜虛擬帳號綁定物件時，輸入物件 ID 有什麼驗證？｜target_user=property_manager｜
 jgb/E/recharge-account-export｜「固定虛擬帳號管理」列表怎麼匯出？（指定日期區間匯出 Excel 明細）｜target_user=property_manager｜
 jgb/E/recharge-account-daily-settlement｜固定虛擬帳號的入帳是怎麼自動比對到帳單的？（每日凌晨 03:00 排程沖銷；限特定合作團隊才會自動比對；餘額不夠不會變成已到帳）｜target_user=property_manager｜
+jgb/E/recharge-account-refund-excluded｜退押金這類要付給租客的帳單，也走固定虛擬帳號嗎？（不會，顯示的是租客本人的收款帳戶）｜target_user=property_manager｜
+jgb/E/recharge-account-vs-single-use-atm｜「固定虛擬帳號管理」跟租客線上繳費產生的 ATM 虛擬帳號是同一種嗎？（不是，ATM 那組是單筆繳費用、效期 180 天）｜target_user=property_manager｜
+jgb/E/recharge-account-mismatch-and-duplicate｜租客重複匯款時系統怎麼處理？（單筆帳單已付款後重複匯入會略過；固定虛擬帳號多匯的部分留作餘額）｜target_user=property_manager｜
+jgb/E/recharge-account-regenerate-expired｜逾期的虛擬帳號能不能重新產生？（此操作需由 JGB 客服協助，業者端沒有自助入口）｜target_user=property_manager｜
 ### E-payment-onboarding 線上金流收款帳號開通（藍新、中信；入口在「線上智能整合收款」頁的「開通帳號」） {#E-payment-onboarding}
 jgb/E/payment-gateway-options｜JGB 支援哪些收款金流？身分限制是什麼？（國泰世華／永豐銀行僅法人；中國信託／藍新法人與個人皆可）｜target_user=property_manager,prospect｜
 jgb/E/payment-gateway-fees｜各家收款金流的費率跟入帳帳戶限制是什麼？（國泰世華／永豐銀行首次設定費 5,000 元且限本行帳戶；中國信託／藍新免費且不限本行帳戶）｜target_user=property_manager,prospect｜
@@ -452,6 +476,8 @@ jgb/E/newebpay-payment-methods｜藍新開通時可以勾選哪些付款方式�
 jgb/E/ctbc-apply-flow｜中國信託轉帳 Pay 怎麼申請？（線上填資料送出後走人工審核，審核 5 個工作天）｜target_user=property_manager｜
 jgb/E/ctbc-form-validation｜中國信託申請表單各欄位有什麼格式限制？（聯絡電話 10 碼、銀行代碼 3 碼、銀行帳號 10～16 碼）｜target_user=property_manager｜
 jgb/E/payment-gateway-withdrawal｜各家金流的款項要怎麼提領？（藍新要自己登入後台辦理，前 5 次免費之後每次 10 元）｜target_user=property_manager,prospect｜
+jgb/E/payment-onboarding-tax-risk｜線上金流收款的資金流向會不會有稅務申報風險？（系統負責收款與開票；稅務風險屬稅捐機關與業者自身規劃，系統不判斷）｜target_user=property_manager,prospect｜
+jgb/E/cash-payment-account-management｜「線上智能整合收款」頁的「現金收款帳戶」怎麼管理？（可以新增常用收款帳戶，也可以刪除）｜target_user=property_manager｜
 
 ## F 修繕 {#F}
 scope: 報修、派工、進度與狀態、修繕通知；⛔ 費用入帳歸 E
