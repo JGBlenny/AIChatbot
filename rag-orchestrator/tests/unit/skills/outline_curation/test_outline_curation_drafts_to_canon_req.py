@@ -6,6 +6,9 @@
 ／引號不平衡皆大聲失敗（exit≠0）且不留半套產出；引號不平衡守門一次點名**所有**違規細目 id；
 兩次生成逐位元相同；`--self-test` 通過。
 
+已審保留（Plan 9.16 S1）：舊正本內容不變的已審細目重生成後保留 `reviewed`、內容改過的丟棄並列入
+`reviewed-dropped-<日期>.json`、未審者不會變已審；`--expect-reviewed-kept` 不符 ⇒ 非 0 且不留任何輸出。
+
 材料一律合成的最小九架 fixture（⛔ 不讀版控正本——那是整合驗收，不是 unit 的事）。
 """
 from __future__ import annotations
@@ -120,12 +123,12 @@ def workspace(tmp_path):
     return {"drafts": drafts, "drafts_dir": str(drafts_dir), "coarse_ids": str(coarse_ids), "fm_dir": fm_dir}
 
 
-def _run_generate(tmp_path, drafts_dir, coarse_ids, fm_dir, canon_root, runs_out, date="20260923"):
+def _run_generate(tmp_path, drafts_dir, coarse_ids, fm_dir, canon_root, runs_out, date="20260923", extra=()):
     cmd = [
         sys.executable, _SCRIPT, "generate",
         "--drafts-dir", drafts_dir, "--coarse-ids", coarse_ids,
         "--front-matter-from", fm_dir, "--canon-root", str(canon_root),
-        "--runs-out", str(runs_out), "--date", date,
+        "--runs-out", str(runs_out), "--date", date, *extra,
     ]
     return subprocess.run(cmd, capture_output=True, text=True)
 
@@ -299,3 +302,98 @@ def test_two_runs_byte_identical(tmp_path, workspace):
            (runs_out2 / "dsp-068-deletions-20260923.json").read_bytes()
     assert (runs_out1 / "open-questions-20260923.md").read_bytes() == \
            (runs_out2 / "open-questions-20260923.md").read_bytes()
+
+
+# ---------------------------------------------------------------------------
+# 已審保留（Plan 9.16 S1）
+# ---------------------------------------------------------------------------
+
+_REVIEWED_LINE = "- reviewed: {by: owner, at: 2026-09-27}"
+
+
+def _mark_reviewed(shelf_md, fine_id):
+    """在舊正本某細目的 `- sources:` 之後插入已審行（模擬 9.15 S4 的寫入方式）。"""
+    lines = shelf_md.read_text(encoding="utf-8").split("\n")
+    out, in_fine = [], False
+    for line in lines:
+        if line.startswith("### "):
+            in_fine = line.endswith(f"{{#{fine_id}}}")
+        out.append(line)
+        if in_fine and line.startswith("- sources:"):
+            out.append(_REVIEWED_LINE)
+    shelf_md.write_text("\n".join(out), encoding="utf-8")
+
+
+def _reviewed_ids(shelf_md):
+    ids, cur = [], None
+    for line in shelf_md.read_text(encoding="utf-8").split("\n"):
+        if line.startswith("### "):
+            cur = line.rsplit("{#", 1)[1].rstrip("}")
+        elif line == _REVIEWED_LINE:
+            ids.append(cur)
+    return ids
+
+
+@pytest.fixture
+def reviewed_canon(tmp_path, workspace):
+    """先生成一份舊正本，再標 B、C 兩條已審（D 維持未審）；回傳舊正本根目錄。"""
+    old_root = tmp_path / "old_canon"
+    r = _run_generate(tmp_path, workspace["drafts_dir"], workspace["coarse_ids"], workspace["fm_dir"],
+                      old_root, tmp_path / "old_runs")
+    assert r.returncode == 0, r.stdout + r.stderr
+    _mark_reviewed(old_root / "jgb" / "B.md", "jgb/B/probe")
+    _mark_reviewed(old_root / "jgb" / "C.md", "jgb/C/probe")
+    assert _reviewed_ids(old_root / "jgb" / "B.md") == ["jgb/B/probe"]
+    assert _reviewed_ids(old_root / "jgb" / "C.md") == ["jgb/C/probe"]
+    # C 改一句 ⇒ 內容指紋不同
+    drafts_c = dict(workspace["drafts"]["C"])
+    drafts_c["coarses"][0]["fines"][0]["sentences"] = ["改過的內容句。"]
+    (tmp_path / "drafts" / "drafts-C.json").write_text(json.dumps(drafts_c, ensure_ascii=False), encoding="utf-8")
+    return old_root
+
+
+def test_reviewed_kept_when_unchanged_and_dropped_when_changed(tmp_path, workspace, reviewed_canon):
+    _skip_if_missing()
+    canon_root = tmp_path / "canon"
+    runs_out = tmp_path / "runs"
+    r = _run_generate(tmp_path, workspace["drafts_dir"], workspace["coarse_ids"], str(reviewed_canon / "jgb"),
+                      canon_root, runs_out, extra=("--expect-reviewed-kept", "1"))
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "已審保留：1 條／丟棄：1 條" in r.stdout
+    assert _reviewed_ids(canon_root / "jgb" / "B.md") == ["jgb/B/probe"]
+    assert _reviewed_ids(canon_root / "jgb" / "C.md") == []
+    assert _reviewed_ids(canon_root / "jgb" / "D.md") == []
+    # 內容不變的已審細目：整架逐位元組等於舊正本（已審行寫在 `- sources:` 之後的原位置）
+    assert (canon_root / "jgb" / "B.md").read_bytes() == (reviewed_canon / "jgb" / "B.md").read_bytes()
+    dropped = json.loads((runs_out / "reviewed-dropped-20260923.json").read_text(encoding="utf-8"))
+    assert [(d["fine_id"], d["reason"]) for d in dropped] == [("jgb/C/probe", "content_changed")]
+    # 三源一致且已審進了 jgb.json（load_canon_or_die 在 generate 內已跑過）
+    by_id = {f["id"]: f for c in json.loads((canon_root / "jgb.json").read_text(encoding="utf-8"))["coarses"]
+             for f in c["fines"]}
+    assert by_id["jgb/B/probe"]["reviewed_by"] == "owner"
+    assert by_id["jgb/C/probe"]["reviewed_by"] is None
+    assert by_id["jgb/D/probe"]["reviewed_by"] is None
+
+
+def test_expect_reviewed_kept_mismatch_fails_before_any_write(tmp_path, workspace, reviewed_canon):
+    _skip_if_missing()
+    canon_root = tmp_path / "canon"
+    runs_out = tmp_path / "runs"
+    r = _run_generate(tmp_path, workspace["drafts_dir"], workspace["coarse_ids"], str(reviewed_canon / "jgb"),
+                      canon_root, runs_out, extra=("--expect-reviewed-kept", "2"))
+    assert r.returncode != 0
+    assert "已審保留 1 條，與預期 2 條不符" in r.stdout + r.stderr
+    assert not (canon_root / "jgb").exists()
+    assert not runs_out.exists()
+
+
+def test_expect_reviewed_kept_mismatch_leaves_existing_canon_byte_identical(tmp_path, workspace, reviewed_canon):
+    """輸出根＝舊正本本身（S1 驗收的實跑形狀）：比對失敗時舊正本一個位元組都不動。"""
+    _skip_if_missing()
+    before = {p: p.read_bytes() for p in reviewed_canon.rglob("*") if p.is_file()}
+    r = _run_generate(tmp_path, workspace["drafts_dir"], workspace["coarse_ids"], str(reviewed_canon / "jgb"),
+                      reviewed_canon, tmp_path / "runs", extra=("--expect-reviewed-kept", "2"))
+    assert r.returncode != 0
+    after = {p: p.read_bytes() for p in reviewed_canon.rglob("*") if p.is_file()}
+    assert after == before
+    assert _reviewed_ids(reviewed_canon / "jgb" / "B.md") == ["jgb/B/probe"]

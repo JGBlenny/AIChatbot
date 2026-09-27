@@ -23,8 +23,14 @@
   python3 drafts_to_canon.py generate --drafts-dir <dir> --coarse-ids <凍結表.md> \\
       --front-matter-from <既有 canon/jgb 目錄> --canon-root <輸出 canon 目錄> \\
       --runs-out <runs/outline-20260920 目錄> --date 20260923 \\
-      [--expect-deletion-lines 23 --expect-deletion-chars 27 --expect-open-questions 81]
+      [--expect-deletion-lines 23 --expect-deletion-chars 27 --expect-open-questions 81] \\
+      [--expect-reviewed-kept 62]
   python3 drafts_to_canon.py --self-test
+
+**已審保留**（Plan 9.16 S1）：`--front-matter-from` 裡舊正本的 `- reviewed:` 行，若新生成的同 id
+細目內容指紋（見 `fine_blocks`）相同，原樣寫回 `- sources:` 之後；不同或細目已刪 ⇒ 不寫回，列入
+`<--runs-out>/reviewed-dropped-<日期>.json`（內容一改就要重審）。`--expect-reviewed-kept` 不符即停，
+且此比對發生在寫任何檔之前。
 
 `--expect-*`（選填）：與 `inputs/dsp-068-punctuation-lines-20260923.md`／drafts 語料實算比對，
 不符即停；**省略時只印出實算數、不比對**——unit 測試用合成小語料，數字本就對不上凍結清單，
@@ -33,6 +39,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -289,6 +296,92 @@ def build_shelf_text(
 
 
 # ---------------------------------------------------------------------------
+# 已審保留（Plan 9.16 S1）：重生成不得抹掉業主已審標記，但內容一改就要重審
+# ---------------------------------------------------------------------------
+
+_FINE_HEAD_RE = re.compile(r"^### .*\{#([^}]+)\}$")
+REVIEWED_PREFIX = "- reviewed:"
+SOURCES_PREFIX = "- sources:"
+
+
+def fine_blocks(text: str) -> dict:
+    """架全文 ⇒ `{fine_id: (內容指紋, reviewed 原行或 None)}`。
+
+    內容指紋＝細目區塊（`### 標題 {#id}` 起、到下一個 `###`／`##` 止）去掉 `- phrasings:`、
+    講法子項（兩格縮排 `  - {…}`）與 `- reviewed:` 行後的 sha256——即標題＋句子＋`sources`＋
+    `target_user`＋`business_types`＋`instance_applicability`。新舊兩側都走本函式，比對才一致。"""
+    out: dict = {}
+    fid: Optional[str] = None
+    kept_lines: list[str] = []
+    reviewed: Optional[str] = None
+
+    def _close() -> None:
+        if fid is not None:
+            digest = hashlib.sha256("\n".join(kept_lines).encode("utf-8")).hexdigest()
+            out[fid] = (digest, reviewed)
+
+    for line in text.split("\n"):
+        m = _FINE_HEAD_RE.match(line)
+        if m or line.startswith("## "):
+            _close()
+            fid, kept_lines, reviewed = (m.group(1), [line], None) if m else (None, [], None)
+            continue
+        if fid is None:
+            continue
+        if line.startswith(REVIEWED_PREFIX):
+            reviewed = line
+        elif line == "- phrasings:" or line.startswith("  - "):
+            continue
+        elif line != "":
+            kept_lines.append(line)
+    _close()
+    return out
+
+
+def carry_reviewed(old_texts: dict, new_texts: dict) -> tuple[dict, list[str], list[dict]]:
+    """把舊正本的 `reviewed` 行寫回新全文（內容指紋相同者，寫在 `- sources:` 之後）。
+    回 (寫回後的新全文, 保留的細目 id, 丟棄清單)。純記憶體運算，⛔ 不寫檔。"""
+    old_reviewed: dict = {}
+    for shelf, text in old_texts.items():
+        for fid, (digest, rline) in fine_blocks(text).items():
+            if rline is not None:
+                old_reviewed[fid] = (shelf, digest, rline)
+    new_blocks: dict = {}
+    for shelf, text in new_texts.items():
+        for fid, (digest, _r) in fine_blocks(text).items():
+            new_blocks[fid] = digest
+
+    keep = {fid: v[2] for fid, v in old_reviewed.items() if new_blocks.get(fid) == v[1]}
+    dropped = [
+        {"fine_id": fid, "shelf": shelf, "reviewed": rline,
+         "reason": "fine_removed" if fid not in new_blocks else "content_changed"}
+        for fid, (shelf, digest, rline) in old_reviewed.items() if fid not in keep
+    ]
+
+    out_texts: dict = {}
+    written: list[str] = []
+    for shelf, text in new_texts.items():
+        lines = text.split("\n")
+        result: list[str] = []
+        fid: Optional[str] = None
+        for line in lines:
+            m = _FINE_HEAD_RE.match(line)
+            if m:
+                fid = m.group(1)
+            elif line.startswith("## "):
+                fid = None
+            result.append(line)
+            if fid in keep and line.startswith(SOURCES_PREFIX):
+                result.append(keep[fid])
+                written.append(fid)
+        out_texts[shelf] = "\n".join(result)
+    missing = sorted(set(keep) - set(written))
+    if missing or len(written) != len(set(written)):
+        raise GenerationError(f"已審寫回失準：應寫 {len(keep)}、實寫 {len(written)}；缺 `- sources:` 的細目 {missing[:5]}")
+    return out_texts, written, dropped
+
+
+# ---------------------------------------------------------------------------
 # 跨架前置檢查（在寫任何檔案之前）
 # ---------------------------------------------------------------------------
 
@@ -347,7 +440,7 @@ def generate(
     drafts_dir: str, coarse_ids_path: str, front_matter_from: str, canon_root: str,
     runs_out: str, date_str: str,
     expect_deletion_lines: Optional[int] = None, expect_deletion_chars: Optional[int] = None,
-    expect_open_questions: Optional[int] = None,
+    expect_open_questions: Optional[int] = None, expect_reviewed_kept: Optional[int] = None,
 ) -> None:
     drafts = load_drafts(drafts_dir)
     coarse_table = load_coarse_table(coarse_ids_path)
@@ -360,11 +453,15 @@ def generate(
     # 先在記憶體建好九架全文（⛔ 不邊建邊寫）——引號平衡守門要蒐集**全九架**的違規後才能一次
     # 點名所有細目 id；沒蒐集完就先落地，步驟 0 沒做時只會報出第一條就中止（驗收要求兩條都點名）。
     shelf_texts: dict[str, str] = {}
+    old_texts: dict[str, str] = {}
     all_manifest: list[dict] = []
     all_open_qs: list[dict] = []
     all_violations: list[tuple[str, str]] = []
     for shelf in SHELVES:
-        fm = load_shelf_front_matter(os.path.join(front_matter_from, f"{shelf}.md"))
+        fm_path = os.path.join(front_matter_from, f"{shelf}.md")
+        fm = load_shelf_front_matter(fm_path)
+        with open(fm_path, encoding="utf-8") as fh:
+            old_texts[shelf] = fh.read()
         text, manifest, open_qs, violations = build_shelf_text(shelf, drafts[shelf], fm, coarse_table)
         shelf_texts[shelf] = text
         all_manifest.extend(manifest)
@@ -372,6 +469,23 @@ def generate(
         all_violations.extend(violations)
 
     check_all_balanced(all_violations)
+
+    # 已審保留（Plan 9.16 S1）：計算與 --expect-reviewed-kept 比對都在**寫任何檔之前**——
+    # ⛔ 別挪到下面寫檔之後（下方其他數字是先寫後核；比對失敗時舊正本的已審標記會已被覆寫）。
+    shelf_texts, kept, dropped = carry_reviewed(old_texts, shelf_texts)
+    print(f"[drafts_to_canon] 已審保留：{len(kept)} 條／丟棄：{len(dropped)} 條")
+    for d in dropped:
+        print(f"[drafts_to_canon]   丟棄 {d['fine_id']}（{d['reason']}）")
+    if expect_reviewed_kept is not None and len(kept) != expect_reviewed_kept:
+        raise GenerationError(
+            f"已審保留 {len(kept)} 條，與預期 {expect_reviewed_kept} 條不符（丟棄 {len(dropped)} 條）；未寫任何檔"
+        )
+
+    os.makedirs(runs_out, exist_ok=True)
+    dropped_path = os.path.join(runs_out, f"reviewed-dropped-{date_str}.json")
+    with open(dropped_path, "w", encoding="utf-8") as fh:
+        json.dump(dropped, fh, ensure_ascii=False, indent=2, sort_keys=True)
+        fh.write("\n")
 
     os.makedirs(shelf_dir, exist_ok=True)
     for shelf, text in shelf_texts.items():
@@ -557,6 +671,7 @@ def main() -> int:
     gp.add_argument("--expect-deletion-lines", type=int, default=None)
     gp.add_argument("--expect-deletion-chars", type=int, default=None)
     gp.add_argument("--expect-open-questions", type=int, default=None)
+    gp.add_argument("--expect-reviewed-kept", type=int, default=None)
     a = ap.parse_args()
     if a.cmd == "generate":
         if (a.expect_deletion_lines is None) != (a.expect_deletion_chars is None):
@@ -564,7 +679,7 @@ def main() -> int:
         generate(
             a.drafts_dir, a.coarse_ids, a.front_matter_from, a.canon_root, a.runs_out, a.date,
             expect_deletion_lines=a.expect_deletion_lines, expect_deletion_chars=a.expect_deletion_chars,
-            expect_open_questions=a.expect_open_questions,
+            expect_open_questions=a.expect_open_questions, expect_reviewed_kept=a.expect_reviewed_kept,
         )
     return 0
 
