@@ -56,6 +56,7 @@ language: zh-TW
   - {text: "草稿帳單齒輪選單", source: "draft:outline-20260920", status: proposed}
   - {text: "合併帳單", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/use/config/useBillTypes.js]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -91,6 +92,7 @@ language: zh-TW
   - {text: "匯款資訊在哪看", source: "draft:outline-20260920", status: proposed}
   - {text: "應到帳可以取消嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/use/config/useBillTypes.js]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -102,6 +104,7 @@ language: zh-TW
   - {text: "退至應到帳", source: "draft:outline-20260920", status: proposed}
   - {text: "待對帳能取消嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/use/config/useBillTypes.js]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -219,6 +222,7 @@ language: zh-TW
   - {text: "總收支怎麼匯出", source: "draft:outline-20260920", status: proposed}
   - {text: "草稿帳單怎麼匯出", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/use/config/useBillTypes.js]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -296,6 +300,7 @@ language: zh-TW
   - {text: "通知信帳單連結", source: "draft:outline-20260920", status: proposed}
   - {text: "通知連結只列出那張帳單", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/BillController.php, code:src/pages/bills/list/Index.jsx, code:src/use/config/billListSearch.js]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -307,6 +312,7 @@ language: zh-TW
   - {text: "收支總覽在哪看", source: "draft:outline-20260920", status: proposed}
   - {text: "總收支跟帳單總表差在哪", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/use/config/useBillTypes.js]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -345,6 +351,7 @@ language: zh-TW
   - {text: "通知已匯款不見了", source: "draft:outline-20260920", status: proposed}
   - {text: "線上收款還要通知已匯款嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [docs:knowledge/jgb-product-facts.md#p914-notify-remittance, code:src/components/Lightbox/BillPayInfo.vue, code:src/use/config/useBillTypes.js, code:app/Role.php]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -431,6 +438,7 @@ language: zh-TW
   - {text: "怎麼新增帳單", source: "draft:outline-20260920", status: proposed}
   - {text: "編輯帳單在哪", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/bills/edit/_parts/BillBasicInfoSection.vue]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -444,6 +452,7 @@ language: zh-TW
   - {text: "帳單對象是誰", source: "draft:outline-20260920", status: proposed}
   - {text: "帳單開給物件", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/utils/constants/bill.js, code:src/pages/bills/edit/Index.jsx, code:src/pages/bills/edit/_parts/BillBasicInfoSection.vue]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -456,6 +465,7 @@ language: zh-TW
   - {text: "新增批次帳單怎麼選對象", source: "draft:outline-20260920", status: proposed}
   - {text: "新增週期帳單怎麼選物件", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/bills/edit/_parts/BillTargetBatchBlock.jsx, code:src/use/config/useBillTypes.js, code:src/utils/constants/contract.js, code:src/pages/contracts/pick/_parts/PageTop.vue, code:src/pages/bills/edit/Index.jsx]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -469,6 +479,7 @@ language: zh-TW
   - {text: "當月分算跟跨月計算差在哪", source: "draft:outline-20260920", status: proposed}
   - {text: "提前截止同月截止", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/bills/edit/_parts/CycleBillingCycleFields.vue, code:src/utils/constants/contract.js]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -482,6 +493,7 @@ language: zh-TW
   - {text: "週期帳單金額怎麼分攤", source: "draft:outline-20260920", status: proposed}
   - {text: "自動分攤欄位不見了", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/bills/edit/_parts/BillBasicInfoSection.vue]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -495,6 +507,7 @@ language: zh-TW
   - {text: "金額小數點限制", source: "draft:outline-20260920", status: proposed}
   - {text: "度數輸入錯誤提示", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/bills/edit/_parts/FeesBlock.jsx, code:src/components/PrefixInput.vue]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -506,6 +519,7 @@ language: zh-TW
   - {text: "帳單標題字數上限", source: "draft:outline-20260920", status: proposed}
   - {text: "帳單標題最多幾個字", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/bills/edit/_parts/BillBasicInfoSection.vue]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -515,6 +529,7 @@ language: zh-TW
   - {text: "帳單備註字數上限", source: "draft:outline-20260920", status: proposed}
   - {text: "帳單備註最多幾個字", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/bills/edit/_parts/BillBasicInfoSection.vue]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -524,6 +539,7 @@ language: zh-TW
   - {text: "內部備註字數上限", source: "draft:outline-20260920", status: proposed}
   - {text: "內部備註誰看得到", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/bills/edit/_parts/BillBasicInfoSection.vue, code:src/pages/bills/edit/_parts/InternalNoteBlock.jsx]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -544,6 +560,7 @@ language: zh-TW
   - {text: "收款帳戶沒選會怎樣", source: "draft:outline-20260920", status: proposed}
   - {text: "固定虛擬帳號付款方式", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/bills/edit/Index.jsx]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -570,6 +587,7 @@ language: zh-TW
   - {text: "簽核中按鈕", source: "draft:outline-20260920", status: proposed}
   - {text: "週期帳單預覽按鈕", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/bills/edit/Index.jsx]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -583,6 +601,7 @@ language: zh-TW
   - {text: "新增帳單付款方式跟合約一樣", source: "draft:outline-20260920", status: proposed}
   - {text: "合約收款方式帶入帳單", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/bills/edit/Index.jsx, code:src/helpers/billCreatePaymentPrefill.ts]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -605,6 +624,7 @@ language: zh-TW
   - {text: "電表度數會重抓嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "草稿帳單度數空白", source: "draft:outline-20260920", status: proposed}
 - sources: [docs:knowledge/jgb-product-facts.md#p914-power-reading-draft, code:app/Bill.php, code:src/pages/bills/edit/_parts/FeesBlock.jsx, code:app/Http/Controllers/BillController.php]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -730,6 +750,7 @@ language: zh-TW
   - {text: "社會住宅身份限制", source: "draft:outline-20260920", status: proposed}
   - {text: "社宅報表限台灣嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:config/role.php, docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#104]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -743,6 +764,7 @@ JGB 把「社會住宅」設計成一種團隊身份，跟「個人房東/代理
   - {text: "差額發票怎麼計算", source: "draft:outline-20260920", status: proposed}
   - {text: "底租總額怎麼設定", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/communities/edit/BalanceInvoice.jsx, code:src/pages/communities/edit/Index.vue, code:app/Role.php]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -800,6 +822,7 @@ JGB 把「社會住宅」設計成一種團隊身份，跟「個人房東/代理
   - {text: "可分配租金是什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "群組底租怎麼分配到每個物件", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/balanceInvoices/edit/pickEstates/Index.vue, code:src/pages/balanceInvoices/_parts/IndividualBaseRentSetting.vue, code:src/pages/balanceInvoices/groups/Index.vue, code:app/Services/BalanceInvoiceService.php]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -856,6 +879,7 @@ JGB 把「社會住宅」設計成一種團隊身份，跟「個人房東/代理
   - {text: "開立發票按鈕為什麼灰色", source: "draft:outline-20260920", status: proposed}
   - {text: "封存群組按鈕為什麼不能按", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/use/config/balanceInvoices/useBalanceInvoicesActions.ts, code:src/components/SurelyVue/BalanceInvoices/ActionsCell.vue, code:src/pages/balanceInvoices/groups/Index.vue, code:app/Services/BalanceInvoiceService.php]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -932,6 +956,7 @@ JGB 把「社會住宅」設計成一種團隊身份，跟「個人房東/代理
   - {text: "虛擬帳號餘額能改嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "虛擬帳號歷程", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/rechargeAccountList/Index.vue, code:app/Http/Controllers/RechargeAccountListController.php, code:app/RechargeAccount.php, code:app/Http/Controllers/Admin/FeatureConfigController.php]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -945,6 +970,7 @@ JGB 把「社會住宅」設計成一種團隊身份，跟「個人房東/代理
   - {text: "刪除虛擬帳號要確認嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "刪除虛擬帳號失敗", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/rechargeAccountList/Index.vue, code:app/Http/Controllers/RechargeAccountListController.php]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -957,6 +983,7 @@ JGB 把「社會住宅」設計成一種團隊身份，跟「個人房東/代理
   - {text: "金額變動歷程內容", source: "draft:outline-20260920", status: proposed}
   - {text: "歷程能看帳單嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/rechargeAccountList/Index.vue]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -970,6 +997,7 @@ JGB 把「社會住宅」設計成一種團隊身份，跟「個人房東/代理
   - {text: "中信虛擬帳號", source: "draft:outline-20260920", status: proposed}
   - {text: "虛擬帳號銀行清單", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/rechargeAccountList/Index.vue]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -983,6 +1011,7 @@ JGB 把「社會住宅」設計成一種團隊身份，跟「個人房東/代理
   - {text: "聯邦虛擬帳號金額改了怎麼辦", source: "draft:outline-20260920", status: proposed}
   - {text: "聯邦虛擬帳號匯錯金額", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/rechargeAccountList/Index.vue]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -996,6 +1025,7 @@ JGB 把「社會住宅」設計成一種團隊身份，跟「個人房東/代理
   - {text: "繳款人識別碼幾碼", source: "draft:outline-20260920", status: proposed}
   - {text: "中信虛擬帳號計算機", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/rechargeAccountList/Index.vue]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -1007,6 +1037,7 @@ JGB 把「社會住宅」設計成一種團隊身份，跟「個人房東/代理
   - {text: "編輯虛擬帳號能改什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "虛擬帳號要換銀行怎麼辦", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/rechargeAccountList/Index.vue]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -1021,6 +1052,7 @@ JGB 把「社會住宅」設計成一種團隊身份，跟「個人房東/代理
   - {text: "物件不屬於這個團隊", source: "draft:outline-20260920", status: proposed}
   - {text: "虛擬帳號選擇物件按鈕", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/rechargeAccountList/Index.vue]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -1034,6 +1066,7 @@ JGB 把「社會住宅」設計成一種團隊身份，跟「個人房東/代理
   - {text: "虛擬帳號匯出明細", source: "draft:outline-20260920", status: proposed}
   - {text: "虛擬帳號匯出日期區間", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/rechargeAccountList/Index.vue, code:app/Http/Controllers/RechargeAccountListController.php]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -1046,6 +1079,7 @@ JGB 把「社會住宅」設計成一種團隊身份，跟「個人房東/代理
   - {text: "虛擬帳號入帳幾點處理", source: "draft:outline-20260920", status: proposed}
   - {text: "虛擬帳號沖銷排程", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Console/Kernel.php, code:app/Console/Commands/BillRechargeAccount.php, code:app/RechargeAccount.php]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -1058,6 +1092,7 @@ JGB 把「社會住宅」設計成一種團隊身份，跟「個人房東/代理
   - {text: "支出帳單收款帳戶", source: "draft:outline-20260920", status: proposed}
   - {text: "退款方向虛擬帳號", source: "draft:outline-20260920", status: proposed}
 - sources: [docs:knowledge/jgb-product-facts.md#p914-refund-bill-account]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -1068,6 +1103,7 @@ JGB 把「社會住宅」設計成一種團隊身份，跟「個人房東/代理
   - {text: "線上繳費ATM虛擬帳號效期", source: "draft:outline-20260920", status: proposed}
   - {text: "固定虛擬帳號會過期嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [docs:knowledge/jgb-product-facts.md#p914-newebpay-atm-expiry]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -1089,6 +1125,7 @@ JGB 把「社會住宅」設計成一種團隊身份，跟「個人房東/代理
   - {text: "虛擬帳號過期怎麼辦", source: "draft:outline-20260920", status: proposed}
   - {text: "虛擬帳號重發", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/rechargeAccountList/Index.vue, docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#93]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -1101,6 +1138,7 @@ JGB 把「社會住宅」設計成一種團隊身份，跟「個人房東/代理
   - {text: "國泰世華可以申請嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "永豐銀行金流申請", source: "draft:outline-20260920", status: proposed}
 - sources: [help:paymentapply_zh-Hant.html, code:app/Http/Controllers/UserController.php, code:app/Payment.php]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -1114,6 +1152,7 @@ JGB 的線上收款金流有國泰世華、永豐銀行、中國信託、藍新 
   - {text: "入帳帳戶有限制嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "國泰世華入帳帳戶", source: "draft:outline-20260920", status: proposed}
 - sources: [help:paymentapply_zh-Hant.html]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -1124,6 +1163,7 @@ JGB 的線上收款金流有國泰世華、永豐銀行、中國信託、藍新 
   - {text: "藍新開通前提條件", source: "draft:outline-20260920", status: proposed}
   - {text: "藍新智付通手機號碼", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/UserController.php]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -1160,6 +1200,7 @@ JGB 的線上收款金流有國泰世華、永豐銀行、中國信託、藍新 
   - {text: "中信金流審核多久", source: "draft:outline-20260920", status: proposed}
   - {text: "中信收款帳號開通流程", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/UserController.php, code:src/pages/users/payment/_parts/Ctbc.vue]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -1174,6 +1215,7 @@ JGB 的線上收款金流有國泰世華、永豐銀行、中國信託、藍新 
   - {text: "銀行帳號要幾碼", source: "draft:outline-20260920", status: proposed}
   - {text: "銀行代碼幾碼", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/UserController.php]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -1186,6 +1228,7 @@ JGB 的線上收款金流有國泰世華、永豐銀行、中國信託、藍新 
   - {text: "藍新提款手續費", source: "draft:outline-20260920", status: proposed}
   - {text: "收到的錢在哪裡領", source: "draft:outline-20260920", status: proposed}
 - sources: [help:paymentapply_zh-Hant.html, docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#47]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -1208,6 +1251,7 @@ JGB 的線上收款金流有國泰世華、永豐銀行、中國信託、藍新 
   - {text: "現金收款帳戶可以刪除嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "常用收款帳戶管理", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/payment/_parts/CashBanks.vue, code:src/components/Lightbox/PaymentCashBanksDelete.vue, code:src/pages/users/payment/routerView/Index.vue]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general

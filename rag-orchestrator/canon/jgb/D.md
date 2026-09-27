@@ -42,6 +42,7 @@ language: zh-TW
   - {text: "一個物件可以簽幾份合約", source: "draft:outline-20260920", status: proposed}
   - {text: "新增合約入口", source: "draft:outline-20260920", status: proposed}
 - sources: [help:landlordonboarding04lease_zh-Hant.html, docs:knowledge/jgb-product-facts.md#p914-contract-new-vs-old, docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#109, code:src/components/Lightbox/SelectContractMethod.jsx, code:src/pages/contracts/list/_parts/PageTop.vue, code:config/role.php]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -95,6 +96,7 @@ language: zh-TW
   - {text: "合約列表標籤欄", source: "draft:outline-20260920", status: proposed}
   - {text: "合約總表欄位", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/contracts/list/_parts/ListTable.vue, docs:knowledge/jgb-product-facts.md#p914-contract-list-tags, code:src/pages/estates/dashboard/contracts/Index.vue]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -126,6 +128,7 @@ language: zh-TW
   - {text: "匯出實價登錄資料", source: "draft:outline-20260920", status: proposed}
   - {text: "合約列表怎麼匯出實價登錄", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/contracts/list/_parts/PageTop.vue, docs:knowledge/jgb-product-facts.md#p914-real-price-registration, docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#115]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -172,6 +175,7 @@ language: zh-TW
   - {text: "法人租客怎麼填", source: "draft:outline-20260920", status: proposed}
   - {text: "緊急聯絡人", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/contracts/edit/tenantInfo/Index.jsx, docs:knowledge/jgb-product-facts.md#p914-contract-additional-tenants, docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#85, docs:knowledge/jgb-product-facts.md#p914-lessee-records, docs:knowledge/jgb-product-facts.md#p914-contract-agents, docs:knowledge/jgb-product-facts.md#p914-contract-exempt-register-signed, code:src/utils/constants/contract.js]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -209,6 +213,7 @@ language: zh-TW
   - {text: "跨月計算跟當月分算差在哪", source: "draft:outline-20260920", status: proposed}
   - {text: "帳單週期分算日", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/contracts/edit/rentBasic/General.vue]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -232,6 +237,7 @@ language: zh-TW
   - {text: "租客慣用語系是什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "合約文件語系怎麼選", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/contracts/edit/rentBasic/General.vue, code:src/utils/constants/contract.js]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -243,6 +249,7 @@ language: zh-TW
   - {text: "違約金計算方式", source: "draft:outline-20260920", status: proposed}
   - {text: "解約通知天數", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/contracts/edit/rentBasic/General.vue]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -259,6 +266,7 @@ language: zh-TW
   - {text: "繳費週期優惠", source: "draft:outline-20260920", status: proposed}
   - {text: "租金優惠跟繳費週期優惠差在哪", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/contracts/edit/billSetting/Index.jsx, code:src/pages/contracts/edit/rent/Index.jsx, docs:knowledge/jgb-product-facts.md#p914-contract-cable-tv-fee]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -272,6 +280,7 @@ language: zh-TW
   - {text: "押金怎麼算", source: "draft:outline-20260920", status: proposed}
   - {text: "押金計算基準", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/contracts/edit/rent/Index.jsx]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -283,6 +292,7 @@ language: zh-TW
   - {text: "分期調整租金", source: "draft:outline-20260920", status: proposed}
   - {text: "租金調幅方式", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/contracts/edit/rentAdjustment/Index.vue]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -312,6 +322,7 @@ language: zh-TW
   - {text: "帳單期間跟租期不一樣", source: "draft:outline-20260920", status: proposed}
   - {text: "帳單自動執行動作", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/contracts/edit/billSetting/Index.jsx, code:src/use/useEditStore.js]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -340,6 +351,7 @@ language: zh-TW
   - {text: "家具修繕責任歸屬", source: "draft:outline-20260920", status: proposed}
   - {text: "點交清單怎麼來的", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/contracts/edit/facilities/General.vue, help:landlordonboarding04lease_zh-Hant.html]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -351,6 +363,7 @@ language: zh-TW
   - {text: "現況補充要寫什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "非自然死亡揭露", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/contracts/edit/situation/General.vue]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -377,6 +390,7 @@ language: zh-TW
   - {text: "謄本資訊會公開嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "建物謄本是選填的嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/routes/contracts.js, help:Landlordonboarding09Socialhousing_zh-Hant.html, code:src/pages/estates/show/Index.jsx]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -389,6 +403,7 @@ language: zh-TW
   - {text: "附件檔案大小限制", source: "draft:outline-20260920", status: proposed}
   - {text: "合約附件格式", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/contracts/edit/landlordAttachment/Index.vue]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -403,6 +418,7 @@ language: zh-TW
   - {text: "合約條款寫不下怎麼辦", source: "draft:outline-20260920", status: proposed}
   - {text: "補充條款範本", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/contracts/edit/additionalConvention/Index.vue, code:src/utils/constants/contract.js, help:landlordonboarding04lease_zh-Hant.html]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -417,6 +433,7 @@ language: zh-TW
   - {text: "紙本合約有哪些分頁", source: "draft:outline-20260920", status: proposed}
   - {text: "車位合約分頁", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/use/useEditStore.js]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -431,6 +448,7 @@ language: zh-TW
   - {text: "建物謄本分頁不見了", source: "draft:outline-20260920", status: proposed}
   - {text: "什麼時候沒有建物謄本", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/use/useEditStore.js]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -441,6 +459,7 @@ language: zh-TW
   - {text: "合約全部還是部分怎麼判斷", source: "draft:outline-20260920", status: proposed}
   - {text: "租賃範圍會自動判斷嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [docs:knowledge/jgb-product-facts.md#p914-contract-lease-scope, code:config/estate.php]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -452,6 +471,7 @@ language: zh-TW
   - {text: "租客編碼改不了", source: "draft:outline-20260920", status: proposed}
   - {text: "承租人代號怎麼改", source: "draft:outline-20260920", status: proposed}
 - sources: [docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#123]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -802,6 +822,7 @@ JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄�
   - {text: "社宅點交頁面跟一般合約一樣嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "點交頁面差異", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/ContractController.php, code:routes/web.php]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -954,6 +975,7 @@ JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄�
   - {text: "續約可以一次設定嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "租客收不到續約通知", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/contracts/renew/Index.vue, help:landlordonboarding04lease_zh-Hant.html]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -965,6 +987,7 @@ JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄�
   - {text: "續約可以上傳紙本合約嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "續約用電子簽名圖章", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/contracts/renew/Index.vue]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -1143,6 +1166,7 @@ JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄�
   - {text: "委託合約跟租賃合約差在哪", source: "draft:outline-20260920", status: proposed}
   - {text: "委託合約狀態頁籤", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/entrustedContracts/list/_parts/PageTop.jsx, docs:knowledge/jgb-product-facts.md#single-vs-dual-contract]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -1175,6 +1199,7 @@ JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄�
   - {text: "委託合約怎麼進入簽署", source: "draft:outline-20260920", status: proposed}
   - {text: "委託合約預覽合約按鈕", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/entrustedContracts/edit/Index.jsx]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -1184,6 +1209,7 @@ JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄�
   - {text: "委託合約上傳檔案大小限制", source: "draft:outline-20260920", status: proposed}
   - {text: "委託合約檔案6MB", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/entrustedContracts/show/_parts/signerInfo/ArchiveFileUploader.jsx]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -1206,6 +1232,7 @@ JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄�
   - {text: "房東一定要註冊帳號嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "房東免註冊是什麼", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/entrustedContracts/edit/landlordInfo/LandlordInfo.jsx]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -1218,6 +1245,7 @@ JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄�
   - {text: "租賃住宅管理人員證號", source: "draft:outline-20260920", status: proposed}
   - {text: "委託合約電子簽名圖章", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/entrustedContracts/edit/managerInfo/ManagerInfo.jsx]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -1230,6 +1258,7 @@ JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄�
   - {text: "收款是給房東還是業者", source: "draft:outline-20260920", status: proposed}
   - {text: "委託合約可以選一種收款方式嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/entrustedContracts/edit/requirement/Payment.jsx]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -1242,6 +1271,7 @@ JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄�
   - {text: "委託合約上傳檔案", source: "draft:outline-20260920", status: proposed}
   - {text: "委託合約還沒簽名可以改嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/entrustedContracts/show/Index.jsx]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -1253,6 +1283,7 @@ JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄�
   - {text: "委託合約怎麼建立", source: "draft:outline-20260920", status: proposed}
   - {text: "委託合約建立入口", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/entrustedContracts/list/_parts/PageTop.jsx, code:src/components/Lightbox/SelectContractMethod.jsx, code:src/pages/estates/pick/_parts/pick.jsx]
+- reviewed: {by: owner, at: 2026-09-27}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
