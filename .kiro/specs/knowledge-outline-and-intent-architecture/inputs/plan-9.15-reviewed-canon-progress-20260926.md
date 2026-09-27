@@ -184,6 +184,11 @@
   - **S3 整片 fresh outcome verifier＝CONFIRMED**（C1 三源一致＋獨立重生成逐位元組相同、C2 七架 `cmp`、C3、C4 `make audit`、C5 紅燈＝既有 9 條、C6、C7 裁決 63 列、C8 標題不斷言已刪內容、C9 更正的 5 條帳本對碼成立）⇒ **S3 完成**（終點 +0，S4 前置）
   - DEFER（P3／P4，依規則不動已 CONFIRMED 的候選，交 S4 審核時一併看）：`contract-list-row-gear-actions` 標題「不論狀態都有查看物件」漏權限條件；`p914-invoice-per-bill`「不合併」宜註明差額發票是另一機制；`bill-archive-precondition` 未列「已支出」也可封存；`recharge-account-mismatch-and-duplicate` 引號文字取自後台紀錄
   - S2～S4 累計 `subagent_tokens` 1,733,192（未含 4 位被停掉、未回報用量的 executor）／5M
+  - **業主（2026-09-27）「先 commit S1～S3」⇒ `f5e3e48b`（未 push）；「帳本只核 D／E 有用到的」**
+  - 帳本複核（fresh verifier，D／E 引用的 36 條扣掉本輪已核 8 條＝28 條）＝REFUTED：**6 條 P2 程式反證＋5 條 P3 收窄**（預覽帳單預設開啟 vs 關閉團隊、註冊 vs 免註冊租客、既存 vs 電子範本合約、事後註冊可經邀請連結認領、合約範本清單來源與英文版補充條款、續約簽署流程、押金收據為特定團隊客製等）；主 session 重現其中 3 項後更正 11 條帳本，並把引用它們的 D／E 11 句＋5 標題同步改寫、重生成（541 細目、七架同、`make audit` PASS）⇒ 送 fresh verifier
+  - ⚠️ 本輪合計 16 條帳本要更正，已記入記憶 `project_ledger_p914_scope_errors`；S3b 執行者曾與複核並行、違反 §5「一次一位」⇒ 主 session 發現後停掉（未改任何檔），待複核完成再派
+  - 更正驗證 fresh verifier＝REFUTED（主 session 自己引入 2 條 P2：「是否通知」隱藏角色寫反〔`config_rule_key 1`＝租客〕、事後註冊認領漏「同一瀏覽器、工作階段 120 分鐘內」條件）＋2 條 P3（LINE／FB 推播限已綁定、「位元」實作詞）⇒ 全修、重生成 ⇒ **targeted fresh verifier＝CONFIRMED**；另把 18 條過時的帳本 evidence 引文換成現行事實文字（正本逐位元組不變，evidence 不進正本）
+  - 外洩掃描：規則一只命中業主已放行的產品用語（「待租客簽回」等、既有範本名）
   - G1 裁決的第二半「文件／文案待修清單」原本漏交（E1 verifier A3 指出）⇒ 主 session 補交 `inputs/doc-fix-list-9.15-G1-20260927.md`（9 條＋1 條 jgb2 程式缺陷）
   - **連帶更正已 commit 的帳本 2 條**（同根因，主 session 自己改、非 S3 擁有檔，屬本線先前引入的錯）：`p914-contract-gear-menu` 改依 `webList`（補查看帳單、兩個取消邀請、社宅／權限條件）；`p914-contract-agents` 限定社宅合約
 - **S3 第 2 輪＝REVISE P2×3**；已達第 2 次 ⇒ 停止自動重送，主 session 逐條裁決**全 FIX**，開新就緒週期、只送一次收尾審查：業主裁決句無合法來源 ⇒ 定來源形式（審核單＃編號）與 verifier 判法；E 驗收數 74→73；裁決落地無驗收 ⇒ 加 63 列對照表與 `--expect-open-questions`。

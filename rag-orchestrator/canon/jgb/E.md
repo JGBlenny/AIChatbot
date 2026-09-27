@@ -297,7 +297,7 @@ language: zh-TW
 「總收支」分頁底下分「全部」「已到帳」「已支出」「應到帳」「應支出」，可以在同一個分頁把收款帳單跟支出帳單放在一起看。
 「總收支」分頁跟「帳單總表」不同：總收支只列收款/支出這幾個狀態的帳單，帳單總表是列出全部帳單不分狀態。
 「總收支」分頁裡「已到帳」「已支出」「應到帳」「應支出」這四個狀態頁籤都有本頁小計功能，因為金額欄顯示的是「這張帳單在本分頁那一邊的金額」，所以才需要本頁小計，跟上方彙總卡片的數字對得起來；「全部」頁籤本身沒有這個小計。
-### 帳單通知走哪些管道？通知對象是誰？（Email／簡訊可分別開關；只發給帳單本身的那位承租人，不會同時發給合約上另一位承租人） {#jgb/E/bill-notify-channels}
+### 帳單通知走哪些管道？通知對象是誰？（免註冊租客可分別開關 Email／簡訊，已註冊租客固定收 Email 與站內通知、已綁定 LINE／FB 另收推播；只發給帳單本身的那位承租人） {#jgb/E/bill-notify-channels}
 - phrasings:
   - {text: "帳單通知怎麼關", source: "draft:outline-20260920", status: proposed}
   - {text: "簡訊通知在哪關掉", source: "draft:outline-20260920", status: proposed}
@@ -307,7 +307,7 @@ language: zh-TW
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
-帳單通知可以分別開關 Email 跟簡訊；業者也可以直接在租客列表用「通知開關」整個關掉某一位租客的全部通知。
+帳單通知的管道依租客是否註冊而不同：免註冊的租客可以分別開關 Email 跟簡訊，業者也可以在租客列表關閉；已註冊的租客固定會收到 Email 與站內通知，已綁定 LINE／FB 的另外會收到推播，租客列表上的開關對他們不能操作。
 帳單通知的收件對象只認這張帳單記錄上的那一位承租人，只會發到這個人的手機跟 Email，不會同時發給合約上另一位掛名的承租人。
 ### 發票可以線上作廢嗎？（可在帳單詳細頁作廢，但只支援 ezPay；其他金流商的發票作廢不了，已開折讓的發票也不能再作廢） {#jgb/E/bill-invoice-void-limitation}
 - phrasings:
@@ -344,7 +344,7 @@ language: zh-TW
 - instance_applicability: general
 封存這個動作允許在「待發送」（草稿）跟「已到帳」兩種狀態下直接執行，不需要先把待發送的帳單轉成已到帳才能封存。
 帳單總表、收款帳單這類分頁都可以勾選多筆同狀態的帳單一次封存。
-### 押金收據號碼是系統自動產生的嗎？（不是，號碼要透過 Excel 匯出／匯入手動填寫，系統不會自動編流水號） {#jgb/E/bill-deposit-receipt-no}
+### 押金收據號碼是系統自動產生的嗎？（特定合作團隊的客製功能，號碼透過 Excel 匯出／匯入手動填寫，系統不會自動編流水號） {#jgb/E/bill-deposit-receipt-no}
 - phrasings:
   - {text: "押金收據號碼怎麼填", source: "draft:outline-20260920", status: proposed}
   - {text: "押金收據號碼會自動產生嗎", source: "draft:outline-20260920", status: proposed}
@@ -353,7 +353,7 @@ language: zh-TW
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
-押金收據號碼不是系統自動產生的流水號，而是業者用 Excel 匯出、自己填好號碼後再匯入系統寫回去。
+押金收據號碼是特定合作團隊的客製功能：不是系統自動產生的流水號，而是業者用 Excel 匯出、自己填好號碼後再匯入系統寫回去，同一個團隊內號碼不能重複；一般團隊沒有這個欄位。
 ### 合約已結束、但底下還留著未來計費期間的租金帳單，系統排定發送時會怎麼處理？（系統自動排定發送／自動寄出都會跳過不寄，但不會刪除帳單；業者手動排定發送則不受這條規則限制；批次寄出依帳單 id 由小到大處理，沒有可指定的發送順序） {#jgb/E/bill-scheduled-contract-ended-guard}
 - phrasings:
   - {text: "合約結束後帳單還會自動寄嗎", source: "draft:outline-20260920", status: proposed}
@@ -566,7 +566,7 @@ language: zh-TW
 只有「新增帳單」（單筆）在對象選租客時，才會依該租客合約的收款設定自動帶入付款方式與收款帳戶。
 如果合約帶出來的帳戶已經停用、不可取號、是自訂現金或屬於舊制/儲值等不符合判準的情況，系統不會亂猜一個值，付款方式會維持未選。
 這個自動帶入的機制只在對象是「租客」時才會啟動，選其他對象（大房東、物件、其他）不會嘗試帶入合約付款設定。
-### 不足一個月的租金怎麼算？（按該期帳單天數比例分攤：月租金 × 實際入住天數 ÷ 該期帳單天數，不是固定除以 30 或 31） {#jgb/E/bill-partial-month-proration}
+### 不足一個月的租金怎麼算？（依天數比例；預設團隊以剩餘天數 ÷ 該月曆天數，逐月產帳以實際天數 ÷ 該期帳單天數，不是固定除以 30） {#jgb/E/bill-partial-month-proration}
 - phrasings:
   - {text: "不足月租金怎麼算", source: "draft:outline-20260920", status: proposed}
   - {text: "點退帳單租金怎麼算", source: "draft:outline-20260920", status: proposed}
@@ -575,7 +575,7 @@ language: zh-TW
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
-不足一個月的租金，是用「月租金 × 這一期實際入住的天數 ÷ 這一期帳單本身的天數」去算，不是固定除以 30 天或 31 天。
+不足一個月的租金是依天數比例計算，不是固定除以 30 天：開啟「合約預覽帳單」的團隊（預設）用「剩餘天數 ÷ 該月的曆天數」折算；關閉預覽帳單的團隊與排程逐月產帳，則用「這一期實際天數 ÷ 這一期帳單的天數」折算。
 ### 草稿帳單的電費度數要自己填嗎？（草稿階段度數預設留空，可在編輯頁按「取得即時電錶度數」先帶入） {#jgb/E/bill-power-reading-draft-defaults}
 - phrasings:
   - {text: "電費度數怎麼帶入", source: "draft:outline-20260920", status: proposed}

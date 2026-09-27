@@ -22,8 +22,9 @@
 - 對應格：C22。
 
 ### 包租 vs 代管 {#charter-vs-management}
-- 事實：委託合約 `EntrustedContract` 以 `lease_type` 區分——`LEASE_TYPE_CHARTER=1`（包租）、`LEASE_TYPE_MANAGEMENT=2`（代管）。代管必填 `service_fee_type／service_fee_currency／service_fee`（服務費制度／週期／約定日期）；包租用「包租租金」與其計算制度／週期／約定日期。合約範本按身分分版（原房東／包租業／代租代管）。
-- 引用：`app/EntrustedContract.php:LEASE_TYPE_CHARTER`、`LEASE_TYPE_MANAGEMENT`、`service_fee_type` 驗證規則。
+- 事實：委託合約 `EntrustedContract` 以 `lease_type` 區分——`LEASE_TYPE_CHARTER=1`（包租）、`LEASE_TYPE_MANAGEMENT=2`（代管）。代管必填服務費計算模式、幣別、服務費或服務費比例（`service_fee_type／service_fee_currency／service_fee`）；計算制度、週期、約定日期（`service_fee_cycle_type／cycle／cycle_date`）兩者都必填，只是標籤不同（代管叫「服務費…」、包租叫「包租租金…」）。合約範本按身分分版（原房東／包租業／代租代管）。
+- 引用：`app/EntrustedContract.php:LEASE_TYPE_CHARTER`、`LEASE_TYPE_MANAGEMENT`、`service_fee_type` 驗證規則（`Rule::requiredIf($this->lease_type === self::LEASE_TYPE_MANAGEMENT)`）、`'service_fee_cycle_type'            => 'required',`（空白照原檔）。
+- ⚠️ 2026-09-27 更正（Plan 9.15 帳本複核 verifier，程式反證）：原句把欄位與標籤配錯（計算制度／週期／約定日期兩種都必填）。
 - 未證：兩者在**結算／代收代付**流程上的差異未對碼（scout 只找到費用欄位差異）。
 - 對應格：C03（partial 正確：範本細目只答了範本分版）。
 
@@ -163,9 +164,10 @@
 
 ### 合約
 
-#### 同一合約可加「其他租客」，上限 10 筆 {#p914-contract-additional-tenants}
-- 事實：合約編輯頁租客資訊區有「新增租客」，每筆記暱稱與證件字號，存於 `additional_tenant`，達 10 筆即不能再加；可用來讓第二位以上承租人出現在同一份合約上。這是業者頁面，不是內部後台的 `addTenantToContract`。
-- 引用：`src/pages/contracts/edit/tenantInfo/Index.jsx:addAdditionalTenant`、`additional_tenant?.length >= 10`。
+#### 既存合約可加「其他租客」，上限 10 筆 {#p914-contract-additional-tenants}
+- 事實：**既存合約**（紙本上傳或自製合約）的租客資訊頁有「新增租客」，每筆填承租方名稱與身分證字號／統一編號，存於 `additional_tenant`，達 10 筆即不能再加；**電子範本合約沒有這個功能**。這是業者頁面，不是內部後台的 `addTenantToContract`。
+- 引用：`src/pages/contracts/edit/tenantInfo/Index.jsx:addAdditionalTenant`、`additional_tenant?.length >= 10`、`Boolean(props.editStore?.options?.is_existed) && <>`；`app/Http/Controllers/ContractController.php`（`'is_existed'=> $contract->contract_is_existing`）。
+- ⚠️ 2026-09-27 更正（Plan 9.15 帳本複核 verifier，程式反證）：原句未限定既存合約、欄位名寫成「暱稱／證件字號」。
 - 對應格：`32e60ab5d92d`、`90170e3f51de`、`c528fcf3fd47`。
 
 #### 租客資料逐筆記錄 {#p914-lessee-records}
@@ -179,10 +181,12 @@
 - ⚠️ 2026-09-27 更正：原句未限定社宅合約（Plan 9.15 S3 D 架 verifier 發現）。
 - 對應格：`d799d0d69999`。
 
-#### 送出簽約邀請時才比對既有會員，之後註冊不回頭綁定 {#p914-contract-invite-account-match}
-- 事實：送出邀請時，以合約填的租客 Email 比對已註冊會員（比對到才代入該會員資料，並把合約上的租客 Email 改成會員的註冊 Email）；以電話比對時只認已完成手機驗證（`phone_verified_at` 非空）的帳號。比對只在送出當下做，租客事後才註冊不會自動綁回先前的合約。
+#### 送出邀請時比對既有會員；事後註冊可經邀請連結認領 {#p914-contract-invite-account-match}
+- 事實：送出邀請時，以合約填的租客 Email 比對已註冊會員（比對到才代入該會員資料，並把合約上的租客 Email 改成會員的註冊 Email）；以電話比對時只認已完成手機驗證（`phone_verified_at` 非空）的帳號。
+- 事實：租客事後才註冊時，如果是**在同一個瀏覽器點開該合約的邀請連結後、在工作階段有效期間內（預設 120 分鐘）接著註冊或登入**，且合約仍是「待租客簽回」尚未綁定帳號，系統會自動認領這份合約；換裝置、隔太久才註冊，或合約已簽署完成、已綁定其他帳號，都不會自動綁定。
 - 事實：承租人 Email 存在各合約自己的 `to_user_email`，程式未見「同一 Email 跨合約須唯一」的檢查。
-- 引用：`app/Http/Controllers/ContractController.php`（`User::where('email', xxtea_base64_encrypt($contract->to_user_email))`、`$contract->to_user_email = $user->email;`、`whereNotNull('phone_verified_at')`）。
+- 引用：`app/Http/Controllers/ContractController.php`（`User::where('email', xxtea_base64_encrypt($contract->to_user_email))`、`$contract->to_user_email = $user->email;`、`whereNotNull('phone_verified_at')`）；`app/Http/Controllers/EstateController.php`（`session()->put('contract_invitation', [$contract->id]);`）；`app/Http/Controllers/AuthController.php`（`receiveContractInvitation('contract', $contractId)`）；`app/User.php:receiveContractInvitation`；`config/session.php`（`'lifetime' => env('SESSION_LIFETIME', 120)`）。
+- ⚠️ 2026-09-27 更正（Plan 9.15 帳本複核 verifier，程式反證）：原句「租客事後註冊不會自動綁回」與程式相反。
 - 對應格：`1e16fa69fcc7`、`94fead8a36a8`、`c46c210386be`。
 
 #### 會員 Email 加密存放，比對前不轉小寫 {#p914-email-encrypted-no-lowercase}
@@ -192,8 +196,9 @@
 - 對應格：`77cba6a26bca`。
 
 #### 新合約不動舊合約；同一物件最多 10 份使用中合約 {#p914-contract-new-vs-old}
-- 事實：建立新合約不會自動作廢或改動既有合約；舊合約只有在使用者明確「刪除合約」「取消邀請」時才停用（`active = 0`）。同一物件使用中合約達 `MAX_ACTIVE_CONTRACTS_COUNT`（10）才擋新增，不檢查新舊租期是否重疊。
-- 引用：`app/Http/Controllers/ContractController.php`（`$contract->active = 0;`、`'cancelInvite' => [`、`activeContracts()->count() >= self::MAX_ACTIVE_CONTRACTS_COUNT`）。
+- 事實：建立新合約不會自動作廢或改動既有合約。同一物件「使用中」（未刪除、未轉歷史：`is_history = 0` 且 `active = 1`）的合約達 `MAX_ACTIVE_CONTRACTS_COUNT`（10）才擋新增，合約結束轉歷史後不再佔名額；不檢查新舊租期是否重疊。「取消邀請」對一般合約是退回待發送，只有續約草稿會被停用。
+- 引用：`app/Http/Controllers/ContractController.php`（`activeContracts()->count() >= self::MAX_ACTIVE_CONTRACTS_COUNT`）；`app/Contract.php`（`scopeActiveContracts`、`Contract::reset` 的 `isRenewContract()` 分支）。
+- ⚠️ 2026-09-27 更正（Plan 9.15 帳本複核 verifier，程式反證）：原句「取消邀請即停用」只對續約草稿成立；計數排除歷史合約。
 - 對應格：`10e43c55dc28`、`2d5a4c136de5`。
 
 #### 只有「待發送」的合約可刪除 {#p914-contract-delete-draft-only}
@@ -212,10 +217,11 @@
 - 對應格：`4953441607e2`。
 
 #### 合約範本清單與限制 {#p914-contract-templates}
-- 事實：可選範本由後端結構檔 `contract_template_options` 定義，含內政部住宅租賃契約（原房東）、內政部轉租契約（包租轉租）、內政部英文版／英泰文版／英越文版、新北住都、Meta Capital 等，各對應 `individual`／`corporation`／`management`。
+- 事實：可選範本由 `config/contract.php` 的 `template`，依出租方身分與團隊組出（`ContractController` 以 `$contractTemplateNames` 組單）：個人房東只有內政部中文版（原房東）、內政部英文版、英泰文版與公會中文版等少數幾種；一般法人另有代租代管、包租轉租等；特定合作團隊有專屬範本。
 - 事實：轉租合約是一般合約實體的一種範本（`config/contract.php` 的 `轉租合約`）；合約列表的 ID 欄即該合約紀錄主鍵，唯一。
-- 事實：內政部英文版範本在版位設定裡沒有補充條款（`additional_terms`）的印製座標，解析結果為 null ⇒ 補充條款不會印在該範本上。
-- 引用：`resources/structures/contract/edit/options.php:contract_template_options`；`config/contract.php`（`內政部英文版 住宅租賃契約書`、`'label' => '轉租合約'`）；`tests/Unit/ContractController/ResolveAdditionalTermsPositionTest.php`；`src/pages/contracts/list/_parts/ListTable.vue`（`ContractColumnKey.ID`）。
+- 事實：內政部英文版的補充條款**會**印在合約書第 4 頁；只有編輯時的「補充條款預覽」對這個範本不套背景、改用空白頁。
+- 引用：`app/Http/Controllers/ContractController.php`（`$contractTemplateNames[] =`）；`app/Contract.php`（`$position[$positionPage][3]['write'] = $writes; // 補充條款;`）；`config/contract.php`（`內政部英文版 住宅租賃契約書`、`'label' => '轉租合約'`）；`tests/Unit/ContractController/ResolveAdditionalTermsPositionTest.php`；`src/pages/contracts/list/_parts/ListTable.vue`（`ContractColumnKey.ID`）。
+- ⚠️ 2026-09-27 更正（Plan 9.15 帳本複核 verifier，程式反證）：原引用的 `resources/structures/contract/edit/options.php` 無載入點；原「英文版不印補充條款」只對預覽成立，正式合約書會印。
 - 對應格：`7b5c41b4e638`、`5736c4b359de`、`9df22ffd2431`。
 
 #### 合約起始日是使用者填的 `date_start` {#p914-contract-date-start}
@@ -234,9 +240,10 @@
 - ⚠️ 2026-09-27 更正：原句只列五項，取自非合約總表的 `index()`，漏了查看帳單與兩個取消邀請（Plan 9.15 S3 D 架 verifier 發現）。
 - 對應格：`a288657cdbab`。
 
-#### 續約＝複製出一份全新合約，確認成立即生效 {#p914-contract-renewal}
-- 事實：續約以 `replicate()` 建立全新合約紀錄，並剝除從舊合約繼承的「歷史合約」位元；租客簽署確認當下即設為 `CONTRACT_SIGNED`，不等舊合約到期。
-- 引用：`app/Services/ContractService.php`（`$renewContract = $contract->replicate();`、`續約合約為全新合約，去掉自父合約繼承來的「歷史合約」位元`、`$renewContract->status = Contract::CONTRACT_SIGNED;`）。
+#### 續約＝複製出一份全新合約；註冊租客要簽署，免註冊租客直接成立 {#p914-contract-renewal}
+- 事實：續約以 `replicate()` 建立全新合約紀錄，並剝除從舊合約繼承的「歷史合約」位元。租客已註冊時走續約邀請（待租客簽回），雙方完成簽署才成立；租客免註冊時建立即沿用原合約狀態、不需簽約。成立不必等舊合約到期。
+- 引用：`app/Services/ContractService.php`（`$renewContract = $contract->replicate();`、`續約合約為全新合約，去掉自父合約繼承來的「歷史合約」位元`、`CONTRACT_RENEW_INVITE_LOG`、`CONTRACT_RENEW_CONFIRM_LOG`）。
+- ⚠️ 2026-09-27 更正（Plan 9.15 帳本複核 verifier，程式反證）：原引用的 `CONTRACT_SIGNED` 位於「父合約已是歷史時還原」分支，不是租客簽署；原句把兩條流程混為一條。
 - 對應格：`ac9b1fdb963f`、`7b6556bf7ee8`。
 
 #### 押金差額入帳只限新北住都延長續約 {#p914-renewal-deposit-diff}
@@ -255,8 +262,9 @@
 
 #### 提前解約後的帳單 {#p914-early-termination-bills}
 - 事實：提前解約確認時把合約 `date_end` 改寫為解約日；每日排程 `bill:gen` 只對 `date_end` 不早於當天的合約產生下一期租金帳單 ⇒ 解約日之後不會再自動產生新帳單。
-- 事實：排程會提前產生最多到下個月的帳單；確認解約的流程未見刪除或封存既有帳單 ⇒ 確認前已產生、期間落在解約日之後的帳單，要業者自行封存。
-- 引用：`app/Services/ContractService.php`（`$contract->date_end = $contract->early_termination_wish_date_end;`）；`app/Console/Commands/CreateRentBill.php`（`$contractsQ->where('date_end', '>=', $now);`、`帳單起始日不得超過本月＋1 月`）；`app/Http/Controllers/BillController.php:archive`。
+- 事實：確認解約的流程不刪除也不封存既有帳單。**開啟「合約預覽帳單」的團隊（預設）**在合約成立時已產生全租期帳單，解約日之後的各期都要業者自行封存；關閉預覽帳單的團隊（特定合作團隊）由排程逐月產生，最多多出到下個月的帳單。
+- 引用：`app/Services/ContractService.php`（`$contract->date_end = $contract->early_termination_wish_date_end;`）；`app/Console/Commands/CreateRentBill.php`（`$contractsQ->where('date_end', '>=', $now);`、`帳單起始日不得超過本月＋1 月`）；`app/Role.php`（`'IS_OPEN_CONTRACT_BILL_SETTING' => true, // 是否開啟合約預覽帳單`）；`app/Services/ContractService.php:createBillFromDrafts`。
+- ⚠️ 2026-09-27 更正（Plan 9.15 帳本複核 verifier，程式反證）：原句「最多多到下個月」只對關閉預覽帳單的團隊成立；原引用的 `BillController:archive` 路由已註解，現行封存走帳單列表／單張的「封存」。
 - 對應格：`c18cbfb4fdc7`、`e093019fff73`。
 
 #### 租客不確認點退時，只能由房東取消點退邀請重發 {#p914-moveout-cancel}
@@ -270,7 +278,8 @@
 - 對應格：`32bef8bcfc9a`、`f481e3a449af`。
 
 #### 合約列表的「標籤」與「是否通知」是兩件事 {#p914-contract-list-tags}
-- 事實：合約列表「標籤」欄可逐筆加註（`SurelyVueEstateLabelsCell` 編輯 `record.labels`），與「是否通知」是各自獨立的設定。
+- 事實：合約列表「標籤」欄可逐筆加註（`SurelyVueEstateLabelsCell` 編輯 `record.labels`）；「是否通知」是**物件儀表板合約清單**上的另一欄（寄送通知給租客；以租客身分登入時不顯示這一欄），兩者互相獨立。
+- ⚠️ 2026-09-27 更正（Plan 9.15 帳本複核 verifier，程式反證）：原句易讀成兩欄都在合約列表。
 - 引用：`src/pages/contracts/list/_parts/ListTable.vue`（`ContractColumnKey.TAGS`）；`src/pages/estates/dashboard/contracts/Index.vue`（`是否通知`）。
 - 對應格：`12a91709003b`。
 
@@ -283,9 +292,10 @@
 ### 帳單、收款與發票
 
 #### 帳單通知的管道與對象 {#p914-bill-notify}
-- 事實：帳單通知可分別開關 Email 與簡訊（`should_send_sms` 取自租客的 `lessee_phone_notify_status`）；管理者可在租客列表直接用「通知開關」關閉某位租客的全部通知。
+- 事實：**免註冊租客**的帳單通知可分別開關 Email 與簡訊（`should_send_sms` 取自 `lessee_phone_notify_status`），管理者可在租客列表關閉；**已註冊租客**固定收 Email 與站內通知，已綁定 LINE／FB 者另收推播，租客列表的開關對其不可操作，簡訊只有特定合作團隊發送。
 - 事實：通知對象是帳單記錄的單一承租人使用者（`bill.user_id`），以其名下的手機與 Email 發送，不會同時發給合約上另一位掛名承租人。
-- 引用：`app/Services/BillService.php`（`'should_send_sms' => (bool)$lessee->lessee_phone_notify_status`）；`app/Jobs/BillReadyJob.php`（`$lesseeUserId = $bill->user_id;`）；`src/pages/users/lesseeList/parts/PageTop.vue`（`當通知開關關閉時，租客將無法收到所有的通知`）。
+- 引用：`app/Services/BillService.php`（`'should_send_sms' => (bool)$lessee->lessee_phone_notify_status`）；`app/Jobs/BillReadyJob.php`（`$lesseeUserId = $bill->user_id;`）；`src/pages/users/lesseeList/parts/PageTop.vue`（`當通知開關關閉時，租客將無法收到所有的通知`）；`app/Notification.php`（`case 'bill_open'`、`botbonnie_api`）。
+- ⚠️ 2026-09-27 更正（Plan 9.15 帳本複核 verifier，程式反證）：原句漏了註冊／免註冊兩種身分的差異。
 - 對應格：`085a8e26b78d`、`9def85e08184`、`ac0d6e0e0d61`。
 
 #### 發票預設在帳單收款時開立、依帳單各自開立 {#p914-invoice-per-bill}
@@ -305,9 +315,10 @@
 - 引用：`app/Services/BalanceInvoiceService.php`（`記負數(減)以符合 F=(A+B)-(C+D)`）。
 - 對應格：`c108fb6b2760`。
 
-#### 不足月租金按該期天數比例 {#p914-proration}
-- 事實：不足月租金＝月租金 × 實際入住天數 ／ 該期帳單的天數，不是固定除以 30 或 31。
-- 引用：`app/Services/ContractService.php`（`$realTotalDays / $billTotalDays`）。
+#### 不足月租金按天數比例，兩種產帳方式算法不同 {#p914-proration}
+- 事實：不足月租金依天數比例，不是固定除以 30。開啟合約預覽帳單的團隊（預設）以「剩餘天數 ÷ 該月曆天數」折算；關閉預覽帳單的團隊與排程逐月產帳以「實際天數 ÷ 該期帳單天數」折算。
+- 引用：`app/Services/ContractService.php`（`$realTotalDays / $billTotalDays`，為 `unitCount` 的備援；註解「不足月的情況才看天」）；`app/Services/BillService.php:getMonthCountWithRemainDays`（`date('t',$unixPrevMonth)`）；`app/Contract.php:genBill`。
+- ⚠️ 2026-09-27 更正（Plan 9.15 帳本複核 verifier，程式反證）：原句只寫了逐月產帳的算法。
 - 對應格：`51f2b99334dd`。
 
 #### 退押金等付給租客的帳單不走固定虛擬帳號 {#p914-refund-bill-account}
@@ -355,9 +366,10 @@
 - 引用：`app/Bill.php`（`待發送 & 已到帳 狀態訂單可封存`）。
 - 對應格：`b8e89b124c27`。
 
-#### 押金收據號碼手動填，不自動編號 {#p914-deposit-receipt-no}
-- 事實：押金收據號碼（`deposit_receipt_no`）由 xlsx 匯出／匯入手動填寫，系統不自動產生流水號。
-- 引用：`app/Services/Bills/BillDepositReceiptService.php`（`deposit_receipt_no`）。
+#### 押金收據號碼是特定團隊的客製功能，手動填、不自動編號 {#p914-deposit-receipt-no}
+- 事實：押金收據號碼是**特定合作團隊的客製功能**：由 xlsx 匯出後手填再匯入，同團隊不得重號，系統不自動產生流水號；一般團隊沒有這個欄位。
+- 引用：`app/Services/Bills/BillDepositReceiptService.php`（`deposit_receipt_no`）；`app/Http/Controllers/BillController.php:updateDepositReceiptNo`（`此團隊未啟用押金收據功能`）。
+- ⚠️ 2026-09-27 更正（Plan 9.15 帳本複核 verifier，程式反證）：原句未限定特定團隊。
 - 對應格：`d0e5d8d61fa4`。
 
 #### 草稿帳單電費度數留空、排定／發送時補抓空值、不覆寫已有度數 {#p914-power-reading-draft}

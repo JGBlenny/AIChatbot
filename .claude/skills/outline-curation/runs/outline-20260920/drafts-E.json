@@ -1373,7 +1373,7 @@
     {
      "proposed_id": "jgb/E/bill-notify-channels",
      "askable": "帳單通知走哪些管道，通知對象是誰",
-     "title": "帳單通知走哪些管道？通知對象是誰？（Email／簡訊可分別開關；只發給帳單本身的那位承租人，不會同時發給合約上另一位承租人）",
+     "title": "帳單通知走哪些管道？通知對象是誰？（免註冊租客可分別開關 Email／簡訊，已註冊租客固定收 Email 與站內通知、已綁定 LINE／FB 另收推播；只發給帳單本身的那位承租人）",
      "unit_ids": [
       "page:bills.list"
      ],
@@ -1392,7 +1392,7 @@
       "關閉租客所有通知"
      ],
      "sentences": [
-      "帳單通知可以分別開關 Email 跟簡訊；業者也可以直接在租客列表用「通知開關」整個關掉某一位租客的全部通知。",
+      "帳單通知的管道依租客是否註冊而不同：免註冊的租客可以分別開關 Email 跟簡訊，業者也可以在租客列表關閉；已註冊的租客固定會收到 Email 與站內通知，已綁定 LINE／FB 的另外會收到推播，租客列表上的開關對他們不能操作。",
       "帳單通知的收件對象只認這張帳單記錄上的那一位承租人，只會發到這個人的手機跟 Email，不會同時發給合約上另一位掛名的承租人。"
      ],
      "sources": [
@@ -1402,7 +1402,7 @@
       {
        "sentence_index": 0,
        "source": "docs:knowledge/jgb-product-facts.md#p914-bill-notify",
-       "quote_or_symbol": "管理者可在租客列表直接用「通知開關」關閉某位租客的全部通知"
+       "quote_or_symbol": "**免註冊租客**的帳單通知可分別開關 Email 與簡訊（`should_send_sms` 取自 `lessee_phone_notif"
       },
       {
        "sentence_index": 1,
@@ -1544,7 +1544,7 @@
     {
      "proposed_id": "jgb/E/bill-deposit-receipt-no",
      "askable": "押金收據號碼是系統自動產生的嗎",
-     "title": "押金收據號碼是系統自動產生的嗎？（不是，號碼要透過 Excel 匯出／匯入手動填寫，系統不會自動編流水號）",
+     "title": "押金收據號碼是系統自動產生的嗎？（特定合作團隊的客製功能，號碼透過 Excel 匯出／匯入手動填寫，系統不會自動編流水號）",
      "unit_ids": [
       "page:bills.list"
      ],
@@ -1562,7 +1562,7 @@
       "押金收據匯入匯出"
      ],
      "sentences": [
-      "押金收據號碼不是系統自動產生的流水號，而是業者用 Excel 匯出、自己填好號碼後再匯入系統寫回去。"
+      "押金收據號碼是特定合作團隊的客製功能：不是系統自動產生的流水號，而是業者用 Excel 匯出、自己填好號碼後再匯入系統寫回去，同一個團隊內號碼不能重複；一般團隊沒有這個欄位。"
      ],
      "sources": [
       "docs:knowledge/jgb-product-facts.md#p914-deposit-receipt-no"
@@ -1571,7 +1571,7 @@
       {
        "sentence_index": 0,
        "source": "docs:knowledge/jgb-product-facts.md#p914-deposit-receipt-no",
-       "quote_or_symbol": "由 xlsx 匯出／匯入手動填寫，系統不自動產生流水號"
+       "quote_or_symbol": "押金收據號碼是**特定合作團隊的客製功能**：由 xlsx 匯出後手填再匯入，同團隊不得重號，系統不自動產生流水號；一般團隊沒有這個欄位。"
       }
      ],
      "not_supported_greps": [],
@@ -2540,7 +2540,7 @@
     {
      "proposed_id": "jgb/E/bill-partial-month-proration",
      "askable": "不足月的租金怎麼算",
-     "title": "不足一個月的租金怎麼算？（按該期帳單天數比例分攤：月租金 × 實際入住天數 ÷ 該期帳單天數，不是固定除以 30 或 31）",
+     "title": "不足一個月的租金怎麼算？（依天數比例；預設團隊以剩餘天數 ÷ 該月曆天數，逐月產帳以實際天數 ÷ 該期帳單天數，不是固定除以 30）",
      "unit_ids": [
       "page:bills.create",
       "page:bills.edit"
@@ -2559,7 +2559,7 @@
       "入住天數比例分攤"
      ],
      "sentences": [
-      "不足一個月的租金，是用「月租金 × 這一期實際入住的天數 ÷ 這一期帳單本身的天數」去算，不是固定除以 30 天或 31 天。"
+      "不足一個月的租金是依天數比例計算，不是固定除以 30 天：開啟「合約預覽帳單」的團隊（預設）用「剩餘天數 ÷ 該月的曆天數」折算；關閉預覽帳單的團隊與排程逐月產帳，則用「這一期實際天數 ÷ 這一期帳單的天數」折算。"
      ],
      "sources": [
       "docs:knowledge/jgb-product-facts.md#p914-proration"
@@ -2568,7 +2568,7 @@
       {
        "sentence_index": 0,
        "source": "docs:knowledge/jgb-product-facts.md#p914-proration",
-       "quote_or_symbol": "不足月租金＝月租金 × 實際入住天數 ／ 該期帳單的天數，不是固定除以 30 或 31"
+       "quote_or_symbol": "不足月租金依天數比例，不是固定除以 30。開啟合約預覽帳單的團隊（預設）以「剩餘天數 ÷ 該月曆天數」折算；關閉預覽帳單的團隊與排程逐月產帳"
       }
      ],
      "not_supported_greps": [],

@@ -355,14 +355,14 @@ jgb/D/early-termination-form-fields｜申請提前解約要填什麼？（欲提
 jgb/D/early-termination-tenant-cancel｜誰可以取消已送出的提前解約申請？（房東透過小齒輪取消，租客只有在提前解約確認中狀態才能取消）｜target_user=property_manager｜
 jgb/D/early-termination-eligibility｜什麼合約可以提前解約？（合約狀態須為成立或點交完成、沒有申請過或已完成過提前解約；「可否提前解約」設定只限制租客發起，不影響房東發起）｜target_user=property_manager｜
 jgb/D/early-termination-effect-move-out｜提前解約後多久可以點退？（依新合約終止日往前推 30 天內即可執行點退押金）｜target_user=property_manager,prospect｜
-jgb/D/early-termination-billing-after｜提前解約後還會出新帳單嗎？（解約日之後系統不會再自動產生新租金帳單，但解約前已產生、落在解約日後的帳單要業者自行封存）｜target_user=property_manager｜
+jgb/D/early-termination-billing-after｜提前解約後還會出新帳單嗎？（解約日之後系統不會再自動產生新租金帳單；已產生、落在解約日後的帳單要業者自行封存）｜target_user=property_manager｜
 ### D-notary 租約公證（公證分頁與公證服務） {#D-notary}
 jgb/D/general-contract-notary-tab｜一般合約的「公證」分頁怎麼設定？（是否辦理公證，同意時可複選三項應逕受強制執行事項，僅支援中文合約）｜target_user=property_manager｜
 jgb/D/contract-thinkcloud-esign-service｜簽約時進入的雲想科技頁面是做什麼的？（承載 Thinkcloud 電子簽署流程的內嵌頁面，一般合約、委託合約皆會用到）｜target_user=property_manager｜
 jgb/D/contract-thinkcloud-signing-variants｜雲想科技簽署畫面依合約類型有什麼差異？（公會版本合約加補充條款多一個協商條款簽名框；DIY 客製化合約解析失敗時會顯示提示訊息，不會直接出現系統錯誤畫面）｜target_user=property_manager｜
 ### D-entrust-contract 委託合約（列表、建立編輯、檢視） {#D-entrust-contract}
 jgb/D/entrusted-contract-what-is-it｜委託合約是什麼？（房東委託業者包租代管的合約，跟業者與租客之間的租賃合約是不同份文件）｜target_user=property_manager,prospect｜
-jgb/D/entrusted-contract-lease-type｜委託合約「包租」跟「代管」有什麼不同？（代管必填服務費制度／週期／約定日期，包租用包租租金及其計算制度）｜target_user=property_manager,prospect｜
+jgb/D/entrusted-contract-lease-type｜委託合約「包租」跟「代管」有什麼不同？（代管必填服務費計算模式、幣別與金額或比例；計算制度、週期、約定日期兩者都要填）｜target_user=property_manager,prospect｜
 jgb/D/entrusted-contract-tabs-overview｜委託合約編輯畫面有哪些分頁？（房東資訊、委託條件三頁、管理方資訊共 3 組 5 頁）｜target_user=property_manager｜
 jgb/D/entrusted-contract-preview-to-show｜委託合約編輯完成後怎麼進入簽署？（點右上角「預覽合約」先儲存資料，再進入檢視頁面）｜target_user=property_manager｜
 jgb/D/entrusted-contract-upload-file-size-limit｜委託合約上傳既有檔案限制多大？（6MB，比一般合約的 10MB 小）｜target_user=property_manager｜
@@ -400,11 +400,11 @@ jgb/E/bill-list-batch-shortcuts｜「草稿帳單」分頁右上角有哪些批�
 jgb/E/bill-scheduled-send-rule｜「排定發送帳單」有什麼限制？（只有度數填完的帳單才能排，每天中午 12 點統一發送）｜target_user=property_manager｜
 jgb/E/bill-single-notification-deeplink｜帳單通知信裡的連結點進去會看到什麼？（單張帳單以彈窗顯示，不會跳到完整列表）｜target_user=property_manager｜
 jgb/E/bill-balance-tab｜「總收支」分頁的用途是什麼？（同時看全部已到帳、已支出、應到帳、應支出的帳單）｜target_user=property_manager｜
-jgb/E/bill-notify-channels｜帳單通知走哪些管道？通知對象是誰？（Email／簡訊可分別開關；只發給帳單本身的那位承租人，不會同時發給合約上另一位承租人）｜target_user=property_manager,prospect｜
+jgb/E/bill-notify-channels｜帳單通知走哪些管道？通知對象是誰？（免註冊租客可分別開關 Email／簡訊，已註冊租客固定收 Email 與站內通知、已綁定 LINE／FB 另收推播；只發給帳單本身的那位承租人）｜target_user=property_manager,prospect｜
 jgb/E/bill-invoice-void-limitation｜發票可以線上作廢嗎？（可在帳單詳細頁作廢，但只支援 ezPay；其他金流商的發票作廢不了，已開折讓的發票也不能再作廢）｜target_user=property_manager,prospect｜
 jgb/E/bill-notify-remittance-visibility｜「通知已匯款」按鈕什麼時候才會出現？（只在非線上金流收款的帳單才有，改走線上金流收款就不顯示）｜target_user=property_manager,prospect｜
 jgb/E/bill-archive-precondition｜帳單要什麼狀態才可以直接封存？（「待發送」跟「已到帳」都可以直接封存，不用先轉成已到帳；可勾選多筆一次封存）｜target_user=property_manager｜
-jgb/E/bill-deposit-receipt-no｜押金收據號碼是系統自動產生的嗎？（不是，號碼要透過 Excel 匯出／匯入手動填寫，系統不會自動編流水號）｜target_user=property_manager,prospect｜
+jgb/E/bill-deposit-receipt-no｜押金收據號碼是系統自動產生的嗎？（特定合作團隊的客製功能，號碼透過 Excel 匯出／匯入手動填寫，系統不會自動編流水號）｜target_user=property_manager,prospect｜
 jgb/E/bill-scheduled-contract-ended-guard｜合約已結束、但底下還留著未來計費期間的租金帳單，系統排定發送時會怎麼處理？（系統自動排定發送／自動寄出都會跳過不寄，但不會刪除帳單；業者手動排定發送則不受這條規則限制；批次寄出依帳單 id 由小到大處理，沒有可指定的發送順序）｜target_user=property_manager｜
 jgb/E/bill-remind-resend-by-support｜業者可以請 JGB 客服代發催繳通知嗎？（此操作需由 JGB 客服協助；業者端沒有自助重發催繳的介面）｜target_user=property_manager,prospect｜
 jgb/E/bill-cvs-barcode-overdue-payment｜超商代碼繳費逾期後才繳，帳單還會入帳嗎？（系統不檢查代碼期限，完全依金流商回傳的付款結果；代碼逾期後是否還能繳費屬外部規定，系統不判斷）｜target_user=property_manager,prospect｜
@@ -424,7 +424,7 @@ jgb/E/bill-payment-method-account-pair｜新增帳單時付款方式跟收款帳
 jgb/E/bill-tenant-unverified-draft-lock｜租客還沒完成驗證時，發給他的帳單會怎樣？（帳單卡在草稿分頁，發不出去；但可以手動移至應到帳/已到帳）｜target_user=property_manager,prospect｜
 jgb/E/bill-submit-button-behavior｜新增帳單頁面下方送出按鈕的文字跟行為會依情境改變（送出／發送簽核／簽核中／預覽帳單）｜target_user=property_manager｜
 jgb/E/bill-contract-payment-prefill｜新增帳單選租客當對象時，付款方式會自動帶入合約的收款設定嗎？（會，但帳戶已停用/不可取號等情況不會亂猜）｜target_user=property_manager｜
-jgb/E/bill-partial-month-proration｜不足一個月的租金怎麼算？（按該期帳單天數比例分攤：月租金 × 實際入住天數 ÷ 該期帳單天數，不是固定除以 30 或 31）｜target_user=property_manager,prospect｜
+jgb/E/bill-partial-month-proration｜不足一個月的租金怎麼算？（依天數比例；預設團隊以剩餘天數 ÷ 該月曆天數，逐月產帳以實際天數 ÷ 該期帳單天數，不是固定除以 30）｜target_user=property_manager,prospect｜
 jgb/E/bill-power-reading-draft-defaults｜草稿帳單的電費度數要自己填嗎？（草稿階段度數預設留空，可在編輯頁按「取得即時電錶度數」先帶入）｜target_user=property_manager｜
 ### E-bill-stats 帳單統計與報表 {#E-bill-stats}
 jgb/E/bill-stat-overview｜「統計報表」的「當前表現」分頁顯示什麼？（收款情況／支出情況卡片）｜target_user=property_manager,prospect｜

@@ -150,8 +150,8 @@
       "也可以在物件管理的物件總表中，對想建立合約的物件點選小齒輪，選擇「建立合約」直接進入。",
       "建立合約時可以選擇「電子合約（公版）」「電子合約（客製化契約書）」或「紙本簽約」三種建立方式。",
       "一個物件最多可以綁定 10 份合約，例如同一物件的舊租約仍在執行中，也可以先跟新租客預先簽下一份合約，等舊約到期銜接。",
-      "建立一份新合約不會自動作廢或改動同一物件上其他既有的合約，舊合約只有在使用者自己操作（例如刪除合約、取消邀請）時才會停用。",
-      "系統在建立合約時不會檢查同一物件不同合約的租期是否重疊，只用「同一物件的使用中合約數」這個門檻（最多 10 份）來擋新增；至於同一物件底下要怎麼建立、命名多個房號，需要洽客服協助個案安排。"
+      "建立一份新合約不會自動作廢或改動同一物件上其他既有的合約。",
+      "系統在建立合約時不會檢查同一物件不同合約的租期是否重疊，只用「同一物件使用中（未刪除、未轉為歷史合約）的合約數」這個門檻（最多 10 份）來擋新增，合約結束轉為歷史後就不再佔名額；至於同一物件底下要怎麼建立、命名多個房號，需要洽客服協助個案安排。"
      ],
      "sources": [
       "help:landlordonboarding04lease_zh-Hant.html",
@@ -182,7 +182,7 @@
       {
        "sentence_index": 4,
        "source": "docs:knowledge/jgb-product-facts.md#p914-contract-new-vs-old",
-       "quote_or_symbol": "新合約不動舊合約；同一物件最多 10 份使用中合約"
+       "quote_or_symbol": "建立新合約不會自動作廢或改動既有合約。同一物件「使用中」（未刪除、未轉歷史：`is_history = 0` 且 `active = 1`）"
       },
       {
        "sentence_index": 5,
@@ -537,12 +537,12 @@
       {
        "sentence_index": 2,
        "source": "docs:knowledge/jgb-product-facts.md#p914-real-price-registration",
-       "quote_or_symbol": "實價登錄匯出"
+       "quote_or_symbol": "匯出時申報義務人身分可選「不動產經紀業」或「租賃住宅包租業」。"
       },
       {
        "sentence_index": 3,
        "source": "docs:knowledge/jgb-product-facts.md#p914-real-price-registration",
-       "quote_or_symbol": "建號以物件的 building_serial_no 為主"
+       "quote_or_symbol": "匯出時申報義務人身分可選「不動產經紀業」或「租賃住宅包租業」。"
       },
       {
        "sentence_index": 4,
@@ -731,7 +731,7 @@
       "系統提供「租客註冊」與「租客免註冊」兩種模式：租客註冊代表租客會自己註冊 JGB 會員並填妥承租方資訊；租客免註冊代表租客不需要註冊會員，改由管理者代為填寫承租方資訊。",
       "這個分頁也可以新增租客的緊急聯絡人，填寫姓名、關係與聯絡號碼。",
       "分頁上會提示，這裡填寫的租客資料會謄寫進合約內容，過程經過加密處理。",
-      "合約編輯的租客資訊分頁還有「新增租客」功能，可以加入其他共同承租人，每筆記錄暱稱與證件字號，最多可以加到 10 筆；這也是目前多人共同簽約的做法——如果問的是更完整的多人簽約功能規劃，目前沒有公開時程。",
+      "如果是既存合約（紙本上傳或自製合約），租客資訊分頁有「新增租客」功能，可以加入其他共同承租人，每筆填寫承租方名稱與身分證字號／統一編號，最多可以加到 10 筆；使用電子範本的合約沒有這個功能。如果問的是更完整的多人簽約功能規劃，目前沒有公開時程。",
       "每一位承租人的姓名、公司名稱、身分類型、聯絡方式，系統是逐筆分開記錄，不是把所有租客資料塞在同一個欄位裡。",
       "選擇「租客免註冊」的合約，只要合約成立就直接視為已完成簽名，不會經過「待租客簽回」或「待管理者簽名」這兩個狀態。"
      ],
@@ -767,7 +767,7 @@
       {
        "sentence_index": 4,
        "source": "docs:knowledge/jgb-product-facts.md#p914-contract-additional-tenants",
-       "quote_or_symbol": "同一合約可加「其他租客」，上限 10 筆"
+       "quote_or_symbol": "**既存合約**（紙本上傳或自製合約）的租客資訊頁有「新增租客」，每筆填承租方名稱與身分證字號／統一編號，存於 `additional_te"
       },
       {
        "sentence_index": 4,
@@ -777,12 +777,12 @@
       {
        "sentence_index": 5,
        "source": "docs:knowledge/jgb-product-facts.md#p914-lessee-records",
-       "quote_or_symbol": "租客資料逐筆記錄"
+       "quote_or_symbol": "租客資料以逐筆承租人紀錄（`existed_lessee`／`prospective_lessee`）建立，姓名、公司名稱、身分類型、聯絡方"
       },
       {
        "sentence_index": 6,
        "source": "docs:knowledge/jgb-product-facts.md#p914-contract-exempt-register-signed",
-       "quote_or_symbol": "免註冊租客的合約成立即為已簽名"
+       "quote_or_symbol": "租客免註冊的合約，成立行為（`CONTRACT_CONFIRM_LOG`）直接把狀態設為 `CONTRACT_SIGNED`，不經過「待租客"
       }
      ],
      "not_supported_greps": [],
@@ -813,7 +813,7 @@
       "另外還有「租賃訂約日期」欄位，用來記錄雙方實際簽訂這份合約的日期，跟合約起迄日期是不同的欄位。",
       "一般團隊建立一般住宅合約時，可選的合約範本共有 12 種：「114年內政部住宅租賃契約(原房東)」「113年內政部轉租契約(包租轉租)」「代租代管契約(參考114年租賃契約)」「內政部英文版 租賃契約書 原房東」「內政部英文版 租賃契約書 包租業」「內政部英文版 租賃契約書 代租代管」「英越文版 租賃契約書」「英泰文版 租賃契約書 原房東」「英泰文版 租賃契約書 代租代管」「公會中文版 租賃契約書 原房東」「公會中文版 租賃契約書 包租業」「公會中文版 租賃契約書 代租代管」。",
       "如果登入身分是個人房東角色，可選範本會縮減成 4 種：「114年內政部住宅租賃契約(原房東)」「內政部英文版 租賃契約書 原房東」「英泰文版 租賃契約書 原房東」「公會中文版 租賃契約書 原房東」。",
-      "「轉租合約」本身也是一般合約範本可以選擇的其中一種，不是另外一套獨立機制；如果選的是內政部英文版範本，系統的版位設定裡沒有補充條款的印製座標，所以就算補充條款分頁有填寫內容，也不會印在這份合約文件上。",
+      "「轉租合約」本身也是一般合約範本可以選擇的其中一種，不是另外一套獨立機制；內政部英文版範本的補充條款會印在合約書上，只有編輯時的補充條款預覽不套用範本背景、改用空白頁顯示。",
       "合約的起始日就是這裡填的「合約起迄日期」起日，之後計算帳務的起算基準都是用這個欄位，跟這份合約資料是什麼時候建立到系統裡沒有關係。",
       "系統對「租賃訂約日期」（簽約日）與「合約起迄日期」（起租日）之間的先後關係沒有做強制檢查或提示；簽約日晚於起租日是否需要向主管機關另外說明，屬於外部規定的認定範圍，系統不判斷。",
       "系統的合約類型／範本只有原房東、包租業、代租代管三種分類，沒有「二房東」這個選項；二房東應該算原房東還是包租業，屬於業態的法律定性問題，系統不判斷。"
@@ -873,12 +873,12 @@
       {
        "sentence_index": 5,
        "source": "docs:knowledge/jgb-product-facts.md#p914-contract-templates",
-       "quote_or_symbol": "合約範本清單與限制"
+       "quote_or_symbol": "可選範本由 `config/contract.php` 的 `template`，依出租方身分與團隊組出（`ContractControll"
       },
       {
        "sentence_index": 6,
        "source": "docs:knowledge/jgb-product-facts.md#p914-contract-date-start",
-       "quote_or_symbol": "合約起始日是使用者填的 date_start"
+       "quote_or_symbol": "合約起始日取使用者填寫的 `date_start`，帳務以它為起算基準，與合約資料建立進系統的時間無關。"
       },
       {
        "sentence_index": 7,
@@ -2906,7 +2906,7 @@
       "房東送出合約邀請後，系統會給租客一段審閱期才能簽約；天數其實是讀團隊設定，沒有設定才用預設的 3 天（72 小時）。",
       "這個審閱天數設定屬於團隊層級，不同團隊可以各自覆蓋預設值。",
       "從發送邀請時開始計算，租客如果沒有在期限內完成簽約，這個合約邀請連結就會失效。",
-      "送出合約邀請時，系統會用合約上填的租客 Email 去比對是否為已經註冊的會員，比對到的話會自動代入該會員的資料，並把合約上的租客 Email 改成該會員的註冊 Email；用電話比對時，只認已經完成手機驗證的帳號。這個比對只在送出邀請的當下做一次，租客如果是事後才註冊會員，不會自動回頭綁定到先前已經送出的合約邀請。",
+      "送出合約邀請時，系統會用合約上填的租客 Email 去比對是否為已經註冊的會員，比對到的話會自動代入該會員的資料，並把合約上的租客 Email 改成該會員的註冊 Email；用電話比對時，只認已經完成手機驗證的帳號。租客如果是事後才註冊，而且是在同一個瀏覽器點開這份合約的邀請連結後、在短時間內（預設 120 分鐘）接著註冊或登入，合約又還在「待租客簽回」、尚未綁定其他帳號，系統會自動把這份合約認領到他的帳號；換裝置或隔太久才註冊則不會自動綁定。",
       "比對會員 Email 時，大小寫不同會被當成不同的 Email，系統沒有把 Email 統一轉成小寫再比對。",
       "租客帳號登入後看不看得到某份合約的邀請，取決於這個帳號與這份合約在資料庫裡實際的綁定關係；如果遇到租客反映看不到邀請，需要查該筆合約與帳號的個案資料，可洽客服協助。"
      ],
@@ -2937,12 +2937,12 @@
       {
        "sentence_index": 3,
        "source": "docs:knowledge/jgb-product-facts.md#p914-contract-invite-account-match",
-       "quote_or_symbol": "送出簽約邀請時才比對既有會員，之後註冊不回頭綁定"
+       "quote_or_symbol": "送出邀請時，以合約填的租客 Email 比對已註冊會員（比對到才代入該會員資料，並把合約上的租客 Email 改成會員的註冊 Email）；"
       },
       {
        "sentence_index": 4,
        "source": "docs:knowledge/jgb-product-facts.md#p914-email-encrypted-no-lowercase",
-       "quote_or_symbol": "會員 Email 加密存放，比對前不轉小寫"
+       "quote_or_symbol": "`User::setEmailAttribute` 以 XXTEA 加密後存入 `email`；比對會員時以加密後字串做相等查詢（`wher"
       },
       {
        "sentence_index": 5,
@@ -4122,7 +4122,7 @@
       {
        "sentence_index": 1,
        "source": "docs:knowledge/jgb-product-facts.md#p914-moveout-cancel",
-       "quote_or_symbol": "房東可手動取消點退邀請（cancelMoveOutInvite，紀錄為「取消點退邀請」）"
+       "quote_or_symbol": "租客遲不確認點退結果時，系統沒有逾期自動放行；房東可手動取消點退邀請（`cancelMoveOutInvite`，紀錄為「取消點退邀請」），"
       }
      ],
      "not_supported_greps": [],
@@ -4372,7 +4372,7 @@
      "sentences": [
       "設定完續約日期後，系統會將續約邀請發送給租客，可以在「待租客簽回」欄位中查找這份合約。",
       "租客簽回後，房東方確認資料無誤，就可以點選「立即簽名」並完成簽約程序，最後即完成該合約的續約。",
-      "續約在系統裡是用「複製」原合約的方式產生一份全新的合約紀錄，並且會把從舊合約繼承來的「歷史合約」狀態位元拿掉；租客完成簽署確認的當下，新合約就直接是「簽署完成」狀態，不需要等到舊合約到期才生效。"
+      "續約在系統裡是用「複製」原合約的方式產生一份全新的合約紀錄，並且會把從舊合約繼承來的「歷史合約」標記拿掉；租客已註冊時要走續約邀請、雙方完成簽署才成立，租客免註冊時建立後直接成立、不需簽約，兩種都不需要等到舊合約到期。"
      ],
      "sources": [
       "help:landlordonboarding04lease_zh-Hant.html",
@@ -4392,7 +4392,7 @@
       {
        "sentence_index": 2,
        "source": "docs:knowledge/jgb-product-facts.md#p914-contract-renewal",
-       "quote_or_symbol": "續約＝複製出一份全新合約，確認成立即生效"
+       "quote_or_symbol": "續約以 `replicate()` 建立全新合約紀錄，並剝除從舊合約繼承的「歷史合約」位元。租客已註冊時走續約邀請（待租客簽回），雙方完成簽"
       }
      ],
      "not_supported_greps": [],
@@ -4529,7 +4529,7 @@
       {
        "sentence_index": 0,
        "source": "docs:knowledge/jgb-product-facts.md#p914-renewal-deposit-diff",
-       "quote_or_symbol": "非新北住都團隊的一般續約（ContractService::renew），第一張帳單不列押金品項"
+       "quote_or_symbol": "押金差額只由新北住都延長續約寫入原押金（`ContractService::nthurcExtension` 寫 `previous_dep"
       },
       {
        "sentence_index": 1,
@@ -4803,7 +4803,7 @@
     {
      "proposed_id": "jgb/D/early-termination-billing-after",
      "askable": "提前解約確定後，還會不會繼續出下一期的租金帳單",
-     "title": "提前解約後還會出新帳單嗎？（解約日之後系統不會再自動產生新租金帳單，但解約前已產生、落在解約日後的帳單要業者自行封存）",
+     "title": "提前解約後還會出新帳單嗎？（解約日之後系統不會再自動產生新租金帳單；已產生、落在解約日後的帳單要業者自行封存）",
      "unit_ids": [
       "page:contracts.earlyTermination"
      ],
@@ -4822,7 +4822,7 @@
      "sentences": [
       "提前解約確認後，系統會把合約的到期日直接改成這次解約後的到期日。",
       "帳單產生的排程只會對到期日還沒到的合約產生下一期租金帳單，所以解約日之後不會再自動產生新的租金帳單。",
-      "帳單排程本身會提前產生最多到下個月的帳單，而且確認解約當下不會自動刪除或封存已經產生的帳單；如果解約前已經先產生了、期間落在解約日之後的帳單，需要業者自己手動封存，系統不會幫忙處理。"
+      "確認解約當下不會自動刪除或封存已經產生的帳單：開啟「合約預覽帳單」的團隊（預設）在合約成立時就已產生整個租期的帳單，解約日之後的各期都要業者自己封存；關閉預覽帳單的團隊由排程逐月產生，最多多出到下個月的帳單，也要自行封存。"
      ],
      "sources": [
       "docs:knowledge/jgb-product-facts.md#p914-early-termination-bills"
@@ -4841,7 +4841,7 @@
       {
        "sentence_index": 2,
        "source": "docs:knowledge/jgb-product-facts.md#p914-early-termination-bills",
-       "quote_or_symbol": "確認解約的流程未見刪除或封存既有帳單"
+       "quote_or_symbol": "提前解約確認時把合約 `date_end` 改寫為解約日；每日排程 `bill:gen` 只對 `date_end` 不早於當天的合約產生下"
       }
      ],
      "not_supported_greps": [],
@@ -5065,7 +5065,7 @@
     {
      "proposed_id": "jgb/D/entrusted-contract-lease-type",
      "askable": "委託合約分包租跟代管，兩種要填的資料一樣嗎",
-     "title": "委託合約「包租」跟「代管」有什麼不同？（代管必填服務費制度／週期／約定日期，包租用包租租金及其計算制度）",
+     "title": "委託合約「包租」跟「代管」有什麼不同？（代管必填服務費計算模式、幣別與金額或比例；計算制度、週期、約定日期兩者都要填）",
      "unit_ids": [
       "page:entrustedContracts.edit.basic"
      ],
@@ -5084,7 +5084,7 @@
      ],
      "sentences": [
       "委託合約用「委託約類型」區分「包租合約」與「代管合約」兩種，也要設定委託約範本、委託約起迄日期。",
-      "選擇代管合約時，必須填寫服務費制度、服務費幣別、服務費金額（收取頻率與約定日期）。",
+      "選擇代管合約時，必須填寫服務費計算模式、服務費幣別、服務費或服務費比例；計算制度、週期與約定日期則是包租與代管都要填，只是欄位名稱不同（代管是「服務費…」、包租是「包租租金…」）。",
       "選擇包租合約時，則是用「包租租金」及其計算制度、收取頻率、約定日期。"
      ],
      "sources": [
@@ -5101,7 +5101,7 @@
       {
        "sentence_index": 1,
        "source": "docs:knowledge/jgb-product-facts.md#charter-vs-management",
-       "quote_or_symbol": "代管必填 `service_fee_type／service_fee_currency／service_fee`（服務費制度／週期／約定日期）；包租用「包租租金」與其計算制度／週期／約定日期"
+       "quote_or_symbol": "委託合約 `EntrustedContract` 以 `lease_type` 區分——`LEASE_TYPE_CHARTER=1`（包租）"
       },
       {
        "sentence_index": 2,
