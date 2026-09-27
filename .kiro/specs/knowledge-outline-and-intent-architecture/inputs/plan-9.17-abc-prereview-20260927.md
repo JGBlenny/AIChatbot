@@ -84,3 +84,12 @@
 
 - 大綱＋S3 第 1 輪＝REVISE P2×5（S3 差異比對缺允許集合與修正紀錄；reviewed 寫回路徑與 §4 衝突、S3 預期未量；未驗非目標架位元組不變；生成器產出檔與 9.16 同日撞名、擁有／回滾不全；S3b 由主 session 二選一、未記業主裁決）。**處置：縮小＋FIX**——S3b 改為只做證據表＋業主裁決、本計畫不改（兩條相關細目都已審）；S3a 補允許集合、修正紀錄、差異比對＋正對照、重生成用新日期、八架 `cmp`、reviewed 寫回照 9.16 S4、終點指標實算、outcome verifier；§4 同步。P3：S1 基準改為 S3 commit、§2 條數改 62、D 編號統一、證據用釘住匯出路徑。
 - 大綱＋S3 第 2 輪（fresh plan-verifier）＝**READY** ⇒ 交業主核可（`next_gate: user_approval`）。S1、S2 開工前各自再過就緒審查。
+
+## 6. 執行紀錄
+
+### S3（2026-09-27）
+
+- **S3a**：允許集合 `scratchpad/p917-s3-allowed.json`；備份 `scratchpad/p917-s3-backup/`（drafts-D／E、canon、9.16 的 20260927 產出）。親修 `payment-gateway-fees`（標題「費率」→「申請費用」、「免費」→「不收申請費」；補藍新提款費與交易手續費條款原文），修正紀錄 `inputs/fix-log-9.17-S3-20260927.md`（4 列全過；新句 [3] 首核不過〔流程註記、洽客服無據〕依 D1 修一次後過）。差異比對 (a)～(f) PASS，正對照（改 `payment-gateway-options`）⇒ (b)(c) 報出。試跑＋repo 重生成（`--date 20260927-s3`）：`已審保留：136 條／丟棄：0 條`；A B C D F G H I 與備份相同；E.md／CATALOG／jgb.json 差異只在該條（＋sha）；9.16 產出未被覆寫。業主重審「過」⇒ 只加 1 行 reviewed、重匯出；已審 id＝136 ∪ {該條}；`load_canon_or_die` 通過；**終點指標 `已審細目 pm 137／535、prospect 18／121`（pm +1、prospect +1）**；單元紅燈＝既有 9 條；`make audit` PASS。fresh outcome verifier＝**CONFIRMED**（六項全過；附記 P4：drafts evidence 欄未補新句、釘住匯出無 .git 無法自證 sha）。
+- **S3b**：證據表 `inputs/evidence-9.17-S3b-scheduled-send-meter-20260927.md`——A 現行內容已不談排定發送、兩條無直接矛盾；B 句 2 漏「唯一缺的是 IoT 綁定物件電費度數時仍可排入、排入與發送時自動補」例外（`checkIotBill`、`prepareIotMeterForSend`）。**業主裁決「B 不完整，下個計畫補例外」**；本計畫未改任何細目。
+- commit `41bb46f7`（S3 本體；因更新腳本編碼錯誤，裁決原文／§6／HANDOFF 行以後續 commit 補上）。
+- 成本：plan-verifier ×2 約 0.11M、S3a verifier 約 0.08M、outcome verifier 約 0.1M ⇒ 9.17 累計約 0.3M。
