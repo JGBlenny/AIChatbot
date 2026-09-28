@@ -15,6 +15,7 @@ language: zh-TW
   - {text: "團隊首頁的介紹文字在哪改", source: "draft:outline-20260920", status: proposed}
   - {text: "公司 Logo 怎麼上傳", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/users/role.blade.php, code:app/Http/Controllers/UserController.php]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -28,6 +29,7 @@ language: zh-TW
   - {text: "WhatsApp 怎麼填", source: "draft:outline-20260920", status: proposed}
   - {text: "廣告聯絡方式在哪設定", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/users/role.blade.php]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -41,6 +43,7 @@ language: zh-TW
   - {text: "刪除團隊的條件", source: "draft:outline-20260920", status: proposed}
   - {text: "團隊解散流程", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/users/role.blade.php]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -68,6 +71,7 @@ language: zh-TW
   - {text: "公司登記證號要填嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "公司統編格式錯誤怎麼辦", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/team/_parts/SignerDetails.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -82,6 +86,7 @@ language: zh-TW
   - {text: "經紀業名稱可以不填嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "經紀人聯絡電話什麼時候要填", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/team/_parts/SignerDetails.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -94,6 +99,7 @@ language: zh-TW
   - {text: "租賃管理人員聯絡電話要填嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "租賃住宅管理人員證號在哪填", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/team/_parts/SignerDetails.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -105,6 +111,7 @@ language: zh-TW
   - {text: "電子簽約圖章是什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "公司大章小章差在哪", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/team/_parts/SignerDetails.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -117,6 +124,7 @@ language: zh-TW
   - {text: "公司資訊怎麼新增", source: "draft:outline-20260920", status: proposed}
   - {text: "主要那組公司資訊可以刪除嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/team/_parts/SignerDetails.vue, code:src/components/Lightbox/SignerInfosEdit.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -128,6 +136,7 @@ language: zh-TW
   - {text: "團隊資訊頁打不開", source: "draft:outline-20260920", status: proposed}
   - {text: "無法查看團隊資訊功能是什麼意思", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/UserController.php]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -138,6 +147,7 @@ language: zh-TW
   - {text: "通訊地址可以跟戶籍地址一樣嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "公司通訊地址在哪填", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/team/_parts/SignerDetails.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -163,6 +173,7 @@ language: zh-TW
   - {text: "怎麼看成員的角色", source: "draft:outline-20260920", status: proposed}
   - {text: "成員名下有沒有物件怎麼看", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/users/team/index.blade.php, code:app/Http/Controllers/UserController.php]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -175,6 +186,7 @@ language: zh-TW
   - {text: "邀請成員要對方先註冊嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "成員邀請用 email 還是手機", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/users/team/index.blade.php]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -188,6 +200,7 @@ language: zh-TW
   - {text: "團隊擁有者的權限跟一般成員一樣嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "成員權限範圍怎麼分", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/UserController.php, code:resources/views/layouts/lightbox/character-capability-edit.blade.php]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -201,6 +214,7 @@ language: zh-TW
   - {text: "角色範本有哪些", source: "draft:outline-20260920", status: proposed}
   - {text: "刪除角色會怎樣", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/layouts/lightbox/character-capability-edit.blade.php, code:config/character.php]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -214,6 +228,7 @@ language: zh-TW
   - {text: "移除成員後果", source: "draft:outline-20260920", status: proposed}
   - {text: "成員擁有的物件怎麼轉移給別人", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/users/team/index.blade.php, code:src/pages/users/team/memberOwned/Index.jsx]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -238,6 +253,7 @@ language: zh-TW
   - {text: "編輯綁定合約在哪", source: "draft:outline-20260920", status: proposed}
   - {text: "成員名下物件怎麼調整", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/users/team/index.blade.php, code:src/pages/users/team/memberOwned/Index.jsx]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -249,6 +265,7 @@ language: zh-TW
   - {text: "角色權限說明在哪", source: "draft:outline-20260920", status: proposed}
   - {text: "目前團隊還沒有角色怎麼辦", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/users/team/index.blade.php, code:resources/views/layouts/lightbox/character-capability-edit.blade.php]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -271,6 +288,7 @@ language: zh-TW
   - {text: "開啟條件是什麼意思", source: "draft:outline-20260920", status: proposed}
   - {text: "角色編輯畫面權限勾不起來", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/layouts/lightbox/character-capability-edit.blade.php, code:src/store/modules/team/capabilityEdit.js]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -292,6 +310,7 @@ language: zh-TW
   - {text: "可以依加入時間排序嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "成員排序有哪些選項", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/entry/team.js]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -302,6 +321,7 @@ language: zh-TW
   - {text: "自己的角色下拉是灰的", source: "draft:outline-20260920", status: proposed}
   - {text: "為什麼有一列選不了角色", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/users/team/index.blade.php, code:app/Http/Controllers/UserController.php]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -314,6 +334,7 @@ language: zh-TW
   - {text: "大房東資料看得到什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "大房東的合作起迄怎麼看", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/bigLandlords/list/_parts/ListTable.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -326,6 +347,7 @@ language: zh-TW
   - {text: "大房東還沒註冊怎麼辦", source: "draft:outline-20260920", status: proposed}
   - {text: "新增大房東要填什麼", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/components/Lightbox/MemberInvite.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -339,6 +361,7 @@ language: zh-TW
   - {text: "大房東權限怎麼設定", source: "draft:outline-20260920", status: proposed}
   - {text: "移除大房東的物件授權", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/bigLandlords/list/_parts/owned.jsx, code:app/Http/Controllers/UserController.php]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -352,6 +375,7 @@ language: zh-TW
   - {text: "大房東資料怎麼匯出", source: "draft:outline-20260920", status: proposed}
   - {text: "大房東 excel 匯入匯出在哪", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/bigLandlords/list/_parts/PageTop.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -363,6 +387,7 @@ language: zh-TW
   - {text: "移除大房東流程", source: "draft:outline-20260920", status: proposed}
   - {text: "大房東資料怎麼編輯", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/use/config/useBigLandlordsTypes.ts]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -384,6 +409,7 @@ language: zh-TW
   - {text: "大房東刪除確認視窗", source: "draft:outline-20260920", status: proposed}
   - {text: "刪除大房東後對方還能登入嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/components/Lightbox/MemberDelete.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -417,6 +443,7 @@ language: zh-TW
   - {text: "還沒有大房東畫面長怎樣", source: "draft:outline-20260920", status: proposed}
   - {text: "搜尋不到大房東會顯示什麼", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/bigLandlords/list/_parts/ListTable.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -428,6 +455,7 @@ language: zh-TW
   - {text: "批次新增大房東要填什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "大房東匯入哪些欄位必填", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/components/ImportPreview/configs/bigLandlord.ts]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -439,6 +467,7 @@ language: zh-TW
   - {text: "可以用身分證字號排序嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "大房東列表排序選項有哪些", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/BiglandlordController.php]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -486,6 +515,7 @@ language: zh-TW
   - {text: "對帳表可以下載嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "對帳表怎麼切換月份", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/bigLandlords/sheet/_parts/Sheet.vue, code:src/pages/bigLandlords/sheet/index.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -497,6 +527,7 @@ language: zh-TW
   - {text: "大房東報表空白原因", source: "draft:outline-20260920", status: proposed}
   - {text: "大房東還沒授權物件會怎樣", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/bigLandlords/sheet/index.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -507,6 +538,7 @@ language: zh-TW
   - {text: "為什麼金額有換算過的字樣", source: "draft:outline-20260920", status: proposed}
   - {text: "多幣別合計怎麼算", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/bigLandlords/sheet/_parts/SheetTemplate.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -517,6 +549,7 @@ language: zh-TW
   - {text: "隱藏空值項目是什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "對帳表列太多怎麼精簡", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/bigLandlords/sheet/_parts/SelectBar.jsx]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -527,6 +560,7 @@ language: zh-TW
   - {text: "月報怎麼回到年表", source: "draft:outline-20260920", status: proposed}
   - {text: "點月份沒反應", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/bigLandlords/sheet/_parts/Sheet.vue, code:src/pages/bigLandlords/sheet/index.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -538,6 +572,7 @@ language: zh-TW
   - {text: "報表下載失敗怎麼辦", source: "draft:outline-20260920", status: proposed}
   - {text: "對帳表重試按鈕在哪", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/bigLandlords/sheet/index.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -549,6 +584,7 @@ language: zh-TW
   - {text: "上次匯入時間在哪看", source: "draft:outline-20260920", status: proposed}
   - {text: "對帳表載入畫面在跑什麼", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/bigLandlords/sheet/index.vue, code:src/pages/bigLandlords/sheet/_parts/SelectBar.jsx]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -764,6 +800,7 @@ language: zh-TW
   - {text: "準時繳租率怎麼算", source: "draft:outline-20260920", status: proposed}
   - {text: "封存的租客是什麼", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/lesseeList/parts/ListTable.vue, code:src/pages/users/lesseeList/parts/PageTop.vue, code:app/Services/LesseeService.php]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -775,6 +812,7 @@ language: zh-TW
   - {text: "為什麼看不到信用評價", source: "draft:outline-20260920", status: proposed}
   - {text: "租客信用評價需要什麼權限", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/lesseeList/parts/ListTable.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -796,6 +834,7 @@ language: zh-TW
   - {text: "Email 顯示灰色是什麼意思", source: "draft:outline-20260920", status: proposed}
   - {text: "手機號碼橘色代表什麼", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/lesseeList/parts/PageTop.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -806,6 +845,7 @@ language: zh-TW
   - {text: "驗證信有效期限", source: "draft:outline-20260920", status: proposed}
   - {text: "簡訊驗證連結會過期嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/lesseeList/parts/PageTop.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -826,6 +866,7 @@ language: zh-TW
   - {text: "繳租率是看哪些帳單", source: "draft:outline-20260920", status: proposed}
   - {text: "準時繳租率算式", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/lesseeList/parts/ListTable.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -837,6 +878,7 @@ language: zh-TW
   - {text: "所屬修繕欄位是什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "帳號資訊欄位是什麼", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/lesseeList/parts/ListTable.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -858,6 +900,7 @@ language: zh-TW
   - {text: "帳單卡在草稿分頁怎麼辦", source: "draft:outline-20260920", status: proposed}
   - {text: "帳單一直沒發送原因", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/lesseeList/parts/PageTop.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -879,6 +922,7 @@ language: zh-TW
   - {text: "社宅團隊怎麼匯出租客", source: "draft:outline-20260920", status: proposed}
   - {text: "為什麼看不到新增租客按鈕", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/lesseeList/parts/PageTop.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -891,6 +935,7 @@ language: zh-TW
   - {text: "每頁可以看幾筆租客", source: "draft:outline-20260920", status: proposed}
   - {text: "租客列表可以篩選通知狀態嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/utils/constants/lessee.js, code:src/pages/users/lesseeList/parts/PageNav.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -903,6 +948,7 @@ language: zh-TW
   - {text: "怎麼幫租客建立電子合約", source: "draft:outline-20260920", status: proposed}
   - {text: "封存分頁的租客要怎麼刪除", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/components/SurelyVue/Lessee/ActionCell.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general

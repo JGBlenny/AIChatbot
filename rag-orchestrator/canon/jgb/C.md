@@ -14,6 +14,7 @@ language: zh-TW
   - {text: "空置數量怎麼算", source: "draft:outline-20260920", status: proposed}
   - {text: "每個社區的招租買賣數量在哪看", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/communities/_parts/CommunityItem.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -26,6 +27,7 @@ language: zh-TW
   - {text: "社區數量有上限嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "新增社區按鈕在哪", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/communities/list/Index.vue, code:src/type/commit.ts]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -38,6 +40,7 @@ language: zh-TW
   - {text: "複製現有社區", source: "draft:outline-20260920", status: proposed}
   - {text: "有沒有現成社區範本可以複製", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/components/Lightbox/CommunitiesBatchAdd.vue, code:src/pages/communities/list/Index.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -51,6 +54,7 @@ language: zh-TW
   - {text: "怎麼依地區找社區", source: "draft:outline-20260920", status: proposed}
   - {text: "社區排序方式", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/communities/list/Index.vue, code:src/pages/communities/list/_parts/CommunitiesAdvanceSearchBlock.jsx]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -76,6 +80,7 @@ language: zh-TW
   - {text: "社區清單匯出功能", source: "draft:outline-20260920", status: proposed}
   - {text: "匯出社區要什麼權限", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/communities/list/Index.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -87,6 +92,7 @@ language: zh-TW
   - {text: "社區列表分頁筆數", source: "draft:outline-20260920", status: proposed}
   - {text: "怎麼調整每頁顯示社區數", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/communities/list/Index.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -97,6 +103,7 @@ language: zh-TW
   - {text: "誰可以新增社區", source: "draft:outline-20260920", status: proposed}
   - {text: "沒有編輯物件的權限看不到新增社區", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/communities/list/Index.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -109,6 +116,7 @@ language: zh-TW
   - {text: "社區資料要編輯哪些項目", source: "draft:outline-20260920", status: proposed}
   - {text: "編輯社區從哪裡進去", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/routes/communities.js]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -132,6 +140,7 @@ language: zh-TW
   - {text: "社區封面圖怎麼傳", source: "draft:outline-20260920", status: proposed}
   - {text: "社區圖片格式限制", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/communities/edit/Gallery.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -142,6 +151,7 @@ language: zh-TW
   - {text: "社區資料存檔提示", source: "draft:outline-20260920", status: proposed}
   - {text: "上傳照片後畫面沒反應正常嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/communities/edit/Gallery.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -153,6 +163,7 @@ language: zh-TW
   - {text: "怎麼加捷運站", source: "draft:outline-20260920", status: proposed}
   - {text: "社區交通資訊在哪填", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/communities/edit/Intros.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -164,6 +175,7 @@ language: zh-TW
   - {text: "社區名稱一定要填嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "社區地址是必填嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/communities/edit/Basic.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -280,6 +292,7 @@ language: zh-TW
   - {text: "物件為什麼要綁社區", source: "draft:outline-20260920", status: proposed}
   - {text: "誰可以做物件綁定社區", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/communities/forceBinding/Welcome.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -291,6 +304,7 @@ language: zh-TW
   - {text: "還有幾個物件沒綁社區", source: "draft:outline-20260920", status: proposed}
   - {text: "綁定物件前要同意什麼", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/communities/forceBinding/Welcome.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -302,6 +316,7 @@ language: zh-TW
   - {text: "先建社區還是先綁物件", source: "draft:outline-20260920", status: proposed}
   - {text: "沒綁完社區會怎樣", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/communities/forceBinding/edit/Index.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -313,6 +328,7 @@ language: zh-TW
   - {text: "綁定物件可以改嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "綁定物件怎麼搜尋", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/communities/forceBinding/edit/Binding.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -324,6 +340,7 @@ language: zh-TW
   - {text: "還有物件沒綁完怎麼辦", source: "draft:outline-20260920", status: proposed}
   - {text: "綁定物件成功提示", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/communities/forceBinding/edit/Binding.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -459,6 +476,7 @@ language: zh-TW
   - {text: "對外顯示地址是什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "物件廣告地址跟實際地址不同", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/estates/edit/basic/Index.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -469,6 +487,7 @@ language: zh-TW
   - {text: "地下室樓層怎麼寫", source: "draft:outline-20260920", status: proposed}
   - {text: "物件之幾房之幾床是什麼", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/estates/edit/basic/Index.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -480,6 +499,7 @@ language: zh-TW
   - {text: "廣告頁隱藏大樓名稱", source: "draft:outline-20260920", status: proposed}
   - {text: "群組名稱怎麼隱藏", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/estates/edit/basic/Index.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -490,6 +510,7 @@ language: zh-TW
   - {text: "社宅謄本面積怎麼算", source: "draft:outline-20260920", status: proposed}
   - {text: "社宅建物謄本會公開嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/estates/edit/building_transcript/Index.vue, code:src/routes/estates.js]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -525,6 +546,7 @@ language: zh-TW
   - {text: "物件平面圖怎麼上傳", source: "draft:outline-20260920", status: proposed}
   - {text: "第一張照片是封面嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/estates/edit/gallery/Index.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -537,6 +559,7 @@ language: zh-TW
   - {text: "房源簡介怎麼寫", source: "draft:outline-20260920", status: proposed}
   - {text: "物件怎麼加捷運站", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/estates/edit/intro/Index.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -548,6 +571,7 @@ language: zh-TW
   - {text: "VR全景照要用什麼app", source: "draft:outline-20260920", status: proposed}
   - {text: "VR全景照可以用電腦編輯嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/estates/edit/vr/Index.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -560,6 +584,7 @@ language: zh-TW
   - {text: "物件重新綁定社區", source: "draft:outline-20260920", status: proposed}
   - {text: "物件搬到別的社區", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/estates/edit/basic/Index.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -569,6 +594,7 @@ language: zh-TW
   - {text: "物件朝向怎麼填", source: "draft:outline-20260920", status: proposed}
   - {text: "物件座向欄位", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/estates/edit/basic/Index.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -579,6 +605,7 @@ language: zh-TW
   - {text: "物件資訊跟廣告資訊差在哪", source: "draft:outline-20260920", status: proposed}
   - {text: "社宅物件編輯分頁跟一般物件不一樣", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/routes/estates.js]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -591,6 +618,7 @@ language: zh-TW
   - {text: "押金可以收多少", source: "draft:outline-20260920", status: proposed}
   - {text: "押金計算方式", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/estates/edit/rent_detail/Index.jsx]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -602,6 +630,7 @@ language: zh-TW
   - {text: "最快入住日怎麼填", source: "draft:outline-20260920", status: proposed}
   - {text: "最快點交日設定", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/estates/edit/rent_detail/Index.jsx]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -613,6 +642,7 @@ language: zh-TW
   - {text: "可以養寵物嗎怎麼設定", source: "draft:outline-20260920", status: proposed}
   - {text: "招租能不能開伙", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/estates/edit/rent_detail/Index.jsx]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -624,6 +654,7 @@ language: zh-TW
   - {text: "登記證號怎麼設定", source: "draft:outline-20260920", status: proposed}
   - {text: "刊登主資訊看不到經紀人資料", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/estates/edit/rent_contact/Index.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -635,6 +666,7 @@ language: zh-TW
   - {text: "怎麼隱藏經理人名稱", source: "draft:outline-20260920", status: proposed}
   - {text: "廣告上隱藏Email", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/estates/edit/rent_contact/Index.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -647,6 +679,7 @@ language: zh-TW
   - {text: "產權登記已辦理未辦理是什麼意思", source: "draft:outline-20260920", status: proposed}
   - {text: "違建面積要填嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/estates/edit/rent_verify/Index.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -658,6 +691,7 @@ language: zh-TW
   - {text: "刊登物件失敗原因", source: "draft:outline-20260920", status: proposed}
   - {text: "刊登物件需要什麼權限", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/EstateController.php]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -785,6 +819,7 @@ language: zh-TW
   - {text: "物件廣告預覽頁", source: "draft:outline-20260920", status: proposed}
   - {text: "還沒刊登的物件連結有效嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/estate/show.blade.php, code:app/Http/Controllers/EstateController.php]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -796,6 +831,7 @@ language: zh-TW
   - {text: "合約邀請連結有時效嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "邀請連結多久失效", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/estate/show.blade.php]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -806,6 +842,7 @@ language: zh-TW
   - {text: "物件廣告頁看不看得到VR", source: "draft:outline-20260920", status: proposed}
   - {text: "物件廣告頁會顯示鄰近捷運站嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/estate/show.blade.php]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -818,6 +855,7 @@ language: zh-TW
   - {text: "隱藏電話設定有效嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "廣告頁可以加房東Line嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/estate/show.blade.php]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -831,6 +869,7 @@ Facebook 也只有在房東有填寫連結時才會顯示「立即聯繫」按�
   - {text: "物件連結會自動跳轉嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "物件廣告頁網址為什麼變了", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/EstateController.php]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -842,6 +881,7 @@ Facebook 也只有在房東有填寫連結時才會顯示「立即聯繫」按�
   - {text: "物件廣告頁有清潔費水電費嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "車位物件有費用表嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/estate/show.blade.php]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -852,6 +892,7 @@ Facebook 也只有在房東有填寫連結時才會顯示「立即聯繫」按�
   - {text: "立即預約入住按鈕在哪", source: "draft:outline-20260920", status: proposed}
   - {text: "受邀簽約的人看到什麼按鈕", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/estate/show.blade.php]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general

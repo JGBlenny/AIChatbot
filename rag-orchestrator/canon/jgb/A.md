@@ -172,6 +172,7 @@ language: zh-TW
   - {text: "可以用手機登入嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "SSO 登入", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/auth/parts/LoginForm.vue, code:src/pages/users/auth/parts/SSOBar.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -182,6 +183,7 @@ language: zh-TW
   - {text: "登入頁面在哪", source: "draft:outline-20260920", status: proposed}
   - {text: "為什麼要選身分才能登入", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/auth/parts/RoleSelect.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -192,6 +194,7 @@ language: zh-TW
   - {text: "手機號碼格式限制", source: "draft:outline-20260920", status: proposed}
   - {text: "手機登入長度限制", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/auth/parts/LoginForm.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -200,6 +203,7 @@ language: zh-TW
 - phrasings:
   - {text: "記住我是什麼", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/auth/parts/LoginForm.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -231,6 +235,7 @@ language: zh-TW
   - {text: "帳號密碼錯誤", source: "draft:outline-20260920", status: proposed}
   - {text: "登不進去", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/auth/parts/LoginForm.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -242,6 +247,7 @@ language: zh-TW
   - {text: "忘記密碼在哪", source: "draft:outline-20260920", status: proposed}
   - {text: "忘記密碼連結", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/auth/parts/LoginForm.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -251,6 +257,7 @@ language: zh-TW
   - {text: "忘記帳號在哪", source: "draft:outline-20260920", status: proposed}
   - {text: "忘記帳號連結", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/auth/parts/LoginForm.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -270,6 +277,7 @@ language: zh-TW
   - {text: "怎麼換身分登入", source: "draft:outline-20260920", status: proposed}
   - {text: "登入預設身分", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/auth/Login.vue, code:app/Http/Controllers/UserController.php#account]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -334,6 +342,7 @@ language: zh-TW
   - {text: "會員中心首頁有什麼統計資料", source: "draft:outline-20260920", status: proposed}
   - {text: "登入後的首頁", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/dashboard/Landlord.vue, code:src/pages/users/dashboard/parts/Block_Vacancy.vue, code:src/pages/users/dashboard/parts/Block_ExpiringContract.vue, code:src/pages/users/dashboard/parts/Block_AccountsReceivable.vue, code:src/pages/users/dashboard/parts/Block_Repair.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -344,6 +353,7 @@ language: zh-TW
   - {text: "刊登率圓環圖", source: "draft:outline-20260920", status: proposed}
   - {text: "收支情況圖表", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/dashboard/parts/RatioDoughnutChart.vue, code:src/pages/users/dashboard/parts/BalanceChart.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -355,6 +365,7 @@ language: zh-TW
   - {text: "帳單合約修繕整合列表", source: "draft:outline-20260920", status: proposed}
   - {text: "Email 通知紀錄區塊", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/dashboard/Landlord.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -376,6 +387,7 @@ language: zh-TW
   - {text: "被加入多個團隊", source: "draft:outline-20260920", status: proposed}
   - {text: "團隊下拉選單在哪", source: "draft:outline-20260920", status: proposed}
 - sources: [help:Landlordonboarding00_zh-Hant.html, help:Landlordonboarding00phone_zh-Hant.html]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -388,6 +400,7 @@ language: zh-TW
   - {text: "首頁頁簽", source: "draft:outline-20260920", status: proposed}
   - {text: "社區收入統計", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/dashboard/Landlord.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -399,6 +412,7 @@ language: zh-TW
   - {text: "捷徑區塊有哪些功能", source: "draft:outline-20260920", status: proposed}
   - {text: "首頁捷徑按鈕", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/dashboard/parts/ShortCuts.vue, code:src/pages/users/dashboard/Landlord.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -424,6 +438,7 @@ language: zh-TW
   - {text: "手機綁定狀態", source: "draft:outline-20260920", status: proposed}
   - {text: "前往綁定按鈕", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/users/account.blade.php]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -434,6 +449,7 @@ language: zh-TW
   - {text: "怎麼換 email", source: "draft:outline-20260920", status: proposed}
   - {text: "更換綁定信箱", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/users/account.blade.php]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -445,6 +461,7 @@ language: zh-TW
   - {text: "更換綁定手機", source: "draft:outline-20260920", status: proposed}
   - {text: "手機已綁定還能改嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/users/account.blade.php, code:src/pages/users/auth/parts/PhoneVerify.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -456,6 +473,7 @@ language: zh-TW
   - {text: "有沒有連 facebook", source: "draft:outline-20260920", status: proposed}
   - {text: "帳號有沒有連 google", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/users/account.blade.php, code:app/Http/Controllers/UserController.php#account]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -497,6 +515,7 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
   - {text: "時區設定在哪", source: "draft:outline-20260920", status: proposed}
   - {text: "Email 通知語言", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/users/account.blade.php]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -509,6 +528,7 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
   - {text: "為什麼不能刊登廣告", source: "draft:outline-20260920", status: proposed}
   - {text: "為什麼不能簽約", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/UserController.php#account, code:resources/views/users/account.blade.php]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -519,6 +539,7 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
   - {text: "儲存失敗提示", source: "draft:outline-20260920", status: proposed}
   - {text: "帳號資訊存不進去", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/UserController.php#account]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -626,6 +647,7 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
   - {text: "通知中心的通知類型有哪些", source: "draft:outline-20260920", status: proposed}
   - {text: "怎麼看合約類通知", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/NotificationController.php#index]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -635,6 +657,7 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
   - {text: "只看未讀通知", source: "draft:outline-20260920", status: proposed}
   - {text: "通知未讀紅點", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/notifications/index.blade.php]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -645,6 +668,7 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
   - {text: "通知每頁幾筆", source: "draft:outline-20260920", status: proposed}
   - {text: "通知中心分頁", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/NotificationController.php#index]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -655,6 +679,7 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
   - {text: "為什麼看不到通知", source: "draft:outline-20260920", status: proposed}
   - {text: "通知權限", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/NotificationController.php#index, code:resources/views/notifications/index.blade.php]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -687,6 +712,7 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
   - {text: "鈴鐺數字是什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "紅點跟鈴鐺數字差別", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/NotificationController.php#navbar]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general

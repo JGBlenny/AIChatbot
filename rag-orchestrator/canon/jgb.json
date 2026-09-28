@@ -2,7 +2,7 @@
   "audience": "jgb",
   "budget_tokens": 0,
   "business_types": [],
-  "canon_sha256": "2cb40985c270a7e7cd50b2d6d9c6a26ed29f8814033e65721c52fc52a97bea5d",
+  "canon_sha256": "59ff90ec064f01ade6fc596fe5a2a355a816773ea1cd5486965129041d878450",
   "coarses": [
     {
       "fines": [
@@ -650,8 +650,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/users/auth/parts/LoginForm.vue",
@@ -689,8 +689,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/users/auth/parts/RoleSelect.vue"
@@ -732,8 +732,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/users/auth/parts/LoginForm.vue"
@@ -765,8 +765,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/users/auth/parts/LoginForm.vue"
@@ -893,8 +893,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/users/auth/parts/LoginForm.vue"
@@ -930,8 +930,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/users/auth/parts/LoginForm.vue"
@@ -967,8 +967,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/users/auth/parts/LoginForm.vue"
@@ -1048,8 +1048,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/users/auth/Login.vue",
@@ -1284,8 +1284,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/users/dashboard/Landlord.vue",
@@ -1331,8 +1331,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/users/dashboard/parts/RatioDoughnutChart.vue",
@@ -1374,8 +1374,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/users/dashboard/Landlord.vue"
@@ -1464,8 +1464,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "help:Landlordonboarding00_zh-Hant.html",
@@ -1509,8 +1509,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/users/dashboard/Landlord.vue"
@@ -1547,8 +1547,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/users/dashboard/parts/ShortCuts.vue",
@@ -1646,8 +1646,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:resources/views/users/account.blade.php"
@@ -1689,8 +1689,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:resources/views/users/account.blade.php"
@@ -1732,8 +1732,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:resources/views/users/account.blade.php",
@@ -1777,8 +1777,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:resources/views/users/account.blade.php",
@@ -1920,8 +1920,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:resources/views/users/account.blade.php"
@@ -1963,8 +1963,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:app/Http/Controllers/UserController.php#account",
@@ -2002,8 +2002,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:app/Http/Controllers/UserController.php#account"
@@ -2405,8 +2405,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:app/Http/Controllers/NotificationController.php#index"
@@ -2443,8 +2443,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:resources/views/notifications/index.blade.php"
@@ -2480,8 +2480,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:app/Http/Controllers/NotificationController.php#index"
@@ -2524,8 +2524,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:app/Http/Controllers/NotificationController.php#index",
@@ -2650,8 +2650,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:app/Http/Controllers/NotificationController.php#navbar"
@@ -2897,8 +2897,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:resources/views/users/role.blade.php",
@@ -2948,8 +2948,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:resources/views/users/role.blade.php"
@@ -2999,8 +2999,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:resources/views/users/role.blade.php"
@@ -3099,8 +3099,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/users/team/_parts/SignerDetails.vue"
@@ -3143,8 +3143,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/users/team/_parts/SignerDetails.vue"
@@ -3186,8 +3186,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/users/team/_parts/SignerDetails.vue"
@@ -3230,8 +3230,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/users/team/_parts/SignerDetails.vue"
@@ -3273,8 +3273,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/users/team/_parts/SignerDetails.vue",
@@ -3316,8 +3316,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:app/Http/Controllers/UserController.php"
@@ -3360,8 +3360,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/users/team/_parts/SignerDetails.vue"
@@ -3457,8 +3457,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:resources/views/users/team/index.blade.php",
@@ -3507,8 +3507,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:resources/views/users/team/index.blade.php"
@@ -3556,8 +3556,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:app/Http/Controllers/UserController.php",
@@ -3607,8 +3607,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:resources/views/layouts/lightbox/character-capability-edit.blade.php",
@@ -3658,8 +3658,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:resources/views/users/team/index.blade.php",
@@ -3746,8 +3746,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:resources/views/users/team/index.blade.php",
@@ -3790,8 +3790,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:resources/views/users/team/index.blade.php",
@@ -3877,8 +3877,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:resources/views/layouts/lightbox/character-capability-edit.blade.php",
@@ -3962,8 +3962,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/entry/team.js"
@@ -4005,8 +4005,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:resources/views/users/team/index.blade.php",
@@ -4056,8 +4056,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/bigLandlords/list/_parts/ListTable.vue"
@@ -4100,8 +4100,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/components/Lightbox/MemberInvite.vue"
@@ -4150,8 +4150,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/bigLandlords/list/_parts/owned.jsx",
@@ -4194,8 +4194,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/bigLandlords/list/_parts/PageTop.vue"
@@ -4237,8 +4237,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/use/config/useBigLandlordsTypes.ts"
@@ -4323,8 +4323,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/components/Lightbox/MemberDelete.vue"
@@ -4453,8 +4453,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/bigLandlords/list/_parts/ListTable.vue"
@@ -4496,8 +4496,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/components/ImportPreview/configs/bigLandlord.ts"
@@ -4538,8 +4538,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:app/Http/Controllers/BiglandlordController.php"
@@ -4735,8 +4735,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/bigLandlords/sheet/_parts/Sheet.vue",
@@ -4778,8 +4778,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/bigLandlords/sheet/index.vue"
@@ -4820,8 +4820,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/bigLandlords/sheet/_parts/SheetTemplate.vue"
@@ -4862,8 +4862,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/bigLandlords/sheet/_parts/SelectBar.jsx"
@@ -4905,8 +4905,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/bigLandlords/sheet/_parts/Sheet.vue",
@@ -4949,8 +4949,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/bigLandlords/sheet/index.vue"
@@ -4993,8 +4993,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/bigLandlords/sheet/index.vue",
@@ -5840,8 +5840,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/users/lesseeList/parts/ListTable.vue",
@@ -5885,8 +5885,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/users/lesseeList/parts/ListTable.vue"
@@ -5971,8 +5971,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/users/lesseeList/parts/PageTop.vue"
@@ -6013,8 +6013,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/users/lesseeList/parts/PageTop.vue"
@@ -6097,8 +6097,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/users/lesseeList/parts/ListTable.vue"
@@ -6145,8 +6145,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/users/lesseeList/parts/ListTable.vue"
@@ -6226,8 +6226,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/users/lesseeList/parts/PageTop.vue"
@@ -6312,8 +6312,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/users/lesseeList/parts/PageTop.vue"
@@ -6361,8 +6361,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/utils/constants/lessee.js",
@@ -6405,8 +6405,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/components/SurelyVue/Lessee/ActionCell.vue"
@@ -6460,8 +6460,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/communities/_parts/CommunityItem.vue"
@@ -6503,8 +6503,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/communities/list/Index.vue",
@@ -6553,8 +6553,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/components/Lightbox/CommunitiesBatchAdd.vue",
@@ -6603,8 +6603,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/communities/list/Index.vue",
@@ -6697,8 +6697,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/communities/list/Index.vue"
@@ -6739,8 +6739,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/communities/list/Index.vue"
@@ -6782,8 +6782,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/communities/list/Index.vue"
@@ -6831,8 +6831,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/routes/communities.js"
@@ -6917,8 +6917,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/communities/edit/Gallery.vue"
@@ -6960,8 +6960,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/communities/edit/Gallery.vue"
@@ -7003,8 +7003,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/communities/edit/Intros.vue"
@@ -7045,8 +7045,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/communities/edit/Basic.vue"
@@ -7510,8 +7510,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/communities/forceBinding/Welcome.vue"
@@ -7553,8 +7553,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/communities/forceBinding/Welcome.vue"
@@ -7596,8 +7596,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/communities/forceBinding/edit/Index.vue"
@@ -7639,8 +7639,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/communities/forceBinding/edit/Binding.vue"
@@ -7682,8 +7682,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/communities/forceBinding/edit/Binding.vue"
@@ -8228,8 +8228,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/estates/edit/basic/Index.vue"
@@ -8271,8 +8271,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/estates/edit/basic/Index.vue"
@@ -8313,8 +8313,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/estates/edit/basic/Index.vue"
@@ -8356,8 +8356,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/estates/edit/building_transcript/Index.vue",
@@ -8495,8 +8495,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/estates/edit/gallery/Index.vue"
@@ -8538,8 +8538,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/estates/edit/intro/Index.vue"
@@ -8582,8 +8582,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/estates/edit/vr/Index.vue"
@@ -8624,8 +8624,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/estates/edit/basic/Index.vue"
@@ -8661,8 +8661,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/estates/edit/basic/Index.vue"
@@ -8704,8 +8704,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/routes/estates.js"
@@ -8753,8 +8753,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/estates/edit/rent_detail/Index.jsx"
@@ -8797,8 +8797,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/estates/edit/rent_detail/Index.jsx"
@@ -8840,8 +8840,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/estates/edit/rent_detail/Index.jsx"
@@ -8883,8 +8883,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/estates/edit/rent_contact/Index.vue"
@@ -8927,8 +8927,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/estates/edit/rent_contact/Index.vue"
@@ -8971,8 +8971,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/estates/edit/rent_verify/Index.vue"
@@ -9015,8 +9015,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:app/Http/Controllers/EstateController.php"
@@ -9512,8 +9512,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:resources/views/estate/show.blade.php",
@@ -9556,8 +9556,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:resources/views/estate/show.blade.php"
@@ -9601,8 +9601,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:resources/views/estate/show.blade.php"
@@ -9647,8 +9647,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:resources/views/estate/show.blade.php"
@@ -9691,8 +9691,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:app/Http/Controllers/EstateController.php"
@@ -9733,8 +9733,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:resources/views/estate/show.blade.php"
@@ -9777,8 +9777,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-09-28",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:resources/views/estate/show.blade.php"
