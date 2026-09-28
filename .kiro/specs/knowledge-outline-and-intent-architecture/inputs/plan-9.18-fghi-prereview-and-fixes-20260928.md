@@ -372,6 +372,33 @@
 - **fresh outcome verifier＝CONFIRMED**（7 項全過，僅一條 P4：可改在空目錄重生成以取得更嚴格的逐位元組證據）。
 - **成本**：S3 就緒審查 ×2 約 0.13M、outcome verifier 約 0.12M ⇒ **9.18 累計約 1.7M**（停點 2.0M、上限 2.2M）。
 
+### S4（2026-09-28）
+
+- 工具 `scratchpad/p918_page_gap.py`（容器內跑，沿用 `endpoint_progress.page_hit`），產出 `inputs/page-gap-9.18-20260928.md`。
+- **pm 缺口 48 頁**（與 `--ignore-review` 的 pm 135 交叉核相符），分類如下：
+  - 外殼頁、子元件有引用：36 頁，其中 15 頁檔內有 router-view，21 頁沒有、需人判；
+  - 完全無細目：9 頁；
+  - 只有兄弟頁有引用：2 頁；
+  - 引用寫成 `Controller.php#方法`：1 頁。
+
+  ⇒ **pm 頁面指標的缺口大多是量尺只認入口檔造成的，真正沒寫的約 9～12 頁**。
+- **prospect 缺口 135 頁**（107 頁完全無細目）。但 prospect 可見頁的範圍未定義，所以不推斷缺多少。
+- **正對照**：scratch 副本移除 `bills/pick/Index.jsx` 的唯一引用 ⇒ 只新增缺口 `page:bills.pick`。
+- **成本**：約 0.02M（主 session 自做，未派 scout）。
+
+### 9.18 收案
+
+- **終點指標**：由 pm 250／prospect 37 升到 **pm 304／prospect 53**（S1 淨 +0，S3 +54／+16）；頁面 pm 70→79、prospect 18→23。
+- **成本**：約 1.7M（上限 2.2M）。
+- **留給 9.19**：
+  - A～E 未審 173 條；F～I 未審 60 條（38 條 doubt＋⚠️ 6 組內 22 條 pass）。
+  - I 架「愛租屋」客戶名改寫。
+  - drafts-E `bill-scheduled-send-rule` 的 evidence 句序位移（P3），並盤查 9.16 的插句是否有同樣問題。
+  - 決定頁面量尺要改（外殼頁認子元件、去掉 `#方法` 後綴）還是改引用。
+  - pm 真缺口約 9～12 頁補寫。
+  - prospect 可見頁的範圍定義交業主。
+  - I 架多處「應寄 Email 實際不寄」（例：取消訂閱的通知名稱拼錯），疑為 jgb2 缺陷，交產品。
+
 ### 附錄：路線選擇實測（2026-09-28，scratch 正本副本 `scratchpad/whatif/`，把未審細目全部加上 reviewed 行後跑 `endpoint_progress.py`）
 
 | 假設 | 已審細目 | 頁面 |
