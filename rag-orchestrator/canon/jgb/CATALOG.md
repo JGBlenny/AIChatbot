@@ -7,12 +7,12 @@ jgb/A/register-sso｜可以用 Facebook、Google、LINE 註冊嗎？（SSO 仍�
 jgb/A/register-captcha-expired｜註冊卡在機器人驗證過期怎麼辦？（會退回第一步重新勾選）｜target_user=property_manager｜
 jgb/A/register-email-verify-resend｜沒收到 Email 驗證碼怎麼辦？（可重發，發送次數過多會出現等待秒數）｜target_user=property_manager｜
 jgb/A/register-password-rule｜註冊密碼格式要求是什麼？（至少 6 碼、須同時包含英文與數字）｜target_user=property_manager,prospect｜
-jgb/A/register-email-already-registered｜註冊時 Email 已被註冊過怎麼辦？（系統會將帳號合併）｜target_user=property_manager｜
+jgb/A/register-email-already-registered｜註冊時 Email 已被註冊過怎麼辦？（已完成註冊的 Email 會直接被擋下；只有還沒完成 Email 註冊的舊帳號才會進行帳號合併）｜target_user=property_manager｜
 jgb/A/register-phone-bind｜註冊要綁定手機號碼嗎？（可選填、簡訊驗證、可「下次再驗證」略過）｜target_user=property_manager,prospect｜
 jgb/A/register-phone-already-bound｜註冊時發現手機已綁定過怎麼辦？（直接顯示已綁定、按繼續完成流程）｜target_user=property_manager｜
-jgb/A/register-role-select｜註冊完之後要選身分嗎？（房東/管理者、租客二選一，可同時擁有兩種身分）｜target_user=property_manager,prospect｜
-jgb/A/register-verify-code-shape｜驗證碼輸入畫面長什麼樣子？（識別碼加 4 碼數字，輸入錯誤太多次會被鎖住）｜target_user=property_manager｜
-jgb/A/register-email-link-resume｜從驗證信連結折返時會從頭開始註冊嗎？（不會，系統會記住 Email 直接跳到輸入驗證碼畫面）｜target_user=property_manager｜
+jgb/A/register-role-select｜註冊完之後要選身分嗎？（一般會在房東/管理者、租客中二選一，可同時擁有兩種身分；從租客端網站導轉來的會直接導回原頁）｜target_user=property_manager,prospect｜
+jgb/A/register-verify-code-shape｜驗證碼輸入畫面長什麼樣子？（識別碼加 4 碼數字；輸入錯誤太多次驗證碼會失效，需重新發送）｜target_user=property_manager｜
+jgb/A/register-email-link-resume｜從驗證信連結折返時會從頭開始註冊嗎？（系統會記住 Email，但機器人驗證失效時會退回第一步）｜target_user=property_manager｜
 ### A-login 登入 {#A-login}
 jgb/A/login-methods｜JGB 有哪些登入方式？（Email、手機號碼、Facebook／Google／LINE）｜target_user=property_manager,prospect｜
 jgb/A/login-role-select-before｜登入前為什麼要先選擇身分？（決定進入房東/管理者或租客的登入表單）｜target_user=property_manager,prospect｜
@@ -23,7 +23,7 @@ jgb/A/login-role-redirect｜登入時身分選錯了怎麼辦？（會依選擇�
 jgb/A/login-error｜登入帳號或密碼錯誤時會顯示什麼？｜target_user=property_manager｜
 jgb/A/login-forget-password-link｜登入頁的「忘記密碼？」連結在哪裡？（在登入表單下方，點擊前往忘記密碼流程）｜target_user=property_manager｜
 jgb/A/login-forget-account-link｜登入頁的「忘記帳號？」連結在哪裡？（在登入表單下方，點擊前往忘記帳號流程）｜target_user=property_manager｜
-jgb/A/login-no-account-register-link｜登入頁下面有連到註冊頁的連結嗎？（「還沒有帳號嗎？立即註冊」）｜target_user=property_manager,prospect｜
+jgb/A/login-no-account-register-link｜登入頁有連到註冊頁的連結嗎？（登入表單上方的「還沒有帳號嗎？立即註冊」）｜target_user=property_manager,prospect｜
 jgb/A/login-identity-switch｜同一帳號同時有房東與租客身分時怎麼切換？（登入時重新選擇身分，或在帳號資訊設定預設身分）｜target_user=property_manager｜
 ### A-account-recovery 忘記帳號、忘記密碼 {#A-account-recovery}
 jgb/A/forget-account-flow｜忘記帳號怎麼辦？（用已綁定的手機號碼簡訊驗證找回 Email 提示）｜target_user=property_manager｜
@@ -34,7 +34,7 @@ jgb/A/forget-password-setpwd-invite｜「請設定密碼」畫面是什麼情境
 jgb/A/dashboard-overview-blocks｜會員中心首頁有哪些統計區塊？（即時物件出租率、即將到期合約、即將到來應到帳帳單、7日內修繕單）｜target_user=property_manager｜
 jgb/A/dashboard-overview-charts｜首頁的圖表看得到什麼？（招租／買賣廣告刊登率圓環圖、收支情況圖）｜target_user=property_manager｜
 jgb/A/dashboard-overview-lists｜首頁下方還有哪些列表？（帳單、合約、修繕整合列表，具通知權限者另有 Email 通知紀錄）｜target_user=property_manager｜
-jgb/A/dashboard-big-landlord-view｜大房東的首頁畫面和一般房東不一樣嗎？（只顯示物件/社區最新收支詳情與收支圖表，沒有捷徑與四個統計方塊）｜target_user=property_manager｜
+jgb/A/dashboard-big-landlord-view｜大房東的首頁畫面和一般房東不一樣嗎？（只顯示社區最新收支詳情與收支圖表，沒有捷徑與四個統計方塊）｜target_user=property_manager｜
 jgb/A/dashboard-team-switch｜怎麼在會員中心首頁切換團隊？（左上角下拉選單選擇被加入的團隊）｜target_user=property_manager｜
 jgb/A/dashboard-occupancy-tab｜首頁的「滿租率(beta)」頁簽是什麼？（限定開放的社區收入統計，非所有團隊都看得到）｜target_user=property_manager｜
 jgb/A/dashboard-shortcuts-list｜首頁「捷徑」區塊有哪些功能？（新增物件、新增合約、新增帳單、新增修繕、查看統計報表、查看大房東列表）｜target_user=property_manager｜
@@ -44,7 +44,7 @@ jgb/A/account-phone-bind-status｜帳號資訊頁怎麼看手機的綁定狀態�
 jgb/A/account-email-verify-status｜帳號資訊頁的 Email 驗證狀態怎麼看？（Email 無法自行更改，需聯繫客服）｜target_user=property_manager｜
 jgb/A/account-phone-no-change-entry｜手機已經綁定後可以自己更換嗎？（沒有更換入口，只顯示已綁定狀態）｜target_user=property_manager｜
 jgb/A/account-sso-status｜帳號資訊頁怎麼看 SSO 綁定狀態？（Facebook／Google／LINE 各自顯示已綁定或未綁定）｜target_user=property_manager｜
-jgb/A/account-change-password｜登入後怎麼在帳號資訊頁修改密碼？（需輸入目前密碼，新密碼規則同註冊）｜target_user=property_manager｜
+jgb/A/account-change-password｜登入後怎麼在帳號資訊頁修改密碼？（需輸入目前密碼、新密碼與確認新密碼）｜target_user=property_manager｜
 jgb/A/account-contact-info｜帳號資訊頁的聯絡資訊要填什麼？（LINE ID、Facebook 個人首頁、WhatsApp、第二組電話）｜target_user=property_manager｜
 jgb/A/account-preference｜帳號資訊頁的偏好設定能設定什麼？（登入預設房東身份、時區、Email 通知語系）｜target_user=property_manager｜
 jgb/A/account-progress-unlock｜帳號資訊頁有「資訊完整度」進度條嗎？（目前頁面上不會顯示這個區塊）｜target_user=property_manager,prospect｜
@@ -52,19 +52,19 @@ jgb/A/account-save-integrity-check｜帳號資訊頁儲存失敗會提示什麼�
 ### A-signer-info 簽約資訊（證件、身分證號、戶籍地址；公司統編與大小章） {#A-signer-info}
 jgb/A/signer-individual-fields｜個人房東的簽約資訊要填什麼？（姓氏、名稱、身分證字號、Email、手機、身分證正反面）｜target_user=property_manager,prospect｜
 jgb/A/signer-corp-fields｜公司身分的簽約資訊要填什麼？（公司名稱、統編、負責人、公司電話/Email、登記證資料）｜target_user=property_manager,prospect｜
-jgb/A/signer-corp-seals｜公司身分要上傳哪些印章與證件附件？（公司大章、小章、經紀人章、經紀業章、租賃管理員章）｜target_user=property_manager,prospect｜
+jgb/A/signer-corp-seals｜公司身分可以上傳哪些印章與證件附件？（公司大章、小章、經紀人章、經紀業章、租賃管理員章，皆為選填）｜target_user=property_manager,prospect｜
 jgb/A/signer-broker-manager-fields｜有不動產經紀人／租賃管理人員資格要多填什麼？（經紀人證號、租賃管理人員證號等）｜target_user=property_manager,prospect｜
 jgb/A/signer-edit-permission｜簽約資訊誰能編輯？（沒有編輯權限的欄位會顯示為停用樣式）｜target_user=property_manager｜
-jgb/A/signer-address-fields｜簽約資訊的地址欄位怎麼填？（戶籍/通訊地址、公司登記/通訊地址皆為必填，可一鍵「同上」）｜target_user=property_manager,prospect｜
+jgb/A/signer-address-fields｜簽約資訊的地址欄位怎麼填？（戶籍/通訊地址、公司登記/通訊地址皆為必填，可一鍵「同戶籍地址」「同公司登記地址」）｜target_user=property_manager,prospect｜
 jgb/A/signer-multi-entry-switch｜公司名下有多筆簽約對象時要怎麼切換？（表單上方出現切換列，超過 5 筆再加「所有團隊」下拉選單）｜target_user=property_manager｜
-jgb/A/signer-manage-save-buttons｜簽約資訊頁的「管理」「儲存」按鈕做什麼？（管理開啟簽約對象管理視窗，儲存只在個人身分頁面出現）｜target_user=property_manager｜
+jgb/A/signer-manage-save-buttons｜簽約資訊頁的「管理」「儲存」按鈕做什麼？（管理開啟簽約對象視窗可新增或刪除，儲存只在個人身分頁面出現）｜target_user=property_manager｜
 ### A-notification-center 通知中心 {#A-notification-center}
 jgb/A/notification-center-type-filter｜通知中心怎麼依類型篩選通知？（依合約/帳務/修繕/裝置/其他分類）｜target_user=property_manager｜
 jgb/A/notification-center-unread-dot｜通知中心的通知怎麼標示未讀？（列表項目左側的紅點，沒有「只顯示未讀」的篩選功能）｜target_user=property_manager｜
 jgb/A/notification-center-per-page｜通知中心每頁顯示筆數可以怎麼調整？（30/60/90 筆，預設 30 筆）｜target_user=property_manager｜
 jgb/A/notification-center-permission｜為什麼通知中心是空的？（房東側需要查看通知的權限才看得到通知內容）｜target_user=property_manager｜
-jgb/A/notification-mark-read-navigate｜點擊通知列表項目會發生什麼？（前往原連結，並帶上標記已讀的依據）｜target_user=property_manager｜
-jgb/A/notification-mark-read-out-of-range｜篩選後頁碼超出範圍會自動跳回第一頁嗎？（寫了判斷式，但實際上永遠不會被觸發）｜target_user=property_manager｜
+jgb/A/notification-mark-read-navigate｜點擊通知列表項目會發生什麼？（前往原連結，並帶上標記已讀的依據；訊息類通知不換頁）｜target_user=property_manager｜
+jgb/A/notification-mark-read-out-of-range｜篩選後頁碼超出範圍會自動跳回第一頁嗎？（不會，只會顯示空的通知清單）｜target_user=property_manager｜
 jgb/A/notification-navbar-bell｜導覽列的通知鈴鐺會顯示什麼？（最近 5 筆通知與未點擊數量，大房東不會顯示）｜target_user=property_manager｜
 ### A-notification-settings 通知收件設定與發送報表（通知收件信箱最多再加 3 組） {#A-notification-settings}
 jgb/A/notification-settings-extra-emails｜通知收件信箱最多能加幾組？（每個通知分類最多再加 3 組電子信箱）｜target_user=property_manager｜
@@ -78,7 +78,7 @@ scope: 團隊建立與成員邀請、角色權限、人員管理、大房東記�
 jgb/B/team-basic-info｜團隊資訊頁面可以設定什麼？（公司 Logo、團隊名稱、團隊介紹）｜target_user=property_manager,prospect｜
 jgb/B/team-ad-contact｜廣告頁聯絡資訊要填什麼？（Line ID、Facebook、WhatsApp 選填，公司電話與公司 Email 必填）｜target_user=property_manager,prospect｜
 jgb/B/team-delete｜怎麼刪除團隊？（需先解除訂閱方案、輸入團隊名稱確認、刪除後資料無法恢復）｜target_user=property_manager｜
-jgb/B/team-signer-personal-info｜簽約資訊卡「個人資訊」區塊只有個人團隊看得到，要填什麼？（姓氏、名稱、身分證字號、Email、手機必填；戶籍地址／通訊地址／身分證正反面／其他附件選填或另有條件）｜target_user=property_manager｜
+jgb/B/team-signer-personal-info｜簽約資訊卡「個人資訊」區塊只有個人團隊看得到，要填什麼？（姓氏、名稱、身分證字號、Email、手機、戶籍地址、通訊地址必填；身分證正反面與其他附件選填）｜target_user=property_manager｜
 jgb/B/team-signer-company-info｜簽約資訊卡的「公司資訊」要填什麼？（公司登記名稱上限 20 字、公司統編皆為必填；公司負責人只有社宅團隊必填；社宅團隊還要填必填的社宅業者編號與公司登記證號，公司登記證日期與縣市則不分團隊都是選填）｜target_user=property_manager｜
 jgb/B/team-signer-agent-info｜簽約資訊卡的「經紀人資訊」要填什麼？（經紀人／經紀業名稱與證號，名稱上限 15 字；社宅團隊多了經紀人聯絡電話與 Email，且都是必填）｜target_user=property_manager｜
 jgb/B/team-signer-manager-info｜簽約資訊卡的「租賃住宅管理人員資訊」要填什麼？（姓名與證號；社宅團隊多了聯絡電話欄位，且姓名／證號／電話都是必填；沒有 Email 欄位）｜target_user=property_manager｜
@@ -86,19 +86,19 @@ jgb/B/team-signer-stamps｜簽約資訊卡可以上傳哪幾種圖章？（法�
 jgb/B/team-multi-company-info｜一個團隊可以管理多組公司資訊嗎？（可以在「團隊資訊管理」視窗新增與刪除，但清單第一筆不能刪除）｜target_user=property_manager｜
 jgb/B/team-info-no-view-permission｜沒有查看團隊資訊的權限，打開團隊資訊頁會怎樣？（提示「您目前登入的帳號無法查看團隊資訊功能」）｜target_user=property_manager｜
 jgb/B/team-signer-address-groups｜簽約資訊卡上有哪些地址欄位群？（個人的戶籍地址／通訊地址、公司的登記地址／通訊地址，都有「同上」可以直接帶入；社宅團隊另有經紀人與租賃管理人員各自的通訊地址）｜target_user=property_manager｜
-jgb/B/team-signer-profile-switch｜怎麼在多組簽約資訊之間切換？（頁面上方有分頁式選單，超過 5 組會收進「所有團隊」下拉選單）｜target_user=property_manager｜
+jgb/B/team-signer-profile-switch｜怎麼在多組簽約資訊之間切換？（頁面上方有可切換的分頁列，超過 5 組時另外多出「所有團隊」下拉選單）｜target_user=property_manager｜
 ### B-member-list 成員列表（邀請、角色、成員名下資料） {#B-member-list}
 jgb/B/member-list-overview｜成員列表可以看到什麼資訊？（成員總人數、加入時間、Email、手機號碼、目前的角色）｜target_user=property_manager｜
 jgb/B/member-invite｜怎麼邀請新成員加入團隊？（用 Email 或手機號碼搜尋，對方要先是 JGB 會員）｜target_user=property_manager｜
 jgb/B/member-role-concept｜成員的「角色」權限決定什麼？（決定看得到與能編輯的物件、合約、帳務、修繕等範圍）｜target_user=property_manager,prospect｜
 jgb/B/member-role-manage｜怎麼管理團隊的角色範本？（可新增、編輯、刪除，也能套用 JGB 內建的快速設定範本）｜target_user=property_manager｜
 jgb/B/member-remove｜怎麼移除成員？（列表右側的紅色 × 圖示開啟確認視窗，按「移除」才會真的刪除；名下還有物件或合約會被擋下）｜target_user=property_manager｜
-jgb/B/member-seat-limit｜邀請成員有名額上限嗎？（依訂閱方案而定，達上限要升級方案才能繼續邀請）｜target_user=property_manager,prospect｜
+jgb/B/member-seat-limit｜邀請成員有名額上限嗎？（依訂閱方案而定；已訂閱達上限要升級方案，未訂閱要先訂閱）｜target_user=property_manager,prospect｜
 jgb/B/member-assign-owned｜怎麼指派物件或合約給成員？（點成員旁的鉛筆圖示選「編輯綁定物件」或「編輯綁定合約」）｜target_user=property_manager｜
 jgb/B/member-role-permission-list｜怎麼查看每個角色能做什麼？（點「角色權限說明」的「這裡」開啟角色權限列表，每一列是一項權限、每一欄是一個角色，用勾號／叉號表示有沒有這項權限）｜target_user=property_manager｜
-jgb/B/member-list-role-inline-change｜成員列表可以直接改成員的角色嗎？（列表每一列都有角色下拉選單可以直接切換；選單裡也有「+ 新增角色」，可以直接開「編輯角色」視窗）｜target_user=property_manager｜
+jgb/B/member-list-role-inline-change｜成員列表可以直接改成員的角色嗎？（一般成員那一列可以用角色下拉選單直接切換；擁有者與自己那一列、或沒有編輯權限時選單會鎖住）｜target_user=property_manager｜
 jgb/B/member-role-edit-open-condition｜編輯角色時的「開啟條件」是什麼？（要先勾選列出的其他權限，這個權限選項的勾選框才能點；沒先勾好之前，勾選框會維持鎖住）｜target_user=property_manager｜
-jgb/B/member-role-edit-reset｜編輯角色時的「重設條件」按鈕是做什麼的？（把目前正在編輯、還沒儲存的勾選狀態還原）｜target_user=property_manager｜
+jgb/B/member-role-edit-reset｜編輯角色時的「重設條件」按鈕是做什麼的？（把所有權限勾選全部清空）｜target_user=property_manager｜
 jgb/B/member-list-sort｜成員列表可以怎麼排序？（姓名、加入時間、手機號碼、Email、角色名稱各有正反兩種排序）｜target_user=property_manager｜
 jgb/B/member-list-role-select-disabled｜為什麼「團隊擁有者」和自己那一列的角色下拉不能改？（這兩列是固定顯示在列表最上面、角色下拉是鎖住的，跟其他成員分開處理）｜target_user=property_manager｜
 ### B-biglandlord-list 大房東列表與授權物件 {#B-biglandlord-list}
@@ -107,17 +107,17 @@ jgb/B/biglandlord-add｜怎麼新增大房東？（已註冊會員填 Email 即�
 jgb/B/biglandlord-authorize-estates｜大房東的「授權物件」怎麼設定？（逐筆物件勾選瀏覽廣告／合約／帳務／修繕；合約要先勾廣告，帳務要先勾廣告＋合約，修繕沒有前提）｜target_user=property_manager｜
 jgb/B/biglandlord-import-export｜大房東名單可以批次匯入或匯出嗎？（可以，Excel 匯入新增、Excel 匯出下載）｜target_user=property_manager,prospect｜
 jgb/B/biglandlord-actions-menu｜大房東列表每一列的操作選單有哪些功能？（編輯所屬物件、編輯大房東、刪除大房東）｜target_user=property_manager｜
-jgb/B/biglandlord-authorize-apply-step｜授權物件頁取消勾選後，為什麼要按「套用」才會生效？（取消勾選只是待處理狀態，按套用才真的移除，按恢復可以取消這次變更）｜target_user=property_manager｜
+jgb/B/biglandlord-authorize-apply-step｜授權物件頁移除物件後，為什麼要按「套用」才會生效？（按紅色 X 移除只是待處理狀態，按套用才真的移除，按恢復可以取消這次變更）｜target_user=property_manager｜
 jgb/B/biglandlord-delete-confirm｜刪除大房東會發生什麼？（先跳出確認視窗，確認後這位大房東就無法再存取這個團隊的任何資訊）｜target_user=property_manager｜
 jgb/B/biglandlord-escrow-owner｜大房東列表上方的「所有權人／轉租人」是做什麼用的？（記錄代管物件的所有權人或轉租人資料，加快編輯合約速度）｜target_user=property_manager｜
-jgb/B/biglandlord-seat-limit｜大房東名額有上限嗎？（大房東列表頁的「新增大房東」目前沒有名額檢查；成員／大房東管理頁（團隊管理底下的大房東列表）的「邀請」按鈕才有，額滿時會提示升級方案）｜target_user=property_manager,prospect｜
+jgb/B/biglandlord-seat-limit｜大房東名額有上限嗎？（目前大房東列表頁的「新增大房東」沒有名額檢查）｜target_user=property_manager,prospect｜
 jgb/B/biglandlord-list-empty｜大房東列表沒有資料時會顯示什麼？（一開始沒有任何大房東顯示「尚無大房東」；用關鍵字搜尋卻沒有符合結果則顯示「沒有符合的結果😢」）｜target_user=property_manager｜
 jgb/B/biglandlord-batch-template-fields｜批次匯入大房東的 Excel 範本要填哪些欄位？（姓氏、名稱必填，其餘含 Email、手機、身分證字號、地址、帳戶資訊、合作方式與合作起迄都是選填）｜target_user=property_manager｜
 jgb/B/biglandlord-list-sort｜大房東列表可以用什麼排序？（姓名、手機號碼、Email、身分證字號，各有正序與反序共 8 種排序方式）｜target_user=property_manager｜
 ### B-biglandlord-report 大房東報表 {#B-biglandlord-report}
 jgb/B/biglandlord-report-overview｜大房東報表可以看到什麼？（依大房東列出所屬物件、出租中物件與執行中合約租金總額）｜target_user=property_manager｜
 jgb/B/biglandlord-report-permission｜誰看得到大房東報表？（需要「查看大房東報表」的角色權限）｜target_user=property_manager｜
-jgb/B/biglandlord-report-community-rate｜大房東報表可以依社區細看嗎？（報表清單有「社區」欄，細節頁還會顯示匯率）｜target_user=property_manager｜
+jgb/B/biglandlord-report-community-rate｜大房東報表可以依社區細看嗎？（報表清單有「社區」欄，幣別不同時細節頁會顯示匯率）｜target_user=property_manager｜
 ### B-biglandlord-sheet 大房東對帳表 {#B-biglandlord-sheet}
 jgb/B/biglandlord-sheet-overview｜大房東對帳表在算什麼？（只有特定合作團隊看得到完整的押金、屋主資金、屋主提領、屋主直收等類別金額，其他團隊只看得到屋主租金收支；單月報表才有「上一月」「下一月」「下載」，整年度報表是「匯出報表」）｜target_user=property_manager｜
 jgb/B/biglandlord-sheet-empty｜對帳表顯示「尚未被指派物件」是什麼意思？（這位大房東還沒被授權任何物件）｜target_user=property_manager｜
@@ -133,28 +133,28 @@ jgb/B/advance-late-fee｜進階設定的「延遲金設置」怎麼計算？（�
 jgb/B/advance-additional-terms｜「預設補充條款」怎麼設定？（最多可以設 3 組，編輯合約時直接選用）｜target_user=property_manager,prospect｜
 jgb/B/advance-custom-label｜「標籤設定」是做什麼用的？（幫物件加自訂標籤，單個標籤上限 18 字元）｜target_user=property_manager,prospect｜
 jgb/B/advance-device-binding｜怎麼綁定智能裝置廠商？（輸入裝置廠商帳號密碼完成綁定，之後可在 JGB 平台管理裝置）｜target_user=property_manager｜
-jgb/B/advance-fee-items-merge｜自訂費用項目可以合併嗎？（可以選多個已存在的品項合併成新品項，合併後無法回復）｜target_user=property_manager｜
+jgb/B/advance-fee-items-merge｜自訂費用項目可以合併嗎？（可以把多個品項併入其中一個既有品項，合併後無法回復）｜target_user=property_manager｜
 jgb/B/advance-payment-cycle-discount｜進階設定的「繳費週期優惠」是給誰用的？（只有特定合作團隊才看得到，選比月繳更長的繳費週期就有折扣）｜target_user=property_manager,prospect｜
 jgb/B/advance-notification-locale｜「Email 通知語系」在哪設定、誰看得到？（只有法人房東或社宅團隊看得到，決定代發通知信的預設語系）｜target_user=property_manager,prospect｜
 jgb/B/advance-timezone｜「時區設定」會影響哪些通知？（只有法人房東或社宅團隊看得到，改變排程通知的發送時間）｜target_user=property_manager,prospect｜
 jgb/B/advance-settlement-currency｜「結算幣別」是做什麼用的？（只有法人房東或社宅團隊看得到，把大房東報表的多幣別合約統一結算成一種幣別）｜target_user=property_manager,prospect｜
 jgb/B/advance-device-binding-visibility｜為什麼進階設定看不到「裝置管理」區塊？（訂閱方案要生效中，且不能是免費方案）｜target_user=property_manager｜
 jgb/B/advance-dedicated-account｜「房東專屬帳號」是做什麼用的？（只有法人房東或社宅團隊看得到；顯示在團隊首頁，且第一次儲存後不能自行修改，要洽 JGB 客服）｜target_user=property_manager,prospect｜
-jgb/B/advance-auto-publish-unpublish｜招租廣告可以自動刊登或自動下架嗎？（可以，合約到期日前 N 天自動刊登，簽約後自動下架）｜target_user=property_manager,prospect｜
+jgb/B/advance-auto-publish-unpublish｜招租廣告可以自動刊登或自動下架嗎？（部分特定合作團隊可以：合約到期日前 N 天自動刊登，簽約後自動下架）｜target_user=property_manager,prospect｜
 jgb/B/advance-contract-label｜「合約管理」的標籤設定跟物件的標籤設定是同一個嗎？（不是，這是合約專用的另一組標籤）｜target_user=property_manager｜
 jgb/B/advance-sales-item-code｜「銷貨單品項代號對應」是做什麼用的？（只有特定團隊才有，設定匯出「M 化銷貨單」時每個品項要帶的產品代號）｜target_user=property_manager｜
-jgb/B/advance-community-labels｜「社區管理」的城市／區域／位置設定是做什麼？（只有特定合作團隊看得到，用來建立社區篩選用的自訂標籤）｜target_user=property_manager｜
+jgb/B/advance-community-labels｜「社區管理」的城市／區域／位置設定是做什麼？（只有特定合作團隊看得到，用來建立社區可選用的城市、區域、位置標籤）｜target_user=property_manager｜
 jgb/B/advance-short-lease-approval｜進階設定的「短租期核可流程」是做什麼的？（只有特定合作團隊看得到；租期少於設定天數時，合約要先簽核通過才會發出邀請給租客）｜target_user=property_manager,prospect｜
 ### B-tenant-list 租客列表（當前租客／封存、準時繳租率、信用評價） {#B-tenant-list}
 jgb/B/lessee-tabs｜租客列表有哪兩個分頁？（當前租客／封存，封存代表這位租客已被移出列表且目前沒有進行中的合約）｜target_user=property_manager,prospect｜
 jgb/B/lessee-credit-rating-visibility｜租客列表的「信用評價」欄位為什麼有些人看不到？（需要有查看租客信用評價的權限才會顯示這一欄）｜target_user=property_manager｜
-jgb/B/lessee-crud｜租客列表可以新增、匯入、匯出租客嗎？（可以手動新增，也支援 Excel 匯入與匯出）｜target_user=property_manager,prospect｜
+jgb/B/lessee-crud｜租客列表可以新增、匯入、匯出租客嗎？（個人房東與法人房東可以手動新增、Excel 匯入與匯出；社宅團隊只能匯出）｜target_user=property_manager,prospect｜
 jgb/B/lessee-notification-status-color｜租客列表裡 Email／手機號碼顯示藍色、橘色、灰色代表什麼？（驗證狀態：已驗證／等待驗證／未驗證）｜target_user=property_manager｜
 jgb/B/lessee-verification-link-expiry｜租客的 Email／手機驗證連結多久過期？（72 小時）｜target_user=property_manager｜
-jgb/B/lessee-notification-toggle-effect｜租客的通知開關關閉後會怎樣？（收不到任何合約或帳單的通知信件或簡訊）｜target_user=property_manager｜
+jgb/B/lessee-notification-toggle-effect｜租客的通知開關關閉後會怎樣？（Email 與手機的開關分開，關掉哪一個就停哪一種通知）｜target_user=property_manager｜
 jgb/B/lessee-on-time-pay-rate｜租客的「準時繳租率」怎麼算？（已到帳未逾期帳單數 ÷ 全部應計入帳單數）｜target_user=property_manager｜
 jgb/B/lessee-list-columns｜租客列表可以看到哪些欄位？（ID、姓名、會員註冊、Email - 通知、手機號碼 - 通知、註冊合約、免註冊合約、所屬修繕、準時繳租率、帳戶名稱、帳號資訊、操作）｜target_user=property_manager｜
-jgb/B/lessee-list-columns-by-role｜社宅團隊與特定合作團隊的租客列表欄位有什麼不一樣？（社宅團隊沒有「會員註冊」「免註冊合約」「操作」，「註冊合約」欄改叫「所屬總合約」；特定合作團隊多了國籍、生日、主要聯絡方式）｜target_user=property_manager｜
+jgb/B/lessee-list-columns-by-role｜社宅團隊的租客列表欄位有什麼不一樣？（沒有「會員註冊」「免註冊合約」與操作選單，「註冊合約」欄改叫「所屬總合約」）｜target_user=property_manager｜
 jgb/B/lessee-pending-verification-bill-draft｜租客的 Email 或手機還在等待驗證時，帳單會怎樣？（帳單會停留在草稿分頁，等驗證完成或連結過期才能發送，也可以手動移動）｜target_user=property_manager｜
 jgb/B/lessee-bulk-notify｜租客列表勾選多筆租客後可以做什麼？（特定合作團隊可以批次發送通知，其他團隊沒有這個批次操作）｜target_user=property_manager｜
 jgb/B/lessee-export-entry-by-role｜匯出租客的入口在哪？（一般房東用「新增租客」下拉選單裡的「匯出租客」；社宅團隊只有一顆「匯出」按鈕，沒有新增或匯入）｜target_user=property_manager｜
@@ -174,7 +174,7 @@ jgb/C/community-list-pagination｜社區總表每頁筆數可以調整嗎？（3
 jgb/C/community-list-add-permission｜誰看得到新增社區的入口？（總表右上角需要編輯物件權限；空狀態的批次新增／新增社區入口需要新增物件權限）｜target_user=property_manager｜
 ### C-community-edit 社區資料編輯（基本資料、照片與描述、介紹與交通） {#C-community-edit}
 jgb/C/community-edit-tabs｜社區編輯有哪些分頁？（基本資料、介紹與交通、照片與描述）｜target_user=property_manager｜
-jgb/C/community-edit-basic-fields｜社區基本資料要填什麼？（社區名稱限30字、詳細地址與對外顯示地址、建築類型、總樓層、屋齡）｜target_user=property_manager｜
+jgb/C/community-edit-basic-fields｜社區基本資料要填什麼？（社區名稱、詳細地址與對外顯示地址、建築類型、總樓層、屋齡）｜target_user=property_manager｜
 jgb/C/community-edit-gallery-photo-limit｜社區照片與描述可以上傳幾張圖片？（限1張，JPG/PNG，檔案大小最大10MB）｜target_user=property_manager｜
 jgb/C/community-edit-gallery-save-notice｜社區照片與描述什麼時候會跳出「已更新」提示？（存檔成功後才出現，不是上傳當下）｜target_user=property_manager｜
 jgb/C/community-edit-intros-and-transit｜社區介紹與交通怎麼填？（社區簡介、鄰近交通說明、可加多個鄰近捷運站）｜target_user=property_manager｜
@@ -183,13 +183,13 @@ jgb/C/community-edit-basic-required-field｜社區基本資料哪個欄位是必
 jgb/C/community-estates-overview-card｜社區底下物件頁最上方顯示什麼？（招租廣告、買賣廣告、目前空置數量、類型、屋齡、本月應收與已收金額）｜target_user=property_manager｜
 jgb/C/community-estates-category-switch｜社區底下的物件清單怎麼切換總覽／招租／買賣？（欄位標題會跟著切換內容改變）｜target_user=property_manager｜
 jgb/C/community-estates-add-batch-copy｜怎麼在社區底下新增物件？（新增／批次新增／複製現有物件，受物件數量上限限制）｜target_user=property_manager｜
-jgb/C/community-estates-extra-tabs｜社區底下有差額發票、投報率頁籤嗎？（依團隊是否開通該功能才會出現，投入成本與投報率兩個頁籤是同一個開關）｜target_user=property_manager｜
+jgb/C/community-estates-extra-tabs｜社區底下有差額發票、投報率頁籤嗎？（依團隊是否開通該功能才會出現；投入成本與投報率是同一個開關，大房東與沒有帳單查看權限的成員看不到）｜target_user=property_manager｜
 jgb/C/community-estates-pagination｜社區物件清單每頁筆數可以調整嗎？（30／60／90項）｜target_user=property_manager｜
 ### C-community-public-page 社區公開頁（社區詳情、社區總表） {#C-community-public-page}
 jgb/C/community-show-content｜社區公開頁（社區廣告）顯示什麼？（基本資訊、鄰近捷運、社區介紹、刊登中物件）｜target_user=property_manager,prospect｜
-jgb/C/community-show-price-range｜社區公開頁最上方顯示什麼價格區間？（租賃金額區間、售價金額區間、售價單價區間坪或平方公尺隨語系切換）｜target_user=property_manager,prospect｜
-jgb/C/community-show-share｜社區公開頁怎麼分享？（分享燈箱、查看所有物件連結）｜target_user=property_manager｜
-jgb/C/community-show-editor-nav｜在社區廣告頁可以直接跳到編輯社區、社區詳情或社區總表嗎？（只有管理員看得到這個選單）｜target_user=property_manager｜
+jgb/C/community-show-price-range｜社區公開頁最上方顯示什麼價格區間？（租賃金額區間、售價金額區間）｜target_user=property_manager,prospect｜
+jgb/C/community-show-share｜社區公開頁怎麼分享？（分享燈箱或手機分享選單、查看所有物件連結）｜target_user=property_manager｜
+jgb/C/community-show-editor-nav｜在社區廣告頁可以直接跳到編輯社區、社區詳情或社區總表嗎？（只有具備編輯物件權限的使用者看得到這個選單）｜target_user=property_manager｜
 ### C-community-force-binding 物件綁定社區的導引（2022/05 社區功能上線時的強制綁定流程，限團隊擁有者） {#C-community-force-binding}
 jgb/C/forcebinding-why-and-who｜為什麼會出現「物件需綁定社區」的導引？（2022/05/12 社區功能上線，只有團隊擁有者能操作）｜target_user=property_manager｜
 jgb/C/forcebinding-welcome-progress｜物件綁定社區的導引起始畫面顯示什麼？（已綁定與尚未綁定的物件數量、需同意服務條款）｜target_user=property_manager｜
@@ -199,22 +199,22 @@ jgb/C/forcebinding-completion-states｜綁定完成後會看到什麼？（全�
 ### C-estate-list 物件列表與篩選 {#C-estate-list}
 jgb/C/estate-list-add-must-pick-community｜物件總表怎麼新增物件？（新增與複製現有物件都要先經過社區選擇畫面，目前沒有批次新增入口）｜target_user=property_manager｜
 jgb/C/estate-list-counter-and-limit｜物件總表標題下方顯示什麼？（目前物件總數、尚可新增數量）｜target_user=property_manager｜
-jgb/C/estate-list-filters｜物件總表有哪些進階篩選條件？（縣市行政區、經理人、大房東、社區、捷運、用途、格局、建築類型、即時合約狀態、合約到期日、招租廣告狀態、租金與面積(坪)範圍、標籤）｜target_user=property_manager｜
+jgb/C/estate-list-filters｜物件總表有哪些進階篩選條件？（縣市行政區、經理人、大房東、社區、捷運、格局、建築類型、即時合約狀態、合約到期日、招租廣告狀態、租金與面積(坪)範圍、標籤）｜target_user=property_manager｜
 jgb/C/estate-list-keyword-search｜物件總表關鍵字搜尋可以查什麼？（案名、地址、租客、物件ID、手機、信箱）｜target_user=property_manager｜
 jgb/C/estate-list-batch-actions｜物件總表可以批次操作嗎？（匯出物件、新增批次帳單、批次刊登／取消刊登招租廣告、刪除；批次取消刊登失敗時不會顯示任何提示）｜target_user=property_manager｜
-jgb/C/estate-status-affects-actions｜物件狀態會影響哪些功能？（未刊登／刊登中／洽談中／合約中，各自能做的操作不同）｜target_user=property_manager,prospect｜
+jgb/C/estate-status-affects-actions｜物件狀態會影響哪些功能？（未刊登／刊登中／洽談中／租約中，各自能做的操作不同）｜target_user=property_manager,prospect｜
 jgb/C/estate-list-pagination｜物件總表每頁筆數可以調整嗎？（30／60／90項）｜target_user=property_manager｜
-jgb/C/estate-list-filters-space-type-and-others｜物件總表篩選還有哪些條件？（空間類型多選、其他群組：VR、有電梯、可開伙、可養寵物）｜target_user=property_manager｜
+jgb/C/estate-list-filters-space-type-and-others｜物件總表篩選還有哪些條件？（空間類型多選、「更多」：VR、有電梯、可開伙、可養寵物）｜target_user=property_manager｜
 jgb/C/estate-list-category-switch｜物件總表怎麼切換總覽／招租／買賣？（三種分類切換）｜target_user=property_manager｜
-jgb/C/estate-list-sort-remembers-last｜物件總表怎麼排序？（排序選項由系統提供，上次選的排序方式會被記住並自動帶入）｜target_user=property_manager｜
+jgb/C/estate-list-sort-remembers-last｜物件總表怎麼排序？（排序選項由系統提供，電腦版會記住上次選的排序方式）｜target_user=property_manager｜
 ### C-estate-edit 物件資料編輯（基本資料、建物謄本、附設傢俱、標題與照片、物件介紹、720 VR） {#C-estate-edit}
 jgb/C/estate-edit-basic-space-type｜物件基本資料的空間類型、用途、格局要怎麼填？｜target_user=property_manager｜
 jgb/C/estate-edit-basic-address｜物件的詳細地址與對外顯示地址有什麼差別？｜target_user=property_manager｜
 jgb/C/estate-edit-basic-floor-room-number｜物件的樓層與房號要怎麼填？（頂加輸入+1、地下室輸入-1）｜target_user=property_manager｜
 jgb/C/estate-edit-basic-community-name-hide｜物件廣告頁可以隱藏群組/大樓名稱嗎？｜target_user=property_manager｜
 jgb/C/estate-edit-building-transcript-social｜社宅物件建物謄本要填什麼？（申請謄本日期、段小段、謄本面積公式，不會顯示在廣告頁）｜target_user=property_manager｜
-jgb/C/estate-edit-building-transcript-general｜一般物件建物謄本要填什麼？（土地標的清冊、坐落基地、稅籍編號、專有部分、主建物、附屬建物）｜target_user=property_manager｜
-jgb/C/estate-edit-facilities｜物件附設傢俱怎麼設定？（第一個區塊標題是格局(<空間類型>)，依空間分區加入家電、傢俱、自訂項目，數量0不顯示在廣告頁）｜target_user=property_manager｜
+jgb/C/estate-edit-building-transcript-general｜一般物件建物謄本可以填什麼？（土地標的清冊、坐落基地、稅籍編號、專有部分、主建物、附屬建物，皆非必填）｜target_user=property_manager｜
+jgb/C/estate-edit-facilities｜物件附設傢俱怎麼設定？（依用途與格局分區加入家電、傢俱、自訂項目，數量0不顯示在廣告頁）｜target_user=property_manager｜
 jgb/C/estate-edit-gallery-title-photos｜物件標題與照片有什麼限制？（標題最長60字、照片最多15張15MB、平面圖最多5張含PDF）｜target_user=property_manager｜
 jgb/C/estate-edit-intro-transit｜物件介紹要填什麼？（房源簡介、鄰近交通，可加多筆鄰近捷運站）｜target_user=property_manager｜
 jgb/C/estate-edit-vr-720｜物件的720 VR全景照怎麼拍？（需先安裝 VR Maker App 掃 QR Code 拍攝，可設定是否用於廣告）｜target_user=property_manager｜
@@ -229,14 +229,14 @@ jgb/C/estate-rent-contact-agency-info｜刊登主資訊的團隊資訊要在哪�
 jgb/C/estate-rent-contact-manager-and-hide｜招租廣告可以隱藏經理人／房東的名稱、電話、Email嗎？（勾選框在「經理人資訊」或「刊登主資訊」的經理人卡片上，每種身分只有一組）｜target_user=property_manager,prospect｜
 jgb/C/estate-rent-verify-legal｜招租的核實訊息是什麼？（依租賃住宅市場發展條例核實產權登記與違建面積）｜target_user=property_manager,prospect｜
 jgb/C/estate-rent-open-permission-and-validation｜為什麼物件刊登不出去？（需要刊登物件或新增物件的權限；必填欄位沒填完會退回編輯頁）｜target_user=property_manager｜
-jgb/C/estate-rent-detail-price-and-tax｜招租詳情要填哪些金額相關欄位？（面積、幣別、每月租金、營業稅：應稅／零稅率／免稅）｜target_user=property_manager｜
+jgb/C/estate-rent-detail-price-and-tax｜招租詳情要填哪些金額相關欄位？（面積、幣別、每月租金；特定合作團隊另有營業稅：應稅／零稅率／免稅）｜target_user=property_manager｜
 ### C-estate-dashboard 物件儀表板（招租表現、合約歷程、帳務收支、修繕紀錄、附件清單、房東流水帳、合約附件、物件記事本、每月報表、每月對帳單；入口直接轉到招租表現） {#C-estate-dashboard}
-jgb/C/estate-dashboard-entry-and-groups｜物件儀表板進去預設是哪個分頁？（預設招租表現；大房東看不到「限管理者查看」分頁群組）｜target_user=property_manager｜
+jgb/C/estate-dashboard-entry-and-groups｜物件儀表板進去預設是哪個分頁？（一般預設招租表現，大房東直接進合約歷程；大房東看不到「限管理者查看」分頁群組）｜target_user=property_manager｜
 jgb/C/estate-dashboard-rent-performance｜招租表現分頁顯示什麼？（空置天數、廣告瀏覽次數、帳務表現、合約歷程與修繕紀錄摘要）｜target_user=property_manager｜
 jgb/C/estate-dashboard-contracts-history｜物件儀表板的合約歷程顯示哪些欄位？（一般房東：狀態／簽約類型／物件／承租人／租期／是否通知；社宅房東：合約名稱／承租人／租期）｜target_user=property_manager｜
 jgb/C/estate-dashboard-bills-tabs｜物件儀表板的帳務收支有哪些子頁籤？（總收支、統計報表）｜target_user=property_manager｜
 jgb/C/estate-dashboard-repair-status-flow｜物件儀表板修繕紀錄怎麼呈現？（申請修繕→安排修繕→完成修繕→結單四狀態）｜target_user=property_manager｜
-jgb/C/estate-dashboard-attachments-vs-contract-attachments｜「附件清單」跟「合約附件」差在哪？（附件清單自由上傳、有儲存空間上限，下載不限身分但只有代理人且有新增物件權限才能刪除；合約附件是租賃法定文件的固定清單）｜target_user=property_manager｜
+jgb/C/estate-dashboard-attachments-vs-contract-attachments｜「附件清單」跟「合約附件」差在哪？（附件清單可上傳 JPG／PNG／PDF、有儲存空間上限，下載不限身分但只有代理人且有新增物件權限才能刪除；合約附件是租賃法定文件的固定清單）｜target_user=property_manager｜
 jgb/C/estate-dashboard-runnings-vs-memos｜「房東流水帳」跟「物件記事本」差在哪？（流水帳要記收入/支出金額，記事本只是純文字備註）｜target_user=property_manager｜
 jgb/C/estate-dashboard-monthly-report-upload｜每月報表／每月對帳單怎麼上傳？（PDF、10MB上限，可批次指定多個物件，同月重傳會覆蓋舊檔）｜target_user=property_manager｜
 jgb/C/estate-dashboard-top-cards｜物件儀表板最上方顯示哪三張卡？（物件資訊、招租廣告、買賣廣告；編輯捷徑需要新增物件權限）｜target_user=property_manager｜
@@ -253,8 +253,8 @@ jgb/C/estate-house-info-card｜物件廣告頁的資料卡片顯示什麼？（�
 jgb/C/team-public-page-purpose｜房東對外首頁（招租店舖）是什麼？（公開展示聯絡資訊、簡介與所有刊登中物件，供分享給潛在租客）｜target_user=property_manager,prospect｜
 jgb/C/team-public-page-edit-and-banner｜招租店舖上可以直接編輯哪些內容？（封面照片、大頭照、姓名、自我介紹，會連動帳號資訊）｜target_user=property_manager｜
 jgb/C/team-public-page-filter-and-view｜招租店舖怎麼篩選物件？（鄉鎮區或捷運、類型與格局，可切換小圖示／大圖示／條列式；每頁筆數 30／60／90，預設 30）｜target_user=property_manager｜
-jgb/C/team-public-page-share｜招租店舖怎麼分享？（可分享至FB、Line、LinkedIn，加入團隊且設定客製帳號可有專屬短網址）｜target_user=property_manager,prospect｜
-jgb/C/team-public-page-recruitment｜多團隊招募頁是什麼？（沒有指定住宅或商用時自動轉址到住宅、強制只顯示招租、不顯示社區篩選、每頁預設10筆）｜target_user=property_manager,prospect｜
+jgb/C/team-public-page-share｜招租店舖怎麼分享？（可分享至FB、Line、LinkedIn或複製連結，分享的是目前頁面的網址）｜target_user=property_manager,prospect｜
+jgb/C/team-public-page-recruitment｜多團隊招募頁和一般招租店舖有什麼不同？（沒有指定住宅或商用時自動轉址到住宅、只顯示招租、不顯示社區篩選、每頁預設 10 筆）｜target_user=property_manager,prospect｜
 
 ## D 租約（含委託約子題） {#D}
 scope: 合約建立、簽署、狀態與階段、續約、退租、違約金、租客邀請簽約；委託約（僅法人房東）；⛔ 帳單與押金金流歸 E

@@ -67,11 +67,11 @@ language: zh-TW
   - {text: "社區可以刪除嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "刪不掉社區怎麼辦", source: "draft:outline-20260920", status: proposed}
   - {text: "刪除社區的限制", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/communities/_parts/CommunityItem.vue, code:src/components/Lightbox/CommunityDelete.vue]
+- sources: [code:src/pages/communities/_parts/CommunityItem.vue, code:src/components/Lightbox/CommunityDelete.vue, code:app/Http/Controllers/CommunityController.php]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-社區列表項目的設定選單提供「刪除」選項，但只有在該社區底下的物件總數為 0 時才能刪除成功。
+社區列表項目的設定選單有「刪除社區」選項（只有具備編輯物件權限的使用者看得到），但只有在該社區底下的物件總數為 0 時才能刪除成功。
 若社區底下還有物件，點擊刪除會出現提示「無法刪除社區，需沒有任何物件才能刪除社區」。
 確認刪除的視窗會提醒「社區刪除後，將無法復原」，需再次確認才會真的刪除。
 ### 社區總表可以匯出嗎？（需要匯出物件權限，會依目前篩選條件匯出） {#jgb/C/community-export-list}
@@ -122,7 +122,7 @@ language: zh-TW
 - instance_applicability: general
 社區編輯頁在「社區資訊」群組下分成「基本資料」「介紹與交通」「照片與描述」三個分頁，都屬於同一個社區資料。
 直接從社區總表點進「編輯社區」時，會先進入「基本資料」分頁。
-### 社區基本資料要填什麼？（社區名稱限30字、詳細地址與對外顯示地址、建築類型、總樓層、屋齡） {#jgb/C/community-edit-basic-fields}
+### 社區基本資料要填什麼？（社區名稱、詳細地址與對外顯示地址、建築類型、總樓層、屋齡） {#jgb/C/community-edit-basic-fields}
 - phrasings:
   - {text: "社區基本資料要填什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "社區名稱字數限制", source: "draft:outline-20260920", status: proposed}
@@ -131,7 +131,7 @@ language: zh-TW
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-基本資料分頁的「社區名稱」欄位，輸入框的提示文字寫著限制30個字，用來告訴客戶這個社區叫什麼名字；查不到對應的長度驗證規則，無法確認超過30字時是否真的會被擋下。
+基本資料分頁的「社區名稱」欄位用來告訴客戶這個社區叫什麼名字，輸入框提示名稱限制在 30 個字以內。
 地址分成「詳細地址」與「對外顯示地址」兩組，對外顯示地址可以按「同詳細地址」直接帶入詳細地址的內容，且對外顯示地址會標記在 Google 地圖上。
 其他欄位還包含建築類型、總樓層（限純數字）與屋齡（限純數字）；另外還有一個「社區細節」欄位區塊，只有團隊被歸類為特定合作團隊時才會顯示，一般團隊看不到。
 ### 社區照片與描述可以上傳幾張圖片？（限1張，JPG/PNG，檔案大小最大10MB） {#jgb/C/community-edit-gallery-photo-limit}
@@ -186,13 +186,13 @@ language: zh-TW
   - {text: "社區物件頁上面的卡片是什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "社區概要顯示哪些數字", source: "draft:outline-20260920", status: proposed}
   - {text: "社區物件總覽在哪看", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/communities/estates/_parts/CommunityOverview.vue]
+- sources: [code:src/pages/communities/estates/_parts/CommunityOverview.vue, code:app/Services/CommunityService.php]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
 社區底下的物件清單頁最上方會顯示這個社區的概要卡片，包含招租廣告、買賣廣告、目前空置數量（皆以物件總數為分母）、建築類型與屋齡。
 卡片上也會顯示這個社區「本月應收金額」與「本月已收金額」。
-卡片右上角的選單可以「編輯」社區、「前往社區廣告」（社區公開頁），管理員身分才會看到「編輯」與「刪除社區」選項。
+卡片右上角的選單可以「前往社區廣告」（社區公開頁）；具備編輯物件權限的使用者（團隊擁有者也包含在內）還會看到「編輯」與「刪除社區」選項。
 ### 社區底下的物件清單怎麼切換總覽／招租／買賣？（欄位標題會跟著切換內容改變） {#jgb/C/community-estates-category-switch}
 - phrasings:
   - {text: "社區物件怎麼切換招租買賣", source: "draft:outline-20260920", status: proposed}
@@ -202,7 +202,7 @@ language: zh-TW
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-社區底下的物件清單提供「總覽-1」「招租」「買賣」三種分類切換。
+社區底下的物件清單提供總覽、招租、買賣三種分類切換。
 切到「招租」時清單欄位會顯示招租廣告與租金，切到「買賣」時則顯示買賣廣告與售價，欄位標題會依所選分類自動變化。
 ### 怎麼在社區底下新增物件？（新增／批次新增／複製現有物件，受物件數量上限限制） {#jgb/C/community-estates-add-batch-copy}
 - phrasings:
@@ -216,18 +216,18 @@ language: zh-TW
 - instance_applicability: general
 有新增物件權限的使用者，在社區物件清單「所有物件」分類下可以點「新增物件」直接建立、選「批次新增」上傳表格，或選「複製現有物件」以既有物件為範本。
 訂閱方案對可建立的物件數量有上限，達到上限時新增物件會被擋下並提示已達上限。
-當社區內只剩非住宅類的「社區共用空間」物件、沒有其他物件時，不會提供「複製現有物件」選項。
-### 社區底下有差額發票、投報率頁籤嗎？（依團隊是否開通該功能才會出現，投入成本與投報率兩個頁籤是同一個開關） {#jgb/C/community-estates-extra-tabs}
+當社區內只剩公共區域物件、沒有其他物件時，不會提供「複製現有物件」選項。
+### 社區底下有差額發票、投報率頁籤嗎？（依團隊是否開通該功能才會出現；投入成本與投報率是同一個開關，大房東與沒有帳單查看權限的成員看不到） {#jgb/C/community-estates-extra-tabs}
 - phrasings:
   - {text: "社區差額發票頁籤", source: "draft:outline-20260920", status: proposed}
   - {text: "社區投報率在哪看", source: "draft:outline-20260920", status: proposed}
   - {text: "社區物件頁籤有哪些", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/utils/constants/community.js, code:src/pages/communities/estates/Index.vue]
+- sources: [code:src/utils/constants/community.js, code:src/pages/communities/estates/Index.vue, code:app/Http/Controllers/CommunityController.php, code:app/Http/Controllers/Api/CommunityRoiController.php]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
 「所有物件」頁籤永遠存在，「差額發票」頁籤只在該社區開通差額發票功能時才會加入。
-「投入成本」與「投報率」兩個頁籤是由同一個開關控制的，開通投報率功能時這兩個頁籤會一起出現，沒辦法只開通其中一個。
+「投入成本」與「投報率」兩個頁籤是由同一個開關控制的，開通投報率功能時這兩個頁籤會一起出現，沒辦法只開通其中一個；但大房東，以及沒有帳單查看權限的成員，即使團隊已開通也看不到這兩個頁籤。
 沒有任何額外頁籤開通時，畫面不會顯示頁籤切換器，直接呈現物件清單。
 ### 社區物件清單每頁筆數可以調整嗎？（30／60／90項） {#jgb/C/community-estates-pagination}
 - phrasings:
@@ -252,19 +252,16 @@ language: zh-TW
 社區公開頁（社區廣告）會顯示「社區基本資訊」（類型、總樓層數、屋齡）、「社區交通與環境設施」（鄰近捷運站、鄰近交通）以及「社區介紹」文字說明。
 頁面下方的「社區所有刊登中物件」會分別列出招租中與買賣中的物件數量，各自可以點「更多」看更多物件。
 頁尾會顯示本社區的 JGB 編號，並附上房屋現況與法定用途的提醒文字。
-### 社區公開頁最上方顯示什麼價格區間？（租賃金額區間、售價金額區間、售價單價區間坪或平方公尺隨語系切換） {#jgb/C/community-show-price-range}
+### 社區公開頁最上方顯示什麼價格區間？（租賃金額區間、售價金額區間） {#jgb/C/community-show-price-range}
 - phrasings:
   - {text: "社區價格區間在哪看", source: "draft:outline-20260920", status: proposed}
   - {text: "社區租金區間", source: "draft:outline-20260920", status: proposed}
-  - {text: "社區售價單價區間", source: "draft:outline-20260920", status: proposed}
-  - {text: "坪數單位切換", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/communities/show/_parts/PageTop.vue]
+- sources: [code:src/pages/communities/show/_parts/PageTop.vue, code:app/Community.php, code:app/Services/CommunityService.php]
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
-社區公開頁最上方會顯示該社區的「租賃金額區間」與「售價金額區間」，這兩個區間各自都只在有2筆資料時才會顯示。
-若社區有登記售價單價，最上方還會另外顯示「售價單價區間」，單位固定跟著網頁語系顯示：繁體中文 顯示坪，其他語系顯示平方公尺，使用者無法手動切換。
-### 社區公開頁怎麼分享？（分享燈箱、查看所有物件連結） {#jgb/C/community-show-share}
+社區公開頁最上方會顯示該社區刊登中物件的「租賃金額區間」與「售價金額區間」（從最低到最高金額），有對應的刊登物件時才會顯示。
+### 社區公開頁怎麼分享？（分享燈箱或手機分享選單、查看所有物件連結） {#jgb/C/community-show-share}
 - phrasings:
   - {text: "社區頁面怎麼分享", source: "draft:outline-20260920", status: proposed}
   - {text: "社區查看所有物件連結", source: "draft:outline-20260920", status: proposed}
@@ -273,18 +270,18 @@ language: zh-TW
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-頁面提供分享功能，點擊分享按鈕會開啟社區分享的燈箱。
-側邊欄也提供「查看所有物件」連結，可直接前往該社區的物件清單。
-### 在社區廣告頁可以直接跳到編輯社區、社區詳情或社區總表嗎？（只有管理員看得到這個選單） {#jgb/C/community-show-editor-nav}
+頁面提供分享功能，點擊分享按鈕會開啟社區分享的燈箱；在支援系統分享的行動裝置上，則會直接叫出手機的分享選單。
+側邊欄也提供「查看所有物件」連結，會前往這個團隊的招租店舖頁。
+### 在社區廣告頁可以直接跳到編輯社區、社區詳情或社區總表嗎？（只有具備編輯物件權限的使用者看得到這個選單） {#jgb/C/community-show-editor-nav}
 - phrasings:
   - {text: "社區詳情頁怎麼編輯社區", source: "draft:outline-20260920", status: proposed}
   - {text: "社區公開頁回總表", source: "draft:outline-20260920", status: proposed}
   - {text: "社區詳情頁返回Dashboard", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/communities/show/Index.vue]
+- sources: [code:src/pages/communities/show/Index.vue, code:app/Services/CommunityService.php]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-只有管理員身分的使用者，在社區廣告頁才會看到右上角的選單，選單有四個選項：「編輯」跳到社區編輯頁、「社區詳情」跳到該社區的管理端物件清單頁、「社區總表」回到社區列表、「返回 Dashboard」回到管理端首頁。
+只有具備編輯物件權限的使用者（團隊擁有者也包含在內），在社區廣告頁才會看到右上角的選單，選單有四個選項：「編輯」跳到社區編輯頁、「社區詳情」跳到該社區的管理端物件清單頁、「社區總表」回到社區列表、「返回 Dashboard」回到管理端首頁。
 ## 物件綁定社區的導引（2022/05 社區功能上線時的強制綁定流程，限團隊擁有者） {#C-community-force-binding}
 ### 為什麼會出現「物件需綁定社區」的導引？（2022/05/12 社區功能上線，只有團隊擁有者能操作） {#jgb/C/forcebinding-why-and-who}
 - phrasings:
@@ -369,7 +366,7 @@ language: zh-TW
 - business_types: [system_provider]
 - instance_applicability: general
 只有具備新增物件權限的使用者，才會在物件總表標題下方看到「目前物件總數」與「尚可新增」的數字，尚可新增的數量會依訂閱方案剩餘額度變動。
-### 物件總表有哪些進階篩選條件？（縣市行政區、經理人、大房東、社區、捷運、用途、格局、建築類型、即時合約狀態、合約到期日、招租廣告狀態、租金與面積(坪)範圍、標籤） {#jgb/C/estate-list-filters}
+### 物件總表有哪些進階篩選條件？（縣市行政區、經理人、大房東、社區、捷運、格局、建築類型、即時合約狀態、合約到期日、招租廣告狀態、租金與面積(坪)範圍、標籤） {#jgb/C/estate-list-filters}
 - phrasings:
   - {text: "物件總表篩選條件有哪些", source: "draft:outline-20260920", status: proposed}
   - {text: "怎麼依經理人篩選物件", source: "draft:outline-20260920", status: proposed}
@@ -404,7 +401,7 @@ language: zh-TW
 - instance_applicability: general
 在物件總表勾選多筆物件後，依權限可以看到「匯出物件」「新增批次帳單」「批次刊登招租廣告」「批次取消刊登招租廣告」「刪除」等批次動作選單，其中「刪除」要求勾選的物件全部都沒有合約才能執行。
 批次刊登招租廣告完全沒有失敗物件時，會直接跳出「[數量]件招租廣告已刊登」的成功提示，只要有任何一件失敗，改成跳出結果燈箱列出成功與失敗的物件；批次取消刊登招租廣告則只有在完全沒有失敗物件時才會跳出「[數量]件招租廣告下架成功」的提示，若有物件失敗，畫面不會出現任何燈箱或錯誤訊息。
-### 物件狀態會影響哪些功能？（未刊登／刊登中／洽談中／合約中，各自能做的操作不同） {#jgb/C/estate-status-affects-actions}
+### 物件狀態會影響哪些功能？（未刊登／刊登中／洽談中／租約中，各自能做的操作不同） {#jgb/C/estate-status-affects-actions}
 - phrasings:
   - {text: "物件狀態影響什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "洽談中物件可以做什麼", source: "draft:outline-20260920", status: proposed}
@@ -413,9 +410,9 @@ language: zh-TW
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
-物件總表把物件分成「未刊登」「刊登中」「洽談中」「合約中」等分類，不同分類可執行的操作不同：未刊登可以編輯物件、刊登物件、刪除物件；刊登中可以編輯物件、取消刊登、新增或編輯合約。
-「洽談中」代表這個物件已經有合約但還沒有任何一份完成簽署，一旦雙方都簽署完成就會變成「合約中」；此狀態下可以編輯物件、查看合約、編輯合約。
-「合約中」狀態下可以查看合約，若租約在30天內到期，還可以編輯物件、刊登物件與查看合約；已歸入歷史的合約不列入判斷物件狀態的依據。
+物件總表把物件分成「未刊登」「刊登中」「洽談中」「租約中」等分類，不同分類可執行的操作不同：未刊登可以編輯物件、刊登物件、刪除物件；刊登中可以編輯物件、取消刊登、新增或編輯合約。
+「洽談中」代表這個物件已經有合約但還沒有任何一份完成簽署，一旦雙方都簽署完成就會變成「租約中」；此狀態下可以編輯物件、查看合約、編輯合約。
+「租約中」狀態下可以查看合約，若租約在30天內到期，還可以編輯物件、刊登物件與查看合約；已歸入歷史的合約不列入判斷物件狀態的依據。
 ### 物件總表每頁筆數可以調整嗎？（30／60／90項） {#jgb/C/estate-list-pagination}
 - phrasings:
   - {text: "物件總表每頁顯示幾筆", source: "draft:outline-20260920", status: proposed}
@@ -426,17 +423,17 @@ language: zh-TW
 - business_types: [system_provider]
 - instance_applicability: general
 物件總表下方可以選擇每頁顯示30項、60項或90項。
-### 物件總表篩選還有哪些條件？（空間類型多選、其他群組：VR、有電梯、可開伙、可養寵物） {#jgb/C/estate-list-filters-space-type-and-others}
+### 物件總表篩選還有哪些條件？（空間類型多選、「更多」：VR、有電梯、可開伙、可養寵物） {#jgb/C/estate-list-filters-space-type-and-others}
 - phrasings:
   - {text: "物件怎麼篩VR", source: "draft:outline-20260920", status: proposed}
   - {text: "物件篩選可養寵物", source: "draft:outline-20260920", status: proposed}
   - {text: "物件篩選有電梯", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/estates/list/_parts/EstatesAdvanceSearchBlock.jsx]
+- sources: [code:src/pages/estates/list/_parts/EstatesAdvanceSearchBlock.jsx, code:src/components/AdvGroupSelect.jsx, code:src/components/AdvGroupSelectMobile.jsx]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
 進階搜尋提供「空間類型」多選篩選（例如整戶、套房、雅房等）。
-另外還有一組「其他」群組篩選，可複選是否有VR、有電梯、可開伙、可養寵物。
+另外還有一個「更多」按鈕，可以複選是否有VR、有電梯、可開伙、可養寵物。
 ### 物件總表怎麼切換總覽／招租／買賣？（三種分類切換） {#jgb/C/estate-list-category-switch}
 - phrasings:
   - {text: "物件總表怎麼切換招租買賣", source: "draft:outline-20260920", status: proposed}
@@ -447,7 +444,7 @@ language: zh-TW
 - business_types: [system_provider]
 - instance_applicability: general
 物件總表提供「總覽」「招租」「買賣」三種分類切換，切換後畫面上的物件清單會依分類重新載入。
-### 物件總表怎麼排序？（排序選項由系統提供，上次選的排序方式會被記住並自動帶入） {#jgb/C/estate-list-sort-remembers-last}
+### 物件總表怎麼排序？（排序選項由系統提供，電腦版會記住上次選的排序方式） {#jgb/C/estate-list-sort-remembers-last}
 - phrasings:
   - {text: "物件總表怎麼排序", source: "draft:outline-20260920", status: proposed}
   - {text: "上次選的排序方式還在嗎", source: "draft:outline-20260920", status: proposed}
@@ -457,7 +454,8 @@ language: zh-TW
 - business_types: [system_provider]
 - instance_applicability: general
 物件總表的排序選項由系統提供，使用者可以在列表上方切換排序方式。
-切換排序後，這個排序方式會被記住；下次進入物件總表、且網址沒有另外帶排序參數時，會自動帶入上次選擇的排序方式。
+在電腦版切換排序後，這個排序方式會被記住；下次進入物件總表、且網址沒有另外帶排序參數時，會自動帶入上次選擇的排序方式。
+手機等窄螢幕上不會自動帶入上次的排序。
 ## 物件資料編輯（基本資料、建物謄本、附設傢俱、標題與照片、物件介紹、720 VR） {#C-estate-edit}
 ### 物件基本資料的空間類型、用途、格局要怎麼填？ {#jgb/C/estate-edit-basic-space-type}
 - phrasings:
@@ -468,7 +466,8 @@ language: zh-TW
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-物件基本資料的「空間類型」是一個區塊標題，底下先選「用途」（例如住宅、商用、土地、工業/廠房/倉庫、酒店），兩者都是必填欄位；再依用途選擇對應的「格局」，例如整戶、套房、雅房，或辦公類型的獨立辦公室、固定辦公桌、共享辦公桌、虛擬辦公室、會員等，格局同樣是必填欄位。
+物件基本資料的「空間類型」是一個區塊標題：一般物件在底下先選「用途」（例如住宅、商用、土地、工業/廠房/倉庫、酒店，可選的用途會依團隊設定而不同），用途是必填；再依用途選擇對應的「格局」，例如整戶、套房、雅房，或辦公類型的獨立辦公室、固定辦公桌、共享辦公桌、虛擬辦公室、會員等，格局同樣是必填欄位。
+社宅物件的基本資料不會顯示用途欄位。
 「虛擬辦公室」格局說明為出租業者提供「商業地址」給企業「借址登記」使用、不做實際上班用途的辦公室；「會員」則是共享辦公室業者提供的會員方案。
 ### 物件的詳細地址與對外顯示地址有什麼差別？ {#jgb/C/estate-edit-basic-address}
 - phrasings:
@@ -516,7 +515,7 @@ language: zh-TW
 - instance_applicability: general
 社宅物件的建物謄本分頁要求填寫申請謄本日期、地號（段小段中文、地號）、建號（段小段中文、建號）、建築完成日期與謄本面積，這些資料不會顯示在物件廣告頁上，主要用來方便未來完備合約資料。
 謄本面積要以建物謄本所載面積為準，公式為主建物面積加附屬建物面積加持分公設面積減車位面積。
-### 一般物件建物謄本要填什麼？（土地標的清冊、坐落基地、稅籍編號、專有部分、主建物、附屬建物） {#jgb/C/estate-edit-building-transcript-general}
+### 一般物件建物謄本可以填什麼？（土地標的清冊、坐落基地、稅籍編號、專有部分、主建物、附屬建物，皆非必填） {#jgb/C/estate-edit-building-transcript-general}
 - phrasings:
   - {text: "一般物件建物謄本要填什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "土地標的清冊怎麼填", source: "draft:outline-20260920", status: proposed}
@@ -525,18 +524,19 @@ language: zh-TW
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-一般物件（即一般住宅物件，非社會住宅物件）的建物謄本分頁要求填寫「土地標的清冊」（段、小段、地號、租賃面積、都市土地使用分區，最多3筆，供實價登錄使用）與坐落基地、稅籍編號。
-同一分頁也要填「專有部分」「主建物」「附屬建物」的相關資料。
-### 物件附設傢俱怎麼設定？（第一個區塊標題是格局(<空間類型>)，依空間分區加入家電、傢俱、自訂項目，數量0不顯示在廣告頁） {#jgb/C/estate-edit-facilities}
+一般物件（即一般住宅物件，非社會住宅物件）的建物謄本分頁可以填寫「土地標的清冊」（段、小段、地號、租賃面積、都市土地使用分區，最多3筆）與坐落基地、稅籍編號；這些欄位都不是必填，這個分頁也不列入完成勾選。
+同一分頁也可以填「專有部分」「主建物」「附屬建物」的相關資料。
+### 物件附設傢俱怎麼設定？（依用途與格局分區加入家電、傢俱、自訂項目，數量0不顯示在廣告頁） {#jgb/C/estate-edit-facilities}
 - phrasings:
   - {text: "附設傢俱怎麼填", source: "draft:outline-20260920", status: proposed}
   - {text: "家電傢俱怎麼加", source: "draft:outline-20260920", status: proposed}
   - {text: "物件設備要怎麼設定", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/estates/edit/facilities/_parts/General.vue]
+- sources: [code:src/pages/estates/edit/facilities/_parts/General.vue, code:src/pages/estates/edit/facilities/_parts/SocialHousing.vue, code:src/pages/estates/edit/facilities/Index.vue]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-附設傢俱分頁的第一個區塊標題是「格局(<空間類型>)」（例如「格局(套房)」），依空間分區列出可設定的家電、傢俱項目，也可以自訂項目名稱與數量；住宅套房／雅房另有「戶內共用空間」區塊。
+一般物件的附設傢俱分頁會依用途與格局分區：例如住宅顯示「格局(套房)」這類區塊、商用辦公類顯示「商用」區塊、有建物的土地或倉儲顯示「有建物」區塊，每個區塊都能設定家電、傢俱項目，也可以自訂項目名稱與數量；住宅套房／雅房另有「戶內共用空間」區塊，另外還有「大樓/社區空間」區塊。
+社宅物件則使用另一套附設傢俱設定畫面。
 任何項目的數量若設為0，就不會顯示在物件廣告頁上。
 需要先設定好用途、型態或格局，才能開始添加傢俱項目。
 ### 物件標題與照片有什麼限制？（標題最長60字、照片最多15張15MB、平面圖最多5張含PDF） {#jgb/C/estate-edit-gallery-title-photos}
@@ -697,7 +697,7 @@ language: zh-TW
 - instance_applicability: general
 執行「刊登物件」的使用者，必須對這個物件有刊登物件或新增物件其中一種權限，否則系統會擋下並提示「您無法刊登此物件」。
 如果物件還有必填欄位沒有填完整，系統會擋下這次刊登，自動導回物件編輯頁，並且把左側選單直接跳到缺欄位的那個分頁，提示需要補齊的錯誤訊息。
-### 招租詳情要填哪些金額相關欄位？（面積、幣別、每月租金、營業稅：應稅／零稅率／免稅） {#jgb/C/estate-rent-detail-price-and-tax}
+### 招租詳情要填哪些金額相關欄位？（面積、幣別、每月租金；特定合作團隊另有營業稅：應稅／零稅率／免稅） {#jgb/C/estate-rent-detail-price-and-tax}
 - phrasings:
   - {text: "招租租金要填幣別嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "營業稅怎麼選", source: "draft:outline-20260920", status: proposed}
@@ -706,19 +706,19 @@ language: zh-TW
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-招租詳情要填「面積」（可勾選「同建物謄本面積」直接帶入）、「幣別」與「每月租金」，這三個都是必填欄位。
-營業稅可以選擇「應稅」「零稅率」或「免稅」三種。
+招租詳情要填「面積」、「幣別」與「每月租金」，這三個都是必填欄位；社宅物件的面積可以按「同建物謄本面積」直接帶入。
+營業稅欄位只有特定合作團隊才會顯示，可以選擇「應稅」「零稅率」或「免稅」三種。
 ## 物件儀表板（招租表現、合約歷程、帳務收支、修繕紀錄、附件清單、房東流水帳、合約附件、物件記事本、每月報表、每月對帳單；入口直接轉到招租表現） {#C-estate-dashboard}
-### 物件儀表板進去預設是哪個分頁？（預設招租表現；大房東看不到「限管理者查看」分頁群組） {#jgb/C/estate-dashboard-entry-and-groups}
+### 物件儀表板進去預設是哪個分頁？（一般預設招租表現，大房東直接進合約歷程；大房東看不到「限管理者查看」分頁群組） {#jgb/C/estate-dashboard-entry-and-groups}
 - phrasings:
   - {text: "物件儀表板預設看哪頁", source: "draft:outline-20260920", status: proposed}
   - {text: "大房東能看物件儀表板哪些分頁", source: "draft:outline-20260920", status: proposed}
   - {text: "物件Dashboard入口", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/routes/estates.js, code:src/pages/estates/dashboard/_parts/TabNav.vue]
+- sources: [code:src/routes/estates.js, code:src/pages/estates/dashboard/_parts/TabNav.vue, code:app/Http/Controllers/EstateController.php]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-進入物件儀表板預設會導向「招租表現」分頁。
+一般使用者進入物件儀表板預設會導向「招租表現」分頁；大房東從物件總表進入時，則會直接導到「合約歷程」。
 分頁分成兩組：「限管理者查看」（招租表現、銷售表現）與「與大房東共享」（合約歷程、帳務收支、修繕紀錄、附件清單、房東流水帳、合約附件、物件記事本；每月報表、每月對帳單只在團隊被歸類為特定合作團隊時才會加入這一組）。
 當使用者身分是大房東時，畫面不會顯示「限管理者查看」這組分頁，只能看到「與大房東共享」的分頁內容。
 社宅房東看不到「合約附件」這個分頁，其餘身分都看得到。
@@ -742,7 +742,7 @@ language: zh-TW
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-一般房東登入時，合約歷程列表欄位是狀態、簽約類型、物件、承租人（租客身分登入時這一欄標題會改成「出租人」，且不顯示「是否通知」欄）、租期、是否通知；社宅房東登入時，欄位改成只有合約名稱、承租人、租期三欄。
+一般房東登入時，合約歷程列表欄位是狀態、簽約類型、物件、承租人、租期、是否通知；社宅房東登入時，欄位改成只有合約名稱、承租人、租期三欄。
 列表每頁可切換顯示30、60或90項。
 ### 物件儀表板的帳務收支有哪些子頁籤？（總收支、統計報表） {#jgb/C/estate-dashboard-bills-tabs}
 - phrasings:
@@ -765,7 +765,7 @@ language: zh-TW
 - instance_applicability: general
 修繕紀錄可依「申請修繕」「安排修繕」「完成修繕」「結單」四種狀態篩選。
 列表欄位包含報修日期、最後更新、分類＆項目、物件地址、結算金額、房東/管理者、租客。
-### 「附件清單」跟「合約附件」差在哪？（附件清單自由上傳、有儲存空間上限，下載不限身分但只有代理人且有新增物件權限才能刪除；合約附件是租賃法定文件的固定清單） {#jgb/C/estate-dashboard-attachments-vs-contract-attachments}
+### 「附件清單」跟「合約附件」差在哪？（附件清單可上傳 JPG／PNG／PDF、有儲存空間上限，下載不限身分但只有代理人且有新增物件權限才能刪除；合約附件是租賃法定文件的固定清單） {#jgb/C/estate-dashboard-attachments-vs-contract-attachments}
 - phrasings:
   - {text: "合約附件要傳什麼文件", source: "draft:outline-20260920", status: proposed}
   - {text: "附件清單空間不夠怎麼辦", source: "draft:outline-20260920", status: proposed}
@@ -774,7 +774,7 @@ language: zh-TW
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-「附件清單」可自由上傳任意檔案，總儲存空間有上限（顯示已用/總量），檔案數量與大小都有限制，空間不足時可以「加價購」；下載檔案不限身分都能做，但只有代理人且擁有新增物件權限的使用者才會看到「刪除檔案」的操作。
+「附件清單」可以上傳 JPG、PNG、PDF 檔案，總儲存空間有上限（顯示已用/總量），檔案數量與大小都有限制，空間不足時可以「加價購」；下載檔案不限身分都能做，但只有代理人且擁有新增物件權限的使用者才會看到「刪除檔案」的操作。
 「合約附件」則是固定的租賃法定文件清單，包含授權代理人簽約同意書、建物所有權/有權出租之證明文件、使用執照影本、出租方同意轉租確認書、房屋位置格局示意圖、社區管理規約與住戶生活規約、其他（附註條款、稅籍證明等），以及出租方身份證明文件影本，圖片僅支援JPG、PNG，檔案大小最大10MB，每個項目的上傳數量限制不同。
 上傳附件到「附件清單」，具備編輯物件權限、是團隊擁有者，或是代理人且擁有新增物件權限，符合其中一種身分即可。
 ### 「房東流水帳」跟「物件記事本」差在哪？（流水帳要記收入/支出金額，記事本只是純文字備註） {#jgb/C/estate-dashboard-runnings-vs-memos}
@@ -903,14 +903,14 @@ Facebook 也只有在房東有填寫連結時才會顯示「立即聯繫」按�
   - {text: "物件廣告頁資料卡片有什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "物件廣告頁看不看得到含哪些費用", source: "draft:outline-20260920", status: proposed}
   - {text: "物件廣告頁格局在哪看", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/estates/show/_parts/EstateBasicInfo.vue]
+- sources: [code:src/pages/estates/show/_parts/EstateBasicInfo.vue, code:resources/views/estate/show.blade.php, code:app/Estate.php]
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
 物件廣告頁的資料卡片一定會顯示地址；社區名稱有值時才會額外顯示社區名稱。
 租金金額有值時，卡片才會顯示「[金額] 元/月」；若該物件有設定「租金已包含」的費用項目，還會在下方加註「(含〈項目〉)」的說明。
 用途不是商用時（住宅或車位），建築類型欄位在住宅用途顯示「建築類型與樓層」，在車位用途則退化為只顯示「建築類型」；格局欄位在住宅用途顯示房型格局，在車位用途則固定顯示「車位」二字。
-用途是商用時，卡片改顯示「空間類型」；「座位數」欄位只有在用途是商用、且空間類型不是店面、也不是整層空間時才會顯示。
+用途是商用時，卡片改顯示「空間類型」與「座位數」。
 不論哪種用途，卡片最下方都一定會顯示「面積」；有上傳物件平面圖時，還會額外顯示「物件平面圖」的縮圖列。
 ## 團隊招租店鋪（對外首頁、多團隊招募頁、banner 與篩選） {#C-team-storefront}
 ### 房東對外首頁（招租店舖）是什麼？（公開展示聯絡資訊、簡介與所有刊登中物件，供分享給潛在租客） {#jgb/C/team-public-page-purpose}
@@ -947,20 +947,19 @@ Facebook 也只有在房東有填寫連結時才會顯示「立即聯繫」按�
 招租店舖提供「鄉鎮/區或捷運」與「類型與格局」兩組篩選條件。
 物件列表可以切換「小圖示」「大圖示」「條列式」三種顯示模式；招租店舖的每頁筆數可選30、60或90項（預設30項），只有多團隊招募頁才提供10、30、60或90項（預設10項）。
 沒有符合篩選條件的結果時，會顯示「沒有符合的結果」並建議調整篩選條件。
-### 招租店舖怎麼分享？（可分享至FB、Line、LinkedIn，加入團隊且設定客製帳號可有專屬短網址） {#jgb/C/team-public-page-share}
+### 招租店舖怎麼分享？（可分享至FB、Line、LinkedIn或複製連結，分享的是目前頁面的網址） {#jgb/C/team-public-page-share}
 - phrasings:
   - {text: "招租店舖怎麼分享", source: "draft:outline-20260920", status: proposed}
-  - {text: "招租店舖有沒有短網址", source: "draft:outline-20260920", status: proposed}
   - {text: "怎麼分享招租店舖到Line", source: "draft:outline-20260920", status: proposed}
-- sources: [help:slug90_zh-Hant.html, code:app/Http/Controllers/IndexController.php]
+- sources: [help:slug90_zh-Hant.html, code:src/pages/users/public/_parts/AsideInfo.vue]
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
 招租店舖左側選單提供快捷鍵，可以快速分享此頁面至 FB、Line 或 LinkedIn，也可以複製連結。
-如果房東所屬團隊有設定客製短網址，分享出去的網址會是該客製短網址；否則會用系統自動產生的一組固定網址代替。
-### 多團隊招募頁是什麼？（沒有指定住宅或商用時自動轉址到住宅、強制只顯示招租、不顯示社區篩選、每頁預設10筆） {#jgb/C/team-public-page-recruitment}
+分享出去的網址就是目前這個招租店舖頁面的網址。
+### 多團隊招募頁和一般招租店舖有什麼不同？（沒有指定住宅或商用時自動轉址到住宅、只顯示招租、不顯示社區篩選、每頁預設 10 筆） {#jgb/C/team-public-page-recruitment}
 - phrasings:
-  - {text: "多團隊招募頁是什麼", source: "draft:outline-20260920", status: proposed}
+  - {text: "招募頁每頁顯示幾筆", source: "draft:outline-20260920", status: proposed}
   - {text: "招募頁跟一般店舖的網址不一樣嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "招募頁跟招租店舖差在哪", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/routes/users.js, code:src/pages/users/public/Index.vue]
@@ -969,3 +968,4 @@ Facebook 也只有在房東有填寫連結時才會顯示「立即聯繫」按�
 - instance_applicability: general
 多團隊招募頁如果網址沒有帶物件用途，會自動轉址並補上「住宅」用途。
 多團隊招募頁固定只顯示招租物件，且不會載入社區篩選模組，這兩點都跟一般招租店舖不同。
+多團隊招募頁每頁預設顯示 10 筆，一般招租店舖則是 30 筆。

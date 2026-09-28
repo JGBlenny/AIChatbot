@@ -50,7 +50,7 @@ language: zh-TW
 - instance_applicability: general
 註冊頁除了 Email 之外，也提供 Facebook、Google、LINE 三種第三方帳號快速註冊。
 透過 LINE 內建瀏覽器開啟 Google 註冊時，系統會另外開啟外部瀏覽器完成驗證。
-用第三方帳號註冊成功後，仍會導向 Email 驗證流程，系統會自動帶入對應的 Email 完成綁定。
+用第三方帳號註冊後，仍會進入 Email 驗證流程，需要自行輸入要綁定的 Email 並完成驗證。
 ### 註冊卡在機器人驗證過期怎麼辦？（會退回第一步重新勾選） {#jgb/A/register-captcha-expired}
 - phrasings:
   - {text: "機器人驗證過期", source: "draft:outline-20260920", status: proposed}
@@ -90,18 +90,18 @@ language: zh-TW
 密碼長度至少需 6 個字元（含）以上。
 密碼須同時包含至少一個英文字母和一個數字，只有英文或只有數字都無法通過。
 確認密碼欄位必須與密碼欄位輸入一致才能完成註冊。
-### 註冊時 Email 已被註冊過怎麼辦？（系統會將帳號合併） {#jgb/A/register-email-already-registered}
+### 註冊時 Email 已被註冊過怎麼辦？（已完成註冊的 Email 會直接被擋下；只有還沒完成 Email 註冊的舊帳號才會進行帳號合併） {#jgb/A/register-email-already-registered}
 - phrasings:
   - {text: "Email 已經註冊過", source: "draft:outline-20260920", status: proposed}
   - {text: "帳號合併", source: "draft:outline-20260920", status: proposed}
   - {text: "重複註冊", source: "draft:outline-20260920", status: proposed}
   - {text: "曾經用 SSO 註冊過還能再用 Email 註冊嗎", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/users/auth/parts/AccountSetting.vue]
+- sources: [code:src/pages/users/auth/parts/AccountSetting.vue, code:app/Http/Controllers/AuthController.php]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-驗證信步驟通過後，系統會先檢查該 Email 是否已被註冊（例如先前已用同一 Email 透過第三方帳號註冊過）。
-若已註冊，畫面標題會顯示「帳號已註冊」，並提示該 Email 已註冊過、JGB 將進行帳號合併，使用者按「繼續」即可完成流程進入下一步（綁定手機）。
+如果這個 Email 已經有完成註冊的帳號（Email 已驗證、也設過密碼），在第一步輸入 Email 時就會顯示「此帳號已註冊」並擋下，不會進入後續步驟；現在用第三方帳號註冊時，也會一併建立這樣的帳號。
+只有這個 Email 已經有帳號、但還沒完成 Email 註冊（例如較早期用第三方帳號註冊的帳號）時，驗證信步驟通過後，畫面標題才會顯示「帳號已註冊」並提示 JGB 將進行帳號合併，使用者按「繼續」即可完成流程進入下一步（綁定手機）。
 此情境按「繼續」時會直接完成帳號設定，不會再檢查姓名、密碼等欄位是否填寫完整。
 ### 註冊要綁定手機號碼嗎？（可選填、簡訊驗證、可「下次再驗證」略過） {#jgb/A/register-phone-bind}
 - phrasings:
@@ -129,7 +129,7 @@ language: zh-TW
 系統會在進入手機綁定步驟前先檢查目前帳號是否已有綁定手機。
 若已綁定，畫面會直接顯示「手機已綁定」，說明未來可用手機號碼登入或作為忘記帳號時的替代找回方式，按「繼續」即可完成註冊流程。
 若是在註冊流程中出現此畫面，按「繼續」會前進到選擇身分步驟；若是註冊完成後在其他情境觸發手機驗證，則會依原本要前往的頁面返回，不會進入選擇身分畫面。
-### 註冊完之後要選身分嗎？（房東/管理者、租客二選一，可同時擁有兩種身分） {#jgb/A/register-role-select}
+### 註冊完之後要選身分嗎？（一般會在房東/管理者、租客中二選一，可同時擁有兩種身分；從租客端網站導轉來的會直接導回原頁） {#jgb/A/register-role-select}
 - phrasings:
   - {text: "註冊完要選身分嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "房東身分和租客身分", source: "draft:outline-20260920", status: proposed}
@@ -139,10 +139,10 @@ language: zh-TW
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
-註冊或登入時都會出現身分選擇畫面，讓使用者選擇「我是房東/管理者」或「我是租客」。
+一般的註冊或登入流程會出現身分選擇畫面，讓使用者選擇「我是房東/管理者」或「我是租客」；已註冊過的第三方帳號登入時，則會直接進入首頁。
 同一組帳號可同時擁有房東與租客兩種身分，選擇的身分只決定這次要進入哪一種介面。
-若是從租客端網站導轉來註冊，選擇身分後系統會依照先前記下的導轉網址，把使用者導回原本要前往的頁面，而不是進入一般會員中心首頁。
-### 驗證碼輸入畫面長什麼樣子？（識別碼加 4 碼數字，輸入錯誤太多次會被鎖住） {#jgb/A/register-verify-code-shape}
+若是從租客端網站導轉來註冊，綁定手機這一步完成或略過後，系統會直接把使用者導回原本要前往的頁面，不會再出現身分選擇畫面。
+### 驗證碼輸入畫面長什麼樣子？（識別碼加 4 碼數字；輸入錯誤太多次驗證碼會失效，需重新發送） {#jgb/A/register-verify-code-shape}
 - phrasings:
   - {text: "驗證碼長什麼樣子", source: "draft:outline-20260920", status: proposed}
   - {text: "驗證碼輸入錯誤被鎖", source: "draft:outline-20260920", status: proposed}
@@ -152,8 +152,8 @@ language: zh-TW
 - business_types: [system_provider]
 - instance_applicability: general
 驗證碼輸入畫面由兩部分組成：左邊顯示一組簡短的識別碼，右邊是使用者要輸入的 4 碼數字驗證碼。
-如果驗證碼連續輸入錯誤太多次，畫面會顯示對應的錯誤訊息；手機驗證、忘記帳號、忘記密碼這三個流程的輸入框會同時被鎖住、無法再輸入，但註冊時的 Email 驗證流程只會顯示錯誤訊息，輸入框不會被鎖住。
-### 從驗證信連結折返時會從頭開始註冊嗎？（不會，系統會記住 Email 直接跳到輸入驗證碼畫面） {#jgb/A/register-email-link-resume}
+如果驗證碼輸入錯誤太多次，畫面會提示驗證次數過多、驗證碼已失效，需要稍候重新發送驗證碼；輸入框本身不會被鎖住。
+### 從驗證信連結折返時會從頭開始註冊嗎？（系統會記住 Email，但機器人驗證失效時會退回第一步） {#jgb/A/register-email-link-resume}
 - phrasings:
   - {text: "點驗證信連結會不會重來", source: "draft:outline-20260920", status: proposed}
   - {text: "收信後點回註冊頁", source: "draft:outline-20260920", status: proposed}
@@ -163,7 +163,7 @@ language: zh-TW
 - business_types: [system_provider]
 - instance_applicability: general
 透過信箱 App 開啟的註冊邀請連結，常會用信箱 App 內建的瀏覽器開啟；使用者跳去收驗證信、再重新點開連結時，很容易讓整個註冊流程從頭開始重跑一次。
-為了避免這個情況，系統會把使用者輸入過的 Email 記在瀏覽器裡；只要偵測到有記住的 Email，而且上次是停在輸入驗證碼的步驟，就會直接帶使用者跳到輸入驗證碼畫面，不需要重新輸入 Email。
+系統會把使用者輸入過的 Email 記在瀏覽器裡，折返時會嘗試直接回到輸入驗證碼的步驟；但如果這次的機器人驗證紀錄已經失效（例如超過 30 分鐘，或是在另一個瀏覽器開啟連結），系統會清空 Email、退回第一步，需要重新勾選機器人驗證。
 ## 登入 {#A-login}
 ### JGB 有哪些登入方式？（Email、手機號碼、Facebook／Google／LINE） {#jgb/A/login-methods}
 - phrasings:
@@ -228,7 +228,7 @@ language: zh-TW
 - instance_applicability: general
 登入頁網址可以帶身分參數，直接跳到對應身分（房東/管理者或租客）的登入表單。
 若沒有帶身分參數，或參數不是這兩者之一，會停留在身分選擇畫面，需先點選「房東/管理者」或「租客」卡片才會出現帳號密碼欄位。
-登入表單元件與身分選擇元件共用同一份角色欄位，只要這個角色欄位被清空，畫面就會自動跳回身分選擇畫面，不會停在空白的帳密表單。
+登入表單上沒有返回身分選擇的按鈕；選錯身分時，重新開啟不帶身分參數的登入頁，就會回到身分選擇畫面重新選擇。
 ### 登入帳號或密碼錯誤時會顯示什麼？ {#jgb/A/login-error}
 - phrasings:
   - {text: "登入失敗", source: "draft:outline-20260920", status: proposed}
@@ -262,15 +262,15 @@ language: zh-TW
 - business_types: [system_provider]
 - instance_applicability: general
 登入表單下方提供「忘記帳號」連結，點擊後會前往忘記帳號流程頁面。
-### 登入頁下面有連到註冊頁的連結嗎？（「還沒有帳號嗎？立即註冊」） {#jgb/A/login-no-account-register-link}
+### 登入頁有連到註冊頁的連結嗎？（登入表單上方的「還沒有帳號嗎？立即註冊」） {#jgb/A/login-no-account-register-link}
 - phrasings:
-  - {text: "登入頁下面有什麼連結", source: "draft:outline-20260920", status: proposed}
+  - {text: "登入頁怎麼去註冊", source: "draft:outline-20260920", status: proposed}
   - {text: "還沒帳號怎麼註冊", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/auth/parts/LoginForm.vue]
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
-尚未註冊的使用者也可從登入頁「還沒有帳號嗎」旁的「立即註冊」連結前往註冊頁。
+尚未註冊的使用者可以從登入表單上方「還沒有帳號嗎」旁的「立即註冊」連結前往註冊頁。
 ### 同一帳號同時有房東與租客身分時怎麼切換？（登入時重新選擇身分，或在帳號資訊設定預設身分） {#jgb/A/login-identity-switch}
 - phrasings:
   - {text: "房東租客身分切換", source: "draft:outline-20260920", status: proposed}
@@ -319,9 +319,9 @@ language: zh-TW
 - instance_applicability: general
 重設密碼前必須先完成帳號驗證，可以選擇用 Email 或手機號碼兩種方式其中之一收驗證碼。
 驗證碼確認正確後，畫面會顯示「帳號驗證成功」並切換到重設密碼表單。
-新密碼的格式限制與註冊時相同：至少 6 個字元、需同時包含英文與數字，且需與確認密碼欄位一致。
+新密碼需至少 6 個字元、同時包含英文與數字，且需與確認密碼欄位一致。
 送出並顯示密碼設定成功後，系統會依處理結果自動導向指定頁面或一般登入頁，需使用新密碼重新登入。
-如果密碼設定失敗，畫面會用瀏覽器內建的提示視窗顯示「密碼設定失敗」以及失敗原因，不是用頁面上一般的錯誤提示樣式呈現。
+如果密碼設定失敗，畫面會跳出提示視窗顯示「密碼設定失敗」與失敗原因；若是密碼格式不符，密碼欄位下方也會顯示錯誤提示。
 ### 「請設定密碼」畫面是什麼情境？（受邀請帳號的初次設定密碼流程） {#jgb/A/forget-password-setpwd-invite}
 - phrasings:
   - {text: "請設定密碼是什麼", source: "draft:outline-20260920", status: proposed}
@@ -332,7 +332,7 @@ language: zh-TW
 - business_types: [system_provider]
 - instance_applicability: general
 當使用者是透過特定邀請連結進入忘記密碼頁面時，畫面會直接顯示「請設定密碼」，而不是一般的忘記密碼流程，並跳過帳號驗證直接進入設定密碼表單。
-此情境是搭配受邀請設定密碼的帳號（例如被交由他人代管的大房東子帳號），透過瀏覽器暫存的識別碼與委託連結建立密碼，設定成功後那組暫存資料會被清除，並依處理結果導向對應頁面。
+這個情境用在大房東的邀請流程：受邀的帳號透過邀請連結進入後，直接設定自己的密碼，設定成功後會依處理結果導向對應頁面。
 此畫面沿用一般忘記密碼頁面同樣的新密碼格式規則，設定成功後會依處理結果導向指定頁面，沒有指定頁面時才導回一般登入頁。
 ## 會員中心首頁 {#A-member-home}
 ### 會員中心首頁有哪些統計區塊？（即時物件出租率、即將到期合約、即將到來應到帳帳單、7日內修繕單） {#jgb/A/dashboard-overview-blocks}
@@ -370,7 +370,7 @@ language: zh-TW
 - business_types: [system_provider]
 - instance_applicability: general
 首頁下方顯示帳單、合約、修繕的整合列表；具備通知檢視權限的使用者，還會另外看到 Email 通知紀錄區塊。
-### 大房東的首頁畫面和一般房東不一樣嗎？（只顯示物件/社區最新收支詳情與收支圖表，沒有捷徑與四個統計方塊） {#jgb/A/dashboard-big-landlord-view}
+### 大房東的首頁畫面和一般房東不一樣嗎？（只顯示社區最新收支詳情與收支圖表，沒有捷徑與四個統計方塊） {#jgb/A/dashboard-big-landlord-view}
 - phrasings:
   - {text: "大房東首頁", source: "draft:outline-20260920", status: proposed}
   - {text: "大房東看到的畫面", source: "draft:outline-20260920", status: proposed}
@@ -380,7 +380,7 @@ language: zh-TW
 - business_types: [system_provider]
 - instance_applicability: general
 若目前登入身分是大房東，首頁不會顯示即時物件出租率、即將到期合約、即將到來應到帳帳單、7日內修繕單四個方塊，也不會有捷徑區塊。
-大房東首頁改為顯示「物件最新收支詳情」（若身分是社區則顯示「社區最新收支詳情」），以及可自訂區間（7天／30天／90天／6個月）的收支圖表。
+大房東首頁改為顯示「社區最新收支詳情」，以及可自訂區間（7天／30天／90天／6個月）的收支圖表。
 ### 怎麼在會員中心首頁切換團隊？（左上角下拉選單選擇被加入的團隊） {#jgb/A/dashboard-team-switch}
 - phrasings:
   - {text: "怎麼切換團隊", source: "draft:outline-20260920", status: proposed}
@@ -431,7 +431,7 @@ language: zh-TW
 - instance_applicability: general
 帳號資訊頁的「帳號基本資訊」區塊可以上傳／更換大頭照（選填），並編輯姓氏、名稱、稱謂。
 頁面說明這些資料是為了讓刊登廣告時租客有更安心的租屋體驗而蒐集的。
-若帳號的基本資訊被鎖定（例如合約雙方完成簽署後，系統會自動鎖定租客的基本資訊），姓氏、名稱、稱謂三個欄位就不會再被更新，即使表單有送出新值。
+部分特定合作團隊的合約完成簽署後，如果租客的姓氏、名稱、身分證字號都已填寫，系統會鎖定租客的基本資訊；鎖定後，姓氏、名稱、稱謂三個欄位就不會再被更新，即使表單有送出新值。
 ### 帳號資訊頁怎麼看手機的綁定狀態？（已綁定／未綁定，未綁定才有「前往綁定」按鈕） {#jgb/A/account-phone-bind-status}
 - phrasings:
   - {text: "手機有沒有綁定", source: "draft:outline-20260920", status: proposed}
@@ -480,7 +480,7 @@ language: zh-TW
 帳號資訊頁「SSO 綁定狀態」區塊會分別列出 Facebook、Google、LINE 三個第三方帳號各自的綁定狀態（已綁定或未綁定）。
 頁面本身沒有提供解除 SSO 綁定的按鈕或連結，只顯示 Facebook、Google、LINE 三個平台各自的綁定狀態。
 「修改密碼」區塊只有在該帳號已經設有密碼時才會顯示；如果帳號是純粹用第三方帳號註冊、從未設定過密碼，此區塊會被隱藏。
-### 登入後怎麼在帳號資訊頁修改密碼？（需輸入目前密碼，新密碼規則同註冊） {#jgb/A/account-change-password}
+### 登入後怎麼在帳號資訊頁修改密碼？（需輸入目前密碼、新密碼與確認新密碼） {#jgb/A/account-change-password}
 - phrasings:
   - {text: "登入後怎麼改密碼", source: "draft:outline-20260920", status: proposed}
   - {text: "帳號資訊改密碼", source: "draft:outline-20260920", status: proposed}
@@ -491,8 +491,8 @@ language: zh-TW
 - instance_applicability: general
 帳號資訊頁點選「修改密碼」會展開密碼修改表單。
 修改密碼必須同時填寫目前密碼、新密碼與確認新密碼；若目前密碼輸入錯誤，會回覆「目前密碼驗證錯誤」並擋下整筆表單儲存。
-新密碼長度需至少 6 個字元，且需與確認新密碼欄位一致，這與註冊時的密碼規則一致。
-同一使用者名下若有以此帳號代管的子帳號（例如受託的大房東子帳號），密碼變更會一併同步更新到這些子帳號。
+新密碼長度需至少 6 個字元，且需與確認新密碼欄位一致。
+如果這個帳號另外綁定了 Facebook、Google 或 LINE 登入，密碼變更會一併同步到這些綁定的登入帳號。
 「密碼」區塊下方會顯示「上次更新：」的日期時間；如果從來沒有改過密碼，則顯示帳號建立的時間。
 ### 帳號資訊頁的聯絡資訊要填什麼？（LINE ID、Facebook 個人首頁、WhatsApp、第二組電話） {#jgb/A/account-contact-info}
 - phrasings:
@@ -505,7 +505,7 @@ language: zh-TW
 - business_types: [system_provider]
 - instance_applicability: general
 「聯絡資訊」區塊會呈現在刊登的廣告上，讓租客有更多管道聯繫房東。
-LINE 欄位可勾選「同手機號碼」，勾選後不需另外輸入 LINE ID；未勾選則需填寫 LINE ID。
+LINE 欄位可勾選「同手機號碼」，勾選後不需另外輸入 LINE ID；未勾選時可以自行填寫 LINE ID，這個欄位不是必填。
 Facebook 欄位填寫的是個人首頁連結，欄位長度上限 200 字元。
 WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不需打「+」，欄位長度上限 200 字元。
 第二組聯絡號碼欄位限填純數字，長度上限 50 字元；畫面上目前沒有「以此電話作為廣告頁聯絡電話」這個核取方塊可以勾選。
@@ -558,7 +558,7 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
 另需填寫 Email 與手機號碼，同樣列為必填。
 身分證正反面照片為附件上傳項目，走證件引導裁切流程。
 另可上傳「工作名片/學生證」「良民證」「小章」三項其他附件，皆非必填。
-如果有多筆個人身分資料（例如同時管理多個角色），表單上方會出現一列可以切換的項目；超過 5 筆時，會多一個「所有團隊」的下拉選單方便切換，並不是變成側邊清單或捲動列。
+如果有多筆個人身分資料（例如同時管理多個角色），表單上方會出現一列可以橫向捲動切換的項目；超過 5 筆時，會多一個「所有團隊」的下拉選單方便切換。
 ### 公司身分的簽約資訊要填什麼？（公司名稱、統編、負責人、公司電話/Email、登記證資料） {#jgb/A/signer-corp-fields}
 - phrasings:
   - {text: "公司簽約資訊", source: "draft:outline-20260920", status: proposed}
@@ -568,11 +568,11 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
-公司/團隊身分的簽約資訊必填項目為公司登記名稱（上限 20 字）與公司統編、公司電話、公司 Email。
+公司/團隊身分的簽約資訊必填項目為公司登記名稱（上限 20 字）、公司統編、公司電話、公司 Email；社宅團隊另外必須填寫公司負責人。
 統編欄位可選擇類型：「公司統編(檢核)」會用台灣統編檢查碼規則驗證格式，長度上限 8 碼；選「其他統編(不檢核)」則不驗證，長度上限放寬到 20 碼。
 公司登記證號、登記證日期、公司登記證縣市為選填欄位；若身分是社宅團隊，公司登記證號則改為必填。
-「公司負責人」是公司團隊都會顯示的欄位；「社宅業者編號」只有社宅團隊才會顯示並填寫，一般公司團隊看不到這個欄位。
-### 公司身分要上傳哪些印章與證件附件？（公司大章、小章、經紀人章、經紀業章、租賃管理員章） {#jgb/A/signer-corp-seals}
+「公司負責人」是公司團隊都會顯示的欄位，社宅團隊為必填、其他公司團隊為選填；「社宅業者編號」只有社宅團隊才會顯示並填寫，一般公司團隊看不到這個欄位。
+### 公司身分可以上傳哪些印章與證件附件？（公司大章、小章、經紀人章、經紀業章、租賃管理員章，皆為選填） {#jgb/A/signer-corp-seals}
 - phrasings:
   - {text: "公司大小章上傳", source: "draft:outline-20260920", status: proposed}
   - {text: "經紀人章要傳嗎", source: "draft:outline-20260920", status: proposed}
@@ -581,7 +581,7 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
-公司身分的簽約資訊固定要上傳五種印章附件：公司大章、公司小章、不動產經紀人章、不動產經紀業章、租賃管理員章；這五個欄位並沒有依身分或資格才顯示的條件，一律都會出現在頁面上。
+公司身分的簽約資訊可以上傳五種印章附件：公司大章、公司小章、不動產經紀人章、不動產經紀業章、租賃管理員章；這五個欄位一律都會出現在頁面上，皆為選填。
 除了這五種印章之外，還有一個獨立的「電子簽約圖章」欄位（畫面上顯示為「圖章」），用來啟用「預設使用圖章取代親手簽名」的簽約方式，走另一組上傳流程。
 ### 有不動產經紀人／租賃管理人員資格要多填什麼？（經紀人證號、租賃管理人員證號等） {#jgb/A/signer-broker-manager-fields}
 - phrasings:
@@ -605,9 +605,9 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
 - business_types: [system_provider]
 - instance_applicability: general
 「簽約資訊」頁面本身固定以可編輯模式載入。
-公司身分的各欄位元件都能各自被設成不可編輯，此時公司登記名稱、統編、負責人等欄位會顯示為停用樣式。
+團隊的簽約資訊只有團隊擁有者，或具備編輯團隊資訊權限的成員可以編輯；沒有權限時，公司登記名稱、統編、負責人等公司欄位會顯示為停用樣式。
 個人身分的欄位元件目前沒有這種可設為不可編輯的樣式切換，固定顯示為一般可編輯樣式；只有公司身分的欄位會依此顯示停用樣式。
-### 簽約資訊的地址欄位怎麼填？（戶籍/通訊地址、公司登記/通訊地址皆為必填，可一鍵「同上」） {#jgb/A/signer-address-fields}
+### 簽約資訊的地址欄位怎麼填？（戶籍/通訊地址、公司登記/通訊地址皆為必填，可一鍵「同戶籍地址」「同公司登記地址」） {#jgb/A/signer-address-fields}
 - phrasings:
   - {text: "戶籍地址要填嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "通訊地址可以跟戶籍一樣嗎", source: "draft:outline-20260920", status: proposed}
@@ -630,7 +630,7 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
 - instance_applicability: general
 如果目前團隊底下有多筆公司簽約對象資料，簽約資訊表單上方會出現一列可以切換的項目，點選就能切到不同的對象。
 超過 5 筆公司簽約對象時，會多一個「所有團隊」的下拉選單，方便直接選擇要編輯的對象，而不是逐一點選切換列。
-### 簽約資訊頁的「管理」「儲存」按鈕做什麼？（管理開啟簽約對象管理視窗，儲存只在個人身分頁面出現） {#jgb/A/signer-manage-save-buttons}
+### 簽約資訊頁的「管理」「儲存」按鈕做什麼？（管理開啟簽約對象視窗可新增或刪除，儲存只在個人身分頁面出現） {#jgb/A/signer-manage-save-buttons}
 - phrasings:
   - {text: "簽約資訊管理按鈕", source: "draft:outline-20260920", status: proposed}
   - {text: "簽約資訊儲存按鈕", source: "draft:outline-20260920", status: proposed}
@@ -638,7 +638,7 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-「管理」按鈕會開啟一個管理簽約對象的視窗，用來新增、編輯或選擇要簽約的對象。
+「管理」按鈕會開啟管理簽約對象的視窗，可以新增簽約對象，或刪除既有的簽約對象。
 「儲存」按鈕只有在個人身分、且位於「簽約資訊」這個獨立頁面時才會出現，用來單獨儲存目前這筆個人簽約資料。
 ## 通知中心 {#A-notification-center}
 ### 通知中心怎麼依類型篩選通知？（依合約/帳務/修繕/裝置/其他分類） {#jgb/A/notification-center-type-filter}
@@ -686,7 +686,7 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
 租客身分一律能看到自己的通知內容。
 房東側（非租客）使用者，只有具備查看通知的權限，通知中心才會顯示實際通知資料。
 沒有這項權限時，類型篩選下拉選單仍會顯示，但會變成停用樣式；每頁筆數選單則完全不會出現；畫面主要區塊會顯示「您還沒有收到任何通知，再等等吧 📭」，而不是錯誤訊息。
-### 點擊通知列表項目會發生什麼？（前往原連結，並帶上標記已讀的依據） {#jgb/A/notification-mark-read-navigate}
+### 點擊通知列表項目會發生什麼？（前往原連結，並帶上標記已讀的依據；訊息類通知不換頁） {#jgb/A/notification-mark-read-navigate}
 - phrasings:
   - {text: "點通知會怎樣", source: "draft:outline-20260920", status: proposed}
   - {text: "通知會標記已讀嗎", source: "draft:outline-20260920", status: proposed}
@@ -695,9 +695,9 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-每則通知點擊後，會依原本的連結網址前往對應頁面，並在網址上加一個參數，作為之後判斷這則通知已經處理過的依據。
+除了訊息類通知之外，每則通知點擊後都會依原本的連結網址前往對應頁面，並在網址上加一個參數，作為之後判斷這則通知已經處理過的依據；訊息類通知則是在原頁面開啟訊息視窗，不會換頁。
 每則通知會顯示所屬物件名稱、通知來源使用者姓名、通知內容文字，以及依通知類型著色的標籤（如合約、帳務、修繕、裝置、其他、訊息）。
-### 篩選後頁碼超出範圍會自動跳回第一頁嗎？（寫了判斷式，但實際上永遠不會被觸發） {#jgb/A/notification-mark-read-out-of-range}
+### 篩選後頁碼超出範圍會自動跳回第一頁嗎？（不會，只會顯示空的通知清單） {#jgb/A/notification-mark-read-out-of-range}
 - phrasings:
   - {text: "通知頁碼超出範圍", source: "draft:outline-20260920", status: proposed}
   - {text: "篩選後跳到空白頁", source: "draft:outline-20260920", status: proposed}
@@ -730,7 +730,7 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
 - business_types: [system_provider]
 - instance_applicability: general
 「通知收件設定」頁面說明每個通知信分類最多可再新增 3 組電子信箱收取通知信件。
-預設信箱欄位固定顯示帳號本身的 Email，此欄位鎖定無法編輯。
+預設信箱欄位固定顯示目前身分（團隊）擁有者的 Email，此欄位鎖定無法編輯；團隊成員看到的也是團隊擁有者的信箱。
 每個通知分類卡片內都可各自新增/移除最多 3 組自訂收件信箱，每組都是標準 Email 格式輸入框且為必填，彼此分類互不共用額度。
 需要具備通知設定的編輯權限，才能新增信箱、儲存表單；沒有這個權限時，「新增信箱」與「儲存」按鈕會直接消失，但每組信箱旁的移除（×）按鈕仍會顯示，只是變成無法點擊的停用樣式。
 ### 通知收件設定有哪些分類？（合約、帳務、修繕、訂閱、房東管理，另有限定開放的加盟分潤報表） {#jgb/A/notification-settings-categories}

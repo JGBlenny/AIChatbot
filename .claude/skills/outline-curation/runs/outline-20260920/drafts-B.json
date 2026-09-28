@@ -180,7 +180,7 @@
     {
      "proposed_id": "jgb/B/team-signer-personal-info",
      "askable": "簽約資訊卡的個人資訊要填哪些欄位",
-     "title": "簽約資訊卡「個人資訊」區塊只有個人團隊看得到，要填什麼？（姓氏、名稱、身分證字號、Email、手機必填；戶籍地址／通訊地址／身分證正反面／其他附件選填或另有條件）",
+     "title": "簽約資訊卡「個人資訊」區塊只有個人團隊看得到，要填什麼？（姓氏、名稱、身分證字號、Email、手機、戶籍地址、通訊地址必填；身分證正反面與其他附件選填）",
      "unit_ids": [
       "page:web:users.role"
      ],
@@ -735,7 +735,7 @@
     {
      "proposed_id": "jgb/B/team-signer-profile-switch",
      "askable": "怎麼在多組簽約資訊之間切換",
-     "title": "怎麼在多組簽約資訊之間切換？（頁面上方有分頁式選單，超過 5 組會收進「所有團隊」下拉選單）",
+     "title": "怎麼在多組簽約資訊之間切換？（頁面上方有可切換的分頁列，超過 5 組時另外多出「所有團隊」下拉選單）",
      "unit_ids": [
       "page:web:users.role"
      ],
@@ -1091,7 +1091,7 @@
     {
      "proposed_id": "jgb/B/member-seat-limit",
      "askable": "邀請成員有沒有名額上限",
-     "title": "邀請成員有名額上限嗎？（依訂閱方案而定，達上限要升級方案才能繼續邀請）",
+     "title": "邀請成員有名額上限嗎？（依訂閱方案而定；已訂閱達上限要升級方案，未訂閱要先訂閱）",
      "unit_ids": [
       "page:web:users.team"
      ],
@@ -1110,7 +1110,7 @@
      ],
      "sentences": [
       "團隊可以邀請的成員人數上限，是由目前的訂閱方案決定的。",
-      "達到上限後，點「邀請」不會開啟邀請視窗，而是提示已達到數量上限，並導引前往升級訂閱方案。"
+      "達到上限後，點「邀請」不會開啟邀請視窗，而是提示已達到數量上限：已訂閱的團隊會導引前往升級方案；還沒訂閱服務的團隊則會提示請先前往訂閱服務，按鈕是「我要訂閱」。"
      ],
      "sources": [
       "code:resources/views/layouts/lightbox/general.blade.php"
@@ -1258,7 +1258,7 @@
     {
      "proposed_id": "jgb/B/member-list-role-inline-change",
      "askable": "成員列表可以直接在列表上改成員的角色嗎",
-     "title": "成員列表可以直接改成員的角色嗎？（列表每一列都有角色下拉選單可以直接切換；選單裡也有「+ 新增角色」，可以直接開「編輯角色」視窗）",
+     "title": "成員列表可以直接改成員的角色嗎？（一般成員那一列可以用角色下拉選單直接切換；擁有者與自己那一列、或沒有編輯權限時選單會鎖住）",
      "unit_ids": [
       "page:web:users.team"
      ],
@@ -1275,8 +1275,8 @@
       "新增角色的入口在哪裡"
      ],
      "sentences": [
-      "成員列表每一列都有一個角色下拉選單，選擇要指派的角色後就會直接送出變更，不用另外打開編輯視窗。",
-      "這個下拉選單最下面有一個「+ 新增角色」選項，點選後會直接開啟「編輯角色」視窗，不用先離開成員列表。"
+      "成員列表中一般成員那一列有角色下拉選單，選擇要指派的角色後就會直接送出變更，不用另外打開編輯視窗；團隊擁有者那一列和自己那一列的選單是鎖住的，沒有編輯權限時整個選單也會鎖住。",
+      "可以切換的角色下拉選單最下面有一個「+ 新增角色」選項，點選後會直接開啟「編輯角色」視窗，不用先離開成員列表。"
      ],
      "sources": [
       "code:resources/views/users/team/index.blade.php"
@@ -1361,7 +1361,7 @@
     {
      "proposed_id": "jgb/B/member-role-edit-reset",
      "askable": "編輯角色時的重設條件按鈕是做什麼的",
-     "title": "編輯角色時的「重設條件」按鈕是做什麼的？（把目前正在編輯、還沒儲存的勾選狀態還原）",
+     "title": "編輯角色時的「重設條件」按鈕是做什麼的？（把所有權限勾選全部清空）",
      "unit_ids": [
       "page:web:users.team"
      ],
@@ -1375,7 +1375,7 @@
      "phrasings": [
       "重設條件按鈕做什麼",
       "角色編輯畫面的重設是什麼意思",
-      "角色勾選錯了怎麼還原"
+      "重設條件會清掉哪些勾選"
      ],
      "sentences": [
       "編輯角色或新增角色的視窗下方有「重設條件」按鈕，點下去會把所有權限勾選全部清空，包含編輯既有角色時原本已載入的勾選。"
@@ -1808,7 +1808,7 @@
     {
      "proposed_id": "jgb/B/biglandlord-authorize-apply-step",
      "askable": "授權物件的勾選為什麼要按套用才會生效",
-     "title": "授權物件頁取消勾選後，為什麼要按「套用」才會生效？（取消勾選只是待處理狀態，按套用才真的移除，按恢復可以取消這次變更）",
+     "title": "授權物件頁移除物件後，為什麼要按「套用」才會生效？（按紅色 X 移除只是待處理狀態，按套用才真的移除，按恢復可以取消這次變更）",
      "unit_ids": [
       "page:users.team.owned"
      ],
@@ -1820,13 +1820,13 @@
      ],
      "instance_applicability": "general",
      "phrasings": [
-      "授權物件取消勾選沒反應",
+      "授權物件移除後沒反應",
       "套用按鈕是做什麼的",
-      "取消勾選可以復原嗎"
+      "移除物件可以復原嗎"
      ],
      "sentences": [
-      "在授權物件頁把某項權限取消勾選後，畫面只會先標示「「套用」後將移除此物件」，並不會立刻生效。",
-      "要按下頁面下方的「套用」按鈕，這次的變更才會真正送出；在按下套用之前，也可以點「恢復」把這次的取消勾選還原。"
+      "在授權物件頁按某筆物件的紅色 X 移除後，畫面只會先在這筆物件上標示「「套用」後將移除此物件」，並不會立刻生效。",
+      "要按下頁面下方的「套用」按鈕，這次的變更才會真正送出；在按下套用之前，也可以點「恢復」把這次的移除還原。"
      ],
      "sources": [
       "code:src/pages/bigLandlords/list/_parts/owned.jsx"
@@ -1946,7 +1946,7 @@
     {
      "proposed_id": "jgb/B/biglandlord-seat-limit",
      "askable": "大房東名額有上限嗎",
-     "title": "大房東名額有上限嗎？（大房東列表頁的「新增大房東」目前沒有名額檢查；成員／大房東管理頁（團隊管理底下的大房東列表）的「邀請」按鈕才有，額滿時會提示升級方案）",
+     "title": "大房東名額有上限嗎？（目前大房東列表頁的「新增大房東」沒有名額檢查）",
      "unit_ids": [
       "page:bigLandlords.list",
       "page:web:users.team"
@@ -1961,15 +1961,13 @@
      "instance_applicability": "general",
      "phrasings": [
       "大房東可以新增幾位",
-      "大房東名額上限",
-      "大房東額滿怎麼辦"
+      "大房東名額上限"
      ],
      "sentences": [
-      "大房東列表頁上「新增大房東」按鈕背後的新增流程，沒有名額上限的檢查邏輯，目前可以持續新增。",
-      "另外還有一個「成員／大房東管理」頁面（團隊管理底下的大房東列表），上面「邀請」按鈕在名額已滿時會換成提示「已達到數量上限！」並導引前往升級方案；這個名額檢查是綁在按邀請送出的當下，不是綁在大房東列表頁的新增大房東流程上。"
+      "大房東列表頁上「新增大房東」按鈕背後的新增流程，沒有名額上限的檢查邏輯，目前可以持續新增。"
      ],
      "sources": [
-      "code:resources/views/layouts/lightbox/general.blade.php"
+      "code:app/Services/BigLandlordService.php"
      ],
      "evidence": [
       {
@@ -1981,21 +1979,6 @@
        "sentence_index": 0,
        "source": "code:src/components/Lightbox/MemberInvite.vue",
        "quote_or_symbol": "const result = await ajax(`${store.state.APP_URL}/api/bigLandlord`, { ...state.form }, 'POST')"
-      },
-      {
-       "sentence_index": 1,
-       "source": "code:resources/views/users/team/index.blade.php",
-       "quote_or_symbol": "@if ($isFull)"
-      },
-      {
-       "sentence_index": 1,
-       "source": "code:resources/views/layouts/lightbox/general.blade.php",
-       "quote_or_symbol": "$lightbox['subscribedPlanBigLandlordIsFull']['title'] = ___('已達到數量上限！');"
-      },
-      {
-       "sentence_index": 1,
-       "source": "code:app/Http/Middleware/PremisesLimitCheck.php",
-       "quote_or_symbol": "case 'users.team': // 擋邀請團隊成員與大房東"
       }
      ],
      "not_supported_greps": [
@@ -2281,7 +2264,7 @@
     {
      "proposed_id": "jgb/B/biglandlord-report-community-rate",
      "askable": "大房東報表可以依社區看嗎、匯率在哪顯示",
-     "title": "大房東報表可以依社區細看嗎？（報表清單有「社區」欄，細節頁還會顯示匯率）",
+     "title": "大房東報表可以依社區細看嗎？（報表清單有「社區」欄，幣別不同時細節頁會顯示匯率）",
      "unit_ids": [
       "page:bigLandlords.report"
      ],
@@ -2299,7 +2282,7 @@
      ],
      "sentences": [
       "大房東報表清單有一欄「社區」，顯示這位大房東名下物件所屬的社區。",
-      "點開大房東報表細節，畫面上會顯示「匯率」欄，並且「所有物件」「社區」「物件」三個層級各自都有獨立的「下載報表」按鈕，可以分別下載對應範圍的報表。"
+      "點開大房東報表細節，若結算幣別和站台幣別不同、而且有匯率資料，會顯示「匯率」（手機版不顯示這段文字）；「所有物件」「社區」「物件」三個層級各自都有獨立的「下載報表」按鈕，可以分別下載對應範圍的報表。"
      ],
      "sources": [
       "code:src/pages/bigLandlords/report/_parts/ListTable.vue",
@@ -2989,7 +2972,7 @@
     {
      "proposed_id": "jgb/B/advance-fee-items-merge",
      "askable": "自訂費用項目可以合併嗎",
-     "title": "自訂費用項目可以合併嗎？（可以選多個已存在的品項合併成新品項，合併後無法回復）",
+     "title": "自訂費用項目可以合併嗎？（可以把多個品項併入其中一個既有品項，合併後無法回復）",
      "unit_ids": [
       "page:users.advance"
      ],
@@ -3006,7 +2989,7 @@
       "自訂費用項目合併操作"
      ],
      "sentences": [
-      "在「帳單自訂費用項目」可以點「合併項目」，選擇多個已存在的收入類或支出類品項，合併成一個新品項，合併後金額會一併統計。",
+      "在「帳單自訂費用項目」可以點「合併項目」，勾選要合併的收入類或支出類品項，再從「欲合併品項」選擇要併入的既有品項，勾選的品項就會併入這個品項；系統預設的品項不能勾選合併。",
       "品項合併後無法回復，操作前系統會提醒要謹慎操作。"
      ],
      "sources": [
@@ -3346,7 +3329,7 @@
     {
      "proposed_id": "jgb/B/advance-auto-publish-unpublish",
      "askable": "招租廣告可以自動刊登或自動下架嗎",
-     "title": "招租廣告可以自動刊登或自動下架嗎？（可以，合約到期日前 N 天自動刊登，簽約後自動下架）",
+     "title": "招租廣告可以自動刊登或自動下架嗎？（部分特定合作團隊可以：合約到期日前 N 天自動刊登，簽約後自動下架）",
      "unit_ids": [
       "page:users.advance"
      ],
@@ -3364,7 +3347,7 @@
       "自動刊登天數怎麼設定"
      ],
      "sentences": [
-      "進階設定「物件管理」區塊的「招租廣告自動刊登」啟用後，可以設定天數，物件的合約到期日在這個天數內時，系統會自動將這個物件的招租廣告刊登出去。",
+      "進階設定「物件管理」區塊的「招租廣告自動刊登」與「招租廣告自動下架」只有部分特定合作團隊看得到，其他團隊沒有這兩個設定；「招租廣告自動刊登」啟用後，可以設定天數，物件的合約到期日在這個天數內時，系統會自動將這個物件的招租廣告刊登出去。",
       "「招租廣告自動下架」啟用後，物件簽訂合約、進入執行中合約狀態時，系統會自動把這個物件的招租廣告下架。"
      ],
      "sources": [
@@ -3456,7 +3439,7 @@
      ],
      "sentences": [
       "進階設定「帳務管理」區塊的「銷貨單品項代號對應」只有特定團隊的進階設定才會出現，是一項團隊層級的設定，不是每個團隊都有。",
-      "這個設定用來指定匯出「M 化銷貨單」時，每個費用品項要帶入的產品代號；沒有設定代號的品項，匯出檔案裡的產品代號會是空白，也可以指定哪些品項不要匯入銷貨單。"
+      "這個設定用來指定匯出「M 化銷貨單」時，每個費用品項要帶入的產品代號；留空的品項會沿用系統預設代號，只有系統預設也沒有代號的品項，匯出檔案裡的產品代號才會是空白，也可以指定哪些品項不要匯入銷貨單。"
      ],
      "sources": [
       "code:src/pages/users/advance/_part/BillsManagement.vue",
@@ -3496,7 +3479,7 @@
     {
      "proposed_id": "jgb/B/advance-community-labels",
      "askable": "社區管理的城市、區域、位置設定是做什麼用的",
-     "title": "「社區管理」的城市／區域／位置設定是做什麼？（只有特定合作團隊看得到，用來建立社區篩選用的自訂標籤）",
+     "title": "「社區管理」的城市／區域／位置設定是做什麼？（只有特定合作團隊看得到，用來建立社區可選用的城市、區域、位置標籤）",
      "unit_ids": [
       "page:users.advance"
      ],
@@ -3515,7 +3498,7 @@
      ],
      "sentences": [
       "進階設定的「社區管理」區塊只會顯示給特定合作團隊，一般團隊看不到這個區塊。",
-      "這個區塊有「城市設定」「區域設定」「位置設定」三組獨立的自訂標籤，設定好之後可以用來為物件加上對應的城市、區域、位置標籤。"
+      "這個區塊有「城市設定」「區域設定」「位置設定」三組獨立的自訂標籤，設定好之後，可以在社區編輯頁的基本資料為社區選用對應的城市、區域、位置標籤。"
      ],
      "sources": [
       "code:src/pages/users/advance/Index.jsx"
@@ -3715,7 +3698,7 @@
     {
      "proposed_id": "jgb/B/lessee-crud",
      "askable": "租客列表可以新增匯入匯出租客嗎",
-     "title": "租客列表可以新增、匯入、匯出租客嗎？（可以手動新增，也支援 Excel 匯入與匯出）",
+     "title": "租客列表可以新增、匯入、匯出租客嗎？（個人房東與法人房東可以手動新增、Excel 匯入與匯出；社宅團隊只能匯出）",
      "unit_ids": [
       "page:users.lesseeList"
      ],
@@ -3733,7 +3716,7 @@
       "已簽約的租客可以改名字嗎"
      ],
      "sentences": [
-      "租客列表可以「新增租客」手動加入一筆租客資料，也可以用「匯入租客」批次匯入，或「匯出租客」下載成 Excel。",
+      "個人房東與法人房東的租客列表可以「新增租客」手動加入一筆租客資料，也可以用「匯入租客」批次匯入，或「匯出租客」下載成 Excel；社宅團隊的租客列表只有匯出功能，不能新增或匯入。",
       "已經有合約的租客，沒辦法在這裡編輯姓名，也不能被刪除。"
      ],
      "sources": [
@@ -3827,7 +3810,7 @@
     {
      "proposed_id": "jgb/B/lessee-notification-toggle-effect",
      "askable": "租客的通知開關關閉會怎樣",
-     "title": "租客的通知開關關閉後會怎樣？（收不到任何合約或帳單的通知信件或簡訊）",
+     "title": "租客的通知開關關閉後會怎樣？（Email 與手機的開關分開，關掉哪一個就停哪一種通知）",
      "unit_ids": [
       "page:users.lesseeList"
      ],
@@ -3844,16 +3827,22 @@
       "通知開關在哪裡設定"
      ],
      "sentences": [
-      "如果租客的通知開關被關閉，就不會收到任何合約或帳單的通知信件或簡訊。"
+      "租客列表的 Email 與手機通知開關是分開的：關閉 Email 開關就不會再收到 Email 通知，關閉手機開關就不會再收到簡訊通知，另一種管道不受影響；已註冊的租客，開關無法在這裡操作。"
      ],
      "sources": [
-      "code:src/pages/users/lesseeList/parts/PageTop.vue"
+      "code:src/pages/users/lesseeList/parts/PageTop.vue",
+      "code:src/pages/users/lesseeList/parts/ContactInfoBlock.jsx"
      ],
      "evidence": [
       {
        "sentence_index": 0,
-       "source": "code:src/pages/users/lesseeList/parts/PageTop.vue",
-       "quote_or_symbol": "當通知開關關閉時，租客將無法收到所有的通知，包括合約與帳單的通知信件 / 簡訊。"
+       "source": "code:src/pages/users/lesseeList/parts/ContactInfoBlock.jsx",
+       "quote_or_symbol": "notifyStatusType: props?.info?.type === ContactInfoType.mail ? 'email_notify_status' : 'phone_notify_status'"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/lesseeList/parts/ContactInfoBlock.jsx",
+       "quote_or_symbol": "props?.is_tenant_registered === 1 && 'disabled'"
       }
      ],
      "not_supported_greps": [],
@@ -3974,7 +3963,7 @@
     {
      "proposed_id": "jgb/B/lessee-list-columns-by-role",
      "askable": "社宅團隊和特定合作團隊的租客列表欄位有什麼不一樣",
-     "title": "社宅團隊與特定合作團隊的租客列表欄位有什麼不一樣？（社宅團隊沒有「會員註冊」「免註冊合約」「操作」，「註冊合約」欄改叫「所屬總合約」；特定合作團隊多了國籍、生日、主要聯絡方式）",
+     "title": "社宅團隊的租客列表欄位有什麼不一樣？（沒有「會員註冊」「免註冊合約」與操作選單，「註冊合約」欄改叫「所屬總合約」）",
      "unit_ids": [
       "page:users.lesseeList"
      ],
@@ -3987,12 +3976,10 @@
      "instance_applicability": "general",
      "phrasings": [
       "社宅租客列表欄位差在哪",
-      "為什麼我看不到國籍欄位",
       "租客列表沒有操作欄"
      ],
      "sentences": [
-      "社宅團隊的租客列表看不到「會員註冊」「免註冊合約」「操作」這三欄，「註冊合約」欄也會改叫「所屬總合約」。",
-      "只有特定合作團隊的租客列表才會多出「國籍」「生日」「主要聯絡方式」這三欄，一般團隊與社宅團隊都沒有這幾欄。"
+      "社宅團隊的租客列表看不到「會員註冊」「免註冊合約」兩欄與最右側的操作選單，「註冊合約」欄也會改叫「所屬總合約」。"
      ],
      "sources": [
       "code:src/pages/users/lesseeList/parts/ListTable.vue"
@@ -4002,16 +3989,6 @@
        "sentence_index": 0,
        "source": "code:src/pages/users/lesseeList/parts/ListTable.vue",
        "quote_or_symbol": "[ConfigRuleKey.socialHousing]: [id, name, ...creditRatingColumns, emailForSocialHousing, phoneForSocialHousing, registerContractAmount, repairAmount, onTimePayRate, bankName, bankInfo],"
-      },
-      {
-       "sentence_index": 1,
-       "source": "code:src/pages/users/lesseeList/parts/ListTable.vue",
-       "quote_or_symbol": "beyond360: [id, name, ...creditRatingColumns, registerStatus, email, phone, registerContractAmount, exemptRegisterContractAmount, repairAmount, onTimePayRate, nationality, birthday, primaryContact, bankName, bankInfo, action],"
-      },
-      {
-       "sentence_index": 1,
-       "source": "code:src/pages/users/lesseeList/parts/ListTable.vue",
-       "quote_or_symbol": "default: [id, name, ...creditRatingColumns, registerStatus, email, phone, registerContractAmount, exemptRegisterContractAmount, repairAmount, onTimePayRate, bankName, bankInfo, action],"
       }
      ],
      "not_supported_greps": [],

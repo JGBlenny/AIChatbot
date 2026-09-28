@@ -51,7 +51,7 @@ language: zh-TW
 如果團隊目前的訂閱方案尚未結束，系統會先提示要到「團隊管理」的「訂閱方案」解除現有訂閱，才能繼續刪除。
 可以刪除時，畫面會列出這個團隊目前持有的物件數與合約數，並要求輸入團隊名稱才能按下刪除。
 刪除團隊會同時清除這個團隊底下所有的物件、合約與帳務等資料，且無法恢復。
-### 簽約資訊卡「個人資訊」區塊只有個人團隊看得到，要填什麼？（姓氏、名稱、身分證字號、Email、手機必填；戶籍地址／通訊地址／身分證正反面／其他附件選填或另有條件） {#jgb/B/team-signer-personal-info}
+### 簽約資訊卡「個人資訊」區塊只有個人團隊看得到，要填什麼？（姓氏、名稱、身分證字號、Email、手機、戶籍地址、通訊地址必填；身分證正反面與其他附件選填） {#jgb/B/team-signer-personal-info}
 - phrasings:
   - {text: "簽約資訊個人欄位有哪些", source: "draft:outline-20260920", status: proposed}
   - {text: "身分證正反面要傳嗎", source: "draft:outline-20260920", status: proposed}
@@ -154,7 +154,7 @@ language: zh-TW
 個人資訊區塊有「戶籍地址」與「通訊地址」兩組地址欄位，通訊地址可以點「同戶籍地址」直接帶入戶籍地址的內容。
 公司資訊區塊有「公司登記地址」與「公司通訊地址」兩組地址欄位，公司通訊地址可以點「同公司登記地址」直接帶入。
 社宅團隊還會多出「經紀人通訊地址」與「租賃管理人員通訊地址」這兩組獨立的地址欄位，一般團隊看不到這兩組。
-### 怎麼在多組簽約資訊之間切換？（頁面上方有分頁式選單，超過 5 組會收進「所有團隊」下拉選單） {#jgb/B/team-signer-profile-switch}
+### 怎麼在多組簽約資訊之間切換？（頁面上方有可切換的分頁列，超過 5 組時另外多出「所有團隊」下拉選單） {#jgb/B/team-signer-profile-switch}
 - phrasings:
   - {text: "怎麼切換不同的簽約資訊", source: "draft:outline-20260920", status: proposed}
   - {text: "簽約資訊太多組要怎麼選", source: "draft:outline-20260920", status: proposed}
@@ -236,7 +236,7 @@ language: zh-TW
 如果這位成員名下還有綁定中的物件或合約，系統會先擋下移除，改跳出提示，要先指派其他經理人後才能進行移除動作。
 這時候可以點進「〔成員姓名〕擁有的物件」或「擁有的合約」頁面，把每一筆物件或合約的授權移除，再回來移除這位成員。
 成員移除後，對方將無法再存取這個團隊內的任何資訊。
-### 邀請成員有名額上限嗎？（依訂閱方案而定，達上限要升級方案才能繼續邀請） {#jgb/B/member-seat-limit}
+### 邀請成員有名額上限嗎？（依訂閱方案而定；已訂閱達上限要升級方案，未訂閱要先訂閱） {#jgb/B/member-seat-limit}
 - phrasings:
   - {text: "成員邀請有上限嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "團隊成員人數上限", source: "draft:outline-20260920", status: proposed}
@@ -246,7 +246,7 @@ language: zh-TW
 - business_types: [system_provider]
 - instance_applicability: general
 團隊可以邀請的成員人數上限，是由目前的訂閱方案決定的。
-達到上限後，點「邀請」不會開啟邀請視窗，而是提示已達到數量上限，並導引前往升級訂閱方案。
+達到上限後，點「邀請」不會開啟邀請視窗，而是提示已達到數量上限：已訂閱的團隊會導引前往升級方案；還沒訂閱服務的團隊則會提示請先前往訂閱服務，按鈕是「我要訂閱」。
 ### 怎麼指派物件或合約給成員？（點成員旁的鉛筆圖示選「編輯綁定物件」或「編輯綁定合約」） {#jgb/B/member-assign-owned}
 - phrasings:
   - {text: "怎麼指派物件給成員", source: "draft:outline-20260920", status: proposed}
@@ -271,7 +271,7 @@ language: zh-TW
 - instance_applicability: general
 成員列表頁面點「角色權限說明請點擊這裡」，會開啟「角色權限列表」視窗，用表格列出團隊內每個角色目前擁有的權限：每一列是一項權限（部分權限旁邊有說明文字），每一欄對應一個角色，用綠色勾號或灰色叉號表示這個角色有沒有這項權限。
 如果團隊目前還沒有建立任何角色，角色權限列表會顯示「目前團隊還沒有任何角色，您可以選擇：」，並提供「新增角色」的按鈕。
-### 成員列表可以直接改成員的角色嗎？（列表每一列都有角色下拉選單可以直接切換；選單裡也有「+ 新增角色」，可以直接開「編輯角色」視窗） {#jgb/B/member-list-role-inline-change}
+### 成員列表可以直接改成員的角色嗎？（一般成員那一列可以用角色下拉選單直接切換；擁有者與自己那一列、或沒有編輯權限時選單會鎖住） {#jgb/B/member-list-role-inline-change}
 - phrasings:
   - {text: "列表上怎麼改成員角色", source: "draft:outline-20260920", status: proposed}
   - {text: "角色下拉選單怎麼用", source: "draft:outline-20260920", status: proposed}
@@ -280,8 +280,8 @@ language: zh-TW
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-成員列表每一列都有一個角色下拉選單，選擇要指派的角色後就會直接送出變更，不用另外打開編輯視窗。
-這個下拉選單最下面有一個「+ 新增角色」選項，點選後會直接開啟「編輯角色」視窗，不用先離開成員列表。
+成員列表中一般成員那一列有角色下拉選單，選擇要指派的角色後就會直接送出變更，不用另外打開編輯視窗；團隊擁有者那一列和自己那一列的選單是鎖住的，沒有編輯權限時整個選單也會鎖住。
+可以切換的角色下拉選單最下面有一個「+ 新增角色」選項，點選後會直接開啟「編輯角色」視窗，不用先離開成員列表。
 ### 編輯角色時的「開啟條件」是什麼？（要先勾選列出的其他權限，這個權限選項的勾選框才能點；沒先勾好之前，勾選框會維持鎖住） {#jgb/B/member-role-edit-open-condition}
 - phrasings:
   - {text: "為什麼有些權限打不開", source: "draft:outline-20260920", status: proposed}
@@ -294,11 +294,11 @@ language: zh-TW
 - instance_applicability: general
 「編輯角色」視窗裡，部分權限選項旁邊會顯示「開啟條件」文字，列出必須先勾選的其他權限。
 在還沒勾選完開啟條件列出的權限之前，這個選項的勾選框會維持鎖住、無法點選；全部勾好開啟條件之後，這個選項才能勾選。
-### 編輯角色時的「重設條件」按鈕是做什麼的？（把目前正在編輯、還沒儲存的勾選狀態還原） {#jgb/B/member-role-edit-reset}
+### 編輯角色時的「重設條件」按鈕是做什麼的？（把所有權限勾選全部清空） {#jgb/B/member-role-edit-reset}
 - phrasings:
   - {text: "重設條件按鈕做什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "角色編輯畫面的重設是什麼意思", source: "draft:outline-20260920", status: proposed}
-  - {text: "角色勾選錯了怎麼還原", source: "draft:outline-20260920", status: proposed}
+  - {text: "重設條件會清掉哪些勾選", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/layouts/lightbox/character-capability-edit.blade.php]
 - target_user: [property_manager]
 - business_types: [system_provider]
@@ -392,17 +392,17 @@ language: zh-TW
 - business_types: [system_provider]
 - instance_applicability: general
 每一筆大房東資料旁的操作選單，可以選「編輯所屬物件」跳到授權物件頁面、「編輯大房東」修改資料，或「刪除大房東」移除這位大房東。
-### 授權物件頁取消勾選後，為什麼要按「套用」才會生效？（取消勾選只是待處理狀態，按套用才真的移除，按恢復可以取消這次變更） {#jgb/B/biglandlord-authorize-apply-step}
+### 授權物件頁移除物件後，為什麼要按「套用」才會生效？（按紅色 X 移除只是待處理狀態，按套用才真的移除，按恢復可以取消這次變更） {#jgb/B/biglandlord-authorize-apply-step}
 - phrasings:
-  - {text: "授權物件取消勾選沒反應", source: "draft:outline-20260920", status: proposed}
+  - {text: "授權物件移除後沒反應", source: "draft:outline-20260920", status: proposed}
   - {text: "套用按鈕是做什麼的", source: "draft:outline-20260920", status: proposed}
-  - {text: "取消勾選可以復原嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "移除物件可以復原嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/bigLandlords/list/_parts/owned.jsx]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-在授權物件頁把某項權限取消勾選後，畫面只會先標示「「套用」後將移除此物件」，並不會立刻生效。
-要按下頁面下方的「套用」按鈕，這次的變更才會真正送出；在按下套用之前，也可以點「恢復」把這次的取消勾選還原。
+在授權物件頁按某筆物件的紅色 X 移除後，畫面只會先在這筆物件上標示「「套用」後將移除此物件」，並不會立刻生效。
+要按下頁面下方的「套用」按鈕，這次的變更才會真正送出；在按下套用之前，也可以點「恢復」把這次的移除還原。
 ### 刪除大房東會發生什麼？（先跳出確認視窗，確認後這位大房東就無法再存取這個團隊的任何資訊） {#jgb/B/biglandlord-delete-confirm}
 - phrasings:
   - {text: "刪除大房東會怎樣", source: "draft:outline-20260920", status: proposed}
@@ -426,17 +426,15 @@ language: zh-TW
 - instance_applicability: general
 大房東列表上方有「所有權人／轉租人」區塊，可以紀錄代管物件的所有權人或轉租人資料，提升日後編輯合約的效率。
 可以點「新增」建立一筆，操作選單則有「編輯所有權人」與「刪除所有權人」；清單筆數多時可以點「載入更多」繼續往下載。
-### 大房東名額有上限嗎？（大房東列表頁的「新增大房東」目前沒有名額檢查；成員／大房東管理頁（團隊管理底下的大房東列表）的「邀請」按鈕才有，額滿時會提示升級方案） {#jgb/B/biglandlord-seat-limit}
+### 大房東名額有上限嗎？（目前大房東列表頁的「新增大房東」沒有名額檢查） {#jgb/B/biglandlord-seat-limit}
 - phrasings:
   - {text: "大房東可以新增幾位", source: "draft:outline-20260920", status: proposed}
   - {text: "大房東名額上限", source: "draft:outline-20260920", status: proposed}
-  - {text: "大房東額滿怎麼辦", source: "draft:outline-20260920", status: proposed}
-- sources: [code:resources/views/layouts/lightbox/general.blade.php]
+- sources: [code:app/Services/BigLandlordService.php]
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
 大房東列表頁上「新增大房東」按鈕背後的新增流程，沒有名額上限的檢查邏輯，目前可以持續新增。
-另外還有一個「成員／大房東管理」頁面（團隊管理底下的大房東列表），上面「邀請」按鈕在名額已滿時會換成提示「已達到數量上限」並導引前往升級方案；這個名額檢查是綁在按邀請送出的當下，不是綁在大房東列表頁的新增大房東流程上。
 ### 大房東列表沒有資料時會顯示什麼？（一開始沒有任何大房東顯示「尚無大房東」；用關鍵字搜尋卻沒有符合結果則顯示「沒有符合的結果😢」） {#jgb/B/biglandlord-list-empty}
 - phrasings:
   - {text: "大房東列表是空的", source: "draft:outline-20260920", status: proposed}
@@ -496,7 +494,7 @@ language: zh-TW
 - business_types: [system_provider]
 - instance_applicability: general
 側邊選單裡的「大房東報表」項目，要這位成員的角色有查看大房東報表的功能權限，才不會在選單整理時被拿掉。
-### 大房東報表可以依社區細看嗎？（報表清單有「社區」欄，細節頁還會顯示匯率） {#jgb/B/biglandlord-report-community-rate}
+### 大房東報表可以依社區細看嗎？（報表清單有「社區」欄，幣別不同時細節頁會顯示匯率） {#jgb/B/biglandlord-report-community-rate}
 - phrasings:
   - {text: "大房東報表有社區欄嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "大房東報表匯率在哪看", source: "draft:outline-20260920", status: proposed}
@@ -506,7 +504,7 @@ language: zh-TW
 - business_types: [system_provider]
 - instance_applicability: general
 大房東報表清單有一欄「社區」，顯示這位大房東名下物件所屬的社區。
-點開大房東報表細節，畫面上會顯示「匯率」欄，並且「所有物件」「社區」「物件」三個層級各自都有獨立的「下載報表」按鈕，可以分別下載對應範圍的報表。
+點開大房東報表細節，若結算幣別和站台幣別不同、而且有匯率資料，會顯示「匯率」（手機版不顯示這段文字）；「所有物件」「社區」「物件」三個層級各自都有獨立的「下載報表」按鈕，可以分別下載對應範圍的報表。
 ## 大房東對帳表 {#B-biglandlord-sheet}
 ### 大房東對帳表在算什麼？（只有特定合作團隊看得到完整的押金、屋主資金、屋主提領、屋主直收等類別金額，其他團隊只看得到屋主租金收支；單月報表才有「上一月」「下一月」「下載」，整年度報表是「匯出報表」） {#jgb/B/biglandlord-sheet-overview}
 - phrasings:
@@ -663,7 +661,7 @@ language: zh-TW
 進階設定的「裝置管理」區塊可以「綁定設備廠商」，綁定後就能在 JGB 平台內管理你的智能裝置。
 點「開始綁定」後，要選擇裝置廠商並輸入該廠商的帳號密碼登入，才能完成綁定。
 綁定完成的廠商會列在下方，每一筆都可以按「更新資料」重新取得裝置資料。
-### 自訂費用項目可以合併嗎？（可以選多個已存在的品項合併成新品項，合併後無法回復） {#jgb/B/advance-fee-items-merge}
+### 自訂費用項目可以合併嗎？（可以把多個品項併入其中一個既有品項，合併後無法回復） {#jgb/B/advance-fee-items-merge}
 - phrasings:
   - {text: "怎麼合併費用項目", source: "draft:outline-20260920", status: proposed}
   - {text: "合併品項後可以回復嗎", source: "draft:outline-20260920", status: proposed}
@@ -672,7 +670,7 @@ language: zh-TW
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-在「帳單自訂費用項目」可以點「合併項目」，選擇多個已存在的收入類或支出類品項，合併成一個新品項，合併後金額會一併統計。
+在「帳單自訂費用項目」可以點「合併項目」，勾選要合併的收入類或支出類品項，再從「欲合併品項」選擇要併入的既有品項，勾選的品項就會併入這個品項；系統預設的品項不能勾選合併。
 品項合併後無法回復，操作前系統會提醒要謹慎操作。
 ### 進階設定的「繳費週期優惠」是給誰用的？（只有特定合作團隊才看得到，選比月繳更長的繳費週期就有折扣） {#jgb/B/advance-payment-cycle-discount}
 - phrasings:
@@ -738,7 +736,7 @@ language: zh-TW
 「房東專屬帳號」欄位在「全域設定」區塊裡，這個區塊只有法人房東或社宅團隊的進階設定看得到，個人房東團隊沒有這個區塊。
 進階設定「全域設定」區塊的「房東專屬帳號」會應用在這個團隊的「團隊首頁」上。
 「房東專屬帳號」第一次儲存後就不能自行修改，要修改需要洽 JGB 客服人員處理。
-### 招租廣告可以自動刊登或自動下架嗎？（可以，合約到期日前 N 天自動刊登，簽約後自動下架） {#jgb/B/advance-auto-publish-unpublish}
+### 招租廣告可以自動刊登或自動下架嗎？（部分特定合作團隊可以：合約到期日前 N 天自動刊登，簽約後自動下架） {#jgb/B/advance-auto-publish-unpublish}
 - phrasings:
   - {text: "招租廣告會自動上架嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "簽約後廣告會自動下架嗎", source: "draft:outline-20260920", status: proposed}
@@ -747,7 +745,7 @@ language: zh-TW
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
-進階設定「物件管理」區塊的「招租廣告自動刊登」啟用後，可以設定天數，物件的合約到期日在這個天數內時，系統會自動將這個物件的招租廣告刊登出去。
+進階設定「物件管理」區塊的「招租廣告自動刊登」與「招租廣告自動下架」只有部分特定合作團隊看得到，其他團隊沒有這兩個設定；「招租廣告自動刊登」啟用後，可以設定天數，物件的合約到期日在這個天數內時，系統會自動將這個物件的招租廣告刊登出去。
 「招租廣告自動下架」啟用後，物件簽訂合約、進入執行中合約狀態時，系統會自動把這個物件的招租廣告下架。
 ### 「合約管理」的標籤設定跟物件的標籤設定是同一個嗎？（不是，這是合約專用的另一組標籤） {#jgb/B/advance-contract-label}
 - phrasings:
@@ -769,8 +767,8 @@ language: zh-TW
 - business_types: [system_provider]
 - instance_applicability: general
 進階設定「帳務管理」區塊的「銷貨單品項代號對應」只有特定團隊的進階設定才會出現，是一項團隊層級的設定，不是每個團隊都有。
-這個設定用來指定匯出「M 化銷貨單」時，每個費用品項要帶入的產品代號；沒有設定代號的品項，匯出檔案裡的產品代號會是空白，也可以指定哪些品項不要匯入銷貨單。
-### 「社區管理」的城市／區域／位置設定是做什麼？（只有特定合作團隊看得到，用來建立社區篩選用的自訂標籤） {#jgb/B/advance-community-labels}
+這個設定用來指定匯出「M 化銷貨單」時，每個費用品項要帶入的產品代號；留空的品項會沿用系統預設代號，只有系統預設也沒有代號的品項，匯出檔案裡的產品代號才會是空白，也可以指定哪些品項不要匯入銷貨單。
+### 「社區管理」的城市／區域／位置設定是做什麼？（只有特定合作團隊看得到，用來建立社區可選用的城市、區域、位置標籤） {#jgb/B/advance-community-labels}
 - phrasings:
   - {text: "城市設定在哪", source: "draft:outline-20260920", status: proposed}
   - {text: "區域設定是什麼", source: "draft:outline-20260920", status: proposed}
@@ -781,7 +779,7 @@ language: zh-TW
 - business_types: [system_provider]
 - instance_applicability: general
 進階設定的「社區管理」區塊只會顯示給特定合作團隊，一般團隊看不到這個區塊。
-這個區塊有「城市設定」「區域設定」「位置設定」三組獨立的自訂標籤，設定好之後可以用來為物件加上對應的城市、區域、位置標籤。
+這個區塊有「城市設定」「區域設定」「位置設定」三組獨立的自訂標籤，設定好之後，可以在社區編輯頁的基本資料為社區選用對應的城市、區域、位置標籤。
 ### 進階設定的「短租期核可流程」是做什麼的？（只有特定合作團隊看得到；租期少於設定天數時，合約要先簽核通過才會發出邀請給租客） {#jgb/B/advance-short-lease-approval}
 - phrasings:
   - {text: "短租期核可流程是什麼", source: "draft:outline-20260920", status: proposed}
@@ -817,7 +815,7 @@ language: zh-TW
 - business_types: [system_provider]
 - instance_applicability: general
 租客列表可以顯示「信用評價」欄位，但只有擁有「查看租客信用評價」權限的成員，畫面上才會出現這一欄；沒有這個權限的人，整欄完全不會出現，也不會佔用表格版面。
-### 租客列表可以新增、匯入、匯出租客嗎？（可以手動新增，也支援 Excel 匯入與匯出） {#jgb/B/lessee-crud}
+### 租客列表可以新增、匯入、匯出租客嗎？（個人房東與法人房東可以手動新增、Excel 匯入與匯出；社宅團隊只能匯出） {#jgb/B/lessee-crud}
 - phrasings:
   - {text: "租客列表可以新增租客嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "租客資料怎麼匯入匯出", source: "draft:outline-20260920", status: proposed}
@@ -826,7 +824,7 @@ language: zh-TW
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
-租客列表可以「新增租客」手動加入一筆租客資料，也可以用「匯入租客」批次匯入，或「匯出租客」下載成 Excel。
+個人房東與法人房東的租客列表可以「新增租客」手動加入一筆租客資料，也可以用「匯入租客」批次匯入，或「匯出租客」下載成 Excel；社宅團隊的租客列表只有匯出功能，不能新增或匯入。
 已經有合約的租客，沒辦法在這裡編輯姓名，也不能被刪除。
 ### 租客列表裡 Email／手機號碼顯示藍色、橘色、灰色代表什麼？（驗證狀態：已驗證／等待驗證／未驗證） {#jgb/B/lessee-notification-status-color}
 - phrasings:
@@ -850,16 +848,16 @@ language: zh-TW
 - business_types: [system_provider]
 - instance_applicability: general
 驗證通知寄出後，信件或簡訊裡連結的有效時間是 72 小時。
-### 租客的通知開關關閉後會怎樣？（收不到任何合約或帳單的通知信件或簡訊） {#jgb/B/lessee-notification-toggle-effect}
+### 租客的通知開關關閉後會怎樣？（Email 與手機的開關分開，關掉哪一個就停哪一種通知） {#jgb/B/lessee-notification-toggle-effect}
 - phrasings:
   - {text: "租客通知關閉會怎樣", source: "draft:outline-20260920", status: proposed}
   - {text: "關掉通知還收得到帳單信嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "通知開關在哪裡設定", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/users/lesseeList/parts/PageTop.vue]
+- sources: [code:src/pages/users/lesseeList/parts/PageTop.vue, code:src/pages/users/lesseeList/parts/ContactInfoBlock.jsx]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-如果租客的通知開關被關閉，就不會收到任何合約或帳單的通知信件或簡訊。
+租客列表的 Email 與手機通知開關是分開的：關閉 Email 開關就不會再收到 Email 通知，關閉手機開關就不會再收到簡訊通知，另一種管道不受影響；已註冊的租客，開關無法在這裡操作。
 ### 租客的「準時繳租率」怎麼算？（已到帳未逾期帳單數 ÷ 全部應計入帳單數） {#jgb/B/lessee-on-time-pay-rate}
 - phrasings:
   - {text: "準時繳租率公式", source: "draft:outline-20260920", status: proposed}
@@ -884,17 +882,15 @@ language: zh-TW
 - instance_applicability: general
 租客列表預設會顯示 ID、姓名、會員註冊、Email - 通知、手機號碼 - 通知、註冊合約、免註冊合約、所屬修繕、準時繳租率、帳戶名稱、帳號資訊、操作這些欄位。
 「註冊合約」是這位租客名下、對方已註冊 JGB 帳號的合約數量；「免註冊合約」是不用租客先註冊帳號、建檔時就標記為免註冊的合約數量。
-### 社宅團隊與特定合作團隊的租客列表欄位有什麼不一樣？（社宅團隊沒有「會員註冊」「免註冊合約」「操作」，「註冊合約」欄改叫「所屬總合約」；特定合作團隊多了國籍、生日、主要聯絡方式） {#jgb/B/lessee-list-columns-by-role}
+### 社宅團隊的租客列表欄位有什麼不一樣？（沒有「會員註冊」「免註冊合約」與操作選單，「註冊合約」欄改叫「所屬總合約」） {#jgb/B/lessee-list-columns-by-role}
 - phrasings:
   - {text: "社宅租客列表欄位差在哪", source: "draft:outline-20260920", status: proposed}
-  - {text: "為什麼我看不到國籍欄位", source: "draft:outline-20260920", status: proposed}
   - {text: "租客列表沒有操作欄", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/lesseeList/parts/ListTable.vue]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-社宅團隊的租客列表看不到「會員註冊」「免註冊合約」「操作」這三欄，「註冊合約」欄也會改叫「所屬總合約」。
-只有特定合作團隊的租客列表才會多出「國籍」「生日」「主要聯絡方式」這三欄，一般團隊與社宅團隊都沒有這幾欄。
+社宅團隊的租客列表看不到「會員註冊」「免註冊合約」兩欄與最右側的操作選單，「註冊合約」欄也會改叫「所屬總合約」。
 ### 租客的 Email 或手機還在等待驗證時，帳單會怎樣？（帳單會停留在草稿分頁，等驗證完成或連結過期才能發送，也可以手動移動） {#jgb/B/lessee-pending-verification-bill-draft}
 - phrasings:
   - {text: "帳單卡在草稿分頁怎麼辦", source: "draft:outline-20260920", status: proposed}
