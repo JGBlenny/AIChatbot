@@ -14,6 +14,7 @@ language: zh-TW
   - {text: "怎麼只看儲值型電錶", source: "draft:outline-20260920", status: proposed}
   - {text: "電錶分類標籤有哪些", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/iots/list/Index.jsx]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -25,6 +26,7 @@ language: zh-TW
   - {text: "供電中斷電中是什麼標籤", source: "draft:outline-20260920", status: proposed}
   - {text: "狀態標籤在畫面哪個位置", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/iots/list/Index.jsx, code:app/Http/Controllers/IotController.php, code:src/pages/iots/_parts/PowerTag.jsx]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -36,6 +38,7 @@ language: zh-TW
   - {text: "怎麼找特定的電錶", source: "draft:outline-20260920", status: proposed}
   - {text: "電錶搜尋範圍有哪些", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/iots/list/Index.jsx]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -46,6 +49,7 @@ language: zh-TW
   - {text: "電錶列表的排序選單", source: "draft:outline-20260920", status: proposed}
   - {text: "門鎖清單能排序嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Iot.php]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -58,6 +62,7 @@ language: zh-TW
   - {text: "維護期間可以儲值嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "電錶度數為什麼不會動", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/iots/_parts/MaintenanceNotice.jsx, code:src/pages/iots/_parts/IotItem.jsx]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -85,6 +90,7 @@ language: zh-TW
   - {text: "為什麼有些電錶帳號沒有顯示到期提示", source: "draft:outline-20260920", status: proposed}
   - {text: "電錶到期提示租客看得到嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/iots/_parts/ManufacturerServiceNotice.jsx, code:app/Http/Controllers/IotController.php, code:src/pages/iots/_parts/Single.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -99,6 +105,7 @@ language: zh-TW
   - {text: "儲值型電錶跟一般型差在哪", source: "draft:outline-20260920", status: proposed}
   - {text: "最後連線成功時間是什麼", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/iots/_parts/IotItem.jsx, code:src/pages/iots/_parts/PowerTag.jsx, code:app/Http/Controllers/Admin/CustomerServiceController.php, code:app/Jobs/DaeJob.php]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -113,6 +120,7 @@ language: zh-TW
   - {text: "用電量圖表可以選幾天", source: "draft:outline-20260920", status: proposed}
   - {text: "CSV可以下載多久的資料", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/iots/_parts/IotItem.jsx]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -126,6 +134,7 @@ language: zh-TW
   - {text: "電錶發票設定在哪裡", source: "draft:outline-20260920", status: proposed}
   - {text: "一般型電錶編輯頁有電錶資料頁籤嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/iots/_parts/Single.vue, code:src/utils/constants/iots.ts, code:src/pages/iots/edit/Log.jsx]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -140,6 +149,7 @@ language: zh-TW
   - {text: "電錶綁定物件的規則", source: "draft:outline-20260920", status: proposed}
   - {text: "選擇物件是單選還是可以多選", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/iots/edit/Basic.jsx]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -152,6 +162,7 @@ language: zh-TW
   - {text: "強開模式是什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "電錶切換中不能點是為什麼", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/iots/_parts/TopUpSwitch.vue, code:src/pages/iots/_parts/PowerSwitch.vue, code:src/pages/iots/_parts/Single.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -166,6 +177,7 @@ language: zh-TW
   - {text: "預計可用電度怎麼算", source: "draft:outline-20260920", status: proposed}
   - {text: "電號在哪裡查", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/iots/_parts/PowerMeterInfo.jsx, code:src/utils/constants/iots.ts]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -180,6 +192,7 @@ language: zh-TW
   - {text: "儲值後帳單在哪裡看", source: "draft:outline-20260920", status: proposed}
   - {text: "儲值歷程在哪裡查", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/iots/_parts/IotItem.jsx, code:src/components/Lightbox/PowerMeterTopUp.vue, code:src/pages/iots/edit/Log.jsx]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -205,6 +218,7 @@ language: zh-TW
   - {text: "電錶發票要怎麼設定統編", source: "draft:outline-20260920", status: proposed}
   - {text: "帳單開立發票是哪個選項", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/iots/_parts/Invoice.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -216,6 +230,7 @@ language: zh-TW
   - {text: "此分類尚無設備是什麼意思", source: "draft:outline-20260920", status: proposed}
   - {text: "目前尚無綁定設備怎麼處理", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/iots/list/Index.jsx]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -229,6 +244,7 @@ language: zh-TW
   - {text: "小白盒怎麼看清單", source: "draft:outline-20260920", status: proposed}
   - {text: "裝置清單怎麼搜尋", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/iot/index.blade.php, code:app/Iot.php]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -242,6 +258,7 @@ language: zh-TW
   - {text: "為什麼我的門鎖沒有鎖門按鈕", source: "draft:outline-20260920", status: proposed}
   - {text: "門鎖離線還能操作嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/iot/index.blade.php, code:app/Http/Controllers/IotController.php]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -271,6 +288,7 @@ SkyWatch 門鎖的狀態欄位會直接顯示已開門或已關門，其他門�
   - {text: "共用門鎖是什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "門鎖類型怎麼選", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/iot/doorlock/basic.blade.php]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -296,6 +314,7 @@ SkyWatch 門鎖的狀態欄位會直接顯示已開門或已關門，其他門�
   - {text: "怎麼查門鎖歷史紀錄", source: "draft:outline-20260920", status: proposed}
   - {text: "開門記錄有哪些欄位", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/iot/doorlock/log.blade.php]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -308,6 +327,7 @@ SkyWatch 門鎖的狀態欄位會直接顯示已開門或已關門，其他門�
   - {text: "物件為什麼沒顯示IoT裝置標籤", source: "draft:outline-20260920", status: proposed}
   - {text: "物件刪不掉是不是因為有綁裝置", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/IotController.php, code:app/Estate.php, code:app/Http/Controllers/EstateController.php, code:resources/views/iot/index.blade.php]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general

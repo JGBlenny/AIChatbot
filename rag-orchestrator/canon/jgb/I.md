@@ -167,6 +167,7 @@ language: zh-TW
   - {text: "選方案時可以選幾種", source: "draft:outline-20260920", status: proposed}
   - {text: "方案物件數量怎麼拉", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/subscription/Chose.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -181,6 +182,7 @@ language: zh-TW
   - {text: "信用卡驗證怎麼跑", source: "draft:outline-20260920", status: proposed}
   - {text: "確認扣款會怎樣", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/subscription/Chose.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -195,6 +197,7 @@ language: zh-TW
   - {text: "統一編號要填嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "訂閱要留Email跟電話嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/subscription/Chose.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -209,6 +212,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
   - {text: "續訂優惠次數", source: "draft:outline-20260920", status: proposed}
   - {text: "續訂優惠可以用多久", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/subscription/Chose.vue, code:src/pages/users/subscription/MyPlan.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -222,6 +226,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
   - {text: "溢繳費用是什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "付款方式在哪裡看", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/subscription/MyPlan.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -234,6 +239,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
   - {text: "沒有權限可以變更方案嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "變更按鈕按不下去", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/subscription/MyPlan.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -246,6 +252,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
   - {text: "溢繳金怎麼算", source: "draft:outline-20260920", status: proposed}
   - {text: "換方案生效時間", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/UserController.php]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -272,6 +279,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
   - {text: "沒有信用卡授權會怎樣", source: "draft:outline-20260920", status: proposed}
   - {text: "續訂失敗有寬限期嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Console/Commands/AutoRenewSubscription.php, code:app/Role.php]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -299,6 +307,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
   - {text: "金流申請要錢嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "手續費可以轉嫁給租客嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/payment/routerView/Add.vue, code:src/pages/users/payment/_parts/CashBanks.vue, doc:/Users/chenqinghuang/dev/work/docs/幫助中心/JGB幫助中心_HTML_交付_20260818/qa27_zh-Hant.html]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -315,6 +324,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
   - {text: "金流商為什麼不能選", source: "draft:outline-20260920", status: proposed}
   - {text: "收款方式被鎖住怎麼辦", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/UserController.php, code:src/pages/users/payment/routerView/Add.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -327,6 +337,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
   - {text: "金流最多能開幾組帳號", source: "draft:outline-20260920", status: proposed}
   - {text: "藍新審核要多久", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/payment/_parts/Newebpay.vue, code:src/pages/users/payment/routerView/Add.vue, doc:/Users/chenqinghuang/dev/work/docs/幫助中心/JGB幫助中心_HTML_交付_20260818/qa27_zh-Hant.html]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -365,6 +376,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
   - {text: "一般收據怎麼選", source: "draft:outline-20260920", status: proposed}
   - {text: "收據要不要開通", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/payment/_parts/Receipt.vue, code:src/utils/constants/paymentSetting.ts]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -378,6 +390,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
   - {text: "押金收據印章設定", source: "draft:outline-20260920", status: proposed}
   - {text: "押金收據字數上限", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/payment/_parts/Receipt.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -413,6 +426,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
   - {text: "帳單收款人怎麼設定", source: "draft:outline-20260920", status: proposed}
   - {text: "收款人可以改成別人嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/payment/_parts/OtherSetting.vue, code:src/pages/users/payment/_parts/Receipt.vue, code:src/utils/constants/paymentSetting.ts]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -427,6 +441,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
   - {text: "聯繫我們表單欄位", source: "draft:outline-20260920", status: proposed}
   - {text: "demo表單怎麼填", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/listings/DemoForm.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -440,6 +455,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
   - {text: "感興趣功能有哪些選項", source: "draft:outline-20260920", status: proposed}
   - {text: "demo表單職稱選單", source: "draft:outline-20260920", status: proposed}
 - sources: [code:config/demoform.php]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -454,6 +470,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
   - {text: "填完表單多久有人回覆", source: "draft:outline-20260920", status: proposed}
   - {text: "demo表單送出成功畫面", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/listings/DemoForm.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -595,6 +612,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
   - {text: "首頁特色介紹內容", source: "draft:outline-20260920", status: proposed}
   - {text: "十大特色是哪些功能", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/listings/Home.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -607,6 +625,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
   - {text: "JGB東南亞據點", source: "draft:outline-20260920", status: proposed}
   - {text: "首頁免費試用按鈕在哪", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/listings/Home.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -617,6 +636,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
   - {text: "官網有聊天機器人嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "為什麼官網看不到諮詢小幫手", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/listings/Home.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -627,6 +647,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
   - {text: "首頁三大優勢介紹", source: "draft:outline-20260920", status: proposed}
   - {text: "JGB平台優勢", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/listings/Home.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -648,6 +669,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
   - {text: "首頁合作夥伴logo", source: "draft:outline-20260920", status: proposed}
   - {text: "企業夥伴區塊內容", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/listings/Home.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [prospect]
 - business_types: [system_provider]
 - instance_applicability: general

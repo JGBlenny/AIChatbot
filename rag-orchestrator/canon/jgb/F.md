@@ -29,6 +29,7 @@ language: zh-TW
   - {text: "修繕單可以用日期篩選嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "修繕單篩選條件怎麼重設", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/repair/list/Index.vue, code:src/components/Lightbox/RepairAdvSearch.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -42,6 +43,7 @@ language: zh-TW
   - {text: "修繕單表格看得到什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "修繕單總表欄位", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/repair/list/Index.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -54,6 +56,7 @@ language: zh-TW
   - {text: "修繕單可以怎麼排序", source: "draft:outline-20260920", status: proposed}
   - {text: "租客可以用金額排序修繕單嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/RepairController.php]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -66,6 +69,7 @@ language: zh-TW
   - {text: "誰可以新增修繕單", source: "draft:outline-20260920", status: proposed}
   - {text: "為什麼看不到新增修繕單按鈕", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/repair/list/Index.vue, code:app/Http/Controllers/UserController.php, code:src/pages/estates/pick/_parts/pick.jsx]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -78,6 +82,7 @@ language: zh-TW
   - {text: "誰看得到修繕總金額", source: "draft:outline-20260920", status: proposed}
   - {text: "結算總金額是全部加起來的嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/repair/list/Index.vue, code:app/Http/Controllers/RepairController.php]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -89,6 +94,7 @@ language: zh-TW
   - {text: "修繕單可以匯出嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "有匯出權限但看不到匯出按鈕", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/repair/list/Index.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -102,6 +108,7 @@ language: zh-TW
   - {text: "修繕單狀態怎麼改", source: "draft:outline-20260920", status: proposed}
   - {text: "封存的修繕單可以移回來嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/RepairController.php]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -131,6 +138,7 @@ language: zh-TW
   - {text: "怎麼只看緊急修繕單", source: "draft:outline-20260920", status: proposed}
   - {text: "分類項目篩選怎麼用", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/components/Lightbox/RepairAdvSearch.vue, code:src/pages/repair/list/Index.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -143,6 +151,7 @@ language: zh-TW
   - {text: "修繕單列表點租客會出現什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "怎麼看修繕單相關人的聯絡方式", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/repair/list/Index.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -379,6 +388,7 @@ language: zh-TW
   - {text: "分享頁需要帳號嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "修繕分享連結是公開的嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Middleware/LoginCheck.php, code:routes/web.php, code:src/pages/repair/share/Index.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -391,6 +401,7 @@ language: zh-TW
   - {text: "修繕分享頁會外流個資嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "分享頁看得到金額嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/RepairController.php, code:src/pages/repair/share/Index.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -415,6 +426,7 @@ language: zh-TW
   - {text: "修繕單連結打開會看到什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "廠商點連結能看到哪些資訊", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/repair/share/Index.vue, code:app/Http/Controllers/RepairController.php]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general

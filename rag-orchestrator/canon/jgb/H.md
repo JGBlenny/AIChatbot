@@ -14,6 +14,7 @@ language: zh-TW
   - {text: "幫助中心怎麼進去", source: "draft:outline-20260920", status: proposed}
   - {text: "幫助中心有哪些分類", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/help-center/Index.vue, code:src/pages/help-center/template-parts/Top.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -26,6 +27,7 @@ language: zh-TW
   - {text: "幫助中心文章怎麼分組", source: "draft:outline-20260920", status: proposed}
   - {text: "幫助中心次分類是什麼", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/help-center/Group.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -40,6 +42,7 @@ language: zh-TW
   - {text: "文章內頁長什麼樣", source: "draft:outline-20260920", status: proposed}
   - {text: "怎麼回到分類列表", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/help-center/Post.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -68,6 +71,7 @@ language: zh-TW
   - {text: "怎麼關掉試用彈窗", source: "draft:outline-20260920", status: proposed}
   - {text: "免費試用天數", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/entry/listings.js, code:src/pages/help-center/Index.vue]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
