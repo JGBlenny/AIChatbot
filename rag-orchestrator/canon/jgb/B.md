@@ -605,7 +605,7 @@ language: zh-TW
 進階設定的「帳務管理」區塊可以設定帳單「自訂費用」的收付項目，分成「收入類」與「支出類」。
 新增每個項目時要選擇「性質」（例如租金、押金、水費、電費、管理費、清潔費、網路費、滯納金、違約金、賠償金、押金設算息、其他），並填寫「自定義名稱」，這兩項都是必填。
 「會科品項代號」是選填欄位，用來提供給 ERP／會計系統拋轉使用。
-### 進階設定的「優惠項目」是給誰用的？（只有統上或新北住都的合作團隊才看得到，可設定折扣套用在租金費用上） {#jgb/B/advance-discount-items}
+### 進階設定的「優惠項目」是給誰用的？（只有部分特定合作團隊才看得到，可設定折扣套用在租金費用上） {#jgb/B/advance-discount-items}
 - phrasings:
   - {text: "進階設定有租金折扣嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "優惠項目怎麼設定", source: "draft:outline-20260920", status: proposed}
@@ -613,9 +613,9 @@ language: zh-TW
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
-進階設定「合約管理」區塊的「優惠項目」只會顯示給統上或新北住都的合作團隊，一般團隊的進階設定沒有這個設定。
-有這個設定的團隊最多可以建立 10 組優惠項目（新北住都合作團隊上限是 30 組），在計算租金費用時套用折扣。
-### 進階設定的「延遲金設置」怎麼計算？（只有統上合作團隊看得到，公式是租金 × (逾期天數 - 緩衝天數) × 延遲金%） {#jgb/B/advance-late-fee}
+進階設定「合約管理」區塊的「優惠項目」只會顯示給部分特定合作團隊，一般團隊的進階設定沒有這個設定。
+有這個設定的團隊最多可以建立 10 組優惠項目（其中一個特定合作團隊的上限是 30 組），在計算租金費用時套用折扣。
+### 進階設定的「延遲金設置」怎麼計算？（只有特定合作團隊看得到，公式是租金 × (逾期天數 - 緩衝天數) × 延遲金%） {#jgb/B/advance-late-fee}
 - phrasings:
   - {text: "進階設定有滯納金設定嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "延遲金怎麼算", source: "draft:outline-20260920", status: proposed}
@@ -625,7 +625,7 @@ language: zh-TW
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
-「延遲金設置」只會出現在統上這個合作團隊的進階設定裡，一般團隊沒有這個設定。
+「延遲金設置」只會出現在特定合作團隊的進階設定裡，一般團隊沒有這個設定。
 有這個設定的團隊可以開啟或關閉延遲金功能，並設定緩衝天數與延遲金百分比。
 開啟後，租客逾期繳租超過緩衝天數，系統會自動計算延遲金並產生一筆帳單，這筆帳單的繳費截止日就是合約的終止日；計算公式是：租金 ×（逾期天數 - 緩衝天數）× 延遲金百分比。
 ### 「預設補充條款」怎麼設定？（最多可以設 3 組，編輯合約時直接選用） {#jgb/B/advance-additional-terms}
@@ -674,7 +674,7 @@ language: zh-TW
 - instance_applicability: general
 在「帳單自訂費用項目」可以點「合併項目」，選擇多個已存在的收入類或支出類品項，合併成一個新品項，合併後金額會一併統計。
 品項合併後無法回復，操作前系統會提醒要謹慎操作。
-### 進階設定的「繳費週期優惠」是給誰用的？（只有統上團隊才看得到，選比月繳更長的繳費週期就有折扣） {#jgb/B/advance-payment-cycle-discount}
+### 進階設定的「繳費週期優惠」是給誰用的？（只有特定合作團隊才看得到，選比月繳更長的繳費週期就有折扣） {#jgb/B/advance-payment-cycle-discount}
 - phrasings:
   - {text: "選季繳有折扣嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "誰看得到繳費週期優惠設定", source: "draft:outline-20260920", status: proposed}
@@ -682,7 +682,7 @@ language: zh-TW
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
-進階設定「合約管理」區塊的「繳費週期優惠」只會顯示給統上這個合作團隊，一般團隊（含新北住都）的進階設定沒有這個設定。
+進階設定「合約管理」區塊的「繳費週期優惠」只會顯示給特定合作團隊，其他團隊的進階設定都沒有這個設定。
 有這個設定的團隊，編輯合約時選擇比月繳更長的繳費週期，就能獲得租金折扣。
 ### 「Email 通知語系」在哪設定、誰看得到？（只有法人房東或社宅團隊看得到，決定代發通知信的預設語系） {#jgb/B/advance-notification-locale}
 - phrasings:
@@ -782,7 +782,7 @@ language: zh-TW
 - instance_applicability: general
 進階設定的「社區管理」區塊只會顯示給特定合作團隊，一般團隊看不到這個區塊。
 這個區塊有「城市設定」「區域設定」「位置設定」三組獨立的自訂標籤，設定好之後可以用來為物件加上對應的城市、區域、位置標籤。
-### 進階設定的「短租期核可流程」是做什麼的？（只有統上合作團隊看得到；租期少於設定天數時，合約要先簽核通過才會發出邀請給租客） {#jgb/B/advance-short-lease-approval}
+### 進階設定的「短租期核可流程」是做什麼的？（只有特定合作團隊看得到；租期少於設定天數時，合約要先簽核通過才會發出邀請給租客） {#jgb/B/advance-short-lease-approval}
 - phrasings:
   - {text: "短租期核可流程是什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "短租期簽核怎麼設定", source: "draft:outline-20260920", status: proposed}
@@ -791,7 +791,7 @@ language: zh-TW
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
-進階設定「合約管理」區塊的「短租期核可流程」只會顯示給統上合作團隊，一般團隊的進階設定沒有這個設定。
+進階設定「合約管理」區塊的「短租期核可流程」只會顯示給特定合作團隊，一般團隊的進階設定沒有這個設定。
 啟用後，如果合約的租期少於設定的天數（短租期定義），這份合約在簽約前需要先進行簽核；簽核通過後，合約邀請才會發出給租客。
 ## 租客列表（當前租客／封存、準時繳租率、信用評價） {#B-tenant-list}
 ### 租客列表有哪兩個分頁？（當前租客／封存，封存代表這位租客已被移出列表且目前沒有進行中的合約） {#jgb/B/lessee-tabs}
@@ -906,7 +906,7 @@ language: zh-TW
 - instance_applicability: general
 為避免租客無法收到帳單通知，若 Email 或手機號碼尚在等待租客驗證，管理者建立帳單時，系統會把帳單停留在草稿帳單分頁中，等租客完成驗證或驗證連結過期後，才能發送帳單。
 管理者仍然可以手動把這張帳單從草稿移到應到帳或已到帳分頁。
-### 租客列表勾選多筆租客後可以做什麼？（統上團隊可以批次發送通知，其他團隊沒有這個批次操作） {#jgb/B/lessee-bulk-notify}
+### 租客列表勾選多筆租客後可以做什麼？（特定合作團隊可以批次發送通知，其他團隊沒有這個批次操作） {#jgb/B/lessee-bulk-notify}
 - phrasings:
   - {text: "租客列表勾選後能做什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "怎麼批次通知租客", source: "draft:outline-20260920", status: proposed}
@@ -915,7 +915,7 @@ language: zh-TW
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-只有統上這個合作團隊，在租客列表勾選一筆以上租客後，畫面下方才會出現批次操作列，可以選「發送通知」一次通知這些租客；其他團隊勾選租客後沒有這個批次操作列。
+只有特定合作團隊在租客列表勾選一筆以上租客後，畫面下方才會出現批次操作列，可以選「發送通知」一次通知這些租客；其他團隊勾選租客後沒有這個批次操作列。
 ### 匯出租客的入口在哪？（一般房東用「新增租客」下拉選單裡的「匯出租客」；社宅團隊只有一顆「匯出」按鈕，沒有新增或匯入） {#jgb/B/lessee-export-entry-by-role}
 - phrasings:
   - {text: "匯出租客在哪", source: "draft:outline-20260920", status: proposed}

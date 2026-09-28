@@ -128,13 +128,13 @@ jgb/B/biglandlord-sheet-load-download-fail｜對帳表載入或下載失敗會�
 jgb/B/biglandlord-sheet-aside-and-loading｜大房東對帳表頁面的側邊選單和載入畫面長怎樣？（左側有社區／物件選單，看單一物件報表時會顯示上次匯入時間，報表產生中會顯示載入百分比進度條）｜target_user=property_manager｜
 ### B-advanced-settings 進階設定（費用項目、租金折扣、滯納金、補充條款範本、自訂標籤、時區語系；介面路徑「團隊管理 > 進階設定」） {#B-advanced-settings}
 jgb/B/advance-fee-items｜帳單的「自訂費用項目」怎麼設定？（分收入類／支出類，必填性質與自定義名稱，會科品項代號選填）｜target_user=property_manager｜
-jgb/B/advance-discount-items｜進階設定的「優惠項目」是給誰用的？（只有統上或新北住都的合作團隊才看得到，可設定折扣套用在租金費用上）｜target_user=property_manager,prospect｜
-jgb/B/advance-late-fee｜進階設定的「延遲金設置」怎麼計算？（只有統上合作團隊看得到，公式是租金 × (逾期天數 - 緩衝天數) × 延遲金%）｜target_user=property_manager,prospect｜
+jgb/B/advance-discount-items｜進階設定的「優惠項目」是給誰用的？（只有部分特定合作團隊才看得到，可設定折扣套用在租金費用上）｜target_user=property_manager,prospect｜
+jgb/B/advance-late-fee｜進階設定的「延遲金設置」怎麼計算？（只有特定合作團隊看得到，公式是租金 × (逾期天數 - 緩衝天數) × 延遲金%）｜target_user=property_manager,prospect｜
 jgb/B/advance-additional-terms｜「預設補充條款」怎麼設定？（最多可以設 3 組，編輯合約時直接選用）｜target_user=property_manager,prospect｜
 jgb/B/advance-custom-label｜「標籤設定」是做什麼用的？（幫物件加自訂標籤，單個標籤上限 18 字元）｜target_user=property_manager,prospect｜
 jgb/B/advance-device-binding｜怎麼綁定智能裝置廠商？（輸入裝置廠商帳號密碼完成綁定，之後可在 JGB 平台管理裝置）｜target_user=property_manager｜
 jgb/B/advance-fee-items-merge｜自訂費用項目可以合併嗎？（可以選多個已存在的品項合併成新品項，合併後無法回復）｜target_user=property_manager｜
-jgb/B/advance-payment-cycle-discount｜進階設定的「繳費週期優惠」是給誰用的？（只有統上團隊才看得到，選比月繳更長的繳費週期就有折扣）｜target_user=property_manager,prospect｜
+jgb/B/advance-payment-cycle-discount｜進階設定的「繳費週期優惠」是給誰用的？（只有特定合作團隊才看得到，選比月繳更長的繳費週期就有折扣）｜target_user=property_manager,prospect｜
 jgb/B/advance-notification-locale｜「Email 通知語系」在哪設定、誰看得到？（只有法人房東或社宅團隊看得到，決定代發通知信的預設語系）｜target_user=property_manager,prospect｜
 jgb/B/advance-timezone｜「時區設定」會影響哪些通知？（只有法人房東或社宅團隊看得到，改變排程通知的發送時間）｜target_user=property_manager,prospect｜
 jgb/B/advance-settlement-currency｜「結算幣別」是做什麼用的？（只有法人房東或社宅團隊看得到，把大房東報表的多幣別合約統一結算成一種幣別）｜target_user=property_manager,prospect｜
@@ -144,7 +144,7 @@ jgb/B/advance-auto-publish-unpublish｜招租廣告可以自動刊登或自動�
 jgb/B/advance-contract-label｜「合約管理」的標籤設定跟物件的標籤設定是同一個嗎？（不是，這是合約專用的另一組標籤）｜target_user=property_manager｜
 jgb/B/advance-sales-item-code｜「銷貨單品項代號對應」是做什麼用的？（只有特定團隊才有，設定匯出「M 化銷貨單」時每個品項要帶的產品代號）｜target_user=property_manager｜
 jgb/B/advance-community-labels｜「社區管理」的城市／區域／位置設定是做什麼？（只有特定合作團隊看得到，用來建立社區篩選用的自訂標籤）｜target_user=property_manager｜
-jgb/B/advance-short-lease-approval｜進階設定的「短租期核可流程」是做什麼的？（只有統上合作團隊看得到；租期少於設定天數時，合約要先簽核通過才會發出邀請給租客）｜target_user=property_manager,prospect｜
+jgb/B/advance-short-lease-approval｜進階設定的「短租期核可流程」是做什麼的？（只有特定合作團隊看得到；租期少於設定天數時，合約要先簽核通過才會發出邀請給租客）｜target_user=property_manager,prospect｜
 ### B-tenant-list 租客列表（當前租客／封存、準時繳租率、信用評價） {#B-tenant-list}
 jgb/B/lessee-tabs｜租客列表有哪兩個分頁？（當前租客／封存，封存代表這位租客已被移出列表且目前沒有進行中的合約）｜target_user=property_manager,prospect｜
 jgb/B/lessee-credit-rating-visibility｜租客列表的「信用評價」欄位為什麼有些人看不到？（需要有查看租客信用評價的權限才會顯示這一欄）｜target_user=property_manager｜
@@ -156,7 +156,7 @@ jgb/B/lessee-on-time-pay-rate｜租客的「準時繳租率」怎麼算？（已
 jgb/B/lessee-list-columns｜租客列表可以看到哪些欄位？（ID、姓名、會員註冊、Email - 通知、手機號碼 - 通知、註冊合約、免註冊合約、所屬修繕、準時繳租率、帳戶名稱、帳號資訊、操作）｜target_user=property_manager｜
 jgb/B/lessee-list-columns-by-role｜社宅團隊與特定合作團隊的租客列表欄位有什麼不一樣？（社宅團隊沒有「會員註冊」「免註冊合約」「操作」，「註冊合約」欄改叫「所屬總合約」；特定合作團隊多了國籍、生日、主要聯絡方式）｜target_user=property_manager｜
 jgb/B/lessee-pending-verification-bill-draft｜租客的 Email 或手機還在等待驗證時，帳單會怎樣？（帳單會停留在草稿分頁，等驗證完成或連結過期才能發送，也可以手動移動）｜target_user=property_manager｜
-jgb/B/lessee-bulk-notify｜租客列表勾選多筆租客後可以做什麼？（統上團隊可以批次發送通知，其他團隊沒有這個批次操作）｜target_user=property_manager｜
+jgb/B/lessee-bulk-notify｜租客列表勾選多筆租客後可以做什麼？（特定合作團隊可以批次發送通知，其他團隊沒有這個批次操作）｜target_user=property_manager｜
 jgb/B/lessee-export-entry-by-role｜匯出租客的入口在哪？（一般房東用「新增租客」下拉選單裡的「匯出租客」；社宅團隊只有一顆「匯出」按鈕，沒有新增或匯入）｜target_user=property_manager｜
 jgb/B/lessee-list-search-and-pagination｜租客列表可以怎麼搜尋篩選、每頁看幾筆？（可依姓名／Email／手機號碼／租客 ID 搜尋，用會員註冊與通知狀態篩選，每頁可選 30／60／90 筆）｜target_user=property_manager｜
 jgb/B/lessee-action-menu｜租客列表每一列的操作選單有哪些功能？（建立電子合約、上傳紙本合約、編輯租客、封存租客；封存分頁裡則改成刪除租客）｜target_user=property_manager｜
@@ -275,7 +275,7 @@ jgb/D/contract-edit-tabs-overview｜建立一般合約有哪些分頁？（承�
 jgb/D/contract-tenant-basic-info｜承租方基本資料怎麼填？（個人／法人租客、租客註冊或免註冊、緊急聯絡人）｜target_user=property_manager｜
 jgb/D/contract-rentbasic-template-and-dates｜「基本條件」分頁的合約範本與日期要怎麼設定？（合約範本／類型、合約起迄日期、租賃訂約日期）｜target_user=property_manager｜
 jgb/D/contract-rentbasic-billing-cycle｜「基本條件」分頁的繳費週期與帳單週期制度怎麼設定？（繳費週期／繳費截止日、當月分算或跨月計算、分算日）｜target_user=property_manager｜
-jgb/D/contract-rentbasic-latefee｜「基本條件」分頁的遲繳滯納金怎麼計算？（僅新北住都角色群組可見，兩段比例＋拖欠天數門檻，欄位唯讀）｜target_user=property_manager｜
+jgb/D/contract-rentbasic-latefee｜「基本條件」分頁的遲繳滯納金怎麼計算？（僅特定合作團隊可見，兩段比例＋拖欠天數門檻，欄位唯讀）｜target_user=property_manager｜
 jgb/D/contract-rentbasic-tenant-language｜「基本條件」分頁的租客慣用語系是什麼？（決定系統產生給租客的合約文件語系）｜target_user=property_manager｜
 jgb/D/contract-rentbasic-early-termination｜合約的「可否提前解約」與違約金怎麼設定？（每月租金／固定金額／詳參補充條款／其他四種算法）｜target_user=property_manager｜
 jgb/D/contract-rent-fees｜租金費用分頁要設定什麼？（租金、押金、自訂收入／支出費用、租金優惠、繳費週期優惠）｜target_user=property_manager｜
@@ -397,7 +397,7 @@ jgb/E/bill-list-income-export-social-housing｜「收款帳單」分頁固定的
 jgb/E/bill-list-special-team-cvs-buttons｜「應到帳」「已到帳」狀態，特定合作團隊的帳號會多出哪些按鈕？（應到帳：匯入發票；已到帳：匯出收據／匯入收據／批次匯出收據）｜target_user=property_manager｜
 jgb/E/bill-balance-tab-export-submenu｜「總收支」分頁的匯出按鈕，特定合作團隊的帳號會多出什麼子選項？（匯出收支明細表）｜target_user=property_manager｜
 jgb/E/bill-list-batch-shortcuts｜「草稿帳單」分頁右上角有哪些批次建立帳單的快捷按鈕？（新增週期帳單／新增批次帳單／排定發送帳單／批次編輯帳單，Excel新增帳單僅限特定合作團隊；帳單總表沒有這些按鈕）｜target_user=property_manager｜
-jgb/E/bill-scheduled-send-rule｜「排定發送帳單」有什麼限制？（只有度數填完的帳單才能排，每天中午 12 點統一發送）｜target_user=property_manager｜
+jgb/E/bill-scheduled-send-rule｜「排定發送帳單」有什麼限制？（一般要度數填完才能排，點退帳單與綁定智慧電錶的電費例外；每天中午 12 點統一發送）｜target_user=property_manager｜
 jgb/E/bill-single-notification-deeplink｜帳單通知信裡的連結點進去會看到什麼？（帳單列表只先列出通知裡的那幾張帳單，自己改篩選後回到一般列表）｜target_user=property_manager｜
 jgb/E/bill-balance-tab｜「總收支」分頁的用途是什麼？（「全部」混列已到帳與已支出的帳單，另有已到帳、已支出、應到帳、應支出各自的頁籤）｜target_user=property_manager｜
 jgb/E/bill-notify-channels｜帳單通知走哪些管道？通知對象是誰？（免註冊租客可分別開關 Email／簡訊，已註冊租客固定收 Email 與站內通知、已綁定 LINE／FB 另收推播；只發給帳單本身的那位承租人）｜target_user=property_manager,prospect｜

@@ -1205,7 +1205,7 @@
     {
      "proposed_id": "jgb/E/bill-scheduled-send-rule",
      "askable": "排定發送帳單有什麼限制",
-     "title": "「排定發送帳單」有什麼限制？（只有度數填完的帳單才能排，每天中午 12 點統一發送）",
+     "title": "「排定發送帳單」有什麼限制？（一般要度數填完才能排，點退帳單與綁定智慧電錶的電費例外；每天中午 12 點統一發送）",
      "unit_ids": [
       "page:bills.pick",
       "page:web:/pick/{action?}"
@@ -1225,12 +1225,16 @@
      ],
      "sentences": [
       "排定發送帳單要先在挑選頁面選好要排定的帳單。",
-      "只有已經填寫完，或本來就沒有水電、瓦斯度數細節要填的帳單，才能執行批次排定發送。",
+      "只有已經填寫完，或本來就沒有水電、瓦斯度數細節要填的帳單，才能排入排定發送。",
+      "例外有兩種：點退帳單不需要先填完度數也能排入；另外，如果帳單唯一還沒填的是電費，而且物件有綁定智慧電錶、讀得到讀數，這張帳單也能排入，電費度數會在排入時和中午發送時自動補上，發送時如果還是補不到度數或讀數是 0 度，這張帳單會被跳過、不會送出。",
       "系統會在每天中午 12:00 把選取的帳單統一發送給租客。",
       "「租客免註冊合約」下的帳單不適用排定發送這個功能。"
      ],
      "sources": [
-      "code:src/pages/bills/pick/Index.jsx"
+      "code:src/pages/bills/pick/Index.jsx",
+      "code:app/Bill.php",
+      "code:app/Http/Controllers/BillController.php",
+      "code:app/Console/Commands/BillBatchSend.php"
      ],
      "evidence": [
       {

@@ -221,7 +221,7 @@ language: zh-TW
 同時要設定「繳費截止日」，也就是每期帳單的繳款期限。
 帳單週期制度分成「當月分算」與「跨月計算」兩種計費方式，會影響租期不足一個完整週期時金額怎麼分攤。
 選擇跨月計算時，還要設定「帳單週期分算日」。
-### 「基本條件」分頁的遲繳滯納金怎麼計算？（僅新北住都角色群組可見，兩段比例＋拖欠天數門檻，欄位唯讀） {#jgb/D/contract-rentbasic-latefee}
+### 「基本條件」分頁的遲繳滯納金怎麼計算？（僅特定合作團隊可見，兩段比例＋拖欠天數門檻，欄位唯讀） {#jgb/D/contract-rentbasic-latefee}
 - phrasings:
   - {text: "滯納金怎麼設定", source: "draft:outline-20260920", status: proposed}
   - {text: "遲繳滯納金計算方式", source: "draft:outline-20260920", status: proposed}
@@ -230,7 +230,7 @@ language: zh-TW
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-「遲繳滯納金」設定只出現在新北住都角色群組的合約上；租客超過繳費期限還沒繳款，會先產生第一筆比例的滯納金，如果拖欠超過設定的天數門檻，還會再產生第二筆同比例的滯納金。
+「遲繳滯納金」設定只出現在特定合作團隊的合約上；租客超過繳費期限還沒繳款，會先產生第一筆比例的滯納金，如果拖欠超過設定的天數門檻，還會再產生第二筆同比例的滯納金。
 滯納金的比例（X）跟拖欠天數門檻（Y）兩個欄位在合約編輯畫面上是唯讀的，不能在合約上直接修改；這兩個數值是這份合約自己的一筆設定紀錄，第一次需要用到時會用系統預設值（2%、30 天）自動建立，之後就固定在這份合約上，不會因為系統預設值以後改變而跟著變動。
 ### 「基本條件」分頁的租客慣用語系是什麼？（決定系統產生給租客的合約文件語系） {#jgb/D/contract-rentbasic-tenant-language}
 - phrasings:

@@ -279,19 +279,20 @@ language: zh-TW
 「新增週期帳單」會先讓房東挑選多個物件，用來建立會依週期重複產生的帳單。
 「批次編輯帳單」預設會開啟匯入試算表的視窗，讓房東批次調整帳單內容；但對某些特定合作團隊的帳號會改開另一個專用視窗（可篩選範圍、整批品項金額一起編輯）。
 另一組特定合作團隊的帳號，右上角的快捷選項只會顯示「新增批次帳單」一項；還有一組特定合作團隊的帳號，快捷選項會多一個「Excel新增帳單」，可以用 Excel 檔案批次新增帳單。
-### 「排定發送帳單」有什麼限制？（只有度數填完的帳單才能排，每天中午 12 點統一發送） {#jgb/E/bill-scheduled-send-rule}
+### 「排定發送帳單」有什麼限制？（一般要度數填完才能排，點退帳單與綁定智慧電錶的電費例外；每天中午 12 點統一發送） {#jgb/E/bill-scheduled-send-rule}
 - phrasings:
   - {text: "排定發送帳單怎麼用", source: "draft:outline-20260920", status: proposed}
   - {text: "排定發送限制", source: "draft:outline-20260920", status: proposed}
   - {text: "水電度數沒填能排定發送嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "帳單幾點統一發送", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/bills/pick/Index.jsx]
-- reviewed: {by: owner, at: 2026-09-27}
+- sources: [code:src/pages/bills/pick/Index.jsx, code:app/Bill.php, code:app/Http/Controllers/BillController.php, code:app/Console/Commands/BillBatchSend.php]
+- reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
 排定發送帳單要先在挑選頁面選好要排定的帳單。
-只有已經填寫完，或本來就沒有水電、瓦斯度數細節要填的帳單，才能執行批次排定發送。
+只有已經填寫完，或本來就沒有水電、瓦斯度數細節要填的帳單，才能排入排定發送。
+例外有兩種：點退帳單不需要先填完度數也能排入；另外，如果帳單唯一還沒填的是電費，而且物件有綁定智慧電錶、讀得到讀數，這張帳單也能排入，電費度數會在排入時和中午發送時自動補上，發送時如果還是補不到度數或讀數是 0 度，這張帳單會被跳過、不會送出。
 系統會在每天中午 12:00 把選取的帳單統一發送給租客。
 「租客免註冊合約」下的帳單不適用排定發送這個功能。
 ### 帳單通知信裡的連結點進去會看到什麼？（帳單列表只先列出通知裡的那幾張帳單，自己改篩選後回到一般列表） {#jgb/E/bill-single-notification-deeplink}

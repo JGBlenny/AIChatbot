@@ -2,7 +2,7 @@
   "audience": "jgb",
   "budget_tokens": 0,
   "business_types": [],
-  "canon_sha256": "59ff90ec064f01ade6fc596fe5a2a355a816773ea1cd5486965129041d878450",
+  "canon_sha256": "fa1b30962a222326edd8fdba4056a9cf968d86adfade516b4dd0f9247bb4aedb",
   "coarses": [
     {
       "fines": [
@@ -2765,10 +2765,10 @@
           ],
           "categories": [],
           "coarse_id": "A-notification-settings",
-          "content_sha256": "8a7cfec6d539c3df25779af9ff1eacf567082fd70a163d05a9874e7232ef310b",
+          "content_sha256": "7f1e4bb84ff3d10136f8166efec794f82b6052669da9a5bf05a1bd039874e713",
           "content_units": [
             "只有「加盟分潤報表」分類會顯示「發送報表」按鈕，點擊會開啟通知信報表的燈箱視窗。",
-            "「多團隊合併報表」按鈕只在限定的特定樓宇團隊底下才會顯示，其餘分類與團隊都看不到這個按鈕。",
+            "「多團隊合併報表」按鈕只在特定合作團隊底下才會顯示，其餘分類與團隊都看不到這個按鈕。",
             "點擊「發送報表」或「多團隊合併報表」按鈕時，會依目前所在的通知分類，開啟對應的報表視窗。"
           ],
           "id": "jgb/A/notification-settings-report-buttons",
@@ -5067,10 +5067,10 @@
           ],
           "categories": [],
           "coarse_id": "B-advanced-settings",
-          "content_sha256": "9db0a094cc77c2109fa72af8f6d99d495367a07952115d19f89908e354370648",
+          "content_sha256": "4dd3793252a7ae17db32e4072a9f924102638369e683df9985c2ae870241432d",
           "content_units": [
-            "進階設定「合約管理」區塊的「優惠項目」只會顯示給統上或新北住都的合作團隊，一般團隊的進階設定沒有這個設定。",
-            "有這個設定的團隊最多可以建立 10 組優惠項目（新北住都合作團隊上限是 30 組），在計算租金費用時套用折扣。"
+            "進階設定「合約管理」區塊的「優惠項目」只會顯示給部分特定合作團隊，一般團隊的進階設定沒有這個設定。",
+            "有這個設定的團隊最多可以建立 10 組優惠項目（其中一個特定合作團隊的上限是 30 組），在計算租金費用時套用折扣。"
           ],
           "id": "jgb/B/advance-discount-items",
           "instance_applicability": "general",
@@ -5098,7 +5098,7 @@
             "property_manager",
             "prospect"
           ],
-          "title": "進階設定的「優惠項目」是給誰用的？（只有統上或新北住都的合作團隊才看得到，可設定折扣套用在租金費用上）"
+          "title": "進階設定的「優惠項目」是給誰用的？（只有部分特定合作團隊才看得到，可設定折扣套用在租金費用上）"
         },
         {
           "business_types": [
@@ -5106,9 +5106,9 @@
           ],
           "categories": [],
           "coarse_id": "B-advanced-settings",
-          "content_sha256": "30a151d6bc0d0ce2bd697ab7dd7e750e51205a76be71acba2e019a4cb07dfc8f",
+          "content_sha256": "fdbad61a329cfde3c31e2441d26913899d46e1363daee0b697d732fdb36b4856",
           "content_units": [
-            "「延遲金設置」只會出現在統上這個合作團隊的進階設定裡，一般團隊沒有這個設定。",
+            "「延遲金設置」只會出現在特定合作團隊的進階設定裡，一般團隊沒有這個設定。",
             "有這個設定的團隊可以開啟或關閉延遲金功能，並設定緩衝天數與延遲金百分比。",
             "開啟後，租客逾期繳租超過緩衝天數，系統會自動計算延遲金並產生一筆帳單，這筆帳單的繳費截止日就是合約的終止日；計算公式是：租金 ×（逾期天數 - 緩衝天數）× 延遲金百分比。"
           ],
@@ -5148,7 +5148,7 @@
             "property_manager",
             "prospect"
           ],
-          "title": "進階設定的「延遲金設置」怎麼計算？（只有統上合作團隊看得到，公式是租金 × (逾期天數 - 緩衝天數) × 延遲金%）"
+          "title": "進階設定的「延遲金設置」怎麼計算？（只有特定合作團隊看得到，公式是租金 × (逾期天數 - 緩衝天數) × 延遲金%）"
         },
         {
           "business_types": [
@@ -5333,9 +5333,9 @@
           ],
           "categories": [],
           "coarse_id": "B-advanced-settings",
-          "content_sha256": "e41378c5910c001bf07d3cf12acb6659924e757208a5dcdc9566b5ca49a655a9",
+          "content_sha256": "c0b9a05c6c76f528205d2f2f30ca47a08ee1292771a53b1d2e1989fab7d0acf3",
           "content_units": [
-            "進階設定「合約管理」區塊的「繳費週期優惠」只會顯示給統上這個合作團隊，一般團隊（含新北住都）的進階設定沒有這個設定。",
+            "進階設定「合約管理」區塊的「繳費週期優惠」只會顯示給特定合作團隊，其他團隊的進階設定都沒有這個設定。",
             "有這個設定的團隊，編輯合約時選擇比月繳更長的繳費週期，就能獲得租金折扣。"
           ],
           "id": "jgb/B/advance-payment-cycle-discount",
@@ -5364,7 +5364,7 @@
             "property_manager",
             "prospect"
           ],
-          "title": "進階設定的「繳費週期優惠」是給誰用的？（只有統上團隊才看得到，選比月繳更長的繳費週期就有折扣）"
+          "title": "進階設定的「繳費週期優惠」是給誰用的？（只有特定合作團隊才看得到，選比月繳更長的繳費週期就有折扣）"
         },
         {
           "business_types": [
@@ -5764,9 +5764,9 @@
           ],
           "categories": [],
           "coarse_id": "B-advanced-settings",
-          "content_sha256": "2ea2ae8f710a1d12b2d8063ed137eb9a84af33d79a1c558466559b6d29939c83",
+          "content_sha256": "f1e5fddeae2471749a0c2469b790a20c6337e6979754526da245ee29ae2c2028",
           "content_units": [
-            "進階設定「合約管理」區塊的「短租期核可流程」只會顯示給統上合作團隊，一般團隊的進階設定沒有這個設定。",
+            "進階設定「合約管理」區塊的「短租期核可流程」只會顯示給特定合作團隊，一般團隊的進階設定沒有這個設定。",
             "啟用後，如果合約的租期少於設定的天數（短租期定義），這份合約在簽約前需要先進行簽核；簽核通過後，合約邀請才會發出給租客。"
           ],
           "id": "jgb/B/advance-short-lease-approval",
@@ -5800,7 +5800,7 @@
             "property_manager",
             "prospect"
           ],
-          "title": "進階設定的「短租期核可流程」是做什麼的？（只有統上合作團隊看得到；租期少於設定天數時，合約要先簽核通過才會發出邀請給租客）"
+          "title": "進階設定的「短租期核可流程」是做什麼的？（只有特定合作團隊看得到；租期少於設定天數時，合約要先簽核通過才會發出邀請給租客）"
         }
       ],
       "id": "B-advanced-settings",
@@ -6243,9 +6243,9 @@
           ],
           "categories": [],
           "coarse_id": "B-tenant-list",
-          "content_sha256": "91e9e175b8ab76eedc345536eb908d61d9c11829bf153aacd181c65e77d83e68",
+          "content_sha256": "02e548927a81e6db02da26d2750e8678b0bd05ff36a25c68219416368b2b935d",
           "content_units": [
-            "只有統上這個合作團隊，在租客列表勾選一筆以上租客後，畫面下方才會出現批次操作列，可以選「發送通知」一次通知這些租客；其他團隊勾選租客後沒有這個批次操作列。"
+            "只有特定合作團隊在租客列表勾選一筆以上租客後，畫面下方才會出現批次操作列，可以選「發送通知」一次通知這些租客；其他團隊勾選租客後沒有這個批次操作列。"
           ],
           "id": "jgb/B/lessee-bulk-notify",
           "instance_applicability": "general",
@@ -6278,7 +6278,7 @@
           "target_user": [
             "property_manager"
           ],
-          "title": "租客列表勾選多筆租客後可以做什麼？（統上團隊可以批次發送通知，其他團隊沒有這個批次操作）"
+          "title": "租客列表勾選多筆租客後可以做什麼？（特定合作團隊可以批次發送通知，其他團隊沒有這個批次操作）"
         },
         {
           "business_types": [
@@ -10794,9 +10794,9 @@
           ],
           "categories": [],
           "coarse_id": "D-contract-edit-general",
-          "content_sha256": "f41d74d05affd2ac5978e1f6f83fe7bf0b85946a927a47f258b6c8337e443fa8",
+          "content_sha256": "89c7ad1eee442b6bf4031aacb9adee144f18ff41c9ca93b4102d16be9677b0ea",
           "content_units": [
-            "「遲繳滯納金」設定只出現在新北住都角色群組的合約上；租客超過繳費期限還沒繳款，會先產生第一筆比例的滯納金，如果拖欠超過設定的天數門檻，還會再產生第二筆同比例的滯納金。",
+            "「遲繳滯納金」設定只出現在特定合作團隊的合約上；租客超過繳費期限還沒繳款，會先產生第一筆比例的滯納金，如果拖欠超過設定的天數門檻，還會再產生第二筆同比例的滯納金。",
             "滯納金的比例（X）跟拖欠天數門檻（Y）兩個欄位在合約編輯畫面上是唯讀的，不能在合約上直接修改；這兩個數值是這份合約自己的一筆設定紀錄，第一次需要用到時會用系統預設值（2%、30 天）自動建立，之後就固定在這份合約上，不會因為系統預設值以後改變而跟著變動。"
           ],
           "id": "jgb/D/contract-rentbasic-latefee",
@@ -10829,7 +10829,7 @@
           "target_user": [
             "property_manager"
           ],
-          "title": "「基本條件」分頁的遲繳滯納金怎麼計算？（僅新北住都角色群組可見，兩段比例＋拖欠天數門檻，欄位唯讀）"
+          "title": "「基本條件」分頁的遲繳滯納金怎麼計算？（僅特定合作團隊可見，兩段比例＋拖欠天數門檻，欄位唯讀）"
         },
         {
           "business_types": [
@@ -15660,10 +15660,11 @@
           ],
           "categories": [],
           "coarse_id": "E-bill-list",
-          "content_sha256": "016afb0f6f64e20f9d0c3b19d8f6f41e3dd561dcbd588a95d56d8240ed071316",
+          "content_sha256": "3b81e5bf9670201269b2c60fa0648a3a18bb23bd55a210db829cbbc655ff87cb",
           "content_units": [
             "排定發送帳單要先在挑選頁面選好要排定的帳單。",
-            "只有已經填寫完，或本來就沒有水電、瓦斯度數細節要填的帳單，才能執行批次排定發送。",
+            "只有已經填寫完，或本來就沒有水電、瓦斯度數細節要填的帳單，才能排入排定發送。",
+            "例外有兩種：點退帳單不需要先填完度數也能排入；另外，如果帳單唯一還沒填的是電費，而且物件有綁定智慧電錶、讀得到讀數，這張帳單也能排入，電費度數會在排入時和中午發送時自動補上，發送時如果還是補不到度數或讀數是 0 度，這張帳單會被跳過、不會送出。",
             "系統會在每天中午 12:00 把選取的帳單統一發送給租客。",
             "「租客免註冊合約」下的帳單不適用排定發送這個功能。"
           ],
@@ -15693,16 +15694,19 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-27",
+          "reviewed_at": "2026-09-28",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
-            "code:src/pages/bills/pick/Index.jsx"
+            "code:src/pages/bills/pick/Index.jsx",
+            "code:app/Bill.php",
+            "code:app/Http/Controllers/BillController.php",
+            "code:app/Console/Commands/BillBatchSend.php"
           ],
           "target_user": [
             "property_manager"
           ],
-          "title": "「排定發送帳單」有什麼限制？（只有度數填完的帳單才能排，每天中午 12 點統一發送）"
+          "title": "「排定發送帳單」有什麼限制？（一般要度數填完才能排，點退帳單與綁定智慧電錶的電費例外；每天中午 12 點統一發送）"
         },
         {
           "business_types": [
