@@ -216,7 +216,7 @@
 
 ## 2. 不做（另案）
 
-- D／E 未審 63 條；F～I 未審 59 條（60 條扣掉本計畫納入的 I 架 1 條）。
+- D／E 未審 63 條；F～I 未審 59 條（60 條扣掉本計畫納入的 I 架 1 條；該條 S3 後仍未審，所以 9.19 收案時 F～I 未審細目仍是 60 條，pm 口徑 58，見 §6 更正）。
 - 頁面量尺修正（業主裁「先不動，列待辦」）；pm 真缺口 9～12 頁補寫；prospect 可見頁範圍定義。
 - `set` 改寫後，舊 evidence 可能不再支持新句（evidence 不進正本，屬資料品質問題）。
 - drafts evidence 句序既有的不對齊，共 23 條（其中 9 條是 9.16～9.18 插句造成的）。本計畫只保證允許集合內對齊，並修工具讓以後的編輯不再產生新的不對齊。
@@ -395,9 +395,9 @@
 
 - **終點指標**：由 pm 304／prospect 53 升到 **pm 369／prospect 80**；頁面 pm 79→89、prospect 23→27。S0、S1、S2 都是 +0，S3 +65／+27。
 - **留給下個計畫**：
-  - A／B／C 未審 45 條：26 條 doubt、⚠️ 9 組中 18 條 pass，另有 hold 2 條依業主裁決**整條刪除**（`login-sso-redirect-no-duplicate-buttons`、`biglandlord-escrow-owner`，須走生成器的刪細目路徑）。
+  - A／B／C 未審 45 條：25 條 doubt（**更正**：原寫 26 doubt，第 26 條是 I 架的 `pricing-trial-plan-landing-page`，屬 F～I）、18 條 ⚠️ 組 pass、hold 2 條依業主裁決**整條刪除**（`login-sso-redirect-no-duplicate-buttons`、`biglandlord-escrow-owner`，須走生成器的刪細目路徑）。
   - I 架「愛租屋」那條（`pricing-trial-plan-landing-page`）已改寫，但仍判 doubt：講法「深入了解企業方案」對不上。
-  - D／E 未審 63 條；F～I 未審 59 條。
+  - D／E 未審 63 條；F～I 未審細目 **60** 條（pm 口徑 58；**更正**：原寫 59，漏算了本計畫納入、但 S3 後仍未審的 I 架 1 條）。
   - jgb2 缺陷清單 20 項：`inputs/jgb2-defects-9.19-20260928.md`，由業主決定是否開單。
   - 頁面量尺待辦；pm 真缺口約 9～12 頁；prospect 可見頁範圍待定義。
   - S1 附記的 P3／P4：`register-verify-code-shape` 的 evidence、`team-public-page-share` 的 askable 等。
