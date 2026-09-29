@@ -15,6 +15,7 @@ language: zh-TW
   - {text: "註冊要填什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "怎麼申請 JGB 帳號", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/auth/Create.vue, code:src/pages/users/auth/parts/CreateWelcome.vue, code:src/pages/users/auth/parts/EmailVerify.vue, code:src/pages/users/auth/parts/AccountSetting.vue, help:onboarding1_zh-Hant.html]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -45,6 +46,7 @@ language: zh-TW
   - {text: "第三方帳號註冊", source: "draft:outline-20260920", status: proposed}
   - {text: "SSO 註冊", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/auth/parts/SSOBar.vue, code:src/pages/users/auth/parts/CreateWelcome.vue, help:onboarding1_zh-Hant.html]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -70,6 +72,7 @@ language: zh-TW
   - {text: "驗證信在等待", source: "draft:outline-20260920", status: proposed}
   - {text: "Email 驗證碼過期", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/auth/parts/EmailVerify.vue]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -84,6 +87,7 @@ language: zh-TW
   - {text: "密碼格式", source: "draft:outline-20260920", status: proposed}
   - {text: "設定密碼限制", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/auth/parts/AccountSetting.vue]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -97,6 +101,7 @@ language: zh-TW
   - {text: "重複註冊", source: "draft:outline-20260920", status: proposed}
   - {text: "曾經用 SSO 註冊過還能再用 Email 註冊嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/auth/parts/AccountSetting.vue, code:app/Http/Controllers/AuthController.php]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -110,6 +115,7 @@ language: zh-TW
   - {text: "可以跳過手機驗證嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "手機驗證碼收不到", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/auth/parts/PhoneVerify.vue]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -123,6 +129,7 @@ language: zh-TW
   - {text: "手機已經綁定過", source: "draft:outline-20260920", status: proposed}
   - {text: "重複綁定手機", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/auth/parts/PhoneVerify.vue]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -136,6 +143,7 @@ language: zh-TW
   - {text: "怎麼切換房東和租客", source: "draft:outline-20260920", status: proposed}
   - {text: "我是房東還是租客", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/auth/parts/RoleSelect.vue, help:onboarding1_zh-Hant.html]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -148,6 +156,7 @@ language: zh-TW
   - {text: "驗證碼輸入錯誤被鎖", source: "draft:outline-20260920", status: proposed}
   - {text: "驗證碼幾碼", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/auth/parts/VerifyPanel.vue, code:src/pages/users/auth/parts/EmailVerify.vue, code:src/pages/users/auth/parts/PhoneVerify.vue, code:src/pages/users/auth/parts/forget/Account.vue, code:src/pages/users/auth/parts/forget/Password.vue]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -223,6 +232,7 @@ language: zh-TW
   - {text: "怎麼切換登入身分", source: "draft:outline-20260920", status: proposed}
   - {text: "房東登入還是租客登入", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/auth/Login.vue, code:src/pages/users/auth/parts/LoginForm.vue]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -267,6 +277,7 @@ language: zh-TW
   - {text: "登入頁怎麼去註冊", source: "draft:outline-20260920", status: proposed}
   - {text: "還沒帳號怎麼註冊", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/auth/parts/LoginForm.vue]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -302,6 +313,7 @@ language: zh-TW
   - {text: "沒綁手機忘記帳號", source: "draft:outline-20260920", status: proposed}
   - {text: "沒有手機號碼怎麼找回帳號", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/auth/parts/forget/Account.vue]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -314,6 +326,7 @@ language: zh-TW
   - {text: "重設密碼", source: "draft:outline-20260920", status: proposed}
   - {text: "密碼忘記了", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/auth/parts/forget/Password.vue, help:slug02_zh-Hant.html]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -328,6 +341,7 @@ language: zh-TW
   - {text: "被邀請要設密碼", source: "draft:outline-20260920", status: proposed}
   - {text: "被邀請設定密碼的頁面", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/auth/parts/forget/Password.vue]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -376,6 +390,7 @@ language: zh-TW
   - {text: "大房東看到的畫面", source: "draft:outline-20260920", status: proposed}
   - {text: "大房東首頁跟一般房東有什麼不同", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/dashboard/Landlord.vue, help:Landlordonboarding00_zh-Hant.html, code:src/pages/users/dashboard/parts/EstateDetails.vue, code:src/pages/users/dashboard/parts/Block_Vacancy.vue]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -551,6 +566,7 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
   - {text: "簽約要填身分證嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "簽約資訊個人欄位", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/team/_parts/SignerDetails.vue]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -565,6 +581,7 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
   - {text: "統編怎麼填", source: "draft:outline-20260920", status: proposed}
   - {text: "公司負責人要填嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/team/_parts/SignerDetails.vue]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -578,6 +595,7 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
   - {text: "經紀人章要傳嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "簽約印章附件", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/team/_parts/SignerDetails.vue]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -589,6 +607,7 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
   - {text: "租賃管理人員資訊", source: "draft:outline-20260920", status: proposed}
   - {text: "經紀業名稱", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/team/_parts/SignerDetails.vue]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -601,6 +620,7 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
   - {text: "沒有編輯權限會怎樣", source: "draft:outline-20260920", status: proposed}
   - {text: "簽約資訊唯讀", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/signerInfo/Index.vue, code:src/pages/users/team/_parts/SignerDetails.vue]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -613,6 +633,7 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
   - {text: "通訊地址可以跟戶籍一樣嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "公司登記地址", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/team/_parts/SignerDetails.vue]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -625,6 +646,7 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
   - {text: "公司多筆簽約對象切換", source: "draft:outline-20260920", status: proposed}
   - {text: "多個公司要怎麼切換", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/team/_parts/SignerDetails.vue]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -635,6 +657,7 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
   - {text: "簽約資訊管理按鈕", source: "draft:outline-20260920", status: proposed}
   - {text: "簽約資訊儲存按鈕", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/team/_parts/SignerDetails.vue]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -726,6 +749,7 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
   - {text: "怎麼加通知信箱", source: "draft:outline-20260920", status: proposed}
   - {text: "額外通知信箱", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/notification/Index.vue]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -739,6 +763,7 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
   - {text: "帳務通知包含什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "訂閱通知是什麼", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/use/config/useForwardNotificationEmails.ts]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -766,6 +791,7 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
   - {text: "儲存按鈕按不下去", source: "draft:outline-20260920", status: proposed}
   - {text: "沒填信箱能存嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/notification/Index.vue]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general

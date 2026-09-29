@@ -360,7 +360,10 @@ async def test_prospect_outline_is_deterministic_and_registers_canon(monkeypatch
     prospect 可見細目刻意留白，透過 `AGENT_CANON_DIR`（僅 `DB_ENV=test` 生效）指向它
     （⛔ 不動 `canon/jgb/`）。"""
     real_doc = load_canon_or_die(CANON_DIR)
-    prospect_fine = next(f for f in real_doc.fines() if "prospect" in f.target_user)
+    # 取「第一條**未審**的 prospect 細目」：版控正本逐步標 reviewed 後，第一條 prospect
+    # 細目可能已審，而 `_mark_reviewed_except` 會跳過已審者 ⇒ 挑到已審的就留不了白（Plan 9.19 S3）。
+    prospect_fine = next(f for f in real_doc.fines()
+                         if "prospect" in f.target_user and not (f.reviewed_by or "").strip())
     canon_dir = all_reviewed_canon_dir(
         tmp_path, skip_ids=frozenset({prospect_fine.id}), name="mostly-reviewed-canon",
     )

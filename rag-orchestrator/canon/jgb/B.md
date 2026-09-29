@@ -242,6 +242,7 @@ language: zh-TW
   - {text: "團隊成員人數上限", source: "draft:outline-20260920", status: proposed}
   - {text: "邀請額滿怎麼辦", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/layouts/lightbox/general.blade.php]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -277,6 +278,7 @@ language: zh-TW
   - {text: "角色下拉選單怎麼用", source: "draft:outline-20260920", status: proposed}
   - {text: "新增角色的入口在哪裡", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/users/team/index.blade.php]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -300,6 +302,7 @@ language: zh-TW
   - {text: "角色編輯畫面的重設是什麼意思", source: "draft:outline-20260920", status: proposed}
   - {text: "重設條件會清掉哪些勾選", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/layouts/lightbox/character-capability-edit.blade.php]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -398,6 +401,7 @@ language: zh-TW
   - {text: "套用按鈕是做什麼的", source: "draft:outline-20260920", status: proposed}
   - {text: "移除物件可以復原嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/bigLandlords/list/_parts/owned.jsx]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -431,6 +435,7 @@ language: zh-TW
   - {text: "大房東可以新增幾位", source: "draft:outline-20260920", status: proposed}
   - {text: "大房東名額上限", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Services/BigLandlordService.php]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -608,6 +613,7 @@ language: zh-TW
   - {text: "進階設定有租金折扣嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "優惠項目怎麼設定", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/advance/Index.jsx]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -620,6 +626,7 @@ language: zh-TW
   - {text: "逾期繳費會產生什麼費用", source: "draft:outline-20260920", status: proposed}
   - {text: "延遲金設置在哪", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/advance/Index.jsx]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -632,6 +639,7 @@ language: zh-TW
   - {text: "合約補充條款可以存幾組", source: "draft:outline-20260920", status: proposed}
   - {text: "預設條款在哪編輯", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/advance/Index.jsx]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -655,6 +663,7 @@ language: zh-TW
   - {text: "裝置管理在哪設定", source: "draft:outline-20260920", status: proposed}
   - {text: "裝置廠商綁定流程", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/advance/Index.jsx]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -667,6 +676,7 @@ language: zh-TW
   - {text: "合併品項後可以回復嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "自訂費用項目合併操作", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/advance/_part/FeesItemManagement.vue, code:src/components/Lightbox/CustomFeeItemMerge.jsx]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -677,6 +687,7 @@ language: zh-TW
   - {text: "選季繳有折扣嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "誰看得到繳費週期優惠設定", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/advance/Index.jsx]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -688,6 +699,7 @@ language: zh-TW
   - {text: "個人房東有語系設定嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "租客收到的通知信語言怎麼決定", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/advance/Index.jsx]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -698,6 +710,7 @@ language: zh-TW
   - {text: "個人房東有時區設定嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "改時區會影響什麼通知", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/advance/Index.jsx]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -709,6 +722,7 @@ language: zh-TW
   - {text: "多幣別報表怎麼算", source: "draft:outline-20260920", status: proposed}
   - {text: "結算幣別在哪設定", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/advance/Index.jsx]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -720,6 +734,7 @@ language: zh-TW
   - {text: "免費方案可以綁裝置嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "為什麼進階設定沒有裝置管理", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/advance/Index.jsx]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -730,6 +745,7 @@ language: zh-TW
   - {text: "房東專屬帳號可以改嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "房東專屬帳號在哪設定", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/advance/Index.jsx]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -742,6 +758,7 @@ language: zh-TW
   - {text: "簽約後廣告會自動下架嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "自動刊登天數怎麼設定", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/advance/Index.jsx]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -753,6 +770,7 @@ language: zh-TW
   - {text: "合約標籤在哪設定", source: "draft:outline-20260920", status: proposed}
   - {text: "合約標籤跟物件標籤一樣嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/advance/Index.jsx]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -763,6 +781,7 @@ language: zh-TW
   - {text: "匯出銷貨單產品代號空白", source: "draft:outline-20260920", status: proposed}
   - {text: "哪些團隊有銷貨單品項代號設定", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/advance/_part/BillsManagement.vue, code:src/pages/users/advance/_part/WenzhongItemCodeManagement.vue]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -775,6 +794,7 @@ language: zh-TW
   - {text: "位置設定跟標籤設定差在哪", source: "draft:outline-20260920", status: proposed}
   - {text: "誰看得到社區管理設定", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/advance/Index.jsx]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -786,6 +806,7 @@ language: zh-TW
   - {text: "短租期簽核怎麼設定", source: "draft:outline-20260920", status: proposed}
   - {text: "租期太短要簽核嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/advance/Index.jsx]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -821,6 +842,7 @@ language: zh-TW
   - {text: "租客資料怎麼匯入匯出", source: "draft:outline-20260920", status: proposed}
   - {text: "已簽約的租客可以改名字嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/lesseeList/parts/PageTop.vue]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -854,6 +876,7 @@ language: zh-TW
   - {text: "關掉通知還收得到帳單信嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "通知開關在哪裡設定", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/lesseeList/parts/PageTop.vue, code:src/pages/users/lesseeList/parts/ContactInfoBlock.jsx]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -887,6 +910,7 @@ language: zh-TW
   - {text: "社宅租客列表欄位差在哪", source: "draft:outline-20260920", status: proposed}
   - {text: "租客列表沒有操作欄", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/lesseeList/parts/ListTable.vue]
+- reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general

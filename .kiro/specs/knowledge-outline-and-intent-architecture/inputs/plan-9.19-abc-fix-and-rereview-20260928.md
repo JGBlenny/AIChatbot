@@ -3,7 +3,7 @@
 > **現況**（`endpoint_progress.py`，2026-09-28，commit `199d4fc5`）：`已審細目 pm 304／535、prospect 53／121；頁面 pm 79／183、prospect 23／183`。
 >
 > **本計畫預期**：
-> - S3 完成時 **pm 最多 +111、prospect 最多 +35**（A／B／C 未審 110 條，加上 I 架 1 條）。
+> - S3 完成時 **pm 最多 +83、prospect 最多 +29**（S2 重審後實算；原估最多 +111／+35）（A／B／C 未審 110 條，加上 I 架 1 條）。
 > - 依 9.16 修正後重審的經驗（修 76 → 過 75），實際預期約 **pm +70～95**。
 > - S0、S1、S2 都是 +0。
 
@@ -126,8 +126,28 @@
 - **工具**：`scratchpad/p919_s2_sheet.py`，是 `p918_s2_sheet.py` 的副本。
   - 變更值：`CANON_COMMIT=<S1 commit>`、`SHELVES` 預設為 `ABCI`、前綴 `p919-s2`、標題「Plan 9.19 S2」。
   - targets 改為讀 `p919-s2-targets.json`，不再以「整架未審」計算，因為 I 架只納入 1 條。這項工具變更要預跑正負對照。
-- **批次**：粗目不拆、每批 ≤35，約 4 批。對照表派工前存成 `p919-s2-batches.json`。
+- **批次**：粗目不拆、每批 ≤35，共 4 批。對照表派工前存成 `p919-s2-batches.json`。
+  - **已預跑**（2026-09-28，S1 commit `bdb2327b` 後）：
+    - `p919_s2_sheet.py`：`CANON_COMMIT="bdb2327b"`、`SHELVES` 預設 `ABCI`（`P919_SHELVES`）、前綴 `p919-s2`。targets 讀 `p919-s2-targets.json`，是 A／B／C 未審 110 條加上 `jgb/I/pricing-trial-plan-landing-page`，共 111 條。
+    - 批次：
+      - S2B1 33 條：A 7 組；
+      - S2B2 33 條：A-notification-settings＋B 5 組；
+      - S2B3 29 條：B-tenant-list＋C 7 組；
+      - S2B4 16 條：C 3 組＋I-pricing 1 條。
+
+      聯集＝targets，互不重疊。
+    - 空結果審核單 `check` ⇒ `targets 111; judged 0; raw-parsed 0; sheet ids 111`、`mismatches: 0`。
+    - 負對照：`P919_SHELVES=ABC` ⇒ `❌ 1 targets not found…['jgb/I/pricing-trial-plan-landing-page']`。
+    - brief 以 9.18 S2 版為範本，已生成 `scratchpad/p919-s2-brief-S2B*.txt`。各批 sources 前綴都在來源清單內：S2B1 code／help、S2B2 code、S2B3 code／help、S2B4 code／help。
 - **brief**：9.18 S2 版，含 `doc:` 來源、「只放一份結論」、「逐條對照清單」。派工前以 grep 確認每批 sources 前綴都在來源清單內。
+- **保留清單（hold）**：`scratchpad/p919-s2-hold.json` 列了 `jgb/A/login-sso-redirect-no-duplicate-buttons`、`jgb/B/biglandlord-escrow-owner` 兩條。業主已裁「列下個計畫刪除」，所以這兩條照常重審，判定只記錄、不標已審。brief 不預告這件事，避免影響獨立判定。
+  - `p919_s2_sheet.py` 的處理（已改、已預跑）：
+    - 這兩條在審核單列成 `[hold]`，並附註「⛔ 標已審（先審判定：X）」，不計入 pass／doubt，也不計入 ⚠️ 的分母；
+    - 表頭寫明「整組回『過』也不涵蓋它們」；
+    - `check` 核對 `[hold]` 標記＝hold ∩ 已判。
+  - 預跑結果（假結果）：
+    - 正常審核單：`raw<->results` 以外的 mismatch 為 0；
+    - 負對照：審核單副本把一條 `[hold]` 改成 `[pass]` ⇒ 報出 `hold marks: sheet [...] vs expected [...]` 等 3 項。
 - **審核單與驗收**：
   - 審核單 `inputs/review-sheet-9.19-S2-ABCI-<日期>.md`；
   - `check` 輸出 `targets 111; judged 111; raw-parsed 111; sheet ids 111`、不符 0；
@@ -136,12 +156,62 @@
 - **停止與回滾**：同 9.18 S2（交件失敗，同一代理重貼一次仍失敗即停；中途停下時未跑的批次在審核單列「未先審」；回滾只刪審核單與 p919-s2 檔）。
 - **預算**：4 批約 0.9M。
 
-### S3 — 業主終審＋寫入已審（pm 最多 +111、prospect 最多 +35）
+### S3 — 業主終審＋寫入已審（pm 最多 +83、prospect 最多 +29；實算見下）
 
-- 工具：`scratchpad/p918_approved.py`（通用）。
-  - `P918_WRITE_SHELVES=ABCI`；`P918_SHEET=<9.19 審核單絕對路徑>`；`P918_PLAN_SECTION` 用預設「### S3」，`PLAN` 改指本計畫。
-  - results／targets 路徑改讀 `p919-s2-*`。這需要把 `p918_approved.py` 複製為 `p919_approved.py`，改這三個常數，並預跑。
-- 業主回覆形式、四欄決定檔、兩來源推導、備份 `scratchpad/p919-s3-backup/`、寫入、重匯出、驗證、停止（寫入前不還原；寫入後以已驗證備份還原；git 基準改為 S1 commit）、回滾、擁有（A／B／C／I `.md`、jgb.json、CATALOG；⛔ D～H、drafts），全部依 9.18 S3 的完整寫法逐條展開。開工前本片另過就緒審查。
+- **業主回覆**：依審核單 `inputs/review-sheet-9.19-S2-ABCI-20260929.md` 回覆，可用以下幾種形式：
+  - 規則：「安全組過」（非 ⚠️ 組的 pass）或「全部 pass 過」；
+  - 點名 ⚠️ 組「過」：只收該組的 pass；
+  - 逐條點名 doubt「照原樣過」；
+  - 逐條點名 pass「不要」。
+
+  其餘 doubt 一律本批不審。**`[hold]` 兩條不論回覆內容都不會被核可。** 回覆若無法完整寫成四欄形式，就回頭問業主。
+- **工具**：`scratchpad/p919_approved.py`，由 `p918_approved.py` 複製，變更項目如下：
+  - results／targets 改讀 `p919-s2-*`；
+  - PLAN 改指本計畫，段落用「### S3」；
+  - **加入 HOLD**：讀 `p919-s2-hold.json`。來源 B 把 hold 排除在核可之外，也不計入 ⚠️ 分母；來源 A 只認 `[pass]`／`[doubt]` 列，所以 hold 本來就被排除。
+  - 環境變數：`P918_WRITE_SHELVES=ABCI`（必填）、`P918_SHEET=/Users/chenqinghuang/dev/work/AIChatbot/.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.19-S2-ABCI-20260929.md`。
+- **步驟**（⛔ 手選 id、⛔ 手改正本）：
+  1. 業主原文逐字記入 §6「### S3」，再寫 `scratchpad/p919-s3-decision.json`。
+  2. `P918_WRITE_SHELVES=ABCI P918_SHEET=/Users/chenqinghuang/dev/work/AIChatbot/.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.19-S2-ABCI-20260929.md python3 p919_approved.py derive p919-s3-decision.json --out p919-s3-approved.json`
+  3. 備份：`rag-orchestrator/canon/` 複製到 `scratchpad/p919-s3-backup/`，以 `diff -r` 確認相同；`git diff --stat bdb2327b -- rag-orchestrator/canon` 與 `git status --short rag-orchestrator/canon` 皆須為空。
+     **紅燈基準（同一工作樹、寫入前）**：跑 `scripts/run-tests.sh unit -q -p no:cacheprovider`，把 FAILED 的測試 id 集合存成 `scratchpad/p919-s3-red-baseline.txt`，並將條數與時間記入 §6 S3。
+  4. `P918_WRITE_SHELVES=ABCI python3 p919_approved.py write p919-s3-approved.json --date <日期>`
+  5. 容器重匯出（⛔ 用重跑生成器來改正本）：
+     `docker compose -f docker-compose.dev.yml run --rm -T --no-deps rag-orchestrator python -c "from services.agent.canon.canon_parser import parse_canon_dir, export_json, export_catalog; from services.agent.canon.canon_assembler import load_canon_or_die; d=parse_canon_dir('/app/canon/jgb'); export_json(d,'/app/canon/jgb.json'); export_catalog(d,'/app/canon/jgb/CATALOG.md'); load_canon_or_die('/app/canon')"`
+  6. `P918_WRITE_SHELVES=ABCI python3 p919_approved.py verify p919-s3-approved.json --backup p919-s3-backup`，然後逐項跑下方驗收。
+- **已預跑**（2026-09-29，scratch 計畫副本與 scratch 正本 `pc14/`，repo 未動）：
+  - derive 結果，兩來源推導一致：
+    - 「安全組過」⇒ 65 條（A 26／B 24／C 15／I 0；pm +65、prospect +27）；
+    - 「全部 pass 過」⇒ 83 條（pm +83、prospect +29）；
+    - 兩種回覆都不含 hold。
+  - **hold 正對照**：results 副本把 `biglandlord-escrow-owner` 改成 pass，工具仍不核可它。
+  - **hold 負對照**：工具副本拿掉 HOLD 排除 ⇒ `sheet-derived 83 != results-derived 84; only-results ['jgb/B/biglandlord-escrow-owner']`，推導失敗。
+  - 安全組 65 條走完 write＋重匯出＋`load_canon_or_die`，verify 結果為 `reviewed backup 308 -> current 373; added lines 65`、`fines changed beyond reviewed_*: 0`、`mismatches: 0`。
+  - scratch 終點指標：`已審細目 pm 369／535、prospect 80／121；頁面 pm 89／183、prospect 27／183`。
+- **驗收**：
+  - 決定檔忠於原文：雙向核對，由 fresh outcome verifier 逐條勾選。
+  - verify 結果為 `mismatches: 0`，涵蓋以下各點：
+    - 已審集合＝308 ∪ 核可（逐 id 比對）；
+    - A／B／C／I 只多出 `- sources:` 之後的 reviewed 行，刪除 0 行；
+    - D～H、CATALOG、README 逐位元組相同；
+    - jgb.json 只有核可 id 多出 `reviewed_*`。
+  - hold 兩條沒有 reviewed 行。
+  - `load_canon_or_die` 通過。
+  - 終點指標：pm＝304＋增量、prospect＝53＋增量。
+  - 重生成保留檢查（**只寫 scratch**）：
+    - 先把 `rag-orchestrator/canon` 複製到 `scratchpad/p919-s3-regen-canon`。
+    - 再執行：
+      `docker compose -f docker-compose.dev.yml run --rm -T --no-deps -v <scratchpad>:/scratch rag-orchestrator python /.claude/skills/outline-curation/scripts/drafts_to_canon.py generate --drafts-dir /.claude/skills/outline-curation/runs/outline-20260920 --coarse-ids /.kiro/specs/knowledge-outline-and-intent-architecture/inputs/coarse-ids-20260921.md --front-matter-from /scratch/p919-s3-regen-canon/jgb --canon-root /scratch/p919-s3-regen-canon --runs-out /scratch/p919-s3-regen-runs --date <日期>-s3check --expect-reviewed-kept <308＋核可數> --expect-open-questions 54`
+    - 須印出 `已審保留：<308＋核可數> 條／丟棄：0 條`，產出的 A～I `.md`、CATALOG、jgb.json 與 repo 逐位元組相同。
+    - ⛔ 對 repo 跑。
+  - 寫入後的紅燈 id 集合減去 `scratchpad/p919-s3-red-baseline.txt` 須為 ∅；`make audit` PASS；fresh outcome verifier CONFIRMED。
+  - commit 只收以下檔案，並以 `git diff --cached --name-only` 核對，範圍外須為 0：A／B／C／I `.md`、jgb.json、審核單、本計畫、`.kiro/specs/knowledge-outline-and-intent-architecture/HANDOFF-20260923.md`（終點行）。CATALOG 須與備份位元組相同，所以不在 commit 範圍內；若有變動，verify 會先報錯。
+- **停止**：
+  - **寫入前**失敗（回覆不符四欄、derive 失敗、備份不同、git 基準非空）⇒ 不還原，直接停。
+  - **寫入後**任一驗收不符 ⇒ 用已驗證的 `p919-s3-backup/` 還原，並以 `diff -r` 確認、`git diff --stat bdb2327b -- rag-orchestrator/canon` 為空，然後停下交業主。這屬於預先授權的還原；若已審數低於 308，仍須業主明示。
+  - 累計達 2.7M 停點 ⇒ 停。
+- **擁有**：`rag-orchestrator/canon/jgb/A.md`、`B.md`、`C.md`、`I.md`、`jgb.json`；本計畫 §6；HANDOFF 終點行；scratchpad 的 p919-s3-decision／approved／backup／regen-*／red-baseline。⛔ drafts、D～H、CATALOG（應無變動）。
+- **回滾**：以 `p919-s3-backup/` 還原，或 revert 該 commit；已審數下降須業主明示。
 - **預算**：outcome verifier 約 0.15M。
 
 ## 2. 不做（另案）
@@ -190,7 +260,22 @@
 
   依規則只開一次收尾審查。
 - 收尾審查（fresh plan-verifier）＝**READY** ⇒ 交業主核可（`next_gate: user_approval`）。S2、S3 開工前各自再過就緒審查。
+- S2 第 1 輪＝REVISE，P2×1：業主裁定要刪除的兩條，在 S2 產物中沒有「不可標已審」的標記。S3 若整組回「過」，會把已知錯誤的內容寫成已審，下個計畫刪除時已審數還會下降。
+  - **FIX（採方案 a）**：新增 hold 清單；`p919_s2_sheet.py` 標 `[hold]`、⚠️ 分母排除、`check` 核對標記，並附正負對照；S3 工具兩個來源都排除 hold，另列預跑要求。
+- S2 第 2 輪（fresh plan-verifier）＝**READY** ⇒ 依業主 9.19 核可開跑（ASK 模式，每批回報）。
+- S3 第 1 輪＝REVISE，P2×2：
+  1. 步驟 5 的容器匯出鏈與重生成保留檢查沒有寫成可執行指令，照字面跑有覆寫 repo 的風險；
+  2. 單元紅燈基準沒寫檔名與量測時點，而工作樹還有其他工作線的改動。
 
+  **FIX**：
+  - 步驟 5 寫成完整指令；
+  - 重生成檢查寫全 scratch 旗標，並註明「⛔ 對 repo 跑」；
+  - 步驟 3 加寫入前紅燈基準 `p919-s3-red-baseline.txt`，驗收改為以它比對；
+  - 擁有範圍列入 regen 與 red-baseline。
+
+  P3 一併處理：審核單改用絕對路徑；commit 清單補 HANDOFF 路徑、移除 CATALOG；表頭預期更正為 +83／+29。
+
+- S3 第 2 輪（fresh plan-verifier）＝**READY** ⇒ 審核單交業主終審。
 ## 6. 執行紀錄
 
 ### S0（2026-09-28）
@@ -244,4 +329,76 @@
 - **commit 範圍核對**：`git diff --cached --name-only` 共 16 檔，範圍外 0。
 - **業主裁決（2026-09-28）**：commit「commit，接著進 S2 (Recommended)」；兩條必須整條刪除的細目「列下個計畫刪除 (Recommended)」，本計畫不動，S2 照常重審。
 - **成本**：S0 約 0.05M；S1 的主 session 修正，加上 verifier 3 包、複核 1 輪、outcome 1 輪約 0.95M；就緒審查 ×3 約 0.33M ⇒ **9.19 累計約 1.35M**（停點 2.7M、上限 3.0M）。
+
+### S2（2026-09-28～29）
+
+- 4 批 fresh verifier 依序跑完，一次一位。brief 以 9.18 S2 版為範本，另加三項：講法要答得到、現行程式走不到的情境判 doubt、比對同粗目（含不在本批的細目）。合計 **pass 83／doubt 28**（含 hold 兩條）：
+
+  | 批 | 條數 | pass／doubt |
+  |---|---|---|
+  | S2B1 | 33 | 25／8 |
+  | S2B2 | 33 | 27／6 |
+  | S2B3 | 29 | 21／8 |
+  | S2B4 | 16 | 10／6 |
+
+- 4 批都一次解析通過，沒有交件失敗。
+- 審核單：`inputs/review-sheet-9.19-S2-ABCI-20260929.md`，表頭 commit `bdb2327b`。
+  - 共 25 組，其中 ⚠️ 9 組。
+  - 審核單上 pass 83／doubt 26，另有 hold 2 條；兩條 hold 先審都判 doubt，標為 `[hold]`。
+  - `check` ⇒ `targets 111; judged 111; raw-parsed 111; sheet ids 111`、`mismatches: 0`。
+  - 正對照（`jgb/C/team-public-page-share`）：審核單副本與 raw 副本各把 doubt 改成 pass，兩者都報出不一致。
+  - 正本與 runs 相對 `bdb2327b` 的 `git diff --stat` 為空。
+- **S1 修過的 61 條裡，仍有 11 條被判 doubt**，主要類型：
+  - 鎖定條件漏了另一條路徑；
+  - 同步密碼的說法會誤導；
+  - 附設傢俱的「商用／有建物」區塊只放座位數；
+  - 窄螢幕排序其實也會帶入；
+  - 物件狀態表出自舊文件；
+  - 缺漏手機版的例外。
+
+  修正列入下個計畫。
+- **成本**：4 批約 0.88M；S2 就緒審查 ×2 約 0.1M。
+
+### S3（2026-09-29）
+
+- **業主裁決原文**（AskUserQuestion「9.19 S3 終審：A／B／C＋I 審核單要怎麼過？」之回覆）：「安全組過 (Recommended)」——非 ⚠️ 16 組的 pass 標已審；⚠️ 9 組全組本批不審；26 條 doubt 本批不審；[hold] 2 條不標；無點名、無照原樣過、無排除。
+- **寫入前準備**：
+  - 決定檔 `p919-s3-decision.json`。
+  - derive ⇒ `approved 65 (both sources equal) by shelf {'A': 26, 'B': 24, 'C': 15, 'I': 0}; expected endpoint increment pm +65, prospect +27`；hold 在核可中 0 條。
+  - git 基準（`bdb2327b`）與 status 皆為空。
+  - 備份 `p919-s3-backup/`（11:55:38）以 `diff -r` 比對相同。
+  - 紅燈基準 `p919-s3-red-baseline.txt` 共 9 條（11:57:52），與 S1 基準相同。
+- **寫入與驗證**：
+  - `write` ⇒ `added 65`；重匯出與 `load_canon_or_die` 通過。
+  - verify ⇒ `reviewed backup 308 -> current 373`、`mismatches: 0`。
+  - hold 兩條都沒有 reviewed 行；正對照：核可的 `dashboard-big-landlord-view` 查得到。
+  - 終點指標 `pm 369／535、prospect 80／121；頁面 pm 89、prospect 23→27`。
+  - scratch 重生成保留 373、丟棄 0，產出與 repo 相同。
+  - `make audit` PASS。
+- **驗收不符 ⇒ 依停止條件還原並停**：
+  - 單元測試出現 1 條新紅燈：`tests/unit/agent/test_canon_assembler_req.py::test_prospect_outline_is_deterministic_and_registers_canon`，錯誤訊息 `AssertionError: (set(), frozenset({'jgb/A/register-email-steps'}))`。
+  - **根因（對碼確認）**：這個測試用 `next(f for f in real_doc.fines() if "prospect" in f.target_user)` 取「版控正本第一條 prospect 細目」，當作刻意留白的未審細目，但 `_mark_reviewed_except` 會跳過已經審過的細目。本片核可了 `jgb/A/register-email-steps`，它正是那「第一條」，測試因此找不到留白細目。
+  - 換句話說，這是測試綁死了正本的實際資料，不是寫入錯誤；該測試檔不在本片擁有範圍內，工作樹中也沒有別條工作線的修改。
+  - 處置：以 `p919-s3-backup/` 整個還原 `rag-orchestrator/canon/`。還原後 `diff -r` 相同、`git diff --stat bdb2327b -- rag-orchestrator/canon` 與 status 皆為空，終點指標回到 `pm 304／prospect 53`。停下交業主。
+- **業主裁決（2026-09-29）**：「核可改測試＋越過停點重做 (Recommended)」——授權修改 `tests/unit/agent/test_canon_assembler_req.py` 的取樣條件，並越過 2.7M 停點（上限 3.0M 內）重做 S3。
+- **重做（業主裁決後）**：
+  - 測試修改：`tests/unit/agent/test_canon_assembler_req.py` 只改一處。`prospect_fine` 改為取「第一條未審的 prospect 細目」（`and not (f.reviewed_by or "").strip()`），並加兩行註解，斷言不變。改後在還原後的正本上跑 `1 passed`。
+  - 備份仍與正本相同，git 基準為空。用同一份 `p919-s3-approved.json` 重跑 write ⇒ `added 65`，重匯出後 `canon_sha256` 為 `76538d2a…`，與第一次相同。
+  - verify ⇒ `reviewed backup 308 -> current 373; added lines 65`、`mismatches: 0`。hold 兩條沒有 reviewed 行。
+  - repo 正本與先前的 scratch 重生成產出（保留 373／丟棄 0）逐位元組相同。
+  - **終點指標 `已審細目 pm 369／535、prospect 80／121；頁面 pm 89／183、prospect 27／183`**（pm +65、prospect +27，與預期相同）。
+  - 單元測試 9 failed，與基準 `p919-s3-red-baseline.txt` 的差集為空，改過的測試通過；`make audit` PASS。
+  - fresh outcome verifier＝**CONFIRMED**（8 項全過）。附記兩點：P3 是本段重做紀錄原本缺漏，現已補上；P4 是原文與解讀寫在同一行。
+- **成本**：S3 就緒審查 ×2 約 0.13M、outcome verifier 約 0.12M ⇒ **9.19 累計約 2.8M**。業主已核可越過 2.7M 停點，上限 3.0M。
+
+### 9.19 收案
+
+- **終點指標**：由 pm 304／prospect 53 升到 **pm 369／prospect 80**；頁面 pm 79→89、prospect 23→27。S0、S1、S2 都是 +0，S3 +65／+27。
+- **留給下個計畫**：
+  - A／B／C 未審 45 條：26 條 doubt、⚠️ 9 組中 18 條 pass，另有 hold 2 條依業主裁決**整條刪除**（`login-sso-redirect-no-duplicate-buttons`、`biglandlord-escrow-owner`，須走生成器的刪細目路徑）。
+  - I 架「愛租屋」那條（`pricing-trial-plan-landing-page`）已改寫，但仍判 doubt：講法「深入了解企業方案」對不上。
+  - D／E 未審 63 條；F～I 未審 59 條。
+  - jgb2 缺陷清單 20 項：`inputs/jgb2-defects-9.19-20260928.md`，由業主決定是否開單。
+  - 頁面量尺待辦；pm 真缺口約 9～12 頁；prospect 可見頁範圍待定義。
+  - S1 附記的 P3／P4：`register-verify-code-shape` 的 evidence、`team-public-page-share` 的 askable 等。
 
