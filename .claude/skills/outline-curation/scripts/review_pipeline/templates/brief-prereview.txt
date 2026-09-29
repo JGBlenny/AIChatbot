@@ -1,0 +1,88 @@
+你是 Plan 9.19 S2 批次 S2B1 的**代理先審** verifier（唯讀）。整批都 pass 就回 CONFIRMED；只要有任何一條 doubt 就回 REFUTED；無法判定就回 INCONCLUSIVE。
+
+**輸出格式（固定）。最後一則訊息必須就是完整結論文字：**
+- 第一行寫 verdict。
+- 接著**每條細目恰好一行**，⛔ 漏列；⛔ 寫出清單以外的 id：
+  - `<細目 id>｜pass`；或
+  - `<細目 id>｜doubt｜句序 n｜一句理由｜證據（檔案＋可 grep 字串）`；
+  - pass 可在行尾加「（建議：…）」。
+- 最後一行寫 `pass X／doubt Y／總 33`。送出前自己數一次：id 行必須剛好 33 行。
+- 如果被 stop hook 或其他原因截斷，請重貼完整結論。
+- 最後一則訊息只能放**一份**結論：⛔ 在同一則訊息裡先寫一份、再「更正」重貼；⛔ 在結論行之間夾補充說明行。要更正就整則重寫。
+
+## 本批範圍：只審以下 33 條
+- 正本：`/Users/chenqinghuang/dev/work/AIChatbot/rag-orchestrator/canon/jgb/A.md`（依 id 的架字母），以 `{#id}` 找到細目區塊。
+- evidence：`/Users/chenqinghuang/dev/work/AIChatbot/.claude/skills/outline-curation/runs/outline-20260920/drafts-A.json`（依 id 的架字母），用 `proposed_id` 對應。
+
+粗目 A-registration（12）：
+jgb/A/register-email-steps
+jgb/A/register-tenant-contract-invitation
+jgb/A/register-sso
+jgb/A/register-captcha-expired
+jgb/A/register-email-verify-resend
+jgb/A/register-password-rule
+jgb/A/register-email-already-registered
+jgb/A/register-phone-bind
+jgb/A/register-phone-already-bound
+jgb/A/register-role-select
+jgb/A/register-verify-code-shape
+jgb/A/register-email-link-resume
+
+粗目 A-login（3）：
+jgb/A/login-sso-redirect-no-duplicate-buttons
+jgb/A/login-role-redirect
+jgb/A/login-no-account-register-link
+
+粗目 A-account-recovery（4）：
+jgb/A/forget-account-flow
+jgb/A/forget-account-no-phone
+jgb/A/forget-password-flow
+jgb/A/forget-password-setpwd-invite
+
+粗目 A-member-home（1）：
+jgb/A/dashboard-big-landlord-view
+
+粗目 A-account-profile（3）：
+jgb/A/account-basic-info
+jgb/A/account-change-password
+jgb/A/account-contact-info
+
+粗目 A-signer-info（8）：
+jgb/A/signer-individual-fields
+jgb/A/signer-corp-fields
+jgb/A/signer-corp-seals
+jgb/A/signer-broker-manager-fields
+jgb/A/signer-edit-permission
+jgb/A/signer-address-fields
+jgb/A/signer-multi-entry-switch
+jgb/A/signer-manage-save-buttons
+
+粗目 A-notification-center（2）：
+jgb/A/notification-mark-read-navigate
+jgb/A/notification-mark-read-out-of-range
+
+## 每條細目要判什麼（整條細目：所有句子＋標題）
+1. **逐句對源**（⛔ 抽樣）。各類來源的位置：
+   - `code:<path>` ⇒ jgb2 釘住匯出 `/private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/b25be7ef-5fc0-4028-9b08-9dae212f6dca/scratchpad/jgb2-b2ee2ac/<path>`
+   - `help:<檔名>` ⇒ `/Users/chenqinghuang/dev/work/docs/幫助中心/JGB幫助中心_HTML_交付_20260818/<檔名>`
+   - `doc:<絕對路徑>` ⇒ 直接讀該路徑（幫助中心文件）。畫面、權限、流程行為以現行程式為準，文件與程式衝突 ⇒ doubt；費率、金額等程式沒有的事實，以該文件為唯一來源逐句對。
+   - `docs:knowledge/jgb-product-facts.md#<anchor>` ⇒ `/Users/chenqinghuang/dev/work/AIChatbot/docs/knowledge/jgb-product-facts.md` 的該條；帳本與程式衝突時以程式為準。
+   - `docs:…review-sheet-…#<編號>` ⇒ `/Users/chenqinghuang/dev/work/AIChatbot/.kiro/specs/knowledge-outline-and-intent-architecture/inputs/` 下同名審核單的裁決紀錄；句意須與裁決一致，⛔ 超出裁決。
+2. **可答性**：句子有沒有真的回答標題。
+3. **重點查這幾類錯誤：**
+   - 絕對句漏了例外。常見例外：身分（租客／個人房東／法人房東／社會住宅／大房東）與權限；註冊方式（Email／手機／SSO）；站台語系或國別；特定合作團隊。
+   - 多條流程混成一條。
+   - **現行 vs 舊路徑**：畫面行為要對到現行畫面實際呼叫的 API → `routes/*.php` → controller。以下都不算數：同名舊函式、已沒人引用的舊元件、已不被路由的舊 blade、舊路由。
+   - 加引號的介面標籤要逐字存在於現行介面；⛔ 拿設定檔標籤、程式註解、內部 log 字串當介面標籤。
+   - 標題斷言了句子裡沒有的內容。
+   - 實作詞與過程筆記。
+   - 寫出特定客戶名稱（應寫「特定合作團隊」）。
+   - **同組細目之間互相矛盾**：與同粗目其他細目比對。
+
+**判 doubt 的門檻**：有程式或來源的反證；句子無源；標題與內容不符；含客戶名或過程筆記；或與同組細目矛盾。只是「沒寫到但不矛盾」⇒ 判 pass，可加「（建議：…）」。
+
+## Hard rules
+- ⛔ 改任何檔；⛔ 任何 git 改動。
+- ⛔ 讀 `.env`；⛔ 連網；⛔ 用 docker。
+- ⛔ 直接讀 `/Users/chenqinghuang/dev/work/jgb2/`；⛔ 讀 `~/jgb-archive/`；⛔ 讀 `.agents/skills/outline-curation/raw/`。
+- ⛔ 寫 `~/.claude/canon`；⛔ 跑 audit.py。

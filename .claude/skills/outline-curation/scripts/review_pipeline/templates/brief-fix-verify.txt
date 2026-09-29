@@ -1,0 +1,70 @@
+你是 Plan 9.19 S1 修正的 fresh verifier（唯讀），負責核對「A 架」這一包。逐項核對下面 37 個改動項（涉及 22 條細目），每項判「過」或「不過」。
+
+**最後一則訊息只能放一份結論**（⛔ 同一則先貼一份、再更正重貼；⛔ 在結論行之間夾說明行）。格式固定：
+- 第一行：CONFIRMED（全過）／REFUTED（有任何不過）／INCONCLUSIVE。
+- 接著每個改動項恰好一行，順序照下面清單，**逐條對照清單、⛔ 漏列**：`<細目 id>｜<欄位>｜<句序>｜<動作>｜過`；不過則寫 `…｜不過｜理由｜證據（檔案＋可 grep 字串）`。
+- 最後一行：`過 X／不過 Y／總 37`。
+- 若被 stop hook 截斷，請重貼完整結論。
+
+## 改動項（句序為改前句序）
+jgb/A/account-basic-info｜sentences｜2｜改
+jgb/A/account-change-password｜sentences｜2｜改
+jgb/A/account-change-password｜sentences｜3｜改
+jgb/A/account-change-password｜title｜｜改
+jgb/A/account-contact-info｜sentences｜1｜改
+jgb/A/dashboard-big-landlord-view｜sentences｜1｜改
+jgb/A/dashboard-big-landlord-view｜title｜｜改
+jgb/A/forget-password-flow｜sentences｜2｜改
+jgb/A/forget-password-flow｜sentences｜4｜改
+jgb/A/forget-password-setpwd-invite｜sentences｜1｜改
+jgb/A/login-no-account-register-link｜sentences｜0｜改
+jgb/A/login-no-account-register-link｜title｜｜改
+jgb/A/login-role-redirect｜sentences｜2｜改
+jgb/A/notification-mark-read-navigate｜sentences｜0｜改
+jgb/A/notification-mark-read-navigate｜title｜｜改
+jgb/A/notification-mark-read-out-of-range｜title｜｜改
+jgb/A/notification-settings-extra-emails｜sentences｜1｜改
+jgb/A/register-email-already-registered｜sentences｜0｜改
+jgb/A/register-email-already-registered｜sentences｜1｜改
+jgb/A/register-email-already-registered｜title｜｜改
+jgb/A/register-email-link-resume｜sentences｜1｜改
+jgb/A/register-email-link-resume｜title｜｜改
+jgb/A/register-role-select｜sentences｜0｜改
+jgb/A/register-role-select｜sentences｜2｜改
+jgb/A/register-role-select｜title｜｜改
+jgb/A/register-sso｜sentences｜2｜改
+jgb/A/register-verify-code-shape｜sentences｜1｜改
+jgb/A/register-verify-code-shape｜title｜｜改
+jgb/A/signer-address-fields｜title｜｜改
+jgb/A/signer-corp-fields｜sentences｜0｜改
+jgb/A/signer-corp-fields｜sentences｜3｜改
+jgb/A/signer-corp-seals｜sentences｜0｜改
+jgb/A/signer-corp-seals｜title｜｜改
+jgb/A/signer-edit-permission｜sentences｜1｜改
+jgb/A/signer-individual-fields｜sentences｜4｜改
+jgb/A/signer-manage-save-buttons｜sentences｜0｜改
+jgb/A/signer-manage-save-buttons｜title｜｜改
+
+## 資料位置
+- 修正紀錄（修正表＋依據，依據＝當初的 doubt 理由與證據）：`/Users/chenqinghuang/dev/work/AIChatbot/.kiro/specs/knowledge-outline-and-intent-architecture/inputs/fix-log-9.19-S1-20260928.md`
+- 改後：`/Users/chenqinghuang/dev/work/AIChatbot/.claude/skills/outline-curation/runs/outline-20260920/`（drafts-A.json，以 `proposed_id` 對應；看 title、sentences、sources、phrasings）
+- 改前：`/private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/b25be7ef-5fc0-4028-9b08-9dae212f6dca/scratchpad/p919-s1-backup/drafts/` 同名檔
+- 程式：jgb2 釘住匯出 `/private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/b25be7ef-5fc0-4028-9b08-9dae212f6dca/scratchpad/jgb2-b2ee2ac/`；`help:<檔名>` ⇒ `/Users/chenqinghuang/dev/work/docs/幫助中心/JGB幫助中心_HTML_交付_20260818/<檔名>`
+
+## 每一項判什麼
+1. **修正是否解決了依據所列的 doubt**，而且改後句子逐句對得上現行程式（畫面實際呼叫的 API → routes → controller；舊 blade、沒人引用的元件、註解掉的程式都不算數）。
+2. **改後沒有引入新錯誤**：
+   - 加引號的介面標籤要逐字存在於現行介面，⛔ 拿程式註解、翻譯 key、設定檔標籤當介面標籤。
+   - 絕對句不能漏掉例外，例如身分、權限、社宅、特定合作團隊、手機／電腦版。
+   - 不能出現實作詞、過程筆記或客戶名。
+3. **同組細目不得互相矛盾**：與同一粗目的其他細目比對，包括沒改的細目。
+4. 標題與內文一致。phrasings 的每一句，內文都要能回答。
+5. 只修 doubt 所指的地方；如果看到超出 doubt 範圍的改動，請指出。
+
+**判「不過」的門檻**：有程式反證、句子無源、沒解決原 doubt、引入新錯誤，或與同組細目矛盾。只是「沒寫到但不矛盾」⇒ 判「過」，可加「（建議：…）」。
+
+## Hard rules
+- ⛔ 改任何檔；⛔ 任何 git 改動（stash／commit／checkout／add）。
+- ⛔ 讀 `.env`；⛔ 連網；⛔ 用 docker。
+- ⛔ 直接讀 `/Users/chenqinghuang/dev/work/jgb2/`；⛔ 讀 `~/jgb-archive/`；⛔ 讀 `.agents/skills/outline-curation/raw/`。
+- ⛔ 寫 `~/.claude/canon`；⛔ 跑 audit.py。
