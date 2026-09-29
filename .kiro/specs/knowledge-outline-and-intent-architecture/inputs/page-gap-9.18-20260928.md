@@ -4,13 +4,28 @@
 > 判定用 `endpoint_progress.py` 的 `page_hit` 原樣（SPA＝`src/pages/<component>` 逐字相等；blade＝controller 檔層級）。
 > 工具 `scratchpad/p918_page_gap.py`（容器內跑），正本 commit `c646395e`。本清單只陳列，⛔ 裁決、⛔ 補寫細目。
 
+## 0. 補驗更正（2026-09-29，fresh verifier 補驗 PARTIAL，均為 P3）
+
+⚠️ 下面 §1 的數字是 `c646395e` 當時的量測；以下更正以本節為準。
+- **時點**：9.19 `bdb2327b` 起有細目引用了 `estates/edit/facilities/Index.vue`，所以現樹 `--ignore-review` 的 pm 覆蓋是 136，缺口是 47（§2 表中的 `page:estates.edit.facilities` 已不在缺口內）。
+- **真缺口約 11～12 頁**（§1 原寫「9 頁＋2＋1」）：
+  - 完全無細目 8 頁：7 個 SPA 頁加首頁 `indexs`；
+  - 只有同目錄兄弟頁有引用 2 頁：`users.forget`、`users.verify`；
+  - 外殼頁裡實際沒寫到的 1 頁：`contracts.edit.socialHousing.facilities`，它的畫面在 `contracts/edit/facilities/SocialHousing.vue`，沒有任何細目引用這個檔（正本只引用 `General.vue`）；
+  - 算半頁：`entrustedContracts.list`，只引用了 `_parts/PageTop.jsx`，列表本體 `_parts/ListTable` 沒有引用。
+- **不算真缺口**：
+  - `web:notifications.index`：內容已寫，只是引用寫成 `NotificationController.php#index` 而比對不到；
+  - `web:/help/{any?}/{slug?}`：blade 外殼，內容由幫助中心 SPA 的細目涵蓋。
+- **「15 頁純路由外殼」說得太滿**：其中 `contracts/edit`、`balanceInvoices/edit`、`communities/forceBinding`、`estates/dashboard` 這幾個外框頁雖含 router-view，也有自己的畫面（步驟列、分頁列等），不是純分流。
+- 分類工具的 `sibling_only` 實際包含子目錄內的檔（docstring 寫「不含」，是 P4 說明錯；工具在 scratchpad，未進 repo）。
+
 ## 1. 結論
 
 - **pm 缺口 48 頁**（＝183−135；和 `endpoint_progress.py --ignore-review` 的 `pm 135` 交叉核相符）。
   - pm：覆蓋 135／183，缺口 48：外殼頁、子元件有引用 36、完全無細目 9、只有同目錄兄弟頁有引用 2、引用帶 #方法 1
   - prospect：覆蓋 48／183，缺口 135：完全無細目 107、外殼頁、子元件有引用 18、只有同目錄兄弟頁有引用 10
 - pm 的「外殼頁、子元件有引用」共 36 頁，其中 15 頁是純路由外殼（檔內有 router-view），21 頁沒有 router-view、需人判是否只是分流元件。這兩類多半是**量尺只比對入口檔，而細目引用了實際畫面子元件**，不代表內容沒寫。
-- **真正完全沒有細目的 pm 頁只有 9 頁**（見 §2 標「完全無細目」者），加上 2 頁只有同目錄兄弟頁有引用、1 頁因引用寫成 `Controller.php#方法` 而比對不到。
+- **真正完全沒有細目的 pm 頁只有 9 頁**（見 §2 標「完全無細目」者），加上 2 頁只有同目錄兄弟頁有引用、1 頁因引用寫成 `Controller.php#方法` 而比對不到。（⚠️ 已更正：真缺口約 11～12 頁，見 §0。）
 - prospect 的缺口大（135 頁、其中 107 頁完全無細目），但分母 183 包含大量只有登入業者才看得到的後台頁；哪些頁對 prospect 開放**未定義**，本表不推斷。
 - ⚠️ 量尺本身的兩個限制（供之後決定要改量尺還是改引用）：(1) 外殼頁只認入口檔；(2) `#方法` 後綴使 blade 比對失敗。
 

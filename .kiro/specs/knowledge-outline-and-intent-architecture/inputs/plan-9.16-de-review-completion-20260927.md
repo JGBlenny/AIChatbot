@@ -1,6 +1,6 @@
 # Plan 9.16：D／E 兩架已審收尾（生成器保留已審＋修正疑慮細目＋第二批交審）
 
-> 狀態：**S1～S4 完成（2026-09-27）**；終點 pm 62→137、prospect 10→18。業主核可：D1 沿用「修一次仍不過就整句刪」；D2 內容一改就重審；D3 上限 4M、3.2M 先停（實用約 2.99M）。ASK 模式。
+> 狀態：**S1～S4 完成（2026-09-27）**；終點 pm 62→137、prospect 10→18，收案後抽驗撤 1 條 ⇒ **最終 pm 136、prospect 17**。業主核可：D1 沿用「修一次仍不過就整句刪」；D2 內容一改就重審；D3 上限 4M、3.2M 先停（S4 時約 2.99M，含收案後抽驗約 3.13M）。ASK 模式。commit：S1＋S2 `3642733c`、S3＋S4 `496369d2`、抽驗撤回 `5d188b37`。
 > **終點指標（本計畫起點，`endpoint_progress.py` 2026-09-27）**：`已審細目 pm 62／535、prospect 10／121；頁面 pm 24／183、prospect 7／183`（D pm 20／104、prospect 1／9；E pm 42／96、prospect 9／21）。
 > **本計畫預期**：S4 完成時 D／E **pm 最多 +138、prospect 最多 +20**（＝D／E 尚未已審的全部；以業主審過為準）；S1～S3 為 +0，皆為 S4 的前置。
 > 上游：Plan 9.15 §6（S4 先審結果、doubt 61 條、⚠️ 8 組、B7 未跑）；記憶 `feedback_endpoint_metric_first`、`project_ledger_p914_scope_errors`。
@@ -119,7 +119,7 @@ Plan 9.15 只讓 D／E 200 條中的 62 條通過（目標最多 200）。剩下
 - 大綱（fresh plan-verifier，2026-09-27）＝**READY**。
 - S1 第 1 輪＝REVISE P2×2，全 FIX：`--expect-reviewed-kept` 須在寫任何檔之前比對（現行 generate 先寫後核，照搬會在失敗時已抹掉已審）＋不符時無輸出的測試；S1 缺擁有清單 ⇒ 列三個擁有檔，驗收實跑改為只寫 scratchpad 再 `cmp`。
 - S1 第 2 輪＝**READY** ⇒ 大綱＋第一個可執行片皆 READY，交業主核可（`next_gate: user_approval`）。S2～S4 開工前各自再過就緒審查。
-- 業主 2026-09-27 核可：先做 S1；D1 沿用；D2 內容一改就重審；D3 4M／3.2M。
+- 業主 2026-09-27 核可：先做 S1；D1 沿用；D2 內容一改就重審；D3 4M／3.2M。（業主回覆原文未留存，此句為主 session 摘述。）
 - S3 第 1 輪＝REVISE P2×1，FIX：審核單只對帳條數，doubt 誤列 pass 會在 S4 被業主一併標已審 ⇒ 審核單改由腳本從 results 機械產生，加逐條對帳（含正對照）。P3 一併採納：batch brief 明列 id 與預期條數（避免重判 59 條已審）、派工前固定 id→批次對照、輸出缺漏／格式錯視同交不出件、⚠️ 分母＝該組 targets、審核單表頭記 commit、brief 點名 §6 留給 S3 的兩點。
 - S3 第 2 輪＝REVISE P2×1：審核單對帳的是 results，但 verifier 原始輸出→results 這一步沒有檔也沒有檢查，轉錄時 doubt 誤成 pass 照樣全綠。**兩輪自動 REVISE 已達上限，主 session 裁決：FIX**（raw 逐字存檔、results 只由腳本解析產生、check 加 raw↔results 對帳＋正對照）；P3（停點觸發時的部分審核單）FIX（未先審細目只能列「未先審」、含未先審的粗目不可整組回過）；P4（untracked 檔不在 diff --stat）接受風險（S3 不寫 runs）。⇒ 新就緒紀元，開**唯一一次**收尾審查；再 REVISE 即暫停交業主。
 - S2 第 1 輪＝REVISE P2×2，全 FIX：①「改過的句子」只來自自報的修正紀錄、沒有獨立分母 ⇒ 加機械差異比對（drafts 對備份逐欄位），改動集合須＝修正紀錄；② doubt 以外的細目沒有 0 改動檢查，且講法不在指紋內，改已審細目的講法會帶著舊已審標記過關 ⇒ 只准改 doubt 集合，其餘細目所有欄位含講法 0 改動，附正對照。P3 附帶修正：試跑指令補掛載、回滾備份加 runs 產出檔、verifier 核修正紀錄每一列（不只句子）。
@@ -147,7 +147,7 @@ Plan 9.15 只讓 D／E 200 條中的 62 條通過（目標最多 200）。剩下
 - 備份 `scratchpad/p916-s2-backup/`（`runs/` drafts-D／E＋open-questions／dsp-068 兩個日期、`canon/`、`jgb-product-facts.md`）。
 - 工具：`scratchpad/p916_s2_drafts_diff.py`（正對照：基準對自己 0 項 PASS；改已審細目講法 ⇒ (c) 報出；搬細目＋加新 id ⇒ (f) 點名兩者；修正紀錄漏列／多列／未過 ⇒ (a)(d)(e) 報出）；`scratchpad/p916_edit.py`（drafts 讀寫逐位元組往返相同、只准改 doubt 集合）。
 - **B7 先審**（fresh verifier，0.21M）：**pass 9／doubt 15（62%）**，結果 `scratchpad/p916-s2-b7-results.json`。doubt 主因：金流開通段對到**已不被路由的舊路徑**（`addMerchant`／舊 blade），現行走 `getPaymentVendor`；個人房東停用藍新等三家、另有「愛金卡」；虛擬帳號段混了立即／排定銷帳、漏權限與「以人為主／以物件為主」模式、特定客戶註解。doubt 集合＝61＋15＝**76**（`scratchpad/p916-s2-doubt.json`）。
-- 親修完成：76 條 doubt 全改（213 項、75 條細目有改動；`payment-gateway-options` 一度漏修，差異比對對 doubt 集合時抓出後補修），差異比對 (b)(c)(f) 全 0；依據逐條記在 `scratchpad/p916-s2-basis.json`，判定記在 `scratchpad/p916-s2-verdicts.json`，修正紀錄在全部核完後由差異比對產表。
+- 親修完成：76 條 doubt 全改（213 項、75 條細目有改動——此為當時計數；2026-09-29 補驗重算，最終修正紀錄為 219 列、76 條細目，講法淨 −3，以下方「收尾」與修正紀錄為準；`payment-gateway-options` 一度漏修，差異比對對 doubt 集合時抓出後補修），差異比對 (b)(c)(f) 全 0；依據逐條記在 `scratchpad/p916-s2-basis.json`，判定記在 `scratchpad/p916-s2-verdicts.json`，修正紀錄在全部核完後由差異比對產表。
 - 驗證批次（fresh verifier，序列）：
   - D1（D #1–20）：過 58／不過 1（社宅附件漏轉租／包租範本例外）⇒ 修一次，併 4 項 verifier 建議改進，5 條整條重核。
   - D2（D #21–39＋D1 複核 5 條）：過 62／不過 4 ⇒ D1 複核 5 條全過；`contract-show-creditcard-auth-prompt`（漏特定合作團隊專屬範本不跳授權）與 `move-out-fee-adjustment-step`（誤刪自動帶入的「違約金」列）各修一次，送 E1 第二次複核（再不過即整句刪，D1）。
@@ -175,6 +175,7 @@ Plan 9.15 只讓 D／E 200 條中的 62 條通過（目標最多 200）。剩下
 - 驗收：已審 id 集合＝既有 62 ∪ 核可 75（交集空）；doubt 與 ⚠️ 組 0 條被標；全套單元紅燈＝既有 9 條；`make audit` PASS（主 session 於同一位元組執行）；重生成保留檢查（scratch）`已審保留：137 條／丟棄：0 條`、輸出與 repo 正本逐位元組相同。fresh outcome verifier＝**CONFIRMED**（`make audit` 依 brief 不重跑、採主 session 證據）。
 - **終點指標：`已審細目 pm 137／535、prospect 18／121；頁面 pm 48／183、prospect 13／183`**（pm +75、prospect +8；prospect +8＝核可中 target_user 含 prospect 的條數）。HANDOFF 開頭已更新。
 - 成本：S4 plan-verifier 約 0.06M、outcome verifier 約 0.09M；**9.16 累計約 2.99M／4M**（未達 3.2M 停點）。
+- commit：S3＋S4 `496369d2`。
 - **9.16 收案**：D／E 200 條中已審 137（pm 對象全數 137；prospect 18／30）；未審 63 條＝⚠️ 5 組 23 條 pass＋40 條 doubt，另案處理（建議 Plan 9.17：先修 40 條 doubt——含 S2 自己寫錯的社宅範本名稱 6 條——再對 ⚠️ 組重審）。
 
 ### 收案後抽驗（2026-09-27，業主要求）
@@ -183,7 +184,9 @@ Plan 9.15 只讓 D／E 200 條中的 62 條通過（目標最多 200）。剩下
 - 結果：**pass 9／fail 1**；親修層 5／5 過；原稿層 1 條 P2——`jgb/E/payment-gateway-fees` 標題寫「中國信託／藍新免費」，來源只證申請免費、無交易費率，且藍新提款前 5 次免費後每次 10 元。無 P1。
 - 連帶發現待裁：`jgb/E/bill-power-reading-draft-defaults`（排定發送時空白度數系統自動補抓，依帳本 #p914-power-reading-draft 與 app/Bill.php `prepareIotMeterForSend`）與已審的 `jgb/E/bill-scheduled-send-rule`（「只有度數填完的帳單才能排定」）看似矛盾，未對碼、不自行選邊，列 9.17。
 - 成本約 0.14M；9.16 含抽驗累計約 3.13M。
-- **業主裁決「撤」（2026-09-27）**：刪除 `payment-gateway-fees` 的 `- reviewed:` 行（E.md 刪 1 行）、重匯出（`jgb.json` 只變該條 reviewed 欄位＋sha，CATALOG 不變）；`load_canon_or_die` 通過；終點指標 `已審細目 pm 136／535、prospect 17／121`；全套單元紅燈＝既有 9 條；`make audit` PASS。該條列 9.17 修正後重審（備份 `scratchpad/p916-unreview-backup/`）。
+- **業主裁決「撤」（2026-09-27）**：刪除 `payment-gateway-fees` 的 `- reviewed:` 行（E.md 刪 1 行）、重匯出（`jgb.json` 只變該條 reviewed 欄位＋sha，CATALOG 不變）；`load_canon_or_die` 通過；終點指標 `已審細目 pm 136／535、prospect 17／121`；全套單元紅燈＝既有 9 條；`make audit` PASS。該條列 9.17 修正後重審（備份 `scratchpad/p916-unreview-backup/`）。commit `5d188b37`。
+
+> ⚠️ 2026-09-29 補記：以下三行是 **S2 期間**的紀錄，誤置在檔尾；其中「累計約 1.45M」是 S2 當時的值（括號內各項加總為 1.42M），⛔ 當作 9.16 最終成本（最終約 3.13M，見上）。
 
 - 另記（verifier 附帶、未改）：`newebpay-precondition` 句 0「系統不再檢查帳號綁定手機」只適用現行 `getPaymentVendor`，舊 `addMerchant` 仍檢查（舊路徑、現行頁面不呼叫）；藍新開通勾選框未綁 enabled，實際開通以後端預設為準。兩者留 S3 先審再看。
 - 過程中發現、另案處理的 jgb2／文件不一致：委託合約檢視頁上傳區畫面寫 6MB、元件實際上限 10MB；幫助中心 `paymentapply` 寫個人房東可選藍新，程式對個人房東停用藍新／國泰／永豐；`bills.one` 舊路由仍在但通知連結已改走列表 `?id=`。
