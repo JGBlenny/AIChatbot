@@ -7,18 +7,18 @@ reviewers: [owner]
 language: zh-TW
 ---
 ## 修繕單列表與狀態（申請修繕、安排修繕、完成修繕、結單、封存） {#F-repair-list}
-### 修繕單總表有哪些狀態分頁？（申請修繕、安排修繕、完成修繕、結單、封存，各代表什麼階段） {#jgb/F/repair-status-tabs}
+### 修繕單總表有哪些狀態分頁？（申請修繕、安排修繕、完成修繕、結單、封存） {#jgb/F/repair-status-tabs}
 - phrasings:
   - {text: "修繕單有幾個狀態", source: "draft:outline-20260920", status: proposed}
   - {text: "修繕單分頁有哪些", source: "draft:outline-20260920", status: proposed}
   - {text: "修繕進度分幾個階段", source: "draft:outline-20260920", status: proposed}
   - {text: "修繕總表怎麼分類", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/routes/repairs.js, code:src/pages/repair/Index.vue, code:app/Repair.php, code:routes/web.php]
+- sources: [code:src/routes/repairs.js, code:src/pages/repair/Index.vue, code:app/Repair.php, code:routes/web.php, help:repair_zh-Hant.html]
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
 修繕單總表分成五個狀態分頁：申請修繕、安排修繕、完成修繕、結單、封存，每張修繕單同一時間只會出現在其中一個分頁。
-「申請修繕」是修繕單剛送出、還沒有人處理的狀態；「安排修繕」代表房東方正在確認或已經指派廠商；「完成修繕」代表廠商已經處理完、房東方在做結算與備註；「結單」代表這張修繕單的處理流程已經走完；「封存」是另外一個可以把修繕單移過去、也可以再移回其他狀態的分頁。
+幫助中心的修繕教學把處理流程依序分成新增修繕單、安排修繕、完成修繕、結單；「封存」則是另一個可以把修繕單移過去、也可以再移回其他狀態的分頁。
 進入畫面後不需要自己選分頁，系統會直接停在「申請修繕」這個分頁。
 修繕單總表這個頁面本身要先登入 JGB 帳號才能打開；但同樣屬於修繕功能的分享頁，並不受這條規則限制（另見「看修繕單分享頁需要先登入嗎」）。
 ### 修繕單總表可以怎麼搜尋或篩選？（案名／地址／經理人／租客關鍵字，加上單一組「修繕單時間段」下拉：報修時間起訖／最後更新時間起訖／7 日內申請報修三選一，還有分類／項目／是否緊急） {#jgb/F/repair-list-search-filter}
@@ -116,21 +116,21 @@ language: zh-TW
 移動選單只給對這個物件有編輯修繕權限的房東方帳號使用；租客的齒輪選單沒有移動選項，只有一個查看／編輯用的按鈕。
 封存不是最後不能回頭的狀態，被封存的修繕單一樣可以透過這個選單再移回申請修繕、安排修繕、完成修繕或結單；「結單」分頁的修繕單同樣可以再移回其他狀態，兩者在能不能移動這件事上沒有差別。
 移動狀態成功之後，畫面上會跳出成功提示，並且直接把使用者帶到剛剛選擇的目標狀態分頁。
-### 哪些身分會看到「查看」而不是「編輯＆查看」的齒輪按鈕文字？（大房東角色，以及只有「顯示所屬」沒有「顯示所有」修繕資料權限的經理人帳號；這個文字只反映顯示修繕資料的權限，能不能移動狀態、能不能在細節頁編輯是另一組「編輯修繕」權限決定的，兩者互相獨立） {#jgb/F/repair-view-only-roles}
+### 哪些身分會看到「查看」而不是「編輯＆查看」的齒輪按鈕文字？（大房東角色，以及對這張單只有「顯示所屬」、沒有「顯示所有」修繕資料權限的團隊成員；但這張單的經理人本人看到的仍是「編輯＆查看」） {#jgb/F/repair-view-only-roles}
 - phrasings:
   - {text: "大房東可以改修繕單嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "誰只能看修繕單", source: "draft:outline-20260920", status: proposed}
   - {text: "查看跟編輯有什麼差別", source: "draft:outline-20260920", status: proposed}
   - {text: "為什麼列表裡少了幾張修繕單", source: "draft:outline-20260920", status: proposed}
-- sources: [code:app/Http/Controllers/RepairController.php, code:src/pages/repair/edit/Index.vue]
+- sources: [code:app/Http/Controllers/RepairController.php, code:src/pages/repair/edit/Index.vue, code:app/Repair.php]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
 齒輪選單裡開啟修繕單細節的按鈕，一般會顯示「編輯＆查看」；但登入身分是「大房東」時，這顆按鈕文字會變成「查看」。
-房東方帳號如果對這個物件只有「顯示所屬修繕資料」的權限、還沒有「顯示所有修繕資料」的權限（也就是經理人身分），按鈕文字一樣會變成「查看」。
+房東方團隊成員如果對這個物件只有「顯示所屬修繕資料」的權限、沒有「顯示所有修繕資料」的權限，按鈕文字一樣會變成「查看」；不過，如果這位成員就是這張修繕單的經理人，系統會把這張單的修繕權限都視為開啟，看到的仍是「編輯＆查看」，也可以移動狀態。
 如果房東方帳號對這個物件連「顯示所屬修繕資料」都沒有，這張修繕單的那一列根本不會出現在列表裡，不是顯示成唯讀，是完全看不到這一列。
 齒輪按鈕文字的「編輯＆查看」跟「查看」只反映顯示修繕資料的權限與是不是大房東身分；能不能移動狀態、能不能在細節頁編輯，要看另一組「編輯修繕」的權限，這兩件事是分開判斷的。
-大房東因為在細節頁的編輯判斷裡被直接排除，所以看到「查看」文字時也確實不能編輯或移動；但只有「顯示所屬」的經理人帳號如果同時具備編輯所屬修繕的權限，齒輪按鈕文字一樣會變成「查看」，卻仍然可以移動狀態、在細節頁編輯。
+大房東因為在細節頁的編輯判斷裡被直接排除，所以看到「查看」文字時也確實不能編輯或移動；但只有「顯示所屬」權限的團隊成員如果同時具備編輯所屬修繕的權限，齒輪按鈕文字一樣會變成「查看」，卻仍然可以移動狀態、在細節頁編輯。
 ### 修繕單總表可以用分類、項目、是否緊急篩選嗎？（可以；先選分類才能選項目，換分類會把已選的項目清空；「是否緊急」是一個勾選框，勾了才會加上這個條件） {#jgb/F/repair-list-filter-category-item-urgent}
 - phrasings:
   - {text: "修繕單怎麼用分類篩選", source: "draft:outline-20260920", status: proposed}
@@ -163,13 +163,13 @@ language: zh-TW
   - {text: "怎麼報修", source: "draft:outline-20260920", status: proposed}
   - {text: "申請修繕流程", source: "draft:outline-20260920", status: proposed}
   - {text: "修繕單申請入口在哪", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/repair/list/Index.vue, code:src/pages/repair/applyProcess/Index.vue, code:src/utils/constants/repair.constant.ts, code:routes/web.php, help:repair_zh-Hant.html]
+- sources: [code:src/pages/repair/list/Index.vue, code:src/pages/repair/applyProcess/Index.vue, code:src/utils/constants/repair.constant.ts, code:routes/web.php, help:repair_zh-Hant.html, code:app/Role.php, code:src/pages/repair/applyProcess/_parts/Detail.vue]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
 申請修繕的入口在【修繕管理】>【修繕單總表】頁面右上角的「新增修繕單」按鈕。
 申請修繕分成三步：先選要報修的物件，再選修繕分類與項目，最後填報修細節後送出；第一步（選物件）下方的按鈕是「取消」與「下一步」，第二步（選分類）是「上一步」與「下一步」，第三步（填細節）則是「上一步」與「申請修繕」。
-租客可以自己在系統上申請報修，房東方也可以代租客申請，不管誰發起，雙方登入系統都看得到同一張修繕單的進度。
+租客可以自己在系統上申請報修，房東方也可以代租客申請；租客自己送出的修繕單，房東方與租客都看得到進度，但房東方在網頁上建立的修繕單目前不會同步到租客的修繕單總表，租客看不到。
 房東方帳號如果要用這個流程，帳號要有「新增&編輯&刪除所屬修繕資料」或「新增&編輯&刪除所有修繕資料」其中一項權限；租客帳號則不需要另外的權限，登入即可申請。
 填完報修細節按下「申請修繕」送出後，系統會直接把使用者帶回修繕單總表的「申請修繕」分頁。
 目前系統上沒有透過 LINE 直接發起報修的入口，LINE 只被用在修繕單建立之後的通知，以及把已經存在的修繕單分享出去。
@@ -182,9 +182,8 @@ language: zh-TW
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
-申請修繕不需要這個物件正在跑合約，房東方只要已經把物件建立在系統上，就可以幫這個物件新增修繕單；系統裡原本用合約找修繕對象的那段邏輯已經標註不再使用，改成一律以物件為主。
+申請修繕不需要這個物件正在跑合約，房東方只要已經把物件建立在系統上，就可以幫這個物件新增修繕單。
 就算物件目前是空屋、尚無租客入住，房東方一樣可以幫這個物件申請修繕。
-選擇物件那一步只需要挑物件本身，流程裡原本預留的合約欄位目前維持空白，並未被用來做任何限制或檢查。
 ### 報修分類項目怎麼選？（分類與項目都是系統設定的清單，選好之後在報修細節可以按「編輯」回上一步重選；有一個特定分類會多出讓使用者自己輸入名稱的欄位） {#jgb/F/repair-apply-category-item-other}
 - phrasings:
   - {text: "修繕項目沒有我要的怎麼辦", source: "draft:outline-20260920", status: proposed}
@@ -236,41 +235,45 @@ language: zh-TW
 申請修繕時可以上傳損壞處的照片或影片，方便維修師傅快速了解狀況；照片最多可以放 10 張，影片最長 30 秒或 100MB。
 支援的圖片格式是 jpeg、jpg、png，影片格式是 mov、mp4、webm。
 如果選擇的照片已經到 10 張的上限，上傳入口就會收起來，要先刪掉幾張才能繼續加。
-### 新增修繕單後誰會收到通知？（租客本人、團隊擁有者會收到 Email，租客如果有綁定 LINE 也會收到 LINE 通知） {#jgb/F/repair-apply-notifications}
+### 新增修繕單後誰會收到通知？（租客送出時通知房東方；房東方在網頁上建立時只寄 Email 給房東方，租客不會收到通知） {#jgb/F/repair-apply-notifications}
 - phrasings:
   - {text: "申請修繕會通知誰", source: "draft:outline-20260920", status: proposed}
   - {text: "報修後誰會知道", source: "draft:outline-20260920", status: proposed}
   - {text: "修繕單送出通知", source: "draft:outline-20260920", status: proposed}
-- sources: [help:repair_zh-Hant.html, code:src/pages/repair/applyProcess/Index.vue]
+- sources: [code:src/pages/repair/applyProcess/Index.vue, code:app/Notification.php, code:app/Role.php]
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
-新增修繕單成功之後，租客跟團隊擁有者都會收到 Email 通知，如果租客的帳號有綁定 LINE，也會另外收到 LINE 通知。
+租客送出修繕單後，房東方會收到通知中心訊息與 Email，房東方有綁定 LINE 的話也會收到 LINE 通知；租客自己不會另外收到通知。
+房東方在網頁上建立修繕單時，系統只會寄 Email 給這張修繕單的房東方帳號；租客目前不會收到任何通知，也不會在自己的修繕單總表看到這張單。
 送出成功後，畫面上也會另外跳出成功提示訊息，讓使用者知道這張修繕單已經建立好了。
 送出後系統會直接把畫面帶回修繕單總表的「申請修繕」分頁，不需要額外操作確認。
-### 安排廠商、完成修繕、結單時還會發哪些通知？（依幫助中心教學：填寫廠商資訊後、完成修繕儲存後、移到結單狀態時，租客或團隊都會再收到一次通知） {#jgb/F/repair-notifications-by-stage}
+### 安排廠商、完成修繕、結單時還會發哪些通知？（租客只有在這張修繕單會通知租客時才收得到；結單只寄 Email） {#jgb/F/repair-notifications-by-stage}
 - phrasings:
   - {text: "安排修繕會通知租客嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "完成修繕後誰會知道", source: "draft:outline-20260920", status: proposed}
   - {text: "修繕單結單會通知誰", source: "draft:outline-20260920", status: proposed}
-- sources: [help:repair_zh-Hant.html]
+- sources: [code:app/Notification.php, code:app/Http/Controllers/RepairController.php]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-管理者點「填寫廠商資訊」更新安排資訊時，如果物件有簽訂租約、租客有綁定 LINE，租客會在 LINE 跟系統右上角的通知中心收到通知。
-管理者在「完成修繕」區塊儲存備註後，租客如果有綁定 LINE 會收到完成修繕的通知；沒有綁定 LINE 的話，登入系統也可以在右上角通知中心看到訊息。
-管理者把修繕單的狀態移入「結單」時，租客、團隊管理者都會收到 Email、LINE、通知中心三種通知。
+管理者更新安排修繕的廠商資訊時，如果這張修繕單會通知租客，租客會收到通知中心訊息，有綁定 LINE 的話也會收到 LINE 推播。
+管理者在「完成修繕」區塊儲存房東備註時，同樣只有會通知租客的修繕單，租客才會收到通知中心訊息與 LINE 推播。
+修繕單移到「結單」時，系統只寄 Email：房東方一定會收到，租客則只有在這張修繕單會通知租客時才會收到；結單不發 LINE，也不發通知中心訊息。
+租客自己送出的修繕單會通知租客；房東方在網頁上建立的修繕單目前一律不會通知租客。
 ## 修繕單編輯 {#F-repair-edit}
-### 修繕單細節頁的進度時間軸顯示什麼？（申請修繕、安排修繕、完成修繕、結單、封存五個階段各自的日期，還沒到的階段不顯示日期） {#jgb/F/repair-edit-progress-timeline}
+### 修繕單細節頁的進度時間軸顯示什麼？（申請修繕、安排修繕、完成修繕、結單、封存五個階段，以及各階段對應的日期） {#jgb/F/repair-edit-progress-timeline}
 - phrasings:
   - {text: "修繕單進度怎麼看", source: "draft:outline-20260920", status: proposed}
   - {text: "修繕單細節頁面", source: "draft:outline-20260920", status: proposed}
   - {text: "修繕單時間軸", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/repair/edit/Index.vue]
+- sources: [code:src/pages/repair/edit/Index.vue, code:app/Http/Controllers/RepairController.php]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-點進一張修繕單的細節頁，最上面會有一條時間軸，依序是申請修繕、安排修繕、完成修繕、結單、封存五個階段，每個階段下面會顯示對應的日期，還沒到的階段則不顯示日期。
+點進一張修繕單的細節頁，最上面會有一條時間軸，依序是申請修繕、安排修繕、完成修繕、結單、封存五個階段，目前所在的階段會被標示出來。
+各階段下方日期的來源不同：申請修繕是送出申請的時間，安排修繕是廠商安排紀錄裡填的修繕時間（有多筆時取第一筆），完成修繕是房東備註裡填的完成時間，結單與封存則是修繕單被移到該狀態的時間。
+因此有日期不代表已經走到那個階段：例如還在安排修繕時，房東若先在房東備註填了完成時間，完成修繕下方就會顯示日期；從修繕單總表的齒輪選單把修繕單移回前面的狀態時，原本記下的結單、封存時間也不會清掉。
 如果直接打開修繕單細節頁的網址、但網址裡沒有帶修繕單編號，系統會直接把使用者導回修繕單總表的「申請修繕」分頁。
 ### 修繕單細節頁怎麼列印？（右上角有「列印」按鈕，會叫出瀏覽器內建的列印視窗，可以印出來或存成 PDF） {#jgb/F/repair-edit-print}
 - phrasings:
@@ -295,7 +298,7 @@ language: zh-TW
 有編輯權限的房東方帳號，在細節頁會看到「切換狀態」區塊，說明文字是「房東可根據實務狀況隨時切換修繕單的狀態」，用下拉選單選好想要的階段後按「變更」就會儲存。
 租客帳號跟大房東角色打開這個頁面時，看不到「切換狀態」這個區塊，只有具備編輯修繕權限的房東方帳號才看得到。
 選好想要的階段之後要按「變更」這顆按鈕，系統才會真的儲存，不是選了就自動生效。
-### 誰不能編輯修繕單細節頁？（租客帳號、大房東角色都只能看，不能切換狀態、不能改廠商資訊、不能寫房東備註） {#jgb/F/repair-edit-cannot-edit-roles}
+### 誰不能編輯修繕單細節頁？（租客帳號、大房東角色不能切換狀態、不能改廠商資訊、不能寫房東備註；租客只能編輯自己的房客備註） {#jgb/F/repair-edit-cannot-edit-roles}
 - phrasings:
   - {text: "租客可以改修繕單嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "大房東可以編輯修繕單嗎", source: "draft:outline-20260920", status: proposed}
@@ -304,7 +307,7 @@ language: zh-TW
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-租客帳號跟大房東角色打開修繕單細節頁，都只能看內容，看不到「切換狀態」區塊，也不能編輯安排修繕的廠商資訊或填寫房東備註。
+租客帳號跟大房東角色打開修繕單細節頁，看不到「切換狀態」區塊，也不能編輯安排修繕的廠商資訊或填寫房東備註；租客唯一能在細節頁編輯的是自己的房客備註。
 房東方帳號要有「新增&編輯&刪除所屬修繕資料」或「新增&編輯&刪除所有修繕資料」其中一項權限，而且不是大房東角色，才能編輯這張修繕單。
 在「安排修繕」廠商資訊那一塊，就算已經有安排紀錄，租客跟大房東角色一樣看不到可以重新編輯的圖示。
 ### 修繕單細節頁顯示哪些報修時填的資料？（「細節補充」區塊底下：申請日期、是否緊急、照片、聯絡電話或 Email、物件區域與時區、分類項目、問題、備註、預約時段；房東方才看得到「細節補充」這個標題與說明文字） {#jgb/F/repair-edit-application-detail-readonly}
@@ -345,7 +348,7 @@ language: zh-TW
 「完成修繕」這個區塊分左右兩欄，左邊是「房東備註」，可以填完成時間、結算金額、備註文字跟照片，只有有編輯權限的房東方帳號能編輯。
 備註文字最多可以輸入 300 字。
 照片最多可以放 10 張，支援 JPG、PNG、PDF 檔，單一檔案大小最大 10MB。
-### 修繕結算金額誰看得到？（「結算金額」欄位只有身分是房東的帳號才會顯示，租客看不到；這筆金額目前只是修繕單自己的紀錄文字，沒有找到跟帳單模組串接的路徑） {#jgb/F/repair-edit-amount-visibility}
+### 修繕結算金額誰看得到？（「結算金額」欄位只有身分是房東的帳號才會顯示，租客看不到；填了金額不會自動產生帳單） {#jgb/F/repair-edit-amount-visibility}
 - phrasings:
   - {text: "修繕結算金額怎麼填", source: "draft:outline-20260920", status: proposed}
   - {text: "完成修繕怎麼登記費用", source: "draft:outline-20260920", status: proposed}
@@ -356,19 +359,19 @@ language: zh-TW
 - instance_applicability: general
 「結算金額」這個欄位只有身分是房東的帳號才會顯示，租客登入後看不到金額。
 修繕單裡填的結算金額目前不會自動產生帳單，是修繕單自己的紀錄。
-### 「房客備註」是什麼？（右邊那一欄，只有這張修繕單有填過預約時段才會出現，沒有的話會顯示「此修繕單為房東發起，無房客備註」） {#jgb/F/repair-edit-tenant-memo}
+### 「房客備註」是什麼？（右邊那一欄，放租客的備註文字與照片，只有租客自己能編輯；從網頁建立的修繕單都會顯示這一欄） {#jgb/F/repair-edit-tenant-memo}
 - phrasings:
   - {text: "房客備註在哪", source: "draft:outline-20260920", status: proposed}
   - {text: "修繕單為什麼沒有房客備註", source: "draft:outline-20260920", status: proposed}
   - {text: "租客可以留言嗎", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/repair/edit/Index.vue, code:src/pages/repair/_parts/MemoArea.vue]
+- sources: [code:src/pages/repair/edit/Index.vue, code:src/pages/repair/_parts/MemoArea.vue, code:src/pages/repair/applyProcess/Index.vue, code:app/Http/Controllers/RepairController.php]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
 「完成修繕」右邊那一欄是「房客備註」，只放備註文字跟照片，不包含完成時間或結算金額欄位。
-只有這張修繕單當初有填過預約時段（代表是租客那邊發起，或房東幫忙填了預約時段），系統才會顯示房客備註區塊；如果是房東發起、尚未填寫預約時段，這一欄會改成顯示「此修繕單為房東發起，無房客備註」。
+房客備註區塊會不會出現，看這張修繕單有沒有預約時段資料：在網頁上申請修繕時，預約時段至少會送出一列（就算沒填也一樣），所以從網頁建立的修繕單都會顯示房客備註區塊；只有完全沒有預約時段資料的修繕單，這一欄才會改成顯示「此修繕單為房東發起，無房客備註」。
 房客備註只有租客自己的帳號能編輯，房東方帳號打開這一區只能查看，看不到編輯圖示。
-### 怎麼把修繕單分享出去給廠商？（在修繕單細節頁點「分享」，可以複製連結，也可以直接用 LINE 分享出去；廠商點開連結不需要登入 JGB 帳號） {#jgb/F/repair-edit-share-to-vendor}
+### 怎麼把修繕單分享出去給廠商？（在修繕單細節頁點「分享」，電腦上可以複製連結或用 LINE 分享，手機上會直接叫出手機的分享選單；廠商點開連結不需要登入 JGB 帳號） {#jgb/F/repair-edit-share-to-vendor}
 - phrasings:
   - {text: "修繕單怎麼分享給廠商", source: "draft:outline-20260920", status: proposed}
   - {text: "怎麼把修繕單傳給水電行", source: "draft:outline-20260920", status: proposed}
@@ -377,8 +380,8 @@ language: zh-TW
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-在修繕單細節頁裡，非租客身分的帳號會看到「分享訊息」區塊，說明文字是「如有配合的廠商，可使用下方分享功能，即可將申請單細節轉給廠商」，點「分享」按鈕會開啟「分享修繕申請單」視窗。
-分享視窗裡有兩種方式：複製修繕單連結，或是用 LINE 分享出去。
+在修繕單細節頁裡，非租客身分的帳號會看到「分享訊息」區塊，說明文字是「如有配合的廠商，可使用下方分享功能，即可將申請單細節轉給廠商」，點「分享」按鈕後的反應依裝置而不同。
+在電腦上，或手機瀏覽器不支援系統分享功能時，會開啟「分享修繕申請單」視窗，可以複製修繕單連結，或用 LINE 分享出去；在支援的手機瀏覽器上，會直接叫出手機內建的分享選單。
 廠商拿到這個連結之後，打開它不需要先登入 JGB 帳號（另見「看修繕單分享頁需要先登入嗎」）。
 ## 修繕單分享頁 {#F-repair-share}
 ### 修繕單分享頁需要先登入嗎？（不需要，這個連結是公開的，系統特別把它排除在登入檢查之外，任何拿到網址的人都可以直接打開） {#jgb/F/repair-share-public-link}
@@ -408,7 +411,7 @@ language: zh-TW
 只要拿到分享連結網址，不需要登入、也不需要跟這張修繕單有任何關係，就能看到這張修繕單房東方的手機號碼或Email（團隊身分顯示公司電話／公司Email，個人房東顯示手機號碼／Email，另見「修繕單細節頁顯示哪些報修時填的資料」）、物件所在區域（只到國家、縣市、行政區，不含街道門牌）、報修照片，以及安排的廠商聯絡電話。
 「結算金額」在分享頁上要不要顯示，看的是瀏覽者目前自己登入 JGB 的身分是不是房東；如果瀏覽者根本沒有登入（分享頁本來就不需要登入），這個判斷會是否，所以看不到金額。
 系統產生分享頁資料時，不會核對這個瀏覽者是不是這張修繕單相關的房東或租客——不管有沒有登入、登入的是誰，看到的內容都一樣。
-### 分享連結會過期嗎？（目前不會，系統一度寫過 30 天過期的檢查，但已經停用，現在沒有天數限制） {#jgb/F/repair-share-no-expiry}
+### 分享連結會過期嗎？（目前不會，沒有天數限制） {#jgb/F/repair-share-no-expiry}
 - phrasings:
   - {text: "修繕分享連結會過期嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "修繕單連結多久失效", source: "draft:outline-20260920", status: proposed}
@@ -418,7 +421,6 @@ language: zh-TW
 - business_types: [system_provider]
 - instance_applicability: general
 目前打開修繕單分享連結，並不會因為超過幾天就失效。
-系統背後曾經寫過「如果超過 30 天就不給查看」的檢查，但這段檢查已經被停用，看得到內容並未受這條規則限制。
 分享頁抓資料時只靠修繕單的編號去找，不受天數期限或物件目前狀態影響。
 ### 修繕單分享頁看得到什麼？（修繕申請單標題與是否緊急、照片、報修細節、安排的廠商資訊、房東備註與房客備註，全部都是唯讀；不會顯示物件廣告連結、縮圖，也沒有房東／承租方資訊側欄） {#jgb/F/repair-share-content}
 - phrasings:

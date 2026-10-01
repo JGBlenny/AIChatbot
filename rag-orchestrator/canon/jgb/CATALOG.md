@@ -480,7 +480,7 @@ jgb/E/cash-payment-account-management｜「現金收款帳戶」怎麼管理？�
 ## F 修繕 {#F}
 scope: 報修、派工、進度與狀態、修繕通知；⛔ 費用入帳歸 E
 ### F-repair-list 修繕單列表與狀態（申請修繕、安排修繕、完成修繕、結單、封存） {#F-repair-list}
-jgb/F/repair-status-tabs｜修繕單總表有哪些狀態分頁？（申請修繕、安排修繕、完成修繕、結單、封存，各代表什麼階段）｜target_user=property_manager,prospect｜
+jgb/F/repair-status-tabs｜修繕單總表有哪些狀態分頁？（申請修繕、安排修繕、完成修繕、結單、封存）｜target_user=property_manager,prospect｜
 jgb/F/repair-list-search-filter｜修繕單總表可以怎麼搜尋或篩選？（案名／地址／經理人／租客關鍵字，加上單一組「修繕單時間段」下拉：報修時間起訖／最後更新時間起訖／7 日內申請報修三選一，還有分類／項目／是否緊急）｜target_user=property_manager｜
 jgb/F/repair-list-columns｜修繕單總表的表格欄位顯示什麼？（物件地址、分類＆項目、報修日期、最後更新、結算金額、房東/管理者、租客）｜target_user=property_manager｜
 jgb/F/repair-list-sort-and-pagination｜修繕單總表怎麼排序、一頁看幾筆？（每頁 30／60／90 筆可選；排序選項裡的「結算金額」只有房東方帳號才看得到）｜target_user=property_manager｜
@@ -488,7 +488,7 @@ jgb/F/repair-create-button-visibility｜「新增修繕單」按鈕誰看得到�
 jgb/F/repair-total-visibility｜「結算總金額」是什麼？（只有房東方帳號登入時才會顯示；這個數字只加總目前這一頁看得到的修繕單，換頁或換每頁筆數就會不一樣）｜target_user=property_manager｜
 jgb/F/repair-export-visibility｜誰能匯出修繕單？（要另外有匯出修繕資料的權限；而且這顆按鈕只有在「新增修繕單」按鈕會出現的身分底下才會一起出現，單獨有匯出權限而沒有編輯權限的房東方帳號看不到它）｜target_user=property_manager｜
 jgb/F/repair-move-status-from-list｜修繕單總表怎麼切換狀態？（每列右邊的齒輪選單有「移至」各個狀態的選項，封存後仍然可以再移回其他狀態）｜target_user=property_manager｜
-jgb/F/repair-view-only-roles｜哪些身分會看到「查看」而不是「編輯＆查看」的齒輪按鈕文字？（大房東角色，以及只有「顯示所屬」沒有「顯示所有」修繕資料權限的經理人帳號；這個文字只反映顯示修繕資料的權限，能不能移動狀態、能不能在細節頁編輯是另一組「編輯修繕」權限決定的，兩者互相獨立）｜target_user=property_manager｜
+jgb/F/repair-view-only-roles｜哪些身分會看到「查看」而不是「編輯＆查看」的齒輪按鈕文字？（大房東角色，以及對這張單只有「顯示所屬」、沒有「顯示所有」修繕資料權限的團隊成員；但這張單的經理人本人看到的仍是「編輯＆查看」）｜target_user=property_manager｜
 jgb/F/repair-list-filter-category-item-urgent｜修繕單總表可以用分類、項目、是否緊急篩選嗎？（可以；先選分類才能選項目，換分類會把已選的項目清空；「是否緊急」是一個勾選框，勾了才會加上這個條件）｜target_user=property_manager｜
 jgb/F/repair-list-contact-card｜修繕單總表點「房東/管理者」或「租客」欄位會怎樣？（會彈出這個人的聯絡資訊卡）｜target_user=property_manager｜
 ### F-repair-apply 報修申請流程 {#F-repair-apply}
@@ -498,23 +498,23 @@ jgb/F/repair-apply-category-item-other｜報修分類項目怎麼選？（分類
 jgb/F/repair-apply-detail-fields｜報修細節要填什麼？（項目分類、問題必填；預約時段依身分決定是否必填；緊急修繕、佐證照片、備註選填；「通知及同步租客」是房東代租客申請時會看到的一個開關，但目前沒有實際作用）｜target_user=property_manager｜
 jgb/F/repair-apply-reservation-slots｜預約時段規則是什麼？（畫面上標示為必填，但實際上只有租客身分申請時系統才會擋下沒填的情況；房東申請時就算不填也能送出）｜target_user=property_manager｜
 jgb/F/repair-apply-photo-limit｜報修可以附照片或影片嗎？（照片最多 10 張；影片最長 30 秒或 100MB；支援 jpeg／jpg／png 圖片與 mov／mp4／webm 影片）｜target_user=property_manager,prospect｜
-jgb/F/repair-apply-notifications｜新增修繕單後誰會收到通知？（租客本人、團隊擁有者會收到 Email，租客如果有綁定 LINE 也會收到 LINE 通知）｜target_user=property_manager,prospect｜
-jgb/F/repair-notifications-by-stage｜安排廠商、完成修繕、結單時還會發哪些通知？（依幫助中心教學：填寫廠商資訊後、完成修繕儲存後、移到結單狀態時，租客或團隊都會再收到一次通知）｜target_user=property_manager｜
+jgb/F/repair-apply-notifications｜新增修繕單後誰會收到通知？（租客送出時通知房東方；房東方在網頁上建立時只寄 Email 給房東方，租客不會收到通知）｜target_user=property_manager,prospect｜
+jgb/F/repair-notifications-by-stage｜安排廠商、完成修繕、結單時還會發哪些通知？（租客只有在這張修繕單會通知租客時才收得到；結單只寄 Email）｜target_user=property_manager｜
 ### F-repair-edit 修繕單編輯 {#F-repair-edit}
-jgb/F/repair-edit-progress-timeline｜修繕單細節頁的進度時間軸顯示什麼？（申請修繕、安排修繕、完成修繕、結單、封存五個階段各自的日期，還沒到的階段不顯示日期）｜target_user=property_manager｜
+jgb/F/repair-edit-progress-timeline｜修繕單細節頁的進度時間軸顯示什麼？（申請修繕、安排修繕、完成修繕、結單、封存五個階段，以及各階段對應的日期）｜target_user=property_manager｜
 jgb/F/repair-edit-print｜修繕單細節頁怎麼列印？（右上角有「列印」按鈕，會叫出瀏覽器內建的列印視窗，可以印出來或存成 PDF）｜target_user=property_manager｜
 jgb/F/repair-edit-switch-status｜修繕單細節頁怎麼切換狀態？（下拉選單直接選要換到哪個階段，按「變更」儲存）｜target_user=property_manager｜
-jgb/F/repair-edit-cannot-edit-roles｜誰不能編輯修繕單細節頁？（租客帳號、大房東角色都只能看，不能切換狀態、不能改廠商資訊、不能寫房東備註）｜target_user=property_manager｜
+jgb/F/repair-edit-cannot-edit-roles｜誰不能編輯修繕單細節頁？（租客帳號、大房東角色不能切換狀態、不能改廠商資訊、不能寫房東備註；租客只能編輯自己的房客備註）｜target_user=property_manager｜
 jgb/F/repair-edit-application-detail-readonly｜修繕單細節頁顯示哪些報修時填的資料？（「細節補充」區塊底下：申請日期、是否緊急、照片、聯絡電話或 Email、物件區域與時區、分類項目、問題、備註、預約時段；房東方才看得到「細節補充」這個標題與說明文字）｜target_user=property_manager｜
 jgb/F/repair-edit-vendor-assign｜怎麼安排修繕廠商？（填寫修繕時間、廠商名稱、維修人員、聯絡電話，儲存後會留下歷史紀錄可以展開查看）｜target_user=property_manager｜
 jgb/F/repair-edit-landlord-complete-memo｜「房東備註」要填什麼？（完成時間、備註文字最多 300 字、可以附照片，最多 10 張、單檔最大 10MB、支援 JPG／PNG／PDF；只有有編輯權限的房東方帳號能編輯）｜target_user=property_manager｜
-jgb/F/repair-edit-amount-visibility｜修繕結算金額誰看得到？（「結算金額」欄位只有身分是房東的帳號才會顯示，租客看不到；這筆金額目前只是修繕單自己的紀錄文字，沒有找到跟帳單模組串接的路徑）｜target_user=property_manager｜
-jgb/F/repair-edit-tenant-memo｜「房客備註」是什麼？（右邊那一欄，只有這張修繕單有填過預約時段才會出現，沒有的話會顯示「此修繕單為房東發起，無房客備註」）｜target_user=property_manager｜
-jgb/F/repair-edit-share-to-vendor｜怎麼把修繕單分享出去給廠商？（在修繕單細節頁點「分享」，可以複製連結，也可以直接用 LINE 分享出去；廠商點開連結不需要登入 JGB 帳號）｜target_user=property_manager｜
+jgb/F/repair-edit-amount-visibility｜修繕結算金額誰看得到？（「結算金額」欄位只有身分是房東的帳號才會顯示，租客看不到；填了金額不會自動產生帳單）｜target_user=property_manager｜
+jgb/F/repair-edit-tenant-memo｜「房客備註」是什麼？（右邊那一欄，放租客的備註文字與照片，只有租客自己能編輯；從網頁建立的修繕單都會顯示這一欄）｜target_user=property_manager｜
+jgb/F/repair-edit-share-to-vendor｜怎麼把修繕單分享出去給廠商？（在修繕單細節頁點「分享」，電腦上可以複製連結或用 LINE 分享，手機上會直接叫出手機的分享選單；廠商點開連結不需要登入 JGB 帳號）｜target_user=property_manager｜
 ### F-repair-share 修繕單分享頁 {#F-repair-share}
 jgb/F/repair-share-public-link｜修繕單分享頁需要先登入嗎？（不需要，這個連結是公開的，系統特別把它排除在登入檢查之外，任何拿到網址的人都可以直接打開）｜target_user=property_manager,prospect｜
 jgb/F/repair-share-visibility-summary｜分享連結誰看得到？（拿到網址的任何人都能看到這張修繕單房東方的手機／Email、物件所在區域、照片、廠商聯絡電話；金額只有在瀏覽者本人目前登入身分是房東時才會顯示，且不會核對是不是這張修繕單相關的房東或租客）｜target_user=property_manager,prospect｜
-jgb/F/repair-share-no-expiry｜分享連結會過期嗎？（目前不會，系統一度寫過 30 天過期的檢查，但已經停用，現在沒有天數限制）｜target_user=property_manager｜
+jgb/F/repair-share-no-expiry｜分享連結會過期嗎？（目前不會，沒有天數限制）｜target_user=property_manager｜
 jgb/F/repair-share-content｜修繕單分享頁看得到什麼？（修繕申請單標題與是否緊急、照片、報修細節、安排的廠商資訊、房東備註與房客備註，全部都是唯讀；不會顯示物件廣告連結、縮圖，也沒有房東／承租方資訊側欄）｜target_user=property_manager｜
 
 ## G 裝置（IoT） {#G}
@@ -525,7 +525,7 @@ jgb/G/power-meter-list-status-tags｜電錶清單的狀態標籤是什麼意思�
 jgb/G/power-meter-list-search｜電錶清單怎麼用關鍵字搜尋？（可選描述、序號、設備名稱、所屬物件名稱其中一種）｜target_user=property_manager｜
 jgb/G/power-meter-list-sort｜電錶清單怎麼排序？（可依設備描述、目前電度、預計可用電度排序；門鎖、攝影機、小白盒清單沒有排序選單）｜target_user=property_manager｜
 jgb/G/power-meter-manufacturer-maintenance｜電錶清單出現「原廠系統維護中」是什麼意思？（維護期間度數不更新、無法儲值）｜target_user=property_manager｜
-jgb/G/power-meter-vendor-unreachable｜電錶顯示「目前連不上廠商」怎麼辦？（度數不會更新、儲值送不出去；業者跟租客都看得到）｜target_user=property_manager,tenant｜
+jgb/G/power-meter-vendor-unreachable｜電錶顯示目前連不上廠商怎麼辦？（度數不會更新、儲值送不出去；全站共用連線的廠商業者跟租客都看得到，以團隊帳號連線的廠商只有業者在清單頁看得到）｜target_user=property_manager,tenant｜
 jgb/G/power-meter-service-expiry｜電錶顯示「服務到期」或「快到期」怎麼辦？（30 天內到期會提醒續訂；只有業者看得到，只出現在清單頁）｜target_user=property_manager｜
 jgb/G/power-meter-list-row-fields｜電錶清單每一列顯示什麼？（型號序號、目前電度、狀態、所屬物件；儲值型才有預計可用電度與低電度警報）｜target_user=property_manager｜
 jgb/G/power-meter-usage-chart-export｜電錶清單列展開後能看什麼？（用電量走勢圖可選 1/7/30/90 天；CSV 只能下載前 90 天）｜target_user=property_manager｜
@@ -534,7 +534,7 @@ jgb/G/power-meter-single-estate-single-bind｜一支電錶只能綁一個物件�
 jgb/G/power-meter-mode-switch｜怎麼切換電錶的供電狀態？（一般型：供電／斷電；儲值型：儲值／強開／斷電，切換中鎖按鈕只有儲值型有）｜target_user=property_manager｜
 jgb/G/power-meter-basic-info-fields｜電錶資料頁的餘額、費率、預計可用電度怎麼看？（只有儲值型電錶才有這個頁籤；費率由雲端儲值系統設定，可用電度＝餘額÷費率）｜target_user=property_manager｜
 jgb/G/power-meter-topup-flow｜電錶怎麼儲值？（「儲值」按鈕就在清單列上，不用展開；金額固定四個選項，維護中或連不上廠商時按鈕會變灰）｜target_user=property_manager｜
-jgb/G/iot-entry-requirements｜電錶／門鎖／攝影機／小白盒頁面需要什麼條件才能進入？（需訂閱方案、且未超過物件數量上限）｜target_user=property_manager,prospect｜
+jgb/G/iot-entry-requirements｜電錶／門鎖／攝影機／小白盒頁面需要什麼條件才能進入？（房東方要有生效中的訂閱，而且方案有開放智能裝置功能；租客不受限制）｜target_user=property_manager,prospect｜
 jgb/G/power-meter-invoice-tab-fields｜開立發票頁籤裡面能填什麼？（目前只有帳單是否開立發票一個選項）｜target_user=property_manager｜
 jgb/G/power-meter-list-empty-state｜電錶清單沒有資料時畫面顯示什麼？（分類內沒有設備寫「此分類尚無設備」；完全沒綁定寫「目前尚無綁定設備」，租客看不到綁定引導連結）｜target_user=property_manager｜
 ### G-device-page 裝置頁（門鎖、攝影機、小白盒） {#G-device-page}
@@ -546,7 +546,7 @@ jgb/G/device-lock-passwords-three-types｜門鎖密碼有哪三種？（房東�
 jgb/G/device-lock-open-log｜門鎖的開門記錄怎麼看？（可依日期查詢操作時間與動作，沒有記錄時會顯示尚無記錄）｜target_user=property_manager｜
 jgb/G/device-gateway-not-counted｜小白盒綁定物件跟門鎖不同在哪？（小白盒不會讓物件被標記為「IoT裝置」，也不會擋刪除）｜target_user=property_manager｜
 ### G-remote-unlock 遠端解鎖（輸入解鎖密碼開門） {#G-remote-unlock}
-jgb/G/remote-unlock-page｜遠端解鎖連結怎麼用？（輸入共用密碼按開門，密碼錯誤或連結失效會提示原因；找不到產生這個連結的入口）｜target_user=property_manager｜
+jgb/G/remote-unlock-page｜遠端解鎖連結怎麼用？（輸入共用密碼按開門，密碼錯誤或連結失效會提示原因）｜target_user=property_manager｜
 jgb/G/remote-unlock-no-login｜遠端解鎖連結需要登入嗎？（不用登入，只要有連結跟密碼就能開）｜target_user=property_manager,prospect｜
 
 ## H 幫助中心 {#H}
@@ -564,13 +564,13 @@ scope: 方案比較與試用、功能矩陣、導入與資料遷移、批次匯�
 jgb/I/pricing-plan-tiers-overview｜JGB 有哪些方案？（免費試用、體驗方案、入門／熱門／專業四級距、企業方案）｜target_user=property_manager,prospect｜
 jgb/I/pricing-free-trial-eligibility｜免費試用怎麼開始、能用多久？（新建立房東身分自動取得，一個週期後不自動續訂）｜target_user=property_manager,prospect｜
 jgb/I/pricing-free-trial-feature-scope｜免費試用不能用哪些功能？（最多 5 個物件，不支援團隊與門鎖電錶等進階功能）｜target_user=property_manager,prospect｜
-jgb/I/pricing-individual-vs-corporate-team｜個人房東與企業團隊方案差在哪？（人員管理四項功能、自動對帳與分店管理起始級距不同）｜target_user=property_manager,prospect｜
+jgb/I/pricing-individual-vs-corporate-team｜個人房東與企業團隊方案差在哪？（團隊成員管理等四項功能、自動對帳與分店管理起始級距不同）｜target_user=property_manager,prospect｜
 jgb/I/pricing-free-vs-experience-plan｜免費方案與體驗方案差在哪？（前者系統贈送 5 個物件，後者每月付費可續訂 10 個物件）｜target_user=property_manager,prospect｜
 jgb/I/pricing-calc-by-estate-count｜怎麼用物件數量試算方案價格？（50～500 物件拉桿試算，超過 500 個要洽企業方案）｜target_user=property_manager,prospect｜
 jgb/I/pricing-quota-near-full-notice｜物件額度快滿了會怎樣？（剩 5 個以下觸發提醒，剛好剩 5 個另寄 Email）｜target_user=property_manager｜
 jgb/I/pricing-enterprise-plan-offer｜企業方案提供什麼？（客製化 LOGO 頁與網址頁，需另外聯繫洽談）｜target_user=property_manager,prospect｜
 jgb/I/pricing-trial-plan-landing-page｜體驗方案介紹頁講什麼？（每月費用試算、體驗方案資格需求、客戶見證、免費試用／免費諮詢按鈕）｜target_user=property_manager,prospect｜
-jgb/I/pricing-plan-price-basis｜方案價格怎麼算、年繳有折扣嗎？（體驗方案月費固定台幣 100 元；一般方案年繳等於 10 個月的月費）｜target_user=property_manager,prospect｜
+jgb/I/pricing-plan-price-basis｜方案價格怎麼算、年繳有折扣嗎？（各方案單價從系統價格表讀取；一般方案年繳等於 10 個月的月費）｜target_user=property_manager,prospect｜
 jgb/I/pricing-quota-full-block｜物件額度用滿了會怎樣？（新增物件、匯入等入口會被擋下並提示升級方案）｜target_user=property_manager｜
 ### I-subscription-payment 訂閱、付款與訂單 {#I-subscription-payment}
 jgb/I/subscription-choose-plan-flow｜訂閱頁怎麼選方案？（體驗方案、依物件數量拉桿的基本方案、企業方案洽談三選一）｜target_user=property_manager｜
@@ -586,8 +586,8 @@ jgb/I/orders-payment-history｜付款紀錄頁看什麼？（扣款日、訂單�
 jgb/I/payment-vendor-options-overview｜收款設置支援哪些金流商？（藍新／國泰世華／永豐／中信／icash Pay／現金收款帳戶，各家設定費與手續費不同）｜target_user=property_manager｜
 jgb/I/payment-vendor-eligibility-by-role-and-plan｜哪些身分或方案不能開通某些金流商？（個人房東不能開藍新／國泰世華／永豐，免費方案／體驗方案不能開國泰世華／永豐）｜target_user=property_manager｜
 jgb/I/payment-newebpay-setup-details｜藍新金流申請要注意什麼？（個人房東無法申請；手機與 Email 送出後不能改，每個金流最多開三組帳號，需審核）｜target_user=property_manager｜
-jgb/I/payment-vendor-edit-after-binding｜金流綁定後還能改嗎？（除了國泰世華，其他金流商明細頁都是唯讀不能重送）｜target_user=property_manager｜
-jgb/I/payment-icash-ctbc-setup｜icash Pay／中信收款帳戶申請要多久？（智付通約 2-5 個工作天，中信 ACH 驗證約 5 個工作天）｜target_user=property_manager｜
+jgb/I/payment-vendor-edit-after-binding｜金流綁定後還能改嗎？（綁定資料都是唯讀；國泰世華只能補填還沒填齊的超商條碼欄位）｜target_user=property_manager｜
+jgb/I/payment-icash-ctbc-setup｜藍新／中信收款帳戶申請要多久？（藍新：智付通至少 2-5 個工作天；中信 ACH 驗證約 5 個工作天）｜target_user=property_manager｜
 jgb/I/payment-receipt-template-options｜收據範本有哪些？（財政部包租業租金收據範本只有法人／社宅團隊才看得到）｜target_user=property_manager｜
 jgb/I/payment-receipt-deposit-team-extras｜押金收據能自訂摘要跟蓋章嗎？（摘要與三顆收款章都只有特定合作團隊才看得到）｜target_user=property_manager｜
 jgb/I/payment-bill-e-invoice-setup｜帳單怎麼開電子發票？（要先聯繫 JGB 業務開通加值服務，開通後才會出現稅與發票分頁）｜target_user=property_manager,prospect｜
@@ -597,16 +597,16 @@ jgb/I/payment-bill-autosend-and-recipient｜帳單可以自動排程發送、指
 jgb/I/demo-form-fields｜預約 demo 表單要填什麼？（公司、職稱、聯絡方式、物件所在地、感興趣功能與諮詢內容）｜target_user=property_manager,prospect｜
 jgb/I/demo-form-option-lists｜demo 表單的下拉選項有哪些？（物件數量 7 級距、團隊人數 6 級距、感興趣功能 6 項）｜target_user=property_manager,prospect｜
 jgb/I/demo-form-submit-result｜demo 表單送出後多久有人聯繫？（顯示感謝頁，2-3 個工作天內專人聯繫）｜target_user=property_manager,prospect｜
-jgb/I/demo-form-actual-validation-scope｜demo 表單哪些欄位真的會被系統擋下？（系統實際只驗公司、姓名、電話、Email 四項）｜target_user=property_manager｜
+jgb/I/demo-form-actual-validation-scope｜demo 表單哪些欄位真的會被系統擋下？（畫面上全部欄位都要填才能送出；系統端只再檢查公司、姓名、電話、Email 四項）｜target_user=property_manager｜
 ### I-control-panel 控制台（設定、通知信範本、自動化任務） {#I-control-panel}
-jgb/I/control-panel-entry-scope｜控制台首頁目前能用什麼？（目前只有「任務管理器」一個項目可以點擊進入）｜target_user=property_manager｜
-jgb/I/control-panel-setting-shell｜進入控制台設定後看到什麼？（本身只是麵包屑與側欄外殼，內容是任務管理器頁面）｜target_user=property_manager｜
-jgb/I/task-manager-purpose｜任務管理器是做什麼用的？（設定週期性任務或預定通知，系統會提前自動開單並寄信）｜target_user=property_manager｜
+jgb/I/control-panel-entry-scope｜控制台首頁目前能用什麼？（目前只有「任務管理器」一個項目可以點擊進入，而且只開放給特定合作團隊）｜target_user=property_manager｜
+jgb/I/control-panel-setting-shell｜進入控制台設定後看到什麼？（麵包屑外殼，內容是任務管理器、新增／編輯任務或通知信設定頁）｜target_user=property_manager｜
+jgb/I/task-manager-purpose｜任務管理器是做什麼用的？（設定週期性任務或預定通知的排程功能）｜target_user=property_manager｜
 jgb/I/task-manager-type-behavior-scope｜新增任務能選哪些類型？（目前只開放「通知」類型，行為是信件通知或站內通知）｜target_user=property_manager｜
 jgb/I/task-manager-cycle-options｜任務週期怎麼設定？（單位分年／月，方式可選僅一次、持續不停、特定日期結束、重複特定次數）｜target_user=property_manager｜
 jgb/I/task-manager-form-fields｜新增任務表單有哪些欄位？（任務名稱、任務類型、關聯物件、任務行為、任務時間、重複間隔、結束時間、通知對象、通知內容）｜target_user=property_manager｜
 jgb/I/task-manager-edit-delete-copy｜已建立的任務怎麼編輯／刪除？（每筆任務可編輯、複製、刪除，編輯週期任務可選只改這次或連後續一起改）｜target_user=property_manager｜
-jgb/I/notification-mail-settings｜通知信副本信箱怎麼設定？（預設收件為團隊擁有者信箱，每個通知信最多再加 3 組副本）｜target_user=property_manager｜
+jgb/I/notification-mail-settings｜通知信副本信箱可以設定嗎？（設定頁只有說明：預設收件為團隊擁有者信箱、每個通知信最多可再加 3 組副本；頁面上目前沒有新增副本的欄位，控制台也沒有入口）｜target_user=property_manager｜
 jgb/I/control-panel-access-restriction｜誰能用控制台的任務管理與通知信設定？（僅限特定合作團隊角色；控制台首頁本身沒有這層檢查，只有進到「設定」子路徑才會擋）｜target_user=property_manager｜
 ### I-marketing-home 官網首頁 {#I-marketing-home}
 jgb/I/homepage-sections-overview｜官網首頁有哪些區塊？（橫幅、熱門物件、優質租管業者推薦、特色介紹、企業夥伴、最新消息）｜target_user=prospect｜
@@ -614,9 +614,9 @@ jgb/I/homepage-ten-features-actual-count｜首頁「JGB平台十大特色」實�
 jgb/I/homepage-city-count-cta｜首頁說 JGB 在東南亞幾個城市使用？（超過 8 個城市，旁邊有免費試用／免費諮詢按鈕）｜target_user=prospect｜
 jgb/I/homepage-presales-assistant-visibility｜首頁的線上諮詢小幫手正式站看得到嗎？（目前設定為正式環境不顯示，只在非正式環境出現）｜target_user=property_manager｜
 jgb/I/homepage-three-advantages｜首頁「JGB平台擁有三大優勢」是哪三項？（提高出租效率、自動化管房流程、提升租客服務品質）｜target_user=prospect｜
-jgb/I/homepage-latest-news-section｜首頁「最新消息」顯示什麼？（沒有消息資料時整區塊不會出現，點擊會開啟幫助中心文章）｜target_user=prospect｜
+jgb/I/homepage-latest-news-section｜首頁「最新消息」顯示什麼？（用輪播呈現消息，點擊會開啟幫助中心文章）｜target_user=prospect｜
 jgb/I/homepage-enterprise-partners-section｜首頁「企業夥伴」放了什麼？（10 個合作夥伴 logo 排成靜態方格，不是輪播）｜target_user=prospect｜
 ### I-hicloud-order 中華電信雲市集訂單頁 {#I-hicloud-order}
 jgb/I/tcloud-order-info-fields｜雲市集訂單頁顯示什麼？（訂單編號、時間、採購方案、價格、點數折抵、付款狀態）｜target_user=property_manager,prospect｜
-jgb/I/tcloud-payment-instructions｜雲市集訂單怎麼付款？（國泰世華一次性虛擬帳號限 WebATM，2 個工作天內付款，付款後 2 天開發票、7 天內開通）｜target_user=property_manager,prospect｜
+jgb/I/tcloud-payment-instructions｜雲市集訂單怎麼付款？（國泰世華一次性虛擬帳號，注意事項請用 WebATM 轉帳；收到匯款資訊後 2 個工作天內付款，款項確認後 2 個工作天內開發票、7 個工作天內開通）｜target_user=property_manager,prospect｜
 jgb/I/tcloud-link-invalid-cases｜雲市集訂單連結為什麼會失效？（連結簽章驗證不過，或訂單編號查無資料，都會導回官網首頁）｜target_user=property_manager,prospect｜

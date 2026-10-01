@@ -32,7 +32,7 @@ language: zh-TW
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
-免費試用是「不綁信用卡的 30 天試用方案」，點選「免費試用」後導向註冊頁完成註冊即可啟用。
+免費試用的說明是「不綁信用卡的30天的試用方案，歡迎體驗」，點選「免費試用」後導向註冊頁完成註冊即可啟用。
 系統在建立房東身分（個人房東、企業團隊或社宅房東）時，只要註冊過程沒有帶入優惠代碼，就會自動給予這個免費方案，效期為系統設定的一個週期（目前為一個月），到期後不會自動續訂。
 個人房東如果是透過優惠代碼連結完成註冊，取得的是優惠代碼指定的方案，而不是這個自動贈送的免費方案。
 免費方案贈送的方案價格固定為 0，即使使用者取消訂閱也不會產生退款。
@@ -48,8 +48,8 @@ language: zh-TW
 - instance_applicability: general
 免費試用最多可新增 5 個物件、支援批次物件上傳，並擁有智能合約（內政部最新標準範本）、支援既存合約、一般匯款、自動催繳通知、即時帳務報表、分店管理、租客管理等功能。
 免費試用不支援 720° VR、團隊成員管理、大房東管理、編輯權限設定、智能門鎖、智能電錶等功能。
-免費試用彈窗裡把自動對帳列在不支援的功能，並註記「無法申請國泰、永豐，可申請藍新、中信」，代表這個限制其實只擋國泰與永豐兩家金流。
-### 個人房東與企業團隊方案差在哪？（人員管理四項功能、自動對帳與分店管理起始級距不同） {#jgb/I/pricing-individual-vs-corporate-team}
+免費試用彈窗裡把自動對帳列在不支援的功能，並註記「無法申請國泰、永豐可申請藍新、中信」；不過能不能開通某家金流還要看身分，例如個人房東連藍新也不能開通（另見「哪些身分或方案不能開通某些金流商」）。
+### 個人房東與企業團隊方案差在哪？（團隊成員管理等四項功能、自動對帳與分店管理起始級距不同） {#jgb/I/pricing-individual-vs-corporate-team}
 - phrasings:
   - {text: "個人房東跟團隊方案差別", source: "draft:outline-20260920", status: proposed}
   - {text: "團隊方案多什麼功能", source: "draft:outline-20260920", status: proposed}
@@ -60,7 +60,7 @@ language: zh-TW
 - business_types: [system_provider]
 - instance_applicability: general
 方案頁目前只會顯示企業團隊身分適用的方案內容與功能比較表，頁面上沒有讓使用者切換成個人房東身分查看內容的入口。
-系統另外定義了一份個人房東專用的方案比較表：人員管理相關的「團隊成員管理」「編輯權限設定」「團隊資訊」「進階設定」四項功能，個人房東的入門、熱門、專業、體驗方案全部都不提供；企業團隊則除了體驗方案外，入門、熱門、專業方案都提供這四項功能。
+系統另外定義了一份個人房東專用的方案比較表：「團隊成員管理」「編輯權限設定」「團隊資訊」「進階設定」四項功能，個人房東的入門、熱門、專業、體驗方案全部都不提供；企業團隊則除了體驗方案外，入門、熱門、專業方案都提供這四項功能。
 自動對帳在個人房東的比較表裡，入門、熱門、專業、體驗方案顯示的都是文字說明「無法申請國泰、永豐可申請藍新、中信」；企業團隊的比較表裡，入門、熱門、專業方案顯示為打勾支援，只有體驗方案不支援。
 分店管理在個人房東的比較表裡，體驗、入門、熱門、專業方案全部支援；企業團隊的比較表裡則是體驗方案不支援，入門、熱門、專業方案才支援。
 大房東管理在兩份比較表裡的支援情形完全相同：體驗方案不支援，入門、熱門、專業方案都支援。
@@ -98,12 +98,12 @@ language: zh-TW
   - {text: "物件數量快到上限怎麼辦", source: "draft:outline-20260920", status: proposed}
   - {text: "方案物件用完前有提醒嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "額度不夠怎麼知道", source: "draft:outline-20260920", status: proposed}
-- sources: [code:app/Estate.php]
+- sources: [code:app/Estate.php, code:app/Notification.php]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-新增物件時，若訂閱中的身分剩餘可新增物件數量在 5 個以下，系統會發送站內通知中心訊息與 Email 提醒即將額滿。
-當剩餘物件數量剛好只剩 5 個時，除了前述提醒，系統會再另外寄送一封 Email 通知使用者接近訂閱方案的物件數量上限。
+新增物件時，若訂閱中的身分剩餘可新增物件數量在 5 個以下，系統會發送站內通知中心訊息提醒即將額滿。
+當剩餘物件數量剛好只剩 5 個時，系統會再另外寄一封 Email 通知使用者接近訂閱方案的物件數量上限。
 這個提醒只在身分目前有生效中的訂閱時才會觸發，沒有生效中的訂閱不會收到這個提醒。
 ### 企業方案提供什麼？（客製化 LOGO 頁與網址頁，需另外聯繫洽談） {#jgb/I/pricing-enterprise-plan-offer}
 - phrasings:
@@ -123,7 +123,7 @@ language: zh-TW
   - {text: "體驗方案介紹頁", source: "draft:outline-20260920", status: proposed}
   - {text: "體驗方案要多少錢", source: "draft:outline-20260920", status: proposed}
   - {text: "體驗方案資格需求", source: "draft:outline-20260920", status: proposed}
-  - {text: "深入了解企業方案後看到什麼", source: "draft:outline-20260920", status: proposed}
+  - {text: "查看體驗方案會看到什麼", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/listings/pricing/TrialPlan.vue]
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
@@ -133,18 +133,17 @@ language: zh-TW
 頁面中段放了一則合作客戶的見證，並附一支介紹影片連結。
 頁面下段「體驗方案資格需求」列出兩項條件：管理房源時間不到兩年的「新創時期」，以及過去沒有使用過 JGB 平台的「全新客戶」。
 頁面上下各有一組「免費試用」與「免費諮詢」按鈕，「免費試用」會開啟免費方案彈窗，「免費諮詢」會另開分頁導向預約 demo 表單。
-### 方案價格怎麼算、年繳有折扣嗎？（體驗方案月費固定台幣 100 元；一般方案年繳等於 10 個月的月費） {#jgb/I/pricing-plan-price-basis}
+### 方案價格怎麼算、年繳有折扣嗎？（各方案單價從系統價格表讀取；一般方案年繳等於 10 個月的月費） {#jgb/I/pricing-plan-price-basis}
 - phrasings:
   - {text: "方案價格數字", source: "draft:outline-20260920", status: proposed}
   - {text: "年繳折扣多少", source: "draft:outline-20260920", status: proposed}
-  - {text: "體驗方案多少錢", source: "draft:outline-20260920", status: proposed}
+  - {text: "體驗方案價格怎麼算", source: "draft:outline-20260920", status: proposed}
   - {text: "方案價格從哪裡算出來", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/UserController.php, code:app/Helper.php]
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
-體驗方案的月費固定是台幣 100 元，換算成其他幣別後顯示。
-入門、熱門、專業等依物件數量分級的方案，實際單價與級距價格是從系統的方案物件價格表讀出來的，不是固定寫死的數字，因此這裡無法列出各級距的金額。
+包含體驗方案在內，各方案的實際單價與級距價格都是從系統的方案物件價格表讀出來的，不是固定寫死的數字，因此這裡無法列出各級距的金額。
 一般依物件數量分級方案的年繳費用，計算方式是月費乘以 10（等於少收 2 個月的費用）；體驗方案的年繳費用則是月費乘以 12，沒有這個折扣。
 ### 物件額度用滿了會怎樣？（新增物件、匯入等入口會被擋下並提示升級方案） {#jgb/I/pricing-quota-full-block}
 - phrasings:
@@ -270,7 +269,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 - instance_applicability: general
 取消訂閱前系統會告知：目前訂閱的方案資格會持續到方案到期日當天，到期後才不會自動續訂，屆時也無法再繼續使用 JGB 的所有服務——也就是取消動作立即生效的是「停止自動續訂」，不是立刻停用目前方案。
 取消時必須從「我不再需要使用相關服務」「無法解決我遇上的問題」「費用昂貴」「其他」四個原因中選一個才能送出；選「其他」的話還要填寫說明文字，否則「確定」按鈕維持無法點擊的樣式。
-送出取消後，系統會清除該身分的自動續約資料與已授權的信用卡約定資料，並寄送 Email 通知使用者。
+送出取消後，系統會清除該身分的自動續約資料與已授權的信用卡約定資料。
 取消動作能不能送出，看的是目前身分是否已經沒有「自動續約資料」——即使目前仍是有效訂閱中的免費方案（沒有自動續約資料），一樣會被這個檢查擋下、直接跳出系統忙碌的錯誤訊息，不會進入原因選擇畫面；這跟目前方案是否還在生效中無關。
 ### 自動續訂扣款失敗會怎樣？（方案資料整個清空、限額歸零、所有物件立即下架，沒有寬限期） {#jgb/I/subscription-renewal-charge-failure}
 - phrasings:
@@ -297,7 +296,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-付款紀錄頁以清單方式列出每一筆已完成扣款：扣款日、訂單編號、「付款內容」、金額、以及「收據」連結；付款內容欄列的是這筆扣款買了什麼——已購買的方案／加購項目名稱（例如熱門方案的加購次數、續訂折扣說明等），加上這筆訂單本身附帶的補充說明文字，沒有任何項目時顯示「無」。
+付款紀錄頁以清單方式列出每一筆已完成扣款：扣款日、訂單編號、「付款內容」、金額、以及「收據」連結；付款內容欄列的是這筆扣款買的品項，例如訂閱的方案名稱與物件數（有數量時後面會標出乘以幾份），再加上這筆訂單本身附帶的說明文字，沒有任何項目時顯示「無」。
 如果目前身分完全沒有付款紀錄，頁面會顯示「目前尚未有任何付款紀錄」。
 頁面提示「如果紀錄有疑慮，請聯繫JGB客服」。
 ### 收款設置支援哪些金流商？（藍新／國泰世華／永豐／中信／icash Pay／現金收款帳戶，各家設定費與手續費不同） {#jgb/I/payment-vendor-options-overview}
@@ -346,20 +345,20 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 藍新申請時填寫的商店名稱，系統會自動加上固定字首後才送出；用於提領入帳款項的銀行帳戶，規定必須是帳號申請人本人所有。
 同一個帳號每個金流最多可以開通三組帳號。
 只要有勾選開通信用卡（含國外信用卡）付款方式，藍新就需要三個工作天以上的審核時間，實際天數依藍新官方審核進度調整。
-### 金流綁定後還能改嗎？（除了國泰世華，其他金流商明細頁都是唯讀不能重送） {#jgb/I/payment-vendor-edit-after-binding}
+### 金流綁定後還能改嗎？（綁定資料都是唯讀；國泰世華只能補填還沒填齊的超商條碼欄位） {#jgb/I/payment-vendor-edit-after-binding}
 - phrasings:
   - {text: "收款方式可以改嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "金流明細可以編輯嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "綁定後想改資料怎麼辦", source: "draft:outline-20260920", status: proposed}
   - {text: "哪個金流可以重新送審", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/users/payment/routerView/Detail.vue]
+- sources: [code:src/pages/users/payment/routerView/Detail.vue, code:src/pages/users/payment/_parts/Cathaybk.vue]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-綁定成功後點進明細頁查看，除了國泰世華以外的金流商表單都是唯讀不能再編輯重送；只有國泰世華的明細頁可以重新填寫並再次送出。
-### icash Pay／中信收款帳戶申請要多久？（智付通約 2-5 個工作天，中信 ACH 驗證約 5 個工作天） {#jgb/I/payment-icash-ctbc-setup}
+綁定成功後點進明細頁查看，各家金流商的資料都是唯讀、不能再編輯重送；唯一的例外是國泰世華：如果當初超商條碼相關欄位還沒填齊，明細頁可以補填這一段再送出，其他已綁定的欄位仍然不能改。
+### 藍新／中信收款帳戶申請要多久？（藍新：智付通至少 2-5 個工作天；中信 ACH 驗證約 5 個工作天） {#jgb/I/payment-icash-ctbc-setup}
 - phrasings:
-  - {text: "icash Pay申請多久", source: "draft:outline-20260920", status: proposed}
+  - {text: "藍新申請要多久", source: "draft:outline-20260920", status: proposed}
   - {text: "中信收款帳戶審核多久", source: "draft:outline-20260920", status: proposed}
   - {text: "智付通開通要多久", source: "draft:outline-20260920", status: proposed}
   - {text: "ACH驗證是什麼", source: "draft:outline-20260920", status: proposed}
@@ -367,7 +366,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-選擇 icash Pay 時頁面會提醒：智付通將存取申請資料以完成開通程序，需要至少 2 到 5 個工作天。
+選擇藍新、而且目前身分可以開通藍新時，頁面會提醒：智付通將存取申請資料以完成開通程序，需要至少 2 到 5 個工作天；個人房東不能開通藍新，選了藍新只會看到無法開通的紅字提示，不會出現這段提醒。
 選擇中國信託時，頁面說明送審後會由 JGB 進行 ACH 驗證並撥款 1 元到收款帳號，審核時間需要 5 個工作天（不含例假日）。
 ### 收據範本有哪些？（財政部包租業租金收據範本只有法人／社宅團隊才看得到） {#jgb/I/payment-receipt-template-options}
 - phrasings:
@@ -407,18 +406,18 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 - instance_applicability: general
 帳單開立發票功能預設不是啟用狀態，要先開通電子發票加值服務，再聯繫 JGB 業務才能啟用。
 功能啟用完成後，「編輯合約」畫面才會多出「稅與發票」分頁，用來設定這份合約未來收款時的帳單是否要開立發票。
-發票的開立模式可以設定「預先開立發票時機」，並可再指定要提前的天數。
+發票的開立模式一般只有「帳單已到帳後開立」；部分特定合作團隊另外可以選「預先開立發票」，再設定「預先開立發票時機」為「發送帳單」「繳費期限前」或「繳費期限後」，選後兩者時還要指定天數。
 ### 沒有查看權限會怎樣？（收款設置與訂閱方案選單整個不會出現） {#jgb/I/payment-permission-menu-visibility}
 - phrasings:
   - {text: "沒有權限看不到收款設置", source: "draft:outline-20260920", status: proposed}
   - {text: "訂閱方案選單不見了", source: "draft:outline-20260920", status: proposed}
   - {text: "為什麼找不到訂閱方案", source: "draft:outline-20260920", status: proposed}
-  - {text: "編輯團隊權限的作用", source: "draft:outline-20260920", status: proposed}
-- sources: [doc:/Users/chenqinghuang/dev/work/docs/幫助中心/JGB幫助中心_HTML_交付_20260818/qa23_zh-Hant.html]
+  - {text: "查看訂閱方案權限的作用", source: "draft:outline-20260920", status: proposed}
+- sources: [code:app/Role.php, code:app/Http/Controllers/UserController.php]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-團隊成員如果沒有被開啟對應的查看權限，介面上【收款設置】與【訂閱方案】這兩個選單會整個不出現（不是變成灰色不能點，而是完全看不到），而且這位成員的帳號資訊會以個人房東的形式呈現。
+側邊選單的【收款設置】與【訂閱方案】分別看團隊成員有沒有「查看收款設置」「查看訂閱方案」權限；沒有對應的權限時，該選單會整個不出現，而不是變成灰色不能點。
 ### 帳單可以自動排程發送、指定收款人嗎？（提前 0～20 天自動發送，收款人可選原簽約者／主要經理人／自訂） {#jgb/I/payment-bill-autosend-and-recipient}
 - phrasings:
   - {text: "帳單自動發送設定", source: "draft:outline-20260920", status: proposed}
@@ -475,41 +474,41 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 - business_types: [system_provider]
 - instance_applicability: general
 表單送出成功後會切換成感謝畫面，寫著「謝謝您完成預約表單」，並提示「感謝您完成填寫表單，將會有專人於 2-3 天工作天聯繫您」，畫面上有按鈕可以回到官網首頁。
-### demo 表單哪些欄位真的會被系統擋下？（系統實際只驗公司、姓名、電話、Email 四項） {#jgb/I/demo-form-actual-validation-scope}
+### demo 表單哪些欄位真的會被系統擋下？（畫面上全部欄位都要填才能送出；系統端只再檢查公司、姓名、電話、Email 四項） {#jgb/I/demo-form-actual-validation-scope}
 - phrasings:
   - {text: "demo表單哪些欄位真的必填", source: "draft:outline-20260920", status: proposed}
   - {text: "實際驗證跟畫面要求一樣嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "demo表單漏填會怎樣", source: "draft:outline-20260920", status: proposed}
   - {text: "demo表單驗證規則", source: "draft:outline-20260920", status: proposed}
-- sources: [code:app/Http/Controllers/IndexController.php]
+- sources: [code:app/Http/Controllers/IndexController.php, code:src/pages/listings/DemoForm.vue]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-表單頁面要求全部 10 個欄位與隱私權同意都填妥、按鈕才會從灰色變可點擊，但系統實際送出時只會檢查公司名稱、姓名、電話、Email 這四個欄位是否為空、以及 Email 格式是否正確，只要這四項合格就能送出成功。
+表單頁面上全部 10 個欄位與隱私權同意都設了必填，沒填完時瀏覽器會先擋下送出；系統收到資料後，只會再檢查公司名稱、姓名、電話、Email 這四個欄位是否為空、以及 Email 格式是否正確。
 ## 控制台（設定、通知信範本、自動化任務） {#I-control-panel}
-### 控制台首頁目前能用什麼？（目前只有「任務管理器」一個項目可以點擊進入） {#jgb/I/control-panel-entry-scope}
+### 控制台首頁目前能用什麼？（目前只有「任務管理器」一個項目可以點擊進入，而且只開放給特定合作團隊） {#jgb/I/control-panel-entry-scope}
 - phrasings:
   - {text: "控制台有什麼功能", source: "draft:outline-20260920", status: proposed}
   - {text: "控制台首頁能做什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "控制台目前可以用哪些設定", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/control-panel/Index.vue]
+- sources: [code:src/pages/control-panel/Index.vue, code:src/routes/controlPanel.js]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
 控制台首頁的說明是「管理您的 JGB 系統」，目前畫面上實際可以點擊進入的項目只有「任務管理器」一項。
-任務管理器的卡片說明是「設定您的排程機器人，在滿足設定的條件後，可以觸發自動操作」，點擊後會進入任務管理器頁面。
-### 進入控制台設定後看到什麼？（本身只是麵包屑與側欄外殼，內容是任務管理器頁面） {#jgb/I/control-panel-setting-shell}
+任務管理器的卡片說明是「設定您的排程機器人，在滿足設定的條件後，可以觸發自動操作」；點擊後，只有開放控制台的特定合作團隊會進入任務管理器頁面，其他帳號會被導回會員中心首頁。
+### 進入控制台設定後看到什麼？（麵包屑外殼，內容是任務管理器、新增／編輯任務或通知信設定頁） {#jgb/I/control-panel-setting-shell}
 - phrasings:
   - {text: "控制台設定頁內容", source: "draft:outline-20260920", status: proposed}
   - {text: "任務管理器上一層是什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "控制台麵包屑", source: "draft:outline-20260920", status: proposed}
   - {text: "控制台側邊欄", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/control-panel/setting/Index.jsx]
+- sources: [code:src/pages/control-panel/setting/Index.jsx, code:src/routes/controlPanel.js]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-點進控制台的設定範圍後，畫面上方會顯示「Dashboard／控制台／任務管理設定」的麵包屑，本身不含其他獨立內容，實際顯示的內容是底下的任務管理器（或新增／編輯任務）頁面。
-### 任務管理器是做什麼用的？（設定週期性任務或預定通知，系統會提前自動開單並寄信） {#jgb/I/task-manager-purpose}
+點進控制台的設定範圍後，畫面上方會顯示「Dashboard」「控制台」「任務管理設定」三層麵包屑，內容區顯示的是任務管理器、新增／編輯任務，或通知信設定頁面。
+### 任務管理器是做什麼用的？（設定週期性任務或預定通知的排程功能） {#jgb/I/task-manager-purpose}
 - phrasings:
   - {text: "任務管理器是什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "自動化任務怎麼運作", source: "draft:outline-20260920", status: proposed}
@@ -569,17 +568,18 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 - instance_applicability: general
 任務列表每一列右側的齒輪選單提供三個動作：「編輯任務」「複製現有任務」「刪除任務」。
 編輯週期性任務時，可以選擇修改範圍是「這項任務」（只改這一次）或「這項任務和後續任務」（連同之後每次排程一起改）。
-### 通知信副本信箱怎麼設定？（預設收件為團隊擁有者信箱，每個通知信最多再加 3 組副本） {#jgb/I/notification-mail-settings}
+### 通知信副本信箱可以設定嗎？（設定頁只有說明：預設收件為團隊擁有者信箱、每個通知信最多可再加 3 組副本；頁面上目前沒有新增副本的欄位，控制台也沒有入口） {#jgb/I/notification-mail-settings}
 - phrasings:
   - {text: "通知信副本信箱怎麼加", source: "draft:outline-20260920", status: proposed}
   - {text: "通知信可以加幾個收件人", source: "draft:outline-20260920", status: proposed}
   - {text: "通知信預設寄給誰", source: "draft:outline-20260920", status: proposed}
   - {text: "通知信設定在哪裡", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/control-panel/notificationMail/Index.jsx]
+- sources: [code:src/pages/control-panel/notificationMail/Index.jsx, code:src/pages/control-panel/Index.vue]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
 通知信設定頁面說明：通知信預設接收信箱是團隊擁有者的註冊信箱，每個通知信最多可以再新增 3 組副本信箱。
+這個頁面目前只有這段說明文字，沒有可以新增副本信箱的欄位或按鈕；控制台首頁與側欄也沒有連到這個頁面的入口。
 ### 誰能用控制台的任務管理與通知信設定？（僅限特定合作團隊角色；控制台首頁本身沒有這層檢查，只有進到「設定」子路徑才會擋） {#jgb/I/control-panel-access-restriction}
 - phrasings:
   - {text: "誰可以用控制台", source: "draft:outline-20260920", status: proposed}
@@ -603,9 +603,9 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 - target_user: [prospect]
 - business_types: [system_provider]
 - instance_applicability: general
-首頁最上方是橫幅區塊，接著依序是「熱門物件」輪播、「誠心推薦·優質租管業者」輪播、平台特色說明區塊、東南亞城市數與試用／諮詢按鈕、「最新消息」，最後是「企業夥伴」。
-「熱門物件」區塊只有在有回傳物件資料時才會顯示，用輪播呈現每筆物件的縮圖、標題與地址等資訊；「查看更多物件」這個連結到找房搜尋頁的按鈕，只有從特定搜尋入口進入首頁時才會顯示，一般直接造訪首頁不會看到這個按鈕。
-「誠心推薦·優質租管業者」區塊同樣只在有資料時顯示，用輪播呈現使用 JGB 的租管業者推薦內容。
+首頁最上方是橫幅區塊，接著依序是「熱門物件」輪播、「誠心推薦·優質租管業者」輪播、平台特色說明區塊、東南亞城市數與試用／諮詢按鈕、「最新消息」、「企業夥伴」，最下方還有一張圖片橫幅。
+「熱門物件」區塊用輪播呈現每筆物件的縮圖、標題與地址等資訊；「查看更多物件」這個連結到找房搜尋頁的按鈕，只有從特定搜尋入口進入首頁時才會顯示，一般直接造訪首頁不會看到這個按鈕。
+「誠心推薦·優質租管業者」區塊用輪播呈現使用 JGB 的租管業者推薦內容。
 ### 首頁「JGB平台十大特色」實際列出幾項？（標題寫十大，目前輪播只設定 3 項：管理儀表板、線上合約管理、即時帳務報表） {#jgb/I/homepage-ten-features-actual-count}
 - phrasings:
   - {text: "JGB平台十大特色有哪些", source: "draft:outline-20260920", status: proposed}
@@ -652,7 +652,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 - business_types: [system_provider]
 - instance_applicability: general
 首頁「JGB平台擁有三大優勢」區塊依序是：「快速提高房源出租管理效率」（提供房東專屬物件刊登頁並轉發社群媒體）、「自動化管房流程」（支援手機介面 24 小時檢視數據報告）、「提升租客服務品質」（即時簽約及帳單通知，支援線上報修）。
-### 首頁「最新消息」顯示什麼？（沒有消息資料時整區塊不會出現，點擊會開啟幫助中心文章） {#jgb/I/homepage-latest-news-section}
+### 首頁「最新消息」顯示什麼？（用輪播呈現消息，點擊會開啟幫助中心文章） {#jgb/I/homepage-latest-news-section}
 - phrasings:
   - {text: "首頁最新消息在哪", source: "draft:outline-20260920", status: proposed}
   - {text: "最新消息點進去是什麼", source: "draft:outline-20260920", status: proposed}
@@ -661,7 +661,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 - target_user: [prospect]
 - business_types: [system_provider]
 - instance_applicability: general
-「最新消息」區塊只有在有取得消息資料時才會顯示，用輪播呈現每則消息的縮圖、分類標籤、標題與發布時間。
+「最新消息」區塊用輪播呈現每則消息的縮圖、分類標籤、標題與發布時間。
 點擊消息縮圖或標題，會另開分頁導向幫助中心的對應文章頁面。
 ### 首頁「企業夥伴」放了什麼？（10 個合作夥伴 logo 排成靜態方格，不是輪播） {#jgb/I/homepage-enterprise-partners-section}
 - phrasings:
@@ -688,7 +688,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 頁面標題是「臺灣雲市集訂單資訊」，列出雲市集訂單編號、訂單時間、採購方案、方案價格（TWD）、使用雲市集點數（點）。
 訂單狀態只有「已付款」或「待付款」兩種；已付款且系統有記錄付款資料時，還會多顯示匯款帳戶末 5 碼。
 頁面下方另外列出客戶資訊（公司統編、公司名稱）與付款資訊（匯款銀行、匯款帳號、匯款金額／自付額）。
-### 雲市集訂單怎麼付款？（國泰世華一次性虛擬帳號限 WebATM，2 個工作天內付款，付款後 2 天開發票、7 天內開通） {#jgb/I/tcloud-payment-instructions}
+### 雲市集訂單怎麼付款？（國泰世華一次性虛擬帳號，注意事項請用 WebATM 轉帳；收到匯款資訊後 2 個工作天內付款，款項確認後 2 個工作天內開發票、7 個工作天內開通） {#jgb/I/tcloud-payment-instructions}
 - phrasings:
   - {text: "雲市集訂單怎麼繳費", source: "draft:outline-20260920", status: proposed}
   - {text: "雲市集付款期限", source: "draft:outline-20260920", status: proposed}

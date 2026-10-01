@@ -2,7 +2,7 @@
   "audience": "jgb",
   "budget_tokens": 0,
   "business_types": [],
-  "canon_sha256": "a80f11422a5a107012cde58dac51abb8fbf1a960e457621f5c93b041b3533546",
+  "canon_sha256": "3f266ad69a5147db3b7027fa18266925abf7f9ca68e5884f48f7d340b68e1a72",
   "coarses": [
     {
       "fines": [
@@ -19136,10 +19136,10 @@
           ],
           "categories": [],
           "coarse_id": "F-repair-list",
-          "content_sha256": "c9b16da86fa265dcfbbc16f884b826ef945e89fd49a2d4a6263d2199e6d94d0a",
+          "content_sha256": "639e617d1acc2b1df3a0052883d478a11efd4d819ce02af5a0e7e379f19bc142",
           "content_units": [
             "修繕單總表分成五個狀態分頁：申請修繕、安排修繕、完成修繕、結單、封存，每張修繕單同一時間只會出現在其中一個分頁。",
-            "「申請修繕」是修繕單剛送出、還沒有人處理的狀態；「安排修繕」代表房東方正在確認或已經指派廠商；「完成修繕」代表廠商已經處理完、房東方在做結算與備註；「結單」代表這張修繕單的處理流程已經走完；「封存」是另外一個可以把修繕單移過去、也可以再移回其他狀態的分頁。",
+            "幫助中心的修繕教學把處理流程依序分成新增修繕單、安排修繕、完成修繕、結單；「封存」則是另一個可以把修繕單移過去、也可以再移回其他狀態的分頁。",
             "進入畫面後不需要自己選分頁，系統會直接停在「申請修繕」這個分頁。",
             "修繕單總表這個頁面本身要先登入 JGB 帳號才能打開；但同樣屬於修繕功能的分享頁，並不受這條規則限制（另見「看修繕單分享頁需要先登入嗎」）。"
           ],
@@ -19176,13 +19176,14 @@
             "code:src/routes/repairs.js",
             "code:src/pages/repair/Index.vue",
             "code:app/Repair.php",
-            "code:routes/web.php"
+            "code:routes/web.php",
+            "help:repair_zh-Hant.html"
           ],
           "target_user": [
             "property_manager",
             "prospect"
           ],
-          "title": "修繕單總表有哪些狀態分頁？（申請修繕、安排修繕、完成修繕、結單、封存，各代表什麼階段）"
+          "title": "修繕單總表有哪些狀態分頁？（申請修繕、安排修繕、完成修繕、結單、封存）"
         },
         {
           "business_types": [
@@ -19518,13 +19519,13 @@
           ],
           "categories": [],
           "coarse_id": "F-repair-list",
-          "content_sha256": "71421ad10a6525de4841512d3e426d45373d8d891b11bd68173950d634689744",
+          "content_sha256": "1e334ed74b532ac2a90ac284403b84874025dc9cc5bc04db966e906da07a329f",
           "content_units": [
             "齒輪選單裡開啟修繕單細節的按鈕，一般會顯示「編輯＆查看」；但登入身分是「大房東」時，這顆按鈕文字會變成「查看」。",
-            "房東方帳號如果對這個物件只有「顯示所屬修繕資料」的權限、還沒有「顯示所有修繕資料」的權限（也就是經理人身分），按鈕文字一樣會變成「查看」。",
+            "房東方團隊成員如果對這個物件只有「顯示所屬修繕資料」的權限、沒有「顯示所有修繕資料」的權限，按鈕文字一樣會變成「查看」；不過，如果這位成員就是這張修繕單的經理人，系統會把這張單的修繕權限都視為開啟，看到的仍是「編輯＆查看」，也可以移動狀態。",
             "如果房東方帳號對這個物件連「顯示所屬修繕資料」都沒有，這張修繕單的那一列根本不會出現在列表裡，不是顯示成唯讀，是完全看不到這一列。",
             "齒輪按鈕文字的「編輯＆查看」跟「查看」只反映顯示修繕資料的權限與是不是大房東身分；能不能移動狀態、能不能在細節頁編輯，要看另一組「編輯修繕」的權限，這兩件事是分開判斷的。",
-            "大房東因為在細節頁的編輯判斷裡被直接排除，所以看到「查看」文字時也確實不能編輯或移動；但只有「顯示所屬」的經理人帳號如果同時具備編輯所屬修繕的權限，齒輪按鈕文字一樣會變成「查看」，卻仍然可以移動狀態、在細節頁編輯。"
+            "大房東因為在細節頁的編輯判斷裡被直接排除，所以看到「查看」文字時也確實不能編輯或移動；但只有「顯示所屬」權限的團隊成員如果同時具備編輯所屬修繕的權限，齒輪按鈕文字一樣會變成「查看」，卻仍然可以移動狀態、在細節頁編輯。"
           ],
           "id": "jgb/F/repair-view-only-roles",
           "instance_applicability": "general",
@@ -19557,12 +19558,13 @@
           "see_also": [],
           "sources": [
             "code:app/Http/Controllers/RepairController.php",
-            "code:src/pages/repair/edit/Index.vue"
+            "code:src/pages/repair/edit/Index.vue",
+            "code:app/Repair.php"
           ],
           "target_user": [
             "property_manager"
           ],
-          "title": "哪些身分會看到「查看」而不是「編輯＆查看」的齒輪按鈕文字？（大房東角色，以及只有「顯示所屬」沒有「顯示所有」修繕資料權限的經理人帳號；這個文字只反映顯示修繕資料的權限，能不能移動狀態、能不能在細節頁編輯是另一組「編輯修繕」權限決定的，兩者互相獨立）"
+          "title": "哪些身分會看到「查看」而不是「編輯＆查看」的齒輪按鈕文字？（大房東角色，以及對這張單只有「顯示所屬」、沒有「顯示所有」修繕資料權限的團隊成員；但這張單的經理人本人看到的仍是「編輯＆查看」）"
         },
         {
           "business_types": [
@@ -19668,11 +19670,11 @@
           ],
           "categories": [],
           "coarse_id": "F-repair-apply",
-          "content_sha256": "bd4a7e71e8321a110c97fa68aa6d1460e0853998925807c1674df8419aff5070",
+          "content_sha256": "1273c238d3da5d116089761e4aeb34036efc07a77c46b5e8fa4c7f1f2bc8d652",
           "content_units": [
             "申請修繕的入口在【修繕管理】>【修繕單總表】頁面右上角的「新增修繕單」按鈕。",
             "申請修繕分成三步：先選要報修的物件，再選修繕分類與項目，最後填報修細節後送出；第一步（選物件）下方的按鈕是「取消」與「下一步」，第二步（選分類）是「上一步」與「下一步」，第三步（填細節）則是「上一步」與「申請修繕」。",
-            "租客可以自己在系統上申請報修，房東方也可以代租客申請，不管誰發起，雙方登入系統都看得到同一張修繕單的進度。",
+            "租客可以自己在系統上申請報修，房東方也可以代租客申請；租客自己送出的修繕單，房東方與租客都看得到進度，但房東方在網頁上建立的修繕單目前不會同步到租客的修繕單總表，租客看不到。",
             "房東方帳號如果要用這個流程，帳號要有「新增&編輯&刪除所屬修繕資料」或「新增&編輯&刪除所有修繕資料」其中一項權限；租客帳號則不需要另外的權限，登入即可申請。",
             "填完報修細節按下「申請修繕」送出後，系統會直接把使用者帶回修繕單總表的「申請修繕」分頁。",
             "目前系統上沒有透過 LINE 直接發起報修的入口，LINE 只被用在修繕單建立之後的通知，以及把已經存在的修繕單分享出去。"
@@ -19711,7 +19713,9 @@
             "code:src/pages/repair/applyProcess/Index.vue",
             "code:src/utils/constants/repair.constant.ts",
             "code:routes/web.php",
-            "help:repair_zh-Hant.html"
+            "help:repair_zh-Hant.html",
+            "code:app/Role.php",
+            "code:src/pages/repair/applyProcess/_parts/Detail.vue"
           ],
           "target_user": [
             "property_manager"
@@ -19724,11 +19728,10 @@
           ],
           "categories": [],
           "coarse_id": "F-repair-apply",
-          "content_sha256": "bb7d8926758017176992f7864c0c1367585da150c5cec12653a2a3bf33c2a925",
+          "content_sha256": "401a407ffa551ad74c4bfbc1942ac7d4e51b55347993fb29e5d857a11f680f69",
           "content_units": [
-            "申請修繕不需要這個物件正在跑合約，房東方只要已經把物件建立在系統上，就可以幫這個物件新增修繕單；系統裡原本用合約找修繕對象的那段邏輯已經標註不再使用，改成一律以物件為主。",
-            "就算物件目前是空屋、尚無租客入住，房東方一樣可以幫這個物件申請修繕。",
-            "選擇物件那一步只需要挑物件本身，流程裡原本預留的合約欄位目前維持空白，並未被用來做任何限制或檢查。"
+            "申請修繕不需要這個物件正在跑合約，房東方只要已經把物件建立在系統上，就可以幫這個物件新增修繕單。",
+            "就算物件目前是空屋、尚無租客入住，房東方一樣可以幫這個物件申請修繕。"
           ],
           "id": "jgb/F/repair-apply-without-contract",
           "instance_applicability": "general",
@@ -19960,9 +19963,10 @@
           ],
           "categories": [],
           "coarse_id": "F-repair-apply",
-          "content_sha256": "b5d560d86dee2dd73ab8c8b6cd3b93c741e8b81f9c056c816e2a577c93e9e022",
+          "content_sha256": "272017b088e9acf2d366d945caf8e5a7f32cdeb232567a5d03ff42a119ea021f",
           "content_units": [
-            "新增修繕單成功之後，租客跟團隊擁有者都會收到 Email 通知，如果租客的帳號有綁定 LINE，也會另外收到 LINE 通知。",
+            "租客送出修繕單後，房東方會收到通知中心訊息與 Email，房東方有綁定 LINE 的話也會收到 LINE 通知；租客自己不會另外收到通知。",
+            "房東方在網頁上建立修繕單時，系統只會寄 Email 給這張修繕單的房東方帳號；租客目前不會收到任何通知，也不會在自己的修繕單總表看到這張單。",
             "送出成功後，畫面上也會另外跳出成功提示訊息，讓使用者知道這張修繕單已經建立好了。",
             "送出後系統會直接把畫面帶回修繕單總表的「申請修繕」分頁，不需要額外操作確認。"
           ],
@@ -19991,14 +19995,15 @@
           "reviewed_by": null,
           "see_also": [],
           "sources": [
-            "help:repair_zh-Hant.html",
-            "code:src/pages/repair/applyProcess/Index.vue"
+            "code:src/pages/repair/applyProcess/Index.vue",
+            "code:app/Notification.php",
+            "code:app/Role.php"
           ],
           "target_user": [
             "property_manager",
             "prospect"
           ],
-          "title": "新增修繕單後誰會收到通知？（租客本人、團隊擁有者會收到 Email，租客如果有綁定 LINE 也會收到 LINE 通知）"
+          "title": "新增修繕單後誰會收到通知？（租客送出時通知房東方；房東方在網頁上建立時只寄 Email 給房東方，租客不會收到通知）"
         },
         {
           "business_types": [
@@ -20006,11 +20011,12 @@
           ],
           "categories": [],
           "coarse_id": "F-repair-apply",
-          "content_sha256": "37762da025585e0342cb0d7e2411892bb5cb0a1e6e5cad20c7a2cfb1ee587f56",
+          "content_sha256": "3c9ea2f838ca4c14a3feb14fcbbdf82fb6755eeb0ba1a4b854c564cee624e847",
           "content_units": [
-            "管理者點「填寫廠商資訊」更新安排資訊時，如果物件有簽訂租約、租客有綁定 LINE，租客會在 LINE 跟系統右上角的通知中心收到通知。",
-            "管理者在「完成修繕」區塊儲存備註後，租客如果有綁定 LINE 會收到完成修繕的通知；沒有綁定 LINE 的話，登入系統也可以在右上角通知中心看到訊息。",
-            "管理者把修繕單的狀態移入「結單」時，租客、團隊管理者都會收到 Email、LINE、通知中心三種通知。"
+            "管理者更新安排修繕的廠商資訊時，如果這張修繕單會通知租客，租客會收到通知中心訊息，有綁定 LINE 的話也會收到 LINE 推播。",
+            "管理者在「完成修繕」區塊儲存房東備註時，同樣只有會通知租客的修繕單，租客才會收到通知中心訊息與 LINE 推播。",
+            "修繕單移到「結單」時，系統只寄 Email：房東方一定會收到，租客則只有在這張修繕單會通知租客時才會收到；結單不發 LINE，也不發通知中心訊息。",
+            "租客自己送出的修繕單會通知租客；房東方在網頁上建立的修繕單目前一律不會通知租客。"
           ],
           "id": "jgb/F/repair-notifications-by-stage",
           "instance_applicability": "general",
@@ -20037,12 +20043,13 @@
           "reviewed_by": null,
           "see_also": [],
           "sources": [
-            "help:repair_zh-Hant.html"
+            "code:app/Notification.php",
+            "code:app/Http/Controllers/RepairController.php"
           ],
           "target_user": [
             "property_manager"
           ],
-          "title": "安排廠商、完成修繕、結單時還會發哪些通知？（依幫助中心教學：填寫廠商資訊後、完成修繕儲存後、移到結單狀態時，租客或團隊都會再收到一次通知）"
+          "title": "安排廠商、完成修繕、結單時還會發哪些通知？（租客只有在這張修繕單會通知租客時才收得到；結單只寄 Email）"
         }
       ],
       "id": "F-repair-apply",
@@ -20056,9 +20063,11 @@
           ],
           "categories": [],
           "coarse_id": "F-repair-edit",
-          "content_sha256": "6d29cec3cb773ea9d81f6aad27b17eec22058b31672b238e6952d36d479a000a",
+          "content_sha256": "8502b99b921efda0d363bf97da14e6517322d1454aace2884723790f35cd2960",
           "content_units": [
-            "點進一張修繕單的細節頁，最上面會有一條時間軸，依序是申請修繕、安排修繕、完成修繕、結單、封存五個階段，每個階段下面會顯示對應的日期，還沒到的階段則不顯示日期。",
+            "點進一張修繕單的細節頁，最上面會有一條時間軸，依序是申請修繕、安排修繕、完成修繕、結單、封存五個階段，目前所在的階段會被標示出來。",
+            "各階段下方日期的來源不同：申請修繕是送出申請的時間，安排修繕是廠商安排紀錄裡填的修繕時間（有多筆時取第一筆），完成修繕是房東備註裡填的完成時間，結單與封存則是修繕單被移到該狀態的時間。",
+            "因此有日期不代表已經走到那個階段：例如還在安排修繕時，房東若先在房東備註填了完成時間，完成修繕下方就會顯示日期；從修繕單總表的齒輪選單把修繕單移回前面的狀態時，原本記下的結單、封存時間也不會清掉。",
             "如果直接打開修繕單細節頁的網址、但網址裡沒有帶修繕單編號，系統會直接把使用者導回修繕單總表的「申請修繕」分頁。"
           ],
           "id": "jgb/F/repair-edit-progress-timeline",
@@ -20086,12 +20095,13 @@
           "reviewed_by": null,
           "see_also": [],
           "sources": [
-            "code:src/pages/repair/edit/Index.vue"
+            "code:src/pages/repair/edit/Index.vue",
+            "code:app/Http/Controllers/RepairController.php"
           ],
           "target_user": [
             "property_manager"
           ],
-          "title": "修繕單細節頁的進度時間軸顯示什麼？（申請修繕、安排修繕、完成修繕、結單、封存五個階段各自的日期，還沒到的階段不顯示日期）"
+          "title": "修繕單細節頁的進度時間軸顯示什麼？（申請修繕、安排修繕、完成修繕、結單、封存五個階段，以及各階段對應的日期）"
         },
         {
           "business_types": [
@@ -20186,9 +20196,9 @@
           ],
           "categories": [],
           "coarse_id": "F-repair-edit",
-          "content_sha256": "309d5c5cbb1812ab094a7a2df53b116883607676cf9f7de3989bfe40e2fdbd5b",
+          "content_sha256": "7a990f446437400d91224a34d12bec8f0b9f75761fc2107c43c238b7652efc18",
           "content_units": [
-            "租客帳號跟大房東角色打開修繕單細節頁，都只能看內容，看不到「切換狀態」區塊，也不能編輯安排修繕的廠商資訊或填寫房東備註。",
+            "租客帳號跟大房東角色打開修繕單細節頁，看不到「切換狀態」區塊，也不能編輯安排修繕的廠商資訊或填寫房東備註；租客唯一能在細節頁編輯的是自己的房客備註。",
             "房東方帳號要有「新增&編輯&刪除所屬修繕資料」或「新增&編輯&刪除所有修繕資料」其中一項權限，而且不是大房東角色，才能編輯這張修繕單。",
             "在「安排修繕」廠商資訊那一塊，就算已經有安排紀錄，租客跟大房東角色一樣看不到可以重新編輯的圖示。"
           ],
@@ -20224,7 +20234,7 @@
           "target_user": [
             "property_manager"
           ],
-          "title": "誰不能編輯修繕單細節頁？（租客帳號、大房東角色都只能看，不能切換狀態、不能改廠商資訊、不能寫房東備註）"
+          "title": "誰不能編輯修繕單細節頁？（租客帳號、大房東角色不能切換狀態、不能改廠商資訊、不能寫房東備註；租客只能編輯自己的房客備註）"
         },
         {
           "business_types": [
@@ -20408,7 +20418,7 @@
           "target_user": [
             "property_manager"
           ],
-          "title": "修繕結算金額誰看得到？（「結算金額」欄位只有身分是房東的帳號才會顯示，租客看不到；這筆金額目前只是修繕單自己的紀錄文字，沒有找到跟帳單模組串接的路徑）"
+          "title": "修繕結算金額誰看得到？（「結算金額」欄位只有身分是房東的帳號才會顯示，租客看不到；填了金額不會自動產生帳單）"
         },
         {
           "business_types": [
@@ -20416,10 +20426,10 @@
           ],
           "categories": [],
           "coarse_id": "F-repair-edit",
-          "content_sha256": "3e0fe92e3faf2d17df7aa2015f56343b841d9348000ddebae51683ea42916c8e",
+          "content_sha256": "d51c7352ea5cdf0c3b5fe787a2b85c2604dadc3fe48b4a63e6568e1732ac5bcb",
           "content_units": [
             "「完成修繕」右邊那一欄是「房客備註」，只放備註文字跟照片，不包含完成時間或結算金額欄位。",
-            "只有這張修繕單當初有填過預約時段（代表是租客那邊發起，或房東幫忙填了預約時段），系統才會顯示房客備註區塊；如果是房東發起、尚未填寫預約時段，這一欄會改成顯示「此修繕單為房東發起，無房客備註」。",
+            "房客備註區塊會不會出現，看這張修繕單有沒有預約時段資料：在網頁上申請修繕時，預約時段至少會送出一列（就算沒填也一樣），所以從網頁建立的修繕單都會顯示房客備註區塊；只有完全沒有預約時段資料的修繕單，這一欄才會改成顯示「此修繕單為房東發起，無房客備註」。",
             "房客備註只有租客自己的帳號能編輯，房東方帳號打開這一區只能查看，看不到編輯圖示。"
           ],
           "id": "jgb/F/repair-edit-tenant-memo",
@@ -20448,12 +20458,14 @@
           "see_also": [],
           "sources": [
             "code:src/pages/repair/edit/Index.vue",
-            "code:src/pages/repair/_parts/MemoArea.vue"
+            "code:src/pages/repair/_parts/MemoArea.vue",
+            "code:src/pages/repair/applyProcess/Index.vue",
+            "code:app/Http/Controllers/RepairController.php"
           ],
           "target_user": [
             "property_manager"
           ],
-          "title": "「房客備註」是什麼？（右邊那一欄，只有這張修繕單有填過預約時段才會出現，沒有的話會顯示「此修繕單為房東發起，無房客備註」）"
+          "title": "「房客備註」是什麼？（右邊那一欄，放租客的備註文字與照片，只有租客自己能編輯；從網頁建立的修繕單都會顯示這一欄）"
         },
         {
           "business_types": [
@@ -20461,10 +20473,10 @@
           ],
           "categories": [],
           "coarse_id": "F-repair-edit",
-          "content_sha256": "439d05163919a29d53e46caa7881d97c3c688a12861e0105b0e2ff5552bfa616",
+          "content_sha256": "9b371e8327e06dfa8f1e83318c467150e8d01d3ff56745a107b62c29183799a3",
           "content_units": [
-            "在修繕單細節頁裡，非租客身分的帳號會看到「分享訊息」區塊，說明文字是「如有配合的廠商，可使用下方分享功能，即可將申請單細節轉給廠商」，點「分享」按鈕會開啟「分享修繕申請單」視窗。",
-            "分享視窗裡有兩種方式：複製修繕單連結，或是用 LINE 分享出去。",
+            "在修繕單細節頁裡，非租客身分的帳號會看到「分享訊息」區塊，說明文字是「如有配合的廠商，可使用下方分享功能，即可將申請單細節轉給廠商」，點「分享」按鈕後的反應依裝置而不同。",
+            "在電腦上，或手機瀏覽器不支援系統分享功能時，會開啟「分享修繕申請單」視窗，可以複製修繕單連結，或用 LINE 分享出去；在支援的手機瀏覽器上，會直接叫出手機內建的分享選單。",
             "廠商拿到這個連結之後，打開它不需要先登入 JGB 帳號（另見「看修繕單分享頁需要先登入嗎」）。"
           ],
           "id": "jgb/F/repair-edit-share-to-vendor",
@@ -20498,7 +20510,7 @@
           "target_user": [
             "property_manager"
           ],
-          "title": "怎麼把修繕單分享出去給廠商？（在修繕單細節頁點「分享」，可以複製連結，也可以直接用 LINE 分享出去；廠商點開連結不需要登入 JGB 帳號）"
+          "title": "怎麼把修繕單分享出去給廠商？（在修繕單細節頁點「分享」，電腦上可以複製連結或用 LINE 分享，手機上會直接叫出手機的分享選單；廠商點開連結不需要登入 JGB 帳號）"
         }
       ],
       "id": "F-repair-edit",
@@ -20610,10 +20622,9 @@
           ],
           "categories": [],
           "coarse_id": "F-repair-share",
-          "content_sha256": "de8af10d75864ba9bc5e6116338dc7d598b41349b5c0bef234f2741d30780daa",
+          "content_sha256": "27e235bb6989965748871397ca06c467ddf70ce28d2432be872dcea62e09a2cf",
           "content_units": [
             "目前打開修繕單分享連結，並不會因為超過幾天就失效。",
-            "系統背後曾經寫過「如果超過 30 天就不給查看」的檢查，但這段檢查已經被停用，看得到內容並未受這條規則限制。",
             "分享頁抓資料時只靠修繕單的編號去找，不受天數期限或物件目前狀態影響。"
           ],
           "id": "jgb/F/repair-share-no-expiry",
@@ -20646,7 +20657,7 @@
           "target_user": [
             "property_manager"
           ],
-          "title": "分享連結會過期嗎？（目前不會，系統一度寫過 30 天過期的檢查，但已經停用，現在沒有天數限制）"
+          "title": "分享連結會過期嗎？（目前不會，沒有天數限制）"
         },
         {
           "business_types": [
@@ -20939,11 +20950,11 @@
           ],
           "categories": [],
           "coarse_id": "G-power-meter",
-          "content_sha256": "292e714015cc481164f34e3d6eb76111dbad95454d7e5a46c749017fe8c98d2c",
+          "content_sha256": "24432edae6dce3ee575f094cf9fde3e16034a71b5d36e4228cfa54c6256475ec",
           "content_units": [
-            "如果目前連不上某個廠商，清單頁與單一電錶頁最上方都會出現一則提示，寫著目前連不上該廠商，並附上錯誤原因。",
-            "提示會說明「目前無法儲值送電，電錶度數也不會更新，請聯絡該廠商確認服務狀態」；這個提示沒有對應帳號可標示。",
-            "這則提示業者跟租客都看得到：被擋住儲值、度數不更新的是這支錶，不分身分都要讓人知道原因。",
+            "電錶廠商連不上時，畫面最上方會出現一則寫著目前連不上該廠商的提示，有錯誤原因時會一併附上；提示出現在哪裡、誰看得到，依廠商的連線方式而不同。",
+            "全站共用同一組連線設定的廠商連不上時，提示會說明目前無法儲值送電、電錶度數也不會更新，請聯絡該廠商確認服務狀態，不會標示帳號；這則提示在電錶清單頁與單一電錶頁都會出現，業者跟租客都看得到。",
+            "以團隊自己綁定的廠商帳號連線的廠商，巡檢發現連不上時，提示只會出現在電錶清單頁、只有業者看得到，並會標示是哪一個帳號，請業者聯絡廠商確認這個帳號的連線設定或帳號密碼。",
             "只有這個身分底下真的掛著會連不上的那家廠商的電錶時才會出現這則提示。"
           ],
           "id": "jgb/G/power-meter-vendor-unreachable",
@@ -20983,7 +20994,7 @@
             "property_manager",
             "tenant"
           ],
-          "title": "電錶顯示「目前連不上廠商」怎麼辦？（度數不會更新、儲值送不出去；業者跟租客都看得到）"
+          "title": "電錶顯示目前連不上廠商怎麼辦？（度數不會更新、儲值送不出去；全站共用連線的廠商業者跟租客都看得到，以團隊帳號連線的廠商只有業者在清單頁看得到）"
         },
         {
           "business_types": [
@@ -21405,9 +21416,10 @@
           ],
           "categories": [],
           "coarse_id": "G-power-meter",
-          "content_sha256": "5339041f441963e8ad79e112e2ba0731b5fa3ad1a39a8b54ad202fdbefd8b6c6",
+          "content_sha256": "7eb78bf0ed1534c7d2b5bce3154615f0f971a5d7fe04999fb515e1075d740290",
           "content_units": [
-            "電錶清單、以及門鎖／攝影機／小白盒清單這兩條路由，都掛了需要訂閱方案跟物件數量沒超過上限這兩道檢查，任一項不符合就進不去頁面。"
+            "房東方帳號要進入電錶清單，或門鎖／攝影機／小白盒清單，需要同時符合兩個條件：目前有生效中的訂閱方案，而且訂閱的方案有開放智能裝置功能；任一項不符合，會被導回會員中心首頁並跳出提示視窗。",
+            "租客帳號進入這些頁面不受這兩項檢查限制。"
           ],
           "id": "jgb/G/iot-entry-requirements",
           "instance_applicability": "general",
@@ -21430,7 +21442,7 @@
             {
               "source": "draft:outline-20260920",
               "status": "proposed",
-              "text": "物件數量超過會怎樣"
+              "text": "方案沒有智能裝置功能會怎樣"
             }
           ],
           "policy": "answerable",
@@ -21439,13 +21451,15 @@
           "reviewed_by": null,
           "see_also": [],
           "sources": [
-            "code:routes/web.php"
+            "code:routes/web.php",
+            "code:app/Http/Middleware/SubscriptionCheck.php",
+            "code:app/Http/Middleware/PremisesLimitCheck.php"
           ],
           "target_user": [
             "property_manager",
             "prospect"
           ],
-          "title": "電錶／門鎖／攝影機／小白盒頁面需要什麼條件才能進入？（需訂閱方案、且未超過物件數量上限）"
+          "title": "電錶／門鎖／攝影機／小白盒頁面需要什麼條件才能進入？（房東方要有生效中的訂閱，而且方案有開放智能裝置功能；租客不受限制）"
         },
         {
           "business_types": [
@@ -21648,12 +21662,11 @@
           ],
           "categories": [],
           "coarse_id": "G-device-page",
-          "content_sha256": "0758e1947759f97177006438e022c69072f6aba1e4a485e53ae6f9b3a0e08c59",
+          "content_sha256": "f7850b0570013b2cb47fd50e4dc186703c7222471e5e0257c0bba735a2f65f47",
           "content_units": [
             "編輯頁最上方都可以修改裝置描述，方便辨識。",
             "門鎖裝置的編輯頁有基本設定、密碼設定、開門記錄三個頁籤；攝影機與小白盒的編輯頁只有基本設定一個頁籤。",
-            "基本設定頁籤都可以選擇或移除這台裝置綁定的物件。",
-            "編輯按鈕在裝置所屬的分類群組被標記成不可編輯時會鎖住、變灰；不過目前程式把這個群組一律標記為可編輯，所以編輯按鈕在畫面上不會真的被這個機制鎖住。"
+            "基本設定頁籤都可以選擇或移除這台裝置綁定的物件。"
           ],
           "id": "jgb/G/device-edit-tabs-by-type",
           "instance_applicability": "general",
@@ -21749,11 +21762,11 @@
           ],
           "categories": [],
           "coarse_id": "G-device-page",
-          "content_sha256": "b52c142f64f155b47c2c09b43d57dc7ec7f418d4a322556ad2682164ea46148d",
+          "content_sha256": "7986a15e9d425276a075e0cabbf4f017fffcfb51b5d52a5dea7af7b6c9576265",
           "content_units": [
             "密碼設定頁籤上有房東個人專屬密碼（6碼），是房東專用的解鎖密碼，可以編輯後儲存。",
             "租客個人專屬密碼（4碼）預設是租客手機號碼末四碼，租客可以自行變更，房東不能修改內容，只能開關這組密碼要不要啟用。",
-            "共用門鎖才會出現租客共用密碼（6碼）區塊，房東可以新增、刪除，也可以一鍵複製一段包含密碼的通知文字方便傳給租客；畫面上雖然定義了「編輯密碼」按鈕，但這顆按鈕被設定成永遠不會顯示，實際上沒有編輯既有密碼內容的入口，只能刪除後重新新增一組。",
+            "共用門鎖才會出現租客共用密碼（6碼）區塊，房東可以新增、刪除，也可以一鍵複製一段包含密碼的通知文字方便傳給租客；畫面上沒有修改既有共用密碼的入口，要換密碼只能刪除後重新新增一組。",
             "私人門鎖不會顯示租客共用密碼這個區塊。"
           ],
           "id": "jgb/G/device-lock-passwords-three-types",
@@ -21899,13 +21912,13 @@
           ],
           "categories": [],
           "coarse_id": "G-remote-unlock",
-          "content_sha256": "f1b0f01d40d582d294ffb8b3e4f92b1495e674f7c21165eafc7a818505b13487",
+          "content_sha256": "d18c4584c86d5b317b3554e1bdd1a438be69d8fda977d54fbba5878afd1ead7a",
           "content_units": [
             "打開遠端解鎖連結後，畫面上會顯示這台門鎖的名稱，並有一個欄位讓人輸入解鎖密碼，輸入完按開門即可送出。",
             "這裡輸入的密碼會拿去比對這把門鎖的租客共用密碼，不是房東個人密碼或租客個人密碼。",
             "密碼輸入錯誤時會提示密碼錯誤；連結本身失效（裝置不存在或連結碼不符）時會提示設備不存在並導回首頁。",
             "密碼正確但門鎖實際開鎖失敗時，會提示門鎖開啟失敗。",
-            "在門鎖的編輯頁與密碼設定頁籤裡，找不到任何按鈕或畫面會產生、顯示這個遠端解鎖連結；連結裡的連結碼是用這台門鎖的建立時間算出來的固定值，不是每次點擊都重新產生的。"
+            "門鎖的編輯頁與密碼設定頁籤裡沒有可以產生或顯示這個遠端解鎖連結的按鈕；每一台門鎖的連結是固定的，不會每次點擊都重新產生。"
           ],
           "id": "jgb/G/remote-unlock-page",
           "instance_applicability": "general",
@@ -21949,7 +21962,7 @@
           "target_user": [
             "property_manager"
           ],
-          "title": "遠端解鎖連結怎麼用？（輸入共用密碼按開門，密碼錯誤或連結失效會提示原因；找不到產生這個連結的入口）"
+          "title": "遠端解鎖連結怎麼用？（輸入共用密碼按開門，密碼錯誤或連結失效會提示原因）"
         },
         {
           "business_types": [
@@ -22155,11 +22168,11 @@
           ],
           "categories": [],
           "coarse_id": "H-help-center",
-          "content_sha256": "b6ded54bf4cf6bad5939e8049ba86953b9acd631af7bec9e7060a64de862e114",
+          "content_sha256": "54eb05c87929b5e5464870afc8b0a3427cfc076c399bc41084f316ad732dbd1f",
           "content_units": [
             "在幫助中心首頁上方的搜尋框輸入關鍵字並選擇分類（可留空），送出後會跳到搜尋結果頁。",
             "搜尋是比對文章的標題加內文，如果輸入的關鍵字之間有空格，會被拆成多個關鍵字，一篇文章要同時包含全部關鍵字才算符合。",
-            "有選分類時，只會在該分類底下的文章找；沒有輸入任何關鍵字就送出搜尋，會直接被導回幫助中心首頁。",
+            "有選分類時，只會在該分類底下的文章找；搜尋框沒有輸入關鍵字時按送出不會跳頁，會停在原本的頁面。",
             "搜尋不到結果時會顯示找不到任何關於此項目的文章，並附上返回幫助中心首頁的連結。"
           ],
           "id": "jgb/H/help-center-search",
@@ -22325,9 +22338,9 @@
           ],
           "categories": [],
           "coarse_id": "I-pricing",
-          "content_sha256": "4cda90845cfb5b44accdec330cde25d77fae4f843f01218b6501de0345fa2cb4",
+          "content_sha256": "fb5138f94fbcf5fa62e82080189c63087d04d1a11e8e6d209281bc9350685ddf",
           "content_units": [
-            "免費試用是「不綁信用卡的 30 天試用方案」，點選「免費試用」後導向註冊頁完成註冊即可啟用。",
+            "免費試用的說明是「不綁信用卡的30天的試用方案，歡迎體驗」，點選「免費試用」後導向註冊頁完成註冊即可啟用。",
             "系統在建立房東身分（個人房東、企業團隊或社宅房東）時，只要註冊過程沒有帶入優惠代碼，就會自動給予這個免費方案，效期為系統設定的一個週期（目前為一個月），到期後不會自動續訂。",
             "個人房東如果是透過優惠代碼連結完成註冊，取得的是優惠代碼指定的方案，而不是這個自動贈送的免費方案。",
             "免費方案贈送的方案價格固定為 0，即使使用者取消訂閱也不會產生退款。"
@@ -22378,11 +22391,11 @@
           ],
           "categories": [],
           "coarse_id": "I-pricing",
-          "content_sha256": "88618540bc1486e57555900d1e5c0e89e3f0b85b4c555b428edd1b3033b2656e",
+          "content_sha256": "fb79d3e878b20a4f80bf041d1dd94b32fe361b8833ffe640821ec5f789c7e716",
           "content_units": [
             "免費試用最多可新增 5 個物件、支援批次物件上傳，並擁有智能合約（內政部最新標準範本）、支援既存合約、一般匯款、自動催繳通知、即時帳務報表、分店管理、租客管理等功能。",
             "免費試用不支援 720° VR、團隊成員管理、大房東管理、編輯權限設定、智能門鎖、智能電錶等功能。",
-            "免費試用彈窗裡把自動對帳列在不支援的功能，並註記「無法申請國泰、永豐，可申請藍新、中信」，代表這個限制其實只擋國泰與永豐兩家金流。"
+            "免費試用彈窗裡把自動對帳列在不支援的功能，並註記「無法申請國泰、永豐可申請藍新、中信」；不過能不能開通某家金流還要看身分，例如個人房東連藍新也不能開通（另見「哪些身分或方案不能開通某些金流商」）。"
           ],
           "id": "jgb/I/pricing-free-trial-feature-scope",
           "instance_applicability": "general",
@@ -22428,10 +22441,10 @@
           ],
           "categories": [],
           "coarse_id": "I-pricing",
-          "content_sha256": "91299443ad3bffcdad3367d76035b83141b7bbe0d4896c4e148b314e149d550b",
+          "content_sha256": "805be5f64be3b8ea9d580e255799e2ba3c8a9607d236a172f228c0900299a1de",
           "content_units": [
             "方案頁目前只會顯示企業團隊身分適用的方案內容與功能比較表，頁面上沒有讓使用者切換成個人房東身分查看內容的入口。",
-            "系統另外定義了一份個人房東專用的方案比較表：人員管理相關的「團隊成員管理」「編輯權限設定」「團隊資訊」「進階設定」四項功能，個人房東的入門、熱門、專業、體驗方案全部都不提供；企業團隊則除了體驗方案外，入門、熱門、專業方案都提供這四項功能。",
+            "系統另外定義了一份個人房東專用的方案比較表：「團隊成員管理」「編輯權限設定」「團隊資訊」「進階設定」四項功能，個人房東的入門、熱門、專業、體驗方案全部都不提供；企業團隊則除了體驗方案外，入門、熱門、專業方案都提供這四項功能。",
             "自動對帳在個人房東的比較表裡，入門、熱門、專業、體驗方案顯示的都是文字說明「無法申請國泰、永豐可申請藍新、中信」；企業團隊的比較表裡，入門、熱門、專業方案顯示為打勾支援，只有體驗方案不支援。",
             "分店管理在個人房東的比較表裡，體驗、入門、熱門、專業方案全部支援；企業團隊的比較表裡則是體驗方案不支援，入門、熱門、專業方案才支援。",
             "大房東管理在兩份比較表裡的支援情形完全相同：體驗方案不支援，入門、熱門、專業方案都支援。"
@@ -22473,7 +22486,7 @@
             "property_manager",
             "prospect"
           ],
-          "title": "個人房東與企業團隊方案差在哪？（人員管理四項功能、自動對帳與分店管理起始級距不同）"
+          "title": "個人房東與企業團隊方案差在哪？（團隊成員管理等四項功能、自動對帳與分店管理起始級距不同）"
         },
         {
           "business_types": [
@@ -22585,10 +22598,10 @@
           ],
           "categories": [],
           "coarse_id": "I-pricing",
-          "content_sha256": "1c6d006e4ace9455601524339e0c5dcb0ade5c74af960e1968aa33db141d136a",
+          "content_sha256": "49d5419be84778f0241b17b4be289e2da24cb0f2f2c937e651f4400938942518",
           "content_units": [
-            "新增物件時，若訂閱中的身分剩餘可新增物件數量在 5 個以下，系統會發送站內通知中心訊息與 Email 提醒即將額滿。",
-            "當剩餘物件數量剛好只剩 5 個時，除了前述提醒，系統會再另外寄送一封 Email 通知使用者接近訂閱方案的物件數量上限。",
+            "新增物件時，若訂閱中的身分剩餘可新增物件數量在 5 個以下，系統會發送站內通知中心訊息提醒即將額滿。",
+            "當剩餘物件數量剛好只剩 5 個時，系統會再另外寄一封 Email 通知使用者接近訂閱方案的物件數量上限。",
             "這個提醒只在身分目前有生效中的訂閱時才會觸發，沒有生效中的訂閱不會收到這個提醒。"
           ],
           "id": "jgb/I/pricing-quota-near-full-notice",
@@ -22621,7 +22634,8 @@
           "reviewed_by": null,
           "see_also": [],
           "sources": [
-            "code:app/Estate.php"
+            "code:app/Estate.php",
+            "code:app/Notification.php"
           ],
           "target_user": [
             "property_manager"
@@ -22714,7 +22728,7 @@
             {
               "source": "draft:outline-20260920",
               "status": "proposed",
-              "text": "深入了解企業方案後看到什麼"
+              "text": "查看體驗方案會看到什麼"
             }
           ],
           "policy": "answerable",
@@ -22737,10 +22751,9 @@
           ],
           "categories": [],
           "coarse_id": "I-pricing",
-          "content_sha256": "1057f7547df66728e20463cc1462fffee6a32234c3a25e5a9eeb6291bae83223",
+          "content_sha256": "cf980c9621a50ffec4005ce395d53312e34936dee1f1ce0069bb5d8b50274bf7",
           "content_units": [
-            "體驗方案的月費固定是台幣 100 元，換算成其他幣別後顯示。",
-            "入門、熱門、專業等依物件數量分級的方案，實際單價與級距價格是從系統的方案物件價格表讀出來的，不是固定寫死的數字，因此這裡無法列出各級距的金額。",
+            "包含體驗方案在內，各方案的實際單價與級距價格都是從系統的方案物件價格表讀出來的，不是固定寫死的數字，因此這裡無法列出各級距的金額。",
             "一般依物件數量分級方案的年繳費用，計算方式是月費乘以 10（等於少收 2 個月的費用）；體驗方案的年繳費用則是月費乘以 12，沒有這個折扣。"
           ],
           "id": "jgb/I/pricing-plan-price-basis",
@@ -22759,7 +22772,7 @@
             {
               "source": "draft:outline-20260920",
               "status": "proposed",
-              "text": "體驗方案多少錢"
+              "text": "體驗方案價格怎麼算"
             },
             {
               "source": "draft:outline-20260920",
@@ -22780,7 +22793,7 @@
             "property_manager",
             "prospect"
           ],
-          "title": "方案價格怎麼算、年繳有折扣嗎？（體驗方案月費固定台幣 100 元；一般方案年繳等於 10 個月的月費）"
+          "title": "方案價格怎麼算、年繳有折扣嗎？（各方案單價從系統價格表讀取；一般方案年繳等於 10 個月的月費）"
         },
         {
           "business_types": [
@@ -23191,11 +23204,11 @@
           ],
           "categories": [],
           "coarse_id": "I-subscription-payment",
-          "content_sha256": "414ed005f11f73a67bec913b340597425f890e356cbc6a6133ecf3eedc995093",
+          "content_sha256": "0735190fccd142019e2713944b9174f09826ca74a0324efebd037f1c58932bee",
           "content_units": [
             "取消訂閱前系統會告知：目前訂閱的方案資格會持續到方案到期日當天，到期後才不會自動續訂，屆時也無法再繼續使用 JGB 的所有服務——也就是取消動作立即生效的是「停止自動續訂」，不是立刻停用目前方案。",
             "取消時必須從「我不再需要使用相關服務」「無法解決我遇上的問題」「費用昂貴」「其他」四個原因中選一個才能送出；選「其他」的話還要填寫說明文字，否則「確定」按鈕維持無法點擊的樣式。",
-            "送出取消後，系統會清除該身分的自動續約資料與已授權的信用卡約定資料，並寄送 Email 通知使用者。",
+            "送出取消後，系統會清除該身分的自動續約資料與已授權的信用卡約定資料。",
             "取消動作能不能送出，看的是目前身分是否已經沒有「自動續約資料」——即使目前仍是有效訂閱中的免費方案（沒有自動續約資料），一樣會被這個檢查擋下、直接跳出系統忙碌的錯誤訊息，不會進入原因選擇畫面；這跟目前方案是否還在生效中無關。"
           ],
           "id": "jgb/I/subscription-cancel-effect",
@@ -23293,9 +23306,9 @@
           ],
           "categories": [],
           "coarse_id": "I-subscription-payment",
-          "content_sha256": "79be0b42aad68ec418b76321bbce78d892e51238bd83439d530fa0e3d3cf376a",
+          "content_sha256": "11b62f60822e35023a9f05a28963e5eae11221fbc6ac9cb8337fb470fff6f3f5",
           "content_units": [
-            "付款紀錄頁以清單方式列出每一筆已完成扣款：扣款日、訂單編號、「付款內容」、金額、以及「收據」連結；付款內容欄列的是這筆扣款買了什麼——已購買的方案／加購項目名稱（例如熱門方案的加購次數、續訂折扣說明等），加上這筆訂單本身附帶的補充說明文字，沒有任何項目時顯示「無」。",
+            "付款紀錄頁以清單方式列出每一筆已完成扣款：扣款日、訂單編號、「付款內容」、金額、以及「收據」連結；付款內容欄列的是這筆扣款買的品項，例如訂閱的方案名稱與物件數（有數量時後面會標出乘以幾份），再加上這筆訂單本身附帶的說明文字，沒有任何項目時顯示「無」。",
             "如果目前身分完全沒有付款紀錄，頁面會顯示「目前尚未有任何付款紀錄」。",
             "頁面提示「如果紀錄有疑慮，請聯繫JGB客服」。"
           ],
@@ -23500,9 +23513,9 @@
           ],
           "categories": [],
           "coarse_id": "I-subscription-payment",
-          "content_sha256": "e0f3518f7eb9017a3865bafbf4d994c6e3ab6291e7008c57edb0c74cef59e12a",
+          "content_sha256": "20656c66068d9e2db7774df10ce37dc06467ead73a540376c4ad70300a5bca49",
           "content_units": [
-            "綁定成功後點進明細頁查看，除了國泰世華以外的金流商表單都是唯讀不能再編輯重送；只有國泰世華的明細頁可以重新填寫並再次送出。"
+            "綁定成功後點進明細頁查看，各家金流商的資料都是唯讀、不能再編輯重送；唯一的例外是國泰世華：如果當初超商條碼相關欄位還沒填齊，明細頁可以補填這一段再送出，其他已綁定的欄位仍然不能改。"
           ],
           "id": "jgb/I/payment-vendor-edit-after-binding",
           "instance_applicability": "general",
@@ -23534,12 +23547,13 @@
           "reviewed_by": null,
           "see_also": [],
           "sources": [
-            "code:src/pages/users/payment/routerView/Detail.vue"
+            "code:src/pages/users/payment/routerView/Detail.vue",
+            "code:src/pages/users/payment/_parts/Cathaybk.vue"
           ],
           "target_user": [
             "property_manager"
           ],
-          "title": "金流綁定後還能改嗎？（除了國泰世華，其他金流商明細頁都是唯讀不能重送）"
+          "title": "金流綁定後還能改嗎？（綁定資料都是唯讀；國泰世華只能補填還沒填齊的超商條碼欄位）"
         },
         {
           "business_types": [
@@ -23547,9 +23561,9 @@
           ],
           "categories": [],
           "coarse_id": "I-subscription-payment",
-          "content_sha256": "095f8c5b24e7074d48b383ffa02cbb7c8ea822a96e7d583049b618fe1efdf80e",
+          "content_sha256": "471aae43136ad288465926a9412180603ab6dc6e2631fe0111f89cc2c21fb349",
           "content_units": [
-            "選擇 icash Pay 時頁面會提醒：智付通將存取申請資料以完成開通程序，需要至少 2 到 5 個工作天。",
+            "選擇藍新、而且目前身分可以開通藍新時，頁面會提醒：智付通將存取申請資料以完成開通程序，需要至少 2 到 5 個工作天；個人房東不能開通藍新，選了藍新只會看到無法開通的紅字提示，不會出現這段提醒。",
             "選擇中國信託時，頁面說明送審後會由 JGB 進行 ACH 驗證並撥款 1 元到收款帳號，審核時間需要 5 個工作天（不含例假日）。"
           ],
           "id": "jgb/I/payment-icash-ctbc-setup",
@@ -23558,7 +23572,7 @@
             {
               "source": "draft:outline-20260920",
               "status": "proposed",
-              "text": "icash Pay申請多久"
+              "text": "藍新申請要多久"
             },
             {
               "source": "draft:outline-20260920",
@@ -23588,7 +23602,7 @@
           "target_user": [
             "property_manager"
           ],
-          "title": "icash Pay／中信收款帳戶申請要多久？（智付通約 2-5 個工作天，中信 ACH 驗證約 5 個工作天）"
+          "title": "藍新／中信收款帳戶申請要多久？（藍新：智付通至少 2-5 個工作天；中信 ACH 驗證約 5 個工作天）"
         },
         {
           "business_types": [
@@ -23693,11 +23707,11 @@
           ],
           "categories": [],
           "coarse_id": "I-subscription-payment",
-          "content_sha256": "928b6ddc2f1c9c9e79a070ad8f97abee5c05df0abf2663716b078f59b3746cba",
+          "content_sha256": "7526d371c35960a128dba056be26f4c70ee3354d2ea0e8f6c5f782b85ed90bb1",
           "content_units": [
             "帳單開立發票功能預設不是啟用狀態，要先開通電子發票加值服務，再聯繫 JGB 業務才能啟用。",
             "功能啟用完成後，「編輯合約」畫面才會多出「稅與發票」分頁，用來設定這份合約未來收款時的帳單是否要開立發票。",
-            "發票的開立模式可以設定「預先開立發票時機」，並可再指定要提前的天數。"
+            "發票的開立模式一般只有「帳單已到帳後開立」；部分特定合作團隊另外可以選「預先開立發票」，再設定「預先開立發票時機」為「發送帳單」「繳費期限前」或「繳費期限後」，選後兩者時還要指定天數。"
           ],
           "id": "jgb/I/payment-bill-e-invoice-setup",
           "instance_applicability": "general",
@@ -23743,9 +23757,9 @@
           ],
           "categories": [],
           "coarse_id": "I-subscription-payment",
-          "content_sha256": "b790c71f7f1782e2603f12b81e27c8b916da66db23b2f4c72c3b9978eb0ddf4f",
+          "content_sha256": "e59a3600aa151fc9f35fa93e0d355061757c223fcd62e26a030c00fe032c8bf9",
           "content_units": [
-            "團隊成員如果沒有被開啟對應的查看權限，介面上【收款設置】與【訂閱方案】這兩個選單會整個不出現（不是變成灰色不能點，而是完全看不到），而且這位成員的帳號資訊會以個人房東的形式呈現。"
+            "側邊選單的【收款設置】與【訂閱方案】分別看團隊成員有沒有「查看收款設置」「查看訂閱方案」權限；沒有對應的權限時，該選單會整個不出現，而不是變成灰色不能點。"
           ],
           "id": "jgb/I/payment-permission-menu-visibility",
           "instance_applicability": "general",
@@ -23768,7 +23782,7 @@
             {
               "source": "draft:outline-20260920",
               "status": "proposed",
-              "text": "編輯團隊權限的作用"
+              "text": "查看訂閱方案權限的作用"
             }
           ],
           "policy": "answerable",
@@ -23777,7 +23791,8 @@
           "reviewed_by": null,
           "see_also": [],
           "sources": [
-            "doc:/Users/chenqinghuang/dev/work/docs/幫助中心/JGB幫助中心_HTML_交付_20260818/qa23_zh-Hant.html"
+            "code:app/Role.php",
+            "code:app/Http/Controllers/UserController.php"
           ],
           "target_user": [
             "property_manager"
@@ -23996,9 +24011,9 @@
           ],
           "categories": [],
           "coarse_id": "I-demo-booking",
-          "content_sha256": "816caf96b5c074b1931255fcf04dfaf4432cc8a54ffc398a58db216ba553d041",
+          "content_sha256": "852454ed20a4c3cf8e969c8b3274831322adc58a6a256c8f42c8b43f8ce8e3bb",
           "content_units": [
-            "表單頁面要求全部 10 個欄位與隱私權同意都填妥、按鈕才會從灰色變可點擊，但系統實際送出時只會檢查公司名稱、姓名、電話、Email 這四個欄位是否為空、以及 Email 格式是否正確，只要這四項合格就能送出成功。"
+            "表單頁面上全部 10 個欄位與隱私權同意都設了必填，沒填完時瀏覽器會先擋下送出；系統收到資料後，只會再檢查公司名稱、姓名、電話、Email 這四個欄位是否為空、以及 Email 格式是否正確。"
           ],
           "id": "jgb/I/demo-form-actual-validation-scope",
           "instance_applicability": "general",
@@ -24030,12 +24045,13 @@
           "reviewed_by": null,
           "see_also": [],
           "sources": [
-            "code:app/Http/Controllers/IndexController.php"
+            "code:app/Http/Controllers/IndexController.php",
+            "code:src/pages/listings/DemoForm.vue"
           ],
           "target_user": [
             "property_manager"
           ],
-          "title": "demo 表單哪些欄位真的會被系統擋下？（系統實際只驗公司、姓名、電話、Email 四項）"
+          "title": "demo 表單哪些欄位真的會被系統擋下？（畫面上全部欄位都要填才能送出；系統端只再檢查公司、姓名、電話、Email 四項）"
         }
       ],
       "id": "I-demo-booking",
@@ -24049,10 +24065,10 @@
           ],
           "categories": [],
           "coarse_id": "I-control-panel",
-          "content_sha256": "55c734ae7a3a2cfdc2b417cc86dc4af86c88051aa78d8bb8c105d161d01fb8a0",
+          "content_sha256": "ede410b61b4c9de5c2e1859e32b7eee8569b0ab9d36875f37331b8e8846da64e",
           "content_units": [
             "控制台首頁的說明是「管理您的 JGB 系統」，目前畫面上實際可以點擊進入的項目只有「任務管理器」一項。",
-            "任務管理器的卡片說明是「設定您的排程機器人，在滿足設定的條件後，可以觸發自動操作」，點擊後會進入任務管理器頁面。"
+            "任務管理器的卡片說明是「設定您的排程機器人，在滿足設定的條件後，可以觸發自動操作」；點擊後，只有開放控制台的特定合作團隊會進入任務管理器頁面，其他帳號會被導回會員中心首頁。"
           ],
           "id": "jgb/I/control-panel-entry-scope",
           "instance_applicability": "general",
@@ -24079,12 +24095,13 @@
           "reviewed_by": null,
           "see_also": [],
           "sources": [
-            "code:src/pages/control-panel/Index.vue"
+            "code:src/pages/control-panel/Index.vue",
+            "code:src/routes/controlPanel.js"
           ],
           "target_user": [
             "property_manager"
           ],
-          "title": "控制台首頁目前能用什麼？（目前只有「任務管理器」一個項目可以點擊進入）"
+          "title": "控制台首頁目前能用什麼？（目前只有「任務管理器」一個項目可以點擊進入，而且只開放給特定合作團隊）"
         },
         {
           "business_types": [
@@ -24092,9 +24109,9 @@
           ],
           "categories": [],
           "coarse_id": "I-control-panel",
-          "content_sha256": "d605c95d58a4303fea651c45a2607cb3d4862af6722036514aa72fa9912cf543",
+          "content_sha256": "366fd14cd80832282e59015a05c0bf584172a5e623b5cdea6fbba8dc33265afc",
           "content_units": [
-            "點進控制台的設定範圍後，畫面上方會顯示「Dashboard／控制台／任務管理設定」的麵包屑，本身不含其他獨立內容，實際顯示的內容是底下的任務管理器（或新增／編輯任務）頁面。"
+            "點進控制台的設定範圍後，畫面上方會顯示「Dashboard」「控制台」「任務管理設定」三層麵包屑，內容區顯示的是任務管理器、新增／編輯任務，或通知信設定頁面。"
           ],
           "id": "jgb/I/control-panel-setting-shell",
           "instance_applicability": "general",
@@ -24126,12 +24143,13 @@
           "reviewed_by": null,
           "see_also": [],
           "sources": [
-            "code:src/pages/control-panel/setting/Index.jsx"
+            "code:src/pages/control-panel/setting/Index.jsx",
+            "code:src/routes/controlPanel.js"
           ],
           "target_user": [
             "property_manager"
           ],
-          "title": "進入控制台設定後看到什麼？（本身只是麵包屑與側欄外殼，內容是任務管理器頁面）"
+          "title": "進入控制台設定後看到什麼？（麵包屑外殼，內容是任務管理器、新增／編輯任務或通知信設定頁）"
         },
         {
           "business_types": [
@@ -24179,7 +24197,7 @@
           "target_user": [
             "property_manager"
           ],
-          "title": "任務管理器是做什麼用的？（設定週期性任務或預定通知，系統會提前自動開單並寄信）"
+          "title": "任務管理器是做什麼用的？（設定週期性任務或預定通知的排程功能）"
         },
         {
           "business_types": [
@@ -24381,9 +24399,10 @@
           ],
           "categories": [],
           "coarse_id": "I-control-panel",
-          "content_sha256": "41ab9aaca5113600c3a1c393f0e1610ebbc01af70359fa436a84dc3328c889c8",
+          "content_sha256": "be25e995023fff7353f0367d57204efe89a116f7cfdbc1928d2668bb16421ac7",
           "content_units": [
-            "通知信設定頁面說明：通知信預設接收信箱是團隊擁有者的註冊信箱，每個通知信最多可以再新增 3 組副本信箱。"
+            "通知信設定頁面說明：通知信預設接收信箱是團隊擁有者的註冊信箱，每個通知信最多可以再新增 3 組副本信箱。",
+            "這個頁面目前只有這段說明文字，沒有可以新增副本信箱的欄位或按鈕；控制台首頁與側欄也沒有連到這個頁面的入口。"
           ],
           "id": "jgb/I/notification-mail-settings",
           "instance_applicability": "general",
@@ -24415,12 +24434,13 @@
           "reviewed_by": null,
           "see_also": [],
           "sources": [
-            "code:src/pages/control-panel/notificationMail/Index.jsx"
+            "code:src/pages/control-panel/notificationMail/Index.jsx",
+            "code:src/pages/control-panel/Index.vue"
           ],
           "target_user": [
             "property_manager"
           ],
-          "title": "通知信副本信箱怎麼設定？（預設收件為團隊擁有者信箱，每個通知信最多再加 3 組副本）"
+          "title": "通知信副本信箱可以設定嗎？（設定頁只有說明：預設收件為團隊擁有者信箱、每個通知信最多可再加 3 組副本；頁面上目前沒有新增副本的欄位，控制台也沒有入口）"
         },
         {
           "business_types": [
@@ -24483,11 +24503,11 @@
           ],
           "categories": [],
           "coarse_id": "I-marketing-home",
-          "content_sha256": "6ecc34947f4ee7df7980236fdabcdb653c9998490280859bfc0e02577d6a0e17",
+          "content_sha256": "3420211f98599b378a2c9d2a3dc09d64a0044e229eb9e4fcda42e5369c2afd98",
           "content_units": [
-            "首頁最上方是橫幅區塊，接著依序是「熱門物件」輪播、「誠心推薦·優質租管業者」輪播、平台特色說明區塊、東南亞城市數與試用／諮詢按鈕、「最新消息」，最後是「企業夥伴」。",
-            "「熱門物件」區塊只有在有回傳物件資料時才會顯示，用輪播呈現每筆物件的縮圖、標題與地址等資訊；「查看更多物件」這個連結到找房搜尋頁的按鈕，只有從特定搜尋入口進入首頁時才會顯示，一般直接造訪首頁不會看到這個按鈕。",
-            "「誠心推薦·優質租管業者」區塊同樣只在有資料時顯示，用輪播呈現使用 JGB 的租管業者推薦內容。"
+            "首頁最上方是橫幅區塊，接著依序是「熱門物件」輪播、「誠心推薦·優質租管業者」輪播、平台特色說明區塊、東南亞城市數與試用／諮詢按鈕、「最新消息」、「企業夥伴」，最下方還有一張圖片橫幅。",
+            "「熱門物件」區塊用輪播呈現每筆物件的縮圖、標題與地址等資訊；「查看更多物件」這個連結到找房搜尋頁的按鈕，只有從特定搜尋入口進入首頁時才會顯示，一般直接造訪首頁不會看到這個按鈕。",
+            "「誠心推薦·優質租管業者」區塊用輪播呈現使用 JGB 的租管業者推薦內容。"
           ],
           "id": "jgb/I/homepage-sections-overview",
           "instance_applicability": "general",
@@ -24701,9 +24721,9 @@
           ],
           "categories": [],
           "coarse_id": "I-marketing-home",
-          "content_sha256": "76900854cf368092597c6bcb9a44198c787184afe853eb788a4ffb942cc95dfc",
+          "content_sha256": "7b5ab220f306bf087c76c8961327feccb0efe58556617610fc547154a47a02a8",
           "content_units": [
-            "「最新消息」區塊只有在有取得消息資料時才會顯示，用輪播呈現每則消息的縮圖、分類標籤、標題與發布時間。",
+            "「最新消息」區塊用輪播呈現每則消息的縮圖、分類標籤、標題與發布時間。",
             "點擊消息縮圖或標題，會另開分頁導向幫助中心的對應文章頁面。"
           ],
           "id": "jgb/I/homepage-latest-news-section",
@@ -24736,7 +24756,7 @@
           "target_user": [
             "prospect"
           ],
-          "title": "首頁「最新消息」顯示什麼？（沒有消息資料時整區塊不會出現，點擊會開啟幫助中心文章）"
+          "title": "首頁「最新消息」顯示什麼？（用輪播呈現消息，點擊會開啟幫助中心文章）"
         },
         {
           "business_types": [
@@ -24884,7 +24904,7 @@
             "property_manager",
             "prospect"
           ],
-          "title": "雲市集訂單怎麼付款？（國泰世華一次性虛擬帳號限 WebATM，2 個工作天內付款，付款後 2 天開發票、7 天內開通）"
+          "title": "雲市集訂單怎麼付款？（國泰世華一次性虛擬帳號，注意事項請用 WebATM 轉帳；收到匯款資訊後 2 個工作天內付款，款項確認後 2 個工作天內開發票、7 個工作天內開通）"
         },
         {
           "business_types": [

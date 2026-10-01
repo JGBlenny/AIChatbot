@@ -17,7 +17,7 @@
     {
      "proposed_id": "jgb/F/repair-status-tabs",
      "askable": "修繕單總表有哪幾個狀態分頁，分別代表什麼意思",
-     "title": "修繕單總表有哪些狀態分頁？（申請修繕、安排修繕、完成修繕、結單、封存，各代表什麼階段）",
+     "title": "修繕單總表有哪些狀態分頁？（申請修繕、安排修繕、完成修繕、結單、封存）",
      "unit_ids": [
       "page:web:/repair/{any?}/{any2?}",
       "page:repair",
@@ -43,7 +43,7 @@
      ],
      "sentences": [
       "修繕單總表分成五個狀態分頁：申請修繕、安排修繕、完成修繕、結單、封存，每張修繕單同一時間只會出現在其中一個分頁。",
-      "「申請修繕」是修繕單剛送出、還沒有人處理的狀態；「安排修繕」代表房東方正在確認或已經指派廠商；「完成修繕」代表廠商已經處理完、房東方在做結算與備註；「結單」代表這張修繕單的處理流程已經走完；「封存」是另外一個可以把修繕單移過去、也可以再移回其他狀態的分頁。",
+      "幫助中心的修繕教學把處理流程依序分成新增修繕單、安排修繕、完成修繕、結單；「封存」則是另一個可以把修繕單移過去、也可以再移回其他狀態的分頁。",
       "進入畫面後不需要自己選分頁，系統會直接停在「申請修繕」這個分頁。",
       "修繕單總表這個頁面本身要先登入 JGB 帳號才能打開；但同樣屬於修繕功能的分享頁，並不受這條規則限制（另見「看修繕單分享頁需要先登入嗎」）。"
      ],
@@ -51,7 +51,8 @@
       "code:src/routes/repairs.js",
       "code:src/pages/repair/Index.vue",
       "code:app/Repair.php",
-      "code:routes/web.php"
+      "code:routes/web.php",
+      "help:repair_zh-Hant.html"
      ],
      "evidence": [
       {
@@ -61,8 +62,8 @@
       },
       {
        "sentence_index": 1,
-       "source": "code:app/Repair.php",
-       "quote_or_symbol": "const APPLY = 1; // 申請中（租客 or 房東）"
+       "source": "help:repair_zh-Hant.html",
+       "quote_or_symbol": "<p>➡安排修繕</p>"
       },
       {
        "sentence_index": 2,
@@ -497,7 +498,7 @@
     {
      "proposed_id": "jgb/F/repair-view-only-roles",
      "askable": "哪些身分只能查看修繕單、不能編輯，哪些身分連列表都看不到",
-     "title": "哪些身分會看到「查看」而不是「編輯＆查看」的齒輪按鈕文字？（大房東角色，以及只有「顯示所屬」沒有「顯示所有」修繕資料權限的經理人帳號；這個文字只反映顯示修繕資料的權限，能不能移動狀態、能不能在細節頁編輯是另一組「編輯修繕」權限決定的，兩者互相獨立）",
+     "title": "哪些身分會看到「查看」而不是「編輯＆查看」的齒輪按鈕文字？（大房東角色，以及對這張單只有「顯示所屬」、沒有「顯示所有」修繕資料權限的團隊成員；但這張單的經理人本人看到的仍是「編輯＆查看」）",
      "unit_ids": [
       "page:repair.apply",
       "page:repair.assign",
@@ -520,13 +521,14 @@
      ],
      "sentences": [
       "齒輪選單裡開啟修繕單細節的按鈕，一般會顯示「編輯＆查看」；但登入身分是「大房東」時，這顆按鈕文字會變成「查看」。",
-      "房東方帳號如果對這個物件只有「顯示所屬修繕資料」的權限、還沒有「顯示所有修繕資料」的權限（也就是經理人身分），按鈕文字一樣會變成「查看」。",
+      "房東方團隊成員如果對這個物件只有「顯示所屬修繕資料」的權限、沒有「顯示所有修繕資料」的權限，按鈕文字一樣會變成「查看」；不過，如果這位成員就是這張修繕單的經理人，系統會把這張單的修繕權限都視為開啟，看到的仍是「編輯＆查看」，也可以移動狀態。",
       "如果房東方帳號對這個物件連「顯示所屬修繕資料」都沒有，這張修繕單的那一列根本不會出現在列表裡，不是顯示成唯讀，是完全看不到這一列。",
-      "齒輪按鈕文字的「編輯＆查看」跟「查看」只反映顯示修繕資料的權限與是不是大房東身分；能不能移動狀態、能不能在細節頁編輯，要看另一組「編輯修繕」的權限，這兩件事是分開判斷的。大房東因為在細節頁的編輯判斷裡被直接排除，所以看到「查看」文字時也確實不能編輯或移動；但只有「顯示所屬」的經理人帳號如果同時具備編輯所屬修繕的權限，齒輪按鈕文字一樣會變成「查看」，卻仍然可以移動狀態、在細節頁編輯。"
+      "齒輪按鈕文字的「編輯＆查看」跟「查看」只反映顯示修繕資料的權限與是不是大房東身分；能不能移動狀態、能不能在細節頁編輯，要看另一組「編輯修繕」的權限，這兩件事是分開判斷的。大房東因為在細節頁的編輯判斷裡被直接排除，所以看到「查看」文字時也確實不能編輯或移動；但只有「顯示所屬」權限的團隊成員如果同時具備編輯所屬修繕的權限，齒輪按鈕文字一樣會變成「查看」，卻仍然可以移動狀態、在細節頁編輯。"
      ],
      "sources": [
       "code:app/Http/Controllers/RepairController.php",
-      "code:src/pages/repair/edit/Index.vue"
+      "code:src/pages/repair/edit/Index.vue",
+      "code:app/Repair.php"
      ],
      "evidence": [
       {
@@ -538,6 +540,11 @@
        "sentence_index": 1,
        "source": "code:app/Http/Controllers/RepairController.php",
        "quote_or_symbol": "if (!$showAllRepair && $showOwnerRepair) {"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Repair.php",
+       "quote_or_symbol": "if($isAgent && strpos($permissionKey, 'repair')){"
       },
       {
        "sentence_index": 2,
@@ -714,7 +721,7 @@
      "sentences": [
       "申請修繕的入口在【修繕管理】>【修繕單總表】頁面右上角的「新增修繕單」按鈕。",
       "申請修繕分成三步：先選要報修的物件，再選修繕分類與項目，最後填報修細節後送出；第一步（選物件）下方的按鈕是「取消」與「下一步」，第二步（選分類）是「上一步」與「下一步」，第三步（填細節）則是「上一步」與「申請修繕」。",
-      "租客可以自己在系統上申請報修，房東方也可以代租客申請，不管誰發起，雙方登入系統都看得到同一張修繕單的進度。",
+      "租客可以自己在系統上申請報修，房東方也可以代租客申請；租客自己送出的修繕單，房東方與租客都看得到進度，但房東方在網頁上建立的修繕單目前不會同步到租客的修繕單總表，租客看不到。",
       "房東方帳號如果要用這個流程，帳號要有「新增&編輯&刪除所屬修繕資料」或「新增&編輯&刪除所有修繕資料」其中一項權限；租客帳號則不需要另外的權限，登入即可申請。",
       "填完報修細節按下「申請修繕」送出後，系統會直接把使用者帶回修繕單總表的「申請修繕」分頁。",
       "目前系統上沒有透過 LINE 直接發起報修的入口，LINE 只被用在修繕單建立之後的通知，以及把已經存在的修繕單分享出去。"
@@ -724,7 +731,9 @@
       "code:src/pages/repair/applyProcess/Index.vue",
       "code:src/utils/constants/repair.constant.ts",
       "code:routes/web.php",
-      "help:repair_zh-Hant.html"
+      "help:repair_zh-Hant.html",
+      "code:app/Role.php",
+      "code:src/pages/repair/applyProcess/_parts/Detail.vue"
      ],
      "evidence": [
       {
@@ -764,8 +773,13 @@
       },
       {
        "sentence_index": 2,
-       "source": "help:repair_zh-Hant.html",
-       "quote_or_symbol": "不管是從哪一方發起「申請派修單」雙方都可以在系統上查看由管理者所安排的修繕進度。"
+       "source": "code:app/Role.php",
+       "quote_or_symbol": "->where('is_notice_tenant', 1)"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/repair/applyProcess/_parts/Detail.vue",
+       "quote_or_symbol": "<SwitchButton :model=\"repairForm.is_notice_tenant\" />"
       },
       {
        "sentence_index": 3,
@@ -813,9 +827,8 @@
       "申請修繕要先有合約嗎"
      ],
      "sentences": [
-      "申請修繕不需要這個物件正在跑合約，房東方只要已經把物件建立在系統上，就可以幫這個物件新增修繕單；系統裡原本用合約找修繕對象的那段邏輯已經標註不再使用，改成一律以物件為主。",
-      "就算物件目前是空屋、尚無租客入住，房東方一樣可以幫這個物件申請修繕。",
-      "選擇物件那一步只需要挑物件本身，流程裡原本預留的合約欄位目前維持空白，並未被用來做任何限制或檢查。"
+      "申請修繕不需要這個物件正在跑合約，房東方只要已經把物件建立在系統上，就可以幫這個物件新增修繕單。",
+      "就算物件目前是空屋、尚無租客入住，房東方一樣可以幫這個物件申請修繕。"
      ],
      "sources": [
       "help:repair_zh-Hant.html",
@@ -832,11 +845,6 @@
        "sentence_index": 1,
        "source": "help:repair_zh-Hant.html",
        "quote_or_symbol": "只要管理者有創好物件，都可以新增修繕單。"
-      },
-      {
-       "sentence_index": 2,
-       "source": "code:src/pages/repair/applyProcess/Index.vue",
-       "quote_or_symbol": "contract: {},"
       }
      ],
      "not_supported_greps": [
@@ -1081,7 +1089,7 @@
     {
      "proposed_id": "jgb/F/repair-apply-notifications",
      "askable": "申請修繕送出後，誰會收到通知",
-     "title": "新增修繕單後誰會收到通知？（租客本人、團隊擁有者會收到 Email，租客如果有綁定 LINE 也會收到 LINE 通知）",
+     "title": "新增修繕單後誰會收到通知？（租客送出時通知房東方；房東方在網頁上建立時只寄 Email 給房東方，租客不會收到通知）",
      "unit_ids": [
       "page:repair.applyProcess"
      ],
@@ -1099,27 +1107,39 @@
       "修繕單送出通知"
      ],
      "sentences": [
-      "新增修繕單成功之後，租客跟團隊擁有者都會收到 Email 通知，如果租客的帳號有綁定 LINE，也會另外收到 LINE 通知。",
+      "租客送出修繕單後，房東方會收到通知中心訊息與 Email，房東方有綁定 LINE 的話也會收到 LINE 通知；租客自己不會另外收到通知。",
+      "房東方在網頁上建立修繕單時，系統只會寄 Email 給這張修繕單的房東方帳號；租客目前不會收到任何通知，也不會在自己的修繕單總表看到這張單。",
       "送出成功後，畫面上也會另外跳出成功提示訊息，讓使用者知道這張修繕單已經建立好了。",
       "送出後系統會直接把畫面帶回修繕單總表的「申請修繕」分頁，不需要額外操作確認。"
      ],
      "sources": [
-      "help:repair_zh-Hant.html",
-      "code:src/pages/repair/applyProcess/Index.vue"
+      "code:src/pages/repair/applyProcess/Index.vue",
+      "code:app/Notification.php",
+      "code:app/Role.php"
      ],
      "evidence": [
       {
        "sentence_index": 0,
-       "source": "help:repair_zh-Hant.html",
-       "quote_or_symbol": "如【新增修繕單】成功，租客、團隊擁有者都會收到email的通知，如租客有綁定Line也會收到通知。"
+       "source": "code:app/Notification.php",
+       "quote_or_symbol": "case 'repair_create': // 租客 or 房東送出修繕申請單時"
       },
       {
        "sentence_index": 1,
+       "source": "code:app/Notification.php",
+       "quote_or_symbol": "if ($repair->is_notice_tenant) {"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Role.php",
+       "quote_or_symbol": "->where('is_notice_tenant', 1)"
+      },
+      {
+       "sentence_index": 2,
        "source": "code:src/pages/repair/applyProcess/Index.vue",
        "quote_or_symbol": "window.globalNoticeShow(result.message)"
       },
       {
-       "sentence_index": 2,
+       "sentence_index": 3,
        "source": "code:src/pages/repair/applyProcess/Index.vue",
        "quote_or_symbol": "router.push(redirectRoute.default)"
       }
@@ -1133,7 +1153,7 @@
     {
      "proposed_id": "jgb/F/repair-notifications-by-stage",
      "askable": "除了新增修繕單，安排廠商、完成修繕、結單這幾個時機還會通知誰",
-     "title": "安排廠商、完成修繕、結單時還會發哪些通知？（依幫助中心教學：填寫廠商資訊後、完成修繕儲存後、移到結單狀態時，租客或團隊都會再收到一次通知）",
+     "title": "安排廠商、完成修繕、結單時還會發哪些通知？（租客只有在這張修繕單會通知租客時才收得到；結單只寄 Email）",
      "unit_ids": [
       "page:repair.edit"
      ],
@@ -1150,28 +1170,35 @@
       "修繕單結單會通知誰"
      ],
      "sentences": [
-      "管理者點「填寫廠商資訊」更新安排資訊時，如果物件有簽訂租約、租客有綁定 LINE，租客會在 LINE 跟系統右上角的通知中心收到通知。",
-      "管理者在「完成修繕」區塊儲存備註後，租客如果有綁定 LINE 會收到完成修繕的通知；沒有綁定 LINE 的話，登入系統也可以在右上角通知中心看到訊息。",
-      "管理者把修繕單的狀態移入「結單」時，租客、團隊管理者都會收到 Email、LINE、通知中心三種通知。"
+      "管理者更新安排修繕的廠商資訊時，如果這張修繕單會通知租客，租客會收到通知中心訊息，有綁定 LINE 的話也會收到 LINE 推播。",
+      "管理者在「完成修繕」區塊儲存房東備註時，同樣只有會通知租客的修繕單，租客才會收到通知中心訊息與 LINE 推播。",
+      "修繕單移到「結單」時，系統只寄 Email：房東方一定會收到，租客則只有在這張修繕單會通知租客時才會收到；結單不發 LINE，也不發通知中心訊息。",
+      "租客自己送出的修繕單會通知租客；房東方在網頁上建立的修繕單目前一律不會通知租客。"
      ],
      "sources": [
-      "help:repair_zh-Hant.html"
+      "code:app/Notification.php",
+      "code:app/Http/Controllers/RepairController.php"
      ],
      "evidence": [
       {
        "sentence_index": 0,
-       "source": "help:repair_zh-Hant.html",
-       "quote_or_symbol": "如此物件有簽訂租約，並且租客有把帳號綁定Line，租客將在Line與登進系統右上角的通知中心收到通知。"
+       "source": "code:app/Notification.php",
+       "quote_or_symbol": "case 'update_manufacturer_info': // 房東更新修繕廠商資訊"
       },
       {
        "sentence_index": 1,
-       "source": "help:repair_zh-Hant.html",
-       "quote_or_symbol": "管理者編輯儲存後，租客如有綁定Line將會收到完成修繕的通知，如沒有綁定Line，租客登進系統也可以於右上方的通知中心看到訊息，並可以進到修繕頁面進行驗收。"
+       "source": "code:app/Notification.php",
+       "quote_or_symbol": "case 'update_note_landlord': // 房東成功修改修繕備註"
       },
       {
        "sentence_index": 2,
-       "source": "help:repair_zh-Hant.html",
-       "quote_or_symbol": "當管理者把修繕單的狀態移入【結單】狀態，租客、團隊管理者都會收到Email、Line、通知中心的通知。"
+       "source": "code:app/Notification.php",
+       "quote_or_symbol": "case 'repair_finish': // 修繕 - 結單"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Http/Controllers/RepairController.php",
+       "quote_or_symbol": "$createData['is_notice_tenant'] = true;"
       }
      ],
      "not_supported_greps": [
@@ -1191,7 +1218,7 @@
     {
      "proposed_id": "jgb/F/repair-edit-progress-timeline",
      "askable": "修繕單細節頁的進度時間軸顯示什麼",
-     "title": "修繕單細節頁的進度時間軸顯示什麼？（申請修繕、安排修繕、完成修繕、結單、封存五個階段各自的日期，還沒到的階段不顯示日期）",
+     "title": "修繕單細節頁的進度時間軸顯示什麼？（申請修繕、安排修繕、完成修繕、結單、封存五個階段，以及各階段對應的日期）",
      "unit_ids": [
       "page:repair.edit"
      ],
@@ -1208,20 +1235,33 @@
       "修繕單時間軸"
      ],
      "sentences": [
-      "點進一張修繕單的細節頁，最上面會有一條時間軸，依序是申請修繕、安排修繕、完成修繕、結單、封存五個階段，每個階段下面會顯示對應的日期，還沒到的階段則不顯示日期。",
+      "點進一張修繕單的細節頁，最上面會有一條時間軸，依序是申請修繕、安排修繕、完成修繕、結單、封存五個階段，目前所在的階段會被標示出來。",
+      "各階段下方日期的來源不同：申請修繕是送出申請的時間，安排修繕是廠商安排紀錄裡填的修繕時間（有多筆時取第一筆），完成修繕是房東備註裡填的完成時間，結單與封存則是修繕單被移到該狀態的時間。",
+      "因此有日期不代表已經走到那個階段：例如還在安排修繕時，房東若先在房東備註填了完成時間，完成修繕下方就會顯示日期；從修繕單總表的齒輪選單把修繕單移回前面的狀態時，原本記下的結單、封存時間也不會清掉。",
       "如果直接打開修繕單細節頁的網址、但網址裡沒有帶修繕單編號，系統會直接把使用者導回修繕單總表的「申請修繕」分頁。"
      ],
      "sources": [
-      "code:src/pages/repair/edit/Index.vue"
+      "code:src/pages/repair/edit/Index.vue",
+      "code:app/Http/Controllers/RepairController.php"
      ],
      "evidence": [
       {
-       "sentence_index": 0,
+       "sentence_index": 1,
        "source": "code:src/pages/repair/edit/Index.vue",
-       "quote_or_symbol": "labelKey: '安排修繕',"
+       "quote_or_symbol": "value: `${ state.assign_logs?.[0]?.assign_date ?? '' } ${ state.assign_logs?.[0]?.assign_time ?? '' }`"
       },
       {
        "sentence_index": 1,
+       "source": "code:src/pages/repair/edit/Index.vue",
+       "quote_or_symbol": "value: `${ state.complete_note?.complete_date ?? '' } ${ state.complete_note?.complete_time ?? '' }`"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Controllers/RepairController.php",
+       "quote_or_symbol": "'finish_date' => !empty($repair->finish_at) ? format_timezone('Y/m/d H:i', $repair->finish_at, $timezoneOffset) : '', // 結單時間"
+      },
+      {
+       "sentence_index": 3,
        "source": "code:src/pages/repair/edit/Index.vue",
        "quote_or_symbol": "if (isEmpty(route.params?.id)){"
       }
@@ -1323,7 +1363,7 @@
     {
      "proposed_id": "jgb/F/repair-edit-cannot-edit-roles",
      "askable": "哪些身分打開修繕單細節頁不能編輯、只能看",
-     "title": "誰不能編輯修繕單細節頁？（租客帳號、大房東角色都只能看，不能切換狀態、不能改廠商資訊、不能寫房東備註）",
+     "title": "誰不能編輯修繕單細節頁？（租客帳號、大房東角色不能切換狀態、不能改廠商資訊、不能寫房東備註；租客只能編輯自己的房客備註）",
      "unit_ids": [
       "page:repair.edit"
      ],
@@ -1340,7 +1380,7 @@
       "誰能改修繕單內容"
      ],
      "sentences": [
-      "租客帳號跟大房東角色打開修繕單細節頁，都只能看內容，看不到「切換狀態」區塊，也不能編輯安排修繕的廠商資訊或填寫房東備註。",
+      "租客帳號跟大房東角色打開修繕單細節頁，看不到「切換狀態」區塊，也不能編輯安排修繕的廠商資訊或填寫房東備註；租客唯一能在細節頁編輯的是自己的房客備註。",
       "房東方帳號要有「新增&編輯&刪除所屬修繕資料」或「新增&編輯&刪除所有修繕資料」其中一項權限，而且不是大房東角色，才能編輯這張修繕單。",
       "在「安排修繕」廠商資訊那一塊，就算已經有安排紀錄，租客跟大房東角色一樣看不到可以重新編輯的圖示。"
      ],
@@ -1354,6 +1394,11 @@
        "sentence_index": 0,
        "source": "code:src/pages/repair/edit/Index.vue",
        "quote_or_symbol": "&& !state.is_big_landlord"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/repair/edit/Index.vue",
+       "quote_or_symbol": ":isAllowedEdit=\"!state.tenantMemoEditing && isTenant\""
       },
       {
        "sentence_index": 1,
@@ -1535,7 +1580,7 @@
     {
      "proposed_id": "jgb/F/repair-edit-amount-visibility",
      "askable": "修繕結算金額只有房東看得到嗎，填了金額之後有沒有帳單",
-     "title": "修繕結算金額誰看得到？（「結算金額」欄位只有身分是房東的帳號才會顯示，租客看不到；這筆金額目前只是修繕單自己的紀錄文字，沒有找到跟帳單模組串接的路徑）",
+     "title": "修繕結算金額誰看得到？（「結算金額」欄位只有身分是房東的帳號才會顯示，租客看不到；填了金額不會自動產生帳單）",
      "unit_ids": [
       "page:repair.edit"
      ],
@@ -1582,7 +1627,7 @@
     {
      "proposed_id": "jgb/F/repair-edit-tenant-memo",
      "askable": "房客備註是什麼，什麼時候會有這個欄位",
-     "title": "「房客備註」是什麼？（右邊那一欄，只有這張修繕單有填過預約時段才會出現，沒有的話會顯示「此修繕單為房東發起，無房客備註」）",
+     "title": "「房客備註」是什麼？（右邊那一欄，放租客的備註文字與照片，只有租客自己能編輯；從網頁建立的修繕單都會顯示這一欄）",
      "unit_ids": [
       "page:repair.edit"
      ],
@@ -1600,12 +1645,14 @@
      ],
      "sentences": [
       "「完成修繕」右邊那一欄是「房客備註」，只放備註文字跟照片，不包含完成時間或結算金額欄位。",
-      "只有這張修繕單當初有填過預約時段（代表是租客那邊發起，或房東幫忙填了預約時段），系統才會顯示房客備註區塊；如果是房東發起、尚未填寫預約時段，這一欄會改成顯示「此修繕單為房東發起，無房客備註。」。",
+      "房客備註區塊會不會出現，看這張修繕單有沒有預約時段資料：在網頁上申請修繕時，預約時段至少會送出一列（就算沒填也一樣），所以從網頁建立的修繕單都會顯示房客備註區塊；只有完全沒有預約時段資料的修繕單，這一欄才會改成顯示「此修繕單為房東發起，無房客備註。」。",
       "房客備註只有租客自己的帳號能編輯，房東方帳號打開這一區只能查看，看不到編輯圖示。"
      ],
      "sources": [
       "code:src/pages/repair/edit/Index.vue",
-      "code:src/pages/repair/_parts/MemoArea.vue"
+      "code:src/pages/repair/_parts/MemoArea.vue",
+      "code:src/pages/repair/applyProcess/Index.vue",
+      "code:app/Http/Controllers/RepairController.php"
      ],
      "evidence": [
       {
@@ -1617,6 +1664,16 @@
        "sentence_index": 1,
        "source": "code:src/pages/repair/edit/Index.vue",
        "quote_or_symbol": "{{ t('此修繕單為房東發起，無房客備註。') }}"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/repair/applyProcess/Index.vue",
+       "quote_or_symbol": "tenant_order_times: ["
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/RepairController.php",
+       "quote_or_symbol": "$preAssignData = $tenantOrderTimes;"
       },
       {
        "sentence_index": 2,
@@ -1634,7 +1691,7 @@
     {
      "proposed_id": "jgb/F/repair-edit-share-to-vendor",
      "askable": "怎麼把修繕單分享給合作的水電廠商",
-     "title": "怎麼把修繕單分享出去給廠商？（在修繕單細節頁點「分享」，可以複製連結，也可以直接用 LINE 分享出去；廠商點開連結不需要登入 JGB 帳號）",
+     "title": "怎麼把修繕單分享出去給廠商？（在修繕單細節頁點「分享」，電腦上可以複製連結或用 LINE 分享，手機上會直接叫出手機的分享選單；廠商點開連結不需要登入 JGB 帳號）",
      "unit_ids": [
       "page:repair.edit"
      ],
@@ -1651,8 +1708,8 @@
       "修繕單連結怎麼複製"
      ],
      "sentences": [
-      "在修繕單細節頁裡，非租客身分的帳號會看到「分享訊息」區塊，說明文字是「如有配合的廠商，可使用下方分享功能，即可將申請單細節轉給廠商。」，點「分享」按鈕會開啟「分享修繕申請單」視窗。",
-      "分享視窗裡有兩種方式：複製修繕單連結，或是用 LINE 分享出去。",
+      "在修繕單細節頁裡，非租客身分的帳號會看到「分享訊息」區塊，說明文字是「如有配合的廠商，可使用下方分享功能，即可將申請單細節轉給廠商。」，點「分享」按鈕後的反應依裝置而不同。",
+      "在電腦上，或手機瀏覽器不支援系統分享功能時，會開啟「分享修繕申請單」視窗，可以複製修繕單連結，或用 LINE 分享出去；在支援的手機瀏覽器上，會直接叫出手機內建的分享選單。",
       "廠商拿到這個連結之後，打開它不需要先登入 JGB 帳號（另見「看修繕單分享頁需要先登入嗎」）。"
      ],
      "sources": [
@@ -1669,6 +1726,11 @@
        "sentence_index": 1,
        "source": "code:src/pages/repair/edit/_parts/ApplicationDetail.vue",
        "quote_or_symbol": "複製修繕單連結"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/repair/edit/_parts/ApplicationDetail.vue",
+       "quote_or_symbol": "if( !isMobile() || !window.navigator.share ){"
       },
       {
        "sentence_index": 2,
@@ -1811,7 +1873,7 @@
     {
      "proposed_id": "jgb/F/repair-share-no-expiry",
      "askable": "修繕單分享連結會不會過期",
-     "title": "分享連結會過期嗎？（目前不會，系統一度寫過 30 天過期的檢查，但已經停用，現在沒有天數限制）",
+     "title": "分享連結會過期嗎？（目前不會，沒有天數限制）",
      "unit_ids": [
       "page:repair.share"
      ],
@@ -1829,7 +1891,6 @@
      ],
      "sentences": [
       "目前打開修繕單分享連結，並不會因為超過幾天就失效。",
-      "系統背後曾經寫過「如果超過 30 天就不給查看」的檢查，但這段檢查已經被停用，看得到內容並未受這條規則限制。",
       "分享頁抓資料時只靠修繕單的編號去找，不受天數期限或物件目前狀態影響。"
      ],
      "sources": [
@@ -1843,11 +1904,6 @@
       },
       {
        "sentence_index": 1,
-       "source": "code:app/Http/Controllers/RepairController.php",
-       "quote_or_symbol": "// 2023/08/22 Joanna 拿掉此限制"
-      },
-      {
-       "sentence_index": 2,
        "source": "code:app/Http/Controllers/RepairController.php",
        "quote_or_symbol": "$repair = Repair::find($id);"
       }

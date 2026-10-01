@@ -255,7 +255,7 @@
     {
      "proposed_id": "jgb/G/power-meter-vendor-unreachable",
      "askable": "電錶顯示「目前連不上廠商」是什麼意思，這則提示租客看不看得到",
-     "title": "電錶顯示「目前連不上廠商」怎麼辦？（度數不會更新、儲值送不出去；業者跟租客都看得到）",
+     "title": "電錶顯示目前連不上廠商怎麼辦？（度數不會更新、儲值送不出去；全站共用連線的廠商業者跟租客都看得到，以團隊帳號連線的廠商只有業者在清單頁看得到）",
      "unit_ids": [
       "page:powerMeter.list",
       "page:powerMeter.single"
@@ -275,9 +275,9 @@
       "電錶度數為什麼不會更新"
      ],
      "sentences": [
-      "如果目前連不上某個廠商，清單頁與單一電錶頁最上方都會出現一則提示，寫著目前連不上該廠商，並附上錯誤原因。",
-      "提示會說明「目前無法儲值送電，電錶度數也不會更新，請聯絡該廠商確認服務狀態」；這個提示沒有對應帳號可標示。",
-      "這則提示業者跟租客都看得到：被擋住儲值、度數不更新的是這支錶，不分身分都要讓人知道原因。",
+      "電錶廠商連不上時，畫面最上方會出現一則寫著目前連不上該廠商的提示，有錯誤原因時會一併附上；提示出現在哪裡、誰看得到，依廠商的連線方式而不同。",
+      "全站共用同一組連線設定的廠商連不上時，提示會說明目前無法儲值送電、電錶度數也不會更新，請聯絡該廠商確認服務狀態，不會標示帳號；這則提示在電錶清單頁與單一電錶頁都會出現，業者跟租客都看得到。",
+      "以團隊自己綁定的廠商帳號連線的廠商，巡檢發現連不上時，提示只會出現在電錶清單頁、只有業者看得到，並會標示是哪一個帳號，請業者聯絡廠商確認這個帳號的連線設定或帳號密碼。",
       "只有這個身分底下真的掛著會連不上的那家廠商的電錶時才會出現這則提示。"
      ],
      "sources": [
@@ -288,32 +288,32 @@
       {
        "sentence_index": 0,
        "source": "code:src/pages/iots/_parts/ManufacturerServiceNotice.jsx",
-       "quote_or_symbol": ": t('目前連不上[s1]（[s2]）', [vendor, service.error_message])"
+       "quote_or_symbol": "? t('目前連不上[s1]', [vendor])"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/iots/_parts/ManufacturerServiceNotice.jsx",
+       "quote_or_symbol": "? t('目前無法儲值送電，電錶度數也不會更新，請聯絡[s1]確認服務狀態。', [vendor])"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/IotController.php",
+       "quote_or_symbol": "'vendor_connectivity'   =>  MiezoConnectivity::notice(),"
       },
       {
        "sentence_index": 2,
-       "source": "code:src/pages/iots/list/Index.jsx",
-       "quote_or_symbol": "<ManufacturerServiceNotice services={searchState.data.vendor_connectivity} />"
+       "source": "code:src/pages/iots/_parts/ManufacturerServiceNotice.jsx",
+       "quote_or_symbol": ": t('目前無法儲值送電，電錶度數也不會更新，請聯絡[s1]確認這個帳號的連線設定或帳號密碼。', [vendor])"
       },
       {
        "sentence_index": 2,
-       "source": "code:src/pages/iots/_parts/Single.vue",
-       "quote_or_symbol": "<ManufacturerServiceNotice :services=\"state.form.vendor_connectivity\" />"
+       "source": "code:app/Http/Controllers/IotController.php",
+       "quote_or_symbol": "if ( empty($role) || $role->config_rule_key == Role::RULE_KEY_TENANT ) {"
       },
       {
        "sentence_index": 3,
        "source": "code:app/Http/Controllers/IotController.php#getVendorConnectivity",
        "quote_or_symbol": "->where('manufacturer', 'Miezo')"
-      },
-      {
-       "sentence_index": 1,
-       "source": "code:src/pages/iots/_parts/ManufacturerServiceNotice.jsx#consequence",
-       "quote_or_symbol": "t('目前無法儲值送電，電錶度數也不會更新，請聯絡[s1]確認服務狀態。', [vendor])"
-      },
-      {
-       "sentence_index": 1,
-       "source": "code:app/Services/Iot/MiezoConnectivity.php#notice",
-       "quote_or_symbol": "'account'           =>  null,"
       }
      ],
      "not_supported_greps": [
@@ -857,7 +857,7 @@
     {
      "proposed_id": "jgb/G/iot-entry-requirements",
      "askable": "要用電錶、門鎖、攝影機、小白盒這些功能，帳號需要符合什麼條件才能進得去",
-     "title": "電錶／門鎖／攝影機／小白盒頁面需要什麼條件才能進入？（需訂閱方案、且未超過物件數量上限）",
+     "title": "電錶／門鎖／攝影機／小白盒頁面需要什麼條件才能進入？（房東方要有生效中的訂閱，而且方案有開放智能裝置功能；租客不受限制）",
      "unit_ids": [
       "page:powerMeter.list",
       "page:web:/{deviceType}/{params?}"
@@ -874,19 +874,37 @@
       "電錶頁面打不開",
       "門鎖頁面顯示需要訂閱",
       "IoT 功能需要訂閱方案嗎",
-      "物件數量超過會怎樣"
+      "方案沒有智能裝置功能會怎樣"
      ],
      "sentences": [
-      "電錶清單、以及門鎖／攝影機／小白盒清單這兩條路由，都掛了需要訂閱方案跟物件數量沒超過上限這兩道檢查，任一項不符合就進不去頁面。"
+      "房東方帳號要進入電錶清單，或門鎖／攝影機／小白盒清單，需要同時符合兩個條件：目前有生效中的訂閱方案，而且訂閱的方案有開放智能裝置功能；任一項不符合，會被導回會員中心首頁並跳出提示視窗。",
+      "租客帳號進入這些頁面不受這兩項檢查限制。"
      ],
      "sources": [
-      "code:routes/web.php"
+      "code:routes/web.php",
+      "code:app/Http/Middleware/SubscriptionCheck.php",
+      "code:app/Http/Middleware/PremisesLimitCheck.php"
      ],
      "evidence": [
       {
        "sentence_index": 0,
        "source": "code:routes/web.php",
        "quote_or_symbol": "Route::match(['get'],'/power_meter/{params?}','IndexController@vueIndex')->where('params', '(.*)')->middleware('need_subscription')->middleware('premises_limit')->name('power_meter.index');"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Middleware/PremisesLimitCheck.php",
+       "quote_or_symbol": "if ($role->plan_iot_switch === 0 && $role->config_rule_type != 'tenant') {"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Middleware/SubscriptionCheck.php",
+       "quote_or_symbol": "if ($role->config_rule_type !== 'tenant' && !$role->isSubscriptionActive()) {"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Middleware/SubscriptionCheck.php",
+       "quote_or_symbol": "if ($role->config_rule_type !== 'tenant' && !$role->isSubscriptionActive()) {"
       }
      ],
      "not_supported_greps": [
@@ -1173,8 +1191,7 @@
      "sentences": [
       "編輯頁最上方都可以修改裝置描述，方便辨識。",
       "門鎖裝置的編輯頁有基本設定、密碼設定、開門記錄三個頁籤；攝影機與小白盒的編輯頁只有基本設定一個頁籤。",
-      "基本設定頁籤都可以選擇或移除這台裝置綁定的物件。",
-      "編輯按鈕在裝置所屬的分類群組被標記成不可編輯時會鎖住、變灰；不過目前程式把這個群組一律標記為可編輯，所以編輯按鈕在畫面上不會真的被這個機制鎖住。"
+      "基本設定頁籤都可以選擇或移除這台裝置綁定的物件。"
      ],
      "sources": [
       "code:src/entry/iot.js",
@@ -1196,16 +1213,6 @@
        "sentence_index": 2,
        "source": "code:resources/views/iot/doorlock/basic.blade.php",
        "quote_or_symbol": "<div class=\"mb-2\"><div class=\"font-500\">{{___('綁定物件')}}</div></div>"
-      },
-      {
-       "sentence_index": 3,
-       "source": "code:resources/views/iot/index.blade.php",
-       "quote_or_symbol": ":class=\"{disabled: !deviceGroup.editable}\""
-      },
-      {
-       "sentence_index": 3,
-       "source": "code:app/Http/Controllers/IotController.php",
-       "quote_or_symbol": "'editable' => (string)1, // 改為總是顯示"
       }
      ],
      "not_supported_greps": [
@@ -1299,7 +1306,7 @@
      "sentences": [
       "密碼設定頁籤上有房東個人專屬密碼（6碼），是房東專用的解鎖密碼，可以編輯後儲存。",
       "租客個人專屬密碼（4碼）預設是租客手機號碼末四碼，租客可以自行變更，房東不能修改內容，只能開關這組密碼要不要啟用。",
-      "共用門鎖才會出現租客共用密碼（6碼）區塊，房東可以新增、刪除，也可以一鍵複製一段包含密碼的通知文字方便傳給租客；畫面上雖然定義了「編輯密碼」按鈕，但這顆按鈕被設定成永遠不會顯示，實際上沒有編輯既有密碼內容的入口，只能刪除後重新新增一組。",
+      "共用門鎖才會出現租客共用密碼（6碼）區塊，房東可以新增、刪除，也可以一鍵複製一段包含密碼的通知文字方便傳給租客；畫面上沒有修改既有共用密碼的入口，要換密碼只能刪除後重新新增一組。",
       "私人門鎖不會顯示租客共用密碼這個區塊。"
      ],
      "sources": [
@@ -1322,14 +1329,14 @@
        "quote_or_symbol": "<div class=\"col-auto  text-secondary-500\">{{ ___('複製密碼') }}</div>"
       },
       {
-       "sentence_index": 3,
-       "source": "code:resources/views/iot/doorlock/password.blade.php",
-       "quote_or_symbol": "<div v-show=\"editing.form.key_public==1\">"
-      },
-      {
        "sentence_index": 2,
        "source": "code:resources/views/iot/doorlock/password.blade.php",
        "quote_or_symbol": ":hidden=\"true\""
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:resources/views/iot/doorlock/password.blade.php",
+       "quote_or_symbol": "<div v-show=\"editing.form.key_public==1\">"
       }
      ],
      "not_supported_greps": [
@@ -1479,7 +1486,7 @@
     {
      "proposed_id": "jgb/G/remote-unlock-page",
      "askable": "拿到一個遠端解鎖連結，怎麼用它開門，這個連結是從哪裡產生的",
-     "title": "遠端解鎖連結怎麼用？（輸入共用密碼按開門，密碼錯誤或連結失效會提示原因；找不到產生這個連結的入口）",
+     "title": "遠端解鎖連結怎麼用？（輸入共用密碼按開門，密碼錯誤或連結失效會提示原因）",
      "unit_ids": [
       "page:tools.unlock"
      ],
@@ -1502,7 +1509,7 @@
       "這裡輸入的密碼會拿去比對這把門鎖的租客共用密碼，不是房東個人密碼或租客個人密碼。",
       "密碼輸入錯誤時會提示密碼錯誤；連結本身失效（裝置不存在或連結碼不符）時會提示設備不存在並導回首頁。",
       "密碼正確但門鎖實際開鎖失敗時，會提示門鎖開啟失敗。",
-      "在門鎖的編輯頁與密碼設定頁籤裡，找不到任何按鈕或畫面會產生、顯示這個遠端解鎖連結；連結裡的連結碼是用這台門鎖的建立時間算出來的固定值，不是每次點擊都重新產生的。"
+      "門鎖的編輯頁與密碼設定頁籤裡沒有可以產生或顯示這個遠端解鎖連結的按鈕；每一台門鎖的連結是固定的，不會每次點擊都重新產生。"
      ],
      "sources": [
       "code:src/pages/tools/unlock/Index.vue",

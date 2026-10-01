@@ -211,7 +211,7 @@
           "sentences": [
             "在幫助中心首頁上方的搜尋框輸入關鍵字並選擇分類（可留空），送出後會跳到搜尋結果頁。",
             "搜尋是比對文章的標題加內文，如果輸入的關鍵字之間有空格，會被拆成多個關鍵字，一篇文章要同時包含全部關鍵字才算符合。",
-            "有選分類時，只會在該分類底下的文章找；沒有輸入任何關鍵字就送出搜尋，會直接被導回幫助中心首頁。",
+            "有選分類時，只會在該分類底下的文章找；搜尋框沒有輸入關鍵字時按送出不會跳頁，會停在原本的頁面。",
             "搜尋不到結果時會顯示找不到任何關於此項目的文章，並附上返回幫助中心首頁的連結。"
           ],
           "sources": [
@@ -234,6 +234,11 @@
               "sentence_index": 2,
               "source": "code:src/pages/help-center/Search.vue",
               "quote_or_symbol": "router.push({\n                    name: 'listings.helpCenter',\n                })"
+            },
+            {
+              "sentence_index": 2,
+              "source": "code:src/pages/help-center/template-parts/Top.vue",
+              "quote_or_symbol": "if( !isEmpty(state.queryObj) ){"
             },
             {
               "sentence_index": 3,

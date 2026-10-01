@@ -288,4 +288,41 @@ S3 commit 後停下，回報終點指標、成本與 §6 紀錄。第二波在�
   - `make audit` OVERALL PASS。
 - **已知破壞**：`ruler-9.12-questions.json` 有 **2 題**（`…#0`、`…#1`）的 gold 指向已刪除的 `login-sso-redirect-no-duplicate-buttons`（outcome verifier 更正，原寫 1 題）。與 9.15 的 3 題同類，9.20 期間不跑 9.12 量尺。
 - **fresh outcome verifier＝CONFIRMED**（7 項全過；自建正對照：在 scratch 正本注入 3 個詞 ⇒ 3 命中）。附記 P3：已知破壞題數 1→2，已更正。
+- **commit**：`1286d00a`（業主 2026-10-01「commit，進 S1」），範圍 13 檔，`git diff --cached --name-only` 範圍外 0。
 - **成本**：S0 約 0.35M（含 jgb2 匯出與預跑、修正核對 verifier 約 0.06M、outcome verifier 約 0.2M——它重跑了全套單元與 audit）。
+
+### S1（2026-10-01）
+
+- **允許集合**：`p920-w1/allowed.json` 共 38 條（F 12／G 5／H 1／I 20）。
+  - 兩個來源推導結果相同：舊 scratchpad 的 `p918-s2-results.json`／`p919-s2-results.json`（已複製並記 sha256 `9dab9e17…`／`d3873739…`），以及 repo 審核單 9.18 S2、9.19 S2。
+  - F～I 未審 60 條全部有先審結論。
+- **步驟 0**：
+  - 備份 `p920-w1/backup/`（17:05:07，早於第一次 repo 編輯 17:17:36），與現況相同。
+  - 紅燈基準沿用 S0 驗收時同一工作樹的結果（9 條；S0 commit 沒有改動檔案內容）。
+  - 允許集合 evidence 131 筆，開工前越界 N＝0。
+- **工具預跑**：
+  - `edit_fine.py` 九架 roundtrip 都是 True；H 改 indent 1 的負對照 exit 1。
+  - 詞表工具從 `p920-s0/` 複製；在 F 架放回「Meta Capital」的負對照 ⇒ 命中、exit 1；「系統上」6 處。
+- **修正**：
+  - 主 session 逐條以 grep 對釘住匯出確認 doubt 證據後改寫，ops 存 `p920-w1/ops.json`。
+  - 新增 evidence 40 筆，逐字 grep 全部命中（D1 刪句時一併移除 1 筆，淨增 39 筆）；負對照為不存在的 `case 'repair_complete'` ⇒ 0。
+  - 先套 scratch 副本、再套 repo，F～I 與試套逐位元組相同。
+  - 修正紀錄 `inputs/fix-log-9.20-S1-FGHI-20261001.md`，共 93 列。
+- **核對**：
+  - fresh verifier F＋H **35／35 過**；G＋I **53／55 過**。
+  - 不過的 2 項依 D1 修一次後複核：
+    - `payment-icash-ctbc-setup` 句 0 過；
+    - `control-panel-setting-shell` 句 1 仍不過（新寫的「可左右切換的選單列」不對）⇒ 依 D1 整句刪。這句是新增句，刪掉即回到只有句 0；標題同步拿掉「與側欄」，並移除只為該句加的 source。
+  - P3／P4 建議 8 項延後到 S2 重審一併看（明細見修正紀錄「核對過程」）。
+  - 核對原始結論摘要存 `p920-w1/verdict-{FH,GI,recheck}.txt`（G＋I 與複核兩份是收案後依 outcome verifier P4 補存的摘要，原文在代理 transcript）。
+- **差異比對**（`ABCDEFGHI`）：(a)～(g) PASS，`(g) evidence remaps 27; new out-of-range: 0`；drafts-A～E 與備份 `cmp` 相同。
+- **重生成**：
+  - scratch 試跑後對 repo 跑（`--runs-out` 寫 scratch 再複製回 repo）：`已審保留：373 條／丟棄：0 條`、57 粗目／539 細目、open_questions 54 則（內文與前次相同）；repo 與試跑逐位元組相同。
+  - DSP-068 刪除 26 行／30 字元：變動只在允許集合內的 3 條（repair-edit-tenant-memo 位移、pricing-free-trial-eligibility 與 pricing-free-trial-feature-scope 各新增 1 筆）。
+  - `canon_check` ⇒ `blocks changed 38 (in allowed 38)`、`mismatches: 0`，客戶名 0、「系統上」6。
+  - `name_scan` ⇒ 539 條、0 命中。
+  - `load_canon_or_die` 通過（`canon_sha256 3f266ad6…`）。
+- **終點指標 `已審細目 pm 369／533、prospect 80／120；頁面 pm 89／183、prospect 27／183`**（不變，符合 +0 預期）。
+- **單元與 audit**：`9 failed, 3931 passed, 3 skipped`，紅燈集合減去基準＝∅；`make audit` OVERALL PASS。
+- **fresh outcome verifier＝CONFIRMED**（7 項全過；自行抽 20 句對釘住匯出全部成立，新增 evidence 39／39 逐字命中；自建正對照：注入「Meta Capital」「tongSang」都被抓到）。附記 P4×3（evidence 淨增數、G＋I 判定未存檔、建議條數）已更正。
+- **成本**：S1 約 0.9M（主 session 查證與修正約 0.35M、verifier 核對 3 次約 0.3M、outcome verifier 約 0.25M）⇒ **9.20 累計約 1.25M**（不含立案 0.75M；第一波停點 1.8M）。
