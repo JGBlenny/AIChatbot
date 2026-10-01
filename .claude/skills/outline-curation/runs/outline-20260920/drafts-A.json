@@ -878,41 +878,6 @@
      "open_questions": []
     },
     {
-     "proposed_id": "jgb/A/login-sso-redirect-no-duplicate-buttons",
-     "askable": "第三方登入導回登入頁時按鈕會不會重複",
-     "title": "從 Facebook／Google／LINE 導回登入頁時，第三方登入按鈕會重複出現嗎？（不會）",
-     "unit_ids": [
-      "page:users.login"
-     ],
-     "target_user": [
-      "property_manager",
-      "prospect"
-     ],
-     "business_types": [
-      "system_provider"
-     ],
-     "instance_applicability": "general",
-     "phrasings": [
-      "第三方登入導回重複按鈕",
-      "上次用什麼方式登入"
-     ],
-     "sentences": [
-      "如果是從 Facebook、Google、LINE 登入導回登入頁的情況，畫面不會重複顯示這些第三方登入按鈕。"
-     ],
-     "sources": [
-      "code:src/pages/users/auth/parts/LoginForm.vue"
-     ],
-     "evidence": [
-      {
-       "sentence_index": 0,
-       "source": "code:src/pages/users/auth/parts/LoginForm.vue",
-       "quote_or_symbol": "<SSOBar v-show=\"!route.query?.sso\" />"
-      }
-     ],
-     "not_supported_greps": [],
-     "open_questions": []
-    },
-    {
      "proposed_id": "jgb/A/login-role-redirect",
      "askable": "登入時身分選錯了、或想切換要用哪個身分登入怎麼辦",
      "title": "登入時身分選錯了怎麼辦？（會依選擇的身分決定進入哪個角色的登入表單）",

@@ -419,17 +419,6 @@ language: zh-TW
 - instance_applicability: general
 點操作選單的「刪除大房東」會先跳出「移除大房東」確認視窗，詢問是否確定要刪除。
 確認刪除後，這位大房東就無法再存取這個團隊內的任何資訊。
-### 大房東列表上方的「所有權人／轉租人」是做什麼用的？（記錄代管物件的所有權人或轉租人資料，加快編輯合約速度） {#jgb/B/biglandlord-escrow-owner}
-- phrasings:
-  - {text: "所有權人轉租人是什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "怎麼新增所有權人", source: "draft:outline-20260920", status: proposed}
-  - {text: "轉租人資料在哪管理", source: "draft:outline-20260920", status: proposed}
-- sources: [code:resources/views/users/team/index.blade.php]
-- target_user: [property_manager]
-- business_types: [system_provider]
-- instance_applicability: general
-大房東列表上方有「所有權人／轉租人」區塊，可以紀錄代管物件的所有權人或轉租人資料，提升日後編輯合約的效率。
-可以點「新增」建立一筆，操作選單則有「編輯所有權人」與「刪除所有權人」；清單筆數多時可以點「載入更多」繼續往下載。
 ### 大房東名額有上限嗎？（目前大房東列表頁的「新增大房東」沒有名額檢查） {#jgb/B/biglandlord-seat-limit}
 - phrasings:
   - {text: "大房東可以新增幾位", source: "draft:outline-20260920", status: proposed}

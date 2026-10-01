@@ -217,15 +217,6 @@ language: zh-TW
 - business_types: [system_provider]
 - instance_applicability: general
 「記住我」勾選只影響下次登入送出時是否要延長登入效期，跟登入方式無關；不論是否勾選「記住我」，上次選擇用 Email 還是手機號碼登入，下次開啟登入頁都會沿用同一種方式。
-### 從 Facebook／Google／LINE 導回登入頁時，第三方登入按鈕會重複出現嗎？（不會） {#jgb/A/login-sso-redirect-no-duplicate-buttons}
-- phrasings:
-  - {text: "第三方登入導回重複按鈕", source: "draft:outline-20260920", status: proposed}
-  - {text: "上次用什麼方式登入", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/users/auth/parts/LoginForm.vue]
-- target_user: [property_manager, prospect]
-- business_types: [system_provider]
-- instance_applicability: general
-如果是從 Facebook、Google、LINE 登入導回登入頁的情況，畫面不會重複顯示這些第三方登入按鈕。
 ### 登入時身分選錯了怎麼辦？（會依選擇的身分決定進入哪個角色的登入表單） {#jgb/A/login-role-redirect}
 - phrasings:
   - {text: "登入身分選錯", source: "draft:outline-20260920", status: proposed}

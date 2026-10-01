@@ -1888,62 +1888,6 @@
      "open_questions": []
     },
     {
-     "proposed_id": "jgb/B/biglandlord-escrow-owner",
-     "askable": "所有權人／轉租人資料是做什麼用的",
-     "title": "大房東列表上方的「所有權人／轉租人」是做什麼用的？（記錄代管物件的所有權人或轉租人資料，加快編輯合約速度）",
-     "unit_ids": [
-      "page:web:users.team"
-     ],
-     "target_user": [
-      "property_manager"
-     ],
-     "business_types": [
-      "system_provider"
-     ],
-     "instance_applicability": "general",
-     "phrasings": [
-      "所有權人轉租人是什麼",
-      "怎麼新增所有權人",
-      "轉租人資料在哪管理"
-     ],
-     "sentences": [
-      "大房東列表上方有「所有權人／轉租人」區塊，可以紀錄代管物件的所有權人或轉租人資料，提升日後編輯合約的效率。",
-      "可以點「新增」建立一筆，操作選單則有「編輯所有權人」與「刪除所有權人」；清單筆數多時可以點「載入更多」繼續往下載。"
-     ],
-     "sources": [
-      "code:resources/views/users/team/index.blade.php"
-     ],
-     "evidence": [
-      {
-       "sentence_index": 0,
-       "source": "code:resources/views/users/team/index.blade.php",
-       "quote_or_symbol": "<div class=\"lg:text-[28px] text-[24px] font-500 mb-4\">{{___('所有權人')}} / {{___('轉租人')}}</div>"
-      },
-      {
-       "sentence_index": 0,
-       "source": "code:resources/views/users/team/index.blade.php",
-       "quote_or_symbol": "{{___('可紀錄代管物件的所有權人/轉租人資料，提升編輯合約的效率。')}}"
-      },
-      {
-       "sentence_index": 1,
-       "source": "code:resources/views/users/team/index.blade.php",
-       "quote_or_symbol": "{{___('編輯所有權人')}}</div>"
-      },
-      {
-       "sentence_index": 1,
-       "source": "code:resources/views/users/team/index.blade.php",
-       "quote_or_symbol": "{{___('刪除所有權人')}}"
-      },
-      {
-       "sentence_index": 1,
-       "source": "code:resources/views/users/team/index.blade.php",
-       "quote_or_symbol": "state.escrowUsersCurrentPage++"
-      }
-     ],
-     "not_supported_greps": [],
-     "open_questions": []
-    },
-    {
      "proposed_id": "jgb/B/biglandlord-seat-limit",
      "askable": "大房東名額有上限嗎",
      "title": "大房東名額有上限嗎？（目前大房東列表頁的「新增大房東」沒有名額檢查）",

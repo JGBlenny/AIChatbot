@@ -18,7 +18,6 @@ jgb/A/login-methods｜JGB 有哪些登入方式？（Email、手機號碼、Face
 jgb/A/login-role-select-before｜登入前為什麼要先選擇身分？（決定進入房東/管理者或租客的登入表單）｜target_user=property_manager,prospect｜
 jgb/A/login-phone-country-code｜用手機號碼登入時，國碼與號碼格式有什麼規則？（號碼長度上限與格式依所選國家而定）｜target_user=property_manager,prospect｜
 jgb/A/login-remember-me｜「記住我」是做什麼？（只延長登入效期，跟記住登入方式無關）｜target_user=property_manager,prospect｜
-jgb/A/login-sso-redirect-no-duplicate-buttons｜從 Facebook／Google／LINE 導回登入頁時，第三方登入按鈕會重複出現嗎？（不會）｜target_user=property_manager,prospect｜
 jgb/A/login-role-redirect｜登入時身分選錯了怎麼辦？（會依選擇的身分決定進入哪個角色的登入表單）｜target_user=property_manager｜
 jgb/A/login-error｜登入帳號或密碼錯誤時會顯示什麼？｜target_user=property_manager｜
 jgb/A/login-forget-password-link｜登入頁的「忘記密碼？」連結在哪裡？（在登入表單下方，點擊前往忘記密碼流程）｜target_user=property_manager｜
@@ -109,7 +108,6 @@ jgb/B/biglandlord-import-export｜大房東名單可以批次匯入或匯出嗎�
 jgb/B/biglandlord-actions-menu｜大房東列表每一列的操作選單有哪些功能？（編輯所屬物件、編輯大房東、刪除大房東）｜target_user=property_manager｜
 jgb/B/biglandlord-authorize-apply-step｜授權物件頁移除物件後，為什麼要按「套用」才會生效？（按紅色 X 移除只是待處理狀態，按套用才真的移除，按恢復可以取消這次變更）｜target_user=property_manager｜
 jgb/B/biglandlord-delete-confirm｜刪除大房東會發生什麼？（先跳出確認視窗，確認後這位大房東就無法再存取這個團隊的任何資訊）｜target_user=property_manager｜
-jgb/B/biglandlord-escrow-owner｜大房東列表上方的「所有權人／轉租人」是做什麼用的？（記錄代管物件的所有權人或轉租人資料，加快編輯合約速度）｜target_user=property_manager｜
 jgb/B/biglandlord-seat-limit｜大房東名額有上限嗎？（目前大房東列表頁的「新增大房東」沒有名額檢查）｜target_user=property_manager,prospect｜
 jgb/B/biglandlord-list-empty｜大房東列表沒有資料時會顯示什麼？（一開始沒有任何大房東顯示「尚無大房東」；用關鍵字搜尋卻沒有符合結果則顯示「沒有符合的結果😢」）｜target_user=property_manager｜
 jgb/B/biglandlord-batch-template-fields｜批次匯入大房東的 Excel 範本要填哪些欄位？（姓氏、名稱必填，其餘含 Email、手機、身分證字號、地址、帳戶資訊、合作方式與合作起迄都是選填）｜target_user=property_manager｜

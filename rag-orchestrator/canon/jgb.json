@@ -2,7 +2,7 @@
   "audience": "jgb",
   "budget_tokens": 0,
   "business_types": [],
-  "canon_sha256": "76538d2a466aae61f21ef09514481d6789cb6a6d3fe8fb011d8dd3940d771fcb",
+  "canon_sha256": "a80f11422a5a107012cde58dac51abb8fbf1a960e457621f5c93b041b3533546",
   "coarses": [
     {
       "fines": [
@@ -777,44 +777,6 @@
             "prospect"
           ],
           "title": "「記住我」是做什麼？（只延長登入效期，跟記住登入方式無關）"
-        },
-        {
-          "business_types": [
-            "system_provider"
-          ],
-          "categories": [],
-          "coarse_id": "A-login",
-          "content_sha256": "c0d5bc144d35094ead24bc9fbb423dc184d16f77e36b94edc1b3579ca1040310",
-          "content_units": [
-            "如果是從 Facebook、Google、LINE 登入導回登入頁的情況，畫面不會重複顯示這些第三方登入按鈕。"
-          ],
-          "id": "jgb/A/login-sso-redirect-no-duplicate-buttons",
-          "instance_applicability": "general",
-          "phrasings": [
-            {
-              "source": "draft:outline-20260920",
-              "status": "proposed",
-              "text": "第三方登入導回重複按鈕"
-            },
-            {
-              "source": "draft:outline-20260920",
-              "status": "proposed",
-              "text": "上次用什麼方式登入"
-            }
-          ],
-          "policy": "answerable",
-          "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
-          "see_also": [],
-          "sources": [
-            "code:src/pages/users/auth/parts/LoginForm.vue"
-          ],
-          "target_user": [
-            "property_manager",
-            "prospect"
-          ],
-          "title": "從 Facebook／Google／LINE 導回登入頁時，第三方登入按鈕會重複出現嗎？（不會）"
         },
         {
           "business_types": [
@@ -4334,49 +4296,6 @@
             "property_manager"
           ],
           "title": "刪除大房東會發生什麼？（先跳出確認視窗，確認後這位大房東就無法再存取這個團隊的任何資訊）"
-        },
-        {
-          "business_types": [
-            "system_provider"
-          ],
-          "categories": [],
-          "coarse_id": "B-biglandlord-list",
-          "content_sha256": "bb08714f7da2951f832667115fbfe00ae7cdf4c49c06f077cdfcb10ef7b3c985",
-          "content_units": [
-            "大房東列表上方有「所有權人／轉租人」區塊，可以紀錄代管物件的所有權人或轉租人資料，提升日後編輯合約的效率。",
-            "可以點「新增」建立一筆，操作選單則有「編輯所有權人」與「刪除所有權人」；清單筆數多時可以點「載入更多」繼續往下載。"
-          ],
-          "id": "jgb/B/biglandlord-escrow-owner",
-          "instance_applicability": "general",
-          "phrasings": [
-            {
-              "source": "draft:outline-20260920",
-              "status": "proposed",
-              "text": "所有權人轉租人是什麼"
-            },
-            {
-              "source": "draft:outline-20260920",
-              "status": "proposed",
-              "text": "怎麼新增所有權人"
-            },
-            {
-              "source": "draft:outline-20260920",
-              "status": "proposed",
-              "text": "轉租人資料在哪管理"
-            }
-          ],
-          "policy": "answerable",
-          "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
-          "see_also": [],
-          "sources": [
-            "code:resources/views/users/team/index.blade.php"
-          ],
-          "target_user": [
-            "property_manager"
-          ],
-          "title": "大房東列表上方的「所有權人／轉租人」是做什麼用的？（記錄代管物件的所有權人或轉租人資料，加快編輯合約速度）"
         },
         {
           "business_types": [
@@ -11166,10 +11085,10 @@
           ],
           "categories": [],
           "coarse_id": "D-contract-edit-general",
-          "content_sha256": "b7ce3ae60dcd2b1ef0f292caa89582ab726b43d07dd6dc41e3f043de0915a715",
+          "content_sha256": "9950c5267d381c294cbc17f82419a77761ad39df108835646cab59568a5ae17a",
           "content_units": [
             "「收款方式」分頁讓房東指定租客要用哪種方式支付款項，選項有「線上金流」「現金收款」「固定虛擬帳號」三種，但不是每個團隊都看得到全部三種。",
-            "「線上金流」只有在使用者國別是台灣、且合約範本不是 Meta Capital 系列時才會顯示這個選項。",
+            "「線上金流」只有在使用者國別是台灣、且合約範本不是特定合作團隊的專用範本時才會顯示這個選項。",
             "「固定虛擬帳號」只有具備特定特殊角色權限的團隊才會顯示這個選項。",
             "選擇「現金收款」可以指定收款銀行帳戶，填寫銀行代碼、銀行名稱、帳戶名稱、銀行帳號等資料，也可以把常用帳號加入清單方便下次選用。",
             "「加入常用帳號」按鈕只有具備編輯角色（收款設定相關）權限的成員才會顯示，權限不足的成員在這個分頁看不到這個按鈕。"
