@@ -57,6 +57,7 @@ language: zh-TW
   - {text: "幫助中心可以打多個關鍵字嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "幫助中心搜尋能限定分類嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/help-center/template-parts/Top.vue, code:src/pages/help-center/Search.vue, code:app/Http/Controllers/IndexController.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general

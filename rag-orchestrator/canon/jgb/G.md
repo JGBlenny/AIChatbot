@@ -76,6 +76,7 @@ language: zh-TW
   - {text: "租客看得到連不上廠商的提示嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "電錶度數為什麼不會更新", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/iots/_parts/ManufacturerServiceNotice.jsx, code:app/Http/Controllers/IotController.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, tenant]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -208,6 +209,7 @@ language: zh-TW
   - {text: "IoT 功能需要訂閱方案嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "方案沒有智能裝置功能會怎樣", source: "draft:outline-20260920", status: proposed}
 - sources: [code:routes/web.php, code:app/Http/Middleware/SubscriptionCheck.php, code:app/Http/Middleware/PremisesLimitCheck.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -275,6 +277,7 @@ SkyWatch 門鎖的狀態欄位會直接顯示已開門或已關門，其他門�
   - {text: "小白盒可以改密碼嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "裝置編輯頁功能", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/entry/iot.js, code:resources/views/iot/index.blade.php, code:resources/views/iot/doorlock/basic.blade.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -301,6 +304,7 @@ SkyWatch 門鎖的狀態欄位會直接顯示已開門或已關門，其他門�
   - {text: "共用密碼是什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "門鎖密碼設定規則", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/iot/doorlock/password.blade.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -342,6 +346,7 @@ SkyWatch 門鎖的狀態欄位會直接顯示已開門或已關門，其他門�
   - {text: "這個開門連結為什麼失效", source: "draft:outline-20260920", status: proposed}
   - {text: "遠端解鎖連結怎麼產生", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/tools/unlock/Index.vue, code:app/Http/Controllers/ToolController.php, code:routes/web.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -356,6 +361,7 @@ SkyWatch 門鎖的狀態欄位會直接顯示已開門或已關門，其他門�
   - {text: "開門連結免登入嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "沒有帳號可以開門嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:routes/web.php, code:src/pages/tools/unlock/Index.vue]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general

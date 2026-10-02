@@ -15,6 +15,7 @@ language: zh-TW
   - {text: "價格方案介紹", source: "draft:outline-20260920", status: proposed}
   - {text: "哪個方案適合我", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/listings/pricing/Home.vue, code:src/pages/listings/pricing/parts/PlanForm.vue, code:app/Http/Controllers/ApiController.php, code:src/pages/listings/pricing/parts/PlanAndDevice.vue]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -43,6 +44,7 @@ language: zh-TW
   - {text: "免費方案物件上限", source: "draft:outline-20260920", status: proposed}
   - {text: "免費試用支援哪些功能", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/listings/template-parts/LightboxFreePlan.vue]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -56,6 +58,7 @@ language: zh-TW
   - {text: "企業團隊方案內容", source: "draft:outline-20260920", status: proposed}
   - {text: "個人跟公司方案不一樣嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/listings/pricing/Home.vue, code:app/Http/Controllers/ApiController.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -84,6 +87,7 @@ language: zh-TW
   - {text: "我有幾間房適合哪個方案", source: "draft:outline-20260920", status: proposed}
   - {text: "價格試算工具", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/listings/pricing/parts/CalculatePrice.vue]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -99,6 +103,7 @@ language: zh-TW
   - {text: "方案物件用完前有提醒嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "額度不夠怎麼知道", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Estate.php, code:app/Notification.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -112,6 +117,7 @@ language: zh-TW
   - {text: "大型企業方案", source: "draft:outline-20260920", status: proposed}
   - {text: "客製化方案怎麼談", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/listings/pricing/parts/PlanAndDevice.vue, code:src/pages/listings/pricing/parts/CalculatePrice.vue]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -125,6 +131,7 @@ language: zh-TW
   - {text: "體驗方案資格需求", source: "draft:outline-20260920", status: proposed}
   - {text: "查看體驗方案會看到什麼", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/listings/pricing/TrialPlan.vue]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -140,6 +147,7 @@ language: zh-TW
   - {text: "體驗方案價格怎麼算", source: "draft:outline-20260920", status: proposed}
   - {text: "方案價格從哪裡算出來", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/UserController.php, code:app/Helper.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -264,6 +272,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
   - {text: "取消訂閱後還能用多久", source: "draft:outline-20260920", status: proposed}
   - {text: "怎麼取消訂閱", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/subscription/Unsubscribe.vue, code:app/Http/Controllers/UserController.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -293,6 +302,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
   - {text: "收據在哪裡下載", source: "draft:outline-20260920", status: proposed}
   - {text: "扣款紀錄列表", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/orders/Index.vue, code:app/Http/Controllers/UserController.php, code:routes/web.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -352,6 +362,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
   - {text: "綁定後想改資料怎麼辦", source: "draft:outline-20260920", status: proposed}
   - {text: "哪個金流可以重新送審", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/payment/routerView/Detail.vue, code:src/pages/users/payment/_parts/Cathaybk.vue]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -363,6 +374,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
   - {text: "智付通開通要多久", source: "draft:outline-20260920", status: proposed}
   - {text: "ACH驗證是什麼", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/payment/routerView/Add.vue, code:src/pages/users/payment/_parts/Ctbc.vue]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -401,6 +413,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
   - {text: "合約怎麼設定要不要開發票", source: "draft:outline-20260920", status: proposed}
   - {text: "發票功能怎麼申請", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/payment/_parts/Invoice.vue]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -414,6 +427,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
   - {text: "為什麼找不到訂閱方案", source: "draft:outline-20260920", status: proposed}
   - {text: "查看訂閱方案權限的作用", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Role.php, code:app/Http/Controllers/UserController.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -481,6 +495,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
   - {text: "demo表單漏填會怎樣", source: "draft:outline-20260920", status: proposed}
   - {text: "demo表單驗證規則", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/IndexController.php, code:src/pages/listings/DemoForm.vue]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -492,6 +507,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
   - {text: "控制台首頁能做什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "控制台目前可以用哪些設定", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/control-panel/Index.vue, code:src/routes/controlPanel.js]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -515,6 +531,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
   - {text: "排程機器人是什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "任務管理器用途", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/control-panel/taskManagement/Index.vue]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -527,6 +544,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
   - {text: "可以設定修繕單自動開單嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "通知任務怎麼設定", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Services/TaskService.php, code:src/pages/control-panel/taskManagement/Index.vue]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -539,6 +557,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
   - {text: "任務可以設定結束日期嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "任務重複次數怎麼設定", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Services/TaskService.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -551,6 +570,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
   - {text: "關聯物件怎麼選", source: "draft:outline-20260920", status: proposed}
   - {text: "通知對象怎麼設定", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/control-panel/taskManagement/edit/Index.jsx]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -563,6 +583,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
   - {text: "編輯週期任務會影響後續任務嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "任務列表可以做什麼操作", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/use/config/useTaskManagementTypes.js, code:app/Services/TaskService.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -587,6 +608,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
   - {text: "控制台權限限制", source: "draft:outline-20260920", status: proposed}
   - {text: "為什麼進不去控制台", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/routes/controlPanel.js]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -682,6 +704,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
   - {text: "雲市集訂單狀態怎麼看", source: "draft:outline-20260920", status: proposed}
   - {text: "雲市集訂單點數", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/customer/tcloud.blade.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -695,6 +718,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
   - {text: "雲市集開通要多久", source: "draft:outline-20260920", status: proposed}
   - {text: "雲市集虛擬帳號怎麼轉帳", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/customer/tcloud.blade.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -708,6 +732,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
   - {text: "雲市集付款連結驗證失敗", source: "draft:outline-20260920", status: proposed}
   - {text: "雲市集訂單查無資料", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/CustomerController.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general

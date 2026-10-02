@@ -14,6 +14,7 @@ language: zh-TW
   - {text: "修繕進度分幾個階段", source: "draft:outline-20260920", status: proposed}
   - {text: "修繕總表怎麼分類", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/routes/repairs.js, code:src/pages/repair/Index.vue, code:app/Repair.php, code:routes/web.php, help:repair_zh-Hant.html]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -123,6 +124,7 @@ language: zh-TW
   - {text: "查看跟編輯有什麼差別", source: "draft:outline-20260920", status: proposed}
   - {text: "為什麼列表裡少了幾張修繕單", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/RepairController.php, code:src/pages/repair/edit/Index.vue, code:app/Repair.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -179,6 +181,7 @@ language: zh-TW
   - {text: "沒租客的房子能修繕嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "申請修繕要先有合約嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [help:repair_zh-Hant.html, code:src/pages/repair/applyProcess/Index.vue, code:app/Http/Controllers/RepairController.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -190,6 +193,7 @@ language: zh-TW
   - {text: "報修分類怎麼選", source: "draft:outline-20260920", status: proposed}
   - {text: "自訂修繕項目名稱", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Repair.php, code:src/utils/enums/repair.enum.ts, code:src/pages/repair/applyProcess/_parts/Detail.vue]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -202,6 +206,7 @@ language: zh-TW
   - {text: "報修細節必填欄位", source: "draft:outline-20260920", status: proposed}
   - {text: "申請修繕表單欄位", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/repair/applyProcess/_parts/Detail.vue, code:src/pages/repair/applyProcess/Index.vue, code:src/components/SwitchButton.vue]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -216,6 +221,7 @@ language: zh-TW
   - {text: "租客要選維修時間嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "可以約幾個修繕時段", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/repair/applyProcess/Index.vue, code:src/pages/repair/applyProcess/_parts/Detail.vue]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -229,6 +235,7 @@ language: zh-TW
   - {text: "報修影片大小限制", source: "draft:outline-20260920", status: proposed}
   - {text: "修繕照片幾張", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/repair/applyProcess/_parts/Detail.vue]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -241,6 +248,7 @@ language: zh-TW
   - {text: "報修後誰會知道", source: "draft:outline-20260920", status: proposed}
   - {text: "修繕單送出通知", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/repair/applyProcess/Index.vue, code:app/Notification.php, code:app/Role.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -254,6 +262,7 @@ language: zh-TW
   - {text: "完成修繕後誰會知道", source: "draft:outline-20260920", status: proposed}
   - {text: "修繕單結單會通知誰", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Notification.php, code:app/Http/Controllers/RepairController.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -268,6 +277,7 @@ language: zh-TW
   - {text: "修繕單細節頁面", source: "draft:outline-20260920", status: proposed}
   - {text: "修繕單時間軸", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/repair/edit/Index.vue, code:app/Http/Controllers/RepairController.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -280,6 +290,7 @@ language: zh-TW
   - {text: "修繕單怎麼列印", source: "draft:outline-20260920", status: proposed}
   - {text: "修繕單可以存成 PDF 嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/repair/edit/Index.vue]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -292,6 +303,7 @@ language: zh-TW
   - {text: "細節頁的狀態下拉選單怎麼用", source: "draft:outline-20260920", status: proposed}
   - {text: "選了狀態沒按變更會生效嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/repair/edit/Index.vue]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -304,6 +316,7 @@ language: zh-TW
   - {text: "大房東可以編輯修繕單嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "誰能改修繕單內容", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/repair/edit/Index.vue, code:src/pages/repair/edit/_parts/VendorContactSection.vue, code:app/Http/Controllers/UserController.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -317,6 +330,7 @@ language: zh-TW
   - {text: "細節補充是什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "報修資料能不能在細節頁改", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/repair/edit/Index.vue, code:src/pages/repair/edit/_parts/ApplicationDetail.vue]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -330,6 +344,7 @@ language: zh-TW
   - {text: "修繕單怎麼指派維修人員", source: "draft:outline-20260920", status: proposed}
   - {text: "廠商聯絡資料怎麼填", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/repair/edit/_parts/VendorContactSection.vue]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -342,6 +357,7 @@ language: zh-TW
   - {text: "房東備註可以放照片嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "備註字數限制多少", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/repair/edit/Index.vue, code:src/pages/repair/_parts/MemoArea.vue]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -365,6 +381,7 @@ language: zh-TW
   - {text: "修繕單為什麼沒有房客備註", source: "draft:outline-20260920", status: proposed}
   - {text: "租客可以留言嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/repair/edit/Index.vue, code:src/pages/repair/_parts/MemoArea.vue, code:src/pages/repair/applyProcess/Index.vue, code:app/Http/Controllers/RepairController.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -377,6 +394,7 @@ language: zh-TW
   - {text: "怎麼把修繕單傳給水電行", source: "draft:outline-20260920", status: proposed}
   - {text: "修繕單連結怎麼複製", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/repair/edit/_parts/ApplicationDetail.vue, code:app/Http/Middleware/LoginCheck.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -417,6 +435,7 @@ language: zh-TW
   - {text: "修繕單連結多久失效", source: "draft:outline-20260920", status: proposed}
   - {text: "分享連結有效期限", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/RepairController.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general

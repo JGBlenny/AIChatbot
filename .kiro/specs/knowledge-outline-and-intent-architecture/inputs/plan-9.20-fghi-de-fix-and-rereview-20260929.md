@@ -172,6 +172,19 @@
   - commit：F～I `.md`、jgb.json、S2 審核單、本計畫、HANDOFF 終點行。
 - **停止**：寫入前失敗 ⇒ 直接停；寫入後驗收不符 ⇒ 以備份還原並停，交業主。
 - **預算**：約 0.2M。
+- **已預跑**（2026-10-03，業主核可越過停點後；repo 正本未動）：
+  - 工作區：S2 scratch 整份複製到本 session `scratchpad/p920-w1/`，`diff -rq` 相同，6 個產物 sha256 前 16 碼與 `s2-findings-9.20-20261001.md` §4 逐一相同。工具 `approve_write.py` 讀同目錄的 `p920-s2-{results,targets,hold}.json`、PLAN 指本計畫、段落「### S3」。
+  - 業主原文已逐字記入 §6「### S3」；決定檔 `p920-w1/p920-s3-decision.json`（rule＝safe，其餘三欄空）。
+  - derive（`P918_WRITE_SHELVES=FGHI`、`P918_SHEET=<S2 審核單絕對路徑>`）⇒ `approved 51 (both sources equal) by shelf {'F': 19, 'G': 6, 'H': 1, 'I': 25}; expected endpoint increment pm +51, prospect +18`。核可集合內 doubt 0 條；未核可的 pass 只有 ⚠️ 組的 `jgb/I/homepage-latest-news-section`。
+  - 對照：rule 改 all ⇒ 52（多出 ⚠️ 組那條，prospect +19）；reply 改成不在 §6 的字串 ⇒ `❌ decision reply is not verbatim inside plan §6 ### S3 record`。
+  - scratch 正本 `p920-s3-pc/`（repo canon 複製，`diff -r` 相同）：write ⇒ `added 51`；容器重匯出（9.19 S3 步驟 5 指令，路徑換 `/scratch/p920-s3-pc/canon`）與 `load_canon_or_die` 通過；verify ⇒ `reviewed backup 373 -> current 424; added lines 51; approved 51`、`fines changed beyond reviewed_*: 0`、`mismatches: 0`；A～E、CATALOG 與備份 `cmp` 相同。
+  - scratch 重生成保留檢查（`--expect-reviewed-kept 424 --expect-open-questions 54`，`--runs-out` 寫 scratch）⇒ `已審保留：424 條／丟棄：0 條`、57 粗目／539 細目，產出與 scratch 正本 `diff -r` 相同。
+  - scratch 終點指標 `已審細目 pm 420／533、prospect 98／120；頁面 pm 109／183、prospect 40／183`。
+  - 紅燈基準（repo 工作樹、寫入前，00:55:59～00:56:57）：`9 failed, 3931 passed, 3 skipped`，集合存 `scratchpad/p920-s3-red-baseline.txt`，與 §12-2 名單逐名相同。
+  - 預測新紅燈：把 scratch 正本掛到容器 `/app/canon`（正對照：容器內 `grep -c reviewed /app/canon/jgb/F.md`＝31，repo 為 12）跑全套單元 ⇒ `9 failed, 3931 passed`，與基準差集＝∅（9.19 S3 的「測試綁正本資料」紅燈本次未出現）。
+- **對 repo 執行的步驟**：備份 `rag-orchestrator/canon/` 至 `scratchpad/p920-s3-backup/` 並 `diff -r`；`git diff --stat 46234eb0 -- rag-orchestrator/canon` 與 `git status --short rag-orchestrator/canon` 皆須為空 ⇒ write ⇒ 容器重匯出（`/app/canon`）⇒ verify `--backup p920-s3-backup` ⇒ 終點指標、全套單元差集、scratch 重生成與 repo `diff -r`、`make audit` ⇒ fresh outcome verifier ⇒ commit。
+  - commit 範圍：F／G／H／I `.md`、`jgb.json`、本計畫、HANDOFF（終點行與現況）；`git diff --cached --name-only` 範圍外 0。CATALOG 須與備份相同，不在範圍內。
+  - 寫入後還原：用 `p920-s3-backup/` 整個還原 `rag-orchestrator/canon/`，`diff -r` 與 `git diff --stat 46234eb0 -- rag-orchestrator/canon` 為空後停下交業主（已審數回到 373，屬預先授權的還原）。
 
 #### ⏸ 第一波停點
 
@@ -243,7 +256,8 @@ S3 commit 後停下，回報終點指標、成本與 §6 紀錄。第二波在�
   - 依規則開一次收尾審查（新的就緒期）；若再判 REVISE，就暫停交業主，不再重送。
 - **收尾審查（fresh plan-verifier）＝READY** ⇒ 大綱＋S0＋S1 交業主核可（`next_gate: user_approval`）。
 - **S2 第 1 輪（fresh plan-verifier）＝READY**（2026-10-01）⇒ 依業主核可開跑（ASK 模式）。
-- S3、S4、S5、S6 開工前各自再送就緒審查。
+- **S3 第 1 輪（fresh plan-verifier）＝READY**（2026-10-03，審含「已預跑」與「對 repo 執行的步驟」）⇒ 依業主核可開跑。
+- S4、S5、S6 開工前各自再送就緒審查。
 
 ## 6. 執行紀錄
 
@@ -367,3 +381,20 @@ S3 commit 後停下，回報終點指標、成本與 §6 紀錄。第二波在�
 - 修正列入下個計畫。先審附的建議另列：「另見」引用的標題已過時 3 處，另有租客例外、影片上傳等建議。
 - 整理（2026-10-03）：8 條 doubt、11 條附帶建議與 S1 的 8 項 P3／P4 合併列於 `inputs/s2-findings-9.20-20261001.md`（從 raw 程式轉出，含 scratch 產物 sha256）。
 - **成本**：2 批約 0.55M（S2B1 0.30M、S2B2 0.23M）；S2 就緒審查約 0.13M ⇒ **9.20 累計約 1.95M**。⚠️ **已超過第一波停點 1.8M**（業主核可「S3 完成前累計達 1.8M 也要先停」）⇒ **停下交業主**。
+
+### S3（2026-10-03）
+
+- **業主裁決原文**（2026-10-03，對「建議越過停點跑 S3、審核單回安全組過」的回覆）：「越過停點，跑 S3，審核單安全組過」——越過第一波停點 1.8M（上限 3.5M 內）；非 ⚠️ 13 組的 pass 標已審；⚠️ 1 組（`I-marketing-home`）全組本批不審；8 條 doubt 本批不審；無點名、無照原樣過、無排除。
+- **寫入前準備**：
+  - 就緒審查 READY（§5）。決定檔、derive 結果與對照見 §1 S3「已預跑」：`approved 51 (both sources equal) by shelf {'F': 19, 'G': 6, 'H': 1, 'I': 25}; expected endpoint increment pm +51, prospect +18`。
+  - git 基準（`46234eb0`）與 status 皆為空；備份 `scratchpad/p920-s3-backup/`（01:00:03）以 `diff -r` 比對相同。
+  - 紅燈基準 `scratchpad/p920-s3-red-baseline.txt` 共 9 條（00:55:59～00:56:57），與 §12-2 名單逐名相同。
+- **寫入與驗證**：
+  - `write` ⇒ `added 51`；容器重匯出與 `load_canon_or_die` 通過（539 條）。
+  - verify ⇒ `reviewed backup 373 -> current 424; added lines 51; approved 51`、`fines changed beyond reviewed_*: 0`、`mismatches: 0`；`git status` 只有 F／G／H／I `.md` 與 `jgb.json` 變動，CATALOG 不變。
+  - repo 正本與預跑的 scratch 正本、scratch 重生成產出（保留 424／丟棄 0）皆 `diff -r` 相同。
+  - **終點指標 `已審細目 pm 420／533、prospect 98／120；頁面 pm 109／183、prospect 40／183`**（pm +51、prospect +18，與預期相同；第一波預估 pm +30～45、prospect +10～16，實際高於預估）。
+  - 單元 `9 failed, 3931 passed, 3 skipped`，與基準差集＝∅；`make audit` OVERALL PASS。
+- **fresh outcome verifier＝CONFIRMED**（5 項＋正對照全過）：自行由審核單重算安全組 51 條，與 approved 差集為 ∅；`.md` diff 只有 51 行 reviewed、`jgb.json` 只有 102 個 reviewed 欄位與 `canon_sha256`（`3f266ad6…`→`b9691255…`）；終點指標與紅燈集合逐字相同。附記 P3：HANDOFF 現況先寫「S3 已 commit」，於本 commit 成立；P4：`make audit` 由主 session 實跑 PASS（verifier 依規不跑）。
+- **成本**：S3 約 0.3M（主 session 預跑與執行約 0.15M、就緒審查約 0.07M、outcome verifier 約 0.1M）⇒ **9.20 累計約 2.25M**（上限 3.5M）。
+- **⏸ 第一波停點**：S3 commit 後停下；第二波（D／E，S4～S6）須業主明示。
