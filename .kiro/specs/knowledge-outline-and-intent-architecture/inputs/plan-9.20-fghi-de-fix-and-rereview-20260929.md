@@ -2,6 +2,8 @@
 
 > **現況**（`endpoint_progress.py`，2026-09-29，commit `35b86d77`）：`已審細目 pm 369／535、prospect 80／121；頁面 pm 89／183、prospect 27／183`（A 52／63、B 70／79、C 56／81、D 51／104、E 86／96、F 12／33、G 20／26、H 4／5、I 18／48；prospect 各架未審：A 2、B 1、C 4、D 7、E 5、F 4、G 2、H 1、I 15）。
 >
+> **進度（2026-10-03）**：S0 `1286d00a`、S1 `46234eb0` 已 commit；S2 已跑完（pass 52／doubt 8，見 §6 S2），累計約 1.95M 超過第一波停點 1.8M ⇒ **⏸ 停在 S3 之前，等業主裁**（是否越過停點、審核單逐組回覆）。終點指標仍為 `已審細目 pm 369／533、prospect 80／120`（2026-10-03 重跑）。
+>
 > **本計畫預期**：
 > - S0 已審數 +0。hold 2 條刪除後，分母 pm 535→533、prospect 121→120（兩條皆未審：`login-sso-redirect-no-duplicate-buttons` 掛 pm＋prospect，`biglandlord-escrow-owner` 只掛 pm）。
 > - 第一波（F～I，S1～S3）：pm +30～45、prospect +10～16。
@@ -134,6 +136,21 @@
   - 正對照：審核單副本與 raw 副本各把一條 doubt 改成 pass，兩者都要報出不一致；
   - 正本相對 S1 commit 無變動。
 - **停止與回滾**：交件失敗時，同一代理重貼一次，仍失敗即停；中途停下時，未跑的批次在審核單列「未先審」；回滾只刪審核單與 `p920-s2` 檔。
+- **已預跑**（2026-10-01，S1 commit `46234eb0` 後；repo 未動）：
+  - `p920-w1/p920-s2-targets.json`：從正本取 F～I 未審細目，共 60 條。
+  - `p920-w1/p920-s2-batches.json`：依正本順序、粗目不拆、每批 ≤35，聯集＝targets，重複 0：
+    - S2B1 28 條：F 4 組＋G 3 組＋H 1 組；
+    - S2B2 32 條：I 6 組。
+  - `p920-w1/p920-s2-hold.json`＝`[]`（本波沒有 hold；S1 也沒有整條刪除的細目）。
+  - `p920-w1/review_sheet.py` 變更值：`CANON_COMMIT="46234eb0"`、`SHELVES` 預設 `FGHI`、`PREFIX="p920-s2"`、標題「Plan 9.20 S2 F～I 修正後重新先審」。
+    - 空結果預跑：`parse` ⇒ `parsed 0 ids`；`check` ⇒ `targets 60; judged 0; raw-parsed 0; sheet ids 60`、`mismatches: 0`。
+    - 負對照：`P919_SHELVES=FGH` ⇒ `❌ 32 targets not found in canon shelves FGH`。
+  - brief：`p920-w1/brief-prereview-S2B{1,2}.txt`，由 `templates/brief-prereview.txt` 機械產生：
+    - 換成本計畫名稱、批次、條數與釘住匯出路徑；
+    - 補上 README 列的三項：講法要答得到；現行程式走不到的情境判 doubt；同粗目比對涵蓋不在本批的細目（含已審）；
+    - 附待裁清單路徑，並寫明「已依程式寫、未選邊，不算 doubt」。
+    - 各批 sources 前綴（S2B1 code／help、S2B2 code）都在 brief 的來源清單內。
+  - S1 附的 P3／P4 建議 8 項（修正紀錄「核對過程」）不預告給先審代理，以保持判定獨立；S2 結果出來後，在審核單之外另列「建議」交業主參考。
 - **預算**：2 批約 0.45M。
 
 #### S3 — 業主終審＋寫入已審（pm 最多 +58、prospect 最多 +22；實際依「安全組過」）
@@ -225,7 +242,8 @@ S3 commit 後停下，回報終點指標、成本與 §6 紀錄。第二波在�
   - 這是**第二次自動 REVISE ⇒ 停止重送，逐條處置**：**FIX**。「各片共用的工具設定」改為逐架設定縮排（H＝2）與 `TRAIL`，加入 H 的負對照，並規定任一架 roundtrip 不是 True 就在編輯前停下。
   - 依規則開一次收尾審查（新的就緒期）；若再判 REVISE，就暫停交業主，不再重送。
 - **收尾審查（fresh plan-verifier）＝READY** ⇒ 大綱＋S0＋S1 交業主核可（`next_gate: user_approval`）。
-- S2、S3、S4、S5、S6 開工前各自再送就緒審查。
+- **S2 第 1 輪（fresh plan-verifier）＝READY**（2026-10-01）⇒ 依業主核可開跑（ASK 模式）。
+- S3、S4、S5、S6 開工前各自再送就緒審查。
 
 ## 6. 執行紀錄
 
@@ -326,3 +344,26 @@ S3 commit 後停下，回報終點指標、成本與 §6 紀錄。第二波在�
 - **單元與 audit**：`9 failed, 3931 passed, 3 skipped`，紅燈集合減去基準＝∅；`make audit` OVERALL PASS。
 - **fresh outcome verifier＝CONFIRMED**（7 項全過；自行抽 20 句對釘住匯出全部成立，新增 evidence 39／39 逐字命中；自建正對照：注入「Meta Capital」「tongSang」都被抓到）。附記 P4×3（evidence 淨增數、G＋I 判定未存檔、建議條數）已更正。
 - **成本**：S1 約 0.9M（主 session 查證與修正約 0.35M、verifier 核對 3 次約 0.3M、outcome verifier 約 0.25M）⇒ **9.20 累計約 1.25M**（不含立案 0.75M；第一波停點 1.8M）。
+
+### S2（2026-10-01）
+
+- 2 批 fresh verifier 依序跑完，一次一位，兩批都一次解析通過：
+  - S2B1（F／G／H 28 條）pass 26／doubt 2；
+  - S2B2（I 32 條）pass 26／doubt 6；
+  - 合計 **pass 52／doubt 8**。
+- raw 由 `extract_verdict.py` 從代理 transcript 機械取出，存 `p920-w1/p920-s2-raw-S2B{1,2}.txt`。
+- 審核單：`inputs/review-sheet-9.20-S2-FGHI-20261001.md`，表頭 commit `46234eb0`，共 14 組，其中 ⚠️ 1 組（`I-marketing-home`：pass 1／doubt 1）。
+  - `check` ⇒ `targets 60; judged 60; raw-parsed 60; sheet ids 60`、`mismatches: 0`。
+  - 正對照（`jgb/I/notification-mail-settings`）：審核單副本與 raw 副本各把 doubt 改成 pass，兩者都報出不一致（`sheet<->results`、`raw<->results`）。
+  - 正本與 runs 相對 `46234eb0` 的 `git status` 為空。
+- **S1 修過的 38 條仍被抓出 6 條**（16%，與 9.19 的 18% 相近）：
+  - `repair-apply-flow-and-entry`：入口漏了租客的「我的報修」；
+  - `repair-edit-amount-visibility`：講法「怎麼填」答不到；
+  - `pricing-free-trial-eligibility`：「取消不退款」是走不到的情境；
+  - `control-panel-setting-shell`：S1 刪掉側欄句後，講法「控制台側邊欄」答不到；
+  - `notification-mail-settings`：漏了會員側欄的「通知收件信箱」頁可以新增信箱；
+  - `homepage-sections-overview`：「從特定搜尋入口」無源。
+- **未修過但被抓出的 2 條**：`pricing-free-vs-experience-plan`（替待裁 #42／#43 選了 FAQ 那一邊）、`pricing-quota-full-block`（畫面上永遠不會顯示物件上限數字）。
+- 修正列入下個計畫。先審附的建議另列：「另見」引用的標題已過時 3 處，另有租客例外、影片上傳等建議。
+- 整理（2026-10-03）：8 條 doubt、11 條附帶建議與 S1 的 8 項 P3／P4 合併列於 `inputs/s2-findings-9.20-20261001.md`（從 raw 程式轉出，含 scratch 產物 sha256）。
+- **成本**：2 批約 0.55M（S2B1 0.30M、S2B2 0.23M）；S2 就緒審查約 0.13M ⇒ **9.20 累計約 1.95M**。⚠️ **已超過第一波停點 1.8M**（業主核可「S3 完成前累計達 1.8M 也要先停」）⇒ **停下交業主**。
