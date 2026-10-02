@@ -117,7 +117,7 @@ language: zh-TW
   - {text: "作廢發票", source: "draft:outline-20260920", status: proposed}
   - {text: "收款備註怎麼改", source: "draft:outline-20260920", status: proposed}
   - {text: "退款對帳單", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/use/config/useBillTypes.js]
+- sources: [code:src/use/config/useBillTypes.js, code:app/Notification.php]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -128,7 +128,7 @@ language: zh-TW
 已到帳的收款帳單只要本身有設定自動開立發票，就會常駐顯示「重開發票」，不論目前發票狀態為何。
 只有在這張帳單有已開立且未作廢的發票時，齒輪選單才會出現「作廢發票」。
 已到帳的收款帳單一律可以「封存帳單」。
-帳單轉為已付款（不論是線上付款、或業者手動移至已到帳）時，系統會自動寄一封附收據 PDF 的通知信給租客；前端目前沒有「重寄收據」的按鈕可以手動再發一次。
+帳單轉為已付款（不論是線上付款、或業者手動移至已到帳）時，系統會自動寄一封通知信給租客，一般會附收據 PDF（部分特定合作團隊的通知信不附收據）；前端目前沒有「重寄收據」的按鈕可以手動再發一次。
 ### 「應支出」狀態的支出帳單，房東跟租客各能做什麼？（房東：前往付款／通知已匯款／取消帳單；租客：付款） {#jgb/E/bill-actions-expense-unpaid}
 - phrasings:
   - {text: "應支出可以做什麼", source: "draft:outline-20260920", status: proposed}
@@ -420,16 +420,16 @@ language: zh-TW
 - instance_applicability: general
 系統收到超商代碼繳費的付款結果通知時，只看金流商回傳的交易狀態是不是成功，沒有另外檢查這組代碼是不是已經過了繳費期限。
 代碼過期後還能不能拿去超商繳費、繳了算不算數，屬於金流商自己的規定，系統不判斷這件事。
-### 收據功能還會不會有新的開發？（現行已到帳帳單一律可以看到系統寄送的收據，目前沒有公開的後續開發時程） {#jgb/E/bill-receipt-feature-roadmap}
+### 收據功能還會不會有新的開發？（現行已到帳帳單的齒輪選單一律看得到收據，目前沒有公開的後續開發時程） {#jgb/E/bill-receipt-feature-roadmap}
 - phrasings:
   - {text: "收據功能會不會更新", source: "draft:outline-20260920", status: proposed}
   - {text: "收據還有新功能嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "收據開發時程", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/use/config/useBillTypes.js, docs:knowledge/jgb-product-facts.md#p914-receipt-email, docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#117]
+- sources: [code:src/use/config/useBillTypes.js, docs:knowledge/jgb-product-facts.md#p914-receipt-email, docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#117, code:app/Notification.php]
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
-現在已到帳的收款帳單，齒輪選單一律看得到「收據」（部分特定合作團隊點「收據」下載的是押金收據）；帳單轉為已付款時，系統也會自動寄送附收據 PDF 的通知信給租客。
+現在已到帳的收款帳單，齒輪選單一律看得到「收據」（部分特定合作團隊點「收據」下載的是押金收據）；帳單轉為已付款時，系統也會自動寄送通知信給租客，一般會附收據 PDF（部分特定合作團隊的通知信不附收據）。
 目前沒有公開的收據功能開發時程。
 ## 建立與編輯帳單（單筆、批次、週期批次） {#E-bill-create-edit}
 ### 新增帳單有哪幾種頁面？（新增帳單／新增批次帳單／新增週期帳單／編輯帳單） {#jgb/E/bill-create-modes}
@@ -545,15 +545,15 @@ language: zh-TW
 - business_types: [system_provider]
 - instance_applicability: general
 「內部備註」最多可以輸入 100 個字，欄位上標示「僅供內部查看」，這個備註是僅供業者團隊成員查看／編輯的欄位，租客端看不到。
-### 「內部備註」在哪些地方會出現？（只給業者團隊成員看：新增帳單單筆與編輯帳單可填，帳單列表欄位與帳單明細可看；批次／週期帳單頁面不顯示） {#jgb/E/bill-internal-note-visibility}
+### 「內部備註」在哪些地方會出現？（只給業者團隊成員看：新增帳單單筆、編輯帳單與帳單列表欄位可填，帳單明細可看；批次／週期帳單頁面不顯示） {#jgb/E/bill-internal-note-visibility}
 - phrasings:
   - {text: "內部備註在批次帳單有嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "內部備註在週期帳單有嗎", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/bills/edit/_parts/BillBasicInfoSection.vue, code:src/pages/bills/_parts/ListTable.jsx, code:src/components/Lightbox/BillItemDetail.vue]
+- sources: [code:src/pages/bills/edit/_parts/BillBasicInfoSection.vue, code:src/pages/bills/_parts/ListTable.jsx, code:src/components/Lightbox/BillItemDetail.vue, code:app/Http/Controllers/BillController.php]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-「內部備註」可以在「新增帳單」（單筆）跟「編輯帳單」頁面填寫，「新增批次帳單」「新增週期帳單」不會顯示這個欄位；填好的內部備註也會出現在帳單列表的「內部備註」欄與帳單明細視窗裡。
+「內部備註」可以在「新增帳單」（單筆）跟「編輯帳單」頁面填寫，也可以在帳單列表的「內部備註」欄直接修改後存檔；「新增批次帳單」「新增週期帳單」不會顯示這個欄位；填好的內部備註也會出現在帳單明細視窗裡。
 內部備註只給業者團隊成員看：租客身分、大房東看不到；另外有些帳單本身沒有內部備註這項資料（例如 B2B 對方付款的帳單），這時也不會顯示。
 ### 新增帳單時付款方式跟收款帳戶一定要一起填嗎？（兩者要嘛都空、要嘛都填；固定虛擬帳號例外） {#jgb/E/bill-payment-method-account-pair}
 - phrasings:
@@ -568,19 +568,18 @@ language: zh-TW
 在「新增帳單」跟「新增批次帳單」，付款方式跟收款帳戶兩者都空著可以送出（沿用合約的收款設定）；但只填其中一項會被擋下，提示要完成付款方式與收款帳戶選擇。
 選擇固定虛擬帳號當付款方式是例外：這個方式本來就沒有對應的收款帳戶欄位，所以不受兩者要成對填寫的規則限制。
 這個成對檢查只發生在按下送出確認彈窗（送出點退不受影響）的當下，並不是每次改欄位就即時檢查。
-### 租客還沒完成驗證時，發給他的帳單會怎樣？（帳單卡在草稿分頁，發不出去；但可以手動移至應到帳/已到帳） {#jgb/E/bill-tenant-unverified-draft-lock}
+### 租客還沒完成驗證時，帳單會被擋在草稿嗎？（合約頁的提示這樣寫，但目前送出帳單時系統不會因為驗證狀態擋下） {#jgb/E/bill-tenant-unverified-draft-lock}
 - phrasings:
   - {text: "租客沒驗證帳單發不出去", source: "draft:outline-20260920", status: proposed}
   - {text: "帳單卡在草稿", source: "draft:outline-20260920", status: proposed}
   - {text: "租客驗證連結過期帳單", source: "draft:outline-20260920", status: proposed}
   - {text: "帳單一直是草稿狀態", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/bills/edit/_parts/BillTargetBlock.jsx]
+- sources: [code:src/pages/bills/edit/_parts/BillTargetBlock.jsx, code:src/pages/contracts/_parts/SignerInfoCard.jsx, code:app/Http/Controllers/BillController.php]
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
-如果租客的 Email 或手機都還沒完成驗證，系統會把帳單停留在草稿帳單分頁，等租客完成驗證或驗證連結過期後，才能真正發送帳單，避免租客收不到帳單通知。
+合約頁的簽約對象資訊裡有一段提示：如果有發送驗證通知給租客，系統會把帳單停留在草稿帳單分頁，待租客完成驗證或驗證連結過期後才能發送；但目前實際送出帳單時，系統並不會因為租客還沒完成驗證而擋下。
 在這個情況下，房東仍然可以手動把帳單直接由草稿移至應到帳或已到帳，不受驗證狀態限制。
-這個限制只影響帳單能不能真正「發送」出去，帳單本身仍然可以照常建立、編輯內容。
 ### 新增帳單頁面下方送出按鈕的文字跟行為會依情境改變（送出／發送簽核／簽核中／預覽帳單） {#jgb/E/bill-submit-button-behavior}
 - phrasings:
   - {text: "送出按鈕文字不一樣", source: "draft:outline-20260920", status: proposed}
@@ -609,16 +608,16 @@ language: zh-TW
 只有「新增帳單」（單筆）在對象選租客時，才會依該租客合約的收款設定自動帶入付款方式與收款帳戶。
 如果合約帶出來的收款帳戶已經停用、線上金流帳戶目前不可取號、是自訂的現金帳戶，或合約的收款方式是支票、線下現金這類舊制方式，系統不會亂猜一個值，付款方式會維持未選；合約是固定虛擬帳號時，綁定仍有效才會帶入「固定虛擬帳號」，綁定已失效就維持未選。
 這個自動帶入的機制只在對象是「租客」時才會啟動，選其他對象（大房東、物件、其他）不會嘗試帶入合約付款設定。
-### 不足一個月的租金怎麼算？（依天數比例；預設團隊以剩餘天數 ÷ 該月曆天數，逐月產帳以實際天數 ÷ 該期帳單天數，不是固定除以 30） {#jgb/E/bill-partial-month-proration}
+### 不足一個月的租金怎麼算？（依天數比例；一般團隊以剩餘天數 ÷ 該月曆天數，逐月產帳以實際天數 ÷ 該期帳單天數，不是固定除以 30） {#jgb/E/bill-partial-month-proration}
 - phrasings:
   - {text: "不足月租金怎麼算", source: "draft:outline-20260920", status: proposed}
   - {text: "點退帳單租金怎麼算", source: "draft:outline-20260920", status: proposed}
   - {text: "入住天數比例分攤", source: "draft:outline-20260920", status: proposed}
-- sources: [docs:knowledge/jgb-product-facts.md#p914-proration]
+- sources: [docs:knowledge/jgb-product-facts.md#p914-proration, code:app/Role.php]
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
-不足一個月的租金是依天數比例計算，不是固定除以 30 天：開啟「合約預覽帳單」的團隊（預設）用「剩餘天數 ÷ 該月的曆天數」折算；關閉預覽帳單的團隊與排程逐月產帳，則用「這一期實際天數 ÷ 這一期帳單的天數」折算。
+不足一個月的租金是依天數比例計算，不是固定除以 30 天：一般團隊（合約成立時就產生整個租期的帳單）用「剩餘天數 ÷ 該月的曆天數」折算；部分特定合作團隊與排程逐月產帳，則用「這一期實際天數 ÷ 這一期帳單的天數」折算。
 ### 草稿帳單的電費度數要自己填嗎？（草稿階段度數預設留空；物件有綁定智慧電錶時，可在編輯頁按「取得即時電錶度數」先帶入） {#jgb/E/bill-power-reading-draft-defaults}
 - phrasings:
   - {text: "電費度數怎麼帶入", source: "draft:outline-20260920", status: proposed}
@@ -851,14 +850,14 @@ JGB 把「社會住宅」設計成一種團隊身份，跟「個人房東/代理
   - {text: "差額發票開立日期", source: "draft:outline-20260920", status: proposed}
   - {text: "差額發票字軌", source: "draft:outline-20260920", status: proposed}
   - {text: "差額怎麼算", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/balanceInvoices/groups/_parts/InvoiceTable.vue, code:app/Services/BalanceInvoiceService.php, code:src/use/config/balanceInvoices/useBalanceInvoicesActions.ts]
+- sources: [code:src/pages/balanceInvoices/groups/_parts/InvoiceTable.vue, code:app/Services/BalanceInvoiceService.php, code:src/use/config/balanceInvoices/useBalanceInvoicesActions.ts, code:app/Console/Kernel.php]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
 差額總表按月份列出這個群組每個月的累積成本、累積收入、差額，以及是否開發票、開立日期、發票金額、發票字軌。
 還沒開發票的月份，「差額」欄顯示的是差額金額的絕對值（不帶正負號）；已經開立發票的月份，「差額」跟「發票金額」這兩欄改成顯示同一個發票開立時的實際金額。
 已經開立發票的月份會另外顯示發票的「開立日期」跟「發票字軌」。
-要開立差額發票，是在差額發票群組列表的動作選單點「開立發票」，群組要是「進行中」狀態、而且這個月還沒開過發票才能開。
+差額發票除了由系統每月排程自動開立，也可以在差額發票群組列表的動作選單點「開立發票」手動開立；手動開立時群組要是「進行中」狀態、而且這個月還沒開過發票。
 ### 差額發票什麼時候自動產生？（一般業者每月 1 日 03:00 開立上月發票；特定團隊另有自己的時程） {#jgb/E/balance-invoice-timing}
 - phrasings:
   - {text: "差額發票何時開立", source: "draft:outline-20260920", status: proposed}
@@ -1109,17 +1108,18 @@ JGB 把「社會住宅」設計成一種團隊身份，跟「個人房東/代理
 - business_types: [system_provider]
 - instance_applicability: general
 「固定虛擬帳號管理」頁面管理的是可以重複收款、要手動建立的固定帳號；租客在「我的帳單」線上繳費時，走藍新取號產生的 ATM 虛擬帳號是另一種、系統即時產生的單筆帳號，效期 180 天，過期後要重新走一次繳費流程才會再產生新的一組，不會出現在「固定虛擬帳號管理」列表裡。
-### 租客重複匯款時系統怎麼處理？（國泰世華單筆帳單 ATM 帳號已付款後重複匯入會略過；固定虛擬帳號多匯的部分留作餘額） {#jgb/E/recharge-account-mismatch-and-duplicate}
+### 租客重複匯款時系統怎麼處理？（國泰世華單筆帳單 ATM 帳號已付款後重複匯入會略過；固定虛擬帳號多匯的部分留在儲值餘額） {#jgb/E/recharge-account-mismatch-and-duplicate}
 - phrasings:
   - {text: "虛擬帳號匯款金額不符", source: "draft:outline-20260920", status: proposed}
   - {text: "虛擬帳號重複匯款", source: "draft:outline-20260920", status: proposed}
   - {text: "虛擬帳號多匯的錢去哪", source: "draft:outline-20260920", status: proposed}
-- sources: [docs:knowledge/jgb-product-facts.md#p914-atm-amount-mismatch, docs:knowledge/jgb-product-facts.md#p914-duplicate-remittance, code:app/Payment.php]
+- sources: [docs:knowledge/jgb-product-facts.md#p914-atm-amount-mismatch, docs:knowledge/jgb-product-facts.md#p914-duplicate-remittance, code:app/Payment.php, code:app/RechargeAccount.php]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
 如果匯到國泰世華單筆帳單 ATM 帳號的這筆帳單已經付款完成，租客又重複匯款進來，系統只會在內部記錄這筆訂單已被處理並略過，不會再沖到任何帳單。
-匯到固定虛擬帳號的錢則一律先進這組帳號的儲值餘額，系統自動銷帳，多匯的部分留作餘額，用來抵扣後續帳單；同一筆銀行入帳通知重複收到時，系統會用指紋比對去重，不會重複儲值。
+匯到固定虛擬帳號的錢一律先進這組帳號的儲值餘額；只有後台開通自動對帳的部分特定合作團隊，系統才會用餘額自動銷帳、多匯的部分留作餘額抵扣後續帳單，其他團隊的餘額不會自動抵帳單。
+同一筆銀行入帳通知重複收到時，系統會用指紋比對去重，不會重複儲值。
 ### 逾期的虛擬帳號能不能重新產生？（此操作需由 JGB 客服協助，業者端沒有自助入口） {#jgb/E/recharge-account-regenerate-expired}
 - phrasings:
   - {text: "逾期虛擬帳號重新產生", source: "draft:outline-20260920", status: proposed}
@@ -1171,20 +1171,19 @@ JGB 的線上收款金流有國泰世華、永豐銀行、中國信託、藍新 
 - business_types: [system_provider]
 - instance_applicability: general
 開通藍新智付通時，管理者手機號碼是在申請表上自行填寫，必須是 09 開頭、共 10 碼的台灣手機號碼；系統不再檢查帳號原本綁定的手機號碼。
-### 開通藍新智付通前，個人房東跟團隊各自要先填完哪些資料？ {#jgb/E/newebpay-required-fields}
+### 開通藍新智付通前，團隊要先填完哪些資料？（個人房東不能開通藍新） {#jgb/E/newebpay-required-fields}
 - phrasings:
   - {text: "藍新開通要先填什麼資料", source: "draft:outline-20260920", status: proposed}
-  - {text: "身分證字號沒填能開藍新嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "個人房東可以開藍新嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "公司統編沒填能開藍新嗎", source: "draft:outline-20260920", status: proposed}
-- sources: [code:app/Http/Controllers/UserController.php]
+- sources: [code:app/Http/Controllers/UserController.php, code:src/pages/users/payment/routerView/Add.vue]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-個人房東要先填好名稱、姓氏、身分證字號、Email 並完成 Email 驗證，以及通訊地址（縣市、區、地址），沒填完會被導回帳號資訊頁面並列出缺少的欄位。
+個人房東在現行收款設定頁不能開通藍新，選了只會看到「您無法開通此收款方式」的提示，若有問題要洽詢 JGB 客服。
 團隊帳號則要先填好公司統編、公司名稱、公司地址（縣市、區、地址），沒填完會被導回團隊頁面；管理者的手機號碼與 Email 改在申請表上填寫，不需要先在帳號上設定或驗證。
-個人房東欄位缺漏時會被導回帳號資訊頁面，並用逗號列出所有還沒填寫或還沒驗證的欄位名稱。
 團隊帳號則是導回團隊頁面，一樣會列出缺少的公司資料。
-### 藍新開通時可以勾選哪些付款方式？（信用卡／Google Pay／Samsung Pay／ATM／超商代碼；國外卡要另外申請） {#jgb/E/newebpay-payment-methods}
+### 藍新開通時有哪些付款方式？（信用卡／Google Pay／Samsung Pay／ATM／超商代碼送出時都會開啟；國外卡要另外申請） {#jgb/E/newebpay-payment-methods}
 - phrasings:
   - {text: "藍新支援哪些付款方式", source: "draft:outline-20260920", status: proposed}
   - {text: "超商代碼繳費金額限制", source: "draft:outline-20260920", status: proposed}
@@ -1194,7 +1193,8 @@ JGB 的線上收款金流有國泰世華、永豐銀行、中國信託、藍新 
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
-藍新開通畫面可以勾選「信用卡」「Google Pay」「Samsung Pay」「ATM」「超商代碼」五種付款方式，預設都是開啟的；開通畫面上沒有「國外卡」選項。
+藍新開通畫面列出「信用卡」「Google Pay」「Samsung Pay」「ATM」「超商代碼」五種付款方式；開通送出時這五種一律以開啟送出，畫面上的勾選目前不會改變送出的設定。
+開通畫面上沒有「國外卡」選項。
 超商代碼有付款金額限制，畫面上會提示付款金額有 TWD 30 到 TWD 20,000 的限制。
 「國外卡」如果需要開通，要另外透過 JGB 向藍新金流申請，耗時約 5 到 7 個工作天。
 ### 中國信託收款怎麼申請？（中信轉帳 Pay 填資料送審，ACH 驗證約 5 個工作天；中信虛擬帳號填 5 碼企業代碼即可，個人房東不能開通） {#jgb/E/ctbc-apply-flow}
@@ -1238,7 +1238,7 @@ JGB 的線上收款金流有國泰世華、永豐銀行、中國信託、藍新 
 藍新的款項會先留在藍新帳戶中，需要自行登入藍新後台辦理提款，前 5 次免費，之後每次收取 10 元手續費。
 藍新提款是在藍新自己的後台辦理，不是在 JGB 系統內操作。
 國泰世華、永豐銀行、中國信託的提領方式與審核工作天，請洽客服。
-### 線上金流收款的資金流向會不會有稅務申報風險？（系統負責收款；稅務風險屬稅捐機關與業者自身規劃，系統不判斷） {#jgb/E/payment-onboarding-tax-risk}
+### 線上金流收款會不會有稅務申報風險？（屬稅捐機關與業者自身規劃，系統不判斷） {#jgb/E/payment-onboarding-tax-risk}
 - phrasings:
   - {text: "金流收款稅務風險", source: "draft:outline-20260920", status: proposed}
   - {text: "線上收款要報稅嗎", source: "draft:outline-20260920", status: proposed}
@@ -1247,7 +1247,7 @@ JGB 的線上收款金流有國泰世華、永豐銀行、中國信託、藍新 
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
-開通線上金流後，系統負責代為收款；資金運用是否涉及稅務申報風險，屬稅捐機關與業者自身的稅務規劃，系統不判斷。
+線上金流收款的資金運用是否涉及稅務申報風險，屬稅捐機關與業者自身的稅務規劃，系統不判斷。
 ### 「現金收款帳戶」怎麼管理？（可以新增、編輯、移除；需要收款設置編輯權限） {#jgb/E/cash-payment-account-management}
 - phrasings:
   - {text: "現金收款帳戶怎麼設定", source: "draft:outline-20260920", status: proposed}

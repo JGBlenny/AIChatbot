@@ -652,7 +652,7 @@
       "分頁旁邊打勾圖示代表必填分頁；租金調幅設定、稅與發票、附設傢俱、現況補充、建物謄本、公證、合約附件、補充條款這 8 頁沒有打勾圖示，屬於選填分頁。",
       "實際會顯示哪些分頁不是固定的，會依合約範本、物件用途（例如車位）、是否為既存（紙本／DIY）合約等條件動態增減。",
       "「租金調幅設定」分頁只有具備特定角色權限的團隊才會顯示，多數團隊看不到這個分頁。",
-      "分頁會不會顯示，不只受「租金調幅設定」這一項影響：「帳單設定」對特定幾個團隊目前是被拿掉的；「稅與發票」則是團隊沒有開通自動產生發票功能時才會被拿掉。"
+      "分頁會不會顯示，不只受「租金調幅設定」這一項影響：「帳單設定」對特定幾個團隊目前是被拿掉的；「稅與發票」在團隊沒有開通自動產生發票功能時會被拿掉，物件用途是車位的合約一般也不顯示「稅與發票」（部分特定合作團隊例外）。"
      ],
      "sources": [
       "code:src/routes/contracts.js",
@@ -698,6 +698,16 @@
        "sentence_index": 6,
        "source": "code:src/use/useEditStore.js",
        "quote_or_symbol": "if (!editStore.options?.can_auto_generate_invoice){"
+      },
+      {
+       "sentence_index": 6,
+       "source": "code:src/use/useEditStore.js",
+       "quote_or_symbol": "// 車位合約過濾"
+      },
+      {
+       "sentence_index": 6,
+       "source": "code:src/use/useEditStore.js",
+       "quote_or_symbol": ": basicRoutes.includes(node.name)"
       }
      ],
      "not_supported_greps": [
@@ -819,7 +829,7 @@
       "「紙本簽約」與「電子合約 - 客製化契約書」另外還有「租賃訂約日期」欄位，用來記錄雙方實際簽訂這份合約的日期，跟合約起迄日期是不同的欄位；「電子合約 - 住宅租賃契約書」沒有這個欄位。",
       "使用「電子合約 - 住宅租賃契約書」建立一般住宅合約時，一般團隊可選的合約範本共有 12 種：「114年內政部住宅租賃契約(原房東)」「113年內政部轉租契約(包租轉租)」「代租代管契約(參考114年租賃契約)」「內政部英文版 租賃契約書 原房東」「內政部英文版 租賃契約書 包租業」「內政部英文版 租賃契約書 代租代管」「英越文版 租賃契約書」「英泰文版 租賃契約書 原房東」「英泰文版 租賃契約書 代租代管」「公會中文版 租賃契約書 原房東」「公會中文版 租賃契約書 包租業」「公會中文版 租賃契約書 代租代管」。",
       "如果登入身分是個人房東角色，可選範本會縮減成 4 種：「114年內政部住宅租賃契約(原房東)」「內政部英文版 租賃契約書 原房東」「英泰文版 租賃契約書 原房東」「公會中文版 租賃契約書 原房東」。",
-      "「轉租合約」本身也是一般合約範本可以選擇的其中一種，不是另外一套獨立機制；內政部英文版範本的補充條款會印在合約書上，只有編輯時的補充條款預覽不套用範本背景、改用空白頁顯示。",
+      "內政部英文版範本的補充條款會印在合約書上，只有編輯時的補充條款預覽不套用範本背景、改用空白頁顯示。",
       "合約的起始日就是這裡填的「合約起迄日期」起日，之後計算帳務的起算基準都是用這個欄位，跟這份合約資料是什麼時候建立到系統裡沒有關係。",
       "系統對「租賃訂約日期」（簽約日）與「合約起迄日期」（起租日）之間的先後關係沒有做強制檢查或提示；簽約日晚於起租日是否需要向主管機關另外說明，屬於外部規定的認定範圍，系統不判斷。",
       "系統的合約類型／範本只有原房東、包租業、代租代管三種分類，沒有「二房東」這個選項；二房東應該算原房東還是包租業，屬於業態的法律定性問題，系統不判斷。"
@@ -1288,7 +1298,7 @@
     {
      "proposed_id": "jgb/D/contract-tax-invoice",
      "askable": "合約的發票要怎麼設定，租金以外的品項也能開發票嗎",
-     "title": "稅與發票分頁怎麼設定？（是否開立發票、應稅品項、目前只支援租金品項開發票）",
+     "title": "稅與發票分頁怎麼設定？（是否開立發票、出租方統一編號、各品項是否應稅）",
      "unit_ids": [
       "page:contracts.edit.taxAndInvoice"
      ],
@@ -1564,7 +1574,7 @@
     {
      "proposed_id": "jgb/D/contract-landlord-dealer-basic",
      "askable": "出租方基本資料分頁要填什麼，經理人跟電子簽名圖章是什麼",
-     "title": "出租方基本資料分頁要填什麼？（個人／團隊資料自動帶入、指定經理人、電子簽名圖章）",
+     "title": "出租方基本資料分頁要填什麼？（個人／團隊資料自動帶入、指定經理人、法人房東可用電子簽名圖章）",
      "unit_ids": [
       "page:contracts.edit.dealerBasic"
      ],
@@ -1585,13 +1595,14 @@
       "「出租方基本資料」分頁如果是個人房東，需要填妥電話、Email、身分證字號、戶籍地址、通訊地址。",
       "如果是用團隊方式建立合約，出租方資料（公司登記名稱、統一編號、電話、Email、公司登記地址、公司通訊地址）會自動帶入先前團隊資訊填寫的內容，需要修改的話要回到「團隊資訊」編輯。",
       "填妥出租方資料後，要在「經理人資訊」選擇這份合約由團隊中哪一位經理人負責管理。",
-      "分頁最下方可以選擇新增電子簽名圖章取代手動簽名；如果先前沒有上傳過電子圖章，需要先到「團隊資訊」設定才能使用這個功能。",
+      "出租方是團隊（法人房東）時，分頁最下方可以選擇用電子簽名圖章取代親手簽名；如果先前沒有上傳過電子圖章，需要先到「團隊資訊」設定才能使用這個功能。個人房東的分頁上沒有這個區塊。",
       "代租代管合約在這個分頁可以逐份選擇「出租人資訊」：從出租人清單選擇出租人，並選擇身份是「所有權人」或「轉租人」；個人房東、團隊本身的出租方資料則是帳號層級的設定。其餘關於要用哪個帳號簽約的個案安排，可洽客服協助。"
      ],
      "sources": [
       "code:src/pages/contracts/edit/dealerBasic/Index.vue",
       "help:landlordonboarding04lease_zh-Hant.html",
-      "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#100"
+      "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#100",
+      "code:app/Http/Controllers/ContractController.php"
      ],
      "evidence": [
       {
@@ -1608,6 +1619,16 @@
        "sentence_index": 2,
        "source": "help:landlordonboarding04lease_zh-Hant.html",
        "quote_or_symbol": "請下方的【經理人資訊】中選取這份合約將由哪一位【經理人】進行管理"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/contracts/edit/dealerBasic/Index.vue",
+       "quote_or_symbol": "t('使用電子簽名圖章取代親手簽名')"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Http/Controllers/ContractController.php",
+       "quote_or_symbol": "'is_enable_electronic_signature'=> $lessorRole->config_rule_key==Role::RULE_KEY_LANDLORD_CORPORATE"
       },
       {
        "sentence_index": 3,
@@ -2137,7 +2158,7 @@
     {
      "proposed_id": "jgb/D/social-housing-facilities-tab",
      "askable": "社宅附設傢俱分頁要填什麼",
-     "title": "社宅合約「附設傢俱」分頁要填什麼？（各格局家具與數量）",
+     "title": "社宅合約「附設傢俱」分頁要填什麼？（設備、隔間、家電與傢俱的數量與型號）",
      "unit_ids": [
       "page:contracts.edit.socialHousing.facilities"
      ],
@@ -2150,19 +2171,36 @@
      "instance_applicability": "general",
      "phrasings": [
       "社宅附設傢俱",
-      "社宅傢俱數量怎麼填"
+      "社宅傢俱數量怎麼填",
+      "社宅家電型號怎麼填"
      ],
      "sentences": [
-      "附設傢俱分頁要填入物件內部各格局的家具與數量。"
+      "社宅合約的附設傢俱分頁要勾選有提供的「設備」與是否有「隔間」，再填「家電」和「傢俱」各品項的數量，家電另外填廠牌／型號；分頁上方會提示這個物件依照廣告的格局。"
      ],
      "sources": [
-      "help:Landlordonboarding09Socialhousing_zh-Hant.html"
+      "help:Landlordonboarding09Socialhousing_zh-Hant.html",
+      "code:src/pages/contracts/edit/facilities/SocialHousing.vue"
      ],
      "evidence": [
       {
        "sentence_index": 0,
        "source": "help:Landlordonboarding09Socialhousing_zh-Hant.html",
        "quote_or_symbol": "附設家具：填入物件內部各格局之家具以及數量"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/contracts/edit/facilities/SocialHousing.vue",
+       "quote_or_symbol": "t('若有提供以下設備或傢俱，請填寫數量及型號。')"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/contracts/edit/facilities/SocialHousing.vue",
+       "quote_or_symbol": "t('依照廣告，此物件的格局為：')"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/contracts/edit/facilities/SocialHousing.vue",
+       "quote_or_symbol": ":placeholder=\"t('廠牌/型號')\""
       }
      ],
      "not_supported_greps": [],
@@ -2189,21 +2227,37 @@
       "代收定金幾日內轉交"
      ],
      "sentences": [
-      "社宅合約的「基本條件」分頁要先選「合約範本」（代租代管、包租合約、轉租合約），並設定「是否帶租約」（這次簽約的物件是否為既存租賃契約的住宅）與「租約起迄日」。",
-      "選「代租代管」範本時，還要設定「委託租賃期間」、「委託管理期間」與「住宅現況」（住宅所有權人自行使用、現為空屋無人使用、有人承租或其他）；「包租合約」與「轉租合約」沒有這幾個欄位。",
+      "社宅合約的「基本條件」分頁要先選「合約範本」（選單上是「代租代管」「包租包管」），並設定「是否帶租約」（這次簽約的物件是否為既存租賃契約的住宅）與「租約起迄日」。從包租包管合約點「新增轉租契約書」建立的合約，範本固定是「轉租」，選單鎖住不能改。",
+      "選「代租代管」範本時，還要設定「委託租賃期間」、「委託管理期間」與「住宅現況」（住宅所有權人自行使用、現為空屋無人使用、有人承租或其他）；「包租包管」與「轉租」沒有這幾個欄位。",
       "「物件返還狀態」要設定租客返還物件時室內裝潢應回復的狀況，選項包含現況返還、回復原狀等。",
       "選「代租代管」範本時，另外要設定「通知義務」、是否授權業者「代收定金」、「轉交定金」（業者收到定金後應於幾日內將租金轉交給原房東）與是否授權「張貼廣告」；「修繕聯絡方式」與「爭議處理」（例如是否依仲裁法規定進行仲裁）則每種範本都要設定。",
-      "選「包租合約」範本時，另外要設定出租人是否授權業者進行「室內裝修」以及「裝修費用負擔」由誰負擔。"
+      "選「包租包管」範本時，另外要設定出租人是否授權業者進行「室內裝修」以及「裝修費用負擔」由誰負擔。"
      ],
      "sources": [
       "code:src/pages/contracts/edit/rentBasic/SocialHousing.vue",
-      "code:config/contract.php"
+      "code:config/contract.php",
+      "code:app/Http/Controllers/ContractController.php"
      ],
      "evidence": [
       {
        "sentence_index": 0,
        "source": "code:src/pages/contracts/edit/rentBasic/SocialHousing.vue",
        "quote_or_symbol": "t('委託租賃期間')"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/ContractController.php",
+       "quote_or_symbol": "'label' => ___('包租包管'),"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/ContractController.php",
+       "quote_or_symbol": "'text' => ___('新增轉租契約書'),"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/contracts/edit/rentBasic/SocialHousing.vue",
+       "quote_or_symbol": ":class=\"{'is-disabled': props.editStore.form.contract_template_selected === 'sublet'}\""
       },
       {
        "sentence_index": 1,
@@ -2244,7 +2298,7 @@
      ],
      "sentences": [
       "社宅合約的「基本條件」分頁只設定「雙方是否可以提前解約」，選項是「可以」或「不可以」，沒有一般合約那組違約金計算方式與通知天數的設定。",
-      "一般住宅合約選擇租客可以提前解約時，還要再選違約金計算方式（例如「每月租金」「固定金額」），並依租客通知的天數分段設定違約金。"
+      "一般住宅合約選擇租客可以提前解約時，還要再選違約金計算方式（例如「每月租金」「固定金額」），並依租客通知的天數分段設定違約金；部分特定合作團隊的專屬範本設定方式不同，例如只填「提前解約預告日」、整段沒有這組設定，或只設單一門檻不分段。"
      ],
      "sources": [
       "code:src/pages/contracts/edit/rentBasic/General.vue",
@@ -2260,6 +2314,11 @@
        "sentence_index": 1,
        "source": "code:src/pages/contracts/edit/rentBasic/General.vue",
        "quote_or_symbol": "v-if=\"editStore.form.contract_template_selected !== 'nthurc_social_housing'\""
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/contracts/edit/rentBasic/General.vue",
+       "quote_or_symbol": "{{ t('提前解約預告日') }}"
       }
      ],
      "not_supported_greps": [
@@ -2291,17 +2350,23 @@
       "社宅代租金額怎麼設定"
      ],
      "sentences": [
-      "社宅合約的「租金費用」分頁都要設定「租金與押金」與「生活費用」；選「代租代管」範本時另外有「代租金額」，選「包租合約」範本時則是「包租金額」，「轉租合約」這兩項都沒有。"
+      "社宅合約的「租金費用」分頁都要設定「租金與押金」與「生活費用」；選「代租代管」範本時另外有「代租金額」，選「包租包管」範本時則是「包租金額」，「轉租」範本這兩項都沒有。"
      ],
      "sources": [
       "help:Landlordonboarding09Socialhousing_zh-Hant.html",
-      "code:src/pages/contracts/edit/rent/Index.jsx"
+      "code:src/pages/contracts/edit/rent/Index.jsx",
+      "code:app/Http/Controllers/ContractController.php"
      ],
      "evidence": [
       {
        "sentence_index": 0,
        "source": "help:Landlordonboarding09Socialhousing_zh-Hant.html",
        "quote_or_symbol": "租金費用（代租金額 / 租金與押金 / 生活費用）"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/ContractController.php",
+       "quote_or_symbol": "'label' => ___('包租包管'),"
       }
      ],
      "not_supported_greps": [],
@@ -2327,10 +2392,11 @@
      ],
      "sentences": [
       "社宅合約的「收款方式」跟一般合約不同，選項是「轉帳」「票據」「現金」三種。",
-      "只有選「代租代管」範本時，收款方式分頁還要設定「收款人」是「原房東」還是「業者」；「包租合約」與「轉租合約」沒有這個欄位。"
+      "只有選「代租代管」範本時，收款方式分頁還要設定「收款人」是「原房東」還是「業者」；「包租包管」與「轉租」範本沒有這個欄位。"
      ],
      "sources": [
-      "code:src/pages/contracts/edit/payment/SocialHousing.vue"
+      "code:src/pages/contracts/edit/payment/SocialHousing.vue",
+      "code:app/Http/Controllers/ContractController.php"
      ],
      "evidence": [
       {
@@ -2342,6 +2408,11 @@
        "sentence_index": 1,
        "source": "code:src/pages/contracts/edit/payment/SocialHousing.vue",
        "quote_or_symbol": "t('收款人')"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/ContractController.php",
+       "quote_or_symbol": "'label' => ___('包租包管'),"
       }
      ],
      "not_supported_greps": [],
@@ -2369,14 +2440,15 @@
      ],
      "sentences": [
       "社宅合約的「公證」分頁要設定「辦理租賃契約公證」是「同意」或「不同意」；分頁上的說明文字是：本租賃契約應辦理公證，但租賃雙方如果因特定事由同意不辦理公證，視同自願放棄公證費申請的權益。",
-      "「強制執行事項」列出三款情形（承租方租期屆滿不返還住宅、承租方欠繳租金費用或違約應付金額、出租方應返還的押金），只有「包租合約」範本可以逐款選擇是否同意強制執行；「保證人效力」是固定的說明文字，不是可以設定的欄位；「稅費負擔」可以設定公證費與其他稅費由出租人、承租人或平均分擔。",
+      "「強制執行事項」列出三款情形（承租方租期屆滿不返還住宅、承租方欠繳租金費用或違約應付金額、出租方應返還的押金），只有「包租包管」範本可以逐款選擇是否同意強制執行；「保證人效力」是固定的說明文字，不是可以設定的欄位；「稅費負擔」可以設定公證費與其他稅費由出租人、承租人或平均分擔。",
       "填完所有分頁內容後，可以點選「預覽合約」，再點「下載合約文件」，依文件進行紙本簽約與公證。",
       "完成紙本簽約（有辦理公證的，在公證完成後）需要把掃描好的合約 PDF 檔上傳，並選擇是否要綁定租客後送出，才能完成歸檔。",
       "如果選擇不辦理公證，需要在「不辦理公證理由」欄位填寫理由，這個欄位最多只能輸入 100 個字元。"
      ],
      "sources": [
       "code:src/pages/contracts/edit/publicNotary/SocialHousing.vue",
-      "help:Landlordonboarding09Socialhousing_zh-Hant.html"
+      "help:Landlordonboarding09Socialhousing_zh-Hant.html",
+      "code:app/Http/Controllers/ContractController.php"
      ],
      "evidence": [
       {
@@ -2388,6 +2460,11 @@
        "sentence_index": 1,
        "source": "code:src/pages/contracts/edit/publicNotary/SocialHousing.vue",
        "quote_or_symbol": "t('可設定公證產生的額外稅費負擔者。')"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/ContractController.php",
+       "quote_or_symbol": "'label' => ___('包租包管'),"
       },
       {
        "sentence_index": 2,
@@ -2418,7 +2495,7 @@
     {
      "proposed_id": "jgb/D/social-housing-attachments-tab",
      "askable": "社宅合約附件要準備哪些文件",
-     "title": "社宅合約「合約附件」要準備什麼？（合約附件只收其他文件如附註條款、稅籍證明；測量成果圖等在出租方附件分頁，轉租合約除外）",
+     "title": "社宅合約「合約附件」要準備什麼？（合約附件只收其他文件如附註條款、稅籍證明；測量成果圖等在出租方附件分頁，轉租範本除外）",
      "unit_ids": [
       "page:contracts.edit.socialHousing.attachments",
       "page:contracts.edit.socialHousing.landlordAttachment",
@@ -2436,20 +2513,31 @@
       "出租方承租方附件上傳"
      ],
      "sentences": [
-      "社宅合約的「合約附件」分頁目前只有一個「其他(附註條款、稅籍證明等)」上傳項目；建物謄本、建物所有權狀影本、建築物使用執照影本、測量成果圖影本、出租人存摺影本等出租方文件，要在出租方的附件分頁上傳（「轉租合約」沒有出租方附件分頁），承租方的文件則在承租方的附件分頁上傳（「包租合約」沒有承租方附件分頁）。"
+      "社宅合約的「合約附件」分頁目前只有一個「其他(附註條款、稅籍證明等)」上傳項目；建物謄本、建物所有權狀影本、建築物使用執照影本、測量成果圖影本、出租人存摺影本等出租方文件，要在出租方的附件分頁上傳（「轉租」範本沒有出租方附件分頁），承租方的文件則在承租方的附件分頁上傳（「包租包管」範本沒有承租方附件分頁）。"
      ],
      "sources": [
       "help:Landlordonboarding09Socialhousing_zh-Hant.html",
       "code:src/pages/contracts/edit/attachments/Index.vue",
       "code:src/pages/contracts/edit/landlordAttachment/Index.vue",
       "code:src/pages/contracts/edit/tenantAttachment/Index.vue",
-      "code:src/use/useEditStore.js"
+      "code:src/use/useEditStore.js",
+      "code:app/Http/Controllers/ContractController.php"
      ],
      "evidence": [
       {
        "sentence_index": 0,
        "source": "help:Landlordonboarding09Socialhousing_zh-Hant.html",
        "quote_or_symbol": "合約附件（測量成果圖、稅籍證明等）"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/ContractController.php",
+       "quote_or_symbol": "'label' => ___('轉租'),"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/ContractController.php",
+       "quote_or_symbol": "'label' => ___('包租包管'),"
       }
      ],
      "not_supported_greps": [],
@@ -2523,16 +2611,22 @@
       "社宅出租方基本資料授權附件"
      ],
      "sentences": [
-      "社宅合約「出租方」分組包含基本資料、授權、附件三個分頁。"
+      "社宅合約「出租方」分組包含基本資料、授權、附件三個分頁；選「轉租」範本時，授權、附件兩個分頁不會顯示，只剩基本資料。"
      ],
      "sources": [
-      "help:Landlordonboarding09Socialhousing_zh-Hant.html"
+      "help:Landlordonboarding09Socialhousing_zh-Hant.html",
+      "code:src/use/useEditStore.js"
      ],
      "evidence": [
       {
        "sentence_index": 0,
        "source": "help:Landlordonboarding09Socialhousing_zh-Hant.html",
        "quote_or_symbol": "D. 出租方"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/use/useEditStore.js",
+       "quote_or_symbol": "// 社宅包租合約 出租方篩選"
       }
      ],
      "not_supported_greps": [],
@@ -2541,7 +2635,7 @@
     {
      "proposed_id": "jgb/D/social-housing-landlord-license-conditions",
      "askable": "社宅合約出租方的「授權」分頁要確認什麼合法建物條件",
-     "title": "社宅合約「授權」分頁要確認什麼？（合法建物條件、同意提供住宅、同意轉租等授權事項）",
+     "title": "社宅合約「授權」分頁要確認什麼？（合法建物條件、住宅使用、同意提供住宅的方式等授權事項）",
      "unit_ids": [
       "page:contracts.edit.socialHousing.landlordLicense"
      ],
@@ -2557,8 +2651,8 @@
       "出租方授權項目"
      ],
      "sentences": [
-      "「授權」分頁要確認合法建物條件，例如主要用途登記含有「住」「住宅」「農舍」「套房」「公寓」或「住宿」字樣，或提出合法房屋證明等文件。",
-      "「授權」分頁也要設定出租人是否同意提供住宅、是否同意出租予租屋服務事業再轉租（包租包管）等授權事項。"
+      "出租方「授權」分頁的「合法建物條件」列出兩項：出租人為出租住宅之所有權人、租賃標的需坐落於當地直轄市；「住宅使用」則列出主要用途登記含有「住」「住宅」「農舍」「套房」「公寓」或「住宿」字樣，或提出合法房屋證明等幾種情形。",
+      "「授權」分頁也要在「同意提供住宅」選擇是出租予租屋服務事業再轉租（包租包管），還是經由租屋服務事業協助出租予符合一定資格者（代租代管），兩者擇一。"
      ],
      "sources": [
       "code:src/pages/contracts/edit/landlordLicense/Index.vue"
@@ -2570,9 +2664,29 @@
        "quote_or_symbol": "t('主要用途登記含有「住」、「住宅」、「農舍」、「套房」、「公寓」或「住宿」字樣。但如該地址有營業登記者，不得申請租稅優惠')"
       },
       {
+       "sentence_index": 0,
+       "source": "code:src/pages/contracts/edit/landlordLicense/Index.vue",
+       "quote_or_symbol": "t('合法建物條件')"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/contracts/edit/landlordLicense/Index.vue",
+       "quote_or_symbol": "t('出租人為出租住宅之所有權人')"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/contracts/edit/landlordLicense/Index.vue",
+       "quote_or_symbol": "t('住宅使用')"
+      },
+      {
        "sentence_index": 1,
        "source": "code:src/pages/contracts/edit/landlordLicense/Index.vue",
        "quote_or_symbol": "t('出租予租屋服務事業再轉租(包租包管)')"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/contracts/edit/landlordLicense/Index.vue",
+       "quote_or_symbol": "{label: t('出租予租屋服務事業再轉租(包租包管)'), value: 1},"
       }
      ],
      "not_supported_greps": [],
@@ -2600,16 +2714,22 @@
       "社宅承租方基本資料家庭授權附件"
      ],
      "sentences": [
-      "社宅合約「承租方」分組包含基本資料、家庭＆財產、授權、附件，用來確認租客的申請身分是否符合社會住宅資格。"
+      "社宅合約「承租方」分組包含基本資料、家庭＆財產、授權、附件，用來確認租客的申請身分是否符合社會住宅資格；選「包租包管」範本時，家庭＆財產、授權、附件三個分頁不會顯示，承租方改填公司資料。"
      ],
      "sources": [
-      "help:Landlordonboarding09Socialhousing_zh-Hant.html"
+      "help:Landlordonboarding09Socialhousing_zh-Hant.html",
+      "code:src/use/useEditStore.js"
      ],
      "evidence": [
       {
        "sentence_index": 0,
        "source": "help:Landlordonboarding09Socialhousing_zh-Hant.html",
        "quote_or_symbol": "E. 承租方"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/use/useEditStore.js",
+       "quote_or_symbol": "// 社宅包租合約 承租方篩選"
       }
      ],
      "not_supported_greps": [],
@@ -2618,7 +2738,7 @@
     {
      "proposed_id": "jgb/D/social-housing-tenant-basic-status",
      "askable": "社宅合約審核租客資格要看哪些身分別",
-     "title": "社宅合約「基本資料」怎麼審核租客資格？（承租人資格、住宅政策補貼戶、代理人；包租合約改填公司資料）",
+     "title": "社宅合約「基本資料」怎麼審核租客資格？（承租人資格、住宅政策補貼戶、代理人；包租包管改填公司資料）",
      "unit_ids": [
       "page:contracts.edit.socialHousing.tenantBasic"
      ],
@@ -2634,17 +2754,23 @@
       "社宅租客資格怎麼審核"
      ],
      "sentences": [
-      "選「代租代管」或「轉租合約」範本時，基本資料分頁要設定「承租人資格」：先選「一般戶」「第一類弱勢戶」或「第二類弱勢戶」，再依類別勾選細項（例如第一類弱勢戶有六十五歲以上之老人、原住民、身心障礙者等，第二類弱勢戶有低收入戶、中低收入戶）；另外「住宅政策補貼戶」要勾選是否有接受政府其他住宅補貼、是否有承租社會住宅或政府興辦之出租住宅，或勾「以上均無」。",
-      "同樣只有「代租代管」與「轉租合約」範本，基本資料分頁有「新增代理人」功能，最多可以填 3 位代理人，關係可選父、母或監護人；「包租合約」範本的承租方改填公司名稱、代表人姓名、統一編號等公司資料，沒有承租人資格與代理人欄位。"
+      "選「代租代管」或「轉租」範本時，基本資料分頁要設定「承租人資格」：先選「一般戶」「第一類弱勢戶」或「第二類弱勢戶」，再依類別勾選細項（例如第一類弱勢戶有六十五歲以上之老人、原住民、身心障礙者等，第二類弱勢戶有低收入戶、中低收入戶）；另外「住宅政策補貼戶」要勾選是否有接受政府其他住宅補貼、是否有承租社會住宅或政府興辦之出租住宅，或勾「以上均無」。",
+      "同樣只有「代租代管」與「轉租」範本，基本資料分頁有「新增代理人」功能，最多可以填 3 位代理人，關係可選父、母或監護人；「包租包管」範本的承租方改填公司名稱、代表人姓名、統一編號等公司資料，沒有承租人資格與代理人欄位。"
      ],
      "sources": [
-      "code:src/pages/contracts/edit/tenantBasic/Index.vue"
+      "code:src/pages/contracts/edit/tenantBasic/Index.vue",
+      "code:app/Http/Controllers/ContractController.php"
      ],
      "evidence": [
       {
        "sentence_index": 0,
        "source": "code:src/pages/contracts/edit/tenantBasic/Index.vue",
        "quote_or_symbol": "t('六十五歲以上之老人。（限申請人本人）')"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/ContractController.php",
+       "quote_or_symbol": "'label' => ___('包租包管'),"
       },
       {
        "sentence_index": 1,
@@ -2818,7 +2944,7 @@
     {
      "proposed_id": "jgb/D/social-housing-charter-sublet-tab-hiding",
      "askable": "社宅合約選包租包管或轉租範本，看到的分頁會不一樣嗎",
-     "title": "社宅合約選「包租包管」或「轉租」範本，分頁會不同嗎？（包租包管隱藏承租方戶籍/證照/附件，轉租隱藏出租方證照/附件）",
+     "title": "社宅合約選「包租包管」或「轉租」範本，分頁會不同嗎？（包租包管不顯示承租方的家庭＆財產、授權、附件，轉租不顯示出租方的授權、附件）",
      "unit_ids": [
       "page:contracts.edit.socialHousing.tenantHousehold",
       "page:contracts.edit.socialHousing.tenantLicense",
@@ -3008,7 +3134,7 @@
      "sentences": [
       "租客簽約頁面第一步要填寫「承租方簽約資料」，並選擇「簽約身份」。",
       "簽約身份是租客時，頁面上有上傳「承租方身份證明文件影本」的欄位（只有部分特定合作團隊的專屬合約範本標為必填）；另外還有「工作名片/學生證」（同一個上傳欄位）與「良民證」等其他證明文件的上傳欄位，各自獨立、不能互相替代。",
-      "印章上傳依簽約身份不同而異：租客身份要上傳「小章」；法人身份（非租客）則要上傳「大章」與「小章」兩個欄位。",
+      "簽約頁的「合約附件(選填)」區塊可以上傳印章：租客身份是「小章」；法人身份（非租客）則有「大章」與「小章」兩個欄位。這些都是選填，送出前的資料檢查不會要求上傳印章。",
       "部分特定合作團隊使用專屬的合約範本；用這類範本簽約時，簽約前會多一個步驟：畫面下方會出現 5 個條款確認選項（詳閱契約條款、無法更改內容、續約通知天數、履約保證金退還天數、吸菸罰緩等規定），要全部勾選才能繼續；一般合約範本沒有這個額外勾選步驟。",
       "確認資料無誤後，一般合約點「下一步」會先進入「合約 PDF 預覽」頁，預覽後再點「下一步」才進入雲想科技（Thinkcloud）的簽約畫面；如果合約的收款設定是自動扣款，這時會先跳出「即將前往授權」視窗，要點「前往授權」授權信用卡。上述特定合作團隊的專屬範本則是依序點「下一步，預覽合約」「下一步，同意合約條款」（勾完 5 個確認選項）與「下一步，前往簽名」。整個瀏覽、簽名過程都有時間戳記與 IP 紀錄。",
       "簽約過程系統只負責記錄簽名當下的時間戳記與 IP 位置這些客觀資訊；簽名內容跟登記姓名是否一致所產生的法律效力，屬於法律問題，系統不判斷。"
@@ -3019,7 +3145,8 @@
       "code:src/pages/contracts/edit/_methods/getFormDataForStepDone.js",
       "help:contract_review_period_zh-Hant.html",
       "code:app/Http/Controllers/ContractController.php",
-      "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#103"
+      "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#103",
+      "code:src/store/modules/contract_sign/index.js"
      ],
      "evidence": [
       {
@@ -3041,6 +3168,26 @@
        "sentence_index": 2,
        "source": "code:resources/views/contract/sign.blade.php",
        "quote_or_symbol": "<div class=\"field-title\">{{___('大章')}}</div>"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:resources/views/contract/sign.blade.php",
+       "quote_or_symbol": "<div class=\"row items-start mb-4\"  v-if=\"!$store.state.contract_sign.is_tenant\">"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:resources/views/contract/sign.blade.php",
+       "quote_or_symbol": "<div class=\"field-title\">{{___('小章')}}</div>"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:resources/views/contract/sign.blade.php",
+       "quote_or_symbol": "___('合約附件(選填)')"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/store/modules/contract_sign/index.js",
+       "quote_or_symbol": "allDone(state){"
       },
       {
        "sentence_index": 3,
@@ -3071,16 +3218,6 @@
        "sentence_index": 4,
        "source": "help:contract_review_period_zh-Hant.html",
        "quote_or_symbol": "點選【下一步】進入雲想科技簽約畫面開始簽約流程，此時的瀏覽、簽名皆會有時間戳記，可於簽約完成後在合約的【附件2】查看到，簽約過程記錄時間、IP 位置。"
-      },
-      {
-       "sentence_index": 2,
-       "source": "code:resources/views/contract/sign.blade.php",
-       "quote_or_symbol": "<div class=\"row items-start mb-4\"  v-if=\"!$store.state.contract_sign.is_tenant\">"
-      },
-      {
-       "sentence_index": 2,
-       "source": "code:resources/views/contract/sign.blade.php",
-       "quote_or_symbol": "<div class=\"field-title\">{{___('小章')}}</div>"
       },
       {
        "sentence_index": 5,
@@ -3164,7 +3301,7 @@
     {
      "proposed_id": "jgb/D/contract-locked-after-signing",
      "askable": "合約簽名之後還可以修改嗎，發現內容有問題要怎麼辦",
-     "title": "合約簽約後可以修改嗎？（送出前可編輯、簽名前可取消簽名重編，簽署完成即無法更改，需重新簽一份新合約）",
+     "title": "合約簽約後可以修改嗎？（送出前可編輯、雙方簽名完成前可取消邀請重編，簽署完成即無法更改，需重新簽一份新合約）",
      "unit_ids": [
       "page:web:contracts.sign",
       "page:contracts.show"
@@ -3181,16 +3318,18 @@
       "合約簽名後可以改嗎",
       "合約內容填錯怎麼辦",
       "取消簽名重新編輯",
+      "取消邀請重新編輯",
       "簽約後修改合約"
      ],
      "sentences": [
       "合約如果還沒發送出去，都可以點選小齒輪選擇「編輯合約」進行編輯與修改。",
-      "合約已經發送但雙方都還沒完成簽名前，可以點選小齒輪選擇「取消簽名」，取消之後可以重新編輯這份合約。",
+      "合約已經發送、但雙方還沒簽名完成前（等租客簽回，或租客已簽、等房東簽名），可以點選小齒輪選擇「取消邀請」，取消之後可以重新編輯這份合約。",
       "如果合約已經簽名完成，就無法再修改內容，需要重新創建一份合約才能修改。",
       "合約簽署完成即會生成 PDF 檔案，且電子簽章具有法律效力，無法更改該合約或物件的內容，內容有誤時需要先解約才能再簽署一份新合約。"
      ],
      "sources": [
-      "help:landlordonboarding04lease_zh-Hant.html"
+      "help:landlordonboarding04lease_zh-Hant.html",
+      "code:app/Http/Controllers/ContractController.php"
      ],
      "evidence": [
       {
@@ -3202,6 +3341,16 @@
        "sentence_index": 1,
        "source": "help:landlordonboarding04lease_zh-Hant.html",
        "quote_or_symbol": "若合約內容有缺漏(EX:租客為上傳身分證)或房東想更改合約內容，可於簽名前，點選合約旁的【小齒輪】點選【取消簽名】後重新編輯此份合約"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/ContractController.php",
+       "quote_or_symbol": "# 取消邀請"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/ContractController.php",
+       "quote_or_symbol": "case Contract::CONTRACT_INVITING_NEXT:"
       },
       {
        "sentence_index": 2,
@@ -3233,7 +3382,7 @@
     {
      "proposed_id": "jgb/D/contract-show-panels",
      "askable": "合約檢視頁面可以看到哪些資訊",
-     "title": "合約檢視頁面看得到什麼？（出／承租方資訊、業者、經理人資訊，以及點交點退進行中的提示）",
+     "title": "社宅合約的檢視頁面看得到什麼？（出／承租方資訊、業者、經理人資訊，以及點交點退進行中的提示）",
      "unit_ids": [
       "page:contracts.show"
      ],
@@ -3245,24 +3394,36 @@
      ],
      "instance_applicability": "general",
      "phrasings": [
-      "合約檢視頁面看得到什麼",
-      "合約詳細資料在哪看",
+      "社宅合約檢視頁面看得到什麼",
+      "社宅合約詳細資料有哪些區塊",
       "合約點交中提示"
      ],
      "sentences": [
-      "合約檢視頁面會顯示「出／承租方資訊」「業者」「經理人資訊」等區塊面板。",
+      "社宅合約的檢視頁面會顯示「出／承租方資訊」「業者」「經理人資訊」等區塊面板；一般合約的檢視頁是另一個頁面，沒有下面這兩種點交、點退進行中的提示。",
       "如果合約正在點交流程中，頁面會顯示提示：合約點交中，等待承租方確認，或合約點交中，請確認點交結果，依目前是哪一方在等待而不同。",
       "點退流程中的合約也會有類似的提示：合約點退中，等待承租方確認，或合約點退中，請確認點退結果。"
      ],
      "sources": [
       "code:src/pages/contracts/show/Index.vue",
-      "code:src/pages/contracts/show/_parts/PanelInfoStructure.vue"
+      "code:src/pages/contracts/show/_parts/PanelInfoStructure.vue",
+      "code:src/routes/contracts.js",
+      "code:app/Http/Controllers/ContractController.php"
      ],
      "evidence": [
       {
        "sentence_index": 0,
        "source": "code:src/pages/contracts/show/_parts/PanelInfoStructure.vue",
        "quote_or_symbol": "t('經理人資訊')"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/ContractController.php",
+       "quote_or_symbol": "// 如果是社會住宅，直接強制轉到新版頁面"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/routes/contracts.js",
+       "quote_or_symbol": "path: '/contracts/sh-show/:id'"
       },
       {
        "sentence_index": 1,
@@ -3804,7 +3965,7 @@
     {
      "proposed_id": "jgb/D/move-out-checklist-and-damage",
      "askable": "點退時發現設備損壞要怎麼處理，可以先存草稿嗎",
-     "title": "點退清單怎麼處理設備損壞？（可編輯填入賠償金額與理由，過程可儲存草稿）",
+     "title": "點退時怎麼處理設備損壞？（系統點退可逐項填入賠償金額與理由、可儲存草稿；上傳點退文件則只顯示文件）",
      "unit_ids": [
       "page:contracts.moveOut"
      ],
@@ -3821,12 +3982,14 @@
       "點退賠償金額"
      ],
      "sentences": [
-      "點退清單會列出點交時約定的傢俱項目，如果物件沒有提供傢俱品項，畫面會提示不需要清點。",
+      "使用系統點退時，第一步的點退清單（畫面標題是「設備損壞確認」）會列出點交時約定的傢俱項目，如果物件沒有提供傢俱品項，畫面會提示不需要清點。",
+      "如果改選「上傳點退文件」（上傳已完成簽署的點退文件），第一步只顯示上傳的 PDF，標題是「點退清單」，不會列出傢俱項目，也不能逐項填寫賠償。",
       "點退時如果發現設備有損壞，需要由房客負賠償責任，可以點選「編輯」並填入賠償金額與理由；沒有標註就代表狀況正常。",
       "點退過程可以先按「儲存點退草稿」，不用一次填完，儲存失敗時畫面會提示「草稿儲存失敗，請稍後再試」。"
      ],
      "sources": [
-      "code:src/pages/contracts/move-out/Index.jsx"
+      "code:src/pages/contracts/move-out/Index.jsx",
+      "code:src/components/Lightbox/ContractMoveOutMethod.vue"
      ],
      "evidence": [
       {
@@ -3835,12 +3998,27 @@
        "quote_or_symbol": "t('根據合約，此物件您沒有提供傢俱品項，無需清點。')"
       },
       {
+       "sentence_index": 0,
+       "source": "code:src/pages/contracts/move-out/Index.jsx",
+       "quote_or_symbol": "t('設備損壞確認')"
+      },
+      {
        "sentence_index": 1,
+       "source": "code:src/components/Lightbox/ContractMoveOutMethod.vue",
+       "quote_or_symbol": "t('上傳點退文件')"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/contracts/move-out/Index.jsx",
+       "quote_or_symbol": "!scopeStore.isSystemHandOver.value"
+      },
+      {
+       "sentence_index": 2,
        "source": "code:src/pages/contracts/move-out/Index.jsx",
        "quote_or_symbol": "t('請確認物件點退都沒有問題，若有損壞請輸入賠償金額與理由，無標註表示狀況正常。')"
       },
       {
-       "sentence_index": 2,
+       "sentence_index": 3,
        "source": "code:src/pages/contracts/move-out/Index.jsx",
        "quote_or_symbol": "t('草稿儲存失敗，請稍後再試')"
       }
@@ -3864,7 +4042,7 @@
     {
      "proposed_id": "jgb/D/move-out-bill-generation",
      "askable": "點退完成後會產生什麼帳單，帳單內容包含什麼",
-     "title": "點退會產生什麼帳單？（含提前解約金、點退押金、賠償金，設定期限後發送，租客確認並繳款才算完成）",
+     "title": "點退會產生什麼帳單？（含提前解約金、點退押金、賠償金，設定期限後發送，租客確認並繳款才算完成；免註冊租客送出即完成）",
      "unit_ids": [
       "page:contracts.moveOut"
      ],
@@ -3883,13 +4061,14 @@
      "sentences": [
       "點退流程分兩步：第一步在「點退清單」確認設備有沒有損壞，有損壞就填寫賠償金額與理由；第二步才會進入「點退找補費用」頁面產生帳單。",
       "確認點退清單、填完損壞賠償金額之後，系統會製作點退帳單，內容包含提前解約金、點退押金、賠償金，並要填入帳單期限。",
-      "帳單設定完成後要發送給租客，等租客確認點退內容並完成繳款，才算完成點退程序。",
+      "帳單設定完成後要發送給租客，等租客確認點退內容並完成繳款，才算完成點退程序；免註冊租客例外：點退一送出就直接成為點退完成，系統同時建立點退帳單，不需要租客確認。",
       "點退結算單會不會跟先前已經開立過的發票重複，要看個案的帳單與發票資料，可洽客服協助。"
      ],
      "sources": [
       "help:landlordonboarding04lease_zh-Hant.html",
       "code:src/pages/contracts/move-out/Index.jsx",
-      "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#132"
+      "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#132",
+      "code:app/Services/ContractService.php"
      ],
      "evidence": [
       {
@@ -3906,6 +4085,16 @@
        "sentence_index": 2,
        "source": "help:landlordonboarding04lease_zh-Hant.html",
        "quote_or_symbol": "待租客確認點退和繳款後即完成點退之程序。"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Services/ContractService.php",
+       "quote_or_symbol": "// 租客未註冊，更新合約狀態"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Services/ContractService.php",
+       "quote_or_symbol": "BillService::createMoveOutBill($contract);"
       },
       {
        "sentence_index": 3,
@@ -3938,7 +4127,7 @@
      "sentences": [
       "點退有一個限制：如果合約沒有綁定 JGB 註冊租客帳號，一般情況下不可以點退。",
       "但如果是「免註冊租客」（建檔時就標註不綁定 JGB 帳號），因為點退一送出就立即成立、不需要租客登入同意，所以這種情況仍然允許點退。",
-      "合約狀態必須是「合約成立」「點交完成」「歷史合約」或「完成歷史合約」其中之一才能點退；已經點退完成過的合約不能再次點退。"
+      "合約狀態必須是「合約成立」「點交完成」或「歷史合約」其中之一才能點退；已經點退完成過的合約不能再次點退。"
      ],
      "sources": [
       "code:app/Contract.php"
@@ -4683,7 +4872,7 @@
     {
      "proposed_id": "jgb/D/early-termination-tenant-cancel",
      "askable": "已經送出的提前解約申請，房東或租客要怎麼取消",
-     "title": "誰可以取消已送出的提前解約申請？（房東透過小齒輪取消，租客只有在提前解約確認中狀態才能取消）",
+     "title": "誰可以取消已送出的提前解約申請？（房東透過小齒輪取消；租客只能取消自己發起、還在申請中的提前解約）",
      "unit_ids": [
       "page:web:contracts.early_termination"
      ],
@@ -4701,7 +4890,7 @@
      ],
      "sentences": [
       "房東如果想取消已經送出的提前解約申請，可以點選合約旁的小齒輪，選取「取消提前解約」。",
-      "租客也可以取消提前解約申請，但只有在合約狀態是「提前解約確認中」時才能取消。",
+      "租客只能取消自己發起的提前解約申請，而且只有在這份申請還在進行中、尚未完成確認時才能取消；房東發起的提前解約，租客無法取消。",
       "如果合約不是這個狀態，系統會擋下取消動作並提示「您無法取消這份提前解約」。"
      ],
      "sources": [
@@ -4718,6 +4907,21 @@
        "sentence_index": 1,
        "source": "code:app/Http/Controllers/ContractController.php",
        "quote_or_symbol": "if ($contract->status != Contract::CONTRACT_EARLY_TERMINATION) {"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/ContractController.php",
+       "quote_or_symbol": "if ($contract->status != Contract::CONTRACT_EARLY_TERMINATION) {"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/ContractController.php",
+       "quote_or_symbol": "$earlyTerminationInitiatorRuleKey = empty($contract->early_termination_role_key) ? $this->role->config_rule_key : $contract->early_termination_role_key;"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/ContractController.php",
+       "quote_or_symbol": "// 房東方專用，非合約擁有者，強制導轉"
       },
       {
        "sentence_index": 2,
@@ -4845,10 +5049,11 @@
      "sentences": [
       "提前解約確認後，系統會把合約的到期日直接改成這次解約後的到期日。",
       "帳單產生的排程只會對到期日還沒到的合約產生下一期租金帳單，所以解約日之後不會再自動產生新的租金帳單。",
-      "確認解約當下不會自動刪除或封存已經產生的帳單：開啟「合約預覽帳單」的團隊（預設）在合約成立時就已產生整個租期的帳單，解約日之後的各期都要業者自己封存；關閉預覽帳單的團隊由排程逐月產生，最多多出到下個月的帳單，也要自行封存。"
+      "確認解約當下不會自動刪除或封存已經產生的帳單：一般團隊在合約成立時就已產生整個租期的帳單，解約日之後的各期都要業者自己封存；部分特定合作團隊的帳單是由排程逐月產生，最多多出到下個月的帳單，也要自行封存。"
      ],
      "sources": [
-      "docs:knowledge/jgb-product-facts.md#p914-early-termination-bills"
+      "docs:knowledge/jgb-product-facts.md#p914-early-termination-bills",
+      "code:app/Role.php"
      ],
      "evidence": [
       {
@@ -4865,6 +5070,16 @@
        "sentence_index": 2,
        "source": "docs:knowledge/jgb-product-facts.md#p914-early-termination-bills",
        "quote_or_symbol": "提前解約確認時把合約 `date_end` 改寫為解約日；每日排程 `bill:gen` 只對 `date_end` 不早於當天的合約產生下"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Role.php",
+       "quote_or_symbol": "'IS_OPEN_CONTRACT_BILL_SETTING' => true, // 是否開啟合約預覽帳單"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Role.php",
+       "quote_or_symbol": "'IS_OPEN_CONTRACT_BILL_SETTING' => false, // 是否開啟合約預覽帳單"
       }
      ],
      "not_supported_greps": [],
@@ -4976,7 +5191,7 @@
     {
      "proposed_id": "jgb/D/contract-thinkcloud-signing-variants",
      "askable": "雲想科技簽署畫面依合約類型或範本會有什麼不同",
-     "title": "雲想科技簽署畫面依合約類型有什麼差異？（公會版本合約加補充條款多一個協商條款簽名框；DIY 客製化合約解析失敗時會顯示提示訊息，不會直接出現系統錯誤畫面）",
+     "title": "簽署畫面與客製化契約書 PDF 要注意什麼？（公會版本合約加補充條款多一個協商條款簽名框；上傳的 PDF 底稿無法解析時合約建立不了，要重新輸出再上傳）",
      "unit_ids": [
       "page:web:contracts.thinkcloud"
      ],
@@ -4988,12 +5203,12 @@
      ],
      "instance_applicability": "general",
      "phrasings": [
-      "DIY合約怎麼簽名",
+      "客製化合約 PDF 無法解析",
       "協商條款簽名框是什麼"
      ],
      "sentences": [
       "如果合約是公會版本合約且有補充條款，簽署畫面會多一個「協商條款」簽名框。",
-      "如果是 DIY 客製化合約（自行上傳範本），系統會嘗試用兩種方式解析上傳的 PDF 底稿；如果兩種都解析失敗，畫面會顯示提示訊息（例如請用瀏覽器「列印→另存為 PDF」重新輸出後再上傳），而不是直接跳出系統錯誤畫面，但簽約流程仍需要使用者依提示重新上傳才能繼續。"
+      "用「電子合約 - 客製化契約書」上傳自己的 PDF 底稿建立合約時，系統會先用兩種方式試著解析這份 PDF；兩種都失敗時，合約不會建立、上傳的檔案也不會保留，回應訊息會請使用者確認檔案內容或重新輸出後再上傳；如果是使用了較新壓縮格式的 PDF，訊息會建議用瀏覽器開啟 PDF，透過「列印 → 另存為 PDF」重新輸出。"
      ],
      "sources": [
       "code:app/Http/Controllers/ContractController.php"
@@ -5013,6 +5228,26 @@
        "sentence_index": 1,
        "source": "code:app/Http/Controllers/ContractController.php",
        "quote_or_symbol": "} catch (DiyPdfUnparseableException $e) {"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/ContractController.php",
+       "quote_or_symbol": "// 兩路皆失敗才擋下，清 S3 垃圾檔後回友善訊息；成功路徑完全不動"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/ContractController.php",
+       "quote_or_symbol": "if (!$contract = Contract::createContract($estate, $agentUser, $requestIsExisted, $addAttrs, ["
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/ContractController.php",
+       "quote_or_symbol": "此 PDF 檔案無法解析，請確認檔案內容正確或嘗試重新輸出後再上傳。"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/ContractController.php",
+       "quote_or_symbol": "DiyPdfUnparseableException::CODE_COMPRESSED_XREF"
       }
      ],
      "not_supported_greps": [],
@@ -5108,12 +5343,14 @@
      "sentences": [
       "委託合約用「委託約類型」區分「包租合約」與「代管合約」兩種，也要設定「委託約起迄日期」；用「電子合約 - 客製化契約書」建立的委託合約還要選「委託約範本」，用「紙本簽約」建立的則改成上傳「委託約檔案」。",
       "選擇代管合約時，必須填寫服務費計算模式、服務費幣別、服務費或服務費比例；計算制度、週期與約定日期則是包租與代管都要填，只是欄位名稱不同（代管是「服務費…」、包租是「包租租金…」）。",
-      "選擇包租合約時，則是用「包租租金」及其計算制度、收取頻率、約定日期。"
+      "選擇包租合約時，則是用「包租租金」及其計算制度、收取頻率、約定日期。",
+      "部分特定合作團隊例外：收費分頁看不到服務費計算模式與計算制度，約定日期也不列入完成檢查，租金欄位改叫「零用金」。"
      ],
      "sources": [
       "code:src/pages/entrustedContracts/edit/requirement/Basic.jsx",
       "code:src/pages/entrustedContracts/edit/requirement/Fees.jsx",
-      "docs:knowledge/jgb-product-facts.md#charter-vs-management"
+      "docs:knowledge/jgb-product-facts.md#charter-vs-management",
+      "code:src/pages/entrustedContracts/edit/Index.jsx"
      ],
      "evidence": [
       {
@@ -5130,6 +5367,16 @@
        "sentence_index": 2,
        "source": "code:src/pages/entrustedContracts/edit/requirement/Fees.jsx",
        "quote_or_symbol": "t('包租租金收取頻率')"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/entrustedContracts/edit/Index.jsx",
+       "quote_or_symbol": "const params = state.isBeyond360 ? general : [...general, service_fee_cycle_date]"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/entrustedContracts/edit/requirement/Fees.jsx",
+       "quote_or_symbol": "return '零用金'"
       }
      ],
      "not_supported_greps": [],
@@ -5154,16 +5401,23 @@
       "委託合約編輯步驟"
      ],
      "sentences": [
-      "委託合約編輯畫面分成「房東資訊」「委託條件」「管理方資訊」三個分組，「委託條件」底下又分基本資料、租金費用、收款方式三個分頁，合計 5 個分頁。"
+      "委託合約編輯畫面分成「房東資訊」「委託條件」「管理方資訊」三個分組，「委託條件」底下又分基本資料、租金費用、收款方式三個分頁，合計 5 個分頁。",
+      "部分特定合作團隊的「租金費用」分頁標籤顯示為「零用金與服務費」。"
      ],
      "sources": [
-      "code:src/routes/entrustedContracts.js"
+      "code:src/routes/entrustedContracts.js",
+      "code:src/pages/entrustedContracts/edit/_parts/EditMenu.jsx"
      ],
      "evidence": [
       {
        "sentence_index": 0,
        "source": "code:src/routes/entrustedContracts.js",
        "quote_or_symbol": "group: '委託條件',"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/entrustedContracts/edit/_parts/EditMenu.jsx",
+       "quote_or_symbol": "? t('零用金與服務費')"
       }
      ],
      "not_supported_greps": [],
@@ -5259,8 +5513,9 @@
      ],
      "sentences": [
       "委託合約的收費分頁要設定計算模式、週期、單價、幣別等資訊。",
-      "分頁上會提示：依內政部租賃住宅市場發展及管理條例規定，一般租賃契約押金額度最高不得超過兩個月租金。",
-      "分頁也可以參考支付金額與參考服務費金額，並支援跨月計算或當月分算兩種計費方式。"
+      "使用中文介面時，分頁上會提示：依內政部租賃住宅市場發展及管理條例規定，一般租賃契約押金額度最高不得超過兩個月租金。",
+      "分頁也可以參考支付金額與參考服務費金額，並支援跨月計算或當月分算兩種計費方式。",
+      "部分特定合作團隊的這個分頁標題是「零用金與服務費」，看不到計算模式、計算制度、參考支付金額與參考服務費金額，也不會出現上面的押金提示。"
      ],
      "sources": [
       "code:src/pages/entrustedContracts/edit/requirement/Fees.jsx"
@@ -5277,9 +5532,24 @@
        "quote_or_symbol": "t('根據中華民國內政部(租賃住宅市場發展及管理條例)規定，一般租賃契約押金額度最高不得超過兩個月租金。')"
       },
       {
+       "sentence_index": 1,
+       "source": "code:src/pages/entrustedContracts/edit/requirement/Fees.jsx",
+       "quote_or_symbol": "state.isLangZhTw"
+      },
+      {
        "sentence_index": 2,
        "source": "code:src/pages/entrustedContracts/edit/requirement/Fees.jsx",
        "quote_or_symbol": "t('跨月計算')"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/entrustedContracts/edit/requirement/Fees.jsx",
+       "quote_or_symbol": "return '零用金與服務費'"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/entrustedContracts/edit/requirement/Fees.jsx",
+       "quote_or_symbol": "!state.isBeyond360"
       }
      ],
      "not_supported_greps": [],

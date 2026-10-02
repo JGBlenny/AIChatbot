@@ -2,7 +2,7 @@
 
 > **現況**（`endpoint_progress.py`，2026-09-29，commit `35b86d77`）：`已審細目 pm 369／535、prospect 80／121；頁面 pm 89／183、prospect 27／183`（A 52／63、B 70／79、C 56／81、D 51／104、E 86／96、F 12／33、G 20／26、H 4／5、I 18／48；prospect 各架未審：A 2、B 1、C 4、D 7、E 5、F 4、G 2、H 1、I 15）。
 >
-> **進度（2026-10-03）**：S0 `1286d00a`、S1 `46234eb0` 已 commit；S2 已跑完（pass 52／doubt 8，見 §6 S2），累計約 1.95M 超過第一波停點 1.8M ⇒ **⏸ 停在 S3 之前，等業主裁**（是否越過停點、審核單逐組回覆）。終點指標仍為 `已審細目 pm 369／533、prospect 80／120`（2026-10-03 重跑）。
+> **進度（2026-10-03）**：第一波收案——S0 `1286d00a`、S1 `46234eb0`、停點紀錄 `6a7362e1`、S3 `a9c377df` 已 commit。**現值 `已審細目 pm 420／533、prospect 98／120`**（已審 424 條；S3 後重跑）。業主 2026-10-03 開第二波（§3），S4 進行中。
 >
 > **本計畫預期**：
 > - S0 已審數 +0。hold 2 條刪除後，分母 pm 535→533、prospect 121→120（兩條皆未審：`login-sso-redirect-no-duplicate-buttons` 掛 pm＋prospect，`biglandlord-escrow-owner` 只掛 pm）。
@@ -196,13 +196,32 @@ S3 commit 後停下，回報終點指標、成本與 §6 紀錄。第二波在�
 
 - **允許集合**：`p920-w2/allowed.json`，共 40 條＝D／E 未審且 9.16 S3 先審為 doubt 的細目。兩來源推導：舊 scratchpad 的 `p916-s3-results.json`，以及 `review-sheet-9.16-S3-DE-20260927.md`。不等或條數≠40 ⇒ 停。
 - **與 S1 的差異**：9.16 之後，9.18 S1（客戶名改寫、IoT／點退例外）與本計畫 S0 都動過 D／E 部分細目。每條先比對 doubt 理由在現行文字上是否仍成立；已被處理的記為「已由 9.18／9.20 S0 處理」，不再改。
+  - **記錄格式**：已處理的細目**不進修正表**（修正表每列都必須對到一筆 drafts 差異，否則 drafts_diff (a) 判 `log rows with no diff` FAIL），改列在修正紀錄獨立一節 `## 已由前案處理`，每條一行 `- \`<id>\`：<哪一案處理、現行文字為何已不成立>`。
+  - 預跑（drafts 未改的 scratch 副本 `p920-w2/pc0/`）：只有該節 ⇒ `(a) fix-log rows: 0; unlogged diffs: 0; log rows with no diff: 0`、PASS；負對照：同一細目改寫成無差異的表格列 ⇒ `log rows with no diff: 1`、FAIL。
+  - **已由前案處理也要獨立核對**：`## 已由前案處理` 的每一條，連同 9.16 doubt 理由與現行文字，一併放進 D／E 修正核對的 fresh verifier 包，判「過／不過」；判「不過」的回到一般修正（D1）。主 session ⛔ 自行認定後不送核對。
+  - **涵蓋檢查（S4 驗收新增一項）**：`p920-w2/coverage_check.py <allowed.json> <修正紀錄>`——修正表 id ∪ `## 已由前案處理` id ∪ `## 停下交業主` id ＝ `allowed.json` 40 條，兩兩不交、不得有允許集合外的 id；不符 exit 1。
+    - 預跑：正對照（38 列修正表＋2 條已處理）⇒ `union 40`、PASS；負對照：漏 1 條 ⇒ `missing 1`、FAIL；同一 id 同時在修正表與已處理 ⇒ `in both table and handled`、FAIL。
+- **終點指標（+0，S6 的前置）**：開工前與完成後都須為 `已審細目 pm 420／533、prospect 98／120`；**已審集合維持 424 條**（取代 S1 驗收中的「373」）。
 - 其餘步驟、驗收、停止、擁有與 S1 相同，把架換成 D／E：
   - 修正紀錄 `inputs/fix-log-9.20-S4-DE-<日期>.md`；
   - verifier 分 2 包（D、E）；
   - 重生成 `--expect-reviewed-kept <373＋S3 核可數>`；
   - A～C、F～I 位元組不變；
   - scratch 目錄 `p920-w2/`。
-- **預算**：約 0.65M。
+- **預算**：約 0.65M；**中途停點：S4 單片實際超過 0.9M 即停下交業主**（業主 2026-10-03「a」）。
+- **已預跑**（2026-10-03，S3 commit `a9c377df` 後；repo 未動）：
+  - ⚠️ **舊 scratchpad 已清空**：9.16 的 `p916-s3-results.json`（b25be7ef）、S0／S1 的 `p920-s0/`、`p920-w1/`、jgb2 匯出（ea138b18）都不在。以下逐項重建，全部放本 session `scratchpad/p920-w2/`。
+  - **允許集合第二來源重建**：用 `extract_verdict.py` 從 9.16 S3 五批先審代理的 transcript（`~/.claude/projects/<專案>/b25be7ef…/subagents/agent-{a53c7110…,a01b4e6e…,aea14d47…,a78b4aed…,aefbdc2a…}.jsonl`，09-27 19:10～19:57）機械重取 raw ⇒ `p916-recovered/p916-s3-raw-S3B{1..5}.txt`，共 138 條（26／29／29／30／24）。
+    - 與 repo 審核單 `review-sheet-9.16-S3-DE-20260927.md` 比對：id 集合相同、138 條判定逐條相同；doubt 兩邊都是 40 條且集合相同。
+    - 40 條都在現行正本、都未審；D／E 其餘未審 23 條在 9.16 全是 pass（＝⚠️ 組 pass），合計 63，與 S5 分母一致。
+    - `allowed.json` 共 40 條（D 30／E 10）；允許集合 evidence 152 筆，越界 0。
+  - **工具重建**：`review_pipeline/` 範本複製後，從 S0 session 的 transcript（`ea138b18….jsonl` 中 S0 的 Bash 指令原文）逐字重放兩段 patch（`edit_fine.py` 的逐架 INDENT／TRAIL＋`remove_fine`；`canon_check.py` 讀詞表＋hold 規則），並逐字還原 `customer-terms.json`（18 詞，`(?i)` 改區段旗標）與 `name_scan.py`。
+    - TRAIL 重新實測（`tail -c1`）：B／D／I 為 `\n`，其餘 `}`，與 patch 值相同。
+    - 九架 roundtrip 全 True；H 改 indent 1 的負對照 exit 1。
+    - `name_scan`：自檢 18／18 正對照命中、負對照 0；repo 正本 539 條 0 命中、「系統上」6，exit 0；scratch 副本放回「Meta Capital」⇒ 命中 1、exit 1。
+  - **jgb2 釘住匯出**重建於 `scratchpad/jgb2-b2ee2ac/`（210M）；正對照 `checkIotBill` 在 `app/Bill.php` 命中 11（與 S0 相同）。
+  - **步驟 0**：備份 `p920-w2/backup/`（drafts 九架、canon、runs 的 `*-20261001-s1-920*`；01:11:25），`diff -r`／`cmp` 相同；git 對 canon 與 runs 為空。紅燈基準沿用 S3 寫入後同一工作樹的全套結果（9 條，與 §12-2 名單相同）。
+  - 重生成預期：`--expect-reviewed-kept 424 --expect-open-questions 54`（424＝373＋S3 核可 51）。
 
 #### S5 — D／E 63 條重新先審（+0）
 
@@ -233,6 +252,8 @@ S3 commit 後停下，回報終點指標、成本與 §6 紀錄。第二波在�
   - 已審細目命中客戶名：停下逐條交業主裁。
   - 終審：D1＋「安全組過」。
 - **業主裁決（2026-10-01）**：「核可，ASK」——核可大綱＋S0＋S1；執行模式 ASK（每片回報）。S2～S6 開工前各自再送就緒審查。
+- **業主裁決（2026-10-03）**：「a」——對選項「(a) 上限提高到 4.2M（建議）；另設中途停點：S4 實際花費超過 0.9M 先停下交業主」。⇒ 開第二波（D／E，S4～S6）；**上限 3.5M→4.2M**；S4 單片超過 0.9M 即停。執行模式沿用 ASK。
+- **業主裁決（2026-10-03，S4 中途停點）**：「a」——對選項「(a) 越過 S4 停點，跑完第二波，總上限提高到 4.5M（建議）；S5 開跑前再回報一次實際累計」。⇒ 越過 S4 中途停點 0.9M；**上限 4.2M→4.5M**；S5 開跑前回報累計。
 
 ## 4. 停止條件（全片共用）
 
@@ -257,7 +278,10 @@ S3 commit 後停下，回報終點指標、成本與 §6 紀錄。第二波在�
 - **收尾審查（fresh plan-verifier）＝READY** ⇒ 大綱＋S0＋S1 交業主核可（`next_gate: user_approval`）。
 - **S2 第 1 輪（fresh plan-verifier）＝READY**（2026-10-01）⇒ 依業主核可開跑（ASK 模式）。
 - **S3 第 1 輪（fresh plan-verifier）＝READY**（2026-10-03，審含「已預跑」與「對 repo 執行的步驟」）⇒ 依業主核可開跑。
-- S4、S5、S6 開工前各自再送就緒審查。
+- **S4 第 1 輪（fresh plan-verifier）＝REVISE**（2026-10-03）：P2×2——(1) 計畫開頭現況仍寫「停在 S3 之前、369／533」，S4 沿用 S1 驗收的「已審 373」與自身 `--expect-reviewed-kept 424` 矛盾；(2) 「已由前案處理」沒有記錄格式，若寫成修正表列會讓 drafts_diff (a) FAIL。處置：兩項皆 **FIX**（開頭改為現值 420／98、S4 寫明不變基準 424；新增 `## 已由前案處理` 節格式並預跑正負對照）。送第 2 輪。
+- **S4 第 2 輪（fresh plan-verifier）＝REVISE**（2026-10-03）：P2×1——「已由前案處理」由主 session 單方認定、不經核對，也沒有檢查 40 條是否全數有去處。⇒ **第二次自動 REVISE，停止重送、逐條處置**：**FIX**（已處理條目一併送 verifier 核對；新增 `coverage_check.py` 涵蓋檢查並預跑正負對照）。依規則開一次收尾審查（新的就緒期）；若再判 REVISE 就暫停交業主。
+- **S4 收尾審查（fresh plan-verifier）＝READY**（2026-10-03）⇒ 依業主核可開跑。
+- S5、S6 開工前各自再送就緒審查。
 
 ## 6. 執行紀錄
 
@@ -398,3 +422,34 @@ S3 commit 後停下，回報終點指標、成本與 §6 紀錄。第二波在�
 - **fresh outcome verifier＝CONFIRMED**（5 項＋正對照全過）：自行由審核單重算安全組 51 條，與 approved 差集為 ∅；`.md` diff 只有 51 行 reviewed、`jgb.json` 只有 102 個 reviewed 欄位與 `canon_sha256`（`3f266ad6…`→`b9691255…`）；終點指標與紅燈集合逐字相同。附記 P3：HANDOFF 現況先寫「S3 已 commit」，於本 commit 成立；P4：`make audit` 由主 session 實跑 PASS（verifier 依規不跑）。
 - **成本**：S3 約 0.3M（主 session 預跑與執行約 0.15M、就緒審查約 0.07M、outcome verifier 約 0.1M）⇒ **9.20 累計約 2.25M**（上限 3.5M）。
 - **⏸ 第一波停點**：S3 commit 後停下；第二波（D／E，S4～S6）須業主明示。
+
+### S4（2026-10-03）
+
+- **就緒審查**：第 1 輪 REVISE、第 2 輪 REVISE、收尾審查 READY（§5）。
+- **允許集合與工具**：見 §1 S4「已預跑」。備份 `p920-w2/backup/`（01:11:25，早於第一次 repo 編輯 01:22:17）。
+- **修正**：
+  - 主 session 逐條對釘住匯出確認 doubt 證據後改寫，ops 存 `p920-w2/ops.json`（38 條）；新增 evidence 61 筆逐字命中，負對照 `case 'repair_complete'` ⇒ 0。
+  - 先套 scratch 副本 `p920-w2/pc/`、再套 repo，D／E 與試套逐位元組相同；A～C、F～I 與備份 `cmp` 相同。
+  - 修正紀錄 `inputs/fix-log-9.20-S4-DE-20261003.md`：修正表 96 列（改 90／新增句 4／刪句 2）、已由前案處理 2 條（`contract-payment-method`、`contract-rentbasic-latefee`）；`coverage_check` ⇒ `union 40`、PASS；drafts_diff (a) `log rows with no diff: 0`。
+  - 內容反轉 1 條：`jgb/E/bill-tenant-unverified-draft-lock`——合約頁提示「租客未驗證時帳單停在草稿」，但現行送出路徑沒有任何驗證狀態檢查（`BillController.php` 的 `case 'send':` 只查擁有者、簽核與金額；曾經的驗證判斷只剩註解，見 `app/Services/BillService.php` 的 `email_verified_at` 兩行與 `ContractController.php` 的 `notify_tenant_status` 註解）⇒ 依業主裁決「以程式為準」改寫，並刪去以該限制為前提的句 2。畫面文案與程式不一致，屬 jgb2 缺陷候選。
+- **核對**：
+  - D 包 fresh verifier：69 項 **66 過／3 不過**（明細見修正紀錄「核對過程」）；已由前案處理 2 條皆過。
+  - 不過 3 項依 D1 修一次（`ops-recheck-D.json`，新 evidence 4 筆逐字命中），待複核。
+  - E 包（29 項）尚未核對。
+- **⏸ 中途停點（業主 2026-10-03「S4 單片超過 0.9M 即停」）**：
+  - S4 目前約 0.8M（估算）：代理實數——就緒審查 3 輪 0.07＋0.11＋0.06M、D 包核對 0.22M；主 session（重建工具、允許集合、40 條查證與改寫）約 0.35M。
+  - 剩餘必要步驟：E 包核對約 0.1M、D 複核約 0.05M、重生成與驗收約 0.05M、outcome verifier 約 0.2M ⇒ S4 合計約 1.2M，**必然超過 0.9M** ⇒ 在送 E 包前停下交業主。
+  - 現況：repo 的 drafts-D／E 已改（未 commit）；正本（canon）、runs 皆未動。回滾＝以 `p920-w2/backup/drafts/` 還原 drafts-D／E。
+- **越過中途停點後（業主「a」）**：
+  - E 包 fresh verifier：29 項 **CONFIRMED 29／29**（刪句 2 項確認剩下的句子成立）。
+  - D 包複核（依 D1 修過一次的 3 條、4 項）：**CONFIRMED 4／4**。
+  - 修正紀錄修正表 96 列全部「過」或「—」；附建議（不阻擋）列於「核對過程」，延後。
+- **差異比對**（`ABCDEFGHI`）：(a)～(g) PASS（`(g) evidence remaps 33; new out-of-range: 0`）；drafts-A～C、F～I 與備份 `cmp` 相同；`coverage_check` ⇒ `union 40`、PASS。
+- **重生成**：
+  - scratch 試跑後對 repo 跑（`--runs-out` 寫 scratch 再複製回 repo）：`已審保留：424 條／丟棄：0 條`、57 粗目／539 細目、open_questions 54 則（扣表頭後內文與 S1 版相同）；DSP-068 刪除清單與 S1 版相同（26 行／30 字元）。repo 正本與試跑、3 個 runs 產出逐位元組相同。
+  - `canon_check` ⇒ `blocks changed 38 (in allowed 38)`、`mismatches: 0`，客戶名 0、「系統上」6；A～C、F～I `.md` 與備份相同。
+  - `name_scan` ⇒ 539 條、0 命中。`load_canon_or_die` 通過（`canon_sha256 fee40221…`）。
+- **終點指標 `已審細目 pm 420／533、prospect 98／120；頁面 pm 109／183、prospect 40／183`**（不變，符合 +0；已審 424）。
+- **單元與 audit**：`9 failed, 3931 passed, 3 skipped`，紅燈集合減去基準＝∅；`make audit` OVERALL PASS。
+- **fresh outcome verifier＝CONFIRMED**（6 項全過；自行重跑 coverage／drafts_diff／canon_check 與負對照，jgb.json 逐 id 比對已審 424 集合不變、只有 38 條允許集合內細目變動；65 筆新 evidence 逐字命中；自抽 10 句對釘住匯出全部成立；終點指標逐字相同）。附記：P4 本節「註解掉」未指明位置 ⇒ 已補上；P3 `bill-tenant-unverified-draft-lock` 只寫「合約頁」，同一提示也出現在帳單編輯頁、委託合約頁與租客名單頁 ⇒ 已列於修正紀錄延後建議，留待下一份計畫。
+- **成本**：S4 約 1.3M（代理實數：就緒審查 3 輪 0.24M、修正核對 D 0.22M／E 0.16M／D 複核 0.13M、outcome verifier 約 0.15M；主 session 約 0.4M，估算）⇒ **9.20 累計約 3.55M**（上限 4.5M）。
