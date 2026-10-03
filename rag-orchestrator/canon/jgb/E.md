@@ -851,6 +851,7 @@ JGB 把「社會住宅」設計成一種團隊身份，跟「個人房東/代理
   - {text: "差額發票字軌", source: "draft:outline-20260920", status: proposed}
   - {text: "差額怎麼算", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/balanceInvoices/groups/_parts/InvoiceTable.vue, code:app/Services/BalanceInvoiceService.php, code:src/use/config/balanceInvoices/useBalanceInvoicesActions.ts, code:app/Console/Kernel.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -1177,6 +1178,7 @@ JGB 的線上收款金流有國泰世華、永豐銀行、中國信託、藍新 
   - {text: "個人房東可以開藍新嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "公司統編沒填能開藍新嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/UserController.php, code:src/pages/users/payment/routerView/Add.vue]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -1190,6 +1192,7 @@ JGB 的線上收款金流有國泰世華、永豐銀行、中國信託、藍新 
   - {text: "國外卡要另外申請嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "藍新付款方式預設開哪些", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/UserController.php, docs:knowledge/jgb-product-facts.md#p914-credit-installment, code:config/rolepayment.php, code:src/pages/users/payment/_parts/Newebpay.vue]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -1244,6 +1247,7 @@ JGB 的線上收款金流有國泰世華、永豐銀行、中國信託、藍新 
   - {text: "線上收款要報稅嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "資金流向申報", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/UserController.php, docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#102]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general

@@ -2,7 +2,7 @@
   "audience": "jgb",
   "budget_tokens": 0,
   "business_types": [],
-  "canon_sha256": "fee402219cb9b88ed67b8b7f8ec3b6df380023f61b08335c4c97cf5256dfde72",
+  "canon_sha256": "7537689a6c3b81cd777e9af03928d0565bdef8afc2e2956f97f2159b3cda4664",
   "coarses": [
     {
       "fines": [
@@ -11612,8 +11612,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-03",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "help:Landlordonboarding09Socialhousing_zh-Hant.html",
@@ -11651,8 +11651,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-03",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "help:Landlordonboarding09Socialhousing_zh-Hant.html"
@@ -11693,8 +11693,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-03",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "help:Landlordonboarding09Socialhousing_zh-Hant.html",
@@ -11746,8 +11746,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-03",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/contracts/edit/rentBasic/SocialHousing.vue",
@@ -11786,8 +11786,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-03",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/contracts/edit/rentBasic/General.vue",
@@ -11824,8 +11824,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-03",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "help:Landlordonboarding09Socialhousing_zh-Hant.html",
@@ -11864,8 +11864,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-03",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/contracts/edit/payment/SocialHousing.vue",
@@ -11916,8 +11916,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-03",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/contracts/edit/publicNotary/SocialHousing.vue",
@@ -11955,8 +11955,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-03",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "help:Landlordonboarding09Socialhousing_zh-Hant.html",
@@ -11999,8 +11999,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-03",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "help:Landlordonboarding09Socialhousing_zh-Hant.html",
@@ -12037,8 +12037,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-03",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "help:Landlordonboarding09Socialhousing_zh-Hant.html",
@@ -12076,8 +12076,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-03",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/contracts/edit/landlordLicense/Index.vue"
@@ -12113,8 +12113,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-03",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "help:Landlordonboarding09Socialhousing_zh-Hant.html",
@@ -12152,8 +12152,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-03",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/contracts/edit/tenantBasic/Index.vue",
@@ -12190,8 +12190,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-03",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/contracts/edit/tenantHousehold/Index.vue"
@@ -12265,8 +12265,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-03",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "help:Landlordonboarding09Socialhousing_zh-Hant.html"
@@ -12304,8 +12304,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-03",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/contracts/edit/moveIn/Index.vue",
@@ -12344,8 +12344,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-03",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/use/useEditStore.js",
@@ -12404,8 +12404,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-03",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:app/Http/Controllers/ContractController.php",
@@ -12465,8 +12465,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-03",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:resources/views/contract/sign.blade.php",
@@ -12515,8 +12515,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-03",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:database/migrations/2026_06_17_000002_create_contract_esign_table.php",
@@ -12573,8 +12573,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-03",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "help:landlordonboarding04lease_zh-Hant.html",
@@ -12660,8 +12660,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-03",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:resources/views/contract/show.blade.php",
@@ -12698,8 +12698,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-03",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:resources/views/contract/show.blade.php",
@@ -12788,8 +12788,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-03",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/contracts/sign/_parts/EmergencyContact.jsx",
@@ -13143,8 +13143,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-03",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/contracts/move-out/Index.jsx",
@@ -13279,8 +13279,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-03",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:app/Contract.php"
@@ -13322,8 +13322,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-03",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "help:landlordonboarding04lease_zh-Hant.html"
@@ -13366,8 +13366,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-03",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/contracts/move-out/Index.jsx",
@@ -13412,8 +13412,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-03",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "docs:knowledge/jgb-product-facts.md#p914-moveout-cancel"
@@ -14257,8 +14257,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-03",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/entrustedContracts/edit/requirement/Basic.jsx",
@@ -14299,8 +14299,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-03",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/routes/entrustedContracts.js",
@@ -14419,8 +14419,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-03",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/entrustedContracts/edit/requirement/Fees.jsx"
@@ -17701,8 +17701,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-03",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/balanceInvoices/groups/_parts/InvoiceTable.vue",
@@ -18873,8 +18873,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-03",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:app/Http/Controllers/UserController.php",
@@ -18924,8 +18924,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-03",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:app/Http/Controllers/UserController.php",
@@ -19111,8 +19111,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-03",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:app/Http/Controllers/UserController.php",
