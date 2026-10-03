@@ -221,11 +221,15 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 - 規約 | `.claude/skills/outline-curation/steps/00c-topic-first-drafting.md` | 起草與逐句對源規則（釘住 commit、死碼掃描、標籤取自 `t()`、實作字眼只進 evidence、衝突不選邊）
 - 分母 | `.claude/skills/outline-curation/steps/00-feature-surface.md` | 步 0a 頁面樹 183 頁（`page_surface.py`）；0b 頁×身分只作粒度對照（有細目≠答對）
 - 決策 | `.claude/DECISIONS.md` | DSP-065／065a（分母＝頁面樹、剔除無頁路由）、DSP-066（代理先審業主終審）、DSP-067（三層、57 粗目、210 條不當材料）
-- 交接 | `.kiro/specs/knowledge-outline-and-intent-architecture/HANDOFF-20260923.md` | 本線交接正本：任務目標、三層產出、Plan 9.10 六片狀態、驗收成果與可重跑證據、四件待裁、紀律與陷阱
+- 交接 | `.kiro/specs/knowledge-outline-and-intent-architecture/HANDOFF-20260923.md` | 本線交接正本：開頭＝終點指標現值與一句話現況；§12＝已審推進流程（9.15～9.22 各計畫、固定流程、踩過的坑、未審與待裁）
+- 計畫 | `.kiro/specs/knowledge-outline-and-intent-architecture/inputs/plan-9.22-remaining-14-closeout-20261003.md` | 最近一份已審推進計畫；§6「9.22 停止」＝剩 14 條的清單與下一步（D1「修整條」規則在 plan-9.21 §1）
+- 判準 | `scripts/audit/checks/outline_plan_discipline.py` | 不變量 43：寫入須附全數逐句核對證據、本線 commit 須附驗證證據、計畫須有 plan-meta；`--extract` 取出驗證代理證據（規則與已知限制在 docstring、HANDOFF §12-2）
+- 守門 | `.githooks/commit-msg` | commit 當下執行已 commit 的不變量 43 檢查器（`git config core.hooksPath .githooks`）；檢查器、hook、`check_invariants.sh` 受 `.claude/settings.json` 權限規則保護
+- 證據 | `.kiro/specs/knowledge-outline-and-intent-architecture/verification/` | 驗證代理證據 JSON（`Verified-by:` 指向此處；base＝父 commit）
 - 計畫 | `.kiro/specs/knowledge-outline-and-intent-architecture/inputs/plan-9.10-three-level-canon-20260921.md` | 正本改三層的程式面 Plan（S1–S6，各片擁有檔案／驗收／停止條件；量測表）
 - 對照 | `.kiro/specs/knowledge-outline-and-intent-architecture/inputs/coarse-ids-20260921.md` | 粗目 id 凍結表 57 列（生成腳本的唯一來源，⛔ 不機械轉寫、⛔ 生成後不可改）
 
-⚠️ **工作樹的 `rag-orchestrator/canon/jgb/` 已於 2026-09-23 換成新正本**（57 粗目／515 細目，`canon_sha256 = 9b67e763…`，S3 完成並驗過）；舊 210 條封存於 `docs/archive/2026-09/canon-pre-dsp067/`（2026-09-23 已移出工作樹，內容在 git `c06575a9`）。⚠️ 新正本 **515 條全未審 ⇒ 模型一條都看不到**，目錄為空 ⇒ 線上行為與部署版本不變。S1／S2／S3／S4／S6 已落地並各經 verifier CONFIRMED，**只剩 S5 清除舊格式**；預算常數表經量測**不改**。⛔ 未進產線——提示詞規則仍是一跳引用，見 HANDOFF §5-2。
+⚠️ **正本 `rag-orchestrator/canon/jgb/` 現況（2026-10-04 查 `jgb.json`）：57 粗目／539 細目、已審 525 條**——只有已審細目對模型可見；終點指標與未審清單以 HANDOFF 開頭與 §12-4 為準（數字每次重跑 `endpoint_progress.py`，⛔ 照抄本行）。舊 210 條封存於 `docs/archive/2026-09/canon-pre-dsp067/`（內容在 git `c06575a9`）。Plan 9.10 程式面各片狀態見 HANDOFF §3。
 
 ## jgb2 串接契約 {#jgb2-chat-integration}
 

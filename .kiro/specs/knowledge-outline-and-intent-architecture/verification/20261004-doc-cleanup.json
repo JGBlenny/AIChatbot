@@ -1,0 +1,19 @@
+{
+ "kind": "change",
+ "verdict": "CONFIRMED",
+ "base": "42532f938c55eccae41039f2706836e0a4a0b51b",
+ "claim": "doc cleanup: HANDOFF-20260923.md and .claude/MAP.md corrections as of HEAD 42532f93 working tree",
+ "p1_p2": 0,
+ "findings": [
+  "endpoint rerun identical to HANDOFF header (pm 519/533, prospect 116/120, per-shelf A-I match)",
+  "commit ids fd89adaa/4f13a0b5/1a255bb7/42532f93 and S3 refutation+restore match git log and plan-9.22 section 6",
+  "limits 4/8/9 reproduced on scratch copies (if-false wrap, printf -v, eval, second audit rule; plan-name escapes, mixed direction, weak consent strings; extract same-line/truncated fallback) with negative controls",
+  "Meta Capital 0 in canon, 1 in 1286d00a parent (positive control); test history matches 4f13a0b5 diff",
+  "jgb.json 57/539/525, 14 unreviewed ids equal plan-9.22 section 0; open-questions s1-922 newest, 54 items, body identical since 20260927",
+  "P3: list of 14 pointed to plan-9.22 section 6 but full ids live in section 0",
+  "P3: verification-depth bullet understates (fines had multiple pre-reviews), conservative direction",
+  "P3 pre-existing outside diff: MAP agentic-mcp CATALOG line still says 57/515 all unreviewed",
+  "P4: MAP dropped moved-out-of-worktree note for canon-pre-dsp067 (absent on disk); limit numbering order; 27 lines vs 28 occurrences"
+ ],
+ "source_transcript": "agent-a1f4993ceb8720fb4.jsonl"
+}
