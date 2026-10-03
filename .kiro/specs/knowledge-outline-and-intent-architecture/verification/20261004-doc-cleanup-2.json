@@ -1,0 +1,18 @@
+{
+ "kind": "change",
+ "verdict": "CONFIRMED",
+ "base": "b847ca86097f67672914c4aeae082b3a7b309447",
+ "claim": "doc cleanup follow-up: MAP.md and HANDOFF-20260923.md corrections on HEAD b847ca86 working tree",
+ "p1_p2": 0,
+ "findings": [
+  "1 PASS: rag-orchestrator/canon/jgb.json (the brief path canon/jgb/jgb.json does not exist) has 57 coarses, 539 fines; 525 have reviewed_by=owner and reviewed_at set, 14 have neither; positive control fine count 539 is non-zero",
+  "2 PASS: plan-9.22 section 0 lists 6 doubt plus 8 pass ids; regex extract of section 0 gives 14 ids equal to the jgb.json unreviewed set (True); section 6 subsection 9.22 stop holds handling and next steps but not the full id list, so the old pointer was imprecise",
+  "3 PASS: docs/archive/2026-09/canon-pre-dsp067 absent on disk (positive control canon-pre-library present); git show --stat c06575a9 lists 11 files under that path; HEAD tracks 0 files there; 2c308bc6 moved it out",
+  "4 PASS: plan-9.21 section 6 records W1-S3 added 37 and W2-S3 added 27 (64 total); each wave spot-checked 12 fines with 12/12 holding (24 total), so 40 had no post-write second check; W1-S1 records the separate fix check",
+  "5 PASS: grep -c on rag-orchestrator/canon/jgb/D.md gives 27 lines (28 occurrences); Meta Capital 0 in canon with positive control count 114",
+  "6 PASS: HEAD order was 1-6,8,9,7; new order 1-9; all 9 items identical after stripping trailing punctuation; prefix unchanged; same character multiset and length 878; list ends with 9 and a full stop",
+  "P3 confidence high: new MAP CATALOG phrase saying only reviewed fines are visible to the model overstates; canon_assembler.build_outline includes unreviewed fines title-only (text empty, citable False); same wording already existed at HEAD in the MAP warning line; recheck grep -n citable rag-orchestrator/services/agent/canon/canon_assembler.py",
+  "P4 confidence high: the edited MAP CATALOG line keeps the HEAD parenthetical saying the 210 fines are not in git right next to the new text saying they are in git c06575a9; not introduced by this diff; recheck grep -n on that phrase in .claude/MAP.md"
+ ],
+ "source_transcript": "agent-ac828f5f2aea7259b.jsonl"
+}
