@@ -1,4 +1,14 @@
 {
+  "permissions": {
+    "deny": [
+      "Edit(scripts/audit/checks/outline_plan_discipline.py)",
+      "Edit(//Users/chenqinghuang/dev/work/AIChatbot/scripts/audit/checks/outline_plan_discipline.py)",
+      "Edit(.githooks/**)",
+      "Edit(//Users/chenqinghuang/dev/work/AIChatbot/.githooks/**)",
+      "Edit(scripts/audit/check_invariants.sh)",
+      "Edit(//Users/chenqinghuang/dev/work/AIChatbot/scripts/audit/check_invariants.sh)"
+    ]
+  },
   "hooks": {
     "PreToolUse": [
       {

@@ -1,0 +1,22 @@
+{
+ "kind": "change",
+ "verdict": "CONFIRMED",
+ "base": "1a255bb70a5c57ba609f38ca8ea221f81acca0f8",
+ "claim": "invariant 43 final (checker, hook, audit block, settings.json deny rules, HANDOFF bullet) as of HEAD 1a255bb7 working tree",
+ "p1_p2": 0,
+ "findings": [
+  "N1 fixed: post-verification sentence/title edits and same-count content swaps rejected by hook and worktree audit",
+  "N2 fixed: --extract reads SubagentHandback from agent-acf9dcd489c21c52e.jsonl with correct base; wrong base rejected",
+  "N3 literal repros fixed (FAIL=0, CODE_REGRESSIONS=(), exit 0, Makefile recipe change caught)",
+  "N5 fixed as specified (decrease w/o consent, fake/missing keys rejected; 期待/final consent accepted)",
+  "N6 listed names fixed; N7 ``` fence fixed",
+  "P3 F1: check_invariants.sh/Makefile guard is pattern-only; if-false wrap of the block, printf -v FAIL, read FAIL, eval, second audit: rule all yield guard PASS with no evidence",
+  "P3 F2: HANDOFF limit 4 overstates protection for check_invariants.sh/Makefile; limits list omits F1/F3/F4",
+  "P3 F3: plan names 規劃/企劃/方案/.rst/no-extension escape plan-meta",
+  "P3 F4: mixed direction (one key up, other down) needs no consent; 業主未同意/-/待 業主確認 accepted as consent",
+  "P4 F5: W compares stored content_sha256, not recomputed; stale-sha hand edit passes W but fails closed at runtime load_canon_or_die",
+  "P4 F6: plan-meta in ~~~ or indented code counts; extract accepts empty/short --base (B re-checks)",
+  "P4 F7: Write-tool coverage of Edit deny rules not independently tested"
+ ],
+ "source_transcript": "agent-a28885dd14f739723.jsonl"
+}

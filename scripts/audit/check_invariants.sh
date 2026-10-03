@@ -918,6 +918,33 @@ else
   echo "✅ PASS（全部向量索引皆為 HNSW）"
 fi
 
+# >>> 不變量 43（區塊內容由檢查器以 BLOCK_SHA 釘住；改這段＝改檢查器，須附驗證證據）
+echo "═══ 不變量 43：知識大綱線的計畫與 commit 紀律 ⛔ 靠人記得 ═══"
+# 源起（2026-10-03，業主）：「終點指標優先／預期 +0 須業主同意」「寫入驗收全數逐句核對、⛔ 抽樣」
+# 「⛔ 自判免驗」只寫在記憶裡、主 session 一再略過——「沒有強制 你不用遵守」。
+# 一律執行**已 commit 的**檢查器（未 commit 的改動不生效）；引導期（HEAD 尚無檢查器）才用工作樹檔。
+OPD_REL="scripts/audit/checks/outline_plan_discipline.py"
+opd_run() {
+  if git -C "$REPO" cat-file -e "HEAD:$OPD_REL" 2>/dev/null; then
+    git -C "$REPO" show "HEAD:$OPD_REL" | OPD_REPO="$REPO" python3 - "$@"
+  else
+    OPD_REPO="$REPO" python3 "$REPO/$OPD_REL" "$@"
+  fi
+}
+if ! opd_run --self-test >/dev/null 2>&1; then
+  echo "❌ FAIL：不變量 43 檢查器的自我測試未過（檢查器本身失效，其 PASS 不可信）"
+  opd_run --self-test
+  FAIL=1
+  CODE_REGRESSIONS+=("不變量 43：檢查器自我測試未過")
+elif ! OPD_OUT=$(opd_run 2>&1); then
+  echo "$OPD_OUT"
+  FAIL=1
+  CODE_REGRESSIONS+=("不變量 43：知識大綱線計畫／commit 紀律或守門被改動")
+else
+  echo "$OPD_OUT"
+fi
+echo
+# <<< 不變量 43
 echo ""
 echo "──────────────── 稽核記帳（兩類紅燈分開）────────────────"
 echo "CODE_CONTRACT_REGRESSIONS: ${#CODE_REGRESSIONS[@]}"

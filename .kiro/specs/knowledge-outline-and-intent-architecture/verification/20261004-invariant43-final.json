@@ -1,0 +1,18 @@
+{
+ "kind": "change",
+ "verdict": "CONFIRMED",
+ "base": "1a255bb70a5c57ba609f38ca8ea221f81acca0f8",
+ "claim": "invariant 43 final incl. extract fence-regex fix (checker sha256 db00f5de...), hook, audit block, settings.json deny rules, HANDOFF bullet; round-5 findings carried over as deferred P3/P4",
+ "p1_p2": 0,
+ "findings": [
+  "C1 diff vs round-5 copy limited to extract regex and self-test message; self-test PASS; reverted-regex copy self-test FAIL (negative control)",
+  "C2 a28885 extracts CONFIRMED, acf9 extracts REFUTED with base 1a255bb7; wrong base rc=1 for both; old regex fails on a28885",
+  "C3 last-verdict-wins, indented close, unclosed, wrong-base unchanged; fence-in-string fail-open fixed",
+  "P3 introduced: final REFUTED block closed on same line is skipped so earlier CONFIRMED wins (old picked REFUTED)",
+  "P3 preexisting: truncated unclosed final REFUTED lets earlier CONFIRMED win",
+  "P4 preexisting: base binds HEAD only, so any same-HEAD earlier round passes base check",
+  "P4: same-line close and CRLF now fail-closed",
+  "C4 make audit rc=0 OVERALL PASS, inv 43 bootstrap warning plus PASS, worktree unchanged; settings.json same 6 deny rules; hook, invariants script, HANDOFF byte-identical to round-5 copy"
+ ],
+ "source_transcript": "agent-a1cbf502aa6333bcc.jsonl"
+}
