@@ -1,0 +1,21 @@
+{
+ "kind": "change",
+ "verdict": "CONFIRMED",
+ "base": "0019b36e15192c5a0dd3e31ce6faea28c8132446",
+ "claim": "doc cleanup final (after page-gap fix): MAP.md and HANDOFF-20260923.md stale-statement fixes and restart-entry step on HEAD 0019b36e working tree",
+ "p1_p2": 0,
+ "findings": [
+  "MAP CATALOG row: dropping the not-in-git note is correct since git show --stat c06575a9 archives canon-pre-dsp067; build_outline sets text only when citable (canon_visible = reviewed and both axes), unreviewed fines get title only; 57/539/525 match jgb.json",
+  "MAP 現況 paragraph: same citable wording and evidence as hunk 1; counts match",
+  "HANDOFF item 5: candidates match plan-9.22 section 6 (9.22 停止) and HANDOFF 12-4 (thinkcloud sentence 3, 10 fully-checked fines, A-account-profile 3, second full check of reviewed fines); 0.3-0.4M per slice matches the budget memory",
+  "HANDOFF 2 架構: stale 541 replaced by pointer; 541 was the bdb2327b count, now 539",
+  "HANDOFF 2 數字: stale 541 fines / drafts 1,410 sentences replaced by pointer; my count of drafts-?.json sentences lists is 1,501, so 1,410 was stale too; 54 待裁 still in 12-4, nothing lost",
+  "HANDOFF 2 210-row paragraph: reworded to 當時 with pointer; pm 369/prospect 80 gone from current-state text, survives only in the 12-1 history row for 9.19",
+  "HANDOFF 4 rerun note: 541 replaced by 現行條數, accurate",
+  "HANDOFF 12-4 page gap: rebuilt from jgb.json + page-surface with page_hit logic; positive control reviewed-only gives pm 133, prospect 52 as in header; ignore-review gives pm 140/183 (gap 43) on working tree and HEAD, pm 136 (gap 47) at bdb2327b; 136/47 comes from page-gap-9.18 section 0 時點 bullet; sentence accurate",
+  "Grep of HANDOFF finds no sentence presenting 541, 515 or pm 369 as current; 515 hits are all marked as history; MAP grep for 541 and pm 369 is empty, and MAP's 539 lines show the grep works",
+  "P4 high: page-gap-9.18 section 0 still says 現樹 136/47; outside this diff and now put in context by HANDOFF; no action needed",
+  "P4 medium: older text pm 真缺口約 11-12 頁 unchanged by this diff; the 3 pm components covered since bdb2327b (contracts/edit/Index.vue, estates/dashboard/Index.vue, contracts/edit/payment/Index.vue) appear to be outer-frame pages that section 0 says are not true gaps; recheck by comparing covered page sets against the 11-12 list"
+ ],
+ "source_transcript": "agent-aa060096bded40253.jsonl"
+}
