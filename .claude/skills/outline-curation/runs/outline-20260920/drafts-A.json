@@ -2377,14 +2377,15 @@
       "聯絡資訊怎麼填",
       "WhatsApp 要填什麼",
       "line id 要填嗎",
-      "第二組電話用途"
+      "第二組電話欄位有什麼限制"
      ],
      "sentences": [
       "「聯絡資訊」區塊會呈現在刊登的廣告上，讓租客有更多管道聯繫房東。",
       "LINE 欄位可勾選「同手機號碼」，勾選後不需另外輸入 LINE ID；未勾選時可以自行填寫 LINE ID，這個欄位不是必填。",
       "Facebook 欄位填寫的是個人首頁連結，欄位長度上限 200 字元。",
       "WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不需打「+」，欄位長度上限 200 字元。",
-      "第二組聯絡號碼欄位限填純數字，長度上限 50 字元；畫面上目前沒有「以此電話作為廣告頁聯絡電話」這個核取方塊可以勾選。"
+      "第二組聯絡號碼欄位長度上限 50 字元。",
+      "畫面上目前沒有「以此電話作為廣告頁聯絡電話」這個核取方塊可以勾選。"
      ],
      "sources": [
       "code:resources/views/users/account.blade.php"
@@ -2428,7 +2429,22 @@
       {
        "sentence_index": 4,
        "source": "code:resources/views/users/account.blade.php",
-       "quote_or_symbol": "{{___('以此電話作為廣告頁聯絡電話')}}"
+       "quote_or_symbol": "{{___('第二組聯絡號碼')}}"
+      },
+      {
+       "sentence_index": 5,
+       "source": "code:resources/views/users/account.blade.php",
+       "quote_or_symbol": "{{-- <div class=\"col-auto\">"
+      },
+      {
+       "sentence_index": 5,
+       "source": "code:resources/views/users/account.blade.php",
+       "quote_or_symbol": "<div class=\"col-auto\">{{___('以此電話作為廣告頁聯絡電話')}}</div>"
+      },
+      {
+       "sentence_index": 5,
+       "source": "code:resources/views/users/account.blade.php",
+       "quote_or_symbol": "</div> --}}"
       }
      ],
      "not_supported_greps": [

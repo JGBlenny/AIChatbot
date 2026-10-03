@@ -3805,10 +3805,11 @@
       "既存合約跟電子合約差別"
      ],
      "sentences": [
-      "新增合約時選「紙本簽約」（上傳合約），適用於雙方已經簽訂完成、或已經公證完成的合約，讓已有合約的房東也能無縫接軌使用系統。",
-      "「電子合約」有「住宅租賃契約書」（使用最新 109 年內政部公版合約）與「客製化契約書」（自製合約模板）兩種，業者自己的合約模板要走「客製化契約書」，不是上傳合約。",
-      "社宅房東身分的新增合約選單裡，沒有「紙本簽約」與「客製化契約書」。",
-      "「紙本簽約」的合約在編輯時，一樣有「租金費用」「帳單設定」等分頁，可以繼續用系統處理帳務。",
+      "在合約列表按「建立合約」後會出現選擇建立方式的選單，選「紙本簽約」（上傳合約）適用於雙方已經簽訂完成、或已經公證完成的合約。",
+      "建立方式選單有「電子合約 - 住宅租賃契約書」「電子合約 - 客製化契約書」「紙本簽約」三個選項，其中「電子合約 - 客製化契約書」的說明是「自製合約模板」。",
+      "選「電子合約 - 客製化契約書」建立的合約，在「基本條件」分頁有「編輯底稿」按鈕，可以編輯自己的合約底稿。",
+      "社宅房東身分按「建立合約」時不會出現選擇建立方式的選單，而是直接進入「電子合約 - 住宅租賃契約書」的建立流程，沒有「紙本簽約」與「客製化契約書」可選。",
+      "「紙本簽約」的合約在編輯時，一樣有「租金費用」「帳單設定」「收款方式」等分頁。",
       "在「基本條件」分頁上傳紙本合約檔案時只收 PDF，畫面上的單檔大小上限是 15 MB，超過會提示重新上傳小於 15 MB 的檔案。",
       "如果掃描出來的合約 PDF 太大，建議先在印表機端調整掃描品質，或用線上壓縮工具縮小檔案再上傳。"
      ],
@@ -3819,7 +3820,9 @@
       "code:src/components/AjaxUploader.vue",
       "code:src/use/useEditStore.js",
       "code:app/Role.php",
-      "code:src/routes/contracts.js"
+      "code:src/routes/contracts.js",
+      "code:src/pages/contracts/list/_parts/PageTop.vue",
+      "code:src/utils/constants/contract.js"
      ],
      "evidence": [
       {
@@ -3833,14 +3836,19 @@
        "quote_or_symbol": "description: '請上傳雙方已簽訂完成或是已公證完成的合約',"
       },
       {
-       "sentence_index": 1,
-       "source": "code:src/components/Lightbox/SelectContractMethod.jsx",
-       "quote_or_symbol": "title: '電子合約 - 住宅租賃契約書',"
+       "sentence_index": 0,
+       "source": "code:src/pages/contracts/list/_parts/PageTop.vue",
+       "quote_or_symbol": "store.commit('lightbox', 'selectContractMethod')"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/contracts/list/_parts/PageTop.vue",
+       "quote_or_symbol": "{{ t('建立合約') }}"
       },
       {
        "sentence_index": 1,
        "source": "code:src/components/Lightbox/SelectContractMethod.jsx",
-       "quote_or_symbol": "description: '使用最新 109 年內政部公版合約',"
+       "quote_or_symbol": "title: '電子合約 - 住宅租賃契約書',"
       },
       {
        "sentence_index": 1,
@@ -3850,45 +3858,95 @@
       {
        "sentence_index": 1,
        "source": "code:src/components/Lightbox/SelectContractMethod.jsx",
+       "quote_or_symbol": "title: '紙本簽約',"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/components/Lightbox/SelectContractMethod.jsx",
        "quote_or_symbol": "description: '自製合約模板',"
       },
       {
        "sentence_index": 2,
+       "source": "code:src/pages/contracts/edit/rentBasic/General.vue",
+       "quote_or_symbol": "{{ t('編輯底稿') }}"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/contracts/edit/rentBasic/General.vue",
+       "quote_or_symbol": "<div v-if=\"editStore.options.is_existed == 2\""
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/utils/constants/contract.js",
+       "quote_or_symbol": "diy: 2 // 電子合約 - 客製化契約書"
+      },
+      {
+       "sentence_index": 3,
        "source": "code:src/components/Lightbox/SelectContractMethod.jsx",
        "quote_or_symbol": "isHidden: computed(()=>store.state.userData?.role?.config_rule_key == 4)"
       },
       {
-       "sentence_index": 2,
+       "sentence_index": 3,
        "source": "code:app/Role.php",
        "quote_or_symbol": "const RULE_KEY_LANDLORD_SOCIAL_HOUSING = 4;"
       },
       {
        "sentence_index": 3,
+       "source": "code:src/pages/contracts/list/_parts/PageTop.vue",
+       "quote_or_symbol": "v-if=\"store.state.userData?.role?.config_rule_key !== 4\""
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/contracts/list/_parts/PageTop.vue",
+       "quote_or_symbol": ":to=\"{name: 'estates.pick', params:{ action:'contractCreate' }}\">"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/components/Lightbox/SelectContractMethod.jsx",
+       "quote_or_symbol": "title: '電子合約 - 住宅租賃契約書',"
+      },
+      {
+       "sentence_index": 4,
        "source": "code:src/use/useEditStore.js",
        "quote_or_symbol": "if (editStore.options?.is_existed === ContractIsExisted.paper){"
       },
       {
-       "sentence_index": 3,
+       "sentence_index": 4,
        "source": "code:src/routes/contracts.js",
        "quote_or_symbol": "label: '帳單設定',"
       },
       {
        "sentence_index": 4,
+       "source": "code:src/use/useEditStore.js",
+       "quote_or_symbol": "'contracts.edit.billSetting', 'contracts.edit.rentBasic', 'contracts.edit.rent', 'contracts.edit.rentAdjustment', 'contracts.edit.payment'"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/routes/contracts.js",
+       "quote_or_symbol": "label: '租金費用',"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/routes/contracts.js",
+       "quote_or_symbol": "label: '收款方式',"
+      },
+      {
+       "sentence_index": 5,
        "source": "code:src/pages/contracts/edit/rentBasic/General.vue",
        "quote_or_symbol": ":size_limit=\"15\""
       },
       {
-       "sentence_index": 4,
+       "sentence_index": 5,
        "source": "code:src/pages/contracts/edit/rentBasic/General.vue",
        "quote_or_symbol": "upload_for=\"existed_contract\""
       },
       {
-       "sentence_index": 4,
+       "sentence_index": 5,
        "source": "code:src/components/AjaxUploader.vue",
        "quote_or_symbol": "{{ t('請重新上傳小於 [s1] 的檔案', [`${size_limit} MB`]) }}"
       },
       {
-       "sentence_index": 5,
+       "sentence_index": 6,
        "source": "help:landlordonboarding04lease_zh-Hant.html",
        "quote_or_symbol": "在掃描檔案時於印表機選擇不同的掃描品質"
       }
@@ -5602,7 +5660,7 @@
     {
      "proposed_id": "jgb/D/general-contract-notary-tab",
      "askable": "一般合約的公證分頁要設定什麼，公證書可以載明哪些強制執行事項",
-     "title": "一般合約的「公證」分頁怎麼設定？（是否辦理公證，同意時可複選三項應逕受強制執行事項；英文與英越文版合約不支援）",
+     "title": "一般合約的「公證」分頁怎麼設定？（是否辦理公證，同意時可複選三項應逕受強制執行事項；只有部分合約範本有此選項）",
      "unit_ids": [
       "page:contracts.edit.publicNotary"
      ],
@@ -5619,13 +5677,20 @@
       "英文合約可以公證嗎"
      ],
      "sentences": [
-      "一般合約的「公證」分頁要先選擇這份租賃合約是否同意辦理公證。",
-      "選擇同意辦理公證後，可以複選「公證書載明下列事項應逕受強制執行」的項目，包含：承租方如於租期屆滿後不返還租賃住宅；承租方未依約給付之欠繳租金、費用及代繳之管理費或違約應付金額；出租方於租期屆滿或契約終止時應返還承租方之全部或一部分押金。",
-      "同意辦理公證後，分頁下方會顯示「保證人效力」的說明文字，內容依勾選的強制執行項目自動帶出，是固定說明、不是可以另外設定的欄位。",
-      "畫面提示：目前英文與英越文版合約不支援公證這個項目。"
+      "一般合約的「公證」分頁，在有「辦理公證」選項的合約範本上，要先選擇這份租賃合約是否「同意辦理」公證。",
+      "有「辦理公證」選項的合約範本是：114年內政部住宅租賃契約(原房東)、113年內政部轉租契約(包租轉租)、代租代管契約(參考114年租賃契約)、公會中文版 租賃契約書（原房東、包租業、代租代管）、內政部英文版 租賃契約書 包租業，以及英泰文版 租賃契約書（原房東、代租代管）。",
+      "選擇「同意辦理」後會出現「強制執行事項」，可以複選三項應逕受強制執行的項目：1：承租方如於租期屆滿後不返還租賃住宅；2：承租方未依約給付之欠繳租金、費用及出租方或租賃住宅所有權人代繳之管理費，或違約時應支付之金額；3：出租方如於租期屆滿或本契約終止時，應返還承租方之全部或一部分押金。",
+      "點選「同意辦理」時，三個強制執行事項會預設全部勾選。",
+      "只有「114年內政部住宅租賃契約(原房東)」「113年內政部轉租契約(包租轉租)」「代租代管契約(參考114年租賃契約)」三種範本，在「強制執行事項」上方還會多一題「公證書載明下列事項應逕受強制執行」的「同意」「不同意」選項。",
+      "同意辦理公證後，分頁下方會顯示「保證人效力」的說明文字，其中的款號依勾選的強制執行事項自動帶出，是固定說明、不是可以另外設定的欄位。",
+      "有「公證」分頁、但範本沒有「辦理公證」選項的合約，分頁只會顯示「*目前英文與英越文版合約不支援此項目。」的提示，例如內政部英文版 租賃契約書 原房東、內政部英文版 租賃契約書 代租代管、英越文版 租賃契約書，以及紙本簽約、客製化契約書。",
+      "車位合約，以及部分特定合作團隊的專用範本，合約編輯畫面不會出現「公證」分頁；車位合約即使用的是有「辦理公證」選項的範本，也一樣沒有這個分頁。"
      ],
      "sources": [
-      "code:src/pages/contracts/edit/publicNotary/General.vue"
+      "code:src/pages/contracts/edit/publicNotary/General.vue",
+      "code:src/use/config/useContractRequiredField.js",
+      "code:config/contract.php",
+      "code:src/pages/contracts/edit/Index.vue"
      ],
      "evidence": [
       {
@@ -5634,19 +5699,219 @@
        "quote_or_symbol": "t('本分租賃合約如同意辦理公證，請於下方設定相關細節。')"
       },
       {
-       "sentence_index": 1,
+       "sentence_index": 0,
        "source": "code:src/pages/contracts/edit/publicNotary/General.vue",
-       "quote_or_symbol": "t('3：出租方如於租期屆滿或本契約終止時，應返還承租方之全部或一部分押金。')"
+       "quote_or_symbol": "{{ t('辦理公證') }}"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/contracts/edit/publicNotary/General.vue",
+       "quote_or_symbol": "{{ t('同意辦理') }}"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/contracts/edit/publicNotary/General.vue",
+       "quote_or_symbol": "{{ t('不同意辦理') }}"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/contracts/edit/publicNotary/General.vue",
+       "quote_or_symbol": "<div v-if=\"contractHasPublicNotary\">"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:config/contract.php",
+       "quote_or_symbol": "'label' => '114年內政部住宅租賃契約(原房東)',"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:config/contract.php",
+       "quote_or_symbol": "'label' => '113年內政部轉租契約(包租轉租)',"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:config/contract.php",
+       "quote_or_symbol": "'label' => '代租代管契約(參考114年租賃契約)',"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:config/contract.php",
+       "quote_or_symbol": "'label' => '公會中文版 租賃契約書 原房東',"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:config/contract.php",
+       "quote_or_symbol": "'label' => '公會中文版 租賃契約書 包租業',"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:config/contract.php",
+       "quote_or_symbol": "'label' => '公會中文版 租賃契約書 代租代管',"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:config/contract.php",
+       "quote_or_symbol": "'label' => '內政部英文版 租賃契約書 包租業',"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:config/contract.php",
+       "quote_or_symbol": "'label' => '英泰文版 租賃契約書 原房東',"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:config/contract.php",
+       "quote_or_symbol": "'label' => '英泰文版 租賃契約書 代租代管',"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/use/config/useContractRequiredField.js",
+       "quote_or_symbol": "[ContractTemplate.en_us_corporation]: ["
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/use/config/useContractRequiredField.js",
+       "quote_or_symbol": "[ContractTemplate.th_th_individual]: ["
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/use/config/useContractRequiredField.js",
+       "quote_or_symbol": "[ContractTemplate.th_th_management]: ["
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/use/config/useContractRequiredField.js",
+       "quote_or_symbol": "[ContractTemplate.tw_zh_corporation_union]: ["
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/use/config/useContractRequiredField.js",
+       "quote_or_symbol": "FormField.hasPublicNotary,"
       },
       {
        "sentence_index": 2,
        "source": "code:src/pages/contracts/edit/publicNotary/General.vue",
-       "quote_or_symbol": "t('保證人效力')"
+       "quote_or_symbol": "{{ t('強制執行事項') }}"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/contracts/edit/publicNotary/General.vue",
+       "quote_or_symbol": "{{ t('辦理公證後，請選擇應逕受強制執行的項目(可複選)。') }}"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/contracts/edit/publicNotary/General.vue",
+       "quote_or_symbol": "{{ t('1：承租方如於租期屆滿後不返還租賃住宅。') }}"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/contracts/edit/publicNotary/General.vue",
+       "quote_or_symbol": "{{ t('2：承租方未依約給付之欠繳租金、費用及出租方或租賃住宅所有權人代繳之管理費，或違約時應支付之金額。') }}"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/contracts/edit/publicNotary/General.vue",
+       "quote_or_symbol": "{{ t('3：出租方如於租期屆滿或本契約終止時，應返還承租方之全部或一部分押金。') }}"
       },
       {
        "sentence_index": 3,
        "source": "code:src/pages/contracts/edit/publicNotary/General.vue",
-       "quote_or_symbol": "t('*目前英文與英越文版合約不支援此項目。')"
+       "quote_or_symbol": "editStore.form.public_notary_content = ['1', '2', '3']"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/pages/contracts/edit/publicNotary/General.vue",
+       "quote_or_symbol": "{{ t('公證書載明下列事項應逕受強制執行') }}"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/pages/contracts/edit/publicNotary/General.vue",
+       "quote_or_symbol": "<div v-if=\"contractHasPublicNotaryDistraint\">"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/use/config/useContractRequiredField.js",
+       "quote_or_symbol": "FormField.hasPublicNotaryDistraint,"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/use/config/useContractRequiredField.js",
+       "quote_or_symbol": "[ContractTemplate.tw_zh_management]: ["
+      },
+      {
+       "sentence_index": 5,
+       "source": "code:src/pages/contracts/edit/publicNotary/General.vue",
+       "quote_or_symbol": "t('保證人效力')"
+      },
+      {
+       "sentence_index": 5,
+       "source": "code:src/pages/contracts/edit/publicNotary/General.vue",
+       "quote_or_symbol": "<div v-html=\"t('公證書載明金錢債務逕受強制執行時，如有保證人者，前項後段第 [s1] 款之效力及於保證人。',[string])\"></div>"
+      },
+      {
+       "sentence_index": 5,
+       "source": "code:src/pages/contracts/edit/Index.vue",
+       "quote_or_symbol": "return editStore.form.public_notary_content.sort((a, b)=>Number(a) - Number(b))"
+      },
+      {
+       "sentence_index": 6,
+       "source": "code:src/pages/contracts/edit/publicNotary/General.vue",
+       "quote_or_symbol": "{{ t('*目前英文與英越文版合約不支援此項目。') }}"
+      },
+      {
+       "sentence_index": 6,
+       "source": "code:src/use/config/useContractRequiredField.js",
+       "quote_or_symbol": "[ContractTemplate.EN201608]: [FormField.hasCondoRegulations],"
+      },
+      {
+       "sentence_index": 6,
+       "source": "code:src/use/config/useContractRequiredField.js",
+       "quote_or_symbol": "[ContractTemplate.VN202005]: [FormField.hasCondoRegulations],"
+      },
+      {
+       "sentence_index": 6,
+       "source": "code:src/use/config/useContractRequiredField.js",
+       "quote_or_symbol": "} else if (!RequiredField[contractTemplate]){"
+      },
+      {
+       "sentence_index": 6,
+       "source": "code:src/use/config/useContractRequiredField.js",
+       "quote_or_symbol": "// 紙本/DIY 合約無 contract_template_selected，但現況補充與建物謄本仍需顯示實價登錄相關欄位"
+      },
+      {
+       "sentence_index": 6,
+       "source": "code:config/contract.php",
+       "quote_or_symbol": "'label' => '內政部英文版 租賃契約書 原房東',"
+      },
+      {
+       "sentence_index": 6,
+       "source": "code:config/contract.php",
+       "quote_or_symbol": "'label' => '內政部英文版 租賃契約書 代租代管',"
+      },
+      {
+       "sentence_index": 6,
+       "source": "code:config/contract.php",
+       "quote_or_symbol": "'label' => '英越文版 租賃契約書',"
+      },
+      {
+       "sentence_index": 7,
+       "source": "code:src/use/useEditStore.js",
+       "quote_or_symbol": "if (editStore.form.premises_use_for === 'parking_space'){"
+      },
+      {
+       "sentence_index": 7,
+       "source": "code:src/use/useEditStore.js",
+       "quote_or_symbol": "const basicRoutes = ['contracts.edit.tenantInfo', 'contracts.edit.billSetting', 'contracts.edit.dealerBasic', 'contracts.edit.rentBasic', 'contracts.edit.rent', 'contracts.edit.payment', 'contracts.edit.situation', 'contracts.edit.landlordAttachment', 'contracts.edit.additionalConvention']"
+      },
+      {
+       "sentence_index": 7,
+       "source": "code:src/use/useEditStore.js",
+       "quote_or_symbol": "myRoutes = myRoutes.filter(node=>node.name !== 'contracts.edit.publicNotary')"
+      },
+      {
+       "sentence_index": 7,
+       "source": "code:src/use/useEditStore.js",
+       "quote_or_symbol": "if (editStore.form.contract_template_selected === 'nthurc_social_housing'){"
       }
      ],
      "not_supported_greps": [],

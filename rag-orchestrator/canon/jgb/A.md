@@ -516,7 +516,7 @@ language: zh-TW
   - {text: "聯絡資訊怎麼填", source: "draft:outline-20260920", status: proposed}
   - {text: "WhatsApp 要填什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "line id 要填嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "第二組電話用途", source: "draft:outline-20260920", status: proposed}
+  - {text: "第二組電話欄位有什麼限制", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/users/account.blade.php]
 - target_user: [property_manager]
 - business_types: [system_provider]
@@ -525,7 +525,8 @@ language: zh-TW
 LINE 欄位可勾選「同手機號碼」，勾選後不需另外輸入 LINE ID；未勾選時可以自行填寫 LINE ID，這個欄位不是必填。
 Facebook 欄位填寫的是個人首頁連結，欄位長度上限 200 字元。
 WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不需打「+」，欄位長度上限 200 字元。
-第二組聯絡號碼欄位限填純數字，長度上限 50 字元；畫面上目前沒有「以此電話作為廣告頁聯絡電話」這個核取方塊可以勾選。
+第二組聯絡號碼欄位長度上限 50 字元。
+畫面上目前沒有「以此電話作為廣告頁聯絡電話」這個核取方塊可以勾選。
 ### 帳號資訊頁的偏好設定能設定什麼？（登入預設房東身份、時區、Email 通知語系） {#jgb/A/account-preference}
 - phrasings:
   - {text: "登入預設身份怎麼設", source: "draft:outline-20260920", status: proposed}

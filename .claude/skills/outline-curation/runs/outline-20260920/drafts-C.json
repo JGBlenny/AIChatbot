@@ -3698,7 +3698,7 @@
     {
      "proposed_id": "jgb/C/estate-dashboard-attachments-vs-contract-attachments",
      "askable": "附件清單跟合約附件有什麼不一樣",
-     "title": "「附件清單」跟「合約附件」差在哪？（附件清單可上傳 JPG／PNG／PDF、每個物件最多 5 個檔案、單檔 10MB，下載不限身分但只有代理人且有新增物件權限才能刪除；合約附件是固定的附件項目清單，可上傳圖片補充以避免日後爭議）",
+     "title": "「附件清單」跟「合約附件」差在哪？（附件清單可上傳 JPG／PNG／PDF、每個物件最多 5 個檔案、單檔 10MB，上傳與下載需要物件編輯權限，刪除操作只有代理人且有新增物件權限才看得到；合約附件是固定的附件項目清單，可上傳附件補充以避免日後爭議）",
      "unit_ids": [
       "page:estates.dashboard.attachments",
       "page:estates.dashboard.contractAttachments"
@@ -3717,17 +3717,23 @@
      ],
      "sentences": [
       "「附件清單」可以上傳 JPG、PNG、PDF 檔案，每個物件最多存放 5 個檔案，每個檔案不可超過 10MB；畫面上方顯示「儲存空間」的已存檔案數與可存檔案數。",
-      "檔案數量用完後會跳出「儲存空間已滿」的提示並顯示剩餘可存的檔案數，需要先刪除不要的檔案，才能再上傳新檔案。",
-      "下載檔案不限身分都能做，但只有代理人且擁有新增物件權限的使用者才看得到「刪除檔案」的操作。",
-      "上傳附件到「附件清單」，具備編輯物件權限、是團隊擁有者，或是代理人且擁有新增物件權限，符合其中一種身分即可。",
-      "「合約附件」是固定的附件項目清單：出租方身份證明文件影本（正反面各一份，若為法人（公司）請上傳公司設立登記表）、授權代理人簽約同意書、建物所有權/有權出租之證明文件、使用執照影本、出租方同意轉租確認書、房屋位置格局示意圖、社區管理規約與住戶生活規約，以及其他（附註條款、稅籍證明等）。",
-      "「合約附件」頁面的說明寫明：如有以下附件，可上傳圖片做補充，以避免日後爭議；圖片僅支援 JPG、PNG 檔，檔案大小最大 10MB，每個項目限制的上傳檔案數量不同。",
-      "只有非大房東、且具備新增物件或編輯物件權限的使用者，才看得到合約附件的上傳與刪除操作。"
+      "檔案數量用完後，選檔上傳時會跳出「儲存空間已滿」的提示並顯示剩餘可存的檔案數；需要先刪除不要的檔案，才能再上傳新檔案。",
+      "上傳、下載與刪除附件清單的檔案時，系統都會檢查物件編輯權限（編輯物件權限，或是該物件的代理人且擁有新增物件權限），沒有權限會回覆「權限不足！」，所以畫面上看得到下載按鈕，不代表一定能下載。",
+      "「刪除檔案」的操作只有該物件的代理人且擁有新增物件權限的使用者才看得到。",
+      "「上傳檔案」按鈕只有具備編輯物件權限、是團隊擁有者，或是該物件的代理人且擁有新增物件權限的使用者才看得到，符合其中一種身分即可。",
+      "「合約附件」是固定的附件項目清單：出租方身份證明文件影本（正反面各一份，若為法人（公司）請上傳公司設立登記表）、授權代理人簽約同意書、建物所有權/有權出租之證明文件、使用執照影本、出租方同意轉租確認書、房屋位置格局示意圖、社區管理規約、住戶生活規約（同一個項目），以及其他（附註條款、稅籍證明等）。",
+      "「合約附件」頁面的說明寫明：如有以下附件，可上傳圖片做補充，以避免日後爭議。",
+      "合約附件每個檔案大小上限 10MB；每個項目可上傳的份數不同：授權代理人簽約同意書最多 2 份、社區管理規約與住戶生活規約最多 15 份、其他最多 5 份，出租方身份證明文件影本為正、反面各 1 份，其餘項目各 1 份。",
+      "合約附件頁面的說明文字寫「圖片僅支援JPG、PNG檔」，但選檔時實際可選 JPG、PNG、PDF 檔。",
+      "只有非大房東、且具備新增物件或編輯物件權限的使用者，才看得到合約附件的上傳與刪除操作。",
+      "合約附件的上傳、儲存與刪除，系統同樣會檢查物件編輯權限，沒有權限會回覆「權限不足！」。"
      ],
      "sources": [
       "code:src/pages/estates/dashboard/attachments/Index.vue",
       "code:src/pages/estates/dashboard/contractAttachments/index.vue",
-      "code:app/Http/Controllers/EstateController.php"
+      "code:app/Http/Controllers/EstateController.php",
+      "code:src/pages/estates/dashboard/Index.vue",
+      "code:src/components/AjaxUploader.vue"
      ],
      "evidence": [
       {
@@ -3771,94 +3777,214 @@
        "quote_or_symbol": "dataFetcher.data.total = result?.data?.total ?? dataFetcher.data.total"
       },
       {
+       "sentence_index": 1,
+       "source": "code:src/pages/estates/dashboard/attachments/Index.vue",
+       "quote_or_symbol": "if (limitLength == 0){"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Controllers/EstateController.php",
+       "quote_or_symbol": "case 'download_attachment':"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Controllers/EstateController.php",
+       "quote_or_symbol": "case 'add_attachment':"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Controllers/EstateController.php",
+       "quote_or_symbol": "case 'delete_attachment':"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Controllers/EstateController.php",
+       "quote_or_symbol": "'message' => ___('權限不足！')"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Controllers/EstateController.php",
+       "quote_or_symbol": "if ($estate->hasPermission($this->user, 'edit_estate') || ($estate->agent_user_id == $this->user->id && $estate->hasPermission($this->user, 'add_estate'))) {"
+      },
+      {
        "sentence_index": 2,
        "source": "code:src/pages/estates/dashboard/attachments/Index.vue",
        "quote_or_symbol": "<span>{{ t('下載檔案') }}</span>"
       },
       {
-       "sentence_index": 2,
+       "sentence_index": 3,
        "source": "code:src/pages/estates/dashboard/attachments/Index.vue",
        "quote_or_symbol": "<span class=\"text-main-500\">{{ t('刪除檔案') }}</span>"
       },
       {
-       "sentence_index": 2,
+       "sentence_index": 3,
        "source": "code:src/pages/estates/dashboard/attachments/Index.vue",
        "quote_or_symbol": "v-if=\"dashboardStore.state?.isAgent && store.state.userData?.permission?.add_estate\""
       },
       {
        "sentence_index": 3,
+       "source": "code:src/pages/estates/dashboard/Index.vue",
+       "quote_or_symbol": "const agentId = dashboardStore.state?.agent?.uid"
+      },
+      {
+       "sentence_index": 4,
        "source": "code:src/pages/estates/dashboard/attachments/Index.vue",
        "quote_or_symbol": "store.state.userData?.permission?.edit_estate ||"
       },
       {
-       "sentence_index": 3,
+       "sentence_index": 4,
        "source": "code:src/pages/estates/dashboard/attachments/Index.vue",
        "quote_or_symbol": "store.state.userData?.is_team_owner ||"
       },
       {
        "sentence_index": 4,
+       "source": "code:src/pages/estates/dashboard/attachments/Index.vue",
+       "quote_or_symbol": "(props.dashboardStore.state?.isAgent && store.state.userData?.permission?.add_estate)"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/pages/estates/dashboard/attachments/Index.vue",
+       "quote_or_symbol": "v-if=\"state.hasUpdateFilePermission\" class=\"btn btn-secondary\">{{ t('上傳檔案') }}</div>"
+      },
+      {
+       "sentence_index": 5,
        "source": "code:src/pages/estates/dashboard/contractAttachments/index.vue",
        "quote_or_symbol": "{{ t('出租方身份證明文件影本') }}"
       },
       {
-       "sentence_index": 4,
+       "sentence_index": 5,
        "source": "code:src/pages/estates/dashboard/contractAttachments/index.vue",
        "quote_or_symbol": "{{ t('若為法人(公司)，請上傳公司設立登記表') }}"
       },
       {
-       "sentence_index": 4,
+       "sentence_index": 5,
        "source": "code:src/pages/estates/dashboard/contractAttachments/index.vue",
        "quote_or_symbol": "title: `${t('授權代理人簽約同意書')}`,"
       },
       {
-       "sentence_index": 4,
+       "sentence_index": 5,
        "source": "code:src/pages/estates/dashboard/contractAttachments/index.vue",
        "quote_or_symbol": "title: `${t('建物所有權/有權出租之證明文件')}`,"
       },
       {
-       "sentence_index": 4,
+       "sentence_index": 5,
        "source": "code:src/pages/estates/dashboard/contractAttachments/index.vue",
        "quote_or_symbol": "title: `${t('使用執照影本')}`,"
       },
       {
-       "sentence_index": 4,
+       "sentence_index": 5,
        "source": "code:src/pages/estates/dashboard/contractAttachments/index.vue",
        "quote_or_symbol": "title: `${t('出租方同意轉租確認書')}`,"
       },
       {
-       "sentence_index": 4,
+       "sentence_index": 5,
        "source": "code:src/pages/estates/dashboard/contractAttachments/index.vue",
        "quote_or_symbol": "title: `${t('房屋位置格局示意圖')}`,"
       },
       {
-       "sentence_index": 4,
+       "sentence_index": 5,
        "source": "code:src/pages/estates/dashboard/contractAttachments/index.vue",
        "quote_or_symbol": "title: `${t('社區管理規約')}、${t('住戶生活規約')}`,"
       },
       {
-       "sentence_index": 4,
+       "sentence_index": 5,
        "source": "code:src/pages/estates/dashboard/contractAttachments/index.vue",
        "quote_or_symbol": "title: `${t('其他(附註條款、稅籍證明等)')}`,"
       },
       {
        "sentence_index": 5,
        "source": "code:src/pages/estates/dashboard/contractAttachments/index.vue",
-       "quote_or_symbol": "{{ t('如有以下附件，可上傳圖片做補充，以避免日後爭議。') }}"
+       "quote_or_symbol": "<div v-show=\"idCard_i == 0\">{{ t('正') }}</div>"
       },
       {
        "sentence_index": 5,
        "source": "code:src/pages/estates/dashboard/contractAttachments/index.vue",
-       "quote_or_symbol": "{{ t('(圖片僅支援JPG、PNG檔，檔案大小最大10MB，每個項目限制的上傳檔案數量不同，請留意。)') }}"
+       "quote_or_symbol": "<div v-show=\"idCard_i == 1\">{{ t('反') }}</div>"
+      },
+      {
+       "sentence_index": 5,
+       "source": "code:src/pages/estates/dashboard/contractAttachments/index.vue",
+       "quote_or_symbol": "title: `${t('社區管理規約')}、${t('住戶生活規約')}`,"
       },
       {
        "sentence_index": 6,
+       "source": "code:src/pages/estates/dashboard/contractAttachments/index.vue",
+       "quote_or_symbol": "{{ t('如有以下附件，可上傳圖片做補充，以避免日後爭議。') }}"
+      },
+      {
+       "sentence_index": 7,
+       "source": "code:src/pages/estates/dashboard/contractAttachments/index.vue",
+       "quote_or_symbol": "size_limit: 10,"
+      },
+      {
+       "sentence_index": 7,
+       "source": "code:src/pages/estates/dashboard/contractAttachments/index.vue",
+       "quote_or_symbol": "limit: 2,"
+      },
+      {
+       "sentence_index": 7,
+       "source": "code:src/pages/estates/dashboard/contractAttachments/index.vue",
+       "quote_or_symbol": "limit: 15,"
+      },
+      {
+       "sentence_index": 7,
+       "source": "code:src/pages/estates/dashboard/contractAttachments/index.vue",
+       "quote_or_symbol": "limit: 5,"
+      },
+      {
+       "sentence_index": 7,
+       "source": "code:src/pages/estates/dashboard/contractAttachments/index.vue",
+       "quote_or_symbol": "{{ t('(圖片僅支援JPG、PNG檔，檔案大小最大10MB，每個項目限制的上傳檔案數量不同，請留意。)') }}"
+      },
+      {
+       "sentence_index": 8,
+       "source": "code:src/pages/estates/dashboard/contractAttachments/index.vue",
+       "quote_or_symbol": "accept=\"image/jpeg,image/png,application/pdf\""
+      },
+      {
+       "sentence_index": 8,
+       "source": "code:src/pages/estates/dashboard/contractAttachments/index.vue",
+       "quote_or_symbol": "{{ t('(圖片僅支援JPG、PNG檔，檔案大小最大10MB，每個項目限制的上傳檔案數量不同，請留意。)') }}"
+      },
+      {
+       "sentence_index": 8,
+       "source": "code:src/pages/estates/dashboard/contractAttachments/index.vue",
+       "quote_or_symbol": "<PdfToImg"
+      },
+      {
+       "sentence_index": 8,
+       "source": "code:src/components/AjaxUploader.vue",
+       "quote_or_symbol": "VM.postToServer({ data_type: 'file', file, file_name: file.name, resolve })"
+      },
+      {
+       "sentence_index": 9,
        "source": "code:src/pages/estates/dashboard/contractAttachments/index.vue",
        "quote_or_symbol": "return !store.state.userData.is_big_landlord &&"
       },
       {
-       "sentence_index": 6,
+       "sentence_index": 9,
        "source": "code:src/pages/estates/dashboard/contractAttachments/index.vue",
        "quote_or_symbol": "(store.state.userData.permission.add_estate || store.state.userData.permission.edit_estate)"
+      },
+      {
+       "sentence_index": 10,
+       "source": "code:app/Http/Controllers/EstateController.php",
+       "quote_or_symbol": "case 'upload_contract_attachment': // 新增合約附件"
+      },
+      {
+       "sentence_index": 10,
+       "source": "code:app/Http/Controllers/EstateController.php",
+       "quote_or_symbol": "case 'save_contract_attachment':"
+      },
+      {
+       "sentence_index": 10,
+       "source": "code:app/Http/Controllers/EstateController.php",
+       "quote_or_symbol": "case 'delete_contract_attachment': // 刪除合約附件"
+      },
+      {
+       "sentence_index": 10,
+       "source": "code:app/Http/Controllers/EstateController.php",
+       "quote_or_symbol": "'message' => ___('權限不足！')"
       }
      ],
      "not_supported_greps": [
@@ -5019,7 +5145,7 @@
     {
      "proposed_id": "jgb/C/team-public-page-recruitment",
      "askable": "多團隊招募頁跟一般的招租店舖有什麼不一樣",
-     "title": "多團隊招募頁和一般招租店舖有什麼不同？（沒有指定住宅或商用時自動轉址到住宅、只顯示招租、不顯示社區篩選、每頁預設 10 筆）",
+     "title": "多團隊招募頁和一般招租店舖有什麼不同？（網址格式不同、物件列表只有招租、沒有社區篩選、每頁預設 10 筆）",
      "unit_ids": [
       "page:users.public"
      ],
@@ -5037,13 +5163,17 @@
       "招募頁跟招租店舖差在哪"
      ],
      "sentences": [
-      "多團隊招募頁如果網址沒有帶物件用途，會自動轉址並補上「住宅」用途。",
-      "多團隊招募頁固定只顯示招租物件，且不會載入社區篩選模組，這兩點都跟一般招租店舖不同。",
-      "多團隊招募頁每頁預設顯示 10 筆，一般招租店舖則是 30 筆。"
+      "多團隊招募頁的網址是 /p/recruitment/ 開頭，後面接招募頁代稱與物件用途；一般招租店舖的網址是 /p/ 後面接團隊代碼、招租或買賣、物件用途。",
+      "兩種頁面在網址沒有帶物件用途時，都會自動轉址並補上「住宅」用途，所以這一點不是兩者的差異。",
+      "多團隊招募頁的物件列表固定只有招租物件。",
+      "多團隊招募頁的篩選條件沒有社區選項；一般招租店舖在團隊有社區時才會出現社區選項。",
+      "多團隊招募頁每頁預設顯示 10 筆，每頁筆數可選 10、30、60、90 項；一般招租店舖預設 30 筆，可選 30、60、90 項。"
      ],
      "sources": [
       "code:src/routes/users.js",
-      "code:src/pages/users/public/Index.vue"
+      "code:src/pages/users/public/Index.vue",
+      "code:src/pages/users/public/_parts/TopFilter.vue",
+      "code:app/Http/Controllers/UserController.php"
      ],
      "evidence": [
       {
@@ -5054,27 +5184,67 @@
       {
        "sentence_index": 0,
        "source": "code:src/routes/users.js",
-       "quote_or_symbol": "premisesUseFor: 'residential'"
+       "quote_or_symbol": "// 一般團隊頁面：/p/{encryptId}/{mode}/{premisesUseFor}"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/public/_parts/TopFilter.vue",
+       "quote_or_symbol": "[{ label: t('招租中物件'), value: 'rent' }, { label: t('買賣中物件'), value: 'sell' }].map((node, node_i)=>{"
       },
       {
        "sentence_index": 1,
-       "source": "code:src/pages/users/public/Index.vue",
-       "quote_or_symbol": "mode={route.params.encryptId === 'recruitment' ? 'rent' : route.params.mode}"
+       "source": "code:src/routes/users.js",
+       "quote_or_symbol": "// 如果沒有 premisesUseFor，重定向到 residential"
       },
       {
        "sentence_index": 1,
-       "source": "code:src/pages/users/public/Index.vue",
-       "quote_or_symbol": "if (encryptId === 'recruitment') {"
+       "source": "code:src/routes/users.js",
+       "quote_or_symbol": "if (!(to.params?.mode) || !(to.params?.premisesUseFor)){"
       },
       {
        "sentence_index": 1,
-       "source": "code:src/pages/users/public/Index.vue",
-       "quote_or_symbol": "// 招租頁面在 TopFilter.vue 中不會載入 community 模組，所以這裡不需要返回數據"
+       "source": "code:src/routes/users.js",
+       "quote_or_symbol": "premisesUseFor: 'residential',"
       },
       {
        "sentence_index": 2,
        "source": "code:src/pages/users/public/Index.vue",
+       "quote_or_symbol": "mode={route.params.encryptId === 'recruitment' ? 'rent' : route.params.mode}"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "// 確保 mode 參數正確傳遞"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/users/public/Index.vue",
+       "quote_or_symbol": "// 招租頁面在 TopFilter.vue 中不會載入 community 模組，所以這裡不需要返回數據"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/users/public/_parts/TopFilter.vue",
+       "quote_or_symbol": "// 招租頁面不需要 community 和 agentId 篩選器"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/users/public/_parts/TopFilter.vue",
+       "quote_or_symbol": "if (!isEmpty(communityOptions)){"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/users/public/_parts/TopFilter.vue",
+       "quote_or_symbol": "groupLabel: t('社區'),"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/pages/users/public/Index.vue",
        "quote_or_symbol": "route.params.encryptId === 'recruitment' ? 10 : 30"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/pages/users/public/Index.vue",
+       "quote_or_symbol": "options={route.params.encryptId === 'recruitment' ? [10, 30, 60, 90] : [30, 60, 90]}"
       }
      ],
      "not_supported_greps": [],

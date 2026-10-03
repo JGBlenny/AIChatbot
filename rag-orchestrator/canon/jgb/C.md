@@ -809,22 +809,26 @@ language: zh-TW
 - instance_applicability: general
 修繕紀錄可依「申請修繕」「安排修繕」「完成修繕」「結單」四種狀態篩選。
 列表欄位包含報修日期、最後更新、分類＆項目、物件地址、結算金額、房東/管理者、租客。
-### 「附件清單」跟「合約附件」差在哪？（附件清單可上傳 JPG／PNG／PDF、每個物件最多 5 個檔案、單檔 10MB，下載不限身分但只有代理人且有新增物件權限才能刪除；合約附件是固定的附件項目清單，可上傳圖片補充以避免日後爭議） {#jgb/C/estate-dashboard-attachments-vs-contract-attachments}
+### 「附件清單」跟「合約附件」差在哪？（附件清單可上傳 JPG／PNG／PDF、每個物件最多 5 個檔案、單檔 10MB，上傳與下載需要物件編輯權限，刪除操作只有代理人且有新增物件權限才看得到；合約附件是固定的附件項目清單，可上傳附件補充以避免日後爭議） {#jgb/C/estate-dashboard-attachments-vs-contract-attachments}
 - phrasings:
   - {text: "合約附件要傳什麼文件", source: "draft:outline-20260920", status: proposed}
   - {text: "附件清單空間不夠怎麼辦", source: "draft:outline-20260920", status: proposed}
   - {text: "物件附件跟合約附件差別", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/estates/dashboard/attachments/Index.vue, code:src/pages/estates/dashboard/contractAttachments/index.vue, code:app/Http/Controllers/EstateController.php]
+- sources: [code:src/pages/estates/dashboard/attachments/Index.vue, code:src/pages/estates/dashboard/contractAttachments/index.vue, code:app/Http/Controllers/EstateController.php, code:src/pages/estates/dashboard/Index.vue, code:src/components/AjaxUploader.vue]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
 「附件清單」可以上傳 JPG、PNG、PDF 檔案，每個物件最多存放 5 個檔案，每個檔案不可超過 10MB；畫面上方顯示「儲存空間」的已存檔案數與可存檔案數。
-檔案數量用完後會跳出「儲存空間已滿」的提示並顯示剩餘可存的檔案數，需要先刪除不要的檔案，才能再上傳新檔案。
-下載檔案不限身分都能做，但只有代理人且擁有新增物件權限的使用者才看得到「刪除檔案」的操作。
-上傳附件到「附件清單」，具備編輯物件權限、是團隊擁有者，或是代理人且擁有新增物件權限，符合其中一種身分即可。
-「合約附件」是固定的附件項目清單：出租方身份證明文件影本（正反面各一份，若為法人（公司）請上傳公司設立登記表）、授權代理人簽約同意書、建物所有權/有權出租之證明文件、使用執照影本、出租方同意轉租確認書、房屋位置格局示意圖、社區管理規約與住戶生活規約，以及其他（附註條款、稅籍證明等）。
-「合約附件」頁面的說明寫明：如有以下附件，可上傳圖片做補充，以避免日後爭議；圖片僅支援 JPG、PNG 檔，檔案大小最大 10MB，每個項目限制的上傳檔案數量不同。
+檔案數量用完後，選檔上傳時會跳出「儲存空間已滿」的提示並顯示剩餘可存的檔案數；需要先刪除不要的檔案，才能再上傳新檔案。
+上傳、下載與刪除附件清單的檔案時，系統都會檢查物件編輯權限（編輯物件權限，或是該物件的代理人且擁有新增物件權限），沒有權限會回覆「權限不足」，所以畫面上看得到下載按鈕，不代表一定能下載。
+「刪除檔案」的操作只有該物件的代理人且擁有新增物件權限的使用者才看得到。
+「上傳檔案」按鈕只有具備編輯物件權限、是團隊擁有者，或是該物件的代理人且擁有新增物件權限的使用者才看得到，符合其中一種身分即可。
+「合約附件」是固定的附件項目清單：出租方身份證明文件影本（正反面各一份，若為法人（公司）請上傳公司設立登記表）、授權代理人簽約同意書、建物所有權/有權出租之證明文件、使用執照影本、出租方同意轉租確認書、房屋位置格局示意圖、社區管理規約、住戶生活規約（同一個項目），以及其他（附註條款、稅籍證明等）。
+「合約附件」頁面的說明寫明：如有以下附件，可上傳圖片做補充，以避免日後爭議。
+合約附件每個檔案大小上限 10MB；每個項目可上傳的份數不同：授權代理人簽約同意書最多 2 份、社區管理規約與住戶生活規約最多 15 份、其他最多 5 份，出租方身份證明文件影本為正、反面各 1 份，其餘項目各 1 份。
+合約附件頁面的說明文字寫「圖片僅支援JPG、PNG檔」，但選檔時實際可選 JPG、PNG、PDF 檔。
 只有非大房東、且具備新增物件或編輯物件權限的使用者，才看得到合約附件的上傳與刪除操作。
+合約附件的上傳、儲存與刪除，系統同樣會檢查物件編輯權限，沒有權限會回覆「權限不足」。
 ### 「房東流水帳」跟「物件記事本」差在哪？（流水帳要記收入或支出與金額，記事本沒有金額欄位；兩者都能附檔） {#jgb/C/estate-dashboard-runnings-vs-memos}
 - phrasings:
   - {text: "流水帳怎麼記", source: "draft:outline-20260920", status: proposed}
@@ -1023,15 +1027,17 @@ Facebook 也只有在房東有填寫連結時才會顯示「立即聯繫」按�
 點擊招租店舖資訊欄最下方的分享圖示，一般（電腦）瀏覽器會開啟分享視窗，可以複製連結，或分享到 Facebook、Line、LinkedIn。
 在 Android、iOS 等手機或平板裝置上，如果瀏覽器支援系統分享功能，點擊分享圖示會直接叫出系統分享選單，不會出現上述分享視窗。
 分享出去的網址就是目前這個招租店舖頁面的網址，已套用的篩選條件也會一併帶在網址上。
-### 多團隊招募頁和一般招租店舖有什麼不同？（沒有指定住宅或商用時自動轉址到住宅、只顯示招租、不顯示社區篩選、每頁預設 10 筆） {#jgb/C/team-public-page-recruitment}
+### 多團隊招募頁和一般招租店舖有什麼不同？（網址格式不同、物件列表只有招租、沒有社區篩選、每頁預設 10 筆） {#jgb/C/team-public-page-recruitment}
 - phrasings:
   - {text: "招募頁每頁顯示幾筆", source: "draft:outline-20260920", status: proposed}
   - {text: "招募頁跟一般店舖的網址不一樣嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "招募頁跟招租店舖差在哪", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/routes/users.js, code:src/pages/users/public/Index.vue]
+- sources: [code:src/routes/users.js, code:src/pages/users/public/Index.vue, code:src/pages/users/public/_parts/TopFilter.vue, code:app/Http/Controllers/UserController.php]
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
-多團隊招募頁如果網址沒有帶物件用途，會自動轉址並補上「住宅」用途。
-多團隊招募頁固定只顯示招租物件，且不會載入社區篩選模組，這兩點都跟一般招租店舖不同。
-多團隊招募頁每頁預設顯示 10 筆，一般招租店舖則是 30 筆。
+多團隊招募頁的網址是 /p/recruitment/ 開頭，後面接招募頁代稱與物件用途；一般招租店舖的網址是 /p/ 後面接團隊代碼、招租或買賣、物件用途。
+兩種頁面在網址沒有帶物件用途時，都會自動轉址並補上「住宅」用途，所以這一點不是兩者的差異。
+多團隊招募頁的物件列表固定只有招租物件。
+多團隊招募頁的篩選條件沒有社區選項；一般招租店舖在團隊有社區時才會出現社區選項。
+多團隊招募頁每頁預設顯示 10 筆，每頁筆數可選 10、30、60、90 項；一般招租店舖預設 30 筆，可選 30、60、90 項。

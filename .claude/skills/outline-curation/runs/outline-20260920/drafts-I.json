@@ -339,7 +339,7 @@
     {
      "proposed_id": "jgb/I/pricing-free-vs-experience-plan",
      "askable": "免費方案和體驗方案有什麼不一樣",
-     "title": "免費方案與體驗方案差在哪？（前者系統贈送 5 個物件，後者每月付費可續訂 10 個物件）",
+     "title": "免費方案與體驗方案差在哪？（前者系統贈送 5 個物件，後者付費訂閱、可選月繳或年繳，可建 10 個物件並自行續訂）",
      "unit_ids": [
       "page:listings.pricing"
      ],
@@ -360,14 +360,18 @@
      "sentences": [
       "免費方案是系統在建立房東身分時自動贈送的測試方案（個人房東帶優惠代碼註冊時取得的是優惠方案），在一個月的測試期間內可以創建 5 個物件，並擁有智能合約功能。",
       "體驗方案是提供給想要數位轉型的短期試用方案，在方案期限內可以創建 10 個物件，同樣擁有智能合約功能，而且可以自行續訂來延長試用期限。",
-      "體驗方案跟其他付費方案一樣，可以在頁面上切換查看「月費」或「年費」兩種計費週期的價格；不像免費方案是系統贈送、價格固定為 0。"
+      "體驗方案是付費方案，跟其他付費方案一樣，可以在方案價格表（電腦版）與訂閱頁切換查看「月費」或「年費」兩種計費週期的價格。",
+      "免費方案是系統贈送的，方案價格固定為 0。",
+      "免費方案是贈送的，系統不會替它自動續訂。"
      ],
      "sources": [
       "code:src/pages/listings/pricing/parts/FAQ.vue",
       "code:src/pages/listings/pricing/parts/PlanForm.vue",
       "code:app/User.php",
       "code:config/defaultplan.php",
-      "code:src/pages/listings/template-parts/LightboxFreePlan.vue"
+      "code:src/pages/listings/template-parts/LightboxFreePlan.vue",
+      "code:src/pages/users/subscription/Chose.vue",
+      "code:src/pages/listings/pricing/parts/PlanAndDevice.vue"
      ],
      "evidence": [
       {
@@ -419,6 +423,41 @@
        "sentence_index": 2,
        "source": "code:src/pages/listings/pricing/parts/PlanForm.vue",
        "quote_or_symbol": "yearly={state.quantity?.[quantity].yearly}"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/listings/pricing/parts/PlanForm.vue",
+       "quote_or_symbol": "{ label: t('月費'), value: 'monthly' },"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/users/subscription/Chose.vue",
+       "quote_or_symbol": "{{ t('體驗方案價格') }}"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/users/subscription/Chose.vue",
+       "quote_or_symbol": "monthly: state.trialPlanPricing.month,"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/listings/pricing/parts/PlanAndDevice.vue",
+       "quote_or_symbol": "t('每月只要 [s1]，即可享有新增物件以及建立合約的功能',"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/User.php",
+       "quote_or_symbol": "$role->plan_price = 0; // 贈送的方案價格一定要 0 以免使用者取消訂閱拿到退款'"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/listings/pricing/parts/PlanForm.vue",
+       "quote_or_symbol": "? <div>FREE</div>"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:app/User.php",
+       "quote_or_symbol": "// 不設定 plan_first_ymd 與 plan_cycle 使方案不會續訂"
       }
      ],
      "not_supported_greps": [],

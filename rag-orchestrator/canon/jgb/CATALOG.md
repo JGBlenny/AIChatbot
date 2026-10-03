@@ -234,7 +234,7 @@ jgb/C/estate-dashboard-rent-performance｜招租表現分頁顯示什麼？（�
 jgb/C/estate-dashboard-contracts-history｜物件儀表板的合約歷程顯示哪些欄位？（一般房東：狀態／簽約類型／物件／承租人／租期／是否通知；社宅房東：合約名稱／承租人／租期）｜target_user=property_manager｜
 jgb/C/estate-dashboard-bills-tabs｜物件儀表板的帳務收支有哪些子頁籤？（總收支、統計報表）｜target_user=property_manager｜
 jgb/C/estate-dashboard-repair-status-flow｜物件儀表板修繕紀錄怎麼呈現？（申請修繕→安排修繕→完成修繕→結單四狀態）｜target_user=property_manager｜
-jgb/C/estate-dashboard-attachments-vs-contract-attachments｜「附件清單」跟「合約附件」差在哪？（附件清單可上傳 JPG／PNG／PDF、每個物件最多 5 個檔案、單檔 10MB，下載不限身分但只有代理人且有新增物件權限才能刪除；合約附件是固定的附件項目清單，可上傳圖片補充以避免日後爭議）｜target_user=property_manager｜
+jgb/C/estate-dashboard-attachments-vs-contract-attachments｜「附件清單」跟「合約附件」差在哪？（附件清單可上傳 JPG／PNG／PDF、每個物件最多 5 個檔案、單檔 10MB，上傳與下載需要物件編輯權限，刪除操作只有代理人且有新增物件權限才看得到；合約附件是固定的附件項目清單，可上傳附件補充以避免日後爭議）｜target_user=property_manager｜
 jgb/C/estate-dashboard-runnings-vs-memos｜「房東流水帳」跟「物件記事本」差在哪？（流水帳要記收入或支出與金額，記事本沒有金額欄位；兩者都能附檔）｜target_user=property_manager｜
 jgb/C/estate-dashboard-monthly-report-upload｜每月報表／每月對帳單怎麼上傳？（PDF、10MB上限，可批次指定多個物件，同月重傳會覆蓋舊檔）｜target_user=property_manager｜
 jgb/C/estate-dashboard-top-cards｜物件儀表板最上方顯示哪三張卡？（物件資訊、招租廣告、買賣廣告；編輯捷徑需要新增物件權限）｜target_user=property_manager｜
@@ -252,7 +252,7 @@ jgb/C/team-public-page-purpose｜房東對外首頁（招租店舖）是什麼�
 jgb/C/team-public-page-edit-and-banner｜招租店舖上可以直接編輯哪些內容？（橫幅照片、頭像、自我介紹；團隊身分另可改團隊名稱等欄位，需要「編輯團隊權限」）｜target_user=property_manager｜
 jgb/C/team-public-page-filter-and-view｜招租店舖怎麼篩選物件？（篩選條件加關鍵字搜尋，手機版多數條件收在「更多」；可切換小圖示／大圖示／條列式；每頁筆數 30／60／90，預設 30）｜target_user=property_manager｜
 jgb/C/team-public-page-share｜招租店舖怎麼分享？（電腦上開分享視窗可複製連結或分享到 FB、Line、LinkedIn；手機上會叫出系統分享選單；分享的是目前頁面的網址）｜target_user=property_manager,prospect｜
-jgb/C/team-public-page-recruitment｜多團隊招募頁和一般招租店舖有什麼不同？（沒有指定住宅或商用時自動轉址到住宅、只顯示招租、不顯示社區篩選、每頁預設 10 筆）｜target_user=property_manager,prospect｜
+jgb/C/team-public-page-recruitment｜多團隊招募頁和一般招租店舖有什麼不同？（網址格式不同、物件列表只有招租、沒有社區篩選、每頁預設 10 筆）｜target_user=property_manager,prospect｜
 
 ## D 租約（含委託約子題） {#D}
 scope: 合約建立、簽署、狀態與階段、續約、退租、違約金、租客邀請簽約；委託約（僅法人房東）；⛔ 帳單與押金金流歸 E
@@ -355,7 +355,7 @@ jgb/D/early-termination-eligibility｜什麼合約可以提前解約？（合約
 jgb/D/early-termination-effect-move-out｜提前解約後多久可以點退？（依新合約終止日往前推 30 天內即可執行點退押金）｜target_user=property_manager,prospect｜
 jgb/D/early-termination-billing-after｜提前解約後還會出新帳單嗎？（解約日之後系統不會再自動產生新租金帳單；已產生、落在解約日後的帳單要業者自行封存）｜target_user=property_manager｜
 ### D-notary 租約公證（公證分頁與公證服務） {#D-notary}
-jgb/D/general-contract-notary-tab｜一般合約的「公證」分頁怎麼設定？（是否辦理公證，同意時可複選三項應逕受強制執行事項；英文與英越文版合約不支援）｜target_user=property_manager｜
+jgb/D/general-contract-notary-tab｜一般合約的「公證」分頁怎麼設定？（是否辦理公證，同意時可複選三項應逕受強制執行事項；只有部分合約範本有此選項）｜target_user=property_manager｜
 jgb/D/contract-thinkcloud-esign-service｜簽約時進入的雲想科技頁面是什麼？（系統導向 Thinkcloud 雲想科技的電子簽署網頁，簽完再導回 JGB；一般合約、委託合約皆會用到）｜target_user=property_manager｜
 jgb/D/contract-thinkcloud-signing-variants｜簽署畫面與客製化契約書 PDF 要注意什麼？（公會中文版合約加補充條款會多一組簽名位置；上傳的 PDF 底稿無法解析時合約建立不了，要重新輸出再上傳）｜target_user=property_manager｜
 ### D-entrust-contract 委託合約（列表、建立編輯、檢視） {#D-entrust-contract}
@@ -565,7 +565,7 @@ jgb/I/pricing-plan-tiers-overview｜JGB 有哪些方案？（免費試用、體�
 jgb/I/pricing-free-trial-eligibility｜免費試用怎麼開始、能用多久？（企業團隊與社宅房東建立身分時自動取得，個人房東未帶優惠代碼時自動取得；一個週期後不自動續訂）｜target_user=property_manager,prospect｜
 jgb/I/pricing-free-trial-feature-scope｜免費試用不能用哪些功能？（最多 5 個物件，不支援團隊與門鎖電錶等進階功能）｜target_user=property_manager,prospect｜
 jgb/I/pricing-individual-vs-corporate-team｜個人房東與企業團隊方案差在哪？（團隊成員管理等四項功能、自動對帳與分店管理起始級距不同）｜target_user=property_manager,prospect｜
-jgb/I/pricing-free-vs-experience-plan｜免費方案與體驗方案差在哪？（前者系統贈送 5 個物件，後者每月付費可續訂 10 個物件）｜target_user=property_manager,prospect｜
+jgb/I/pricing-free-vs-experience-plan｜免費方案與體驗方案差在哪？（前者系統贈送 5 個物件，後者付費訂閱、可選月繳或年繳，可建 10 個物件並自行續訂）｜target_user=property_manager,prospect｜
 jgb/I/pricing-calc-by-estate-count｜怎麼用物件數量試算方案價格？（50～500 物件拉桿試算，超過 500 個要洽企業方案）｜target_user=property_manager,prospect｜
 jgb/I/pricing-quota-near-full-notice｜物件額度快滿了會怎樣？（剩 5 個以下觸發提醒，剛好剩 5 個另寄 Email）｜target_user=property_manager｜
 jgb/I/pricing-enterprise-plan-offer｜企業方案提供什麼？（客製化 LOGO 頁與網址頁，需另外聯繫洽談）｜target_user=property_manager,prospect｜

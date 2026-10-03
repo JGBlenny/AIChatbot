@@ -2,7 +2,7 @@
   "audience": "jgb",
   "budget_tokens": 0,
   "business_types": [],
-  "canon_sha256": "44b4c319e96be7ee1243f292789375aa9b9e9fa8db09e1cab1e62aa09cc37982",
+  "canon_sha256": "bb20bcdf2f36ef5b0143f2b82edf4007e24232245d03c6fc21fad371c77a69a9",
   "coarses": [
     {
       "fines": [
@@ -1824,13 +1824,14 @@
           ],
           "categories": [],
           "coarse_id": "A-account-profile",
-          "content_sha256": "d9aca49f2afeaf2e8aac383b6ae0faa4dda20026f212c3fa126ce5401e826666",
+          "content_sha256": "e3f48d4468a320f72de0489ac0e26b179c308b24cbc3ee24b79b8d5c880494dc",
           "content_units": [
             "「聯絡資訊」區塊會呈現在刊登的廣告上，讓租客有更多管道聯繫房東。",
             "LINE 欄位可勾選「同手機號碼」，勾選後不需另外輸入 LINE ID；未勾選時可以自行填寫 LINE ID，這個欄位不是必填。",
             "Facebook 欄位填寫的是個人首頁連結，欄位長度上限 200 字元。",
             "WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不需打「+」，欄位長度上限 200 字元。",
-            "第二組聯絡號碼欄位限填純數字，長度上限 50 字元；畫面上目前沒有「以此電話作為廣告頁聯絡電話」這個核取方塊可以勾選。"
+            "第二組聯絡號碼欄位長度上限 50 字元。",
+            "畫面上目前沒有「以此電話作為廣告頁聯絡電話」這個核取方塊可以勾選。"
           ],
           "id": "jgb/A/account-contact-info",
           "instance_applicability": "general",
@@ -1853,7 +1854,7 @@
             {
               "source": "draft:outline-20260920",
               "status": "proposed",
-              "text": "第二組電話用途"
+              "text": "第二組電話欄位有什麼限制"
             }
           ],
           "policy": "answerable",
@@ -9280,15 +9281,19 @@
           ],
           "categories": [],
           "coarse_id": "C-estate-dashboard",
-          "content_sha256": "9e8796390dca4a7399207fb2ce1a58909bb2775d30a292f058db8cd1cc60e972",
+          "content_sha256": "4a97f1cff2580bdb542c9fb879ea7c46928bf66ed269200b42dfefdeb056b771",
           "content_units": [
             "「附件清單」可以上傳 JPG、PNG、PDF 檔案，每個物件最多存放 5 個檔案，每個檔案不可超過 10MB；畫面上方顯示「儲存空間」的已存檔案數與可存檔案數。",
-            "檔案數量用完後會跳出「儲存空間已滿」的提示並顯示剩餘可存的檔案數，需要先刪除不要的檔案，才能再上傳新檔案。",
-            "下載檔案不限身分都能做，但只有代理人且擁有新增物件權限的使用者才看得到「刪除檔案」的操作。",
-            "上傳附件到「附件清單」，具備編輯物件權限、是團隊擁有者，或是代理人且擁有新增物件權限，符合其中一種身分即可。",
-            "「合約附件」是固定的附件項目清單：出租方身份證明文件影本（正反面各一份，若為法人（公司）請上傳公司設立登記表）、授權代理人簽約同意書、建物所有權/有權出租之證明文件、使用執照影本、出租方同意轉租確認書、房屋位置格局示意圖、社區管理規約與住戶生活規約，以及其他（附註條款、稅籍證明等）。",
-            "「合約附件」頁面的說明寫明：如有以下附件，可上傳圖片做補充，以避免日後爭議；圖片僅支援 JPG、PNG 檔，檔案大小最大 10MB，每個項目限制的上傳檔案數量不同。",
-            "只有非大房東、且具備新增物件或編輯物件權限的使用者，才看得到合約附件的上傳與刪除操作。"
+            "檔案數量用完後，選檔上傳時會跳出「儲存空間已滿」的提示並顯示剩餘可存的檔案數；需要先刪除不要的檔案，才能再上傳新檔案。",
+            "上傳、下載與刪除附件清單的檔案時，系統都會檢查物件編輯權限（編輯物件權限，或是該物件的代理人且擁有新增物件權限），沒有權限會回覆「權限不足」，所以畫面上看得到下載按鈕，不代表一定能下載。",
+            "「刪除檔案」的操作只有該物件的代理人且擁有新增物件權限的使用者才看得到。",
+            "「上傳檔案」按鈕只有具備編輯物件權限、是團隊擁有者，或是該物件的代理人且擁有新增物件權限的使用者才看得到，符合其中一種身分即可。",
+            "「合約附件」是固定的附件項目清單：出租方身份證明文件影本（正反面各一份，若為法人（公司）請上傳公司設立登記表）、授權代理人簽約同意書、建物所有權/有權出租之證明文件、使用執照影本、出租方同意轉租確認書、房屋位置格局示意圖、社區管理規約、住戶生活規約（同一個項目），以及其他（附註條款、稅籍證明等）。",
+            "「合約附件」頁面的說明寫明：如有以下附件，可上傳圖片做補充，以避免日後爭議。",
+            "合約附件每個檔案大小上限 10MB；每個項目可上傳的份數不同：授權代理人簽約同意書最多 2 份、社區管理規約與住戶生活規約最多 15 份、其他最多 5 份，出租方身份證明文件影本為正、反面各 1 份，其餘項目各 1 份。",
+            "合約附件頁面的說明文字寫「圖片僅支援JPG、PNG檔」，但選檔時實際可選 JPG、PNG、PDF 檔。",
+            "只有非大房東、且具備新增物件或編輯物件權限的使用者，才看得到合約附件的上傳與刪除操作。",
+            "合約附件的上傳、儲存與刪除，系統同樣會檢查物件編輯權限，沒有權限會回覆「權限不足」。"
           ],
           "id": "jgb/C/estate-dashboard-attachments-vs-contract-attachments",
           "instance_applicability": "general",
@@ -9317,12 +9322,14 @@
           "sources": [
             "code:src/pages/estates/dashboard/attachments/Index.vue",
             "code:src/pages/estates/dashboard/contractAttachments/index.vue",
-            "code:app/Http/Controllers/EstateController.php"
+            "code:app/Http/Controllers/EstateController.php",
+            "code:src/pages/estates/dashboard/Index.vue",
+            "code:src/components/AjaxUploader.vue"
           ],
           "target_user": [
             "property_manager"
           ],
-          "title": "「附件清單」跟「合約附件」差在哪？（附件清單可上傳 JPG／PNG／PDF、每個物件最多 5 個檔案、單檔 10MB，下載不限身分但只有代理人且有新增物件權限才能刪除；合約附件是固定的附件項目清單，可上傳圖片補充以避免日後爭議）"
+          "title": "「附件清單」跟「合約附件」差在哪？（附件清單可上傳 JPG／PNG／PDF、每個物件最多 5 個檔案、單檔 10MB，上傳與下載需要物件編輯權限，刪除操作只有代理人且有新增物件權限才看得到；合約附件是固定的附件項目清單，可上傳附件補充以避免日後爭議）"
         },
         {
           "business_types": [
@@ -10026,11 +10033,13 @@
           ],
           "categories": [],
           "coarse_id": "C-team-storefront",
-          "content_sha256": "ff13f569b622a5e35870e61b3106d0c98a110549400a24750f930ed60f819cd8",
+          "content_sha256": "9d18564b058930047b21e5aa7a683f3652968cae66bc10269b04e159d064630c",
           "content_units": [
-            "多團隊招募頁如果網址沒有帶物件用途，會自動轉址並補上「住宅」用途。",
-            "多團隊招募頁固定只顯示招租物件，且不會載入社區篩選模組，這兩點都跟一般招租店舖不同。",
-            "多團隊招募頁每頁預設顯示 10 筆，一般招租店舖則是 30 筆。"
+            "多團隊招募頁的網址是 /p/recruitment/ 開頭，後面接招募頁代稱與物件用途；一般招租店舖的網址是 /p/ 後面接團隊代碼、招租或買賣、物件用途。",
+            "兩種頁面在網址沒有帶物件用途時，都會自動轉址並補上「住宅」用途，所以這一點不是兩者的差異。",
+            "多團隊招募頁的物件列表固定只有招租物件。",
+            "多團隊招募頁的篩選條件沒有社區選項；一般招租店舖在團隊有社區時才會出現社區選項。",
+            "多團隊招募頁每頁預設顯示 10 筆，每頁筆數可選 10、30、60、90 項；一般招租店舖預設 30 筆，可選 30、60、90 項。"
           ],
           "id": "jgb/C/team-public-page-recruitment",
           "instance_applicability": "general",
@@ -10058,13 +10067,15 @@
           "see_also": [],
           "sources": [
             "code:src/routes/users.js",
-            "code:src/pages/users/public/Index.vue"
+            "code:src/pages/users/public/Index.vue",
+            "code:src/pages/users/public/_parts/TopFilter.vue",
+            "code:app/Http/Controllers/UserController.php"
           ],
           "target_user": [
             "property_manager",
             "prospect"
           ],
-          "title": "多團隊招募頁和一般招租店舖有什麼不同？（沒有指定住宅或商用時自動轉址到住宅、只顯示招租、不顯示社區篩選、每頁預設 10 筆）"
+          "title": "多團隊招募頁和一般招租店舖有什麼不同？（網址格式不同、物件列表只有招租、沒有社區篩選、每頁預設 10 筆）"
         }
       ],
       "id": "C-team-storefront",
@@ -12831,12 +12842,13 @@
           ],
           "categories": [],
           "coarse_id": "D-contract-sign-view",
-          "content_sha256": "4c04f3d6d05713e30fe9c8788d28ef8875f88fa5e7982cf165fbc06ee2962aaa",
+          "content_sha256": "622d102358cef75b4366943f3a814f8b55f08a63fba9ae2906bd3138284b5905",
           "content_units": [
-            "新增合約時選「紙本簽約」（上傳合約），適用於雙方已經簽訂完成、或已經公證完成的合約，讓已有合約的房東也能無縫接軌使用系統。",
-            "「電子合約」有「住宅租賃契約書」（使用最新 109 年內政部公版合約）與「客製化契約書」（自製合約模板）兩種，業者自己的合約模板要走「客製化契約書」，不是上傳合約。",
-            "社宅房東身分的新增合約選單裡，沒有「紙本簽約」與「客製化契約書」。",
-            "「紙本簽約」的合約在編輯時，一樣有「租金費用」「帳單設定」等分頁，可以繼續用系統處理帳務。",
+            "在合約列表按「建立合約」後會出現選擇建立方式的選單，選「紙本簽約」（上傳合約）適用於雙方已經簽訂完成、或已經公證完成的合約。",
+            "建立方式選單有「電子合約 - 住宅租賃契約書」「電子合約 - 客製化契約書」「紙本簽約」三個選項，其中「電子合約 - 客製化契約書」的說明是「自製合約模板」。",
+            "選「電子合約 - 客製化契約書」建立的合約，在「基本條件」分頁有「編輯底稿」按鈕，可以編輯自己的合約底稿。",
+            "社宅房東身分按「建立合約」時不會出現選擇建立方式的選單，而是直接進入「電子合約 - 住宅租賃契約書」的建立流程，沒有「紙本簽約」與「客製化契約書」可選。",
+            "「紙本簽約」的合約在編輯時，一樣有「租金費用」「帳單設定」「收款方式」等分頁。",
             "在「基本條件」分頁上傳紙本合約檔案時只收 PDF，畫面上的單檔大小上限是 15 MB，超過會提示重新上傳小於 15 MB 的檔案。",
             "如果掃描出來的合約 PDF 太大，建議先在印表機端調整掃描品質，或用線上壓縮工具縮小檔案再上傳。"
           ],
@@ -12871,7 +12883,9 @@
             "code:src/components/AjaxUploader.vue",
             "code:src/use/useEditStore.js",
             "code:app/Role.php",
-            "code:src/routes/contracts.js"
+            "code:src/routes/contracts.js",
+            "code:src/pages/contracts/list/_parts/PageTop.vue",
+            "code:src/utils/constants/contract.js"
           ],
           "target_user": [
             "property_manager",
@@ -14195,12 +14209,16 @@
           ],
           "categories": [],
           "coarse_id": "D-notary",
-          "content_sha256": "1c31480e053af6a69caae8d85571508621e3ad185a23334706dc3b247e40e939",
+          "content_sha256": "30cee25e91f93e0efd6cc700fcb708f6e0f41dab759d1127dddda589a9daf4e5",
           "content_units": [
-            "一般合約的「公證」分頁要先選擇這份租賃合約是否同意辦理公證。",
-            "選擇同意辦理公證後，可以複選「公證書載明下列事項應逕受強制執行」的項目，包含：承租方如於租期屆滿後不返還租賃住宅；承租方未依約給付之欠繳租金、費用及代繳之管理費或違約應付金額；出租方於租期屆滿或契約終止時應返還承租方之全部或一部分押金。",
-            "同意辦理公證後，分頁下方會顯示「保證人效力」的說明文字，內容依勾選的強制執行項目自動帶出，是固定說明、不是可以另外設定的欄位。",
-            "畫面提示：目前英文與英越文版合約不支援公證這個項目。"
+            "一般合約的「公證」分頁，在有「辦理公證」選項的合約範本上，要先選擇這份租賃合約是否「同意辦理」公證。",
+            "有「辦理公證」選項的合約範本是：114年內政部住宅租賃契約(原房東)、113年內政部轉租契約(包租轉租)、代租代管契約(參考114年租賃契約)、公會中文版 租賃契約書（原房東、包租業、代租代管）、內政部英文版 租賃契約書 包租業，以及英泰文版 租賃契約書（原房東、代租代管）。",
+            "選擇「同意辦理」後會出現「強制執行事項」，可以複選三項應逕受強制執行的項目：1：承租方如於租期屆滿後不返還租賃住宅；2：承租方未依約給付之欠繳租金、費用及出租方或租賃住宅所有權人代繳之管理費，或違約時應支付之金額；3：出租方如於租期屆滿或本契約終止時，應返還承租方之全部或一部分押金。",
+            "點選「同意辦理」時，三個強制執行事項會預設全部勾選。",
+            "只有「114年內政部住宅租賃契約(原房東)」「113年內政部轉租契約(包租轉租)」「代租代管契約(參考114年租賃契約)」三種範本，在「強制執行事項」上方還會多一題「公證書載明下列事項應逕受強制執行」的「同意」「不同意」選項。",
+            "同意辦理公證後，分頁下方會顯示「保證人效力」的說明文字，其中的款號依勾選的強制執行事項自動帶出，是固定說明、不是可以另外設定的欄位。",
+            "有「公證」分頁、但範本沒有「辦理公證」選項的合約，分頁只會顯示「*目前英文與英越文版合約不支援此項目」的提示，例如內政部英文版 租賃契約書 原房東、內政部英文版 租賃契約書 代租代管、英越文版 租賃契約書，以及紙本簽約、客製化契約書。",
+            "車位合約，以及部分特定合作團隊的專用範本，合約編輯畫面不會出現「公證」分頁；車位合約即使用的是有「辦理公證」選項的範本，也一樣沒有這個分頁。"
           ],
           "id": "jgb/D/general-contract-notary-tab",
           "instance_applicability": "general",
@@ -14227,12 +14245,15 @@
           "reviewed_by": null,
           "see_also": [],
           "sources": [
-            "code:src/pages/contracts/edit/publicNotary/General.vue"
+            "code:src/pages/contracts/edit/publicNotary/General.vue",
+            "code:src/use/config/useContractRequiredField.js",
+            "code:config/contract.php",
+            "code:src/pages/contracts/edit/Index.vue"
           ],
           "target_user": [
             "property_manager"
           ],
-          "title": "一般合約的「公證」分頁怎麼設定？（是否辦理公證，同意時可複選三項應逕受強制執行事項；英文與英越文版合約不支援）"
+          "title": "一般合約的「公證」分頁怎麼設定？（是否辦理公證，同意時可複選三項應逕受強制執行事項；只有部分合約範本有此選項）"
         },
         {
           "business_types": [
@@ -22698,11 +22719,13 @@
           ],
           "categories": [],
           "coarse_id": "I-pricing",
-          "content_sha256": "e4bb48cde81f0c68d53942c734becb8c0533eb1ab30859b28065ca33600ef680",
+          "content_sha256": "0815630bd38dc75d94cc023b5e0b10b2e8aadc6bf9ec587b884f1b9511d3bfcb",
           "content_units": [
             "免費方案是系統在建立房東身分時自動贈送的測試方案（個人房東帶優惠代碼註冊時取得的是優惠方案），在一個月的測試期間內可以創建 5 個物件，並擁有智能合約功能。",
             "體驗方案是提供給想要數位轉型的短期試用方案，在方案期限內可以創建 10 個物件，同樣擁有智能合約功能，而且可以自行續訂來延長試用期限。",
-            "體驗方案跟其他付費方案一樣，可以在頁面上切換查看「月費」或「年費」兩種計費週期的價格；不像免費方案是系統贈送、價格固定為 0。"
+            "體驗方案是付費方案，跟其他付費方案一樣，可以在方案價格表（電腦版）與訂閱頁切換查看「月費」或「年費」兩種計費週期的價格。",
+            "免費方案是系統贈送的，方案價格固定為 0。",
+            "免費方案是贈送的，系統不會替它自動續訂。"
           ],
           "id": "jgb/I/pricing-free-vs-experience-plan",
           "instance_applicability": "general",
@@ -22738,13 +22761,15 @@
             "code:src/pages/listings/pricing/parts/PlanForm.vue",
             "code:app/User.php",
             "code:config/defaultplan.php",
-            "code:src/pages/listings/template-parts/LightboxFreePlan.vue"
+            "code:src/pages/listings/template-parts/LightboxFreePlan.vue",
+            "code:src/pages/users/subscription/Chose.vue",
+            "code:src/pages/listings/pricing/parts/PlanAndDevice.vue"
           ],
           "target_user": [
             "property_manager",
             "prospect"
           ],
-          "title": "免費方案與體驗方案差在哪？（前者系統贈送 5 個物件，後者每月付費可續訂 10 個物件）"
+          "title": "免費方案與體驗方案差在哪？（前者系統贈送 5 個物件，後者付費訂閱、可選月繳或年繳，可建 10 個物件並自行續訂）"
         },
         {
           "business_types": [

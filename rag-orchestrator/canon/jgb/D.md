@@ -815,14 +815,15 @@ JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄�
   - {text: "上傳既有合約適用情境", source: "draft:outline-20260920", status: proposed}
   - {text: "上傳合約檔案太大怎麼辦", source: "draft:outline-20260920", status: proposed}
   - {text: "既存合約跟電子合約差別", source: "draft:outline-20260920", status: proposed}
-- sources: [help:landlordonboarding04lease_zh-Hant.html, code:src/components/Lightbox/SelectContractMethod.jsx, code:src/pages/contracts/edit/rentBasic/General.vue, code:src/components/AjaxUploader.vue, code:src/use/useEditStore.js, code:app/Role.php, code:src/routes/contracts.js]
+- sources: [help:landlordonboarding04lease_zh-Hant.html, code:src/components/Lightbox/SelectContractMethod.jsx, code:src/pages/contracts/edit/rentBasic/General.vue, code:src/components/AjaxUploader.vue, code:src/use/useEditStore.js, code:app/Role.php, code:src/routes/contracts.js, code:src/pages/contracts/list/_parts/PageTop.vue, code:src/utils/constants/contract.js]
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
-新增合約時選「紙本簽約」（上傳合約），適用於雙方已經簽訂完成、或已經公證完成的合約，讓已有合約的房東也能無縫接軌使用系統。
-「電子合約」有「住宅租賃契約書」（使用最新 109 年內政部公版合約）與「客製化契約書」（自製合約模板）兩種，業者自己的合約模板要走「客製化契約書」，不是上傳合約。
-社宅房東身分的新增合約選單裡，沒有「紙本簽約」與「客製化契約書」。
-「紙本簽約」的合約在編輯時，一樣有「租金費用」「帳單設定」等分頁，可以繼續用系統處理帳務。
+在合約列表按「建立合約」後會出現選擇建立方式的選單，選「紙本簽約」（上傳合約）適用於雙方已經簽訂完成、或已經公證完成的合約。
+建立方式選單有「電子合約 - 住宅租賃契約書」「電子合約 - 客製化契約書」「紙本簽約」三個選項，其中「電子合約 - 客製化契約書」的說明是「自製合約模板」。
+選「電子合約 - 客製化契約書」建立的合約，在「基本條件」分頁有「編輯底稿」按鈕，可以編輯自己的合約底稿。
+社宅房東身分按「建立合約」時不會出現選擇建立方式的選單，而是直接進入「電子合約 - 住宅租賃契約書」的建立流程，沒有「紙本簽約」與「客製化契約書」可選。
+「紙本簽約」的合約在編輯時，一樣有「租金費用」「帳單設定」「收款方式」等分頁。
 在「基本條件」分頁上傳紙本合約檔案時只收 PDF，畫面上的單檔大小上限是 15 MB，超過會提示重新上傳小於 15 MB 的檔案。
 如果掃描出來的合約 PDF 太大，建議先在印表機端調整掃描品質，或用線上壓縮工具縮小檔案再上傳。
 ### 簽約後可以補加保證人嗎？（租客簽約流程本身就能加連帶保證人；簽約完成後要補加，業者端沒有自助功能，需洽 JGB 客服協助） {#jgb/D/contract-guarantor-add-after-signing}
@@ -1193,19 +1194,23 @@ JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄�
 帳單產生的排程只會對到期日還沒到的合約產生下一期租金帳單，所以解約日之後不會再自動產生新的租金帳單。
 確認解約當下不會自動刪除或封存已經產生的帳單：一般團隊在合約成立時就已產生整個租期的帳單，解約日之後的各期都要業者自己封存；部分特定合作團隊的帳單是由排程逐月產生，最多多出到下個月的帳單，也要自行封存。
 ## 租約公證（公證分頁與公證服務） {#D-notary}
-### 一般合約的「公證」分頁怎麼設定？（是否辦理公證，同意時可複選三項應逕受強制執行事項；英文與英越文版合約不支援） {#jgb/D/general-contract-notary-tab}
+### 一般合約的「公證」分頁怎麼設定？（是否辦理公證，同意時可複選三項應逕受強制執行事項；只有部分合約範本有此選項） {#jgb/D/general-contract-notary-tab}
 - phrasings:
   - {text: "一般合約公證怎麼設定", source: "draft:outline-20260920", status: proposed}
   - {text: "公證強制執行事項", source: "draft:outline-20260920", status: proposed}
   - {text: "英文合約可以公證嗎", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/contracts/edit/publicNotary/General.vue]
+- sources: [code:src/pages/contracts/edit/publicNotary/General.vue, code:src/use/config/useContractRequiredField.js, code:config/contract.php, code:src/pages/contracts/edit/Index.vue]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-一般合約的「公證」分頁要先選擇這份租賃合約是否同意辦理公證。
-選擇同意辦理公證後，可以複選「公證書載明下列事項應逕受強制執行」的項目，包含：承租方如於租期屆滿後不返還租賃住宅；承租方未依約給付之欠繳租金、費用及代繳之管理費或違約應付金額；出租方於租期屆滿或契約終止時應返還承租方之全部或一部分押金。
-同意辦理公證後，分頁下方會顯示「保證人效力」的說明文字，內容依勾選的強制執行項目自動帶出，是固定說明、不是可以另外設定的欄位。
-畫面提示：目前英文與英越文版合約不支援公證這個項目。
+一般合約的「公證」分頁，在有「辦理公證」選項的合約範本上，要先選擇這份租賃合約是否「同意辦理」公證。
+有「辦理公證」選項的合約範本是：114年內政部住宅租賃契約(原房東)、113年內政部轉租契約(包租轉租)、代租代管契約(參考114年租賃契約)、公會中文版 租賃契約書（原房東、包租業、代租代管）、內政部英文版 租賃契約書 包租業，以及英泰文版 租賃契約書（原房東、代租代管）。
+選擇「同意辦理」後會出現「強制執行事項」，可以複選三項應逕受強制執行的項目：1：承租方如於租期屆滿後不返還租賃住宅；2：承租方未依約給付之欠繳租金、費用及出租方或租賃住宅所有權人代繳之管理費，或違約時應支付之金額；3：出租方如於租期屆滿或本契約終止時，應返還承租方之全部或一部分押金。
+點選「同意辦理」時，三個強制執行事項會預設全部勾選。
+只有「114年內政部住宅租賃契約(原房東)」「113年內政部轉租契約(包租轉租)」「代租代管契約(參考114年租賃契約)」三種範本，在「強制執行事項」上方還會多一題「公證書載明下列事項應逕受強制執行」的「同意」「不同意」選項。
+同意辦理公證後，分頁下方會顯示「保證人效力」的說明文字，其中的款號依勾選的強制執行事項自動帶出，是固定說明、不是可以另外設定的欄位。
+有「公證」分頁、但範本沒有「辦理公證」選項的合約，分頁只會顯示「*目前英文與英越文版合約不支援此項目」的提示，例如內政部英文版 租賃契約書 原房東、內政部英文版 租賃契約書 代租代管、英越文版 租賃契約書，以及紙本簽約、客製化契約書。
+車位合約，以及部分特定合作團隊的專用範本，合約編輯畫面不會出現「公證」分頁；車位合約即使用的是有「辦理公證」選項的範本，也一樣沒有這個分頁。
 ### 簽約時進入的雲想科技頁面是什麼？（系統導向 Thinkcloud 雲想科技的電子簽署網頁，簽完再導回 JGB；一般合約、委託合約皆會用到） {#jgb/D/contract-thinkcloud-esign-service}
 - phrasings:
   - {text: "簽約跳出的雲想科技頁面是什麼", source: "draft:outline-20260920", status: proposed}
