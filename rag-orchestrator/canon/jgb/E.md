@@ -117,18 +117,20 @@ language: zh-TW
   - {text: "作廢發票", source: "draft:outline-20260920", status: proposed}
   - {text: "收款備註怎麼改", source: "draft:outline-20260920", status: proposed}
   - {text: "退款對帳單", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/use/config/useBillTypes.js, code:app/Notification.php]
+- sources: [code:src/use/config/useBillTypes.js, code:app/Notification.php, code:app/Http/Controllers/UserController.php]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
+這是房東方帳號在「已到帳」收款帳單齒輪選單看到的內容；其中「編輯收款備註」「重開發票」「作廢發票」「封存帳單」要有「新增&編輯&刪除所屬帳單」或「新增&編輯&刪除所有帳單」權限才會顯示。
 已到帳的收款帳單可以「編輯收款備註」。
 已到帳的收款帳單，如果所屬合約有設定自動開立發票、且已經產生發票，齒輪選單裡會列出對應的「發票」按鈕（一張以上會依張數編號），已經作廢的那張後面會加註「（已作廢）」；ezPay 開立的發票點下去會打開該張發票的連結，eCloud 開立的則是打開 eCloud 的登入頁面。
 已到帳的收款帳單一律可以看到「收據」；部分特定合作團隊點「收據」下載的是押金收據。
 只有這張帳單本身是反轉帳單（房東退款給租客）時，齒輪選單才會多出「退款對帳單」。
 已到帳的收款帳單只要本身有設定自動開立發票，就會常駐顯示「重開發票」，不論目前發票狀態為何。
 只有在這張帳單有已開立且未作廢的發票時，齒輪選單才會出現「作廢發票」。
-已到帳的收款帳單一律可以「封存帳單」。
+已到帳的收款帳單可以「封存帳單」。
 帳單轉為已付款（不論是線上付款、或業者手動移至已到帳）時，系統會自動寄一封通知信給租客，一般會附收據 PDF（部分特定合作團隊的通知信不附收據）；前端目前沒有「重寄收據」的按鈕可以手動再發一次。
+押金設算息帳單轉為已到帳時，不會另外通知租客。
 ### 「應支出」狀態的支出帳單，房東跟租客各能做什麼？（房東：前往付款／通知已匯款／取消帳單；租客：付款） {#jgb/E/bill-actions-expense-unpaid}
 - phrasings:
   - {text: "應支出可以做什麼", source: "draft:outline-20260920", status: proposed}
@@ -611,8 +613,8 @@ language: zh-TW
 ### 不足一個月的租金怎麼算？（依天數比例；一般團隊以剩餘天數 ÷ 該月曆天數，逐月產帳以實際天數 ÷ 該期帳單天數，不是固定除以 30） {#jgb/E/bill-partial-month-proration}
 - phrasings:
   - {text: "不足月租金怎麼算", source: "draft:outline-20260920", status: proposed}
-  - {text: "點退帳單租金怎麼算", source: "draft:outline-20260920", status: proposed}
   - {text: "入住天數比例分攤", source: "draft:outline-20260920", status: proposed}
+  - {text: "不足一個月租金按天數怎麼折算", source: "draft:outline-20260920", status: proposed}
 - sources: [docs:knowledge/jgb-product-facts.md#p914-proration, code:app/Role.php]
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
@@ -1111,15 +1113,15 @@ JGB 把「社會住宅」設計成一種團隊身份，跟「個人房東/代理
 「固定虛擬帳號管理」頁面管理的是可以重複收款、要手動建立的固定帳號；租客在「我的帳單」線上繳費時，走藍新取號產生的 ATM 虛擬帳號是另一種、系統即時產生的單筆帳號，效期 180 天，過期後要重新走一次繳費流程才會再產生新的一組，不會出現在「固定虛擬帳號管理」列表裡。
 ### 租客重複匯款時系統怎麼處理？（國泰世華單筆帳單 ATM 帳號已付款後重複匯入會略過；固定虛擬帳號多匯的部分留在儲值餘額） {#jgb/E/recharge-account-mismatch-and-duplicate}
 - phrasings:
-  - {text: "虛擬帳號匯款金額不符", source: "draft:outline-20260920", status: proposed}
   - {text: "虛擬帳號重複匯款", source: "draft:outline-20260920", status: proposed}
   - {text: "虛擬帳號多匯的錢去哪", source: "draft:outline-20260920", status: proposed}
-- sources: [docs:knowledge/jgb-product-facts.md#p914-atm-amount-mismatch, docs:knowledge/jgb-product-facts.md#p914-duplicate-remittance, code:app/Payment.php, code:app/RechargeAccount.php]
+  - {text: "重複匯款會重複入帳嗎", source: "draft:outline-20260920", status: proposed}
+- sources: [docs:knowledge/jgb-product-facts.md#p914-duplicate-remittance, code:app/Payment.php, code:app/RechargeAccount.php, code:app/Services/Payment/SinopacVaNotifyService.php]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
 如果匯到國泰世華單筆帳單 ATM 帳號的這筆帳單已經付款完成，租客又重複匯款進來，系統只會在內部記錄這筆訂單已被處理並略過，不會再沖到任何帳單。
-匯到固定虛擬帳號的錢一律先進這組帳號的儲值餘額；只有後台開通自動對帳的部分特定合作團隊，系統才會用餘額自動銷帳、多匯的部分留作餘額抵扣後續帳單，其他團隊的餘額不會自動抵帳單。
+匯到固定虛擬帳號的錢會先進這組帳號的儲值餘額；只有後台開通自動對帳的部分特定合作團隊，系統才會用餘額自動銷帳、多匯的部分留作餘額抵扣後續帳單，其他團隊的餘額不會自動抵帳單。
 同一筆銀行入帳通知重複收到時，系統會用指紋比對去重，不會重複儲值。
 ### 逾期的虛擬帳號能不能重新產生？（此操作需由 JGB 客服協助，業者端沒有自助入口） {#jgb/E/recharge-account-regenerate-expired}
 - phrasings:

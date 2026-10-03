@@ -78,7 +78,7 @@
     {
      "proposed_id": "jgb/I/pricing-free-trial-eligibility",
      "askable": "免費試用怎麼取得、可以用多久、期滿後會不會自動續訂",
-     "title": "免費試用怎麼開始、能用多久？（新建立房東身分自動取得，一個週期後不自動續訂）",
+     "title": "免費試用怎麼開始、能用多久？（企業團隊與社宅房東建立身分時自動取得，個人房東未帶優惠代碼時自動取得；一個週期後不自動續訂）",
      "unit_ids": [
       "page:listings.pricing"
      ],
@@ -97,10 +97,10 @@
       "試用期多長"
      ],
      "sentences": [
-      "免費試用的說明是「不綁信用卡的30天的試用方案，歡迎體驗！」，點選「免費試用」後導向註冊頁完成註冊即可啟用。",
-      "系統在建立房東身分（個人房東、企業團隊或社宅房東）時，只要註冊過程沒有帶入優惠代碼，就會自動給予這個免費方案，效期為系統設定的一個週期（目前為一個月），到期後不會自動續訂。",
-      "個人房東如果是透過優惠代碼連結完成註冊，取得的是優惠代碼指定的方案，而不是這個自動贈送的免費方案。",
-      "免費方案贈送的方案價格固定為 0，即使使用者取消訂閱也不會產生退款。"
+      "價格頁的「免費試用方案」寫著「不綁信用卡的30天的試用方案，歡迎體驗！」，點「免費註冊試用」會另開註冊頁。",
+      "企業團隊與社宅房東身分建立時，一律自動取得免費方案；個人房東則是註冊過程沒有帶入優惠代碼時，才自動取得免費方案。",
+      "免費方案的效期是系統設定的一個週期（目前為一個月），到期後不會自動續訂。",
+      "個人房東如果是透過優惠代碼連結完成註冊，取得的是優惠代碼指定的方案，而不是這個自動贈送的免費方案。"
      ],
      "sources": [
       "code:src/pages/listings/pricing/parts/PlanAndDevice.vue",
@@ -114,19 +114,59 @@
        "quote_or_symbol": "不綁信用卡的[s1]天的試用方案，歡迎體驗！"
       },
       {
+       "sentence_index": 0,
+       "source": "code:src/pages/listings/pricing/parts/PlanAndDevice.vue",
+       "quote_or_symbol": "{ t('免費試用方案', null, store.state.listingsI18n) }"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/listings/pricing/parts/PlanAndDevice.vue",
+       "quote_or_symbol": "{ t('免費註冊試用', null, store.state.listingsI18n) }"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/listings/pricing/parts/PlanAndDevice.vue",
+       "quote_or_symbol": "to={{ name: 'users.create' }}"
+      },
+      {
        "sentence_index": 1,
        "source": "code:app/User.php",
        "quote_or_symbol": "// 不設定 plan_first_ymd 與 plan_cycle 使方案不會續訂"
       },
       {
+       "sentence_index": 1,
+       "source": "code:app/User.php",
+       "quote_or_symbol": "case Role::RULE_KEY_LANDLORD_CORPORATE:"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/User.php",
+       "quote_or_symbol": "case Role::RULE_KEY_LANDLORD_SOCIAL_HOUSING:"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/User.php",
+       "quote_or_symbol": "if (!empty($promotion = session('promotion')) && !empty($promotion['type']) && $promotion['type']=='registration_plan') {"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/User.php",
+       "quote_or_symbol": "$role->plan_name = '免費方案';"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:config/defaultplan.php",
+       "quote_or_symbol": "\"plan_cycle\" => 'month',"
+      },
+      {
        "sentence_index": 2,
        "source": "code:app/User.php",
-       "quote_or_symbol": "// 如果有使用優惠代碼 則幫其設定訂閱方案"
+       "quote_or_symbol": "$planExtendYmd = subscription($defaultPlan['plan_cycle']);"
       },
       {
        "sentence_index": 3,
        "source": "code:app/User.php",
-       "quote_or_symbol": "$role->plan_price = 0; // 贈送的方案價格一定要 0 以免使用者取消訂閱拿到退款'"
+       "quote_or_symbol": "// 如果有使用優惠代碼 則幫其設定訂閱方案"
       }
      ],
      "not_supported_greps": [
@@ -318,14 +358,16 @@
       "免費方案可以續訂嗎"
      ],
      "sentences": [
-      "免費方案是提供給每一個新創身份的測試方案，在一個月的測試期間內可以創建 5 個物件，並擁有智能合約及自動對帳功能。",
-      "體驗方案是提供給想要數位轉型的短期試用方案，在方案期限內可以創建 10 個物件，同樣擁有智能合約與自動對帳功能，而且可以自行續訂來延長試用期限。",
+      "免費方案是系統在建立房東身分時自動贈送的測試方案（個人房東帶優惠代碼註冊時取得的是優惠方案），在一個月的測試期間內可以創建 5 個物件，並擁有智能合約功能。",
+      "體驗方案是提供給想要數位轉型的短期試用方案，在方案期限內可以創建 10 個物件，同樣擁有智能合約功能，而且可以自行續訂來延長試用期限。",
       "體驗方案跟其他付費方案一樣，可以在頁面上切換查看「月費」或「年費」兩種計費週期的價格；不像免費方案是系統贈送、價格固定為 0。"
      ],
      "sources": [
       "code:src/pages/listings/pricing/parts/FAQ.vue",
       "code:src/pages/listings/pricing/parts/PlanForm.vue",
-      "code:app/User.php"
+      "code:app/User.php",
+      "code:config/defaultplan.php",
+      "code:src/pages/listings/template-parts/LightboxFreePlan.vue"
      ],
      "evidence": [
       {
@@ -334,9 +376,44 @@
        "quote_or_symbol": "免費方案為JGB房管系統提供給每一個新創身份的測試方案，在一個月的測試期間內，您可以在JGB房管系統內創建5個物件"
       },
       {
+       "sentence_index": 0,
+       "source": "code:app/User.php",
+       "quote_or_symbol": "$role->plan_name = '免費方案';"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:config/defaultplan.php",
+       "quote_or_symbol": "\"estate_limit\" => 5,"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:config/defaultplan.php",
+       "quote_or_symbol": "\"plan_cycle\" => 'month',"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/listings/template-parts/LightboxFreePlan.vue",
+       "quote_or_symbol": "label: t('智能合約', null, store.state.listingsI18n),"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/User.php",
+       "quote_or_symbol": "if (!empty($promotion = session('promotion')) && !empty($promotion['type']) && $promotion['type']=='registration_plan') {"
+      },
+      {
        "sentence_index": 1,
        "source": "code:src/pages/listings/pricing/parts/FAQ.vue",
        "quote_or_symbol": "體驗方案則是提供給想要數位轉型的短期試用方案，在方案期限內可以在JGB房管系統內創建10個物件"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/listings/pricing/parts/FAQ.vue",
+       "quote_or_symbol": "體驗方案則是提供給想要數位轉型的短期試用方案，在方案期限內可以在JGB房管系統內創建10個物件"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/listings/pricing/parts/FAQ.vue",
+       "quote_or_symbol": "您也可以自行續訂來延長試用期限"
       },
       {
        "sentence_index": 2,
@@ -696,7 +773,10 @@
      "sentences": [
       "物件列表新增物件、批次匯入物件、社區底下新增物件等多個入口，在送出前都會先檢查目前身分的訂閱是否還在生效中、以及剩餘可新增物件數量是否還夠。",
       "只要訂閱已經失效，或是剩餘可新增物件數量不足，這些入口都會擋下操作並改成提示使用者方案額度已滿，導向升級方案，而不是真的建立物件。",
-      "彈出視窗的標題一律是「已達到數量上限！」，但內文依目前身分是否為有效訂閱中而不同：已訂閱中時內文是「您的 [方案名稱] 最多可上傳 [物件上限] 組物件，目前已到達上限，要升級方案嗎？」，按鈕文字是「前往升級」；沒有有效訂閱時內文是「您尚未訂閱服務最多可上傳 [物件上限] 組物件，目前已到達上限，請先前往訂閱服務，即可享受所有您需要的功能！」，按鈕文字是「我要訂閱」。"
+      "彈出視窗的標題一律是「已達到數量上限！」，內文與按鈕依目前身分是否為有效訂閱中而不同。",
+      "有效訂閱中時，內文會寫出方案名稱與物件上限，並問「要升級方案嗎？」，按鈕文字是「前往升級」。",
+      "沒有有效訂閱時，內文是請使用者「請先前往訂閱服務，即可享受所有您需要的功能！」，按鈕文字是「我要訂閱」。",
+      "訂閱已失效時，複製物件、編輯物件、刊登招租廣告這些入口，也會出現同一個彈窗。"
      ],
      "sources": [
       "code:app/Http/Controllers/EstateController.php",
@@ -729,6 +809,51 @@
        "sentence_index": 2,
        "source": "code:resources/views/layouts/lightbox/general.blade.php",
        "quote_or_symbol": "if (!empty($role) && $role->isSubscriptionActive()) {"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:resources/views/layouts/lightbox/general.blade.php",
+       "quote_or_symbol": "$lightbox['subscribedPlanIsFull']['title'] = ___('已達到數量上限！');"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:resources/views/layouts/lightbox/general.blade.php",
+       "quote_or_symbol": "if (!empty($role) && $role->isSubscriptionActive()) {"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:resources/views/layouts/lightbox/general.blade.php",
+       "quote_or_symbol": "$lightbox['subscribedPlanIsFull']['description'] = ___('您的 [s1] 最多可上傳 [s2] 組物件，目前已到達上限，要升級方案嗎？', [!empty($role->plan_name) ? ___($role->plan_name) : '', isset($role->plan_estate_limit) ? ___($role->plan_estate_limit) : '無上限']);"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:resources/views/layouts/lightbox/general.blade.php",
+       "quote_or_symbol": "$lightbox['subscribedPlanIsFull']['action_link']['text'] = ___('前往升級');"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:resources/views/layouts/lightbox/general.blade.php",
+       "quote_or_symbol": "'text'=> ___('我要訂閱'),"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:resources/views/layouts/lightbox/general.blade.php",
+       "quote_or_symbol": "請先前往訂閱服務，即可享受所有您需要的功能！"
+      },
+      {
+       "sentence_index": 5,
+       "source": "code:app/Http/Middleware/SubscriptionCheck.php",
+       "quote_or_symbol": "case 'estates.copy': // 擋複製物件"
+      },
+      {
+       "sentence_index": 5,
+       "source": "code:app/Http/Middleware/SubscriptionCheck.php",
+       "quote_or_symbol": "case 'api2.estates.edit': // 擋編輯物件"
+      },
+      {
+       "sentence_index": 5,
+       "source": "code:app/Http/Middleware/SubscriptionCheck.php",
+       "quote_or_symbol": "case 'estates.open': // 擋刊登物件招租廣告"
       }
      ],
      "not_supported_greps": [
@@ -2372,7 +2497,7 @@
     {
      "proposed_id": "jgb/I/control-panel-setting-shell",
      "askable": "控制台設定頁本身有什麼內容",
-     "title": "進入控制台設定後看到什麼？（麵包屑外殼，內容是任務管理器、新增／編輯任務或通知信設定頁）",
+     "title": "進入控制台設定後看到什麼？（上方三層麵包屑與左側「控制台」側邊欄，內容是任務管理器、新增／編輯任務或通知信設定頁）",
      "unit_ids": [
       "page:controlPanel.setting"
      ],
@@ -2390,11 +2515,14 @@
       "控制台側邊欄"
      ],
      "sentences": [
-      "點進控制台的設定範圍後，畫面上方會顯示「Dashboard」「控制台」「任務管理設定」三層麵包屑，內容區顯示的是任務管理器、新增／編輯任務，或通知信設定頁面。"
+      "點進控制台的設定範圍後，畫面上方會顯示「Dashboard」「控制台」「任務管理設定」三層麵包屑，內容區顯示的是任務管理器、新增／編輯任務，或通知信設定頁面。",
+      "在任務管理器與通知信設定頁，桌面版畫面左側會有「控制台」側邊欄，欄內目前只有「任務管理設定」一項；新增、編輯任務時不顯示側邊欄。",
+      "手機版沒有左側欄，改成頁面上方一條顯示目前項目名稱的選單列，點開可以選項目。"
      ],
      "sources": [
       "code:src/pages/control-panel/setting/Index.jsx",
-      "code:src/routes/controlPanel.js"
+      "code:src/routes/controlPanel.js",
+      "code:src/pages/control-panel/_parts/OrderAside.vue"
      ],
      "evidence": [
       {
@@ -2406,6 +2534,41 @@
        "sentence_index": 0,
        "source": "code:src/routes/controlPanel.js",
        "quote_or_symbol": "name: 'notificationMail',"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/control-panel/setting/Index.jsx",
+       "quote_or_symbol": "{!state.isHightLightShow && <OrderAside />}"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/control-panel/setting/Index.jsx",
+       "quote_or_symbol": "return ['taskManagement.create', 'taskManagement.edit'].includes(route.name)"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/control-panel/_parts/OrderAside.vue",
+       "quote_or_symbol": "<div class=\"mb-2 mt-6 font-500\">{ t('控制台') }</div>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/control-panel/_parts/OrderAside.vue",
+       "quote_or_symbol": "routeName: 'taskManagement',"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/control-panel/_parts/OrderAside.vue",
+       "quote_or_symbol": "<div class=\"left-0 z-10 -mx-5 block w-screen bg-grey-50 px-2 lg:hidden\">"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/control-panel/_parts/OrderAside.vue",
+       "quote_or_symbol": "<div class=\"relative hidden lg:block\">"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/control-panel/_parts/OrderAside.vue",
+       "quote_or_symbol": "store.commit('lightbox', 'orderAsideMobile')"
       }
      ],
      "not_supported_greps": [
@@ -2660,7 +2823,7 @@
     {
      "proposed_id": "jgb/I/notification-mail-settings",
      "askable": "通知信可以加副本信箱嗎、最多可以加幾個",
-     "title": "通知信副本信箱可以設定嗎？（設定頁只有說明：預設收件為團隊擁有者信箱、每個通知信最多可再加 3 組副本；頁面上目前沒有新增副本的欄位，控制台也沒有入口）",
+     "title": "通知信副本信箱可以設定嗎？（可以：會員側欄「通知收件信箱」頁每個通知類別最多再加 3 組；控制台裡的「通知信設定」頁只有說明、沒有新增欄位，也沒有入口）",
      "unit_ids": [
       "page:notificationMail"
      ],
@@ -2675,15 +2838,22 @@
       "通知信副本信箱怎麼加",
       "通知信可以加幾個收件人",
       "通知信預設寄給誰",
-      "通知信設定在哪裡"
+      "通知信設定在哪裡",
+      "通知收件信箱在哪裡"
      ],
      "sentences": [
-      "通知信設定頁面說明：通知信預設接收信箱是團隊擁有者的註冊信箱，每個通知信最多可以再新增 3 組副本信箱。",
-      "這個頁面目前只有這段說明文字，沒有可以新增副本信箱的欄位或按鈕；控制台首頁與側欄也沒有連到這個頁面的入口。"
+      "控制台裡有一個「通知信設定」頁面，頁面上的說明寫：通知信預設接收信箱是團隊擁有者的註冊信箱，每個通知信最多可以再新增 3 組副本信箱。",
+      "這個頁面目前只有這段說明文字，沒有可以新增副本信箱的欄位或按鈕；控制台首頁與側欄也沒有連到這個頁面的入口。",
+      "要新增通知信副本信箱，請到會員側欄的「通知收件信箱」頁：每個通知類別（例如合約管理類別、帳務管理類別、修繕管理類別）最多可以再新增 3 組信箱，按「新增信箱」填好後按「儲存」。",
+      "「通知收件信箱」頁只有企業團隊與社宅房東身分的側欄看得到，而且要有「查看所有通知」權限；有「編輯團隊通知」權限才能新增、刪除信箱並儲存，沒有的話只能看。"
      ],
      "sources": [
       "code:src/pages/control-panel/notificationMail/Index.jsx",
-      "code:src/pages/control-panel/Index.vue"
+      "code:src/pages/control-panel/Index.vue",
+      "code:src/pages/users/notification/Index.vue",
+      "code:src/use/config/useForwardNotificationEmails.ts",
+      "code:app/Role.php",
+      "code:app/Http/Controllers/UserController.php"
      ],
      "evidence": [
       {
@@ -2692,9 +2862,74 @@
        "quote_or_symbol": "通知信預設接收信箱為團隊擁有者註冊信箱，每個通知信最多可再新增 3 組副本信箱。"
       },
       {
+       "sentence_index": 0,
+       "source": "code:src/pages/control-panel/notificationMail/Index.jsx",
+       "quote_or_symbol": "<div class=\"mb-4 text-[24px] font-bold\">{t('通知信設定')}</div>"
+      },
+      {
        "sentence_index": 1,
        "source": "code:src/pages/control-panel/Index.vue",
        "quote_or_symbol": "{/* //TODO: 其他控制台功能之後待補完 */}"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/users/notification/Index.vue",
+       "quote_or_symbol": "<h3 class=\"mb-1\">{{ t('通知收件信箱') }}</h3>"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/users/notification/Index.vue",
+       "quote_or_symbol": "{{ t('每個通知信最多可再新增 3 組電子信箱收取通知信件。') }}"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/users/notification/Index.vue",
+       "quote_or_symbol": "{{ t('新增信箱') }}"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/users/notification/Index.vue",
+       "quote_or_symbol": "v-if=\"formData.emailData?.[category.key]?.custom_emails?.length < state.mailAmountLimit && state.hasPermissionToEdit\">"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/use/config/useForwardNotificationEmails.ts",
+       "quote_or_symbol": "label: '合約管理類別',"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/use/config/useForwardNotificationEmails.ts",
+       "quote_or_symbol": "label: '帳務管理類別',"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/use/config/useForwardNotificationEmails.ts",
+       "quote_or_symbol": "label: '修繕管理類別',"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Role.php",
+       "quote_or_symbol": "'label' => ___('通知收件信箱'),"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Role.php",
+       "quote_or_symbol": "'permission' => 'show_notification',"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/users/notification/Index.vue",
+       "quote_or_symbol": "hasPermissionToEdit: computed(()=>store.state.userData?.permission?.edit_notification || false),"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "'label'=> '查看所有通知',"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "'label'=> '編輯團隊通知',"
       }
      ],
      "not_supported_greps": [
@@ -2818,12 +3053,14 @@
       "JGB官網首頁介紹"
      ],
      "sentences": [
-      "首頁最上方是橫幅區塊，接著依序是「熱門物件」輪播、「誠心推薦·優質租管業者」輪播、平台特色說明區塊、東南亞城市數與試用／諮詢按鈕、「最新消息」、「企業夥伴」，最下方還有一張圖片橫幅。",
-      "「熱門物件」區塊用輪播呈現每筆物件的縮圖、標題與地址等資訊；「查看更多物件」這個連結到找房搜尋頁的按鈕，只有從特定搜尋入口進入首頁時才會顯示，一般直接造訪首頁不會看到這個按鈕。",
+      "首頁最上方是橫幅區塊，接著依序是「熱門物件」輪播、「誠心推薦·優質租管業者」輪播、「JGB平台十大特色」說明區塊、「JGB平台擁有三大優勢」、東南亞城市數與試用／諮詢按鈕、「最新消息」、「企業夥伴」，最下方還有一張圖片橫幅。",
+      "「熱門物件」區塊用輪播呈現每筆物件的縮圖、標題與地址等資訊；區塊底下連到找房搜尋頁的「查看更多物件」按鈕，只有首頁網址另外帶了特定搜尋參數時才會顯示，首頁上沒有任何連結會帶這個參數，一般直接造訪首頁看不到這個按鈕。",
+      "同樣是首頁網址帶了那個搜尋參數時，橫幅下方會多出找房搜尋面板，一般直接造訪首頁也不會顯示。",
       "「誠心推薦·優質租管業者」區塊用輪播呈現使用 JGB 的租管業者推薦內容。"
      ],
      "sources": [
-      "code:src/pages/listings/Home.vue"
+      "code:src/pages/listings/Home.vue",
+      "code:src/pages/listings/template-parts/HomeTop.vue"
      ],
      "evidence": [
       {
@@ -2832,12 +3069,67 @@
        "quote_or_symbol": "熱門物件"
       },
       {
+       "sentence_index": 0,
+       "source": "code:src/pages/listings/Home.vue",
+       "quote_or_symbol": "v-html=\"t('JGB平台十大特色', null, $store.state.listingsI18n)\"></a>"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/listings/Home.vue",
+       "quote_or_symbol": "<div v-html=\"t('JGB平台擁有三大優勢', null, $store.state.listingsI18n)\"></div>"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/listings/Home.vue",
+       "quote_or_symbol": "{{ t('免費試用', null, $store.state.listingsI18n) }}"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/listings/Home.vue",
+       "quote_or_symbol": "{{ t('免費諮詢', null, $store.state.listingsI18n) }}"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/listings/Home.vue",
+       "quote_or_symbol": "{{ t('最新消息', null, $store.state.listingsI18n) }}"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/listings/Home.vue",
+       "quote_or_symbol": "{{ t('企業夥伴', null, $store.state.listingsI18n) }}"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/listings/Home.vue",
+       "quote_or_symbol": "publicUrl(`/assets/img/about/IWBI.png`)"
+      },
+      {
        "sentence_index": 1,
        "source": "code:src/pages/listings/Home.vue",
        "quote_or_symbol": "查看更多物件"
       },
       {
+       "sentence_index": 1,
+       "source": "code:src/pages/listings/Home.vue",
+       "quote_or_symbol": "<div v-if=\"$route.query?.allowSearch\" class=\"v-cloak--hidden mt-4 text-center\">"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/listings/Home.vue",
+       "quote_or_symbol": "<router-link :to=\"{name:'listings.search', query:{sort:8}}\" class=\"btn btn-main-ghost\">"
+      },
+      {
        "sentence_index": 2,
+       "source": "code:src/pages/listings/template-parts/HomeTop.vue",
+       "quote_or_symbol": "route.query?.allowSearch || route.name == 'listings.search'"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/listings/template-parts/HomeTop.vue",
+       "quote_or_symbol": "<ListingsSearchPanel></ListingsSearchPanel>"
+      },
+      {
+       "sentence_index": 3,
        "source": "code:src/pages/listings/Home.vue",
        "quote_or_symbol": "誠心推薦·優質租管業者"
       }

@@ -159,22 +159,22 @@ language: zh-TW
 - instance_applicability: general
 點一下「房東/管理者」這一欄，會跳出一張聯絡資訊卡，顯示這個帳號的聯絡資訊；點「租客」這一欄也會跳出同樣形式的聯絡資訊卡，顯示這欄記錄到的租客聯絡資訊（如果這欄沒有聯絡人資料，畫面會跳出「沒有聯絡人資訊」的提示，另見「修繕單總表的表格欄位顯示什麼」）。
 ## 報修申請流程 {#F-repair-apply}
-### 怎麼申請修繕單？（【修繕管理】>【修繕單總表】右上角「新增修繕單」進入，選物件→選分類項目→填報修細節→送出，按「上一步」「下一步」在步驟間切換） {#jgb/F/repair-apply-flow-and-entry}
+### 怎麼申請修繕單？（房東方從【修繕管理】>【修繕單總表】、租客從【我的報修】>【修繕單總表】右上角「新增修繕單」進入，選物件→選分類項目→填報修細節→送出，按「上一步」「下一步」在步驟間切換） {#jgb/F/repair-apply-flow-and-entry}
 - phrasings:
   - {text: "怎麼新增修繕單", source: "draft:outline-20260920", status: proposed}
   - {text: "怎麼報修", source: "draft:outline-20260920", status: proposed}
   - {text: "申請修繕流程", source: "draft:outline-20260920", status: proposed}
   - {text: "修繕單申請入口在哪", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/repair/list/Index.vue, code:src/pages/repair/applyProcess/Index.vue, code:src/utils/constants/repair.constant.ts, code:routes/web.php, help:repair_zh-Hant.html, code:app/Role.php, code:src/pages/repair/applyProcess/_parts/Detail.vue]
+- sources: [code:src/pages/repair/list/Index.vue, code:src/pages/repair/applyProcess/Index.vue, code:src/utils/constants/repair.constant.ts, code:routes/web.php, help:repair_zh-Hant.html, code:app/Role.php, code:src/pages/repair/applyProcess/_parts/Detail.vue, code:app/Notification.php]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-申請修繕的入口在【修繕管理】>【修繕單總表】頁面右上角的「新增修繕單」按鈕。
+房東方從【修繕管理】>【修繕單總表】、租客從【我的報修】>【修繕單總表】進入，頁面右上角都有「新增修繕單」按鈕。
 申請修繕分成三步：先選要報修的物件，再選修繕分類與項目，最後填報修細節後送出；第一步（選物件）下方的按鈕是「取消」與「下一步」，第二步（選分類）是「上一步」與「下一步」，第三步（填細節）則是「上一步」與「申請修繕」。
 租客可以自己在系統上申請報修，房東方也可以代租客申請；租客自己送出的修繕單，房東方與租客都看得到進度，但房東方在網頁上建立的修繕單目前不會同步到租客的修繕單總表，租客看不到。
 房東方帳號如果要用這個流程，帳號要有「新增&編輯&刪除所屬修繕資料」或「新增&編輯&刪除所有修繕資料」其中一項權限；租客帳號則不需要另外的權限，登入即可申請。
 填完報修細節按下「申請修繕」送出後，系統會直接把使用者帶回修繕單總表的「申請修繕」分頁。
-目前系統上沒有透過 LINE 直接發起報修的入口，LINE 只被用在修繕單建立之後的通知，以及把已經存在的修繕單分享出去。
+LINE 在修繕流程裡用於通知（修繕單建立等階段會透過 LINE 推播），以及修繕單細節頁的分享按鈕；JGB 網頁介面沒有透過 LINE 發起報修的入口。
 ### 沒有租約在跑的物件也能申請修繕嗎？（可以，房東方只要建好物件就能申請，不用先有合約） {#jgb/F/repair-apply-without-contract}
 - phrasings:
   - {text: "空屋可以報修嗎", source: "draft:outline-20260920", status: proposed}
@@ -364,17 +364,20 @@ language: zh-TW
 「完成修繕」這個區塊分左右兩欄，左邊是「房東備註」，可以填完成時間、結算金額、備註文字跟照片，只有有編輯權限的房東方帳號能編輯。
 備註文字最多可以輸入 300 字。
 照片最多可以放 10 張，支援 JPG、PNG、PDF 檔，單一檔案大小最大 10MB。
-### 修繕結算金額誰看得到？（「結算金額」欄位只有身分是房東的帳號才會顯示，租客看不到；填了金額不會自動產生帳單） {#jgb/F/repair-edit-amount-visibility}
+### 修繕結算金額在哪裡填、誰看得到？（在「完成修繕」的「房東備註」編輯模式填；「結算金額」欄位只有身分是房東的帳號才會顯示，租客看不到；填了金額不會自動產生帳單） {#jgb/F/repair-edit-amount-visibility}
 - phrasings:
   - {text: "修繕結算金額怎麼填", source: "draft:outline-20260920", status: proposed}
   - {text: "完成修繕怎麼登記費用", source: "draft:outline-20260920", status: proposed}
   - {text: "修繕金額會變成帳單嗎", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/repair/edit/Index.vue, code:app/Http/Controllers/RepairController.php]
+  - {text: "修繕結算金額誰看得到", source: "draft:outline-20260920", status: proposed}
+- sources: [code:src/pages/repair/edit/Index.vue, code:app/Http/Controllers/RepairController.php, code:src/pages/repair/_parts/MemoArea.vue]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
 「結算金額」這個欄位只有身分是房東的帳號才會顯示，租客登入後看不到金額。
 修繕單裡填的結算金額目前不會自動產生帳單，是修繕單自己的紀錄。
+「結算金額」填在修繕單細節頁「完成修繕」區塊的「房東備註」裡：點「房東備註」右上角的編輯圖示進入編輯，填好「結算金額」後按「儲存」。
+能編輯「房東備註」的只有房東方帳號，且要有「新增&編輯&刪除所屬修繕資料」或「新增&編輯&刪除所有修繕資料」權限；大房東角色與租客不能編輯。
 ### 「房客備註」是什麼？（右邊那一欄，放租客的備註文字與照片，只有租客自己能編輯；從網頁建立的修繕單都會顯示這一欄） {#jgb/F/repair-edit-tenant-memo}
 - phrasings:
   - {text: "房客備註在哪", source: "draft:outline-20260920", status: proposed}

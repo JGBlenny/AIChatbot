@@ -23,7 +23,7 @@ language: zh-TW
 除了頁面上列出的四個級距，另外還提供不綁信用卡的「免費試用」方案，以及只能透過聯繫窗口洽談的「企業方案」。
 方案價格依物件數量分級計費，頁面上可切換「月費」或「年費」兩種計費週期查看價格。
 企業方案主打客製化專屬 LOGO 頁與客製化專屬網址頁，是提供給大型企業的解決方案，需點選「深入了解企業方案」導向預約 demo 頁面洽談，頁面上不會顯示企業方案的價格。
-### 免費試用怎麼開始、能用多久？（新建立房東身分自動取得，一個週期後不自動續訂） {#jgb/I/pricing-free-trial-eligibility}
+### 免費試用怎麼開始、能用多久？（企業團隊與社宅房東建立身分時自動取得，個人房東未帶優惠代碼時自動取得；一個週期後不自動續訂） {#jgb/I/pricing-free-trial-eligibility}
 - phrasings:
   - {text: "免費試用能用多久", source: "draft:outline-20260920", status: proposed}
   - {text: "怎麼取得免費試用", source: "draft:outline-20260920", status: proposed}
@@ -33,10 +33,10 @@ language: zh-TW
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
-免費試用的說明是「不綁信用卡的30天的試用方案，歡迎體驗」，點選「免費試用」後導向註冊頁完成註冊即可啟用。
-系統在建立房東身分（個人房東、企業團隊或社宅房東）時，只要註冊過程沒有帶入優惠代碼，就會自動給予這個免費方案，效期為系統設定的一個週期（目前為一個月），到期後不會自動續訂。
+價格頁的「免費試用方案」寫著「不綁信用卡的30天的試用方案，歡迎體驗」，點「免費註冊試用」會另開註冊頁。
+企業團隊與社宅房東身分建立時，一律自動取得免費方案；個人房東則是註冊過程沒有帶入優惠代碼時，才自動取得免費方案。
+免費方案的效期是系統設定的一個週期（目前為一個月），到期後不會自動續訂。
 個人房東如果是透過優惠代碼連結完成註冊，取得的是優惠代碼指定的方案，而不是這個自動贈送的免費方案。
-免費方案贈送的方案價格固定為 0，即使使用者取消訂閱也不會產生退款。
 ### 免費試用不能用哪些功能？（最多 5 個物件，不支援團隊與門鎖電錶等進階功能） {#jgb/I/pricing-free-trial-feature-scope}
 - phrasings:
   - {text: "免費方案有什麼限制", source: "draft:outline-20260920", status: proposed}
@@ -73,12 +73,12 @@ language: zh-TW
   - {text: "免費方案跟體驗方案哪裡不同", source: "draft:outline-20260920", status: proposed}
   - {text: "體驗方案是免費的嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "免費方案可以續訂嗎", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/listings/pricing/parts/FAQ.vue, code:src/pages/listings/pricing/parts/PlanForm.vue, code:app/User.php]
+- sources: [code:src/pages/listings/pricing/parts/FAQ.vue, code:src/pages/listings/pricing/parts/PlanForm.vue, code:app/User.php, code:config/defaultplan.php, code:src/pages/listings/template-parts/LightboxFreePlan.vue]
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
-免費方案是提供給每一個新創身份的測試方案，在一個月的測試期間內可以創建 5 個物件，並擁有智能合約及自動對帳功能。
-體驗方案是提供給想要數位轉型的短期試用方案，在方案期限內可以創建 10 個物件，同樣擁有智能合約與自動對帳功能，而且可以自行續訂來延長試用期限。
+免費方案是系統在建立房東身分時自動贈送的測試方案（個人房東帶優惠代碼註冊時取得的是優惠方案），在一個月的測試期間內可以創建 5 個物件，並擁有智能合約功能。
+體驗方案是提供給想要數位轉型的短期試用方案，在方案期限內可以創建 10 個物件，同樣擁有智能合約功能，而且可以自行續訂來延長試用期限。
 體驗方案跟其他付費方案一樣，可以在頁面上切換查看「月費」或「年費」兩種計費週期的價格；不像免費方案是系統贈送、價格固定為 0。
 ### 怎麼用物件數量試算方案價格？（50～500 物件拉桿試算，超過 500 個要洽企業方案） {#jgb/I/pricing-calc-by-estate-count}
 - phrasings:
@@ -165,7 +165,10 @@ language: zh-TW
 - instance_applicability: general
 物件列表新增物件、批次匯入物件、社區底下新增物件等多個入口，在送出前都會先檢查目前身分的訂閱是否還在生效中、以及剩餘可新增物件數量是否還夠。
 只要訂閱已經失效，或是剩餘可新增物件數量不足，這些入口都會擋下操作並改成提示使用者方案額度已滿，導向升級方案，而不是真的建立物件。
-彈出視窗的標題一律是「已達到數量上限」，但內文依目前身分是否為有效訂閱中而不同：已訂閱中時內文是「您的 [方案名稱] 最多可上傳 [物件上限] 組物件，目前已到達上限，要升級方案嗎」，按鈕文字是「前往升級」；沒有有效訂閱時內文是「您尚未訂閱服務最多可上傳 [物件上限] 組物件，目前已到達上限，請先前往訂閱服務，即可享受所有您需要的功能」，按鈕文字是「我要訂閱」。
+彈出視窗的標題一律是「已達到數量上限」，內文與按鈕依目前身分是否為有效訂閱中而不同。
+有效訂閱中時，內文會寫出方案名稱與物件上限，並問「要升級方案嗎」，按鈕文字是「前往升級」。
+沒有有效訂閱時，內文是請使用者「請先前往訂閱服務，即可享受所有您需要的功能」，按鈕文字是「我要訂閱」。
+訂閱已失效時，複製物件、編輯物件、刊登招租廣告這些入口，也會出現同一個彈窗。
 ## 訂閱、付款與訂單 {#I-subscription-payment}
 ### 訂閱頁怎麼選方案？（體驗方案、依物件數量拉桿的基本方案、企業方案洽談三選一） {#jgb/I/subscription-choose-plan-flow}
 - phrasings:
@@ -513,17 +516,19 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 - instance_applicability: general
 控制台首頁的說明是「管理您的 JGB 系統」，目前畫面上實際可以點擊進入的項目只有「任務管理器」一項。
 任務管理器的卡片說明是「設定您的排程機器人，在滿足設定的條件後，可以觸發自動操作」；點擊後，只有開放控制台的特定合作團隊會進入任務管理器頁面，其他帳號會被導回會員中心首頁。
-### 進入控制台設定後看到什麼？（麵包屑外殼，內容是任務管理器、新增／編輯任務或通知信設定頁） {#jgb/I/control-panel-setting-shell}
+### 進入控制台設定後看到什麼？（上方三層麵包屑與左側「控制台」側邊欄，內容是任務管理器、新增／編輯任務或通知信設定頁） {#jgb/I/control-panel-setting-shell}
 - phrasings:
   - {text: "控制台設定頁內容", source: "draft:outline-20260920", status: proposed}
   - {text: "任務管理器上一層是什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "控制台麵包屑", source: "draft:outline-20260920", status: proposed}
   - {text: "控制台側邊欄", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/control-panel/setting/Index.jsx, code:src/routes/controlPanel.js]
+- sources: [code:src/pages/control-panel/setting/Index.jsx, code:src/routes/controlPanel.js, code:src/pages/control-panel/_parts/OrderAside.vue]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
 點進控制台的設定範圍後，畫面上方會顯示「Dashboard」「控制台」「任務管理設定」三層麵包屑，內容區顯示的是任務管理器、新增／編輯任務，或通知信設定頁面。
+在任務管理器與通知信設定頁，桌面版畫面左側會有「控制台」側邊欄，欄內目前只有「任務管理設定」一項；新增、編輯任務時不顯示側邊欄。
+手機版沒有左側欄，改成頁面上方一條顯示目前項目名稱的選單列，點開可以選項目。
 ### 任務管理器是做什麼用的？（設定週期性任務或預定通知的排程功能） {#jgb/I/task-manager-purpose}
 - phrasings:
   - {text: "任務管理器是什麼", source: "draft:outline-20260920", status: proposed}
@@ -589,18 +594,21 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 - instance_applicability: general
 任務列表每一列右側的齒輪選單提供三個動作：「編輯任務」「複製現有任務」「刪除任務」。
 編輯週期性任務時，可以選擇修改範圍是「這項任務」（只改這一次）或「這項任務和後續任務」（連同之後每次排程一起改）。
-### 通知信副本信箱可以設定嗎？（設定頁只有說明：預設收件為團隊擁有者信箱、每個通知信最多可再加 3 組副本；頁面上目前沒有新增副本的欄位，控制台也沒有入口） {#jgb/I/notification-mail-settings}
+### 通知信副本信箱可以設定嗎？（可以：會員側欄「通知收件信箱」頁每個通知類別最多再加 3 組；控制台裡的「通知信設定」頁只有說明、沒有新增欄位，也沒有入口） {#jgb/I/notification-mail-settings}
 - phrasings:
   - {text: "通知信副本信箱怎麼加", source: "draft:outline-20260920", status: proposed}
   - {text: "通知信可以加幾個收件人", source: "draft:outline-20260920", status: proposed}
   - {text: "通知信預設寄給誰", source: "draft:outline-20260920", status: proposed}
   - {text: "通知信設定在哪裡", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/control-panel/notificationMail/Index.jsx, code:src/pages/control-panel/Index.vue]
+  - {text: "通知收件信箱在哪裡", source: "draft:outline-20260920", status: proposed}
+- sources: [code:src/pages/control-panel/notificationMail/Index.jsx, code:src/pages/control-panel/Index.vue, code:src/pages/users/notification/Index.vue, code:src/use/config/useForwardNotificationEmails.ts, code:app/Role.php, code:app/Http/Controllers/UserController.php]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-通知信設定頁面說明：通知信預設接收信箱是團隊擁有者的註冊信箱，每個通知信最多可以再新增 3 組副本信箱。
+控制台裡有一個「通知信設定」頁面，頁面上的說明寫：通知信預設接收信箱是團隊擁有者的註冊信箱，每個通知信最多可以再新增 3 組副本信箱。
 這個頁面目前只有這段說明文字，沒有可以新增副本信箱的欄位或按鈕；控制台首頁與側欄也沒有連到這個頁面的入口。
+要新增通知信副本信箱，請到會員側欄的「通知收件信箱」頁：每個通知類別（例如合約管理類別、帳務管理類別、修繕管理類別）最多可以再新增 3 組信箱，按「新增信箱」填好後按「儲存」。
+「通知收件信箱」頁只有企業團隊與社宅房東身分的側欄看得到，而且要有「查看所有通知」權限；有「編輯團隊通知」權限才能新增、刪除信箱並儲存，沒有的話只能看。
 ### 誰能用控制台的任務管理與通知信設定？（僅限特定合作團隊角色；控制台首頁本身沒有這層檢查，只有進到「設定」子路徑才會擋） {#jgb/I/control-panel-access-restriction}
 - phrasings:
   - {text: "誰可以用控制台", source: "draft:outline-20260920", status: proposed}
@@ -621,12 +629,13 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
   - {text: "首頁有什麼內容", source: "draft:outline-20260920", status: proposed}
   - {text: "官網首頁架構", source: "draft:outline-20260920", status: proposed}
   - {text: "JGB官網首頁介紹", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/listings/Home.vue]
+- sources: [code:src/pages/listings/Home.vue, code:src/pages/listings/template-parts/HomeTop.vue]
 - target_user: [prospect]
 - business_types: [system_provider]
 - instance_applicability: general
-首頁最上方是橫幅區塊，接著依序是「熱門物件」輪播、「誠心推薦·優質租管業者」輪播、平台特色說明區塊、東南亞城市數與試用／諮詢按鈕、「最新消息」、「企業夥伴」，最下方還有一張圖片橫幅。
-「熱門物件」區塊用輪播呈現每筆物件的縮圖、標題與地址等資訊；「查看更多物件」這個連結到找房搜尋頁的按鈕，只有從特定搜尋入口進入首頁時才會顯示，一般直接造訪首頁不會看到這個按鈕。
+首頁最上方是橫幅區塊，接著依序是「熱門物件」輪播、「誠心推薦·優質租管業者」輪播、「JGB平台十大特色」說明區塊、「JGB平台擁有三大優勢」、東南亞城市數與試用／諮詢按鈕、「最新消息」、「企業夥伴」，最下方還有一張圖片橫幅。
+「熱門物件」區塊用輪播呈現每筆物件的縮圖、標題與地址等資訊；區塊底下連到找房搜尋頁的「查看更多物件」按鈕，只有首頁網址另外帶了特定搜尋參數時才會顯示，首頁上沒有任何連結會帶這個參數，一般直接造訪首頁看不到這個按鈕。
+同樣是首頁網址帶了那個搜尋參數時，橫幅下方會多出找房搜尋面板，一般直接造訪首頁也不會顯示。
 「誠心推薦·優質租管業者」區塊用輪播呈現使用 JGB 的租管業者推薦內容。
 ### 首頁「JGB平台十大特色」實際列出幾項？（標題寫十大，目前輪播只設定 3 項：管理儀表板、線上合約管理、即時帳務報表） {#jgb/I/homepage-ten-features-actual-count}
 - phrasings:

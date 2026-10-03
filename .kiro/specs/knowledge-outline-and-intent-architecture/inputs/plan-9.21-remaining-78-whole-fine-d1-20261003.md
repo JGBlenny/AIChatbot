@@ -98,9 +98,34 @@
 #### ⏸ 第一波停點
 W1-S3 commit 後停下，回報終點指標、累計成本、D1 量測結果。第二波在業主明示後才開始。
 
-### W2-S1／S2／S3 — D／E／F／I（21 條 doubt 修正、35 條重新先審、終審）
-- 同第一波，架換 D／E／F／I（W2-S1 開工前另送就緒審查，屆時寫出全部常數：不變位元組為 A～C、G、H；`--expect-reviewed-kept` 以 W1-S3 後實值為準；D1 依停點裁決）；允許集合來源：S5 審核單（D／E）與 S2 審核單（F／I）＋各自 raw（`p920-w5/p920-s5-raw-*`、`p920-w1/p920-s2-raw-*`，不在則從 transcript 重取）。
-- 預算約 0.6＋0.5＋0.3M。
+### W2-S1 — D／E／F／I 21 條 doubt 依新 D1 修正（+0）
+
+- **底片＝W1-S1**（同步驟、同新 D1、同 executor 起草→主 session 審閱與機械驗證→套用→核對→D1 修一次→複核→重生成→outcome verifier）；以下常數全部改寫，⛔ 不沿用 W1-S1 的值：
+  - scratch 目錄 `p921-w2/`；修正紀錄 `inputs/fix-log-9.21-W2-S1-DEFI-<日期>.md`；ops 存 `p921-w2/ops.json`；工具自 `p921-w1/` 複製（edit_fine、drafts_diff、canon_check、name_scan、customer-terms、coverage_check、scope_check、apply_ops、templates），值不改。
+  - **允許集合** `p921-w2/allowed.json` **21 條（D 10／E 3／F 2／I 6）**＝D／E／F／I 未審且最近一次先審判 doubt 者。兩來源：
+    - D／E：repo 審核單 `review-sheet-9.20-S5-DE-20261003.md`（正本 `589e0a14`）＋ `scratchpad/p920-w5/p920-s5-raw-*`；
+    - F／I：`review-sheet-9.20-S2-FGHI-20261001.md`（正本 `46234eb0`）＋ `scratchpad/p920-w1/p920-s2-raw-*`。
+    - 已查（2026-10-03，`d7c805d9`）：審核單與 raw 逐 id 判定相同（S5 63／63、S2 60／60）；D～I 未審 35＝doubt 21＋pass 14（全為 ⚠️ 組 pass）；不等或條數≠21 ⇒ 停。
+    - 判定後內容未變：`git diff --stat <該正本> -- drafts-D／E（589e0a14）、drafts-F／I（46234eb0）` 皆空；`.md` 自該正本起只新增 `- reviewed:` 行（非 reviewed 新增行 0；正對照：reviewed 行有命中）。
+  - **備份** `p921-w2/backup/`（drafts、runs 整個目錄、canon；13:16:02，與 repo `diff -r` 相同）；九架 roundtrip 全 True；客戶名掃描 `fines scanned: 539`、hits 0、「系統上」6。
+  - **不變位元組**：drafts-A／B／C／G／H 與 `canon/jgb/A.md`～`C.md`、`G.md`、`H.md` 與備份 `cmp` 相同；CATALOG 只允許允許集合內細目的行變動（`canon_check`）。
+  - **終點指標（+0，W2-S3 的前置）**：開工前（已量）與完成後都須為 `已審細目 pm 494／533、prospect 110／120`；已審集合維持 **498** 條。
+  - 重生成 `--expect-reviewed-kept 498 --expect-open-questions 54`（`--runs-out` 寫 scratch 再複製回 repo，日期標 `<日期>-w2s1-921`）。
+  - **起草**：executor，brief `p921-w2/brief-executor-fix.md`＝W1 版（`p921-w1/brief-executor-fix.md`）機械替換：目錄 `p921-w2`、條數 21、`drafts-{D,E,F,I}.json`、工作清單 `p921-w2/worklist.txt`（已產生，21 條，含 doubt 理由、現行內容、同粗目標題）、待裁路徑 `open-questions-20261003-w1s1-921.md`（54 則）；新 D1 與 Hard rules 段逐字沿用。套到 scratch 副本、`drafts_diff --list` 產出改動項後，同一 executor 續做 `scope-map.json`（每項 doubt／whole／both）與 `whole-basis.md`（同 W1-S1）；主 session 對匯出逐字 grep 後才寫入修正紀錄。
+  - **修正核對 verifier 分包**：D＋E 一包（13 條）、F＋I 一包（8 條）；brief 由 W1-S1 已改版 `p921-w1/brief-fix-AB.txt` 機械替換，**替換表（逐項）**：
+    1. 首行片名與包名「Plan 9.21 W1-S1」「A＋B 架」⇒「Plan 9.21 W2-S1」「D＋E 架」／「F＋I 架」；改動項數、細目數（首行與末行 `總 N`）⇒ 該包 `drafts_diff --list` 實數；
+    2. 「## 改動項」清單 ⇒ 該包的改動項（`drafts_diff --list` 機械篩架）；
+    3. 修正紀錄路徑 ⇒ `inputs/fix-log-9.21-W2-S1-DEFI-<日期>.md`；依據來源「9.19 S2 先審的 doubt 理由」⇒「D／E＝9.20 S5 先審、F／I＝9.20 S2 先審的 doubt 理由」；
+    4. 改後檔名 `drafts-A.json、drafts-B.json` ⇒ 該包兩架；改前備份 `p921-w1/backup/drafts/` ⇒ `p921-w2/backup/drafts/`；
+    5. 待裁路徑 `open-questions-20261003-s4-920.md` ⇒ `open-questions-20261003-w1s1-921.md`。
+    - 判準段（含 W1-S1 已改的三處）逐字沿用。
+    - **驗收（機械 grep，兩份 W2 brief 各自）**：`W1-S1`、`9.19`、`ABC`、`A＋B`、`s4-920`、`p921-w1`、`drafts-A`、`drafts-B`、「只修 doubt 所指」皆 0 命中；`fix-log-9.21-W2-S1-DEFI-` 恰 1 命中；末行 `總 N` 與「## 改動項」行數相等。正對照：`p921-w1/brief-fix-AB.txt` 對前 8 個字串各至少命中 1、`templates/brief-fix-verify.txt` 對「只修 doubt 所指」命中 1。任一不符 ⇒ 不派工、修 brief。
+  - `drafts_diff` 以 `P919_DIFF_SHELVES=ABCDEFGHI` 執行（(a)～(g) PASS，A／B／C／G／H 無改動項）；`scope_check` PASS；`coverage_check` 21 條全數有去處；整條列逐列有 fresh verifier 判定，§6 記整條列數與過／不過分布。
+  - commit 範圍：drafts-D／E／F／I、`canon/jgb/D.md`～`F.md`、`I.md`、CATALOG、`jgb.json`、runs `*-<日期>-w2s1-921*` 三檔、修正紀錄、本計畫；`git diff --cached --name-only` 範圍外 0。
+- **預算約 1.3M**（W1-S1 實績 1.6M／25 條按 21 條折算）。9.21 累計估 2.55＋1.3≈3.85M；**W2-S1 commit 後累計 > 3.9M ⇒ 停下回報業主**（上限 4.8M；W2-S2 估 0.6M、W2-S3 估 0.35M）。
+
+### W2-S2／S3 — D／E／F／I 35 條重新先審、終審（W2-S1 commit 後各自再送就緒審查，屆時寫出全部常數）
+- 同 W1-S2／W1-S3，架換 D／E／F／I；分母＝允許集合 21＋⚠️ 組 pass 14；D1 量測以 W1＋W2 合併值判（§1 W1-S2 定義）。
 
 ## 2. 不做（另案）
 - 新起草細目（頁面真缺口約 11～12 頁）、頁面量尺改造、prospect 可見頁範圍定義——皆待業主裁（HANDOFF §12-4）。
@@ -111,6 +136,7 @@ W1-S3 commit 後停下，回報終點指標、累計成本、D1 量測結果。�
 - **已裁（2026-10-03「D1 改整條、9.21 照建議」）**：見 §0。
 - **業主裁決（2026-10-03）**：「核可」——核可大綱＋W1-S1；執行模式沿用 ASK（每片回報）。W1-S2 起各片開工前各自再送就緒審查。
 - **業主裁決（2026-10-03，W1-S1 後成本回報）**：「a」——對選項「(a) 繼續 W1-S2 和 W1-S3，第一波停點放寬到 2.6M（建議）；W1-S2 開工前照例先送就緒審查」。⇒ **第一波停點 2.0M→2.6M**；總上限 4.0M 不變，第二波範圍與 D1 於第一波停點依 D1 量測結果再裁。
+- **業主裁決（2026-10-03，第一波停點）**：「a」——對選項「(a) 第二波繼續用新 D1，上限放寬到 4.8M（建議）」。⇒ 第二波 D／E／F／I 35 條沿用新 D1；**總上限 4.0M→4.8M**。
 
 ## 4. 停止條件（全片共用）
 - 已審細目數任何時候下降 ⇒ 停。
@@ -126,6 +152,8 @@ W1-S3 commit 後停下，回報終點指標、累計成本、D1 量測結果。�
 - **收尾審查（fresh plan-verifier）＝READY**（2026-10-03）⇒ 大綱＋W1-S1 交業主核可（`next_gate: user_approval`）。W1-S2、W1-S3、W2 各片開工前各自再送就緒審查。
 - **W1-S2 第 1 輪（fresh plan-verifier）＝READY**（2026-10-03）⇒ 依業主核可開跑。
 - **W1-S3 第 1 輪（fresh plan-verifier）＝READY**（2026-10-03）⇒ 依業主核可開跑。
+- **W2-S1 第 1 輪（fresh plan-verifier）＝REVISE**（2026-10-03）：P2×1——verifier brief 由 W1 版衍生，替換清單漏了修正紀錄路徑（仍指 W1-S1 A／B／C）與依據來源（9.19 S2），而 grep 驗收只查「只修 doubt 所指」與 `p921-w1`，攔不到。處置：**FIX**——改為逐項替換表（片名／包名／件數、改動項、修正紀錄與依據來源、改後與改前路徑、待裁路徑），grep 驗收擴為 9 個殘留字串 0 命中＋W2 修正紀錄恰 1 命中＋件數一致，附正對照（實測 W1 brief 含首行、末行、修正紀錄、改後、改前、待裁 6 處 W1 常數）。送第 2 輪。
+- **W2-S1 第 2 輪（fresh plan-verifier）＝READY**（2026-10-03）⇒ 依業主「a」（第二波新 D1、上限 4.8M）開跑。
 
 ## 6. 執行紀錄
 
@@ -181,3 +209,18 @@ W1-S3 commit 後停下，回報終點指標、累計成本、D1 量測結果。�
 - D1 成效：修過 25 條重審抓回 1／25＝4.0%（判準 < 10% 達成）；終審核可 37／43＝86%（9.20 第二波 59%）。
 - 成本：第一波約 2.55M（W1-S1 1.6M、W1-S2 0.6M、W1-S3 0.35M）；上限 4.0M 剩約 1.45M。
 - 第二波（D／E／F／I：doubt 21＋⚠️ pass 14＝35 條）的範圍與 D1 待業主裁。
+
+### W2-S1（2026-10-03）
+
+- **允許集合**：`p921-w2/allowed.json` 21 條（D 10／E 3／F 2／I 6），兩來源逐 id 相同（見 W2-S1 節）；就緒審查 2 輪（§5）。
+- **工具與備份**：工具自 `p921-w1/` 複製；備份 `p921-w2/backup/`（13:16:02，早於第一次 repo 編輯 13:55:14）；九架 roundtrip 全 True、客戶名 0 命中。
+- **起草**：executor（`p921-w2/brief-executor-fix.md`）產出 `ops-draft.json`＋`fix-notes.md`（21 條全修、停下 0；整條修正 46 項；整條待裁 2 項），續做 `scope-map.json`（doubt 37／whole 37／both 13）與 `whole-basis.md`（20 條）。主 session 審閱筆記並機械驗證：21 id＝允許集合；新 evidence 191 筆＋整條依據證據 31 筆逐字命中；先套 scratch 再套 repo，九架與試套逐位元組相同、A／B／C／G／H 與備份相同。
+  - 整條待裁 2 項的去處：`pricing-free-vs-experience-plan`（自動對帳，涉及待裁 #42／#43，刪該語不選邊）記入「整條待裁」；`pricing-quota-full-block`（未訂閱版彈窗數字位置程式判斷式疑寫反，**非 54 則待裁**）記入「另見」為 jgb2 缺陷候選，本條避開不寫數字。
+  - `bill-actions-received`：起草者判 doubt 理由於現行內容已不成立，改動全為整條（權限例外、「一律」、押金設算息不通知），核對 verifier 判過。
+- **修正紀錄** `inputs/fix-log-9.21-W2-S1-DEFI-20261003.md`：修正表 87 列、整條依據 20 條、整條待裁 1 條、另見 21 條；`scope_check` PASS、`coverage_check` PASS、drafts_diff (a)～(g) PASS。
+- **核對**：verifier brief 依替換表機械產生，grep 驗收 9 字串 0 命中、W2 修正紀錄恰 1 命中、件數一致（D＋E 57、F＋I 30）。D＋E **56／57**、F＋I **30／30**；不過 1 項（`move-out-bill-generation` 新增句寫歷史合約同意後「不是點退完成」，程式與同組細目皆反證，P2 本片引入）依 D1 修一次，複核 **7／7 CONFIRMED**。**整條列數 50（兩者並列 13、純整條 37），過 50／不過 0**。附建議 5 則延後。
+- **重生成**：scratch 試跑後對 repo 跑：`已審保留：498 條／丟棄：0 條`、57 粗目／539 細目、open_questions 54 則；DSP-068 刪除 33 行／34 字元。repo 與試跑、3 個 runs 產出逐位元組相同。`canon_check` ⇒ `blocks changed 21 (in allowed 21)`、`mismatches: 0`，客戶名 0、「系統上」5（`repair-apply-flow-and-entry` 改為「JGB 網頁介面沒有」）；A／B／C／G／H `.md` 與備份相同。`load_canon_or_die` 通過。
+- **終點指標 `已審細目 pm 494／533、prospect 110／120；頁面 pm 125／183、prospect 50／183`**（不變，符合 +0；已審 498）。
+- **單元與 audit**：`9 failed, 3931 passed, 3 skipped`，與基準差集＝∅；`make audit` OVERALL PASS。
+- **fresh outcome verifier＝CONFIRMED**（5 項＋終點指標重跑全過，無 P0～P2）：自行重跑三支檢查；jgb.json 已審 498 集合逐 id 相同、變動恰為 21 條允許集合且皆未審；自抽 18 句（含 13 句整條、複核句、`bill-actions-received` 2 句）對釘住匯出全部成立；整條依據 3＋3 筆證據逐字命中；`pricing-free-vs-experience-plan` 正本與 jgb.json 中「對帳」0 次（不選邊）；兩份核對 brief 9 字串 0 命中；客戶名 0；負對照（舊「加入常用帳號看收款設置權限」說法）被程式反證。附記 P4×3（「頁面上方」用詞、一筆證據引註解但下方判斷式相符、drafts／open-questions 的客戶名命中與備份及前版相同、非本片引入），延後。
+- **成本**：W2-S1 約 1.55M（就緒審查 2 輪 0.13M、executor 起草＋範圍對照 0.52M、核對 D＋E 0.26M、F＋I 0.16M、複核 0.11M、outcome verifier 約 0.2M、主 session 約 0.17M 估算）。⚠️ 超出本片預算 1.3M；**9.21 累計約 4.1M，越過本片停點 3.9M ⇒ W2-S1 commit 後停下回報業主**（W2-S2 估 0.6M＋W2-S3 估 0.35M 會使總額約 5.05M，超過上限 4.8M）。

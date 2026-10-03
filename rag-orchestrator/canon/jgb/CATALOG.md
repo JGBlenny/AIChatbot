@@ -308,7 +308,7 @@ jgb/D/social-housing-landlord-license-conditions｜社宅合約「授權」分�
 jgb/D/social-housing-tenant-tabs-overview｜社宅合約「承租方」分組有哪些分頁？（基本資料、家庭＆財產、授權、附件）｜target_user=property_manager｜
 jgb/D/social-housing-tenant-basic-status｜社宅合約「基本資料」怎麼審核租客資格？（承租人資格、住宅政策補貼戶、代理人；包租包管改填公司資料）｜target_user=property_manager｜
 jgb/D/social-housing-tenant-household｜社宅合約「家庭＆財產」分頁要登記什麼？（家庭成員、不動產與動產總額、最近年所得）｜target_user=property_manager｜
-jgb/D/social-housing-tenant-license｜社宅合約承租方的「授權」分頁要同意什麼？（財稅所得總檢核、家庭年所得百分位等資格條件）｜target_user=property_manager｜
+jgb/D/social-housing-tenant-license｜社宅合約承租方的「授權」分頁要同意什麼？（承租資格變動通知、無自有住宅、所得低於最低生活費標準 3.5 倍、財稅所得總檢核）｜target_user=property_manager｜
 jgb/D/social-housing-dealer-basic｜社宅合約「業者」分頁在做什麼？（確認團隊資料與經理人資訊，有誤要回團隊資訊或帳號資訊修改）｜target_user=property_manager｜
 jgb/D/social-housing-move-in-terms｜社宅合約「點交證明文件」分頁在約定什麼？（點交狀態與修繕責任的預先約定，不是簽約後實際執行的點交）｜target_user=property_manager｜
 jgb/D/social-housing-charter-sublet-tab-hiding｜社宅合約選「包租包管」或「轉租」範本，分頁會不同嗎？（包租包管不顯示承租方的家庭＆財產、授權、附件，轉租不顯示出租方的授權、附件）｜target_user=property_manager｜
@@ -317,10 +317,10 @@ jgb/D/contract-invite-and-review-period｜合約邀請發出後租客有多久�
 jgb/D/contract-sign-flow-steps｜租客簽約要經過哪些步驟？（填承租方簽約資料與上傳文件、預覽合約、自動扣款先授權信用卡、部分範本另有條款勾選、雲想科技畫面簽名）｜target_user=property_manager｜
 jgb/D/contract-esign-no-extra-fee｜電子簽章簽約要另外收費嗎？（系統內沒有簽章計費機制，簽約流程無付費／加購畫面）｜target_user=property_manager,prospect｜
 jgb/D/contract-locked-after-signing｜合約簽約後可以修改嗎？（送出前可編輯、雙方簽名完成前可取消邀請重編，簽署完成即無法更改，需重新簽一份新合約）｜target_user=property_manager,prospect｜
-jgb/D/contract-show-panels｜社宅合約的檢視頁面看得到什麼？（出／承租方資訊、業者、經理人資訊，以及點交點退進行中的提示）｜target_user=property_manager｜
+jgb/D/contract-show-panels｜社宅合約的檢視頁面看得到什麼？（承租方、業者、經理人資訊，以及點交點退進行中的提示）｜target_user=property_manager｜
 jgb/D/contract-show-paper-upload-archive｜合約檢視頁的「歸檔資料」是什麼？有什麼檔案限制？（租客免註冊的合約簽署後上傳合約、續約、終止合約的歸檔 PDF，最大 10MB）｜target_user=property_manager｜
 jgb/D/contract-show-creditcard-auth-prompt｜簽約時會提示信用卡自動扣款授權嗎？（收款設定需要信用卡自動扣款時，租客在簽約頁點「下一步」會提示前往授權；特定合作團隊專屬範本除外）｜target_user=property_manager｜
-jgb/D/contract-upload-existing-vs-electronic｜上傳既有合約跟建立電子合約差在哪？（既存合約用於已簽好或有自己公版合約的情境，皆可續用系統帳務／修繕追蹤）｜target_user=property_manager,prospect｜
+jgb/D/contract-upload-existing-vs-electronic｜上傳既有合約跟建立電子合約差在哪？（上傳＝「紙本簽約」，用於已簽訂或已公證完成的合約；自製合約模板是電子合約的「客製化契約書」）｜target_user=property_manager,prospect｜
 jgb/D/contract-guarantor-add-after-signing｜簽約後可以補加保證人嗎？（租客簽約流程本身就能加連帶保證人；簽約完成後要補加，業者端沒有自助功能，需洽 JGB 客服協助）｜target_user=property_manager｜
 ### D-move-in 點交 {#D-move-in}
 jgb/D/move-in-checklist-and-responsibility｜點交清單怎麼確認？（依合約約定的傢俱項目逐一上傳照片、標註出租方或承租方負責）｜target_user=property_manager｜
@@ -332,8 +332,8 @@ jgb/D/move-in-result-pdf｜點交結果能下載 PDF 嗎？（有專屬頁面可
 jgb/D/move-in-optional-and-timing｜點交是必要流程嗎？（點交是選擇性操作，未點交也能發帳單；簽約完成後即可在執行中合約選取物件點交）｜target_user=property_manager,prospect｜
 ### D-move-out 點退 {#D-move-out}
 jgb/D/move-out-checklist-and-damage｜點退時怎麼處理設備損壞？（系統點退可逐項填入賠償金額與理由、可儲存草稿；上傳點退文件則只顯示文件）｜target_user=property_manager｜
-jgb/D/move-out-bill-generation｜點退會產生什麼帳單？（含提前解約金、點退押金、賠償金，設定期限後發送，租客確認並繳款才算完成；免註冊租客送出即完成）｜target_user=property_manager｜
-jgb/D/move-out-eligibility-conditions｜什麼合約可以點退？（合約狀態須為執行中／點交完成／歷史合約、須綁定 JGB 租客帳號，免註冊租客除外）｜target_user=property_manager｜
+jgb/D/move-out-bill-generation｜點退會產生什麼帳單？（房東在「點退找補費用」確認費用後送出點退；註冊租客按同意後帳單成立、合約轉為點退完成，不看有沒有繳款；免註冊租客送出即成立）｜target_user=property_manager｜
+jgb/D/move-out-eligibility-conditions｜什麼合約可以點退？（合約狀態須為合約成立／點交完成／歷史合約、須綁定 JGB 租客帳號，免註冊租客除外）｜target_user=property_manager｜
 jgb/D/move-out-timing-window｜點退的時間限制是什麼？（合約到期前 30 天起可以點退，過了到期日之後目前沒有再設上限）｜target_user=property_manager｜
 jgb/D/move-out-remains-in-active-list｜點退完成的合約為什麼還在「執行中合約」？（只要還沒到合約到期日就會留在執行中，到期後才轉入歷史合約）｜target_user=property_manager,prospect｜
 jgb/D/move-out-fee-adjustment-step｜點退第二步「點退找補費用」頁面要填什麼？（系統帶入的點退費用項目，含提前解約時自動帶入的違約金、傢俱賠償，另可填備註、期限、附件）｜target_user=property_manager｜
@@ -348,7 +348,7 @@ jgb/D/renew-invite-review-days｜續約邀請效期是幾天？（預設 3 天�
 jgb/D/renew-data-carryover-rules｜續約時資料怎麼沿用？（新合約由舊合約複製，並更新出租方/承租方最新資料；週期設定有調整就用新的、沒調整就沿用）｜target_user=property_manager｜
 jgb/D/renew-deposit-difference-handling｜續約押金差額怎麼處理？（一般續約第一張帳單不列押金；只有特定合作團隊的延長續約會用原押金算差額；新合約無法直接沿用舊合約押金，一律列全額押金）｜target_user=property_manager｜
 ### D-early-termination 提前解約 {#D-early-termination}
-jgb/D/early-termination-reasons｜房東申請提前解約要選什麼理由？（新版中文合約有 10 項法定理由可選，其餘合約只能選「其他」）｜target_user=property_manager｜
+jgb/D/early-termination-reasons｜房東申請提前解約要選什麼理由？（新版中文合約有 10 項理由可選，其餘合約只能選「其他」）｜target_user=property_manager｜
 jgb/D/early-termination-form-fields｜申請提前解約要填什麼？（預計提前解約日須早於原合約到期日、違約金支付方與金額、佐證資料）｜target_user=property_manager｜
 jgb/D/early-termination-tenant-cancel｜誰可以取消已送出的提前解約申請？（房東透過小齒輪取消；租客只能取消自己發起、還在申請中的提前解約）｜target_user=property_manager｜
 jgb/D/early-termination-eligibility｜什麼合約可以提前解約？（合約狀態須為成立或點交完成、沒有申請過或已完成過提前解約；「可否提前解約」設定只限制租客發起，不影響房東發起）｜target_user=property_manager｜
@@ -357,7 +357,7 @@ jgb/D/early-termination-billing-after｜提前解約後還會出新帳單嗎？�
 ### D-notary 租約公證（公證分頁與公證服務） {#D-notary}
 jgb/D/general-contract-notary-tab｜一般合約的「公證」分頁怎麼設定？（是否辦理公證，同意時可複選三項應逕受強制執行事項；英文與英越文版合約不支援）｜target_user=property_manager｜
 jgb/D/contract-thinkcloud-esign-service｜簽約時進入的雲想科技頁面是什麼？（系統導向 Thinkcloud 雲想科技的電子簽署網頁，簽完再導回 JGB；一般合約、委託合約皆會用到）｜target_user=property_manager｜
-jgb/D/contract-thinkcloud-signing-variants｜簽署畫面與客製化契約書 PDF 要注意什麼？（公會版本合約加補充條款多一個協商條款簽名框；上傳的 PDF 底稿無法解析時合約建立不了，要重新輸出再上傳）｜target_user=property_manager｜
+jgb/D/contract-thinkcloud-signing-variants｜簽署畫面與客製化契約書 PDF 要注意什麼？（公會中文版合約加補充條款會多一組簽名位置；上傳的 PDF 底稿無法解析時合約建立不了，要重新輸出再上傳）｜target_user=property_manager｜
 ### D-entrust-contract 委託合約（列表、建立編輯、檢視） {#D-entrust-contract}
 jgb/D/entrusted-contract-what-is-it｜委託合約是什麼？（房東委託業者包租代管的合約，跟業者與租客之間的租賃合約是不同份文件）｜target_user=property_manager,prospect｜
 jgb/D/entrusted-contract-lease-type｜委託合約「包租」跟「代管」有什麼不同？（代管必填服務費計算模式、幣別與金額或比例；計算制度、週期、約定日期兩者都要填）｜target_user=property_manager,prospect｜
@@ -492,7 +492,7 @@ jgb/F/repair-view-only-roles｜哪些身分會看到「查看」而不是「編�
 jgb/F/repair-list-filter-category-item-urgent｜修繕單總表可以用分類、項目、是否緊急篩選嗎？（可以；先選分類才能選項目，換分類會把已選的項目清空；「是否緊急」是一個勾選框，勾了才會加上這個條件）｜target_user=property_manager｜
 jgb/F/repair-list-contact-card｜修繕單總表點「房東/管理者」或「租客」欄位會怎樣？（會彈出這個人的聯絡資訊卡）｜target_user=property_manager｜
 ### F-repair-apply 報修申請流程 {#F-repair-apply}
-jgb/F/repair-apply-flow-and-entry｜怎麼申請修繕單？（【修繕管理】>【修繕單總表】右上角「新增修繕單」進入，選物件→選分類項目→填報修細節→送出，按「上一步」「下一步」在步驟間切換）｜target_user=property_manager｜
+jgb/F/repair-apply-flow-and-entry｜怎麼申請修繕單？（房東方從【修繕管理】>【修繕單總表】、租客從【我的報修】>【修繕單總表】右上角「新增修繕單」進入，選物件→選分類項目→填報修細節→送出，按「上一步」「下一步」在步驟間切換）｜target_user=property_manager｜
 jgb/F/repair-apply-without-contract｜沒有租約在跑的物件也能申請修繕嗎？（可以，房東方只要建好物件就能申請，不用先有合約）｜target_user=property_manager,prospect｜
 jgb/F/repair-apply-category-item-other｜報修分類項目怎麼選？（分類與項目都是系統設定的清單，選好之後在報修細節可以按「編輯」回上一步重選；有一個特定分類會多出讓使用者自己輸入名稱的欄位）｜target_user=property_manager｜
 jgb/F/repair-apply-detail-fields｜報修細節要填什麼？（項目分類、問題必填；預約時段依身分決定是否必填；緊急修繕、佐證照片、備註選填；「通知及同步租客」是房東代租客申請時會看到的一個開關，但目前沒有實際作用）｜target_user=property_manager｜
@@ -508,7 +508,7 @@ jgb/F/repair-edit-cannot-edit-roles｜誰不能編輯修繕單細節頁？（租
 jgb/F/repair-edit-application-detail-readonly｜修繕單細節頁顯示哪些報修時填的資料？（「細節補充」區塊底下：申請日期、是否緊急、照片、聯絡電話或 Email、物件區域與時區、分類項目、問題、備註、預約時段；房東方才看得到「細節補充」這個標題與說明文字）｜target_user=property_manager｜
 jgb/F/repair-edit-vendor-assign｜怎麼安排修繕廠商？（填寫修繕時間、廠商名稱、維修人員、聯絡電話，儲存後會留下歷史紀錄可以展開查看）｜target_user=property_manager｜
 jgb/F/repair-edit-landlord-complete-memo｜「房東備註」要填什麼？（完成時間、備註文字最多 300 字、可以附照片，最多 10 張、單檔最大 10MB、支援 JPG／PNG／PDF；只有有編輯權限的房東方帳號能編輯）｜target_user=property_manager｜
-jgb/F/repair-edit-amount-visibility｜修繕結算金額誰看得到？（「結算金額」欄位只有身分是房東的帳號才會顯示，租客看不到；填了金額不會自動產生帳單）｜target_user=property_manager｜
+jgb/F/repair-edit-amount-visibility｜修繕結算金額在哪裡填、誰看得到？（在「完成修繕」的「房東備註」編輯模式填；「結算金額」欄位只有身分是房東的帳號才會顯示，租客看不到；填了金額不會自動產生帳單）｜target_user=property_manager｜
 jgb/F/repair-edit-tenant-memo｜「房客備註」是什麼？（右邊那一欄，放租客的備註文字與照片，只有租客自己能編輯；從網頁建立的修繕單都會顯示這一欄）｜target_user=property_manager｜
 jgb/F/repair-edit-share-to-vendor｜怎麼把修繕單分享出去給廠商？（在修繕單細節頁點「分享」，電腦上可以複製連結或用 LINE 分享，手機上會直接叫出手機的分享選單；廠商點開連結不需要登入 JGB 帳號）｜target_user=property_manager｜
 ### F-repair-share 修繕單分享頁 {#F-repair-share}
@@ -562,7 +562,7 @@ jgb/H/help-center-trial-form｜幫助中心的「立即免費試用」視窗是�
 scope: 方案比較與試用、功能矩陣、導入與資料遷移、批次匯入流程、競品（deliberate_no）；⛔ 找真人走 handoff
 ### I-pricing 方案、價格與免費試用 {#I-pricing}
 jgb/I/pricing-plan-tiers-overview｜JGB 有哪些方案？（免費試用、體驗方案、入門／熱門／專業四級距、企業方案）｜target_user=property_manager,prospect｜
-jgb/I/pricing-free-trial-eligibility｜免費試用怎麼開始、能用多久？（新建立房東身分自動取得，一個週期後不自動續訂）｜target_user=property_manager,prospect｜
+jgb/I/pricing-free-trial-eligibility｜免費試用怎麼開始、能用多久？（企業團隊與社宅房東建立身分時自動取得，個人房東未帶優惠代碼時自動取得；一個週期後不自動續訂）｜target_user=property_manager,prospect｜
 jgb/I/pricing-free-trial-feature-scope｜免費試用不能用哪些功能？（最多 5 個物件，不支援團隊與門鎖電錶等進階功能）｜target_user=property_manager,prospect｜
 jgb/I/pricing-individual-vs-corporate-team｜個人房東與企業團隊方案差在哪？（團隊成員管理等四項功能、自動對帳與分店管理起始級距不同）｜target_user=property_manager,prospect｜
 jgb/I/pricing-free-vs-experience-plan｜免費方案與體驗方案差在哪？（前者系統贈送 5 個物件，後者每月付費可續訂 10 個物件）｜target_user=property_manager,prospect｜
@@ -600,13 +600,13 @@ jgb/I/demo-form-submit-result｜demo 表單送出後多久有人聯繫？（顯�
 jgb/I/demo-form-actual-validation-scope｜demo 表單哪些欄位真的會被系統擋下？（畫面上全部欄位都要填才能送出；系統端只再檢查公司、姓名、電話、Email 四項）｜target_user=property_manager｜
 ### I-control-panel 控制台（設定、通知信範本、自動化任務） {#I-control-panel}
 jgb/I/control-panel-entry-scope｜控制台首頁目前能用什麼？（目前只有「任務管理器」一個項目可以點擊進入，而且只開放給特定合作團隊）｜target_user=property_manager｜
-jgb/I/control-panel-setting-shell｜進入控制台設定後看到什麼？（麵包屑外殼，內容是任務管理器、新增／編輯任務或通知信設定頁）｜target_user=property_manager｜
+jgb/I/control-panel-setting-shell｜進入控制台設定後看到什麼？（上方三層麵包屑與左側「控制台」側邊欄，內容是任務管理器、新增／編輯任務或通知信設定頁）｜target_user=property_manager｜
 jgb/I/task-manager-purpose｜任務管理器是做什麼用的？（設定週期性任務或預定通知的排程功能）｜target_user=property_manager｜
 jgb/I/task-manager-type-behavior-scope｜新增任務能選哪些類型？（目前只開放「通知」類型，行為是信件通知或站內通知）｜target_user=property_manager｜
 jgb/I/task-manager-cycle-options｜任務週期怎麼設定？（單位分年／月，方式可選僅一次、持續不停、特定日期結束、重複特定次數）｜target_user=property_manager｜
 jgb/I/task-manager-form-fields｜新增任務表單有哪些欄位？（任務名稱、任務類型、關聯物件、任務行為、任務時間、重複間隔、結束時間、通知對象、通知內容）｜target_user=property_manager｜
 jgb/I/task-manager-edit-delete-copy｜已建立的任務怎麼編輯／刪除？（每筆任務可編輯、複製、刪除，編輯週期任務可選只改這次或連後續一起改）｜target_user=property_manager｜
-jgb/I/notification-mail-settings｜通知信副本信箱可以設定嗎？（設定頁只有說明：預設收件為團隊擁有者信箱、每個通知信最多可再加 3 組副本；頁面上目前沒有新增副本的欄位，控制台也沒有入口）｜target_user=property_manager｜
+jgb/I/notification-mail-settings｜通知信副本信箱可以設定嗎？（可以：會員側欄「通知收件信箱」頁每個通知類別最多再加 3 組；控制台裡的「通知信設定」頁只有說明、沒有新增欄位，也沒有入口）｜target_user=property_manager｜
 jgb/I/control-panel-access-restriction｜誰能用控制台的任務管理與通知信設定？（僅限特定合作團隊角色；控制台首頁本身沒有這層檢查，只有進到「設定」子路徑才會擋）｜target_user=property_manager｜
 ### I-marketing-home 官網首頁 {#I-marketing-home}
 jgb/I/homepage-sections-overview｜官網首頁有哪些區塊？（橫幅、熱門物件、優質租管業者推薦、特色介紹、企業夥伴、最新消息）｜target_user=prospect｜

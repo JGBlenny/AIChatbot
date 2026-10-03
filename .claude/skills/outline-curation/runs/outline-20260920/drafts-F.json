@@ -701,7 +701,7 @@
     {
      "proposed_id": "jgb/F/repair-apply-flow-and-entry",
      "askable": "怎麼開始申請一張新的修繕單、整體流程有哪幾步、入口在哪",
-     "title": "怎麼申請修繕單？（【修繕管理】>【修繕單總表】右上角「新增修繕單」進入，選物件→選分類項目→填報修細節→送出，按「上一步」「下一步」在步驟間切換）",
+     "title": "怎麼申請修繕單？（房東方從【修繕管理】>【修繕單總表】、租客從【我的報修】>【修繕單總表】右上角「新增修繕單」進入，選物件→選分類項目→填報修細節→送出，按「上一步」「下一步」在步驟間切換）",
      "unit_ids": [
       "page:repair.applyProcess"
      ],
@@ -719,12 +719,12 @@
       "修繕單申請入口在哪"
      ],
      "sentences": [
-      "申請修繕的入口在【修繕管理】>【修繕單總表】頁面右上角的「新增修繕單」按鈕。",
+      "房東方從【修繕管理】>【修繕單總表】、租客從【我的報修】>【修繕單總表】進入，頁面右上角都有「新增修繕單」按鈕。",
       "申請修繕分成三步：先選要報修的物件，再選修繕分類與項目，最後填報修細節後送出；第一步（選物件）下方的按鈕是「取消」與「下一步」，第二步（選分類）是「上一步」與「下一步」，第三步（填細節）則是「上一步」與「申請修繕」。",
       "租客可以自己在系統上申請報修，房東方也可以代租客申請；租客自己送出的修繕單，房東方與租客都看得到進度，但房東方在網頁上建立的修繕單目前不會同步到租客的修繕單總表，租客看不到。",
       "房東方帳號如果要用這個流程，帳號要有「新增&編輯&刪除所屬修繕資料」或「新增&編輯&刪除所有修繕資料」其中一項權限；租客帳號則不需要另外的權限，登入即可申請。",
       "填完報修細節按下「申請修繕」送出後，系統會直接把使用者帶回修繕單總表的「申請修繕」分頁。",
-      "目前系統上沒有透過 LINE 直接發起報修的入口，LINE 只被用在修繕單建立之後的通知，以及把已經存在的修繕單分享出去。"
+      "LINE 在修繕流程裡用於通知（修繕單建立等階段會透過 LINE 推播），以及修繕單細節頁的分享按鈕；JGB 網頁介面沒有透過 LINE 發起報修的入口。"
      ],
      "sources": [
       "code:src/pages/repair/list/Index.vue",
@@ -733,13 +733,34 @@
       "code:routes/web.php",
       "help:repair_zh-Hant.html",
       "code:app/Role.php",
-      "code:src/pages/repair/applyProcess/_parts/Detail.vue"
+      "code:src/pages/repair/applyProcess/_parts/Detail.vue",
+      "code:app/Notification.php"
      ],
      "evidence": [
       {
        "sentence_index": 0,
        "source": "help:repair_zh-Hant.html",
        "quote_or_symbol": "並點選右上方之【新增修繕單】"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Role.php",
+       "quote_or_symbol": "'label' => $this->config_rule_type === 'landlord' ? ___('修繕管理') : ___('我的報修'),"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Role.php",
+       "quote_or_symbol": "'label' => ___('修繕單總表'),"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/repair/list/Index.vue",
+       "quote_or_symbol": "{{ t('新增修繕單') }}"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/repair/list/Index.vue",
+       "quote_or_symbol": "class=\"col-auto ml-auto\">"
       },
       {
        "sentence_index": 1,
@@ -795,6 +816,16 @@
        "sentence_index": 5,
        "source": "code:src/pages/repair/edit/_parts/ApplicationDetail.vue",
        "quote_or_symbol": "https://social-plugins.line.me/lineit/share?url="
+      },
+      {
+       "sentence_index": 5,
+       "source": "code:app/Notification.php",
+       "quote_or_symbol": "case 'repair_create': // 租客 or 房東送出修繕申請單時"
+      },
+      {
+       "sentence_index": 5,
+       "source": "code:app/Notification.php",
+       "quote_or_symbol": "botbonnie_api('push', 'line', $repair->role_id, $repair->user_id, ["
       }
      ],
      "not_supported_greps": [
@@ -1580,7 +1611,7 @@
     {
      "proposed_id": "jgb/F/repair-edit-amount-visibility",
      "askable": "修繕結算金額只有房東看得到嗎，填了金額之後有沒有帳單",
-     "title": "修繕結算金額誰看得到？（「結算金額」欄位只有身分是房東的帳號才會顯示，租客看不到；填了金額不會自動產生帳單）",
+     "title": "修繕結算金額在哪裡填、誰看得到？（在「完成修繕」的「房東備註」編輯模式填；「結算金額」欄位只有身分是房東的帳號才會顯示，租客看不到；填了金額不會自動產生帳單）",
      "unit_ids": [
       "page:repair.edit"
      ],
@@ -1594,15 +1625,19 @@
      "phrasings": [
       "修繕結算金額怎麼填",
       "完成修繕怎麼登記費用",
-      "修繕金額會變成帳單嗎"
+      "修繕金額會變成帳單嗎",
+      "修繕結算金額誰看得到"
      ],
      "sentences": [
       "「結算金額」這個欄位只有身分是房東的帳號才會顯示，租客登入後看不到金額。",
-      "修繕單裡填的結算金額目前不會自動產生帳單，是修繕單自己的紀錄。"
+      "修繕單裡填的結算金額目前不會自動產生帳單，是修繕單自己的紀錄。",
+      "「結算金額」填在修繕單細節頁「完成修繕」區塊的「房東備註」裡：點「房東備註」右上角的編輯圖示進入編輯，填好「結算金額」後按「儲存」。",
+      "能編輯「房東備註」的只有房東方帳號，且要有「新增&編輯&刪除所屬修繕資料」或「新增&編輯&刪除所有修繕資料」權限；大房東角色與租客不能編輯。"
      ],
      "sources": [
       "code:src/pages/repair/edit/Index.vue",
-      "code:app/Http/Controllers/RepairController.php"
+      "code:app/Http/Controllers/RepairController.php",
+      "code:src/pages/repair/_parts/MemoArea.vue"
      ],
      "evidence": [
       {
@@ -1614,6 +1649,51 @@
        "sentence_index": 1,
        "source": "code:app/Http/Controllers/RepairController.php",
        "quote_or_symbol": "'total' => isset($repair->total) ? exchange_currency($repair->currency, $repair->currency, $repair->total, ['suffixFormat' => true, 'thousandFormat' => true]) : null,"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/repair/edit/Index.vue",
+       "quote_or_symbol": "{{ t('完成修繕') }}"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/repair/edit/Index.vue",
+       "quote_or_symbol": ":badgeText=\"t('房東備註')\""
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/repair/_parts/MemoArea.vue",
+       "quote_or_symbol": "<div v-if=\"props?.isAllowedEdit && !props?.isEditing\" class=\"col-auto ml-auto print:hidden\">"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/repair/_parts/MemoArea.vue",
+       "quote_or_symbol": "v-else-if=\"props?.isEditing && props?.tempMemoData\""
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/repair/_parts/MemoArea.vue",
+       "quote_or_symbol": "{{ t('儲存') }}"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/repair/edit/Index.vue",
+       "quote_or_symbol": "&& !state.is_big_landlord"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/repair/edit/Index.vue",
+       "quote_or_symbol": "&& (store.state.userData?.permission?.edit_repair || store.state.userData?.permission?.edit_owner_repair)"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "'label'=> '新增&編輯&刪除所屬修繕資料',"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "'label'=> '新增&編輯&刪除所有修繕資料',"
       }
      ],
      "not_supported_greps": [
