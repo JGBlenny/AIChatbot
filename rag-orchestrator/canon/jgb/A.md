@@ -24,20 +24,23 @@ language: zh-TW
 第二步輸入收到的 Email 驗證碼完成信箱驗證。
 第三步填寫姓氏、名稱、稱謂並設定密碼，按下「完成註冊」即建立帳號。
 註冊時需先閱讀並同意服務條款和隱私權聲明才能繼續下一步。
-### 租客從電子合約邀請怎麼註冊？（房東建約發邀請，租客點「查看合約」再點「註冊」接續完成） {#jgb/A/register-tenant-contract-invitation}
+### 租客從電子合約邀請怎麼註冊？（房東建約發邀請，租客點「查看合約」再點「立即註冊」接續完成） {#jgb/A/register-tenant-contract-invitation}
 - phrasings:
   - {text: "租客電子合約邀請註冊", source: "draft:outline-20260920", status: proposed}
   - {text: "房東邀請租客簽約怎麼註冊", source: "draft:outline-20260920", status: proposed}
   - {text: "收到合約邀請信怎麼辦", source: "draft:outline-20260920", status: proposed}
   - {text: "租客可以不註冊嗎", source: "draft:outline-20260920", status: proposed}
-- sources: [help:onboarding1_zh-Hant.html, code:app/Http/Controllers/AuthController.php]
+- sources: [help:onboarding1_zh-Hant.html, code:app/Http/Controllers/AuthController.php, code:src/pages/contracts/edit/tenantInfo/Index.jsx, code:app/Notification.php, code:resources/views/emails/zh-TW/contracts/invite.blade.php, code:resources/views/estate/show.blade.php, code:src/pages/users/auth/parts/LoginForm.vue, code:src/components/SurelyVue/Contract/CategoryCell.jsx, code:app/Http/Controllers/EstateController.php, code:app/Http/Middleware/LoginCheck.php]
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
-租客還沒有 JGB 帳號時，房東在建立合約時輸入租客的 Email 或手機號碼發送邀請，房東端會進入「待租客簽回」畫面，顯示尚未註冊會員租客的 Email 帳號。
-租客會收到簽約邀請郵件，點選信中的「查看合約」按鈕後，會進入該物件的廣告頁供租客參考。
-租客在廣告頁確認無誤後，點選頁面右下角的「查看合約」，因為還未註冊成為 JGB 會員，會先進入 JGB 登入畫面，此時點選「註冊」按鈕即可完成註冊，並接續完成合約。
-租客也可以選擇不註冊帳號，改由房東自行填寫租客的身份資料。
+房東建立合約時，若選「租客註冊」，會在「合約邀請聯繫方式」選 Email 或手機號碼並填入租客的聯絡方式來發送邀請；邀請送出後，合約會進入「待租客簽回」。
+房東用 Email 邀請時，租客會收到簽約邀請郵件；點選信中的「查看合約」按鈕後，會進入該物件的廣告頁供租客參考。
+房東用手機號碼邀請時，租客收到的是帶有同一個連結的簡訊。
+租客在廣告頁點選「查看合約」後，如果還沒有登入，會先進入 JGB 登入畫面。
+登入畫面上有「立即註冊」可以點選。
+註冊完成後，系統會把這份合約邀請綁定到新帳號，租客就能接續處理這份合約。
+房東建立合約時若選「租客免註冊」，租客不需要註冊 JGB 會員，改由房東／管理者協助填寫租客資訊。
 ### 可以用 Facebook、Google、LINE 註冊嗎？（SSO 仍需完成 Email 綁定） {#jgb/A/register-sso}
 - phrasings:
   - {text: "可以用臉書登入註冊嗎", source: "draft:outline-20260920", status: proposed}
@@ -53,18 +56,19 @@ language: zh-TW
 註冊頁除了 Email 之外，也提供 Facebook、Google、LINE 三種第三方帳號快速註冊。
 透過 LINE 內建瀏覽器開啟 Google 註冊時，系統會另外開啟外部瀏覽器完成驗證。
 用第三方帳號註冊後，仍會進入 Email 驗證流程，需要自行輸入要綁定的 Email 並完成驗證。
-### 註冊卡在機器人驗證過期怎麼辦？（會退回第一步重新勾選） {#jgb/A/register-captcha-expired}
+### 註冊卡在機器人驗證過期怎麼辦？（重新勾選「我不是機器人」；寄驗證信時沒通過會退回第一步） {#jgb/A/register-captcha-expired}
 - phrasings:
   - {text: "機器人驗證過期", source: "draft:outline-20260920", status: proposed}
   - {text: "我不是機器人卡住", source: "draft:outline-20260920", status: proposed}
   - {text: "註冊一直失敗", source: "draft:outline-20260920", status: proposed}
-  - {text: "驗證框顯示不出來", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/users/auth/parts/EmailVerify.vue, code:src/pages/users/auth/parts/CreateWelcome.vue]
+- sources: [code:src/pages/users/auth/parts/EmailVerify.vue, code:src/pages/users/auth/parts/CreateWelcome.vue, code:app/Http/Controllers/AuthController.php, code:app/Services/AuthService.php]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-若「我不是機器人」驗證已經過期，畫面會提示重新輸入 Email 並重新勾選「我不是機器人」，流程退回到第一步的 Email 輸入畫面。
-退回第一步時，先前輸入的 Email 與驗證通行證會被清空，需要重新輸入 Email 並重新勾選「我不是機器人」才能繼續。
+在第一步 Email 輸入畫面，「我不是機器人」的勾選失效時，「繼續」按鈕會收起來，需要重新勾選才會再出現。
+如果是在寄驗證信時，系統判定機器人驗證沒有通過，畫面會退回第一步的 Email 輸入畫面，並提示「機器人驗證已經過期，請重新輸入 Email 並勾選「我不是機器人」」
+退回第一步時，先前輸入的 Email 與機器人驗證結果都會被清空，需要重新輸入 Email 並重新勾選「我不是機器人」才能繼續。
+機器人驗證通過後，系統只在 30 分鐘內承認同一個 Email 的驗證紀錄；超過之後再寄驗證信，就會要求重新驗證。
 ### 沒收到 Email 驗證碼怎麼辦？（可重發，發送次數過多會出現等待秒數） {#jgb/A/register-email-verify-resend}
 - phrasings:
   - {text: "沒收到驗證信", source: "draft:outline-20260920", status: proposed}
@@ -162,17 +166,19 @@ language: zh-TW
 - instance_applicability: general
 驗證碼輸入畫面由兩部分組成：左邊顯示一組簡短的識別碼，右邊是使用者要輸入的 4 碼數字驗證碼。
 如果驗證碼輸入錯誤太多次，畫面會提示驗證次數過多、驗證碼已失效，需要稍候重新發送驗證碼；輸入框本身不會被鎖住。
-### 從驗證信連結折返時會從頭開始註冊嗎？（系統會記住 Email，但機器人驗證失效時會退回第一步） {#jgb/A/register-email-link-resume}
+### 從信箱 App 點註冊連結、去收驗證碼再回來，會從頭開始註冊嗎？（同一瀏覽器會記住 Email 回到驗證碼步驟；機器人驗證失效時退回第一步） {#jgb/A/register-email-link-resume}
 - phrasings:
-  - {text: "點驗證信連結會不會重來", source: "draft:outline-20260920", status: proposed}
+  - {text: "註冊到一半去收信再回來會重來嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "收信後點回註冊頁", source: "draft:outline-20260920", status: proposed}
-  - {text: "驗證信折返", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/users/auth/Create.vue, code:src/pages/users/auth/parts/CreateWelcome.vue]
+  - {text: "從信箱 App 開註冊連結會重來嗎", source: "draft:outline-20260920", status: proposed}
+- sources: [code:src/pages/users/auth/Create.vue, code:src/pages/users/auth/parts/CreateWelcome.vue, code:src/pages/users/auth/parts/EmailVerify.vue, code:app/Services/AuthService.php]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-透過信箱 App 開啟的註冊邀請連結，常會用信箱 App 內建的瀏覽器開啟；使用者跳去收驗證信、再重新點開連結時，很容易讓整個註冊流程從頭開始重跑一次。
-系統會把使用者輸入過的 Email 記在瀏覽器裡，折返時會嘗試直接回到輸入驗證碼的步驟；但如果這次的機器人驗證紀錄已經失效（例如超過 30 分鐘，或是在另一個瀏覽器開啟連結），系統會清空 Email、退回第一步，需要重新勾選機器人驗證。
+輸入 Email 進入驗證碼步驟後，系統會把這個 Email 和目前停在驗證碼步驟這件事記在瀏覽器裡。
+之後在同一個瀏覽器重新開啟註冊頁時，會直接帶回這個 Email 並跳到驗證碼步驟，不會從第一步重來。
+回到驗證碼步驟時，系統會再嘗試寄一次驗證信。
+但如果寄驗證信時，這個瀏覽器已經沒有這個 Email 還有效的機器人驗證紀錄（例如已超過 30 分鐘），會清空 Email 並退回第一步，需要重新勾選「我不是機器人」。
 ## 登入 {#A-login}
 ### JGB 有哪些登入方式？（Email、手機號碼、Facebook／Google／LINE） {#jgb/A/login-methods}
 - phrasings:
@@ -291,14 +297,15 @@ language: zh-TW
   - {text: "忘記帳號怎麼辦", source: "draft:outline-20260920", status: proposed}
   - {text: "忘記 email 帳號", source: "draft:outline-20260920", status: proposed}
   - {text: "找回帳號", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/users/auth/parts/forget/Account.vue, help:slug01_zh-Hant.html]
+- sources: [code:src/pages/users/auth/parts/forget/Account.vue, code:app/Http/Controllers/AuthController.php, code:app/User.php]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
 忘記帳號功能只能用「當初綁定在帳號上的手機號碼」進行簡訊驗證碼驗證來找回。
-如果帳號當初沒有綁定手機號碼，忘記帳號畫面上會提示需改聯繫 JGB 客服協助。
-手機驗證成功後，畫面會顯示身份驗證成功並給出帳號提示（Email 提示字串），而不是直接顯示完整帳號。
-如果驗證完成後仍無法藉此找回帳戶，需要聯繫所屬的租賃管理業者，由業者協助向 JGB 申請重新找回帳號。
+忘記帳號畫面的說明文字寫明：如果未綁定手機號碼，請聯繫 JGB 客服。
+輸入的手機號碼若沒有對應的帳號，手機欄位下方會提示「手機號碼格式錯誤或無此號碼對應的帳號」
+手機驗證成功後，畫面會顯示「身份驗證成功」「以下為您的帳號提示：」，下面是只露出 Email 開頭第一個字、其餘以 * 遮蔽的帳號提示，@ 後面的網域照常顯示，而不是完整帳號。
+驗證成功畫面的最下方寫著「如有其他問題，請聯繫 JGB 客服」
 ### 沒綁手機號碼還能用「忘記帳號」找回嗎？（不行，只能靠手機簡訊驗證） {#jgb/A/forget-account-no-phone}
 - phrasings:
   - {text: "沒綁手機忘記帳號", source: "draft:outline-20260920", status: proposed}
@@ -431,13 +438,13 @@ language: zh-TW
   - {text: "改姓名", source: "draft:outline-20260920", status: proposed}
   - {text: "改大頭照", source: "draft:outline-20260920", status: proposed}
   - {text: "帳號資訊頁面", source: "draft:outline-20260920", status: proposed}
-- sources: [code:resources/views/users/account.blade.php, code:app/Http/Controllers/UserController.php#account]
+- sources: [code:resources/views/users/account.blade.php, code:app/Http/Controllers/UserController.php#account, code:app/Contract.php, code:app/Http/Controllers/ContractController.php]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
 帳號資訊頁的「帳號基本資訊」區塊可以上傳／更換大頭照（選填），並編輯姓氏、名稱、稱謂。
 頁面說明這些資料是為了讓刊登廣告時租客有更安心的租屋體驗而蒐集的。
-部分特定合作團隊的合約完成簽署後，如果租客的姓氏、名稱、身分證字號都已填寫，系統會鎖定租客的基本資訊；鎖定後，姓氏、名稱、稱謂三個欄位就不會再被更新，即使表單有送出新值。
+部分特定合作團隊的合約完成簽署後，系統會依簽署方式鎖定租客的基本資訊，兩種方式都要求已有租客的身分證字號，沒有身分證字號就不會鎖定；鎖定後，姓氏、名稱、稱謂三個欄位在畫面上不能再編輯，即使表單有送出新值也不會被更新。
 ### 帳號資訊頁怎麼看手機的綁定狀態？（已綁定／未綁定，未綁定才有「前往綁定」按鈕） {#jgb/A/account-phone-bind-status}
 - phrasings:
   - {text: "手機有沒有綁定", source: "draft:outline-20260920", status: proposed}
@@ -491,14 +498,14 @@ language: zh-TW
   - {text: "登入後怎麼改密碼", source: "draft:outline-20260920", status: proposed}
   - {text: "帳號資訊改密碼", source: "draft:outline-20260920", status: proposed}
   - {text: "修改密碼要輸入原密碼嗎", source: "draft:outline-20260920", status: proposed}
-- sources: [code:resources/views/users/account.blade.php, code:app/Http/Controllers/UserController.php#account]
+- sources: [code:resources/views/users/account.blade.php, code:app/Http/Controllers/UserController.php#account, code:src/components/PasswordForm.vue]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
+帳號資訊頁只有在帳號本身有設定密碼時，才會顯示「密碼」區塊。
 帳號資訊頁點選「修改密碼」會展開密碼修改表單。
 修改密碼必須同時填寫目前密碼、新密碼與確認新密碼；若目前密碼輸入錯誤，會回覆「目前密碼驗證錯誤」並擋下整筆表單儲存。
-新密碼長度需至少 6 個字元，且需與確認新密碼欄位一致。
-如果這個帳號另外綁定了 Facebook、Google 或 LINE 登入，密碼變更會一併同步到這些綁定的登入帳號。
+新密碼長度需至少 6 個字元、需同時包含英文與數字，且需與確認新密碼欄位一致。
 「密碼」區塊下方會顯示「上次更新：」的日期時間；如果從來沒有改過密碼，則顯示帳號建立的時間。
 ### 帳號資訊頁的聯絡資訊要填什麼？（LINE ID、Facebook 個人首頁、WhatsApp、第二組電話） {#jgb/A/account-contact-info}
 - phrasings:
@@ -700,17 +707,18 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
 租客身分一律能看到自己的通知內容。
 房東側（非租客）使用者，只有具備查看通知的權限，通知中心才會顯示實際通知資料。
 沒有這項權限時，類型篩選下拉選單仍會顯示，但會變成停用樣式；每頁筆數選單則完全不會出現；畫面主要區塊會顯示「您還沒有收到任何通知，再等等吧 📭」，而不是錯誤訊息。
-### 點擊通知列表項目會發生什麼？（前往原連結，並帶上標記已讀的依據；訊息類通知不換頁） {#jgb/A/notification-mark-read-navigate}
+### 點擊通知列表項目會發生什麼？（前往原連結並把該則通知標為已讀；訊息類通知不換頁） {#jgb/A/notification-mark-read-navigate}
 - phrasings:
   - {text: "點通知會怎樣", source: "draft:outline-20260920", status: proposed}
   - {text: "通知會標記已讀嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "通知連結", source: "draft:outline-20260920", status: proposed}
-- sources: [code:app/Http/Controllers/NotificationController.php#index, code:resources/views/notifications/index.blade.php]
+- sources: [code:app/Http/Controllers/NotificationController.php#index, code:resources/views/notifications/index.blade.php, code:app/Http/Controllers/Controller.php, code:app/Notification.php]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-除了訊息類通知之外，每則通知點擊後都會依原本的連結網址前往對應頁面，並在網址上加一個參數，作為之後判斷這則通知已經處理過的依據；訊息類通知則是在原頁面開啟訊息視窗，不會換頁。
-每則通知會顯示所屬物件名稱、通知來源使用者姓名、通知內容文字，以及依通知類型著色的標籤（如合約、帳務、修繕、裝置、其他、訊息）。
+除了訊息類通知之外，每則通知點擊後都會依原本的連結網址前往對應頁面，並在網址上多帶一個通知編號參數。
+前往的頁面載入時，系統會依這個參數把這則通知標為已讀，並把網址上的這個參數拿掉。
+訊息類通知則是在原頁面開啟訊息視窗，不會換頁。
 ### 篩選後頁碼超出範圍會自動跳回第一頁嗎？（不會，只會顯示空的通知清單） {#jgb/A/notification-mark-read-out-of-range}
 - phrasings:
   - {text: "通知頁碼超出範圍", source: "draft:outline-20260920", status: proposed}
@@ -764,17 +772,20 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
 「訂閱管理類別」包含訂閱方案修改、即將扣款、取消訂閱等通知信。
 「房東管理類別」包含大房東報表排定發送等通知信。
 「加盟分潤報表」類別只有被列入特定開放名單的團隊才會顯示，若想讓新團隊加入分潤報表需另外聯繫 JGB。
-### 「發送報表」「多團隊合併報表」按鈕是做什麼的？（限加盟分潤報表分類，多團隊合併僅限特定團隊） {#jgb/A/notification-settings-report-buttons}
+### 「發送報表」「多團隊合併報表」按鈕是做什麼的？（選起始日與終止日，把加盟分潤報表寄到自訂通知信箱；僅限加盟分潤報表分類，多團隊合併僅限特定團隊） {#jgb/A/notification-settings-report-buttons}
 - phrasings:
   - {text: "發送報表按鈕", source: "draft:outline-20260920", status: proposed}
   - {text: "多團隊合併報表", source: "draft:outline-20260920", status: proposed}
   - {text: "分潤報表怎麼看", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/use/config/useForwardNotificationEmails.ts, code:src/pages/users/notification/Index.vue]
+- sources: [code:src/use/config/useForwardNotificationEmails.ts, code:src/pages/users/notification/Index.vue, code:src/components/Lightbox/NotificationMailReport.vue, code:app/Services/FranchiseProfitShareService.php]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-只有「加盟分潤報表」分類會顯示「發送報表」按鈕，點擊會開啟通知信報表的燈箱視窗。
+只有「加盟分潤報表」分類（限定開放的特定合作團隊才看得到）會顯示「發送報表」按鈕，點擊會開啟選擇時間區間的視窗。
+在視窗裡選好「起始日」與「終止日」後按「發送」，系統會把這段期間的加盟分潤報表寄到這個分類設定的自訂通知信箱，成功時會顯示「報表已發送至指定信箱」。
+如果這段期間沒有分潤資料，或這個分類還沒有設定自訂通知信箱，報表不會寄出，畫面會跳出失敗提示，說明是查無分潤資料或未設定收件人。
 「多團隊合併報表」按鈕只在特定合作團隊底下才會顯示，其餘分類與團隊都看不到這個按鈕。
+「多團隊合併報表」視窗同樣選起始日與終止日，系統會把幾個合作團隊在這段期間的加盟分潤資料合併成一份報表，寄到這個分類設定的自訂通知信箱。
 點擊「發送報表」或「多團隊合併報表」按鈕時，會依目前所在的通知分類，開啟對應的報表視窗。
 ### 通知收件設定改完怎麼儲存？（至少要有一個分類填了自訂信箱，儲存鍵才會啟用） {#jgb/A/notification-settings-save}
 - phrasings:

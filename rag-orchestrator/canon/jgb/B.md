@@ -51,17 +51,17 @@ language: zh-TW
 如果團隊目前的訂閱方案尚未結束，系統會先提示要到「團隊管理」的「訂閱方案」解除現有訂閱，才能繼續刪除。
 可以刪除時，畫面會列出這個團隊目前持有的物件數與合約數，並要求輸入團隊名稱才能按下刪除。
 刪除團隊會同時清除這個團隊底下所有的物件、合約與帳務等資料，且無法恢復。
-### 簽約資訊卡「個人資訊」區塊只有個人團隊看得到，要填什麼？（姓氏、名稱、身分證字號、Email、手機、戶籍地址、通訊地址必填；身分證正反面與其他附件選填） {#jgb/B/team-signer-personal-info}
+### 簽約資訊卡「個人資訊」區塊要填什麼？（只有租客與個人房東身分才有；姓氏、名稱、身分證字號、Email、手機、戶籍地址、通訊地址必填；身分證正反面與其他附件選填） {#jgb/B/team-signer-personal-info}
 - phrasings:
   - {text: "簽約資訊個人欄位有哪些", source: "draft:outline-20260920", status: proposed}
   - {text: "身分證正反面要傳嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "良民證要上傳嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "戶籍地址跟通訊地址一樣可以嗎", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/users/team/_parts/SignerDetails.vue]
+- sources: [code:src/pages/users/team/_parts/SignerDetails.vue, code:app/Role.php]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-簽約資訊卡的「個人資訊」區塊只有個人團隊看得到，法人團隊與社宅團隊不會顯示這個區塊；可以填寫這個團隊在刊登物件廣告與簽立合約時所需提供的個人資訊：姓氏、名稱、身分證字號、Email、手機號碼都是必填。
+簽約資訊卡的「個人資訊」區塊只有租客與個人房東身分會顯示，法人房東與社宅團隊顯示的是「公司資訊」等區塊，不會有這個區塊；可以填寫刊登物件廣告與簽立合約時所需提供的資料：姓氏、名稱、身分證字號、Email、手機號碼都是必填。
 戶籍地址與通訊地址也要填寫，通訊地址可以點「同戶籍地址」直接帶入。
 身分證正反面照片是選填，另外還有一個「其他附件(選填)」區塊，可以選填上傳工作名片/學生證、良民證、小章這三項附件。
 ### 簽約資訊卡的「公司資訊」要填什麼？（公司登記名稱上限 20 字、公司統編皆為必填；公司負責人只有社宅團隊必填；社宅團隊還要填必填的社宅業者編號與公司登記證號，公司登記證日期與縣市則不分團隊都是選填） {#jgb/B/team-signer-company-info}
@@ -478,16 +478,18 @@ language: zh-TW
 大房東報表清單會依大房東列出姓名、所屬物件數、出租中物件數，以及目前執行中合約的租金總額。
 點開單一大房東的細節，可以進一步看到底下每個社區、每筆物件的租客、租期與租金明細，並能個別下載報表。
 報表會用團隊在「進階設定」設定的結算幣別，把不同幣別的合約金額換算成同一種幣別做加總。
-### 誰看得到大房東報表？（需要「查看大房東報表」的角色權限） {#jgb/B/biglandlord-report-permission}
+### 誰看得到大房東報表？（法人房東與社宅團隊身分，且角色要有「查看大房東報表」權限） {#jgb/B/biglandlord-report-permission}
 - phrasings:
   - {text: "大房東報表誰能看", source: "draft:outline-20260920", status: proposed}
   - {text: "查看大房東報表權限", source: "draft:outline-20260920", status: proposed}
   - {text: "為什麼看不到大房東報表", source: "draft:outline-20260920", status: proposed}
-- sources: [code:app/Http/Controllers/UserController.php]
+- sources: [code:app/Http/Controllers/UserController.php, code:app/Role.php, code:resources/views/layouts/lightbox/character-capability-edit.blade.php]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-側邊選單裡的「大房東報表」項目，要這位成員的角色有查看大房東報表的功能權限，才不會在選單整理時被拿掉。
+側邊選單「大房東管理」底下的「大房東報表」項目，只有法人房東與社宅團隊身分才會出現。
+團隊成員所屬的角色要有「查看大房東報表」的權限，這個選單項目才會出現。
+角色權限設定裡，「查看大房東報表」的開啟條件是先有「查看大房東列表」。
 ### 大房東報表可以依社區細看嗎？（報表清單有「社區」欄，幣別不同時細節頁會顯示匯率） {#jgb/B/biglandlord-report-community-rate}
 - phrasings:
   - {text: "大房東報表有社區欄嗎", source: "draft:outline-20260920", status: proposed}
@@ -584,19 +586,19 @@ language: zh-TW
 切換到看單一物件的報表時，畫面上會顯示這個物件資料「最後導入時間」；看社區整體報表時不會顯示這個時間。
 報表資料在產生中的時候，畫面中間會顯示一個百分比進度條，數字會隨著報表產生進度往上跳動。
 ## 進階設定（費用項目、租金折扣、滯納金、補充條款範本、自訂標籤、時區語系；介面路徑「團隊管理 > 進階設定」） {#B-advanced-settings}
-### 帳單的「自訂費用項目」怎麼設定？（分收入類／支出類，必填性質與自定義名稱，會科品項代號選填） {#jgb/B/advance-fee-items}
+### 「帳單自訂費用項目」怎麼設定？（分收入類／支出類，必填性質與自定義名稱，會科品項代號選填） {#jgb/B/advance-fee-items}
 - phrasings:
   - {text: "費用項目怎麼設定", source: "draft:outline-20260920", status: proposed}
   - {text: "自訂費用分收入支出類嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "帳單費用項目性質怎麼選", source: "draft:outline-20260920", status: proposed}
-  - {text: "費用項目可以合併嗎", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/users/advance/_part/FeesItemManagement.vue, code:src/pages/users/advance/_part/FeePanel.vue]
+- sources: [code:src/pages/users/advance/_part/FeesItemManagement.vue, code:src/pages/users/advance/_part/FeePanel.vue, code:src/pages/users/advance/_part/BillsManagement.vue]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
 進階設定的「帳務管理」區塊可以設定帳單「自訂費用」的收付項目，分成「收入類」與「支出類」。
-新增每個項目時要選擇「性質」（例如租金、押金、水費、電費、管理費、清潔費、網路費、滯納金、違約金、賠償金、押金設算息、其他），並填寫「自定義名稱」，這兩項都是必填。
+新增每個項目時要選擇「性質」（例如租金、押金、水費、電費、管理費、清潔費、網路費、滯納金、違約金、賠償金、押金設算息、其他），並填寫「自定義名稱」，這兩項畫面上都標示為必填。
 「會科品項代號」是選填欄位，用來提供給 ERP／會計系統拋轉使用。
+自訂項目可以拖曳調整順序，點旁邊的編輯圖示可以修改，編輯時也可以刪除；預設項目只顯示，不能編輯。
 ### 進階設定的「優惠項目」是給誰用的？（只有部分特定合作團隊才看得到，可設定折扣套用在租金費用上） {#jgb/B/advance-discount-items}
 - phrasings:
   - {text: "進階設定有租金折扣嗎", source: "draft:outline-20260920", status: proposed}
@@ -634,18 +636,19 @@ language: zh-TW
 - instance_applicability: general
 進階設定的「合約管理」區塊可以設定至多三組常用的「預設補充條款」，編輯合約時可以直接選用，不用每次重新輸入。
 每一組條款都可以新增、編輯、預覽（會轉成 PDF 預覽），也可以刪除。
-### 「標籤設定」是做什麼用的？（幫物件加自訂標籤，單個標籤上限 18 字元） {#jgb/B/advance-custom-label}
+### 「標籤設定」是做什麼用的？（幫物件加自訂標籤，單個標籤輸入框最多收 9 個字元） {#jgb/B/advance-custom-label}
 - phrasings:
   - {text: "自訂標籤怎麼設定", source: "draft:outline-20260920", status: proposed}
   - {text: "標籤字數上限是多少", source: "draft:outline-20260920", status: proposed}
   - {text: "物件標籤在哪加", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/users/advance/Index.jsx]
+- sources: [code:src/pages/users/advance/Index.jsx, code:src/components/LabelPanel.vue, code:src/pages/estates/list/_parts/ListTable.vue, code:src/pages/estates/list/Index.vue]
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
 進階設定的「物件管理」區塊有一個「標籤設定」，可以先在這裡建立自訂標籤。
 設定好標籤後，可以到物件管理的物件總表，幫不同的物件加上這些自訂標籤。
-單一個標籤最多可以輸入 18 字元（約 9 個中文字）。
+單一個標籤最多只能輸入 9 個字元，中文或英文都一樣，超過的字會被截掉。
+畫面上的說明文字寫的是「單個標籤上限為18字元(9個字)」，但實際輸入不分中英文都只收 9 個字元。
 ### 怎麼綁定智能裝置廠商？（輸入裝置廠商帳號密碼完成綁定，之後可在 JGB 平台管理裝置） {#jgb/B/advance-device-binding}
 - phrasings:
   - {text: "智能裝置怎麼綁定", source: "draft:outline-20260920", status: proposed}
@@ -920,11 +923,13 @@ language: zh-TW
   - {text: "租客列表勾選後能做什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "怎麼批次通知租客", source: "draft:outline-20260920", status: proposed}
   - {text: "租客批次操作在哪", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/use/config/useLesseeTypes.ts, code:src/pages/users/lesseeList/parts/ListTable.vue]
+- sources: [code:src/use/config/useLesseeTypes.ts, code:src/pages/users/lesseeList/parts/ListTable.vue, code:src/components/ListBulkAction.vue, code:src/components/Lightbox/EditUsersMessage.jsx]
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-只有特定合作團隊在租客列表勾選一筆以上租客後，畫面下方才會出現批次操作列，可以選「發送通知」一次通知這些租客；其他團隊勾選租客後沒有這個批次操作列。
+只有特定合作團隊的租客列表有勾選框；勾選一筆以上租客後，固定在列表上方的批次操作列會顯示已選數量，並提供「發送通知」。
+其他團隊的租客列表沒有勾選框，也沒有批次操作。
+按「發送通知」會開啟視窗，填寫「通知標題」與「通知內容」後按「發送」，這則通知會發給所有已勾選的租客，並在租客登入時顯示。
 ### 匯出租客的入口在哪？（一般房東用「新增租客」下拉選單裡的「匯出租客」；社宅團隊只有一顆「匯出」按鈕，沒有新增或匯入） {#jgb/B/lessee-export-entry-by-role}
 - phrasings:
   - {text: "匯出租客在哪", source: "draft:outline-20260920", status: proposed}

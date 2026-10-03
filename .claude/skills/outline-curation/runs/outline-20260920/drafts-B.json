@@ -180,7 +180,7 @@
     {
      "proposed_id": "jgb/B/team-signer-personal-info",
      "askable": "簽約資訊卡的個人資訊要填哪些欄位",
-     "title": "簽約資訊卡「個人資訊」區塊只有個人團隊看得到，要填什麼？（姓氏、名稱、身分證字號、Email、手機、戶籍地址、通訊地址必填；身分證正反面與其他附件選填）",
+     "title": "簽約資訊卡「個人資訊」區塊要填什麼？（只有租客與個人房東身分才有；姓氏、名稱、身分證字號、Email、手機、戶籍地址、通訊地址必填；身分證正反面與其他附件選填）",
      "unit_ids": [
       "page:web:users.role"
      ],
@@ -198,12 +198,13 @@
       "戶籍地址跟通訊地址一樣可以嗎"
      ],
      "sentences": [
-      "簽約資訊卡的「個人資訊」區塊只有個人團隊看得到，法人團隊與社宅團隊不會顯示這個區塊；可以填寫這個團隊在刊登物件廣告與簽立合約時所需提供的個人資訊：姓氏、名稱、身分證字號、Email、手機號碼都是必填。",
+      "簽約資訊卡的「個人資訊」區塊只有租客與個人房東身分會顯示，法人房東與社宅團隊顯示的是「公司資訊」等區塊，不會有這個區塊；可以填寫刊登物件廣告與簽立合約時所需提供的資料：姓氏、名稱、身分證字號、Email、手機號碼都是必填。",
       "戶籍地址與通訊地址也要填寫，通訊地址可以點「同戶籍地址」直接帶入。",
       "身分證正反面照片是選填，另外還有一個「其他附件(選填)」區塊，可以選填上傳工作名片/學生證、良民證、小章這三項附件。"
      ],
      "sources": [
-      "code:src/pages/users/team/_parts/SignerDetails.vue"
+      "code:src/pages/users/team/_parts/SignerDetails.vue",
+      "code:app/Role.php"
      ],
      "evidence": [
       {
@@ -220,6 +221,51 @@
        "sentence_index": 0,
        "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
        "quote_or_symbol": "fieldTitleLabelKey: '身分證字號',"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "isIndividual: computed(()=>[1, 2].includes(store.state?.userData?.role?.config_rule_key)),"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "isCorporate: computed(()=>[3, 4].includes(store.state?.userData?.role?.config_rule_key)),"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "<h4 class=\"mb-4\">{{ t('公司資訊') }}</h4>"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "{{ t('團隊在刊登物件廣告與簽立合約時所需提供的資料。') }}"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "fieldTitleLabelKey: '姓氏',"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "fieldTitleLabelKey: 'Email',"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "fieldTitleLabelKey: '手機號碼',"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Role.php",
+       "quote_or_symbol": "const RULE_KEY_LANDLORD_INDIVIDUAL     = 2;"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Role.php",
+       "quote_or_symbol": "const RULE_KEY_TENANT                  = 1;"
       },
       {
        "sentence_index": 1,
@@ -2157,7 +2203,7 @@
     {
      "proposed_id": "jgb/B/biglandlord-report-permission",
      "askable": "誰看得到大房東報表",
-     "title": "誰看得到大房東報表？（需要「查看大房東報表」的角色權限）",
+     "title": "誰看得到大房東報表？（法人房東與社宅團隊身分，且角色要有「查看大房東報表」權限）",
      "unit_ids": [
       "page:bigLandlords.report"
      ],
@@ -2174,10 +2220,14 @@
       "為什麼看不到大房東報表"
      ],
      "sentences": [
-      "側邊選單裡的「大房東報表」項目，要這位成員的角色有查看大房東報表的功能權限，才不會在選單整理時被拿掉。"
+      "側邊選單「大房東管理」底下的「大房東報表」項目，只有法人房東與社宅團隊身分才會出現。",
+      "團隊成員所屬的角色要有「查看大房東報表」的權限，這個選單項目才會出現。",
+      "角色權限設定裡，「查看大房東報表」的開啟條件是先有「查看大房東列表」。"
      ],
      "sources": [
-      "code:app/Http/Controllers/UserController.php"
+      "code:app/Http/Controllers/UserController.php",
+      "code:app/Role.php",
+      "code:resources/views/layouts/lightbox/character-capability-edit.blade.php"
      ],
      "evidence": [
       {
@@ -2188,12 +2238,37 @@
       {
        "sentence_index": 0,
        "source": "code:app/Role.php",
+       "quote_or_symbol": "[self::RULE_KEY_LANDLORD_CORPORATE, self::RULE_KEY_LANDLORD_SOCIAL_HOUSING]"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Role.php",
        "quote_or_symbol": "'show_biglandlord_report',"
       },
       {
-       "sentence_index": 0,
+       "sentence_index": 1,
        "source": "code:app/Role.php",
-       "quote_or_symbol": "( $this->is_landlord && $this->is_team && !empty($currentPermission) && !empty($itemSub['permission']) && !$currentPermission[$itemSub['permission']] ) // 若有代入使用者，而且有載入權限表，確認此使用者無此功能權限"
+       "quote_or_symbol": "!$currentPermission[$itemSub['permission']]"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "'label'=> '查看大房東報表',"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:resources/views/layouts/lightbox/character-capability-edit.blade.php",
+       "quote_or_symbol": "{{___('開啟條件')}}"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "'requires'=> ['g_show_biglandlord']"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "'label'=> '查看大房東列表',"
       }
      ],
      "not_supported_greps": [
@@ -2608,7 +2683,7 @@
     {
      "proposed_id": "jgb/B/advance-fee-items",
      "askable": "帳單的自訂費用項目怎麼設定",
-     "title": "帳單的「自訂費用項目」怎麼設定？（分收入類／支出類，必填性質與自定義名稱，會科品項代號選填）",
+     "title": "「帳單自訂費用項目」怎麼設定？（分收入類／支出類，必填性質與自定義名稱，會科品項代號選填）",
      "unit_ids": [
       "page:users.advance"
      ],
@@ -2622,23 +2697,29 @@
      "phrasings": [
       "費用項目怎麼設定",
       "自訂費用分收入支出類嗎",
-      "帳單費用項目性質怎麼選",
-      "費用項目可以合併嗎"
+      "帳單費用項目性質怎麼選"
      ],
      "sentences": [
       "進階設定的「帳務管理」區塊可以設定帳單「自訂費用」的收付項目，分成「收入類」與「支出類」。",
-      "新增每個項目時要選擇「性質」（例如租金、押金、水費、電費、管理費、清潔費、網路費、滯納金、違約金、賠償金、押金設算息、其他），並填寫「自定義名稱」，這兩項都是必填。",
-      "「會科品項代號」是選填欄位，用來提供給 ERP／會計系統拋轉使用。"
+      "新增每個項目時要選擇「性質」（例如租金、押金、水費、電費、管理費、清潔費、網路費、滯納金、違約金、賠償金、押金設算息、其他），並填寫「自定義名稱」，這兩項畫面上都標示為必填。",
+      "「會科品項代號」是選填欄位，用來提供給 ERP／會計系統拋轉使用。",
+      "自訂項目可以拖曳調整順序，點旁邊的編輯圖示可以修改，編輯時也可以刪除；預設項目只顯示，不能編輯。"
      ],
      "sources": [
       "code:src/pages/users/advance/_part/FeesItemManagement.vue",
-      "code:src/pages/users/advance/_part/FeePanel.vue"
+      "code:src/pages/users/advance/_part/FeePanel.vue",
+      "code:src/pages/users/advance/_part/BillsManagement.vue"
      ],
      "evidence": [
       {
        "sentence_index": 0,
        "source": "code:src/pages/users/advance/_part/FeesItemManagement.vue",
        "quote_or_symbol": ":title=\"t('帳單自訂費用項目')\""
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/advance/_part/BillsManagement.vue",
+       "quote_or_symbol": ":title=\"t('帳務管理')\""
       },
       {
        "sentence_index": 1,
@@ -2651,9 +2732,39 @@
        "quote_or_symbol": "<div class=\"after-required mb-1 text-[13px]\">{{ t('自定義名稱') }}</div>"
       },
       {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/advance/_part/FeePanel.vue",
+       "quote_or_symbol": "<div class=\"after-required mb-1 text-[13px]\">{{ t('性質') }}</div>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/advance/_part/FeePanel.vue",
+       "quote_or_symbol": "<div class=\"after-required mb-1 text-[13px]\">{{ t('自定義名稱') }}</div>"
+      },
+      {
        "sentence_index": 2,
        "source": "code:src/pages/users/advance/_part/FeePanel.vue",
        "quote_or_symbol": "{{ t('會科品項代號（選填，供 ERP／會計拋轉）') }}"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/users/advance/_part/FeePanel.vue",
+       "quote_or_symbol": "handle=\".dragTrigger\""
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/users/advance/_part/FeePanel.vue",
+       "quote_or_symbol": "<i class=\"bi bi-pencil-square\"></i>"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/users/advance/_part/FeePanel.vue",
+       "quote_or_symbol": "<i class=\"bi bi-trash text-[21px] text-error\"></i>"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/users/advance/_part/FeePanel.vue",
+       "quote_or_symbol": "<div v-for=\"(node, index) in defaultList\" :key=\"'default-' + index\""
       }
      ],
      "not_supported_greps": [],
@@ -2821,7 +2932,7 @@
     {
      "proposed_id": "jgb/B/advance-custom-label",
      "askable": "自訂標籤怎麼設定、用在哪裡",
-     "title": "「標籤設定」是做什麼用的？（幫物件加自訂標籤，單個標籤上限 18 字元）",
+     "title": "「標籤設定」是做什麼用的？（幫物件加自訂標籤，單個標籤輸入框最多收 9 個字元）",
      "unit_ids": [
       "page:users.advance"
      ],
@@ -2841,10 +2952,14 @@
      "sentences": [
       "進階設定的「物件管理」區塊有一個「標籤設定」，可以先在這裡建立自訂標籤。",
       "設定好標籤後，可以到物件管理的物件總表，幫不同的物件加上這些自訂標籤。",
-      "單一個標籤最多可以輸入 18 字元（約 9 個中文字）。"
+      "單一個標籤最多只能輸入 9 個字元，中文或英文都一樣，超過的字會被截掉。",
+      "畫面上的說明文字寫的是「單個標籤上限為18字元(9個字)」，但實際輸入不分中英文都只收 9 個字元。"
      ],
      "sources": [
-      "code:src/pages/users/advance/Index.jsx"
+      "code:src/pages/users/advance/Index.jsx",
+      "code:src/components/LabelPanel.vue",
+      "code:src/pages/estates/list/_parts/ListTable.vue",
+      "code:src/pages/estates/list/Index.vue"
      ],
      "evidence": [
       {
@@ -2858,7 +2973,27 @@
        "quote_or_symbol": "description={t('標籤設定後可至物件管理>物件總表處為不同的物件加上自定義標籤，單個標籤上限為18字元(9個字)。')}"
       },
       {
+       "sentence_index": 1,
+       "source": "code:src/pages/estates/list/_parts/ListTable.vue",
+       "quote_or_symbol": "title: t('物件') + t('標籤'),"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/estates/list/Index.vue",
+       "quote_or_symbol": "labelIds: labels.map(({id})=>id),"
+      },
+      {
        "sentence_index": 2,
+       "source": "code:src/components/LabelPanel.vue",
+       "quote_or_symbol": "if (newVal.length > 9){"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/components/LabelPanel.vue",
+       "quote_or_symbol": "state.editing.label = newVal.slice(0, 9)"
+      },
+      {
+       "sentence_index": 3,
        "source": "code:src/pages/users/advance/Index.jsx",
        "quote_or_symbol": "description={t('標籤設定後可至物件管理>物件總表處為不同的物件加上自定義標籤，單個標籤上限為18字元(9個字)。')}"
       }
@@ -3998,11 +4133,15 @@
       "租客批次操作在哪"
      ],
      "sentences": [
-      "只有特定合作團隊在租客列表勾選一筆以上租客後，畫面下方才會出現批次操作列，可以選「發送通知」一次通知這些租客；其他團隊勾選租客後沒有這個批次操作列。"
+      "只有特定合作團隊的租客列表有勾選框；勾選一筆以上租客後，固定在列表上方的批次操作列會顯示已選數量，並提供「發送通知」。",
+      "其他團隊的租客列表沒有勾選框，也沒有批次操作。",
+      "按「發送通知」會開啟視窗，填寫「通知標題」與「通知內容」後按「發送」，這則通知會發給所有已勾選的租客，並在租客登入時顯示。"
      ],
      "sources": [
       "code:src/use/config/useLesseeTypes.ts",
-      "code:src/pages/users/lesseeList/parts/ListTable.vue"
+      "code:src/pages/users/lesseeList/parts/ListTable.vue",
+      "code:src/components/ListBulkAction.vue",
+      "code:src/components/Lightbox/EditUsersMessage.jsx"
      ],
      "evidence": [
       {
@@ -4014,6 +4153,46 @@
        "sentence_index": 0,
        "source": "code:src/pages/users/lesseeList/parts/ListTable.vue",
        "quote_or_symbol": "v-if=\"!isEmpty(state.pickedItems) && !isEmpty(useLesseeTypesState.bulkActions)\""
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/lesseeList/parts/ListTable.vue",
+       "quote_or_symbol": "<div class=\"sticky left-0 z-10 bg-white\" :style=\"{ top: '60px' }\">"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/components/ListBulkAction.vue",
+       "quote_or_symbol": "{{ t('總計已選') }}"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/use/config/useLesseeTypes.ts",
+       "quote_or_symbol": "label: t('發送通知'),"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/lesseeList/parts/ListTable.vue",
+       "quote_or_symbol": "if (useLesseeTypesState.bulkActions.length > 0){"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/lesseeList/parts/ListTable.vue",
+       "quote_or_symbol": "return null"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/components/Lightbox/EditUsersMessage.jsx",
+       "quote_or_symbol": "{ t('通知將在租客登入時顯示。') }"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/components/Lightbox/EditUsersMessage.jsx",
+       "quote_or_symbol": "{ t('通知標題') }"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/users/lesseeList/parts/ListTable.vue",
+       "quote_or_symbol": "targets: state.pickedItems.map((node)=>{"
       }
      ],
      "not_supported_greps": [

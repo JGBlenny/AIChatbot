@@ -109,3 +109,18 @@ W1-S3 commit 後停下，回報終點指標、累計成本、D1 量測結果。�
 
 - `/canon-audit outline-drafting` 應讀 10 份：9 份文件由主 session 整檔讀過；`runs/outline-20260920/` 33 檔由 scout 分批整檔讀過（drafts-I、page-surface 首讀有缺段，經 Stop 閘門點名後以固定 400 行分段補讀），7 個 reviewed-dropped 與 8 個 dsp-068 檔由主 session 讀過。完成以 Stop 閘門通過為準（`audit.py status` 的 session 推測曾誤報 0/10，⛔ 不當證據）。
 - 盤查成本另計，不計入本計畫上限（同 9.20）：scout 4 位約 0.6M、主 session 約 0.2M。
+
+### W1-S1（2026-10-03）
+
+- **允許集合**：`p921-w1/allowed.json` 25 條（A 8／B 5／C 12）。第二來源以 `extract_verdict.py` 從 9.19 S2 四批 transcript 重取（`p921-w1/p919-recovered/`）：S2B1 兩份中 `agent-a21416978ec9459e2` 無結論（中途放棄），採 `agent-ac6754e5974d55854`（25／8／33，與 9.19 §6 S2 相符）。與 repo 審核單 111 條判定逐條相同；A／B／C 未審 43＝doubt 25＋⚠️ pass 18。
+- **工具與備份**：工具自 `p920-w2/` 複製＋新 `scope_check.py`；備份 `p921-w1/backup/`（10:58:32，早於第一次 repo 編輯 11:37:05）；九架 roundtrip 全 True、客戶名 0 命中。
+- **起草（分工與計畫不同，記錄）**：為控制主 session 成本，修正起草交 **executor**（brief `p921-w1/brief-executor-fix.md`，只准寫 scratch），產出 `ops-draft.json`＋逐句筆記 `fix-notes.md`；主 session 審閱筆記、機械驗證後才套用。另由同一 executor 產出範圍對照 `scope-map.json`（doubt 57／whole 49／both 7）與整條依據 22 條。
+  - 機械驗證：25 個 id＝允許集合、停下 0；新 evidence 287 筆＋整條依據證據全部對釘住匯出逐字命中；先套 scratch 再套 repo，A～C 與試套逐位元組相同、D～I 與備份相同。
+- **修正紀錄** `inputs/fix-log-9.21-W1-S1-ABC-20261003.md`：修正表 113 列、整條依據 22 條、整條待裁 2 條、另見 10 條；`scope_check` PASS、`coverage_check` PASS、drafts_diff (a)～(g) PASS。
+- **核對**：A＋B 58／59、C 53／54；不過 2 項依 D1 修一次，複核 7／7 CONFIRMED（明細見修正紀錄「核對過程」）。整條列 56 列全數過；**整條列數 56（doubt＋整條並列 7、純整條 49），過 56／不過 0**。
+- **生成時調整**：`forget-account-flow` 句 3 標籤中間含終止符，生成器大聲失敗 ⇒ 依 DSP-068 拆兩段引號後通過（記於修正紀錄）。
+- **重生成**：scratch 試跑後對 repo 跑（`--runs-out` 寫 scratch 再複製回 repo）：`已審保留：461 條／丟棄：0 條`、57 粗目／539 細目、open_questions 54 則；DSP-068 刪除 31 行／34 字元。repo 與試跑、3 個 runs 產出逐位元組相同。`canon_check` ⇒ `blocks changed 25 (in allowed 25)`、`mismatches: 0`，客戶名 0、「系統上」6；D～I `.md` 與備份相同。`load_canon_or_die` 通過。
+- **終點指標 `已審細目 pm 457／533、prospect 105／120；頁面 pm 119／183、prospect 48／183`**（不變，符合 +0；已審 461）。
+- **單元與 audit**：`9 failed, 3931 passed, 3 skipped`，與基準差集＝∅；`make audit` OVERALL PASS。
+- **fresh outcome verifier＝CONFIRMED**（6 項全過；自行重跑三支檢查、逐 id 比對 jgb.json 已審 461 集合不變、25 條變動全在允許集合；自抽 12 條細目對釘住匯出（含 7 條有整條列者與 DSP-068 拆段句）全部成立；整條依據 10 筆證據逐字命中；負對照 3 筆皆 0）。附記 P4×2（「最下方」用詞、核對過程 REFUTED 字樣易誤讀），延後。
+- **成本**：W1-S1 約 1.6M（executor 起草 0.61M、核對 A＋B 0.22M、C 0.22M、複核 0.13M、outcome verifier 約 0.2M、主 session 約 0.2M 估算）。⚠️ 超出本片預算 0.7M 一倍多；9.21 累計約 1.6M，第一波停點 2.0M 會被 W1-S2（估 0.6～0.8M）越過 ⇒ **W1-S1 commit 後停下回報業主**。

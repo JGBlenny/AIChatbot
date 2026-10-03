@@ -79,7 +79,7 @@
     {
      "proposed_id": "jgb/A/register-tenant-contract-invitation",
      "askable": "租客沒有帳號的情況下，房東建約邀請簽約時要怎麼註冊",
-     "title": "租客從電子合約邀請怎麼註冊？（房東建約發邀請，租客點「查看合約」再點「註冊」接續完成）",
+     "title": "租客從電子合約邀請怎麼註冊？（房東建約發邀請，租客點「查看合約」再點「立即註冊」接續完成）",
      "unit_ids": [
       "page:users.create"
      ],
@@ -98,25 +98,41 @@
       "租客可以不註冊嗎"
      ],
      "sentences": [
-      "租客還沒有 JGB 帳號時，房東在建立合約時輸入租客的 Email 或手機號碼發送邀請，房東端會進入「待租客簽回」畫面，顯示尚未註冊會員租客的 Email 帳號。",
-      "租客會收到簽約邀請郵件，點選信中的「查看合約」按鈕後，會進入該物件的廣告頁供租客參考。",
-      "租客在廣告頁確認無誤後，點選頁面右下角的「查看合約」，因為還未註冊成為 JGB 會員，會先進入 JGB 登入畫面，此時點選「註冊」按鈕即可完成註冊，並接續完成合約。",
-      "租客也可以選擇不註冊帳號，改由房東自行填寫租客的身份資料。"
+      "房東建立合約時，若選「租客註冊」，會在「合約邀請聯繫方式」選 Email 或手機號碼並填入租客的聯絡方式來發送邀請；邀請送出後，合約會進入「待租客簽回」。",
+      "房東用 Email 邀請時，租客會收到簽約邀請郵件；點選信中的「查看合約」按鈕後，會進入該物件的廣告頁供租客參考。",
+      "房東用手機號碼邀請時，租客收到的是帶有同一個連結的簡訊。",
+      "租客在廣告頁點選「查看合約」後，如果還沒有登入，會先進入 JGB 登入畫面。",
+      "登入畫面上有「立即註冊」可以點選。",
+      "註冊完成後，系統會把這份合約邀請綁定到新帳號，租客就能接續處理這份合約。",
+      "房東建立合約時若選「租客免註冊」，租客不需要註冊 JGB 會員，改由房東／管理者協助填寫租客資訊。"
      ],
      "sources": [
       "help:onboarding1_zh-Hant.html",
-      "code:app/Http/Controllers/AuthController.php"
+      "code:app/Http/Controllers/AuthController.php",
+      "code:src/pages/contracts/edit/tenantInfo/Index.jsx",
+      "code:app/Notification.php",
+      "code:resources/views/emails/zh-TW/contracts/invite.blade.php",
+      "code:resources/views/estate/show.blade.php",
+      "code:src/pages/users/auth/parts/LoginForm.vue",
+      "code:src/components/SurelyVue/Contract/CategoryCell.jsx",
+      "code:app/Http/Controllers/EstateController.php",
+      "code:app/Http/Middleware/LoginCheck.php"
      ],
      "evidence": [
       {
        "sentence_index": 0,
-       "source": "help:onboarding1_zh-Hant.html",
-       "quote_or_symbol": "房東在建立合約時輸入租客Email或手機號碼發送邀請"
+       "source": "code:src/pages/contracts/edit/tenantInfo/Index.jsx",
+       "quote_or_symbol": "{ t('合約邀請聯繫方式') }"
       },
       {
        "sentence_index": 0,
-       "source": "help:onboarding1_zh-Hant.html",
-       "quote_or_symbol": "會進入「待租客簽回」畫面，可以看到尚未註冊會員租客的Email帳號"
+       "source": "code:src/pages/contracts/edit/tenantInfo/Index.jsx",
+       "quote_or_symbol": "label: t('租客註冊'),"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/components/SurelyVue/Contract/CategoryCell.jsx",
+       "quote_or_symbol": "label = t('待租客簽回')"
       },
       {
        "sentence_index": 1,
@@ -124,24 +140,59 @@
        "quote_or_symbol": "租客點選郵件內之「查看合約」按鈕後，會進入該物件廣告頁供租客參考"
       },
       {
+       "sentence_index": 1,
+       "source": "code:resources/views/emails/zh-TW/contracts/invite.blade.php",
+       "quote_or_symbol": "<p><a class=\"btn inFrameLink\" target=\"_blank\" href=\"{{ $url }}\">查看合約</a></p>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Notification.php",
+       "quote_or_symbol": "route('estates.house', array('no' => trans_jgb_no($contract->estate_id), 'action' => trans_jgb_no($contract->id), 'r_type' => 'tenant'))"
+      },
+      {
        "sentence_index": 2,
-       "source": "help:onboarding1_zh-Hant.html",
-       "quote_or_symbol": "點選廣告頁右下角之「查看合約」，因還未註冊成為JGB會員，所以會進入JGB登入畫面，此時點選「註冊」按鈕"
+       "source": "code:app/Notification.php",
+       "quote_or_symbol": "sms($configCountry[$toUserPhoneCountryKey]['code'], $contract->to_user_phone, $message, 'l1');"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Notification.php",
+       "quote_or_symbol": "$msgData = [$userName, short_url($redirectUrl)];"
       },
       {
        "sentence_index": 3,
-       "source": "help:onboarding1_zh-Hant.html",
-       "quote_or_symbol": "租客可自行選擇是否要註冊JGB帳號，若租客不想註冊則可由房東自行填寫租客身份資料等"
+       "source": "code:resources/views/estate/show.blade.php",
+       "quote_or_symbol": "{{___('查看合約')}}</a>"
       },
       {
-       "sentence_index": 0,
-       "source": "code:app/Http/Controllers/AuthController.php",
-       "quote_or_symbol": "if ($contractInvitations = session()->get('contract_invitation')) {"
+       "sentence_index": 3,
+       "source": "code:app/Http/Middleware/LoginCheck.php",
+       "quote_or_symbol": "// 如果沒有 session 則當下狀態為未登入"
       },
       {
-       "sentence_index": 0,
+       "sentence_index": 4,
+       "source": "code:src/pages/users/auth/parts/LoginForm.vue",
+       "quote_or_symbol": "{{ t('立即註冊') }}"
+      },
+      {
+       "sentence_index": 5,
+       "source": "code:app/Http/Controllers/EstateController.php",
+       "quote_or_symbol": "session()->put('contract_invitation', [$contract->id]);"
+      },
+      {
+       "sentence_index": 5,
        "source": "code:app/Http/Controllers/AuthController.php",
        "quote_or_symbol": "$fatherUser->receiveContractInvitation('contract', $contractId);"
+      },
+      {
+       "sentence_index": 6,
+       "source": "code:src/pages/contracts/edit/tenantInfo/Index.jsx",
+       "quote_or_symbol": "label: t('租客免註冊'),"
+      },
+      {
+       "sentence_index": 6,
+       "source": "code:src/pages/contracts/edit/tenantInfo/Index.jsx",
+       "quote_or_symbol": "t('租客免註冊：租客因無需註冊 JGB 會員而需要管理者協助填寫以下租客資訊。')"
       }
      ],
      "not_supported_greps": [],
@@ -212,7 +263,7 @@
     {
      "proposed_id": "jgb/A/register-captcha-expired",
      "askable": "註冊時「我不是機器人」驗證過期或失敗怎麼辦",
-     "title": "註冊卡在機器人驗證過期怎麼辦？（會退回第一步重新勾選）",
+     "title": "註冊卡在機器人驗證過期怎麼辦？（重新勾選「我不是機器人」；寄驗證信時沒通過會退回第一步）",
      "unit_ids": [
       "page:users.create"
      ],
@@ -226,32 +277,65 @@
      "phrasings": [
       "機器人驗證過期",
       "我不是機器人卡住",
-      "註冊一直失敗",
-      "驗證框顯示不出來"
+      "註冊一直失敗"
      ],
      "sentences": [
-      "若「我不是機器人」驗證已經過期，畫面會提示重新輸入 Email 並重新勾選「我不是機器人」，流程退回到第一步的 Email 輸入畫面。",
-      "退回第一步時，先前輸入的 Email 與驗證通行證會被清空，需要重新輸入 Email 並重新勾選「我不是機器人」才能繼續。"
+      "在第一步 Email 輸入畫面，「我不是機器人」的勾選失效時，「繼續」按鈕會收起來，需要重新勾選才會再出現。",
+      "如果是在寄驗證信時，系統判定機器人驗證沒有通過，畫面會退回第一步的 Email 輸入畫面，並提示「機器人驗證已經過期，請重新輸入 Email 並勾選「我不是機器人」。」",
+      "退回第一步時，先前輸入的 Email 與機器人驗證結果都會被清空，需要重新輸入 Email 並重新勾選「我不是機器人」才能繼續。",
+      "機器人驗證通過後，系統只在 30 分鐘內承認同一個 Email 的驗證紀錄；超過之後再寄驗證信，就會要求重新驗證。"
      ],
      "sources": [
       "code:src/pages/users/auth/parts/EmailVerify.vue",
-      "code:src/pages/users/auth/parts/CreateWelcome.vue"
+      "code:src/pages/users/auth/parts/CreateWelcome.vue",
+      "code:app/Http/Controllers/AuthController.php",
+      "code:app/Services/AuthService.php"
      ],
      "evidence": [
       {
        "sentence_index": 0,
        "source": "code:src/pages/users/auth/parts/CreateWelcome.vue",
-       "quote_or_symbol": "機器人驗證已經過期，請重新輸入 Email 並勾選「我不是機器人」。"
+       "quote_or_symbol": "@expire=\"()=>{ state.recaptchaVerified = false; parentState.form.captcha_token = '' }\""
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/auth/parts/CreateWelcome.vue",
+       "quote_or_symbol": "<div v-if=\"emailValidator.response.success == true && state.recaptchaVerified == true && emailValidator.isReady\" class=\"relative z-10 mt-4\">"
       },
       {
        "sentence_index": 1,
+       "source": "code:src/pages/users/auth/parts/EmailVerify.vue",
+       "quote_or_symbol": "if (newVal?.data?.recaptcha_required !== true){"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/AuthController.php",
+       "quote_or_symbol": "$result['data']['recaptcha_required'] = true;"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/auth/parts/CreateWelcome.vue",
+       "quote_or_symbol": "機器人驗證已經過期，請重新輸入 Email 並勾選「我不是機器人」。"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/users/auth/parts/EmailVerify.vue",
+       "quote_or_symbol": "props.parentState.form.email = ''"
+      },
+      {
+       "sentence_index": 2,
        "source": "code:src/pages/users/auth/parts/EmailVerify.vue",
        "quote_or_symbol": "props.parentState.form.captcha_token = ''"
       },
       {
-       "sentence_index": 1,
-       "source": "code:src/pages/users/auth/parts/EmailVerify.vue",
-       "quote_or_symbol": "props.parentState.form.email = ''"
+       "sentence_index": 3,
+       "source": "code:app/Services/AuthService.php",
+       "quote_or_symbol": "const REGISTER_CAPTCHA_TTL = 1800;"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Services/AuthService.php",
+       "quote_or_symbol": "return (time() - (int) $passed['at']) < self::REGISTER_CAPTCHA_TTL;"
       }
      ],
      "not_supported_greps": [],
@@ -666,7 +750,7 @@
     {
      "proposed_id": "jgb/A/register-email-link-resume",
      "askable": "從信箱 App 收到的驗證信連結點回來，會不會要重新從頭註冊",
-     "title": "從驗證信連結折返時會從頭開始註冊嗎？（系統會記住 Email，但機器人驗證失效時會退回第一步）",
+     "title": "從信箱 App 點註冊連結、去收驗證碼再回來，會從頭開始註冊嗎？（同一瀏覽器會記住 Email 回到驗證碼步驟；機器人驗證失效時退回第一步）",
      "unit_ids": [
       "page:users.create"
      ],
@@ -678,33 +762,67 @@
      ],
      "instance_applicability": "general",
      "phrasings": [
-      "點驗證信連結會不會重來",
+      "註冊到一半去收信再回來會重來嗎",
       "收信後點回註冊頁",
-      "驗證信折返"
+      "從信箱 App 開註冊連結會重來嗎"
      ],
      "sentences": [
-      "透過信箱 App 開啟的註冊邀請連結，常會用信箱 App 內建的瀏覽器開啟；使用者跳去收驗證信、再重新點開連結時，很容易讓整個註冊流程從頭開始重跑一次。",
-      "系統會把使用者輸入過的 Email 記在瀏覽器裡，折返時會嘗試直接回到輸入驗證碼的步驟；但如果這次的機器人驗證紀錄已經失效（例如超過 30 分鐘，或是在另一個瀏覽器開啟連結），系統會清空 Email、退回第一步，需要重新勾選機器人驗證。"
+      "輸入 Email 進入驗證碼步驟後，系統會把這個 Email 和目前停在驗證碼步驟這件事記在瀏覽器裡。",
+      "之後在同一個瀏覽器重新開啟註冊頁時，會直接帶回這個 Email 並跳到驗證碼步驟，不會從第一步重來。",
+      "回到驗證碼步驟時，系統會再嘗試寄一次驗證信。",
+      "但如果寄驗證信時，這個瀏覽器已經沒有這個 Email 還有效的機器人驗證紀錄（例如已超過 30 分鐘），會清空 Email 並退回第一步，需要重新勾選「我不是機器人」。"
      ],
      "sources": [
       "code:src/pages/users/auth/Create.vue",
-      "code:src/pages/users/auth/parts/CreateWelcome.vue"
+      "code:src/pages/users/auth/parts/CreateWelcome.vue",
+      "code:src/pages/users/auth/parts/EmailVerify.vue",
+      "code:app/Services/AuthService.php"
      ],
      "evidence": [
       {
        "sentence_index": 0,
        "source": "code:src/pages/users/auth/Create.vue",
-       "quote_or_symbol": "因 email app 開啟註冊邀請連結時，會用 in-app browser 開啟，但當使用者要去查看驗證信時，又需要關閉 in-app browser"
+       "quote_or_symbol": "window.localStorage.setItem('usersCreate_email', state.form.email)"
       },
       {
-       "sentence_index": 1,
-       "source": "code:src/pages/users/auth/parts/CreateWelcome.vue",
-       "quote_or_symbol": "function isVerifySent(){"
+       "sentence_index": 0,
+       "source": "code:src/pages/users/auth/Create.vue",
+       "quote_or_symbol": "window.localStorage.setItem('usersCreate_step', state.step)"
       },
       {
        "sentence_index": 1,
        "source": "code:src/pages/users/auth/parts/CreateWelcome.vue",
        "quote_or_symbol": "return window.localStorage.getItem('usersCreate_email') && window.localStorage.getItem('usersCreate_step') === 'EmailVerify'"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/auth/parts/CreateWelcome.vue",
+       "quote_or_symbol": "props.parentState.form.email = window.localStorage.getItem('usersCreate_email')"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/auth/parts/CreateWelcome.vue",
+       "quote_or_symbol": "props.parentState.step = 'EmailVerify'"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/users/auth/parts/EmailVerify.vue",
+       "quote_or_symbol": "emailVerificator.send()"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/users/auth/parts/EmailVerify.vue",
+       "quote_or_symbol": "if (newVal?.data?.recaptcha_required !== true){"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/users/auth/parts/EmailVerify.vue",
+       "quote_or_symbol": "props.parentState.form.email = ''"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Services/AuthService.php",
+       "quote_or_symbol": "const REGISTER_CAPTCHA_TTL = 1800;"
       }
      ],
      "not_supported_greps": [],
@@ -1156,13 +1274,15 @@
      ],
      "sentences": [
       "忘記帳號功能只能用「當初綁定在帳號上的手機號碼」進行簡訊驗證碼驗證來找回。",
-      "如果帳號當初沒有綁定手機號碼，忘記帳號畫面上會提示需改聯繫 JGB 客服協助。",
-      "手機驗證成功後，畫面會顯示身份驗證成功並給出帳號提示（Email 提示字串），而不是直接顯示完整帳號。",
-      "如果驗證完成後仍無法藉此找回帳戶，需要聯繫所屬的租賃管理業者，由業者協助向 JGB 申請重新找回帳號。"
+      "忘記帳號畫面的說明文字寫明：如果未綁定手機號碼，請聯繫 JGB 客服。",
+      "輸入的手機號碼若沒有對應的帳號，手機欄位下方會提示「手機號碼格式錯誤或無此號碼對應的帳號。」",
+      "手機驗證成功後，畫面會顯示「身份驗證成功！」「以下為您的帳號提示：」，下面是只露出 Email 開頭第一個字、其餘以 * 遮蔽的帳號提示，@ 後面的網域照常顯示，而不是完整帳號。",
+      "驗證成功畫面的最下方寫著「如有其他問題，請聯繫 JGB 客服。」"
      ],
      "sources": [
       "code:src/pages/users/auth/parts/forget/Account.vue",
-      "help:slug01_zh-Hant.html"
+      "code:app/Http/Controllers/AuthController.php",
+      "code:app/User.php"
      ],
      "evidence": [
       {
@@ -1176,19 +1296,44 @@
        "quote_or_symbol": "如果未綁定手機號碼，請聯繫 JGB 客服"
       },
       {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/auth/parts/forget/Account.vue",
+       "quote_or_symbol": "如果未綁定手機號碼，請聯繫 JGB 客服"
+      },
+      {
        "sentence_index": 2,
+       "source": "code:app/Http/Controllers/AuthController.php",
+       "quote_or_symbol": "$result['data']['field_errors']['phone'] = ___('手機號碼格式錯誤或無此號碼對應的帳號。');"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/User.php",
+       "quote_or_symbol": "->whereNotNull('phone_verified_at')"
+      },
+      {
+       "sentence_index": 3,
        "source": "code:src/pages/users/auth/parts/forget/Account.vue",
        "quote_or_symbol": "t('身份驗證成功！以下為您的帳號提示：')"
       },
       {
-       "sentence_index": 2,
+       "sentence_index": 3,
        "source": "code:src/pages/users/auth/parts/forget/Account.vue",
        "quote_or_symbol": "state.response.showEmailHint?.data?.email_hint"
       },
       {
        "sentence_index": 3,
-       "source": "help:slug01_zh-Hant.html",
-       "quote_or_symbol": "如果完成以上流程後還是不能協助您找回帳戶的話，請聯繫您的租賃管理業者，租賃管理業者會協助您向我們申請重新找回您的帳號"
+       "source": "code:app/Http/Controllers/AuthController.php",
+       "quote_or_symbol": "$account = asterisks($account, $showCount);"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Http/Controllers/AuthController.php",
+       "quote_or_symbol": "$result['data']['email_hint'] = $account . '@' . $platform;"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/pages/users/auth/parts/forget/Account.vue",
+       "quote_or_symbol": "t('如有其他問題，請聯繫 JGB 客服。')"
       }
      ],
      "not_supported_greps": [],
@@ -1839,17 +1984,29 @@
      "sentences": [
       "帳號資訊頁的「帳號基本資訊」區塊可以上傳／更換大頭照（選填），並編輯姓氏、名稱、稱謂。",
       "頁面說明這些資料是為了讓刊登廣告時租客有更安心的租屋體驗而蒐集的。",
-      "部分特定合作團隊的合約完成簽署後，如果租客的姓氏、名稱、身分證字號都已填寫，系統會鎖定租客的基本資訊；鎖定後，姓氏、名稱、稱謂三個欄位就不會再被更新，即使表單有送出新值。"
+      "部分特定合作團隊的合約完成簽署後，系統會依簽署方式鎖定租客的基本資訊，兩種方式都要求已有租客的身分證字號，沒有身分證字號就不會鎖定；鎖定後，姓氏、名稱、稱謂三個欄位在畫面上不能再編輯，即使表單有送出新值也不會被更新。"
      ],
      "sources": [
       "code:resources/views/users/account.blade.php",
-      "code:app/Http/Controllers/UserController.php#account"
+      "code:app/Http/Controllers/UserController.php#account",
+      "code:app/Contract.php",
+      "code:app/Http/Controllers/ContractController.php"
      ],
      "evidence": [
       {
        "sentence_index": 0,
        "source": "code:resources/views/users/account.blade.php",
        "quote_or_symbol": "{{___('帳號基本資訊')}}"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:resources/views/users/account.blade.php",
+       "quote_or_symbol": "{{___('照片(選填)')}}"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:resources/views/users/account.blade.php",
+       "quote_or_symbol": "{{___('稱謂')}}"
       },
       {
        "sentence_index": 1,
@@ -1865,6 +2022,41 @@
        "sentence_index": 2,
        "source": "code:app/Http/Controllers/UserController.php#account",
        "quote_or_symbol": "'is_basic_info_locked' => (bool)$user->is_basic_info_locked, // 合約雙方完成簽署後自動鎖定租客基本資訊"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:resources/views/users/account.blade.php",
+       "quote_or_symbol": "@if($infoBasic['is_basic_info_locked']) readonly disabled class=\"disabled\" @endif>"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Controllers/UserController.php#account",
+       "quote_or_symbol": "$this->user->last_name = $input['last_name'];"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Contract.php",
+       "quote_or_symbol": "$user->is_basic_info_locked = 1;"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Contract.php",
+       "quote_or_symbol": "in_array($model->user_id, $isBasicInfoLockedUserIds) &&"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Controllers/ContractController.php",
+       "quote_or_symbol": "$lesseeUser->is_basic_info_locked = 1; // 上鎖"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Contract.php",
+       "quote_or_symbol": "!empty($user->first_name) && !empty($user->last_name) && !empty($user->id_card_number)"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Controllers/ContractController.php",
+       "quote_or_symbol": "if (!empty($contract->to_user_id_card_number)) {"
       }
      ],
      "not_supported_greps": [],
@@ -2099,41 +2291,62 @@
       "修改密碼要輸入原密碼嗎"
      ],
      "sentences": [
+      "帳號資訊頁只有在帳號本身有設定密碼時，才會顯示「密碼」區塊。",
       "帳號資訊頁點選「修改密碼」會展開密碼修改表單。",
       "修改密碼必須同時填寫目前密碼、新密碼與確認新密碼；若目前密碼輸入錯誤，會回覆「目前密碼驗證錯誤」並擋下整筆表單儲存。",
-      "新密碼長度需至少 6 個字元，且需與確認新密碼欄位一致。",
-      "如果這個帳號另外綁定了 Facebook、Google 或 LINE 登入，密碼變更會一併同步到這些綁定的登入帳號。",
+      "新密碼長度需至少 6 個字元、需同時包含英文與數字，且需與確認新密碼欄位一致。",
       "「密碼」區塊下方會顯示「上次更新：」的日期時間；如果從來沒有改過密碼，則顯示帳號建立的時間。"
      ],
      "sources": [
       "code:resources/views/users/account.blade.php",
-      "code:app/Http/Controllers/UserController.php#account"
+      "code:app/Http/Controllers/UserController.php#account",
+      "code:src/components/PasswordForm.vue"
      ],
      "evidence": [
       {
        "sentence_index": 0,
+       "source": "code:app/Http/Controllers/UserController.php#account",
+       "quote_or_symbol": "$showPassword = !empty($user->password);"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:resources/views/users/account.blade.php",
+       "quote_or_symbol": "@if ($showPassword)"
+      },
+      {
+       "sentence_index": 1,
        "source": "code:resources/views/users/account.blade.php",
        "quote_or_symbol": "@click=\"memberCenter.safety.display_password_form=true\">{{___('修改密碼')}}"
       },
       {
-       "sentence_index": 1,
+       "sentence_index": 2,
        "source": "code:app/Http/Controllers/UserController.php#account",
        "quote_or_symbol": "if (!Hash::check(request('old_password'), $this->user->password)) {"
       },
       {
-       "sentence_index": 1,
+       "sentence_index": 2,
        "source": "code:app/Http/Controllers/UserController.php#account",
        "quote_or_symbol": "'status-error' => ___('目前密碼驗證錯誤')"
       },
       {
-       "sentence_index": 2,
+       "sentence_index": 3,
        "source": "code:app/Http/Controllers/UserController.php#account",
        "quote_or_symbol": "'password' => 'min:6|required_with:password_confirmation|same:password_confirmation',"
       },
       {
        "sentence_index": 3,
-       "source": "code:app/Http/Controllers/UserController.php#account",
-       "quote_or_symbol": "if (!empty($fathers = User::where('father_id', $this->user->id)->get())) {"
+       "source": "code:src/components/PasswordForm.vue",
+       "quote_or_symbol": "return /[0-9]/.test(this.password) && /[a-zA-Z]/.test(this.password)"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/components/PasswordForm.vue",
+       "quote_or_symbol": "return this.password.length >= 6"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/components/PasswordForm.vue",
+       "quote_or_symbol": "tip_pwd_format: '密碼應有至少一位英文和數字',"
       },
       {
        "sentence_index": 4,
@@ -3138,7 +3351,7 @@
     {
      "proposed_id": "jgb/A/notification-mark-read-navigate",
      "askable": "點通知會發生什麼事、通知會不會被標記已讀",
-     "title": "點擊通知列表項目會發生什麼？（前往原連結，並帶上標記已讀的依據；訊息類通知不換頁）",
+     "title": "點擊通知列表項目會發生什麼？（前往原連結並把該則通知標為已讀；訊息類通知不換頁）",
      "unit_ids": [
       "page:web:notifications.index"
      ],
@@ -3155,19 +3368,17 @@
       "通知連結"
      ],
      "sentences": [
-      "除了訊息類通知之外，每則通知點擊後都會依原本的連結網址前往對應頁面，並在網址上加一個參數，作為之後判斷這則通知已經處理過的依據；訊息類通知則是在原頁面開啟訊息視窗，不會換頁。",
-      "每則通知會顯示所屬物件名稱、通知來源使用者姓名、通知內容文字，以及依通知類型著色的標籤（如合約、帳務、修繕、裝置、其他、訊息）。"
+      "除了訊息類通知之外，每則通知點擊後都會依原本的連結網址前往對應頁面，並在網址上多帶一個通知編號參數。",
+      "前往的頁面載入時，系統會依這個參數把這則通知標為已讀，並把網址上的這個參數拿掉。",
+      "訊息類通知則是在原頁面開啟訊息視窗，不會換頁。"
      ],
      "sources": [
       "code:app/Http/Controllers/NotificationController.php#index",
-      "code:resources/views/notifications/index.blade.php"
+      "code:resources/views/notifications/index.blade.php",
+      "code:app/Http/Controllers/Controller.php",
+      "code:app/Notification.php"
      ],
      "evidence": [
-      {
-       "sentence_index": 0,
-       "source": "code:app/Http/Controllers/NotificationController.php#index",
-       "quote_or_symbol": "$url .= '&notification_id=' . $data->id;"
-      },
       {
        "sentence_index": 0,
        "source": "code:app/Http/Controllers/NotificationController.php#index",
@@ -3175,13 +3386,28 @@
       },
       {
        "sentence_index": 1,
-       "source": "code:resources/views/notifications/index.blade.php",
-       "quote_or_symbol": "{{ ___($data->estate_title) }}"
+       "source": "code:app/Http/Controllers/Controller.php",
+       "quote_or_symbol": "Notification::markAsRead($this->user->id, $this->role->id, $notificationId);"
       },
       {
        "sentence_index": 1,
+       "source": "code:app/Http/Controllers/Controller.php",
+       "quote_or_symbol": "$query = $request->except('notification_id'); // 清除notification_id"
+      },
+      {
+       "sentence_index": 2,
        "source": "code:resources/views/notifications/index.blade.php",
-       "quote_or_symbol": "class=\"tag-sticker\" style=\"background-color:{{ $notificationColor[$data->type] }};\">{{ ___($notificationTitle[$data->type]) }}"
+       "quote_or_symbol": "if(data.type == 32) {"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:resources/views/notifications/index.blade.php",
+       "quote_or_symbol": "$store.commit('lightbox', 'showUserMessage')"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Notification.php",
+       "quote_or_symbol": "const NOTIFICATION_MESSAGE = 32;"
       }
      ],
      "not_supported_greps": [],
@@ -3474,7 +3700,7 @@
     {
      "proposed_id": "jgb/A/notification-settings-report-buttons",
      "askable": "通知收件設定裡的「發送報表」「多團隊合併報表」按鈕是做什麼的",
-     "title": "「發送報表」「多團隊合併報表」按鈕是做什麼的？（限加盟分潤報表分類，多團隊合併僅限特定團隊）",
+     "title": "「發送報表」「多團隊合併報表」按鈕是做什麼的？（選起始日與終止日，把加盟分潤報表寄到自訂通知信箱；僅限加盟分潤報表分類，多團隊合併僅限特定團隊）",
      "unit_ids": [
       "page:users.notification"
      ],
@@ -3491,13 +3717,18 @@
       "分潤報表怎麼看"
      ],
      "sentences": [
-      "只有「加盟分潤報表」分類會顯示「發送報表」按鈕，點擊會開啟通知信報表的燈箱視窗。",
+      "只有「加盟分潤報表」分類（限定開放的特定合作團隊才看得到）會顯示「發送報表」按鈕，點擊會開啟選擇時間區間的視窗。",
+      "在視窗裡選好「起始日」與「終止日」後按「發送」，系統會把這段期間的加盟分潤報表寄到這個分類設定的自訂通知信箱，成功時會顯示「報表已發送至指定信箱」。",
+      "如果這段期間沒有分潤資料，或這個分類還沒有設定自訂通知信箱，報表不會寄出，畫面會跳出失敗提示，說明是查無分潤資料或未設定收件人。",
       "「多團隊合併報表」按鈕只在特定合作團隊底下才會顯示，其餘分類與團隊都看不到這個按鈕。",
+      "「多團隊合併報表」視窗同樣選起始日與終止日，系統會把幾個合作團隊在這段期間的加盟分潤資料合併成一份報表，寄到這個分類設定的自訂通知信箱。",
       "點擊「發送報表」或「多團隊合併報表」按鈕時，會依目前所在的通知分類，開啟對應的報表視窗。"
      ],
      "sources": [
       "code:src/use/config/useForwardNotificationEmails.ts",
-      "code:src/pages/users/notification/Index.vue"
+      "code:src/pages/users/notification/Index.vue",
+      "code:src/components/Lightbox/NotificationMailReport.vue",
+      "code:app/Services/FranchiseProfitShareService.php"
      ],
      "evidence": [
       {
@@ -3506,12 +3737,72 @@
        "quote_or_symbol": "showMailReportButton: true,"
       },
       {
+       "sentence_index": 0,
+       "source": "code:src/use/config/useForwardNotificationEmails.ts",
+       "quote_or_symbol": "return specialRolesState.getSpecialGroupsByRole(store.state.userData?.role?.id)?.includes(SpecialRole.franchiseProfitShare)"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/notification/Index.vue",
+       "quote_or_symbol": "{{ t('發送報表') }}"
+      },
+      {
        "sentence_index": 1,
+       "source": "code:src/components/Lightbox/NotificationMailReport.vue",
+       "quote_or_symbol": "{{ t('起始日') }}"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/components/Lightbox/NotificationMailReport.vue",
+       "quote_or_symbol": "{{ t('終止日') }}"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/components/Lightbox/NotificationMailReport.vue",
+       "quote_or_symbol": "window.globalNoticeShow(t('報表已發送至指定信箱'))"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Services/FranchiseProfitShareService.php",
+       "quote_or_symbol": "if (isset($emailGroups['franchiseProfitShare']['custom_emails'])) {"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Services/FranchiseProfitShareService.php",
+       "quote_or_symbol": "'message' => '查無分潤資料',"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Services/FranchiseProfitShareService.php",
+       "quote_or_symbol": "'message' => '未設定收件人',"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/components/Lightbox/NotificationMailReport.vue",
+       "quote_or_symbol": "window.globalNoticeShow(errorMessage, 'error')"
+      },
+      {
+       "sentence_index": 3,
        "source": "code:src/use/config/useForwardNotificationEmails.ts",
        "quote_or_symbol": "return roleId === 21228"
       },
       {
-       "sentence_index": 2,
+       "sentence_index": 4,
+       "source": "code:app/Services/FranchiseProfitShareService.php",
+       "quote_or_symbol": "new \\App\\Exports\\FranchiseProfitShareMultiTeamExport($allTeamData),"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:app/Services/FranchiseProfitShareService.php",
+       "quote_or_symbol": "$recipients = $emailGroups['franchiseProfitShare']['custom_emails'] ?? [];"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/pages/users/notification/Index.vue",
+       "quote_or_symbol": "{{ t('多團隊合併報表') }}"
+      },
+      {
+       "sentence_index": 5,
        "source": "code:src/pages/users/notification/Index.vue",
        "quote_or_symbol": "function handleClickMailReport(categoryKey: CategoryKey){"
       }

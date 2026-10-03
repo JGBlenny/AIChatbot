@@ -2,7 +2,7 @@
   "audience": "jgb",
   "budget_tokens": 0,
   "business_types": [],
-  "canon_sha256": "7537689a6c3b81cd777e9af03928d0565bdef8afc2e2956f97f2159b3cda4664",
+  "canon_sha256": "39c34d116909cc195000695e74dfe8f0aaf84cb8474e25d2881d5e12b7b8a07a",
   "coarses": [
     {
       "fines": [
@@ -73,12 +73,15 @@
           ],
           "categories": [],
           "coarse_id": "A-registration",
-          "content_sha256": "cc8fe23547fac71dab89e2e06c441a8d91e2068aae265e553216582f6ffd5efa",
+          "content_sha256": "bb9c968b8d150f3d0fd20dece6970b8d7db4b86b3f43408d48ecf04a05b7e064",
           "content_units": [
-            "租客還沒有 JGB 帳號時，房東在建立合約時輸入租客的 Email 或手機號碼發送邀請，房東端會進入「待租客簽回」畫面，顯示尚未註冊會員租客的 Email 帳號。",
-            "租客會收到簽約邀請郵件，點選信中的「查看合約」按鈕後，會進入該物件的廣告頁供租客參考。",
-            "租客在廣告頁確認無誤後，點選頁面右下角的「查看合約」，因為還未註冊成為 JGB 會員，會先進入 JGB 登入畫面，此時點選「註冊」按鈕即可完成註冊，並接續完成合約。",
-            "租客也可以選擇不註冊帳號，改由房東自行填寫租客的身份資料。"
+            "房東建立合約時，若選「租客註冊」，會在「合約邀請聯繫方式」選 Email 或手機號碼並填入租客的聯絡方式來發送邀請；邀請送出後，合約會進入「待租客簽回」。",
+            "房東用 Email 邀請時，租客會收到簽約邀請郵件；點選信中的「查看合約」按鈕後，會進入該物件的廣告頁供租客參考。",
+            "房東用手機號碼邀請時，租客收到的是帶有同一個連結的簡訊。",
+            "租客在廣告頁點選「查看合約」後，如果還沒有登入，會先進入 JGB 登入畫面。",
+            "登入畫面上有「立即註冊」可以點選。",
+            "註冊完成後，系統會把這份合約邀請綁定到新帳號，租客就能接續處理這份合約。",
+            "房東建立合約時若選「租客免註冊」，租客不需要註冊 JGB 會員，改由房東／管理者協助填寫租客資訊。"
           ],
           "id": "jgb/A/register-tenant-contract-invitation",
           "instance_applicability": "general",
@@ -111,13 +114,21 @@
           "see_also": [],
           "sources": [
             "help:onboarding1_zh-Hant.html",
-            "code:app/Http/Controllers/AuthController.php"
+            "code:app/Http/Controllers/AuthController.php",
+            "code:src/pages/contracts/edit/tenantInfo/Index.jsx",
+            "code:app/Notification.php",
+            "code:resources/views/emails/zh-TW/contracts/invite.blade.php",
+            "code:resources/views/estate/show.blade.php",
+            "code:src/pages/users/auth/parts/LoginForm.vue",
+            "code:src/components/SurelyVue/Contract/CategoryCell.jsx",
+            "code:app/Http/Controllers/EstateController.php",
+            "code:app/Http/Middleware/LoginCheck.php"
           ],
           "target_user": [
             "property_manager",
             "prospect"
           ],
-          "title": "租客從電子合約邀請怎麼註冊？（房東建約發邀請，租客點「查看合約」再點「註冊」接續完成）"
+          "title": "租客從電子合約邀請怎麼註冊？（房東建約發邀請，租客點「查看合約」再點「立即註冊」接續完成）"
         },
         {
           "business_types": [
@@ -182,10 +193,12 @@
           ],
           "categories": [],
           "coarse_id": "A-registration",
-          "content_sha256": "508d785940f7054d45ebece5455fdd91ba77fadcfc9a7e41af4887f1ed4609ca",
+          "content_sha256": "4ab54071f78962aec66187787a43a7da88c4b1766ed5140f2c84e1f87f215304",
           "content_units": [
-            "若「我不是機器人」驗證已經過期，畫面會提示重新輸入 Email 並重新勾選「我不是機器人」，流程退回到第一步的 Email 輸入畫面。",
-            "退回第一步時，先前輸入的 Email 與驗證通行證會被清空，需要重新輸入 Email 並重新勾選「我不是機器人」才能繼續。"
+            "在第一步 Email 輸入畫面，「我不是機器人」的勾選失效時，「繼續」按鈕會收起來，需要重新勾選才會再出現。",
+            "如果是在寄驗證信時，系統判定機器人驗證沒有通過，畫面會退回第一步的 Email 輸入畫面，並提示「機器人驗證已經過期，請重新輸入 Email 並勾選「我不是機器人」」",
+            "退回第一步時，先前輸入的 Email 與機器人驗證結果都會被清空，需要重新輸入 Email 並重新勾選「我不是機器人」才能繼續。",
+            "機器人驗證通過後，系統只在 30 分鐘內承認同一個 Email 的驗證紀錄；超過之後再寄驗證信，就會要求重新驗證。"
           ],
           "id": "jgb/A/register-captcha-expired",
           "instance_applicability": "general",
@@ -204,11 +217,6 @@
               "source": "draft:outline-20260920",
               "status": "proposed",
               "text": "註冊一直失敗"
-            },
-            {
-              "source": "draft:outline-20260920",
-              "status": "proposed",
-              "text": "驗證框顯示不出來"
             }
           ],
           "policy": "answerable",
@@ -218,12 +226,14 @@
           "see_also": [],
           "sources": [
             "code:src/pages/users/auth/parts/EmailVerify.vue",
-            "code:src/pages/users/auth/parts/CreateWelcome.vue"
+            "code:src/pages/users/auth/parts/CreateWelcome.vue",
+            "code:app/Http/Controllers/AuthController.php",
+            "code:app/Services/AuthService.php"
           ],
           "target_user": [
             "property_manager"
           ],
-          "title": "註冊卡在機器人驗證過期怎麼辦？（會退回第一步重新勾選）"
+          "title": "註冊卡在機器人驗證過期怎麼辦？（重新勾選「我不是機器人」；寄驗證信時沒通過會退回第一步）"
         },
         {
           "business_types": [
@@ -570,10 +580,12 @@
           ],
           "categories": [],
           "coarse_id": "A-registration",
-          "content_sha256": "98f82b4ae70314f3b55c90a496abb831671c55f6e54650b798702be3b3a574fb",
+          "content_sha256": "79c584d256f21de1ba8df25a8e5d3af977f1e9d02b1ce9b57384f78b905e28b4",
           "content_units": [
-            "透過信箱 App 開啟的註冊邀請連結，常會用信箱 App 內建的瀏覽器開啟；使用者跳去收驗證信、再重新點開連結時，很容易讓整個註冊流程從頭開始重跑一次。",
-            "系統會把使用者輸入過的 Email 記在瀏覽器裡，折返時會嘗試直接回到輸入驗證碼的步驟；但如果這次的機器人驗證紀錄已經失效（例如超過 30 分鐘，或是在另一個瀏覽器開啟連結），系統會清空 Email、退回第一步，需要重新勾選機器人驗證。"
+            "輸入 Email 進入驗證碼步驟後，系統會把這個 Email 和目前停在驗證碼步驟這件事記在瀏覽器裡。",
+            "之後在同一個瀏覽器重新開啟註冊頁時，會直接帶回這個 Email 並跳到驗證碼步驟，不會從第一步重來。",
+            "回到驗證碼步驟時，系統會再嘗試寄一次驗證信。",
+            "但如果寄驗證信時，這個瀏覽器已經沒有這個 Email 還有效的機器人驗證紀錄（例如已超過 30 分鐘），會清空 Email 並退回第一步，需要重新勾選「我不是機器人」。"
           ],
           "id": "jgb/A/register-email-link-resume",
           "instance_applicability": "general",
@@ -581,7 +593,7 @@
             {
               "source": "draft:outline-20260920",
               "status": "proposed",
-              "text": "點驗證信連結會不會重來"
+              "text": "註冊到一半去收信再回來會重來嗎"
             },
             {
               "source": "draft:outline-20260920",
@@ -591,7 +603,7 @@
             {
               "source": "draft:outline-20260920",
               "status": "proposed",
-              "text": "驗證信折返"
+              "text": "從信箱 App 開註冊連結會重來嗎"
             }
           ],
           "policy": "answerable",
@@ -601,12 +613,14 @@
           "see_also": [],
           "sources": [
             "code:src/pages/users/auth/Create.vue",
-            "code:src/pages/users/auth/parts/CreateWelcome.vue"
+            "code:src/pages/users/auth/parts/CreateWelcome.vue",
+            "code:src/pages/users/auth/parts/EmailVerify.vue",
+            "code:app/Services/AuthService.php"
           ],
           "target_user": [
             "property_manager"
           ],
-          "title": "從驗證信連結折返時會從頭開始註冊嗎？（系統會記住 Email，但機器人驗證失效時會退回第一步）"
+          "title": "從信箱 App 點註冊連結、去收驗證碼再回來，會從頭開始註冊嗎？（同一瀏覽器會記住 Email 回到驗證碼步驟；機器人驗證失效時退回第一步）"
         }
       ],
       "id": "A-registration",
@@ -1035,12 +1049,13 @@
           ],
           "categories": [],
           "coarse_id": "A-account-recovery",
-          "content_sha256": "cf5d8d865ecbe375064778528b4d3cb2de5dff7acfc4c176f958ba0718161fc5",
+          "content_sha256": "cbffc74a87f1915e36d2ef94f6aaf3beeb1abcd9816c804965d8fd23f4d0330c",
           "content_units": [
             "忘記帳號功能只能用「當初綁定在帳號上的手機號碼」進行簡訊驗證碼驗證來找回。",
-            "如果帳號當初沒有綁定手機號碼，忘記帳號畫面上會提示需改聯繫 JGB 客服協助。",
-            "手機驗證成功後，畫面會顯示身份驗證成功並給出帳號提示（Email 提示字串），而不是直接顯示完整帳號。",
-            "如果驗證完成後仍無法藉此找回帳戶，需要聯繫所屬的租賃管理業者，由業者協助向 JGB 申請重新找回帳號。"
+            "忘記帳號畫面的說明文字寫明：如果未綁定手機號碼，請聯繫 JGB 客服。",
+            "輸入的手機號碼若沒有對應的帳號，手機欄位下方會提示「手機號碼格式錯誤或無此號碼對應的帳號」",
+            "手機驗證成功後，畫面會顯示「身份驗證成功」「以下為您的帳號提示：」，下面是只露出 Email 開頭第一個字、其餘以 * 遮蔽的帳號提示，@ 後面的網域照常顯示，而不是完整帳號。",
+            "驗證成功畫面的最下方寫著「如有其他問題，請聯繫 JGB 客服」"
           ],
           "id": "jgb/A/forget-account-flow",
           "instance_applicability": "general",
@@ -1068,7 +1083,8 @@
           "see_also": [],
           "sources": [
             "code:src/pages/users/auth/parts/forget/Account.vue",
-            "help:slug01_zh-Hant.html"
+            "code:app/Http/Controllers/AuthController.php",
+            "code:app/User.php"
           ],
           "target_user": [
             "property_manager"
@@ -1534,11 +1550,11 @@
           ],
           "categories": [],
           "coarse_id": "A-account-profile",
-          "content_sha256": "1f1fa200ca10d7a19e5796020228cf2070e1720414a0dd0f12692c8dde3c3bc7",
+          "content_sha256": "d682c03bd1922e2cd2e5ab941645079a213a940c03c23e54718d031595637a2d",
           "content_units": [
             "帳號資訊頁的「帳號基本資訊」區塊可以上傳／更換大頭照（選填），並編輯姓氏、名稱、稱謂。",
             "頁面說明這些資料是為了讓刊登廣告時租客有更安心的租屋體驗而蒐集的。",
-            "部分特定合作團隊的合約完成簽署後，如果租客的姓氏、名稱、身分證字號都已填寫，系統會鎖定租客的基本資訊；鎖定後，姓氏、名稱、稱謂三個欄位就不會再被更新，即使表單有送出新值。"
+            "部分特定合作團隊的合約完成簽署後，系統會依簽署方式鎖定租客的基本資訊，兩種方式都要求已有租客的身分證字號，沒有身分證字號就不會鎖定；鎖定後，姓氏、名稱、稱謂三個欄位在畫面上不能再編輯，即使表單有送出新值也不會被更新。"
           ],
           "id": "jgb/A/account-basic-info",
           "instance_applicability": "general",
@@ -1571,7 +1587,9 @@
           "see_also": [],
           "sources": [
             "code:resources/views/users/account.blade.php",
-            "code:app/Http/Controllers/UserController.php#account"
+            "code:app/Http/Controllers/UserController.php#account",
+            "code:app/Contract.php",
+            "code:app/Http/Controllers/ContractController.php"
           ],
           "target_user": [
             "property_manager"
@@ -1758,12 +1776,12 @@
           ],
           "categories": [],
           "coarse_id": "A-account-profile",
-          "content_sha256": "34472f2f515278a24432a48ea55d0a037f35b22362745f0f03ef5dfcaa1384a4",
+          "content_sha256": "e878b04dafb735251cdf504bce0216f90004f72cb091f8ca401152633b9ea980",
           "content_units": [
+            "帳號資訊頁只有在帳號本身有設定密碼時，才會顯示「密碼」區塊。",
             "帳號資訊頁點選「修改密碼」會展開密碼修改表單。",
             "修改密碼必須同時填寫目前密碼、新密碼與確認新密碼；若目前密碼輸入錯誤，會回覆「目前密碼驗證錯誤」並擋下整筆表單儲存。",
-            "新密碼長度需至少 6 個字元，且需與確認新密碼欄位一致。",
-            "如果這個帳號另外綁定了 Facebook、Google 或 LINE 登入，密碼變更會一併同步到這些綁定的登入帳號。",
+            "新密碼長度需至少 6 個字元、需同時包含英文與數字，且需與確認新密碼欄位一致。",
             "「密碼」區塊下方會顯示「上次更新：」的日期時間；如果從來沒有改過密碼，則顯示帳號建立的時間。"
           ],
           "id": "jgb/A/account-change-password",
@@ -1792,7 +1810,8 @@
           "see_also": [],
           "sources": [
             "code:resources/views/users/account.blade.php",
-            "code:app/Http/Controllers/UserController.php#account"
+            "code:app/Http/Controllers/UserController.php#account",
+            "code:src/components/PasswordForm.vue"
           ],
           "target_user": [
             "property_manager"
@@ -2505,10 +2524,11 @@
           ],
           "categories": [],
           "coarse_id": "A-notification-center",
-          "content_sha256": "4707a22088b105222d6aa9c9f498217e8d4da26a50cb72a8bf6c15c813b0c0f3",
+          "content_sha256": "a1f0d4978149ef70743bc134578d03cb385c574eab0a45f8541bef0dbb59f45f",
           "content_units": [
-            "除了訊息類通知之外，每則通知點擊後都會依原本的連結網址前往對應頁面，並在網址上加一個參數，作為之後判斷這則通知已經處理過的依據；訊息類通知則是在原頁面開啟訊息視窗，不會換頁。",
-            "每則通知會顯示所屬物件名稱、通知來源使用者姓名、通知內容文字，以及依通知類型著色的標籤（如合約、帳務、修繕、裝置、其他、訊息）。"
+            "除了訊息類通知之外，每則通知點擊後都會依原本的連結網址前往對應頁面，並在網址上多帶一個通知編號參數。",
+            "前往的頁面載入時，系統會依這個參數把這則通知標為已讀，並把網址上的這個參數拿掉。",
+            "訊息類通知則是在原頁面開啟訊息視窗，不會換頁。"
           ],
           "id": "jgb/A/notification-mark-read-navigate",
           "instance_applicability": "general",
@@ -2536,12 +2556,14 @@
           "see_also": [],
           "sources": [
             "code:app/Http/Controllers/NotificationController.php#index",
-            "code:resources/views/notifications/index.blade.php"
+            "code:resources/views/notifications/index.blade.php",
+            "code:app/Http/Controllers/Controller.php",
+            "code:app/Notification.php"
           ],
           "target_user": [
             "property_manager"
           ],
-          "title": "點擊通知列表項目會發生什麼？（前往原連結，並帶上標記已讀的依據；訊息類通知不換頁）"
+          "title": "點擊通知列表項目會發生什麼？（前往原連結並把該則通知標為已讀；訊息類通知不換頁）"
         },
         {
           "business_types": [
@@ -2728,10 +2750,13 @@
           ],
           "categories": [],
           "coarse_id": "A-notification-settings",
-          "content_sha256": "7f1e4bb84ff3d10136f8166efec794f82b6052669da9a5bf05a1bd039874e713",
+          "content_sha256": "fd472bc308f37ed8b4677f9837f31c83c1ec3cbac272b609c4135a55895be8e8",
           "content_units": [
-            "只有「加盟分潤報表」分類會顯示「發送報表」按鈕，點擊會開啟通知信報表的燈箱視窗。",
+            "只有「加盟分潤報表」分類（限定開放的特定合作團隊才看得到）會顯示「發送報表」按鈕，點擊會開啟選擇時間區間的視窗。",
+            "在視窗裡選好「起始日」與「終止日」後按「發送」，系統會把這段期間的加盟分潤報表寄到這個分類設定的自訂通知信箱，成功時會顯示「報表已發送至指定信箱」。",
+            "如果這段期間沒有分潤資料，或這個分類還沒有設定自訂通知信箱，報表不會寄出，畫面會跳出失敗提示，說明是查無分潤資料或未設定收件人。",
             "「多團隊合併報表」按鈕只在特定合作團隊底下才會顯示，其餘分類與團隊都看不到這個按鈕。",
+            "「多團隊合併報表」視窗同樣選起始日與終止日，系統會把幾個合作團隊在這段期間的加盟分潤資料合併成一份報表，寄到這個分類設定的自訂通知信箱。",
             "點擊「發送報表」或「多團隊合併報表」按鈕時，會依目前所在的通知分類，開啟對應的報表視窗。"
           ],
           "id": "jgb/A/notification-settings-report-buttons",
@@ -2760,12 +2785,14 @@
           "see_also": [],
           "sources": [
             "code:src/use/config/useForwardNotificationEmails.ts",
-            "code:src/pages/users/notification/Index.vue"
+            "code:src/pages/users/notification/Index.vue",
+            "code:src/components/Lightbox/NotificationMailReport.vue",
+            "code:app/Services/FranchiseProfitShareService.php"
           ],
           "target_user": [
             "property_manager"
           ],
-          "title": "「發送報表」「多團隊合併報表」按鈕是做什麼的？（限加盟分潤報表分類，多團隊合併僅限特定團隊）"
+          "title": "「發送報表」「多團隊合併報表」按鈕是做什麼的？（選起始日與終止日，把加盟分潤報表寄到自訂通知信箱；僅限加盟分潤報表分類，多團隊合併僅限特定團隊）"
         },
         {
           "business_types": [
@@ -2979,9 +3006,9 @@
           ],
           "categories": [],
           "coarse_id": "B-team-profile",
-          "content_sha256": "6a2de0ad62a0e65a50c2399543a8f5681d32c5d11c77ba8898f4482468448def",
+          "content_sha256": "337b7bcd9db65bbb53e8bb03b8a51ba9569f9e6a16a45d90c27780f9f29c01c3",
           "content_units": [
-            "簽約資訊卡的「個人資訊」區塊只有個人團隊看得到，法人團隊與社宅團隊不會顯示這個區塊；可以填寫這個團隊在刊登物件廣告與簽立合約時所需提供的個人資訊：姓氏、名稱、身分證字號、Email、手機號碼都是必填。",
+            "簽約資訊卡的「個人資訊」區塊只有租客與個人房東身分會顯示，法人房東與社宅團隊顯示的是「公司資訊」等區塊，不會有這個區塊；可以填寫刊登物件廣告與簽立合約時所需提供的資料：姓氏、名稱、身分證字號、Email、手機號碼都是必填。",
             "戶籍地址與通訊地址也要填寫，通訊地址可以點「同戶籍地址」直接帶入。",
             "身分證正反面照片是選填，另外還有一個「其他附件(選填)」區塊，可以選填上傳工作名片/學生證、良民證、小章這三項附件。"
           ],
@@ -3015,12 +3042,13 @@
           "reviewed_by": null,
           "see_also": [],
           "sources": [
-            "code:src/pages/users/team/_parts/SignerDetails.vue"
+            "code:src/pages/users/team/_parts/SignerDetails.vue",
+            "code:app/Role.php"
           ],
           "target_user": [
             "property_manager"
           ],
-          "title": "簽約資訊卡「個人資訊」區塊只有個人團隊看得到，要填什麼？（姓氏、名稱、身分證字號、Email、手機、戶籍地址、通訊地址必填；身分證正反面與其他附件選填）"
+          "title": "簽約資訊卡「個人資訊」區塊要填什麼？（只有租客與個人房東身分才有；姓氏、名稱、身分證字號、Email、手機、戶籍地址、通訊地址必填；身分證正反面與其他附件選填）"
         },
         {
           "business_types": [
@@ -4526,9 +4554,11 @@
           ],
           "categories": [],
           "coarse_id": "B-biglandlord-report",
-          "content_sha256": "2e6da592df020da40c43a41620752a4574476d1e22731eca6d226bfa2c34a47b",
+          "content_sha256": "02c3802381e26a7a6dbe6798e2d260676c29f5a17ffbc7d1c8b0f9fc182445a6",
           "content_units": [
-            "側邊選單裡的「大房東報表」項目，要這位成員的角色有查看大房東報表的功能權限，才不會在選單整理時被拿掉。"
+            "側邊選單「大房東管理」底下的「大房東報表」項目，只有法人房東與社宅團隊身分才會出現。",
+            "團隊成員所屬的角色要有「查看大房東報表」的權限，這個選單項目才會出現。",
+            "角色權限設定裡，「查看大房東報表」的開啟條件是先有「查看大房東列表」。"
           ],
           "id": "jgb/B/biglandlord-report-permission",
           "instance_applicability": "general",
@@ -4555,12 +4585,14 @@
           "reviewed_by": null,
           "see_also": [],
           "sources": [
-            "code:app/Http/Controllers/UserController.php"
+            "code:app/Http/Controllers/UserController.php",
+            "code:app/Role.php",
+            "code:resources/views/layouts/lightbox/character-capability-edit.blade.php"
           ],
           "target_user": [
             "property_manager"
           ],
-          "title": "誰看得到大房東報表？（需要「查看大房東報表」的角色權限）"
+          "title": "誰看得到大房東報表？（法人房東與社宅團隊身分，且角色要有「查看大房東報表」權限）"
         },
         {
           "business_types": [
@@ -4931,11 +4963,12 @@
           ],
           "categories": [],
           "coarse_id": "B-advanced-settings",
-          "content_sha256": "cdd9e483aea4b4e16007b2f4fb4500d0777101448f11d40335b1e20fb2953ab0",
+          "content_sha256": "f49935224101117560e301b4a54457e42375125c36f091ece9150d3b698ed130",
           "content_units": [
             "進階設定的「帳務管理」區塊可以設定帳單「自訂費用」的收付項目，分成「收入類」與「支出類」。",
-            "新增每個項目時要選擇「性質」（例如租金、押金、水費、電費、管理費、清潔費、網路費、滯納金、違約金、賠償金、押金設算息、其他），並填寫「自定義名稱」，這兩項都是必填。",
-            "「會科品項代號」是選填欄位，用來提供給 ERP／會計系統拋轉使用。"
+            "新增每個項目時要選擇「性質」（例如租金、押金、水費、電費、管理費、清潔費、網路費、滯納金、違約金、賠償金、押金設算息、其他），並填寫「自定義名稱」，這兩項畫面上都標示為必填。",
+            "「會科品項代號」是選填欄位，用來提供給 ERP／會計系統拋轉使用。",
+            "自訂項目可以拖曳調整順序，點旁邊的編輯圖示可以修改，編輯時也可以刪除；預設項目只顯示，不能編輯。"
           ],
           "id": "jgb/B/advance-fee-items",
           "instance_applicability": "general",
@@ -4954,11 +4987,6 @@
               "source": "draft:outline-20260920",
               "status": "proposed",
               "text": "帳單費用項目性質怎麼選"
-            },
-            {
-              "source": "draft:outline-20260920",
-              "status": "proposed",
-              "text": "費用項目可以合併嗎"
             }
           ],
           "policy": "answerable",
@@ -4968,12 +4996,13 @@
           "see_also": [],
           "sources": [
             "code:src/pages/users/advance/_part/FeesItemManagement.vue",
-            "code:src/pages/users/advance/_part/FeePanel.vue"
+            "code:src/pages/users/advance/_part/FeePanel.vue",
+            "code:src/pages/users/advance/_part/BillsManagement.vue"
           ],
           "target_user": [
             "property_manager"
           ],
-          "title": "帳單的「自訂費用項目」怎麼設定？（分收入類／支出類，必填性質與自定義名稱，會科品項代號選填）"
+          "title": "「帳單自訂費用項目」怎麼設定？（分收入類／支出類，必填性質與自定義名稱，會科品項代號選填）"
         },
         {
           "business_types": [
@@ -5114,11 +5143,12 @@
           ],
           "categories": [],
           "coarse_id": "B-advanced-settings",
-          "content_sha256": "9dec21d208e1bbb32f2659afadca2e2d323813afd5482a8ca618669ab73c037f",
+          "content_sha256": "80f8b4e457b9046ac04b4b4733ab1cb086d9eea21ae32c09716ec85c65cf1981",
           "content_units": [
             "進階設定的「物件管理」區塊有一個「標籤設定」，可以先在這裡建立自訂標籤。",
             "設定好標籤後，可以到物件管理的物件總表，幫不同的物件加上這些自訂標籤。",
-            "單一個標籤最多可以輸入 18 字元（約 9 個中文字）。"
+            "單一個標籤最多只能輸入 9 個字元，中文或英文都一樣，超過的字會被截掉。",
+            "畫面上的說明文字寫的是「單個標籤上限為18字元(9個字)」，但實際輸入不分中英文都只收 9 個字元。"
           ],
           "id": "jgb/B/advance-custom-label",
           "instance_applicability": "general",
@@ -5145,13 +5175,16 @@
           "reviewed_by": null,
           "see_also": [],
           "sources": [
-            "code:src/pages/users/advance/Index.jsx"
+            "code:src/pages/users/advance/Index.jsx",
+            "code:src/components/LabelPanel.vue",
+            "code:src/pages/estates/list/_parts/ListTable.vue",
+            "code:src/pages/estates/list/Index.vue"
           ],
           "target_user": [
             "property_manager",
             "prospect"
           ],
-          "title": "「標籤設定」是做什麼用的？（幫物件加自訂標籤，單個標籤上限 18 字元）"
+          "title": "「標籤設定」是做什麼用的？（幫物件加自訂標籤，單個標籤輸入框最多收 9 個字元）"
         },
         {
           "business_types": [
@@ -6152,9 +6185,11 @@
           ],
           "categories": [],
           "coarse_id": "B-tenant-list",
-          "content_sha256": "02e548927a81e6db02da26d2750e8678b0bd05ff36a25c68219416368b2b935d",
+          "content_sha256": "e329f82c6adbcd013e52d6dedefbe4e37d9d25d249477260ab6f8803e1985727",
           "content_units": [
-            "只有特定合作團隊在租客列表勾選一筆以上租客後，畫面下方才會出現批次操作列，可以選「發送通知」一次通知這些租客；其他團隊勾選租客後沒有這個批次操作列。"
+            "只有特定合作團隊的租客列表有勾選框；勾選一筆以上租客後，固定在列表上方的批次操作列會顯示已選數量，並提供「發送通知」。",
+            "其他團隊的租客列表沒有勾選框，也沒有批次操作。",
+            "按「發送通知」會開啟視窗，填寫「通知標題」與「通知內容」後按「發送」，這則通知會發給所有已勾選的租客，並在租客登入時顯示。"
           ],
           "id": "jgb/B/lessee-bulk-notify",
           "instance_applicability": "general",
@@ -6182,7 +6217,9 @@
           "see_also": [],
           "sources": [
             "code:src/use/config/useLesseeTypes.ts",
-            "code:src/pages/users/lesseeList/parts/ListTable.vue"
+            "code:src/pages/users/lesseeList/parts/ListTable.vue",
+            "code:src/components/ListBulkAction.vue",
+            "code:src/components/Lightbox/EditUsersMessage.jsx"
           ],
           "target_user": [
             "property_manager"
@@ -6978,11 +7015,13 @@
           ],
           "categories": [],
           "coarse_id": "C-community-estates",
-          "content_sha256": "0859343ac7ccf39ce4a89e481ad127045956ac01ae7f39f8d401c8cef4862df6",
+          "content_sha256": "06611887ffa372597c4b0e2f7ccb89ea9545b51a749a51863f0064d79d03bfb2",
           "content_units": [
             "社區底下的物件清單頁最上方會顯示這個社區的概要卡片，包含招租廣告、買賣廣告、目前空置數量（皆以物件總數為分母）、建築類型與屋齡。",
             "卡片上也會顯示這個社區「本月應收金額」與「本月已收金額」。",
-            "卡片右上角的選單可以「前往社區廣告」（社區公開頁）；具備編輯物件權限的使用者（團隊擁有者也包含在內）還會看到「編輯」與「刪除社區」選項。"
+            "卡片上的數量與金額只計入目前登入者有權限看到的物件：團隊擁有者看全部，其他成員依「查看所有物件」或「查看所屬物件」權限，大房東則只計入他可存取的物件。",
+            "電腦版卡片右上角的選單有「前往社區廣告」（社區公開頁）；具備編輯物件權限的使用者（團隊擁有者也包含在內）還會看到「編輯」與「刪除社區」選項。",
+            "手機等窄螢幕（寬度 991 以下）沒有這個選單，改在卡片下方顯示「編輯社區」「預覽廣告頁」「刪除社區」，其中「編輯社區」「刪除社區」同樣只有具備編輯物件權限的使用者看得到。"
           ],
           "id": "jgb/C/community-estates-overview-card",
           "instance_applicability": "general",
@@ -7010,7 +7049,9 @@
           "see_also": [],
           "sources": [
             "code:src/pages/communities/estates/_parts/CommunityOverview.vue",
-            "code:app/Services/CommunityService.php"
+            "code:app/Services/CommunityService.php",
+            "code:src/pages/communities/estates/Index.vue",
+            "code:app/Http/Controllers/UserController.php"
           ],
           "target_user": [
             "property_manager"
@@ -7116,10 +7157,10 @@
           ],
           "categories": [],
           "coarse_id": "C-community-estates",
-          "content_sha256": "3a8fa551f09b0c981914e43bb7196413f024009e241f2ea10f3c3df828160472",
+          "content_sha256": "b12b487ab098f1c7f78258d7d75aa04b61df39c79dd1d32672f44bed7f0e5cce",
           "content_units": [
             "「所有物件」頁籤永遠存在，「差額發票」頁籤只在該社區開通差額發票功能時才會加入。",
-            "「投入成本」與「投報率」兩個頁籤是由同一個開關控制的，開通投報率功能時這兩個頁籤會一起出現，沒辦法只開通其中一個；但大房東，以及沒有帳單查看權限的成員，即使團隊已開通也看不到這兩個頁籤。",
+            "「投入成本」與「投報率」兩個頁籤是由同一個開關控制的，團隊開通投報率功能時這兩個頁籤會一起出現，沒辦法只開通其中一個；但即使團隊已開通，租客身分、大房東，以及沒有「查看所有帳單」權限的成員也看不到這兩個頁籤。",
             "沒有任何額外頁籤開通時，畫面不會顯示頁籤切換器，直接呈現物件清單。"
           ],
           "id": "jgb/C/community-estates-extra-tabs",
@@ -7150,12 +7191,14 @@
             "code:src/utils/constants/community.js",
             "code:src/pages/communities/estates/Index.vue",
             "code:app/Http/Controllers/CommunityController.php",
-            "code:app/Http/Controllers/Api/CommunityRoiController.php"
+            "code:app/Http/Controllers/Api/CommunityRoiController.php",
+            "code:app/Services/InvoiceService.php",
+            "code:app/Http/Controllers/UserController.php"
           ],
           "target_user": [
             "property_manager"
           ],
-          "title": "社區底下有差額發票、投報率頁籤嗎？（依團隊是否開通該功能才會出現；投入成本與投報率是同一個開關，大房東與沒有帳單查看權限的成員看不到）"
+          "title": "社區底下有差額發票、投報率頁籤嗎？（差額發票看該社區是否開通；投入成本與投報率由團隊的投報率功能開關一起控制，租客、大房東與沒有「查看所有帳單」權限的成員看不到）"
         },
         {
           "business_types": [
@@ -7700,11 +7743,12 @@
           ],
           "categories": [],
           "coarse_id": "C-estate-list",
-          "content_sha256": "d256185031906453d53b5c59e84474b5041abe9f24539b3d525575c609d2b4fe",
+          "content_sha256": "f24374dd9436c123ddd8b43fafe14e16dddd623e4c46d145feec5514880d3fa6",
           "content_units": [
             "物件總表的進階搜尋提供國家、縣市、行政區、經理人、大房東、社區、捷運站等下拉篩選。",
             "也可以依格局、建築類型、即時合約狀態、合約到期日、招租廣告狀態、租金、面積(坪)與標籤等條件縮小搜尋結果；沒有依用途篩選的選項（用途篩選只在挑選物件用的物件挑選器裡才有）。",
-            "篩選結果數量會顯示在搜尋條件下方，格式為目前顯示筆數／總筆數。"
+            "手機（寬度小於 576px）上，即時合約狀態與合約到期日直接排在搜尋列上方，其餘條件收在「更多」裡；其中租金範圍只有在幣別為 TWD 時才會出現。",
+            "寬度 992px 以上的螢幕，搜尋條件下方會顯示「篩選結果」，格式為目前顯示筆數／總筆數；較窄的螢幕（含手機）沒有這一行。"
           ],
           "id": "jgb/C/estate-list-filters",
           "instance_applicability": "general",
@@ -7741,7 +7785,10 @@
           "reviewed_by": null,
           "see_also": [],
           "sources": [
-            "code:src/pages/estates/list/_parts/EstatesAdvanceSearchBlock.jsx"
+            "code:src/pages/estates/list/_parts/EstatesAdvanceSearchBlock.jsx",
+            "code:src/pages/estates/list/_parts/EstatesAdvanceSearchBlockM.jsx",
+            "code:src/pages/estates/list/Index.vue",
+            "code:tailwind.config.js"
           ],
           "target_user": [
             "property_manager"
@@ -7796,10 +7843,12 @@
           ],
           "categories": [],
           "coarse_id": "C-estate-list",
-          "content_sha256": "95c8f0d3a034b94579291f51ffe749c2a4a02270b4df33280c67c25435d0ead2",
+          "content_sha256": "0c1e58fbc3fd61b74c6d6faf993fac61c8c5b7c40c70cb8d4be8d5cac513cda6",
           "content_units": [
-            "在物件總表勾選多筆物件後，依權限可以看到「匯出物件」「新增批次帳單」「批次刊登招租廣告」「批次取消刊登招租廣告」「刪除」等批次動作選單，其中「刪除」要求勾選的物件全部都沒有合約才能執行。",
-            "批次刊登招租廣告完全沒有失敗物件時，會直接跳出「[數量]件招租廣告已刊登」的成功提示，只要有任何一件失敗，改成跳出結果燈箱列出成功與失敗的物件；批次取消刊登招租廣告則只有在完全沒有失敗物件時才會跳出「[數量]件招租廣告下架成功」的提示，若有物件失敗，畫面不會出現任何燈箱或錯誤訊息。"
+            "個人房東、大房東與租客身分的物件總表沒有勾選框，不能批次操作；法人房東與社宅團隊的成員也要至少有其中一項批次動作的權限，才會有勾選框。",
+            "勾選多筆物件後，依權限可以看到「匯出物件」「新增批次帳單」「批次刊登招租廣告」「批次取消刊登招租廣告」「刪除」等批次動作；其中「刪除」只有在勾選的物件全部都是「無合約」、且不是跨頁全選整份清單時才會出現。",
+            "批次刊登招租廣告時，完全沒有失敗物件會直接跳出已刊登件數的成功提示；只要有任何一件失敗，改成跳出結果視窗，顯示已刊登的件數，以及因資訊不齊全而沒有刊登的件數（全部失敗時標題是「招租廣告刊登失敗」）。",
+            "批次取消刊登招租廣告時，只有在完全沒有失敗物件時才會跳出下架成功件數的提示；若有物件失敗，畫面不會出現任何視窗或錯誤訊息。"
           ],
           "id": "jgb/C/estate-list-batch-actions",
           "instance_applicability": "general",
@@ -7827,12 +7876,13 @@
           "see_also": [],
           "sources": [
             "code:src/use/config/useEstateTypes.js",
-            "code:src/pages/estates/list/_parts/ListTable.vue"
+            "code:src/pages/estates/list/_parts/ListTable.vue",
+            "code:src/components/Lightbox/EstatePublishResult.jsx"
           ],
           "target_user": [
             "property_manager"
           ],
-          "title": "物件總表可以批次操作嗎？（匯出物件、新增批次帳單、批次刊登／取消刊登招租廣告、刪除；批次取消刊登失敗時不會顯示任何提示）"
+          "title": "物件總表可以批次操作嗎？（個人房東、大房東、租客身分不能；法人房東與社宅團隊成員可：匯出物件、新增批次帳單、批次刊登／取消刊登招租廣告、刪除；批次取消刊登失敗時不會顯示任何提示）"
         },
         {
           "business_types": [
@@ -7840,11 +7890,13 @@
           ],
           "categories": [],
           "coarse_id": "C-estate-list",
-          "content_sha256": "0ec9d8a0e44b8b5ebd8ebad4e937ade8a6515af9e8c728e211c1e0c5de2ced6b",
+          "content_sha256": "bbb1670fcc2ee9d3cfcdcdfab87248c6870825626aeb51237009dae895dfa77d",
           "content_units": [
-            "物件總表把物件分成「未刊登」「刊登中」「洽談中」「租約中」等分類，不同分類可執行的操作不同：未刊登可以編輯物件、刊登物件、刪除物件；刊登中可以編輯物件、取消刊登、新增或編輯合約。",
-            "「洽談中」代表這個物件已經有合約但還沒有任何一份完成簽署，一旦雙方都簽署完成就會變成「租約中」；此狀態下可以編輯物件、查看合約、編輯合約。",
-            "「租約中」狀態下可以查看合約，若租約在30天內到期，還可以編輯物件、刊登物件與查看合約；已歸入歷史的合約不列入判斷物件狀態的依據。"
+            "物件總表有兩組各自獨立的狀態：招租廣告狀態（未刊登／刊登中）與合約狀態（洽談中／租約中，沒有合約的物件另外標示為無合約），兩者不是同一組四選一的分類。",
+            "「洽談中」代表這個物件已經有合約，但還沒有任何一份完成簽署；一旦雙方都簽署完成就會變成「租約中」。",
+            "已歸入歷史的合約不列入判斷物件合約狀態的依據。",
+            "每個物件的操作選單會依權限，以及物件目前是否已刊登招租廣告，顯示「刊登招租廣告」或「取消刊登招租廣告」。",
+            "刪除單一物件時，物件必須是未刊登（不能是刊登中）、沒有尚未歸入歷史的合約，也沒有綁定 IoT 裝置，否則會被擋下並顯示原因。"
           ],
           "id": "jgb/C/estate-status-affects-actions",
           "instance_applicability": "general",
@@ -7857,12 +7909,17 @@
             {
               "source": "draft:outline-20260920",
               "status": "proposed",
-              "text": "洽談中物件可以做什麼"
+              "text": "洽談中是什麼意思"
             },
             {
               "source": "draft:outline-20260920",
               "status": "proposed",
               "text": "物件狀態怎麼判斷"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "刊登中的物件可以刪除嗎"
             }
           ],
           "policy": "answerable",
@@ -7871,14 +7928,17 @@
           "reviewed_by": null,
           "see_also": [],
           "sources": [
-            "help:slug39_zh-Hant.html",
-            "code:src/use/search/modules/contractStatus.js"
+            "code:src/use/search/modules/contractStatus.js",
+            "code:app/Estate.php",
+            "code:app/Http/Controllers/EstateController.php",
+            "code:src/use/search/modules/is_open.js",
+            "code:app/Contract.php"
           ],
           "target_user": [
             "property_manager",
             "prospect"
           ],
-          "title": "物件狀態會影響哪些功能？（未刊登／刊登中／洽談中／租約中，各自能做的操作不同）"
+          "title": "物件狀態會影響哪些功能？（招租廣告狀態未刊登／刊登中，與合約狀態洽談中／租約中，是各自獨立的；刪除物件要求未刊登、沒有合約、沒有 IoT 綁定）"
         },
         {
           "business_types": [
@@ -8017,11 +8077,12 @@
           ],
           "categories": [],
           "coarse_id": "C-estate-list",
-          "content_sha256": "cc0cbfe8d882f18b0b387ad6285dc00600f13b95e4b2c436a37f42b3c2460026",
+          "content_sha256": "4a2541229400d7b71b1c071cbe76cd1843e7d4f93fd38f3750b2cb120f002c9f",
           "content_units": [
             "物件總表的排序選項由系統提供，使用者可以在列表上方切換排序方式。",
-            "在電腦版切換排序後，這個排序方式會被記住；下次進入物件總表、且網址沒有另外帶排序參數時，會自動帶入上次選擇的排序方式。",
-            "手機等窄螢幕上不會自動帶入上次的排序。"
+            "在寬度 576px 以上的畫面切換排序後，這個排序方式會記在瀏覽器裡。",
+            "下次進入物件總表、且網址沒有另外帶排序參數時，會自動帶入上次記住的排序方式，不論用多寬的畫面進入。",
+            "手機等寬度小於 576px 的畫面切換排序，不會被記成物件總表的排序，所以下次進入不會帶入手機上選的排序。"
           ],
           "id": "jgb/C/estate-list-sort-remembers-last",
           "instance_applicability": "general",
@@ -8049,12 +8110,14 @@
           "see_also": [],
           "sources": [
             "code:src/pages/estates/list/Index.vue",
-            "code:src/components/ListSearchBar.vue"
+            "code:src/components/ListSearchBar.vue",
+            "code:src/utils/constants/common.ts",
+            "code:src/pages/estates/list/_parts/EstatesAdvanceSearchBlock.jsx"
           ],
           "target_user": [
             "property_manager"
           ],
-          "title": "物件總表怎麼排序？（排序選項由系統提供，電腦版會記住上次選的排序方式）"
+          "title": "物件總表怎麼排序？（排序選項由系統提供，寬度 576px 以上切換的排序會被記住）"
         }
       ],
       "id": "C-estate-list",
@@ -8328,11 +8391,16 @@
           ],
           "categories": [],
           "coarse_id": "C-estate-edit",
-          "content_sha256": "2b87934bcc7e112048898f17b1fee12f13b2d1df0d810489c870f1f028a952be",
+          "content_sha256": "26960558f98d1411e3cd900321937ce2160c58cfa0485a19e6626dd8b1246604",
           "content_units": [
-            "一般物件的附設傢俱分頁會依用途與格局分區：例如住宅顯示「格局(套房)」這類區塊、商用辦公類顯示「商用」區塊、有建物的土地或倉儲顯示「有建物」區塊，每個區塊都能設定家電、傢俱項目，也可以自訂項目名稱與數量；住宅套房／雅房另有「戶內共用空間」區塊，另外還有「大樓/社區空間」區塊。",
-            "社宅物件則使用另一套附設傢俱設定畫面。",
-            "任何項目的數量若設為0，就不會顯示在物件廣告頁上。",
+            "一般物件的附設傢俱分頁會依用途、空間類型與格局分區顯示；社宅物件則使用另一套附設傢俱設定畫面。",
+            "住宅與旅館類物件先在「格局(套房)」這類標題的區塊選好各類空間的數量，頁面就會依數量產生各個空間區塊；每個空間區塊都能設定「家電」「傢俱」的數量，也能「自訂」項目名稱與數量，自訂最多 10 項。",
+            "住宅套房／雅房另有「戶內共用空間」區塊。",
+            "商用辦公類物件的家電、傢俱在「辦公空間」區塊設定，店面物件在「店面空間」區塊設定。",
+            "「商用」與「有建物」這兩個標題底下只有必填的「座位數」，不是設定家電、傢俱的地方。",
+            "車位用途與空地物件不需要設定格局，畫面會顯示「車位用途物件，不需要設定「格局」內容」或「空地用途物件，不需要設定「格局」內容」。",
+            "所有一般物件都有「大樓/社區空間」區塊，可以勾選「公設」與「安全設備」項目。",
+            "家電、傢俱與自訂項目的數量若設為 0，就不會顯示在物件廣告頁上。",
             "需要先設定好用途、型態或格局，才能開始添加傢俱項目。"
           ],
           "id": "jgb/C/estate-edit-facilities",
@@ -9212,11 +9280,15 @@
           ],
           "categories": [],
           "coarse_id": "C-estate-dashboard",
-          "content_sha256": "803ced11be0fa65d3182d4a748f60e03eece21f74cb318f16425ded07b7fff26",
+          "content_sha256": "9e8796390dca4a7399207fb2ce1a58909bb2775d30a292f058db8cd1cc60e972",
           "content_units": [
-            "「附件清單」可以上傳 JPG、PNG、PDF 檔案，總儲存空間有上限（顯示已用/總量），檔案數量與大小都有限制，空間不足時可以「加價購」；下載檔案不限身分都能做，但只有代理人且擁有新增物件權限的使用者才會看到「刪除檔案」的操作。",
-            "「合約附件」則是固定的租賃法定文件清單，包含授權代理人簽約同意書、建物所有權/有權出租之證明文件、使用執照影本、出租方同意轉租確認書、房屋位置格局示意圖、社區管理規約與住戶生活規約、其他（附註條款、稅籍證明等），以及出租方身份證明文件影本，圖片僅支援JPG、PNG，檔案大小最大10MB，每個項目的上傳數量限制不同。",
-            "上傳附件到「附件清單」，具備編輯物件權限、是團隊擁有者，或是代理人且擁有新增物件權限，符合其中一種身分即可。"
+            "「附件清單」可以上傳 JPG、PNG、PDF 檔案，每個物件最多存放 5 個檔案，每個檔案不可超過 10MB；畫面上方顯示「儲存空間」的已存檔案數與可存檔案數。",
+            "檔案數量用完後會跳出「儲存空間已滿」的提示並顯示剩餘可存的檔案數，需要先刪除不要的檔案，才能再上傳新檔案。",
+            "下載檔案不限身分都能做，但只有代理人且擁有新增物件權限的使用者才看得到「刪除檔案」的操作。",
+            "上傳附件到「附件清單」，具備編輯物件權限、是團隊擁有者，或是代理人且擁有新增物件權限，符合其中一種身分即可。",
+            "「合約附件」是固定的附件項目清單：出租方身份證明文件影本（正反面各一份，若為法人（公司）請上傳公司設立登記表）、授權代理人簽約同意書、建物所有權/有權出租之證明文件、使用執照影本、出租方同意轉租確認書、房屋位置格局示意圖、社區管理規約與住戶生活規約，以及其他（附註條款、稅籍證明等）。",
+            "「合約附件」頁面的說明寫明：如有以下附件，可上傳圖片做補充，以避免日後爭議；圖片僅支援 JPG、PNG 檔，檔案大小最大 10MB，每個項目限制的上傳檔案數量不同。",
+            "只有非大房東、且具備新增物件或編輯物件權限的使用者，才看得到合約附件的上傳與刪除操作。"
           ],
           "id": "jgb/C/estate-dashboard-attachments-vs-contract-attachments",
           "instance_applicability": "general",
@@ -9244,12 +9316,13 @@
           "see_also": [],
           "sources": [
             "code:src/pages/estates/dashboard/attachments/Index.vue",
-            "code:src/pages/estates/dashboard/contractAttachments/index.vue"
+            "code:src/pages/estates/dashboard/contractAttachments/index.vue",
+            "code:app/Http/Controllers/EstateController.php"
           ],
           "target_user": [
             "property_manager"
           ],
-          "title": "「附件清單」跟「合約附件」差在哪？（附件清單可上傳 JPG／PNG／PDF、有儲存空間上限，下載不限身分但只有代理人且有新增物件權限才能刪除；合約附件是租賃法定文件的固定清單）"
+          "title": "「附件清單」跟「合約附件」差在哪？（附件清單可上傳 JPG／PNG／PDF、每個物件最多 5 個檔案、單檔 10MB，下載不限身分但只有代理人且有新增物件權限才能刪除；合約附件是固定的附件項目清單，可上傳圖片補充以避免日後爭議）"
         },
         {
           "business_types": [
@@ -9257,10 +9330,12 @@
           ],
           "categories": [],
           "coarse_id": "C-estate-dashboard",
-          "content_sha256": "ba210af355d538ad2db85b3d9a1523a923a5342a1fadb6ce3a4d560b368f35c0",
+          "content_sha256": "c2cb14df6f798af2c30ebe9481779b0bfe0f529a2efdcf9e5d1f864120b986dc",
           "content_units": [
-            "「房東流水帳」的每筆紀錄要填時間、說明、對象、類別（收入或支出）、費用，也可以附加附件。",
-            "「物件記事本」的每筆紀錄只需要填時間、說明、對象與附件，沒有收入支出的金額欄位。"
+            "「房東流水帳」新增一筆時，要填時間、費用類別（收入或支出）、幣別與金額；說明與對象可以留空。",
+            "「房東流水帳」也可以附加最多 3 個附件，每個檔案不超過 10MB，可以是圖片或 PDF。",
+            "沒有該物件編輯權限的使用者新增流水帳時會被擋下，並顯示「權限不足」。",
+            "「物件記事本」新增一筆時，只要填時間；說明與對象可以留空，同樣可以附加最多 3 個附件（每個不超過 10MB），沒有收入支出的金額欄位。"
           ],
           "id": "jgb/C/estate-dashboard-runnings-vs-memos",
           "instance_applicability": "general",
@@ -9288,12 +9363,15 @@
           "see_also": [],
           "sources": [
             "code:src/pages/estates/dashboard/runnings/Index.vue",
-            "code:src/pages/estates/dashboard/memos/Index.vue"
+            "code:src/pages/estates/dashboard/memos/Index.vue",
+            "code:src/pages/estates/dashboard/runnings/_parts/LedgerContainer.vue",
+            "code:src/pages/estates/dashboard/memos/_parts/MemoContainer.vue",
+            "code:app/Http/Controllers/EstateController.php"
           ],
           "target_user": [
             "property_manager"
           ],
-          "title": "「房東流水帳」跟「物件記事本」差在哪？（流水帳要記收入/支出金額，記事本只是純文字備註）"
+          "title": "「房東流水帳」跟「物件記事本」差在哪？（流水帳要記收入或支出與金額，記事本沒有金額欄位；兩者都能附檔）"
         },
         {
           "business_types": [
@@ -9807,10 +9885,14 @@
           ],
           "categories": [],
           "coarse_id": "C-team-storefront",
-          "content_sha256": "43a93c9b135d14d613daf9c7a2a10b5a50aad051873603a1ac16b8733f06b1a0",
+          "content_sha256": "49d98ec7c1d051d023a861a33167efa97384682e16a99ef0420acdecf64c9ff5",
           "content_units": [
-            "在招租店舖頁面可以即時編輯「封面照片」「大頭照」「姓名」「自我介紹」，相關修改會連動變更到「會員中心＞帳號資訊」內。",
-            "更換封面照片時，畫面會建議尺寸為 1920 x 576。"
+            "招租店舖頁面上，只有管理者且具備「編輯團隊權限」的使用者看得到編輯入口；團隊身分儲存時，還要有「編輯團隊資訊」權限，否則會被擋下並顯示「您目前登入的帳號無法使用編輯團隊功能」。",
+            "個人房東身分可以更換頁面上方的橫幅照片（按「更換照片」）與頭像（頭像右下角的相機圖示），並編輯自我介紹。",
+            "團隊身分可以更換橫幅照片與頭像，並編輯團隊名稱、經理人證號、租賃管理員證號、公司電話、公司Email 與團隊介紹。",
+            "個人房東在這裡更換的頭像，與帳號資訊頁的照片是同一張；橫幅照片與自我介紹則不會出現在帳號資訊頁。",
+            "團隊身分在這裡改的團隊名稱，與「團隊資訊」頁的「團隊名稱」是同一個欄位。",
+            "更換橫幅照片時，畫面會建議尺寸為 1920 x 576。"
           ],
           "id": "jgb/C/team-public-page-edit-and-banner",
           "instance_applicability": "general",
@@ -9837,13 +9919,14 @@
           "reviewed_by": null,
           "see_also": [],
           "sources": [
-            "help:slug90_zh-Hant.html",
-            "code:src/pages/users/public/Index.vue"
+            "code:src/pages/users/public/Index.vue",
+            "code:src/pages/users/public/_parts/AsideInfo.vue",
+            "code:app/Http/Controllers/UserController.php"
           ],
           "target_user": [
             "property_manager"
           ],
-          "title": "招租店舖上可以直接編輯哪些內容？（封面照片、大頭照、姓名、自我介紹，會連動帳號資訊）"
+          "title": "招租店舖上可以直接編輯哪些內容？（橫幅照片、頭像、自我介紹；團隊身分另可改團隊名稱等欄位，需要「編輯團隊權限」）"
         },
         {
           "business_types": [
@@ -9851,10 +9934,14 @@
           ],
           "categories": [],
           "coarse_id": "C-team-storefront",
-          "content_sha256": "3656514081e3f406ee50e39755c0f883bb7b62fae6221e2d0a2e334f823b28f3",
+          "content_sha256": "47be1d9248a6f26609dcce024a7b1bd230cc74f2cea7ef12ea75240c18a8af9b",
           "content_units": [
-            "招租店舖提供「鄉鎮/區或捷運」與「類型與格局」兩組篩選條件。",
-            "物件列表可以切換「小圖示」「大圖示」「條列式」三種顯示模式；招租店舖的每頁筆數可選30、60或90項（預設30項），只有多團隊招募頁才提供10、30、60或90項（預設10項）。",
+            "畫面寬度 576px 以上時，招租店舖上方有一排篩選條件：經理人、國家、縣市、行政區、社區、捷運、空間類型、格局、建築類型、租金與面積（買賣模式則是售價與面積），以及 VR、有電梯、可開伙、可養寵物等其他條件。",
+            "畫面寬度 576px 以上時，上方還有關鍵字搜尋框，可以輸入案名、地址、經理人、社區。",
+            "畫面寬度小於 576px（手機）時，上方只直接顯示經理人、建築類型與「更多」，其餘條件收在「更多」裡；租金與售價只在幣別為新台幣時才出現；關鍵字搜尋框可以輸入案名、地址、經理人、大房東、租客、社區。",
+            "多團隊招募頁沒有經理人與社區這兩個篩選條件。",
+            "物件列表可以切換「小圖示」「大圖示」「條列式」三種顯示模式。",
+            "招租店舖的每頁筆數可選30、60或90項（預設30項），只有多團隊招募頁才提供10、30、60或90項（預設10項）。",
             "沒有符合篩選條件的結果時，會顯示「沒有符合的結果」並建議調整篩選條件。"
           ],
           "id": "jgb/C/team-public-page-filter-and-view",
@@ -9882,12 +9969,15 @@
           "reviewed_by": null,
           "see_also": [],
           "sources": [
-            "code:src/pages/users/public/Index.vue"
+            "code:src/pages/users/public/Index.vue",
+            "code:src/pages/users/public/_parts/PublicSearchBlock.jsx",
+            "code:src/pages/users/public/_parts/TopFilter.vue",
+            "code:src/pages/users/public/_parts/PublicSearchBlockM.jsx"
           ],
           "target_user": [
             "property_manager"
           ],
-          "title": "招租店舖怎麼篩選物件？（鄉鎮區或捷運、類型與格局，可切換小圖示／大圖示／條列式；每頁筆數 30／60／90，預設 30）"
+          "title": "招租店舖怎麼篩選物件？（篩選條件加關鍵字搜尋，手機版多數條件收在「更多」；可切換小圖示／大圖示／條列式；每頁筆數 30／60／90，預設 30）"
         },
         {
           "business_types": [
@@ -9895,10 +9985,11 @@
           ],
           "categories": [],
           "coarse_id": "C-team-storefront",
-          "content_sha256": "c8775265b1d8d3e11ffbb41a2ecd931c08991b2e6e386f74429cc872b5453bac",
+          "content_sha256": "3a4648c800bdd4a0ad8449d45fe79b0f0ff4c4b6c56ac03ca6f8fb0d1cdb831e",
           "content_units": [
-            "招租店舖左側選單提供快捷鍵，可以快速分享此頁面至 FB、Line 或 LinkedIn，也可以複製連結。",
-            "分享出去的網址就是目前這個招租店舖頁面的網址。"
+            "點擊招租店舖資訊欄最下方的分享圖示，一般（電腦）瀏覽器會開啟分享視窗，可以複製連結，或分享到 Facebook、Line、LinkedIn。",
+            "在 Android、iOS 等手機或平板裝置上，如果瀏覽器支援系統分享功能，點擊分享圖示會直接叫出系統分享選單，不會出現上述分享視窗。",
+            "分享出去的網址就是目前這個招租店舖頁面的網址，已套用的篩選條件也會一併帶在網址上。"
           ],
           "id": "jgb/C/team-public-page-share",
           "instance_applicability": "general",
@@ -9920,14 +10011,14 @@
           "reviewed_by": null,
           "see_also": [],
           "sources": [
-            "help:slug90_zh-Hant.html",
-            "code:src/pages/users/public/_parts/AsideInfo.vue"
+            "code:src/pages/users/public/_parts/AsideInfo.vue",
+            "code:src/mixin/methods.js"
           ],
           "target_user": [
             "property_manager",
             "prospect"
           ],
-          "title": "招租店舖怎麼分享？（可分享至FB、Line、LinkedIn或複製連結，分享的是目前頁面的網址）"
+          "title": "招租店舖怎麼分享？（電腦上開分享視窗可複製連結或分享到 FB、Line、LinkedIn；手機上會叫出系統分享選單；分享的是目前頁面的網址）"
         },
         {
           "business_types": [
