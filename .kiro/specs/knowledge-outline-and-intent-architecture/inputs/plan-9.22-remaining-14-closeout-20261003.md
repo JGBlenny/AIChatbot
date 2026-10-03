@@ -114,6 +114,7 @@
 - **業主裁決（2026-10-03，S1 停點）**：「a」——對選項「(a) 上限放寬到 1.6M，繼續 S2 和 S3（建議）」。⇒ **總上限 1.3M→1.6M**；S2、S3 開工前各自送就緒審查。
 - **業主裁決（2026-10-03，S2 開工前）**：「可以放寬 但我要確保成果品質」——對「重估剩餘約 0.75M、總額約 1.6～1.65M，上限定 1.7M 不再放寬」的回覆。⇒ **總上限 1.6M→1.7M，此後不再放寬**（碰到即停在當片）；**品質閘門一律不為省成本刪減**（就緒審查、raw 機械取出與三方對帳、正對照、單元差集、`make audit`、fresh outcome verifier 全保留）；另依此裁決把 S3 抽驗改為**全數核可細目逐句核對**（核可 ≤14 條，取代固定種子抽 12 條）。
 - **業主裁決（2026-10-03，S3 預跑發現新紅燈後）**：「a」——對選項「(a) 同意，在 S3 先修這條測試再寫入（建議）」。⇒ S3 範圍加入**只改測試**：`rag-orchestrator/tests/unit/agent/test_canon_assembler_req.py` 的 `_mark_reviewed_except`（skip_ids 若原本已審則拿掉其 reviewed 行）與 `test_prospect_outline_is_deterministic_and_registers_canon`（改取第一條 prospect 細目，不再要求原本未審）；⛔ 動產品程式。驗收：修前在預跑正本重現紅燈、修後預跑正本與現行正本皆綠、全套差集＝∅、outcome verifier 一併核此檔。commit 範圍加此一檔。
+- **業主裁決（2026-10-03，停止後）**：「a」——對選項「(a) 補派驗證（建議）：這筆額外花費明確記帳，只驗最終狀態」。⇒ 超出上限 1.7M 另派一位 fresh verifier 驗停止後的最終狀態（HEAD `4f13a0b5`），不做其他事。
 
 ## 4. 停止條件（全片共用）
 
@@ -183,3 +184,6 @@
   - 其餘 10 條 S2 安全組 pass 已通過全數逐句核對（本次 outcome verifier 逐句成立），可直接作為下一份計畫終審的候選，但正本內容若有變動須重驗。
   - `A-account-profile` 組 3 條：`account-change-password` 句 4「需同時包含英文與數字」程式未強制（doubt），同組 2 條 pass。
 - **D1 量測**：9.22 S2 抓回 0／6；9.21＋9.22 合併 3／52＝5.8%。另：全數核對抓到一條經三輪審查都判過的錯句 ⇒ 抽樣 12 條的驗收強度不足以保證每條成立。
+- **停止後最終狀態驗證（fresh outcome verifier，業主「a」）＝CONFIRMED**（6 項全過）：(1) `rag-orchestrator/canon` 與 `fd89adaa`、備份 `p922-s3-backup/` 皆相同，reviewed 525，終點指標逐字相同（負對照：`7aac4142` 與 `fd89adaa` 的正本 diff 有差，證明檢查有效）；(2) 測試檔相對 `fd89adaa` 只有兩處改動、assert 全保留，在 525 已審正本上目標測試通過；(3) 全套 `9 failed, 3931 passed`，與基準雙向差集＝∅；(4) `4f13a0b5` 只含計畫、S2 審核單、HANDOFF、測試檔，其他工作線 41 檔指紋 `shasum -c` 全 OK；(5) HANDOFF 現況行、§12-1 列與本節數字與實況一致；(6) 推翻屬實（`#signForm` 原生 POST → redirect 到 GET `contracts.thinkcloud` → catch 回傳陣列，瀏覽器得 JSON、無彈窗）。
+  - 代理自承違規：把單元輸出寫進 scratch 兩個新檔（只含 pytest 輸出），主 session 已刪除；repo 與既有證據未動。附記 P4×1（測試註解描述的是 prospect 全審情境，現行正本為 116／120，措辭問題），延後。
+  - **成本**：此驗證約 0.15M（超出上限部分，業主核可）⇒ 9.22 合計約 1.95M。
