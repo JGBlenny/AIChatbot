@@ -72,15 +72,33 @@
 - **終點指標（+0）**：開工前與完成後都須為 `已審細目 pm 519／533、prospect 116／120`（已審 525）。
 - **停止與回滾**：交件失敗同一代理重貼一次，仍失敗即停；回滾只刪審核單與 `p922-s2` 檔。
 - 預算約 0.3M。
+- **已預跑**（2026-10-03，S1 commit `fd89adaa` 後；repo 未動）：
+  - 工作區 `scratchpad/p922-s2/`：三支工具由 `p921-w2s2/` 複製，變更值 `CANON_COMMIT="fd89adaa"`、`SHELVES` 預設 `ACDI`、`PREFIX="p922-s2"`、標題「Plan 9.22 S2 A／C／D／I 修正後重新先審」。
+  - `p922-s2-targets.json`：現行正本未審 **14** 條（允許集合 6 全在其中）；`p922-s2-batches.json`：一批 `S2B1` 14 條、6 組（A-account-profile 3、C-estate-dashboard 2、C-team-storefront 1、D-contract-sign-view 2、D-notary 3、I-pricing 3）；hold＝`[]`。
+  - brief `brief-prereview-S2B1.txt`：待裁路徑改為 S1 重生成的 `open-questions-20261003-s1-922.md`（內文與前版相同，54 則）；殘留 `W2-S2`、`W2S2`、`w2s1-921` 皆 0（正對照 W2 版各 1）；id 行 14；判準段與 W2 版逐字相同。
+  - 非空合成預跑（`scratchpad/p922-s2-pc/`，14 條中 1 條 doubt）：`parse` ⇒ `parsed 14 ids: pass 13 / doubt 1`；`sheet` ⇒ `groups 6 … pending 0`；`check` ⇒ `targets 14; judged 14; raw-parsed 14; sheet ids 14`、`mismatches: 0`；負對照刪 1 行 ⇒ `❌ S2B1: missing ids […]`、exit 1。實際工作區無合成 raw（`parse` ⇒ 0）。
+  - `d1_measure`：合成 doubt 落在允許集合 1 條 ⇒ `ratio 1/6 = 16.7%`；真 results 空 ⇒ `fines without a re-review verdict`、exit 2。
+  - 正本相對 `fd89adaa` 的 `git status`／`git diff --stat` 皆空。
 
 ### S3 — 業主終審＋寫入（pm 最多 +14）
 
 - 工具 `p922-s2/approve_write.py`：由 `p921-w2s2/` 版複製，results／targets／hold 改讀 `p922-s2-*`、PLAN 改指本計畫、段落 `### S3`；寫入架 `P918_WRITE_SHELVES=ACDI`；`P918_SHEET=<S2 審核單絕對路徑>`。業主原文先逐字記入 §6「### S3」再 derive。
 - 預跑同 9.21 W2-S3：derive（兩來源相等）、reply 不在 §6 ⇒ 大聲失敗；scratch 正本 write／重匯出／verify（`reviewed backup 525 -> current 525+N`、`fines changed beyond reviewed_*: 0`）；scratch 重生成保留檢查（`--expect-reviewed-kept 525+N`）；scratch 終點指標；scratch 正本掛容器跑全套單元差集。
-- **對 repo 執行**：備份 `scratchpad/p922-s3-backup/`；git 基準（S1 commit）與 status 皆空 ⇒ write ⇒ 重匯出 ⇒ verify ⇒ repo 與預跑 `diff -r` ⇒ 終點指標、單元差集、`make audit` ⇒ fresh outcome verifier（含抽驗）⇒ commit。
-- **抽驗**：核可數 ≥ 12 時以 `random.Random(20261003).sample(sorted(approved), 12)`，否則全抽；派工前固定並記入 §6；推翻定義與處置同 9.21 W1-S3（還原用 `p922-s3-backup/`）。
-- commit 範圍：A／C／D／I `.md`、`jgb.json`、S2 審核單、本計畫、HANDOFF（終點行與現況）；`git diff --cached --name-only` 範圍外 0。
+- **對 repo 執行**：備份 `scratchpad/p922-s3-backup/`；git 前置（**限本片擁有路徑**）：`git diff --stat fd89adaa -- rag-orchestrator/canon` 與 `git status --short rag-orchestrator/canon` 皆空、`git status --short -- rag-orchestrator/tests/unit/agent/test_canon_assembler_req.py` 只有 ` M`（已核可的測試修正）；其他工作線的未 commit 檔（29 個路徑、41 個檔，清單與 sha256 指紋 `scratchpad/p922-s2/foreign-paths.txt`／`foreign-fingerprint.txt`，指紋摘要 `61712a4d4c4acce4`）是既有、非本線擁有的基準，本片 ⛔ 碰，commit 前重算指紋須相同。⇒ write ⇒ 重匯出 ⇒ verify ⇒ repo 與預跑 `diff -r` ⇒ 終點指標 ⇒ **該測試檔對 repo 正本單跑**（預期只剩基準內的 `test_prospect_view_fine_ids_match_id_map` 一條紅）⇒ 全套單元與 `p920-w2/red-baseline.txt` 差集＝∅ ⇒ `make audit` ⇒ fresh outcome verifier（**全數核對**＋測試檔核對）⇒ commit。
+  - **單元測試跑的程式樹**：`scripts/run-tests.sh unit`（`docker-compose.dev.yml`，`./rag-orchestrator:/app` 掛載工作樹）＝目前工作樹，含上述其他工作線的未 commit 改動；`red-baseline.txt` 的 9 條即在同一工作樹（9.20 起逐片重跑皆 9 failed 同名，9.22 S1 後亦同）取得；指紋相同即程式樹相同。
+- **全數核對**（業主 2026-10-03「我要確保成果品質」，取代抽 12 條）：outcome verifier 對 approved 的**每一條**逐條列標題與每句成立／不成立並附匯出證據；**另核測試檔**：`rag-orchestrator/tests/unit/agent/test_canon_assembler_req.py` 相對備份 `scratchpad/p922-s2/test_canon_assembler_req.py.bak` 的 diff 只動 `_mark_reviewed_except` 與 `test_prospect_outline_is_deterministic_and_registers_canon` 兩處、產品程式 0 改動（本片改動以擁有路徑判定：`git diff --stat fd89adaa -- rag-orchestrator` 相對 S3 開工前只多出 `rag-orchestrator/canon` 與該測試檔；其他工作線檔以指紋比對與開工前相同）、目標測試在 repo 正本通過、負對照（舊版測試在 prospect 全審正本會 `StopIteration`）成立；推翻定義與處置同 9.21 W1-S3（任一推翻 ⇒ 用 `p922-s3-backup/` 還原、`git diff --stat <S1 commit> -- rag-orchestrator/canon` 為空後停下交業主）；§6 記每條結果。
+- **測試檔被推翻的處置**：outcome verifier 判測試改動不成立（超出兩處、動到產品程式、或目標測試未綠）⇒ 用 `.bak` 還原該檔（`cmp` 相同）、用 `p922-s3-backup/` 還原正本，`git diff --stat fd89adaa -- rag-orchestrator/canon rag-orchestrator/tests/unit/agent/test_canon_assembler_req.py` 為空後停下交業主。正本內容被推翻時同樣以此條件確認還原。
+- commit 範圍（**8 檔**）：`canon/jgb/C.md`、`D.md`、`I.md`、`jgb.json`、S2 審核單、本計畫、HANDOFF（終點行與現況）、`rag-orchestrator/tests/unit/agent/test_canon_assembler_req.py`；A.md 本片核可 0 條、⛔ 應有 diff（`git diff --stat -- rag-orchestrator/canon/jgb/A.md` 為空）。`git diff --cached --name-only` 恰為此 8 檔、範圍外 0。
 - 預算約 0.35M。
+- **已預跑**（2026-10-03，業主終審回覆後；repo 正本未動）：
+  - 工具 `p922-s2/approve_write.py`：由 `p921-w2s2/` 版複製，results／targets／hold 改讀 `p922-s2-*`、PLAN 改指本計畫、段落 `### S3`；決定檔 `p922-s2/p922-s3-decision.json`（rule＝safe）；業主原文已逐字記入 §6「### S3」。
+  - derive（`P918_WRITE_SHELVES=ACDI`、`P918_SHEET=<S2 審核單>`）⇒ `approved 11 (both sources equal) by shelf {'A': 0, 'C': 3, 'D': 5, 'I': 3}; expected endpoint increment pm +11, prospect +4`。對照：reply 改成不在 §6 的字串 ⇒ `❌ decision reply is not verbatim inside plan §6 ### S3 record`；rule 改 all ⇒ 13。
+  - scratch 正本 `p922-s3-pc/`：write ⇒ `added 11`；重匯出與 `load_canon_or_die` 通過；verify ⇒ `reviewed backup 525 -> current 536; added lines 11; approved 11`、`fines changed beyond reviewed_*: 0`、`mismatches: 0`；B／E／F／G／H、CATALOG 與備份相同。
+  - scratch 重生成保留（`--expect-reviewed-kept 536 --expect-open-questions 54`）⇒ `已審保留：536 條／丟棄：0 條`，與 scratch 正本 `diff -r` 相同。
+  - scratch 終點指標 `已審細目 pm 530／533、prospect 120／120；頁面 pm 140／183、prospect 53／183`。頁面上限因 S1 補了程式來源由 pm 138 升為 140（`--ignore-review` 重量：`pm 140、prospect 53`）。
+  - **預跑發現新紅燈**：scratch 正本掛容器跑全套 ⇒ `10 failed, 3930 passed`，差集＝`test_canon_assembler_req.py::test_prospect_outline_is_deterministic_and_registers_canon`（`StopIteration`：取樣「第一條未審 prospect 細目」，prospect 全審後挑不到；HANDOFF §12-3「測試綁正本實際資料」同類）。⇒ 停下交業主，業主裁 (a)（§3）。
+  - **測試修正（只改測試）**：`_mark_reviewed_except` 對 skip_ids 中原本已審者拿掉 reviewed 行；測試改取第一條 prospect 細目。驗：該測試檔在 scratch 正本（I.md reviewed 54）與現行正本（51）皆只剩基準內的 `test_prospect_view_fine_ids_match_id_map` 一條紅；負對照：還原舊測試於 scratch 正本 ⇒ 目標測試再紅。修正後 scratch 正本全套 ⇒ `9 failed, 3931 passed`，差集＝∅。
+- **終點指標**：寫入後須為 `已審細目 pm 530／533、prospect 120／120`（pm +11、prospect +4）。
 
 ## 2. 不做（另案）
 
@@ -93,12 +111,15 @@
 
 - **已裁（2026-10-03「a」）**：見 §0。核可前不動正本。
 - **業主裁決（2026-10-03）**：「核可」——核可大綱＋S1；執行模式沿用 ASK（每片回報）；S2、S3 開工前各自再送就緒審查。
+- **業主裁決（2026-10-03，S1 停點）**：「a」——對選項「(a) 上限放寬到 1.6M，繼續 S2 和 S3（建議）」。⇒ **總上限 1.3M→1.6M**；S2、S3 開工前各自送就緒審查。
+- **業主裁決（2026-10-03，S2 開工前）**：「可以放寬 但我要確保成果品質」——對「重估剩餘約 0.75M、總額約 1.6～1.65M，上限定 1.7M 不再放寬」的回覆。⇒ **總上限 1.6M→1.7M，此後不再放寬**（碰到即停在當片）；**品質閘門一律不為省成本刪減**（就緒審查、raw 機械取出與三方對帳、正對照、單元差集、`make audit`、fresh outcome verifier 全保留）；另依此裁決把 S3 抽驗改為**全數核可細目逐句核對**（核可 ≤14 條，取代固定種子抽 12 條）。
+- **業主裁決（2026-10-03，S3 預跑發現新紅燈後）**：「a」——對選項「(a) 同意，在 S3 先修這條測試再寫入（建議）」。⇒ S3 範圍加入**只改測試**：`rag-orchestrator/tests/unit/agent/test_canon_assembler_req.py` 的 `_mark_reviewed_except`（skip_ids 若原本已審則拿掉其 reviewed 行）與 `test_prospect_outline_is_deterministic_and_registers_canon`（改取第一條 prospect 細目，不再要求原本未審）；⛔ 動產品程式。驗收：修前在預跑正本重現紅燈、修後預跑正本與現行正本皆綠、全套差集＝∅、outcome verifier 一併核此檔。commit 範圍加此一檔。
 
 ## 4. 停止條件（全片共用）
 
 - 已審細目數任何時候下降 ⇒ 停。
 - 正本只准在 S1 重生成（只動允許集合）與 S3 寫入（只加 reviewed 行）時變動。
-- **總上限 1.3M；S1 commit 後累計 > 0.7M ⇒ 停下回報業主**；超過上限即停。
+- **總上限 1.3M；S1 commit 後累計 > 0.7M ⇒ 停下回報業主**；超過上限即停。（現行上限 1.7M，見 §3；不再放寬。）
 - 一次只跑一個代理（本機 8GB）。
 - 代理 brief 一律帶 HANDOFF §12-2 必禁清單。
 
@@ -107,6 +128,10 @@
 - **第 1 輪（fresh plan-verifier，大綱＋S1）＝REVISE**（2026-10-03）：P2×2——(1) executor brief 的 grep 驗收漏了 `drafts-{D,E,F,I}`、待裁路徑 `w1s1-921`、自檢「21 個」三個 9.21 值；(2) verifier brief 替換表第 5 項寫「待裁路徑不變」但底稿實為 `w1s1-921`，grep 也漏 `D＋E`、`drafts-E`、`9.20 S`、`13 條`，複核 brief 無替換與檢查規則。處置：兩項皆 **FIX**——executor brief 已預跑產生，替換表寫成 8 處逐項、殘留 8 字串 0 命中（附正對照實測值）、與底稿 `diff` 只差替換的 8 行；verifier brief 改正第 5 項、殘留檢查擴為 9 字串＋新值恰 1＋件數一致＋判準段逐字相同；複核 brief 納入同一替換表與檢查。送第 2 輪。
 - **第 2 輪（fresh plan-verifier）＝REVISE**（2026-10-03）：P2×1——工作清單的 doubt 理由與修正紀錄「依據」節沒寫來源與檢查；照 9.21 的產生器複製會讀到 9.20 舊 raw，`contract-upload-existing-vs-electronic` 與 `pricing-free-vs-experience-plan` 會拿到已修過的舊理由，S1 的現有檢查都攔不到。⇒ **第二次自動 REVISE，停止重送、逐條處置**：**FIX**——疑點來源限定兩份 9.21 重審 raw、工作清單與修正紀錄產生器已寫出並預跑、新增 `doubt_source_check.py`（逐字比對＋殘留字串，附正負對照），派工前必過。依規則開一次收尾審查；再判 REVISE 就暫停交業主。
 - **收尾審查（fresh plan-verifier）＝READY**（2026-10-03）⇒ 大綱＋S1 交業主核可（`next_gate: user_approval`）。S2、S3 開工前各自再送就緒審查。
+- **S2 第 1 輪（fresh plan-verifier）＝READY**（2026-10-03）⇒ 依業主「a」與「可以放寬 但我要確保成果品質」（上限 1.7M）開跑。
+- **S3 第 1 輪（fresh plan-verifier）＝REVISE**（2026-10-03）：P2×2——(1) S3 commit 範圍漏了業主核可加入的測試檔，`git diff --cached` 範圍檢查必失敗，或漏 commit 使 HEAD 紅；(2) 執行步驟與全數核對未納入測試修正的 repo 端驗收（單跑、差集基準、outcome verifier 核此檔），測試被推翻無處置，且殘留「含抽驗」字樣。處置：兩項皆 **FIX**——commit 範圍加測試檔（恰 9 檔）；對 repo 執行加「測試檔單跑＋全套差集對 `red-baseline.txt`」；全數核對加測試檔 diff／範圍／負對照；新增測試被推翻的還原與停止；「含抽驗」改「全數核對」。送第 2 輪。
+- **S3 第 2 輪（fresh plan-verifier）＝REVISE**（2026-10-03）：P2×3（皆第 1 輪修正時引入）——(1) commit 範圍寫「恰 9 檔」含 A.md，但 A 架核可 0 條、A.md 不會有 diff，實際 8 檔；(2) git 前置與「產品程式 0 改動」未限路徑，工作樹另有其他工作線的未 commit 改動，必然誤判，且未寫明測試跑哪棵程式樹；(3) 測試被推翻的還原條件 `git diff --stat fd89adaa` 無路徑限定，永遠不會為空。⇒ **第二次自動 REVISE，停止重送、逐條處置**：三項皆 **FIX**——commit 範圍改 8 檔並註明 A.md 無 diff；所有 git 檢查加本片擁有路徑；其他工作線 29 路徑／41 檔建 sha256 指紋為既有基準、commit 前重比；寫明單元測試跑掛載的工作樹、與紅燈基準同一棵；還原條件加路徑並以 `cmp` 驗測試檔。依規則開一次收尾審查；再判 REVISE 就暫停交業主。
+- **S3 收尾審查（fresh plan-verifier）＝READY**（2026-10-03）⇒ 依業主「安全組過」、測試修正「a」與上限 1.7M 開跑。
 
 ## 6. 執行紀錄
 
@@ -124,3 +149,37 @@
 - **單元與 audit**：`9 failed, 3931 passed, 3 skipped`，與基準差集＝∅；`make audit` OVERALL PASS。
 - **fresh outcome verifier＝CONFIRMED**（5 項＋終點指標重跑全過，無 P0～P2）：自行重跑四支檢查；6 條「依據」與 9.21 重審 raw 理由逐字相同；jgb.json 已審 525 集合不變、變動恰為 6 條允許集合；6 條標題＋共 40 句逐句對釘住匯出全部成立，原 doubt 皆不再成立（「109 年」「下載不限」「每月付費」0 命中、公證分頁補上無分頁例外）；整條待裁項不選邊；客戶名 0；負對照 2 筆皆 0。附記 P4×4（依據 #6 句序格式「句序 標題」、上傳合約 S5「帳單設定」對部分特定合作團隊不成立宜加限定、scratch 複核 brief 含一個範本代碼、社宅句沿用社宅看不到的選單標籤），延後。
 - **成本**：S1 約 0.85M（executor 起草＋範圍對照 0.30M、核對 0.17M、複核 0.11M、outcome verifier 約 0.17M、主 session 約 0.1M 估算）。⚠️ 超出本片預算 0.5M；**累計約 0.85M，越過 S1 停點 0.7M ⇒ S1 commit 後停下回報業主**（S2 估 0.3M＋S3 估 0.35M ⇒ 總額約 1.5M，超過上限 1.3M）。
+
+### S2（2026-10-03）
+
+- 1 批 fresh verifier（S2B1，14 條）一次解析通過：**pass 13／doubt 1**。raw 由 `extract_verdict.py` 機械取出，存 `p922-s2/p922-s2-raw-S2B1.txt`。
+- 審核單 `inputs/review-sheet-9.22-S2-ACDI-20261003.md`，表頭 commit `fd89adaa`，共 6 組，⚠️ 1 組（`A-account-profile` pass 2／doubt 1）。
+  - `check` ⇒ `targets 14; judged 14; raw-parsed 14; sheet ids 14`、`mismatches: 0`。
+  - 正對照（`jgb/A/account-change-password`）：審核單副本改 pass ⇒ 報 `sheet<->results` 不一致；raw 副本改 pass ⇒ 報 `raw<->results` 不一致。
+  - 正本相對 `fd89adaa` 的 `git status` 與 `git diff --stat` 皆空。
+- **D1 量測**：`d1_measure.py` ⇒ `denominator 6 (table 6, in targets 6, excluded [])`、`numerator 0`、**`ratio 0/6 = 0.0%`**；**9.21＋9.22 合併 3／52＝5.8%**（舊 D1 16～21%）。
+- 唯一 doubt 是 S1 未修的 ⚠️ 組 pass：`account-change-password` 句 4「新密碼需同時包含英文與數字」——帳號資訊頁「儲存」未綁前端檢查結果、後端只驗 `min:6` 與確認一致，純數字密碼照樣存得進去；英數規則只是畫面提示（該句是 9.21 W1-S1 整條檢查依 `PasswordForm.vue` 補上，9.21 W1-S2 判 pass，本次被推翻）。
+- pass 附建議 2 則（`team-public-page-recruitment` 招募頁另少「經理人」篩選、手機版社區區塊不看有無社區；`contract-upload-existing-vs-electronic` 「帳單設定」對部分特定合作團隊不成立），皆不構成反證，延後。
+- 依「安全組過」：S3 可寫入 **11 條（pm +11、prospect +4）**；⚠️ 組 2 條 pass 也過則 13 條（pm +13、prospect +4）。
+- **成本**：S2 約 0.39M（就緒審查 0.06M、S2B1 0.28M、主 session 約 0.05M）⇒ **9.22 累計約 1.24M**（上限 1.7M；S3 估 0.4M，含全數核對）。
+
+### S3（2026-10-03）
+
+- **業主裁決原文**（2026-10-03，對問題「S2 重新先審完成…終審要怎麼回？」的選擇）：「安全組過」——非 ⚠️ 5 組的 pass 標已審（rule＝safe）；⚠️ 組 `A-account-profile` 整組本批不審；1 條 doubt 本批不審；無點名、無照原樣過、無排除。驗收依 §3：outcome verifier 對核可細目**全數**逐句核對，任一推翻 ⇒ 以備份還原並停。
+- **寫入前準備**：就緒審查 3 輪（REVISE×2 皆 FIX，收尾 READY，§5）。git 前置（限擁有路徑）：`git diff --stat fd89adaa -- rag-orchestrator/canon` 與 status 皆空、測試檔 ` M`；備份 `scratchpad/p922-s3-backup/`（21:22:14）`diff -r` 相同；其他工作線 29 路徑／41 檔指紋 `61712a4d4c4acce4` 已存。
+- **寫入與驗證**：`write` ⇒ `added 11`；重匯出與 `load_canon_or_die` 通過；verify ⇒ `reviewed backup 525 -> current 536; added lines 11; approved 11`、`fines changed beyond reviewed_*: 0`、`mismatches: 0`；`git status` 只有 C／D／I `.md` 與 `jgb.json`，A.md 無 diff、CATALOG 不變；repo 與 scratch 預跑、scratch 重生成產出（保留 536／丟棄 0）皆 `diff -r` 相同。
+- **終點指標 `已審細目 pm 530／533、prospect 120／120；頁面 pm 140／183、prospect 53／183`**（pm +11、prospect +4，與預期相同；C pm 78→81、D 99→104、I 45→48 全審；只剩 A 3 條未審）。
+- **測試與 audit**：該測試檔對 repo 正本單跑 ⇒ `1 failed, 28 passed`，紅的只有基準內的 `test_prospect_view_fine_ids_match_id_map`；全套 `9 failed, 3931 passed, 3 skipped`，與基準差集＝∅；`make audit` OVERALL PASS；其他工作線 41 檔指紋重算與開工前相同。
+- **fresh outcome verifier＝REFUTED**（檢查 1、2、3、5、6 過；4 全數核對 10／11 成立）：`jgb/D/contract-thinkcloud-signing-variants` 句 3「送去簽署時，如果客製化契約書的 PDF 底稿又解析不出來，也會跳出同樣的訊息，簽署不會開始。」——「跳出同樣的訊息」不成立：簽署由 `sign.blade.php` 的 `window.$('#signForm').submit()` 送出，`ContractController@sign` 以 redirect 導到 GET 路由 `contracts.thinkcloud`，`thinkcloud()` 的 `catch (DiyPdfUnparseableException $e)` 回傳陣列（`'success' => false, 'message' => …`），瀏覽器得到的是 JSON 頁面、沒有彈窗；「簽署不會開始」成立（P2）。主 session 對匯出確認該 catch 與路由屬實。該句是 9.21 W2-S1 整條檢查新增，W2-S1 核對、9.21 W2-S2 與本計畫 S2 先審皆判過，本次全數核對才抓出。
+  - 測試檔核對過（只動兩處、守門 assert 保留、產品程式 0 改動、41 檔指紋相同、舊寫法在現行正本 0 條未審 prospect ⇒ `StopIteration`）。附記 P4×3（`add_attachment` 讀錯陣列層級致後端未擋 5 檔上限屬 jgb2 缺陷、`isset` 對空字串成立、「企業團隊」對應法人房東），延後。
+- **依計畫還原**：正本由 `p922-s3-backup/` 還原；`git diff --stat fd89adaa -- rag-orchestrator/canon` 與 status 皆空、`diff -r` 相同、`load_canon_or_die` 通過；終點指標回到 `已審細目 pm 519／533、prospect 116／120；頁面 pm 133／183、prospect 52／183`。測試檔不在被推翻之列、保留（在 525 已審正本上該檔單跑亦只剩基準內 1 條紅）。
+- **成本**：S3 約 0.56M（就緒審查 3 輪 0.17M、outcome verifier 0.27M、主 session 約 0.12M）⇒ **9.22 累計約 1.80M，超過上限 1.7M**（outcome verifier 派出時累計約 1.53M、未預留其 0.27M）。依 §3「此後不再放寬、碰到即停在當片」⇒ **S3 不寫入、9.22 停在此處**。
+
+### 9.22 停止（2026-10-03）
+
+- **終點指標**：`已審細目 pm 519／533、prospect 116／120`（本計畫 +0；S1 的 6 條修正保留在正本、未審）。
+- **留給下一份計畫**：14 條仍未審。
+  - `jgb/D/contract-thinkcloud-signing-variants` 句 3 須依 D1 修（刪「跳出同樣的訊息」或改寫為程式可證的畫面行為），修後該條須重新先審。
+  - 其餘 10 條 S2 安全組 pass 已通過全數逐句核對（本次 outcome verifier 逐句成立），可直接作為下一份計畫終審的候選，但正本內容若有變動須重驗。
+  - `A-account-profile` 組 3 條：`account-change-password` 句 4「需同時包含英文與數字」程式未強制（doubt），同組 2 條 pass。
+- **D1 量測**：9.22 S2 抓回 0／6；9.21＋9.22 合併 3／52＝5.8%。另：全數核對抓到一條經三輪審查都判過的錯句 ⇒ 抽樣 12 條的驗收強度不足以保證每條成立。

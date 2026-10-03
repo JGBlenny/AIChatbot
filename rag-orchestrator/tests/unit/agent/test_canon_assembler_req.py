@@ -97,6 +97,8 @@ _FINE_HEADING_RE = re.compile(r"^### .+\{#(jgb/[A-Z]/[a-z0-9-]+)\}\s*$", re.M)
 def _mark_reviewed_except(shelf_text: str, skip_ids: frozenset) -> str:
     """`skip_ids` 刻意留白；已經有 `reviewed` 的細目也一律跳過（⛔ 無條件附加會撞
     `canon_parser` 的『屬性重複 reviewed』——S4 之後 D／E 會混入真的 `reviewed`）。
+    `skip_ids` 裡原本就已審的細目，拿掉它的 `reviewed` 行，確保真的留白（Plan 9.22 S3：
+    prospect 全審後正本已挑不到未審的 prospect 細目）。
     """
     matches = list(_FINE_HEADING_RE.finditer(shelf_text))
     pieces, cursor = [], 0
@@ -104,10 +106,12 @@ def _mark_reviewed_except(shelf_text: str, skip_ids: frozenset) -> str:
         next_start = matches[i + 1].start() if i + 1 < len(matches) else len(shelf_text)
         pieces.append(shelf_text[cursor:m.end()])
         block = shelf_text[m.end():next_start]
-        already_reviewed = bool(re.search(r"^- reviewed:", block, re.M))
-        if m.group(1) not in skip_ids and not already_reviewed:
+        if m.group(1) in skip_ids:
+            block = re.sub(r"^- reviewed:.*\n?", "", block, flags=re.M)
+        elif not re.search(r"^- reviewed:", block, re.M):
             pieces.append("\n- reviewed: {by: s4-measurement, at: 2026-09-23}")
-        cursor = m.end()
+        pieces.append(block)
+        cursor = next_start
     pieces.append(shelf_text[cursor:])
     return "".join(pieces)
 
@@ -360,10 +364,9 @@ async def test_prospect_outline_is_deterministic_and_registers_canon(monkeypatch
     prospect 可見細目刻意留白，透過 `AGENT_CANON_DIR`（僅 `DB_ENV=test` 生效）指向它
     （⛔ 不動 `canon/jgb/`）。"""
     real_doc = load_canon_or_die(CANON_DIR)
-    # 取「第一條**未審**的 prospect 細目」：版控正本逐步標 reviewed 後，第一條 prospect
-    # 細目可能已審，而 `_mark_reviewed_except` 會跳過已審者 ⇒ 挑到已審的就留不了白（Plan 9.19 S3）。
-    prospect_fine = next(f for f in real_doc.fines()
-                         if "prospect" in f.target_user and not (f.reviewed_by or "").strip())
+    # 取第一條 prospect 細目；它在版控正本若已審，`_mark_reviewed_except` 會拿掉 reviewed
+    # 讓它留白（Plan 9.22 S3：prospect 全審後已挑不到「未審」者；舊寫法 9.19 S3 會 StopIteration）。
+    prospect_fine = next(f for f in real_doc.fines() if "prospect" in f.target_user)
     canon_dir = all_reviewed_canon_dir(
         tmp_path, skip_ids=frozenset({prospect_fine.id}), name="mostly-reviewed-canon",
     )
