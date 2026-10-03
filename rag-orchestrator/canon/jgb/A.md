@@ -31,6 +31,7 @@ language: zh-TW
   - {text: "收到合約邀請信怎麼辦", source: "draft:outline-20260920", status: proposed}
   - {text: "租客可以不註冊嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [help:onboarding1_zh-Hant.html, code:app/Http/Controllers/AuthController.php, code:src/pages/contracts/edit/tenantInfo/Index.jsx, code:app/Notification.php, code:resources/views/emails/zh-TW/contracts/invite.blade.php, code:resources/views/estate/show.blade.php, code:src/pages/users/auth/parts/LoginForm.vue, code:src/components/SurelyVue/Contract/CategoryCell.jsx, code:app/Http/Controllers/EstateController.php, code:app/Http/Middleware/LoginCheck.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -62,6 +63,7 @@ language: zh-TW
   - {text: "我不是機器人卡住", source: "draft:outline-20260920", status: proposed}
   - {text: "註冊一直失敗", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/auth/parts/EmailVerify.vue, code:src/pages/users/auth/parts/CreateWelcome.vue, code:app/Http/Controllers/AuthController.php, code:app/Services/AuthService.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -172,6 +174,7 @@ language: zh-TW
   - {text: "收信後點回註冊頁", source: "draft:outline-20260920", status: proposed}
   - {text: "從信箱 App 開註冊連結會重來嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/auth/Create.vue, code:src/pages/users/auth/parts/CreateWelcome.vue, code:src/pages/users/auth/parts/EmailVerify.vue, code:app/Services/AuthService.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -298,6 +301,7 @@ language: zh-TW
   - {text: "忘記 email 帳號", source: "draft:outline-20260920", status: proposed}
   - {text: "找回帳號", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/auth/parts/forget/Account.vue, code:app/Http/Controllers/AuthController.php, code:app/User.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -713,6 +717,7 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
   - {text: "通知會標記已讀嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "通知連結", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/NotificationController.php#index, code:resources/views/notifications/index.blade.php, code:app/Http/Controllers/Controller.php, code:app/Notification.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -724,6 +729,7 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
   - {text: "通知頁碼超出範圍", source: "draft:outline-20260920", status: proposed}
   - {text: "篩選後跳到空白頁", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/NotificationController.php#index]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -778,6 +784,7 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
   - {text: "多團隊合併報表", source: "draft:outline-20260920", status: proposed}
   - {text: "分潤報表怎麼看", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/use/config/useForwardNotificationEmails.ts, code:src/pages/users/notification/Index.vue, code:src/components/Lightbox/NotificationMailReport.vue, code:app/Services/FranchiseProfitShareService.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general

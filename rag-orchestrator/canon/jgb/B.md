@@ -58,6 +58,7 @@ language: zh-TW
   - {text: "良民證要上傳嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "戶籍地址跟通訊地址一樣可以嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/team/_parts/SignerDetails.vue, code:app/Role.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -160,6 +161,7 @@ language: zh-TW
   - {text: "簽約資訊太多組要怎麼選", source: "draft:outline-20260920", status: proposed}
   - {text: "所有團隊下拉選單是什麼", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/team/_parts/SignerDetails.vue]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -472,6 +474,7 @@ language: zh-TW
   - {text: "大房東的物件租金總額在哪查", source: "draft:outline-20260920", status: proposed}
   - {text: "大房東報表可以下載嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/bigLandlords/report/_parts/ListTable.vue, code:src/pages/bigLandlords/report/_parts/BigLandlordItemDetail.jsx, code:src/pages/users/advance/Index.jsx]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -484,6 +487,7 @@ language: zh-TW
   - {text: "查看大房東報表權限", source: "draft:outline-20260920", status: proposed}
   - {text: "為什麼看不到大房東報表", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/UserController.php, code:app/Role.php, code:resources/views/layouts/lightbox/character-capability-edit.blade.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -496,6 +500,7 @@ language: zh-TW
   - {text: "大房東報表匯率在哪看", source: "draft:outline-20260920", status: proposed}
   - {text: "報表可以下載社區層級嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/bigLandlords/report/_parts/ListTable.vue, code:src/pages/bigLandlords/report/_parts/BigLandlordItemDetail.jsx]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -592,6 +597,7 @@ language: zh-TW
   - {text: "自訂費用分收入支出類嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "帳單費用項目性質怎麼選", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/advance/_part/FeesItemManagement.vue, code:src/pages/users/advance/_part/FeePanel.vue, code:src/pages/users/advance/_part/BillsManagement.vue]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -642,6 +648,7 @@ language: zh-TW
   - {text: "標籤字數上限是多少", source: "draft:outline-20260920", status: proposed}
   - {text: "物件標籤在哪加", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/advance/Index.jsx, code:src/components/LabelPanel.vue, code:src/pages/estates/list/_parts/ListTable.vue, code:src/pages/estates/list/Index.vue]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -924,6 +931,7 @@ language: zh-TW
   - {text: "怎麼批次通知租客", source: "draft:outline-20260920", status: proposed}
   - {text: "租客批次操作在哪", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/use/config/useLesseeTypes.ts, code:src/pages/users/lesseeList/parts/ListTable.vue, code:src/components/ListBulkAction.vue, code:src/components/Lightbox/EditUsersMessage.jsx]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general

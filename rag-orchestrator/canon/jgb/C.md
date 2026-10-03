@@ -189,6 +189,7 @@ language: zh-TW
   - {text: "社區概要顯示哪些數字", source: "draft:outline-20260920", status: proposed}
   - {text: "社區物件總覽在哪看", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/communities/estates/_parts/CommunityOverview.vue, code:app/Services/CommunityService.php, code:src/pages/communities/estates/Index.vue, code:app/Http/Controllers/UserController.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -203,6 +204,7 @@ language: zh-TW
   - {text: "總覽招租買賣分類在哪", source: "draft:outline-20260920", status: proposed}
   - {text: "社區物件清單分類切換", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/utils/constants/estate.js, code:src/pages/communities/estates/_parts/ListTable.vue]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -215,6 +217,7 @@ language: zh-TW
   - {text: "複製現有物件", source: "draft:outline-20260920", status: proposed}
   - {text: "物件數量上限", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/communities/estates/Index.vue]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -227,6 +230,7 @@ language: zh-TW
   - {text: "社區投報率在哪看", source: "draft:outline-20260920", status: proposed}
   - {text: "社區物件頁籤有哪些", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/utils/constants/community.js, code:src/pages/communities/estates/Index.vue, code:app/Http/Controllers/CommunityController.php, code:app/Http/Controllers/Api/CommunityRoiController.php, code:app/Services/InvoiceService.php, code:app/Http/Controllers/UserController.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -239,6 +243,7 @@ language: zh-TW
   - {text: "物件清單分頁筆數", source: "draft:outline-20260920", status: proposed}
   - {text: "怎麼調整每頁項目數", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/communities/estates/Index.vue]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -359,6 +364,7 @@ language: zh-TW
   - {text: "物件總表可以批次新增嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "複製現有物件在物件總表", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/estates/list/_parts/PageTop.vue]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -370,6 +376,7 @@ language: zh-TW
   - {text: "還可以新增幾個物件", source: "draft:outline-20260920", status: proposed}
   - {text: "尚可新增物件數量在哪看", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/estates/list/_parts/PageTop.vue]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -382,6 +389,7 @@ language: zh-TW
   - {text: "租金範圍怎麼篩", source: "draft:outline-20260920", status: proposed}
   - {text: "格局怎麼篩選物件", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/estates/list/_parts/EstatesAdvanceSearchBlock.jsx, code:src/pages/estates/list/_parts/EstatesAdvanceSearchBlockM.jsx, code:src/pages/estates/list/Index.vue, code:tailwind.config.js]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -395,6 +403,7 @@ language: zh-TW
   - {text: "物件關鍵字搜尋範圍", source: "draft:outline-20260920", status: proposed}
   - {text: "用物件ID找物件", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/estates/list/_parts/EstatesAdvanceSearchBlock.jsx]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -405,6 +414,7 @@ language: zh-TW
   - {text: "怎麼一次刊登多筆物件", source: "draft:outline-20260920", status: proposed}
   - {text: "物件總表可以匯出嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/use/config/useEstateTypes.js, code:src/pages/estates/list/_parts/ListTable.vue, code:src/components/Lightbox/EstatePublishResult.jsx]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -419,6 +429,7 @@ language: zh-TW
   - {text: "物件狀態怎麼判斷", source: "draft:outline-20260920", status: proposed}
   - {text: "刊登中的物件可以刪除嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/use/search/modules/contractStatus.js, code:app/Estate.php, code:app/Http/Controllers/EstateController.php, code:src/use/search/modules/is_open.js, code:app/Contract.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -433,6 +444,7 @@ language: zh-TW
   - {text: "物件列表分頁筆數", source: "draft:outline-20260920", status: proposed}
   - {text: "調整每頁顯示物件數", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/estates/list/Index.vue]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -443,6 +455,7 @@ language: zh-TW
   - {text: "物件篩選可養寵物", source: "draft:outline-20260920", status: proposed}
   - {text: "物件篩選有電梯", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/estates/list/_parts/EstatesAdvanceSearchBlock.jsx, code:src/components/AdvGroupSelect.jsx, code:src/components/AdvGroupSelectMobile.jsx]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -454,6 +467,7 @@ language: zh-TW
   - {text: "物件總覽招租買賣分類", source: "draft:outline-20260920", status: proposed}
   - {text: "物件列表分類切換", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/routes/estates.js, code:src/utils/constants/estate.js, code:src/pages/estates/list/_parts/ListTable.vue]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -464,6 +478,7 @@ language: zh-TW
   - {text: "上次選的排序方式還在嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "物件排序選項有哪些", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/estates/list/Index.vue, code:src/components/ListSearchBar.vue, code:src/utils/constants/common.ts, code:src/pages/estates/list/_parts/EstatesAdvanceSearchBlock.jsx]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -478,6 +493,7 @@ language: zh-TW
   - {text: "物件格局怎麼填", source: "draft:outline-20260920", status: proposed}
   - {text: "虛擬辦公室是什麼意思", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/estates/edit/basic/Index.vue]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -536,6 +552,7 @@ language: zh-TW
   - {text: "土地標的清冊怎麼填", source: "draft:outline-20260920", status: proposed}
   - {text: "稅籍編號在哪填", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/estates/edit/buildingTranscriptGeneral/Index.vue, code:src/pages/contracts/edit/buildingTranscript/General.vue, code:src/routes/estates.js]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -547,6 +564,7 @@ language: zh-TW
   - {text: "家電傢俱怎麼加", source: "draft:outline-20260920", status: proposed}
   - {text: "物件設備要怎麼設定", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/estates/edit/facilities/_parts/General.vue, code:src/pages/estates/edit/facilities/_parts/SocialHousing.vue, code:src/pages/estates/edit/facilities/Index.vue]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -954,6 +972,7 @@ Facebook 也只有在房東有填寫連結時才會顯示「立即聯繫」按�
   - {text: "房東對外首頁怎麼用", source: "draft:outline-20260920", status: proposed}
   - {text: "怎麼進去我的招租店舖", source: "draft:outline-20260920", status: proposed}
 - sources: [help:slug90_zh-Hant.html]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -965,6 +984,7 @@ Facebook 也只有在房東有填寫連結時才會顯示「立即聯繫」按�
   - {text: "改自我介紹會同步嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "招租店舖大頭照怎麼設", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/public/Index.vue, code:src/pages/users/public/_parts/AsideInfo.vue, code:app/Http/Controllers/UserController.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -980,6 +1000,7 @@ Facebook 也只有在房東有填寫連結時才會顯示「立即聯繫」按�
   - {text: "招租店舖顯示模式", source: "draft:outline-20260920", status: proposed}
   - {text: "招租店舖每頁顯示幾筆", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/public/Index.vue, code:src/pages/users/public/_parts/PublicSearchBlock.jsx, code:src/pages/users/public/_parts/TopFilter.vue, code:src/pages/users/public/_parts/PublicSearchBlockM.jsx]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -995,6 +1016,7 @@ Facebook 也只有在房東有填寫連結時才會顯示「立即聯繫」按�
   - {text: "招租店舖怎麼分享", source: "draft:outline-20260920", status: proposed}
   - {text: "怎麼分享招租店舖到Line", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/public/_parts/AsideInfo.vue, code:src/mixin/methods.js]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general

@@ -69,10 +69,31 @@
   - 分母＝W1-S1 修正表中出現、且在 W1-S2 重審 targets 內的細目（排除「已由前案處理」「停下交業主」的 id；**有「整條待裁」項的細目仍計入分母**——它有修正、也會重審，重審若因那一項判 doubt 照計，並在 §6 另列件數）；分子＝其中在 W1-S2 raw（`extract_verdict.py` 取出）判 doubt 者；比例＝分子／分母。§6 記分子、分母、被排除的 id 與理由；可由 `p921-s2-results.json` 與 `p921-w1/allowed.json`、修正紀錄機械重算。
   - **怎麼用**：W1 值在 ⏸ 第一波停點回報；**W1 ≥ 10% ⇒ 由業主在停點決定 W2 用新 D1 或改回舊 D1**；「下一份計畫是否改回舊 D1」以 W1＋W2 合併值判（合併分母＝兩波分母相加）。
 - 預算約 0.6M。
+- **終點指標（+0，W1-S3 的前置）**：開工前與完成後都須為 `已審細目 pm 457／533、prospect 105／120`（已審 461）；正本相對 W1-S1 commit `ca8b3a08` 不得變動。
+- **已預跑**（2026-10-03，`ca8b3a08` 後；repo 未動）：
+  - 工作區 `scratchpad/p921-s2/`：`review_sheet.py`、`extract_verdict.py` 由 9.20 S5 版（`p920-w5/`）複製，變更值 `CANON_COMMIT="ca8b3a08"`、`SHELVES` 預設 `ABC`、`PREFIX="p921-s2"`、標題「Plan 9.21 W1-S2 A／B／C 修正後重新先審」。
+  - `p921-s2-targets.json`：現行正本 A／B／C 未審 **43** 條（＝W1-S1 允許集合 25＋⚠️ 組 pass 18）。
+  - `p921-s2-batches.json`（S2 格式 `{批次: [{coarse, ids}]}`）：正本順序、粗目不拆、每批 ≤35：W1S2B1 33 條（A 5 組＋B 4 組＋C 2 組）、W1S2B2 10 條（C 3 組）；聯集＝targets、重複 0。hold＝`[]`。
+  - brief `brief-prereview-W1S2B{1,2}.txt`：由 9.20 S2 原文（`s2-brief-recovered.txt`）機械替換批次、條數、架、id 清單、待裁路徑（`open-questions-20261003-w1s1-921.md`）與匯出路徑；判準段逐字沿用。W1-S1 的修正紀錄與核對建議⛔ 不給先審代理（保持獨立）。
+  - 非空合成預跑（`scratchpad/p921-s2-pc/` 副本，43 條中 1 條 doubt）：`parse` ⇒ `parsed 43 ids: pass 42 / doubt 1`；`sheet` ⇒ `groups 14 … pending 0`；`check` ⇒ `targets 43; judged 43; raw-parsed 43; sheet ids 43`、`mismatches: 0`；負對照刪 1 行 ⇒ `❌ W1S2B2: missing ids […]`、exit 1。實際工作區無合成 raw。
+  - **D1 量測工具** `p921-s2/d1_measure.py <修正紀錄> <targets> <results>`：分母／分子依本節定義機械計算、印比例與被排除 id；空分母或缺判定 ⇒ exit 2。預跑：合成 results ⇒ `denominator 25 … ratio 1/25 = 4.0%`；真 results 尚空 ⇒ `fines without a re-review verdict`、exit 2。
+- **驗收**：兩批一次一位代理、raw 機械取出；`check` ⇒ `targets 43; judged 43; raw-parsed 43; sheet ids 43`、`mismatches: 0`；審核單 `inputs/review-sheet-9.21-W1-S2-ABC-<日期>.md`；正對照（審核單副本／raw 副本各改一條 doubt 為 pass ⇒ 兩者都報不一致）；`d1_measure` 結果記入 §6；正本 `git status` 為空。
+- **停止與回滾**：交件失敗同一代理重貼一次，仍失敗即停；回滾只刪審核單與 `p921-s2` 檔。
 
 ### W1-S3 — 業主終審＋寫入（pm 最多 +43）
 - 同 9.20 S3／S6；outcome verifier 沿用固定種子抽驗（核可數 ≥ 12 時抽 12 條，否則全抽）。
 - 預算約 0.35M。
+- **已預跑**（2026-10-03，業主終審回覆後；repo 正本未動）：
+  - 工具 `p921-s2/approve_write.py`：由 9.20 S6 版複製，results／targets／hold 改讀 `p921-s2-*`、PLAN 改指本計畫、段落 `### W1-S3`。業主原文已逐字記入 §6「### W1-S3」；決定檔 `p921-s2/p921-s3-decision.json`（rule＝safe）。
+  - derive（`P918_WRITE_SHELVES=ABC`、`P918_SHEET=<W1-S2 審核單絕對路徑>`）⇒ `approved 37 (both sources equal) by shelf {'A': 7, 'B': 8, 'C': 22}; expected endpoint increment pm +37, prospect +5`。對照：reply 改成不在 §6 的字串 ⇒ `❌ decision reply is not verbatim…`；rule 改 all ⇒ 40。
+  - scratch 正本 `p921-s3-pc/`：write ⇒ `added 37`；容器重匯出與 `load_canon_or_die` 通過；verify ⇒ `reviewed backup 461 -> current 498; added lines 37; approved 37`、`fines changed beyond reviewed_*: 0`、`mismatches: 0`；D～I、CATALOG 與備份 `cmp` 相同。
+  - scratch 重生成保留檢查（`--expect-reviewed-kept 498 --expect-open-questions 54`）⇒ `已審保留：498 條／丟棄：0 條`，與 scratch 正本 `diff -r` 相同。
+  - scratch 終點指標 `已審細目 pm 494／533、prospect 110／120；頁面 pm 125／183、prospect 50／183`。
+  - 紅燈基準沿用 `p920-w2/red-baseline.txt`（9 條；W1-S1 commit 後同一工作樹已驗 9 failed 同名）；預測新紅燈：scratch 正本掛到容器 `/app/canon`（正對照：容器內 C.md `reviewed` 78、repo 56）跑全套 ⇒ `9 failed, 3931 passed`，差集＝∅。
+- **對 repo 執行的步驟**：備份 `rag-orchestrator/canon/` 至 `scratchpad/p921-s3-backup/` 並 `diff -r`；`git diff --stat ca8b3a08 -- rag-orchestrator/canon` 與 `git status --short rag-orchestrator/canon` 皆須為空 ⇒ write ⇒ 容器重匯出 ⇒ verify `--backup p921-s3-backup` ⇒ repo 與 scratch 預跑 `diff -r` ⇒ 終點指標、全套單元差集、`make audit` ⇒ fresh outcome verifier（含抽驗）⇒ commit。
+  - **抽驗（沿用 9.20 S6）**：派工前固定 `random.Random(20261003).sample(sorted(p921-s3-approved.json), 12)`，存 `p921-s2/p921-s3-sample.json`，12 個 id 記入 §6；verifier 逐條列標題與每句成立／不成立並附匯出證據；**推翻**＝抽樣細目的標題或任一句在釘住匯出（及細目所列來源）找不到支持或有反證（P3／P4 措辭建議不算）；任一推翻 ⇒ 用 `p921-s3-backup/` 還原、`git diff --stat ca8b3a08 -- rag-orchestrator/canon` 為空後停下交業主；§6 記 12 個 id 與逐條結果。
+  - commit 範圍：A／B／C `.md`、`jgb.json`、W1-S2 審核單、本計畫、HANDOFF（終點行與現況）；`git diff --cached --name-only` 範圍外 0。
+- **終點指標**：寫入後須為 `已審細目 pm 494／533、prospect 110／120`（pm +37、prospect +5）。
 
 #### ⏸ 第一波停點
 W1-S3 commit 後停下，回報終點指標、累計成本、D1 量測結果。第二波在業主明示後才開始。
@@ -89,6 +110,7 @@ W1-S3 commit 後停下，回報終點指標、累計成本、D1 量測結果。�
 ## 3. 業主裁決與待裁
 - **已裁（2026-10-03「D1 改整條、9.21 照建議」）**：見 §0。
 - **業主裁決（2026-10-03）**：「核可」——核可大綱＋W1-S1；執行模式沿用 ASK（每片回報）。W1-S2 起各片開工前各自再送就緒審查。
+- **業主裁決（2026-10-03，W1-S1 後成本回報）**：「a」——對選項「(a) 繼續 W1-S2 和 W1-S3，第一波停點放寬到 2.6M（建議）；W1-S2 開工前照例先送就緒審查」。⇒ **第一波停點 2.0M→2.6M**；總上限 4.0M 不變，第二波範圍與 D1 於第一波停點依 D1 量測結果再裁。
 
 ## 4. 停止條件（全片共用）
 - 已審細目數任何時候下降 ⇒ 停。
@@ -102,6 +124,8 @@ W1-S3 commit 後停下，回報終點指標、累計成本、D1 量測結果。�
 - **第 1 輪（fresh plan-verifier，大綱＋W1-S1）＝REVISE**（2026-10-03）：P2×4——(1) 新增「範圍」欄會讓 `drafts_diff._ROW`（固定 6 欄）解析失敗；(2) 沿用的核對 brief 第 5 條「只修 doubt 所指」與新 D1 矛盾，整條列沒有依據也沒有判準；(3) D1 成效判準的分母、用哪一波、停點時怎麼用都沒定義；(4) W1-S1 沿用 9.20 的常數（不變位元組、已審 373、分包 F＋H／G＋I）不適用。處置：四項皆 **FIX**——範圍改寫在依據欄固定格式＋新 `scope_check.py`（已預跑正負對照）；brief 改三處並以 grep 驗收；量測分母／分子／用法寫死；W1-S1 改以 9.20 S4 為底片並逐項寫出常數。送第 2 輪。
 - **第 2 輪（fresh plan-verifier）＝REVISE**（2026-10-03）：P2×1——新 D1 下，一條細目可能 doubt 已修、但整條檢查發現另一項須替待裁選邊；計畫沒說它歸哪節，若同時記修正表與停下交業主，`coverage_check` 必然失敗，量測分母也不明。⇒ **第二次自動 REVISE，停止重送、逐條處置**：**FIX**（選 (a)：doubt 照修，該項記入新節「整條待裁」、不計入 coverage、細目仍計入量測分母；合成預跑正負對照）。依規則開一次收尾審查；再判 REVISE 就暫停交業主。
 - **收尾審查（fresh plan-verifier）＝READY**（2026-10-03）⇒ 大綱＋W1-S1 交業主核可（`next_gate: user_approval`）。W1-S2、W1-S3、W2 各片開工前各自再送就緒審查。
+- **W1-S2 第 1 輪（fresh plan-verifier）＝READY**（2026-10-03）⇒ 依業主核可開跑。
+- **W1-S3 第 1 輪（fresh plan-verifier）＝READY**（2026-10-03）⇒ 依業主核可開跑。
 
 ## 6. 執行紀錄
 
@@ -124,3 +148,36 @@ W1-S3 commit 後停下，回報終點指標、累計成本、D1 量測結果。�
 - **單元與 audit**：`9 failed, 3931 passed, 3 skipped`，與基準差集＝∅；`make audit` OVERALL PASS。
 - **fresh outcome verifier＝CONFIRMED**（6 項全過；自行重跑三支檢查、逐 id 比對 jgb.json 已審 461 集合不變、25 條變動全在允許集合；自抽 12 條細目對釘住匯出（含 7 條有整條列者與 DSP-068 拆段句）全部成立；整條依據 10 筆證據逐字命中；負對照 3 筆皆 0）。附記 P4×2（「最下方」用詞、核對過程 REFUTED 字樣易誤讀），延後。
 - **成本**：W1-S1 約 1.6M（executor 起草 0.61M、核對 A＋B 0.22M、C 0.22M、複核 0.13M、outcome verifier 約 0.2M、主 session 約 0.2M 估算）。⚠️ 超出本片預算 0.7M 一倍多；9.21 累計約 1.6M，第一波停點 2.0M 會被 W1-S2（估 0.6～0.8M）越過 ⇒ **W1-S1 commit 後停下回報業主**。
+
+### W1-S2（2026-10-03）
+
+- 2 批 fresh verifier 依序跑完，一次一位，兩批都一次解析通過：W1S2B1（33 條）pass 32／doubt 1；W1S2B2（10 條）pass 8／doubt 2；合計 **pass 40／doubt 3**。raw 由 `extract_verdict.py` 機械取出，存 `p921-s2/p921-s2-raw-W1S2B{1,2}.txt`。
+- 審核單 `inputs/review-sheet-9.21-W1-S2-ABC-20261003.md`，表頭 commit `ca8b3a08`，共 14 組，⚠️ 2 組（`A-account-profile` pass 2／doubt 1、`C-estate-dashboard` pass 1／doubt 1）。
+  - `check` ⇒ `targets 43; judged 43; raw-parsed 43; sheet ids 43`、`mismatches: 0`。
+  - 正對照（`jgb/C/team-public-page-recruitment`）：審核單副本改 pass ⇒ 不一致 2；raw 副本改 pass ⇒ 不一致 1。
+  - 正本相對 `ca8b3a08` 的 `git status` 為空。
+- **D1 改法量測（業主成效判準）**：`d1_measure.py` ⇒ `denominator 25 (table 25, in targets 25, excluded [])`、`numerator 1: ['jgb/C/estate-dashboard-attachments-vs-contract-attachments']`、**`ratio 1/25 = 4.0%`（判準 < 10% ⇒ 達成）**；對照舊 D1：9.19 18%（11／61）、9.20 第一波 16%（6／38）、第二波 21%（8／38）。
+  - 被抓回的 1 條：下載附件需物件編輯權限（大房東下載會收到「權限不足！」），句子與標題寫「下載不限身分」——是 W1-S1 沿用的舊句、整條檢查漏看。
+- 其餘 2 條 doubt 皆為未修過的 ⚠️ 組 pass：`account-contact-info`（「第二組聯絡號碼限填純數字」程式未強制）、`team-public-page-recruitment`（標題把一般店舖也有的轉址列為差異；講法「網址不一樣嗎」答不到）。
+- 依「安全組過」：W1-S3 可寫入 **37 條（pm +37、prospect +5）**；全部 pass 過則 40 條（pm +40、prospect +5）。
+- **成本**：W1-S2 約 0.6M（就緒審查 0.07M、W1S2B1 0.28M、W1S2B2 0.19M、主 session 約 0.05M）⇒ **9.21 累計約 2.2M**（第一波停點 2.6M）。
+
+### W1-S3（2026-10-03）
+
+- **業主裁決原文**（2026-10-03，對「建議照之前的做法回『安全組過』；抽驗沿用 9.20 S6 固定種子抽 12 條」的回覆）：「安全組過」——非 ⚠️ 12 組的 pass 標已審（rule＝safe）；⚠️ 2 組全組本批不審；3 條 doubt 本批不審；無點名、無照原樣過、無排除。抽驗沿用 9.20 S6：outcome verifier 自核可集合以固定種子抽 12 條逐句對釘住匯出，任一推翻 ⇒ 以備份還原並停。
+- **抽樣（派工前固定）**：`random.Random(20261003).sample(sorted(p921-s3-approved.json), 12)` ⇒ `jgb/A/notification-mark-read-navigate`、`jgb/A/forget-account-flow`、`jgb/C/estate-edit-building-transcript-general`、`jgb/B/biglandlord-report-community-rate`、`jgb/C/estate-list-sort-remembers-last`、`jgb/C/community-estates-overview-card`、`jgb/C/community-estates-category-switch`、`jgb/A/notification-settings-report-buttons`、`jgb/C/community-estates-pagination`、`jgb/B/lessee-bulk-notify`、`jgb/C/estate-list-pagination`、`jgb/C/team-public-page-edit-and-banner`（重算一致）。
+- **寫入前準備**：就緒審查 READY（§5）。git 基準（`ca8b3a08`）與 status 皆為空；備份 `scratchpad/p921-s3-backup/`（12:56:25）`diff -r` 相同；紅燈基準沿用 `p920-w2/red-baseline.txt`（9 條）。
+- **寫入與驗證**：`write` ⇒ `added 37`；容器重匯出與 `load_canon_or_die` 通過；verify ⇒ `reviewed backup 461 -> current 498; added lines 37; approved 37`、`fines changed beyond reviewed_*: 0`、`mismatches: 0`；`git status` 只有 A／B／C `.md` 與 `jgb.json`，CATALOG 不變；repo 與 scratch 預跑、scratch 重生成產出（保留 498／丟棄 0）皆 `diff -r` 相同。
+- **終點指標 `已審細目 pm 494／533、prospect 110／120；頁面 pm 125／183、prospect 50／183`**（pm +37、prospect +5，與預期相同；A pm 52→59、B 70→78（全審）、C 56→78）。
+- 單元 `9 failed, 3931 passed, 3 skipped`，差集＝∅；`make audit` OVERALL PASS。
+- **fresh outcome verifier＝CONFIRMED**（5 項＋正對照全過）：自行由審核單重算安全組 37 條（A 7／B 8／C 22），與 approved 相同；`.md` diff 只有 37 行 reviewed、`jgb.json` 只動 37×2 個 reviewed 欄位與 `canon_sha256`；終點指標逐字相同。
+  - **抽驗：12／12 成立、推翻 0**（重算種子結果與 `p921-s3-sample.json` 相同）：`notification-mark-read-navigate`（標題＋3 句）、`forget-account-flow`（標題＋5 句）、`estate-edit-building-transcript-general`（標題＋2 句）、`biglandlord-report-community-rate`（標題＋2 句）、`estate-list-sort-remembers-last`（標題＋4 句）、`community-estates-overview-card`（標題＋5 句）、`community-estates-category-switch`（2 句）、`notification-settings-report-buttons`（標題＋6 句）、`community-estates-pagination`（1 句）、`lessee-bulk-notify`（標題＋3 句）、`estate-list-pagination`（1 句）、`team-public-page-edit-and-banner`（標題＋6 句）皆成立。其中 6 條為 W1-S1 依新 D1 修過者。
+  - 附記 P4×2（個人「自我介紹」列的程式鍵拼錯可能無標籤、手機與電腦版刪除社區呼叫不同動作），皆程式面、不影響細目，延後。
+- **成本**：W1-S3 約 0.35M（就緒審查 0.07M、outcome verifier 約 0.2M、主 session 約 0.08M）⇒ **9.21 第一波累計約 2.55M**（停點 2.6M）。
+
+### ⏸ 第一波停點（2026-10-03）
+
+- 終點指標：`已審細目 pm 457→494／533、prospect 105→110／120；頁面 pm 119→125、prospect 48→50`。
+- D1 成效：修過 25 條重審抓回 1／25＝4.0%（判準 < 10% 達成）；終審核可 37／43＝86%（9.20 第二波 59%）。
+- 成本：第一波約 2.55M（W1-S1 1.6M、W1-S2 0.6M、W1-S3 0.35M）；上限 4.0M 剩約 1.45M。
+- 第二波（D／E／F／I：doubt 21＋⚠️ pass 14＝35 條）的範圍與 D1 待業主裁。
