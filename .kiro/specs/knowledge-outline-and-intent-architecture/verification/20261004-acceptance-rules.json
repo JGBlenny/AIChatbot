@@ -1,0 +1,19 @@
+{
+ "kind": "change",
+ "verdict": "CONFIRMED",
+ "base": "2d46a3791debf2fb950944ffc409cf48f9a3c2d6",
+ "claim": "HANDOFF 12-2 新增驗收範圍等於回報範圍與 findings 繁體中文兩條規則，改動內每句事實陳述正確、無新錯誤、無遺失有效內容（HEAD 2d46a379 工作樹）",
+ "p1_p2": 0,
+ "findings": [
+  "1 成立：doc-cleanup.json 的 claim 為 HANDOFF 與 MAP corrections as of HEAD 42532f93，doc-cleanup-2.json 為 corrections on HEAD b847ca86，兩輪驗的都是更正處而非整份文件",
+  "2 成立：git show 2d46a379 的 MAP 有 3 處（刪除未進 git、CATALOG 列可見改為可引用、現況段同改），HANDOFF 有 5 個更正 hunk（架構 541、數字 541 與 1410、210 段現為 515 與 pm 369 prospect 80、第 4 節 541、12-4 的 136 與 47），依粒度可數成 5 到 7 處，6 為合理數法；第 5 步屬新增內容，不計入",
+  "3 成立：最終版 12-4 寫明 136 與 47 是 bdb2327b 當時 ignore-review 口徑的值，現為 pm 140 與 183、缺口 43；doc-cleanup-3 的 claim 含 after page-gap fix，其 transcript agent-aa060096bded40253 有一個 REFUTED hunk 後改寫的原文",
+  "4 成立：outline_plan_discipline.py 的 evidence_violations 對 claim 只檢查非空，全檔 grep claim 沒有比對回報內容的程式；正對照：該非空檢查確實命中，且工作樹檢查器與 HEAD 相同",
+  "5 成立：spec.json 的 language 為 zh-TW",
+  "6 成立：verification 目錄 5 個 json 的 findings 中文字數為 0、0、0、25、18，後兩份只是英文句中引用的中文詞；正對照：HANDOFF 有 9442 個中文字",
+  "7 成立：新句完整保留原句的終點指標與對話輸出無檢查點，並把仍靠記憶擴寫為仍靠 brief、本檔與記憶；diff 中沒有其他刪除",
+  "P4 信心中：9 處的計數粒度未定義，HANDOFF 可數成 5 到 7 處，6 自洽但不唯一；複核方式為以 git show 2d46a379 逐處重數",
+  "P4 信心中：現有檔名全是 20261004，2026-10-04 以前須以包含當天的方式解讀才成立；複核方式為 ls verification 查看日期"
+ ],
+ "source_transcript": "agent-a7356e75ad882c6e4.jsonl"
+}
