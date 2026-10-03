@@ -118,6 +118,7 @@ language: zh-TW
   - {text: "收款備註怎麼改", source: "draft:outline-20260920", status: proposed}
   - {text: "退款對帳單", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/use/config/useBillTypes.js, code:app/Notification.php, code:app/Http/Controllers/UserController.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -428,6 +429,7 @@ language: zh-TW
   - {text: "收據還有新功能嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "收據開發時程", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/use/config/useBillTypes.js, docs:knowledge/jgb-product-facts.md#p914-receipt-email, docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#117, code:app/Notification.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -552,6 +554,7 @@ language: zh-TW
   - {text: "內部備註在批次帳單有嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "內部備註在週期帳單有嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/bills/edit/_parts/BillBasicInfoSection.vue, code:src/pages/bills/_parts/ListTable.jsx, code:src/components/Lightbox/BillItemDetail.vue, code:app/Http/Controllers/BillController.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -577,6 +580,7 @@ language: zh-TW
   - {text: "租客驗證連結過期帳單", source: "draft:outline-20260920", status: proposed}
   - {text: "帳單一直是草稿狀態", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/bills/edit/_parts/BillTargetBlock.jsx, code:src/pages/contracts/_parts/SignerInfoCard.jsx, code:app/Http/Controllers/BillController.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -616,6 +620,7 @@ language: zh-TW
   - {text: "入住天數比例分攤", source: "draft:outline-20260920", status: proposed}
   - {text: "不足一個月租金按天數怎麼折算", source: "draft:outline-20260920", status: proposed}
 - sources: [docs:knowledge/jgb-product-facts.md#p914-proration, code:app/Role.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -1117,6 +1122,7 @@ JGB 把「社會住宅」設計成一種團隊身份，跟「個人房東/代理
   - {text: "虛擬帳號多匯的錢去哪", source: "draft:outline-20260920", status: proposed}
   - {text: "重複匯款會重複入帳嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [docs:knowledge/jgb-product-facts.md#p914-duplicate-remittance, code:app/Payment.php, code:app/RechargeAccount.php, code:app/Services/Payment/SinopacVaNotifyService.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general

@@ -523,6 +523,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
   - {text: "控制台麵包屑", source: "draft:outline-20260920", status: proposed}
   - {text: "控制台側邊欄", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/control-panel/setting/Index.jsx, code:src/routes/controlPanel.js, code:src/pages/control-panel/_parts/OrderAside.vue]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -602,6 +603,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
   - {text: "通知信設定在哪裡", source: "draft:outline-20260920", status: proposed}
   - {text: "通知收件信箱在哪裡", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/control-panel/notificationMail/Index.jsx, code:src/pages/control-panel/Index.vue, code:src/pages/users/notification/Index.vue, code:src/use/config/useForwardNotificationEmails.ts, code:app/Role.php, code:app/Http/Controllers/UserController.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -630,6 +632,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
   - {text: "官網首頁架構", source: "draft:outline-20260920", status: proposed}
   - {text: "JGB官網首頁介紹", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/listings/Home.vue, code:src/pages/listings/template-parts/HomeTop.vue]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -689,6 +692,7 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
   - {text: "最新消息點進去是什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "首頁消息輪播", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/listings/Home.vue]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [prospect]
 - business_types: [system_provider]
 - instance_applicability: general

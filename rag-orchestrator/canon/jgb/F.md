@@ -166,6 +166,7 @@ language: zh-TW
   - {text: "申請修繕流程", source: "draft:outline-20260920", status: proposed}
   - {text: "修繕單申請入口在哪", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/repair/list/Index.vue, code:src/pages/repair/applyProcess/Index.vue, code:src/utils/constants/repair.constant.ts, code:routes/web.php, help:repair_zh-Hant.html, code:app/Role.php, code:src/pages/repair/applyProcess/_parts/Detail.vue, code:app/Notification.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -371,6 +372,7 @@ LINE 在修繕流程裡用於通知（修繕單建立等階段會透過 LINE 推
   - {text: "修繕金額會變成帳單嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "修繕結算金額誰看得到", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/repair/edit/Index.vue, code:app/Http/Controllers/RepairController.php, code:src/pages/repair/_parts/MemoArea.vue]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general

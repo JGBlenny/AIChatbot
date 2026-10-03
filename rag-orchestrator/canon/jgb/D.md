@@ -158,6 +158,7 @@ language: zh-TW
   - {text: "建立合約流程", source: "draft:outline-20260920", status: proposed}
   - {text: "合約分頁順序", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/routes/contracts.js, code:src/use/useEditStore.js]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -194,6 +195,7 @@ language: zh-TW
   - {text: "合約起迄日期怎麼設定", source: "draft:outline-20260920", status: proposed}
   - {text: "租賃訂約日期是什麼", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/contracts/edit/rentBasic/General.vue, code:app/Http/Controllers/ContractController.php, code:config/contract.php, code:app/Role.php, help:landlordonboarding04lease_zh-Hant.html, docs:knowledge/jgb-product-facts.md#p914-contract-templates, docs:knowledge/jgb-product-facts.md#p914-contract-date-start, docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#91, docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#101, code:src/utils/constants/contract.js]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -227,6 +229,7 @@ language: zh-TW
   - {text: "遲繳滯納金計算方式", source: "draft:outline-20260920", status: proposed}
   - {text: "滯納金比例跟拖欠天數", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/contracts/edit/rentBasic/General.vue]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -308,6 +311,7 @@ language: zh-TW
   - {text: "應稅品項設定", source: "draft:outline-20260920", status: proposed}
   - {text: "統一編號要不要打", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/contracts/edit/taxAndInvoice/index.jsx, code:src/routes/contracts.js, code:src/use/useEditStore.js, code:app/RoleInvoices.php, code:app/Http/Controllers/ContractController.php, code:app/Services/InvoiceService.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -343,6 +347,7 @@ language: zh-TW
   - {text: "固定虛擬帳號收租", source: "draft:outline-20260920", status: proposed}
   - {text: "現金收款帳戶", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/contracts/edit/payment/General.vue, code:app/Contract.php, code:src/pages/contracts/edit/payment/Index.vue, code:src/use/config/useSpecialRoles.js, code:app/Character.php, code:src/routes/contracts.js, code:app/Http/Controllers/UserController.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -380,6 +385,7 @@ language: zh-TW
   - {text: "電子簽名圖章", source: "draft:outline-20260920", status: proposed}
   - {text: "團隊資料自動帶入", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/contracts/edit/dealerBasic/Index.vue, help:landlordonboarding04lease_zh-Hant.html, docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#100, code:app/Http/Controllers/ContractController.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -660,6 +666,7 @@ language: zh-TW
   - {text: "承租方授權項目", source: "draft:outline-20260920", status: proposed}
   - {text: "財稅所得總檢核授權", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/contracts/edit/tenantLicense/Index.vue, code:src/use/useEditStore.js, code:app/Http/Controllers/ContractController.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -936,6 +943,7 @@ JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄�
   - {text: "租客同意點退後會怎樣", source: "draft:outline-20260920", status: proposed}
   - {text: "免註冊租客點退帳單", source: "draft:outline-20260920", status: proposed}
 - sources: [help:landlordonboarding04lease_zh-Hant.html, code:src/pages/contracts/move-out/Index.jsx, docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#132, code:app/Services/ContractService.php, code:src/pages/bills/edit/Index.jsx, code:src/pages/bills/edit/_parts/ExpireDateBlock.jsx, code:app/Http/Controllers/ContractController.php, code:app/Contract.php, code:app/Services/BillService.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -951,6 +959,7 @@ JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄�
   - {text: "沒有註冊的租客可以點退嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "點退合約狀態限制", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Contract.php, code:app/Http/Controllers/ContractController.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -1111,6 +1120,7 @@ JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄�
   - {text: "解約要選什麼原因", source: "draft:outline-20260920", status: proposed}
   - {text: "非中文合約解約理由", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/ContractController.php, code:resources/views/layouts/lightbox/early-termination-by-landlord.blade.php, code:src/components/Lightbox/ContractEarlyTerminationByLandlord.jsx]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -1124,6 +1134,7 @@ JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄�
   - {text: "提前解約日期限制", source: "draft:outline-20260920", status: proposed}
   - {text: "提前解約佐證資料怎麼傳", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/ContractController.php, help:landlordonboarding04lease_zh-Hant.html, code:resources/views/layouts/lightbox/early-termination-by-landlord.blade.php, code:src/components/Lightbox/ContractEarlyTerminationByLandlord.jsx]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -1137,6 +1148,7 @@ JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄�
   - {text: "租客可以取消提前解約嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "取消提前解約條件", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/ContractController.php, help:landlordonboarding04lease_zh-Hant.html]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -1149,6 +1161,7 @@ JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄�
   - {text: "可否提前解約設定對房東有效嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "續約中可以提前解約嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Contract.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -1160,6 +1173,7 @@ JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄�
   - {text: "提前解約後多久可以點退", source: "draft:outline-20260920", status: proposed}
   - {text: "提前解約影響", source: "draft:outline-20260920", status: proposed}
 - sources: [help:landlordonboarding04lease_zh-Hant.html]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -1171,6 +1185,7 @@ JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄�
   - {text: "解約後還會出帳單嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "解約後帳單要自己處理嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [docs:knowledge/jgb-product-facts.md#p914-early-termination-bills, code:app/Role.php]
+- reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
