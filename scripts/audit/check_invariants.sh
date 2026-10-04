@@ -945,6 +945,25 @@ else
 fi
 echo
 # <<< 不變量 43
+# >>> 不變量 44
+echo "═══ 不變量 44：目標驗收 H 留出題（196 題）⛔ 進正本 ═══"
+# 源起（2026-10-04，目標驗收規格 §2.4、Plan 9.27）：H＝holdout 99＋material 97，是效果量測的留出集；
+# 正本標題／講法／內文與 H 任一題整句相同或共同子字串 ≥8 字 ⇒ FAIL（扣除業主逐筆裁定的基準）。
+# 題目原文在 repo 外（~/jgb-archive），只在主機跑；讀不到或雜湊不符 ⇒ 守護退出 2 ⇒ FAIL（⛔ 靜默跳過）。
+G44_CHECK="$REPO/scripts/audit/checks/goal_eval_holdout_guard.py"
+if ! python3 "$G44_CHECK" --self-test >/dev/null 2>&1; then
+  echo "❌ FAIL：不變量 44 檢查器的自我測試未過（檢查器本身失效，其 PASS 不可信）"
+  python3 "$G44_CHECK" --self-test
+  FAIL=1
+  CODE_REGRESSIONS+=("不變量 44：goal_eval_holdout_guard.py 自我測試未過")
+elif ! G44_OUT=$(python3 "$G44_CHECK" 2>&1); then
+  echo "$G44_OUT"
+  FAIL=1
+  CODE_REGRESSIONS+=("不變量 44：H 留出題出現在正本或守護前置條件失敗（見上方 ❌ 行）")
+else
+  echo "$G44_OUT"
+fi
+# <<< 不變量 44
 echo ""
 echo "──────────────── 稽核記帳（兩類紅燈分開）────────────────"
 echo "CODE_CONTRACT_REGRESSIONS: ${#CODE_REGRESSIONS[@]}"

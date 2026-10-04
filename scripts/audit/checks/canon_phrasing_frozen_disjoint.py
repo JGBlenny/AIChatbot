@@ -9,6 +9,9 @@ design.md `| 34 |`：`rag-orchestrator/canon/*.json` 所有講法（不分 statu
 
 正對照：故意塞一句必紅（`--self-test`）。
 
+⚠️ 目標驗收的 H 留出題（holdout 99＋material 97）另由 `goal_eval_holdout_guard.py` 守
+（目標驗收規格 2026-10-04 裁決 8、Plan 9.27）；本檢查語義不變。
+
 用法：python3 scripts/audit/checks/canon_phrasing_frozen_disjoint.py [--self-test]
 """
 from __future__ import annotations

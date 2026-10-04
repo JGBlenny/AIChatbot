@@ -1,0 +1,32 @@
+{
+ "kind": "change",
+ "verdict": "CONFIRMED",
+ "base": "9618129c49d7b2fea744dd35b8a7ac70b6cd2a6e",
+ "claim": "工作樹（HEAD 9618129c，改動未 commit）已完成 Plan 9.27，驗收清單 A1～A19 全部成立",
+ "findings": [
+  "A1：成立——凍結檔 196 題與索引（扣除 ce2ce3372c6e）逐欄相同，不符 0 筆；holdout 99、material 97、業者 193、售前 3；hash_norm 196/196；去除列舉值 property_manager 等之後，題目 8 字片段掃描 0 命中；正對照會命中",
+  "A2：成立（以工作樹為準）——規格 sha256 0e87e246…84e4cc 等於凍結檔 spec_sha256；questions.json sha256 15333e14…1100f 相符；七個種子 20261004～20261010 與計畫一一對應；不需種子的三項附理由；容忍帶公式為基線 Wilson 95% 半寬",
+  "A3：成立——規格 §5 的覆蓋門檻（業者 ≥95%、售前 ≥90%）與效果門檻（L1 ≥90%、L2 ≥80%、L3 ≥85%、端到端 ≥70%）都在，由 A2 的規格雜湊鎖住",
+  "A4：成立——帶 --no-baseline 跑時 rc=1，恰 2 筆：71c32e1c3d67×jgb/E/balance-invoice-refund-report-column×title×8、8cce4b057f46×jgb/D/contract-list-export-declaration×body×8；另以不引用守護程式的暴力掃描重算，結果相同",
+  "A5：成立——holdout 32d0c09991c7 與 material ba7d1bf618a0 各取 10 字片段，種入標題與內文兩種副本，四組都 rc=1，並指出該題 id 與欄位",
+  "A6：成立——把 material ba7d1bf618a0 整句種入講法副本，rc=1，輸出含 phrasing × hash",
+  "A7：成立——不帶參數跑時 rc=0，PASS（基準放行 2 筆、新命中 0 筆）；基準檔的三元組與 owner_words 都與業主裁定原文一致",
+  "A8：成立——questions 不存在、questions sha256 不符、正本 0 檔、凍結檔不存在，四種情況都 rc=2 並印出原因；正對照（真實路徑）rc=0",
+  "A9：成立——對 A4～A8、self-test、種入組與 make audit 的全部輸出做 196 題的 8 字子字串掃描，0 命中；正對照（種入副本）會命中",
+  "A10：成立——self-test 11/11；單元測試 7 passed；變異版掛進容器跑：停用子字串比對時 5 條紅、停用基準扣除時 2 條紅；跑完守護檔 shasum 不變",
+  "A11：成立——抽出不變量 44 區塊執行：包裝指向種入副本時 FAIL=1 且 CODE_REGRESSIONS 1 筆；改用 self-test 必失敗的副本時 FAIL=1 且 1 筆；指回真守護時 FAIL=0；主機 make audit OVERALL PASS，輸出可見不變量 44 的 PASS 行",
+  "A12：成立——57 列，集合與順序等於 jgb.json 的 coarses；56 列照提議、A-account-profile 改判適用，結果適用 54、不適用 3；前 5 欄與備份相同；引用的業主原文一致",
+  "A13：成立——定義檔與備份 diff 只有 §0 第 1、4 項各多一句取代標註，指向規格；備份與 HEAD 相同",
+  "A14：成立——rag-orchestrator/canon 的 git diff 與 status 皆空（正對照 runtime.py 會列出）；endpoint_progress 結果為 pm 537／537、prospect 121／121",
+  "A15：成立——他線 41 個指紋全 OK，清單含 runtime.py；dirty 集合等於他線檔加本計畫列名的檔",
+  "A16：成立——全套 unit 9 failed、3946 passed，與 red-base 兩方向差集皆 ∅；collect-only 收集到新測試檔 7 條",
+  "A17：成立（以工作樹為準）——consent_zero 與業主核可原文逐字相同；endpoint_from 等於 endpoint_to，為 +0；不變量 43 PASS；計畫檔尚未 commit",
+  "A18：成立——兩份 review_pipeline/README.md 只在寫入前步驟加守護指令與「非 0 ⇒ ⛔ 寫入」，兩份 diff 相同",
+  "A19：成立——canon_phrasing_frozen_disjoint.py 只在 docstring 增加說明；HEAD 版與工作樹版的 self-test 與主檢查輸出逐字相同、rc=0",
+  "其他發現 1（P3）：規格 §2.4 L1 的「混排並打亂」也是隨機步驟，凍結檔沒有為它定種子，也沒註明不需要；不屬 A2 點名的 7 步，不阻擋",
+  "其他發現 2（P4）：A2 與 A17 只能對工作樹驗，commit 後應以 git show HEAD 再核規格 sha256 與 consent_zero",
+  "其他發現 3（P4）：計畫第 10 行仍說 consent_zero 是佔位，§1 第 2 步寫「六個」種子但實際列七個，都只是文字過時",
+  "其他發現 4（P4）：本次在 scratch 的種入副本含題目原文，只在 scratch；刪除被安全檢查擋下，交主 session 決定要不要清理"
+ ],
+ "source_transcript": "a2f989acaeab16c50.output"
+}

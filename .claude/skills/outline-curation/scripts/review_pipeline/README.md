@@ -41,7 +41,7 @@ mkdir -p <SP>/jgb2-b2ee2ac && git -C /Users/chenqinghuang/dev/work/jgb2/dev1 arc
 3. **終審**，依序：
    1. 業主原文逐字記入計畫 §6「### S3」，並寫成四欄決定檔。
    2. `approve_write.py derive`。
-   3. **寫入前**：把 `rag-orchestrator/canon/` 備份到 scratch，以 `diff -r` 確認相同；確認 git 基準為空；在同一工作樹跑全套單元，把紅燈 id 集合存成基準。
+   3. **寫入前**：把 `rag-orchestrator/canon/` 備份到 scratch，以 `diff -r` 確認相同；確認 git 基準為空；在同一工作樹跑全套單元，把紅燈 id 集合存成基準。跑 H 留出題守護 `python3 scripts/audit/checks/goal_eval_holdout_guard.py`（主機；目標驗收規格 2026-10-04 §2.4），非 0 ⇒ ⛔ 寫入；寫入後第 8 步的 `make audit` 會對新正本再跑一次。
    4. `approve_write.py write`。
    5. 容器重匯出：
       `docker compose -f docker-compose.dev.yml run --rm -T --no-deps rag-orchestrator python -c "from services.agent.canon.canon_parser import parse_canon_dir, export_json, export_catalog; from services.agent.canon.canon_assembler import load_canon_or_die; d=parse_canon_dir('/app/canon/jgb'); export_json(d,'/app/canon/jgb.json'); export_catalog(d,'/app/canon/jgb/CATALOG.md'); load_canon_or_die('/app/canon')"`

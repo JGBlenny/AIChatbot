@@ -1,0 +1,14 @@
+{
+ "_meta": {
+  "guard": "scripts/audit/checks/goal_eval_holdout_guard.py",
+  "rule": "（題 id, 細目 id, 欄位）三元組放行；同題出現在其他細目或其他欄位仍 FAIL",
+  "decided_by": "owner",
+  "decided_at": "2026-10-04",
+  "owner_words": "命中 1：「產品用語，放行 (Recommended)」；命中 2：「產品用語，放行 (Recommended)」（AskUserQuestion 逐字）",
+  "plan": ".kiro/specs/knowledge-outline-and-intent-architecture/inputs/plan-9.27-goal-eval-freeze-and-guard-20261004.md"
+ },
+ "allowed": [
+  {"qid": "71c32e1c3d67", "fine_id": "jgb/E/balance-invoice-refund-report-column", "field": "title", "reason": "報表名稱「差額發票收支表」，產品用語"},
+  {"qid": "8cce4b057f46", "fine_id": "jgb/D/contract-list-export-declaration", "field": "body", "reason": "按鈕名稱「匯出實價登錄資料」，產品用語"}
+ ]
+}
