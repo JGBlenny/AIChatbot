@@ -583,6 +583,34 @@ def _single_reviewed_canon_copy(tmp_path):
     return dst
 
 
+def _all_unreviewed_canon_copy(tmp_path):
+    """版控正本的 tmp 複本，撤掉**全部** `- reviewed:` 行（⛔ 不動版控 `canon/`）。
+
+    Plan 9.24：正本全審後已沒有「未審」細目可標，`_single_reviewed_canon_copy` 的
+    正對照無從注入；改用反向 mutation——全部撤審 ⇒ 兩把尺必為 0，證明全審時的
+    「兩把尺皆非零」斷言不是恆真的空判斷。
+    """
+    baseline = _grep_reviewed_count()
+    assert baseline > 0, "正本沒有任何已審細目，反向 mutation 無從撤審"
+    dst = tmp_path / "all-unreviewed-canon"
+    shelf_dst = dst / CANON_NAME
+    shelf_dst.mkdir(parents=True)
+    removed = 0
+    for fname in sorted(os.listdir(_SHELF_DIR)):
+        if not (len(fname) == 4 and fname.endswith(".md")):
+            continue
+        text = open(os.path.join(_SHELF_DIR, fname), encoding="utf-8").read()
+        text, n = re.subn(r"^- reviewed:[^\n]*\n", "", text, flags=re.M)
+        removed += n
+        (shelf_dst / fname).write_text(text, encoding="utf-8")
+    assert removed == baseline, (removed, baseline)
+    doc = parse_canon_dir(str(shelf_dst))
+    assert sum(1 for f in doc.fines() if f.reviewed_by is not None) == 0
+    export_json(doc, str(dst / f"{CANON_NAME}.json"))
+    export_catalog(doc, str(shelf_dst / "CATALOG.md"))
+    return dst
+
+
 async def test_real_views_fit_the_budget(monkeypatch, tmp_path):
     """真實正本兩視圖的 `check_turn_budget` 皆通過；正對照：`k_limit=-1` ⇒ raise；
     mutation：多一條已審細目 ⇒ 兩把尺必變非零。
@@ -652,20 +680,32 @@ async def test_real_views_fit_the_budget(monkeypatch, tmp_path):
     with pytest.raises(OutlineBudgetExceeded):
         check_turn_budget(prospect_doc.sections, prospect_toc, k_limit=-1, toc_limit=8_000)
 
-    # mutation：正本多一條已審細目 ⇒ 兩把尺必變非零（證明上面「皆為 0」不是空判斷）。
+    # mutation：證明上面的斷言會隨已審狀態變動、不是空判斷。
+    # - 還有未審細目 ⇒ 複本多標一條已審 ⇒ prospect 兩把尺必非零（原做法）；
+    # - 全審（Plan 9.24 起）⇒ 已無未審可標 ⇒ 反向：複本全部撤審 ⇒ 兩受眾兩把尺必為 0。
     monkeypatch.setenv(DB_ENV_KEY, "test")
-    monkeypatch.setenv(CANON_DIR_ENV, str(_single_reviewed_canon_copy(tmp_path)))
+    fully_reviewed = len(reviewed_ids) == len(canon.fines())
+    if fully_reviewed:
+        monkeypatch.setenv(CANON_DIR_ENV, str(_all_unreviewed_canon_copy(tmp_path)))
+    else:
+        monkeypatch.setenv(CANON_DIR_ENV, str(_single_reviewed_canon_copy(tmp_path)))
     reset_canon_registry()
     try:
-        mutated_doc = await build_audience_outline("prospect")
+        mutated = {aud: await build_audience_outline(aud) for aud in ("prospect", "property_manager")}
     finally:
         reset_canon_registry()
-    mutated_toc = next(s for s in mutated_doc.sections if s.id == TOC_SECTION_ID)
-    mutated_budget = check_turn_budget(
-        mutated_doc.sections, mutated_toc,
-        k_limit=default_k_token_limit("prospect"), toc_limit=default_toc_token_limit("prospect"),
-    )
-    assert mutated_budget.k_upper > 0 and mutated_budget.toc_tokens > 0
+    mutated_budget = {}
+    for aud, doc in mutated.items():
+        toc = next(s for s in doc.sections if s.id == TOC_SECTION_ID)
+        mutated_budget[aud] = check_turn_budget(
+            doc.sections, toc,
+            k_limit=default_k_token_limit(aud), toc_limit=default_toc_token_limit(aud),
+        )
+    if fully_reviewed:
+        for aud, b in mutated_budget.items():
+            assert b.k_upper == 0 and b.toc_tokens == 0, (aud, b)
+    else:
+        assert mutated_budget["prospect"].k_upper > 0 and mutated_budget["prospect"].toc_tokens > 0
 
 
 def test_versioned_canon_dir_is_untouched(tmp_path):

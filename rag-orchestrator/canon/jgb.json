@@ -2,7 +2,7 @@
   "audience": "jgb",
   "budget_tokens": 0,
   "business_types": [],
-  "canon_sha256": "b4d6966b18735e29fd5c0b9fb009e580e01b9e5f3ab4677cac3c9066fc83360a",
+  "canon_sha256": "b08267e5d43c9f1df5b190ca47d8ba4746ec093aeb6d8aaa2c9e7c029aae5652",
   "coarses": [
     {
       "fines": [
@@ -1582,8 +1582,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-04",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:resources/views/users/account.blade.php",
@@ -1776,12 +1776,11 @@
           ],
           "categories": [],
           "coarse_id": "A-account-profile",
-          "content_sha256": "e878b04dafb735251cdf504bce0216f90004f72cb091f8ca401152633b9ea980",
+          "content_sha256": "c9f98691b024bc1bed6a7a61cd0b6cf1c053e8fe59610dc4898781e1afeb38a0",
           "content_units": [
             "帳號資訊頁只有在帳號本身有設定密碼時，才會顯示「密碼」區塊。",
             "帳號資訊頁點選「修改密碼」會展開密碼修改表單。",
             "修改密碼必須同時填寫目前密碼、新密碼與確認新密碼；若目前密碼輸入錯誤，會回覆「目前密碼驗證錯誤」並擋下整筆表單儲存。",
-            "新密碼長度需至少 6 個字元、需同時包含英文與數字，且需與確認新密碼欄位一致。",
             "「密碼」區塊下方會顯示「上次更新：」的日期時間；如果從來沒有改過密碼，則顯示帳號建立的時間。"
           ],
           "id": "jgb/A/account-change-password",
@@ -1805,8 +1804,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-04",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:resources/views/users/account.blade.php",
@@ -1859,8 +1858,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-04",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:resources/views/users/account.blade.php"
@@ -14300,11 +14299,10 @@
           ],
           "categories": [],
           "coarse_id": "D-notary",
-          "content_sha256": "841e830278a8db92584d13c15464c986d7a60e3a0d0280ab783cfe132d1f8e78",
+          "content_sha256": "fd3bf360f873d4194ac22f0726c91f51e933922c12b17820f540353c3b110481",
           "content_units": [
             "如果合約是「公會中文版 租賃契約書」（原房東、包租業或代租代管）且有補充條款，送去簽署時，合約上會多出一組簽名位置（出租方與承租方各一個）。",
-            "用「電子合約 - 客製化契約書」上傳自己的 PDF 底稿建立合約時，系統會先用兩種方式試著解析這份 PDF；兩種都失敗時，合約不會建立、上傳的檔案也不會保留，回應訊息會請使用者確認檔案內容或重新輸出後再上傳；如果是使用了較新壓縮格式的 PDF，訊息會建議用瀏覽器開啟 PDF，透過「列印 → 另存為 PDF」重新輸出。",
-            "送去簽署時，如果客製化契約書的 PDF 底稿又解析不出來，也會跳出同樣的訊息，簽署不會開始。"
+            "用「電子合約 - 客製化契約書」上傳自己的 PDF 底稿建立合約時，系統會先用兩種方式試著解析這份 PDF；兩種都失敗時，合約不會建立、上傳的檔案也不會保留，回應訊息會請使用者確認檔案內容或重新輸出後再上傳；如果是使用了較新壓縮格式的 PDF，訊息會建議用瀏覽器開啟 PDF，透過「列印 → 另存為 PDF」重新輸出。"
           ],
           "id": "jgb/D/contract-thinkcloud-signing-variants",
           "instance_applicability": "general",
@@ -14327,8 +14325,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-04",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:app/Http/Controllers/ContractController.php",
@@ -22563,12 +22561,10 @@
           ],
           "categories": [],
           "coarse_id": "I-pricing",
-          "content_sha256": "c1f4d381809078bdf2f69f59c12164a9a7bcc6304d7e4e4fd5b2af5e61dba9b6",
+          "content_sha256": "8495297389354b4bba768175d68837ad6a5e068c24c7936713d71a27e7fa5e8c",
           "content_units": [
             "價格頁的「免費試用方案」寫著「不綁信用卡的30天的試用方案，歡迎體驗」，點「免費註冊試用」會另開註冊頁。",
-            "企業團隊與社宅房東身分建立時，一律自動取得免費方案；個人房東則是註冊過程沒有帶入優惠代碼時，才自動取得免費方案。",
-            "免費方案的效期是系統設定的一個週期（目前為一個月），到期後不會自動續訂。",
-            "個人房東如果是透過優惠代碼連結完成註冊，取得的是優惠代碼指定的方案，而不是這個自動贈送的免費方案。"
+            "免費方案的效期是系統設定的一個週期（目前為一個月），到期後不會自動續訂。"
           ],
           "id": "jgb/I/pricing-free-trial-eligibility",
           "instance_applicability": "general",
@@ -22596,8 +22592,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-04",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/listings/pricing/parts/PlanAndDevice.vue",
@@ -22608,7 +22604,7 @@
             "property_manager",
             "prospect"
           ],
-          "title": "免費試用怎麼開始、能用多久？（企業團隊與社宅房東建立身分時自動取得，個人房東未帶優惠代碼時自動取得；一個週期後不自動續訂）"
+          "title": "免費試用怎麼開始、能用多久？（一個週期後不自動續訂）"
         },
         {
           "business_types": [
@@ -22719,9 +22715,8 @@
           ],
           "categories": [],
           "coarse_id": "I-pricing",
-          "content_sha256": "0815630bd38dc75d94cc023b5e0b10b2e8aadc6bf9ec587b884f1b9511d3bfcb",
+          "content_sha256": "fdcdfeada4d87b43e41ad466e2626f656e7e1880e8e87fe1432177454fd3c064",
           "content_units": [
-            "免費方案是系統在建立房東身分時自動贈送的測試方案（個人房東帶優惠代碼註冊時取得的是優惠方案），在一個月的測試期間內可以創建 5 個物件，並擁有智能合約功能。",
             "體驗方案是提供給想要數位轉型的短期試用方案，在方案期限內可以創建 10 個物件，同樣擁有智能合約功能，而且可以自行續訂來延長試用期限。",
             "體驗方案是付費方案，跟其他付費方案一樣，可以在方案價格表（電腦版）與訂閱頁切換查看「月費」或「年費」兩種計費週期的價格。",
             "免費方案是系統贈送的，方案價格固定為 0。",
@@ -22753,8 +22748,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-04",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/listings/pricing/parts/FAQ.vue",
@@ -22769,7 +22764,7 @@
             "property_manager",
             "prospect"
           ],
-          "title": "免費方案與體驗方案差在哪？（前者系統贈送 5 個物件，後者付費訂閱、可選月繳或年繳，可建 10 個物件並自行續訂）"
+          "title": "免費方案與體驗方案差在哪？（前者系統贈送，後者付費訂閱、可選月繳或年繳，可建 10 個物件並自行續訂）"
         },
         {
           "business_types": [

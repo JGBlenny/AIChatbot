@@ -443,6 +443,7 @@ language: zh-TW
   - {text: "改大頭照", source: "draft:outline-20260920", status: proposed}
   - {text: "帳號資訊頁面", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/users/account.blade.php, code:app/Http/Controllers/UserController.php#account, code:app/Contract.php, code:app/Http/Controllers/ContractController.php]
+- reviewed: {by: owner, at: 2026-10-04}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -503,13 +504,13 @@ language: zh-TW
   - {text: "帳號資訊改密碼", source: "draft:outline-20260920", status: proposed}
   - {text: "修改密碼要輸入原密碼嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/users/account.blade.php, code:app/Http/Controllers/UserController.php#account, code:src/components/PasswordForm.vue]
+- reviewed: {by: owner, at: 2026-10-04}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
 帳號資訊頁只有在帳號本身有設定密碼時，才會顯示「密碼」區塊。
 帳號資訊頁點選「修改密碼」會展開密碼修改表單。
 修改密碼必須同時填寫目前密碼、新密碼與確認新密碼；若目前密碼輸入錯誤，會回覆「目前密碼驗證錯誤」並擋下整筆表單儲存。
-新密碼長度需至少 6 個字元、需同時包含英文與數字，且需與確認新密碼欄位一致。
 「密碼」區塊下方會顯示「上次更新：」的日期時間；如果從來沒有改過密碼，則顯示帳號建立的時間。
 ### 帳號資訊頁的聯絡資訊要填什麼？（LINE ID、Facebook 個人首頁、WhatsApp、第二組電話） {#jgb/A/account-contact-info}
 - phrasings:
@@ -518,6 +519,7 @@ language: zh-TW
   - {text: "line id 要填嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "第二組電話欄位有什麼限制", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/users/account.blade.php]
+- reviewed: {by: owner, at: 2026-10-04}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general

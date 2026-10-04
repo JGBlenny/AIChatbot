@@ -1,0 +1,137 @@
+{
+ "kind": "write",
+ "verdict": "CONFIRMED",
+ "base": "c14ca7aefdef846c063b37f360a4cf3423aa4e9d",
+ "claim": "Plan 9.24 已把最後 6 條細目修完並寫為已審：`jgb/A/account-basic-info`、`jgb/A/account-contact-info`、`jgb/A/account-change-password`、`jgb/D/contract-thinkcloud-signing-variants`、`jgb/I/pricing-free-trial-eligibility`、`jgb/I/pricing-free-vs-experience-plan`，且：(1) 這 6 條每條的標題與每一句（句數＝該條 `content_units` 數）對該細目宣告的來源（jgb2 釘住匯出，或 sources 所列幫助中心頁）皆成立；判準含：標題與句子不得以列舉或概括造成排他或過度概括（例：漏列個人房東預設取得免費方案、概括所有房東身分），同粗目細目之間對同一事實的說法不得互相矛盾——違反即「不成立」；(2) 修正範圍：相對 HEAD，drafts 與正本的內容變動只在 `account-change-password`、`contract-thinkcloud-signing-variants`、`pricing-free-trial-eligibility`、`pricing-free-vs-experience-plan` 4 條，句子只有整句刪除（其餘句與 HEAD 逐字相同；刪後句數依序 4、2、2、4），兩條定價細目標題逐字等於計畫 §1 表且為 HEAD 標題的子序列；另 2 條只多 `- reviewed:` 行；其他 533 條逐欄不變；正本（`jgb/*.md` 含 CATALOG）不含 `沒有帶入優惠代碼時，才自動取得`、`取得的是優惠代碼指定的方案`、`帶優惠代碼註冊時取得的是優惠方案`、`也會跳出同樣的訊息`、`需同時包含英文與數字`、`未帶優惠代碼時自動取得`、`建立房東身分時自動贈送`、`企業團隊與社宅房東建立身分時自動取得`（負對照：這 8 個字串在 HEAD 正本各命中 ≥1）；(3) `jgb.json` 已審集合＝HEAD 的 533 條 ∪ 這 6 條＝539 條全審；終點指標重跑第一行以 `已審細目 pm 533／533、prospect 120／120；` 開頭；(4) 全套單元測試紅燈集合與 9 條基準雙向差集＝∅；`test_library_view_req.py` 相對 HEAD 只新增 `_all_unreviewed_canon_copy` 與改寫 `test_real_views_fit_the_budget` 的 mutation 段，該檔在工作樹正本（全審）全綠，變異版在同正本使該測試變紅，產品程式（`rag-orchestrator/` 下非 tests 的 .py）相對 HEAD 本計畫 0 改動；(5) 計畫 §6「### S1」紀錄與 HANDOFF 本次改動處（與 `p924-backup/HANDOFF.bak` 比對可見）的數字與敘述與實況一致。（HANDOFF 提到的證據檔 `verification/20261004-p924-write.json` 會由主 session 從你的交件取出，目前尚不存在，屬預期。）",
+ "fines": [
+  {
+   "id": "jgb/A/account-basic-info",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "d682c03bd1922e2cd2e5ab941645079a213a940c03c23e54718d031595637a2d",
+   "title_text": "帳號資訊頁能改哪些基本資料？（大頭照、姓氏、名稱、稱謂）",
+   "notes": [
+    "來源皆為 jgb2 釘住匯出（scratchpad/jgb2-b2ee2ac）；sources 無幫助中心頁。本條相對 HEAD 只多 `- reviewed:` 行（jgb.json 只差 reviewed_by／reviewed_at）。",
+    "標題：resources/views/users/account.blade.php 的「帳號基本資訊」卡片含 `照片(選填)` 的 ajax-uploader name=\"user_thumbnail\"、`姓氏` name=\"last_name\"、`名稱` name=\"first_name\"、`稱謂` select-picker name=\"honorific\"；UserController::account POST 寫回 avatar／last_name／first_name／honorific。四項列舉與頁面欄位一致，無排他。",
+    "句 1：同上；`照片(選填)` 證實大頭照為選填，ajax-uploader 可上傳／更換；姓氏、名稱、稱謂為可編輯欄位（未鎖定時）。成立。",
+    "句 2：account.blade.php 字串 `為提供租客更安心的租屋體驗，在刊登廣告時，金箍棒平台希望使用者提供以下資訊。`，與句意一致。成立。",
+    "句 3：app/Contract.php 的 saved 區塊 `config(\"app.is_basic_info_locked_user_ids\")` + `$model->status == self::CONTRACT_SIGNED`，且 `!empty($user->first_name) && !empty($user->last_name) && !empty($user->id_card_number)` 才 `is_basic_info_locked = 1`；ContractController::sign 內 `if (!empty($contract->to_user_id_card_number))` 且團隊在 `is_basic_info_locked_user_ids` 名單才 `$lesseeUser->is_basic_info_locked = 1; // 上鎖`——兩條路徑皆需身分證字號、只限名單內團隊（「部分特定合作團隊」）。鎖定後 blade `@if($infoBasic['is_basic_info_locked']) readonly disabled`（稱謂改為 disabled 文字框＋hidden），後端 `if (!$this->user->is_basic_info_locked) { ...last_name/first_name/honorific }` 不更新。成立。",
+    "同粗目（A-account-profile）其他細目未對鎖定或基本資料下相反說法。"
+   ]
+  },
+  {
+   "id": "jgb/A/account-contact-info",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "e3f48d4468a320f72de0489ac0e26b179c308b24cbc3ee24b79b8d5c880494dc",
+   "title_text": "帳號資訊頁的聯絡資訊要填什麼？（LINE ID、Facebook 個人首頁、WhatsApp、第二組電話）",
+   "notes": [
+    "來源：jgb2 匯出 resources/views/users/account.blade.php（sources 只列此檔）。本條相對 HEAD 只多 `- reviewed:` 行。",
+    "標題：「聯絡資訊」卡片四欄＝`Line ID`、`Facebook`（placeholder `個人首頁連結`）、`WhatsApp`、`第二組聯絡號碼`，與標題列舉一致。",
+    "句 1：blade 字串 `以下資訊將會呈現在廣告上，租客可以透過更多管道與房東聯繫，提升簽約成功率！`；該卡片不在任何 @if 內（唯一前置 `@if (false && ...)` 已於其前 @endif 關閉）。成立。",
+    "句 2：checkbox name=\"line_is_phone\" 標籤 `同手機號碼`；勾選時 `v-if=\"getTemp('lineIsPhone')\"` 改顯示帶入手機號的 disabled-class 輸入框，未勾選時 `placeholder=\"{{___('請填上 Line ID')}}\"` 可自填；UserController::getAccountSettingMissingInputKeys 只檢查 `line` 鍵存在（array_key_exists），不驗值 ⇒ 非必填。成立。",
+    "句 3：`<input ... placeholder=\"{{___('個人首頁連結')}}\" ... name=\"facebook\"  maxlength=\"200\"`。成立。",
+    "句 4：tooltip `請填寫國碼與電話號碼，國碼前面不需打「+」。`，`name=\"whats_app\"  maxlength=\"200\"`。成立。",
+    "句 5：`name=\"phone2\" maxlength=\"50\"`。成立。",
+    "句 6：`以此電話作為廣告頁聯絡電話` 的 checkbox 整段包在 Blade 註解 `{{-- ... --}}` 內，不會渲染。成立。"
+   ]
+  },
+  {
+   "id": "jgb/A/account-change-password",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "c9f98691b024bc1bed6a7a61cd0b6cf1c053e8fe59610dc4898781e1afeb38a0",
+   "title_text": "登入後怎麼在帳號資訊頁修改密碼？（需輸入目前密碼、新密碼與確認新密碼）",
+   "notes": [
+    "來源：jgb2 匯出 account.blade.php、UserController.php#account、src/components/PasswordForm.vue。相對 HEAD 只整句刪除原句 4（含 `需同時包含英文與數字`），其餘 4 句逐字不變、順序保留。",
+    "標題：UserController::account 的 `$passwordComponentProps` 標籤 `目前密碼`／`密碼`／`確認新密碼`，`'require_old_password' => true`；後端規則 `'old_password' => 'required'`、`'password' => 'min:6|required_with:password_confirmation|same:password_confirmation'`。三欄皆需輸入，由句 3 支撐。成立。",
+    "句 1：`$showPassword = !empty($user->password);`，blade `@if ($showPassword)` 包住「密碼」區塊。成立。",
+    "句 2：blade `@click=\"memberCenter.safety.display_password_form=true\">{{___('修改密碼')}}`，v-else 顯示 `<password-form ...>`。成立。",
+    "句 3：同上規則：old_password required；password 與 password_confirmation 經 required_with／same 互綁；`if (!Hash::check(request('old_password'), $this->user->password))` 回 `'status-error' => ___('目前密碼驗證錯誤')` 並 `return back()`，發生在 `$this->user->save()` 之前 ⇒ 整筆表單未存。成立。",
+    "句 4（原句 5）：`'description' => ___('上次更新：') . ($user->password_change_at ? ... : format_timezone(..., $user->created_at, ...))`，blade `{{$password['description']}}` 顯示於「密碼」區塊。成立。",
+    "同粗目 `account-sso-status` 句 3「修改密碼區塊只有在已設密碼時才顯示」與本條句 1 一致，無矛盾。"
+   ]
+  },
+  {
+   "id": "jgb/D/contract-thinkcloud-signing-variants",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "fd3bf360f873d4194ac22f0726c91f51e933922c12b17820f540353c3b110481",
+   "title_text": "簽署畫面與客製化契約書 PDF 要注意什麼？（公會中文版合約加補充條款會多一組簽名位置；上傳的 PDF 底稿無法解析時合約建立不了，要重新輸出再上傳）",
+   "notes": [
+    "來源：jgb2 匯出 app/Http/Controllers/ContractController.php、config/contract.php。相對 HEAD 只整句刪除原句 3（`也會跳出同樣的訊息`），標題未改。",
+    "標題：兩點分別由句 1、句 2 支撐（見下）；不再對送簽時 PDF 失敗下任何說法。成立。",
+    "句 1：ContractController 送簽 `case 'general'` 內 `if (isset($contract->additional_terms) && ($contract->contract_file == 'tw_zh_individual_union' || ... 'tw_zh_corporation_union' || ... 'tw_zh_management_union'))` 改用 `'_with_additional_terms_sign_block'`；config/contract.php 標籤 `公會中文版 租賃契約書 原房東／包租業／代租代管`。我以 JSON 解析比對 signblocks：individual／corporation 6→8、management 2→4，多出的皆為 page 4 的 Landlord 一個＋Tenant 一個 ⇒「多一組（出租方與承租方各一個）」。成立。",
+    "句 2：ContractController 建立合約路徑 `// 兩路皆失敗才擋下，清 S3 垃圾檔後回友善訊息`，`if (is_int($requestIsExisted) && $requestIsExisted === 2 ...)` 呼叫 `PdfCompatibilityChecker::check`（FPDI + smalot）；`catch (DiyPdfUnparseableException $e)` 內 `Storage::disk('s3')->delete($relativePath)` 後 `return ['success' => false, 'message' => CODE_COMPRESSED_XREF ? '此 PDF 使用了較新的壓縮格式…透過「列印 → 另存為 PDF」重新輸出後再上傳。' : '此 PDF 檔案無法解析，請確認檔案內容正確或嘗試重新輸出後再上傳。']`，位於 `Contract::createContract` 之前；`is_existed=2` 對應 src/utils/constants/contract.js `diy: 2 // 電子合約 - 客製化契約書`。成立。",
+    "同粗目（D-notary）其他兩條（公證分頁、雲想科技導向）未對此兩事實有相反說法。"
+   ]
+  },
+  {
+   "id": "jgb/I/pricing-free-trial-eligibility",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "8495297389354b4bba768175d68837ad6a5e068c24c7936713d71a27e7fa5e8c",
+   "title_text": "免費試用怎麼開始、能用多久？（一個週期後不自動續訂）",
+   "notes": [
+    "來源：jgb2 匯出 src/pages/listings/pricing/parts/PlanAndDevice.vue、app/User.php、config/defaultplan.php；另讀 MarketingInviteController.php、PromotionController.php 判斷排他。相對 HEAD 整句刪除原句 2、4；標題逐字等於計畫 §1 表，且以子序列檢查證實為 HEAD 標題只刪字。",
+    "標題：刪字後不再列舉「誰會自動取得」，無排他、無過度概括；「怎麼開始」由句 1（價格頁連結到註冊頁）、「能用多久／不自動續訂」由句 2 支撐。成立。",
+    "句 1：PlanAndDevice.vue `t('免費試用方案')`、`t('不綁信用卡的[s1]天的試用方案，歡迎體驗！', [30])`、`<RouterLink to={{ name: 'users.create' }} target=\"_blank\">` 文字 `免費註冊試用`；src/routes/users.js `name: 'users.create'` → `@src/pages/users/auth/Create.vue`；pricing/Home.vue 有 `<PlanAndDevice ... />` ⇒ 確為價格頁。句子只描述此區塊文案與連結，未宣稱這是唯一入口或人人取得同一方案。成立。",
+    "句 2：User.php createRole「Step4: 給予房東初始方案」預設分支 `$defaultPlan = config('defaultplan')`、`subscription($defaultPlan['plan_cycle'])`、`$role->plan_name = '免費方案'`、`// 不設定 plan_first_ymd 與 plan_cycle 使方案不會續訂`；config/defaultplan.php `\"plan_cycle\" => 'month'`；app/Helper.php `function subscription($type = 'month', $cycleCount = 1 ...)` 加一個月，`plan_end_ymd` 再減一天 ⇒ 一個月。句子只描述免費方案本身效期，未概括誰會拿到。成立。",
+    "排他／過度概括核對：Step4 個人房東分支只在 `session('promotion')['type']=='registration_plan'` 時改給優惠方案，此 session 由 PromotionController（`case 'registration_plan'`）與 MarketingInviteController（`'type' => 'registration_plan'`）設定；刪後兩句皆未觸及此分流，故無漏列或過度概括。",
+    "同粗目 I-pricing：`pricing-plan-tiers-overview`（另有不綁信用卡的免費試用）、`pricing-free-trial-feature-scope`（最多 5 個物件）、`pricing-trial-plan-landing-page`（免費試用開啟免費方案彈窗）、`pricing-free-vs-experience-plan`（免費方案系統贈送、不續訂）皆與本條相容，無矛盾。"
+   ]
+  },
+  {
+   "id": "jgb/I/pricing-free-vs-experience-plan",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "fdcdfeada4d87b43e41ad466e2626f656e7e1880e8e87fe1432177454fd3c064",
+   "title_text": "免費方案與體驗方案差在哪？（前者系統贈送，後者付費訂閱、可選月繳或年繳，可建 10 個物件並自行續訂）",
+   "notes": [
+    "來源：jgb2 匯出 FAQ.vue、PlanForm.vue、app/User.php、config/defaultplan.php、LightboxFreePlan.vue、users/subscription/Chose.vue、PlanAndDevice.vue。相對 HEAD 整句刪除原句 1（含 `建立房東身分時自動贈送` 與優惠代碼括號）；標題只刪「 5 個物件」，逐字等於計畫 §1 表、為 HEAD 標題子序列。",
+    "標題：「前者系統贈送」— User.php Step4 免費方案 `$role->plan_price = 0; // 贈送的方案價格一定要 0`；「後者付費訂閱、可選月繳或年繳」— PlanForm.vue 月費／年費 toggle 與 `/users/subscription/chose?plan=${title === '體驗方案' ? 'trial' : 'basic'}`、Chose.vue `體驗方案價格`；「可建 10 個物件並自行續訂」— FAQ.vue `創建10個物件`、`您也可以自行續訂來延長試用期限`。未概括哪些身分取得免費方案。成立。",
+    "句 1：FAQ.vue `體驗方案則是提供給想要數位轉型的短期試用方案，在方案期限內可以在JGB房管系統內創建10個物件，並擁有智能合約與自動對帳功能，並且，您也可以自行續訂來延長試用期限。` 成立（「同樣擁有」的比較對象在原句 1 刪除後未明示，但 FAQ 同段說免費方案也有智能合約，事實不矛盾）。",
+    "句 2：PlanForm.vue `<div class=\"hidden lg:block\">` 內 ChoiceToggler `{ label: t('月費'), value: 'monthly' }, { label: t('年費'), value: 'yearly' }`（手機隱藏 ⇒「電腦版」）；Chose.vue 月費／年費切換＋`{{ t('體驗方案價格') }}`、`monthly: state.trialPlanPricing.month`；PlanAndDevice.vue 體驗方案 `每月只要 [s1]`。成立。",
+    "句 3：User.php 免費方案 `$role->plan_type = 'free'`、`$role->plan_name = '免費方案'`、`$role->plan_price = 0; // 贈送的方案價格一定要 0`；PlanForm.vue `monthly == 0 ? <div>FREE</div>`。成立。",
+    "句 4：User.php `// 不設定 plan_first_ymd 與 plan_cycle 使方案不會續訂`。成立。",
+    "排他／矛盾核對：刪後 4 句不再說「建立房東身分時自動贈送」，不再概括所有房東身分；與 `pricing-free-trial-eligibility` 不互相矛盾；與 `pricing-plan-price-basis`（體驗方案年繳＝月費×12）相容。註：registration_plan 優惠在 estate_limit<50 時以 `plan_type = 'trial'`、價格 0 給優惠方案，但那是以 promotion['plan_name'] 命名的另一個優惠方案，不是價格頁販售的「體驗方案」，不影響「體驗方案是付費方案」。"
+   ]
+  }
+ ],
+ "findings": [
+  "(2) 成立。jgb.json 逐 fine 比對（HEAD vs 工作樹，539／539 id 相同、順序相同）：只有 6 條有差異；account-basic-info、account-contact-info 只差 reviewed_by／reviewed_at；account-change-password、contract-thinkcloud-signing-variants 差 content_units／content_sha256／reviewed_*；兩條定價細目另差 title；其他 533 條逐欄相同；頂層只有 canon_sha256 變動（衍生值）。句子比對：工作樹每句都在 HEAD 中且順序保留（純刪除），句數 4、2、2、4。兩個定價標題的子序列檢查都是 True，也都逐字出現在計畫檔中。drafts-{A..I}.json 逐 fine 比對：只有 A／D／I 的這 4 條有變動（sentences、evidence，定價兩條另有 title），sources 不變；evidence 恰為 HEAD evidence 去掉被刪句後重編 sentence_index；B、C、E～H 與 HEAD 位元組相同；頂層與粗目欄位都沒變。.md 的 diff 對到標題列：A.md 446／507／522、D.md 1234、I.md 33／76 都是 6 條各自區塊內的 `- reviewed:` 行，其餘只有被刪句與 2 處標題（CATALOG 也只有這 2 行）。8 個字串在工作樹正本 *.md 的命中都是 0；HEAD 正本依序為 1／1／1／1／1／2／1／2（各 ≥1）。正對照：`帳號資訊頁能改哪些基本資料` 在 HEAD 與工作樹都命中 2。",
+  "(3) 成立。從 jgb.json 自行重算：工作樹 pm 533／533、prospect 120／120，已審 539 條，已審集合＝HEAD 533 條 ∪ 6 條（交集為空、相等為 True）；HEAD 為 pm 527／533、prospect 118／120（負對照）。我在本 session 重跑 endpoint_progress.py（compose 掛載 ./rag-orchestrator:/app、./.claude:/.claude:ro，即工作樹），第一行是 `已審細目 pm 533／533、prospect 120／120；頁面 pm 140／183、prospect 53／183`，各架 pm A 62、B 78、C 81、D 104、E 96、F 33、G 26、H 5、I 48，全滿。",
+  "(4) 成立。我自己跑了 `scripts/run-tests.sh unit -p no:cacheprovider -q`，結果是 `9 failed, 3931 passed, 3 skipped, 276 deselected`。FAILED 9 條與 scratchpad/red-baseline.txt 逐條相同，雙向差集＝∅。單檔 test_library_view_req.py 在工作樹全審正本上 `17 passed`；把 p924/test_library_view_req.mut.py 唯讀掛載覆蓋後跑同一檔，`1 failed, 16 passed`，失敗的正是 test_real_views_fit_the_budget：`AssertionError: ('prospect', TurnBudget(k_upper=3099, toc_tokens=1166, toc_lines=36))`，證明反向 mutation 有咬合力。`git diff --numstat` 該檔為 49 增／9 刪，改動只有新增 `_all_unreviewed_canon_copy` 和 test_real_views_fit_the_budget 的 mutation 段（fully_reviewed 分流、兩受眾）。工作樹該檔與 p924/test_library_view_req.py 經 cmp 相同；p924-backup/test_library_view_req.py 與 HEAD 經 cmp 相同。產品程式：rag-orchestrator 下非 tests 的已改／未追蹤 .py 共 9 個（exit_gates.py、provenance_units.py、runtime.py、tools/jgb2.py、turn_context.py、tools/agent_eval.py、cc.py、claim4.py、probe.py），全部列在開工前指紋 p924/foreign-fp.txt 中，`shasum -a 256 -c` 41／41 OK；runtime.py 的 mtime 是 Sep 24，早於本計畫 ⇒ 本計畫對產品程式 0 改動。",
+  "(5) 成立。HANDOFF.bak 與 HEAD 版經 cmp 相同；工作樹 HANDOFF 的改動處（開頭終點指標、一句話現況、開工第 2／5 步、§12-1 加 9.24 列、§12-4 未審細目段）所寫的數字，都與我重跑的結果一致：pm 533／533、prospect 120／120、頁面 140／183、53／183，各架 A 62、D 104、I 48 等，pm 527→533、prospect 118→120、539 條全審。計畫 §6 S1 我能觀察到的部分都對得上：41 個指紋全 OK 且含 runtime.py；HEAD 全碼一致；句數 4→2、5→4、3→2、5→4；drafts 與 p924/runs-pc 九架都 cmp 相同；repo canon 與 p924/canon-w 經 diff -r 相同（正對照：backup canon 與 repo canon 有 5 檔不同）；runs 新增 3 檔：reviewed-dropped 為空陣列（丟棄 0）、open-questions 標頭「共 54 則」、jgb.json 57 個粗目；added lines 6 對上 6 行 `- reviewed:`；測試檔 49 增／9 刪；unit 結果 passed=3931 failed=9；p924/audit-baseline.log 為 `OVERALL: PASS（2026-10-04）`，p924/audit-prev.log 與基準相比唯一的差異是不變量 43 的 `W 工作樹有 6 條細目…`。依禁令沒有重跑的部分：make audit；步驟 2 寫入前的 canon_check／name_scan 中間輸出已被步驟 3 覆蓋，只能用 canon-w 與最終 diff 佐證；這些不構成反證。",
+  "建議（P4，信心 high，不阻擋）：pricing-free-vs-experience-plan 句 1 的「同樣擁有智能合約功能」，在原句 1 整句刪除後，比較對象沒有明說。證據：jgb.json 該條 content_units[0]。預期：比較對象明確。實際：用語懸空，但事實與 FAQ.vue 相符。重驗：下份計畫重新起草免費方案資訊時一併檢視。",
+  "建議（P4，信心 high，不阻擋）：HANDOFF §12-1 表把 9.24 列插在 9.23 列之前，順序非遞增；另外 test_real_views_fit_the_budget 的 docstring 仍寫「mutation：多一條已審細目 ⇒ 兩把尺必變非零」，未反映全審分支。證據：`git diff` HANDOFF 與測試檔。預期：表依序、docstring 同步。實際：如上。重驗：目視即可；不影響任何數字或判定。"
+ ],
+ "source_transcript": "a9a066298da0dc354.output"
+}

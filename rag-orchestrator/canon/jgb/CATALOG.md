@@ -562,10 +562,10 @@ jgb/H/help-center-trial-form｜幫助中心的「立即免費試用」視窗是�
 scope: 方案比較與試用、功能矩陣、導入與資料遷移、批次匯入流程、競品（deliberate_no）；⛔ 找真人走 handoff
 ### I-pricing 方案、價格與免費試用 {#I-pricing}
 jgb/I/pricing-plan-tiers-overview｜JGB 有哪些方案？（免費試用、體驗方案、入門／熱門／專業四級距、企業方案）｜target_user=property_manager,prospect｜
-jgb/I/pricing-free-trial-eligibility｜免費試用怎麼開始、能用多久？（企業團隊與社宅房東建立身分時自動取得，個人房東未帶優惠代碼時自動取得；一個週期後不自動續訂）｜target_user=property_manager,prospect｜
+jgb/I/pricing-free-trial-eligibility｜免費試用怎麼開始、能用多久？（一個週期後不自動續訂）｜target_user=property_manager,prospect｜
 jgb/I/pricing-free-trial-feature-scope｜免費試用不能用哪些功能？（最多 5 個物件，不支援團隊與門鎖電錶等進階功能）｜target_user=property_manager,prospect｜
 jgb/I/pricing-individual-vs-corporate-team｜個人房東與企業團隊方案差在哪？（團隊成員管理等四項功能、自動對帳與分店管理起始級距不同）｜target_user=property_manager,prospect｜
-jgb/I/pricing-free-vs-experience-plan｜免費方案與體驗方案差在哪？（前者系統贈送 5 個物件，後者付費訂閱、可選月繳或年繳，可建 10 個物件並自行續訂）｜target_user=property_manager,prospect｜
+jgb/I/pricing-free-vs-experience-plan｜免費方案與體驗方案差在哪？（前者系統贈送，後者付費訂閱、可選月繳或年繳，可建 10 個物件並自行續訂）｜target_user=property_manager,prospect｜
 jgb/I/pricing-calc-by-estate-count｜怎麼用物件數量試算方案價格？（50～500 物件拉桿試算，超過 500 個要洽企業方案）｜target_user=property_manager,prospect｜
 jgb/I/pricing-quota-near-full-notice｜物件額度快滿了會怎樣？（剩 5 個以下觸發提醒，剛好剩 5 個另寄 Email）｜target_user=property_manager｜
 jgb/I/pricing-enterprise-plan-offer｜企業方案提供什麼？（客製化 LOGO 頁與網址頁，需另外聯繫洽談）｜target_user=property_manager,prospect｜

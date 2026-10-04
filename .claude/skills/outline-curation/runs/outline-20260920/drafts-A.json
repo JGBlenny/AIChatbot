@@ -2294,7 +2294,6 @@
       "帳號資訊頁只有在帳號本身有設定密碼時，才會顯示「密碼」區塊。",
       "帳號資訊頁點選「修改密碼」會展開密碼修改表單。",
       "修改密碼必須同時填寫目前密碼、新密碼與確認新密碼；若目前密碼輸入錯誤，會回覆「目前密碼驗證錯誤」並擋下整筆表單儲存。",
-      "新密碼長度需至少 6 個字元、需同時包含英文與數字，且需與確認新密碼欄位一致。",
       "「密碼」區塊下方會顯示「上次更新：」的日期時間；如果從來沒有改過密碼，則顯示帳號建立的時間。"
      ],
      "sources": [
@@ -2330,26 +2329,6 @@
       },
       {
        "sentence_index": 3,
-       "source": "code:app/Http/Controllers/UserController.php#account",
-       "quote_or_symbol": "'password' => 'min:6|required_with:password_confirmation|same:password_confirmation',"
-      },
-      {
-       "sentence_index": 3,
-       "source": "code:src/components/PasswordForm.vue",
-       "quote_or_symbol": "return /[0-9]/.test(this.password) && /[a-zA-Z]/.test(this.password)"
-      },
-      {
-       "sentence_index": 3,
-       "source": "code:src/components/PasswordForm.vue",
-       "quote_or_symbol": "return this.password.length >= 6"
-      },
-      {
-       "sentence_index": 3,
-       "source": "code:src/components/PasswordForm.vue",
-       "quote_or_symbol": "tip_pwd_format: '密碼應有至少一位英文和數字',"
-      },
-      {
-       "sentence_index": 4,
        "source": "code:app/Http/Controllers/UserController.php#account",
        "quote_or_symbol": "'description' => ___('上次更新：') . ($user->password_change_at ? format_timezone('Y/m/d H:i', $user->password_change_at, $role->timezone_offset) : format_timezone('Y/m/d H:i', $user->created_at, $role->timezone_offset)),"
       }

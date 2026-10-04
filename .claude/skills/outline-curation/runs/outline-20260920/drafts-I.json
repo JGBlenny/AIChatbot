@@ -78,7 +78,7 @@
     {
      "proposed_id": "jgb/I/pricing-free-trial-eligibility",
      "askable": "免費試用怎麼取得、可以用多久、期滿後會不會自動續訂",
-     "title": "免費試用怎麼開始、能用多久？（企業團隊與社宅房東建立身分時自動取得，個人房東未帶優惠代碼時自動取得；一個週期後不自動續訂）",
+     "title": "免費試用怎麼開始、能用多久？（一個週期後不自動續訂）",
      "unit_ids": [
       "page:listings.pricing"
      ],
@@ -98,9 +98,7 @@
      ],
      "sentences": [
       "價格頁的「免費試用方案」寫著「不綁信用卡的30天的試用方案，歡迎體驗！」，點「免費註冊試用」會另開註冊頁。",
-      "企業團隊與社宅房東身分建立時，一律自動取得免費方案；個人房東則是註冊過程沒有帶入優惠代碼時，才自動取得免費方案。",
-      "免費方案的效期是系統設定的一個週期（目前為一個月），到期後不會自動續訂。",
-      "個人房東如果是透過優惠代碼連結完成註冊，取得的是優惠代碼指定的方案，而不是這個自動贈送的免費方案。"
+      "免費方案的效期是系統設定的一個週期（目前為一個月），到期後不會自動續訂。"
      ],
      "sources": [
       "code:src/pages/listings/pricing/parts/PlanAndDevice.vue",
@@ -130,43 +128,13 @@
       },
       {
        "sentence_index": 1,
-       "source": "code:app/User.php",
-       "quote_or_symbol": "// 不設定 plan_first_ymd 與 plan_cycle 使方案不會續訂"
-      },
-      {
-       "sentence_index": 1,
-       "source": "code:app/User.php",
-       "quote_or_symbol": "case Role::RULE_KEY_LANDLORD_CORPORATE:"
-      },
-      {
-       "sentence_index": 1,
-       "source": "code:app/User.php",
-       "quote_or_symbol": "case Role::RULE_KEY_LANDLORD_SOCIAL_HOUSING:"
-      },
-      {
-       "sentence_index": 1,
-       "source": "code:app/User.php",
-       "quote_or_symbol": "if (!empty($promotion = session('promotion')) && !empty($promotion['type']) && $promotion['type']=='registration_plan') {"
-      },
-      {
-       "sentence_index": 1,
-       "source": "code:app/User.php",
-       "quote_or_symbol": "$role->plan_name = '免費方案';"
-      },
-      {
-       "sentence_index": 2,
        "source": "code:config/defaultplan.php",
        "quote_or_symbol": "\"plan_cycle\" => 'month',"
       },
       {
-       "sentence_index": 2,
+       "sentence_index": 1,
        "source": "code:app/User.php",
        "quote_or_symbol": "$planExtendYmd = subscription($defaultPlan['plan_cycle']);"
-      },
-      {
-       "sentence_index": 3,
-       "source": "code:app/User.php",
-       "quote_or_symbol": "// 如果有使用優惠代碼 則幫其設定訂閱方案"
       }
      ],
      "not_supported_greps": [
@@ -339,7 +307,7 @@
     {
      "proposed_id": "jgb/I/pricing-free-vs-experience-plan",
      "askable": "免費方案和體驗方案有什麼不一樣",
-     "title": "免費方案與體驗方案差在哪？（前者系統贈送 5 個物件，後者付費訂閱、可選月繳或年繳，可建 10 個物件並自行續訂）",
+     "title": "免費方案與體驗方案差在哪？（前者系統贈送，後者付費訂閱、可選月繳或年繳，可建 10 個物件並自行續訂）",
      "unit_ids": [
       "page:listings.pricing"
      ],
@@ -358,7 +326,6 @@
       "免費方案可以續訂嗎"
      ],
      "sentences": [
-      "免費方案是系統在建立房東身分時自動贈送的測試方案（個人房東帶優惠代碼註冊時取得的是優惠方案），在一個月的測試期間內可以創建 5 個物件，並擁有智能合約功能。",
       "體驗方案是提供給想要數位轉型的短期試用方案，在方案期限內可以創建 10 個物件，同樣擁有智能合約功能，而且可以自行續訂來延長試用期限。",
       "體驗方案是付費方案，跟其他付費方案一樣，可以在方案價格表（電腦版）與訂閱頁切換查看「月費」或「年費」兩種計費週期的價格。",
       "免費方案是系統贈送的，方案價格固定為 0。",
@@ -377,85 +344,55 @@
       {
        "sentence_index": 0,
        "source": "code:src/pages/listings/pricing/parts/FAQ.vue",
-       "quote_or_symbol": "免費方案為JGB房管系統提供給每一個新創身份的測試方案，在一個月的測試期間內，您可以在JGB房管系統內創建5個物件"
+       "quote_or_symbol": "體驗方案則是提供給想要數位轉型的短期試用方案，在方案期限內可以在JGB房管系統內創建10個物件"
       },
       {
        "sentence_index": 0,
-       "source": "code:app/User.php",
-       "quote_or_symbol": "$role->plan_name = '免費方案';"
-      },
-      {
-       "sentence_index": 0,
-       "source": "code:config/defaultplan.php",
-       "quote_or_symbol": "\"estate_limit\" => 5,"
-      },
-      {
-       "sentence_index": 0,
-       "source": "code:config/defaultplan.php",
-       "quote_or_symbol": "\"plan_cycle\" => 'month',"
-      },
-      {
-       "sentence_index": 0,
-       "source": "code:src/pages/listings/template-parts/LightboxFreePlan.vue",
-       "quote_or_symbol": "label: t('智能合約', null, store.state.listingsI18n),"
-      },
-      {
-       "sentence_index": 0,
-       "source": "code:app/User.php",
-       "quote_or_symbol": "if (!empty($promotion = session('promotion')) && !empty($promotion['type']) && $promotion['type']=='registration_plan') {"
-      },
-      {
-       "sentence_index": 1,
        "source": "code:src/pages/listings/pricing/parts/FAQ.vue",
        "quote_or_symbol": "體驗方案則是提供給想要數位轉型的短期試用方案，在方案期限內可以在JGB房管系統內創建10個物件"
       },
       {
-       "sentence_index": 1,
-       "source": "code:src/pages/listings/pricing/parts/FAQ.vue",
-       "quote_or_symbol": "體驗方案則是提供給想要數位轉型的短期試用方案，在方案期限內可以在JGB房管系統內創建10個物件"
-      },
-      {
-       "sentence_index": 1,
+       "sentence_index": 0,
        "source": "code:src/pages/listings/pricing/parts/FAQ.vue",
        "quote_or_symbol": "您也可以自行續訂來延長試用期限"
       },
       {
-       "sentence_index": 2,
+       "sentence_index": 1,
        "source": "code:src/pages/listings/pricing/parts/PlanForm.vue",
        "quote_or_symbol": "yearly={state.quantity?.[quantity].yearly}"
       },
       {
-       "sentence_index": 2,
+       "sentence_index": 1,
        "source": "code:src/pages/listings/pricing/parts/PlanForm.vue",
        "quote_or_symbol": "{ label: t('月費'), value: 'monthly' },"
       },
       {
-       "sentence_index": 2,
+       "sentence_index": 1,
        "source": "code:src/pages/users/subscription/Chose.vue",
        "quote_or_symbol": "{{ t('體驗方案價格') }}"
       },
       {
-       "sentence_index": 2,
+       "sentence_index": 1,
        "source": "code:src/pages/users/subscription/Chose.vue",
        "quote_or_symbol": "monthly: state.trialPlanPricing.month,"
       },
       {
-       "sentence_index": 2,
+       "sentence_index": 1,
        "source": "code:src/pages/listings/pricing/parts/PlanAndDevice.vue",
        "quote_or_symbol": "t('每月只要 [s1]，即可享有新增物件以及建立合約的功能',"
       },
       {
-       "sentence_index": 3,
+       "sentence_index": 2,
        "source": "code:app/User.php",
        "quote_or_symbol": "$role->plan_price = 0; // 贈送的方案價格一定要 0 以免使用者取消訂閱拿到退款'"
       },
       {
-       "sentence_index": 3,
+       "sentence_index": 2,
        "source": "code:src/pages/listings/pricing/parts/PlanForm.vue",
        "quote_or_symbol": "? <div>FREE</div>"
       },
       {
-       "sentence_index": 4,
+       "sentence_index": 3,
        "source": "code:app/User.php",
        "quote_or_symbol": "// 不設定 plan_first_ymd 與 plan_cycle 使方案不會續訂"
       }

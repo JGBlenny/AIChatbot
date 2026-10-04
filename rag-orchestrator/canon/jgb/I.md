@@ -23,20 +23,19 @@ language: zh-TW
 除了頁面上列出的四個級距，另外還提供不綁信用卡的「免費試用」方案，以及只能透過聯繫窗口洽談的「企業方案」。
 方案價格依物件數量分級計費，頁面上可切換「月費」或「年費」兩種計費週期查看價格。
 企業方案主打客製化專屬 LOGO 頁與客製化專屬網址頁，是提供給大型企業的解決方案，需點選「深入了解企業方案」導向預約 demo 頁面洽談，頁面上不會顯示企業方案的價格。
-### 免費試用怎麼開始、能用多久？（企業團隊與社宅房東建立身分時自動取得，個人房東未帶優惠代碼時自動取得；一個週期後不自動續訂） {#jgb/I/pricing-free-trial-eligibility}
+### 免費試用怎麼開始、能用多久？（一個週期後不自動續訂） {#jgb/I/pricing-free-trial-eligibility}
 - phrasings:
   - {text: "免費試用能用多久", source: "draft:outline-20260920", status: proposed}
   - {text: "怎麼取得免費試用", source: "draft:outline-20260920", status: proposed}
   - {text: "免費方案會自動續訂嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "試用期多長", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/listings/pricing/parts/PlanAndDevice.vue, code:app/User.php, code:config/defaultplan.php]
+- reviewed: {by: owner, at: 2026-10-04}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
 價格頁的「免費試用方案」寫著「不綁信用卡的30天的試用方案，歡迎體驗」，點「免費註冊試用」會另開註冊頁。
-企業團隊與社宅房東身分建立時，一律自動取得免費方案；個人房東則是註冊過程沒有帶入優惠代碼時，才自動取得免費方案。
 免費方案的效期是系統設定的一個週期（目前為一個月），到期後不會自動續訂。
-個人房東如果是透過優惠代碼連結完成註冊，取得的是優惠代碼指定的方案，而不是這個自動贈送的免費方案。
 ### 免費試用不能用哪些功能？（最多 5 個物件，不支援團隊與門鎖電錶等進階功能） {#jgb/I/pricing-free-trial-feature-scope}
 - phrasings:
   - {text: "免費方案有什麼限制", source: "draft:outline-20260920", status: proposed}
@@ -67,17 +66,17 @@ language: zh-TW
 自動對帳在個人房東的比較表裡，入門、熱門、專業、體驗方案顯示的都是文字說明「無法申請國泰、永豐可申請藍新、中信」；企業團隊的比較表裡，入門、熱門、專業方案顯示為打勾支援，只有體驗方案不支援。
 分店管理在個人房東的比較表裡，體驗、入門、熱門、專業方案全部支援；企業團隊的比較表裡則是體驗方案不支援，入門、熱門、專業方案才支援。
 大房東管理在兩份比較表裡的支援情形完全相同：體驗方案不支援，入門、熱門、專業方案都支援。
-### 免費方案與體驗方案差在哪？（前者系統贈送 5 個物件，後者付費訂閱、可選月繳或年繳，可建 10 個物件並自行續訂） {#jgb/I/pricing-free-vs-experience-plan}
+### 免費方案與體驗方案差在哪？（前者系統贈送，後者付費訂閱、可選月繳或年繳，可建 10 個物件並自行續訂） {#jgb/I/pricing-free-vs-experience-plan}
 - phrasings:
   - {text: "免費方案跟體驗方案差在哪", source: "draft:outline-20260920", status: proposed}
   - {text: "免費方案跟體驗方案哪裡不同", source: "draft:outline-20260920", status: proposed}
   - {text: "體驗方案是免費的嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "免費方案可以續訂嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/listings/pricing/parts/FAQ.vue, code:src/pages/listings/pricing/parts/PlanForm.vue, code:app/User.php, code:config/defaultplan.php, code:src/pages/listings/template-parts/LightboxFreePlan.vue, code:src/pages/users/subscription/Chose.vue, code:src/pages/listings/pricing/parts/PlanAndDevice.vue]
+- reviewed: {by: owner, at: 2026-10-04}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
-免費方案是系統在建立房東身分時自動贈送的測試方案（個人房東帶優惠代碼註冊時取得的是優惠方案），在一個月的測試期間內可以創建 5 個物件，並擁有智能合約功能。
 體驗方案是提供給想要數位轉型的短期試用方案，在方案期限內可以創建 10 個物件，同樣擁有智能合約功能，而且可以自行續訂來延長試用期限。
 體驗方案是付費方案，跟其他付費方案一樣，可以在方案價格表（電腦版）與訂閱頁切換查看「月費」或「年費」兩種計費週期的價格。
 免費方案是系統贈送的，方案價格固定為 0。

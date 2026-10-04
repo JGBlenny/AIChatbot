@@ -5979,8 +5979,7 @@
      ],
      "sentences": [
       "如果合約是「公會中文版 租賃契約書」（原房東、包租業或代租代管）且有補充條款，送去簽署時，合約上會多出一組簽名位置（出租方與承租方各一個）。",
-      "用「電子合約 - 客製化契約書」上傳自己的 PDF 底稿建立合約時，系統會先用兩種方式試著解析這份 PDF；兩種都失敗時，合約不會建立、上傳的檔案也不會保留，回應訊息會請使用者確認檔案內容或重新輸出後再上傳；如果是使用了較新壓縮格式的 PDF，訊息會建議用瀏覽器開啟 PDF，透過「列印 → 另存為 PDF」重新輸出。",
-      "送去簽署時，如果客製化契約書的 PDF 底稿又解析不出來，也會跳出同樣的訊息，簽署不會開始。"
+      "用「電子合約 - 客製化契約書」上傳自己的 PDF 底稿建立合約時，系統會先用兩種方式試著解析這份 PDF；兩種都失敗時，合約不會建立、上傳的檔案也不會保留，回應訊息會請使用者確認檔案內容或重新輸出後再上傳；如果是使用了較新壓縮格式的 PDF，訊息會建議用瀏覽器開啟 PDF，透過「列印 → 另存為 PDF」重新輸出。"
      ],
      "sources": [
       "code:app/Http/Controllers/ContractController.php",
@@ -6046,16 +6045,6 @@
        "sentence_index": 1,
        "source": "code:app/Http/Controllers/ContractController.php",
        "quote_or_symbol": "DiyPdfUnparseableException::CODE_COMPRESSED_XREF"
-      },
-      {
-       "sentence_index": 2,
-       "source": "code:app/Http/Controllers/ContractController.php",
-       "quote_or_symbol": "// 僅攔 DiyPdfUnparseableException，其他例外類型保留既有錯誤路徑。"
-      },
-      {
-       "sentence_index": 2,
-       "source": "code:app/Http/Controllers/ContractController.php",
-       "quote_or_symbol": "$signBlockAry = $diyContractService->readToSignBlock($result,$contract,$role);"
       }
      ],
      "not_supported_greps": [],
