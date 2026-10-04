@@ -48,6 +48,7 @@ jgb/A/account-contact-info｜帳號資訊頁的聯絡資訊要填什麼？（LIN
 jgb/A/account-preference｜帳號資訊頁的偏好設定能設定什麼？（登入預設房東身份、時區、Email 通知語系）｜target_user=property_manager｜
 jgb/A/account-progress-unlock｜帳號資訊頁有「資訊完整度」進度條嗎？（目前頁面上不會顯示這個區塊）｜target_user=property_manager,prospect｜
 jgb/A/account-save-integrity-check｜帳號資訊頁儲存失敗會提示什麼？（頁面沒有完整載入時會提醒重新整理再儲存）｜target_user=property_manager｜
+jgb/A/account-change-password-rules｜在帳號資訊頁改密碼，新密碼有什麼規則？（至少 6 個字元、需與確認新密碼一致；英數混合在這裡只是提示）｜target_user=property_manager｜
 ### A-signer-info 簽約資訊（證件、身分證號、戶籍地址；公司統編與大小章） {#A-signer-info}
 jgb/A/signer-individual-fields｜個人房東的簽約資訊要填什麼？（姓氏、名稱、身分證字號、Email、手機、身分證正反面）｜target_user=property_manager,prospect｜
 jgb/A/signer-corp-fields｜公司身分的簽約資訊要填什麼？（公司名稱、統編、負責人、公司電話/Email、登記證資料）｜target_user=property_manager,prospect｜
@@ -170,6 +171,7 @@ jgb/C/community-delete-requires-empty｜社區可以刪除嗎？（社區底下�
 jgb/C/community-export-list｜社區總表可以匯出嗎？（需要匯出物件權限，會依目前篩選條件匯出）｜target_user=property_manager｜
 jgb/C/community-list-pagination｜社區總表每頁筆數可以調整嗎？（30／60／90項）｜target_user=property_manager｜
 jgb/C/community-list-add-permission｜誰看得到新增社區的入口？（總表右上角需要編輯物件權限；空狀態的批次新增／新增社區入口需要新增物件權限）｜target_user=property_manager｜
+jgb/C/community-pick-next-step｜社區選擇畫面選好社區之後會發生什麼？（複製社區直接建立副本並進入編輯；新增物件直接建立物件並進入編輯；複製物件接著挑選物件）｜target_user=property_manager｜
 ### C-community-edit 社區資料編輯（基本資料、照片與描述、介紹與交通） {#C-community-edit}
 jgb/C/community-edit-tabs｜社區編輯有哪些分頁？（基本資料、介紹與交通、照片與描述）｜target_user=property_manager｜
 jgb/C/community-edit-basic-fields｜社區基本資料要填什麼？（社區名稱、詳細地址與對外顯示地址、建築類型、總樓層、屋齡）｜target_user=property_manager｜
@@ -358,6 +360,7 @@ jgb/D/early-termination-billing-after｜提前解約後還會出新帳單嗎？�
 jgb/D/general-contract-notary-tab｜一般合約的「公證」分頁怎麼設定？（是否辦理公證，同意時可複選三項應逕受強制執行事項；只有部分合約範本有此選項）｜target_user=property_manager｜
 jgb/D/contract-thinkcloud-esign-service｜簽約時進入的雲想科技頁面是什麼？（系統導向 Thinkcloud 雲想科技的電子簽署網頁，簽完再導回 JGB；一般合約、委託合約皆會用到）｜target_user=property_manager｜
 jgb/D/contract-thinkcloud-signing-variants｜簽署畫面與客製化契約書 PDF 要注意什麼？（公會中文版合約加補充條款會多一組簽名位置；上傳的 PDF 底稿無法解析時合約建立不了，要重新輸出再上傳）｜target_user=property_manager｜
+jgb/D/contract-thinkcloud-diy-pdf-sign-blocked｜客製化契約書送簽時 PDF 底稿解析失敗會怎樣？（簽署不會開始）｜target_user=property_manager｜
 ### D-entrust-contract 委託合約（列表、建立編輯、檢視） {#D-entrust-contract}
 jgb/D/entrusted-contract-what-is-it｜委託合約是什麼？（房東委託業者包租代管的合約，跟業者與租客之間的租賃合約是不同份文件）｜target_user=property_manager,prospect｜
 jgb/D/entrusted-contract-lease-type｜委託合約「包租」跟「代管」有什麼不同？（代管必填服務費計算模式、幣別與金額或比例；計算制度、週期、約定日期兩者都要填）｜target_user=property_manager,prospect｜
@@ -572,6 +575,7 @@ jgb/I/pricing-enterprise-plan-offer｜企業方案提供什麼？（客製化 LO
 jgb/I/pricing-trial-plan-landing-page｜體驗方案介紹頁講什麼？（每月費用試算、體驗方案資格需求、客戶見證、免費試用／免費諮詢按鈕）｜target_user=property_manager,prospect｜
 jgb/I/pricing-plan-price-basis｜方案價格怎麼算、年繳有折扣嗎？（各方案單價從系統價格表讀取；一般方案年繳等於 10 個月的月費）｜target_user=property_manager,prospect｜
 jgb/I/pricing-quota-full-block｜物件額度用滿了會怎樣？（新增物件、匯入等入口會被擋下並提示升級方案）｜target_user=property_manager｜
+jgb/I/pricing-landlord-initial-plan｜建立房東身分時會拿到什麼方案？（企業團隊與社宅房東自動取得免費方案；個人房東一般也是，透過特定優惠或行銷活動連結註冊時則取得活動指定的方案）｜target_user=property_manager,prospect｜
 ### I-subscription-payment 訂閱、付款與訂單 {#I-subscription-payment}
 jgb/I/subscription-choose-plan-flow｜訂閱頁怎麼選方案？（體驗方案、依物件數量拉桿的基本方案、企業方案洽談三選一）｜target_user=property_manager｜
 jgb/I/subscription-payment-authorization-flow｜訂閱怎麼扣款？（先試刷 TWD 1 驗證信用卡、藍新金流走 SSL／PCI-DSS）｜target_user=property_manager,prospect｜

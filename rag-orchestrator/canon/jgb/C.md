@@ -110,6 +110,20 @@ language: zh-TW
 - instance_applicability: general
 只有具備編輯物件權限的使用者，才看得到社區總表右上角的「新增社區」按鈕與批次新增、複製現有社區的選單；沒有編輯物件的權限時，這些按鈕與選單都不會顯示。
 當該分類目前沒有任何社區時，畫面會改顯示空狀態；此時「此分類尚未有社區，您可以選擇😎：」文字與底下的「批次新增」「新增社區」按鈕，只有在使用者具備新增物件權限時才會出現，沒有新增物件權限的使用者只會看到「此分類尚未有社區」的提示文字。
+### 社區選擇畫面選好社區之後會發生什麼？（複製社區直接建立副本並進入編輯；新增物件直接建立物件並進入編輯；複製物件接著挑選物件） {#jgb/C/community-pick-next-step}
+- phrasings:
+  - {text: "選完社區之後會怎樣", source: "draft:outline-20260920", status: proposed}
+  - {text: "複製社區之後會跳到哪裡", source: "draft:outline-20260920", status: proposed}
+  - {text: "社區選擇畫面怎麼用", source: "draft:outline-20260920", status: proposed}
+- sources: [code:src/pages/communities/pick/Index.vue, code:src/components/BottomNav.vue, code:app/Http/Controllers/EstateController.php, code:src/pages/estates/edit/Index.vue]
+- reviewed: {by: owner, at: 2026-10-04}
+- target_user: [property_manager]
+- business_types: [system_provider]
+- instance_applicability: general
+社區選擇畫面會依用途顯示不同標題：「請選擇要複製的社區」「請選擇要新增物件的社區」「請選擇要複製物件的社區」。
+複製社區時，選好社區按「下一步」，系統會直接建立一份副本並進入新社區的編輯頁。
+新增物件時，選好社區按「下一步」，系統會直接在該社區建立一筆新物件，並進入這筆物件的「編輯物件」頁。
+複製物件時，選好社區按「下一步」，會接著進入挑選要複製哪一個物件的畫面。
 ## 社區資料編輯（基本資料、照片與描述、介紹與交通） {#C-community-edit}
 ### 社區編輯有哪些分頁？（基本資料、介紹與交通、照片與描述） {#jgb/C/community-edit-tabs}
 - phrasings:

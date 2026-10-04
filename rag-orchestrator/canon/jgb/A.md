@@ -564,6 +564,19 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
 - business_types: [system_provider]
 - instance_applicability: general
 如果送出儲存時，系統偵測到頁面沒有完整載入（缺少應該要有的欄位），會擋下這次儲存，並提示「頁面沒有完整載入，這次的資料沒有儲存，請重新整理頁面後再儲存一次」。
+### 在帳號資訊頁改密碼，新密碼有什麼規則？（至少 6 個字元、需與確認新密碼一致；英數混合在這裡只是提示） {#jgb/A/account-change-password-rules}
+- phrasings:
+  - {text: "改密碼有什麼限制", source: "draft:outline-20260920", status: proposed}
+  - {text: "改密碼一定要英文加數字嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "帳號資訊頁新密碼規則", source: "draft:outline-20260920", status: proposed}
+- sources: [code:app/Http/Controllers/UserController.php, code:src/components/PasswordForm.vue, code:resources/views/users/account.blade.php, code:app/Http/Controllers/AuthController.php]
+- reviewed: {by: owner, at: 2026-10-04}
+- target_user: [property_manager]
+- business_types: [system_provider]
+- instance_applicability: general
+在帳號資訊頁修改密碼時，新密碼長度需至少 6 個字元，且需與確認新密碼欄位一致。
+帳號資訊頁的密碼表單會提示「密碼應有至少一位英文和數字」，但按「儲存」時不會檢查這一條。
+註冊帳號時設定的密碼則必須同時包含英文與數字。
 ## 簽約資訊（證件、身分證號、戶籍地址；公司統編與大小章） {#A-signer-info}
 ### 個人房東的簽約資訊要填什麼？（姓氏、名稱、身分證字號、Email、手機、身分證正反面） {#jgb/A/signer-individual-fields}
 - phrasings:

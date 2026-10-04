@@ -440,6 +440,102 @@
       }
      ],
      "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/C/community-pick-next-step",
+     "askable": "社區選擇畫面選好社區之後會發生什麼",
+     "title": "社區選擇畫面選好社區之後會發生什麼？（複製社區直接建立副本並進入編輯；新增物件直接建立物件並進入編輯；複製物件接著挑選物件）",
+     "unit_ids": [
+      "page:communities.pick"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "選完社區之後會怎樣",
+      "複製社區之後會跳到哪裡",
+      "社區選擇畫面怎麼用"
+     ],
+     "sentences": [
+      "社區選擇畫面會依用途顯示不同標題：「請選擇要複製的社區」「請選擇要新增物件的社區」「請選擇要複製物件的社區」。",
+      "複製社區時，選好社區按「下一步」，系統會直接建立一份副本並進入新社區的編輯頁。",
+      "新增物件時，選好社區按「下一步」，系統會直接在該社區建立一筆新物件，並進入這筆物件的「編輯物件」頁。",
+      "複製物件時，選好社區按「下一步」，會接著進入挑選要複製哪一個物件的畫面。"
+     ],
+     "sources": [
+      "code:src/pages/communities/pick/Index.vue",
+      "code:src/components/BottomNav.vue",
+      "code:app/Http/Controllers/EstateController.php",
+      "code:src/pages/estates/edit/Index.vue"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/communities/pick/Index.vue",
+       "quote_or_symbol": "return t('請選擇要複製的社區')"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/communities/pick/Index.vue",
+       "quote_or_symbol": "return t('請選擇要新增物件的社區')"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/communities/pick/Index.vue",
+       "quote_or_symbol": "return t('請選擇要複製物件的社區')"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/communities/pick/Index.vue",
+       "quote_or_symbol": "copy: 1,"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/communities/pick/Index.vue",
+       "quote_or_symbol": "name: 'communities.edit',"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/components/BottomNav.vue",
+       "quote_or_symbol": "default: '下一步',"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/communities/pick/Index.vue",
+       "quote_or_symbol": "window.location.href = `${store.state.APP_URL}/api2/estate/create?communityId=${communitiesScopeStore.pick.picked[0]}`"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Controllers/EstateController.php",
+       "quote_or_symbol": "if (!$estate = Estate::createEstate($user, $role, $addAttrs)) {"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Controllers/EstateController.php",
+       "quote_or_symbol": "return redirect()->route('estates.edit', ['id' => $estate->id]);"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/estates/edit/Index.vue",
+       "quote_or_symbol": "label: t('編輯物件'),"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/communities/pick/Index.vue",
+       "quote_or_symbol": "name: 'estates.pick',"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/communities/pick/Index.vue",
+       "quote_or_symbol": "action: 'estateCopy',"
+      }
+     ],
+     "not_supported_greps": [],
+     "open_questions": []
     }
    ]
   },

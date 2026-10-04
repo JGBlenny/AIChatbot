@@ -1,0 +1,83 @@
+{
+ "kind": "write",
+ "verdict": "CONFIRMED",
+ "base": "6e4db63d1bb11ce5a22ebb8c9cefcf46fd6bee03",
+ "claim": "Plan 9.25 已新增並寫為已審 4 條細目：`jgb/A/account-change-password-rules`、`jgb/C/community-pick-next-step`、`jgb/D/contract-thinkcloud-diy-pdf-sign-blocked`、`jgb/I/pricing-landlord-initial-plan`，且：(1) 這 4 條每條的標題與每一句（句數＝該條 `content_units` 數）對 jgb2 釘住匯出皆成立；判準含：與既有細目同題、跨粗目矛盾、排他列舉或過度概括、畫面行為與程式不符——違反即「不成立」；(2) 相對 HEAD，`jgb.json` 只新增這 4 條、既有 539 條逐欄不變（含 reviewed 狀態）、粗目欄位不變；4 條內容與審核單 `review-sheet-9.25-20261004.md` 逐字相同；drafts 只在 A／C／D／I 對應粗目各附加 1 條，其他內容不變；(3) 已審集合＝539＋4＝543 全審；終點指標第一行以 `已審細目 pm 537／537、prospect 121／121；頁面 pm 142／183` 開頭，新增覆蓋頁為 `page:communities.pick` 與 `page:estates.edit`、無頁面失去覆蓋；計畫 P1～P4 內容要點各有成立句；(4) 全套單元測試紅燈集合與 9 條基準雙向差集＝∅；(5) 計畫 §6「### S1」紀錄與 HANDOFF 本次改動處（與 `p925-backup/HANDOFF.bak` 比對可見）的數字與敘述與實況一致。（證據檔 `verification/20261004-p925-write.json` 會由主 session 從你的交件取出，目前尚不存在，屬預期。）",
+ "fines": [
+  {
+   "id": "jgb/A/account-change-password-rules",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "e3a67ac38c1b88b1e21b4a838c8bba40f5fcb1af971cd4f51a4b28f6b65ca699",
+   "title_text": "在帳號資訊頁改密碼，新密碼有什麼規則？（至少 6 個字元、需與確認新密碼一致；英數混合在這裡只是提示）",
+   "notes": [
+    "標題：三個要點分別由句 1～3 支撐。與 `jgb/A/account-change-password`（怎麼改：目前密碼／新密碼／確認欄位、目前密碼錯誤會被擋）不同題：本條講新密碼規則。與 `jgb/A/register-password-rule`（註冊端強制英數）不矛盾，且由句 3 明確區分兩個情境。與 `jgb/A/forget-password-flow` 不同情境（忘記密碼）。",
+    "句 1：成立。`app/Http/Controllers/UserController.php` 的 `public function account(` 內 `'password' => 'min:6|required_with:password_confirmation|same:password_confirmation',`；Laravel 對字串的 min:6 代表長度至少 6（錯誤文案寫「超過6個字元」，但規則本身允許剛好 6 個字元，open-questions 第 4 則已記錄這個落差）；same 規則要求與確認欄位一致。路由 `'/account', 'UserController@account')->name('users.account')`。確認欄位名稱：`'password_confirm_label' => ___('確認新密碼')`。",
+    "句 2：成立。`src/components/PasswordForm.vue` 的提示文字 `tip_pwd_format: '密碼應有至少一位英文和數字'`，只用來顯示勾選或警示圖示；`resources/views/users/account.blade.php` 的儲存按鈕 `<button form=\"form_account_setting\"  class=\"btn btn-secondary-ghost\"  type=\"submit\"` 沒有綁定 disabled；`password_allow_submit` 只在 `@done` 被設定，沒有被用來擋按鈕（對照 `safety.blade.php` 有 `:class=\"{'disabled': !memberCenter.safety.password_allow_submit`）；表單的 onsubmit 只會加上 disabled；src 內沒有任何掛在 form_account_setting 上的送出攔截；後端也沒有英數 regex。",
+    "句 3：成立。`app/Http/Controllers/AuthController.php` 的 `authEmail` 內 `'password' => 'required|string|min:6|regex:/^(?=.*[a-zA-Z])(?=.*[0-9]).*$/',`，前端 `src/pages/users/auth/parts/AccountSetting.vue` 的 `format: /[0-9]/.test(state.password) && /[a-zA-Z]/.test(state.password)`；SSO 與手機註冊路徑（`authSSO`、`authPhone`）都不設定密碼，所以不構成反例。"
+   ]
+  },
+  {
+   "id": "jgb/C/community-pick-next-step",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "c57491e172dbd08382b81f757c79f073b7bb4963651b09ef8785b684428e4f4e",
+   "title_text": "社區選擇畫面選好社區之後會發生什麼？（複製社區直接建立副本並進入編輯；新增物件直接建立物件並進入編輯；複製物件接著挑選物件）",
+   "notes": [
+    "標題：三種去向分別由句 2～4 支撐。與 `jgb/C/community-batch-add-and-copy`（怎麼開始複製社區，會先進入社區選擇畫面）、`estate-list-add-must-pick-community`（物件總表的入口要先經過社區選擇畫面）、`community-estates-add-batch-copy`（社區底下的新增物件入口）不同題：本條回答選好社區之後會發生什麼。與它們沒有矛盾；`estate-list-add-must-pick-community` 寫「再回來建立或複製物件」較籠統，但不衝突。",
+    "句 1：成立。`src/pages/communities/pick/Index.vue` 的 `case 'communityCopy':` 回傳 `t('請選擇要複製的社區')`，`case 'estateCreate':` 回傳 `t('請選擇要新增物件的社區')`，`case 'estateCopy':` 回傳 `t('請選擇要複製物件的社區')`。路由 `src/routes/communities.js` 的 `path: 'pick/:action'` 必須帶 action；src 內所有呼叫端（`estates/list/_parts/PageTop.vue`、`communities/list/Index.vue`、`users/dashboard/parts/ShortCuts.vue`）只用這三種 action，所以 default 分支的「請選擇社區」不構成漏列。",
+    "句 2：成立（成功路徑）。pick 頁的 `communityCopyFetcher` 以 POST 呼叫 `/api3/communities/single`，帶 `copy: 1`；後端 `CommunityController.php` 的 `postSingle` 在 `elseif (!empty($request->copy))` 時呼叫 `prepareDataFromCopy`，接著 `createCommunity`，回傳的 `item()` 含 `'communityId' => $community->id`；前端拿到 `result?.data?.communityId` 後 `router.push({ name: 'communities.edit' ...})`。按鈕文字來自 `src/components/BottomNav.vue` 的 `default: '下一步',`。失敗路徑（權限或額度）沒有寫，但句子不是排他寫法（審核單 P4 已延後）。",
+    "句 3：成立（成功路徑）。pick 頁 `window.location.href = `${store.state.APP_URL}/api2/estate/create?communityId=...`` 會進到 `EstateController.php` 的 `public function create(`，執行 `Estate::createEstate($user, $role, $addAttrs)`，其中 `$addAttrs['community_id'] = $communityId`，接著 `return redirect()->route('estates.edit', ['id' => $estate->id]);`。web.php 有兩條同名 `estates.edit`，以後者 `/estates/edit/{id?}/...` 為準；前端 `src/routes/estates.js` 的 `path: '/estates/edit/:id'` 對應 `src/pages/estates/edit/Index.vue`，麵包屑為 `label: t('編輯物件'),`。",
+    "句 4：成立。pick 頁的 `case 'estateCopy':` 執行 `router.push({ name: 'estates.pick', params: { action: 'estateCopy' }, query: { communityId } })`；`src/pages/estates/pick/_parts/pick.jsx` 的 `case EstatePickAction.estateCopy:` 回傳 `t('請選擇要複製的物件')`，也就是挑選要複製哪一個物件的畫面。"
+   ]
+  },
+  {
+   "id": "jgb/D/contract-thinkcloud-diy-pdf-sign-blocked",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "0aa5b7d1438bd76faf3771453ac3d1457a08aea5e796b25f4a68184b26b34c85",
+   "title_text": "客製化契約書送簽時 PDF 底稿解析失敗會怎樣？（簽署不會開始）",
+   "notes": [
+    "標題：由句 2 支撐。與 `jgb/D/contract-thinkcloud-signing-variants` 不同題：既有條目句 2 講的是上傳底稿建立合約時解析失敗，合約不會建立；本條講的是已建立的合約在送簽時解析失敗。兩者不矛盾，句 1 的「再解析一次」也與既有條目「建立時先解析」一致。",
+    "句 1：成立。`ContractController.php` 的 `public function thinkcloud(` 在 `case 'general':` 且 `else if($contract->isDiyContract()){ # diy` 時呼叫 `$diyContractService->readToSignBlock($result,$contract,$role)`；`app/Services/Jgb3/DiyContractService.php` 的 `readToSignBlock` 內 `self::urlPdfProperties(get_upload_file($contract->contract_file))` 會重新解析 PDF（`PdfCompatibilityChecker`：FPDI 加 smalot）取得頁面尺寸，接著 `setRatioProperties` 與 `transformThinkcloud` 產生簽名位置。建立時也解析過一次：同檔 `create` 路徑的 `} catch (DiyPdfUnparseableException $e) {`。對應關係：`isDiyContract()` 為 `contract_is_existing == 2`，而 `src/utils/constants/contract.js` 有 `diy: 2 // 電子合約 - 客製化契約書`，`SelectContractMethod.jsx` 有 `title: '電子合約 - 客製化契約書'`。",
+    "句 2：成立。`thinkcloud()` 內 `} catch (DiyPdfUnparseableException $e) {` 會直接 `return ['success' => false, 'message' => ...]`，位置在 `thinkcloud_api('create', $contract` 建立簽署的呼叫之前，所以簽署不會建立。`urlPdfProperties` 的註解寫明，兩條解析路徑都失敗時會丟出 DiyPdfUnparseableException，不再回傳空陣列。"
+   ]
+  },
+  {
+   "id": "jgb/I/pricing-landlord-initial-plan",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "039b80565ee3e9cfe4643aec917254b07dcadd252f9516e3d4d9ca7599cd35ba",
+   "title_text": "建立房東身分時會拿到什麼方案？（企業團隊與社宅房東自動取得免費方案；個人房東一般也是，透過特定優惠或行銷活動連結註冊時則取得活動指定的方案）",
+   "notes": [
+    "標題：三個要點分別由句 1～3 支撐，個人房東用「一般也是」，不是排他寫法。與 `jgb/I/pricing-free-trial-eligibility`（價格頁的免費試用入口、效期一個週期、不自動續訂）、`pricing-free-vs-experience-plan`（免費方案與體驗方案的差別）、`pricing-free-trial-feature-scope`（免費試用的功能範圍與 5 個物件上限）不同題：本條講建立身分時拿到什麼方案。與它們不矛盾：`config/defaultplan.php` 的 `\"estate_limit\" => 5`、`\"plan_cycle\" => 'month'` 與既有條目一致。",
+    "句 1：成立。`app/User.php` 的 `createRole` 在 Step4 有 `case Role::RULE_KEY_LANDLORD_CORPORATE:` 與 `case Role::RULE_KEY_LANDLORD_SOCIAL_HOUSING:`，兩者都無條件執行 `$role->plan_type = 'free';`、`$role->plan_name = '免費方案';`。逐一檢查所有建立身分的呼叫端（`/usr/bin/grep -rnE \"Role::create\\(|->createRole\\(\" app`）：團隊身分只經由 `UserController.php` 的 `$this->user->createRole($request->config_rule_key, ...)` 建立，之後沒有覆寫方案；`BigLandlordService` 直接 `Role::create` 的只有租客與個人房東（`'config_rule_key' => 2` 並給 `'plan_name' => '免費方案'`）；`RoleCompanys::create` 建的是公司子實體，不是身分。所以「一律」有程式根據。「社宅房東」對應 config `'4' => ['name' => '社會住宅'`（UI 稱社宅團隊）。",
+    "句 2：成立。在 `case Role::RULE_KEY_LANDLORD_INDIVIDUAL:` 中，只有 `registration_plan` 條件成立時才會 `break`，否則落到 CORPORATE／SOCIAL_HOUSING 分支，取得 `'免費方案'`；`BigLandlordService` 建立的個人房東也是 `'免費方案'`。「一般也會」的寫法涵蓋了 `login_plan`（`UserController.php` 登入後才套用）等後續變動。",
+    "句 3：成立。個人房東分支的 `$promotion['type']=='registration_plan'` 成立時會設定 `$role->plan_name = $promotion['plan_name'];`、`plan_type` 為 basic 或 trial（不是 free），然後 `break`；`session('promotion')` 的來源是 `PromotionController.php`（優惠連結 `code`，`registration_plan` 會導向註冊頁）與 `MarketingInviteController.php`（`'type'              => 'registration_plan',`、`const PLAN_NAME         = '個人房東 - 知識衛星行銷專案';`）；後台類型名稱為 `Admin/PromotionController.php` 的 `'registration_plan' => '註冊免費方案',`。附記（不影響判定）：行銷活動程式註解把它稱為免費方案，但 plan_name 與 plan_type 都不是系統的「免費方案」，所以「而不是免費方案」就產品方案名稱而言成立。"
+   ]
+  }
+ ],
+ "findings": [
+  "(2) 成立：工作樹 `jgb.json` 與 `git show HEAD:` 比較：粗目 57／57，id、title、順序都相同；細目 539→543，新增的恰好是 4 個 id、刪除 0、既有 539 條逐欄比對變動 0（含 reviewed_by／reviewed_at）；新條目都附加在各自粗目的末尾（A-account-profile、C-community-list、D-notary、I-pricing）；頂層欄位只有衍生值 canon_sha256 改變。我對 543 條逐條重算 content_sha256＝sha256('\\n'.join(content_units))，不一致 0 條。容器內 `parse_canon_auto` 解析 md 得到 543 條，與 json 的標題、句子、來源、target_user、reviewed、粗目逐欄一致；A／C／D／I.md 的 diff 只有新增行（刪除行 0）；CATALOG.md 只多 4 行。審核單 4 條的標題、句子（3／2／3／4 句）、講法、粗目名、target_user 與 json 逐字相同。drafts：B／E／F／G／H 與 HEAD 位元組相同；A／C／D／I 的結構化 diff 都只有一處，即對應粗目（帳號資訊、社區列表與建立、租約公證（公證分頁與公證服務）、方案、價格與免費試用）的 fines 陣列尾端各附加 1 條，其標題、句子、來源、target_user、business_types、instance_applicability 與 json 相同，其餘內容不變。",
+  "(3) 成立：已審 543／543（未審 0 條）；pm 537、prospect 121。重跑 `endpoint_progress.py`，第一行為 `已審細目 pm 537／537、prospect 121／121；頁面 pm 142／183、prospect 53／183`。我把備份（已用 cmp 確認與 HEAD 相同）以唯讀掛載進容器，用同一套 `page_hit` 加上來源路徑聯集重算：HEAD 140 頁、工作樹 142 頁；新增覆蓋 `communities/pick/Index.vue`（page:communities.pick）與 `estates/edit/Index.vue`（page:estates.edit），失去覆蓋 0 頁。HEAD 的 headline 為 `pm 533／533、prospect 120／120；頁面 pm 140／183`（負對照）。P1～P4：P1 三種去向由 C 條句 2、3、4 成立，sources 含 `src/pages/communities/pick/Index.vue`；計畫 P1 原文寫「新增物件會進入新增畫面」，經 00c 修正後實際句子為「直接建立並進入編輯物件頁」，這個去向有成立句。P2 由 I 條句 1、2、3 成立，沒有排他寫法；P3 由 D 條句 2 成立；P4 由 A 條句 1、2 成立，且句 3 與 register-password-rule 一致。另外確認 11 個新講法以 NFKC 正規化後與全庫 1742 個既有講法重複 0。",
+  "(4) 成立：我實跑 `scripts/run-tests.sh unit` 兩次，結果為 `9 failed, 3931 passed, 3 skipped`；FAILED 集合排序後與 `scratchpad/red-baseline.txt` 的 9 條逐行 diff 完全相同（輸出 IDENTICAL），雙向差集＝∅。",
+  "(5) 成立：HANDOFF 先以 cmp 確認備份＝HEAD，再與工作樹 diff，改動處的數字都對得上：終點指標行（各架 A63／C82／D105／I49 與重跑輸出一致、543 條全審）；一句話現況（pm 533→537、prospect 120→121、頁面 140→142，覆蓋頁為 communities.pick、estates.edit）；開工第 2／5 步；§12-1 新增 9.25 列（537／121、頁面 pm 142），9.24 列移到 9.23 之後；§12-4「pm 未覆蓋 41 頁」＝183−142，重算未覆蓋清單也是 41 頁，其中所列 10 頁加上 notifications.index、/help、bills.sheet 都在清單內，剩下 28 頁＝原 29 頁減去已被覆蓋的 estates.edit。計畫 §6 S1：evidence 29 筆（drafts 新條目 5＋12＋3＋9）、open_questions 54（open-questions 檔頭寫共 54 則）、runs 新增 3 個 `*-20261004-s1-925*` 檔（git status 為 ??）、講法 1742→1753（＋11）、其他工作線 41 個指紋檔目前 `shasum -c` 全部 OK（含正對照 runtime.py）、單元 passed=3931 failed=9 都與實況一致。00c 各輪 verifier 判定屬過程紀錄，本次無法重現，未列入判定。"
+ ],
+ "source_transcript": "af3d4ad9c538b151c.output"
+}

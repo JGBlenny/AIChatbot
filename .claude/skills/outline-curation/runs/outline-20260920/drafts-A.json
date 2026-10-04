@@ -2571,6 +2571,72 @@
      ],
      "not_supported_greps": [],
      "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/A/account-change-password-rules",
+     "askable": "在帳號資訊頁改密碼，新密碼有什麼規則",
+     "title": "在帳號資訊頁改密碼，新密碼有什麼規則？（至少 6 個字元、需與確認新密碼一致；英數混合在這裡只是提示）",
+     "unit_ids": [
+      "page:web:users.account"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "改密碼有什麼限制",
+      "改密碼一定要英文加數字嗎",
+      "帳號資訊頁新密碼規則"
+     ],
+     "sentences": [
+      "在帳號資訊頁修改密碼時，新密碼長度需至少 6 個字元，且需與確認新密碼欄位一致。",
+      "帳號資訊頁的密碼表單會提示「密碼應有至少一位英文和數字」，但按「儲存」時不會檢查這一條。",
+      "註冊帳號時設定的密碼則必須同時包含英文與數字。"
+     ],
+     "sources": [
+      "code:app/Http/Controllers/UserController.php",
+      "code:src/components/PasswordForm.vue",
+      "code:resources/views/users/account.blade.php",
+      "code:app/Http/Controllers/AuthController.php"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "'password' => 'min:6|required_with:password_confirmation|same:password_confirmation',"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/components/PasswordForm.vue",
+       "quote_or_symbol": "tip_pwd_format: '密碼應有至少一位英文和數字',"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:resources/views/users/account.blade.php",
+       "quote_or_symbol": "<button form=\"form_account_setting\"  class=\"btn btn-secondary-ghost\"  type=\"submit\""
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "'tip_pwd_format' => ___('密碼應有至少一位英文和數字'),"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Controllers/AuthController.php",
+       "quote_or_symbol": "'password' => 'required|string|min:6|regex:/^(?=.*[a-zA-Z])(?=.*[0-9]).*$/',"
+      }
+     ],
+     "not_supported_greps": [
+      {
+       "grep": "grep -c \"password_allow_submit\" resources/views/users/account.blade.php",
+       "result": "1——只有 password-form 的 @done 設定這個值，「儲存」按鈕沒有綁定它；後端規則只有 min:6 與 same:password_confirmation，沒有英數 regex",
+       "control_term": "grep -c \"password_allow_submit\" resources/views/users/safety.blade.php ⇒ 2（同一個值在另一頁確實被拿來擋按鈕）"
+      }
+     ],
+     "open_questions": []
     }
    ]
   },

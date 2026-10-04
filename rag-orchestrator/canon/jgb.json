@@ -2,7 +2,7 @@
   "audience": "jgb",
   "budget_tokens": 0,
   "business_types": [],
-  "canon_sha256": "b08267e5d43c9f1df5b190ca47d8ba4746ec093aeb6d8aaa2c9e7c029aae5652",
+  "canon_sha256": "34e411dad2a05d0efca2b753903bd47f9e40def59c632e5077ac86a5ddfb44b9",
   "coarses": [
     {
       "fines": [
@@ -1994,6 +1994,53 @@
             "property_manager"
           ],
           "title": "帳號資訊頁儲存失敗會提示什麼？（頁面沒有完整載入時會提醒重新整理再儲存）"
+        },
+        {
+          "business_types": [
+            "system_provider"
+          ],
+          "categories": [],
+          "coarse_id": "A-account-profile",
+          "content_sha256": "e3a67ac38c1b88b1e21b4a838c8bba40f5fcb1af971cd4f51a4b28f6b65ca699",
+          "content_units": [
+            "在帳號資訊頁修改密碼時，新密碼長度需至少 6 個字元，且需與確認新密碼欄位一致。",
+            "帳號資訊頁的密碼表單會提示「密碼應有至少一位英文和數字」，但按「儲存」時不會檢查這一條。",
+            "註冊帳號時設定的密碼則必須同時包含英文與數字。"
+          ],
+          "id": "jgb/A/account-change-password-rules",
+          "instance_applicability": "general",
+          "phrasings": [
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "改密碼有什麼限制"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "改密碼一定要英文加數字嗎"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "帳號資訊頁新密碼規則"
+            }
+          ],
+          "policy": "answerable",
+          "policy_ref": null,
+          "reviewed_at": "2026-10-04",
+          "reviewed_by": "owner",
+          "see_also": [],
+          "sources": [
+            "code:app/Http/Controllers/UserController.php",
+            "code:src/components/PasswordForm.vue",
+            "code:resources/views/users/account.blade.php",
+            "code:app/Http/Controllers/AuthController.php"
+          ],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "在帳號資訊頁改密碼，新密碼有什麼規則？（至少 6 個字元、需與確認新密碼一致；英數混合在這裡只是提示）"
         }
       ],
       "id": "A-account-profile",
@@ -6739,6 +6786,54 @@
             "property_manager"
           ],
           "title": "誰看得到新增社區的入口？（總表右上角需要編輯物件權限；空狀態的批次新增／新增社區入口需要新增物件權限）"
+        },
+        {
+          "business_types": [
+            "system_provider"
+          ],
+          "categories": [],
+          "coarse_id": "C-community-list",
+          "content_sha256": "c57491e172dbd08382b81f757c79f073b7bb4963651b09ef8785b684428e4f4e",
+          "content_units": [
+            "社區選擇畫面會依用途顯示不同標題：「請選擇要複製的社區」「請選擇要新增物件的社區」「請選擇要複製物件的社區」。",
+            "複製社區時，選好社區按「下一步」，系統會直接建立一份副本並進入新社區的編輯頁。",
+            "新增物件時，選好社區按「下一步」，系統會直接在該社區建立一筆新物件，並進入這筆物件的「編輯物件」頁。",
+            "複製物件時，選好社區按「下一步」，會接著進入挑選要複製哪一個物件的畫面。"
+          ],
+          "id": "jgb/C/community-pick-next-step",
+          "instance_applicability": "general",
+          "phrasings": [
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "選完社區之後會怎樣"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "複製社區之後會跳到哪裡"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "社區選擇畫面怎麼用"
+            }
+          ],
+          "policy": "answerable",
+          "policy_ref": null,
+          "reviewed_at": "2026-10-04",
+          "reviewed_by": "owner",
+          "see_also": [],
+          "sources": [
+            "code:src/pages/communities/pick/Index.vue",
+            "code:src/components/BottomNav.vue",
+            "code:app/Http/Controllers/EstateController.php",
+            "code:src/pages/estates/edit/Index.vue"
+          ],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "社區選擇畫面選好社區之後會發生什麼？（複製社區直接建立副本並進入編輯；新增物件直接建立物件並進入編輯；複製物件接著挑選物件）"
         }
       ],
       "id": "C-community-list",
@@ -14336,6 +14431,44 @@
             "property_manager"
           ],
           "title": "簽署畫面與客製化契約書 PDF 要注意什麼？（公會中文版合約加補充條款會多一組簽名位置；上傳的 PDF 底稿無法解析時合約建立不了，要重新輸出再上傳）"
+        },
+        {
+          "business_types": [
+            "system_provider"
+          ],
+          "categories": [],
+          "coarse_id": "D-notary",
+          "content_sha256": "0aa5b7d1438bd76faf3771453ac3d1457a08aea5e796b25f4a68184b26b34c85",
+          "content_units": [
+            "用「電子合約 - 客製化契約書」建立的合約送去簽署時，系統會再解析一次 PDF 底稿，用來放置簽名位置。",
+            "這時如果 PDF 底稿解析不出來，簽署不會開始。"
+          ],
+          "id": "jgb/D/contract-thinkcloud-diy-pdf-sign-blocked",
+          "instance_applicability": "general",
+          "phrasings": [
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "客製化契約書送簽失敗"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "送簽時 PDF 底稿解析不出來"
+            }
+          ],
+          "policy": "answerable",
+          "policy_ref": null,
+          "reviewed_at": "2026-10-04",
+          "reviewed_by": "owner",
+          "see_also": [],
+          "sources": [
+            "code:app/Http/Controllers/ContractController.php"
+          ],
+          "target_user": [
+            "property_manager"
+          ],
+          "title": "客製化契約書送簽時 PDF 底稿解析失敗會怎樣？（簽署不會開始）"
         }
       ],
       "id": "D-notary",
@@ -23075,6 +23208,53 @@
             "property_manager"
           ],
           "title": "物件額度用滿了會怎樣？（新增物件、匯入等入口會被擋下並提示升級方案）"
+        },
+        {
+          "business_types": [
+            "system_provider"
+          ],
+          "categories": [],
+          "coarse_id": "I-pricing",
+          "content_sha256": "039b80565ee3e9cfe4643aec917254b07dcadd252f9516e3d4d9ca7599cd35ba",
+          "content_units": [
+            "企業團隊與社宅房東身分建立時，一律自動取得免費方案。",
+            "個人房東身分建立時，一般也會自動取得免費方案。",
+            "個人房東如果是透過「註冊免費方案」類型的優惠連結，或行銷活動的邀請連結完成註冊，取得的是該活動指定的方案，而不是免費方案。"
+          ],
+          "id": "jgb/I/pricing-landlord-initial-plan",
+          "instance_applicability": "general",
+          "phrasings": [
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "註冊後會拿到什麼方案"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "新帳號有送方案嗎"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "用優惠連結註冊會拿到什麼方案"
+            }
+          ],
+          "policy": "answerable",
+          "policy_ref": null,
+          "reviewed_at": "2026-10-04",
+          "reviewed_by": "owner",
+          "see_also": [],
+          "sources": [
+            "code:app/User.php",
+            "code:app/Http/Controllers/Admin/PromotionController.php",
+            "code:app/Http/Controllers/MarketingInviteController.php"
+          ],
+          "target_user": [
+            "property_manager",
+            "prospect"
+          ],
+          "title": "建立房東身分時會拿到什麼方案？（企業團隊與社宅房東自動取得免費方案；個人房東一般也是，透過特定優惠或行銷活動連結註冊時則取得活動指定的方案）"
         }
       ],
       "id": "I-pricing",

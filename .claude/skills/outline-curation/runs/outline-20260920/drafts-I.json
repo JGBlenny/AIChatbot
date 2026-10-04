@@ -841,6 +841,92 @@
       }
      ],
      "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/I/pricing-landlord-initial-plan",
+     "askable": "建立房東身分時會拿到什麼方案",
+     "title": "建立房東身分時會拿到什麼方案？（企業團隊與社宅房東自動取得免費方案；個人房東一般也是，透過特定優惠或行銷活動連結註冊時則取得活動指定的方案）",
+     "unit_ids": [
+      "page:listings.pricing"
+     ],
+     "target_user": [
+      "property_manager",
+      "prospect"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "註冊後會拿到什麼方案",
+      "新帳號有送方案嗎",
+      "用優惠連結註冊會拿到什麼方案"
+     ],
+     "sentences": [
+      "企業團隊與社宅房東身分建立時，一律自動取得免費方案。",
+      "個人房東身分建立時，一般也會自動取得免費方案。",
+      "個人房東如果是透過「註冊免費方案」類型的優惠連結，或行銷活動的邀請連結完成註冊，取得的是該活動指定的方案，而不是免費方案。"
+     ],
+     "sources": [
+      "code:app/User.php",
+      "code:app/Http/Controllers/Admin/PromotionController.php",
+      "code:app/Http/Controllers/MarketingInviteController.php"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:app/User.php",
+       "quote_or_symbol": "case Role::RULE_KEY_LANDLORD_CORPORATE:"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/User.php",
+       "quote_or_symbol": "case Role::RULE_KEY_LANDLORD_SOCIAL_HOUSING:"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/User.php",
+       "quote_or_symbol": "$role->plan_name = '免費方案';"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/User.php",
+       "quote_or_symbol": "case Role::RULE_KEY_LANDLORD_INDIVIDUAL:"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/User.php",
+       "quote_or_symbol": "$role->plan_name = '免費方案';"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/User.php",
+       "quote_or_symbol": "$promotion['type']=='registration_plan'"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/User.php",
+       "quote_or_symbol": "$role->plan_name = $promotion['plan_name'];"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Controllers/Admin/PromotionController.php",
+       "quote_or_symbol": "'registration_plan' => '註冊免費方案',"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Controllers/MarketingInviteController.php",
+       "quote_or_symbol": "'type'              => 'registration_plan',"
+      }
+     ],
+     "not_supported_greps": [
+      {
+       "grep": "/usr/bin/grep -n \"case Role::RULE_KEY_LANDLORD_INDIVIDUAL:\\|\\$promotion\\['type'\\]=='registration_plan'\\|\\$role->plan_name = \\$promotion\\['plan_name'\\];\\|break;\\|case Role::RULE_KEY_LANDLORD_CORPORATE:\" app/User.php（Step4 區段）",
+       "result": "個人房東分支 registration_plan 成立時設定 plan_name＝優惠指定方案後 break（不落到下方給 '免費方案' 的 CORPORATE／SOCIAL_HOUSING 分支）；不成立時落到該分支取得免費方案",
+       "control_term": "/usr/bin/grep -cF \"$role->plan_name = '免費方案';\" app/User.php ⇒ ≥1（免費方案設定確實存在於落入分支；本機 grep 為 ugrep，須用 -F 或 /usr/bin/grep）"
+      }
+     ],
+     "open_questions": []
     }
    ]
   },

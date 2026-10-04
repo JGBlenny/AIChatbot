@@ -171,6 +171,19 @@ language: zh-TW
 有效訂閱中時，內文會寫出方案名稱與物件上限，並問「要升級方案嗎」，按鈕文字是「前往升級」。
 沒有有效訂閱時，內文是請使用者「請先前往訂閱服務，即可享受所有您需要的功能」，按鈕文字是「我要訂閱」。
 訂閱已失效時，複製物件、編輯物件、刊登招租廣告這些入口，也會出現同一個彈窗。
+### 建立房東身分時會拿到什麼方案？（企業團隊與社宅房東自動取得免費方案；個人房東一般也是，透過特定優惠或行銷活動連結註冊時則取得活動指定的方案） {#jgb/I/pricing-landlord-initial-plan}
+- phrasings:
+  - {text: "註冊後會拿到什麼方案", source: "draft:outline-20260920", status: proposed}
+  - {text: "新帳號有送方案嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "用優惠連結註冊會拿到什麼方案", source: "draft:outline-20260920", status: proposed}
+- sources: [code:app/User.php, code:app/Http/Controllers/Admin/PromotionController.php, code:app/Http/Controllers/MarketingInviteController.php]
+- reviewed: {by: owner, at: 2026-10-04}
+- target_user: [property_manager, prospect]
+- business_types: [system_provider]
+- instance_applicability: general
+企業團隊與社宅房東身分建立時，一律自動取得免費方案。
+個人房東身分建立時，一般也會自動取得免費方案。
+個人房東如果是透過「註冊免費方案」類型的優惠連結，或行銷活動的邀請連結完成註冊，取得的是該活動指定的方案，而不是免費方案。
 ## 訂閱、付款與訂單 {#I-subscription-payment}
 ### 訂閱頁怎麼選方案？（體驗方案、依物件數量拉桿的基本方案、企業方案洽談三選一） {#jgb/I/subscription-choose-plan-flow}
 - phrasings:

@@ -6049,6 +6049,57 @@
      ],
      "not_supported_greps": [],
      "open_questions": []
+    },
+    {
+     "proposed_id": "jgb/D/contract-thinkcloud-diy-pdf-sign-blocked",
+     "askable": "客製化契約書送簽時 PDF 底稿解析失敗會怎樣",
+     "title": "客製化契約書送簽時 PDF 底稿解析失敗會怎樣？（簽署不會開始）",
+     "unit_ids": [
+      "page:web:contracts.thinkcloud"
+     ],
+     "target_user": [
+      "property_manager"
+     ],
+     "business_types": [
+      "system_provider"
+     ],
+     "instance_applicability": "general",
+     "phrasings": [
+      "客製化契約書送簽失敗",
+      "送簽時 PDF 底稿解析不出來"
+     ],
+     "sentences": [
+      "用「電子合約 - 客製化契約書」建立的合約送去簽署時，系統會再解析一次 PDF 底稿，用來放置簽名位置。",
+      "這時如果 PDF 底稿解析不出來，簽署不會開始。"
+     ],
+     "sources": [
+      "code:app/Http/Controllers/ContractController.php"
+     ],
+     "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/ContractController.php",
+       "quote_or_symbol": "$signBlockAry = $diyContractService->readToSignBlock($result,$contract,$role);"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/ContractController.php",
+       "quote_or_symbol": "// 僅攔 DiyPdfUnparseableException，其他例外類型保留既有錯誤路徑。"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/ContractController.php",
+       "quote_or_symbol": "} catch (DiyPdfUnparseableException $e) {"
+      }
+     ],
+     "not_supported_greps": [
+      {
+       "grep": "grep -n \"catch (DiyPdfUnparseableException\\|thinkcloud_api('create'\" app/Http/Controllers/ContractController.php",
+       "result": "thinkcloud() 內送簽時的 catch 在第 18466 行，真正建立簽署的 thinkcloud_api('create' 呼叫在第 18649 行（第 18640 行在 /** */ 註解區塊內，不算），catch 先回傳、不會走到建立簽署",
+       "control_term": "grep -c \"thinkcloud_api('create'\" app/Http/Controllers/ContractController.php ⇒ ≥1（建立簽署的呼叫確實存在）"
+      }
+     ],
+     "open_questions": []
     }
    ]
   },

@@ -1237,6 +1237,17 @@ JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄�
 - instance_applicability: general
 如果合約是「公會中文版 租賃契約書」（原房東、包租業或代租代管）且有補充條款，送去簽署時，合約上會多出一組簽名位置（出租方與承租方各一個）。
 用「電子合約 - 客製化契約書」上傳自己的 PDF 底稿建立合約時，系統會先用兩種方式試著解析這份 PDF；兩種都失敗時，合約不會建立、上傳的檔案也不會保留，回應訊息會請使用者確認檔案內容或重新輸出後再上傳；如果是使用了較新壓縮格式的 PDF，訊息會建議用瀏覽器開啟 PDF，透過「列印 → 另存為 PDF」重新輸出。
+### 客製化契約書送簽時 PDF 底稿解析失敗會怎樣？（簽署不會開始） {#jgb/D/contract-thinkcloud-diy-pdf-sign-blocked}
+- phrasings:
+  - {text: "客製化契約書送簽失敗", source: "draft:outline-20260920", status: proposed}
+  - {text: "送簽時 PDF 底稿解析不出來", source: "draft:outline-20260920", status: proposed}
+- sources: [code:app/Http/Controllers/ContractController.php]
+- reviewed: {by: owner, at: 2026-10-04}
+- target_user: [property_manager]
+- business_types: [system_provider]
+- instance_applicability: general
+用「電子合約 - 客製化契約書」建立的合約送去簽署時，系統會再解析一次 PDF 底稿，用來放置簽名位置。
+這時如果 PDF 底稿解析不出來，簽署不會開始。
 ## 委託合約（列表、建立編輯、檢視） {#D-entrust-contract}
 ### 委託合約是什麼？（房東委託業者包租代管的合約，跟業者與租客之間的租賃合約是不同份文件） {#jgb/D/entrusted-contract-what-is-it}
 - phrasings:
