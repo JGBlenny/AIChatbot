@@ -94,3 +94,58 @@ def test_blank_reviewed_by_counts_as_unreviewed():
     assert not ep.is_reviewed(types.SimpleNamespace(reviewed_by=""))
     assert not ep.is_reviewed(types.SimpleNamespace(reviewed_by="  "))
     assert not ep.is_reviewed(types.SimpleNamespace(reviewed_by=None))
+
+
+# ---------- Plan 9.26：閉包量尺與 `#方法` 去除 ----------
+#: 合成閉包：入口檔 users/register/Index.vue 的畫面另由子元件 parts/Form.vue 渲染
+_CLOSURE = {"users/register/Index.vue": ["users/register/Index.vue", "users/register/parts/Form.vue"],
+            "users/forget/Index.vue": ["users/forget/Index.vue"]}
+
+
+def _canon_citing(tmp_path, reviewed_src: str):
+    """複本：已審細目只引用 `reviewed_src`（不引用入口檔）。"""
+    dst = tmp_path / "shelves"
+    shutil.copytree(_SHELVES, dst)
+    a = dst / "A.md"
+    text = a.read_text(encoding="utf-8")
+    assert "- sources: [kb:3585]" in text, "fixture 已變"
+    a.write_text(text.replace("- sources: [kb:3585]", f"- sources: [kb:3585, {reviewed_src}]", 1), encoding="utf-8")
+    return str(dst)
+
+
+def test_closure_counts_subcomponent_citation(tmp_path):
+    canon = _canon_citing(tmp_path, "code:src/pages/users/register/parts/Form.vue")
+    surface = _surface(tmp_path)
+    # 正對照：給閉包 ⇒ 引用子元件的已審細目點亮該頁
+    assert ep.measure(canon, surface, closure=_CLOSURE)["by_identity"]["property_manager"]["pages"] == 1
+    # 舊量尺（不給閉包）只比入口檔 ⇒ 同一份輸入不命中
+    assert ep.measure(canon, surface)["by_identity"]["property_manager"]["pages"] == 0
+
+
+def test_closure_missing_page_fails_loudly(tmp_path):
+    canon = _canon_citing(tmp_path, "code:src/pages/users/register/parts/Form.vue")
+    partial = {"users/register/Index.vue": _CLOSURE["users/register/Index.vue"]}  # 缺 users/forget/Index.vue
+    with pytest.raises(SystemExit):
+        ep.measure(canon, _surface(tmp_path), closure=partial)
+
+
+def test_blade_hit_strips_method_suffix():
+    unit = {"kind": "blade", "component": "NotificationController@index"}
+    fine = types.SimpleNamespace(sources=["code:app/Http/Controllers/NotificationController.php#index"])
+    assert ep.page_hit(unit, ep.code_paths(fine))
+    # 負對照：別的 controller 不命中
+    other = types.SimpleNamespace(sources=["code:app/Http/Controllers/UserController.php#index"])
+    assert not ep.page_hit(unit, ep.code_paths(other))
+
+
+def test_load_closure_fails_loudly(tmp_path):
+    good = tmp_path / "c.json"
+    good.write_text(json.dumps({"sha": "x", "pages": _CLOSURE}), encoding="utf-8")
+    assert ep.load_closure(str(good)) == _CLOSURE  # 正對照
+    assert ep.load_closure(None) is None
+    with pytest.raises(SystemExit):
+        ep.load_closure(str(tmp_path / "nope.json"))
+    empty = tmp_path / "e.json"
+    empty.write_text(json.dumps({"sha": "x", "pages": {}}), encoding="utf-8")
+    with pytest.raises(SystemExit):
+        ep.load_closure(str(empty))

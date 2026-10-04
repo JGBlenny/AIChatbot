@@ -4,14 +4,16 @@
 
 - M1（主指標）：`reviewed_by` 非空、且 `target_user` 含該身分的細目數／該身分細目數；逐架列。
 - M2（覆蓋，代理指標）：page-surface `in_baseline` 的頁，有幾頁被「已審且含該身分」的細目 `sources` 指到：
-  SPA 頁 ⇔ `code:src/pages/<component>` 逐字相等；blade 頁（`Controller@method`）⇔
-  `code:app/Http/Controllers/(<子目錄>/)*<Controller>.php`（控制器檔層級）。⚠️ 近似，只看趨勢。
+  SPA 頁 ⇔ 給了 `--closure` 時：該頁閉包（入口檔＋其 `src/pages/` 內 import 與子路由，`page_import_closure.py` 產出）
+  任一檔被 `code:src/pages/<檔>` 引用；不給時只比入口檔（Plan 9.26 前的舊量尺）。blade 頁（`Controller@method`）⇔
+  `code:app/Http/Controllers/(<子目錄>/)*<Controller>.php`（控制器檔層級；來源的 `#方法` 後綴先去掉）。
+  ⚠️ 代理指標：跨功能共用子元件、外框父路由被子孫引用點亮都會算入；只看趨勢。
 - `--ignore-review`：關掉已審過濾，只供正對照（Plan 9.15 §1：現樹不分身分須為 132／183）。
 
 前置拿不到（正本／page-surface 不存在、細目 0、細目數與標題數不符）⇒ 非 0 並印原因（⛔ 不靜默）。
 解析一律走 `canon_items.parse_canon_auto`（需容器依賴：`docker compose -f docker-compose.dev.yml run --rm -T
 --no-deps rag-orchestrator python3 /.claude/skills/outline-curation/scripts/endpoint_progress.py …`）。
-用法：endpoint_progress.py --canon <正本目錄> --surface <page-surface.json> [--json] [--ignore-review]
+用法：endpoint_progress.py --canon <正本目錄> --surface <page-surface.json> [--closure <page-import-closure.json>] [--json] [--ignore-review]
 """
 from __future__ import annotations
 
@@ -34,26 +36,44 @@ def is_reviewed(fine) -> bool:
 
 
 def code_paths(fine) -> set:
-    return {s[len("code:"):] for s in (fine.sources or ()) if s.startswith("code:")}
+    """`code:` 來源路徑；去掉 `#方法` 後綴（Plan 9.26：`NotificationController.php#index` 比不到 blade 頁）。"""
+    return {s[len("code:"):].split("#", 1)[0] for s in (fine.sources or ()) if s.startswith("code:")}
 
 
-def page_hit(unit: dict, paths: set) -> bool:
+def page_hit(unit: dict, paths: set, closure: dict | None = None) -> bool:
     comp = unit.get("component") or ""
     if not comp:
         return False
     if unit.get("kind") == "spa":
-        return f"src/pages/{comp}" in paths
+        if closure is None:
+            files = [comp]  # 舊量尺：只比入口檔
+        elif comp in closure:
+            files = closure[comp]  # Plan 9.26：入口檔＋其 src/pages 內 import／子路由閉包
+        else:
+            raise SystemExit(f"❌ closure 沒有這頁：src/pages/{comp}（閉包與 page-surface 不同版？⛔ 靜默退回只比入口檔）")
+        return any(f"src/pages/{f}" in paths for f in files)
     ctrl = re.escape(comp.split("@")[0])
     rx = re.compile(rf"app/Http/Controllers/(?:.+/)?{ctrl}\.php")
     return any(rx.fullmatch(p) for p in paths)
 
 
-def pages_covered(units: list, fines: list) -> int:
+def pages_covered(units: list, fines: list, closure: dict | None = None) -> int:
     paths = set().union(*(code_paths(f) for f in fines)) if fines else set()
-    return sum(1 for u in units if page_hit(u, paths))
+    return sum(1 for u in units if page_hit(u, paths, closure))
 
 
-def measure(canon: str, surface: str, ignore_review: bool = False) -> dict:
+def load_closure(path: str | None) -> dict | None:
+    if not path:
+        return None
+    if not os.path.isfile(path):
+        raise SystemExit(f"❌ closure 不存在：{path}")
+    pages = json.load(open(path, encoding="utf-8")).get("pages") or {}
+    if not pages:
+        raise SystemExit("❌ closure 的 pages 為空（工具或路徑壞了）")
+    return pages
+
+
+def measure(canon: str, surface: str, ignore_review: bool = False, closure: dict | None = None) -> dict:
     if not os.path.exists(canon):
         raise SystemExit(f"❌ 正本不存在：{canon}")
     if not os.path.isfile(surface):
@@ -74,13 +94,13 @@ def measure(canon: str, surface: str, ignore_review: bool = False) -> dict:
         mine = [f for f in fines if ident in (f.target_user or ())]
         rev = [f for f in mine if ignore_review or is_reviewed(f)]
         out["by_identity"][ident] = {"reviewed": sum(1 for f in mine if is_reviewed(f)), "total": len(mine),
-                                     "pages": pages_covered(units, rev)}
+                                     "pages": pages_covered(units, rev, closure)}
         for f in mine:
             s = out["by_shelf"].setdefault(fine_shelf_letter(f.id), {i: [0, 0] for i in IDENTITIES})
             s[ident][1] += 1
             s[ident][0] += is_reviewed(f)
     if ignore_review:
-        out["pages_any_identity_ignore_review"] = pages_covered(units, fines)
+        out["pages_any_identity_ignore_review"] = pages_covered(units, fines, closure)
     return out
 
 
@@ -96,8 +116,9 @@ def main(argv=None) -> int:
     ap.add_argument("--surface", required=True)
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--ignore-review", action="store_true", help="關掉已審過濾（只供正對照）")
+    ap.add_argument("--closure", help="頁面閉包 JSON（page_import_closure.py 產出）；不給＝只比入口檔（舊量尺）")
     a = ap.parse_args(argv)
-    m = measure(a.canon, a.surface, a.ignore_review)
+    m = measure(a.canon, a.surface, a.ignore_review, load_closure(a.closure))
     if a.json:
         print(json.dumps(m, ensure_ascii=False, indent=1))
         return 0
