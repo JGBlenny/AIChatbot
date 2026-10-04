@@ -1,0 +1,339 @@
+{
+ "kind": "write",
+ "verdict": "REFUTED",
+ "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+ "claim": "Plan 9.28 批次 B12：20 條細目的標題與每一句已逐句對合法來源核對，逐條結果如 fines",
+ "fines": [
+  {
+   "id": "jgb/D/social-housing-building-detail",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "1afced71dd4cf549c2c99b700409a4fa4bc9e46c108c7395b9a6dd97ac690a7c",
+   "title_text": "社宅合約「建物標的」分組有哪些分頁？（建物細節、現況補充、現況照片、附設傢俱四個分頁）",
+   "notes": [
+    "標題：四個分頁由句 1 支撐。",
+    "句 1：src/routes/contracts.js＋contractRoutes__edit_socialHousing 中 group '建物標的' 的四筆 label '建物細節'、'現況補充'、'現況照片'、'附設傢俱'；src/pages/contracts/edit/buildingTranscript/SocialHousing.vue 有 t('建物資訊')、t('建物謄本') 兩段標題；Landlordonboarding09Socialhousing_zh-Hant.html 也寫「建物細節（建物資訊/建物謄本）」。",
+    "句 2：src/pages/contracts/edit/buildingTranscript/SocialHousing.vue＋'如要修改[s1]的資料，需先刪除此份合約，並至 [s2] 內修改[s3]，再重新創建合約。'（s1＝建物資訊／建物謄本，s2＝物件編輯），欄位都包在 class=\"disabled\" 的列裡；Landlordonboarding09Socialhousing_zh-Hant.html 寫「此處資訊主要針對該物件創建時之資料進行呈現」。",
+    "句 3：src/pages/contracts/edit/situation/SocialHousing.vue＋'若有以下情形或設備，請勾選符合的項目，沒有勾選將視為沒有此情形或設備。'、'海砂屋'、'輻射屋'、'定期消防安全檢查'、'做過混凝土中水溶性氯離子含量檢測'；'如有需要，可執行：[s1]'＋'複製現有合約資料' 放在頁首說明下方的固定區塊，沒有綁勾選狀態的條件。"
+   ]
+  },
+  {
+   "id": "jgb/D/social-housing-photos-tab",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "533a7e38c47dfc0516502f7127a3bb85b7d1d8e0c458a4e7168b146c01ebf3d7",
+   "title_text": "社宅合約「現況照片」分頁一定要上傳嗎？（部分照片為必填，用來證明社宅內部現況設備存在）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：Landlordonboarding09Socialhousing_zh-Hant.html＋「注意部分現況照片為「必填」，證明社宅內部現況上是有該項設備，到時需提供給公會進行認證」；程式 src/pages/contracts/edit/photos/Index.vue 的 required: true 只標在門牌及大門、衛浴設備、出入口及樓梯間、滅火器／偵煙器、熱水器、附設傢俱，漏水處與其他沒有標，符合「部分必填」。補充：畫面本身只用必填星號表示，送公會認證這個理由只出現在幫助中心。"
+   ]
+  },
+  {
+   "id": "jgb/D/social-housing-facilities-tab",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "50e48947dfac217ffd021613511c8e3e1ea8fa5746d7a179c67f7a54c0a0c211",
+   "title_text": "社宅合約「附設傢俱」分頁要填什麼？（設備、隔間、家電與傢俱的數量與型號）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/pages/contracts/edit/facilities/SocialHousing.vue＋t('設備') 勾選框（social_housing_equipment）、t('隔間') 勾選框（has_partition）、t('家電')／t('傢俱') 兩組 NumberPicker 數量，電器組另有 placeholder t('廠牌/型號') 的輸入框；頁首有 t('依照廣告，此物件的格局為：')。facilities/Index.vue 在 property_purpose_key == 2 時載入 SocialHousing.vue。"
+   ]
+  },
+  {
+   "id": "jgb/D/social-housing-rent-basic-conditions",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "e6d318e405c6fbdd9f6d7eb8d3c0cb86523f56aa32d6e6bf0f445e31b101f359",
+   "title_text": "社宅合約「基本條件」要填什麼？（合約範本、委託期間、住宅現況、物件返還狀態、代收定金、爭議處理）",
+   "notes": [
+    "標題：所列各項都由句 1、3、4、5 支撐。",
+    "句 1：app/Http/Controllers/ContractController.php＋case Contract::SOCIAL_HOUSING 的 contract_template_options＝___('代租代管') management、___('包租包管') charter；src/pages/contracts/edit/rentBasic/SocialHousing.vue＋t('合約範本')、t('是否帶租約')、'本次欲簽約合約之物件是否為既存租賃契約之住宅（即「帶租約」住宅）。'、t('租約起迄日')。",
+    "句 2：ContractController.php＋___('新增轉租契約書')（只在 SOCIAL_HOUSING 且 contract_type === 'charter' 時出現，連到 contracts.create type=sublet）；同上檔案中 contract_type === 'sublet' 時，options 只剩 ___('轉租')；rentBasic/SocialHousing.vue＋:class=\"{'is-disabled': ... === 'sublet'}\"。",
+    "句 3：rentBasic/SocialHousing.vue＋v-if=\"!['charter','sublet'].includes(...)\" 區塊內有 t('委託租賃期間')、t('委託管理期間')、t('住宅現況')，選項為 t('住宅所有權人自行使用')、t('現為空屋無人使用')、t('有人承租')、t('其他')。",
+    "句 4：rentBasic/SocialHousing.vue＋t('物件返還狀態')、'請設定租客返還物件時，室內裝潢應回復的狀況。'，選項 t('回復原狀')、t('現況返還')、t('其他')。",
+    "句 5：rentBasic/SocialHousing.vue＋第二個 !['charter','sublet'] 區塊有 t('通知義務')、t('代收定金')、t('轉交定金')（'請設定業者收到定金後，應於幾日內將租金轉交給原房東'）、t('張貼廣告')；t('修繕聯絡方式') 與 t('爭議處理')（含 '依仲裁法規定進行仲裁。'）在條件區塊外，每種範本都會顯示。",
+    "句 6：rentBasic/SocialHousing.vue＋v-if=\"... == 'charter'\" 區塊內有 t('室內裝修')（'請設定出租人是否授權業者進行室內裝修'）與 t('裝修費用負擔')，選項為 t('出租人')／t('包租業')。"
+   ]
+  },
+  {
+   "id": "jgb/D/social-housing-early-termination-difference",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "a54cc3eed3c504cd0f92f27933c4a4845fea163b91820b0c5e4d469fce253b85",
+   "title_text": "社宅合約的提前解約怎麼設定？跟一般合約一樣嗎？（只設定雙方是否可以提前解約，沒有違約金計算方式）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/pages/contracts/edit/rentBasic/SocialHousing.vue＋t('雙方是否可以提前解約')，選項 t('可以')／t('不可以')；這個檔案裡 grep「違約」找不到任何違約金欄位。",
+    "句 2：src/pages/contracts/edit/rentBasic/General.vue＋t('租客是否可以提前解約')、t('違約金計算方式')（t('每月租金')、t('固定金額')）、'租客若於 [s1] 天(含)以上通知房東…若少於 [s1] 天…'；特定合作團隊的範本：meta_capital_condos 分支只有 t('提前解約預告日')，meta_capital_office 分支是空區塊，另一個特定合作團隊範本只顯示 '租客若少於 [s1] 天，則需支付 [s3] 個月違約金。'（單一門檻）。"
+   ]
+  },
+  {
+   "id": "jgb/D/social-housing-rent-fees-tab",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "b88a48a76040beabe626cd3a4206c9fdaf022708e3d5a8c28374e717ff06e932",
+   "title_text": "社宅合約「租金費用」分頁要填什麼？（代租金額或包租金額、租金與押金、生活費用）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/pages/contracts/edit/rent/Index.jsx＋t('代租金額') 只在 contract_template_selected === 'management' 且 property_purpose_key == 2 時出現；t('包租金額') 只在 === 'charter' 時出現；t('租金與押金') 不分範本都顯示；t('生活費用') 的區塊註解是「生活費用(一般＆社宅共用)」。補充：生活費用區塊對車位合約與特定合作團隊身分（state.isNthurc 等）會隱藏，但這類身分走的是一般住宅合約流程，社宅團隊不會碰到，所以不算漏掉例外。"
+   ]
+  },
+  {
+   "id": "jgb/D/social-housing-payment-method-tab",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "ed81f098a0627e1ab81a4756f8380cf2296ae3b690557b613e2b4659605bd7d4",
+   "title_text": "社宅合約「收款方式」怎麼設定？（轉帳、票據、現金三種；代租代管範本還要選收款人是原房東或業者）",
+   "notes": [
+    "標題：由句 1、2 支撐。",
+    "句 1：src/pages/contracts/edit/payment/SocialHousing.vue＋t('轉帳')、t('票據')、t('現金')；一般合約 src/pages/contracts/edit/payment/General.vue 的選項是 t('線上金流')、t('現金收款')、t('固定虛擬帳號')，兩者確實不同。",
+    "句 2：payment/SocialHousing.vue＋v-if=\"!['charter','sublet'].includes(...)\" 區塊內有 t('收款人')，選項 t('原房東')／t('業者')。"
+   ]
+  },
+  {
+   "id": "jgb/D/social-housing-notary",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "00d2e16dfc086a05a49537abb741f7bb5f025dc60fab0c679734426e798a96bd",
+   "title_text": "社宅合約一定要公證嗎？（預設應辦理公證，可填理由不辦但視同放棄公證費補助；辦理公證後需下載文件紙本簽署再上傳歸檔）",
+   "notes": [
+    "標題：由句 1、3、4、5 支撐（「預設應辦理」對應說明文字中的「本租賃契約應辦理公證」）。",
+    "句 1：src/pages/contracts/edit/publicNotary/SocialHousing.vue＋t('辦理租賃契約公證')，選項 t('同意')／t('不同意')；說明文字 '本租賃契約應辦理公證，但租賃雙方因以下事由同意不辦理公證者，視同自願放棄公證費申請之權益。'（句中是轉述，沒有加引號）。",
+    "句 2：publicNotary/SocialHousing.vue＋'1：承租方如於租期屆滿後不返還租賃住宅。'、'2：…'、'3：…'，同意／不同意的 radio 只在 v-if=\"... == 'charter'\" 時出現；t('保證人效力') 是固定文字；t('稅費負擔') 有 t('公證費')、t('其他稅費')，負擔者選項 t('出租人')／t('承租人')／t('平均分擔')。",
+    "句 3：Landlordonboarding09Socialhousing_zh-Hant.html＋「內容填寫完畢後，及可點選右下方之【預覽合約】」「點選【下載合約文件】，並依文件進行簽約以及公證」。",
+    "句 4：Landlordonboarding09Socialhousing_zh-Hant.html＋「完成公證後，即可填寫物件/ 媒合 / 房客編號，並將掃描好的合約 PDF檔上傳」「完成歸檔前，可選擇是否要綁定租客，確認後點選【送出】即可」。",
+    "句 5：publicNotary/SocialHousing.vue＋t('不辦理公證理由') 的 textarea :maxlength=\"100\" 與 t('最多 [s1] 個字元' ,[100])，只在 owner_is_rent_notarization == 0 時可以填。"
+   ]
+  },
+  {
+   "id": "jgb/D/notary-enforcement-items",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "不成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "329bd661298a031279bec1f917728e2de8507d0f31aa6d6c8ea1c728ed231e3e",
+   "title_text": "一般合約的公證分頁要怎麼設定強制執行事項？",
+   "notes": [
+    "標題：是一個問句，沒有額外斷言，句子已經回答。",
+    "句 1：src/pages/contracts/edit/publicNotary/General.vue＋v-if=\"contractHasPublicNotary\" 下有 t('辦理公證')，選項 t('同意辦理')／t('不同意辦理')。",
+    "句 2：src/use/config/useContractRequiredField.js＋含 FormField.hasPublicNotary 的範本：tw_zh_individual、tw_zh_corporation、tw_zh_management、tw_zh_individual_union、tw_zh_corporation_union、tw_zh_management_union、en_us_corporation、th_th_individual、th_th_management；config/contract.php 對應的 label 與句中列的名稱一致。",
+    "句 3：publicNotary/General.vue＋v-show=\"has_public_notary == 1\" 下有 t('強制執行事項')、'辦理公證後，請選擇應逕受強制執行的項目(可複選)。'，三個 checkbox 的文字與句中逐字相符。",
+    "句 4：publicNotary/General.vue＋選 t('同意辦理') 的 radio @change 會執行 editStore.form.public_notary_content = ['1', '2', '3']，也就是三項預設全部勾選，不是全部不勾選；只有選「不同意辦理」才會清成 []。句子與程式相反。",
+    "句 5：useContractRequiredField.js＋FormField.hasPublicNotaryDistraint 只出現在 tw_zh_corporation、tw_zh_management、tw_zh_individual 三個範本；publicNotary/General.vue＋t('公證書載明下列事項應逕受強制執行')，選項 t('同意')／t('不同意')，位置在 t('強制執行事項') 上方。",
+    "句 6：publicNotary/General.vue＋t('保證人效力')、'公證書載明金錢債務逕受強制執行時，如有保證人者，前項後段第 [s1] 款之效力及於保證人。'，[s1] 由 sortedPublicNotaryContent（已勾選的事項）組出來。",
+    "句 7：publicNotary/General.vue＋v-else 顯示 t('*目前英文與英越文版合約不支援此項目。')；useContractRequiredField.js 中 EN201608、VN202005 都沒有 hasPublicNotary，en_us_management 沒有設定、走 Fallback；紙本與 DIY 合約的 contract_template_selected 是 null（ContractController.php＋'contract_template_selected' => (!$contract->contract_is_existing && ...)），同樣走 Fallback；src/use/useEditStore.js 的紙本與 DIY 白名單都包含 'contracts.edit.publicNotary'。",
+    "句 8：src/use/useEditStore.js＋車位合約過濾（premises_use_for === 'parking_space'）的 basicRoutes 不含 publicNotary，而且是依車位用途過濾、不看範本；特定合作團隊範本 meta_capital_condos／meta_capital_office，以及另一個特定合作團隊的社宅範本，都會把 'contracts.edit.publicNotary' 濾掉。"
+   ]
+  },
+  {
+   "id": "jgb/D/social-housing-attachments-tab",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "42bab2c86d448c98a7c0ce55747cfc2beeff91af2be635860862e971b84843d1",
+   "title_text": "社宅合約「合約附件」要準備什麼？（合約附件只收其他文件如附註條款、稅籍證明；測量成果圖等在出租方附件分頁，轉租範本除外）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/pages/contracts/edit/attachments/Index.vue＋attachmentRowOptions 只有 attachment_others，標題 `a.${t('其他(附註條款、稅籍證明等)')}`；src/pages/contracts/edit/landlordAttachment/Index.vue＋attachmentRowOptionsSocialHousing 有 '第一類建物謄本'、'建物所有權狀影本'、'建築物使用執照影本'、'測量成果圖影本'、'出租人存摺影本'；src/use/useEditStore.js＋'sublet' 會濾掉 socialHousing.landlordAttachment，'charter' 會濾掉 socialHousing.tenantAttachment。幫助中心 Landlordonboarding09Socialhousing_zh-Hant.html 寫的是「合約附件（測量成果圖、稅籍證明等）」，與程式不一致；畫面以程式為準，句子跟程式相符。"
+   ]
+  },
+  {
+   "id": "jgb/D/social-housing-subsidy-terms-tab",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "daf1cb985b24cb78d99ccc5bccc573651770e9a88116dcc4a9f0aa227ee1d8e3",
+   "title_text": "社宅合約「補助申請」分頁在做什麼？（配合社宅包租代管 333 補貼政策，出租方三種稅費減免）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：Landlordonboarding09Socialhousing_zh-Hant.html＋「補助申請主要配合政府的「社會住宅包租代管333」補貼政策」「出租方的3種稅費減免：房屋稅、地價稅、租金所得稅」「承租方的3項費用補助：公證費、修繕費、居家安全相關保險費」「業者的3年免費專業服務：仲介費、代管費由政府全額補助。」；src/routes/contracts.js 的 group 為 '補助申請'。",
+    "句 2：Landlordonboarding09Socialhousing_zh-Hant.html＋「條件（補助費用申請日期/住宅出租修繕費/公證費/承租人租金補助）」；程式 src/pages/contracts/edit/subsidyTerms/Index.vue 有 t('補助費用申請日期')、t('住宅出租修繕費')、t('公證費')，以及標題「承租人租金補助」。",
+    "句 3：review-sheet-9.15-S2-DE-20260927.md＋「| 99 | G8 | 採用：寫系統側事實＋「屬外部規定，系統不判斷」」，第 99 題是「補貼申請人寫法」；句意與裁決一致。"
+   ]
+  },
+  {
+   "id": "jgb/D/social-housing-landlord-tabs-overview",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "46a6d09eb36b42c47a6603018bf70a7b726c408a229744b52a15c983a55ea1b6",
+   "title_text": "社宅合約「出租方」分組有哪些分頁？（基本資料、授權、附件三個分頁）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/routes/contracts.js＋group '出租方' 有 label '基本資料'、'授權'、'附件'；src/use/useEditStore.js＋contract_template_selected === 'sublet' 時濾掉 'contracts.edit.socialHousing.landlordLicense' 與 'contracts.edit.socialHousing.landlordAttachment'；Landlordonboarding09Socialhousing_zh-Hant.html 的「D. 出租方」也列這三項。"
+   ]
+  },
+  {
+   "id": "jgb/D/social-housing-landlord-license-conditions",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "e536b1777ef689dbb371e584ac84e003a7db0805a206bd39152ca807ec6c686c",
+   "title_text": "社宅合約「授權」分頁要確認什麼？（合法建物條件、住宅使用、同意提供住宅的方式等授權事項）",
+   "notes": [
+    "標題：由句 1、2 支撐。",
+    "句 1：src/pages/contracts/edit/landlordLicense/Index.vue＋t('合法建物條件') 有兩個選項 '出租人為出租住宅之所有權人'、'租賃標的需坐落於當地直轄市'；t('住宅使用') 有四個選項，包含 '主要用途登記含有「住」、「住宅」、「農舍」、「套房」、「公寓」或「住宿」字樣…' 和 '…提出合法房屋證明…'。",
+    "句 2：同上檔案 landlordLicense/Index.vue＋t('同意提供住宅')，radio 選項 '出租予租屋服務事業再轉租(包租包管)'、'經由租屋服務事業協助出租予符合一定資格者(代租代管)'，type=\"radio\" 只能擇一。"
+   ]
+  },
+  {
+   "id": "jgb/D/social-housing-tenant-tabs-overview",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "8e8efe2001889758b9ec9f41ff4dd188ecef2e18cae8359449fb46c685e755a4",
+   "title_text": "社宅合約「承租方」分組有哪些分頁？（基本資料、家庭＆財產、授權、附件）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/routes/contracts.js＋group '承租方' 有 label '基本資料'、'家庭＆財產'、'授權'、'附件'；src/use/useEditStore.js＋'charter' 時濾掉 tenantHousehold、tenantLicense、tenantAttachment；src/pages/contracts/edit/tenantBasic/Index.vue 的 v-else 分支（charter）改填 t('公司名稱') 等欄位。「確認申請身分是否符合資格」這個用途，對應 tenantBasic/Index.vue＋t('承租人資格') 與 tenantLicense/Index.vue＋t('申請身分條件')。"
+   ]
+  },
+  {
+   "id": "jgb/D/social-housing-tenant-basic-status",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "06cc1b392b7e416dae4c0aa7a8d0c191b71b2483a706429730f97be88f6e7321",
+   "title_text": "社宅合約「基本資料」怎麼審核租客資格？（承租人資格、住宅政策補貼戶、代理人；包租包管改填公司資料）",
+   "notes": [
+    "標題：由句 1、2 支撐。",
+    "句 1：src/pages/contracts/edit/tenantBasic/Index.vue＋v-if=\"contract_template_selected !== 'charter'\" 區塊內有 t('承租人資格')（'一般戶'、'第一類弱勢戶'、'第二類弱勢戶'）；細項 tenantQualificationDetailOptions 第一類有 '六十五歲以上之老人。（限申請人本人）'、'原住民。'、'身心障礙者。'，第二類有 '低收入戶。'、'中低收入戶。'；t('住宅政策補貼戶') 的三個選項包含 '以上均無。'。",
+    "句 2：同上檔案 tenantBasic/Index.vue＋v-if=\"!== 'charter'\" 下有 t('新增代理人')，在 to_user_pdf_agents.length < 3 時才能新增並顯示 (n/3)，關係選項為 t('父')、t('母')、t('監護人')；v-else（charter）分支是 t('公司名稱')、t('代表人姓名')、t('統一編號')。"
+   ]
+  },
+  {
+   "id": "jgb/D/social-housing-tenant-household",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "8211a7fb513c3be2787da6f735956bd59e3c18d3f8c6baf35c3077129934face",
+   "title_text": "社宅合約「家庭＆財產」分頁要登記什麼？（家庭成員、不動產與動產總額、最近年所得）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/pages/contracts/edit/tenantHousehold/Index.vue＋t('家庭成員')、t('所在地址')、t('持分比')、t('不動產總額')、t('動產總額')、t('最近年所得')。"
+   ]
+  },
+  {
+   "id": "jgb/D/social-housing-tenant-license",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "6b8b1141bf47249024d5c9a955cef1bcf9a4065cc15cb184eb79770142c44e26",
+   "title_text": "社宅合約承租方的「授權」分頁要同意什麼？（承租資格變動通知、無自有住宅、所得低於最低生活費標準 3.5 倍、財稅所得總檢核）",
+   "notes": [
+    "標題：由句 2、3 支撐。",
+    "句 1：src/pages/contracts/edit/tenantLicense/Index.vue＋t('請勾選同意授權的項目。')、t('承租資格變動通知')、t('申請身分條件')。",
+    "句 2：tenantLicense/Index.vue＋checkbox t('租屋服務事業已確實轉知承租方')。",
+    "句 3：tenantLicense/Index.vue＋三個未註解掉的選項：'符合欲申請直轄市無自有住宅之規定'、'所得總額按申請人家庭成員人數平均分配低於欲申請直轄市最新年度最低生活費標準之 3.5 倍'、'申請人及家庭成員是否符合財稅所得總檢核'，與句中逐字相符。",
+    "句 4：src/use/useEditStore.js＋'charter' 時濾掉 'contracts.edit.socialHousing.tenantLicense'。"
+   ]
+  },
+  {
+   "id": "jgb/D/social-housing-dealer-basic",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "906ee39b09965045d7573908b31c56a7519a6683352d603fa7ff1e630bd37ba2",
+   "title_text": "社宅合約「業者」分頁在做什麼？（確認團隊資料與經理人資訊，有誤要回團隊資訊或帳號資訊修改）",
+   "notes": [
+    "標題：由句 1、2 支撐。",
+    "句 1：Landlordonboarding09Socialhousing_zh-Hant.html＋「基本資料：可於此確認您的團隊資料＆經理人資訊無誤」。",
+    "句 2：Landlordonboarding09Socialhousing_zh-Hant.html＋「若有誤請點選藍字的【團隊資訊】或【帳號資訊】進行修改」；程式 src/pages/contracts/edit/dealerBasic/Index.vue＋'如有需要修改以下資訊，請前往 [s1] 進行修改。'，連結文字分別是 t('團隊資訊') > t('簽約資訊') 和 t('帳號資訊')；公司與經理人資料都是唯讀顯示，分頁上只能用下拉選單選擇簽約資訊和經理人。"
+   ]
+  },
+  {
+   "id": "jgb/D/social-housing-move-in-terms",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "b50839e819c87d78492f6f8ad467172b3cb10634bfaba79c348d4acd2f3f5658",
+   "title_text": "社宅合約「點交證明文件」分頁在約定什麼？（點交狀態與修繕責任的預先約定，不是簽約後實際執行的點交）",
+   "notes": [
+    "標題：由句 1、3 支撐。",
+    "句 1：src/pages/contracts/edit/moveIn/Index.vue＋t('點交證明文件')、t('點交狀態')（t('現狀')／t('修繕後點交')）、t('修繕責任')。",
+    "句 2：同上檔案 moveIn/Index.vue＋'依照合約，所有品項默認以現狀且出租方有損壞之修繕責任，可再根據實務狀況調整細節，但若為承租方刻意損壞則該由承租方自行負擔責任。'（句中是轉述）。",
+    "句 3：src/routes/contracts.js＋分頁 'contracts.edit.socialHousing.moveIn' 載入 edit/moveIn/Index.vue；實際點交是另一條路由 'contracts.moveIn'，path '/contracts/sh-move-in/:id'，載入 contracts/move-in/Index.vue。"
+   ]
+  },
+  {
+   "id": "jgb/D/social-housing-charter-sublet-tab-hiding",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "ca80a9e476d3329c0f4497d16b89433d893ca30ce7c96c7b3b60f965914b230c",
+   "title_text": "社宅合約選「包租包管」或「轉租」範本，分頁會不同嗎？（包租包管不顯示承租方的家庭＆財產、授權、附件，轉租不顯示出租方的授權、附件）",
+   "notes": [
+    "標題：由句 1、2 支撐。",
+    "句 1：src/use/useEditStore.js＋註解「社宅包租合約 承租方篩選」：'charter' 時濾掉 socialHousing.tenantHousehold、tenantLicense、tenantAttachment。",
+    "句 2：同上檔案 useEditStore.js＋'sublet' 時濾掉 socialHousing.landlordLicense、landlordAttachment。",
+    "句 3：app/Http/Controllers/ContractController.php＋SOCIAL_HOUSING 的範本只有 management、charter，以及 sublet 合約限定的 sublet；useEditStore.js 其他過濾條件（車位、特定合作團隊範本、稅與發票、租金調幅）比對的都是一般合約的路由名稱，不會影響 socialHousing.* 路由。紙本與 DIY 過濾也碰不到社宅：src/components/Lightbox/SelectContractMethod.jsx＋isHidden: config_rule_key == 4 會把這兩種方式藏起來。選代租代管時分頁清單完整。"
+   ]
+  }
+ ],
+ "findings": [
+  "jgb/D/notary-enforcement-items 句 4 與程式相反：src/pages/contracts/edit/publicNotary/General.vue 選「同意辦理」時會把 public_notary_content 設成 ['1','2','3']，三項強制執行事項預設全部勾選。",
+  "來源彼此衝突：Landlordonboarding09Socialhousing_zh-Hant.html 說「合約附件（測量成果圖、稅籍證明等）」，但程式 src/pages/contracts/edit/attachments/Index.vue 的合約附件只有「其他(附註條款、稅籍證明等)」，測量成果圖在 landlordAttachment/Index.vue。細目 social-housing-attachments-tab 以程式為準，幫助中心文案待修。",
+  "來源彼此衝突：幫助中心說「目前社會住宅因「公證」是必要的程序」，但程式 publicNotary/SocialHousing.vue 可以選「不同意」並填「不辦理公證理由」。細目 social-housing-notary 以程式為準（與審核單 G1 第 28 題的方向一致）。",
+  "同組細目互相一致：social-housing-notary 句 2（只有包租包管能逐款選擇強制執行）與 notary-enforcement-items（一般合約用複選）描述的是不同元件（SocialHousing.vue 和 General.vue），沒有矛盾。"
+ ],
+ "source_transcript": "a84b8f0bdf0239ef9.output"
+}

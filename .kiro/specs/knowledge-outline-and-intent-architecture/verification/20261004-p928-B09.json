@@ -1,0 +1,242 @@
+{
+ "kind": "write",
+ "verdict": "REFUTED",
+ "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+ "claim": "Plan 9.28 批次 B09：13 條細目的標題與每一句已逐句對合法來源核對，逐條結果如 fines",
+ "fines": [
+  {
+   "id": "jgb/C/estate-house-preview-unpublished",
+   "title": "不成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "b5c3abce0ff88d7c3868a4bd8865551f6ac1c4467e70f5e5b530874845e0583f",
+   "title_text": "物件還沒刊登（未開放）時，廣告頁會怎麼顯示？（屋主看到的是預覽頁提示；其他人造訪會得到404）",
+   "notes": [
+    "標題：「其他人造訪會得到404」超出句 2。句 2 把 404 限定在「沒有查看權限」的造訪者；app/Http/Controllers/EstateController.php 的 show() 只有在 !$estate->is_open 且（未登入，或已登入但 show_estate／show_owner_estate 都沒有）時才 abort(404)，有 show_estate 權限的團隊成員看到的是預覽頁，不會得到 404。另外，帶合約的邀請網址會走 $isInvite 分支，根本不會執行到 abort(404)。所以標題的「其他人」說得太廣。",
+    "句 1：resources/views/estate/show.blade.php＋『這是您的物件廣告預覽頁，此物件尚未完成刊登。』，條件是 @if (!$isOpen && !$isInvite && !$isContractSnapshot)。擁有者（isHasPermission add_estate）打開時會出現。畫面上的句末有「。」，引文少了句號，其餘逐字相符。",
+    "句 2：app/Http/Controllers/EstateController.php＋『下架物件對所有人（含搜尋引擎爬蟲）一致回 404』與 abort(404)，條件是 !$estate->is_open && !$isFromContractPermission && (empty($this->user) || !$isShow)。目的就是程式註解寫的「讓 Google 重爬後移除索引，避免外洩聯絡資訊殘留在搜尋結果」。補充：用邀請網址（/house/{no}/{合約編號}）進來的人不會走這一段，見 findings。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-house-invite-countdown",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "36100f52ce48d2199e18d1e668f464a028d91ad2c9da0bcfc4e393c0ab14d1e7",
+   "title_text": "簽約邀請連結會失效嗎？（連結會顯示倒數，過期後失效）",
+   "notes": [
+    "標題：句 1 的「本連結會於［剩餘時間］後失效」可以支撐「顯示倒數、過期後失效」。",
+    "句 1：resources/views/estate/show.blade.php＋『以下是來自 [s1] 的簽約邀請，本連結會於 [s2] 後失效，請把握時間完成簽約！』（[s1] 是 $contract->owner_name，[s2] 是 $isInviteRemain），位置在頁面上方的 invitation-headr 區塊。條件是 $isCountingDown；依 app/Http/Controllers/EstateController.php 的『合約不處於 待租客簽回 或 剩餘時間已經結束，邀約失效 則不顯示簽約倒數』，只有在合約還在邀請中、而且還沒過期時才會顯示。句子講的是仍然有效的邀請連結，所以判成立。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-house-content-blocks",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "e19dcd69bf6610c5b9ba643cfcea6b355c9a746e5c74a8e9a16ad02a2f378e00",
+   "title_text": "物件廣告頁顯示哪些內容？（照片／VR全景切換、設備與設施、交通與環境設施、溫馨提醒）",
+   "notes": [
+    "標題：四項分別由句 1～3 支撐。",
+    "句 1：resources/views/estate/show.blade.php＋『VR 全景』『照片』兩顆切換按鈕（slick-gallery 的 v-slot:middle），條件是 gallery[0] 有 liveTourLink。依 app/Http/Controllers/EstateController.php 的 if (!empty($estate->is_show_vr)) array_unshift(... 'liveTourLink')，VR 一定排在第一張。介面文字是「VR 全景」，中間有空格，引文沒有，只差空白。",
+    "句 2：同上 show.blade.php＋{{___('設備與設施')}}，這個標題沒有任何條件；各分區 facility-block 的條件是 array_sum($group['furniture'] + $group['appliance']) > 0 || !empty($group['customs'])（其他分區也一樣）。",
+    "句 3：同上 show.blade.php＋『交通與環境設施』（地圖＋『地址』）與『鄰近捷運站』（有 mrt 才顯示）；『溫馨提醒』區塊包含『本物件之JGB編號』，以及『1、房屋照片僅反應使用現況，用途以使用執照或謄本記載為準。刊登內容的法定用途與現況使用不同時…』等提醒文字。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-house-contact-landlord",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "eebb2f481a8a8436a92d43df482cfae816443e0603d36bb616d107735d382363",
+   "title_text": "物件廣告頁「聯絡房東」區塊顯示什麼？（房東電話／Email依隱藏設定決定是否顯示；公司廣告電話／Email不受隱藏設定影響）",
+   "notes": [
+    "標題：句 1、句 2 支撐。",
+    "句 1：resources/views/estate/show.blade.php＋@if (empty($estate->hide_phone) && !empty($landlordInfo['phone']))、@if (empty($estate->hide_email) && !empty($premisesContact['mail']))；法人的經理人欄位是 empty($estate->hide_phone) && !empty($landlordInfo['main_agent_full_phone'])，以及 empty($estate->hide_email) && !empty($premisesContact['main_agent_mail'])。premisesContact 沒有 phone 鍵（app/Http/Controllers/EstateController.php 的 $premisesContact = [ 'mail' …），所以不會繞過隱藏設定。",
+    "句 2：同上 show.blade.php＋{{-- 公司電話 --}} @if (!empty($landlordInfo['advertising_company_phone']))、{{-- 公司Email --}} @if (!empty($landlordInfo['advertising_company_email']))，兩個條件都沒有檢查 hide_phone／hide_email。判斷是不是法人用的是 $landlordInfo['company']（= $role->company_name）。",
+    "句 3：同上 show.blade.php＋@if (!empty($premisesContact['line'])) 加上『加 Line 好友』與 data-clipboard-text 複製圖示；@if (!empty($premisesContact['whats_app'])) 加上『加 WhatsApp 聯絡人』。",
+    "句 4：同上 show.blade.php＋@if (!empty($premisesContact['facebook'])) 加上『立即聯繫』；三種聯絡方式沒有值時都不會輸出。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-house-vs-show-url",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "29535e254d5ac8eb621126986308538aa2a7382eacb9b599ad1de2d131e0a358",
+   "title_text": "物件廣告頁的網址會自動轉換嗎？（刊登中時，內部編號網址會自動轉址到 JGB 編號公開網址）",
+   "notes": [
+    "標題：句 1 支撐。",
+    "句 1：app/Http/Controllers/EstateController.php＋『如果物件是處於公開狀態且非從 house 進入 都進 house』，條件是 request()->routeIs('estates.show') && empty($action) && !$isArchive && $estate->is_open，成立時 redirect()->route('estates.house', ['no' => trans_jgb_no(...)])。$action 就是合約或邀請參數這一段路徑。",
+    "句 2：同上 EstateController.php 的 house()＋if ($contract->isRenewContract()) 加上 return redirect()->route('contracts.show', ...)，直接導向該合約頁，不會呼叫 show()。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-house-fees-table",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "94a487b27f97bdb2d4a4f1dcf04c9ef621c79b44cd5fff82692a892779c98f86",
+   "title_text": "物件廣告頁有費用明細表嗎？（車位物件不顯示，其餘物件顯示生活費用表）",
+   "notes": [
+    "標題：句 1 支撐。",
+    "句 1：resources/views/estate/show.blade.php＋{{-- 生活費用(不包含車位)--}} @if ($premisesInfoBasic['premises_use_for'] !== 'parking_space') 包著 <fees-table :labels-fees … :fees-amount-list>，傳入費用項目與換算後的金額。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-house-appointment-cta",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "a9305f518af7dc2a2e652d08f7ce7004b0ae2ff431a0f8b44270e10515b7e19b",
+   "title_text": "物件廣告頁有預約入住的按鈕嗎？（一般訪客看到「立即預約入住」，受邀簽約者看到「查看合約」）",
+   "notes": [
+    "標題：句 1、句 2 支撐。",
+    "句 1：resources/views/estate/show.blade.php＋{{-- 桌面版 --}}、{{-- 手機版 --}}（sticky bottom-0）兩處的 @else 分支都是『立即預約入住』，點擊執行 $store.commit('lightbox', 'estateAppointment')，對應頁面上的 <lightbox-estate-appointment>。",
+    "句 2：同上 show.blade.php＋@if ($isInvite) {{-- 被邀請者觀看本物件 --}} 加上『查看合約』，href 是 route('contracts.show', ['id' => $contract->id, 'r_type' => 'tenant'])，不會 commit 燈箱。app/Http/Controllers/EstateController.php 的 house() 註解也把 contracts.show 稱為簽名頁面。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-house-info-card",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "1cc8f2bec9e2c807c05079da0f6a956a1c2160b4f84f41beaf9436774a438cf2",
+   "title_text": "物件廣告頁的資料卡片顯示什麼？（地址／社區名稱、租金元/月與含哪些費用、建築類型與樓層或格局、商用類的空間類型與座位數、面積、物件平面圖）",
+   "notes": [
+    "標題：句 1～5 涵蓋全部項目。",
+    "句 1：src/pages/estates/show/_parts/EstateBasicInfo.vue＋addressAndCommunityName，其中 address 是 isVisible: true，communityName 是 isVisible: !isEmpty(props.communityName)。resources/views/estate/show.blade.php 傳入 :is-show-address-and-community-name=\"true\"。",
+    "句 2：同上 EstateBasicInfo.vue＋v-if=\"!isEmpty(props.rent.amount)\" 加上 t('元/月')；v-if=\"props.hasIncludedFees\" 輸出 (含 …)。app/Http/Controllers/EstateController.php 的 $hasFeeInclude 以 rent_include === true 判斷。",
+    "句 3：同上 EstateBasicInfo.vue＋labelKey: props.premisesUseFor === 'residential' ? '建築類型與樓層' : '建築類型'；layout 在非住宅時 return `${ t('車位') }`，兩者都是 isVisible: props.premisesUseFor !== 'business'。",
+    "句 4：同上 EstateBasicInfo.vue＋spaceType、seats 都限商用。seats 另外有 props.spaceType !== 'retail_shop' && !== 'office_flat' 條件，但 show.blade.php 傳進來的是 $labelsSpaceType 的翻譯標籤（config/estate.php：'retail_shop' => '店面'），永遠不會等於這兩個 key，實際上商用一律顯示座位數，所以句子成立。",
+    "句 5：同上 EstateBasicInfo.vue＋size 是 isVisible: true（labelKey '面積'）；floorPlan 是 labelKey '物件平面圖'，條件 isVisible: !isEmpty(props.floorPlan) && route.name !== 'estates.advertisementPrintView'，以 32px 縮圖排成一列。"
+   ]
+  },
+  {
+   "id": "jgb/C/team-public-page-purpose",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "79d18b34782b01d1b1bf56cfa49d10b9e34d901a141d9c9d15e53063058ab935",
+   "title_text": "房東對外首頁（招租店舖）是什麼？（公開展示聯絡資訊、簡介與所有刊登中物件，供分享給潛在租客）",
+   "notes": [
+    "標題：句 1 支撐。",
+    "句 1：slug90_zh-Hant.html＋『「房東對外首頁」（招租店舖）是房東對外宣傳的好幫手，除了房東聯絡資訊與基本介紹外，也會公開展示房東旗下所有物件分類為 「刊登中」 的物件』。",
+    "句 2：同上 slug90_zh-Hant.html＋『延伸 1：登入 JGB 後，只要點選側邊選單左上角您大頭照上的藍色房子 Icon，即可連結到您專屬的「房東對外首頁」』。"
+   ]
+  },
+  {
+   "id": "jgb/C/team-public-page-edit-and-banner",
+   "title": "成立",
+   "sentences": [
+    "不成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "49d98ec7c1d051d023a861a33167efa97384682e16a99ef0420acdecf64c9ff5",
+   "title_text": "招租店舖上可以直接編輯哪些內容？（橫幅照片、頭像、自我介紹；團隊身分另可改團隊名稱等欄位，需要「編輯團隊權限」）",
+   "notes": [
+    "標題：可編輯項目由句 2、句 3 支撐。「需要「編輯團隊權限」」對應 src/pages/users/public/Index.vue 的 editable 必要條件 permission?.edit_role，app/Http/Controllers/UserController.php 的 'g_edit_role'=> ['label'=> '編輯團隊權限'] 證明這個權限的介面標籤就是「編輯團隊權限」，所以標題成立。",
+    "句 1：src/pages/users/public/Index.vue＋editable: computed(()=> userPublicScopeStore.infos?.is_admin && store.state?.userData?.permission?.edit_role)。但「只有管理者」與程式不符：app/Http/Controllers/UserController.php 的 info() 是這樣算的：$isAdmin = !empty($this->user) && !empty($this->role) && !(($user->id != $this->user->id) && !empty($user->getPermissionByRoleId($this->role->id)) && !…['show_estate'])。店舖擁有者如果不是造訪者目前身分的團隊成員，app/Role.php 的 getCharacterIdByUser 會回 null，getPermissionByCharacter 也取不到權限，於是 is_admin 為 true。也就是說，任何已登入、而且目前身分有 edit_role 的使用者都看得到編輯入口，跟是不是該店舖的管理者無關。後半句成立：同上 UserController.php 的 if ($role->is_team && !$this->isHasGPermission('edit_role_info')) 會回『您目前登入的帳號無法使用編輯團隊功能』，而 'g_edit_role_info' 的 label 是『編輯團隊資訊』。",
+    "句 2：src/pages/users/public/Index.vue＋upload_for=\"banner\" 加上 t('更換照片')；src/pages/users/public/_parts/AsideInfo.vue＋upload_for=\"avatar\"，位置在 absolute right-0 bottom-0，圖示是 icon_cam_white.svg；app/Http/Controllers/UserController.php 中個人房東的 infoColumn 只有 key 'introduction' 設為 'editable'=> true。",
+    "句 3：app/Http/Controllers/UserController.php＋團隊 infoColumn 的 labelKey 依序是『團隊名稱』『經理人證號』『租賃管理員證號』『公司電話』『公司Email』『團隊介紹』，全部都是 editable true；POST 會寫入 role->company_banner／company_logo。",
+    "句 4：同上 UserController.php＋個人房東的 POST 寫入 $user->avatar／$user->banner／$user->introduction；account() 的 $infoBasic 只有 'user_thumbnail' => get_upload_file($user->avatar)，沒有 banner 或 introduction（正對照：user_thumbnail 有找到）。resources/views/users/account.blade.php 用 grep 找 introduction／banner 都沒有結果。",
+    "句 5：同上 UserController.php＋$role->menu_name = $infoColumn['menu_name']；resources/views/users/role.blade.php＋『團隊名稱』<input name=\"menu_name\">。users.role 頁在 src/pages/estates/edit/rent_contact/Index.vue 稱為『團隊資訊』。",
+    "句 6：src/pages/users/public/Index.vue＋{ t('建議尺寸') }： 1920 x 576。"
+   ]
+  },
+  {
+   "id": "jgb/C/team-public-page-filter-and-view",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "47be1d9248a6f26609dcce024a7b1bd230cc74f2cea7ef12ea75240c18a8af9b",
+   "title_text": "招租店舖怎麼篩選物件？（篩選條件加關鍵字搜尋，手機版多數條件收在「更多」；可切換小圖示／大圖示／條列式；每頁筆數 30／60／90，預設 30）",
+   "notes": [
+    "標題：句 1～6 支撐。",
+    "句 1：src/pages/users/public/_parts/TopFilter.vue＋viewport.width >= 576 ? <PublicSearchBlock；src/pages/users/public/_parts/PublicSearchBlock.jsx＋keyName 依序是 agentId、country、city、district、community、MRT、space_type、room_count、building；route.params?.mode === 'rent' 時是 rentRange／sizeRange，否則是 sellPriceRange／sellSizeRange；keyGroup 為 is_show_vr: 'VR'、has_elevator: '有電梯'、fires_limit: '可開伙'、pet_limit: '可養寵物'。",
+    "句 2：同上 PublicSearchBlock.jsx＋placeholder={t('輸入：案名、地址、經理人、社區')}。",
+    "句 3：src/pages/users/public/_parts/PublicSearchBlockM.jsx＋上方三格分別是 agentId optionTitle、building optionTitle、t('更多')；選單 3 內有 country／city／district／community／MRT／space_type／room_count；租金與售價有 store.state.siteOptions.dollarSign === 'TWD' 條件；placeholder={t('輸入：案名、地址、經理人、大房東、租客、社區')}。",
+    "句 4：src/pages/users/public/_parts/TopFilter.vue＋『招租頁面不需要 community 和 agentId 篩選器』，對應 ...(route.params.encryptId !== 'recruitment' ? { community, agentId } : {})。",
+    "句 5：src/pages/users/public/Index.vue＋premisesItemLayoutOptions 為 t('小圖示')、t('大圖示')、t('條列式')。",
+    "句 6：同上 Index.vue＋options={route.params.encryptId === 'recruitment' ? [10, 30, 60, 90] : [30, 60, 90]}；per_page 預設 (route.params.encryptId === 'recruitment' ? 10 : 30)。",
+    "句 7：同上 Index.vue＋isEmptySearchResult 時顯示 t('沒有符合的結果') 與 t('你可以試著調整一些篩選條件，來瀏覽更多物件。')。"
+   ]
+  },
+  {
+   "id": "jgb/C/team-public-page-share",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "3a4648c800bdd4a0ad8449d45fe79b0f0ff4c4b6c56ac03ca6f8fb0d1cdb831e",
+   "title_text": "招租店舖怎麼分享？（電腦上開分享視窗可複製連結或分享到 FB、Line、LinkedIn；手機上會叫出系統分享選單；分享的是目前頁面的網址）",
+   "notes": [
+    "標題：句 1～3 支撐。",
+    "句 1：src/pages/users/public/_parts/AsideInfo.vue＋socialMediaRow 最後一格是 bi-share-fill；else 分支 store.commit('lightbox', 'userPublicShare') 開啟 Lightbox2，內容有 t('複製連結')、Facebook、Line、LinkedIn 的 t('分享')。",
+    "句 2：同上 AsideInfo.vue＋if (isDevice('any') && typeof navigator.share === 'function') navigator.share(...)；src/mixin/methods.js＋isDevice 的 any 包含 android／blackBerry／ios(iPhone|iPad|iPod)／windows(IEMobile)。",
+    "句 3：同上 AsideInfo.vue＋shareData.url 為 `${window.location.protocol}//${window.location.host}${route.fullPath}`，fullPath 含 query，因此篩選條件會一併帶出。"
+   ]
+  },
+  {
+   "id": "jgb/C/community-copy-flow",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "不成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "e72f18e3e68caa8bae64d6a2fd4f0b27e2d92846b72d6acbd601f1f22b0b4711",
+   "title_text": "複製社區、在社區新增物件，選好社區之後會發生什麼？",
+   "notes": [
+    "標題：問句，沒有額外斷言。",
+    "句 1：src/pages/communities/pick/Index.vue＋pageTitle 的三個 case 分別是 t('請選擇要複製的社區')、t('請選擇要新增物件的社區')、t('請選擇要複製物件的社區')。",
+    "句 2：同上 pick/Index.vue＋case 'communityCopy' 的 next.onClick 是 debounceClick 後 communityCopyFetcher.refetch()（POST /api3/communities/single copy: 1），成功後 router.push({ name: 'communities.edit', params: { communityId } })。中間沒有任何確認視窗：src/components/BottomNav.vue 用 grep 找 confirm／確定都沒有結果，只會呼叫 next.onClick。建立副本之後進入的是新社區的編輯頁，不是社區列表。app/Http/Controllers/CommunityController.php 的 postSingle 走 elseif (!empty($request->copy)) 分支，回傳 item()，裡面帶 'communityId'。",
+    "句 3：同上 pick/Index.vue＋case 'estateCreate' 時 window.location.href = `${APP_URL}/api2/estate/create?communityId=…`；routes/web.php＋'/api2/estate/create/{action?}' 對應 EstateController@create；app/Http/Controllers/EstateController.php 的 create() 用 $addAttrs['community_id'] = $communityId 加 Estate::createEstate，接著 redirect()->route('estates.edit')；src/pages/estates/edit/Index.vue＋label: t('編輯物件')。",
+    "句 4：同上 pick/Index.vue＋case 'estateCopy' 時 router.push({ name: 'estates.pick', params: { action: 'estateCopy' }, query: { communityId } })；src/routes/estates.js 的 '/estates/pick/:action' 對應挑選物件的頁面。"
+   ]
+  }
+ ],
+ "findings": [
+  "幫助中心 slug90_zh-Hant.html 的「延伸 2：可以即時編輯 「封面照片」、「大頭照」、「姓名」、「自我介紹」，相關修改將連動變更到您「會員中心 > 帳號資訊」內」與程式不一致：app/Http/Controllers/UserController.php 的 account() 中 $infoBasic 只帶 user_thumbnail（$user->avatar），沒有 banner 和 introduction；店舖頁上的個人房東姓名也不是可編輯欄位（infoColumn 的『姓名』沒有 editable）。team-public-page-edit-and-banner 句 4 依程式寫，結論與幫助中心相反，依判定規則以程式為準。",
+  "權限觀察（交由人裁決，未實跑驗證）：app/Http/Controllers/UserController.php 的 info() 中，$isAdmin 對「店舖擁有者不是自己目前身分團隊成員」的已登入造訪者會算成 true（app/Role.php 的 getCharacterIdByUser 回 null，getPermissionByCharacter 也取不到權限）。前端 src/pages/users/public/Index.vue 的 editable 只再檢查造訪者自己的 edit_role。POST api3.post.users.infos 只對 $role->is_team 檢查 edit_role_info，所以個人房東的店舖可能被其他已登入、而且有 edit_role 的使用者看到編輯入口並送出修改（橫幅、頭像、自我介紹）。這可能是授權缺口，需要在本機實際驗證後再判定。",
+  "estate-house-preview-unpublished：未刊登物件如果透過邀請網址（/house/{JGB編號}/{合約編號}）進入，app/Http/Controllers/EstateController.php 的 show() 會走 $isInvite 分支，沒登入也不會 abort(404)。句 2 用「沒有查看該物件的權限」作條件，本批判成立，但標題「其他人造訪會得到404」因此和本條一併判不成立。",
+  "同一個目的地 route('contracts.show')，在 estate-house-vs-show-url 句 2 稱為「合約檢視頁」，在 estate-house-appointment-cta 句 2 稱為「簽署頁面」。兩種說法都對得到程式（house() 的註解寫的是簽名頁面），不算矛盾，只是用詞不統一。"
+ ],
+ "source_transcript": "a635350293e723e71.output"
+}

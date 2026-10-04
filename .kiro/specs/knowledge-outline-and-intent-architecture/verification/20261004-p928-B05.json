@@ -1,0 +1,415 @@
+{
+ "kind": "write",
+ "verdict": "REFUTED",
+ "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+ "claim": "Plan 9.28 批次 B05：26 條細目的標題與每一句已逐句對合法來源核對，逐條結果如 fines",
+ "fines": [
+  {
+   "id": "jgb/B/biglandlord-sheet-overview",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "不成立"
+   ],
+   "content_sha256": "746ae9e0a6d76f88cd5050f4e12c58bbbaa1133d35b3d0f07a58d11798007824",
+   "title_text": "大房東對帳表在算什麼？（只有特定合作團隊看得到完整的押金、屋主資金、屋主提領、屋主直收等類別金額，其他團隊只看得到屋主租金收支；單月報表才有「上一月」「下一月」「下載」，整年度報表是「匯出報表」）",
+   "notes": [
+    "標題：各斷言由句 1（V2 名單才有 A～D 區、其他團隊只有屋主租金收支）與 src/pages/bigLandlords/sheet/index.vue 月報分支（上一月／下一月／下載）及 src/pages/bigLandlords/sheet/_parts/SelectBar.jsx 的 t('匯出報表') 支撐；句 2 的錯誤在於把切換年份歸給按鈕，不影響標題本身的斷言",
+    "句 1：src/pages/bigLandlords/sheet/_parts/Sheet.vue＋`isV2`／`bigLandlordReportV2`（src/use/config/useSpecialRoles.js 中 allRoles: false、VITE_BIG_LANDLORD_REPORT_V2_ROLE_IDS 名單）：名單內渲染 押金收入／押金支出／屋主資金收入／屋主資金支出／屋主提領／屋主直收收入／屋主直收支出；名單外只渲染 `isLabelAdjust ? t('租金收入') : t('屋主租金收入')` 與 `isLabelAdjust ? t('本期支出') : t('屋主租金支出')`（src/use/config/useBigLandlordLabelAdjust.ts 名單制），表頭 12 個月欄＝以月份為單位，成立",
+    "句 2：src/pages/bigLandlords/sheet/index.vue＋`['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'].includes(String(route.query.month)`：上一月／下一月／取消／下載只在月報分支，此部分成立；但年度畫面中切換年份是 src/pages/bigLandlords/sheet/_parts/SelectBar.jsx 另外的 ‹ › RouterLink（`year: Number(route.query.year ...) - 1`）與年份輸入框，`onExportClick` 的「匯出報表」按鈕只呼叫 createPdf 匯出目前年份的 PDF，並不能切換年份；句子寫成「可以切換年份、匯出整年度資料的「匯出報表」按鈕」把切換年份歸給該按鈕，不成立"
+   ]
+  },
+  {
+   "id": "jgb/B/biglandlord-sheet-empty",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "b79891bcfd2804978ed150acc687d5537839b15f820630ce39eaebea1ddda967",
+   "title_text": "對帳表顯示「尚未被指派物件」是什麼意思？（這位大房東還沒被授權任何物件）",
+   "notes": [
+    "標題：與句 1 一致，src/pages/bigLandlords/sheet/index.vue 的 `reportNoticeMessage` 提示文字含「尚未被指派物件」",
+    "句 1：src/pages/bigLandlords/sheet/index.vue＋`這位大房東尚未被指派物件，請管理者先到「大房東管理」指派物件，報表才會有資料。`（state === 'no_estate' 時只顯示提示、不顯示表格）；後端 app/Http/Controllers/BiglandlordController.php＋`sidebarHasEstate` 為 false 時回 `'state' => 'no_estate'` 與同一句訊息，成立（另：大房東本人「有被指派但一間都沒開放帳務」時會改回「目前尚未開放您查看物件帳務…」，屬已指派情境，不在本句範圍）"
+   ]
+  },
+  {
+   "id": "jgb/B/biglandlord-sheet-multi-currency",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "e8f06d7f6d431a67a253aaab3a82ab1fbf346470ac89b0f0cf06f6d58b789959",
+   "title_text": "對帳表出現「本月含多幣別帳單」提示是什麼意思？（該月的帳單有不同幣別，已用結算幣別加總）",
+   "notes": [
+    "標題：由句 1 與 src/use/useOwnerFundStatement.ts 的 `settlement_currency` 聚合支撐",
+    "句 1：src/pages/bigLandlords/sheet/_parts/SheetTemplate.vue＋`本月含多幣別帳單（[s1]），以 [s2] 結算合計`，在各區塊「月總計」列、`monthlyMixedInfo?.[month]?.is_mixed_currency` 為真時顯示；src/use/useOwnerFundStatement.ts＋`aggregateAmounts(monthItems, settlementCurrency, changer)` 說明月總計以結算幣別逐筆換算加總，成立"
+   ]
+  },
+  {
+   "id": "jgb/B/biglandlord-sheet-hide-empty-rows",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "cd0c0866653fa7ed856904a0c72c11a4351556ee815ffd4b6480e11762fd2e88",
+   "title_text": "對帳表可以隱藏沒有金額的項目嗎？（可以開關「隱藏空值項目」）",
+   "notes": [
+    "標題：由句 1 支撐",
+    "句 1：src/pages/bigLandlords/sheet/_parts/SelectBar.jsx＋`t('隱藏空值項目')` checkbox（`onHideEmptyRowChange`）；src/pages/bigLandlords/sheet/_parts/SheetTemplate.vue＋`item.yearlySubtotal?.base_number !== 0` 過濾掉金額為零的項目列，類別下若無剩餘項目整個類別也不顯示，成立（備註：預設 `hideEmptyRows: true` 即為開啟）"
+   ]
+  },
+  {
+   "id": "jgb/A/password-last-updated",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "不成立"
+   ],
+   "content_sha256": "48a79f9a2fcec60bcbf44aed427a84d5ec87d762d662f9d3f2b72ea6e7af8b3f",
+   "title_text": "密碼區塊的「上次更新」顯示什麼時間？",
+   "notes": [
+    "標題：問句，唯一斷言為「密碼區塊有『上次更新』」，app/Http/Controllers/UserController.php＋`___('上次更新：')` 支撐",
+    "句 1：app/Http/Controllers/UserController.php（routes/web.php `UserController@account` name users.account）＋`$showPassword = !empty($user->password);`；resources/views/users/account.blade.php＋`@if ($showPassword)` 包住「密碼」區塊，成立",
+    "句 2：resources/views/users/account.blade.php＋`memberCenter.safety.display_password_form=true` 由「修改密碼」按鈕展開 `<password-form>`，成立",
+    "句 3：app/Http/Controllers/UserController.php＋`'old_password' => 'required'`、`'password' => 'min:6|required_with:password_confirmation|same:password_confirmation'`；同上＋`___('目前密碼驗證錯誤')` 在 `$this->user->save()` 之前 `return back()`，整筆不儲存；src/components/PasswordForm.vue＋`old_password_OK` 前端亦要求，成立",
+    "句 4：app/Http/Controllers/UserController.php＋`'description' => ___('上次更新：') . ($user->password_change_at ? format_timezone(... $user->password_change_at ...) : format_timezone(... $user->created_at ...))`：從未改過密碼時顯示的是帳號建立時間，不是「尚未更新」；全匯出 grep「尚未更新」於 app／resources/views／src 皆無命中（正對照：同指令可命中「上次更新：」），不成立"
+   ]
+  },
+  {
+   "id": "jgb/B/biglandlord-sheet-month-drilldown",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "6855c7f7a96fafb81c1ba4c02cc1411e920d4e9c29c581f60eb51dcc6829a070",
+   "title_text": "對帳表怎麼從年表切到單一月份的月報？（點表頭的月份會進入該月月報，點「取消」回到年表）",
+   "notes": [
+    "標題：由句 1、句 2 支撐",
+    "句 1：src/pages/bigLandlords/sheet/_parts/Sheet.vue＋表頭 `RouterLink v-for=\"(node, index) in [...Array(12)]\"` 的 `month: index+1` query；src/pages/bigLandlords/sheet/index.vue 帶 month 1～12 時渲染 MonthlyReport，成立",
+    "句 2：src/pages/bigLandlords/sheet/index.vue＋`const { month, ...restQuery } = route.query` 後 `router.replace({query:restQuery})` 的 t('取消')，移除 month 參數回到年表，成立"
+   ]
+  },
+  {
+   "id": "jgb/B/biglandlord-sheet-load-download-fail",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "a49beaa5ff4bcdb63c6eb6e9dfd8bc93ae3df23fd1eb1e16d330836dc29ac978",
+   "title_text": "對帳表載入或下載失敗會怎樣？（載入失敗會顯示錯誤並提供「重試」，下載失敗只顯示錯誤訊息）",
+   "notes": [
+    "標題：由句 1、句 2 支撐",
+    "句 1：src/pages/bigLandlords/sheet/index.vue＋`reportErrorMessage`（`apiResponse?.message || t('報表載入失敗，請稍後再試')`）與 `state.reportState === 'error'` 分支的 t('重試')（`handleRetryFetch` → `refetch()`）；後端 app/Http/Controllers/BiglandlordController.php＋`'state' => 'error'`，成立",
+    "句 2：src/pages/bigLandlords/sheet/index.vue＋`handleMonthlyReportDownload` 失敗時設 `t('報表下載失敗，請稍後再試')`，`downloadErrorMessage` 區塊只有圖示與文字、無重試按鈕，需再按 t('下載')，成立"
+   ]
+  },
+  {
+   "id": "jgb/B/biglandlord-sheet-aside-and-loading",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "7c648a639c126c453604a9a769621e9febd16a9ed7443979530996af30ba929a",
+   "title_text": "大房東對帳表頁面的側邊選單和載入畫面長怎樣？（左側有社區／物件選單，看單一物件報表時會顯示上次匯入時間，報表產生中會顯示載入百分比進度條）",
+   "notes": [
+    "標題：由句 1～3 支撐（「上次匯入時間」為句 2「最後導入時間」之轉述）",
+    "句 1：src/pages/bigLandlords/sheet/_parts/AsideMenu.vue（由 src/pages/bigLandlords/sheet/index.vue 的 `<SheetAsideMenu` 置於左欄）＋`t('總報表')`、`t('社區報表')` 與各物件 RouterLink（`community_id`／`estate_id` query），成立",
+    "句 2：src/pages/bigLandlords/sheet/_parts/SelectBar.jsx＋`{/* 最後導入時間：只在個別物件報表顯示 */}` 與 `!isEmpty(route.query.estate_id) && (... t('最後導入時間') ...)`，社區／總報表不顯示，成立",
+    "句 3：src/pages/bigLandlords/sheet/index.vue＋`ownerFundState.fetcher.isFetching` 時顯示置中疊層與 `{{ ownerFundState.reportLoadPercent }}%` 進度條；src/use/useOwnerFundStatement.ts＋`computeProgressPercent(progressInputs, reportLoadPercent.value)`（單調遞增），成立"
+   ]
+  },
+  {
+   "id": "jgb/B/advance-fee-items",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "f49935224101117560e301b4a54457e42375125c36f091ece9150d3b698ed130",
+   "title_text": "「帳單自訂費用項目」怎麼設定？（分收入類／支出類，必填性質與自定義名稱，會科品項代號選填）",
+   "notes": [
+    "標題：由句 1～3 支撐",
+    "句 1：src/pages/users/advance/_part/BillsManagement.vue＋`t('帳務管理')` 內含 FeesItemManagement；src/pages/users/advance/_part/FeesItemManagement.vue＋`t('帳單自訂費用項目')`、`t('收入類')`、`t('支出類')` 兩個 FeePanel，成立",
+    "句 2：src/pages/users/advance/_part/FeePanel.vue＋`NATURE_OPTIONS = ['租金','押金','水費','電費','管理費','清潔費','網路費','滯納金','違約金','賠償金','押金設算息','其他']`，「性質」與「自定義名稱」標題都有 `after-required` class，成立",
+    "句 3：src/pages/users/advance/_part/FeePanel.vue＋`t('會科品項代號（選填，供 ERP／會計拋轉）')`，成立",
+    "句 4：src/pages/users/advance/_part/FeePanel.vue＋自訂項目 `<Draggable` 拖曳排序、`bi-pencil-square` 進入編輯、編輯中 `v-if=\"props?.editingFields?.id\"` 顯示 `bi-trash` 刪除；`<!-- 預設項目：靜態顯示，不可拖曳、不可編輯 -->`，成立"
+   ]
+  },
+  {
+   "id": "jgb/B/advance-discount-items",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "4dd3793252a7ae17db32e4072a9f924102638369e683df9985c2ae870241432d",
+   "title_text": "進階設定的「優惠項目」是給誰用的？（只有部分特定合作團隊才看得到，可設定折扣套用在租金費用上）",
+   "notes": [
+    "標題：由句 1、句 2 支撐",
+    "句 1：src/pages/users/advance/Index.jsx＋`t('合約管理')` 區塊內 `t('優惠項目')` 外層條件為兩個特定合作團隊名單（`getSpecialGroupsByRole` 判斷）之一，一般團隊不渲染，成立",
+    "句 2：同上＋`limitCount={... ? 30 : 10}` 與 `t('可設定至多[s1]組優惠項目，在計算租金費用時套用。', [... ? '三十' : '十'])`，其中一個特定合作團隊為 30 組、其餘有此設定者為 10 組，成立"
+   ]
+  },
+  {
+   "id": "jgb/B/advance-late-fee",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "不成立"
+   ],
+   "content_sha256": "fdbad61a329cfde3c31e2441d26913899d46e1363daee0b697d732fdb36b4856",
+   "title_text": "進階設定的「延遲金設置」怎麼計算？（只有特定合作團隊看得到，公式是租金 × (逾期天數 - 緩衝天數) × 延遲金%）",
+   "notes": [
+    "標題：「只有特定合作團隊看得到」由句 1 支撐；公式由 app/Bill.php＋`$lateFee = $billRent * $lateFeeDay * ($contract->late_fee_percent / 100);`（lateFeeDay＝付款日－(繳費期限＋緩衝天數)）支撐，與句 3 公式部分一致",
+    "句 1：src/pages/users/advance/Index.jsx＋`t('延遲金設置')` 外層條件為單一特定合作團隊名單判斷，成立",
+    "句 2：同上＋SwitchButton 開關（`penaltyEnable` lightbox）與 `t('緩衝天數')`、`t('延遲金')` %、`t('編輯延遲金設置')`，成立",
+    "句 3：公式部分有 src/pages/users/advance/Index.jsx 說明文字與 app/Bill.php 支撐；但「這筆帳單的繳費截止日就是合約的終止日」與現行程式不符：app/Bill.php＋`private function generateLateFeeBill()` 內 `'date_expire' => date(\"Ymd\"), // 繳費期限`，延遲金帳單的繳費期限是產生當天，不是合約終止日（畫面說明文字 `該筆帳單的繳費截止日為合約的終止日` 與程式衝突，依規則以程式為準）；另 `canGenerateLateFeeBill` 要求 `complete_at` 已有值，延遲金是在逾期帳單完成付款後才產生，不成立"
+   ]
+  },
+  {
+   "id": "jgb/B/advance-additional-terms",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "569e1ebf052dbc967370159624513e44ba07bb52272bdf386e6e0419e87b8f3d",
+   "title_text": "「預設補充條款」怎麼設定？（最多可以設 3 組，編輯合約時直接選用）",
+   "notes": [
+    "標題：由句 1 支撐",
+    "句 1：src/pages/users/advance/Index.jsx＋`t('合約管理')` 區塊內 `t('預設補充條款')`、`t('可設定至多三組常用補充條款，編輯合約時可直接選用。')`、`customAdditionalTermsLengthLimit: 3`，成立",
+    "句 2：同上＋`isAllowAddCustomAdditionalTerms` 時的 `t('新增')` +、選單 `t('編輯')`／`t('預覽')`／`t('刪除')`；預覽走 `getAdditionalTermsPreviewFile(content)` 產生 pdfFile 後以 `PdfToImg` 顯示，成立"
+   ]
+  },
+  {
+   "id": "jgb/B/advance-custom-label",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "80f8b4e457b9046ac04b4b4733ab1cb086d9eea21ae32c09716ec85c65cf1981",
+   "title_text": "「標籤設定」是做什麼用的？（幫物件加自訂標籤，單個標籤輸入框最多收 9 個字元）",
+   "notes": [
+    "標題：由句 2、句 3 支撐",
+    "句 1：src/pages/users/advance/Index.jsx＋`t('物件管理')` 區塊內 `t('標籤設定')`（`LabelPanel group=\"estate\"`），成立",
+    "句 2：src/pages/estates/list/_parts/ListTable.vue＋`title: t('物件') + t('標籤')` 欄位與 `updateMetaData = ({ labels, note }, id)`；src/pages/estates/list/Index.vue＋`estateCustomLabels`、`labelIds: labels.map(({id})=>id)`，成立",
+    "句 3：src/components/LabelPanel.vue＋`// Label限制9字數` `if (newVal.length > 9){ state.editing.label = newVal.slice(0, 9)`，以字元數截斷、不分中英文，成立",
+    "句 4：src/pages/users/advance/Index.jsx＋`單個標籤上限為18字元(9個字)` 逐字存在於說明文字；實際截斷規則見 src/components/LabelPanel.vue＋`newVal.slice(0, 9)`，成立"
+   ]
+  },
+  {
+   "id": "jgb/B/advance-device-binding",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "8867b43156290757814610f70ec60562a9f1c6afabd5e1453d83ac99740166b7",
+   "title_text": "怎麼綁定智能裝置廠商？（輸入裝置廠商帳號密碼完成綁定，之後可在 JGB 平台管理裝置）",
+   "notes": [
+    "標題：由句 1、句 2 支撐",
+    "句 1：src/pages/users/advance/Index.jsx＋`t('裝置管理')` 區塊 `t('綁定設備廠商')` 與 `t('綁定設備廠商後，即可在 JGB 平台內管理您的智能裝置。')`，成立",
+    "句 2：同上＋`t('開始綁定')` 開啟 `iotBinding` lightbox；src/components/Lightbox/IotBinding.vue＋`t('JGB 支援以下設備廠商，請選擇欲綁定的廠商。')`、`vendorLogin.account`／`vendorLogin.password`，送出 `manufacturerLogin`，成立",
+    "句 3：src/pages/users/advance/Index.jsx＋`connectedVendorList.map` 每筆 `t('更新資料')` 呼叫 `/api3/iots/manufacturerFetch`；app/Http/Controllers/IotController.php＋`fetchManufacturer` 內 `Iot::syncDeviceOfManufacturer`，成立"
+   ]
+  },
+  {
+   "id": "jgb/B/advance-fee-items-merge",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "413cdc6f8fdd9d72dea47dd4f35e1fec3a0eaaeb35abb4bc00197d996386379d",
+   "title_text": "自訂費用項目可以合併嗎？（可以把多個品項併入其中一個既有品項，合併後無法回復）",
+   "notes": [
+    "標題：由句 1、句 2 支撐",
+    "句 1：src/pages/users/advance/_part/FeesItemManagement.vue＋`可執行 [s1]合併項目[s2]` 的 `openMergeLightBox()`；src/components/Lightbox/CustomFeeItemMerge.jsx＋t('收入類')／t('支出類') 切換、清單 `filter(node=>{ return !node.is_default })`（預設品項不列出、不能勾選）、`t('欲合併品項')` 下拉 `availableItems`，送出 `/api3/bills/customFeeItems/merge`，成立",
+    "句 2：src/components/Lightbox/CustomFeeItemMerge.jsx＋`t('品項合併後將無法回復，請謹慎操作。')`，成立"
+   ]
+  },
+  {
+   "id": "jgb/B/advance-payment-cycle-discount",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "c0b9a05c6c76f528205d2f2f30ca47a08ee1292771a53b1d2e1989fab7d0acf3",
+   "title_text": "進階設定的「繳費週期優惠」是給誰用的？（只有特定合作團隊才看得到，選比月繳更長的繳費週期就有折扣）",
+   "notes": [
+    "標題：由句 1、句 2 支撐",
+    "句 1：src/pages/users/advance/Index.jsx＋`t('繳費週期優惠')` 外層條件為單一特定合作團隊名單判斷，成立",
+    "句 2：同上＋`t('編輯合約時可選擇比月繳更長的繳費週期，並獲得租金折扣。')`，選項 `t('季繳')`／`t('半年繳')`／`t('年繳')`，成立"
+   ]
+  },
+  {
+   "id": "jgb/B/advance-notification-locale",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "12517744a4c10042b1c49504328a63208332e569636d285e69af7f6b317d5a93",
+   "title_text": "「Email 通知語系」在哪設定、誰看得到？（只有法人房東或社宅團隊看得到，決定代發通知信的預設語系）",
+   "notes": [
+    "標題：由句 1、句 2 支撐",
+    "句 1：src/pages/users/advance/Index.jsx＋`[3, 4].includes(store.state.userData.role.config_rule_key)` 包住 `t('全域設定')`；app/Role.php＋`RULE_KEY_LANDLORD_CORPORATE      = 3`、`RULE_KEY_LANDLORD_SOCIAL_HOUSING = 4`、`RULE_KEY_LANDLORD_INDIVIDUAL     = 2`，個人房東不顯示，成立",
+    "句 2：src/pages/users/advance/Index.jsx＋`t('Email 通知語系')` 與 `t('可設定系統代發給您的租客的通知信預設語系。')`，成立"
+   ]
+  },
+  {
+   "id": "jgb/B/advance-timezone",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "9715728ee7e89c5859bdfa0f9a6576bab188577656372f2115410695346e2653",
+   "title_text": "「時區設定」會影響哪些通知？（只有法人房東或社宅團隊看得到，改變排程通知的發送時間）",
+   "notes": [
+    "標題：由句 1、句 2 支撐",
+    "句 1：src/pages/users/advance/Index.jsx＋`t('時區設定')` 位於 `[3, 4].includes(...config_rule_key)` 的「全域設定」區塊（app/Role.php 3＝法人房東、4＝社宅），成立",
+    "句 2：同上＋`t('選擇非台灣時區後，系統會將此團隊/帳號收到的排程通知時間更改為您所選擇的時區。<br>（如：每日過期帳單通知、合約30天內到期提醒通知）')`，成立"
+   ]
+  },
+  {
+   "id": "jgb/B/advance-settlement-currency",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "23b8a40de545d5f8185933b34fc7875395f239e49fd99f61547b298c4697978a",
+   "title_text": "「結算幣別」是做什麼用的？（只有法人房東或社宅團隊看得到，把大房東報表的多幣別合約統一結算成一種幣別）",
+   "notes": [
+    "標題：由句 1、句 2 支撐",
+    "句 1：src/pages/users/advance/Index.jsx＋`t('結算幣別')` 位於 `[3, 4].includes(...config_rule_key)` 的「全域設定」區塊，成立",
+    "句 2：同上＋`t('用於產製大房東報表，將多種幣別的合約資訊結算至統一幣別。')`（儲存 `/api3/users/role/setCurrency`），成立"
+   ]
+  },
+  {
+   "id": "jgb/B/advance-device-binding-visibility",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "89267facf0aa887112189ae21eab56dff2ebca309874feb991e1a40572fdc879",
+   "title_text": "為什麼進階設定看不到「裝置管理」區塊？（訂閱方案要生效中，且不能是免費方案）",
+   "notes": [
+    "標題：由句 1 支撐",
+    "句 1：src/pages/users/advance/Index.jsx＋`isAllowUse: computed(()=>{ return store.state.userData.role?.isSubscriptionActive && store.state.userData.role?.plan_name !== '免費方案' })`，`deviceState.isAllowUse && ...t('裝置管理')`，成立"
+   ]
+  },
+  {
+   "id": "jgb/B/advance-dedicated-account",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "fb2e3cb638bf0e087926afdd9364674bfb237f59d79d8f63533cce56007dff35",
+   "title_text": "「房東專屬帳號」是做什麼用的？（只有法人房東或社宅團隊看得到；顯示在團隊首頁，且第一次儲存後不能自行修改，要洽 JGB 客服）",
+   "notes": [
+    "標題：由句 1～3 支撐",
+    "句 1：src/pages/users/advance/Index.jsx＋`t('房東專屬帳號')` 位於 `[3, 4].includes(...config_rule_key)` 的「全域設定」區塊（app/Role.php＋`RULE_KEY_LANDLORD_INDIVIDUAL     = 2` 不在內），成立",
+    "句 2：src/pages/users/advance/Index.jsx＋`t('房東專屬帳號將會應用在：「您的團隊首頁」；成功儲存後若要修改請洽JGB客服人員。')`，成立",
+    "句 3：同上＋`customerAccountEditable`：`!isEmpty(dataFetcher.data?.customer_account)` 或 `customerAccountCreated` 後不再顯示編輯圖示，說明文字要求洽 JGB 客服，成立"
+   ]
+  },
+  {
+   "id": "jgb/B/advance-auto-publish-unpublish",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "bb65382ff0b9eb476e92ecc78b60ab9f226f7e39c9786976a4d1049c9b64a692",
+   "title_text": "招租廣告可以自動刊登或自動下架嗎？（部分特定合作團隊可以：合約到期日前 N 天自動刊登，簽約後自動下架）",
+   "notes": [
+    "標題：由句 1、句 2 支撐",
+    "句 1：src/pages/users/advance/Index.jsx＋`estateAdState.is_enabled && <>` 包住 `t('招租廣告自動刊登')`／`t('招租廣告自動下架')`；app/Http/Controllers/UserController.php＋`getPublish` 內 `in_array($this->role->id, config('app.auto_publish_role_ids'))`；說明 `t('若物件的合約到期日在設定的天數內，系統會自動將刊登物件的招租廣告。')`；app/Console/Commands/EstateAutoPublist.php＋`Contract::checkIfReleaseExists($estate->id, $role->contract_expiry_days)` 後 `is_open => 1`，成立",
+    "句 2：src/pages/users/advance/Index.jsx＋`t('物件簽訂合約後 (合約狀態為執行中合約)，系統會自動下架物件的招租廣告。')`；app/Http/Controllers/ContractController.php＋`if ($isAutoPublishRole && $this->role->is_auto_unpublish) { $estate->is_open = 0;`（簽約完成時），成立"
+   ]
+  },
+  {
+   "id": "jgb/B/advance-contract-label",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "26ac5d8f561685a66a7d60448d5346097626a18b1bd1f0c966e0db7326495fe9",
+   "title_text": "「合約管理」的標籤設定跟物件的標籤設定是同一個嗎？（不是，這是合約專用的另一組標籤）",
+   "notes": [
+    "標題：由句 1 支撐",
+    "句 1：src/pages/users/advance/Index.jsx＋「合約管理」區塊 `t('標籤設定')` 使用 `LabelPanel group=\"contract\"`（`labelState.group.contract`），「物件管理」區塊使用 `group=\"estate\"`，兩組分開，成立"
+   ]
+  },
+  {
+   "id": "jgb/B/advance-sales-item-code",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "9e35b30ea5740fe4e6773f145867c1d6c237f3b25326468c71d962206b42d524",
+   "title_text": "「銷貨單品項代號對應」是做什麼用的？（只有特定團隊才有，設定匯出「M 化銷貨單」時每個品項要帶的產品代號）",
+   "notes": [
+    "標題：由句 1、句 2 支撐",
+    "句 1：src/pages/users/advance/_part/BillsManagement.vue＋`t('帳務管理')` 內以「收付明細檔匯出」特規名單（`getSpecialGroupsByRole`）決定是否渲染「銷貨單品項代號對應」；app/Http/Controllers/UserController.php＋`hasBillExportPaymentDetailPermission($role->id)` 與 `Item::findItemsByRoleId($role->id` 以團隊為單位，成立",
+    "句 2：src/pages/users/advance/_part/WenzhongItemCodeManagement.vue＋`t('匯出「M 化銷貨單」時，每個品項要帶入的產品代號。…也可以指定哪些品項不要匯入銷貨單。')` 與 `t('留空的品項會沿用系統預設代號（灰字顯示）；系統預設也沒有的品項，匯出檔的產品代號會是空白。…')`，成立"
+   ]
+  },
+  {
+   "id": "jgb/B/advance-community-labels",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "bda28799c1f47639fedb317ebb6d52627b82e229186d951396dd23f4e2011c25",
+   "title_text": "「社區管理」的城市／區域／位置設定是做什麼？（只有特定合作團隊看得到，用來建立社區可選用的城市、區域、位置標籤）",
+   "notes": [
+    "標題：由句 1、句 2 支撐",
+    "句 1：src/pages/users/advance/Index.jsx＋`t('社區管理')` 區塊外層為單一特定合作團隊名單判斷，成立",
+    "句 2：同上＋`t('城市設定')`／`t('區域設定')`／`t('位置設定')` 分別為 `group=\"community_city\"`／`community_area`／`community_location`；src/pages/communities/edit/Basic.vue＋`communityDetails = { city: '城市', area: '區域', location: '位置' }` 與 `options={labelState.group?.[`community_${ node }`]...}` 下拉（同一特定團隊條件、`t('社區細節')`），成立"
+   ]
+  },
+  {
+   "id": "jgb/B/advance-short-lease-approval",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "f1e5fddeae2471749a0c2469b790a20c6337e6979754526da245ee29ae2c2028",
+   "title_text": "進階設定的「短租期核可流程」是做什麼的？（只有特定合作團隊看得到；租期少於設定天數時，合約要先簽核通過才會發出邀請給租客）",
+   "notes": [
+    "標題：由句 1、句 2 支撐",
+    "句 1：src/pages/users/advance/Index.jsx＋`t('短租期核可流程')` 外層為單一特定合作團隊名單判斷，成立",
+    "句 2：同上＋`t('若租期少於設定的天數，則該合約在簽約前，需進行簽核。簽核通過後，合約邀請才會發出給租客。')` 與 `t('短租期定義')`；app/Http/Controllers/ContractController.php＋`if ($diffDays < $shortLeaseDay) { $contractShortLeaseInfo['is_short_lease'] = 1;` 及邀請面板 `Approval::CONTRACT_SHORT_LEASE_INVITE` 簽核狀態，成立"
+   ]
+  }
+ ],
+ "findings": [
+  "jgb/B/advance-late-fee 句 3：進階設定畫面說明文字（src/pages/users/advance/Index.jsx `該筆帳單的繳費截止日為合約的終止日`）與現行後端衝突——app/Bill.php `generateLateFeeBill()` 把延遲金帳單 `'date_expire' => date(\"Ymd\")` 設為產生當天；且延遲金是在逾期帳單完成付款（`complete_at` 有值）後才產生。細目照抄畫面說明文字，與程式不符",
+  "jgb/A/password-last-updated 句 4：「尚未更新」字串在匯出內不存在；app/Http/Controllers/UserController.php 在 `password_change_at` 為空時改顯示帳號 `created_at`",
+  "jgb/B/biglandlord-sheet-overview 句 2：年度畫面的年份切換（‹ › 與年份輸入框）和「匯出報表」按鈕是 src/pages/bigLandlords/sheet/_parts/SelectBar.jsx 中兩個不同的控制項，細目把兩種功能寫成同一個按鈕",
+  "來源內部不一致（不影響本批判定）：src/pages/users/advance/Index.jsx 的「城市設定／區域設定／位置設定」說明文字沿用了「可至物件管理>物件總表處為不同的物件加上自定義標籤」，但實際使用位置是 src/pages/communities/edit/Basic.vue 的社區細節下拉；jgb/B/advance-community-labels 依程式描述，判成立"
+ ],
+ "source_transcript": "a7dbb8b9fe31b8d97.output"
+}

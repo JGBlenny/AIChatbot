@@ -1,0 +1,421 @@
+{
+ "kind": "write",
+ "verdict": "REFUTED",
+ "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+ "claim": "Plan 9.28 批次 B03：24 條細目的標題與每一句已逐句對合法來源核對，逐條結果如 fines",
+ "fines": [
+  {
+   "id": "jgb/A/notification-center-type-filter",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "628d56c5c2b80efc9fc7371d2c00d9d92badbae305797ec23e5b346594243824",
+   "title_text": "通知中心怎麼依類型篩選通知？（依合約/帳務/修繕/裝置/其他分類）",
+   "notes": [
+    "標題：句 1 支撐五種分類（另有「全部」）。",
+    "句 1：app/Http/Controllers/NotificationController.php＋$filterOptions（___('全部')、___('合約')、___('帳務')、___('修繕')、___('裝置')、___('其他')）＋index() 的下拉選項恰為這六項；resources/views/notifications/index.blade.php 以 select-picker 呈現 filterOptions。"
+   ]
+  },
+  {
+   "id": "jgb/A/notification-center-unread-dot",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "3c3e1bd807291cb0f51d5e0390eaac8d15e4cfebf3debcb06e6b6308f78f803a",
+   "title_text": "通知中心的通知怎麼標示未讀？（列表項目左側的紅點，沒有「只顯示未讀」的篩選功能）",
+   "notes": [
+    "標題：兩句分別支撐紅點與無篩選。",
+    "句 1：resources/views/notifications/index.blade.php＋@if ($data->is_read == 0) 與 class=\"absolute bg-main-500\"＋未讀時在項目最左欄（頭像欄）顯示 10px 圓點；src/styles/_variables.sass＋--color-main-500: #da3932 為紅色。",
+    "句 2：resources/views/notifications/index.blade.php＋checkbox-unread＋「只顯示未讀」核取方塊整段在 <!-- --> 註解內，不會渲染；app/Http/Controllers/NotificationController.php index() 也無未讀篩選參數。"
+   ]
+  },
+  {
+   "id": "jgb/A/notification-center-per-page",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "5eec3733b8b4cd7ddbbfeb64ed9612c0fd29885df34c1c82042e0279789165f2",
+   "title_text": "通知中心每頁顯示筆數可以怎麼調整？（30/60/90 筆，預設 30 筆）",
+   "notes": [
+    "標題：句 1 支撐。",
+    "句 1：app/Http/Controllers/NotificationController.php＋switch ($request->per_page) case 60／case 90／case 30: default: $perPage = 30＋預設 30；resources/views/notifications/index.blade.php＋'30'=> ___('30項')、'60項'、'90項'＋選單選項與預設 selected '30'。"
+   ]
+  },
+  {
+   "id": "jgb/A/notification-center-permission",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "9d5330a66737899cffd33ad9623076f24e705729bfb036b34097263cf998fd7d",
+   "title_text": "為什麼通知中心是空的？（房東側需要查看通知的權限才看得到通知內容）",
+   "notes": [
+    "標題：句 2、句 3 支撐。",
+    "句 1：app/Http/Controllers/NotificationController.php＋$role->config_rule_key === Role::RULE_KEY_TENANT || $this->isHasGPermission('show_notification')＋租客不需權限即查詢 where('role_id', $role->id) 的通知。",
+    "句 2：app/Http/Controllers/NotificationController.php 同上條件＋非租客須有 show_notification 才會查詢資料，否則 $datas = []。",
+    "句 3：resources/views/notifications/index.blade.php＋class=\"{{ empty($datas)?'disabled' :''}}\" 的 select-picker 仍渲染但加 disabled（src/styles/tailwind.sass .disabled 停用樣式）；每頁選單包在 @if (!empty($pageNav)) 內，無權限時 $pageNav = null 不出現；@if (empty($datas)) 顯示 ___('您還沒有收到任何通知，再等等吧 📭')，非錯誤訊息。"
+   ]
+  },
+  {
+   "id": "jgb/A/notification-mark-read-navigate",
+   "title": "不成立",
+   "sentences": [
+    "成立",
+    "不成立",
+    "成立"
+   ],
+   "content_sha256": "a1f0d4978149ef70743bc134578d03cb385c574eab0a45f8541bef0dbb59f45f",
+   "title_text": "點擊通知列表項目會發生什麼？（前往原連結並把該則通知標為已讀；訊息類通知不換頁）",
+   "notes": [
+    "標題：「把該則通知標為已讀」依賴句 2，句 2 不成立，標題不成立。",
+    "句 1：app/Http/Controllers/NotificationController.php＋$url .= '&notification_id=' . $data->id 與 '?notification_id='＋index() 為每則通知網址加上通知編號；resources/views/notifications/index.blade.php＋window.location.href = data.url＋type != 32 時前往該網址。",
+    "句 2：app/Http/Controllers/Controller.php＋if ($notificationId = request('notification_id')) 與 Notification::markAsRead($this->user->id, $this->role->id, $notificationId)＋確實會清掉參數後轉址；但 app/Notification.php＋markAsRead 的 where('user_id', $userId)->where('role_id', $roleId) 要求通知的 user_id 等於目前登入者，而通知建立時 user_id 寫的是身分擁有者（app/Notification.php＋'user_id' => $role->user_id），NotificationController 列表只依 role_id 撈資料；有 show_notification 權限的團隊成員（非擁有者）可看到並點擊，卻不會被標為已讀。句子未排除此身分例外。",
+    "句 3：resources/views/notifications/index.blade.php＋if(data.type == 32) … $store.commit('lightbox', 'showUserMessage') … return＋訊息類（app/Notification.php＋NOTIFICATION_MESSAGE = 32，'url' => 'message_id='. $message_id）開啟訊息視窗、不換頁。"
+   ]
+  },
+  {
+   "id": "jgb/A/notification-mark-read-out-of-range",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "841aa5f732ed42edab36bfde02dffd212bdde9256b4ea5f53b7f501b067c6fad",
+   "title_text": "篩選後頁碼超出範圍會自動跳回第一頁嗎？（不會，只會顯示空的通知清單）",
+   "notes": [
+    "標題：句 1 支撐。",
+    "句 1：app/Http/Controllers/NotificationController.php＋if (empty($datas) && request('page') > 1)＋$datas 是 paginate() 回傳的分頁物件，empty() 對物件恆為 false，「自動跳回第一頁」的轉址永遠不會執行；resources/views/notifications/index.blade.php 的 @if (empty($datas)) 同樣為 false，進入 @foreach 但無資料，呈現空清單。"
+   ]
+  },
+  {
+   "id": "jgb/A/notification-navbar-bell",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "1bba9d712679cec3b022989fa4e07fe461d77e2d03af44e46f3aa7903f73f47b",
+   "title_text": "導覽列的通知鈴鐺會顯示什麼？（最近 5 筆通知與未點擊數量，大房東不會顯示）",
+   "notes": [
+    "標題：三句支撐。",
+    "句 1：app/Http/Controllers/NotificationController.php＋$notifications->limit(5)->get()＋navbar() 點擊鈴鐺時依 id desc 取 5 筆；src/components/NoticeBell.vue＋getUnread({init: false}) 與 t('查看全部通知') 連到通知中心。",
+    "句 2：app/Http/Controllers/NotificationController.php＋where('is_click', 0) 與 $counts = $notClickNotificationCounts＋鈴鐺數字為未點擊數；src/components/NoticeBell.vue＋v-show=\"newNotice>0\" 顯示數字、v-show=\"!item.is_read\" 顯示紅點＋數字依 is_click、紅點依 is_read，兩欄位獨立。",
+    "句 3：app/Http/Controllers/NotificationController.php＋($role->config_rule_key === Role::RULE_KEY_TENANT || $this->isHasGPermission('show_notification')) && !$role->isBigLandlord($this->user)＋大房東即使有權限也不取資料。"
+   ]
+  },
+  {
+   "id": "jgb/A/notification-settings-extra-emails",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "483fbee74b556d10c8f5a9af9a88db8c0a5d350a9ccb30362c14db3673154715",
+   "title_text": "通知收件信箱最多能加幾組？（每個通知分類最多再加 3 組電子信箱）",
+   "notes": [
+    "標題：句 1、句 3 支撐。",
+    "句 1：src/pages/users/notification/Index.vue＋t('每個通知信最多可再新增 3 組電子信箱收取通知信件。')＋頁面說明文字（句子未加引號，屬轉述）；麵包屑 t('通知收件設定')。",
+    "句 2：src/pages/users/notification/Index.vue＋name=\"default_email\" … disabled＋預設信箱欄位鎖定；app/Http/Controllers/UserController.php＋getRoleEmailGroups 的 $data['default'] = … $this->role->user->email＋取身分擁有者的 Email，成員看到的也是擁有者信箱。",
+    "句 3：src/pages/users/notification/Index.vue＋mailAmountLimit: 3 與 custom_emails?.length < state.mailAmountLimit＋每分類各自計數；input type=\"email\" … required＋標準 Email 格式且必填；handleAddEmail／handleRemoveEmail 依 categoryKey 個別操作。",
+    "句 4：src/pages/users/notification/Index.vue＋hasPermissionToEdit: computed(()=>store.state.userData?.permission?.edit_notification || false)＋「儲存」與「新增信箱」都包在含 hasPermissionToEdit 的 v-if；移除按鈕所在的 div 套 `${ state.hasPermissionToEdit ? '' : 'disabled' }`，src/styles/tailwind.sass＋.disabled 為 opacity 0.5、pointer-events: none 的停用樣式，handleRemoveEmail 亦直接 return。"
+   ]
+  },
+  {
+   "id": "jgb/A/notification-settings-categories",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "38326d5744172585f0db4746552819dc3f07794687661ee30e2d8615b902c7c1",
+   "title_text": "通知收件設定有哪些分類？（合約、帳務、修繕、訂閱、房東管理，另有限定開放的加盟分潤報表）",
+   "notes": [
+    "標題：六句支撐。",
+    "句 1：src/use/config/useForwardNotificationEmails.ts＋label: '合約管理類別'、description: '包含租客簽名、合約成立、提前解約等通知信。'＋一致。",
+    "句 2：useForwardNotificationEmails.ts＋'帳務管理類別'、'包含帳單已到帳、租客已匯款、金額不匹配等通知信。'＋一致。",
+    "句 3：useForwardNotificationEmails.ts＋'修繕管理類別'、'包含租客提出修繕、修改修繕備註等通知信。'＋一致。",
+    "句 4：useForwardNotificationEmails.ts＋'訂閱管理類別'、'包含訂閱方案修改、即將扣款、取消訂閱等通知信。'＋一致。",
+    "句 5：useForwardNotificationEmails.ts＋'房東管理類別'、'包含大房東報表排定發送等通知信。'＋一致。",
+    "句 6：useForwardNotificationEmails.ts＋visible: … getSpecialGroupsByRole(…)?.includes(SpecialRole.franchiseProfitShare) 與 description: '若新團隊欲加入分潤報表內，請與 JGB 聯繫。'＋只有列入特定名單的團隊顯示，其餘分類 visible: ()=>true。"
+   ]
+  },
+  {
+   "id": "jgb/A/notification-settings-report-buttons",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "fd472bc308f37ed8b4677f9837f31c83c1ec3cbac272b609c4135a55895be8e8",
+   "title_text": "「發送報表」「多團隊合併報表」按鈕是做什麼的？（選起始日與終止日，把加盟分潤報表寄到自訂通知信箱；僅限加盟分潤報表分類，多團隊合併僅限特定團隊）",
+   "notes": [
+    "標題：句 1–5 支撐；按鈕文字 t('發送報表')、t('多團隊合併報表') 逐字存在於 src/pages/users/notification/Index.vue。",
+    "句 1：src/use/config/useForwardNotificationEmails.ts＋只有 franchiseProfitShare 為 showMailReportButton: true，其餘 false；src/pages/users/notification/Index.vue＋v-if=\"category.showMailReportButton\" 與 handleClickMailReport 開啟 notificationMailReport- 燈箱；src/components/Lightbox/NotificationMailReport.vue＋t('時間區間')。",
+    "句 2：src/components/Lightbox/NotificationMailReport.vue＋t('起始日')、t('終止日')、t('發送')、/api3/users/notification/sendReport、t('報表已發送至指定信箱')；app/Services/FranchiseProfitShareService.php＋sendReportEmail 與 getRecipientEmails 取 $emailGroups['franchiseProfitShare']['custom_emails'] 為收件人。",
+    "句 3：app/Services/FranchiseProfitShareService.php＋'message' => '查無分潤資料' 與 'message' => '未設定收件人'＋success false、不寄出；src/components/Lightbox/NotificationMailReport.vue＋window.globalNoticeShow(errorMessage, 'error') 顯示回傳訊息。",
+    "句 4：src/use/config/useForwardNotificationEmails.ts＋showMultiTeamReportButton 只定義在 franchiseProfitShare，且只對單一特定合作團隊的身分回 true，其餘分類為 false；app/Http/Controllers/UserController.php＋sendMultiTeamReport 後端同樣只允許該團隊。",
+    "句 5：src/components/Lightbox/NotificationMailReport.vue＋isMultiTeamMode 與 /api3/users/notification/sendMultiTeamReport＋同一視窗選起訖日；app/Services/FranchiseProfitShareService.php＋sendMultiTeamReport 的 $targetRoleIds（數個特定合作團隊）以 exportMultiTeamExcel 合併為一份多 Sheet 報表，sendMultiTeamEmail 寄到該團隊 franchiseProfitShare 的 custom_emails。",
+    "句 6：src/pages/users/notification/Index.vue＋handleClickMailReport(category.key)／handleClickMultiTeamReport(category.key) 以 `notificationMailReport-${ categoryKey }` 等燈箱 id 開啟，currentOpenedCategoryInfo 依燈箱 id 取回分類＋依所在分類開啟對應視窗。"
+   ]
+  },
+  {
+   "id": "jgb/A/notification-settings-save",
+   "title": "不成立",
+   "sentences": [
+    "不成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "61f6e4092657a2d8b6b96a7f4a537dd61cf77861b941aa265a2c07fe4a708e56",
+   "title_text": "通知收件設定改完怎麼儲存？（至少要有一個分類填了自訂信箱，儲存鍵才會啟用）",
+   "notes": [
+    "標題：「至少要有一個分類填了自訂信箱，儲存鍵才會啟用」與句 1 同一問題，不成立。",
+    "句 1：src/pages/users/notification/Index.vue＋hasCustomEmail 以 targetKeys.some((key)=>!isEmpty(formData.emailData[key].custom_emails)) 判斷；src/mixin/methods.js＋isEmpty 對陣列只看 Object.keys(value).length＋按「新增信箱」產生空字串欄位 [''] 時 hasCustomEmail 就是 true、按鈕即啟用（空白欄位之後才由 input required 的瀏覽器驗證擋下），實際啟用條件是「任一分類有自訂信箱欄位」而非「已經填了信箱」；未啟用時 class disabled 且 handleSubmitForm 直接 return 的部分成立。",
+    "句 2：src/pages/users/notification/Index.vue＋t('儲存成功')、t(result?.message || '儲存失敗，請稍後再試。')、t('網路錯誤，請稍後再試。')＋一致（src/mixin/methods.js ajax 失敗時 throw xhr 進 catch）。",
+    "句 3：src/pages/users/notification/Index.vue＋onMounted(getData) 呼叫 /api3/users/notification/mailGroups 取 result.data.group 與 result.data.default；handleSubmitForm 以 formData.emailData 整包 POST 到 /mailGroups/update；app/Http/Controllers/UserController.php＋saveRoleEmailGroups 以整包覆寫 email_groups。"
+   ]
+  },
+  {
+   "id": "jgb/B/team-basic-info",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "c0d0af62d104f3e1d8e01031daf26a72e312cff595460b136931c71ca2b46e83",
+   "title_text": "團隊資訊頁面可以設定什麼？（公司 Logo、團隊名稱、團隊介紹）",
+   "notes": [
+    "標題：句 1 支撐。",
+    "句 1：resources/views/users/role.blade.php＋___('基本資訊')、:field-title-label-key=\"'公司 Logo'\"、___('團隊名稱')、___('團隊介紹')＋一致；app/Role.php＋'label' => ___('團隊管理') 之下 ___('團隊資訊') 連到 users.role。",
+    "句 2：resources/views/users/role.blade.php＋placeholder ___('向未來的租客介紹自己吧。') 與 tooltip ___('以下資訊將呈現在您的 [s1] 內。') 帶 ___('團隊首頁') 連結＋一致。",
+    "句 3：app/Http/Controllers/UserController.php＋$enableEdit = $this->isHasGPermission('edit_role_info')；resources/views/users/role.blade.php＋class=\"{{$enableEdit?'':'disabled'}}\"、:is-allowed-to-edit，且 @if ($enableEdit) 才顯示儲存鈕＋無權限只能檢視。"
+   ]
+  },
+  {
+   "id": "jgb/B/team-ad-contact",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "dded667ce36773f44a7aa2b88080b0f62d86581a79bdd7c7104fb8f6b99d966b",
+   "title_text": "廣告頁聯絡資訊要填什麼？（Line ID、Facebook、WhatsApp 選填，公司電話與公司 Email 必填）",
+   "notes": [
+    "標題：三句支撐。",
+    "句 1：resources/views/users/role.blade.php＋___('廣告頁聯絡資訊') 與 ___('以下資訊將會呈現在廣告上，租客可以透過更多管道與房東聯繫，提升簽約成功率！')＋一致。",
+    "句 2：resources/views/users/role.blade.php＋Line ID、Facebook 欄位 placeholder ___('個人首頁連結')、WhatsApp tooltip ___('請填寫國碼與電話號碼，國碼前面不需打「+」。')＋一致。",
+    "句 3：resources/views/users/role.blade.php＋___('公司電話')、___('公司Email') 的 fieldTitle 帶 after-required 且 input required＋必填；Line ID／Facebook／WhatsApp 無 required。"
+   ]
+  },
+  {
+   "id": "jgb/B/team-delete",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "96af2869b5e37c6d0e36fe7d03a26cacfaf19f54f49c668e3f9e8dce7372fb45",
+   "title_text": "怎麼刪除團隊？（需先解除訂閱方案、輸入團隊名稱確認、刪除後資料無法恢復）",
+   "notes": [
+    "標題：句 2–4 支撐。",
+    "句 1：app/Http/Controllers/UserController.php＋$showDeleteRole = !empty($this->user->roles()->where('id', $this->role->id)->first())（app/User.php＋roles() 為 hasMany，即自己擁有的身分）；resources/views/users/role.blade.php＋@if(!$showDeleteRole) style=\"display:none\" 包住 ___('刪除團隊')。",
+    "句 2：resources/views/users/role.blade.php＋@if($allowDeletion) 否則開 subscriptionReminder：___('您的訂閱方案尚未結束') 與 '如想刪除團隊，請先解除此團隊現有的訂閱方案，可前往「團隊管理」下的「訂閱方案」內調整。'＋一致（實際判斷依 role 的 allow_deletion 旗標，由方案設定決定，畫面以訂閱方案尚未結束說明）。",
+    "句 3：resources/views/users/role.blade.php＋t('「[s1]」[s2]目前持有 [s3] 個物件及 [s4] 份合約。'…) 與 :class=\"{'disabled':  teamName != $store.state.userData.role.menu_name }\"＋需輸入團隊名稱才可按 ___('刪除')。",
+    "句 4：resources/views/users/role.blade.php＋t('刪除[s1]將會同時清除該[s1]內所有的物件、合約和帳務等資料且無法恢復。',[t('團隊')])＋一致。"
+   ]
+  },
+  {
+   "id": "jgb/B/team-signer-personal-info",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "337b7bcd9db65bbb53e8bb03b8a51ba9569f9e6a16a45d90c27780f9f29c01c3",
+   "title_text": "簽約資訊卡「個人資訊」區塊要填什麼？（只有租客與個人房東身分才有；姓氏、名稱、身分證字號、Email、手機、戶籍地址、通訊地址必填；身分證正反面與其他附件選填）",
+   "notes": [
+    "標題：三句支撐。",
+    "句 1：src/pages/users/team/_parts/SignerDetails.vue＋isIndividual: computed(()=>[1, 2].includes(…config_rule_key)) 與 <template v-if=\"state.isIndividual\"> 內 t('個人資訊')；isCorporate [3, 4] 顯示 t('公司資訊')；config/role.php＋1 租客、2 個人房東/代理人、3 法人房東(公司)、4 社會住宅；t('團隊在刊登物件廣告與簽立合約時所需提供的資料。')；firstRowOfIndividualInfo／secondRowOfIndividualInfo 的 姓氏、名稱、身分證字號、Email、手機號碼皆 isRequired: true（src/pages/users/team/_parts/SignerFormInputField.vue＋after-required 必填標示）。",
+    "句 2：src/pages/users/team/_parts/SignerDetails.vue＋t('戶籍地址')、t('通訊地址') 的 address-component :required=\"true\"，以及 t('同戶籍地址') 按鈕複製 resident_address＋一致。",
+    "句 3：src/pages/users/team/_parts/SignerDetails.vue＋t('身分證正反面照片(選填)')、t('其他附件(選填)') 與 otherAttachmentInfo 的 '工作名片/學生證'、'良民證'、'小章'＋一致。"
+   ]
+  },
+  {
+   "id": "jgb/B/team-signer-company-info",
+   "title": "不成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "不成立"
+   ],
+   "content_sha256": "6cce0338373c16f4118086ec8c790922f8adb9571072d0e11aa53602f6db1e73",
+   "title_text": "簽約資訊卡的「公司資訊」要填什麼？（公司登記名稱上限 20 字、公司統編皆為必填；公司負責人只有社宅團隊必填；社宅團隊還要填必填的社宅業者編號與公司登記證號，公司登記證日期與縣市則不分團隊都是選填）",
+   "notes": [
+    "標題：「公司登記證日期與縣市則不分團隊都是選填」與句 5 一樣漏掉例外，不成立。",
+    "句 1：src/pages/users/team/_parts/SignerDetails.vue＋firstRowOfCorpInfo 的 '公司登記名稱' maxLength: 20、isRequired: true，'公司統編' isRequired: true（不分社宅）＋一致。",
+    "句 2：src/pages/users/team/_parts/SignerDetails.vue＋typeOptions 的 label: '公司統編(檢核)'、label: '其他統編(不檢核)' 與 errorMessageLabelKey: '公司統編格式錯誤'（company_id_type !== 'other' 才跑 verifyTWBusinessNo）＋一致。",
+    "句 3：src/pages/users/team/_parts/SignerDetails.vue＋'公司負責人' isRequired: state.isSocialHousingTeam＋一致。",
+    "句 4：src/pages/users/team/_parts/SignerDetails.vue＋'社宅業者編號' isFieldVisible: state.isSocialHousingTeam、isRequired: true＋一致。",
+    "句 5：src/pages/users/team/_parts/SignerDetails.vue＋fifthRowOfCorpInfo 前端標示 '公司登記證號' isRequired: state.isSocialHousingTeam、日期與縣市 isRequired: false；但 app/Http/Controllers/UserController.php＋role() 儲存時 Validator 的 company_registration_ymd／company_registration_issue_city／company_registration_code 在 $role->receipt_type == 'tw_zh_mof' 時 $fail(___('選擇「財政部包租業租金收據範本」時 公司登記證日期 為必填。')) 等＋選用財政部包租業租金收據範本時這三欄都必填，一般團隊與社宅團隊皆適用；句子「不論…都是選填」與「一般團隊則是選填」漏掉此收據範本例外。"
+   ]
+  },
+  {
+   "id": "jgb/B/team-signer-agent-info",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "2e6e07e7f7052afdb3abd21920e608e2e1c93dd768f58299559f703a303f6f5f",
+   "title_text": "簽約資訊卡的「經紀人資訊」要填什麼？（經紀人／經紀業名稱與證號，名稱上限 15 字；社宅團隊多了經紀人聯絡電話與 Email，且都是必填）",
+   "notes": [
+    "標題：三句支撐。",
+    "句 1：src/pages/users/team/_parts/SignerDetails.vue＋t('經紀人資訊') 區塊與 brokerInfo 的 '經紀人名稱'、'經紀人證號'、'經紀業名稱'、'經紀業證號'＋一致。",
+    "句 2：src/pages/users/team/_parts/SignerDetails.vue＋'經紀人名稱'、'經紀業名稱' maxLength: 15，長度 >= 15 顯示 '已達 [s1] 上限 [s2] 字'；一般團隊四欄 isRequired 為 state.isSocialHousingTeam 或 false＋選填。",
+    "句 3：src/pages/users/team/_parts/SignerDetails.vue＋'經紀人名稱'／'經紀人證號' isRequired: state.isSocialHousingTeam；'經紀人聯絡電話'、'經紀人 Email' 的 isFieldVisible 與 isRequired 皆為 state.isSocialHousingTeam＋一致。"
+   ]
+  },
+  {
+   "id": "jgb/B/team-signer-manager-info",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "403229ee59ce8d33ff85366e58b1440292ffc56e1bedda58e6adcb0ad0869261",
+   "title_text": "簽約資訊卡的「租賃住宅管理人員資訊」要填什麼？（姓名與證號；社宅團隊多了聯絡電話欄位，且姓名／證號／電話都是必填；沒有 Email 欄位）",
+   "notes": [
+    "標題：兩句支撐。",
+    "句 1：src/pages/users/team/_parts/SignerDetails.vue＋t('租賃住宅管理人員資訊') 與 leasingManagerInfo 的 '租賃管理人員名稱'、'租賃管理人員證號' isRequired: state.isSocialHousingTeam＋一般團隊選填。",
+    "句 2：src/pages/users/team/_parts/SignerDetails.vue＋'租賃管理人員聯絡電話' isFieldVisible／isRequired: state.isSocialHousingTeam；leasingManagerInfo 只有這三欄、無 Email＋一致。"
+   ]
+  },
+  {
+   "id": "jgb/B/team-signer-stamps",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "2404bfae6aa7450a3fc795dbc34438590a9a89c339f4ad0614aa466aa459094f",
+   "title_text": "簽約資訊卡可以上傳哪幾種圖章？（法人或社宅團隊的簽約資訊卡才看得到「附件」與「電子簽約圖章」兩個區塊；「附件」有公司大章、公司小章、不動產經紀人章、不動產經紀業章、租賃管理員章五種，「電子簽約圖章」另外只有一個「圖章」欄位）",
+   "notes": [
+    "標題：三句支撐。",
+    "句 1：src/pages/users/team/_parts/SignerDetails.vue＋t('附件') 與 t('電子簽約圖章') 都在 <template v-if=\"state.isCorporate\">（config_rule_key 3、4）內；個人（1、2）走 isIndividual 分支看不到＋一致。",
+    "句 2：src/pages/users/team/_parts/SignerDetails.vue＋corpAttachmentInfo 的 '公司大章'、'公司小章'、'不動產經紀人章'、'不動產經紀業章'、'租賃管理員章'＋一致。",
+    "句 3：src/pages/users/team/_parts/SignerDetails.vue＋electronicSignatureInfo 只有 '圖章'（name electronic_signature_attachment，與附件欄位不同）；switch-button 在無 attachment 時 disable，文字 t('預設使用圖章取代親手簽名') 與 t('請先上傳圖章並儲存，即可啟用預設使用圖章簽約功能。')；app/Http/Controllers/ContractController.php＋$useElectronicSignature = !empty($lessorRole->electronic_signature_is_default) 簽約時套用。"
+   ]
+  },
+  {
+   "id": "jgb/B/team-multi-company-info",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "c8cd61cdee5ed93aeca65e431b057c3b64cf0e04e5b47330971b897430a6c946",
+   "title_text": "一個團隊可以管理多組公司資訊嗎？（可以在「團隊資訊管理」視窗新增與刪除，但清單第一筆不能刪除）",
+   "notes": [
+    "標題：兩句支撐。",
+    "句 1：src/pages/users/team/_parts/SignerDetails.vue＋t('管理') 按鈕 store.commit('lightbox','manageSingerProfile')（有編輯權限才顯示）；src/components/Lightbox/SignerInfosEdit.vue＋lightbox2 id=\"manageSingerProfile\"、t('團隊資訊管理')、v-for props.signerProfileList（SignerDetails.vue 的 signerProfileList 為 companyInfoList 全部）與 t('新增') → handleCreateRole。",
+    "句 2：src/components/Lightbox/SignerInfosEdit.vue＋<div v-if=\"index !== 0\" class=\"btn\" @click=\"handelDelete(node.id)\"> 與 bi-x-lg＋第一筆沒有刪除圖示，handelDelete 也擋 id 0。"
+   ]
+  },
+  {
+   "id": "jgb/B/team-info-no-view-permission",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "95274346cdd89bd9859c8ce26942c400a6910d97c63ab995cc6b0b478162d21b",
+   "title_text": "沒有查看團隊資訊的權限，打開團隊資訊頁會怎樣？（提示「您目前登入的帳號無法查看團隊資訊功能」）",
+   "notes": [
+    "標題：句 1 支撐，提示文字逐字相符。",
+    "句 1：app/Http/Controllers/UserController.php＋role() 的 if ($roleFullType != \"tenant\" && !$this->isHasGPermission('show_role_info')) 轉回 users.index 並帶 'status-error' => ___('您目前登入的帳號無法查看團隊資訊功能')＋一致（租客不判定權限；團隊資訊頁屬房東側功能）。"
+   ]
+  },
+  {
+   "id": "jgb/B/team-signer-address-groups",
+   "title": "不成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "eb279d59be455d19f9a9f0b8888212b4bc5f67880bc60fbc9c266e771b58d60f",
+   "title_text": "簽約資訊卡上有哪些地址欄位群？（個人的戶籍地址／通訊地址、公司的登記地址／通訊地址，都有「同上」可以直接帶入；社宅團隊另有經紀人與租賃管理人員各自的通訊地址）",
+   "notes": [
+    "標題：加引號的介面文字「同上」不存在於現行介面；src/pages/users/team/_parts/SignerDetails.vue 的實際按鈕文字是 t('同戶籍地址') 與 t('同公司登記地址')，全檔沒有「同上」，依規則 2 標題不成立；其餘斷言由三句支撐。",
+    "句 1：src/pages/users/team/_parts/SignerDetails.vue＋t('戶籍地址')、t('通訊地址') 與 t('同戶籍地址') 按鈕 mailing_address = {...state.currentSigner.resident_address}＋一致。",
+    "句 2：src/pages/users/team/_parts/SignerDetails.vue＋t('公司登記地址')、t('公司通訊地址') 與 t('同公司登記地址') 按鈕 company_address = {...state.currentSigner.company_registration_address}＋一致。",
+    "句 3：src/pages/users/team/_parts/SignerDetails.vue＋<div v-if=\"state.isSocialHousingTeam\"> 內 t('經紀人通訊地址')、t('租賃管理人員通訊地址')＋一般團隊看不到。"
+   ]
+  },
+  {
+   "id": "jgb/B/team-signer-profile-switch",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "03ea856f0b40fe17ee08d26e05ce11c978efcda18eb8d860a19c2ecf2edfb91f",
+   "title_text": "怎麼在多組簽約資訊之間切換？（頁面上方有可切換的分頁列，超過 5 組時另外多出「所有團隊」下拉選單）",
+   "notes": [
+    "標題：兩句支撐，「所有團隊」逐字存在。",
+    "句 1：src/pages/users/team/_parts/SignerDetails.vue＋ScrollNav v-if=\"state.scrollNavDetail?.isShowScrollBar\"（companyInfoList.length > 1）、list: productEntryState.role.companyInfoNav、@click onClickScrollNav；src/entry/product.js＋resetCompanyInfoNav 把 companyInfoList 每筆轉為分頁項目，onAddInfoCompany 新增後重建＋一致。",
+    "句 2：src/pages/users/team/_parts/SignerDetails.vue＋isMoreThan5: companyInfoList.length > 5、t('所有團隊')、v-for=\"(node, index) in state.scrollNavDetail?.list\" 與 onClickScrollNav(index)＋列出全部組數、點選可切換（選項文字的問題見 findings）。"
+   ]
+  },
+  {
+   "id": "jgb/A/new-password-length",
+   "title": "成立",
+   "sentences": [
+    "不成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "4c30df9dbc53b9b9f0b82a8582e3bb06f3ff033e71ae29b5197b98748df04054",
+   "title_text": "帳號資訊頁設定新密碼有長度限制嗎？",
+   "notes": [
+    "標題：疑問句，只隱含「有長度限制」；程式確有限制（至少 6 字元），成立；具體數字由句 1 承擔。",
+    "句 1：app/Http/Controllers/UserController.php＋account() 的 'password' => 'min:6|required_with:password_confirmation|same:password_confirmation' 與 'password.min' => '密碼必須超過6個字元'；同檔 $passwordComponentProps 的 'tip_pwd_length' => ___('至少6位(含)字元以上')＋實際下限是 6 個字元，不是 8 個字元；「需與確認新密碼一致」（'password.same' => '密碼需與確認新密碼一致'）成立，但數字錯誤，整句不成立。",
+    "句 2：src/components/PasswordForm.vue＋text_fields['tip_pwd_format'] 顯示 ___('密碼應有至少一位英文和數字')（app/Http/Controllers/UserController.php＋$passwordComponentProps）；resources/views/users/account.blade.php＋儲存 button form=\"form_account_setting\" 沒有綁 password_allow_submit；UserController.php account() 驗證規則沒有英數 regex＋按儲存不檢查。",
+    "句 3：app/Http/Controllers/AuthController.php＋authEmail 註冊 Step2 的 'password' => 'required|string|min:6|regex:/^(?=.*[a-zA-Z])(?=.*[0-9]).*$/' 與 ___('欄位應包含至少一位英文和數字。')＋一致。"
+   ]
+  }
+ ],
+ "findings": [
+  "通知已讀綁定身分擁有者：app/Notification.php 的 markAsRead 用 where('user_id', $userId) 篩選，而通知寫入時 user_id 是身分擁有者，通知中心（NotificationController index）與鈴鐺（navbar）都只依 role_id 列出。照程式推導，有 show_notification 權限的團隊成員（非擁有者）點了通知也不會變成已讀，紅點一直留著；鈴鐺的未點擊數（is_click）只依 role_id 更新，不受影響，所以成員身分下兩個狀態表現不一致。未在實機上驗證。",
+  "「所有團隊」下拉選單的選項文字讀 node.company_name（src/pages/users/team/_parts/SignerDetails.vue），但法人／社宅分支傳入的 list 是 src/entry/product.js resetCompanyInfoNav 產出的 {label, value}，沒有 company_name；照程式推導選項會是空白文字（筆數與點選切換仍正確）。個人分支的 filterNavItems 也只產生 label/value，而且 onClickScrollNav 只改 productEntryState.role.currentInfoCompanyIndex，個人身分多組簽約資訊的切換可能沒有作用。未在實機上驗證。",
+  "app/Http/Controllers/NotificationController.php index() 的「沒有結果且在第二頁以上就自動跳回第一頁」因 empty($datas) 對分頁物件恆為 false 而成為死碼；jgb/A/notification-mark-read-out-of-range 描述的是現行實際行為，日後若修正這個判斷，該細目會反轉。",
+  "帳號資訊頁新密碼長度：前端提示「至少6位(含)字元以上」與後端 min:6 一致；jgb/A/new-password-length 句 1 寫 8 個字元，與程式衝突。",
+  "公司登記證號／日期／縣市在選用「財政部包租業租金收據範本」時由後端強制必填（app/Http/Controllers/UserController.php role() 的 receipt_type == 'tw_zh_mof' 驗證），前端 SignerDetails.vue 沒有標必填；jgb/B/team-signer-company-info 只依前端標示描述。",
+  "jgb/A/notification-settings-save 的儲存鍵實際啟用條件是「任一分類有自訂信箱欄位（含未填寫的空白欄位）」；擋下空白欄位的是 jgb/A/notification-settings-extra-emails 句 3 所述的 input required 驗證，兩條要合讀才完整。"
+ ],
+ "source_transcript": "a445e6c37f5763160.output"
+}

@@ -1,0 +1,403 @@
+{
+ "kind": "write",
+ "verdict": "REFUTED",
+ "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+ "claim": "Plan 9.28 批次 B01：23 條細目的標題與每一句已逐句對合法來源核對，逐條結果如 fines",
+ "fines": [
+  {
+   "id": "jgb/A/register-email-steps",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "06613ed4f5a01c0fab0e13f27983332da4e62018475db3fa72d233a897763677",
+   "title_text": "如何註冊 JGB 帳號？（Email、驗證碼、帳號設定三步驟）",
+   "notes": [
+    "標題：src/pages/users/auth/parts/CreateProgress.vue 的 total 預設 3，EmailVerify.vue 是 now=\"2\"、AccountSetting.vue 是 now=\"3\"，三步驟由句 2～4 支撐",
+    "句 1：src/pages/users/auth/parts/CreateWelcome.vue 有「單一帳號方便管理，註冊即可擁有房東 & 租客雙重身分喔！」；onboarding1_zh-Hant.html 寫「以Email為主來建立JGB帳號…只需註冊一次，就可以同時擁有房東及租客身份」；config/role.php 中租客(1)與個人房東(2)的 is_registration_default 都是 true，AuthController.php 的 setUserInfo 會兩個一起建立",
+    "句 2：src/pages/users/auth/parts/CreateWelcome.vue 的「繼續」按鈕條件是 emailValidator.response.success == true && state.recaptchaVerified == true；送出後 step 改成 EmailVerify，EmailVerify.vue 掛載時呼叫 emailVerificator.send()（後端 AuthController@authEmail 的 sendVerEmail）",
+    "句 3：src/pages/users/auth/parts/EmailVerify.vue 收到 response.verify.success 後 step 改成 AccountSetting",
+    "句 4：src/pages/users/auth/parts/AccountSetting.vue 有 姓氏／名稱／稱謂／密碼／確認密碼 欄位與按鈕「完成註冊」，呼叫 api2/authEmail/setUserInfo，裡面 initializeUser 會把 is_registered 設為 1",
+    "句 5：src/pages/users/auth/parts/CreateWelcome.vue 的「點擊「繼續」，即表示我已閱讀並同意金箍棒的 [s1] 和 [s2]。」（服務條款、隱私權聲明）；同意的方式是按「繼續」，畫面上沒有另外的勾選框"
+   ]
+  },
+  {
+   "id": "jgb/A/register-tenant-contract-invitation",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "bb9c968b8d150f3d0fd20dece6970b8d7db4b86b3f43408d48ecf04a05b7e064",
+   "title_text": "租客從電子合約邀請怎麼註冊？（房東建約發邀請，租客點「查看合約」再點「立即註冊」接續完成）",
+   "notes": [
+    "標題：各段斷言都有句 1～6 支撐",
+    "句 1：src/pages/contracts/edit/tenantInfo/Index.jsx 有「租客註冊」選項、「合約邀請聯繫方式」以及 Email／手機號碼 切換；src/components/SurelyVue/Contract/CategoryCell.jsx 的 case 2 為「待租客簽回」（app/Contract.php 中 CONTRACT_INVITING = 2）；onboarding1_zh-Hant.html 寫「點選邀請簽約後，會進入「待租客簽回」畫面」",
+    "句 2：app/Notification.php 的 contract_invite 會在 to_user_email 有值時寄信，$redirectUrl = route('estates.house', … 'r_type' => 'tenant')；resources/views/emails/zh-TW/contracts/invite.blade.php 有 <a … href=\"{{ $url }}\">查看合約</a>；說明中心寫「會進入該物件廣告頁」",
+    "句 3：同上（app/Notification.php）在 to_user_phone 有值時發簡訊，$msgData = [$userName, short_url($redirectUrl)]，是同一個 redirectUrl 的短網址",
+    "句 4：resources/views/estate/show.blade.php 的「查看合約」連到 route('contracts.show', … 'r_type' => 'tenant')（這個路由需要登入）；app/Http/Middleware/LoginCheck.php 在未登入時導到 users.create any=login，並把 r_type 帶過去",
+    "句 5：src/pages/users/auth/parts/LoginForm.vue 有「還沒有帳號嗎？」＋ router-link 到 users.create，文字是「立即註冊」",
+    "句 6：app/Http/Controllers/EstateController.php 的 house() 在未登入時把合約 id 存進 session contract_invitation；app/Http/Controllers/AuthController.php 的 setUserInfo 對新帳號（roles_count <= 0）會執行 receiveContractInvitation('email')，並逐筆執行 receiveContractInvitation('contract', $contractId)",
+    "句 7：src/pages/contracts/edit/tenantInfo/Index.jsx 有「租客免註冊：租客因無需註冊 JGB 會員而需要管理者協助填寫以下租客資訊。」"
+   ]
+  },
+  {
+   "id": "jgb/A/register-sso",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "b672b6a7d4c91bb99663197e702ec86be732def8837f8865db44b9fa2f02c4e1",
+   "title_text": "可以用 Facebook、Google、LINE 註冊嗎？（SSO 仍需完成 Email 綁定）",
+   "notes": [
+    "標題：由句 1、3 支撐",
+    "句 1：src/pages/users/auth/parts/SSOBar.vue 有 fb／google／line 三個按鈕；CreateWelcome.vue 在沒有 ?sso 參數時顯示 <SSOBar>",
+    "句 2：src/pages/users/auth/parts/SSOBar.vue 的 openExternalBrowser()，在 userAgentInfo.isLine 時把 Google SSO 網址加上 ?openExternalBrowser=1",
+    "句 3：app/Http/Controllers/AuthController.php 的 authSSO callback 遇到新的第三方帳號，會導到 users.create?sso=1&social_type=…；src/pages/users/auth/parts/CreateWelcome.vue 顯示「已使用 [s1] 帳號註冊成功，請完成 Email 驗證。」並保留 Email 輸入欄；onboarding1_zh-Hant.html 寫「系統也會自動連結進入Email帳號註冊流程」"
+   ]
+  },
+  {
+   "id": "jgb/A/register-captcha-expired",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "4ab54071f78962aec66187787a43a7da88c4b1766ed5140f2c84e1f87f215304",
+   "title_text": "註冊卡在機器人驗證過期怎麼辦？（重新勾選「我不是機器人」；寄驗證信時沒通過會退回第一步）",
+   "notes": [
+    "標題：由句 1～3 支撐",
+    "句 1：src/pages/users/auth/parts/CreateWelcome.vue 中 VueRecaptcha 的 @expire 會把 recaptchaVerified 設為 false，「繼續」按鈕是 v-if=\"… state.recaptchaVerified == true …\"",
+    "句 2：app/Http/Controllers/AuthController.php 的 sendVerEmail，在 AuthService::verifyRegisterCaptcha 沒通過時回傳 recaptcha_required = true；src/pages/users/auth/parts/EmailVerify.vue 看到這個值就把 step 改回 Welcome，並把 captchaRetry 設為 true；CreateWelcome.vue 這時顯示「機器人驗證已經過期，請重新輸入 Email 並勾選「我不是機器人」。」",
+    "句 3：src/pages/users/auth/parts/EmailVerify.vue 會清空 parentState.form.captcha_token 與 email，把 localStorage 的 usersCreate_email 設為空字串；Welcome 元件重新掛載後 recaptchaVerified 回到初始值 false",
+    "句 4：app/Services/AuthService.php 的 REGISTER_CAPTCHA_TTL = 1800；hasPassedRegisterCaptcha 會比對 session 裡記錄的 email 是否相同，並檢查是否還在時效內"
+   ]
+  },
+  {
+   "id": "jgb/A/register-email-verify-resend",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "ad79a4d6b6141eaf3ab80be11db0b3a660a6facfefb17dab5a7469dacf5aec65",
+   "title_text": "沒收到 Email 驗證碼怎麼辦？（可重發，發送次數過多會出現等待秒數）",
+   "notes": [
+    "標題：由句 1～3 支撐",
+    "句 1：src/pages/users/auth/parts/EmailVerify.vue 有「沒有收到驗證信嗎？試試 [s1]重發驗證信[s2]」，點擊呼叫 window.__reSendVer()，也就是 emailVerificator.send()",
+    "句 2：app/User.php 的 getSendEmailRemainSec 設定 120 秒間隔（達到上限後改成 18000 秒），authEmail 的 sendVerEmail 回傳 data.wait；src/pages/users/auth/parts/EmailVerify.vue 在 wait > 0 時給連結加上 disabled 並顯示「(n秒)」；src/use/useVerifyEmail.js 用 setInterval 每秒把 wait 減 1。附註：第一次寄出後也會開始倒數",
+    "句 3：app/Http/Controllers/AuthController.php 在 email_send_count >= getEmailSendingLimit()（5 次）時回傳 field_errors.wait「Email 驗證失敗，請稍候再試…」；src/pages/users/auth/parts/EmailVerify.vue 用 <ErrorsTip :errors=\"…field_errors?.wait\"> 顯示",
+    "句 4：src/pages/users/auth/parts/EmailVerify.vue 有「填錯 Email 嗎？ [s1]點此重新輸入[s2]」，點擊執行 window.__toStep('Welcome')"
+   ]
+  },
+  {
+   "id": "jgb/A/register-password-rule",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "fb12b706067071e54b2df2a20d7522615b6547214441af92cecb17e0579132bb",
+   "title_text": "註冊密碼格式要求是什麼？（至少 6 碼、須同時包含英文與數字）",
+   "notes": [
+    "標題：由句 1、2 支撐",
+    "句 1：src/pages/users/auth/parts/AccountSetting.vue 的 pwdFormat.length 條件是 state.password.length >= 6，畫面提示「密碼至少6位(含)字元以上。」；後端 app/Http/Controllers/AuthController.php 的 setUserInfo 規則是 'min:6'",
+    "句 2：同上（AccountSetting.vue）format 條件為 /[0-9]/.test && /[a-zA-Z]/.test，提示「應包含至少一位英文和數字。」；後端 AuthController.php 規則 regex:/^(?=.*[a-zA-Z])(?=.*[0-9]).*$/",
+    "句 3：同上（AccountSetting.vue）same 條件為 password === password_confirmation，allowSubmit 必須三項都通過；後端 AuthController.php 規則 'password_confirmation' => 'same:password'"
+   ]
+  },
+  {
+   "id": "jgb/A/register-email-already-registered",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "0e6daebe694e28572a6b3beafc21e1f1d21633e353b3f91e076b5f1aabf319a2",
+   "title_text": "註冊時 Email 已被註冊過怎麼辦？（已完成註冊的 Email 會直接被擋下；只有還沒完成 Email 註冊的舊帳號才會進行帳號合併）",
+   "notes": [
+    "標題：由句 1、2 支撐",
+    "句 1：app/Http/Controllers/AuthController.php 的 validateEmail，在 User::checkEmailUserByEmail 為真時回傳「此帳號已註冊。」；app/User.php 的 checkEmailUserByEmail 條件是 email_verified_at 不為空、password 不為空、is_registered=1，排除 social_id 的條件已被註解掉；CreateWelcome.vue 要驗證成功才會出現「繼續」；app/User.php 的 findExemptRegisterUserOrCreateRegUser 遇到第三方帳號註冊時，先建立不帶 social_id 的 Email 帳號，再另外複製一筆帶 social_id 的子帳號，後續經 verifyEmail 與 initializeUser 寫入驗證時間與密碼",
+    "句 2：src/pages/users/auth/parts/AccountSetting.vue 掛載時呼叫 getEmailRegStatus（後端 User::checkFatherUserByEmail，不檢查驗證時間與密碼），結果為真時顯示標題「帳號已註冊」與「[s1] 已註冊過，JGB 將進行帳號合併。」；按「繼續」執行 submit(true)，成功後 step 改成 PhoneVerify",
+    "句 3：src/pages/users/auth/parts/AccountSetting.vue 的 submit(force) 在 force 為真時跳過 allowSubmit 檢查；後端 app/Http/Controllers/AuthController.php 的 setUserInfo 只在 !checkFatherUserByEmail 時才驗證姓名與密碼"
+   ]
+  },
+  {
+   "id": "jgb/A/register-phone-bind",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "43a7987dc68b8a71fc50e7869f4dd7c5ddbaf53324b9ffadf8092fb8ccc90fb5",
+   "title_text": "註冊要綁定手機號碼嗎？（可選填、簡訊驗證、可「下次再驗證」略過）",
+   "notes": [
+    "標題：由句 2、3 支撐",
+    "句 1：AccountSetting.vue 成功後 step 改成 PhoneVerify；src/pages/users/auth/parts/PhoneVerify.vue 有 select-picker 國碼選單，輸入框 :maxlength=\"state.lengthLimit\" 取自 siteOptions.countries[country].lengthLimit，並提示「號碼最長為 [s1] 碼。」",
+    "句 2：同上（PhoneVerify.vue）按「驗證號碼」呼叫 phoneVerificator.send()（後端 AuthController@authPhone 的 sendVerSms）；verifyPhone 驗證成功即完成綁定",
+    "句 3：同上（PhoneVerify.vue）在 route.name == 'users.create' 時顯示「下次再驗證」並呼叫 skipVerify()；帳號在前一步 setUserInfo 已建立完成",
+    "句 4：同上（PhoneVerify.vue）有「沒有收到簡訊嗎？試試 [s1]重發簡訊[s2]」與 wait 秒數；後端 AuthController.php 的 authPhone sendVerSms 回傳 getSendSmsRemainSec",
+    "句 5：src/pages/users/auth/parts/PhoneVerify.vue 有「若綁定成功，未來可使用電話號碼進行登入；如果忘記帳號，也能使用手機號碼找回帳號」；src/pages/users/auth/parts/forget/Password.vue 也提供手機號碼（loginBy phone）驗證後重設密碼"
+   ]
+  },
+  {
+   "id": "jgb/A/register-phone-already-bound",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "96197ae6b834636125aa9fd7e6f5a93dc85881862384cb899a76191909a06683",
+   "title_text": "註冊時發現手機已綁定過怎麼辦？（直接顯示已綁定、按繼續完成流程）",
+   "notes": [
+    "標題：由句 2 支撐",
+    "句 1：src/pages/users/auth/parts/PhoneVerify.vue 的 onBeforeMount 先呼叫 api2/authPhone/getPhoneBindingStatus（後端是 getHasVerifiedPhone），再決定 screen 是 hasPhone 還是 validate",
+    "句 2：同上（PhoneVerify.vue）hasPhone 畫面顯示「手機已綁定」、「未來可使用電話號碼進行登入，忘記主帳號時也能當作代替帳號登入。」、「[s1] 已綁定好手機號碼，請點擊「繼續」完成註冊流程。」",
+    "句 3：同上（PhoneVerify.vue）「繼續」在 route.name == 'users.create' 時把 step 改成 RoleSelect，其他情況執行 backToPreviousPage()（導到 redirect 參數）；唯一的非註冊入口 resources/views/users/account.blade.php 的「前往綁定」會帶 redirect=users.account"
+   ]
+  },
+  {
+   "id": "jgb/A/register-role-select",
+   "title": "成立",
+   "sentences": [
+    "不成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "3ff49ae838c9ff4ac802ad2380ddb8feae98f19d5cd5730dddd229446858cba8",
+   "title_text": "註冊完之後要選身分嗎？（一般會在房東/管理者、租客中二選一，可同時擁有兩種身分；從租客端網站導轉來的會直接導回原頁）",
+   "notes": [
+    "標題：由句 2、3 與句 1 的前半支撐",
+    "句 1：前半成立：src/pages/users/auth/parts/RoleSelect.vue 有「我是房東/管理者」「我是租客」。後半不成立：app/Http/Controllers/AuthController.php 的 authSSO callback 遇到已註冊的第三方帳號時，是 $redirectUrl = session('redirect_after_login')，有值就導到該頁（例如合約邀請或租客端網站導轉來的原頁），只有沒值時才導到 users.index。另外，登入頁的 SSOBar 只放在 src/pages/users/auth/parts/LoginForm.vue 裡，也就是選完身分之後才出現；從登入頁用第三方帳號登入前，其實已經選過身分。所以「已註冊過的第三方帳號登入時，則會直接進入首頁」漏掉了這兩種例外",
+    "句 2：config/role.php 的租客(1)與個人房東(2)都設 is_registration_default true；src/pages/users/auth/parts/RoleSelect.vue 選擇後執行 changeSession selected_role_type；app/Http/Controllers/Controller.php 依 selected_role_type 決定這次進入租客或房東身分",
+    "句 3：src/pages/users/auth/parts/PhoneVerify.vue 在 session 有 redirect_after_login 時執行 setFromLiving，skipVerify 與驗證成功後的 watch 都執行 window.location.href = redirectToLivingUrl，不會把 step 改成 RoleSelect；src/pages/users/auth/parts/CreateWelcome.vue 會把 query 的 redirect_after_login 寫進 session"
+   ]
+  },
+  {
+   "id": "jgb/A/register-verify-code-shape",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "17eb741adc859e89c149e2ade750d7842060dd508248f87418328da11850487d",
+   "title_text": "驗證碼輸入畫面長什麼樣子？（識別碼加 4 碼數字；輸入錯誤太多次驗證碼會失效，需重新發送）",
+   "notes": [
+    "標題：由句 1、2 支撐",
+    "句 1：src/pages/users/auth/parts/VerifyPanel.vue 左欄顯示 {{ verId }} -，右欄是 <PinCode :length=\"4\">；app/User.php 的 sendVerEmail 中 email_verification_id 為 3 個大寫字母，驗證碼為 rand(2345,9876)；後端規則 regex:/^[0-9]{4}$/",
+    "句 2：app/Http/Controllers/AuthController.php 達到次數上限時回傳「驗證次數過多，驗證碼已失效，請稍候重發驗證信。」（簡訊流程為「…請稍候重發簡訊。」）；src/pages/users/auth/parts/VerifyPanel.vue 的 isLocked 只吃 data.is_locked，但 AuthController.php 從不回傳 is_locked（grep 只在前端出現），EmailVerify.vue 甚至沒有傳 isLocked，所以輸入框不會被鎖住"
+   ]
+  },
+  {
+   "id": "jgb/A/register-email-link-resume",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "79c584d256f21de1ba8df25a8e5d3af977f1e9d02b1ce9b57384f78b905e28b4",
+   "title_text": "從信箱 App 點註冊連結、去收驗證碼再回來，會從頭開始註冊嗎？（同一瀏覽器會記住 Email 回到驗證碼步驟；機器人驗證失效時退回第一步）",
+   "notes": [
+    "標題：由句 1、2、4 支撐",
+    "句 1：src/pages/users/auth/Create.vue 用 watch 把 step 與 email 寫進 localStorage（usersCreate_step、usersCreate_email）",
+    "句 2：src/pages/users/auth/parts/CreateWelcome.vue 的 onMounted 在 isVerifySent()（usersCreate_step === 'EmailVerify' 且有 email）為真時，帶回 email 並把 step 改成 EmailVerify",
+    "句 3：src/pages/users/auth/parts/EmailVerify.vue 的 onMounted 在 email 有值時呼叫 emailVerificator.send()",
+    "句 4：app/Services/AuthService.php 的 hasPassedRegisterCaptcha 以 session 記錄同一 email，TTL 1800 秒；重新開頁後 captcha_token 為空，驗證失敗時 src/pages/users/auth/parts/EmailVerify.vue 收到 recaptcha_required，會清空 email 並退回 Welcome"
+   ]
+  },
+  {
+   "id": "jgb/A/login-methods",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "130e9529aa234ae4b12a9c371590d7f47edb45eb61150579238371efcf168e47",
+   "title_text": "JGB 有哪些登入方式？（Email、手機號碼、Facebook／Google／LINE）",
+   "notes": [
+    "標題：由句 1、2 支撐",
+    "句 1：src/pages/users/auth/parts/LoginForm.vue 的 toggleLoginBy 在 Email／手機號碼 之間切換，對應 api2/login/emailLogin 與 phoneLogin",
+    "句 2：src/pages/users/auth/parts/LoginForm.vue 內有 <SSOBar>；src/pages/users/auth/parts/SSOBar.vue 有 fb、google、line 三個按鈕"
+   ]
+  },
+  {
+   "id": "jgb/A/contact-info-social-fields",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "不成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "3bdeb3b656cac4379535b74a974ae721fbd6f581dd612afde805127b6ab5eb8b",
+   "title_text": "聯絡資訊的 LINE、Facebook、WhatsApp 欄位怎麼填？",
+   "notes": [
+    "標題：由句 2～4 支撐",
+    "句 1：resources/views/users/account.blade.php 的「聯絡資訊」卡片寫「以下資訊將會呈現在廣告上，租客可以透過更多管道與房東聯繫，提升簽約成功率！」",
+    "句 2：同上（account.blade.php）有 Line ID 的 checkbox line_is_phone「同手機號碼」；勾選後改顯示 disabled 的手機號碼欄（v-if getTemp('lineIsPhone')），未勾選時顯示可填的 line 欄位，沒有 required；app/Http/Controllers/UserController.php 的 account() 也沒有必填檢查",
+    "句 3：不成立。resources/views/users/account.blade.php 的 Facebook 欄位是 placeholder「個人首頁連結」，但 maxlength=\"200\"，不是 100；app/Http/Controllers/UserController.php 的 account() 儲存 $this->user->facebook = $input['facebook']，沒有長度驗證",
+    "句 4：同上（account.blade.php）WhatsApp 的 tooltip 是「請填寫國碼與電話號碼，國碼前面不需打「+」。」，欄位 name=\"whats_app\" maxlength=\"200\"",
+    "句 5：同上（account.blade.php）「第二組聯絡號碼」欄位 name=\"phone2\" maxlength=\"50\"",
+    "句 6：同上（account.blade.php）「以此電話作為廣告頁聯絡電話」的 checkbox 整段在 {{-- … --}} 註解裡，不會顯示"
+   ]
+  },
+  {
+   "id": "jgb/A/login-role-select-before",
+   "title": "不成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "92188d3eefe6f5b7f2d8706bb3c3083c970f9986b797f57b67e8ab174822c6b7",
+   "title_text": "登入前為什麼要先選擇身分？（決定進入房東/管理者或租客的登入表單）",
+   "notes": [
+    "標題：不成立。依判定規則 6，標題的「為什麼」與括號內的理由「決定進入房東/管理者或租客的登入表單」，在本條唯一的句子裡都找不到支撐，句子只說「需先選擇」。另外，src/pages/users/auth/parts/LoginForm.vue 對兩種身分是同一張表單，只是標題「歡迎[s1]！」不同，並把 role 送給後端；實際用途是由 app/Http/Controllers/Controller.php 依 selected_role_type 決定登入後進入哪一個身分",
+    "句 1：src/pages/users/auth/Login.vue 的 state.step 初始為 RoleSelect；src/pages/users/auth/parts/LoginForm.vue 在沒有 role 時退回 RoleSelect；src/pages/users/auth/parts/RoleSelect.vue 有「我是房東/管理者」「我是租客」。附註：網址帶 r_type 時由參數代為選定身分"
+   ]
+  },
+  {
+   "id": "jgb/A/login-phone-country-code",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "2b07ca1de6380771ad3d2d23f696114de921725e306dff12d3a785956b3466f1",
+   "title_text": "用手機號碼登入時，國碼與號碼格式有什麼規則？（號碼長度上限與格式依所選國家而定）",
+   "notes": [
+    "標題：由句 1 支撐",
+    "句 1：src/pages/users/auth/parts/LoginForm.vue 在手機模式有 VueSelect 國碼選單（預設 TW，或 localStorage 的 loginCountry），輸入框 :maxlength=\"state.lengthLimit\" 取自 countries[country].lengthLimit；allowSubmit 用 countries[country].phoneReg 檢查格式；後端 app/Http/Controllers/AuthController.php 的 phoneLogin 也用 ValidateMobile($request->phone, $request->country) 驗證。附註：國碼有預設值，不一定需要手動選"
+   ]
+  },
+  {
+   "id": "jgb/A/login-remember-me",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "2bd3cb7bd61df75db415895fa43426811db58c1108230dccff9df9b46e919f5b",
+   "title_text": "「記住我」是做什麼？（只延長登入效期，跟記住登入方式無關）",
+   "notes": [
+    "標題：由句 1 支撐",
+    "句 1：src/pages/users/auth/parts/LoginForm.vue 只在送出登入時帶 remember（勾選狀態另存 localStorage 的 'remember'）；app/Http/Controllers/AuthController.php 的 $login 在 $isRememberMe 時設定 Cookie::forever('remember_me')；登入方式存在 localStorage 的 'loginBy'，只在 toggleLoginBy 時寫入，初始化時讀回，跟 remember 無關"
+   ]
+  },
+  {
+   "id": "jgb/A/login-role-redirect",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "46ca274cfb6c9f21bcd367d703ad3dc1cb21dae48bdefb2572b4765e306059dc",
+   "title_text": "登入時身分選錯了怎麼辦？（會依選擇的身分決定進入哪個角色的登入表單）",
+   "notes": [
+    "標題：由句 1、2 支撐",
+    "句 1：src/pages/users/auth/Login.vue 的 watch route.query.r_type，值屬於 ['landlord','tenant'] 時把 step 改成 LoginForm",
+    "句 2：同上（Login.vue）else 分支把 step 設為 RoleSelect；src/pages/users/auth/parts/RoleSelect.vue 點卡片後才 router.push r_type",
+    "句 3：src/pages/users/auth/parts/LoginForm.vue 範本沒有返回身分選擇的按鈕；src/pages/users/auth/Login.vue 在沒有 r_type 時 step 為 RoleSelect"
+   ]
+  },
+  {
+   "id": "jgb/A/login-error",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "2af2a400266dc5d611de1aee6637aae654f1f3de7487097b902aa08a8cd2dd24",
+   "title_text": "登入帳號或密碼錯誤時會顯示什麼？",
+   "notes": [
+    "標題：由句 1 支撐（訊息是 app/Http/Controllers/AuthController.php 的「帳號或密碼錯誤；或使用者不存在。」）",
+    "句 1：src/pages/users/auth/parts/LoginForm.vue 在密碼 input 之後放了 <ErrorsTip v-show=\"state.response.login?.success == false\" :errors=\"…field_errors?.['*']\">",
+    "句 2：同上（LoginForm.vue）watch { country, phone, email, password } 時執行 state.response.login = {}",
+    "句 3：同上（LoginForm.vue）toggleLoginBy 會把 phone、password、email 清空"
+   ]
+  },
+  {
+   "id": "jgb/A/login-forget-password-link",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "e133e5c84808e241eae58d98d1b2836c5366337b16180d76785484e0cb7eea85",
+   "title_text": "登入頁的「忘記密碼？」連結在哪裡？（在登入表單下方，點擊前往忘記密碼流程）",
+   "notes": [
+    "標題：src/pages/users/auth/parts/LoginForm.vue 的介面文字就是「忘記密碼？」",
+    "句 1：src/pages/users/auth/parts/LoginForm.vue 表單與 SSOBar 下方有 router-link :to=\"{name:'users.forget.password'}\"，文字「忘記密碼？」"
+   ]
+  },
+  {
+   "id": "jgb/A/login-forget-account-link",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "e782f993cf6968ae5e70de7d7e825eb8e399b214557f09f01da7faae88a82830",
+   "title_text": "登入頁的「忘記帳號？」連結在哪裡？（在登入表單下方，點擊前往忘記帳號流程）",
+   "notes": [
+    "標題：src/pages/users/auth/parts/LoginForm.vue 的介面文字就是「忘記帳號？」",
+    "句 1：src/pages/users/auth/parts/LoginForm.vue 表單下方有 router-link :to=\"{name:'users.forget.account'}\"，文字「忘記帳號？」"
+   ]
+  },
+  {
+   "id": "jgb/A/login-no-account-register-link",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "cf32a71e331d6dfab6b7f41b35103b52957dc5c8096b19b2a74bf76f209a8fff",
+   "title_text": "登入頁有連到註冊頁的連結嗎？（登入表單上方的「還沒有帳號嗎？立即註冊」）",
+   "notes": [
+    "標題：src/pages/users/auth/parts/LoginForm.vue 表單頂部標題下方有「還沒有帳號嗎？」＋「立即註冊」",
+    "句 1：src/pages/users/auth/parts/LoginForm.vue 有 {{ t('還沒有帳號嗎？') }} <router-link :to=\"{name: 'users.create'}\">…{{ t('立即註冊') }}"
+   ]
+  },
+  {
+   "id": "jgb/A/login-identity-switch",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "749bb8037aeebbced448b82b87290a715eceae657e0c26081951e0e60ab56953",
+   "title_text": "同一帳號同時有房東與租客身分時怎麼切換？（登入時重新選擇身分，或在帳號資訊設定預設身分）",
+   "notes": [
+    "標題：由句 1、2 支撐",
+    "句 1：src/pages/users/auth/Login.vue 先顯示 RoleSelect；src/pages/users/auth/parts/RoleSelect.vue 執行 changeSession selected_role_type；app/Http/Controllers/Controller.php 遇到 tenant 時取租客身分，遇到 landlord 時取 default_role_id 或第一個房東身分",
+    "句 2：resources/views/users/account.blade.php 的「偏好設定」卡片有「登入預設房東身份」下拉（name user_default_role）；app/Http/Controllers/UserController.php 的 account() 寫入 default_role_id，選項只列房東身分與團隊（「預設身份不含租客」）；app/Http/Controllers/Controller.php 在選 landlord 時用 $this->user->default_role_id"
+   ]
+  }
+ ],
+ "findings": [
+  "jgb/A/register-role-select 句 1 說「已註冊過的第三方帳號登入時，則會直接進入首頁」，但同一條句 3 與 jgb/A/register-tenant-contract-invitation 都依賴 session redirect_after_login 導回原頁。AuthController.php 的 authSSO callback 一樣是先導 redirect_after_login，所以句 1 和這兩處的導回行為互相矛盾",
+  "jgb/A/login-role-select-before 的標題說身分「決定進入…的登入表單」，但 jgb/A/login-identity-switch 與程式（Controller.php 的 selected_role_type）顯示，身分選擇的作用是決定登入後進入哪一個身分；兩種身分在 LoginForm.vue 用的是同一張表單",
+  "jgb/A/contact-info-social-fields 句 3 的 Facebook 上限寫 100，但 account.blade.php 的 maxlength 是 200，和同一條 WhatsApp（200）一樣；後端沒有長度驗證"
+ ],
+ "source_transcript": "ac3ec6b55c332d4f8.output"
+}

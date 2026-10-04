@@ -1,0 +1,328 @@
+{
+ "kind": "write",
+ "verdict": "REFUTED",
+ "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+ "claim": "Plan 9.28 批次 B24：20 條細目的標題與每一句已逐句對合法來源核對，逐條結果如 fines",
+ "fines": [
+  {
+   "id": "jgb/I/control-panel-entry-scope",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "ede410b61b4c9de5c2e1859e32b7eee8569b0ab9d36875f37331b8e8846da64e",
+   "title_text": "控制台首頁目前能用什麼？（目前只有「任務管理器」一個項目可以點擊進入，而且只開放給特定合作團隊）",
+   "notes": [
+    "標題：由句 1、句 2 支撐（只有一張卡片；設定子路徑只放行特定合作團隊角色分組）。",
+    "句 1：src/pages/control-panel/Index.vue＋t('管理您的 JGB 系統')＋唯一未註解的 Template 是 label={'任務管理器'}，其餘卡片（含「通知設定」）都在 //TODO 註解區塊內。",
+    "句 2：src/pages/control-panel/Index.vue＋content={'設定您的排程機器人，在滿足設定的條件後，可以觸發自動操作。'}、routerName={'taskManagement'}；src/routes/controlPanel.js＋beforeEnter 內 findSpecialRoleGroup 的 key 不在控制台分組與特定合作團隊分組時 window.location.href = '/users'；src/routes/users.js＋path: '/users' 的 beforeEnter 轉 users.dashboard（會員中心首頁）。"
+   ]
+  },
+  {
+   "id": "jgb/I/control-panel-setting-shell",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "39bd74f949e8fb6fd71b98fac5a1c130941ef462ee3b41347471f5441d963c30",
+   "title_text": "進入控制台設定後看到什麼？（上方三層麵包屑與左側「控制台」側邊欄，內容是任務管理器、新增／編輯任務或通知信設定頁）",
+   "notes": [
+    "標題：由句 1～句 3 支撐。",
+    "句 1：src/pages/control-panel/setting/Index.jsx＋Breadcrumbs 的 label: 'Dashboard'、t('控制台')、t('任務管理設定')，內容區是 RouterView；src/routes/controlPanel.js＋children 為 taskManagement、taskManagement.create、taskManagement.edit、notificationMail。",
+    "句 2：src/pages/control-panel/setting/Index.jsx＋{!state.isHightLightShow && <OrderAside />}，isHightLightShow 只在 taskManagement.create／taskManagement.edit 為真；src/pages/control-panel/_parts/OrderAside.vue＋側欄標題 t('控制台')，controlPanelList 唯一未註解項為 t('任務管理設定')（「通知收件信箱」等皆已註解）。註：桌面側欄寬度由 localStorage 的 controlPanelAsideExpandToggled 決定，未曾展開過時預設寬度 0、只露出展開按鈕。",
+    "句 3：src/pages/control-panel/_parts/OrderAside.vue＋桌面側欄容器為 hidden lg:block，手機為 lg:hidden 的上方列，中間顯示 state.controlPanelActive?.label，點擊 store.commit('lightbox', 'orderAsideMobile') 開啟 OrderAsideInner 選單。"
+   ]
+  },
+  {
+   "id": "jgb/I/task-manager-purpose",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "d8f29e7c51b2323376d548c9e0e7b3615cf4b7dd8ce716a18a75e5d17b3c3282",
+   "title_text": "任務管理器是做什麼用的？（設定週期性任務或預定通知的排程功能）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/pages/control-panel/taskManagement/Index.vue＋t('設定週期性的任務、或是預定通知，像是週期修繕單、預約信件通知等，設定完成後，系統將會自動在指定週期的前三十天完成單據的開立，並寄信通知。')；句子未加引號、省略「前三十天」與舉例，意思沒有被改變。",
+    "句 2：src/pages/control-panel/taskManagement/Index.vue＋篩選欄 t('社區')、t('任務類型')，關鍵字輸入框 placeholder t('輸入') + '：' + t('任務名稱')；空狀態：isFilteredSearch 為真時 t('沒有符合的結果😢')，否則 t('目前尚無任務資料')；「沒有符合的結果」逐字存在於畫面字串中。"
+   ]
+  },
+  {
+   "id": "jgb/I/task-manager-type-behavior-scope",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "432cdba2ae68ddb2e4d30b8a735624aab95f3c2bf01a5b5930132858ee434ba4",
+   "title_text": "新增任務能選哪些類型？（目前只開放「通知」類型，行為是信件通知或站內通知）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：app/Services/TaskService.php＋getTypeOptions 只有 'label' => '通知'，behavior 為 '信件通知'、'站內通知'；src/pages/control-panel/taskManagement/edit/Index.jsx＋任務類型選單取 /api3/controlPanel/taskManagement/typeOptions，任務行為以 t(node.label) 顯示。",
+    "句 2：src/pages/control-panel/taskManagement/Index.vue＋說明文字含「像是週期修繕單」；app/Services/TaskService.php＋getTypeOptions 中 'label' => '修繕管理' 整段被註解。"
+   ]
+  },
+  {
+   "id": "jgb/I/task-manager-cycle-options",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "d8a49c7cfe1a8908c2416330e627bee5f9a6be2d6c44166aa8c68f429ca7a44c",
+   "title_text": "任務週期怎麼設定？（單位分年／月，方式可選僅一次、持續不停、特定日期結束、重複特定次數）",
+   "notes": [
+    "標題：由句 1、句 2 支撐。",
+    "句 1：app/Services/TaskService.php＋getCycleOptions 的 unit 為 '年'、'月'；src/pages/control-panel/taskManagement/edit/Index.jsx＋「重複間隔」下拉以 cycleUnitOptions 的 label 顯示。",
+    "句 2：app/Services/TaskService.php＋getCycleOptions 的 method 為 '僅一次'、'持續不停'、'特定日期結束'、'重複特定次數'；src/components/Lightbox/TaskItemDetail.vue＋InfoCard title={t('結束時間')} 顯示 /detail API 經 translateData 翻成的 cycle_type 中文（四個標籤都會出現在任務細節畫面）。註：新增／編輯表單中後兩項只顯示為「於 [日期]」「重複 [n] 次」，不顯示完整標籤。"
+   ]
+  },
+  {
+   "id": "jgb/I/task-manager-form-fields",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "41f9418ec105dadc15e1f307f845243b46ce6b84d6459c7c6d2ecf4595e9d742",
+   "title_text": "新增任務表單有哪些欄位？（任務名稱、任務類型、關聯物件、任務行為、任務時間、重複間隔、結束時間、通知對象、通知內容）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/pages/control-panel/taskManagement/edit/Index.jsx＋欄位依序 t('任務名稱')、t('任務類型')、t('關聯物件')（顯示 t('已全選') 或所選物件）、t('任務行為')（type 為 notification 時顯示，預設就是 notification）、t('任務時間')、t('重複間隔')、t('結束時間')（t('於') 日期／t('重複')…t('次')）、t('通知對象')（placeholder t('請輸入Email或選擇團隊成員')）、t('通知內容')。",
+    "句 2：src/pages/control-panel/taskManagement/edit/Index.jsx＋{ !isEmpty(route.params.id) && … t('編輯範圍') }；選項來自 app/Services/TaskService.php＋getEditScopeOptions 的 '這項任務'、'這項任務和後續任務'。編輯任何已存在的任務都會顯示這個欄位，週期性任務也包含在內。"
+   ]
+  },
+  {
+   "id": "jgb/I/task-manager-edit-delete-copy",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "6ebfa412a3bfa906fd9ef2f85761e7ef2d5bb2144362361edd63aa47d1041797",
+   "title_text": "已建立的任務怎麼編輯／刪除？（每筆任務可編輯、複製、刪除，編輯週期任務可選只改這次或連後續一起改）",
+   "notes": [
+    "標題：由句 1、句 2 支撐。",
+    "句 1：src/use/config/useTaskManagementTypes.js＋genSingleActions 的 t('編輯任務')、t('複製現有任務')、t('刪除任務')；src/pages/control-panel/taskManagement/_parts/TaskItem.jsx＋列尾 Tooltip 的 trigger 是 <Icon type=\"Setting\" />（齒輪），content 列出這三個動作。",
+    "句 2：app/Services/TaskService.php＋getEditScopeOptions 的 '這項任務'、'這項任務和後續任務'；update() 中 this_task 只更新單筆，this_task_and_subsequent_task 會刪除同 father_id 中 id >= 當筆的任務後重建。"
+   ]
+  },
+  {
+   "id": "jgb/I/notification-mail-settings",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "aa3fab5cbf8a44fc868e1e86a183f10f90e358330dab2688ce2778c542b119c3",
+   "title_text": "通知信副本信箱可以設定嗎？（可以：會員側欄「通知收件信箱」頁每個通知類別最多再加 3 組；控制台裡的「通知信設定」頁只有說明、沒有新增欄位，也沒有入口）",
+   "notes": [
+    "標題：由句 1～句 4 支撐。",
+    "句 1：src/pages/control-panel/notificationMail/Index.jsx＋t('通知信設定')、t('通知信預設接收信箱為團隊擁有者註冊信箱，每個通知信最多可再新增 3 組副本信箱。')。",
+    "句 2：src/pages/control-panel/notificationMail/Index.jsx＋說明之後只有空的 row／relative grow 區塊與 <ListBottom />，沒有輸入欄位或按鈕；src/pages/control-panel/Index.vue＋label={'通知設定'} routerName={'notificationMail'} 在註解區塊內；src/pages/control-panel/_parts/OrderAside.vue＋routeName: 'notificationMail' 那一項已註解。",
+    "句 3：src/pages/users/notification/Index.vue＋t('通知收件信箱')、mailAmountLimit: 3、t('新增信箱')、t('儲存')；類別名稱見 src/use/config/useForwardNotificationEmails.ts＋'合約管理類別'、'帳務管理類別'、'修繕管理類別'。",
+    "句 4：app/Role.php＋側欄 label ___('通知收件信箱') 的 'permission' => 'show_notification'、'allow_role_key' => [RULE_KEY_LANDLORD_CORPORATE, RULE_KEY_LANDLORD_SOCIAL_HOUSING]；app/Http/Controllers/UserController.php＋'g_show_notification' 的 label 是 '查看所有通知'，'g_edit_notification' 的 label 是 '編輯團隊通知'；src/pages/users/notification/Index.vue＋hasPermissionToEdit 取 permission.edit_notification，沒有這個權限時隱藏儲存與新增按鈕，輸入框套 disabled。"
+   ]
+  },
+  {
+   "id": "jgb/I/control-panel-access-restriction",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "93e3fb010659e2016b33c54b0ae6da735a05cbddd30dda86b8084f41f9dba826",
+   "title_text": "誰能用控制台的任務管理與通知信設定？（僅限特定合作團隊角色；控制台首頁本身沒有這層檢查，只有進到「設定」子路徑才會擋）",
+   "notes": [
+    "標題：由句 1、句 2 支撐。",
+    "句 1：src/routes/controlPanel.js＋controlPanel.setting 的 beforeEnter 呼叫 useSpecialRoles().findSpecialRoleGroup(role.id)，key 不在控制台分組與特定合作團隊分組時 window.location.href = '/users'。",
+    "句 2：src/routes/controlPanel.js＋controlPanel.index 沒有 beforeEnter 也沒有 meta；routes/web.php＋Route::get('controlPanel/{any?}' 只掛 middleware('need_login')；src/routes/index.js＋全域 beforeEach 只擋 meta.notAllowedRoles；src/pages/control-panel/Index.vue＋唯一卡片是「任務管理器」。",
+    "句 3：src/routes/controlPanel.js＋taskManagement.create、taskManagement.edit、notificationMail 三個子路由都有 meta: { notAllowedRoles: ['tenant'] }，taskManagement 列表沒有。"
+   ]
+  },
+  {
+   "id": "jgb/I/homepage-sections-overview",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "ccd5cf6736aa770d4ea89247de4f80f095c188d9aaf752179e3d0f12b0b5d4e8",
+   "title_text": "官網首頁有哪些區塊？（橫幅、熱門物件、優質租管業者推薦、特色介紹、企業夥伴、最新消息）",
+   "notes": [
+    "標題：各區塊都由句 1 支撐。",
+    "句 1：src/pages/listings/Home.vue＋模板依序為 <ListingsHomeTop>（橫幅）、t('熱門物件')（Slick）、t('誠心推薦·優質租管業者')（Slick）、t('JGB平台十大特色')、t('JGB平台擁有三大優勢')、東南亞城市數區塊加 t('免費試用')／t('免費諮詢')、t('最新消息')、t('企業夥伴')、IWBI 圖片。",
+    "句 2：src/pages/listings/Home.vue＋熱門物件 Slick 每項有 thumbnail／ad_title／ad_subtitle 或 premises-item；v-if=\"$route.query?.allowSearch\" 才顯示 t('查看更多物件')（連 listings.search）。反查 src、resources、app 只有 Home.vue 與 HomeTop.vue 出現 allowSearch（以 Home.vue 本身命中作為正對照），沒有任何連結會帶這個參數。",
+    "句 3：src/pages/listings/template-parts/HomeTop.vue＋route.query?.allowSearch || route.name == 'listings.search' 時才渲染 <ListingsSearchPanel>，位置在橫幅 Slick 之後。",
+    "句 4：src/pages/listings/Home.vue＋t('誠心推薦·優質租管業者') 下 Slick type=\"landlordFeedback\"，逐筆呈現 title／subtitle／content 與 t('查看更多內容')。"
+   ]
+  },
+  {
+   "id": "jgb/I/homepage-ten-features-actual-count",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "49d1882f07bc325f136fd015960726e65a8226a375158927be1673e5431bd4f2",
+   "title_text": "首頁「JGB平台十大特色」實際列出幾項？（標題寫十大，目前輪播只設定 3 項：管理儀表板、線上合約管理、即時帳務報表）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/pages/listings/Home.vue＋state.showRoom 只有三筆：'管理儀表板'（'手機、電腦各種介面輕鬆管理。 招租、收支情況一目了然！'）、'線上合約管理'（'獨家租賃智能合約，合法線上電子簽約。'）、'即時帳務報表'（'完整資金報表，精準掌控現金流以及各項費用明細查詢。'）；區塊標題 t('JGB平台十大特色')。",
+    "句 2：src/pages/listings/Home.vue（同上）＋t('查看所有功能') 連 {name:'listings.features'}，t('了解價格方案') 連 {name:'listings.pricing'}；src/routes/listings.js＋listings.features 的 path 是 '/features'，listings.pricing 的 path 是 '/pricing'。"
+   ]
+  },
+  {
+   "id": "jgb/I/experience-plan-quota",
+   "title": "成立",
+   "sentences": [
+    "不成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "32b3133c477befacca532e37c46d694f8589e1f28a9da9b9faf9d515a8b21fbf",
+   "title_text": "體驗方案可以建幾個物件？",
+   "notes": [
+    "標題：是問句，沒有斷言，所以判成立；但回答它的句 1 數字錯誤。",
+    "句 1：src/pages/listings/pricing/parts/FAQ.vue＋'體驗方案則是提供給想要數位轉型的短期試用方案，在方案期限內可以在JGB房管系統內創建10個物件，並擁有智能合約與自動對帳功能，並且，您也可以自行續訂來延長試用期限。'——來源寫的是 10 個物件，不是 20 個；app/Http/Controllers/ApiController.php＋'title' => '體驗方案' 的 'quantityList' => [10]；app/Http/Controllers/UserController.php＋「當 requestData 為體驗方案時一律取成 10 戶的方案」。",
+    "句 2：src/pages/listings/pricing/parts/PlanForm.vue＋桌面版（hidden lg:block）ChoiceToggler 選項 t('月費')／t('年費')，體驗方案非 0 元時以 FormattedPrice 顯示；src/pages/users/subscription/Chose.vue＋plan.name == 'trial' 時顯示 RateToggler（t('月費')、t('年費')）與 t('體驗方案價格')，trialPlanPricing 為 100／1200 TWD。",
+    "句 3：app/User.php＋plan_type = 'free'、plan_name = '免費方案'、plan_price = 0，註解為「贈送的方案價格一定要 0」；config/defaultplan.php＋預設方案設定。",
+    "句 4：app/User.php（同上）＋註解「不設定 plan_first_ymd 與 plan_cycle 使方案不會續訂」，免費方案分支確實沒有設定這兩個欄位。"
+   ]
+  },
+  {
+   "id": "jgb/I/homepage-city-count-cta",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "daa93a236cf008d8f1ec4628d5d200a5710d8c3baf77a6cd01b23b853c47e39e",
+   "title_text": "首頁說 JGB 在東南亞幾個城市使用？（超過 8 個城市，旁邊有免費試用／免費諮詢按鈕）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/pages/listings/Home.vue＋t('東南亞超過<span…> [s1] 個城市</span><br…/>都在使用<br/>JGB Smart Property', ['8'])，同一個 flex 列內並排 t('免費試用')（開 free_plan 燈箱）與 t('免費諮詢')（連 /demo-form）；中間的換行標籤不影響畫面上的文字內容。"
+   ]
+  },
+  {
+   "id": "jgb/I/homepage-presales-assistant-visibility",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "93084d10b3ee3a957da0fa91ecbe871b51256bbd6e148bca7ddfa57b2cccd462",
+   "title_text": "首頁的線上諮詢小幫手正式站看得到嗎？（目前設定為正式環境不顯示，只在非正式環境出現）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/pages/listings/Home.vue＋<PresalesAssistant v-if=\"window.APP_ENV !== 'production'\" />，註解為「非正式環境才顯示;正式機 APP_ENV='production'」；resources/views/layouts/app.blade.php＋window.APP_ENV = @json(config('app.env'))。"
+   ]
+  },
+  {
+   "id": "jgb/I/homepage-three-advantages",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "b336129ef9df686e435ad4bd06f0f0509b08172c550c1819c2b81e835c4dabb3",
+   "title_text": "首頁「JGB平台擁有三大優勢」是哪三項？（提高出租效率、自動化管房流程、提升租客服務品質）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/pages/listings/Home.vue＋state.advantages 依序為 '快速提高房源出租管理效率'（提供房東專屬物件刊登頁，迅速轉發至不同社群媒體）、'自動化管房流程'（JGB 支援手機介面，讓您的團隊可以 24 小時檢視所有數據和報告）、'提升租客服務品質'（即時的簽約及帳單通知、線上報修系統）；區塊標題 t('JGB平台擁有三大優勢')。"
+   ]
+  },
+  {
+   "id": "jgb/I/homepage-latest-news-section",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "7b5ab220f306bf087c76c8961327feccb0efe58556617610fc547154a47a02a8",
+   "title_text": "首頁「最新消息」顯示什麼？（用輪播呈現消息，點擊會開啟幫助中心文章）",
+   "notes": [
+    "標題：由句 1、句 2 支撐。",
+    "句 1：src/pages/listings/Home.vue＋t('最新消息') 下 Slick type=\"type1\"，每張 singleNewsCard 有 thumbnail、category?.title 標籤、item.title、item.created_at。",
+    "句 2：src/pages/listings/Home.vue（同上）＋縮圖與標題都包在 router-link :to=\"{name:'listings.helpCenter.post', params:{slug:item.slug}}\" target=\"_blank\" 內。"
+   ]
+  },
+  {
+   "id": "jgb/I/homepage-enterprise-partners-section",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "9e9e4008575376d7cc240bb94fa2bd6ad2e28fcb862f101cd5e784a8de4353e7",
+   "title_text": "首頁「企業夥伴」放了什麼？（10 個合作夥伴 logo 排成靜態方格，不是輪播）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/pages/listings/Home.vue＋state.partners 未註解的有 10 筆檔名；t('企業夥伴') 下是一般的 row justify-center，每格 class w-1/2 lg:w-1/5（手機每列 2 個、桌機每列 5 個），只有 <img>，沒有 Slick，也沒有文字。"
+   ]
+  },
+  {
+   "id": "jgb/I/tcloud-order-info-fields",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "f9fc20d75b9e71d9d80cd7ea29b8d59c76d53fe05d11bd62bf504b6930ee95c5",
+   "title_text": "雲市集訂單頁顯示什麼？（訂單編號、時間、採購方案、價格、點數折抵、付款狀態）",
+   "notes": [
+    "標題：由句 1～句 3 支撐；「點數折抵」對應畫面上的「使用雲市集點數」，與「匯款金額(自付額)」對照。",
+    "句 1：resources/views/customer/tcloud.blade.php＋臺灣雲市集訂單資訊、雲市集訂單編號：、訂單時間：、採購方案：、方案價格：{{ 'TWD $' …、使用雲市集點數：… 點。",
+    "句 2：resources/views/customer/tcloud.blade.php（同上）＋訂單狀態只有 ___('已付款') 或 ___('待付款')；payment_completed_at 與 payment_completed_data 都有值時多顯示「匯款帳戶末5碼：」。",
+    "句 3：resources/views/customer/tcloud.blade.php（同上）＋客戶資訊（公司統編：、公司名稱：），付款資訊（匯款銀行：、匯款帳號：、匯款金額(自付額)：）。"
+   ]
+  },
+  {
+   "id": "jgb/I/tcloud-payment-instructions",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "e8a65fd95fa93d6eee076bb3854b8765f0028261f243a71487d3b788eab62cb7",
+   "title_text": "雲市集訂單怎麼付款？（國泰世華一次性虛擬帳號，注意事項請用 WebATM 轉帳；收到匯款資訊後 2 個工作天內付款，款項確認後 2 個工作天內開發票、7 個工作天內開通）",
+   "notes": [
+    "標題：由句 1～句 3 支撐。",
+    "句 1：resources/views/customer/tcloud.blade.php＋匯款銀行：國泰世華銀行 - 013；匯款帳號：{{ $customerTCloud->pay_info }}；「1. 匯款帳號為一次性虛擬帳號，請透過WebATM進行轉帳，避免付款失敗。」（原文 WebATM 前後沒有空格，文字內容相同）。",
+    "句 2：resources/views/customer/tcloud.blade.php（同上）＋「2. 請於收到匯款資訊後，2個工作天內完成付款。」",
+    "句 3：resources/views/customer/tcloud.blade.php（同上）＋「3. 款項確認後，將於2個工作天內開立電子發票，7個工作天內開通服務。」"
+   ]
+  },
+  {
+   "id": "jgb/I/tcloud-link-invalid-cases",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "113f76c84035190e09aa0dd8f7377486201d72bd23edce266dde28df398b2a75",
+   "title_text": "雲市集訂單連結為什麼會失效？（連結簽章驗證不過，或訂單編號查無資料，都會導回官網首頁）",
+   "notes": [
+    "標題：由句 1、句 2 支撐。",
+    "句 1：app/Http/Controllers/CustomerController.php＋tcloud() 的 case 'show' 先執行 checkSign($id, $sign)，失敗時 redirect()->route('indexs') 並帶 'status-error' => ___('驗證失敗，如有任何問題，請聯繫JGB客服。')；routes/web.php＋name('indexs') 是 '/'（ListingController@index）；resources/views/layouts/app.blade.php＋session('status-error') 會以 globalErrorShow 顯示。",
+    "句 2：app/Http/Controllers/CustomerController.php（同上）＋DB::table('customer_tclouds')->where('id', $id)->first() 查無資料時，redirect()->route('indexs') 並帶 ___('此付款連結已失效，如有任何問題，請聯繫JGB客服。')。註：連結裡帶的是訂單紀錄的 id，不是畫面上顯示的「雲市集訂單編號」(no)。"
+   ]
+  }
+ ],
+ "findings": [
+  "experience-plan-quota 句 1 寫可以建立 20 個物件，但現行程式三處都是 10：src/pages/listings/pricing/parts/FAQ.vue 寫「創建10個物件」，app/Http/Controllers/ApiController.php 體驗方案的 quantityList 是 [10]，app/Http/Controllers/UserController.php 寫明體驗方案一律取 10 戶的方案。",
+  "任務管理器兩頁的說明文字互相不一致：src/pages/control-panel/taskManagement/Index.vue 寫「指定週期的前三十天完成單據的開立」，src/pages/control-panel/taskManagement/edit/Index.jsx 寫「觸發時間前 45 天完成單據的開立…30 天前、15 天前寄送通知信」。task-manager-purpose 句 1 沒有寫天數，所以不受影響；之後若要補天數，需要先釐清哪一頁才對。",
+  "control-panel-setting-shell 的畫面細節：桌面側欄由 localStorage 的 controlPanelAsideExpandToggled 控制，沒有展開過時預設寬度為 0；手機上方列顯示的是 controlPanelActive?.label，在通知信設定頁（路由 notificationMail 不在 controlPanelList 中）這一列會是空白。句子本身仍然成立，此處只作提醒。",
+  "task-manager-cycle-options：新增／編輯表單中，「特定日期結束」「重複特定次數」只顯示成「於 [日期]」「重複 [n] 次」；完整的四個標籤出現在任務細節燈箱（src/components/Lightbox/TaskItemDetail.vue 的「結束時間」）。",
+  "流程揭露：查找 RateToggler 時，有一次遞迴 grep 因為子指令沒有回傳路徑，退化成在匯出根目錄全掃，輸出中帶出了匯出內一個 dotenv 類設定檔的幾行註解。這些內容沒有被拿來當任何判定的依據，也沒有寫進任何 note。"
+ ],
+ "source_transcript": "a2cd2c4e3040ce293.output"
+}

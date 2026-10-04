@@ -1,0 +1,328 @@
+{
+ "kind": "write",
+ "verdict": "REFUTED",
+ "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+ "claim": "Plan 9.28 批次 B07：20 條細目的標題與每一句已逐句對合法來源核對，逐條結果如 fines",
+ "fines": [
+  {
+   "id": "jgb/C/community-show-content",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "9498ccd16867cfd849862ad98c022a569b975a12ea2778d661f419b654c8177e",
+   "title_text": "社區公開頁（社區廣告）顯示什麼？（基本資訊、鄰近捷運、社區介紹、刊登中物件）",
+   "notes": [
+    "標題：基本資訊、鄰近捷運、社區介紹、刊登中物件各由句 1、句 2 支撐（src/pages/communities/show/Index.vue）。",
+    "句 1：src/pages/communities/show/Index.vue＋t('社區基本資訊')、t('類型')、t('總樓層數')、t('屋齡')、t('社區交通與環境設施')、t('鄰近捷運站')、t('鄰近交通')、t('社區介紹')；三區塊與欄位都存在。附註：「鄰近交通」在程式裡是緊接在後的獨立 h4 區塊（state.data?.traffic_additional 有值才顯示），不是包在「社區交通與環境設施」區塊內；社區介紹也是 intros 有值才顯示。句意仍成立。",
+    "句 2：同上＋t('社區所有刊登中物件')、t('招租')：quantities_of_rent、t('買賣')：quantities_of_sell、t('更多')；兩組分別在 estatesForRent／estatesForSell 有資料時顯示，各有「更多」連結。",
+    "句 3：同上＋t('本社區之 JGB 編號')：jgb_no，以及 t('1、房屋照片僅反應使用現況，用途以使用執照或謄本記載為準…法定用途與現況使用不同時…') 提醒文字，位於頁面主欄最下方「溫馨提醒」區。"
+   ]
+  },
+  {
+   "id": "jgb/C/community-show-price-range",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "ffd0de09efa564d5d19508b6667b7beb21813d1e5ed42ff72315fa8e5ce3de50",
+   "title_text": "社區公開頁最上方顯示什麼價格區間？（租賃金額區間、售價金額區間）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/pages/communities/show/_parts/PageTop.vue＋state.data?.rent_range?.length === 2 時顯示 t('租賃金額區間')、sell_price_range?.length === 2 時顯示 t('售價金額區間')；app/Services/CommunityService.php＋getEditData 只在 getRentRange()[0] 不為空時才組 rent_range；app/Community.php＋getRentRange 取 estates()->where('is_open', 1)->where('active', 1) 的 min/max rent，getSellPriceRange 取 sell_is_open=1 的 min/max sell_price，也就是刊登中物件的最低到最高。"
+   ]
+  },
+  {
+   "id": "jgb/C/community-show-share",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "456d8e8ddec795e500d8572fad7a55d2b58bf3a4a77606d71df9c4cae78ab4da",
+   "title_text": "社區公開頁怎麼分享？（分享燈箱或手機分享選單、查看所有物件連結）",
+   "notes": [
+    "標題：由句 1、句 2 支撐。",
+    "句 1：src/pages/communities/show/_parts/PageTop.vue＋if (isDevice('any') && typeof navigator.share === 'function') navigator.share(...) else store.commit('lightbox', 'CommunityShare')；src/mixin/methods.js＋isDevice 的 any＝Android／iOS／BlackBerry／IEMobile。",
+    "句 2：src/pages/communities/show/_parts/AsideContact.vue＋t('查看所有物件') 連到 name: 'users.public'（encryptId＝團隊）；src/routes/users.js＋users.public 未帶 mode 時導到 mode: 'rent'、premisesUseFor: 'residential'，就是該團隊的招租店舖頁。"
+   ]
+  },
+  {
+   "id": "jgb/C/community-show-editor-nav",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "fa7b3baf08bd7f93933f1f12505eba87cf92e947e9cbba1b62257bf6c944198e",
+   "title_text": "在社區廣告頁可以直接跳到編輯社區、社區詳情或社區總表嗎？（只有具備編輯物件權限的使用者看得到這個選單）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/pages/communities/show/Index.vue＋communityShowScopeStore.dataFetcher.data?.is_admin 為真才渲染選單，四個選項是 t('編輯')→communities.edit、t('社區詳情')→communities.estates、t('社區總表')→communities.list、t('返回[s1]', ['Dashboard'])→users.dashboard；app/Services/CommunityService.php＋getEditData 的 'is_admin' => isHasGPermission('edit_estate', …)：非租客身分，且是團隊擁有者或有 edit_estate 權限。src/routes/communities.js＋communities.estates 路徑為 estates/:communityId，即管理端物件清單。附註：is_admin 檢查的是瀏覽者目前所在團隊（getRole），不是該社區所屬團隊（見 findings）；「返回 Dashboard」的空格依 Redis 翻譯而定，匯出內無法逐字核對。"
+   ]
+  },
+  {
+   "id": "jgb/C/forcebinding-why-and-who",
+   "title": "不成立",
+   "sentences": [
+    "不成立",
+    "不成立"
+   ],
+   "content_sha256": "d8b1e4e387e47728ef5a46e02dda35de03b05a994ae8098e01afafc955d3ef16",
+   "title_text": "為什麼會出現「物件需綁定社區」的導引？（2022/05/12 社區功能上線，只有團隊擁有者能操作）",
+   "notes": [
+    "標題：標題預設這個導引現在會出現，但句 1 被推翻（現行程式已不會把使用者導進導引）；句 2 也不成立。",
+    "句 1：src/pages/communities/forceBinding/Welcome.vue 確實有 t('為了提供更有效率…JGB系統將於 [s1] 後增加「社區」功能', ['2022/05/12']) 和 t('物件需全數綁定至社區才能使用系統。')。但會導過去的只有 src/components/MustDo/EstateCommunity.vue（quantities_of_no_community > 0 時 router.push communities.forceBinding.welcome），而這個元件只在 src/components/MustDo/Index.vue 舊格式 quest_name === 'EstateCommunity' 時才掛載。app/Http/Controllers/ApiController.php 的 getMustDo 現在只回 getUnreadAnnouncements（帶 'steps' 的公告），舊的 quest_name 分支全部註解掉了，所以登入不會被導向綁定導引。另外 src/pages/communities/forceBinding/Index.vue 在 quest === null 時會直接導回 users.dashboard。",
+    "句 2：src/pages/communities/forceBinding/Welcome.vue＋t('權限不足') 只在 store.state.mustDo.community.meta?.data?.is_admin === false 時顯示。meta 只由 EstateCommunity.vue 的 onBeforeMount 寫入（呼叫 /api3/communities/meta，app/Http/Controllers/CommunityController.php getMeta 的 'is_admin' => $user->id == $role->user->id），但該元件現行不會掛載，meta 一直是 null（src/store/modules/must_do.js 初值 meta: null）。結果 is_admin 是 undefined：遮罩會出現，但「權限不足」提示是 hidden，「繼續」按鈕也不會出現，非擁有者看不到「權限不足」。設計上確實是擁有者限定，但現行畫面不符合句子。"
+   ]
+  },
+  {
+   "id": "jgb/C/forcebinding-welcome-progress",
+   "title": "不成立",
+   "sentences": [
+    "不成立",
+    "成立"
+   ],
+   "content_sha256": "5c357c89e5120dcd9f6102760d2478788df67fa93ad23857b42c0f4a4c0815e2",
+   "title_text": "物件綁定社區的導引起始畫面顯示什麼？（已綁定與尚未綁定的物件數量、需同意服務條款）",
+   "notes": [
+    "標題：「已綁定與尚未綁定的物件數量」依賴句 1，句 1 不成立。",
+    "句 1：src/pages/communities/forceBinding/Welcome.vue＋t('尚未綁定至社區')、t('已成功綁定至社區') 兩個標籤存在，數字取自 store.state.mustDo.community.meta?.data?.quantities_of_no_community／quantities_of_estates，取不到時顯示 '-'。meta 只由 src/components/MustDo/EstateCommunity.vue 載入，而現行 app/Http/Controllers/ApiController.php getMustDo 不再回 EstateCommunity 任務，所以這兩格現行只會顯示「- 個」，不會顯示數量。",
+    "句 2：同上＋t('點擊「繼續」，即表示我已閱讀並同意金箍棒的 [s1]服務條款[s2] 和 [s3]隱私權聲明[s4]。') 無條件渲染；「繼續」RouterLink 指向 communities.forceBinding.edit.basic。附註：「繼續」按鈕只在 is_admin 為真時出現，在現行 meta 為 null 的情況下不會出現（見 findings）。"
+   ]
+  },
+  {
+   "id": "jgb/C/landlord-ledger-entry",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "不成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "1d53fbdc913241f254f81d2744253675c9b73600aca9d05368ded365087f4a65",
+   "title_text": "房東流水帳新增一筆要填什麼？可以附檔嗎？",
+   "notes": [
+    "標題：只是提問，由句 1（要填什麼）與句 2 的「可以附檔」支撐。附件上限的數字錯在句 2，但標題本身沒有斷言數字。",
+    "句 1：app/Http/Controllers/EstateController.php＋case 'add_bill_running' 的 Validator 'date' => 'required'、'fee_type' => 'required'、'currencySelected' => 'required'、'price' => 'required|gte:0'，note／target_name 允許空值；src/pages/estates/dashboard/runnings/_parts/LedgerContainer.vue＋t('費用類別') 選項 income: '收入'、expense: '支出'。",
+    "句 2：src/pages/estates/dashboard/runnings/_parts/LedgerContainer.vue＋maxNumberOfFiles: 3 - (props.form?.attachments?.length || 0)、maxFileSize: 10 * 1024 * 1024、allowedFileTypes: ['image/*', '.pdf']；src/pages/estates/dashboard/runnings/Index.vue＋const MAX_FILES = 3，編輯燈箱 :maxFiles=\"3\"。來源寫的是最多 3 個，不是 5 個。",
+    "句 3：app/Http/Controllers/EstateController.php＋add_bill_running 在 !$hasEditPermission 時回 'message' => ___('權限不足！')（$hasEditPermission＝edit_estate，或經理人本人且有 add_estate）；src/mixin/methods.js＋ajax 在 success 為 false 時 window.globalErrorShow(res.message) 顯示。",
+    "句 4：src/pages/estates/dashboard/memos/_parts/MemoContainer.vue＋表單欄位只有 '時間'、'說明'、'對象'，maxNumberOfFiles: 3 - …、maxFileSize: 10 * 1024 * 1024，沒有金額欄位；app/Http/Controllers/EstateController.php＋case 'add_memo' 只驗 'date' => 'required'。附註：句中「同樣」與句 2 的 5 個互相矛盾，見 findings。"
+   ]
+  },
+  {
+   "id": "jgb/C/forcebinding-two-steps",
+   "title": "不成立",
+   "sentences": [
+    "成立",
+    "不成立"
+   ],
+   "content_sha256": "b7b8f12e07f65284230ecd7e9656c82263206522b358ed5e020e250b3512ef12",
+   "title_text": "物件綁定社區導引有哪兩個步驟？（填寫社區資料、選擇欲綁定社區內的物件；未完成系統功能無法正常使用）",
+   "notes": [
+    "標題：「未完成系統功能無法正常使用」依賴句 2，句 2 不成立。",
+    "句 1：src/pages/communities/forceBinding/edit/Index.vue＋PageTop title { 1: t('填寫社區資料'), 2: t('選擇欲綁定社區內的物件') }，側欄步驟為 t('新增社區資料')（1 out of 2）與 t('綁定社區內的物件')（2 out of 2）。",
+    "句 2：同上，畫面有文字 t('因系統功能更新後…故未綁定完成前，系統功能將會無法正常使用')，但現行程式沒有任何強制：app/Http/Controllers/ApiController.php getMustDo 只回公告，src/components/MustDo/EstateCommunity.vue 的強制導向不會掛載，src/pages/communities/forceBinding/Index.vue 在 quest 為 null 時導回 dashboard。把畫面上的舊提示當成現行行為不成立。"
+   ]
+  },
+  {
+   "id": "jgb/C/forcebinding-select-estates-irreversible",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "059ef48ef78fc99f84f3f69d91e0b22b5005430638977019a12e04d27e126ff4",
+   "title_text": "怎麼挑選要綁定的物件？（可關鍵字搜尋、每頁30/60/90項，確認綁定後無法修改）",
+   "notes": [
+    "標題：由句 1、句 2 支撐。",
+    "句 1：src/pages/communities/forceBinding/edit/Binding.vue＋SearchBar（src/pages/communities/_parts/SearchBar.vue 有 placeholder={t('關鍵字')}），表頭 t('物件名稱')、t('細節')、t('招租廣告') is_open_counts / counts、t('買賣廣告') sell_is_open_counts / counts，每頁 options={[30, 60, 90]}（t('30項')、t('60項')、t('90項')）。附註：整個綁定流程現行無法進入，見 findings。",
+    "句 2：同上＋🔔 t('確認綁定物件後，即不能修改')，確認燈箱 communityBindingConfirm 內有 t('請確認欲綁定的物件，綁定後即不能修改。')。"
+   ]
+  },
+  {
+   "id": "jgb/C/forcebinding-completion-states",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "不成立"
+   ],
+   "content_sha256": "87667f731e56581b18620fab10552b617fb2c76e58f4b0d5a65ff7b1ca2d4878",
+   "title_text": "綁定完成後會看到什麼？（全部綁完顯示恭喜，還有剩則提示繼續綁定）",
+   "notes": [
+    "標題：「顯示恭喜」「提示繼續綁定」兩種畫面文字都存在（src/pages/communities/forceBinding/edit/Binding.vue）；句 2 錯的是點擊後的行為，不是提示本身。",
+    "句 1：src/pages/communities/forceBinding/edit/Binding.vue＋quantities_of_no_community === 0 時進 done 畫面：🎉t('恭喜！你已經成功綁定所有物件')，並有 RouterLink communities.list 的 t('前往社區總表')。",
+    "句 2：同上＋continue 畫面 t('你完成最困難的部分！')、t('你已經完成新增社區的必需步驟，但還有些物件尚未綁定完成。') 與按鈕 t('繼續綁定物件') 都存在。但按鈕的 continueHandler 呼叫 store.state.mustDo.community.meta.refetch()，而 meta 只由現行不會掛載的 src/components/MustDo/EstateCommunity.vue 寫入（src/store/modules/must_do.js 初值 meta: null），點擊會在 null 上呼叫 refetch 而出錯，無法繼續綁定。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-list-add-must-pick-community",
+   "title": "成立",
+   "sentences": [
+    "不成立",
+    "成立"
+   ],
+   "content_sha256": "8bda49304b4819f829a8e30b4cbff26eea034e4b4d5c4db46f7f21a66be893c8",
+   "title_text": "物件總表怎麼新增物件？（新增與複製現有物件都要先經過社區選擇畫面，目前沒有批次新增入口）",
+   "notes": [
+    "標題：「都要先經過社區選擇畫面」是必經路徑的描述，成立（能往下走時一定經過 communities.pick）；「沒有批次新增入口」由句 2 支撐。",
+    "句 1：src/pages/estates/list/_parts/PageTop.vue＋estateCreateHandler：communitiesScopeStore.metaFetcher.data?.remainEstatesCount <= 0 時 store.commit('lightbox', 'subscribedPlanIsFull') 後直接 return，不會導到社區選擇畫面；只有額度未滿時才 router.push communities.pick（action estateCreate／estateCopy）。之後 src/pages/communities/pick/Index.vue 導到 /api2/estate/create?communityId= 或 estates.pick。句子說點了「都會」先導向社區選擇畫面，漏掉方案額度已滿的例外。",
+    "句 2：同上＋<!-- <a class=\"option\">{ t('批次新增') }</a> --> 被註解掉，選單只剩 t('複製現有物件')。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-list-counter-and-limit",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "c418114b2ee078bdfd7b9f3a60a6bd75ceebae557561ef0b67efaf4043b61a3e",
+   "title_text": "物件總表標題下方顯示什麼？（目前物件總數、尚可新增數量）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/pages/estates/list/_parts/PageTop.vue＋v-if=\"store.state.userData.permission?.add_estate\" 時顯示 t('目前[s1]總數', [t('物件')]) 與 t('尚可新增')（remainEstatesCount）；app/Role.php＋remainEstatesCount＝(plan_estate_limit + plan_coupon_estate_plus + plan_extra_estate_plus) - estates_count，依訂閱方案額度計算。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-list-filters",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "不成立"
+   ],
+   "content_sha256": "f24374dd9436c123ddd8b43fafe14e16dddd623e4c46d145feec5514880d3fa6",
+   "title_text": "物件總表有哪些進階篩選條件？（縣市行政區、經理人、大房東、社區、捷運、格局、建築類型、即時合約狀態、合約到期日、招租廣告狀態、租金與面積(坪)範圍、標籤）",
+   "notes": [
+    "標題：列出的條件都由句 1、句 2 支撐。",
+    "句 1：src/pages/estates/list/_parts/EstatesAdvanceSearchBlock.jsx＋EstateSearchKey.country／city／district／agentId／bigLandlordId／community／MRT；src/use/search/modules/agent.js t('經理人')、bigLandlord.js t('大房東')、community.js t('社區')、MRT.js t('鄰近捷運站')、country.js t('國家')、district.js t('區')。",
+    "句 2：同上＋room_count（t('格局')）、building（t('建築類型')）、contractStatus（t('即時合約狀態')）、contract_date_end_month（t('合約到期日')）、is_open（t('招租廣告狀態')）、rentRange（t('租金')）、sizeRange（t('面積(坪)')）、label（t('標籤')），桌機與手機區塊都沒有 use_for；用途篩選見 src/components/Lightbox/EstateAdvSearch.vue（由 src/pages/estates/pick/_parts/pick.jsx 使用）。",
+    "句 3：src/pages/estates/list/_parts/EstatesAdvanceSearchBlockM.jsx＋選單 1＝contractStatus、2＝contract_date_end_month 直接排在關鍵字列上方，3＝t('更多') 內含其餘條件，rentRange 外包 store.state.siteOptions.dollarSign === 'TWD'；src/pages/estates/list/Index.vue＋viewport.width < 576 時才用這個手機區塊。",
+    "句 4：src/pages/estates/list/_parts/EstatesAdvanceSearchBlock.jsx＋<div class=\"mb-4 hidden … lg:block\">{t('篩選結果')}: {pageNav?.range_text} / {pageNav?.total}</div>；tailwind.config.js 的 lg: '992px'，所以 992px 以上才顯示這部分成立。但 app/Helper.php 的 get_paginate 'range_text' => $rangeStart.' - '.$rangeEnd，實際顯示的是本頁起訖序號（例如「31 - 60 / 120」），不是「目前顯示筆數／總筆數」，格式描述不成立。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-list-keyword-search",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "f6376bd2a5f62d19a00911c5a02402abef6bd4650ce9c8278c219d4d0460b51b",
+   "title_text": "物件總表關鍵字搜尋可以查什麼？（案名、地址、租客、物件ID、手機、信箱）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/pages/estates/list/_parts/EstatesAdvanceSearchBlock.jsx＋SelectPicker options keyword_for pairs { estateName: t('案名'), address: t('地址'), tenant: t('租客'), id: t('ID'), phone: t('手機'), email: t('信箱') }；src/pages/estates/list/Index.vue 的 options.keyword_for 也是這六個值。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-list-batch-actions",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "0c1e58fbc3fd61b74c6d6faf993fac61c8c5b7c40c70cb8d4be8d5cac513cda6",
+   "title_text": "物件總表可以批次操作嗎？（個人房東、大房東、租客身分不能；法人房東與社宅團隊成員可：匯出物件、新增批次帳單、批次刊登／取消刊登招租廣告、刪除；批次取消刊登失敗時不會顯示任何提示）",
+   "notes": [
+    "標題：由句 1～句 4 支撐。",
+    "句 1：src/pages/estates/list/_parts/ListTable.vue＋rowSelection：!hasBulkAction || isBigLandlord || config_rule_key === 1 || === 2 時回 null；app/Role.php＋RULE_KEY_TENANT = 1、RULE_KEY_LANDLORD_INDIVIDUAL = 2；src/use/config/useEstateTypes.js＋bulkActions 依 userData.permission 過濾，至少剩一項才有勾選框。",
+    "句 2：src/use/config/useEstateTypes.js＋t('匯出物件')（export_estate）、t('新增批次帳單')（add_bill）、t('批次刊登招租廣告')、t('批次取消刊登招租廣告')、t('刪除')（edit_estate、requireAllNoContract: true）；src/pages/estates/list/_parts/ListTable.vue＋allPickedAreNoContract 在 isWholeListAllPicked 時為 false，且要求每筆 stickers 的 org_text === '無合約'。",
+    "句 3：src/pages/estates/list/_parts/ListTable.vue＋openRent 在 failed_estates_amount === 0 時 globalNoticeShow(t('[s1]件招租廣告已刊登!'))，不為 0 時開 LightboxId.estatePublishResult；src/components/Lightbox/EstatePublishResult.jsx＋t('[s1] 件招租廣告已刊登！')，全部失敗時改為 t('招租廣告刊登失敗！')，另有 t('清單中的 [s1] 個物件資訊不齊全，並未刊登廣告。')。",
+    "句 4：src/pages/estates/list/_parts/ListTable.vue＋closeRent 只在 failed_estates_amount === 0 時 globalNoticeShow(t('[s1]件招租廣告下架成功!'))，其他情況只 refetch 清單，沒有燈箱或錯誤訊息。附註：背景工作佇列面板（src/components/QueuePanel.vue）照常顯示工作狀態，但那不是結果提示。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-status-affects-actions",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "不成立",
+    "成立"
+   ],
+   "content_sha256": "bbb1670fcc2ee9d3cfcdcdfab87248c6870825626aeb51237009dae895dfa77d",
+   "title_text": "物件狀態會影響哪些功能？（招租廣告狀態未刊登／刊登中，與合約狀態洽談中／租約中，是各自獨立的；刪除物件要求未刊登、沒有合約、沒有 IoT 綁定）",
+   "notes": [
+    "標題：兩組狀態各自獨立由句 1 支撐；刪除條件由句 5 支撐。",
+    "句 1：src/use/search/modules/is_open.js＋t('招租廣告狀態') { 0: t('未刊登'), 1: t('刊登中') }；src/use/search/modules/contractStatus.js＋t('即時合約狀態') { 1: t('無租約'), 2: t('洽談中'), 3: t('租約中') }，是兩個獨立篩選；app/Estate.php＋getSticker 的 org_text '無合約'／'洽談中'／'租約中'。",
+    "句 2：app/Estate.php＋getSticker：有 active、is_history=0 且 status >= Contract::CONTRACT_SIGNED 的合約時為「租約中」，否則有 status < CONTRACT_SIGNED 的合約時為「洽談中」；app/Contract.php＋CONTRACT_SIGNED = 8 // 雙方簽名完成。",
+    "句 3：同 app/Estate.php＋getSticker 的條件 where('is_history', 0)；app/Contract.php＋scopeActiveContracts where('is_history', 0)。",
+    "句 4：app/Http/Controllers/EstateController.php＋webList 的 // 刊登招租廣告＆取消刊登招租廣告 外層是 if ($type == 1 || $type == 2)，裡面依 public_estate／LVisShowEdit 權限與 is_open 決定顯示 close_is_open 或 open_is_open。在「買賣」分類（type 3）這兩個選項都不會出現。句子說「每個物件」只依權限與刊登狀態決定，漏掉分類這個例外。",
+    "句 5：app/Http/Controllers/EstateController.php＋validateEstateForDelete：is_open 時回 t('您無法刪除當前狀態為刊登中的 [s1] 物件')，有 actualContracts()->activeContracts()（is_newest=1、is_history=0、active=1）時回 t('很抱歉，該物件已有對應的合約存在…')，has_iot 時回 t('您無法刪除尚有IoT綁定的 [s1] 物件')；delete() 把錯誤放在 message 回傳。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-list-pagination",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "717c0dae9a259864daec940df3c7918761b76ac51fef47e31d00a707fc57e49a",
+   "title_text": "物件總表每頁筆數可以調整嗎？（30／60／90項）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/pages/estates/list/Index.vue＋t('每頁') SelectPicker options { 30: t('30項'), 60: t('60項'), 90: t('90項') }，@user-change=\"handlePerPageChange\"；放在清單下方，pageNav 有值時顯示。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-list-filters-space-type-and-others",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "7f08e965c03bfcc317b91aca4a1f5b37e73f22ca40bda50f9f266eb31b538a97",
+   "title_text": "物件總表篩選還有哪些條件？（空間類型多選、「更多」：VR、有電梯、可開伙、可養寵物）",
+   "notes": [
+    "標題：由句 1、句 2 支撐。",
+    "句 1：src/pages/estates/list/_parts/EstatesAdvanceSearchBlock.jsx＋AdvSortMultipleSelect keyName={EstateSearchKey.space_type}；src/use/search/modules/space_type.js＋t('空間類型') 取 config estate.general.use_for 的 space_type；config/estate.php＋'flat' => '整戶'、'studio' => '套房'、'room' => '雅房'。",
+    "句 2：同 EstatesAdvanceSearchBlock.jsx＋AdvGroupSelect keyGroup { is_show_vr: 'VR', has_elevator: '有電梯', fires_limit: '可開伙', pet_limit: '可養寵物' }；src/components/AdvGroupSelect.jsx＋觸發鈕 t('更多')、checkbox 複選與 t('全選')。手機版 src/components/AdvGroupSelectMobile.jsx 是 t('更多') 區塊。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-list-category-switch",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "2f9b9b4f907cd456acc8a333f60e305206b4c412f7dc38dc890cee042e15194a",
+   "title_text": "物件總表怎麼切換總覽／招租／買賣？（三種分類切換）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/pages/estates/list/_parts/ListTable.vue＋ScrollNav :list=\"listStore.state?.listCategories\"，handleChangeCategory 用 router.push params.category；src/pages/estates/Index.vue＋listCategories 來自 src/utils/constants/estate.js 的 EstateCategories（'總覽-1'、'招租'、'買賣'）；src/pages/estates/list/Index.vue＋api 為 /api2/estate/list/getList/${category}，切換分類後依新分類重新取清單。附註：「總覽」顯示依賴 Redis 翻譯鍵 '總覽-1'（app/Http/Controllers/ApiController.php geti18n），匯出內無法逐字核對；勾選物件時分類列會換成批次操作列。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-list-sort-remembers-last",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "4a2541229400d7b71b1c071cbe76cd1843e7d4f93fd38f3750b2cb120f002c9f",
+   "title_text": "物件總表怎麼排序？（排序選項由系統提供，寬度 576px 以上切換的排序會被記住）",
+   "notes": [
+    "標題：由句 1～句 4 支撐。",
+    "句 1：src/pages/estates/list/Index.vue＋:sortOptions=\"listStore.searchState.data?.sortOptions\"（由後端清單 API 回傳），handleSortChange 用 router.push query.sort；src/pages/estates/list/_parts/EstatesAdvanceSearchBlock.jsx＋排序 Tooltip 選單。",
+    "句 2：src/pages/estates/list/_parts/EstatesAdvanceSearchBlock.jsx＋saveSortKey 寫入 localStorage 'listSortingKey'[props.sortingKey]；src/pages/estates/list/Index.vue＋v-if=\"viewport.width >= 576\" 且 :sortingKey=\"SortingKey.estatesList\"；src/utils/constants/common.ts＋estatesList: 'estatesList'。",
+    "句 3：src/pages/estates/list/Index.vue＋beforeRouteEnter 呼叫 genLocalSort({ to, from, next }, 'estatesList')，跟寬度無關；src/components/ListSearchBar.vue＋genLocalSort 在 isEmpty(to?.query?.sort) 且 localStorage 有值時回傳 sort。",
+    "句 4：src/pages/estates/list/Index.vue＋viewport.width < 576 時用 ListSearchBar，:sortingKey=\"`bills_${route?.params?.action}`\"；src/components/ListSearchBar.vue＋listSortingKey[props.sortingKey] = optionKey，存在不同的 key，不是 'estatesList'，下次進入不會帶入。"
+   ]
+  }
+ ],
+ "findings": [
+  "物件綁定社區的強制導引流程（forceBinding，涉及 forcebinding-why-and-who、forcebinding-welcome-progress、forcebinding-two-steps、forcebinding-select-estates-irreversible、forcebinding-completion-states 五條）現行無法觸發。app/Http/Controllers/ApiController.php 的 getMustDo 只回 getUnreadAnnouncements（帶 steps），舊的 quest_name 分支已全部註解；src/components/MustDo/Index.vue 只在舊格式 quest_name === 'EstateCommunity' 時掛載 src/components/MustDo/EstateCommunity.vue，所以強制導向與 store.state.mustDo.community.meta 的載入都不會發生。src/pages/communities/forceBinding/Index.vue 在 quest 為 null 時還會導回 dashboard。正對照組：同一個 grep 有命中 EstateCommunity.vue 內的 router.push communities.forceBinding.welcome，以及 CommunityController.php 的 isForceBinding，工具正常。這五條描述的畫面文字大多仍存在於程式，但描述成現行行為的句子（會被導向、無法使用系統、數量顯示、權限不足提示、繼續綁定）都不成立。建議業主裁決：這組細目要退役，還是改寫成『舊版遷移流程』。",
+  "同組日期不一致：src/pages/communities/forceBinding/Welcome.vue 寫 '2022/05/12'，src/components/MustDo/EstateCommunity.vue 的燈箱寫 '2022/05/11'。",
+  "landlord-ledger-entry 內部矛盾：句 2 說流水帳最多 5 個附件，句 4 說記事本「同樣」最多 3 個。程式兩者都是 3 個（runnings/_parts/LedgerContainer.vue 與 memos/_parts/MemoContainer.vue 的 maxNumberOfFiles: 3 - …），src/pages/users/lesseeList/parts/Lightbox_CreditRating.vue 的註解也說兩者共用同一組附件限制。",
+  "community-show-editor-nav：is_admin 由 app/Http/Controllers/CommunityController.php getSingle 用瀏覽者目前所在團隊（$this->getRole()）計算，不是該社區所屬團隊。有編輯物件權限的使用者看別的團隊的社區廣告頁，理論上也會看到這個選單。這不影響細目句意，但屬於程式層的疑點，交回裁決。",
+  "「返回 Dashboard」（社區廣告頁選單）與「總覽」（物件總表分類，鍵為 '總覽-1'）的中文顯示由 Redis 翻譯（ApiController@geti18n 的 Redis::hgetall('locale:…')）決定，匯出內無法逐字核對空格與最終字樣。"
+ ],
+ "source_transcript": "ac39ee4fed6494d84.output"
+}

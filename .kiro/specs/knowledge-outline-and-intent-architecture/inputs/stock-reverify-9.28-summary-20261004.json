@@ -1,0 +1,6688 @@
+{
+ "batches": [
+  {
+   "batch": "B01",
+   "valid": true,
+   "errors": [],
+   "decoy": {
+    "caught": true,
+    "cited_source": true,
+    "other_flagged": 0
+   },
+   "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+   "verdict": "REFUTED",
+   "source_transcript": "ac3ec6b55c332d4f8.output",
+   "evidence": "20261004-p928-B01.json",
+   "redo": {
+    "resend": 1,
+    "replace": 0,
+    "voided": 0,
+    "note": "首交 4 則 note 寫「同一檔」未寫「同上」⇒ 重貼一次，判定未變",
+    "disclosure": ""
+   }
+  },
+  {
+   "batch": "B02",
+   "valid": true,
+   "errors": [],
+   "decoy": {
+    "caught": true,
+    "cited_source": true,
+    "other_flagged": 0
+   },
+   "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+   "verdict": "REFUTED",
+   "source_transcript": "a05599083fa49ddfc.output",
+   "evidence": "20261004-p928-B02.json",
+   "redo": {
+    "resend": 0,
+    "replace": 0,
+    "voided": 0,
+    "note": "",
+    "disclosure": ""
+   }
+  },
+  {
+   "batch": "B03",
+   "valid": true,
+   "errors": [],
+   "decoy": {
+    "caught": true,
+    "cited_source": true,
+    "other_flagged": 0
+   },
+   "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+   "verdict": "REFUTED",
+   "source_transcript": "a445e6c37f5763160.output",
+   "evidence": "20261004-p928-B03.json",
+   "redo": {
+    "resend": 0,
+    "replace": 0,
+    "voided": 0,
+    "note": "",
+    "disclosure": ""
+   }
+  },
+  {
+   "batch": "B04",
+   "valid": true,
+   "errors": [],
+   "decoy": {
+    "caught": true,
+    "cited_source": true,
+    "other_flagged": 0
+   },
+   "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+   "verdict": "REFUTED",
+   "source_transcript": "a3d5bf516baeb33a1.output",
+   "evidence": "20261004-p928-B04.json",
+   "redo": {
+    "resend": 0,
+    "replace": 0,
+    "voided": 0,
+    "note": "",
+    "disclosure": ""
+   }
+  },
+  {
+   "batch": "B05",
+   "valid": true,
+   "errors": [],
+   "decoy": {
+    "caught": true,
+    "cited_source": true,
+    "other_flagged": 0
+   },
+   "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+   "verdict": "REFUTED",
+   "source_transcript": "a7dbb8b9fe31b8d97.output",
+   "evidence": "20261004-p928-B05.json",
+   "redo": {
+    "resend": 0,
+    "replace": 0,
+    "voided": 0,
+    "note": "",
+    "disclosure": ""
+   }
+  },
+  {
+   "batch": "B06",
+   "valid": true,
+   "errors": [],
+   "decoy": {
+    "caught": true,
+    "cited_source": true,
+    "other_flagged": 0
+   },
+   "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+   "verdict": "REFUTED",
+   "source_transcript": "abe8fff13dd15cc54.output",
+   "evidence": "20261004-p928-B06.json",
+   "redo": {
+    "resend": 0,
+    "replace": 0,
+    "voided": 0,
+    "note": "",
+    "disclosure": ""
+   }
+  },
+  {
+   "batch": "B07",
+   "valid": true,
+   "errors": [],
+   "decoy": {
+    "caught": true,
+    "cited_source": true,
+    "other_flagged": 0
+   },
+   "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+   "verdict": "REFUTED",
+   "source_transcript": "ac39ee4fed6494d84.output",
+   "evidence": "20261004-p928-B07.json",
+   "redo": {
+    "resend": 0,
+    "replace": 0,
+    "voided": 0,
+    "note": "",
+    "disclosure": ""
+   }
+  },
+  {
+   "batch": "B08",
+   "valid": true,
+   "errors": [],
+   "decoy": {
+    "caught": true,
+    "cited_source": true,
+    "other_flagged": 0
+   },
+   "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+   "verdict": "REFUTED",
+   "source_transcript": "acdd4643eeb7abbb0.output",
+   "evidence": "20261004-p928-B08.json",
+   "redo": {
+    "resend": 0,
+    "replace": 0,
+    "voided": 0,
+    "note": "",
+    "disclosure": ""
+   }
+  },
+  {
+   "batch": "B09",
+   "valid": true,
+   "errors": [],
+   "decoy": {
+    "caught": true,
+    "cited_source": true,
+    "other_flagged": 0
+   },
+   "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+   "verdict": "REFUTED",
+   "source_transcript": "a635350293e723e71.output",
+   "evidence": "20261004-p928-B09.json",
+   "redo": {
+    "resend": 0,
+    "replace": 0,
+    "voided": 0,
+    "note": "",
+    "disclosure": ""
+   }
+  },
+  {
+   "batch": "B10",
+   "valid": true,
+   "errors": [],
+   "decoy": {
+    "caught": true,
+    "cited_source": true,
+    "other_flagged": 0
+   },
+   "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+   "verdict": "REFUTED",
+   "source_transcript": "a8ab964a099192c71.output",
+   "evidence": "20261004-p928-B10.json",
+   "redo": {
+    "resend": 0,
+    "replace": 0,
+    "voided": 0,
+    "note": "",
+    "disclosure": ""
+   }
+  },
+  {
+   "batch": "B11",
+   "valid": true,
+   "errors": [],
+   "decoy": {
+    "caught": true,
+    "cited_source": true,
+    "other_flagged": 0
+   },
+   "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+   "verdict": "REFUTED",
+   "source_transcript": "a191e19f9ab5a1a67.output",
+   "evidence": "20261004-p928-B11.json",
+   "redo": {
+    "resend": 0,
+    "replace": 0,
+    "voided": 0,
+    "note": "",
+    "disclosure": ""
+   }
+  },
+  {
+   "batch": "B12",
+   "valid": true,
+   "errors": [],
+   "decoy": {
+    "caught": true,
+    "cited_source": true,
+    "other_flagged": 0
+   },
+   "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+   "verdict": "REFUTED",
+   "source_transcript": "a84b8f0bdf0239ef9.output",
+   "evidence": "20261004-p928-B12.json",
+   "redo": {
+    "resend": 0,
+    "replace": 0,
+    "voided": 0,
+    "note": "",
+    "disclosure": ""
+   }
+  },
+  {
+   "batch": "B13",
+   "valid": true,
+   "errors": [],
+   "decoy": {
+    "caught": true,
+    "cited_source": true,
+    "other_flagged": 0
+   },
+   "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+   "verdict": "REFUTED",
+   "source_transcript": "aba672afb294d2a2d.output",
+   "evidence": "20261004-p928-B13.json",
+   "redo": {
+    "resend": 0,
+    "replace": 0,
+    "voided": 0,
+    "note": "",
+    "disclosure": ""
+   }
+  },
+  {
+   "batch": "B14",
+   "valid": true,
+   "errors": [],
+   "decoy": {
+    "caught": true,
+    "cited_source": true,
+    "other_flagged": 0
+   },
+   "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+   "verdict": "REFUTED",
+   "source_transcript": "ae0c04f0f224a9f6b.output",
+   "evidence": "20261004-p928-B14.json",
+   "redo": {
+    "resend": 1,
+    "replace": 1,
+    "voided": 0,
+    "note": "首派代理停擺（600s 無進度、未交件）⇒ 換人；交件後 notes 有客戶簡稱 ⇒ 重貼一次改寫，判定未變",
+    "disclosure": ""
+   }
+  },
+  {
+   "batch": "B15",
+   "valid": true,
+   "errors": [],
+   "decoy": {
+    "caught": true,
+    "cited_source": true,
+    "other_flagged": 0
+   },
+   "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+   "verdict": "REFUTED",
+   "source_transcript": "a922057271a3550f8.output",
+   "evidence": "20261004-p928-B15.json",
+   "redo": {
+    "resend": 1,
+    "replace": 0,
+    "voided": 0,
+    "note": "首交 JSON 引號未跳脫無法解析 ⇒ 重貼一次，判定未變",
+    "disclosure": "代理自行揭露一次 grep 參數展開為空、於 repo 根目錄遞迴，輸出僅見 semantic_model 檔、未引用；判定不重做"
+   }
+  },
+  {
+   "batch": "B16",
+   "valid": true,
+   "errors": [],
+   "decoy": {
+    "caught": true,
+    "cited_source": true,
+    "other_flagged": 0
+   },
+   "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+   "verdict": "REFUTED",
+   "source_transcript": "aad5f71e558ff6a11.output",
+   "evidence": "20261004-p928-B16.json",
+   "redo": {
+    "resend": 0,
+    "replace": 0,
+    "voided": 0,
+    "note": "",
+    "disclosure": ""
+   }
+  },
+  {
+   "batch": "B17",
+   "valid": true,
+   "errors": [],
+   "decoy": {
+    "caught": true,
+    "cited_source": true,
+    "other_flagged": 0
+   },
+   "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+   "verdict": "REFUTED",
+   "source_transcript": "a2097884771b5302d.output",
+   "evidence": "20261004-p928-B17.json",
+   "redo": {
+    "resend": 0,
+    "replace": 1,
+    "voided": 1,
+    "note": "首派代理自行揭露在 brief 目錄建立又刪除暫存腳本（違反唯讀）⇒ 該次作廢未收件，換人重做",
+    "disclosure": ""
+   }
+  },
+  {
+   "batch": "B18",
+   "valid": true,
+   "errors": [],
+   "decoy": {
+    "caught": true,
+    "cited_source": true,
+    "other_flagged": 0
+   },
+   "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+   "verdict": "REFUTED",
+   "source_transcript": "ae3363f0a333953dc.output",
+   "evidence": "20261004-p928-B18.json",
+   "redo": {
+    "resend": 0,
+    "replace": 0,
+    "voided": 0,
+    "note": "",
+    "disclosure": ""
+   }
+  },
+  {
+   "batch": "B19",
+   "valid": true,
+   "errors": [],
+   "decoy": {
+    "caught": true,
+    "cited_source": true,
+    "other_flagged": 0
+   },
+   "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+   "verdict": "REFUTED",
+   "source_transcript": "a898b669795d151a9.output",
+   "evidence": "20261004-p928-B19.json",
+   "redo": {
+    "resend": 0,
+    "replace": 0,
+    "voided": 0,
+    "note": "",
+    "disclosure": ""
+   }
+  },
+  {
+   "batch": "B20",
+   "valid": true,
+   "errors": [],
+   "decoy": {
+    "caught": true,
+    "cited_source": true,
+    "other_flagged": 0
+   },
+   "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+   "verdict": "REFUTED",
+   "source_transcript": "a4e2c79a2266eb9bd.output",
+   "evidence": "20261004-p928-B20.json",
+   "redo": {
+    "resend": 0,
+    "replace": 0,
+    "voided": 0,
+    "note": "",
+    "disclosure": ""
+   }
+  },
+  {
+   "batch": "B21",
+   "valid": true,
+   "errors": [],
+   "decoy": {
+    "caught": true,
+    "cited_source": true,
+    "other_flagged": 0
+   },
+   "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+   "verdict": "REFUTED",
+   "source_transcript": "ac1db110af2cf2c1f.output",
+   "evidence": "20261004-p928-B21.json",
+   "redo": {
+    "resend": 0,
+    "replace": 0,
+    "voided": 0,
+    "note": "",
+    "disclosure": ""
+   }
+  },
+  {
+   "batch": "B22",
+   "valid": true,
+   "errors": [],
+   "decoy": {
+    "caught": true,
+    "cited_source": true,
+    "other_flagged": 0
+   },
+   "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+   "verdict": "REFUTED",
+   "source_transcript": "a495f1347e2bf4bd8.output",
+   "evidence": "20261004-p928-B22.json",
+   "redo": {
+    "resend": 0,
+    "replace": 0,
+    "voided": 0,
+    "note": "",
+    "disclosure": ""
+   }
+  },
+  {
+   "batch": "B23",
+   "valid": true,
+   "errors": [],
+   "decoy": {
+    "caught": true,
+    "cited_source": true,
+    "other_flagged": 0
+   },
+   "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+   "verdict": "REFUTED",
+   "source_transcript": "affed753ee2ffdcdf.output",
+   "evidence": "20261004-p928-B23.json",
+   "redo": {
+    "resend": 0,
+    "replace": 0,
+    "voided": 0,
+    "note": "",
+    "disclosure": ""
+   }
+  },
+  {
+   "batch": "B24",
+   "valid": true,
+   "errors": [],
+   "decoy": {
+    "caught": true,
+    "cited_source": true,
+    "other_flagged": 0
+   },
+   "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+   "verdict": "REFUTED",
+   "source_transcript": "a2cd2c4e3040ce293.output",
+   "evidence": "20261004-p928-B24.json",
+   "redo": {
+    "resend": 0,
+    "replace": 0,
+    "voided": 0,
+    "note": "",
+    "disclosure": "代理自行揭露一次 grep 參數展開為空、於 jgb2 匯出根目錄遞迴，輸出帶出 .env.custom 數行；未用於判定，證據 secret 樣式掃描 0 筆；判定不作廢"
+   }
+  }
+ ],
+ "fines_checked": 525,
+ "sentences_checked": 1442,
+ "titles_failed": [
+  {
+   "id": "jgb/A/login-role-select-before",
+   "batch": "B01",
+   "note": "標題：不成立。依判定規則 6，標題的「為什麼」與括號內的理由「決定進入房東/管理者或租客的登入表單」，在本條唯一的句子裡都找不到支撐，句子只說「需先選擇」。另外，src/pages/users/auth/parts/LoginForm.vue 對兩種身分是同一張表單，只是標題「歡迎[s1]！」不同，並把 role 送給後端；實際用途是由 app/Http/Controllers/Controller.php 依 selected_role_type 決定登入後進入哪一個身分"
+  },
+  {
+   "id": "jgb/A/dashboard-overview-lists",
+   "batch": "B02",
+   "note": "標題：標題宣稱有「修繕」整合列表，句 1 不成立，標題同樣不成立。"
+  },
+  {
+   "id": "jgb/A/dashboard-big-landlord-view",
+   "batch": "B02",
+   "note": "標題：標題宣稱大房東首頁顯示「社區最新收支詳情」，句 2 該部分不成立，標題不成立。"
+  },
+  {
+   "id": "jgb/A/notification-mark-read-navigate",
+   "batch": "B03",
+   "note": "標題：「把該則通知標為已讀」依賴句 2，句 2 不成立，標題不成立。"
+  },
+  {
+   "id": "jgb/A/notification-settings-save",
+   "batch": "B03",
+   "note": "標題：「至少要有一個分類填了自訂信箱，儲存鍵才會啟用」與句 1 同一問題，不成立。"
+  },
+  {
+   "id": "jgb/B/team-signer-company-info",
+   "batch": "B03",
+   "note": "標題：「公司登記證日期與縣市則不分團隊都是選填」與句 5 一樣漏掉例外，不成立。"
+  },
+  {
+   "id": "jgb/B/team-signer-address-groups",
+   "batch": "B03",
+   "note": "標題：加引號的介面文字「同上」不存在於現行介面；src/pages/users/team/_parts/SignerDetails.vue 的實際按鈕文字是 t('同戶籍地址') 與 t('同公司登記地址')，全檔沒有「同上」，依規則 2 標題不成立；其餘斷言由三句支撐。"
+  },
+  {
+   "id": "jgb/B/member-list-overview",
+   "batch": "B04",
+   "note": "標題：「成員總人數」這項斷言依賴句 1，但句 1 不成立（非擁有者登入時人數少算 1）；其餘欄位（加入時間、Email、手機號碼、角色）的表頭確實存在，見 resources/views/users/team/index.blade.php 的表頭 ___('加入時間')。"
+  },
+  {
+   "id": "jgb/C/forcebinding-why-and-who",
+   "batch": "B07",
+   "note": "標題：標題預設這個導引現在會出現，但句 1 被推翻（現行程式已不會把使用者導進導引）；句 2 也不成立。"
+  },
+  {
+   "id": "jgb/C/forcebinding-welcome-progress",
+   "batch": "B07",
+   "note": "標題：「已綁定與尚未綁定的物件數量」依賴句 1，句 1 不成立。"
+  },
+  {
+   "id": "jgb/C/forcebinding-two-steps",
+   "batch": "B07",
+   "note": "標題：「未完成系統功能無法正常使用」依賴句 2，句 2 不成立。"
+  },
+  {
+   "id": "jgb/C/estate-house-preview-unpublished",
+   "batch": "B09",
+   "note": "標題：「其他人造訪會得到404」超出句 2。句 2 把 404 限定在「沒有查看權限」的造訪者；app/Http/Controllers/EstateController.php 的 show() 只有在 !$estate->is_open 且（未登入，或已登入但 show_estate／show_owner_estate 都沒有）時才 abort(404)，有 show_estate 權限的團隊成員看到的是預覽頁，不會得到 404。另外，帶合約的邀請網址會走 $isInvite 分支，根本不會執行到 abort(404)。所以標題的「其他人」說得太廣。"
+  },
+  {
+   "id": "jgb/D/contract-list-status-tabs",
+   "batch": "B10",
+   "note": "標題：與句 1 同樣的問題：狀態 3 的側欄頁籤實際叫「待管理者簽名」，不是「待房東簽名」（app/Role.php roleHasAction 租約管理 sub 的 'label' => ___('待管理者簽名')，經 app/Http/Controllers/ApiController.php 的 aside_list 送到 src/components/AsideMenu.vue）；只有頁面大標題 src/pages/contracts/list/_parts/PageTop.vue 的 statusPair 3: '待房東簽名' 寫成待房東簽名，兩處介面文字互相衝突，標題的五個頁籤名稱沒有完整的支撐。"
+  },
+  {
+   "id": "jgb/D/contract-list-row-gear-actions",
+   "batch": "B10",
+   "note": "標題：標題把「查看物件」和「查看帳單」並列為不論狀態都有，並和「其餘依…身分與權限增減」對比，等於把「查看物件」寫成不受權限影響。但 app/Http/Controllers/ContractController.php webList 的 if($LVtoThis_userPermission['show_owner_estate'] == true) 才會加入「查看物件」，租客的權限全部是 false（app/Http/Controllers/Controller.php getPermissions：// 租客沒有權限），所以租客永遠看不到「查看物件」。句 2 也明確把它限定在「有查看物件的權限」，標題超出了句子的內容。"
+  },
+  {
+   "id": "jgb/D/contract-list-row-sort-options",
+   "batch": "B10",
+   "note": "標題：寫「各分新舊／早晚」，但依名稱只有一個選項，沒有分新舊或早晚（app/Http/Controllers/ContractController.php 的 1 => ___('依名稱排序')）。句 1 正確列出名稱不分，標題超出了句子的內容。"
+  },
+  {
+   "id": "jgb/D/contract-situation-tab",
+   "batch": "B11",
+   "note": "標題：不成立。標題斷言「內政部規範現況細節」，與句 1 同樣找不到來源支撐"
+  },
+  {
+   "id": "jgb/D/contract-additional-convention",
+   "batch": "B11",
+   "note": "標題：不成立。「最多 50 行、每行 50 字」在現行畫面沒有作用（見句 1）"
+  },
+  {
+   "id": "jgb/D/contract-lease-scope-by-space-type",
+   "batch": "B11",
+   "note": "標題：不成立。標題寫「整戶時自動為全部，其餘一律部分」，與句 2 及程式（「整層空間」也判為全部）矛盾；config/estate.php＋`'office_flat' => '整層空間'` 是獨立於「整戶」的空間型態"
+  },
+  {
+   "id": "jgb/E/bill-actions-expense-paid",
+   "batch": "B15",
+   "note": "標題：不成立。「房東一律有編輯收款備註／封存」漏了權限例外，理由同句 1。"
+  },
+  {
+   "id": "jgb/E/bill-list-export",
+   "batch": "B15",
+   "note": "標題：不成立。「其他分頁另有一套匯出流程」沒有任何一句支撐，句 4 反而說草稿帳單、收款帳單的勾選匯出「跟帳單總表共用同一套規則」，標題超出句子內容。"
+  },
+  {
+   "id": "jgb/E/bill-power-reading-draft-defaults",
+   "batch": "B16",
+   "note": "標題：『草稿階段度數預設留空』在編輯頁畫面上不成立（理由見句 1），所以標題不成立。"
+  },
+  {
+   "id": "jgb/E/balance-invoice-anomaly-list",
+   "batch": "B17",
+   "note": "標題：「處理需洽客服」由句 1 後半支撐，但句 1 後半不成立（見句 1），所以標題不成立。"
+  },
+  {
+   "id": "jgb/E/ctbc-form-validation",
+   "batch": "B18",
+   "note": "標題：不成立。括號裡的「銀行帳號 10～16 碼」依據的句 3 不成立"
+  },
+  {
+   "id": "jgb/G/power-meter-list-sort",
+   "batch": "B21",
+   "note": "標題：「門鎖、攝影機、小白盒清單沒有排序選單」不成立，見句 2。"
+  },
+  {
+   "id": "jgb/G/power-meter-service-expiry",
+   "batch": "B21",
+   "note": "標題：加引號的「快到期」不是現行介面文字；src/pages/iots/_parts/ManufacturerServiceNotice.jsx 的 headline 實際是 t('[s1]服務已於 [s2] 到期')、t('[s1]服務到期日 [s2]（剩 [s3] 天）')、t('[s1]服務到期日 [s2]')，全專案介面無「快到期」字樣（只出現在程式註解）。依規則 2 不成立。"
+  },
+  {
+   "id": "jgb/G/power-meter-single-edit-tabs",
+   "batch": "B21",
+   "note": "標題：「儲值型有基本設定／電錶資料／開立發票三個頁籤」是無條件斷言；src/helpers/iots.ts getStatusTabs 在 !!conditions?.gen_invoice === false 或 isTenant 時濾掉 PowerMeterTab.invoice，句 4 也寫明只有開通自動開立發票且非租客才有第三個頁籤；標題超出句子內容，不成立。"
+  },
+  {
+   "id": "jgb/G/device-page-shared-list",
+   "batch": "B21",
+   "note": "標題：「沒有排序選單」不成立，見句 2。"
+  },
+  {
+   "id": "jgb/I/pricing-plan-price-basis",
+   "batch": "B22",
+   "note": "標題：前半成立；後半「一般方案年繳等於 10 個月的月費」依附句 2，句 2 無法判定，故標題不成立。"
+  },
+  {
+   "id": "jgb/I/demo-form-actual-validation-scope",
+   "batch": "B23",
+   "note": "標題：「畫面上全部欄位都要填才能送出」依賴句 1 前半，該部分無法證實，所以標題不成立；「系統端只再檢查四項」成立。"
+  }
+ ],
+ "sentences_failed": [
+  {
+   "id": "jgb/A/register-role-select",
+   "n": 1,
+   "batch": "B01",
+   "note": "句 1：前半成立：src/pages/users/auth/parts/RoleSelect.vue 有「我是房東/管理者」「我是租客」。後半不成立：app/Http/Controllers/AuthController.php 的 authSSO callback 遇到已註冊的第三方帳號時，是 $redirectUrl = session('redirect_after_login')，有值就導到該頁（例如合約邀請或租客端網站導轉來的原頁），只有沒值時才導到 users.index。另外，登入頁的 SSOBar 只放在 src/pages/users/auth/parts/LoginForm.vue 裡，也就是選完身分之後才出現；從登入頁用第三方帳號登入前，其實已經選過身分。所以「已註冊過的第三方帳號登入時，則會直接進入首頁」漏掉了這兩種例外"
+  },
+  {
+   "id": "jgb/A/forget-password-flow",
+   "n": 4,
+   "batch": "B02",
+   "note": "句 4：app/Http/Controllers/AuthController.php＋case 'updatePassword'＋$fatherUser->reload(true); // 登入主帳號——重設成功時後端已把使用者寫入 session 自動登入，result.redirect 設為 route('users.create', ['any'=> 'login'])；Password.vue 以 window.location.href 前往該網址，但 routes/web.php 的 users.create 掛 if_login 中介層，app/Http/Middleware/IfLoginCheck.php＋session(User::class) 存在即 redirect()->route('users.index')，使用者直接進入會員中心，並不需要用新密碼重新登入。幫助中心 slug02_zh-Hant.html 寫「就可以重新登錄了」、畫面文字寫「請使用新密碼登入」，與程式實際行為衝突，依規則以程式為準。"
+  },
+  {
+   "id": "jgb/A/forget-password-setpwd-invite",
+   "n": 3,
+   "batch": "B02",
+   "note": "句 3：前半成立（Password.vue 的 setPwd 與 resetPwd 共用同一表單與 pwdFormat 規則）；後半不成立：app/Http/Controllers/AuthController.php＋case 'updatePassword' 中 $fatherUser->reload(true) 已自動登入，未指定頁面時 redirect 為登入頁網址，但 app/Http/Middleware/IfLoginCheck.php＋session(User::class) 存在即 redirect()->route('users.index')，實際會進入會員中心而非停在一般登入頁；後端訊息亦為「密碼設定完成！正在為您登入系統...」。"
+  },
+  {
+   "id": "jgb/A/dashboard-overview-lists",
+   "n": 1,
+   "batch": "B02",
+   "note": "句 1：src/pages/users/dashboard/parts/BillContractRepair.vue＋tabList 只有「帳務情況」與「合約情況」兩個頁簽，修繕列表已被註解（// const List_Repair = defineAsyncComponent…）且沒有任何修繕頁簽，首頁整合列表只有帳單與合約，沒有修繕。後半「具備通知檢視權限才顯示 Email 通知紀錄」成立：src/pages/users/dashboard/Landlord.vue＋store.state.userData?.permission?.show_notification && EmailRecords（EmailRecords.vue 標題「Email 發送記錄」）。"
+  },
+  {
+   "id": "jgb/A/dashboard-big-landlord-view",
+   "n": 2,
+   "batch": "B02",
+   "note": "句 2：區間選項成立（src/pages/users/dashboard/Landlord.vue＋DateRangeSelector options 7 days／30 days／90 days／6 months＋customizable={true}，下接 BalanceChart）。但「社區最新收支詳情」不成立：Landlord.vue 的 JSX 直接寫 <EstateDetails />，檔內既未 import 也未宣告；全域元件只由 src/components/index.js＋import.meta.glob('./**/*.{vue,jsx}') 依 src/components 下的路徑自動註冊（正對照：同檔未 import 的 LayoutGeneral、DateRangeSelector 都在 src/components 底下存在，因此能解析），src/components 底下沒有任何會被命名為 EstateDetails 的檔案，src/pages/users/dashboard/parts/EstateDetails.vue 只有 src/pages/bills/stat/_parts/Stat.jsx 以 defineAsyncComponent 明確引入。依此，大房東首頁的 EstateDetails 無法解析，現行程式渲染不出「社區最新收支詳情」區塊（該字串只存在於 EstateDetails.vue）。"
+  },
+  {
+   "id": "jgb/A/signer-individual-fields",
+   "n": 5,
+   "batch": "B02",
+   "note": "句 5：門檻成立（SignerDetails.vue＋isShowScrollBar: infoIdentity?.length > 1、isMoreThan5: > 5、「所有團隊」），但「例如同時管理多個角色」不成立：多筆個人資料是同一個人房東身分底下的多筆簽約對象，app/Http/Controllers/UserController.php＋UserSignerInfo::getSignerInfos($user->id, $this->role->id)，由「管理」視窗的「新增」建立，與管理多個角色無關。另外「所有團隊」選單項目渲染 node.company_name，但個人身分的清單來自 filterNavItems，只有 label／value，選單文字會是空白。"
+  },
+  {
+   "id": "jgb/A/notification-mark-read-navigate",
+   "n": 2,
+   "batch": "B03",
+   "note": "句 2：app/Http/Controllers/Controller.php＋if ($notificationId = request('notification_id')) 與 Notification::markAsRead($this->user->id, $this->role->id, $notificationId)＋確實會清掉參數後轉址；但 app/Notification.php＋markAsRead 的 where('user_id', $userId)->where('role_id', $roleId) 要求通知的 user_id 等於目前登入者，而通知建立時 user_id 寫的是身分擁有者（app/Notification.php＋'user_id' => $role->user_id），NotificationController 列表只依 role_id 撈資料；有 show_notification 權限的團隊成員（非擁有者）可看到並點擊，卻不會被標為已讀。句子未排除此身分例外。"
+  },
+  {
+   "id": "jgb/A/notification-settings-save",
+   "n": 1,
+   "batch": "B03",
+   "note": "句 1：src/pages/users/notification/Index.vue＋hasCustomEmail 以 targetKeys.some((key)=>!isEmpty(formData.emailData[key].custom_emails)) 判斷；src/mixin/methods.js＋isEmpty 對陣列只看 Object.keys(value).length＋按「新增信箱」產生空字串欄位 [''] 時 hasCustomEmail 就是 true、按鈕即啟用（空白欄位之後才由 input required 的瀏覽器驗證擋下），實際啟用條件是「任一分類有自訂信箱欄位」而非「已經填了信箱」；未啟用時 class disabled 且 handleSubmitForm 直接 return 的部分成立。"
+  },
+  {
+   "id": "jgb/B/team-signer-company-info",
+   "n": 5,
+   "batch": "B03",
+   "note": "句 5：src/pages/users/team/_parts/SignerDetails.vue＋fifthRowOfCorpInfo 前端標示 '公司登記證號' isRequired: state.isSocialHousingTeam、日期與縣市 isRequired: false；但 app/Http/Controllers/UserController.php＋role() 儲存時 Validator 的 company_registration_ymd／company_registration_issue_city／company_registration_code 在 $role->receipt_type == 'tw_zh_mof' 時 $fail(___('選擇「財政部包租業租金收據範本」時 公司登記證日期 為必填。')) 等＋選用財政部包租業租金收據範本時這三欄都必填，一般團隊與社宅團隊皆適用；句子「不論…都是選填」與「一般團隊則是選填」漏掉此收據範本例外。"
+  },
+  {
+   "id": "jgb/B/member-list-overview",
+   "n": 1,
+   "batch": "B04",
+   "note": "句 1：resources/views/users/team/index.blade.php＋t('[s1] 個成員', [$store.state.team.member_list.length+1])；app/Http/Controllers/UserController.php＋function fetchMembers 中 unset($tempUserData[$ownerKey]); unset($tempUserData[$selfKey]);。member_list 同時排除擁有者與登入者本人，畫面人數＝member_list 筆數＋1。登入者是擁有者時，這個數字等於含擁有者的總人數；登入者是一般成員時，總人數應是 member_list 筆數＋2（另外還有擁有者與本人），畫面少算 1。所以「目前團隊的成員總人數（含團隊擁有者本人）」並非對所有登入者都成立。"
+  },
+  {
+   "id": "jgb/B/member-list-overview",
+   "n": 2,
+   "batch": "B04",
+   "note": "句 2：app/Http/Controllers/UserController.php＋fetchMembers 中 $collectionUsersIds[] = (object)['user_id'=>$ownerKey]; $collectionUsersIds[] = (object)['user_id'=>$selfKey]; 與 'join_date' => isset($LVcollectionUsersIds->created_at)?...:''。擁有者與本人的資料最後會被這兩筆沒有 created_at 的物件覆寫，所以 join_date 是空字串；resources/views/users/team/index.blade.php＋@{{$store.state.team.self.join_date}} 與 @{{$store.state.team.owner.join_date}} 也就顯示空白。只有一般成員那幾列有加入時間，「每位成員會顯示加入時間」漏掉這個例外。Email、手機號碼、角色欄確實存在。"
+  },
+  {
+   "id": "jgb/B/member-invite",
+   "n": 2,
+   "batch": "B04",
+   "note": "句 2：app/Http/Controllers/UserController.php＋case 'accountValidation'：帳號查不到時回傳 ___('您輸入的帳號不存在')，從不回傳 is_member=false；src/store/modules/team/invite.js＋notMemberList 只在 is_member 為假時才寫入，因此 resources/views/users/team/index.blade.php 的 ___('尚未成為JGB會員') 區塊不會出現。實際對該帳號的提示是「您輸入的帳號不存在」，不是「尚未成為 JGB 會員」；視窗只在一開始有一行靜態說明「受邀請的對象如果不是 JGB 會員，將無法新增為團隊成員。」"
+  },
+  {
+   "id": "jgb/B/member-assign-owned",
+   "n": 1,
+   "batch": "B04",
+   "note": "句 1：resources/views/users/team/index.blade.php＋鉛筆（icon_edit.svg）只畫在 v-for member_list 的列裡，而且包在 @if ($enableEdit) 中。最上面的擁有者那一列與自己那一列（select-picker class=\"disabled\" 的兩列）都沒有鉛筆；沒有 edit_role_team 權限時，桌機版也沒有。「每一列右側有鉛筆圖示」漏掉這些例外。點開後會導向 /users/team/member/owned/estates|contracts 這部分正確。"
+  },
+  {
+   "id": "jgb/B/member-list-role-inline-change",
+   "n": 2,
+   "batch": "B04",
+   "note": "句 2：同上 resources/views/users/team/index.blade.php＋選項 { label: `+ ${t('新增角色')}`, value: 'addCharacter' } 被選取時，先把 action 設為 'add' 再 $store.commit('lightbox', 'character--Edit')；resources/views/layouts/lightbox/character-capability-edit.blade.php＋action==='add' 時視窗標題顯示 ___('新增角色')，只有 action==='modify' 才顯示 ___('編輯角色')。所以開啟的視窗畫面上叫「新增角色」，不是加引號的「編輯角色」。"
+  },
+  {
+   "id": "jgb/B/biglandlord-list-overview",
+   "n": 2,
+   "batch": "B04",
+   "note": "句 2：同上 src/pages/bigLandlords/list/_parts/ListTable.vue＋生日與主要聯絡方式兩欄用 SurelyVueCommonTextBlockCell v-bind=\"record[column.key]\" 呈現；src/utils/surelyVue/bigLandlord.ts＋this[ColumnKey.birthday] = { birthday } 與 this[ColumnKey.primaryContact] = { primary_contact }；src/components/SurelyVue/Common/TextBlockCell.vue＋props 只有 textString，畫面渲染 {{ t(props?.textString) || '-' }}。傳入的 key 對不上 textString，所以兩欄每筆都只顯示「-」，實際不會顯示生日與主要聯絡方式的值。合作方式、合作起迄、所屬物件數（RelatedEstateCell 的 qty_of_estates）正確。"
+  },
+  {
+   "id": "jgb/B/biglandlord-report-community-rate",
+   "n": 1,
+   "batch": "B04",
+   "note": "句 1：同上 ListTable.vue＋社區欄用 SurelyVueBigLandlordReportContentCell 呈現；src/utils/surelyVue/bigLandlord.ts＋this[ColumnKey.community] = { communities, content: communities.length > 0 ? communities.length.toString() : '' }；src/components/SurelyVue/BigLandlord/ReportContentCell.vue＋{{ props.content || \"-\" }}。這一欄只顯示社區「數量」，點了才 emit communityListOpen 開出社區清單，欄位本身不會顯示所屬的社區。"
+  },
+  {
+   "id": "jgb/B/biglandlord-sheet-overview",
+   "n": 2,
+   "batch": "B05",
+   "note": "句 2：src/pages/bigLandlords/sheet/index.vue＋`['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'].includes(String(route.query.month)`：上一月／下一月／取消／下載只在月報分支，此部分成立；但年度畫面中切換年份是 src/pages/bigLandlords/sheet/_parts/SelectBar.jsx 另外的 ‹ › RouterLink（`year: Number(route.query.year ...) - 1`）與年份輸入框，`onExportClick` 的「匯出報表」按鈕只呼叫 createPdf 匯出目前年份的 PDF，並不能切換年份；句子寫成「可以切換年份、匯出整年度資料的「匯出報表」按鈕」把切換年份歸給該按鈕，不成立"
+  },
+  {
+   "id": "jgb/B/advance-late-fee",
+   "n": 3,
+   "batch": "B05",
+   "note": "句 3：公式部分有 src/pages/users/advance/Index.jsx 說明文字與 app/Bill.php 支撐；但「這筆帳單的繳費截止日就是合約的終止日」與現行程式不符：app/Bill.php＋`private function generateLateFeeBill()` 內 `'date_expire' => date(\"Ymd\"), // 繳費期限`，延遲金帳單的繳費期限是產生當天，不是合約終止日（畫面說明文字 `該筆帳單的繳費截止日為合約的終止日` 與程式衝突，依規則以程式為準）；另 `canGenerateLateFeeBill` 要求 `complete_at` 已有值，延遲金是在逾期帳單完成付款後才產生，不成立"
+  },
+  {
+   "id": "jgb/C/community-add-single-and-limit",
+   "n": 2,
+   "batch": "B06",
+   "note": "句 2：src/components/Lightbox/CommunitiesBatchAdd.vue＋previewApi/confirmApi '/api3/communities/batch/preview|confirm' → app/Http/Controllers/CommunityController.php＋batchConfirm 直接 dispatch CommunityBatchJob → app/Community.php＋public static function batch 只有 $limits = 500 單批上限，整條批次新增路徑沒有 remainCommunitiesCount 檢查（正對照：同一 CommunityController.php 內 remainCommunitiesCount 出現 4 次，分屬 getMeta、postSingle 與舊版 generalBatch；src/pages/communities/list/Index.vue 的「批次新增」也不檢查 remainCommunitiesCount）。達上限時仍可用「批次新增」新增社區，「達到上限時無法繼續新增社區」為漏例外的絕對句。另 app/Role.php＋getPlanCommunityLimit 顯示上限取自 plan_estate_limit，個人房東固定 1。"
+  },
+  {
+   "id": "jgb/C/forcebinding-why-and-who",
+   "n": 1,
+   "batch": "B07",
+   "note": "句 1：src/pages/communities/forceBinding/Welcome.vue 確實有 t('為了提供更有效率…JGB系統將於 [s1] 後增加「社區」功能', ['2022/05/12']) 和 t('物件需全數綁定至社區才能使用系統。')。但會導過去的只有 src/components/MustDo/EstateCommunity.vue（quantities_of_no_community > 0 時 router.push communities.forceBinding.welcome），而這個元件只在 src/components/MustDo/Index.vue 舊格式 quest_name === 'EstateCommunity' 時才掛載。app/Http/Controllers/ApiController.php 的 getMustDo 現在只回 getUnreadAnnouncements（帶 'steps' 的公告），舊的 quest_name 分支全部註解掉了，所以登入不會被導向綁定導引。另外 src/pages/communities/forceBinding/Index.vue 在 quest === null 時會直接導回 users.dashboard。"
+  },
+  {
+   "id": "jgb/C/forcebinding-why-and-who",
+   "n": 2,
+   "batch": "B07",
+   "note": "句 2：src/pages/communities/forceBinding/Welcome.vue＋t('權限不足') 只在 store.state.mustDo.community.meta?.data?.is_admin === false 時顯示。meta 只由 EstateCommunity.vue 的 onBeforeMount 寫入（呼叫 /api3/communities/meta，app/Http/Controllers/CommunityController.php getMeta 的 'is_admin' => $user->id == $role->user->id），但該元件現行不會掛載，meta 一直是 null（src/store/modules/must_do.js 初值 meta: null）。結果 is_admin 是 undefined：遮罩會出現，但「權限不足」提示是 hidden，「繼續」按鈕也不會出現，非擁有者看不到「權限不足」。設計上確實是擁有者限定，但現行畫面不符合句子。"
+  },
+  {
+   "id": "jgb/C/forcebinding-welcome-progress",
+   "n": 1,
+   "batch": "B07",
+   "note": "句 1：src/pages/communities/forceBinding/Welcome.vue＋t('尚未綁定至社區')、t('已成功綁定至社區') 兩個標籤存在，數字取自 store.state.mustDo.community.meta?.data?.quantities_of_no_community／quantities_of_estates，取不到時顯示 '-'。meta 只由 src/components/MustDo/EstateCommunity.vue 載入，而現行 app/Http/Controllers/ApiController.php getMustDo 不再回 EstateCommunity 任務，所以這兩格現行只會顯示「- 個」，不會顯示數量。"
+  },
+  {
+   "id": "jgb/C/forcebinding-two-steps",
+   "n": 2,
+   "batch": "B07",
+   "note": "句 2：同上，畫面有文字 t('因系統功能更新後…故未綁定完成前，系統功能將會無法正常使用')，但現行程式沒有任何強制：app/Http/Controllers/ApiController.php getMustDo 只回公告，src/components/MustDo/EstateCommunity.vue 的強制導向不會掛載，src/pages/communities/forceBinding/Index.vue 在 quest 為 null 時導回 dashboard。把畫面上的舊提示當成現行行為不成立。"
+  },
+  {
+   "id": "jgb/C/forcebinding-completion-states",
+   "n": 2,
+   "batch": "B07",
+   "note": "句 2：同上＋continue 畫面 t('你完成最困難的部分！')、t('你已經完成新增社區的必需步驟，但還有些物件尚未綁定完成。') 與按鈕 t('繼續綁定物件') 都存在。但按鈕的 continueHandler 呼叫 store.state.mustDo.community.meta.refetch()，而 meta 只由現行不會掛載的 src/components/MustDo/EstateCommunity.vue 寫入（src/store/modules/must_do.js 初值 meta: null），點擊會在 null 上呼叫 refetch 而出錯，無法繼續綁定。"
+  },
+  {
+   "id": "jgb/C/estate-list-add-must-pick-community",
+   "n": 1,
+   "batch": "B07",
+   "note": "句 1：src/pages/estates/list/_parts/PageTop.vue＋estateCreateHandler：communitiesScopeStore.metaFetcher.data?.remainEstatesCount <= 0 時 store.commit('lightbox', 'subscribedPlanIsFull') 後直接 return，不會導到社區選擇畫面；只有額度未滿時才 router.push communities.pick（action estateCreate／estateCopy）。之後 src/pages/communities/pick/Index.vue 導到 /api2/estate/create?communityId= 或 estates.pick。句子說點了「都會」先導向社區選擇畫面，漏掉方案額度已滿的例外。"
+  },
+  {
+   "id": "jgb/C/estate-list-filters",
+   "n": 4,
+   "batch": "B07",
+   "note": "句 4：src/pages/estates/list/_parts/EstatesAdvanceSearchBlock.jsx＋<div class=\"mb-4 hidden … lg:block\">{t('篩選結果')}: {pageNav?.range_text} / {pageNav?.total}</div>；tailwind.config.js 的 lg: '992px'，所以 992px 以上才顯示這部分成立。但 app/Helper.php 的 get_paginate 'range_text' => $rangeStart.' - '.$rangeEnd，實際顯示的是本頁起訖序號（例如「31 - 60 / 120」），不是「目前顯示筆數／總筆數」，格式描述不成立。"
+  },
+  {
+   "id": "jgb/C/estate-status-affects-actions",
+   "n": 4,
+   "batch": "B07",
+   "note": "句 4：app/Http/Controllers/EstateController.php＋webList 的 // 刊登招租廣告＆取消刊登招租廣告 外層是 if ($type == 1 || $type == 2)，裡面依 public_estate／LVisShowEdit 權限與 is_open 決定顯示 close_is_open 或 open_is_open。在「買賣」分類（type 3）這兩個選項都不會出現。句子說「每個物件」只依權限與刊登狀態決定，漏掉分類這個例外。"
+  },
+  {
+   "id": "jgb/C/estate-rent-open-permission-and-validation",
+   "n": 2,
+   "batch": "B08",
+   "note": "句 2：app/Http/Controllers/EstateController.php＋validateFields 失敗時 redirect()->route('estates.edit', ['id' => …]) 並 flash 'premisesStep'（current／current_sub）。但 routes/web.php＋「'/estates/edit/{id?}/{action?}/{any3?}', 'IndexController@vueIndex'」現行是 Vue 頁，src 全域找不到 premisesStep／current_sub 的讀取端；讀取它的 resources/views/estate/edit.blade.php（$store.dispatch('premises_edit/step/init')）在 app 內沒有任何 view('estate.edit') 會渲染（正對照：同一次 grep 有找到 EstateController 的 flash 寫入）。現行行為：導回編輯頁，並由 layouts/app.blade.php 的 globalErrorShow 顯示錯誤訊息；左側選單不會自動跳到缺欄位的分頁。「把左側選單直接跳到缺欄位的那個分頁」只存在於舊 blade 路徑，不成立。"
+  },
+  {
+   "id": "jgb/C/team-public-page-edit-and-banner",
+   "n": 1,
+   "batch": "B09",
+   "note": "句 1：src/pages/users/public/Index.vue＋editable: computed(()=> userPublicScopeStore.infos?.is_admin && store.state?.userData?.permission?.edit_role)。但「只有管理者」與程式不符：app/Http/Controllers/UserController.php 的 info() 是這樣算的：$isAdmin = !empty($this->user) && !empty($this->role) && !(($user->id != $this->user->id) && !empty($user->getPermissionByRoleId($this->role->id)) && !…['show_estate'])。店舖擁有者如果不是造訪者目前身分的團隊成員，app/Role.php 的 getCharacterIdByUser 會回 null，getPermissionByCharacter 也取不到權限，於是 is_admin 為 true。也就是說，任何已登入、而且目前身分有 edit_role 的使用者都看得到編輯入口，跟是不是該店舖的管理者無關。後半句成立：同上 UserController.php 的 if ($role->is_team && !$this->isHasGPermission('edit_role_info')) 會回『您目前登入的帳號無法使用編輯團隊功能』，而 'g_edit_role_info' 的 label 是『編輯團隊資訊』。"
+  },
+  {
+   "id": "jgb/D/contract-list-status-tabs",
+   "n": 1,
+   "batch": "B10",
+   "note": "句 1：app/Role.php＋'label' => ___('待管理者簽名')＋側欄（頁籤）上狀態 3 顯示的是「待管理者簽名」，句子寫「待房東簽名」；而且「待發送合約」的 allow_role_key 是 RULE_KEY_LANDLORD_* && $hasPermission，租客（$hasPermission 為 false）和大房東都看不到這個頁籤，「分成五個頁籤」不是每種身分都成立。另外現行選單與麵包屑的名稱是「租約管理」（src/pages/contracts/list/Index.vue 的 breadcrumbsList t('租約管理')），不是「合約管理」。"
+  },
+  {
+   "id": "jgb/D/contract-search-keyword-scope",
+   "n": 2,
+   "batch": "B10",
+   "note": "句 2：src/pages/contracts/list/_parts/ContractsAdvanceSearchBlock.jsx＋keyName={'contract_is_existing'}＋現行列表的進階篩選列（桌機用這支、手機用 ContractsAdvanceSearchBlockM.jsx）沒有「通知狀態」（notify_type）這一項。notify_type 只出現在 src/components/Lightbox/ContractsAdvSearch.vue，但全 src 沒有任何地方開啟這個燈箱（grep 'ContractsAdvSearch' 只找到它自己），屬於沒接線的舊元件。另外「是否註冊 JGB 帳號」在現行介面的文字是「租客是否註冊」（src/use/search/modules/tenant_type.js）。現行實際有的篩選還包括國家／縣市／區、經理人、大房東、點交點退、租客身分別、建築類型、合約到期日、來源、標籤等。"
+  },
+  {
+   "id": "jgb/D/contract-search-keyword-scope",
+   "n": 3,
+   "batch": "B10",
+   "note": "句 3：src/use/search/index.js＋submit: router.push({ query: …})＋進階篩選送出時只改目前路由的 query，不會切到 contracts.search，所以畫面標題仍是原本的狀態名稱，不會變成「合約搜尋結果」。只有 src/components/AdvSearchTemplate.vue 會導到 contracts.search，而它只被帳單社宅報表頁使用。此外 contracts.search 的路徑是 /contracts/:status?/search，仍然帶著狀態參數（API 是 getList/${status}），不能說它跟五個狀態頁籤是分開的頁面。"
+  },
+  {
+   "id": "jgb/D/contract-create-entry",
+   "n": 4,
+   "batch": "B10",
+   "note": "句 4：app/Http/Controllers/ContractController.php＋$estate->contracts()->actualContracts()->activeContracts()->count() >= self::MAX_ACTIVE_CONTRACTS_COUNT＋上限只計算使用中的合約（app/Contract.php scopeActiveContracts 的 is_history = 0 且 active = 1，另外 is_newest = 1），歷史合約不算。句子說「一個物件最多可以綁定 10 份合約」是絕對說法，漏掉了「只算使用中」這個條件（同一物件的歷史合約加上使用中的合約可以超過 10 份）。正確的條件寫在句 6；後半段的例子（舊約執行中也能先簽新約）本身成立。"
+  },
+  {
+   "id": "jgb/D/contract-rentbasic-template-and-dates",
+   "n": 9,
+   "batch": "B11",
+   "note": "句 9：不成立。app/Http/Controllers/ContractController.php＋`'label' => ___('自製合約')`：客製化契約書（`contract_is_existing == 2`）的合約類型選項是「自製合約」，不在原房東／包租業／代租代管三類內；「只有三種分類」漏此例外（沒有二房東選項本身成立，審核單 #101 裁決只允許寫系統側事實）"
+  },
+  {
+   "id": "jgb/D/contract-tax-invoice",
+   "n": 9,
+   "batch": "B11",
+   "note": "句 9：不成立。src/pages/contracts/edit/taxAndInvoice/index.jsx＋`目前這份合約沒有任何品項會開立發票，帳單不會有發票金額。若確定不需要發票，建議把上方「帳單是否開立發票」改為「否」。`：實際是先告知帳單不會有發票金額，再「若確定不需要發票」才建議改否；句子寫成「應該改否，不然帳單不會有發票金額」，因果被倒置（改為否同樣沒有發票金額）"
+  },
+  {
+   "id": "jgb/D/contract-situation-tab",
+   "n": 1,
+   "batch": "B11",
+   "note": "句 1：不成立。src/pages/contracts/edit/situation/General.vue 有 `t('汽車停車位')`、`t('建物出租型態')`、`本建物(專有部分)是否曾發生兇殺、自殺、一氧化碳中毒或其他非自然死亡情事`，滲漏水欄位在 src/pages/contracts/edit/situation/_parts/__fields/IsWaterLeakageField.vue＋`滲漏水處`；但「內政部規範的項目」這個定性在該分頁與 sources 中都找不到（grep `內政部` 於 situation 目錄無命中，正對照 `非自然死亡` 有命中），屬常識補述"
+  },
+  {
+   "id": "jgb/D/contract-additional-convention",
+   "n": 1,
+   "batch": "B11",
+   "note": "句 1：不成立。src/utils/constants/contract.js＋`termLines: 50`、`textPerLine: 50` 只被 src/pages/contracts/edit/additionalConvention/Index.vue 的 `contentLineBreaker`／`handleTextareaWord` 使用，但 template 的 textarea 是 `@change=\"(e)=>{ editStore.form.additional_terms = e.target.value }\"`，`handleTextareaWord` 與 `state.termLines` 在 template 皆無引用；src/components/Lightbox/ContractCustomAdditionalTerms.vue 只 import 不使用；app/Http/Controllers/ContractController.php＋`$contract->additional_terms = !empty($requestData['additional_terms'])` 也無上限檢查。現行介面不限 50 行×50 字（幫助中心 landlordonboarding04lease_zh-Hant.html 的「最多能寫至 50 行」與程式衝突，以程式為準）"
+  },
+  {
+   "id": "jgb/D/contract-additional-convention",
+   "n": 3,
+   "batch": "B11",
+   "note": "句 3：不成立。建議來自 landlordonboarding04lease_zh-Hant.html＋`若超過 50 行，建議另外寫成一份文字檔`，但其前提「50 行限制」與現行程式不符（見句 1，src/pages/contracts/edit/additionalConvention/Index.vue 未接線 `handleTextareaWord`）"
+  },
+  {
+   "id": "jgb/D/contract-additional-convention",
+   "n": 5,
+   "batch": "B11",
+   "note": "句 5：不成立。同上檔有 `補充條款至多僅限 [s1] 頁 A4 內容，請務必執行「預覽結果」以確認最終呈現。`（1 頁 A4 提示成立），但句子斷言輸入框另有「最多 50 行、每行 50 字」的字元上限，現行 textarea 無此限制（見句 1）"
+  },
+  {
+   "id": "jgb/D/contract-invite-and-review-period",
+   "n": 4,
+   "batch": "B13",
+   "note": "句 4：app/Http/Controllers/ContractController.php＋invite() 一般住宅分支的 whereNotNull('phone_verified_at') 與 $contract->to_user_email = $user->email 都屬實；但同一個 invite() 的社會住宅分支用電話比對時只做 User::where('phone_country_id', $targetCountryId)->where('phone', xxtea_base64_encrypt($targetPhone))，沒有 phone_verified_at 條件 ⇒「用電話比對時，只認已經完成手機驗證的帳號」漏掉社宅合約這個例外。"
+  },
+  {
+   "id": "jgb/D/move-in-checklist-and-responsibility",
+   "n": 3,
+   "batch": "B13",
+   "note": "句 3：resources/views/contract/move-in.blade.php＋「點交備註」與「補充條款」是兩個不同欄位：___('點交備註') 是單行 input（name 為 move_in_note；app/Http/Controllers/ContractController.php 的 $maxLength = 100、tooltip「[s1]最多可輸入[s2]字」），___('補充條款') 才是 limited-textarea additional_terms＋___('限制填寫20行，每行限制50字，超過部分系統會自動進行裁切')；社宅頁 src/pages/contracts/move-in/Index.vue 也分開列 t('點交備註最多可輸入 [s1] 字', [100]) 與補充條款 [20, 50] ⇒ 把點交備註當成補充條款、套用 20 行×50 字不成立。"
+  },
+  {
+   "id": "jgb/D/move-out-checklist-and-damage",
+   "n": 4,
+   "batch": "B13",
+   "note": "句 4：src/pages/contracts/move-out/Index.jsx＋t('儲存點退草稿') 屬實；但「草稿儲存失敗，請稍後再試」只出現在 catch（例外／連線失敗）。API 回 success=false 時顯示的是 response?.message || t('草稿儲存失敗')，而 app/Http/Controllers/ContractController.php 的 draft-save 會回 ___('您沒有權限執行此操作')、___('此合約狀態不允許編輯點退資訊')、___('資料格式錯誤')、___('家具賠償備註長度不可超過 300 字') 或 ___('草稿儲存失敗') ⇒「儲存失敗時畫面會提示『草稿儲存失敗，請稍後再試』」漏掉其他失敗訊息。"
+  },
+  {
+   "id": "jgb/D/move-out-bill-generation",
+   "n": 1,
+   "batch": "B13",
+   "note": "句 1：src/pages/contracts/move-out/Index.jsx＋系統點退第一步（可以填損壞賠償的那一步）畫面標題是 t('設備損壞確認')；t('點退清單') 只出現在「上傳點退文件」模式的第一步，而那個模式只顯示 PDF、不能填賠償 ⇒「第一步在『點退清單』確認設備有沒有損壞，有損壞就填寫賠償金額與理由」把介面標籤配錯畫面；第二步 pageTitle={t('點退找補費用')} 屬實。"
+  },
+  {
+   "id": "jgb/D/renew-batch-entry-and-selection",
+   "n": 2,
+   "batch": "B14",
+   "note": "句 2：src/pages/contracts/pick/Index.jsx `isBatchRenew` 分支只回傳 `{ agent: state.agentOptions, label: state.labelOptions }`，不含 keyword_for 六種範圍；src/pages/estates/pick/_parts/SearchSortBlock.vue 註解「某些 action(如續約 batchRenew)…」且只在 keyword_for.pairs 非空時才顯示範圍下拉。實際批次續約挑選頁只有一個關鍵字框（placeholder「搜尋物件名稱、物件地址、租客姓名」）加物件經理人／標籤過濾，沒有案名/地址/經理人/大房東/租客/ID 六種範圍可選（六種範圍只給其他 action 與 MEMBER_OWNED_CONTRACT）。"
+  },
+  {
+   "id": "jgb/D/renew-signing-flow",
+   "n": 2,
+   "batch": "B14",
+   "note": "句 2：landlordonboarding04lease_zh-Hant.html 寫【立即簽名】，但現行介面按鈕是 t('立即簽約')（src/pages/contracts/_parts/show/signerInfo/ButtonArea.jsx、src/pages/contracts/_parts/SignerInfoCard.jsx）；grep「立即簽名」於 src、resources/views 0 命中（正對照「立即簽約」有命中）。加引號介面文字不存在於現行介面。"
+  },
+  {
+   "id": "jgb/D/renew-data-carryover-rules",
+   "n": 3,
+   "batch": "B14",
+   "note": "句 3：src/pages/contracts/renew/Index.vue 續約頁除日期、繳費週期、帳單週期制度與簽約設定外，單選紙本合約時還有 t('合約檔案') 上傳，「只能設定…」漏列；且續約帳單頁現行介面標題是 src/pages/contracts/renew/Preview.vue t('確認續約帳單')，grep「續約預覽」只出現在程式註解（src/components/TaxCalculationBlock.jsx、src/pages/bills/edit/_parts/FeesBlock.jsx），不是介面文字。"
+  },
+  {
+   "id": "jgb/D/entrusted-contract-lease-type",
+   "n": 1,
+   "batch": "B14",
+   "note": "句 1：src/pages/entrustedContracts/edit/requirement/Basic.jsx t('委託約類型')（t('包租合約')／t('代管合約')）、t('委託約起迄日期')、紙本（document_type 1）上傳 t('委託約檔案') 皆成立；但客製化（document_type 2）的 t('委託約範本') 下拉是 `disabled={props.info.document_type === 2}`，選項固定為 src/pages/entrustedContracts/edit/Index.jsx contractsTypeOptions 唯一的 t('自製合約')，使用者無法「選」範本，旁邊改為 t('編輯電子簽章底稿')。"
+  },
+  {
+   "id": "jgb/D/entrusted-contract-landlord-info",
+   "n": 1,
+   "batch": "B14",
+   "note": "句 1：src/pages/entrustedContracts/edit/landlordInfo/LandlordInfo.jsx t('是否預設本合約之房東註冊 JGB 會員') 與 ChoiceToggler「房東註冊／房東免註冊」存在，但兩個選項都 `disabled: props.info.document_type == 2`——以「電子合約 - 客製化契約書」建立的委託合約不能在此選擇，句子漏了此例外。"
+  },
+  {
+   "id": "jgb/E/bill-actions-progress",
+   "n": 2,
+   "batch": "B15",
+   "note": "句 2：不成立。同上，收款帳單分頁 bulkActions 的 case 'income-progress' 是 toReceived、invoiced，再依 ['ready', 'income'] 附加 label: t('匯出')，這部分相符。但帳單總表走 genBulkActions，附加的是 exportAction，label 為 t('匯出帳單')（匯出中顯示 t('匯出中')），不是「匯出」。句子把兩個分頁的按鈕都寫成「匯出」，帳單總表那一半的引號介面文字與畫面不符。其餘斷言（isManualInvoiceEnabled 才保留開立發票、bulk 沒有 revertToReady）成立。"
+  },
+  {
+   "id": "jgb/E/bill-actions-received",
+   "n": 9,
+   "batch": "B15",
+   "note": "句 9：不成立。app/Notification.php 的 case 'bill_paid': // 線上已付款 or 線下按下移至已到帳 只有在 switch ($roleConfigRuleKey . '-' . $creditorRoleConfigRuleKey) 命中 case '1-2'、case '1-3'（收款方是個人或法人房東）時才寄信給租客。收款方是社會住宅（config/role.php 中 '4' => '社會住宅'）時為 '1-4'，沒有對應 case，不寄任何通知信。「系統會自動寄一封通知信給租客」少了社會住宅這個身分例外。附收據、特定合作團隊不附（suppressReceiptEmailAttachment）、前端沒有重寄按鈕（src 內 grep 重寄 0 筆，正對照 編輯收款備註 有命中）這幾點成立。"
+  },
+  {
+   "id": "jgb/E/bill-actions-expense-paid",
+   "n": 1,
+   "batch": "B15",
+   "note": "句 1：不成立。src/use/config/useBillTypes.js 的 case 'expense-paid' 對 landlord 走 state.assembleOptions(canViewOwnedBill, canEditOwnedBill, result)；editReceivedRemark 與 archive 都是 permission: 'add_bill'，沒有 add_bill／owner_bill（「新增&編輯&刪除所屬／所有帳單」）權限的成員看不到，「一律」不成立（同批 jgb/E/bill-actions-received 句 1 有寫出這個權限條件）。收據與退款對帳單分別要 has_income_only_receipt、has_refund_statement，app/Bill.php 的 shouldGenerateIncomeOnlyReceipt() 以 isRefundDirection() 為條件，這一半成立。"
+  },
+  {
+   "id": "jgb/E/bill-list-export",
+   "n": 1,
+   "batch": "B15",
+   "note": "句 1：不成立。主斷言成立：src/use/config/useBillTypes.js 的 commonActions 沒有 'all-' 的 case，所以沒有右上角按鈕；genBulkActions 在 route.params?.type === 'all' 時附加 exportAction（t('匯出帳單')）。但括號裡引用的介面文字「全選」在帳單列表上不存在：src/pages/bills/_parts/ListTable.jsx 的表頭是 rowSelection 核取方塊 onSelectAll，沒有文字；跨頁全選在 src/components/SurelyVue/Common/PickAllFooter.vue，文字是 t('選取全部 [s1] 個項目')。"
+  },
+  {
+   "id": "jgb/E/bill-list-export",
+   "n": 2,
+   "batch": "B15",
+   "note": "句 2：不成立。src/pages/bills/_parts/ListTable.jsx 的表頭核取方塊 onSelectAll 只把「當頁」selectedRows 加進 pickedItems，不會把其他頁一起選，此時走 ID 模式（POST billIds）。要「連同其他頁一起選」得點 src/components/SurelyVue/Common/PickAllFooter.vue 的「選取全部 [s1] 個項目」（src/pages/bills/list/Index.jsx 的 onPickAll 塞入 { id: 'all' }），之後才走 src/use/config/useBillTypes.js handleExportClick 的 fromList 篩選條件匯出。句子把表頭核取方塊等同於整批全選，與程式不符。"
+  },
+  {
+   "id": "jgb/E/bill-list-export-other-tabs",
+   "n": 1,
+   "batch": "B15",
+   "note": "句 1：不成立。同上，按鈕文字確實是 ready-draft 的 t('匯出帳單')、expense 與 balance 的 t('匯出')，都開 billListExportOld。但每顆都帶 permission: 'export_bill'，commonActions 會以 hasPermission(node?.main?.permission …) 濾掉，全部被濾掉時回傳 null。沒有「匯出帳務資料」權限的成員看不到，「一律有」漏了權限例外。"
+  },
+  {
+   "id": "jgb/E/bill-list-income-export-social-housing",
+   "n": 1,
+   "batch": "B15",
+   "note": "句 1：不成立。src/use/config/useBillTypes.js 的 case 'income-…' 在 !isEmpty(store.state.userData.role.config_rule_key) 時建立 t('匯出帳單')，但同時帶 permission: 'export_bill'，最後依權限過濾。「只要…有設定值就會顯示」「等同於一律會顯示」漏了匯出權限這個條件。config/role.php 的 '2'、'3'、'4' 都是 landlord，key 必定有值，這部分成立。"
+  },
+  {
+   "id": "jgb/E/bill-cvs-barcode-overdue-payment",
+   "n": 1,
+   "batch": "B15",
+   "note": "句 1：不成立。app/Http/Controllers/PaymentController.php 的 case 'newebpay-cvs' 確實沒有期限檢查，但不是「只看交易狀態是不是成功」：除了 if ($requestData['Status'] !== 'SUCCESS') return，還有 if ((int)$result['Amt'] !== (int)$payment->price) return（金額不符不入帳）、if ($payment->isPaided()) return（已付款略過）以及回傳欄位缺漏檢查。句中的「只看」漏了這些條件。"
+  },
+  {
+   "id": "jgb/E/bill-receipt-feature-roadmap",
+   "n": 1,
+   "batch": "B15",
+   "note": "句 1：不成立。src/use/config/useBillTypes.js 的「收據」一律顯示（特定合作團隊改下載押金收據），這部分成立。但 app/Notification.php 的 case 'bill_paid' 只有在 case '1-2'、case '1-3'（收款方是個人或法人房東）時才寄信給租客；收款方是社會住宅（config/role.php 的 '4'）時為 '1-4'，沒有對應 case，不寄信。押金設算息帳單也不寄（BILL_TYPE_DEPOSITRATE break）。docs/knowledge/jgb-product-facts.md #p914-receipt-email 同樣沒寫這些例外，以程式為準，「帳單轉為已付款時，系統也會自動寄送通知信給租客」漏了身分例外。"
+  },
+  {
+   "id": "jgb/E/bill-internal-note-visibility",
+   "n": 2,
+   "batch": "B16",
+   "note": "句 2：app/Http/Controllers/BillController.php＋buildBillSingleData 中 \\App\\BillAdditions::canAccessInternalNote($role, $this->user, $bill) 不通過時 unset($billData['additions']['internal_note'])。app/BillAdditions.php＋canAccessInternalNote 是看『檢視者身分』：租客、大房東回 false；(int) $bill->owner_role_id !== (int) $role->id 也回 false。實際規則是『不是這張帳單管理方團隊的人拿不到這個欄位』，不是『帳單本身沒有內部備註這項資料』。同一張 B2B 帳單，管理方團隊仍看得到。句中把它寫成帳單屬性（並舉『B2B 對方付款的帳單』為例），與程式不符。"
+  },
+  {
+   "id": "jgb/E/bill-payment-method-account-pair",
+   "n": 2,
+   "batch": "B16",
+   "note": "句 2：src/pages/bills/edit/Index.jsx＋isRechargeAccountMethod 不套用成對規則，例外本身成立。但 src/pages/bills/edit/_parts/BillCreatePaymentSelector.vue＋<template v-if=\"isRechargePicked\"> 仍顯示 <h5>{{ t('收款帳戶') }}</h5> 與唯讀的 rechargeAccountLabel（註解『唯讀：帳號綁在合約上，不提供挑選』）。畫面上其實有收款帳戶欄（唯讀、不能選），句中『本來就沒有對應的收款帳戶欄位』與畫面不符。"
+  },
+  {
+   "id": "jgb/E/bill-payment-method-account-pair",
+   "n": 3,
+   "batch": "B16",
+   "note": "句 3：src/pages/bills/edit/Index.jsx＋前端的成對檢查只在 handleOpenConfirmLightbox。但『儲存草稿』走 handleSaveDraft → state.updateBill()，同樣 POST /api3/bills/single；app/Http/Controllers/BillController.php＋single() 的 POST 分支會呼叫 validateBillPaymentFields，只填一項時回 ___('請完成付款方式與收款帳戶選擇')。所以存草稿也會被擋，句中『只發生在按下送出…的當下』漏了這個例外。"
+  },
+  {
+   "id": "jgb/E/bill-power-reading-draft-defaults",
+   "n": 1,
+   "batch": "B16",
+   "note": "句 1：docs/knowledge/jgb-product-facts.md＋#p914-power-reading-draft 與 app/Bill.php＋'現在草稿階段度數留空'，講的都是資料庫裡存的值。現行編輯頁畫面不是這樣：app/Http/Controllers/BillController.php＋buildBillSingleData 在物件 has_iot 時取得 manufacturerDeviceId，傳給 formatAdditionalData；app/Detail.php＋formatBasicData 對『待發送、一般帳單、合約電費列』，在 if (!$hasMeasurementAfter) 時執行 $amountOfUsedNew = $meterReading。也就是說，物件綁定電錶時，草稿編輯頁的當期度數欄一打開就會顯示電錶讀數，不是空的。按鈕的部分成立：src/pages/bills/edit/_parts/FeesBlock.jsx＋t('取得即時電錶度數')（特定合作團隊不顯示）；BillController.php＋currentMeter 回 ___('此物件未綁定智能電表')。依判定規則 5，畫面行為以程式為準，所以『欄位預設是空的』不成立。"
+  },
+  {
+   "id": "jgb/E/balance-invoice-timing",
+   "n": 3,
+   "batch": "B17",
+   "note": "句 3：app/Console/Kernel.php＋「balance-invoice:update-status')->dailyAt('01:05')」「balance-invoice:update-realtime-stats')->everyTwoHours()」。排程本身存在，但有兩處與現行程式不符。(1) 狀態不只靠每日排程：app/Services/BalanceInvoiceService.php 的 updateGroup 在存檔時就會呼叫「$updateData['status'] = $this->calculateGroupStatus(」立即更新。(2) 每 2 小時跑的 app/Console/Commands/UpdateBalanceInvoiceRealtimeStats.php 只寫 realtime_total_cost／realtime_total_income 兩個欄位，而且讀寫的是 app/Models/BalanceInvoiceGroup.php 這支模型；畫面上的「累積成本」「累積收入」是 BalanceInvoiceService.php 的 getGroupList 在每次查詢時，由已開票月結（is_invoiced=true）的 monthly_cost、balance_amount 當場算出來的。grep realtime_total 在 src 與 app/Services 都是 0 筆，正對照 isRentItemForDirection 在 app/Services/BalanceInvoiceService.php 有 9 筆。所以這兩欄並不是每 2 小時更新。"
+  },
+  {
+   "id": "jgb/E/balance-invoice-group-action-menu",
+   "n": 7,
+   "batch": "B17",
+   "note": "句 7：src/components/SurelyVue/BalanceInvoices/ActionsCell.vue＋「title=查看歷程」的獨立按鈕。這個元件只用在列表頁 src/pages/balanceInvoices/list/_parts/ListTable.vue（handleOpenActivityLog）。詳細頁 src/pages/balanceInvoices/groups/Index.vue 用的是 OverviewHeader 的 actionMenuItems，沒有任何歷程按鈕：grep ActivityLog 在 src/pages/balanceInvoices 只命中 ListTable.vue，正對照 OverviewHeader 在 groups/Index.vue 有命中。前一句才剛區分列表頁與詳細頁，本句卻沒限定頁面，說「動作選單旁邊另外有」，實際只有列表頁有，漏了詳細頁這個例外。"
+  },
+  {
+   "id": "jgb/E/balance-invoice-rent-item-rule",
+   "n": 1,
+   "batch": "B17",
+   "note": "句 1：app/Services/BalanceInvoiceService.php＋isRentItemForDirection（is_editable=0 時看 in_array($item->name, self::rentNatureItemNames())，名單在 config/item.php 的 balance_invoice_rent_names：'租金'、'退租金'；is_editable=1 時看「$item->nature === '租金'」），前半句成立。但結尾說「判斷依據不是這筆帳單是哪一種帳單」與程式不符：calculateMonthlyIncome、captureTransactionSnapshot、prepareExcelDataRows 三處都先過濾帳單類型「->whereIn('type', [\\App\\Bill::BILL_TYPE_RENT, \\App\\Bill::BILL_TYPE_MOVEOUT, \\App\\Bill::BILL_TYPE_CREATE])」。app/Bill.php 另有 BILL_TYPE_AMERCEMENT=4、BILL_TYPE_TOPUP=5、BILL_TYPE_DEPOSITRATE=6，這三類帳單上的品項不論名稱或性質一律不計入。所以帳單類型確實是判斷依據之一；只有在 1／2／3 類（含點退）帳單裡，才逐品項判斷。"
+  },
+  {
+   "id": "jgb/E/balance-invoice-anomaly-list",
+   "n": 1,
+   "batch": "B17",
+   "note": "句 1：前半成立。app/Http/Controllers/Admin/InvoiceFailureController.php＋「$pageSetting['title'] = '發票異常盤查'」是後台內部頁；app/Services/InvoiceFailureAuditService.php 的 rejectExpectedNonIssuedBills 中「if (!$balanceInvoiceService->isBillBelongsToGroup($bill)) { return true; }」，不在群組的帳單會留在名單上。業者端的篩選見 src/use/search/modules/billInvoiceStatus.js「invoiceAbnormal: '發票異常'」。後半「實際盤查與處理只在 JGB 內部客服後台進行，此操作需由 JGB 客服協助」與程式不符：該篩選旁的註解寫「原該開立但開立失敗…供快速撈出重開」；app/Bill.php 的 case 'invoiceAbnormal' 註解寫「供業者快速撈出重開」；app/Services/InvoiceService.php 的 canManualIssue／issueInvoice($bill, $role, $isManual) 讓業者自己手動開立。所以業者可以自行處理，不是只能由客服處理。另外，盤查名單也收「未開發票（逾期）」（invoice_status=PREPARE）的帳單，業者用「發票異常」篩選看不到這一類（app/Bill.php 的 invoiceAbnormal 只撈 INVOICE_STATUS ABNORMAL=2），所以「可用發票異常篩選看到這類帳單」也只對一部分成立。"
+  },
+  {
+   "id": "jgb/E/recharge-account-vs-single-use-atm",
+   "n": 1,
+   "batch": "B18",
+   "note": "句 1：不成立。斷言「要手動建立的固定帳號」：routes/api.php＋'External\\RechargeAccountApiController@store'（註解'匯入虛擬帳號資料'）與 app/Http/Controllers/External/RechargeAccountApiController.php＋'storeWithTenant' 顯示固定虛擬帳號也可由對外 API 匯入建立，不只手動；另「過期後要重新走一次繳費流程才會再產生新的一組」在 docs/knowledge/jgb-product-facts.md 的 p914-newebpay-atm-expiry 條沒有寫，查無支撐。180 天部分成立（app/Http/Controllers/BillController.php＋''addExpireDays' => 180'）"
+  },
+  {
+   "id": "jgb/E/newebpay-required-fields",
+   "n": 2,
+   "batch": "B18",
+   "note": "句 2：不成立。app/Http/Controllers/UserController.php 的 getPaymentVendor POST 藍新分支，團隊 needsToFills 為 'company_id_number'、'company_name'、'company_city_id'、'company_district_id'、'company_address'，但缺資料時的 switch 只有 'case Role::RULE_KEY_LANDLORD_CORPORATE:' 回 ''redirect' => route('users.role')'；社會住宅團隊（RULE_KEY_LANDLORD_SOCIAL_HOUSING）不會被導回團隊頁，而是往下跑 Validator 回錯誤訊息。所以「團隊帳號沒填完會被導回團隊頁面」漏了社會住宅這個例外。手機與 Email 的部分成立（''roles-users' => []'、'手機號碼與Email改由申請表單自行填寫'）"
+  },
+  {
+   "id": "jgb/E/newebpay-required-fields",
+   "n": 3,
+   "batch": "B18",
+   "note": "句 3：不成立。同上，app/Http/Controllers/UserController.php 只有一般法人（RULE_KEY_LANDLORD_CORPORATE）會帶 redirect 與缺漏清單（src/mixin/methods.js＋'status-error' 帶 message 跳轉）；社會住宅團隊不會導回團隊頁"
+  },
+  {
+   "id": "jgb/E/ctbc-form-validation",
+   "n": 3,
+   "batch": "B18",
+   "note": "句 3：不成立。後端 app/Http/Controllers/UserController.php 是 ''bank_account' = 'required|digits_between:10,16''，也有 'str_pad($requestData['bank_account'], 16, '0', STR_PAD_LEFT)'；但現行畫面 src/pages/users/payment/_parts/Ctbc.vue 的銀行帳號輸入框是 'maxLength=\"14\"'，使用者最多只能填 14 碼，「可以輸入 10 到 16 碼」在畫面上不成立"
+  },
+  {
+   "id": "jgb/F/repair-list-columns",
+   "n": 2,
+   "batch": "B19",
+   "note": "句 2：app/Http/Controllers/RepairController.php＋'main_agent' 取 agent_user_id、'tenant'=> $repair->tenant_info；app/Repair.php＋getTenantAttribute 名為 getTenantInfoAttribute，只在 to_user_id／to_role_id 有值時查資料、不查物件現行承租人，這部分成立。但「只有提出申請的人是租客本人時才會有值、房東方提出的就一定是空的」漏掉例外：app/Http/Controllers/External/RepairApiController.php＋'to_user_id' => $contract->to_user_id（routes/api.php＋Route::post('/repairs', 'External\\RepairApiController@store')），房東方透過對外 API 帶 contract_id 建立的修繕單會寫入租客資料，租客欄就會有值；RepairController.php 建單的合約分支（'contract_id' => $contract->id）也會寫入 to_user_id。絕對句漏例外 ⇒ 不成立。"
+  },
+  {
+   "id": "jgb/F/repair-list-contact-card",
+   "n": 1,
+   "batch": "B19",
+   "note": "句 1：前半（點欄位彈出聯絡資訊卡）有 src/pages/repair/list/Index.vue 支撐；但括號內「這欄沒有聯絡人資料時會跳出『沒有聯絡人資訊』提示」不成立：src/components/SurelyVue/Common/SingleUserCell.vue＋v-if=\"isEmpty(props?.id) || isEmpty(props?.name)\" 只顯示 '-'，且這個分支沒有 @click，空白欄點了不會呼叫 open；src/use/useContactCard.ts＋t('沒有聯絡人資訊') 只在 open() 收到空資料時觸發，從這個列表永遠走不到。來源實際是：沒有資料的欄位顯示「-」、不可點、不跳任何提示。"
+  },
+  {
+   "id": "jgb/F/repair-apply-flow-and-entry",
+   "n": 1,
+   "batch": "B19",
+   "note": "句 1：app/Role.php＋'修繕管理'／'我的報修' 下的 '修繕單總表' 成立；但「頁面右上角都有『新增修繕單』按鈕」對房東方是絕對句，漏掉權限例外：src/pages/repair/list/Index.vue＋房東方須 permission?.edit_repair || permission?.edit_owner_repair 才顯示按鈕，沒有這兩項權限的房東方帳號看不到。絕對句漏權限例外 ⇒ 不成立（權限條件只在同條句 4 才出現）。"
+  },
+  {
+   "id": "jgb/F/repair-share-visibility-summary",
+   "n": 3,
+   "batch": "B20",
+   "note": "句 3：前半（產生資料時不核對瀏覽者身分）成立：app/Http/Controllers/RepairController.php＋$isShare 分支無身分比對、'is_big_landlord' => (!$isShare && ...) 分享時固定 false。但後半「不管有沒有登入、登入的是誰，看到的內容都一樣」不成立：src/pages/repair/share/Index.vue＋:showAmount=\"store.state.userData?.role?.config_rule_type === 'landlord'\" 使登入身分為房東的瀏覽者會多看到「結算金額」，未登入或租客身分則看不到——這正是本條句 2 的內容，絕對句漏掉此例外。"
+  },
+  {
+   "id": "jgb/G/power-meter-list-sort",
+   "n": 2,
+   "batch": "B21",
+   "note": "句 2：src/entry/iot.js＋iot: { sortOptions: { 1: t('設備描述(大)'), 2: t('設備描述(小)') } }＋resources/views/iot/index.blade.php 的 <list-search-bar :sort-options=\"iot.sortOptions\"> 在門鎖／攝影機／小白盒清單顯示排序選單（src/components/ListSearchBar.vue 在 sortOptions 非空時 render），app/Http/Controllers/IotController.php device() 也把 sort 傳進 Iot::search 依 name 排序。實際是這三種清單仍有「設備描述(大／小)」可選，只是沒有目前電度、預計可用電度兩組；句子說「沒有這些排序選項可選」不成立。"
+  },
+  {
+   "id": "jgb/G/power-meter-service-expiry",
+   "n": 2,
+   "batch": "B21",
+   "note": "句 2：src/pages/iots/_parts/ManufacturerServiceNotice.jsx＋consequence() 的 t('目前無法儲值送電，電錶度數也不會更新，請盡快向[s1]續訂。', [vendor]) 與 t('到期後將無法儲值送電，電錶度數也不會更新，請盡快向[s1]續訂。', [vendor])＋[s1] 代入的是廠商名稱（app/Iot.php IOT_MANUFACTURERS 的 'name'，例如「台科電雲端儲值系統」），畫面實際寫「請盡快向台科電雲端儲值系統續訂。」，不是句中加引號的「請盡快向該廠商續訂」；加引號文字非逐字存在，依規則 2 不成立（帳號以 t('帳號') 顯示、30 天內才用 warning 文案兩點本身成立）。"
+  },
+  {
+   "id": "jgb/G/power-meter-list-row-fields",
+   "n": 4,
+   "batch": "B21",
+   "note": "句 4：app/Jobs/DaeJob.php＋「若台科電有回傳低電鍍設定值先依照設定值，沒有就用JGB系統預設20」、$lowMeterValue = 20; if ( array_key_exists('lower-limit-credit-value', $deviceInfo) )＋門檻在廠商有回傳時才用廠商值，沒回傳時是 JGB 預設 20，不是一律由廠商同步；句子說「這個警報的門檻值是廠商那邊同步過來的」漏掉預設值例外，不成立。其餘斷言成立：src/pages/iots/_parts/PowerTag.jsx t('低電度警報')；low_meter_alert 只在 app/Jobs/DaeJob.php 寫入（app/Http/Controllers/Admin/CustomerServiceController.php 只讀），前端無調整入口；src/pages/iots/list/Index.jsx 在 route.params.type === 'topUp' 且清單非空時顯示 t('若欲修改低電度警報，請至 [s1] 修改低電度警報數值。') 並連到 t('台科電雲端儲值系統')。"
+  },
+  {
+   "id": "jgb/G/power-meter-topup-flow",
+   "n": 5,
+   "batch": "B21",
+   "note": "句 5：app/Iot.php＋getTopUpLog 的 $query->where('is_finish', '=', 1)＋src/pages/iots/edit/Log.jsx 讀 /api3/iots/powerMeter/topUpLog（app/Http/Controllers/IotController.php topUpLog 用 Iot::getTopUpLog）；is_finish 由 IotController.php updateStateFromeRemote 在廠商回報任務完成後才 update 'is_finish' => 1。儲值送出當下只建立帳單，尚未繳費、入錶完成前「電錶儲值歷程」查不到這一筆；句子說送出後即可查到，不成立（欄位：儲值時間、儲值金額、儲值前／後金額、操作者本身正確）。"
+  },
+  {
+   "id": "jgb/G/device-page-shared-list",
+   "n": 2,
+   "batch": "B21",
+   "note": "句 2：resources/views/iot/index.blade.php＋<list-search-bar :sort-options=\"iot.sortOptions\">＋src/entry/iot.js iot.sortOptions = { 1: t('設備描述(大)'), 2: t('設備描述(小)') }，src/components/ListSearchBar.vue 在 !isEmpty(props.sortOptions) 時顯示排序下拉；app/Http/Controllers/IotController.php device() 也把 'sort' 傳給 Iot::search。實際有依設備描述大／小排序的選單；前半句搜尋選項（select-picker name 描述／sn 序號／model 設備型號／estates_name 所屬物件名稱）成立，但「沒有大小排序選單」不成立。"
+  },
+  {
+   "id": "jgb/I/pricing-plan-price-basis",
+   "n": 2,
+   "batch": "B22",
+   "note": "句 2：無法判定：app/Helper.php get_plan_price 的 ×10／×12 只在 \"case 'basic':\" 分支（'$planEstatePrice['number_min'] == 10' 時 ×12，否則 ×10）；同函式另有 \"case 'unit':\" 分支，年繳＝物件數×unit_price×12×plan_durations.estate_discount/100，不保證等於 10 個月。各級距實際是哪一種 price_type 存在 DB plan_estate_prices，匯出內查不到；app/Console/Commands/UserIdentityMonthlyStat.php 註解只說明 10～19 級距為 basic，無 50 以上級距的資料。"
+  },
+  {
+   "id": "jgb/I/demo-form-fields",
+   "n": 2,
+   "batch": "B23",
+   "note": "句 2：無法判定：src/pages/listings/DemoForm.vue＋t('所有資訊皆必填')、allDone 的 10 欄與 isPrivacyCheck 控制 btn-grey／btn-main、button type=\"submit\" 未 disabled，這幾點成立；但職稱、物件數量、團隊人數三欄是 @vueform/multiselect 元件（package-lock.json＋\"node_modules/@vueform/multiselect\" \"version\": \"2.5.1\"），required 只是傳給元件的屬性，匯出內沒有套件原始碼，無法證實瀏覽器原生驗證會在這三欄擋下送出，所以「每個欄位都靠瀏覽器內建必填檢查擋下」證據不足。"
+  },
+  {
+   "id": "jgb/I/demo-form-actual-validation-scope",
+   "n": 1,
+   "batch": "B23",
+   "note": "句 1：後半成立：app/Http/Controllers/IndexController.php＋demoForm $rule 只有 'company_name' => 'required'、'name' => 'required'、'tel' => 'required'、'email' => 'required|email'。前半無法判定：src/pages/listings/DemoForm.vue＋職稱、物件數量、團隊人數三欄是 Multiselect 元件（套件 @vueform/multiselect，package-lock.json 鎖定 2.5.1），required 只是傳給元件的屬性，匯出內沒有套件原始碼，無法證實瀏覽器會因這三欄未填而擋下送出；後端也不檢查這三欄。"
+  }
+ ],
+ "valid_batches": 24,
+ "holding_sentences": [
+  [
+   "jgb/A/register-email-steps",
+   1
+  ],
+  [
+   "jgb/A/register-email-steps",
+   2
+  ],
+  [
+   "jgb/A/register-email-steps",
+   3
+  ],
+  [
+   "jgb/A/register-email-steps",
+   4
+  ],
+  [
+   "jgb/A/register-email-steps",
+   5
+  ],
+  [
+   "jgb/A/register-tenant-contract-invitation",
+   1
+  ],
+  [
+   "jgb/A/register-tenant-contract-invitation",
+   2
+  ],
+  [
+   "jgb/A/register-tenant-contract-invitation",
+   3
+  ],
+  [
+   "jgb/A/register-tenant-contract-invitation",
+   4
+  ],
+  [
+   "jgb/A/register-tenant-contract-invitation",
+   5
+  ],
+  [
+   "jgb/A/register-tenant-contract-invitation",
+   6
+  ],
+  [
+   "jgb/A/register-tenant-contract-invitation",
+   7
+  ],
+  [
+   "jgb/A/register-sso",
+   1
+  ],
+  [
+   "jgb/A/register-sso",
+   2
+  ],
+  [
+   "jgb/A/register-sso",
+   3
+  ],
+  [
+   "jgb/A/register-captcha-expired",
+   1
+  ],
+  [
+   "jgb/A/register-captcha-expired",
+   2
+  ],
+  [
+   "jgb/A/register-captcha-expired",
+   3
+  ],
+  [
+   "jgb/A/register-captcha-expired",
+   4
+  ],
+  [
+   "jgb/A/register-email-verify-resend",
+   1
+  ],
+  [
+   "jgb/A/register-email-verify-resend",
+   2
+  ],
+  [
+   "jgb/A/register-email-verify-resend",
+   3
+  ],
+  [
+   "jgb/A/register-email-verify-resend",
+   4
+  ],
+  [
+   "jgb/A/register-password-rule",
+   1
+  ],
+  [
+   "jgb/A/register-password-rule",
+   2
+  ],
+  [
+   "jgb/A/register-password-rule",
+   3
+  ],
+  [
+   "jgb/A/register-email-already-registered",
+   1
+  ],
+  [
+   "jgb/A/register-email-already-registered",
+   2
+  ],
+  [
+   "jgb/A/register-email-already-registered",
+   3
+  ],
+  [
+   "jgb/A/register-phone-bind",
+   1
+  ],
+  [
+   "jgb/A/register-phone-bind",
+   2
+  ],
+  [
+   "jgb/A/register-phone-bind",
+   3
+  ],
+  [
+   "jgb/A/register-phone-bind",
+   4
+  ],
+  [
+   "jgb/A/register-phone-bind",
+   5
+  ],
+  [
+   "jgb/A/register-phone-already-bound",
+   1
+  ],
+  [
+   "jgb/A/register-phone-already-bound",
+   2
+  ],
+  [
+   "jgb/A/register-phone-already-bound",
+   3
+  ],
+  [
+   "jgb/A/register-role-select",
+   2
+  ],
+  [
+   "jgb/A/register-role-select",
+   3
+  ],
+  [
+   "jgb/A/register-verify-code-shape",
+   1
+  ],
+  [
+   "jgb/A/register-verify-code-shape",
+   2
+  ],
+  [
+   "jgb/A/register-email-link-resume",
+   1
+  ],
+  [
+   "jgb/A/register-email-link-resume",
+   2
+  ],
+  [
+   "jgb/A/register-email-link-resume",
+   3
+  ],
+  [
+   "jgb/A/register-email-link-resume",
+   4
+  ],
+  [
+   "jgb/A/login-methods",
+   1
+  ],
+  [
+   "jgb/A/login-methods",
+   2
+  ],
+  [
+   "jgb/A/login-role-select-before",
+   1
+  ],
+  [
+   "jgb/A/login-phone-country-code",
+   1
+  ],
+  [
+   "jgb/A/login-remember-me",
+   1
+  ],
+  [
+   "jgb/A/login-role-redirect",
+   1
+  ],
+  [
+   "jgb/A/login-role-redirect",
+   2
+  ],
+  [
+   "jgb/A/login-role-redirect",
+   3
+  ],
+  [
+   "jgb/A/login-error",
+   1
+  ],
+  [
+   "jgb/A/login-error",
+   2
+  ],
+  [
+   "jgb/A/login-error",
+   3
+  ],
+  [
+   "jgb/A/login-forget-password-link",
+   1
+  ],
+  [
+   "jgb/A/login-forget-account-link",
+   1
+  ],
+  [
+   "jgb/A/login-no-account-register-link",
+   1
+  ],
+  [
+   "jgb/A/login-identity-switch",
+   1
+  ],
+  [
+   "jgb/A/login-identity-switch",
+   2
+  ],
+  [
+   "jgb/A/forget-account-flow",
+   1
+  ],
+  [
+   "jgb/A/forget-account-flow",
+   2
+  ],
+  [
+   "jgb/A/forget-account-flow",
+   3
+  ],
+  [
+   "jgb/A/forget-account-flow",
+   4
+  ],
+  [
+   "jgb/A/forget-account-flow",
+   5
+  ],
+  [
+   "jgb/A/forget-account-no-phone",
+   1
+  ],
+  [
+   "jgb/A/forget-account-no-phone",
+   2
+  ],
+  [
+   "jgb/A/forget-account-no-phone",
+   3
+  ],
+  [
+   "jgb/A/forget-password-flow",
+   1
+  ],
+  [
+   "jgb/A/forget-password-flow",
+   2
+  ],
+  [
+   "jgb/A/forget-password-flow",
+   3
+  ],
+  [
+   "jgb/A/forget-password-flow",
+   5
+  ],
+  [
+   "jgb/A/forget-password-setpwd-invite",
+   1
+  ],
+  [
+   "jgb/A/forget-password-setpwd-invite",
+   2
+  ],
+  [
+   "jgb/A/dashboard-overview-blocks",
+   1
+  ],
+  [
+   "jgb/A/dashboard-overview-charts",
+   1
+  ],
+  [
+   "jgb/A/dashboard-overview-charts",
+   2
+  ],
+  [
+   "jgb/A/dashboard-big-landlord-view",
+   1
+  ],
+  [
+   "jgb/A/dashboard-team-switch",
+   1
+  ],
+  [
+   "jgb/A/dashboard-team-switch",
+   2
+  ],
+  [
+   "jgb/A/dashboard-team-switch",
+   3
+  ],
+  [
+   "jgb/A/dashboard-occupancy-tab",
+   1
+  ],
+  [
+   "jgb/A/dashboard-occupancy-tab",
+   2
+  ],
+  [
+   "jgb/A/dashboard-occupancy-tab",
+   3
+  ],
+  [
+   "jgb/A/dashboard-shortcuts-list",
+   1
+  ],
+  [
+   "jgb/A/dashboard-shortcuts-list",
+   2
+  ],
+  [
+   "jgb/A/account-phone-bind-status",
+   1
+  ],
+  [
+   "jgb/A/account-email-verify-status",
+   1
+  ],
+  [
+   "jgb/A/account-email-verify-status",
+   2
+  ],
+  [
+   "jgb/A/account-phone-no-change-entry",
+   1
+  ],
+  [
+   "jgb/A/account-phone-no-change-entry",
+   2
+  ],
+  [
+   "jgb/A/account-sso-status",
+   1
+  ],
+  [
+   "jgb/A/account-sso-status",
+   2
+  ],
+  [
+   "jgb/A/account-sso-status",
+   3
+  ],
+  [
+   "jgb/A/account-preference",
+   1
+  ],
+  [
+   "jgb/A/account-preference",
+   2
+  ],
+  [
+   "jgb/A/account-preference",
+   3
+  ],
+  [
+   "jgb/A/account-progress-unlock",
+   1
+  ],
+  [
+   "jgb/A/account-progress-unlock",
+   2
+  ],
+  [
+   "jgb/A/account-save-integrity-check",
+   1
+  ],
+  [
+   "jgb/A/signer-individual-fields",
+   1
+  ],
+  [
+   "jgb/A/signer-individual-fields",
+   2
+  ],
+  [
+   "jgb/A/signer-individual-fields",
+   3
+  ],
+  [
+   "jgb/A/signer-individual-fields",
+   4
+  ],
+  [
+   "jgb/A/signer-corp-fields",
+   1
+  ],
+  [
+   "jgb/A/signer-corp-fields",
+   2
+  ],
+  [
+   "jgb/A/signer-corp-fields",
+   3
+  ],
+  [
+   "jgb/A/signer-corp-fields",
+   4
+  ],
+  [
+   "jgb/A/signer-corp-seals",
+   1
+  ],
+  [
+   "jgb/A/signer-corp-seals",
+   2
+  ],
+  [
+   "jgb/A/signer-broker-manager-fields",
+   1
+  ],
+  [
+   "jgb/A/signer-broker-manager-fields",
+   2
+  ],
+  [
+   "jgb/A/signer-broker-manager-fields",
+   3
+  ],
+  [
+   "jgb/A/signer-edit-permission",
+   1
+  ],
+  [
+   "jgb/A/signer-edit-permission",
+   2
+  ],
+  [
+   "jgb/A/signer-edit-permission",
+   3
+  ],
+  [
+   "jgb/A/signer-address-fields",
+   1
+  ],
+  [
+   "jgb/A/signer-address-fields",
+   2
+  ],
+  [
+   "jgb/A/signer-address-fields",
+   3
+  ],
+  [
+   "jgb/A/signer-address-fields",
+   4
+  ],
+  [
+   "jgb/A/signer-multi-entry-switch",
+   1
+  ],
+  [
+   "jgb/A/signer-multi-entry-switch",
+   2
+  ],
+  [
+   "jgb/A/signer-manage-save-buttons",
+   1
+  ],
+  [
+   "jgb/A/signer-manage-save-buttons",
+   2
+  ],
+  [
+   "jgb/A/notification-center-type-filter",
+   1
+  ],
+  [
+   "jgb/A/notification-center-unread-dot",
+   1
+  ],
+  [
+   "jgb/A/notification-center-unread-dot",
+   2
+  ],
+  [
+   "jgb/A/notification-center-per-page",
+   1
+  ],
+  [
+   "jgb/A/notification-center-permission",
+   1
+  ],
+  [
+   "jgb/A/notification-center-permission",
+   2
+  ],
+  [
+   "jgb/A/notification-center-permission",
+   3
+  ],
+  [
+   "jgb/A/notification-mark-read-navigate",
+   1
+  ],
+  [
+   "jgb/A/notification-mark-read-navigate",
+   3
+  ],
+  [
+   "jgb/A/notification-mark-read-out-of-range",
+   1
+  ],
+  [
+   "jgb/A/notification-navbar-bell",
+   1
+  ],
+  [
+   "jgb/A/notification-navbar-bell",
+   2
+  ],
+  [
+   "jgb/A/notification-navbar-bell",
+   3
+  ],
+  [
+   "jgb/A/notification-settings-extra-emails",
+   1
+  ],
+  [
+   "jgb/A/notification-settings-extra-emails",
+   2
+  ],
+  [
+   "jgb/A/notification-settings-extra-emails",
+   3
+  ],
+  [
+   "jgb/A/notification-settings-extra-emails",
+   4
+  ],
+  [
+   "jgb/A/notification-settings-categories",
+   1
+  ],
+  [
+   "jgb/A/notification-settings-categories",
+   2
+  ],
+  [
+   "jgb/A/notification-settings-categories",
+   3
+  ],
+  [
+   "jgb/A/notification-settings-categories",
+   4
+  ],
+  [
+   "jgb/A/notification-settings-categories",
+   5
+  ],
+  [
+   "jgb/A/notification-settings-categories",
+   6
+  ],
+  [
+   "jgb/A/notification-settings-report-buttons",
+   1
+  ],
+  [
+   "jgb/A/notification-settings-report-buttons",
+   2
+  ],
+  [
+   "jgb/A/notification-settings-report-buttons",
+   3
+  ],
+  [
+   "jgb/A/notification-settings-report-buttons",
+   4
+  ],
+  [
+   "jgb/A/notification-settings-report-buttons",
+   5
+  ],
+  [
+   "jgb/A/notification-settings-report-buttons",
+   6
+  ],
+  [
+   "jgb/A/notification-settings-save",
+   2
+  ],
+  [
+   "jgb/A/notification-settings-save",
+   3
+  ],
+  [
+   "jgb/B/team-basic-info",
+   1
+  ],
+  [
+   "jgb/B/team-basic-info",
+   2
+  ],
+  [
+   "jgb/B/team-basic-info",
+   3
+  ],
+  [
+   "jgb/B/team-ad-contact",
+   1
+  ],
+  [
+   "jgb/B/team-ad-contact",
+   2
+  ],
+  [
+   "jgb/B/team-ad-contact",
+   3
+  ],
+  [
+   "jgb/B/team-delete",
+   1
+  ],
+  [
+   "jgb/B/team-delete",
+   2
+  ],
+  [
+   "jgb/B/team-delete",
+   3
+  ],
+  [
+   "jgb/B/team-delete",
+   4
+  ],
+  [
+   "jgb/B/team-signer-personal-info",
+   1
+  ],
+  [
+   "jgb/B/team-signer-personal-info",
+   2
+  ],
+  [
+   "jgb/B/team-signer-personal-info",
+   3
+  ],
+  [
+   "jgb/B/team-signer-company-info",
+   1
+  ],
+  [
+   "jgb/B/team-signer-company-info",
+   2
+  ],
+  [
+   "jgb/B/team-signer-company-info",
+   3
+  ],
+  [
+   "jgb/B/team-signer-company-info",
+   4
+  ],
+  [
+   "jgb/B/team-signer-agent-info",
+   1
+  ],
+  [
+   "jgb/B/team-signer-agent-info",
+   2
+  ],
+  [
+   "jgb/B/team-signer-agent-info",
+   3
+  ],
+  [
+   "jgb/B/team-signer-manager-info",
+   1
+  ],
+  [
+   "jgb/B/team-signer-manager-info",
+   2
+  ],
+  [
+   "jgb/B/team-signer-stamps",
+   1
+  ],
+  [
+   "jgb/B/team-signer-stamps",
+   2
+  ],
+  [
+   "jgb/B/team-signer-stamps",
+   3
+  ],
+  [
+   "jgb/B/team-multi-company-info",
+   1
+  ],
+  [
+   "jgb/B/team-multi-company-info",
+   2
+  ],
+  [
+   "jgb/B/team-info-no-view-permission",
+   1
+  ],
+  [
+   "jgb/B/team-signer-address-groups",
+   1
+  ],
+  [
+   "jgb/B/team-signer-address-groups",
+   2
+  ],
+  [
+   "jgb/B/team-signer-address-groups",
+   3
+  ],
+  [
+   "jgb/B/team-signer-profile-switch",
+   1
+  ],
+  [
+   "jgb/B/team-signer-profile-switch",
+   2
+  ],
+  [
+   "jgb/B/member-invite",
+   1
+  ],
+  [
+   "jgb/B/member-invite",
+   3
+  ],
+  [
+   "jgb/B/member-role-concept",
+   1
+  ],
+  [
+   "jgb/B/member-role-concept",
+   2
+  ],
+  [
+   "jgb/B/member-role-concept",
+   3
+  ],
+  [
+   "jgb/B/member-role-manage",
+   1
+  ],
+  [
+   "jgb/B/member-role-manage",
+   2
+  ],
+  [
+   "jgb/B/member-role-manage",
+   3
+  ],
+  [
+   "jgb/B/member-remove",
+   1
+  ],
+  [
+   "jgb/B/member-remove",
+   2
+  ],
+  [
+   "jgb/B/member-remove",
+   3
+  ],
+  [
+   "jgb/B/member-remove",
+   4
+  ],
+  [
+   "jgb/B/member-seat-limit",
+   1
+  ],
+  [
+   "jgb/B/member-seat-limit",
+   2
+  ],
+  [
+   "jgb/B/member-assign-owned",
+   2
+  ],
+  [
+   "jgb/B/member-role-permission-list",
+   1
+  ],
+  [
+   "jgb/B/member-role-permission-list",
+   2
+  ],
+  [
+   "jgb/B/member-list-role-inline-change",
+   1
+  ],
+  [
+   "jgb/B/member-role-edit-open-condition",
+   1
+  ],
+  [
+   "jgb/B/member-role-edit-open-condition",
+   2
+  ],
+  [
+   "jgb/B/member-role-edit-reset",
+   1
+  ],
+  [
+   "jgb/B/member-list-sort",
+   1
+  ],
+  [
+   "jgb/B/member-list-role-select-disabled",
+   1
+  ],
+  [
+   "jgb/B/member-list-role-select-disabled",
+   2
+  ],
+  [
+   "jgb/B/biglandlord-list-overview",
+   1
+  ],
+  [
+   "jgb/B/biglandlord-list-overview",
+   3
+  ],
+  [
+   "jgb/B/biglandlord-add",
+   1
+  ],
+  [
+   "jgb/B/biglandlord-add",
+   2
+  ],
+  [
+   "jgb/B/biglandlord-add",
+   3
+  ],
+  [
+   "jgb/B/biglandlord-authorize-estates",
+   1
+  ],
+  [
+   "jgb/B/biglandlord-authorize-estates",
+   2
+  ],
+  [
+   "jgb/B/biglandlord-authorize-estates",
+   3
+  ],
+  [
+   "jgb/B/biglandlord-authorize-estates",
+   4
+  ],
+  [
+   "jgb/B/biglandlord-import-export",
+   1
+  ],
+  [
+   "jgb/B/biglandlord-import-export",
+   2
+  ],
+  [
+   "jgb/B/biglandlord-actions-menu",
+   1
+  ],
+  [
+   "jgb/B/biglandlord-authorize-apply-step",
+   1
+  ],
+  [
+   "jgb/B/biglandlord-authorize-apply-step",
+   2
+  ],
+  [
+   "jgb/B/biglandlord-delete-confirm",
+   1
+  ],
+  [
+   "jgb/B/biglandlord-delete-confirm",
+   2
+  ],
+  [
+   "jgb/B/biglandlord-seat-limit",
+   1
+  ],
+  [
+   "jgb/B/biglandlord-list-empty",
+   1
+  ],
+  [
+   "jgb/B/biglandlord-list-empty",
+   2
+  ],
+  [
+   "jgb/B/biglandlord-batch-template-fields",
+   1
+  ],
+  [
+   "jgb/B/biglandlord-batch-template-fields",
+   2
+  ],
+  [
+   "jgb/B/biglandlord-list-sort",
+   1
+  ],
+  [
+   "jgb/B/biglandlord-report-overview",
+   1
+  ],
+  [
+   "jgb/B/biglandlord-report-overview",
+   2
+  ],
+  [
+   "jgb/B/biglandlord-report-overview",
+   3
+  ],
+  [
+   "jgb/B/biglandlord-report-permission",
+   1
+  ],
+  [
+   "jgb/B/biglandlord-report-permission",
+   2
+  ],
+  [
+   "jgb/B/biglandlord-report-permission",
+   3
+  ],
+  [
+   "jgb/B/biglandlord-report-community-rate",
+   2
+  ],
+  [
+   "jgb/B/biglandlord-sheet-overview",
+   1
+  ],
+  [
+   "jgb/B/biglandlord-sheet-empty",
+   1
+  ],
+  [
+   "jgb/B/biglandlord-sheet-multi-currency",
+   1
+  ],
+  [
+   "jgb/B/biglandlord-sheet-hide-empty-rows",
+   1
+  ],
+  [
+   "jgb/B/biglandlord-sheet-month-drilldown",
+   1
+  ],
+  [
+   "jgb/B/biglandlord-sheet-month-drilldown",
+   2
+  ],
+  [
+   "jgb/B/biglandlord-sheet-load-download-fail",
+   1
+  ],
+  [
+   "jgb/B/biglandlord-sheet-load-download-fail",
+   2
+  ],
+  [
+   "jgb/B/biglandlord-sheet-aside-and-loading",
+   1
+  ],
+  [
+   "jgb/B/biglandlord-sheet-aside-and-loading",
+   2
+  ],
+  [
+   "jgb/B/biglandlord-sheet-aside-and-loading",
+   3
+  ],
+  [
+   "jgb/B/advance-fee-items",
+   1
+  ],
+  [
+   "jgb/B/advance-fee-items",
+   2
+  ],
+  [
+   "jgb/B/advance-fee-items",
+   3
+  ],
+  [
+   "jgb/B/advance-fee-items",
+   4
+  ],
+  [
+   "jgb/B/advance-discount-items",
+   1
+  ],
+  [
+   "jgb/B/advance-discount-items",
+   2
+  ],
+  [
+   "jgb/B/advance-late-fee",
+   1
+  ],
+  [
+   "jgb/B/advance-late-fee",
+   2
+  ],
+  [
+   "jgb/B/advance-additional-terms",
+   1
+  ],
+  [
+   "jgb/B/advance-additional-terms",
+   2
+  ],
+  [
+   "jgb/B/advance-custom-label",
+   1
+  ],
+  [
+   "jgb/B/advance-custom-label",
+   2
+  ],
+  [
+   "jgb/B/advance-custom-label",
+   3
+  ],
+  [
+   "jgb/B/advance-custom-label",
+   4
+  ],
+  [
+   "jgb/B/advance-device-binding",
+   1
+  ],
+  [
+   "jgb/B/advance-device-binding",
+   2
+  ],
+  [
+   "jgb/B/advance-device-binding",
+   3
+  ],
+  [
+   "jgb/B/advance-fee-items-merge",
+   1
+  ],
+  [
+   "jgb/B/advance-fee-items-merge",
+   2
+  ],
+  [
+   "jgb/B/advance-payment-cycle-discount",
+   1
+  ],
+  [
+   "jgb/B/advance-payment-cycle-discount",
+   2
+  ],
+  [
+   "jgb/B/advance-notification-locale",
+   1
+  ],
+  [
+   "jgb/B/advance-notification-locale",
+   2
+  ],
+  [
+   "jgb/B/advance-timezone",
+   1
+  ],
+  [
+   "jgb/B/advance-timezone",
+   2
+  ],
+  [
+   "jgb/B/advance-settlement-currency",
+   1
+  ],
+  [
+   "jgb/B/advance-settlement-currency",
+   2
+  ],
+  [
+   "jgb/B/advance-device-binding-visibility",
+   1
+  ],
+  [
+   "jgb/B/advance-dedicated-account",
+   1
+  ],
+  [
+   "jgb/B/advance-dedicated-account",
+   2
+  ],
+  [
+   "jgb/B/advance-dedicated-account",
+   3
+  ],
+  [
+   "jgb/B/advance-auto-publish-unpublish",
+   1
+  ],
+  [
+   "jgb/B/advance-auto-publish-unpublish",
+   2
+  ],
+  [
+   "jgb/B/advance-contract-label",
+   1
+  ],
+  [
+   "jgb/B/advance-sales-item-code",
+   1
+  ],
+  [
+   "jgb/B/advance-sales-item-code",
+   2
+  ],
+  [
+   "jgb/B/advance-community-labels",
+   1
+  ],
+  [
+   "jgb/B/advance-community-labels",
+   2
+  ],
+  [
+   "jgb/B/advance-short-lease-approval",
+   1
+  ],
+  [
+   "jgb/B/advance-short-lease-approval",
+   2
+  ],
+  [
+   "jgb/B/lessee-tabs",
+   1
+  ],
+  [
+   "jgb/B/lessee-tabs",
+   2
+  ],
+  [
+   "jgb/B/lessee-credit-rating-visibility",
+   1
+  ],
+  [
+   "jgb/B/lessee-crud",
+   1
+  ],
+  [
+   "jgb/B/lessee-crud",
+   2
+  ],
+  [
+   "jgb/B/lessee-notification-status-color",
+   1
+  ],
+  [
+   "jgb/B/lessee-verification-link-expiry",
+   1
+  ],
+  [
+   "jgb/B/lessee-notification-toggle-effect",
+   1
+  ],
+  [
+   "jgb/B/lessee-on-time-pay-rate",
+   1
+  ],
+  [
+   "jgb/B/lessee-list-columns",
+   1
+  ],
+  [
+   "jgb/B/lessee-list-columns",
+   2
+  ],
+  [
+   "jgb/B/lessee-list-columns-by-role",
+   1
+  ],
+  [
+   "jgb/B/lessee-pending-verification-bill-draft",
+   1
+  ],
+  [
+   "jgb/B/lessee-pending-verification-bill-draft",
+   2
+  ],
+  [
+   "jgb/B/lessee-bulk-notify",
+   1
+  ],
+  [
+   "jgb/B/lessee-bulk-notify",
+   2
+  ],
+  [
+   "jgb/B/lessee-bulk-notify",
+   3
+  ],
+  [
+   "jgb/B/lessee-export-entry-by-role",
+   1
+  ],
+  [
+   "jgb/B/lessee-export-entry-by-role",
+   2
+  ],
+  [
+   "jgb/B/lessee-list-search-and-pagination",
+   1
+  ],
+  [
+   "jgb/B/lessee-list-search-and-pagination",
+   2
+  ],
+  [
+   "jgb/B/lessee-list-search-and-pagination",
+   3
+  ],
+  [
+   "jgb/B/lessee-action-menu",
+   1
+  ],
+  [
+   "jgb/B/lessee-action-menu",
+   2
+  ],
+  [
+   "jgb/C/community-list-overview-stats",
+   1
+  ],
+  [
+   "jgb/C/community-list-overview-stats",
+   2
+  ],
+  [
+   "jgb/C/community-list-overview-stats",
+   3
+  ],
+  [
+   "jgb/C/community-add-single-and-limit",
+   1
+  ],
+  [
+   "jgb/C/community-batch-add-and-copy",
+   1
+  ],
+  [
+   "jgb/C/community-batch-add-and-copy",
+   2
+  ],
+  [
+   "jgb/C/community-batch-add-and-copy",
+   3
+  ],
+  [
+   "jgb/C/community-list-filter-sort",
+   1
+  ],
+  [
+   "jgb/C/community-list-filter-sort",
+   2
+  ],
+  [
+   "jgb/C/community-list-filter-sort",
+   3
+  ],
+  [
+   "jgb/C/community-delete-requires-empty",
+   1
+  ],
+  [
+   "jgb/C/community-delete-requires-empty",
+   2
+  ],
+  [
+   "jgb/C/community-delete-requires-empty",
+   3
+  ],
+  [
+   "jgb/C/community-export-list",
+   1
+  ],
+  [
+   "jgb/C/community-export-list",
+   2
+  ],
+  [
+   "jgb/C/community-list-pagination",
+   1
+  ],
+  [
+   "jgb/C/community-list-add-permission",
+   1
+  ],
+  [
+   "jgb/C/community-list-add-permission",
+   2
+  ],
+  [
+   "jgb/C/community-edit-tabs",
+   1
+  ],
+  [
+   "jgb/C/community-edit-tabs",
+   2
+  ],
+  [
+   "jgb/C/community-edit-basic-fields",
+   1
+  ],
+  [
+   "jgb/C/community-edit-basic-fields",
+   2
+  ],
+  [
+   "jgb/C/community-edit-basic-fields",
+   3
+  ],
+  [
+   "jgb/C/community-edit-gallery-photo-limit",
+   1
+  ],
+  [
+   "jgb/C/community-edit-gallery-save-notice",
+   1
+  ],
+  [
+   "jgb/C/community-edit-gallery-save-notice",
+   2
+  ],
+  [
+   "jgb/C/community-edit-intros-and-transit",
+   1
+  ],
+  [
+   "jgb/C/community-edit-intros-and-transit",
+   2
+  ],
+  [
+   "jgb/C/community-edit-basic-required-field",
+   1
+  ],
+  [
+   "jgb/C/community-estates-overview-card",
+   1
+  ],
+  [
+   "jgb/C/community-estates-overview-card",
+   2
+  ],
+  [
+   "jgb/C/community-estates-overview-card",
+   3
+  ],
+  [
+   "jgb/C/community-estates-overview-card",
+   4
+  ],
+  [
+   "jgb/C/community-estates-overview-card",
+   5
+  ],
+  [
+   "jgb/C/community-estates-category-switch",
+   1
+  ],
+  [
+   "jgb/C/community-estates-category-switch",
+   2
+  ],
+  [
+   "jgb/C/community-estates-add-batch-copy",
+   1
+  ],
+  [
+   "jgb/C/community-estates-add-batch-copy",
+   2
+  ],
+  [
+   "jgb/C/community-estates-add-batch-copy",
+   3
+  ],
+  [
+   "jgb/C/community-estates-extra-tabs",
+   1
+  ],
+  [
+   "jgb/C/community-estates-extra-tabs",
+   2
+  ],
+  [
+   "jgb/C/community-estates-extra-tabs",
+   3
+  ],
+  [
+   "jgb/C/community-estates-pagination",
+   1
+  ],
+  [
+   "jgb/C/community-show-content",
+   1
+  ],
+  [
+   "jgb/C/community-show-content",
+   2
+  ],
+  [
+   "jgb/C/community-show-content",
+   3
+  ],
+  [
+   "jgb/C/community-show-price-range",
+   1
+  ],
+  [
+   "jgb/C/community-show-share",
+   1
+  ],
+  [
+   "jgb/C/community-show-share",
+   2
+  ],
+  [
+   "jgb/C/community-show-editor-nav",
+   1
+  ],
+  [
+   "jgb/C/forcebinding-welcome-progress",
+   2
+  ],
+  [
+   "jgb/C/forcebinding-two-steps",
+   1
+  ],
+  [
+   "jgb/C/forcebinding-select-estates-irreversible",
+   1
+  ],
+  [
+   "jgb/C/forcebinding-select-estates-irreversible",
+   2
+  ],
+  [
+   "jgb/C/forcebinding-completion-states",
+   1
+  ],
+  [
+   "jgb/C/estate-list-add-must-pick-community",
+   2
+  ],
+  [
+   "jgb/C/estate-list-counter-and-limit",
+   1
+  ],
+  [
+   "jgb/C/estate-list-filters",
+   1
+  ],
+  [
+   "jgb/C/estate-list-filters",
+   2
+  ],
+  [
+   "jgb/C/estate-list-filters",
+   3
+  ],
+  [
+   "jgb/C/estate-list-keyword-search",
+   1
+  ],
+  [
+   "jgb/C/estate-list-batch-actions",
+   1
+  ],
+  [
+   "jgb/C/estate-list-batch-actions",
+   2
+  ],
+  [
+   "jgb/C/estate-list-batch-actions",
+   3
+  ],
+  [
+   "jgb/C/estate-list-batch-actions",
+   4
+  ],
+  [
+   "jgb/C/estate-status-affects-actions",
+   1
+  ],
+  [
+   "jgb/C/estate-status-affects-actions",
+   2
+  ],
+  [
+   "jgb/C/estate-status-affects-actions",
+   3
+  ],
+  [
+   "jgb/C/estate-status-affects-actions",
+   5
+  ],
+  [
+   "jgb/C/estate-list-pagination",
+   1
+  ],
+  [
+   "jgb/C/estate-list-filters-space-type-and-others",
+   1
+  ],
+  [
+   "jgb/C/estate-list-filters-space-type-and-others",
+   2
+  ],
+  [
+   "jgb/C/estate-list-category-switch",
+   1
+  ],
+  [
+   "jgb/C/estate-list-sort-remembers-last",
+   1
+  ],
+  [
+   "jgb/C/estate-list-sort-remembers-last",
+   2
+  ],
+  [
+   "jgb/C/estate-list-sort-remembers-last",
+   3
+  ],
+  [
+   "jgb/C/estate-list-sort-remembers-last",
+   4
+  ],
+  [
+   "jgb/C/estate-edit-basic-space-type",
+   1
+  ],
+  [
+   "jgb/C/estate-edit-basic-space-type",
+   2
+  ],
+  [
+   "jgb/C/estate-edit-basic-space-type",
+   3
+  ],
+  [
+   "jgb/C/estate-edit-basic-address",
+   1
+  ],
+  [
+   "jgb/C/estate-edit-basic-floor-room-number",
+   1
+  ],
+  [
+   "jgb/C/estate-edit-basic-floor-room-number",
+   2
+  ],
+  [
+   "jgb/C/estate-edit-basic-community-name-hide",
+   1
+  ],
+  [
+   "jgb/C/estate-edit-building-transcript-social",
+   1
+  ],
+  [
+   "jgb/C/estate-edit-building-transcript-social",
+   2
+  ],
+  [
+   "jgb/C/estate-edit-building-transcript-general",
+   1
+  ],
+  [
+   "jgb/C/estate-edit-building-transcript-general",
+   2
+  ],
+  [
+   "jgb/C/estate-edit-facilities",
+   1
+  ],
+  [
+   "jgb/C/estate-edit-facilities",
+   2
+  ],
+  [
+   "jgb/C/estate-edit-facilities",
+   3
+  ],
+  [
+   "jgb/C/estate-edit-facilities",
+   4
+  ],
+  [
+   "jgb/C/estate-edit-facilities",
+   5
+  ],
+  [
+   "jgb/C/estate-edit-facilities",
+   6
+  ],
+  [
+   "jgb/C/estate-edit-facilities",
+   7
+  ],
+  [
+   "jgb/C/estate-edit-facilities",
+   8
+  ],
+  [
+   "jgb/C/estate-edit-facilities",
+   9
+  ],
+  [
+   "jgb/C/estate-edit-gallery-title-photos",
+   1
+  ],
+  [
+   "jgb/C/estate-edit-gallery-title-photos",
+   2
+  ],
+  [
+   "jgb/C/estate-edit-gallery-title-photos",
+   3
+  ],
+  [
+   "jgb/C/estate-edit-intro-transit",
+   1
+  ],
+  [
+   "jgb/C/estate-edit-intro-transit",
+   2
+  ],
+  [
+   "jgb/C/estate-edit-vr-720",
+   1
+  ],
+  [
+   "jgb/C/estate-edit-vr-720",
+   2
+  ],
+  [
+   "jgb/C/estate-edit-vr-720",
+   3
+  ],
+  [
+   "jgb/C/estate-edit-cannot-change-community",
+   1
+  ],
+  [
+   "jgb/C/estate-edit-basic-orientation",
+   1
+  ],
+  [
+   "jgb/C/estate-edit-tabs-overview",
+   1
+  ],
+  [
+   "jgb/C/estate-edit-tabs-overview",
+   2
+  ],
+  [
+   "jgb/C/estate-rent-detail-deposit-cap",
+   1
+  ],
+  [
+   "jgb/C/estate-rent-detail-deposit-cap",
+   2
+  ],
+  [
+   "jgb/C/estate-rent-detail-move-in-lease-terms",
+   1
+  ],
+  [
+   "jgb/C/estate-rent-detail-move-in-lease-terms",
+   2
+  ],
+  [
+   "jgb/C/estate-rent-detail-tenant-conditions",
+   1
+  ],
+  [
+   "jgb/C/estate-rent-detail-tenant-conditions",
+   2
+  ],
+  [
+   "jgb/C/estate-rent-contact-agency-info",
+   1
+  ],
+  [
+   "jgb/C/estate-rent-contact-agency-info",
+   2
+  ],
+  [
+   "jgb/C/estate-rent-contact-manager-and-hide",
+   1
+  ],
+  [
+   "jgb/C/estate-rent-contact-manager-and-hide",
+   2
+  ],
+  [
+   "jgb/C/estate-rent-contact-manager-and-hide",
+   3
+  ],
+  [
+   "jgb/C/estate-rent-verify-legal",
+   1
+  ],
+  [
+   "jgb/C/estate-rent-verify-legal",
+   2
+  ],
+  [
+   "jgb/C/estate-rent-open-permission-and-validation",
+   1
+  ],
+  [
+   "jgb/C/estate-rent-detail-price-and-tax",
+   1
+  ],
+  [
+   "jgb/C/estate-rent-detail-price-and-tax",
+   2
+  ],
+  [
+   "jgb/C/estate-dashboard-entry-and-groups",
+   1
+  ],
+  [
+   "jgb/C/estate-dashboard-entry-and-groups",
+   2
+  ],
+  [
+   "jgb/C/estate-dashboard-entry-and-groups",
+   3
+  ],
+  [
+   "jgb/C/estate-dashboard-entry-and-groups",
+   4
+  ],
+  [
+   "jgb/C/estate-dashboard-rent-performance",
+   1
+  ],
+  [
+   "jgb/C/estate-dashboard-rent-performance",
+   2
+  ],
+  [
+   "jgb/C/estate-dashboard-contracts-history",
+   1
+  ],
+  [
+   "jgb/C/estate-dashboard-contracts-history",
+   2
+  ],
+  [
+   "jgb/C/estate-dashboard-bills-tabs",
+   1
+  ],
+  [
+   "jgb/C/estate-dashboard-repair-status-flow",
+   1
+  ],
+  [
+   "jgb/C/estate-dashboard-repair-status-flow",
+   2
+  ],
+  [
+   "jgb/C/estate-dashboard-monthly-report-upload",
+   1
+  ],
+  [
+   "jgb/C/estate-dashboard-monthly-report-upload",
+   2
+  ],
+  [
+   "jgb/C/estate-dashboard-monthly-report-upload",
+   3
+  ],
+  [
+   "jgb/C/estate-dashboard-top-cards",
+   1
+  ],
+  [
+   "jgb/C/estate-dashboard-top-cards",
+   2
+  ],
+  [
+   "jgb/C/estate-house-preview-unpublished",
+   1
+  ],
+  [
+   "jgb/C/estate-house-preview-unpublished",
+   2
+  ],
+  [
+   "jgb/C/estate-house-invite-countdown",
+   1
+  ],
+  [
+   "jgb/C/estate-house-content-blocks",
+   1
+  ],
+  [
+   "jgb/C/estate-house-content-blocks",
+   2
+  ],
+  [
+   "jgb/C/estate-house-content-blocks",
+   3
+  ],
+  [
+   "jgb/C/estate-house-contact-landlord",
+   1
+  ],
+  [
+   "jgb/C/estate-house-contact-landlord",
+   2
+  ],
+  [
+   "jgb/C/estate-house-contact-landlord",
+   3
+  ],
+  [
+   "jgb/C/estate-house-contact-landlord",
+   4
+  ],
+  [
+   "jgb/C/estate-house-vs-show-url",
+   1
+  ],
+  [
+   "jgb/C/estate-house-vs-show-url",
+   2
+  ],
+  [
+   "jgb/C/estate-house-fees-table",
+   1
+  ],
+  [
+   "jgb/C/estate-house-appointment-cta",
+   1
+  ],
+  [
+   "jgb/C/estate-house-appointment-cta",
+   2
+  ],
+  [
+   "jgb/C/estate-house-info-card",
+   1
+  ],
+  [
+   "jgb/C/estate-house-info-card",
+   2
+  ],
+  [
+   "jgb/C/estate-house-info-card",
+   3
+  ],
+  [
+   "jgb/C/estate-house-info-card",
+   4
+  ],
+  [
+   "jgb/C/estate-house-info-card",
+   5
+  ],
+  [
+   "jgb/C/team-public-page-purpose",
+   1
+  ],
+  [
+   "jgb/C/team-public-page-purpose",
+   2
+  ],
+  [
+   "jgb/C/team-public-page-edit-and-banner",
+   2
+  ],
+  [
+   "jgb/C/team-public-page-edit-and-banner",
+   3
+  ],
+  [
+   "jgb/C/team-public-page-edit-and-banner",
+   4
+  ],
+  [
+   "jgb/C/team-public-page-edit-and-banner",
+   5
+  ],
+  [
+   "jgb/C/team-public-page-edit-and-banner",
+   6
+  ],
+  [
+   "jgb/C/team-public-page-filter-and-view",
+   1
+  ],
+  [
+   "jgb/C/team-public-page-filter-and-view",
+   2
+  ],
+  [
+   "jgb/C/team-public-page-filter-and-view",
+   3
+  ],
+  [
+   "jgb/C/team-public-page-filter-and-view",
+   4
+  ],
+  [
+   "jgb/C/team-public-page-filter-and-view",
+   5
+  ],
+  [
+   "jgb/C/team-public-page-filter-and-view",
+   6
+  ],
+  [
+   "jgb/C/team-public-page-filter-and-view",
+   7
+  ],
+  [
+   "jgb/C/team-public-page-share",
+   1
+  ],
+  [
+   "jgb/C/team-public-page-share",
+   2
+  ],
+  [
+   "jgb/C/team-public-page-share",
+   3
+  ],
+  [
+   "jgb/D/contract-list-status-tabs",
+   2
+  ],
+  [
+   "jgb/D/contract-list-status-tabs",
+   3
+  ],
+  [
+   "jgb/D/contract-search-keyword-scope",
+   1
+  ],
+  [
+   "jgb/D/contract-create-entry",
+   1
+  ],
+  [
+   "jgb/D/contract-create-entry",
+   2
+  ],
+  [
+   "jgb/D/contract-create-entry",
+   3
+  ],
+  [
+   "jgb/D/contract-create-entry",
+   5
+  ],
+  [
+   "jgb/D/contract-create-entry",
+   6
+  ],
+  [
+   "jgb/D/contract-create-estate-completeness-requirement",
+   1
+  ],
+  [
+   "jgb/D/contract-create-estate-completeness-requirement",
+   2
+  ],
+  [
+   "jgb/D/contract-list-row-gear-actions",
+   1
+  ],
+  [
+   "jgb/D/contract-list-row-gear-actions",
+   2
+  ],
+  [
+   "jgb/D/contract-list-row-gear-actions",
+   3
+  ],
+  [
+   "jgb/D/contract-list-row-gear-actions",
+   4
+  ],
+  [
+   "jgb/D/contract-list-row-gear-actions",
+   5
+  ],
+  [
+   "jgb/D/contract-list-row-gear-actions",
+   6
+  ],
+  [
+   "jgb/D/contract-list-row-gear-actions",
+   7
+  ],
+  [
+   "jgb/D/contract-list-row-gear-actions",
+   8
+  ],
+  [
+   "jgb/D/contract-list-row-sort-options",
+   1
+  ],
+  [
+   "jgb/D/contract-list-columns",
+   1
+  ],
+  [
+   "jgb/D/contract-list-columns",
+   2
+  ],
+  [
+   "jgb/D/contract-list-columns",
+   3
+  ],
+  [
+   "jgb/D/contract-list-deposit-alert",
+   1
+  ],
+  [
+   "jgb/D/contract-list-bill-currency-column",
+   1
+  ],
+  [
+   "jgb/D/contract-list-export-declaration",
+   1
+  ],
+  [
+   "jgb/D/contract-list-export-declaration",
+   2
+  ],
+  [
+   "jgb/D/contract-list-export-declaration",
+   3
+  ],
+  [
+   "jgb/D/contract-list-export-declaration",
+   4
+  ],
+  [
+   "jgb/D/contract-list-export-declaration",
+   5
+  ],
+  [
+   "jgb/D/contract-list-export-excel",
+   1
+  ],
+  [
+   "jgb/D/contract-list-export-excel",
+   2
+  ],
+  [
+   "jgb/D/contract-list-export-excel",
+   3
+  ],
+  [
+   "jgb/D/contract-edit-tabs-overview",
+   1
+  ],
+  [
+   "jgb/D/contract-edit-tabs-overview",
+   2
+  ],
+  [
+   "jgb/D/contract-edit-tabs-overview",
+   3
+  ],
+  [
+   "jgb/D/contract-edit-tabs-overview",
+   4
+  ],
+  [
+   "jgb/D/contract-edit-tabs-overview",
+   5
+  ],
+  [
+   "jgb/D/contract-edit-tabs-overview",
+   6
+  ],
+  [
+   "jgb/D/contract-edit-tabs-overview",
+   7
+  ],
+  [
+   "jgb/D/contract-tenant-basic-info",
+   1
+  ],
+  [
+   "jgb/D/contract-tenant-basic-info",
+   2
+  ],
+  [
+   "jgb/D/contract-tenant-basic-info",
+   3
+  ],
+  [
+   "jgb/D/contract-tenant-basic-info",
+   4
+  ],
+  [
+   "jgb/D/contract-tenant-basic-info",
+   5
+  ],
+  [
+   "jgb/D/contract-tenant-basic-info",
+   6
+  ],
+  [
+   "jgb/D/contract-tenant-basic-info",
+   7
+  ],
+  [
+   "jgb/D/contract-tenant-basic-info",
+   8
+  ],
+  [
+   "jgb/D/contract-tenant-basic-info",
+   9
+  ],
+  [
+   "jgb/D/contract-rentbasic-template-and-dates",
+   1
+  ],
+  [
+   "jgb/D/contract-rentbasic-template-and-dates",
+   2
+  ],
+  [
+   "jgb/D/contract-rentbasic-template-and-dates",
+   3
+  ],
+  [
+   "jgb/D/contract-rentbasic-template-and-dates",
+   4
+  ],
+  [
+   "jgb/D/contract-rentbasic-template-and-dates",
+   5
+  ],
+  [
+   "jgb/D/contract-rentbasic-template-and-dates",
+   6
+  ],
+  [
+   "jgb/D/contract-rentbasic-template-and-dates",
+   7
+  ],
+  [
+   "jgb/D/contract-rentbasic-template-and-dates",
+   8
+  ],
+  [
+   "jgb/D/contract-rentbasic-billing-cycle",
+   1
+  ],
+  [
+   "jgb/D/contract-rentbasic-billing-cycle",
+   2
+  ],
+  [
+   "jgb/D/contract-rentbasic-billing-cycle",
+   3
+  ],
+  [
+   "jgb/D/contract-rentbasic-billing-cycle",
+   4
+  ],
+  [
+   "jgb/D/contract-rentbasic-latefee",
+   1
+  ],
+  [
+   "jgb/D/contract-rentbasic-latefee",
+   2
+  ],
+  [
+   "jgb/D/contract-rentbasic-tenant-language",
+   1
+  ],
+  [
+   "jgb/D/contract-rentbasic-early-termination",
+   1
+  ],
+  [
+   "jgb/D/contract-rentbasic-early-termination",
+   2
+  ],
+  [
+   "jgb/D/contract-rentbasic-early-termination",
+   3
+  ],
+  [
+   "jgb/D/contract-rentbasic-early-termination",
+   4
+  ],
+  [
+   "jgb/D/contract-rentbasic-early-termination",
+   5
+  ],
+  [
+   "jgb/D/contract-rent-fees",
+   1
+  ],
+  [
+   "jgb/D/contract-rent-fees",
+   2
+  ],
+  [
+   "jgb/D/contract-rent-fees",
+   3
+  ],
+  [
+   "jgb/D/contract-rent-fees",
+   4
+  ],
+  [
+   "jgb/D/contract-rent-fees",
+   5
+  ],
+  [
+   "jgb/D/contract-rent-deposit-two-modes",
+   1
+  ],
+  [
+   "jgb/D/contract-rent-adjustment",
+   1
+  ],
+  [
+   "jgb/D/contract-rent-adjustment",
+   2
+  ],
+  [
+   "jgb/D/contract-rent-adjustment",
+   3
+  ],
+  [
+   "jgb/D/contract-rent-adjustment",
+   4
+  ],
+  [
+   "jgb/D/contract-rent-adjustment",
+   5
+  ],
+  [
+   "jgb/D/contract-tax-invoice",
+   1
+  ],
+  [
+   "jgb/D/contract-tax-invoice",
+   2
+  ],
+  [
+   "jgb/D/contract-tax-invoice",
+   3
+  ],
+  [
+   "jgb/D/contract-tax-invoice",
+   4
+  ],
+  [
+   "jgb/D/contract-tax-invoice",
+   5
+  ],
+  [
+   "jgb/D/contract-tax-invoice",
+   6
+  ],
+  [
+   "jgb/D/contract-tax-invoice",
+   7
+  ],
+  [
+   "jgb/D/contract-tax-invoice",
+   8
+  ],
+  [
+   "jgb/D/contract-bill-setting",
+   1
+  ],
+  [
+   "jgb/D/contract-bill-setting",
+   2
+  ],
+  [
+   "jgb/D/contract-bill-setting",
+   3
+  ],
+  [
+   "jgb/D/contract-bill-setting",
+   4
+  ],
+  [
+   "jgb/D/contract-bill-setting",
+   5
+  ],
+  [
+   "jgb/D/contract-payment-method",
+   1
+  ],
+  [
+   "jgb/D/contract-payment-method",
+   2
+  ],
+  [
+   "jgb/D/contract-payment-method",
+   3
+  ],
+  [
+   "jgb/D/contract-payment-method",
+   4
+  ],
+  [
+   "jgb/D/contract-payment-method",
+   5
+  ],
+  [
+   "jgb/D/contract-facilities-tab",
+   1
+  ],
+  [
+   "jgb/D/contract-facilities-tab",
+   2
+  ],
+  [
+   "jgb/D/contract-facilities-tab",
+   3
+  ],
+  [
+   "jgb/D/contract-landlord-dealer-basic",
+   1
+  ],
+  [
+   "jgb/D/contract-landlord-dealer-basic",
+   2
+  ],
+  [
+   "jgb/D/contract-landlord-dealer-basic",
+   3
+  ],
+  [
+   "jgb/D/contract-landlord-dealer-basic",
+   4
+  ],
+  [
+   "jgb/D/contract-landlord-dealer-basic",
+   5
+  ],
+  [
+   "jgb/D/contract-landlord-dealer-basic",
+   6
+  ],
+  [
+   "jgb/D/contract-landlord-dealer-basic",
+   7
+  ],
+  [
+   "jgb/D/contract-building-transcript-optional",
+   1
+  ],
+  [
+   "jgb/D/contract-building-transcript-optional",
+   2
+  ],
+  [
+   "jgb/D/contract-building-transcript-optional",
+   3
+  ],
+  [
+   "jgb/D/contract-attachments-optional",
+   1
+  ],
+  [
+   "jgb/D/contract-attachments-optional",
+   2
+  ],
+  [
+   "jgb/D/contract-attachments-optional",
+   3
+  ],
+  [
+   "jgb/D/contract-attachments-optional",
+   4
+  ],
+  [
+   "jgb/D/contract-additional-convention",
+   2
+  ],
+  [
+   "jgb/D/contract-additional-convention",
+   4
+  ],
+  [
+   "jgb/D/contract-edit-tabs-conditional-rules",
+   1
+  ],
+  [
+   "jgb/D/contract-edit-tabs-conditional-rules",
+   2
+  ],
+  [
+   "jgb/D/contract-edit-tabs-conditional-rules",
+   3
+  ],
+  [
+   "jgb/D/contract-edit-tabs-conditional-rules",
+   4
+  ],
+  [
+   "jgb/D/contract-edit-tabs-conditional-rules",
+   5
+  ],
+  [
+   "jgb/D/contract-edit-tabs-conditional-rules",
+   6
+  ],
+  [
+   "jgb/D/contract-edit-building-transcript-visibility",
+   1
+  ],
+  [
+   "jgb/D/contract-lease-scope-by-space-type",
+   1
+  ],
+  [
+   "jgb/D/contract-lease-scope-by-space-type",
+   2
+  ],
+  [
+   "jgb/D/contract-tenant-code-change",
+   1
+  ],
+  [
+   "jgb/D/social-housing-building-detail",
+   1
+  ],
+  [
+   "jgb/D/social-housing-building-detail",
+   2
+  ],
+  [
+   "jgb/D/social-housing-building-detail",
+   3
+  ],
+  [
+   "jgb/D/social-housing-photos-tab",
+   1
+  ],
+  [
+   "jgb/D/social-housing-facilities-tab",
+   1
+  ],
+  [
+   "jgb/D/social-housing-rent-basic-conditions",
+   1
+  ],
+  [
+   "jgb/D/social-housing-rent-basic-conditions",
+   2
+  ],
+  [
+   "jgb/D/social-housing-rent-basic-conditions",
+   3
+  ],
+  [
+   "jgb/D/social-housing-rent-basic-conditions",
+   4
+  ],
+  [
+   "jgb/D/social-housing-rent-basic-conditions",
+   5
+  ],
+  [
+   "jgb/D/social-housing-rent-basic-conditions",
+   6
+  ],
+  [
+   "jgb/D/social-housing-early-termination-difference",
+   1
+  ],
+  [
+   "jgb/D/social-housing-early-termination-difference",
+   2
+  ],
+  [
+   "jgb/D/social-housing-rent-fees-tab",
+   1
+  ],
+  [
+   "jgb/D/social-housing-payment-method-tab",
+   1
+  ],
+  [
+   "jgb/D/social-housing-payment-method-tab",
+   2
+  ],
+  [
+   "jgb/D/social-housing-notary",
+   1
+  ],
+  [
+   "jgb/D/social-housing-notary",
+   2
+  ],
+  [
+   "jgb/D/social-housing-notary",
+   3
+  ],
+  [
+   "jgb/D/social-housing-notary",
+   4
+  ],
+  [
+   "jgb/D/social-housing-notary",
+   5
+  ],
+  [
+   "jgb/D/social-housing-attachments-tab",
+   1
+  ],
+  [
+   "jgb/D/social-housing-subsidy-terms-tab",
+   1
+  ],
+  [
+   "jgb/D/social-housing-subsidy-terms-tab",
+   2
+  ],
+  [
+   "jgb/D/social-housing-subsidy-terms-tab",
+   3
+  ],
+  [
+   "jgb/D/social-housing-landlord-tabs-overview",
+   1
+  ],
+  [
+   "jgb/D/social-housing-landlord-license-conditions",
+   1
+  ],
+  [
+   "jgb/D/social-housing-landlord-license-conditions",
+   2
+  ],
+  [
+   "jgb/D/social-housing-tenant-tabs-overview",
+   1
+  ],
+  [
+   "jgb/D/social-housing-tenant-basic-status",
+   1
+  ],
+  [
+   "jgb/D/social-housing-tenant-basic-status",
+   2
+  ],
+  [
+   "jgb/D/social-housing-tenant-household",
+   1
+  ],
+  [
+   "jgb/D/social-housing-tenant-license",
+   1
+  ],
+  [
+   "jgb/D/social-housing-tenant-license",
+   2
+  ],
+  [
+   "jgb/D/social-housing-tenant-license",
+   3
+  ],
+  [
+   "jgb/D/social-housing-tenant-license",
+   4
+  ],
+  [
+   "jgb/D/social-housing-dealer-basic",
+   1
+  ],
+  [
+   "jgb/D/social-housing-dealer-basic",
+   2
+  ],
+  [
+   "jgb/D/social-housing-move-in-terms",
+   1
+  ],
+  [
+   "jgb/D/social-housing-move-in-terms",
+   2
+  ],
+  [
+   "jgb/D/social-housing-move-in-terms",
+   3
+  ],
+  [
+   "jgb/D/social-housing-charter-sublet-tab-hiding",
+   1
+  ],
+  [
+   "jgb/D/social-housing-charter-sublet-tab-hiding",
+   2
+  ],
+  [
+   "jgb/D/social-housing-charter-sublet-tab-hiding",
+   3
+  ],
+  [
+   "jgb/D/contract-invite-and-review-period",
+   1
+  ],
+  [
+   "jgb/D/contract-invite-and-review-period",
+   2
+  ],
+  [
+   "jgb/D/contract-invite-and-review-period",
+   3
+  ],
+  [
+   "jgb/D/contract-invite-and-review-period",
+   5
+  ],
+  [
+   "jgb/D/contract-invite-and-review-period",
+   6
+  ],
+  [
+   "jgb/D/contract-invite-and-review-period",
+   7
+  ],
+  [
+   "jgb/D/contract-sign-flow-steps",
+   1
+  ],
+  [
+   "jgb/D/contract-sign-flow-steps",
+   2
+  ],
+  [
+   "jgb/D/contract-sign-flow-steps",
+   3
+  ],
+  [
+   "jgb/D/contract-sign-flow-steps",
+   4
+  ],
+  [
+   "jgb/D/contract-sign-flow-steps",
+   5
+  ],
+  [
+   "jgb/D/contract-sign-flow-steps",
+   6
+  ],
+  [
+   "jgb/D/contract-sign-flow-steps",
+   7
+  ],
+  [
+   "jgb/D/contract-sign-flow-steps",
+   8
+  ],
+  [
+   "jgb/D/contract-sign-flow-steps",
+   9
+  ],
+  [
+   "jgb/D/contract-esign-no-extra-fee",
+   1
+  ],
+  [
+   "jgb/D/contract-esign-no-extra-fee",
+   2
+  ],
+  [
+   "jgb/D/contract-esign-no-extra-fee",
+   3
+  ],
+  [
+   "jgb/D/contract-locked-after-signing",
+   1
+  ],
+  [
+   "jgb/D/contract-locked-after-signing",
+   2
+  ],
+  [
+   "jgb/D/contract-locked-after-signing",
+   3
+  ],
+  [
+   "jgb/D/contract-locked-after-signing",
+   4
+  ],
+  [
+   "jgb/D/contract-show-paper-upload-archive",
+   1
+  ],
+  [
+   "jgb/D/contract-show-paper-upload-archive",
+   2
+  ],
+  [
+   "jgb/D/contract-show-creditcard-auth-prompt",
+   1
+  ],
+  [
+   "jgb/D/contract-guarantor-add-after-signing",
+   1
+  ],
+  [
+   "jgb/D/contract-guarantor-add-after-signing",
+   2
+  ],
+  [
+   "jgb/D/move-in-checklist-and-responsibility",
+   1
+  ],
+  [
+   "jgb/D/move-in-checklist-and-responsibility",
+   2
+  ],
+  [
+   "jgb/D/move-in-checklist-and-responsibility",
+   4
+  ],
+  [
+   "jgb/D/move-in-meter-readings",
+   1
+  ],
+  [
+   "jgb/D/move-in-meter-readings",
+   2
+  ],
+  [
+   "jgb/D/move-in-page-general-vs-social-housing",
+   1
+  ],
+  [
+   "jgb/D/move-in-page-general-vs-social-housing",
+   2
+  ],
+  [
+   "jgb/D/move-in-blocked-states",
+   1
+  ],
+  [
+   "jgb/D/move-in-blocked-states",
+   2
+  ],
+  [
+   "jgb/D/move-in-cancel-invite",
+   1
+  ],
+  [
+   "jgb/D/move-in-result-pdf",
+   1
+  ],
+  [
+   "jgb/D/move-in-optional-and-timing",
+   1
+  ],
+  [
+   "jgb/D/move-in-optional-and-timing",
+   2
+  ],
+  [
+   "jgb/D/move-in-optional-and-timing",
+   3
+  ],
+  [
+   "jgb/D/move-out-checklist-and-damage",
+   1
+  ],
+  [
+   "jgb/D/move-out-checklist-and-damage",
+   2
+  ],
+  [
+   "jgb/D/move-out-checklist-and-damage",
+   3
+  ],
+  [
+   "jgb/D/move-out-bill-generation",
+   2
+  ],
+  [
+   "jgb/D/move-out-bill-generation",
+   3
+  ],
+  [
+   "jgb/D/move-out-bill-generation",
+   4
+  ],
+  [
+   "jgb/D/move-out-bill-generation",
+   5
+  ],
+  [
+   "jgb/D/move-out-bill-generation",
+   6
+  ],
+  [
+   "jgb/D/move-out-eligibility-conditions",
+   1
+  ],
+  [
+   "jgb/D/move-out-eligibility-conditions",
+   2
+  ],
+  [
+   "jgb/D/move-out-eligibility-conditions",
+   3
+  ],
+  [
+   "jgb/D/move-out-timing-window",
+   1
+  ],
+  [
+   "jgb/D/move-out-timing-window",
+   2
+  ],
+  [
+   "jgb/D/move-out-remains-in-active-list",
+   1
+  ],
+  [
+   "jgb/D/move-out-remains-in-active-list",
+   2
+  ],
+  [
+   "jgb/D/move-out-fee-adjustment-step",
+   1
+  ],
+  [
+   "jgb/D/move-out-fee-adjustment-step",
+   2
+  ],
+  [
+   "jgb/D/move-out-tenant-no-response-cancel",
+   1
+  ],
+  [
+   "jgb/D/move-out-tenant-no-response-cancel",
+   2
+  ],
+  [
+   "jgb/D/renew-batch-entry-and-selection",
+   1
+  ],
+  [
+   "jgb/D/renew-batch-entry-and-selection",
+   3
+  ],
+  [
+   "jgb/D/renew-date-setting-modes",
+   1
+  ],
+  [
+   "jgb/D/renew-date-setting-modes",
+   2
+  ],
+  [
+   "jgb/D/renew-date-setting-modes",
+   3
+  ],
+  [
+   "jgb/D/renew-upload-paper-signed",
+   1
+  ],
+  [
+   "jgb/D/renew-upload-paper-signed",
+   2
+  ],
+  [
+   "jgb/D/renew-preview-bill-generation",
+   1
+  ],
+  [
+   "jgb/D/renew-preview-bill-generation",
+   2
+  ],
+  [
+   "jgb/D/renew-preview-bill-generation",
+   3
+  ],
+  [
+   "jgb/D/renew-signing-flow",
+   1
+  ],
+  [
+   "jgb/D/renew-signing-flow",
+   3
+  ],
+  [
+   "jgb/D/renew-invite-review-days",
+   1
+  ],
+  [
+   "jgb/D/renew-data-carryover-rules",
+   1
+  ],
+  [
+   "jgb/D/renew-data-carryover-rules",
+   2
+  ],
+  [
+   "jgb/D/renew-deposit-difference-handling",
+   1
+  ],
+  [
+   "jgb/D/renew-deposit-difference-handling",
+   2
+  ],
+  [
+   "jgb/D/renew-deposit-difference-handling",
+   3
+  ],
+  [
+   "jgb/D/early-termination-reasons",
+   1
+  ],
+  [
+   "jgb/D/early-termination-reasons",
+   2
+  ],
+  [
+   "jgb/D/early-termination-reasons",
+   3
+  ],
+  [
+   "jgb/D/early-termination-form-fields",
+   1
+  ],
+  [
+   "jgb/D/early-termination-form-fields",
+   2
+  ],
+  [
+   "jgb/D/early-termination-form-fields",
+   3
+  ],
+  [
+   "jgb/D/early-termination-form-fields",
+   4
+  ],
+  [
+   "jgb/D/early-termination-tenant-cancel",
+   1
+  ],
+  [
+   "jgb/D/early-termination-tenant-cancel",
+   2
+  ],
+  [
+   "jgb/D/early-termination-tenant-cancel",
+   3
+  ],
+  [
+   "jgb/D/early-termination-eligibility",
+   1
+  ],
+  [
+   "jgb/D/early-termination-eligibility",
+   2
+  ],
+  [
+   "jgb/D/early-termination-eligibility",
+   3
+  ],
+  [
+   "jgb/D/early-termination-effect-move-out",
+   1
+  ],
+  [
+   "jgb/D/early-termination-effect-move-out",
+   2
+  ],
+  [
+   "jgb/D/early-termination-billing-after",
+   1
+  ],
+  [
+   "jgb/D/early-termination-billing-after",
+   2
+  ],
+  [
+   "jgb/D/early-termination-billing-after",
+   3
+  ],
+  [
+   "jgb/D/entrusted-contract-what-is-it",
+   1
+  ],
+  [
+   "jgb/D/entrusted-contract-what-is-it",
+   2
+  ],
+  [
+   "jgb/D/entrusted-contract-what-is-it",
+   3
+  ],
+  [
+   "jgb/D/entrusted-contract-lease-type",
+   2
+  ],
+  [
+   "jgb/D/entrusted-contract-lease-type",
+   3
+  ],
+  [
+   "jgb/D/entrusted-contract-lease-type",
+   4
+  ],
+  [
+   "jgb/D/entrusted-contract-tabs-overview",
+   1
+  ],
+  [
+   "jgb/D/entrusted-contract-tabs-overview",
+   2
+  ],
+  [
+   "jgb/D/entrusted-contract-preview-to-show",
+   1
+  ],
+  [
+   "jgb/D/entrusted-contract-upload-file-size-limit",
+   1
+  ],
+  [
+   "jgb/D/entrusted-contract-fees",
+   1
+  ],
+  [
+   "jgb/D/entrusted-contract-fees",
+   2
+  ],
+  [
+   "jgb/D/entrusted-contract-fees",
+   3
+  ],
+  [
+   "jgb/D/entrusted-contract-fees",
+   4
+  ],
+  [
+   "jgb/D/entrusted-contract-landlord-info",
+   2
+  ],
+  [
+   "jgb/D/entrusted-contract-landlord-info",
+   3
+  ],
+  [
+   "jgb/D/entrusted-contract-manager-info",
+   1
+  ],
+  [
+   "jgb/D/entrusted-contract-manager-info",
+   2
+  ],
+  [
+   "jgb/D/entrusted-contract-manager-info",
+   3
+  ],
+  [
+   "jgb/D/entrusted-contract-payment",
+   1
+  ],
+  [
+   "jgb/D/entrusted-contract-payment",
+   2
+  ],
+  [
+   "jgb/D/entrusted-contract-payment",
+   3
+  ],
+  [
+   "jgb/D/entrusted-contract-show-and-upload",
+   1
+  ],
+  [
+   "jgb/D/entrusted-contract-show-and-upload",
+   2
+  ],
+  [
+   "jgb/D/entrusted-contract-show-and-upload",
+   3
+  ],
+  [
+   "jgb/D/entrusted-contract-create-entry",
+   1
+  ],
+  [
+   "jgb/D/entrusted-contract-create-entry",
+   2
+  ],
+  [
+   "jgb/E/bill-list-tabs",
+   1
+  ],
+  [
+   "jgb/E/bill-list-tabs",
+   2
+  ],
+  [
+   "jgb/E/bill-list-tabs",
+   3
+  ],
+  [
+   "jgb/E/bill-status-tabs-landlord",
+   1
+  ],
+  [
+   "jgb/E/bill-status-tabs-landlord",
+   2
+  ],
+  [
+   "jgb/E/bill-status-tabs-landlord",
+   3
+  ],
+  [
+   "jgb/E/bill-status-tabs-tenant",
+   1
+  ],
+  [
+   "jgb/E/bill-status-tabs-tenant",
+   2
+  ],
+  [
+   "jgb/E/bill-status-tabs-tenant",
+   3
+  ],
+  [
+   "jgb/E/bill-actions-draft",
+   1
+  ],
+  [
+   "jgb/E/bill-actions-draft",
+   2
+  ],
+  [
+   "jgb/E/bill-actions-draft",
+   3
+  ],
+  [
+   "jgb/E/bill-actions-draft",
+   4
+  ],
+  [
+   "jgb/E/bill-actions-draft",
+   5
+  ],
+  [
+   "jgb/E/bill-actions-draft",
+   6
+  ],
+  [
+   "jgb/E/bill-actions-scheduled",
+   1
+  ],
+  [
+   "jgb/E/bill-actions-archived",
+   1
+  ],
+  [
+   "jgb/E/bill-actions-unreceived",
+   1
+  ],
+  [
+   "jgb/E/bill-actions-unreceived",
+   2
+  ],
+  [
+   "jgb/E/bill-actions-progress",
+   1
+  ],
+  [
+   "jgb/E/bill-actions-received",
+   1
+  ],
+  [
+   "jgb/E/bill-actions-received",
+   2
+  ],
+  [
+   "jgb/E/bill-actions-received",
+   3
+  ],
+  [
+   "jgb/E/bill-actions-received",
+   4
+  ],
+  [
+   "jgb/E/bill-actions-received",
+   5
+  ],
+  [
+   "jgb/E/bill-actions-received",
+   6
+  ],
+  [
+   "jgb/E/bill-actions-received",
+   7
+  ],
+  [
+   "jgb/E/bill-actions-received",
+   8
+  ],
+  [
+   "jgb/E/bill-actions-received",
+   10
+  ],
+  [
+   "jgb/E/bill-actions-expense-unpaid",
+   1
+  ],
+  [
+   "jgb/E/bill-actions-expense-unconfirmed",
+   1
+  ],
+  [
+   "jgb/E/bill-actions-expense-paid",
+   2
+  ],
+  [
+   "jgb/E/bill-expired-status",
+   1
+  ],
+  [
+   "jgb/E/bill-expired-status",
+   2
+  ],
+  [
+   "jgb/E/bill-expired-status",
+   3
+  ],
+  [
+   "jgb/E/bill-expired-status",
+   4
+  ],
+  [
+   "jgb/E/bill-list-keyword-search",
+   1
+  ],
+  [
+   "jgb/E/bill-list-keyword-search",
+   2
+  ],
+  [
+   "jgb/E/bill-list-keyword-search",
+   3
+  ],
+  [
+   "jgb/E/bill-list-export",
+   3
+  ],
+  [
+   "jgb/E/bill-list-export",
+   4
+  ],
+  [
+   "jgb/E/bill-list-bulk-action-intersection",
+   1
+  ],
+  [
+   "jgb/E/bill-list-bulk-action-intersection",
+   2
+  ],
+  [
+   "jgb/E/bill-list-export-other-tabs",
+   2
+  ],
+  [
+   "jgb/E/bill-list-income-export-social-housing",
+   2
+  ],
+  [
+   "jgb/E/bill-list-special-team-cvs-buttons",
+   1
+  ],
+  [
+   "jgb/E/bill-list-special-team-cvs-buttons",
+   2
+  ],
+  [
+   "jgb/E/bill-balance-tab-export-submenu",
+   1
+  ],
+  [
+   "jgb/E/bill-list-batch-shortcuts",
+   1
+  ],
+  [
+   "jgb/E/bill-list-batch-shortcuts",
+   2
+  ],
+  [
+   "jgb/E/bill-list-batch-shortcuts",
+   3
+  ],
+  [
+   "jgb/E/bill-list-batch-shortcuts",
+   4
+  ],
+  [
+   "jgb/E/bill-list-batch-shortcuts",
+   5
+  ],
+  [
+   "jgb/E/bill-scheduled-send-rule",
+   1
+  ],
+  [
+   "jgb/E/bill-scheduled-send-rule",
+   2
+  ],
+  [
+   "jgb/E/bill-scheduled-send-rule",
+   3
+  ],
+  [
+   "jgb/E/bill-scheduled-send-rule",
+   4
+  ],
+  [
+   "jgb/E/bill-scheduled-send-rule",
+   5
+  ],
+  [
+   "jgb/E/bill-single-notification-deeplink",
+   1
+  ],
+  [
+   "jgb/E/bill-single-notification-deeplink",
+   2
+  ],
+  [
+   "jgb/E/bill-balance-tab",
+   1
+  ],
+  [
+   "jgb/E/bill-balance-tab",
+   2
+  ],
+  [
+   "jgb/E/bill-balance-tab",
+   3
+  ],
+  [
+   "jgb/E/bill-notify-channels",
+   1
+  ],
+  [
+   "jgb/E/bill-notify-channels",
+   2
+  ],
+  [
+   "jgb/E/bill-invoice-void-limitation",
+   1
+  ],
+  [
+   "jgb/E/bill-invoice-void-limitation",
+   2
+  ],
+  [
+   "jgb/E/bill-notify-remittance-visibility",
+   1
+  ],
+  [
+   "jgb/E/bill-notify-remittance-visibility",
+   2
+  ],
+  [
+   "jgb/E/bill-archive-precondition",
+   1
+  ],
+  [
+   "jgb/E/bill-archive-precondition",
+   2
+  ],
+  [
+   "jgb/E/bill-deposit-receipt-no",
+   1
+  ],
+  [
+   "jgb/E/bill-scheduled-contract-ended-guard",
+   1
+  ],
+  [
+   "jgb/E/bill-scheduled-contract-ended-guard",
+   2
+  ],
+  [
+   "jgb/E/bill-scheduled-contract-ended-guard",
+   3
+  ],
+  [
+   "jgb/E/bill-remind-resend-by-support",
+   1
+  ],
+  [
+   "jgb/E/bill-remind-resend-by-support",
+   2
+  ],
+  [
+   "jgb/E/bill-cvs-barcode-overdue-payment",
+   2
+  ],
+  [
+   "jgb/E/bill-receipt-feature-roadmap",
+   2
+  ],
+  [
+   "jgb/E/bill-create-modes",
+   1
+  ],
+  [
+   "jgb/E/bill-create-modes",
+   2
+  ],
+  [
+   "jgb/E/bill-create-modes",
+   3
+  ],
+  [
+   "jgb/E/bill-create-target",
+   1
+  ],
+  [
+   "jgb/E/bill-create-target",
+   2
+  ],
+  [
+   "jgb/E/bill-create-target",
+   3
+  ],
+  [
+   "jgb/E/bill-batch-vs-cycle",
+   1
+  ],
+  [
+   "jgb/E/bill-batch-vs-cycle",
+   2
+  ],
+  [
+   "jgb/E/bill-batch-vs-cycle",
+   3
+  ],
+  [
+   "jgb/E/bill-cycle-schedule-fields",
+   1
+  ],
+  [
+   "jgb/E/bill-cycle-schedule-fields",
+   2
+  ],
+  [
+   "jgb/E/bill-cycle-schedule-fields",
+   3
+  ],
+  [
+   "jgb/E/bill-cycle-schedule-fields",
+   4
+  ],
+  [
+   "jgb/E/bill-cycle-amortization",
+   1
+  ],
+  [
+   "jgb/E/bill-cycle-amortization",
+   2
+  ],
+  [
+   "jgb/E/bill-cycle-amortization",
+   3
+  ],
+  [
+   "jgb/E/bill-fee-item-rules",
+   1
+  ],
+  [
+   "jgb/E/bill-fee-item-rules",
+   2
+  ],
+  [
+   "jgb/E/bill-fee-item-rules",
+   3
+  ],
+  [
+   "jgb/E/bill-title-field",
+   1
+  ],
+  [
+   "jgb/E/bill-remark-field",
+   1
+  ],
+  [
+   "jgb/E/bill-internal-note-field",
+   1
+  ],
+  [
+   "jgb/E/bill-internal-note-visibility",
+   1
+  ],
+  [
+   "jgb/E/bill-payment-method-account-pair",
+   1
+  ],
+  [
+   "jgb/E/bill-tenant-unverified-draft-lock",
+   1
+  ],
+  [
+   "jgb/E/bill-tenant-unverified-draft-lock",
+   2
+  ],
+  [
+   "jgb/E/bill-submit-button-behavior",
+   1
+  ],
+  [
+   "jgb/E/bill-submit-button-behavior",
+   2
+  ],
+  [
+   "jgb/E/bill-submit-button-behavior",
+   3
+  ],
+  [
+   "jgb/E/bill-submit-button-behavior",
+   4
+  ],
+  [
+   "jgb/E/bill-contract-payment-prefill",
+   1
+  ],
+  [
+   "jgb/E/bill-contract-payment-prefill",
+   2
+  ],
+  [
+   "jgb/E/bill-contract-payment-prefill",
+   3
+  ],
+  [
+   "jgb/E/bill-partial-month-proration",
+   1
+  ],
+  [
+   "jgb/E/bill-stat-overview",
+   1
+  ],
+  [
+   "jgb/E/bill-stat-overview",
+   2
+  ],
+  [
+   "jgb/E/bill-stat-overview",
+   3
+  ],
+  [
+   "jgb/E/bill-stat-monthly-tabs",
+   1
+  ],
+  [
+   "jgb/E/bill-stat-monthly-tabs",
+   2
+  ],
+  [
+   "jgb/E/bill-stat-monthly-tabs",
+   3
+  ],
+  [
+   "jgb/E/bill-monthly-report-upload",
+   1
+  ],
+  [
+   "jgb/E/bill-monthly-report-upload",
+   2
+  ],
+  [
+   "jgb/E/bill-monthly-report-upload",
+   3
+  ],
+  [
+   "jgb/E/bill-monthly-report-upload",
+   4
+  ],
+  [
+   "jgb/E/social-housing-sheet-list",
+   1
+  ],
+  [
+   "jgb/E/social-housing-sheet-list",
+   2
+  ],
+  [
+   "jgb/E/social-housing-sheet-list",
+   3
+  ],
+  [
+   "jgb/E/social-housing-sheet-list",
+   4
+  ],
+  [
+   "jgb/E/social-housing-sheet-list",
+   5
+  ],
+  [
+   "jgb/E/social-housing-sheet-contract-version",
+   1
+  ],
+  [
+   "jgb/E/social-housing-sheet-contract-version",
+   2
+  ],
+  [
+   "jgb/E/social-housing-sheet-make-form",
+   1
+  ],
+  [
+   "jgb/E/social-housing-sheet-make-form",
+   2
+  ],
+  [
+   "jgb/E/social-housing-sheet-make-form",
+   3
+  ],
+  [
+   "jgb/E/social-housing-sheet-export-history",
+   1
+  ],
+  [
+   "jgb/E/social-housing-sheet-export-history",
+   2
+  ],
+  [
+   "jgb/E/social-housing-sheet-archive",
+   1
+  ],
+  [
+   "jgb/E/social-housing-sheet-archive",
+   2
+  ],
+  [
+   "jgb/E/social-housing-sheet-archive",
+   3
+  ],
+  [
+   "jgb/E/social-housing-sheet-archive",
+   4
+  ],
+  [
+   "jgb/E/social-housing-sheet-program-scope",
+   1
+  ],
+  [
+   "jgb/E/social-housing-sheet-program-scope",
+   2
+  ],
+  [
+   "jgb/E/balance-invoice-community-switch",
+   1
+  ],
+  [
+   "jgb/E/balance-invoice-community-switch",
+   2
+  ],
+  [
+   "jgb/E/balance-invoice-community-switch",
+   3
+  ],
+  [
+   "jgb/E/balance-invoice-group-statuses",
+   1
+  ],
+  [
+   "jgb/E/balance-invoice-group-statuses",
+   2
+  ],
+  [
+   "jgb/E/balance-invoice-group-statuses",
+   3
+  ],
+  [
+   "jgb/E/balance-invoice-list-columns",
+   1
+  ],
+  [
+   "jgb/E/balance-invoice-list-columns",
+   2
+  ],
+  [
+   "jgb/E/balance-invoice-list-columns",
+   3
+  ],
+  [
+   "jgb/E/balance-invoice-group-basic-info",
+   1
+  ],
+  [
+   "jgb/E/balance-invoice-group-basic-info",
+   2
+  ],
+  [
+   "jgb/E/balance-invoice-group-basic-info",
+   3
+  ],
+  [
+   "jgb/E/balance-invoice-group-basic-info",
+   4
+  ],
+  [
+   "jgb/E/balance-invoice-group-basic-info",
+   5
+  ],
+  [
+   "jgb/E/balance-invoice-pick-and-individual-rent",
+   1
+  ],
+  [
+   "jgb/E/balance-invoice-pick-and-individual-rent",
+   2
+  ],
+  [
+   "jgb/E/balance-invoice-pick-and-individual-rent",
+   3
+  ],
+  [
+   "jgb/E/balance-invoice-group-detail-tabs",
+   1
+  ],
+  [
+   "jgb/E/balance-invoice-group-detail-tabs",
+   2
+  ],
+  [
+   "jgb/E/balance-invoice-group-detail-tabs",
+   3
+  ],
+  [
+   "jgb/E/balance-invoice-group-detail-tabs",
+   4
+  ],
+  [
+   "jgb/E/balance-invoice-monthly-invoice-table",
+   1
+  ],
+  [
+   "jgb/E/balance-invoice-monthly-invoice-table",
+   2
+  ],
+  [
+   "jgb/E/balance-invoice-monthly-invoice-table",
+   3
+  ],
+  [
+   "jgb/E/balance-invoice-monthly-invoice-table",
+   4
+  ],
+  [
+   "jgb/E/balance-invoice-timing",
+   1
+  ],
+  [
+   "jgb/E/balance-invoice-timing",
+   2
+  ],
+  [
+   "jgb/E/balance-invoice-group-action-menu",
+   1
+  ],
+  [
+   "jgb/E/balance-invoice-group-action-menu",
+   2
+  ],
+  [
+   "jgb/E/balance-invoice-group-action-menu",
+   3
+  ],
+  [
+   "jgb/E/balance-invoice-group-action-menu",
+   4
+  ],
+  [
+   "jgb/E/balance-invoice-group-action-menu",
+   5
+  ],
+  [
+   "jgb/E/balance-invoice-group-action-menu",
+   6
+  ],
+  [
+   "jgb/E/balance-invoice-refund-report-column",
+   1
+  ],
+  [
+   "jgb/E/balance-invoice-rent-item-rule",
+   2
+  ],
+  [
+   "jgb/E/balance-invoice-entity-type-change",
+   1
+  ],
+  [
+   "jgb/E/balance-invoice-unsigned-contract",
+   1
+  ],
+  [
+   "jgb/E/balance-invoice-unsigned-contract",
+   2
+  ],
+  [
+   "jgb/E/balance-invoice-unsigned-contract",
+   3
+  ],
+  [
+   "jgb/E/recharge-account-list-columns",
+   1
+  ],
+  [
+   "jgb/E/recharge-account-list-columns",
+   2
+  ],
+  [
+   "jgb/E/recharge-account-list-columns",
+   3
+  ],
+  [
+   "jgb/E/recharge-account-list-columns",
+   4
+  ],
+  [
+   "jgb/E/recharge-account-delete",
+   1
+  ],
+  [
+   "jgb/E/recharge-account-delete",
+   2
+  ],
+  [
+   "jgb/E/recharge-account-delete",
+   3
+  ],
+  [
+   "jgb/E/recharge-account-history-content",
+   1
+  ],
+  [
+   "jgb/E/recharge-account-history-content",
+   2
+  ],
+  [
+   "jgb/E/recharge-account-history-content",
+   3
+  ],
+  [
+   "jgb/E/recharge-account-bank-support",
+   1
+  ],
+  [
+   "jgb/E/recharge-account-bank-support",
+   2
+  ],
+  [
+   "jgb/E/recharge-account-bank-support",
+   3
+  ],
+  [
+   "jgb/E/recharge-account-ubot-flow",
+   1
+  ],
+  [
+   "jgb/E/recharge-account-ubot-flow",
+   2
+  ],
+  [
+   "jgb/E/recharge-account-ubot-flow",
+   3
+  ],
+  [
+   "jgb/E/recharge-account-ctbc-flow",
+   1
+  ],
+  [
+   "jgb/E/recharge-account-immutable",
+   1
+  ],
+  [
+   "jgb/E/recharge-account-immutable",
+   2
+  ],
+  [
+   "jgb/E/recharge-account-immutable",
+   3
+  ],
+  [
+   "jgb/E/recharge-account-immutable",
+   4
+  ],
+  [
+   "jgb/E/recharge-account-estate-binding-validation",
+   1
+  ],
+  [
+   "jgb/E/recharge-account-estate-binding-validation",
+   2
+  ],
+  [
+   "jgb/E/recharge-account-estate-binding-validation",
+   3
+  ],
+  [
+   "jgb/E/recharge-account-estate-binding-validation",
+   4
+  ],
+  [
+   "jgb/E/recharge-account-export",
+   1
+  ],
+  [
+   "jgb/E/recharge-account-export",
+   2
+  ],
+  [
+   "jgb/E/recharge-account-export",
+   3
+  ],
+  [
+   "jgb/E/recharge-account-daily-settlement",
+   1
+  ],
+  [
+   "jgb/E/recharge-account-daily-settlement",
+   2
+  ],
+  [
+   "jgb/E/recharge-account-daily-settlement",
+   3
+  ],
+  [
+   "jgb/E/recharge-account-refund-excluded",
+   1
+  ],
+  [
+   "jgb/E/recharge-account-mismatch-and-duplicate",
+   1
+  ],
+  [
+   "jgb/E/recharge-account-mismatch-and-duplicate",
+   2
+  ],
+  [
+   "jgb/E/recharge-account-mismatch-and-duplicate",
+   3
+  ],
+  [
+   "jgb/E/recharge-account-regenerate-expired",
+   1
+  ],
+  [
+   "jgb/E/payment-gateway-options",
+   1
+  ],
+  [
+   "jgb/E/payment-gateway-options",
+   2
+  ],
+  [
+   "jgb/E/payment-gateway-options",
+   3
+  ],
+  [
+   "jgb/E/payment-gateway-fees",
+   1
+  ],
+  [
+   "jgb/E/payment-gateway-fees",
+   2
+  ],
+  [
+   "jgb/E/payment-gateway-fees",
+   3
+  ],
+  [
+   "jgb/E/payment-gateway-fees",
+   4
+  ],
+  [
+   "jgb/E/newebpay-precondition",
+   1
+  ],
+  [
+   "jgb/E/newebpay-required-fields",
+   1
+  ],
+  [
+   "jgb/E/newebpay-payment-methods",
+   1
+  ],
+  [
+   "jgb/E/newebpay-payment-methods",
+   2
+  ],
+  [
+   "jgb/E/newebpay-payment-methods",
+   3
+  ],
+  [
+   "jgb/E/newebpay-payment-methods",
+   4
+  ],
+  [
+   "jgb/E/ctbc-apply-flow",
+   1
+  ],
+  [
+   "jgb/E/ctbc-apply-flow",
+   2
+  ],
+  [
+   "jgb/E/ctbc-apply-flow",
+   3
+  ],
+  [
+   "jgb/E/ctbc-apply-flow",
+   4
+  ],
+  [
+   "jgb/E/ctbc-form-validation",
+   1
+  ],
+  [
+   "jgb/E/ctbc-form-validation",
+   2
+  ],
+  [
+   "jgb/E/payment-gateway-withdrawal",
+   1
+  ],
+  [
+   "jgb/E/payment-gateway-withdrawal",
+   2
+  ],
+  [
+   "jgb/E/payment-gateway-withdrawal",
+   3
+  ],
+  [
+   "jgb/E/payment-onboarding-tax-risk",
+   1
+  ],
+  [
+   "jgb/E/cash-payment-account-management",
+   1
+  ],
+  [
+   "jgb/E/cash-payment-account-management",
+   2
+  ],
+  [
+   "jgb/F/repair-status-tabs",
+   1
+  ],
+  [
+   "jgb/F/repair-status-tabs",
+   2
+  ],
+  [
+   "jgb/F/repair-status-tabs",
+   3
+  ],
+  [
+   "jgb/F/repair-status-tabs",
+   4
+  ],
+  [
+   "jgb/F/repair-list-search-filter",
+   1
+  ],
+  [
+   "jgb/F/repair-list-search-filter",
+   2
+  ],
+  [
+   "jgb/F/repair-list-search-filter",
+   3
+  ],
+  [
+   "jgb/F/repair-list-search-filter",
+   4
+  ],
+  [
+   "jgb/F/repair-list-columns",
+   1
+  ],
+  [
+   "jgb/F/repair-list-columns",
+   3
+  ],
+  [
+   "jgb/F/repair-list-sort-and-pagination",
+   1
+  ],
+  [
+   "jgb/F/repair-list-sort-and-pagination",
+   2
+  ],
+  [
+   "jgb/F/repair-list-sort-and-pagination",
+   3
+  ],
+  [
+   "jgb/F/repair-create-button-visibility",
+   1
+  ],
+  [
+   "jgb/F/repair-create-button-visibility",
+   2
+  ],
+  [
+   "jgb/F/repair-create-button-visibility",
+   3
+  ],
+  [
+   "jgb/F/repair-total-visibility",
+   1
+  ],
+  [
+   "jgb/F/repair-total-visibility",
+   2
+  ],
+  [
+   "jgb/F/repair-export-visibility",
+   1
+  ],
+  [
+   "jgb/F/repair-export-visibility",
+   2
+  ],
+  [
+   "jgb/F/repair-export-visibility",
+   3
+  ],
+  [
+   "jgb/F/repair-move-status-from-list",
+   1
+  ],
+  [
+   "jgb/F/repair-move-status-from-list",
+   2
+  ],
+  [
+   "jgb/F/repair-move-status-from-list",
+   3
+  ],
+  [
+   "jgb/F/repair-move-status-from-list",
+   4
+  ],
+  [
+   "jgb/F/repair-view-only-roles",
+   1
+  ],
+  [
+   "jgb/F/repair-view-only-roles",
+   2
+  ],
+  [
+   "jgb/F/repair-view-only-roles",
+   3
+  ],
+  [
+   "jgb/F/repair-view-only-roles",
+   4
+  ],
+  [
+   "jgb/F/repair-view-only-roles",
+   5
+  ],
+  [
+   "jgb/F/repair-list-filter-category-item-urgent",
+   1
+  ],
+  [
+   "jgb/F/repair-list-filter-category-item-urgent",
+   2
+  ],
+  [
+   "jgb/F/repair-list-filter-category-item-urgent",
+   3
+  ],
+  [
+   "jgb/F/repair-apply-flow-and-entry",
+   2
+  ],
+  [
+   "jgb/F/repair-apply-flow-and-entry",
+   3
+  ],
+  [
+   "jgb/F/repair-apply-flow-and-entry",
+   4
+  ],
+  [
+   "jgb/F/repair-apply-flow-and-entry",
+   5
+  ],
+  [
+   "jgb/F/repair-apply-flow-and-entry",
+   6
+  ],
+  [
+   "jgb/F/repair-apply-without-contract",
+   1
+  ],
+  [
+   "jgb/F/repair-apply-without-contract",
+   2
+  ],
+  [
+   "jgb/F/repair-apply-category-item-other",
+   1
+  ],
+  [
+   "jgb/F/repair-apply-category-item-other",
+   2
+  ],
+  [
+   "jgb/F/repair-apply-category-item-other",
+   3
+  ],
+  [
+   "jgb/F/repair-apply-detail-fields",
+   1
+  ],
+  [
+   "jgb/F/repair-apply-detail-fields",
+   2
+  ],
+  [
+   "jgb/F/repair-apply-detail-fields",
+   3
+  ],
+  [
+   "jgb/F/repair-apply-detail-fields",
+   4
+  ],
+  [
+   "jgb/F/repair-apply-detail-fields",
+   5
+  ],
+  [
+   "jgb/F/repair-apply-reservation-slots",
+   1
+  ],
+  [
+   "jgb/F/repair-apply-reservation-slots",
+   2
+  ],
+  [
+   "jgb/F/repair-apply-reservation-slots",
+   3
+  ],
+  [
+   "jgb/F/repair-apply-photo-limit",
+   1
+  ],
+  [
+   "jgb/F/repair-apply-photo-limit",
+   2
+  ],
+  [
+   "jgb/F/repair-apply-photo-limit",
+   3
+  ],
+  [
+   "jgb/F/repair-apply-notifications",
+   1
+  ],
+  [
+   "jgb/F/repair-apply-notifications",
+   2
+  ],
+  [
+   "jgb/F/repair-apply-notifications",
+   3
+  ],
+  [
+   "jgb/F/repair-apply-notifications",
+   4
+  ],
+  [
+   "jgb/F/repair-notifications-by-stage",
+   1
+  ],
+  [
+   "jgb/F/repair-notifications-by-stage",
+   2
+  ],
+  [
+   "jgb/F/repair-notifications-by-stage",
+   3
+  ],
+  [
+   "jgb/F/repair-notifications-by-stage",
+   4
+  ],
+  [
+   "jgb/F/repair-edit-progress-timeline",
+   1
+  ],
+  [
+   "jgb/F/repair-edit-progress-timeline",
+   2
+  ],
+  [
+   "jgb/F/repair-edit-progress-timeline",
+   3
+  ],
+  [
+   "jgb/F/repair-edit-progress-timeline",
+   4
+  ],
+  [
+   "jgb/F/repair-edit-print",
+   1
+  ],
+  [
+   "jgb/F/repair-edit-print",
+   2
+  ],
+  [
+   "jgb/F/repair-edit-switch-status",
+   1
+  ],
+  [
+   "jgb/F/repair-edit-switch-status",
+   2
+  ],
+  [
+   "jgb/F/repair-edit-switch-status",
+   3
+  ],
+  [
+   "jgb/F/repair-edit-cannot-edit-roles",
+   1
+  ],
+  [
+   "jgb/F/repair-edit-cannot-edit-roles",
+   2
+  ],
+  [
+   "jgb/F/repair-edit-cannot-edit-roles",
+   3
+  ],
+  [
+   "jgb/F/repair-edit-application-detail-readonly",
+   1
+  ],
+  [
+   "jgb/F/repair-edit-application-detail-readonly",
+   2
+  ],
+  [
+   "jgb/F/repair-edit-application-detail-readonly",
+   3
+  ],
+  [
+   "jgb/F/repair-edit-application-detail-readonly",
+   4
+  ],
+  [
+   "jgb/F/repair-edit-vendor-assign",
+   1
+  ],
+  [
+   "jgb/F/repair-edit-vendor-assign",
+   2
+  ],
+  [
+   "jgb/F/repair-edit-vendor-assign",
+   3
+  ],
+  [
+   "jgb/F/repair-edit-landlord-complete-memo",
+   1
+  ],
+  [
+   "jgb/F/repair-edit-landlord-complete-memo",
+   2
+  ],
+  [
+   "jgb/F/repair-edit-landlord-complete-memo",
+   3
+  ],
+  [
+   "jgb/F/repair-edit-amount-visibility",
+   1
+  ],
+  [
+   "jgb/F/repair-edit-amount-visibility",
+   2
+  ],
+  [
+   "jgb/F/repair-edit-amount-visibility",
+   3
+  ],
+  [
+   "jgb/F/repair-edit-amount-visibility",
+   4
+  ],
+  [
+   "jgb/F/repair-edit-tenant-memo",
+   1
+  ],
+  [
+   "jgb/F/repair-edit-tenant-memo",
+   2
+  ],
+  [
+   "jgb/F/repair-edit-tenant-memo",
+   3
+  ],
+  [
+   "jgb/F/repair-edit-share-to-vendor",
+   1
+  ],
+  [
+   "jgb/F/repair-edit-share-to-vendor",
+   2
+  ],
+  [
+   "jgb/F/repair-edit-share-to-vendor",
+   3
+  ],
+  [
+   "jgb/F/repair-share-public-link",
+   1
+  ],
+  [
+   "jgb/F/repair-share-public-link",
+   2
+  ],
+  [
+   "jgb/F/repair-share-public-link",
+   3
+  ],
+  [
+   "jgb/F/repair-share-visibility-summary",
+   1
+  ],
+  [
+   "jgb/F/repair-share-visibility-summary",
+   2
+  ],
+  [
+   "jgb/F/repair-share-no-expiry",
+   1
+  ],
+  [
+   "jgb/F/repair-share-no-expiry",
+   2
+  ],
+  [
+   "jgb/F/repair-share-content",
+   1
+  ],
+  [
+   "jgb/F/repair-share-content",
+   2
+  ],
+  [
+   "jgb/F/repair-share-content",
+   3
+  ],
+  [
+   "jgb/F/repair-share-content",
+   4
+  ],
+  [
+   "jgb/F/repair-share-content",
+   5
+  ],
+  [
+   "jgb/G/power-meter-list-category-tabs",
+   1
+  ],
+  [
+   "jgb/G/power-meter-list-status-tags",
+   1
+  ],
+  [
+   "jgb/G/power-meter-list-status-tags",
+   2
+  ],
+  [
+   "jgb/G/power-meter-list-search",
+   1
+  ],
+  [
+   "jgb/G/power-meter-list-sort",
+   1
+  ],
+  [
+   "jgb/G/power-meter-manufacturer-maintenance",
+   1
+  ],
+  [
+   "jgb/G/power-meter-manufacturer-maintenance",
+   2
+  ],
+  [
+   "jgb/G/power-meter-manufacturer-maintenance",
+   3
+  ],
+  [
+   "jgb/G/power-meter-vendor-unreachable",
+   1
+  ],
+  [
+   "jgb/G/power-meter-vendor-unreachable",
+   2
+  ],
+  [
+   "jgb/G/power-meter-vendor-unreachable",
+   3
+  ],
+  [
+   "jgb/G/power-meter-vendor-unreachable",
+   4
+  ],
+  [
+   "jgb/G/power-meter-service-expiry",
+   1
+  ],
+  [
+   "jgb/G/power-meter-service-expiry",
+   3
+  ],
+  [
+   "jgb/G/power-meter-service-expiry",
+   4
+  ],
+  [
+   "jgb/G/power-meter-list-row-fields",
+   1
+  ],
+  [
+   "jgb/G/power-meter-list-row-fields",
+   2
+  ],
+  [
+   "jgb/G/power-meter-list-row-fields",
+   3
+  ],
+  [
+   "jgb/G/power-meter-usage-chart-export",
+   1
+  ],
+  [
+   "jgb/G/power-meter-usage-chart-export",
+   2
+  ],
+  [
+   "jgb/G/power-meter-single-edit-tabs",
+   1
+  ],
+  [
+   "jgb/G/power-meter-single-edit-tabs",
+   2
+  ],
+  [
+   "jgb/G/power-meter-single-edit-tabs",
+   3
+  ],
+  [
+   "jgb/G/power-meter-single-edit-tabs",
+   4
+  ],
+  [
+   "jgb/G/power-meter-single-estate-single-bind",
+   1
+  ],
+  [
+   "jgb/G/power-meter-single-estate-single-bind",
+   2
+  ],
+  [
+   "jgb/G/power-meter-mode-switch",
+   1
+  ],
+  [
+   "jgb/G/power-meter-mode-switch",
+   2
+  ],
+  [
+   "jgb/G/power-meter-mode-switch",
+   3
+  ],
+  [
+   "jgb/G/power-meter-mode-switch",
+   4
+  ],
+  [
+   "jgb/G/power-meter-basic-info-fields",
+   1
+  ],
+  [
+   "jgb/G/power-meter-basic-info-fields",
+   2
+  ],
+  [
+   "jgb/G/power-meter-basic-info-fields",
+   3
+  ],
+  [
+   "jgb/G/power-meter-basic-info-fields",
+   4
+  ],
+  [
+   "jgb/G/power-meter-topup-flow",
+   1
+  ],
+  [
+   "jgb/G/power-meter-topup-flow",
+   2
+  ],
+  [
+   "jgb/G/power-meter-topup-flow",
+   3
+  ],
+  [
+   "jgb/G/power-meter-topup-flow",
+   4
+  ],
+  [
+   "jgb/G/iot-entry-requirements",
+   1
+  ],
+  [
+   "jgb/G/iot-entry-requirements",
+   2
+  ],
+  [
+   "jgb/G/power-meter-invoice-tab-fields",
+   1
+  ],
+  [
+   "jgb/G/power-meter-invoice-tab-fields",
+   2
+  ],
+  [
+   "jgb/G/power-meter-list-empty-state",
+   1
+  ],
+  [
+   "jgb/G/power-meter-list-empty-state",
+   2
+  ],
+  [
+   "jgb/G/device-page-shared-list",
+   1
+  ],
+  [
+   "jgb/G/device-page-shared-list",
+   3
+  ],
+  [
+   "jgb/G/device-page-lock-open-close",
+   1
+  ],
+  [
+   "jgb/G/device-page-lock-open-close",
+   2
+  ],
+  [
+   "jgb/G/device-page-lock-open-close",
+   3
+  ],
+  [
+   "jgb/G/device-page-lock-open-close",
+   4
+  ],
+  [
+   "jgb/G/device-page-lock-open-close",
+   5
+  ],
+  [
+   "jgb/G/device-edit-tabs-by-type",
+   1
+  ],
+  [
+   "jgb/G/device-edit-tabs-by-type",
+   2
+  ],
+  [
+   "jgb/G/device-edit-tabs-by-type",
+   3
+  ],
+  [
+   "jgb/G/device-lock-type-and-binding-limit",
+   1
+  ],
+  [
+   "jgb/G/device-lock-type-and-binding-limit",
+   2
+  ],
+  [
+   "jgb/G/device-lock-passwords-three-types",
+   1
+  ],
+  [
+   "jgb/G/device-lock-passwords-three-types",
+   2
+  ],
+  [
+   "jgb/G/device-lock-passwords-three-types",
+   3
+  ],
+  [
+   "jgb/G/device-lock-passwords-three-types",
+   4
+  ],
+  [
+   "jgb/G/device-lock-open-log",
+   1
+  ],
+  [
+   "jgb/G/device-lock-open-log",
+   2
+  ],
+  [
+   "jgb/G/device-gateway-not-counted",
+   1
+  ],
+  [
+   "jgb/G/device-gateway-not-counted",
+   2
+  ],
+  [
+   "jgb/G/remote-unlock-page",
+   1
+  ],
+  [
+   "jgb/G/remote-unlock-page",
+   2
+  ],
+  [
+   "jgb/G/remote-unlock-page",
+   3
+  ],
+  [
+   "jgb/G/remote-unlock-page",
+   4
+  ],
+  [
+   "jgb/G/remote-unlock-page",
+   5
+  ],
+  [
+   "jgb/G/remote-unlock-no-login",
+   1
+  ],
+  [
+   "jgb/H/help-center-home-groups",
+   1
+  ],
+  [
+   "jgb/H/help-center-home-groups",
+   2
+  ],
+  [
+   "jgb/H/help-center-home-groups",
+   3
+  ],
+  [
+   "jgb/H/help-center-group-structure",
+   1
+  ],
+  [
+   "jgb/H/help-center-group-structure",
+   2
+  ],
+  [
+   "jgb/H/help-center-group-structure",
+   3
+  ],
+  [
+   "jgb/H/help-center-group-structure",
+   4
+  ],
+  [
+   "jgb/H/help-center-post-detail",
+   1
+  ],
+  [
+   "jgb/H/help-center-post-detail",
+   2
+  ],
+  [
+   "jgb/H/help-center-post-detail",
+   3
+  ],
+  [
+   "jgb/H/help-center-post-detail",
+   4
+  ],
+  [
+   "jgb/H/help-center-search",
+   1
+  ],
+  [
+   "jgb/H/help-center-search",
+   2
+  ],
+  [
+   "jgb/H/help-center-search",
+   3
+  ],
+  [
+   "jgb/H/help-center-search",
+   4
+  ],
+  [
+   "jgb/H/help-center-trial-form",
+   1
+  ],
+  [
+   "jgb/H/help-center-trial-form",
+   2
+  ],
+  [
+   "jgb/H/help-center-trial-form",
+   3
+  ],
+  [
+   "jgb/H/help-center-trial-form",
+   4
+  ],
+  [
+   "jgb/I/pricing-plan-tiers-overview",
+   1
+  ],
+  [
+   "jgb/I/pricing-plan-tiers-overview",
+   2
+  ],
+  [
+   "jgb/I/pricing-plan-tiers-overview",
+   3
+  ],
+  [
+   "jgb/I/pricing-plan-tiers-overview",
+   4
+  ],
+  [
+   "jgb/I/pricing-free-trial-feature-scope",
+   1
+  ],
+  [
+   "jgb/I/pricing-free-trial-feature-scope",
+   2
+  ],
+  [
+   "jgb/I/pricing-free-trial-feature-scope",
+   3
+  ],
+  [
+   "jgb/I/pricing-individual-vs-corporate-team",
+   1
+  ],
+  [
+   "jgb/I/pricing-individual-vs-corporate-team",
+   2
+  ],
+  [
+   "jgb/I/pricing-individual-vs-corporate-team",
+   3
+  ],
+  [
+   "jgb/I/pricing-individual-vs-corporate-team",
+   4
+  ],
+  [
+   "jgb/I/pricing-individual-vs-corporate-team",
+   5
+  ],
+  [
+   "jgb/I/pricing-calc-by-estate-count",
+   1
+  ],
+  [
+   "jgb/I/pricing-calc-by-estate-count",
+   2
+  ],
+  [
+   "jgb/I/pricing-calc-by-estate-count",
+   3
+  ],
+  [
+   "jgb/I/pricing-calc-by-estate-count",
+   4
+  ],
+  [
+   "jgb/I/pricing-calc-by-estate-count",
+   5
+  ],
+  [
+   "jgb/I/pricing-quota-near-full-notice",
+   1
+  ],
+  [
+   "jgb/I/pricing-quota-near-full-notice",
+   2
+  ],
+  [
+   "jgb/I/pricing-quota-near-full-notice",
+   3
+  ],
+  [
+   "jgb/I/pricing-enterprise-plan-offer",
+   1
+  ],
+  [
+   "jgb/I/pricing-enterprise-plan-offer",
+   2
+  ],
+  [
+   "jgb/I/pricing-enterprise-plan-offer",
+   3
+  ],
+  [
+   "jgb/I/pricing-trial-plan-landing-page",
+   1
+  ],
+  [
+   "jgb/I/pricing-trial-plan-landing-page",
+   2
+  ],
+  [
+   "jgb/I/pricing-trial-plan-landing-page",
+   3
+  ],
+  [
+   "jgb/I/pricing-trial-plan-landing-page",
+   4
+  ],
+  [
+   "jgb/I/pricing-trial-plan-landing-page",
+   5
+  ],
+  [
+   "jgb/I/pricing-plan-price-basis",
+   1
+  ],
+  [
+   "jgb/I/subscription-choose-plan-flow",
+   1
+  ],
+  [
+   "jgb/I/subscription-choose-plan-flow",
+   2
+  ],
+  [
+   "jgb/I/subscription-choose-plan-flow",
+   3
+  ],
+  [
+   "jgb/I/subscription-choose-plan-flow",
+   4
+  ],
+  [
+   "jgb/I/subscription-payment-authorization-flow",
+   1
+  ],
+  [
+   "jgb/I/subscription-payment-authorization-flow",
+   2
+  ],
+  [
+   "jgb/I/subscription-payment-authorization-flow",
+   3
+  ],
+  [
+   "jgb/I/subscription-payment-authorization-flow",
+   4
+  ],
+  [
+   "jgb/I/subscription-invoice-fields",
+   1
+  ],
+  [
+   "jgb/I/subscription-invoice-fields",
+   2
+  ],
+  [
+   "jgb/I/subscription-invoice-fields",
+   3
+  ],
+  [
+   "jgb/I/subscription-invoice-fields",
+   4
+  ],
+  [
+   "jgb/I/subscription-coupon-and-renewal-discount",
+   1
+  ],
+  [
+   "jgb/I/subscription-coupon-and-renewal-discount",
+   2
+  ],
+  [
+   "jgb/I/subscription-coupon-and-renewal-discount",
+   3
+  ],
+  [
+   "jgb/I/subscription-my-plan-page",
+   1
+  ],
+  [
+   "jgb/I/subscription-my-plan-page",
+   2
+  ],
+  [
+   "jgb/I/subscription-change-card-flow",
+   1
+  ],
+  [
+   "jgb/I/subscription-change-card-flow",
+   2
+  ],
+  [
+   "jgb/I/subscription-plan-change-billing",
+   1
+  ],
+  [
+   "jgb/I/subscription-plan-change-billing",
+   2
+  ],
+  [
+   "jgb/I/subscription-cancel-effect",
+   1
+  ],
+  [
+   "jgb/I/subscription-cancel-effect",
+   2
+  ],
+  [
+   "jgb/I/subscription-cancel-effect",
+   3
+  ],
+  [
+   "jgb/I/subscription-cancel-effect",
+   4
+  ],
+  [
+   "jgb/I/subscription-renewal-charge-failure",
+   1
+  ],
+  [
+   "jgb/I/subscription-renewal-charge-failure",
+   2
+  ],
+  [
+   "jgb/I/subscription-renewal-charge-failure",
+   3
+  ],
+  [
+   "jgb/I/subscription-renewal-charge-failure",
+   4
+  ],
+  [
+   "jgb/I/orders-payment-history",
+   1
+  ],
+  [
+   "jgb/I/orders-payment-history",
+   2
+  ],
+  [
+   "jgb/I/orders-payment-history",
+   3
+  ],
+  [
+   "jgb/I/payment-vendor-options-overview",
+   1
+  ],
+  [
+   "jgb/I/payment-vendor-options-overview",
+   2
+  ],
+  [
+   "jgb/I/payment-vendor-options-overview",
+   3
+  ],
+  [
+   "jgb/I/payment-vendor-options-overview",
+   4
+  ],
+  [
+   "jgb/I/payment-vendor-options-overview",
+   5
+  ],
+  [
+   "jgb/I/payment-vendor-options-overview",
+   6
+  ],
+  [
+   "jgb/I/payment-vendor-eligibility-by-role-and-plan",
+   1
+  ],
+  [
+   "jgb/I/payment-vendor-eligibility-by-role-and-plan",
+   2
+  ],
+  [
+   "jgb/I/payment-newebpay-setup-details",
+   1
+  ],
+  [
+   "jgb/I/payment-newebpay-setup-details",
+   2
+  ],
+  [
+   "jgb/I/payment-newebpay-setup-details",
+   3
+  ],
+  [
+   "jgb/I/payment-newebpay-setup-details",
+   4
+  ],
+  [
+   "jgb/I/payment-newebpay-setup-details",
+   5
+  ],
+  [
+   "jgb/I/payment-vendor-edit-after-binding",
+   1
+  ],
+  [
+   "jgb/I/payment-icash-ctbc-setup",
+   1
+  ],
+  [
+   "jgb/I/payment-icash-ctbc-setup",
+   2
+  ],
+  [
+   "jgb/I/payment-receipt-template-options",
+   1
+  ],
+  [
+   "jgb/I/payment-receipt-template-options",
+   2
+  ],
+  [
+   "jgb/I/payment-receipt-template-options",
+   3
+  ],
+  [
+   "jgb/I/payment-receipt-deposit-team-extras",
+   1
+  ],
+  [
+   "jgb/I/payment-bill-e-invoice-setup",
+   1
+  ],
+  [
+   "jgb/I/payment-bill-e-invoice-setup",
+   2
+  ],
+  [
+   "jgb/I/payment-bill-e-invoice-setup",
+   3
+  ],
+  [
+   "jgb/I/payment-permission-menu-visibility",
+   1
+  ],
+  [
+   "jgb/I/payment-bill-autosend-and-recipient",
+   1
+  ],
+  [
+   "jgb/I/payment-bill-autosend-and-recipient",
+   2
+  ],
+  [
+   "jgb/I/payment-bill-autosend-and-recipient",
+   3
+  ],
+  [
+   "jgb/I/demo-form-fields",
+   1
+  ],
+  [
+   "jgb/I/demo-form-fields",
+   3
+  ],
+  [
+   "jgb/I/demo-form-option-lists",
+   1
+  ],
+  [
+   "jgb/I/demo-form-option-lists",
+   2
+  ],
+  [
+   "jgb/I/demo-form-option-lists",
+   3
+  ],
+  [
+   "jgb/I/demo-form-option-lists",
+   4
+  ],
+  [
+   "jgb/I/demo-form-submit-result",
+   1
+  ],
+  [
+   "jgb/I/control-panel-entry-scope",
+   1
+  ],
+  [
+   "jgb/I/control-panel-entry-scope",
+   2
+  ],
+  [
+   "jgb/I/control-panel-setting-shell",
+   1
+  ],
+  [
+   "jgb/I/control-panel-setting-shell",
+   2
+  ],
+  [
+   "jgb/I/control-panel-setting-shell",
+   3
+  ],
+  [
+   "jgb/I/task-manager-purpose",
+   1
+  ],
+  [
+   "jgb/I/task-manager-purpose",
+   2
+  ],
+  [
+   "jgb/I/task-manager-type-behavior-scope",
+   1
+  ],
+  [
+   "jgb/I/task-manager-type-behavior-scope",
+   2
+  ],
+  [
+   "jgb/I/task-manager-cycle-options",
+   1
+  ],
+  [
+   "jgb/I/task-manager-cycle-options",
+   2
+  ],
+  [
+   "jgb/I/task-manager-form-fields",
+   1
+  ],
+  [
+   "jgb/I/task-manager-form-fields",
+   2
+  ],
+  [
+   "jgb/I/task-manager-edit-delete-copy",
+   1
+  ],
+  [
+   "jgb/I/task-manager-edit-delete-copy",
+   2
+  ],
+  [
+   "jgb/I/notification-mail-settings",
+   1
+  ],
+  [
+   "jgb/I/notification-mail-settings",
+   2
+  ],
+  [
+   "jgb/I/notification-mail-settings",
+   3
+  ],
+  [
+   "jgb/I/notification-mail-settings",
+   4
+  ],
+  [
+   "jgb/I/control-panel-access-restriction",
+   1
+  ],
+  [
+   "jgb/I/control-panel-access-restriction",
+   2
+  ],
+  [
+   "jgb/I/control-panel-access-restriction",
+   3
+  ],
+  [
+   "jgb/I/homepage-sections-overview",
+   1
+  ],
+  [
+   "jgb/I/homepage-sections-overview",
+   2
+  ],
+  [
+   "jgb/I/homepage-sections-overview",
+   3
+  ],
+  [
+   "jgb/I/homepage-sections-overview",
+   4
+  ],
+  [
+   "jgb/I/homepage-ten-features-actual-count",
+   1
+  ],
+  [
+   "jgb/I/homepage-ten-features-actual-count",
+   2
+  ],
+  [
+   "jgb/I/homepage-city-count-cta",
+   1
+  ],
+  [
+   "jgb/I/homepage-presales-assistant-visibility",
+   1
+  ],
+  [
+   "jgb/I/homepage-three-advantages",
+   1
+  ],
+  [
+   "jgb/I/homepage-latest-news-section",
+   1
+  ],
+  [
+   "jgb/I/homepage-latest-news-section",
+   2
+  ],
+  [
+   "jgb/I/homepage-enterprise-partners-section",
+   1
+  ],
+  [
+   "jgb/I/tcloud-order-info-fields",
+   1
+  ],
+  [
+   "jgb/I/tcloud-order-info-fields",
+   2
+  ],
+  [
+   "jgb/I/tcloud-order-info-fields",
+   3
+  ],
+  [
+   "jgb/I/tcloud-payment-instructions",
+   1
+  ],
+  [
+   "jgb/I/tcloud-payment-instructions",
+   2
+  ],
+  [
+   "jgb/I/tcloud-payment-instructions",
+   3
+  ],
+  [
+   "jgb/I/tcloud-link-invalid-cases",
+   1
+  ],
+  [
+   "jgb/I/tcloud-link-invalid-cases",
+   2
+  ]
+ ],
+ "fines_fully_holding": 445,
+ "spotcheck": {
+  "valid": true,
+  "errors": [],
+  "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+  "sample": [
+   [
+    "jgb/E/bill-actions-draft",
+    5
+   ],
+   [
+    "jgb/A/dashboard-occupancy-tab",
+    2
+   ],
+   [
+    "jgb/A/register-email-verify-resend",
+    1
+   ],
+   [
+    "jgb/A/account-phone-bind-status",
+    1
+   ],
+   [
+    "jgb/A/register-captcha-expired",
+    2
+   ],
+   [
+    "jgb/G/device-page-lock-open-close",
+    3
+   ],
+   [
+    "jgb/F/repair-edit-vendor-assign",
+    2
+   ],
+   [
+    "jgb/A/signer-corp-fields",
+    2
+   ],
+   [
+    "jgb/C/estate-rent-contact-manager-and-hide",
+    1
+   ],
+   [
+    "jgb/E/balance-invoice-group-detail-tabs",
+    4
+   ],
+   [
+    "jgb/A/register-email-steps",
+    5
+   ],
+   [
+    "jgb/C/community-export-list",
+    1
+   ],
+   [
+    "jgb/C/estate-status-affects-actions",
+    2
+   ],
+   [
+    "jgb/G/device-gateway-not-counted",
+    2
+   ],
+   [
+    "jgb/G/device-lock-type-and-binding-limit",
+    1
+   ],
+   [
+    "jgb/C/forcebinding-welcome-progress",
+    2
+   ],
+   [
+    "jgb/A/signer-manage-save-buttons",
+    1
+   ],
+   [
+    "jgb/I/homepage-presales-assistant-visibility",
+    1
+   ],
+   [
+    "jgb/F/repair-share-public-link",
+    1
+   ],
+   [
+    "jgb/I/task-manager-cycle-options",
+    1
+   ]
+  ],
+  "source_transcript": "a4d599264b3bea294.output"
+ },
+ "spotcheck_overturned": [
+  {
+   "id": "jgb/G/device-page-lock-open-close",
+   "n": 3,
+   "note": "resources/views/iot/index.blade.php 的「狀態顯示」：外層是 v-if=\"device.status === 200\"，SkyWatch 門鎖要在線上，而且 is_locked 剛好是 0 或 1，才顯示 ___('已開門') 或 ___('已關門')。is_locked 不是 0／1 時落到 v-else，顯示 ___('連線中')；離線（status 不是 200，app/Http/Controllers/IotController.php 預設 $status = 503）時，同樣顯示 ___('未連線')。句子說 SkyWatch 會直接顯示已開門或已關門，並和「其他門鎖只會顯示連線中或未連線」對比，漏掉了 SkyWatch 離線時也只顯示「未連線」這個例外。"
+  }
+ ]
+}

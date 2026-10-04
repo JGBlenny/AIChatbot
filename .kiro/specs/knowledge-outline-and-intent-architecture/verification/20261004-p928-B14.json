@@ -1,0 +1,454 @@
+{
+ "kind": "write",
+ "verdict": "REFUTED",
+ "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+ "claim": "Plan 9.28 批次 B14：26 條細目的標題與每一句已逐句對合法來源核對，逐條結果如 fines",
+ "fines": [
+  {
+   "id": "jgb/D/renew-batch-entry-and-selection",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "不成立",
+    "成立"
+   ],
+   "content_sha256": "5dfe135e9225b5a01e4c2aeb48a26abbdcb466a20a80c5e0f2b2effa391ea261",
+   "title_text": "怎麼一次幫多筆合約續約？（合約總表「建立合約」旁選批次續約，異動中的合約不能選）",
+   "notes": [
+    "標題：src/pages/contracts/list/_parts/PageTop.vue 的「建立合約」按鈕 options 內有 t('批次續約')（route contracts.pick action batchRenew）；異動中不能選由句 3 支撐。",
+    "句 1：landlordonboarding04lease_zh-Hant.html「於【執行中合約】中點選右上方建立合約旁的【小箭頭】並選擇【批次續約】」；src/pages/contracts/list/_parts/PageTop.vue `{{ t('批次續約') }}` 導向 contracts.pick/batchRenew（合約挑選頁）。",
+    "句 2：src/pages/contracts/pick/Index.jsx `isBatchRenew` 分支只回傳 `{ agent: state.agentOptions, label: state.labelOptions }`，不含 keyword_for 六種範圍；src/pages/estates/pick/_parts/SearchSortBlock.vue 註解「某些 action(如續約 batchRenew)…」且只在 keyword_for.pairs 非空時才顯示範圍下拉。實際批次續約挑選頁只有一個關鍵字框（placeholder「搜尋物件名稱、物件地址、租客姓名」）加物件經理人／標籤過濾，沒有案名/地址/經理人/大房東/租客/ID 六種範圍可選（六種範圍只給其他 action 與 MEMBER_OWNED_CONTRACT）。",
+    "句 3：src/pages/contracts/pick/Index.jsx `續約功能無法選擇正在異動中的合約 (包括提前解約申請中、點交中及點退中的合約)。`（BATCH_RENEW 才顯示）；landlordonboarding04lease_zh-Hant.html 同句。"
+   ]
+  },
+  {
+   "id": "jgb/D/renew-date-setting-modes",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "12a37f18d9e029708673454634e2aa5e40eed19b3242cf57714265748065bb29",
+   "title_text": "續約日期怎麼設定？（多份合約可用快速日期設定一次加 N 個月，或個別指定每份合約的續約日）",
+   "notes": [
+    "標題：由句 1、句 2 支撐。",
+    "句 1：src/pages/contracts/renew/Index.vue `pickedItems?.length > 1` 才顯示 t('快速日期設定')；`setQuickRenewAll` 以 `moment(el?.date?.end).addCalendar(month)` 各自從每份合約到期日往後加；選項 quickOptions [1, 2, 3, 6, 12, 18]。",
+    "句 2：同上 src/pages/contracts/renew/Index.vue t('個別指定續約日')，每份合約各有 +N 個月按鈕與日曆 FlatPickr 自訂日期。",
+    "句 3：同上 src/pages/contracts/renew/Index.vue `can_be_notify` 為 false 時顯示 t('租客聯繫方式尚未驗證 / 未開啟通知，無法收到續約的通知。')。"
+   ]
+  },
+  {
+   "id": "jgb/D/renew-upload-paper-signed",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "a68a33af421e2c73102cb334ef46ea5295f3199afba51b8a4a0ad017a467f09e",
+   "title_text": "續約可以上傳紙本已簽合約嗎？（只選一份紙本簽約的合約續約時可以，提供雙方已完成簽約的紙本合約掃描檔）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/pages/contracts/renew/Index.vue `pickedItems?.length === 1 && node.is_existed === 1` 才顯示 AjaxUploader，標籤 t('合約檔案')、說明 t('請提供雙方已完成簽約的紙本合約掃描檔。')；is_existed 來自 app/Http/Controllers/ContractController.php `$contractIsExisting = $_data->contract_is_existing`，對應 src/components/Lightbox/SelectContractMethod.jsx 的「紙本簽約」（contractUpload）。",
+    "句 2：同上 src/pages/contracts/renew/Index.vue `state.isEnableElectronicSignature &&` 顯示 t('使用電子簽名圖章取代親手簽名') 開關，無附件時 t('團隊尚未上傳電子簽名圖章，無法啟用。')；app/Http/Controllers/ContractController.php renewInit `$isEnableElectronicSignature = $this->role->config_rule_key == Role::RULE_KEY_LANDLORD_CORPORATE`（法人房東）。"
+   ]
+  },
+  {
+   "id": "jgb/D/renew-preview-bill-generation",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "14a87587c842238d4688077fbf0714d933a18ab124a50affad35115e17235518",
+   "title_text": "續約可以預先編輯帳單嗎？（續約預覽頁可先編輯續約期間帳單，實際帳單於完成續約後才產生）",
+   "notes": [
+    "標題：由句 1、句 2 支撐（頁面為續約流程的預覽頁 contracts.renew.preview）。",
+    "句 1：src/pages/contracts/renew/Preview.vue t('確認續約帳單') 與 t('以下為依續約日期與週期設定預先產生的帳單…')；app/Http/Controllers/ContractController.php `public function renewBillPreview` 依續約日與週期試算草稿。",
+    "句 2：同上 src/pages/contracts/renew/Preview.vue 同一句「可預先編輯標題、繳費期限、帳單週期、金額、細項與自動執行動作。實際帳單將於合約完成續約後產生。」",
+    "句 3：同上 src/pages/contracts/renew/Preview.vue t('此合約無可預產的帳單')。"
+   ]
+  },
+  {
+   "id": "jgb/D/renew-signing-flow",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "不成立",
+    "成立"
+   ],
+   "content_sha256": "287e9c342e411c46549b49a4ba00574f0ad67d201c3aed8c0e000735a60d5ce2",
+   "title_text": "續約邀請發出後流程是什麼？（租客簽回後可在「待租客簽回」查找，房東確認無誤後立即簽名完成續約）",
+   "notes": [
+    "標題：「待租客簽回」存在於 src/pages/contracts/list/_parts/PageTop.vue `2: '待租客簽回'`；房東確認後簽名完成續約的語意有句 2 內容支撐（標題未加引號）。",
+    "句 1：landlordonboarding04lease_zh-Hant.html「完成後系統會將續約邀請發送給租客，可於【待租客簽回】欄位中查找您的合約」；app/Services/ContractService.php 註冊租客走 `CONTRACT_RENEW_INVITE_LOG`。",
+    "句 2：landlordonboarding04lease_zh-Hant.html 寫【立即簽名】，但現行介面按鈕是 t('立即簽約')（src/pages/contracts/_parts/show/signerInfo/ButtonArea.jsx、src/pages/contracts/_parts/SignerInfoCard.jsx）；grep「立即簽名」於 src、resources/views 0 命中（正對照「立即簽約」有命中）。加引號介面文字不存在於現行介面。",
+    "句 3：docs/knowledge/jgb-product-facts.md #p914-contract-renewal；app/Services/ContractService.php `$renewContract = $contract->replicate();`、`續約合約為全新合約，去掉自父合約繼承來的「歷史合約」位元`，`is_tenant_registered` 走 CONTRACT_RENEW_INVITE_LOG，否則 CONTRACT_RENEW_CONFIRM_LOG 不需簽約。"
+   ]
+  },
+  {
+   "id": "jgb/D/renew-invite-review-days",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "a54cb400ef2c37f53373f49d7dd3a7c06cb57a8952aef09d08aabc7cb4fd8323",
+   "title_text": "續約邀請效期是幾天？（預設 3 天，團隊可覆蓋設定）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：app/Services/ContractService.php `getSettings('contract_review_renew_period', …)['renew_days'] ?? 3` 寫入 `contract_inviting_expire_at`，註解「續約期天數：直接讀團隊設定 JSON（續約，未設定回退預設 3）」。"
+   ]
+  },
+  {
+   "id": "jgb/D/renew-data-carryover-rules",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "不成立"
+   ],
+   "content_sha256": "9ca1bde3b642ec503a36efeae96dd0f34270730ef34bb0ad4d191f0560e1e9aa",
+   "title_text": "續約時資料怎麼沿用？（新合約由舊合約複製，並更新出租方/承租方最新資料；週期設定有調整就用新的、沒調整就沿用）",
+   "notes": [
+    "標題：由句 1、句 2 支撐。",
+    "句 1：app/Services/ContractService.php `// 更新承租方資料` 以 Role/User 的 phone、email 更新 to_user_phone／to_user_email，`// 更新出租方公司資料` 以 role_companys 或 lessorRole 更新 company_phone／company_email 等。",
+    "句 2：同上 app/Services/ContractService.php `若續約頁有調整（$cycleSettings 帶入非空值）則覆寫，未帶則沿用原合約設定`。",
+    "句 3：src/pages/contracts/renew/Index.vue 續約頁除日期、繳費週期、帳單週期制度與簽約設定外，單選紙本合約時還有 t('合約檔案') 上傳，「只能設定…」漏列；且續約帳單頁現行介面標題是 src/pages/contracts/renew/Preview.vue t('確認續約帳單')，grep「續約預覽」只出現在程式註解（src/components/TaxCalculationBlock.jsx、src/pages/bills/edit/_parts/FeesBlock.jsx），不是介面文字。"
+   ]
+  },
+  {
+   "id": "jgb/D/renew-deposit-difference-handling",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "090f540dc1884ba060ffbbe5ecc2cc0caeaee48ca1f7d0044624bdc5af6aa9fc",
+   "title_text": "續約押金差額怎麼處理？（一般續約第一張帳單不列押金；只有特定合作團隊的延長續約會用原押金算差額；新合約無法直接沿用舊合約押金，一律列全額押金）",
+   "notes": [
+    "標題：由三句支撐。",
+    "句 1：docs/knowledge/jgb-product-facts.md #p914-renewal-deposit-diff「第一張帳單不列押金品項（`empty($prevBill) && !$this->isRenewContract()` 才加押金）」。",
+    "句 2：同上 docs/knowledge/jgb-product-facts.md #p914-renewal-deposit-diff；app/Contract.php `$addToDataForDeposit = function` 內 `if ($title === '押金' && $isRenewMethod){` 差額為負列 `'title'  => '退押金'`（fee_type 1 支出），車位押金不進此分支、直接列負數金額。「延長續約」是帳本用語，非介面按鈕文字，以帳本為準採認。",
+    "句 3：docs/knowledge/jgb-product-facts.md #p914-no-deposit-carryover「非續約的新合約第一張帳單一律列全額押金，舊合約的押金走「點退押金」結算」。"
+   ]
+  },
+  {
+   "id": "jgb/D/early-termination-reasons",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "189e10c456a99605f8513fa390ddd3a19a8be99b873008767aba85daed2683e5",
+   "title_text": "房東申請提前解約要選什麼理由？（新版中文合約有 10 項理由可選，其餘合約只能選「其他」）",
+   "notes": [
+    "標題：由句 1、句 2 支撐。",
+    "句 1：src/components/Lightbox/ContractEarlyTerminationByLandlord.jsx 第一步「下一步」在 `isEmpty(state.form.reason_options)` 時 disabled；app/Http/Controllers/ContractController.php `getEarlyTerminationReasons` 基底 `'other' => ___('其他')` 一律存在。",
+    "句 2：同上 app/Http/Controllers/ContractController.php `只有新版中文合約會顯示其他以外的提前解約理由`、`stripos($contractFile, 'tw_zh')` 時合併 reason_1～reason_10，含「出租方為重新建築而必要收回。」「承租方遲付租金之總額達兩個月之金額，…」「承租方違反第七條第三項規定，擅自將租賃住宅轉租或轉讓租賃權於他人。」。",
+    "句 3：src/components/Lightbox/ContractEarlyTerminationByLandlord.jsx textarea `disabled={state.form.reason_options !== 'other'}`、`maxLength={200}`、`解約理由最多可輸入 [s1] 字`，且選 other 而內容空時「下一步」disabled。"
+   ]
+  },
+  {
+   "id": "jgb/D/early-termination-form-fields",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "2a5fb1bf8bb4bd0965f10866021535211a9b84fb2c0e8355e1b979633dd01267",
+   "title_text": "申請提前解約要填什麼？（預計提前解約日須早於原合約到期日、違約金支付方與金額、佐證資料）",
+   "notes": [
+    "標題：由四句支撐。",
+    "句 1：src/components/Lightbox/ContractEarlyTerminationByLandlord.jsx t('預計提前解約日')；app/Http/Controllers/ContractController.php sendEarlyTerminationByLandlord `'wish_date_end' => 'required|date|before:' . $contract->date_end` 驗證失敗回錯誤。",
+    "句 2：同上 src/components/Lightbox/ContractEarlyTerminationByLandlord.jsx t('違約金設定')、t('支付方')（出租方／承租方）、t('支付金額')；第二步「下一步」在 wish_date_end、selected_payer、liquidated_damages 任一為空時 disabled。",
+    "句 3：同上 src/components/Lightbox/ContractEarlyTerminationByLandlord.jsx 第一步 t('佐證資料')、`size_limit={10}`、t('支援JPG、PNG檔，檔案大小最大[s1]MB。', [10])。",
+    "句 4：同上 src/components/Lightbox/ContractEarlyTerminationByLandlord.jsx 特定合作團隊旗標成立時，選承租方會把 liquidated_damages 設為 `state.data.contract.rent.base_number`，金額輸入框 `disabled={… && state.form.selected_payer === 'tenant'}`，並提示「您的企業帳號設定預設[s1]違約金為合約設定[s2][s3][s4]。」。"
+   ]
+  },
+  {
+   "id": "jgb/D/early-termination-tenant-cancel",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "5f5a3c43ac9088b5835c1dbc754bef57b03deba444b1e006d2a33eaf9792aa8e",
+   "title_text": "誰可以取消已送出的提前解約申請？（房東透過小齒輪取消；租客只能取消自己發起、還在申請中的提前解約）",
+   "notes": [
+    "標題：由三句支撐。",
+    "句 1：app/Http/Controllers/ContractController.php 齒輪選單 `isEarlyTerminating()` 時 `'text' => ___('取消提前解約')`（lightbox early-termination-cancel-）；landlordonboarding04lease_zh-Hant.html 寫「取消提前終止合約」但現行程式標籤為「取消提前解約」，以程式為準成立。",
+    "句 2：同上 app/Http/Controllers/ContractController.php 租客 `if ($action == 'cancel')` 要求 `$contract->status != Contract::CONTRACT_EARLY_TERMINATION` 時擋下；租客發起時 sendEarlyTerminationByTenant 設 `Contract::CONTRACT_EARLY_TERMINATION`，房東發起時 app/Services/ContractService.php CONTRACT_EARLY_TERMINATION_APPLY_LOG 設 `Contract::CONTRACT_INVITING`，故房東發起的租客無法取消。",
+    "句 3：同上 app/Http/Controllers/ContractController.php `'status-error' => ___('您無法取消這份提前解約')`。"
+   ]
+  },
+  {
+   "id": "jgb/D/early-termination-eligibility",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "e24425a7c7b467965adc1715c9338e6b3c9c5c0e382b4268dd473bb92e31780a",
+   "title_text": "什麼合約可以提前解約？（合約狀態須為成立或點交完成、沒有申請過或已完成過提前解約；「可否提前解約」設定只限制租客發起，不影響房東發起）",
+   "notes": [
+    "標題：由三句支撐。",
+    "句 1：app/Contract.php `public function canEarlyTermination` 條件1 status 須為 CONTRACT_SIGNED／CONTRACT_MOVE_IN_DONE（註解「合約成立/點交完成」），條件2 bit_status 含 CONTRACT_EARLY_TERMINATION 或 _DONE 即 false。",
+    "句 2：同上 app/Contract.php `if (!$role->is_landlord && !$this->allow_early_termination)`（條件3 for 租客）。",
+    "句 3：同上 app/Contract.php 條件4 `if ($this->isRenewing()) { return false; }`。"
+   ]
+  },
+  {
+   "id": "jgb/D/early-termination-effect-move-out",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "33df31a50d9e30ec001ac154a8d38b435897fe625a22c5dc830b298240666e98",
+   "title_text": "提前解約後多久可以點退？（依新合約終止日往前推 30 天內即可執行點退押金）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：landlordonboarding04lease_zh-Hant.html「提前終止合約後，根據新的合約終止日，在租期到期前三十天，便可以執行「點退押金」」。",
+    "句 2：同上 landlordonboarding04lease_zh-Hant.html「點退時將會依照合約條件，自動帶入並且判斷是否有違約金，房東可依照實際狀況調整數字」。"
+   ]
+  },
+  {
+   "id": "jgb/D/notary-agree-option",
+   "title": "成立",
+   "sentences": [
+    "不成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "c210a036ca9909cea36f20ab033bb96f1086655449fcd5f9cbe2224a75b2ecd2",
+   "title_text": "哪些合約範本可以在公證分頁選擇辦理公證？",
+   "notes": [
+    "標題：由句 2 支撐。",
+    "句 1：src/store/modules/contract_edit/public_notary.js `has_public_notary: 0`、resources/structures/contract/edit/form.php `'has_public_notary'=> 0`、app/Http/Controllers/ContractController.php `'has_public_notary' => !empty($contract->has_public_notary) ? $contract->has_public_notary : 0`；src/pages/contracts/edit/publicNotary/General.vue 的「不同意辦理」radio `:value=\"0\"`，預設是不同意辦理，找不到任何預設為 1（同意辦理）的來源。",
+    "句 2：src/use/config/useContractRequiredField.js 含 `FormField.hasPublicNotary` 的範本為 tw_zh_individual、tw_zh_corporation、tw_zh_management、三個 _union、en_us_corporation、th_th_individual、th_th_management；config/contract.php 對應 label「114年內政部住宅租賃契約(原房東)」「113年內政部轉租契約(包租轉租)」「代租代管契約(參考114年租賃契約)」「公會中文版 租賃契約書 原房東/包租業/代租代管」「內政部英文版 租賃契約書 包租業」「英泰文版 租賃契約書 原房東/代租代管」。",
+    "句 3：src/pages/contracts/edit/publicNotary/General.vue t('強制執行事項')、t('辦理公證後，請選擇應逕受強制執行的項目(可複選)。') 與三個 checkbox 文字「1：承租方如於租期屆滿後不返還租賃住宅。」等逐字相符。",
+    "句 4：同上 src/pages/contracts/edit/publicNotary/General.vue 「同意辦理」@change `public_notary_content = ['1', '2', '3']`。",
+    "句 5：同上 src/pages/contracts/edit/publicNotary/General.vue `contractHasPublicNotaryDistraint` 時顯示 t('公證書載明下列事項應逕受強制執行') 同意／不同意；src/use/config/useContractRequiredField.js 只有 tw_zh_corporation、tw_zh_management、tw_zh_individual 含 `FormField.hasPublicNotaryDistraint`。",
+    "句 6：同上 src/pages/contracts/edit/publicNotary/General.vue t('保證人效力') 與 `前項後段第 [s1] 款之效力及於保證人`，款號由 sortedPublicNotaryContent 帶入。",
+    "句 7：同上 src/pages/contracts/edit/publicNotary/General.vue `v-else` 顯示 t('*目前英文與英越文版合約不支援此項目。')；src/use/config/useContractRequiredField.js EN201608、VN202005 不含 hasPublicNotary，en_us_management 與無範本（紙本／DIY）落入 FallbackRequiredFields；src/use/useEditStore.js 紙本與 DIY 過濾清單都保留 'contracts.edit.publicNotary'。",
+    "句 8：src/use/useEditStore.js `// 車位合約過濾` basicRoutes 不含 publicNotary；另對特定合作團隊範本 `filter(node=>node.name !== 'contracts.edit.publicNotary')`。"
+   ]
+  },
+  {
+   "id": "jgb/D/early-termination-billing-after",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "1fca3e856f39d115546b694c721a6031f71f90f7aba28b4ebe1efb11cce636dc",
+   "title_text": "提前解約後還會出新帳單嗎？（解約日之後系統不會再自動產生新租金帳單；已產生、落在解約日後的帳單要業者自行封存）",
+   "notes": [
+    "標題：由三句支撐。",
+    "句 1：docs/knowledge/jgb-product-facts.md #p914-early-termination-bills「提前解約確認時把合約 `date_end` 改寫為解約日」。",
+    "句 2：同上 docs/knowledge/jgb-product-facts.md #p914-early-termination-bills「每日排程 `bill:gen` 只對 `date_end` 不早於當天的合約產生下一期租金帳單」。",
+    "句 3：同上 docs/knowledge/jgb-product-facts.md #p914-early-termination-bills；app/Role.php `'IS_OPEN_CONTRACT_BILL_SETTING' => true, // 是否開啟合約預覽帳單`（預設），部分角色設定為 false（特定合作團隊）。"
+   ]
+  },
+  {
+   "id": "jgb/D/entrusted-contract-what-is-it",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "565a39412920f36388d93075cb198739b1f1a5c256ec0f1e1760b56a69c32579",
+   "title_text": "委託合約是什麼？（房東委託業者包租代管的合約，跟業者與租客之間的租賃合約是不同份文件）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：docs/knowledge/jgb-product-facts.md #single-vs-dual-contract「委託合約 `EntrustedContract`（房東↔業者）與租賃合約 `Contract`（業者↔租客）兩份並存」。",
+    "句 2：src/pages/entrustedContracts/list/_parts/PageTop.jsx status 1～5 為 t('待發送委託約')、t('待房東簽回')、t('待管理者簽名')、t('執行中委託約')、t('歷史委託約')；一般合約 src/pages/contracts/list/_parts/PageTop.vue statusPair 亦為 1～5 五種。",
+    "句 3：同上 src/pages/entrustedContracts/list/_parts/PageTop.jsx「待房東簽回」「待管理者簽名」，對照一般合約「待租客簽回」「待房東簽名」。"
+   ]
+  },
+  {
+   "id": "jgb/D/entrusted-contract-lease-type",
+   "title": "成立",
+   "sentences": [
+    "不成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "68ac603c4b2b300ef81ba0c3b78b841646c4e7670a71757ff3a0c8b41a58090a",
+   "title_text": "委託合約「包租」跟「代管」有什麼不同？（代管必填服務費計算模式、幣別與金額或比例；計算制度、週期、約定日期兩者都要填）",
+   "notes": [
+    "標題：由句 2 支撐。",
+    "句 1：src/pages/entrustedContracts/edit/requirement/Basic.jsx t('委託約類型')（t('包租合約')／t('代管合約')）、t('委託約起迄日期')、紙本（document_type 1）上傳 t('委託約檔案') 皆成立；但客製化（document_type 2）的 t('委託約範本') 下拉是 `disabled={props.info.document_type === 2}`，選項固定為 src/pages/entrustedContracts/edit/Index.jsx contractsTypeOptions 唯一的 t('自製合約')，使用者無法「選」範本，旁邊改為 t('編輯電子簽章底稿')。",
+    "句 2：docs/knowledge/jgb-product-facts.md #charter-vs-management；src/pages/entrustedContracts/edit/Index.jsx `toggleCheckIcon('entrustedContracts.edit.fee'` 在非包租時 push service_fee_type、service_fee、service_fee_currency；src/pages/entrustedContracts/edit/requirement/Fees.jsx 標題 t('服務費收取頻率')／t('包租租金收取頻率')、t('服務費計算制度')／t('包租租金計算制度')。",
+    "句 3：src/pages/entrustedContracts/edit/requirement/Fees.jsx `rentTitleKey` 包租時為「包租租金」，並有「包租租金收取頻率」「包租租金計算制度」與 t('約定日期')。",
+    "句 4：同上 src/pages/entrustedContracts/edit/requirement/Fees.jsx 特定合作團隊旗標時計算模式與計算制度區塊不渲染、rentTitleKey 為「零用金」；src/pages/entrustedContracts/edit/Index.jsx `const params = state.is… ? general : [...general, service_fee_cycle_date]`。"
+   ]
+  },
+  {
+   "id": "jgb/D/entrusted-contract-tabs-overview",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "31dc6d5383006f863ef4cb076a5b57487fe95620fd52502e60d44f474abe5995",
+   "title_text": "委託合約編輯畫面有哪些分頁？（房東資訊、委託條件三頁、管理方資訊共 3 組 5 頁）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/routes/entrustedContracts.js 五個子路由 group 為「房東資訊」「委託條件」×3（pageLabel 基本資料、租金費用、收款方式）「管理方資訊」。",
+    "句 2：src/pages/entrustedContracts/edit/_parts/EditMenu.jsx 特定合作團隊且 `item.routeKey === 'fee'` 時顯示 t('零用金與服務費')。"
+   ]
+  },
+  {
+   "id": "jgb/D/entrusted-contract-preview-to-show",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "a35b824d4fede58e138e3b7ae24f8781d73a43708faa53791c11b11b0f4480c9",
+   "title_text": "委託合約編輯完成後怎麼進入簽署？（點右上角「預覽合約」先儲存資料，再進入檢視頁面）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/pages/entrustedContracts/edit/Index.jsx NavBar tools 的 t('預覽合約') 按鈕 `onSave().then(()=>{ router.push(`/entrustedContracts/show/…`) })`；檢視頁 src/pages/entrustedContracts/show/_parts/signerInfo/ButtonArea.jsx「立即簽約」與 src/pages/entrustedContracts/show/_parts/signerInfo/ArchiveFileUploader.jsx 歸檔上傳。"
+   ]
+  },
+  {
+   "id": "jgb/D/entrusted-contract-upload-file-size-limit",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "fd03f9ec5f18959782606a6063fedfc4e976538b00ae555cb40b019c68879350",
+   "title_text": "委託合約上傳既有檔案限制多大？（畫面寫最大 6MB，上傳元件實際上限是 10MB）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/pages/entrustedContracts/show/_parts/signerInfo/ArchiveFileUploader.jsx t('支援 PDF 檔，檔案大小最大 [s1] MB。', [6]) 與 `size_limit={10}`。"
+   ]
+  },
+  {
+   "id": "jgb/D/entrusted-contract-fees",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "f538284470da50b57f4b1f7a49d727c626696365bc96ff5ac14cfbd17d13388c",
+   "title_text": "委託合約的收費分頁要設定什麼？（服務費或包租金額的計算模式與週期，押金提示不得超過兩個月租金）",
+   "notes": [
+    "標題：由句 1、句 2 支撐。",
+    "句 1：src/pages/entrustedContracts/edit/requirement/Fees.jsx t('計算模式')、t('週期')、t('單價')、t('幣別')。",
+    "句 2：同上 src/pages/entrustedContracts/edit/requirement/Fees.jsx `state.isLangZhTw &&` 顯示 t('根據中華民國內政部(租賃住宅市場發展及管理條例)規定，一般租賃契約押金額度最高不得超過兩個月租金。')（句子未加引號，屬轉述）。",
+    "句 3：同上 src/pages/entrustedContracts/edit/requirement/Fees.jsx t('參考支付金額')、t('參考服務費金額')、t('跨月計算')、t('當月分算')。",
+    "句 4：同上 src/pages/entrustedContracts/edit/requirement/Fees.jsx `pageTitleKey` 特定合作團隊為 '零用金與服務費'，計算模式、計算制度、參考支付金額、參考服務費金額與押金提示皆包在非該團隊條件內。"
+   ]
+  },
+  {
+   "id": "jgb/D/entrusted-contract-landlord-info",
+   "title": "成立",
+   "sentences": [
+    "不成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "a5abe2ebc470f601bc0541c58126de969c2ae7c072cbbac55a7242bdc9320e02",
+   "title_text": "委託合約的房東資訊怎麼填？（房東註冊或房東免註冊；免註冊時要選個人房東或法人房東身份）",
+   "notes": [
+    "標題：由句 2、句 3 支撐。",
+    "句 1：src/pages/entrustedContracts/edit/landlordInfo/LandlordInfo.jsx t('是否預設本合約之房東註冊 JGB 會員') 與 ChoiceToggler「房東註冊／房東免註冊」存在，但兩個選項都 `disabled: props.info.document_type == 2`——以「電子合約 - 客製化契約書」建立的委託合約不能在此選擇，句子漏了此例外。",
+    "句 2：同上 src/pages/entrustedContracts/edit/landlordInfo/LandlordInfo.jsx t('房東註冊：房東將會註冊 JGB 會員並自行填妥出租方資訊。')、t('房東免註冊：房東因無需註冊 JGB 會員而需要管理者協助填寫以下房東資訊。')。",
+    "句 3：同上 src/pages/entrustedContracts/edit/landlordInfo/LandlordInfo.jsx 免註冊分支 t('請填寫房東資訊')、t('系統會將以下房東資料騰寫到合約內，過程經加密處理，不讓資料外流。')、t('出租方身份別')（t('個人房東')／t('法人房東')）；註冊分支 t('合約邀請聯繫方式')。"
+   ]
+  },
+  {
+   "id": "jgb/D/entrusted-contract-manager-info",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "667e3b93945dde29f7a8e23c8ecbda1ee71099f4965c0fe002be2d8c14a73351",
+   "title_text": "委託合約的經理人資訊分頁要填什麼？（選簽約公司並帶出公司、經紀人與租賃住宅管理人員資訊、指定經理人、電子簽名圖章）",
+   "notes": [
+    "標題：由三句支撐。",
+    "句 1：src/pages/entrustedContracts/edit/managerInfo/ManagerInfo.jsx t('委託約簽約資訊')、t('公司資訊')（公司登記名稱、公司統一編號、負責人姓名、公司登記證號、公司電話、公司Email、公司登記地址、公司通訊地址）、t('經紀人資訊')、t('租賃住宅管理人員資訊')（名稱、證號），值取自 `props.options.info_companys`，並提示 t('如有需要修改以下資訊，請前往 [s1] 進行修改。') 連到「團隊資訊」。",
+    "句 2：同上 src/pages/entrustedContracts/edit/managerInfo/ManagerInfo.jsx t('經理人資訊')、t('經理人')，修改連結為「帳號資訊」。",
+    "句 3：同上 src/pages/entrustedContracts/edit/managerInfo/ManagerInfo.jsx 頁尾 t('簽約設定') 下 t('使用電子簽名圖章取代親手簽名')；顯示條件 `is_enable_electronic_signature` 由 app/Services/EntrustedContractService.php 依登入身分為 RULE_KEY_LANDLORD_CORPORATE 決定（建立委託約的業者身分），故採認。"
+   ]
+  },
+  {
+   "id": "jgb/D/entrusted-contract-payment",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "18a8a25e186ca67dc8323709179b668e3178c2475f8621e78106ab93b07c9471",
+   "title_text": "委託合約收付款資訊怎麼設定？（沒有選擇器，固定顯示「出租方帳戶」與「管理方帳戶」兩個現金收付區塊，後者必填）",
+   "notes": [
+    "標題：由句 1、句 2 支撐。",
+    "句 1：src/pages/entrustedContracts/edit/requirement/Payment.jsx 標題 t('收付款資訊')，固定渲染 { t('現金收付') }-{ t('出租方帳戶') } 與 { t('現金收付') }-{ t('管理方帳戶') } 兩區塊，無收款方式選擇器（介面以半形「-」連接，句中全形「－」僅為標點寬度差異）。",
+    "句 2：同上 src/pages/entrustedContracts/edit/requirement/Payment.jsx 管理方帳戶 `<h5 class=\"after-required mb-2\">`，出租方帳戶無 after-required；src/pages/entrustedContracts/edit/Index.jsx `toggleCheckIcon('entrustedContracts.edit.payment'` 只檢查 manager_cash_* 欄位。",
+    "句 3：同上 src/pages/entrustedContracts/edit/requirement/Payment.jsx 兩區塊皆有 t('銀行代碼')、t('銀行名稱')、t('銀行帳號')、t('帳戶名稱')，管理方另有 t('加入常用帳號')。"
+   ]
+  },
+  {
+   "id": "jgb/D/entrusted-contract-show-and-upload",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "8ee8beb3ae4cdef51da8e0a9e4aabca97ab6f68bbadc99f44752b1c56a7afd97",
+   "title_text": "委託合約檢視頁面能做什麼？（查看歸檔資料、上傳既有委託合約檔案、尚未寄出邀請前可返回編輯）",
+   "notes": [
+    "標題：由三句支撐。",
+    "句 1：src/pages/entrustedContracts/show/Index.jsx t('歸檔資料')、pdf 分頁內容空時 t('您尚未上傳合約檔案')、上傳成功 `window.globalNoticeShow(t('檔案已上傳'))`。",
+    "句 2：同上 src/pages/entrustedContracts/show/Index.jsx `contract_info?.status === 1 &&` 才顯示 t('返回編輯')；app/EntrustedContract.php `const STATUS_READY = 1; // 待簽約`，對應列表 status 1「待發送委託約」。",
+    "句 3：同上 src/pages/entrustedContracts/show/Index.jsx breadcrumbsList `label: t('合約總表')` 導向 entrustedContracts.list。"
+   ]
+  },
+  {
+   "id": "jgb/D/entrusted-contract-create-entry",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "a66ea203cfafaac07354474982eda4d107d1e520f0211e524a723cbf843d8cdf",
+   "title_text": "委託合約怎麼建立？（委託合約列表頁「建立委託約」按鈕，需有建立合約權限，可選客製化契約書或紙本簽約）",
+   "notes": [
+    "標題：由兩句支撐。",
+    "句 1：src/pages/entrustedContracts/list/_parts/PageTop.jsx `store.state.userData.permission?.add_contract && !state.isSearchScreen &&` 顯示 t('建立委託約')。",
+    "句 2：同上 src/pages/entrustedContracts/list/_parts/PageTop.jsx `LightboxSelectContractMethod isHiddenItem={['contractCreate']}`；src/components/Lightbox/SelectContractMethod.jsx「電子合約 - 客製化契約書」「紙本簽約」導向 estates.pick；src/pages/estates/pick/_parts/pick.jsx `case EstatePickAction.entrustedContractUpload:` 下一步 POST /api/entrustedContract 後進 `/entrustedContracts/${ result.data.id }/edit`，客製化的「下一步」是 AjaxUploader（`upload_for=\"customizeContract\"`）要先上傳底稿。"
+   ]
+  }
+ ],
+ "findings": [
+  "jgb/D/renew-data-carryover-rules 句 3 稱續約頁「只能設定續約日期、繳費週期、帳單週期制度與簽約方式」，與同組 jgb/D/renew-upload-paper-signed 句 1（單選紙本合約時續約頁有「合約檔案」上傳）互相矛盾；src/pages/contracts/renew/Index.vue 支持後者。",
+  "幫助中心 landlordonboarding04lease_zh-Hant.html 與現行程式有兩處介面文字不一致：續約／簽約按鈕幫助中心寫【立即簽名】、程式為「立即簽約」（影響 jgb/D/renew-signing-flow 句 2）；取消提前解約幫助中心寫【取消提前終止合約】、程式為「取消提前解約」（jgb/D/early-termination-tenant-cancel 以程式為準判成立）。",
+  "jgb/D/notary-agree-option 句 1「預設已同意辦理」與程式預設 has_public_notary = 0（不同意辦理）相反，而同條句 4 正確描述「點選同意辦理時才全勾三項」，同條內前後語意不一致。",
+  "jgb/D/renew-batch-entry-and-selection 句 2 把一般合約挑選頁的六種搜尋範圍套到批次續約；src/pages/contracts/pick/Index.jsx 對 BATCH_RENEW 刻意不提供 keyword_for。",
+  "委託合約以「電子合約 - 客製化契約書」建立時有多處鎖定（委託約範本下拉 disabled、房東註冊／免註冊選項 disabled），jgb/D/entrusted-contract-lease-type 句 1 與 jgb/D/entrusted-contract-landlord-info 句 1 都漏了這個例外。"
+ ],
+ "source_transcript": "ae0c04f0f224a9f6b.output"
+}

@@ -1,0 +1,372 @@
+{
+ "kind": "write",
+ "verdict": "REFUTED",
+ "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+ "claim": "Plan 9.28 批次 B19：20 條細目的標題與每一句已逐句對合法來源核對，逐條結果如 fines",
+ "fines": [
+  {
+   "id": "jgb/F/repair-status-tabs",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "639e617d1acc2b1df3a0052883d478a11efd4d819ce02af5a0e7e379f19bc142",
+   "title_text": "修繕單總表有哪些狀態分頁？（申請修繕、安排修繕、完成修繕、結單、封存）",
+   "notes": [
+    "標題：src/routes/repairs.js 的 repairListRoutes 五個 labelKey 為 申請修繕／安排修繕／完成修繕／結單／封存，與句 1 一致。",
+    "句 1：src/routes/repairs.js＋repairListRoutes 五個分頁；app/Http/Controllers/RepairController.php＋getMapRepairStatus 依 tabStatus 以 where('status', …) 單一狀態過濾，每張單只有一個 status 值，只會落在一個分頁。",
+    "句 2：repair_zh-Hant.html＋「➡新增修繕單」「➡安排修繕」「➡完成修繕」「➡結單」四段；app/Http/Controllers/RepairController.php＋route_name 'repair.archive' 與移動選單只移除目前所在狀態，封存分頁的列仍有移至其他四個狀態的選項，且 move 動作接受任何 from／to。",
+    "句 3：src/pages/repair/Index.vue＋if (route.name === 'repair') router.push({ name: 'repair.apply' })，選單連結 route('repairs.index') 即 /repair。",
+    "句 4：routes/web.php＋'/repair/{any?}/{any2?}' 掛 middleware('need_login')；app/Http/Middleware/LoginCheck.php＋$exceptApiUrls = ['/repair/share'] 讓分享頁不導去登入。"
+   ]
+  },
+  {
+   "id": "jgb/F/repair-list-search-filter",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "b72d02b52359bccce81092fef1446a1225040dd70a97e662d8d2078d66489e7b",
+   "title_text": "修繕單總表可以怎麼搜尋或篩選？（案名／地址／經理人／租客關鍵字，加上單一組「修繕單時間段」下拉：報修時間起訖／最後更新時間起訖／7 日內申請報修三選一，還有分類／項目／是否緊急）",
+   "notes": [
+    "標題：各斷言由句 1～4 與 src/components/Lightbox/RepairAdvSearch.vue 的「修繕類型」「是否為緊急項目」區塊支撐。",
+    "句 1：src/pages/repair/list/Index.vue＋keyword_for pairs estateName／address／agent／tenant 對應 案名／地址／經理人／租客，default: 'estateName'；app/Repair.php＋switch ($searchFor) 依欄位比對。",
+    "句 2：src/components/Lightbox/RepairAdvSearch.vue＋t('修繕單時間段') 的 select-picker 選項 apply: t('報修時間起訖')、update: t('最後更新時間起訖')、withinSevenDays: t('[s1] 日內申請報修', [7])，單一下拉三選一（另有空白「請選擇」）。",
+    "句 3：同上＋onChange 先把 update_date_range 與 apply_date_range 都設為 ['', '']，再依選項設 apply_date_range，切換即清空另一種時間條件。",
+    "句 4：同上＋t('重設條件') 的 onClick：props.searchState.form = { ...props.searchState.defaultForm } 並 state.date_for = ''，位於視窗底部 sticky 區塊。"
+   ]
+  },
+  {
+   "id": "jgb/F/repair-list-columns",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "不成立",
+    "成立"
+   ],
+   "content_sha256": "ede410c40bae0b60f026ba730e4c2f5b016ca9e2ab45b88a7c21ca955deb008b",
+   "title_text": "修繕單總表的表格欄位顯示什麼？（物件地址、分類＆項目、報修日期、最後更新、結算金額、房東/管理者、租客）",
+   "notes": [
+    "標題：src/pages/repair/list/Index.vue 的 columns 標題 t('物件地址')、t('分類＆項目')、t('報修日期')、t('最後更新')、t('結算金額')、t('房東/管理者')、t('租客')，與句 1 一致。",
+    "句 1：src/pages/repair/list/Index.vue＋state.columns 七個欄位標題逐字相符。",
+    "句 2：app/Http/Controllers/RepairController.php＋'main_agent' 取 agent_user_id、'tenant'=> $repair->tenant_info；app/Repair.php＋getTenantAttribute 名為 getTenantInfoAttribute，只在 to_user_id／to_role_id 有值時查資料、不查物件現行承租人，這部分成立。但「只有提出申請的人是租客本人時才會有值、房東方提出的就一定是空的」漏掉例外：app/Http/Controllers/External/RepairApiController.php＋'to_user_id' => $contract->to_user_id（routes/api.php＋Route::post('/repairs', 'External\\RepairApiController@store')），房東方透過對外 API 帶 contract_id 建立的修繕單會寫入租客資料，租客欄就會有值；RepairController.php 建單的合約分支（'contract_id' => $contract->id）也會寫入 to_user_id。絕對句漏例外 ⇒ 不成立。",
+    "句 3：src/pages/repair/list/Index.vue＋#emptyText 內 t('此分類目前尚未有修繕單')。"
+   ]
+  },
+  {
+   "id": "jgb/F/repair-list-sort-and-pagination",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "ccedd98ed6cc70023465fe5e5f47b6615b9ce46c41fb240cb2a7d3d8edfff0da",
+   "title_text": "修繕單總表怎麼排序、一頁看幾筆？（每頁 30／60／90 筆可選；排序選項裡的「結算金額」只有房東方帳號才看得到）",
+   "notes": [
+    "標題：由句 1～3 支撐。",
+    "句 1：app/Http/Controllers/RepairController.php＋switch ($request->per_page) case 60／case 90／case 30: default: $perPage = 30；src/components/ListBottom.vue＋options={[30, 60, 90]}、modelValue … || 30。",
+    "句 2：app/Http/Controllers/RepairController.php＋$sortOptions 1～12：報修日期由新到舊／由舊到新、最後更新時間由新到舊／由舊到新、結算金額由大到小／由小到大、分類(大)／(小)、案名(大)／(小)、租客(大)／(小)。",
+    "句 3：app/Http/Controllers/RepairController.php＋if (!$isLandlord) { unset($sortOptions[5]); unset($sortOptions[6]); }。"
+   ]
+  },
+  {
+   "id": "jgb/F/repair-create-button-visibility",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "ea983f830e3fa4f6123bdee70edde6f828b9ea93dac48a74ceb30e8b6a124ab8",
+   "title_text": "「新增修繕單」按鈕誰看得到？（租客一定有；房東方要有「新增&編輯&刪除所屬」或「新增&編輯&刪除所有」修繕資料其中一項權限）",
+   "notes": [
+    "標題：由句 1、2 支撐。",
+    "句 1：src/pages/repair/list/Index.vue＋v-if 條件 config_rule_type === 'tenant' 即顯示 t('新增修繕單')。",
+    "句 2：同上＋config_rule_type === 'landlord' && (permission?.edit_repair || permission?.edit_owner_repair)；app/Http/Controllers/UserController.php＋'g_edit_owner_repair' label '新增&編輯&刪除所屬修繕資料'、'g_edit_repair' label '新增&編輯&刪除所有修繕資料'。",
+    "句 3：src/pages/repair/list/Index.vue＋router-link :to=\"{name:'estates.pick', params:{action: 'repairCreate'}}\" 改寫為 estates.pick／repairCreate；src/pages/estates/pick/_parts/pick.jsx＋case EstatePickAction.repairCreate 下一步 classes next: isEmpty(picked[0]) ? 'disabled'，選好物件才 router.push repair.applyProcess。"
+   ]
+  },
+  {
+   "id": "jgb/F/repair-total-visibility",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "0acf172fd7efc2226d3e70fbd4657b65fb1109c9ad6b80129f73dd78d175b956",
+   "title_text": "「結算總金額」是什麼？（只有房東方帳號登入時才會顯示；這個數字只加總目前這一頁看得到的修繕單，換頁或換每頁筆數就會不一樣）",
+   "notes": [
+    "標題：由句 1、2 支撐。",
+    "句 1：src/pages/repair/list/Index.vue＋v-if=\"store.state.userData?.role?.config_rule_type == 'landlord'\" 包住 t('結算總金額：')（引號改述）。",
+    "句 2：app/Http/Controllers/RepairController.php＋$repairs = $currentRepairsModel->paginate($perPage) 後在 foreach ($repairs …) 內 $listTotal += $repairTotal，回傳 'total' => currency_format('', $listTotal)，只加總當頁資料，換頁或改 per_page 會改變加總範圍。"
+   ]
+  },
+  {
+   "id": "jgb/F/repair-export-visibility",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "72d73b6db975fb8eebc4997bff8ef83b6603a2edec9354d5a8c04ea26a52ee11",
+   "title_text": "誰能匯出修繕單？（要另外有匯出修繕資料的權限；而且這顆按鈕只有在「新增修繕單」按鈕會出現的身分底下才會一起出現，單獨有匯出權限而沒有編輯權限的房東方帳號看不到它）",
+   "notes": [
+    "標題：由句 1～3 支撐。",
+    "句 1：src/pages/repair/list/Index.vue＋v-if=\"store.state.userData?.permission?.export_repair\" 包住 t('匯出修繕單')；app/Http/Controllers/UserController.php＋'g_export_repair' label '匯出修繕資料'。",
+    "句 2：src/pages/repair/list/Index.vue＋匯出按鈕位於與 t('新增修繕單') 同一個 div（v-if 為 tenant 或 landlord 且 edit_repair／edit_owner_repair）之內，外層不成立時內層不渲染。",
+    "句 3：同上＋:class 含 { 'disabled': searchState?.data?.pageNav?.total == 0 }；src/styles/tailwind.sass＋.disabled opacity: 0.5、pointer-events: none（變淡且無法點擊）。"
+   ]
+  },
+  {
+   "id": "jgb/F/repair-move-status-from-list",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "69c893a69a575a3a7aa9edf2b9ab996e08e0f577d777495ee53117e249ec3659",
+   "title_text": "修繕單總表怎麼切換狀態？（每列右邊的齒輪選單有「移至」各個狀態的選項，封存後仍然可以再移回其他狀態）",
+   "notes": [
+    "標題：由句 1、3 支撐。",
+    "句 1：app/Http/Controllers/RepairController.php＋___('移至「[s1]」', [___('申請修繕')]) 等五個 move 選項，else if ($status === $action['route_name']) unset 目前狀態；src/components/SurelyVue/Repair/ActionCell.vue＋dropdownMenu 列出 option.label，位於最右側 ACTION 欄。",
+    "句 2：app/Http/Controllers/RepairController.php＋if ($canEditRepair) 才加入 move 選項（$canEditRepair 為 edit_repair 或 edit_owner_repair 的 hasOwnerPermission）；租客分支只有 'type'=> 'edit' 一個選項。",
+    "句 3：同上＋封存（repair.archive）與結單（repair.finish）分頁一樣只移除自身，其餘四個 move 選項保留；show() case 'move' 對 $to 五種值都接受，沒有限制來源狀態。",
+    "句 4：src/pages/repair/list/Index.vue＋handleChangeRepairStatus 成功時 window.globalNoticeShow(result.message) 並 router.push({ name: to })；app/Http/Controllers/RepairController.php＋'message' => ___('移動成功')。"
+   ]
+  },
+  {
+   "id": "jgb/F/repair-view-only-roles",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "1e334ed74b532ac2a90ac284403b84874025dc9cc5bc04db966e906da07a329f",
+   "title_text": "哪些身分會看到「查看」而不是「編輯＆查看」的齒輪按鈕文字？（大房東角色，以及對這張單只有「顯示所屬」、沒有「顯示所有」修繕資料權限的團隊成員；但這張單的經理人本人看到的仍是「編輯＆查看」）",
+   "notes": [
+    "標題：由句 1、2 支撐。",
+    "句 1：app/Http/Controllers/RepairController.php＋$editText = ___('編輯＆查看'); if ($isBigLandlord) { $editText = ___('查看'); }。",
+    "句 2：同上＋if (!$showAllRepair && $showOwnerRepair) { $editText = ___('查看'); }；app/Repair.php＋hasOwnerPermission 中 $isAgent = ($this->agent_user_id == $user->id); if($isAgent && strpos($permissionKey, 'repair')) return true，經理人所有修繕權限為真，故顯示「編輯＆查看」且 $canEditRepair 為真可移動。",
+    "句 3：app/Http/Controllers/RepairController.php＋if (!$showAllRepair && !$showOwnerRepair) { continue; }，該列不放入 $datas。",
+    "句 4：同上＋$editText 只依 $isBigLandlord 與 show_repair／show_owner_repair 決定，move 選項依 $canEditRepair（edit_repair／edit_owner_repair）；src/pages/repair/edit/Index.vue＋canEditRepair 依 permission.edit_repair／edit_owner_repair。",
+    "句 5：src/pages/repair/edit/Index.vue＋canEditRepair 含 !state.is_big_landlord；app/Http/Controllers/RepairController.php＋if ( $isBigLandlord || (!$editOwnerRepair && !$editRepair) ) 回傳「該身份沒有編輯權限」擋住 move／modify；只有顯示所屬的非經理人成員若有 edit_owner_repair，$editText 為「查看」但 $canEditRepair 為真、細節頁 canEditRepair 亦為真。"
+   ]
+  },
+  {
+   "id": "jgb/F/repair-list-filter-category-item-urgent",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "2dbce4c34b05c7dcdf7e8bf11cf38e3df853a0be4064666a17c3929c3c147014",
+   "title_text": "修繕單總表可以用分類、項目、是否緊急篩選嗎？（可以；先選分類才能選項目，換分類會把已選的項目清空；「是否緊急」是一個勾選框，勾了才會加上這個條件）",
+   "notes": [
+    "標題：由句 1～3 支撐。",
+    "句 1：src/use/search/modules/repairItem.js＋values: computed(()=>filterValue[props.form.category - 1])，未選分類時為空；src/components/Lightbox/RepairAdvSearch.vue＋isEmpty(state.itemOptions?.values) 時「項目」只給 options={[false]}（僅「請選擇」），有值時才列出該分類的項目。",
+    "句 2：src/components/Lightbox/RepairAdvSearch.vue＋分類 VueSelect 的 onSelect 內 props.searchState.form.item = ''。",
+    "句 3：src/use/search/modules/is_urgent.js＋optionTitle = t('是否為緊急項目？')、checkedValue '1'；src/components/Lightbox/RepairAdvSearch.vue＋type=\"checkbox\" 未勾時 form[key] = ''；app/Repair.php＋$mapIsUrgent = [\"1\" => 2] 只在對應到時加 where('emergency_status', 2)（EMERGENCY_STATUS）。"
+   ]
+  },
+  {
+   "id": "jgb/F/repair-list-contact-card",
+   "title": "成立",
+   "sentences": [
+    "不成立"
+   ],
+   "content_sha256": "54720274d080a5f05fe4ac0ba9d6c3e65618780bbd445879dbc728290cf51585",
+   "title_text": "修繕單總表點「房東/管理者」或「租客」欄位會怎樣？（會彈出這個人的聯絡資訊卡）",
+   "notes": [
+    "標題：src/pages/repair/list/Index.vue＋@click=\"()=>contactCardState.open(agent, 'agent')\" 與 contactCardState.open(tenant)，有資料時彈出 ContactCard，標題本身成立。",
+    "句 1：前半（點欄位彈出聯絡資訊卡）有 src/pages/repair/list/Index.vue 支撐；但括號內「這欄沒有聯絡人資料時會跳出『沒有聯絡人資訊』提示」不成立：src/components/SurelyVue/Common/SingleUserCell.vue＋v-if=\"isEmpty(props?.id) || isEmpty(props?.name)\" 只顯示 '-'，且這個分支沒有 @click，空白欄點了不會呼叫 open；src/use/useContactCard.ts＋t('沒有聯絡人資訊') 只在 open() 收到空資料時觸發，從這個列表永遠走不到。來源實際是：沒有資料的欄位顯示「-」、不可點、不跳任何提示。"
+   ]
+  },
+  {
+   "id": "jgb/F/repair-apply-flow-and-entry",
+   "title": "成立",
+   "sentences": [
+    "不成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "d22508e0fe3f69ed3a59edcf9df32b455200a1ff7ad590b8521a90d07aef5493",
+   "title_text": "怎麼申請修繕單？（房東方從【修繕管理】>【修繕單總表】、租客從【我的報修】>【修繕單總表】右上角「新增修繕單」進入，選物件→選分類項目→填報修細節→送出，按「上一步」「下一步」在步驟間切換）",
+   "notes": [
+    "標題：app/Role.php＋'label' => … ___('修繕管理') : ___('我的報修') 與子選單 ___('修繕單總表')；src/utils/constants/repair.constant.ts＋bottomNavPrevText／bottomNavNextText 為「上一步」「下一步」，步驟順序見句 2，標題成立。",
+    "句 1：app/Role.php＋'修繕管理'／'我的報修' 下的 '修繕單總表' 成立；但「頁面右上角都有『新增修繕單』按鈕」對房東方是絕對句，漏掉權限例外：src/pages/repair/list/Index.vue＋房東方須 permission?.edit_repair || permission?.edit_owner_repair 才顯示按鈕，沒有這兩項權限的房東方帳號看不到。絕對句漏權限例外 ⇒ 不成立（權限條件只在同條句 4 才出現）。",
+    "句 2：src/pages/estates/pick/_parts/pick.jsx＋case EstatePickAction.repairCreate prevText=\"取消\"、src/components/BottomNav.vue＋nextText default: '下一步'；src/utils/constants/repair.constant.ts＋CATEGORIES 為 '上一步'／'下一步'，DETAIL 為 '上一步'／'申請修繕'。",
+    "句 3：repair_zh-Hant.html＋「租客可以自行申請派修單…也可以由管理者從這邊申請派修單」；app/Http/Controllers/RepairController.php＋租客建單 $createData['is_notice_tenant'] = true；src/pages/repair/applyProcess/Index.vue＋form is_notice_tenant: false（房東方開關沒接上，見 Detail.vue）；app/Role.php＋repairs($isLandlord=false) 只取 where('is_notice_tenant', 1)，房東方網頁建立的單租客看不到。",
+    "句 4：src/pages/repair/list/Index.vue＋新增按鈕條件 tenant 或 landlord 且 edit_repair／edit_owner_repair；app/Http/Controllers/UserController.php＋權限 label '新增&編輯&刪除所屬修繕資料'／'新增&編輯&刪除所有修繕資料'。",
+    "句 5：src/pages/repair/applyProcess/Index.vue＋submitRepairForm 成功後 router.push(redirectRoute.default)；src/utils/constants/repair.constant.ts＋redirectRoute.default = { name: 'repair.apply' }。",
+    "句 6：app/Notification.php＋case 'repair_create' 內 botbonnie_api('push', 'line', …)；src/pages/repair/edit/_parts/ApplicationDetail.vue＋social-plugins.line.me/lineit/share?url=…/repair/share/ 分享連結；正對照組：建單呼叫端 grep repairItem/create 只命中 src/pages/repair/applyProcess/Index.vue，進入點 grep repairCreate 命中列表頁、src/pages/users/dashboard/parts/ShortCuts.vue、src/pages/users/dashboard/Tenant.vue，全為網頁入口，沒有 LINE 發起入口。"
+   ]
+  },
+  {
+   "id": "jgb/F/repair-apply-without-contract",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "401a407ffa551ad74c4bfbc1942ac7d4e51b55347993fb29e5d857a11f680f69",
+   "title_text": "沒有租約在跑的物件也能申請修繕嗎？（可以，房東方只要建好物件就能申請，不用先有合約）",
+   "notes": [
+    "標題：由句 1、2 支撐。",
+    "句 1：repair_zh-Hant.html＋「不一定要在合約中才能進行申請派修單，只要管理者有創好物件，都可以新增修繕單。」；app/Http/Controllers/RepairController.php＋elseif (!empty($requestData['estate_id'])) 以 $this->role->estates()->find(…) 取物件建單，不查合約（只有租客才走執行中合約查找）。",
+    "句 2：app/Http/Controllers/RepairController.php＋同上房東方分支不檢查合約或租客；app/Http/Controllers/EstateController.php＋pick 只在 $isTenantRepairCreate 時限制執行中合約物件，房東方選物件不受此限，空屋一樣可選。"
+   ]
+  },
+  {
+   "id": "jgb/F/repair-apply-category-item-other",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "4d2c5bfc580bbc19d9e56b705c0f8a3fb19935a6c70aa7d9cc9d0428d3008d7d",
+   "title_text": "報修分類項目怎麼選？（分類與項目都是系統設定的清單，選好之後在報修細節可以按「編輯」回上一步重選；有一個特定分類會多出讓使用者自己輸入名稱的欄位）",
+   "notes": [
+    "標題：由句 1～3 支撐。",
+    "句 1：src/pages/repair/applyProcess/_parts/Categories.vue＋scroll-nav 分類分頁，項目以 RatioArea 背景圖 /assets/img/repair_items/${item.file_name} 加名稱的卡片呈現；app/Repair.php＋repairItems 取自 DB::table('repair_categories')／DB::table('repair_items') 的 active 資料。",
+    "句 2：src/utils/enums/repair.enum.ts＋Categories.OTHER = 11；src/pages/repair/applyProcess/_parts/Detail.vue＋v-if=\"Number(pickedDetailOfRepair.category.categoryId) === Categories.OTHER\" 顯示 t('自定義分類名稱') 與 placeholder t('請輸入自定義分類名稱')。",
+    "句 3：src/pages/repair/applyProcess/_parts/Detail.vue＋「項目分類」區塊 router-link :to=\"bottomNavPrevRoute[ApplyProcessSteps.DETAIL]\" 內 t('編輯')；src/utils/constants/repair.constant.ts＋DETAIL 的上一頁為 step categories。"
+   ]
+  },
+  {
+   "id": "jgb/F/repair-apply-detail-fields",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "03a659f9f3928d130e984f95c63cafedcfd42a1fda441783c60a5c0ca1f53ab2",
+   "title_text": "報修細節要填什麼？（項目分類、問題必填；預約時段依身分決定是否必填；緊急修繕、佐證照片、備註選填；「通知及同步租客」是房東代租客申請時會看到的一個開關，但目前沒有實際作用）",
+   "notes": [
+    "標題：由句 1～4 與 repair-apply-reservation-slots 的預約時段檢查支撐。",
+    "句 1：src/pages/repair/applyProcess/_parts/Detail.vue＋:isRequired=\"true\" :title=\"'項目分類'\"、:title=\"'問題'\"，問題選項 issue_options 加 t('其他') 後出現輸入框；app/Http/Controllers/RepairController.php＋'repair_item_id' => 'required'、'repair_issue' => 'required_if:issue_selected,null'。",
+    "句 2：src/pages/repair/applyProcess/_parts/Detail.vue＋'緊急修繕'、'佐證照片或影片'、'備註' 皆 :isRequired=\"false\"，緊急修繕 description '如果開啟「緊急修繕」，廠商將視狀況增加修繕費用，請斟酌使用。'。",
+    "句 3：src/pages/repair/applyProcess/_parts/Detail.vue＋v-if=\"state.shouldNotifyTenant\"（pickedItems[0].contracts.length > 0 且非租客）的區塊 :isRequired=\"true\" :title=\"'通知及同步租客'\"、description '本物件有租客承租中，是否要通知及同步於您租客的修繕單總表？'，SwitchButton 只傳 :model；src/components/SwitchButton.vue＋只讀 modelValue prop、點擊只 $emit('update:modelValue')，父層未接 v-model，畫面與 repairForm.is_notice_tenant 都不變；app/Http/Controllers/EstateController.php＋repairCreate 的 contracts 為現行已簽約非歷史合約。",
+    "句 4：src/pages/repair/applyProcess/_parts/Detail.vue＋<input :model=\"repairForm.is_urgent\" type=\"checkbox\" />（非 v-model）；src/pages/repair/applyProcess/Index.vue＋form is_urgent: false；app/Http/Controllers/RepairController.php＋$requestData['is_urgent'] === 'true' ? EMERGENCY_STATUS : EMERGENCY_NON_STATUS，結果一律非緊急。",
+    "句 5：src/pages/repair/applyProcess/_parts/Detail.vue＋'備註' description '如有其他狀況需要師傅知道的，請在備註欄內填寫。'。"
+   ]
+  },
+  {
+   "id": "jgb/F/repair-apply-reservation-slots",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "e083504e7a4aba7a1ffa912487e7fd4647dcee4a3d43a49c88c6161683847067",
+   "title_text": "預約時段規則是什麼？（畫面上標示為必填，但實際上只有租客身分申請時系統才會擋下沒填的情況；房東申請時就算不填也能送出）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/pages/repair/applyProcess/_parts/Detail.vue＋:isRequired=\"true\" :title=\"'預約時段'\"；src/pages/repair/applyProcess/Index.vue＋isOrderTimeOk 只在 config_rule_type === 'tenant' 時檢查，否則 true；app/Http/Controllers/RepairController.php＋if (!$isLandlord) { $rules += ['tenant_order_times' => 'required'] }。",
+    "句 2：src/pages/repair/applyProcess/_parts/Detail.vue＋每組 FlatPickr 日期與 t('從')／t('到') 兩個整點下拉，v-if=\"repairForm.tenant_order_times.length < 5\" 才顯示 +t('新增時段')，最多 5 組。",
+    "句 3：同上＋t('此物件的所在時區為：[s1]', [estate_timezone_string])。"
+   ]
+  },
+  {
+   "id": "jgb/F/repair-apply-photo-limit",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "a650883ff3967d3387e00eca60d3a6133a94aa24660ef839c14978a50c7a5e55",
+   "title_text": "報修可以附照片或影片嗎？（照片最多 10 張；影片最長 30 秒或 100MB；支援 jpeg／jpg／png 圖片與 mov／mp4／webm 影片）",
+   "notes": [
+    "標題：由句 1、2 支撐。",
+    "句 1：src/pages/repair/applyProcess/_parts/Detail.vue＋t('可上傳損壞處的照片或影片，方便維修師傅快速了解狀況，照片至多 10 張，影片最長 30 秒或 100MB。')。",
+    "句 2：同上＋t('可支援圖片格式：jpeg、jpg、png，影片格式：mov、mp4、webm。')，accept=\"image/jpeg,image/png,video/mp4,video/quicktime,video/webm\"。",
+    "句 3：Detail.vue＋<label v-if=\"repairForm.apply_photos.length<10\"> 上傳入口，max_length: 10 - repairForm.apply_photos.length，刪除後才能再顯示（註：照片與影片共用此 10 個名額）。"
+   ]
+  },
+  {
+   "id": "jgb/C/community-pick-copy-estate",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "不成立"
+   ],
+   "content_sha256": "af0ac3b32e2d81a368d16f9ae913a02746c97b9d4e9fb24c94f304df34a020b4",
+   "title_text": "從社區選擇畫面複製物件，下一步是什麼？",
+   "notes": [
+    "標題：提問型標題，沒有另外的斷言，成立；答案見句 4（句 4 不成立）。",
+    "句 1：src/pages/communities/pick/Index.vue＋pageTitle：communityCopy→t('請選擇要複製的社區')、estateCreate→t('請選擇要新增物件的社區')、estateCopy→t('請選擇要複製物件的社區')（另有預設 t('請選擇社區')）。",
+    "句 2：src/pages/communities/pick/Index.vue＋communityCopyFetcher POST /api3/communities/single 帶 copy: 1，成功後 router.push({ name: 'communities.edit', params: { communityId: result?.data?.communityId } })。",
+    "句 3：src/pages/communities/pick/Index.vue＋window.location.href = …/api2/estate/create?communityId=…；app/Http/Controllers/EstateController.php＋create() 以 $addAttrs['community_id'] 呼叫 Estate::createEstate 後 redirect()->route('estates.edit', …)；src/pages/estates/edit/Index.vue＋t('編輯物件')（另有 add_estate 權限、訂閱與物件數上限的錯誤分支，屬失敗情境）。",
+    "句 4：src/pages/communities/pick/Index.vue＋case 'estateCopy' 是 router.push({ name: 'estates.pick', params: { action: 'estateCopy' }, query: { communityId } })，先進入物件選擇畫面；app/Http/Controllers/EstateController.php＋pick 的 case 'estateCopy' 以 $searchCriteria['communityId'] 只列該社區物件；src/pages/estates/pick/_parts/pick.jsx＋case EstatePickAction.estateCopy 要使用者選一筆後才 window.location.href = …/estates/copy/${picked[0]}。來源實際是：讓使用者從該社區的物件中自選一筆再複製，不是直接複製第一筆。"
+   ]
+  },
+  {
+   "id": "jgb/F/repair-apply-notifications",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "272017b088e9acf2d366d945caf8e5a7f32cdeb232567a5d03ff42a119ea021f",
+   "title_text": "新增修繕單後誰會收到通知？（租客送出時通知房東方；房東方在網頁上建立時只寄 Email 給房東方，租客不會收到通知）",
+   "notes": [
+    "標題：由句 1、2 支撐。",
+    "句 1：app/Notification.php＋case 'repair_create' 的 case 'lessee' 分支：botbonnie_api('push', 'line', $repair->role_id, $repair->user_id …)、Notification::add 給房東、email($emailSubject, $repair->user_email …)，此分支沒有任何給租客的通知（與 repair_zh-Hant.html「租客、團隊擁有者都會收到email的通知」衝突，以程式為準）。",
+    "句 2：app/Notification.php＋case 'lessor' 分支只在 if ($repair->is_notice_tenant) 時通知租客，其後固定 email 給 $repair->user_email；src/pages/repair/applyProcess/Index.vue＋房東方送出時 is_notice_tenant: false（開關未接上）；app/Role.php＋repairs(false) 只取 is_notice_tenant = 1，租客總表看不到。",
+    "句 3：src/pages/repair/applyProcess/Index.vue＋if (result.success) 後 window.globalNoticeShow(result.message)；app/Http/Controllers/RepairController.php＋'message' => ___('新增成功')。",
+    "句 4：src/pages/repair/applyProcess/Index.vue＋router.push(redirectRoute.default)；src/utils/constants/repair.constant.ts＋default: { name: 'repair.apply' }。"
+   ]
+  },
+  {
+   "id": "jgb/F/repair-notifications-by-stage",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "3c9ea2f838ca4c14a3feb14fcbbdf82fb6755eeb0ba1a4b854c564cee624e847",
+   "title_text": "安排廠商、完成修繕、結單時還會發哪些通知？（租客只有在這張修繕單會通知租客時才收得到；結單只寄 Email）",
+   "notes": [
+    "標題：由句 1～3 支撐。",
+    "句 1：app/Http/Controllers/RepairController.php＋assign_logs 有值時 $notificationKey = 'update_manufacturer_info'；app/Notification.php＋case 'update_manufacturer_info' 內 if ($repair->is_notice_tenant) 才 botbonnie_api('push', 'line', …) 與 Notification::add 給租客。",
+    "句 2：app/Http/Controllers/RepairController.php＋complete_note 有值時 $notificationKey = 'update_note_landlord'；app/Notification.php＋case 'update_note_landlord' 內 if ($repair->is_notice_tenant) 才推 LINE 與通知中心給租客。",
+    "句 3：app/Http/Controllers/RepairController.php＋move 到 repair.finish 或 modify 進度到 FINISH 時 Notification::notice('repair_finish' …)；app/Notification.php＋case 'repair_finish' 只呼叫 email(…)：房東固定寄，租客在 if ($repair->is_notice_tenant) 內寄，該 case 沒有 botbonnie_api 或 Notification::add（與 repair_zh-Hant.html 結單「Email、Line、通知中心」衝突，以程式為準）。",
+    "句 4：app/Http/Controllers/RepairController.php＋租客建單 $createData['is_notice_tenant'] = true；房東方網頁建單 $is_notice_tenant = $requestData['is_notice_tenant'] == 'true'，src/pages/repair/applyProcess/Index.vue＋前端固定送 is_notice_tenant: false。"
+   ]
+  }
+ ],
+ "findings": [
+  "幫助中心與程式衝突（以程式為準）：repair_zh-Hant.html 寫新增修繕單成功時「租客、團隊擁有者都會收到email的通知」，但 app/Notification.php case 'repair_create' 中，租客送出只通知房東方，房東方網頁送出（is_notice_tenant 為 false）也只寄給房東方；同一份幫助中心寫結單時「租客、團隊管理者都會收到Email、Line、通知中心的通知」，但 case 'repair_finish' 只寄 Email。另外幫助中心的送出按鈕寫【申請報修】，src/utils/constants/repair.constant.ts 的實際文字是「申請修繕」。",
+  "跨條：jgb/F/repair-list-columns 句 2 說房東方提出的修繕單租客欄一定空白，但 app/Http/Controllers/External/RepairApiController.php 的 store 允許房東方帶 contract_id 建單並寫入 to_user_id 與 is_notice_tenant，這類單租客欄會有值，也會通知租客；jgb/F/repair-apply-notifications 與 jgb/F/repair-notifications-by-stage 都限定「在網頁上」，所以不受影響。",
+  "跨條：jgb/F/repair-list-contact-card 引用 repair-list-columns 的空白欄情境，但空白欄在 src/components/SurelyVue/Common/SingleUserCell.vue 只顯示「-」且不可點，所以「沒有聯絡人資訊」提示從列表永遠不會出現。"
+ ],
+ "source_transcript": "a898b669795d151a9.output"
+}

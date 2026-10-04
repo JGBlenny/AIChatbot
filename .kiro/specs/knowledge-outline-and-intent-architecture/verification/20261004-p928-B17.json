@@ -1,0 +1,274 @@
+{
+ "kind": "write",
+ "verdict": "REFUTED",
+ "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+ "claim": "Plan 9.28 批次 B17：15 條細目的標題與每一句已逐句對合法來源核對，逐條結果如 fines",
+ "fines": [
+  {
+   "id": "jgb/E/balance-invoice-community-switch",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "1a432d3d50b46027041579e8210380e5d130c6b3e1eba224cbf60edef29c6806",
+   "title_text": "差額發票要在哪裡設定？（團隊開通後在「差額發票管理」建立差額群組；社區編輯頁的差額發票開關只對部分特定合作團隊顯示）",
+   "notes": [
+    "標題：兩個斷言（團隊開通後在「差額發票管理」建群組、社區編輯頁開關只對部分特定合作團隊顯示）都由句 1 支撐，句 1 成立。",
+    "句 1：app/Role.php＋「'label' => ___('差額發票管理')」包在 hasBalanceInvoicePermission() 內，該函式用 FeatureConfigService->isEnabled('balance_invoice', ...) 判斷團隊是否開通；src/pages/communities/edit/Index.vue＋「getSpecialGroupsByRole(...)?.includes('balanceInvoice')」不符時把 communities.edit.balanceInvoice 分頁濾掉，名單來自 src/use/config/useSpecialRoles.js 的 VITE_BALANCE_INVOICE_ROLE_IDS；分頁標籤見 src/routes/communities.js「label: '差額發票'」，開關文字見 src/pages/communities/edit/BalanceInvoice.jsx「是否開設差額發票」。附註：hasBalanceInvoicePermission() 另有「大房東不允許使用差額群組功能」的身分例外，本句不是絕對句，故不判不成立。",
+    "句 2：src/pages/communities/edit/BalanceInvoice.jsx＋「開啟差額發票功能後，當此社區下所有物件的每月總租金金額大於每月底租金額時，系統將自動開立差額發票」。這段文字不論開關狀態都會顯示；本句說的是開關開啟後的效果，內容與原文相符。",
+    "句 3：src/pages/communities/edit/BalanceInvoice.jsx＋「底租總額」「幣別」「每月租金」（after-required）；onChange 裡 if (!value) 時會把 base_currency 與 base_number 設為 null，也就是清空。"
+   ]
+  },
+  {
+   "id": "jgb/E/balance-invoice-group-statuses",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "e0bcbf7ee6e8aac04033941297713bcd6e1cf430833c9908c1c007e8b69ea418",
+   "title_text": "差額發票群組總表有哪些狀態？（尚未生效／進行中／歷史／封存）",
+   "notes": [
+    "標題：四種狀態與 src/utils/constants/balanceInvoices.ts 的 BalanceInvoicesStatusMap 一致，句 1 支撐。",
+    "句 1：src/utils/constants/balanceInvoices.ts＋「labelKey: '尚未生效'」「'進行中'」「'歷史'」「'封存'」。",
+    "句 2：app/Services/BalanceInvoiceService.php＋calculateGroupStatus（rent_start_date 為空或晚於今天 ⇒ STATUS_UPCOMING；rent_end_date 早於今天 ⇒ STATUS_HISTORY；其餘 ⇒ STATUS_PROGRESSING；STATUS_ARCHIVED 註明「僅透過手動封存」，actionGroup 的 case 'archive' 由使用者觸發）；畫面提示見 src/pages/balanceInvoices/list/_parts/ListTable.vue「包租約進行中」「包租約已停止」「包租約未開始」。",
+    "句 3：src/pages/balanceInvoices/list/_parts/ListTable.vue＋ScrollNav :list=state.statusList，handleChangeStatus 切換 route params.status；後端 app/Services/BalanceInvoiceService.php 的 getGroupList 用 ->byStatus($status) 分開查。"
+   ]
+  },
+  {
+   "id": "jgb/E/balance-invoice-list-columns",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "a0631bd7f7b66a22291a550f5dc0bc3def583c092f7323bcdfaa29aab694d063",
+   "title_text": "差額發票群組總表列表裡看得到哪些欄位？（ID／出租物件數／本月發票狀態／累積成本／累積收入／累積發票金額）",
+   "notes": [
+    "標題：列出的欄位都在句 1 裡，句 1 成立。",
+    "句 1：src/pages/balanceInvoices/list/_parts/ListTable.vue＋tableHead 的 title：'ID'、t('狀態')、t('群組')、t('出租物件數')、t('本月發票狀態')、t('累積成本')、t('累積收入')、t('累積發票金額')，與本句逐一相符。",
+    "句 2：同上 ListTable.vue＋SurelyVueBalanceInvoicesGroupName；src/components/SurelyVue/BalanceInvoices/GroupName.vue 顯示 props.name，名稱下方另有一行包租起訖日（renting_duration）。本句只說顯示名稱，沒有寫錯。",
+    "句 3：同上 ListTable.vue＋「estatesCount.in_renting」「estatesCount.total」，顯示格式是「出租中／總數」；出租中的算法見 app/BalanceInvoiceGroup.php 的 getEstatesStatusCountAttribute（合約狀態為已簽署到點退完成、且今天落在 date_start 與 date_end 之間）。本句沒提到同欄還會顯示總數，但所述內容成立。"
+   ]
+  },
+  {
+   "id": "jgb/E/balance-invoice-group-basic-info",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "4c63d2b1c5edfa2251ad791930fc84af6ad86374ed248384e75c48cef4ed0b8b",
+   "title_text": "建立差額發票群組要填哪些基本資料？（群組名稱／底租／租期／前期餘額／房屋座落地址／房屋稅籍編號）",
+   "notes": [
+    "標題：六項欄位都在句 1～5 裡有支撐。",
+    "句 1：src/pages/balanceInvoices/edit/basicInfo/Index.vue＋「after-required mb-2 font-500」包著 t('群組名稱')。",
+    "句 2：同上 basicInfo/Index.vue＋t('底租') 底下的 t('金額')，帶 after-required。",
+    "句 3：同上 basicInfo/Index.vue＋t('租期') 的 rentDurationConfig「起始日」「終止日」，皆帶 after-required。",
+    "句 4：同上 basicInfo/Index.vue＋t('前期餘額') 底下的 t('金額')、t('結算日期')，都沒有 after-required，屬選填。",
+    "句 5：同上 basicInfo/Index.vue＋t('個人住宅所有權人')、t('房屋座落地址')、t('房屋稅籍編號')。"
+   ]
+  },
+  {
+   "id": "jgb/E/balance-invoice-pick-and-individual-rent",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "ff2a86401287a8d4ebabcf6885f7c2b048090494ccd5b5ecc7790ce9945e2a8f",
+   "title_text": "差額發票群組怎麼加入物件？每個物件的底租可以自訂嗎？（群組可開「自訂個別底租」，把群組底租總額分配給各物件）",
+   "notes": [
+    "標題：由句 1～2 支撐。",
+    "句 1：src/pages/balanceInvoices/edit/pickEstates/Index.vue＋「t('請選擇物件')」；路由 src/routes/balanceInvoices.js 的 balanceInvoices.edit.pickEstates（側欄標籤為「所屬物件」）。",
+    "句 2：src/pages/balanceInvoices/_parts/IndividualBaseRentSetting.vue＋「t('自訂個別底租')」「v-if=props.switchButtonValue」才顯示「t('可分配租金')」；開關存在群組欄位 use_individual_base_rent_setting（app/Services/BalanceInvoiceService.php 的 updateGroupSetting），是整個群組共用一個；updateGroup 也會檢查「個別物件底租總和…超過群組底租」。",
+    "句 3：app/Services/BalanceInvoiceService.php＋calculateMonthlyCost「($group->base_rent_amount / $totalEstates) * $includedEstates」，只在 !use_individual_base_rent_setting 時走這條算法。"
+   ]
+  },
+  {
+   "id": "jgb/E/balance-invoice-group-detail-tabs",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "662c1d30a896ac1b7505308393d159bcbaafb79989a8a6cf48b916a1e43397b2",
+   "title_text": "差額發票群組詳細頁面看得到什麼？（招租數量／本月應收金額／本月已收金額，以及三個分頁）",
+   "notes": [
+    "標題：由句 1～2 支撐。",
+    "句 1：src/pages/balanceInvoices/groups/Index.vue＋overviewItems 的 t('招租數量')、t('底租金額')、t('前期餘額金額')，以及 bottomInfoItems 的 t('本月應收金額')、t('本月已收金額')，全部放在頁首的 OverviewHeader。",
+    "句 2：同上 groups/Index.vue＋categoryOptions：t('群組物件')、t('差額總表')、t('報表發票下載')。",
+    "句 3：同上 groups/Index.vue＋ESTATES 分頁顯示 IndividualBaseRentSetting 與 BelongingEstatesTable（帶 useIndividualBaseRentSetting、onUpdateBaseRent）；src/utils/surelyVue/balanceInvoices.ts 的 BalanceInvoicesBelongingEstatesDataSourceItem 含 BASE_RENT 欄。",
+    "句 4：src/pages/balanceInvoices/groups/_parts/ReportTable.vue＋「Object.entries(props.list)」每一年一個 TableMonthsInOneYear；後端 app/Services/BalanceInvoiceService.php 的 getGroupReports 依年份整理 1～12 月，每月含 excel_url 與 invoice_url。"
+   ]
+  },
+  {
+   "id": "jgb/E/balance-invoice-monthly-invoice-table",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "f4d307ebf50a32b8e5d19727ea7b5fb0d51cafdec43cf6650229f57c7c62c753",
+   "title_text": "「差額總表」裡每個月的差額怎麼看、怎麼開發票？（累積成本、累積收入、差額、是否開發票、發票金額、發票字軌）",
+   "notes": [
+    "標題：欄位與開票方式由句 1～4 支撐。",
+    "句 1：src/pages/balanceInvoices/groups/_parts/InvoiceTable.vue＋欄名 t('月份')、t('累積成本')、t('累積收入')、t('差額')、t('是否開發票')、t('開立日期')、t('發票金額')、t('發票字軌')；後端 app/Services/BalanceInvoiceService.php 的 getGroupInvoices 依 monthlyRecords 逐月列出。",
+    "句 2：app/Services/BalanceInvoiceService.php＋getGroupInvoices「'balance_invoiced_amount' => ... $record->invoice ? intval($record->invoice->total_amt) : intval(abs($record->balance_amount))」；src/utils/surelyVue/balanceInvoices.ts 的 BALANCED_AMOUNT 與 INVOICED_AMOUNT 都取 balance_invoiced_amount；InvoiceTable.vue 在未開票時讓發票金額欄顯示 base_number: 0。",
+    "句 3：src/pages/balanceInvoices/groups/_parts/InvoiceTable.vue＋「invoicedDate || '-'」與「(isInvoicedThisMonth && invoiceNumber) || '-'」；後端只有在有 invoice 時才給 invoiced_date。",
+    "句 4：app/Console/Kernel.php＋「invoice:balance-group-generate --auto」排程；src/use/config/balanceInvoices/useBalanceInvoicesActions.ts＋「labelKey: '開立發票'」isDisabled 條件為「groupData.isInvoiced || Number(route?.params?.status) !== BalanceInvoicesStatus.PROGRESSING」；列表頁 src/components/SurelyVue/BalanceInvoices/ActionsCell.vue 的下拉選單會用到它。"
+   ]
+  },
+  {
+   "id": "jgb/E/balance-invoice-timing",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "不成立"
+   ],
+   "content_sha256": "5f9e4c0f1f28bb14b061ad5ccaf6a8c5ecaef38739e0712dde22cad6b3b81c00",
+   "title_text": "差額發票什麼時候自動產生？（一般業者每月 1 日 03:00 開立上月發票；特定團隊另有自己的時程）",
+   "notes": [
+    "標題：由句 1～2 支撐，兩句都成立。",
+    "句 1：app/Console/Kernel.php＋「invoice:balance-group-generate --auto --exclude_role_id=」…「->monthlyOn(1, '03:00')」；app/Console/Commands/BalanceInvoiceGroupGenerator.php＋「未指定時預設處理上個月」（subMonth）。被排除的是一個特定合作團隊。",
+    "句 2：app/Console/Kernel.php＋「--current-month」「->dailyAt('23:30')」配 isLastOfMonth()；以及「--recalc-excel」「->monthlyOn(1, '03:05')」，註解寫「重算而非重印快照：月底 23:30 開票後才入帳的款項會浮現在報表上」。",
+    "句 3：app/Console/Kernel.php＋「balance-invoice:update-status')->dailyAt('01:05')」「balance-invoice:update-realtime-stats')->everyTwoHours()」。排程本身存在，但有兩處與現行程式不符。(1) 狀態不只靠每日排程：app/Services/BalanceInvoiceService.php 的 updateGroup 在存檔時就會呼叫「$updateData['status'] = $this->calculateGroupStatus(」立即更新。(2) 每 2 小時跑的 app/Console/Commands/UpdateBalanceInvoiceRealtimeStats.php 只寫 realtime_total_cost／realtime_total_income 兩個欄位，而且讀寫的是 app/Models/BalanceInvoiceGroup.php 這支模型；畫面上的「累積成本」「累積收入」是 BalanceInvoiceService.php 的 getGroupList 在每次查詢時，由已開票月結（is_invoiced=true）的 monthly_cost、balance_amount 當場算出來的。grep realtime_total 在 src 與 app/Services 都是 0 筆，正對照 isRentItemForDirection 在 app/Services/BalanceInvoiceService.php 有 9 筆。所以這兩欄並不是每 2 小時更新。"
+   ]
+  },
+  {
+   "id": "jgb/E/balance-invoice-group-action-menu",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "不成立"
+   ],
+   "content_sha256": "66f17e93b24b619c36fcdd4f4762de05141a2b607b7b46ecc12ea39a056e6cde",
+   "title_text": "差額發票群組的動作選單有哪些選項？什麼時候不能用？（編輯群組／開立發票／封存群組／刪除群組；列表頁不能用時反灰，詳細頁直接不顯示；另有查看歷程圖示）",
+   "notes": [
+    "標題：四個選項、列表頁反灰、詳細頁不顯示，都由句 1～6 支撐。「另有查看歷程圖示」在列表頁確實存在，標題本身沒說出現在哪一頁，所以成立；但句 7 的寫法有問題，見句 7。",
+    "句 1：src/use/config/balanceInvoices/useBalanceInvoicesActions.ts＋「labelKey: '編輯群組'」「'開立發票'」「'封存群組'」「'刪除群組'」。",
+    "句 2：同上 useBalanceInvoicesActions.ts＋edit 沒有 isDisabled，onClick 呼叫 router.push 到 'balanceInvoices.edit.basicInfo'。",
+    "句 3：同上 useBalanceInvoicesActions.ts＋「isDisabled: groupData.isInvoiced || Number(route?.params?.status) !== BalanceInvoicesStatus.PROGRESSING」。",
+    "句 4：同上 useBalanceInvoicesActions.ts＋「isDisabled: Number(route?.params?.status) === BalanceInvoicesStatus.ARCHIVED || Number(route?.query?.status) === BalanceInvoicesStatus.ARCHIVED」。",
+    "句 5：同上 useBalanceInvoicesActions.ts＋「isDisabled: !groupData.isDeletable」；app/Services/BalanceInvoiceService.php 的 actionGroup case 'invoiced' 開票成功後執行「'is_deletable' => false」，deleteGroup 遇到「此群組無法刪除」會擋下。",
+    "句 6：src/components/SurelyVue/BalanceInvoices/ActionsCell.vue＋「action.isDisabled ? 'disabled' : ''」，選項反灰、點擊直接 return；src/pages/balanceInvoices/groups/Index.vue＋「show: !node.isDisabled」。詳細頁的路由是 groups/:groupId，沒有 params.status，所以開立發票恆為 disabled，不會顯示。",
+    "句 7：src/components/SurelyVue/BalanceInvoices/ActionsCell.vue＋「title=查看歷程」的獨立按鈕。這個元件只用在列表頁 src/pages/balanceInvoices/list/_parts/ListTable.vue（handleOpenActivityLog）。詳細頁 src/pages/balanceInvoices/groups/Index.vue 用的是 OverviewHeader 的 actionMenuItems，沒有任何歷程按鈕：grep ActivityLog 在 src/pages/balanceInvoices 只命中 ListTable.vue，正對照 OverviewHeader 在 groups/Index.vue 有命中。前一句才剛區分列表頁與詳細頁，本句卻沒限定頁面，說「動作選單旁邊另外有」，實際只有列表頁有，漏了詳細頁這個例外。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-notebook-entry",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "不成立"
+   ],
+   "content_sha256": "432c999e80f5a1a80924b075cbce8b4f50a68b291114595b156261e566efd5d1",
+   "title_text": "物件記事本新增一筆要填什麼？",
+   "notes": [
+    "標題：是問句，本身沒有事實斷言，成立。實際要填什麼見各句，句 4 不成立。",
+    "句 1：app/Http/Controllers/EstateController.php＋case 'add_bill_running' 的 Validator「'date' => 'required', 'fee_type' => 'required', 'currencySelected' => 'required', 'price' => 'required|gte:0'」，note 與 target_name 可為空；畫面 src/pages/estates/dashboard/runnings/_parts/LedgerContainer.vue＋「t('新增流水帳')」，feeTypeOptions 為「收入」「支出」。",
+    "句 2：src/pages/estates/dashboard/runnings/_parts/LedgerContainer.vue＋「maxFileSize: 10 * 1024 * 1024」「allowedFileTypes: ['image/*', '.pdf']」「maxNumberOfFiles: 3 - ...」。",
+    "句 3：app/Http/Controllers/EstateController.php＋add_bill_running 下「if (!$hasEditPermission)」回傳「'message' => ___('權限不足！')」；$hasEditPermission 取自 edit_estate 權限（或經紀人加 add_estate）；前端 src/mixin/methods.js 的 ajaxResRedirection 用 globalErrorShow(res.message) 顯示。實際字串多一個全形「！」。",
+    "句 4：src/pages/estates/dashboard/memos/_parts/MemoContainer.vue＋formConfig 只有 '時間'、'說明'、'對象' 三欄，加上附件（同樣 3 個、10MB），沒有收入／支出或金額欄位；app/Http/Controllers/EstateController.php 的 case 'add_memo' 只驗「'date' => 'required'」，寫進 estate_memos 的也只有 date、note、target_name。所以「也要填收入或支出的金額」與程式不符，前半句成立。"
+   ]
+  },
+  {
+   "id": "jgb/E/balance-invoice-refund-report-column",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "d47081aaaf1362292686df4a039b4f449467f6f97a599f71fcc493fbb6159512",
+   "title_text": "差額發票收支表的租金退款／減免怎麼呈現？（列在「租金增(減)(B)」欄，以負數表示）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：docs/knowledge/jgb-product-facts.md＋{#p914-balance-invoice-refund}「把租金退款／減免列在「租金增(減)(B)」欄、以負數（括號）表示」；程式對照 app/Services/BalanceInvoiceService.php＋「self::formatAmount(-$refundAmount),  // 收入金額 租金增(減)(B)」，formatAmount 對負數輸出「'(' . $formattedAmount . ')'」，表頭為「租金增(減)\\n(B)」（換行分兩行）；這份 Excel 就是月結的 excel_url，在 src/pages/balanceInvoices/groups/_parts/ReportTable.vue 的報表發票下載分頁提供下載。"
+   ]
+  },
+  {
+   "id": "jgb/E/balance-invoice-rent-item-rule",
+   "title": "成立",
+   "sentences": [
+    "不成立",
+    "成立"
+   ],
+   "content_sha256": "96aadcab2ab8e2a75533949b09d6dee3615ce9ca704e9b4b9ba22594720319aa",
+   "title_text": "差額發票收支表怎麼判斷一個帳單品項算不算「租金」收入？（系統預設品項看名稱是不是「租金」「退租金」；自訂品項看品項性質）",
+   "notes": [
+    "標題：兩個判斷規則與程式一致（見句 1 前半），成立。",
+    "句 1：app/Services/BalanceInvoiceService.php＋isRentItemForDirection（is_editable=0 時看 in_array($item->name, self::rentNatureItemNames())，名單在 config/item.php 的 balance_invoice_rent_names：'租金'、'退租金'；is_editable=1 時看「$item->nature === '租金'」），前半句成立。但結尾說「判斷依據不是這筆帳單是哪一種帳單」與程式不符：calculateMonthlyIncome、captureTransactionSnapshot、prepareExcelDataRows 三處都先過濾帳單類型「->whereIn('type', [\\App\\Bill::BILL_TYPE_RENT, \\App\\Bill::BILL_TYPE_MOVEOUT, \\App\\Bill::BILL_TYPE_CREATE])」。app/Bill.php 另有 BILL_TYPE_AMERCEMENT=4、BILL_TYPE_TOPUP=5、BILL_TYPE_DEPOSITRATE=6，這三類帳單上的品項不論名稱或性質一律不計入。所以帳單類型確實是判斷依據之一；只有在 1／2／3 類（含點退）帳單裡，才逐品項判斷。",
+    "句 2：同上 BalanceInvoiceService.php＋calculateMonthlyIncome 依 complete_ymd 落在該月的已到帳帳單，逐筆 detail 用 isRentItemForDirection 加總，沒有去重或識別預繳的邏輯。所以會不會重複計入，取決於個案帳單的品項名稱、性質與入帳日；本句的保留說法與程式相符。"
+   ]
+  },
+  {
+   "id": "jgb/E/balance-invoice-entity-type-change",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "712ec7675b743a2d89ce0a455e5d021b088fc9b64959dca289a4f3fdec341a50",
+   "title_text": "身分從法人改成自然人後，差額發票群組要怎麼重新設定？（系統沒有專用的身分切換規則）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：app/Services/BalanceInvoiceService.php＋grep「法人」「自然人」「is_corp」「corporate」「identity」「身分」「身份」「entity_type」皆 0 筆；正對照「isRentItemForDirection」9 筆、「buyer_ubn」1 筆。buyer_ubn 那一筆出現在 createInvoiceForMonthlyRecord，固定寫「'category' => \\App\\Invoice::CATEGORY_B2C」「'buyer_ubn' => ''」，沒有依身分切換的分支，所以「沒有專屬處理規則」成立。"
+   ]
+  },
+  {
+   "id": "jgb/E/balance-invoice-unsigned-contract",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "f96b3e12102b730546000d41ce87db7ae269d1c15d9880baeac2eff8950e7372",
+   "title_text": "合約還沒簽回時能不能開發票或收據？（發票看合約的開票設定、押金收據看帳單是否到帳，簽署狀態是否連動要看個案）",
+   "notes": [
+    "標題：由句 1～3 支撐。",
+    "句 1：docs/knowledge/jgb-product-facts.md＋{#p914-invoice-per-bill}「預設發票在帳單被標記已收款時開立」，例外為「預先開立發票」與「立即開立權限」；沿呼叫鏈對照 app/Services/InvoiceService.php＋shouldIssueInvoice 只看 $role->invoice_mode 與帳單狀態，canManualIssue 看「FeatureRoleConfig::isEnabled('manual_invoice'」，合約層的設定是 is_auto_generate_invoice 與 invoice_info。開票時機判斷裡沒有合約簽署狀態的條件。",
+    "句 2：docs/knowledge/jgb-product-facts.md＋{#p914-receipt-email}「帳單轉為已付款（線上付款，或業者手動移至已到帳）時，系統寄款項確認 email 給租客並附收據 PDF（特定客製角色改附其專屬押金收據或不附）」。",
+    "句 3：同上 jgb-product-facts.md 兩條都沒有寫到合約簽署狀態與開票、收據的連動；app/Services/InvoiceService.php 的 shouldIssueInvoice 也沒有直接判斷簽署狀態。本句只說要依個案資料確認，沒有超出來源。"
+   ]
+  },
+  {
+   "id": "jgb/E/balance-invoice-anomaly-list",
+   "title": "不成立",
+   "sentences": [
+    "不成立"
+   ],
+   "content_sha256": "850cd3537a07b3f61db51a435a7f96cd611f78d7e63940a2d48f10ee5ebb2054",
+   "title_text": "帳單不在任何差額發票群組內時，JGB 怎麼處理？（列進內部「發票異常盤查」名單，處理需洽客服）",
+   "notes": [
+    "標題：「處理需洽客服」由句 1 後半支撐，但句 1 後半不成立（見句 1），所以標題不成立。",
+    "句 1：前半成立。app/Http/Controllers/Admin/InvoiceFailureController.php＋「$pageSetting['title'] = '發票異常盤查'」是後台內部頁；app/Services/InvoiceFailureAuditService.php 的 rejectExpectedNonIssuedBills 中「if (!$balanceInvoiceService->isBillBelongsToGroup($bill)) { return true; }」，不在群組的帳單會留在名單上。業者端的篩選見 src/use/search/modules/billInvoiceStatus.js「invoiceAbnormal: '發票異常'」。後半「實際盤查與處理只在 JGB 內部客服後台進行，此操作需由 JGB 客服協助」與程式不符：該篩選旁的註解寫「原該開立但開立失敗…供快速撈出重開」；app/Bill.php 的 case 'invoiceAbnormal' 註解寫「供業者快速撈出重開」；app/Services/InvoiceService.php 的 canManualIssue／issueInvoice($bill, $role, $isManual) 讓業者自己手動開立。所以業者可以自行處理，不是只能由客服處理。另外，盤查名單也收「未開發票（逾期）」（invoice_status=PREPARE）的帳單，業者用「發票異常」篩選看不到這一類（app/Bill.php 的 invoiceAbnormal 只撈 INVOICE_STATUS ABNORMAL=2），所以「可用發票異常篩選看到這類帳單」也只對一部分成立。"
+   ]
+  }
+ ],
+ "findings": [
+  "balance-invoice-timing 的 sources 引用 app/Models/BalanceInvoiceGroup.php，但現行群組列表、詳細頁與狀態計算都用 app/BalanceInvoiceGroup.php（app/Services/BalanceInvoiceService.php 開頭「use App\\BalanceInvoiceGroup;」）。app/Models/BalanceInvoiceGroup.php 只被 UpdateBalanceInvoiceRealtimeStats 指令使用，它的 realtime_total_* 欄位不在任何畫面或 API 出現，引用這支檔來描述畫面行為會誤導。",
+  "balance-invoice-anomaly-list 說處理只能洽客服，與 jgb/E/balance-invoice-group 系列外、帳單列表「發票異常」篩選的設計目的相衝突：程式註解寫的是供業者快速撈出重開，InvoiceService 的 canManualIssue 也讓業者手動開立。",
+  "jgb/C/estate-notebook-entry 把「房東流水帳」（有收入／支出與金額）和「物件記事本」（只有時間、說明、對象、附件）兩種表單混寫，句 4 把流水帳的金額欄套到了記事本上。",
+  "balance-invoice-group-action-menu 句 5 只說手動開立發票後就不能刪除，balance-invoice-monthly-invoice-table 句 4 說手動開立的條件，兩條互相一致；兩條的「進行中」判斷在前端都是看列表分頁的 route status，不是看群組實際的狀態欄位，平常兩者相同。"
+ ],
+ "source_transcript": "a2097884771b5302d.output"
+}

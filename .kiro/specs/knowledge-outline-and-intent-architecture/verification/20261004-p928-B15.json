@@ -1,0 +1,574 @@
+{
+ "kind": "write",
+ "verdict": "REFUTED",
+ "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+ "claim": "Plan 9.28 批次 B15：34 條細目的標題與每一句已逐句對合法來源核對，逐條結果如 fines",
+ "fines": [
+  {
+   "id": "jgb/E/bill-list-tabs",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "97182a361c40f5394fe64cc369cfaa4b981b0d4ef39184217fad57d17dcfb557",
+   "title_text": "帳單列表分成哪些分頁？（帳單總表／草稿帳單／收款帳單／支出帳單／總收支）",
+   "notes": [
+    "標題：src/use/config/useBillTypes.js 的 case 'landlord' 列出 label t('帳單總表')、t('草稿帳單')、t('收款帳單')、t('支出帳單')、t('總收支') 五個 type，由句 1 支撐。附註：側欄選單 app/Role.php 把 ready 那一項標成 ___('待發送帳單')，頁面標題（PageTop title＝currentType.label）才顯示「草稿帳單」。",
+    "句 1：src/use/config/useBillTypes.js，case 'landlord' 的 result 共 5 個 type node，type node 都沒有 permission 欄位，不會被濾掉；切換靠 app/Role.php 帳務管理子選單 route('bills.index', ['type' => 'all'…'balance'])。",
+    "句 2：同上，key: 'all' 沒有 statuses；app/Http/Controllers/BillController.php 的 list() 中 billTypeStatusToCondition 'all' => ['active' => [0, 1]]（前端預設 billTypeStatus 'all'），不篩狀態。ready/income/expense/balance 各有 statuses 陣列。",
+    "句 3：src/pages/bills/list/Index.jsx 的 hasMonthNav: computed(()=>['ready', 'income', 'expense'].includes(route.params.type))，MonthNav 只在 isManager（config_rule_key !== 1，也就是房東）分支裡渲染。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-status-tabs-landlord",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "f1b392518d831f44c27856d6a446d5c5d3920540d4a7eb6b6b93f7d958c91ddf",
+   "title_text": "「草稿帳單」「收款帳單」「支出帳單」分頁底下各分哪些狀態？",
+   "notes": [
+    "標題：疑問句，三分頁的狀態由三句支撐。",
+    "句 1：src/use/config/useBillTypes.js 的 key: 'ready' statuses 為 buildStatus('draft')、buildStatus('scheduled')、buildStatus('archived')，billStatuses 對應 t('草稿')、t('排定發送')、t('封存')。",
+    "句 2：同上，key: 'income' statuses 為 unreceived、progress、received，對應 t('應到帳')、t('待對帳')、t('已到帳')（incomplete 已被註解掉）。",
+    "句 3：同上，key: 'expense' statuses 為 unpaid、paid、expired，對應 t('應支出')、t('已支出')、label: t('已失效')。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-status-tabs-tenant",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "d308365c4a7b238fb20bc3040107ffa166752b39694d21b69b60265350b21d9e",
+   "title_text": "租客的帳單列表跟房東的有什麼不同？（只有收款帳單／支出帳單兩個分頁）",
+   "notes": [
+    "標題：由句 1 支撐。附註：租客側欄 app/Role.php 對 expense 的標籤是 ___('繳費帳單')，頁面標題則是 t('支出帳單')。",
+    "句 1：src/use/config/useBillTypes.js，case 'tenant' 的 result 只有 key 'income'（t('收款帳單')）與 key 'expense'（t('支出帳單')）；all、ready、balance 只出現在 case 'landlord'。",
+    "句 2：同上，tenant income statuses 為 buildStatus('unreceived')、buildStatus('received')，也就是應到帳、已到帳。",
+    "句 3：同上，tenant expense statuses 為 unpaid、unconfirmed、paid、expired，對應 t('應支出')、t('待對帳')、t('已支出')、t('已失效')。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-actions-draft",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "fa45c56c47a79b5e1ba33d42a52738cc239cca96d448d51e27ee23d629f1a88c",
+   "title_text": "「草稿」狀態的帳單可以做哪些動作？（編輯／發送／移至已到帳／封存）",
+   "notes": [
+    "標題：src/use/config/useBillTypes.js genSingleActions 的 case 'ready-draft' 依序列出 edit、send、toReceived、archive，由句 1–4 支撐。",
+    "句 1：同上，ready-draft 含 filteredBillActions.get('edit')，labelKey: '編輯帳單'，路由到 bills.edit。",
+    "句 2：同上，send（labelKey: '發送帳單'）開 billToUnreceived_；src/components/Lightbox/BillToUnreceived.vue 送出 status: 'unreceived'；app/Http/Controllers/BillController.php 的 single() case 'unreceived' 執行 $bill->ready() 並 Notification::notice('bill_open')（免註冊合約另依開關通知）。",
+    "句 3：src/use/config/useBillTypes.js，toReceived 的 labelKey 是 '移至已到帳'；狀態從 ready-draft 直接改為已到帳（app/Http/Controllers/BillController.php 的 manualComplete）。genSingleActions 末段「if (state.currentSpecialRole.includes(…)) filterToReceivedOption」會對特定合作團隊拿掉這一項。",
+    "句 4：src/use/config/useBillTypes.js，ready-draft 含 archive（labelKey: '封存帳單'）。",
+    "句 5：同上，「“合併帳單” 目前只開放給」特定合作團隊群組（state.currentSpecialGroup?.key 比對）時才加入 merge。",
+    "句 6：同上，bulkActions 的 case 'ready-draft' 第一項是 batchFeeEdit（labelKey: '批次預覽編輯'）；全選時打 /api3/bills/batch-fee-edit/resolve-ids 並帶列表篩選條件，部分勾選時讀 pickedIds，接著 store.commit('lightbox', 'batchFeeEdit')。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-actions-scheduled",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "1db1904c9634e3dea782acb1e8acaecc5eae1bd107779cc518a3319c856fe8ff",
+   "title_text": "「排定發送」狀態的帳單可以做哪些動作？（只有「取消排定發送」）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/use/config/useBillTypes.js genSingleActions 的 case 'ready-scheduled' 中 result = [filteredBillActions.get('cancelSchedule')]，labelKey: '取消排定發送'。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-actions-archived",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "ca45aef3aca4c9e16de0f6abed92f37b648658b062e67773a4a715e4fb3cf485",
+   "title_text": "「封存」狀態的帳單可以做哪些動作？（沒有任何動作，齒輪選單是空的）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/use/config/useBillTypes.js genSingleActions 的 switch 沒有 'ready-archived' 這個 case，result 維持 []；src/components/SurelyVue/Bill/ActionCell.jsx 只要沒有 hideMenu 就照樣渲染 DropdownMenu，選項 state.actions?.map 結果為空。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-actions-unreceived",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "9171f2814464c08413e5a9a43148312f7d6dff8cb3b97b2dab0eac742e8b377e",
+   "title_text": "「應到帳」狀態的收款帳單可以做哪些動作？（匯款資訊／移至已到帳／開立發票／取消帳單）",
+   "notes": [
+    "標題：由句 1–2 支撐。",
+    "句 1：src/use/config/useBillTypes.js 的 case 'income-unreceived' 寫 ...billData?.is_auto_pay === false ? [filteredBillActions.get('transferInfo')]（labelKey: '匯款資訊'，開 billPayInfo_）；app/Bill.php 的 'is_auto_pay' => … // 此單是否為自動扣款。",
+    "句 2：src/use/config/useBillTypes.js，同一個 case 列出 toReceived、invoiced、cancel（labelKey: '取消帳單'）；特定合作團隊以 filterToReceivedOption 移除移至已到帳；canIssue = billData?.can_auto_generate_invoice && billData?.is_auto_generate_invoice && Number(billData?.invoice_status ?? 0) !== INVOICE_STATUS_COMPLETE。"
+   ]
+  },
+  {
+   "id": "jgb/A/password-alnum-hint",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "不成立",
+    "成立"
+   ],
+   "content_sha256": "d84784cd63fc67a0659451a95dbd09b8f8fd59042f3e5d4276873e35be8750fd",
+   "title_text": "改密碼時「至少一位英文和數字」是強制的嗎？",
+   "notes": [
+    "標題：疑問句。「至少一位英文和數字」逐字出現在介面提示「密碼應有至少一位英文和數字」（app/Http/Controllers/UserController.php 的 tip_pwd_format）之中。",
+    "句 1：app/Http/Controllers/UserController.php 帳號資訊 POST 的 'password' => 'min:6|required_with:password_confirmation|same:password_confirmation'，訊息為 '密碼需與確認新密碼一致'。",
+    "句 2：不成立。提示確實存在（app/Http/Controllers/UserController.php 的 'tip_pwd_format' => ___('密碼應有至少一位英文和數字')），但沒有任何地方擋下。後端驗證只有 min:6 與 same，沒有英數規則；resources/views/users/account.blade.php 的「儲存」按鈕 <button form='form_account_setting' … type='submit'> 沒有綁 password_allow_submit；src/components/PasswordForm.vue 的 format_OK 只控制提示圖示與 @done 事件。只有 resources/views/users/safety.blade.php 用 :class 綁 'disabled': !memberCenter.safety.password_allow_submit 擋按鈕。",
+    "句 3：app/Http/Controllers/AuthController.php 的 case 'setUserInfo': // … 完成註冊 寫 'password' => 'required|string|min:6|regex:/^(?=.*[a-zA-Z])(?=.*[0-9]).*$/'，錯誤訊息為「欄位應包含至少一位英文和數字。」"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-actions-progress",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "不成立"
+   ],
+   "content_sha256": "d15423e83aef16d57e194f77b10cc7af7d9a2810c170840905bc5167df1feae5",
+   "title_text": "「待對帳」狀態的收款帳單可以做哪些動作？（退至應到帳／移至已到帳／開立發票，沒有取消帳單）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/use/config/useBillTypes.js genSingleActions 的 case 'income-progress' 列出 revertToReady（'退至應到帳'）、toReceived、invoiced，沒有 cancel；canIssue 條件與應到帳相同；特定合作團隊以 filterToReceivedOption 移除移至已到帳。",
+    "句 2：不成立。同上，收款帳單分頁 bulkActions 的 case 'income-progress' 是 toReceived、invoiced，再依 ['ready', 'income'] 附加 label: t('匯出')，這部分相符。但帳單總表走 genBulkActions，附加的是 exportAction，label 為 t('匯出帳單')（匯出中顯示 t('匯出中')），不是「匯出」。句子把兩個分頁的按鈕都寫成「匯出」，帳單總表那一半的引號介面文字與畫面不符。其餘斷言（isManualInvoiceEnabled 才保留開立發票、bulk 沒有 revertToReady）成立。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-actions-received",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "不成立",
+    "成立"
+   ],
+   "content_sha256": "f04f66d53824b4b53f1f02186233e6651820ad3886952a501e864d98be54c21b",
+   "title_text": "「已到帳」狀態的收款帳單可以做哪些動作？（收款備註／發票／收據／退款對帳單）",
+   "notes": [
+    "標題：括號中的四類由句 2–5 支撐。",
+    "句 1：src/use/config/useBillTypes.js 中 editReceivedRemark、reinvoiced、voidInvoice、archive 都是 permission: 'add_bill'，assembleOptions 以 canEditOwnedBill = hasPermission('owner_bill') || hasPermission('add_bill') 過濾；app/Http/Controllers/ApiController.php 的 'add_bill', // 新增 & 編輯 & 刪除所屬帳單、'owner_bill', // 新增 & 編輯 & 刪除所有帳單；app/Http/Controllers/UserController.php 的 'label'=> '新增&編輯&刪除所屬帳單'、'新增&編輯&刪除所有帳單'。",
+    "句 2：src/use/config/useBillTypes.js 的 case 'income-received' 首項 editReceivedRemark（labelKey: '編輯收款備註'）。",
+    "句 3：同上，billData?.can_auto_generate_invoice && Array.isArray(billData?.is_invoice_generated) 時逐張產生 t('發票[s1]')，多張時以 numberToChinese 編號；statuses 為 2 的那張接（t('已作廢')）；vendor_name 'ezPay' 開 invoice.url，'eCloud' 開 https://box.ecloudlife.com/login。app/Invoice.php 中 const INVALID = 2。",
+    "句 4：src/use/config/useBillTypes.js，receipt（labelKey: '收據'）沒有 permission 也沒有條件，一律列出；onClick 對特定合作團隊改開 /deposit-receipt。",
+    "句 5：同上，...(billData?.has_refund_statement === true ? [refundStatement])；app/Bill.php 的 shouldProvideRefundStatement() 第一個條件就是 isRefundDirection()（反轉）。",
+    "句 6：src/use/config/useBillTypes.js 的 canReissue = billData?.is_auto_generate_invoice === true，註解寫「常駐顯示…不論 invoice_status」。",
+    "句 7：同上，...(billData?.has_voidable_invoice === true ? [voidInvoice])；app/Bill.php 的 $hasVoidableInvoice 只有在發票 status 等於 Invoice::ADD（已開立）時才為 true。",
+    "句 8：src/use/config/useBillTypes.js，income-received 的最後一項是 archive。",
+    "句 9：不成立。app/Notification.php 的 case 'bill_paid': // 線上已付款 or 線下按下移至已到帳 只有在 switch ($roleConfigRuleKey . '-' . $creditorRoleConfigRuleKey) 命中 case '1-2'、case '1-3'（收款方是個人或法人房東）時才寄信給租客。收款方是社會住宅（config/role.php 中 '4' => '社會住宅'）時為 '1-4'，沒有對應 case，不寄任何通知信。「系統會自動寄一封通知信給租客」少了社會住宅這個身分例外。附收據、特定合作團隊不附（suppressReceiptEmailAttachment）、前端沒有重寄按鈕（src 內 grep 重寄 0 筆，正對照 編輯收款備註 有命中）這幾點成立。",
+    "句 10：app/Notification.php 線上與線下兩條分支都有 if ($bill->type == Bill::BILL_TYPE_DEPOSITRATE) { break; }，註解為「押金設算息帳單已到帳時，不需要通知租客」。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-actions-expense-unpaid",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "d3084a20996ebb8ca49623a64827374c73efab7ea1cae18f91efd784a87482b6",
+   "title_text": "「應支出」狀態的支出帳單，房東跟租客各能做什麼？（房東：前往付款／通知已匯款／取消帳單；租客：付款）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/use/config/useBillTypes.js 的 case 'expense-unpaid' 中，landlord 為 payInfo（'前往付款'）、transferNotification（'通知已匯款'）、cancel（'取消帳單'），tenant 改為 [filteredBillActions.get('pay')]（labelKey: '付款'）。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-actions-expense-unconfirmed",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "41e39a3bde8118160bd1d91b57cefdf09eab60814ce8d76a9fcf0ccccef1a4ef",
+   "title_text": "「待對帳」狀態的支出帳單，房東跟租客各能做什麼？（房東：前往付款／通知已匯款／取消帳單；租客：沒有齒輪動作）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/use/config/useBillTypes.js 的 case 'expense-unconfirmed' 中，landlord 為 payInfo、transferNotification、cancel，case 'tenant' 為 result = []。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-actions-expense-paid",
+   "title": "不成立",
+   "sentences": [
+    "不成立",
+    "成立"
+   ],
+   "content_sha256": "131cd3ddda231f847a8d67c0a59257d41ac10994fbad0be5d7dffbfbda3a3e3c",
+   "title_text": "「已支出」狀態的支出帳單，房東跟租客各能做什麼？（房東一律有編輯收款備註／封存；反轉帳單才多出收據／退款對帳單）",
+   "notes": [
+    "標題：不成立。「房東一律有編輯收款備註／封存」漏了權限例外，理由同句 1。",
+    "句 1：不成立。src/use/config/useBillTypes.js 的 case 'expense-paid' 對 landlord 走 state.assembleOptions(canViewOwnedBill, canEditOwnedBill, result)；editReceivedRemark 與 archive 都是 permission: 'add_bill'，沒有 add_bill／owner_bill（「新增&編輯&刪除所屬／所有帳單」）權限的成員看不到，「一律」不成立（同批 jgb/E/bill-actions-received 句 1 有寫出這個權限條件）。收據與退款對帳單分別要 has_income_only_receipt、has_refund_statement，app/Bill.php 的 shouldGenerateIncomeOnlyReceipt() 以 isRefundDirection() 為條件，這一半成立。",
+    "句 2：src/use/config/useBillTypes.js 的 case 'tenant' 為 result = [receipt, …has_refund_statement ? refundStatement]，can_auto_generate_invoice && Array.isArray(is_invoice_generated) 時 unshift 發票選項，作廢那張標（t('已作廢')）。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-expired-status",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "e2e58df385056048d1c4883cb155d0e44e058211aae6345c65a83b93919f6553",
+   "title_text": "帳單狀態顯示「已失效」是什麼意思？（限電錶儲值帳單，4 天繳費期限）",
+   "notes": [
+    "標題：由句 1、3 支撐。",
+    "句 1：billexpired_zh-Hant.html 的「這一定是一張 電錶費儲值帳單 。一般的租金、押金、點退帳單都不會出現這個狀態」；程式端 app/Http/Controllers/BillController.php 的 'expense-expired' 帶 'type' => Bill::BILL_TYPE_TOPUP，兩邊一致。",
+    "句 2：billexpired_zh-Hant.html 的「按下【儲值】的當下由系統即時產生 ，所以帳單上的發送者會顯示「JGB系統」」與「租金需要房東編輯後主動發送」。",
+    "句 3：billexpired_zh-Hant.html 的「從建立當天起算，共有 4 天 的繳費期限。若逾期未繳，系統會在隔天凌晨自動將它標記為已失效」。",
+    "句 4：billexpired_zh-Hant.html 的「不需要。…代表這筆款項從頭到尾都沒有支付，該筆帳單即作廢，也不會累積成欠款」。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-list-keyword-search",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "1b2dfdaeca45d5ef53a6af1650e7ca85d37f721ccafd2c2a7dd69681354471ee",
+   "title_text": "帳單列表怎麼用關鍵字搜尋？（可指定用案名／地址／租客／ID／手機／信箱／帳單名稱／虛擬帳號／合約帳單共 9 種比對）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/pages/bills/list/Index.jsx 的 keyword_for pairs 共 9 項：案名、地址、租客、ID、手機、信箱、帳單名稱、虛擬帳號、合約帳單（values 也有 'contractChain'）。後端 app/Bill.php 有 $keywordFor == 'estateName'／'address'／'tenant'／'id'／'contractChain'／'phone' || 'email'／'billTitle'／'virtualAccount' 等分支。",
+    "句 2：src/pages/bills/_parts/BillAdvanceSearchBlock.jsx 的 <SelectPicker options={props.searchState.options?.keyword_for?.pairs …} 位於關鍵字輸入框 placeholder={t('關鍵字')} 旁邊；下拉用的是 pairs，所以 9 項都會出現。",
+    "句 3：src/pages/bills/list/Index.jsx 的 keyword_for: { type: String, default: 'estateName' }；app/Bill.php 寫「預設為 estateName」。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-list-export",
+   "title": "不成立",
+   "sentences": [
+    "不成立",
+    "不成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "488d0228075f0fb5ffa9cbd838637bd407086026814d294af3b4f7fa9d03828d",
+   "title_text": "帳單總表怎麼匯出？（要先勾選帳單才會出現匯出選項；全選走篩選條件、勾選部分筆數走ID清單；其他分頁另有一套匯出流程）",
+   "notes": [
+    "標題：不成立。「其他分頁另有一套匯出流程」沒有任何一句支撐，句 4 反而說草稿帳單、收款帳單的勾選匯出「跟帳單總表共用同一套規則」，標題超出句子內容。",
+    "句 1：不成立。主斷言成立：src/use/config/useBillTypes.js 的 commonActions 沒有 'all-' 的 case，所以沒有右上角按鈕；genBulkActions 在 route.params?.type === 'all' 時附加 exportAction（t('匯出帳單')）。但括號裡引用的介面文字「全選」在帳單列表上不存在：src/pages/bills/_parts/ListTable.jsx 的表頭是 rowSelection 核取方塊 onSelectAll，沒有文字；跨頁全選在 src/components/SurelyVue/Common/PickAllFooter.vue，文字是 t('選取全部 [s1] 個項目')。",
+    "句 2：不成立。src/pages/bills/_parts/ListTable.jsx 的表頭核取方塊 onSelectAll 只把「當頁」selectedRows 加進 pickedItems，不會把其他頁一起選，此時走 ID 模式（POST billIds）。要「連同其他頁一起選」得點 src/components/SurelyVue/Common/PickAllFooter.vue 的「選取全部 [s1] 個項目」（src/pages/bills/list/Index.jsx 的 onPickAll 塞入 { id: 'all' }），之後才走 src/use/config/useBillTypes.js handleExportClick 的 fromList 篩選條件匯出。句子把表頭核取方塊等同於整批全選，與程式不符。",
+    "句 3：app/Http/Controllers/BillController.php 的 export()，ID 模式在 if ($billCounts > $maxExportLimits) 時回 'success' => false，exportFromListFilters 同樣如此；src/use/config/useBillTypes.js 顯示 t('匯出筆數超過 [s1] 筆上限，請縮小搜尋範圍後再試。')，不會部分匯出。",
+    "句 4：src/use/config/useBillTypes.js 的 exportAction 帶 permission: 'export_bill'，以 hasPermission('export_bill') 決定是否附加；bulkActions 在 ['ready', 'income'].includes(route.params?.type) 時附加 label t('匯出')，onClick 同樣是 handleExportClick()。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-list-bulk-action-intersection",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "d24877abccd24c957f490a71db796cd31054b0a6ecf56e60f4edf65aced48cde",
+   "title_text": "帳單總表勾選多筆不同狀態的帳單時，批次操作列會出現哪些動作？（只列出每一筆帳單都能做的共同動作）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/use/config/useBillTypes.js genBulkActions 對每張帳單以 getActionsForTypeStatus 取動作，再用 intersectionActionKeys 取交集；src/pages/bills/list/Index.jsx 在 bulkActions 為 null（type all）時改用 genBulkActions。",
+    "句 2：src/use/config/useBillTypes.js 中 if (intersectionActionKeys.size === 0) break，finalActions 為空；之後「帳單總表：附加 export 動作（獨立於交集結果…）」，有 export_bill 權限時 push exportAction（t('匯出帳單')）。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-list-export-other-tabs",
+   "title": "成立",
+   "sentences": [
+    "不成立",
+    "成立"
+   ],
+   "content_sha256": "e3873a30a463440b60b6531054ea8d6a3f66dd35e06cef6ead059cc689148a6e",
+   "title_text": "「草稿帳單」「支出帳單」「總收支」分頁的匯出按鈕，跟帳單總表不是同一套（不需要先勾選，走另一個較舊的匯出流程）",
+   "notes": [
+    "標題：src/use/config/useBillTypes.js 的 commonActions 中，這三個分頁的匯出都是 store.commit('lightbox', 'billListExportOld')，不必勾選，與帳單總表的 handleExportClick 不同。標題本身沒有「一律」。",
+    "句 1：不成立。同上，按鈕文字確實是 ready-draft 的 t('匯出帳單')、expense 與 balance 的 t('匯出')，都開 billListExportOld。但每顆都帶 permission: 'export_bill'，commonActions 會以 hasPermission(node?.main?.permission …) 濾掉，全部被濾掉時回傳 null。沒有「匯出帳務資料」權限的成員看不到，「一律有」漏了權限例外。",
+    "句 2：同上，commonActions 的 switch 沒有 'ready-scheduled'、'ready-archived'、'expense-expired' 這三個 case，result 為 []，回傳 null。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-list-income-export-social-housing",
+   "title": "成立",
+   "sentences": [
+    "不成立",
+    "成立"
+   ],
+   "content_sha256": "a9135b4df9acb7cbf064023e989c0be80d7516aaaf3a47132643978913b60f94",
+   "title_text": "「收款帳單」分頁固定的匯出按鈕，什麼時候會多出「匯出租客繳費證明」子選項？（只有身分類別為社會住宅的帳號才有）",
+   "notes": [
+    "標題：由句 2 支撐。",
+    "句 1：不成立。src/use/config/useBillTypes.js 的 case 'income-…' 在 !isEmpty(store.state.userData.role.config_rule_key) 時建立 t('匯出帳單')，但同時帶 permission: 'export_bill'，最後依權限過濾。「只要…有設定值就會顯示」「等同於一律會顯示」漏了匯出權限這個條件。config/role.php 的 '2'、'3'、'4' 都是 landlord，key 必定有值，這部分成立。",
+    "句 2：src/use/config/useBillTypes.js 的 store.state.userData.role.config_rule_key === 4 時 subs 加 t('匯出租客繳費證明')；config/role.php 的 '4' => ['name' => '社會住宅'…]；app/Role.php 的 const RULE_KEY_LANDLORD_SOCIAL_HOUSING = 4。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-list-special-team-cvs-buttons",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "193c56a30b09b9b9e5dd43b6e55c830a2882c1517fe333595c2316ceea228de5",
+   "title_text": "「應到帳」「已到帳」狀態，特定合作團隊的帳號會多出哪些按鈕？（應到帳：匯入發票；已到帳：匯出收據／匯入收據／批次匯出收據）",
+   "notes": [
+    "標題：由句 1–2 支撐。",
+    "句 1：src/use/config/useBillTypes.js 在 route.params?.status === 'unreceived' 且帳號屬發票明細匯入特規群組時 push t('匯入發票')；群組定義在 src/use/config/useSpecialRoles.js 的 label: t('發票明細匯入')。",
+    "句 2：src/use/config/useBillTypes.js 在 route.params?.status === 'received' 且帳號屬兩個押金收據特規群組之一時，push t('匯出收據')、t('匯入收據')、t('批次匯出收據')；src/use/config/useSpecialRoles.js 中這兩個群組各自獨立定義，和發票明細匯入群組分開。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-balance-tab-export-submenu",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "e1d00795ce1260881ee6c2e09ebdf7eb5d0b0534eb2b2fd69fcfab468453444f",
+   "title_text": "「總收支」分頁的匯出按鈕，特定合作團隊的帳號會多出什麼子選項？（匯出收支明細表）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/use/config/useBillTypes.js 的 case 'balance-…' 在 state.currentSpecialRole?.includes('balanceInvoice') 時 subs 加 t('匯出收支明細表')；src/use/config/useSpecialRoles.js 中這個群組 label: t('差額發票')。句中的「差額發票」是群組名稱，不是介面文字。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-list-batch-shortcuts",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "b12265dc3328084e7f807b32ef914689998966eb4df30369532773ab49f9369c",
+   "title_text": "「草稿帳單」分頁右上角有哪些批次建立帳單的快捷按鈕？（新增週期帳單／新增批次帳單／排定發送帳單／批次編輯帳單，Excel新增帳單僅限特定合作團隊；帳單總表沒有這些按鈕）",
+   "notes": [
+    "標題：由句 1、5 支撐。",
+    "句 1：src/use/config/useBillTypes.js 的 case 'ready-draft' main 為 t('新增帳單')，subs 預設 return [batchCreateCycleBills, batchCreateBills, bulkScheduledBills, batchEditBills]；commonActions 沒有 'all-' 的 case，所以帳單總表沒有。",
+    "句 2：同上，batchCreateBills（t('新增批次帳單')）推到 contracts.pick，action 'billCreateBatch'，query billTarget: 'tenant'。",
+    "句 3：同上，batchCreateCycleBills 推到 estates.pick，action 'billCreateCycleBatch'；src/pages/estates/pick/_parts/PageTop.vue 標題 t('新增週期帳單')；src/pages/bills/edit/_parts/BillBasicInfoSection.vue 有 t('帳單週期')、t('週期起始日')、t('週期終止日')。",
+    "句 4：src/use/config/useBillTypes.js 的 batchEditBills 預設 store.commit('lightbox', 'billImportSheet')，src/components/Lightbox/BillImportSheet.vue 是匯出 Excel 再上傳。特定合作團隊改開另一個 lightbox，src/components/Lightbox/BillBatchEditZiyu.vue 有 t('選擇匯出範圍後下載 Excel，各品項欄位帶出金額計算結果') 與 t('繳費期限區間')、t('帳單來源')。附註：一般版提示 t('目前僅支援編輯生活費用中的「當期度數」、「上期度數」')，句中「調整帳單內容」寫得較寬。",
+    "句 5：src/use/config/useBillTypes.js 對一個特定合作團隊 return [batchCreateBills]；對另一個特定合作團隊多加 addBillsByExcel（t('Excel新增帳單')，開 billBatchAdd）；src/components/Lightbox/BillBatchAdd.vue 有 t('請依照金箍棒提供的 Excel 欄位填寫資料，再將檔案上傳即可。')。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-scheduled-send-rule",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "3b81e5bf9670201269b2c60fa0648a3a18bb23bd55a210db829cbbc655ff87cb",
+   "title_text": "「排定發送帳單」有什麼限制？（一般要度數填完才能排，點退帳單與綁定智慧電錶的電費例外；每天中午 12 點統一發送）",
+   "notes": [
+    "標題：由句 2–4 支撐。",
+    "句 1：src/pages/bills/pick/Index.jsx 的 case 'bulkScheduled' 提示 t('請選擇帳單')，allowSubmit 需 pickedIds.length > 0，送出 status: 'scheduled'。",
+    "句 2：同上，提示 t('只有已填寫完或沒有水電/瓦斯度數細節的帳單才能執行批次發送功能…')；app/Bill.php 的 canSchedule() 要求 unfinishedDetailsJudgment($unFinishDetails)。",
+    "句 3：app/Bill.php 的 checkIotBill() 寫 if ($this->type === self::BILL_TYPE_MOVEOUT) return true（點退），以及 count($unFinishDetails) != 1、$item->name != '電費'、Iot::getPowerMeterOfBindingEstate；app/Http/Controllers/BillController.php 的「人工排入排定發送清單時也補入 IoT 電費度數」；app/Console/Commands/BillBatchSend.php 的 $iotGuard = $bill->prepareIotMeterForSend()，不為 true 時 continue（「補值失敗…或電費 0 度…一律跳過不送出」）。",
+    "句 4：src/pages/bills/pick/Index.jsx 提示「我們將於每日 12:00 將選取的帳單統一發送給租客」；app/Console/Kernel.php 的 $schedule->command('bill:batch-send')->dailyAt('12:00')（13–15 點為補跑）。",
+    "句 5：src/pages/bills/pick/Index.jsx 提示 t('隸屬「租客免註冊合約」的帳單無法使用排定發送的功能。')。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-single-notification-deeplink",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "459fa666de03681b8167870a98d292d8374e95e3a6c594a6cc24bef9179d4af0",
+   "title_text": "帳單通知信裡的連結點進去會看到什麼？（帳單列表只先列出通知裡的那幾張帳單，自己改篩選後回到一般列表）",
+   "notes": [
+    "標題：由句 1–2 支撐。",
+    "句 1：app/Http/Controllers/BillController.php 的 [#12678804667] 寫明這個 id 是通知深連結帶進來的「只看某幾張帳單」限制，$deepLinkBillIds 取自 $_GET['id']；通知連結如 app/Notification.php 的 route('bills.index', [… 'id' => $bill->id])；src/use/useNumericBillRouteRedirect.ts 轉址時保留 query: route.query。",
+    "句 2：src/use/config/billListSearch.js 的 dropPinnedBillId 會 delete result.id；src/pages/bills/list/Index.jsx 在 onScrollNavClicked（換分頁 tab）、MonthNav onSubmit（換年／月）、queryTransform（進階搜尋送出）三處呼叫它。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-balance-tab",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "69983508fa98ddbd1de3b5500e737a8b786bc24a9ed2dc51f87ed5e4eb3b2a96",
+   "title_text": "「總收支」分頁的用途是什麼？（「全部」混列已到帳與已支出的帳單，另有已到帳、已支出、應到帳、應支出各自的頁籤）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/use/config/useBillTypes.js 中 key: 'balance' 的 statuses 為 t('全部')、received、paid、unreceived、unpaid；app/Http/Controllers/BillController.php 的 'balance-all' => ['both_role_id' …, 'status' => [Bill::BILL_COMPLETE]]，只有已到帳狀態，收付兩邊都含；balance-unreceived／unpaid 另依 [BILL_READY, BILL_PAYED] 分頁。",
+    "句 2：app/Http/Controllers/BillController.php 的 balance-* 各自限定 status，'all' => ['active' => [0, 1]] 則不限狀態。",
+    "句 3：src/use/config/useBillTypes.js 中四個 buildStatus 有 showSubTotalPerPage: true，'全部' 沒有；app/Http/Controllers/BillController.php 的「總收支的收／付分頁：金額欄改顯示「這張帳單在本分頁那一邊的金額」」，$billData['total']['base_number'] = $billSideSums[…][$billSideKey]。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-notify-channels",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "47300bb7df6a667645b15b4b489018d487c2c7554d902bf6e05956980e69aa7d",
+   "title_text": "帳單通知走哪些管道？通知對象是誰？（免註冊租客可分別開關 Email／簡訊，已註冊租客固定收 Email 與站內通知、已綁定 LINE／FB 另收推播；只發給帳單本身的那位承租人）",
+   "notes": [
+    "標題：由句 1–2 支撐。",
+    "句 1：docs/knowledge/jgb-product-facts.md #p914-bill-notify 的「免註冊租客的帳單通知可分別開關 Email 與簡訊…管理者可在租客列表關閉；已註冊租客固定收 Email 與站內通知，已綁定 LINE／FB 者另收推播，租客列表的開關對其不可操作」。對碼：app/Http/Controllers/BillController.php 在 is_tenant_registered == 1 時 Notification::notice('bill_open')，== 0 時依 lessee_email_notify_status／lessee_phone_notify_status。",
+    "句 2：docs/knowledge/jgb-product-facts.md #p914-bill-notify 的「通知對象是帳單記錄的單一承租人使用者（bill.user_id）…不會同時發給合約上另一位掛名承租人」。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-invoice-void-limitation",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "b0b9410dc95b2e0ca4a1df44c0c0e0f180d3ce716b203f21424d134c347b02cf",
+   "title_text": "發票可以線上作廢嗎？（可在帳單詳細頁作廢，但只支援 ezPay；其他金流商的發票作廢不了，已開折讓的發票也不能再作廢）",
+   "notes": [
+    "標題：由句 1–2 支撐。",
+    "句 1：docs/knowledge/jgb-product-facts.md #p914-invoice-void-ezpay 的「業者可在帳單詳細頁作廢該帳單已開立的發票，但只支援 ezPay；其他發票廠商會被擋下」；對碼 app/Services/InvoiceService.php 有「僅支援 ezPay 作廢」。",
+    "句 2：同上帳本的「已開立折讓的發票依 ezPay 規則不可作廢，退費要改走折讓」；app/Services/InvoiceService.php 有「此發票已無法作廢，若需退費請改用折讓處理」。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-notify-remittance-visibility",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "4793cd264cba12a6b48631d41dab3f966c0e528201c0cceb5635261254fa1a41",
+   "title_text": "「通知已匯款」按鈕什麼時候才會出現？（租客付款資訊視窗只在非線上金流收款的帳單才有；應支出帳單的齒輪選單則沒有這個限制）",
+   "notes": [
+    "標題：由句 2 支撐。",
+    "句 1：app/Role.php 的租客選單 'label' => ___('帳務管理') 底下子項 'label' => ___('繳費帳單')（route type expense）。src/components/Lightbox/BillPayInfo.vue 中租客（config_rule_key === 1）且 !props.is_online_payment 時顯示 t('通知已匯款')，開 billTransferNotification_。src/components/Lightbox/BillTransferNotification.vue 有 t('請輸入您匯款帳號的末五碼或備註。')、t('上傳')。docs/knowledge/jgb-product-facts.md #p914-notify-remittance 寫的路徑是「我的帳單」→「待繳帳單」，與現行選單文字不同，這裡以程式為準。",
+    "句 2：src/components/Lightbox/BillPayInfo.vue 的 isVisible 含 && !props.is_online_payment；src/use/config/useBillTypes.js 的 case 'expense-unpaid' 中 transferNotification 不看任何線上金流條件。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-archive-precondition",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "ac81f61f94b5563630fd327c77c2c78fd031e37f79f4decbac25fe070d4ad411",
+   "title_text": "帳單要什麼狀態才可以直接封存？（「待發送」跟「已到帳」都可以直接封存，不用先轉成已到帳；可勾選多筆一次封存）",
+   "notes": [
+    "標題：由句 1–2 支撐。",
+    "句 1：docs/knowledge/jgb-product-facts.md #p914-bill-archive-states；對碼 app/Bill.php 的 canArchive() 寫「待發送 & 已到帳 狀態訂單可封存」，條件為 status === Bill::BILL_PREPARE || status === Bill::BILL_COMPLETE。",
+    "句 2：src/use/config/useBillTypes.js 中 bulkActions 的 'ready-draft' 與 'income-received' 都含 archive；genBulkActions 對 ready-draft、income-received 也含 archive（帳單總表）。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-deposit-receipt-no",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "ff16c0fc8f9e0dcf7072baa46b497f27d80a677b5009f869bc181922c3975555",
+   "title_text": "押金收據號碼是系統自動產生的嗎？（特定合作團隊的客製功能，號碼透過 Excel 匯出／匯入手動填寫，系統不會自動編流水號）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：docs/knowledge/jgb-product-facts.md #p914-deposit-receipt-no 的「特定合作團隊的客製功能：由 xlsx 匯出後手填再匯入，同團隊不得重號，系統不自動產生流水號；一般團隊沒有這個欄位」。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-scheduled-contract-ended-guard",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "556eb33c25801d10fe9961925e9acf166d40f49c23a1d6d95bca866798b8252c",
+   "title_text": "合約已結束、但底下還留著未來計費期間的租金帳單，系統排定發送時會怎麼處理？（系統自動排定發送／自動寄出都會跳過不寄，但不會刪除帳單；業者手動排定發送則不受這條規則限制；批次寄出依帳單 id 由小到大處理，沒有可指定的發送順序）",
+   "notes": [
+    "標題：由句 1–3 支撐。",
+    "句 1：app/Services/Bills/ContractEndedRentBillGuard.php 的 blockContext() 只擋 $type !== Bill::BILL_TYPE_RENT 以外的帳單（也就是只擋一般租金），條件為 strcmp($billDateStart, $contractDateEnd) <= 0 時放行；註解「當下重算，不寫任何旗標」。呼叫端為 app/Console/Commands/BillAutoBatchSend.php 與 app/Console/Commands/BillBatchSend.php（continue 跳過，帳單維持原狀態）。",
+    "句 2：app/Console/Commands/BillBatchSend.php 寫 if (!ContractEndedRentBillGuard::wasScheduledByHuman($bill))，註解「人工自己按「排定發送」排進來的不擋」。",
+    "句 3：app/Console/Commands/BillBatchSend.php 的 $billsQ->chunkById(100, …)（依 id 遞增分頁）；signature 為 'bill:batch-send {--role-id= …} {--debug …}'，沒有排序選項。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-remind-resend-by-support",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "4c0ddabbb0326db4f4d480aba80541836e8e9d7abadc135ab9c88cb3b2f01c33",
+   "title_text": "業者可以請 JGB 客服代發催繳通知嗎？（此操作需由 JGB 客服協助；業者端沒有自助重發催繳的介面）",
+   "notes": [
+    "標題：由句 1–2 支撐。",
+    "句 1：app/Console/Commands/BillNotifyOverdue.php 的 $maxOverdueDays = 65、$intervalNotifyDays = 2、whereRaw('DATEDIFF(NOW(), date_expire) % ? = 1')（逾期第 1、3、5…天寄）。業者端沒有重發入口：routes/web.php 內 grep overdue 為 0 筆；src 內「催繳」只出現在合約設定 t('催繳租金')；app/Http/Controllers/UserController.php 有 ___('系統會自動寄送催繳通知給名列以下的租客們')（正對照）。",
+    "句 2：review-sheet-9.15-S2-DE-20260927.md 裁決 | 111 | G6 | 採用：寫「此操作需由 JGB 客服協助」 |。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-cvs-barcode-overdue-payment",
+   "title": "成立",
+   "sentences": [
+    "不成立",
+    "成立"
+   ],
+   "content_sha256": "f40b57977eeb25c75d11cd71bb533d89489428fdb3f64b6966efc1180dd3adce",
+   "title_text": "超商代碼繳費逾期後才繳，帳單還會入帳嗎？（系統不檢查代碼期限，完全依金流商回傳的付款結果；代碼逾期後是否還能繳費屬外部規定，系統不判斷）",
+   "notes": [
+    "標題：app/Http/Controllers/PaymentController.php 的 case 'newebpay-cvs' 沒有任何代碼期限檢查，入帳完全依回傳結果（狀態與金額）；後半由句 2 支撐。",
+    "句 1：不成立。app/Http/Controllers/PaymentController.php 的 case 'newebpay-cvs' 確實沒有期限檢查，但不是「只看交易狀態是不是成功」：除了 if ($requestData['Status'] !== 'SUCCESS') return，還有 if ((int)$result['Amt'] !== (int)$payment->price) return（金額不符不入帳）、if ($payment->isPaided()) return（已付款略過）以及回傳欄位缺漏檢查。句中的「只看」漏了這些條件。",
+    "句 2：review-sheet-9.15-S2-DE-20260927.md 裁決 | 114 | G8 | 採用：寫系統側事實＋「屬外部規定，系統不判斷」 |；G8 列出的外部規定包含金流商。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-receipt-feature-roadmap",
+   "title": "成立",
+   "sentences": [
+    "不成立",
+    "成立"
+   ],
+   "content_sha256": "5c7d7f8d380699788500c411fbb7726563a4f10105dd5383cc2958e4065a272c",
+   "title_text": "收據功能還會不會有新的開發？（現行已到帳帳單的齒輪選單一律看得到收據，目前沒有公開的後續開發時程）",
+   "notes": [
+    "標題：前半由 src/use/config/useBillTypes.js 的 income-received 無條件列出 receipt 支撐，後半由句 2 支撐。",
+    "句 1：不成立。src/use/config/useBillTypes.js 的「收據」一律顯示（特定合作團隊改下載押金收據），這部分成立。但 app/Notification.php 的 case 'bill_paid' 只有在 case '1-2'、case '1-3'（收款方是個人或法人房東）時才寄信給租客；收款方是社會住宅（config/role.php 的 '4'）時為 '1-4'，沒有對應 case，不寄信。押金設算息帳單也不寄（BILL_TYPE_DEPOSITRATE break）。docs/knowledge/jgb-product-facts.md #p914-receipt-email 同樣沒寫這些例外，以程式為準，「帳單轉為已付款時，系統也會自動寄送通知信給租客」漏了身分例外。",
+    "句 2：review-sheet-9.15-S2-DE-20260927.md 裁決 | 117 | G7 | 採用：寫現行功能＋「目前沒有公開時程」 |。"
+   ]
+  }
+ ],
+ "findings": [
+  "跨條同一錯誤：jgb/E/bill-actions-received 句 9 與 jgb/E/bill-receipt-feature-roadmap 句 1 都寫「帳單轉為已付款時系統會自動寄通知信給租客」。app/Notification.php 的 case 'bill_paid' 只處理 '1-2'、'1-3'、'2-1'、'3-1' 四種身分組合（正對照 case '1-2' 有命中，'1-4' 0 筆），所以收款方是社會住宅時租客收不到這封信；帳本 docs/knowledge/jgb-product-facts.md #p914-receipt-email 也漏了這個例外，建議一併更正帳本。",
+  "同組前後不一：jgb/E/bill-actions-received 句 1 有寫出「新增&編輯&刪除所屬／所有帳單」權限條件，jgb/E/bill-actions-expense-paid（標題與句 1）卻寫「房東一律有編輯收款備註／封存」，jgb/E/bill-list-export-other-tabs 句 1 與 jgb/E/bill-list-income-export-social-housing 句 1 同樣漏了 export_bill（匯出帳務資料）權限條件。",
+  "按鈕文字跨條不一致：帳單總表批次列的匯出叫「匯出帳單」（src/use/config/useBillTypes.js exportAction），草稿帳單／收款帳單批次列叫「匯出」。jgb/E/bill-actions-progress 句 2 把帳單總表那顆也寫成「匯出」；jgb/E/bill-list-export 標題的「其他分頁另有一套匯出流程」又和同條句 4（草稿／收款共用同一套勾選匯出）矛盾。",
+  "全選語義：jgb/E/bill-list-export 把表頭核取方塊寫成「全選、連同其他頁一起選」。實際上表頭只選當頁（src/pages/bills/_parts/ListTable.jsx onSelectAll），跨頁全選要點頁尾 src/components/SurelyVue/Common/PickAllFooter.vue 的「選取全部 [s1] 個項目」。",
+  "介面標籤提醒（不影響判定）：房東側欄 app/Role.php 的 ready 分頁標籤是「待發送帳單」，租客側欄 expense 標籤是「繳費帳單」，頁面標題則是 src/use/config/useBillTypes.js 的「草稿帳單」「支出帳單」。帳本 #p914-notify-remittance 的路徑「我的帳單→待繳帳單」與現行租客選單「帳務管理→繳費帳單」不符，建議修帳本。",
+  "程式與留言不一致（G1#37 已知）：src/pages/bills/list/Index.jsx 的 contractChain 註解寫「不加入 values 下拉」，但 values 有它，下拉用的又是 pairs，「合約帳單」實際會出現在下拉，句子以實際行為為準，判定成立。",
+  "流程揭露：有一次 grep 指令因檔案參數展開成空值，在工作目錄（AIChatbot repo 根目錄）遞迴執行。輸出只看到 semantic_model 下的檔案，沒有引用、也沒有用於任何判定；本報告所有證據都來自 jgb2 匯出、幫助中心檔、docs/knowledge/jgb-product-facts.md 與 sources 明列的審核單。是否要因此重跑這一批，請主 session 裁決。"
+ ],
+ "source_transcript": "a922057271a3550f8.output"
+}

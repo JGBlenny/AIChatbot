@@ -1,0 +1,460 @@
+{
+ "kind": "write",
+ "verdict": "REFUTED",
+ "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+ "claim": "Plan 9.28 批次 B02：27 條細目的標題與每一句已逐句對合法來源核對，逐條結果如 fines",
+ "fines": [
+  {
+   "id": "jgb/A/forget-account-flow",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "cbffc74a87f1915e36d2ef94f6aaf3beeb1abcd9816c804965d8fd23f4d0330c",
+   "title_text": "忘記帳號怎麼辦？（用已綁定的手機號碼簡訊驗證找回 Email 提示）",
+   "notes": [
+    "標題：src/pages/users/auth/parts/forget/Account.vue 只有手機欄位＋sendVerSms/verifyPhone（task: 'show_email_hint'），驗證後顯示 email_hint；句 1、4 支撐。",
+    "句 1：src/pages/users/auth/parts/forget/Account.vue＋「請輸入當初綁定在帳號上的手機號碼」；畫面只有手機號碼欄位，送 /api2/login/sendVerSms 與 verifyPhone，無其他驗證方式。",
+    "句 2：src/pages/users/auth/parts/forget/Account.vue＋「如果未綁定手機號碼，請聯繫 JGB 客服。」逐字存在於 state.screen == 'validate' 的說明文字。",
+    "句 3：app/Http/Controllers/AuthController.php＋case 'validatePhone'＋「手機號碼格式錯誤或無此號碼對應的帳號。」（checkFatherUserByPhone 失敗時寫入 field_errors.phone）；Account.vue 以 ErrorsTip 顯示在手機欄位下方。",
+    "句 4：src/pages/users/auth/parts/forget/Account.vue＋「身份驗證成功！以下為您的帳號提示：」；app/Http/Controllers/AuthController.php＋case 'showEmailHint'＋asterisks($account, $showCount) 且 $showCount = 1，再接 '@' . $platform；app/Helper.php＋function asterisks 以 mb_substr 保留開頭 1 字、其餘以 * 補。",
+    "句 5：src/pages/users/auth/parts/forget/Account.vue＋「如有其他問題，請聯繫 JGB 客服。」位於 hint 畫面最後一段。"
+   ]
+  },
+  {
+   "id": "jgb/A/forget-account-no-phone",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "46706655f109ce225ac62f7c15dc84ade6d8362c2ff252d20be98fcbb3d81341",
+   "title_text": "沒綁手機號碼還能用「忘記帳號」找回嗎？（不行，只能靠手機簡訊驗證）",
+   "notes": [
+    "標題：src/pages/users/auth/parts/forget/Account.vue 只有手機簡訊驗證，未綁定者提示聯繫客服；句 1、2 支撐。",
+    "句 1：src/pages/users/auth/parts/forget/Account.vue＋useVerifyPhone＋/api2/login/sendVerSms；整頁無 Email 切換（對照 forget/Password.vue 才有 toggleLoginBy 的 Email／手機切換）。",
+    "句 2：src/pages/users/auth/parts/forget/Account.vue＋「如果未綁定手機號碼，請聯繫 JGB 客服。」；validatePhone 需 checkFatherUserByPhone 對到帳號才能送驗證碼。",
+    "句 3：src/use/useValidatePhone.js＋watch 中 isReady 時 setTimeout 1000 後 send（輸入中即時驗證）；src/pages/users/auth/parts/forget/Account.vue＋ErrorsTip 的 status 'passed'／'error'＋「號碼最長為 [s1] 碼。」依 getCountryDetail(state.country)?.lengthLimit。"
+   ]
+  },
+  {
+   "id": "jgb/A/forget-password-flow",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "不成立",
+    "成立"
+   ],
+   "content_sha256": "38155f27bc013f582bdf8916b060be6a1d804c547f62570aaf8203d14057f005",
+   "title_text": "忘記密碼怎麼辦？（Email 或手機任一驗證後即可重設新密碼）",
+   "notes": [
+    "標題：src/pages/users/auth/parts/forget/Password.vue＋toggleLoginBy（email／phone）＋驗證通過後 state.screen = 'resetPwd'；句 1、2 支撐。",
+    "句 1：src/pages/users/auth/parts/forget/Password.vue＋「在重新設定密碼前，請先完成帳號驗證，即可進行重設密碼。」＋Email／手機號碼切換（emailVerificator／phoneVerificator 擇一）。",
+    "句 2：src/pages/users/auth/parts/forget/Password.vue＋watch targetVerificator.response.verify 成功→state.screen = 'resetPwd'＋「帳號驗證成功！請重設密碼，設定完成後請使用新密碼登入。」",
+    "句 3：src/pages/users/auth/parts/forget/Password.vue＋pwdFormat（length >= 6、/[0-9]/ 與 /[a-zA-Z]/、same）＋isPwdReady 未過則 pwdSubmit 直接 return；help slug02_zh-Hant.html＋「至少 6 個字元，並且同時包含英文字母與數字」一致。",
+    "句 4：app/Http/Controllers/AuthController.php＋case 'updatePassword'＋$fatherUser->reload(true); // 登入主帳號——重設成功時後端已把使用者寫入 session 自動登入，result.redirect 設為 route('users.create', ['any'=> 'login'])；Password.vue 以 window.location.href 前往該網址，但 routes/web.php 的 users.create 掛 if_login 中介層，app/Http/Middleware/IfLoginCheck.php＋session(User::class) 存在即 redirect()->route('users.index')，使用者直接進入會員中心，並不需要用新密碼重新登入。幫助中心 slug02_zh-Hant.html 寫「就可以重新登錄了」、畫面文字寫「請使用新密碼登入」，與程式實際行為衝突，依規則以程式為準。",
+    "句 5：src/pages/users/auth/parts/forget/Password.vue＋alert('密碼設定失敗：' + (result.message || '請檢查輸入格式'))＋ErrorsTip 顯示 response.resetPwd.data.field_errors.password（後端 AuthController.php updatePassword 驗證失敗寫入「格式錯誤。」）。"
+   ]
+  },
+  {
+   "id": "jgb/A/forget-password-setpwd-invite",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "不成立"
+   ],
+   "content_sha256": "49adc32234c695401c628361d7a9ac663028c787f058822637dc76dd8f18a529",
+   "title_text": "「請設定密碼」畫面是什麼情境？（受邀請帳號的初次設定密碼流程）",
+   "notes": [
+    "標題：src/pages/users/auth/parts/forget/Password.vue＋route.params.type === 'setPwd' 顯示「請設定密碼」；src/pages/result-screen/Index.jsx 的邀請畫面「設定密碼」按鈕導向此頁；句 1、2 支撐。",
+    "句 1：src/pages/users/auth/parts/forget/Password.vue＋t('請設定密碼')＋onMounted 中 if (route.params.type === 'setPwd') state.screen = 'setPwd'，表單 v-if 含 state.screen == 'setPwd'，跳過 validate／verify；src/routes/users.js＋path: 'password/:type?'。",
+    "句 2：src/pages/result-screen/Index.jsx＋Cookies.set('bigLandlord_id'…)＋router.push name 'users.forget.password' params type 'setPwd'；app/Http/Controllers/AuthController.php＋「如果有指定用戶更新密碼（BigLandlord 流程）」＋BigLandlord::find($request->id)；成功後依 result.redirect 導向。",
+    "句 3：前半成立（Password.vue 的 setPwd 與 resetPwd 共用同一表單與 pwdFormat 規則）；後半不成立：app/Http/Controllers/AuthController.php＋case 'updatePassword' 中 $fatherUser->reload(true) 已自動登入，未指定頁面時 redirect 為登入頁網址，但 app/Http/Middleware/IfLoginCheck.php＋session(User::class) 存在即 redirect()->route('users.index')，實際會進入會員中心而非停在一般登入頁；後端訊息亦為「密碼設定完成！正在為您登入系統...」。"
+   ]
+  },
+  {
+   "id": "jgb/A/dashboard-overview-blocks",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "44b2d50ecbb3c128b7cb4913e752fd0e375343283f0f1169d5b00137e3695f07",
+   "title_text": "會員中心首頁有哪些統計區塊？（即時物件出租率、即將到期合約、即將到來應到帳帳單、7日內修繕單）",
+   "notes": [
+    "標題：與句 1 同內容，四個區塊標題逐字對到各 Block 元件。",
+    "句 1：src/pages/users/dashboard/Landlord.vue＋非 state.isBigLandlord 分支依序渲染 Block_Vacancy、Block_ExpiringContract、Block_AccountsReceivable、Block_Repair（同一 row 各 xxxl:col-3）；src/pages/users/dashboard/parts/Block_Vacancy.vue＋「即時物件出租率」、Block_ExpiringContract.vue＋「即將到期合約」、Block_AccountsReceivable.vue＋「即將到來應到帳帳單」、Block_Repair.vue＋「7日內修繕單」。src/pages/users/dashboard/Index.vue 以 config_rule_key 2／3／4 進入 Landlord.vue。"
+   ]
+  },
+  {
+   "id": "jgb/A/dashboard-overview-charts",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "200ba61c77ea7345b31a46ec36326f48789977f59c44472a676f690aac76f75f",
+   "title_text": "首頁的圖表看得到什麼？（招租／買賣廣告刊登率圓環圖、收支情況圖）",
+   "notes": [
+    "標題：句 1、2 支撐。",
+    "句 1：src/pages/users/dashboard/parts/RatioDoughnutChart.vue＋頁簽「招租廣告刊登率」「買賣廣告刊登率」＋資料項「刊登中」「未刊登」＋中心文字「總件數」；Landlord.vue 渲染 RatioDoughnutChart。",
+    "句 2：src/pages/users/dashboard/parts/BalanceChart.vue＋標題「收支情況」＋圖例「收入」「支出」「當日結餘」「累計結餘」；Landlord.vue 渲染 BalanceChart。"
+   ]
+  },
+  {
+   "id": "jgb/A/dashboard-overview-lists",
+   "title": "不成立",
+   "sentences": [
+    "不成立"
+   ],
+   "content_sha256": "a4a0612db37e758b9a38e99518dfd99c4fb8ee7ca7c98b3832c9bc6a8818b7d2",
+   "title_text": "首頁下方還有哪些列表？（帳單、合約、修繕整合列表，具通知權限者另有 Email 通知紀錄）",
+   "notes": [
+    "標題：標題宣稱有「修繕」整合列表，句 1 不成立，標題同樣不成立。",
+    "句 1：src/pages/users/dashboard/parts/BillContractRepair.vue＋tabList 只有「帳務情況」與「合約情況」兩個頁簽，修繕列表已被註解（// const List_Repair = defineAsyncComponent…）且沒有任何修繕頁簽，首頁整合列表只有帳單與合約，沒有修繕。後半「具備通知檢視權限才顯示 Email 通知紀錄」成立：src/pages/users/dashboard/Landlord.vue＋store.state.userData?.permission?.show_notification && EmailRecords（EmailRecords.vue 標題「Email 發送記錄」）。"
+   ]
+  },
+  {
+   "id": "jgb/A/dashboard-big-landlord-view",
+   "title": "不成立",
+   "sentences": [
+    "成立",
+    "不成立"
+   ],
+   "content_sha256": "a382dc80c6e5bdf63fe3644f882b203767f868169b00ecfcb2144260904dcf57",
+   "title_text": "大房東的首頁畫面和一般房東不一樣嗎？（只顯示社區最新收支詳情與收支圖表，沒有捷徑與四個統計方塊）",
+   "notes": [
+    "標題：標題宣稱大房東首頁顯示「社區最新收支詳情」，句 2 該部分不成立，標題不成立。",
+    "句 1：src/pages/users/dashboard/Landlord.vue＋state.isBigLandlord ? …（EstateDetails＋DateRangeSelector＋BalanceChart）：四個 Block_* 與 ShortCuts 只在非大房東分支渲染。注意幫助中心 Landlordonboarding00_zh-Hant.html 的「總覽資訊」描述大房東看得到「即時出租率、應到帳款項、房東流水帳和７日內的修繕單」，與程式衝突，依規則以程式為準。",
+    "句 2：區間選項成立（src/pages/users/dashboard/Landlord.vue＋DateRangeSelector options 7 days／30 days／90 days／6 months＋customizable={true}，下接 BalanceChart）。但「社區最新收支詳情」不成立：Landlord.vue 的 JSX 直接寫 <EstateDetails />，檔內既未 import 也未宣告；全域元件只由 src/components/index.js＋import.meta.glob('./**/*.{vue,jsx}') 依 src/components 下的路徑自動註冊（正對照：同檔未 import 的 LayoutGeneral、DateRangeSelector 都在 src/components 底下存在，因此能解析），src/components 底下沒有任何會被命名為 EstateDetails 的檔案，src/pages/users/dashboard/parts/EstateDetails.vue 只有 src/pages/bills/stat/_parts/Stat.jsx 以 defineAsyncComponent 明確引入。依此，大房東首頁的 EstateDetails 無法解析，現行程式渲染不出「社區最新收支詳情」區塊（該字串只存在於 EstateDetails.vue）。"
+   ]
+  },
+  {
+   "id": "jgb/A/dashboard-team-switch",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "847f7684d19cd9e765688f42480ddf85b8002edc08a1d2f66c19afdbb3bb7dec",
+   "title_text": "怎麼在會員中心首頁切換團隊？（左上角下拉選單選擇被加入的團隊）",
+   "notes": [
+    "標題：Landlordonboarding00_zh-Hant.html＋「請點選左上角之下拉選單，選擇您被加入的團隊」；句 1 支撐。",
+    "句 1：Landlordonboarding00_zh-Hant.html＋「當您的管理業者將您加入JGB系統之後」＋「請點選左上角之下拉選單，選擇您被加入的團隊」。",
+    "句 2：Landlordonboarding00_zh-Hant.html＋「即可檢視所屬的物件、合約、帳務以及修繕資訊」。",
+    "句 3：Landlordonboarding00phone_zh-Hant.html＋「手機版與電腦版是同一套系統、同一組功能，差別只在畫面會依螢幕寬度調整排列方式，不會因為使用手機而少了哪些功能」。"
+   ]
+  },
+  {
+   "id": "jgb/A/dashboard-occupancy-tab",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "5fccccbab337d753c952dc144a05ebdb24a08eb002b2dff6010c8b82bb0f672b",
+   "title_text": "首頁的「滿租率(beta)」頁簽是什麼？（限定開放的社區收入統計，非所有團隊都看得到）",
+   "notes": [
+    "標題：src/pages/users/dashboard/Landlord.vue＋「滿租率(beta)」＋showOccupancyTab（SpecialRole.communityIncomeStats）＋CommunityIncomeStats；句 1、2 支撐。",
+    "句 1：src/pages/users/dashboard/Landlord.vue＋showOccupancyTab = specialRoles.getSpecialGroupsByRole(…).includes(SpecialRole.communityIncomeStats)＋tabs「主要」「滿租率(beta)」，只在 showOccupancyTab 為真時渲染 TabmarkNav。",
+    "句 2：src/pages/users/dashboard/Landlord.vue＋state.activeTab === 'occupancy' ? <CommunityIncomeStats /> : <>…</>，整個原本區塊（統計方塊、圖表、列表）被取代。",
+    "句 3：src/pages/users/dashboard/Landlord.vue＋router.push({ query: { ...route.query, tab: key } })，activeTab 由 route?.query?.tab === 'occupancy' 決定，帶該網址即停在該頁簽（限開放團隊）。"
+   ]
+  },
+  {
+   "id": "jgb/A/dashboard-shortcuts-list",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "ccf287215f4cdd4f457593a552cb3b8a8a61b1aa1959392af2e7e97517ea932a",
+   "title_text": "首頁「捷徑」區塊有哪些功能？（新增物件、新增合約、新增帳單、新增修繕、查看統計報表、查看大房東列表）",
+   "notes": [
+    "標題：src/pages/users/dashboard/parts/ShortCuts.vue 六個項目逐字存在；句 1 支撐。",
+    "句 1：src/pages/users/dashboard/parts/ShortCuts.vue＋「捷徑」＋「新增物件」「新增合約」「新增帳單」「新增修繕」「查看統計報表」「查看大房東列表」（各自另有權限條件，查看大房東列表另需 props.role == 3）。",
+    "句 2：src/pages/users/dashboard/Landlord.vue＋showShortCut：permissions = ['add_estate', 'add_contract', 'add_bill', 'edit_owner_repair', 'chart_bill', 'chart_owner_bill', 'show_biglandlord'] 任一為真才渲染 ShortCuts，與句中列舉一致。"
+   ]
+  },
+  {
+   "id": "jgb/A/account-phone-bind-status",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "c09de3c5ab084b1c9ef51a1aaab994ad9bbc5ebd7d7f3a9f22e7896efd103ee6",
+   "title_text": "帳號資訊頁怎麼看手機的綁定狀態？（已綁定／未綁定，未綁定才有「前往綁定」按鈕）",
+   "notes": [
+    "標題：句 1 支撐。",
+    "句 1：resources/views/users/account.blade.php＋「帳號資訊」區塊＋$infoBasic['is_phone_verified'] ? ___('已綁定') : ___('未綁定')＋未綁定時 route('users.verify', ['any' => 'phone', …]) 的「前往綁定」按鈕；routes/web.php 的 /account 走 UserController@account 回此 view；src/routes/users.js 的 users.verify.phone → PhoneVerify.vue。"
+   ]
+  },
+  {
+   "id": "jgb/A/account-email-verify-status",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "79daee299719f11efdcb307a17ea4874b222118063787417f692349176e75f3d",
+   "title_text": "帳號資訊頁的 Email 驗證狀態怎麼看？（Email 無法自行更改，需聯繫客服）",
+   "notes": [
+    "標題：句 1、2 支撐（一般帳號唯讀＋聯繫客服提示）。",
+    "句 1：resources/views/users/account.blade.php＋一般 Email 顯示 ___('已驗證')／___('未驗證')；Email 符合特定合作團隊網域的帳號（preg_match 條件）才改顯示 ___('未完成驗證')／___('未設定')。",
+    "句 2：resources/views/users/account.blade.php＋一般帳號 <input class=\"w-full disabled\" type=\"email\" … disabled readonly/>＋tooltip「如需更換 Email 帳號，請聯繫 JGB 客服。」；app/Http/Controllers/UserController.php＋bind_email 對非該網域帳號回「當前Email不可異動」。"
+   ]
+  },
+  {
+   "id": "jgb/A/account-phone-no-change-entry",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "6825fa89761411fa48a53f099f9cc1f8669c5e5f956fd2a1f38946be736cc1fc",
+   "title_text": "手機已經綁定後可以自己更換嗎？（沒有更換入口，只顯示已綁定狀態）",
+   "notes": [
+    "標題：句 1、2 支撐。",
+    "句 1：resources/views/users/account.blade.php＋@if( $infoBasic['is_phone_verified'] ) 只渲染 disabled readonly 的手機 input，「前往綁定」只在 @else 分支。",
+    "句 2：src/pages/users/auth/parts/PhoneVerify.vue＋getPhoneBindingStatus 為真時 state.screen = 'hasPhone'＋「手機已綁定」＋「未來可使用電話號碼進行登入，忘記主帳號時也能當作代替帳號登入。」＋唯一按鈕「繼續」，該畫面無重新綁定選項。"
+   ]
+  },
+  {
+   "id": "jgb/A/account-sso-status",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "98466cc3af201b02e6021cb7a9129f7b8d89a84945c54b227309ac2fc9a96271",
+   "title_text": "帳號資訊頁怎麼看 SSO 綁定狀態？（Facebook／Google／LINE 各自顯示已綁定或未綁定）",
+   "notes": [
+    "標題：句 1 支撐。",
+    "句 1：resources/views/users/account.blade.php＋「SSO 綁定狀態」＋has_facebook／has_google／has_line 各自顯示 ___('已綁定')／___('未綁定')；app/Http/Controllers/UserController.php＋$ssoUsers 以 social_key line／google／facebook 計數。",
+    "句 2：resources/views/users/account.blade.php＋SSO 區塊只有圖示與狀態文字，無任何解除綁定按鈕或連結。",
+    "句 3：app/Http/Controllers/UserController.php＋$showPassword = !empty($user->password)；resources/views/users/account.blade.php＋@if ($showPassword) 包住「密碼」區塊與「修改密碼」按鈕。"
+   ]
+  },
+  {
+   "id": "jgb/A/account-preference",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "e2298bd624d473162d78dbe51281919d0722a2af4a942f42195b2fe7b3441847",
+   "title_text": "帳號資訊頁的偏好設定能設定什麼？（登入預設房東身份、時區、Email 通知語系）",
+   "notes": [
+    "標題：resources/views/users/account.blade.php 的「偏好設定」區塊含三項；句 1～3 支撐。",
+    "句 1：resources/views/users/account.blade.php＋「登入預設房東身份」select user_default_role；app/Http/Controllers/UserController.php＋default_role_options 只收房東身份與團隊（「預設身份不含租客」），儲存時 $this->user->default_role_id = $defaultRoleId。",
+    "句 2：resources/views/users/account.blade.php＋「時區設定」tooltip「選擇非台灣時區後，系統會將此團隊/帳號收到的排程通知時間更改為您所選擇的時區。」「（如：每日過期帳單通知、合約30天內到期提醒通知）」。",
+    "句 3：resources/views/users/account.blade.php＋「Email 通知語系」select locale_email；UserController.php 儲存 $this->user->locale_email。"
+   ]
+  },
+  {
+   "id": "jgb/A/account-progress-unlock",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "dd30db31fff97088c90347bba32a72c7476806e12269913c6215ccfd21be4b1e",
+   "title_text": "帳號資訊頁有「資訊完整度」進度條嗎？（目前頁面上不會顯示這個區塊）",
+   "notes": [
+    "標題：句 1 支撐。",
+    "句 1：resources/views/users/account.blade.php＋@if (false && $role->config_rule_type == 'landlord') 包住「會員狀態」「資訊完整度」整塊，條件恆為假。",
+    "句 2：resources/views/users/account.blade.php＋「簽約資訊」區塊（身分證字號、戶籍地址等）整段以 <?php /* … */ ?> 註解掉；routes/web.php＋users.signer_info（IndexController@vueIndex）與 src/routes/users.js＋users.signer_info → src/pages/users/signerInfo/Index.vue 為獨立頁面。"
+   ]
+  },
+  {
+   "id": "jgb/A/account-save-integrity-check",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "ddbd10afc4c7c84d6f1f596ae6fa762f8d06c452673cb762e5ee8c1493454196",
+   "title_text": "帳號資訊頁儲存失敗會提示什麼？（頁面沒有完整載入時會提醒重新整理再儲存）",
+   "notes": [
+    "標題：句 1 支撐。",
+    "句 1：app/Http/Controllers/UserController.php＋account 方法 POST 分支＋getAccountSettingMissingInputKeys 有缺欄位即 return back()->with('status-error' => ___('頁面沒有完整載入，這次的資料沒有儲存，請重新整理頁面後再儲存一次'))，在任何 save 之前擋下。"
+   ]
+  },
+  {
+   "id": "jgb/A/signer-individual-fields",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "不成立"
+   ],
+   "content_sha256": "60a5222d42d311dc0df132c61734c84e41d923dbe5c44754c8b97db306929f53",
+   "title_text": "個人房東的簽約資訊要填什麼？（姓氏、名稱、身分證字號、Email、手機、身分證正反面）",
+   "notes": [
+    "標題：句 1～3 支撐所列欄位。",
+    "句 1：src/pages/users/team/_parts/SignerDetails.vue＋firstRowOfIndividualInfo：「姓氏」「名稱」「身分證字號」皆 isRequired: true。",
+    "句 2：src/pages/users/team/_parts/SignerDetails.vue＋secondRowOfIndividualInfo：「Email」「手機號碼」皆 isRequired: true。",
+    "句 3：src/pages/users/team/_parts/SignerDetails.vue＋idCardAttachmentInfo（uploadFor tenant_identity_certificate_front／back）＋:idGuided=\"true\"＋註解「身分證正反面走證件引導裁切」。",
+    "句 4：src/pages/users/team/_parts/SignerDetails.vue＋otherAttachmentInfo「工作名片/學生證」「良民證」「小章」＋標題「其他附件(選填)」。",
+    "句 5：門檻成立（SignerDetails.vue＋isShowScrollBar: infoIdentity?.length > 1、isMoreThan5: > 5、「所有團隊」），但「例如同時管理多個角色」不成立：多筆個人資料是同一個人房東身分底下的多筆簽約對象，app/Http/Controllers/UserController.php＋UserSignerInfo::getSignerInfos($user->id, $this->role->id)，由「管理」視窗的「新增」建立，與管理多個角色無關。另外「所有團隊」選單項目渲染 node.company_name，但個人身分的清單來自 filterNavItems，只有 label／value，選單文字會是空白。"
+   ]
+  },
+  {
+   "id": "jgb/A/password-form-validation",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "不成立",
+    "成立"
+   ],
+   "content_sha256": "223787dc8aca7222cbb08ed66092d41f8f731902d6c502232d5872131487e00a",
+   "title_text": "帳號資訊頁修改密碼時要填哪些欄位？填錯會怎樣？",
+   "notes": [
+    "標題：問句型標題，由句 2～4 支撐其主題。",
+    "句 1：app/Http/Controllers/UserController.php＋$showPassword = !empty($user->password)；resources/views/users/account.blade.php＋@if ($showPassword) 包住 ___('密碼') 區塊。",
+    "句 2：resources/views/users/account.blade.php＋「修改密碼」按鈕 @click memberCenter.safety.display_password_form=true 後渲染 password-form。",
+    "句 3：欄位部分成立（src/components/PasswordForm.vue＋require_old_password 時 old_password、password、password_confirmation 皆 required；UserController.php＋'old_password' => 'required'）。錯誤訊息不成立：app/Http/Controllers/UserController.php＋!Hash::check(request('old_password'), …) 時回 ___('目前密碼驗證錯誤')，畫面上的字是「目前密碼驗證錯誤」，不是句中引號內的「目前密碼輸入錯誤」；擋下整筆儲存這一點成立（return back() 在 save 之前）。",
+    "句 4：app/Http/Controllers/UserController.php＋'description' => ___('上次更新：') . ($user->password_change_at ? … : format_timezone('Y/m/d H:i', $user->created_at, …))；resources/views/users/account.blade.php＋{{$password['description']}} 位於「密碼」標題下方。"
+   ]
+  },
+  {
+   "id": "jgb/A/signer-corp-fields",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "52743505713bbae219003675bfdf7d7f293eb4c5b2d56f86a2311ae98d9a62e4",
+   "title_text": "公司身分的簽約資訊要填什麼？（公司名稱、統編、負責人、公司電話/Email、登記證資料）",
+   "notes": [
+    "標題：句 1～4 支撐所列欄位。",
+    "句 1：src/pages/users/team/_parts/SignerDetails.vue＋firstRowOfCorpInfo「公司登記名稱」isRequired true、maxLength 20；「公司統編」isRequired true；secondRowOfCorpInfo「公司電話」「公司Email」isRequired true；「公司負責人」isRequired: state.isSocialHousingTeam（config_rule_key === 4）。",
+    "句 2：src/pages/users/team/_parts/SignerDetails.vue＋typeOptions「公司統編(檢核)」「其他統編(不檢核)」＋isShowErrorTip 只在 company_id_type !== 'other' 時跑 verifyTWBusinessNo＋maxLength: company_id_type === 'other' ? 20 : 8；SignerFormInputField.vue＋t(opt.label) 渲染選項文字。",
+    "句 3：src/pages/users/team/_parts/SignerDetails.vue＋fifthRowOfCorpInfo「公司登記證號」isRequired: state.isSocialHousingTeam、「公司登記證日期」「公司登記證縣市」isRequired: false。",
+    "句 4：src/pages/users/team/_parts/SignerDetails.vue＋「公司負責人」isFieldVisible: true、isRequired: state.isSocialHousingTeam；「社宅業者編號」isFieldVisible: state.isSocialHousingTeam。"
+   ]
+  },
+  {
+   "id": "jgb/A/signer-corp-seals",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "35707dbb09140d2d3193d338f372799566fcd6b0f86c34b9adf1fda824aa1bcd",
+   "title_text": "公司身分可以上傳哪些印章與證件附件？（公司大章、小章、經紀人章、經紀業章、租賃管理員章，皆為選填）",
+   "notes": [
+    "標題：句 1 支撐。",
+    "句 1：src/pages/users/team/_parts/SignerDetails.vue＋corpAttachmentInfo「公司大章」「公司小章」「不動產經紀人章」「不動產經紀業章」「租賃管理員章」，沒有 isFieldVisible 條件，一律渲染；src/pages/users/team/_parts/SignerFormImgUploader.vue 沒有 required 設定。",
+    "句 2：src/pages/users/team/_parts/SignerDetails.vue＋區塊標題「電子簽約圖章」＋electronicSignatureInfo fieldTitleLabelKey「圖章」，apiUrl 用 electronicSignature.api_upload（另一組上傳）＋開關「預設使用圖章取代親手簽名」。"
+   ]
+  },
+  {
+   "id": "jgb/A/signer-broker-manager-fields",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "bd51b802ee70cd1db3279dfbf490190e619cd949b624fc700b9462243be95098",
+   "title_text": "有不動產經紀人／租賃管理人員資格要多填什麼？（經紀人證號、租賃管理人員證號等）",
+   "notes": [
+    "標題：句 1～3 支撐。",
+    "句 1：src/pages/users/team/_parts/SignerDetails.vue＋brokerInfo「經紀人名稱」maxLength 15、「經紀人證號」、「經紀業名稱」maxLength 15、「經紀業證號」。",
+    "句 2：src/pages/users/team/_parts/SignerDetails.vue＋leasingManagerInfo 只有「租賃管理人員名稱」「租賃管理人員證號」「租賃管理人員聯絡電話」，沒有 Email；brokerInfo 才有「經紀人 Email」。",
+    "句 3：src/pages/users/team/_parts/SignerDetails.vue＋經紀人名稱／證號、租賃管理人員名稱／證號 isRequired: state.isSocialHousingTeam；「經紀人聯絡電話」「經紀人 Email」「租賃管理人員聯絡電話」isFieldVisible: state.isSocialHousingTeam。"
+   ]
+  },
+  {
+   "id": "jgb/A/signer-edit-permission",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "584917e535f84f64a235fc5ee5116cf552fb340cecf6c599f0f40f347778ee94",
+   "title_text": "簽約資訊誰能編輯？（沒有編輯權限的欄位會顯示為停用樣式）",
+   "notes": [
+    "標題：句 2 支撐。",
+    "句 1：src/pages/users/signerInfo/Index.vue＋<signer-details :is-allowed-to-edit=\"true\" …>。",
+    "句 2：resources/views/users/role.blade.php＋:is-allowed-to-edit=\"{{ json_encode($enableEdit …) }}\"；app/Http/Controllers/UserController.php＋role 方法 $enableEdit = $this->isHasGPermission('edit_role_info')；app/Http/Controllers/Controller.php＋isHasGPermission 在 $roleOwnerUserId == $user->id 時為真（擁有者），否則依 hasPermissionByRole；src/pages/users/team/_parts/SignerDetails.vue＋公司欄位 classes: { disabled: !props.isAllowedToEdit }。",
+    "句 3：src/pages/users/team/_parts/SignerDetails.vue＋個人欄位 firstRowOfIndividualInfo／secondRowOfIndividualInfo 的 classes: {}，個人附件 :isAllowedToEdit=\"true\"；只有公司欄位帶 disabled: !props.isAllowedToEdit。"
+   ]
+  },
+  {
+   "id": "jgb/A/signer-address-fields",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "7775f7de477f6df4f216152b3bb734f270db133bb6ba45a083ed41e3e50acd70",
+   "title_text": "簽約資訊的地址欄位怎麼填？（戶籍/通訊地址、公司登記/通訊地址皆為必填，可一鍵「同戶籍地址」「同公司登記地址」）",
+   "notes": [
+    "標題：句 1～3 支撐。",
+    "句 1：src/pages/users/team/_parts/SignerDetails.vue＋「戶籍地址」「通訊地址」兩個 address-component 皆 :required=\"true\"。",
+    "句 2：src/pages/users/team/_parts/SignerDetails.vue＋「同戶籍地址」@click：state.currentSigner.mailing_address = {...state.currentSigner.resident_address}。",
+    "句 3：src/pages/users/team/_parts/SignerDetails.vue＋「公司登記地址」「公司通訊地址」address-component :required=\"true\"＋「同公司登記地址」把 company_registration_address 複製到 company_address。",
+    "句 4：src/pages/users/team/_parts/SignerDetails.vue＋「經紀人通訊地址」「租賃管理人員通訊地址」都在 v-if=\"state.isSocialHousingTeam\" 內。"
+   ]
+  },
+  {
+   "id": "jgb/A/signer-multi-entry-switch",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "07fb00c3db901e2ca928d8a67dde706a417e8f14b2bbc60850d53e3b85fe55b3",
+   "title_text": "公司名下有多筆簽約對象時要怎麼切換？（表單上方出現切換列，超過 5 筆再加「所有團隊」下拉選單）",
+   "notes": [
+    "標題：句 1、2 支撐。",
+    "句 1：src/pages/users/team/_parts/SignerDetails.vue＋公司身分 isShowScrollBar: companyInfoList.length > 1＋ScrollNav @click onClickScrollNav 切換 currentInfoCompanyIndex；resources/views/users/role.blade.php＋state.role.companyInfoNav = state.role.resetCompanyInfoNav()。",
+    "句 2：src/pages/users/team/_parts/SignerDetails.vue＋isMoreThan5: companyInfoList.length > 5＋tooltip「所有團隊」，點選項目呼叫 onClickScrollNav(index) 直接切換（附註：選項文字取 node.company_name，但 src/entry/product.js 的 resetCompanyInfoNav 只產生 label／value，選項文字可能空白，見 findings）。"
+   ]
+  },
+  {
+   "id": "jgb/A/signer-manage-save-buttons",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "f30c0471a724c79e0ae4a446d6a5541eba360e4db26183f4b5166b4b4bc7437a",
+   "title_text": "簽約資訊頁的「管理」「儲存」按鈕做什麼？（管理開啟簽約對象視窗可新增或刪除，儲存只在個人身分頁面出現）",
+   "notes": [
+    "標題：句 1、2 支撐。",
+    "句 1：src/pages/users/team/_parts/SignerDetails.vue＋「管理」@click store.commit('lightbox','manageSingerProfile')；src/components/Lightbox/SignerInfosEdit.vue＋「新增」emit('createRole')＋各列 X 按鈕 emit('deleteRole', id)（第一筆不可刪）。",
+    "句 2：src/pages/users/team/_parts/SignerDetails.vue＋v-if=\"state.isIndividual && route.name === 'users.signer_info'\" 的「儲存」，handleSaveProfileChanges 以 POST /users/roleTenant 送出 state.currentSigner（目前這一筆）。"
+   ]
+  }
+ ],
+ "findings": [
+  "幫助中心 Landlordonboarding00_zh-Hant.html／Landlordonboarding00phone_zh-Hant.html 的「總覽資訊」說大房東看得到「即時出租率、應到帳款項、房東流水帳和７日內的修繕單」以及「帳務情況」「修繕情況」，但 src/pages/users/dashboard/Landlord.vue 的 state.isBigLandlord 分支只渲染 EstateDetails＋DateRangeSelector＋BalanceChart，文件與程式衝突（影響 dashboard-big-landlord-view 句 1 的引用來源，該句依程式判定成立）。",
+  "src/pages/users/dashboard/Landlord.vue 直接寫 <EstateDetails />，但檔內沒有 import，src/components/index.js 的自動註冊也涵蓋不到 src/pages/users/dashboard/parts/EstateDetails.vue（正對照：同檔未 import 的 LayoutGeneral、DateRangeSelector 都在 src/components 下，可以解析）。依此推論，大房東首頁的「社區最新收支詳情」不會渲染。此結論是靜態推導，沒有在瀏覽器實際驗證。",
+  "密碼重設（一般與受邀 setPwd）成功後，app/Http/Controllers/AuthController.php 的 updatePassword 會以 $fatherUser->reload(true) 自動登入；導向的登入頁網址再被 app/Http/Middleware/IfLoginCheck.php 轉到 users.index。畫面文字「設定完成後請使用新密碼登入」與幫助中心 slug02_zh-Hant.html「就可以重新登錄了」都和實際行為不一致（forget-password-flow 句 4、forget-password-setpwd-invite 句 3）。",
+  "src/pages/users/team/_parts/SignerDetails.vue 的「所有團隊」選單項目渲染 {{ node.company_name }}，但公司清單（src/entry/product.js resetCompanyInfoNav）與個人清單（filterNavItems）都只產生 label／value，超過 5 筆時選單文字可能全為空白；屬程式缺陷，提供業主參考。",
+  "帳號資訊頁目前密碼錯誤時，實際訊息是「目前密碼驗證錯誤」（app/Http/Controllers/UserController.php account 方法），細目寫成「目前密碼輸入錯誤」。",
+  "首頁整合列表 src/pages/users/dashboard/parts/BillContractRepair.vue 的修繕列表已被註解移除，只剩帳務與合約兩個頁簽；dashboard-overview-lists 的「修繕」不成立。"
+ ],
+ "source_transcript": "a05599083fa49ddfc.output"
+}

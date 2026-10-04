@@ -1,0 +1,134 @@
+{
+ "kind": "change",
+ "verdict": "REFUTED",
+ "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+ "claim": "Plan 9.28 抽查：20 句已逐句對合法來源獨立核對，逐句結果如 sample",
+ "sample": [
+  {
+   "id": "jgb/E/bill-actions-draft",
+   "n": 5,
+   "verdict": "成立",
+   "note": "src/use/config/useBillTypes.js：genSingleActions 的 case 'ready-draft' 只在 state.currentSpecialGroup?.key 等於特定合作團隊代碼時，才加入 filteredBillActions.get('merge')（labelKey '合併帳單'），程式註解也寫著「合併帳單」目前只開放給特定合作團隊；全 src 搜尋 get('merge') 只有這一處。"
+  },
+  {
+   "id": "jgb/A/dashboard-occupancy-tab",
+   "n": 2,
+   "verdict": "成立",
+   "note": "src/pages/users/dashboard/Landlord.vue：state.activeTab === 'occupancy' 時顯示 <CommunityIncomeStats />，否則顯示原本的 Block_Vacancy／Block_ExpiringContract 等統計方塊與 BalanceChart 等內容，屬二選一。src/pages/users/dashboard/parts/CommunityIncomeStats.vue 使用 echarts 的 LineChart／BarChart，程式註解寫「社區收入統計圖表」。"
+  },
+  {
+   "id": "jgb/A/register-email-verify-resend",
+   "n": 1,
+   "verdict": "成立",
+   "note": "src/pages/users/auth/parts/EmailVerify.vue：驗證碼面板（VerifyPanel）下方有 t('沒有收到驗證信嗎？試試 [s1]重發驗證信[s2]')，連結的 onclick 呼叫 window.__reSendVer()，也就是 emailVerificator.send()，會重新觸發寄送。"
+  },
+  {
+   "id": "jgb/A/account-phone-bind-status",
+   "n": 1,
+   "verdict": "成立",
+   "note": "resources/views/users/account.blade.php 的 ___('帳號資訊') 區塊：手機號碼旁依 is_phone_verified 顯示 ___('已綁定') 或 ___('未綁定')；未綁定時（@else）顯示 ___('前往綁定') 按鈕，連到 route('users.verify', ['any' => 'phone'])。routes/web.php 的 users.account 指向 UserController@account，該方法 return view('users.account')，確認這是現行畫面。"
+  },
+  {
+   "id": "jgb/A/register-captcha-expired",
+   "n": 2,
+   "verdict": "成立",
+   "note": "app/Http/Controllers/AuthController.php 的 case 'sendVerEmail'：AuthService::verifyRegisterCaptcha 沒通過時回傳 recaptcha_required = true。src/pages/users/auth/parts/EmailVerify.vue 監聽到 recaptcha_required 後，清空 email 並設定 parentState.step = 'Welcome'（退回第一步 Email 輸入）。src/pages/users/auth/parts/CreateWelcome.vue 在 captchaRetry 為真時顯示 t('機器人驗證已經過期，請重新輸入 Email 並勾選「我不是機器人」。')，句中引文只少了句末句號。"
+  },
+  {
+   "id": "jgb/G/device-page-lock-open-close",
+   "n": 3,
+   "verdict": "不成立",
+   "note": "resources/views/iot/index.blade.php 的「狀態顯示」：外層是 v-if=\"device.status === 200\"，SkyWatch 門鎖要在線上，而且 is_locked 剛好是 0 或 1，才顯示 ___('已開門') 或 ___('已關門')。is_locked 不是 0／1 時落到 v-else，顯示 ___('連線中')；離線（status 不是 200，app/Http/Controllers/IotController.php 預設 $status = 503）時，同樣顯示 ___('未連線')。句子說 SkyWatch 會直接顯示已開門或已關門，並和「其他門鎖只會顯示連線中或未連線」對比，漏掉了 SkyWatch 離線時也只顯示「未連線」這個例外。"
+  },
+  {
+   "id": "jgb/F/repair-edit-vendor-assign",
+   "n": 2,
+   "verdict": "成立",
+   "note": "src/pages/repair/edit/_parts/VendorContactSection.vue：編輯表單的欄位是 t('修繕時間')（日期＋時間）、t('廠商名稱')、t('維修人員')、t('聯絡電話')。儲存後的顯示列 assignLogListConfig 依序是 t('編輯時間')（descAssignLogs[0].edit_time，也就是最新一筆紀錄的編輯時間）、修繕時間、廠商名稱、維修人員、聯絡電話。"
+  },
+  {
+   "id": "jgb/A/signer-corp-fields",
+   "n": 2,
+   "verdict": "成立",
+   "note": "src/pages/users/team/_parts/SignerDetails.vue 的公司統編欄：typeOptions 是 '公司統編(檢核)' 與 '其他統編(不檢核)'（由 src/pages/users/team/_parts/SignerFormInputField.vue 以 t(opt.label) 顯示成單選）。company_id_type 不是 'other' 時，才用 verifyTWBusinessNo 做檢查碼驗證（src/mixin/methods.js，台灣統編加權檢查碼）；maxLength 在 'other' 時是 20，否則是 8。"
+  },
+  {
+   "id": "jgb/C/estate-rent-contact-manager-and-hide",
+   "n": 1,
+   "verdict": "成立",
+   "note": "src/pages/estates/edit/rent_contact/Index.vue：isCompany 等於 config_rule_key 在 [3, 4] 之中（3 是法人房東、4 是社會住宅）。t('經理人') 與 t('廣告顯示經理人')（都有必填星號，都是 VueSelect）只出現在 v-if=\"state.isCompany\" 底下的 t('經理人資訊') 區塊，不在 t('刊登主資訊') 區塊。v-if=\"!state.isCompany\" 的個人房東分支只有刊登主資訊，沒有這兩個欄位。"
+  },
+  {
+   "id": "jgb/E/balance-invoice-group-detail-tabs",
+   "n": 4,
+   "verdict": "成立",
+   "note": "src/pages/balanceInvoices/groups/Index.vue 有分頁 t('報表發票下載')，category 是 REPORT 時渲染 ReportTable。src/pages/balanceInvoices/groups/_parts/ReportTable.vue 依 Object.entries(props.list) 逐年渲染 TableMonthsInOneYear。src/components/TableMonthsInOneYear.jsx 每月提供 t('明細表')（excel_url，也就是報表）與 t('發票')（invoice_url，帶 download 屬性）可下載。"
+  },
+  {
+   "id": "jgb/A/register-email-steps",
+   "n": 5,
+   "verdict": "成立",
+   "note": "src/pages/users/auth/parts/CreateWelcome.vue 的 t('繼續') 按鈕下方寫著 t('點擊「繼續」，即表示我已閱讀並同意金箍棒的 [s1] 和 [s2]。')，[s1]、[s2] 分別是服務條款與隱私權聲明的連結。所以要進入下一步，就等於閱讀並同意這兩份文件（以點擊「繼續」表示同意，沒有另外的勾選框）。Create.vue、EmailVerify.vue、AccountSetting.vue 沒有其他相關條款；help:onboarding1_zh-Hant.html 沒有提到條款，但也沒有相反的說法。"
+  },
+  {
+   "id": "jgb/C/community-export-list",
+   "n": 1,
+   "verdict": "成立",
+   "note": "src/pages/communities/list/Index.vue：permission.export_estate 為真才顯示 t('匯出社區')；communityExport() 送出 job_name 'community_export'、communityIds 'all'、searchOptions 為 route.query，再以 job_type 'download' 加入 queue/ADD。app/Http/Controllers/QueueController.php 會再檢查 isHasGPermission('export_estate')。app/Jobs/JgbJob.php 呼叫 CommunityService::generateReportExcel，該方法讀取 $parameter['searchOptions']，所以會依目前的搜尋條件匯出。"
+  },
+  {
+   "id": "jgb/C/estate-status-affects-actions",
+   "n": 2,
+   "verdict": "成立",
+   "note": "app/Estate.php 的 updateStatus：只要有一份未刪除（active）的非歷史合約處於 CONTRACT_SIGNED（8）以上、CONTRACT_HISTORY（1024）以下，就是 ESTATE_CONTRACT_SIGNED（租約中）；有非歷史合約但沒有任何一份到這個區間，就是 ESTATE_HAVE_CONTRACT（洽談中）。app/Contract.php 的 const CONTRACT_SIGNED = 8 註解為「雙方簽名完成」。歷史狀態與 is_history = 1 同步設定，不會出現例外。src/use/search/modules/contractStatus.js 的選項標籤是 t('洽談中')、t('租約中')。"
+  },
+  {
+   "id": "jgb/G/device-gateway-not-counted",
+   "n": 2,
+   "verdict": "成立",
+   "note": "app/Http/Controllers/EstateController.php 的 validateEstateForDelete：if ($estate->has_iot) 時回傳 ___('您無法刪除尚有IoT綁定的 [s1] 物件')。app/Http/Controllers/IotController.php 設定 has_iot 的方式是 iots()->where('type', '!=', 'gateway')->count()，且 gateway 綁定時 affectedEstateIds 為空，所以只綁小白盒的物件 has_iot 為 0，刪除不會被這條擋下。"
+  },
+  {
+   "id": "jgb/G/device-lock-type-and-binding-limit",
+   "n": 1,
+   "verdict": "成立",
+   "note": "resources/views/iot/doorlock/basic.blade.php（由 resources/views/iot/index.blade.php @include('iot.doorlock.basic') 引用）顯示 ___('「私人門鎖」為個人房間的門鎖，只能綁定一個物件；「共用門鎖」為大樓大門、住家大門等公用的門鎖，可以綁定多個物件。')。index.blade.php 也有 itemPick.maximum = !editing.form.key_public ? 1 : null，實際執行這個上限。"
+  },
+  {
+   "id": "jgb/C/forcebinding-welcome-progress",
+   "n": 2,
+   "verdict": "成立",
+   "note": "src/pages/communities/forceBinding/Welcome.vue：t('繼續') 按鈕（RouterLink 到 communities.forceBinding.edit.basic）下方寫著 t('點擊「繼續」，即表示我已閱讀並同意金箍棒的 [s1]服務條款[s2] 和 [s3]隱私權聲明[s4]。')。句子沒有加引號，『JGB』與介面上的『金箍棒』是同一個品牌。"
+  },
+  {
+   "id": "jgb/A/signer-manage-save-buttons",
+   "n": 1,
+   "verdict": "成立",
+   "note": "src/pages/users/team/_parts/SignerDetails.vue：t('管理') 按鈕會 store.commit('lightbox','manageSingerProfile')。src/components/Lightbox/SignerInfosEdit.vue 的視窗有 t('新增') 按鈕（emit createRole，接到 /api3/users/role/company/create），每列有刪除鈕（emit deleteRole，接到 /api3/users/role/company/delete）。補充：第一筆（index 0）沒有刪除鈕，但句子沒有說每一筆都能刪除。"
+  },
+  {
+   "id": "jgb/I/homepage-presales-assistant-visibility",
+   "n": 1,
+   "verdict": "成立",
+   "note": "src/pages/listings/Home.vue 用 defineAsyncComponent 掛載 PresalesAssistant，並寫 <PresalesAssistant v-if=\"window.APP_ENV !== 'production'\" />，註解是『非正式環境才顯示;正式機 APP_ENV='production'』。window.APP_ENV 由 resources/views/layouts/app.blade.php 從 config('app.env') 注入。"
+  },
+  {
+   "id": "jgb/F/repair-share-public-link",
+   "n": 1,
+   "verdict": "成立",
+   "note": "routes/web.php 中，/repair/{any?}/{any2?} 掛 need_login；app/Http/Kernel.php 把 need_login 對應到 LoginCheck。app/Http/Middleware/LoginCheck.php 的前台未登入分支有 $exceptApiUrls = ['/repair/share']，符合時 $isExcepted 為真，不會導去登入頁。分享頁資料 API /api2/repairItem/share/{id?} 沒有掛 need_login；src/pages/repair/share/Index.vue 呼叫的就是這支 API。"
+  },
+  {
+   "id": "jgb/I/task-manager-cycle-options",
+   "n": 1,
+   "verdict": "成立",
+   "note": "app/Services/TaskService.php 的 getCycleOptions：cycle.unit 只有 label '年'（year）與 '月'（month）。src/pages/control-panel/taskManagement/edit/Index.jsx 透過 /api3/controlPanel/taskManagement/cycleOptions 取用這兩個選項（TaskManagementController 呼叫 getCycleOptions）。"
+  }
+ ],
+ "findings": [
+  "P2／信心 high：jgb/G/device-page-lock-open-close 句 3 不成立。證據是 resources/views/iot/index.blade.php 的狀態欄，外層為 v-if=\"device.status === 200\"：只有線上且 is_locked 為 0／1 的 SkyWatch 門鎖，才顯示「已開門／已關門」；離線的 SkyWatch 門鎖與其他門鎖一樣顯示「未連線」，is_locked 不是 0／1 時則顯示「連線中」。預期句子要寫出『在線上時』這個條件。實際句子把 SkyWatch 寫成一律直接顯示開或關。複核方式：grep \"skyWatch開鎖顯示\" 與 \"device.status === 200\"。",
+  "P4／信心 medium（不阻擋）：jgb/A/signer-manage-save-buttons 句 1。src/components/Lightbox/SignerInfosEdit.vue 的第一筆簽約對象（index 0）沒有刪除鈕；句子沒有寫成絕對句，所以判成立，僅供參考。",
+  "P4／信心 medium（不阻擋）：jgb/A/register-email-steps 句 5。src/pages/users/auth/parts/CreateWelcome.vue 以點擊「繼續」表示同意，沒有獨立的勾選步驟；句意可以成立，但若要更精確，可以改寫成『點擊繼續即表示同意』。"
+ ],
+ "source_transcript": "a4d599264b3bea294.output"
+}

@@ -1,0 +1,25 @@
+{
+ "kind": "change",
+ "verdict": "CONFIRMED",
+ "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+ "claim": "工作樹（HEAD `77464446d4de61b6412b1d9af9eb425be6cd3c0c`，改動未 commit）已完成 Plan 9.28，A1～A13 全部成立：\n- 9.15～9.21 寫入的 525 條、1,442 句＋525 個標題，已由 24 批 fresh verifier 逐句對合法來源補核。\n- 每批混入的 1 條誘餌，24 條全部抓到。\n- 結果：445 條全條成立，標題不成立 29、句不成立 81。\n- 另以種子 20261012 抽 20 句交獨立 verifier 重核，推翻 1 句，只列在 `spotcheck_overturned` 欄。\n- 彙整逐批列出有效性與重做次數（重貼 3、換人 2、作廢 1），與計畫 §6 一致。\n- 正本與 drafts 未變；端點指標為 pm 537／537、prospect 121／121。\n- commit 範圍內的代理產物，客戶名掃描 0 命中。",
+ "findings": [
+  "A1：成立——make_batches.py 重算 24 批、525 條／1442 句，與誘餌清單逐批細目相同",
+  "A2：成立——重跑 aggregate 24/24 有效、525 條、1442 句、445 全條成立、標題 29、句 81",
+  "A3：成立——25 份證據 base 皆為 HEAD，source_transcript 對應代理 ID",
+  "A4：成立——24 個誘餌全抓且引合法來源",
+  "A5：成立——種子 20261012 抽樣與前次相同，抽查有效、推翻 1 句只在 spotcheck_overturned",
+  "A6：成立——每批有效性 24/24，self-test 23/23",
+  "A7：成立——scratch 以 --redo --spotcheck 重產，JSON 與 md 皆與 repo 位元組相同",
+  "A8：成立——重做清單（重貼 3、換人 2、作廢 1）與計畫 §6 及代理 transcript 實況逐批一致（B01/B14/B15 各重貼 1、B14 首派未交件換人、B17 首派作廢換人），彙整 JSON 有 redo 欄、md 有〇節表，無暫停批",
+  "A9：成立——canon/runs 無 diff 且無工作樹改動，endpoint_progress pm 537／537、prospect 121／121",
+  "A10：成立——scan_names.py 掃 29 檔（24 批次＋抽查＋兩份彙整＋誘餌＋重做）0 命中、正負對照通過；change 證據依 A10 由主 session 另掃",
+  "A11：成立——consent_zero 與業主原文逐字相同、CONSENT_BAD 不擋",
+  "A12：成立——他線 41 檔指紋全 OK；unit 9 failed 與基準差集雙向皆空；make audit OVERALL PASS",
+  "A13：成立——stock_reverify 八檔兩鏡像 cmp 相同，重產批次、抽樣、彙整一致",
+  "P4：計畫現況段仍寫 consent_zero 為佔位，與 plan-meta 不符（不影響檢查）",
+  "P4：HANDOFF 寫處置 110 項，未計入抽查推翻 1 句",
+  "P4：B14 首派停擺描述「600s 無進度」與 transcript 約 20 分鐘不完全一致（次數正確）"
+ ],
+ "source_transcript": "aa4fd40123d79dd58.output"
+}

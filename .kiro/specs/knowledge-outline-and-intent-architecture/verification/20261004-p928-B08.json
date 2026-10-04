@@ -1,0 +1,473 @@
+{
+ "kind": "write",
+ "verdict": "REFUTED",
+ "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+ "claim": "Plan 9.28 批次 B08：29 條細目的標題與每一句已逐句對合法來源核對，逐條結果如 fines",
+ "fines": [
+  {
+   "id": "jgb/C/estate-edit-basic-space-type",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "7aca1c897315d519b3795bbfcd257edbe01e6d9bc2b4abb3cdee41d470d04545",
+   "title_text": "物件基本資料的空間類型、用途、格局要怎麼填？",
+   "notes": [
+    "標題：問句，由句 1～3 支撐。",
+    "句 1：src/pages/estates/edit/basic/Index.vue＋「t('空間類型')」為 h4 區塊標題；「t('用途')」與「t('格局')」皆帶 after-required；用途選項 premisesUseForOptions 含 住宅／商用／土地／工業/廠房/倉庫／酒店，依 role.estate_use_for 取 all／residential／business 子集（另依團隊設定加入車位）；格局 spaceTypeOptions 含 整戶、套房、雅房、獨立辦公室、固定辦公桌、共享辦公桌、虛擬辦公室、會員。成立。附註：特定合作團隊在車位用途時格局欄位不顯示（isRoleDisplayParkingSpaceType），句中未用絕對語且以「例如」列舉，不判失準。",
+    "句 2：同上＋「v-if=\"editStore.options?.property_purpose_key != 2\"」包住用途欄位；app/Estate.php 的 const SOCIAL_HOUSING = 2 為社會住宅。成立。",
+    "句 3：同上＋tooltip 文字「「虛擬辦公室」：出租辦公室業者提供「商業地址」給企業「借址登記」的辦公室，而不拿來實際上班用的辦公室。」與「「會員」：共享辦公室業者所提供的會員方案」。成立（「出租業者」為「出租辦公室業者」之簡述）。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-edit-basic-address",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "3c293e893f4204560996d9926a2d35c2811a8004d0692cb3ccd57af81d9f6b91",
+   "title_text": "物件的詳細地址與對外顯示地址有什麼差別？",
+   "notes": [
+    "標題：問句，由句 1 支撐。",
+    "句 1：src/pages/estates/edit/basic/Index.vue＋「t('詳細地址')」「t('對外顯示地址')」兩個 AddressComponent2；按鈕「t('同詳細地址')」@click 執行 display_address = {...address}。成立。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-edit-basic-floor-room-number",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "63aef78a716bcdbe38a9b37b59cedbf3695e3429754676178dd9f4e945cf846a",
+   "title_text": "物件的樓層與房號要怎麼填？（頂加輸入+1、地下室輸入-1）",
+   "notes": [
+    "標題：由句 1、2 支撐。",
+    "句 1：src/pages/estates/edit/basic/Index.vue＋「t('所在樓層')」「t('總樓層')」「t('之幾房')」「t('之幾床')」；後兩欄 v-if=\"editStore.form.premises_use_for !== 'parking_space'\"。成立。附註：特定合作團隊此兩欄標籤改為門牌號碼／房號。",
+    "句 2：同上＋「所在樓層輸入+1代表頂加；-1代表地下室。」。成立。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-edit-basic-community-name-hide",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "034dc49cbb9e8a7390d182ac0f4f06cf4c4a7cd366f61e01f354835f5a74ff64",
+   "title_text": "物件廣告頁可以隱藏群組/大樓名稱嗎？",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/pages/estates/edit/basic/Index.vue＋「t('群組/大樓名稱')」下 input :value=\"state.communityName\" readonly；勾選框「在物件廣告頁隱藏群組名稱」設 is_show_community_name=false；app/Http/Controllers/EstateController.php＋「'community_name' => !empty($estate->community_id) && ($estate->is_show_community_name == true)」，否則回空字串。成立。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-edit-building-transcript-social",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "6875c83f0dac05eb58f143d785e490fa0eecde99eb8ccc5ec61595f7b185d520",
+   "title_text": "社宅物件建物謄本要填什麼？（申請謄本日期、段小段、謄本面積公式，不會顯示在廣告頁）",
+   "notes": [
+    "標題：由句 1、2 支撐。",
+    "句 1：src/pages/estates/edit/building_transcript/Index.vue＋「為方便未來完備合約資料，請先提供以下資料，資料將不會顯示於物件廣告上。」；申請謄本日期、地號（段小段中文、地號）、建號（段小段中文、建號）、建築完成日期、謄本面積皆 after-required；src/routes/estates.js＋estates.edit.building_transcript 的 display_property_purpose_key: [2]（社宅）。成立。",
+    "句 2：src/pages/estates/edit/building_transcript/Index.vue＋「請以建物謄本所載面積為準」與 `(= 主建物面積 + 附屬建物面積 + 持分公設面積 - 車位面積)`。成立。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-edit-building-transcript-general",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "bef4aa7040429dbb80973fc3a3c7602dba2194f365393fa148d8eb0edbff93a7",
+   "title_text": "一般物件建物謄本可以填什麼？（土地標的清冊、坐落基地、稅籍編號、專有部分、主建物、附屬建物，皆非必填）",
+   "notes": [
+    "標題：由句 1、2 支撐（各欄位皆無 after-required）。",
+    "句 1：src/pages/estates/edit/buildingTranscriptGeneral/Index.vue＋<General :showAllFields=\"true\" />；src/pages/contracts/edit/buildingTranscript/General.vue＋「t('土地標的清冊')」欄位 段／小段／地號／租賃面積／都市土地使用分區，addLandEntry 限 landInventory.length < 3；「t('坐落基地')」「t('稅籍編號')」皆無必填標記；src/routes/estates.js＋estates.edit.building_transcript_general 的 checkedIcon: false、display_property_purpose_key: [1]；app/Estate.php＋GENERAL_HOUSING = 1 // 一般住宅。成立。",
+    "句 2：src/pages/contracts/edit/buildingTranscript/General.vue＋「t('專有部分')」「t('主建物')」「t('附屬建物')」。成立。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-edit-facilities",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "26960558f98d1411e3cd900321937ce2160c58cfa0485a19e6626dd8b1246604",
+   "title_text": "物件附設傢俱怎麼設定？（依用途與格局分區加入家電、傢俱、自訂項目，數量0不顯示在廣告頁）",
+   "notes": [
+    "標題：由句 1～9 支撐。",
+    "句 1：src/pages/estates/edit/facilities/Index.vue＋General 於 property_purpose_key [1]、SocialHousing 於 [2]。成立。",
+    "句 2：src/pages/estates/edit/facilities/_parts/General.vue＋標題 t(`格局(${state.spaceTypeLabels[...]})`) 顯示於 residential／hotel／店面或整層空間；pattern.count 下拉決定 form.pattern 區塊數；labels appliance「家電」、furniture「傢俱」、customs「自訂」，自訂 `( n / 10 )` 且 push 前檢查 length >= 10；config/estate.php＋default_pattern_facilities 各格局皆含 furniture／appliance／customs。成立。",
+    "句 3：同上＋「only for 住宅中的套房＆雅房的設備(戶內共用空間)」v-if space_type === 'studio' || 'room'，標題「t('戶內共用空間')」。成立。",
+    "句 4：同上＋「t('辦公空間')」於 premises_use_for === 'business' && !isRetailShopOrOfficeFlat；「t('店面空間')」於 space_type == 'retail_shop'。成立。",
+    "句 5：同上＋「t('商用')」與「t('有建物')」區塊僅含「t('座位數')」及紅色 *。成立。",
+    "句 6：同上＋「車位用途物件，不需要設定「格局」內容」「空地用途物件，不需要設定「格局」內容」。成立。",
+    "句 7：同上＋「通用的設備(大樓/社區空間)」區塊無 v-if，含「t('公設')」「t('安全設備')」勾選框。成立。",
+    "句 8：同上＋「數量為 0 者不會顯示在物件廣告頁上。」。成立。",
+    "句 9：同上＋「您還沒設定用途、型態或格局，設定後就能添加傢俱囉 👏」。成立。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-edit-gallery-title-photos",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "0d7ddff13ddec413e5541fa8021fe9e4b6a00cd494faa1dbb5723ee936e2bbfe",
+   "title_text": "物件標題與照片有什麼限制？（標題最長60字、照片最多15張15MB、平面圖最多5張含PDF）",
+   "notes": [
+    "標題：由句 1～3 支撐。",
+    "句 1：src/pages/estates/edit/gallery/Index.vue＋「t('物件標題')」「t('物件公開標題')」兩欄 maxlength=\"60\"、「標題最長 [s1] 字', [60]」；公開標題旁有「t('啟用')」開關。成立。",
+    "句 2：同上＋「支援JPG、PNG檔，至多 [s1] 張，檔案大小最大 [s2] MB。', [15, 15]」、「為您的物件上傳照片，第一張照片將設為封面。」、描述 placeholder「替你的[s1]加點吸引人的敘述吧！」。成立。",
+    "句 3：同上＋「支援JPG、PNG、PDF檔，至多 [s1] 張，檔案大小最大 [s2] MB。', [5, 15]」、「如提供平面圖，將會在廣告中呈現。」。成立。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-edit-intro-transit",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "8a8607ac1a6ae2f477d9fe3e90ec6d5043cde63099dd9aec1f5bf38d45ac8c50",
+   "title_text": "物件介紹要填什麼？（房源簡介、鄰近交通，可加多筆鄰近捷運站）",
+   "notes": [
+    "標題：由句 1、2 支撐。",
+    "句 1：src/pages/estates/edit/intro/Index.vue＋「提供物件的介紹，讓您的客戶更了解細節。」「t('房源簡介')」「t('鄰近交通')」。成立。",
+    "句 2：同上＋「+ {{ t('新增鄰近捷運站') }}」push {line, stations}；每筆「t('捷運線')」「t('停靠站')」。成立。附註：此區塊僅在地址國家為 TW／MY／TH 時顯示（hasMRTConfig），句子未宣稱一律可用。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-edit-vr-720",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "0c57f61d9aa835958f3219040d2c351b92003bfea7c2c55f79fe1949c50a237c",
+   "title_text": "物件的720 VR全景照怎麼拍？（需先安裝 VR Maker App 掃 QR Code 拍攝，可設定是否用於廣告）",
+   "notes": [
+    "標題：由句 1～3 支撐。",
+    "句 1：src/pages/estates/edit/vr/Index.vue＋「拍攝 720 VR 全景照之前，請先確認已安裝「VR Maker」。」與「請掃描以下 QR Code 進行物件 720 VR 全景拍攝。」。成立。附註：手機版畫面不顯示 QR Code，改顯示「進行720度VR環景拍攝」按鈕。",
+    "句 2：同上＋「目前不支援以手機編輯 VR 全景照，請使用 PC 開啟」。成立。",
+    "句 3：同上＋「t('啟用設定')」開關與「於招租廣告、買賣廣告中使用 720 VR 全景照。」。成立。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-edit-cannot-change-community",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "513f613b711f56e177909dc21003f31e4f55bef4a551712e0b882e74e0fc7a00",
+   "title_text": "物件可以換綁到別的社區嗎？（畫面上目前沒有這個操作入口）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/pages/estates/edit/basic/Index.vue＋群組/大樓名稱 input readonly，changeCommunity 函式未在 template 使用；其他綁定入口 app/Http/Controllers/CommunityController.php＋patchEstates 由 src/pages/communities/forceBinding/edit/Binding.vue 呼叫，物件清單來自 api2/estate/pick/communityBinding，app/Http/Controllers/EstateController.php＋「case 'communityBinding': // 是否為物件綁定社區，則過濾掉已綁定社區的物件」，即只能綁未綁定物件。正對照：forceBinding 的 PATCH 呼叫有找到。成立。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-edit-basic-orientation",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "c31c0e1cb2141577b37e9755475a7a194db86a26b164d067051f64aade382c24",
+   "title_text": "物件基本資料可以填朝向嗎？",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/pages/estates/edit/basic/Index.vue＋「t('朝向')」Multiselect v-model=\"editStore.form.direction\"。成立。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-edit-tabs-overview",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "8d67337a35421e37bc139f24d3cd3369392f063213bbd8d01d87f9c266166114",
+   "title_text": "物件編輯有哪些分頁？（「物件資訊」與「廣告資訊」兩個群組；社宅與一般物件的建物謄本分頁互斥）",
+   "notes": [
+    "標題：由句 1、2 支撐。",
+    "句 1：src/routes/estates.js＋edit 子路由 group: '物件資訊'（基本資料、標題與照片、附設傢俱、建物謄本、核實訊息、720 VR、物件介紹）與 group: '廣告資訊'、subGroup '招租'（招租詳情、刊登主資訊）／'買賣'（買賣詳情、刊登主資訊）；src/use/useEditStore.js＋menuGroup 依 group／subGroup 分組。成立。",
+    "句 2：src/routes/estates.js＋building_transcript display_property_purpose_key: [2]、building_transcript_general [1]、rent_verify [1]；src/use/useEditStore.js＋「node.meta?.display_property_purpose_key?.includes(parseInt(editStore.options?.property_purpose_key))」。成立。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-rent-detail-deposit-cap",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "e5eeed5b88e7b9c3fa015abadff29b75c7bbd8284469486007f40d7325bf0bfb",
+   "title_text": "招租押金有法定上限嗎？（一般租賃契約押金最高不得超過兩個月租金）",
+   "notes": [
+    "標題：由句 2 支撐。",
+    "句 1：src/pages/estates/edit/rent_detail/Index.jsx＋「t('計算基準')」單選「t('每月租金')」（deposit_type 0，個月數）與「t('固定金額')」（deposit_type 1）。成立。",
+    "句 2：同上＋「根據中華民國內政部(租賃住宅市場發展及管理條例)規定，一般租賃契約押金額度最高不得超過兩個月租金。」（僅 lang === 'zh-TW' 顯示；括號全半形差異不影響）。成立。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-rent-detail-move-in-lease-terms",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "4942802e39786f61b6393a3a76cb953c192d749498644d26654f117986c2f02d",
+   "title_text": "招租詳情的最短租期、最快入住日、最快點交日怎麼填？",
+   "notes": [
+    "標題：問句，由句 1、2 支撐。",
+    "句 1：src/pages/estates/edit/rent_detail/Index.jsx＋「t('最短租期')」選項 1 個月／3 個月／6 個月／1 年／2 年與「t('其他')」，自訂單位 <option value=\"year\">年、<option value=\"month\">月，無天。成立。",
+    "句 2：同上＋「t('簽約後隨時入住')」「t('指定日期')」「t('其他')」；「t('最快點交日')」下「t('簽約後點交')」「t('指定日期')」「t('其他')」。成立。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-rent-detail-tenant-conditions",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "2c4c06a03ab8161789237e56a53c82a66059db30ccf8933b84a67eb9689ca144",
+   "title_text": "招租條件要求可以設定什麼？（身份限制複選、養寵物可否、開伙可否、生活公約）",
+   "notes": [
+    "標題：由句 1、2 支撐。",
+    "句 1：src/pages/estates/edit/rent_detail/Index.jsx＋「t('條件要求')」「t('身份限制(複選)')」選項 學生、上班族、家庭、男性、女性（checkbox）。成立。附註：整段在車位用途時不顯示。",
+    "句 2：同上＋「t('養寵物')」「t('開伙')」各為 可以／不可以；「t('補充')」標題下 textarea 欄名「t('生活公約')」（500 字）。成立（「補充」為區塊標題、欄位名為生活公約，句意可接受）。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-rent-contact-agency-info",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "e9c18ae44021b73806559052bb4b7fd7144d856ce70780b2bb147ef864cceaf1",
+   "title_text": "刊登主資訊的團隊資訊要在哪裡修改？（法人／社宅房東顯示公司資訊、到團隊資訊修改；個人房東顯示經理人資訊、到帳號資訊修改）",
+   "notes": [
+    "標題：由句 1、2 支撐。",
+    "句 1：src/pages/estates/edit/rent_contact/Index.vue＋isCompany = [3, 4].includes(config_rule_key)（註解 3 = 法人房東、4 = 社會住宅）；顯示 company_name／company_phone／company_email，提示「如有需要修改以下資訊，請前往 [s1] 進行修改。」連結「t('團隊資訊')」。成立。",
+    "句 2：同上＋v-if=\"!state.isCompany\" 區塊顯示 agentInfo 的 name／phone／email，連結「t('帳號資訊')」。成立。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-rent-contact-manager-and-hide",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "fbbcdc3514800628ee55f7ac62e1e77555d01f046eacebd8fab3f4d18adc8b22",
+   "title_text": "招租廣告可以隱藏經理人／房東的名稱、電話、Email嗎？（勾選框在「經理人資訊」或「刊登主資訊」的經理人卡片上，每種身分只有一組）",
+   "notes": [
+    "標題：由句 1～3 支撐。",
+    "句 1：src/pages/estates/edit/rent_contact/Index.vue＋「t('經理人')」與「t('廣告顯示經理人')」皆帶紅色 *，只在 isCompany 區塊的「t('經理人資訊')」下；個人房東區塊無此兩欄。成立。",
+    "句 2：同上＋「在廣告上隱藏名稱」「在廣告上隱藏聯絡電話」「在廣告上隱藏Email」：法人／社宅在經理人資訊卡片內，個人房東在刊登主資訊卡片內，各區塊各一組。成立。",
+    "句 3：同上＋BottomNav :next-text=\"t('預覽招租廣告')\"（存檔後導向 links.show_rent）。成立。"
+   ]
+  },
+  {
+   "id": "jgb/C/recruitment-page-size",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "不成立"
+   ],
+   "content_sha256": "786a0fded9e3b6d3517ba939d6b7f898c62b138c8003bbd668d6fe5080ec99ac",
+   "title_text": "招募頁與招租店舖每頁顯示幾筆物件？",
+   "notes": [
+    "標題：純問句，沒有斷言，判成立；答案句（句 5）不成立。",
+    "句 1：src/routes/users.js＋path: '/p/:encryptId?/:mode?/:premisesUseFor?' 與「特殊處理招募頁面：/p/recruitment/{slug}/{premisesUseFor?}」；一般頁「/p/{encryptId}/{mode}/{premisesUseFor}」。成立。",
+    "句 2：同上＋招募頁無 premisesUseFor 時 next(... premisesUseFor: 'residential')；一般頁缺 mode 或 premisesUseFor 時補 mode: 'rent', premisesUseFor: 'residential'。成立。",
+    "句 3：app/Http/Controllers/UserController.php＋getRecruitmentPageEstates 合併 'mode' => 'rent'，info 中 mode == 'rent' 時用 isOpen = 1（招租刊登中）。成立。",
+    "句 4：src/pages/users/public/_parts/TopFilter.vue＋「招租頁面不需要 community 和 agentId 篩選器」…(route.params.encryptId !== 'recruitment' ? { community: … })；社區選項 if (!isEmpty(communityOptions)) 才加入；src/pages/users/public/Index.vue＋encryptId === 'recruitment' 時 return { list: [] }。成立。",
+    "句 5：src/pages/users/public/Index.vue＋「per_page: Number(route.query.per_page) || (route.params.encryptId === 'recruitment' ? 10 : 30)」與「options={route.params.encryptId === 'recruitment' ? [10, 30, 60, 90] : [30, 60, 90]}」；app/Http/Controllers/UserController.php＋「$defaultPerPage = !empty($requestData['recruitment_role_ids']) ? 10 : 30;」。來源寫的是招募頁預設每頁 10 筆，句子寫 20 筆，不成立；可選 10／30／60／90 項，一般店舖預設 30、可選 30／60／90 項，這兩點正確。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-rent-verify-legal",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "64975624390b2970fb3935cf9adef6f01160692955e3749c7bf027eea4d7d842",
+   "title_text": "招租的核實訊息是什麼？（依租賃住宅市場發展條例核實產權登記與違建面積）",
+   "notes": [
+    "標題：由句 1、2 支撐。附註：標題的法規名稱「租賃住宅市場發展條例」和畫面上的「住宅租賃市場發展條例」字序不同，指的是同一部法規，不判失準。",
+    "句 1：src/pages/estates/edit/rent_verify/Index.vue＋「t('產權登記')」單選「已辦理」（tooltip「租賃標的在地政機關有產權登記。」）與「未辦理」（「租賃標的在地政機關無產權登記。」）。成立（畫面沒有必填標記，「要求勾選」視為描述頁面要填的內容）。",
+    "句 2：同上＋「內政部依照《[s1]》要求發佈廣告內容應與事實相符，請您核實如下資料」，[s1]=「住宅租賃市場發展條例」（僅 user.country == 'TW' 顯示）；「t('租賃標的法定用途')」；「租賃標的未登記之改建、增建、 加建、違建部分」分「壹樓」、樓層、「頂樓」、「其他處所」各填面積。成立。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-rent-open-permission-and-validation",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "不成立"
+   ],
+   "content_sha256": "e922d5b5b0f94178ebbdc7ba0e713fed1cad5d778ce85403b1c20286f254ba56",
+   "title_text": "為什麼物件刊登不出去？（需要刊登物件或新增物件的權限；必填欄位沒填完會退回編輯頁）",
+   "notes": [
+    "標題：兩個斷言（權限；缺欄位退回編輯頁）都有程式支撐：EstateController::open 驗證失敗時 redirect()->route('estates.edit')。成立。",
+    "句 1：app/Http/Controllers/EstateController.php＋open() 中 hasPermission($user, 'add_estate')、hasPermission($user, 'public_estate')，兩者皆無時 'status-error' => ___('您無法刊登此物件')；「刊登物件」連結 route('estates.open') 為現行畫面使用。成立。",
+    "句 2：app/Http/Controllers/EstateController.php＋validateFields 失敗時 redirect()->route('estates.edit', ['id' => …]) 並 flash 'premisesStep'（current／current_sub）。但 routes/web.php＋「'/estates/edit/{id?}/{action?}/{any3?}', 'IndexController@vueIndex'」現行是 Vue 頁，src 全域找不到 premisesStep／current_sub 的讀取端；讀取它的 resources/views/estate/edit.blade.php（$store.dispatch('premises_edit/step/init')）在 app 內沒有任何 view('estate.edit') 會渲染（正對照：同一次 grep 有找到 EstateController 的 flash 寫入）。現行行為：導回編輯頁，並由 layouts/app.blade.php 的 globalErrorShow 顯示錯誤訊息；左側選單不會自動跳到缺欄位的分頁。「把左側選單直接跳到缺欄位的那個分頁」只存在於舊 blade 路徑，不成立。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-rent-detail-price-and-tax",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "f298d17e522d17126d72165594b2ad406855b48ecc61fab5da77058f49e0ad98",
+   "title_text": "招租詳情要填哪些金額相關欄位？（面積、幣別、每月租金；特定合作團隊另有營業稅：應稅／零稅率／免稅）",
+   "notes": [
+    "標題：由句 1、2 支撐。",
+    "句 1：src/pages/estates/edit/rent_detail/Index.jsx＋社宅（property_purpose_key 2）「t('面積')」h5 after-required 並有按鈕「t('同建物謄本面積')」；一般物件用 src/components/AreaSizeConversion.jsx（標題後 <sup>*</sup>）；「t('幣別')」「t('每月租金')」fieldTitle after-required。成立。",
+    "句 2：src/pages/estates/edit/rent_detail/Index.jsx＋營業稅區塊只在 findSpecialRoleGroup(...)?.key 為某特定合作團隊時渲染，選項 1:「應稅」、2:「零稅率」、3:「免稅」。成立。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-dashboard-entry-and-groups",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "18d0bea267dc910a19a3908f5ae623473b23ac43a6b21d09ed0fade3c2d07112",
+   "title_text": "物件儀表板進去預設是哪個分頁？（一般預設招租表現，大房東直接進合約歷程；大房東看不到「限管理者查看」分頁群組）",
+   "notes": [
+    "標題：由句 1、3 支撐。",
+    "句 1：src/routes/estates.js＋estates.dashboard redirect: { name: 'estates.dashboard.rent' }；app/Http/Controllers/EstateController.php＋「'name'=> (!$isBigLandlord) ? 'estates.dashboard' : 'estates.dashboard.contracts'」。成立。",
+    "句 2：src/routes/estates.js＋tabGroup 'admin'：招租表現、銷售表現；'share'：合約歷程、帳務收支、修繕紀錄、附件清單、房東流水帳、合約附件、物件記事本、每月報表、每月對帳單（後兩者 isAngo: true）；src/pages/estates/dashboard/_parts/TabNav.vue＋isAngo 頁籤只在 getSpecialGroupsByRole 含某特定合作團隊群組時保留。成立。",
+    "句 3：src/pages/estates/dashboard/_parts/TabNav.vue＋「v-if=\"!dashboardStore.state?.isBigLandlord\"」包住「t('限管理者查看')」（桌機與手機）；app/Http/Controllers/EstateController.php＋dashboard() rent_status「若是大房東，導向到物件總表」。成立。",
+    "句 4：src/routes/estates.js＋合約附件 hideConfigRuleKey: [4]；TabNav.vue＋config_rule_key != node.meta?.hideConfigRuleKey 過濾（4 為社會住宅）。成立。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-dashboard-rent-performance",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "40dd6f6685768bde98cc9229b2ab707069fe2c04bec2373535886dcd83425b29",
+   "title_text": "招租表現分頁顯示什麼？（空置天數、廣告瀏覽次數、帳務表現、合約歷程與修繕紀錄摘要）",
+   "notes": [
+    "標題：由句 1、2 支撐。",
+    "句 1：src/pages/estates/dashboard/rent/Index.vue＋「t('空置天數')」圖表含「t('出租')」「t('空置')」天數、「t('廣告瀏覽次數')」「t('平均頁面瀏覽次數：')」。成立。",
+    "句 2：同上＋「t('帳務表現')」下「總收入」「總支出」「總結餘」；「t('合約歷程')」tooltip「此列表只會顯示執行中 & 歷史合約。」；「t('修繕紀錄')」；三處皆有「t('更多')」router-link。成立。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-dashboard-contracts-history",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "35566b7a027e6b3a394d8a049d329b3124c440771fbc40f1cd5e371c47792fea",
+   "title_text": "物件儀表板的合約歷程顯示哪些欄位？（一般房東：狀態／簽約類型／物件／承租人／租期／是否通知；社宅房東：合約名稱／承租人／租期）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/pages/estates/dashboard/contracts/Index.vue＋config_rule_key !== 4 時表頭 狀態／簽約類型／物件／承租人／租期／是否通知；v-else（4 社會住宅）為 合約名稱／承租人／租期。成立。",
+    "句 2：同上＋select-picker 選項 '30': t('30項')、'60'、'90'。成立。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-dashboard-bills-tabs",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "436d64fe8a5d4a7118e8d142bf21bc428703878b68eac852c0e6b0a717bd315c",
+   "title_text": "物件儀表板的帳務收支有哪些子頁籤？（總收支、統計報表）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/routes/estates.js＋estates.dashboard.bills meta.tabs labelKey '總收支'、'統計報表'（'未來表現' 已註解）；src/pages/estates/dashboard/bills/_parts/PageTop.jsx＋route.meta.tabs.map 渲染。成立。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-dashboard-repair-status-flow",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "6c4951566603896b09d04b944e5ff097bffdaef653474819c61be34385f6552c",
+   "title_text": "物件儀表板修繕紀錄怎麼呈現？（申請修繕→安排修繕→完成修繕→結單四狀態）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/pages/estates/dashboard/repair/Index.vue＋tabList「t('申請修繕')」「t('安排修繕')」「t('完成修繕')」「t('結單')」，點選依 activeTab 重新查詢。成立。",
+    "句 2：同上＋表頭「報修日期」「最後更新」「分類＆項目」「物件地址」「結算金額」「房東/管理者」「租客」。成立。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-dashboard-monthly-report-upload",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "9371150dd3b1cfe2fb041a921fe25de86d7b3b1c12dae8e1133851cdd195a9f4",
+   "title_text": "每月報表／每月對帳單怎麼上傳？（PDF、10MB上限，可批次指定多個物件，同月重傳會覆蓋舊檔）",
+   "notes": [
+    "標題：由句 1～3 支撐。",
+    "句 1：src/pages/estates/dashboard/_parts/MonthlyUpload.jsx＋「僅能上傳 PDF，檔案大小限制 10MB。」、accept=\"application/pdf\"、size_limit={10}；「t('選擇年份')」「t('選擇月份')」「t('指定物件')」，「共 [s1] 個物件」可多選。成立。",
+    "句 2：同上＋「請注意，若該月有已上傳的檔案，則舊檔案會被新上傳的檔案覆蓋。」。成立。",
+    "句 3：src/routes/estates.js＋monthlyReport／monthlyStatement tabGroup: 'share', isAngo: true；src/pages/estates/dashboard/_parts/TabNav.vue＋isAngo 只對某特定合作團隊群組保留；MonthlyUpload.jsx＋「檔案上傳後，其他團隊成員 / 大房東可由 [s1] 或」…「與大房東共享」…「下載報表」。成立。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-dashboard-top-cards",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "ea43cd14458c3bb63472e987ada922d0c8fec8ba341f8ae3958d8612a26e6493",
+   "title_text": "物件儀表板最上方顯示哪三張卡？（物件資訊、招租廣告、買賣廣告；編輯捷徑需要新增物件權限）",
+   "notes": [
+    "標題：由句 1、2 支撐。",
+    "句 1：src/pages/estates/dashboard/_parts/TabNav.vue＋第一卡 thumbnail／name／address（無地址顯示「尚未提供地址」）；第二卡「t('招租廣告')」含 刊登中／未刊登 與 links.rent_show 預覽；第三卡「t('買賣廣告')」含狀態與 links.sell_show。三卡皆無 v-if。成立。",
+    "句 2：同上＋兩張卡的 Edit 圖示皆 v-if=\"dashboardStore.state?.isAgent && store.state.userData.permission?.add_estate\"；src/pages/estates/dashboard/Index.vue＋isAgent = 登入者 id 等於物件 agent.uid。成立。"
+   ]
+  }
+ ],
+ "findings": [
+  "jgb/C/estate-rent-open-permission-and-validation 句 2 引用的是舊路徑：EstateController::open 仍 flash 'premisesStep'，但現行 /estates/edit/{id} 由 IndexController@vueIndex 回傳 Vue 頁，src 內沒有讀取端；只有不再被渲染的 resources/views/estate/edit.blade.php 會讀。依判定規則 3（現行 vs 舊路徑）判不成立。另附：買賣刊登 sellOpen 完全不做 validateFields，若此細目日後擴及買賣刊登需另寫。",
+  "jgb/C/recruitment-page-size 句 5 的數字錯誤：前端 src/pages/users/public/Index.vue 與後端 app/Http/Controllers/UserController.php 一致，招募頁預設每頁 10 筆，不是 20 筆。",
+  "附註（不影響判定）：押金提示的法規名稱寫作「租賃住宅市場發展及管理條例」（rent_detail/Index.jsx），核實訊息頁畫面寫作「住宅租賃市場發展條例」（rent_verify/Index.vue），estate-rent-verify-legal 的標題又寫作「租賃住宅市場發展條例」，三處名稱不一致。"
+ ],
+ "source_transcript": "acdd4643eeb7abbb0.output"
+}

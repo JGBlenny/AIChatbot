@@ -1,0 +1,313 @@
+{
+ "kind": "write",
+ "verdict": "REFUTED",
+ "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+ "claim": "Plan 9.28 批次 B22：16 條細目的標題與每一句已逐句對合法來源核對，逐條結果如 fines",
+ "fines": [
+  {
+   "id": "jgb/G/remote-unlock-page",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "d18c4584c86d5b317b3554e1bdd1a438be69d8fda977d54fbba5878afd1ead7a",
+   "title_text": "遠端解鎖連結怎麼用？（輸入共用密碼按開門，密碼錯誤或連結失效會提示原因）",
+   "notes": [
+    "標題：輸入密碼按開門、密碼錯誤與連結失效各有提示，均由句 1～3 支撐（src/pages/tools/unlock/Index.vue、app/Http/Controllers/ToolController.php）。",
+    "句 1：src/pages/tools/unlock/Index.vue＋'state.iot.name'、placeholder 't(請輸入解鎖密碼)'、按鈕文字 '開門' onClick={openTheDoor}；名稱來自 api3/tools/unlock/...?data=1 回傳的 iot.name。",
+    "句 2：app/Http/Controllers/ToolController.php＋'checkPasscode(Iot::PASSCODE_TYPE_PUBLIC'；app/Iot.php＋'PASSCODE_TYPE_PUBLIC = 3' 註解為「租客共用密碼」，房東個人為 PASSCODE_TYPE_LANDLORD_PRIVATE、租客個人為 PASSCODE_TYPE_TENANT_PRIVATE。",
+    "句 3：app/Http/Controllers/ToolController.php＋'密碼錯誤'；Iot::find 失敗或 batch != md5(id-created_at) 皆回 '設備不存在' 與 'redirect' => route('indexs')；src/pages/tools/unlock/Index.vue＋'alert(json.message)'、'location.href = json.redirect'；錯誤訊息由 src/mixin/methods.js＋'globalErrorShow' 顯示。",
+    "句 4：app/Http/Controllers/ToolController.php＋'門鎖開啟失敗'（setLock 結果非 success 時）。",
+    "句 5：app/Http/Controllers/ToolController.php＋'md5($iot->id . '-' . $iot->created_at)'，連結碼由裝置 id 與建立時間決定、固定不變；全匯出 grep 'api3/tools'、'tools.unlock'、'md5(' 於 src/ 與 resources/views/ 只命中 src/pages/tools/unlock/Index.vue 與 routes（正對照組：同次 grep 命中 Index.vue 本身），resources/views/iot/doorlock/password.blade.php 與 src/pages/iots/edit/Basic.jsx 皆無產生或顯示此連結的元素。"
+   ]
+  },
+  {
+   "id": "jgb/G/remote-unlock-no-login",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "583cda4e542200616fccefb4adae13355cb67c59a69bb0978a95f57f11554ea1",
+   "title_text": "遠端解鎖連結需要登入嗎？（不用登入，只要有連結跟密碼就能開）",
+   "notes": [
+    "標題：與句 1 一致。",
+    "句 1：routes/web.php＋\"Route::get('/unlock/{iotId}/{batch}', 'IndexController@vueIndex')\" 位於只掛 'web' 的群組、未掛 need_login；API 'ToolController@unlock' 位於 Route::prefix('api3') 群組，無 need_login；app/Http/Kernel.php 的 'web' 群組無登入檢查；app/Http/Controllers/ToolController.php 的 unlock 只驗連結碼與密碼。"
+   ]
+  },
+  {
+   "id": "jgb/H/help-center-home-groups",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "bb2201395de9b964b0a6a78d5b7b90c6e5b6f509a84b659d54220d4f889b7c4d",
+   "title_text": "幫助中心首頁長什麼樣？（分類卡片顯示圖示、篇數、更新日期）",
+   "notes": [
+    "標題：由句 1 支撐（src/pages/help-center/Index.vue）。",
+    "句 1：src/pages/help-center/Index.vue＋'icons/help-center/${groupItem?.icon}.svg'、'groupItem.title'、'此系列有 [s1] 篇文章'、'更新日期'；資料來自 app/Http/Controllers/IndexController.php 的 help() case 'groups'（取全部 info_center_groups）。",
+    "句 2：同上＋\"router-link :to=\\\"{name:'listings.helpCenter.group'\"，點卡片進分類頁。",
+    "句 3：src/pages/help-center/template-parts/Top.vue＋'<LangSwitcher'、\"t('返回 to'...) JGB Smart Property\" 連到 name:'listings.home'。"
+   ]
+  },
+  {
+   "id": "jgb/H/help-center-group-structure",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "7694bf82d71e3dda4e4ac89c7d43a81baea700e3652463d8c0180c9d5316eeaa",
+   "title_text": "幫助中心分類頁怎麼排文章？（分類底下先分次分類，各次分類再列出文章卡片）",
+   "notes": [
+    "標題：由句 1～2 支撐（src/pages/help-center/Group.vue）。",
+    "句 1：src/pages/help-center/Group.vue＋'state?.group?.icon'、'此系列有 [s1] 篇文章'、'state?.group?.update_date'，其下 v-for 'state.group.sub_groups'；此區塊上方另有麵包屑（所有系列＞分類名），不影響本句。",
+    "句 2：同上＋'{{subGroup.title}}' 後接 'subGroup.posts' 卡片；app/Http/Controllers/IndexController.php＋\"where('subgroup_id', $subgroup['id'])\"，每篇文章只有一個 subgroup_id。",
+    "句 3：src/pages/help-center/Group.vue＋'v-show=\"!isEmpty(subGroup.posts)\"'。",
+    "句 4：同上＋'post.title'、'post.excerpt'、'post?.update_date'，router-link 到 'listings.helpCenter.post'。"
+   ]
+  },
+  {
+   "id": "jgb/H/help-center-post-detail",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "f43df9d2eca53d3ffd77b5ae1c4d79f8a6ff0c894fc4256e73af660d737d66ab",
+   "title_text": "幫助中心文章內頁有什麼？（麵包屑、分享到 Facebook／LINE、上下篇導覽、相關文章）",
+   "notes": [
+    "標題：各項由句 1～4 支撐（src/pages/help-center/Post.vue）。",
+    "句 1：src/pages/help-center/Post.vue＋breadcrumbs list 依序 '所有系列'、'state?.post?.group?.title'（onClick 推 'listings.helpCenter.group'）、'state?.post?.title'。",
+    "句 2：同上＋'window.shareFb(' 與 'window.shareLine(' 兩個按鈕，位於標題下方與更新日期同列。",
+    "句 3：同上＋'v-if=\"state?.prev_post?.slug\"'、'v-if=\"state?.next_post?.slug\"'；app/Http/Controllers/IndexController.php＋\"$result['data']['prev_post'] = null\"。",
+    "句 4：src/pages/help-center/Post.vue＋'相關文章主題' 區塊，v-for 'state.related_posts' 的 router-link 換 slug。"
+   ]
+  },
+  {
+   "id": "jgb/H/help-center-search",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "54eb05c87929b5e5464870afc8b0a3427cfc076c399bc41084f316ad732dbd1f",
+   "title_text": "幫助中心搜尋怎麼運作？（比對標題與內文、多個關鍵字要同時出現、可加選分類）",
+   "notes": [
+    "標題：由句 1～3 支撐。",
+    "句 1：src/pages/help-center/template-parts/Top.vue＋select-picker 首項 \"label: t('分類'), value: ''\"、input placeholder '搜尋答案'，submit 時 router push 'listings.helpCenter.search'。",
+    "句 2：app/Http/Controllers/IndexController.php＋\"explode(' ', $keyword)\"、'(?=.*' 逐詞前瞻、'preg_match_all($pattern, $title . $stripExcerpt'——標題＋內文，全部關鍵字都須出現。",
+    "句 3：app/Http/Controllers/IndexController.php＋\"$_data['group']['slug'] !== $group\" 時 continue；src/pages/help-center/template-parts/Top.vue＋'if( !isEmpty(state.queryObj) )'，queryObj 在 keyword 為空時回 undefined，不跳頁。",
+    "句 4：app/Http/Controllers/IndexController.php＋'我們找不到任何關於此項目的文章'；src/pages/help-center/Search.vue＋'dataFetcher.data?.success == false' 區塊含 router-link 到 'listings.helpCenter'（幫助中心）。"
+   ]
+  },
+  {
+   "id": "jgb/H/help-center-trial-form",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "ef9d99911a70d91144873623e825cdd649107c4e2a84647cfdc953945a9d1613",
+   "title_text": "幫助中心的「立即免費試用」視窗是什麼時候跳出來的？（首頁停留 60 秒自動彈出，四個欄位都要填）",
+   "notes": [
+    "標題：「立即免費試用」逐字存在於 src/pages/help-center/Index.vue；60 秒與四欄位必填由句 1～3 支撐。",
+    "句 1：src/entry/listings.js＋'setTimeout(' 內 \"lightboxOpen('trialForm')\"、'1000 * 60 * 1'，離開時 clearTimeout；src/pages/help-center/Index.vue＋'立即免費試用' 與下一行 'JGB Smart Property!'、內文 '免費試用30天'。",
+    "句 2：src/entry/listings.js＋\"'listings.helpCenter'.includes(route.name)\"；src/routes/listings.js 子路由名為 'listings.helpCenter.search／group／post'，不是該字串的子字串，故不觸發且會 clearTimeout；程式寫法為字串 includes 而非 ===，但現行路由名中只有首頁符合，行為等同完全相等。",
+    "句 3：src/pages/help-center/Index.vue＋'公司名/姓名'、'電話'、'Email'、'簡述您有興趣的原因'，'trialFormAllDone' 未全填時按鈕加 disabled；app/Http/Controllers/IndexController.php trialForm＋\"'name' => 'required'\" 等四欄 required。",
+    "句 4：src/pages/help-center/Index.vue＋'style=\"right:10px; top:10px;\" @click=\"lightboxClear()\"' 的 icon_x 關閉鈕。"
+   ]
+  },
+  {
+   "id": "jgb/I/pricing-plan-tiers-overview",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "f98f400866997c830789d7d05aa0abbd5ff0bb76a95e3f9a44361143c83127ac",
+   "title_text": "JGB 有哪些方案？（免費試用、體驗方案、入門／熱門／專業四級距、企業方案）",
+   "notes": [
+    "標題：由句 1～2、4 支撐。",
+    "句 1：app/Http/Controllers/ApiController.php getPlanPricings＋\"'title' => '體驗方案'\" quantityList [10]、'入門方案' [50, 100, 150]、'熱門方案' [200…450] 帶 'highlight' => true、'專業方案' [500]；src/pages/listings/pricing/parts/PlanForm.vue＋'最熱門'。",
+    "句 2：src/pages/listings/pricing/parts/PlanAndDevice.vue＋'免費試用方案'、'不綁信用卡的[s1]天的試用方案'、'企業方案'、'深入了解企業方案'；'免費試用' 字串亦存在於 src/pages/listings/pricing/TrialPlan.vue 按鈕。",
+    "句 3：app/Http/Controllers/ApiController.php＋'get_plan_price(50, ...' 依數量取價；src/pages/listings/pricing/parts/PlanForm.vue＋ChoiceToggler \"label: t('月費')\"、\"label: t('年費')\"（手機版見 PlanSlider.vue、CalculatePrice.vue 同樣切換）。",
+    "句 4：src/pages/listings/pricing/parts/PlanAndDevice.vue＋'客製化專屬 LOGO 頁'、'客製化專屬網址頁'、'適合大型企業的企業級解決方案'，連結 \"name: 'listings.demoForm'\"；src/pages/listings/DemoForm.vue＋'預約客製 Demo'；企業方案區塊無價格欄位。"
+   ]
+  },
+  {
+   "id": "jgb/I/pricing-free-trial-feature-scope",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "fb79d3e878b20a4f80bf041d1dd94b32fe361b8833ffe640821ec5f789c7e716",
+   "title_text": "免費試用不能用哪些功能？（最多 5 個物件，不支援團隊與門鎖電錶等進階功能）",
+   "notes": [
+    "標題：由句 1～2 支撐。",
+    "句 1：src/pages/listings/template-parts/LightboxFreePlan.vue＋supportedList '可新增最多[s1]個物件也支援批次物件上傳'（[5]）、'智能合約'＋'內政部最新標準範本'、'支援既存合約'、'一般匯款'、'自動催繳通知'、'即時帳務報表'、'分店管理'、'租客管理'。",
+    "句 2：同上＋unsupportedList '720° VR'、'團隊成員管理'、'大房東管理'、'編輯權限設定'、'智能門鎖'、'智能電錶'。",
+    "句 3：src/pages/listings/template-parts/LightboxFreePlan.vue＋unsupportedList '自動對帳' subLabel '無法申請國泰、永豐可申請藍新、中信'；app/Http/Controllers/UserController.php getPaymentSupportedVendors＋'Role::RULE_KEY_LANDLORD_INDIVIDUAL' 時 PAYMENT_NEWEBPAY／CATHAYBK／SINOPAC 皆 disabled（與 docs/knowledge/jgb-product-facts.md 該條一致）。"
+   ]
+  },
+  {
+   "id": "jgb/I/pricing-individual-vs-corporate-team",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "805be5f64be3b8ea9d580e255799e2ba3c8a9607d236a172f228c0900299a1de",
+   "title_text": "個人房東與企業團隊方案差在哪？（團隊成員管理等四項功能、自動對帳與分店管理起始級距不同）",
+   "notes": [
+    "標題：四項功能、自動對帳、分店管理差異均由句 2～4 支撐（app/Http/Controllers/ApiController.php）。",
+    "句 1：src/pages/listings/pricing/Home.vue＋\"planRole: 'landlord_corporate'\"，全 src grep 'planRole' 無其他賦值（正對照組：同次 grep 命中此宣告行）；PlanForm.vue 只讀 'state.groups?.[state.planRole]'。",
+    "句 2：app/Http/Controllers/ApiController.php getPlanPricings＋'landlord_individual' 下 '團隊成員管理'、'編輯權限設定'、'團隊資訊'、'進階設定' 四格 tick 皆 0；'landlord_corporate' 下同四項為 體驗 0、入門／熱門／專業 1（cellList 順序依註解為體驗、入門、熱門、專業）。",
+    "句 3：同上＋個人房東 '自動對帳' 四格 cellType text '無法申請國泰、永豐可申請藍新、中信'；企業團隊為 tick 0,1,1,1。",
+    "句 4：同上＋個人房東 '分店管理' tick 1,1,1,1；企業團隊 0,1,1,1。",
+    "句 5：同上＋兩表 '大房東管理' 皆 tick 0,1,1,1。"
+   ]
+  },
+  {
+   "id": "jgb/I/quota-full-no-subscription",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "不成立",
+    "成立"
+   ],
+   "content_sha256": "d316cf6ac2a0df01b8c9bde81ad202f42c000c5bcca2a22c0a4a5f1cdca4c92a",
+   "title_text": "沒有訂閱時新增物件達上限會看到什麼？",
+   "notes": [
+    "標題：為提問句，無超出句子的斷言。",
+    "句 1：routes/web.php＋'api2.estates.create'、'estates.general.batch'、'estates.social-housing.batch' 均掛 'need_subscription' 與 'premises_limit'；app/Http/Middleware/SubscriptionCheck.php＋'isSubscriptionActive()'、app/Http/Middleware/PremisesLimitCheck.php＋'remainEstatesCount() === 0'；前端 src/pages/estates/list/_parts/PageTop.vue、src/pages/communities/estates/Index.vue＋'remainEstatesCount <= 0' 先擋。",
+    "句 2：app/Http/Middleware/SubscriptionCheck.php＋\"session()->flash('lightbox-open', 'subscribedPlanIsFull')\" 並導回 estates.index；PremisesLimitCheck.php 同；app/Http/Controllers/EstateController.php＋\"'subscribedPlanIsFull' : 'addPremises-upload-bulk'\"。",
+    "句 3：resources/views/layouts/lightbox/general.blade.php＋'已達到數量上限！'（兩種狀態 title 相同），description／按鈕依 '$role->isSubscriptionActive()' 覆寫。",
+    "句 4：同上＋'您的 [s1] 最多可上傳 [s2] 組物件，目前已到達上限，要升級方案嗎？'、action_link text '前往升級'。",
+    "句 5：同上＋未訂閱版 description '您尚未訂閱服務最多可上傳 [s1] 組物件，目前已到達上限，請先前往訂閱服務，即可享受所有您需要的功能！'，但 action_link text 為 '我要訂閱'，不是「前往訂閱」；全匯出 src/ 與 resources/views/ grep '前往訂閱' 只命中「前往訂閱方案頁」（行銷頁與信件），lightbox 無此按鈕（正對照組：同次 grep 命中 general.blade.php 的 '我要訂閱'）。",
+    "句 6：routes/web.php＋'estates.copy'、'api2.estates.edit'、'estates.open' 掛 'need_subscription'；app/Http/Middleware/SubscriptionCheck.php 這三個 case 在 '!$role->isSubscriptionActive()' 時 flash 'subscribedPlanIsFull'。"
+   ]
+  },
+  {
+   "id": "jgb/I/pricing-calc-by-estate-count",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "077da8c29d978aab548ef79133383015b0302a93460727d4e00ecd34c5ca2926",
+   "title_text": "怎麼用物件數量試算方案價格？（50～500 物件拉桿試算，超過 500 個要洽企業方案）",
+   "notes": [
+    "標題：由句 1、3 支撐。",
+    "句 1：src/pages/listings/pricing/parts/CalculatePrice.vue＋'計算方案價格'、'方案最少始於 50 個物件'、VueSlider 'min={50}' 'max={500}' 'interval={50}'。",
+    "句 2：同上＋tooltip '管理的房源數，例如: 五間收租房源，就是五個物件'。",
+    "句 3：同上＋'state.quantitySlider.value >= 500' 時顯示 '如果您有多於 [s1] 個以上的物件，您需要我們的[s2]企業方案[s3]'（[s1]=500，連到 listings.demoForm）。",
+    "句 4：同上＋'此價錢是根據輸入的物件單位數估算。此估算不包括任何適用的稅費以及任何加購費用。 年繳費用折扣包含於價格內。'。",
+    "句 5：同上＋'選擇方案' 連結 '/users/subscription/chose?plan=basic&paymentCycle=${state.displayTable}&qty=${state.quantitySlider.value}'（target _blank）。"
+   ]
+  },
+  {
+   "id": "jgb/I/pricing-quota-near-full-notice",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "49d5419be84778f0241b17b4be289e2da24cb0f2f2c937e651f4400938942518",
+   "title_text": "物件額度快滿了會怎樣？（剩 5 個以下觸發提醒，剛好剩 5 個另寄 Email）",
+   "notes": [
+    "標題：由句 1～2 支撐。",
+    "句 1：app/Estate.php createEstate＋'$remainEstatesCounts <= 5' 時 \"Notification::notice('will_full_remind_to_subscription'\"；app/Notification.php 該 case＋'Notification::add(' 通知中心（url 導向 users.subscription_chose）。",
+    "句 2：app/Estate.php＋'if ($remainEstatesCounts === 5)' 再呼叫 'fixed_qty_remind_to_subscription'；app/Notification.php 該 case＋'email($emailSubject, $user['email']'。",
+    "句 3：app/Estate.php＋'$ownerRole->isSubscriptionActive() && $remainEstatesCounts <= 5'。"
+   ]
+  },
+  {
+   "id": "jgb/I/pricing-enterprise-plan-offer",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "d5c4544d1676e78e016b8ae003615b69469c04214b8bf05d1fdbad31f6306a0f",
+   "title_text": "企業方案提供什麼？（客製化 LOGO 頁與網址頁，需另外聯繫洽談）",
+   "notes": [
+    "標題：由句 1～2 支撐。",
+    "句 1：src/pages/listings/pricing/parts/PlanAndDevice.vue＋'客製化專屬 LOGO 頁'、'客製化專屬網址頁'、'適合大型企業的企業級解決方案'。",
+    "句 2：同上＋'深入了解企業方案' RouterLink \"name: 'listings.demoForm'\"，區塊無價格；src/pages/listings/DemoForm.vue＋'預約客製 Demo'。",
+    "句 3：src/pages/listings/pricing/parts/CalculatePrice.vue＋'max={500}'，值 >= 500 時顯示 '如果您有多於 [s1] 個以上的物件，您需要我們的[s2]企業方案[s3]'。"
+   ]
+  },
+  {
+   "id": "jgb/I/pricing-trial-plan-landing-page",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "7827f150db34a5cea4f836284f37b649445cd5bc015c75f9861d4f89f149ab1b",
+   "title_text": "體驗方案介紹頁講什麼？（每月費用試算、體驗方案資格需求、客戶見證、免費試用／免費諮詢按鈕）",
+   "notes": [
+    "標題：每月費用換算、資格需求、見證、兩按鈕分別由句 1、4、3、5 支撐（src/pages/listings/pricing/TrialPlan.vue）。",
+    "句 1：src/pages/listings/pricing/TrialPlan.vue＋'小成本輕鬆管房非夢事'、'每月只需 [s1] 元，JGB Smart Property 就提供您管理房源所需的一切'，金額來自 \"getExchangeCurrency('TWD', store.state.siteOptions.dollarSign, 100)\"。",
+    "句 2：同上＋sections titleKey 依序 '物件及廣告管理'、'線上合約管理'、'自動金流管理'，各附 img。",
+    "句 3：同上＋一段見證引言與客戶 logo，及 '觀看影片' 連到外部影片網址。",
+    "句 4：同上＋'體驗方案資格需求'，targets '新創時期'／'管理房源時間不到兩年'、'全新客戶'／'過去並沒有使用過 JGB 平台'。",
+    "句 5：同上＋頂部與底部各一組 '免費試用'（push query lightbox: 'free_plan'，對應 src/pages/listings/template-parts/LightboxFreePlan.vue id 'free_plan'）與 '免費諮詢'（target _blank 到 '/demo-form'）。"
+   ]
+  },
+  {
+   "id": "jgb/I/pricing-plan-price-basis",
+   "title": "不成立",
+   "sentences": [
+    "成立",
+    "不成立"
+   ],
+   "content_sha256": "cf980c9621a50ffec4005ce395d53312e34936dee1f1ce0069bb5d8b50274bf7",
+   "title_text": "方案價格怎麼算、年繳有折扣嗎？（各方案單價從系統價格表讀取；一般方案年繳等於 10 個月的月費）",
+   "notes": [
+    "標題：前半成立；後半「一般方案年繳等於 10 個月的月費」依附句 2，句 2 無法判定，故標題不成立。",
+    "句 1：app/Helper.php get_plan_price＋\"DB::table('plan_estate_prices')\"（經 Redis 快取）取 unit_price／basic_price；app/Http/Controllers/UserController.php＋'get_plan_price($estateNumber, $planCycle'，體驗方案一律取 10 戶級距。",
+    "句 2：無法判定：app/Helper.php get_plan_price 的 ×10／×12 只在 \"case 'basic':\" 分支（'$planEstatePrice['number_min'] == 10' 時 ×12，否則 ×10）；同函式另有 \"case 'unit':\" 分支，年繳＝物件數×unit_price×12×plan_durations.estate_discount/100，不保證等於 10 個月。各級距實際是哪一種 price_type 存在 DB plan_estate_prices，匯出內查不到；app/Console/Commands/UserIdentityMonthlyStat.php 註解只說明 10～19 級距為 basic，無 50 以上級距的資料。"
+   ]
+  }
+ ],
+ "findings": [
+  "jgb/I/quota-full-no-subscription 句 5 的按鈕文字與現行燈箱不符：resources/views/layouts/lightbox/general.blade.php 未訂閱版 'subscribedPlanIsFull' 的 action_link text 是 '我要訂閱'，不是「前往訂閱」；有效訂閱版才是 '前往升級'。",
+  "jgb/I/pricing-plan-price-basis 句 1 說體驗方案單價取自價格表，計費路徑（app/Helper.php get_plan_price）確實如此；但 jgb/I/pricing-trial-plan-landing-page 介紹頁副標的金額是 src/pages/listings/pricing/TrialPlan.vue 寫死的台幣 100 元再換算（getExchangeCurrency('TWD', ..., 100)），不讀價格表。兩條沒有直接矛盾，但如果價格表的體驗方案價格改了，介紹頁顯示的金額不會跟著變。",
+  "jgb/I/pricing-free-trial-feature-scope 句 3 的「個人房東連藍新也不能開通」不在該條列出的 sources 裡，實際證據在 app/Http/Controllers/UserController.php getPaymentSupportedVendors，與 docs/knowledge/jgb-product-facts.md 該條一致；建議在 sources 補上。",
+  "jgb/I/pricing-individual-vs-corporate-team 所述的個人房東比較表，在現行方案頁不可見（src/pages/listings/pricing/Home.vue 的 planRole 寫死為 'landlord_corporate'）；這與該條句 1 一致，但其餘細目引用方案頁比較表時，應以企業團隊表為準。"
+ ],
+ "source_transcript": "a495f1347e2bf4bd8.output"
+}

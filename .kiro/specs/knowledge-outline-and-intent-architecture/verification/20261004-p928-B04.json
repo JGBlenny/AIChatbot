@@ -1,0 +1,456 @@
+{
+ "kind": "write",
+ "verdict": "REFUTED",
+ "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+ "claim": "Plan 9.28 批次 B04：28 條細目的標題與每一句已逐句對合法來源核對，逐條結果如 fines",
+ "fines": [
+  {
+   "id": "jgb/B/member-list-overview",
+   "title": "不成立",
+   "sentences": [
+    "不成立",
+    "不成立"
+   ],
+   "content_sha256": "8b2e92f5dae925c4a834c99f9a4850b4cdcf3e6c883a2ec632ecc0c8e6636737",
+   "title_text": "成員列表可以看到什麼資訊？（成員總人數、加入時間、Email、手機號碼、目前的角色）",
+   "notes": [
+    "標題：「成員總人數」這項斷言依賴句 1，但句 1 不成立（非擁有者登入時人數少算 1）；其餘欄位（加入時間、Email、手機號碼、角色）的表頭確實存在，見 resources/views/users/team/index.blade.php 的表頭 ___('加入時間')。",
+    "句 1：resources/views/users/team/index.blade.php＋t('[s1] 個成員', [$store.state.team.member_list.length+1])；app/Http/Controllers/UserController.php＋function fetchMembers 中 unset($tempUserData[$ownerKey]); unset($tempUserData[$selfKey]);。member_list 同時排除擁有者與登入者本人，畫面人數＝member_list 筆數＋1。登入者是擁有者時，這個數字等於含擁有者的總人數；登入者是一般成員時，總人數應是 member_list 筆數＋2（另外還有擁有者與本人），畫面少算 1。所以「目前團隊的成員總人數（含團隊擁有者本人）」並非對所有登入者都成立。",
+    "句 2：app/Http/Controllers/UserController.php＋fetchMembers 中 $collectionUsersIds[] = (object)['user_id'=>$ownerKey]; $collectionUsersIds[] = (object)['user_id'=>$selfKey]; 與 'join_date' => isset($LVcollectionUsersIds->created_at)?...:''。擁有者與本人的資料最後會被這兩筆沒有 created_at 的物件覆寫，所以 join_date 是空字串；resources/views/users/team/index.blade.php＋@{{$store.state.team.self.join_date}} 與 @{{$store.state.team.owner.join_date}} 也就顯示空白。只有一般成員那幾列有加入時間，「每位成員會顯示加入時間」漏掉這個例外。Email、手機號碼、角色欄確實存在。"
+   ]
+  },
+  {
+   "id": "jgb/B/member-invite",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "不成立",
+    "成立"
+   ],
+   "content_sha256": "2b7a2faee84272713af7fa3785723944ffb3ceb7e805dc88c87b64657c6fc339",
+   "title_text": "怎麼邀請新成員加入團隊？（用 Email 或手機號碼搜尋，對方要先是 JGB 會員）",
+   "notes": [
+    "標題：resources/views/users/team/index.blade.php＋___('受邀請的對象如果不是 JGB 會員，將無法新增為團隊成員。') 與 Email／手機號碼的 radio（invitee_account_type），可支撐標題。",
+    "句 1：resources/views/users/team/index.blade.php＋lightboxOpen('inviteMember')、___('新增成員')、name=\"invitee_account_type\" value=\"email\"／\"phone\"。未達上限時，點「邀請」會開啟「新增成員」視窗，可以選 Email 或手機號碼。",
+    "句 2：app/Http/Controllers/UserController.php＋case 'accountValidation'：帳號查不到時回傳 ___('您輸入的帳號不存在')，從不回傳 is_member=false；src/store/modules/team/invite.js＋notMemberList 只在 is_member 為假時才寫入，因此 resources/views/users/team/index.blade.php 的 ___('尚未成為JGB會員') 區塊不會出現。實際對該帳號的提示是「您輸入的帳號不存在」，不是「尚未成為 JGB 會員」；視窗只在一開始有一行靜態說明「受邀請的對象如果不是 JGB 會員，將無法新增為團隊成員。」",
+    "句 3：同上 resources/views/users/team/index.blade.php＋readyToInvite、___('即將新增成員')、___('確認') 會送出 #readyToInvite 表單；src/store/modules/team/invite.js＋accountValidate 會把多筆對象 concat 進 readyToInvite。"
+   ]
+  },
+  {
+   "id": "jgb/B/member-role-concept",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "9b2814f4e4bdae98c2563451957d9981f2d73ba35d01d7bcf4641ba352f13c61",
+   "title_text": "成員的「角色」權限決定什麼？（決定看得到與能編輯的物件、合約、帳務、修繕等範圍）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：app/Http/Controllers/UserController.php＋$displayCapabilities 的 '查看所屬物件'／'查看所有物件'／'新增&編輯&刪除所屬物件'／'新增&編輯&刪除所有物件'；合約、帳單、修繕各有同樣的「所屬／所有」兩層。",
+    "句 2：同上 app/Http/Controllers/UserController.php＋'查看團隊權限'、'查看團隊資訊'、'編輯團隊資訊'、'查看成員列表'、'查看大房東列表'、'查看租客列表'。",
+    "句 3：resources/views/layouts/lightbox/character-capability-edit.blade.php＋___('團隊擁有者為創建此團隊者，無法編輯與刪除。')。"
+   ]
+  },
+  {
+   "id": "jgb/B/member-role-manage",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "c3c92c2f9240250a58ca7de4fed916a4c82d4ef79fb9193fa8133a378b760b26",
+   "title_text": "怎麼管理團隊的角色範本？（可新增、編輯、刪除，也能套用 JGB 內建的快速設定範本）",
+   "notes": [
+    "標題：由句 1～3 支撐。",
+    "句 1：resources/views/layouts/lightbox/character-capability-edit.blade.php＋___('以下為團隊內所有角色，如需調整角色名稱或權限細節，請點擊「編輯」。')；resources/views/users/team/index.blade.php＋lightboxOpen('character--Manage') 與 ___('角色管理')。",
+    "句 2：resources/views/layouts/lightbox/character-capability-edit.blade.php＋___('快速設定') 只在 action==='add' 時顯示，另有 ___('JGB 提供權限參考模板，可使用上方 “快速設定 ”套用權限。')；config/character.php＋'label'=> '店長'、'label'=> '會計'（display true）；app/Character.php＋getAllTemplateCharacters。",
+    "句 3：resources/views/layouts/lightbox/character-capability-edit.blade.php＋___('角色刪除後無法恢復，請問您確定要刪除角色嗎？')。"
+   ]
+  },
+  {
+   "id": "jgb/B/member-remove",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "2b17518f70b9bba3966fcd451f1245777abdbff77be38a05d0b4153da62d218a",
+   "title_text": "怎麼移除成員？（列表右側的紅色 × 圖示開啟確認視窗，按「移除」才會真的刪除；名下還有物件或合約會被擋下）",
+   "notes": [
+    "標題：由句 1、2 支撐。",
+    "句 1：resources/views/users/team/index.blade.php＋icon_x_red.svg 的 @click 會在 !member.has_item 時執行 lightboxOpen(`memberDelete${m_index}`)；該視窗標題是 ___('移除成員')，按鈕 ___('移除') 才會送出 #delForm。",
+    "句 2：同上 resources/views/users/team/index.blade.php＋has_item 為真時開 memberCanNotDelete，文字是 ___('欲刪除的團隊成員，目前尚有綁定中的物件或合約，請先指派其他經理人後再行移除動作。')。",
+    "句 3：同上 resources/views/users/team/index.blade.php＋___('修改綁定物件')／___('修改綁定合約') 會導向 /users/team/member/owned/estates|contracts；src/pages/users/team/memberOwned/Index.jsx＋t('[s1] 擁有的物件')／t('[s1] 擁有的合約')、單筆 bi-x-circle-fill 移除鈕（removeOwnedItem）與 t('移除所有授權')。",
+    "句 4：resources/views/users/team/index.blade.php＋___('成員移除後，對方將無法再存取團隊內的任何資訊，請問您確定要刪除[s1]嗎？')。"
+   ]
+  },
+  {
+   "id": "jgb/B/member-seat-limit",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "9a594bcfeb20a8eca62df20a2383a0b6a368e66d5f947ff1a11ba010bea5d01e",
+   "title_text": "邀請成員有名額上限嗎？（依訂閱方案而定；已訂閱達上限要升級方案，未訂閱要先訂閱）",
+   "notes": [
+    "標題：由句 1、2 支撐。",
+    "句 1：app/Role.php＋remainTeamsCount 使用 plan_team_limit（另加 plan_extra_team_plus 額外方案）減去 teams_count；app/Http/Controllers/UserController.php＋$isFull = (!$this->role->isSubscriptionActive() || $this->role->remainTeamsCount() === 0)。",
+    "句 2：resources/views/users/team/index.blade.php＋@if ($isFull) 時改成 lightboxOpen('subscribedPlanTeamIsFull')；resources/views/layouts/lightbox/general.blade.php＋未訂閱時是 ___('您尚未訂閱服務最多可邀請 [s1] 位成員，目前已到達上限，請先前往訂閱服務…') 與 ___('我要訂閱')；isSubscriptionActive() 時改成 ___('您的 [s1] 最多可邀請 [s2] 位成員，目前已到達上限，要升級方案嗎？') 與 ___('前往升級')。"
+   ]
+  },
+  {
+   "id": "jgb/A/contact-info-second-phone",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "不成立",
+    "成立"
+   ],
+   "content_sha256": "3f236d52b3a34a08c8eeb56022b1fd92cc95908a51a973bb162258424682f138",
+   "title_text": "聯絡資訊可以填第二組聯絡電話嗎？",
+   "notes": [
+    "標題：resources/views/users/account.blade.php＋___('第二組聯絡號碼') 欄位存在，可回答標題的問題。",
+    "句 1：resources/views/users/account.blade.php＋___('以下資訊將會呈現在廣告上，租客可以透過更多管道與房東聯繫，提升簽約成功率！')。",
+    "句 2：同上 resources/views/users/account.blade.php＋name=\"line_is_phone\" 與 ___('同手機號碼')；勾選後只顯示 disabled 的手機號碼欄，未勾選時是 placeholder ___('請填上 Line ID') 的輸入框，沒有必填標記；app/Http/Controllers/UserController.php＋function account 中 $this->user->line = $input['line'] 也沒有必填檢查。",
+    "句 3：同上 resources/views/users/account.blade.php＋placeholder ___('個人首頁連結')、name=\"facebook\"、maxlength=\"200\"。",
+    "句 4：同上 resources/views/users/account.blade.php＋___('請填寫國碼與電話號碼，國碼前面不需打「+」。')、name=\"whats_app\"、maxlength=\"200\"。",
+    "句 5：同上 resources/views/users/account.blade.php＋name=\"phone2\" maxlength=\"50\"。實際上限是 50 字元，不是 30；app/Http/Controllers/UserController.php＋$this->user->phone2 = $input['phone2'] 也沒有 30 字元的後端限制。",
+    "句 6：同上 resources/views/users/account.blade.php＋___('以此電話作為廣告頁聯絡電話') 整段包在 {{-- --}} 註解裡，畫面上不會出現。"
+   ]
+  },
+  {
+   "id": "jgb/B/member-assign-owned",
+   "title": "成立",
+   "sentences": [
+    "不成立",
+    "成立"
+   ],
+   "content_sha256": "a0c1016d9e4952ac94abd81603a778a74668539433d8a171e58ebd9d4c9196b5",
+   "title_text": "怎麼指派物件或合約給成員？（點成員旁的鉛筆圖示選「編輯綁定物件」或「編輯綁定合約」）",
+   "notes": [
+    "標題：resources/views/users/team/index.blade.php＋icon_edit.svg tooltip 內有 ___('編輯綁定物件')／___('編輯綁定合約')，一般成員那一列確實可以這樣操作。",
+    "句 1：resources/views/users/team/index.blade.php＋鉛筆（icon_edit.svg）只畫在 v-for member_list 的列裡，而且包在 @if ($enableEdit) 中。最上面的擁有者那一列與自己那一列（select-picker class=\"disabled\" 的兩列）都沒有鉛筆；沒有 edit_role_team 權限時，桌機版也沒有。「每一列右側有鉛筆圖示」漏掉這些例外。點開後會導向 /users/team/member/owned/estates|contracts 這部分正確。",
+    "句 2：src/pages/users/team/memberOwned/Index.jsx＋t('授權更多物件')／t('授權更多合約')、t('移除所有授權')，確認視窗 t('即將移除所有授權') 按確認後執行 removeAllOwned（ownedList: []）。"
+   ]
+  },
+  {
+   "id": "jgb/B/member-role-permission-list",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "291abd98c68d1ec829b6307c4f0ca62c310d01e56f89d979c25a4245bd23e5d2",
+   "title_text": "怎麼查看每個角色能做什麼？（點「角色權限說明」的「這裡」開啟角色權限列表，每一列是一項權限、每一欄是一個角色，用勾號／叉號表示有沒有這項權限）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：resources/views/users/team/index.blade.php＋___('角色權限說明請點擊 [s1]。') 中的 [s1] 是 ___('這裡')，會執行 lightboxOpen('character--Table')；resources/views/layouts/lightbox/character-capability-edit.blade.php＋___('角色權限列表')；src/store/modules/team/capabilityEdit.js＋capTable 每個角色一欄（headerName: char.label），每項權限一列並附 description，有權限是 icon_checked_green.svg（綠），沒有是 icon_x.svg（#444、opacity 0.2，灰）。",
+    "句 2：resources/views/layouts/lightbox/character-capability-edit.blade.php＋capTable 資料為空時顯示 ___('目前團隊還沒有任何角色，您可以選擇：') 與 ___('新增角色') 按鈕。"
+   ]
+  },
+  {
+   "id": "jgb/B/member-list-role-inline-change",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "不成立"
+   ],
+   "content_sha256": "7957d10339bf610162c0dbd9fac3b38431f798f0b8654a53f40900c16af37f25",
+   "title_text": "成員列表可以直接改成員的角色嗎？（一般成員那一列可以用角色下拉選單直接切換；擁有者與自己那一列、或沒有編輯權限時選單會鎖住）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：resources/views/users/team/index.blade.php＋vue-select 的 @select 會直接 submit #characterChangeForm（action change-character）；擁有者與自己那兩列是 select-picker class=\"disabled\" :disabled；外層 div 在 {{$enableEdit?'':'disabled'}} 時帶 disabled。",
+    "句 2：同上 resources/views/users/team/index.blade.php＋選項 { label: `+ ${t('新增角色')}`, value: 'addCharacter' } 被選取時，先把 action 設為 'add' 再 $store.commit('lightbox', 'character--Edit')；resources/views/layouts/lightbox/character-capability-edit.blade.php＋action==='add' 時視窗標題顯示 ___('新增角色')，只有 action==='modify' 才顯示 ___('編輯角色')。所以開啟的視窗畫面上叫「新增角色」，不是加引號的「編輯角色」。"
+   ]
+  },
+  {
+   "id": "jgb/B/member-role-edit-open-condition",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "2cbc390c73a59e272e47232403aa3ebfaf093adae0aef36bfa06dccdd89eb348",
+   "title_text": "編輯角色時的「開啟條件」是什麼？（要先勾選列出的其他權限，這個權限選項的勾選框才能點；沒先勾好之前，勾選框會維持鎖住）",
+   "notes": [
+    "標題：由句 1、2 支撐。",
+    "句 1：resources/views/layouts/lightbox/character-capability-edit.blade.php＋{{___('開啟條件')}}: 後面接 requireLabels(capItem.requires).join('、')，只在 requires 不為空時顯示。",
+    "句 2：src/store/modules/team/capabilityEdit.js＋isThisCapDisabled 在 matched.length < requires.length 時回傳 true；character-capability-edit.blade.php＋:disabled=\"$store.getters['team/capabilityEdit/isThisCapDisabled'](...)\"。"
+   ]
+  },
+  {
+   "id": "jgb/B/member-role-edit-reset",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "7633f1d8c43619a57affe74270651d6304401330081761695ff73a84f22b906b",
+   "title_text": "編輯角色時的「重設條件」按鈕是做什麼的？（把所有權限勾選全部清空）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：resources/views/layouts/lightbox/character-capability-edit.blade.php＋___('重設條件') 會 dispatch('team/capabilityEdit/reset')；src/store/modules/team/capabilityEdit.js＋mutations reset 在 action 為 'add' 或 'modify' 時都把 state.editing.capabilities 設成全空陣列（舊的「回到調整前」邏輯已註解掉）。"
+   ]
+  },
+  {
+   "id": "jgb/B/member-list-sort",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "6572e5cf0356af10049673813117af97cd86407b8630ef9c12fca47c73f1c11a",
+   "title_text": "成員列表可以怎麼排序？（姓名、加入時間、手機號碼、Email、角色名稱各有正反兩種排序）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/entry/team.js＋memberListOptions 共 1～10：t('姓名(A-Z)')、t('姓名(Z-A)')、t('加入時間(早)')、t('加入時間(晚)')、t('手機號碼(小)')、t('手機號碼(大)')、t('Email(A-Z)')、t('Email(Z-A)')、t('角色名稱(A-Z)')、t('角色名稱(Z-A)')；resources/views/users/team/index.blade.php＋list-search-bar :sort-options=\"state.memberListOptions\"。"
+   ]
+  },
+  {
+   "id": "jgb/B/member-list-role-select-disabled",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "373ad746b351f73d251304e919c4b44f867d118eb432de4152e702b6b24cbcf0",
+   "title_text": "為什麼「團隊擁有者」和自己那一列的角色下拉不能改？（這兩列是固定顯示在列表最上面、角色下拉是鎖住的，跟其他成員分開處理）",
+   "notes": [
+    "標題：由句 1、2 支撐。",
+    "句 1：resources/views/users/team/index.blade.php＋owner 列 v-if=\"$store.state.team.owner && $store.state.team.owner.uid !== $store.state.team.self.uid\"（註解：owner跟self是同一個uid就只顯示一個），self 列緊接在後，兩列都在 member_list 迴圈之前，select-picker 是 class=\"disabled\" :disabled；app/Http/Controllers/UserController.php＋fetchMembers 會把 owner／self 從 member_list 拿掉、另外回傳。",
+    "句 2：同上 resources/views/users/team/index.blade.php＋選項來源 capabilityEdit.characters.list，只有 member.character == '0' 時才會出現 t('團隊擁有者')；app/Role.php＋initCharacters 中「如果是擁有者，直接跳過」；app/Http/Controllers/UserController.php＋outputCharactersInfo 會略過 template_id == 0。"
+   ]
+  },
+  {
+   "id": "jgb/B/biglandlord-list-overview",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "不成立",
+    "成立"
+   ],
+   "content_sha256": "e2d758425f26e325549a03b0025408307a45e0829c04660ae8847afc6bcc2349",
+   "title_text": "大房東列表可以看到哪些欄位？（ID、姓名、會員註冊、身分證字號、生日、主要聯絡方式、帳戶資訊、合作方式、合作起迄、所屬物件）",
+   "notes": [
+    "標題：src/pages/bigLandlords/list/_parts/ListTable.vue＋columns 有 'ID'、t('姓名')、t('會員註冊')、t('身分證字號')、t('生日')、t('主要聯絡方式')、t('帳戶資訊')、t('合作方式')、t('合作起迄')、t('所屬物件')，標題列的欄位都存在。",
+    "句 1：同上 src/pages/bigLandlords/list/_parts/ListTable.vue＋columns 有 ID、t('姓名')、t('會員註冊')、t('Email')、t('手機號碼')、t('身分證字號')、t('地址')、t('帳戶名稱')、t('帳戶資訊')。",
+    "句 2：同上 src/pages/bigLandlords/list/_parts/ListTable.vue＋生日與主要聯絡方式兩欄用 SurelyVueCommonTextBlockCell v-bind=\"record[column.key]\" 呈現；src/utils/surelyVue/bigLandlord.ts＋this[ColumnKey.birthday] = { birthday } 與 this[ColumnKey.primaryContact] = { primary_contact }；src/components/SurelyVue/Common/TextBlockCell.vue＋props 只有 textString，畫面渲染 {{ t(props?.textString) || '-' }}。傳入的 key 對不上 textString，所以兩欄每筆都只顯示「-」，實際不會顯示生日與主要聯絡方式的值。合作方式、合作起迄、所屬物件數（RelatedEstateCell 的 qty_of_estates）正確。",
+    "句 3：src/components/SurelyVue/BigLandlord/NameCell.vue＋@click=\"handleOpenContactCard\" 會 emit openContactCard；ListTable.vue＋contactCardState.open(...)。"
+   ]
+  },
+  {
+   "id": "jgb/B/biglandlord-add",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "5ac6a4754bfd62b25436557feb4fef9102cca51efe64186802af9ad6eb2b29f8",
+   "title_text": "怎麼新增大房東？（已註冊會員填 Email 即可，未註冊只要填姓氏與名稱，Email 選填）",
+   "notes": [
+    "標題：由句 1～3 支撐。",
+    "句 1：src/components/Lightbox/MemberInvite.vue＋t('大房東是否已註冊帳號') + '?'，ChoiceToggler 選項 t('已註冊')／t('未註冊')；src/pages/bigLandlords/list/_parts/PageTop.vue＋t('新增大房東') 會開 LightboxId.memberInvite。",
+    "句 2：同上 src/components/Lightbox/MemberInvite.vue＋registered 分支只有一個 Email 輸入框與 t('新增') 鈕（POST /api/bigLandlord）；app/Services/BigLandlordService.php＋createBigLandlord 的 BIGLANDLORD_REGISTERED 分支用 email 找到 user 後寫入。",
+    "句 3：同上 src/components/Lightbox/MemberInvite.vue＋unregistered 分支的姓氏、名稱帶 after-required，Email 沒有；新增鈕在 !isEmpty(last_name) && !isEmpty(first_name) 時才可按。"
+   ]
+  },
+  {
+   "id": "jgb/B/biglandlord-authorize-estates",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "b58dc7c540fb15a09d10eb26d7db486cbfa5ac02cd08917a6153e4d5db7ea981",
+   "title_text": "大房東的「授權物件」怎麼設定？（逐筆物件勾選瀏覽廣告／合約／帳務／修繕；合約要先勾廣告，帳務要先勾廣告＋合約，修繕沒有前提）",
+   "notes": [
+    "標題：由句 1、2 支撐。",
+    "句 1：src/pages/bigLandlords/list/_parts/owned.jsx＋t('[s1] 擁有的物件')，每筆物件有 t('權限設定') 勾選框；app/Http/Controllers/UserController.php＋getCapabilities 的 type 2 回傳 ___('瀏覽物件廣告')、___('瀏覽物件所屬合約')、___('瀏覽物件所屬帳務')、___('瀏覽物件所屬修繕')。",
+    "句 2：同上 app/Http/Controllers/UserController.php＋'show_contract' requires ['show_estate']、'show_bill' requires ['show_estate','show_contract']、'show_repair' requires []；owned.jsx＋isThisCapDisabled 依 requires 鎖住勾選框。",
+    "句 3：src/pages/bigLandlords/list/_parts/owned.jsx＋t('備註') 底下有 t('合作方式') 輸入框，以及 t('合作起迄') 兩個 FlatPickr 日期欄。",
+    "句 4：同上 owned.jsx＋t('授權更多物件') 會導向 estates.pick；t('移除所有授權') 跳 t('即將移除所有授權') 確認，按確認執行 removeAllOwned。"
+   ]
+  },
+  {
+   "id": "jgb/B/biglandlord-import-export",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "344e547166f13d9283fab8ed95cc3d1d5b89e69d2f3e1a8a3b16dac0079583b0",
+   "title_text": "大房東名單可以批次匯入或匯出嗎？（可以，Excel 匯入新增、Excel 匯出下載）",
+   "notes": [
+    "標題：由句 1、2 支撐；匯入範本是 Excel：app/Services/BigLandlordService.php＋generateSampleBigLandlordRecordExcel。",
+    "句 1：src/pages/bigLandlords/list/_parts/PageTop.vue＋ButtonWithTooltip 的選項 t('匯入大房東') 會開 LightboxId.bigLandlordBatchAdd；src/components/Lightbox/BigLandlordsBatchAdd.vue＋t('批次新增大房東')。",
+    "句 2：同上 PageTop.vue＋v-if=\"!isEmpty(searchState.data?.list)\" 時才出現 t('匯出大房東')，連到 /api/bigLandlord/record/excel/export；app/Services/BigLandlordService.php＋exportBigLandlordRecordsToExcel 用 Writer\\Xlsx 產生 exported_data.xlsx 並 download。"
+   ]
+  },
+  {
+   "id": "jgb/B/biglandlord-actions-menu",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "589b2ae216d319ed595858b61a27c6b71f139ea8d21fb478b45a2920e19c3154",
+   "title_text": "大房東列表每一列的操作選單有哪些功能？（編輯所屬物件、編輯大房東、刪除大房東）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/use/config/useBigLandlordsTypes.ts＋t('編輯所屬物件')（Route.user.team.owned，對應 src/routes/bigLandlords.js 的 owned.jsx 授權物件頁）、t('編輯大房東')（LightBoxAction.bigLandlord.edit）、t('刪除大房東')（LightBoxAction.bigLandlord.delete）；src/components/SurelyVue/BigLandlord/ActionCell.vue＋genSingleActions。"
+   ]
+  },
+  {
+   "id": "jgb/B/biglandlord-authorize-apply-step",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "cbd7697293fe3ce51e86bede42218a90c5bddcdc851e38621443e12f405af77f",
+   "title_text": "授權物件頁移除物件後，為什麼要按「套用」才會生效？（按紅色 X 移除只是待處理狀態，按套用才真的移除，按恢復可以取消這次變更）",
+   "notes": [
+    "標題：由句 1、2 支撐。",
+    "句 1：src/pages/bigLandlords/list/_parts/owned.jsx＋icon_x_red.svg 只會把 id 加進 state.userOwned.readyToRemove，並蓋上 t('「套用」後將移除此物件，或者 [s1]。') 的遮罩，不會打 API。",
+    "句 2：同上 owned.jsx＋BottomNav colNext 的 t('套用') 呼叫 modifyUserOwned（PATCH /api/bigLandlord/estate/{id}，帶 removeItems）；遮罩上的 t('恢復') onClick 會把該 id 從 readyToRemove 移除。"
+   ]
+  },
+  {
+   "id": "jgb/B/biglandlord-delete-confirm",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "c82bea883942a6e21c4e4a07e6c47dff2e43afd66dddc70d5385ec929af6a95a",
+   "title_text": "刪除大房東會發生什麼？（先跳出確認視窗，確認後這位大房東就無法再存取這個團隊的任何資訊）",
+   "notes": [
+    "標題：由句 1、2 支撐。",
+    "句 1：src/components/Lightbox/MemberDelete.vue＋id memberDelete_${props.id}、標題 t('移除大房東')、內文含 t('…請問您確定要刪除[s1]嗎？')，按 t('刪除') 才送出 DELETE /api/bigLandlord/{id}；src/utils/constants/commit.ts＋delete: (id)=>`memberDelete_${id}`。",
+    "句 2：同上 src/components/Lightbox/MemberDelete.vue＋t('成員移除後，對方將無法再存取團隊內的任何資訊，請問您確定要刪除[s1]嗎？')。"
+   ]
+  },
+  {
+   "id": "jgb/B/biglandlord-seat-limit",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "4d257cbd1d3d2536f4d80b5445086e43d2cb11488b59f5bb0c9ddbd3965c170a",
+   "title_text": "大房東名額有上限嗎？（目前大房東列表頁的「新增大房東」沒有名額檢查）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：app/Services/BigLandlordService.php＋createBigLandlord 只檢查 role_id、email 是否重複與註冊狀態，沒有呼叫 remainBigLandlordsCount；routes/api.php＋Route::resource('bigLandlord', 'BiglandlordController') 只掛 need_login。名額檢查只存在舊路徑：app/Http/Middleware/PremisesLimitCheck.php 的 case 'users.team'（POST action invite），而 resources/views/users/team/index.blade.php 在 type 2 時會直接轉到 /bigLandlords/list，不再使用舊的邀請流程。"
+   ]
+  },
+  {
+   "id": "jgb/B/biglandlord-list-empty",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "883b8f4bb2b0383dbbe75f6771c896a1e2a5825a77806dd8faa09676bf8f4bd2",
+   "title_text": "大房東列表沒有資料時會顯示什麼？（一開始沒有任何大房東顯示「尚無大房東」；用關鍵字搜尋卻沒有符合結果則顯示「沒有符合的結果😢」）",
+   "notes": [
+    "標題：由句 1、2 支撐。",
+    "句 1：src/pages/bigLandlords/list/_parts/ListTable.vue＋#emptyText 在 isEmpty(route.query?.keyword) 時顯示 t(\"尚無大房東\")。",
+    "句 2：同上 ListTable.vue＋v-else 顯示 t(\"沒有符合的結果😢\")。"
+   ]
+  },
+  {
+   "id": "jgb/B/biglandlord-batch-template-fields",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "a0a3d7b07412bef5648d0d3f67632091b769c5d00cf729ddbae5012fccdc92fe",
+   "title_text": "批次匯入大房東的 Excel 範本要填哪些欄位？（姓氏、名稱必填，其餘含 Email、手機、身分證字號、地址、帳戶資訊、合作方式與合作起迄都是選填）",
+   "notes": [
+    "標題：由句 1、2 支撐。",
+    "句 1：src/components/ImportPreview/configs/bigLandlord.ts＋只有 '姓氏'、'名稱' 是 required: true；app/Services/BigLandlordService.php＋createExcelHeader 範本表頭只有 '姓氏*'、'名稱*' 帶星號。",
+    "句 2：同上 src/components/ImportPreview/configs/bigLandlord.ts＋'Email'、'手機號碼'、'身分證字號'、'國家'、'縣市'、'區域'、'地址'、'帳戶名稱'、'帳戶資訊'、'合作方式'、'合作起始時間'、'合作終止時間' 都是 required: false。"
+   ]
+  },
+  {
+   "id": "jgb/B/biglandlord-list-sort",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "5a34f90e653a6069ee94d069c9b2001f8f4109ac524873be31a351f82494dda1",
+   "title_text": "大房東列表可以用什麼排序？（姓名、手機號碼、Email、身分證字號，各有正序與反序共 8 種排序方式）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：app/Http/Controllers/BiglandlordController.php＋index 的 sortOptions 1～8：___('姓名(A-Z)')、___('姓名(Z-A)')、___('手機號碼(小)')、___('手機號碼(大)')、___('Email(A-Z)')、___('Email(Z-A)')、___('身分證字號(A-Z)')、___('身分證字號(Z-A)')；app/Services/BigLandlordService.php＋getBigLandlordsList 的 case 1～8 orderBy。"
+   ]
+  },
+  {
+   "id": "jgb/B/biglandlord-report-overview",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "09f07b6f059a253248806ff32309db3e01e9bb29e76fdfed73196b8a3c9810c0",
+   "title_text": "大房東報表可以看到什麼？（依大房東列出所屬物件、出租中物件與執行中合約租金總額）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/pages/bigLandlords/report/_parts/ListTable.vue＋columns 有 t('大房東姓名')、t('所屬物件')、t('出租中物件')、t('執行中合約租金總額')；src/utils/surelyVue/bigLandlord.ts＋BigLandlordReportDataSourceItem 中 relatedEstate／rentingEstate 的 content 是筆數，totalOngoingContractRent 取每個物件最新租客的 rent。",
+    "句 2：src/pages/bigLandlords/report/_parts/BigLandlordItemDetail.jsx＋t('大房東報表細節')，分 t('所有物件')、t('社區')、t('物件') 三區，欄位是 t('租客')、t('租期')、t('租金')、t('大房東報表')。物件列顯示租客名、date_start ~ date_end 與租金（社區列的租客、租期顯示 '-'，只有租金合計）；各列都有 t('下載報表') 連到 bigLandlords.sheet。",
+    "句 3：同上 BigLandlordItemDetail.jsx＋getRent／getRentTotal 用 currencyTool.changer(..., props.roleCurrency) 換算後加總；src/pages/bigLandlords/report/_parts/ListTable.vue＋getCurrency() 取得 role_currency；src/pages/users/advance/Index.jsx＋t('進階設定') 頁的 title={t('結算幣別')} 存的是 role_currency。"
+   ]
+  },
+  {
+   "id": "jgb/B/biglandlord-report-permission",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "02c3802381e26a7a6dbe6798e2d260676c29f5a17ffbc7d1c8b0f9fc182445a6",
+   "title_text": "誰看得到大房東報表？（法人房東與社宅團隊身分，且角色要有「查看大房東報表」權限）",
+   "notes": [
+    "標題：由句 1～3 支撐。",
+    "句 1：app/Role.php＋$addSubItem(... '大房東報表', ... 'show_biglandlord_report', [self::RULE_KEY_LANDLORD_CORPORATE, self::RULE_KEY_LANDLORD_SOCIAL_HOUSING])，掛在 ___('大房東管理') 底下；後段 foreach 會把 config_rule_key 不在 allow_role_key 的 sub 拿掉。",
+    "句 2：同上 app/Role.php＋同一段 foreach 中 $this->is_landlord && $this->is_team && ... && !$currentPermission[$itemSub['permission']] 時拿掉該 sub；app/Http/Controllers/UserController.php＋'g_show_bigLandlord_report' => ['label'=> '查看大房東報表']。",
+    "句 3：app/Http/Controllers/UserController.php＋'g_show_bigLandlord_report' 的 'requires'=> ['g_show_biglandlord']，而 g_show_biglandlord 的 label 是 '查看大房東列表'；resources/views/layouts/lightbox/character-capability-edit.blade.php＋___('開啟條件')。"
+   ]
+  },
+  {
+   "id": "jgb/B/biglandlord-report-community-rate",
+   "title": "成立",
+   "sentences": [
+    "不成立",
+    "成立"
+   ],
+   "content_sha256": "17ff2d6c42459f5a9d5bfa090f37b2f2afd69cac608119cfb559b387484a8794",
+   "title_text": "大房東報表可以依社區細看嗎？（報表清單有「社區」欄，幣別不同時細節頁會顯示匯率）",
+   "notes": [
+    "標題：src/pages/bigLandlords/report/_parts/ListTable.vue＋{ title: t('社區'), key: ColumnKey.community }，「社區」欄確實存在；匯率部分由句 2 支撐。",
+    "句 1：同上 ListTable.vue＋社區欄用 SurelyVueBigLandlordReportContentCell 呈現；src/utils/surelyVue/bigLandlord.ts＋this[ColumnKey.community] = { communities, content: communities.length > 0 ? communities.length.toString() : '' }；src/components/SurelyVue/BigLandlord/ReportContentCell.vue＋{{ props.content || \"-\" }}。這一欄只顯示社區「數量」，點了才 emit communityListOpen 開出社區清單，欄位本身不會顯示所屬的社區。",
+    "句 2：src/pages/bigLandlords/report/_parts/BigLandlordItemDetail.jsx＋只有 result.baseCurrency 與 store.state.siteOptions?.dollarSign 不同時才渲染 CurrencyTip；而且要 !isEmpty(store.state?.currencyRates?.[props.base_currency])，t('匯率') 才會出現在 className=\"hidden lg:block\" 裡（手機版不顯示）；t('所有物件')、t('社區')、t('物件') 三區各有 t('下載報表')（bigLandlords.sheet，依層級分別帶不帶 community_id／estate_id）。"
+   ]
+  }
+ ],
+ "findings": [
+  "成員列表的固定列與資料源不一致（member-list-overview 句 1、句 2，member-assign-owned 句 1）：app/Http/Controllers/UserController.php＋fetchMembers 會把擁有者與登入者從 member_list 移除，另外以 owner／self 回傳，並用沒有 created_at 的物件覆寫兩人的資料。因此 resources/views/users/team/index.blade.php 的人數 member_list.length+1 只在擁有者本人登入時才等於總人數；擁有者與自己那兩列的加入時間永遠空白；鉛筆與 × 圖示也只出現在 member_list 的列。描述成員列表「每一列／每位成員」的細目都會被這兩列打破。",
+  "邀請成員的「尚未成為JGB會員」區塊是死碼（member-invite 句 2）：resources/views/users/team/index.blade.php 的 ___('尚未成為JGB會員') 與 src/store/modules/team/invite.js 的 notMemberList，都要伺服器回傳 is_member=false 才會用到；但 app/Http/Controllers/UserController.php＋case 'accountValidation' 查不到帳號時一律回傳 ___('您輸入的帳號不存在')。拿模板字串當現行提示，會寫錯。",
+  "大房東列表的「生日」「主要聯絡方式」欄是空殼（biglandlord-list-overview 句 2）：src/pages/bigLandlords/list/_parts/ListTable.vue 用 SurelyVueCommonTextBlockCell 綁 { birthday }／{ primary_contact }，但 src/components/SurelyVue/Common/TextBlockCell.vue 只吃 textString，所以兩欄一律顯示「-」。凡是說列表會顯示生日或主要聯絡方式值的細目，都會與畫面衝突。",
+  "名額上限前後兩條路徑不同（member-seat-limit 對照 biglandlord-seat-limit）：成員邀請仍走 users.team，受 isFull 與 PremisesLimitCheck／SubscriptionCheck 管控；大房東新增已改走 /api/bigLandlord（BigLandlordService::createBigLandlord），沒有名額檢查。resources/layouts 裡 subscribedPlanBigLandlordIsFull 的燈箱只對舊的 users.team type 2 路徑有效，而這條路徑現在會被轉到 /bigLandlords/list。兩條細目各自描述的現況都正確，但文件或帳本若沿用『大房東達上限要升級方案』，就會與現行程式衝突。",
+  "同名視窗的標題依模式切換（member-list-role-inline-change 句 2）：resources/views/layouts/lightbox/character-capability-edit.blade.php 的 lightbox id 都是 character--Edit，但畫面標題依 editing.action 顯示「新增角色」或「編輯角色」；從下拉選單的「+ 新增角色」進入時，標題是「新增角色」。"
+ ],
+ "source_transcript": "a3d5bf516baeb33a1.output"
+}

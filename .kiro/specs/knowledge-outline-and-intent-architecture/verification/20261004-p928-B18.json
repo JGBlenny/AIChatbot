@@ -1,0 +1,433 @@
+{
+ "kind": "write",
+ "verdict": "REFUTED",
+ "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+ "claim": "Plan 9.28 批次 B18：25 條細目的標題與每一句已逐句對合法來源核對，逐條結果如 fines",
+ "fines": [
+  {
+   "id": "jgb/E/recharge-account-list-columns",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "de64768529f89958cb0f2ade6e6b9bcf1fca4fa1b6f43e2e3c82004d8f736380",
+   "title_text": "「固定虛擬帳號管理」列表看得到哪些資訊？（虛擬帳號、餘額、歷程一律都有；租客或物件欄位看團隊的固定虛擬帳號模式；有編輯權限時另有操作欄）",
+   "notes": [
+    "標題：每項斷言都有句 1、2、3 支撐，來源為 src/pages/users/rechargeAccountList/Index.vue 的 columns（'共用欄位（永遠顯示）'、'action 欄位（僅在有編輯權限時顯示）'）",
+    "句 1：src/pages/users/rechargeAccountList/Index.vue＋'state.showTenantColumns'、t('租客姓名')、t('物件 ID')、t('虛擬帳號')、t('餘額')、t('歷程')；模式旗標來自 app/Http/Controllers/RechargeAccountListController.php 的 checkPermission（canUseFvaByPerson／canUseFvaByProperty）；擇一出自 app/Http/Controllers/Admin/FeatureConfigController.php＋'模式互斥：以物件為主 / 以人為主 僅能擇一'；後台標籤見 resources/views/admin/feature_configs/fixed_virtual_account_settings.blade.php＋'以人為主'",
+    "句 2：src/pages/users/rechargeAccountList/Index.vue＋'openHistoryLightbox'、t('金額變動歷程')；操作欄最後才 push、桌機時 fixed:'right'（'if (state.canEdit)'）",
+    "句 3：src/pages/users/rechargeAccountList/Index.vue＋'物件欄位（僅在 showEstateColumns 時顯示）'，欄位為 t('物件 ID')、t('案名')、t('地址')",
+    "句 4：app/RechargeAccount.php＋'function recharge'（_addLog 以 increment 加進 recharge_amount_base_number）；src/pages/users/rechargeAccountList/Index.vue＋'餘額必須為大於等於 0 的數字'，新增／編輯皆送 balance；後端 app/Http/Controllers/RechargeAccountListController.php＋''balance' => 'nullable|numeric|min:0''"
+   ]
+  },
+  {
+   "id": "jgb/E/recharge-account-delete",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "abe26a32c1a0db1c978f1020dfc753533f55c9044a8259e25db5104d76eb27cc",
+   "title_text": "固定虛擬帳號要怎麼刪除？（列表操作選單選「刪除」，跳出確認視窗後才會真的刪掉）",
+   "notes": [
+    "標題：由句 1、2 支撐（src/pages/users/rechargeAccountList/Index.vue＋'openDeleteLightbox'、LIGHTBOX_DELETE）",
+    "句 1：src/pages/users/rechargeAccountList/Index.vue＋'column.key === 'action''，DropdownMenu 內 t('編輯')、t('刪除')；action 欄只在 state.canEdit（edit_recharge_account）時加入；後端 app/Http/Controllers/RechargeAccountListController.php＋'checkEditPermission'",
+    "句 2：src/pages/users/rechargeAccountList/Index.vue＋t('刪除虛擬帳號')，視窗顯示 state.activeItem?.tenant_name 與 formatVirtualAccount（銀行簡稱(代碼) 帳號），按鈕 t('取消') 只關窗、t('刪除') 才呼叫 handleDelete",
+    "句 3：src/pages/users/rechargeAccountList/Index.vue＋'window.globalNoticeShow(t('已刪除'))' 後 searchState.fetcher.refetch()；失敗走 globalErrorShow(result?.error?.message)"
+   ]
+  },
+  {
+   "id": "jgb/E/recharge-account-history-content",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "d6f01a8968ad35862bf4df0d9a1a27c906e6955c24707748f66591d375393382",
+   "title_text": "點開「歷程」看得到哪些內容？（每筆金額變動的時間／類型／金額／前後餘額／操作人員，有連結帳單可以點開查看）",
+   "notes": [
+    "標題：由句 1、2 支撐",
+    "句 1：src/pages/users/rechargeAccountList/Index.vue＋t('時間')、t('類型')、t('變動金額')、t('變動前餘額')、t('變動後餘額')、t('操作人員')；資料來自 app/Http/Controllers/RechargeAccountListController.php 的 history（'balance_before'、'operator_name'）",
+    "句 2：src/pages/users/rechargeAccountList/Index.vue＋'log.bill_id ?'、'bi bi-receipt'、表頭 t('帳單')；openBillDetail 以 action:'add' 疊加，註解'疊加開啟該帳單詳細資料（不關閉歷程 lightbox）'",
+    "句 3：src/pages/users/rechargeAccountList/Index.vue＋t('目前尚無歷程記錄')"
+   ]
+  },
+  {
+   "id": "jgb/E/recharge-account-bank-support",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "921cee77fee93873f2c0ea5d3b067595b66ff27d68d5859da12801320fdae8d7",
+   "title_text": "固定虛擬帳號可以選哪些銀行？（聯邦、中國信託有專屬的建號流程，其餘從系統銀行清單選）",
+   "notes": [
+    "標題：由句 1–3 支撐",
+    "句 1：src/pages/users/rechargeAccountList/Index.vue＋'/api3/config/banks'、'placeholder=\"請選擇銀行\"'（銀行下拉來自系統銀行清單）",
+    "句 2：src/pages/users/rechargeAccountList/Index.vue＋'isUbot = computed(() => state.editForm.code === '803')'、註解'啟用「填金額、由系統取號」模式'",
+    "句 3：src/pages/users/rechargeAccountList/Index.vue＋'isCtbc = computed(() => state.editForm.code === '822')'、genCtbcVirtualAccount（僅新增模式）"
+   ]
+  },
+  {
+   "id": "jgb/E/recharge-account-ubot-flow",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "e17b24e31c97bea6185ed8b89d74aa7035dc10a0f3ab194e4ad26382e14987b4",
+   "title_text": "聯邦（803）虛擬帳號怎麼建立？有什麼限制？（金額鎖在帳號裡，租客月租變動要重新建一組）",
+   "notes": [
+    "標題：由句 1–3 支撐",
+    "句 1：src/pages/users/rechargeAccountList/Index.vue＋t('綁定金額')、t('產生帳號')、'請先按「產生帳號」取得虛擬帳號'；後端 app/Http/Controllers/RechargeAccountListController.php＋'聯邦虛擬帳號必須填寫綁定金額'",
+    "句 2：src/pages/users/rechargeAccountList/Index.vue＋'＊聯邦的虛擬帳號會把金額鎖在帳號裡，一組帳號只能收這個金額。租客匯錯金額，銀行在 ATM 當下就會擋下來。'",
+    "句 3：src/pages/users/rechargeAccountList/Index.vue＋'＊之後這位租客的月租如有變動，這組帳號就會失效，必須重新建立一組給他。'"
+   ]
+  },
+  {
+   "id": "jgb/E/recharge-account-ctbc-flow",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "2a6ba6b8fdc05500c92c9eadf0553d9deec15af97bcf98aa84422f8cd938b75a",
+   "title_text": "中國信託（822）虛擬帳號怎麼算出帳號？（填企業識別碼 5 碼與繳款人識別碼 8 碼由系統計算）",
+   "notes": [
+    "標題：由句 1 支撐",
+    "句 1：src/pages/users/rechargeAccountList/Index.vue＋'企業識別碼'（maxlength 5）、'繳款人識別碼'（maxlength 8）、genCtbcVirtualAccount；顯示條件 '!state.activeItem && isCtbc.value'（編輯時不出現）"
+   ]
+  },
+  {
+   "id": "jgb/E/recharge-account-immutable",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "db4ae4dce5308d1f1341fab351a89be2d536895bbb07ad1e28cebddc6f3e418f",
+   "title_text": "虛擬帳號建立後，銀行跟帳號可以改嗎？（不行，銀行跟帳號建立後不能改；可以改餘額，以及依團隊模式改租客資料或綁定物件）",
+   "notes": [
+    "標題：由句 1、2 支撐",
+    "句 1：src/pages/users/rechargeAccountList/Index.vue＋'state.activeItem ?' 時銀行與 t('固定式虛擬帳號') 皆為 'cursor-not-allowed' 唯讀 div；後端 app/Http/Controllers/RechargeAccountListController.php＋'code/account 是帳號身份識別，建立後不可修改'",
+    "句 2：src/pages/users/rechargeAccountList/Index.vue＋handleEdit payload（tenant_name/email/phone、balance，showEstateColumns 時 estate_id）；租客欄位只在 showTenantColumns、物件欄位只在 showEstateColumns 顯示",
+    "句 3：src/pages/users/rechargeAccountList/Index.vue＋'租客欄位 — 僅在 showTenantColumns 時顯示'；後端 update 接受 tenant_name/tenant_email/tenant_phone 直接更新",
+    "句 4：src/pages/users/rechargeAccountList/Index.vue＋'＊銀行與帳號建立後不可修改，如需變更請刪除後重新建立。'（引號內文字逐字存在）"
+   ]
+  },
+  {
+   "id": "jgb/E/recharge-account-estate-binding-validation",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "d32bd56ca942e6e7fc0318c3a410d1b442946d773ec9ac496331b3879feab980",
+   "title_text": "虛擬帳號綁定物件時，輸入物件 ID 有什麼驗證？",
+   "notes": [
+    "標題：問句，由句 1–4 回答",
+    "句 1：src/pages/users/rechargeAccountList/Index.vue＋'handleEstateIdInput'，parseInt 為 NaN 時 t('請輸入有效的物件 ID')",
+    "句 2：src/pages/users/rechargeAccountList/Index.vue＋'validateEstateId' 失敗時 t('物件不存在或不屬於此團隊')；後端 app/Http/Controllers/RechargeAccountListController.php＋'getEstate'（$role->estates() 找不到回同訊息）；成功才設 estatePreview",
+    "句 3：src/pages/users/rechargeAccountList/Index.vue＋t('案名')、t('地址') 預覽；未確認時 isSaveDisabled 擋送出",
+    "句 4：src/pages/users/rechargeAccountList/Index.vue＋t('選擇物件')、'sessionStorage.setItem(EDIT_FORM_BACKUP_KEY'、'estates.pick'；返回時讀 'picked_estate_id' 帶回；src/pages/estates/pick/_parts/pick.jsx＋'picked_estate_id'；挑選頁有搜尋 src/pages/estates/pick/_parts/SearchSortBlock.vue＋'搜尋物件名稱、物件地址'"
+   ]
+  },
+  {
+   "id": "jgb/E/recharge-account-export",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "d097039e84c089cc15fb0e1844fa3a66b86b7bd7fb6d235c0d8c611573d2bb3e",
+   "title_text": "「固定虛擬帳號管理」的「報表匯出」匯出什麼？（指定日期區間內租客匯入的入帳明細 Excel）",
+   "notes": [
+    "標題：由句 1、2 支撐",
+    "句 1：src/pages/users/rechargeAccountList/Index.vue＋t('起始日期')、t('結束日期')、'請選擇日期區間'、'起始日期不可晚於結束日期'；後端 app/Http/Controllers/RechargeAccountListController.php＋'after_or_equal:date_start'",
+    "句 2：app/Http/Controllers/RechargeAccountListController.php＋'function export'、''log_code', 200'（租客匯入）、'固定虛擬帳號匯入明細_'、'.xlsx'；src/pages/users/rechargeAccountList/Index.vue 檔名同樣帶起訖日期",
+    "句 3：src/pages/users/rechargeAccountList/Index.vue＋'openExportLightbox'，date_start: firstDayOfMonthYmd()、date_end: todayYmd()"
+   ]
+  },
+  {
+   "id": "jgb/E/recharge-account-daily-settlement",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "2c5638771563d9698ab52d95f3f940f42d52fe8c989a39881ecbc5e8d9c60a7d",
+   "title_text": "固定虛擬帳號的入帳是怎麼自動比對到帳單的？（入金當下即時銷帳，另有每日凌晨 03:00 排程再比對；限特定合作團隊；餘額不夠不會變成已到帳）",
+   "notes": [
+    "標題：由句 1–3 支撐",
+    "句 1：app/RechargeAccount.php＋'入金成功即時觸發帳單自動銷賬'、'settleReadyBills'（BILL_READY 移轉 complete 已到帳）；app/Console/Kernel.php＋'bill:recharge-account')->dailyAt(\"03:00\")'；app/Console/Commands/BillRechargeAccount.php 同用 settleReadyBills",
+    "句 2：app/Console/Commands/BillRechargeAccount.php＋'autoReconcileRechargeAccountRoleIds'（白名單為空即 return）；app/RechargeAccount.php＋'whereIn(\"bills.owner_role_id\", $allowlists)'；白名單取自後台 feature_configs.recharge_account（特定合作團隊）",
+    "句 3：app/RechargeAccount.php＋'餘額不足以支付「這一張」時只跳過該張'；app/Console/Commands/BillRechargeAccount.php＋'儲值金不夠的帳單就停在待繳款'、'不限制應到帳日期'；app/Bill.php＋'BILL_READY = 2;           // 狀態 2：應到帳/待繳費'"
+   ]
+  },
+  {
+   "id": "jgb/E/recharge-account-refund-excluded",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "b8a09795292bb403a493402bc5161c5e9f293bc628bbb675ffc3daf76f21c44d",
+   "title_text": "退押金這類要付給租客的帳單，也走固定虛擬帳號嗎？（不會，顯示的是租客本人的收款帳戶）",
+   "notes": [
+    "標題：由句 1 支撐",
+    "句 1：docs/knowledge/jgb-product-facts.md＋'p914-refund-bill-account'（'收款方為租客的支出帳單（如退押金）顯示租客本人的收款銀行帳戶，不使用固定虛擬帳號'）；與 app/RechargeAccount.php＋'退款方向(房東退錢給租客)的帳單一律跳過' 一致"
+   ]
+  },
+  {
+   "id": "jgb/E/recharge-account-vs-single-use-atm",
+   "title": "成立",
+   "sentences": [
+    "不成立"
+   ],
+   "content_sha256": "d8d48ae776a474b11356a02f885d951c4ff5e67b2d1791b596eeecd863189e50",
+   "title_text": "「固定虛擬帳號管理」跟租客線上繳費產生的 ATM 虛擬帳號是同一種嗎？（不是，ATM 那組是單筆繳費用、效期 180 天）",
+   "notes": [
+    "標題：docs/knowledge/jgb-product-facts.md＋'p914-newebpay-atm-expiry'（單筆取號、180 天、與固定虛擬帳號不同）支撐標題各斷言",
+    "句 1：不成立。斷言「要手動建立的固定帳號」：routes/api.php＋'External\\RechargeAccountApiController@store'（註解'匯入虛擬帳號資料'）與 app/Http/Controllers/External/RechargeAccountApiController.php＋'storeWithTenant' 顯示固定虛擬帳號也可由對外 API 匯入建立，不只手動；另「過期後要重新走一次繳費流程才會再產生新的一組」在 docs/knowledge/jgb-product-facts.md 的 p914-newebpay-atm-expiry 條沒有寫，查無支撐。180 天部分成立（app/Http/Controllers/BillController.php＋''addExpireDays' => 180'）"
+   ]
+  },
+  {
+   "id": "jgb/E/recharge-account-mismatch-and-duplicate",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "f6b0590f05d155615c92cf1b896e22dde07e66fa50c2be1242b21529a5fab615",
+   "title_text": "租客重複匯款時系統怎麼處理？（國泰世華單筆帳單 ATM 帳號已付款後重複匯入會略過；固定虛擬帳號多匯的部分留在儲值餘額）",
+   "notes": [
+    "標題：由句 1、2 支撐",
+    "句 1：app/Payment.php＋'該匯款帳號入金資訊已經處理過'、':該訂單已被處理'（payment_completed_at 有值即 continue）；docs/knowledge/jgb-product-facts.md＋'p914-duplicate-remittance'",
+    "句 2：app/RechargeAccount.php＋'autoReconcileRechargeAccountRoleIds'（白名單外不 settleReadyBills），餘額留存；docs/knowledge/jgb-product-facts.md＋'多匯的部分留作餘額抵扣後續帳單'",
+    "句 3：app/Payment.php＋'儲值歷程已有本筆指紋，不重複儲值'；app/Services/Payment/SinopacVaNotifyService.php＋'LOG_MARKER_PREFIX'（log_message 指紋比對）"
+   ]
+  },
+  {
+   "id": "jgb/E/recharge-account-regenerate-expired",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "26be3714750709f276931226b767fc035c8a40dd4ef9c09d206992b8de9db41b",
+   "title_text": "逾期的虛擬帳號能不能重新產生？（此操作需由 JGB 客服協助，業者端沒有自助入口）",
+   "notes": [
+    "標題：由句 1 支撐",
+    "句 1：review-sheet-9.15-S2-DE-20260927.md＋'| 93 | G6 | 採用：寫「此操作需由 JGB 客服協助」'；src/pages/users/rechargeAccountList/Index.vue 只有 t('新增')、t('編輯')、t('刪除')、t('報表匯出') 入口（正對照皆命中），無重新產生入口"
+   ]
+  },
+  {
+   "id": "jgb/E/payment-gateway-options",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "fd2bb0165b08b9c8caf9cefca1e739ffbdd355666d6cf18cf85a949cc7abb358",
+   "title_text": "JGB 支援哪些收款金流？身分限制是什麼？（國泰世華／永豐銀行／中國信託／藍新／愛金卡；個人房東不能開通藍新、國泰世華、永豐銀行）",
+   "notes": [
+    "標題：由句 1、2 支撐",
+    "句 1：app/Payment.php＋'function manufacturerActionLists'（newebpay 藍新、cathaybk 國泰、sinopac 永豐、ctbc 中信、icashpay 愛金卡）；另有一個只開放給特定合作團隊的金流，app/Http/Controllers/UserController.php 的 getPaymentSupportedVendors 對其他團隊移除，一般業者看不到",
+    "句 2：app/Http/Controllers/UserController.php＋'RULE_KEY_LANDLORD_INDIVIDUAL'＋'PAYMENT_NEWEBPAY, Payment::PAYMENT_CATHAYBK, Payment::PAYMENT_SINOPAC'＋'您無法開通此收款方式，若有問題請洽詢JGB客服'；免費／體驗方案停用國泰、永豐（'免費方案', '體驗方案'）。paymentapply_zh-Hant.html 寫藍新「法人與個人」可申請，與程式衝突，依判定規則 5 以程式為準",
+    "句 3：paymentapply_zh-Hant.html＋'中國信託的租客必須有中信帳戶，並透過中信 APP 繳費'"
+   ]
+  },
+  {
+   "id": "jgb/E/payment-gateway-fees",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "a016b2fad70205062a8e035d07389bddd7aeec7e22d74fbf7e6f9e8d11b09e04",
+   "title_text": "各家收款金流的申請費用跟入帳帳戶限制是什麼？（國泰世華／永豐銀行首次設定費 5,000 元且限本行帳戶；中國信託／藍新線上申請不收申請費、可指定任一實體帳戶）",
+   "notes": [
+    "標題：由句 1、2 支撐",
+    "句 1：paymentapply_zh-Hant.html＋'自行向銀行申請，首次設定費 5,000 元'、'於 JGB 系統線上申請，免費'",
+    "句 2：paymentapply_zh-Hant.html＋'僅能匯入國泰世華的實體帳戶'、'僅能匯入永豐銀行的實體帳戶'、'任一指定實體帳戶'",
+    "句 3：paymentapply_zh-Hant.html＋'藍新的款項會先留在藍新帳戶中，需自行登入藍新後台辦理提款，前 5 次免費，之後每次收取 10 元。'",
+    "句 4：src/pages/users/payment/_parts/Newebpay.vue＋'費率以藍新科技股份有限公司本服務會員系統公告為依據。'（使用條款「交易手續費」節）"
+   ]
+  },
+  {
+   "id": "jgb/E/newebpay-precondition",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "3263e5a805979f063d4f4faa71c973fe82e96cedfa31737bcf0010ab17857421",
+   "title_text": "開通藍新智付通前要準備什麼？（申請表要自填 09 開頭的台灣手機號碼）",
+   "notes": [
+    "標題：由句 1 支撐",
+    "句 1：app/Http/Controllers/UserController.php＋'管理者手機號碼改為申請當下自行填寫'、'故不再檢查帳號上原本綁定的手機號碼與其國別'、''phone' => ['required', 'regex:/^09[0-9]{8}$/']'；src/pages/users/payment/_parts/Newebpay.vue＋'請填寫09開頭共10碼的手機號碼'"
+   ]
+  },
+  {
+   "id": "jgb/C/public-page-purpose-redirect",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "不成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "3db935a08ead4adbdb5192f2a50dfe20f5fc687f93ac8b5b4f564859016680d9",
+   "title_text": "招募頁網址沒帶物件用途時會怎樣？",
+   "notes": [
+    "標題：問句本身無斷言（但回答它的句 2 不成立）",
+    "句 1：src/routes/users.js＋'/p/:encryptId?/:mode?/:premisesUseFor?'、'/p/recruitment/{slug}/{premisesUseFor?}'、'一般團隊頁面：/p/{encryptId}/{mode}/{premisesUseFor}'（mode 為 rent／sell）",
+    "句 2：不成立。src/routes/users.js＋'premisesUseFor: 'residential''：兩種頁面缺用途時都補上 residential；src/use/config/useEstateUseFor.js＋'key: 'residential','、label t('住宅')（商用是 'business'）。實際補的是「住宅」，不是「商用」；後端 app/Http/Controllers/UserController.php＋'$actualPremisesUseFor = $premisesUseFor ?: 'residential''同樣是住宅",
+    "句 3：app/Http/Controllers/UserController.php＋'getRecruitmentPageEstates'、''mode' => 'rent',  // 確保 mode 參數正確傳遞'；src/pages/users/public/Index.vue＋'mode={route.params.encryptId === 'recruitment' ? 'rent' : route.params.mode}'",
+    "句 4：src/pages/users/public/Index.vue＋'招租頁面在 TopFilter.vue 中不會載入 community 模組'（recruitment 回 list: []）；src/pages/users/public/_parts/TopFilter.vue＋'groupLabel: t('社區')' 只在 communityOptions 非空時加入",
+    "句 5：src/pages/users/public/Index.vue＋'(route.params.encryptId === 'recruitment' ? 10 : 30)'、'options={route.params.encryptId === 'recruitment' ? [10, 30, 60, 90] : [30, 60, 90]}'"
+   ]
+  },
+  {
+   "id": "jgb/E/newebpay-required-fields",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "不成立",
+    "不成立"
+   ],
+   "content_sha256": "84dbcd929e40feee745827ce178c198040360fdeb43fa2e4a3ee84aa86996eec",
+   "title_text": "開通藍新智付通前，團隊要先填完哪些資料？（個人房東不能開通藍新）",
+   "notes": [
+    "標題：問句，括號斷言由句 1 支撐",
+    "句 1：app/Http/Controllers/UserController.php＋'getPaymentSupportedVendors'＋'RULE_KEY_LANDLORD_INDIVIDUAL'＋'您無法開通此收款方式，若有問題請洽詢JGB客服'；src/pages/users/payment/routerView/Add.vue＋'state.bankSelected.disabled'，選到時只顯示 bankSelected.message",
+    "句 2：不成立。app/Http/Controllers/UserController.php 的 getPaymentVendor POST 藍新分支，團隊 needsToFills 為 'company_id_number'、'company_name'、'company_city_id'、'company_district_id'、'company_address'，但缺資料時的 switch 只有 'case Role::RULE_KEY_LANDLORD_CORPORATE:' 回 ''redirect' => route('users.role')'；社會住宅團隊（RULE_KEY_LANDLORD_SOCIAL_HOUSING）不會被導回團隊頁，而是往下跑 Validator 回錯誤訊息。所以「團隊帳號沒填完會被導回團隊頁面」漏了社會住宅這個例外。手機與 Email 的部分成立（''roles-users' => []'、'手機號碼與Email改由申請表單自行填寫'）",
+    "句 3：不成立。同上，app/Http/Controllers/UserController.php 只有一般法人（RULE_KEY_LANDLORD_CORPORATE）會帶 redirect 與缺漏清單（src/mixin/methods.js＋'status-error' 帶 message 跳轉）；社會住宅團隊不會導回團隊頁"
+   ]
+  },
+  {
+   "id": "jgb/E/newebpay-payment-methods",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "ab33e11b6be35204284cbe3dd01fa1bd29e701f353a2b61245e815e675edc09b",
+   "title_text": "藍新開通時有哪些付款方式？（信用卡／Google Pay／Samsung Pay／ATM／超商代碼送出時都會開啟；國外卡要另外申請）",
+   "notes": [
+    "標題：由句 1、4 支撐",
+    "句 1：app/Http/Controllers/UserController.php 的 getPaymentVendor＋'$paymentMethods = ['（五種 'enabled' => true，國外卡 false，超商條碼 true）；src/pages/users/payment/_parts/Newebpay.vue＋'!['cvs_barcode', 'foreign_card'].includes(node.name)' 過濾後顯示五種；勾選框 '<input type=\"checkbox\"' 沒有綁定 vModel，送出的是 vendorForm.paymentMethods 原值；POST 端 '$requestData[$paymentMethod['name']] = (($paymentMethod['enabled'] === \"true\") ? 1 : 0)'（src/mixin/methods.js 的 jsonToFormData 把 true 送成 'true'），五種送出時都是開啟",
+    "句 2：src/pages/users/payment/_parts/Newebpay.vue＋'filterPaymentMethods'（排除 foreign_card）",
+    "句 3：app/Http/Controllers/UserController.php＋'付款金額有 TWD30 ~ TWD 20,000 的限制。'（超商代碼的 tip，Newebpay.vue 以 Tooltip 顯示 paymentMethod.tip）",
+    "句 4：app/Http/Controllers/UserController.php＋'後續將須透過JGB向藍新金流申請開通，耗時約5-7工作天'（國外卡 tip 字串；這個選項目前在畫面被過濾，提示本身不會顯示，但內容與句意一致）"
+   ]
+  },
+  {
+   "id": "jgb/E/ctbc-apply-flow",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "3c5e36e5e7c80f953be4522d187750817e7bd29f11b606e1763cb280344c31e3",
+   "title_text": "中國信託收款怎麼申請？（中信轉帳 Pay 填資料送審，ACH 驗證約 5 個工作天；中信虛擬帳號填 5 碼企業代碼即可，個人房東不能開通）",
+   "notes": [
+    "標題：由句 1、2、4 支撐",
+    "句 1：src/pages/users/payment/_parts/Ctbc.vue＋achFieldKeys 'id_number'、'phone_number'、'bank_code'、'bank_account_name'、'bank_account'，標籤 t('身分證字號') + '/' + t('統一編號')、t('聯絡電話')、t('銀行代碼與名稱')、t('戶名')、t('銀行帳號')，區塊 t('收款帳戶資訊')",
+    "句 2：src/pages/users/payment/_parts/Ctbc.vue＋'送審後會由 JGB Smart 進行 ACH 驗證並撥款 1 元到收款帳號，審核時間需 5 個工作天(不含例假日)'；app/Http/Controllers/UserController.php＋'ach_verified' => 0",
+    "句 3：app/Http/Controllers/UserController.php＋'implode(', ', $validator->errors()->all())'，經 src/mixin/methods.js＋'window.globalErrorShow(res.message)' 顯示",
+    "句 4：app/Http/Controllers/UserController.php＋''ctbc_atm_prefix' = 'required|numeric|digits:5''，ATM 分支直接設 ''ach_verified' => 1, 'account_enabled' => 1''；個人房東 '$payment['ctbc_atm']['active'] = false'；src/pages/users/payment/_parts/Ctbc.vue＋t('您無法開通此收款方式，若有問題請洽詢JGB客服。')"
+   ]
+  },
+  {
+   "id": "jgb/E/ctbc-form-validation",
+   "title": "不成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "不成立"
+   ],
+   "content_sha256": "b40758bec9deac39a4eced01f5a0ebafb06399adb355defb583018182fd05e6d",
+   "title_text": "中國信託申請表單各欄位有什麼格式限制？（聯絡電話 10 碼、銀行代碼 3 碼、銀行帳號 10～16 碼）",
+   "notes": [
+    "標題：不成立。括號裡的「銀行帳號 10～16 碼」依據的句 3 不成立",
+    "句 1：app/Http/Controllers/UserController.php＋''phone_number' = 'required|digits:10''；src/pages/users/payment/_parts/Ctbc.vue 聯絡電話 'maxLength=\"10\"'＋pureNumber",
+    "句 2：app/Http/Controllers/UserController.php＋''bank_code' = 'required|digits:3''",
+    "句 3：不成立。後端 app/Http/Controllers/UserController.php 是 ''bank_account' = 'required|digits_between:10,16''，也有 'str_pad($requestData['bank_account'], 16, '0', STR_PAD_LEFT)'；但現行畫面 src/pages/users/payment/_parts/Ctbc.vue 的銀行帳號輸入框是 'maxLength=\"14\"'，使用者最多只能填 14 碼，「可以輸入 10 到 16 碼」在畫面上不成立"
+   ]
+  },
+  {
+   "id": "jgb/E/payment-gateway-withdrawal",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "c2d8683fa8b15682b788cd7d943244bb50dc83c7329dc00b97af84f7340ee019",
+   "title_text": "各家金流的款項要怎麼提領？（藍新要自己登入後台辦理，前 5 次免費之後每次 10 元）",
+   "notes": [
+    "標題：由句 1 支撐",
+    "句 1：paymentapply_zh-Hant.html＋'需自行登入藍新後台辦理提款，前 5 次免費，之後每次收取 10 元'",
+    "句 2：paymentapply_zh-Hant.html＋'需自行登入藍新後台辦理提款'（提款在藍新後台，不在 JGB 系統）",
+    "句 3：review-sheet-9.15-S2-DE-20260927.md＋'| 47 | G5 | 改寫：業主未提供提領方式與工作天數字 ⇒ 寫「請洽客服」'；paymentapply_zh-Hant.html＋'待業務提供後補寫'"
+   ]
+  },
+  {
+   "id": "jgb/E/payment-onboarding-tax-risk",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "bb874ca367af5f30953ea7cb9ba7ad30e682ab52b69a1c81a09fa77dae54820e",
+   "title_text": "線上金流收款會不會有稅務申報風險？（屬稅捐機關與業者自身規劃，系統不判斷）",
+   "notes": [
+    "標題：由句 1 支撐",
+    "句 1：review-sheet-9.15-S2-DE-20260927.md＋'| 102 | G8 | 採用：寫系統側事實＋「屬外部規定，系統不判斷」'（G8 列 '102 稅務'），句意與裁決一致"
+   ]
+  },
+  {
+   "id": "jgb/E/cash-payment-account-management",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "3e524a5b0bd2bf7619349ffecc10fd7704b1a21cd5a1b7f15abaa838704d2f9b",
+   "title_text": "「現金收款帳戶」怎麼管理？（可以新增、編輯、移除；需要收款設置編輯權限）",
+   "notes": [
+    "標題：由句 1、2 支撐",
+    "句 1：src/pages/users/payment/_parts/CashBanks.vue＋t('現金收款帳戶')、'於編輯每份合約時將會自動帶入合約的收款訊息'、t('新增現金帳戶')；按鈕在 '!hasEditRolePaymentPermission' 時加 'disabled'（edit_role_payment）；src/pages/users/payment/routerView/Index.vue 引用 CashBanks",
+    "句 2：src/pages/users/payment/_parts/CashBanks.vue＋t('編輯帳戶')、t('移除帳戶')；src/components/Lightbox/PaymentCashBanksDelete.vue＋'刪除帳戶後，未來將無法在簽約時選擇此帳戶作為收款帳戶，但不會影響過去已成立的合約。'，按 t('刪除') 才送 DELETE"
+   ]
+  }
+ ],
+ "findings": [
+  "幫助中心 paymentapply_zh-Hant.html 寫藍新 NewebPay「法人與個人」都可申請，也寫「若您是個人房東，目前可以選擇的是中國信託與藍新」；但現行程式 app/Http/Controllers/UserController.php 的 getPaymentSupportedVendors 對個人房東（RULE_KEY_LANDLORD_INDIVIDUAL）停用藍新。jgb/E/payment-gateway-options 與 jgb/E/newebpay-required-fields 已依程式寫；幫助中心這一段需要列入文件待修",
+  "jgb/C/public-page-purpose-redirect 句 2 說缺用途時補「商用」，但 src/routes/users.js 與 app/Http/Controllers/UserController.php 補的都是 residential（住宅），要改句",
+  "jgb/E/ctbc-form-validation：中信銀行帳號後端接受 10～16 碼並補 0 到 16 碼，但畫面 src/pages/users/payment/_parts/Ctbc.vue 的輸入框 maxLength 是 14，前後端不一致；細目照後端寫成 16 碼與畫面不符。藍新表單 src/pages/users/payment/_parts/Newebpay.vue 也是 maxLength 14，與後端 'digits_between:10,14' 一致",
+  "jgb/E/newebpay-required-fields：社會住宅團隊缺公司資料時不會導回團隊頁（程式只對一般法人回 redirect），句 2、3 漏了這個例外；另外句 3 和句 2 內容重複，開頭「團隊帳號則是」也沒有可以對照的前句",
+  "jgb/E/recharge-account-vs-single-use-atm：固定虛擬帳號除了頁面手動新增，也能經對外 API（routes/api.php 'api.external.recharge-accounts.store'）匯入，「要手動建立」不正確；「過期後要重新走繳費流程產生新的一組」在帳本條目裡查無支撐",
+  "jgb/E/payment-gateway-options 句 1 列舉的金流沒有包含只開放給特定合作團隊的那個金流（app/Payment.php 的 manufacturerActionLists 有、getPaymentSupportedVendors 對其他團隊移除）；對一般業者成立，這裡只當作提醒",
+  "jgb/E/payment-gateway-withdrawal 句 1 與 jgb/E/payment-gateway-fees 句 3 內容幾乎一樣（藍新提款前 5 次免費、之後每次 10 元），兩條細目重複"
+ ],
+ "source_transcript": "ae3363f0a333953dc.output"
+}

@@ -1,0 +1,277 @@
+{
+ "kind": "write",
+ "verdict": "REFUTED",
+ "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+ "claim": "Plan 9.28 批次 B20：15 條細目的標題與每一句已逐句對合法來源核對，逐條結果如 fines",
+ "fines": [
+  {
+   "id": "jgb/F/repair-edit-progress-timeline",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "8502b99b921efda0d363bf97da14e6517322d1454aace2884723790f35cd2960",
+   "title_text": "修繕單細節頁的進度時間軸顯示什麼？（申請修繕、安排修繕、完成修繕、結單、封存五個階段，以及各階段對應的日期）",
+   "notes": [
+    "標題：src/pages/repair/edit/Index.vue 的 progressConfig 依序列出 申請修繕／安排修繕／完成修繕／結單／封存 五項，各帶 value 日期，由句 1、句 2 支撐。",
+    "句 1：src/pages/repair/edit/Index.vue＋'修繕進度' 標題與列印列之後即為 class='timeline' 區塊；progressConfig 五個 labelKey 依序；圓點以 'Number(index) + 1 === state.progress' 加外圈光暈標示目前階段。",
+    "句 2：同上 progressConfig：申請修繕 value=state.apply_date，安排修繕=state.assign_logs?.[0]（第一筆）的 assign_date＋assign_time，完成修繕=state.complete_note 的 complete_date＋complete_time（房東備註完成時間），結單=finish_date、封存=archive_date；app/Http/Controllers/RepairController.php＋'apply_at' => date('YmdHis')（建立時寫入）、assign_data 以 array_push 追加故 [0] 為最早一筆、'finish_date' => !empty($repair->finish_at)、case 'repair.finish' 時 $repair->finish_at = $now、case 'repair.archive' 時 $repair->archive_at = $now。",
+    "句 3：src/pages/repair/edit/Index.vue＋'完成修繕' 的 value 只取 complete_note，與 progress 無關，故未到該階段也會顯示日期；app/Http/Controllers/RepairController.php＋case 'move'（src/pages/repair/_parts/ListItem.vue 的 icon-setting 選單與 src/pages/repair/list/Index.vue 的 handleChangeRepairStatus 皆呼叫 /api2/repairItem/move/）只設定新狀態時間、不清 finish_at／archive_at，且讀取時 'finish_date' => !empty($repair->finish_at) 不檢查狀態，故舊的結單、封存時間仍顯示。",
+    "句 4：src/pages/repair/edit/Index.vue＋onMounted 內 if (isEmpty(route.params?.id)) router.push({ name: 'repair.apply' })；src/routes/repairs.js＋name: 'repair.apply' 的 labelKey: '申請修繕'，path '/repair/edit/:id?' 允許不帶編號。"
+   ]
+  },
+  {
+   "id": "jgb/F/repair-edit-print",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "f685133bff9e84ef976f3bae004beccac051743076e3144741246168be22a582",
+   "title_text": "修繕單細節頁怎麼列印？（右上角有「列印」按鈕，會叫出瀏覽器內建的列印視窗，可以印出來或存成 PDF）",
+   "notes": [
+    "標題：由句 1、句 2 支撐（src/pages/repair/edit/Index.vue 的 '列印' 按鈕與 window.print()）。",
+    "句 1：src/pages/repair/edit/Index.vue＋{{ t('列印') }} 位於 '修繕進度' 標題列右側 col-auto，@click='handleClickPrint'；另有 @media print 樣式處理列印版面。",
+    "句 2：同上 handleClickPrint 內 window.print()，即呼叫瀏覽器原生列印對話框（印表機或另存 PDF 為瀏覽器列印對話框的目的地選項，程式本身未另做 PDF 產生）。"
+   ]
+  },
+  {
+   "id": "jgb/F/repair-edit-switch-status",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "7dc7dd25c9187ad2dd6767d4486aac54da217052a1eb9c7c342324bb585abdbd",
+   "title_text": "修繕單細節頁怎麼切換狀態？（下拉選單直接選要換到哪個階段，按「變更」儲存）",
+   "notes": [
+    "標題：由句 1、句 3 支撐。",
+    "句 1：src/pages/repair/edit/Index.vue＋v-if='canEditRepair' 區塊內 t('切換狀態')、t('房東可根據實務狀況隨時切換修繕單的狀態。')、select-picker 選項為五階段、按鈕 t('變更') 呼叫 modifyData(state.tempForm)；canEditRepair = !isTenant && !state.is_big_landlord && (edit_repair || edit_owner_repair)。",
+    "句 2：同上 canEditRepair 計算式排除 isTenant 與 is_big_landlord，且需 edit_repair 或 edit_owner_repair 權限。",
+    "句 3：同上 handleProgressChange 只寫入 state.tempForm.progress，真正送出 /api2/repairItem/modify/ 只在點 '變更' 的 @click 時發生。"
+   ]
+  },
+  {
+   "id": "jgb/F/repair-edit-cannot-edit-roles",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "7a990f446437400d91224a34d12bec8f0b9f75761fc2107c43c238b7652efc18",
+   "title_text": "誰不能編輯修繕單細節頁？（租客帳號、大房東角色不能切換狀態、不能改廠商資訊、不能寫房東備註；租客只能編輯自己的房客備註）",
+   "notes": [
+    "標題：由句 1～句 3 支撐。",
+    "句 1：src/pages/repair/edit/Index.vue＋canEditRepair 排除 isTenant 與 is_big_landlord，同一值控制 '切換狀態' 區塊、VendorContactSection 的 :canEditRepair、房東備註 MemoArea 的 :isAllowedEdit；房客備註 MemoArea :isAllowedEdit='!state.tenantMemoEditing && isTenant'，只有租客可編輯。",
+    "句 2：同上 canEditRepair 需 permission.edit_repair 或 edit_owner_repair 且非大房東；app/Http/Controllers/UserController.php＋'g_edit_owner_repair' 的 label '新增&編輯&刪除所屬修繕資料'、'g_edit_repair' 的 label '新增&編輯&刪除所有修繕資料'；app/Http/Controllers/RepairController.php＋'該身份沒有編輯權限'（$isBigLandlord || (!$editOwnerRepair && !$editRepair) 時擋下）。",
+    "句 3：src/pages/repair/edit/_parts/VendorContactSection.vue＋編輯圖示 icon_edit_blue.svg 的 v-if='!state.isTenant && !props.isBigLandlord && props?.canEditRepair'。"
+   ]
+  },
+  {
+   "id": "jgb/C/ledger-required-fields",
+   "title": "成立",
+   "sentences": [
+    "不成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "0c1c7c6fe81b8a2a111b440afb424193913a8c53e566146320f55e3560485bc3",
+   "title_text": "房東流水帳哪些欄位必填？",
+   "notes": [
+    "標題：純提問，無獨立斷言；src/pages/estates/dashboard/runnings/_parts/PageTop.vue＋t('房東流水帳') 確認名稱為現行介面字樣。",
+    "句 1：app/Http/Controllers/EstateController.php＋case 'add_bill_running' 的 Validator 規則只有 'date' => 'required'、'fee_type' => 'required'、'currencySelected' => 'required'、'price' => 'required|gte:0'，note 與 target_name 不在規則內且 $note = !empty($requestData['note']) ? ... : null 允許空值；src/pages/estates/dashboard/runnings/_parts/LedgerContainer.vue 的 說明／對象 input 也沒有必填檢查。前半（時間、費用類別、幣別、金額必填）成立，但「說明與對象都是必填」與程式不符：兩者可留空。",
+    "句 2：src/pages/estates/dashboard/runnings/_parts/LedgerContainer.vue＋restrictions: maxFileSize: 10 * 1024 * 1024、allowedFileTypes: ['image/*', '.pdf']、maxNumberOfFiles: 3 - (props.form?.attachments?.length || 0)；src/pages/estates/dashboard/runnings/Index.vue＋const MAX_FILES = 3。",
+    "句 3：app/Http/Controllers/EstateController.php＋add_bill_running 開頭 if (!$hasEditPermission) 回傳 'message' => ___('權限不足！')，$hasEditPermission 由 $estate->hasPermission($this->user, 'edit_estate') 等物件權限決定；src/mixin/methods.js＋ajaxResRedirection 在 res.message 且 success 為 false 時 window.globalErrorShow(res.message) 顯示。",
+    "句 4：app/Http/Controllers/EstateController.php＋case 'add_memo' 註解 'date required；note / target_name 皆可空'，Validator 只有 'date' => 'required'；src/pages/estates/dashboard/memos/_parts/MemoContainer.vue＋maxFileSize: 10 * 1024 * 1024、maxNumberOfFiles: 3 - ...，formConfig 只有 時間／說明／對象，無費用欄位；src/pages/estates/dashboard/memos/_parts/PageTop.vue＋t('物件記事本')。"
+   ]
+  },
+  {
+   "id": "jgb/F/repair-edit-application-detail-readonly",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "3c3d92326143e61bf4c6c1c19d334ba7968c09c506f76409e093639a3d9b6cc7",
+   "title_text": "修繕單細節頁顯示哪些報修時填的資料？（「細節補充」區塊底下：申請日期、是否緊急、照片、聯絡電話或 Email、物件區域與時區、分類項目、問題、備註、預約時段；房東方才看得到「細節補充」這個標題與說明文字）",
+   "notes": [
+    "標題：src/pages/repair/edit/_parts/ApplicationDetail.vue 依序顯示 apply_date、緊急標籤、EditPhotos、電話／Email、物件區域、物件時區、分類、問題、備註、預約時段；'細節補充' 標題僅 !isTenant 顯示，由句 1～句 4 支撐。",
+    "句 1：src/pages/repair/edit/Index.vue＋<div v-if='!isTenant'> 內 t('細節補充') 與 t('以下資訊房東可根據實務狀況補充填寫，如有提供，您的租客也會看到您提供的資訊。')，其後依序為 ApplicationDetail 與 VendorContactSection（再之後才是 '完成修繕'）；ApplicationDetail 本身無角色條件，租客也會看到。",
+    "句 2：src/pages/repair/edit/_parts/ApplicationDetail.vue＋t('物件區域')、t('物件時區')、t('分類')（category + ', ' + repair_item_name）、t('問題')、t('備註')、t('預約時段') 皆為純文字 div，無 input，故唯讀。",
+    "句 3：src/pages/repair/edit/_parts/ApplicationDetail.vue＋is_company 為真顯示 t('公司電話')／t('公司Email')，否則 t('手機號碼')／t('Email')；app/Http/Controllers/RepairController.php＋註解 '電話＆email（根據該修繕單的對應房東身份＆使用者）'，case 2 取 $repairUser->phone／email，case 3 取 $repairRole->company_phone／company_email，'is_company' => ($repairRole->config_rule_key === 3)，$repairUser = $repair->user、$repairRole = $repair->role（修繕單對應房東），非申請人。",
+    "句 4：src/pages/repair/edit/_parts/ApplicationDetail.vue＋<span v-show='is_urgent'> t('緊急')；src/pages/repair/applyProcess/_parts/Detail.vue＋'緊急修繕' 區塊的勾選框寫成 <input :model='repairForm.is_urgent' type='checkbox' />（不是 v-model，未綁定），src/pages/repair/applyProcess/Index.vue＋form 內 is_urgent: false 永遠送出 false；app/Http/Controllers/RepairController.php＋$emergencyStatus = $requestData['is_urgent'] === 'true' ? ... 故網頁申請不會被標記緊急。"
+   ]
+  },
+  {
+   "id": "jgb/F/repair-edit-vendor-assign",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "f00ce7595cf9fd7a4aaa55484baaeb8587ba0048e3166d54dfe61324f8516d47",
+   "title_text": "怎麼安排修繕廠商？（填寫修繕時間、廠商名稱、維修人員、聯絡電話，儲存後會留下歷史紀錄可以展開查看）",
+   "notes": [
+    "標題：由句 1～句 3 支撐。",
+    "句 1：src/pages/repair/edit/_parts/VendorContactSection.vue＋descAssignLogs 長度為 0 時，v-if='props?.canEditRepair' 顯示 t('填寫廠商資訊')，v-else 顯示 t('安排修繕廠商中')。",
+    "句 2：同上 編輯模式欄位 t('修繕時間')（日期＋時間）、t('廠商名稱')、t('維修人員')、t('聯絡電話')；顯示模式 assignLogListConfig 首欄 t('編輯時間') 取最新一筆 edit_time；app/Http/Controllers/RepairController.php＋$assignLogs['edit_time'] = date('Y/m/d H:i') 於每次儲存寫入。",
+    "句 3：src/pages/repair/edit/_parts/VendorContactSection.vue＋v-if='state.descAssignLogs?.length > 1' 顯示 t('展開歷史紀錄')，展開後列出 filter((node, i)=>i !== 0) 的其餘舊紀錄；app/Http/Controllers/RepairController.php＋array_push($assignData, $assignLogs) 保留每次紀錄。"
+   ]
+  },
+  {
+   "id": "jgb/F/repair-edit-landlord-complete-memo",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "caf5c67f5ff38acc3f910c82fc437fbd9a4382d07c8576416d1d17f0f4380472",
+   "title_text": "「房東備註」要填什麼？（完成時間、備註文字最多 300 字、可以附照片，最多 10 張、單檔最大 10MB、支援 JPG／PNG／PDF；只有有編輯權限的房東方帳號能編輯）",
+   "notes": [
+    "標題：由句 1～句 3 支撐。",
+    "句 1：src/pages/repair/edit/Index.vue＋t('完成修繕') 下兩個 xl:col-6 欄，左欄 MemoArea :badgeText=\"t('房東備註')\"、:showDateTime='true'、:showAmount 為 landlord 身分、:isAllowedEdit='canEditRepair'；src/pages/repair/_parts/MemoArea.vue＋編輯模式有 t('完成時間')、t('結算金額')、t('備註')、t('照片')。",
+    "句 2：src/pages/repair/_parts/MemoArea.vue＋t('至多 [s1] 字。', [300])；app/Http/Controllers/RepairController.php＋$maxLength = 300 與 mb_substr($completeNote['content'], 0, $maxLength, 'utf-8')。",
+    "句 3：src/pages/repair/_parts/MemoArea.vue＋maxPhotos: 10 預設值與 t('支援JPG、PNG、PDF檔，至多 [s1] 張，檔案大小最大 [s2] MB。', [props?.maxPhotos, 10])。"
+   ]
+  },
+  {
+   "id": "jgb/F/repair-edit-amount-visibility",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "cc32c2335e4d19b5495e1b2cbf94bf3fe3e83bc31f69a73643b619c8c6585ab9",
+   "title_text": "修繕結算金額在哪裡填、誰看得到？（在「完成修繕」的「房東備註」編輯模式填；「結算金額」欄位只有身分是房東的帳號才會顯示，租客看不到；填了金額不會自動產生帳單）",
+   "notes": [
+    "標題：由句 1～句 4 支撐。",
+    "句 1：src/pages/repair/edit/Index.vue＋房東備註 MemoArea :showAmount=\"store.state.userData?.role?.config_rule_type === 'landlord'\"；src/pages/repair/_parts/MemoArea.vue＋t('結算金額') 區塊 v-if='props?.showAmount'；config/role.php 身分種類只有 tenant／landlord。",
+    "句 2：app/Http/Controllers/RepairController.php＋case 'modify' 內 '20210609 新增結算金額' 只做 $repair->total = $total 後 $repair->save()，未建立任何帳單；app/Repair.php＋booted() 只處理大房東同步，無帳單產生。",
+    "句 3：src/pages/repair/_parts/MemoArea.vue＋標題列右側 ml-auto 的編輯圖示 @click='props?.onEdit' 進入編輯模式，編輯模式有 t('結算金額') 的 PrefixInput 與 t('儲存') 按鈕；src/pages/repair/edit/Index.vue＋handleLandlordMemoSave 呼叫 modifyData。",
+    "句 4：src/pages/repair/edit/Index.vue＋房東備註 :isAllowedEdit='canEditRepair'（排除租客與大房東，需 edit_repair 或 edit_owner_repair）；app/Http/Controllers/UserController.php＋'新增&編輯&刪除所屬修繕資料'／'新增&編輯&刪除所有修繕資料'；app/Http/Controllers/RepairController.php＋complete_note 時 if (!$isLandlord) 回 '非房東身份不可編輯'。"
+   ]
+  },
+  {
+   "id": "jgb/F/repair-edit-tenant-memo",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "d51c7352ea5cdf0c3b5fe787a2b85c2604dadc3fe48b4a63e6568e1732ac5bcb",
+   "title_text": "「房客備註」是什麼？（右邊那一欄，放租客的備註文字與照片，只有租客自己能編輯；從網頁建立的修繕單都會顯示這一欄）",
+   "notes": [
+    "標題：由句 1～句 3 支撐。",
+    "句 1：src/pages/repair/edit/Index.vue＋右欄 MemoArea :badgeText=\"t('房客備註')\"、:showDateTime='false'、:showAmount='false'；src/pages/repair/_parts/MemoArea.vue 只剩 t('備註') 與 t('照片')。",
+    "句 2：src/pages/repair/edit/Index.vue＋MemoArea v-if='!isEmpty(state?.tenant_order_times)'，v-else 顯示 t('此修繕單為房東發起，無房客備註。')；src/pages/repair/applyProcess/Index.vue＋form.tenant_order_times 預設一列 { date: '', from: '', to: '' }，src/pages/repair/applyProcess/_parts/Detail.vue 刪除列需 tenant_order_times.length > 1，故至少送一列；app/Http/Controllers/RepairController.php＋$preAssignData = $tenantOrderTimes 寫入 'pre_assign_data'，讀取時每列都組成字串放進 $tenantOrderTimes，非空。",
+    "句 3：src/pages/repair/edit/Index.vue＋房客備註 :isAllowedEdit='!state.tenantMemoEditing && isTenant'；src/pages/repair/_parts/MemoArea.vue＋編輯圖示 v-if='props?.isAllowedEdit && !props?.isEditing'；app/Http/Controllers/RepairController.php＋complete_note_tenant 時 if ($isLandlord) 回 '非租客身份不可編輯'。"
+   ]
+  },
+  {
+   "id": "jgb/F/repair-edit-share-to-vendor",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "9b371e8327e06dfa8f1e83318c467150e8d01d3ff56745a107b62c29183799a3",
+   "title_text": "怎麼把修繕單分享出去給廠商？（在修繕單細節頁點「分享」，電腦上可以複製連結或用 LINE 分享，手機上會直接叫出手機的分享選單；廠商點開連結不需要登入 JGB 帳號）",
+   "notes": [
+    "標題：由句 1～句 3 支撐。",
+    "句 1：src/pages/repair/edit/_parts/ApplicationDetail.vue＋區塊 v-if 為 config_rule_type !=='tenant' 且 $route.name == 'repair.edit'，內含 t('分享訊息')、t('如有配合的廠商，可使用下方分享功能，即可將申請單細節轉給廠商。') 與 t('分享') 按鈕，@click 依 isMobile() 與 window.navigator.share 分流。",
+    "句 2：同上 if( !isMobile() || !window.navigator.share ) lightboxOpen('shareMessage')，lightbox 內 t('分享修繕申請單')、t('複製修繕單連結')、Line 的 social-plugins.line.me/lineit/share 連結；否則 navigatorShare(...)，src/mixin/methods.js＋navigatorShare 呼叫 window.navigator.share(shareData)。",
+    "句 3：app/Http/Middleware/LoginCheck.php＋$exceptApiUrls = ['/repair/share'] 對未登入者放行；routes/web.php＋'/api2/repairItem/share/{id?}' 未掛 need_login。"
+   ]
+  },
+  {
+   "id": "jgb/F/repair-share-public-link",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "6f8a9c14cf73c27f7aa97f70b185db5ff968875d61bb09d13f880ff6419e02f7",
+   "title_text": "修繕單分享頁需要先登入嗎？（不需要，這個連結是公開的，系統特別把它排除在登入檢查之外，任何拿到網址的人都可以直接打開）",
+   "notes": [
+    "標題：由句 1、句 2 支撐。",
+    "句 1：app/Http/Middleware/LoginCheck.php＋'TODO: 之後要修改結構：排除的url' 與 $exceptApiUrls = ['/repair/share']，命中時 $isExcepted = true，不導去 users.create login；routes/web.php＋'api 3: 分享：因不需要登入，所以先獨立拆開' 的 '/api2/repairItem/share/{id?}' 無 need_login。",
+    "句 2：routes/web.php＋'/repair/{any?}/{any2?}' 'IndexController@repairIndex' ->middleware('need_login')（涵蓋總表與 /repair/edit/），'/api2/repairItem/{action?}/{id?}' 也掛 need_login；排除清單只有 '/repair/share'。",
+    "句 3：src/pages/repair/share/Index.vue＋isEmpty(result?.data) 時 router.push({ name: 'listings.home' })，src/routes/listings.js＋'listings.home' path '/'；app/Http/Controllers/IndexController.php＋repairIndex 在 share 回傳 success false 時 redirect()->route('indexs')（routes/web.php 的 '/'）；app/Http/Controllers/RepairController.php＋'找不到修繕資料'。"
+   ]
+  },
+  {
+   "id": "jgb/F/repair-share-visibility-summary",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "不成立"
+   ],
+   "content_sha256": "fce01cc3c9b82dd9d27be012fa9f3952217874baf35bb775c2ddf81295903784",
+   "title_text": "分享連結誰看得到？（拿到網址的任何人都能看到這張修繕單房東方的手機／Email、物件所在區域、照片、廠商聯絡電話；金額只有在瀏覽者本人目前登入身分是房東時才會顯示，且不會核對是不是這張修繕單相關的房東或租客）",
+   "notes": [
+    "標題：各斷言由句 1、句 2 支撐；「不會核對是不是相關房東或租客」由 app/Http/Controllers/RepairController.php 的 $isShare 分支只做 Repair::find($id)、無任何身分比對支撐（此點本身成立，句 3 的錯在「看到的內容都一樣」）。",
+    "句 1：app/Http/Controllers/RepairController.php＋$isShare 分支 Repair::find($id) 無身分檢查，回傳 'phone'／'email'（case 2 個人房東取 $repairUser，case 3 團隊取 company_phone／company_email）、'estate_area' => Address::format(estate_country_id, estate_city_id, estate_district_id, '', ...) 不帶地址門牌、'apply_photos'、'assign_logs'（含 vendor_phone）；src/pages/repair/share/Index.vue＋detailDataPair 的 '公司電話'／'手機號碼'、'公司Email'／'Email'、'物件區域' 與 VendorContactSection；app/Address.php＋format 第 4 參數 $address 為空。",
+    "句 2：src/pages/repair/share/Index.vue＋房東備註 MemoArea :showAmount=\"store.state.userData?.role?.config_rule_type === 'landlord'\"，未登入時 userData 無 role，判斷為否；src/pages/repair/_parts/MemoArea.vue＋t('結算金額') v-if='props?.showAmount'。",
+    "句 3：前半（產生資料時不核對瀏覽者身分）成立：app/Http/Controllers/RepairController.php＋$isShare 分支無身分比對、'is_big_landlord' => (!$isShare && ...) 分享時固定 false。但後半「不管有沒有登入、登入的是誰，看到的內容都一樣」不成立：src/pages/repair/share/Index.vue＋:showAmount=\"store.state.userData?.role?.config_rule_type === 'landlord'\" 使登入身分為房東的瀏覽者會多看到「結算金額」，未登入或租客身分則看不到——這正是本條句 2 的內容，絕對句漏掉此例外。"
+   ]
+  },
+  {
+   "id": "jgb/F/repair-share-no-expiry",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "27e235bb6989965748871397ca06c467ddf70ce28d2432be872dcea62e09a2cf",
+   "title_text": "分享連結會過期嗎？（目前不會，沒有天數限制）",
+   "notes": [
+    "標題：由句 1、句 2 支撐。",
+    "句 1：app/Http/Controllers/RepairController.php＋'若該單超過30天則不給予觀看' 與 '2023/08/22 Joanna 拿掉此限制'，原 (strtotime($repair->apply_at) + 2592000) <= time() 判斷整段被註解。",
+    "句 2：同上 if ( $isShare ) { $repair = Repair::find($id); ... }，只以編號查找，合約簽署限制 'CONTRACT_SIGNED' 判斷亦被註解，未檢查天數或物件狀態。"
+   ]
+  },
+  {
+   "id": "jgb/F/repair-share-content",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "e9b2f3b3547bcd24388e04cfc3184df7cbb2d7d8c6ea6b238370658ca0a013fa",
+   "title_text": "修繕單分享頁看得到什麼？（修繕申請單標題與是否緊急、照片、報修細節、安排的廠商資訊、房東備註與房客備註，全部都是唯讀；不會顯示物件廣告連結、縮圖，也沒有房東／承租方資訊側欄）",
+   "notes": [
+    "標題：由句 1～句 5 支撐。",
+    "句 1：src/pages/repair/share/Index.vue＋t('修繕申請單')、repairSharedData?.data?.apply_date、<span v-if='repairSharedData.data?.is_urgent'> t('緊急')；緊急未被設定見 src/pages/repair/applyProcess/_parts/Detail.vue＋<input :model='repairForm.is_urgent'（非 v-model）與 app/Http/Controllers/RepairController.php＋$requestData['is_urgent'] === 'true'。",
+    "句 2：src/pages/repair/share/Index.vue＋EditPhotos list: apply_photos（有照片時）與 detailDataPair：'公司電話'／'手機號碼'、'公司Email'／'Email'、'物件區域'、'物件時區'、'分類'、'問題'、'備註'、'預約時段'。",
+    "句 3：同上 <VendorContactSection :assignLogs=... :canEditRepair='false' />（src/pages/repair/edit/_parts/VendorContactSection.vue 顯示 修繕時間／廠商名稱／維修人員／聯絡電話），以及 MemoArea t('房東備註') 與 t('房客備註')（無預約時段時顯示 '此修繕單為房東發起，無房客備註。'）。",
+    "句 4：src/pages/repair/share/Index.vue＋VendorContactSection :canEditRepair='false'（src/pages/repair/edit/_parts/VendorContactSection.vue 的 填寫按鈕與編輯圖示皆需 canEditRepair），兩個 MemoArea 皆 :isAllowedEdit='false'；頁面無任何輸入或留言元件。",
+    "句 5：app/Http/Controllers/RepairController.php＋'分享功能去除不必要之參數' 下 unset estate_name、estate_href、estate_thumbnail、contract_date、contract_rent_string、progress、aside_panel；src/pages/repair/share/Index.vue 未引用 AsidePanel，也不渲染物件名稱、連結或縮圖。"
+   ]
+  }
+ ],
+ "findings": [
+  "jgb/C/ledger-required-fields 句 1 稱「說明與對象都是必填」，但同條句 4 對物件記事本正確寫出說明與對象可留空；程式上兩者其實同樣不檢查說明與對象（app/Http/Controllers/EstateController.php 的 add_bill_running Validator 只要求 date、fee_type、currencySelected、price），流水帳句 1 應修正為說明與對象可留空。",
+  "jgb/F/repair-share-visibility-summary 句 3「不管有沒有登入、登入的是誰，看到的內容都一樣」與同條句 2（登入房東身分才顯示結算金額）互相矛盾；同組 jgb/F/repair-edit-amount-visibility 句 1 也說明金額依房東身分顯示。",
+  "非阻擋性觀察：jgb/F/repair-share-content 句 5 說物件縮圖在分享模式被拿掉，就分享頁畫面而言成立；但 app/Http/Controllers/RepairController.php 的分享 meta 有 'image' => !empty($toUserNotePhotos[0]) ? $toUserNotePhotos[0] : $repair->thumbnail，經 resources/views/layouts/app.blade.php 的 og:image 輸出。因此貼到通訊軟體時，連結預覽可能顯示物件縮圖；meta title 也含物件區域與分類。若要回答分享出去會露出什麼，可另行補充。"
+ ],
+ "source_transcript": "a4e2c79a2266eb9bd.output"
+}

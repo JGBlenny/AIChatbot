@@ -1,0 +1,225 @@
+{
+ "kind": "write",
+ "verdict": "REFUTED",
+ "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+ "claim": "Plan 9.28 批次 B10：12 條細目的標題與每一句已逐句對合法來源核對，逐條結果如 fines",
+ "fines": [
+  {
+   "id": "jgb/D/contract-list-status-tabs",
+   "title": "不成立",
+   "sentences": [
+    "不成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "adb8d181b5f267aa32aa1ae7356b70e5b956cf1892b978a6a7ad2785f5ef866c",
+   "title_text": "合約列表有哪些狀態頁籤？（待發送合約／待租客簽回／待房東簽名／執行中合約／歷史合約）",
+   "notes": [
+    "標題：與句 1 同樣的問題：狀態 3 的側欄頁籤實際叫「待管理者簽名」，不是「待房東簽名」（app/Role.php roleHasAction 租約管理 sub 的 'label' => ___('待管理者簽名')，經 app/Http/Controllers/ApiController.php 的 aside_list 送到 src/components/AsideMenu.vue）；只有頁面大標題 src/pages/contracts/list/_parts/PageTop.vue 的 statusPair 3: '待房東簽名' 寫成待房東簽名，兩處介面文字互相衝突，標題的五個頁籤名稱沒有完整的支撐。",
+    "句 1：app/Role.php＋'label' => ___('待管理者簽名')＋側欄（頁籤）上狀態 3 顯示的是「待管理者簽名」，句子寫「待房東簽名」；而且「待發送合約」的 allow_role_key 是 RULE_KEY_LANDLORD_* && $hasPermission，租客（$hasPermission 為 false）和大房東都看不到這個頁籤，「分成五個頁籤」不是每種身分都成立。另外現行選單與麵包屑的名稱是「租約管理」（src/pages/contracts/list/Index.vue 的 breadcrumbsList t('租約管理')），不是「合約管理」。",
+    "句 2：src/routes/contracts.js＋const allows = ['1', '2', '3', '4', '5']＋不在範圍內時 next({ name: 'contracts.list', params: { status: '' } })，會導回沒有篩選狀態的合約總表，成立。",
+    "句 3：src/routes/contracts.js＋to?.params?.status === '1' && store.state.userData.role?.config_rule_type === 'tenant'＋執行 window.location.href = '/users'；routes/web.php 的 prefix('users') 底下 '/' 是 users.index（登入後的 Dashboard），成立。"
+   ]
+  },
+  {
+   "id": "jgb/D/contract-search-keyword-scope",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "不成立",
+    "不成立"
+   ],
+   "content_sha256": "56ac1009a73fb8fd1068398c303cec3d3d1394dd8945d0d0ff8367aff268a16f",
+   "title_text": "合約列表怎麼搜尋合約？（案名／地址／租客／ID／手機／信箱六種關鍵字，另有進階搜尋）",
+   "notes": [
+    "標題：六種關鍵字有句 1 支撐；src/pages/contracts/list/_parts/ContractsAdvanceSearchBlock.jsx 確實提供進階篩選，標題本身沒有寫錯的地方。",
+    "句 1：src/pages/contracts/list/Index.vue＋keyword_for values: ['estateName', 'address', 'tenant', 'id', 'phone', 'email']，對應的介面文字是 案名／地址／租客／ID／手機／信箱，成立。",
+    "句 2：src/pages/contracts/list/_parts/ContractsAdvanceSearchBlock.jsx＋keyName={'contract_is_existing'}＋現行列表的進階篩選列（桌機用這支、手機用 ContractsAdvanceSearchBlockM.jsx）沒有「通知狀態」（notify_type）這一項。notify_type 只出現在 src/components/Lightbox/ContractsAdvSearch.vue，但全 src 沒有任何地方開啟這個燈箱（grep 'ContractsAdvSearch' 只找到它自己），屬於沒接線的舊元件。另外「是否註冊 JGB 帳號」在現行介面的文字是「租客是否註冊」（src/use/search/modules/tenant_type.js）。現行實際有的篩選還包括國家／縣市／區、經理人、大房東、點交點退、租客身分別、建築類型、合約到期日、來源、標籤等。",
+    "句 3：src/use/search/index.js＋submit: router.push({ query: …})＋進階篩選送出時只改目前路由的 query，不會切到 contracts.search，所以畫面標題仍是原本的狀態名稱，不會變成「合約搜尋結果」。只有 src/components/AdvSearchTemplate.vue 會導到 contracts.search，而它只被帳單社宅報表頁使用。此外 contracts.search 的路徑是 /contracts/:status?/search，仍然帶著狀態參數（API 是 getList/${status}），不能說它跟五個狀態頁籤是分開的頁面。"
+   ]
+  },
+  {
+   "id": "jgb/D/contract-create-entry",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "不成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "e08d0e336e716c8e290d29cf2a6c4beaf1941e723c6f9fd1575f60ada63f6674",
+   "title_text": "怎麼建立一份新合約？（合約總表右上角「建立合約」，或物件總表小齒輪選建立合約）",
+   "notes": [
+    "標題：兩個入口分別由句 1、句 2 支撐（src/pages/contracts/list/_parts/PageTop.vue 的 t('建立合約')；app/Http/Controllers/EstateController.php 的 'text' => ___('建立合約')），成立。",
+    "句 1：landlordonboarding04lease_zh-Hant.html＋「1-1.於【合約管理】中的【合約總表】點按右上角的【建立合約】」「1-2.選取您想建立合約的物件，並點選【下一步】」；程式 src/pages/contracts/list/_parts/PageTop.vue 的 t('建立合約') 按鈕和 src/pages/estates/pick/_parts/pick.jsx 的 t('下一步') 都對得上，成立。附註：現行選單名稱是「租約管理」；按鈕要有 add_contract 權限才會出現。",
+    "句 2：landlordonboarding04lease_zh-Hant.html＋「於【物件管理】中的【物件總表】…點按小齒輪，選擇【建立合約】」；app/Http/Controllers/EstateController.php＋// 建立合約選項（需要 $isAddContract），成立。",
+    "句 3：src/components/Lightbox/SelectContractMethod.jsx＋t('請選擇建立合約的方式')、'電子合約 - 住宅租賃契約書'、'電子合約 - 客製化契約書'、'紙本簽約'；src/pages/contracts/list/_parts/PageTop.vue＋config_rule_key !== 4 時開燈箱，否則直接 RouterLink 到 estates.pick contractCreate；app/Role.php 定義 RULE_KEY_LANDLORD_SOCIAL_HOUSING = 4，成立。",
+    "句 4：app/Http/Controllers/ContractController.php＋$estate->contracts()->actualContracts()->activeContracts()->count() >= self::MAX_ACTIVE_CONTRACTS_COUNT＋上限只計算使用中的合約（app/Contract.php scopeActiveContracts 的 is_history = 0 且 active = 1，另外 is_newest = 1），歷史合約不算。句子說「一個物件最多可以綁定 10 份合約」是絕對說法，漏掉了「只算使用中」這個條件（同一物件的歷史合約加上使用中的合約可以超過 10 份）。正確的條件寫在句 6；後半段的例子（舊約執行中也能先簽新約）本身成立。",
+    "句 5：docs/knowledge/jgb-product-facts.md＋#p914-contract-new-vs-old「建立新合約不會自動作廢或改動既有合約」，成立。",
+    "句 6：app/Http/Controllers/ContractController.php＋MAX_ACTIVE_CONTRACTS_COUNT = 10 與 activeContracts()；app/Contract.php＋where('is_history', 0)->where('active', 1)；刪除時 ContractController delete() 會設 $contract->active = 0（等同未刪除＝active 1）；程式不檢查租期是否重疊。其餘個案走客服，符合 review-sheet-9.15-S2-DE-20260927.md #109「只寫程式證實的系統行為，其餘走個案客服」，成立。"
+   ]
+  },
+  {
+   "id": "jgb/D/contract-create-estate-completeness-requirement",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "bfa376ba2c18de9a764dd4d5ae3b463a012bd075d1df82cb914bdd7b3b66e87a",
+   "title_text": "物件要先刊登廣告才能建立合約嗎？（現行規則是必填欄位要填齊，不是看刊登狀態）",
+   "notes": [
+    "標題：由句 1、句 2 支撐，成立。",
+    "句 1：app/Http/Controllers/ContractController.php＋create() 內 empty($estate->isCurrentDataCanCreateContract()[\"success\"])＋回傳 'message' => ___('請先完善物件所有必填欄位')。現行入口是 routes/web.php 的 api2/contract/create/{action?}（ContractController@create），由 src/pages/estates/pick/_parts/pick.jsx 呼叫，成立。",
+    "句 2：app/Http/Controllers/ContractController.php＋註解「2024/11/13 Abu: 已改為物件資料要齊全才能發合約」＋舊條件 // if (empty($estate->is_open)) 和 // 'message' => ___('招租物件尚未刊登') 都已經註解掉；src/pages/estates/pick/_parts/pickBatch.jsx 的 isAdPublic 實際判斷的也是 can_create_contract（app/Http/Controllers/EstateController.php：用 isCurrentDataCanCreateContract 判斷），成立。"
+   ]
+  },
+  {
+   "id": "jgb/D/contract-list-row-gear-actions",
+   "title": "不成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "52c2e7d687b05cf20d2a9d157c8d6463b864724f7d6bba87ad6b45185d009318",
+   "title_text": "合約總表列的小齒輪可以做什麼操作？（不論狀態都有「查看物件」「查看帳單」；其餘依合約狀態、身分與權限增減）",
+   "notes": [
+    "標題：標題把「查看物件」和「查看帳單」並列為不論狀態都有，並和「其餘依…身分與權限增減」對比，等於把「查看物件」寫成不受權限影響。但 app/Http/Controllers/ContractController.php webList 的 if($LVtoThis_userPermission['show_owner_estate'] == true) 才會加入「查看物件」，租客的權限全部是 false（app/Http/Controllers/Controller.php getPermissions：// 租客沒有權限），所以租客永遠看不到「查看物件」。句 2 也明確把它限定在「有查看物件的權限」，標題超出了句子的內容。",
+    "句 1：app/Http/Controllers/ContractController.php＋webList 的 // 合約相關齒輪（根據不同狀態決定齒輪內容），依 status、roleType、$LVtoThis_userPermission 組出 actions；畫面由 src/components/SurelyVue/Contract/ActionCell.jsx 照 actions 渲染；API 是 routes/web.php 的 api2/contract/list/{action?}/{status?} → ContractController@webList，成立。",
+    "句 2：app/Http/Controllers/ContractController.php＋# 查看物件 if($LVtoThis_userPermission['show_owner_estate'] == true)，這段在 status switch 之前，與狀態無關，成立。",
+    "句 3：app/Http/Controllers/ContractController.php＋'text' => ___('查看帳單')、'class_name' => $LVchainBillsCount > 0 ? '' : 'disabled'、link '/bills/all?keyword=' . $LVbillRootId . '&keyword_for=contractChain'，無條件加入；整條續約鏈都沒有帳單時是 disabled，成立。",
+    "句 4：app/Http/Controllers/ContractController.php＋$this->roleType === 'tenant' && !empty($LVcontractDataPage->getAutoPayCreditCardExpireYmd())＋加入「更換綁定信用卡」，連到 contracts.credit_card_auto_pay 的 credit_card_update（重新授權），成立。",
+    "句 5：app/Http/Controllers/ContractController.php＋case Contract::CONTRACT_INVITING / CONTRACT_INVITING_NEXT：條件是 edit_owner_contract 或（非租客且有 sign_contract），依 isRenewing() → 取消續約、isEarlyTerminating() → 取消提前解約、其他 → 取消邀請，三者只會出現一個；租客本來就沒有任何權限（app/Http/Controllers/Controller.php getPermissions），成立。",
+    "句 6：app/Http/Controllers/ContractController.php＋case CONTRACT_SIGNED/MOVE_IN/MOVE_IN_DONE/MOVE_OUT/MOVE_OUT_DONE：社宅且 contract_type === 'charter' 時加入「新增轉租契約書」；roleType !== 'tenant' 時加入 點交物件／取消點交邀請／點退押金／取消點退邀請（依 canMoveIn、canMoveOut、狀態決定是否 disabled）；非社宅且非租客時加入「續約」。句子的每個斷言都成立。附註：這個區塊另外還會給「提前解約」（房東方要有權限，租客也有），句子沒有提到，但它沒有宣稱已經列完全部選項。",
+    "句 7：app/Http/Controllers/ContractController.php＋case Contract::CONTRACT_EARLY_TERMINATION：movein 設成 disabled 後加入；接著程式本來要加點退，卻誤寫成再加入一次 $LVreturnActionTemplate['movein']，所以「點交物件」會重複出現兩次，且都不能點；最後加入可點的「取消提前解約」，成立。",
+    "句 8：app/Http/Controllers/ContractController.php＋case CONTRACT_HISTORY / CONTRACT_HISTORY_DONE：有權限時加入「點退押金」（canMoveOut() && edit_moveout_contract 才能點）；isRenewExpiredAllowed() && 非社宅 && roleType !== 'tenant' 時補回「續約」（註解：續約例外名單），成立。"
+   ]
+  },
+  {
+   "id": "jgb/D/contract-list-row-sort-options",
+   "title": "不成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "b78e3ce489f2451b017a63e888aecc8452f74233bbf3cde98126ad56e22b61c7",
+   "title_text": "合約總表可以怎麼排序？（依名稱、更新時間、合約起始日、終止日、成立日，各分新舊／早晚，共 5 種依據）",
+   "notes": [
+    "標題：寫「各分新舊／早晚」，但依名稱只有一個選項，沒有分新舊或早晚（app/Http/Controllers/ContractController.php 的 1 => ___('依名稱排序')）。句 1 正確列出名稱不分，標題超出了句子的內容。",
+    "句 1：app/Http/Controllers/ContractController.php＋$returnSortOptionsMap：依名稱排序、更新時間(新)/(舊)、合約起始日(晚)/(早)、合約終止日(晚)/(早)、合約成立日(早)/(晚)，以 'sortOptions' => $returnSortOptionsMap 回傳；src/pages/contracts/list/_parts/ContractsAdvanceSearchBlock.jsx 照 sortOptions 渲染排序選單，成立。"
+   ]
+  },
+  {
+   "id": "jgb/D/contract-list-columns",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "2730d3e2da7fe2fbc0969bb31cbc3403f5b50698887ab6eb773d720ed8f629ad",
+   "title_text": "合約總表有哪些欄位？（含團隊自訂的「標籤」欄）",
+   "notes": [
+    "標題：由句 1、句 2 支撐，成立。",
+    "句 1：src/pages/contracts/list/_parts/ListTable.vue＋case 2/3 的非挑選頁欄位是 ID、CATEGORY（狀態）、TYPE（合約類型）、ESTATE（物件）、LESSEE（承租人）、RENT_PERIOD（租期）、RECHARGE（固定虛擬帳號）、SHORTCUT（動作）、TAGS（標籤）、COMMENT（備註）；case 4 社會住宅是 ID、ESTATE（社宅時標題為 '合約名稱'）、LESSEE、RENT_PERIOD、SHORTCUT、TAGS、COMMENT。順序依 contractColumns 這個 Map 排列，2＝個人房東、3＝法人房東（app/Role.php RULE_KEY_*），成立。",
+    "句 2：src/pages/contracts/list/_parts/ListTable.vue＋ContractColumnKey.TAGS 用 SurelyVueEstateLabelsCell 顯示 record.labels，選項來自 contractCustomLabels（src/pages/contracts/list/Index.vue），成立。",
+    "句 3：docs/knowledge/jgb-product-facts.md＋#p914-contract-list-tags；src/pages/contracts/list/_parts/ListTable.vue＋submitMetaDataHandler 的 labelIds 可以逐筆編輯；src/pages/estates/dashboard/contracts/Index.vue＋t('是否通知') 是物件儀表板上另一個欄位，兩者無關，成立。"
+   ]
+  },
+  {
+   "id": "jgb/D/contract-list-deposit-alert",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "697155a37804b8794e8afee098734a3c50cc2bbb8ee4c1cffdc7f3493efb4ba2",
+   "title_text": "合約總表的待退押金提示燈號是什麼意思？（合約到期前 30 天才能點退）",
+   "notes": [
+    "標題：與句 1 的提示文字一致，成立。",
+    "句 1：src/pages/contracts/list/_parts/stickerLabelBlock.jsx＋[t('待退押金')].includes(sticker.text) 時用 Tooltip 顯示 t('合約到期前30天始可點退')；src/components/SurelyVue/Contract/EstateCell.jsx 透過 StickerLabel 渲染在列表的物件欄，成立。"
+   ]
+  },
+  {
+   "id": "jgb/D/social-housing-handover-notice",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "不成立",
+    "成立"
+   ],
+   "content_sha256": "3a7c8755dcaabb5fb39dbef3f515ec310ff3d0c9343839284327cde3434d5bfa",
+   "title_text": "社宅合約點交、點退進行中時，檢視頁會顯示什麼提示？",
+   "notes": [
+    "標題：只是問句，主題由句 1 至句 3 支撐，成立。",
+    "句 1：src/pages/contracts/show/_parts/SocialHousingPanel.vue＋nowStep == 3、nowStep == 4、nowStep >= 5、is_move_in、is_move_out 時都會渲染 PanelInfoStructure；src/pages/contracts/show/_parts/PanelInfoStructure.vue＋t('承租方')、t('業者')、t('公司資訊')、t('經理人資訊')；步驟陣列 ['上傳', '承租方資訊', '承租方確認', '出租方確認'] 在 src/pages/contracts/show/Index.vue。一般合約走 routes/web.php 的 contracts.show（ContractController@show），社宅走 sh-show（app/Http/Controllers/ContractController.php 的 $LVshowLink 依 property_purpose_key 分流）；「合約點交中」這段字串全 repo 只出現在 src/pages/contracts/show/Index.vue，成立。",
+    "句 2：src/pages/contracts/show/Index.vue＋v-if=\"scopeStore.state.isTenant\" 顯示 t('合約點交中，請確認點交結果')，v-else 顯示 t('合約點交中，等待承租方確認')。實際是租客看到「請確認點交結果」、其他身分看到「等待承租方確認」，句子把兩種身分寫反了。",
+    "句 3：src/pages/contracts/show/Index.vue＋租客顯示 t('合約點退中，請確認點退結果')，其他身分顯示 t('合約點退中，等待承租方確認')，與句子一致，成立。"
+   ]
+  },
+  {
+   "id": "jgb/D/contract-list-bill-currency-column",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "9e890bdf75f9f654d9362926e62320668dc949593edf76403b13c4408ee98fe6",
+   "title_text": "合約總表什麼時候會多出「帳單幣別」欄？（只有在批次建立帳單、挑選合約的頁面才會出現，一般檢視沒有這一欄）",
+   "notes": [
+    "標題：由句 1 支撐，成立。",
+    "句 1：src/pages/contracts/list/_parts/ListTable.vue＋...(isBillCreateAction ? [ContractColumnKey.CURRENCY] : [])，只在 isInPickContractPage 且 currentAction 是 billCreateBatch 或 billCreateCycleBatch（src/utils/constants/contract.js）時加入，欄名 '帳單幣別'；一般檢視的欄位清單沒有 CURRENCY，成立。"
+   ]
+  },
+  {
+   "id": "jgb/D/contract-list-export-declaration",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "064314497ba6daf3f461ad97dfd7b2182f28493ef2b36d66c7d9f56eb9e50d22",
+   "title_text": "合約總表可以匯出實價登錄資料嗎？（只有在「執行中合約」頁籤、中文站台、團隊開通此功能且帳號有建立合約權限時才會出現按鈕）",
+   "notes": [
+    "標題：條件由句 2 支撐，成立。",
+    "句 1：src/pages/contracts/list/_parts/PageTop.vue＋t('匯出實價登錄資料')，點擊後 store.commit('lightbox', 'estateTransactionExport')；src/components/Lightbox/EstateTransactionExport.vue＋t('請設定您要匯出的租約資料。')，以及 api/contract/declaration/export，成立。",
+    "句 2：src/pages/contracts/list/_parts/PageTop.vue＋canExportEstateTransaction = isLangZhTW && route.params?.status === '4' && featuresState.isEnabled('declaration_export')（src/use/config/useFeatures.js 讀 role.features，屬於團隊層級設定）；按鈕外層是 v-if=\"permission?.add_contract && !state.isSearchScreen\"；pageNav.total == 0 時加上 'disabled' class，成立。",
+    "句 3：src/components/Lightbox/EstateTransactionExport.vue＋caseKindList 的 '不動產經紀業' 和 '租賃住宅包租業'（欄位標題是「申報人種類」），成立。",
+    "句 4：app/Services/ContractService.php＋generateDeclarationJson 內 $buildingSerialNo = $estate->building_serial_no，若為空才改從 $estate->building_registration_transcript 取 estate_number；routes/api.php 的 /declaration/export → ContractController@generateDeclarationJson。取的是物件的資料，不是合約上填的建號，成立。",
+    "句 5：review-sheet-9.15-S2-DE-20260927.md＋#115「採用：寫現行功能＋「目前沒有公開時程」」，句意與裁決一致，成立。"
+   ]
+  },
+  {
+   "id": "jgb/D/contract-list-export-excel",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "a9672cec4a7a7cc01b55376e87243d332d995b8a82c9452c9c4f5713103b7e25",
+   "title_text": "合約總表可以匯出 Excel 嗎？（勾選後按「匯出合約」，需要匯出合約權限，內容含租期、每期租金、合約押金等欄位）",
+   "notes": [
+    "標題：由句 1 至句 3 支撐，成立。",
+    "句 1：docs/knowledge/jgb-product-facts.md＋#p914-contract-export；程式對照 src/pages/contracts/list/Index.vue＋勾選後的 t('匯出合約') → /api2/getBatchCode，job_name: 'contract_export'；app/Jobs/JgbJob.php＋case 'contract_export' 執行 ContractService generateReportExcel，產出 .xlsx。待發送頁由 src/pages/contracts/list/_parts/ListTable.vue 的 bulkActions 提供同一顆按鈕，成立。",
+    "句 2：src/pages/contracts/list/Index.vue＋permission?.export_contract；src/pages/contracts/list/_parts/ListTable.vue＋if (store.state.userData?.permission?.export_contract)，成立。",
+    "句 3：app/Services/ContractService.php＋generateReportExcel 的 ___('租期', $lang)、___('合約每期租金', $lang)、___('合約押金', $lang)；在 generateReportExcel 到檔尾的範圍 grep「戶號」得 0 筆（同一範圍的正對照組「合約押金」有命中），成立。附註：app/Jobs/JgbJob.php 對特定合作團隊改用另一支專屬格式 generateReportExcelForRole66649，欄名是「租金」「押金」「起租日」「到期日」，資訊相當，同樣沒有「戶號」。"
+   ]
+  }
+ ],
+ "findings": [
+  "選單與頁面標題的名稱不一致：側欄（app/Role.php roleHasAction）上狀態 3 叫「待管理者簽名」、選單群組叫「租約管理」；但頁面大標題（src/pages/contracts/list/_parts/PageTop.vue）寫「待房東簽名」，幫助中心 landlordonboarding04lease_zh-Hant.html 寫【合約管理】。本批 contract-list-status-tabs、contract-create-entry、contract-list-row-gear-actions 都採用「待房東簽名」或「合約管理」，對外說法要統一到哪一個，需要裁決。",
+  "src/components/Lightbox/ContractsAdvSearch.vue（含通知狀態、是否註冊 JGB 帳號等條件）在 src 內沒有任何開啟的入口，是沒接線的舊元件；現行進階篩選是 src/pages/contracts/list/_parts/ContractsAdvanceSearchBlock.jsx／ContractsAdvanceSearchBlockM.jsx。contract-search-keyword-scope 的句 2 是照舊元件寫的。",
+  "contract-create-entry 的句 4（最多 10 份）與句 6（只算使用中、歷史合約不佔名額）在同一條細目裡寬嚴不一致，句 4 單獨讀會誤導。",
+  "提前解約中的齒輪程式（app/Http/Controllers/ContractController.php case CONTRACT_EARLY_TERMINATION）本來要加點退，卻誤寫成再加入一次 $LVreturnActionTemplate['movein']，所以「點交物件」重複出現兩次。contract-list-row-gear-actions 的句 7 照實描述了這個現象；這看起來是程式 bug，不是設計。"
+ ],
+ "source_transcript": "a8ab964a099192c71.output"
+}

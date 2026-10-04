@@ -1,0 +1,457 @@
+{
+ "kind": "write",
+ "verdict": "REFUTED",
+ "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+ "claim": "Plan 9.28 批次 B16：26 條細目的標題與每一句已逐句對合法來源核對，逐條結果如 fines",
+ "fines": [
+  {
+   "id": "jgb/E/bill-create-modes",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "1391c93738f984e4d19ab4255fa2962ad9749e2ce6d3f6de4e2759dbd97600d5",
+   "title_text": "新增帳單有哪幾種頁面？（新增帳單／新增批次帳單／新增週期帳單／編輯帳單）",
+   "notes": [
+    "標題：src/pages/bills/edit/_parts/BillBasicInfoSection.vue 的 pageTitle 對映 'bills.create': t('新增帳單')、'bills.create.batch': t('新增批次帳單')、'bills.create.cycleBatch': t('新增週期帳單')、'bills.edit': t('編輯帳單')，四種頁面都有句子支撐。",
+    "句 1：src/pages/bills/edit/_parts/BillBasicInfoSection.vue＋pageTitle 四個路由標題；src/routes/bills.js＋name: 'bills.create'／'bills.create.batch'／'bills.create.cycleBatch'／'bills.edit'（path 'edit/:billId?'）。",
+    "句 2：同上 BillBasicInfoSection.vue＋isBatchMode: computed(()=>['bills.create.batch', 'bills.create.cycleBatch'].includes(route.name))；各欄位依 route.name 決定是否顯示（例如 v-if=\"route.name !== 'bills.create.cycleBatch'\"），四個路由共用這個元件。",
+    "句 3：src/routes/bills.js＋path: 'edit/:billId?'；src/pages/bills/edit/Index.jsx＋REQUEST_FORM_CONFIG 'bills.edit' 的 payload billId: route.params.billId，一次只帶一個 billId。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-create-target",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "d96828aa542dc6618680f86bb2ff278c01e36ee9d6d8deaa0c7c0e1fe404e9e3",
+   "title_text": "新增帳單時「對象」可以選哪些？（租客／大房東／物件／其他）",
+   "notes": [
+    "標題：src/pages/bills/edit/_parts/BillBasicInfoSection.vue 的 billTargetOptions 有四項，由句 1 支撐。",
+    "句 1：src/pages/bills/edit/_parts/BillBasicInfoSection.vue＋billTargetOptions: tenant: t('租客')、bigLandlord: t('大房東')、estate: t('物件')、other: t('其他')；src/pages/bills/edit/_parts/BillTargetBlock.jsx＋{ t('對象') } 下拉的 options={Object.keys(props.billTargetOptions)}；src/utils/constants/bill.js＋export const BillTarget。",
+    "句 2：src/pages/bills/edit/Index.jsx＋onPickedBillTargetChange 內 if (route.name === 'bills.create'){ onUpdateForm({ payment_method: null, role_payment_id: null, ...}) 先清空；pendingPaymentPrefillDatum = state.form.billTarget === BillTarget.tenant ? (newTarget?.contract ?? null) : null（註解『其餘對象（大房東 / 物件 / 其他）維持清空』）。",
+    "句 3：BillBasicInfoSection.vue＋personOptions：case 'bigLandlord': return singleEstateFetcher.data?.big_landlords；tenant 分支取 name: contractNode.tenant?.name。src/pages/bills/edit/Index.jsx＋singleEstateFetcher 用所選 estateId 呼叫 /api3/estates/single。app/Contract.php＋getToUserFullNameAttribute 中 if ($this->is_corp_tenant) return $this->to_user_menu_name（法人約顯示公司名）。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-batch-vs-cycle",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "73fb1b64fcdd03937e698e7e5e246d559fa23596a8d92a7e112849daf2be6648",
+   "title_text": "「新增批次帳單」跟「新增週期帳單」有什麼不同？（批次是每個對象各一張，週期是一次產出各期帳單；兩者都可在租客與物件之間切換）",
+   "notes": [
+    "標題：各項說法由句 1～3 支撐。",
+    "句 1：src/use/config/useBillTypes.js＋batchCreateBills 導向 contracts.pick，query billTarget: 'tenant'；batchCreateCycleBills 導向 estates.pick，query billTarget: 'estate'。src/pages/contracts/pick/_parts/PageTop.vue＋action 在 hasMultipleTargetActions（含 BILL_CREATE_BATCH／BILL_CREATE_CYCLE_BATCH）內時，顯示 label '租客'／'物件' 切換。src/utils/constants/contract.js＋export const hasMultipleTargetActions；src/pages/estates/pick/_parts/PageTop.vue＋SelectableTargetType（租客／物件）。",
+    "句 2：src/pages/bills/edit/Index.jsx＋bottomNavButtonConfig 的 cycleBatch 分支 text: t('預覽帳單')；getCycleBillFetch 呼叫 /api/bills/cycleBills 取得每期切分。src/components/Lightbox/BillCycleConfirmBeforeSend.vue＋改呼叫 POST /api/bills/cycleBills（createCycleBillDraft），一次建立各期帳單。",
+    "句 3：src/pages/bills/edit/Index.jsx＋extractBillIds 註解『批次帳單返回陣列』；同上 Index.jsx 的 validators 註解『產帳後至各期帳單編輯』；src/pages/bills/edit/_parts/BillTargetBatchBlock.jsx＋pickedList 逐筆列出對象。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-cycle-schedule-fields",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "1b03ee18fef11d289c1344a2d70d99ba15d2879b4471283644cfd6d499e4d66b",
+   "title_text": "新增週期帳單的「繳費週期」設定要填哪些欄位？（繳費週期／繳費截止日／截止日設定／帳單週期制度）",
+   "notes": [
+    "標題：src/pages/bills/edit/_parts/CycleBillingCycleFields.vue 的 selectFieldConfigs 有 labelKey '繳費週期'、'繳費截止日'、'截止日設定'，另有 t(\"帳單週期制度\")，由各句支撐。",
+    "句 1：src/pages/bills/edit/_parts/CycleBillingCycleFields.vue＋cycleOptions：t('每月')、t('每2個月')…t('每11個月')、t('每年')，共 12 項（另有 placeholder t('請選擇')）。",
+    "句 2：同上 CycleBillingCycleFields.vue＋dayOptions 用 Array.from({ length: 31 }) 產生 1～31；cycleStartOptions = dayOptions，帳單週期分算日共用同一組選項。",
+    "句 3：同上 CycleBillingCycleFields.vue＋cycleDateTypeOptions：t('提前截止')、t('同月截止')。",
+    "句 4：同上 CycleBillingCycleFields.vue＋type=\"radio\" v-for BillingCycleTypeOptions，預設 cycle_type: BillingCycleType.currentMonthly；v-if=\"isCrossMonthly\" 時才顯示 t('帳單週期分算日')。src/utils/constants/contract.js＋BillingCycleTypeOptions 的 labelKey 依序為 '當月分算'（第一項）、'跨月計算'。"
+   ]
+  },
+  {
+   "id": "jgb/C/contract-attachment-quota",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "不成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "26926ba12a042791f3d3260697f1fb542ab4ab401e519f583c77f99c8f118a98",
+   "title_text": "合約附件每個項目可以上傳幾份？",
+   "notes": [
+    "標題：疑問句只點出主題，沒有數字斷言；主題由句 6～9 涵蓋（句 8 的數字另判不成立）。",
+    "句 1：src/pages/estates/dashboard/attachments/Index.vue＋accept=\"image/jpeg,image/png,application/pdf\"、uploadSizeLimit: 10、t('儲存空間([s1])', [total/max])；app/Http/Controllers/EstateController.php＋case 'attachments' 中 $attachmentDatas['max'] = 5，add_attachment 驗證 'file' => 'required|mimes:jpeg,jpg,png,pdf|max:10240'。",
+    "句 2：src/pages/estates/dashboard/attachments/Index.vue＋if (limitLength == 0){ lightboxOpen('spcaeIsFull') }，彈窗顯示 t('儲存空間已滿') 與『剩餘儲存檔案數：』{{ max - total }}；i >= limitLength 時 break，所以要先刪除才能再上傳。",
+    "句 3：app/Http/Controllers/EstateController.php＋$hasEditPermission = ...hasPermission($this->user, 'edit_estate') || ($estate->agent_user_id == $this->user->id && ...'add_estate')；download_attachment／add_attachment／delete_attachment 都是 if (!$hasEditPermission) 回 ___('權限不足！')。src/pages/estates/dashboard/attachments/Index.vue＋下載用 <a class=\"btn-icon\" download :href=\"rowData?.public_url\">，沒有權限判斷，所有人都看得到。",
+    "句 4：src/pages/estates/dashboard/attachments/Index.vue＋垃圾桶圖示與 t('刪除檔案') 都是 v-if=\"dashboardStore.state?.isAgent && store.state.userData?.permission?.add_estate\"；src/pages/estates/dashboard/Index.vue＋isAgent 判斷 userId == agent uid。",
+    "句 5：src/pages/estates/dashboard/attachments/Index.vue＋hasUpdateFilePermission: is_team_owner || permission?.edit_estate || (isAgent && permission?.add_estate)；t('上傳檔案') 由 v-if=\"state.hasUpdateFilePermission\" 控制。",
+    "句 6：src/pages/estates/dashboard/contractAttachments/index.vue＋t('出租方身份證明文件影本')（v-for 2 格，標 t('正')／t('反')）、t('若為法人(公司)，請上傳公司設立登記表')；attachmentRowOptions 的標題依序為授權代理人簽約同意書、建物所有權/有權出租之證明文件、使用執照影本、出租方同意轉租確認書、房屋位置格局示意圖、`${t('社區管理規約')}、${t('住戶生活規約')}`（同一項）、t('其他(附註條款、稅籍證明等)')。",
+    "句 7：同上 contractAttachments/index.vue＋t('如有以下附件，可上傳圖片做補充，以避免日後爭議。')。",
+    "句 8：src/pages/estates/dashboard/contractAttachments/index.vue＋attachment_user_agent_signing_consent: { title: 授權代理人簽約同意書, limit: 2 }，畫面上限是 2 份，不是 4 份。後端 app/Http/Controllers/EstateController.php＋save_contract_attachment 的 $maxFileCount = $attachmentColumnName === 'attachment_community_norms' ? 15 : 5（規約以外上限 5）。兩處都不是 4。其餘數字（規約 15、其他 5、身分證正反各 1、其餘各 1、size_limit: 10）與畫面相符。",
+    "句 9：同上 contractAttachments/index.vue＋說明文字 t('(圖片僅支援JPG、PNG檔，檔案大小最大10MB，每個項目限制的上傳檔案數量不同，請留意。)')，但 input 是 accept=\"image/jpeg,image/png,application/pdf\"。",
+    "句 10：同上 contractAttachments/index.vue＋show: !store.state.userData.is_big_landlord && (permission.add_estate || permission.edit_estate)；上傳 label 與 uploadGrid-delete 都是 v-if=\"state.show\"。",
+    "句 11：app/Http/Controllers/EstateController.php＋case 'upload_contract_attachment'／'save_contract_attachment'／'delete_contract_attachment' 都是 if (!$hasEditPermission) 回 ___('權限不足！')。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-cycle-amortization",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "807f9a639493fe2e68866340f1cd97f407dc90b8a453907b9fddecc99346fc88",
+   "title_text": "「總額（自動分攤）」欄位什麼時候才會出現？（只有新增週期帳單、且團隊開通社區投報率時）",
+   "notes": [
+    "標題：src/pages/bills/edit/_parts/BillBasicInfoSection.vue 的 canUseAmortization，由句 1 支撐。",
+    "句 1：src/pages/bills/edit/_parts/BillBasicInfoSection.vue＋canUseAmortization: computed(()=>route.name === 'bills.create.cycleBatch' && features.isCommunityRoiEnabled.value)，區塊為 v-if=\"state.canUseAmortization\"。",
+    "句 2：同上 BillBasicInfoSection.vue＋amountMode 預設 'per_period'，選項 t('每期金額')／t('總額（自動分攤）')，說明文字 t('費用欄位請填「整筆總額」，系統會平均分成各期…')。附註：每期金額模式下，不足一整期的短期仍會依 app/Services/BillService.php＋scaleAlignedCycleFees 按 unitCount 比例縮放；句中『套用到每一期』理解為每期的基準金額，未判為錯。",
+    "句 3：同上 BillBasicInfoSection.vue＋t('…系統會平均分成各期，除不盡的零頭全部加在最後一期…')；app/Services/BillService.php＋applyTotalAmountAmortization 註解『首期即使只有半個月，攤到的份額仍然是 1/N』『前面每期無條件捨去、零頭全歸最後一期』。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-fee-item-rules",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "7c513c793fe33d8235dd281a332fa0da35d6f0d49741e7c6d94e860620270e1b",
+   "title_text": "帳單費用細目填寫有什麼規則？（度數欄位最多小數點後 2 位、電水瓦斯金額欄位限制小數點後 2 位、當期度數不可小於上期度數）",
+   "notes": [
+    "標題：三項說法分別由句 1、句 2 支撐。",
+    "句 1：src/pages/bills/edit/_parts/FeesBlock.jsx＋meterFieldErrors.detect 中 isOverDecimalPlace(value, 2) 時加入 '最多小數點後[s1]位'，並用 filteredFloatDigi 截斷；金額 PrefixInput 為 decimalPlaces={node.name === '電費' || node.name === '水費' || node.name === '瓦斯費' ? 2 : undefined}。src/components/PrefixInput.vue＋props.decimalPlaces === 2 才 toFixed(2)。src/pages/bills/edit/_parts/CustomFeesBlock.jsx＋node.label 也做同樣三項判斷。",
+    "句 2：src/pages/bills/edit/_parts/FeesBlock.jsx＋只有 Number(feeNode.amount_of_used_new) < Number(feeNode.amount_of_used) 時，才把 { labelKey: '當期度數必須大於上期度數' } 加到 errors.subtotal（嚴格小於；相等不觸發）。",
+    "句 3：同上 FeesBlock.jsx＋度數 <input> 用 onChange 呼叫 meterFieldErrors.detect（原生 change 事件在離開欄位時觸發），不是 onInput。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-title-field",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "dcae17fa1a61c6a29fe7c83cae7b8af80d4cd8a239837cf836e565b1cb235f1b",
+   "title_text": "「帳單標題」最多可以輸入幾個字？（45 個字）",
+   "notes": [
+    "標題：同句 1。",
+    "句 1：src/pages/bills/edit/_parts/BillBasicInfoSection.vue＋billNoteMaxLength: 45 傳給 NoteBlock；src/pages/bills/edit/_parts/NoteBlock.jsx＋t('帳單標題')、e.target.value.slice(0, props.maxLength)，計數顯示 {props.form.note.length} / {props.maxLength}。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-remark-field",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "ac647a4969be9a35302e3bdd7c6aa8505df3b9626f27272780b17e1e208fbb3d",
+   "title_text": "「帳單備註」最多可以輸入幾個字？（150 個字）",
+   "notes": [
+    "標題：同句 1。",
+    "句 1：src/pages/bills/edit/_parts/BillBasicInfoSection.vue＋billRemarkMaxLength: 150 傳給 RemarkBlock；src/pages/bills/edit/_parts/RemarkBlock.jsx＋t('帳單備註')、slice(0, props.maxLength)。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-internal-note-field",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "e1a91f3f90189ea5303fca8f70de20d95fd93239c99c675abda22e9fc2cfbaf5",
+   "title_text": "「內部備註」最多可以輸入幾個字？誰看得到？（100 個字，僅供業者團隊成員查看／編輯，租客看不到）",
+   "notes": [
+    "標題：同句 1。",
+    "句 1：src/pages/bills/edit/_parts/BillBasicInfoSection.vue＋internalNoteMaxLength: 100；isInternalNoteVisible 用 config_rule_key !== 1 排除租客，並排除 is_big_landlord。src/pages/bills/edit/_parts/InternalNoteBlock.jsx＋t('內部備註') 與 t('僅供內部查看')，註解『僅供業者團隊成員查看/編輯』。app/BillAdditions.php＋canAccessInternalNote 對 RULE_KEY_TENANT 回 false。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-internal-note-visibility",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "不成立"
+   ],
+   "content_sha256": "1c4355985505a767268461e969532e345b1cf2be0709ef81d3c53199b0cb30bf",
+   "title_text": "「內部備註」在哪些地方會出現？（只給業者團隊成員看：新增帳單單筆、編輯帳單與帳單列表欄位可填，帳單明細可看；批次／週期帳單頁面不顯示）",
+   "notes": [
+    "標題：各項說法由句 1 支撐；『只給業者團隊成員看』本身成立。",
+    "句 1：src/pages/bills/edit/_parts/BillBasicInfoSection.vue＋isInternalNoteVisible: ['bills.edit', 'bills.create'].includes(route.name)（註解『批次新增…不顯示』）；src/pages/bills/_parts/ListTable.jsx＋BillColumnKey.INTERNAL_NOTE 用 SurelyVueBillInternalNoteCell 送出 action: 'editInternalNote'；src/components/Lightbox/BillItemDetail.vue＋<h6>{t('內部備註')}</h6>。",
+    "句 2：app/Http/Controllers/BillController.php＋buildBillSingleData 中 \\App\\BillAdditions::canAccessInternalNote($role, $this->user, $bill) 不通過時 unset($billData['additions']['internal_note'])。app/BillAdditions.php＋canAccessInternalNote 是看『檢視者身分』：租客、大房東回 false；(int) $bill->owner_role_id !== (int) $role->id 也回 false。實際規則是『不是這張帳單管理方團隊的人拿不到這個欄位』，不是『帳單本身沒有內部備註這項資料』。同一張 B2B 帳單，管理方團隊仍看得到。句中把它寫成帳單屬性（並舉『B2B 對方付款的帳單』為例），與程式不符。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-payment-method-account-pair",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "不成立",
+    "不成立"
+   ],
+   "content_sha256": "2880fd7bdb9540db50b3ee81a47177f86c1620b86f46cb534ddb737a78975118",
+   "title_text": "新增帳單時付款方式跟收款帳戶一定要一起填嗎？（兩者要嘛都空、要嘛都填；固定虛擬帳號例外）",
+   "notes": [
+    "標題：『兩者要嘛都空、要嘛都填；固定虛擬帳號例外』由句 1 與程式支撐；句 2 的理由與句 3 的時機另判。",
+    "句 1：src/pages/bills/edit/Index.jsx＋handleOpenConfirmLightbox 中，route.name 為 'bills.create' 或 'bills.create.batch'，且 hasPaymentMethod !== hasPaymentAccount 時，執行 window.globalErrorShow(t('請完成付款方式與收款帳戶選擇'))；app/Http/Controllers/BillController.php＋validateBillPaymentFields『規則 1：皆空 → …沿用既有付款繼承』。",
+    "句 2：src/pages/bills/edit/Index.jsx＋isRechargeAccountMethod 不套用成對規則，例外本身成立。但 src/pages/bills/edit/_parts/BillCreatePaymentSelector.vue＋<template v-if=\"isRechargePicked\"> 仍顯示 <h5>{{ t('收款帳戶') }}</h5> 與唯讀的 rechargeAccountLabel（註解『唯讀：帳號綁在合約上，不提供挑選』）。畫面上其實有收款帳戶欄（唯讀、不能選），句中『本來就沒有對應的收款帳戶欄位』與畫面不符。",
+    "句 3：src/pages/bills/edit/Index.jsx＋前端的成對檢查只在 handleOpenConfirmLightbox。但『儲存草稿』走 handleSaveDraft → state.updateBill()，同樣 POST /api3/bills/single；app/Http/Controllers/BillController.php＋single() 的 POST 分支會呼叫 validateBillPaymentFields，只填一項時回 ___('請完成付款方式與收款帳戶選擇')。所以存草稿也會被擋，句中『只發生在按下送出…的當下』漏了這個例外。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-tenant-unverified-draft-lock",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "4075f7a99f503d0fcf0fabd09e526a6ee4af7741f198ede505a459a33b0a7920",
+   "title_text": "租客還沒完成驗證時，帳單會被擋在草稿嗎？（合約頁的提示這樣寫，但目前送出帳單時系統不會因為驗證狀態擋下）",
+   "notes": [
+    "標題：由句 1、2 支撐。",
+    "句 1：src/pages/contracts/_parts/SignerInfoCard.jsx＋t('若您有發送驗證通知給[s1]，為避免[s2]無法收到合約與帳單通知，系統會將帳單停留在草稿帳單分頁中，待[s3]完成驗證或驗證連結過期後，才能發送帳單。')。否定查詢：verified_status／verify_status 在 app/Http/Controllers/BillController.php、app/Bill.php 都是 0 筆。正對照：同樣的字串在 app/Contract.php 的 getTenantInfoAttribute 找得到 'email_verified_status'，證明搜尋工具正常。送出帳單的路徑沒有依驗證狀態阻擋的檢查。",
+    "句 2：src/pages/bills/edit/_parts/BillTargetBlock.jsx＋t('如有需要，您仍可直接將帳單由草稿移至應到帳 / 已到帳。')；app/Http/Controllers/BillController.php 同上否定查詢，沒有驗證狀態限制。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-submit-button-behavior",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "e731347ed646b2bb91dc99dc65d8f0df9251be7d253bef1c3ff89e11907fb75e",
+   "title_text": "新增帳單頁面下方送出按鈕的文字跟行為會依情境改變（送出／發送簽核／簽核中／預覽帳單）",
+   "notes": [
+    "標題：四種按鈕文字由句 1～3 支撐。",
+    "句 1：src/pages/bills/edit/Index.jsx＋bottomNavButtonConfig 中 getApprovalButtonText = ()=>state.shouldUseApprovalFlow ? t('發送簽核') : useMoveOutLabel（即 t('送出')）；shouldUseApprovalFlow 只對特定合作團隊回 true。",
+    "句 2：同上 Index.jsx＋condition: ()=>state?.approval?.bill_send?.status === 'processing' 時 text: t('簽核中')。",
+    "句 3：同上 Index.jsx＋condition: ()=>route.name === 'bills.create.cycleBatch' 時 text: t('預覽帳單')，onClick: handleCycleBillPreview。",
+    "句 4：同上 Index.jsx＋預設規則 type: 'withDropdown'，dropdownOption text: t('儲存草稿')。週期帳單（type 'loading'）、簽核中、特定合作團隊這三條規則比預設規則先命中，都沒有 dropdownOption。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-contract-payment-prefill",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "7fa7b469ad7c3f277a0a185df084631918a35fa3db1dc6a5f06533aebc600249",
+   "title_text": "新增帳單選租客當對象時，付款方式會自動帶入合約的收款設定嗎？（會，但帳戶已停用/不可取號等情況不會亂猜）",
+   "notes": [
+    "標題：由句 1～3 支撐。",
+    "句 1：src/pages/bills/edit/Index.jsx＋applyContractPaymentPrefill 開頭 if (route.name !== 'bills.create') return；pendingPaymentPrefillDatum 只在 BillTarget.tenant 時取 newTarget?.contract。",
+    "句 2：src/helpers/billCreatePaymentPrefill.ts＋LEGACY_PAYMENT_METHODS = ['cheque', 'offline_cash'] 回 null；cash 要 cash_bank_selected 出現在 options.cash_banks 才帶入（-1 自訂現金帳戶不帶入）；vendor 要 role_payment_id 出現在 online_vendors（實際可取號的帳戶）才帶入；recharge_account 要 is_recharge_account === true 且 recharge_accounts 非空才帶入。src/pages/bills/edit/_parts/BillCreatePaymentSelector.vue＋t('固定虛擬帳號')。",
+    "句 3：src/pages/bills/edit/Index.jsx＋state.form.billTarget === BillTarget.tenant ? … : null（註解『其餘對象（大房東 / 物件 / 其他）維持清空』）。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-partial-month-proration",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "9d63afc1e7cbaf6f2901856f3e93bd9229777e241e68410553c399412e3ce0e9",
+   "title_text": "不足一個月的租金怎麼算？（依天數比例；一般團隊以剩餘天數 ÷ 該月曆天數，逐月產帳以實際天數 ÷ 該期帳單天數，不是固定除以 30）",
+   "notes": [
+    "標題：同句 1。",
+    "句 1：docs/knowledge/jgb-product-facts.md＋#p914-proration：『開啟合約預覽帳單的團隊（預設）以「剩餘天數 ÷ 該月曆天數」折算；關閉預覽帳單的團隊與排程逐月產帳以「實際天數 ÷ 該期帳單天數」折算』。app/Role.php＋loadConfig 預設 'IS_OPEN_CONTRACT_BILL_SETTING' => true，只有兩組特定合作團隊設為 false。app/Contract.php＋isBillDraftEnabled 註解『這類團隊關閉此機制，帳單一律由 genBill 逐月產生』、『一次落帳整份(12／36 期)租金帳單』，對應句中『合約成立時就產生整個租期的帳單』。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-power-reading-draft-defaults",
+   "title": "不成立",
+   "sentences": [
+    "不成立"
+   ],
+   "content_sha256": "297c50e18e4add96ee3fc9be62def977f1e74cfa458a2459e9d2d7d1b2c2a899",
+   "title_text": "草稿帳單的電費度數要自己填嗎？（草稿階段度數預設留空；物件有綁定智慧電錶時，可在編輯頁按「取得即時電錶度數」先帶入）",
+   "notes": [
+    "標題：『草稿階段度數預設留空』在編輯頁畫面上不成立（理由見句 1），所以標題不成立。",
+    "句 1：docs/knowledge/jgb-product-facts.md＋#p914-power-reading-draft 與 app/Bill.php＋'現在草稿階段度數留空'，講的都是資料庫裡存的值。現行編輯頁畫面不是這樣：app/Http/Controllers/BillController.php＋buildBillSingleData 在物件 has_iot 時取得 manufacturerDeviceId，傳給 formatAdditionalData；app/Detail.php＋formatBasicData 對『待發送、一般帳單、合約電費列』，在 if (!$hasMeasurementAfter) 時執行 $amountOfUsedNew = $meterReading。也就是說，物件綁定電錶時，草稿編輯頁的當期度數欄一打開就會顯示電錶讀數，不是空的。按鈕的部分成立：src/pages/bills/edit/_parts/FeesBlock.jsx＋t('取得即時電錶度數')（特定合作團隊不顯示）；BillController.php＋currentMeter 回 ___('此物件未綁定智能電表')。依判定規則 5，畫面行為以程式為準，所以『欄位預設是空的』不成立。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-stat-overview",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "03378b017358d70bb5c32b2b95e9b00c51b063f3bf3dae76b5ba8438296ad1d2",
+   "title_text": "「統計報表」的「當前表現」分頁顯示什麼？（收款情況／支出情況卡片）",
+   "notes": [
+    "標題：由句 1 支撐。該分頁另有每日圖表、總覽圖、費用狀態等區塊（見 findings），但標題沒有說『只有』。",
+    "句 1：src/pages/bills/stat/Index.jsx＋TabmarkNav 第一項 key: ''、label: t('當前表現')，不在報表分頁時渲染 <Stat />；src/pages/bills/stat/_parts/Stat.jsx＋IncomeExpenseStatus title={t('收款情況')} 與 title={t('支出情況')}。",
+    "句 2：src/pages/bills/stat/_parts/Stat.jsx＋提示文字 `${t('預計總收款')}：${t('應到帳')} + ${t('待對帳')} + ${t('已到帳')}` 與 `${t('未收款')}：${t('應到帳')} + ${t('待對帳')}`。",
+    "句 3：同上 Stat.jsx＋`${t('預計總支出')}：${t('應支出')} + ${t('已支出')}`。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-stat-monthly-tabs",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "fa74b9438f96940e48af5e465ec89c14bf37a71aa7e3bbba94f09a5744a967be",
+   "title_text": "統計報表除了「當前表現」，還有「每月報表」「每月對帳單」分頁，但只有特定合作團隊看得到",
+   "notes": [
+    "標題：由句 1～3 支撐。",
+    "句 1：src/pages/bills/stat/Index.jsx＋tabs 中的 t('每月報表')、t('每月對帳單') 只在 getSpecialGroupsByRole(...) 含特定合作團隊群組時加入，否則只有 t('當前表現')。",
+    "句 2：同上 Index.jsx＋同一個條件，一般帳號的 tabs 只剩 key: '' 一項。",
+    "句 3：同上 Index.jsx＋route.params?.target 為 'monthlyReport' 或 'monthlyStatement'，而且屬於特定合作團隊群組，才會渲染 <MonthlyReport />，否則渲染 <Stat />；光改網址 target 切不過去。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-monthly-report-upload",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "12ee8c7280827c5a3d2140161a4a5933e4b817a9b4fb1a73783b849d9ea24c6b",
+   "title_text": "「每月報表」跟「每月對帳單」分頁在做什麼？（依社區/物件上傳與下載每月的物件報表、對帳單檔案）",
+   "notes": [
+    "標題：由句 1～4 支撐；下載見 src/pages/bills/stat/_parts/MonthlyReport.vue＋t('下載全部') 與逐月按鈕。",
+    "句 1：src/pages/bills/stat/_parts/MonthlyReport.vue＋route.params.target === 'monthlyReport' 時顯示 t('物件報表') 與 t('新增報表')（導向 estates.pick，action 'monthlyReport'），並有 t('社區')／t('物件') 兩個篩選下拉；新增按鈕對大房東不顯示（!is_big_landlord）。",
+    "句 2：同上 MonthlyReport.vue＋t('物件對帳單') 與 t('新增對帳單')（action 'monthlyStatement'）。",
+    "句 3：同上 MonthlyReport.vue＋isEmpty(state?.estatesMonthlyList) 時顯示 t('尚未上傳任何報表')。",
+    "句 4：同上 MonthlyReport.vue＋選社區的 onSelect 會清空 selectedEstateId 與 estatesMonthlyList；選物件的 onSelect 才呼叫 getEstatesMonthlyData()；清單為空時顯示 t('尚未上傳任何報表')，並用 ErrorsTip 顯示 t('請選擇物件。')。"
+   ]
+  },
+  {
+   "id": "jgb/E/social-housing-sheet-list",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "3165b46909e034d7480b1a1192e54ea226ec107da588e2c71587fdb468f84177",
+   "title_text": "社宅報表的「清冊列表」在列什麼？（每個媒合編號底下的表單勾選與修繕費、申請期數）",
+   "notes": [
+    "標題：由句 1～3 支撐。",
+    "句 1：src/pages/bills/socialHousingSheets/Index.vue＋<h2>{{ t('清冊列表') }}</h2>，表頭為 t('媒合編號') 與 {{ t('表單') }} 4／7／9／11；app/Http/Controllers/BillController.php＋socialHousingSheets 的 getOptions 每列 'label' => social_housing_match_number，sheets 的 type 為 '4'、'7'、'9'、'11'。",
+    "句 2：src/pages/bills/socialHousingSheets/Index.vue＋v-if=\"form.type == '4'\" 時顯示 t('修繕費') 的 PrefixInput（附註：前後端都沒有強制必填）。",
+    "句 3：app/Http/Controllers/BillController.php＋'apply_count_option' => range(1, 12 - count($form7AppropriatedDates))（表單 9 同理，註解『剩餘申報期數』）；src/pages/bills/socialHousingSheets/Index.vue＋v-if=\"form.type == '7' || form.type == '9'\" 時顯示 t('申請期數') 的 Multiselect，:options=\"form.apply_count_option\"。",
+    "句 4：同上 Index.vue＋其他表單用 <div v-if=\"form.type != '11'\" class=\"row flex-nowrap\">；表單 11 用 <label v-if=\"form.type == '11'\">，只有一個 t('印') 核取方塊。",
+    "句 5：同上 Index.vue＋表頭四個 checkbox 各自 :checked=\"state.getIsAllChecked('4'|'7'|'9'|'11')\"，@change 呼叫 setAllChecked(formType, ...)。"
+   ]
+  },
+  {
+   "id": "jgb/E/social-housing-sheet-contract-version",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "69517926f57384e11cf4a64a303c39cdc851ad94368bc54479560240e08279cc",
+   "title_text": "社宅報表上方的合約版本切換列是做什麼用的？（切換不同版本的社宅合約，每次查詢都會帶著這個版本一起送出）",
+   "notes": [
+    "標題：由句 1、2 支撐。",
+    "句 1：src/routes/bills.js＋path: '/bills/socialHousingSheets/:version?'；src/pages/bills/socialHousingSheets/Index.vue＋ScrollNav 的 list: state.filterContractVersionOptions，@click 時 router.push(`/bills/socialHousingSheets/${e.value}`)。",
+    "句 2：同上 Index.vue＋onBeforeMount 與 onBeforeRouteUpdate 都呼叫 fetchData({ contract_version: route.params?.version, ...route.query })，snapSubmit 也帶 contract_version: route.params?.version；app/Http/Controllers/BillController.php＋getOptions 用 ->where('contract_version', $contractVersion) 實際過濾。"
+   ]
+  },
+  {
+   "id": "jgb/E/social-housing-sheet-make-form",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "2fdd0b842527573f0d41d585fd9775132f0d2821aa47e219ac56fb1fd3f36a20",
+   "title_text": "社宅報表怎麼製作表單？（填撥款日、勾選表單後按「製作表單」，會記錄成清冊紀錄）",
+   "notes": [
+    "標題：由句 1～3 支撐。",
+    "句 1：src/pages/bills/socialHousingSheets/Index.vue＋t('撥款日') 的 FlatPickr；t('製作表單') 按鈕 :class=\"!isEmpty(state.appropriationDate) ?'' :'disabled'\"。src/styles/components/Btn.sass＋&.disabled 設 pointer-events: none，沒選日期就按不了。",
+    "句 2：同上 Index.vue＋提示 t('點擊製作表單後系統將儲存上述所勾選與所填寫資料，再進入清冊列表會自動帶入團隊成員最後一次操作紀錄。')；app/Http/Controllers/BillController.php＋snap 分支 Redis::hset('socialhousing:sheet', $redisKey, ...)，getOptions 再讀回來。",
+    "句 3：同上 Index.vue＋snapSubmit 後執行 listStore.archive_logs.unshift(result.data?.latest_log)，最新一筆的 sheets 是可點的按鈕，呼叫 downloadFile(btn)。"
+   ]
+  },
+  {
+   "id": "jgb/E/social-housing-sheet-export-history",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "c84be6428b867f031f5259044037bfd09f9513a592cb716959957928cebd9819",
+   "title_text": "社宅報表的「匯出歷史」會記錄幾筆匯出動作？（系統至多記錄近 30 筆）",
+   "notes": [
+    "標題：由句 2 支撐。",
+    "句 1：src/pages/bills/socialHousingSheets/Index.vue＋<h2>{{ t('匯出歷史') }}</h2>，欄位有 t('匯出時間')、t('操作人員')、t('表單')。",
+    "句 2：同上 Index.vue＋t('系統至多記錄近 [s1] 筆匯出動作。', [30])；app/Http/Controllers/BillController.php＋getOptions 使用 ->limit(30)。"
+   ]
+  },
+  {
+   "id": "jgb/E/social-housing-sheet-archive",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "67d7aed0900c456045062ed9a6e40cc177e90ceca6c41cd054c52e1a2dc10fe1",
+   "title_text": "社宅報表的「歸檔」是什麼意思？（操作按鈕是「確定歸檔」；綠色「歸檔」標籤只在已歸檔後才出現）",
+   "notes": [
+    "標題：由句 1、3 支撐。",
+    "句 1：src/pages/bills/socialHousingSheets/Index.vue＋archiveLogs_first 只在 filteredArchiveLogs[0].is_archived != 1 時取第一筆，該列有可點的 t('確定歸檔')，按下開啟 Lightbox t('確定要歸檔嗎？')。其餘未歸檔的列因 v-if=\"logNode?.is_archived != 0\" 不顯示按鈕；已歸檔列的按鈕是停用狀態（見句 3）。所以能按的只有最上方那筆未歸檔紀錄。",
+    "句 2：同上 Index.vue＋t('執行此動作後，資料將同步至資料庫且無法修改，如確認要歸檔請執行「確認」。')，t('確認') 按鈕呼叫 archiveSubmit。",
+    "句 3：同上 Index.vue＋v-if=\"logNode?.is_archived == 1\" 時才顯示 Icon type=\"Checked\" 與綠色的 t('歸檔') 標籤；已歸檔列的 t('確定歸檔') 加上 :class=\"logNode?.is_archived == 1 ?'disabled' :null\"；表頭的 t('歸檔') 是欄位名稱，不是按鈕。",
+    "句 4：同上 Index.vue＋archiveLogs_others 中 v-if=\"logNode?.is_archived == 1\" 才渲染可下載的按鈕；v-else 用 <span>{{ btn?.label }}</span> 加 t('、') 列出文字。"
+   ]
+  },
+  {
+   "id": "jgb/E/social-housing-sheet-program-scope",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "1532b0bbf146fc0a5b0c46d23cd10827bab66a61ca77a2774a9b3cfb9a958244",
+   "title_text": "社宅報表的「社會住宅」身份可以對應到哪個地方政府的社宅方案？（系統只定義身份類別，不判斷方案適配）",
+   "notes": [
+    "標題：由句 1、2 支撐。",
+    "句 1：config/role.php＋'4' => 'name' => '社會住宅'、'is_team' => true、'allow_multiple' => true、'allowed_currency' => ['TWD']、'allowed_country' => ['TW']（另有 'allowed_locale' => ['zh-TW']），與 '個人房東/代理人'、'法人房東(公司)' 並列。這些名稱透過 app/Http/Controllers/UserController.php＋___(config('role')[$role->config_rule_key]['name']) 顯示在畫面上。src/components/AsideMenu.vue＋t('社宅團隊適用於台灣管理的社會住宅…')。",
+    "句 2：review-sheet-9.15-S2-DE-20260927.md＋裁決紀錄 | 104 | G8 | 採用：寫系統側事實＋「屬外部規定，系統不判斷」；句意與裁決一致。"
+   ]
+  }
+ ],
+ "findings": [
+  "帳本與程式衝突（電費度數）：docs/knowledge/jgb-product-facts.md #p914-power-reading-draft 寫『草稿帳單的電費度數預設留空』，講的是資料庫存值。但 app/Detail.php formatBasicData 在編輯頁 API 中（app/Http/Controllers/BillController.php buildBillSingleData 傳入電錶 device id），會在 measurement_after 為 NULL 時把電錶讀數放進當期度數顯示。帳本沒有區分『存值留空』和『編輯頁顯示已帶入』，拿它來寫畫面上的句子會出錯，建議交回裁決。",
+  "合約附件『授權代理人簽約同意書』的上限三處不一致：細目寫 4 份；畫面 src/pages/estates/dashboard/contractAttachments/index.vue 是 limit: 2；後端 app/Http/Controllers/EstateController.php save_contract_attachment 對規約以外的項目一律 $maxFileCount 5。",
+  "附件清單的後端上限檢查疑似無效：app/Http/Controllers/EstateController.php add_attachment 用 isset($attachments['total']) 檢查，但 $attachments 的結構是 ['success','data']，total 在 data 底下，所以 5 份上限實際上只靠前端擋。這點不影響本批判定，屬跨條觀察。",
+  "付款方式成對檢查：前端只在按送出、開確認彈窗時擋，但後端 validateBillPaymentFields 在建立帳單時也會擋（包括『儲存草稿』走的 POST /api3/bills/single），批次建立也一樣。同組細目描述檢查時機時，要把存草稿算進去。",
+  "統計報表『當前表現』分頁除了收款情況、支出情況兩張卡片，還有每日圖表（DailyChart）、總覽圖（OverviewChart）、物件提醒（EstateReminder）與費用狀態（FeesStatus）。bill-stat-overview 沒有說『只有』，所以判成立；若要寫成完整清單需要補齊。",
+  "週期帳單『每期金額』模式下，不足一整期的短期金額仍依 app/Services/BillService.php scaleAlignedCycleFees 按比例縮放。bill-cycle-amortization 句 2『套用到每一期』沒有提到這點，判成立，僅提醒。"
+ ],
+ "source_transcript": "aad5f71e558ff6a11.output"
+}

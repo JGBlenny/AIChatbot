@@ -1,0 +1,430 @@
+{
+ "kind": "write",
+ "verdict": "REFUTED",
+ "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+ "claim": "Plan 9.28 批次 B23：25 條細目的標題與每一句已逐句對合法來源核對，逐條結果如 fines",
+ "fines": [
+  {
+   "id": "jgb/I/subscription-choose-plan-flow",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "c7f803f04aa64700ffbe0e744f4771a6b803c62ed92d45f824d0f9878a93f089",
+   "title_text": "訂閱頁怎麼選方案？（體驗方案、依物件數量拉桿的基本方案、企業方案洽談三選一）",
+   "notes": [
+    "標題：三個斷言（體驗／拉桿基本方案／企業方案洽談）均由句 1、句 2 支撐。",
+    "句 1：app/Http/Controllers/UserController.php＋subscriptionChose 內 $plans 的 'title'=> ___('體驗方案')／___('基本方案')／___('企業方案')；基本方案級距名稱見 app/Http/Controllers/ApiController.php＋getPlanPricings 的 titleKey「入門方案／熱門方案／專業方案」；企業方案選取後 src/pages/users/subscription/Chose.vue＋「填寫表單」按鈕與「預約客製 Demo」連結皆導向 /demo-form（點卡片本身是展開，需再點連結或按鈕才導向，屬合理概括）。",
+    "句 2：src/pages/users/subscription/Chose.vue＋VueSlider 的 :min=\"50\" :max=\"500\" :interval=\"50\"，價格區塊用 getBasicPlanItem(state.quantitySlider.value) 的 titleKey 與 monthly／yearly 即時更新。",
+    "句 3：同上＋「監測拖拉狀態，禁止拖拉低於自己的物件數」watch：值小於 ownedEstatesQty 時改成 Math.ceil(ownedEstatesQty / 50) * 50 並設 t('無法選擇比已上傳物件數量小的方案')。附註：進頁面時的自動跳格因 oldVals[0] == 50 不顯示提示，拖拉時才顯示；依拖拉情境閱讀判成立。",
+    "句 4：同上＋allowTrial 計算式 !state.userPlan.name || =='trial' || =='free'，不符時卡片加 disabled class，.planItem.disabled 樣式為 pointer-events: none、背景 #f6f6f6、文字 #888888。"
+   ]
+  },
+  {
+   "id": "jgb/I/subscription-payment-authorization-flow",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "5b5b039af9794d158eac1ea1055aa7f892d5ff158b524dbfdb63c3d6bbf957e5",
+   "title_text": "訂閱怎麼扣款？（先試刷 TWD 1 驗證信用卡、藍新金流走 SSL／PCI-DSS）",
+   "notes": [
+    "標題：試刷 TWD 1 與 SSL／PCI-DSS 分別由句 2、句 3 支撐。",
+    "句 1：src/pages/users/subscription/Chose.vue＋v-if=\"state.checkCreditAgreed\" 時顯示 t('前往付款') 並 lightboxOpen('deductionReminder')（標題 t('扣款提醒')），否則顯示 t('前往授權')。",
+    "句 2：同上＋t('系統將試刷TWD 1以確認信用卡有效，成功約定後，會隨即取消TWD 1扣款')；後端 app/Http/Controllers/UserController.php＋'note' => '首次約定信用卡授權'、'price' => 1。",
+    "句 3：src/pages/users/subscription/Chose.vue＋「由配合的合作服務商-藍新金流提供線上刷卡支付服務，藍新金流系統架構導入SSL 256bit加密機制且符合PCI-DSS國際安全認證」。",
+    "句 4：同上＋「JGB 提醒您，按下「確認扣款」後，將更新您的訂閱方案並進行扣款，請再次確認細節再執行。」"
+   ]
+  },
+  {
+   "id": "jgb/I/free-trial-length",
+   "title": "成立",
+   "sentences": [
+    "不成立",
+    "成立"
+   ],
+   "content_sha256": "3a615b380f80121c8cb7766994d0dfe6e5861be2bf2692261335de6974ac4cdb",
+   "title_text": "免費試用方案可以用多久？要綁信用卡嗎？",
+   "notes": [
+    "標題：僅為提問，無獨立斷言。",
+    "句 1：src/pages/listings/pricing/parts/PlanAndDevice.vue＋t('不綁信用卡的[s1]天的試用方案，歡迎體驗！', [30], ...)；實際畫面文字為「不綁信用卡的30天的試用方案，歡迎體驗！」，不是 14 天；「免費註冊試用」RouterLink to users.create target=_blank 部分成立，但天數錯誤故整句不成立。",
+    "句 2：app/User.php＋$role->plan_type = 'free' 段落用 config('defaultplan') 的 plan_cycle 計算 plan_end_ymd，註解「不設定 plan_first_ymd 與 plan_cycle 使方案不會續訂」；config/defaultplan.php＋\"plan_cycle\" => 'month'。"
+   ]
+  },
+  {
+   "id": "jgb/I/subscription-invoice-fields",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "44cdd7b35eee109220b4a0d3d6337671df36535c76c876bdf6b1cc7af0d556e8",
+   "title_text": "訂閱時發票資訊要填什麼？（二聯式／三聯式、統一編號僅三聯式必填；地址欄目前沒有掛必填檢查）",
+   "notes": [
+    "標題：三個斷言由句 1～句 3 支撐。",
+    "句 1：src/pages/users/subscription/Chose.vue＋發票類型切換 state.invoice.type 在 'duplicate'／'triplicate' 間切換，t('二聯式')、t('三聯式')，同一表單以 v-show 切換欄位。",
+    "句 2：同上＋買受人標題 class after-required 無條件顯示；統一編號區塊 v-show=\"state.invoice?.type === 'triplicate'\" 且 after-required；後端 app/Http/Controllers/UserController.php＋'invoice.id_card_number' => 'required_if:invoice.type,triplicate'。",
+    "句 3：src/pages/users/subscription/Chose.vue＋t('地址') 標題無 after-required，:errors 必填檢查整段被註解；src/components/AddressComponent2.vue＋required 預設 false 且呼叫端未傳，元件含 country／city／district／detail 四欄；後端驗證規則無地址欄。",
+    "句 4：src/pages/users/subscription/Chose.vue＋Email 標題 :class 僅 duplicate 時 after-required（註解「二聯式才必填」），t('聯絡電話') 標題無必填記號。"
+   ]
+  },
+  {
+   "id": "jgb/I/subscription-coupon-and-renewal-discount",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "88def267c77fd5b8f34eb221558f3319fbdf3b85e08775e8a13ff7b59e3b1523",
+   "title_text": "訂閱優惠碼怎麼用？（輸入後即時驗證，續訂優惠次數沒有設定上限時顯示「終生」）",
+   "notes": [
+    "標題：即時驗證與「終生」分別由句 1、句 3 支撐。",
+    "句 1：src/pages/users/subscription/Chose.vue＋t('兌換') 按鈕呼叫 couponValidity → POST /users/coupon/check，回傳 is_legal 與 message 顯示；已套用清單 state.paymentDetail.coupon.use 每列有 removeCoupon(coponItemIndex)。附註：addCoupon 每次會清掉前一張，同時只能套用一張。",
+    "句 2：src/pages/users/subscription/MyPlan.vue＋t('續訂優惠') 與 t('剩餘續訂優惠次數')；附註：兩行在 coupon_remaining_recurrence_count 為 0 時都不顯示。",
+    "句 3：同上＋v-else-if=\"...coupon_remaining_recurrence_count == null\" 顯示 t('終生')，> 0 時顯示實際次數；app/Http/Controllers/UserController.php＋'coupon_remaining_recurrence_count' => isset(...) ? ... : null。"
+   ]
+  },
+  {
+   "id": "jgb/I/subscription-my-plan-page",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "bd957eff10085f7949d091986ce8f005c3fc58741bfb94fdca57944b3030b7b9",
+   "title_text": "我的方案頁看什麼？（方案卡片、付款方式綁定狀態、溢繳費用）",
+   "notes": [
+    "標題：由句 1、句 2 支撐。",
+    "句 1：src/pages/users/subscription/MyPlan.vue＋左側卡片 plan_card.plan_name、plan_card.size、t('額外戶數')（v-if 非空）、plan_card.pricing；右側 t('付款方式') 與 t('溢繳費用')；後端 app/Http/Controllers/UserController.php＋'size' => ___('[s1] 戶', [$role->plan_estate_limit])。",
+    "句 2：src/pages/users/subscription/MyPlan.vue＋credit_card_logos/${...card_info?.type}.png、card_info.number、card_info.expiry_date；無卡號時 t('尚未綁定')。"
+   ]
+  },
+  {
+   "id": "jgb/I/subscription-change-card-flow",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "9baf8223075d98eaa9e2ad5adfe55cb59865a1bb7be4a25422281e8e9a8a81da",
+   "title_text": "怎麼換綁信用卡？（更新要重新授權並試刷 1 元，變更方案按鈕需要對應權限）",
+   "notes": [
+    "標題：由句 1、句 2 支撐。",
+    "句 1：src/pages/users/subscription/MyPlan.vue＋t('更新') 開 lightbox changeCardReminder，內文「更換綁定信用卡需重新授權，屆時將與您收取一塊錢，請按下「前往更換」繼續流程。」，按 t('前往更換') 才呼叫 credit_card_update；後端 app/Http/Controllers/UserController.php＋'note' => '首次約定信用卡授權(更換信用卡號)'、'price' => 1。",
+    "句 2：src/pages/users/subscription/MyPlan.vue＋hasEditRoleSubscriptionPermission = store.state.userData.permission.edit_role_subscription，無權限時 t('變更') 加 disabled；src/styles/components/Btn.sass＋&.disabled 為 opacity: 0.5、pointer-events: none。"
+   ]
+  },
+  {
+   "id": "jgb/I/subscription-plan-change-billing",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "0fb56674d34c553d26ed51d71174e1ef0120bf3f4f07ffb44fa8e1d701a14360",
+   "title_text": "換方案時舊方案沒用完的錢會退嗎？（按剩餘天數比例換算成溢繳金，直接折抵新方案費用）",
+   "notes": [
+    "標題：由句 2 支撐。",
+    "句 1：app/Http/Controllers/UserController.php＋subscriptionChose 結帳段 $planFirstYmd = $planStartYmd = date('Ymd')，付款成功後 $role->update($readyToUpdate['roles']) 立即寫入新方案。",
+    "句 2：同上＋$cashRefund = $role->plan_price * ($planDiffInDays - $planStartDiffInDays) / $planDiffInDays；$actualPrice > ($cash+$cashRefund) 時 $cashUsed = 總溢繳金，餘額才為應付金額，付款細節列 ___('退還的溢繳金額')。"
+   ]
+  },
+  {
+   "id": "jgb/I/subscription-cancel-effect",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "0735190fccd142019e2713944b9174f09826ca74a0324efebd037f1c58932bee",
+   "title_text": "取消訂閱會怎樣？（立即停止自動續訂與已授權信用卡，但用到目前效期結束才失效）",
+   "notes": [
+    "標題：由句 1、句 3 支撐。",
+    "句 1：app/Http/Controllers/UserController.php＋unsubscribe 的「如果取消訂閱，您目前的方案資格會持續到 [s3] 日，之後將不再自動續訂，屆時您也無法再繼續使用 JGB 的所有服務。」（s3 為 plan_end_ymd）；src/pages/users/subscription/Unsubscribe.vue＋t('更改設定將立即生效。')。",
+    "句 2：app/Http/Controllers/UserController.php＋$reasonOptions 四項「我不再需要使用相關服務／無法解決我遇上的問題／費用昂貴／其他」；src/pages/users/subscription/Unsubscribe.vue＋allowSubmit：未選為 false，選 other 時 reason_other_content.length>0 才為 true，否則 t('確定') 加 disabled。",
+    "句 3：app/Http/Controllers/UserController.php＋「將該role的自動續約資料拔掉」plan_first_ymd = null、plan_extend_ymd = null、clearCreditAgreed()；app/Role.php＋clearCreditAgreed 清 plan_bind_card_* 與 newebpay_payment_info。",
+    "句 4：app/Http/Controllers/UserController.php＋if (empty($this->role->plan_extend_ymd)) 回傳 ___('很抱歉！目前系統繁忙中。') 與 redirect users.index；app/User.php＋免費方案註解「不設定 plan_first_ymd 與 plan_cycle」，未設 plan_extend_ymd；src/mixin/methods.js＋ajaxResRedirection 有 redirect 時以 status-error 帶訊息跳轉。"
+   ]
+  },
+  {
+   "id": "jgb/I/subscription-renewal-charge-failure",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "cfd03712503a04cc79caf473e5f99ab78f00e877994ec4787773388bbe80de90",
+   "title_text": "自動續訂扣款失敗會怎樣？（方案資料整個清空、限額歸零、所有物件立即下架，沒有寬限期）",
+   "notes": [
+    "標題：由句 1～句 4 支撐。",
+    "句 1：app/Console/Commands/AutoRenewSubscription.php＋if (!$role->checkCreditAgreed() || !$role->isSubscriptionRenewable()) { $role->clearSubscription(); $role->pullOffAllEstate(); }，扣款失敗的 else 分支同樣兩步；app/Role.php＋isSubscriptionRenewable 檢查 plan_first_ymd 與 plan_cycle。",
+    "句 2：app/Role.php＋clearSubscription 將 plan_estate_limit／plan_contract_limit／plan_team_limit／plan_big_landlord_limit 設 0，plan_first_ymd／plan_start_ymd／plan_end_ymd／plan_extend_ymd 設 null。",
+    "句 3：同上＋pullOffAllEstate 取 whereRaw('(is_open != 0 or sell_is_open != 0)')，逐筆設 is_open = false、sell_is_open = false。",
+    "句 4：app/Console/Commands/AutoRenewSubscription.php＋選取條件 plan_end_ymd < $now，條件不符或扣款失敗當次即 clearSubscription＋pullOffAllEstate，無延後或重試邏輯（僅 payment 建立失敗或無對應使用者時 continue 跳過）。"
+   ]
+  },
+  {
+   "id": "jgb/I/orders-payment-history",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "11b62f60822e35023a9f05a28963e5eae11221fbc6ac9cb8337fb470fff6f3f5",
+   "title_text": "付款紀錄頁看什麼？（扣款日、訂單編號、付款內容、金額、收據）",
+   "notes": [
+    "標題：五欄由句 1 支撐。",
+    "句 1：src/pages/users/orders/Index.vue＋欄位 t('扣款日')、t('訂單編號')、t('付款內容')、t('金額')、t('收據')，deviceList 為空時顯示 <span>無</span>；routes/web.php＋'UserController@getPaymentLogLists'；app/Http/Controllers/UserController.php＋getPaymentLogLists 組 items：___($item['name'], [$s1, $s2]) . ' * ' . $item['count']，再附 contents。附註：清單只取 payment_completed_ymd 非空且單號含 JGB 或（SU＋newebpay＋agreed_credit_2）的付款。",
+    "句 2：src/pages/users/orders/Index.vue＋t('目前尚未有任何付款紀錄')。",
+    "句 3：同上＋t('如果紀錄有疑慮，請聯繫JGB客服。')。"
+   ]
+  },
+  {
+   "id": "jgb/I/payment-vendor-options-overview",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "62ff4c58e36019c00230bd617e724acf550f69a265108aa2a429453a82d9f9f0",
+   "title_text": "收款設置支援哪些金流商？（藍新／國泰世華／永豐／中信／icash Pay／現金收款帳戶，各家設定費與手續費不同）",
+   "notes": [
+    "標題：由句 1～句 3 支撐。",
+    "句 1：src/pages/users/payment/routerView/Add.vue＋vendorKey 分支 newebpay／cathaybk／ctbc／sinopac／icashpay；app/Payment.php＋manufacturerActionLists 名稱 ___('藍新')／___('國泰')／___('永豐')／___('中信')／___('愛金卡')；src/pages/users/payment/_parts/CashBanks.vue＋t('現金收款帳戶')、t('新增現金帳戶')。",
+    "句 2：qa27_zh-Hant.html＋表格「國泰世華 自行向銀行申請 首次 5,000 元」「永豐銀行 自行向銀行申請 首次 5,000 元」「中國信託 於 JGB 系統線上申請 免費」「藍新 NewebPay 於 JGB 系統線上申請 免費」。",
+    "句 3：qa27_zh-Hant.html＋「超商條碼：每筆 10 至 20 元」「虛擬 ATM：每筆 3 元」「信用卡：每筆 1.85%」「實體繳納每筆 15 元、網路繳納每筆 20 元」「國內卡每筆 2.4%、國外卡每筆 3%」「超商代碼：每筆 28 元」，全數一致。",
+    "句 4：qa27_zh-Hant.html＋「藍新的手續費一律由收款方負擔，不能轉嫁給租客；國泰世華的超商條碼則可以自行設定由租客或由您支付」「租客必須有中信帳戶並使用中信 APP 繳費」。",
+    "句 5：qa27_zh-Hant.html＋「使用超商代碼付款的話，有 30 元以上、20,000 以下的租金限制」；app/Http/Controllers/UserController.php＋getPaymentVendor 超商代碼 tip「付款金額有 TWD30 ~ TWD 20,000 的限制。」。",
+    "句 6：app/Http/Controllers/UserController.php＋getPaymentSupportedVendors：RULE_KEY_LANDLORD_INDIVIDUAL 時 PAYMENT_NEWEBPAY／PAYMENT_CATHAYBK／PAYMENT_SINOPAC disabled；elseif in_array($planName, ['免費方案', '體驗方案']) 時 PAYMENT_CATHAYBK／PAYMENT_SINOPAC disabled。"
+   ]
+  },
+  {
+   "id": "jgb/I/payment-vendor-eligibility-by-role-and-plan",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "c286b1745fbb5492f627a16805c81a384c2c615ecef928a69e788ee3f3d84c8e",
+   "title_text": "哪些身分或方案不能開通某些金流商？（個人房東不能開藍新／國泰世華／永豐，免費方案／體驗方案不能開國泰世華／永豐）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：app/Http/Controllers/UserController.php＋getPaymentSupportedVendors 的 if 個人房東（三家 disabled）／elseif 免費或體驗方案（僅國泰、永豐 disabled），藍新不在第二組。附註：方案判定用 get_plan_name($role->plan_estate_limit)。",
+    "句 2：src/pages/users/payment/routerView/Add.vue＋灰階 class 只在 state.isLimitVendorAdd[node.key]（同 key 已有 >= 3 組）時加 'disabled grayscale'；bankSelected.disabled 時只顯示紅字 bankSelected.message、不渲染表單；訊息文字來自後端 ___('您無法開通此收款方式，若有問題請洽詢JGB客服')。"
+   ]
+  },
+  {
+   "id": "jgb/I/payment-newebpay-setup-details",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "6a394201d6bc25b0136fd57ee746c256618d9b2402332587580cc509cc8bb9fd",
+   "title_text": "藍新金流申請要注意什麼？（個人房東無法申請；手機與 Email 送出後不能改，每個金流最多開三組帳號，需審核）",
+   "notes": [
+    "標題：由句 1、2、4、5 支撐。",
+    "句 1：app/Http/Controllers/UserController.php＋getPaymentSupportedVendors 個人房東 PAYMENT_NEWEBPAY disabled 並帶 ___('您無法開通此收款方式，若有問題請洽詢JGB客服')；src/pages/users/payment/routerView/Add.vue＋bankSelected.disabled 時以 text-red-600 顯示 message、不出現表單。",
+    "句 2：src/pages/users/payment/_parts/Newebpay.vue＋「此號碼將成為您未來藍新科技/NewebPay的管理者帳號，送出申請後無法修改」與「此信箱將成為藍新科技/NewebPay 寄送通知信的信箱，送出申請後無法修改」。",
+    "句 3：同上＋「系統會自動加上 JGB_ 前綴」與「而此帳戶必須為帳號申請人本人所有」。",
+    "句 4：src/pages/users/payment/routerView/Add.vue＋t('每個金流至多可開通三組帳號。')。",
+    "句 5：qa27_zh-Hant.html＋「只要有點選信用卡、國外信用卡開通的話，需要三個工作天以上的審核時間，依藍新官方進行審核階段的調整」。"
+   ]
+  },
+  {
+   "id": "jgb/I/payment-vendor-edit-after-binding",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "20656c66068d9e2db7774df10ce37dc06467ead73a540376c4ad70300a5bca49",
+   "title_text": "金流綁定後還能改嗎？（綁定資料都是唯讀；國泰世華只能補填還沒填齊的超商條碼欄位）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/pages/users/payment/routerView/Detail.vue＋各元件皆傳 isDisabled={true}，註解「只有國泰可以再次填寫並送出」，cathaybkFormSubmit 以 PATCH 送出；isAllowCathaybkBarcode 由排除 cathaybk_account／atm_prefix／encryption 後其餘欄位是否有空值決定；src/pages/users/payment/_parts/Cathaybk.vue＋(!props.isDisabled || props.isAllowCathaybkBarcode) 才顯示 t('開啟超商條碼功能') 區塊，加密因子與 ATM 前綴四碼輸入框在 isDisabled 時加 disabled。"
+   ]
+  },
+  {
+   "id": "jgb/I/payment-icash-ctbc-setup",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "471aae43136ad288465926a9412180603ab6dc6e2631fe0111f89cc2c21fb349",
+   "title_text": "藍新／中信收款帳戶申請要多久？（藍新：智付通至少 2-5 個工作天；中信 ACH 驗證約 5 個工作天）",
+   "notes": [
+    "標題：由句 1、句 2 支撐。",
+    "句 1：src/pages/users/payment/routerView/Add.vue＋「智付通將存取您的資訊以便開通帳號，需至少 2 - 5 個工作天完成開通程序」，僅在 bankSelected 非 disabled 分支顯示；disabled 分支只顯示紅字 message。",
+    "句 2：src/pages/users/payment/_parts/Ctbc.vue＋「送審後會由 JGB Smart 進行 ACH 驗證並撥款 1 元到收款帳號，審核時間需 5 個工作天(不含例假日)」；顯示條件 vendorForm.payment?.ctbc_pay?.active，app/Http/Controllers/UserController.php＋getPaymentVendor 中 'ctbc_pay' => ['active' => true] 恆為 true。"
+   ]
+  },
+  {
+   "id": "jgb/I/payment-receipt-template-options",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "f97318cd14b4cc58bff1e57776f6b311a2ec3b750a68d64575e24f8293c7d3c9",
+   "title_text": "收據範本有哪些？（財政部包租業租金收據範本只有法人／社宅團隊才看得到）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/pages/users/payment/_parts/Receipt.vue＋availableReceiptOptions：isTeam = [3, 4].includes(config_rule_key) 時五種，否則 [general, no]；src/utils/constants/paymentSetting.ts＋receiptTypeOptions 五項標籤，3 為「超商繳費單、JGB系統收據」、5 為「超商繳費單、不檢附收據」，1／2 含「財政部包租業租金收據」、4 含「JGB系統繳費單」。",
+    "句 2：src/pages/users/payment/_parts/Receipt.vue＋「選擇「財政部包租業租金收據範本」時，請於團隊資訊內填寫 公司登記證日期、公司登記證縣市、公司登記證號資料。」；app/Bill.php＋company_registration_ymd／company_registration_code 空值時範本寫入 '-'。",
+    "句 3：src/pages/users/payment/_parts/Receipt.vue＋上傳區塊在 v-if=\"state.showTransactionInputs\" 之外，僅以 hasEditRolePaymentPermission 切換 disabled；「支援JPG、PNG檔，至多 [s1] 張，檔案大小最大 [s2]。」帶 [1, '10MB']，:size_limit=\"10\"。"
+   ]
+  },
+  {
+   "id": "jgb/I/payment-receipt-deposit-team-extras",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "684772d71ddae59dfe3c3712ec3b7d6615406d86cc8fe122247ba90006e6fb47",
+   "title_text": "押金收據能自訂摘要跟蓋章嗎？（摘要與三顆收款章都只有特定合作團隊才看得到）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/pages/users/payment/_parts/Receipt.vue＋RECEIPT_SUMMARY_TITLE_MAX = 20、「印在押金收據「摘要」欄開頭的文字，留空則沿用團隊名稱」；stampFields 三項對應 src/utils/constants/paymentSetting.ts＋'主辦出納用印'／'主辦會計用印'／'機構首長用印'；整塊包在 <template v-if=\"isDepositReceiptStampTeam\">，條件為 useSpecialRoles 的特定合作團隊群組。"
+   ]
+  },
+  {
+   "id": "jgb/I/payment-bill-e-invoice-setup",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "7526d371c35960a128dba056be26f4c70ee3354d2ea0e8f6c5f782b85ed90bb1",
+   "title_text": "帳單怎麼開電子發票？（要先聯繫 JGB 業務開通加值服務，開通後才會出現稅與發票分頁）",
+   "notes": [
+    "標題：由句 1、句 2 支撐。",
+    "句 1：src/pages/users/payment/_parts/Invoice.vue＋t('如要啟用此功能，請先開通電子發票加值服務後，聯繫您的 JGB 業務。')，未啟用時顯示 t('功能尚未啟用')。",
+    "句 2：同上＋「若功能已啟用完成，「編輯合約」是會出現“稅與發票”分頁」；src/use/useEditStore.js＋if (!editStore.options?.can_auto_generate_invoice) 濾掉 contracts.edit.taxAndInvoice。附註：另有車位合約與物件用途等額外過濾，句中「才會」屬必要條件敘述。",
+    "句 3：src/pages/users/payment/_parts/Invoice.vue＋invoiceModes 固定「帳單已到帳後開立」，特定合作團隊群組才加「預先開立發票」；preBillingIssueTimings「發送帳單／繳費期限前／繳費期限後」，非 onSend 時顯示 t('指定天數')。"
+   ]
+  },
+  {
+   "id": "jgb/I/payment-permission-menu-visibility",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "e59a3600aa151fc9f35fa93e0d355061757c223fcd62e26a030c00fe032c8bf9",
+   "title_text": "沒有查看權限會怎樣？（收款設置與訂閱方案選單整個不會出現）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：app/Role.php＋團隊管理 sub 中 ___('收款設置') 'permission' => 'show_role_payment'、___('訂閱方案') 'permission' => 'show_role_subscription'，迴圈中 !$currentPermission[$itemSub['permission']] 時 unset 該項；app/Character.php＋\"show_role_payment\", // 查看收款設置、\"show_role_subscription\", // 查看訂閱方案。"
+   ]
+  },
+  {
+   "id": "jgb/I/payment-bill-autosend-and-recipient",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "38f86bda2f5b81f2d16afb7b051521735d2892e0b6c2cc7662280918fc524ec3",
+   "title_text": "帳單可以自動排程發送、指定收款人嗎？（提前 0～20 天自動發送，收款人可選原簽約者／主要經理人／自訂）",
+   "notes": [
+    "標題：由句 1、句 3 支撐。",
+    "句 1：src/pages/users/payment/_parts/OtherSetting.vue＋dayOptions 為 t('不啟用')、t('當天')、1～20；說明文字「已填寫完或不需設定生活費用細節(如：水、電、瓦斯費用)的帳單」與「到期日為 05/05，提前發送天數設定為5天時，則系統會於 04/30 07:00 時將該筆帳單傳送至排定發送帳單列表內」。",
+    "句 2：同上＋store.state?.userData?.role?.isSubscriptionActive && 才渲染此區塊。",
+    "句 3：src/utils/constants/paymentSetting.ts＋receiptReceiverOption「原簽約者／主要經理人／自訂」與 transactionInputLabelKeys「收款人／聯絡人／聯絡人電話／Email」；src/pages/users/payment/_parts/Receipt.vue＋非 CUSTOM 時 resetCustomReceiverInfos 並直接 submit，showTransactionInputs 僅 BOTH／GENERAL／JGB_SYSTEM（即 1、3、4）為 true。"
+   ]
+  },
+  {
+   "id": "jgb/I/demo-form-fields",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "不成立",
+    "成立"
+   ],
+   "content_sha256": "0a1755dccea71de256553d60a1cc4c511747eb80d23f19155f904785685d54f6",
+   "title_text": "預約 demo 表單要填什麼？（公司、職稱、聯絡方式、物件所在地、感興趣功能與諮詢內容）",
+   "notes": [
+    "標題：欄位列舉由句 1 支撐。",
+    "句 1：src/pages/listings/DemoForm.vue＋t('聯繫我們')、公司名稱／職稱／姓名／電話／Email／物件所在地（placeholder t('國家/城市')）／物件數量／團隊人數／最有興趣的功能（可複選）／諮詢內容，以及 t('我同意[s1]JGB隱私權政策[s2]') 勾選框。",
+    "句 2：無法判定：src/pages/listings/DemoForm.vue＋t('所有資訊皆必填')、allDone 的 10 欄與 isPrivacyCheck 控制 btn-grey／btn-main、button type=\"submit\" 未 disabled，這幾點成立；但職稱、物件數量、團隊人數三欄是 @vueform/multiselect 元件（package-lock.json＋\"node_modules/@vueform/multiselect\" \"version\": \"2.5.1\"），required 只是傳給元件的屬性，匯出內沒有套件原始碼，無法證實瀏覽器原生驗證會在這三欄擋下送出，所以「每個欄位都靠瀏覽器內建必填檢查擋下」證據不足。",
+    "句 3：src/pages/listings/DemoForm.vue＋interests 為 type=\"checkbox\"，:required=\"state.request.interests.length === 0\"；其餘為 Multiselect 下拉或 input／textarea。"
+   ]
+  },
+  {
+   "id": "jgb/I/demo-form-option-lists",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "663d8b535985d5f43ac001fcefc80fc3f0df9ab95e0d8557094a977140e3c5ab",
+   "title_text": "demo 表單的下拉選項有哪些？（物件數量 7 級距、團隊人數 6 級距、感興趣功能 6 項）",
+   "notes": [
+    "標題：由句 1～句 3 支撐。",
+    "句 1：config/demoform.php＋'estates_amount' 為 1-10、11-30、31-50、50-100、100-200、200-300、300戶以上，共 7 項。",
+    "句 2：同上＋'team_member_amount' 為 1-15、16-30、31-50、51-100、101-500、501-1000，共 6 項。",
+    "句 3：同上＋'function_table' 為房源管理、租約管理、帳務管理、團隊管理、智慧門鎖、智慧電錶，共 6 項。",
+    "句 4：同上＋'job_title' 13 項，從公司負責人到其他，完全一致。"
+   ]
+  },
+  {
+   "id": "jgb/I/demo-form-submit-result",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "ac4ab0c6c6526fd4fcd445a3749db7ae3bfd53f283919b417a5a5db8e2c598fb",
+   "title_text": "demo 表單送出後多久有人聯繫？（顯示感謝頁，2-3 個工作天內專人聯繫）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/pages/listings/DemoForm.vue＋成功後 router.push query demoFormSubmitted: 1，顯示 t('謝謝您完成預約表單！')、t('感謝您完成填寫表單，將會有專人於 2-3 天工作天聯繫您')，以及 router-link name 'listings.home' 的 t('回到首頁')。"
+   ]
+  },
+  {
+   "id": "jgb/I/demo-form-actual-validation-scope",
+   "title": "不成立",
+   "sentences": [
+    "不成立"
+   ],
+   "content_sha256": "852454ed20a4c3cf8e969c8b3274831322adc58a6a256c8f42c8b43f8ce8e3bb",
+   "title_text": "demo 表單哪些欄位真的會被系統擋下？（畫面上全部欄位都要填才能送出；系統端只再檢查公司、姓名、電話、Email 四項）",
+   "notes": [
+    "標題：「畫面上全部欄位都要填才能送出」依賴句 1 前半，該部分無法證實，所以標題不成立；「系統端只再檢查四項」成立。",
+    "句 1：後半成立：app/Http/Controllers/IndexController.php＋demoForm $rule 只有 'company_name' => 'required'、'name' => 'required'、'tel' => 'required'、'email' => 'required|email'。前半無法判定：src/pages/listings/DemoForm.vue＋職稱、物件數量、團隊人數三欄是 Multiselect 元件（套件 @vueform/multiselect，package-lock.json 鎖定 2.5.1），required 只是傳給元件的屬性，匯出內沒有套件原始碼，無法證實瀏覽器會因這三欄未填而擋下送出；後端也不檢查這三欄。"
+   ]
+  }
+ ],
+ "findings": [
+  "淺層審核建議（中信心，P2）：jgb/I/demo-form-fields 句 2 與 jgb/I/demo-form-actual-validation-scope 句 1 都假設「10 個欄位都由瀏覽器原生必填驗證擋下」。其中三個下拉欄位是 @vueform/multiselect 2.5.1 元件，required 只是傳給元件的屬性，匯出內無法證實它們會觸發原生驗證；後端 IndexController@demoForm 也只檢查公司名稱、姓名、電話、Email。若元件不支援原生 required，這三欄空白也能送出成功。重新驗證方式：在本機頁面不填職稱／物件數量／團隊人數、其餘填妥後送出，看是否被擋。",
+  "數值錯誤（高信心，P2）：jgb/I/free-trial-length 句 1 引號內寫「14天」，但現行價格頁 PlanAndDevice.vue 是 t('不綁信用卡的[s1]天的試用方案，歡迎體驗！', [30], ...)，畫面為 30 天；同條句 2 說免費方案效期為一個月（config/defaultplan.php 'plan_cycle' => 'month'），兩句天數本身就互相不一致。",
+  "來源間開通時間不同（P4，僅提醒）：jgb/I/payment-newebpay-setup-details 句 5 依幫助中心 qa27 寫「勾信用卡需三個工作天以上審核」，jgb/I/payment-icash-ctbc-setup 句 1 依 Add.vue 寫「智付通至少 2 到 5 個工作天」，後端 getPaymentVendor 的國外卡提示另寫「後續申請開通耗時約5-7工作天」。三者條件不同，不算直接矛盾，但同一題組回答時可能讓人困惑。",
+  "邊界說明（P4）：jgb/I/subscription-choose-plan-flow 句 3 的提示只在拖拉低於物件數時出現；進頁面時的自動跳格因 oldVals[0] == 50 不顯示提示。jgb/I/subscription-coupon-and-renewal-discount 句 2 的兩行在剩餘次數為 0 時都不顯示。jgb/I/orders-payment-history 句 1 的清單只取單號含 JGB，或 SU＋newebpay＋agreed_credit_2 的已完成付款。以上依情境閱讀都判成立，僅供補述參考。"
+ ],
+ "source_transcript": "affed753ee2ffdcdf.output"
+}

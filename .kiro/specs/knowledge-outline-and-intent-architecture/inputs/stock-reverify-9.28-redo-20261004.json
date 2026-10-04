@@ -1,0 +1,177 @@
+{
+ "_meta": {
+  "plan": ".kiro/specs/knowledge-outline-and-intent-architecture/inputs/plan-9.28-stock-reverify-525-20261004.md",
+  "rule": "resend＝SendMessage 請同一代理重貼；replace＝換一位 fresh verifier 重做；voided＝該次交件作廢未收件",
+  "source": "計畫 §6 重做與揭露"
+ },
+ "batches": {
+  "B01": {
+   "resend": 1,
+   "replace": 0,
+   "voided": 0,
+   "disclosure": "",
+   "note": "首交 4 則 note 寫「同一檔」未寫「同上」⇒ 重貼一次，判定未變"
+  },
+  "B02": {
+   "resend": 0,
+   "replace": 0,
+   "voided": 0,
+   "disclosure": "",
+   "note": ""
+  },
+  "B03": {
+   "resend": 0,
+   "replace": 0,
+   "voided": 0,
+   "disclosure": "",
+   "note": ""
+  },
+  "B04": {
+   "resend": 0,
+   "replace": 0,
+   "voided": 0,
+   "disclosure": "",
+   "note": ""
+  },
+  "B05": {
+   "resend": 0,
+   "replace": 0,
+   "voided": 0,
+   "disclosure": "",
+   "note": ""
+  },
+  "B06": {
+   "resend": 0,
+   "replace": 0,
+   "voided": 0,
+   "disclosure": "",
+   "note": ""
+  },
+  "B07": {
+   "resend": 0,
+   "replace": 0,
+   "voided": 0,
+   "disclosure": "",
+   "note": ""
+  },
+  "B08": {
+   "resend": 0,
+   "replace": 0,
+   "voided": 0,
+   "disclosure": "",
+   "note": ""
+  },
+  "B09": {
+   "resend": 0,
+   "replace": 0,
+   "voided": 0,
+   "disclosure": "",
+   "note": ""
+  },
+  "B10": {
+   "resend": 0,
+   "replace": 0,
+   "voided": 0,
+   "disclosure": "",
+   "note": ""
+  },
+  "B11": {
+   "resend": 0,
+   "replace": 0,
+   "voided": 0,
+   "disclosure": "",
+   "note": ""
+  },
+  "B12": {
+   "resend": 0,
+   "replace": 0,
+   "voided": 0,
+   "disclosure": "",
+   "note": ""
+  },
+  "B13": {
+   "resend": 0,
+   "replace": 0,
+   "voided": 0,
+   "disclosure": "",
+   "note": ""
+  },
+  "B14": {
+   "resend": 1,
+   "replace": 1,
+   "voided": 0,
+   "disclosure": "",
+   "note": "首派代理停擺（600s 無進度、未交件）⇒ 換人；交件後 notes 有客戶簡稱 ⇒ 重貼一次改寫，判定未變"
+  },
+  "B15": {
+   "resend": 1,
+   "replace": 0,
+   "voided": 0,
+   "disclosure": "代理自行揭露一次 grep 參數展開為空、於 repo 根目錄遞迴，輸出僅見 semantic_model 檔、未引用；判定不重做",
+   "note": "首交 JSON 引號未跳脫無法解析 ⇒ 重貼一次，判定未變"
+  },
+  "B16": {
+   "resend": 0,
+   "replace": 0,
+   "voided": 0,
+   "disclosure": "",
+   "note": ""
+  },
+  "B17": {
+   "resend": 0,
+   "replace": 1,
+   "voided": 1,
+   "disclosure": "",
+   "note": "首派代理自行揭露在 brief 目錄建立又刪除暫存腳本（違反唯讀）⇒ 該次作廢未收件，換人重做"
+  },
+  "B18": {
+   "resend": 0,
+   "replace": 0,
+   "voided": 0,
+   "disclosure": "",
+   "note": ""
+  },
+  "B19": {
+   "resend": 0,
+   "replace": 0,
+   "voided": 0,
+   "disclosure": "",
+   "note": ""
+  },
+  "B20": {
+   "resend": 0,
+   "replace": 0,
+   "voided": 0,
+   "disclosure": "",
+   "note": ""
+  },
+  "B21": {
+   "resend": 0,
+   "replace": 0,
+   "voided": 0,
+   "disclosure": "",
+   "note": ""
+  },
+  "B22": {
+   "resend": 0,
+   "replace": 0,
+   "voided": 0,
+   "disclosure": "",
+   "note": ""
+  },
+  "B23": {
+   "resend": 0,
+   "replace": 0,
+   "voided": 0,
+   "disclosure": "",
+   "note": ""
+  },
+  "B24": {
+   "resend": 0,
+   "replace": 0,
+   "voided": 0,
+   "disclosure": "代理自行揭露一次 grep 參數展開為空、於 jgb2 匯出根目錄遞迴，輸出帶出 .env.custom 數行；未用於判定，證據 secret 樣式掃描 0 筆；判定不作廢",
+   "note": ""
+  }
+ }
+}

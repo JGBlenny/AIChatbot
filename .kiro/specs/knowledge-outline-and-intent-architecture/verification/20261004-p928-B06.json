@@ -1,0 +1,550 @@
+{
+ "kind": "write",
+ "verdict": "REFUTED",
+ "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+ "claim": "Plan 9.28 批次 B06：34 條細目的標題與每一句已逐句對合法來源核對，逐條結果如 fines",
+ "fines": [
+  {
+   "id": "jgb/B/lessee-tabs",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "0b600841593316f611242335c39ea72390f7721e306b9f20f6ca7e0213946ab3",
+   "title_text": "租客列表有哪兩個分頁？（當前租客／封存，封存代表這位租客已被移出列表且目前沒有進行中的合約）",
+   "notes": [
+    "標題：兩個分頁與封存條件均由句 1、句 2 支撐。",
+    "句 1：src/pages/users/lesseeList/parts/ListTable.vue＋scrollNavList 內 t('當前租客')、t('封存')；src/pages/users/lesseeList/parts/PageTop.vue＋'租客聯絡簿，包含簽約成功的租客、與自行管理的潛在租客'，涵蓋範圍與句意一致。",
+    "句 2：app/Services/LesseeService.php＋public function archive：existed 租客須 registered_contract_signed_count=0 且 exempt_register_contract_signed_count=0 才會 update active=400，否則回 '租客有進行中的合約，不能封存'；app/Http/Controllers/LesseeController.php＋case '400' 以 active=400 列出封存分頁，當前分頁只列 active=1。"
+   ]
+  },
+  {
+   "id": "jgb/B/lessee-credit-rating-visibility",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "4c2197e4b1656fba03815202d1ee05c53b54f17aa639f3a9a29b42d833b63792",
+   "title_text": "租客列表的「信用評價」欄位為什麼有些人看不到？（需要有查看租客信用評價的權限才會顯示這一欄）",
+   "notes": [
+    "標題：與句 1 一致。",
+    "句 1：src/pages/users/lesseeList/parts/ListTable.vue＋'const creditRatingColumns = store.state.userData?.permission?.show_credit_rating ? [creditRating] : []'，註解寫明「沒有查看權限的人整欄不出現，不佔表格寬度」；app/Http/Controllers/LesseeController.php＋isHasGPermission('show_credit_rating') 後端也不送資料。"
+   ]
+  },
+  {
+   "id": "jgb/B/lessee-crud",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "833b04b637cbe0e76d0cd3c51eec3b99b290304faf8d64940c5a8c79435bee76",
+   "title_text": "租客列表可以新增、匯入、匯出租客嗎？（個人房東與法人房東可以手動新增、Excel 匯入與匯出；社宅團隊只能匯出）",
+   "notes": [
+    "標題：由句 1 支撐（ConfigRuleKey 2/3/4 對應個人房東／法人房東／社會住宅，見 src/utils/constants/common.ts＋ConfigRuleKey）。",
+    "句 1：src/pages/users/lesseeList/parts/PageTop.vue＋config_rule_key === 2 || === 3 時顯示 t('新增租客') 與下拉 t('匯入租客')、t('匯出租客')；config_rule_key === 4 只有 t('匯出')；匯出 job 'export_lessees_list' 由 app/Services/LesseeService.php＋generateLesseeListExcel 產 Excel。",
+    "句 2：同上 PageTop.vue＋'已有合約的租客，將無法編輯姓名，也無法被刪除。'；app/Services/LesseeService.php＋public function delete 要求 registered_contract_count=0 且 exempt_register_contract_count=0，否則回 '租客已有合約，不能刪除'；update 的 exist 分支註解 '有合約不能修改姓名'。"
+   ]
+  },
+  {
+   "id": "jgb/B/lessee-notification-status-color",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "7dd931189bb369b0d03d30a22d80aab622990401afbd26425ec2fd18bdbc3f4f",
+   "title_text": "租客列表裡 Email／手機號碼顯示藍色、橘色、灰色代表什麼？（驗證狀態：已驗證／等待驗證／未驗證）",
+   "notes": [
+    "標題：與句 1 一致。",
+    "句 1：src/pages/users/lesseeList/parts/PageTop.vue＋'藍色的 Email 與手機號碼，代表該通知方式已被租客驗證，可以接收合約與帳單通知；橘色代表該通知方式正在等待租客驗證、灰色代表該通知方式未驗證'；src/pages/users/lesseeList/parts/ContactInfoBlock.jsx＋verifyStatus === 0 ? 'text-grey-600' : verifyStatus === 1 ? 'text-secondary-500' : 'text-ten-500' 對應。"
+   ]
+  },
+  {
+   "id": "jgb/B/lessee-verification-link-expiry",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "0190ecf8497f2d2f806fcd9b3f097338f4b9224f01ffcd012e17e51d2ddae553",
+   "title_text": "租客的 Email／手機驗證連結多久過期？（72 小時）",
+   "notes": [
+    "標題：與句 1 一致。",
+    "句 1：src/pages/users/lesseeList/parts/PageTop.vue＋'驗證通知發出後，信件 / 簡訊中連結的有效時間為 72 小時'。"
+   ]
+  },
+  {
+   "id": "jgb/B/lessee-notification-toggle-effect",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "a0c3f89c41b97114f0408b0ed439020da75a8f11a8a9b21f6d08464ed6ce0076",
+   "title_text": "租客的通知開關關閉後會怎樣？（Email 與手機的開關分開，關掉哪一個就停哪一種通知）",
+   "notes": [
+    "標題：與句 1 一致。",
+    "句 1：src/pages/users/lesseeList/parts/ContactInfoBlock.jsx＋notifyStatusType 依類型分為 'email_notify_status' / 'phone_notify_status'，SwitchButton 在 is_tenant_registered === 1 時加 'disabled'；app/Http/Controllers/BillController.php 與 app/Jobs/BillReadyJob.php＋'should_send_email' => (bool)$lessee->lessee_email_notify_status、'should_send_sms' => (bool)$lessee->lessee_phone_notify_status，兩管道分開判斷（ContractController.php 亦同）。"
+   ]
+  },
+  {
+   "id": "jgb/B/lessee-on-time-pay-rate",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "24377e945ed80efe566c37819abde1d2e91c86afb765c56704635d2d4f6299d8",
+   "title_text": "租客的「準時繳租率」怎麼算？（已到帳未逾期帳單數 ÷ 全部應計入帳單數）",
+   "notes": [
+    "標題：「全部應計入帳單數」即句 1 的分母，成立。",
+    "句 1：src/pages/users/lesseeList/parts/ListTable.vue＋表頭說明 t('已到帳未逾期帳單數') / (t('應到帳逾期帳單數') + t('已到帳未逾期帳單數') + t('已到帳逾期帳單數'))；app/Services/LesseeService.php＋calcLesseeStatBill 的 $LVdenominator 計算一致。"
+   ]
+  },
+  {
+   "id": "jgb/B/lessee-list-columns",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "64048e5f99f74bd730d7ab9f5e00230e93fc936cafda057dd62dfa0bc5123fb9",
+   "title_text": "租客列表可以看到哪些欄位？（ID、姓名、會員註冊、Email - 通知、手機號碼 - 通知、註冊合約、免註冊合約、所屬修繕、準時繳租率、帳戶名稱、帳號資訊、操作）",
+   "notes": [
+    "標題：與句 1 的預設欄位一致（社宅與信用評價為另條細目處理的例外）。",
+    "句 1：src/pages/users/lesseeList/parts/ListTable.vue＋columnPattern 的 default: [id, name, ...creditRatingColumns, registerStatus, email, phone, registerContractAmount, exemptRegisterContractAmount, repairAmount, onTimePayRate, bankName, bankInfo, action]，標題文字 'Email - 通知'、'手機號碼 - 通知' 等相符；信用評價欄依權限另加。",
+    "句 2：app/Services/LesseeService.php＋calcLesseeStatContract：is_tenant_registered == 1 計入 registered_contract_count、== 0 計入 exempt_register_contract_count，即合約建檔時的註冊／免註冊類型。"
+   ]
+  },
+  {
+   "id": "jgb/B/lessee-list-columns-by-role",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "c1d2628f8a4c547a3e6437e4eac4451d1dc9a17d38a98b8feb2de3bd2e8b78fa",
+   "title_text": "社宅團隊的租客列表欄位有什麼不一樣？（沒有「會員註冊」「免註冊合約」與操作選單，「註冊合約」欄改叫「所屬總合約」）",
+   "notes": [
+    "標題：與句 1 一致。",
+    "句 1：src/pages/users/lesseeList/parts/ListTable.vue＋[ConfigRuleKey.socialHousing]: [id, name, ...creditRatingColumns, emailForSocialHousing, phoneForSocialHousing, registerContractAmount, repairAmount, onTimePayRate, bankName, bankInfo]（無 registerStatus、exemptRegisterContractAmount、action）；同上 title: state.currentRole === ConfigRuleKey.socialHousing ? t('所屬總合約') : t('註冊合約')。"
+   ]
+  },
+  {
+   "id": "jgb/B/lessee-pending-verification-bill-draft",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "be86ffc6e32d3ba42ca842d116beb43749d1e046fb2642301c1d8d582ac37908",
+   "title_text": "租客的 Email 或手機還在等待驗證時，帳單會怎樣？（帳單會停留在草稿分頁，等驗證完成或連結過期才能發送，也可以手動移動）",
+   "notes": [
+    "標題：與句 1、句 2 一致。",
+    "句 1：src/pages/users/lesseeList/parts/PageTop.vue＋'若 Email / 手機號碼尚在等待租客驗證，則當管理者建立帳單時，系統會將帳單停留在草稿帳單分頁中，待租客完成驗證或驗證連結過期後，才能發送帳單。'（僅此現行介面說明為據，後端強制邏輯未在 app/ 內定位到，見 findings）。",
+    "句 2：同上 PageTop.vue＋'您仍可直接將帳單由草稿移至應到帳 / 已到帳。'"
+   ]
+  },
+  {
+   "id": "jgb/B/lessee-bulk-notify",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "e329f82c6adbcd013e52d6dedefbe4e37d9d25d249477260ab6f8803e1985727",
+   "title_text": "租客列表勾選多筆租客後可以做什麼？（特定合作團隊可以批次發送通知，其他團隊沒有這個批次操作）",
+   "notes": [
+    "標題：與句 1、句 2 一致。",
+    "句 1：src/use/config/useLesseeTypes.ts＋bulkActions 只有特定合作團隊的 special role 才含 t('發送通知')；src/pages/users/lesseeList/parts/ListTable.vue＋rowSelection 僅在 bulkActions.length > 0 時回傳、ListBulkAction 包在 sticky top 60px 容器；src/components/ListBulkAction.vue＋t('總計已選') 顯示已選數量。",
+    "句 2：src/pages/users/lesseeList/parts/ListTable.vue＋rowSelection 其餘情況 return null，ListBulkAction 需 !isEmpty(useLesseeTypesState.bulkActions)。",
+    "句 3：src/components/Lightbox/EditUsersMessage.jsx＋t('通知標題')、t('通知內容')、t('發送')、'通知將在租客登入時顯示。'；src/pages/users/lesseeList/parts/ListTable.vue＋sendUsersMessage 的 targets 取 state.pickedItems（全部已勾選，含跨頁）POST /api3/users/message。"
+   ]
+  },
+  {
+   "id": "jgb/B/lessee-export-entry-by-role",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "b5644e7613740a59e33130bb224b1b771911dbb41ddb053565b5d5c8ff314c62",
+   "title_text": "匯出租客的入口在哪？（一般房東用「新增租客」下拉選單裡的「匯出租客」；社宅團隊只有一顆「匯出」按鈕，沒有新增或匯入）",
+   "notes": [
+    "標題：與句 1、句 2 一致。",
+    "句 1：src/pages/users/lesseeList/parts/PageTop.vue＋config_rule_key 2/3 的 ButtonWithTooltip，button t('新增租客')、options t('匯入租客')、t('匯出租客')。",
+    "句 2：同上 PageTop.vue＋config_rule_key === 4 只渲染 t('匯出') 按鈕，呼叫同一個 downloadFile(props.export.job_name, …)，即 'export_lessees_list'。"
+   ]
+  },
+  {
+   "id": "jgb/B/lessee-list-search-and-pagination",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "954574e83022dae74098ca897f3f85148e4a22076cffdfd0c8115f618eaefd6a",
+   "title_text": "租客列表可以怎麼搜尋篩選、每頁看幾筆？（可依姓名／Email／手機號碼／租客 ID 搜尋，用會員註冊與通知狀態篩選，每頁可選 30／60／90 筆）",
+   "notes": [
+    "標題：與三句一致。",
+    "句 1：src/utils/constants/lessee.js＋KeywordForOption pairs: name '姓名'、email 'Email'、phone '手機號碼'、userId '租客ID'；src/pages/users/lesseeList/parts/LesseeAdvanceSearchBlock.vue＋AdvSingleSelect :options=\"KeywordForOption\"。",
+    "句 2：src/utils/constants/lessee.js＋IsTenantRegisteredOption（'未註冊'/'已註冊'）與 NotifyStatusOptions 八個 pairs '接受通知(手機)' … '未填寫聯繫方式(Email)'；LesseeAdvanceSearchBlock.vue 兩者皆有渲染。",
+    "句 3：src/pages/users/lesseeList/parts/PageNav.vue＋SelectPicker options '30': t('30項')、'60'、'90'。"
+   ]
+  },
+  {
+   "id": "jgb/B/lessee-action-menu",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "413f12f4374e7324c1a3fffa05f5fce453a510c9410366222d232f64c367b518",
+   "title_text": "租客列表每一列的操作選單有哪些功能？（建立電子合約、上傳紙本合約、編輯租客、封存租客；封存分頁裡則改成刪除租客）",
+   "notes": [
+    "標題：與兩句一致。",
+    "句 1：src/components/SurelyVue/Lessee/ActionCell.vue＋labelKey '建立電子合約'、'上傳紙本合約'、'編輯租客'。",
+    "句 2：同上 ActionCell.vue＋route.query?.archived === '1' ? '刪除租客' : '封存租客'。"
+   ]
+  },
+  {
+   "id": "jgb/C/community-list-overview-stats",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "fb98f15dfdcba5bcb3db3e7e888566066e106833bfb6285cabbfcb03ad888d41",
+   "title_text": "社區總表顯示什麼資訊？（物件總數、招租／買賣廣告數、空置數量、本月應收與已收）",
+   "notes": [
+    "標題：與三句一致。",
+    "句 1：src/pages/communities/_parts/CommunityItem.vue＋quantities_of_estates、quantities_of_rent、quantities_of_sell、receivable_of_month（t('本月應總收')）、received_of_month（t('本月已總收')）；app/Http/Controllers/CommunityController.php＋webItem 的 $_singleItem_stat。",
+    "句 2：同上 CommunityItem.vue＋t('空置數量') + '=' + t('物件總數量') + '-' + t('有執行中合約的物件總數量')；app/Community.php＋getQuantitiesByEstateId 的 $idleCount = $estateCount - $signedCount。",
+    "句 3：同上 CommunityItem.vue＋(props.isShowSticker && props.balance_invoice_enabled) 顯示 t('開設差額發票') 與 t('底租')；CommunityController.php＋webItem 的 'balance_invoice' base_currency 固定 'TWD'。"
+   ]
+  },
+  {
+   "id": "jgb/C/community-add-single-and-limit",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "不成立"
+   ],
+   "content_sha256": "00a052f9b41363efaf9c16abc16dd3c44f96cf0a5abbca36f1a91ec42839d560",
+   "title_text": "如何新增社區？（訂閱方案有可建立社區數量上限）",
+   "notes": [
+    "標題：上限確實存在（app/Http/Controllers/CommunityController.php＋postSingle 的 remainCommunitiesCount() <= 0 擋下），標題斷言本身成立。",
+    "句 1：src/pages/communities/list/Index.vue＋addCommunity POST /api3/communities/single 成功後 router.push({ name: 'communities.edit' })，按鈕 t('新增社區')。",
+    "句 2：src/components/Lightbox/CommunitiesBatchAdd.vue＋previewApi/confirmApi '/api3/communities/batch/preview|confirm' → app/Http/Controllers/CommunityController.php＋batchConfirm 直接 dispatch CommunityBatchJob → app/Community.php＋public static function batch 只有 $limits = 500 單批上限，整條批次新增路徑沒有 remainCommunitiesCount 檢查（正對照：同一 CommunityController.php 內 remainCommunitiesCount 出現 4 次，分屬 getMeta、postSingle 與舊版 generalBatch；src/pages/communities/list/Index.vue 的「批次新增」也不檢查 remainCommunitiesCount）。達上限時仍可用「批次新增」新增社區，「達到上限時無法繼續新增社區」為漏例外的絕對句。另 app/Role.php＋getPlanCommunityLimit 顯示上限取自 plan_estate_limit，個人房東固定 1。"
+   ]
+  },
+  {
+   "id": "jgb/C/community-batch-add-and-copy",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "c2beed985ba5f51d6fba8883ec6fc8b0dc8152bda196a38078be3d67ec7db402",
+   "title_text": "怎麼批次新增社區、或複製現有社區建立新社區？",
+   "notes": [
+    "標題：問句，由三句支撐。",
+    "句 1：src/pages/communities/list/Index.vue＋options 內 t('批次新增') 開 'CommunitiesBatchAdd'；src/components/ImportPreview/Index.vue＋t('下載範本')、t('請上傳 Excel 檔案（.xls 或 .xlsx），檔案大小上限')。",
+    "句 2：src/components/Lightbox/CommunitiesBatchAdd.vue＋uploadSizeMax default: 10 → ImportPreview maxFileSize；src/components/ImportPreview/Index.vue＋file.size / 1024 / 1024 > props.maxFileSize。",
+    "句 3：src/pages/communities/list/Index.vue＋!isEmpty(communityListState.data?.list) && t('複製現有社區')，點擊 router.push({ name: 'communities.pick', params: { action: 'communityCopy' } })。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-attachment-storage",
+   "title": "成立",
+   "sentences": [
+    "不成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "342bf0002cc6366839fb6a525fb84eab92d543376cd678c9b76bc6c90a8093cb",
+   "title_text": "物件的附件清單可以放幾個檔案？",
+   "notes": [
+    "標題：問句，本身無數值斷言。",
+    "句 1：app/Http/Controllers/EstateController.php＋case 'attachments' 的 $attachmentDatas['max'] = 5; // 最大數量限制；src/pages/estates/dashboard/attachments/Index.vue＋t('至多存放 [s1] 個檔案…', [dataFetcher?.data?.max …]) 顯示的是 5，不是 8。JPG／PNG／PDF（accept=\"image/jpeg,image/png,application/pdf\"、後端 mimes:jpeg,jpg,png,pdf|max:10240）、10MB 與「儲存空間」顯示屬實，但「最多存放 8 個檔案」與程式不符。",
+    "句 2：src/pages/estates/dashboard/attachments/Index.vue＋preUploadHandler 中 limitLength == 0 時 lightboxOpen('spcaeIsFull')，lightbox 內 t('儲存空間已滿') 與 '剩餘儲存檔案數：'；刪除後 total 減少才能再上傳。",
+    "句 3：app/Http/Controllers/EstateController.php＋$hasEditPermission = edit_estate || (agent_user_id == user && add_estate)，case 'add_attachment'、'download_attachment'、'delete_attachment' 皆 if (!$hasEditPermission) 回 '權限不足！'；前端下載鈕無權限條件。",
+    "句 4：src/pages/estates/dashboard/attachments/Index.vue＋v-if=\"dashboardStore.state?.isAgent && store.state.userData?.permission?.add_estate\" 包住刪除鈕與 t('刪除檔案')。",
+    "句 5：同上 attachments/Index.vue＋hasUpdateFilePermission = is_team_owner || permission.edit_estate || (isAgent && permission.add_estate)，v-if 控制 t('上傳檔案')。",
+    "句 6：src/pages/estates/dashboard/contractAttachments/index.vue＋t('出租方身份證明文件影本')、t('若為法人(公司)，請上傳公司設立登記表')、attachmentRowOptions 七項（授權代理人簽約同意書…其他(附註條款、稅籍證明等)），社區管理規約、住戶生活規約同一項。",
+    "句 7：同上 contractAttachments/index.vue＋t('如有以下附件，可上傳圖片做補充，以避免日後爭議。')。",
+    "句 8：同上 contractAttachments/index.vue＋size_limit: 10；limit: 2（授權代理人）、15（社區規約）、5（其他）、其餘 1；身份證明 v-for 2 格（正、反）。",
+    "句 9：同上 contractAttachments/index.vue＋t('(圖片僅支援JPG、PNG檔，檔案大小最大10MB…)') 與 input accept=\"image/jpeg,image/png,application/pdf\"。",
+    "句 10：同上 contractAttachments/index.vue＋show: !is_big_landlord && (add_estate || edit_estate)，v-if=\"state.show\" 控制上傳格與 uploadGrid-delete。",
+    "句 11：app/Http/Controllers/EstateController.php＋case 'upload_contract_attachment'、'save_contract_attachment'、'delete_contract_attachment' 皆 if (!$hasEditPermission) 回 '權限不足！'。"
+   ]
+  },
+  {
+   "id": "jgb/C/community-list-filter-sort",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "5e5bb1083a9898437c8838a0a4b98774f6bec228093ded8e3c9e3cce28b40566",
+   "title_text": "社區總表怎麼搜尋與排序？（案名／地址關鍵字、縣市行政區、建物類型、捷運站）",
+   "notes": [
+    "標題：與三句一致。",
+    "句 1：src/pages/communities/list/_parts/CommunitiesAdvanceSearchBlock.jsx＋placeholder t('輸入：案名、地址')；app/Http/Controllers/CommunityController.php＋webList 的 role_communities.address like / orWhere role_communities.label like。",
+    "句 2：同上 CommunitiesAdvanceSearchBlock.jsx＋AdvSingleSelect keyName 'country'、'city'、'district'、'building' 與 AdvSortMultipleSelect keyName 'MRT'。",
+    "句 3：同上 CommunitiesAdvanceSearchBlock.jsx＋saveSortKey 寫入 localStorage 'listSortingKey'；src/pages/communities/list/Index.vue＋beforeRouteEnter 的 genLocalSort(…, 'communitiesList') 讀回。"
+   ]
+  },
+  {
+   "id": "jgb/C/community-delete-requires-empty",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "7ef44c74bec5c18a4fc25a33538251a191afc1207e68edbb4b6fa5dc126fe0d1",
+   "title_text": "社區可以刪除嗎？（社區底下不能有任何物件才能刪除，且刪除後無法復原）",
+   "notes": [
+    "標題：與三句一致。",
+    "句 1：app/Http/Controllers/CommunityController.php＋webList 中 hasPermission($user, 'edit_estate') 才加入 '刪除社區' action；deleteSingle 呼叫 app/Community.php＋isCanDelete（不含社區共用空間的 active 物件數為 0，與列表物件總數同口徑）。",
+    "句 2：src/pages/communities/_parts/CommunityItem.vue＋props.quantities_of_estates !== 0 時 globalErrorShow(t('無法刪除社區，需沒有任何物件才能刪除社區'))；後端 deleteSingle 同一訊息。",
+    "句 3：src/components/Lightbox/CommunityDelete.vue＋t('社區刪除後，將無法復原，請問您確定要刪除「[s1]」嗎')，需按 t('刪除')。"
+   ]
+  },
+  {
+   "id": "jgb/C/community-export-list",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "ec5f8bd14212944821df97692d1f5db298be0cda34eade2beaeb44e6bbd642c2",
+   "title_text": "社區總表可以匯出嗎？（需要匯出物件權限，會依目前篩選條件匯出）",
+   "notes": [
+    "標題：與兩句一致。",
+    "句 1：src/pages/communities/list/Index.vue＋communityExport 送 job_name 'community_export'、communityIds 'all'、searchOptions: { ...route.query }，成功後 store.commit('queue/ADD', { job_type: 'download' })；按鈕 t('匯出社區')。",
+    "句 2：同上 list/Index.vue＋store.state.userData?.permission?.export_estate && …，class 在 pageNav?.total === 0 時加 'disabled'。"
+   ]
+  },
+  {
+   "id": "jgb/C/community-list-pagination",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "6e99d6eaf78c019dd5bdb938a81d64ae3f50875c62b37e507211b5a9009aa884",
+   "title_text": "社區總表每頁筆數可以調整嗎？（30／60／90項）",
+   "notes": [
+    "標題：與句 1 一致。",
+    "句 1：src/pages/communities/list/Index.vue＋VueSelect options={[30, 60, 90]}，customLabel t('30項')、t('60項')、t('90項')。"
+   ]
+  },
+  {
+   "id": "jgb/C/community-list-add-permission",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "91b14e3dc51c4a2aae854404fc5e3919ef9773f3095583cc497ad3e28126e098",
+   "title_text": "誰看得到新增社區的入口？（總表右上角需要編輯物件權限；空狀態的批次新增／新增社區入口需要新增物件權限）",
+   "notes": [
+    "標題：與兩句一致。",
+    "句 1：src/pages/communities/list/Index.vue＋store.state.userData?.permission?.edit_estate && <ButtonWithTooltip …> 包住 t('新增社區')、t('批次新增')、t('複製現有社區')。",
+    "句 2：同上 list/Index.vue＋空狀態分支 store.state.userData.permission?.add_estate ? t('此分類尚未有社區，您可以選擇😎：') + t('批次新增') + t('新增社區') : t('此分類尚未有社區')。"
+   ]
+  },
+  {
+   "id": "jgb/C/community-edit-tabs",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "1a688783a99f953891973a1027fe7892680eb1ff489a9042bfb78acbe3e13b42",
+   "title_text": "社區編輯有哪些分頁？（基本資料、介紹與交通、照片與描述）",
+   "notes": [
+    "標題：列出的三個分頁與句 1 相符（另有僅特定合作團隊可見的「差額發票」分頁，見 findings）。",
+    "句 1：src/routes/communities.js＋edit 陣列中 label '基本資料'、'介紹與交通'、'照片與描述' 的 group 皆為 '社區資訊'（'差額發票' 屬 group '發票設定'）。",
+    "句 2：同上 communities.js＋communities.edit 的 beforeEnter：to.name === 'communities.edit' 時 next({ name: 'communities.edit.basic' })；總表「編輯社區」action 的 route name 為 'communities.edit'（app/Http/Controllers/CommunityController.php＋'編輯社區'）。"
+   ]
+  },
+  {
+   "id": "jgb/C/community-edit-basic-fields",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "46812f593f002e02dfc4665ba1b53e0d58cdf870bb664400eb1676b6841d77a0",
+   "title_text": "社區基本資料要填什麼？（社區名稱、詳細地址與對外顯示地址、建築類型、總樓層、屋齡）",
+   "notes": [
+    "標題：與三句一致。",
+    "句 1：src/pages/communities/edit/Basic.vue＋placeholder t('請告訴客戶您的社區名稱為何。限制 [s1] 個字', [30])。",
+    "句 2：同上 Basic.vue＋t('詳細地址')、t('對外顯示地址')、t('同詳細地址') 將 address 複製到 display_address，與 t('對外顯示地址將會標記在 Google 地圖上')。",
+    "句 3：同上 Basic.vue＋t('建築類型')、t('總樓層')、t('屋齡')（placeholder t('限純數字')）；t('社區細節') 區塊受 getSpecialGroupsByRole(...)?.includes(特定合作團隊群組) 控制。"
+   ]
+  },
+  {
+   "id": "jgb/C/community-edit-gallery-photo-limit",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "8cec3ca70a50ea236254a3afb1a5b0a3c8a5a997682ce6933de11757ca986710",
+   "title_text": "社區照片與描述可以上傳幾張圖片？（限1張，JPG/PNG，檔案大小最大10MB）",
+   "notes": [
+    "標題：與句 1 一致。",
+    "句 1：src/pages/communities/edit/Gallery.vue＋galleryMaxLength: 1、accept=\"image/jpeg,image/png\"、t('支援JPG、PNG檔，至多 [s1] 張，檔案大小最大 [s2]。', [1, '10MB'])；src/components/AjaxUploader.vue＋size_limit default: 10。"
+   ]
+  },
+  {
+   "id": "jgb/C/community-edit-gallery-save-notice",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "ab7f51e19f22ed5615e6b6f1590b888b66befc96334fee5119278880f39fd7e7",
+   "title_text": "社區照片與描述什麼時候會跳出「已更新」提示？（存檔成功後才出現，不是上傳當下）",
+   "notes": [
+    "標題：與兩句一致。",
+    "句 1：src/pages/communities/edit/Gallery.vue＋submitResultHandler 在 result.success 後：非強制綁定 globalNoticeShow(`${t('社區')}: ${editStore.form.name} ${t('已更新')}`)；強制綁定且非既有社區時改 t('創建成功')。",
+    "句 2：同上 Gallery.vue＋AjaxUploader onUploaded 只 push 到 editStore.form.gallery；src/components/AjaxUploader.vue 無 globalNoticeShow。"
+   ]
+  },
+  {
+   "id": "jgb/C/community-edit-intros-and-transit",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "7f680bf4574e33dd0bffa5b05f429da84c4e95d64207a6a83b3a83c2a373b731",
+   "title_text": "社區介紹與交通怎麼填？（社區簡介、鄰近交通說明、可加多個鄰近捷運站）",
+   "notes": [
+    "標題：與兩句一致。",
+    "句 1：src/pages/communities/edit/Intros.vue＋t('社區簡介')、t('鄰近交通') 兩個 textarea，說明 t('提供社區的介紹，讓您的客戶更了解細節。')。",
+    "句 2：同上 Intros.vue＋t('新增鄰近捷運站') push { line, stations }，每筆 t('捷運線') 與 t('停靠站')，isMRTaddButtonDisabled 在最後一筆 line/stations 未填時禁用（此區塊僅在詳細地址國家為 '1','5','10' 時出現，見 findings）。"
+   ]
+  },
+  {
+   "id": "jgb/C/community-edit-basic-required-field",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "9250d89c8cdae65677d7ff8ee6e347e055fcf8b8d59e443a8895231ba5fdd237",
+   "title_text": "社區基本資料哪個欄位是必填？（只有社區名稱是必填）",
+   "notes": [
+    "標題：與句 1 一致。",
+    "句 1：src/pages/communities/edit/Basic.vue＋只有 <h4 class=\"after-required mb-4\">{t('社區名稱')}</h4>；src/components/AddressFieldTitle.jsx＋required default: false（Basic.vue 未傳）；app/Services/CommunityService.php＋validatorSingle 只有 \"name\" => \"required\"。"
+   ]
+  },
+  {
+   "id": "jgb/C/community-estates-overview-card",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "06611887ffa372597c4b0e2f7ccb89ea9545b51a749a51863f0064d79d03bfb2",
+   "title_text": "社區底下物件頁最上方顯示什麼？（招租廣告、買賣廣告、目前空置數量、類型、屋齡、本月應收與已收金額）",
+   "notes": [
+    "標題：與句 1、句 2 一致。",
+    "句 1：src/pages/communities/estates/_parts/CommunityOverview.vue＋OverviewItem t('招租廣告')、t('買賣廣告')、t('目前空置數量') 皆 :denominator=\"props.data?.quantities_of_estates\"，另有 t('類型')、t('屋齡')。",
+    "句 2：同上 CommunityOverview.vue＋t('本月應收金額')、t('本月已收金額')。",
+    "句 3：app/Services/CommunityService.php＋getEstateIds：擁有者回 ''（全部）、show_estate 回 ''、show_owner_estate 回 ownedByAgent 物件、大房東回 getAccessibleEstateIds；app/Http/Controllers/CommunityController.php＋getSingle → item() 以 $estateIds 計數量與 getReceivableOfMonth/getReceivedOfMonth。",
+    "句 4：同上 CommunityOverview.vue＋v-show=\"viewport.width >= 992\" 選單內 t('前往[s1]', [t('社區廣告')])，t('編輯') 與 t('刪除社區') 受 props.data?.is_admin；app/Services/CommunityService.php＋'is_admin' => $this->isHasGPermission('edit_estate', $role, $user)。",
+    "句 5：src/pages/communities/estates/Index.vue＋viewport.width <= 991 區塊 t('編輯社區')、t('預覽廣告頁')、t('刪除社區')，編輯與刪除受 singleData.data?.is_admin。"
+   ]
+  },
+  {
+   "id": "jgb/C/community-estates-category-switch",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "2465dfbbc7667153df9d24a2254ee870ca83691243baa9b072749c7bf9275161",
+   "title_text": "社區底下的物件清單怎麼切換總覽／招租／買賣？（欄位標題會跟著切換內容改變）",
+   "notes": [
+    "標題：與兩句一致。",
+    "句 1：src/utils/constants/estate.js＋EstateCategories { label: '總覽-1' }、'招租'、'買賣'；src/pages/communities/estates/_parts/ListTable.vue＋listCategories 渲染分類切換（'總覽-1' 為翻譯 key，字典在匯出外，依慣例顯示「總覽」）。",
+    "句 2：同上 ListTable.vue＋title: { 1: t('招租廣告'), 2: t('招租廣告'), 3: t('買賣廣告') } 與 { 1: t('買賣廣告'), 2: t('租金'), 3: t('售價') }。"
+   ]
+  },
+  {
+   "id": "jgb/C/community-estates-add-batch-copy",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "206330437237896b6f87521e51bd765519231915f5ea9bf6e8398daa95293298",
+   "title_text": "怎麼在社區底下新增物件？（新增／批次新增／複製現有物件，受物件數量上限限制）",
+   "notes": [
+    "標題：與三句一致。",
+    "句 1：src/pages/communities/estates/Index.vue＋permission?.add_estate && state.currentTab === CommunityTab.estateList 時顯示 t('新增物件')、t('批次新增')、t('複製現有物件')（Route.estate.pick.estateCopy）。",
+    "句 2：同上 estates/Index.vue＋handleAddEstate／handleBatchAddEstate 在 remainEstatesCount <= 0 時 store.commit('lightbox', 'subscribedPlanIsFull') 並 return。",
+    "句 3：同上 estates/Index.vue＋hasOnlyPublicAreaWithoutEstate（list 只有 1 筆且 property_purpose_key === 3）時不渲染「複製現有物件」。"
+   ]
+  },
+  {
+   "id": "jgb/C/community-estates-extra-tabs",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "b12b487ab098f1c7f78258d7d75aa04b61df39c79dd1d32672f44bed7f0e5cce",
+   "title_text": "社區底下有差額發票、投報率頁籤嗎？（差額發票看該社區是否開通；投入成本與投報率由團隊的投報率功能開關一起控制，租客、大房東與沒有「查看所有帳單」權限的成員看不到）",
+   "notes": [
+    "標題：與三句一致。",
+    "句 1：src/pages/communities/estates/Index.vue＋tabOptions 篩掉 balanceInvoice 除非 singleData.data?.balance_invoice?.enabled；src/utils/constants/community.js＋ChoiceOptions '所有物件'、'差額發票'；app/Services/InvoiceService.php＋'enabled' => $community->balance_invoice_enabled。",
+    "句 2：src/utils/constants/community.js＋CommunityRoiChoiceOptions '投入成本'、'投報率' 一起 push；app/Http/Controllers/CommunityController.php＋isCommunityRoiVisible 排除 RULE_KEY_TENANT、isBigLandlord、無 CommunityRoiController::REQUIRED_PERMISSION（app/Http/Controllers/Api/CommunityRoiController.php＋'show_bill'），再看 isCommunityRoiEnabledForTeam；app/Http/Controllers/UserController.php＋'g_show_bill' label '查看所有帳單'。",
+    "句 3：src/pages/communities/estates/Index.vue＋hasTabs 為 false 時不渲染 ChoiceToggler，改 <h4>{ t('所有物件') }</h4> 並直接顯示 ListTable。"
+   ]
+  },
+  {
+   "id": "jgb/C/community-estates-pagination",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "52b10762e7ffc3d72de62abc56f6669d6743601b39c0d399181a502f8898c579",
+   "title_text": "社區物件清單每頁筆數可以調整嗎？（30／60／90項）",
+   "notes": [
+    "標題：與句 1 一致。",
+    "句 1：src/pages/communities/estates/Index.vue＋queryForm: { per_page: 30 } 與 VueSelect options={[30, 60, 90]}、t('30項')、t('60項')、t('90項')。"
+   ]
+  }
+ ],
+ "findings": [
+  "jgb/C/estate-attachment-storage 句 1 寫「每個物件最多存放 8 個檔案」，但 app/Http/Controllers/EstateController.php 的 case 'attachments' 寫死 $attachmentDatas['max'] = 5，畫面 src/pages/estates/dashboard/attachments/Index.vue 的「至多存放 [s1] 個檔案」也顯示 5。另外，add_attachment 的後端上限檢查讀的是頂層的 $attachments['total'] / ['max']，但這兩個值實際放在 ['data'] 底下，所以後端檢查不會觸發，目前只靠前端的 limitLength 擋（附帶觀察，不影響本條判定）。",
+  "jgb/C/community-add-single-and-limit 句 2：單筆新增（postSingle）和複製（同樣走 postSingle）都會檢查 remainCommunitiesCount；現行的批次新增路徑（/api3/communities/batch/preview|confirm → CommunityBatchJob → Community::batch）沒有這項檢查，達上限後仍能批次新增社區。舊版 generalBatch 有檢查，但現行畫面已不呼叫。同組的 jgb/C/community-batch-add-and-copy 沒有寫到上限，兩條之間沒有直接矛盾。",
+  "jgb/B/lessee-pending-verification-bill-draft 的唯一來源是租客列表的現行說明文字（PageTop.vue 注意事項第 4 點）。在 app/ 內的帳單建立與發送流程（Bill.php、BillController.php、BillReadyJob.php）找不到「租客 Email／手機驗證中就把帳單留在草稿」的強制邏輯。正對照：verify_status 有出現在 LesseeService.php、Contract.php、User.php 等 8 個檔案，搜尋方式可用。說明文字與程式行為是否一致，建議由人確認。",
+  "PageTop.vue 注意事項第 3 點寫「當通知開關關閉時，租客將無法收到所有的通知」，但後端程式是依管道分開判斷（should_send_email／should_send_sms）。jgb/B/lessee-notification-toggle-effect 依程式判為成立，畫面說明文字較籠統。",
+  "jgb/C/community-edit-tabs 只列出「社區資訊」群組的三個分頁。src/pages/communities/edit/Index.vue 的 filteredEditRoutes 對特定合作團隊另外開放「發票設定／差額發票」分頁，本批沒有任何細目涵蓋這個分頁。",
+  "jgb/C/community-edit-intros-and-transit：「鄰近捷運站」區塊只在詳細地址的國家代碼為 '1'、'5'、'10' 時出現（Intros.vue 的 hasMRTConfig），句子沒寫出這個條件。句子不屬於絕對句，所以判成立，但條件有省略。",
+  "jgb/B/lessee-action-menu 與 jgb/B/lessee-list-columns 描述的是一般房東的預設畫面：社宅團隊沒有操作欄，欄位也不同，這部分由 jgb/B/lessee-list-columns-by-role 補充說明，同組細目之間沒有矛盾。"
+ ],
+ "source_transcript": "abe8fff13dd15cc54.output"
+}

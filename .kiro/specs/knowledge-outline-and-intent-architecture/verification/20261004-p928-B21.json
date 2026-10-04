@@ -1,0 +1,441 @@
+{
+ "kind": "write",
+ "verdict": "REFUTED",
+ "base": "77464446d4de61b6412b1d9af9eb425be6cd3c0c",
+ "claim": "Plan 9.28 批次 B21：25 條細目的標題與每一句已逐句對合法來源核對，逐條結果如 fines",
+ "fines": [
+  {
+   "id": "jgb/G/power-meter-list-category-tabs",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "5518a1479c966959082a6b1c51987fc220c0ec14f79d935e24a692568da18fbf",
+   "title_text": "電錶清單怎麼切換分類？（所有電錶、一般型、儲值型三個分類，切換後會換一批列表）",
+   "notes": [
+    "標題：src/pages/iots/list/Index.jsx＋statusTabs（t('所有電錶')、t('一般型')、t('儲值型')）＋ScrollNav onClick 以 router.push params.type 換分類，句 1 支撐。",
+    "句 1：src/pages/iots/list/Index.jsx＋label: t('所有電錶')／t('一般型')／t('儲值型')＋點選後 router.push name 'powerMeter.list' params type，後端 app/Http/Controllers/IotController.php 的 list() 依 $request->type 設 isTopUp 0／1 篩選；分類列是清單區塊（relative grow）的第一列，位於標題與搜尋列之下，「清單最上方」就清單區塊而言成立。"
+   ]
+  },
+  {
+   "id": "jgb/G/power-meter-list-status-tags",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "a91e2eaf904c045747da6866bf65f5ae27b2ec139af639db143325d01373fb1b",
+   "title_text": "電錶清單的狀態標籤是什麼意思？（全部／供電中／斷電中／未連線，夾在分類跟清單之間；未連線含未啟用）",
+   "notes": [
+    "標題：句 1、句 2 支撐（四個 QueryNavBar 位於 ScrollNav 與 TableHead 之間；未連線計數含 notActive）。",
+    "句 1：src/pages/iots/list/Index.jsx＋QueryNavBar title={t('全部')}／t('供電中')／t('斷電中')／t('未連線')＋四個標籤 render 在 ScrollNav 之後、TableHead 與 listTemplate 之前，點選改 query.tag 再篩。",
+    "句 2：app/Http/Controllers/IotController.php＋「只要裝置不是在連線中就一定是未連線或未啟用」＋status != 'connecting' 一律 $queryItemsQty['not_active'] += 1 並放進 $iotInfos['disconnected']；app/Iot.php formatBasicData 的 $status = 'notActive'，src/pages/iots/_parts/PowerTag.jsx 對 notActive 顯示 t('未啟用')，因此未啟用同樣算在未連線標籤底下。"
+   ]
+  },
+  {
+   "id": "jgb/G/power-meter-list-search",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "1f4d76d645e12153682ea0d9f7163903427f0eb772b2e69f2c8ba4d8995632ef",
+   "title_text": "電錶清單怎麼用關鍵字搜尋？（可選描述、序號、設備名稱、所屬物件名稱其中一種）",
+   "notes": [
+    "標題：句 1 支撐。",
+    "句 1：src/pages/iots/list/Index.jsx＋keyword_for pairs name: '描述'、sn: '序號'、model: '設備名稱'、estates_name: '所屬物件名稱'＋SelectPicker 單選一種；app/Iot.php 的 search() switch ($conditions['keywordFor']) 對 sn／name／model／estates_name 分別過濾。"
+   ]
+  },
+  {
+   "id": "jgb/G/power-meter-list-sort",
+   "title": "不成立",
+   "sentences": [
+    "成立",
+    "不成立"
+   ],
+   "content_sha256": "047cbd88980b1a670247ec461e81e1ebf3c8ead27672ec0845abfef593c76357",
+   "title_text": "電錶清單怎麼排序？（可依設備描述、目前電度、預計可用電度排序；門鎖、攝影機、小白盒清單沒有排序選單）",
+   "notes": [
+    "標題：「門鎖、攝影機、小白盒清單沒有排序選單」不成立，見句 2。",
+    "句 1：app/Iot.php＋getSortOption 的 '設備描述(大)'、'設備描述(小)'、'目前電度(大)'、'目前電度(小)'、'預計可用電度(大)'、'預計可用電度(小)'＋search() 依 sort 1～6 orderBy name／last_meter／available_meter；src/pages/iots/list/Index.jsx 以 ListSearchBar sortOptions={searchState.data?.sortOptions} 呈現。",
+    "句 2：src/entry/iot.js＋iot: { sortOptions: { 1: t('設備描述(大)'), 2: t('設備描述(小)') } }＋resources/views/iot/index.blade.php 的 <list-search-bar :sort-options=\"iot.sortOptions\"> 在門鎖／攝影機／小白盒清單顯示排序選單（src/components/ListSearchBar.vue 在 sortOptions 非空時 render），app/Http/Controllers/IotController.php device() 也把 sort 傳進 Iot::search 依 name 排序。實際是這三種清單仍有「設備描述(大／小)」可選，只是沒有目前電度、預計可用電度兩組；句子說「沒有這些排序選項可選」不成立。"
+   ]
+  },
+  {
+   "id": "jgb/G/power-meter-manufacturer-maintenance",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "3c04da9fbb3b6c4ea7fd6f60fba9bb8ed9b1b7825272815d13ab2dfd1ffcd46d",
+   "title_text": "電錶清單出現「原廠系統維護中」是什麼意思？（維護期間度數不更新、無法儲值）",
+   "notes": [
+    "標題：src/pages/iots/_parts/MaintenanceNotice.jsx＋t('電錶原廠系統維護中')（含「原廠系統維護中」字串）＋句 2 支撐度數不更新、無法儲值。",
+    "句 1：src/pages/iots/_parts/MaintenanceNotice.jsx＋border-error-500 bg-error-50 text-error-700、t('電錶原廠系統維護中（[s1]）', [period])＋清單頁 src/pages/iots/list/Index.jsx 與單一頁 src/pages/iots/_parts/Single.vue 都在最上方放 MaintenanceNotice；起訖時間取自 app/Services/Iot/DaeMaintenance.php notice() 的 began_at／ended_at（解析不到時段時只顯示不帶時段的「電錶原廠系統維護中」，屬解析失敗的例外路徑，附註）。",
+    "句 2：src/pages/iots/_parts/MaintenanceNotice.jsx＋t('維護期間電錶度數不會更新，也無法儲值，請於維護結束後再試。')＋後端 app/Http/Controllers/IotController.php topUp() 回 'MANUFACTURER_MAINTAINING' 擋儲值。",
+    "句 3：src/pages/iots/_parts/IotItem.jsx＋isMaintaining: !isEmpty(props.maintenance) && props.manufacturer === 'DAE'＋只有該廠商電錶的儲值被擋；app/Http/Controllers/IotController.php single() 的 $iot->manufacturer == 'DAE' ? DaeMaintenance::notice() : null，其他廠商的單一電錶頁不顯示，getManufacturerMaintenance 也只在身分底下有該廠商電錶時回傳。"
+   ]
+  },
+  {
+   "id": "jgb/G/power-meter-vendor-unreachable",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "24432edae6dce3ee575f094cf9fde3e16034a71b5d36e4228cfa54c6256475ec",
+   "title_text": "電錶顯示目前連不上廠商怎麼辦？（度數不會更新、儲值送不出去；全站共用連線的廠商業者跟租客都看得到，以團隊帳號連線的廠商只有業者在清單頁看得到）",
+   "notes": [
+    "標題：句 1～4 支撐。",
+    "句 1：src/pages/iots/_parts/ManufacturerServiceNotice.jsx＋t('目前連不上[s1]')／t('目前連不上[s1]（[s2]）', [vendor, service.error_message])＋有 error_message 才附原因；出現位置與可見身分依兩條資料來源不同（vendor_connectivity 與 manufacturer_services），見句 2、3。",
+    "句 2：app/Services/Iot/MiezoConnectivity.php＋'account' => null、'unreachable' => true＋src/pages/iots/_parts/ManufacturerServiceNotice.jsx 在 account 為空時用 t('目前無法儲值送電，電錶度數也不會更新，請聯絡[s1]確認服務狀態。')，且不顯示「帳號」那一格；app/Http/Controllers/IotController.php list() 回 'vendor_connectivity' 不分身分（註解「業者與租客都要看得到」），single() 也回 vendor_connectivity，src/pages/iots/_parts/Single.vue 會 render。",
+    "句 3：app/Http/Controllers/IotController.php＋getManufacturerServices 在 $role->config_rule_key == Role::RULE_KEY_TENANT 時回 []，'unreachable' => $isError、'account' => $row->manufacturer_user_id＋只在 list() 回傳（single() 沒有 manufacturer_services）；src/pages/iots/_parts/ManufacturerServiceNotice.jsx 顯示 t('帳號') 與 t('目前無法儲值送電，電錶度數也不會更新，請聯絡[s1]確認這個帳號的連線設定或帳號密碼。')。",
+    "句 4：app/Http/Controllers/IotController.php＋getVendorConnectivity 以 where('manufacturer', 'Miezo')->where('role_id'／whereIn('id') ->exists() 判斷；getManufacturerServices 以 whereExists(... iots.manufacturer_id = m.id) 只留有掛電錶的綁定帳號；single() 也只在該支電錶屬於該廠商時回傳。"
+   ]
+  },
+  {
+   "id": "jgb/G/power-meter-service-expiry",
+   "title": "不成立",
+   "sentences": [
+    "成立",
+    "不成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "688f9049c357789ce280098b1052e7fa0955175c3bf5ca57c2391bd8e4775425",
+   "title_text": "電錶顯示「服務到期」或「快到期」怎麼辦？（30 天內到期會提醒續訂；只有業者看得到，只出現在清單頁）",
+   "notes": [
+    "標題：加引號的「快到期」不是現行介面文字；src/pages/iots/_parts/ManufacturerServiceNotice.jsx 的 headline 實際是 t('[s1]服務已於 [s2] 到期')、t('[s1]服務到期日 [s2]（剩 [s3] 天）')、t('[s1]服務到期日 [s2]')，全專案介面無「快到期」字樣（只出現在程式註解）。依規則 2 不成立。",
+    "句 1：app/Http/Controllers/IotController.php＋reduceManufacturerServices：danger 全部留在 $urgent，$upcoming 只取 $primary（排序後第一個），$primary['level'] === 'normal' && !empty($urgent) 時拿掉；MANUFACTURER_SERVICE_WARN_DAYS = 30，30 天內為 warning 一定保留。",
+    "句 2：src/pages/iots/_parts/ManufacturerServiceNotice.jsx＋consequence() 的 t('目前無法儲值送電，電錶度數也不會更新，請盡快向[s1]續訂。', [vendor]) 與 t('到期後將無法儲值送電，電錶度數也不會更新，請盡快向[s1]續訂。', [vendor])＋[s1] 代入的是廠商名稱（app/Iot.php IOT_MANUFACTURERS 的 'name'，例如「台科電雲端儲值系統」），畫面實際寫「請盡快向台科電雲端儲值系統續訂。」，不是句中加引號的「請盡快向該廠商續訂」；加引號文字非逐字存在，依規則 2 不成立（帳號以 t('帳號') 顯示、30 天內才用 warning 文案兩點本身成立）。",
+    "句 3：app/Http/Controllers/IotController.php＋getManufacturerServices 的 whereExists(... ->whereRaw('iots.manufacturer_id = m.id'))＋一顆電錶都沒接的綁定帳號不列。",
+    "句 4：app/Http/Controllers/IotController.php＋getManufacturerServices 開頭 $role->config_rule_key == Role::RULE_KEY_TENANT 時 return []＋manufacturer_services 只在 list() 回傳；src/pages/iots/_parts/Single.vue 只 render state.form.vendor_connectivity，不含 manufacturer_services。"
+   ]
+  },
+  {
+   "id": "jgb/G/power-meter-list-row-fields",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "不成立"
+   ],
+   "content_sha256": "6c66bce5c9be17d44237fd13f0c3a097bf064680536d4d26cb393023732bd2de",
+   "title_text": "電錶清單每一列顯示什麼？（型號序號、目前電度、狀態、所屬物件；儲值型才有預計可用電度與低電度警報）",
+   "notes": [
+    "標題：src/pages/iots/_parts/IotItem.jsx＋{props.manufacturer} {props.model}、{props.sn}、last_meter、PowerTag、estates 縮圖＋props.type === 'topUp' 才顯示 available_meter 與 PowerTag isLowerPower，標題各斷言均有句子支撐。",
+    "句 1：src/pages/iots/_parts/IotItem.jsx＋t('設備名稱＆序號')、t('描述')、t('目前電度')、<PowerTag status=...>、thumbnail-circle backgroundImage node.thumbnail＋各欄位皆在列上；無物件時顯示 t('尚未綁定')。",
+    "句 2：src/pages/iots/_parts/IotItem.jsx＋t('最後連線成功') { props.last_online_at || t('無紀錄') }＋放在 PowerTag 下方；src/pages/iots/list/Index.jsx 頂端是 t('畫面開啟時間')，註解明寫「這個時間一直都是「打開這頁的當下」」。",
+    "句 3：src/pages/iots/_parts/IotItem.jsx＋props.type === 'topUp' ? available_meter : <div>{t('非儲值電錶')}</div>＋成立；欄名為 t('預計可用電度') 加 t('(估算)')。",
+    "句 4：app/Jobs/DaeJob.php＋「若台科電有回傳低電鍍設定值先依照設定值，沒有就用JGB系統預設20」、$lowMeterValue = 20; if ( array_key_exists('lower-limit-credit-value', $deviceInfo) )＋門檻在廠商有回傳時才用廠商值，沒回傳時是 JGB 預設 20，不是一律由廠商同步；句子說「這個警報的門檻值是廠商那邊同步過來的」漏掉預設值例外，不成立。其餘斷言成立：src/pages/iots/_parts/PowerTag.jsx t('低電度警報')；low_meter_alert 只在 app/Jobs/DaeJob.php 寫入（app/Http/Controllers/Admin/CustomerServiceController.php 只讀），前端無調整入口；src/pages/iots/list/Index.jsx 在 route.params.type === 'topUp' 且清單非空時顯示 t('若欲修改低電度警報，請至 [s1] 修改低電度警報數值。') 並連到 t('台科電雲端儲值系統')。"
+   ]
+  },
+  {
+   "id": "jgb/G/power-meter-usage-chart-export",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "61e0670da9665497940630ac217d0f3d847ab4d189781e2cf87bf681ad552945",
+   "title_text": "電錶清單列展開後能看什麼？（用電量走勢圖可選 1/7/30/90 天；CSV 只能下載前 90 天）",
+   "notes": [
+    "標題：句 1、句 2 支撐。",
+    "句 1：src/pages/iots/_parts/IotItem.jsx＋bills-list-item onClick 展開 expand-content，dateRangeSelector options scale 1／7／30／90 unit 'days'＋DailyChart 顯示用電統計（src/pages/iots/_parts/PowerMeterDailyChart.jsx t('用電統計')）；src/components/DateRangeSelector.jsx customizable 預設 false，IotItem 未開自訂區間。",
+    "句 2：src/pages/iots/_parts/IotItem.jsx＋downloadCsv 內 '2.僅能下載前90日的資料'、filename `${csvData.fileName}.csv`＋DailyChart onExport 觸發（PowerMeterDailyChart.jsx t('匯出報表')），區間選項上限 90 天。"
+   ]
+  },
+  {
+   "id": "jgb/G/power-meter-single-edit-tabs",
+   "title": "不成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "93ddb17cef4529a7051ea90b160f35f61cf9085389d09fd1c987d5bfc45c4c28",
+   "title_text": "電錶編輯頁能改什麼？（儲值型有基本設定／電錶資料／開立發票三個頁籤，一般型只有基本設定）",
+   "notes": [
+    "標題：「儲值型有基本設定／電錶資料／開立發票三個頁籤」是無條件斷言；src/helpers/iots.ts getStatusTabs 在 !!conditions?.gen_invoice === false 或 isTenant 時濾掉 PowerMeterTab.invoice，句 4 也寫明只有開通自動開立發票且非租客才有第三個頁籤；標題超出句子內容，不成立。",
+    "句 1：src/pages/iots/_parts/Single.vue＋t('請為裝置設定描述，方便辨識。')、v-model=\"state.form.name\"、handleSaveName 由 t('儲存') 觸發＋（租客時輸入框 disabled、無儲存鈕，句子未用絕對語）。",
+    "句 2：src/pages/iots/edit/Basic.jsx＋t('綁定物件')、+{t('選擇物件')}、icon_x_red 移除、t('儲存')＋src/utils/constants/iots.ts PowerMeterTabPair.default 只有 labelKey '基本設定'，一般型套 default。",
+    "句 3：src/utils/constants/iots.ts＋PowerMeterTabPair[PowerMeterType.topUp] 含 '電錶資料'＋src/pages/iots/_parts/Single.vue 該頁籤 render PowerMeterInfo（src/pages/iots/_parts/PowerMeterInfo.jsx t('電號')、t('目前餘額')、t('費率')、t('預計可用電度')）與 src/pages/iots/edit/Log.jsx（t('電錶儲值歷程')、t('儲值時間')、t('儲值金額')、t('儲值前金額')、t('儲值後金額')、t('操作者')，t('費率異動歷程') 按鈕開 LightboxPowerMeterRateLog）。",
+    "句 4：src/helpers/iots.ts＋getStatusTabs 過濾 (!!conditions?.gen_invoice === false || !!conditions?.isTenant) && value === PowerMeterTab.invoice＋src/pages/iots/_parts/Single.vue gen_invoice: state.can_auto_generate_invoice、hasPermissionInvoice 要求 !isTenant 與 PowerMeterType.topUp。"
+   ]
+  },
+  {
+   "id": "jgb/G/power-meter-single-estate-single-bind",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "31002f49e0a6d7054613079a52a56dd633188d9acbffc3ca8b255eed96abd7e3",
+   "title_text": "一支電錶只能綁一個物件？（選擇物件的挑選頁是單選，選了一個之後其他物件會被鎖住不能再選）",
+   "notes": [
+    "標題：句 1 支撐；src/pages/iots/edit/Basic.jsx 儲存時也只送 onSaveData.estates = [{ id: state.editingEstates[0].id }]。",
+    "句 1：src/pages/iots/edit/Basic.jsx＋router.push name 'estates.pick' params action 'estateBind'＋src/use/scopeStore/usePickModule.js lengthLimit 對 'estateBind' return 1；src/pages/estates/pick/Index.jsx 對非 batch action 用 pick.jsx，src/pages/estates/pick/_parts/pick.jsx 在 !picked.includes(node.id) && picked.length >= lengthLimit 時給 wrapper 'disabled'。",
+    "句 2：src/pages/iots/edit/Basic.jsx＋{!props.isTenant && ... +{t('選擇物件')}} 與 { !props.isTenant && <img src=icon_x_red.svg> }＋租客看不到兩者，也看不到儲存鈕。"
+   ]
+  },
+  {
+   "id": "jgb/G/power-meter-mode-switch",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "746ff8d27dd13085b749e1d0eee6f4d0cace08cb986fd1cdd658104b1538bc5e",
+   "title_text": "怎麼切換電錶的供電狀態？（一般型：供電／斷電；儲值型：儲值／強開／斷電，切換中鎖按鈕只有儲值型有）",
+   "notes": [
+    "標題：句 1～4 支撐。",
+    "句 1：src/pages/iots/_parts/PowerSwitch.vue＋t(status === PowerStatus.supply ? '供電' : '斷電')＋src/pages/iots/_parts/TopUpSwitch.vue getModeLabel '儲值模式'、'強開模式'、'斷電模式'；src/pages/iots/_parts/Single.vue 依 PowerMeterType.topUp／normal 分別顯示。",
+    "句 2：src/pages/iots/_parts/Single.vue＋handleTopUpSwitchOpen／handlePowerSwitchOpen commit Mutation.lightbox 'PowerMeterModeDialog'，handleSwitchMode 才送 togglePowerMode／toggleLock＋src/components/Lightbox/PowerMeterModeDialog.vue t('您確認要修改供電模式嗎？')、t('您確認要斷電嗎？') 與 t('確定') 按鈕。",
+    "句 3：src/pages/iots/_parts/Single.vue＋isConnected = state.form.status === PowerMeterStatus.connecting && !isTenant.value，<template v-if=\"isConnected\"> 包住兩種開關。",
+    "句 4：src/pages/iots/_parts/TopUpSwitch.vue＋${props.isModeSwitchLoading ? \"disabled text-white\" : \"\"}＋src/pages/iots/_parts/PowerSwitch.vue 無 loading 參數，只把目前狀態那顆設 disabled，沒有切換中鎖定。"
+   ]
+  },
+  {
+   "id": "jgb/G/power-meter-basic-info-fields",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "dca76f13dc4bbd9036243d68c942f67dc705e751b98e4c389cad5432f71ca0f7",
+   "title_text": "電錶資料頁的餘額、費率、預計可用電度怎麼看？（只有儲值型電錶才有這個頁籤；費率由雲端儲值系統設定，可用電度＝餘額÷費率）",
+   "notes": [
+    "標題：句 1、3、4 支撐。",
+    "句 1：src/utils/constants/iots.ts＋PowerMeterTabPair[PowerMeterType.topUp] 含 labelKey '電錶資料'，default 只有 '基本設定'＋src/pages/iots/_parts/Single.vue 只在 PowerMeterTab.meterData 頁籤 render PowerMeterInfo。",
+    "句 2：src/pages/iots/_parts/PowerMeterInfo.jsx＋t('電號')、t('目前餘額')、t('費率')、t('預計可用電度')＋t('估算')、t('最後連線成功時間')＋五個欄位。",
+    "句 3：src/pages/iots/_parts/PowerMeterInfo.jsx＋t('費率依照房東 / 管理者至雲端儲值系統所設定的數值。')、!state.isTenant && <a href=\"https://clh25.dae.tw/web/index.php\">{t('設定')}</a>＋費率只以文字顯示，無輸入欄位（同元件內唯一可操作的是重新整理 icon 與這個外連）。",
+    "句 4：src/pages/iots/_parts/PowerMeterInfo.jsx＋t('目前餘額 / 費率 = 預計可用電度')、(props.form.wallet_balance?.base_number / props.form.rate?.base_number).toFixed(2)。"
+   ]
+  },
+  {
+   "id": "jgb/G/power-meter-topup-flow",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "不成立"
+   ],
+   "content_sha256": "bbbc45c042bbee3d85f8de901cd15d3ed6b563149ed2c3604585592e87934f65",
+   "title_text": "電錶怎麼儲值？（「儲值」按鈕就在清單列上，不用展開；金額固定四個選項，維護中或連不上廠商時按鈕會變灰）",
+   "notes": [
+    "標題：句 1～3 支撐（「儲值」為 IotItem.jsx 的 t('儲值') 按鈕文字）。",
+    "句 1：src/pages/iots/_parts/IotItem.jsx＋{t('儲值')} 按鈕 style display: props.type === 'normal' ? 'none' : ''＋按鈕在列本身操作欄，onClick e.stopPropagation() 不需展開。",
+    "句 2：src/components/Lightbox/PowerMeterTopUp.vue＋TopUpAmountBlock value={1000}／{1500}／{2000}／{2500}＋一般情況沒有輸入欄；附註：同檔有 QA 測試用的 route.query?.customAmount === '1' 才出現的 <input type=\"number\">（TODO 待移除），一般使用者路徑看不到。",
+    "句 3：src/pages/iots/_parts/IotItem.jsx＋class btn-secondary 加 'disabled' 條件 (['notActive', 'disconnected'].includes(props.status) || state.isMaintaining || state.isVendorUnreachable)＋src/styles/components/Btn.sass &.disabled pointer-events: none !important、opacity: 0.5，點擊事件不會觸發。",
+    "句 4：src/components/Lightbox/PowerMeterTopUp.vue＋t('儲值後，可在帳務管理找到本次儲值的帳單，繳費期限為')、t('儲值方式綁定合約中所約定的繳款方式，如需其他儲值方式，請與房東聯繫。')＋app/Http/Controllers/IotController.php topUp() POST 呼叫 $iot->genBill(...) 建立帳單。",
+    "句 5：app/Iot.php＋getTopUpLog 的 $query->where('is_finish', '=', 1)＋src/pages/iots/edit/Log.jsx 讀 /api3/iots/powerMeter/topUpLog（app/Http/Controllers/IotController.php topUpLog 用 Iot::getTopUpLog）；is_finish 由 IotController.php updateStateFromeRemote 在廠商回報任務完成後才 update 'is_finish' => 1。儲值送出當下只建立帳單，尚未繳費、入錶完成前「電錶儲值歷程」查不到這一筆；句子說送出後即可查到，不成立（欄位：儲值時間、儲值金額、儲值前／後金額、操作者本身正確）。"
+   ]
+  },
+  {
+   "id": "jgb/G/iot-entry-requirements",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "7eb78bf0ed1534c7d2b5bce3154615f0f971a5d7fe04999fb515e1075d740290",
+   "title_text": "電錶／門鎖／攝影機／小白盒頁面需要什麼條件才能進入？（房東方要有生效中的訂閱，而且方案有開放智能裝置功能；租客不受限制）",
+   "notes": [
+    "標題：句 1、句 2 支撐。",
+    "句 1：routes/web.php＋power_meter.index 與 iots.index（deviceType ^lock|camera|gateway$）都掛 ->middleware('need_subscription')->middleware('premises_limit')＋app/Http/Middleware/SubscriptionCheck.php case 'iots.index'／'power_meter.index' 在 !$role->isSubscriptionActive() 時 session()->flash('lightbox-open', 'subscribedPlanNotAllow') 並 redirect()->route('users.index')；app/Http/Middleware/PremisesLimitCheck.php 在 $role->plan_iot_switch === 0 時同樣導回 users.index 開燈箱。",
+    "句 2：app/Http/Middleware/SubscriptionCheck.php＋$role->config_rule_type !== 'tenant' && !$role->isSubscriptionActive()＋app/Http/Middleware/PremisesLimitCheck.php $role->config_rule_type != 'tenant'，租客兩項都不檢查。"
+   ]
+  },
+  {
+   "id": "jgb/G/power-meter-invoice-tab-fields",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "a9deff8ae80701523a71a1f5dc6583eb7a4dfd58232028060eb2fc9071e67a0e",
+   "title_text": "開立發票頁籤裡面能填什麼？（目前只有帳單是否開立發票一個選項）",
+   "notes": [
+    "標題：句 1 支撐（src/utils/constants/iots.ts title: \"帳單是否開立發票\"）。",
+    "句 1：src/pages/iots/_parts/Invoice.vue＋PowerMeterInvoiceForm[InvoiceField.is_auto_generate_invoice] 的 radio（'否'／'是'）與 t(\"儲存\") submit，handleSave 只送 is_auto_generate_invoice。",
+    "句 2：src/pages/iots/_parts/Invoice.vue＋「14336: 根據 20240904 PM 要求，拿掉「出租方統編」相關欄位」＋出租方統編、稅別、承租方統編、買受人名稱的 template 全被 <!-- --> 註解掉，畫面不 render。"
+   ]
+  },
+  {
+   "id": "jgb/G/power-meter-list-empty-state",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "4e9ada25a559f2b153185679859b39a85a16466f7d9fc9cab35670cc08b96eda",
+   "title_text": "電錶清單沒有資料時畫面顯示什麼？（分類內沒有設備寫「此分類尚無設備」；完全沒綁定寫「目前尚無綁定設備」，租客看不到綁定引導連結）",
+   "notes": [
+    "標題：src/pages/iots/list/Index.jsx＋t('此分類尚無設備')、t('目前尚無綁定設備') 逐字存在；句 1、2 支撐。",
+    "句 1：src/pages/iots/list/Index.jsx＋state.isPowerMeterLinked ? t('此分類尚無設備') : t('目前尚無綁定設備')，isPowerMeterLinked 取 vendorOptions 中 value 'DAE' 的 is_linked＋app/Http/Controllers/IotController.php manufacturer() 的綁定選項已排除共用連線廠商（unset($iotManufacturers['Miezo'])），所以「綁定電錶廠商」即此綁定；另需無搜尋貼紙（有貼紙時顯示 t('沒有符合的結果😢')）。",
+    "句 2：src/pages/iots/list/Index.jsx＋store.state.userData?.role?.config_rule_key !== ConfigRuleKey.tenant && t('如需綁定智能設備廠商，請至 [s1][s2] > [s3][s4] 內設定。', [..., config_rule_key !== 2 ? t('團隊管理') : t('其他設定'), t('進階設定')])＋租客不顯示這行。"
+   ]
+  },
+  {
+   "id": "jgb/G/device-page-shared-list",
+   "title": "不成立",
+   "sentences": [
+    "成立",
+    "不成立",
+    "成立"
+   ],
+   "content_sha256": "dbf885d454ff50ef8faf73223c2f46c6fd67085313afbd88273ff9a7a3f44155",
+   "title_text": "門鎖／攝影機／小白盒清單長什麼樣？（型號序號、描述、狀態、所屬物件四欄，可依關鍵字搜尋，沒有排序選單）",
+   "notes": [
+    "標題：「沒有排序選單」不成立，見句 2。",
+    "句 1：routes/web.php＋Route::get('/{deviceType}/{params?}', 'IotController@index')->where('deviceType', '^lock|camera|gateway$')＋resources/views/iot/index.blade.php thead ___('型號＆序號')、___('描述')、___('狀態')、___('所屬物件') 四欄，v-show deviceGroup.device_type === deviceType 分頁顯示。",
+    "句 2：resources/views/iot/index.blade.php＋<list-search-bar :sort-options=\"iot.sortOptions\">＋src/entry/iot.js iot.sortOptions = { 1: t('設備描述(大)'), 2: t('設備描述(小)') }，src/components/ListSearchBar.vue 在 !isEmpty(props.sortOptions) 時顯示排序下拉；app/Http/Controllers/IotController.php device() 也把 'sort' 傳給 Iot::search。實際有依設備描述大／小排序的選單；前半句搜尋選項（select-picker name 描述／sn 序號／model 設備型號／estates_name 所屬物件名稱）成立，但「沒有大小排序選單」不成立。",
+    "句 3：resources/views/iot/index.blade.php＋v-if=\"isEmpty(deviceGroup.list) && isEmpty(stickers.show())\" 顯示 ___('目前尚無綁定設備') 與 ___('如需綁定智能設備廠商，請至 [s1][s2] > [s3][s4] 內設定。')，連結 onClick=\"toUsersAdvPage()\"（src/entry/iot.js 導向 /users/advance）。"
+   ]
+  },
+  {
+   "id": "jgb/G/device-page-lock-open-close",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "2fc49f7df6aba87875045469b31a24b96229c1ca971b895d7b40987d06d55d7c",
+   "title_text": "門鎖清單怎麼直接開門／鎖門？（開門一定有、鎖門只有特定廠商支援；離線時按鈕不會顯示）",
+   "notes": [
+    "標題：句 1、2、4 支撐（app/Http/Controllers/IotController.php getDevicesList 對 lock 一律 $hasAction = true）。",
+    "句 1：resources/views/iot/index.blade.php＋{{___('開門')}} 按鈕 @click lightboxOpen(`lb_dialog_setlockopen_${device.id}`)，燈箱 t('您確認要開鎖嗎？') 與 ___('確定') 才呼叫 toggleLock(..., 'unlock', ...)；附註：可回報已開門的門鎖在已開門狀態下開門鈕為 disabled（:class=\"{disabled: device.is_locked === 0 && device.has_close_action}\"）。",
+    "句 2：app/Http/Controllers/IotController.php＋if ($iot->manufacturer === 'SkyWatch') { $hasCloseAction = true; }＋resources/views/iot/index.blade.php v-if=\"device.has_close_action\" 才顯示 ___('鎖門')。",
+    "句 3：resources/views/iot/index.blade.php＋device.is_locked === 0／1 && device.manufacturer === 'SkyWatch' 顯示 ___('已開門')／___('已關門')，其他 v-else 顯示 ___('連線中')，離線顯示 ___('未連線')。",
+    "句 4：resources/views/iot/index.blade.php＋v-if=\"deviceGroup.device_type === 'lock' && device.has_action && device.status === 200\"＋app/Http/Controllers/IotController.php $status = 503 預設、is_online 才 200；離線時整組按鈕不 render。",
+    "句 5：resources/views/iot/index.blade.php＋未連線分支只有 icon_iots_unconnect.svg 與 ___('未連線')＋同檔正對照：連線分支有 ___('連線中')；未連線分支無任何排查或重新連線文字、按鈕。"
+   ]
+  },
+  {
+   "id": "jgb/G/device-edit-tabs-by-type",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "f7850b0570013b2cb47fd50e4dc186703c7222471e5e0257c0bba735a2f65f47",
+   "title_text": "裝置編輯頁的頁籤，門鎖跟攝影機／小白盒不一樣？（門鎖多出密碼設定、開門記錄兩個頁籤）",
+   "notes": [
+    "標題：句 2 支撐。",
+    "句 1：resources/views/iot/index.blade.php＋___('請為裝置設定描述，方便辨識。')、v-model=\"editing.form.name\"、saveSetting({ name })＋位於裝置設定區塊、頁籤之上（租客輸入框 disabled、無儲存鈕，句子未用絕對語）。",
+    "句 2：src/entry/iot.js＋navList case 'lock' 回 t('基本設定')、t('密碼設定')、t('開門記錄')，其他回只有 t('基本設定')＋resources/views/iot/index.blade.php tabIndex 0／1／2 分別 include iot.doorlock.basic／password／log。",
+    "句 3：resources/views/iot/doorlock/basic.blade.php＋___('綁定物件')、+ {{___('選擇物件')}}、icon_x_red.svg 移除、儲存 action 'estates:change'＋此 basic 頁籤對所有裝置類型共用（門鎖類型區塊才有 v-if=\"editing.device_type == 'lock'\"）。"
+   ]
+  },
+  {
+   "id": "jgb/G/device-lock-type-and-binding-limit",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "b90b9b6e1eb6fb2c6e41e7cdc1d317b90bcf50583b5e8c97963ad3ded5ae2662",
+   "title_text": "私人門鎖跟共用門鎖差在哪？（私人只能綁一個物件，共用可以綁多個）",
+   "notes": [
+    "標題：句 1 支撐。",
+    "句 1：resources/views/iot/doorlock/basic.blade.php＋___('「私人門鎖」為個人房間的門鎖，只能綁定一個物件；「共用門鎖」為大樓大門、住家大門等公用的門鎖，可以綁定多個物件。')＋resources/views/iot/index.blade.php $store.state.itemPick.maximum = !editing.form.key_public ?1 :null 落實上限。",
+    "句 2：resources/views/iot/doorlock/basic.blade.php＋:disabled=\"editing.form.estates.length>1 ?['0'] :[]\"＋選項 value '0' 為 ___('私人門鎖')，綁超過一個物件時該選項被鎖。"
+   ]
+  },
+  {
+   "id": "jgb/I/quota-full-upgrade-dialog",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "不成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "eae440dc630be84e5cb35356afa2e4e4e0e7a87577fe42c3999c5fb9ba8417e9",
+   "title_text": "物件數量到上限時會跳出什麼視窗？",
+   "notes": [
+    "標題：問句，句 3～5 回答。",
+    "句 1：routes/web.php＋api2.estates.create、estates.general.batch、estates.social-housing.batch 都掛 need_subscription 與 premises_limit＋app/Http/Middleware/SubscriptionCheck.php 檢查 isSubscriptionActive()、app/Http/Middleware/PremisesLimitCheck.php 檢查 remainEstatesCount() === 0；前端 src/pages/estates/list/_parts/PageTop.vue、src/pages/communities/estates/Index.vue（handleAddEstate、handleBatchAddEstate）先以 remainEstatesCount <= 0 擋下；app/Http/Controllers/EstateController.php 批次匯入另比 $sheetDataCnt > $remainEstateCount。",
+    "句 2：app/Http/Middleware/SubscriptionCheck.php＋session()->flash('lightbox-open', 'subscribedPlanIsFull') 並 redirect estates.index＋PremisesLimitCheck.php 同一燈箱；燈箱連結 route('users.subscription_chose')（resources/views/layouts/lightbox/general.blade.php），不建立物件。",
+    "句 3：resources/views/layouts/lightbox/general.blade.php＋'title'=> ___('已達到數量上限！')（兩種狀態相同）＋if (!empty($role) && $role->isSubscriptionActive()) 時覆寫 description 與 action_link text。",
+    "句 4：resources/views/layouts/lightbox/general.blade.php＋___('您的 [s1] 最多可上傳 [s2] 組物件，目前已到達上限，要升級方案嗎？') 成立，但按鈕是 $lightbox['subscribedPlanIsFull']['action_link']['text'] = ___('前往升級')，不是「立即升級」；以 grep 全 src、resources/views 找不到「立即升級」介面字串（正對照「前往升級」、「我要訂閱」均命中），resources/lang 亦無對應翻譯。不成立。",
+    "句 5：resources/views/layouts/lightbox/general.blade.php＋'subscribedPlanIsFull' 預設 description ___('您尚未訂閱服務最多可上傳 [s1] 組物件，目前已到達上限，請先前往訂閱服務，即可享受所有您需要的功能！')、'text'=> ___('我要訂閱')。",
+    "句 6：app/Http/Middleware/SubscriptionCheck.php＋case 'estates.copy'、'api2.estates.edit'、'estates.open'（註解「擋刊登物件招租廣告」）在 !$role->isSubscriptionActive() 時同樣 flash 'subscribedPlanIsFull'＋routes/web.php 這三條都掛 need_subscription。"
+   ]
+  },
+  {
+   "id": "jgb/G/device-lock-passwords-three-types",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "7986a15e9d425276a075e0cabbf4f017fffcfb51b5d52a5dea7af7b6c9576265",
+   "title_text": "門鎖密碼有哪三種？（房東個人密碼、租客個人密碼、租客共用密碼，權限各不同）",
+   "notes": [
+    "標題：句 1～3 支撐。",
+    "句 1：resources/views/iot/doorlock/password.blade.php＋___('房東個人專屬密碼')、___('此為您專用的解鎖密碼，如非必要，請不要洩漏給第三人。')、pin-code :length=\"6\"、___('編輯密碼')／___('儲存密碼')（區塊 v-if=\"!isTenant\"）。",
+    "句 2：resources/views/iot/doorlock/password.blade.php＋___('此組預設密碼為租客手機號碼末四碼，租客可自行變更，房東無法修改，如有需要，房東可停用此組密碼。')、pin-code :length=\"4\" :disabled=\"true\"、switch-button 'changePwd:is_enable'。",
+    "句 3：resources/views/iot/doorlock/password.blade.php＋v-show=\"editing.form.key_public==1\"、___('租客共用密碼')、pin-code :length=\"6\"、___('+ 新增')、___('刪除')、___('複製密碼') 的 data-clipboard-text 含 [s3] 密碼的通知文字＋既有密碼的 ___('編輯密碼') 按鈕帶 :hidden=\"true\"，畫面無修改入口。",
+    "句 4：resources/views/iot/doorlock/password.blade.php＋共用密碼外層 <div v-show=\"editing.form.key_public==1\">，私人門鎖（key_public 0）不顯示。"
+   ]
+  },
+  {
+   "id": "jgb/G/device-lock-open-log",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "b914a4e5c2d675ac1a59de96408b1100bd52b9a73293026cf5c0032bb377d684",
+   "title_text": "門鎖的開門記錄怎麼看？（可依日期查詢操作時間與動作，沒有記錄時會顯示尚無記錄）",
+   "notes": [
+    "標題：句 1、句 2 支撐。",
+    "句 1：resources/views/iot/doorlock/log.blade.php＋___('記錄日期') select-picker @user-change 設 lockLog.selected 後 getLockLog()＋app/Http/Controllers/IotController.php lockLog() 以 $selected 取當日 0:0:0～23:59:59 的紀錄。",
+    "句 2：resources/views/iot/doorlock/log.blade.php＋___('操作時間')、___('動作')、v-show=\"lockLog.list.length<=0\" 顯示 ___('尚無記錄')。"
+   ]
+  },
+  {
+   "id": "jgb/G/device-gateway-not-counted",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "fc6a55642dfd7d5958dda3e6c7bf9849cf401b8c7af8ec5b7f5ceed2d7a59819",
+   "title_text": "小白盒綁定物件跟門鎖不同在哪？（小白盒不會讓物件被標記為「IoT裝置」，也不會擋刪除）",
+   "notes": [
+    "標題：app/Estate.php＋'text' => ___('IoT裝置')（逐字存在）＋句 1、2 支撐。",
+    "句 1：app/Http/Controllers/IotController.php＋handleEstatesChange 的 $iot->type != 'gateway' ? ... : [] 與 $_estate->has_iot = $_estate->iots()->where('type', '!=', 'gateway')->count() ? 1 : 0＋app/Estate.php if ($this->has_iot) 加 ___('IoT裝置') 標籤；has_iot 只在此處與 app/Console/Commands/ToolCommandEstate.php 以同一排除條件寫入。",
+    "句 2：app/Http/Controllers/EstateController.php＋validateEstateForDelete 的 if ($estate->has_iot) return ___('您無法刪除尚有IoT綁定的 [s1] 物件', [$estate->title])＋has_iot 不計 gateway，只綁小白盒的物件不受擋。"
+   ]
+  }
+ ],
+ "findings": [
+  "jgb/G/power-meter-list-sort 句 2 與 jgb/G/device-page-shared-list 句 2（及兩者標題）犯同一錯：都斷言門鎖／攝影機／小白盒清單沒有排序選單，但 resources/views/iot/index.blade.php 的 <list-search-bar :sort-options=\"iot.sortOptions\"> 搭配 src/entry/iot.js 寫死的 { 1: t('設備描述(大)'), 2: t('設備描述(小)') } 會顯示排序下拉；app/Iot.php getSortOption 對 lock／camera／gateway 回空陣列只影響 API，不是畫面來源。兩條需一起修。",
+  "jgb/G/power-meter-topup-flow 句 5 與 jgb/G/power-meter-single-edit-tabs 句 3 都描述「電錶儲值歷程」，後者的欄位描述正確；前者的時序錯誤來自 app/Iot.php getTopUpLog 只列 is_finish = 1（入錶完成）的紀錄。",
+  "jgb/G/power-meter-service-expiry 句 2 與標題的問題都是把模板文字改寫後加引號（「請盡快向該廠商續訂」、「快到期」），畫面實際字串見 src/pages/iots/_parts/ManufacturerServiceNotice.jsx 的 consequence() 與 headline()。",
+  "jgb/I/quota-full-upgrade-dialog 句 4 的按鈕文字「立即升級」在現行介面不存在，實際為 resources/views/layouts/lightbox/general.blade.php 的 ___('前往升級')；同檔訂閱失效時是 ___('我要訂閱')（句 5 正確）。",
+  "附註（非判定依據）：src/components/Lightbox/PowerMeterTopUp.vue 留有 QA 測試用、帶 ?customAmount=1 才出現的自訂金額輸入框（TODO 待移除），後端 app/Http/Controllers/IotController.php topUp() POST 只檢查 empty($topUpAmount)，未限制四個固定金額；一般使用者路徑不受影響，故 power-meter-topup-flow 句 2 判成立。"
+ ],
+ "source_transcript": "ac1db110af2cf2c1f.output"
+}
