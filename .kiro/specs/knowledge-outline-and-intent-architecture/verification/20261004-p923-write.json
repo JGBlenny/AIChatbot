@@ -1,0 +1,199 @@
+{
+ "kind": "write",
+ "verdict": "CONFIRMED",
+ "base": "721a0cb6f1535860fd5d4e44794927f2684bad38",
+ "claim": "Plan 9.23 S1b 已把 8 條細目寫為已審：`jgb/C/estate-dashboard-attachments-vs-contract-attachments`、`jgb/C/estate-dashboard-runnings-vs-memos`、`jgb/C/team-public-page-recruitment`、`jgb/D/contract-show-panels`、`jgb/D/contract-upload-existing-vs-electronic`、`jgb/D/general-contract-notary-tab`、`jgb/D/contract-thinkcloud-esign-service`、`jgb/I/pricing-quota-full-block`，且：(1) 這 8 條每條的標題與每一句（句數＝該條 `content_units` 數）對 jgb2 釘住匯出皆成立；(2) `jgb.json` 已審集合＝寫入前 525 條原集合 ∪ 這 8 條，其他細目內容不變；被排除的 `jgb/D/contract-thinkcloud-signing-variants`、`jgb/I/pricing-free-trial-eligibility`、`jgb/I/pricing-free-vs-experience-plan` 仍未審；`rag-orchestrator/canon/jgb/A.md` 無 diff；(3) 終點指標重跑＝`已審細目 pm 527／533、prospect 118／120`；(4) 全套單元測試的紅燈集合與 9 條基準雙向差集＝∅；(5) 計畫全檔的數字與敘述（開頭預期段、plan-meta、§6「### S1」與「### S1b」全部紀錄）、以及 HANDOFF 本次改動處（與 `p923-backup/HANDOFF.bak` 比對可見）與實況一致；S1 記錄的「兩條定價細目 3 句不成立」理由（`app/User.php` Step4 只在 `registration_plan` 類型給優惠方案）也對匯出確認。（HANDOFF 一句話現況提到的證據檔 `verification/20261004-p923-write.json` 會由主 session 從你的交件取出，目前尚不存在，屬預期。）",
+ "fines": [
+  {
+   "id": "jgb/C/estate-dashboard-attachments-vs-contract-attachments",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "4a97f1cff2580bdb542c9fb879ea7c46928bf66ed269200b42dfefdeb056b771",
+   "title_text": "「附件清單」跟「合約附件」差在哪？（附件清單可上傳 JPG／PNG／PDF、每個物件最多 5 個檔案、單檔 10MB，上傳與下載需要物件編輯權限，刪除操作只有代理人且有新增物件權限才看得到；合約附件是固定的附件項目清單，可上傳附件補充以避免日後爭議）",
+   "notes": [
+    "標題：各子句分別由句 1、3、4、6、7 的證據支撐（src/pages/estates/dashboard/attachments/Index.vue 的 accept=「image/jpeg,image/png,application/pdf」、uploadSizeLimit: 10；app/Http/Controllers/EstateController.php dashboard() case 'attachments' 的 $attachmentDatas['max'] = 5；download_attachment／add_attachment 的 $hasEditPermission；刪除按鈕 v-if dashboardStore.state?.isAgent && permission?.add_estate；contractAttachments/index.vue 的固定項目與說明文字）。",
+    "句 1：attachments/Index.vue 的 input accept=「image/jpeg,image/png,application/pdf」、state.uploadSizeLimit: 10、文字「至多存放 [s1] 個檔案，每個檔案大小不可超過 [s2]。」與「儲存空間([s1])」顯示 total/max；EstateController.php case 'attachments' 設 $attachmentDatas['max'] = 5、$attachmentDatas['total']；add_attachment 後端 Validator 'file' => 'required|mimes:jpeg,jpg,png,pdf|max:10240'。5 個上限在畫面由 preUploadHandler 的 limitLength（max - total）擋（後端 add_attachment 的上限判斷讀錯陣列層，見 findings 附註），使用者經畫面操作所見成立。",
+    "句 2：attachments/Index.vue preUploadHandler：limitLength == 0 時 lightboxOpen('spcaeIsFull')；該燈箱標題 t('儲存空間已滿')、內文「剩餘儲存檔案數： {{ max - total }}」（isEmpty(0) 在 src/mixin/methods.js 回 false，故 0 也會顯示）；刪除後 delete_attachment 回傳新 total/max，才有空位再上傳。",
+    "句 3：EstateController.php dashboard() 的 $hasEditPermission＝hasPermission(user,'edit_estate') || (agent_user_id == user->id && hasPermission(user,'add_estate'))；case 'download_attachment'、'add_attachment'、'delete_attachment' 皆 if (!$hasEditPermission) 回 ___('權限不足！')；畫面上下載鈕（a download :href=rowData?.public_url）無 v-if，任何人看得到，故「看得到不代表能下載」成立。",
+    "句 4：attachments/Index.vue 桌機版 Trashcan 與手機版「刪除檔案」option 皆 v-if=「dashboardStore.state?.isAgent && store.state.userData?.permission?.add_estate」；isAgent 定義在 src/pages/estates/dashboard/Index.vue（userData.user.id == agent.uid）。",
+    "句 5：attachments/Index.vue state.hasUpdateFilePermission＝userData?.is_team_owner || permission?.edit_estate || (isAgent && permission?.add_estate)，「上傳檔案」按鈕 v-if=state.hasUpdateFilePermission；三者任一即可。",
+    "句 6：src/pages/estates/dashboard/contractAttachments/index.vue：出租方身份證明文件影本（正/反兩格，提示「若為法人(公司)，請上傳公司設立登記表」）、attachmentRowOptions 的授權代理人簽約同意書、建物所有權/有權出租之證明文件、使用執照影本、出租方同意轉租確認書、房屋位置格局示意圖、「社區管理規約、住戶生活規約」（同一 key attachment_user_community_norms）、其他(附註條款、稅籍證明等)；逐項相符。",
+    "句 7：contractAttachments/index.vue 文字 t('如有以下附件，可上傳圖片做補充，以避免日後爭議。') 逐字相符。",
+    "句 8：contractAttachments/index.vue AjaxUploader size_limit: 10；limit：授權代理人簽約同意書 2、社區管理規約/住戶生活規約 15、其他 5、其餘 1；身分證 v-for idCard in 2，正（idCard_i==0）反（==1）各 1 格。",
+    "句 9：contractAttachments/index.vue 說明 t('(圖片僅支援JPG、PNG檔，檔案大小最大10MB，每個項目限制的上傳檔案數量不同，請留意。)')，而各 input accept=「image/jpeg,image/png,application/pdf」，且 PDF 以 PdfToImg 顯示；說明與實際可選不一致之敘述成立。",
+    "句 10：contractAttachments/index.vue state.show＝!userData.is_big_landlord && (permission.add_estate || permission.edit_estate)；上傳 label 與 uploadGrid-delete 皆 v-if=state.show。",
+    "句 11：EstateController.php case 'upload_contract_attachment'、'save_contract_attachment'、'delete_contract_attachment' 開頭皆 if (!$hasEditPermission) 回 ___('權限不足！')。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-dashboard-runnings-vs-memos",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "c2cb14df6f798af2c30ebe9481779b0bfe0f529a2efdcf9e5d1f864120b986dc",
+   "title_text": "「房東流水帳」跟「物件記事本」差在哪？（流水帳要記收入或支出與金額，記事本沒有金額欄位；兩者都能附檔）",
+   "notes": [
+    "標題：EstateController.php case 'add_bill_running' Validator 要求 fee_type／price；case 'add_memo' 只驗 date，程式註解「無 fee_type/currency/price 等金流欄位」；兩個 Container 都有 UppyUploader 附件。成立。",
+    "句 1：EstateController.php case 'add_bill_running' Validator：'date' => 'required'、'fee_type' => 'required'、'currencySelected' => 'required'、'price' => 'required|gte:0'；note、target_name 以 !empty 取值可空；src/pages/estates/dashboard/runnings/_parts/LedgerContainer.vue 欄位 時間／說明／對象、費用類別（feeTypeOptions income 收入／expense 支出）、費用（幣別 VueSelect＋金額）。",
+    "句 2：LedgerContainer.vue UppyUploader restrictions：maxFileSize: 10 * 1024 * 1024、allowedFileTypes: ['image/*', '.pdf']、maxNumberOfFiles: 3 - attachments.length；後端寫入 estate_bill_running_attachments。",
+    "句 3：EstateController.php case 'add_bill_running'／'edit_bill_running' 開頭 if (!$hasEditPermission) 回 ___('權限不足！')；src/mixin/methods.js ajax 回應處理對 success=false 的 message 呼叫 window.globalErrorShow 顯示。",
+    "句 4：EstateController.php case 'add_memo' Validator 只有 'date' => 'required'（註解「note / target_name 皆可空」），寫入 estate_memos 無 fee_type／price；src/pages/estates/dashboard/memos/_parts/MemoContainer.vue 欄位 時間／說明／對象，UppyUploader maxFileSize 10MB、maxNumberOfFiles: 3 - attachments.length、allowedFileTypes image/*、.pdf。"
+   ]
+  },
+  {
+   "id": "jgb/C/team-public-page-recruitment",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "9d18564b058930047b21e5aa7a683f3652968cae66bc10269b04e159d064630c",
+   "title_text": "多團隊招募頁和一般招租店舖有什麼不同？（網址格式不同、物件列表只有招租、沒有社區篩選、每頁預設 10 筆）",
+   "notes": [
+    "標題：四個差異分別由句 1、3、4、5 證實。成立。",
+    "句 1：src/routes/users.js 路由 users.public path '/p/:encryptId?/:mode?/:premisesUseFor?'，beforeEnter 註解「/p/recruitment/{slug}/{premisesUseFor?}」與「一般團隊頁面：/p/{encryptId}/{mode}/{premisesUseFor}」；app/Http/Controllers/UserController.php「$encryptId === 'recruitment'」時 $slug = $mode。",
+    "句 2：src/routes/users.js：recruitment 缺 premisesUseFor ⇒ next 補 premisesUseFor: 'residential'；一般頁缺 mode 或 premisesUseFor ⇒ 轉址補 mode: 'rent'、premisesUseFor: 'residential'；兩者都補住宅。UserController.php 亦有 $premisesUseFor ?: 'residential'。",
+    "句 3：UserController.php getRecruitmentPageEstates() merge 'mode' => 'rent' 並呼叫 $this->info($request, $ownerEncryptId, 'rent', $premisesUseFor)；src/pages/users/public/Index.vue 列表 mode={encryptId === 'recruitment' ? 'rent' : route.params.mode}。",
+    "句 4：src/pages/users/public/_parts/TopFilter.vue 註解「招租頁面不需要 community 和 agentId 篩選器」、...(route.params.encryptId !== 'recruitment' ? { community, agentId } : {})；Index.vue communityListFetcher 對 recruitment 回 { list: [] }；一般頁 cityAndCommunityOptions 只在 communityOptions 非空才 push groupLabel t('社區')（清單來自 CommunityController getList 的團隊啟用社區）。",
+    "句 5：src/pages/users/public/Index.vue per_page: Number(route.query.per_page) || (encryptId === 'recruitment' ? 10 : 30)；options={encryptId === 'recruitment' ? [10, 30, 60, 90] : [30, 60, 90]}；UserController.php $defaultPerPage = !empty(recruitment_role_ids) ? 10 : 30。"
+   ]
+  },
+  {
+   "id": "jgb/D/contract-show-panels",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "d19a7f9355ede1daa529629e82830a62fb1192bd0cd8aee59d04013fb86ea39d",
+   "title_text": "社宅合約的檢視頁面看得到什麼？（承租方、業者、經理人資訊，以及點交點退進行中的提示）",
+   "notes": [
+    "標題：src/pages/contracts/show/_parts/PanelInfoStructure.vue 有 t('承租方')、t('業者')、t('公司資訊')、t('經理人資訊')；src/pages/contracts/show/Index.vue 有 is_move_in／is_move_out 提示。成立。",
+    "句 1：src/routes/contracts.js contracts.show path '/contracts/sh-show/:id'（routes/web.php 名 contracts.show.social_housing）；show/Index.vue 只在 property_purpose_key == 2 掛 SocialHousingPanel；SocialHousingPanel.vue 在 nowStep == 3（步驟列 ['上傳','承租方資訊','承租方確認','出租方確認'] 的第 3 步）、== 4、>= 5 及 is_move_in 分支渲染 PanelInfoStructure；一般合約走 routes/web.php '/show/{id?}/{action?}' => ContractController@show（另一頁）；「合約點交中」「合約點退中」字串在 src／resources／app 中只出現在 src/pages/contracts/show/Index.vue（正對照：該檔被 grep 命中）。",
+    "句 2：show/Index.vue v-if=scopeStore.options.is_move_in：isTenant（userData.role.config_rule_key == 1，app/Role.php RULE_KEY_TENANT = 1）顯示 t('合約點交中，請確認點交結果')，v-else 顯示 t('合約點交中，等待承租方確認')。",
+    "句 3：show/Index.vue v-if=scopeStore.options.is_move_out：isTenant 顯示 t('合約點退中，請確認點退結果')，否則 t('合約點退中，等待承租方確認')。"
+   ]
+  },
+  {
+   "id": "jgb/D/contract-upload-existing-vs-electronic",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "622d102358cef75b4366943f3a814f8b55f08a63fba9ae2906bd3138284b5905",
+   "title_text": "上傳既有合約跟建立電子合約差在哪？（上傳＝「紙本簽約」，用於已簽訂或已公證完成的合約；自製合約模板是電子合約的「客製化契約書」）",
+   "notes": [
+    "標題：src/components/Lightbox/SelectContractMethod.jsx contractUpload title '紙本簽約'、description '請上傳雙方已簽訂完成或是已公證完成的合約'；customizeContractCreate title '電子合約 - 客製化契約書'、description '自製合約模板'。成立。",
+    "句 1：src/pages/contracts/list/_parts/PageTop.vue「建立合約」按鈕 store.commit('lightbox', 'selectContractMethod')（config_rule_key !== 4 時）；SelectContractMethod.jsx 標題「請選擇建立合約的方式」，紙本簽約說明如上；src/utils/constants/contract.js ContractCreationMethod contractUpload: 1（上傳）。",
+    "句 2：SelectContractMethod.jsx state.methods 三項：contractCreate '電子合約 - 住宅租賃契約書'、customizeContractCreate '電子合約 - 客製化契約書'（description '自製合約模板'）、contractUpload '紙本簽約'；PageTop.vue 以 <LightboxSelectContractMethod /> 無 isHiddenItem 呼叫，三項皆列。",
+    "句 3：contract.js ContractCreationMethod customizeContractCreate: 2；src/pages/estates/pick/_parts/pick.jsx 建立時送 is_existed: state.contractCreationMethod；src/pages/contracts/edit/rentBasic/General.vue v-if=「editStore.options.is_existed == 2」的 t('編輯底稿') 按鈕導向 /jgb3/login/diyContract/{id}；rentBasic 為 contracts.js 標籤「基本條件」。",
+    "句 4：PageTop.vue config_rule_key === 4 時改為 RouterLink {name: 'estates.pick', params:{ action:'contractCreate' }}（即「電子合約 - 住宅租賃契約書」同一路由），不開選單；app/Role.php RULE_KEY_LANDLORD_SOCIAL_HOUSING = 4、config/role.php 名稱「社會住宅」；SelectContractMethod.jsx 對 key 4 亦把客製化與紙本 isHidden。",
+    "句 5：src/use/useEditStore.js「紙本合約過濾」is_existed === ContractIsExisted.paper 保留 contracts.edit.rent、contracts.edit.billSetting、contracts.edit.payment 等；src/routes/contracts.js 對應標籤 '租金費用'、'帳單設定'、'收款方式'（帳單設定對 nthurc／tongSang 特定團隊另被拿掉，屬特例，不影響「一樣有…等分頁」）。",
+    "句 6：rentBasic/General.vue v-if=「editStore.options.is_existed == 1」的 ajax-uploader :size_limit=「15」、input accept=「application/pdf」；src/components/AjaxUploader.vue 超過 size_limit 時開燈箱 t('檔案大小超過 [s1]') 與 t('請重新上傳小於 [s1] 的檔案', [size_limit MB])。",
+    "句 7：此句為操作建議，匯出內無對應字串（grep「掃描品質／印表機／線上壓縮」於 app、src、resources、public 皆 0 筆；正對照：同 grep 方式可命中句 6 的「請重新上傳小於」）。建議出處為細目 sources 所列 help:landlordonboarding04lease_zh-Hant.html（/Users/chenqinghuang/dev/work/docs/幫助中心/JGB幫助中心_HTML_交付_20260818/，Q「上傳合約的PDF檔案大於10MB該怎麼辦？」答「在掃描檔案時於印表機選擇不同的掃描品質」「從此線上網站進行線上壓縮」）；匯出證實其前提（15 MB 上限與超限退件，AjaxUploader.vue）。句子未寫數字，與程式 15 MB 不衝突，無誤導，判成立（出處性質見 findings 附註）。"
+   ]
+  },
+  {
+   "id": "jgb/D/general-contract-notary-tab",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "30cee25e91f93e0efd6cc700fcb708f6e0f41dab759d1127dddda589a9daf4e5",
+   "title_text": "一般合約的「公證」分頁怎麼設定？（是否辦理公證，同意時可複選三項應逕受強制執行事項；只有部分合約範本有此選項）",
+   "notes": [
+    "標題：src/pages/contracts/edit/publicNotary/General.vue 的「辦理公證」radio、三個 checkbox；src/use/config/useContractRequiredField.js 只有部分範本含 FormField.hasPublicNotary。成立。",
+    "句 1：publicNotary/Index.vue property_purpose_key == 1 掛 General.vue；General.vue v-if=contractHasPublicNotary 顯示 t('辦理公證') 與 radio t('同意辦理')／t('不同意辦理')。",
+    "句 2：useContractRequiredField.js RequiredField 含 FormField.hasPublicNotary 的 key：tw_zh_individual、tw_zh_corporation、tw_zh_management、tw_zh_individual_union、tw_zh_corporation_union、tw_zh_management_union、en_us_corporation、th_th_individual、th_th_management（腳本逐 key 解析）；config/contract.php label 依序為 114年內政部住宅租賃契約(原房東)、113年內政部轉租契約(包租轉租)、代租代管契約(參考114年租賃契約)、公會中文版 租賃契約書 原房東／包租業／代租代管、內政部英文版 租賃契約書 包租業、英泰文版 租賃契約書 原房東／代租代管；其他範本（EN201608、VN202005、未列 key 的 en_us_management 與客製範本）走 FallbackRequiredFields，不含 hasPublicNotary。清單完整。",
+    "句 3：General.vue「強制執行事項」區 t('辦理公證後，請選擇應逕受強制執行的項目(可複選)。')，三個 checkbox 文字為 1：承租方如於租期屆滿後不返還租賃住宅。／2：承租方未依約給付之欠繳租金、費用及出租方或租賃住宅所有權人代繳之管理費，或違約時應支付之金額。／3：出租方如於租期屆滿或本契約終止時，應返還承租方之全部或一部分押金。（v-show has_public_notary == 1）。",
+    "句 4：General.vue 「同意辦理」radio @change：has_public_notary == 1 ⇒ editStore.form.public_notary_content = ['1', '2', '3']。",
+    "句 5：useContractRequiredField.js 含 FormField.hasPublicNotaryDistraint 的只有 tw_zh_corporation、tw_zh_management、tw_zh_individual（對應句中三個名稱）；General.vue v-if=contractHasPublicNotaryDistraint 在「強制執行事項」之前顯示 t('公證書載明下列事項應逕受強制執行') 與 t('同意')／t('不同意')。",
+    "句 6：General.vue v-show has_public_notary == 1 區塊 t('保證人效力') 與 t('公證書載明金錢債務逕受強制執行時，如有保證人者，前項後段第 [s1] 款之效力及於保證人。',[string])，string 由 editStore.sortedPublicNotaryContent（src/pages/contracts/edit/Index.vue 依勾選排序）組成，純 v-html 顯示、無輸入欄位。",
+    "句 7：General.vue v-else 分支（範本無 hasPublicNotary）顯示 t('*目前英文與英越文版合約不支援此項目。')；EN201608／en_us_management／VN202005 不含 hasPublicNotary（config/contract.php 名稱相符）；紙本與 DIY 無 contract_template_selected ⇒ FallbackRequiredFields（不含 hasPublicNotary），且 useEditStore.js 紙本／DIY 過濾清單保留 contracts.edit.publicNotary，故有分頁、只見提示。分頁標頭的固定說明句仍在，句意指設定區只剩此提示，非誇大。",
+    "句 8：src/use/useEditStore.js「車位合約過濾」premises_use_for === 'parking_space' 的 basicRoutes 不含 contracts.edit.publicNotary（與範本無關，先於範本判斷外另行過濾）；「ticket_2537 Meta_Capital過濾」meta_capital_condos／meta_capital_office 與「新北住都」nthurc_social_housing 皆濾掉 publicNotary。"
+   ]
+  },
+  {
+   "id": "jgb/D/contract-thinkcloud-esign-service",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "06a9850ec790e7b2c62f9a4a62efa0d59c1008e670b33c90789cf88791bbb8d8",
+   "title_text": "簽約時進入的雲想科技頁面是什麼？（系統導向 Thinkcloud 雲想科技的電子簽署網頁，簽完再導回 JGB；一般合約、委託合約皆會用到）",
+   "notes": [
+    "標題：句 1、句 2 的證據合起來支撐；匯出 README.md「電子簽章 - 雲想 ThinkCloud 整合」。成立。",
+    "句 1：routes/web.php '/thinkcloud/{id?}/{type?}/{action?}' => ContractController@thinkcloud（註解「合約簽署(雲想)」）；ContractController.php thinkcloud() 以 thinkcloud_api('url', $contract, ['jobid'=>…, 'customurl'=>route('contracts.thinkcloud', [... 'action' => 'check'])]) 取 app/Helper.php case 'url'（「取得簽署網頁 URL」，呼叫 /Job/get_signdoc_url）後 return redirect($url)；case 'check'（註解「檢查雲想簽名狀態，簽完固定會回到這」）呼叫 checkThinkcloud 後 redirect 到 contracts.show。",
+    "句 2：app/Services/EntrustedContractService.php 呼叫 thinkcloud_api('create', …) 與 thinkcloud_api('url', …)；routes/web.php '/{id}/thinkcloud/check' => EntrustedContractController@thinkcloudCheck（entrustedContracts.thinkcloud.check）。"
+   ]
+  },
+  {
+   "id": "jgb/I/pricing-quota-full-block",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "fcc4c3a4bab02c2709967b16e39798a5744e1c69df658e30198e8aaba421e911",
+   "title_text": "物件額度用滿了會怎樣？（新增物件、匯入等入口會被擋下並提示升級方案）",
+   "notes": [
+    "標題：app/Http/Middleware/PremisesLimitCheck.php 與 SubscriptionCheck.php 對新增／批次匯入路由擋下並 flash 'subscribedPlanIsFull'；燈箱有效訂閱時按鈕「前往升級」。成立。",
+    "句 1：routes/web.php api2.estates.create（'/api2/estate/create/{action?}'）、estates.general.batch、estates.copy 皆掛 middleware need_subscription＋premises_limit（app/Http/Kernel.php 對應 SubscriptionCheck、PremisesLimitCheck）；SubscriptionCheck 檢查 $role->isSubscriptionActive()，PremisesLimitCheck 檢查 remainEstatesCount() === 0；前端入口 src/pages/estates/list/_parts/ListTable.vue estateCreateHandler、src/pages/communities/estates/Index.vue handleAddEstate（導向 /api2/estate/create?communityId=…）與 handleBatchAddEstate 先判 remainEstatesCount <= 0；EstateController.php 批次匯入另判 $sheetDataCnt > $remainEstateCount。",
+    "句 2：兩支 middleware 不成立時 session()->flash('lightbox-open', 'subscribedPlanIsFull') 並 redirect estates.index（ajax 回 JSON redirect），不進 EstateController@create；批次匯入超量亦 redirect 帶 'lightbox-open' => 'subscribedPlanIsFull'；燈箱 action_link href 皆為 route('users.subscription_chose')（方案選擇頁）。",
+    "句 3：resources/views/layouts/lightbox/general.blade.php 'subscribedPlanIsFull' 預設 title ___('已達到數量上限！')，isSubscriptionActive() 分支 title 同為 ___('已達到數量上限！')；description 與 action_link text 依是否有效訂閱改寫；該檔由 resources/views/layouts/app.blade.php @include('layouts.lightbox.general')。",
+    "句 4：general.blade.php isSubscriptionActive() 分支：description ___('您的 [s1] 最多可上傳 [s2] 組物件，目前已到達上限，要升級方案嗎？', [plan_name, plan_estate_limit])，action_link text ___('前往升級')。",
+    "句 5：general.blade.php 預設：description ___('您尚未訂閱服務最多可上傳 [s1] 組物件，目前已到達上限，請先前往訂閱服務，即可享受所有您需要的功能！')，action_link text ___('我要訂閱')。",
+    "句 6：SubscriptionCheck.php 同一 case 群組另含 'estates.copy'（擋複製物件）、'api2.estates.edit'（擋編輯物件）、'estates.open'（擋刊登物件招租廣告），無訂閱時同樣 flash 'subscribedPlanIsFull'；routes/web.php 這三路由皆掛 need_subscription。"
+   ]
+  }
+ ],
+ "findings": [
+  "(1) 8 條、8 個標題、46 句（11＋4＋5＋3＋7＋8＋2＋6，自 jgb.json content_units 重算）全數逐句核對，皆判成立；逐句證據見各條 notes。content_sha256 與 title_text 為本 session 自工作樹 rag-orchestrator/canon/jgb.json 讀出。",
+  "(2) 成立。以 python 比對 git show HEAD:rag-orchestrator/canon/jgb.json 與工作樹：細目 539／539、id 集合相同；已審 525 → 533，新增恰為這 8 條、無移除；有變動的細目恰 8 條，且每條只差 reviewed_at（null → 2026-10-04）與 reviewed_by（null → owner）；頂層只有 canon_sha256 變動，57 個粗目的非 fines 欄位無變動。jgb/D/contract-thinkcloud-signing-variants、jgb/I/pricing-free-trial-eligibility、jgb/I/pricing-free-vs-experience-plan 仍為 reviewed_at=None，且與 HEAD 逐欄相同。git diff HEAD -- rag-orchestrator/canon 只動 jgb.json、C.md（+3 行）、D.md（+4 行）、I.md（+1 行），每個 .md 只新增 - reviewed: {by: owner, at: 2026-10-04}；A.md 無 diff（HEAD 與工作樹 sha256 同為 4889a5bb…）。備份 p923-backup/canon 的 jgb.json／A／C／D／I sha256 與 HEAD 逐檔相同。",
+  "(3) 成立。本 session 重跑指定指令，第一行為「已審細目 pm 527／533、prospect 118／120；頁面 pm 140／183、prospect 53／183」，分架 A 59／62、B 78／78、C 81／81、D 103／104、E 96／96、F 33／33、G 26／26、H 5／5、I 46／48。正對照：另以 -v 把 p923-backup/canon 唯讀掛到 /app/canon 重跑，容器讀到已審 525，輸出 pm 519／533、prospect 116／120、頁面 pm 133／183、prospect 52／183（＝計畫記載的寫入前值），證明此量尺會隨正本變動。",
+  "(4) 成立。本 session 執行 scripts/run-tests.sh unit -q -rf -p no:cacheprovider：9 failed、3931 passed、3 skipped、276 deselected（212.63s）。FAILED 的 9 個 node id 與 red-baseline.txt 逐名相同，雙向差集＝∅（無新增紅燈，基準紅燈也都還在）。",
+  "(5) 成立，逐項重算如下。開頭現況段：jgb.json 539 條、HEAD 未審 14 條（539−525）；git diff --stat fd89adaa HEAD -- rag-orchestrator/canon 為空；備份正本的指標 519／116、頁面 133／52，均相符。預期段與 plan-meta（endpoint_from pm 519/533、prospect 116/120；endpoint_to pm 527/533、prospect 118/120）：10 條都含 property_manager，其中 4 條含 prospect（team-public-page-recruitment、contract-upload-existing-vs-electronic、兩條定價細目），故 10 條對應 +10／+4；8 條對應 +8／+2，與實測 527／118 相符。§6 S1：55 句（8 條 46 句＋兩條定價細目 4＋5＝9 句）相符；scratch p923-pc 正本已審 535，掛載重跑結果 pm 529／533、prospect 120／120、頁面 140／53、C 81／81、D 103／104、I 48／48，相符；p923-approved.json 與 synth-approved.json 以 cmp 比對相同；其他工作線指紋 p923-foreign-fp.txt 共 41 列，shasum -c 全部 OK，檔案 sha256 前 16 碼 7379139225332cc4 相符（正對照：清單含 rag-orchestrator/services/agent/runtime.py）。用 git status -uall 重算，47 個路徑扣掉 canon 4 檔、本計畫與 HANDOFF 後恰為 41。§6 S1b：p923b-decision.json 的 reply 為「別管上限 聚焦驗收成果」，exclude 為 3 條；p923b-approved.json 恰為這 8 條，分架 C3／D4／I1，對應 +8／+2；p923b-regen-canon 與 repo 正本 diff -r 相同。單元測試的 p923b-unit-after.log 為 passed=3931、failed=9，紅燈集合與基準相同。p923b-audit-prev.log 與 p923-audit-baseline.log 比對，唯一差異是不變量 43 的 W「工作樹有 8 條細目新增已審…」（以及隨之而來的 CODE_CONTRACT_REGRESSIONS 1 與 OVERALL FAIL），與紀錄相符。S1b 第 1 次 verifier 所指的「57 句」已改為 55，開頭預期段已補 S1b 縮減，兩處都已修正。HANDOFF：備份 HANDOFF.bak 與 HEAD 版以 cmp 比對相同；改動處的終點指標與分架數字、剩 6 條（pm 6、prospect 2）、§12-4 列出的 6 個 id、§12-1 的 9.23 列（527／118，分母 533／120），與本 session 實測及 jgb.json 相符。S1 推翻理由：匯出 app/User.php「// Step4: 給予房東初始方案」下的 RULE_KEY_LANDLORD_INDIVIDUAL 分支，只在 $promotion['type']=='registration_plan' 時設優惠方案，其餘情況 fall through 到 RULE_KEY_LANDLORD_CORPORATE 的免費方案；app/Http/Controllers/Admin/PromotionController.php 的類型對照有 'registration_plan' => '註冊免費方案'、'login_plan' => '登入免費方案'、'plan_discount' => '方案折扣'，已確認。§5 的就緒審查歷程與各項成本估算屬過程紀錄，無法以程式或數據重驗，未計入。",
+  "覆蓋對照：業主原話「把 10 條已全數核對的細目交終審」＋「安全組過，排除 contract-thinkcloud-signing-variants」＋「別管上限 聚焦驗收成果」（凍結清單 scratchpad/p923b-acceptance.md，sha256 c6942a24… 與 .sha256 檔相符）。A1（8 條已審、6 條未審、排除生效）以工作樹 jgb.json 驗證，成立；A2 的證據內容即本交件；A3 以重跑指標驗證，成立；A4 的單元差集與他線指紋都成立。A1／A3 的觀察點規定是 commit 後的 HEAD，A4 的 make audit PASS 與 commit 恰 7 檔，目前尚未發生（brief 禁止我跑 audit 與 commit），屬主 session 後續步驟，不在本次宣稱 (1)～(5) 內。",
+  "附註 P4（信心高，非阻擋）：jgb/D/contract-upload-existing-vs-electronic 句 7 的掃描與壓縮建議，出處是幫助中心 HTML，不在 jgb2 釘住匯出內。匯出只能證實前提（15 MB 上限與超限退件），無法證實建議本身。幫助中心原文寫的上限是 10MB，程式是 15 MB；句子沒寫數字，所以沒有衝突。預期：A2 要求每句 notes 指向匯出路徑；實際：此句只能部分指向匯出。重驗方式：主 session 決定幫助中心 HTML 是否算這類「建議句」的合格出處。",
+  "附註 P4（信心高，非阻擋，屬 jgb2 程式缺陷、不是正本錯誤）：EstateController.php case 'add_attachment' 用 isset($attachments['total']) && isset($attachments['max']) 判斷上限，但 dashboard(..., 'attachments') 回傳的 total／max 放在 ['data'] 底下，所以後端這道上限判斷永遠不會觸發，5 個檔案的上限實際只靠前端 preUploadHandler 擋。jgb/C/estate-dashboard-attachments-vs-contract-attachments 句 1、2 描述的是畫面行為，經畫面操作仍成立。重驗方式：如要修，屬 jgb2 另案。"
+ ],
+ "source_transcript": "a3baeffefad7b2405.output"
+}

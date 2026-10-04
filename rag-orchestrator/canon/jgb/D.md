@@ -783,6 +783,7 @@ JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄�
   - {text: "社宅合約詳細資料有哪些區塊", source: "draft:outline-20260920", status: proposed}
   - {text: "合約點交中提示", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/contracts/show/Index.vue, code:src/pages/contracts/show/_parts/PanelInfoStructure.vue, code:src/routes/contracts.js, code:app/Http/Controllers/ContractController.php, code:src/pages/contracts/show/_parts/SocialHousingPanel.vue, code:app/Role.php, code:routes/web.php]
+- reviewed: {by: owner, at: 2026-10-04}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -816,6 +817,7 @@ JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄�
   - {text: "上傳合約檔案太大怎麼辦", source: "draft:outline-20260920", status: proposed}
   - {text: "既存合約跟電子合約差別", source: "draft:outline-20260920", status: proposed}
 - sources: [help:landlordonboarding04lease_zh-Hant.html, code:src/components/Lightbox/SelectContractMethod.jsx, code:src/pages/contracts/edit/rentBasic/General.vue, code:src/components/AjaxUploader.vue, code:src/use/useEditStore.js, code:app/Role.php, code:src/routes/contracts.js, code:src/pages/contracts/list/_parts/PageTop.vue, code:src/utils/constants/contract.js]
+- reviewed: {by: owner, at: 2026-10-04}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -1200,6 +1202,7 @@ JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄�
   - {text: "公證強制執行事項", source: "draft:outline-20260920", status: proposed}
   - {text: "英文合約可以公證嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/contracts/edit/publicNotary/General.vue, code:src/use/config/useContractRequiredField.js, code:config/contract.php, code:src/pages/contracts/edit/Index.vue]
+- reviewed: {by: owner, at: 2026-10-04}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -1216,6 +1219,7 @@ JGB 的電子簽章走 Thinkcloud 這家第三方服務，相關的簽約紀錄�
   - {text: "簽約跳出的雲想科技頁面是什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "雲想科技畫面是誰在用", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/ContractController.php, code:routes/web.php]
+- reviewed: {by: owner, at: 2026-10-04}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general

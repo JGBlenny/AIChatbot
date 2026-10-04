@@ -2,7 +2,7 @@
   "audience": "jgb",
   "budget_tokens": 0,
   "business_types": [],
-  "canon_sha256": "bb20bcdf2f36ef5b0143f2b82edf4007e24232245d03c6fc21fad371c77a69a9",
+  "canon_sha256": "b4d6966b18735e29fd5c0b9fb009e580e01b9e5f3ab4677cac3c9066fc83360a",
   "coarses": [
     {
       "fines": [
@@ -9316,8 +9316,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-04",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/estates/dashboard/attachments/Index.vue",
@@ -9365,8 +9365,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-04",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/estates/dashboard/runnings/Index.vue",
@@ -10062,8 +10062,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-04",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/routes/users.js",
@@ -12741,8 +12741,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-04",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/contracts/show/Index.vue",
@@ -12873,8 +12873,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-04",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "help:landlordonboarding04lease_zh-Hant.html",
@@ -14241,8 +14241,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-04",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/contracts/edit/publicNotary/General.vue",
@@ -14282,8 +14282,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-04",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:app/Http/Controllers/ContractController.php",
@@ -23067,8 +23067,8 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": null,
-          "reviewed_by": null,
+          "reviewed_at": "2026-10-04",
+          "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:app/Http/Controllers/EstateController.php",

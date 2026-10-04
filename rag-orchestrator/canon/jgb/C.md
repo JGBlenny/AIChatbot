@@ -815,6 +815,7 @@ language: zh-TW
   - {text: "附件清單空間不夠怎麼辦", source: "draft:outline-20260920", status: proposed}
   - {text: "物件附件跟合約附件差別", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/estates/dashboard/attachments/Index.vue, code:src/pages/estates/dashboard/contractAttachments/index.vue, code:app/Http/Controllers/EstateController.php, code:src/pages/estates/dashboard/Index.vue, code:src/components/AjaxUploader.vue]
+- reviewed: {by: owner, at: 2026-10-04}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -835,6 +836,7 @@ language: zh-TW
   - {text: "物件記事本可以記什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "流水帳跟記事本差別", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/estates/dashboard/runnings/Index.vue, code:src/pages/estates/dashboard/memos/Index.vue, code:src/pages/estates/dashboard/runnings/_parts/LedgerContainer.vue, code:src/pages/estates/dashboard/memos/_parts/MemoContainer.vue, code:app/Http/Controllers/EstateController.php]
+- reviewed: {by: owner, at: 2026-10-04}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -1033,6 +1035,7 @@ Facebook 也只有在房東有填寫連結時才會顯示「立即聯繫」按�
   - {text: "招募頁跟一般店舖的網址不一樣嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "招募頁跟招租店舖差在哪", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/routes/users.js, code:src/pages/users/public/Index.vue, code:src/pages/users/public/_parts/TopFilter.vue, code:app/Http/Controllers/UserController.php]
+- reviewed: {by: owner, at: 2026-10-04}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general

@@ -162,6 +162,7 @@ language: zh-TW
   - {text: "訂閱失效還能新增物件嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "方案額度用完提示", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/EstateController.php, code:app/Http/Middleware/SubscriptionCheck.php, code:app/Http/Middleware/PremisesLimitCheck.php, code:resources/views/layouts/lightbox/general.blade.php]
+- reviewed: {by: owner, at: 2026-10-04}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
