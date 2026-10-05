@@ -1,0 +1,19 @@
+{
+ "kind": "change",
+ "verdict": "CONFIRMED",
+ "base": "c6e7ac3d933b1d9908261b6d1f34888d2926beb6",
+ "claim": "Plan 9.29 收尾：計畫 §6 補記 A8 起草／先審／寫入證據的客戶名掃描結果並逐筆說明不分大小寫命中；edit_fine.py roundtrip 九架位元組不變",
+ "findings": [
+  "範圍：計畫檔 git diff 只在 §6 末尾多 4 行（「收尾結果驗證」「A8 掃描結果（補記）」）；canon 與 runs 對 HEAD 沒有任何變動。這次是 F1 複驗，範圍限 A8 與 A11 roundtrip，其餘 A 項前次已全過、沒有重開。",
+  "對照組：詞表取自 canon_check.py 的 PAT。正對照：合成字串在分大小寫與 re.I 兩種掃描下都命中。負對照：「系統上」兩種都不中；另一個含同兩字、但前一字不是「系」的常用詞命中，證明前置排除有效。git grep 正對照 consent_zero 命中 14 檔，不存在的字串 0 檔。",
+  "主張 1（掃描範圍）成立。計畫 16 個 .kiro 檔分大小寫 0 命中；先審 G1～G5、postdelete（3b）、W1～W5 寫入證據、review-sheet、dispositions 都是 0；正本 jgb.json、CATALOG.md、jgb/A～I.md 分大小寫與不分大小寫都是 0。",
+  "主張 2（逐筆說明）成立。不分大小寫的命中只有兩筆，§6 都說明了：一筆在 prereview-G4.json 的 notes，前後文確有「部分特定合作團隊沒有」；另一筆在 drafts-E 的 jgb/E/bill-power-reading-draft-defaults 的 evidence 欄，是同一個識別字，沒有出現在 sentences、title 或 phrasings。A8 要求的「0 或逐筆說明」已做到。",
+  "主張 3 大部分成立。16 檔不分大小寫命中 1（G4）屬實；drafts 68 條改動細目不分大小寫 1→2（+1，就是 bill-power-reading-draft-defaults）屬實；正本不分大小寫 0 屬實；base f13b0cb5 含字根的檔 19 個屬實。",
+  "主張 4 成立。python3 .claude/skills/outline-curation/scripts/review_pipeline/edit_fine.py --roundtrip 在 A、B、C、D、E、F、G、I 八架都印 roundtrip byte-identical: True，exit 0。程式碼裡這條路徑只讀不寫，跑前跑後 git status 相同；.claude 與 .agents 兩份 edit_fine.py 以 cmp 比對相同。",
+  "P3｜信心高｜證據：git grep -l -i -F <G4 裡那個完整識別字> f13b0cb5 得 7 檔（drafts-B、drafts-D、fix-log-9.16-S2-DE、outline-B-draft、outline-D-draft、plan-9.28、p928-B11.json）；分大小寫、-w 結果都是 7。預期：§6 寫的「6 個已 commit 檔」。實際：7 個。這個差異只會讓「base 本來就有」的論點更強，不影響 A8 是否成立，但 §6 記的事實數字有誤。複查：用上面的指令重算，並修正 §6 的數字。",
+  "P4｜信心高｜證據：drafts 改動細目分大小寫 1→1，那筆在 jgb/D/entrusted-contract-lease-type 的 evidence 欄，base 已存在。預期：A8 的『改動細目』若指 drafts，這筆也該說明。實際：§6 只說明比 base 多出的那筆，沒提這筆。A8 主要針對的正本是 0，所以列為建議。複查：在 §6 補一句這筆是 base 就有的。",
+  "P4｜信心高｜證據：runs 下的 open-questions-20261005-w1～w5-929.md 每檔分大小寫命中 1 筆，在方法註解的引文裡。這是 drafts_to_canon.py 產生的彙整，五檔除標題外內容相同；base 的 13 份 open-questions 檔也全部都有命中。預期：這類檔不屬 A8 與本主張的範圍。實際：舊有內容延續下來，不是本計畫新增的。複查：不需要；若要清，另案處理。",
+  "未查證：§6『W3 初版命中 1』的初版證據，以及 check_exec.py 步驟 4 的起草產出都在 scratchpad。這次只用已 commit 的 drafts 改動細目代替，不影響 A8 的判定。"
+ ],
+ "source_transcript": "a521f5a8cf9bd7c6b.output"
+}
