@@ -1,0 +1,181 @@
+{
+ "kind": "write",
+ "verdict": "CONFIRMED",
+ "base": "f1e1a0f4c221bdd5971f3bee1a49faa4b886b372",
+ "claim": "Plan 9.29 寫入核對 W2：10 條細目的標題與每一句已逐句對合法來源核對，逐條結果如 fines",
+ "fines": [
+  {
+   "id": "jgb/C/community-add-single-and-limit",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "87cf4fe66256b0e5c69a48a55caecc8c705343ce7dd87822d8490a0a9eb92d3c",
+   "title_text": "如何新增社區？（訂閱方案有可建立社區數量上限）",
+   "notes": [
+    "標題：兩句都支撐「新增社區」入口與數量上限，沒有超出句子內容。",
+    "句 1：src/pages/communities/list/Index.vue＋`async function addCommunity`：POST `/api3/communities/single`，回傳 `result?.data?.id` 後 `router.push({ name: 'communities.edit' ...})`，也就是直接進入社區編輯頁；按鈕文字是 `t('新增社區')`。",
+    "句 2：同上＋`remainCommunitiesCount <= 0` 時 `store.commit('lightbox', 'subscribedPlanCommunityIsFull')` 然後 return，不會建立社區；resources/views/layouts/lightbox/general.blade.php＋`subscribedPlanCommunityIsFull`，title 是「已達到數量上限！」；src/type/commit.ts 的註解寫「訂閱方案可以建立的社區數量已達上限」。後端 app/Http/Controllers/CommunityController.php＋`remainCommunitiesCount() <= 0` 也會擋。上限取自 app/Role.php＋`getPlanCommunityLimit`（目前借用物件上限；個人房東固定 1）。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-house-preview-unpublished",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "0fe2fd3ded1df8e34834dc540385acdf3e47cd4907555c6b3584d4ad5555ed78",
+   "title_text": "物件還沒刊登（未開放）時，廣告頁會怎麼顯示？（屋主看到的是預覽頁提示）",
+   "notes": [
+    "標題：有句 1 支撐。",
+    "句 1：resources/views/estate/show.blade.php＋`@if (!$isOpen && !$isInvite && !$isContractSnapshot)` 會顯示「這是您的物件廣告預覽頁，此物件尚未完成刊登。」；app/Http/Controllers/EstateController.php＋`$isOpen = $estate->is_open`，未刊登時只有具備 show_estate／show_owner_estate 權限的人才能進來（其他人 `abort(404)`），擁有者屬於這一類。補充：同一則提示，有查看權限的團隊成員也看得到；本句沒有寫「只有」，所以不算錯。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-list-add-must-pick-community",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "dd9b93f4e3f701d8922c5d1a72ef6224b749f4bd50b7190725d2afe6fdf8b3da",
+   "title_text": "物件總表怎麼新增物件？（新增與複製現有物件都要先經過社區選擇畫面，目前沒有批次新增入口）",
+   "notes": [
+    "標題：兩句都支撐。",
+    "句 1：src/pages/estates/list/_parts/PageTop.vue＋`estateCreateHandler`：「新增物件」與「複製現有物件」都會 `router.push({ name: 'communities.pick', params: { action: 'estateCreate' / 'estateCopy' } })`；`remainEstatesCount <= 0` 時改成 `store.commit('lightbox', 'subscribedPlanIsFull')`。resources/views/layouts/lightbox/general.blade.php 中 `subscribedPlanIsFull` 的 title 是「已達到數量上限！」。選完社區之後，新增會直接建立物件，複製會再進物件挑選畫面（src/pages/communities/pick/Index.vue＋`api2/estate/create?communityId`／`estates.pick`），「再回來建立或複製」只是概括的說法，沒有矛盾。",
+    "句 2：同上 PageTop.vue＋`<!-- <a class=\"option\">` 裡的「批次新增」選項被註解掉了，畫面上不會出現。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-list-filters",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "f825175e8c6f3101414f3762525ccb6a62b1c623af48ad367df1a6b56a6d698e",
+   "title_text": "物件總表有哪些進階篩選條件？（縣市行政區、經理人、大房東、社區、捷運、格局、建築類型、即時合約狀態、合約到期日、招租廣告狀態、租金與面積(坪)範圍、標籤）",
+   "notes": [
+    "標題：列出的每一項都在句 1、句 2 裡；空間類型由同粗目 estate-list-filters-space-type-and-others 負責，句子用了「等」，沒有寫成排他列舉。",
+    "句 1：src/pages/estates/list/_parts/EstatesAdvanceSearchBlock.jsx＋`EstateSearchKey.country`、`city`、`district`、`agentId`、`bigLandlordId`、`community`、`MRT`，都是下拉篩選；標籤來自 src/use/search/modules/country.js「國家」、MRT.js「鄰近捷運站」等。",
+    "句 2：同上 EstatesAdvanceSearchBlock.jsx＋`room_count`、`building`、`contractStatus`、`contract_date_end_month`、`is_open`、`rentRange`、`sizeRange`、`label`，標籤分別是 src/use/search/modules/room_count.js「格局」、building.js「建築類型」、contractStatus.js「即時合約狀態」、date_end_month.js「合約到期日」、is_open.js「招租廣告狀態」、rentRange.js「租金」、sizeRange.js「面積(坪)」、label.js「標籤」。桌機與手機元件都沒有 `use_for`；畫面上找得到用途選擇的只有 src/components/Lightbox/EstateAdvSearch.vue＋`t('用途')`，它只被 src/pages/estates/pick/_parts/pick.jsx 引用。src/components/Lightbox/ContractsAdvSearch.vue 也有，但沒有任何地方引用；RepairAdvSearch.vue 不會畫出用途。",
+    "句 3：src/pages/estates/list/Index.vue＋`v-if=\"viewport.width < 576\"` 時改用 EstatesAdvanceSearchBlockM。src/pages/estates/list/_parts/EstatesAdvanceSearchBlockM.jsx 上方一列直接放 contractStatus、contract_date_end_month 與「更多」，關鍵字列排在它下面；「更多」裡面的 `store.state.siteOptions.dollarSign === 'TWD' && ... rentRange` 只在 TWD 時才出現。",
+    "句 4：src/pages/estates/list/_parts/EstatesAdvanceSearchBlock.jsx＋`hidden ... lg:block`＋`t('篩選結果')`: `range_text` / `total`；tailwind.config.js＋`lg: '992px'`；app/Helper.php＋`'range_text' => $rangeStart.' - '.$rangeEnd`。手機用的 M 元件與 src/components/ListSearchBar.vue 都沒有這一行。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-status-affects-actions",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "b80d02a99c6bb5d4690be44bd1c7f70d584fc5ac8eb486cd9771dfe60866bce3",
+   "title_text": "物件狀態會影響哪些功能？（招租廣告狀態未刊登／刊登中，與合約狀態洽談中／租約中，是各自獨立的；刪除物件要求未刊登、沒有合約、沒有 IoT 綁定）",
+   "notes": [
+    "標題：各斷言都有句 1、句 5 支撐。標題的「沒有合約」對應句 1 定義的「無合約」狀態（只看沒有歸入歷史的合約）。",
+    "句 1：src/use/search/modules/is_open.js＋「未刊登」「刊登中」；src/use/search/modules/contractStatus.js＋「洽談中」「租約中」；app/Estate.php＋`function getSticker` 列表標籤分成「租約中／洽談中／無合約」三種，招租廣告狀態另外由 `is_open` 決定，兩者各自獨立。補充：篩選選項的文字是「無租約」，列表標籤是「無合約」（見 findings）。",
+    "句 2：app/Estate.php＋`function updateStatus`：有非歷史合約，而且其中有 `status >= CONTRACT_SIGNED`（< HISTORY）時，狀態是 ESTATE_CONTRACT_SIGNED（租約中），否則是 ESTATE_HAVE_CONTRACT（洽談中）；app/Contract.php＋`CONTRACT_SIGNED = 8; // 雙方簽名完成`。",
+    "句 3：同上 updateStatus＋`->where('is_history', false)`；getSticker 會透過 `$this->contracts` 延遲載入完整欄位，再套 `->where('is_history', 0)`，所以歷史合約一樣被排除。",
+    "句 4：app/Http/Controllers/EstateController.php＋`function webList` 中 `if ($type == 1 || $type == 2)` 且 `public_estate || $LVisShowEdit` 時，依 `is_open` 放 `close_is_open`（取消刊登招租廣告）或 `open_is_open`（刊登招租廣告）；type 3（買賣）只放買賣廣告的選項。",
+    "句 5：同上＋`function validateEstateForDelete`：`is_open` 時顯示「您無法刪除當前狀態為刊登中的 [s1] 物件」；`actualContracts()->activeContracts()`（app/Contract.php＋`scopeActiveContracts` 條件是 is_history=0）時顯示「該物件已有對應的合約存在…」；`has_iot` 時顯示「您無法刪除尚有IoT綁定的 [s1] 物件」。`delete()` 會把這些訊息回傳。"
+   ]
+  },
+  {
+   "id": "jgb/C/forcebinding-completion-states",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "89274b46ac0809dfc5f43b23f2c12057ded4290815b031e13a2e1e38b777bc99",
+   "title_text": "綁定完成後會看到什麼？（全部綁完顯示恭喜，還有剩則提示繼續綁定）",
+   "notes": [
+    "標題：有兩句支撐。",
+    "句 1：src/pages/communities/forceBinding/edit/Binding.vue＋`quantities_of_no_community === 0` 時進入 `bindingResultScreen = 'done'`，畫面顯示「🎉恭喜！你已經成功綁定所有物件」，並有 `RouterLink to={{ name: 'communities.list' }}` 的「前往社區總表」。現行不會自動導向：src/components/MustDo/Index.vue 只有舊格式 quest 才會掛 `<MustDoEstateCommunity />`；app/Http/Controllers/ApiController.php＋`getMustDo` 現在只回 `getUnreadAnnouncements` 的公告 quest（裡面帶 steps）；導向程式碼在 src/components/MustDo/EstateCommunity.vue＋`communities.forceBinding.welcome`。",
+    "句 2：同上 Binding.vue＋「👏 你完成最困難的部分！」「你已經完成新增社區的必需步驟，但還有些物件尚未綁定完成。」「繼續綁定物件」。`continueHandler` 會呼叫 `store.state.mustDo.community.meta.refetch()`，但 meta 只有在 src/components/MustDo/EstateCommunity.vue 的 onBeforeMount 才會指派；src/store/modules/must_do.js 的初始值是 `meta: null`，所以現行按下去會失敗。"
+   ]
+  },
+  {
+   "id": "jgb/C/forcebinding-two-steps",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "62f825b8a7f7257c1d721d016ee51a3d4b3ba6485269a9a5049a09bd90a69c69",
+   "title_text": "物件綁定社區導引有哪兩個步驟？（填寫社區資料、選擇欲綁定社區內的物件）",
+   "notes": [
+    "標題：有句 1 支撐。",
+    "句 1：src/pages/communities/forceBinding/edit/Index.vue＋PageTop title `1: t('填寫社區資料')`、`2: t('選擇欲綁定社區內的物件')`，以及「1 out of 2」「2 out of 2」；src/routes/communities.js＋`forceBindingStep: 1`／`forceBindingStep: 2`。不再自動導向的依據同 forcebinding-completion-states：src/components/MustDo/Index.vue、app/Http/Controllers/ApiController.php＋`getMustDo`、src/components/MustDo/EstateCommunity.vue。",
+    "句 2：src/pages/communities/forceBinding/edit/Index.vue＋「因系統功能更新後，各功能皆採最新的社區物件來進行動作，故未綁定完成前，系統功能將會無法正常使用」，逐字相符；現行不再導向的依據同上。另外 src/pages/communities/forceBinding/Index.vue＋`quest === null` 時會被導回 users.dashboard。"
+   ]
+  },
+  {
+   "id": "jgb/C/forcebinding-welcome-progress",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "6f31a2c09c1c8550936c4be74f11574e891221ebd157585bca15b4e616c8b362",
+   "title_text": "物件綁定社區的導引起始畫面顯示什麼？（需同意服務條款）",
+   "notes": [
+    "標題：有句 2 支撐。",
+    "句 1：src/pages/communities/forceBinding/Welcome.vue＋「尚未綁定至社區」用 `quantities_of_no_community || '-'`，「已成功綁定至社區」用 `(quantities_of_estates - quantities_of_no_community) || '-'`。meta 只由 src/components/MustDo/EstateCommunity.vue 載入，src/store/modules/must_do.js 的初始值是 `meta: null`，所以兩格現行都顯示「-」個（undefined 相減得 NaN，也會走到 '-'）。",
+    "句 2：同上 Welcome.vue＋「點擊「繼續」，即表示我已閱讀並同意金箍棒的 服務條款 和 隱私權聲明。」；「繼續」按鈕只在 `meta?.data?.is_admin` 為真時出現，meta 為 null 時不會出現。"
+   ]
+  },
+  {
+   "id": "jgb/C/forcebinding-why-and-who",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "0824c9f282cacd00baee3d1a22a459b702eef760c64a93208342a42672a2ce9f",
+   "title_text": "為什麼「物件需綁定社區」的導引？（2022/05/12 社區功能上線，只有團隊擁有者能操作）",
+   "notes": [
+    "標題：有兩句支撐。",
+    "句 1：src/pages/communities/forceBinding/Welcome.vue＋`['2022/05/12']`＋「物件需全數綁定至社區才能使用系統。」；舊的導向在 src/components/MustDo/EstateCommunity.vue＋`quantities_of_no_community > 0` 時 `router.push({ name: 'communities.forceBinding.welcome' })`；現行 app/Http/Controllers/ApiController.php＋`getMustDo` 只回公告 quest，src/components/MustDo/Index.vue 不再掛這個元件。",
+    "句 2：Welcome.vue＋「權限不足」與「此次系統更新，執行物件綁定社區動作需為<b>團隊擁有者</b>。」，只有在 `is_admin === false` 時才會加上 block；app/Http/Controllers/CommunityController.php＋`'is_admin' => $user->id == $role->user->id`。meta 只由 src/components/MustDo/EstateCommunity.vue 載入（src/store/modules/must_do.js 中 `meta: null`），所以現行 is_admin 是 undefined：權限不足提示被隱藏，「繼續」按鈕也不出現。"
+   ]
+  },
+  {
+   "id": "jgb/C/team-public-page-edit-and-banner",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "4bf25a16603c160f62df35276b7e835d7cf3864172f14ef107896348e1893984",
+   "title_text": "招租店舖上可以直接編輯哪些內容？（橫幅照片、頭像、自我介紹；團隊身分另可改團隊名稱等欄位，需要「編輯團隊權限」）",
+   "notes": [
+    "標題：各斷言都有句 1～3 支撐；「編輯團隊權限」是權限設定畫面上的標籤（見句 1）。",
+    "句 1：src/pages/users/public/Index.vue＋`editable: ... is_admin && store.state?.userData?.permission?.edit_role`；app/Http/Controllers/UserController.php＋`'g_edit_role'=> [ 'label'=> '編輯團隊權限'`、`'g_edit_role' => ['edit_role']`；同檔 `api3.post.users.infos` 分支中 `$role->is_team && !$this->isHasGPermission('edit_role_info')` 回傳「您目前登入的帳號無法使用編輯團隊功能」，`g_edit_role_info` 的 label 是「編輯團隊資訊」。",
+    "句 2：src/pages/users/public/Index.vue＋`upload_for=\"banner\"`＋`t('更換照片')`；src/pages/users/public/_parts/AsideInfo.vue＋`upload_for=\"avatar\"`＋`icon_cam_white.svg`（位置 `absolute right-0 bottom-0`）；app/Http/Controllers/UserController.php 中，個人房東的 infoColumn 只有 `introduction` 是 `'editable'=> true`。",
+    "句 3：app/Http/Controllers/UserController.php 中團隊的 infoColumn 的 labelKey 依序是「團隊名稱」「經理人證號」「租賃管理員證號」「公司電話」「公司Email」「團隊介紹」，全部 `'editable'=> true`；儲存時寫入 `menu_name`、`company_broker_license`、`company_leasing_manager_license`、`company_phone`、`company_email`、`company_introduction`、`company_banner`、`company_logo`。",
+    "句 4：同上，個人房東儲存時寫入 `$user->avatar`、`$user->banner`、`$user->introduction`；`function account` 中帳號資訊頁的照片是 `'user_thumbnail' => ... get_upload_file($user->avatar)`。resources/views/users/account.blade.php＋「照片(選填)」，沒有 introduction 或 banner 欄位。",
+    "句 5：同上 `$role->menu_name = ... $infoColumn['menu_name']`；resources/views/users/role.blade.php＋「團隊名稱」綁 `name=\"menu_name\"`。users.role 頁在 src 中以「團隊資訊」連結指向（例如 src/pages/estates/edit/rent_contact/Index.vue＋`backendRoutes?.['users.role']`）。",
+    "句 6：src/pages/users/public/Index.vue＋`t('建議尺寸')`： 1920 x 576；同檔 `cropperOptions={{ aspectRatio: 1920 / 576 }}`。"
+   ]
+  }
+ ],
+ "findings": [
+  "來源彼此衝突（日期）：src/pages/communities/forceBinding/Welcome.vue 寫社區功能於「2022/05/12」後增加，同一套舊流程的提醒燈箱 src/components/MustDo/EstateCommunity.vue 卻寫「2022/05/11」。forcebinding-why-and-who 依導引畫面寫 05/12，與導引畫面一致；兩個舊畫面本身日期不一致。",
+  "用語差異（不影響判定）：物件總表「即時合約狀態」篩選的選項文字是「無租約」（src/use/search/modules/contractStatus.js＋`1: t('無租約')`），列表標籤是「無合約」（app/Estate.php＋`getSticker`）。estate-status-affects-actions 句 1 與同粗目 estate-list-batch-actions 都用「無合約」，對應的是列表標籤。",
+  "estate-rent-open-permission-and-validation 判不成立的原因只在引號用字：現行刊登路徑是 物件總表「刊登招租廣告」→ 預覽頁「刊登」按鈕（resources/views/estate/show/navbar.blade.php）→ estates.open。權限與驗證邏輯本身都與程式相符；把引號內的字改成現行按鈕文字，或拿掉引號，就能成立。",
+  "待查（安全，超出本組命題範圍，只有讀碼依據，沒有實跑）：app/Http/Controllers/UserController.php＋`api3.post.users.infos` 分支。被編輯的身分 `$role` 由網址的 encryptId 決定。對個人房東店舖（`!$role->is_team`）完全沒有權限檢查，就直接更新該房東的 introduction／banner／avatar。對團隊店舖，`isHasGPermission('edit_role_info')` 檢查的是登入者自己目前身分的權限，不是登入者是否屬於被編輯的團隊。如果屬實，任何登入者（甚至未登入、但帶有 CSRF token 的請求）可能改得到別人的店舖資料。需要主持人在本機用測試帳號實際打一次 POST 確認。"
+ ],
+ "source_transcript": "a92e89183587e2c67.output"
+}

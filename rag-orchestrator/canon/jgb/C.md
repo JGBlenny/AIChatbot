@@ -26,13 +26,13 @@ language: zh-TW
   - {text: "怎麼新增社區", source: "draft:outline-20260920", status: proposed}
   - {text: "社區數量有上限嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "新增社區按鈕在哪", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/communities/list/Index.vue, code:src/type/commit.ts]
-- reviewed: {by: owner, at: 2026-09-28}
+- sources: [code:src/pages/communities/list/Index.vue, code:src/type/commit.ts, code:resources/views/layouts/lightbox/general.blade.php]
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
 在社區總表按下「新增社區」按鈕即可建立一筆新社區，建立後會直接進入社區編輯頁面。
-訂閱方案對可建立的社區數量有上限，達到上限時無法繼續新增社區。
+訂閱方案對可建立的社區數量有上限；達到上限時，按「新增社區」會跳出「已達到數量上限」的提示，而不會建立新社區。
 ### 怎麼批次新增社區、或複製現有社區建立新社區？ {#jgb/C/community-batch-add-and-copy}
 - phrasings:
   - {text: "批次新增社區怎麼做", source: "draft:outline-20260920", status: proposed}
@@ -310,42 +310,42 @@ language: zh-TW
 - instance_applicability: general
 只有具備編輯物件權限的使用者（團隊擁有者也包含在內），在社區廣告頁才會看到右上角的選單，選單有四個選項：「編輯」跳到社區編輯頁、「社區詳情」跳到該社區的管理端物件清單頁、「社區總表」回到社區列表、「返回 Dashboard」回到管理端首頁。
 ## 物件綁定社區的導引（2022/05 社區功能上線時的強制綁定流程，限團隊擁有者） {#C-community-force-binding}
-### 為什麼會出現「物件需綁定社區」的導引？（2022/05/12 社區功能上線，只有團隊擁有者能操作） {#jgb/C/forcebinding-why-and-who}
+### 為什麼「物件需綁定社區」的導引？（2022/05/12 社區功能上線，只有團隊擁有者能操作） {#jgb/C/forcebinding-why-and-who}
 - phrasings:
   - {text: "為什麼要綁定社區", source: "draft:outline-20260920", status: proposed}
   - {text: "物件為什麼要綁社區", source: "draft:outline-20260920", status: proposed}
   - {text: "誰可以做物件綁定社區", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/communities/forceBinding/Welcome.vue]
-- reviewed: {by: owner, at: 2026-09-28}
+- sources: [code:src/pages/communities/forceBinding/Welcome.vue, code:src/components/MustDo/EstateCommunity.vue, code:app/Http/Controllers/ApiController.php, code:src/components/MustDo/Index.vue, code:src/store/modules/must_do.js, code:app/Http/Controllers/CommunityController.php]
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-系統於 2022/05/12 新增「社區」功能後，要求既有物件必須全數綁定至社區才能使用系統，因此舊帳號登入時會被導向這個綁定導引畫面。
-執行這個綁定動作需要是團隊擁有者身分，若不是團隊擁有者，畫面會顯示「權限不足」。
-### 物件綁定社區的導引起始畫面顯示什麼？（已綁定與尚未綁定的物件數量、需同意服務條款） {#jgb/C/forcebinding-welcome-progress}
+這是 2022/05/12 新增「社區」功能時的舊版遷移導引：當時要求既有物件必須全數綁定至社區才能使用系統，舊帳號登入時會被導向這個綁定導引畫面；現行的登入流程已不再把使用者導向這個導引。
+舊版導引的設計是只有團隊擁有者能執行物件綁定社區，畫面上若判定為非擁有者會顯示「權限不足」；但判定所需的資料由舊版流程載入，現行不會載入，所以現行畫面不會顯示「權限不足」，也不會出現「繼續」按鈕。
+### 物件綁定社區的導引起始畫面顯示什麼？（需同意服務條款） {#jgb/C/forcebinding-welcome-progress}
 - phrasings:
   - {text: "綁定社區進度在哪看", source: "draft:outline-20260920", status: proposed}
   - {text: "還有幾個物件沒綁社區", source: "draft:outline-20260920", status: proposed}
   - {text: "綁定物件前要同意什麼", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/communities/forceBinding/Welcome.vue]
-- reviewed: {by: owner, at: 2026-09-28}
+- sources: [code:src/pages/communities/forceBinding/Welcome.vue, code:src/components/MustDo/EstateCommunity.vue, code:app/Http/Controllers/ApiController.php, code:src/components/MustDo/Index.vue, code:src/store/modules/must_do.js]
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-起始畫面會分別顯示目前「尚未綁定至社區」與「已成功綁定至社區」的物件數量。
-點擊「繼續」即代表同意 JGB 的服務條款與隱私權聲明才能往下一步。
-### 物件綁定社區導引有哪兩個步驟？（填寫社區資料、選擇欲綁定社區內的物件；未完成系統功能無法正常使用） {#jgb/C/forcebinding-two-steps}
+舊版導引的起始畫面設計上會分別顯示「尚未綁定至社區」與「已成功綁定至社區」的物件數量；但數量取自舊版流程載入的資料，現行不會載入，所以這兩格現行只會顯示「-」個，不會顯示數量，登入也不會再被導向這個畫面。
+舊版導引的起始畫面下方註明點擊「繼續」即表示已閱讀並同意服務條款與隱私權聲明；但現行畫面不會出現「繼續」按鈕，無法往下一步。
+### 物件綁定社區導引有哪兩個步驟？（填寫社區資料、選擇欲綁定社區內的物件） {#jgb/C/forcebinding-two-steps}
 - phrasings:
   - {text: "綁定社區流程有幾步", source: "draft:outline-20260920", status: proposed}
   - {text: "先建社區還是先綁物件", source: "draft:outline-20260920", status: proposed}
   - {text: "沒綁完社區會怎樣", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/communities/forceBinding/edit/Index.vue]
-- reviewed: {by: owner, at: 2026-09-28}
+- sources: [code:src/pages/communities/forceBinding/edit/Index.vue, code:src/components/MustDo/EstateCommunity.vue, code:app/Http/Controllers/ApiController.php, code:src/components/MustDo/Index.vue, code:src/pages/communities/forceBinding/Index.vue]
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-導引分兩步：第一步「填寫社區資料」，第二步「選擇欲綁定社區內的物件」。
-在物件全數綁定完成之前，系統功能將無法正常使用。
+舊版的物件綁定社區導引分兩步：第一步「填寫社區資料」，第二步「選擇欲綁定社區內的物件」；現行登入流程已不再自動導向這個導引。
+導引畫面上寫著「因系統功能更新後，各功能皆採最新的社區物件來進行動作，故未綁定完成前，系統功能將會無法正常使用」，這是舊版遷移時的提示；現行登入流程已不會再因為物件未綁定社區而被導向導引。
 ### 怎麼挑選要綁定的物件？（可關鍵字搜尋、每頁30/60/90項，確認綁定後無法修改） {#jgb/C/forcebinding-select-estates-irreversible}
 - phrasings:
   - {text: "怎麼選要綁定的物件", source: "draft:outline-20260920", status: proposed}
@@ -363,13 +363,13 @@ language: zh-TW
   - {text: "綁定完成畫面", source: "draft:outline-20260920", status: proposed}
   - {text: "還有物件沒綁完怎麼辦", source: "draft:outline-20260920", status: proposed}
   - {text: "綁定物件成功提示", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/communities/forceBinding/edit/Binding.vue]
-- reviewed: {by: owner, at: 2026-09-28}
+- sources: [code:src/pages/communities/forceBinding/edit/Binding.vue, code:src/components/MustDo/EstateCommunity.vue, code:app/Http/Controllers/ApiController.php, code:src/components/MustDo/Index.vue, code:src/store/modules/must_do.js]
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-當所有物件都綁定完成時，畫面會顯示「恭喜」加上「你已經成功綁定所有物件」，並提供前往社區總表的按鈕。
-若還有物件尚未綁定完成，畫面則顯示「你完成最困難的部分」並提示「你已經完成新增社區的必需步驟，但還有些物件尚未綁定完成」，可以點擊繼續綁定物件。
+舊版導引的最後一步，當所有物件都綁定完成時，畫面會顯示「恭喜」加上「你已經成功綁定所有物件」，並提供前往社區總表的按鈕；現行登入流程已不再自動導向這個導引。
+舊版導引中，若還有物件尚未綁定完成，畫面會顯示「你完成最困難的部分」並提示「你已經完成新增社區的必需步驟，但還有些物件尚未綁定完成」，另有「繼續綁定物件」按鈕；但這顆按鈕要用舊版流程載入的資料，現行不會載入，所以現行按下去無法繼續綁定。
 ## 物件列表與篩選 {#C-estate-list}
 ### 物件總表怎麼新增物件？（新增與複製現有物件都要先經過社區選擇畫面，目前沒有批次新增入口） {#jgb/C/estate-list-add-must-pick-community}
 - phrasings:
@@ -377,12 +377,12 @@ language: zh-TW
   - {text: "新增物件要選社區嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "物件總表可以批次新增嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "複製現有物件在物件總表", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/estates/list/_parts/PageTop.vue]
-- reviewed: {by: owner, at: 2026-10-03}
+- sources: [code:src/pages/estates/list/_parts/PageTop.vue, code:resources/views/layouts/lightbox/general.blade.php]
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-在物件總表點「新增物件」或「複製現有物件」，都會先導向社區選擇畫面，再回來建立或複製物件。
+在物件總表點「新增物件」或「複製現有物件」，會先導向社區選擇畫面，再回來建立或複製物件；但方案可新增的物件數量已用完時，會改為跳出「已達到數量上限」的提示，不會進入社區選擇畫面。
 目前物件總表沒有「批次新增」入口可以使用，這個選項目前是隱藏、不會顯示出來的。
 ### 物件總表標題下方顯示什麼？（目前物件總數、尚可新增數量） {#jgb/C/estate-list-counter-and-limit}
 - phrasings:
@@ -402,15 +402,15 @@ language: zh-TW
   - {text: "物件怎麼依社區篩選", source: "draft:outline-20260920", status: proposed}
   - {text: "租金範圍怎麼篩", source: "draft:outline-20260920", status: proposed}
   - {text: "格局怎麼篩選物件", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/estates/list/_parts/EstatesAdvanceSearchBlock.jsx, code:src/pages/estates/list/_parts/EstatesAdvanceSearchBlockM.jsx, code:src/pages/estates/list/Index.vue, code:tailwind.config.js]
-- reviewed: {by: owner, at: 2026-10-03}
+- sources: [code:src/pages/estates/list/_parts/EstatesAdvanceSearchBlock.jsx, code:src/pages/estates/list/_parts/EstatesAdvanceSearchBlockM.jsx, code:src/pages/estates/list/Index.vue, code:tailwind.config.js, code:app/Helper.php, code:app/Http/Controllers/EstateController.php]
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
 物件總表的進階搜尋提供國家、縣市、行政區、經理人、大房東、社區、捷運站等下拉篩選。
 也可以依格局、建築類型、即時合約狀態、合約到期日、招租廣告狀態、租金、面積(坪)與標籤等條件縮小搜尋結果；沒有依用途篩選的選項（用途篩選只在挑選物件用的物件挑選器裡才有）。
 手機（寬度小於 576px）上，即時合約狀態與合約到期日直接排在搜尋列上方，其餘條件收在「更多」裡；其中租金範圍只有在幣別為 TWD 時才會出現。
-寬度 992px 以上的螢幕，搜尋條件下方會顯示「篩選結果」，格式為目前顯示筆數／總筆數；較窄的螢幕（含手機）沒有這一行。
+寬度 992px 以上的螢幕，搜尋條件下方會顯示「篩選結果」，格式為「本頁起訖序號 / 總筆數」；較窄的螢幕（含手機）沒有這一行。
 ### 物件總表關鍵字搜尋可以查什麼？（案名、地址、租客、物件ID、手機、信箱） {#jgb/C/estate-list-keyword-search}
 - phrasings:
   - {text: "物件怎麼用租客手機搜尋", source: "draft:outline-20260920", status: proposed}
@@ -442,15 +442,15 @@ language: zh-TW
   - {text: "洽談中是什麼意思", source: "draft:outline-20260920", status: proposed}
   - {text: "物件狀態怎麼判斷", source: "draft:outline-20260920", status: proposed}
   - {text: "刊登中的物件可以刪除嗎", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/use/search/modules/contractStatus.js, code:app/Estate.php, code:app/Http/Controllers/EstateController.php, code:src/use/search/modules/is_open.js, code:app/Contract.php]
-- reviewed: {by: owner, at: 2026-10-03}
+- sources: [code:src/use/search/modules/contractStatus.js, code:app/Estate.php, code:app/Http/Controllers/EstateController.php, code:src/use/search/modules/is_open.js, code:app/Contract.php, code:src/use/useEstateListStore.js]
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
 物件總表有兩組各自獨立的狀態：招租廣告狀態（未刊登／刊登中）與合約狀態（洽談中／租約中，沒有合約的物件另外標示為無合約），兩者不是同一組四選一的分類。
 「洽談中」代表這個物件已經有合約，但還沒有任何一份完成簽署；一旦雙方都簽署完成就會變成「租約中」。
 已歸入歷史的合約不列入判斷物件合約狀態的依據。
-每個物件的操作選單會依權限，以及物件目前是否已刊登招租廣告，顯示「刊登招租廣告」或「取消刊登招租廣告」。
+在「總覽」與「招租」分類下，每個物件的操作選單會依權限，以及物件目前是否已刊登招租廣告，顯示「刊登招租廣告」或「取消刊登招租廣告」；「買賣」分類下不會出現這兩個選項。
 刪除單一物件時，物件必須是未刊登（不能是刊登中）、沒有尚未歸入歷史的合約，也沒有綁定 IoT 裝置，否則會被擋下並顯示原因。
 ### 物件總表每頁筆數可以調整嗎？（30／60／90項） {#jgb/C/estate-list-pagination}
 - phrasings:
@@ -885,18 +885,17 @@ language: zh-TW
 物件儀表板最上方固定顯示三張卡片：物件基本資訊（縮圖、名稱、地址）、招租廣告（狀態、預覽連結）、買賣廣告（狀態、預覽連結）。
 招租廣告卡與買賣廣告卡右上角各自的編輯捷徑（鉛筆圖示），只有當登入身分是代理人，且擁有新增物件的權限時才會顯示。
 ## 單一物件廣告頁（招租） {#C-estate-public-page}
-### 物件還沒刊登（未開放）時，廣告頁會怎麼顯示？（屋主看到的是預覽頁提示；其他人造訪會得到404） {#jgb/C/estate-house-preview-unpublished}
+### 物件還沒刊登（未開放）時，廣告頁會怎麼顯示？（屋主看到的是預覽頁提示） {#jgb/C/estate-house-preview-unpublished}
 - phrasings:
   - {text: "物件沒刊登廣告頁還看得到嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "物件廣告預覽頁", source: "draft:outline-20260920", status: proposed}
   - {text: "還沒刊登的物件連結有效嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/estate/show.blade.php, code:app/Http/Controllers/EstateController.php]
-- reviewed: {by: owner, at: 2026-09-28}
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
 當物件尚未刊登（未開放）時，物件的擁有者若打開廣告頁連結，畫面上方會顯示提示：「這是您的物件廣告預覽頁，此物件尚未完成刊登」
-當物件未刊登（未開放）、且目前造訪者沒有查看該物件的權限（包含未登入的訪客與搜尋引擎爬蟲）時，系統會回傳 404，讓 Google 等搜尋引擎重新爬取後把頁面從索引中移除，避免物件聯絡資訊繼續留在搜尋結果裡。
 ### 簽約邀請連結會失效嗎？（連結會顯示倒數，過期後失效） {#jgb/C/estate-house-invite-countdown}
 - phrasings:
   - {text: "簽約邀請連結會過期嗎", source: "draft:outline-20260920", status: proposed}
@@ -1004,11 +1003,11 @@ Facebook 也只有在房東有填寫連結時才會顯示「立即聯繫」按�
   - {text: "改自我介紹會同步嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "招租店舖大頭照怎麼設", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/public/Index.vue, code:src/pages/users/public/_parts/AsideInfo.vue, code:app/Http/Controllers/UserController.php]
-- reviewed: {by: owner, at: 2026-10-03}
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-招租店舖頁面上，只有管理者且具備「編輯團隊權限」的使用者看得到編輯入口；團隊身分儲存時，還要有「編輯團隊資訊」權限，否則會被擋下並顯示「您目前登入的帳號無法使用編輯團隊功能」。
+招租店舖頁面上，需要具備「編輯團隊權限」才看得到編輯入口；團隊身分儲存時，還要有「編輯團隊資訊」權限，否則會被擋下並顯示「您目前登入的帳號無法使用編輯團隊功能」。
 個人房東身分可以更換頁面上方的橫幅照片（按「更換照片」）與頭像（頭像右下角的相機圖示），並編輯自我介紹。
 團隊身分可以更換橫幅照片與頭像，並編輯團隊名稱、經理人證號、租賃管理員證號、公司電話、公司Email 與團隊介紹。
 個人房東在這裡更換的頭像，與帳號資訊頁的照片是同一張；橫幅照片與自我介紹則不會出現在帳號資訊頁。

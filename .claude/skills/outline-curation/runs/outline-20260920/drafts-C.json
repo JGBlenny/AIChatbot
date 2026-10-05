@@ -81,11 +81,12 @@
      ],
      "sentences": [
       "在社區總表按下「新增社區」按鈕即可建立一筆新社區，建立後會直接進入社區編輯頁面。",
-      "訂閱方案對可建立的社區數量有上限，達到上限時無法繼續新增社區。"
+      "訂閱方案對可建立的社區數量有上限；達到上限時，按「新增社區」會跳出「已達到數量上限！」的提示，而不會建立新社區。"
      ],
      "sources": [
       "code:src/pages/communities/list/Index.vue",
-      "code:src/type/commit.ts"
+      "code:src/type/commit.ts",
+      "code:resources/views/layouts/lightbox/general.blade.php"
      ],
      "evidence": [
       {
@@ -97,6 +98,21 @@
        "sentence_index": 1,
        "source": "code:src/type/commit.ts",
        "quote_or_symbol": "subscribedPlanCommunityIsFull = \"subscribedPlanCommunityIsFull\", // 訂閱方案可以建立的社區數量已達上限"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/communities/list/Index.vue",
+       "quote_or_symbol": "if (communitiesScopeStore.metaFetcher.data?.remainCommunitiesCount <= 0){"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/communities/list/Index.vue",
+       "quote_or_symbol": "store.commit('lightbox', 'subscribedPlanCommunityIsFull')"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:resources/views/layouts/lightbox/general.blade.php",
+       "quote_or_symbol": "$lightbox['subscribedPlanCommunityIsFull']['title'] = ___('已達到數量上限！');"
       }
      ],
      "not_supported_greps": [
@@ -1434,7 +1450,7 @@
     {
      "proposed_id": "jgb/C/forcebinding-why-and-who",
      "askable": "為什麼會跳出強制把物件綁定社區的畫面，誰才能操作",
-     "title": "為什麼會出現「物件需綁定社區」的導引？（2022/05/12 社區功能上線，只有團隊擁有者能操作）",
+     "title": "為什麼「物件需綁定社區」的導引？（2022/05/12 社區功能上線，只有團隊擁有者能操作）",
      "unit_ids": [
       "page:communities.forceBinding.welcome",
       "page:communities.forceBinding"
@@ -1452,11 +1468,16 @@
       "誰可以做物件綁定社區"
      ],
      "sentences": [
-      "系統於 2022/05/12 新增「社區」功能後，要求既有物件必須全數綁定至社區才能使用系統，因此舊帳號登入時會被導向這個綁定導引畫面。",
-      "執行這個綁定動作需要是團隊擁有者身分，若不是團隊擁有者，畫面會顯示「權限不足」。"
+      "這是 2022/05/12 新增「社區」功能時的舊版遷移導引：當時要求既有物件必須全數綁定至社區才能使用系統，舊帳號登入時會被導向這個綁定導引畫面；現行的登入流程已不再把使用者導向這個導引。",
+      "舊版導引的設計是只有團隊擁有者能執行物件綁定社區，畫面上若判定為非擁有者會顯示「權限不足」；但判定所需的資料由舊版流程載入，現行不會載入，所以現行畫面不會顯示「權限不足」，也不會出現「繼續」按鈕。"
      ],
      "sources": [
-      "code:src/pages/communities/forceBinding/Welcome.vue"
+      "code:src/pages/communities/forceBinding/Welcome.vue",
+      "code:src/components/MustDo/EstateCommunity.vue",
+      "code:app/Http/Controllers/ApiController.php",
+      "code:src/components/MustDo/Index.vue",
+      "code:src/store/modules/must_do.js",
+      "code:app/Http/Controllers/CommunityController.php"
      ],
      "evidence": [
       {
@@ -1465,9 +1486,79 @@
        "quote_or_symbol": "<div>{ t('為了提供更有效率、更完善的服務內容，JGB系統將於 [s1] 後增加「社區」功能', ['2022/05/12']) }</div>"
       },
       {
+       "sentence_index": 0,
+       "source": "code:src/pages/communities/forceBinding/Welcome.vue",
+       "quote_or_symbol": "{ t('為了提供更有效率、更完善的服務內容，JGB系統將於 [s1] 後增加「社區」功能', ['2022/05/12']) }"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/communities/forceBinding/Welcome.vue",
+       "quote_or_symbol": "{ t('物件需全數綁定至社區才能使用系統。') }"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/components/MustDo/EstateCommunity.vue",
+       "quote_or_symbol": "// 如果沒社區的物件數量大於 0，則導到綁定流程"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/components/MustDo/EstateCommunity.vue",
+       "quote_or_symbol": "name: 'communities.forceBinding.welcome',"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/ApiController.php",
+       "quote_or_symbol": "$quest = self::getUnreadAnnouncements($user->id, $role->config_rule_key, $role->id);"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/ApiController.php",
+       "quote_or_symbol": "'steps' => $allSteps,"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/components/MustDo/Index.vue",
+       "quote_or_symbol": "'steps' in quest.value"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/components/MustDo/Index.vue",
+       "quote_or_symbol": "EstateCommunity: <MustDoEstateCommunity />,"
+      },
+      {
        "sentence_index": 1,
        "source": "code:src/pages/communities/forceBinding/Welcome.vue",
        "quote_or_symbol": "<h4>{t('權限不足')}</h4>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/communities/forceBinding/Welcome.vue",
+       "quote_or_symbol": "store.state.mustDo.community.meta?.data?.is_admin === false ? 'block' : 'hidden'"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/communities/forceBinding/Welcome.vue",
+       "quote_or_symbol": "<h4>{t('權限不足')}</h4>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/communities/forceBinding/Welcome.vue",
+       "quote_or_symbol": "<a class=\"btn btn-blue size-2 mb-2 w-full\">{ t('繼續') }</a>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/components/MustDo/EstateCommunity.vue",
+       "quote_or_symbol": "store.state.mustDo.community.meta = reactive("
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/store/modules/must_do.js",
+       "quote_or_symbol": "meta: null,"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/CommunityController.php",
+       "quote_or_symbol": "=> $user->id == $role->user->id,"
       }
      ],
      "not_supported_greps": [],
@@ -1476,7 +1567,7 @@
     {
      "proposed_id": "jgb/C/forcebinding-welcome-progress",
      "askable": "綁定物件的導引起始畫面會顯示什麼",
-     "title": "物件綁定社區的導引起始畫面顯示什麼？（已綁定與尚未綁定的物件數量、需同意服務條款）",
+     "title": "物件綁定社區的導引起始畫面顯示什麼？（需同意服務條款）",
      "unit_ids": [
       "page:communities.forceBinding.welcome"
      ],
@@ -1493,11 +1584,15 @@
       "綁定物件前要同意什麼"
      ],
      "sentences": [
-      "起始畫面會分別顯示目前「尚未綁定至社區」與「已成功綁定至社區」的物件數量。",
-      "點擊「繼續」即代表同意 JGB 的服務條款與隱私權聲明才能往下一步。"
+      "舊版導引的起始畫面設計上會分別顯示「尚未綁定至社區」與「已成功綁定至社區」的物件數量；但數量取自舊版流程載入的資料，現行不會載入，所以這兩格現行只會顯示「-」個，不會顯示數量，登入也不會再被導向這個畫面。",
+      "舊版導引的起始畫面下方註明點擊「繼續」即表示已閱讀並同意服務條款與隱私權聲明；但現行畫面不會出現「繼續」按鈕，無法往下一步。"
      ],
      "sources": [
-      "code:src/pages/communities/forceBinding/Welcome.vue"
+      "code:src/pages/communities/forceBinding/Welcome.vue",
+      "code:src/components/MustDo/EstateCommunity.vue",
+      "code:app/Http/Controllers/ApiController.php",
+      "code:src/components/MustDo/Index.vue",
+      "code:src/store/modules/must_do.js"
      ],
      "evidence": [
       {
@@ -1506,9 +1601,74 @@
        "quote_or_symbol": "<div class=\"mb-2 text-center text-grey-600\">{ t('尚未綁定至社區') }</div>"
       },
       {
+       "sentence_index": 0,
+       "source": "code:src/pages/communities/forceBinding/Welcome.vue",
+       "quote_or_symbol": "<div class=\"mb-2 text-center text-grey-600\">{ t('尚未綁定至社區') }</div>"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/communities/forceBinding/Welcome.vue",
+       "quote_or_symbol": "<div class=\"mb-2 text-center text-success\">{ t('已成功綁定至社區') }</div>"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/communities/forceBinding/Welcome.vue",
+       "quote_or_symbol": "store.state.mustDo.community.meta?.data?.quantities_of_no_community || '-'"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/communities/forceBinding/Welcome.vue",
+       "quote_or_symbol": "(store.state.mustDo.community.meta?.data?.quantities_of_estates - store.state.mustDo.community.meta?.data?.quantities_of_no_community) || '-'"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/components/MustDo/EstateCommunity.vue",
+       "quote_or_symbol": "store.state.mustDo.community.meta = reactive("
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/store/modules/must_do.js",
+       "quote_or_symbol": "meta: null,"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/ApiController.php",
+       "quote_or_symbol": "$quest = self::getUnreadAnnouncements($user->id, $role->config_rule_key, $role->id);"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/ApiController.php",
+       "quote_or_symbol": "'steps' => $allSteps,"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/components/MustDo/Index.vue",
+       "quote_or_symbol": "'steps' in quest.value"
+      },
+      {
        "sentence_index": 1,
        "source": "code:src/pages/communities/forceBinding/Welcome.vue",
        "quote_or_symbol": "<div className=\"text-center text-[12px] text-grey-600\" vHtml={t('點擊「繼續」，即表示我已閱讀並同意金箍棒的 [s1]服務條款[s2] 和 [s3]隱私權聲明[s4]。', ['<a class=\"btn btn-text\" href=\"https://www.jgbsmart.com/help/post/terms\" target=\"_blank\">', '</a>', '<a class=\"btn btn-text\" href=\"https://www.jgbsmart.com/help/post/privacy\" target=\"_blank\">', '</a>'])}></div>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/communities/forceBinding/Welcome.vue",
+       "quote_or_symbol": "點擊「繼續」，即表示我已閱讀並同意金箍棒的 [s1]服務條款[s2] 和 [s3]隱私權聲明[s4]。"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/communities/forceBinding/Welcome.vue",
+       "quote_or_symbol": "<a class=\"btn btn-blue size-2 mb-2 w-full\">{ t('繼續') }</a>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/components/MustDo/EstateCommunity.vue",
+       "quote_or_symbol": "store.state.mustDo.community.meta = reactive("
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/store/modules/must_do.js",
+       "quote_or_symbol": "meta: null,"
       }
      ],
      "not_supported_greps": [],
@@ -1517,7 +1677,7 @@
     {
      "proposed_id": "jgb/C/forcebinding-two-steps",
      "askable": "物件綁定社區的導引有幾個步驟，未完成前功能會受影響嗎",
-     "title": "物件綁定社區導引有哪兩個步驟？（填寫社區資料、選擇欲綁定社區內的物件；未完成系統功能無法正常使用）",
+     "title": "物件綁定社區導引有哪兩個步驟？（填寫社區資料、選擇欲綁定社區內的物件）",
      "unit_ids": [
       "page:communities.forceBinding.edit"
      ],
@@ -1534,11 +1694,15 @@
       "沒綁完社區會怎樣"
      ],
      "sentences": [
-      "導引分兩步：第一步「填寫社區資料」，第二步「選擇欲綁定社區內的物件」。",
-      "在物件全數綁定完成之前，系統功能將無法正常使用。"
+      "舊版的物件綁定社區導引分兩步：第一步「填寫社區資料」，第二步「選擇欲綁定社區內的物件」；現行登入流程已不再自動導向這個導引。",
+      "導引畫面上寫著「因系統功能更新後，各功能皆採最新的社區物件來進行動作，故未綁定完成前，系統功能將會無法正常使用」，這是舊版遷移時的提示；現行登入流程已不會再因為物件未綁定社區而被導向導引。"
      ],
      "sources": [
-      "code:src/pages/communities/forceBinding/edit/Index.vue"
+      "code:src/pages/communities/forceBinding/edit/Index.vue",
+      "code:src/components/MustDo/EstateCommunity.vue",
+      "code:app/Http/Controllers/ApiController.php",
+      "code:src/components/MustDo/Index.vue",
+      "code:src/pages/communities/forceBinding/Index.vue"
      ],
      "evidence": [
       {
@@ -1547,9 +1711,64 @@
        "quote_or_symbol": "1: t('填寫社區資料'),"
       },
       {
+       "sentence_index": 0,
+       "source": "code:src/pages/communities/forceBinding/edit/Index.vue",
+       "quote_or_symbol": "1: t('填寫社區資料'),"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/communities/forceBinding/edit/Index.vue",
+       "quote_or_symbol": "2: t('選擇欲綁定社區內的物件'),"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/components/MustDo/EstateCommunity.vue",
+       "quote_or_symbol": "name: 'communities.forceBinding.welcome',"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/ApiController.php",
+       "quote_or_symbol": "$quest = self::getUnreadAnnouncements($user->id, $role->config_rule_key, $role->id);"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/ApiController.php",
+       "quote_or_symbol": "'steps' => $allSteps,"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/components/MustDo/Index.vue",
+       "quote_or_symbol": "'steps' in quest.value"
+      },
+      {
        "sentence_index": 1,
        "source": "code:src/pages/communities/forceBinding/edit/Index.vue",
        "quote_or_symbol": "<div>{t('因系統功能更新後，各功能皆採最新的社區物件來進行動作，故未綁定完成前，系統功能將會無法正常使用')}</div>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/communities/forceBinding/edit/Index.vue",
+       "quote_or_symbol": "<div>{t('因系統功能更新後，各功能皆採最新的社區物件來進行動作，故未綁定完成前，系統功能將會無法正常使用')}</div>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/communities/forceBinding/Index.vue",
+       "quote_or_symbol": "if (store.state.mustDo?.fetcher?.data?.quest === null){"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/ApiController.php",
+       "quote_or_symbol": "$quest = self::getUnreadAnnouncements($user->id, $role->config_rule_key, $role->id);"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/ApiController.php",
+       "quote_or_symbol": "'steps' => $allSteps,"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/components/MustDo/Index.vue",
+       "quote_or_symbol": "'steps' in quest.value"
       }
      ],
      "not_supported_greps": [
@@ -1630,11 +1849,15 @@
       "綁定物件成功提示"
      ],
      "sentences": [
-      "當所有物件都綁定完成時，畫面會顯示「恭喜！」加上「你已經成功綁定所有物件」，並提供前往社區總表的按鈕。",
-      "若還有物件尚未綁定完成，畫面則顯示「你完成最困難的部分！」並提示「你已經完成新增社區的必需步驟，但還有些物件尚未綁定完成」，可以點擊繼續綁定物件。"
+      "舊版導引的最後一步，當所有物件都綁定完成時，畫面會顯示「恭喜！」加上「你已經成功綁定所有物件」，並提供前往社區總表的按鈕；現行登入流程已不再自動導向這個導引。",
+      "舊版導引中，若還有物件尚未綁定完成，畫面會顯示「你完成最困難的部分！」並提示「你已經完成新增社區的必需步驟，但還有些物件尚未綁定完成」，另有「繼續綁定物件」按鈕；但這顆按鈕要用舊版流程載入的資料，現行不會載入，所以現行按下去無法繼續綁定。"
      ],
      "sources": [
-      "code:src/pages/communities/forceBinding/edit/Binding.vue"
+      "code:src/pages/communities/forceBinding/edit/Binding.vue",
+      "code:src/components/MustDo/EstateCommunity.vue",
+      "code:app/Http/Controllers/ApiController.php",
+      "code:src/components/MustDo/Index.vue",
+      "code:src/store/modules/must_do.js"
      ],
      "evidence": [
       {
@@ -1643,9 +1866,64 @@
        "quote_or_symbol": "<h2 class=\"mb-3\">🎉{t('恭喜！你已經成功綁定所有物件')}</h2>"
       },
       {
+       "sentence_index": 0,
+       "source": "code:src/pages/communities/forceBinding/edit/Binding.vue",
+       "quote_or_symbol": "<h2 class=\"mb-3\">🎉{t('恭喜！你已經成功綁定所有物件')}</h2>"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/communities/forceBinding/edit/Binding.vue",
+       "quote_or_symbol": "{t('前往社區總表')}"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/ApiController.php",
+       "quote_or_symbol": "$quest = self::getUnreadAnnouncements($user->id, $role->config_rule_key, $role->id);"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/ApiController.php",
+       "quote_or_symbol": "'steps' => $allSteps,"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/components/MustDo/Index.vue",
+       "quote_or_symbol": "'steps' in quest.value"
+      },
+      {
        "sentence_index": 1,
        "source": "code:src/pages/communities/forceBinding/edit/Binding.vue",
        "quote_or_symbol": "<div class=\"mb-6 text-grey-600 lg:mb-12\">{t('你已經完成新增社區的必需步驟，但還有些物件尚未綁定完成。')}</div>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/communities/forceBinding/edit/Binding.vue",
+       "quote_or_symbol": "<h2 class=\"mb-3\">👏 {t('你完成最困難的部分！')}</h2>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/communities/forceBinding/edit/Binding.vue",
+       "quote_or_symbol": "<div class=\"mb-6 text-grey-600 lg:mb-12\">{t('你已經完成新增社區的必需步驟，但還有些物件尚未綁定完成。')}</div>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/communities/forceBinding/edit/Binding.vue",
+       "quote_or_symbol": "{t('繼續綁定物件')}"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/communities/forceBinding/edit/Binding.vue",
+       "quote_or_symbol": "store.state.mustDo.community.meta.refetch().then(()=>{"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/components/MustDo/EstateCommunity.vue",
+       "quote_or_symbol": "store.state.mustDo.community.meta = reactive("
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/store/modules/must_do.js",
+       "quote_or_symbol": "meta: null,"
       }
      ],
      "not_supported_greps": [],
@@ -1682,17 +1960,38 @@
       "複製現有物件在物件總表"
      ],
      "sentences": [
-      "在物件總表點「新增物件」或「複製現有物件」，都會先導向社區選擇畫面，再回來建立或複製物件。",
+      "在物件總表點「新增物件」或「複製現有物件」，會先導向社區選擇畫面，再回來建立或複製物件；但方案可新增的物件數量已用完時，會改為跳出「已達到數量上限！」的提示，不會進入社區選擇畫面。",
       "目前物件總表沒有「批次新增」入口可以使用，這個選項目前是隱藏、不會顯示出來的。"
      ],
      "sources": [
-      "code:src/pages/estates/list/_parts/PageTop.vue"
+      "code:src/pages/estates/list/_parts/PageTop.vue",
+      "code:resources/views/layouts/lightbox/general.blade.php"
      ],
      "evidence": [
       {
        "sentence_index": 0,
        "source": "code:src/pages/estates/list/_parts/PageTop.vue",
        "quote_or_symbol": "name: 'communities.pick',"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/estates/list/_parts/PageTop.vue",
+       "quote_or_symbol": "if (communitiesScopeStore.metaFetcher.data?.remainEstatesCount <= 0){"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/estates/list/_parts/PageTop.vue",
+       "quote_or_symbol": "store.commit('lightbox', 'subscribedPlanIsFull')"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/estates/list/_parts/PageTop.vue",
+       "quote_or_symbol": "callback?.()"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:resources/views/layouts/lightbox/general.blade.php",
+       "quote_or_symbol": "$lightbox['subscribedPlanIsFull']['title'] = ___('已達到數量上限！');"
       },
       {
        "sentence_index": 1,
@@ -1774,13 +2073,15 @@
       "物件總表的進階搜尋提供國家、縣市、行政區、經理人、大房東、社區、捷運站等下拉篩選。",
       "也可以依格局、建築類型、即時合約狀態、合約到期日、招租廣告狀態、租金、面積(坪)與標籤等條件縮小搜尋結果；沒有依用途篩選的選項（用途篩選只在挑選物件用的物件挑選器裡才有）。",
       "手機（寬度小於 576px）上，即時合約狀態與合約到期日直接排在搜尋列上方，其餘條件收在「更多」裡；其中租金範圍只有在幣別為 TWD 時才會出現。",
-      "寬度 992px 以上的螢幕，搜尋條件下方會顯示「篩選結果」，格式為目前顯示筆數／總筆數；較窄的螢幕（含手機）沒有這一行。"
+      "寬度 992px 以上的螢幕，搜尋條件下方會顯示「篩選結果」，格式為「本頁起訖序號 / 總筆數」；較窄的螢幕（含手機）沒有這一行。"
      ],
      "sources": [
       "code:src/pages/estates/list/_parts/EstatesAdvanceSearchBlock.jsx",
       "code:src/pages/estates/list/_parts/EstatesAdvanceSearchBlockM.jsx",
       "code:src/pages/estates/list/Index.vue",
-      "code:tailwind.config.js"
+      "code:tailwind.config.js",
+      "code:app/Helper.php",
+      "code:app/Http/Controllers/EstateController.php"
      ],
      "evidence": [
       {
@@ -1847,6 +2148,26 @@
        "sentence_index": 3,
        "source": "code:tailwind.config.js",
        "quote_or_symbol": "lg: '992px',"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/estates/list/_parts/EstatesAdvanceSearchBlock.jsx",
+       "quote_or_symbol": "{t('篩選結果')}: { listStore?.searchState?.data?.pageNav?.range_text } / { listStore?.searchState?.data?.pageNav?.total }"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Helper.php",
+       "quote_or_symbol": "'range_text' => $rangeStart.' - '.$rangeEnd,"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Helper.php",
+       "quote_or_symbol": "$rangeStart = ($currentPage-1) * $perPage + 1;"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Http/Controllers/EstateController.php",
+       "quote_or_symbol": "$pageNav = get_paginate($estateDataPage);"
       }
      ],
      "not_supported_greps": [
@@ -2055,7 +2376,7 @@
       "物件總表有兩組各自獨立的狀態：招租廣告狀態（未刊登／刊登中）與合約狀態（洽談中／租約中，沒有合約的物件另外標示為無合約），兩者不是同一組四選一的分類。",
       "「洽談中」代表這個物件已經有合約，但還沒有任何一份完成簽署；一旦雙方都簽署完成就會變成「租約中」。",
       "已歸入歷史的合約不列入判斷物件合約狀態的依據。",
-      "每個物件的操作選單會依權限，以及物件目前是否已刊登招租廣告，顯示「刊登招租廣告」或「取消刊登招租廣告」。",
+      "在「總覽」與「招租」分類下，每個物件的操作選單會依權限，以及物件目前是否已刊登招租廣告，顯示「刊登招租廣告」或「取消刊登招租廣告」；「買賣」分類下不會出現這兩個選項。",
       "刪除單一物件時，物件必須是未刊登（不能是刊登中）、沒有尚未歸入歷史的合約，也沒有綁定 IoT 裝置，否則會被擋下並顯示原因。"
      ],
      "sources": [
@@ -2063,7 +2384,8 @@
       "code:app/Estate.php",
       "code:app/Http/Controllers/EstateController.php",
       "code:src/use/search/modules/is_open.js",
-      "code:app/Contract.php"
+      "code:app/Contract.php",
+      "code:src/use/useEstateListStore.js"
      ],
      "evidence": [
       {
@@ -2125,6 +2447,26 @@
        "sentence_index": 3,
        "source": "code:app/Http/Controllers/EstateController.php",
        "quote_or_symbol": "'text' => ___('刊登招租廣告'),"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Http/Controllers/EstateController.php",
+       "quote_or_symbol": "if ($type == 1 || $type == 2) {"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Http/Controllers/EstateController.php",
+       "quote_or_symbol": "if ($LVtoThis_userPermission['public_estate'] || $LVisShowEdit) {"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Http/Controllers/EstateController.php",
+       "quote_or_symbol": "$LVreturnActionTemplate['open_is_open']['link'] = route('estates.show', ['id' => $LVestateDataPage->id]);"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/use/useEstateListStore.js",
+       "quote_or_symbol": "return [{ label: t('總覽-1'), value: '1' }, { label: t('招租'), value: '2' }, { label: t('買賣'), value: '3' }]"
       },
       {
        "sentence_index": 4,
@@ -4331,7 +4673,7 @@
     {
      "proposed_id": "jgb/C/estate-house-preview-unpublished",
      "askable": "物件還沒刊登時，物件廣告頁看起來是什麼樣子",
-     "title": "物件還沒刊登（未開放）時，廣告頁會怎麼顯示？（屋主看到的是預覽頁提示；其他人造訪會得到404）",
+     "title": "物件還沒刊登（未開放）時，廣告頁會怎麼顯示？（屋主看到的是預覽頁提示）",
      "unit_ids": [
       "page:web:estates.house",
       "page:web:estates.show"
@@ -4350,8 +4692,7 @@
       "還沒刊登的物件連結有效嗎"
      ],
      "sentences": [
-      "當物件尚未刊登（未開放）時，物件的擁有者若打開廣告頁連結，畫面上方會顯示提示：「這是您的物件廣告預覽頁，此物件尚未完成刊登。」",
-      "當物件未刊登（未開放）、且目前造訪者沒有查看該物件的權限（包含未登入的訪客與搜尋引擎爬蟲）時，系統會回傳 404，讓 Google 等搜尋引擎重新爬取後把頁面從索引中移除，避免物件聯絡資訊繼續留在搜尋結果裡。"
+      "當物件尚未刊登（未開放）時，物件的擁有者若打開廣告頁連結，畫面上方會顯示提示：「這是您的物件廣告預覽頁，此物件尚未完成刊登。」"
      ],
      "sources": [
       "code:resources/views/estate/show.blade.php",
@@ -4362,11 +4703,6 @@
        "sentence_index": 0,
        "source": "code:resources/views/estate/show.blade.php",
        "quote_or_symbol": "<div class=\"col global-notice-content\">{{___('這是您的物件廣告預覽頁，此物件尚未完成刊登。')}}</div>"
-      },
-      {
-       "sentence_index": 1,
-       "source": "code:app/Http/Controllers/EstateController.php",
-       "quote_or_symbol": "下架物件對所有人（含搜尋引擎爬蟲）一致回 404，"
       }
      ],
      "not_supported_greps": [
@@ -4856,7 +5192,7 @@
       "招租店舖大頭照怎麼設"
      ],
      "sentences": [
-      "招租店舖頁面上，只有管理者且具備「編輯團隊權限」的使用者看得到編輯入口；團隊身分儲存時，還要有「編輯團隊資訊」權限，否則會被擋下並顯示「您目前登入的帳號無法使用編輯團隊功能」。",
+      "招租店舖頁面上，需要具備「編輯團隊權限」才看得到編輯入口；團隊身分儲存時，還要有「編輯團隊資訊」權限，否則會被擋下並顯示「您目前登入的帳號無法使用編輯團隊功能」。",
       "個人房東身分可以更換頁面上方的橫幅照片（按「更換照片」）與頭像（頭像右下角的相機圖示），並編輯自我介紹。",
       "團隊身分可以更換橫幅照片與頭像，並編輯團隊名稱、經理人證號、租賃管理員證號、公司電話、公司Email 與團隊介紹。",
       "個人房東在這裡更換的頭像，與帳號資訊頁的照片是同一張；橫幅照片與自我介紹則不會出現在帳號資訊頁。",
@@ -4869,6 +5205,31 @@
       "code:app/Http/Controllers/UserController.php"
      ],
      "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/public/Index.vue",
+       "quote_or_symbol": "return userPublicScopeStore.infos?.is_admin && store.state?.userData?.permission?.edit_role"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "'label'=> '編輯團隊權限',"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "'label'=> '編輯團隊資訊',"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "if ($role->is_team && !$this->isHasGPermission('edit_role_info')) {"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "'message' => ___('您目前登入的帳號無法使用編輯團隊功能'),"
+      },
       {
        "sentence_index": 0,
        "source": "code:src/pages/users/public/Index.vue",

@@ -1,0 +1,62 @@
+[
+  {
+    "fine_id": "jgb/C/community-add-single-and-limit",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-28}",
+    "shelf": "C"
+  },
+  {
+    "fine_id": "jgb/C/forcebinding-why-and-who",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-28}",
+    "shelf": "C"
+  },
+  {
+    "fine_id": "jgb/C/forcebinding-welcome-progress",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-28}",
+    "shelf": "C"
+  },
+  {
+    "fine_id": "jgb/C/forcebinding-two-steps",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-28}",
+    "shelf": "C"
+  },
+  {
+    "fine_id": "jgb/C/forcebinding-completion-states",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-28}",
+    "shelf": "C"
+  },
+  {
+    "fine_id": "jgb/C/estate-list-add-must-pick-community",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-10-03}",
+    "shelf": "C"
+  },
+  {
+    "fine_id": "jgb/C/estate-list-filters",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-10-03}",
+    "shelf": "C"
+  },
+  {
+    "fine_id": "jgb/C/estate-status-affects-actions",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-10-03}",
+    "shelf": "C"
+  },
+  {
+    "fine_id": "jgb/C/estate-house-preview-unpublished",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-28}",
+    "shelf": "C"
+  },
+  {
+    "fine_id": "jgb/C/team-public-page-edit-and-banner",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-10-03}",
+    "shelf": "C"
+  }
+]

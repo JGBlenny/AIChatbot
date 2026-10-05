@@ -191,9 +191,9 @@ jgb/C/community-show-price-range｜社區公開頁最上方顯示什麼價格區
 jgb/C/community-show-share｜社區公開頁怎麼分享？（分享燈箱或手機分享選單、查看所有物件連結）｜target_user=property_manager｜
 jgb/C/community-show-editor-nav｜在社區廣告頁可以直接跳到編輯社區、社區詳情或社區總表嗎？（只有具備編輯物件權限的使用者看得到這個選單）｜target_user=property_manager｜
 ### C-community-force-binding 物件綁定社區的導引（2022/05 社區功能上線時的強制綁定流程，限團隊擁有者） {#C-community-force-binding}
-jgb/C/forcebinding-why-and-who｜為什麼會出現「物件需綁定社區」的導引？（2022/05/12 社區功能上線，只有團隊擁有者能操作）｜target_user=property_manager｜
-jgb/C/forcebinding-welcome-progress｜物件綁定社區的導引起始畫面顯示什麼？（已綁定與尚未綁定的物件數量、需同意服務條款）｜target_user=property_manager｜
-jgb/C/forcebinding-two-steps｜物件綁定社區導引有哪兩個步驟？（填寫社區資料、選擇欲綁定社區內的物件；未完成系統功能無法正常使用）｜target_user=property_manager｜
+jgb/C/forcebinding-why-and-who｜為什麼「物件需綁定社區」的導引？（2022/05/12 社區功能上線，只有團隊擁有者能操作）｜target_user=property_manager｜
+jgb/C/forcebinding-welcome-progress｜物件綁定社區的導引起始畫面顯示什麼？（需同意服務條款）｜target_user=property_manager｜
+jgb/C/forcebinding-two-steps｜物件綁定社區導引有哪兩個步驟？（填寫社區資料、選擇欲綁定社區內的物件）｜target_user=property_manager｜
 jgb/C/forcebinding-select-estates-irreversible｜怎麼挑選要綁定的物件？（可關鍵字搜尋、每頁30/60/90項，確認綁定後無法修改）｜target_user=property_manager｜
 jgb/C/forcebinding-completion-states｜綁定完成後會看到什麼？（全部綁完顯示恭喜，還有剩則提示繼續綁定）｜target_user=property_manager｜
 ### C-estate-list 物件列表與篩選 {#C-estate-list}
@@ -241,7 +241,7 @@ jgb/C/estate-dashboard-runnings-vs-memos｜「房東流水帳」跟「物件記�
 jgb/C/estate-dashboard-monthly-report-upload｜每月報表／每月對帳單怎麼上傳？（PDF、10MB上限，可批次指定多個物件，同月重傳會覆蓋舊檔）｜target_user=property_manager｜
 jgb/C/estate-dashboard-top-cards｜物件儀表板最上方顯示哪三張卡？（物件資訊、招租廣告、買賣廣告；編輯捷徑需要新增物件權限）｜target_user=property_manager｜
 ### C-estate-public-page 單一物件廣告頁（招租） {#C-estate-public-page}
-jgb/C/estate-house-preview-unpublished｜物件還沒刊登（未開放）時，廣告頁會怎麼顯示？（屋主看到的是預覽頁提示；其他人造訪會得到404）｜target_user=property_manager,prospect｜
+jgb/C/estate-house-preview-unpublished｜物件還沒刊登（未開放）時，廣告頁會怎麼顯示？（屋主看到的是預覽頁提示）｜target_user=property_manager,prospect｜
 jgb/C/estate-house-invite-countdown｜簽約邀請連結會失效嗎？（連結會顯示倒數，過期後失效）｜target_user=property_manager,prospect｜
 jgb/C/estate-house-content-blocks｜物件廣告頁顯示哪些內容？（照片／VR全景切換、設備與設施、交通與環境設施、溫馨提醒）｜target_user=property_manager,prospect｜
 jgb/C/estate-house-contact-landlord｜物件廣告頁「聯絡房東」區塊顯示什麼？（房東電話／Email依隱藏設定決定是否顯示；公司廣告電話／Email不受隱藏設定影響）｜target_user=property_manager,prospect｜
