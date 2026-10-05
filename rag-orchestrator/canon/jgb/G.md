@@ -43,18 +43,18 @@ language: zh-TW
 - business_types: [system_provider]
 - instance_applicability: general
 可以用關鍵字搜尋，搜尋範圍可選描述、序號、設備名稱或所屬物件名稱其中一種。
-### 電錶清單怎麼排序？（可依設備描述、目前電度、預計可用電度排序；門鎖、攝影機、小白盒清單沒有排序選單） {#jgb/G/power-meter-list-sort}
+### 電錶清單怎麼排序？（可依設備描述、目前電度、預計可用電度排序） {#jgb/G/power-meter-list-sort}
 - phrasings:
   - {text: "電錶清單可以排序嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "電錶列表的排序選單", source: "draft:outline-20260920", status: proposed}
   - {text: "門鎖清單能排序嗎", source: "draft:outline-20260920", status: proposed}
-- sources: [code:app/Iot.php]
-- reviewed: {by: owner, at: 2026-09-28}
+- sources: [code:app/Iot.php, code:src/entry/iot.js, code:src/components/ListSearchBar.vue, code:resources/views/iot/index.blade.php]
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
 清單另外有排序選單，可以依設備描述、目前電度、預計可用電度各自的大小排序。
-門鎖、攝影機、小白盒清單沒有這些排序選項可選。
+門鎖、攝影機、小白盒清單的排序選單只有「設備描述(大)」與「設備描述(小)」兩個選項，沒有依目前電度、預計可用電度排序的選項。
 ### 電錶清單出現「原廠系統維護中」是什麼意思？（維護期間度數不更新、無法儲值） {#jgb/G/power-meter-manufacturer-maintenance}
 - phrasings:
   - {text: "電錶維護中是什麼意思", source: "draft:outline-20260920", status: proposed}
@@ -84,19 +84,19 @@ language: zh-TW
 全站共用同一組連線設定的廠商連不上時，提示會說明目前無法儲值送電、電錶度數也不會更新，請聯絡該廠商確認服務狀態，不會標示帳號；這則提示在電錶清單頁與單一電錶頁都會出現，業者跟租客都看得到。
 以團隊自己綁定的廠商帳號連線的廠商，巡檢發現連不上時，提示只會出現在電錶清單頁、只有業者看得到，並會標示是哪一個帳號，請業者聯絡廠商確認這個帳號的連線設定或帳號密碼。
 只有這個身分底下真的掛著會連不上的那家廠商的電錶時才會出現這則提示。
-### 電錶顯示「服務到期」或「快到期」怎麼辦？（30 天內到期會提醒續訂；只有業者看得到，只出現在清單頁） {#jgb/G/power-meter-service-expiry}
+### 電錶顯示「服務到期」怎麼辦？（30 天內到期會提醒續訂；只有業者看得到，只出現在清單頁） {#jgb/G/power-meter-service-expiry}
 - phrasings:
   - {text: "電錶服務快到期怎麼辦", source: "draft:outline-20260920", status: proposed}
   - {text: "電錶帳號到期會怎樣", source: "draft:outline-20260920", status: proposed}
   - {text: "為什麼有些電錶帳號沒有顯示到期提示", source: "draft:outline-20260920", status: proposed}
   - {text: "電錶到期提示租客看得到嗎", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/iots/_parts/ManufacturerServiceNotice.jsx, code:app/Http/Controllers/IotController.php, code:src/pages/iots/_parts/Single.vue]
-- reviewed: {by: owner, at: 2026-09-28}
+- sources: [code:src/pages/iots/_parts/ManufacturerServiceNotice.jsx, code:app/Http/Controllers/IotController.php, code:src/pages/iots/_parts/Single.vue, code:app/Iot.php]
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
 已到期或已回報連不上的帳號，每一個都會列出來；還沒發生問題的帳號最多只會列出最急的一行，如果剩餘天數在 30 天以內一定會列出來，天數還很遠、且已經有到期或連不上的紅字時，這一行日期才會被拿掉不顯示。
-提示會寫出是哪一個帳號：已到期時寫「目前無法儲值送電，電錶度數也不會更新，請盡快向該廠商續訂」，30 天內快到期時才寫「到期後將無法儲值送電，電錶度數也不會更新，請盡快向該廠商續訂」。
+提示會寫出是哪一個帳號：沒有回報連不上的帳號，已到期時會寫「目前無法儲值送電，電錶度數也不會更新，請盡快向」該帳號所屬廠商的名稱（例如台科電雲端儲值系統）再接「續訂」，30 天內快到期時才寫「到期後將無法儲值送電，電錶度數也不會更新，請盡快向」同樣接廠商名稱再接「續訂」。
 底下沒有接任何電錶的廠商帳號不會出現在提示裡。
 這組提示只有業者身分看得到，租客一律看不到；也只出現在電錶清單頁，單一電錶頁不會顯示。
 ### 電錶清單每一列顯示什麼？（型號序號、目前電度、狀態、所屬物件；儲值型才有預計可用電度與低電度警報） {#jgb/G/power-meter-list-row-fields}
@@ -105,15 +105,15 @@ language: zh-TW
   - {text: "電錶列表顯示什麼資訊", source: "draft:outline-20260920", status: proposed}
   - {text: "儲值型電錶跟一般型差在哪", source: "draft:outline-20260920", status: proposed}
   - {text: "最後連線成功時間是什麼", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/iots/_parts/IotItem.jsx, code:src/pages/iots/_parts/PowerTag.jsx, code:app/Http/Controllers/Admin/CustomerServiceController.php, code:app/Jobs/DaeJob.php]
-- reviewed: {by: owner, at: 2026-09-28}
+- sources: [code:src/pages/iots/_parts/IotItem.jsx, code:src/pages/iots/_parts/PowerTag.jsx, code:app/Http/Controllers/Admin/CustomerServiceController.php, code:app/Jobs/DaeJob.php, code:app/Iot.php]
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
 每一列會顯示設備名稱與序號、描述、目前電度、狀態標籤，以及所屬物件的縮圖。
 狀態旁邊會另外寫出這支電錶最後一次真的連線成功的時間，跟畫面上方「畫面開啟時間」不是同一件事：後者只是打開這一頁的當下。
 只有儲值型電錶會顯示預計可用電度（估算），一般型電錶這一欄固定顯示「非儲值電錶」。
-儲值型電錶如果可用電度偏低，會在預計可用電度旁多顯示一個低電度警報標籤；這個警報的門檻值是廠商那邊同步過來的，JGB 介面本身沒有讓房東調整這個門檻的地方，儲值型分頁的清單最下面有一行提示，寫著若要修改低電度警報，要到台科電雲端儲值系統修改。
+儲值型電錶如果可用電度偏低，會在預計可用電度旁多顯示一個低電度警報標籤；這個警報的門檻值，台科電那邊有回傳設定值就用它的，沒有回傳就用 JGB 系統預設的門檻值；JGB 介面本身沒有讓房東調整這個門檻的地方，儲值型分頁的清單最下面有一行提示，寫著若要修改低電度警報，要到台科電雲端儲值系統修改。
 ### 電錶清單列展開後能看什麼？（用電量走勢圖可選 1/7/30/90 天；CSV 只能下載前 90 天） {#jgb/G/power-meter-usage-chart-export}
 - phrasings:
   - {text: "電錶用電量走勢圖去哪看", source: "draft:outline-20260920", status: proposed}
@@ -192,8 +192,8 @@ language: zh-TW
   - {text: "儲值金額可以自己輸入嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "儲值後帳單在哪裡看", source: "draft:outline-20260920", status: proposed}
   - {text: "儲值歷程在哪裡查", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/iots/_parts/IotItem.jsx, code:src/components/Lightbox/PowerMeterTopUp.vue, code:src/pages/iots/edit/Log.jsx]
-- reviewed: {by: owner, at: 2026-09-28}
+- sources: [code:src/pages/iots/_parts/IotItem.jsx, code:src/components/Lightbox/PowerMeterTopUp.vue, code:src/pages/iots/edit/Log.jsx, code:app/Iot.php, code:app/Http/Controllers/IotController.php]
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -201,7 +201,7 @@ language: zh-TW
 儲值金額固定是 1000、1500、2000、2500 四個選項其中一個，沒有可以自己輸入金額的欄位。
 電錶原廠系統維護中、或目前連不上廠商時，這支電錶清單列上的「儲值」按鈕會直接變灰、無法點擊，是把按鈕鎖住，不是點下去才跳出提示視窗。
 儲值後會在帳務管理產生一筆帳單，繳費方式會跟著合約約定的繳款方式走。
-儲值送出後，可以到電錶編輯頁的電錶資料頁籤、「電錶儲值歷程」清單裡查到這一筆的儲值時間、金額、儲值前後金額與操作者。
+儲值送出後，要等這次儲值確實入到電錶、完成之後，這一筆才會出現在電錶編輯頁的電錶資料頁籤、「電錶儲值歷程」清單裡，內容有儲值時間、金額、儲值前後金額與操作者；剛送出、還沒完成的儲值，在這份清單裡查不到。
 ### 電錶／門鎖／攝影機／小白盒頁面需要什麼條件才能進入？（房東方要有生效中的訂閱，而且方案有開放智能裝置功能；租客不受限制） {#jgb/G/iot-entry-requirements}
 - phrasings:
   - {text: "電錶頁面打不開", source: "draft:outline-20260920", status: proposed}
@@ -240,19 +240,19 @@ language: zh-TW
 如果目前已經有綁定電錶廠商，只是切到的分類（例如儲值型）底下沒有電錶，會顯示此分類尚無設備。
 如果完全還沒綁定任何電錶廠商，會顯示目前尚無綁定設備，並附上一行提示，告訴非租客身分的使用者要到團隊管理（或其他設定）的進階設定裡去綁定；租客登入時看不到這行綁定引導文字。
 ## 裝置頁（門鎖、攝影機、小白盒） {#G-device-page}
-### 門鎖／攝影機／小白盒清單長什麼樣？（型號序號、描述、狀態、所屬物件四欄，可依關鍵字搜尋，沒有排序選單） {#jgb/G/device-page-shared-list}
+### 門鎖／攝影機／小白盒清單長什麼樣？（型號序號、描述、狀態、所屬物件四欄，可依關鍵字搜尋） {#jgb/G/device-page-shared-list}
 - phrasings:
   - {text: "門鎖清單長怎樣", source: "draft:outline-20260920", status: proposed}
   - {text: "攝影機列表有哪些欄位", source: "draft:outline-20260920", status: proposed}
   - {text: "小白盒怎麼看清單", source: "draft:outline-20260920", status: proposed}
   - {text: "裝置清單怎麼搜尋", source: "draft:outline-20260920", status: proposed}
-- sources: [code:resources/views/iot/index.blade.php, code:app/Iot.php]
-- reviewed: {by: owner, at: 2026-09-28}
+- sources: [code:resources/views/iot/index.blade.php, code:app/Iot.php, code:src/entry/iot.js, code:src/components/ListSearchBar.vue]
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
 門鎖、攝影機、小白盒各自有獨立的裝置清單頁，欄位固定是型號＆序號、描述、狀態、所屬物件四欄。
-可以用關鍵字搜尋描述、序號、設備型號或所屬物件名稱其中一種；這幾種裝置清單沒有像電錶清單那樣的大小排序選單。
+可以用關鍵字搜尋描述、序號、設備型號或所屬物件名稱其中一種；清單另外有排序選單，只有「設備描述(大)」與「設備描述(小)」兩個選項，沒有像電錶清單那樣依目前電度、預計可用電度排序的選項。
 清單裡完全沒有綁定設備時，會提示尚無綁定設備，並附上前往進階設定綁定廠商的連結。
 ### 門鎖清單怎麼直接開門／鎖門？（開門一定有、鎖門只有特定廠商支援；離線時按鈕不會顯示） {#jgb/G/device-page-lock-open-close}
 - phrasings:
@@ -261,13 +261,13 @@ language: zh-TW
   - {text: "為什麼我的門鎖沒有鎖門按鈕", source: "draft:outline-20260920", status: proposed}
   - {text: "門鎖離線還能操作嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/iot/index.blade.php, code:app/Http/Controllers/IotController.php]
-- reviewed: {by: owner, at: 2026-09-28}
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
 在門鎖清單每一列可以直接按開門，按下後會先跳出確認視窗，確認才會真的送出開門指令。
 鎖門按鈕只有 SkyWatch 品牌的門鎖才有，其他廠商的門鎖清單上只會看到開門一個按鈕。
-SkyWatch 門鎖的狀態欄位會直接顯示已開門或已關門，其他門鎖只會顯示連線中或未連線，不會顯示目前開或關。
+SkyWatch 門鎖在連線且回報得到開關狀態時，狀態欄位會直接顯示已開門或已關門；其他門鎖連線時只會顯示連線中，不會顯示目前開或關；任何門鎖未連線時，狀態欄位都只顯示未連線。
 門鎖離線（未連線）時開門/鎖門按鈕都不會顯示。
 門鎖顯示未連線時，畫面上沒有提供排查步驟或重新連線的操作說明，只能看到未連線這個狀態字樣本身。
 ### 裝置編輯頁的頁籤，門鎖跟攝影機／小白盒不一樣？（門鎖多出密碼設定、開門記錄兩個頁籤） {#jgb/G/device-edit-tabs-by-type}

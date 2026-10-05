@@ -1,0 +1,68 @@
+[
+  {
+    "fine_id": "jgb/F/repair-list-columns",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-28}",
+    "shelf": "F"
+  },
+  {
+    "fine_id": "jgb/F/repair-list-contact-card",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-28}",
+    "shelf": "F"
+  },
+  {
+    "fine_id": "jgb/F/repair-apply-flow-and-entry",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-10-03}",
+    "shelf": "F"
+  },
+  {
+    "fine_id": "jgb/F/repair-share-visibility-summary",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-28}",
+    "shelf": "F"
+  },
+  {
+    "fine_id": "jgb/G/power-meter-list-sort",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-28}",
+    "shelf": "G"
+  },
+  {
+    "fine_id": "jgb/G/power-meter-service-expiry",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-28}",
+    "shelf": "G"
+  },
+  {
+    "fine_id": "jgb/G/power-meter-list-row-fields",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-28}",
+    "shelf": "G"
+  },
+  {
+    "fine_id": "jgb/G/power-meter-topup-flow",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-28}",
+    "shelf": "G"
+  },
+  {
+    "fine_id": "jgb/G/device-page-shared-list",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-28}",
+    "shelf": "G"
+  },
+  {
+    "fine_id": "jgb/G/device-page-lock-open-close",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-28}",
+    "shelf": "G"
+  },
+  {
+    "fine_id": "jgb/I/pricing-plan-price-basis",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-10-03}",
+    "shelf": "I"
+  }
+]

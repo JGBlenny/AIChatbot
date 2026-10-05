@@ -1,0 +1,890 @@
+[
+ {
+  "group": "G1",
+  "fid": "jgb/A/dashboard-big-landlord-view",
+  "item": "標題",
+  "batch": "B02",
+  "final": "標題刪字",
+  "basis": "「社區最新收支詳情」區塊依賴 Landlord.vue 直接寫的 <EstateDetails />，該元件未在檔內引入、也不在 src/components 自動註冊範圍，現行程式渲染不出來；標題刪去「社區最新收支詳情與」，剩「收支圖表」由改寫後句 [1] 支撐，「沒有捷徑與四個統計方塊」由句 [0] 支撐。"
+ },
+ {
+  "group": "G1",
+  "fid": "jgb/A/dashboard-big-landlord-view",
+  "item": "句 2",
+  "batch": "B02",
+  "final": "改寫",
+  "basis": "區間選項與自訂成立（大房東分支的 DateRangeSelector 7 天／30 天／90 天／6 個月、customizable），其下接 BalanceChart（標題「收支情況」）；「社區最新收支詳情」因 EstateDetails 無法解析而不成立，刪去該半句，其餘文字逐字保留。"
+ },
+ {
+  "group": "G1",
+  "fid": "jgb/A/dashboard-overview-lists",
+  "item": "標題",
+  "batch": "B02",
+  "final": "業主裁定延後整條刪",
+  "basis": "寫入核對推翻：漏大房東首頁沒有帳單／合約列表的例外"
+ },
+ {
+  "group": "G1",
+  "fid": "jgb/A/dashboard-overview-lists",
+  "item": "句 1",
+  "batch": "B02",
+  "final": "業主裁定延後整條刪",
+  "basis": "寫入核對推翻：漏大房東首頁沒有帳單／合約列表的例外"
+ },
+ {
+  "group": "G1",
+  "fid": "jgb/A/forget-password-flow",
+  "item": "句 4",
+  "batch": "B02",
+  "final": "業主裁定延後整條刪",
+  "basis": "寫入重核推翻：句 5 彈窗不顯示失敗原因（固定字「請檢查輸入格式」）"
+ },
+ {
+  "group": "G1",
+  "fid": "jgb/A/forget-password-setpwd-invite",
+  "item": "句 3",
+  "batch": "B02",
+  "final": "改寫",
+  "basis": "前半（沿用同一表單與格式規則）成立，保留；後半：被邀請設定密碼時網址來自 entrusted_url，沒有時為登入頁，但 updatePassword 已 reload(true) 自動登入，登入頁路由掛 if_login，已登入即轉往會員中心。"
+ },
+ {
+  "group": "G1",
+  "fid": "jgb/A/login-role-select-before",
+  "item": "標題",
+  "batch": "B01",
+  "final": "標題刪字",
+  "basis": "唯一的句子只說登入前需先選擇身分（房東/管理者或租客），不支撐「為什麼」與括號內的用途；標題刪去「為什麼」與整個括號。"
+ },
+ {
+  "group": "G1",
+  "fid": "jgb/A/notification-mark-read-navigate",
+  "item": "標題",
+  "batch": "B03",
+  "final": "標題刪字",
+  "basis": "標題「把該則通知標為已讀」是無條件說法，但 markAsRead 要求通知登記的使用者等於目前登入者，不是無條件；標題刪去「並把該則通知標為已讀」，條件說法留在句 [1]。"
+ },
+ {
+  "group": "G1",
+  "fid": "jgb/A/notification-mark-read-navigate",
+  "item": "句 2",
+  "batch": "B03",
+  "final": "改寫",
+  "basis": "清掉參數並轉址成立（Controller 在 notification_id 存在時一律清掉參數）；標為已讀只在通知的 user_id 等於目前登入者時發生（markAsRead 的 where('user_id', $userId)）。不主張哪些身分一定會或一定不會被標，只寫程式確立的條件。"
+ },
+ {
+  "group": "G1",
+  "fid": "jgb/A/notification-settings-save",
+  "item": "標題",
+  "batch": "B03",
+  "final": "標題刪字",
+  "basis": "括號內「至少要有一個分類填了自訂信箱」與句 1 同一問題：啟用條件是任一分類有自訂信箱欄位，與是否已填無關；刪去整個括號。"
+ },
+ {
+  "group": "G1",
+  "fid": "jgb/A/notification-settings-save",
+  "item": "句 1",
+  "batch": "B03",
+  "final": "改寫",
+  "basis": "isEmpty 對陣列只看 Object.keys 長度，按「新增信箱」產生 [''] 時 hasCustomEmail 即為 true，按鈕啟用；未啟用時 disabled 樣式與 handleSubmitForm 直接 return 的部分成立，保留。"
+ },
+ {
+  "group": "G1",
+  "fid": "jgb/A/register-role-select",
+  "item": "句 1",
+  "batch": "B01",
+  "final": "改寫",
+  "basis": "前半（身分選擇畫面、兩個選項）成立保留；後半 authSSO callback 對已註冊第三方帳號，有 redirect_after_login 就導向該頁，沒有才導向首頁，且 callback 本身不經過身分選擇畫面（從登入頁使用時，第三方登入按鈕在選完身分後才出現），改寫補上這兩點。"
+ },
+ {
+  "group": "G1",
+  "fid": "jgb/A/signer-individual-fields",
+  "item": "句 5",
+  "batch": "B02",
+  "final": "業主裁定延後整條刪",
+  "basis": "先審刪掉兩句後，3b 複查判標題答不到「要填什麼」、剩下的句子開頭「另需」承接已刪的句子；只能刪字刪句已救不回來。"
+ },
+ {
+  "group": "G1",
+  "fid": "jgb/B/advance-late-fee",
+  "item": "句 3",
+  "batch": "B05",
+  "final": "業主裁定延後整條刪",
+  "basis": "寫入核對推翻：句 3 沒寫延遲金開關在建立合約時複製、既有合約不跟著變"
+ },
+ {
+  "group": "G1",
+  "fid": "jgb/B/biglandlord-list-overview",
+  "item": "句 2",
+  "batch": "B04",
+  "final": "業主裁定延後整條刪",
+  "basis": "3b 複查判欄位列舉不完整（漏「生日」「主要聯絡方式」）；再刪句只會讓列舉更不完整。"
+ },
+ {
+  "group": "G1",
+  "fid": "jgb/B/biglandlord-report-community-rate",
+  "item": "句 1",
+  "batch": "B04",
+  "final": "改寫",
+  "basis": "社區欄 content 是社區數量字串，欄位本身不顯示社區名稱；點擊才 emit communityListOpen，Index.vue 開啟社區清單燈箱。"
+ },
+ {
+  "group": "G1",
+  "fid": "jgb/B/biglandlord-sheet-overview",
+  "item": "句 2",
+  "batch": "B05",
+  "final": "業主裁定延後整條刪",
+  "basis": "先審刪掉「各團隊看得到哪些類別」那句後，標題「對帳表在算什麼？」已經沒有句子回答；只刪字改不了問句。"
+ },
+ {
+  "group": "G1",
+  "fid": "jgb/B/member-assign-owned",
+  "item": "句 1",
+  "batch": "B04",
+  "final": "改寫",
+  "basis": "鉛筆圖示只畫在 member_list 的列內且包在 @if ($enableEdit)（edit_role_team 權限）中；member_list 已排除擁有者與登入者本人，那兩列另畫且沒有鉛筆。導向物件／合約頁的部分成立，保留。"
+ },
+ {
+  "group": "G1",
+  "fid": "jgb/B/member-invite",
+  "item": "句 2",
+  "batch": "B04",
+  "final": "改寫",
+  "basis": "accountValidation 對查不到的帳號只回 success=false 與「您輸入的帳號不存在」，不會回 is_member=false，所以「尚未成為 JGB 會員」區塊不會出現；改寫成靜態說明加上實際提示。"
+ },
+ {
+  "group": "G1",
+  "fid": "jgb/B/member-list-overview",
+  "item": "標題",
+  "batch": "B04",
+  "final": "標題刪字",
+  "basis": "標題「成員總人數」依賴原句 1，而人數＝member_list 筆數＋1，非擁有者登入時少算擁有者或本人其一；標題刪去「成員總人數、」，其餘欄位（加入時間、Email、手機號碼、角色）有改寫後句 [1] 支撐。"
+ },
+ {
+  "group": "G1",
+  "fid": "jgb/B/member-list-overview",
+  "item": "句 1",
+  "batch": "B04",
+  "final": "改寫",
+  "basis": "member_list 同時排除擁有者與登入者本人，畫面人數＝member_list 筆數＋1；登入者是擁有者時等於含擁有者的總人數，不是擁有者時不等於總人數，改寫只陳述確立的算法與擁有者登入的情形。"
+ },
+ {
+  "group": "G1",
+  "fid": "jgb/B/member-list-overview",
+  "item": "句 2",
+  "batch": "B04",
+  "final": "改寫",
+  "basis": "Email、手機號碼、角色欄成立；擁有者與本人的資料最後被沒有 created_at 的物件覆寫，join_date 為空字串，畫面對應位置空白，只有一般成員列有加入時間。"
+ },
+ {
+  "group": "G1",
+  "fid": "jgb/B/member-list-role-inline-change",
+  "item": "句 2",
+  "batch": "B04",
+  "final": "改寫",
+  "basis": "選取 addCharacter 時把 action 設為 'add' 再開同一個燈箱，action==='add' 時標題顯示「新增角色」，只有 'modify' 才顯示「編輯角色」，故視窗名稱改為「新增角色」。"
+ },
+ {
+  "group": "G1",
+  "fid": "jgb/B/team-signer-address-groups",
+  "item": "標題",
+  "batch": "B03",
+  "final": "標題刪字",
+  "basis": "全檔沒有介面文字「同上」，實際按鈕是「同戶籍地址」「同公司登記地址」；標題刪去「，都有「同上」可以直接帶入」，其餘斷言由三句支撐。"
+ },
+ {
+  "group": "G1",
+  "fid": "jgb/B/team-signer-company-info",
+  "item": "標題",
+  "batch": "B03",
+  "final": "標題刪字",
+  "basis": "標題尾段「公司登記證日期與縣市則不分團隊都是選填」漏掉選用財政部包租業租金收據範本時三項必須先填的例外；標題刪去「，公司登記證日期與縣市則不分團隊都是選填」。"
+ },
+ {
+  "group": "G1",
+  "fid": "jgb/B/team-signer-company-info",
+  "item": "句 5",
+  "batch": "B03",
+  "final": "改寫",
+  "basis": "畫面上號碼必填性（社宅必填、一般選填、日期與縣市選填）成立保留；例外依據收款設定畫面的提示文字與其儲存（畫面→/api3/users/payment/meta→UserController 的 receipt_type 驗證）：選 tw_zh_mof 時三項任一為空即失敗。"
+ },
+ {
+  "group": "G2",
+  "fid": "jgb/C/community-add-single-and-limit",
+  "item": "句 2",
+  "batch": "B06",
+  "final": "改寫",
+  "basis": "原句「達到上限時無法繼續新增社區」是漏掉批次新增這個例外的絕對句。「新增社區」按鈕（addCommunity）在額度用完時只跳出上限提示就 return，不會呼叫建立；新句只描述這顆按鈕的行為，不碰批次新增，也不再用「無法繼續新增社區」這種絕對說法。"
+ },
+ {
+  "group": "G2",
+  "fid": "jgb/C/estate-house-preview-unpublished",
+  "item": "標題",
+  "batch": "B09",
+  "final": "標題刪字",
+  "basis": "句 2 把 404 限定在「沒有查看權限的造訪者」，有查看權限的團隊成員看到預覽頁，邀請網址走另一個分支，所以「其他人造訪會得到404」說太廣。標題刪掉「；其他人造訪會得到404」，只留句 1 支撐的「屋主看到的是預覽頁提示」；404 的情形仍由句 2 完整說明。"
+ },
+ {
+  "group": "G2",
+  "fid": "jgb/C/estate-list-add-must-pick-community",
+  "item": "句 1",
+  "batch": "B07",
+  "final": "改寫",
+  "basis": "點「新增物件」「複製現有物件」都經 estateCreateHandler，額度用完（remainEstatesCount <= 0）時只跳出上限燈箱就 return，不會 router.push 到社區選擇畫面。原句的「都會」漏掉這個例外，新句保留原有說法並補上例外。標題的「都要先經過社區選擇畫面」描述必經流程，與新句不衝突，不動。"
+ },
+ {
+  "group": "G2",
+  "fid": "jgb/C/estate-list-filters",
+  "item": "句 4",
+  "batch": "B07",
+  "final": "改寫",
+  "basis": "畫面顯示的是 range_text 加總筆數；range_text 在 get_paginate 是「起始序號 - 結束序號」，不是「目前顯示筆數」。物件總表清單 webList（約 2769～4100 行）回傳的 pageNav 來自 get_paginate。新句只改格式描述，其餘（992px、較窄無此行）逐字保留。"
+ },
+ {
+  "group": "G2",
+  "fid": "jgb/C/estate-rent-open-permission-and-validation",
+  "item": "句 2",
+  "batch": "B08",
+  "final": "業主裁定延後整條刪",
+  "basis": "寫入核對推翻：句 1 引號內「刊登物件」不是現行介面文字（現行按鈕為「刊登」）"
+ },
+ {
+  "group": "G2",
+  "fid": "jgb/C/estate-status-affects-actions",
+  "item": "句 4",
+  "batch": "B07",
+  "final": "改寫",
+  "basis": "webList 加入「刊登／取消刊登招租廣告」選項的程式包在 type 為 1（總覽）或 2（招租）的條件內，type 3（買賣）不會出現；前端分類值 1、2、3 對應總覽、招租、買賣。新句補上分類這個條件，其餘保留。"
+ },
+ {
+  "group": "G2",
+  "fid": "jgb/C/forcebinding-completion-states",
+  "item": "句 2",
+  "batch": "B07",
+  "final": "改寫",
+  "basis": "三段畫面文字與按鈕都在，但按鈕的處理函式先對 community.meta 呼叫 refetch；meta 初值 null，唯一寫入者是現行不掛載的舊版元件，所以現行按下去無法繼續綁定。依業主裁定改寫成舊版畫面描述加現行按鈕無效。"
+ },
+ {
+  "group": "G2",
+  "fid": "jgb/C/forcebinding-two-steps",
+  "item": "標題",
+  "batch": "B07",
+  "final": "標題刪字",
+  "basis": "標題的「未完成系統功能無法正常使用」依賴句 2，那是舊版畫面提示、現行沒有對應強制；刪去「；未完成系統功能無法正常使用」，剩兩個步驟，由句 1 支撐。"
+ },
+ {
+  "group": "G2",
+  "fid": "jgb/C/forcebinding-two-steps",
+  "item": "句 2",
+  "batch": "B07",
+  "final": "改寫",
+  "basis": "畫面文字逐字存在，但現行 getMustDo 只回傳公告、舊版強制導向元件不會掛載，導引頁在沒有任務時還會導回總覽，所以這句不是現行行為。依業主裁定改寫成舊版遷移提示加現行不再導向；不另斷言「未綁定不會限制功能」（無法用程式證明全域否定）。"
+ },
+ {
+  "group": "G2",
+  "fid": "jgb/C/forcebinding-welcome-progress",
+  "item": "標題",
+  "batch": "B07",
+  "final": "標題刪字",
+  "basis": "標題的「已綁定與尚未綁定的物件數量」依賴句 1，而數量現行顯示不出來；刪去「已綁定與尚未綁定的物件數量、」，剩「（需同意服務條款）」，由改寫後的句 2 支撐。"
+ },
+ {
+  "group": "G2",
+  "fid": "jgb/C/forcebinding-welcome-progress",
+  "item": "句 1",
+  "batch": "B07",
+  "final": "改寫",
+  "basis": "兩個標籤字串存在，但數字取自舊版元件載入的資料（初值 null），現行 getMustDo 不再回舊版任務、元件不掛載，所以只會顯示「-」個。依業主裁定改寫成舊版設計加現行不觸發。"
+ },
+ {
+  "group": "G2",
+  "fid": "jgb/C/forcebinding-why-and-who",
+  "item": "標題",
+  "batch": "B07",
+  "final": "標題刪字",
+  "basis": "標題的「會出現」預設導引現行仍會出現，但現行登入不會再導向它（見句 1 依據）。業主裁定改寫成舊版流程；只刪「會出現」三字，剩「為什麼「物件需綁定社區」的導引？（2022/05/12 社區功能上線，只有團隊擁有者能操作）」，括號內兩個斷言都由改寫後的句 1、句 2 支撐。刪完文句略顯生硬，若業主覺得不順，備選新標題見 owner.md 備註（非交業主項）。"
+ },
+ {
+  "group": "G2",
+  "fid": "jgb/C/forcebinding-why-and-who",
+  "item": "句 1",
+  "batch": "B07",
+  "final": "改寫",
+  "basis": "唯一會導向綁定導引的是舊版元件 EstateCommunity（量到沒綁社區的物件就導向導引），它只在任務資料帶舊版任務名稱時才會掛載；現行 getMustDo 只回傳公告（帶 steps），前端遇到 steps 一律走公告元件，舊版任務對照表根本不會被取用。依業主裁定改寫成「舊版遷移導引，現行登入不再導向」，畫面文字仍逐字存在，保留描述。"
+ },
+ {
+  "group": "G2",
+  "fid": "jgb/C/forcebinding-why-and-who",
+  "item": "句 2",
+  "batch": "B07",
+  "final": "改寫",
+  "basis": "「權限不足」只在 is_admin === false 時顯示，is_admin 取自舊版元件載入的資料；該元件現行不會掛載，資料維持初值 null，is_admin 為 undefined，因此提示被隱藏、「繼續」按鈕（只在 is_admin 為真時渲染）也不出現。設計上限團隊擁有者（資料端以使用者是否為團隊擁有者判定）仍有程式依據，故改寫成舊版設計加現行不觸發。"
+ },
+ {
+  "group": "G2",
+  "fid": "jgb/C/team-public-page-edit-and-banner",
+  "item": "句 1",
+  "batch": "B09",
+  "final": "改寫",
+  "basis": "後半（編輯團隊資訊權限、錯誤訊息）程式成立，保留。前半「只有管理者」不成立：is_admin 的算法不要求是店舖管理者，編輯入口只要求 is_admin 與編輯團隊權限。新句只保留「需要編輯團隊權限才看得到編輯入口」這個必要條件（程式明確要求），不再說誰是管理者；不加新斷言。"
+ },
+ {
+  "group": "G3",
+  "fid": "jgb/D/contract-additional-convention",
+  "item": "標題",
+  "batch": "B11",
+  "final": "標題刪字",
+  "basis": "輸入框沒有字數／行數上限：textarea 只綁 change 事件寫回表單、無 maxlength；handleTextareaWord 與 state.termLines 在 template 無引用；後端 additional_terms 無上限檢查。故刪去「最多 50 行、每行 50 字，」，其餘（可套用範本、複製其他合約）有句 4 支撐。"
+ },
+ {
+  "group": "G3",
+  "fid": "jgb/D/contract-additional-convention",
+  "item": "句 1",
+  "batch": "B11",
+  "final": "整句刪",
+  "basis": "「最多 50 行、每行 50 字」只存在於未接線的 contentLineBreaker／handleTextareaWord 與常數，現行輸入框與後端皆不限制；程式與幫助中心「50 行」說法衝突，以程式為準；合法來源確立不了正確說法，整句刪。"
+ },
+ {
+  "group": "G3",
+  "fid": "jgb/D/contract-additional-convention",
+  "item": "句 3",
+  "batch": "B11",
+  "final": "整句刪",
+  "basis": "建議「超過 50 行改放合約附件」的前提是 50 行限制，現行不存在；無其他來源確立替代說法，整句刪。"
+ },
+ {
+  "group": "G3",
+  "fid": "jgb/D/contract-additional-convention",
+  "item": "句 5",
+  "batch": "B11",
+  "final": "改寫",
+  "basis": "1 頁 A4 的提示成立；刪去「跟前面『最多 50 行、每行 50 字』的輸入框字元數上限是兩件事…」整段後半（前提不存在），只留成立的前半，其餘文字逐字保留。"
+ },
+ {
+  "group": "G3",
+  "fid": "jgb/D/contract-create-entry",
+  "item": "句 4",
+  "batch": "B10",
+  "final": "改寫",
+  "basis": "上限只計使用中（is_history=0 且 active=1，另限最新一份 actualContracts）的合約，歷史合約不佔名額；把絕對句改成限定使用中，後半例子（幫助中心 A／B 租約情境）逐字保留；與同條句 6 一致。"
+ },
+ {
+  "group": "G3",
+  "fid": "jgb/D/contract-invite-and-review-period",
+  "item": "句 4",
+  "batch": "B13",
+  "final": "改寫",
+  "basis": "invite() 一般住宅分支以電話比對時有 whereNotNull('phone_verified_at')；社會住宅分支（Contract::SOCIAL_HOUSING 區塊）電話比對沒有該條件（區塊內 0 筆，正對照：一般住宅區塊 1 筆、社宅區塊的電話比對行 1 筆）。只改這個子句，其餘（Email 比對、改成註冊 Email——社宅分支經 toUserUpdateSnapshot 同樣寫入 to_user_email）逐字保留。"
+ },
+ {
+  "group": "G3",
+  "fid": "jgb/D/contract-lease-scope-by-space-type",
+  "item": "標題",
+  "batch": "B11",
+  "final": "標題刪字",
+  "basis": "程式把整戶（flat）與整層空間（office_flat）都判為「全部」，其他為「部分」；標題「整戶時自動為全部，其餘一律部分」與之矛盾，刪去「為整戶時自動為「全部」，其餘一律「部分」」，保留「物件空間型態」「不用使用者勾選」（句 1、2 支撐）。"
+ },
+ {
+  "group": "G3",
+  "fid": "jgb/D/contract-list-row-gear-actions",
+  "item": "標題",
+  "batch": "B10",
+  "final": "標題刪字",
+  "basis": "「查看物件」只在 show_owner_estate 權限為 true 時加入，租客權限全為 false；故刪去「查看物件」，「查看帳單」不受權限條件包住（句 3 支撐），「其餘依合約狀態、身分與權限增減」保留。"
+ },
+ {
+  "group": "G3",
+  "fid": "jgb/D/contract-list-row-sort-options",
+  "item": "標題",
+  "batch": "B10",
+  "final": "標題刪字",
+  "basis": "依名稱只有一個選項（不分新舊），其餘四種各分兩向；刪去「各分新舊／早晚，」，5 種依據（名稱、更新時間、起始日、終止日、成立日）由句 1 支撐。"
+ },
+ {
+  "group": "G3",
+  "fid": "jgb/D/contract-list-status-tabs",
+  "item": "標題",
+  "batch": "B10",
+  "final": "標題刪字",
+  "basis": "狀態 3 的頁籤在側邊選單叫「待管理者簽名」、頁面標題叫「待房東簽名」，兩處介面文字不同；標題括號內的五個名稱無法全部由句子支撐，整段括號刪除（新標題為舊標題的子序列）。"
+ },
+ {
+  "group": "G3",
+  "fid": "jgb/D/contract-list-status-tabs",
+  "item": "句 1",
+  "batch": "B10",
+  "final": "改寫",
+  "basis": "側邊選單名稱是「租約管理」、狀態 3 頁籤是「待管理者簽名」，頁面標題才是「待房東簽名」；租客不會進入狀態 1 頁籤，故不是每種身分都有五個。改寫為實際名稱並註明兩處差異與租客例外（Role.php 的 allow_role_key 以 `X && $hasPermission` 寫成布林陣列，無法由此判斷各身分是否隱藏頁籤，故不寫該斷言）。"
+ },
+ {
+  "group": "G3",
+  "fid": "jgb/D/contract-rentbasic-template-and-dates",
+  "item": "句 9",
+  "batch": "B11",
+  "final": "改寫",
+  "basis": "客製化契約書（contract_is_existing==2）的合約類型是「自製合約」，且範本另有特定團隊專用者，故「只有三種分類」不成立；刪去「只有原房東、包租業、代租代管三種分類」，保留「沒有二房東選項」（全域 0 筆、正對照「原房東」47 筆）與審核單 #101 的「系統不判斷」。"
+ },
+ {
+  "group": "G3",
+  "fid": "jgb/D/contract-search-keyword-scope",
+  "item": "句 2",
+  "batch": "B10",
+  "final": "改寫",
+  "basis": "現行列表（PageTop 渲染 ContractsAdvanceSearchBlock／M）沒有「通知狀態」（notify_type 在該區塊 0 筆，只在未被任何地方開啟的 ContractsAdvSearch 舊燈箱）；「是否註冊 JGB 帳號」現行文字是「租客是否註冊」。改寫成現行介面確有的七項（各 module 的 optionTitle，且 Index.vue 的 queries 皆宣告）。"
+ },
+ {
+  "group": "G3",
+  "fid": "jgb/D/contract-search-keyword-scope",
+  "item": "句 3",
+  "batch": "B10",
+  "final": "整句刪",
+  "basis": "列表進階篩選送出只 router.push({query})，停在原路由，標題仍是狀態名；只有 AdvSearchTemplate 會導向 contracts.search，而它只被帳單社宅報表頁引用；且 contracts.search 路徑仍帶狀態參數。合法來源確立不了「進階搜尋後標題變合約搜尋結果、是另一個頁面」，整句刪。"
+ },
+ {
+  "group": "G3",
+  "fid": "jgb/D/contract-situation-tab",
+  "item": "標題",
+  "batch": "B11",
+  "final": "標題刪字",
+  "basis": "「內政部規範」在現況補充分頁與 sources 找不到（situation 目錄 0 筆、正對照「非自然死亡」有命中），刪去「內政部規範」；車位、屋況（建物現況格局）、漏水處有程式欄位支撐。"
+ },
+ {
+  "group": "G3",
+  "fid": "jgb/D/contract-situation-tab",
+  "item": "句 1",
+  "batch": "B11",
+  "final": "改寫",
+  "basis": "同上，刪去「內政部規範的」，其餘逐字保留；整條檢查：標題與句子刪字後一致，整條不需交業主。「屋況」對應程式的「建物現況格局」分段（含海砂屋氯離子檢測等屋況項目）。"
+ },
+ {
+  "group": "G3",
+  "fid": "jgb/D/contract-tax-invoice",
+  "item": "句 9",
+  "batch": "B11",
+  "final": "改寫",
+  "basis": "畫面文字先說「帳單不會有發票金額」，再說「若確定不需要發票，建議改為否」；原句把因果倒置。照原文順序改寫。"
+ },
+ {
+  "group": "G3",
+  "fid": "jgb/D/entrusted-contract-landlord-info",
+  "item": "句 1",
+  "batch": "B14",
+  "final": "改寫",
+  "basis": "房東註冊／房東免註冊兩個選項皆 disabled: document_type == 2；委託合約 document_type 2 即電子 DIY（客製化契約書，建立入口 customizeEntrustedContractCreate 對應 2）。補上此例外，其餘逐字保留；整條檢查：句 2、3 描述兩模式，未與例外矛盾。"
+ },
+ {
+  "group": "G3",
+  "fid": "jgb/D/entrusted-contract-lease-type",
+  "item": "句 1",
+  "batch": "B14",
+  "final": "改寫",
+  "basis": "客製化（document_type 2）的「委託約範本」下拉 disabled、選項固定只有「自製合約」（state.select 初值 customization），使用者不能「選」，旁邊是「編輯電子簽章底稿」。改寫該段，其餘（委託約類型、起迄日期、紙本上傳委託約檔案）原樣保留。"
+ },
+ {
+  "group": "G3",
+  "fid": "jgb/D/move-in-checklist-and-responsibility",
+  "item": "句 3",
+  "batch": "B13",
+  "final": "改寫",
+  "basis": "「點交備註」是單行輸入框（move_in_note，$maxLength=100）；「補充條款」才是 20 行×50 字的 limited-textarea。原句把兩欄位合併，改為分述。"
+ },
+ {
+  "group": "G3",
+  "fid": "jgb/D/move-out-bill-generation",
+  "item": "句 1",
+  "batch": "B13",
+  "final": "改寫",
+  "basis": "可填賠償的系統點退第一步畫面標題是「設備損壞確認」；「點退清單」是改上傳點退文件模式（只顯示 PDF、不能填賠償）的標題。改寫並加「使用系統點退時」限定，第二步「點退找補費用」屬實，其餘逐字保留。"
+ },
+ {
+  "group": "G3",
+  "fid": "jgb/D/move-out-checklist-and-damage",
+  "item": "句 4",
+  "batch": "B13",
+  "final": "改寫",
+  "basis": "「草稿儲存失敗，請稍後再試」只在 catch；API 回 success=false 時顯示 response.message（無則「草稿儲存失敗」），後端 draft-save 另回權限、狀態、格式、備註長度等訊息。改寫為「提示失敗原因，例如…」，列出的訊息皆逐字出自程式（權限訊息未列）。"
+ },
+ {
+  "group": "G3",
+  "fid": "jgb/D/renew-batch-entry-and-selection",
+  "item": "句 2",
+  "batch": "B14",
+  "final": "改寫",
+  "basis": "批次續約分支的搜尋選項只回傳 agent 與 label，不含 keyword_for 六種範圍（SearchSortBlock 只在 pairs 非空時才顯示範圍下拉）。改寫為現行畫面：提示文字加物件經理人／標籤過濾；因電腦版用 SearchSortBlock、窄螢幕改走另一個搜尋燈箱，故限定「電腦版」。新增 SearchSortBlock.vue 為來源。"
+ },
+ {
+  "group": "G3",
+  "fid": "jgb/D/renew-data-carryover-rules",
+  "item": "句 3",
+  "batch": "B14",
+  "final": "改寫",
+  "basis": "續約頁單選紙本合約時另有「合約檔案」上傳，「只能設定」漏列；續約帳單頁介面標題是「確認續約帳單」，「續約預覽」只在程式註解。三處就地改寫：只能→可以、補紙本上傳、續約預覽→確認續約帳單；其餘（無租金費用分頁，續約頁與預覽頁「租金費用」0 筆、正對照「繳費週期」5 筆）逐字保留。"
+ },
+ {
+  "group": "G3",
+  "fid": "jgb/D/renew-signing-flow",
+  "item": "句 2",
+  "batch": "B14",
+  "final": "改寫",
+  "basis": "現行按鈕是「立即簽約」（「立即簽名」0 筆、正對照「立即簽約」9 筆）；但紙本／DIY 且（非續約或續約時重新上傳 PDF）的合約顯示「確認並成立合約」，故加註此例外（isExistingContract 條件）。"
+ },
+ {
+  "group": "G4",
+  "fid": "jgb/E/balance-invoice-anomaly-list",
+  "item": "標題",
+  "batch": "B17",
+  "final": "標題刪字",
+  "basis": "標題「處理需洽客服」由原句 1 後半支撐，該半句已證實不成立（業者可自行撈出重開），整句改寫後不再支撐；標題刪「，處理需洽客服」，新標題為舊標題子序列。"
+ },
+ {
+  "group": "G4",
+  "fid": "jgb/E/balance-invoice-anomaly-list",
+  "item": "句 1",
+  "batch": "B17",
+  "final": "改寫",
+  "basis": "前半成立（不在群組的帳單在盤查名單的過濾器裡一律留下）。後半「只在 JGB 內部客服後台進行、需由客服協助」與程式不符：業者端帳單列表的「發票異常」篩選註解寫「供業者快速撈出重開」。改寫只保留成立的兩個斷言：內部名單、業者端篩選能撈出開立失敗的帳單；刪掉『只有客服能處理』。盤查名單另收未開發票（逾期）帳單而篩選不含，故不寫『看到這類帳單』。"
+ },
+ {
+  "group": "G4",
+  "fid": "jgb/E/balance-invoice-group-action-menu",
+  "item": "句 7",
+  "batch": "B17",
+  "final": "改寫",
+  "basis": "該按鈕元件只被列表頁的表格使用；詳細頁用總覽標頭的動作選單，沒有歷程按鈕。原句未限定頁面，漏了詳細頁例外；改為限定列表頁並明寫詳細頁沒有。"
+ },
+ {
+  "group": "G4",
+  "fid": "jgb/E/balance-invoice-rent-item-rule",
+  "item": "句 1",
+  "batch": "B17",
+  "final": "改寫",
+  "basis": "原句結尾「判斷依據不是這筆帳單是哪一種帳單」與程式不符：三處取數都先限定帳單類型為 1／2／3，類型 4／5／6 的帳單品項不論名稱或性質都不計入。畫面上對應名稱取自帳單列表「帳單來源」篩選（值與帳單類型欄位同值）。前半（預設品項看名稱、自訂品項看性質）成立，逐字保留。"
+ },
+ {
+  "group": "G4",
+  "fid": "jgb/E/balance-invoice-timing",
+  "item": "句 3",
+  "batch": "B17",
+  "final": "改寫",
+  "basis": "每日 01:05 排程存在成立；但狀態在編輯存檔時也會立即重算（畫面編輯頁自動存檔走更新路由）。『累積成本／累積收入每 2 小時更新』不成立：2 小時排程只寫另外兩個欄位，畫面上這兩欄來自列表查詢當場把已開立發票月結加總；那兩個欄位只有該排程指令與模型引用，沒有任何畫面或控制器讀取。改寫句只寫程式確立的行為。"
+ },
+ {
+  "group": "G4",
+  "fid": "jgb/E/bill-actions-expense-paid",
+  "item": "標題",
+  "batch": "B15",
+  "final": "業主裁定保留",
+  "basis": "9.28 判標題與句 1 不成立，理由是房東端有權限過濾；起草代理與我對碼都確認這個分支沒有權限過濾（正對照：已到帳收入帳單有），9.28 看錯分支。"
+ },
+ {
+  "group": "G4",
+  "fid": "jgb/E/bill-actions-expense-paid",
+  "item": "句 1",
+  "batch": "B15",
+  "final": "業主裁定保留",
+  "basis": "9.28 判標題與句 1 不成立，理由是房東端有權限過濾；起草代理與我對碼都確認這個分支沒有權限過濾（正對照：已到帳收入帳單有），9.28 看錯分支。"
+ },
+ {
+  "group": "G4",
+  "fid": "jgb/E/bill-actions-progress",
+  "item": "句 2",
+  "batch": "B15",
+  "final": "業主裁定延後整條刪",
+  "basis": "起草改寫後，先審判兩句都不成立（漏「要有帳單編輯權限」這個例外），依 D1 兩句都要刪，刪完一句不剩。"
+ },
+ {
+  "group": "G4",
+  "fid": "jgb/E/bill-actions-received",
+  "item": "句 9",
+  "batch": "B15",
+  "final": "改寫",
+  "basis": "通知信只在付款者為租客、收款者為個人房東或法人房東時才寄；收款方為社會住宅（編碼 4）時沒有對應處理，不寄信。原句少了這個身分例外，補上；附收據、特定合作團隊不附、沒有重寄按鈕三點維持。『前端』換成介面用語『畫面上』。"
+ },
+ {
+  "group": "G4",
+  "fid": "jgb/E/bill-cvs-barcode-overdue-payment",
+  "item": "句 1",
+  "batch": "B15",
+  "final": "改寫",
+  "basis": "確實沒有期限檢查，但入帳不是『只看交易狀態』：還要金額相符、訂單未付過、找得到訂單與帳單、通知欄位完整。改寫列出這些條件，保留『沒有檢查期限』。"
+ },
+ {
+  "group": "G4",
+  "fid": "jgb/E/bill-internal-note-visibility",
+  "item": "句 2",
+  "batch": "B16",
+  "final": "改寫",
+  "basis": "規則看的是檢視者身分與是否為這張帳單所屬團隊（帳單所屬團隊識別碼要等於檢視者身份），不是帳單本身有沒有這項資料；同一張 B2B 帳單管理方仍看得到。原句把它寫成帳單屬性並舉 B2B 例，改為檢視者條件。"
+ },
+ {
+  "group": "G4",
+  "fid": "jgb/E/bill-list-export",
+  "item": "標題",
+  "batch": "B15",
+  "final": "標題刪字",
+  "basis": "「其他分頁另有一套匯出流程」本條沒有任何一句支撐，且句 4 說草稿帳單、收款帳單勾選匯出與總表共用同一套規則；刪「；其他分頁另有一套匯出流程」，新標題為舊標題子序列。"
+ },
+ {
+  "group": "G4",
+  "fid": "jgb/E/bill-list-export",
+  "item": "句 1",
+  "batch": "B15",
+  "final": "改寫",
+  "basis": "主斷言成立；括號內的介面文字「全選」在帳單列表上不存在（表頭是沒有文字的核取方塊），刪掉該括號，其餘逐字保留。"
+ },
+ {
+  "group": "G4",
+  "fid": "jgb/E/bill-list-export",
+  "item": "句 2",
+  "batch": "B15",
+  "final": "整句刪",
+  "basis": "D1：改寫後先審仍不成立 ⇒ 整句刪"
+ },
+ {
+  "group": "G4",
+  "fid": "jgb/E/bill-list-export-other-tabs",
+  "item": "句 1",
+  "batch": "B15",
+  "final": "改寫",
+  "basis": "每顆按鈕都帶匯出權限，右上角快捷按鈕會依該權限過濾；沒有「匯出帳務資料」權限的成員看不到，原句「一律有」漏了權限例外。改為有權限者才看到，其餘（文字、不需勾選、較舊視窗）逐字保留。"
+ },
+ {
+  "group": "G4",
+  "fid": "jgb/E/bill-list-income-export-social-housing",
+  "item": "句 1",
+  "batch": "B15",
+  "final": "整句刪",
+  "basis": "D1：改寫後先審仍不成立 ⇒ 整句刪"
+ },
+ {
+  "group": "G4",
+  "fid": "jgb/E/bill-payment-method-account-pair",
+  "item": "句 2",
+  "batch": "B16",
+  "final": "改寫",
+  "basis": "例外本身成立，但畫面上選固定虛擬帳號時仍有「收款帳戶」欄，只是唯讀顯示合約綁定帳號、不能挑；原句「本來就沒有對應的收款帳戶欄位」與畫面不符，改為唯讀不可挑。"
+ },
+ {
+  "group": "G4",
+  "fid": "jgb/E/bill-payment-method-account-pair",
+  "item": "句 3",
+  "batch": "B16",
+  "final": "改寫",
+  "basis": "儲存草稿走同一支新增路徑，伺服端同樣驗證成對，只填一項會被擋。原句「只發生在按下送出確認彈窗」漏了儲存草稿；補上，其餘（非即時、送出點退不受影響）保留。"
+ },
+ {
+  "group": "G4",
+  "fid": "jgb/E/bill-power-reading-draft-defaults",
+  "item": "標題",
+  "batch": "B16",
+  "final": "標題刪字",
+  "basis": "「草稿階段度數預設留空」與現行畫面不符（綁定電錶時開頁即帶入），刪「草稿階段度數預設留空；」，新標題為舊標題子序列；其餘『可在編輯頁按取得即時電錶度數先帶入』由改寫句支撐。"
+ },
+ {
+  "group": "G4",
+  "fid": "jgb/E/bill-power-reading-draft-defaults",
+  "item": "句 1",
+  "batch": "B16",
+  "final": "改寫",
+  "basis": "原句與文件講的是資料庫裡存的值；現行編輯頁畫面：物件有綁定電錶、待發送合約帳單、系統預設電費品項、度數尚未填過時，開頁就帶入電錶當下讀數，所以「預設是空的」不成立（以程式為準）。按鈕只出現在這種電費列（有電錶讀數資訊、非特定合作團隊）；沒有綁定的物件沒有自動帶入。「未綁定則提示此物件未綁定智能電表」在畫面上到不了（沒有電錶就沒有按鈕），故不寫。整句改寫為程式確立的行為。"
+ },
+ {
+  "group": "G4",
+  "fid": "jgb/E/bill-receipt-feature-roadmap",
+  "item": "句 1",
+  "batch": "B15",
+  "final": "改寫",
+  "basis": "收據一律顯示成立；通知信只對個人／法人房東收款的帳單寄給租客，社會住宅收款沒有對應處理不寄，押金設算息帳單明文不通知租客。文件 p914-receipt-email 同樣漏例外，程式為準。補上兩個例外。"
+ },
+ {
+  "group": "G4",
+  "fid": "jgb/E/ctbc-form-validation",
+  "item": "標題",
+  "batch": "B18",
+  "final": "標題刪字",
+  "basis": "標題「銀行帳號 10～16 碼」依賴不成立的原句 3；標題只能刪字不能換成 14，故整段刪「、銀行帳號 10～16 碼」，新標題為舊標題子序列；銀行帳號限制改由句 3 單獨說明。"
+ },
+ {
+  "group": "G4",
+  "fid": "jgb/E/ctbc-form-validation",
+  "item": "句 3",
+  "batch": "B18",
+  "final": "改寫",
+  "basis": "伺服端規則是 10 到 16 碼並補 0，但現行申請畫面的銀行帳號欄位 maxLength 為 14，使用者最多只能填 14 碼，「可輸入 10 到 16 碼」在畫面上不成立。改為畫面實際可填範圍（最多 14、至少 10），補 0 規則保留。"
+ },
+ {
+  "group": "G4",
+  "fid": "jgb/E/newebpay-required-fields",
+  "item": "句 2",
+  "batch": "B18",
+  "final": "改寫",
+  "basis": "缺資料時的導向只處理個人與法人兩種身分；社會住宅也是團隊、也要有公司資料（驗證要求），但不會被導回團隊頁面。保留『團隊要先填』，把導回團隊頁面限定為法人房東團隊；手機與 Email 的部分 9.28 已確認成立。"
+ },
+ {
+  "group": "G4",
+  "fid": "jgb/E/newebpay-required-fields",
+  "item": "句 3",
+  "batch": "B18",
+  "final": "改寫",
+  "basis": "原句「團隊帳號則是導回團隊頁面」漏社會住宅例外；改為法人房東導回並列出缺漏，社會住宅不導回、改在送出時顯示驗證錯誤訊息。"
+ },
+ {
+  "group": "G4",
+  "fid": "jgb/E/recharge-account-vs-single-use-atm",
+  "item": "句 1",
+  "batch": "B18",
+  "final": "業主裁定延後整條刪",
+  "basis": "唯一一句改寫後仍不成立：句中租客入口寫「我的帳單」，現行選單是「帳務管理」→「繳費帳單」；刪了就一句不剩。"
+ },
+ {
+  "group": "G5",
+  "fid": "jgb/F/repair-apply-flow-and-entry",
+  "item": "句 1",
+  "batch": "B19",
+  "final": "改寫",
+  "basis": "按鈕的 v-if 是「租客」或「房東方且有所屬／所有修繕編輯權限之一」，原句「房東方也都有」漏權限例外；改成租客有、房東方要有兩項權限之一，與同條句 4 一致。權限鍵到畫面標籤的對應取自 UserController 的群組表。"
+ },
+ {
+  "group": "G5",
+  "fid": "jgb/F/repair-list-columns",
+  "item": "句 2",
+  "batch": "B19",
+  "final": "改寫",
+  "basis": "原句「只有租客本人提出才有值、房東方提出就一定空」漏例外：對外介面與列表建單的合約分支都會寫入租客資料。依 D1 把絕對的『誰提出』部分拿掉，只留程式確立的兩件事：租客欄來自這張單自己記錄的資料、不查現行承租人；沒資料時欄位顯示「-」。"
+ },
+ {
+  "group": "G5",
+  "fid": "jgb/F/repair-list-contact-card",
+  "item": "句 1",
+  "batch": "B19",
+  "final": "改寫",
+  "basis": "前半（點欄位跳出聯絡資訊卡）成立；括號內『沒資料會跳出沒有聯絡人資訊提示』不成立，空資料只顯示「-」且沒有點擊處理。改寫成來源實際行為，整條仍有成立的句子，不交業主。"
+ },
+ {
+  "group": "G5",
+  "fid": "jgb/F/repair-share-visibility-summary",
+  "item": "句 3",
+  "batch": "B20",
+  "final": "改寫",
+  "basis": "前半（不核對身分）成立；後半『不管登入是誰內容都一樣』與同條句 2 的結算金額判斷矛盾，改成只留不核對身分，並把金額是否顯示明講為只看瀏覽者目前登入身分是不是房東。"
+ },
+ {
+  "group": "G5",
+  "fid": "jgb/G/device-page-lock-open-close",
+  "item": "句 3",
+  "batch": "spotcheck",
+  "final": "改寫",
+  "basis": "狀態外層要 status 為連線才進入；SkyWatch 且開關狀態為 0 或 1 才顯示已開門／已關門，否則落到連線中；未連線一律走最外層 else 顯示未連線。原句漏掉 SkyWatch 離線只顯示未連線。"
+ },
+ {
+  "group": "G5",
+  "fid": "jgb/G/device-page-shared-list",
+  "item": "標題",
+  "batch": "B21",
+  "final": "標題刪字",
+  "basis": "標題『沒有排序選單』與來源相反（有設備描述大／小排序選單），只刪「，沒有排序選單」。新標題是舊標題的子序列。"
+ },
+ {
+  "group": "G5",
+  "fid": "jgb/G/device-page-shared-list",
+  "item": "句 2",
+  "batch": "B21",
+  "final": "改寫",
+  "basis": "搜尋前半成立；排序部分改成實際有「設備描述(大／小)」兩項、沒有目前電度與預計可用電度（這兩組只在電錶的選項表）。路由確認 lock／camera／gateway 都走同一個清單頁。"
+ },
+ {
+  "group": "G5",
+  "fid": "jgb/G/power-meter-list-row-fields",
+  "item": "句 4",
+  "batch": "B21",
+  "final": "改寫",
+  "basis": "門檻只在廠商有回傳時才用廠商值，沒回傳就用 JGB 預設值；原句漏預設值例外。數字不寫，因單位與畫面對應未在來源確立。其餘斷言（介面無調整處、清單提示）保留未動。"
+ },
+ {
+  "group": "G5",
+  "fid": "jgb/G/power-meter-list-sort",
+  "item": "標題",
+  "batch": "B21",
+  "final": "標題刪字",
+  "basis": "標題後半『沒有排序選單』不成立，刪「；門鎖、攝影機、小白盒清單沒有排序選單」。新標題是舊標題的子序列，剩餘斷言由句 1 支撐。"
+ },
+ {
+  "group": "G5",
+  "fid": "jgb/G/power-meter-list-sort",
+  "item": "句 2",
+  "batch": "B21",
+  "final": "改寫",
+  "basis": "三種清單仍有設備描述大／小排序，只是沒有目前電度與預計可用電度兩組。"
+ },
+ {
+  "group": "G5",
+  "fid": "jgb/G/power-meter-service-expiry",
+  "item": "標題",
+  "batch": "B21",
+  "final": "標題刪字",
+  "basis": "「快到期」不是現行介面文字，只刪「或「快到期」」。保留的「服務到期」是介面字串「服務到期日」「服務已於…到期」的子字串。"
+ },
+ {
+  "group": "G5",
+  "fid": "jgb/G/power-meter-service-expiry",
+  "item": "句 2",
+  "batch": "B21",
+  "final": "改寫",
+  "basis": "畫面文字的『廠商』位置是代入的廠商名稱，不是「該廠商」三字；改成把固定文字逐字抄、廠商名稱處用說明帶過。同時補上已回報連不上的帳號走另一組文案（isUnreachable 優先），故限定為沒有回報連不上的帳號。"
+ },
+ {
+  "group": "G5",
+  "fid": "jgb/G/power-meter-single-edit-tabs",
+  "item": "標題",
+  "batch": "B21",
+  "final": "業主裁定延後整條刪",
+  "basis": "先審刪掉兩句（漏租客例外）後，3b 又判剩下的句子漏列「最後連線成功時間」；再刪就只剩發票頁籤一句，標題沒有支撐。"
+ },
+ {
+  "group": "G5",
+  "fid": "jgb/G/power-meter-topup-flow",
+  "item": "句 5",
+  "batch": "B21",
+  "final": "改寫",
+  "basis": "歷程清單只查已完成的紀錄，已完成標記要等廠商回報執行成功（或對帳回填）才寫入。送出當下查不到。欄位內容（儲值時間、金額、儲值前後金額、操作者）9.28 已認成立，保留。"
+ },
+ {
+  "group": "G5",
+  "fid": "jgb/I/demo-form-actual-validation-scope",
+  "item": "標題",
+  "batch": "B23",
+  "final": "業主裁定延後整條刪",
+  "basis": "寫入核對推翻：句 1 列「設了必填」的頁面欄位漏職稱、物件數量、團隊人數三個同樣標 required 的下拉選單"
+ },
+ {
+  "group": "G5",
+  "fid": "jgb/I/demo-form-actual-validation-scope",
+  "item": "句 1",
+  "batch": "B23",
+  "final": "業主裁定延後整條刪",
+  "basis": "寫入核對推翻：句 1 列「設了必填」的頁面欄位漏職稱、物件數量、團隊人數三個同樣標 required 的下拉選單"
+ },
+ {
+  "group": "G5",
+  "fid": "jgb/I/demo-form-fields",
+  "item": "句 2",
+  "batch": "B23",
+  "final": "業主裁定延後整條刪",
+  "basis": "寫入核對推翻：句 2 列「設了必填」的欄位漏同樣三項"
+ },
+ {
+  "group": "G5",
+  "fid": "jgb/I/pricing-plan-price-basis",
+  "item": "標題",
+  "batch": "B22",
+  "final": "標題刪字",
+  "basis": "年繳折扣與『一般方案年繳等於 10 個月』依附句 2，句 2 整句刪後無支撐，刪「、年繳有折扣嗎」與「；一般方案年繳等於 10 個月的月費」。新標題是舊標題的子序列。"
+ },
+ {
+  "group": "G5",
+  "fid": "jgb/I/pricing-plan-price-basis",
+  "item": "句 2",
+  "batch": "B22",
+  "final": "整句刪",
+  "basis": "價格函式有兩種計價（固定月費型年繳乘 10，體驗級距乘 12；單價型年繳是物件數×單價×12×年繳折扣比例）。各級距屬哪一種存在資料表，匯出內沒有種子資料或遷移可查，無法確立『一般依物件數量分級方案年繳＝月費×10』。合法來源確立不了正確說法，整句刪。"
+ }
+]

@@ -141,19 +141,17 @@ language: zh-TW
 頁面中段放了一則合作客戶的見證，並附一支介紹影片連結。
 頁面下段「體驗方案資格需求」列出兩項條件：管理房源時間不到兩年的「新創時期」，以及過去沒有使用過 JGB 平台的「全新客戶」。
 頁面上下各有一組「免費試用」與「免費諮詢」按鈕，「免費試用」會開啟免費方案彈窗，「免費諮詢」會另開分頁導向預約 demo 表單。
-### 方案價格怎麼算、年繳有折扣嗎？（各方案單價從系統價格表讀取；一般方案年繳等於 10 個月的月費） {#jgb/I/pricing-plan-price-basis}
+### 方案價格怎麼算？（各方案單價從系統價格表讀取） {#jgb/I/pricing-plan-price-basis}
 - phrasings:
   - {text: "方案價格數字", source: "draft:outline-20260920", status: proposed}
-  - {text: "年繳折扣多少", source: "draft:outline-20260920", status: proposed}
   - {text: "體驗方案價格怎麼算", source: "draft:outline-20260920", status: proposed}
   - {text: "方案價格從哪裡算出來", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/UserController.php, code:app/Helper.php]
-- reviewed: {by: owner, at: 2026-10-03}
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
 包含體驗方案在內，各方案的實際單價與級距價格都是從系統的方案物件價格表讀出來的，不是固定寫死的數字，因此這裡無法列出各級距的金額。
-一般依物件數量分級方案的年繳費用，計算方式是月費乘以 10（等於少收 2 個月的費用）；體驗方案的年繳費用則是月費乘以 12，沒有這個折扣。
 ### 物件額度用滿了會怎樣？（新增物件、匯入等入口會被擋下並提示升級方案） {#jgb/I/pricing-quota-full-block}
 - phrasings:
   - {text: "物件額度用滿了", source: "draft:outline-20260920", status: proposed}

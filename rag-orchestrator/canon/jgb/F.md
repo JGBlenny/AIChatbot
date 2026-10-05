@@ -43,13 +43,13 @@ language: zh-TW
   - {text: "修繕單列表欄位說明", source: "draft:outline-20260920", status: proposed}
   - {text: "修繕單表格看得到什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "修繕單總表欄位", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/repair/list/Index.vue]
-- reviewed: {by: owner, at: 2026-09-28}
+- sources: [code:src/pages/repair/list/Index.vue, code:app/Http/Controllers/RepairController.php, code:app/Repair.php, code:src/components/SurelyVue/Common/SingleUserCell.vue]
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
 每一列會顯示物件地址、分類＆項目、報修日期、「最後更新」、結算金額、房東/管理者、租客這幾個欄位。
-「房東/管理者」這欄顯示的是被指派負責這張修繕單的房東方帳號；「租客」這欄顯示的是這張修繕單本身記錄到的租客資料，只有在提出這張報修申請的人是租客本人時才會有值——如果這張修繕單是房東方提出的，這欄就會是空的，系統不會另外去查這個物件目前實際的承租人是誰來補上。
+「房東/管理者」這欄顯示的是被指派負責這張修繕單的房東方帳號；「租客」這欄顯示的是這張修繕單本身記錄到的租客資料，系統不會另外去查這個物件目前實際的承租人是誰來補上，所以這張修繕單沒有記錄到租客資料時，這欄就是空的（只顯示「-」）。
 如果這個分類目前尚未累積任何修繕單，表格會顯示「此分類目前尚未有修繕單」的提示文字，而不是報錯畫面。
 ### 修繕單總表怎麼排序、一頁看幾筆？（每頁 30／60／90 筆可選；排序選項裡的「結算金額」只有房東方帳號才看得到） {#jgb/F/repair-list-sort-and-pagination}
 - phrasings:
@@ -152,12 +152,12 @@ language: zh-TW
   - {text: "點房東管理者欄位會怎樣", source: "draft:outline-20260920", status: proposed}
   - {text: "修繕單列表點租客會出現什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "怎麼看修繕單相關人的聯絡方式", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/repair/list/Index.vue]
-- reviewed: {by: owner, at: 2026-09-28}
+- sources: [code:src/pages/repair/list/Index.vue, code:src/components/SurelyVue/Common/SingleUserCell.vue]
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-點一下「房東/管理者」這一欄，會跳出一張聯絡資訊卡，顯示這個帳號的聯絡資訊；點「租客」這一欄也會跳出同樣形式的聯絡資訊卡，顯示這欄記錄到的租客聯絡資訊（如果這欄沒有聯絡人資料，畫面會跳出「沒有聯絡人資訊」的提示，另見「修繕單總表的表格欄位顯示什麼」）。
+點一下「房東/管理者」這一欄，會跳出一張聯絡資訊卡，顯示這個帳號的聯絡資訊；點「租客」這一欄也會跳出同樣形式的聯絡資訊卡，顯示這欄記錄到的租客聯絡資訊；如果這欄沒有聯絡人資料，畫面只會顯示「-」，不能點，點了也不會跳出提示（另見「修繕單總表的表格欄位顯示什麼」）。
 ## 報修申請流程 {#F-repair-apply}
 ### 怎麼申請修繕單？（房東方從【修繕管理】>【修繕單總表】、租客從【我的報修】>【修繕單總表】右上角「新增修繕單」進入，選物件→選分類項目→填報修細節→送出，按「上一步」「下一步」在步驟間切換） {#jgb/F/repair-apply-flow-and-entry}
 - phrasings:
@@ -165,15 +165,14 @@ language: zh-TW
   - {text: "怎麼報修", source: "draft:outline-20260920", status: proposed}
   - {text: "申請修繕流程", source: "draft:outline-20260920", status: proposed}
   - {text: "修繕單申請入口在哪", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/repair/list/Index.vue, code:src/pages/repair/applyProcess/Index.vue, code:src/utils/constants/repair.constant.ts, code:routes/web.php, help:repair_zh-Hant.html, code:app/Role.php, code:src/pages/repair/applyProcess/_parts/Detail.vue, code:app/Notification.php]
-- reviewed: {by: owner, at: 2026-10-03}
+- sources: [code:src/pages/repair/list/Index.vue, code:src/pages/repair/applyProcess/Index.vue, code:src/utils/constants/repair.constant.ts, code:routes/web.php, help:repair_zh-Hant.html, code:app/Role.php, code:src/pages/repair/applyProcess/_parts/Detail.vue, code:app/Notification.php, code:app/Http/Controllers/UserController.php]
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-房東方從【修繕管理】>【修繕單總表】、租客從【我的報修】>【修繕單總表】進入，頁面右上角都有「新增修繕單」按鈕。
+房東方從【修繕管理】>【修繕單總表】、租客從【我的報修】>【修繕單總表】進入；租客頁面右上角有「新增修繕單」按鈕，房東方帳號則要有「新增&編輯&刪除所屬修繕資料」或「新增&編輯&刪除所有修繕資料」其中一項權限，才看得到這個按鈕。
 申請修繕分成三步：先選要報修的物件，再選修繕分類與項目，最後填報修細節後送出；第一步（選物件）下方的按鈕是「取消」與「下一步」，第二步（選分類）是「上一步」與「下一步」，第三步（填細節）則是「上一步」與「申請修繕」。
 租客可以自己在系統上申請報修，房東方也可以代租客申請；租客自己送出的修繕單，房東方與租客都看得到進度，但房東方在網頁上建立的修繕單目前不會同步到租客的修繕單總表，租客看不到。
-房東方帳號如果要用這個流程，帳號要有「新增&編輯&刪除所屬修繕資料」或「新增&編輯&刪除所有修繕資料」其中一項權限；租客帳號則不需要另外的權限，登入即可申請。
 填完報修細節按下「申請修繕」送出後，系統會直接把使用者帶回修繕單總表的「申請修繕」分頁。
 LINE 在修繕流程裡用於通知（修繕單建立等階段會透過 LINE 推播），以及修繕單細節頁的分享按鈕；JGB 網頁介面沒有透過 LINE 發起報修的入口。
 ### 沒有租約在跑的物件也能申請修繕嗎？（可以，房東方只要建好物件就能申請，不用先有合約） {#jgb/F/repair-apply-without-contract}
@@ -421,19 +420,18 @@ LINE 在修繕流程裡用於通知（修繕單建立等階段會透過 LINE 推
 修繕單分享頁不需要登入 JGB 帳號就能打開；系統判斷「使用者有沒有登入、要不要導去登入頁」的規則裡，特別把分享頁的網址排除在外，所以沒有登入的人一樣可以直接看到內容。
 這跟修繕功能的其他頁面不一樣：修繕單總表跟修繕單細節頁都被系統設定成需要先登入才能進入，只有分享頁被單獨排除。
 如果連結裡的修繕單編號查無資料，系統會把使用者導去官網首頁，而不是顯示分享內容。
-### 分享連結誰看得到？（拿到網址的任何人都能看到這張修繕單房東方的手機／Email、物件所在區域、照片、廠商聯絡電話；金額只有在瀏覽者本人目前登入身分是房東時才會顯示，且不會核對是不是這張修繕單相關的房東或租客） {#jgb/F/repair-share-visibility-summary}
+### 分享連結誰看得到？（金額只有在瀏覽者本人目前登入身分是房東時才會顯示，且不會核對是不是這張修繕單相關的房東或租客） {#jgb/F/repair-share-visibility-summary}
 - phrasings:
   - {text: "分享連結誰都能看嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "修繕分享頁會外流個資嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "分享頁看得到金額嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/RepairController.php, code:src/pages/repair/share/Index.vue]
-- reviewed: {by: owner, at: 2026-09-28}
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
-只要拿到分享連結網址，不需要登入、也不需要跟這張修繕單有任何關係，就能看到這張修繕單房東方的手機號碼或Email（團隊身分顯示公司電話／公司Email，個人房東顯示手機號碼／Email，另見「修繕單細節頁顯示哪些報修時填的資料」）、物件所在區域（只到國家、縣市、行政區，不含街道門牌）、報修照片，以及安排的廠商聯絡電話。
 「結算金額」在分享頁上要不要顯示，看的是瀏覽者目前自己登入 JGB 的身分是不是房東；如果瀏覽者根本沒有登入（分享頁本來就不需要登入），這個判斷會是否，所以看不到金額。
-系統產生分享頁資料時，不會核對這個瀏覽者是不是這張修繕單相關的房東或租客——不管有沒有登入、登入的是誰，看到的內容都一樣。
+系統產生分享頁資料時，不會核對這個瀏覽者是不是這張修繕單相關的房東或租客；「結算金額」是否顯示，只看瀏覽者目前登入的身分是不是房東，和是否與這張修繕單有關無關。
 ### 分享連結會過期嗎？（目前不會，沒有天數限制） {#jgb/F/repair-share-no-expiry}
 - phrasings:
   - {text: "修繕分享連結會過期嗎", source: "draft:outline-20260920", status: proposed}

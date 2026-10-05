@@ -516,7 +516,7 @@ jgb/F/repair-edit-tenant-memo｜「房客備註」是什麼？（右邊那一欄
 jgb/F/repair-edit-share-to-vendor｜怎麼把修繕單分享出去給廠商？（在修繕單細節頁點「分享」，電腦上可以複製連結或用 LINE 分享，手機上會直接叫出手機的分享選單；廠商點開連結不需要登入 JGB 帳號）｜target_user=property_manager｜
 ### F-repair-share 修繕單分享頁 {#F-repair-share}
 jgb/F/repair-share-public-link｜修繕單分享頁需要先登入嗎？（不需要，這個連結是公開的，系統特別把它排除在登入檢查之外，任何拿到網址的人都可以直接打開）｜target_user=property_manager,prospect｜
-jgb/F/repair-share-visibility-summary｜分享連結誰看得到？（拿到網址的任何人都能看到這張修繕單房東方的手機／Email、物件所在區域、照片、廠商聯絡電話；金額只有在瀏覽者本人目前登入身分是房東時才會顯示，且不會核對是不是這張修繕單相關的房東或租客）｜target_user=property_manager,prospect｜
+jgb/F/repair-share-visibility-summary｜分享連結誰看得到？（金額只有在瀏覽者本人目前登入身分是房東時才會顯示，且不會核對是不是這張修繕單相關的房東或租客）｜target_user=property_manager,prospect｜
 jgb/F/repair-share-no-expiry｜分享連結會過期嗎？（目前不會，沒有天數限制）｜target_user=property_manager｜
 jgb/F/repair-share-content｜修繕單分享頁看得到什麼？（修繕申請單標題與是否緊急、照片、報修細節、安排的廠商資訊、房東備註與房客備註，全部都是唯讀；不會顯示物件廣告連結、縮圖，也沒有房東／承租方資訊側欄）｜target_user=property_manager｜
 
@@ -526,10 +526,10 @@ scope: IoT 門鎖、密碼、裝置廠商與狀態；⛔ 抄表歸 E
 jgb/G/power-meter-list-category-tabs｜電錶清單怎麼切換分類？（所有電錶、一般型、儲值型三個分類，切換後會換一批列表）｜target_user=property_manager｜
 jgb/G/power-meter-list-status-tags｜電錶清單的狀態標籤是什麼意思？（全部／供電中／斷電中／未連線，夾在分類跟清單之間；未連線含未啟用）｜target_user=property_manager｜
 jgb/G/power-meter-list-search｜電錶清單怎麼用關鍵字搜尋？（可選描述、序號、設備名稱、所屬物件名稱其中一種）｜target_user=property_manager｜
-jgb/G/power-meter-list-sort｜電錶清單怎麼排序？（可依設備描述、目前電度、預計可用電度排序；門鎖、攝影機、小白盒清單沒有排序選單）｜target_user=property_manager｜
+jgb/G/power-meter-list-sort｜電錶清單怎麼排序？（可依設備描述、目前電度、預計可用電度排序）｜target_user=property_manager｜
 jgb/G/power-meter-manufacturer-maintenance｜電錶清單出現「原廠系統維護中」是什麼意思？（維護期間度數不更新、無法儲值）｜target_user=property_manager｜
 jgb/G/power-meter-vendor-unreachable｜電錶顯示目前連不上廠商怎麼辦？（度數不會更新、儲值送不出去；全站共用連線的廠商業者跟租客都看得到，以團隊帳號連線的廠商只有業者在清單頁看得到）｜target_user=property_manager,tenant｜
-jgb/G/power-meter-service-expiry｜電錶顯示「服務到期」或「快到期」怎麼辦？（30 天內到期會提醒續訂；只有業者看得到，只出現在清單頁）｜target_user=property_manager｜
+jgb/G/power-meter-service-expiry｜電錶顯示「服務到期」怎麼辦？（30 天內到期會提醒續訂；只有業者看得到，只出現在清單頁）｜target_user=property_manager｜
 jgb/G/power-meter-list-row-fields｜電錶清單每一列顯示什麼？（型號序號、目前電度、狀態、所屬物件；儲值型才有預計可用電度與低電度警報）｜target_user=property_manager｜
 jgb/G/power-meter-usage-chart-export｜電錶清單列展開後能看什麼？（用電量走勢圖可選 1/7/30/90 天；CSV 只能下載前 90 天）｜target_user=property_manager｜
 jgb/G/power-meter-single-edit-tabs｜電錶編輯頁能改什麼？（儲值型有基本設定／電錶資料／開立發票三個頁籤，一般型只有基本設定）｜target_user=property_manager｜
@@ -541,7 +541,7 @@ jgb/G/iot-entry-requirements｜電錶／門鎖／攝影機／小白盒頁面需�
 jgb/G/power-meter-invoice-tab-fields｜開立發票頁籤裡面能填什麼？（目前只有帳單是否開立發票一個選項）｜target_user=property_manager｜
 jgb/G/power-meter-list-empty-state｜電錶清單沒有資料時畫面顯示什麼？（分類內沒有設備寫「此分類尚無設備」；完全沒綁定寫「目前尚無綁定設備」，租客看不到綁定引導連結）｜target_user=property_manager｜
 ### G-device-page 裝置頁（門鎖、攝影機、小白盒） {#G-device-page}
-jgb/G/device-page-shared-list｜門鎖／攝影機／小白盒清單長什麼樣？（型號序號、描述、狀態、所屬物件四欄，可依關鍵字搜尋，沒有排序選單）｜target_user=property_manager,prospect｜
+jgb/G/device-page-shared-list｜門鎖／攝影機／小白盒清單長什麼樣？（型號序號、描述、狀態、所屬物件四欄，可依關鍵字搜尋）｜target_user=property_manager,prospect｜
 jgb/G/device-page-lock-open-close｜門鎖清單怎麼直接開門／鎖門？（開門一定有、鎖門只有特定廠商支援；離線時按鈕不會顯示）｜target_user=property_manager｜
 jgb/G/device-edit-tabs-by-type｜裝置編輯頁的頁籤，門鎖跟攝影機／小白盒不一樣？（門鎖多出密碼設定、開門記錄兩個頁籤）｜target_user=property_manager｜
 jgb/G/device-lock-type-and-binding-limit｜私人門鎖跟共用門鎖差在哪？（私人只能綁一個物件，共用可以綁多個）｜target_user=property_manager,prospect｜
@@ -573,7 +573,7 @@ jgb/I/pricing-calc-by-estate-count｜怎麼用物件數量試算方案價格？�
 jgb/I/pricing-quota-near-full-notice｜物件額度快滿了會怎樣？（剩 5 個以下觸發提醒，剛好剩 5 個另寄 Email）｜target_user=property_manager｜
 jgb/I/pricing-enterprise-plan-offer｜企業方案提供什麼？（客製化 LOGO 頁與網址頁，需另外聯繫洽談）｜target_user=property_manager,prospect｜
 jgb/I/pricing-trial-plan-landing-page｜體驗方案介紹頁講什麼？（每月費用試算、體驗方案資格需求、客戶見證、免費試用／免費諮詢按鈕）｜target_user=property_manager,prospect｜
-jgb/I/pricing-plan-price-basis｜方案價格怎麼算、年繳有折扣嗎？（各方案單價從系統價格表讀取；一般方案年繳等於 10 個月的月費）｜target_user=property_manager,prospect｜
+jgb/I/pricing-plan-price-basis｜方案價格怎麼算？（各方案單價從系統價格表讀取）｜target_user=property_manager,prospect｜
 jgb/I/pricing-quota-full-block｜物件額度用滿了會怎樣？（新增物件、匯入等入口會被擋下並提示升級方案）｜target_user=property_manager｜
 jgb/I/pricing-landlord-initial-plan｜建立房東身分時會拿到什麼方案？（企業團隊與社宅房東自動取得免費方案；個人房東一般也是，透過特定優惠或行銷活動連結註冊時則取得活動指定的方案）｜target_user=property_manager,prospect｜
 ### I-subscription-payment 訂閱、付款與訂單 {#I-subscription-payment}

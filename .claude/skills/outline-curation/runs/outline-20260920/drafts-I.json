@@ -668,7 +668,7 @@
     {
      "proposed_id": "jgb/I/pricing-plan-price-basis",
      "askable": "方案的實際價格數字是寫在系統裡的嗎、年繳有打折嗎",
-     "title": "方案價格怎麼算、年繳有折扣嗎？（各方案單價從系統價格表讀取；一般方案年繳等於 10 個月的月費）",
+     "title": "方案價格怎麼算？（各方案單價從系統價格表讀取）",
      "unit_ids": [
       "page:listings.pricing"
      ],
@@ -682,13 +682,11 @@
      "instance_applicability": "general",
      "phrasings": [
       "方案價格數字",
-      "年繳折扣多少",
       "體驗方案價格怎麼算",
       "方案價格從哪裡算出來"
      ],
      "sentences": [
-      "包含體驗方案在內，各方案的實際單價與級距價格都是從系統的方案物件價格表讀出來的，不是固定寫死的數字，因此這裡無法列出各級距的金額。",
-      "一般依物件數量分級方案的年繳費用，計算方式是月費乘以 10（等於少收 2 個月的費用）；體驗方案的年繳費用則是月費乘以 12，沒有這個折扣。"
+      "包含體驗方案在內，各方案的實際單價與級距價格都是從系統的方案物件價格表讀出來的，不是固定寫死的數字，因此這裡無法列出各級距的金額。"
      ],
      "sources": [
       "code:app/Http/Controllers/UserController.php",
@@ -699,11 +697,6 @@
        "sentence_index": 0,
        "source": "code:app/Helper.php",
        "quote_or_symbol": "$planEstatePrices = DB::table('plan_estate_prices')->select(['number_min', 'number_max', 'unit_price', 'basic_price', 'price_type', 'currency'])->where('currency', '=', $currency)->get()->all();"
-      },
-      {
-       "sentence_index": 1,
-       "source": "code:app/Helper.php",
-       "quote_or_symbol": "// 目前年繳的費用計算方式為 月繳費用*10，體驗方案則是月繳費用*12"
       }
      ],
      "not_supported_greps": [

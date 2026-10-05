@@ -2,7 +2,7 @@
   "audience": "jgb",
   "budget_tokens": 0,
   "business_types": [],
-  "canon_sha256": "132fe07cc6bd1f728bc4fd969640b6c70e206dc6fce8328c025322507ec98ace",
+  "canon_sha256": "9ee991cd9760e39bb55617501c5f08f10b6edc64f440481751193d2d38816758",
   "coarses": [
     {
       "fines": [
@@ -19634,10 +19634,10 @@
           ],
           "categories": [],
           "coarse_id": "F-repair-list",
-          "content_sha256": "ede410c40bae0b60f026ba730e4c2f5b016ca9e2ab45b88a7c21ca955deb008b",
+          "content_sha256": "efae84b60228c731c68e7515a29271475cf4cd0b54d9107e7126d401815732df",
           "content_units": [
             "每一列會顯示物件地址、分類＆項目、報修日期、「最後更新」、結算金額、房東/管理者、租客這幾個欄位。",
-            "「房東/管理者」這欄顯示的是被指派負責這張修繕單的房東方帳號；「租客」這欄顯示的是這張修繕單本身記錄到的租客資料，只有在提出這張報修申請的人是租客本人時才會有值——如果這張修繕單是房東方提出的，這欄就會是空的，系統不會另外去查這個物件目前實際的承租人是誰來補上。",
+            "「房東/管理者」這欄顯示的是被指派負責這張修繕單的房東方帳號；「租客」這欄顯示的是這張修繕單本身記錄到的租客資料，系統不會另外去查這個物件目前實際的承租人是誰來補上，所以這張修繕單沒有記錄到租客資料時，這欄就是空的（只顯示「-」）。",
             "如果這個分類目前尚未累積任何修繕單，表格會顯示「此分類目前尚未有修繕單」的提示文字，而不是報錯畫面。"
           ],
           "id": "jgb/F/repair-list-columns",
@@ -19661,11 +19661,14 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-28",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
-            "code:src/pages/repair/list/Index.vue"
+            "code:src/pages/repair/list/Index.vue",
+            "code:app/Http/Controllers/RepairController.php",
+            "code:app/Repair.php",
+            "code:src/components/SurelyVue/Common/SingleUserCell.vue"
           ],
           "target_user": [
             "property_manager"
@@ -20009,9 +20012,9 @@
           ],
           "categories": [],
           "coarse_id": "F-repair-list",
-          "content_sha256": "54720274d080a5f05fe4ac0ba9d6c3e65618780bbd445879dbc728290cf51585",
+          "content_sha256": "b21094e58ea81a5ca07e30663b192b1cc094f5a46dadc0c1fca678341ba7f17c",
           "content_units": [
-            "點一下「房東/管理者」這一欄，會跳出一張聯絡資訊卡，顯示這個帳號的聯絡資訊；點「租客」這一欄也會跳出同樣形式的聯絡資訊卡，顯示這欄記錄到的租客聯絡資訊（如果這欄沒有聯絡人資料，畫面會跳出「沒有聯絡人資訊」的提示，另見「修繕單總表的表格欄位顯示什麼」）。"
+            "點一下「房東/管理者」這一欄，會跳出一張聯絡資訊卡，顯示這個帳號的聯絡資訊；點「租客」這一欄也會跳出同樣形式的聯絡資訊卡，顯示這欄記錄到的租客聯絡資訊；如果這欄沒有聯絡人資料，畫面只會顯示「-」，不能點，點了也不會跳出提示（另見「修繕單總表的表格欄位顯示什麼」）。"
           ],
           "id": "jgb/F/repair-list-contact-card",
           "instance_applicability": "general",
@@ -20034,11 +20037,12 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-28",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
-            "code:src/pages/repair/list/Index.vue"
+            "code:src/pages/repair/list/Index.vue",
+            "code:src/components/SurelyVue/Common/SingleUserCell.vue"
           ],
           "target_user": [
             "property_manager"
@@ -20057,12 +20061,11 @@
           ],
           "categories": [],
           "coarse_id": "F-repair-apply",
-          "content_sha256": "d22508e0fe3f69ed3a59edcf9df32b455200a1ff7ad590b8521a90d07aef5493",
+          "content_sha256": "0667bbd1e7f3baf518265c542dd0fe1e4b253ddd5e7487c83c865099fb56d293",
           "content_units": [
-            "房東方從【修繕管理】>【修繕單總表】、租客從【我的報修】>【修繕單總表】進入，頁面右上角都有「新增修繕單」按鈕。",
+            "房東方從【修繕管理】>【修繕單總表】、租客從【我的報修】>【修繕單總表】進入；租客頁面右上角有「新增修繕單」按鈕，房東方帳號則要有「新增&編輯&刪除所屬修繕資料」或「新增&編輯&刪除所有修繕資料」其中一項權限，才看得到這個按鈕。",
             "申請修繕分成三步：先選要報修的物件，再選修繕分類與項目，最後填報修細節後送出；第一步（選物件）下方的按鈕是「取消」與「下一步」，第二步（選分類）是「上一步」與「下一步」，第三步（填細節）則是「上一步」與「申請修繕」。",
             "租客可以自己在系統上申請報修，房東方也可以代租客申請；租客自己送出的修繕單，房東方與租客都看得到進度，但房東方在網頁上建立的修繕單目前不會同步到租客的修繕單總表，租客看不到。",
-            "房東方帳號如果要用這個流程，帳號要有「新增&編輯&刪除所屬修繕資料」或「新增&編輯&刪除所有修繕資料」其中一項權限；租客帳號則不需要另外的權限，登入即可申請。",
             "填完報修細節按下「申請修繕」送出後，系統會直接把使用者帶回修繕單總表的「申請修繕」分頁。",
             "LINE 在修繕流程裡用於通知（修繕單建立等階段會透過 LINE 推播），以及修繕單細節頁的分享按鈕；JGB 網頁介面沒有透過 LINE 發起報修的入口。"
           ],
@@ -20092,7 +20095,7 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-10-03",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
@@ -20103,7 +20106,8 @@
             "help:repair_zh-Hant.html",
             "code:app/Role.php",
             "code:src/pages/repair/applyProcess/_parts/Detail.vue",
-            "code:app/Notification.php"
+            "code:app/Notification.php",
+            "code:app/Http/Controllers/UserController.php"
           ],
           "target_user": [
             "property_manager"
@@ -20972,11 +20976,10 @@
           ],
           "categories": [],
           "coarse_id": "F-repair-share",
-          "content_sha256": "fce01cc3c9b82dd9d27be012fa9f3952217874baf35bb775c2ddf81295903784",
+          "content_sha256": "51b22810ca997268d4973dc5528f99c68cc6795a77de20b91d236d222983abeb",
           "content_units": [
-            "只要拿到分享連結網址，不需要登入、也不需要跟這張修繕單有任何關係，就能看到這張修繕單房東方的手機號碼或Email（團隊身分顯示公司電話／公司Email，個人房東顯示手機號碼／Email，另見「修繕單細節頁顯示哪些報修時填的資料」）、物件所在區域（只到國家、縣市、行政區，不含街道門牌）、報修照片，以及安排的廠商聯絡電話。",
             "「結算金額」在分享頁上要不要顯示，看的是瀏覽者目前自己登入 JGB 的身分是不是房東；如果瀏覽者根本沒有登入（分享頁本來就不需要登入），這個判斷會是否，所以看不到金額。",
-            "系統產生分享頁資料時，不會核對這個瀏覽者是不是這張修繕單相關的房東或租客——不管有沒有登入、登入的是誰，看到的內容都一樣。"
+            "系統產生分享頁資料時，不會核對這個瀏覽者是不是這張修繕單相關的房東或租客；「結算金額」是否顯示，只看瀏覽者目前登入的身分是不是房東，和是否與這張修繕單有關無關。"
           ],
           "id": "jgb/F/repair-share-visibility-summary",
           "instance_applicability": "general",
@@ -20999,7 +21002,7 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-28",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
@@ -21010,7 +21013,7 @@
             "property_manager",
             "prospect"
           ],
-          "title": "分享連結誰看得到？（拿到網址的任何人都能看到這張修繕單房東方的手機／Email、物件所在區域、照片、廠商聯絡電話；金額只有在瀏覽者本人目前登入身分是房東時才會顯示，且不會核對是不是這張修繕單相關的房東或租客）"
+          "title": "分享連結誰看得到？（金額只有在瀏覽者本人目前登入身分是房東時才會顯示，且不會核對是不是這張修繕單相關的房東或租客）"
         },
         {
           "business_types": [
@@ -21253,10 +21256,10 @@
           ],
           "categories": [],
           "coarse_id": "G-power-meter",
-          "content_sha256": "047cbd88980b1a670247ec461e81e1ebf3c8ead27672ec0845abfef593c76357",
+          "content_sha256": "a0961e04289c30850ade58951938dce45b0352ecb40a35725b0eadd1141a40d6",
           "content_units": [
             "清單另外有排序選單，可以依設備描述、目前電度、預計可用電度各自的大小排序。",
-            "門鎖、攝影機、小白盒清單沒有這些排序選項可選。"
+            "門鎖、攝影機、小白盒清單的排序選單只有「設備描述(大)」與「設備描述(小)」兩個選項，沒有依目前電度、預計可用電度排序的選項。"
           ],
           "id": "jgb/G/power-meter-list-sort",
           "instance_applicability": "general",
@@ -21279,16 +21282,19 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-28",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
-            "code:app/Iot.php"
+            "code:app/Iot.php",
+            "code:src/entry/iot.js",
+            "code:src/components/ListSearchBar.vue",
+            "code:resources/views/iot/index.blade.php"
           ],
           "target_user": [
             "property_manager"
           ],
-          "title": "電錶清單怎麼排序？（可依設備描述、目前電度、預計可用電度排序；門鎖、攝影機、小白盒清單沒有排序選單）"
+          "title": "電錶清單怎麼排序？（可依設備描述、目前電度、預計可用電度排序）"
         },
         {
           "business_types": [
@@ -21398,10 +21404,10 @@
           ],
           "categories": [],
           "coarse_id": "G-power-meter",
-          "content_sha256": "688f9049c357789ce280098b1052e7fa0955175c3bf5ca57c2391bd8e4775425",
+          "content_sha256": "6a06f8449f280cfcdc75ad9ec5f3568a3d1ac3c8db331271a9420eb24a13482e",
           "content_units": [
             "已到期或已回報連不上的帳號，每一個都會列出來；還沒發生問題的帳號最多只會列出最急的一行，如果剩餘天數在 30 天以內一定會列出來，天數還很遠、且已經有到期或連不上的紅字時，這一行日期才會被拿掉不顯示。",
-            "提示會寫出是哪一個帳號：已到期時寫「目前無法儲值送電，電錶度數也不會更新，請盡快向該廠商續訂」，30 天內快到期時才寫「到期後將無法儲值送電，電錶度數也不會更新，請盡快向該廠商續訂」。",
+            "提示會寫出是哪一個帳號：沒有回報連不上的帳號，已到期時會寫「目前無法儲值送電，電錶度數也不會更新，請盡快向」該帳號所屬廠商的名稱（例如台科電雲端儲值系統）再接「續訂」，30 天內快到期時才寫「到期後將無法儲值送電，電錶度數也不會更新，請盡快向」同樣接廠商名稱再接「續訂」。",
             "底下沒有接任何電錶的廠商帳號不會出現在提示裡。",
             "這組提示只有業者身分看得到，租客一律看不到；也只出現在電錶清單頁，單一電錶頁不會顯示。"
           ],
@@ -21431,18 +21437,19 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-28",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/iots/_parts/ManufacturerServiceNotice.jsx",
             "code:app/Http/Controllers/IotController.php",
-            "code:src/pages/iots/_parts/Single.vue"
+            "code:src/pages/iots/_parts/Single.vue",
+            "code:app/Iot.php"
           ],
           "target_user": [
             "property_manager"
           ],
-          "title": "電錶顯示「服務到期」或「快到期」怎麼辦？（30 天內到期會提醒續訂；只有業者看得到，只出現在清單頁）"
+          "title": "電錶顯示「服務到期」怎麼辦？（30 天內到期會提醒續訂；只有業者看得到，只出現在清單頁）"
         },
         {
           "business_types": [
@@ -21450,12 +21457,12 @@
           ],
           "categories": [],
           "coarse_id": "G-power-meter",
-          "content_sha256": "6c66bce5c9be17d44237fd13f0c3a097bf064680536d4d26cb393023732bd2de",
+          "content_sha256": "26d1f87f8618258daea74e6479c898069deceb5b77b189eeec8f188ab4c0b51b",
           "content_units": [
             "每一列會顯示設備名稱與序號、描述、目前電度、狀態標籤，以及所屬物件的縮圖。",
             "狀態旁邊會另外寫出這支電錶最後一次真的連線成功的時間，跟畫面上方「畫面開啟時間」不是同一件事：後者只是打開這一頁的當下。",
             "只有儲值型電錶會顯示預計可用電度（估算），一般型電錶這一欄固定顯示「非儲值電錶」。",
-            "儲值型電錶如果可用電度偏低，會在預計可用電度旁多顯示一個低電度警報標籤；這個警報的門檻值是廠商那邊同步過來的，JGB 介面本身沒有讓房東調整這個門檻的地方，儲值型分頁的清單最下面有一行提示，寫著若要修改低電度警報，要到台科電雲端儲值系統修改。"
+            "儲值型電錶如果可用電度偏低，會在預計可用電度旁多顯示一個低電度警報標籤；這個警報的門檻值，台科電那邊有回傳設定值就用它的，沒有回傳就用 JGB 系統預設的門檻值；JGB 介面本身沒有讓房東調整這個門檻的地方，儲值型分頁的清單最下面有一行提示，寫著若要修改低電度警報，要到台科電雲端儲值系統修改。"
           ],
           "id": "jgb/G/power-meter-list-row-fields",
           "instance_applicability": "general",
@@ -21483,14 +21490,15 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-28",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/iots/_parts/IotItem.jsx",
             "code:src/pages/iots/_parts/PowerTag.jsx",
             "code:app/Http/Controllers/Admin/CustomerServiceController.php",
-            "code:app/Jobs/DaeJob.php"
+            "code:app/Jobs/DaeJob.php",
+            "code:app/Iot.php"
           ],
           "target_user": [
             "property_manager"
@@ -21759,13 +21767,13 @@
           ],
           "categories": [],
           "coarse_id": "G-power-meter",
-          "content_sha256": "bbbc45c042bbee3d85f8de901cd15d3ed6b563149ed2c3604585592e87934f65",
+          "content_sha256": "cd497989ecb337ebd444b32fc9dc2a7554d80c8478421414554bcf847b032bab",
           "content_units": [
             "儲值型電錶的清單列本身就有一個「儲值」按鈕，不用先展開；一般型電錶的清單列不會出現這個按鈕。",
             "儲值金額固定是 1000、1500、2000、2500 四個選項其中一個，沒有可以自己輸入金額的欄位。",
             "電錶原廠系統維護中、或目前連不上廠商時，這支電錶清單列上的「儲值」按鈕會直接變灰、無法點擊，是把按鈕鎖住，不是點下去才跳出提示視窗。",
             "儲值後會在帳務管理產生一筆帳單，繳費方式會跟著合約約定的繳款方式走。",
-            "儲值送出後，可以到電錶編輯頁的電錶資料頁籤、「電錶儲值歷程」清單裡查到這一筆的儲值時間、金額、儲值前後金額與操作者。"
+            "儲值送出後，要等這次儲值確實入到電錶、完成之後，這一筆才會出現在電錶編輯頁的電錶資料頁籤、「電錶儲值歷程」清單裡，內容有儲值時間、金額、儲值前後金額與操作者；剛送出、還沒完成的儲值，在這份清單裡查不到。"
           ],
           "id": "jgb/G/power-meter-topup-flow",
           "instance_applicability": "general",
@@ -21793,13 +21801,15 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-28",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/iots/_parts/IotItem.jsx",
             "code:src/components/Lightbox/PowerMeterTopUp.vue",
-            "code:src/pages/iots/edit/Log.jsx"
+            "code:src/pages/iots/edit/Log.jsx",
+            "code:app/Iot.php",
+            "code:app/Http/Controllers/IotController.php"
           ],
           "target_user": [
             "property_manager"
@@ -21955,10 +21965,10 @@
           ],
           "categories": [],
           "coarse_id": "G-device-page",
-          "content_sha256": "dbf885d454ff50ef8faf73223c2f46c6fd67085313afbd88273ff9a7a3f44155",
+          "content_sha256": "61d2394ec537886aed71c7240278068fea8c51ff98476eba12aedc3f6f313a5c",
           "content_units": [
             "門鎖、攝影機、小白盒各自有獨立的裝置清單頁，欄位固定是型號＆序號、描述、狀態、所屬物件四欄。",
-            "可以用關鍵字搜尋描述、序號、設備型號或所屬物件名稱其中一種；這幾種裝置清單沒有像電錶清單那樣的大小排序選單。",
+            "可以用關鍵字搜尋描述、序號、設備型號或所屬物件名稱其中一種；清單另外有排序選單，只有「設備描述(大)」與「設備描述(小)」兩個選項，沒有像電錶清單那樣依目前電度、預計可用電度排序的選項。",
             "清單裡完全沒有綁定設備時，會提示尚無綁定設備，並附上前往進階設定綁定廠商的連結。"
           ],
           "id": "jgb/G/device-page-shared-list",
@@ -21987,18 +21997,20 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-28",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:resources/views/iot/index.blade.php",
-            "code:app/Iot.php"
+            "code:app/Iot.php",
+            "code:src/entry/iot.js",
+            "code:src/components/ListSearchBar.vue"
           ],
           "target_user": [
             "property_manager",
             "prospect"
           ],
-          "title": "門鎖／攝影機／小白盒清單長什麼樣？（型號序號、描述、狀態、所屬物件四欄，可依關鍵字搜尋，沒有排序選單）"
+          "title": "門鎖／攝影機／小白盒清單長什麼樣？（型號序號、描述、狀態、所屬物件四欄，可依關鍵字搜尋）"
         },
         {
           "business_types": [
@@ -22006,11 +22018,11 @@
           ],
           "categories": [],
           "coarse_id": "G-device-page",
-          "content_sha256": "2fc49f7df6aba87875045469b31a24b96229c1ca971b895d7b40987d06d55d7c",
+          "content_sha256": "5abe3d05da806e69c457f6c880a00bef6bd2c532ceb314f02e506e7c2093f2f3",
           "content_units": [
             "在門鎖清單每一列可以直接按開門，按下後會先跳出確認視窗，確認才會真的送出開門指令。",
             "鎖門按鈕只有 SkyWatch 品牌的門鎖才有，其他廠商的門鎖清單上只會看到開門一個按鈕。",
-            "SkyWatch 門鎖的狀態欄位會直接顯示已開門或已關門，其他門鎖只會顯示連線中或未連線，不會顯示目前開或關。",
+            "SkyWatch 門鎖在連線且回報得到開關狀態時，狀態欄位會直接顯示已開門或已關門；其他門鎖連線時只會顯示連線中，不會顯示目前開或關；任何門鎖未連線時，狀態欄位都只顯示未連線。",
             "門鎖離線（未連線）時開門/鎖門按鈕都不會顯示。",
             "門鎖顯示未連線時，畫面上沒有提供排查步驟或重新連線的操作說明，只能看到未連線這個狀態字樣本身。"
           ],
@@ -22040,7 +22052,7 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-28",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
@@ -23150,10 +23162,9 @@
           ],
           "categories": [],
           "coarse_id": "I-pricing",
-          "content_sha256": "cf980c9621a50ffec4005ce395d53312e34936dee1f1ce0069bb5d8b50274bf7",
+          "content_sha256": "745ed8fe2fc8c7e4bfd4463ec76ba903389d0ce7e15989ea98c5e8f276e52305",
           "content_units": [
-            "包含體驗方案在內，各方案的實際單價與級距價格都是從系統的方案物件價格表讀出來的，不是固定寫死的數字，因此這裡無法列出各級距的金額。",
-            "一般依物件數量分級方案的年繳費用，計算方式是月費乘以 10（等於少收 2 個月的費用）；體驗方案的年繳費用則是月費乘以 12，沒有這個折扣。"
+            "包含體驗方案在內，各方案的實際單價與級距價格都是從系統的方案物件價格表讀出來的，不是固定寫死的數字，因此這裡無法列出各級距的金額。"
           ],
           "id": "jgb/I/pricing-plan-price-basis",
           "instance_applicability": "general",
@@ -23162,11 +23173,6 @@
               "source": "draft:outline-20260920",
               "status": "proposed",
               "text": "方案價格數字"
-            },
-            {
-              "source": "draft:outline-20260920",
-              "status": "proposed",
-              "text": "年繳折扣多少"
             },
             {
               "source": "draft:outline-20260920",
@@ -23181,7 +23187,7 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-10-03",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
@@ -23192,7 +23198,7 @@
             "property_manager",
             "prospect"
           ],
-          "title": "方案價格怎麼算、年繳有折扣嗎？（各方案單價從系統價格表讀取；一般方案年繳等於 10 個月的月費）"
+          "title": "方案價格怎麼算？（各方案單價從系統價格表讀取）"
         },
         {
           "business_types": [

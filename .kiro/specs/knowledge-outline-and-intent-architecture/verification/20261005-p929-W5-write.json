@@ -1,0 +1,206 @@
+{
+ "kind": "write",
+ "verdict": "CONFIRMED",
+ "base": "29f991c5517dc1d07b9dc168b17238585c126c19",
+ "claim": "Plan 9.29 寫入核對 W5：11 條細目的標題與每一句已逐句對合法來源核對，逐條結果如 fines",
+ "fines": [
+  {
+   "id": "jgb/F/repair-apply-flow-and-entry",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "0667bbd1e7f3baf518265c542dd0fe1e4b253ddd5e7487c83c865099fb56d293",
+   "title_text": "怎麼申請修繕單？（房東方從【修繕管理】>【修繕單總表】、租客從【我的報修】>【修繕單總表】右上角「新增修繕單」進入，選物件→選分類項目→填報修細節→送出，按「上一步」「下一步」在步驟間切換）",
+   "notes": [
+    "標題：選單名稱、右上角按鈕、三步流程與上一步／下一步都被句 1、2 支撐（app/Role.php＋「___('修繕管理') : ___('我的報修')」；src/pages/repair/list/Index.vue＋「新增修繕單」）。",
+    "句 1：app/Role.php＋「$this->config_rule_type === 'landlord' ? ___('修繕管理') : ___('我的報修')」與子項「___('修繕單總表')」；src/pages/repair/list/Index.vue＋「config_rule_type === 'tenant' || (store.state.userData?.role?.config_rule_type === 'landlord' && (store.state.userData?.permission?.edit_repair || store.state.userData?.permission?.edit_owner_repair))」包住「新增修繕單」；app/Http/Controllers/UserController.php＋「新增&編輯&刪除所屬修繕資料」「新增&編輯&刪除所有修繕資料」。成立。",
+    "句 2：src/pages/estates/pick/_parts/pick.jsx＋「case EstatePickAction.repairCreate」BottomNav prevText=\"取消\"，nextText 用 src/components/BottomNav.vue 預設「default: '下一步'」；src/utils/constants/repair.constant.ts＋「bottomNavPrevText」兩步皆「上一步」、bottomNavNextText 為「下一步」「申請修繕」。成立。",
+    "句 3：app/Role.php＋「function repairs」租客端只撈「where('is_notice_tenant', 1)」；app/Http/Controllers/RepairController.php＋「$createData['is_notice_tenant'] = true」（租客發起強制通知）；房東發起取前端 is_notice_tenant，src/pages/repair/applyProcess/_parts/Detail.vue＋「<SwitchButton :model=\"repairForm.is_notice_tenant\" />」無切換邏輯、Index.vue 預設「is_notice_tenant: false」。幫助中心 repair_zh-Hant.html 寫「不管是從哪一方發起…雙方都可以在系統上查看」，與程式衝突，依規則 5 以程式為準。成立。",
+    "句 4：src/pages/repair/applyProcess/Index.vue＋「router.push(redirectRoute.default)」；src/utils/constants/repair.constant.ts＋「default: { name: 'repair.apply' }」；src/routes/repairs.js＋「labelKey: '申請修繕'」。成立。",
+    "句 5：app/Notification.php＋「case 'repair_create'」內「botbonnie_api('push', 'line'」；src/pages/repair/edit/_parts/ApplicationDetail.vue＋「social-plugins.line.me/lineit/share」；建立修繕單的唯一呼叫是 src/pages/repair/applyProcess/Index.vue＋「/api2/repairItem/create」（grep 'repairItem/create' 於 src 只此一處；正對照：grep 'lineit' 有命中 ApplicationDetail.vue）。成立。"
+   ]
+  },
+  {
+   "id": "jgb/F/repair-list-columns",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "efae84b60228c731c68e7515a29271475cf4cd0b54d9107e7126d401815732df",
+   "title_text": "修繕單總表的表格欄位顯示什麼？（物件地址、分類＆項目、報修日期、最後更新、結算金額、房東/管理者、租客）",
+   "notes": [
+    "標題：七欄與句 1 一致。",
+    "句 1：src/pages/repair/list/Index.vue＋「t('物件地址')」「t('分類＆項目')」「t('報修日期')」「t('最後更新')」「t('結算金額')」「t('房東/管理者')」「t('租客')」。成立。",
+    "句 2：app/Http/Controllers/RepairController.php＋「'main_agent'=> [」取修繕單上的 agent_user_id／agent_*，「'tenant'=> $repair->tenant_info」；app/Repair.php＋「getTenantInfoAttribute」只用修繕單記錄的 to_user_id／to_role_id 查承租人資料，任一為空即回空陣列；房東建立時 RepairController.php＋「'to_role_id' => null」；src/components/SurelyVue/Common/SingleUserCell.vue＋「isEmpty(props?.id) || isEmpty(props?.name)」時顯示「'-'」。成立。",
+    "句 3：src/pages/repair/list/Index.vue＋「此分類目前尚未有修繕單」於 #emptyText。成立。"
+   ]
+  },
+  {
+   "id": "jgb/F/repair-list-contact-card",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "b21094e58ea81a5ca07e30663b192b1cc094f5a46dadc0c1fca678341ba7f17c",
+   "title_text": "修繕單總表點「房東/管理者」或「租客」欄位會怎樣？（會彈出這個人的聯絡資訊卡）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/pages/repair/list/Index.vue＋「@click=\"()=>contactCardState.open(agent, 'agent')\"」與「contactCardState.open(tenant)」共用 <ContactCard>；src/components/SurelyVue/Common/SingleUserCell.vue＋「<div v-if=\"isEmpty(props?.id) || isEmpty(props?.name)\">{{ '-' }}</div>」該 div 無 @click，只有 v-else 分支綁「@click=\"handleClick\"」，故顯示「-」時點了不會觸發任何提示。成立。"
+   ]
+  },
+  {
+   "id": "jgb/F/repair-share-visibility-summary",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "51b22810ca997268d4973dc5528f99c68cc6795a77de20b91d236d222983abeb",
+   "title_text": "分享連結誰看得到？（金額只有在瀏覽者本人目前登入身分是房東時才會顯示，且不會核對是不是這張修繕單相關的房東或租客）",
+   "notes": [
+    "標題：由句 1、2 支撐。",
+    "句 1：src/pages/repair/share/Index.vue＋「:showAmount=\"store.state.userData?.role?.config_rule_type === 'landlord'\"」；src/pages/repair/_parts/MemoArea.vue＋「v-if=\"props?.showAmount\"」包住「結算金額」；routes/web.php＋「/api2/repairItem/share/{id?}', 'RepairController@share'」未掛 need_login。未登入時 userData 為空，判斷為否。成立。",
+    "句 2：app/Http/Controllers/RepairController.php＋「if ( $isShare ) { $repair = Repair::find($id);」分享分支只用編號查單，沒有身分或關係比對；金額顯示條件同上 share/Index.vue。成立。"
+   ]
+  },
+  {
+   "id": "jgb/G/device-page-lock-open-close",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "5abe3d05da806e69c457f6c880a00bef6bd2c532ceb314f02e506e7c2093f2f3",
+   "title_text": "門鎖清單怎麼直接開門／鎖門？（開門一定有、鎖門只有特定廠商支援；離線時按鈕不會顯示）",
+   "notes": [
+    "標題：「開門一定有」配合「離線時按鈕不會顯示」的限定成立（app/Http/Controllers/IotController.php＋「if ($iot->type == 'lock') { $hasAction = true;」）。",
+    "句 1：resources/views/iot/index.blade.php＋「lightboxOpen(`lb_dialog_setlockopen_${device.id}`)」開「您確認要開鎖嗎？」視窗，按「確定」才呼叫「toggleLock('{{route('iots.set-lock')}}', 'unlock'」。成立。",
+    "句 2：app/Http/Controllers/IotController.php＋「if ($iot->manufacturer === 'SkyWatch') { $hasCloseAction = true;」；index.blade.php＋「v-if=\"device.has_close_action\"」包住「鎖門」。成立（此處指開關門按鈕；該列另有編輯圖示，非開關門控制）。",
+    "句 3：同上 index.blade.php＋「device.is_locked === 0 && deviceGroup.device_type === 'lock' && device.manufacturer === 'SkyWatch'」顯示「已開門」、is_locked === 1 顯示「已關門」，否則「連線中」；status 非 200 顯示「未連線」。成立。",
+    "句 4：同上 index.blade.php＋「v-if=\"deviceGroup.device_type === 'lock' && device.has_action && device.status === 200\"」包住開門／鎖門按鈕。成立。",
+    "句 5：同上 index.blade.php＋未連線分支只有「icon_iots_unconnect.svg」與「{{___('未連線')}}」，無其他說明或操作。成立。"
+   ]
+  },
+  {
+   "id": "jgb/G/device-page-shared-list",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "61d2394ec537886aed71c7240278068fea8c51ff98476eba12aedc3f6f313a5c",
+   "title_text": "門鎖／攝影機／小白盒清單長什麼樣？（型號序號、描述、狀態、所屬物件四欄，可依關鍵字搜尋）",
+   "notes": [
+    "標題：由句 1、2 支撐。",
+    "句 1：routes/web.php＋「->where('deviceType', '^lock|camera|gateway$')」→ IotController@index 回「view('iot.index'」；resources/views/iot/index.blade.php＋「型號＆序號」「描述」「狀態」「所屬物件」四個表頭，且「v-show=\"deviceGroup.device_type === deviceType」只顯示當前類型。成立。",
+    "句 2：同上 index.blade.php＋select-picker 選項「name: t('描述'), sn: t('序號'), model: t('設備型號'), estates_name: t('所屬物件名稱')」，排序用「:sort-options=\"iot.sortOptions\"」；src/entry/iot.js＋「sortOptions: { 1: t('設備描述(大)'), 2: t('設備描述(小)') }」；app/Iot.php＋「getSortOption」電度排序只在 case 'power_meter'。成立。",
+    "句 3：同上 index.blade.php＋「{{___('目前尚無綁定設備')}}」與「如需綁定智能設備廠商，請至 [s1][s2] > [s3][s4] 內設定。」連結「toUsersAdvPage()」（___('進階設定')）。成立。"
+   ]
+  },
+  {
+   "id": "jgb/G/power-meter-list-row-fields",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "26d1f87f8618258daea74e6479c898069deceb5b77b189eeec8f188ab4c0b51b",
+   "title_text": "電錶清單每一列顯示什麼？（型號序號、目前電度、狀態、所屬物件；儲值型才有預計可用電度與低電度警報）",
+   "notes": [
+    "標題：由句 1、3、4 支撐。",
+    "句 1：src/pages/iots/_parts/IotItem.jsx＋「t('設備名稱＆序號')」「t('描述')」「t('目前電度')」＋<PowerTag status=…>、所屬物件「thumbnail-circle」縮圖（未綁定顯示「尚未綁定」）。成立。",
+    "句 2：同上 IotItem.jsx＋「{ t('最後連線成功') } { props.last_online_at || t('無紀錄') }」；src/pages/iots/list/Index.jsx＋「t('畫面開啟時間')」顯示「searchState.data.last_updated_at」；app/Iot.php＋「'last_updated_at'   =>  format_timezone('Y/m/d H:i:s', date('Y/m/d H:i:s')」為當下時間。成立。",
+    "句 3：同上 IotItem.jsx＋「props.type === 'topUp'」才顯示 available_meter，否則「t('非儲值電錶')」；app/Iot.php＋「if ( $this->is_topup == 1 ) { $type = 'topUp';」。成立。",
+    "句 4：src/pages/iots/_parts/PowerTag.jsx＋「t('低電度警報')」，IotItem.jsx 只在 topUp 分支放「<PowerTag isLowerPower={props.is_lower_power} />」；app/Jobs/DaeJob.php＋「$lowMeterValue = 20;」「if ( array_key_exists('lower-limit-credit-value', $deviceInfo) )」；src/pages/iots/list/Index.jsx＋「route.params.type === 'topUp' && !isEmpty(searchState?.data?.list)」時顯示「若欲修改低電度警報，請至 [s1] 修改低電度警報數值。」連到「台科電雲端儲值系統」。成立。"
+   ]
+  },
+  {
+   "id": "jgb/G/power-meter-list-sort",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "a0961e04289c30850ade58951938dce45b0352ecb40a35725b0eadd1141a40d6",
+   "title_text": "電錶清單怎麼排序？（可依設備描述、目前電度、預計可用電度排序）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：app/Iot.php＋「case 'power_meter':」下「設備描述(大)」「設備描述(小)」「目前電度(大)」「目前電度(小)」「預計可用電度(大)」「預計可用電度(小)」；app/Http/Controllers/IotController.php＋「'sortOptions'   =>  Iot::getSortOption($deviceType, $lang)」。成立。",
+    "句 2：src/entry/iot.js＋「1: t('設備描述(大)'), 2: t('設備描述(小)')」；resources/views/iot/index.blade.php＋「:sort-options=\"iot.sortOptions\"」。成立。"
+   ]
+  },
+  {
+   "id": "jgb/G/power-meter-service-expiry",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "6a06f8449f280cfcdc75ad9ec5f3568a3d1ac3c8db331271a9420eb24a13482e",
+   "title_text": "電錶顯示「服務到期」怎麼辦？（30 天內到期會提醒續訂；只有業者看得到，只出現在清單頁）",
+   "notes": [
+    "標題：由句 1、2、4 支撐（app/Http/Controllers/IotController.php＋「MANUFACTURER_SERVICE_WARN_DAYS = 30」）。",
+    "句 1：app/Http/Controllers/IotController.php＋「reduceManufacturerServices」：danger 全留、upcoming 只取「$primary = isset($upcoming[0])」，且「$primary['level'] === 'normal' && !empty($urgent)」時才不留。成立。",
+    "句 2：src/pages/iots/_parts/ManufacturerServiceNotice.jsx＋「目前無法儲值送電，電錶度數也不會更新，請盡快向[s1]續訂。」（level danger 且非 unreachable）與「到期後將無法儲值送電，電錶度數也不會更新，請盡快向[s1]續訂。」（warning）；帳號以「t('帳號') } { props.service.account」顯示；廠商名取 app/Iot.php＋「'name'  =>  '台科電雲端儲值系統'」。成立。",
+    "句 3：app/Http/Controllers/IotController.php＋「->whereExists(function($query) { … ->whereRaw('iots.manufacturer_id = m.id');」。成立。",
+    "句 4：同上 IotController.php＋「$role->config_rule_key == Role::RULE_KEY_TENANT ) { return [];」；manufacturer_services 只在 list() 回傳，single() 不回；src/pages/iots/_parts/Single.vue＋「<ManufacturerServiceNotice :services=\"state.form.vendor_connectivity\" />」只畫連線提示，不畫到期資料。成立。"
+   ]
+  },
+  {
+   "id": "jgb/G/power-meter-topup-flow",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "cd497989ecb337ebd444b32fc9dc2a7554d80c8478421414554bcf847b032bab",
+   "title_text": "電錶怎麼儲值？（「儲值」按鈕就在清單列上，不用展開；金額固定四個選項，維護中或連不上廠商時按鈕會變灰）",
+   "notes": [
+    "標題：由句 1、2、3 支撐。",
+    "句 1：src/pages/iots/_parts/IotItem.jsx＋「display: props.type === 'normal' ? 'none' : ''」的「t('儲值')」按鈕位於列本身、在 expand-content 之外。成立。",
+    "句 2：src/components/Lightbox/PowerMeterTopUp.vue＋「value={1000}」「value={1500}」「value={2000}」「value={2500}」。另有「route.query?.customAmount === '1'」才出現的 QA 測試輸入框（註解「待測試結束後要拿掉」），一般介面不出現，見 findings。成立。",
+    "句 3：src/pages/iots/_parts/IotItem.jsx＋「state.isMaintaining || state.isVendorUnreachable) ? 'disabled' : ''」；src/styles/components/Btn.sass＋「&.disabled」「pointer-events: none !important」，按鈕無法點擊。成立。",
+    "句 4：src/components/Lightbox/PowerMeterTopUp.vue＋「儲值後，可在帳務管理找到本次儲值的帳單」與「儲值方式綁定合約中所約定的繳款方式」；app/Http/Controllers/IotController.php＋「$bill = $iot->genBill(」。成立。",
+    "句 5：app/Iot.php＋「getTopUpLog」「where('is_finish', '=', 1)」；app/Http/Controllers/IotController.php＋「topUpLog」回 topup_at／topup_amount／before_amount／after_amount／operator；src/pages/iots/edit/Log.jsx＋「t('電錶儲值歷程')」「t('儲值時間')」「t('儲值金額')」「t('儲值前金額')」「t('儲值後金額')」「t('操作者')」。成立。"
+   ]
+  },
+  {
+   "id": "jgb/I/pricing-plan-price-basis",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "745ed8fe2fc8c7e4bfd4463ec76ba903389d0ce7e15989ea98c5e8f276e52305",
+   "title_text": "方案價格怎麼算？（各方案單價從系統價格表讀取）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：app/Helper.php＋「function get_plan_price」從「DB::table('plan_estate_prices')->select(['number_min', 'number_max', 'unit_price', 'basic_price', 'price_type', 'currency'])」讀單價與級距；app/Http/Controllers/ApiController.php＋「get_plan_price(10, 'month', $toCurrency)」（體驗方案 10 物件）以及 50、100、150、200… 各級距都走同一函式。年繳倍數（「basic_price']*10」「*12」）寫在程式裡，但單價與級距價本身取自價格表。成立。"
+   ]
+  }
+ ],
+ "findings": [
+  "src/pages/listings/DemoForm.vue 中「職稱」「物件數量」「團隊人數」三個 <Multiselect> 都寫了 required，但 jgb/I/demo-form-actual-validation-scope 句 1 和 jgb/I/demo-form-fields 句 2 列「設了必填」的欄位時都只列 8 項，兩條漏的是同樣三項。建議先確認 @vueform/multiselect 2.5.1 的 required（假 input）在現行畫面上會不會觸發原生驗證，再統一修正兩條。",
+  "幫助中心 repair_zh-Hant.html 寫「不管是從哪一方發起「申請派修單」雙方都可以在系統上查看」，與程式不一致：app/Role.php＋「function repairs」租客端只撈 is_notice_tenant=1，房東在網頁建立的單 is_notice_tenant 實際為 false。jgb/F/repair-apply-flow-and-entry 句 3 已依程式寫成「租客看不到」，與同粗目 jgb/F/repair-apply-notifications 句 2 一致；需要修的是文件那一側。",
+  "src/components/Lightbox/PowerMeterTopUp.vue 留著 QA 測試用的自訂金額輸入框（「route.query?.customAmount === '1'」，註解寫明待測試結束要拿掉）。後端 app/Http/Controllers/IotController.php 的 topUp POST 只檢查「empty($topUpAmount)」，沒有限制在四個金額內。這不影響 jgb/G/power-meter-topup-flow 句 2 對一般介面的描述，但 URL 加參數就能繞過，供主持人參考。",
+  "src/pages/listings/pricing/TrialPlan.vue＋「getExchangeCurrency('TWD', store.state.siteOptions.dollarSign, 100)」：體驗方案介紹頁的「每月只需」金額是寫死的台幣 100 元，不是讀價格表。jgb/I/pricing-plan-price-basis 講的是實際計價單價，所以不衝突；不過若被理解成「頁面上所有價格數字都不是寫死的」就會不精確。"
+ ],
+ "source_transcript": "a29e90ce37bcd74c7.output"
+}
