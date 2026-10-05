@@ -259,12 +259,12 @@ jgb/C/team-public-page-recruitment｜多團隊招募頁和一般招租店舖有�
 ## D 租約（含委託約子題） {#D}
 scope: 合約建立、簽署、狀態與階段、續約、退租、違約金、租客邀請簽約；委託約（僅法人房東）；⛔ 帳單與押金金流歸 E
 ### D-contract-list 合約列表與搜尋 {#D-contract-list}
-jgb/D/contract-list-status-tabs｜合約列表有哪些狀態頁籤？（待發送合約／待租客簽回／待房東簽名／執行中合約／歷史合約）｜target_user=property_manager｜
+jgb/D/contract-list-status-tabs｜合約列表有哪些狀態頁籤？｜target_user=property_manager｜
 jgb/D/contract-search-keyword-scope｜合約列表怎麼搜尋合約？（案名／地址／租客／ID／手機／信箱六種關鍵字，另有進階搜尋）｜target_user=property_manager｜
 jgb/D/contract-create-entry｜怎麼建立一份新合約？（合約總表右上角「建立合約」，或物件總表小齒輪選建立合約）｜target_user=property_manager｜
 jgb/D/contract-create-estate-completeness-requirement｜物件要先刊登廣告才能建立合約嗎？（現行規則是必填欄位要填齊，不是看刊登狀態）｜target_user=property_manager｜
-jgb/D/contract-list-row-gear-actions｜合約總表列的小齒輪可以做什麼操作？（不論狀態都有「查看物件」「查看帳單」；其餘依合約狀態、身分與權限增減）｜target_user=property_manager｜
-jgb/D/contract-list-row-sort-options｜合約總表可以怎麼排序？（依名稱、更新時間、合約起始日、終止日、成立日，各分新舊／早晚，共 5 種依據）｜target_user=property_manager｜
+jgb/D/contract-list-row-gear-actions｜合約總表列的小齒輪可以做什麼操作？（不論狀態都有「查看帳單」；其餘依合約狀態、身分與權限增減）｜target_user=property_manager｜
+jgb/D/contract-list-row-sort-options｜合約總表可以怎麼排序？（依名稱、更新時間、合約起始日、終止日、成立日，共 5 種依據）｜target_user=property_manager｜
 jgb/D/contract-list-columns｜合約總表有哪些欄位？（含團隊自訂的「標籤」欄）｜target_user=property_manager｜
 jgb/D/contract-list-deposit-alert｜合約總表的待退押金提示燈號是什麼意思？（合約到期前 30 天才能點退）｜target_user=property_manager｜
 jgb/D/contract-list-bill-currency-column｜合約總表什麼時候會多出「帳單幣別」欄？（只有在批次建立帳單、挑選合約的頁面才會出現，一般檢視沒有這一欄）｜target_user=property_manager｜
@@ -285,14 +285,14 @@ jgb/D/contract-tax-invoice｜稅與發票分頁怎麼設定？（是否開立發
 jgb/D/contract-bill-setting｜帳單設定分頁在做什麼？（預先編輯未來帳單的標題、金額、週期與自動執行動作）｜target_user=property_manager｜
 jgb/D/contract-payment-method｜合約收款方式有哪幾種？（線上金流、現金收款、固定虛擬帳號三種）｜target_user=property_manager｜
 jgb/D/contract-facilities-tab｜附設傢俱分頁在做什麼？（設定家具責任歸屬，簽約後會帶入點交清單）｜target_user=property_manager｜
-jgb/D/contract-situation-tab｜現況補充分頁要寫什麼？（車位、屋況、漏水處等內政部規範現況細節）｜target_user=property_manager｜
+jgb/D/contract-situation-tab｜現況補充分頁要寫什麼？（車位、屋況、漏水處等現況細節）｜target_user=property_manager｜
 jgb/D/contract-landlord-dealer-basic｜出租方基本資料分頁要填什麼？（個人／團隊資料自動帶入、指定經理人、法人房東可用電子簽名圖章）｜target_user=property_manager｜
 jgb/D/contract-building-transcript-optional｜建物謄本分頁是選填的嗎？（選填，僅供合約內容完備使用，不會顯示在廣告頁）｜target_user=property_manager｜
 jgb/D/contract-attachments-optional｜合約附件分頁能上傳什麼？（各類文件圖片或 PDF，最大 10MB）｜target_user=property_manager｜
-jgb/D/contract-additional-convention｜補充條款有字數限制嗎？（最多 50 行、每行 50 字，可套用範本與複製其他合約）｜target_user=property_manager｜
+jgb/D/contract-additional-convention｜補充條款有字數限制嗎？（可套用範本與複製其他合約）｜target_user=property_manager｜
 jgb/D/contract-edit-tabs-conditional-rules｜合約編輯分頁會依什麼條件增減？（紙本／客製化契約書、車位、特定合作團隊範本、稅務發票資格皆會影響）｜target_user=property_manager｜
 jgb/D/contract-edit-building-transcript-visibility｜「建物謄本」分頁什麼時候不會顯示？（只有選中／未選合約範本時才顯示，選到英越文或泰文版就會被拿掉）｜target_user=property_manager｜
-jgb/D/contract-lease-scope-by-space-type｜合約的租賃範圍怎麼決定？（物件空間型態為整戶時自動為「全部」，其餘一律「部分」，不用使用者勾選）｜target_user=property_manager｜
+jgb/D/contract-lease-scope-by-space-type｜合約的租賃範圍怎麼決定？（物件空間型態，不用使用者勾選）｜target_user=property_manager｜
 jgb/D/contract-tenant-code-change｜承租人編碼要異動怎麼辦？（此操作需由 JGB 客服協助）｜target_user=property_manager｜
 ### D-contract-edit-social-housing 建立與編輯社宅合約（房東基本資料與授權書、租客資格與證明文件、家庭與所得檢核、補貼修繕項目、照片檢核、點交，其餘分頁同一般） {#D-contract-edit-social-housing}
 jgb/D/social-housing-building-detail｜社宅合約「建物標的」分組有哪些分頁？（建物細節、現況補充、現況照片、附設傢俱四個分頁）｜target_user=property_manager｜
@@ -345,7 +345,7 @@ jgb/D/renew-batch-entry-and-selection｜怎麼一次幫多筆合約續約？（�
 jgb/D/renew-date-setting-modes｜續約日期怎麼設定？（多份合約可用快速日期設定一次加 N 個月，或個別指定每份合約的續約日）｜target_user=property_manager｜
 jgb/D/renew-upload-paper-signed｜續約可以上傳紙本已簽合約嗎？（只選一份紙本簽約的合約續約時可以，提供雙方已完成簽約的紙本合約掃描檔）｜target_user=property_manager｜
 jgb/D/renew-preview-bill-generation｜續約可以預先編輯帳單嗎？（續約預覽頁可先編輯續約期間帳單，實際帳單於完成續約後才產生）｜target_user=property_manager｜
-jgb/D/renew-signing-flow｜續約邀請發出後流程是什麼？（租客簽回後可在「待租客簽回」查找，房東確認無誤後立即簽名完成續約）｜target_user=property_manager｜
+jgb/D/renew-signing-flow｜續約邀請發出後流程是什麼？（房東確認無誤後立即簽名完成續約）｜target_user=property_manager｜
 jgb/D/renew-invite-review-days｜續約邀請效期是幾天？（預設 3 天，團隊可覆蓋設定）｜target_user=property_manager｜
 jgb/D/renew-data-carryover-rules｜續約時資料怎麼沿用？（新合約由舊合約複製，並更新出租方/承租方最新資料；週期設定有調整就用新的、沒調整就沿用）｜target_user=property_manager｜
 jgb/D/renew-deposit-difference-handling｜續約押金差額怎麼處理？（一般續約第一張帳單不列押金；只有特定合作團隊的延長續約會用原押金算差額；新合約無法直接沿用舊合約押金，一律列全額押金）｜target_user=property_manager｜

@@ -1,0 +1,116 @@
+[
+  {
+    "fine_id": "jgb/D/contract-list-status-tabs",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-27}",
+    "shelf": "D"
+  },
+  {
+    "fine_id": "jgb/D/contract-search-keyword-scope",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-27}",
+    "shelf": "D"
+  },
+  {
+    "fine_id": "jgb/D/contract-create-entry",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-27}",
+    "shelf": "D"
+  },
+  {
+    "fine_id": "jgb/D/contract-list-row-gear-actions",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-27}",
+    "shelf": "D"
+  },
+  {
+    "fine_id": "jgb/D/contract-list-row-sort-options",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-27}",
+    "shelf": "D"
+  },
+  {
+    "fine_id": "jgb/D/contract-rentbasic-template-and-dates",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-10-03}",
+    "shelf": "D"
+  },
+  {
+    "fine_id": "jgb/D/contract-tax-invoice",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-10-03}",
+    "shelf": "D"
+  },
+  {
+    "fine_id": "jgb/D/contract-situation-tab",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-27}",
+    "shelf": "D"
+  },
+  {
+    "fine_id": "jgb/D/contract-additional-convention",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-27}",
+    "shelf": "D"
+  },
+  {
+    "fine_id": "jgb/D/contract-lease-scope-by-space-type",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-27}",
+    "shelf": "D"
+  },
+  {
+    "fine_id": "jgb/D/contract-invite-and-review-period",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-10-03}",
+    "shelf": "D"
+  },
+  {
+    "fine_id": "jgb/D/move-in-checklist-and-responsibility",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-27}",
+    "shelf": "D"
+  },
+  {
+    "fine_id": "jgb/D/move-out-checklist-and-damage",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-10-03}",
+    "shelf": "D"
+  },
+  {
+    "fine_id": "jgb/D/move-out-bill-generation",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-10-03}",
+    "shelf": "D"
+  },
+  {
+    "fine_id": "jgb/D/renew-batch-entry-and-selection",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-27}",
+    "shelf": "D"
+  },
+  {
+    "fine_id": "jgb/D/renew-signing-flow",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-27}",
+    "shelf": "D"
+  },
+  {
+    "fine_id": "jgb/D/renew-data-carryover-rules",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-27}",
+    "shelf": "D"
+  },
+  {
+    "fine_id": "jgb/D/entrusted-contract-lease-type",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-10-03}",
+    "shelf": "D"
+  },
+  {
+    "fine_id": "jgb/D/entrusted-contract-landlord-info",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-27}",
+    "shelf": "D"
+  }
+]
