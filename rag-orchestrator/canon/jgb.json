@@ -2,7 +2,7 @@
   "audience": "jgb",
   "budget_tokens": 0,
   "business_types": [],
-  "canon_sha256": "8c3d83dd43c76e03c88150614996496b8b991d730693247a6d366f1d76aa9f3c",
+  "canon_sha256": "132fe07cc6bd1f728bc4fd969640b6c70e206dc6fce8328c025322507ec98ace",
   "coarses": [
     {
       "fines": [
@@ -15331,7 +15331,7 @@
           ],
           "categories": [],
           "coarse_id": "E-bill-list",
-          "content_sha256": "f04f66d53824b4b53f1f02186233e6651820ad3886952a501e864d98be54c21b",
+          "content_sha256": "15a6235609920e0be35fb6eaf77620e7b5e51c62069112cf32a9d23f2a6448d8",
           "content_units": [
             "這是房東方帳號在「已到帳」收款帳單齒輪選單看到的內容；其中「編輯收款備註」「重開發票」「作廢發票」「封存帳單」要有「新增&編輯&刪除所屬帳單」或「新增&編輯&刪除所有帳單」權限才會顯示。",
             "已到帳的收款帳單可以「編輯收款備註」。",
@@ -15341,7 +15341,7 @@
             "已到帳的收款帳單只要本身有設定自動開立發票，就會常駐顯示「重開發票」，不論目前發票狀態為何。",
             "只有在這張帳單有已開立且未作廢的發票時，齒輪選單才會出現「作廢發票」。",
             "已到帳的收款帳單可以「封存帳單」。",
-            "帳單轉為已付款（不論是線上付款、或業者手動移至已到帳）時，系統會自動寄一封通知信給租客，一般會附收據 PDF（部分特定合作團隊的通知信不附收據）；前端目前沒有「重寄收據」的按鈕可以手動再發一次。",
+            "帳單轉為已付款（不論是線上付款、或業者手動移至已到帳）時，如果收款方是個人房東或法人房東，系統會自動寄一封通知信給租客，一般會附收據 PDF（部分特定合作團隊的通知信不附收據）；收款方是社會住宅時，系統不會寄這封通知信；畫面上目前沒有「重寄收據」的按鈕可以手動再發一次。",
             "押金設算息帳單轉為已到帳時，不會另外通知租客。"
           ],
           "id": "jgb/E/bill-actions-received",
@@ -15375,13 +15375,14 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-10-03",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/use/config/useBillTypes.js",
             "code:app/Notification.php",
-            "code:app/Http/Controllers/UserController.php"
+            "code:app/Http/Controllers/UserController.php",
+            "code:config/role.php"
           ],
           "target_user": [
             "property_manager"
@@ -15606,10 +15607,9 @@
           ],
           "categories": [],
           "coarse_id": "E-bill-list",
-          "content_sha256": "488d0228075f0fb5ffa9cbd838637bd407086026814d294af3b4f7fa9d03828d",
+          "content_sha256": "3afc3f15e73a8bd3ea83b6a12f3d3affb2c3e6888564fb2284185eb6ec9eabaa",
           "content_units": [
-            "帳單總表沒有一個隨時可以按的「匯出帳單」按鈕，只有在左側核取方塊勾選帳單（或用表頭「全選」）之後，上方才會跳出批次動作列，裡面才有「匯出帳單」這個選項。",
-            "如果是用表頭「全選」核取方塊整批勾選（連同尚未載入的其他頁一起選），按「匯出帳單」會依照目前畫面上的篩選條件匯出整批帳單；如果只是勾選畫面上看到的幾筆（沒有按全選），匯出改成只匯出這幾筆勾選的帳單。",
+            "帳單總表沒有一個隨時可以按的「匯出帳單」按鈕，只有在左側核取方塊勾選帳單之後，上方才會跳出批次動作列，裡面才有「匯出帳單」這個選項。",
             "匯出筆數超過系統上限時會直接擋下，並提示匯出筆數超過上限、請縮小搜尋範圍後再試，不會只匯出部分結果。",
             "帳單總表的批次操作列要有匯出帳單的權限才會出現「匯出帳單」選項；「草稿帳單」「收款帳單」分頁勾選帳單後，批次操作列也會出現同樣勾選/全選邏輯的「匯出」選項，跟帳單總表共用同一套規則。"
           ],
@@ -15639,16 +15639,19 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-27",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
-            "code:src/use/config/useBillTypes.js"
+            "code:src/use/config/useBillTypes.js",
+            "code:src/pages/bills/list/Index.jsx",
+            "code:src/pages/bills/_parts/ListTable.jsx",
+            "code:src/components/SurelyVue/Common/PickAllFooter.vue"
           ],
           "target_user": [
             "property_manager"
           ],
-          "title": "帳單總表怎麼匯出？（要先勾選帳單才會出現匯出選項；全選走篩選條件、勾選部分筆數走ID清單；其他分頁另有一套匯出流程）"
+          "title": "帳單總表怎麼匯出？（要先勾選帳單才會出現匯出選項）"
         },
         {
           "business_types": [
@@ -15699,9 +15702,9 @@
           ],
           "categories": [],
           "coarse_id": "E-bill-list",
-          "content_sha256": "e3873a30a463440b60b6531054ea8d6a3f66dd35e06cef6ead059cc689148a6e",
+          "content_sha256": "a168988068497d2ca0be3fbd2a7b9119145d065076ba3e516d55bf937d4a90b9",
           "content_units": [
-            "「草稿帳單」跟「支出帳單」「總收支」分頁右上角一律有一個固定的「匯出」／「匯出帳單」按鈕，不需要先勾選任何一筆，按下去會另外開一個（較舊的）匯出視窗，跟帳單總表用勾選觸發的匯出是不同的流程。",
+            "「草稿帳單」跟「支出帳單」「總收支」分頁右上角，有「匯出帳務資料」權限的帳號會看到一個固定的「匯出」／「匯出帳單」按鈕，不需要先勾選任何一筆，按下去會另外開一個（較舊的）匯出視窗，跟帳單總表用勾選觸發的匯出是不同的流程。",
             "「排定發送」「封存」「已失效」分頁則沒有這個匯出按鈕。"
           ],
           "id": "jgb/E/bill-list-export-other-tabs",
@@ -15725,11 +15728,12 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-27",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
-            "code:src/use/config/useBillTypes.js"
+            "code:src/use/config/useBillTypes.js",
+            "code:app/Http/Controllers/UserController.php"
           ],
           "target_user": [
             "property_manager"
@@ -15742,9 +15746,8 @@
           ],
           "categories": [],
           "coarse_id": "E-bill-list",
-          "content_sha256": "a9135b4df9acb7cbf064023e989c0be80d7516aaaf3a47132643978913b60f94",
+          "content_sha256": "2bfec22785fb647642b22a68a33bb20601e62f2d2f31a2a640716fc16776d6ef",
           "content_units": [
-            "「收款帳單」分頁右上角固定有一個「匯出帳單」按鈕，只要帳號的身分類別（收費規則類型）有設定值就會顯示——一般房東帳號（個人／法人／社會住宅）身分類別必定有值，等同於一律會顯示，不是只有特定帳號才有。",
             "只有身分類別是「社會住宅」的帳號，這顆固定匯出按鈕才會多一個子選項「匯出租客繳費證明」；其他身分類別的帳號沒有這個子選項。"
           ],
           "id": "jgb/E/bill-list-income-export-social-housing",
@@ -15768,12 +15771,13 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-27",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/use/config/useBillTypes.js",
-            "code:app/Role.php"
+            "code:app/Role.php",
+            "code:app/Http/Controllers/UserController.php"
           ],
           "target_user": [
             "property_manager"
@@ -16398,9 +16402,9 @@
           ],
           "categories": [],
           "coarse_id": "E-bill-list",
-          "content_sha256": "f40b57977eeb25c75d11cd71bb533d89489428fdb3f64b6966efc1180dd3adce",
+          "content_sha256": "17ed9395c33097e29d085db874f2739bef5fe5e4492ba4927328742bb24709c8",
           "content_units": [
-            "系統收到超商代碼繳費的付款結果通知時，只看金流商回傳的交易狀態是不是成功，沒有另外檢查這組代碼是不是已經過了繳費期限。",
+            "系統收到超商代碼繳費的付款結果通知時，沒有另外檢查這組代碼是不是已經過了繳費期限；是否入帳取決於通知內容是否完整、找不找得到對應的訂單與帳單、這筆訂單是不是已經付過、金流商回傳的交易狀態是不是成功，以及付款金額跟訂單金額是否相符。",
             "代碼過期後還能不能拿去超商繳費、繳了算不算數，屬於金流商自己的規定，系統不判斷這件事。"
           ],
           "id": "jgb/E/bill-cvs-barcode-overdue-payment",
@@ -16424,7 +16428,7 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-27",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
@@ -16435,7 +16439,7 @@
             "property_manager",
             "prospect"
           ],
-          "title": "超商代碼繳費逾期後才繳，帳單還會入帳嗎？（系統不檢查代碼期限，完全依金流商回傳的付款結果；代碼逾期後是否還能繳費屬外部規定，系統不判斷）"
+          "title": "超商代碼繳費逾期後才繳，帳單還會入帳嗎？（系統不檢查代碼期限，代碼逾期後是否還能繳費屬外部規定，系統不判斷）"
         },
         {
           "business_types": [
@@ -16443,9 +16447,9 @@
           ],
           "categories": [],
           "coarse_id": "E-bill-list",
-          "content_sha256": "5c7d7f8d380699788500c411fbb7726563a4f10105dd5383cc2958e4065a272c",
+          "content_sha256": "126ec9160c5e2f037006204048e5a460cf02bbc921cc91c2ba7d0e674e887412",
           "content_units": [
-            "現在已到帳的收款帳單，齒輪選單一律看得到「收據」（部分特定合作團隊點「收據」下載的是押金收據）；帳單轉為已付款時，系統也會自動寄送通知信給租客，一般會附收據 PDF（部分特定合作團隊的通知信不附收據）。",
+            "現在已到帳的收款帳單，齒輪選單一律看得到「收據」（部分特定合作團隊點「收據」下載的是押金收據）；帳單轉為已付款時，如果收款方是個人房東或法人房東，系統也會自動寄送通知信給租客，一般會附收據 PDF（部分特定合作團隊的通知信不附收據）；收款方是社會住宅的帳單，以及押金設算息帳單，不會寄這封通知信。",
             "目前沒有公開的收據功能開發時程。"
           ],
           "id": "jgb/E/bill-receipt-feature-roadmap",
@@ -16469,14 +16473,15 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-10-03",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/use/config/useBillTypes.js",
             "docs:knowledge/jgb-product-facts.md#p914-receipt-email",
             "docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#117",
-            "code:app/Notification.php"
+            "code:app/Notification.php",
+            "code:config/role.php"
           ],
           "target_user": [
             "property_manager",
@@ -16903,10 +16908,10 @@
           ],
           "categories": [],
           "coarse_id": "E-bill-create-edit",
-          "content_sha256": "1c4355985505a767268461e969532e345b1cf2be0709ef81d3c53199b0cb30bf",
+          "content_sha256": "83c9d7a401f7eaefcc3ab24361886155181ac1ab7f726edfc12156217ae61419",
           "content_units": [
             "「內部備註」可以在「新增帳單」（單筆）跟「編輯帳單」頁面填寫，也可以在帳單列表的「內部備註」欄直接修改後存檔；「新增批次帳單」「新增週期帳單」不會顯示這個欄位；填好的內部備註也會出現在帳單明細視窗裡。",
-            "內部備註只給業者團隊成員看：租客身分、大房東看不到；另外有些帳單本身沒有內部備註這項資料（例如 B2B 對方付款的帳單），這時也不會顯示。"
+            "內部備註只給這張帳單所屬業者團隊的成員看：租客身分、大房東看不到，不是這張帳單所屬團隊的成員也看不到。"
           ],
           "id": "jgb/E/bill-internal-note-visibility",
           "instance_applicability": "general",
@@ -16924,14 +16929,15 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-10-03",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/bills/edit/_parts/BillBasicInfoSection.vue",
             "code:src/pages/bills/_parts/ListTable.jsx",
             "code:src/components/Lightbox/BillItemDetail.vue",
-            "code:app/Http/Controllers/BillController.php"
+            "code:app/Http/Controllers/BillController.php",
+            "code:app/BillAdditions.php"
           ],
           "target_user": [
             "property_manager"
@@ -16944,11 +16950,11 @@
           ],
           "categories": [],
           "coarse_id": "E-bill-create-edit",
-          "content_sha256": "2880fd7bdb9540db50b3ee81a47177f86c1620b86f46cb534ddb737a78975118",
+          "content_sha256": "85bf8b336327eae89bf031c24da88652aae6cdf2c00560ba1958f88d097f37d1",
           "content_units": [
             "在「新增帳單」跟「新增批次帳單」，付款方式跟收款帳戶兩者都空著可以送出（沿用合約的收款設定）；但只填其中一項會被擋下，提示要完成付款方式與收款帳戶選擇。",
-            "選擇固定虛擬帳號當付款方式是例外：這個方式本來就沒有對應的收款帳戶欄位，所以不受兩者要成對填寫的規則限制。",
-            "這個成對檢查只發生在按下送出確認彈窗（送出點退不受影響）的當下，並不是每次改欄位就即時檢查。"
+            "選擇固定虛擬帳號當付款方式是例外：這個方式的收款帳戶欄位只是顯示合約綁定的帳號、不能挑選，所以不受兩者要成對填寫的規則限制。",
+            "這個成對檢查不是每次改欄位就即時檢查，而是在按下送出確認彈窗（送出點退不受影響）或儲存草稿的當下才檢查；只填其中一項時，儲存草稿也會被擋下，提示同樣要完成付款方式與收款帳戶選擇。"
           ],
           "id": "jgb/E/bill-payment-method-account-pair",
           "instance_applicability": "general",
@@ -16971,11 +16977,13 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-27",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
-            "code:src/pages/bills/edit/Index.jsx"
+            "code:src/pages/bills/edit/Index.jsx",
+            "code:src/pages/bills/edit/_parts/BillCreatePaymentSelector.vue",
+            "code:app/Http/Controllers/BillController.php"
           ],
           "target_user": [
             "property_manager"
@@ -17178,9 +17186,9 @@
           ],
           "categories": [],
           "coarse_id": "E-bill-create-edit",
-          "content_sha256": "297c50e18e4add96ee3fc9be62def977f1e74cfa458a2459e9d2d7d1b2c2a899",
+          "content_sha256": "c5a8ebc194bb1ac43c841c8ec2f1e7e0514881e50582208e6e4e4091bc3303f4",
           "content_units": [
-            "草稿帳單的電費度數欄位預設是空的；編輯頁的電費列有「取得即時電錶度數」按鈕，物件有綁定智慧電錶時按下去可以先把度數帶進來，沒有綁定則會提示此物件未綁定智能電表；部分特定合作團隊沒有這個按鈕。"
+            "草稿的合約帳單，如果物件有綁定智慧電錶、系統預設的「電費」品項當期度數還沒有填過，打開編輯頁時當期度數就會自動帶入電錶當下讀數，已經填過的度數不會被覆蓋（特定合作團隊已送簽核的帳單除外）；這種電費列另有「取得即時電錶度數」按鈕，按下去會再抓一次電錶當下讀數填進當期度數，部分特定合作團隊沒有這個按鈕；沒有綁定智慧電錶的物件不會自動帶入電錶讀數。"
           ],
           "id": "jgb/E/bill-power-reading-draft-defaults",
           "instance_applicability": "general",
@@ -17203,19 +17211,22 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-27",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "docs:knowledge/jgb-product-facts.md#p914-power-reading-draft",
             "code:app/Bill.php",
             "code:src/pages/bills/edit/_parts/FeesBlock.jsx",
-            "code:app/Http/Controllers/BillController.php"
+            "code:app/Http/Controllers/BillController.php",
+            "code:app/Detail.php",
+            "code:app/Services/ApprovalService.php",
+            "code:src/use/search/modules/billType.js"
           ],
           "target_user": [
             "property_manager"
           ],
-          "title": "草稿帳單的電費度數要自己填嗎？（草稿階段度數預設留空；物件有綁定智慧電錶時，可在編輯頁按「取得即時電錶度數」先帶入）"
+          "title": "草稿帳單的電費度數要自己填嗎？（物件有綁定智慧電錶時，可在編輯頁按「取得即時電錶度數」先帶入）"
         }
       ],
       "id": "E-bill-create-edit",
@@ -18035,11 +18046,11 @@
           ],
           "categories": [],
           "coarse_id": "E-balance-invoice",
-          "content_sha256": "5f9e4c0f1f28bb14b061ad5ccaf6a8c5ecaef38739e0712dde22cad6b3b81c00",
+          "content_sha256": "6f3ed0ac58ce9156cf88753a4316607300231f75dcd1d18174b2d436b0e957fc",
           "content_units": [
             "除了一個特定合作團隊以外，其餘業者的差額發票由系統於每月 1 日凌晨 03:00 排程自動開立「上一個月」的差額發票。",
             "那個特定合作團隊的時程不同：改成每月最後一天 23:30 直接開立「當月」發票，並在次月 1 日 03:05 依當下最新資料重新計算明細表（不是重印快照，讓月底才入帳的款項也能反映在報表上）。",
-            "差額發票群組的狀態（尚未生效／進行中／歷史）由每日凌晨 01:05 的排程更新一次；累積成本／累積收入則是每 2 小時更新一次。"
+            "差額發票群組的狀態（尚未生效／進行中／歷史）除了每日凌晨 01:05 的排程更新一次，編輯群組存檔時也會依租期立即重新計算；群組列表上的「累積成本」「累積收入」則是每次開啟列表時，依已開立發票的月份當場算出。"
           ],
           "id": "jgb/E/balance-invoice-timing",
           "instance_applicability": "general",
@@ -18067,12 +18078,16 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-27",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:app/Models/BalanceInvoiceGroup.php",
-            "code:app/Console/Kernel.php"
+            "code:app/Console/Kernel.php",
+            "code:app/Services/BalanceInvoiceService.php",
+            "code:routes/api.php",
+            "code:src/pages/balanceInvoices/edit/Index.vue",
+            "code:src/pages/balanceInvoices/list/_parts/ListTable.vue"
           ],
           "target_user": [
             "property_manager"
@@ -18085,7 +18100,7 @@
           ],
           "categories": [],
           "coarse_id": "E-balance-invoice",
-          "content_sha256": "66f17e93b24b619c36fcdd4f4762de05141a2b607b7b46ecc12ea39a056e6cde",
+          "content_sha256": "08498c3b53fa675d8a44179e13fb7f3b3ad6ff7cc2c22c4256b365b761a515ba",
           "content_units": [
             "差額發票群組的動作選單選項有「編輯群組」「開立發票」「封存群組」「刪除群組」四個。",
             "「編輯群組」永遠可以點，會跳轉去編輯這個群組的基本資料。",
@@ -18093,7 +18108,7 @@
             "「封存群組」在群組還不是「封存」狀態時才能用。",
             "「刪除群組」要這個群組還能刪除才能用；在動作選單手動「開立發票」過的群組就不能再刪除。",
             "在群組列表頁，不能用的選項會反灰、無法點擊；在群組詳細頁則直接不顯示不能用的選項，而且詳細頁不會出現「開立發票」。",
-            "動作選單旁邊另外有一個獨立的「查看歷程」圖示按鈕，不在下拉選單裡，點下去可以看這個群組的操作紀錄。"
+            "在群組列表頁，動作選單旁邊另外有一個獨立的「查看歷程」圖示按鈕，不在下拉選單裡，點下去可以看這個群組的操作紀錄；群組詳細頁沒有這個按鈕。"
           ],
           "id": "jgb/E/balance-invoice-group-action-menu",
           "instance_applicability": "general",
@@ -18121,14 +18136,16 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-27",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/use/config/balanceInvoices/useBalanceInvoicesActions.ts",
             "code:src/components/SurelyVue/BalanceInvoices/ActionsCell.vue",
             "code:src/pages/balanceInvoices/groups/Index.vue",
-            "code:app/Services/BalanceInvoiceService.php"
+            "code:app/Services/BalanceInvoiceService.php",
+            "code:src/pages/balanceInvoices/list/_parts/ListTable.vue",
+            "code:src/components/Lightbox/BalanceInvoicesActivityLog.vue"
           ],
           "target_user": [
             "property_manager"
@@ -18183,9 +18200,9 @@
           ],
           "categories": [],
           "coarse_id": "E-balance-invoice",
-          "content_sha256": "96aadcab2ab8e2a75533949b09d6dee3615ce9ca704e9b4b9ba22594720319aa",
+          "content_sha256": "d0fe6c8f652fdb28dbed128c3c760fe1cd627253e444025c4be495c529d8febe",
           "content_units": [
-            "差額發票收支表判斷一筆帳單品項算不算「租金」收入：系統預設品項看品項名稱是不是「租金」或「退租金」；業者自訂的品項則看品項性質是不是「租金」，自訂品項即使取名「租金」、性質不是租金也不算；判斷依據不是這筆帳單是哪一種帳單（例如退租結算單）。",
+            "差額發票收支表判斷一筆帳單品項算不算「租金」收入：系統預設品項看品項名稱是不是「租金」或「退租金」；業者自訂的品項則看品項性質是不是「租金」，自訂品項即使取名「租金」、性質不是租金也不算；另外還要先看這筆帳單的「帳單來源」：只有「合約帳單」「點退帳單」「手動建立帳單」上的品項才會逐筆判斷，「罰金帳單」「儲值電費帳單」「設算息帳單」上的品項不論名稱或性質一律不計入。",
             "如果個案帳單的品項命名方式跟預繳租金重複，會不會造成收支表重複計入，屬記帳命名上的判斷，需要依個案帳單資料確認。"
           ],
           "id": "jgb/E/balance-invoice-rent-item-rule",
@@ -18209,11 +18226,13 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-27",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
-            "code:app/Services/BalanceInvoiceService.php"
+            "code:app/Services/BalanceInvoiceService.php",
+            "code:src/use/search/modules/billType.js",
+            "code:app/Bill.php"
           ],
           "target_user": [
             "property_manager"
@@ -18313,9 +18332,9 @@
           ],
           "categories": [],
           "coarse_id": "E-balance-invoice",
-          "content_sha256": "850cd3537a07b3f61db51a435a7f96cd611f78d7e63940a2d48f10ee5ebb2054",
+          "content_sha256": "b401d7a9643343a2a601ff0c65a2b07f73706bd99870f818763cca19ef1f75d5",
           "content_units": [
-            "帳單不屬於任何差額發票群組、又出現開票異常的情況時，系統會把它列進內部「發票異常盤查」名單；業者端在帳單列表可以用「發票異常」狀態篩選看到這類帳單，但實際盤查與處理只在 JGB 內部客服後台進行，此操作需由 JGB 客服協助。"
+            "帳單不屬於任何差額發票群組、又出現開票異常的情況時，系統會把它列進內部「發票異常盤查」名單；業者端在帳單列表可以用「發票異常」狀態篩選，撈出原該開立但開立失敗的帳單。"
           ],
           "id": "jgb/E/balance-invoice-anomaly-list",
           "instance_applicability": "general",
@@ -18338,16 +18357,20 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-27",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
-            "code:app/Http/Controllers/Admin/InvoiceFailureController.php"
+            "code:app/Http/Controllers/Admin/InvoiceFailureController.php",
+            "code:app/Services/InvoiceFailureAuditService.php",
+            "code:routes/web.php",
+            "code:app/Bill.php",
+            "code:src/use/search/modules/billInvoiceStatus.js"
           ],
           "target_user": [
             "property_manager"
           ],
-          "title": "帳單不在任何差額發票群組內時，JGB 怎麼處理？（列進內部「發票異常盤查」名單，處理需洽客服）"
+          "title": "帳單不在任何差額發票群組內時，JGB 怎麼處理？"
         }
       ],
       "id": "E-balance-invoice",
@@ -19160,11 +19183,11 @@
           ],
           "categories": [],
           "coarse_id": "E-payment-onboarding",
-          "content_sha256": "84dbcd929e40feee745827ce178c198040360fdeb43fa2e4a3ee84aa86996eec",
+          "content_sha256": "11cf65f28ca97bd977e6e3a0a658f6ff016af813acb140a1c82bd4b39bf0831c",
           "content_units": [
             "個人房東在現行收款設定頁不能開通藍新，選了只會看到「您無法開通此收款方式」的提示，若有問題要洽詢 JGB 客服。",
-            "團隊帳號則要先填好公司統編、公司名稱、公司地址（縣市、區、地址），沒填完會被導回團隊頁面；管理者的手機號碼與 Email 改在申請表上填寫，不需要先在帳號上設定或驗證。",
-            "團隊帳號則是導回團隊頁面，一樣會列出缺少的公司資料。"
+            "團隊帳號則要先填好公司統編、公司名稱、公司地址（縣市、區、地址），法人房東團隊沒填完會被導回團隊頁面；管理者的手機號碼與 Email 改在申請表上填寫，不需要先在帳號上設定或驗證。",
+            "法人房東團隊被導回團隊頁面時，一樣會列出缺少的公司資料；社會住宅團隊沒填完時則不會被導回團隊頁面，而是在送出申請時顯示欄位錯誤訊息。"
           ],
           "id": "jgb/E/newebpay-required-fields",
           "instance_applicability": "general",
@@ -19187,12 +19210,14 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-10-03",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:app/Http/Controllers/UserController.php",
-            "code:src/pages/users/payment/routerView/Add.vue"
+            "code:src/pages/users/payment/routerView/Add.vue",
+            "code:src/mixin/methods.js",
+            "code:config/role.php"
           ],
           "target_user": [
             "property_manager"
@@ -19305,11 +19330,11 @@
           ],
           "categories": [],
           "coarse_id": "E-payment-onboarding",
-          "content_sha256": "b40758bec9deac39a4eced01f5a0ebafb06399adb355defb583018182fd05e6d",
+          "content_sha256": "65ea878bc06672be32e2bcae83554506a56553ae22a02f7ae1859eb07f24d408",
           "content_units": [
             "聯絡電話必須剛好 10 碼數字。",
             "銀行代碼必須剛好 3 碼數字。",
-            "銀行帳號要輸入 10 到 16 碼數字，不足 16 碼系統會自動在前面補 0。"
+            "銀行帳號欄位最多只能填 14 碼數字，至少要 10 碼；不足 16 碼系統會自動在前面補 0。"
           ],
           "id": "jgb/E/ctbc-form-validation",
           "instance_applicability": "general",
@@ -19337,16 +19362,19 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-27",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
-            "code:app/Http/Controllers/UserController.php"
+            "code:app/Http/Controllers/UserController.php",
+            "code:src/pages/users/payment/_parts/Ctbc.vue",
+            "code:src/pages/users/payment/routerView/Add.vue",
+            "code:routes/web.php"
           ],
           "target_user": [
             "property_manager"
           ],
-          "title": "中國信託申請表單各欄位有什麼格式限制？（聯絡電話 10 碼、銀行代碼 3 碼、銀行帳號 10～16 碼）"
+          "title": "中國信託申請表單各欄位有什麼格式限制？（聯絡電話 10 碼、銀行代碼 3 碼）"
         },
         {
           "business_types": [

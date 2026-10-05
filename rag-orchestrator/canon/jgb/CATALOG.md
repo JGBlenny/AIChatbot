@@ -391,7 +391,7 @@ jgb/E/bill-actions-expense-unconfirmed｜「待對帳」狀態的支出帳單，
 jgb/E/bill-actions-expense-paid｜「已支出」狀態的支出帳單，房東跟租客各能做什麼？（房東一律有編輯收款備註／封存；反轉帳單才多出收據／退款對帳單）｜target_user=property_manager｜
 jgb/E/bill-expired-status｜帳單狀態顯示「已失效」是什麼意思？（限電錶儲值帳單，4 天繳費期限）｜target_user=property_manager,prospect｜
 jgb/E/bill-list-keyword-search｜帳單列表怎麼用關鍵字搜尋？（可指定用案名／地址／租客／ID／手機／信箱／帳單名稱／虛擬帳號／合約帳單共 9 種比對）｜target_user=property_manager｜
-jgb/E/bill-list-export｜帳單總表怎麼匯出？（要先勾選帳單才會出現匯出選項；全選走篩選條件、勾選部分筆數走ID清單；其他分頁另有一套匯出流程）｜target_user=property_manager｜
+jgb/E/bill-list-export｜帳單總表怎麼匯出？（要先勾選帳單才會出現匯出選項）｜target_user=property_manager｜
 jgb/E/bill-list-bulk-action-intersection｜帳單總表勾選多筆不同狀態的帳單時，批次操作列會出現哪些動作？（只列出每一筆帳單都能做的共同動作）｜target_user=property_manager｜
 jgb/E/bill-list-export-other-tabs｜「草稿帳單」「支出帳單」「總收支」分頁的匯出按鈕，跟帳單總表不是同一套（不需要先勾選，走另一個較舊的匯出流程）｜target_user=property_manager｜
 jgb/E/bill-list-income-export-social-housing｜「收款帳單」分頁固定的匯出按鈕，什麼時候會多出「匯出租客繳費證明」子選項？（只有身分類別為社會住宅的帳號才有）｜target_user=property_manager｜
@@ -408,7 +408,7 @@ jgb/E/bill-archive-precondition｜帳單要什麼狀態才可以直接封存？�
 jgb/E/bill-deposit-receipt-no｜押金收據號碼是系統自動產生的嗎？（特定合作團隊的客製功能，號碼透過 Excel 匯出／匯入手動填寫，系統不會自動編流水號）｜target_user=property_manager,prospect｜
 jgb/E/bill-scheduled-contract-ended-guard｜合約已結束、但底下還留著未來計費期間的租金帳單，系統排定發送時會怎麼處理？（系統自動排定發送／自動寄出都會跳過不寄，但不會刪除帳單；業者手動排定發送則不受這條規則限制；批次寄出依帳單 id 由小到大處理，沒有可指定的發送順序）｜target_user=property_manager｜
 jgb/E/bill-remind-resend-by-support｜業者可以請 JGB 客服代發催繳通知嗎？（此操作需由 JGB 客服協助；業者端沒有自助重發催繳的介面）｜target_user=property_manager,prospect｜
-jgb/E/bill-cvs-barcode-overdue-payment｜超商代碼繳費逾期後才繳，帳單還會入帳嗎？（系統不檢查代碼期限，完全依金流商回傳的付款結果；代碼逾期後是否還能繳費屬外部規定，系統不判斷）｜target_user=property_manager,prospect｜
+jgb/E/bill-cvs-barcode-overdue-payment｜超商代碼繳費逾期後才繳，帳單還會入帳嗎？（系統不檢查代碼期限，代碼逾期後是否還能繳費屬外部規定，系統不判斷）｜target_user=property_manager,prospect｜
 jgb/E/bill-receipt-feature-roadmap｜收據功能還會不會有新的開發？（現行已到帳帳單的齒輪選單一律看得到收據，目前沒有公開的後續開發時程）｜target_user=property_manager,prospect｜
 ### E-bill-create-edit 建立與編輯帳單（單筆、批次、週期批次） {#E-bill-create-edit}
 jgb/E/bill-create-modes｜新增帳單有哪幾種頁面？（新增帳單／新增批次帳單／新增週期帳單／編輯帳單）｜target_user=property_manager,prospect｜
@@ -426,7 +426,7 @@ jgb/E/bill-tenant-unverified-draft-lock｜租客還沒完成驗證時，帳單�
 jgb/E/bill-submit-button-behavior｜新增帳單頁面下方送出按鈕的文字跟行為會依情境改變（送出／發送簽核／簽核中／預覽帳單）｜target_user=property_manager｜
 jgb/E/bill-contract-payment-prefill｜新增帳單選租客當對象時，付款方式會自動帶入合約的收款設定嗎？（會，但帳戶已停用/不可取號等情況不會亂猜）｜target_user=property_manager｜
 jgb/E/bill-partial-month-proration｜不足一個月的租金怎麼算？（依天數比例；一般團隊以剩餘天數 ÷ 該月曆天數，逐月產帳以實際天數 ÷ 該期帳單天數，不是固定除以 30）｜target_user=property_manager,prospect｜
-jgb/E/bill-power-reading-draft-defaults｜草稿帳單的電費度數要自己填嗎？（草稿階段度數預設留空；物件有綁定智慧電錶時，可在編輯頁按「取得即時電錶度數」先帶入）｜target_user=property_manager｜
+jgb/E/bill-power-reading-draft-defaults｜草稿帳單的電費度數要自己填嗎？（物件有綁定智慧電錶時，可在編輯頁按「取得即時電錶度數」先帶入）｜target_user=property_manager｜
 ### E-bill-stats 帳單統計與報表 {#E-bill-stats}
 jgb/E/bill-stat-overview｜「統計報表」的「當前表現」分頁顯示什麼？（收款情況／支出情況卡片）｜target_user=property_manager,prospect｜
 jgb/E/bill-stat-monthly-tabs｜統計報表除了「當前表現」，還有「每月報表」「每月對帳單」分頁，但只有特定合作團隊看得到｜target_user=property_manager｜
@@ -452,7 +452,7 @@ jgb/E/balance-invoice-refund-report-column｜差額發票收支表的租金退�
 jgb/E/balance-invoice-rent-item-rule｜差額發票收支表怎麼判斷一個帳單品項算不算「租金」收入？（系統預設品項看名稱是不是「租金」「退租金」；自訂品項看品項性質）｜target_user=property_manager｜
 jgb/E/balance-invoice-entity-type-change｜身分從法人改成自然人後，差額發票群組要怎麼重新設定？（系統沒有專用的身分切換規則）｜target_user=property_manager｜
 jgb/E/balance-invoice-unsigned-contract｜合約還沒簽回時能不能開發票或收據？（發票看合約的開票設定、押金收據看帳單是否到帳，簽署狀態是否連動要看個案）｜target_user=property_manager｜
-jgb/E/balance-invoice-anomaly-list｜帳單不在任何差額發票群組內時，JGB 怎麼處理？（列進內部「發票異常盤查」名單，處理需洽客服）｜target_user=property_manager｜
+jgb/E/balance-invoice-anomaly-list｜帳單不在任何差額發票群組內時，JGB 怎麼處理？｜target_user=property_manager｜
 ### E-virtual-account 固定虛擬帳號管理（租客虛擬帳號、餘額、歷程） {#E-virtual-account}
 jgb/E/recharge-account-list-columns｜「固定虛擬帳號管理」列表看得到哪些資訊？（虛擬帳號、餘額、歷程一律都有；租客或物件欄位看團隊的固定虛擬帳號模式；有編輯權限時另有操作欄）｜target_user=property_manager｜
 jgb/E/recharge-account-delete｜固定虛擬帳號要怎麼刪除？（列表操作選單選「刪除」，跳出確認視窗後才會真的刪掉）｜target_user=property_manager｜
@@ -475,7 +475,7 @@ jgb/E/newebpay-precondition｜開通藍新智付通前要準備什麼？（申�
 jgb/E/newebpay-required-fields｜開通藍新智付通前，團隊要先填完哪些資料？（個人房東不能開通藍新）｜target_user=property_manager｜
 jgb/E/newebpay-payment-methods｜藍新開通時有哪些付款方式？（信用卡／Google Pay／Samsung Pay／ATM／超商代碼送出時都會開啟；國外卡要另外申請）｜target_user=property_manager,prospect｜
 jgb/E/ctbc-apply-flow｜中國信託收款怎麼申請？（中信轉帳 Pay 填資料送審，ACH 驗證約 5 個工作天；中信虛擬帳號填 5 碼企業代碼即可，個人房東不能開通）｜target_user=property_manager｜
-jgb/E/ctbc-form-validation｜中國信託申請表單各欄位有什麼格式限制？（聯絡電話 10 碼、銀行代碼 3 碼、銀行帳號 10～16 碼）｜target_user=property_manager｜
+jgb/E/ctbc-form-validation｜中國信託申請表單各欄位有什麼格式限制？（聯絡電話 10 碼、銀行代碼 3 碼）｜target_user=property_manager｜
 jgb/E/payment-gateway-withdrawal｜各家金流的款項要怎麼提領？（藍新要自己登入後台辦理，前 5 次免費之後每次 10 元）｜target_user=property_manager,prospect｜
 jgb/E/payment-onboarding-tax-risk｜線上金流收款會不會有稅務申報風險？（屬稅捐機關與業者自身規劃，系統不判斷）｜target_user=property_manager,prospect｜
 jgb/E/cash-payment-account-management｜「現金收款帳戶」怎麼管理？（可以新增、編輯、移除；需要收款設置編輯權限）｜target_user=property_manager｜

@@ -1,0 +1,286 @@
+{
+ "kind": "write",
+ "verdict": "CONFIRMED",
+ "base": "5b94ae983210af18b2a65a25cad3aa79add62a38",
+ "claim": "Plan 9.29 寫入核對 W4：15 條細目的標題與每一句已逐句對合法來源核對，逐條結果如 fines",
+ "fines": [
+  {
+   "id": "jgb/E/balance-invoice-anomaly-list",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "b401d7a9643343a2a601ff0c65a2b07f73706bd99870f818763cca19ef1f75d5",
+   "title_text": "帳單不在任何差額發票群組內時，JGB 怎麼處理？",
+   "notes": [
+    "標題：問句，由句 1 回答（列入內部盤查名單＋業者端可篩「發票異常」），無超出句子的斷言。",
+    "句 1：app/Services/InvoiceFailureAuditService.php＋`if (!$balanceInvoiceService->isBillBelongsToGroup($bill)) {` 後 `return true;`（不在群組內的帳單一律留在名單）、`ABNORMAL(2)：有嘗試開立但失敗的帳單`；內部頁名見 app/Http/Controllers/Admin/InvoiceFailureController.php＋`$pageSetting['title'] = '發票異常盤查';`，路由 routes/web.php＋`Admin\\InvoiceFailureController@list`；業者端篩選見 src/use/search/modules/billInvoiceStatus.js＋`invoiceAbnormal: '發票異常', // 原該開立但開立失敗`，由 src/pages/bills/_parts/BillAdvanceSearchBlock.jsx＋`keyName=\"billInvoiceStatus\"` 渲染，後端 app/Bill.php＋`case 'invoiceAbnormal':` 撈 invoice_status=ABNORMAL。"
+   ]
+  },
+  {
+   "id": "jgb/E/balance-invoice-group-action-menu",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "08498c3b53fa675d8a44179e13fb7f3b3ad6ff7cc2c22c4256b365b761a515ba",
+   "title_text": "差額發票群組的動作選單有哪些選項？什麼時候不能用？（編輯群組／開立發票／封存群組／刪除群組；列表頁不能用時反灰，詳細頁直接不顯示；另有查看歷程圖示）",
+   "notes": [
+    "標題：四個選項、列表反灰／詳細頁不顯示、查看歷程圖示，均由句 1、6、7 支撐。",
+    "句 1：src/use/config/balanceInvoices/useBalanceInvoicesActions.ts＋`labelKey: '編輯群組'`、`labelKey: '開立發票'`、`labelKey: '封存群組'`、`labelKey: '刪除群組'`，Map 只有這四個。",
+    "句 2：同上＋`['edit', {` 單筆無 isDisabled，onClick `name: 'balanceInvoices.edit.basicInfo'`。",
+    "句 3：同上＋`isDisabled: groupData.isInvoiced || Number(route?.params?.status) !== BalanceInvoicesStatus.PROGRESSING`；isInvoiced 來自 app/Services/BalanceInvoiceService.php＋`'is_invoiced_this_month' => $isInvoicedThisMonth`。",
+    "句 4：useBalanceInvoicesActions.ts＋`isDisabled: Number(route?.params?.status) === BalanceInvoicesStatus.ARCHIVED`。",
+    "句 5：useBalanceInvoicesActions.ts＋`isDisabled: !groupData.isDeletable`；app/Services/BalanceInvoiceService.php＋`case 'invoiced':` 開票成功後 `'is_deletable' => false,`。",
+    "句 6：src/components/SurelyVue/BalanceInvoices/ActionsCell.vue＋`${ action.isDisabled ? 'disabled' : '' }`（列表反灰）；src/pages/balanceInvoices/groups/Index.vue＋`show: !node.isDisabled,`（詳細頁不顯示），詳細頁路由無 status 參數致「開立發票」isDisabled 恆真故不出現。",
+    "句 7：ActionsCell.vue＋`title=\"查看歷程\"`＋`bi-clock-history`，位於 DropdownMenu 之外；src/pages/balanceInvoices/list/_parts/ListTable.vue＋`LightboxBalanceInvoicesActivityLog`；groups/Index.vue 無「歷程」或 ActivityLog 字串（正對照：同檔 grep `actionList` 有命中）。"
+   ]
+  },
+  {
+   "id": "jgb/E/balance-invoice-rent-item-rule",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "d0fe6c8f652fdb28dbed128c3c760fe1cd627253e444025c4be495c529d8febe",
+   "title_text": "差額發票收支表怎麼判斷一個帳單品項算不算「租金」收入？（系統預設品項看名稱是不是「租金」「退租金」；自訂品項看品項性質）",
+   "notes": [
+    "標題：與句 1 及 isRentItemForDirection 規則一致。",
+    "句 1：app/Services/BalanceInvoiceService.php＋`private static function isRentItemForDirection`：`is_editable === 0` 時 `in_array($item->name, self::rentNatureItemNames(), true)`（config 預設 `['租金', '退租金']`），客製品項 `return $item->nature === '租金';`；收支表／快照／收入三處皆 `->whereIn('type', [\\App\\Bill::BILL_TYPE_RENT, \\App\\Bill::BILL_TYPE_MOVEOUT, \\App\\Bill::BILL_TYPE_CREATE])`；app/Bill.php＋`const BILL_TYPE_AMERCEMENT = 4;`、`BILL_TYPE_TOPUP = 5`、`BILL_TYPE_DEPOSITRATE = 6`；名稱對照 src/use/search/modules/billType.js＋`'1': '合約帳單'`…`'6': '設算息帳單'`。",
+    "句 2：BalanceInvoiceService.php 同上＋`注意：客製品項一旦被團隊標成 nature='租金'（含誤標如折扣/測試），就會被納入 → 屬資料面須治理`；判定逐品項依名稱／is_editable／nature，是否重複計入取決於個案品項設定，句子只說需依個案確認，未作程式無法支撐的斷言。"
+   ]
+  },
+  {
+   "id": "jgb/E/balance-invoice-timing",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "6f3ed0ac58ce9156cf88753a4316607300231f75dcd1d18174b2d436b0e957fc",
+   "title_text": "差額發票什麼時候自動產生？（一般業者每月 1 日 03:00 開立上月發票；特定團隊另有自己的時程）",
+   "notes": [
+    "標題：由句 1、2 支撐。",
+    "句 1：app/Console/Kernel.php＋`invoice:balance-group-generate --auto --exclude_role_id=` 搭配 `->monthlyOn(1, '03:00')`；app/Console/Commands/BalanceInvoiceGroupGenerator.php＋`{--current-month : 處理當月（月底開票用；未指定時預設處理上個月）}`。",
+    "句 2：Kernel.php 同上＋`--current-month')` 搭配 `->dailyAt('23:30')` 與 `isLastOfMonth()`；`--recalc-excel')->monthlyOn(1, '03:05')`，註解「重算而非重印快照：月底 23:30 開票後才入帳的款項會浮現在報表上」。",
+    "句 3：Kernel.php＋`balance-invoice:update-status')->dailyAt('01:05')`；app/Services/BalanceInvoiceService.php＋`// 根據 rent_start_date 和 rent_end_date 連動更新 status` 與 `$this->calculateGroupStatus(`（編輯存檔時）；列表累積值見同檔＋`// 使用月結資料計算累積值（只計算已完成且已開立發票的記錄）`，於列表 API 每次組裝時計算；src/pages/balanceInvoices/list/_parts/ListTable.vue＋`t('累積成本')`。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-actions-received",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "15a6235609920e0be35fb6eaf77620e7b5e51c62069112cf32a9d23f2a6448d8",
+   "title_text": "「已到帳」狀態的收款帳單可以做哪些動作？（收款備註／發票／收據／退款對帳單）",
+   "notes": [
+    "標題：括號列舉均見於 `case 'income-received':` 組合，由句 2–8 支撐。",
+    "句 1：src/use/config/useBillTypes.js＋`labelKey: '編輯收款備註'`、`labelKey: '重開發票'`、`labelKey: '作廢發票'`、`labelKey: '封存帳單'` 皆 `permission: 'add_bill'`，`assembleOptions` 以 `canEditOwnedBill = hasPermission('owner_bill') || hasPermission('add_bill')` 過濾（landlord）；app/Http/Controllers/UserController.php＋`'g_add_bill' => ['add_bill']`（label `新增&編輯&刪除所屬帳單`）、`'g_edit_bill' => ['receive_bill', 'pay_bill', 'owner_bill']`（label `新增&編輯&刪除所有帳單`）。",
+    "句 2：useBillTypes.js＋`case 'income-received':` 首項 `filteredBillActions.get('editReceivedRemark')`。",
+    "句 3：同上＋`billData?.can_auto_generate_invoice && Array.isArray(billData?.is_invoice_generated)`、`t('發票[s1]', [nodeArray.length === 1 ? '' : t(numberToChinese(`、`（${t('已作廢')}）`、`case 'ezPay': window.open(billData?.invoice?.url`、`case 'eCloud': window.open('https://box.ecloudlife.com/login')`。",
+    "句 4：同上＋`filteredBillActions.get('receipt')` 無條件列入且 receipt 無 permission；特定合作團隊點收據改開 `/deposit-receipt`。",
+    "句 5：同上＋`...(billData?.has_refund_statement === true`；app/Bill.php＋`public function shouldProvideRefundStatement()` 第一條件 `isRefundDirection()`。",
+    "句 6：useBillTypes.js＋`const canReissue = billData?.is_auto_generate_invoice === true`，註解「不論 invoice_status 是 0/1/2」。",
+    "句 7：同上＋`...(billData?.has_voidable_invoice === true`；app/Bill.php＋`$hasVoidableInvoice = true; // 僅 status=ADD 才可作廢`。",
+    "句 8：useBillTypes.js＋`filteredBillActions.get('archive')` 列於 income-received 組合末項。",
+    "句 9：app/Notification.php＋`case 'bill_paid': // 線上已付款 or 線下按下移至已到帳`，`case '1-2': case '1-3':` 才寄租客 email 附 `['Receipt' => $receipt]`，`!$bill->suppressReceiptEmailAttachment()` 為特定合作團隊不附；config/role.php＋`'4' => [` `'name' => '社會住宅'`，switch 無 1-4 分支故不寄；src 內 grep `重寄收據|resendReceipt` 0 命中（正對照：同法 grep `'收據'` 於 useBillTypes.js 有命中）。",
+    "句 10：app/Notification.php＋`// 押金設算息帳單已到帳時，不需要通知租客` 後 `if ($bill->type == Bill::BILL_TYPE_DEPOSITRATE) { break;`，線上與線下兩分支皆有。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-cvs-barcode-overdue-payment",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "17ed9395c33097e29d085db874f2739bef5fe5e4492ba4927328742bb24709c8",
+   "title_text": "超商代碼繳費逾期後才繳，帳單還會入帳嗎？（系統不檢查代碼期限，代碼逾期後是否還能繳費屬外部規定，系統不判斷）",
+   "notes": [
+    "標題：由句 1、2 支撐。",
+    "句 1：app/Http/Controllers/PaymentController.php＋`case 'newebpay-cvs':` 依序檢查 `$fieldErrors`（無回傳資料／狀態／訊息／結果）、`無訂單金額`/`無訂單編號`/`無繳費代碼`、`無對應訂單資料`、`該訂單已付款，跳過重複處理`、`無對應帳單`、`金流商回傳非成功狀態`、`金額不符`，之後 `$bill->setPaid(`；整段無任何期限／expire 判斷（正對照：同段 grep `Amt` 有命中）。",
+    "句 2：review-sheet-9.15-S2-DE-20260927.md＋`| 114 | G8 | 採用：寫系統側事實＋「屬外部規定，系統不判斷」 |`，句意與裁決一致。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-internal-note-visibility",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "83c9d7a401f7eaefcc3ab24361886155181ac1ab7f726edfc12156217ae61419",
+   "title_text": "「內部備註」在哪些地方會出現？（只給業者團隊成員看：新增帳單單筆、編輯帳單與帳單列表欄位可填，帳單明細可看；批次／週期帳單頁面不顯示）",
+   "notes": [
+    "標題：各處出現位置由句 1、2 支撐。",
+    "句 1：src/pages/bills/edit/_parts/BillBasicInfoSection.vue＋`isInternalNoteVisible: computed(()=>['bills.edit', 'bills.create'].includes(route.name)` 與註解「批次新增（bills.create.batch / cycleBatch）不顯示」；src/pages/bills/_parts/ListTable.jsx＋`title: t('內部備註')`，inline 編輯見 src/components/SurelyVue/Bill/InternalNoteCell.jsx＋`onSubmit={handleSubmit}`，後端 app/Http/Controllers/BillController.php＋`更新帳單內部備註（internal_note）— 列表 inline 編輯用`；明細 src/components/Lightbox/BillItemDetail.vue＋`<h6 class=\"mb-2 text-grey-800\">{t('內部備註')}</h6>`。",
+    "句 2：app/BillAdditions.php＋`public static function canAccessInternalNote`：`RULE_KEY_TENANT` 回 false、`isBigLandlord($user)` 回 false、`(int) $bill->owner_role_id !== (int) $role->id` 回 false。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-list-export",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "3afc3f15e73a8bd3ea83b6a12f3d3affb2c3e6888564fb2284185eb6ec9eabaa",
+   "title_text": "帳單總表怎麼匯出？（要先勾選帳單才會出現匯出選項）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/use/config/useBillTypes.js 右上角固定按鈕的 switch 只有 `ready-`/`income-`/`expense-`/`balance-` 系列，無 `all-`；帳單總表由同檔＋`// 帳單總表：附加 export 動作（獨立於交集結果，不走 filterByPermission）` 把 `exportAction`（`t('匯出帳單')`）加入批次列；src/pages/bills/list/Index.jsx＋`store.state?.bills?.pick?.pickedItems.length > 0` 時才以批次列取代上方狀態頁籤。",
+    "句 2：useBillTypes.js＋`t('匯出筆數超過 [s1] 筆上限，請縮小搜尋範圍後再試。'`；後端 app/Http/Controllers/BillController.php＋`if ($billCounts > $maxExportLimits) {` 直接回 `'success' => false`，不派工。",
+    "句 3：useBillTypes.js＋`route.params?.type === 'all' && hasPermission('export_bill'`；`['ready', 'income'].includes(route.params?.type)` 時批次列加 `label: t('匯出')`、`onClick: ()=>{ handleExportClick() }`，與總表共用同一 `handleExportClick`（勾選 ID 模式／全選 fromList 模式）。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-list-export-other-tabs",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "a168988068497d2ca0be3fbd2a7b9119145d065076ba3e516d55bf937d4a90b9",
+   "title_text": "「草稿帳單」「支出帳單」「總收支」分頁的匯出按鈕，跟帳單總表不是同一套（不需要先勾選，走另一個較舊的匯出流程）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/use/config/useBillTypes.js＋`case 'ready-draft':` 組合含 `label: t('匯出帳單')`、`case 'expense-paid':` 與 `case 'balance-unpaid':` 等含 `label: t('匯出')`，皆 `permission: 'export_bill'`、`store.commit('lightbox', 'billListExportOld')`；權限名稱見 app/Http/Controllers/UserController.php＋`'g_export_bill'     =>  ['export_bill']` 與 label `'匯出帳務資料'`。",
+    "句 2：useBillTypes.js 同一 switch 無 `ready-scheduled`、`ready-archived`、`expense-expired` 分支（狀態定義見同檔 `buildStatus('scheduled'`、`buildStatus('archived'`、`buildStatus('expired'`），result 維持空陣列。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-list-income-export-social-housing",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "2bfec22785fb647642b22a68a33bb20601e62f2d2f31a2a640716fc16776d6ef",
+   "title_text": "「收款帳單」分頁固定的匯出按鈕，什麼時候會多出「匯出租客繳費證明」子選項？（只有身分類別為社會住宅的帳號才有）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/use/config/useBillTypes.js＋`store.state.userData.role.config_rule_key === 4` 才加入 `label: t('匯出租客繳費證明')`（位於 `case 'income-received':` 等收款分頁固定按鈕 subs）；config/role.php＋`'4' => [` `'name' => '社會住宅'`。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-payment-method-account-pair",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "85bf8b336327eae89bf031c24da88652aae6cdf2c00560ba1958f88d097f37d1",
+   "title_text": "新增帳單時付款方式跟收款帳戶一定要一起填嗎？（兩者要嘛都空、要嘛都填；固定虛擬帳號例外）",
+   "notes": [
+    "標題：由句 1、2 支撐。",
+    "句 1：src/pages/bills/edit/Index.jsx＋`if (['bills.create', 'bills.create.batch'].includes(route.name)){` 與 `window.globalErrorShow(t('請完成付款方式與收款帳戶選擇'))`；後端 app/Http/Controllers/BillController.php＋`// 規則 1：皆空 → 選用覆蓋未啟用，沿用既有付款繼承（R1.3），放行`。",
+    "句 2：src/pages/bills/edit/_parts/BillCreatePaymentSelector.vue＋`<!-- 唯讀：帳號綁在合約上，不提供挑選（R8.2） -->`；Index.jsx＋`if (!isRechargeAccountMethod && hasPaymentMethod !== hasPaymentAccount){`；BillController.php＋`if ($paymentMethod === self::CONTRACT_PAYMENT_METHOD_RECHARGE) {` 先於成對規則返回。",
+    "句 3：Index.jsx＋`function handleOpenConfirmLightbox(){` 內檢查（contracts.moveOut 不在路由清單）；儲存草稿 `async function handleSaveDraft(){` 走 `state.updateBill()` 同一儲存端點，後端 BillController.php＋`validateBillPaymentFields($request, $role)`（單筆建立與 batchCreateBill 兩處）回 `'message' => ___('請完成付款方式與收款帳戶選擇')`。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-power-reading-draft-defaults",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "c5a8ebc194bb1ac43c841c8ec2f1e7e0514881e50582208e6e4e4091bc3303f4",
+   "title_text": "草稿帳單的電費度數要自己填嗎？（物件有綁定智慧電錶時，可在編輯頁按「取得即時電錶度數」先帶入）",
+   "notes": [
+    "標題：由句 1 後半支撐。",
+    "句 1：app/Detail.php＋`if (!empty($deviceId) && $bill->status == Bill::BILL_PREPARE && !$isApproval && $bill->type == 1) {`、`if ($item['name'] == '電費' && $item['is_editable'] == 0) {`、`if (!$hasMeasurementAfter) { $amountOfUsedNew = $meterReading;`（僅原始值為 NULL 時帶入、已填不覆蓋）；`$isApproval` 見 app/Services/ApprovalService.php＋`public static function isBillApproved`（特定合作團隊送簽核處理中或已核准）；按鈕見 src/pages/bills/edit/_parts/FeesBlock.jsx＋`t('取得即時電錶度數')`，條件 `node.name === '電費' && Array.isArray(node.ext_infos)` 並排除特定合作團隊，呼叫 `/api3/bills/current-meter/`（app/Http/Controllers/BillController.php＋`取得綁定智能電表的「當下即時度數」`）。與 docs/knowledge/jgb-product-facts.md＋`{#p914-power-reading-draft}`「草稿帳單的電費度數預設留空」字面衝突，依判定規則 5 以現行程式為準，見 findings。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-receipt-feature-roadmap",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "126ec9160c5e2f037006204048e5a460cf02bbc921cc91c2ba7d0e674e887412",
+   "title_text": "收據功能還會不會有新的開發？（現行已到帳帳單的齒輪選單一律看得到收據，目前沒有公開的後續開發時程）",
+   "notes": [
+    "標題：由句 1、2 支撐。",
+    "句 1：src/use/config/useBillTypes.js＋`case 'income-received':` 內 `filteredBillActions.get('receipt')` 無條件列入；app/Notification.php＋`case 'bill_paid':`、`case '1-2':`/`case '1-3':` 寄租客並附 `['Receipt' => $receipt]`、`suppressReceiptEmailAttachment()`、`if ($bill->type == Bill::BILL_TYPE_DEPOSITRATE) {` break；config/role.php＋`'name' => '社會住宅'`（key 4，無對應分支）；docs/knowledge/jgb-product-facts.md＋`{#p914-receipt-email}` 一致。",
+    "句 2：review-sheet-9.15-S2-DE-20260927.md＋`| 117 | G7 | 採用：寫現行功能＋「目前沒有公開時程」 |`。"
+   ]
+  },
+  {
+   "id": "jgb/E/ctbc-form-validation",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "65ea878bc06672be32e2bcae83554506a56553ae22a02f7ae1859eb07f24d408",
+   "title_text": "中國信託申請表單各欄位有什麼格式限制？（聯絡電話 10 碼、銀行代碼 3 碼）",
+   "notes": [
+    "標題：由句 1、2 支撐（虛擬帳號企業代碼 5 碼屬另一路徑，由同粗目 ctbc-apply-flow 涵蓋，本條未宣稱窮舉）。",
+    "句 1：app/Http/Controllers/UserController.php＋`$rules['phone_number'] = 'required|digits:10';`；src/pages/users/payment/_parts/Ctbc.vue＋`maxLength=\"10\"`。",
+    "句 2：UserController.php＋`$rules['bank_code'] = 'required|digits:3';`。",
+    "句 3：Ctbc.vue＋`maxLength=\"14\"`（銀行帳號輸入框，由 src/pages/users/payment/routerView/Add.vue＋`return <Ctbc` 掛載）；UserController.php＋`$rules['bank_account'] = 'required|digits_between:10,16';`（下限 10）與 `str_pad($requestData['bank_account'], 16, '0', STR_PAD_LEFT)`。"
+   ]
+  },
+  {
+   "id": "jgb/E/newebpay-required-fields",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "11cf65f28ca97bd977e6e3a0a658f6ff016af813acb140a1c82bd4b39bf0831c",
+   "title_text": "開通藍新智付通前，團隊要先填完哪些資料？（個人房東不能開通藍新）",
+   "notes": [
+    "標題：由句 1、2 支撐。",
+    "句 1：app/Http/Controllers/UserController.php＋`if ($this->role->config_rule_key === Role::RULE_KEY_LANDLORD_INDIVIDUAL) {` 對 `Payment::PAYMENT_NEWEBPAY` 設 `'disabled' = true` 與 `___('您無法開通此收款方式，若有問題請洽詢JGB客服')`；src/pages/users/payment/routerView/Add.vue＋`<div class=\"text-[16px]\">{state.bankSelected.message}</div>`（disabled 時只顯示訊息）。",
+    "句 2：UserController.php＋`'error_message' => ___('公司統編尚未填寫')`、`公司名稱尚未填寫`、`公司地址：縣市尚未填寫`、`公司地址：區尚未填寫`、`公司地址：地址尚未填寫`；`case Role::RULE_KEY_LANDLORD_CORPORATE:` 回 `'redirect' => route('users.role')`；`// 手機號碼與Email改由申請表單自行填寫` 且 `'roles-users' => []`。",
+    "句 3：同上，回傳同時帶 `'message' => $errorMessages`，src/mixin/methods.js＋`if (res.open || res.redirect || res.refresh){` 以 `changeSession` 顯示 message 後跳轉；社會住宅（config/role.php＋`'is_team' => true`、`'type' => 'landlord'`）在 notFills 的 switch 無分支，落到 `case Role::RULE_KEY_LANDLORD_SOCIAL_HOUSING:` 的 Validator（`'company_id_number' => 'required|digits:8'` 等），失敗回 `implode(', ', $validator->errors()->all())`。"
+   ]
+  }
+ ],
+ "findings": [
+  "來源衝突（不影響本組判定）：docs/knowledge/jgb-product-facts.md 的 `{#p914-power-reading-draft}` 寫「草稿帳單的電費度數預設留空」，但現行 app/Detail.php＋`if (!$hasMeasurementAfter) { $amountOfUsedNew = $meterReading;`（#12710133292 修正註解：原 isset 判斷使自動帶入成死碼）會在編輯頁對未填過的系統電費列帶入電錶讀數（僅呈現、未寫 DB 前）；jgb/E/bill-power-reading-draft-defaults 依程式寫法成立，帳本該條建議主持人裁決是否更新。",
+  "同粗目觀察：jgb/E/balance-invoice-unsigned-contract 句 2「帳單到帳後系統寄給租客的通知信會附上收據（部分特定合作團隊另有處理方式）」未排除收款方為社會住宅（app/Notification.php `case 'bill_paid':` 只有 `'1-2'`/`'1-3'` 寄租客）與押金設算息帳單（`BILL_TYPE_DEPOSITRATE` break）兩種不寄信情形，與本組 jgb/E/bill-actions-received 句 9、10 及 jgb/E/bill-receipt-feature-roadmap 句 1 的範圍不一致；本組兩條與程式相符，該參考細目可能需補例外。",
+  "對照細目 jgb/C/estate-notebook-entry 句 4 不成立（詳見 control），屬預期中的對照錯誤，已被識別。"
+ ],
+ "control": {
+  "id": "jgb/C/estate-notebook-entry",
+  "title": "成立",
+  "sentences": [
+   "成立",
+   "成立",
+   "成立",
+   "不成立"
+  ],
+  "notes": [
+   "標題：問句，無額外斷言。",
+   "句 1：app/Http/Controllers/EstateController.php＋`case 'add_bill_running':` 的 Validator `'date' => 'required'`、`'fee_type' => 'required'`、`'currencySelected' => 'required'`、`'price' => 'required|gte:0'`，note／target_name 以 `!empty(...) ? ... : null` 可空；src/pages/estates/dashboard/runnings/_parts/LedgerContainer.vue＋`t('費用類別')`、`income: '收入'`、`expense: '支出'`。",
+   "句 2：LedgerContainer.vue＋`maxFileSize: 10 * 1024 * 1024`、`allowedFileTypes: ['image/*', '.pdf']`、`maxNumberOfFiles: 3 - (props.form?.attachments?.length || 0)`。",
+   "句 3：EstateController.php＋`if (!$hasEditPermission) {` 回 `'message' => ___('權限不足！')`。",
+   "句 4：EstateController.php＋`case 'add_memo':` 的 Validator 只有 `'date' => 'required'`（註解「date required；note / target_name 皆可空」），src/pages/estates/dashboard/memos/_parts/MemoContainer.vue 欄位只有 `labelKey: '時間'`、`'說明'`、`'對象'` 與附件（`maxNumberOfFiles: 3 -`、`maxFileSize: 10 * 1024 * 1024`），沒有收入／支出或金額欄位；句末「也要填收入或支出的金額」與來源不符，且與同句「只要填時間」自相矛盾。"
+  ]
+ },
+ "source_transcript": "a7fd60f2c00a744a2.output"
+}

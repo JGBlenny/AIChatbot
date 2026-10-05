@@ -1,0 +1,92 @@
+[
+  {
+    "fine_id": "jgb/E/bill-actions-received",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-10-03}",
+    "shelf": "E"
+  },
+  {
+    "fine_id": "jgb/E/bill-list-export",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-27}",
+    "shelf": "E"
+  },
+  {
+    "fine_id": "jgb/E/bill-list-export-other-tabs",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-27}",
+    "shelf": "E"
+  },
+  {
+    "fine_id": "jgb/E/bill-list-income-export-social-housing",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-27}",
+    "shelf": "E"
+  },
+  {
+    "fine_id": "jgb/E/bill-cvs-barcode-overdue-payment",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-27}",
+    "shelf": "E"
+  },
+  {
+    "fine_id": "jgb/E/bill-receipt-feature-roadmap",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-10-03}",
+    "shelf": "E"
+  },
+  {
+    "fine_id": "jgb/E/bill-internal-note-visibility",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-10-03}",
+    "shelf": "E"
+  },
+  {
+    "fine_id": "jgb/E/bill-payment-method-account-pair",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-27}",
+    "shelf": "E"
+  },
+  {
+    "fine_id": "jgb/E/bill-power-reading-draft-defaults",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-27}",
+    "shelf": "E"
+  },
+  {
+    "fine_id": "jgb/E/balance-invoice-timing",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-27}",
+    "shelf": "E"
+  },
+  {
+    "fine_id": "jgb/E/balance-invoice-group-action-menu",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-27}",
+    "shelf": "E"
+  },
+  {
+    "fine_id": "jgb/E/balance-invoice-rent-item-rule",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-27}",
+    "shelf": "E"
+  },
+  {
+    "fine_id": "jgb/E/balance-invoice-anomaly-list",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-27}",
+    "shelf": "E"
+  },
+  {
+    "fine_id": "jgb/E/newebpay-required-fields",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-10-03}",
+    "shelf": "E"
+  },
+  {
+    "fine_id": "jgb/E/ctbc-form-validation",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-27}",
+    "shelf": "E"
+  }
+]
