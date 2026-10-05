@@ -13,7 +13,7 @@ import sys
 
 RUNS = os.environ.get("P919_RUNS", "/Users/chenqinghuang/dev/work/AIChatbot/.claude/skills/outline-curation/runs/outline-20260920")  # override only for scratch pre-runs
 SP = os.path.dirname(os.path.abspath(__file__))
-TRAIL = {"A": "", "B": "\n", "C": "", "I": "\n"}  # Plan 9.19 S1: measured per shelf
+TRAIL = {"A": "", "B": "\n", "C": "", "D": "\n", "E": "", "F": "", "G": "", "I": "\n"}  # Plan 9.19 S1 + 9.29 (D–G): measured per shelf; H is not byte-stable, never edit it
 
 
 def dump(shelf, d):
@@ -26,7 +26,7 @@ def path(shelf):
 
 def main():
     if sys.argv[1] == "--roundtrip":
-        for s in "ABCI":
+        for s in "ABCDEFGI":
             raw = open(path(s), encoding="utf-8").read()
             ok = dump(s, json.loads(raw)) == raw
             print(s, "roundtrip byte-identical:", ok)

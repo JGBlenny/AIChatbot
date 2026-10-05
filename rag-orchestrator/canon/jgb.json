@@ -2,7 +2,7 @@
   "audience": "jgb",
   "budget_tokens": 0,
   "business_types": [],
-  "canon_sha256": "34e411dad2a05d0efca2b753903bd47f9e40def59c632e5077ac86a5ddfb44b9",
+  "canon_sha256": "2533905135f0e7d75b9b56031d25c3c866e4f485dced492247f12a6777c8862e",
   "coarses": [
     {
       "fines": [
@@ -482,11 +482,10 @@
           ],
           "categories": [],
           "coarse_id": "A-registration",
-          "content_sha256": "3ff49ae838c9ff4ac802ad2380ddb8feae98f19d5cd5730dddd229446858cba8",
+          "content_sha256": "24cb6aca73ff5f84cc3b525be1094acd94816910b1c0de0b69656397852d359f",
           "content_units": [
-            "一般的註冊或登入流程會出現身分選擇畫面，讓使用者選擇「我是房東/管理者」或「我是租客」；已註冊過的第三方帳號登入時，則會直接進入首頁。",
-            "同一組帳號可同時擁有房東與租客兩種身分，選擇的身分只決定這次要進入哪一種介面。",
-            "若是從租客端網站導轉來註冊，綁定手機這一步完成或略過後，系統會直接把使用者導回原本要前往的頁面，不會再出現身分選擇畫面。"
+            "一般的註冊或登入流程會出現身分選擇畫面，讓使用者選擇「我是房東/管理者」或「我是租客」；已註冊過的第三方帳號登入時，不會再出現身分選擇畫面，若登入前已有指定要前往的頁面就前往該頁，沒有才直接進入首頁。",
+            "同一組帳號可同時擁有房東與租客兩種身分，選擇的身分只決定這次要進入哪一種介面。"
           ],
           "id": "jgb/A/register-role-select",
           "instance_applicability": "general",
@@ -514,7 +513,7 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-29",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
@@ -525,7 +524,7 @@
             "property_manager",
             "prospect"
           ],
-          "title": "註冊完之後要選身分嗎？（一般會在房東/管理者、租客中二選一，可同時擁有兩種身分；從租客端網站導轉來的會直接導回原頁）"
+          "title": "註冊完之後要選身分嗎？（一般會在房東/管理者、租客中二選一，可同時擁有兩種身分）"
         },
         {
           "business_types": [
@@ -704,7 +703,7 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-28",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
@@ -714,7 +713,7 @@
             "property_manager",
             "prospect"
           ],
-          "title": "登入前為什麼要先選擇身分？（決定進入房東/管理者或租客的登入表單）"
+          "title": "登入前要先選擇身分？"
         },
         {
           "business_types": [
@@ -1183,11 +1182,11 @@
           ],
           "categories": [],
           "coarse_id": "A-account-recovery",
-          "content_sha256": "49adc32234c695401c628361d7a9ac663028c787f058822637dc76dd8f18a529",
+          "content_sha256": "6c3e67a685fead6367608df4cbf7b36263d7c8ae092bf3bd831562439cfea81e",
           "content_units": [
             "當使用者是透過特定邀請連結進入忘記密碼頁面時，畫面會直接顯示「請設定密碼」，而不是一般的忘記密碼流程，並跳過帳號驗證直接進入設定密碼表單。",
             "這個情境用在大房東的邀請流程：受邀的帳號透過邀請連結進入後，直接設定自己的密碼，設定成功後會依處理結果導向對應頁面。",
-            "此畫面沿用一般忘記密碼頁面同樣的新密碼格式規則，設定成功後會依處理結果導向指定頁面，沒有指定頁面時才導回一般登入頁。"
+            "此畫面沿用一般忘記密碼頁面同樣的新密碼格式規則；設定成功後系統會自動為您登入，並前往指定頁面，沒有指定頁面時會前往登入頁，但因為已經登入，會直接進入會員中心。"
           ],
           "id": "jgb/A/forget-password-setpwd-invite",
           "instance_applicability": "general",
@@ -1210,7 +1209,7 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-29",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
@@ -1370,10 +1369,10 @@
           ],
           "categories": [],
           "coarse_id": "A-member-home",
-          "content_sha256": "a382dc80c6e5bdf63fe3644f882b203767f868169b00ecfcb2144260904dcf57",
+          "content_sha256": "832492509577ef5c108a2471f1061bb4290b391f2dd53868a5fdeefae803a203",
           "content_units": [
             "若目前登入身分是大房東，首頁不會顯示即時物件出租率、即將到期合約、即將到來應到帳帳單、7日內修繕單四個方塊，也不會有捷徑區塊。",
-            "大房東首頁改為顯示「社區最新收支詳情」，以及可自訂區間（7天／30天／90天／6個月）的收支圖表。"
+            "大房東首頁改為顯示可自訂區間（7天／30天／90天／6個月）的收支圖表。"
           ],
           "id": "jgb/A/dashboard-big-landlord-view",
           "instance_applicability": "general",
@@ -1396,7 +1395,7 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-29",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
@@ -1408,7 +1407,7 @@
           "target_user": [
             "property_manager"
           ],
-          "title": "大房東的首頁畫面和一般房東不一樣嗎？（只顯示社區最新收支詳情與收支圖表，沒有捷徑與四個統計方塊）"
+          "title": "大房東的首頁畫面和一般房東不一樣嗎？（沒有捷徑與四個統計方塊）"
         },
         {
           "business_types": [
@@ -2571,10 +2570,10 @@
           ],
           "categories": [],
           "coarse_id": "A-notification-center",
-          "content_sha256": "a1f0d4978149ef70743bc134578d03cb385c574eab0a45f8541bef0dbb59f45f",
+          "content_sha256": "dc074affd70fc25ba891940fc35c4b46e6b6dd407d5cd56d3b79826129e50cb1",
           "content_units": [
             "除了訊息類通知之外，每則通知點擊後都會依原本的連結網址前往對應頁面，並在網址上多帶一個通知編號參數。",
-            "前往的頁面載入時，系統會依這個參數把這則通知標為已讀，並把網址上的這個參數拿掉。",
+            "前往的頁面載入時，系統會把網址上的這個參數拿掉；若這則通知的收件人就是目前登入的使用者本人，才會把這則通知標為已讀。",
             "訊息類通知則是在原頁面開啟訊息視窗，不會換頁。"
           ],
           "id": "jgb/A/notification-mark-read-navigate",
@@ -2598,7 +2597,7 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-10-03",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
@@ -2610,7 +2609,7 @@
           "target_user": [
             "property_manager"
           ],
-          "title": "點擊通知列表項目會發生什麼？（前往原連結並把該則通知標為已讀；訊息類通知不換頁）"
+          "title": "點擊通知列表項目會發生什麼？（前往原連結；訊息類通知不換頁）"
         },
         {
           "business_types": [
@@ -2847,9 +2846,9 @@
           ],
           "categories": [],
           "coarse_id": "A-notification-settings",
-          "content_sha256": "61f6e4092657a2d8b6b96a7f4a537dd61cf77861b941aa265a2c07fe4a708e56",
+          "content_sha256": "7b6d22a7f759c74a66ba108cc91503f7bc0205abb4ef7706b1234a45e2e0471f",
           "content_units": [
-            "「儲存」按鈕只有在至少一個分類已經填了自訂收件信箱時才會啟用，否則呈現停用樣式且送出動作不會執行。",
+            "「儲存」按鈕只有在至少一個分類出現自訂收件信箱的輸入欄位時才會啟用（欄位有沒有填不影響），否則呈現停用樣式且送出動作不會執行。",
             "儲存成功會顯示「儲存成功」提示；若儲存失敗，畫面會用系統回傳的訊息或預設「儲存失敗，請稍後再試」顯示錯誤提示；若發生網路錯誤則顯示「網路錯誤，請稍後再試」",
             "頁面載入時會自動取得目前各分類的自訂信箱與預設信箱，按下「儲存」則會把整包分類資料送出更新。"
           ],
@@ -2874,7 +2873,7 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-29",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
@@ -2883,7 +2882,7 @@
           "target_user": [
             "property_manager"
           ],
-          "title": "通知收件設定改完怎麼儲存？（至少要有一個分類填了自訂信箱，儲存鍵才會啟用）"
+          "title": "通知收件設定改完怎麼儲存？"
         }
       ],
       "id": "A-notification-settings",
@@ -3103,13 +3102,14 @@
           ],
           "categories": [],
           "coarse_id": "B-team-profile",
-          "content_sha256": "6cce0338373c16f4118086ec8c790922f8adb9571072d0e11aa53602f6db1e73",
+          "content_sha256": "b66f04de0305198e8e301bb3b39d6d44031e773ff1369ba5b35250f917e5b413",
           "content_units": [
             "簽約資訊卡的「公司資訊」要填公司登記名稱（最多 20 字）與公司統編，這兩項不分一般團隊或社宅團隊都是必填。",
             "「公司統編」欄位下方可以選擇統編類型是「公司統編(檢核)」還是「其他統編(不檢核)」，選「公司統編(檢核)」時會檢查統一編號格式，格式不對會顯示「公司統編格式錯誤」。",
             "「公司負責人」只有社宅團隊是必填欄位，一般團隊則是選填。",
             "「社宅業者編號」只有社宅團隊看得到，且是必填欄位；一般團隊沒有這一欄。",
-            "「公司登記證號」對社宅團隊是必填，一般團隊則是選填；「公司登記證日期」「公司登記證縣市」不論一般團隊或社宅團隊都是選填。"
+            "「公司登記證號」對社宅團隊是必填，一般團隊則是選填；「公司登記證日期」「公司登記證縣市」則是選填。",
+            "不過團隊要選用「財政部包租業租金收據範本」時，系統要求這三項都要先填寫完成。"
           ],
           "id": "jgb/B/team-signer-company-info",
           "instance_applicability": "general",
@@ -3137,7 +3137,7 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-28",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
@@ -3146,7 +3146,7 @@
           "target_user": [
             "property_manager"
           ],
-          "title": "簽約資訊卡的「公司資訊」要填什麼？（公司登記名稱上限 20 字、公司統編皆為必填；公司負責人只有社宅團隊必填；社宅團隊還要填必填的社宅業者編號與公司登記證號，公司登記證日期與縣市則不分團隊都是選填）"
+          "title": "簽約資訊卡的「公司資訊」要填什麼？（公司登記名稱上限 20 字、公司統編皆為必填；公司負責人只有社宅團隊必填；社宅團隊還要填必填的社宅業者編號與公司登記證號）"
         },
         {
           "business_types": [
@@ -3398,7 +3398,7 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-28",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
@@ -3407,7 +3407,7 @@
           "target_user": [
             "property_manager"
           ],
-          "title": "簽約資訊卡上有哪些地址欄位群？（個人的戶籍地址／通訊地址、公司的登記地址／通訊地址，都有「同上」可以直接帶入；社宅團隊另有經紀人與租賃管理人員各自的通訊地址）"
+          "title": "簽約資訊卡上有哪些地址欄位群？（個人的戶籍地址／通訊地址、公司的登記地址／通訊地址；社宅團隊另有經紀人與租賃管理人員各自的通訊地址）"
         },
         {
           "business_types": [
@@ -3464,10 +3464,10 @@
           ],
           "categories": [],
           "coarse_id": "B-member-list",
-          "content_sha256": "8b2e92f5dae925c4a834c99f9a4850b4cdcf3e6c883a2ec632ecc0c8e6636737",
+          "content_sha256": "396343a55a583478b9179412b28cda2ad6db5a4d40d75c813bc08031eacd8ee5",
           "content_units": [
-            "成員列表頁面上方會顯示目前團隊的成員總人數（含團隊擁有者本人）。",
-            "清單上每位成員會顯示加入時間、Email、手機號碼，以及目前套用的角色名稱。"
+            "成員列表標題旁會顯示成員人數，這個人數是下方一般成員列的筆數再加 1；以團隊擁有者身分登入時，剛好等於含團隊擁有者本人的總人數。",
+            "清單上每位成員都會顯示 Email、手機號碼，以及目前套用的角色名稱；加入時間只有一般成員那幾列有，團隊擁有者那一列和自己那一列的加入時間是空白。"
           ],
           "id": "jgb/B/member-list-overview",
           "instance_applicability": "general",
@@ -3495,7 +3495,7 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-28",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
@@ -3505,7 +3505,7 @@
           "target_user": [
             "property_manager"
           ],
-          "title": "成員列表可以看到什麼資訊？（成員總人數、加入時間、Email、手機號碼、目前的角色）"
+          "title": "成員列表可以看到什麼資訊？（加入時間、Email、手機號碼、目前的角色）"
         },
         {
           "business_types": [
@@ -3513,10 +3513,10 @@
           ],
           "categories": [],
           "coarse_id": "B-member-list",
-          "content_sha256": "2b7a2faee84272713af7fa3785723944ffb3ceb7e805dc88c87b64657c6fc339",
+          "content_sha256": "2649cc6a9e613ce7f8228a484413fe04c795df1eea1f97f9be36a5200b407eed",
           "content_units": [
             "點擊成員列表的「邀請」按鈕會開啟「新增成員」視窗，可以選擇用 Email 或手機號碼搜尋要邀請的對象。",
-            "受邀請的對象如果還不是 JGB 會員，系統會提示這個帳號尚未成為 JGB 會員，不能把他新增為團隊成員。",
+            "受邀請的對象如果不是 JGB 會員，將無法新增為團隊成員；輸入的 Email 或手機號碼查不到帳號時，會顯示「您輸入的帳號不存在」。",
             "可以一次搜尋加入多位對象到「即將新增成員」清單，確認後一次送出邀請。"
           ],
           "id": "jgb/B/member-invite",
@@ -3545,7 +3545,7 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-28",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
@@ -3758,9 +3758,9 @@
           ],
           "categories": [],
           "coarse_id": "B-member-list",
-          "content_sha256": "a0c1016d9e4952ac94abd81603a778a74668539433d8a171e58ebd9d4c9196b5",
+          "content_sha256": "fac58060b60c4c68ab7c5e60e7095e295a4055f54898d907bdd6705c7b70c9d2",
           "content_units": [
-            "成員列表每一列右側有鉛筆圖示，點開可以選「編輯綁定物件」或「編輯綁定合約」，會跳到這位成員擁有的物件／合約頁面。",
+            "有編輯權限時，成員列表中一般成員那幾列右側有鉛筆圖示，點開可以選「編輯綁定物件」或「編輯綁定合約」，會跳到這位成員擁有的物件／合約頁面；團隊擁有者那一列和自己那一列沒有鉛筆圖示。",
             "在「〔成員姓名〕擁有的物件」或「擁有的合約」頁面，可以點「授權更多物件／合約」加入新的授權，或點「移除所有授權」一次撤銷這位成員的所有物件／合約授權。"
           ],
           "id": "jgb/B/member-assign-owned",
@@ -3784,7 +3784,7 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-28",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
@@ -3846,10 +3846,10 @@
           ],
           "categories": [],
           "coarse_id": "B-member-list",
-          "content_sha256": "7957d10339bf610162c0dbd9fac3b38431f798f0b8654a53f40900c16af37f25",
+          "content_sha256": "1903645ab0bd76ab26b4c9c1dbc51e4b79b1cc9382ed7e275ac7039b599f4b8f",
           "content_units": [
             "成員列表中一般成員那一列有角色下拉選單，選擇要指派的角色後就會直接送出變更，不用另外打開編輯視窗；團隊擁有者那一列和自己那一列的選單是鎖住的，沒有編輯權限時整個選單也會鎖住。",
-            "可以切換的角色下拉選單最下面有一個「+ 新增角色」選項，點選後會直接開啟「編輯角色」視窗，不用先離開成員列表。"
+            "可以切換的角色下拉選單最下面有一個「+ 新增角色」選項，點選後會直接開啟「新增角色」視窗，不用先離開成員列表。"
           ],
           "id": "jgb/B/member-list-role-inline-change",
           "instance_applicability": "general",
@@ -3872,7 +3872,7 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-29",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
@@ -4647,10 +4647,9 @@
           ],
           "categories": [],
           "coarse_id": "B-biglandlord-report",
-          "content_sha256": "17ff2d6c42459f5a9d5bfa090f37b2f2afd69cac608119cfb559b387484a8794",
+          "content_sha256": "877e0049789a13ec5ccbe18ee3b57d90c1c3b5d5a39b4e0fd36984545b6f53ae",
           "content_units": [
-            "大房東報表清單有一欄「社區」，顯示這位大房東名下物件所屬的社區。",
-            "點開大房東報表細節，若結算幣別和站台幣別不同、而且有匯率資料，會顯示「匯率」（手機版不顯示這段文字）；「所有物件」「社區」「物件」三個層級各自都有獨立的「下載報表」按鈕，可以分別下載對應範圍的報表。"
+            "大房東報表清單有一欄「社區」，顯示這位大房東名下的社區數量，點擊數字會開啟社區清單。"
           ],
           "id": "jgb/B/biglandlord-report-community-rate",
           "instance_applicability": "general",
@@ -4673,7 +4672,7 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-10-03",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
@@ -4683,7 +4682,7 @@
           "target_user": [
             "property_manager"
           ],
-          "title": "大房東報表可以依社區細看嗎？（報表清單有「社區」欄，幣別不同時細節頁會顯示匯率）"
+          "title": "大房東報表可以依社區細看嗎？（報表清單有「社區」欄）"
         }
       ],
       "id": "B-biglandlord-report",

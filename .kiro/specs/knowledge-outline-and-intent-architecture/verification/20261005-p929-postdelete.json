@@ -1,0 +1,281 @@
+{
+ "kind": "write",
+ "verdict": "REFUTED",
+ "base": "f13b0cb57303c6f8b887e341cbc38a337f6f5fcb",
+ "claim": "Plan 9.29 刪後複查 3b：16 條細目的標題與每一句已逐句對合法來源核對，逐條結果如 fines",
+ "fines": [
+  {
+   "id": "jgb/A/dashboard-big-landlord-view",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "832492509577ef5c108a2471f1061bb4290b391f2dd53868a5fdeefae803a203",
+   "title_text": "大房東的首頁畫面和一般房東不一樣嗎？（沒有捷徑與四個統計方塊）",
+   "notes": [
+    "標題：src/pages/users/dashboard/Landlord.vue 以 state.isBigLandlord 分支，大房東走另一組畫面，不渲染 Block_* 四方塊與 ShortCuts，句 1、2 都支撐。",
+    "句 1：src/pages/users/dashboard/Landlord.vue＋`state.isBigLandlord`／`<Block_Vacancy />`／`state.showShortCut && <div`：四方塊與捷徑只在非大房東分支。方塊標題見 src/pages/users/dashboard/parts/Block_Vacancy.vue `t('即時物件出租率')`、Block_ExpiringContract.vue `t('即將到期合約')`、Block_AccountsReceivable.vue `t('即將到來應到帳帳單')`、Block_Repair.vue `t('7日內修繕單')`。",
+    "句 2：同上 Landlord.vue＋`scale: 7`／`scale: 30`／`scale: 90`／`scale: 6, unit: 'months'`／`customizable={true}`／`<BalanceChart`：大房東分支顯示可自訂區間的 DateRangeSelector 和收支圖表。另：同分支的 `<EstateDetails />` 沒有 import，src/components/index.js 也沒有同名的全域元件，實際不會渲染，所以不影響本句。"
+   ]
+  },
+  {
+   "id": "jgb/A/register-role-select",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "24cb6aca73ff5f84cc3b525be1094acd94816910b1c0de0b69656397852d359f",
+   "title_text": "註冊完之後要選身分嗎？（一般會在房東/管理者、租客中二選一，可同時擁有兩種身分）",
+   "notes": [
+    "標題：src/pages/users/auth/parts/RoleSelect.vue 有兩張卡片「我是房東/管理者」「我是租客」；help onboarding1_zh-Hant.html 寫「只需註冊一次，就可以同時擁有房東及租客身份」。句 1、2 支撐。",
+    "句 1：src/pages/users/auth/parts/RoleSelect.vue＋`t('我是房東/管理者')`／`t('我是租客')`。註冊流程見 src/pages/users/auth/parts/PhoneVerify.vue `parentState.step = 'RoleSelect'`，登入流程見 src/pages/users/auth/Login.vue `step: 'RoleSelect'`。已註冊的第三方帳號見 app/Http/Controllers/AuthController.php `findSsoUserBySocialIdAndSocialKey` 分支：session 有 `redirect_after_login` 就導到該頁，否則 `return redirect($dashboardUrl)`，不經過身分選擇。",
+    "句 2：help onboarding1_zh-Hant.html＋「就可以同時擁有房東及租客身份」；app/Http/Controllers/Controller.php＋`session('selected_role_type') === 'tenant'`／`=== 'landlord'`：選擇只決定這次登入用哪個 role。"
+   ]
+  },
+  {
+   "id": "jgb/A/signer-individual-fields",
+   "title": "不成立",
+   "sentences": [
+    "不成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "79dbc07fa339be9a2d9e0cd5f2d9b45688ded21296278a1c2a0980d79da9131a",
+   "title_text": "個人房東的簽約資訊要填什麼？",
+   "notes": [
+    "標題：不成立（規則 10）。標題問「要填什麼」，但 src/pages/users/team/_parts/SignerDetails.vue `firstRowOfIndividualInfo` 的必填核心欄位（姓氏、名稱、身分證字號，`fieldTitleLabelKey: '身分證字號'`, `isRequired: true`）在剩下的句子裡都沒出現。剩下的句子只答到 Email／手機和附件，沒有答到問題的主體。",
+    "句 1：不成立（規則 10）。src/pages/users/team/_parts/SignerDetails.vue＋`secondRowOfIndividualInfo`（Email、手機號碼 `isRequired: true`）事實本身正確。但句首「另需」「同樣列為必填」承接的是姓氏／名稱／身分證字號那句，那句已經不在本條，本句依賴已刪除的前文。",
+    "句 2：同上 SignerDetails.vue＋`t('身分證正反面照片(選填)')`、`idCardAttachmentInfo` 註解「身分證正反面走證件引導裁切（id-document-guided-crop）」、`:idGuided=\"true\"`：屬於附件上傳，走證件引導裁切。",
+    "句 3：同上 SignerDetails.vue＋`otherAttachmentInfo` 三項 `'工作名片/學生證'`／`'良民證'`／`'小章'`，區塊標題 `t('其他附件(選填)')`。「另可」承接的是句 2 的附件，仍在本條內。"
+   ]
+  },
+  {
+   "id": "jgb/B/biglandlord-list-overview",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "不成立",
+    "成立"
+   ],
+   "content_sha256": "3ccd884dc4c6c069029fea01d68cd41f9d7794ad9519c51d469b3a44f3edfa4f",
+   "title_text": "大房東列表可以看到哪些欄位？",
+   "notes": [
+    "標題：問句，句 1～3 有回答。列舉不完整的問題記在句 2。",
+    "句 1：src/pages/bigLandlords/list/_parts/ListTable.vue＋`title: 'ID'`、`t('姓名')`、`t('會員註冊')`、`t('Email')`、`t('手機號碼')`、`t('身分證字號')`、`t('地址')`、`t('帳戶名稱')`、`t('帳戶資訊')`：列出的欄位都存在。",
+    "句 2：不成立（規則 8）。同上 ListTable.vue 的 `t('合作方式')`、`t('合作起迄')`、`t('所屬物件')`（src/utils/surelyVue/bigLandlord.ts `qty_of_estates`）都對。但本句用「另外還會顯示」收尾整份欄位列舉，而同一份 columns 還固定有 `title: t('生日')` 和 `title: t('主要聯絡方式')` 兩欄，沒有顯示條件。兩句合起來回答「哪些欄位」時漏了這兩欄。",
+    "句 3：同上 ListTable.vue＋`:onOpenContactCard`／`contactCardState.open`，以及 src/components/SurelyVue/BigLandlord/NameCell.vue `emit('openContactCard'`：點姓名會開聯絡資訊卡。"
+   ]
+  },
+  {
+   "id": "jgb/B/biglandlord-report-community-rate",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "877e0049789a13ec5ccbe18ee3b57d90c1c3b5d5a39b4e0fd36984545b6f53ae",
+   "title_text": "大房東報表可以依社區細看嗎？（報表清單有「社區」欄）",
+   "notes": [
+    "標題：src/pages/bigLandlords/report/_parts/ListTable.vue `title: t('社區')`，句 1 支撐。",
+    "句 1：src/pages/bigLandlords/report/_parts/ListTable.vue＋`title: t('社區')`、`emit('communityListOpen', info.communities`；src/utils/surelyVue/bigLandlord.ts＋`communities.length.toString()`（顯示社區數量）；src/pages/bigLandlords/report/Index.vue＋`handleCommunityListOpen` → `LightBoxAction.bigLandlord.communities()`，會開啟社區清單。"
+   ]
+  },
+  {
+   "id": "jgb/B/biglandlord-sheet-overview",
+   "title": "不成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "f4d9fd1a2e08a015f9d3f79f5b5d2ae9beef2d87d705e185c55d56722cce047d",
+   "title_text": "大房東對帳表在算什麼？（單月報表才有「上一月」「下一月」「下載」，整年度報表是「匯出報表」）",
+   "notes": [
+    "標題：不成立（規則 10）。標題問「對帳表在算什麼」，剩下唯一一句只講單月和整年度畫面的按鈕差異，沒有回答對帳表算什麼。src/pages/bigLandlords/sheet/_parts/SelectBar.jsx 有「押金收入」「屋主資金收入」「屋主租金收入」等類別，但本條沒有任何一句提到。括號內關於按鈕的斷言本身有句 1 支撐。",
+    "句 1：src/pages/bigLandlords/sheet/index.vue＋`['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'].includes(String(route.query.month)`、`t('上一月')`、`t('下一月')`、`t('取消')`、`t('下載')` 只在月報分支。年表分支見 src/pages/bigLandlords/sheet/_parts/SelectBar.jsx＋`bi-chevron-left`／`bi-chevron-right`、`name=\"year\"` 輸入框、`t('匯出報表')`。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-house-preview-unpublished",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "0fe2fd3ded1df8e34834dc540385acdf3e47cd4907555c6b3584d4ad5555ed78",
+   "title_text": "物件還沒刊登（未開放）時，廣告頁會怎麼顯示？（屋主看到的是預覽頁提示）",
+   "notes": [
+    "標題：resources/views/estate/show.blade.php 的預覽提示，句 1 支撐。",
+    "句 1：resources/views/estate/show.blade.php＋`@if (!$isOpen && !$isInvite && !$isContractSnapshot)`、`這是您的物件廣告預覽頁，此物件尚未完成刊登。`（引號內文字除了句末「。」以外逐字相符）。app/Http/Controllers/EstateController.php＋`abort(404)` 條件：物件未刊登時，只有具 show_estate／show_owner_estate 權限的人看得到頁面，擁有者屬於這一類。"
+   ]
+  },
+  {
+   "id": "jgb/D/contract-tax-invoice",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "897a4abc2a46dc9c461e49ed0751c988f4ec8c0492c94cd5985112facfa3c433",
+   "title_text": "稅與發票分頁怎麼設定？（是否開立發票、出租方統一編號、各品項是否應稅）",
+   "notes": [
+    "標題：src/pages/contracts/edit/taxAndInvoice/index.jsx `t('帳單是否開立發票')`、`t('出租方統一編號')`、`t('應稅品項')`，句 3～6 支撐。",
+    "句 1：src/routes/contracts.js＋`name: 'contracts.edit.taxAndInvoice'` 的 `display_property_purpose_key: [1]`（只有一般合約）；src/use/useEditStore.js＋`if (!editStore.options?.can_auto_generate_invoice)` 會過濾掉這個分頁；app/Http/Controllers/ContractController.php＋`'can_auto_generate_invoice' => (bool)!empty($RoleInvoicesInformation)`；app/RoleInvoices.php＋`getRoleInvoicesByRoleId` `->where('role_invoices.active', 1)`（出租方團隊啟用中的發票設定）。",
+    "句 2：src/use/useEditStore.js＋`premises_use_for === 'parking_space'`、`canShowTaxInvoice`：車位合約只有帶兩種特定合作團隊角色旗標的團隊才保留這個分頁。",
+    "句 3：src/pages/contracts/edit/taxAndInvoice/index.jsx＋`t('帳單是否開立發票')` 是分頁的第一個設定區塊（`can_auto_generate_invoice && <>` 內的第一項）。",
+    "句 4：同上 index.jsx＋`t('出租方統一編號')`、`t('發票是否要打承租方的統一編號')`、`placeholder={t('請填寫統編')}`、`t('買受人名稱')`，這些區塊在 `is_auto_generate_invoice ? '' : 'disabled'` 為可用時才能操作。",
+    "句 5：同上 index.jsx＋`state.canToggleRentTaxable && <SwitchButton`（租金應稅開關）、`featuresState.isDepositInterestEnabled.value && <div`＋`t('押金設算息')`；src/use/config/useFeatures.js＋`isEnabled('deposit_interest')`。",
+    "句 6：同上 index.jsx＋`filteredFees`／`filteredCustomFees` 依 `feeObj.amount` 篩選、`t('生活費用計稅品項')`、每一項 `<FeeBlock` 內有 SwitchButton。",
+    "句 7：同上 index.jsx＋`canToggleRentTaxable: computed(()=>!props.editStore.options?.balance_invoice_enabled)`；app/Http/Controllers/ContractController.php＋`$balanceInvoiceEnabled = $teamEnabled && $communityEnabled`。",
+    "句 8：同上 index.jsx＋`hasNoTaxableItem` 與提示 `t('目前這份合約沒有任何品項會開立發票，帳單不會有發票金額。若確定不需要發票，建議把上方「帳單是否開立發票」改為「否」。')`。"
+   ]
+  },
+  {
+   "id": "jgb/D/renew-signing-flow",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "2368338f894ad64448d47c8b10408b20c17793cdc39afb72ac7e99cbe930ed5b",
+   "title_text": "續約邀請發出後流程是什麼？（房東確認無誤後立即簽名完成續約）",
+   "notes": [
+    "標題：landlordonboarding04lease_zh-Hant.html 寫「租客簽回後，房東方若確認資料無誤，即可點選【立即簽名】…完成該合約的續約」。標題的「立即簽名」沒有加引號，是描述簽名這個動作，與句 2 一致。",
+    "句 1：landlordonboarding04lease_zh-Hant.html＋「完成後系統會將續約邀請發送給租客，可於【待租客簽回】欄位中查找您的合約」；app/Services/ContractService.php＋`CONTRACT_RENEW_INVITE_LOG` → `Contract::CONTRACT_INVITING; // status 設定為待租客簽回`。",
+    "句 2：src/pages/contracts/_parts/show/signerInfo/ButtonArea.jsx＋`case 4: // 'CONTRACT_INVITING_NEXT' 待房東簽名` 下的按鈕是 `t('立即簽約')`；`isExistingContract`（紙本／DIY 且 `(!props.contractInfo?.isRenewContract || props.contractInfo?.isRenewContractReuploadPdf)`）時是 `t('確認並成立合約')`；app/Services/ContractService.php＋`is_renew_contract_reupload_pdf = 1`。幫助中心寫【立即簽名】，現行按鈕文字是「立即簽約」，依規則 5 以程式為準，本句與程式一致。",
+    "句 3：docs/knowledge/jgb-product-facts.md＋`{#p914-contract-renewal}`。已對 app/Services/ContractService.php 原始碼：`$renewContract = $contract->replicate();`、`續約合約為全新合約，去掉自父合約繼承來的「歷史合約」位元`、`if ($renewContract->is_tenant_registered)` → `CONTRACT_RENEW_INVITE_LOG`，否則走 `CONTRACT_RENEW_CONFIRM_LOG`（不變更狀態，沿用執行中狀態）。"
+   ]
+  },
+  {
+   "id": "jgb/E/balance-invoice-anomaly-list",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "b401d7a9643343a2a601ff0c65a2b07f73706bd99870f818763cca19ef1f75d5",
+   "title_text": "帳單不在任何差額發票群組內時，JGB 怎麼處理？",
+   "notes": [
+    "標題：問句，句 1 回答了不屬於群組的帳單在開票異常時會怎麼處理。",
+    "句 1：app/Services/InvoiceFailureAuditService.php＋`rejectExpectedNonIssuedBills` 中 `if (!$balanceInvoiceService->isBillBelongsToGroup($bill)) {` 直接 `return true`（不屬於群組的一律留在名單上），撈取條件見 `buildFailedBillsQuery`（ABNORMAL 或該開未開）；app/Http/Controllers/Admin/InvoiceFailureController.php＋`$pageSetting['title'] = '發票異常盤查'`、routes/web.php＋`admin.invoice_failures`。業者端見 src/use/search/modules/billInvoiceStatus.js＋`invoiceAbnormal: '發票異常', // 原該開立但開立失敗`，以及 app/Bill.php＋`case 'invoiceAbnormal':`。"
+   ]
+  },
+  {
+   "id": "jgb/A/contact-info-social-fields",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "不成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "3bdeb3b656cac4379535b74a974ae721fbd6f581dd612afde805127b6ab5eb8b",
+   "title_text": "聯絡資訊的 LINE、Facebook、WhatsApp 欄位怎麼填？",
+   "notes": [
+    "標題：resources/views/users/account.blade.php 的「聯絡資訊」區塊有 Line ID、Facebook、WhatsApp 欄位，句 2～4 回答。",
+    "句 1：resources/views/users/account.blade.php＋`以下資訊將會呈現在廣告上，租客可以透過更多管道與房東聯繫，提升簽約成功率！`。",
+    "句 2：同上 account.blade.php＋`name=\"line_is_phone\"`、`___('同手機號碼')`：勾選後改顯示停用（disabled）的手機號碼輸入框；未勾選時是 `placeholder=\"{{___('請填上 Line ID')}}\"`。app/Http/Controllers/UserController.php `account()` 存檔段 `$this->user->line = $input['line'];` 沒有必填檢查。",
+    "句 3：不成立。同上 account.blade.php＋`placeholder=\"{{___('個人首頁連結')}}\"` 那個 Facebook 欄位實際是 `maxlength=\"200\"`，不是 100；app/Http/Controllers/UserController.php `$this->user->facebook = $input['facebook'];` 也沒有 100 字的後端檢查。「個人首頁連結」這部分正確，錯的是長度上限。",
+    "句 4：同上 account.blade.php＋`請填寫國碼與電話號碼，國碼前面不需打「+」。`、`name=\"whats_app\"  maxlength=\"200\"`。",
+    "句 5：同上 account.blade.php＋`placeholder=\"{{___('第二組聯絡號碼')}}\"`、`name=\"phone2\" maxlength=\"50\"`。",
+    "句 6：同上 account.blade.php＋`以此電話作為廣告頁聯絡電話` 所在的區塊被 `{{-- … --}}` Blade 註解包住，不會輸出到畫面。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-list-export",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "3afc3f15e73a8bd3ea83b6a12f3d3affb2c3e6888564fb2284185eb6ec9eabaa",
+   "title_text": "帳單總表怎麼匯出？（要先勾選帳單才會出現匯出選項）",
+   "notes": [
+    "標題：src/use/config/useBillTypes.js＋`// 帳單總表：附加 export 動作`，句 1 支撐。",
+    "句 1：src/use/config/useBillTypes.js＋`case 'all-':` 的批次動作回傳 null，改由 `genBulkActions` 產生，並 `finalActions.push(exportAction.value)`（`t('匯出帳單')`）；頁面右上固定按鈕的 switch 沒有 all 分支。src/pages/bills/list/Index.jsx＋`store.state?.bills?.pick?.pickedItems.length > 0` 時才顯示批次操作列。",
+    "句 2：同上 useBillTypes.js＋`handleExportClick` 失敗時顯示 `t('匯出筆數超過 [s1] 筆上限，請縮小搜尋範圍後再試。'`；app/Http/Controllers/BillController.php＋`if ($billCounts > $maxExportLimits) {` 回傳 `'success' => false`：整批擋下，不會只匯出一部分。",
+    "句 3：同上 useBillTypes.js＋`if (route.params?.type === 'all' && hasPermission('export_bill'`；另外在 `['ready', 'income'].includes(route.params?.type)` 且 `hasPermission('export_bill'` 時加上 `label: t('匯出')`、`onClick: ()=>{ handleExportClick() }`，跟帳單總表呼叫同一個函式（勾選 ID 和全選 fromList 兩種模式都相同）。"
+   ]
+  },
+  {
+   "id": "jgb/E/bill-list-income-export-social-housing",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "2bfec22785fb647642b22a68a33bb20601e62f2d2f31a2a640716fc16776d6ef",
+   "title_text": "「收款帳單」分頁固定的匯出按鈕，什麼時候會多出「匯出租客繳費證明」子選項？（只有身分類別為社會住宅的帳號才有）",
+   "notes": [
+    "標題：src/use/config/useBillTypes.js `case 'income-received':` 等收款分頁的固定 `t('匯出帳單')` 按鈕，句 1 支撐。",
+    "句 1：src/use/config/useBillTypes.js＋`store.state.userData.role.config_rule_key === 4` 時 subs 才有 `t('匯出租客繳費證明')`，否則是空陣列；app/Role.php＋`const RULE_KEY_LANDLORD_SOCIAL_HOUSING = 4;`。句中「這顆固定匯出按鈕」承接的是本條標題，不依賴已刪的前文。"
+   ]
+  },
+  {
+   "id": "jgb/F/repair-apply-flow-and-entry",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "0667bbd1e7f3baf518265c542dd0fe1e4b253ddd5e7487c83c865099fb56d293",
+   "title_text": "怎麼申請修繕單？（房東方從【修繕管理】>【修繕單總表】、租客從【我的報修】>【修繕單總表】右上角「新增修繕單」進入，選物件→選分類項目→填報修細節→送出，按「上一步」「下一步」在步驟間切換）",
+   "notes": [
+    "標題：入口和步驟見句 1、2 的來源，都支撐。",
+    "句 1：app/Role.php＋`'label' => $this->config_rule_type === 'landlord' ? ___('修繕管理') : ___('我的報修')`，子選單是 `___('修繕單總表')`。src/pages/repair/list/Index.vue 中，`t('新增修繕單')` 外層條件是 `config_rule_type === 'tenant'`，或房東方帶 `permission?.edit_repair || …permission?.edit_owner_repair`。權限名稱見 app/Http/Controllers/UserController.php＋`'新增&編輯&刪除所屬修繕資料'`／`'新增&編輯&刪除所有修繕資料'`。",
+    "句 2：src/pages/estates/pick/_parts/pick.jsx＋`case EstatePickAction.repairCreate:` 的 BottomNav `prevText=\"取消\"`，下一步按鈕用 src/components/BottomNav.vue 的預設 `default: '下一步'`；src/utils/constants/repair.constant.ts＋`bottomNavPrevText` 兩步都是 `'上一步'`，`bottomNavNextText` 是 `'下一步'`／`'申請修繕'`。",
+    "句 3：help repair_zh-Hant.html＋「租客可以自行申請派修單…也可以由管理者從這邊申請派修單」。src/pages/repair/applyProcess/_parts/Detail.vue＋`<SwitchButton :model=\"repairForm.is_notice_tenant\" />` 是單向綁定，房東方送出時一直是 false。app/Http/Controllers/RepairController.php 中租客發起時才設 `$createData['is_notice_tenant'] = true;`。app/Role.php＋`Repair::whereIn('estate_id', $estateIds)->where('is_notice_tenant', 1)` 是租客清單的條件，所以房東方建立的單租客看不到。",
+    "句 4：src/pages/repair/applyProcess/Index.vue＋`submitRepairForm` 成功後 `router.push(redirectRoute.default)`；src/utils/constants/repair.constant.ts＋`name: 'repair.apply'`；src/routes/repairs.js＋`labelKey: '申請修繕'`。",
+    "句 5：app/Notification.php＋`case 'repair_create':` 內有 `botbonnie_api('push', 'line'`；src/pages/repair/edit/_parts/ApplicationDetail.vue＋`social-plugins.line.me/lineit/share`（正對照：同一個 grep 方法在修繕頁能找到這個分享鈕）；用同樣方法搜 src/pages/repair/list 和 src/pages/repair/applyProcess，沒有任何透過 LINE 報修的入口。"
+   ]
+  },
+  {
+   "id": "jgb/F/repair-share-visibility-summary",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "51b22810ca997268d4973dc5528f99c68cc6795a77de20b91d236d222983abeb",
+   "title_text": "分享連結誰看得到？（金額只有在瀏覽者本人目前登入身分是房東時才會顯示，且不會核對是不是這張修繕單相關的房東或租客）",
+   "notes": [
+    "標題：句 1、2 支撐金額的顯示條件，以及系統不核對瀏覽者是否為相關人。",
+    "句 1：src/pages/repair/share/Index.vue＋`:showAmount=\"store.state.userData?.role?.config_rule_type === 'landlord'\"`；src/pages/repair/_parts/MemoArea.vue＋`v-if=\"props?.showAmount\"` 包住 `t('結算金額')`。沒有登入時 userData.role 是空的，判斷結果為否。分享 API 不需登入：routes/web.php＋`/api2/repairItem/share/{id?}` 沒有 need_login，對照同檔 `/api2/repairItem/{action?}/{id?}` 有 `->middleware('need_login')`。",
+    "句 2：app/Http/Controllers/RepairController.php＋`share()` 呼叫 `$this->show($request, 'share', $id)`，進入 `if ( $isShare ) {` 後用 `$repair = Repair::find($id);` 只依編號取資料，不核對瀏覽者身分；顯示條件同上 share/Index.vue。"
+   ]
+  },
+  {
+   "id": "jgb/G/power-meter-single-edit-tabs",
+   "title": "成立",
+   "sentences": [
+    "不成立",
+    "成立"
+   ],
+   "content_sha256": "6e8ae90be6ebd428ff069136a08b93ed72ef80ed9856dd8526cf5749fff7085d",
+   "title_text": "電錶編輯頁能改什麼？（儲值型有電錶資料頁籤）",
+   "notes": [
+    "標題：src/utils/constants/iots.ts `PowerMeterTabPair` 中儲值型多一個「電錶資料」頁籤，句 1、2 回答了頁籤差異，括號內的斷言成立。",
+    "句 1：不成立（規則 8、9）。src/utils/constants/iots.ts＋`[PowerMeterType.topUp]`（`'電錶資料'` 只在儲值型），以及 src/pages/iots/edit/Log.jsx＋`t('電錶儲值歷程')`、`t('儲值時間')`…`t('操作者')`、`t('費率異動歷程')`（點開 lightbox）都對。但括號列舉的基本資料只寫「電號、餘額、費率、預計可用電度」，src/pages/iots/_parts/PowerMeterInfo.jsx 同一區塊還有 `t('最後連線成功時間')`，漏列了。這也與同粗目 jgb/G/power-meter-basic-info-fields 句 2（五個欄位，含最後連線成功時間）矛盾，錯的是本條。",
+    "句 2：src/helpers/iots.ts＋`getStatusTabs` 中 `(!!conditions?.gen_invoice === false || !!conditions?.isTenant) && value === PowerMeterTab.invoice` 時過濾掉；src/utils/constants/iots.ts＋`// 只有儲值型電表有發票`；src/pages/iots/_parts/Single.vue＋`hasPermissionInvoice`（`state.form.type === PowerMeterType.topUp && state.can_auto_generate_invoice`）。"
+   ]
+  }
+ ],
+ "findings": [
+  "jgb/G/power-meter-single-edit-tabs 句 1 的基本資料列了 4 項，同粗目 jgb/G/power-meter-basic-info-fields 句 2 列了 5 項（含最後連線成功時間），兩者矛盾。程式 src/pages/iots/_parts/PowerMeterInfo.jsx 有 `t('最後連線成功時間')`，錯的是前者。",
+  "來源衝突：幫助中心 landlordonboarding04lease_zh-Hant.html 續約段寫房東點【立即簽名】，現行程式 src/pages/contracts/_parts/show/signerInfo/ButtonArea.jsx 在待房東簽名狀態的按鈕文字是「立即簽約」。jgb/D/renew-signing-flow 句 2 跟隨程式，判成立；幫助中心的文字已過時。",
+  "jgb/A/contact-info-social-fields 句 3 寫 Facebook 上限 100 字元，但 resources/views/users/account.blade.php（以及 resources/views/users/role.blade.php）是 `maxlength=\"200\"`。",
+  "jgb/A/signer-individual-fields 刪句後只剩以「另需」開頭的 Email／手機那句。個人身分必填的姓氏、名稱、身分證字號，本條和同粗目其他細目都沒有任何一條涵蓋（戶籍／通訊地址由 jgb/A/signer-address-fields 涵蓋）。",
+  "jgb/B/biglandlord-sheet-overview 刪句後，標題「對帳表在算什麼？」已經沒有任何句子回答。",
+  "參考：src/pages/users/dashboard/Landlord.vue 大房東分支的 `<EstateDetails />` 沒有 import，也不在 src/components/index.js 的自動註冊範圍內，實際不會渲染。這不影響 jgb/A/dashboard-big-landlord-view 的判定，供正本維護參考。"
+ ],
+ "source_transcript": "a44421f2d758b770d.output"
+}

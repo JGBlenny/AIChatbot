@@ -1,0 +1,80 @@
+[
+  {
+    "fine_id": "jgb/A/register-role-select",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-29}",
+    "shelf": "A"
+  },
+  {
+    "fine_id": "jgb/A/login-role-select-before",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-28}",
+    "shelf": "A"
+  },
+  {
+    "fine_id": "jgb/A/forget-password-setpwd-invite",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-29}",
+    "shelf": "A"
+  },
+  {
+    "fine_id": "jgb/A/dashboard-big-landlord-view",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-29}",
+    "shelf": "A"
+  },
+  {
+    "fine_id": "jgb/A/notification-mark-read-navigate",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-10-03}",
+    "shelf": "A"
+  },
+  {
+    "fine_id": "jgb/A/notification-settings-save",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-29}",
+    "shelf": "A"
+  },
+  {
+    "fine_id": "jgb/B/team-signer-company-info",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-28}",
+    "shelf": "B"
+  },
+  {
+    "fine_id": "jgb/B/team-signer-address-groups",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-28}",
+    "shelf": "B"
+  },
+  {
+    "fine_id": "jgb/B/member-list-overview",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-28}",
+    "shelf": "B"
+  },
+  {
+    "fine_id": "jgb/B/member-invite",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-28}",
+    "shelf": "B"
+  },
+  {
+    "fine_id": "jgb/B/member-assign-owned",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-28}",
+    "shelf": "B"
+  },
+  {
+    "fine_id": "jgb/B/member-list-role-inline-change",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-29}",
+    "shelf": "B"
+  },
+  {
+    "fine_id": "jgb/B/biglandlord-report-community-rate",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-10-03}",
+    "shelf": "B"
+  }
+]

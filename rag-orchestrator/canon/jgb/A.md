@@ -142,20 +142,19 @@ language: zh-TW
 系統會在進入手機綁定步驟前先檢查目前帳號是否已有綁定手機。
 若已綁定，畫面會直接顯示「手機已綁定」，說明未來可用手機號碼登入或作為忘記帳號時的替代找回方式，按「繼續」即可完成註冊流程。
 若是在註冊流程中出現此畫面，按「繼續」會前進到選擇身分步驟；若是註冊完成後在其他情境觸發手機驗證，則會依原本要前往的頁面返回，不會進入選擇身分畫面。
-### 註冊完之後要選身分嗎？（一般會在房東/管理者、租客中二選一，可同時擁有兩種身分；從租客端網站導轉來的會直接導回原頁） {#jgb/A/register-role-select}
+### 註冊完之後要選身分嗎？（一般會在房東/管理者、租客中二選一，可同時擁有兩種身分） {#jgb/A/register-role-select}
 - phrasings:
   - {text: "註冊完要選身分嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "房東身分和租客身分", source: "draft:outline-20260920", status: proposed}
   - {text: "怎麼切換房東和租客", source: "draft:outline-20260920", status: proposed}
   - {text: "我是房東還是租客", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/auth/parts/RoleSelect.vue, help:onboarding1_zh-Hant.html]
-- reviewed: {by: owner, at: 2026-09-29}
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
-一般的註冊或登入流程會出現身分選擇畫面，讓使用者選擇「我是房東/管理者」或「我是租客」；已註冊過的第三方帳號登入時，則會直接進入首頁。
+一般的註冊或登入流程會出現身分選擇畫面，讓使用者選擇「我是房東/管理者」或「我是租客」；已註冊過的第三方帳號登入時，不會再出現身分選擇畫面，若登入前已有指定要前往的頁面就前往該頁，沒有才直接進入首頁。
 同一組帳號可同時擁有房東與租客兩種身分，選擇的身分只決定這次要進入哪一種介面。
-若是從租客端網站導轉來註冊，綁定手機這一步完成或略過後，系統會直接把使用者導回原本要前往的頁面，不會再出現身分選擇畫面。
 ### 驗證碼輸入畫面長什麼樣子？（識別碼加 4 碼數字；輸入錯誤太多次驗證碼會失效，需重新發送） {#jgb/A/register-verify-code-shape}
 - phrasings:
   - {text: "驗證碼長什麼樣子", source: "draft:outline-20260920", status: proposed}
@@ -196,12 +195,12 @@ language: zh-TW
 - instance_applicability: general
 登入表單可在 Email 與手機號碼兩種帳號輸入方式間切換。
 登入頁另外提供 Facebook、Google、LINE 第三方帳號登入。
-### 登入前為什麼要先選擇身分？（決定進入房東/管理者或租客的登入表單） {#jgb/A/login-role-select-before}
+### 登入前要先選擇身分？ {#jgb/A/login-role-select-before}
 - phrasings:
   - {text: "登入頁面在哪", source: "draft:outline-20260920", status: proposed}
   - {text: "為什麼要選身分才能登入", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/auth/parts/RoleSelect.vue]
-- reviewed: {by: owner, at: 2026-09-28}
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -343,13 +342,13 @@ language: zh-TW
   - {text: "被邀請要設密碼", source: "draft:outline-20260920", status: proposed}
   - {text: "被邀請設定密碼的頁面", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/auth/parts/forget/Password.vue]
-- reviewed: {by: owner, at: 2026-09-29}
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
 當使用者是透過特定邀請連結進入忘記密碼頁面時，畫面會直接顯示「請設定密碼」，而不是一般的忘記密碼流程，並跳過帳號驗證直接進入設定密碼表單。
 這個情境用在大房東的邀請流程：受邀的帳號透過邀請連結進入後，直接設定自己的密碼，設定成功後會依處理結果導向對應頁面。
-此畫面沿用一般忘記密碼頁面同樣的新密碼格式規則，設定成功後會依處理結果導向指定頁面，沒有指定頁面時才導回一般登入頁。
+此畫面沿用一般忘記密碼頁面同樣的新密碼格式規則；設定成功後系統會自動為您登入，並前往指定頁面，沒有指定頁面時會前往登入頁，但因為已經登入，會直接進入會員中心。
 ## 會員中心首頁 {#A-member-home}
 ### 會員中心首頁有哪些統計區塊？（即時物件出租率、即將到期合約、即將到來應到帳帳單、7日內修繕單） {#jgb/A/dashboard-overview-blocks}
 - phrasings:
@@ -386,18 +385,18 @@ language: zh-TW
 - business_types: [system_provider]
 - instance_applicability: general
 首頁下方顯示帳單、合約、修繕的整合列表；具備通知檢視權限的使用者，還會另外看到 Email 通知紀錄區塊。
-### 大房東的首頁畫面和一般房東不一樣嗎？（只顯示社區最新收支詳情與收支圖表，沒有捷徑與四個統計方塊） {#jgb/A/dashboard-big-landlord-view}
+### 大房東的首頁畫面和一般房東不一樣嗎？（沒有捷徑與四個統計方塊） {#jgb/A/dashboard-big-landlord-view}
 - phrasings:
   - {text: "大房東首頁", source: "draft:outline-20260920", status: proposed}
   - {text: "大房東看到的畫面", source: "draft:outline-20260920", status: proposed}
   - {text: "大房東首頁跟一般房東有什麼不同", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/dashboard/Landlord.vue, help:Landlordonboarding00_zh-Hant.html, code:src/pages/users/dashboard/parts/EstateDetails.vue, code:src/pages/users/dashboard/parts/Block_Vacancy.vue]
-- reviewed: {by: owner, at: 2026-09-29}
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
 若目前登入身分是大房東，首頁不會顯示即時物件出租率、即將到期合約、即將到來應到帳帳單、7日內修繕單四個方塊，也不會有捷徑區塊。
-大房東首頁改為顯示「社區最新收支詳情」，以及可自訂區間（7天／30天／90天／6個月）的收支圖表。
+大房東首頁改為顯示可自訂區間（7天／30天／90天／6個月）的收支圖表。
 ### 怎麼在會員中心首頁切換團隊？（左上角下拉選單選擇被加入的團隊） {#jgb/A/dashboard-team-switch}
 - phrasings:
   - {text: "怎麼切換團隊", source: "draft:outline-20260920", status: proposed}
@@ -727,18 +726,18 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
 租客身分一律能看到自己的通知內容。
 房東側（非租客）使用者，只有具備查看通知的權限，通知中心才會顯示實際通知資料。
 沒有這項權限時，類型篩選下拉選單仍會顯示，但會變成停用樣式；每頁筆數選單則完全不會出現；畫面主要區塊會顯示「您還沒有收到任何通知，再等等吧 📭」，而不是錯誤訊息。
-### 點擊通知列表項目會發生什麼？（前往原連結並把該則通知標為已讀；訊息類通知不換頁） {#jgb/A/notification-mark-read-navigate}
+### 點擊通知列表項目會發生什麼？（前往原連結；訊息類通知不換頁） {#jgb/A/notification-mark-read-navigate}
 - phrasings:
   - {text: "點通知會怎樣", source: "draft:outline-20260920", status: proposed}
   - {text: "通知會標記已讀嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "通知連結", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/NotificationController.php#index, code:resources/views/notifications/index.blade.php, code:app/Http/Controllers/Controller.php, code:app/Notification.php]
-- reviewed: {by: owner, at: 2026-10-03}
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
 除了訊息類通知之外，每則通知點擊後都會依原本的連結網址前往對應頁面，並在網址上多帶一個通知編號參數。
-前往的頁面載入時，系統會依這個參數把這則通知標為已讀，並把網址上的這個參數拿掉。
+前往的頁面載入時，系統會把網址上的這個參數拿掉；若這則通知的收件人就是目前登入的使用者本人，才會把這則通知標為已讀。
 訊息類通知則是在原頁面開啟訊息視窗，不會換頁。
 ### 篩選後頁碼超出範圍會自動跳回第一頁嗎？（不會，只會顯示空的通知清單） {#jgb/A/notification-mark-read-out-of-range}
 - phrasings:
@@ -810,16 +809,16 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
 「多團隊合併報表」按鈕只在特定合作團隊底下才會顯示，其餘分類與團隊都看不到這個按鈕。
 「多團隊合併報表」視窗同樣選起始日與終止日，系統會把幾個合作團隊在這段期間的加盟分潤資料合併成一份報表，寄到這個分類設定的自訂通知信箱。
 點擊「發送報表」或「多團隊合併報表」按鈕時，會依目前所在的通知分類，開啟對應的報表視窗。
-### 通知收件設定改完怎麼儲存？（至少要有一個分類填了自訂信箱，儲存鍵才會啟用） {#jgb/A/notification-settings-save}
+### 通知收件設定改完怎麼儲存？ {#jgb/A/notification-settings-save}
 - phrasings:
   - {text: "通知設定怎麼存", source: "draft:outline-20260920", status: proposed}
   - {text: "儲存按鈕按不下去", source: "draft:outline-20260920", status: proposed}
   - {text: "沒填信箱能存嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/notification/Index.vue]
-- reviewed: {by: owner, at: 2026-09-29}
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-「儲存」按鈕只有在至少一個分類已經填了自訂收件信箱時才會啟用，否則呈現停用樣式且送出動作不會執行。
+「儲存」按鈕只有在至少一個分類出現自訂收件信箱的輸入欄位時才會啟用（欄位有沒有填不影響），否則呈現停用樣式且送出動作不會執行。
 儲存成功會顯示「儲存成功」提示；若儲存失敗，畫面會用系統回傳的訊息或預設「儲存失敗，請稍後再試」顯示錯誤提示；若發生網路錯誤則顯示「網路錯誤，請稍後再試」
 頁面載入時會自動取得目前各分類的自訂信箱與預設信箱，按下「儲存」則會把整包分類資料送出更新。

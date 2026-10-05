@@ -1,0 +1,234 @@
+{
+ "kind": "write",
+ "verdict": "REFUTED",
+ "base": "f13b0cb57303c6f8b887e341cbc38a337f6f5fcb",
+ "claim": "Plan 9.29 先審 G2：12 條細目的標題與每一句已逐句對合法來源核對，逐條結果如 fines",
+ "fines": [
+  {
+   "id": "jgb/C/community-add-single-and-limit",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "87cf4fe66256b0e5c69a48a55caecc8c705343ce7dd87822d8490a0a9eb92d3c",
+   "title_text": "如何新增社區？（訂閱方案有可建立社區數量上限）",
+   "notes": [
+    "標題：句 1 支撐新增社區流程，句 2 支撐社區數量上限，兩個斷言都有句子支撐。",
+    "句 1：src/pages/communities/list/Index.vue＋`async function addCommunity`、`/api3/communities/single`、`name: 'communities.edit'`：按「新增社區」會 POST 建立社區，回傳 id 後 router.push 到 communities.edit（社區編輯頁）；未達上限時成立。",
+    "句 2：同上＋`remainCommunitiesCount <= 0`、`store.commit('lightbox', 'subscribedPlanCommunityIsFull')` 後 return，不呼叫建立 API；resources/views/layouts/lightbox/general.blade.php＋`'subscribedPlanCommunityIsFull'`、標題 `已達到數量上限！`；src/type/commit.ts＋`subscribedPlanCommunityIsFull`（註解：訂閱方案可建立的社區數量已達上限）。"
+   ],
+   "findings_ref": []
+  },
+  {
+   "id": "jgb/C/estate-house-preview-unpublished",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "不成立"
+   ],
+   "content_sha256": "b5c3abce0ff88d7c3868a4bd8865551f6ac1c4467e70f5e5b530874845e0583f",
+   "title_text": "物件還沒刊登（未開放）時，廣告頁會怎麼顯示？（屋主看到的是預覽頁提示）",
+   "notes": [
+    "標題：只斷言屋主看到預覽頁提示，句 1 有支撐；句 2 的 404 例外漏列不影響標題斷言。",
+    "句 1：resources/views/estate/show.blade.php＋`@if (!$isOpen && !$isInvite && !$isContractSnapshot)`、`這是您的物件廣告預覽頁，此物件尚未完成刊登。`（sticky 置頂提示）；app/Http/Controllers/EstateController.php＋`public function house` 直接呼叫 `$this->show($request, $id, $action)`，擁有者有查看權限會走到這段提示。",
+    "句 2：app/Http/Controllers/EstateController.php＋`abort(404)`、`下架物件對所有人（含搜尋引擎爬蟲）一致回 404`：404 判斷只寫在 `show()` 的最後一個 else 分支，也就是非邀請、非 invite_preview、非 snapshot 的情況；另有 `$isFromContractPermission` 例外。透過簽約邀請連結（`elseif ($isInvite)`，`/house/{物件編號}/{合約編號}`）或 `invite_preview` 開啟未刊登物件時，即使造訪者沒有 show_estate／show_owner_estate 權限（包含未登入的租客），也不會回 404，頁面照常顯示。句子把 404 寫成『未刊登且無查看權限』就一律發生，漏了邀請連結與合約權限兩個例外（規則 4／8）。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-list-add-must-pick-community",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "dd9b93f4e3f701d8922c5d1a72ef6224b749f4bd50b7190725d2afe6fdf8b3da",
+   "title_text": "物件總表怎麼新增物件？（新增與複製現有物件都要先經過社區選擇畫面，目前沒有批次新增入口）",
+   "notes": [
+    "標題：句 1 支撐『新增與複製都先經過社區選擇畫面』，句 2 支撐『沒有批次新增入口』。",
+    "句 1：src/pages/estates/list/_parts/PageTop.vue＋`estateCreateHandler`、`name: 'communities.pick'`、`action: 'estateCreate'`／`action: 'estateCopy'`、`remainEstatesCount <= 0` 時 `store.commit('lightbox', 'subscribedPlanIsFull')` 並 return；resources/views/layouts/lightbox/general.blade.php＋`'subscribedPlanIsFull'`、標題 `已達到數量上限！`。空狀態入口 src/pages/estates/list/_parts/ListTable.vue＋`const estateCreateHandler` 也走 `Route.community.createEstate()`（src/utils/constants/route.ts＋`createEstate` → communities.pick）。註：選好社區後，新增是由 src/pages/communities/pick/Index.vue＋`/api2/estate/create?communityId=` 直接建立；複製則是進 estates.pick，並不會『回到』物件總表。句中『再回來建立或複製』措辭較鬆，但沒有違反主斷言。",
+    "句 2：src/pages/estates/list/_parts/PageTop.vue＋`<!-- <a class=\"option\">` `{ t('批次新增') }</a>  -->`：批次新增選項已被註解掉，選單只剩「複製現有物件」。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-attachment-storage",
+   "title": "成立",
+   "sentences": [
+    "不成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "342bf0002cc6366839fb6a525fb84eab92d543376cd678c9b76bc6c90a8093cb",
+   "title_text": "物件的附件清單可以放幾個檔案？",
+   "notes": [
+    "標題：只是問句，本身沒有數字斷言，所以成立；答案數字錯在句 1。",
+    "句 1：app/Http/Controllers/EstateController.php＋`case 'attachments':`、`$attachmentDatas['max'] = 5; // 最大數量限制`：上限是 5 個檔案，不是 8 個。src/pages/estates/dashboard/attachments/Index.vue＋`至多存放 [s1] 個檔案` 的數字也取自 API 的 max（=5）。JPG／PNG／PDF（`accept=\"image/jpeg,image/png,application/pdf\"`、後端 `mimes:jpeg,jpg,png,pdf|max:10240`）、10MB（`uploadSizeLimit: 10`）、「儲存空間([s1])」顯示 total/max 都成立，只有『8 個』錯。",
+    "句 2：src/pages/estates/dashboard/attachments/Index.vue＋`if (limitLength == 0){ lightboxOpen('spcaeIsFull') }`、`{{ t('儲存空間已滿') }}`、`剩餘儲存檔案數：`；刪除後 API 回傳新的 total/max。成立。",
+    "句 3：app/Http/Controllers/EstateController.php＋`case 'add_attachment':`、`case 'download_attachment':`、`case 'delete_attachment':` 都先檢查 `if (!$hasEditPermission)`，不通過就回 `權限不足！`；`$hasEditPermission` 是 `hasPermission($this->user, 'edit_estate') || ($estate->agent_user_id == $this->user->id && ... 'add_estate')`。前端 attachments/Index.vue 的下載鈕 `<a class=\"btn-icon\" download :href=\"rowData?.public_url\">` 沒有權限條件。成立。",
+    "句 4：src/pages/estates/dashboard/attachments/Index.vue＋`v-if=\"dashboardStore.state?.isAgent && store.state.userData?.permission?.add_estate\"`（垃圾桶圖示，以及手機選單的「刪除檔案」）。成立。",
+    "句 5：同上＋`hasUpdateFilePermission`：`is_team_owner || permission?.edit_estate || (isAgent && permission?.add_estate)`，`v-if=\"state.hasUpdateFilePermission\"` 的按鈕文字是「上傳檔案」。成立。",
+    "句 6：src/pages/estates/dashboard/contractAttachments/index.vue＋`出租方身份證明文件影本`、`若為法人(公司)，請上傳公司設立登記表`、`attachmentRowOptions` 列出 授權代理人簽約同意書／建物所有權/有權出租之證明文件／使用執照影本／出租方同意轉租確認書／房屋位置格局示意圖／`社區管理規約`、`住戶生活規約`（同一列）／`其他(附註條款、稅籍證明等)`，清單是寫死的。成立。",
+    "句 7：contractAttachments/index.vue＋`如有以下附件，可上傳圖片做補充，以避免日後爭議。`。成立。",
+    "句 8：contractAttachments/index.vue＋`size_limit: 10`、`limit: 2`（授權代理人簽約同意書）、`limit: 15`（社區管理規約、住戶生活規約）、`limit: 5`（其他）、其餘 `limit: 1`；身份證明為 `v-for=\"(idCardNum, idCard_i) in 2\"`，標示「正」「反」。成立。",
+    "句 9：contractAttachments/index.vue＋`(圖片僅支援JPG、PNG檔，檔案大小最大10MB` 對照 `accept=\"image/jpeg,image/png,application/pdf\"`。成立。",
+    "句 10：contractAttachments/index.vue＋`show: computed(()=>{ return !store.state.userData.is_big_landlord && (permission.add_estate || permission.edit_estate)`，上傳 label 與 `uploadGrid-delete` 都以 `v-if=\"state.show\"` 控制。成立。",
+    "句 11：app/Http/Controllers/EstateController.php＋`case 'upload_contract_attachment':`、`case 'save_contract_attachment':`、`case 'delete_contract_attachment':` 都先檢查 `if (!$hasEditPermission)`，不通過回 `權限不足！`。成立。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-list-filters",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "f825175e8c6f3101414f3762525ccb6a62b1c623af48ad367df1a6b56a6d698e",
+   "title_text": "物件總表有哪些進階篩選條件？（縣市行政區、經理人、大房東、社區、捷運、格局、建築類型、即時合約狀態、合約到期日、招租廣告狀態、租金與面積(坪)範圍、標籤）",
+   "notes": [
+    "標題：括號列出的每一項都有句子支撐（句 1、句 2）。空間類型與 VR／電梯等『更多』條件由同粗目的 jgb/C/estate-list-filters-space-type-and-others 涵蓋；標題沒有寫『只有』，判成立。",
+    "句 1：src/pages/estates/list/_parts/EstatesAdvanceSearchBlock.jsx＋`EstateSearchKey.country`、`EstateSearchKey.city`、`EstateSearchKey.district`、`EstateSearchKey.agentId`、`EstateSearchKey.bigLandlordId`、`EstateSearchKey.community`、`EstateSearchKey.MRT`；標籤見 src/use/search/modules/country.js、agent.js（`經理人`）、bigLandlord.js（`大房東`）、community.js（`社區`）、MRT.js（`鄰近捷運站`）。成立。",
+    "句 2：EstatesAdvanceSearchBlock.jsx＋`room_count`、`building`、`contractStatus`、`contract_date_end_month`、`is_open`、`rentRange`、`sizeRange`、`label`；src/use/search/modules/sizeRange.js＋`面積(坪)`，contractStatus.js＋`即時合約狀態`，is_open.js＋`招租廣告狀態`。物件總表的區塊裡沒有 use_for 選項（src/utils/constants/estate.js 的 `EstateSearchKey` 不含 use_for）；用途下拉只出現在挑選器使用的 src/components/Lightbox/EstateAdvSearch.vue＋`t('用途')`、`state.use_forOptions`（由 src/pages/estates/pick/_parts/pick.jsx 開啟）。成立。",
+    "句 3：src/pages/estates/list/Index.vue＋`v-if=\"viewport.width < 576\"` 時改用 EstatesAdvanceSearchBlockM；src/pages/estates/list/_parts/EstatesAdvanceSearchBlockM.jsx＋上方列只有 contractStatusLabel、contract_date_end_month 與 `t('更多')`，其餘條件在 `3: <>` 裡；`store.state.siteOptions.dollarSign === 'TWD' && <AdvSliderSelectMobile ... rentRange`。成立。",
+    "句 4：EstatesAdvanceSearchBlock.jsx＋`class=\"mb-4 hidden text-right text-[13px] text-grey-600 lg:block\">{t('篩選結果')}: { ...pageNav?.range_text } / { ...pageNav?.total }`；tailwind.config.js＋`lg: '992px'`；app/Helper.php＋`'range_text' => $rangeStart.' - '.$rangeEnd`；手機版 EstatesAdvanceSearchBlockM.jsx 沒有這一行。成立。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-rent-open-permission-and-validation",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "7481e1c0a5c39849ad04a6daf162eb1f157274e3d0271e2572ac36377f7fc732",
+   "title_text": "為什麼物件刊登不出去？（需要刊登物件或新增物件的權限；必填欄位沒填完會退回編輯頁）",
+   "notes": [
+    "標題：兩個斷言分別由句 1、句 2 支撐。",
+    "句 1：app/Http/Controllers/EstateController.php＋`public function open(`、`$publicEstate = $estate->hasPermission($user, 'public_estate')`、`if (!$publicEstate && !$addEstate)` → `'status-error' => ___('您無法刊登此物件')`；routes/web.php＋`'/open/{id}', 'EstateController@open'`，現行入口是 resources/views/estate/show/navbar.blade.php＋`'premises_publish'=> $premisesOpenUrl`。成立。",
+    "句 2：同上＋`$estate->validateFields()` 失敗時 `redirect()->route('estates.edit', ...)->with(['status-error' => $validateFields['errorMessage'], 'error_fields' => ...])`。成立。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-status-affects-actions",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "b80d02a99c6bb5d4690be44bd1c7f70d584fc5ac8eb486cd9771dfe60866bce3",
+   "title_text": "物件狀態會影響哪些功能？（招租廣告狀態未刊登／刊登中，與合約狀態洽談中／租約中，是各自獨立的；刪除物件要求未刊登、沒有合約、沒有 IoT 綁定）",
+   "notes": [
+    "標題：兩組狀態各自獨立由句 1 支撐，刪除條件由句 5 支撐。",
+    "句 1：src/use/search/modules/is_open.js＋`招租廣告狀態`（`未刊登`／`刊登中`）；src/use/search/modules/contractStatus.js＋`即時合約狀態`（`無租約`／`洽談中`／`租約中`）；app/Estate.php＋`getSticker` 的貼紙是 `租約中`／`洽談中`／`無合約`。兩組是分開的欄位（is_open 與 status）。成立。",
+    "句 2：app/Estate.php＋`public function updateStatus`：有非歷史合約時，只要有任何一份 `status >= Contract::CONTRACT_SIGNED` 且 `< CONTRACT_HISTORY` 就是 ESTATE_CONTRACT_SIGNED（租約中），否則是 ESTATE_HAVE_CONTRACT（洽談中）；app/Contract.php＋`CONTRACT_SIGNED = 8; // 狀態 8：雙方簽名完成`。成立。",
+    "句 3：app/Estate.php＋`updateStatus` 的 `->where('is_history', false)->where('active', 1)`，`getSticker` 的 `->where('is_history', 0)`。成立。",
+    "句 4：app/Http/Controllers/EstateController.php＋`public function webList` 的 `if ($type == 1 || $type == 2)` 且 `$LVtoThis_userPermission['public_estate'] || $LVisShowEdit` 時，依 `$LVestateDataPage->is_open` 放 `close_is_open`（`取消刊登招租廣告`）或 `open_is_open`（`刊登招租廣告`）；type 3（買賣）只出買賣廣告的選項。成立。",
+    "句 5：同上＋`protected function validateEstateForDelete`：`if ($estate->is_open)` → `您無法刪除當前狀態為刊登中的 [s1] 物件`；`actualContracts()->activeContracts()->count() >= 1` → `該物件已有對應的合約存在`（app/Contract.php＋`scopeActiveContracts` 是 `is_history = 0`）；`if ($estate->has_iot)` → `您無法刪除尚有IoT綁定的 [s1] 物件`；`public function delete` 會把 $error 回傳成 message。成立。"
+   ]
+  },
+  {
+   "id": "jgb/C/forcebinding-completion-states",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "89274b46ac0809dfc5f43b23f2c12057ded4290815b031e13a2e1e38b777bc99",
+   "title_text": "綁定完成後會看到什麼？（全部綁完顯示恭喜，還有剩則提示繼續綁定）",
+   "notes": [
+    "標題：兩種結果畫面分別由句 1、句 2 支撐。",
+    "句 1：src/pages/communities/forceBinding/edit/Binding.vue＋`quantities_of_no_community === 0` → `bindingResultScreen = 'done'`、`🎉{t('恭喜！你已經成功綁定所有物件')}`、`{t('前往社區總表')}`（`name: 'communities.list'`）。現行不會自動導向：src/components/MustDo/Index.vue 只有在 quest 是舊格式時才 render `<MustDoEstateCommunity />`；app/Http/Controllers/ApiController.php＋`public function getMustDo` 現在只回傳 `getUnreadAnnouncements`，含 `'steps'`，所以一律走 `<MustDoAnnouncement>`；導向程式 src/components/MustDo/EstateCommunity.vue＋`name: 'communities.forceBinding.welcome'` 不會被執行。成立。",
+    "句 2：Binding.vue＋`👏 {t('你完成最困難的部分！')}`、`你已經完成新增社區的必需步驟，但還有些物件尚未綁定完成。`、`{t('繼續綁定物件')}`；`function continueHandler` 會呼叫 `store.state.mustDo.community.meta.refetch()`，但 meta 只由 EstateCommunity.vue 的 `onBeforeMount` 指派（src/store/modules/must_do.js 的初始值是 `meta: null`），現行為 null，所以 refetch 失敗、`router.push` 不會執行。成立。"
+   ]
+  },
+  {
+   "id": "jgb/C/forcebinding-two-steps",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "62f825b8a7f7257c1d721d016ee51a3d4b3ba6485269a9a5049a09bd90a69c69",
+   "title_text": "物件綁定社區導引有哪兩個步驟？（填寫社區資料、選擇欲綁定社區內的物件）",
+   "notes": [
+    "標題：句 1 支撐兩個步驟的名稱。",
+    "句 1：src/pages/communities/forceBinding/edit/Index.vue＋PageTop title `1: t('填寫社區資料'), 2: t('選擇欲綁定社區內的物件')`、`1 out of 2`／`2 out of 2`（側欄文字是 `新增社區資料`／`綁定社區內的物件`）；現行不自動導向的依據同 forcebinding-completion-states：src/components/MustDo/Index.vue＋`'steps' in quest.value`、app/Http/Controllers/ApiController.php＋`getUnreadAnnouncements`。成立。",
+    "句 2：forceBinding/edit/Index.vue＋`因系統功能更新後，各功能皆採最新的社區物件來進行動作，故未綁定完成前，系統功能將會無法正常使用`，逐字相符；現行不導向的依據為 src/components/MustDo/EstateCommunity.vue＋`quantities_of_no_community > 0` 的導向程式只在舊格式 quest 時才會掛載。成立。"
+   ]
+  },
+  {
+   "id": "jgb/C/forcebinding-welcome-progress",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "6f31a2c09c1c8550936c4be74f11574e891221ebd157585bca15b4e616c8b362",
+   "title_text": "物件綁定社區的導引起始畫面顯示什麼？（需同意服務條款）",
+   "notes": [
+    "標題：句 1 支撐起始畫面的內容，句 2 支撐『同意服務條款』的註記。",
+    "句 1：src/pages/communities/forceBinding/Welcome.vue＋`尚未綁定至社區`、`已成功綁定至社區`、`[store.state.mustDo.community.meta?.data?.quantities_of_no_community || '-']`、`(quantities_of_estates - quantities_of_no_community) || '-'`；src/store/modules/must_do.js＋`meta: null`，只有 src/components/MustDo/EstateCommunity.vue 會指派 meta，現行不會掛載，所以兩格都會顯示 `-`（undefined→'-'，NaN→'-'）。成立。",
+    "句 2：Welcome.vue＋`點擊「繼續」，即表示我已閱讀並同意金箍棒的 [s1]服務條款[s2] 和 [s3]隱私權聲明[s4]。`；「繼續」按鈕在 `store.state.mustDo.community.meta?.data?.is_admin ? <RouterLink ...>{ t('繼續') }` 裡，meta 為 null，所以不會出現。成立。"
+   ]
+  },
+  {
+   "id": "jgb/C/forcebinding-why-and-who",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "0824c9f282cacd00baee3d1a22a459b702eef760c64a93208342a42672a2ce9f",
+   "title_text": "為什麼「物件需綁定社區」的導引？（2022/05/12 社區功能上線，只有團隊擁有者能操作）",
+   "notes": [
+    "標題：2022/05/12 由句 1 支撐，限團隊擁有者由句 2 支撐（句 2 寫明是舊版設計）。",
+    "句 1：src/pages/communities/forceBinding/Welcome.vue＋`JGB系統將於 [s1] 後增加「社區」功能', ['2022/05/12']`、`物件需全數綁定至社區才能使用系統。`；舊導向是 src/components/MustDo/EstateCommunity.vue＋`quantities_of_no_community > 0` → `communities.forceBinding.welcome`；現行 app/Http/Controllers/ApiController.php＋`getMustDo` 只回傳公告（含 steps），src/components/MustDo/Index.vue 不會掛載 EstateCommunity。成立。",
+    "句 2：app/Http/Controllers/CommunityController.php＋`'is_admin' => $user->id == $role->user->id, //是否是擁有者`；Welcome.vue＋`<h4>{t('權限不足')}</h4>` 只有在 `is_admin === false ? 'block' : 'hidden'` 時才顯示；`此次系統更新，執行物件綁定社區動作需為<b>團隊擁有者</b>。`。現行 meta 為 null（src/store/modules/must_do.js＋`meta: null`），is_admin 是 undefined，所以既不會顯示『權限不足』，也不會出現「繼續」。成立。"
+   ]
+  },
+  {
+   "id": "jgb/C/team-public-page-edit-and-banner",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "4bf25a16603c160f62df35276b7e835d7cf3864172f14ef107896348e1893984",
+   "title_text": "招租店舖上可以直接編輯哪些內容？（橫幅照片、頭像、自我介紹；團隊身分另可改團隊名稱等欄位，需要「編輯團隊權限」）",
+   "notes": [
+    "標題：可編輯的項目由句 2、3 支撐，需要「編輯團隊權限」由句 1 支撐。",
+    "句 1：src/pages/users/public/Index.vue＋`editable: computed(()=>{ return userPublicScopeStore.infos?.is_admin && store.state?.userData?.permission?.edit_role`；app/Http/Controllers/UserController.php＋`'g_edit_role'=> [ 'label'=> '編輯團隊權限'`、`'g_edit_role_info'=> [ 'label'=> '編輯團隊資訊'`；儲存 `case 'api3.post.users.infos':` 的 `if ($role->is_team && !$this->isHasGPermission('edit_role_info'))` → `您目前登入的帳號無法使用編輯團隊功能`。成立。",
+    "句 2：src/pages/users/public/Index.vue＋`upload_for=\"banner\"`、`{ t('更換照片') }`；src/pages/users/public/_parts/AsideInfo.vue＋`upload_for=\"avatar\"`、`absolute right-0 bottom-0`、`icon_cam_white.svg`；app/Http/Controllers/UserController.php＋個人房東 infoColumn 的 `'key'=> 'introduction'`、`'editable'=> true`，儲存時寫入 `$user->introduction`。成立。",
+    "句 3：app/Http/Controllers/UserController.php＋團隊 infoColumn 的 `團隊名稱`（menu_name）、`經理人證號`、`租賃管理員證號`、`公司電話`、`公司Email`、`團隊介紹` 都有 `'editable'=> true`；儲存時寫入 `$role->menu_name`、`company_broker_license`、`company_leasing_manager_license`、`company_phone`、`company_email`、`company_introduction`、`company_banner`、`company_logo`。成立。",
+    "句 4：app/Http/Controllers/UserController.php＋個人房東儲存 `$user->avatar = $avatarData ...`、`$user->banner`、`$user->introduction`；resources/views/users/account.blade.php＋`照片(選填)`，`user_thumbnail` 對應 UserController `public function account` 的 `$this->user->avatar = basename($input['user_thumbnail'])`，是同一個 users.avatar 欄位；account.blade.php 裡 grep `banner`、`introduction` 都沒有結果（正對照：同一檔 grep `avatar` 有命中）。成立。",
+    "句 5：app/Role.php＋`getNameAttribute` 優先回傳 `menu_name`，招租店舖儲存的是 `$role->menu_name`；resources/views/users/role.blade.php＋`{{___('團隊名稱')}}`、`<input type=\"text\" name=\"menu_name\"`（routes/web.php＋`'/role', 'UserController@role')->name('users.role')`），是同一個欄位。成立。",
+    "句 6：src/pages/users/public/Index.vue＋`{ t('建議尺寸') }： 1920 x 576`、`cropperOptions={{ aspectRatio: 1920 / 576 }}`。成立。"
+   ]
+  }
+ ],
+ "findings": [
+  "jgb/C/estate-attachment-storage 句 1 寫『最多 8 個檔案』，但 app/Http/Controllers/EstateController.php 的 `$attachmentDatas['max'] = 5` 是 5 個；畫面 `至多存放 [s1] 個檔案` 也會顯示 5。另外 `case 'add_attachment':` 的上限檢查讀的是頂層的 `$attachments['total']`／`$attachments['max']`，但 `dashboard(...,'attachments')` 回傳時這兩個值放在 `data` 底下，所以後端其實沒有擋數量，上限只靠前端 `limitLength`。這是程式本身的狀況，供主持人參考，不影響本條判定。",
+  "jgb/C/estate-house-preview-unpublished 句 2 的 404 只發生在 EstateController::show 的『非邀請、非 invite_preview、非 snapshot』分支，簽約邀請連結（/house/{物件編號}/{合約編號}）不會 404。同粗目的 jgb/C/estate-house-invite-countdown 描述的正是邀請連結開廣告頁的情境，兩條並列時，句 2 的絕對說法會跟它衝突。",
+  "forceBinding 系列：src/pages/communities/forceBinding/Index.vue＋`如果沒有任務，又進這頁，導走`，只要 mustDo quest === null（沒有未讀公告）就導向 users.dashboard。所以現行直接打網址進來時，多半看不到導引畫面；看得到時（有未讀公告），數量才會顯示『-』、才沒有「繼續」。四條細目都寫成『現行不會載入、顯示 -』，沒有提到可能直接被導走，不算錯，但不完整。",
+  "日期不一致：src/pages/communities/forceBinding/Welcome.vue 寫 `2022/05/12`，src/components/MustDo/EstateCommunity.vue 的燈箱寫 `2022/05/11`。jgb/C/forcebinding-why-and-who 採用 05/12，與 Welcome 一致；兩處來源彼此不一致。",
+  "src/pages/users/public/_parts/AsideInfo.vue 的 textarea 標題讀 `row.label`，但後端 UserController 的 infoColumn 只給 `labelKey`（個人房東那筆還拼成 `lablabelKeyel`），所以畫面上「自我介紹」「團隊介紹」的欄位標題不會顯示，只看得到編輯鉛筆與內容。jgb/C/team-public-page-edit-and-banner 沒有引號引用這兩個標題，不影響判定，供撰寫時參考。",
+  "jgb/C/estate-list-add-must-pick-community 句 1 的『再回來建立或複製物件』措辭不精確：選好社區後，新增是由 /api2/estate/create 直接建立並進入編輯頁，複製則進物件挑選畫面，都不會回到物件總表。實際流程見同粗目 jgb/C/community-pick-next-step。這裡判成立，建議修飾措辭。"
+ ],
+ "source_transcript": "a21d9f5ca76176db9.output"
+}

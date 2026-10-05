@@ -309,7 +309,7 @@
     {
      "proposed_id": "jgb/B/team-signer-company-info",
      "askable": "簽約資訊卡的公司資訊要填哪些欄位",
-     "title": "簽約資訊卡的「公司資訊」要填什麼？（公司登記名稱上限 20 字、公司統編皆為必填；公司負責人只有社宅團隊必填；社宅團隊還要填必填的社宅業者編號與公司登記證號，公司登記證日期與縣市則不分團隊都是選填）",
+     "title": "簽約資訊卡的「公司資訊」要填什麼？（公司登記名稱上限 20 字、公司統編皆為必填；公司負責人只有社宅團隊必填；社宅團隊還要填必填的社宅業者編號與公司登記證號）",
      "unit_ids": [
       "page:web:users.role"
      ],
@@ -331,7 +331,7 @@
       "「公司統編」欄位下方可以選擇統編類型是「公司統編(檢核)」還是「其他統編(不檢核)」，選「公司統編(檢核)」時會檢查統一編號格式，格式不對會顯示「公司統編格式錯誤」。",
       "「公司負責人」只有社宅團隊是必填欄位，一般團隊則是選填。",
       "「社宅業者編號」只有社宅團隊看得到，且是必填欄位；一般團隊沒有這一欄。",
-      "「公司登記證號」對社宅團隊是必填，一般團隊則是選填；「公司登記證日期」「公司登記證縣市」不論一般團隊或社宅團隊都是選填。"
+      "「公司登記證號」對社宅團隊是必填，一般團隊則是選填；「公司登記證日期」「公司登記證縣市」則是選填。不過團隊要選用「財政部包租業租金收據範本」時，系統要求這三項都要先填寫完成。"
      ],
      "sources": [
       "code:src/pages/users/team/_parts/SignerDetails.vue"
@@ -401,6 +401,46 @@
        "sentence_index": 4,
        "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
        "quote_or_symbol": "fieldTitleLabelKey: '公司登記證縣市',"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "fieldTitleLabelKey: '公司登記證號',"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "isRequired: state.isSocialHousingTeam,"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "fieldTitleLabelKey: '公司登記證日期',"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/pages/users/team/_parts/SignerDetails.vue",
+       "quote_or_symbol": "fieldTitleLabelKey: '公司登記證縣市',"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/pages/users/payment/_parts/Receipt.vue",
+       "quote_or_symbol": "t('選擇「財政部包租業租金收據範本」時，請於團隊資訊內填寫 公司登記證日期、公司登記證縣市、公司登記證號資料。')"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/pages/users/payment/routerView/Index.vue",
+       "quote_or_symbol": "const result = await ajax(`${ store.state.APP_URL }/api3/users/payment/meta`, state.paymentMeta.form, 'PATCH')"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:routes/web.php",
+       "quote_or_symbol": "Route::match(['get', 'patch'], '/meta', 'UserController@getPaymentMeta');"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "if ($value == 'tw_zh_mof' && (empty($role->company_registration_ymd) || empty($role->company_registration_issue_city_id) || empty($role->company_registration_code))) {"
       }
      ],
      "not_supported_greps": [
@@ -714,7 +754,7 @@
     {
      "proposed_id": "jgb/B/team-signer-address-groups",
      "askable": "簽約資訊卡上有哪些地址欄位群",
-     "title": "簽約資訊卡上有哪些地址欄位群？（個人的戶籍地址／通訊地址、公司的登記地址／通訊地址，都有「同上」可以直接帶入；社宅團隊另有經紀人與租賃管理人員各自的通訊地址）",
+     "title": "簽約資訊卡上有哪些地址欄位群？（個人的戶籍地址／通訊地址、公司的登記地址／通訊地址；社宅團隊另有經紀人與租賃管理人員各自的通訊地址）",
      "unit_ids": [
       "page:web:users.role"
      ],
@@ -846,7 +886,7 @@
     {
      "proposed_id": "jgb/B/member-list-overview",
      "askable": "成員列表可以看到什麼資訊，例如人數、加入時間、角色",
-     "title": "成員列表可以看到什麼資訊？（成員總人數、加入時間、Email、手機號碼、目前的角色）",
+     "title": "成員列表可以看到什麼資訊？（加入時間、Email、手機號碼、目前的角色）",
      "unit_ids": [
       "page:web:users.team"
      ],
@@ -864,8 +904,8 @@
       "成員名下有沒有物件怎麼看"
      ],
      "sentences": [
-      "成員列表頁面上方會顯示目前團隊的成員總人數（含團隊擁有者本人）。",
-      "清單上每位成員會顯示加入時間、Email、手機號碼，以及目前套用的角色名稱。"
+      "成員列表標題旁會顯示成員人數，這個人數是下方一般成員列的筆數再加 1；以團隊擁有者身分登入時，剛好等於含團隊擁有者本人的總人數。",
+      "清單上每位成員都會顯示 Email、手機號碼，以及目前套用的角色名稱；加入時間只有一般成員那幾列有，團隊擁有者那一列和自己那一列的加入時間是空白。"
      ],
      "sources": [
       "code:resources/views/users/team/index.blade.php",
@@ -876,6 +916,31 @@
        "sentence_index": 0,
        "source": "code:resources/views/users/team/index.blade.php",
        "quote_or_symbol": "@{{ t('[s1] 個成員', [$store.state.team.member_list.length+1]) }}"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:resources/views/users/team/index.blade.php",
+       "quote_or_symbol": "@{{ t('[s1] 個成員', [$store.state.team.member_list.length+1]) }}"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "$ownerKey = $this->role->user_id;"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "$selfKey = $this->user->id;"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "unset($tempUserData[$ownerKey]);"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "unset($tempUserData[$selfKey]);"
       },
       {
        "sentence_index": 1,
@@ -896,6 +961,46 @@
        "sentence_index": 1,
        "source": "code:resources/views/users/team/index.blade.php",
        "quote_or_symbol": "{{___('角色')}}"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:resources/views/users/team/index.blade.php",
+       "quote_or_symbol": "<span class=\"col\">{{___('Email')}}</span>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:resources/views/users/team/index.blade.php",
+       "quote_or_symbol": "<span class=\"col\">{{___('手機號碼')}}</span>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:resources/views/users/team/index.blade.php",
+       "quote_or_symbol": "{{___('角色')}}"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:resources/views/users/team/index.blade.php",
+       "quote_or_symbol": "<div>@{{member.join_date}}</div>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:resources/views/users/team/index.blade.php",
+       "quote_or_symbol": "<div class=\"lg:col-2 lg:shrink col-12 lg:mb-0 mb-2 flex flex-nowrap items-center\">@{{$store.state.team.owner.join_date}}</div>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "$collectionUsersIds[] = (object)['user_id'=>$ownerKey];"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "$collectionUsersIds[] = (object)['user_id'=>$selfKey];"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "'join_date' => isset($LVcollectionUsersIds->created_at)?date('Y/m/d', strtotime($LVcollectionUsersIds->created_at)):'', // 加入時間"
       }
      ],
      "not_supported_greps": [],
@@ -923,7 +1028,7 @@
      ],
      "sentences": [
       "點擊成員列表的「邀請」按鈕會開啟「新增成員」視窗，可以選擇用 Email 或手機號碼搜尋要邀請的對象。",
-      "受邀請的對象如果還不是 JGB 會員，系統會提示這個帳號尚未成為 JGB 會員，不能把他新增為團隊成員。",
+      "受邀請的對象如果不是 JGB 會員，將無法新增為團隊成員；輸入的 Email 或手機號碼查不到帳號時，會顯示「您輸入的帳號不存在」。",
       "可以一次搜尋加入多位對象到「即將新增成員」清單，確認後一次送出邀請。"
      ],
      "sources": [
@@ -944,6 +1049,26 @@
        "sentence_index": 1,
        "source": "code:resources/views/users/team/index.blade.php",
        "quote_or_symbol": "受邀請的對象如果不是 JGB 會員，將無法新增為團隊成員。"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:resources/views/users/team/index.blade.php",
+       "quote_or_symbol": "受邀請的對象如果不是 JGB 會員，將無法新增為團隊成員。"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "'message'=> ___('您輸入的帳號不存在'),"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:resources/views/users/team/index.blade.php",
+       "quote_or_symbol": "<errors-tip class=\"mt-2\" :errors=\"$store.state.team.invite.accountValidationFailedMsg\">"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/store/modules/team/invite.js",
+       "quote_or_symbol": "context.dispatch('update', {'team.invite.accountValidationFailedMsg': result.data.message}, {root: true});"
       },
       {
        "sentence_index": 2,
@@ -1202,7 +1327,7 @@
       "成員名下物件怎麼調整"
      ],
      "sentences": [
-      "成員列表每一列右側有鉛筆圖示，點開可以選「編輯綁定物件」或「編輯綁定合約」，會跳到這位成員擁有的物件／合約頁面。",
+      "有編輯權限時，成員列表中一般成員那幾列右側有鉛筆圖示，點開可以選「編輯綁定物件」或「編輯綁定合約」，會跳到這位成員擁有的物件／合約頁面；團隊擁有者那一列和自己那一列沒有鉛筆圖示。",
       "在「〔成員姓名〕擁有的物件」或「擁有的合約」頁面，可以點「授權更多物件／合約」加入新的授權，或點「移除所有授權」一次撤銷這位成員的所有物件／合約授權。"
      ],
      "sources": [
@@ -1224,6 +1349,31 @@
        "sentence_index": 0,
        "source": "code:resources/views/users/team/index.blade.php",
        "quote_or_symbol": "}\">{{___('編輯綁定合約')}}</div>"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:resources/views/users/team/index.blade.php",
+       "quote_or_symbol": "@if ($enableEdit)"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:resources/views/users/team/index.blade.php",
+       "quote_or_symbol": "v-for=\"(member, m_index) in $store.state.team.member_list\""
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "$enableEdit = $this->isHasGPermission('edit_role_team');"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "unset($tempUserData[$ownerKey]);"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "unset($tempUserData[$selfKey]);"
       },
       {
        "sentence_index": 1,
@@ -1322,7 +1472,7 @@
      ],
      "sentences": [
       "成員列表中一般成員那一列有角色下拉選單，選擇要指派的角色後就會直接送出變更，不用另外打開編輯視窗；團隊擁有者那一列和自己那一列的選單是鎖住的，沒有編輯權限時整個選單也會鎖住。",
-      "可以切換的角色下拉選單最下面有一個「+ 新增角色」選項，點選後會直接開啟「編輯角色」視窗，不用先離開成員列表。"
+      "可以切換的角色下拉選單最下面有一個「+ 新增角色」選項，點選後會直接開啟「新增角色」視窗，不用先離開成員列表。"
      ],
      "sources": [
       "code:resources/views/users/team/index.blade.php"
@@ -1347,6 +1497,26 @@
        "sentence_index": 1,
        "source": "code:resources/views/users/team/index.blade.php",
        "quote_or_symbol": "$store.commit('lightbox', 'character--Edit')"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:resources/views/users/team/index.blade.php",
+       "quote_or_symbol": "{ label: `+ ${t('新增角色')}`, value: 'addCharacter', className: 'text-secondary' }"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:resources/views/users/team/index.blade.php",
+       "quote_or_symbol": "$store.dispatch('update', {'team.capabilityEdit.editing.action': 'add'})"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:resources/views/users/team/index.blade.php",
+       "quote_or_symbol": "$store.commit('lightbox', 'character--Edit')"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:resources/views/layouts/lightbox/character-capability-edit.blade.php",
+       "quote_or_symbol": "<span class=\"text-[28px]\" v-show=\"$store.state.team.capabilityEdit.editing.action==='add'\">{{___('新增角色')}}</span>"
       }
      ],
      "not_supported_greps": [],
@@ -2283,7 +2453,7 @@
     {
      "proposed_id": "jgb/B/biglandlord-report-community-rate",
      "askable": "大房東報表可以依社區看嗎、匯率在哪顯示",
-     "title": "大房東報表可以依社區細看嗎？（報表清單有「社區」欄，幣別不同時細節頁會顯示匯率）",
+     "title": "大房東報表可以依社區細看嗎？（報表清單有「社區」欄）",
      "unit_ids": [
       "page:bigLandlords.report"
      ],
@@ -2300,8 +2470,7 @@
       "報表可以下載社區層級嗎"
      ],
      "sentences": [
-      "大房東報表清單有一欄「社區」，顯示這位大房東名下物件所屬的社區。",
-      "點開大房東報表細節，若結算幣別和站台幣別不同、而且有匯率資料，會顯示「匯率」（手機版不顯示這段文字）；「所有物件」「社區」「物件」三個層級各自都有獨立的「下載報表」按鈕，可以分別下載對應範圍的報表。"
+      "大房東報表清單有一欄「社區」，顯示這位大房東名下的社區數量，點擊數字會開啟社區清單。"
      ],
      "sources": [
       "code:src/pages/bigLandlords/report/_parts/ListTable.vue",
@@ -2314,24 +2483,29 @@
        "quote_or_symbol": "title: t('社區'),"
       },
       {
-       "sentence_index": 1,
-       "source": "code:src/pages/bigLandlords/report/_parts/BigLandlordItemDetail.jsx",
-       "quote_or_symbol": "<div className=\"hidden lg:block\">{t('匯率')}</div>"
+       "sentence_index": 0,
+       "source": "code:src/utils/surelyVue/bigLandlord.ts",
+       "quote_or_symbol": "communities.length > 0 ? communities.length.toString() : '',"
       },
       {
-       "sentence_index": 1,
-       "source": "code:src/pages/bigLandlords/report/_parts/BigLandlordItemDetail.jsx",
-       "quote_or_symbol": "<h6 class=\"mb-2 text-grey-600\">{ t('所有物件') }</h6>"
+       "sentence_index": 0,
+       "source": "code:src/components/SurelyVue/BigLandlord/ReportContentCell.vue",
+       "quote_or_symbol": "{{ props.content || \"-\" }}"
       },
       {
-       "sentence_index": 1,
-       "source": "code:src/pages/bigLandlords/report/_parts/BigLandlordItemDetail.jsx",
-       "quote_or_symbol": "<h6 class=\"mb-2 text-grey-600\">{ t('社區') }</h6>"
+       "sentence_index": 0,
+       "source": "code:src/pages/bigLandlords/report/_parts/ListTable.vue",
+       "quote_or_symbol": "emit('communityListOpen', info.communities as ICommunity[])"
       },
       {
-       "sentence_index": 1,
-       "source": "code:src/pages/bigLandlords/report/_parts/BigLandlordItemDetail.jsx",
-       "quote_or_symbol": "<h6 class=\"mb-2 text-grey-600\">{ t('物件') }</h6>"
+       "sentence_index": 0,
+       "source": "code:src/pages/bigLandlords/report/Index.vue",
+       "quote_or_symbol": "commitToLightbox(LightBoxAction.bigLandlord.communities());"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/bigLandlords/report/Index.vue",
+       "quote_or_symbol": "<LightboxCommunityList :info=\"list.communities\" />"
       }
      ],
      "not_supported_greps": [],

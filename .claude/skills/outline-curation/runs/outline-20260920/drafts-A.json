@@ -619,7 +619,7 @@
     {
      "proposed_id": "jgb/A/register-role-select",
      "askable": "註冊完成後要選擇身分嗎，房東和租客身分怎麼選",
-     "title": "註冊完之後要選身分嗎？（一般會在房東/管理者、租客中二選一，可同時擁有兩種身分；從租客端網站導轉來的會直接導回原頁）",
+     "title": "註冊完之後要選身分嗎？（一般會在房東/管理者、租客中二選一，可同時擁有兩種身分）",
      "unit_ids": [
       "page:users.create",
       "page:users.login"
@@ -639,9 +639,8 @@
       "我是房東還是租客"
      ],
      "sentences": [
-      "一般的註冊或登入流程會出現身分選擇畫面，讓使用者選擇「我是房東/管理者」或「我是租客」；已註冊過的第三方帳號登入時，則會直接進入首頁。",
-      "同一組帳號可同時擁有房東與租客兩種身分，選擇的身分只決定這次要進入哪一種介面。",
-      "若是從租客端網站導轉來註冊，綁定手機這一步完成或略過後，系統會直接把使用者導回原本要前往的頁面，不會再出現身分選擇畫面。"
+      "一般的註冊或登入流程會出現身分選擇畫面，讓使用者選擇「我是房東/管理者」或「我是租客」；已註冊過的第三方帳號登入時，不會再出現身分選擇畫面，若登入前已有指定要前往的頁面就前往該頁，沒有才直接進入首頁。",
+      "同一組帳號可同時擁有房東與租客兩種身分，選擇的身分只決定這次要進入哪一種介面。"
      ],
      "sources": [
       "code:src/pages/users/auth/parts/RoleSelect.vue",
@@ -654,14 +653,39 @@
        "quote_or_symbol": "t('我是房東/管理者')"
       },
       {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/auth/parts/RoleSelect.vue",
+       "quote_or_symbol": "t('我是房東/管理者')"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/AuthController.php",
+       "quote_or_symbol": "$user->father()->reload(true);"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/AuthController.php",
+       "quote_or_symbol": "$redirectUrl = !empty(session('redirect_after_login')) ? session('redirect_after_login') : null;"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/AuthController.php",
+       "quote_or_symbol": "return redirect($redirectUrl);"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/AuthController.php",
+       "quote_or_symbol": "return redirect($dashboardUrl);"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/AuthController.php",
+       "quote_or_symbol": "$dashboardUrl = route('users.index');"
+      },
+      {
        "sentence_index": 1,
        "source": "help:onboarding1_zh-Hant.html",
        "quote_or_symbol": "只需註冊一次，就可以同時擁有房東及租客身份"
-      },
-      {
-       "sentence_index": 2,
-       "source": "code:src/pages/users/auth/parts/RoleSelect.vue",
-       "quote_or_symbol": "const getRedirectSession = async ()=>{"
       }
      ],
      "not_supported_greps": [],
@@ -883,7 +907,7 @@
     {
      "proposed_id": "jgb/A/login-role-select-before",
      "askable": "登入頁為什麼要先選擇身分",
-     "title": "登入前為什麼要先選擇身分？（決定進入房東/管理者或租客的登入表單）",
+     "title": "登入前要先選擇身分？",
      "unit_ids": [
       "page:users.login"
      ],
@@ -1484,7 +1508,7 @@
      "sentences": [
       "當使用者是透過特定邀請連結進入忘記密碼頁面時，畫面會直接顯示「請設定密碼」，而不是一般的忘記密碼流程，並跳過帳號驗證直接進入設定密碼表單。",
       "這個情境用在大房東的邀請流程：受邀的帳號透過邀請連結進入後，直接設定自己的密碼，設定成功後會依處理結果導向對應頁面。",
-      "此畫面沿用一般忘記密碼頁面同樣的新密碼格式規則，設定成功後會依處理結果導向指定頁面，沒有指定頁面時才導回一般登入頁。"
+      "此畫面沿用一般忘記密碼頁面同樣的新密碼格式規則；設定成功後系統會自動為您登入，並前往指定頁面，沒有指定頁面時會前往登入頁，但因為已經登入，會直接進入會員中心。"
      ],
      "sources": [
       "code:src/pages/users/auth/parts/forget/Password.vue"
@@ -1514,6 +1538,46 @@
        "sentence_index": 2,
        "source": "code:src/pages/users/auth/parts/forget/Password.vue",
        "quote_or_symbol": "if (result.redirect) {"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/users/auth/parts/forget/Password.vue",
+       "quote_or_symbol": "format: /[0-9]/.test(state.password) && /[a-zA-Z]/.test(state.password),"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/users/auth/parts/forget/Password.vue",
+       "quote_or_symbol": "v-if=\"state.screen == 'resetPwd' || state.screen == 'setPwd'\""
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/users/auth/parts/forget/Password.vue",
+       "quote_or_symbol": "url: route.params.type === 'setPwd' ? Cookies?.get('entrusted_url') : ''"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Controllers/AuthController.php",
+       "quote_or_symbol": "$redirectUrl = $request->url;"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Controllers/AuthController.php",
+       "quote_or_symbol": "$fatherUser->reload(true); // 登入主帳號"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Controllers/AuthController.php",
+       "quote_or_symbol": "$result['redirect'] = $redirectUrl;"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:routes/web.php",
+       "quote_or_symbol": "->name('users.create')->middleware('if_login');"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Middleware/IfLoginCheck.php",
+       "quote_or_symbol": "return redirect()->route('users.index');"
       }
      ],
      "not_supported_greps": [],
@@ -1719,7 +1783,7 @@
     {
      "proposed_id": "jgb/A/dashboard-big-landlord-view",
      "askable": "大房東登入後的會員中心首頁跟一般房東的首頁有什麼不同",
-     "title": "大房東的首頁畫面和一般房東不一樣嗎？（只顯示社區最新收支詳情與收支圖表，沒有捷徑與四個統計方塊）",
+     "title": "大房東的首頁畫面和一般房東不一樣嗎？（沒有捷徑與四個統計方塊）",
      "unit_ids": [
       "page:users.index",
       "page:users.dashboard"
@@ -1738,7 +1802,7 @@
      ],
      "sentences": [
       "若目前登入身分是大房東，首頁不會顯示即時物件出租率、即將到期合約、即將到來應到帳帳單、7日內修繕單四個方塊，也不會有捷徑區塊。",
-      "大房東首頁改為顯示「社區最新收支詳情」，以及可自訂區間（7天／30天／90天／6個月）的收支圖表。"
+      "大房東首頁改為顯示可自訂區間（7天／30天／90天／6個月）的收支圖表。"
      ],
      "sources": [
       "code:src/pages/users/dashboard/Landlord.vue",
@@ -1776,6 +1840,31 @@
        "sentence_index": 1,
        "source": "code:src/pages/users/dashboard/parts/EstateDetails.vue",
        "quote_or_symbol": ": t('物件最新收支詳情')"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/dashboard/Landlord.vue",
+       "quote_or_symbol": "customizable={true}"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/dashboard/Landlord.vue",
+       "quote_or_symbol": "scale: 90,"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/dashboard/Landlord.vue",
+       "quote_or_symbol": "dateRangeSelectorPosition=\"outer\" />"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/components/DateRangeSelector.jsx",
+       "quote_or_symbol": "t('近 [s1] 天', [node.scale])"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/dashboard/parts/BalanceChart.vue",
+       "quote_or_symbol": "<h3 class=\"text-[24px] font-700 lang-other:text-[20px]\">{ t('收支情況') }</h3>"
       }
      ],
      "not_supported_greps": [
@@ -3412,7 +3501,7 @@
     {
      "proposed_id": "jgb/A/notification-mark-read-navigate",
      "askable": "點通知會發生什麼事、通知會不會被標記已讀",
-     "title": "點擊通知列表項目會發生什麼？（前往原連結並把該則通知標為已讀；訊息類通知不換頁）",
+     "title": "點擊通知列表項目會發生什麼？（前往原連結；訊息類通知不換頁）",
      "unit_ids": [
       "page:web:notifications.index"
      ],
@@ -3430,7 +3519,7 @@
      ],
      "sentences": [
       "除了訊息類通知之外，每則通知點擊後都會依原本的連結網址前往對應頁面，並在網址上多帶一個通知編號參數。",
-      "前往的頁面載入時，系統會依這個參數把這則通知標為已讀，並把網址上的這個參數拿掉。",
+      "前往的頁面載入時，系統會把網址上的這個參數拿掉；若這則通知的收件人就是目前登入的使用者本人，才會把這則通知標為已讀。",
       "訊息類通知則是在原頁面開啟訊息視窗，不會換頁。"
      ],
      "sources": [
@@ -3454,6 +3543,26 @@
        "sentence_index": 1,
        "source": "code:app/Http/Controllers/Controller.php",
        "quote_or_symbol": "$query = $request->except('notification_id'); // 清除notification_id"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/Controller.php",
+       "quote_or_symbol": "Notification::markAsRead($this->user->id, $this->role->id, $notificationId);"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/Controller.php",
+       "quote_or_symbol": "$query = $request->except('notification_id'); // 清除notification_id"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/Controller.php",
+       "quote_or_symbol": "$this->user = session(User::class);"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Notification.php",
+       "quote_or_symbol": "$notification = DB::table('notifications')->useWritePdo()->where('user_id', $userId)->where('role_id', $roleId)->where('id', $id)->where('is_read', 0);"
       },
       {
        "sentence_index": 2,
@@ -3880,7 +3989,7 @@
     {
      "proposed_id": "jgb/A/notification-settings-save",
      "askable": "通知收件設定改完要怎麼儲存，一定要有自訂信箱才能存嗎",
-     "title": "通知收件設定改完怎麼儲存？（至少要有一個分類填了自訂信箱，儲存鍵才會啟用）",
+     "title": "通知收件設定改完怎麼儲存？",
      "unit_ids": [
       "page:users.notification"
      ],
@@ -3897,7 +4006,7 @@
       "沒填信箱能存嗎"
      ],
      "sentences": [
-      "「儲存」按鈕只有在至少一個分類已經填了自訂收件信箱時才會啟用，否則呈現停用樣式且送出動作不會執行。",
+      "「儲存」按鈕只有在至少一個分類出現自訂收件信箱的輸入欄位時才會啟用（欄位有沒有填不影響），否則呈現停用樣式且送出動作不會執行。",
       "儲存成功會顯示「儲存成功」提示；若儲存失敗，畫面會用系統回傳的訊息或預設「儲存失敗，請稍後再試。」顯示錯誤提示；若發生網路錯誤則顯示「網路錯誤，請稍後再試。」",
       "頁面載入時會自動取得目前各分類的自訂信箱與預設信箱，按下「儲存」則會把整包分類資料送出更新。"
      ],
@@ -3905,6 +4014,36 @@
       "code:src/pages/users/notification/Index.vue"
      ],
      "evidence": [
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/notification/Index.vue",
+       "quote_or_symbol": "if (!state.hasCustomEmail){"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/notification/Index.vue",
+       "quote_or_symbol": ":class=\"['btn btn-grey-ghost bg-white', `${ state.hasCustomEmail ? '' : 'disabled' }`]\">"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/notification/Index.vue",
+       "quote_or_symbol": "return targetKeys.some((key)=>!isEmpty(formData.emailData[key].custom_emails))"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/mixin/methods.js",
+       "quote_or_symbol": "return value === undefined || value === null || (typeof value === 'object' && Object.keys(value).length === 0) || (typeof value === 'string' && value.trim().length === 0)"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/notification/Index.vue",
+       "quote_or_symbol": "function handleAddEmail(categoryKey: CategoryKey){"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/notification/Index.vue",
+       "quote_or_symbol": "{{ t('新增信箱') }}"
+      },
       {
        "sentence_index": 0,
        "source": "code:src/pages/users/notification/Index.vue",

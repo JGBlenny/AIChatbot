@@ -1,0 +1,416 @@
+{
+ "kind": "write",
+ "verdict": "REFUTED",
+ "base": "f13b0cb57303c6f8b887e341cbc38a337f6f5fcb",
+ "claim": "Plan 9.29 先審 G3：20 條細目的標題與每一句已逐句對合法來源核對，逐條結果如 fines",
+ "fines": [
+  {
+   "id": "jgb/D/contract-additional-convention",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "cfd48a506bbd6cbb8883a264aa44d86dd0c16c138ac373ebfb27b2c255e993be",
+   "title_text": "補充條款有字數限制嗎？（可套用範本與複製其他合約）",
+   "notes": [
+    "標題：括號內「可套用範本與複製其他合約」由句 2 支撐；問句本身不構成斷言。",
+    "句 1：landlordonboarding04lease_zh-Hant.html＋「補充條款主要是因為系統之電子合約為政府所提供的公版定型化契約」＋文意一致。",
+    "句 2：src/pages/contracts/edit/additionalConvention/Index.vue＋t('預設補充條款')、t('複製現有合約資料')（連結 /contracts/pick/additionalConventionCopy/）＋兩者皆在現行分頁上。",
+    "句 3：src/pages/contracts/edit/additionalConvention/Index.vue＋t('補充條款至多僅限 [s1] 頁 A4 內容，請務必執行「預覽結果」以確認最終呈現。', [1])＋無條件顯示的 ErrorsTip，文字逐字相符。"
+   ]
+  },
+  {
+   "id": "jgb/D/contract-create-entry",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "ebc00eba5156f42eb9bbe992b9a3ab32543892baec22ab1feb81b46f85f97e94",
+   "title_text": "怎麼建立一份新合約？（合約總表右上角「建立合約」，或物件總表小齒輪選建立合約）",
+   "notes": [
+    "標題：兩個入口分別由句 1、句 2 支撐。",
+    "句 1：landlordonboarding04lease_zh-Hant.html＋「於【合約管理】中的【合約總表】點按右上角的【建立合約】」「選取您想建立合約的物件，並點選【下一步】」；src/pages/contracts/list/_parts/PageTop.vue＋t('建立合約') 按鈕。",
+    "句 2：landlordonboarding04lease_zh-Hant.html＋「對你想創建合約的物件，點按小齒輪，選擇【建立合約】」；app/Http/Controllers/EstateController.php＋'text' => ___('建立合約')。",
+    "句 3：src/components/Lightbox/SelectContractMethod.jsx＋t('請選擇建立合約的方式')、'電子合約 - 住宅租賃契約書'、'電子合約 - 客製化契約書'、'紙本簽約'；src/pages/contracts/list/_parts/PageTop.vue＋config_rule_key !== 4 才 commit selectContractMethod，否則 RouterLink 至 estates.pick contractCreate；app/Role.php＋RULE_KEY_LANDLORD_SOCIAL_HOUSING = 4。",
+    "句 4：app/Http/Controllers/ContractController.php＋MAX_ACTIVE_CONTRACTS_COUNT = 10、actualContracts()->activeContracts()->count()；app/Contract.php＋scopeActiveContracts where('is_history', 0)->where('active', 1)；landlordonboarding04lease_zh-Hant.html＋「A租約即將到期…若有 B租客有意願要承租，亦可以先進行簽約動作」。",
+    "句 5：docs/knowledge/jgb-product-facts.md＋{#p914-contract-new-vs-old}「建立新合約不會自動作廢或改動既有合約」；ContractController 建立流程僅做數量檢查。",
+    "句 6：app/Http/Controllers/ContractController.php＋activeContracts()->count() >= self::MAX_ACTIVE_CONTRACTS_COUNT 為唯一數量門檻、無租期重疊檢查；docs/knowledge/jgb-product-facts.md＋「不檢查新舊租期是否重疊」；review-sheet-9.15-S2-DE-20260927.md＋| 109 | G9 | 採用：只寫程式證實的系統行為，其餘走個案客服。"
+   ]
+  },
+  {
+   "id": "jgb/D/contract-invite-and-review-period",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "c215dca7c563f5ed505b5af7f3dadb8bafa06e5a9b253ade4098a8363e5d02d9",
+   "title_text": "合約邀請發出後租客有多久審閱期？（預設 3 天／72 小時，逾期連結失效，天數為團隊可調整設定）",
+   "notes": [
+    "標題：預設 3 天、逾期失效、團隊可調皆由句 1–3 支撐。",
+    "句 1：app/Http/Controllers/ContractController.php＋getSettings('contract_review_renew_period', …)['review_days'] ?? 3、strtotime(\"+{$reviewDays} days\")（一般與社宅分支皆同）＋房東 invite 路徑讀團隊設定、未設回退 3。",
+    "句 2：同上＋註解「團隊覆蓋 > 全域預設 3 天」、以 $this->role->id 取設定＋屬團隊層級。",
+    "句 3：landlordonboarding04lease_zh-Hant.html＋「從您發送邀請時開始計算，租客需要在72小時內進行簽約，否則該連結就會失效」；ContractController.php＋contract_inviting_expire_at 自發送當下起算。",
+    "句 4：app/Http/Controllers/ContractController.php＋User::where('email', xxtea_base64_encrypt($contract->to_user_email))、$contract->to_user_email = $user->email、一般分支 phone 查詢含 whereNotNull('phone_verified_at')，社宅分支 phone 查詢無此條件。",
+    "句 5：docs/knowledge/jgb-product-facts.md＋{#p914-contract-invite-account-match}；app/Http/Controllers/EstateController.php＋session()->put('contract_invitation', [$contract->id])（限 CONTRACT_INVITING 且 to_user_id 為空）；app/Http/Controllers/AuthController.php＋receiveContractInvitation('contract', $contractId)；config/session.php＋'lifetime' => env('SESSION_LIFETIME', 120)；其他情況句子以「看個案」收斂，未作否定斷言。",
+    "句 6：app/User.php＋setEmailAttribute 直接 xxtea_base64_encrypt($email) 未轉小寫；docs/knowledge/jgb-product-facts.md＋{#p914-email-encrypted-no-lowercase}。",
+    "句 7：review-sheet-9.15-S2-DE-20260927.md＋| 113 | G9 | 採用：只寫程式證實的系統行為，其餘走個案客服＋句意只描述依綁定關係並轉客服。"
+   ]
+  },
+  {
+   "id": "jgb/D/contract-lease-scope-by-space-type",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "3aff13f3da2f4813ea94e015ff1070e1fdb9ab22ca8661384a0d6faa4317cc45",
+   "title_text": "合約的租賃範圍怎麼決定？（物件空間型態，不用使用者勾選）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：app/Contract.php＋「若物件的空間型態為整戶，則租賃範圍為全部，其他狀況下必是部分」＋依 $estate->space_type 自動帶方框，非使用者欄位；docs/knowledge/jgb-product-facts.md＋{#p914-contract-lease-scope}。",
+    "句 2：app/Contract.php＋$estate->space_type === 'flat' || $estate->space_type === 'office_flat'；config/estate.php＋'flat' => '整戶'、'office_flat' => '整層空間'、'studio' => '套房'、'room' => '雅房'。"
+   ]
+  },
+  {
+   "id": "jgb/D/paper-contract-upload-limits",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "不成立",
+    "成立"
+   ],
+   "content_sha256": "bf574e2fc9139bb4e688c97a5f50711a3b2dedb38b2f94d1fc6ad78e628acf3a",
+   "title_text": "紙本簽約和電子合約在建立時有什麼不同？",
+   "notes": [
+    "標題：問句，由句 1–6 的差異內容回應。",
+    "句 1：src/components/Lightbox/SelectContractMethod.jsx＋title '紙本簽約'、description '請上傳雙方已簽訂完成或是已公證完成的合約'。",
+    "句 2：同上＋三個 methods（contractCreate／customizeContractCreate／contractUpload），customizeContractCreate 的 description '自製合約模板'；PageTop.vue 未傳 isHiddenItem。",
+    "句 3：src/pages/contracts/edit/rentBasic/General.vue＋v-if=\"editStore.options.is_existed == 2\" 下的 t('編輯底稿')；src/utils/constants/contract.js＋diy: 2 // 電子合約 - 客製化契約書。",
+    "句 4：src/pages/contracts/list/_parts/PageTop.vue＋config_rule_key !== 4 才開 selectContractMethod，否則直接 estates.pick action contractCreate；SelectContractMethod.jsx＋客製化與紙本 isHidden: config_rule_key == 4；app/Role.php＋RULE_KEY_LANDLORD_SOCIAL_HOUSING = 4。",
+    "句 5：src/use/useEditStore.js＋紙本合約過濾白名單含 'contracts.edit.rent'、'contracts.edit.billSetting'、'contracts.edit.payment'。",
+    "句 6：src/pages/contracts/edit/rentBasic/General.vue＋ajax-uploader upload_for=\"existed_contract\" 傳 :size_limit=\"15\"；src/components/AjaxUploader.vue＋t('請重新上傳小於 [s1] 的檔案', [`${size_limit} MB`])＋實際上限與提示是 15 MB，不是 20 MB（同粗目 jgb/D/contract-upload-existing-vs-electronic 句 6 寫 15 MB，與程式一致，本條錯）。",
+    "句 7：landlordonboarding04lease_zh-Hant.html＋「在掃描檔案時於印表機選擇不同的掃描品質」「可以從 此 線上網站（點我） 進行線上壓縮」。"
+   ]
+  },
+  {
+   "id": "jgb/D/contract-list-row-gear-actions",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "52c2e7d687b05cf20d2a9d157c8d6463b864724f7d6bba87ad6b45185d009318",
+   "title_text": "合約總表列的小齒輪可以做什麼操作？（不論狀態都有「查看帳單」；其餘依合約狀態、身分與權限增減）",
+   "notes": [
+    "標題：由句 1、句 3 支撐。",
+    "句 1：app/Http/Controllers/ContractController.php＋「定義 $actions 這段應該挪到前端」後依 switch ($LVcontractDataPage->status)、$this->roleType、$LVtoThis_userPermission 組 actions；routes/web.php＋/api2/contract/list/{action?}/{status?} → webList。",
+    "句 2：app/Http/Controllers/ContractController.php＋if($LVtoThis_userPermission['show_owner_estate'] == true) 推入 showEstate（'查看物件'），在 switch 之前。",
+    "句 3：同上＋'text' => ___('查看帳單')、'class_name' => $LVchainBillsCount > 0 ? '' : 'disabled'、link '/bills/all?keyword=' . $LVbillRootId . '&keyword_for=contractChain'。",
+    "句 4：同上＋$this->roleType === 'tenant' && !empty($LVcontractDataPage->getAutoPayCreditCardExpireYmd()) 推入 changeCreditBind（'更換綁定信用卡'），link credit_card_update。",
+    "句 5：同上＋case CONTRACT_INVITING／CONTRACT_INVITING_NEXT：isRenewing() → cancelRenew（'取消續約'），isEarlyTerminating() → cancelTerminate（'取消提前解約'），否則 cancelInvite（'取消邀請'），僅推一項。",
+    "句 6：同上＋CONTRACT_SIGNED／MOVE_IN／MOVE_IN_DONE／MOVE_OUT／MOVE_OUT_DONE：社宅且 contract_type === 'charter' 推 addContract（'新增轉租契約書'）；$this->roleType !== 'tenant' 推 movein／cancelMoveInInvite／moveout／cancelMoveOutInvite（class_name 依 canMoveIn、狀態等可為 disabled）；property_purpose_key != SOCIAL_HOUSING && 非租客推 renew（'續約'）。句子未宣稱窮舉（另有提前解約，見 findings）。",
+    "句 7：同上＋case CONTRACT_EARLY_TERMINATION：movein 設 disabled 後 push 兩次 $LVreturnActionTemplate['movein']，再推 cancelTerminate class_name ''；src/components/SurelyVue/Contract/ActionCell.jsx＋props.actions?.map 直接渲染未去重。",
+    "句 8：同上＋case CONTRACT_HISTORY／CONTRACT_HISTORY_DONE：moveout 依 canMoveOut() 決定 disabled；isRenewExpiredAllowed() && property_purpose_key != SOCIAL_HOUSING && roleType !== 'tenant' 才補 renew（註解「續約例外名單」）。"
+   ]
+  },
+  {
+   "id": "jgb/D/contract-list-row-sort-options",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "b78e3ce489f2451b017a63e888aecc8452f74233bbf3cde98126ad56e22b61c7",
+   "title_text": "合約總表可以怎麼排序？（依名稱、更新時間、合約起始日、終止日、成立日，共 5 種依據）",
+   "notes": [
+    "標題：$returnSortOptionsMap 恰為 5 種依據（名稱／更新時間／起始日／終止日／成立日），由句 1 支撐。",
+    "句 1：app/Http/Controllers/ContractController.php＋$returnSortOptionsMap：'依名稱排序'、'更新時間(新)'、'更新時間(舊)'、'合約起始日(晚)'、'合約起始日(早)'、'合約終止日(晚)'、'合約終止日(早)'、'合約成立日(早)'、'合約成立日(晚)'，以 'sortOptions' 回傳；src/pages/contracts/list/_parts/PageTop.vue＋:sortOptions=\"props.searchState?.data?.sortOptions\"。"
+   ]
+  },
+  {
+   "id": "jgb/D/contract-list-status-tabs",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "7fbe5a5c3de6a45387229c9af3f2b1a42ea37cad003ab563ab33739586a9139a",
+   "title_text": "合約列表有哪些狀態頁籤？",
+   "notes": [
+    "標題：問句，由句 1 回應。",
+    "句 1：app/Role.php＋租約管理 sub：'待發送合約'（allow_role_key 不含 RULE_KEY_TENANT）、'待租客簽回'、'待管理者簽名'、'執行中合約'、'歷史合約'；src/pages/contracts/list/_parts/PageTop.vue＋statusPair 3: '待房東簽名' 作頁面標題。",
+    "句 2：src/routes/contracts.js＋const allows = ['1', '2', '3', '4', '5']，不在其中則 next({ name: 'contracts.list', params: { status: '' } })。",
+    "句 3：同上＋to?.params?.status === '1' && config_rule_type === 'tenant' 時 window.location.href = '/users'（會員首頁）。"
+   ]
+  },
+  {
+   "id": "jgb/D/contract-rentbasic-template-and-dates",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "c890962ae1f1354653750c5b4487255b5be2ce992ccb5bfe0dc362fee7019e4b",
+   "title_text": "「基本條件」分頁的合約範本與日期要怎麼設定？（合約範本／類型、合約起迄日期、租賃訂約日期）",
+   "notes": [
+    "標題：三組欄位由句 1–3 支撐。",
+    "句 1：src/pages/contracts/edit/rentBasic/General.vue＋v-if=\"editStore.options.is_existed != 0\" 區塊為 t('合約類型')，v-else 區塊為 t('合約範本')。",
+    "句 2：同上＋t('合約起迄日期') 含起始日／終止日 flat-pickr（contract_date_start／contract_date_end）。",
+    "句 3：同上＋「租賃訂約日期：僅紙本/DIY 合約顯示」v-if=\"editStore.options.is_existed == 1 || editStore.options.is_existed == 2\"，綁 lease_signing_date，與 contract_date_start 為不同欄位。",
+    "句 4：app/Http/Controllers/ContractController.php＋非個人房東分支 array_push 12 個鍵（tw_zh_individual…tw_zh_management_union）；config/contract.php＋對應 label 逐字為句中 12 個名稱。",
+    "句 5：同上＋if ($isIndividualManager) array_push('tw_zh_individual', 'EN201608', 'th_th_individual', 'tw_zh_individual_union')；$isIndividualManager 為 RULE_KEY_LANDLORD_INDIVIDUAL；config/contract.php 對應 4 個 label。",
+    "句 6：docs/knowledge/jgb-product-facts.md＋{#p914-contract-templates}「內政部英文版的補充條款會印在合約書第 4 頁；只有編輯時的補充條款預覽對這個範本不套背景、改用空白頁」；ContractController.php＋resolveAdditionalTermsPosition 註解「由呼叫端退回空白頁預覽」。",
+    "句 7：docs/knowledge/jgb-product-facts.md＋{#p914-contract-date-start}；General.vue＋起始日綁 contract_date_start。",
+    "句 8：src/pages/contracts/edit/rentBasic/General.vue＋lease_signing_date 只有 flat-pickr、無 minDate 或與起始日比對（對照：終止日有 minDate 以起始日+1）；app/Services/ContractService.php＋$situation['lease_signing_date'] 僅讀值；review-sheet-9.15-S2-DE-20260927.md＋| 91 | G8 | 採用：寫系統側事實＋「屬外部規定，系統不判斷」。",
+    "句 9：config/contract.php、app/Http/Controllers/ContractController.php、src 皆無「二房東」字串（正對照「原房東」同檔命中）；合約類型選項為 原房東／包租業／代租代管／包租包管／轉租等；review-sheet-9.15-S2-DE-20260927.md＋| 101 | G8 | 採用。"
+   ]
+  },
+  {
+   "id": "jgb/D/contract-search-keyword-scope",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "8d9d11182fb0d3af060c260adbd5377b330c07cc9f1cba6a6cb79ca9006df350",
+   "title_text": "合約列表怎麼搜尋合約？（案名／地址／租客／ID／手機／信箱六種關鍵字，另有進階搜尋）",
+   "notes": [
+    "標題：由句 1、句 2 支撐。",
+    "句 1：src/pages/contracts/list/Index.vue＋keyword_for values: ['estateName', 'address', 'tenant', 'id', 'phone', 'email']，pairs 案名／地址／租客／ID／手機／信箱；src/pages/contracts/list/_parts/ContractsAdvanceSearchBlock.jsx 同樣六項。",
+    "句 2：src/pages/contracts/list/_parts/ContractsAdvanceSearchBlock.jsx＋keyName community／contract_is_existing／tenant_type／contractPeriodQuery／space_type／rentRange／sizeRange 篩選器；src/use/search/modules/community.js 等＋optionTitle t('社區')、t('合約類型')、t('租客是否註冊')、t('租期範圍查詢方式')、t('空間類型')、t('租金')、t('面積(坪)')。句子以「等」收尾非窮舉。sources 所列 src/components/Lightbox/ContractsAdvSearch.vue 全 src 無引用（見 findings），以現行元件判定。"
+   ]
+  },
+  {
+   "id": "jgb/D/contract-situation-tab",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "1daa9cc68a8cb16f30730995ee32eb12f860664f5b0df78fd64086bce2034e0f",
+   "title_text": "現況補充分頁要寫什麼？（車位、屋況、漏水處等現況細節）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/pages/contracts/edit/situation/General.vue＋t('建物現況格局')、t('汽車停車位')、t('機車停車位')、t('建物出租型態')、t('本建物(專有部分)是否曾發生兇殺、自殺、一氧化碳中毒或其他非自然死亡情事')，並引入 IsWaterLeakageField（src/pages/contracts/edit/situation/_parts/__fields/IsWaterLeakageField.vue＋t(\"滲漏水處\")）。"
+   ]
+  },
+  {
+   "id": "jgb/D/contract-tax-invoice",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "不成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "156f3ec4825cb8cd08716e818c6c53390be07703b4780d1bbf9e5a6e5d8051f6",
+   "title_text": "稅與發票分頁怎麼設定？（是否開立發票、出租方統一編號、各品項是否應稅）",
+   "notes": [
+    "標題：三項設定由句 3–6 支撐。",
+    "句 1：src/routes/contracts.js＋contracts.edit.taxAndInvoice display_property_purpose_key: [1]（社宅 routes 無此分頁）；src/use/useEditStore.js＋!editStore.options?.can_auto_generate_invoice 時移除；app/Http/Controllers/ContractController.php＋'can_auto_generate_invoice' => (bool)!empty($RoleInvoicesInformation)；app/RoleInvoices.php＋getRoleInvoicesByRoleId where('role_invoices.active', 1)。",
+    "句 2：src/use/useEditStore.js＋車位合約過濾：canShowTaxInvoice 僅特定合作團隊角色才把 'contracts.edit.taxAndInvoice' 加回。",
+    "句 3：src/pages/contracts/edit/taxAndInvoice/index.jsx＋t('帳單是否開立發票') 是／否。",
+    "句 4：同上＋t('出租方統一編號')、t('發票是否要打承租方的統一編號')、`${t('是')}，${t('統編')}：`、t('買受人名稱')。",
+    "句 5：同上＋租金 SwitchButton（canToggleRentTaxable）與 featuresState.isDepositInterestEnabled.value && 的 t('押金設算息') 應稅開關。",
+    "句 6：同上＋filteredFees／filteredCustomFees showList 以 amount（或內含、自付）篩選，列在 t('生活費用計稅品項') 下逐項切換。",
+    "句 7：app/Services/InvoiceService.php＋checkInvoiceAmount 只累加 ($detail['is_taxable'] == 1) && ($detail['total_price'] > 0)＋金額為 0 或負數的應稅品項（例如折扣類支出）不計入；另 BalanceInvoiceService::isItemCoveredByGroupRent 讓差額發票群組的租金不由該帳單開立＋「都會計入」漏例外，不成立。",
+    "句 8：src/pages/contracts/edit/taxAndInvoice/index.jsx＋canToggleRentTaxable: computed(()=>!props.editStore.options?.balance_invoice_enabled)；app/Http/Controllers/ContractController.php＋$balanceInvoiceEnabled = $teamEnabled && $communityEnabled。",
+    "句 9：src/pages/contracts/edit/taxAndInvoice/index.jsx＋hasNoTaxableItem 時顯示 t('目前這份合約沒有任何品項會開立發票，帳單不會有發票金額。若確定不需要發票，建議把上方「帳單是否開立發票」改為「否」。')。"
+   ]
+  },
+  {
+   "id": "jgb/D/entrusted-contract-landlord-info",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "7f756d49c33f8f5460e6e4fab941f6df75895546d2b2a19cb8e38e19fa725495",
+   "title_text": "委託合約的房東資訊怎麼填？（房東註冊或房東免註冊；免註冊時要選個人房東或法人房東身份）",
+   "notes": [
+    "標題：由句 1–3 支撐。",
+    "句 1：src/pages/entrustedContracts/edit/landlordInfo/LandlordInfo.jsx＋t('是否預設本合約之房東註冊 JGB 會員')、ChoiceToggler t('房東註冊')／t('房東免註冊') 皆 disabled: props.info.document_type == 2；app/EntrustedContract.php＋DOCUMENT_TYPE_ELECTRONIC_DIY = 2。",
+    "句 2：同上＋t('房東註冊：房東將會註冊 JGB 會員並自行填妥出租方資訊。')、t('房東免註冊：房東因無需註冊 JGB 會員而需要管理者協助填寫以下房東資訊。')。",
+    "句 3：同上＋免註冊分支 t('請填寫房東資訊')、t('系統會將以下房東資料騰寫到合約內，過程經加密處理，不讓資料外流。')、t('出租方身份別') 下 t('個人房東')／t('法人房東')；註冊分支 t('合約邀請聯繫方式')。句子未加引號轉述，意思一致。"
+   ]
+  },
+  {
+   "id": "jgb/D/entrusted-contract-lease-type",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "c9e4e804e50c353183ed827380e3bb3c7515407c7257b6c3854731e7783cf9fd",
+   "title_text": "委託合約「包租」跟「代管」有什麼不同？（代管必填服務費計算模式、幣別與金額或比例；計算制度、週期、約定日期兩者都要填）",
+   "notes": [
+    "標題：由句 2 支撐。",
+    "句 1：src/pages/entrustedContracts/edit/requirement/Basic.jsx＋t('委託約類型') 選項 t('包租合約')／t('代管合約')、t('委託約起迄日期')、document_type === 2 時 t('委託約範本') disabled 與 t('編輯電子簽章底稿')、document_type === 1 時 t('委託約檔案')；src/pages/entrustedContracts/edit/Index.jsx＋contractsTypeOptions label t('自製合約')。",
+    "句 2：docs/knowledge/jgb-product-facts.md＋{#charter-vs-management}；src/pages/entrustedContracts/edit/requirement/Fees.jsx＋t('包租租金收取頻率')／t('服務費收取頻率')、t('包租租金計算制度')／t('服務費計算制度')；src/pages/entrustedContracts/edit/Index.jsx＋lease_type !== 包租 時 push service_fee_type、service_fee、service_fee_currency。",
+    "句 3：src/pages/entrustedContracts/edit/requirement/Fees.jsx＋rentTitleKey 包租時回 '包租租金'，及 '包租租金計算制度'、'包租租金收取頻率'（週期／約定日期子欄）。",
+    "句 4：同上＋特定合作團隊條件下 pageTitleKey '零用金與服務費'、rentTitleKey '零用金'、!state.isBeyond… 隱藏 t('計算模式') 與計算制度區塊；src/pages/entrustedContracts/edit/Index.jsx＋該條件下 params 不含 service_fee_cycle_date。"
+   ]
+  },
+  {
+   "id": "jgb/D/move-in-checklist-and-responsibility",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "c1582313fe85d8c647a3d74be431a6436d0f7b2ab018cd44d65fa74fec12e242",
+   "title_text": "點交清單怎麼確認？（依合約約定的傢俱項目逐一上傳照片、標註出租方或承租方負責）",
+   "notes": [
+    "標題：由句 1、句 2 支撐。",
+    "句 1：resources/views/contract/move-in.blade.php（一般合約現行頁：routes/web.php contracts.move_in → ContractController@moveIn → view('contract.move-in')）＋___('以下是合約立定時的約定交接項目，點擊「編輯」可以上傳照片或是加上備註。')。",
+    "句 2：同上＋責任按鈕 ___('出租方')／___('承租方')（repair_responsibility）與 ___('出租方負責')／___('承租方負責') 標籤；landlordonboarding04lease_zh-Hant.html＋「簽約完成後於合約中註記的傢俱，都會帶入【點交清單】中」；src/pages/contracts/edit/facilities/General.vue 為來源分頁。",
+    "句 3：app/Http/Controllers/ContractController.php＋$maxLength = 100、'tooltip' => ___('[s1]最多可輸入[s2]字', …)；resources/views/contract/move-in.blade.php＋___('限制填寫20行，每行限制50字，超過部分系統會自動進行裁切')。",
+    "句 4：resources/views/contract/move-in.blade.php＋___('此空間尚未提供任何品項。')。"
+   ]
+  },
+  {
+   "id": "jgb/D/move-out-bill-generation",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "c0c003cc2f6787565a0e216b05a6f1d672678667a58f9ee5e91ba46dfc3d208b",
+   "title_text": "點退會產生什麼帳單？（房東在「點退找補費用」確認費用後送出點退；註冊租客按同意後帳單成立、合約轉為點退完成，不看有沒有繳款；免註冊租客送出即成立）",
+   "notes": [
+    "標題：由句 2、3、5 支撐。",
+    "句 1：src/pages/contracts/move-out/Index.jsx＋step 1 t('設備損壞確認')、t('請確認物件點退都沒有問題，若有損壞請輸入賠償金額與理由…')；step 2 BillEditor pageTitle={t('點退找補費用')}。",
+    "句 2：src/pages/bills/edit/_parts/ExpireDateBlock.jsx＋t('繳費期限')；src/pages/bills/edit/Index.jsx＋label: t('傢俱賠償')、route.name === 'contracts.moveOut' ? t('送出點退')；app/Http/Controllers/ContractController.php＋agree 時 Item::findOrCreateItem(…, '傢俱賠償') 建帳單明細。",
+    "句 3：app/Services/ContractService.php＋handleTenantMoveOut 註冊租客走 CONTRACT_MOVE_OUT_SEND_LOG → status CONTRACT_MOVE_OUT（列表貼紙 '點退中'）；app/Http/Controllers/ContractController.php＋moveOut case 'agree'（routes/web.php /api2/contract/move-out/{id}/{action}）建 Bill 並設 status = CONTRACT_MOVE_OUT_DONE，無付款檢查。",
+    "句 4：app/Http/Controllers/ContractController.php＋agree 分支 if ($contract->is_history==1) status = CONTRACT_HISTORY_DONE；webList CONTRACT_HISTORY_DONE 且 bit_status & CONTRACT_MOVE_OUT_DONE 時貼紙 ___('點退完成')。",
+    "句 5：app/Services/ContractService.php＋未註冊分支 CONTRACT_MOVE_OUT_CONFIRM_LOG 後 BillService::createMoveOutBill($contract)；app/Services/BillService.php＋註解「免註冊點退帳單改為停留草稿，不自動發送」、不呼叫 $bill->ready()；app/Bill.php＋setBasic 設 BILL_PREPARE（待發送）。",
+    "句 6：review-sheet-9.15-S2-DE-20260927.md＋| 132 | G9 | 採用：只寫程式證實的系統行為，其餘走個案客服＋句子僅轉客服。"
+   ]
+  },
+  {
+   "id": "jgb/D/move-out-checklist-and-damage",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "58fe21b0fbb0e9961ecba3a8938f9a8cd6fd897ed6beabd1cbb3d9729dd0a169",
+   "title_text": "點退時怎麼處理設備損壞？（系統點退可逐項填入賠償金額與理由、可儲存草稿；上傳點退文件則只顯示文件）",
+   "notes": [
+    "標題：由句 2–4 支撐。",
+    "句 1：src/pages/contracts/move-out/Index.jsx＋isSystemHandOver 為真時 t('設備損壞確認')、compensationList 逐格局列項，facilitiesCount <= 0 時 t('根據合約，此物件您沒有提供傢俱品項，無需清點。')。",
+    "句 2：src/components/Lightbox/ContractMoveOutMethod.vue＋t('上傳點退文件')、t('…或您可上傳已完成簽署的點退文件。')；src/pages/contracts/move-out/Index.jsx＋!isSystemHandOver 時只渲染 t('點退清單') 與 PdfContainer。",
+    "句 3：src/pages/contracts/move-out/Index.jsx＋t('請確認物件點退都沒有問題，若有損壞請輸入賠償金額與理由，無標註表示狀況正常。')、t('編輯')；landlordonboarding04lease_zh-Hant.html＋「需由房客負賠償之責任，可點選【編輯圖示】並且填入賠償金額＆理由」。",
+    "句 4：src/pages/contracts/move-out/Index.jsx＋t('儲存點退草稿')、t('草稿儲存失敗')、t('草稿儲存失敗，請稍後再試')；app/Http/Controllers/ContractController.php＋draft-save 回 ___('此合約狀態不允許編輯點退資訊')、___('資料格式錯誤')、___('家具賠償備註長度不可超過 300 字')；src/mixin/methods.js＋ajax 的 catch 會 window.globalErrorShow(errorResponse.message)。"
+   ]
+  },
+  {
+   "id": "jgb/D/renew-batch-entry-and-selection",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "6eaf1fbdf5b5370b05a0031eee07b98337161c5b1a5d9879569e0a4bd7c6e4dc",
+   "title_text": "怎麼一次幫多筆合約續約？（合約總表「建立合約」旁選批次續約，異動中的合約不能選）",
+   "notes": [
+    "標題：由句 1、句 3 支撐。",
+    "句 1：landlordonboarding04lease_zh-Hant.html＋「於【執行中合約】中點選右上方建立合約旁的【小箭頭】並選擇【批次續約】」；src/pages/contracts/list/_parts/PageTop.vue＋options 內 t('批次續約') → contracts.pick action batchRenew。",
+    "句 2：src/pages/estates/pick/_parts/SearchSortBlock.vue＋billTarget tenant 時 placeholder t('搜尋物件名稱、物件地址、租客姓名')、SearchItem t('物件經理人')、t('標籤')；src/pages/contracts/pick/Index.jsx＋isBatchRenew 回 { agent, label }，viewport.width > 991 才用 SearchSortBlock（電腦版）。",
+    "句 3：src/pages/contracts/pick/Index.jsx＋t('續約功能無法選擇正在異動中的合約 (包括提前解約申請中、點交中及點退中的合約)。')；landlordonboarding04lease_zh-Hant.html 同文。"
+   ]
+  },
+  {
+   "id": "jgb/D/renew-data-carryover-rules",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "ebb73dec36053d8b9016bc0b665935e33f8384d53ba1931306a809c2992f92eb",
+   "title_text": "續約時資料怎麼沿用？（新合約由舊合約複製，並更新出租方/承租方最新資料；週期設定有調整就用新的、沒調整就沿用）",
+   "notes": [
+    "標題：由句 1、句 2 支撐。",
+    "句 1：app/Services/ContractService.php＋renew() 內 $renewContract = $contract->replicate()、to_user_phone = $toUser->phone ?: …、to_user_email = $toUser->email ?: …、註解「續約時應該從最新的 role_companys 或 role 資料更新出租方資訊」與 company_phone／company_email 覆寫。",
+    "句 2：同上＋foreach (['cycle', 'cycle_date', 'cycle_date_type', 'cycle_type', 'cycle_start'] …) 有非空值才覆寫，註解「未帶則沿用原合約設定」。",
+    "句 3：src/pages/contracts/renew/Index.vue＋t('快速日期設定')、t('個別指定續約日')、t('繳費週期')、t('帳單週期制度')、t('簽約設定')、t('合約檔案')，無租金費用欄位；src/pages/contracts/renew/Preview.vue＋t('確認續約帳單')、帳單列可編 t('帳單標題')、t('金額')。"
+   ]
+  },
+  {
+   "id": "jgb/D/renew-signing-flow",
+   "title": "不成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "2368338f894ad64448d47c8b10408b20c17793cdc39afb72ac7e99cbe930ed5b",
+   "title_text": "續約邀請發出後流程是什麼？（租客簽回後可在「待租客簽回」查找，房東確認無誤後立即簽名完成續約）",
+   "notes": [
+    "標題：「租客簽回後可在「待租客簽回」查找」與程式不符：租客簽回後合約轉為 CONTRACT_INVITING_NEXT，src/pages/contracts/list/_parts/PageTop.vue＋statusPair 3: '待房東簽名'、app/Role.php＋'待管理者簽名' 頁籤；句 1 寫的是「邀請發送後」在待租客簽回查找，標題時序寫錯，超出句子內容。",
+    "句 1：landlordonboarding04lease_zh-Hant.html＋「完成後系統會將續約邀請發送給租客，可於【待租客簽回】欄位中查找您的合約」；app/Services/ContractService.php＋註冊租客走 CONTRACT_RENEW_INVITE_LOG → status CONTRACT_INVITING（註解「status 設定為待租客簽回」）。",
+    "句 2：src/pages/contracts/_parts/show/signerInfo/ButtonArea.jsx＋case 4 待房東簽名：isExistingContract（紙本／DIY 且 (!isRenewContract || isRenewContractReuploadPdf)）顯示 t('確認並成立合約')，否則 t('立即簽約')。",
+    "句 3：docs/knowledge/jgb-product-facts.md＋{#p914-contract-renewal}；app/Services/ContractService.php＋$renewContract = $contract->replicate()、註解「續約合約為全新合約，去掉自父合約繼承來的「歷史合約」位元」、is_tenant_registered 分別走 CONTRACT_RENEW_INVITE_LOG／CONTRACT_RENEW_CONFIRM_LOG。"
+   ]
+  }
+ ],
+ "findings": [
+  "同粗目矛盾：jgb/D/paper-contract-upload-limits 句 6 寫紙本合約上傳上限 20 MB，同粗目 jgb/D/contract-upload-existing-vs-electronic 句 6 寫 15 MB；src/pages/contracts/edit/rentBasic/General.vue 的 ajax-uploader :size_limit=\"15\" 證明後者正確、前者錯。",
+  "重複細目：jgb/D/paper-contract-upload-limits 句 1–5、7 與同粗目 jgb/D/contract-upload-existing-vs-electronic 句 1–5、7 逐字相同，兩條只差上傳上限數字（一對一錯），建議主持人裁定合併或刪除其一。",
+  "jgb/D/contract-search-keyword-scope 的 sources 列 src/components/Lightbox/ContractsAdvSearch.vue，但全 src 無任何引用（只有自身 Lightbox2 id=\"ContractsAdvSearch\"）；現行合約總表用 src/pages/contracts/list/_parts/ContractsAdvanceSearchBlock.jsx（電腦版）與 ContractsAdvanceSearchBlockM.jsx（手機版），條件標籤來自 src/use/search/modules/*.js。本次以現行元件判成立，sources 建議更正。",
+  "jgb/D/contract-additional-convention 標題問「有字數限制嗎」，但句子只講 1 頁 A4 的提示；src/utils/constants/contract.js 的 additionConventionLimit（termLines: 50、textPerLine: 50）由 additionalConvention/Index.vue 的 handleTextareaWord 實際限制 50 行、每行 50 字。句子本身沒有錯，但沒有回答標題的問題（屬遺漏，未判不成立）。",
+  "jgb/D/contract-list-row-gear-actions 不是窮舉：執行中狀態另有「提前解約」（ContractController.php webList terminate，租客與有權限房東皆可見、社宅除外），待發送狀態有「編輯合約」「刪除合約」，句子都沒寫到。句子沒有宣稱窮舉，所以沒判不成立；同粗目若有人問「全部選項」，回答會不完整。",
+  "帳本 docs/knowledge/jgb-product-facts.md {#p914-contract-invite-account-match} 寫「換裝置、隔太久才註冊…都不會自動綁定」，與程式衝突：app/Http/Controllers/AuthController.php 在註冊時呼叫 receiveContractInvitation('email')，手機驗證時呼叫 receiveContractInvitation('phone')；app/User.php 會以 Email 或電話比對，把邀請中、尚未綁定的合約認領給該會員，不需要 session。jgb/D/contract-invite-and-review-period 句 5 寫成「看個案」，所以本條不受影響，但帳本這句太絕對。",
+  "點退帳單狀態：註冊租客同意點退時（ContractController.php moveOut case 'agree'）也是用 Bill::setBasic 建帳單（BILL_PREPARE），之後 $bill->save()，沒有呼叫 ready()。jgb/D/move-out-bill-generation 句 5 只說免註冊的帳單停在草稿，讀者可能以為註冊租客的帳單會自動送出；程式看不出差異，建議主持人確認後補充。",
+  "jgb/D/contract-tax-invoice 句 7 與分頁上顯示的文案衝突：taxAndInvoice/index.jsx 顯示 t('…JGB 目前僅提供租金品項開立發票服務，其他品項設定持續增加中。')，但 InvoiceService 實際會計入所有應稅且金額大於 0 的品項。畫面文案疑似過時，建議列入文案待修。",
+  "內部 API 路徑 app/Http/Controllers/Internal/ContractWriteController.php 的 sendInvite 寫死 strtotime('+72 HOUR')，不讀團隊審閱天數設定；房東 UI 路徑才讀團隊設定。jgb/D/contract-invite-and-review-period 句 1 明確限定「房東送出」，所以不受影響，僅供參考。"
+ ],
+ "source_transcript": "aa1b2950e427f5e14.output"
+}

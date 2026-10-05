@@ -1,0 +1,222 @@
+{
+ "kind": "write",
+ "verdict": "CONFIRMED",
+ "base": "f13b0cb57303c6f8b887e341cbc38a337f6f5fcb",
+ "claim": "Plan 9.29 寫入核對 W1：13 條細目的標題與每一句已逐句對合法來源核對，逐條結果如 fines",
+ "fines": [
+  {
+   "id": "jgb/A/dashboard-big-landlord-view",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "832492509577ef5c108a2471f1061bb4290b391f2dd53868a5fdeefae803a203",
+   "title_text": "大房東的首頁畫面和一般房東不一樣嗎？（沒有捷徑與四個統計方塊）",
+   "notes": [
+    "標題：src/pages/users/dashboard/Landlord.vue 以 state.isBigLandlord 三元分支，大房東分支不渲染 Block_Vacancy／Block_ExpiringContract／Block_AccountsReceivable／Block_Repair 與 ShortCuts，由句 1、2 支撐。",
+    "句 1：src/pages/users/dashboard/Landlord.vue＋`state.isBigLandlord` ? <EstateDetails/>… : <Block_Vacancy/>…<ShortCuts/>；四個方塊與 showShortCut 捷徑只在非大房東分支（滿租率頁簽時兩者也都不顯示）。src/pages/users/dashboard/Index.vue 確認首頁即此元件。幫助中心 Landlordonboarding00_zh-Hant.html 仍寫大房東可看「即時出租率…７日內的修繕單」，與現行程式衝突，依規則 5 以程式為準（見 findings）。",
+    "句 2：同上 Landlord.vue＋`DateRangeSelector` options scale 7 days／30 days／90 days／6 months、`customizable={true}`，其後 `<BalanceChart dateRangeSelectorPosition=\"outer\" />`；src/pages/users/dashboard/parts/BalanceChart.vue 標題 t('收支情況')。另有 EstateDetails 卡片，但本句未宣稱唯一，成立。"
+   ]
+  },
+  {
+   "id": "jgb/A/forget-password-setpwd-invite",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "6c3e67a685fead6367608df4cbf7b36263d7c8ae092bf3bd831562439cfea81e",
+   "title_text": "「請設定密碼」畫面是什麼情境？（受邀請帳號的初次設定密碼流程）",
+   "notes": [
+    "標題：src/pages/users/auth/parts/forget/Password.vue `route.params?.type == 'setPwd'` 顯示 t('請設定密碼')；src/pages/result-screen/Index.jsx 大房東邀請成功畫面（未註冊者）按「設定密碼」導向 type setPwd，由句 1–3 支撐。",
+    "句 1：src/pages/users/auth/parts/forget/Password.vue＋onMounted `if (route.params.type === 'setPwd'){ state.screen = 'setPwd' }`，表單 `v-if=\"state.screen == 'resetPwd' || state.screen == 'setPwd'\"`，標題「請設定密碼」取代「忘記密碼嗎？」，跳過 validate／verify。",
+    "句 2：src/pages/result-screen/Index.jsx＋case 'bigLandlord' 按鈕 `router.push({ name: 'users.forget.password', params: { type: 'setPwd' } })` 並設 Cookie bigLandlord_id／entrusted_url；Password.vue 成功後依 result.redirect 導頁。",
+    "句 3：Password.vue 同一表單與 pwdFormat 規則；app/Http/Controllers/AuthController.php＋updatePassword 大房東分支 `$redirectUrl = $request->url`（無則 route('users.create',['any'=>'login'])）、`$fatherUser->reload(true)` 及訊息「密碼設定完成！正在為您登入系統...」；登入頁 if_login 中介層（app/Http/Middleware/IfLoginCheck.php）已登入即導 users.index。"
+   ]
+  },
+  {
+   "id": "jgb/A/login-role-select-before",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "92188d3eefe6f5b7f2d8706bb3c3083c970f9986b797f57b67e8ab174822c6b7",
+   "title_text": "登入前要先選擇身分？",
+   "notes": [
+    "標題：src/pages/users/auth/Login.vue `step: 'RoleSelect'` 預設，由句 1 支撐。",
+    "句 1：src/pages/users/auth/parts/RoleSelect.vue＋t('我是房東/管理者')、t('我是租客')、t('請選擇您的身份進行登入')；src/pages/users/auth/Login.vue 預設 step RoleSelect，網址帶 r_type 時是以參數預先指定身分（仍是選定身分後才進 LoginForm）；src/pages/users/auth/parts/LoginForm.vue `if (!props.parentState.form.role){ props.parentState.step = 'RoleSelect' }`，第三方登入 SSOBar 也在 LoginForm 內，未選身分無法登入。"
+   ]
+  },
+  {
+   "id": "jgb/A/notification-mark-read-navigate",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "dc074affd70fc25ba891940fc35c4b46e6b6dd407d5cd56d3b79826129e50cb1",
+   "title_text": "點擊通知列表項目會發生什麼？（前往原連結；訊息類通知不換頁）",
+   "notes": [
+    "標題：resources/views/notifications/index.blade.php 點擊 handler：type 32 開訊息視窗後 return，其餘 `window.location.href = data.url`，由句 1、3 支撐。",
+    "句 1：app/Http/Controllers/NotificationController.php＋index 內 `$url .= '&notification_id=' . $data->id` / `'?notification_id='`；resources/views/notifications/index.blade.php＋`window.location.href = data.url`（非 type 32）。",
+    "句 2：app/Http/Controllers/Controller.php＋`if ($notificationId = request('notification_id'))` 呼叫 Notification::markAsRead 後 `$request->except('notification_id')` 重導；app/Notification.php＋markAsRead `where('user_id', $userId)->where('role_id', $roleId)`。列表本身以 `where('role_id', $role->id)` 取資料，點擊後同身分載入，故實際門檻為收件人＝目前使用者，成立。",
+    "句 3：resources/views/notifications/index.blade.php＋`if(data.type == 32)` → `$store.commit('lightbox', 'showUserMessage')` 後 return；app/Notification.php `NOTIFICATION_MESSAGE = 32`。"
+   ]
+  },
+  {
+   "id": "jgb/A/notification-settings-save",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "7b6d22a7f759c74a66ba108cc91503f7bc0205abb4ef7706b1234a45e2e0471f",
+   "title_text": "通知收件設定改完怎麼儲存？",
+   "notes": [
+    "標題：src/pages/users/notification/Index.vue 有 t('儲存') 送出按鈕與 handleSubmitForm，由句 1–3 支撐。",
+    "句 1：src/pages/users/notification/Index.vue＋`hasCustomEmail` 以 isEmpty(custom_emails) 判斷（src/mixin/methods.js isEmpty：[''] 不算空，故空白欄位也算），按鈕 class `${ state.hasCustomEmail ? '' : 'disabled' }`（src/styles/tailwind.sass `.disabled` pointer-events: none）且 handleSubmitForm `if (!state.hasCustomEmail){ return }`。",
+    "句 2：同上 Index.vue＋`globalNoticeShow(t('儲存成功'))`、`t(result?.message || '儲存失敗，請稍後再試。')`、catch 內 `t('網路錯誤，請稍後再試。')`。",
+    "句 3：同上 Index.vue＋`onMounted(getData)` GET mailGroups 取 `result.data.group` 與 `result.data.default`；送出 `ajax(\\`${ state.basicApiUrl }/update\\`, formData.emailData, 'POST')` 為整包；app/Http/Controllers/UserController.php saveRoleEmailGroups 整包存 email_groups。"
+   ]
+  },
+  {
+   "id": "jgb/A/register-role-select",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "24cb6aca73ff5f84cc3b525be1094acd94816910b1c0de0b69656397852d359f",
+   "title_text": "註冊完之後要選身分嗎？（一般會在房東/管理者、租客中二選一，可同時擁有兩種身分）",
+   "notes": [
+    "標題：src/pages/users/auth/parts/RoleSelect.vue 兩張卡片＋onboarding1_zh-Hant.html「同時擁有房東及租客身份」，由句 1、2 支撐。",
+    "句 1：src/pages/users/auth/parts/RoleSelect.vue＋t('我是房東/管理者')、t('我是租客')（users.create 與 users.login 皆用）；app/Http/Controllers/AuthController.php＋case 'callback' 已註冊 SSO 帳號 `$user->father()->reload(true)` 後 `session('redirect_after_login')` 有值就 redirect 該頁，否則 `redirect($dashboardUrl)`（route('users.index')），不經身分選擇。",
+    "句 2：onboarding1_zh-Hant.html＋「只需註冊一次，就可以同時擁有房東及租客身份」；config/role.php 租客與個人房東 `is_registration_default => true`；app/Http/Controllers/Controller.php＋`session('selected_role_type')` tenant／landlord 只決定取哪個 role 進入。"
+   ]
+  },
+  {
+   "id": "jgb/B/biglandlord-report-community-rate",
+   "title": "成立",
+   "sentences": [
+    "成立"
+   ],
+   "content_sha256": "877e0049789a13ec5ccbe18ee3b57d90c1c3b5d5a39b4e0fd36984545b6f53ae",
+   "title_text": "大房東報表可以依社區細看嗎？（報表清單有「社區」欄）",
+   "notes": [
+    "標題：src/pages/bigLandlords/report/_parts/ListTable.vue 欄位 `title: t('社區')`，點擊開社區清單，由句 1 支撐。",
+    "句 1：src/pages/bigLandlords/report/_parts/ListTable.vue＋`title: t('社區')`、`case ColumnKey.community: emit('communityListOpen', info.communities)`；src/utils/surelyVue/bigLandlord.ts＋BigLandlordReportDataSourceItem `content: communities.length.toString()`；app/Services/BigLandlordService.php＋composeBigLandlordReportData 的 communities 依大房東授權物件所屬社區分組；src/pages/bigLandlords/report/Index.vue handleCommunityListOpen 開燈箱。"
+   ]
+  },
+  {
+   "id": "jgb/B/member-assign-owned",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "fac58060b60c4c68ab7c5e60e7095e295a4055f54898d907bdd6705c7b70c9d2",
+   "title_text": "怎麼指派物件或合約給成員？（點成員旁的鉛筆圖示選「編輯綁定物件」或「編輯綁定合約」）",
+   "notes": [
+    "標題：resources/views/users/team/index.blade.php 鉛筆 icon_edit.svg tooltip 內 ___('編輯綁定物件')、___('編輯綁定合約')，由句 1 支撐。",
+    "句 1：resources/views/users/team/index.blade.php＋`@if ($enableEdit)` 包住 member_list 列的 icon_edit tooltip，`v-show=\"!member.disabled\"`；app/Http/Controllers/UserController.php＋fetchMembers `'disabled'=> $LVuserId == $ownerKey` 且 owner／self 自 member_list unset，故一般成員列皆有；擁有者列與自己列的 markup 無此圖示；連結 `/users/team/member/owned/estates/${member.uid}`／`contracts`。",
+    "句 2：src/pages/users/team/memberOwned/Index.jsx＋t('[s1] 擁有的物件')／t('[s1] 擁有的合約')、t('授權更多物件')／t('授權更多合約')、t('移除所有授權')（確認燈箱 t('即將移除所有授權') 後以空 ownedList POST modifyUserOwned）。"
+   ]
+  },
+  {
+   "id": "jgb/B/member-invite",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "2649cc6a9e613ce7f8228a484413fe04c795df1eea1f97f9be36a5200b407eed",
+   "title_text": "怎麼邀請新成員加入團隊？（用 Email 或手機號碼搜尋，對方要先是 JGB 會員）",
+   "notes": [
+    "標題：resources/views/users/team/index.blade.php 邀請燈箱 radio Email／手機號碼與 ___('受邀請的對象如果不是 JGB 會員，將無法新增為團隊成員。')，由句 1、2 支撐。",
+    "句 1：resources/views/users/team/index.blade.php＋`lightboxOpen('inviteMember')` 按鈕 ___('邀請')，燈箱標題 ___('新增成員')，radio invitee_account_type email／phone。（已達名額上限時改開 subscribedPlanTeamIsFull，屬 member-seat-limit 的特殊情況，不影響一般情況敘述）",
+    "句 2：同上 index.blade.php＋___('受邀請的對象如果不是 JGB 會員，將無法新增為團隊成員。')；app/Http/Controllers/UserController.php＋accountValidation 查無 User 時 `'message'=> ___('您輸入的帳號不存在')`，src/store/modules/team/invite.js 寫入 accountValidationFailedMsg 由 errors-tip 顯示。",
+    "句 3：src/store/modules/team/invite.js＋accountValidate 成功時 push 進 readyToInvite（同 user_id 去重）；index.blade.php＋___('即將新增成員') 清單與 ___('確認') 送出 `#readyToInvite` 表單。"
+   ]
+  },
+  {
+   "id": "jgb/B/member-list-overview",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "396343a55a583478b9179412b28cda2ad6db5a4d40d75c813bc08031eacd8ee5",
+   "title_text": "成員列表可以看到什麼資訊？（加入時間、Email、手機號碼、目前的角色）",
+   "notes": [
+    "標題：resources/views/users/team/index.blade.php 表頭 ___('加入時間')、___('Email')、___('手機號碼')、___('角色')，由句 1、2 支撐。",
+    "句 1：resources/views/users/team/index.blade.php＋`t('[s1] 個成員', [$store.state.team.member_list.length+1])`；app/Http/Controllers/UserController.php＋fetchMembers `unset($tempUserData[$ownerKey]); unset($tempUserData[$selfKey]);`，擁有者登入時 owner 列因 `owner.uid !== self.uid` 不顯示，總數＝member_list＋1。",
+    "句 2：app/Http/Controllers/UserController.php＋fetchMembers 迴圈最後附加 `(object)['user_id'=>$ownerKey]`、`(object)['user_id'=>$selfKey]`（無 created_at）覆寫同 key，`'join_date' => isset($LVcollectionUsersIds->created_at)?…:''`，故擁有者與自己列加入時間為空；index.blade.php 各列顯示 mail、account（無手機時 N/A）與角色選單。"
+   ]
+  },
+  {
+   "id": "jgb/B/member-list-role-inline-change",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "1903645ab0bd76ab26b4c9c1dbc51e4b79b1cc9382ed7e275ac7039b599f4b8f",
+   "title_text": "成員列表可以直接改成員的角色嗎？（一般成員那一列可以用角色下拉選單直接切換；擁有者與自己那一列、或沒有編輯權限時選單會鎖住）",
+   "notes": [
+    "標題：resources/views/users/team/index.blade.php member 列 vue-select @select 直接送出，owner／self 列 select-picker class=\"disabled\"，由句 1 支撐。",
+    "句 1：resources/views/users/team/index.blade.php＋@select 內 `window.$('#characterChangeForm').submit()`（action change-character）；owner 與 self 列 `<select-picker class=\"disabled\"`；member 列外層 `{{$enableEdit?'':'disabled'}}`，src/styles/tailwind.sass `.disabled` pointer-events: none。",
+    "句 2：同上 index.blade.php＋options 最後 `{ label: \\`+ ${t('新增角色')}\\`, value: 'addCharacter' }`，選取時 editing.action='add' 並 `$store.commit('lightbox', 'character--Edit')`；resources/views/layouts/lightbox/character-capability-edit.blade.php＋action==='add' 標題 ___('新增角色')。"
+   ]
+  },
+  {
+   "id": "jgb/B/team-signer-address-groups",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "eb279d59be455d19f9a9f0b8888212b4bc5f67880bc60fbc9c266e771b58d60f",
+   "title_text": "簽約資訊卡上有哪些地址欄位群？（個人的戶籍地址／通訊地址、公司的登記地址／通訊地址；社宅團隊另有經紀人與租賃管理人員各自的通訊地址）",
+   "notes": [
+    "標題：src/pages/users/team/_parts/SignerDetails.vue 地址區塊 t('戶籍地址')、t('通訊地址')、t('公司登記地址')、t('公司通訊地址')、t('經紀人通訊地址')、t('租賃管理人員通訊地址')，由句 1–3 支撐。",
+    "句 1：src/pages/users/team/_parts/SignerDetails.vue＋`v-if=\"state.isIndividual\"` 內 t('戶籍地址')、t('通訊地址')，t('同戶籍地址') 點擊 `mailing_address = {...resident_address}`。",
+    "句 2：同上 SignerDetails.vue＋`v-if=\"state.isCorporate\"` 內 t('公司登記地址')、t('公司通訊地址')，t('同公司登記地址') 點擊 `company_address = {...company_registration_address}`。",
+    "句 3：同上 SignerDetails.vue＋`<div v-if=\"state.isSocialHousingTeam\"` 包住 t('經紀人通訊地址') 與 t('租賃管理人員通訊地址')；isSocialHousingTeam＝config_rule_key === 4。"
+   ]
+  },
+  {
+   "id": "jgb/B/team-signer-company-info",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "b66f04de0305198e8e301bb3b39d6d44031e773ff1369ba5b35250f917e5b413",
+   "title_text": "簽約資訊卡的「公司資訊」要填什麼？（公司登記名稱上限 20 字、公司統編皆為必填；公司負責人只有社宅團隊必填；社宅團隊還要填必填的社宅業者編號與公司登記證號）",
+   "notes": [
+    "標題：src/pages/users/team/_parts/SignerDetails.vue firstRowOfCorpInfo／fifthRowOfCorpInfo 的 isRequired 與 maxLength，由句 1、3、4、5 支撐。",
+    "句 1：src/pages/users/team/_parts/SignerDetails.vue＋company_name `isRequired: true`、`maxLength: 20`；company_id_number `isRequired: true`（不依 isSocialHousingTeam）；區塊 `v-if=\"state.isCorporate\"`（3、4 皆是）。",
+    "句 2：同上 SignerDetails.vue＋typeOptions `'公司統編(檢核)'`、`'其他統編(不檢核)'`（src/pages/users/team/_parts/SignerFormInputField.vue 以 label 渲染於輸入框下方），isShowErrorTip 於 `company_id_type !== 'other'` 且 `!verifyTWBusinessNo(...)`，errorMessageLabelKey `'公司統編格式錯誤'`。",
+    "句 3：同上 SignerDetails.vue＋company_principal_name `isRequired: state.isSocialHousingTeam`。",
+    "句 4：同上 SignerDetails.vue＋social_housing_business_id `isFieldVisible: state.isSocialHousingTeam`、`isRequired: true`。",
+    "句 5：同上 SignerDetails.vue＋company_registration_code `isRequired: state.isSocialHousingTeam`；company_registration_ymd、company_registration_issue_city `isRequired: false`。",
+    "句 6：app/Http/Controllers/UserController.php＋update-other 驗證 `$value == 'tw_zh_mof' && (empty($role->company_registration_ymd) || empty($role->company_registration_issue_city_id) || empty($role->company_registration_code))` → ___('選擇「財政部包租業租金收據範本」時，請於團隊資訊內填寫 公司登記證日期、公司登記證縣市、公司登記證號資料。')；團隊資訊儲存時亦有三條「選擇「財政部包租業租金收據範本」時 … 為必填。」驗證。"
+   ]
+  }
+ ],
+ "findings": [
+  "幫助中心 Landlordonboarding00_zh-Hant.html「總覽資訊」仍寫大房東進團隊後可看到「即時出租率、應到帳款項、房東流水帳和７日內的修繕單」等方塊；現行 src/pages/users/dashboard/Landlord.vue 在 state.isBigLandlord 時只渲染 EstateDetails＋DateRangeSelector＋BalanceChart，不顯示四個統計方塊與捷徑。文件過時，與 jgb/A/dashboard-big-landlord-view（依程式）衝突。",
+  "jgb/A/forget-password-setpwd-invite 句 3 依程式（app/Http/Controllers/AuthController.php updatePassword `$fatherUser->reload(true)` 自動登入並經 if_login 導到會員中心）成立，但同一畫面 src/pages/users/auth/parts/forget/Password.vue 副標仍寫「請重設密碼，設定完成後請使用新密碼登入」，與實際行為相反，客服回覆時可能與使用者看到的提示矛盾。"
+ ],
+ "source_transcript": "a6e6d2ff3adc1e1f6.output"
+}

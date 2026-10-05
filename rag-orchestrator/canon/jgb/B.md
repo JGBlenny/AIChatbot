@@ -65,14 +65,14 @@ language: zh-TW
 簽約資訊卡的「個人資訊」區塊只有租客與個人房東身分會顯示，法人房東與社宅團隊顯示的是「公司資訊」等區塊，不會有這個區塊；可以填寫刊登物件廣告與簽立合約時所需提供的資料：姓氏、名稱、身分證字號、Email、手機號碼都是必填。
 戶籍地址與通訊地址也要填寫，通訊地址可以點「同戶籍地址」直接帶入。
 身分證正反面照片是選填，另外還有一個「其他附件(選填)」區塊，可以選填上傳工作名片/學生證、良民證、小章這三項附件。
-### 簽約資訊卡的「公司資訊」要填什麼？（公司登記名稱上限 20 字、公司統編皆為必填；公司負責人只有社宅團隊必填；社宅團隊還要填必填的社宅業者編號與公司登記證號，公司登記證日期與縣市則不分團隊都是選填） {#jgb/B/team-signer-company-info}
+### 簽約資訊卡的「公司資訊」要填什麼？（公司登記名稱上限 20 字、公司統編皆為必填；公司負責人只有社宅團隊必填；社宅團隊還要填必填的社宅業者編號與公司登記證號） {#jgb/B/team-signer-company-info}
 - phrasings:
   - {text: "公司登記名稱字數上限", source: "draft:outline-20260920", status: proposed}
   - {text: "社宅業者編號在哪填", source: "draft:outline-20260920", status: proposed}
   - {text: "公司登記證號要填嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "公司統編格式錯誤怎麼辦", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/team/_parts/SignerDetails.vue]
-- reviewed: {by: owner, at: 2026-09-28}
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -80,7 +80,8 @@ language: zh-TW
 「公司統編」欄位下方可以選擇統編類型是「公司統編(檢核)」還是「其他統編(不檢核)」，選「公司統編(檢核)」時會檢查統一編號格式，格式不對會顯示「公司統編格式錯誤」。
 「公司負責人」只有社宅團隊是必填欄位，一般團隊則是選填。
 「社宅業者編號」只有社宅團隊看得到，且是必填欄位；一般團隊沒有這一欄。
-「公司登記證號」對社宅團隊是必填，一般團隊則是選填；「公司登記證日期」「公司登記證縣市」不論一般團隊或社宅團隊都是選填。
+「公司登記證號」對社宅團隊是必填，一般團隊則是選填；「公司登記證日期」「公司登記證縣市」則是選填。
+不過團隊要選用「財政部包租業租金收據範本」時，系統要求這三項都要先填寫完成。
 ### 簽約資訊卡的「經紀人資訊」要填什麼？（經紀人／經紀業名稱與證號，名稱上限 15 字；社宅團隊多了經紀人聯絡電話與 Email，且都是必填） {#jgb/B/team-signer-agent-info}
 - phrasings:
   - {text: "經紀人名稱字數上限", source: "draft:outline-20260920", status: proposed}
@@ -142,13 +143,13 @@ language: zh-TW
 - business_types: [system_provider]
 - instance_applicability: general
 如果目前登入的帳號沒有查看團隊資訊的權限，系統會提示「您目前登入的帳號無法查看團隊資訊功能」。
-### 簽約資訊卡上有哪些地址欄位群？（個人的戶籍地址／通訊地址、公司的登記地址／通訊地址，都有「同上」可以直接帶入；社宅團隊另有經紀人與租賃管理人員各自的通訊地址） {#jgb/B/team-signer-address-groups}
+### 簽約資訊卡上有哪些地址欄位群？（個人的戶籍地址／通訊地址、公司的登記地址／通訊地址；社宅團隊另有經紀人與租賃管理人員各自的通訊地址） {#jgb/B/team-signer-address-groups}
 - phrasings:
   - {text: "簽約資訊有哪些地址欄位", source: "draft:outline-20260920", status: proposed}
   - {text: "通訊地址可以跟戶籍地址一樣嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "公司通訊地址在哪填", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/team/_parts/SignerDetails.vue]
-- reviewed: {by: owner, at: 2026-09-28}
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
@@ -168,19 +169,19 @@ language: zh-TW
 團隊資訊管理裡新增的每一組公司資訊，都會在簽約資訊卡片上方變成一個可以點擊切換的分頁項目。
 當公司資訊超過 5 組時，畫面會多出一個「所有團隊」的下拉選單；這個下拉選單列出的是全部組數（不是只有超過 5 組後多出來的部分），點選其中一項一樣可以切換過去。
 ## 成員列表（邀請、角色、成員名下資料） {#B-member-list}
-### 成員列表可以看到什麼資訊？（成員總人數、加入時間、Email、手機號碼、目前的角色） {#jgb/B/member-list-overview}
+### 成員列表可以看到什麼資訊？（加入時間、Email、手機號碼、目前的角色） {#jgb/B/member-list-overview}
 - phrasings:
   - {text: "成員列表看得到什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "成員清單有哪些欄位", source: "draft:outline-20260920", status: proposed}
   - {text: "怎麼看成員的角色", source: "draft:outline-20260920", status: proposed}
   - {text: "成員名下有沒有物件怎麼看", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/users/team/index.blade.php, code:app/Http/Controllers/UserController.php]
-- reviewed: {by: owner, at: 2026-09-28}
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-成員列表頁面上方會顯示目前團隊的成員總人數（含團隊擁有者本人）。
-清單上每位成員會顯示加入時間、Email、手機號碼，以及目前套用的角色名稱。
+成員列表標題旁會顯示成員人數，這個人數是下方一般成員列的筆數再加 1；以團隊擁有者身分登入時，剛好等於含團隊擁有者本人的總人數。
+清單上每位成員都會顯示 Email、手機號碼，以及目前套用的角色名稱；加入時間只有一般成員那幾列有，團隊擁有者那一列和自己那一列的加入時間是空白。
 ### 怎麼邀請新成員加入團隊？（用 Email 或手機號碼搜尋，對方要先是 JGB 會員） {#jgb/B/member-invite}
 - phrasings:
   - {text: "怎麼邀請成員", source: "draft:outline-20260920", status: proposed}
@@ -188,12 +189,12 @@ language: zh-TW
   - {text: "邀請成員要對方先註冊嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "成員邀請用 email 還是手機", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/users/team/index.blade.php]
-- reviewed: {by: owner, at: 2026-09-28}
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
 點擊成員列表的「邀請」按鈕會開啟「新增成員」視窗，可以選擇用 Email 或手機號碼搜尋要邀請的對象。
-受邀請的對象如果還不是 JGB 會員，系統會提示這個帳號尚未成為 JGB 會員，不能把他新增為團隊成員。
+受邀請的對象如果不是 JGB 會員，將無法新增為團隊成員；輸入的 Email 或手機號碼查不到帳號時，會顯示「您輸入的帳號不存在」。
 可以一次搜尋加入多位對象到「即將新增成員」清單，確認後一次送出邀請。
 ### 成員的「角色」權限決定什麼？（決定看得到與能編輯的物件、合約、帳務、修繕等範圍） {#jgb/B/member-role-concept}
 - phrasings:
@@ -256,11 +257,11 @@ language: zh-TW
   - {text: "編輯綁定合約在哪", source: "draft:outline-20260920", status: proposed}
   - {text: "成員名下物件怎麼調整", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/users/team/index.blade.php, code:src/pages/users/team/memberOwned/Index.jsx]
-- reviewed: {by: owner, at: 2026-09-28}
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-成員列表每一列右側有鉛筆圖示，點開可以選「編輯綁定物件」或「編輯綁定合約」，會跳到這位成員擁有的物件／合約頁面。
+有編輯權限時，成員列表中一般成員那幾列右側有鉛筆圖示，點開可以選「編輯綁定物件」或「編輯綁定合約」，會跳到這位成員擁有的物件／合約頁面；團隊擁有者那一列和自己那一列沒有鉛筆圖示。
 在「〔成員姓名〕擁有的物件」或「擁有的合約」頁面，可以點「授權更多物件／合約」加入新的授權，或點「移除所有授權」一次撤銷這位成員的所有物件／合約授權。
 ### 怎麼查看每個角色能做什麼？（點「角色權限說明」的「這裡」開啟角色權限列表，每一列是一項權限、每一欄是一個角色，用勾號／叉號表示有沒有這項權限） {#jgb/B/member-role-permission-list}
 - phrasings:
@@ -280,12 +281,12 @@ language: zh-TW
   - {text: "角色下拉選單怎麼用", source: "draft:outline-20260920", status: proposed}
   - {text: "新增角色的入口在哪裡", source: "draft:outline-20260920", status: proposed}
 - sources: [code:resources/views/users/team/index.blade.php]
-- reviewed: {by: owner, at: 2026-09-29}
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
 成員列表中一般成員那一列有角色下拉選單，選擇要指派的角色後就會直接送出變更，不用另外打開編輯視窗；團隊擁有者那一列和自己那一列的選單是鎖住的，沒有編輯權限時整個選單也會鎖住。
-可以切換的角色下拉選單最下面有一個「+ 新增角色」選項，點選後會直接開啟「編輯角色」視窗，不用先離開成員列表。
+可以切換的角色下拉選單最下面有一個「+ 新增角色」選項，點選後會直接開啟「新增角色」視窗，不用先離開成員列表。
 ### 編輯角色時的「開啟條件」是什麼？（要先勾選列出的其他權限，這個權限選項的勾選框才能點；沒先勾好之前，勾選框會維持鎖住） {#jgb/B/member-role-edit-open-condition}
 - phrasings:
   - {text: "為什麼有些權限打不開", source: "draft:outline-20260920", status: proposed}
@@ -494,18 +495,17 @@ language: zh-TW
 側邊選單「大房東管理」底下的「大房東報表」項目，只有法人房東與社宅團隊身分才會出現。
 團隊成員所屬的角色要有「查看大房東報表」的權限，這個選單項目才會出現。
 角色權限設定裡，「查看大房東報表」的開啟條件是先有「查看大房東列表」。
-### 大房東報表可以依社區細看嗎？（報表清單有「社區」欄，幣別不同時細節頁會顯示匯率） {#jgb/B/biglandlord-report-community-rate}
+### 大房東報表可以依社區細看嗎？（報表清單有「社區」欄） {#jgb/B/biglandlord-report-community-rate}
 - phrasings:
   - {text: "大房東報表有社區欄嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "大房東報表匯率在哪看", source: "draft:outline-20260920", status: proposed}
   - {text: "報表可以下載社區層級嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/bigLandlords/report/_parts/ListTable.vue, code:src/pages/bigLandlords/report/_parts/BigLandlordItemDetail.jsx]
-- reviewed: {by: owner, at: 2026-10-03}
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-大房東報表清單有一欄「社區」，顯示這位大房東名下物件所屬的社區。
-點開大房東報表細節，若結算幣別和站台幣別不同、而且有匯率資料，會顯示「匯率」（手機版不顯示這段文字）；「所有物件」「社區」「物件」三個層級各自都有獨立的「下載報表」按鈕，可以分別下載對應範圍的報表。
+大房東報表清單有一欄「社區」，顯示這位大房東名下的社區數量，點擊數字會開啟社區清單。
 ## 大房東對帳表 {#B-biglandlord-sheet}
 ### 大房東對帳表在算什麼？（只有特定合作團隊看得到完整的押金、屋主資金、屋主提領、屋主直收等類別金額，其他團隊只看得到屋主租金收支；單月報表才有「上一月」「下一月」「下載」，整年度報表是「匯出報表」） {#jgb/B/biglandlord-sheet-overview}
 - phrasings:
