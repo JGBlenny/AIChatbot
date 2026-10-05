@@ -1,0 +1,12 @@
+{
+ "kind": "change",
+ "verdict": "CONFIRMED",
+ "base": "45a90b9895694fdd0d002c7cc062dbcdf0e784c0",
+ "claim": "Plan 9.30 收尾結果驗證：對凍結驗收清單 A1～A12 逐項驗收",
+ "findings": [
+  "A1～A12 全數獨立重算或重跑通過：12 條同 id 整條重寫、整條刪 0、12 條以外 531 條在 jgb.json 每個欄位都不變、pm 537／537、prospect 121／121、make audit OVERALL PASS、unit 紅燈 9 條與基準名稱雙向差集為空、生成器重跑結果與 commit 位元組一致；A3 自行抽查 6 條各 1 句回源全部成立",
+  "P3（非阻擋）：PII 掃描測試 test_real_dirs_have_no_new_identifier_hits[runs] 本來就紅，這次多一筆新命中 drafts-I.json email（demo-form-fields 的 evidence 逐字引了介面範例 jgb@mail.com），被名稱層級的差集遮住；不是真人個資，等該測試恢復綠燈時需附證據加入 KNOWN_FALSE_POSITIVES",
+  "P4（非阻擋）：runs 檔 open-questions-20261005-w-930.md 帶有既有待裁裡的詞表客戶名（父 commit 18 份同檔都已有，不是本計畫新增，也不在 A8 範圍）"
+ ],
+ "source_transcript": "a0c59ddafb8f9ef5c.output"
+}

@@ -210,3 +210,9 @@ consent_zero: 「核可，同意本計畫 +0 (Recommended)」
   - 分大小寫：計畫、驗收清單、終審單、修正紀錄、先審與寫入證據 0；正本 `jgb.json`、`jgb/*.md`、`CATALOG.md` 0；HANDOFF 2——與開工前備份逐字相同（既有內容，本計畫未新增）。
   - 不分大小寫：上述 `.kiro` 新檔 0；正本 0；**drafts 改動細目 12 筆**，全部位於 `evidence` 的逐字引文與 `not_supported_greps` 指令／結果（`advance-late-fee` 3 筆、`bill-actions-progress` 3 筆、`estate-rent-open-permission-and-validation` 6 筆），內容是 jgb2 原始碼裡特定合作團隊的權限方法名與欄位鍵（00c 規定 evidence 須逐字引程式、識別字只准出現在 evidence），標題／句子／講法 0。**說明**：base `ce658bcb` 的已 commit drafts 已含同兩個字根（不分大小寫）共 40 處（`git grep -ic`：一個字根 A 1／B 5／D 11，另一個 B 13／D 5／E 2／I 3），本計畫未新增可對外理解的客戶資訊；對話時會被引用的正本 0。
 - **用量**：盤查代理 2 位約 0.85M、起草 0.67M、先審 0.35M、寫入核對 0.33M（含重判）⇒ 累計約 2.2M（停止線 2.6M；收尾驗證約 0.2M）。
+- **步驟 6.9 commit**：`make audit` OVERALL PASS；他線 41 檔＋`.agents` 16 檔指紋不變；commit `45a90b98`（28 檔，範圍外 0；commit hook 不變量 43 通過；`Verified-by` 指向寫入證據）。
+- **步驟 7 收尾驗證**（fresh outcome verifier，BRIEF-CONTRACT v1，約 0.21M）：**CONFIRMED**，A1～A12 逐項獨立重算或重跑通過（含以 `rewrite_fine` 把 12 份 ops 重套到父 commit drafts 與 HEAD 位元組相同、生成器重跑與 commit 一致、A9 工具正負對照全數重跑、unit 紅燈名稱雙向差集 ∅、自行抽查 6 條各 1 句回源成立）。證據 `verification/20261005-p930-closeout-change.json`（base `45a90b98`）。非阻擋建議兩則，主持人處置：
+  - P3：`test_pii_scan_req.py::test_real_dirs_have_no_new_identifier_hits[runs]`（基準內既有紅燈）命中由 17 筆變 18 筆，多出 `drafts-I.json` 的 email——`jgb/I/demo-form-fields` evidence 逐字引了介面範例 placeholder `例：jgb@mail.com`（主持人查證：父 commit drafts-I 0 筆、HEAD 1 筆）。不是真人個資、00c 規定 evidence 逐字引程式；紅燈名稱層級的差集看不到命中筆數變化。**DEFER**：等該測試恢復綠燈時附逐行證據加入 `KNOWN_FALSE_POSITIVES`（或改用不含 email 的引文），屬「6 條 sources 必填紅燈」同類待裁。
+  - P4：`runs/.../open-questions-20261005-w-930.md` 含詞表客戶名，來自 `jgb/G/remote-unlock-page` 的既有待裁（父 commit 18 份同檔皆有），非本計畫新增、不在 A8 範圍。**DEFER**（另案）。
+- **用量合計**：約 2.4M（停止線 2.6M 內）。
+- **計畫完成**：12／12 已處置（重寫寫入 12）；終點指標 pm 537／537、prospect 121／121。
