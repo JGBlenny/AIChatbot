@@ -1,0 +1,291 @@
+{
+ "kind": "write",
+ "verdict": "CONFIRMED",
+ "base": "ce658bcbcae81c7e7378b93ea58edeaca3ad240e",
+ "claim": "Plan 9.30 寫入核對：12 條細目的標題與每一句已逐句對合法來源核對，逐條結果如 fines",
+ "fines": [
+  {
+   "id": "jgb/E/bill-actions-progress",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "bdf02c98604fb6df7b2f6884b5c4d9a5f2b23ff98680ad55724d619e09a46fcc",
+   "title_text": "「待對帳」狀態的收款帳單可以做哪些動作？（單張可退至應到帳、移至已到帳、開立發票，沒有取消帳單；批次沒有退至應到帳）",
+   "notes": [
+    "標題：各斷言分別由句 1（單張三項、無取消帳單）與句 4（批次無退至應到帳）支撐。",
+    "句 1：src/use/config/useBillTypes.js＋`case 'income-progress':` 單筆 genSingleActions 只有 revertToReady（'退至應到帳'）、toReceived（'移至已到帳'）、invoiced（'開立發票'），無 cancel；房東方經 assembleOptions。app/Bill.php＋`$status = 'progress';`（BILL_PAYED 且為收款方）確認待對帳＝income-progress。",
+    "句 2：useBillTypes.js 同上＋`permission: 'add_bill'`（revertToReady/toReceived）與 `const canEditOwnedBill = hasPermission('owner_bill') || hasPermission('add_bill')`；app/Http/Controllers/UserController.php＋`'label'=> '新增&編輯&刪除所屬帳單'`（g_add_bill→add_bill）、`'label'=> '新增&編輯&刪除所有帳單'`（g_edit_bill→owner_bill）；特定團隊以 `filterToReceivedOption(result)` 移除「移至已到帳」。",
+    "句 3：useBillTypes.js 同上＋`const canIssue = billData?.can_auto_generate_invoice && billData?.is_auto_generate_invoice && Number(billData?.invoice_status ?? 0) !== INVOICE_STATUS_COMPLETE`；app/Bill.php＋`'can_auto_generate_invoice' => (bool)($this->contract->is_auto_generate_invoice` 確認為合約層設定。",
+    "句 4：useBillTypes.js 同上＋bulkActions `case 'income-progress':` 只有 toReceived、invoiced，另在 ready/income 分頁加 `label: t('匯出')`（export_bill）；帳單總表 genBulkActions 交集後附加 exportAction `t('匯出帳單')`（export_bill）；兩處皆無 revertToReady（其 bulk genAttrs 回傳 {}）。",
+    "句 5：useBillTypes.js 同上＋`filterByPermission(result, ...)`（toReceived 需 add_bill；UserController.php 中 g_edit_bill requires g_add_bill，故所有/所屬權限者皆具 add_bill）、`filterToReceivedOption`；批次開立發票＝`isManualInvoiceEnabled`（src/use/config/useFeatures.js＋`isEnabled('manual_invoice')`）＋`filterInvoicedOptionByBillState`：每張 can_auto_generate_invoice && is_auto_generate_invoice，且 `is_invoice_generated.length > 0` 者存在即隱藏。"
+   ]
+  },
+  {
+   "id": "jgb/E/recharge-account-vs-single-use-atm",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "b542bb8e4d678ec5d0e5ed61efeff2838723f61960f6a7bfc90d4853452f95c8",
+   "title_text": "「固定虛擬帳號管理」跟租客線上繳費取得的 ATM 虛擬帳號是同一種嗎？（不是，線上繳費的 ATM 帳號是依單張帳單單筆取號，藍新取號的效期為 180 天）",
+   "notes": [
+    "標題：由句 1、3、4 支撐。",
+    "句 1：結論句，由句 2～4 的兩種來源比對支撐：app/Http/Controllers/RechargeAccountListController.php（recharge_accounts 表）與 app/Http/Controllers/BillController.php（`case 'newebpay-atm':` 單筆取號）為不同資料來源。",
+    "句 2：app/Http/Controllers/RechargeAccountListController.php＋`->where('role_recharge_accounts.role_id', $roleId)`、`'recharge_accounts.tenant_name'`、`'recharge_accounts.estate_id'`、`'balance' => $account->recharge_amount_base_number`。",
+    "句 3：app/Http/Controllers/BillController.php＋`case 'newebpay-atm':` 以該帳單的 $payment `->go('newebpay', 'atm_no', 'bill'`，結果 `$payment->updateOrCreatePayInfo('newebpay', 'atm'` 記在付款紀錄；不寫入 recharge_accounts，故不在固定虛擬帳號列表。",
+    "句 4：BillController.php 同上＋`'addExpireDays' => 180, // 20201030改為180天`；`取過號尚未過期 => 不再取號`（`strtotime($payInfo['ExpireDate']) >= time()` 時回傳同一 VACCNo，否則重新取號）；app/Payment.php＋`strtotime('+7 days', $this->payment_ts)` 僅為未指定時預設；docs/knowledge/jgb-product-facts.md＋`{#p914-newebpay-atm-expiry}` 一致。"
+   ]
+  },
+  {
+   "id": "jgb/A/signer-individual-fields",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "48640e0192667139ce23914930e844a79d45cf2c9ed0dec219dd637c67a10684",
+   "title_text": "個人房東的簽約資訊要填哪些欄位？（姓氏、名稱、身分證字號、Email、手機號碼、戶籍地址、通訊地址標示必填，身分證正反面照片與其他附件為選填）",
+   "notes": [
+    "標題：由句 1～4 支撐。",
+    "句 1：src/pages/users/team/_parts/SignerDetails.vue＋`firstRowOfIndividualInfo`／`secondRowOfIndividualInfo`（姓氏、名稱、身分證字號、Email、手機號碼皆 `isRequired: true`）、`t('個人資訊')`、`isIndividual: computed(()=>[1, 2].includes(`；src/pages/users/team/_parts/SignerFormInputField.vue＋`'after-required': props.isRequired`；src/styles/tailwind.sass＋`.after-required` `content: '*'`；app/Role.php＋`// 其他設定（個人房東專用）` 與 `'label' => ___('簽約資訊')`、`RULE_KEY_LANDLORD_INDIVIDUAL     = 2`。",
+    "句 2：SignerDetails.vue＋`t('戶籍地址')`、`t('通訊地址')` 的 address-component `:required=\"true\"`；src/components/AddressComponent.vue＋`<AddressFieldTitle ... :required=\"required\"`；src/components/AddressFieldTitle.jsx＋`${props.required && 'after-required'}`。",
+    "句 3：SignerDetails.vue 同上＋`t('身分證正反面照片(選填)')`、`t('請上傳清晰的橫式證件正反面照片')`、`idCardAttachmentInfo`（id_certificate_front／back，`t('正面') : t('反面')`）。",
+    "句 4：SignerDetails.vue 同上＋`t('其他附件(選填)')` 與 `otherAttachmentInfo`：'工作名片/學生證'、'良民證'、'小章'。"
+   ]
+  },
+  {
+   "id": "jgb/B/biglandlord-list-overview",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "79ab41cd9519d27fa51cc5289d4f279c8fdee93de33eb203205ae9f2f970e694",
+   "title_text": "大房東列表有哪些欄位？（ID、姓名、會員註冊、Email、手機號碼、身分證字號、地址、帳戶名稱、帳戶資訊、合作方式、合作起迄、所屬物件、生日、主要聯絡方式，其中生日與主要聯絡方式目前每筆都顯示「-」）",
+   "notes": [
+    "標題：由句 1、5 支撐。",
+    "句 1：src/pages/bigLandlords/list/_parts/ListTable.vue＋columns list 依序 'ID'、t('姓名')、t('會員註冊')、t('Email')、t('手機號碼')、t('身分證字號')、t('地址')、t('帳戶名稱')、t('帳戶資訊')、t('合作方式')、t('合作起迄')、t('所屬物件')、t('生日')、t('主要聯絡方式')，最後 `key: ColumnKey.action`（操作欄，固定右側 src/utils/surelyVue/bigLandlord.ts＋`[ColumnKey.action]: 'right'`）。",
+    "句 2：src/components/SurelyVue/BigLandlord/IsRegisteredCell.vue＋`VerifiedStatus.verified ? 'bg-success-400' : 'bg-grey-200'`；app/Services/BigLandlordService.php＋`'email_verified_status' => ($bigLandlord->user && $bigLandlord->user->is_registered == 1)`。",
+    "句 3：src/components/SurelyVue/BigLandlord/RelatedEstateCell.vue＋`({{ props.qty_of_estates || 0 }})` 與 `router.push(Route.user.team.owned(`；BigLandlordService.php 同上＋`'qty_of_estates' => count($bigLandlord->getEstatePermissions)`。",
+    "句 4：src/components/SurelyVue/BigLandlord/NameCell.vue＋`emit('openContactCard'`；ListTable.vue 同上＋`contactCardState.open(`。",
+    "句 5：ListTable.vue 同上＋birthday/primaryContact 用 `SurelyVueCommonTextBlockCell` 並以 `{ birthday }`／`{ primary_contact }` 傳入（bigLandlord.ts＋`this[ColumnKey.birthday] = {`）；src/components/SurelyVue/Common/TextBlockCell.vue＋`{{ t(props?.textString) || '-' }}`，textString 從未傳入，t() 對非字串原樣回傳 undefined，故恆顯示「-」。"
+   ]
+  },
+  {
+   "id": "jgb/B/biglandlord-sheet-overview",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "fb14c19bb9aa3de09efd353fd2d0d7e65de087b87a1259ff4b99446321361f0e",
+   "title_text": "大房東對帳表在算什麼？（依年度列出屋主的收入與支出，年度表每月一欄；一般團隊是屋主租金收入與支出，特定合作團隊的資金版報表另有押金、屋主提領、屋主直收等區塊）",
+   "notes": [
+    "標題：由句 1、2 支撐。",
+    "句 1：src/pages/bigLandlords/sheet/index.vue＋`route.params.bigLandlord_id`、`Number(route.query.year)`；src/pages/bigLandlords/sheet/_parts/Sheet.vue＋`v-for=\"(node, index) in [...Array(12)]\"` 與 `t(`${index+1}月`)`；src/pages/bigLandlords/sheet/_parts/monthlyReport/Index.vue＋`isV2 ? t('屋主資金對帳單') : t('屋主租金對帳單')`（isV2＝bigLandlordReportV2 群組）。",
+    "句 2：Sheet.vue 同上＋isV2 分支 t('押金收入')、t('押金支出')、t('屋主資金收入')、t('屋主資金支出')、t('屋主提領')、t('屋主直收收入')、t('屋主直收支出') 共七區；非 V2 分支 `isLabelAdjust ? t('租金收入') : t('屋主租金收入')`、`isLabelAdjust ? t('本期支出') : t('屋主租金支出')`。",
+    "句 3：monthlyReport/Index.vue 同上＋抬頭下依序 TableInfo、EstateList、ReconciliationTerm，V2 為 DepositList、PropertyManagingReconciliation、OwnerWithdrawalCashflow、OwnerDirectReceiveCashflow、RemarkOfOwner，非 V2 為 DepositList、EZoneCashflow；TableInfo.vue＋`t('屋主名稱')`、`t('製表人')`；EstateList.vue＋`t('物件清單')`；ReconciliationTerm.vue＋`t('記帳期間')`；DepositList.vue＋`A. {{ t('押金') }}`；EZoneCashflow.vue＋`t('屋主租金')`；PropertyManagingReconciliation.vue＋`B. ${t('屋主資金')}`；OwnerWithdrawalCashflow.vue＋`C. ${t('屋主提領')}`；OwnerDirectReceiveCashflow.vue＋`D. ${t('屋主直收')}`；RemarkOfOwner.vue＋`t('備註')`。",
+    "句 4：src/pages/bigLandlords/sheet/_parts/monthlyReport/ReconciliationTerm.vue＋reconciliation_start～end、t('上期屋主租金結餘')、t('本期屋主租金收入')、t('本期屋主租金支出')、t('本期屋主租金總結餘')、t('流水帳結餘')、t('可調動租金')（V2：屋主資金／t('可調動資金')）；isLabelAdjust 時改 t('租金收入')／t('本期支出') 並以 `v-if=\"!isLabelAdjust\"` 隱藏上期結餘、總結餘、可調動租金。",
+    "句 5：src/pages/bigLandlords/sheet/_parts/monthlyReport/EZoneCashflow.vue＋`v-if=\"!isLabelAdjust\"` 下 `t('總結餘（上期結餘 + 屋主租金收入 - 屋主租金支出）')`；ReconciliationTerm.vue 的 priorBalance＝balance − income + expense 與此式一致。"
+   ]
+  },
+  {
+   "id": "jgb/G/power-meter-single-edit-tabs",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "d17ef2cdcc78520bb71de47ef055cf1cc17901d677c81e1e3858f41b9d6a456e",
+   "title_text": "電錶編輯頁能改什麼？（描述、綁定物件、供電狀態；儲值型另有電錶資料頁籤，帳號開通自動開立發票時還有開立發票頁籤；租客只能看不能改）",
+   "notes": [
+    "標題：由句 1～6 支撐。",
+    "句 1：src/pages/iots/_parts/Single.vue＋`t(\"描述\")`、`t(\"請為裝置設定描述，方便辨識。\")`、`handleSaveName`、`${isTenant ? 'disabled' : ''}`、`v-if=\"!isTenant\"` 包住 `t(\"儲存\")`；src/styles/tailwind.sass＋`.disabled` `opacity: 0.5`。",
+    "句 2：src/pages/iots/edit/Basic.jsx＋`t('綁定物件')`、`{!props.isTenant &&` 包住 `+{t('選擇物件')}`、`icon_x_red.svg` 叉叉與 `t('儲存')`（onSave `action: 'estates:change'`）。",
+    "句 3：src/utils/constants/iots.ts＋`PowerMeterTabPair` 只有 topUp 有多頁籤，其餘走 `default: [ { labelKey: \"基本設定\"` ；src/helpers/iots.ts＋`PowerMeterTabPair[type] || PowerMeterTabPair.default`。",
+    "句 4：iots.ts 同上＋topUp 含 `labelKey: \"電錶資料\"`；src/pages/iots/_parts/PowerMeterInfo.jsx＋`t('電錶基本資料')`、`bi-arrow-counterclockwise`、`t('畫面開啟時間')`、t('電號')、t('目前餘額')、t('費率')、t('預計可用電度')、t('最後連線成功時間')，無輸入欄位；src/pages/iots/edit/Log.jsx＋`t('電錶儲值歷程')`、`t('費率異動歷程')`。",
+    "句 5：src/helpers/iots.ts＋getStatusTabs 在 `!!conditions?.gen_invoice === false || !!conditions?.isTenant` 時濾掉 invoice；Single.vue＋`gen_invoice: state.can_auto_generate_invoice`（getPaymentMeta other_settings）與 `hasPermissionInvoice`（topUp、非租客、can_auto_generate_invoice）；iots.ts＋`// 只有儲值型電表有發票`。",
+    "句 6：Single.vue 同上＋`isConnected`＝`state.form.status === PowerMeterStatus.connecting && !isTenant.value`，其下 TopUpSwitch／PowerSwitch 置於頁面上方。"
+   ]
+  },
+  {
+   "id": "jgb/A/dashboard-overview-lists",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "40128139b0d5bb7a20c83774d97193d918c7dd7caffe0074932b65105a3cf031",
+   "title_text": "房東首頁下方還有哪些列表？（帳單與合約整合列表，具查看所有通知權限者另有系統代發送 E-mail 區塊；大房東首頁沒有）",
+   "notes": [
+    "標題：由句 1、4、5 支撐。",
+    "句 1：src/pages/users/dashboard/Landlord.vue＋非 isBigLandlord 分支底部 `<BillContractRepair />`；`{ key: 'main', label: t('主要')`；src/pages/users/dashboard/parts/BillContractRepair.vue＋`tab: t('帳務情況')`、`tab: t('合約情況')`。",
+    "句 2：BillContractRepair.vue 同上＋children t('逾期待收款')、t('待繳費')；t('即將到期合約')、t('待發送')、t('待房東簽名')、t('待租客簽回')；`<RouterLink to={state.currentChildList?.[state.childTabIndex].link}` 右上 `t('更多')`。",
+    "句 3：BillContractRepair.vue 同上＋`// const List_Repair = defineAsyncComponent(` 已註解，tabList 無修繕。",
+    "句 4：Landlord.vue＋`store.state.userData?.permission?.show_notification && <div class=\"mb-7 lg:mb-0\"> <EmailRecords />`；app/Http/Controllers/UserController.php＋`'g_show_notification'=> [ 'label'=> '查看所有通知'`；src/pages/users/dashboard/parts/EmailRecords.vue＋`t('系統代發送E-mail')`、t('收件人')、t('信件主旨')。",
+    "句 5：Landlord.vue 同上＋`state.isBigLandlord ? <div class=\"mb-5\"> <EstateDetails />...<BalanceChart` 分支無兩區塊；`state.activeTab === 'occupancy' ? <CommunityIncomeStats />` 時整段主要內容不渲染。"
+   ]
+  },
+  {
+   "id": "jgb/B/advance-late-fee",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "b4d4427b615b7f35f1bea2b77d1c71b7327cbee48be0e4ea6f12bfb081b52bc1",
+   "title_text": "進階設定的「延遲金設置」是什麼、延遲金怎麼算？（只有特定合作團隊看得到；合約建立時帶入團隊設定，租金帳單逾期付款後才產生延遲金帳單，金額＝租金 ×（逾期天數 − 緩衝天數）× 延遲金百分比）",
+   "notes": [
+    "標題：標題各斷言（特定合作團隊、合約建立時帶入、逾期付款後才產生、公式）由句 1、3、5、6 支撐。",
+    "句 1：src/pages/users/advance/Index.jsx＋`<FormBlock` 標題 `t('延遲金設置')` 以單一特定團隊旗標條件渲染（同檔 LightboxPenaltyEnable／LightboxPenaltySettingEdit 亦同條件）。",
+    "句 2：Index.jsx 同上＋`Components.SwitchButton` 與 `t('啟用')`、`t('緩衝天數')`、`t('延遲金')` + `%`、`penaltyState.enable_late_fee === 1 &&` 才顯示 `t('編輯延遲金設置')`；app/Http/Controllers/UserController.php＋lateFeeEnalbe／lateFeeUpdate 的 `// 如果有簽核的資訊就走簽核，沒有就直接更新`（ApprovalService::needApproval）。",
+    "句 3：app/Bill.php＋canGenerateLateFeeBill（`$contract->enable_late_fee != 1`、`empty($this->complete_at)`、`$dateDiff <= $contract->calc_late_fee_buffer_days`）；generateLateFeeBill 以同一租客 `'user_id' => $this->user_id` 建立、`'date_expire' => date(\"Ymd\")`（產生當天）。重新查證：建立時雖為 `'status' => Bill::BILL_PREPARE`，但同函式在第一次 `$newBill->save();` 與寫入 details 之後，有 `// 直接發送帳單至應支出/應到帳`、`$newBill->setReady(0, 'JGB系統', 0, 'JGB系統');`、`$newBill->status = Bill::BILL_READY;`、補 bit_status 再 `$newBill->save();`；常數 `const BILL_READY = 2;           // 狀態 2：應到帳/待繳費`，formatTypeStatus 中 BILL_READY 對收款方為 `$status = 'unreceived'`（應到帳）。上次判定只讀到建立段落，誤判為待發送；本次依函式後段改判成立。",
+    "句 4：Bill.php 同上＋`if ($this->type != Bill::BILL_TYPE_RENT) { return false;`；常數 `BILL_TYPE_RENT = 1;       // 型態 1：一般租金`、MOVEOUT 點退、CREATE 新增帳單、AMERCEMENT 罰款、TOPUP 儲值、DEPOSITRATE 押金設算息。",
+    "句 5：Bill.php 同上＋`->where('items.name', '租金')` 取 `$billRent`，`$lateFeeDayTs = strtotime(date('Ymd', strtotime($this->pay_at))) - $bufferDayTs` 即（付款日−繳費期限）−緩衝天數，`$lateFee = $billRent * $lateFeeDay * ($contract->late_fee_percent / 100)`。",
+    "句 6：app/Contract.php＋createContract 內 `'enable_late_fee'   =>  $ownerRole->enable_late_fee,`、calc_late_fee_buffer_days、late_fee_percent；Bill.php 判斷皆讀 `$contract->`；UserController.php 的 lateFee 更新只寫 `$this->role`，未回寫既有合約。"
+   ]
+  },
+  {
+   "id": "jgb/A/forget-password-flow",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "17d48ee3bdc345b689863c98ea280bf3ea29c6dee2538a2ae5ec813e6335458b",
+   "title_text": "忘記密碼怎麼重設？（Email 或手機號碼擇一驗證帳號、輸入驗證碼後設定新密碼，設定完成一般會直接登入）",
+   "notes": [
+    "標題：由句 1、2、4、6 支撐。",
+    "句 1：src/pages/users/auth/parts/LoginForm.vue＋`t('忘記密碼？')`；src/pages/users/auth/parts/forget/Password.vue＋`t('忘記密碼嗎？')`、Email／手機號碼切換 toggleLoginBy、按鈕 `:class=\"{disabled: !state.targetValidator.response.success }\"` `t('驗證帳號')`；app/Http/Controllers/AuthController.php＋`___('Email 格式錯誤或無此 Email 對應的帳號。')`、`___('手機號碼格式錯誤或無此號碼對應的帳號。')`（routes/web.php＋`'/api2/login/{action?}/{customerAccount?}', 'AuthController@login'`）。",
+    "句 2：Password.vue 同上＋`api2/login/sendVerEmail`／`sendVerSms`、`t('沒有收到驗證信嗎？試試 [s1]重發驗證信[s2]'`、`t('沒有收到簡訊嗎？試試 [s1]重發簡訊[s2]'`、`({{ ...wait }}{{ t('秒') }})`；src/pages/users/auth/parts/VerifyPanel.vue＋`:length=\"4\"`；AuthController.php＋`'ver_code' => 'required|regex:/^[0-9]{4}$/'`。",
+    "句 3：AuthController.php 同上＋`$verCodeAttemptLimit = 3;`、`___('驗證碼錯誤[s1]次，剩餘[s2]次機會;失敗[s3]次驗證碼將失效。'`、`___('驗證次數過多，驗證碼已失效，請稍候重發驗證信。')`。",
+    "句 4：Password.vue 同上＋`state.screen = 'resetPwd'`、t('密碼')、t('確認密碼')、pwdFormat（`length >= 6`、`/[0-9]/` 且 `/[a-zA-Z]/`、same），按鈕 `disabled: !state.isPwdReady`、`t('重設密碼')`。",
+    "句 5：AuthController.php 同上＋`'regex:/(^[A-Za-z0-9*&-_]+$)+/'`（類別含 & 至 _ 區間，! \" # $ % 與空格、中文不在內）、失敗時 `$result['data']['field_errors']['password'] = ___('格式錯誤。')` 且無 message；Password.vue＋`alert('密碼設定失敗：' + (result.message || '請檢查輸入格式'))` 與 password 欄 ErrorsTip。",
+    "句 6：AuthController.php 同上＋`$fatherUser->reload(true); // 登入主帳號`、`$result['redirect'] = $redirectUrl;`（users.create login）；app/Model.php＋reload `session()->put(static::class, $instance)`；routes/web.php＋users.create `->middleware('if_login')`；app/Http/Middleware/IfLoginCheck.php＋`return redirect()->route('users.index');`；Password.vue＋`t('帳號驗證成功！請重設密碼，設定完成後請使用新密碼登入。')`。"
+   ]
+  },
+  {
+   "id": "jgb/C/estate-rent-open-permission-and-validation",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "1d0456430e218f504d122a5d8f614dca9f1f4140552fbdce80a8cd47ec27fa68",
+   "title_text": "為什麼物件的招租廣告刊登不出去？（沒有刊登權限、團隊沒有生效中的訂閱方案、或物件資料檢查沒通過）",
+   "notes": [
+    "標題：由句 2、3、4 支撐。",
+    "句 1：src/pages/estates/edit/rent_contact/Index.vue＋`:next-text=\"t('預覽招租廣告')\"`；app/Http/Controllers/EstateController.php＋列表動作 `'open_is_open' => [ 'text' => ___('刊登招租廣告'),`；resources/views/estate/show/navbar.blade.php＋`$links['premises_publish']` `{{___('刊登')}}`。",
+    "句 2：EstateController.php 同上＋open() `$addEstate = $estate->hasPermission($user, 'add_estate')`、`$publicEstate`，皆否時 `redirect()->route('estates.index')->with([ 'status-error' => ___('您無法刊登此物件')`；app/Estate.php＋hasPermission `if ($this->user_id == $user->id) { # roleType === 'owner'`；app/Http/Controllers/UserController.php＋g_add_estate `'新增&編輯&刪除所屬物件'`、g_edit_estate（含 public_estate）`'新增&編輯&刪除所有物件'`。",
+    "句 3：routes/web.php＋`'EstateController@open')->name('estates.open')->middleware('need_subscription')`；app/Http/Middleware/SubscriptionCheck.php＋`case 'estates.open':` `!$role->isSubscriptionActive()` → `session()->flash('lightbox-open', 'subscribedPlanIsFull')` 並導回 estates.index；resources/views/layouts/lightbox/general.blade.php＋未訂閱文案 `請先前往訂閱服務` 與 `___('我要訂閱')`。",
+    "句 4：EstateController.php 同上＋`$estate->validateFields()` 失敗 `redirect()->route('estates.edit'` 帶 `'status-error' => $validateFields['errorMessage']`；app/Estate.php＋validateFields 逐區 `foreach ($rules as $premisesStepLv1Key` 第一個 `$validator->fails()` 即 return。",
+    "句 5：app/Estate.php 同上＋rules：premises_use_for、building、space_type required；`'info.address.city' => 'required_if:info.address.country,TW,VN,PH,KH,TH'`、district 同、detail required；floor、floor_all、size required；`'gallery.premises_title' => 'required|max:60'`；`'rent.rent' => array('required', ..., 'gt:0')`；`if ($this->use_for == 'business')` seats；特定團隊權限時加 `___('公證費')` 欄必填；config/country.php 為國碼來源。",
+    "句 6：src/use/config/useEstateTypes.js＋`label: t('批次刊登招租廣告')` `permission: 'edit_estate'`（g_edit_estate＝所有物件）；src/components/Lightbox/EstateBatchAdvertise.vue；app/Estate.php＋batchOpenRent 迴圈 `$LVestateData->validateFields()` 失敗 `$failCount++` 跳過，其餘照常更新。"
+   ]
+  },
+  {
+   "id": "jgb/I/demo-form-actual-validation-scope",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "75a2bd404feccc80e8a1896c4274438c30846fafefe7051695e3312fbd34c37b",
+   "title_text": "demo 表單漏填欄位時，系統端會擋下哪些？（送出後系統端只檢查公司名稱、姓名、電話、Email 四項，其餘欄位空白不會被系統端退回）",
+   "notes": [
+    "標題：由句 1、3 支撐。",
+    "句 1：app/Http/Controllers/IndexController.php＋demoForm `$rule = [ 'company_name' => 'required', 'name' => 'required', 'tel' => 'required', 'email' => 'required|email',`，失敗 `// 驗證失敗：不寫入、不發 Slack，直接回錯`、`___('下列欄位為必填')`、`errorFields`；src/pages/listings/DemoForm.vue＋`window.globalErrorShow(result.message)` 與 `state.errorFields.includes('company_name')` 等 error class。",
+    "句 2：src/pages/listings/DemoForm.vue＋company_name、name、tel（`type=\"tel\"`）、email（`type=\"email\"`）input 皆 `required`。",
+    "句 3：IndexController.php 同上＋job_title、country、estates_amount、team_member_amount、interests、consultation_content 皆 `!empty(...) ? ... : null` 後直接 `DB::table('form_demos')->useWritePdo()->insert(`。",
+    "句 4：DemoForm.vue 同上＋`<input v-model=\"state.isPrivacyCheck\" type=\"checkbox\" required />`，isPrivacyCheck 不在 state.request（送出 data 為 state.request）；IndexController.php 不讀此欄。"
+   ]
+  },
+  {
+   "id": "jgb/I/demo-form-fields",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "0e66648ecf2cc0833992aed23e96d3f8f0b363bd8921264e40bdfd2dbefdd568",
+   "title_text": "預約 demo 表單要填什麼？（公司名稱、職稱、姓名、電話、Email、物件所在地、物件數量、團隊人數、最有興趣的功能、諮詢內容，並勾選同意隱私權政策）",
+   "notes": [
+    "標題：由句 1 支撐。",
+    "句 1：src/pages/listings/DemoForm.vue＋`t('聯繫我們'`、t('公司名稱')、t('職稱')、t('姓名')、t('電話')、Email、t('物件所在地')（placeholder `t('國家/城市'`）、t('物件數量')、t('團隊人數')、`最有興趣的功能<span ...>（可複選）</span>`、t('諮詢內容')、`t('我同意[s1]JGB隱私權政策[s2]'`。",
+    "句 2：DemoForm.vue 同上＋表單最末 `* {{ t('所有資訊皆必填'`。",
+    "句 3：DemoForm.vue 同上＋興趣 checkbox `:required=\"state.request.interests.length === 0\"`，未勾任何一項時每個方塊皆 required，瀏覽器原生驗證擋下。",
+    "句 4：DemoForm.vue 同上＋allDone fields `['company_name', 'job_title', 'name', 'tel', 'email', 'country', 'interests', 'estates_amount', 'team_member_amount', 'consultation_content']`、allowSubmit 需 isPrivacyCheck，按鈕 `${!state.allowSubmit ?'btn-grey' :'btn-main'}`。"
+   ]
+  }
+ ],
+ "findings": [
+  "jgb/B/advance-late-fee：app/Bill.php 的 generateLateFeeBill 先以 `'status' => Bill::BILL_PREPARE`（待發送）建立帳單，函式後段再 `setReady` 並改 `Bill::BILL_READY`（應到帳）存檔；建立段落的行內註解「狀態 2：應到帳/待繳費」與當下常數值（1）不符，易讓只讀前段的人誤判。最終狀態為應到帳，細目句 3 正確。",
+  "jgb/B/advance-late-fee：介面說明文字（src/pages/users/advance/Index.jsx＋`該筆帳單的繳費截止日為合約的終止日`）與程式 `'date_expire' => date(\"Ymd\")`（產生當天）衝突；細目句 3 依程式寫「產生當天」，依規則 5 以程式為準，但介面文案與程式不一致值得記錄。",
+  "jgb/I/demo-form-fields 句 2「所有資訊皆必填」與 jgb/I/demo-form-actual-validation-scope 句 3（六項系統端不檢查）並非矛盾：前者是頁面文案與前端必填，後者是後端驗證範圍，兩條已各自說明層次。"
+ ],
+ "control": {
+  "id": "jgb/D/notary-agree-option",
+  "title": "成立",
+  "sentences": [
+   "不成立",
+   "成立",
+   "成立",
+   "成立",
+   "成立",
+   "成立",
+   "成立",
+   "不成立"
+  ],
+  "notes": [
+   "標題：疑問句，無獨立斷言。",
+   "句 1：src/store/modules/contract_edit/public_notary.js＋`has_public_notary: 0, //0, 1`；app/Http/Controllers/ContractController.php＋`'has_public_notary' => !empty($contract->has_public_notary) ? $contract->has_public_notary : 0`；app/Contract.php 的 createContract 未設此欄。來源顯示預設為 0（未同意），找不到「預設同意辦理」的支撐。",
+   "句 2：src/use/config/useContractRequiredField.js＋含 `FormField.hasPublicNotary` 的範本：tw_zh_individual／tw_zh_corporation／tw_zh_management、三個 *_union、en_us_corporation、th_th_individual、th_th_management；config/contract.php＋對應 label（'114年內政部住宅租賃契約(原房東)' 等）。",
+   "句 3：src/pages/contracts/edit/publicNotary/General.vue＋`t('強制執行事項')`、`t('辦理公證後，請選擇應逕受強制執行的項目(可複選)。')` 與三項文字。",
+   "句 4：General.vue 同上＋選同意時 `editStore.form.public_notary_content = ['1', '2', '3']`。",
+   "句 5：useContractRequiredField.js 同上＋`FormField.hasPublicNotaryDistraint` 僅在 tw_zh_corporation、tw_zh_management、tw_zh_individual；General.vue＋`t('公證書載明下列事項應逕受強制執行')` 與 t('同意')／t('不同意')。",
+   "句 6：General.vue 同上＋`t('保證人效力')` 與 `前項後段第 [s1] 款之效力及於保證人` 以 sortedPublicNotaryContent 組字串，無輸入欄位。",
+   "句 7：General.vue 同上＋`v-else` 顯示 `t('*目前英文與英越文版合約不支援此項目。')`；useContractRequiredField.js＋EN201608、VN202005 與 FallbackRequiredFields（紙本/DIY）皆不含 hasPublicNotary。",
+   "句 8：無法判定：src/pages/contracts/edit/Index.vue 內未找到控制「公證」分頁對車位合約或特定團隊範本隱藏的程式，證據不足。"
+  ]
+ },
+ "source_transcript": "a72689c6e3ea03c60.output"
+}

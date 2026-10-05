@@ -463,20 +463,21 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 這個自動發送排程設定只有在目前身分是有效訂閱中才會顯示。
 「帳單收款人」可以選「原簽約者」「主要經理人」或「自訂」；選「自訂」時要額外填寫收款人、聯絡人、聯絡人電話、Email 四個欄位，選其他兩個選項則不需要，會直接送出設定；這整組帳單收款人設定只在收據類型選「1. 超商繳費單、財政部包租業租金收據、JGB系統收據」「3. 超商繳費單、JGB系統收據」「4. JGB系統繳費單、JGB系統收據」時才會顯示，選「2. 超商繳費單、財政部包租業租金收據」或「5. 超商繳費單、不檢附收據」時整組不顯示。
 ## 預約 demo {#I-demo-booking}
-### 預約 demo 表單要填什麼？（公司、職稱、聯絡方式、物件所在地、感興趣功能與諮詢內容） {#jgb/I/demo-form-fields}
+### 預約 demo 表單要填什麼？（公司名稱、職稱、姓名、電話、Email、物件所在地、物件數量、團隊人數、最有興趣的功能、諮詢內容，並勾選同意隱私權政策） {#jgb/I/demo-form-fields}
 - phrasings:
   - {text: "預約demo要填什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "怎麼申請demo", source: "draft:outline-20260920", status: proposed}
   - {text: "聯繫我們表單欄位", source: "draft:outline-20260920", status: proposed}
   - {text: "demo表單怎麼填", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/listings/DemoForm.vue]
-- reviewed: {by: owner, at: 2026-09-28}
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
-預約 demo 表單（頁面標題「聯繫我們」）要填公司名稱、職稱、姓名、電話、Email、物件所在地（國家/城市）、物件數量、團隊人數、最有興趣的功能（可複選）與諮詢內容，並勾選同意 JGB 隱私權政策。
-頁面下方標示「所有資訊皆必填」，「送出」按鈕的顏色會依畫面上是否已填妥公司名稱、職稱、姓名、電話、Email、物件所在地、感興趣功能、物件數量、團隊人數、諮詢內容這 10 個欄位並勾選隱私權政策，在灰色與可點擊的主色之間切換，但按鈕本身一律可以點擊；實際擋下送出的是每個欄位上的瀏覽器對必填欄位的內建檢查，未填妥必填欄位時是瀏覽器原生驗證跳出提示、擋下表單送出，不是這個顏色判斷式在擋。
-「最有興趣的功能」選項是複選核取方塊，畫面會要求至少勾選一項；其餘欄位都是單選下拉選單或文字輸入框。
+預約 demo 表單（頁面標題「聯繫我們」）要填：公司名稱、職稱、姓名、電話、Email、物件所在地（國家/城市）、物件數量、團隊人數、最有興趣的功能（可複選）與諮詢內容，最後要勾選「我同意JGB隱私權政策」。
+頁面最下方寫著「所有資訊皆必填」。
+「最有興趣的功能」是複選核取方塊，一項都沒勾時，瀏覽器會要求至少勾選一項。
+「送出」按鈕要等公司名稱、職稱、姓名、電話、Email、物件所在地、最有興趣的功能、物件數量、團隊人數、諮詢內容這 10 項都填妥並勾選隱私權政策，才會從灰色變成主色。
 ### demo 表單的下拉選項有哪些？（物件數量 7 級距、團隊人數 6 級距、感興趣功能 6 項） {#jgb/I/demo-form-option-lists}
 - phrasings:
   - {text: "物件數量選項有哪些", source: "draft:outline-20260920", status: proposed}
@@ -504,18 +505,21 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 - business_types: [system_provider]
 - instance_applicability: general
 表單送出成功後會切換成感謝畫面，寫著「謝謝您完成預約表單」，並提示「感謝您完成填寫表單，將會有專人於 2-3 天工作天聯繫您」，畫面上有按鈕可以回到官網首頁。
-### demo 表單哪些欄位真的會被系統擋下？（畫面上全部欄位都要填才能送出；系統端只再檢查公司、姓名、電話、Email 四項） {#jgb/I/demo-form-actual-validation-scope}
+### demo 表單漏填欄位時，系統端會擋下哪些？（送出後系統端只檢查公司名稱、姓名、電話、Email 四項，其餘欄位空白不會被系統端退回） {#jgb/I/demo-form-actual-validation-scope}
 - phrasings:
   - {text: "demo表單哪些欄位真的必填", source: "draft:outline-20260920", status: proposed}
   - {text: "實際驗證跟畫面要求一樣嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "demo表單漏填會怎樣", source: "draft:outline-20260920", status: proposed}
   - {text: "demo表單驗證規則", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/IndexController.php, code:src/pages/listings/DemoForm.vue]
-- reviewed: {by: owner, at: 2026-10-03}
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-表單頁面上全部 10 個欄位與隱私權同意都設了必填，沒填完時瀏覽器會先擋下送出；系統收到資料後，只會再檢查公司名稱、姓名、電話、Email 這四個欄位是否為空、以及 Email 格式是否正確。
+表單送出後，系統端只檢查公司名稱、姓名、電話、Email 四項：任何一項是空的，或 Email 格式不正確，這次送出會被退回、不會寫入，畫面跳出「下列欄位為必填」的提示，並把該欄位標示為錯誤。
+公司名稱、姓名、電話、Email 這四個輸入框在頁面上本身也設了必填，空白時瀏覽器會先擋下、不會送到系統端；Email 欄位是 Email 輸入框，格式不符時瀏覽器同樣會擋下。
+職稱、物件所在地、物件數量、團隊人數、最有興趣的功能與諮詢內容這六項，系統端不檢查，空白也不會被系統端退回，這次送出照樣寫入。
+「我同意JGB隱私權政策」的核取方塊只在頁面上設了必填，這個勾選狀態不會送到系統端，系統端也不檢查。
 ## 控制台（設定、通知信範本、自動化任務） {#I-control-panel}
 ### 控制台首頁目前能用什麼？（目前只有「任務管理器」一個項目可以點擊進入，而且只開放給特定合作團隊） {#jgb/I/control-panel-entry-scope}
 - phrasings:

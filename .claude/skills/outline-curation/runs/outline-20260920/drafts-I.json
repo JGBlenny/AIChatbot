@@ -2263,7 +2263,7 @@
     {
      "proposed_id": "jgb/I/demo-form-fields",
      "askable": "預約 demo 表單要填哪些資料",
-     "title": "預約 demo 表單要填什麼？（公司、職稱、聯絡方式、物件所在地、感興趣功能與諮詢內容）",
+     "title": "預約 demo 表單要填什麼？（公司名稱、職稱、姓名、電話、Email、物件所在地、物件數量、團隊人數、最有興趣的功能、諮詢內容，並勾選同意隱私權政策）",
      "unit_ids": [
       "page:listings.demoForm"
      ],
@@ -2282,9 +2282,10 @@
       "demo表單怎麼填"
      ],
      "sentences": [
-      "預約 demo 表單（頁面標題「聯繫我們」）要填公司名稱、職稱、姓名、電話、Email、物件所在地（國家/城市）、物件數量、團隊人數、最有興趣的功能（可複選）與諮詢內容，並勾選同意 JGB 隱私權政策。",
-      "頁面下方標示「所有資訊皆必填」，「送出」按鈕的顏色會依畫面上是否已填妥公司名稱、職稱、姓名、電話、Email、物件所在地、感興趣功能、物件數量、團隊人數、諮詢內容這 10 個欄位並勾選隱私權政策，在灰色與可點擊的主色之間切換，但按鈕本身一律可以點擊；實際擋下送出的是每個欄位上的瀏覽器對必填欄位的內建檢查，未填妥必填欄位時是瀏覽器原生驗證跳出提示、擋下表單送出，不是這個顏色判斷式在擋。",
-      "「最有興趣的功能」選項是複選核取方塊，畫面會要求至少勾選一項；其餘欄位都是單選下拉選單或文字輸入框。"
+      "預約 demo 表單（頁面標題「聯繫我們」）要填：公司名稱、職稱、姓名、電話、Email、物件所在地（國家/城市）、物件數量、團隊人數、最有興趣的功能（可複選）與諮詢內容，最後要勾選「我同意JGB隱私權政策」。",
+      "頁面最下方寫著「所有資訊皆必填」。",
+      "「最有興趣的功能」是複選核取方塊，一項都沒勾時，瀏覽器會要求至少勾選一項。",
+      "「送出」按鈕要等公司名稱、職稱、姓名、電話、Email、物件所在地、最有興趣的功能、物件數量、團隊人數、諮詢內容這 10 項都填妥並勾選隱私權政策，才會從灰色變成主色。"
      ],
      "sources": [
       "code:src/pages/listings/DemoForm.vue"
@@ -2293,7 +2294,82 @@
       {
        "sentence_index": 0,
        "source": "code:src/pages/listings/DemoForm.vue",
-       "quote_or_symbol": "{{ t('預約客製 Demo，來看看JGB Smart Property 可以為您做什麼！', null, $store.state.listingsI18n) }}"
+       "quote_or_symbol": "{{ t('聯繫我們', null, $store.state.listingsI18n) }}"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/listings/DemoForm.vue",
+       "quote_or_symbol": "{{ t('公司名稱', null, $store.state.listingsI18n) }}"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/listings/DemoForm.vue",
+       "quote_or_symbol": "{{ t('職稱', null, $store.state.listingsI18n) }}"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/listings/DemoForm.vue",
+       "quote_or_symbol": "{{ t('姓名', null, $store.state.listingsI18n) }}"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/listings/DemoForm.vue",
+       "quote_or_symbol": "{{ t('電話', null, $store.state.listingsI18n) }}"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/listings/DemoForm.vue",
+       "quote_or_symbol": ":placeholder=\"t('例：jgb@mail.com', null, $store.state.listingsI18n)\""
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/listings/DemoForm.vue",
+       "quote_or_symbol": "{{ t('物件所在地', null, $store.state.listingsI18n) }}"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/listings/DemoForm.vue",
+       "quote_or_symbol": ":placeholder=\"t('國家/城市', null, $store.state.listingsI18n)\""
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/listings/DemoForm.vue",
+       "quote_or_symbol": "{{ t('物件數量', null, $store.state.listingsI18n) }}"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/listings/DemoForm.vue",
+       "quote_or_symbol": "{{ t('團隊人數', null, $store.state.listingsI18n) }}"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/listings/DemoForm.vue",
+       "quote_or_symbol": "t('最有興趣的功能<span"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/listings/DemoForm.vue",
+       "quote_or_symbol": "（可複選）"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/listings/DemoForm.vue",
+       "quote_or_symbol": "{{ t('諮詢內容', null, $store.state.listingsI18n) }}"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/listings/DemoForm.vue",
+       "quote_or_symbol": "v-html=\"t('我同意[s1]JGB隱私權政策[s2]'"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/listings/DemoForm.vue",
+       "quote_or_symbol": "* {{ t('所有資訊皆必填', null, $store.state.listingsI18n) }}"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/listings/DemoForm.vue",
+       "quote_or_symbol": "type=\"checkbox\""
       },
       {
        "sentence_index": 2,
@@ -2301,19 +2377,32 @@
        "quote_or_symbol": ":required=\"state.request.interests.length === 0\""
       },
       {
-       "sentence_index": 1,
+       "sentence_index": 2,
+       "source": "code:src/pages/listings/DemoForm.vue",
+       "quote_or_symbol": "<label"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/listings/DemoForm.vue",
+       "quote_or_symbol": "const fields = ['company_name', 'job_title', 'name', 'tel', 'email', 'country', 'interests', 'estates_amount', 'team_member_amount', 'consultation_content']"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/listings/DemoForm.vue",
+       "quote_or_symbol": "return state.allDone && store.state.siteOptions?.url && state.isPrivacyCheck"
+      },
+      {
+       "sentence_index": 3,
        "source": "code:src/pages/listings/DemoForm.vue",
        "quote_or_symbol": ":class=\"`${!state.allowSubmit ?'btn-grey' :'btn-main'} btn size-2 demoform-submit-button w-full`\""
-      }
-     ],
-     "not_supported_greps": [
+      },
       {
-       "sentence_index": 1,
-       "cmd": "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -B5 -nF \"demoform-submit-button\" b2ee2ac382ce06763798a7238e4fd5c9411fcfaa -- src/pages/listings/DemoForm.vue | grep -c ':disabled'",
-       "result": "0 — 送出按鈕的宣告附近沒有 :disabled 綁定，只有 :class 與 :style 依 allowSubmit 切換顏色，按鈕元素本身一直是可點擊的",
-       "positive_control": "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 show b2ee2ac382ce06763798a7238e4fd5c9411fcfaa:src/pages/listings/DemoForm.vue | grep -c 'required' → 11，確認表單欄位上真的掛了原生 required 屬性（8 個固定必填欄位、1 個感興趣功能的條件式 required、1 個一般 required、1 個隱私權 checkbox），跟畫面顯示要求一致"
+       "sentence_index": 3,
+       "source": "code:src/pages/listings/DemoForm.vue",
+       "quote_or_symbol": "{{ t('送出', null, $store.state.listingsI18n) }}"
       }
      ],
+     "not_supported_greps": [],
      "open_questions": []
     },
     {
@@ -2436,7 +2525,7 @@
     {
      "proposed_id": "jgb/I/demo-form-actual-validation-scope",
      "askable": "demo表單如果有些欄位漏填,系統真的會擋下來嗎",
-     "title": "demo 表單哪些欄位真的會被系統擋下？（畫面上全部欄位都要填才能送出；系統端只再檢查公司、姓名、電話、Email 四項）",
+     "title": "demo 表單漏填欄位時，系統端會擋下哪些？（送出後系統端只檢查公司名稱、姓名、電話、Email 四項，其餘欄位空白不會被系統端退回）",
      "unit_ids": [
       "page:listings.demoForm"
      ],
@@ -2454,7 +2543,10 @@
       "demo表單驗證規則"
      ],
      "sentences": [
-      "表單頁面上全部 10 個欄位與隱私權同意都設了必填，沒填完時瀏覽器會先擋下送出；系統收到資料後，只會再檢查公司名稱、姓名、電話、Email 這四個欄位是否為空、以及 Email 格式是否正確。"
+      "表單送出後，系統端只檢查公司名稱、姓名、電話、Email 四項：任何一項是空的，或 Email 格式不正確，這次送出會被退回、不會寫入，畫面跳出「下列欄位為必填」的提示，並把該欄位標示為錯誤。",
+      "公司名稱、姓名、電話、Email 這四個輸入框在頁面上本身也設了必填，空白時瀏覽器會先擋下、不會送到系統端；Email 欄位是 Email 輸入框，格式不符時瀏覽器同樣會擋下。",
+      "職稱、物件所在地、物件數量、團隊人數、最有興趣的功能與諮詢內容這六項，系統端不檢查，空白也不會被系統端退回，這次送出照樣寫入。",
+      "「我同意JGB隱私權政策」的核取方塊只在頁面上設了必填，這個勾選狀態不會送到系統端，系統端也不檢查。"
      ],
      "sources": [
       "code:app/Http/Controllers/IndexController.php",
@@ -2464,20 +2556,189 @@
       {
        "sentence_index": 0,
        "source": "code:app/Http/Controllers/IndexController.php",
+       "quote_or_symbol": "'company_name' => 'required',"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/IndexController.php",
+       "quote_or_symbol": "'name' => 'required',"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/IndexController.php",
+       "quote_or_symbol": "'tel' => 'required',"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/IndexController.php",
        "quote_or_symbol": "'email' => 'required|email',"
       },
       {
        "sentence_index": 0,
+       "source": "code:app/Http/Controllers/IndexController.php",
+       "quote_or_symbol": "// 驗證失敗：不寫入、不發 Slack，直接回錯"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/IndexController.php",
+       "quote_or_symbol": "$result['message'] = ___('下列欄位為必填');"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/IndexController.php",
+       "quote_or_symbol": "$result['data']['errorFields'] = array_keys($validator->messages()->get('*'));"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/listings/DemoForm.vue",
+       "quote_or_symbol": "window.globalErrorShow(result.message)"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/listings/DemoForm.vue",
+       "quote_or_symbol": "state.errorFields = [...result.data.errorFields]"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/listings/DemoForm.vue",
+       "quote_or_symbol": ":class=\"{ error: state.errorFields.includes('company_name')}\""
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/listings/DemoForm.vue",
+       "quote_or_symbol": ":class=\"{ error: state.errorFields.includes('email')}\""
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/listings/DemoForm.vue",
+       "quote_or_symbol": "v-model=\"state.request.company_name\""
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/listings/DemoForm.vue",
+       "quote_or_symbol": "v-model=\"state.request.name\""
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/listings/DemoForm.vue",
+       "quote_or_symbol": "v-model=\"state.request.tel\""
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/listings/DemoForm.vue",
+       "quote_or_symbol": "v-model=\"state.request.email\""
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/listings/DemoForm.vue",
+       "quote_or_symbol": "type=\"email\""
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/listings/DemoForm.vue",
+       "quote_or_symbol": "required"
+      },
+      {
+       "sentence_index": 1,
        "source": "code:src/pages/listings/DemoForm.vue",
        "quote_or_symbol": "type=\"submit\""
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Controllers/IndexController.php",
+       "quote_or_symbol": "$jobTitle = !empty($inputs['job_title']) ? $inputs['job_title'] : null;"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Controllers/IndexController.php",
+       "quote_or_symbol": "$country = !empty($inputs['country']) ? $inputs['country'] : null;"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Controllers/IndexController.php",
+       "quote_or_symbol": "$estatesAmount = !empty($inputs['estates_amount']) ? $inputs['estates_amount'] : null;"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Controllers/IndexController.php",
+       "quote_or_symbol": "$teamMemberAmount = !empty($inputs['team_member_amount']) ? $inputs['team_member_amount'] : null;"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Controllers/IndexController.php",
+       "quote_or_symbol": "$interests = !empty($inputs['interests']) ? $inputs['interests'] : null;"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Controllers/IndexController.php",
+       "quote_or_symbol": "$consultationContent = !empty($inputs['consultation_content']) ? $inputs['consultation_content'] : null;"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Controllers/IndexController.php",
+       "quote_or_symbol": "$save = DB::table('form_demos')->useWritePdo()->insert(["
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/listings/DemoForm.vue",
+       "quote_or_symbol": "{{ t('職稱', null, $store.state.listingsI18n) }}"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/listings/DemoForm.vue",
+       "quote_or_symbol": "{{ t('物件所在地', null, $store.state.listingsI18n) }}"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/listings/DemoForm.vue",
+       "quote_or_symbol": "{{ t('物件數量', null, $store.state.listingsI18n) }}"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/listings/DemoForm.vue",
+       "quote_or_symbol": "{{ t('團隊人數', null, $store.state.listingsI18n) }}"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/listings/DemoForm.vue",
+       "quote_or_symbol": "t('最有興趣的功能<span"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/listings/DemoForm.vue",
+       "quote_or_symbol": "{{ t('諮詢內容', null, $store.state.listingsI18n) }}"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/listings/DemoForm.vue",
+       "quote_or_symbol": "v-html=\"t('我同意[s1]JGB隱私權政策[s2]'"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/listings/DemoForm.vue",
+       "quote_or_symbol": "<input v-model=\"state.isPrivacyCheck\" type=\"checkbox\" required />"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/listings/DemoForm.vue",
+       "quote_or_symbol": "isPrivacyCheck: false,"
       }
      ],
      "not_supported_greps": [
       {
-       "sentence_index": 0,
-       "cmd": "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 show b2ee2ac382ce06763798a7238e4fd5c9411fcfaa:app/Http/Controllers/IndexController.php | sed -n '/public function demoForm/,/public function trialForm/p' | sed -n '/\\$rule = \\[/,/\\];/p' | grep -c '=>'",
-       "result": "4 — demoForm() 函式裡 $rule 陣列只有 4 個 key（company_name／name／tel／email），跟畫面上要求的 10 個欄位不一致",
-       "positive_control": "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 show b2ee2ac382ce06763798a7238e4fd5c9411fcfaa:app/Http/Controllers/IndexController.php | sed -n '/public function demoForm/,/public function trialForm/p' | sed -n '/\\$rule = \\[/,/\\];/p' | grep -c 'job_title\\|interests\\|estates_amount' → 0，確認職稱／感興趣功能／物件數量這些畫面上必填的欄位完全沒有出現在後端驗證規則裡"
+       "grep": "sed -n '/public function demoForm/,/public function trialForm/p' /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/app/Http/Controllers/IndexController.php | grep -cE \"'(job_title|country|estates_amount|team_member_amount|interests|consultation_content)' => '?required\"",
+       "result": "0（demoForm() 的驗證規則裡沒有職稱、物件所在地、物件數量、團隊人數、最有興趣的功能、諮詢內容任何一項）",
+       "positive_control": "(sed -n '/public function demoForm/,/public function trialForm/p' /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/app/Http/Controllers/IndexController.php | sed -n '/\\$rule = \\[/,/\\];/p') | grep -c \"=>\" → 4"
+      },
+      {
+       "grep": "sed -n '27,42p' /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/src/pages/listings/DemoForm.vue | grep -c \"isPrivacyCheck\"",
+       "result": "0（送出給系統端的 request 物件裡沒有隱私權政策的勾選狀態）",
+       "positive_control": "sed -n '27,42p' /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/src/pages/listings/DemoForm.vue | grep -c \"company_name\" → 1"
+      },
+      {
+       "grep": "grep -c \"isPrivacyCheck\" /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/app/Http/Controllers/IndexController.php",
+       "result": "0（系統端程式完全沒有處理隱私權政策勾選）",
+       "positive_control": "grep -c \"company_name\" /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/app/Http/Controllers/IndexController.php → 4"
       }
      ],
      "open_questions": []

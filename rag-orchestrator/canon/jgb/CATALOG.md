@@ -27,12 +27,12 @@ jgb/A/login-identity-switch｜同一帳號同時有房東與租客身分時怎�
 ### A-account-recovery 忘記帳號、忘記密碼 {#A-account-recovery}
 jgb/A/forget-account-flow｜忘記帳號怎麼辦？（用已綁定的手機號碼簡訊驗證找回 Email 提示）｜target_user=property_manager｜
 jgb/A/forget-account-no-phone｜沒綁手機號碼還能用「忘記帳號」找回嗎？（不行，只能靠手機簡訊驗證）｜target_user=property_manager｜
-jgb/A/forget-password-flow｜忘記密碼怎麼辦？（Email 或手機任一驗證後即可重設新密碼）｜target_user=property_manager｜
+jgb/A/forget-password-flow｜忘記密碼怎麼重設？（Email 或手機號碼擇一驗證帳號、輸入驗證碼後設定新密碼，設定完成一般會直接登入）｜target_user=property_manager｜
 jgb/A/forget-password-setpwd-invite｜「請設定密碼」畫面是什麼情境？（受邀請帳號的初次設定密碼流程）｜target_user=property_manager｜
 ### A-member-home 會員中心首頁 {#A-member-home}
 jgb/A/dashboard-overview-blocks｜會員中心首頁有哪些統計區塊？（即時物件出租率、即將到期合約、即將到來應到帳帳單、7日內修繕單）｜target_user=property_manager｜
 jgb/A/dashboard-overview-charts｜首頁的圖表看得到什麼？（招租／買賣廣告刊登率圓環圖、收支情況圖）｜target_user=property_manager｜
-jgb/A/dashboard-overview-lists｜首頁下方還有哪些列表？（帳單、合約、修繕整合列表，具通知權限者另有 Email 通知紀錄）｜target_user=property_manager｜
+jgb/A/dashboard-overview-lists｜房東首頁下方還有哪些列表？（帳單與合約整合列表，具查看所有通知權限者另有系統代發送 E-mail 區塊；大房東首頁沒有）｜target_user=property_manager｜
 jgb/A/dashboard-big-landlord-view｜大房東的首頁畫面和一般房東不一樣嗎？（沒有捷徑與四個統計方塊）｜target_user=property_manager｜
 jgb/A/dashboard-team-switch｜怎麼在會員中心首頁切換團隊？（左上角下拉選單選擇被加入的團隊）｜target_user=property_manager｜
 jgb/A/dashboard-occupancy-tab｜首頁的「滿租率(beta)」頁簽是什麼？（限定開放的社區收入統計，非所有團隊都看得到）｜target_user=property_manager｜
@@ -50,7 +50,7 @@ jgb/A/account-progress-unlock｜帳號資訊頁有「資訊完整度」進度條
 jgb/A/account-save-integrity-check｜帳號資訊頁儲存失敗會提示什麼？（頁面沒有完整載入時會提醒重新整理再儲存）｜target_user=property_manager｜
 jgb/A/account-change-password-rules｜在帳號資訊頁改密碼，新密碼有什麼規則？（至少 6 個字元、需與確認新密碼一致；英數混合在這裡只是提示）｜target_user=property_manager｜
 ### A-signer-info 簽約資訊（證件、身分證號、戶籍地址；公司統編與大小章） {#A-signer-info}
-jgb/A/signer-individual-fields｜個人房東的簽約資訊要填什麼？（姓氏、名稱、身分證字號、Email、手機、身分證正反面）｜target_user=property_manager,prospect｜
+jgb/A/signer-individual-fields｜個人房東的簽約資訊要填哪些欄位？（姓氏、名稱、身分證字號、Email、手機號碼、戶籍地址、通訊地址標示必填，身分證正反面照片與其他附件為選填）｜target_user=property_manager,prospect｜
 jgb/A/signer-corp-fields｜公司身分的簽約資訊要填什麼？（公司名稱、統編、負責人、公司電話/Email、登記證資料）｜target_user=property_manager,prospect｜
 jgb/A/signer-corp-seals｜公司身分可以上傳哪些印章與證件附件？（公司大章、小章、經紀人章、經紀業章、租賃管理員章，皆為選填）｜target_user=property_manager,prospect｜
 jgb/A/signer-broker-manager-fields｜有不動產經紀人／租賃管理人員資格要多填什麼？（經紀人證號、租賃管理人員證號等）｜target_user=property_manager,prospect｜
@@ -102,7 +102,7 @@ jgb/B/member-role-edit-reset｜編輯角色時的「重設條件」按鈕是做�
 jgb/B/member-list-sort｜成員列表可以怎麼排序？（姓名、加入時間、手機號碼、Email、角色名稱各有正反兩種排序）｜target_user=property_manager｜
 jgb/B/member-list-role-select-disabled｜為什麼「團隊擁有者」和自己那一列的角色下拉不能改？（這兩列是固定顯示在列表最上面、角色下拉是鎖住的，跟其他成員分開處理）｜target_user=property_manager｜
 ### B-biglandlord-list 大房東列表與授權物件 {#B-biglandlord-list}
-jgb/B/biglandlord-list-overview｜大房東列表可以看到哪些欄位？（ID、姓名、會員註冊、身分證字號、生日、主要聯絡方式、帳戶資訊、合作方式、合作起迄、所屬物件）｜target_user=property_manager｜
+jgb/B/biglandlord-list-overview｜大房東列表有哪些欄位？（ID、姓名、會員註冊、Email、手機號碼、身分證字號、地址、帳戶名稱、帳戶資訊、合作方式、合作起迄、所屬物件、生日、主要聯絡方式，其中生日與主要聯絡方式目前每筆都顯示「-」）｜target_user=property_manager｜
 jgb/B/biglandlord-add｜怎麼新增大房東？（已註冊會員填 Email 即可，未註冊只要填姓氏與名稱，Email 選填）｜target_user=property_manager｜
 jgb/B/biglandlord-authorize-estates｜大房東的「授權物件」怎麼設定？（逐筆物件勾選瀏覽廣告／合約／帳務／修繕；合約要先勾廣告，帳務要先勾廣告＋合約，修繕沒有前提）｜target_user=property_manager｜
 jgb/B/biglandlord-import-export｜大房東名單可以批次匯入或匯出嗎？（可以，Excel 匯入新增、Excel 匯出下載）｜target_user=property_manager,prospect｜
@@ -118,7 +118,7 @@ jgb/B/biglandlord-report-overview｜大房東報表可以看到什麼？（依�
 jgb/B/biglandlord-report-permission｜誰看得到大房東報表？（法人房東與社宅團隊身分，且角色要有「查看大房東報表」權限）｜target_user=property_manager｜
 jgb/B/biglandlord-report-community-rate｜大房東報表可以依社區細看嗎？（報表清單有「社區」欄）｜target_user=property_manager｜
 ### B-biglandlord-sheet 大房東對帳表 {#B-biglandlord-sheet}
-jgb/B/biglandlord-sheet-overview｜大房東對帳表在算什麼？（只有特定合作團隊看得到完整的押金、屋主資金、屋主提領、屋主直收等類別金額，其他團隊只看得到屋主租金收支；單月報表才有「上一月」「下一月」「下載」，整年度報表是「匯出報表」）｜target_user=property_manager｜
+jgb/B/biglandlord-sheet-overview｜大房東對帳表在算什麼？（依年度列出屋主的收入與支出，年度表每月一欄；一般團隊是屋主租金收入與支出，特定合作團隊的資金版報表另有押金、屋主提領、屋主直收等區塊）｜target_user=property_manager｜
 jgb/B/biglandlord-sheet-empty｜對帳表顯示「尚未被指派物件」是什麼意思？（這位大房東還沒被授權任何物件）｜target_user=property_manager｜
 jgb/B/biglandlord-sheet-multi-currency｜對帳表出現「本月含多幣別帳單」提示是什麼意思？（該月的帳單有不同幣別，已用結算幣別加總）｜target_user=property_manager｜
 jgb/B/biglandlord-sheet-hide-empty-rows｜對帳表可以隱藏沒有金額的項目嗎？（可以開關「隱藏空值項目」）｜target_user=property_manager｜
@@ -128,7 +128,7 @@ jgb/B/biglandlord-sheet-aside-and-loading｜大房東對帳表頁面的側邊選
 ### B-advanced-settings 進階設定（費用項目、租金折扣、滯納金、補充條款範本、自訂標籤、時區語系；介面路徑「團隊管理 > 進階設定」） {#B-advanced-settings}
 jgb/B/advance-fee-items｜「帳單自訂費用項目」怎麼設定？（分收入類／支出類，必填性質與自定義名稱，會科品項代號選填）｜target_user=property_manager｜
 jgb/B/advance-discount-items｜進階設定的「優惠項目」是給誰用的？（只有部分特定合作團隊才看得到，可設定折扣套用在租金費用上）｜target_user=property_manager,prospect｜
-jgb/B/advance-late-fee｜進階設定的「延遲金設置」怎麼計算？（只有特定合作團隊看得到，公式是租金 × (逾期天數 - 緩衝天數) × 延遲金%）｜target_user=property_manager,prospect｜
+jgb/B/advance-late-fee｜進階設定的「延遲金設置」是什麼、延遲金怎麼算？（只有特定合作團隊看得到；合約建立時帶入團隊設定，租金帳單逾期付款後才產生延遲金帳單，金額＝租金 ×（逾期天數 − 緩衝天數）× 延遲金百分比）｜target_user=property_manager,prospect｜
 jgb/B/advance-additional-terms｜「預設補充條款」怎麼設定？（最多可以設 3 組，編輯合約時直接選用）｜target_user=property_manager,prospect｜
 jgb/B/advance-custom-label｜「標籤設定」是做什麼用的？（幫物件加自訂標籤，單個標籤輸入框最多收 9 個字元）｜target_user=property_manager,prospect｜
 jgb/B/advance-device-binding｜怎麼綁定智能裝置廠商？（輸入裝置廠商帳號密碼完成綁定，之後可在 JGB 平台管理裝置）｜target_user=property_manager｜
@@ -228,7 +228,7 @@ jgb/C/estate-rent-detail-tenant-conditions｜招租條件要求可以設定什�
 jgb/C/estate-rent-contact-agency-info｜刊登主資訊的團隊資訊要在哪裡修改？（法人／社宅房東顯示公司資訊、到團隊資訊修改；個人房東顯示經理人資訊、到帳號資訊修改）｜target_user=property_manager｜
 jgb/C/estate-rent-contact-manager-and-hide｜招租廣告可以隱藏經理人／房東的名稱、電話、Email嗎？（勾選框在「經理人資訊」或「刊登主資訊」的經理人卡片上，每種身分只有一組）｜target_user=property_manager,prospect｜
 jgb/C/estate-rent-verify-legal｜招租的核實訊息是什麼？（依租賃住宅市場發展條例核實產權登記與違建面積）｜target_user=property_manager,prospect｜
-jgb/C/estate-rent-open-permission-and-validation｜為什麼物件刊登不出去？（需要刊登物件或新增物件的權限；必填欄位沒填完會退回編輯頁）｜target_user=property_manager｜
+jgb/C/estate-rent-open-permission-and-validation｜為什麼物件的招租廣告刊登不出去？（沒有刊登權限、團隊沒有生效中的訂閱方案、或物件資料檢查沒通過）｜target_user=property_manager｜
 jgb/C/estate-rent-detail-price-and-tax｜招租詳情要填哪些金額相關欄位？（面積、幣別、每月租金；特定合作團隊另有營業稅：應稅／零稅率／免稅）｜target_user=property_manager｜
 ### C-estate-dashboard 物件儀表板（招租表現、合約歷程、帳務收支、修繕紀錄、附件清單、房東流水帳、合約附件、物件記事本、每月報表、每月對帳單；入口直接轉到招租表現） {#C-estate-dashboard}
 jgb/C/estate-dashboard-entry-and-groups｜物件儀表板進去預設是哪個分頁？（一般預設招租表現，大房東直接進合約歷程；大房東看不到「限管理者查看」分頁群組）｜target_user=property_manager｜
@@ -384,7 +384,7 @@ jgb/E/bill-actions-draft｜「草稿」狀態的帳單可以做哪些動作？�
 jgb/E/bill-actions-scheduled｜「排定發送」狀態的帳單可以做哪些動作？（只有「取消排定發送」）｜target_user=property_manager｜
 jgb/E/bill-actions-archived｜「封存」狀態的帳單可以做哪些動作？（沒有任何動作，齒輪選單是空的）｜target_user=property_manager｜
 jgb/E/bill-actions-unreceived｜「應到帳」狀態的收款帳單可以做哪些動作？（匯款資訊／移至已到帳／開立發票／取消帳單）｜target_user=property_manager｜
-jgb/E/bill-actions-progress｜「待對帳」狀態的收款帳單可以做哪些動作？（退至應到帳／移至已到帳／開立發票，沒有取消帳單）｜target_user=property_manager｜
+jgb/E/bill-actions-progress｜「待對帳」狀態的收款帳單可以做哪些動作？（單張可退至應到帳、移至已到帳、開立發票，沒有取消帳單；批次沒有退至應到帳）｜target_user=property_manager｜
 jgb/E/bill-actions-received｜「已到帳」狀態的收款帳單可以做哪些動作？（收款備註／發票／收據／退款對帳單）｜target_user=property_manager｜
 jgb/E/bill-actions-expense-unpaid｜「應支出」狀態的支出帳單，房東跟租客各能做什麼？（房東：前往付款／通知已匯款／取消帳單；租客：付款）｜target_user=property_manager｜
 jgb/E/bill-actions-expense-unconfirmed｜「待對帳」狀態的支出帳單，房東跟租客各能做什麼？（房東：前往付款／通知已匯款／取消帳單；租客：沒有齒輪動作）｜target_user=property_manager｜
@@ -465,7 +465,7 @@ jgb/E/recharge-account-estate-binding-validation｜虛擬帳號綁定物件時�
 jgb/E/recharge-account-export｜「固定虛擬帳號管理」的「報表匯出」匯出什麼？（指定日期區間內租客匯入的入帳明細 Excel）｜target_user=property_manager｜
 jgb/E/recharge-account-daily-settlement｜固定虛擬帳號的入帳是怎麼自動比對到帳單的？（入金當下即時銷帳，另有每日凌晨 03:00 排程再比對；限特定合作團隊；餘額不夠不會變成已到帳）｜target_user=property_manager｜
 jgb/E/recharge-account-refund-excluded｜退押金這類要付給租客的帳單，也走固定虛擬帳號嗎？（不會，顯示的是租客本人的收款帳戶）｜target_user=property_manager｜
-jgb/E/recharge-account-vs-single-use-atm｜「固定虛擬帳號管理」跟租客線上繳費產生的 ATM 虛擬帳號是同一種嗎？（不是，ATM 那組是單筆繳費用、效期 180 天）｜target_user=property_manager｜
+jgb/E/recharge-account-vs-single-use-atm｜「固定虛擬帳號管理」跟租客線上繳費取得的 ATM 虛擬帳號是同一種嗎？（不是，線上繳費的 ATM 帳號是依單張帳單單筆取號，藍新取號的效期為 180 天）｜target_user=property_manager｜
 jgb/E/recharge-account-mismatch-and-duplicate｜租客重複匯款時系統怎麼處理？（國泰世華單筆帳單 ATM 帳號已付款後重複匯入會略過；固定虛擬帳號多匯的部分留在儲值餘額）｜target_user=property_manager｜
 jgb/E/recharge-account-regenerate-expired｜逾期的虛擬帳號能不能重新產生？（此操作需由 JGB 客服協助，業者端沒有自助入口）｜target_user=property_manager｜
 ### E-payment-onboarding 線上金流收款帳號開通（藍新、中信；入口在「線上智能整合收款」頁的「開通帳號」） {#E-payment-onboarding}
@@ -532,7 +532,7 @@ jgb/G/power-meter-vendor-unreachable｜電錶顯示目前連不上廠商怎麼�
 jgb/G/power-meter-service-expiry｜電錶顯示「服務到期」怎麼辦？（30 天內到期會提醒續訂；只有業者看得到，只出現在清單頁）｜target_user=property_manager｜
 jgb/G/power-meter-list-row-fields｜電錶清單每一列顯示什麼？（型號序號、目前電度、狀態、所屬物件；儲值型才有預計可用電度與低電度警報）｜target_user=property_manager｜
 jgb/G/power-meter-usage-chart-export｜電錶清單列展開後能看什麼？（用電量走勢圖可選 1/7/30/90 天；CSV 只能下載前 90 天）｜target_user=property_manager｜
-jgb/G/power-meter-single-edit-tabs｜電錶編輯頁能改什麼？（儲值型有基本設定／電錶資料／開立發票三個頁籤，一般型只有基本設定）｜target_user=property_manager｜
+jgb/G/power-meter-single-edit-tabs｜電錶編輯頁能改什麼？（描述、綁定物件、供電狀態；儲值型另有電錶資料頁籤，帳號開通自動開立發票時還有開立發票頁籤；租客只能看不能改）｜target_user=property_manager｜
 jgb/G/power-meter-single-estate-single-bind｜一支電錶只能綁一個物件？（選擇物件的挑選頁是單選，選了一個之後其他物件會被鎖住不能再選）｜target_user=property_manager｜
 jgb/G/power-meter-mode-switch｜怎麼切換電錶的供電狀態？（一般型：供電／斷電；儲值型：儲值／強開／斷電，切換中鎖按鈕只有儲值型有）｜target_user=property_manager｜
 jgb/G/power-meter-basic-info-fields｜電錶資料頁的餘額、費率、預計可用電度怎麼看？（只有儲值型電錶才有這個頁籤；費率由雲端儲值系統設定，可用電度＝餘額÷費率）｜target_user=property_manager｜
@@ -598,10 +598,10 @@ jgb/I/payment-bill-e-invoice-setup｜帳單怎麼開電子發票？（要先聯�
 jgb/I/payment-permission-menu-visibility｜沒有查看權限會怎樣？（收款設置與訂閱方案選單整個不會出現）｜target_user=property_manager｜
 jgb/I/payment-bill-autosend-and-recipient｜帳單可以自動排程發送、指定收款人嗎？（提前 0～20 天自動發送，收款人可選原簽約者／主要經理人／自訂）｜target_user=property_manager｜
 ### I-demo-booking 預約 demo {#I-demo-booking}
-jgb/I/demo-form-fields｜預約 demo 表單要填什麼？（公司、職稱、聯絡方式、物件所在地、感興趣功能與諮詢內容）｜target_user=property_manager,prospect｜
+jgb/I/demo-form-fields｜預約 demo 表單要填什麼？（公司名稱、職稱、姓名、電話、Email、物件所在地、物件數量、團隊人數、最有興趣的功能、諮詢內容，並勾選同意隱私權政策）｜target_user=property_manager,prospect｜
 jgb/I/demo-form-option-lists｜demo 表單的下拉選項有哪些？（物件數量 7 級距、團隊人數 6 級距、感興趣功能 6 項）｜target_user=property_manager,prospect｜
 jgb/I/demo-form-submit-result｜demo 表單送出後多久有人聯繫？（顯示感謝頁，2-3 個工作天內專人聯繫）｜target_user=property_manager,prospect｜
-jgb/I/demo-form-actual-validation-scope｜demo 表單哪些欄位真的會被系統擋下？（畫面上全部欄位都要填才能送出；系統端只再檢查公司、姓名、電話、Email 四項）｜target_user=property_manager｜
+jgb/I/demo-form-actual-validation-scope｜demo 表單漏填欄位時，系統端會擋下哪些？（送出後系統端只檢查公司名稱、姓名、電話、Email 四項，其餘欄位空白不會被系統端退回）｜target_user=property_manager｜
 ### I-control-panel 控制台（設定、通知信範本、自動化任務） {#I-control-panel}
 jgb/I/control-panel-entry-scope｜控制台首頁目前能用什麼？（目前只有「任務管理器」一個項目可以點擊進入，而且只開放給特定合作團隊）｜target_user=property_manager｜
 jgb/I/control-panel-setting-shell｜進入控制台設定後看到什麼？（上方三層麵包屑與左側「控制台」側邊欄，內容是任務管理器、新增／編輯任務或通知信設定頁）｜target_user=property_manager｜

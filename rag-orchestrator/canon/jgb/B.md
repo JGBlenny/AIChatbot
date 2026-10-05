@@ -334,19 +334,21 @@ language: zh-TW
 成員列表最上面會固定顯示「團隊擁有者」與「自己（登入帳號本人）」各一列，如果登入帳號本人就是團隊擁有者則只顯示一列；這兩列各自的角色下拉選單是鎖住的、不能點選變更。
 「團隊擁有者」是系統內建的固定角色，不會出現在成員的角色下拉選單裡。
 ## 大房東列表與授權物件 {#B-biglandlord-list}
-### 大房東列表可以看到哪些欄位？（ID、姓名、會員註冊、身分證字號、生日、主要聯絡方式、帳戶資訊、合作方式、合作起迄、所屬物件） {#jgb/B/biglandlord-list-overview}
+### 大房東列表有哪些欄位？（ID、姓名、會員註冊、Email、手機號碼、身分證字號、地址、帳戶名稱、帳戶資訊、合作方式、合作起迄、所屬物件、生日、主要聯絡方式，其中生日與主要聯絡方式目前每筆都顯示「-」） {#jgb/B/biglandlord-list-overview}
 - phrasings:
   - {text: "大房東列表有哪些欄位", source: "draft:outline-20260920", status: proposed}
   - {text: "大房東資料看得到什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "大房東的合作起迄怎麼看", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/bigLandlords/list/_parts/ListTable.vue]
-- reviewed: {by: owner, at: 2026-09-28}
+- sources: [code:src/pages/bigLandlords/list/_parts/ListTable.vue, code:app/Services/BigLandlordService.php, code:src/utils/surelyVue/bigLandlord.ts, code:src/components/SurelyVue/BigLandlord/IsRegisteredCell.vue, code:src/components/SurelyVue/BigLandlord/RelatedEstateCell.vue, code:src/components/SurelyVue/BigLandlord/NameCell.vue, code:src/components/SurelyVue/Common/TextBlockCell.vue, code:src/routes/bigLandlords.js, code:src/pages/bigLandlords/list/_parts/owned.jsx]
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-大房東列表的每一筆資料會顯示 ID、姓名、會員註冊、Email、手機號碼、身分證字號、地址、帳戶名稱與帳戶資訊。
-另外還會顯示合作方式、合作起迄日期、這位大房東目前被授權的所屬物件數量，以及生日、主要聯絡方式。
-點擊姓名可以開啟這位大房東的聯絡資訊卡。
+大房東列表由左至右的欄位是：ID、姓名、會員註冊、Email、手機號碼、身分證字號、地址、帳戶名稱、帳戶資訊、合作方式、合作起迄、所屬物件、生日、主要聯絡方式，最右邊另有每一列的操作欄。
+「會員註冊」欄是一個圓點：綠色代表這位大房東已完成註冊或驗證，灰色代表還沒有。
+「所屬物件」欄顯示授權給這位大房東的物件數量（括號裡的數字），點下去會進到這位大房東的授權物件頁。
+點擊「姓名」欄的名字會開啟這位大房東的聯絡資訊卡。
+「生日」「主要聯絡方式」兩欄目前每一筆都只顯示「-」，不會顯示內容。
 ### 怎麼新增大房東？（已註冊會員填 Email 即可，未註冊只要填姓氏與名稱，Email 選填） {#jgb/B/biglandlord-add}
 - phrasings:
   - {text: "怎麼新增大房東", source: "draft:outline-20260920", status: proposed}
@@ -507,19 +509,22 @@ language: zh-TW
 - instance_applicability: general
 大房東報表清單有一欄「社區」，顯示這位大房東名下的社區數量，點擊數字會開啟社區清單。
 ## 大房東對帳表 {#B-biglandlord-sheet}
-### 大房東對帳表在算什麼？（只有特定合作團隊看得到完整的押金、屋主資金、屋主提領、屋主直收等類別金額，其他團隊只看得到屋主租金收支；單月報表才有「上一月」「下一月」「下載」，整年度報表是「匯出報表」） {#jgb/B/biglandlord-sheet-overview}
+### 大房東對帳表在算什麼？（依年度列出屋主的收入與支出，年度表每月一欄；一般團隊是屋主租金收入與支出，特定合作團隊的資金版報表另有押金、屋主提領、屋主直收等區塊） {#jgb/B/biglandlord-sheet-overview}
 - phrasings:
   - {text: "大房東對帳表看什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "對帳表怎麼看押金收支", source: "draft:outline-20260920", status: proposed}
-  - {text: "對帳表可以下載嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "對帳表怎麼切換月份", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/bigLandlords/sheet/_parts/Sheet.vue, code:src/pages/bigLandlords/sheet/index.vue]
-- reviewed: {by: owner, at: 2026-09-28}
+  - {text: "對帳表在算什麼", source: "draft:outline-20260920", status: proposed}
+  - {text: "對帳表的總結餘怎麼算", source: "draft:outline-20260920", status: proposed}
+- sources: [code:src/pages/bigLandlords/sheet/_parts/Sheet.vue, code:src/pages/bigLandlords/sheet/index.vue, code:src/pages/bigLandlords/sheet/_parts/monthlyReport/Index.vue, code:src/pages/bigLandlords/sheet/_parts/monthlyReport/TableInfo.vue, code:src/pages/bigLandlords/sheet/_parts/monthlyReport/EstateList.vue, code:src/pages/bigLandlords/sheet/_parts/monthlyReport/ReconciliationTerm.vue, code:src/pages/bigLandlords/sheet/_parts/monthlyReport/DepositList.vue, code:src/pages/bigLandlords/sheet/_parts/monthlyReport/EZoneCashflow.vue, code:src/pages/bigLandlords/sheet/_parts/monthlyReport/PropertyManagingReconciliation.vue, code:src/pages/bigLandlords/sheet/_parts/monthlyReport/OwnerWithdrawalCashflow.vue, code:src/pages/bigLandlords/sheet/_parts/monthlyReport/OwnerDirectReceiveCashflow.vue, code:src/pages/bigLandlords/sheet/_parts/monthlyReport/RemarkOfOwner.vue]
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-對帳表以月份為單位列出各類別金額；只有特定合作團隊看得到完整的押金收入／支出、屋主資金收入／支出、屋主提領、屋主直收收入／支出等類別，其他團隊只看得到「屋主租金收入」「屋主租金支出」（部分團隊的用語會改顯示為「租金收入」「本期支出」）。
-「上一月」「下一月」「下載」「取消」這幾個按鈕只出現在單月報表畫面（網址帶 1 到 12 月其中一個月份參數）；查看整年度對帳表時看到的不是這幾個按鈕，而是可以切換年份、匯出整年度資料的「匯出報表」按鈕。
+大房東對帳表是針對一位大房東、依年度整理的屋主收支報表：年度表每個月一欄（1月到12月），各區塊列出每個月的金額；單月對帳單則列出該月的明細，抬頭是「屋主租金對帳單」（採資金版報表的特定合作團隊是「屋主資金對帳單」）。
+年度表的區塊依團隊類型而不同：一般團隊是「屋主租金收入」「屋主租金支出」兩個區塊；採資金版報表的特定合作團隊是「押金收入」「押金支出」「屋主資金收入」「屋主資金支出」「屋主提領」「屋主直收收入」「屋主直收支出」七個區塊；部分團隊的用語會改顯示為「租金收入」「本期支出」。
+單月對帳單最上方有屋主名稱與製表人，往下所有團隊都有「物件清單」「記帳期間」「押金」三個區塊；一般團隊接著是「屋主租金」區塊，採資金版報表的特定合作團隊則接著是「屋主資金」「屋主提領」「屋主直收」三個區塊與備註。
+「記帳期間」區塊列出該月的記帳起訖日，以及本期屋主租金收入、本期屋主租金支出、本期屋主租金總結餘、上期屋主租金結餘、流水帳結餘與可調動租金（採資金版報表的特定合作團隊，用語是「屋主資金」「可調動資金」）；部分團隊的用語會改成「租金收入」「本期支出」，並隱藏上期結餘、總結餘與可調動租金。
+有顯示總結餘的一般團隊，總結餘的算法是上期結餘加屋主租金收入、減屋主租金支出（報表上寫成「總結餘（上期結餘 + 屋主租金收入 - 屋主租金支出）」）。
 ### 對帳表顯示「尚未被指派物件」是什麼意思？（這位大房東還沒被授權任何物件） {#jgb/B/biglandlord-sheet-empty}
 - phrasings:
   - {text: "對帳表沒資料怎麼辦", source: "draft:outline-20260920", status: proposed}
@@ -616,20 +621,23 @@ language: zh-TW
 - instance_applicability: general
 進階設定「合約管理」區塊的「優惠項目」只會顯示給部分特定合作團隊，一般團隊的進階設定沒有這個設定。
 有這個設定的團隊最多可以建立 10 組優惠項目（其中一個特定合作團隊的上限是 30 組），在計算租金費用時套用折扣。
-### 進階設定的「延遲金設置」怎麼計算？（只有特定合作團隊看得到，公式是租金 × (逾期天數 - 緩衝天數) × 延遲金%） {#jgb/B/advance-late-fee}
+### 進階設定的「延遲金設置」是什麼、延遲金怎麼算？（只有特定合作團隊看得到；合約建立時帶入團隊設定，租金帳單逾期付款後才產生延遲金帳單，金額＝租金 ×（逾期天數 − 緩衝天數）× 延遲金百分比） {#jgb/B/advance-late-fee}
 - phrasings:
   - {text: "進階設定有滯納金設定嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "延遲金怎麼算", source: "draft:outline-20260920", status: proposed}
   - {text: "逾期繳費會產生什麼費用", source: "draft:outline-20260920", status: proposed}
   - {text: "延遲金設置在哪", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/users/advance/Index.jsx]
-- reviewed: {by: owner, at: 2026-09-29}
+- sources: [code:src/pages/users/advance/Index.jsx, code:app/Bill.php, code:app/Http/Controllers/UserController.php, code:app/Contract.php]
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
-「延遲金設置」只會出現在特定合作團隊的進階設定裡，一般團隊沒有這個設定。
-有這個設定的團隊可以開啟或關閉延遲金功能，並設定緩衝天數與延遲金百分比。
-開啟後，租客逾期繳租超過緩衝天數，系統會自動計算延遲金並產生一筆帳單，這筆帳單的繳費截止日就是合約的終止日；計算公式是：租金 ×（逾期天數 - 緩衝天數）× 延遲金百分比。
+進階設定裡的「延遲金設置」區塊只會出現在特定合作團隊，一般團隊沒有這個設定。
+有這個區塊的團隊可以用「啟用」開關開啟或關閉延遲金，區塊裡會顯示「緩衝天數」與「延遲金」百分比，啟用後可按「編輯延遲金設置」修改；送出變更時，團隊若有設定簽核流程就送簽核，沒有則直接更新。
+延遲金是在租金帳單逾期付款之後才產生：這張租金帳單所屬合約已啟用延遲金、帳單已到帳，而且付款日比繳費期限晚、超過緩衝天數時，系統會自動為同一位租客再產生一張延遲金帳單，並直接送到應到帳；這張延遲金帳單的繳費期限是產生當天。
+只有型態是一般租金的帳單會觸發延遲金，點退帳單、手動新增的帳單、罰款帳單、儲值帳單與押金設算息帳單都不會。
+延遲金金額的算法是：這張租金帳單的租金項目金額 ×（逾期天數 - 緩衝天數）× 延遲金百分比，逾期天數是付款日比繳費期限晚的天數。
+是否產生延遲金、緩衝天數與延遲金百分比，看的是合約上的設定：合約建立時才從團隊目前的設定複製一份到合約，團隊之後再開啟或修改設定，已建立的合約不會跟著改變，所以團隊開啟延遲金之前就建立的合約不會產生延遲金帳單。
 ### 「預設補充條款」怎麼設定？（最多可以設 3 組，編輯合約時直接選用） {#jgb/B/advance-additional-terms}
 - phrasings:
   - {text: "補充條款範本怎麼設定", source: "draft:outline-20260920", status: proposed}

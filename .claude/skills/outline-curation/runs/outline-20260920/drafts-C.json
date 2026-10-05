@@ -3770,7 +3770,7 @@
     {
      "proposed_id": "jgb/C/estate-rent-open-permission-and-validation",
      "askable": "物件刊登不出去是什麼原因，欄位沒填完會怎樣",
-     "title": "為什麼物件刊登不出去？（需要刊登物件或新增物件的權限；必填欄位沒填完會退回編輯頁）",
+     "title": "為什麼物件的招租廣告刊登不出去？（沒有刊登權限、團隊沒有生效中的訂閱方案、或物件資料檢查沒通過）",
      "unit_ids": [
       "page:estates.edit.rent_detail",
       "page:estates.edit.rent_contact",
@@ -3786,39 +3786,407 @@
      "phrasings": [
       "物件刊登不出去",
       "刊登物件失敗原因",
-      "刊登物件需要什麼權限"
+      "刊登物件需要什麼權限",
+      "招租廣告刊登失敗"
      ],
      "sentences": [
-      "執行「刊登物件」的使用者，必須對這個物件有刊登物件或新增物件其中一種權限，否則系統會擋下並提示「您無法刊登此物件」。",
-      "如果物件還有必填欄位沒有填完整，系統會擋下這次刊登，自動導回物件編輯頁，並且把左側選單直接跳到缺欄位的那個分頁，提示需要補齊的錯誤訊息。"
+      "單一物件刊登招租廣告的流程是：在物件編輯最後一步按「預覽招租廣告」，或在物件總表按該物件選單的「刊登招租廣告」，進到預覽頁後再按「刊登」。",
+      "按下「刊登」後，系統會確認操作的人是不是這個物件的擁有者本人，或是否擁有「新增&編輯&刪除所屬物件」或「新增&編輯&刪除所有物件」權限；都不是時會擋下，導回物件列表並提示「您無法刊登此物件」。",
+      "目前登入的團隊沒有生效中的訂閱方案時，刊登也會被擋下，導回物件列表並跳出請先訂閱服務的提示視窗。",
+      "刊登前系統還會檢查物件資料是否填完整，沒通過就不會刊登，改導回物件編輯頁並顯示錯誤訊息；系統依序檢查各區，遇到第一個沒通過的區就停下並回報該區的問題。檢查的項目是：用途、建築類型、空間類型、地址（要填詳細地址；台灣、越南、菲律賓、柬埔寨、泰國的物件還要有縣市與區）、樓層、總樓層、坪數、物件標題（最多 60 字）、租金（要大於 0）；商用物件還要填座位數，特定合作團隊還要填公證費。",
+      "在物件總表勾選多個物件用「批次刊登招租廣告」時，每個物件各自做同樣的資料檢查，資料不齊全的物件會被跳過、不會刊登，其他物件照常刊登；這個批次選項需要「新增&編輯&刪除所有物件」權限才看得到。"
      ],
      "sources": [
-      "code:app/Http/Controllers/EstateController.php"
+      "code:src/pages/estates/edit/rent_contact/Index.vue",
+      "code:app/Http/Controllers/EstateController.php",
+      "code:src/pages/estates/list/Index.vue",
+      "code:resources/views/estate/show/navbar.blade.php",
+      "code:app/Estate.php",
+      "code:app/Http/Controllers/UserController.php",
+      "code:routes/web.php",
+      "code:app/Http/Middleware/SubscriptionCheck.php",
+      "code:resources/views/layouts/lightbox/general.blade.php",
+      "code:config/country.php",
+      "code:src/use/config/useEstateTypes.js",
+      "code:src/components/Lightbox/EstateBatchAdvertise.vue"
      ],
      "evidence": [
       {
        "sentence_index": 0,
+       "source": "code:src/pages/estates/edit/rent_contact/Index.vue",
+       "quote_or_symbol": ":next-text=\"t('預覽招租廣告')\" />"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/estates/edit/rent_contact/Index.vue",
+       "quote_or_symbol": "window.location.href = editStore.options?.links?.show_rent"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/EstateController.php",
+       "quote_or_symbol": "'text' => ___('刊登招租廣告'),"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/EstateController.php",
+       "quote_or_symbol": "'link' => route('estates.show', ['id' => $_estate->id]),"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/estates/list/Index.vue",
+       "quote_or_symbol": "label: t('物件總表'),"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:resources/views/estate/show/navbar.blade.php",
+       "quote_or_symbol": "<a class=\"btn btn-green\" href=\"{{$links['premises_publish']}}\">{{___('刊登')}}</a>"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/EstateController.php",
+       "quote_or_symbol": "$premisesOpenUrl = $estate->id ? route('estates.open', ['id' => $estate->id]) : '';"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/EstateController.php",
+       "quote_or_symbol": "$estate->hasPermission($user, 'add_estate');"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/EstateController.php",
+       "quote_or_symbol": "$estate->hasPermission($user, 'public_estate');"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/EstateController.php",
+       "quote_or_symbol": "if (!$publicEstate && !$addEstate) {"
+      },
+      {
+       "sentence_index": 1,
        "source": "code:app/Http/Controllers/EstateController.php",
        "quote_or_symbol": "'status-error' => ___('您無法刊登此物件')"
       },
       {
        "sentence_index": 1,
+       "source": "code:app/Estate.php",
+       "quote_or_symbol": "if ($this->user_id == $user->id) { # roleType === 'owner'"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "'g_add_estate' => ['add_estate'],"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "'g_edit_estate' => ['edit_estate', 'public_estate', 'assign_estate'],"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "'label'=> '新增&編輯&刪除所屬物件',"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "'label'=> '新增&編輯&刪除所有物件',"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:routes/web.php",
+       "quote_or_symbol": "Route::match(['get', 'post'], '/open/{id}', 'EstateController@open')->name('estates.open')->middleware('need_subscription');"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Middleware/SubscriptionCheck.php",
+       "quote_or_symbol": "case 'estates.open': // 擋刊登物件招租廣告"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Middleware/SubscriptionCheck.php",
+       "quote_or_symbol": "if (!$role->isSubscriptionActive()) {"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Middleware/SubscriptionCheck.php",
+       "quote_or_symbol": "session()->flash('lightbox-open', 'subscribedPlanIsFull');"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Middleware/SubscriptionCheck.php",
+       "quote_or_symbol": "return redirect()->route('estates.index');"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:resources/views/layouts/lightbox/general.blade.php",
+       "quote_or_symbol": "請先前往訂閱服務，即可享受所有您需要的功能！"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Http/Controllers/EstateController.php",
+       "quote_or_symbol": "if (($validateFields = $estate->validateFields()) && isset($validateFields['status']) && !$validateFields['status']) {"
+      },
+      {
+       "sentence_index": 3,
        "source": "code:app/Http/Controllers/EstateController.php",
        "quote_or_symbol": "return redirect()->route('estates.edit', ['id' => $estate->id])->with(["
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Http/Controllers/EstateController.php",
+       "quote_or_symbol": "'status-error' => $validateFields['errorMessage'],"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Estate.php",
+       "quote_or_symbol": "foreach ($rules as $premisesStepLv1Key => $premisesStepLv1) {"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Estate.php",
+       "quote_or_symbol": "// 刊登失敗"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Estate.php",
+       "quote_or_symbol": "'info.premises_use_for' => 'required',"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Estate.php",
+       "quote_or_symbol": "'info.building' => 'required',"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Estate.php",
+       "quote_or_symbol": "'info.space_type' => 'required',"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Estate.php",
+       "quote_or_symbol": "'info.address.city' => 'required_if:info.address.country,TW,VN,PH,KH,TH',"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Estate.php",
+       "quote_or_symbol": "'info.address.district' => 'required_if:info.address.country,TW,VN,PH,KH,TH',"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Estate.php",
+       "quote_or_symbol": "'info.address.detail' => 'required',"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Estate.php",
+       "quote_or_symbol": "'info.floor' => array('required',"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Estate.php",
+       "quote_or_symbol": "'info.floor_all' => array('required',"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Estate.php",
+       "quote_or_symbol": "'info.size' => array('required',"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Estate.php",
+       "quote_or_symbol": "'gallery.premises_title' => 'required|max:60',"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Estate.php",
+       "quote_or_symbol": "'rent.rent' => array('required',"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Estate.php",
+       "quote_or_symbol": "'gt:0'"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Estate.php",
+       "quote_or_symbol": "if ($this->use_for == 'business') {"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Estate.php",
+       "quote_or_symbol": "$rules['info']['facilities']['facilities.seats'] = 'required|numeric';"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Estate.php",
+       "quote_or_symbol": "if($this->role->hasNthurcPermission()){"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Estate.php",
+       "quote_or_symbol": "$rules['nthurc']['']['nthurc.nthurc_notarial_fee'] = array('required',"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Estate.php",
+       "quote_or_symbol": "'info.premises_use_for' => ___('用途'),"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Estate.php",
+       "quote_or_symbol": "'info.building' => ___('建築類型'),"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Estate.php",
+       "quote_or_symbol": "'info.space_type' => ___('空間類型'),"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Estate.php",
+       "quote_or_symbol": "'info.address.detail' => ___('地址'),"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Estate.php",
+       "quote_or_symbol": "'info.address.city' => ___('縣市'),"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Estate.php",
+       "quote_or_symbol": "'info.address.district' => ___('區'),"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Estate.php",
+       "quote_or_symbol": "'info.floor' => ___('樓層'),"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Estate.php",
+       "quote_or_symbol": "'info.floor_all' => ___('總樓層'),"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Estate.php",
+       "quote_or_symbol": "'info.size' => ___('坪數'),"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Estate.php",
+       "quote_or_symbol": "'gallery.premises_title' => ___('物件標題'),"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Estate.php",
+       "quote_or_symbol": "'rent.rent' => ___('租金'),"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Estate.php",
+       "quote_or_symbol": "'facilities.seats' => ___('座位數'),"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Estate.php",
+       "quote_or_symbol": "'nthurc.nthurc_notarial_fee' => ___('公證費'),"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:config/country.php",
+       "quote_or_symbol": "'name' => ('台灣'),"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:config/country.php",
+       "quote_or_symbol": "'name' => ('越南'),"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:config/country.php",
+       "quote_or_symbol": "'name' => ('菲律賓'),"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:config/country.php",
+       "quote_or_symbol": "'name' => ('柬埔寨'),"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:config/country.php",
+       "quote_or_symbol": "'name' => ('泰國'),"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/use/config/useEstateTypes.js",
+       "quote_or_symbol": "label: t('批次刊登招租廣告'),"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/use/config/useEstateTypes.js",
+       "quote_or_symbol": "permission: 'edit_estate',"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/use/config/useEstateTypes.js",
+       "quote_or_symbol": "return isEmpty(node.permission) || store.state.userData?.permission?.[node.permission]"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "'g_edit_estate' => ['edit_estate', 'public_estate', 'assign_estate'],"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:app/Estate.php",
+       "quote_or_symbol": "public static function batchOpenRent($parameter)"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:app/Estate.php",
+       "quote_or_symbol": "if (($validateFields = $LVestateData->validateFields()) && isset($validateFields['status']) && !$validateFields['status']) {"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:app/Estate.php",
+       "quote_or_symbol": "$failCount++;"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:app/Estate.php",
+       "quote_or_symbol": "$queryEstatesIds[$LVestateId]->is_open = 1;"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/components/Lightbox/EstateBatchAdvertise.vue",
+       "quote_or_symbol": "{ t('*廣告資訊不齊全的物件，將無法自動刊登廣告。')}"
       }
      ],
      "not_supported_greps": [
       {
-       "sentence_index": 0,
-       "grep": "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 show b2ee2ac382ce06763798a7238e4fd5c9411fcfaa:app/Http/Controllers/EstateController.php | grep -n \"您無法刊登此物件\"",
-       "result": "2 hits（第10347、10411行，分別是刊登物件與另一處相同的權限擋下邏輯）：`if (!\\$publicEstate && !\\$addEstate) { return redirect()->route('estates.index')->with(['status-error' => ___('您無法刊登此物件')]); }`",
-       "positive_control": "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 show b2ee2ac382ce06763798a7238e4fd5c9411fcfaa:app/Http/Controllers/EstateController.php | grep -nF \"public function open\" → 1 hit，證明 open() 這個刊登動作的函式本身確實存在、grep 條件本身有效"
+       "grep": "sed -n '10343,10350p' /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/app/Http/Controllers/EstateController.php | grep -c \"您無法刊登此物件\"",
+       "result": "1（沒有 add_estate 也沒有 public_estate 時，open() 直接導回物件列表並帶這句提示）",
+       "positive_control": "sed -n '10332,10342p' /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/app/Http/Controllers/EstateController.php | grep -c \"hasPermission\" → 2"
       },
       {
-       "sentence_index": 1,
-       "grep": "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 show b2ee2ac382ce06763798a7238e4fd5c9411fcfaa:app/Http/Controllers/EstateController.php | grep -nF \"validateFields()\"",
-       "result": "2 hits（第5751、10360行），第10360行就在 open() 函式內：`if (($validateFields = $estate->validateFields()) && isset($validateFields['status']) && !$validateFields['status']) { return redirect()->route('estates.edit', ...)->with(['premisesStep' => [...]]) }`，帶著 stepCurrent／stepCurrentSub 讓前端自動跳到缺欄位分頁",
-       "positive_control": "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 show b2ee2ac382ce06763798a7238e4fd5c9411fcfaa:app/Http/Controllers/EstateController.php | grep -n \"errorFields\" → 至少 1 hit，證明錯誤欄位回傳機制確實存在、grep 條件本身有效"
+       "grep": "sed -n '/case .estates.open.:/,/break;/p' /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/app/Http/Middleware/SubscriptionCheck.php | grep -c \"isSubscriptionActive\"",
+       "result": "1（estates.open 與新增、編輯物件等路由共用同一個訂閱有效性檢查，沒有生效中訂閱時導回物件列表）",
+       "positive_control": "grep -c \"isSubscriptionActive\" /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/app/Http/Middleware/SubscriptionCheck.php → 7"
+      },
+      {
+       "grep": "sed -n '10360,10369p' /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/app/Http/Controllers/EstateController.php | grep -c \"is_open = true\"",
+       "result": "0（欄位驗證失敗的區塊內（導回編輯頁之前）沒有把物件設為刊登中）",
+       "positive_control": "sed -n '10370,10376p' /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/app/Http/Controllers/EstateController.php | grep -c \"is_open = true\" → 1"
+      },
+      {
+       "grep": "sed -n '7088,7093p' /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/app/Estate.php | grep -c \"is_open = 1\"",
+       "result": "0（批次刊登中欄位驗證失敗的物件只計入失敗並 continue，沒有被設成刊登中）",
+       "positive_control": "sed -n '7108,7113p' /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/app/Estate.php | grep -c \"is_open = 1\" → 1"
+      },
+      {
+       "grep": "grep -c \"return isEmpty(node.permission) || store.state.userData?.permission?.\\[node.permission\\]\" /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/src/use/config/useEstateTypes.js",
+       "result": "1（批次選項依 permission 欄位濾掉，沒有 edit_estate 權限就看不到批次刊登招租廣告）",
+       "positive_control": "grep -c \"label: t('批次刊登招租廣告'),\" /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/src/use/config/useEstateTypes.js → 1"
       }
      ],
      "open_questions": []

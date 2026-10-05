@@ -737,18 +737,23 @@ language: zh-TW
 - instance_applicability: general
 核實訊息要求勾選「產權登記」是「已辦理」（租賃標的在地政機關有產權登記）還是「未辦理」（租賃標的在地政機關無產權登記）。
 內政部依照《住宅租賃市場發展條例》要求廣告內容應與事實相符，因此還要填寫租賃標的法定用途，以及未登記之改建、增建、加建、違建部分（分壹樓、所在樓層、頂樓、其他處所各自的面積）。
-### 為什麼物件刊登不出去？（需要刊登物件或新增物件的權限；必填欄位沒填完會退回編輯頁） {#jgb/C/estate-rent-open-permission-and-validation}
+### 為什麼物件的招租廣告刊登不出去？（沒有刊登權限、團隊沒有生效中的訂閱方案、或物件資料檢查沒通過） {#jgb/C/estate-rent-open-permission-and-validation}
 - phrasings:
   - {text: "物件刊登不出去", source: "draft:outline-20260920", status: proposed}
   - {text: "刊登物件失敗原因", source: "draft:outline-20260920", status: proposed}
   - {text: "刊登物件需要什麼權限", source: "draft:outline-20260920", status: proposed}
-- sources: [code:app/Http/Controllers/EstateController.php]
-- reviewed: {by: owner, at: 2026-09-28}
+  - {text: "招租廣告刊登失敗", source: "draft:outline-20260920", status: proposed}
+- sources: [code:src/pages/estates/edit/rent_contact/Index.vue, code:app/Http/Controllers/EstateController.php, code:src/pages/estates/list/Index.vue, code:resources/views/estate/show/navbar.blade.php, code:app/Estate.php, code:app/Http/Controllers/UserController.php, code:routes/web.php, code:app/Http/Middleware/SubscriptionCheck.php, code:resources/views/layouts/lightbox/general.blade.php, code:config/country.php, code:src/use/config/useEstateTypes.js, code:src/components/Lightbox/EstateBatchAdvertise.vue]
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-執行「刊登物件」的使用者，必須對這個物件有刊登物件或新增物件其中一種權限，否則系統會擋下並提示「您無法刊登此物件」。
-如果物件還有必填欄位沒有填完整，系統會擋下這次刊登，自動導回物件編輯頁，並且把左側選單直接跳到缺欄位的那個分頁，提示需要補齊的錯誤訊息。
+單一物件刊登招租廣告的流程是：在物件編輯最後一步按「預覽招租廣告」，或在物件總表按該物件選單的「刊登招租廣告」，進到預覽頁後再按「刊登」。
+按下「刊登」後，系統會確認操作的人是不是這個物件的擁有者本人，或是否擁有「新增&編輯&刪除所屬物件」或「新增&編輯&刪除所有物件」權限；都不是時會擋下，導回物件列表並提示「您無法刊登此物件」。
+目前登入的團隊沒有生效中的訂閱方案時，刊登也會被擋下，導回物件列表並跳出請先訂閱服務的提示視窗。
+刊登前系統還會檢查物件資料是否填完整，沒通過就不會刊登，改導回物件編輯頁並顯示錯誤訊息；系統依序檢查各區，遇到第一個沒通過的區就停下並回報該區的問題。
+檢查的項目是：用途、建築類型、空間類型、地址（要填詳細地址；台灣、越南、菲律賓、柬埔寨、泰國的物件還要有縣市與區）、樓層、總樓層、坪數、物件標題（最多 60 字）、租金（要大於 0）；商用物件還要填座位數，特定合作團隊還要填公證費。
+在物件總表勾選多個物件用「批次刊登招租廣告」時，每個物件各自做同樣的資料檢查，資料不齊全的物件會被跳過、不會刊登，其他物件照常刊登；這個批次選項需要「新增&編輯&刪除所有物件」權限才看得到。
 ### 招租詳情要填哪些金額相關欄位？（面積、幣別、每月租金；特定合作團隊另有營業稅：應稅／零稅率／免稅） {#jgb/C/estate-rent-detail-price-and-tax}
 - phrasings:
   - {text: "招租租金要填幣別嗎", source: "draft:outline-20260920", status: proposed}

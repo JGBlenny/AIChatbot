@@ -127,22 +127,24 @@ language: zh-TW
 - instance_applicability: general
 點一列可以展開看用電量走勢圖，時間區間可選 1 天、7 天、30 天、90 天。
 也可以匯出成 CSV，CSV 只能下載前 90 天的資料。
-### 電錶編輯頁能改什麼？（儲值型有基本設定／電錶資料／開立發票三個頁籤，一般型只有基本設定） {#jgb/G/power-meter-single-edit-tabs}
+### 電錶編輯頁能改什麼？（描述、綁定物件、供電狀態；儲值型另有電錶資料頁籤，帳號開通自動開立發票時還有開立發票頁籤；租客只能看不能改） {#jgb/G/power-meter-single-edit-tabs}
 - phrasings:
   - {text: "電錶編輯頁可以改什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "電錶設定有哪些頁籤", source: "draft:outline-20260920", status: proposed}
   - {text: "電錶怎麼改描述", source: "draft:outline-20260920", status: proposed}
-  - {text: "電錶發票設定在哪裡", source: "draft:outline-20260920", status: proposed}
+  - {text: "電錶發票設定在哪", source: "draft:outline-20260920", status: proposed}
   - {text: "一般型電錶編輯頁有電錶資料頁籤嗎", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/iots/_parts/Single.vue, code:src/utils/constants/iots.ts, code:src/pages/iots/edit/Log.jsx]
-- reviewed: {by: owner, at: 2026-09-28}
+- sources: [code:src/pages/iots/_parts/Single.vue, code:src/pages/iots/edit/Basic.jsx, code:src/utils/constants/iots.ts, code:src/helpers/iots.ts, code:src/pages/iots/_parts/PowerMeterInfo.jsx, code:src/pages/iots/edit/Log.jsx, code:src/styles/tailwind.sass]
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-編輯頁最上面可以修改這支電錶的描述文字，方便辨識，按儲存即生效。
-基本設定頁籤可以綁定或移除這支電錶所屬的物件；一般型電錶的編輯頁只有這一個頁籤。
-儲值型電錶才會多出電錶資料頁籤，裡面是這支電錶的基本資料（電號、餘額、費率、預計可用電度）、預設顯示的電錶儲值歷程（儲值時間、金額、儲值前後金額、操作者），以及另外點開才看得到的費率異動歷程。
-只有儲值型電錶、且帳號已開通自動開立發票的情況下，才會多出一個「開立發票」頁籤；租客登入時看不到這個頁籤。
+電錶編輯頁的「描述」欄可以修改這支電錶的描述文字（方便辨識），按「儲存」就生效；租客登入時描述欄是停用樣式，也沒有「儲存」按鈕。
+「基本設定」頁籤的「綁定物件」可以按「選擇物件」換掉這支電錶綁定的物件，按「儲存」生效；租客登入時看不到「選擇物件」、刪除叉叉與「儲存」。
+一般型電錶的編輯頁只有「基本設定」這一個頁籤。
+儲值型電錶多一個「電錶資料」頁籤，只能查看：上方的電錶基本資料有電號、目前餘額、費率、預計可用電度與最後連線成功時間（右上角有重新整理與畫面開啟時間），下方是電錶儲值歷程，另可點開費率異動歷程；這個頁籤沒有可以修改的欄位。
+儲值型電錶、非租客登入、而且帳號已開通自動開立發票時，才會再多一個「開立發票」頁籤；一般型電錶沒有這個頁籤。
+電錶連線中、非租客登入時，頁面上方還會有切換供電狀態的按鈕。
 ### 一支電錶只能綁一個物件？（選擇物件的挑選頁是單選，選了一個之後其他物件會被鎖住不能再選） {#jgb/G/power-meter-single-estate-single-bind}
 - phrasings:
   - {text: "電錶可以綁幾個物件", source: "draft:outline-20260920", status: proposed}

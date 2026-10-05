@@ -321,21 +321,23 @@ language: zh-TW
 忘記帳號功能的驗證方式只有手機簡訊驗證碼一種，沒有 Email 驗證選項。
 帳號如果沒有綁定手機號碼，就無法透過此頁面自助找回，畫面上直接提示改為聯繫 JGB 客服。
 手機號碼欄位在輸入過程中會即時顯示驗證結果（成功或錯誤提示），並依所選國碼提示號碼長度上限。
-### 忘記密碼怎麼辦？（Email 或手機任一驗證後即可重設新密碼） {#jgb/A/forget-password-flow}
+### 忘記密碼怎麼重設？（Email 或手機號碼擇一驗證帳號、輸入驗證碼後設定新密碼，設定完成一般會直接登入） {#jgb/A/forget-password-flow}
 - phrasings:
   - {text: "忘記密碼怎麼辦", source: "draft:outline-20260920", status: proposed}
   - {text: "重設密碼", source: "draft:outline-20260920", status: proposed}
   - {text: "密碼忘記了", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/users/auth/parts/forget/Password.vue, help:slug02_zh-Hant.html]
-- reviewed: {by: owner, at: 2026-09-29}
+  - {text: "重設密碼後要重新登入嗎", source: "draft:outline-20260920", status: proposed}
+- sources: [code:src/pages/users/auth/parts/LoginForm.vue, code:src/pages/users/auth/parts/forget/Password.vue, code:app/Http/Controllers/AuthController.php, code:src/pages/users/auth/parts/VerifyPanel.vue, code:app/Model.php, code:routes/web.php, code:app/Http/Middleware/IfLoginCheck.php]
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-重設密碼前必須先完成帳號驗證，可以選擇用 Email 或手機號碼兩種方式其中之一收驗證碼。
-驗證碼確認正確後，畫面會顯示「帳號驗證成功」並切換到重設密碼表單。
-新密碼需至少 6 個字元、同時包含英文與數字，且需與確認密碼欄位一致。
-送出並顯示密碼設定成功後，系統會依處理結果自動導向指定頁面或一般登入頁，需使用新密碼重新登入。
-如果密碼設定失敗，畫面會跳出提示視窗顯示「密碼設定失敗」與失敗原因；若是密碼格式不符，密碼欄位下方也會顯示錯誤提示。
+在登入頁按「忘記密碼」進入「忘記密碼嗎」頁面，先選用 Email 或手機號碼其中一種輸入帳號；輸入的 Email 或手機號碼必須有對應的帳號，沒有時欄位下方會提示格式錯誤或找不到對應的帳號，「驗證帳號」按鈕也維持灰色不能按。
+帳號驗證通過後，系統會把驗證碼寄到該 Email、或用簡訊傳到該手機號碼，在頁面輸入 4 位數驗證碼；沒收到可以按頁面上的重發連結，重發後會顯示倒數秒數。
+驗證碼輸入錯誤時，畫面會提示已錯誤幾次、還剩幾次機會，錯誤達 3 次驗證碼就會失效，需要重發。
+驗證通過後，頁面切換成重設密碼表單，輸入「密碼」與「確認密碼」；新密碼至少 6 個字元、同時包含英文與數字，且兩次輸入要一致，三項條件都符合「重設密碼」按鈕才能按。
+系統另外限制密碼只能用英文字母、數字與部分半形符號，含有不被允許的符號（例如驚嘆號、井字號、錢字號、百分號、空格）或中文字時，送出會被退回，密碼欄位下方顯示「格式錯誤」，並跳出「密碼設定失敗：請檢查輸入格式」的提示。
+設定成功後，系統一般會直接以這個帳號登入並前往會員中心，不需要再用新密碼登入一次；不過重設密碼頁面上的說明文字仍寫著設定完成後請使用新密碼登入。
 ### 「請設定密碼」畫面是什麼情境？（受邀請帳號的初次設定密碼流程） {#jgb/A/forget-password-setpwd-invite}
 - phrasings:
   - {text: "請設定密碼是什麼", source: "draft:outline-20260920", status: proposed}
@@ -374,17 +376,21 @@ language: zh-TW
 - instance_applicability: general
 首頁提供「招租廣告刊登率／買賣廣告刊登率」圓環圖，顯示刊登中、未刊登、總件數。
 首頁另外提供「收支情況」圖，顯示收入、支出、當日結餘、累計結餘。
-### 首頁下方還有哪些列表？（帳單、合約、修繕整合列表，具通知權限者另有 Email 通知紀錄） {#jgb/A/dashboard-overview-lists}
+### 房東首頁下方還有哪些列表？（帳單與合約整合列表，具查看所有通知權限者另有系統代發送 E-mail 區塊；大房東首頁沒有） {#jgb/A/dashboard-overview-lists}
 - phrasings:
   - {text: "首頁下方列表", source: "draft:outline-20260920", status: proposed}
-  - {text: "帳單合約修繕整合列表", source: "draft:outline-20260920", status: proposed}
-  - {text: "Email 通知紀錄區塊", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/users/dashboard/Landlord.vue]
-- reviewed: {by: owner, at: 2026-09-28}
+  - {text: "首頁帳單合約列表", source: "draft:outline-20260920", status: proposed}
+  - {text: "首頁系統代發送E-mail區塊", source: "draft:outline-20260920", status: proposed}
+- sources: [code:src/pages/users/dashboard/Landlord.vue, code:src/pages/users/dashboard/parts/BillContractRepair.vue, code:src/pages/users/dashboard/parts/EmailRecords.vue, code:app/Http/Controllers/UserController.php]
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-首頁下方顯示帳單、合約、修繕的整合列表；具備通知檢視權限的使用者，還會另外看到 Email 通知紀錄區塊。
+房東或管理者（大房東除外）在會員中心首頁「主要」頁面的下方，有一個帳單與合約的整合列表，分成「帳務情況」「合約情況」兩個頁簽。
+「帳務情況」底下有「逾期待收款」「待繳費」兩個清單，「合約情況」底下有「即將到期合約」「待發送」「待房東簽名」「待租客簽回」四個清單，每個清單右上角的「更多」可以前往完整列表。
+這個整合列表沒有修繕清單。
+具備「查看所有通知」權限的成員，整合列表下方還會多一個「系統代發送E-mail」區塊，列出系統代發送的 Email 紀錄。
+大房東登入時，首頁沒有這個整合列表，也沒有「系統代發送E-mail」區塊；切到「滿租率(beta)」頁簽時，這兩個區塊同樣不會顯示。
 ### 大房東的首頁畫面和一般房東不一樣嗎？（沒有捷徑與四個統計方塊） {#jgb/A/dashboard-big-landlord-view}
 - phrasings:
   - {text: "大房東首頁", source: "draft:outline-20260920", status: proposed}
@@ -577,21 +583,20 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
 帳號資訊頁的密碼表單會提示「密碼應有至少一位英文和數字」，但按「儲存」時不會檢查這一條。
 註冊帳號時設定的密碼則必須同時包含英文與數字。
 ## 簽約資訊（證件、身分證號、戶籍地址；公司統編與大小章） {#A-signer-info}
-### 個人房東的簽約資訊要填什麼？（姓氏、名稱、身分證字號、Email、手機、身分證正反面） {#jgb/A/signer-individual-fields}
+### 個人房東的簽約資訊要填哪些欄位？（姓氏、名稱、身分證字號、Email、手機號碼、戶籍地址、通訊地址標示必填，身分證正反面照片與其他附件為選填） {#jgb/A/signer-individual-fields}
 - phrasings:
   - {text: "個人房東簽約資訊", source: "draft:outline-20260920", status: proposed}
   - {text: "簽約要填身分證嗎", source: "draft:outline-20260920", status: proposed}
   - {text: "簽約資訊個人欄位", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/pages/users/team/_parts/SignerDetails.vue]
-- reviewed: {by: owner, at: 2026-09-29}
+- sources: [code:src/pages/users/team/_parts/SignerDetails.vue, code:src/pages/users/team/_parts/SignerFormInputField.vue, code:src/styles/tailwind.sass, code:app/Role.php, code:src/components/AddressComponent.vue, code:src/components/AddressFieldTitle.jsx]
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
-個人身分的簽約資訊必填欄位為姓氏、名稱、身分證字號。
-另需填寫 Email 與手機號碼，同樣列為必填。
-身分證正反面照片為附件上傳項目，走證件引導裁切流程。
-另可上傳「工作名片/學生證」「良民證」「小章」三項其他附件，皆非必填。
-如果有多筆個人身分資料（例如同時管理多個角色），表單上方會出現一列可以橫向捲動切換的項目；超過 5 筆時，會多一個「所有團隊」的下拉選單方便切換。
+個人房東在「其他設定」的「簽約資訊」頁，「個人資訊」區塊有姓氏、名稱、身分證字號、Email、手機號碼五個欄位，欄位名稱旁都標示必填（星號）。
+「戶籍地址」與「通訊地址」兩組地址也標示必填。
+「身分證正反面照片(選填)」可以分別上傳證件的正面與反面兩張照片，頁面提示請上傳清晰的橫式證件正反面照片。
+「其他附件(選填)」可以上傳「工作名片/學生證」「良民證」「小章」三項，都是選填。
 ### 公司身分的簽約資訊要填什麼？（公司名稱、統編、負責人、公司電話/Email、登記證資料） {#jgb/A/signer-corp-fields}
 - phrasings:
   - {text: "公司簽約資訊", source: "draft:outline-20260920", status: proposed}

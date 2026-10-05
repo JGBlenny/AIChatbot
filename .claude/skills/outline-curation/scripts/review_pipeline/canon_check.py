@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 """Plan 9.18 S1: canon block diff (base vs new) restricted to allowed ids + customer-name scan.
-  python3 p918_s1_canon_check.py <base canon dir> <new canon dir> <allowed.json>"""
+  python3 p918_s1_canon_check.py <base canon dir> <new canon dir> <allowed.json> [--remove <removed-ids.json>]"""
 import json, re, sys, filecmp, os
-base, new, allowed = sys.argv[1], sys.argv[2], set(json.load(open(sys.argv[3])))
+argv = sys.argv[1:]
+remove = set()
+if "--remove" in argv:  # Plan 9.30: fines absent from the new canon are allowed only if listed here
+    i = argv.index("--remove"); remove = set(json.load(open(argv[i + 1]))); del argv[i:i + 2]
+base, new, allowed = argv[0], argv[1], set(json.load(open(argv[2])))
 PAT = re.compile(r"(?<!系)統上|新北住都|樓宇|資育|資聯|泰萬通|Beyond360|beyond360|安歌|喬立|joeRich|nthurc|tongSang|21228|愛租屋")
 def blocks(p):
     out, pre = {}, []
@@ -15,7 +19,7 @@ def blocks(p):
 errs = []; changed = set()
 for s in "ABCDEFGHI":
     (bb, bp), (nb, np_) = blocks(f"{base}/jgb/{s}.md"), blocks(f"{new}/jgb/{s}.md")
-    if list(bb) != list(nb): errs.append(f"{s}: fine order/membership differs")
+    if [k for k in bb if not (k in remove and k not in nb)] != list(nb): errs.append(f"{s}: fine order/membership differs")
     if bp != np_: errs.append(f"{s}: non-fine text differs")
     for k in bb:
         if k in nb and bb[k] != nb[k]: changed.add(k)

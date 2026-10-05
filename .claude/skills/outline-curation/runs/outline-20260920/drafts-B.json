@@ -1725,7 +1725,7 @@
     {
      "proposed_id": "jgb/B/biglandlord-list-overview",
      "askable": "大房東列表可以看到哪些欄位",
-     "title": "大房東列表可以看到哪些欄位？（ID、姓名、會員註冊、身分證字號、生日、主要聯絡方式、帳戶資訊、合作方式、合作起迄、所屬物件）",
+     "title": "大房東列表有哪些欄位？（ID、姓名、會員註冊、Email、手機號碼、身分證字號、地址、帳戶名稱、帳戶資訊、合作方式、合作起迄、所屬物件、生日、主要聯絡方式，其中生日與主要聯絡方式目前每筆都顯示「-」）",
      "unit_ids": [
       "page:bigLandlords.list",
       "page:bigLandlords.index"
@@ -1743,12 +1743,22 @@
       "大房東的合作起迄怎麼看"
      ],
      "sentences": [
-      "大房東列表的每一筆資料會顯示 ID、姓名、會員註冊、Email、手機號碼、身分證字號、地址、帳戶名稱與帳戶資訊。",
-      "另外還會顯示合作方式、合作起迄日期、這位大房東目前被授權的所屬物件數量，以及生日、主要聯絡方式。",
-      "點擊姓名可以開啟這位大房東的聯絡資訊卡。"
+      "大房東列表由左至右的欄位是：ID、姓名、會員註冊、Email、手機號碼、身分證字號、地址、帳戶名稱、帳戶資訊、合作方式、合作起迄、所屬物件、生日、主要聯絡方式，最右邊另有每一列的操作欄。",
+      "「會員註冊」欄是一個圓點：綠色代表這位大房東已完成註冊或驗證，灰色代表還沒有。",
+      "「所屬物件」欄顯示授權給這位大房東的物件數量（括號裡的數字），點下去會進到這位大房東的授權物件頁。",
+      "點擊「姓名」欄的名字會開啟這位大房東的聯絡資訊卡。",
+      "「生日」「主要聯絡方式」兩欄目前每一筆都只顯示「-」，不會顯示內容。"
      ],
      "sources": [
-      "code:src/pages/bigLandlords/list/_parts/ListTable.vue"
+      "code:src/pages/bigLandlords/list/_parts/ListTable.vue",
+      "code:app/Services/BigLandlordService.php",
+      "code:src/utils/surelyVue/bigLandlord.ts",
+      "code:src/components/SurelyVue/BigLandlord/IsRegisteredCell.vue",
+      "code:src/components/SurelyVue/BigLandlord/RelatedEstateCell.vue",
+      "code:src/components/SurelyVue/BigLandlord/NameCell.vue",
+      "code:src/components/SurelyVue/Common/TextBlockCell.vue",
+      "code:src/routes/bigLandlords.js",
+      "code:src/pages/bigLandlords/list/_parts/owned.jsx"
      ],
      "evidence": [
       {
@@ -1759,7 +1769,22 @@
       {
        "sentence_index": 0,
        "source": "code:src/pages/bigLandlords/list/_parts/ListTable.vue",
+       "quote_or_symbol": "title: t('姓名'),"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/bigLandlords/list/_parts/ListTable.vue",
        "quote_or_symbol": "title: t('會員註冊'),"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/bigLandlords/list/_parts/ListTable.vue",
+       "quote_or_symbol": "title: t('Email'),"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/bigLandlords/list/_parts/ListTable.vue",
+       "quote_or_symbol": "title: t('手機號碼'),"
       },
       {
        "sentence_index": 0,
@@ -1767,27 +1792,138 @@
        "quote_or_symbol": "title: t('身分證字號'),"
       },
       {
-       "sentence_index": 1,
+       "sentence_index": 0,
+       "source": "code:src/pages/bigLandlords/list/_parts/ListTable.vue",
+       "quote_or_symbol": "title: t('地址'),"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/bigLandlords/list/_parts/ListTable.vue",
+       "quote_or_symbol": "title: t('帳戶名稱'),"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/bigLandlords/list/_parts/ListTable.vue",
+       "quote_or_symbol": "title: t('帳戶資訊'),"
+      },
+      {
+       "sentence_index": 0,
        "source": "code:src/pages/bigLandlords/list/_parts/ListTable.vue",
        "quote_or_symbol": "title: t('合作方式'),"
       },
       {
-       "sentence_index": 1,
+       "sentence_index": 0,
+       "source": "code:src/pages/bigLandlords/list/_parts/ListTable.vue",
+       "quote_or_symbol": "title: t('合作起迄'),"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/bigLandlords/list/_parts/ListTable.vue",
+       "quote_or_symbol": "title: t('所屬物件'),"
+      },
+      {
+       "sentence_index": 0,
        "source": "code:src/pages/bigLandlords/list/_parts/ListTable.vue",
        "quote_or_symbol": "title: t('生日'),"
       },
       {
-       "sentence_index": 1,
+       "sentence_index": 0,
        "source": "code:src/pages/bigLandlords/list/_parts/ListTable.vue",
        "quote_or_symbol": "title: t('主要聯絡方式'),"
       },
       {
-       "sentence_index": 2,
+       "sentence_index": 0,
        "source": "code:src/pages/bigLandlords/list/_parts/ListTable.vue",
-       "quote_or_symbol": "import useContactCard, { ContactCard } from '@src/use/useContactCard'"
+       "quote_or_symbol": "key: ColumnKey.action,"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/bigLandlords/list/_parts/ListTable.vue",
+       "quote_or_symbol": "<SurelyVueBigLandlordActionCell"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/components/SurelyVue/BigLandlord/IsRegisteredCell.vue",
+       "quote_or_symbol": "? 'bg-success-400'"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/components/SurelyVue/BigLandlord/IsRegisteredCell.vue",
+       "quote_or_symbol": ": 'bg-grey-200'"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Services/BigLandlordService.php",
+       "quote_or_symbol": "'email_verified_status' => ($bigLandlord->user && $bigLandlord->user->is_registered == 1)"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/components/SurelyVue/BigLandlord/RelatedEstateCell.vue",
+       "quote_or_symbol": "({{ props.qty_of_estates || 0 }})"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/components/SurelyVue/BigLandlord/RelatedEstateCell.vue",
+       "quote_or_symbol": "router.push(Route.user.team.owned({ id: props.id, query }));"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Services/BigLandlordService.php",
+       "quote_or_symbol": "'qty_of_estates' => count($bigLandlord->getEstatePermissions),"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/routes/bigLandlords.js",
+       "quote_or_symbol": "name: 'users.team.owned',"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/bigLandlords/list/_parts/owned.jsx",
+       "quote_or_symbol": "{t('[s1] 擁有的物件', [route.query.name])}"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/components/SurelyVue/BigLandlord/NameCell.vue",
+       "quote_or_symbol": "emit('openContactCard', {"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/bigLandlords/list/_parts/ListTable.vue",
+       "quote_or_symbol": "contactCardState.open({"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/components/SurelyVue/Common/TextBlockCell.vue",
+       "quote_or_symbol": "<div>{{ t(props?.textString) || '-' }}</div>"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/utils/surelyVue/bigLandlord.ts",
+       "quote_or_symbol": "this[ColumnKey.birthday] = {"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/utils/surelyVue/bigLandlord.ts",
+       "quote_or_symbol": "this[ColumnKey.primaryContact] = {"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/pages/bigLandlords/list/_parts/ListTable.vue",
+       "quote_or_symbol": "v-else-if=\"column.key === ColumnKey.birthday\""
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/pages/bigLandlords/list/_parts/ListTable.vue",
+       "quote_or_symbol": "v-else-if=\"column.key === ColumnKey.primaryContact\""
       }
      ],
-     "not_supported_greps": [],
+     "not_supported_greps": [
+      {
+       "grep": "grep -rn \"textString\" /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/src/pages/bigLandlords /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/src/utils/surelyVue/bigLandlord.ts /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/src/type/surelyVue/bigLandlord.ts /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/src/helpers/bigLandlord.ts | wc -l | tr -d ' '",
+       "result": "0（大房東列表頁、資料來源類別、型別與 helper 都沒有任何地方傳入 textString，所以文字區塊元件讀不到生日與主要聯絡方式的值）",
+       "positive_control": "grep -c \"textString\" /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/src/components/SurelyVue/Common/TextBlockCell.vue → 2"
+      }
+     ],
      "open_questions": []
     },
     {
@@ -2522,7 +2658,7 @@
     {
      "proposed_id": "jgb/B/biglandlord-sheet-overview",
      "askable": "大房東對帳表在算什麼",
-     "title": "大房東對帳表在算什麼？（只有特定合作團隊看得到完整的押金、屋主資金、屋主提領、屋主直收等類別金額，其他團隊只看得到屋主租金收支；單月報表才有「上一月」「下一月」「下載」，整年度報表是「匯出報表」）",
+     "title": "大房東對帳表在算什麼？（依年度列出屋主的收入與支出，年度表每月一欄；一般團隊是屋主租金收入與支出，特定合作團隊的資金版報表另有押金、屋主提領、屋主直收等區塊）",
      "unit_ids": [
       "page:bigLandlords.sheet"
      ],
@@ -2536,55 +2672,284 @@
      "phrasings": [
       "大房東對帳表看什麼",
       "對帳表怎麼看押金收支",
-      "對帳表可以下載嗎",
-      "對帳表怎麼切換月份"
+      "對帳表在算什麼",
+      "對帳表的總結餘怎麼算"
      ],
      "sentences": [
-      "對帳表以月份為單位列出各類別金額；只有特定合作團隊看得到完整的押金收入／支出、屋主資金收入／支出、屋主提領、屋主直收收入／支出等類別，其他團隊只看得到「屋主租金收入」「屋主租金支出」（部分團隊的用語會改顯示為「租金收入」「本期支出」）。",
-      "「上一月」「下一月」「下載」「取消」這幾個按鈕只出現在單月報表畫面（網址帶 1 到 12 月其中一個月份參數）；查看整年度對帳表時看到的不是這幾個按鈕，而是可以切換年份、匯出整年度資料的「匯出報表」按鈕。"
+      "大房東對帳表是針對一位大房東、依年度整理的屋主收支報表：年度表每個月一欄（1月到12月），各區塊列出每個月的金額；單月對帳單則列出該月的明細，抬頭是「屋主租金對帳單」（採資金版報表的特定合作團隊是「屋主資金對帳單」）。",
+      "年度表的區塊依團隊類型而不同：一般團隊是「屋主租金收入」「屋主租金支出」兩個區塊；採資金版報表的特定合作團隊是「押金收入」「押金支出」「屋主資金收入」「屋主資金支出」「屋主提領」「屋主直收收入」「屋主直收支出」七個區塊；部分團隊的用語會改顯示為「租金收入」「本期支出」。",
+      "單月對帳單最上方有屋主名稱與製表人，往下所有團隊都有「物件清單」「記帳期間」「押金」三個區塊；一般團隊接著是「屋主租金」區塊，採資金版報表的特定合作團隊則接著是「屋主資金」「屋主提領」「屋主直收」三個區塊與備註。",
+      "「記帳期間」區塊列出該月的記帳起訖日，以及本期屋主租金收入、本期屋主租金支出、本期屋主租金總結餘、上期屋主租金結餘、流水帳結餘與可調動租金（採資金版報表的特定合作團隊，用語是「屋主資金」「可調動資金」）；部分團隊的用語會改成「租金收入」「本期支出」，並隱藏上期結餘、總結餘與可調動租金。",
+      "有顯示總結餘的一般團隊，總結餘的算法是上期結餘加屋主租金收入、減屋主租金支出（報表上寫成「總結餘（上期結餘 + 屋主租金收入 - 屋主租金支出）」）。"
      ],
      "sources": [
       "code:src/pages/bigLandlords/sheet/_parts/Sheet.vue",
-      "code:src/pages/bigLandlords/sheet/index.vue"
+      "code:src/pages/bigLandlords/sheet/index.vue",
+      "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/Index.vue",
+      "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/TableInfo.vue",
+      "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/EstateList.vue",
+      "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/ReconciliationTerm.vue",
+      "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/DepositList.vue",
+      "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/EZoneCashflow.vue",
+      "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/PropertyManagingReconciliation.vue",
+      "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/OwnerWithdrawalCashflow.vue",
+      "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/OwnerDirectReceiveCashflow.vue",
+      "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/RemarkOfOwner.vue"
      ],
      "evidence": [
       {
-       "sentence_index": 1,
-       "source": "code:src/pages/bigLandlords/sheet/index.vue",
-       "quote_or_symbol": "<div v-if=\"['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'].includes(String(route.query.month) as string)\""
-      },
-      {
-       "sentence_index": 1,
-       "source": "code:src/pages/bigLandlords/sheet/index.vue",
-       "quote_or_symbol": "@click=\"goPrevMonth\"><i class=\"bi bi-chevron-left\"></i> {{ t('上一月') }}</div>"
-      },
-      {
-       "sentence_index": 1,
-       "source": "code:src/pages/bigLandlords/sheet/_parts/SelectBar.jsx",
-       "quote_or_symbol": "<div class=\"mr-2 text-[14px]\">{t('匯出報表')}</div>"
+       "sentence_index": 0,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/Sheet.vue",
+       "quote_or_symbol": "{{ t(`${index+1}月`) }} <i class=\"bi bi-box-arrow-up-right text-[11px]\"></i>"
       },
       {
        "sentence_index": 0,
        "source": "code:src/pages/bigLandlords/sheet/_parts/Sheet.vue",
-       "quote_or_symbol": "return !!specialRolesState.getSpecialGroupsByRole(store.state.userData?.role?.id)?.includes('bigLandlordReportV2')"
+       "quote_or_symbol": "{{ t('類別') }} / {{ t('項目') }}"
       },
       {
        "sentence_index": 0,
+       "source": "code:src/pages/bigLandlords/sheet/index.vue",
+       "quote_or_symbol": "label: t(route.query.bigLandlord_name) || t('大房東報表'),"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/Index.vue",
+       "quote_or_symbol": "<h2 class=\"mb-4 px-1.5 py-2\">{{ isV2 ? t('屋主資金對帳單') : t('屋主租金對帳單') }}</h2>"
+      },
+      {
+       "sentence_index": 1,
        "source": "code:src/pages/bigLandlords/sheet/_parts/Sheet.vue",
        "quote_or_symbol": ":title=\"t('押金收入')\""
       },
       {
-       "sentence_index": 0,
+       "sentence_index": 1,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/Sheet.vue",
+       "quote_or_symbol": ":title=\"t('押金支出')\""
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/Sheet.vue",
+       "quote_or_symbol": ":title=\"t('屋主資金收入')\""
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/Sheet.vue",
+       "quote_or_symbol": ":title=\"t('屋主資金支出')\""
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/Sheet.vue",
+       "quote_or_symbol": ":title=\"t('屋主提領')\""
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/Sheet.vue",
+       "quote_or_symbol": ":title=\"t('屋主直收收入')\""
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/Sheet.vue",
+       "quote_or_symbol": ":title=\"t('屋主直收支出')\""
+      },
+      {
+       "sentence_index": 1,
        "source": "code:src/pages/bigLandlords/sheet/_parts/Sheet.vue",
        "quote_or_symbol": ":title=\"isLabelAdjust ? t('租金收入') : t('屋主租金收入')\""
       },
       {
-       "sentence_index": 0,
+       "sentence_index": 1,
        "source": "code:src/pages/bigLandlords/sheet/_parts/Sheet.vue",
        "quote_or_symbol": ":title=\"isLabelAdjust ? t('本期支出') : t('屋主租金支出')\""
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/Sheet.vue",
+       "quote_or_symbol": "return !!specialRolesState.getSpecialGroupsByRole(store.state.userData?.role?.id)?.includes('bigLandlordReportV2')"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/Sheet.vue",
+       "quote_or_symbol": "<template v-if=\"isV2\">"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/Sheet.vue",
+       "quote_or_symbol": "<template v-else>"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/Index.vue",
+       "quote_or_symbol": "<TableInfo class=\"mb-6\" />"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/Index.vue",
+       "quote_or_symbol": "<EstateList />"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/Index.vue",
+       "quote_or_symbol": "<ReconciliationTerm class=\"mb-4\" />"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/Index.vue",
+       "quote_or_symbol": "<DepositList class=\"mb-4\" />"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/Index.vue",
+       "quote_or_symbol": "<EZoneCashflow />"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/Index.vue",
+       "quote_or_symbol": "<PropertyManagingReconciliation class=\"mb-4\" />"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/Index.vue",
+       "quote_or_symbol": "<OwnerWithdrawalCashflow class=\"mb-4\" />"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/Index.vue",
+       "quote_or_symbol": "<OwnerDirectReceiveCashflow />"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/Index.vue",
+       "quote_or_symbol": "<RemarkOfOwner />"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/TableInfo.vue",
+       "quote_or_symbol": "<h5 class=\"flex items-center\">{{ t('屋主名稱') }}</h5>"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/TableInfo.vue",
+       "quote_or_symbol": "<h5 class=\"col-start-5 flex items-center text-right\">{{ t('製表人') }}</h5>"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/EstateList.vue",
+       "quote_or_symbol": "<h4 class=\"mb-2 px-1.5\">{{ t('物件清單') }}</h4>"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/ReconciliationTerm.vue",
+       "quote_or_symbol": "{{ t('記帳期間') }}"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/DepositList.vue",
+       "quote_or_symbol": "<h4 class=\"mb-2 px-1.5\">A. {{ t('押金') }}</h4>"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/EZoneCashflow.vue",
+       "quote_or_symbol": "<FeeTableHead :title=\"t('屋主租金')\" />"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/PropertyManagingReconciliation.vue",
+       "quote_or_symbol": "<FeeTableHead :title=\"`B. ${t('屋主資金')}`\" />"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/OwnerWithdrawalCashflow.vue",
+       "quote_or_symbol": "<FeeTableHead :title=\"`C. ${t('屋主提領')}`\" />"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/OwnerDirectReceiveCashflow.vue",
+       "quote_or_symbol": "<FeeTableHead :title=\"`D. ${t('屋主直收')}`\" />"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/RemarkOfOwner.vue",
+       "quote_or_symbol": "<h4 class=\"flex items-center justify-center bg-grey-200\">{{ t('備註') }}</h4>"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/ReconciliationTerm.vue",
+       "quote_or_symbol": "{{ t('記帳期間') }}"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/ReconciliationTerm.vue",
+       "quote_or_symbol": "<div v-if=\"data && 'reconciliation_start' in data\">{{ data.reconciliation_start }}</div>"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/ReconciliationTerm.vue",
+       "quote_or_symbol": "{{ isLabelAdjust ? t('租金收入') : (isV2 ? t('本期屋主資金收入') : t('本期屋主租金收入')) }}"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/ReconciliationTerm.vue",
+       "quote_or_symbol": "{{ isLabelAdjust ? t('本期支出') : (isV2 ? t('本期屋主資金支出') : t('本期屋主租金支出')) }}"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/ReconciliationTerm.vue",
+       "quote_or_symbol": "{{ isV2 ? t('本期屋主資金總結餘') : t('本期屋主租金總結餘') }}"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/ReconciliationTerm.vue",
+       "quote_or_symbol": "{{ isV2 ? t('上期屋主資金結餘') : t('上期屋主租金結餘') }}"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/ReconciliationTerm.vue",
+       "quote_or_symbol": "{{ t('流水帳結餘') }}"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/ReconciliationTerm.vue",
+       "quote_or_symbol": "{{ isV2 ? t('可調動資金') : t('可調動租金') }}"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/ReconciliationTerm.vue",
+       "quote_or_symbol": "<h5 v-if=\"!isLabelAdjust\" class=\"flex items-center border-b border-black\">"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/EZoneCashflow.vue",
+       "quote_or_symbol": "{{ t('總結餘（上期結餘 + 屋主租金收入 - 屋主租金支出）') }}"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/EZoneCashflow.vue",
+       "quote_or_symbol": "<div v-if=\"!isLabelAdjust\" class=\"grid grid-cols-6 gap-0 border-b-2 border-black bg-grey-200\">"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/ReconciliationTerm.vue",
+       "quote_or_symbol": "base_number: d.e_zone_balance.base_number - d.e_zone_income.base_number + d.e_zone_expense.base_number"
       }
      ],
-     "not_supported_greps": [],
+     "not_supported_greps": [
+      {
+       "grep": "sed -n '184,207p' /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/src/pages/bigLandlords/sheet/_parts/Sheet.vue | grep -c \"<SheetTemplate\"",
+       "result": "2（年度表一般團隊（v-else）分支只有兩個區塊）",
+       "positive_control": "sed -n '106,183p' /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/src/pages/bigLandlords/sheet/_parts/Sheet.vue | grep -c \"<SheetTemplate\" → 7"
+      },
+      {
+       "grep": "sed -n '44,47p' /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/src/pages/bigLandlords/sheet/_parts/monthlyReport/Index.vue | grep -c \"<PropertyManagingReconciliation\\|<OwnerWithdrawalCashflow\\|<OwnerDirectReceiveCashflow\\|<RemarkOfOwner\"",
+       "result": "0（單月對帳單一般團隊（v-else）分支沒有屋主資金、屋主提領、屋主直收與備註區塊）",
+       "positive_control": "sed -n '37,43p' /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/src/pages/bigLandlords/sheet/_parts/monthlyReport/Index.vue | grep -c \"<PropertyManagingReconciliation\\|<OwnerWithdrawalCashflow\\|<OwnerDirectReceiveCashflow\\|<RemarkOfOwner\" → 4"
+      },
+      {
+       "grep": "grep -c 'v-if=\"!isLabelAdjust' /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/src/pages/bigLandlords/sheet/_parts/monthlyReport/ReconciliationTerm.vue",
+       "result": "6（記帳期間區塊有 6 處在用語調整團隊被隱藏（上期結餘、本期總結餘與可調動租金的標題與金額））",
+       "positive_control": "grep -c \"t('流水帳結餘')\" /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/src/pages/bigLandlords/sheet/_parts/monthlyReport/ReconciliationTerm.vue → 2"
+      }
+     ],
      "open_questions": [
       "「年度累計」欄目前是刻意隱藏：SelectBar.jsx 的 `const SHOW_YEARLY_COLUMN = false`（註解「2026-04-30 Joanna 拍板暫時隱藏」）與 Sheet.vue 對應區塊的 `v-if=\"false\"` 都關閉了這一欄，畫面上不會顯示年度累計金額。是否要在知識裡提到這個欄位存在但目前關閉，或完全不提，待業主確認。",
       "月報明細（monthlyReport/ReconciliationTerm.vue、EZoneCashflow.vue 等）裡「租金收入」「本期支出」這兩個標題，只在 isLabelAdjust（useBigLandlordLabelAdjust）為真的團隊才會顯示；不是這個條件的團隊看到的是「屋主租金收入」「屋主租金支出」（V2 角色則是「本期屋主資金收入」「本期屋主資金支出」）。這兩套標題語義是否要分開寫成兩條知識、或只取一種當作『對外說法』，待業主確認。"
@@ -2999,7 +3364,7 @@
     {
      "proposed_id": "jgb/B/advance-late-fee",
      "askable": "進階設定的滯納金延遲金怎麼計算、誰看得到",
-     "title": "進階設定的「延遲金設置」怎麼計算？（只有特定合作團隊看得到，公式是租金 × (逾期天數 - 緩衝天數) × 延遲金%）",
+     "title": "進階設定的「延遲金設置」是什麼、延遲金怎麼算？（只有特定合作團隊看得到；合約建立時帶入團隊設定，租金帳單逾期付款後才產生延遲金帳單，金額＝租金 ×（逾期天數 − 緩衝天數）× 延遲金百分比）",
      "unit_ids": [
       "page:users.advance"
      ],
@@ -3018,12 +3383,18 @@
       "延遲金設置在哪"
      ],
      "sentences": [
-      "「延遲金設置」只會出現在特定合作團隊的進階設定裡，一般團隊沒有這個設定。",
-      "有這個設定的團隊可以開啟或關閉延遲金功能，並設定緩衝天數與延遲金百分比。",
-      "開啟後，租客逾期繳租超過緩衝天數，系統會自動計算延遲金並產生一筆帳單，這筆帳單的繳費截止日就是合約的終止日；計算公式是：租金 ×（逾期天數 - 緩衝天數）× 延遲金百分比。"
+      "進階設定裡的「延遲金設置」區塊只會出現在特定合作團隊，一般團隊沒有這個設定。",
+      "有這個區塊的團隊可以用「啟用」開關開啟或關閉延遲金，區塊裡會顯示「緩衝天數」與「延遲金」百分比，啟用後可按「編輯延遲金設置」修改；送出變更時，團隊若有設定簽核流程就送簽核，沒有則直接更新。",
+      "延遲金是在租金帳單逾期付款之後才產生：這張租金帳單所屬合約已啟用延遲金、帳單已到帳，而且付款日比繳費期限晚、超過緩衝天數時，系統會自動為同一位租客再產生一張延遲金帳單，並直接送到應到帳；這張延遲金帳單的繳費期限是產生當天。",
+      "只有型態是一般租金的帳單會觸發延遲金，點退帳單、手動新增的帳單、罰款帳單、儲值帳單與押金設算息帳單都不會。",
+      "延遲金金額的算法是：這張租金帳單的租金項目金額 ×（逾期天數 - 緩衝天數）× 延遲金百分比，逾期天數是付款日比繳費期限晚的天數。",
+      "是否產生延遲金、緩衝天數與延遲金百分比，看的是合約上的設定：合約建立時才從團隊目前的設定複製一份到合約，團隊之後再開啟或修改設定，已建立的合約不會跟著改變，所以團隊開啟延遲金之前就建立的合約不會產生延遲金帳單。"
      ],
      "sources": [
-      "code:src/pages/users/advance/Index.jsx"
+      "code:src/pages/users/advance/Index.jsx",
+      "code:app/Bill.php",
+      "code:app/Http/Controllers/UserController.php",
+      "code:app/Contract.php"
      ],
      "evidence": [
       {
@@ -3039,7 +3410,7 @@
       {
        "sentence_index": 1,
        "source": "code:src/pages/users/advance/Index.jsx",
-       "quote_or_symbol": "modelValue={penaltyState.enable_late_fee}"
+       "quote_or_symbol": "<div className=\"ml-2 text-base font-500\">{ t('啟用') }</div>"
       },
       {
        "sentence_index": 1,
@@ -3047,19 +3418,221 @@
        "quote_or_symbol": "<div className=\"font-500\">{ t('緩衝天數') }</div>"
       },
       {
-       "sentence_index": 2,
+       "sentence_index": 1,
        "source": "code:src/pages/users/advance/Index.jsx",
-       "quote_or_symbol": "description={t('租客逾期未繳租金時，若超過緩衝天數，則會產生延遲金。系統將會自動計算延遲金的金額並生成帳單，該筆帳單的繳費截止日為合約的終止日。[s1]計算公式：租金 × ( 逾期天數 - 緩衝天數) ×延遲金%', ['</br>'])}"
+       "quote_or_symbol": "<div className=\"font-500\">{ t('延遲金') }</div>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "penaltyState.enable_late_fee === 1 && <div className=\"flex flex-nowrap justify-end\">"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "{ t('編輯延遲金設置') }"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "// 如果有簽核的資訊就走簽核，沒有就直接更新"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "$approvalExist = ApprovalService::needApproval($this->role->id, Approval::TEAM_LATE_FEE);"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "ApprovalService::createApproval(["
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "$this->role->save();"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Bill.php",
+       "quote_or_symbol": "if ($contract->enable_late_fee != 1) {"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Bill.php",
+       "quote_or_symbol": "if (empty($this->complete_at)) {"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Bill.php",
+       "quote_or_symbol": "$dateDiff = date_diff_in_days($expireDate, $payDate);"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Bill.php",
+       "quote_or_symbol": "if ($dateDiff <= $contract->calc_late_fee_buffer_days) {"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Bill.php",
+       "quote_or_symbol": "if ($this->canGenerateLateFeeBill()) {"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Bill.php",
+       "quote_or_symbol": "$this->generateLateFeeBill();"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Bill.php",
+       "quote_or_symbol": "if (Role::hasToneSangPermission($this->creditor_role_id)) {"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Bill.php",
+       "quote_or_symbol": "$newBill->setIssueTarget('TARGET_TYPE_TENANT', $contract->to_role_id);"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Bill.php",
+       "quote_or_symbol": "'user_id' => $this->user_id, // 付錢者 user id"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Bill.php",
+       "quote_or_symbol": "// 直接發送帳單至應支出/應到帳"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Bill.php",
+       "quote_or_symbol": "$newBill->setReady(0, 'JGB系統', 0, 'JGB系統');"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Bill.php",
+       "quote_or_symbol": "$newBill->status = Bill::BILL_READY;"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Bill.php",
+       "quote_or_symbol": "const BILL_READY = 2;           // 狀態 2：應到帳/待繳費"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Bill.php",
+       "quote_or_symbol": "'date_expire' => date(\"Ymd\"), // 繳費期限"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Bill.php",
+       "quote_or_symbol": "if ($this->type != Bill::BILL_TYPE_RENT) {"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Bill.php",
+       "quote_or_symbol": "const BILL_TYPE_RENT = 1;       // 型態 1：一般租金"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Bill.php",
+       "quote_or_symbol": "// 型態 2：點退"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Bill.php",
+       "quote_or_symbol": "// 型態 3：新增帳單"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Bill.php",
+       "quote_or_symbol": "// 型態 4：罰款"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Bill.php",
+       "quote_or_symbol": "// 型態 5：儲值"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:app/Bill.php",
+       "quote_or_symbol": "// 型態 6：押金設算息"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:app/Bill.php",
+       "quote_or_symbol": "$billRent = $detail->total_price;"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:app/Bill.php",
+       "quote_or_symbol": "->where('items.name', '租金')"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:app/Bill.php",
+       "quote_or_symbol": "$bufferDayTs = strtotime($this->date_expire) + ($contract->calc_late_fee_buffer_days * 86400);"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:app/Bill.php",
+       "quote_or_symbol": "$lateFeeDayTs = strtotime(date('Ymd', strtotime($this->pay_at))) - $bufferDayTs;"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:app/Bill.php",
+       "quote_or_symbol": "$lateFee = $billRent * $lateFeeDay * ($contract->late_fee_percent / 100);"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/pages/users/advance/Index.jsx",
+       "quote_or_symbol": "計算公式：租金 × ( 逾期天數 - 緩衝天數) ×延遲金%"
+      },
+      {
+       "sentence_index": 5,
+       "source": "code:app/Contract.php",
+       "quote_or_symbol": "public static function createContract($targetEstate, $currentUser, $isExisting, $addAttrs = null, $salesTaxLogDetails = [])"
+      },
+      {
+       "sentence_index": 5,
+       "source": "code:app/Contract.php",
+       "quote_or_symbol": "'enable_late_fee'   =>  $ownerRole->enable_late_fee,"
+      },
+      {
+       "sentence_index": 5,
+       "source": "code:app/Contract.php",
+       "quote_or_symbol": "'calc_late_fee_buffer_days' =>  $ownerRole->calc_late_fee_buffer_days,"
+      },
+      {
+       "sentence_index": 5,
+       "source": "code:app/Contract.php",
+       "quote_or_symbol": "'late_fee_percent'  =>  $ownerRole->late_fee_percent,"
+      },
+      {
+       "sentence_index": 5,
+       "source": "code:app/Bill.php",
+       "quote_or_symbol": "if ($contract->enable_late_fee != 1) {"
       }
      ],
      "not_supported_greps": [
       {
-       "grep": "git -C jgb2/dev2 show master:src/pages/users/advance/Index.jsx | sed -n '933,935p' | grep -c isTongSang",
-       "result": "1 — 「延遲金設置」FormBlock 整段被 state.isTongSang 包住，一般團隊不會渲染這個區塊",
-       "control_term": "git -C jgb2/dev2 show master:src/pages/users/advance/Index.jsx | sed -n '749,753p' | grep -c \"title={t('物件管理')}\" => 1（正對照組：緊接在後的「物件管理」區塊標題確實命中，證明 grep 本身能在這個檔案裡找到東西，不是查詢方式壞掉）"
+       "grep": "sed -n '933,935p' /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/src/pages/users/advance/Index.jsx | grep -c isTongSang",
+       "result": "1（延遲金設置整個區塊被 isTongSang 包住，一般團隊不會渲染）",
+       "positive_control": "sed -n '749,753p' /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/src/pages/users/advance/Index.jsx | grep -c \"title={t('物件管理')}\" → 1"
+      },
+      {
+       "grep": "sed -n '18147,18152p' /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/app/Bill.php | grep -c \"BILL_TYPE_RENT\"",
+       "result": "1（canGenerateLateFeeBill 一開頭就要求帳單型態是一般租金，其他型態直接 return false）",
+       "positive_control": "sed -n '18147,18152p' /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/app/Bill.php | grep -c \"return false\" → 1"
+      },
+      {
+       "grep": "grep -rnE \"(contract|Contract)->(enable_late_fee|calc_late_fee_buffer_days|late_fee_percent) *=[^=]\" /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/app --include='*.php' | wc -l | tr -d ' '",
+       "result": "0（app/ 內沒有任何一處對合約的延遲金欄位做賦值（以 $contract->欄位 = 的寫法））",
+       "positive_control": "grep -rnE \"'(enable_late_fee|calc_late_fee_buffer_days|late_fee_percent)' *=> *\\\\\\$ownerRole\" /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/app --include='*.php' | wc -l | tr -d ' ' → 3"
       }
      ],
-     "open_questions": []
+     "open_questions": [
+      "進階設定「延遲金設置」區塊的說明文字寫「該筆帳單的繳費截止日為合約的終止日」，但程式產生延遲金帳單時把繳費期限設為產生當天（Bill.php 的 'date_expire' => date(\"Ymd\")）；編輯視窗另寫「變更的數值需由主管審核同意，變更才會生效」，程式則在團隊沒有設定簽核流程時直接更新。本條句子依程式行為寫，畫面說明文字是否要修正待業主確認。"
+     ]
     },
     {
      "proposed_id": "jgb/B/advance-additional-terms",

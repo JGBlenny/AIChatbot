@@ -2,7 +2,7 @@
   "audience": "jgb",
   "budget_tokens": 0,
   "business_types": [],
-  "canon_sha256": "9ee991cd9760e39bb55617501c5f08f10b6edc64f440481751193d2d38816758",
+  "canon_sha256": "8a5844bcc85dfe43d2f52f135d285e3beae8fbbf8858adac9b4f1ff09d4ec62f",
   "coarses": [
     {
       "fines": [
@@ -1135,13 +1135,14 @@
           ],
           "categories": [],
           "coarse_id": "A-account-recovery",
-          "content_sha256": "38155f27bc013f582bdf8916b060be6a1d804c547f62570aaf8203d14057f005",
+          "content_sha256": "17d48ee3bdc345b689863c98ea280bf3ea29c6dee2538a2ae5ec813e6335458b",
           "content_units": [
-            "重設密碼前必須先完成帳號驗證，可以選擇用 Email 或手機號碼兩種方式其中之一收驗證碼。",
-            "驗證碼確認正確後，畫面會顯示「帳號驗證成功」並切換到重設密碼表單。",
-            "新密碼需至少 6 個字元、同時包含英文與數字，且需與確認密碼欄位一致。",
-            "送出並顯示密碼設定成功後，系統會依處理結果自動導向指定頁面或一般登入頁，需使用新密碼重新登入。",
-            "如果密碼設定失敗，畫面會跳出提示視窗顯示「密碼設定失敗」與失敗原因；若是密碼格式不符，密碼欄位下方也會顯示錯誤提示。"
+            "在登入頁按「忘記密碼」進入「忘記密碼嗎」頁面，先選用 Email 或手機號碼其中一種輸入帳號；輸入的 Email 或手機號碼必須有對應的帳號，沒有時欄位下方會提示格式錯誤或找不到對應的帳號，「驗證帳號」按鈕也維持灰色不能按。",
+            "帳號驗證通過後，系統會把驗證碼寄到該 Email、或用簡訊傳到該手機號碼，在頁面輸入 4 位數驗證碼；沒收到可以按頁面上的重發連結，重發後會顯示倒數秒數。",
+            "驗證碼輸入錯誤時，畫面會提示已錯誤幾次、還剩幾次機會，錯誤達 3 次驗證碼就會失效，需要重發。",
+            "驗證通過後，頁面切換成重設密碼表單，輸入「密碼」與「確認密碼」；新密碼至少 6 個字元、同時包含英文與數字，且兩次輸入要一致，三項條件都符合「重設密碼」按鈕才能按。",
+            "系統另外限制密碼只能用英文字母、數字與部分半形符號，含有不被允許的符號（例如驚嘆號、井字號、錢字號、百分號、空格）或中文字時，送出會被退回，密碼欄位下方顯示「格式錯誤」，並跳出「密碼設定失敗：請檢查輸入格式」的提示。",
+            "設定成功後，系統一般會直接以這個帳號登入並前往會員中心，不需要再用新密碼登入一次；不過重設密碼頁面上的說明文字仍寫著設定完成後請使用新密碼登入。"
           ],
           "id": "jgb/A/forget-password-flow",
           "instance_applicability": "general",
@@ -1160,21 +1161,31 @@
               "source": "draft:outline-20260920",
               "status": "proposed",
               "text": "密碼忘記了"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "重設密碼後要重新登入嗎"
             }
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-29",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
+            "code:src/pages/users/auth/parts/LoginForm.vue",
             "code:src/pages/users/auth/parts/forget/Password.vue",
-            "help:slug02_zh-Hant.html"
+            "code:app/Http/Controllers/AuthController.php",
+            "code:src/pages/users/auth/parts/VerifyPanel.vue",
+            "code:app/Model.php",
+            "code:routes/web.php",
+            "code:app/Http/Middleware/IfLoginCheck.php"
           ],
           "target_user": [
             "property_manager"
           ],
-          "title": "忘記密碼怎麼辦？（Email 或手機任一驗證後即可重設新密碼）"
+          "title": "忘記密碼怎麼重設？（Email 或手機號碼擇一驗證帳號、輸入驗證碼後設定新密碼，設定完成一般會直接登入）"
         },
         {
           "business_types": [
@@ -1327,9 +1338,13 @@
           ],
           "categories": [],
           "coarse_id": "A-member-home",
-          "content_sha256": "a4a0612db37e758b9a38e99518dfd99c4fb8ee7ca7c98b3832c9bc6a8818b7d2",
+          "content_sha256": "40128139b0d5bb7a20c83774d97193d918c7dd7caffe0074932b65105a3cf031",
           "content_units": [
-            "首頁下方顯示帳單、合約、修繕的整合列表；具備通知檢視權限的使用者，還會另外看到 Email 通知紀錄區塊。"
+            "房東或管理者（大房東除外）在會員中心首頁「主要」頁面的下方，有一個帳單與合約的整合列表，分成「帳務情況」「合約情況」兩個頁簽。",
+            "「帳務情況」底下有「逾期待收款」「待繳費」兩個清單，「合約情況」底下有「即將到期合約」「待發送」「待房東簽名」「待租客簽回」四個清單，每個清單右上角的「更多」可以前往完整列表。",
+            "這個整合列表沒有修繕清單。",
+            "具備「查看所有通知」權限的成員，整合列表下方還會多一個「系統代發送E-mail」區塊，列出系統代發送的 Email 紀錄。",
+            "大房東登入時，首頁沒有這個整合列表，也沒有「系統代發送E-mail」區塊；切到「滿租率(beta)」頁簽時，這兩個區塊同樣不會顯示。"
           ],
           "id": "jgb/A/dashboard-overview-lists",
           "instance_applicability": "general",
@@ -1342,26 +1357,29 @@
             {
               "source": "draft:outline-20260920",
               "status": "proposed",
-              "text": "帳單合約修繕整合列表"
+              "text": "首頁帳單合約列表"
             },
             {
               "source": "draft:outline-20260920",
               "status": "proposed",
-              "text": "Email 通知紀錄區塊"
+              "text": "首頁系統代發送E-mail區塊"
             }
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-28",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
-            "code:src/pages/users/dashboard/Landlord.vue"
+            "code:src/pages/users/dashboard/Landlord.vue",
+            "code:src/pages/users/dashboard/parts/BillContractRepair.vue",
+            "code:src/pages/users/dashboard/parts/EmailRecords.vue",
+            "code:app/Http/Controllers/UserController.php"
           ],
           "target_user": [
             "property_manager"
           ],
-          "title": "首頁下方還有哪些列表？（帳單、合約、修繕整合列表，具通知權限者另有 Email 通知紀錄）"
+          "title": "房東首頁下方還有哪些列表？（帳單與合約整合列表，具查看所有通知權限者另有系統代發送 E-mail 區塊；大房東首頁沒有）"
         },
         {
           "business_types": [
@@ -2053,13 +2071,12 @@
           ],
           "categories": [],
           "coarse_id": "A-signer-info",
-          "content_sha256": "60a5222d42d311dc0df132c61734c84e41d923dbe5c44754c8b97db306929f53",
+          "content_sha256": "48640e0192667139ce23914930e844a79d45cf2c9ed0dec219dd637c67a10684",
           "content_units": [
-            "個人身分的簽約資訊必填欄位為姓氏、名稱、身分證字號。",
-            "另需填寫 Email 與手機號碼，同樣列為必填。",
-            "身分證正反面照片為附件上傳項目，走證件引導裁切流程。",
-            "另可上傳「工作名片/學生證」「良民證」「小章」三項其他附件，皆非必填。",
-            "如果有多筆個人身分資料（例如同時管理多個角色），表單上方會出現一列可以橫向捲動切換的項目；超過 5 筆時，會多一個「所有團隊」的下拉選單方便切換。"
+            "個人房東在「其他設定」的「簽約資訊」頁，「個人資訊」區塊有姓氏、名稱、身分證字號、Email、手機號碼五個欄位，欄位名稱旁都標示必填（星號）。",
+            "「戶籍地址」與「通訊地址」兩組地址也標示必填。",
+            "「身分證正反面照片(選填)」可以分別上傳證件的正面與反面兩張照片，頁面提示請上傳清晰的橫式證件正反面照片。",
+            "「其他附件(選填)」可以上傳「工作名片/學生證」「良民證」「小章」三項，都是選填。"
           ],
           "id": "jgb/A/signer-individual-fields",
           "instance_applicability": "general",
@@ -2082,17 +2099,22 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-29",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
-            "code:src/pages/users/team/_parts/SignerDetails.vue"
+            "code:src/pages/users/team/_parts/SignerDetails.vue",
+            "code:src/pages/users/team/_parts/SignerFormInputField.vue",
+            "code:src/styles/tailwind.sass",
+            "code:app/Role.php",
+            "code:src/components/AddressComponent.vue",
+            "code:src/components/AddressFieldTitle.jsx"
           ],
           "target_user": [
             "property_manager",
             "prospect"
           ],
-          "title": "個人房東的簽約資訊要填什麼？（姓氏、名稱、身分證字號、Email、手機、身分證正反面）"
+          "title": "個人房東的簽約資訊要填哪些欄位？（姓氏、名稱、身分證字號、Email、手機號碼、戶籍地址、通訊地址標示必填，身分證正反面照片與其他附件為選填）"
         },
         {
           "business_types": [
@@ -4067,11 +4089,13 @@
           ],
           "categories": [],
           "coarse_id": "B-biglandlord-list",
-          "content_sha256": "e2d758425f26e325549a03b0025408307a45e0829c04660ae8847afc6bcc2349",
+          "content_sha256": "79ab41cd9519d27fa51cc5289d4f279c8fdee93de33eb203205ae9f2f970e694",
           "content_units": [
-            "大房東列表的每一筆資料會顯示 ID、姓名、會員註冊、Email、手機號碼、身分證字號、地址、帳戶名稱與帳戶資訊。",
-            "另外還會顯示合作方式、合作起迄日期、這位大房東目前被授權的所屬物件數量，以及生日、主要聯絡方式。",
-            "點擊姓名可以開啟這位大房東的聯絡資訊卡。"
+            "大房東列表由左至右的欄位是：ID、姓名、會員註冊、Email、手機號碼、身分證字號、地址、帳戶名稱、帳戶資訊、合作方式、合作起迄、所屬物件、生日、主要聯絡方式，最右邊另有每一列的操作欄。",
+            "「會員註冊」欄是一個圓點：綠色代表這位大房東已完成註冊或驗證，灰色代表還沒有。",
+            "「所屬物件」欄顯示授權給這位大房東的物件數量（括號裡的數字），點下去會進到這位大房東的授權物件頁。",
+            "點擊「姓名」欄的名字會開啟這位大房東的聯絡資訊卡。",
+            "「生日」「主要聯絡方式」兩欄目前每一筆都只顯示「-」，不會顯示內容。"
           ],
           "id": "jgb/B/biglandlord-list-overview",
           "instance_applicability": "general",
@@ -4094,16 +4118,24 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-28",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
-            "code:src/pages/bigLandlords/list/_parts/ListTable.vue"
+            "code:src/pages/bigLandlords/list/_parts/ListTable.vue",
+            "code:app/Services/BigLandlordService.php",
+            "code:src/utils/surelyVue/bigLandlord.ts",
+            "code:src/components/SurelyVue/BigLandlord/IsRegisteredCell.vue",
+            "code:src/components/SurelyVue/BigLandlord/RelatedEstateCell.vue",
+            "code:src/components/SurelyVue/BigLandlord/NameCell.vue",
+            "code:src/components/SurelyVue/Common/TextBlockCell.vue",
+            "code:src/routes/bigLandlords.js",
+            "code:src/pages/bigLandlords/list/_parts/owned.jsx"
           ],
           "target_user": [
             "property_manager"
           ],
-          "title": "大房東列表可以看到哪些欄位？（ID、姓名、會員註冊、身分證字號、生日、主要聯絡方式、帳戶資訊、合作方式、合作起迄、所屬物件）"
+          "title": "大房東列表有哪些欄位？（ID、姓名、會員註冊、Email、手機號碼、身分證字號、地址、帳戶名稱、帳戶資訊、合作方式、合作起迄、所屬物件、生日、主要聯絡方式，其中生日與主要聯絡方式目前每筆都顯示「-」）"
         },
         {
           "business_types": [
@@ -4696,10 +4728,13 @@
           ],
           "categories": [],
           "coarse_id": "B-biglandlord-sheet",
-          "content_sha256": "746ae9e0a6d76f88cd5050f4e12c58bbbaa1133d35b3d0f07a58d11798007824",
+          "content_sha256": "fb14c19bb9aa3de09efd353fd2d0d7e65de087b87a1259ff4b99446321361f0e",
           "content_units": [
-            "對帳表以月份為單位列出各類別金額；只有特定合作團隊看得到完整的押金收入／支出、屋主資金收入／支出、屋主提領、屋主直收收入／支出等類別，其他團隊只看得到「屋主租金收入」「屋主租金支出」（部分團隊的用語會改顯示為「租金收入」「本期支出」）。",
-            "「上一月」「下一月」「下載」「取消」這幾個按鈕只出現在單月報表畫面（網址帶 1 到 12 月其中一個月份參數）；查看整年度對帳表時看到的不是這幾個按鈕，而是可以切換年份、匯出整年度資料的「匯出報表」按鈕。"
+            "大房東對帳表是針對一位大房東、依年度整理的屋主收支報表：年度表每個月一欄（1月到12月），各區塊列出每個月的金額；單月對帳單則列出該月的明細，抬頭是「屋主租金對帳單」（採資金版報表的特定合作團隊是「屋主資金對帳單」）。",
+            "年度表的區塊依團隊類型而不同：一般團隊是「屋主租金收入」「屋主租金支出」兩個區塊；採資金版報表的特定合作團隊是「押金收入」「押金支出」「屋主資金收入」「屋主資金支出」「屋主提領」「屋主直收收入」「屋主直收支出」七個區塊；部分團隊的用語會改顯示為「租金收入」「本期支出」。",
+            "單月對帳單最上方有屋主名稱與製表人，往下所有團隊都有「物件清單」「記帳期間」「押金」三個區塊；一般團隊接著是「屋主租金」區塊，採資金版報表的特定合作團隊則接著是「屋主資金」「屋主提領」「屋主直收」三個區塊與備註。",
+            "「記帳期間」區塊列出該月的記帳起訖日，以及本期屋主租金收入、本期屋主租金支出、本期屋主租金總結餘、上期屋主租金結餘、流水帳結餘與可調動租金（採資金版報表的特定合作團隊，用語是「屋主資金」「可調動資金」）；部分團隊的用語會改成「租金收入」「本期支出」，並隱藏上期結餘、總結餘與可調動租金。",
+            "有顯示總結餘的一般團隊，總結餘的算法是上期結餘加屋主租金收入、減屋主租金支出（報表上寫成「總結餘（上期結餘 + 屋主租金收入 - 屋主租金支出）」）。"
           ],
           "id": "jgb/B/biglandlord-sheet-overview",
           "instance_applicability": "general",
@@ -4717,27 +4752,37 @@
             {
               "source": "draft:outline-20260920",
               "status": "proposed",
-              "text": "對帳表可以下載嗎"
+              "text": "對帳表在算什麼"
             },
             {
               "source": "draft:outline-20260920",
               "status": "proposed",
-              "text": "對帳表怎麼切換月份"
+              "text": "對帳表的總結餘怎麼算"
             }
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-28",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/bigLandlords/sheet/_parts/Sheet.vue",
-            "code:src/pages/bigLandlords/sheet/index.vue"
+            "code:src/pages/bigLandlords/sheet/index.vue",
+            "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/Index.vue",
+            "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/TableInfo.vue",
+            "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/EstateList.vue",
+            "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/ReconciliationTerm.vue",
+            "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/DepositList.vue",
+            "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/EZoneCashflow.vue",
+            "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/PropertyManagingReconciliation.vue",
+            "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/OwnerWithdrawalCashflow.vue",
+            "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/OwnerDirectReceiveCashflow.vue",
+            "code:src/pages/bigLandlords/sheet/_parts/monthlyReport/RemarkOfOwner.vue"
           ],
           "target_user": [
             "property_manager"
           ],
-          "title": "大房東對帳表在算什麼？（只有特定合作團隊看得到完整的押金、屋主資金、屋主提領、屋主直收等類別金額，其他團隊只看得到屋主租金收支；單月報表才有「上一月」「下一月」「下載」，整年度報表是「匯出報表」）"
+          "title": "大房東對帳表在算什麼？（依年度列出屋主的收入與支出，年度表每月一欄；一般團隊是屋主租金收入與支出，特定合作團隊的資金版報表另有押金、屋主提領、屋主直收等區塊）"
         },
         {
           "business_types": [
@@ -5095,11 +5140,14 @@
           ],
           "categories": [],
           "coarse_id": "B-advanced-settings",
-          "content_sha256": "fdbad61a329cfde3c31e2441d26913899d46e1363daee0b697d732fdb36b4856",
+          "content_sha256": "b4d4427b615b7f35f1bea2b77d1c71b7327cbee48be0e4ea6f12bfb081b52bc1",
           "content_units": [
-            "「延遲金設置」只會出現在特定合作團隊的進階設定裡，一般團隊沒有這個設定。",
-            "有這個設定的團隊可以開啟或關閉延遲金功能，並設定緩衝天數與延遲金百分比。",
-            "開啟後，租客逾期繳租超過緩衝天數，系統會自動計算延遲金並產生一筆帳單，這筆帳單的繳費截止日就是合約的終止日；計算公式是：租金 ×（逾期天數 - 緩衝天數）× 延遲金百分比。"
+            "進階設定裡的「延遲金設置」區塊只會出現在特定合作團隊，一般團隊沒有這個設定。",
+            "有這個區塊的團隊可以用「啟用」開關開啟或關閉延遲金，區塊裡會顯示「緩衝天數」與「延遲金」百分比，啟用後可按「編輯延遲金設置」修改；送出變更時，團隊若有設定簽核流程就送簽核，沒有則直接更新。",
+            "延遲金是在租金帳單逾期付款之後才產生：這張租金帳單所屬合約已啟用延遲金、帳單已到帳，而且付款日比繳費期限晚、超過緩衝天數時，系統會自動為同一位租客再產生一張延遲金帳單，並直接送到應到帳；這張延遲金帳單的繳費期限是產生當天。",
+            "只有型態是一般租金的帳單會觸發延遲金，點退帳單、手動新增的帳單、罰款帳單、儲值帳單與押金設算息帳單都不會。",
+            "延遲金金額的算法是：這張租金帳單的租金項目金額 ×（逾期天數 - 緩衝天數）× 延遲金百分比，逾期天數是付款日比繳費期限晚的天數。",
+            "是否產生延遲金、緩衝天數與延遲金百分比，看的是合約上的設定：合約建立時才從團隊目前的設定複製一份到合約，團隊之後再開啟或修改設定，已建立的合約不會跟著改變，所以團隊開啟延遲金之前就建立的合約不會產生延遲金帳單。"
           ],
           "id": "jgb/B/advance-late-fee",
           "instance_applicability": "general",
@@ -5127,17 +5175,20 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-29",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
-            "code:src/pages/users/advance/Index.jsx"
+            "code:src/pages/users/advance/Index.jsx",
+            "code:app/Bill.php",
+            "code:app/Http/Controllers/UserController.php",
+            "code:app/Contract.php"
           ],
           "target_user": [
             "property_manager",
             "prospect"
           ],
-          "title": "進階設定的「延遲金設置」怎麼計算？（只有特定合作團隊看得到，公式是租金 × (逾期天數 - 緩衝天數) × 延遲金%）"
+          "title": "進階設定的「延遲金設置」是什麼、延遲金怎麼算？（只有特定合作團隊看得到；合約建立時帶入團隊設定，租金帳單逾期付款後才產生延遲金帳單，金額＝租金 ×（逾期天數 − 緩衝天數）× 延遲金百分比）"
         },
         {
           "business_types": [
@@ -9085,10 +9136,14 @@
           ],
           "categories": [],
           "coarse_id": "C-rent-listing",
-          "content_sha256": "e922d5b5b0f94178ebbdc7ba0e713fed1cad5d778ce85403b1c20286f254ba56",
+          "content_sha256": "1d0456430e218f504d122a5d8f614dca9f1f4140552fbdce80a8cd47ec27fa68",
           "content_units": [
-            "執行「刊登物件」的使用者，必須對這個物件有刊登物件或新增物件其中一種權限，否則系統會擋下並提示「您無法刊登此物件」。",
-            "如果物件還有必填欄位沒有填完整，系統會擋下這次刊登，自動導回物件編輯頁，並且把左側選單直接跳到缺欄位的那個分頁，提示需要補齊的錯誤訊息。"
+            "單一物件刊登招租廣告的流程是：在物件編輯最後一步按「預覽招租廣告」，或在物件總表按該物件選單的「刊登招租廣告」，進到預覽頁後再按「刊登」。",
+            "按下「刊登」後，系統會確認操作的人是不是這個物件的擁有者本人，或是否擁有「新增&編輯&刪除所屬物件」或「新增&編輯&刪除所有物件」權限；都不是時會擋下，導回物件列表並提示「您無法刊登此物件」。",
+            "目前登入的團隊沒有生效中的訂閱方案時，刊登也會被擋下，導回物件列表並跳出請先訂閱服務的提示視窗。",
+            "刊登前系統還會檢查物件資料是否填完整，沒通過就不會刊登，改導回物件編輯頁並顯示錯誤訊息；系統依序檢查各區，遇到第一個沒通過的區就停下並回報該區的問題。",
+            "檢查的項目是：用途、建築類型、空間類型、地址（要填詳細地址；台灣、越南、菲律賓、柬埔寨、泰國的物件還要有縣市與區）、樓層、總樓層、坪數、物件標題（最多 60 字）、租金（要大於 0）；商用物件還要填座位數，特定合作團隊還要填公證費。",
+            "在物件總表勾選多個物件用「批次刊登招租廣告」時，每個物件各自做同樣的資料檢查，資料不齊全的物件會被跳過、不會刊登，其他物件照常刊登；這個批次選項需要「新增&編輯&刪除所有物件」權限才看得到。"
           ],
           "id": "jgb/C/estate-rent-open-permission-and-validation",
           "instance_applicability": "general",
@@ -9107,20 +9162,36 @@
               "source": "draft:outline-20260920",
               "status": "proposed",
               "text": "刊登物件需要什麼權限"
+            },
+            {
+              "source": "draft:outline-20260920",
+              "status": "proposed",
+              "text": "招租廣告刊登失敗"
             }
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-28",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
-            "code:app/Http/Controllers/EstateController.php"
+            "code:src/pages/estates/edit/rent_contact/Index.vue",
+            "code:app/Http/Controllers/EstateController.php",
+            "code:src/pages/estates/list/Index.vue",
+            "code:resources/views/estate/show/navbar.blade.php",
+            "code:app/Estate.php",
+            "code:app/Http/Controllers/UserController.php",
+            "code:routes/web.php",
+            "code:app/Http/Middleware/SubscriptionCheck.php",
+            "code:resources/views/layouts/lightbox/general.blade.php",
+            "code:config/country.php",
+            "code:src/use/config/useEstateTypes.js",
+            "code:src/components/Lightbox/EstateBatchAdvertise.vue"
           ],
           "target_user": [
             "property_manager"
           ],
-          "title": "為什麼物件刊登不出去？（需要刊登物件或新增物件的權限；必填欄位沒填完會退回編輯頁）"
+          "title": "為什麼物件的招租廣告刊登不出去？（沒有刊登權限、團隊沒有生效中的訂閱方案、或物件資料檢查沒通過）"
         },
         {
           "business_types": [
@@ -15288,10 +15359,13 @@
           ],
           "categories": [],
           "coarse_id": "E-bill-list",
-          "content_sha256": "d15423e83aef16d57e194f77b10cc7af7d9a2810c170840905bc5167df1feae5",
+          "content_sha256": "bdf02c98604fb6df7b2f6884b5c4d9a5f2b23ff98680ad55724d619e09a46fcc",
           "content_units": [
-            "待對帳狀態的收款帳單可以「退至應到帳」或「移至已到帳」（部分特定合作團隊的選單沒有「移至已到帳」），選單裡不會有「取消帳單」；「開立發票」的顯示條件跟應到帳狀態相同（合約設定自動開立發票、帳單本身設定自動開立發票、且發票尚未完成），不是每一張待對帳帳單都看得到。",
-            "在帳單總表或收款帳單分頁勾選多筆「待對帳」帳單時，批次操作列會有「移至已到帳」（部分特定合作團隊沒有），有匯出權限時另有「匯出」；「開立發票」只有開通手動開立發票功能的團隊才會出現；批次操作列不會有「退至應到帳」。"
+            "房東方在「待對帳」收款帳單的齒輪選單裡，可以選「退至應到帳」「移至已到帳」，條件符合時還有「開立發票」；選單裡沒有「取消帳單」。",
+            "「退至應到帳」「移至已到帳」需要有帳單的新增或編輯權限（「新增&編輯&刪除所屬帳單」或「新增&編輯&刪除所有帳單」）才會出現，沒有這個權限的成員看不到；另外特定合作團隊的選單沒有「移至已到帳」。",
+            "「開立發票」只有在這張帳單所屬合約設定自動開立發票、帳單本身也設定自動開立發票、而且發票還沒開立完成時才會出現，不是每一張待對帳帳單都有。",
+            "在帳單總表或收款帳單分頁勾選多筆「待對帳」帳單時，批次操作列可能出現的動作是「移至已到帳」「開立發票」，以及有匯出權限時的匯出（收款帳單分頁叫「匯出」，帳單總表叫「匯出帳單」）；批次操作列沒有「退至應到帳」。",
+            "批次的「移至已到帳」同樣要有帳單的新增或編輯權限，特定合作團隊也沒有這個選項；批次的「開立發票」必須同時符合：團隊開通手動開立發票功能、勾選的每一張帳單都設定自動開立發票（合約與帳單）、而且都還沒開立過發票。"
           ],
           "id": "jgb/E/bill-actions-progress",
           "instance_applicability": "general",
@@ -15314,16 +15388,18 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-27",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
-            "code:src/use/config/useBillTypes.js"
+            "code:src/use/config/useBillTypes.js",
+            "code:app/Http/Controllers/UserController.php",
+            "code:src/use/config/useFeatures.js"
           ],
           "target_user": [
             "property_manager"
           ],
-          "title": "「待對帳」狀態的收款帳單可以做哪些動作？（退至應到帳／移至已到帳／開立發票，沒有取消帳單）"
+          "title": "「待對帳」狀態的收款帳單可以做哪些動作？（單張可退至應到帳、移至已到帳、開立發票，沒有取消帳單；批次沒有退至應到帳）"
         },
         {
           "business_types": [
@@ -18904,9 +18980,12 @@
           ],
           "categories": [],
           "coarse_id": "E-virtual-account",
-          "content_sha256": "d8d48ae776a474b11356a02f885d951c4ff5e67b2d1791b596eeecd863189e50",
+          "content_sha256": "b542bb8e4d678ec5d0e5ed61efeff2838723f61960f6a7bfc90d4853452f95c8",
           "content_units": [
-            "「固定虛擬帳號管理」頁面管理的是可以重複收款、要手動建立的固定帳號；租客在「我的帳單」線上繳費時，走藍新取號產生的 ATM 虛擬帳號是另一種、系統即時產生的單筆帳號，效期 180 天，過期後要重新走一次繳費流程才會再產生新的一組，不會出現在「固定虛擬帳號管理」列表裡。"
+            "不是同一種。",
+            "「固定虛擬帳號管理」列表裡管理的，是團隊名下、綁在租客或物件上、帶有餘額的固定虛擬帳號。",
+            "租客在帳單上線上繳費、選 ATM 轉帳時取得的虛擬帳號，是針對這一張帳單單筆取號產生的，帳號資訊記在這張帳單的付款紀錄上；它不是固定虛擬帳號，也不會出現在「固定虛擬帳號管理」列表裡。",
+            "藍新取號的 ATM 虛擬帳號效期是 180 天；效期內再選 ATM 轉帳會顯示同一組帳號，已過效期或還沒取過號就會重新取一組新的。"
           ],
           "id": "jgb/E/recharge-account-vs-single-use-atm",
           "instance_applicability": "general",
@@ -18924,21 +19003,24 @@
             {
               "source": "draft:outline-20260920",
               "status": "proposed",
-              "text": "固定虛擬帳號會過期嗎"
+              "text": "固定虛擬帳號跟單筆ATM帳號一樣嗎"
             }
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-27",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
+            "code:app/Http/Controllers/RechargeAccountListController.php",
+            "code:app/Http/Controllers/BillController.php",
+            "code:app/Payment.php",
             "docs:knowledge/jgb-product-facts.md#p914-newebpay-atm-expiry"
           ],
           "target_user": [
             "property_manager"
           ],
-          "title": "「固定虛擬帳號管理」跟租客線上繳費產生的 ATM 虛擬帳號是同一種嗎？（不是，ATM 那組是單筆繳費用、效期 180 天）"
+          "title": "「固定虛擬帳號管理」跟租客線上繳費取得的 ATM 虛擬帳號是同一種嗎？（不是，線上繳費的 ATM 帳號是依單張帳單單筆取號，藍新取號的效期為 180 天）"
         },
         {
           "business_types": [
@@ -21559,12 +21641,14 @@
           ],
           "categories": [],
           "coarse_id": "G-power-meter",
-          "content_sha256": "93ddb17cef4529a7051ea90b160f35f61cf9085389d09fd1c987d5bfc45c4c28",
+          "content_sha256": "d17ef2cdcc78520bb71de47ef055cf1cc17901d677c81e1e3858f41b9d6a456e",
           "content_units": [
-            "編輯頁最上面可以修改這支電錶的描述文字，方便辨識，按儲存即生效。",
-            "基本設定頁籤可以綁定或移除這支電錶所屬的物件；一般型電錶的編輯頁只有這一個頁籤。",
-            "儲值型電錶才會多出電錶資料頁籤，裡面是這支電錶的基本資料（電號、餘額、費率、預計可用電度）、預設顯示的電錶儲值歷程（儲值時間、金額、儲值前後金額、操作者），以及另外點開才看得到的費率異動歷程。",
-            "只有儲值型電錶、且帳號已開通自動開立發票的情況下，才會多出一個「開立發票」頁籤；租客登入時看不到這個頁籤。"
+            "電錶編輯頁的「描述」欄可以修改這支電錶的描述文字（方便辨識），按「儲存」就生效；租客登入時描述欄是停用樣式，也沒有「儲存」按鈕。",
+            "「基本設定」頁籤的「綁定物件」可以按「選擇物件」換掉這支電錶綁定的物件，按「儲存」生效；租客登入時看不到「選擇物件」、刪除叉叉與「儲存」。",
+            "一般型電錶的編輯頁只有「基本設定」這一個頁籤。",
+            "儲值型電錶多一個「電錶資料」頁籤，只能查看：上方的電錶基本資料有電號、目前餘額、費率、預計可用電度與最後連線成功時間（右上角有重新整理與畫面開啟時間），下方是電錶儲值歷程，另可點開費率異動歷程；這個頁籤沒有可以修改的欄位。",
+            "儲值型電錶、非租客登入、而且帳號已開通自動開立發票時，才會再多一個「開立發票」頁籤；一般型電錶沒有這個頁籤。",
+            "電錶連線中、非租客登入時，頁面上方還會有切換供電狀態的按鈕。"
           ],
           "id": "jgb/G/power-meter-single-edit-tabs",
           "instance_applicability": "general",
@@ -21587,7 +21671,7 @@
             {
               "source": "draft:outline-20260920",
               "status": "proposed",
-              "text": "電錶發票設定在哪裡"
+              "text": "電錶發票設定在哪"
             },
             {
               "source": "draft:outline-20260920",
@@ -21597,18 +21681,22 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-28",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
             "code:src/pages/iots/_parts/Single.vue",
+            "code:src/pages/iots/edit/Basic.jsx",
             "code:src/utils/constants/iots.ts",
-            "code:src/pages/iots/edit/Log.jsx"
+            "code:src/helpers/iots.ts",
+            "code:src/pages/iots/_parts/PowerMeterInfo.jsx",
+            "code:src/pages/iots/edit/Log.jsx",
+            "code:src/styles/tailwind.sass"
           ],
           "target_user": [
             "property_manager"
           ],
-          "title": "電錶編輯頁能改什麼？（儲值型有基本設定／電錶資料／開立發票三個頁籤，一般型只有基本設定）"
+          "title": "電錶編輯頁能改什麼？（描述、綁定物件、供電狀態；儲值型另有電錶資料頁籤，帳號開通自動開立發票時還有開立發票頁籤；租客只能看不能改）"
         },
         {
           "business_types": [
@@ -24317,11 +24405,12 @@
           ],
           "categories": [],
           "coarse_id": "I-demo-booking",
-          "content_sha256": "0a1755dccea71de256553d60a1cc4c511747eb80d23f19155f904785685d54f6",
+          "content_sha256": "0e66648ecf2cc0833992aed23e96d3f8f0b363bd8921264e40bdfd2dbefdd568",
           "content_units": [
-            "預約 demo 表單（頁面標題「聯繫我們」）要填公司名稱、職稱、姓名、電話、Email、物件所在地（國家/城市）、物件數量、團隊人數、最有興趣的功能（可複選）與諮詢內容，並勾選同意 JGB 隱私權政策。",
-            "頁面下方標示「所有資訊皆必填」，「送出」按鈕的顏色會依畫面上是否已填妥公司名稱、職稱、姓名、電話、Email、物件所在地、感興趣功能、物件數量、團隊人數、諮詢內容這 10 個欄位並勾選隱私權政策，在灰色與可點擊的主色之間切換，但按鈕本身一律可以點擊；實際擋下送出的是每個欄位上的瀏覽器對必填欄位的內建檢查，未填妥必填欄位時是瀏覽器原生驗證跳出提示、擋下表單送出，不是這個顏色判斷式在擋。",
-            "「最有興趣的功能」選項是複選核取方塊，畫面會要求至少勾選一項；其餘欄位都是單選下拉選單或文字輸入框。"
+            "預約 demo 表單（頁面標題「聯繫我們」）要填：公司名稱、職稱、姓名、電話、Email、物件所在地（國家/城市）、物件數量、團隊人數、最有興趣的功能（可複選）與諮詢內容，最後要勾選「我同意JGB隱私權政策」。",
+            "頁面最下方寫著「所有資訊皆必填」。",
+            "「最有興趣的功能」是複選核取方塊，一項都沒勾時，瀏覽器會要求至少勾選一項。",
+            "「送出」按鈕要等公司名稱、職稱、姓名、電話、Email、物件所在地、最有興趣的功能、物件數量、團隊人數、諮詢內容這 10 項都填妥並勾選隱私權政策，才會從灰色變成主色。"
           ],
           "id": "jgb/I/demo-form-fields",
           "instance_applicability": "general",
@@ -24349,7 +24438,7 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-09-28",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
@@ -24359,7 +24448,7 @@
             "property_manager",
             "prospect"
           ],
-          "title": "預約 demo 表單要填什麼？（公司、職稱、聯絡方式、物件所在地、感興趣功能與諮詢內容）"
+          "title": "預約 demo 表單要填什麼？（公司名稱、職稱、姓名、電話、Email、物件所在地、物件數量、團隊人數、最有興趣的功能、諮詢內容，並勾選同意隱私權政策）"
         },
         {
           "business_types": [
@@ -24466,9 +24555,12 @@
           ],
           "categories": [],
           "coarse_id": "I-demo-booking",
-          "content_sha256": "852454ed20a4c3cf8e969c8b3274831322adc58a6a256c8f42c8b43f8ce8e3bb",
+          "content_sha256": "75a2bd404feccc80e8a1896c4274438c30846fafefe7051695e3312fbd34c37b",
           "content_units": [
-            "表單頁面上全部 10 個欄位與隱私權同意都設了必填，沒填完時瀏覽器會先擋下送出；系統收到資料後，只會再檢查公司名稱、姓名、電話、Email 這四個欄位是否為空、以及 Email 格式是否正確。"
+            "表單送出後，系統端只檢查公司名稱、姓名、電話、Email 四項：任何一項是空的，或 Email 格式不正確，這次送出會被退回、不會寫入，畫面跳出「下列欄位為必填」的提示，並把該欄位標示為錯誤。",
+            "公司名稱、姓名、電話、Email 這四個輸入框在頁面上本身也設了必填，空白時瀏覽器會先擋下、不會送到系統端；Email 欄位是 Email 輸入框，格式不符時瀏覽器同樣會擋下。",
+            "職稱、物件所在地、物件數量、團隊人數、最有興趣的功能與諮詢內容這六項，系統端不檢查，空白也不會被系統端退回，這次送出照樣寫入。",
+            "「我同意JGB隱私權政策」的核取方塊只在頁面上設了必填，這個勾選狀態不會送到系統端，系統端也不檢查。"
           ],
           "id": "jgb/I/demo-form-actual-validation-scope",
           "instance_applicability": "general",
@@ -24496,7 +24588,7 @@
           ],
           "policy": "answerable",
           "policy_ref": null,
-          "reviewed_at": "2026-10-03",
+          "reviewed_at": "2026-10-05",
           "reviewed_by": "owner",
           "see_also": [],
           "sources": [
@@ -24506,7 +24598,7 @@
           "target_user": [
             "property_manager"
           ],
-          "title": "demo 表單哪些欄位真的會被系統擋下？（畫面上全部欄位都要填才能送出；系統端只再檢查公司、姓名、電話、Email 四項）"
+          "title": "demo 表單漏填欄位時，系統端會擋下哪些？（送出後系統端只檢查公司名稱、姓名、電話、Email 四項，其餘欄位空白不會被系統端退回）"
         }
       ],
       "id": "I-demo-booking",

@@ -592,7 +592,7 @@
     {
      "proposed_id": "jgb/G/power-meter-single-edit-tabs",
      "askable": "點開一支電錶的編輯頁後可以改什麼、儲值型跟一般型看到的頁籤一樣嗎",
-     "title": "電錶編輯頁能改什麼？（儲值型有基本設定／電錶資料／開立發票三個頁籤，一般型只有基本設定）",
+     "title": "電錶編輯頁能改什麼？（描述、綁定物件、供電狀態；儲值型另有電錶資料頁籤，帳號開通自動開立發票時還有開立發票頁籤；租客只能看不能改）",
      "unit_ids": [
       "page:powerMeter.single"
      ],
@@ -607,25 +607,85 @@
       "電錶編輯頁可以改什麼",
       "電錶設定有哪些頁籤",
       "電錶怎麼改描述",
-      "電錶發票設定在哪裡",
+      "電錶發票設定在哪",
       "一般型電錶編輯頁有電錶資料頁籤嗎"
      ],
      "sentences": [
-      "編輯頁最上面可以修改這支電錶的描述文字，方便辨識，按儲存即生效。",
-      "基本設定頁籤可以綁定或移除這支電錶所屬的物件；一般型電錶的編輯頁只有這一個頁籤。",
-      "儲值型電錶才會多出電錶資料頁籤，裡面是這支電錶的基本資料（電號、餘額、費率、預計可用電度）、預設顯示的電錶儲值歷程（儲值時間、金額、儲值前後金額、操作者），以及另外點開才看得到的費率異動歷程。",
-      "只有儲值型電錶、且帳號已開通自動開立發票的情況下，才會多出一個「開立發票」頁籤；租客登入時看不到這個頁籤。"
+      "電錶編輯頁的「描述」欄可以修改這支電錶的描述文字（方便辨識），按「儲存」就生效；租客登入時描述欄是停用樣式，也沒有「儲存」按鈕。",
+      "「基本設定」頁籤的「綁定物件」可以按「選擇物件」換掉這支電錶綁定的物件，按「儲存」生效；租客登入時看不到「選擇物件」、刪除叉叉與「儲存」。一般型電錶的編輯頁只有「基本設定」這一個頁籤。",
+      "儲值型電錶多一個「電錶資料」頁籤，只能查看：上方的電錶基本資料有電號、目前餘額、費率、預計可用電度與最後連線成功時間（右上角有重新整理與畫面開啟時間），下方是電錶儲值歷程，另可點開費率異動歷程；這個頁籤沒有可以修改的欄位。",
+      "儲值型電錶、非租客登入、而且帳號已開通自動開立發票時，才會再多一個「開立發票」頁籤；一般型電錶沒有這個頁籤。",
+      "電錶連線中、非租客登入時，頁面上方還會有切換供電狀態的按鈕。"
      ],
      "sources": [
       "code:src/pages/iots/_parts/Single.vue",
+      "code:src/pages/iots/edit/Basic.jsx",
       "code:src/utils/constants/iots.ts",
-      "code:src/pages/iots/edit/Log.jsx"
+      "code:src/helpers/iots.ts",
+      "code:src/pages/iots/_parts/PowerMeterInfo.jsx",
+      "code:src/pages/iots/edit/Log.jsx",
+      "code:src/styles/tailwind.sass"
      ],
      "evidence": [
       {
        "sentence_index": 0,
        "source": "code:src/pages/iots/_parts/Single.vue",
+       "quote_or_symbol": "<div class=\"font-500\">{{ t(\"描述\") }}</div>"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/iots/_parts/Single.vue",
        "quote_or_symbol": "{{ t(\"請為裝置設定描述，方便辨識。\") }}"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/iots/_parts/Single.vue",
+       "quote_or_symbol": ":class=\"`col-12 shrink ${isTenant ? 'disabled' : ''}`\""
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/iots/_parts/Single.vue",
+       "quote_or_symbol": "<div v-if=\"!isTenant\" class=\"col-auto\">"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/iots/_parts/Single.vue",
+       "quote_or_symbol": "{{ t(\"儲存\") }}"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/iots/_parts/Single.vue",
+       "quote_or_symbol": "@click=\"handleSaveName\""
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/styles/tailwind.sass",
+       "quote_or_symbol": "pointer-events: none"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/iots/edit/Basic.jsx",
+       "quote_or_symbol": "<div class=\"mb-2\"><div class=\"font-500\">{t('綁定物件')}</div></div>"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/iots/edit/Basic.jsx",
+       "quote_or_symbol": "+{t('選擇物件')}</div>}"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/iots/edit/Basic.jsx",
+       "quote_or_symbol": "{!props.isTenant &&"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/pages/iots/edit/Basic.jsx",
+       "quote_or_symbol": "{t('儲存')}"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/utils/constants/iots.ts",
+       "quote_or_symbol": "default: ["
       },
       {
        "sentence_index": 1,
@@ -634,21 +694,130 @@
       },
       {
        "sentence_index": 2,
+       "source": "code:src/utils/constants/iots.ts",
+       "quote_or_symbol": "labelKey: \"電錶資料\","
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/iots/_parts/PowerMeterInfo.jsx",
+       "quote_or_symbol": "<div>{t('電錶基本資料')}</div>"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/iots/_parts/PowerMeterInfo.jsx",
+       "quote_or_symbol": "<div class=\"col-auto mb-2 font-bold text-grey-700\">{t('電號')}</div>"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/iots/_parts/PowerMeterInfo.jsx",
+       "quote_or_symbol": "<div class=\"mb-2 font-bold text-grey-700\">{t('目前餘額')}</div>"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/iots/_parts/PowerMeterInfo.jsx",
+       "quote_or_symbol": "<div class=\"mr-1 font-bold text-grey-700\">{t('費率')}</div>"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/iots/_parts/PowerMeterInfo.jsx",
+       "quote_or_symbol": "<span class=\"font-bold\">{t('預計可用電度')}</span>"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/iots/_parts/PowerMeterInfo.jsx",
+       "quote_or_symbol": "<span class=\"font-bold\">{t('最後連線成功時間')}</span>"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/iots/_parts/PowerMeterInfo.jsx",
+       "quote_or_symbol": "<div class=\"mr-1 text-[14px] text-grey-700\">{t('畫面開啟時間')}</div>"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/iots/_parts/PowerMeterInfo.jsx",
+       "quote_or_symbol": "bi bi-arrow-counterclockwise"
+      },
+      {
+       "sentence_index": 2,
        "source": "code:src/pages/iots/edit/Log.jsx",
        "quote_or_symbol": "<div>{t('電錶儲值歷程')}</div>"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/pages/iots/edit/Log.jsx",
+       "quote_or_symbol": "}}>{t('費率異動歷程')}</div>"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/helpers/iots.ts",
+       "quote_or_symbol": "(!!conditions?.gen_invoice === false || !!conditions?.isTenant) &&"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/helpers/iots.ts",
+       "quote_or_symbol": "value === PowerMeterTab.invoice"
       },
       {
        "sentence_index": 3,
        "source": "code:src/utils/constants/iots.ts",
        "quote_or_symbol": "labelKey: \"開立發票\","
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/iots/_parts/Single.vue",
+       "quote_or_symbol": "gen_invoice: state.can_auto_generate_invoice,"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/pages/iots/_parts/Single.vue",
+       "quote_or_symbol": "isTenant: isTenant.value,"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/pages/iots/_parts/Single.vue",
+       "quote_or_symbol": "const isConnected = computed(()=>{"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/pages/iots/_parts/Single.vue",
+       "quote_or_symbol": "state.form.status === PowerMeterStatus.connecting"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/pages/iots/_parts/Single.vue",
+       "quote_or_symbol": "&& !isTenant.value"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/pages/iots/_parts/Single.vue",
+       "quote_or_symbol": "<TopUpSwitch"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/pages/iots/_parts/Single.vue",
+       "quote_or_symbol": "<PowerSwitch"
       }
      ],
      "not_supported_greps": [
       {
-       "grep": "grep -n -A26 \"export const PowerMeterTabPair\" <(git -C /Users/chenqinghuang/dev/work/jgb2/dev2 show b2ee2ac382ce06763798a7238e4fd5c9411fcfaa:src/utils/constants/iots.ts)",
-       "expected_zero": false,
-       "result": "PowerMeterTabPair.default 只有一個 { labelKey: \"基本設定\" } 元素，topUp 分支才有電錶資料與開立發票",
-       "control": "grep -nF \"labelKey: \\\"電錶資料\\\"\" <(git -C /Users/chenqinghuang/dev/work/jgb2/dev2 show b2ee2ac382ce06763798a7238e4fd5c9411fcfaa:src/utils/constants/iots.ts) 命中 1 筆、只在 topUp 分支底下，default 分支只有「基本設定」一項"
+       "grep": "sed -n '20,25p' /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/src/utils/constants/iots.ts | grep -c \"labelKey\"",
+       "result": "1（一般型（default）只有一個頁籤項目）",
+       "positive_control": "sed -n '5,19p' /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/src/utils/constants/iots.ts | grep -c \"labelKey\" → 3"
+      },
+      {
+       "grep": "sed -n '20,25p' /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/src/utils/constants/iots.ts | grep -c \"開立發票\"",
+       "result": "0（一般型（default）的頁籤清單裡沒有開立發票）",
+       "positive_control": "sed -n '5,19p' /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/src/utils/constants/iots.ts | grep -c \"開立發票\" → 1"
+      },
+      {
+       "grep": "cat /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/src/pages/iots/_parts/PowerMeterInfo.jsx /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/src/pages/iots/edit/Log.jsx | grep -cE \"<input|<select|<textarea|v-model|onInput\"",
+       "result": "0（電錶資料頁籤的兩個元件（基本資料、儲值歷程）沒有任何輸入欄位）",
+       "positive_control": "grep -cE \"<input|<select|<textarea|v-model|onInput\" /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/src/pages/iots/_parts/Single.vue → 2"
+      },
+      {
+       "grep": "grep -c \"!props.isTenant &&\" /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/src/pages/iots/edit/Basic.jsx",
+       "result": "3（綁定物件區的「選擇物件」、刪除叉叉、「儲存」三處都包在非租客條件裡，租客看不到）",
+       "positive_control": "grep -c \"{t('選擇物件')}\" /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/src/pages/iots/edit/Basic.jsx → 1"
       }
      ],
      "open_questions": []

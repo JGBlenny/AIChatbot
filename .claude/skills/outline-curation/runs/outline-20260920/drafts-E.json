@@ -372,7 +372,7 @@
     {
      "proposed_id": "jgb/E/bill-actions-progress",
      "askable": "待對帳狀態的收款帳單可以做哪些動作",
-     "title": "「待對帳」狀態的收款帳單可以做哪些動作？（退至應到帳／移至已到帳／開立發票，沒有取消帳單）",
+     "title": "「待對帳」狀態的收款帳單可以做哪些動作？（單張可退至應到帳、移至已到帳、開立發票，沒有取消帳單；批次沒有退至應到帳）",
      "unit_ids": [
       "page:bills.list"
      ],
@@ -389,11 +389,16 @@
       "待對帳能取消嗎"
      ],
      "sentences": [
-      "待對帳狀態的收款帳單可以「退至應到帳」或「移至已到帳」（部分特定合作團隊的選單沒有「移至已到帳」），選單裡不會有「取消帳單」；「開立發票」的顯示條件跟應到帳狀態相同（合約設定自動開立發票、帳單本身設定自動開立發票、且發票尚未完成），不是每一張待對帳帳單都看得到。",
-      "在帳單總表或收款帳單分頁勾選多筆「待對帳」帳單時，批次操作列會有「移至已到帳」（部分特定合作團隊沒有），有匯出權限時另有「匯出」；「開立發票」只有開通手動開立發票功能的團隊才會出現；批次操作列不會有「退至應到帳」。"
+      "房東方在「待對帳」收款帳單的齒輪選單裡，可以選「退至應到帳」「移至已到帳」，條件符合時還有「開立發票」；選單裡沒有「取消帳單」。",
+      "「退至應到帳」「移至已到帳」需要有帳單的新增或編輯權限（「新增&編輯&刪除所屬帳單」或「新增&編輯&刪除所有帳單」）才會出現，沒有這個權限的成員看不到；另外特定合作團隊的選單沒有「移至已到帳」。",
+      "「開立發票」只有在這張帳單所屬合約設定自動開立發票、帳單本身也設定自動開立發票、而且發票還沒開立完成時才會出現，不是每一張待對帳帳單都有。",
+      "在帳單總表或收款帳單分頁勾選多筆「待對帳」帳單時，批次操作列可能出現的動作是「移至已到帳」「開立發票」，以及有匯出權限時的匯出（收款帳單分頁叫「匯出」，帳單總表叫「匯出帳單」）；批次操作列沒有「退至應到帳」。",
+      "批次的「移至已到帳」同樣要有帳單的新增或編輯權限，特定合作團隊也沒有這個選項；批次的「開立發票」必須同時符合：團隊開通手動開立發票功能、勾選的每一張帳單都設定自動開立發票（合約與帳單）、而且都還沒開立過發票。"
      ],
      "sources": [
-      "code:src/use/config/useBillTypes.js"
+      "code:src/use/config/useBillTypes.js",
+      "code:app/Http/Controllers/UserController.php",
+      "code:src/use/config/useFeatures.js"
      ],
      "evidence": [
       {
@@ -404,39 +409,199 @@
       {
        "sentence_index": 0,
        "source": "code:src/use/config/useBillTypes.js",
-       "quote_or_symbol": "const canIssue = billData?.can_auto_generate_invoice"
+       "quote_or_symbol": "labelKey: '移至已到帳',"
       },
       {
        "sentence_index": 0,
        "source": "code:src/use/config/useBillTypes.js",
-       "quote_or_symbol": "&& Number(billData?.invoice_status ?? 0) !== INVOICE_STATUS_COMPLETE"
+       "quote_or_symbol": "labelKey: '開立發票',"
       },
       {
        "sentence_index": 0,
        "source": "code:src/use/config/useBillTypes.js",
-       "quote_or_symbol": "result = filterOptionByKey(result, 'invoiced')"
+       "quote_or_symbol": "filteredBillActions.get('revertToReady'),"
       },
       {
-       "sentence_index": 1,
+       "sentence_index": 0,
+       "source": "code:src/use/config/useBillTypes.js",
+       "quote_or_symbol": "genSingleActions: function(billData){ // 各單項齒輪內的內容"
+      },
+      {
+       "sentence_index": 0,
        "source": "code:src/use/config/useBillTypes.js",
        "quote_or_symbol": "case 'income-progress':"
       },
       {
-       "sentence_index": 1,
+       "sentence_index": 0,
        "source": "code:src/use/config/useBillTypes.js",
-       "quote_or_symbol": "filteredBillActions.get('toReceived'),"
+       "quote_or_symbol": "labelKey: '取消帳單',"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/use/config/useBillTypes.js",
+       "quote_or_symbol": "result = state.assembleOptions(canViewOwnedBill, canEditOwnedBill, result)"
       },
       {
        "sentence_index": 1,
        "source": "code:src/use/config/useBillTypes.js",
+       "quote_or_symbol": "const canEditOwnedBill = hasPermission('owner_bill') || hasPermission('add_bill')"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/use/config/useBillTypes.js",
+       "quote_or_symbol": "if ((node.permission === 'add_bill' && canEditOwnedBill) || node.permission === 'owner_bill'){"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/use/config/useBillTypes.js",
+       "quote_or_symbol": "function filterToReceivedOption(options){"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:src/use/config/useBillTypes.js",
+       "quote_or_symbol": "if (state.currentSpecialRole.includes('tongSang')){"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "'label'=> '新增&編輯&刪除所屬帳單',"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "'label'=> '新增&編輯&刪除所有帳單',"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "'g_add_bill' => ['add_bill'], // 此為新增邏輯，需盤查"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/UserController.php",
+       "quote_or_symbol": "'g_edit_bill' => ['receive_bill', 'pay_bill', 'owner_bill'],"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/use/config/useBillTypes.js",
+       "quote_or_symbol": "const canIssue = billData?.can_auto_generate_invoice"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/use/config/useBillTypes.js",
+       "quote_or_symbol": "&& billData?.is_auto_generate_invoice"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/use/config/useBillTypes.js",
+       "quote_or_symbol": "&& Number(billData?.invoice_status ?? 0) !== INVOICE_STATUS_COMPLETE"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/use/config/useBillTypes.js",
+       "quote_or_symbol": "result = filterOptionByKey(result, 'invoiced')"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:src/use/config/useBillTypes.js",
+       "quote_or_symbol": "// 開立發票「不綁」manual_invoice 功能旗標：只要帳單設定自動開立且尚無有效發票即顯示。"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/use/config/useBillTypes.js",
+       "quote_or_symbol": "bulkActions: computed(()=>{ // 在各列表頁面，直接執行多選時，可以做的動作"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/use/config/useBillTypes.js",
+       "quote_or_symbol": "genBulkActions: function(bills){"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/use/config/useBillTypes.js",
+       "quote_or_symbol": "case 'income-progress':"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/use/config/useBillTypes.js",
+       "quote_or_symbol": "filteredBillActions.get('toReceived'),"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/use/config/useBillTypes.js",
+       "quote_or_symbol": "label: t('匯出'),"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/use/config/useBillTypes.js",
+       "quote_or_symbol": "label: exportState.isExporting ? t('匯出中') : t('匯出帳單'),"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/use/config/useBillTypes.js",
+       "quote_or_symbol": "&& hasPermission('export_bill', store.state.userData?.permission)"
+      },
+      {
+       "sentence_index": 3,
+       "source": "code:src/use/config/useBillTypes.js",
+       "quote_or_symbol": "if (route.params?.type === 'all' && hasPermission('export_bill', store.state.userData?.permission)){"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/use/config/useBillTypes.js",
+       "quote_or_symbol": "result = filterByPermission(result, store.state.userData?.permission)"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/use/config/useBillTypes.js",
        "quote_or_symbol": "if (isManualInvoiceEnabled.value){"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/use/config/useBillTypes.js",
+       "quote_or_symbol": "&& pickedItems.every((bill)=>bill?.can_auto_generate_invoice && bill?.is_auto_generate_invoice)"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/use/config/useBillTypes.js",
+       "quote_or_symbol": "const hasInvoiced = pickedItems.some((bill)=>!Array.isArray(bill?.is_invoice_generated) || bill.is_invoice_generated.length > 0)"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/use/config/useFeatures.js",
+       "quote_or_symbol": "return isEnabled('manual_invoice')"
+      },
+      {
+       "sentence_index": 4,
+       "source": "code:src/use/config/useBillTypes.js",
+       "quote_or_symbol": "if (state.currentSpecialRole.includes('tongSang')){"
       }
      ],
      "not_supported_greps": [
       {
-       "grep": "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -n -A 6 \"case 'income-progress':\" master -- src/use/config/useBillTypes.js",
-       "result": "5 處命中（switch/case 標籤在檔案裡被多個平行邏輯各自 switch 一次是既有寫法）；其中靜態 bulkActions 陣列那一段（約行 1578）明確組出 [revertToReady, toReceived, invoiced] 三個 action，沒有 cancel",
-       "positive_control": "git -C /Users/chenqinghuang/dev/work/jgb2/dev2 grep -n -A 6 \"case 'income-unreceived':\" master -- src/use/config/useBillTypes.js → 5 處命中，其中對應區塊（約行 1231）含 filteredBillActions.get('cancel')，證明同一支 grep 在「有取消」的狀態上能命中"
+       "grep": "sed -n '1578,1590p' /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/src/use/config/useBillTypes.js | grep -c \"get('cancel')\"",
+       "result": "0（單張帳單齒輪選單 case 'income-progress' 區塊內沒有取消帳單）",
+       "positive_control": "sed -n '1559,1574p' /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/src/use/config/useBillTypes.js | grep -c \"get('cancel')\" → 1"
+      },
+      {
+       "grep": "(sed -n '1170,1300p' /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/src/use/config/useBillTypes.js; sed -n '1329,1460p' /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/src/use/config/useBillTypes.js) | grep -c \"revertToReady\"",
+       "result": "0（批次操作列兩處（bulkActions、genBulkActions）都沒有退至應到帳）",
+       "positive_control": "(sed -n '1170,1300p' /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/src/use/config/useBillTypes.js; sed -n '1329,1460p' /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/src/use/config/useBillTypes.js) | grep -c \"get('toReceived')\" → 8"
+      },
+      {
+       "grep": "sed -n '151,155p' /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/src/use/config/useBillTypes.js | grep -c \"permission: 'add_bill'\"",
+       "result": "1（退至應到帳帶 add_bill 權限鍵，沒有該權限的成員會被 assembleOptions 濾掉）",
+       "positive_control": "sed -n '127,131p' /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/src/use/config/useBillTypes.js | grep -c \"permission: 'add_bill'\" → 1"
+      },
+      {
+       "grep": "sed -n '1770,1776p' /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/src/use/config/useBillTypes.js | grep -c \"filterToReceivedOption\"",
+       "result": "1（單張選單在 tongSang 特定合作團隊會濾掉移至已到帳）",
+       "positive_control": "sed -n '1294,1298p' /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/src/use/config/useBillTypes.js | grep -c \"filterToReceivedOption\" → 1"
+      },
+      {
+       "grep": "grep -c \"if (!canIssue){\" /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/src/use/config/useBillTypes.js",
+       "result": "1（開立發票在 canIssue 不成立時被濾掉，所以不是每張待對帳帳單都有）",
+       "positive_control": "grep -c \"if (!canReissue){\" /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/src/use/config/useBillTypes.js → 1"
       }
      ],
      "open_questions": []
@@ -5024,7 +5189,7 @@
     {
      "proposed_id": "jgb/E/recharge-account-vs-single-use-atm",
      "askable": "固定虛擬帳號跟線上繳費的ATM虛擬帳號是同一種嗎",
-     "title": "「固定虛擬帳號管理」跟租客線上繳費產生的 ATM 虛擬帳號是同一種嗎？（不是，ATM 那組是單筆繳費用、效期 180 天）",
+     "title": "「固定虛擬帳號管理」跟租客線上繳費取得的 ATM 虛擬帳號是同一種嗎？（不是，線上繳費的 ATM 帳號是依單張帳單單筆取號，藍新取號的效期為 180 天）",
      "unit_ids": [
       "page:users.rechargeAccountList"
      ],
@@ -5038,22 +5203,118 @@
      "phrasings": [
       "ATM虛擬帳號跟固定虛擬帳號差在哪",
       "線上繳費ATM虛擬帳號效期",
-      "固定虛擬帳號會過期嗎"
+      "固定虛擬帳號跟單筆ATM帳號一樣嗎"
      ],
      "sentences": [
-      "「固定虛擬帳號管理」頁面管理的是可以重複收款、要手動建立的固定帳號；租客在「我的帳單」線上繳費時，走藍新取號產生的 ATM 虛擬帳號是另一種、系統即時產生的單筆帳號，效期 180 天，過期後要重新走一次繳費流程才會再產生新的一組，不會出現在「固定虛擬帳號管理」列表裡。"
+      "不是同一種。「固定虛擬帳號管理」列表裡管理的，是團隊名下、綁在租客或物件上、帶有餘額的固定虛擬帳號。",
+      "租客在帳單上線上繳費、選 ATM 轉帳時取得的虛擬帳號，是針對這一張帳單單筆取號產生的，帳號資訊記在這張帳單的付款紀錄上；它不是固定虛擬帳號，也不會出現在「固定虛擬帳號管理」列表裡。",
+      "藍新取號的 ATM 虛擬帳號效期是 180 天；效期內再選 ATM 轉帳會顯示同一組帳號，已過效期或還沒取過號就會重新取一組新的。"
      ],
      "sources": [
+      "code:app/Http/Controllers/RechargeAccountListController.php",
+      "code:app/Http/Controllers/BillController.php",
+      "code:app/Payment.php",
       "docs:knowledge/jgb-product-facts.md#p914-newebpay-atm-expiry"
      ],
      "evidence": [
       {
        "sentence_index": 0,
+       "source": "code:app/Http/Controllers/RechargeAccountListController.php",
+       "quote_or_symbol": "$query = RechargeAccount::select("
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/RechargeAccountListController.php",
+       "quote_or_symbol": "->join('role_recharge_accounts', 'recharge_accounts.id', '=', 'role_recharge_accounts.recharge_account_id')"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/RechargeAccountListController.php",
+       "quote_or_symbol": "'tenant_name' => $account->tenant_name,"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/RechargeAccountListController.php",
+       "quote_or_symbol": "'estate_name' => $estate ? $estate->title : null,"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/RechargeAccountListController.php",
+       "quote_or_symbol": "'balance' => $account->recharge_amount_base_number,"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/BillController.php",
+       "quote_or_symbol": "if (!($payment = $bill->getPayment())) {"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/BillController.php",
+       "quote_or_symbol": "'paymentable_id' => $bill->id,"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/BillController.php",
+       "quote_or_symbol": "$responseData = $payment->go('newebpay', 'atm_no', 'bill', array_merge($newebpay, ["
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/BillController.php",
+       "quote_or_symbol": "$payInfo = $payment->updateOrCreatePayInfo('cathaybk', 'atm', array_merge($responseData));"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/RechargeAccountListController.php",
+       "quote_or_symbol": "$query = RechargeAccount::select("
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Controllers/BillController.php",
+       "quote_or_symbol": "// 取過號尚未過期 => 不再取號"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Controllers/BillController.php",
+       "quote_or_symbol": "if (!empty($payInfo = $payment->hasPayInfo('newebpay', 'atm')) && !empty($payInfo['ExpireDate']) && strtotime($payInfo['ExpireDate']) >= time()) {"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Controllers/BillController.php",
+       "quote_or_symbol": "// 重新發送取號 call api"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Http/Controllers/BillController.php",
+       "quote_or_symbol": "'addExpireDays' => 180, // 20201030改為180天"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Payment.php",
+       "quote_or_symbol": "$this->manufacturer = 'newebpay'; // 加入金流廠商"
+      },
+      {
+       "sentence_index": 2,
+       "source": "code:app/Payment.php",
+       "quote_or_symbol": "$expireDate = !empty($parameter['addExpireDays']) ? date('Ymd', strtotime('+' . $parameter['addExpireDays'] . 'days', $this->payment_ts)) : date('Ymd', strtotime('+7 days', $this->payment_ts));"
+      },
+      {
+       "sentence_index": 2,
        "source": "docs:knowledge/jgb-product-facts.md#p914-newebpay-atm-expiry",
        "quote_or_symbol": "這是單筆取號的效期，與固定虛擬帳號不同。"
       }
      ],
-     "not_supported_greps": [],
+     "not_supported_greps": [
+      {
+       "grep": "grep -c \"PayInfo\" /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/app/Http/Controllers/RechargeAccountListController.php",
+       "result": "0（固定虛擬帳號管理列表的控制器完全不讀帳單付款紀錄上的單筆取號資訊，列表只查 RechargeAccount）",
+       "positive_control": "grep -c \"RechargeAccount::\" /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/app/Http/Controllers/RechargeAccountListController.php → 17"
+      },
+      {
+       "grep": "sed -n '4966,5460p' /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/app/Http/Controllers/BillController.php | grep -c \"RechargeAccount\"",
+       "result": "0（藍新／國泰／永豐／中信四段線上繳費 ATM 取號流程都不建立或讀取 RechargeAccount）",
+       "positive_control": "sed -n '4966,5460p' /private/tmp/claude-501/-Users-chenqinghuang-dev-work-AIChatbot/ffa857d1-270c-475e-afd0-7650f7255f37/scratchpad/jgb2-b2ee2ac/app/Http/Controllers/BillController.php | grep -c \"hasPayInfo\\|updateOrCreatePayInfo\" → 7"
+      }
+     ],
      "open_questions": []
     },
     {

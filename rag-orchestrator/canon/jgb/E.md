@@ -98,18 +98,21 @@ language: zh-TW
 - instance_applicability: general
 應到帳的收款帳單，如果不是走自動收款，齒輪選單會顯示「匯款資訊」讓房東查看匯款帳戶。
 應到帳的收款帳單可以「移至已到帳」或「取消帳單」（部分特定合作團隊的選單沒有「移至已到帳」）；「開立發票」則要這張帳單所屬合約有設定自動開立發票、帳單本身也設定自動開立發票、且發票狀態還沒到「已完成」時才會出現，不是每一張應到帳帳單都看得到。
-### 「待對帳」狀態的收款帳單可以做哪些動作？（退至應到帳／移至已到帳／開立發票，沒有取消帳單） {#jgb/E/bill-actions-progress}
+### 「待對帳」狀態的收款帳單可以做哪些動作？（單張可退至應到帳、移至已到帳、開立發票，沒有取消帳單；批次沒有退至應到帳） {#jgb/E/bill-actions-progress}
 - phrasings:
   - {text: "待對帳可以做什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "退至應到帳", source: "draft:outline-20260920", status: proposed}
   - {text: "待對帳能取消嗎", source: "draft:outline-20260920", status: proposed}
-- sources: [code:src/use/config/useBillTypes.js]
-- reviewed: {by: owner, at: 2026-09-27}
+- sources: [code:src/use/config/useBillTypes.js, code:app/Http/Controllers/UserController.php, code:src/use/config/useFeatures.js]
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-待對帳狀態的收款帳單可以「退至應到帳」或「移至已到帳」（部分特定合作團隊的選單沒有「移至已到帳」），選單裡不會有「取消帳單」；「開立發票」的顯示條件跟應到帳狀態相同（合約設定自動開立發票、帳單本身設定自動開立發票、且發票尚未完成），不是每一張待對帳帳單都看得到。
-在帳單總表或收款帳單分頁勾選多筆「待對帳」帳單時，批次操作列會有「移至已到帳」（部分特定合作團隊沒有），有匯出權限時另有「匯出」；「開立發票」只有開通手動開立發票功能的團隊才會出現；批次操作列不會有「退至應到帳」。
+房東方在「待對帳」收款帳單的齒輪選單裡，可以選「退至應到帳」「移至已到帳」，條件符合時還有「開立發票」；選單裡沒有「取消帳單」。
+「退至應到帳」「移至已到帳」需要有帳單的新增或編輯權限（「新增&編輯&刪除所屬帳單」或「新增&編輯&刪除所有帳單」）才會出現，沒有這個權限的成員看不到；另外特定合作團隊的選單沒有「移至已到帳」。
+「開立發票」只有在這張帳單所屬合約設定自動開立發票、帳單本身也設定自動開立發票、而且發票還沒開立完成時才會出現，不是每一張待對帳帳單都有。
+在帳單總表或收款帳單分頁勾選多筆「待對帳」帳單時，批次操作列可能出現的動作是「移至已到帳」「開立發票」，以及有匯出權限時的匯出（收款帳單分頁叫「匯出」，帳單總表叫「匯出帳單」）；批次操作列沒有「退至應到帳」。
+批次的「移至已到帳」同樣要有帳單的新增或編輯權限，特定合作團隊也沒有這個選項；批次的「開立發票」必須同時符合：團隊開通手動開立發票功能、勾選的每一張帳單都設定自動開立發票（合約與帳單）、而且都還沒開立過發票。
 ### 「已到帳」狀態的收款帳單可以做哪些動作？（收款備註／發票／收據／退款對帳單） {#jgb/E/bill-actions-received}
 - phrasings:
   - {text: "已到帳能做什麼", source: "draft:outline-20260920", status: proposed}
@@ -1103,17 +1106,20 @@ JGB 把「社會住宅」設計成一種團隊身份，跟「個人房東/代理
 - business_types: [system_provider]
 - instance_applicability: general
 收款方是租客本人的支出帳單（例如退押金），畫面顯示的是租客本人的收款銀行帳戶，不會使用「固定虛擬帳號管理」裡設定的帳號；固定虛擬帳號只用在租客要繳款給業者的方向。
-### 「固定虛擬帳號管理」跟租客線上繳費產生的 ATM 虛擬帳號是同一種嗎？（不是，ATM 那組是單筆繳費用、效期 180 天） {#jgb/E/recharge-account-vs-single-use-atm}
+### 「固定虛擬帳號管理」跟租客線上繳費取得的 ATM 虛擬帳號是同一種嗎？（不是，線上繳費的 ATM 帳號是依單張帳單單筆取號，藍新取號的效期為 180 天） {#jgb/E/recharge-account-vs-single-use-atm}
 - phrasings:
   - {text: "ATM虛擬帳號跟固定虛擬帳號差在哪", source: "draft:outline-20260920", status: proposed}
   - {text: "線上繳費ATM虛擬帳號效期", source: "draft:outline-20260920", status: proposed}
-  - {text: "固定虛擬帳號會過期嗎", source: "draft:outline-20260920", status: proposed}
-- sources: [docs:knowledge/jgb-product-facts.md#p914-newebpay-atm-expiry]
-- reviewed: {by: owner, at: 2026-09-27}
+  - {text: "固定虛擬帳號跟單筆ATM帳號一樣嗎", source: "draft:outline-20260920", status: proposed}
+- sources: [code:app/Http/Controllers/RechargeAccountListController.php, code:app/Http/Controllers/BillController.php, code:app/Payment.php, docs:knowledge/jgb-product-facts.md#p914-newebpay-atm-expiry]
+- reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-「固定虛擬帳號管理」頁面管理的是可以重複收款、要手動建立的固定帳號；租客在「我的帳單」線上繳費時，走藍新取號產生的 ATM 虛擬帳號是另一種、系統即時產生的單筆帳號，效期 180 天，過期後要重新走一次繳費流程才會再產生新的一組，不會出現在「固定虛擬帳號管理」列表裡。
+不是同一種。
+「固定虛擬帳號管理」列表裡管理的，是團隊名下、綁在租客或物件上、帶有餘額的固定虛擬帳號。
+租客在帳單上線上繳費、選 ATM 轉帳時取得的虛擬帳號，是針對這一張帳單單筆取號產生的，帳號資訊記在這張帳單的付款紀錄上；它不是固定虛擬帳號，也不會出現在「固定虛擬帳號管理」列表裡。
+藍新取號的 ATM 虛擬帳號效期是 180 天；效期內再選 ATM 轉帳會顯示同一組帳號，已過效期或還沒取過號就會重新取一組新的。
 ### 租客重複匯款時系統怎麼處理？（國泰世華單筆帳單 ATM 帳號已付款後重複匯入會略過；固定虛擬帳號多匯的部分留在儲值餘額） {#jgb/E/recharge-account-mismatch-and-duplicate}
 - phrasings:
   - {text: "虛擬帳號重複匯款", source: "draft:outline-20260920", status: proposed}

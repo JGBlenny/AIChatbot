@@ -6,6 +6,9 @@
 ops: {"title": str?, "set": {"<i>": str}?, "delete": [i]?, "insert_after": {"<i>": [str]}?,
       "add_sources": [str]?, "remove_sources": [str]?, "evidence": any?}
 Sentence indices always refer to the fine's sentences BEFORE this call. Only doubt fines may be edited.
+Plan 9.30 whole-fine ops (each must be the only key): {"remove_fine": true} (fine must also be in env REMOVE=<json>);
+  {"rewrite_fine": {title, sentences, phrasings, sources, evidence, not_supported_greps, open_questions}} (all 7 required;
+  proposed_id/askable/unit_ids/target_user/business_types/instance_applicability are refused).
 """
 import json
 import os
@@ -22,6 +25,62 @@ def dump(shelf, d):
 
 def path(shelf):
     return os.path.join(RUNS, f"drafts-{shelf}.json")
+
+
+REWRITE_KEYS = {"title", "sentences", "phrasings", "sources", "evidence", "not_supported_greps", "open_questions"}
+FROZEN_KEYS = {"proposed_id", "askable", "unit_ids", "target_user", "business_types", "instance_applicability"}
+
+
+def whole_fine(shelf, d, fid, f, ops):
+    """Plan 9.30: {"remove_fine": true} (fid must also be in env REMOVE) or {"rewrite_fine": {7 keys}}."""
+    if len(ops) != 1:
+        raise SystemExit(f"❌ remove_fine/rewrite_fine must be the only op key: {sorted(ops)}")
+    if "remove_fine" in ops:
+        if ops["remove_fine"] is not True:
+            raise SystemExit("❌ remove_fine must be true")
+        remove = set(json.load(open(os.environ["REMOVE"], encoding="utf-8")))
+        if fid not in remove:
+            raise SystemExit(f"❌ {fid} is not in the REMOVE set; removing it is out of scope")
+        for c in d["coarses"]:
+            c["fines"] = [x for x in c["fines"] if x["proposed_id"] != fid]
+        with open(path(shelf), "w", encoding="utf-8") as fh:
+            fh.write(dump(shelf, d))
+        print(f"{fid}: removed")
+        return 0
+    rw = ops["rewrite_fine"]
+    if not isinstance(rw, dict):
+        raise SystemExit("❌ rewrite_fine must be an object")
+    frozen = sorted(set(rw) & FROZEN_KEYS)
+    if frozen:
+        raise SystemExit(f"❌ rewrite_fine may not change {frozen}; those need the owner")
+    if set(rw) != REWRITE_KEYS:
+        raise SystemExit(f"❌ rewrite_fine keys must be exactly {sorted(REWRITE_KEYS)}: missing {sorted(REWRITE_KEYS - set(rw))}, extra {sorted(set(rw) - REWRITE_KEYS)}")
+    if not isinstance(rw["title"], str) or not rw["title"].strip():
+        raise SystemExit("❌ rewrite_fine.title must be a non-empty string")
+    for k in ("sentences", "phrasings", "sources"):
+        if not isinstance(rw[k], list) or not rw[k] or not all(isinstance(x, str) and x.strip() for x in rw[k]):
+            raise SystemExit(f"❌ rewrite_fine.{k} must be a non-empty list of non-empty strings")
+    for k in ("evidence", "not_supported_greps", "open_questions"):
+        if not isinstance(rw[k], list):
+            raise SystemExit(f"❌ rewrite_fine.{k} must be a list (give [] when empty)")
+    n = len(rw["sentences"])
+    for e in rw["evidence"]:
+        if set(e) != {"sentence_index", "source", "quote_or_symbol"}:
+            raise SystemExit(f"❌ evidence keys must be sentence_index/source/quote_or_symbol: {e}")
+        if not isinstance(e["sentence_index"], int) or not 0 <= e["sentence_index"] < n:
+            raise SystemExit(f"❌ evidence sentence_index out of range 0..{n - 1}: {e}")
+    missing = sorted(set(range(n)) - {e["sentence_index"] for e in rw["evidence"]})
+    if missing:
+        raise SystemExit(f"❌ sentences without evidence: {missing}")
+    for k in REWRITE_KEYS:
+        f[k] = rw[k]
+    f["evidence"] = sorted(f["evidence"], key=lambda e: e["sentence_index"])
+    with open(path(shelf), "w", encoding="utf-8") as fh:
+        fh.write(dump(shelf, d))
+    print(f"{fid}: rewritten, {n} sentences")
+    for i, s in enumerate(f["sentences"]):
+        print(f"  [{i}] {s}")
+    return 0
 
 
 def main():
@@ -44,6 +103,8 @@ def main():
     if len(hit) != 1:
         raise SystemExit(f"❌ {fid} found {len(hit)} times")
     f = hit[0]
+    if "remove_fine" in ops or "rewrite_fine" in ops:  # Plan 9.30: whole-fine ops never mix with sentence ops
+        return whole_fine(shelf, d, fid, f, ops)
     old = list(f["sentences"])
     if "evidence" in ops:
         raise SystemExit("❌ the whole-evidence overwrite op is disabled in p919; use evidence_add")
