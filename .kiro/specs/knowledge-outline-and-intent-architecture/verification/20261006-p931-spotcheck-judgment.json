@@ -1,0 +1,204 @@
+{
+ "kind": "spotcheck",
+ "base": "3d0cba8ad72111a97eee689fcc2b1d55daf02c31",
+ "items": [
+  {
+   "no": 1,
+   "fine_id": "jgb/E/bill-cycle-amortization",
+   "judgment": "成立",
+   "notes": "src/pages/bills/edit/_parts/BillBasicInfoSection.vue：`amountMode: computed(()=>props.form.amount_mode || 'per_period')`（預設每期金額）、選項文字 `t('每期金額')`、`t('總額（自動分攤）')`、說明 `t('費用欄位請填「整筆總額」，系統會平均分成各期，除不盡的零頭全部加在最後一期`；後端 app/Http/Controllers/BillController.php `isCycleBillTotalAmountMode`、`$request->input('amount_mode', 'per_period') === 'total'`。每期金額＝既有行為（每期套同一金額），總額模式由系統拆到各期，句意一致。"
+  },
+  {
+   "no": 2,
+   "fine_id": "jgb/A/notification-settings-extra-emails",
+   "judgment": "不成立",
+   "notes": "src/pages/users/notification/Index.vue：每分類上限 `mailAmountLimit: 3,`、輸入框 `type=\"email\"` 加 `required`、額度以 `formData.emailData?.[category.key]?.custom_emails?.length < state.mailAmountLimit` 逐分類計算，這幾點成立。但句子寫「每個通知分類卡片內都可各自新增/移除」是絕對句，漏了權限例外：「新增信箱」按鈕的條件是 `&& state.hasPermissionToEdit`，`handleAddEmail`／`handleRemoveEmail` 一開頭就 `if (!state.hasPermissionToEdit){ return }`，權限來源是 `store.state.userData?.permission?.edit_notification`。沒有 edit_notification 權限的人不能新增或移除（判定規則 4）。"
+  },
+  {
+   "no": 3,
+   "fine_id": "jgb/I/pricing-plan-tiers-overview",
+   "judgment": "成立",
+   "notes": "app/Http/Controllers/ApiController.php `getPlanPricings`（route `/api2/getPlanPricings`，src/pages/listings/pricing/Home.vue 有呼叫）：`'title' => '體驗方案'` `'quantityList' => [10]`、`'title' => '入門方案'` `'quantityList' => [50, 100, 150]`、`'title' => '熱門方案'` `'quantityList' => [200, 250, 300, 350, 400, 450]` 加 `'highlight' => true`、`'title' => '專業方案'` `'quantityList' => [500]`；src/pages/listings/pricing/parts/PlanForm.vue 在 highlight 時顯示 `t('最熱門', null, store.state.listingsI18n)`。企業方案另以連結處理（src/pages/listings/pricing/parts/Slogan.vue 寫「選擇付費方案…有關企業方案，[s1]歡迎聯絡我們」），所以四個級距的說法成立。"
+  },
+  {
+   "no": 4,
+   "fine_id": "jgb/D/contract-create-entry",
+   "judgment": "成立",
+   "notes": "app/Http/Controllers/ContractController.php `create()`：`const MAX_ACTIVE_CONTRACTS_COUNT = 10;`、`if ($estate->contracts()->actualContracts()->activeContracts()->count() >= self::MAX_ACTIVE_CONTRACTS_COUNT)`；app/Contract.php `scopeActiveContracts`：`where('is_history', 0)->where('active', 1)`。docs/knowledge/jgb-product-facts.md#p914-contract-new-vs-old 寫「同一物件「使用中」…達 MAX_ACTIVE_CONTRACTS_COUNT（10）才擋新增…不檢查新舊租期是否重疊」。help landlordonboarding04lease_zh-Hant.html 寫「該物件 A租約即將到期…若有 B租客有意願要承租，亦可以先進行簽約動作」。句意與審核單 #109「只寫程式證實的系統行為」一致。"
+  },
+  {
+   "no": 5,
+   "fine_id": "jgb/D/contract-list-row-gear-actions",
+   "judgment": "不成立",
+   "notes": "app/Http/Controllers/ContractController.php `webList`（action getList）裡組 `$LVreturn['actions']` 的條件確實包含狀態、`$this->roleType === 'tenant'`、`$LVtoThis_userPermission[...]`。但句子把決定因素列成只有「狀態、身分、權限」三項，屬排他列舉；程式還依其他條件增減或停用選項：合約業態 `property_purpose_key == Contract::SOCIAL_HOUSING`（社會住宅合約另走一套）、`is_tenant_registered == 1`、`isRenewExpiredAllowed()`、續約鏈帳單數決定「查看帳單」是否 `'disabled'`，以及特定合作團隊的簽核狀態（`Role::hasToneSangPermission` 區塊會把「提前終止合約」改成 disabled）。違反判定規則 6，也漏了規則 4 列的社會住宅與特定合作團隊例外。"
+  },
+  {
+   "no": 6,
+   "fine_id": "jgb/E/bill-monthly-report-upload",
+   "judgment": "成立",
+   "notes": "src/pages/bills/stat/_parts/MonthlyReport.vue：非 monthlyReport 的 target 顯示 `{ t('物件對帳單')}` 和按鈕 `{t('新增對帳單')}`（導向 estates.pick，action `monthlyStatement`，之後由 src/pages/estates/dashboard/_parts/MonthlyUpload.jsx 上傳），下方另有「社區」「物件」篩選。附記：這兩個分頁只對特定合作團隊開放（src/pages/bills/stat/Index.jsx 用 `getSpecialGroupsByRole(store.state.userData.role.id).includes(` 判斷）；`!store?.state?.userData.is_big_landlord` 為假時（大房東）標題和按鈕都不顯示；按鈕本身不需要先篩選。句子沒有用絕對詞，判成立，以上條件記錄備查。"
+  },
+  {
+   "no": 7,
+   "fine_id": "jgb/C/community-estates-add-batch-copy",
+   "judgment": "成立",
+   "notes": "src/pages/communities/estates/Index.vue：`store.state.userData?.permission?.add_estate && state.currentTab === CommunityTab.estateList` 時顯示 `{ t('新增物件') }`（`handleAddEstate` 導到 `/api2/estate/create?communityId=`）、`{ t('批次新增') }`（開 `EstatesBatchAdd-` lightbox，內含 ImportPreview 上傳表格）、`{ t('複製現有物件') }`。附記：`!state.hasOnlyPublicAreaWithoutEstate` 為假時（社區只有一筆公共區域）隱藏「複製現有物件」；`remainEstatesCount <= 0` 時改開 `subscribedPlanIsFull`。句子是能力描述、沒有絕對詞，判成立。"
+  },
+  {
+   "no": 8,
+   "fine_id": "jgb/E/recharge-account-mismatch-and-duplicate",
+   "judgment": "成立",
+   "notes": "app/Payment.php `cathaybkXml`：找到單筆帳單 ATM 帳號對應的 payment 後，`if (!empty($payment->payment_completed_at))` 只記 `\\Log::info(... ':該訂單已被處理')` 和 `$errors[] = '該訂單已被處理 payment_id:'`，隨即 `continue`，不進沖帳。docs/knowledge/jgb-product-facts.md#p914-duplicate-remittance 寫「再入金只記錄「該訂單已被處理」並略過，不會沖到任何帳單」，兩者一致。"
+  },
+  {
+   "no": 9,
+   "fine_id": "jgb/C/estate-edit-vr-720",
+   "judgment": "成立",
+   "notes": "src/pages/estates/edit/vr/Index.vue：`t('拍攝 720 VR 全景照之前，請先確認已安裝「VR Maker」。')`、`t('點擊或掃描 QR Code 下載 App')`、`t('請掃描以下 QR Code 進行物件 720 VR 全景拍攝。')` 搭配 `<VueQrcode :value=\"editStore.options?.vrMakerDeepLink\"`。附記：QR Code 區塊是 `hidden lg:block`，窄螢幕改成按鈕 `t('進行720度VR環景拍攝')`；整段只在 `!isEmpty(editStore.options?.vrMakerDeepLink)` 時顯示。"
+  },
+  {
+   "no": 10,
+   "fine_id": "jgb/D/contract-upload-existing-vs-electronic",
+   "judgment": "不成立",
+   "notes": "src/components/Lightbox/SelectContractMethod.jsx：三個選項 `title: '電子合約 - 住宅租賃契約書'`、`title: '電子合約 - 客製化契約書'`、`title: '紙本簽約'` 成立。但「電子合約 - 客製化契約書」的說明實際是 `description: '自製合約模板'`，不是句子說的「上傳自己的合約」；「請上傳雙方已簽訂完成或是已公證完成的合約」是「紙本簽約」的說明。另外，社會住宅身分（`isHidden: computed(()=>store.state.userData?.role?.config_rule_key == 4)`）看不到後兩個選項。"
+  },
+  {
+   "no": 11,
+   "fine_id": "jgb/E/balance-invoice-list-columns",
+   "judgment": "成立",
+   "notes": "src/pages/balanceInvoices/list/_parts/ListTable.vue：`title: t('群組'),` 欄的 `key: BalanceInvoicesTableColumnKeys.NAME`，由 `SurelyVueBalanceInvoicesGroupName` 渲染；src/components/SurelyVue/BalanceInvoices/GroupName.vue 顯示 `{{ props.name }}`。附記：同一格下方還顯示租期 `props.renting_duration?.start_date … ~ … end_date`，而且可點擊進入群組。"
+  },
+  {
+   "no": 12,
+   "fine_id": "jgb/F/repair-share-content",
+   "judgment": "成立",
+   "notes": "src/pages/repair/share/Index.vue：照片 `EditPhotos`（條件 `apply_photos?.length > 0`、`deleteable: false`），`detailDataPair` 依序為 `'手機號碼'/'公司電話'`、`'Email'/'公司Email'`、`labelKey: '物件區域'`、`'物件時區'`、`'分類'`、`'問題'`、`'備註'`、`'預約時段'`。附記：電話和 Email 兩列都會顯示（不是二選一）；照片只有在報修時有上傳才顯示。"
+  },
+  {
+   "no": 13,
+   "fine_id": "jgb/E/balance-invoice-group-basic-info",
+   "judgment": "成立",
+   "notes": "src/pages/balanceInvoices/edit/basicInfo/Index.vue：`<div class=\"after-required mb-2 font-500\">{{ t('群組名稱') }}</div>`（必填標記），新建流程 createGroup 會導向 `balanceInvoices.edit.basicInfo`（`isCreateNew: 1`）；後端 app/Http/Controllers/BalanceInvoiceController.php `'form.name' => 'sometimes|required|string|max:255'`。"
+  },
+  {
+   "no": 14,
+   "fine_id": "jgb/I/subscription-renewal-charge-failure",
+   "judgment": "成立",
+   "notes": "app/Console/Commands/AutoRenewSubscription.php 扣款失敗分支 `// 如果扣款失敗 則清空訂閱方案資料與下架物件` → `$role->pullOffAllEstate();`；app/Role.php `pullOffAllEstate`：`whereRaw('(is_open != 0 or sell_is_open != 0)')`，逐筆設 `$estate->is_open = false; $estate->sell_is_open = false;`。「刊登中」（src/components/EstateItem.vue `t('刊登中')`）和「買賣廣告」（src/pages/estates/dashboard/_parts/TabNav.vue `t('買賣廣告')`）都是現行介面文字。"
+  },
+  {
+   "no": 15,
+   "fine_id": "jgb/E/recharge-account-history-content",
+   "judgment": "不成立",
+   "notes": "欄位成立：src/pages/users/rechargeAccountList/Index.vue `金額變動歷程` lightbox 有 `t('時間')` `t('類型')` `t('變動金額')` `t('變動前餘額')` `t('變動後餘額')` `t('操作人員')`。但「列出…每一筆金額變動紀錄」不成立：前端 `openHistoryLightbox` 呼叫 `/api/recharge-accounts/${record.id}/history` 時沒帶參數，也沒有分頁或載入更多；後端 app/Http/Controllers/RechargeAccountListController `history()` 是 `$perPage = min(100, max(1, (int) $request->input('per_page', 50)))` 搭配 `->paginate(...)`、`orderBy('id', 'desc')`。所以畫面只會出現最近 50 筆。"
+  },
+  {
+   "no": 16,
+   "fine_id": "jgb/A/forget-account-flow",
+   "judgment": "成立",
+   "notes": "src/pages/users/auth/parts/forget/Account.vue 的 `v-if=\"state.screen == 'hint'\"` 區塊：`t('身份驗證成功！以下為您的帳號提示：')`、Email 提示框，區塊最後一行是 `{{ t('如有其他問題，請聯繫 JGB 客服。') }}`。附記：區塊外下方還有共用的「返回登入」按鈕，這句是結果區最後一行文字。"
+  },
+  {
+   "no": 17,
+   "fine_id": "jgb/B/member-invite",
+   "judgment": "成立",
+   "notes": "resources/views/users/team/index.blade.php（由 UserController@team 回傳 `view('users.team.index'`，route users.team）：`@click=\"lightboxOpen('inviteMember')\"` 的 `{{___('邀請')}}` 會開 `<lightbox id=\"inviteMember\"`，標題 `{{___('新增成員')}}`，切換鈕有 `{{___('Email')}}`、`{{___('手機號碼')}}`。附記：`@if ($isFull)`（方案未啟用或成員額度用完）時同一個按鈕改開 `subscribedPlanTeamIsFull`；按鈕本身要 `@if ($enableEdit)` 才出現。"
+  },
+  {
+   "no": 18,
+   "fine_id": "jgb/A/register-password-rule",
+   "judgment": "成立",
+   "notes": "src/pages/users/auth/parts/AccountSetting.vue：`length: state.password.length >= 6`、提示 `t('密碼至少6位(含)字元以上。')`；後端 app/Http/Controllers/AuthController.php `'password' => 'required|string|min:6|regex:/^(?=.*[a-zA-Z])(?=.*[0-9]).*$/'`。"
+  },
+  {
+   "no": 19,
+   "fine_id": "jgb/C/estate-edit-basic-orientation",
+   "judgment": "成立",
+   "notes": "src/pages/estates/edit/basic/Index.vue（route `estates.edit.basic`，label `'基本資料'`）：`<h4 class=\"mb-2\">{{ t('朝向') }}</h4>` 搭配 `Multiselect v-model=\"editStore.form.direction\"`，位在模板頂層，沒有 v-if 條件包住。"
+  },
+  {
+   "no": 20,
+   "fine_id": "jgb/B/member-role-permission-list",
+   "judgment": "成立",
+   "notes": "resources/views/layouts/lightbox/character-capability-edit.blade.php（index.blade.php `@include('layouts.lightbox.character-capability-edit')`）的 `<lightbox id=\"character--Table\"`：`v-if=\"$store.getters['team/capabilityEdit/capTable'].desktop.data.length === 0\"` 時顯示 `{{___('目前團隊還沒有任何角色，您可以選擇：')}}` 和 `{{___('新增角色')}}` 按鈕；src/store/modules/team/capabilityEdit.js 的 capTable 在 `state.characters.list.length <= 0` 時回傳空資料。"
+  },
+  {
+   "no": 21,
+   "fine_id": "jgb/A/notification-settings-extra-emails",
+   "judgment": "成立",
+   "notes": "src/pages/users/notification/Index.vue：麵包屑 `label: t('通知收件設定')`，頁首說明 `{{ t('每個通知信最多可再新增 3 組電子信箱收取通知信件。') }}`。句子是轉述、沒有加引號，句意一致。"
+  },
+  {
+   "no": 22,
+   "fine_id": "jgb/I/control-panel-access-restriction",
+   "judgment": "成立",
+   "notes": "src/routes/controlPanel.js：子路由 `taskManagement.create`、`taskManagement.edit`、`notificationMail` 三者的 meta 都有 `notAllowedRoles: ['tenant']`，`taskManagement`（列表）沒有；src/routes/index.js `to.meta?.notAllowedRoles?.includes('tenant')` 會實際攔截；src/pages/control-panel/notificationMail/Index.jsx 頁標題 `t('通知信設定')`。這是外層 setting 特定合作團隊檢查之外的額外標記。"
+  },
+  {
+   "no": 23,
+   "fine_id": "jgb/C/estate-dashboard-runnings-vs-memos",
+   "judgment": "成立",
+   "notes": "app/Http/Controllers/EstateController.php `dashboard()` 的 `add_bill_running`：`'date' => 'required'`、`'fee_type' => 'required'`、`'currencySelected' => 'required'`、`'price' => 'required|gte:0'`；`$note = !empty($requestData['note']) ? ... : null`、`$targetName = !empty($requestData['target_name']) ? ... : null`。src/pages/estates/dashboard/runnings/_parts/LedgerContainer.vue `feeTypeOptions: { income: '收入', expense: '支出' }`，有幣別選單 `currencySelected`。"
+  },
+  {
+   "no": 24,
+   "fine_id": "jgb/E/bill-actions-expense-unconfirmed",
+   "judgment": "成立",
+   "notes": "src/use/config/useBillTypes.js `case 'expense-unconfirmed':` 的 result 是 `payInfo`（labelKey `'前往付款'`）、`transferNotification`（`'通知已匯款'`）、`cancel`（`'取消帳單'`），與 expense-unpaid 相同；`case 'tenant': result = []`。附記：房東端會經過 `state.assembleOptions(canViewOwnedBill, canEditOwnedBill, result)`，三項都是 `permission: 'add_bill'`，沒有編輯帳單權限的人看不到。"
+  },
+  {
+   "no": 25,
+   "fine_id": "jgb/F/repair-status-tabs",
+   "judgment": "成立",
+   "notes": "app/Role.php 選單 `'url' => route('repairs.index')`（routes/web.php `/repair/{any?}` → `IndexController@repairIndex`）；src/pages/repair/Index.vue `onMounted` 有 `if (route.name === 'repair'){ router.push({ name: 'repair.apply' }) }`；src/routes/repairs.js `name: 'repair.apply'` 的 `labelKey: '申請修繕'`。"
+  },
+  {
+   "no": 26,
+   "fine_id": "jgb/D/general-contract-notary-tab",
+   "judgment": "成立",
+   "notes": "src/use/useEditStore.js `menuRoutes`：`// 車位合約過濾` `if (editStore.form.premises_use_for === 'parking_space')` 只保留 basicRoutes（不含 `contracts.edit.publicNotary`），這個過濾不看範本；特定合作團隊專用範本有兩處 `myRoutes.filter(node=>node.name !== 'contracts.edit.publicNotary')` 和另一段排除 `'contracts.edit.publicNotary'` 的清單。src/routes/contracts.js 該路由 `label: '公證'`。"
+  },
+  {
+   "no": 27,
+   "fine_id": "jgb/D/contract-invite-and-review-period",
+   "judgment": "不成立",
+   "notes": "後半句成立：app/Http/Controllers/ContractController.php `getSettings('contract_review_renew_period', (int) optional($this->role)->id)['review_days'] ?? 3)` → `contract_inviting_expire_at = date(... strtotime(\"+{$reviewDays} days\"))`。但前半句「系統會給租客一段審閱期才能簽約」把這段期間寫成簽約前必須等待的期間。程式裡它是簽約邀請的失效期限（`contract_inviting_expire_at`、app/Contract.php `getInviteRemainAttribute` 算剩餘時間），租客可以在期限內隨時簽。help landlordonboarding04lease_zh-Hant.html 也寫「租客需要在72小時內進行簽約，否則該連結就會失效」。程式裡找不到「等滿才能簽」的閘門，與審核單 #113「只寫程式證實的系統行為」不一致。"
+  },
+  {
+   "no": 28,
+   "fine_id": "jgb/C/estate-list-filters-space-type-and-others",
+   "judgment": "成立",
+   "notes": "src/pages/estates/list/_parts/EstatesAdvanceSearchBlock.jsx `<AdvSortMultipleSelect options={props.searchState.options?.space_type} keyName={EstateSearchKey.space_type}`（多選）；src/use/search/modules/space_type.js `const optionTitle = t('空間類型')`；config/estate.php `'flat' => '整戶'`、`'studio' => '套房'`、`'room' => '雅房'`。"
+  },
+  {
+   "no": 29,
+   "fine_id": "jgb/A/register-tenant-contract-invitation",
+   "judgment": "成立",
+   "notes": "src/pages/contracts/edit/tenantInfo/Index.jsx：`label: t('租客免註冊'),`（value false），tooltip `t('租客免註冊：租客因無需註冊 JGB 會員而需要管理者協助填寫以下租客資訊。')`。附記：特定合作團隊與 `is_existed == 2`（客製化契約書）時這個選項是 disabled；句子是「若選」的條件句，判成立。"
+  },
+  {
+   "no": 30,
+   "fine_id": "jgb/A/notification-settings-report-buttons",
+   "judgment": "成立",
+   "notes": "src/components/Lightbox/NotificationMailReport.vue：`t('起始日')`、`t('終止日')`、按鈕 `t('發送')`，成功後 `window.globalNoticeShow(t('報表已發送至指定信箱'))`；呼叫 `/api3/users/notification/sendReport` → app/Http/Controllers/UserController.php `sendReport`（`category === 'franchiseProfitShare'`）→ app/Services/FranchiseProfitShareService.php `getRecipientEmails` 取 `$emailGroups['franchiseProfitShare']['custom_emails']`，空的話回 `'未設定收件人'`。"
+  },
+  {
+   "no": 31,
+   "fine_id": "jgb/B/advance-community-labels",
+   "judgment": "成立",
+   "notes": "src/pages/users/advance/Index.jsx：`title={t('社區管理')}` 區塊外層條件是 state 上的特定合作團隊旗標，由 `specialRolesState.getSpecialGroupsByRole(store.state.userData?.role?.id)?.includes(` 判斷。不在該群組的團隊不會渲染這個區塊。"
+  }
+ ],
+ "findings": [
+  "第 27 句：help landlordonboarding04lease_zh-Hant.html 寫審閱期固定「72小時內」，但 app/Http/Controllers/ContractController.php 改讀團隊設定 `contract_review_renew_period`，未設定才用 3 天，help 已落後於程式。另外 app/Http/Controllers/Internal/ContractWriteController.php 的內部建約 API 寫死 `strtotime('+72 HOUR')`，註解寫明不套用團隊設定，與 UI 路徑不同。",
+  "第 4 句：help landlordonboarding04lease_zh-Hant.html 寫「一個物件可以綁定至多十個合約」，程式只計算使用中、未轉歷史的合約（`activeContracts()`、`actualContracts()` 的 `is_newest`），help 的寫法過度概括。",
+  "第 10 句：細目標題寫「自製合約模板是電子合約的「客製化契約書」」，與程式 `description: '自製合約模板'` 一致；待判句寫的「上傳自己的合約」在 SelectContractMethod.jsx 找不到，疑似把「紙本簽約」的說明套到了客製化契約書上。",
+  "第 15 句：歷程 lightbox 只拿第一頁（後端預設 per_page 50），細目標題「每筆金額變動」在紀錄超過 50 筆時不成立。",
+  "第 2／21 句：每分類 3 組上限只由前端（`mailAmountLimit: 3`）控制；後端 UserController@saveRoleEmailGroups 把整包 request 存進 email_groups，不檢查數量或格式。",
+  "第 6 句：「每月報表／每月對帳單」分頁只對特定合作團隊顯示（bills/stat/Index.jsx 用特定群組判斷），細目標題沒寫這個前提；同一頁的大房東身分（`is_big_landlord`）看不到標題和新增按鈕。",
+  "第 11 句：「群組」欄除了名稱，還顯示租期起訖（GroupName.vue `renting_duration`）。",
+  "第 12 句：分享頁同時列出電話和 Email 兩列，待判句寫「聯絡電話或Email」容易被讀成二選一。",
+  "第 17 句：方案未啟用或成員額度已滿（`$isFull`）時，「邀請」改開額度已滿的 lightbox，不會開「新增成員」視窗。"
+ ],
+ "source_transcript": "a386d3ed426a3d1a8.output"
+}

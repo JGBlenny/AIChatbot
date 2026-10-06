@@ -1,0 +1,12 @@
+{
+ "kind": "change",
+ "verdict": "CONFIRMED",
+ "base": "3d0cba8ad72111a97eee689fcc2b1d55daf02c31",
+ "claim": "Plan 9.31 commit 前核對：對凍結驗收清單 B1～B7 逐項驗收",
+ "findings": [
+  "P3（不阻擋）：計畫 §6 將 #2 記為『句 4』、#5 記為『句 2』，抽樣結果實為句序 2 與 0（抽查單依 1 起算為第 3 句、第 1 句）；#14、#26 一致。可由細目 id 與引述文字回復，建議改正",
+  "P4（不阻擋）：工作樹含他線未提交改動，commit 時只 add 計畫、驗收清單、抽查單、判定證據、規格 5 檔，commit 後以 git show --stat 確認不含 canon／drafts",
+  "未驗（commit 流程內、屬主 session）：B7 的 make audit 最終樹 OVERALL PASS（本 verifier 禁 docker exec）；B5 的 commit stat 待 commit 後確認"
+ ],
+ "source_transcript": "a04e171441676b687.output"
+}
