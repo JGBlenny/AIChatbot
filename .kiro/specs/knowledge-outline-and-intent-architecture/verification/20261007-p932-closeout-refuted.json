@@ -1,0 +1,13 @@
+{
+ "kind": "change",
+ "verdict": "REFUTED",
+ "base": "b4d4d8463efc79270a946c3ffe6da6846daffc89",
+ "claim": "Plan 9.32 收尾結果驗證：對凍結驗收清單 C1～C10 逐項驗收",
+ "findings": [
+  "P2 high：C2 未達成——inputs/fix-log-9.32-20261006.md 9 列依據欄皆為同一句「主 session 起草紀錄…」，無任何「整條 #m」標記與「## 整條依據」節（grep -c '整條 #' = 0；正對照 fix-log-9.21-W1 有命中）；#5、#14 標題等連帶處置只記於計畫 §6 散文。內容正確性不受影響（C3 回源成立）",
+  "P4 advisory：新增 runs/open-questions-20261006-w-932.md 含客戶名「新北住都」1 處，為生成器自父 commit open-questions 檔沿用的舊文字，不在 C7 範圍",
+  "未獨立重跑：H 留出題守護（需 ~/jgb-archive，Hard rules 禁）、make audit（需 DB；僅讀主 session audit-W.log OVERALL PASS）、他線 41 檔逐檔指紋（無基準雜湊；僅確認未入 commit）",
+  "已獨立通過：C1、C3（含 4 條自行回源）、C4（evidence 17/17 逐字、識別字 0、不變量 34 空）、C5（endpoint 537/121、approve_write verify mismatches 0、load_canon_or_die OK）、C6、C7、C8 unit（9 failed 與基準差集 ∅）、C9、C10"
+ ],
+ "source_transcript": "ac3d38ddf57fef815.output"
+}

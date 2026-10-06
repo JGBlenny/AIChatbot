@@ -118,3 +118,10 @@ consent_zero: 「核可，同意本計畫 +0 (Recommended)」
 - **C1 去向對帳**：4 句＝改寫寫入 4（#2、#5、#14、#26）；另 #5 先審新抓到的句 6 依 D1 修一次寫入；整句刪 0、業主裁定保留 0、寫入核對推翻 0。
 - **C7 客戶名掃描**（`canon_check.py` 的 `PAT`；正對照合成客戶名命中、負對照「系統上」不中）：分大小寫——正本 0（`canon_check` 輸出）；不分大小寫——本計畫新增或修改的 `.kiro` 檔（計畫、驗收清單、修正紀錄、終審單、先審／複核／寫入證據）0；drafts 改動 4 條整條（含 evidence）0；HANDOFF 2 處為開工前即有（與 9.30 收尾時相同）。
 - **用量**：就緒審查 0.17M、先審 0.19M、複核 0.15M、寫入核對 0.19M ⇒ 累計約 0.70M（停止線 1.4M；收尾約 0.2M）。
+- **步驟 6.9 commit**：`make audit` OVERALL PASS；他線 41 檔指紋不變；commit `b4d4d846`（19 檔，範圍外 0；commit hook 不變量 43 通過）。
+- **步驟 7 收尾驗證第 1 次**（fresh outcome verifier，BRIEF-CONTRACT v1，約 0.18M）：**REFUTED**，P2×1——C2「同條其他句、標題、講法的連帶處置在修正紀錄標『整條 #m』」未做到：修正紀錄 9 列依據欄皆為同一句、無「整條 #m」與依據節，連帶處置只寫在 §6 散文（`grep -c "整條 #"`＝0）。C1、C3（含自行回源 4 條）、C4～C7、C8 unit、C9、C10 獨立通過；H 守護、`make audit`、他線逐檔指紋未重跑（權限）。另 P4：新增 runs `open-questions-20261006-w-932.md` 帶生成器沿用的既有客戶名 1 處（不在 C7 範圍）。證據 `verification/20261007-p932-closeout-refuted.json`。
+  - **處置**：P2 為本計畫引入、在 C2 範圍內 ⇒ **FIX**——修正紀錄依 Plan 9.21 格式重寫依據欄（`依據 #n`／`整條 #m`／`先審 #m`／`業主裁定`）並補「## 依據」「## 整條依據」「## 先審新抓到」節；`drafts_diff --fix-log` 仍 RESULT PASS（9 列、(a)～(g) 全過）、`grep -c "整條 #"`＝5。主 session 在主機重跑 H 留出題守護 PASS。P4 **DEFER**（既有文字、另案）。修正屬 claim 相關 ⇒ 另派一位 fresh verifier 重驗後另開 commit。
+- **收尾重驗**（fresh outcome verifier，BRIEF-CONTRACT v1，約 0.15M）：**CONFIRMED**——C2 修好（9 列依據逐列對上實際改動與證據檔、`grep -c "整條 #"`＝5、`drafts_diff --fix-log` RESULT PASS；負對照刪 1 列 ⇒ FAIL）；C1、C3（自行回源 #14 句 0）、C5、C7、C9、C10 親自重跑通過；工作樹相對 `b4d4d846` 的本線改動只有修正紀錄、計畫 §6 與證據檔。證據 `verification/20261007-p932-closeout-change.json`（base `b4d4d846`）。非阻擋 P4：H 守護與 `make audit` 未由代理重跑（權限）⇒ 主 session commit 前在最終工作樹重跑（見下行）；他線逐檔指紋代理缺基準 ⇒ 主 session 以步驟 0 指紋檔（scratch `p930/foreign-fp.txt`）重比；「整條 #m」的 m 定義與 9.21 不同但檔頭已說明（不改）。
+- **用量合計**：約 1.03M（停止線 1.4M 內）。
+- **計畫完成**：4／4 已處置（改寫寫入 4，另修先審新抓到 1 句）；終點指標 pm 537／537、prospect 121／121。
+- **commit 前重跑**（最終工作樹）：`make audit` OVERALL PASS（含不變量 43、44）；H 留出題守護 PASS；他線 41 檔以 scratch `p930/foreign-fp.txt` 逐檔比對全部 OK。

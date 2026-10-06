@@ -1,0 +1,14 @@
+{
+ "kind": "change",
+ "verdict": "CONFIRMED",
+ "base": "b4d4d8463efc79270a946c3ffe6da6846daffc89",
+ "claim": "Plan 9.32 收尾重驗：修正紀錄修正後，對凍結驗收清單 C1～C10 逐項驗收",
+ "findings": [
+  "原 P2（C2）已修好：修正紀錄 9 列依據標記（依據 #2/#5/#14/#26、整條 #標題×2、業主裁定＋整條×2、先審 #5）逐列對上 git diff fb9732cf b4d4d846 的 drafts 改動與 p931 判定檔第 2/5/15/27 筆、prereview gear 句 6 不成立；grep '整條 #'＝5；drafts_diff --fix-log RESULT PASS（a 9/0/0、b 0、c 0、d 相等、e 0、f 0、g 4/0），負對照（刪 1 列）RESULT FAIL",
+  "C1/C3/C5/C7/C9/C10 親自重跑或重核通過：jgb.json 只有 4 條改動、其餘 539 條逐欄相同；#14 句 0 回源 jgb2（per_page 預設 50、orderBy id desc、前端不帶參數）成立；endpoint pm 537／537、prospect 121／121；客戶名掃描 0（正、負對照有效）",
+  "P4：H 守護與 make audit 未在最終工作樹重跑（brief 禁止 jgb-archive 與 docker exec）；僅看留存輸出 audit-W.log OVERALL PASS 含不變量 44，並在最終工作樹親跑不變量 43 PASS；之後只改兩個 md",
+  "P4：他線 41 檔逐檔指紋缺基準，無法重現；git status 檔名集合不變、commit 19 檔無他線檔",
+  "P4：整條 #m 的 m 定義（句序／標題）與 9.21 範例（流水號）不同，但修正紀錄開頭已說明"
+ ],
+ "source_transcript": "a71de2bbad7a99588.output"
+}
