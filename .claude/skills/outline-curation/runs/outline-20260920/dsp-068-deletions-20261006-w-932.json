@@ -1,0 +1,248 @@
+[
+  {
+    "char": "。",
+    "fine_id": "jgb/A/register-captcha-expired",
+    "offset": 82,
+    "sentence_index": 1
+  },
+  {
+    "char": "。",
+    "fine_id": "jgb/A/register-email-already-registered",
+    "offset": 64,
+    "sentence_index": 0
+  },
+  {
+    "char": "？",
+    "fine_id": "jgb/A/login-forget-password-link",
+    "offset": 13,
+    "sentence_index": 0
+  },
+  {
+    "char": "？",
+    "fine_id": "jgb/A/login-forget-account-link",
+    "offset": 13,
+    "sentence_index": 0
+  },
+  {
+    "char": "？",
+    "fine_id": "jgb/A/login-no-account-register-link",
+    "offset": 24,
+    "sentence_index": 0
+  },
+  {
+    "char": "。",
+    "fine_id": "jgb/A/forget-account-flow",
+    "offset": 44,
+    "sentence_index": 2
+  },
+  {
+    "char": "！",
+    "fine_id": "jgb/A/forget-account-flow",
+    "offset": 20,
+    "sentence_index": 3
+  },
+  {
+    "char": "。",
+    "fine_id": "jgb/A/forget-account-flow",
+    "offset": 30,
+    "sentence_index": 4
+  },
+  {
+    "char": "。",
+    "fine_id": "jgb/A/notification-settings-save",
+    "offset": 47,
+    "sentence_index": 1
+  },
+  {
+    "char": "。",
+    "fine_id": "jgb/A/notification-settings-save",
+    "offset": 77,
+    "sentence_index": 1
+  },
+  {
+    "char": "！",
+    "fine_id": "jgb/C/community-add-single-and-limit",
+    "offset": 41,
+    "sentence_index": 1
+  },
+  {
+    "char": "！",
+    "fine_id": "jgb/C/forcebinding-completion-states",
+    "offset": 30,
+    "sentence_index": 0
+  },
+  {
+    "char": "！",
+    "fine_id": "jgb/C/forcebinding-completion-states",
+    "offset": 33,
+    "sentence_index": 1
+  },
+  {
+    "char": "！",
+    "fine_id": "jgb/C/estate-list-add-must-pick-community",
+    "offset": 73,
+    "sentence_index": 0
+  },
+  {
+    "char": "！",
+    "fine_id": "jgb/C/estate-list-batch-actions",
+    "offset": 96,
+    "sentence_index": 2
+  },
+  {
+    "char": "！",
+    "fine_id": "jgb/C/estate-dashboard-attachments-vs-contract-attachments",
+    "offset": 69,
+    "sentence_index": 2
+  },
+  {
+    "char": "！",
+    "fine_id": "jgb/C/estate-dashboard-attachments-vs-contract-attachments",
+    "offset": 40,
+    "sentence_index": 10
+  },
+  {
+    "char": "！",
+    "fine_id": "jgb/C/estate-dashboard-runnings-vs-memos",
+    "offset": 32,
+    "sentence_index": 2
+  },
+  {
+    "char": "。",
+    "fine_id": "jgb/C/estate-house-preview-unpublished",
+    "offset": 61,
+    "sentence_index": 0
+  },
+  {
+    "char": "！",
+    "fine_id": "jgb/C/estate-house-invite-countdown",
+    "offset": 64,
+    "sentence_index": 0
+  },
+  {
+    "char": "。",
+    "fine_id": "jgb/D/general-contract-notary-tab",
+    "offset": 50,
+    "sentence_index": 6
+  },
+  {
+    "char": "。",
+    "fine_id": "jgb/E/bill-monthly-report-upload",
+    "offset": 79,
+    "sentence_index": 3
+  },
+  {
+    "char": "？",
+    "fine_id": "jgb/E/social-housing-sheet-archive",
+    "offset": 60,
+    "sentence_index": 0
+  },
+  {
+    "char": "。",
+    "fine_id": "jgb/E/recharge-account-immutable",
+    "offset": 73,
+    "sentence_index": 3
+  },
+  {
+    "char": "。",
+    "fine_id": "jgb/E/ctbc-apply-flow",
+    "offset": 96,
+    "sentence_index": 3
+  },
+  {
+    "char": "？",
+    "fine_id": "jgb/F/repair-apply-detail-fields",
+    "offset": 82,
+    "sentence_index": 2
+  },
+  {
+    "char": "。",
+    "fine_id": "jgb/F/repair-edit-switch-status",
+    "offset": 53,
+    "sentence_index": 0
+  },
+  {
+    "char": "。",
+    "fine_id": "jgb/F/repair-edit-application-detail-readonly",
+    "offset": 80,
+    "sentence_index": 0
+  },
+  {
+    "char": "。",
+    "fine_id": "jgb/F/repair-edit-tenant-memo",
+    "offset": 123,
+    "sentence_index": 1
+  },
+  {
+    "char": "。",
+    "fine_id": "jgb/F/repair-edit-share-to-vendor",
+    "offset": 65,
+    "sentence_index": 0
+  },
+  {
+    "char": "。",
+    "fine_id": "jgb/G/power-meter-service-expiry",
+    "offset": 82,
+    "sentence_index": 1
+  },
+  {
+    "char": "。",
+    "fine_id": "jgb/G/power-meter-service-expiry",
+    "offset": 135,
+    "sentence_index": 1
+  },
+  {
+    "char": "！",
+    "fine_id": "jgb/I/pricing-free-trial-eligibility",
+    "offset": 34,
+    "sentence_index": 0
+  },
+  {
+    "char": "？",
+    "fine_id": "jgb/I/pricing-free-trial-feature-scope",
+    "offset": 95,
+    "sentence_index": 2
+  },
+  {
+    "char": "！",
+    "fine_id": "jgb/I/pricing-quota-full-block",
+    "offset": 18,
+    "sentence_index": 2
+  },
+  {
+    "char": "？",
+    "fine_id": "jgb/I/pricing-quota-full-block",
+    "offset": 31,
+    "sentence_index": 3
+  },
+  {
+    "char": "！",
+    "fine_id": "jgb/I/pricing-quota-full-block",
+    "offset": 37,
+    "sentence_index": 4
+  },
+  {
+    "char": "！",
+    "fine_id": "jgb/I/demo-form-submit-result",
+    "offset": 28,
+    "sentence_index": 0
+  },
+  {
+    "char": "。",
+    "fine_id": "jgb/I/control-panel-entry-scope",
+    "offset": 40,
+    "sentence_index": 1
+  },
+  {
+    "char": "。",
+    "fine_id": "jgb/I/tcloud-link-invalid-cases",
+    "offset": 61,
+    "sentence_index": 0
+  },
+  {
+    "char": "。",
+    "fine_id": "jgb/I/tcloud-link-invalid-cases",
+    "offset": 59,
+    "sentence_index": 1
+  }
+]

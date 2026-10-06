@@ -986,17 +986,17 @@ JGB 把「社會住宅」設計成一種團隊身份，跟「個人房東/代理
 有編輯固定虛擬帳號權限的成員，在「固定虛擬帳號管理」列表每一列右邊的操作選單裡有「編輯」跟「刪除」兩個選項；沒有這個權限就看不到操作選單。
 點「刪除」會先跳出確認視窗，顯示這組虛擬帳號的租客姓名跟帳號，需要再按一次「刪除」才會真的刪除；按「取消」可以中止。
 刪除成功後畫面會提示「已刪除」，並重新整理列表；如果刪除失敗，會顯示對應的錯誤訊息。
-### 點開「歷程」看得到哪些內容？（每筆金額變動的時間／類型／金額／前後餘額／操作人員，有連結帳單可以點開查看） {#jgb/E/recharge-account-history-content}
+### 點開「歷程」看得到哪些內容？（最近 50 筆金額變動的時間／類型／金額／前後餘額／操作人員，有連結帳單可以點開查看） {#jgb/E/recharge-account-history-content}
 - phrasings:
   - {text: "歷程看得到什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "金額變動歷程內容", source: "draft:outline-20260920", status: proposed}
   - {text: "歷程能看帳單嗎", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/rechargeAccountList/Index.vue]
-- reviewed: {by: owner, at: 2026-09-27}
+- reviewed: {by: owner, at: 2026-10-06}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-點開「歷程」會列出這組虛擬帳號每一筆金額變動紀錄，包含時間、類型、變動金額、變動前餘額、變動後餘額、操作人員。
+點開「歷程」會列出這組虛擬帳號最近的金額變動紀錄，由新到舊、最多顯示最近 50 筆，每筆包含時間、類型、變動金額、變動前餘額、變動後餘額、操作人員。
 如果這筆金額變動有連結到某張帳單，該列會多一個「帳單」圖示，點下去可以疊加開啟這張帳單的詳細資料，不用關掉歷程視窗。
 如果目前還沒有任何歷程記錄，會顯示「目前尚無歷程記錄」。
 ### 固定虛擬帳號可以選哪些銀行？（聯邦、中國信託有專屬的建號流程，其餘從系統銀行清單選） {#jgb/E/recharge-account-bank-support}

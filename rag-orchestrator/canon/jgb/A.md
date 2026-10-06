@@ -774,13 +774,13 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
   - {text: "怎麼加通知信箱", source: "draft:outline-20260920", status: proposed}
   - {text: "額外通知信箱", source: "draft:outline-20260920", status: proposed}
 - sources: [code:src/pages/users/notification/Index.vue]
-- reviewed: {by: owner, at: 2026-09-29}
+- reviewed: {by: owner, at: 2026-10-06}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
 「通知收件設定」頁面說明每個通知信分類最多可再新增 3 組電子信箱收取通知信件。
 預設信箱欄位固定顯示目前身分（團隊）擁有者的 Email，此欄位鎖定無法編輯；團隊成員看到的也是團隊擁有者的信箱。
-每個通知分類卡片內都可各自新增/移除最多 3 組自訂收件信箱，每組都是標準 Email 格式輸入框且為必填，彼此分類互不共用額度。
+有通知設定的編輯權限時，每個通知分類卡片內可以各自新增或移除自訂收件信箱，每個分類最多 3 組、彼此不共用額度；每組都是標準 Email 格式輸入框且為必填。
 需要具備通知設定的編輯權限，才能新增信箱、儲存表單；沒有這個權限時，「新增信箱」與「儲存」按鈕會直接消失，但每組信箱旁的移除（×）按鈕仍會顯示，只是變成無法點擊的停用樣式。
 ### 通知收件設定有哪些分類？（合約、帳務、修繕、訂閱、房東管理，另有限定開放的加盟分潤報表） {#jgb/A/notification-settings-categories}
 - phrasings:

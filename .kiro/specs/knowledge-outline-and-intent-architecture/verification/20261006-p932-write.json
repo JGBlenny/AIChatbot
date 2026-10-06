@@ -1,0 +1,121 @@
+{
+ "kind": "write",
+ "verdict": "CONFIRMED",
+ "base": "fb9732cf36640cfe9d48016f97f88d05a8fb871d",
+ "claim": "Plan 9.32 寫入核對：4 條細目的標題與每一句已逐句對合法來源核對，逐條結果如 fines",
+ "fines": [
+  {
+   "id": "jgb/A/notification-settings-extra-emails",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "870916b1271f73c2043b667aec672e36733c07863e2c06e78b2b218fbd51f26c",
+   "title_text": "通知收件信箱最多能加幾組？（每個通知分類最多再加 3 組電子信箱）",
+   "notes": [
+    "標題：src/pages/users/notification/Index.vue＋`mailAmountLimit: 3`、`custom_emails?.length < state.mailAmountLimit`，每個分類卡片各自判斷上限，句 1、句 3 支撐。",
+    "句 1：src/pages/users/notification/Index.vue＋`t('通知收件設定')`（麵包屑頁名）、`每個通知信最多可再新增 3 組電子信箱收取通知信件。`；句子是轉述頁面說明，引號只用在頁名，頁名逐字存在。",
+    "句 2：同上 `name=\"default_email\"`＋`disabled`（欄位鎖定）；值來自 routes/web.php `mailGroups` → app/Http/Controllers/UserController.php `getRoleEmailGroups` 的 `$data['default'] = !empty($this->role->user->email)`，app/Role.php `function user()` 為 `belongsTo(User::class)`（團隊擁有者）；團隊成員登入時 `$this->role` 是該團隊 role，所以看到的也是擁有者信箱。",
+    "句 3：src/pages/users/notification/Index.vue＋`v-for=\"(email, emailIndex) in formData.emailData?.[category.key]?.custom_emails\"`、`handleAddEmail(category.key)`、`handleRemoveEmail(category.key, emailIndex)`（依分類各自增刪）、`type=\"email\"`＋`required`；上限判斷按分類各自計算，不共用額度。",
+    "句 4：同上 `<template v-if=\"state.hasPermissionToEdit\">` 包住「儲存」、新增鈕條件含 `&& state.hasPermissionToEdit`（無權限時兩者都不渲染）；移除鈕外層 div 帶 `state.hasPermissionToEdit ? '' : 'disabled'`，src/styles/tailwind.sass `.disabled` 為 `opacity: 0.5`、`pointer-events: none`（停用樣式且點不到），`handleRemoveEmail` 另有無權限即 return；權限鍵 `edit_notification`。"
+   ]
+  },
+  {
+   "id": "jgb/D/contract-list-row-gear-actions",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "21621c3f9bc4cad605870b0eb5f21e1dd7b647c88870873e29606f07e5c94357",
+   "title_text": "合約總表列的小齒輪可以做什麼操作？（不論狀態都有「查看帳單」；其餘依合約狀態、身分、權限等條件增減）",
+   "notes": [
+    "標題：app/Http/Controllers/ContractController.php `webList` 中「查看帳單」在 `switch ($LVcontractDataPage->status)` 之前無條件加入，其餘選項依狀態、`roleType`、權限增減；句 1、句 3 支撐。",
+    "句 1：src/pages/contracts/list/Index.vue 呼叫 `/api2/contract/list/getList/` → routes/web.php `ContractController@webList`；app/Http/Controllers/ContractController.php 的 actions 依 `$LVcontractDataPage->status`、`$this->roleType`、`$LVtoThis_userPermission`、`property_purpose_key != Contract::SOCIAL_HOUSING` 組出，可否點選由 `class_name` 'disabled' 控制；src/components/SurelyVue/Contract/ActionCell.jsx 直接渲染 `props.actions`。",
+    "句 2：app/Http/Controllers/ContractController.php＋`# 查看物件`、`if($LVtoThis_userPermission['show_owner_estate'] == true)`，位於狀態 switch 之前，與狀態無關。",
+    "句 3：同上 `// 查看帳單（含母約先前帳單；整條續約鏈皆無帳單時 disabled）`、`'class_name' => $LVchainBillsCount > 0 ? '' : 'disabled'`、`'link' => '/bills/all?keyword=' . $LVbillRootId . '&keyword_for=contractChain'`；app/Bill.php `keywordFor == 'contractChain'` 會用整條鏈的合約 id 查帳單。",
+    "句 4：app/Http/Controllers/ContractController.php＋`# 更換綁定信用卡`、`$this->roleType === 'tenant' && !empty($LVcontractDataPage->getAutoPayCreditCardExpireYmd())`、link 為 `credit_card_auto_pay` 的 `credit_card_update`（藍新重新授權頁面）。",
+    "句 5：同上 `case Contract::CONTRACT_INVITING: case Contract::CONTRACT_INVITING_NEXT:`，條件 `edit_owner_contract || ($this->roleType !== 'tenant' && sign_contract)`；`isRenewing()` → `cancelRenew`「取消續約」，`isEarlyTerminating()` → `cancelTerminate`「取消提前解約」，否則 `cancelInvite`「取消邀請」，三者擇一。租客依 app/Support/UserData.php `getPermissions` 的 `// 租客沒有權限` 全部為 false，不會落入。",
+    "句 6：同上 `case Contract::CONTRACT_SIGNED` 到 `CONTRACT_MOVE_OUT_DONE` 共五種狀態；權限條件內：社宅＋`contract_type === 'charter'` 會加 `addContract`「新增轉租契約書」；`if ($this->roleType !== 'tenant')` 才加 movein／cancelMoveInInvite／moveout／cancelMoveOutInvite，各自依 `canMoveIn()`、`status == CONTRACT_MOVE_IN`、`canMoveOut()`、`status == CONTRACT_MOVE_OUT` 決定 disabled；非社宅＋非租客才加 `renew`「續約」。",
+    "句 7：同上 非社宅＋`$this->roleType === 'tenant'` 的分支在權限 if 之外，直接加「提前解約」；`else if` 非社宅＋`(edit_owner_contract || sign_contract)` 給非租客；兩邊都是 `canEarlyTermination() ? '' : 'disabled'`。",
+    "句 8：同上 `case Contract::CONTRACT_EARLY_TERMINATION:`，`movein` 設 disabled 後加入，之後註解寫「# 點退押金」卻再次加入 `$LVreturnActionTemplate['movein']`（「點交物件」出現兩次、都 disabled）；`cancelTerminate` 設 `'class_name' = ''`（可以點）。",
+    "句 9：同上 `case Contract::CONTRACT_HISTORY:` 與 `case Contract::CONTRACT_HISTORY_DONE:` 在權限條件內加 `moveout`，依 `canMoveOut() && edit_moveout_contract` 決定 disabled；`isRenewExpiredAllowed() && 非社宅 && $this->roleType !== 'tenant'` 才補「續約」；app/Contract.php `isRenewExpiredAllowed` 讀 `config('app.renew_expired_allow_contract_ids')` 例外名單。"
+   ]
+  },
+  {
+   "id": "jgb/E/recharge-account-history-content",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "b1ad064b93a3c5c546d5a73270ad88c3f94c7366a120d026fa17a988f1dc11ec",
+   "title_text": "點開「歷程」看得到哪些內容？（最近 50 筆金額變動的時間／類型／金額／前後餘額／操作人員，有連結帳單可以點開查看）",
+   "notes": [
+    "標題：src/pages/users/rechargeAccountList/Index.vue `t('歷程')` 欄與 `openHistoryLightbox`；app/Http/Controllers/RechargeAccountListController.php `history` 預設 `per_page', 50`；句 1～句 2 支撐。",
+    "句 1：src/pages/users/rechargeAccountList/Index.vue 呼叫 `/api/recharge-accounts/${record.id}/history` 時不帶參數 → routes/api.php `RechargeAccountListController@history` → app/Http/Controllers/RechargeAccountListController.php `$request->input('per_page', 50)`、`orderBy('id', 'desc')`；表頭 `t('時間')`、`t('類型')`、`t('變動金額')`、`t('變動前餘額')`、`t('變動後餘額')`、`t('操作人員')`。",
+    "句 2：src/pages/users/rechargeAccountList/Index.vue＋`{log.bill_id ? (` 時顯示 `bi bi-receipt` 圖示（欄名 `t('帳單')`），`openBillDetail` 執行 `store.commit('lightbox', { id: `billItemDetail_${billId}`, action: 'add' })`，註解寫「疊加開啟該帳單詳細資料（不關閉歷程 lightbox）」。",
+    "句 3：同上 `state.historyList.length === 0` 時顯示 `t('目前尚無歷程記錄')`。"
+   ]
+  },
+  {
+   "id": "jgb/D/contract-invite-and-review-period",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "c73830f9d5affbf5a6bf117769deb2ad6990bce873af5206907642334040f4f6",
+   "title_text": "合約邀請發出後租客有多久審閱期？（預設 3 天／72 小時，逾期連結失效；天數由 JGB 依團隊設定）",
+   "notes": [
+    "標題：句 1～句 3 支撐（預設 3 天／72 小時、逾期失效、JGB 依團隊設定）。",
+    "句 1：app/Http/Controllers/ContractController.php `invite`＋`getSettings('contract_review_renew_period', ...)['review_days'] ?? 3`、`strtotime(\"+{$reviewDays} days\")`（一般與社宅綁定分支都有）；landlordonboarding04lease_zh-Hant.html＋`租客需要在72小時內進行簽約`。",
+    "句 2：database/migrations/2026_07_02_000001_seed_contract_review_renew_period_feature_config.php＋`讓後台業管針對指定團隊(role)各別設定「審閱期」`、`'default_settings' => [ 'review_days' => 3`、`未設定的團隊維持系統預設 3 天`；app/Services/Features/FeatureConfigService.php `getSettings` 為團隊設定覆蓋預設。",
+    "句 3：landlordonboarding04lease_zh-Hant.html＋`從您發送邀請時開始計算，租客需要在72小時內進行簽約，否則該連結就會失效。`；程式佐證 app/Console/Commands/ContractStatusUpdater.php `contract_inviting_expire_at', '<'`→`$contract->reset(); // 將合約取消`，app/Console/Kernel.php `contract:update', ['invite'])->hourlyAt(0)`。",
+    "句 4：app/Http/Controllers/ContractController.php `invite`＋`User::where('email', xxtea_base64_encrypt($contract->to_user_email))`、`$contract->to_user_email = $user->email;`；一般住宅用電話比對有 `->whereNotNull('phone_verified_at')`；社宅分支 `User::where('phone_country_id', $targetCountryId)->where('phone', ...)` 沒有手機驗證條件；docs/knowledge/jgb-product-facts.md `p914-contract-invite-account-match` 同義。（一般住宅合約有填手機時優先用手機比對，句子沒寫絕對語，不影響。）",
+    "句 5：docs/knowledge/jgb-product-facts.md `p914-contract-invite-account-match`；程式 app/Http/Controllers/EstateController.php `session()->put('contract_invitation', [$contract->id]);`（條件 `status == Contract::CONTRACT_INVITING && empty($contract->to_user_id)`）、app/Http/Controllers/AuthController.php `receiveContractInvitation('contract', $contractId)`、config/session.php `'lifetime' => env('SESSION_LIFETIME', 120)`、app/User.php `receiveContractInvitation` 的 `whereNull('to_user_id')->where('status', Contract::CONTRACT_INVITING)`；其他情況寫成「要看個案資料」，沒有斷言。",
+    "句 6：docs/knowledge/jgb-product-facts.md `p914-email-encrypted-no-lowercase`；程式 app/User.php `setEmailAttribute` 直接 `xxtea_base64_encrypt($email)`，app/Libraries/XXTEA.php `xxtea_base64_encrypt` 沒有轉小寫，ContractController.php 比對時用加密字串做相等查詢。",
+    "句 7：.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md `| 113 | G9 | 採用：只寫程式證實的系統行為，其餘走個案客服 |`；程式 app/Http/Controllers/ContractController.php `webList` 中 `if($this->roleType === 'tenant'){ $searchRoleIndex = 'to_role_id';`（租客看到的合約取決於 to_role_id 綁定）；個案部分轉客服，跟裁決一致。"
+   ]
+  }
+ ],
+ "findings": [
+  "事實帳本 docs/knowledge/jgb-product-facts.md `p914-contract-invite-account-match` 第二條寫「換裝置、隔太久才註冊……都不會自動綁定」，但 app/Http/Controllers/AuthController.php 註冊流程 `// Step11: 接收受合約邀請` 會先呼叫 `$fatherUser->receiveContractInvitation('email')`，手機驗證成功後也會呼叫 `$user->receiveContractInvitation('phone')`；app/User.php 這兩種模式會用 to_user_email／to_user_phone 認領「待租客簽回且未綁定」的合約，跟 session 無關。所以換裝置後用同一個 Email 或手機註冊，仍可能自動綁定，帳本這句說得太滿。本組 jgb/D/contract-invite-and-review-period 句 5 已改成「要看個案資料」，沒有受影響；帳本建議另外更正。",
+  "app/Http/Controllers/Internal/ContractWriteController.php（內部 jgb-agent 建約 API）送邀請時固定 `strtotime('+72 HOUR')`，註解「不套用各客製團隊的延長規則」。這跟 jgb/D/contract-invite-and-review-period 句 1、句 2 的「依團隊設定」不同，但只發生在內部代理路徑，不是房東在畫面上送出邀請的路徑，所以不影響判定，只供參考。",
+  "jgb/D/contract-list-row-gear-actions 句 6 與句 9 說「點退押金」能不能點選「要看合約是否符合條件」。程式 `canMoveOut() && $LVtoThis_userPermission['edit_moveout_contract']` 另外還要求點退權限。句子沒寫成只看合約條件，所以不判不成立；如果要更精確，可以補上權限條件（不影響判定）。"
+ ],
+ "control": {
+  "id": "jgb/A/password-last-updated",
+  "title": "成立",
+  "sentences": [
+   "成立",
+   "成立",
+   "成立",
+   "不成立"
+  ],
+  "notes": [
+   "標題：只是問句，沒有斷言。",
+   "句 1：app/Http/Controllers/UserController.php `account`＋`$showPassword = !empty($user->password);`；resources/views/users/account.blade.php `@if ($showPassword)` 包住「密碼」區塊。",
+   "句 2：resources/views/users/account.blade.php＋`@click=\"memberCenter.safety.display_password_form=true\">{{___('修改密碼')}}`，展開 `<password-form`。",
+   "句 3：app/Http/Controllers/UserController.php＋`'old_password' => 'required'`、`required_with:password_confirmation|same:password_confirmation`；`!Hash::check(request('old_password'), $this->user->password)` 時 `return back()->with(['status-error' => ___('目前密碼驗證錯誤')])`，在 save 之前就返回，整筆不儲存。",
+   "句 4：app/Http/Controllers/UserController.php＋`'description' => ___('上次更新：') . ($user->password_change_at ? format_timezone(... $user->password_change_at ...) : format_timezone('Y/m/d H:i', $user->created_at, ...))`。從沒改過密碼時，顯示的是帳號建立時間 created_at，不是「尚未更新」；resources/views/users/account.blade.php 也沒有「尚未更新」字樣。"
+  ]
+ },
+ "source_transcript": "ac4f90456db6a85aa.output"
+}

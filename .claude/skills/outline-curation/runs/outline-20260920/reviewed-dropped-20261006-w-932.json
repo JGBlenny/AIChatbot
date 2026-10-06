@@ -1,0 +1,26 @@
+[
+  {
+    "fine_id": "jgb/A/notification-settings-extra-emails",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-29}",
+    "shelf": "A"
+  },
+  {
+    "fine_id": "jgb/D/contract-list-row-gear-actions",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-10-05}",
+    "shelf": "D"
+  },
+  {
+    "fine_id": "jgb/D/contract-invite-and-review-period",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-10-05}",
+    "shelf": "D"
+  },
+  {
+    "fine_id": "jgb/E/recharge-account-history-content",
+    "reason": "content_changed",
+    "reviewed": "- reviewed: {by: owner, at: 2026-09-27}",
+    "shelf": "E"
+  }
+]

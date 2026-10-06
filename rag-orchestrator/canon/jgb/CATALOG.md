@@ -263,7 +263,7 @@ jgb/D/contract-list-status-tabs｜合約列表有哪些狀態頁籤？｜target_
 jgb/D/contract-search-keyword-scope｜合約列表怎麼搜尋合約？（案名／地址／租客／ID／手機／信箱六種關鍵字，另有進階搜尋）｜target_user=property_manager｜
 jgb/D/contract-create-entry｜怎麼建立一份新合約？（合約總表右上角「建立合約」，或物件總表小齒輪選建立合約）｜target_user=property_manager｜
 jgb/D/contract-create-estate-completeness-requirement｜物件要先刊登廣告才能建立合約嗎？（現行規則是必填欄位要填齊，不是看刊登狀態）｜target_user=property_manager｜
-jgb/D/contract-list-row-gear-actions｜合約總表列的小齒輪可以做什麼操作？（不論狀態都有「查看帳單」；其餘依合約狀態、身分與權限增減）｜target_user=property_manager｜
+jgb/D/contract-list-row-gear-actions｜合約總表列的小齒輪可以做什麼操作？（不論狀態都有「查看帳單」；其餘依合約狀態、身分、權限等條件增減）｜target_user=property_manager｜
 jgb/D/contract-list-row-sort-options｜合約總表可以怎麼排序？（依名稱、更新時間、合約起始日、終止日、成立日，共 5 種依據）｜target_user=property_manager｜
 jgb/D/contract-list-columns｜合約總表有哪些欄位？（含團隊自訂的「標籤」欄）｜target_user=property_manager｜
 jgb/D/contract-list-deposit-alert｜合約總表的待退押金提示燈號是什麼意思？（合約到期前 30 天才能點退）｜target_user=property_manager｜
@@ -315,7 +315,7 @@ jgb/D/social-housing-dealer-basic｜社宅合約「業者」分頁在做什麼�
 jgb/D/social-housing-move-in-terms｜社宅合約「點交證明文件」分頁在約定什麼？（點交狀態與修繕責任的預先約定，不是簽約後實際執行的點交）｜target_user=property_manager｜
 jgb/D/social-housing-charter-sublet-tab-hiding｜社宅合約選「包租包管」或「轉租」範本，分頁會不同嗎？（包租包管不顯示承租方的家庭＆財產、授權、附件，轉租不顯示出租方的授權、附件）｜target_user=property_manager｜
 ### D-contract-sign-view 簽約與合約檢視 {#D-contract-sign-view}
-jgb/D/contract-invite-and-review-period｜合約邀請發出後租客有多久審閱期？（預設 3 天／72 小時，逾期連結失效，天數為團隊可調整設定）｜target_user=property_manager,prospect｜
+jgb/D/contract-invite-and-review-period｜合約邀請發出後租客有多久審閱期？（預設 3 天／72 小時，逾期連結失效；天數由 JGB 依團隊設定）｜target_user=property_manager,prospect｜
 jgb/D/contract-sign-flow-steps｜租客簽約要經過哪些步驟？（填承租方簽約資料與上傳文件、預覽合約、自動扣款先授權信用卡、部分範本另有條款勾選、雲想科技畫面簽名）｜target_user=property_manager｜
 jgb/D/contract-esign-no-extra-fee｜電子簽章簽約要另外收費嗎？（系統內沒有簽章計費機制，簽約流程無付費／加購畫面）｜target_user=property_manager,prospect｜
 jgb/D/contract-locked-after-signing｜合約簽約後可以修改嗎？（送出前可編輯、雙方簽名完成前可取消邀請重編，簽署完成即無法更改，需重新簽一份新合約）｜target_user=property_manager,prospect｜
@@ -456,7 +456,7 @@ jgb/E/balance-invoice-anomaly-list｜帳單不在任何差額發票群組內時�
 ### E-virtual-account 固定虛擬帳號管理（租客虛擬帳號、餘額、歷程） {#E-virtual-account}
 jgb/E/recharge-account-list-columns｜「固定虛擬帳號管理」列表看得到哪些資訊？（虛擬帳號、餘額、歷程一律都有；租客或物件欄位看團隊的固定虛擬帳號模式；有編輯權限時另有操作欄）｜target_user=property_manager｜
 jgb/E/recharge-account-delete｜固定虛擬帳號要怎麼刪除？（列表操作選單選「刪除」，跳出確認視窗後才會真的刪掉）｜target_user=property_manager｜
-jgb/E/recharge-account-history-content｜點開「歷程」看得到哪些內容？（每筆金額變動的時間／類型／金額／前後餘額／操作人員，有連結帳單可以點開查看）｜target_user=property_manager｜
+jgb/E/recharge-account-history-content｜點開「歷程」看得到哪些內容？（最近 50 筆金額變動的時間／類型／金額／前後餘額／操作人員，有連結帳單可以點開查看）｜target_user=property_manager｜
 jgb/E/recharge-account-bank-support｜固定虛擬帳號可以選哪些銀行？（聯邦、中國信託有專屬的建號流程，其餘從系統銀行清單選）｜target_user=property_manager｜
 jgb/E/recharge-account-ubot-flow｜聯邦（803）虛擬帳號怎麼建立？有什麼限制？（金額鎖在帳號裡，租客月租變動要重新建一組）｜target_user=property_manager｜
 jgb/E/recharge-account-ctbc-flow｜中國信託（822）虛擬帳號怎麼算出帳號？（填企業識別碼 5 碼與繳款人識別碼 8 碼由系統計算）｜target_user=property_manager｜

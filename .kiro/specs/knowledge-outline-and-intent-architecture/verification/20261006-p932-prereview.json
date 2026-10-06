@@ -1,0 +1,125 @@
+{
+ "kind": "write",
+ "verdict": "REFUTED",
+ "base": "fb9732cf36640cfe9d48016f97f88d05a8fb871d",
+ "claim": "Plan 9.32 先審：5 條細目的標題與每一句已逐句對合法來源核對，逐條結果如 fines",
+ "fines": [
+  {
+   "id": "jgb/A/notification-settings-extra-emails",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "870916b1271f73c2043b667aec672e36733c07863e2c06e78b2b218fbd51f26c",
+   "title_text": "通知收件信箱最多能加幾組？（每個通知分類最多再加 3 組電子信箱）",
+   "notes": [
+    "標題：句 1、句 3 支撐「每個分類最多再加 3 組」：src/pages/users/notification/Index.vue 的 mailAmountLimit: 3，以及以分類為單位判斷的 custom_emails?.length < state.mailAmountLimit。",
+    "句 1：src/pages/users/notification/Index.vue＋「每個通知信最多可再新增 3 組電子信箱收取通知信件。」。頁面說明文字確實存在；句子沒有加引號，把它轉述成「每個通知信分類」，和程式以分類為單位設上限一致。",
+    "句 2：src/pages/users/notification/Index.vue＋name=\"default_email\" 的 input 帶 disabled，所以鎖定不能編輯；值來自 app/Http/Controllers/UserController.php 的 getRoleEmailGroups，也就是 $data['default'] = $this->role->user->email（目前身分的擁有者）。團隊成員登入時 $this->role 取自 allTeams（見 app/Http/Controllers/Controller.php 的 allTeams()），所以成員看到的也是團隊擁有者的信箱。",
+    "句 3：src/pages/users/notification/Index.vue（同上）＋handleAddEmail(category.key)／handleRemoveEmail(category.key, emailIndex) 以分類為單位新增、移除；上限判斷式是 formData.emailData?.[category.key]?.custom_emails?.length < state.mailAmountLimit，每個分類各算各的；輸入框是 type=\"email\" 而且帶 required。",
+    "句 4：src/pages/users/notification/Index.vue（同上）＋「新增信箱」與「儲存」都包在 v-if=\"state.hasPermissionToEdit\"（權限 edit_notification）裡，沒權限時不會出現；移除（×）按鈕不受 v-if 控制，但外層 div 會加上 'disabled' class（src/styles/tailwind.sass 的 .disabled 定義為 opacity 0.5、pointer-events none），handleRemoveEmail 沒權限時也直接 return，所以按鈕還在、只是停用而且點不了。"
+   ]
+  },
+  {
+   "id": "jgb/A/contact-info-social-fields",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "不成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "3bdeb3b656cac4379535b74a974ae721fbd6f581dd612afde805127b6ab5eb8b",
+   "title_text": "聯絡資訊的 LINE、Facebook、WhatsApp 欄位怎麼填？",
+   "notes": [
+    "標題：只問怎麼填，沒有額外斷言；句 2～句 4 都在回答這個問題。現行頁面確認：routes/web.php 的 'UserController@account' 會 return view('users.account')。",
+    "句 1：resources/views/users/account.blade.php＋「以下資訊將會呈現在廣告上，租客可以透過更多管道與房東聯繫，提升簽約成功率！」，句意一致。",
+    "句 2：resources/views/users/account.blade.php（同上）＋勾選 name=\"line_is_phone\"（文字「同手機號碼」）後，原本的輸入框會換成帶 disabled class、值為手機號碼的欄位；沒勾選時顯示 placeholder「請填上 Line ID」的輸入框，沒有 required。app/Http/Controllers/UserController.php 的 account() 直接存 $this->user->line = $input['line']，也沒有做必填檢查。",
+    "句 3：resources/views/users/account.blade.php（同上）＋Facebook 輸入框是 placeholder=\"{{___('個人首頁連結')}}\" ... name=\"facebook\"  maxlength=\"200\"。來源寫的長度上限是 200 字元，不是句子說的 100 字元，所以不成立。",
+    "句 4：resources/views/users/account.blade.php（同上）＋tooltip 內容「請填寫國碼與電話號碼，國碼前面不需打「+」。」，name=\"whats_app\"  maxlength=\"200\"，兩點都相符。",
+    "句 5：resources/views/users/account.blade.php（同上）＋name=\"phone2\" maxlength=\"50\"（欄位標題「第二組聯絡號碼」），相符。",
+    "句 6：resources/views/users/account.blade.php（同上）＋「以此電話作為廣告頁聯絡電話」那個核取方塊（name=\"phone2_is_default\"）整段被 Blade 註解 {{-- ... --}} 包住，不會輸出到畫面，所以畫面上確實沒有可勾選的選項。"
+   ]
+  },
+  {
+   "id": "jgb/D/contract-list-row-gear-actions",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "不成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "b7a92c40ec06ed3b52e2b6728aabfefc9205445107bd795f195341229cfc6f22",
+   "title_text": "合約總表列的小齒輪可以做什麼操作？（不論狀態都有「查看帳單」；其餘依合約狀態、身分、權限等條件增減）",
+   "notes": [
+    "標題：「不論狀態都有查看帳單」由句 3 支撐（app/Http/Controllers/ContractController.php 中，『查看帳單』寫在 switch ($LVcontractDataPage->status) 之前，沒有條件）；「其餘依狀態、身分、權限增減」由句 1 支撐。",
+    "句 1：app/Http/Controllers/ContractController.php＋webList 裡 $LVreturn['actions'] 的組成，會依 status 分 case、依 $this->roleType === 'tenant'、依 $LVtoThis_userPermission[...]、依 property_purpose_key == Contract::SOCIAL_HOUSING 判斷；可不可以點選靠 class_name 'disabled' 控制。前端 src/components/SurelyVue/Contract/ActionCell.jsx 直接照 props.actions 畫出選項。列表頁 src/pages/contracts/list/Index.vue 呼叫 /api2/contract/list/getList，對應 routes/web.php 的 'ContractController@webList'。",
+    "句 2：app/Http/Controllers/ContractController.php（同上）＋if($LVtoThis_userPermission['show_owner_estate'] == true) 時才 push showEstate（文字「查看物件」），而且寫在狀態 switch 之前。",
+    "句 3：app/Http/Controllers/ContractController.php（同上）＋註解「查看帳單（含母約先前帳單；整條續約鏈皆無帳單時 disabled）」，'class_name' => $LVchainBillsCount > 0 ? '' : 'disabled'，連結 keyword_for=contractChain；app/Bill.php 的 contractChain 分支是 whereIn('bills.contract_id', $chainIds)，查的是整條續約鏈的帳單。",
+    "句 4：app/Http/Controllers/ContractController.php（同上）＋$this->roleType === 'tenant' && !empty($LVcontractDataPage->getAutoPayCreditCardExpireYmd()) 時 push changeCreditBind（文字「更換綁定信用卡」），連結到 action 'credit_card_update' 重新授權。",
+    "句 5：app/Http/Controllers/ContractController.php（同上）＋case CONTRACT_INVITING／CONTRACT_INVITING_NEXT 的權限條件是 edit_owner_contract || (非租客 && sign_contract)，依 isRenewing()→cancelRenew「取消續約」、isEarlyTerminating()→cancelTerminate「取消提前解約」、其餘→cancelInvite「取消邀請」，三擇一只 push 一個選項。",
+    "句 6：app/Http/Controllers/ContractController.php（同上）。句中列出的新增轉租契約書、點交物件、取消點交邀請、點退押金、取消點退邀請、續約及其條件都相符，但列舉漏掉同一批狀態（CONTRACT_SIGNED～CONTRACT_MOVE_OUT_DONE）下的「提前解約」（$LVreturnActionTemplate['terminate']，文字 ___('提前解約')）。來源實際是：非社宅合約、登入身分是租客時一律 push（click_handler 'api'）；非社宅合約、非租客且有 edit_owner_contract 或 sign_contract 權限時也會 push（開 early-termination-by-landlord 視窗）。句子在說明這個狀態的選單內容，還特別寫了租客看不到哪四項，卻沒提租客看得到「提前解約」，屬於列舉不全（規則 8），所以不成立。",
+    "句 7：app/Http/Controllers/ContractController.php（同上）＋case CONTRACT_EARLY_TERMINATION 有權限時，先 push 一次 movein（disabled），接著把 moveout 設成 disabled，卻又 push 了一次 $LVreturnActionTemplate['movein']，所以「點交物件」會出現兩次、都點不了；最後 push 的 cancelTerminate class_name 是 ''，可以點。",
+    "句 8：app/Http/Controllers/ContractController.php（同上）＋case CONTRACT_HISTORY 與 CONTRACT_HISTORY_DONE 有權限時都會 push moveout「點退押金」，class_name 依 canMoveOut() && edit_moveout_contract 決定；renew 只在 isRenewExpiredAllowed() && 非社宅 && $this->roleType !== 'tenant' 時補回。app/Contract.php 的 isRenewExpiredAllowed 讀 config('app.renew_expired_allow_contract_ids') 這份例外名單。狀態 512 程式裡沒有寫入 status（status = Contract::CONTRACT_EARLY_TERMINATION_DONE 只出現在註解），所以不會漏掉另一種歷史狀態。"
+   ]
+  },
+  {
+   "id": "jgb/E/recharge-account-history-content",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "b1ad064b93a3c5c546d5a73270ad88c3f94c7366a120d026fa17a988f1dc11ec",
+   "title_text": "點開「歷程」看得到哪些內容？（最近 50 筆金額變動的時間／類型／金額／前後餘額／操作人員，有連結帳單可以點開查看）",
+   "notes": [
+    "標題：各項斷言都由句 1、句 2 支撐；「歷程」欄位標題見 src/pages/users/rechargeAccountList/Index.vue 的 { title: t('歷程'), key: 'history' ...}。",
+    "句 1：src/pages/users/rechargeAccountList/Index.vue＋openHistoryLightbox 呼叫 /api/recharge-accounts/${record.id}/history 時沒帶 page 參數；表頭是「時間」「類型」「變動金額」「變動前餘額」「變動後餘額」「操作人員」。後端 app/Http/Controllers/RechargeAccountListController.php 的 history() 是 per_page 預設 50，並且 orderBy('id', 'desc')，所以是由新到舊、最多 50 筆。路由見 routes/api.php 的 'RechargeAccountListController@history'。",
+    "句 2：src/pages/users/rechargeAccountList/Index.vue（同上）＋「帳單」欄只在 log.bill_id 有值時顯示 bi-receipt 圖示（title「查看帳單」），沒有值顯示「-」。點下去會執行 openBillDetail，用 store.commit('lightbox', { id: `billItemDetail_${billId}`, action: 'add' }) 疊加開啟；註解寫明「疊加開啟該帳單詳細資料（不關閉歷程 lightbox）」。",
+    "句 3：src/pages/users/rechargeAccountList/Index.vue（同上）＋state.historyList.length === 0 時顯示 t('目前尚無歷程記錄')，逐字相符。"
+   ]
+  },
+  {
+   "id": "jgb/D/contract-invite-and-review-period",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "c73830f9d5affbf5a6bf117769deb2ad6990bce873af5206907642334040f4f6",
+   "title_text": "合約邀請發出後租客有多久審閱期？（預設 3 天／72 小時，逾期連結失效；天數由 JGB 依團隊設定）",
+   "notes": [
+    "標題：預設 3 天／72 小時與「依團隊設定」由句 1、句 2 支撐，逾期失效由句 3 支撐。",
+    "句 1：app/Http/Controllers/ContractController.php＋invite() 的一般住宅與社宅分支，都用 getSettings('contract_review_renew_period', ...)['review_days'] ?? 3 加上 strtotime(\"+{$reviewDays} days\") 寫入 contract_inviting_expire_at。附註：app/Http/Controllers/Internal/ContractWriteController.php 的 sendInvite 固定是 strtotime('+72 HOUR')、不套團隊設定，但那是內部代理建約 API（routes/api.php 的 'Internal\\ContractWriteController@store'），不是房東送出邀請的路徑，所以不影響本句。",
+    "句 2：app/Http/Controllers/ContractController.php（同上）＋註解「審閱期天數：直接讀團隊設定 JSON（團隊覆蓋 > 全域預設 3 天），未設定回退 3」。database/migrations/2026_07_02_000001_seed_contract_review_renew_period_feature_config.php 的說明是「讓後台業管針對指定團隊(role)各別設定」，default_settings 為 'review_days' => 3，相符。",
+    "句 3：help:landlordonboarding04lease_zh-Hant.html＋「從您發送邀請時開始計算，租客需要在72小時內進行簽約，否則該連結就會失效。」。程式端 app/Console/Commands/ContractStatusUpdater.php 對 status 為 CONTRACT_INVITING、contract_inviting_expire_at 已過期的合約執行 $contract->reset()，並發 contract_invite_expired 通知，相符；天數以句 1 的團隊設定為準。",
+    "句 4：app/Http/Controllers/ContractController.php＋一般住宅分支以 User::where('email', xxtea_base64_encrypt($contract->to_user_email)) 比對，比對到就代入會員資料並執行 $contract->to_user_email = $user->email；電話比對要求 whereNotNull('phone_verified_at')。社宅分支的電話比對是 User::where('phone_country_id', $targetCountryId)->where('phone', xxtea_base64_encrypt($targetPhone))，沒有 phone_verified_at 條件。也和 docs/knowledge/jgb-product-facts.md#p914-contract-invite-account-match 一致。",
+    "句 5：app/Http/Controllers/EstateController.php＋未登入時 session()->put('contract_invitation', [$contract->id])，條件是 $contract->status == Contract::CONTRACT_INVITING && empty($contract->to_user_id)；app/Http/Controllers/AuthController.php 在註冊與登入時都會執行 receiveContractInvitation('contract', $contractId)；app/User.php 的 receiveContractInvitation 只處理 whereNull('to_user_id')->where('status', Contract::CONTRACT_INVITING) 的合約；config/session.php 是 'lifetime' => env('SESSION_LIFETIME', 120)。句子對其他情況只寫「要看個案資料」，沒有斷言一定不會綁定；註冊時另有 receiveContractInvitation('email') 會以 Email 認領，和這個保留說法不衝突。",
+    "句 6：docs/knowledge/jgb-product-facts.md#p914-email-encrypted-no-lowercase＋「大小寫不同會被當成不同 Email」。程式端 app/User.php 的 setEmailAttribute 直接 xxtea_base64_encrypt($email)，沒有 strtolower；app/Contract.php 的 setToUserEmailAttribute 只用 preg_replace 去掉頭尾空白，也沒有轉小寫，相符。",
+    "句 7：審核單 review-sheet-9.15-S2-DE-20260927.md #113 的裁決是「只寫程式證實的系統行為，其餘走個案客服」，句意一致。程式端 app/Http/Controllers/ContractController.php 的 webList 在租客身分時 $searchRoleIndex = 'to_role_id'，看得到哪些合約取決於合約的綁定欄位，相符。"
+   ]
+  }
+ ],
+ "findings": [
+  "jgb/D/contract-list-row-gear-actions 句 6 列出「執行中合約」各階段的齒輪選項時漏掉「提前解約」：非社宅合約的租客一律看得到（api 檢查），非租客但有簽約權限的人也看得到（app/Http/Controllers/ContractController.php 的 $LVreturnActionTemplate['terminate']）。同粗目其他細目沒有補上這一項。",
+  "jgb/A/contact-info-social-fields 句 3 的 Facebook 長度上限（100）和現行頁面 resources/views/users/account.blade.php 的 maxlength=\"200\" 不一致；團隊頁 resources/views/users/role.blade.php 的 facebook 也是 maxlength=\"200\"。",
+  "來源差異（不影響本組判定）：help:landlordonboarding04lease_zh-Hant.html 寫固定「72小時」，現行程式改成依團隊設定（預設 3 天，可由後台按團隊覆蓋）；app/Http/Controllers/Internal/ContractWriteController.php 的內部建約 API 則固定 72 小時、不套團隊設定，註解寫明「不套用各客製團隊的延長規則」。"
+ ],
+ "source_transcript": "addf3b2c0116259c3.output"
+}

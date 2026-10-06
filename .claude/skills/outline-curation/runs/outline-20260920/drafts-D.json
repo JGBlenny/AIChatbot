@@ -344,7 +344,7 @@
     {
      "proposed_id": "jgb/D/contract-list-row-gear-actions",
      "askable": "合約總表每一列的小齒輪可以做什麼動作",
-     "title": "合約總表列的小齒輪可以做什麼操作？（不論狀態都有「查看帳單」；其餘依合約狀態、身分與權限增減）",
+     "title": "合約總表列的小齒輪可以做什麼操作？（不論狀態都有「查看帳單」；其餘依合約狀態、身分、權限等條件增減）",
      "unit_ids": [
       "page:contracts.list"
      ],
@@ -360,12 +360,12 @@
       "合約列表的齒輪按鈕能做什麼"
      ],
      "sentences": [
-      "合約總表每一列的小齒輪內容，是依這份合約目前的狀態、登入身分與權限來決定的。",
+      "合約總表每一列的小齒輪會出現哪些選項、能不能點選，要看多項條件，包括這份合約目前的狀態、登入身分、權限，以及是否為社會住宅合約等。",
       "不論合約狀態，只要有查看物件的權限，小齒輪都會顯示「查看物件」。",
       "不論合約狀態，小齒輪都會顯示「查看帳單」，點進去可以看到這份合約（含它整條續約鏈）產生過的所有帳單；如果這條續約鏈目前完全沒有帳單，這個選項會顯示但不能點選。",
       "如果目前登入身分是租客，而且這份合約已經綁定信用卡自動扣款，小齒輪還會額外顯示「更換綁定信用卡」，可以重新走一次授權綁定。",
       "狀態是「待租客簽回」或「待房東簽名」時，如果有簽合約權限，小齒輪依情況只會顯示一個取消選項：這份合約正在續約中顯示「取消續約」，正在提前解約中顯示「取消提前解約」，兩者都不是的話顯示「取消邀請」。",
-      "狀態是「執行中合約」的各個階段（雙方簽名完成、點交送出、點交完成、點退送出、點退完成）時，如果有權限，社宅包租範本會額外顯示「新增轉租契約書」；如果目前登入身分不是租客，還會顯示「點交物件」「取消點交邀請」「點退押金」「取消點退邀請」（能不能點選要看合約目前是否符合條件）——租客身分看不到這四個選項；非社宅用途的合約，登入身分不是租客時還會顯示「續約」。",
+      "狀態是「執行中合約」的各個階段（雙方簽名完成、點交送出、點交完成、點退送出、點退完成）時，如果有權限，社宅包租範本會額外顯示「新增轉租契約書」；如果目前登入身分不是租客，還會顯示「點交物件」「取消點交邀請」「點退押金」「取消點退邀請」（能不能點選要看合約目前是否符合條件）——租客身分看不到這四個選項；非社宅用途的合約，登入身分不是租客時還會顯示「續約」。另外，非社宅用途的合約在這些階段也會顯示「提前解約」：租客身分一律看得到，非租客身分要有合約編輯或簽約權限才看得到；能不能點選要看合約目前是否可以提前解約。",
       "狀態是「提前解約中」時，有權限的話小齒輪會顯示無法點選的「點交物件」（目前畫面會重複出現兩次），以及可以點選的「取消提前解約」。",
       "狀態是「歷史合約」或合約已結束時，有權限的話小齒輪會顯示「點退押金」，能不能點選要看是否符合點退條件；正常情況下歷史合約看不到「續約」，但系統另外有一份例外名單，名單內的合約即使已經變成歷史合約，只要登入身分不是租客、且是非社宅用途，還是會補回「續約」這個選項。"
      ],
@@ -386,6 +386,31 @@
        "sentence_index": 0,
        "source": "code:src/pages/contracts/list/Index.vue",
        "quote_or_symbol": "api2/contract/list/getList"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/ContractController.php",
+       "quote_or_symbol": "switch ($LVcontractDataPage->status) {"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/ContractController.php",
+       "quote_or_symbol": "if ($this->roleType === 'tenant'"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/ContractController.php",
+       "quote_or_symbol": "if($LVtoThis_userPermission['edit_owner_contract'] || $LVtoThis_userPermission['sign_contract']){"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/ContractController.php",
+       "quote_or_symbol": "if ($LVcontractDataPage->property_purpose_key == Contract::SOCIAL_HOUSING"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/ContractController.php",
+       "quote_or_symbol": "$LVreturnActionTemplate['movein']['class_name'] = $LVcontractDataPage->canMoveIn() ? '' : 'disabled';"
       },
       {
        "sentence_index": 1,
@@ -416,6 +441,21 @@
        "sentence_index": 5,
        "source": "code:app/Http/Controllers/ContractController.php",
        "quote_or_symbol": "'text' => ___('取消點退邀請'),"
+      },
+      {
+       "sentence_index": 5,
+       "source": "code:app/Http/Controllers/ContractController.php",
+       "quote_or_symbol": "$LVreturnActionTemplate['terminate']['class_name'] = $LVcontractDataPage->canEarlyTermination() ? '' : 'disabled';"
+      },
+      {
+       "sentence_index": 5,
+       "source": "code:app/Http/Controllers/ContractController.php",
+       "quote_or_symbol": "&& ($LVtoThis_userPermission['edit_owner_contract'] || $LVtoThis_userPermission['sign_contract'])){"
+      },
+      {
+       "sentence_index": 5,
+       "source": "code:app/Http/Controllers/ContractController.php",
+       "quote_or_symbol": "'text' => ___('提前解約'),"
       },
       {
        "sentence_index": 7,
@@ -3384,7 +3424,7 @@
     {
      "proposed_id": "jgb/D/contract-invite-and-review-period",
      "askable": "合約發送邀請給租客之後，租客有多久時間可以審閱，逾期會怎樣",
-     "title": "合約邀請發出後租客有多久審閱期？（預設 3 天／72 小時，逾期連結失效，天數為團隊可調整設定）",
+     "title": "合約邀請發出後租客有多久審閱期？（預設 3 天／72 小時，逾期連結失效；天數由 JGB 依團隊設定）",
      "unit_ids": [
       "page:web:contracts.sign"
      ],
@@ -3403,8 +3443,8 @@
       "審閱期天數"
      ],
      "sentences": [
-      "房東送出合約邀請後，系統會給租客一段審閱期才能簽約；天數其實是讀團隊設定，沒有設定才用預設的 3 天（72 小時）。",
-      "這個審閱天數設定屬於團隊層級，不同團隊可以各自覆蓋預設值。",
+      "房東送出合約邀請後，租客要在審閱期限內完成簽約；期限天數依團隊設定，沒有設定時預設 3 天（72 小時）。",
+      "審閱天數是 JGB 在後台依團隊設定的值，沒有特別設定的團隊一律用預設的 3 天。",
       "從發送邀請時開始計算，租客如果沒有在期限內完成簽約，這個合約邀請連結就會失效。",
       "送出合約邀請時，系統會用合約上填的租客 Email 去比對是否為已經註冊的會員，比對到的話會自動代入該會員的資料，並把合約上的租客 Email 改成該會員的註冊 Email；用電話比對時，一般住宅合約只認已經完成手機驗證的帳號，社會住宅合約則不要求手機驗證。租客如果是事後才註冊，而且是在同一個瀏覽器點開這份合約的邀請連結後、在短時間內（預設 120 分鐘）接著註冊或登入，合約又還在「待租客簽回」、尚未綁定其他帳號，系統會自動把這份合約認領到他的帳號；其他情況（例如換裝置或隔太久才註冊）能不能綁定要看個案資料，可洽客服協助確認。",
       "比對會員 Email 時，大小寫不同會被當成不同的 Email，系統沒有把 Email 統一轉成小寫再比對。",
@@ -3425,9 +3465,29 @@
        "quote_or_symbol": "->getSettings('contract_review_renew_period', (int) optional($this->role)->id)['review_days'] ?? 3);"
       },
       {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/ContractController.php",
+       "quote_or_symbol": "$contract->contract_inviting_expire_at = date('Y-m-d H:i:s', strtotime(\"+{$reviewDays} days\"));"
+      },
+      {
        "sentence_index": 1,
        "source": "code:app/Http/Controllers/ContractController.php",
        "quote_or_symbol": "$contract->contract_inviting_expire_at = date('Y-m-d H:i:s', strtotime(\"+{$reviewDays} days\"));"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:database/migrations/2026_07_02_000001_seed_contract_review_renew_period_feature_config.php",
+       "quote_or_symbol": "讓後台業管針對指定團隊(role)各別設定「審閱期」（簽約邀請）與「續約期」"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:routes/web.php",
+       "quote_or_symbol": "Route::match(['get', 'post'], '/{action?}/{id?}', 'Admin\\FeatureConfigController@index')->name('admin.feature_configs');"
+      },
+      {
+       "sentence_index": 1,
+       "source": "code:app/Http/Controllers/ContractController.php",
+       "quote_or_symbol": "->getSettings('contract_review_renew_period', (int) optional($this->role)->id)['review_days'] ?? 3);"
       },
       {
        "sentence_index": 2,

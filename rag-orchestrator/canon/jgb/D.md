@@ -62,21 +62,22 @@ language: zh-TW
 - instance_applicability: general
 建立合約前，系統會先檢查該物件的必填欄位是否已經填寫齊全，沒填齊會擋下並提示「請先完善物件所有必填欄位」。
 建立合約的檢查條件曾經改過：早期是看物件「是否已刊登」來決定能不能建立合約，2024/11/13 已經改成看「物件必填資料是否填齊」，以前用刊登狀態當條件的做法目前已經不再套用。
-### 合約總表列的小齒輪可以做什麼操作？（不論狀態都有「查看帳單」；其餘依合約狀態、身分與權限增減） {#jgb/D/contract-list-row-gear-actions}
+### 合約總表列的小齒輪可以做什麼操作？（不論狀態都有「查看帳單」；其餘依合約狀態、身分、權限等條件增減） {#jgb/D/contract-list-row-gear-actions}
 - phrasings:
   - {text: "合約列表小齒輪可以做什麼", source: "draft:outline-20260920", status: proposed}
   - {text: "合約列表的齒輪按鈕能做什麼", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/ContractController.php, code:routes/web.php, code:src/pages/contracts/list/Index.vue, code:app/Contract.php, code:src/components/SurelyVue/Contract/ActionCell.jsx]
-- reviewed: {by: owner, at: 2026-10-05}
+- reviewed: {by: owner, at: 2026-10-06}
 - target_user: [property_manager]
 - business_types: [system_provider]
 - instance_applicability: general
-合約總表每一列的小齒輪內容，是依這份合約目前的狀態、登入身分與權限來決定的。
+合約總表每一列的小齒輪會出現哪些選項、能不能點選，要看多項條件，包括這份合約目前的狀態、登入身分、權限，以及是否為社會住宅合約等。
 不論合約狀態，只要有查看物件的權限，小齒輪都會顯示「查看物件」。
 不論合約狀態，小齒輪都會顯示「查看帳單」，點進去可以看到這份合約（含它整條續約鏈）產生過的所有帳單；如果這條續約鏈目前完全沒有帳單，這個選項會顯示但不能點選。
 如果目前登入身分是租客，而且這份合約已經綁定信用卡自動扣款，小齒輪還會額外顯示「更換綁定信用卡」，可以重新走一次授權綁定。
 狀態是「待租客簽回」或「待房東簽名」時，如果有簽合約權限，小齒輪依情況只會顯示一個取消選項：這份合約正在續約中顯示「取消續約」，正在提前解約中顯示「取消提前解約」，兩者都不是的話顯示「取消邀請」。
 狀態是「執行中合約」的各個階段（雙方簽名完成、點交送出、點交完成、點退送出、點退完成）時，如果有權限，社宅包租範本會額外顯示「新增轉租契約書」；如果目前登入身分不是租客，還會顯示「點交物件」「取消點交邀請」「點退押金」「取消點退邀請」（能不能點選要看合約目前是否符合條件）——租客身分看不到這四個選項；非社宅用途的合約，登入身分不是租客時還會顯示「續約」。
+另外，非社宅用途的合約在這些階段也會顯示「提前解約」：租客身分一律看得到，非租客身分要有合約編輯或簽約權限才看得到；能不能點選要看合約目前是否可以提前解約。
 狀態是「提前解約中」時，有權限的話小齒輪會顯示無法點選的「點交物件」（目前畫面會重複出現兩次），以及可以點選的「取消提前解約」。
 狀態是「歷史合約」或合約已結束時，有權限的話小齒輪會顯示「點退押金」，能不能點選要看是否符合點退條件；正常情況下歷史合約看不到「續約」，但系統另外有一份例外名單，名單內的合約即使已經變成歷史合約，只要登入身分不是租客、且是非社宅用途，還是會補回「續約」這個選項。
 ### 合約總表可以怎麼排序？（依名稱、更新時間、合約起始日、終止日、成立日，共 5 種依據） {#jgb/D/contract-list-row-sort-options}
@@ -705,19 +706,19 @@ language: zh-TW
 如果合約範本選擇「轉租」範本，出租方分組下的「授權」「附件」兩個分頁不會顯示。
 社宅合約範本其實有三種（代租代管、包租包管、轉租），只有包租包管跟轉租各自有拿掉分頁的規則；選「代租代管」範本時看到的是完整的分頁清單，沒有被額外拿掉任何分頁。
 ## 簽約與合約檢視 {#D-contract-sign-view}
-### 合約邀請發出後租客有多久審閱期？（預設 3 天／72 小時，逾期連結失效，天數為團隊可調整設定） {#jgb/D/contract-invite-and-review-period}
+### 合約邀請發出後租客有多久審閱期？（預設 3 天／72 小時，逾期連結失效；天數由 JGB 依團隊設定） {#jgb/D/contract-invite-and-review-period}
 - phrasings:
   - {text: "合約審閱期多久", source: "draft:outline-20260920", status: proposed}
   - {text: "合約邀請多久會過期", source: "draft:outline-20260920", status: proposed}
   - {text: "租客沒簽約連結失效", source: "draft:outline-20260920", status: proposed}
   - {text: "審閱期天數", source: "draft:outline-20260920", status: proposed}
 - sources: [code:app/Http/Controllers/ContractController.php, code:app/Http/Controllers/Internal/ContractWriteController.php, help:landlordonboarding04lease_zh-Hant.html, docs:knowledge/jgb-product-facts.md#p914-contract-invite-account-match, docs:knowledge/jgb-product-facts.md#p914-email-encrypted-no-lowercase, docs:.kiro/specs/knowledge-outline-and-intent-architecture/inputs/review-sheet-9.15-S2-DE-20260927.md#113]
-- reviewed: {by: owner, at: 2026-10-05}
+- reviewed: {by: owner, at: 2026-10-06}
 - target_user: [property_manager, prospect]
 - business_types: [system_provider]
 - instance_applicability: general
-房東送出合約邀請後，系統會給租客一段審閱期才能簽約；天數其實是讀團隊設定，沒有設定才用預設的 3 天（72 小時）。
-這個審閱天數設定屬於團隊層級，不同團隊可以各自覆蓋預設值。
+房東送出合約邀請後，租客要在審閱期限內完成簽約；期限天數依團隊設定，沒有設定時預設 3 天（72 小時）。
+審閱天數是 JGB 在後台依團隊設定的值，沒有特別設定的團隊一律用預設的 3 天。
 從發送邀請時開始計算，租客如果沒有在期限內完成簽約，這個合約邀請連結就會失效。
 送出合約邀請時，系統會用合約上填的租客 Email 去比對是否為已經註冊的會員，比對到的話會自動代入該會員的資料，並把合約上的租客 Email 改成該會員的註冊 Email；用電話比對時，一般住宅合約只認已經完成手機驗證的帳號，社會住宅合約則不要求手機驗證。
 租客如果是事後才註冊，而且是在同一個瀏覽器點開這份合約的邀請連結後、在短時間內（預設 120 分鐘）接著註冊或登入，合約又還在「待租客簽回」、尚未綁定其他帳號，系統會自動把這份合約認領到他的帳號；其他情況（例如換裝置或隔太久才註冊）能不能綁定要看個案資料，可洽客服協助確認。

@@ -1,0 +1,61 @@
+{
+ "kind": "write",
+ "verdict": "REFUTED",
+ "base": "fb9732cf36640cfe9d48016f97f88d05a8fb871d",
+ "claim": "Plan 9.32 複核：2 條細目的標題與每一句已逐句對合法來源核對，逐條結果如 fines",
+ "fines": [
+  {
+   "id": "jgb/D/contract-list-row-gear-actions",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立",
+    "成立"
+   ],
+   "content_sha256": "21621c3f9bc4cad605870b0eb5f21e1dd7b647c88870873e29606f07e5c94357",
+   "title_text": "合約總表列的小齒輪可以做什麼操作？（不論狀態都有「查看帳單」；其餘依合約狀態、身分、權限等條件增減）",
+   "notes": [
+    "標題：「查看帳單」不分狀態一律加入（見句 3 證據），其餘選項依 status／roleType／權限分支增減（句 1、5～9），標題斷言都有句子支撐。",
+    "句 1：現行呼叫鏈 src/pages/contracts/list/Index.vue（api2/contract/list/getList）→ routes/web.php「ContractController@webList」→ app/Http/Controllers/ContractController.php webList（getList 走優化路徑，只有帶 old cookie 才回落 list()）；齒輪內容由 webList 的「switch ($LVcontractDataPage->status)」、「$this->roleType === 'tenant'」、「$LVtoThis_userPermission[...]」、「property_purpose_key == Contract::SOCIAL_HOUSING」等條件決定，src/components/SurelyVue/Contract/ActionCell.jsx 只依後端回傳的 actions 逐項畫出、以 class_name disabled 控制能否點選，成立。",
+    "句 2：app/Http/Controllers/ContractController.php「if($LVtoThis_userPermission['show_owner_estate'] == true)」→ 推入 showEstate（「查看物件」），這段在 status switch 之前、與狀態無關；租客的權限在 Controller.php getPermissions「租客沒有權限」全為 false，與句子『有查看物件的權限才顯示』一致，成立。",
+    "句 3：同上 ContractController.php「// 查看帳單（含母約先前帳單；整條續約鏈皆無帳單時 disabled）」：不分狀態一律推入「查看帳單」，class_name 依「$LVchainBillsCount > 0 ? '' : 'disabled'」，連結「/bills/all?keyword=...&keyword_for=contractChain」；app/Bill.php「keywordFor == 'contractChain'」查 father_id＝根 id 或 id＝根 id 的所有合約帳單；app/Contract.php「$contract->father_id = $contract->id」確認根合約 father_id 是自身，成立。",
+    "句 4：同上 ContractController.php「$this->roleType === 'tenant'」且「!empty($LVcontractDataPage->getAutoPayCreditCardExpireYmd())」→「更換綁定信用卡」，連到 contracts.credit_card_auto_pay action=credit_card_update（註解「藍新重新授權頁面」）；app/Contract.php getAutoPayCreditCardExpireYmd 要 is_auto_pay 且有授權 TokenLife 才回傳值，成立。",
+    "句 5：同上 ContractController.php「case Contract::CONTRACT_INVITING: case Contract::CONTRACT_INVITING_NEXT:」，條件「edit_owner_contract || (roleType !== 'tenant' && sign_contract)」，以 if／else if／else 依序只取一個：isRenewing→「取消續約」、isEarlyTerminating→「取消提前解約」、其餘→「取消邀請」，成立。",
+    "句 6：同上 ContractController.php「case Contract::CONTRACT_SIGNED」到「CONTRACT_MOVE_OUT_DONE」五個狀態：在「edit_owner_contract || sign_contract」之下，社宅＋contract_type charter＋物件存在→「新增轉租契約書」；「if ($this->roleType !== 'tenant')」才推入「點交物件」「取消點交邀請」「點退押金」「取消點退邀請」（class_name 依 canMoveIn／MOVE_IN／canMoveOut／MOVE_OUT 決定是否 disabled）；非社宅且非租客→「續約」，成立。",
+    "句 7：同上 ContractController.php：非社宅且「$this->roleType === 'tenant'」時，不另查權限就推入「提前解約」（click_handler api）；否則非社宅且「edit_owner_contract || sign_contract」才推入（lightbox early-termination-by-landlord）；class_name 依「canEarlyTermination()」決定，成立。",
+    "句 8：同上 ContractController.php「case Contract::CONTRACT_EARLY_TERMINATION」：在權限條件下推入 disabled 的「點交物件」，接著把 moveout 設成 disabled 但實際又推入「$LVreturnActionTemplate['movein']」，所以「點交物件」出現兩次，最後推入可點的「取消提前解約」（class_name ''、link contracts.early_termination cancel），成立。",
+    "句 9：同上 ContractController.php「case Contract::CONTRACT_HISTORY」與「case Contract::CONTRACT_HISTORY_DONE」：在權限條件下推入「點退押金」，class_name 依「canMoveOut() && edit_moveout_contract」決定；「isRenewExpiredAllowed()」且非社宅、「roleType !== 'tenant'」時補回「續約」；app/Contract.php isRenewExpiredAllowed 讀 config('app.renew_expired_allow_contract_ids') 名單，成立。"
+   ]
+  },
+  {
+   "id": "jgb/A/password-form-validation",
+   "title": "成立",
+   "sentences": [
+    "成立",
+    "成立",
+    "不成立",
+    "成立"
+   ],
+   "content_sha256": "223787dc8aca7222cbb08ed66092d41f8f731902d6c502232d5872131487e00a",
+   "title_text": "帳號資訊頁修改密碼時要填哪些欄位？填錯會怎樣？",
+   "notes": [
+    "標題：只是提問，沒有具體斷言；本條句 3 有回答要填的欄位與填錯時的處理，成立。",
+    "句 1：app/Http/Controllers/UserController.php account「$showPassword = !empty($user->password);」；resources/views/users/account.blade.php「@if ($showPassword)」包住「密碼」區塊（routes/web.php「UserController@account」name users.account 是現行路由），成立。",
+    "句 2：resources/views/users/account.blade.php「@click=\"memberCenter.safety.display_password_form=true\"」按鈕文字「修改密碼」，v-else 展開 password-form 元件，成立。",
+    "句 3：app/Http/Controllers/UserController.php 規則「'old_password' => 'required'」，password「required_with:password_confirmation|same:password_confirmation」；src/components/PasswordForm.vue 三個欄位都是 required（require_old_password=true），所以三欄必填這部分成立，舊密碼錯也確實會在 save() 前 return back()，整筆表單不儲存。但實際錯誤訊息是 UserController.php「'status-error' => ___('目前密碼驗證錯誤')」，不是句子寫的「目前密碼輸入錯誤」。全匯出 app／src／resources／routes／config 都 grep 不到「目前密碼輸入錯誤」（正對照：同一指令找得到「目前密碼驗證錯誤」），加引號的介面文字不是逐字一致，不成立。",
+    "句 4：app/Http/Controllers/UserController.php「'description' => ___('上次更新：') . ($user->password_change_at ? format_timezone('Y/m/d H:i', $user->password_change_at, ...) : format_timezone('Y/m/d H:i', $user->created_at, ...))」；resources/views/users/account.blade.php「{{$password['description']}}」顯示在「密碼」標題下方，成立。"
+   ]
+  }
+ ],
+ "findings": [
+  "jgb/D/contract-list-row-gear-actions 句 3 的旁支觀察（不影響判定）：ContractController.php webList 算 disabled 用的續約鏈帳單數只算「->where('active', 1)」的合約，但 app/Bill.php「contractChain」篩選不過濾 active。所以作廢續約合約上的帳單，會出現在點進去的帳單清單裡，卻不算進啟用判斷；整條鏈只有作廢合約有帳單時，選項會是 disabled。",
+  "同粗目沒有發現互相矛盾的細目；本組兩條之間也沒有矛盾。"
+ ],
+ "source_transcript": "aeb601384a026d107.output"
+}

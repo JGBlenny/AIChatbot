@@ -4712,7 +4712,7 @@
     {
      "proposed_id": "jgb/E/recharge-account-history-content",
      "askable": "點開「歷程」看得到哪些內容",
-     "title": "點開「歷程」看得到哪些內容？（每筆金額變動的時間／類型／金額／前後餘額／操作人員，有連結帳單可以點開查看）",
+     "title": "點開「歷程」看得到哪些內容？（最近 50 筆金額變動的時間／類型／金額／前後餘額／操作人員，有連結帳單可以點開查看）",
      "unit_ids": [
       "page:users.rechargeAccountList"
      ],
@@ -4729,7 +4729,7 @@
       "歷程能看帳單嗎"
      ],
      "sentences": [
-      "點開「歷程」會列出這組虛擬帳號每一筆金額變動紀錄，包含時間、類型、變動金額、變動前餘額、變動後餘額、操作人員。",
+      "點開「歷程」會列出這組虛擬帳號最近的金額變動紀錄，由新到舊、最多顯示最近 50 筆，每筆包含時間、類型、變動金額、變動前餘額、變動後餘額、操作人員。",
       "如果這筆金額變動有連結到某張帳單，該列會多一個「帳單」圖示，點下去可以疊加開啟這張帳單的詳細資料，不用關掉歷程視窗。",
       "如果目前還沒有任何歷程記錄，會顯示「目前尚無歷程記錄」。"
      ],
@@ -4746,6 +4746,21 @@
        "sentence_index": 0,
        "source": "code:src/pages/users/rechargeAccountList/Index.vue",
        "quote_or_symbol": "<th class=\"py-2 px-2 text-right\">{t('變動金額')}</th>"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/RechargeAccountListController.php",
+       "quote_or_symbol": "$perPage = min(100, max(1, (int) $request->input('per_page', 50)));"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:app/Http/Controllers/RechargeAccountListController.php",
+       "quote_or_symbol": "->orderBy('id', 'desc')"
+      },
+      {
+       "sentence_index": 0,
+       "source": "code:src/pages/users/rechargeAccountList/Index.vue",
+       "quote_or_symbol": "`${store.state.APP_URL}/api/recharge-accounts/${record.id}/history`,"
       },
       {
        "sentence_index": 1,
