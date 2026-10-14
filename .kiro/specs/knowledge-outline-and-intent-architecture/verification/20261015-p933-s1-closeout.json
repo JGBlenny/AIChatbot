@@ -1,0 +1,13 @@
+{
+ "verdict": "CONFIRMED",
+ "kind": "change",
+ "base": "0eb281ef1fb10a3e93bdb111b1e23a1fa7c9fd69",
+ "claim": "Plan 9.33 S1＋S1b 收尾：最終清單 `inputs/askable-list-9.33-20261015.json` 2,096 件（1,979＋S1b 淨增 117）符合 E1、E2、E6、E8、E14（3 批）；E3、E18 讀取稽核命中逐筆判定成立；E4 種入 4／10 照實記未達且盲判 10 對已完成（與主 session 0 分歧）；E5、E16 64 格依 §9.4 (a)(b) 全數盲判、與主 session 分歧 12 格已逐項列表並經業主裁定為 對到 39／漏列 23／不屬 2；E15 `leak_check` 重跑一致（受檢檔 0 命中、正對照 33／33）；E17、E19 書面依據在計畫；驗證紀錄 `inputs/askable-verify-9.33-20261015.md` 與上述一致。",
+ "findings": [
+  "P4 high: hit-review F＋G＋H 批 L137 描述為 repo 根第一層項目名稱，實際預覽還有更深一層名稱；仍只有名稱、無內文，判定不變",
+  "P4 high: bills.sheet 業主排除註明在 E 批 input.json 與驗證紀錄，不在清單檔本身",
+  "P4 medium: 盲判種入候選只放同粗目新增項；查過跨粗目同檔候選（I-pricing#30 對 I-demo-booking#new1）不符合 (ii)，結果不變",
+  "P4 high: check_final.py 沒檢查空問題或空引文、頁面是否屬於該粗目；獨立更嚴檢查 0 錯（S1 有 3 件引文超過 120 字，但 120 字上限只適用 S1b）"
+ ],
+ "source_transcript": "agent-a8ba9f1dccffbbb58.jsonl"
+}
