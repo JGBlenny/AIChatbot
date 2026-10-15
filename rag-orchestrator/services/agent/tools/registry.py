@@ -388,6 +388,18 @@ class ToolRegistry:
     # ------------------------------------------------------------------
     # 註冊
     # ------------------------------------------------------------------
+    def hide_from_model(self, name: str) -> bool:
+        """把已註冊工具改為 `facade_only`（門面照列、模型看不到也叫不了）。回是否有改。
+
+        2026-10-15 選項 A：舊知識庫零列已審 ⇒ `kb.search` 找到的每一筆 `kb.get` 都取不到，
+        只會浪費模型往返；由啟動流程依資料狀態呼叫（`mcp_facade.gate_kb_search_on_reviewed_rows`）。
+        """
+        spec = self._specs.get(name)
+        if spec is None or spec.get("facade_only"):
+            return False
+        self._specs[name] = {**spec, "facade_only": True}  # type: ignore[assignment]
+        return True
+
     def register(self, spec: ToolSpec, fn: ToolFn) -> None:
         name = spec["name"]
         if name in self._specs:

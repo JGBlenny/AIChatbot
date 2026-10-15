@@ -333,6 +333,8 @@ async def lifespan(app: FastAPI):
 
     # agent 路徑（agentic-mcp-orchestration 2.2／design 元件 8）：runtime／大綱／影子。
     await _init_agent_runtime(app)
+    # 2026-10-15 選項 A：舊知識庫零列已審 ⇒ kb.search 不給模型（依資料狀態，重啟重判）。
+    await _mcp_facade.gate_kb_search_on_reviewed_rows(_mcp_registry, db_pool)
 
     print("🎉 RAG Orchestrator 啟動完成！（含 Phase B 意圖建議 + agent 會話狀態層）")
     print(f"📝 API 文件: http://localhost:8100/docs")

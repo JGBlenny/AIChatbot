@@ -1974,6 +1974,32 @@ def _as_tool_result(raw: Any) -> ToolResult:
     )
 
 
+async def gate_kb_search_on_reviewed_rows(registry: ToolRegistry, pool) -> Optional[int]:
+    """2026-10-15 業主選 A：舊知識庫**零列已審** ⇒ `kb.search` 不給模型（門面照列）。
+
+    `kb.get` 只放行已審列（`review_state.content_reviewed_predicate`），而 `kb.search` 的檢索器
+    只過濾可見性 ⇒ 零列已審時它列出的每一筆模型都開不了（正式機 926 列有效、0 列已審；
+    實測 `kb.search` 成功後 `kb.get` 連續失敗直到預算用完）。依資料狀態判定、⛔ 寫死：
+    將來有已審列，重啟即恢復。查詢失敗 ⇒ 維持原狀（模型仍看得到），回 `None`。
+    """
+    from services.agent.canon.review_state import COLUMN, REVIEWED_REGEX
+
+    try:
+        async with pool.acquire() as conn:
+            reviewed = await conn.fetchval(
+                f"SELECT count(*) FROM knowledge_base kb WHERE kb.is_active AND kb.{COLUMN} ~ $1",
+                REVIEWED_REGEX,
+            )
+    except Exception as exc:  # noqa: BLE001 — fail-soft：維持原狀
+        print(f"⚠️ [agent] 舊知識庫已審列數查詢失敗，kb.search 維持原狀：{type(exc).__name__}")
+        return None
+    if reviewed == 0 and registry.hide_from_model("kb.search"):
+        print("ℹ️ [agent] 舊知識庫零列已審 ⇒ kb.search 不提供給模型（門面照列）")
+    else:
+        print(f"ℹ️ [agent] 舊知識庫已審 {reviewed} 列 ⇒ kb.search 維持提供給模型")
+    return reviewed
+
+
 def build_registry(deps: FacadeDeps, registry: Optional[ToolRegistry] = None) -> ToolRegistry:
     """把 1.4／1.5／1.6 的工具函式接上 `ToolRegistry`（薄接線，⛔ 不改其行為）。
 
