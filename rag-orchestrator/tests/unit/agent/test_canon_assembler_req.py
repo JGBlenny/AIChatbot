@@ -485,7 +485,7 @@ def test_resolve_canon_section_coarse_navigation_returns_fine_list():
     )
     assert result.ok is True
     assert result.provenance[0].citable is False
-    assert result.data["answer"] == "jgb/A/one｜第一條\njgb/A/two｜第二條"
+    assert result.data["answer"] == "outline:jgb/A/one｜第一條\noutline:jgb/A/two｜第二條"
     assert "未審" not in result.data["answer"]  # 負對照：未審細目不出現
 
 
@@ -526,7 +526,7 @@ def test_resolve_canon_section_bare_letter_coarse_accepted_during_transition():
         doc, _nav_identity(), "outline:A", vendor_business_types=frozenset()
     )
     assert result.ok is True
-    assert result.data["answer"] == "jgb/A/legacy｜舊形態細目"
+    assert result.data["answer"] == "outline:jgb/A/legacy｜舊形態細目"
 
 
 def test_resolve_canon_section_fine_id_shape_checked_before_coarse_id():
@@ -560,6 +560,6 @@ def test_build_canon_toc_excludes_coarse_with_zero_visible_reviewed_fines():
         )),
     ])
     toc = build_canon_toc(doc, _nav_identity(), vendor_business_types=frozenset())
-    assert "A-visible｜有可見細目｜1" in toc.text.splitlines()
+    assert "outline:A-visible｜有可見細目｜1" in toc.text.splitlines()
     assert "B-empty" not in toc.text  # 負對照：零可見細目的粗目不出現
     load_canon_or_die(CANON_DIR)   # 仍然同源

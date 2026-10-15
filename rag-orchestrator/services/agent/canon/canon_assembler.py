@@ -401,7 +401,11 @@ def build_canon_toc(doc: CanonDoc, identity: Identity, *, vendor_business_types:
             if canon_visible(identity, fine, vendor_business_types=vendor_business_types)
         )
         if count:
-            lines.append(f"{coarse.id}{TOC_LINE_SEP}{coarse.title}{TOC_LINE_SEP}{count}")
+            # 2026-10-15 正式機：行首直接印 `kb.get` 可用的完整 id（`outline:<粗目 id>`）。
+            # 只印裸 id 時，模型把資料段標記尾端的 `§<n>` 當成 id 呼叫 `kb.get("outline:32")`。
+            lines.append(
+                f"{OUTLINE_ID_PREFIX}{coarse.id}{TOC_LINE_SEP}{coarse.title}{TOC_LINE_SEP}{count}"
+            )
     return OutlineSection(
         id=TOC_SECTION_ID,
         title=TOC_SECTION_TITLE,
@@ -503,7 +507,8 @@ def resolve_canon_section(
     if coarse is None:
         return _no_match()
     lines = [
-        f"{fine.id}{TOC_LINE_SEP}{fine.title}"
+        # 同目錄：印完整 id（`outline:<細目 id>`），模型照抄即可開（正式機實測照抄裸 id 失敗）。
+        f"{OUTLINE_ID_PREFIX}{fine.id}{TOC_LINE_SEP}{fine.title}"
         for fine in coarse.fines
         if canon_visible(identity, fine, vendor_business_types=vendor_business_types)
     ]

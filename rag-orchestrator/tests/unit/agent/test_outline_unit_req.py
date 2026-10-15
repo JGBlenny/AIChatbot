@@ -384,7 +384,7 @@ def test_build_canon_toc_lists_coarse_row_with_visible_reviewed_count():
     toc = build_canon_toc(doc, _prospect_identity(), vendor_business_types=frozenset())
     assert toc.id == TOC_SECTION_ID
     assert toc.citable is False
-    assert toc.text == "A｜粗目 A｜1"
+    assert toc.text == "outline:A｜粗目 A｜1"
     assert "jgb/A/alpha" not in toc.text  # 負對照：目錄不得出現細目 id
 
 
@@ -392,7 +392,7 @@ def test_build_canon_toc_lists_coarse_row_with_visible_reviewed_count():
 def test_build_canon_toc_line_format_is_coarse_id_title_count():
     doc = _canon([_fine("jgb/A/alpha", title="系統總覽")])
     toc = build_canon_toc(doc, _prospect_identity(), vendor_business_types=frozenset())
-    assert toc.text.splitlines() == ["A｜粗目 A｜1"]
+    assert toc.text.splitlines() == ["outline:A｜粗目 A｜1"]
     assert "系統總覽" not in toc.text  # 負對照：細目標題不得出現在目錄（那是粗目標題的層級）
 
 

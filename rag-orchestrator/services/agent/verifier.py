@@ -774,7 +774,10 @@ class OutputVerifier:
                 break  # 觀察：同一類記一次就夠
 
         # ⑦ handoff 詞後置掃描
-        if scan_handoff_mentions(out.answer) and not handoff:
+        # 2026-10-15 A3：轉人字眼若出自**該句引用的可引用原文**（例：正本
+        # `jgb/E/bill-remind-resend-by-support`「此操作需由 JGB 客服協助」），是照正本陳述
+        # 事實、不是模型自己叫使用者去找人 ⇒ 不擋；只有引文裡沒有的轉人字眼才擋。
+        if not handoff and _uncovered_handoff_mention(out, resolved):
             hit = _hit(VerifierVerdict(ok=False, reason="HANDOFF_WORD_NO_HANDOFF"))
             if hit is not None:
                 return hit
@@ -1035,3 +1038,27 @@ class OutputVerifier:
 
 __all__ = ["OutputVerifier", "split_sentences", "VERIFIER_MODES", "DEFAULT_VERIFIER_MODE",
            "VerifyContext", "verdict_class"]
+
+
+def _uncovered_handoff_mention(out: "AgentOutput", resolved: dict) -> bool:
+    """回答裡有沒有**引文沒有支撐**的轉人字眼（`HANDOFF_WORDS`）。
+
+    逐筆看：某筆文字含轉人字眼 w，且這一筆所有可引用引文（`resolved[(筆, *)]`、
+    `citable=True`）都不含 w ⇒ 未支撐。整段 `answer` 含字眼卻沒有任何一筆含它
+    （例如沒有 `sentences` 的舊形狀）⇒ 一律視為未支撐（照擋，失敗方向是多擋）。
+    """
+    if not scan_handoff_mentions(out.answer):
+        return False
+    sentences = list(getattr(out, "sentences", None) or [])
+    seen_in_sentence = set()
+    for i, sentence in enumerate(sentences):
+        text = getattr(sentence, "text", "") or ""
+        words = [w for w in HANDOFF_WORDS if w in text]
+        if not words:
+            continue
+        quotes = [ref.quote for (si, _j), ref in resolved.items() if si == i and ref.citable]
+        for w in words:
+            seen_in_sentence.add(w)
+            if not any(w in q for q in quotes):
+                return True
+    return any(w in (out.answer or "") and w not in seen_in_sentence for w in HANDOFF_WORDS)

@@ -924,7 +924,16 @@ def _pending_creator(identity: Any) -> dict:
             "role_id": getattr(identity, "role_id", None)}
 
 
-def _pre_lookup_trigger(message: str) -> Optional[tuple[str, str]]:
+#: 2026-10-15 A2：上一回合追問的是名稱類（物件／社區／地址，`last_ask_target` 封閉值）時，使用者
+#: 這句若是 7～30 字、無句讀的一串名稱，也拿去比對物件（正式機：回答「學生獨立套房可租補」被當成
+#: 新的知識題轉人，或被模型拆成物件「學生獨立套房」＋描述「可租補」）。空白、括號、連字號是物件
+#: 名稱常見字元，不擋；句讀（逗號、句號、問號、驚嘆號、分號、冒號）才擋。
+_PRE_LOOKUP_ANSWER_MAX_CHARS = 30
+_PRE_LOOKUP_SENTENCE_PUNCT: frozenset = frozenset("，。！？；：,.!?;:")
+_PRE_LOOKUP_NAME_ASK_TARGETS: frozenset = frozenset({"estate", "community", "address"})
+
+
+def _pre_lookup_trigger(message: str, *, after_name_ask: bool = False) -> Optional[tuple[str, str]]:
     """U3 觸發判定。回傳 `(kind, candidate)`；不觸發 ⇒ `None`。
 
     `kind` ∈ `{"id", "keyword"}`；`candidate` 已去頭尾空白與標點，⛔ 尚未過
@@ -953,6 +962,11 @@ def _pre_lookup_trigger(message: str) -> Optional[tuple[str, str]]:
         if any(ch in _PRE_LOOKUP_PUNCTUATION for ch in core):
             return None
         if any(ch.isspace() for ch in core):
+            return None
+        return "keyword", core
+    # A2：上一回合追問名稱 ⇒ 較長的一串名稱也當成可能的物件名稱（查無不注入，同短名詞規則）。
+    if after_name_ask and len(core) <= _PRE_LOOKUP_ANSWER_MAX_CHARS:
+        if any(ch in _PRE_LOOKUP_SENTENCE_PUNCT for ch in core):
             return None
         return "keyword", core
     return None
@@ -3036,7 +3050,9 @@ class AgentRuntime:
         #「哪一種類型」。⛔ 不代模型作答、不改變 outcome；⛔ 原 ref／關鍵字不進
         # trace／決策快照（只記 `pre_lookup_trace`）。⚠️ 同 T3 兩段的排法：
         # 排在 DSP-022 那句**之前**——這是使用者這句之前的背景資料。
-        pre_trigger = _pre_lookup_trigger(user_message)
+        pre_trigger = _pre_lookup_trigger(
+            user_message, after_name_ask=last_ask_target in _PRE_LOOKUP_NAME_ASK_TARGETS
+        )
         if pre_trigger is not None:
             pre_kind, pre_candidate = pre_trigger
             pre_carry: Optional[tuple] = None

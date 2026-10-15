@@ -9,7 +9,7 @@
 
 ## 0. 業主已裁定（2026-10-15）
 
-- D1 `AGENT_VERIFIER_MODE=enforce`（與驗收一致）。
+- D1 `AGENT_VERIFIER_MODE=grounding_observe`：部署前裁 `enforce`（與驗收一致），上線後實測知識題 `enforce` 答 1／5、`grounding_observe` 答 3／5，業主 2026-10-15 改裁「改回 grounding_observe」；健檢會因 `verifier_grounding_observe_on_real_api` 亮紅旗，屬已知。
 - D2 與 LINE OA demo 同機一起切，不另排時段。
 - D3 接真 JGB（www）：`USE_MOCK_JGB_API=false`，先測既有 API 撐得起的部分；接口 B 新增端點未完成前，統計與建物件／合約／手動帳單回「暫不支援」降級。
 - D4 commit：`runtime.py`／`turn_context.py`／`exit_gates.py` 整檔進站內幫手 commit（訊息註明含 Plan 9.11）；其他線各自 commit；他人未追蹤檔不進。

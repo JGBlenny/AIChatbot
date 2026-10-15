@@ -157,9 +157,9 @@ def test_toc_only_lists_coarses_with_this_audiences_visible_reviewed_fines(canon
     lines = toc.text.splitlines()
     # 計畫 9.10 S1／S5：粗目 id 恆為 `<架字母>-<slug>`（⛔ 不再是裸字母），fixture 見
     # tests/fixtures/canon_jgb/shelves/*.md（A-account／B-team／C-community）。
-    assert any(line.startswith("A-account｜") for line in lines)   # 正對照：粗目 A 有 1 條 prospect 可見已審
-    assert any(line.startswith("C-community｜") for line in lines)   # 正對照：粗目 C 同上
-    assert not any(line.startswith("B-team｜") for line in lines)  # 負對照：粗目 B 對 prospect 零可見已審
+    assert any(line.startswith("outline:A-account｜") for line in lines)   # 正對照：粗目 A 有 1 條 prospect 可見已審
+    assert any(line.startswith("outline:C-community｜") for line in lines)   # 正對照：粗目 C 同上
+    assert not any(line.startswith("outline:B-team｜") for line in lines)  # 負對照：粗目 B 對 prospect 零可見已審
     assert PM_ONLY_REVIEWED_ID not in toc.text
     assert PM_ONLY_REVIEWED_TITLE not in toc.text
     assert PROSPECT_ONLY_UNREVIEWED_ID not in toc.text                  # 未審不列目錄
@@ -167,7 +167,7 @@ def test_toc_only_lists_coarses_with_this_audiences_visible_reviewed_fines(canon
 
     # 正對照：pm 視圖看得到粗目 B（證明「B 不出現」是可見性過濾的結果，不是粗目 B 本身沒東西）
     pm_toc = build_canon_toc(canon, PM, vendor_business_types=frozenset())
-    assert any(line.startswith("B-team｜") for line in pm_toc.text.splitlines())
+    assert any(line.startswith("outline:B-team｜") for line in pm_toc.text.splitlines())
 
 
 # ═══════════════════════════════════════════════════════════════════
