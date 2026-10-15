@@ -59,6 +59,19 @@ consent_zero: 「核可，同意本計畫 +0 (Recommended)」
 - **凍結補內容清單**：全部未覆蓋事項逐件列出，業主逐件（或整批）裁「補／不補」；裁定後寫入 `inputs/gap-freeze-9.33-<日期>.json` 並記 sha256；規格 §2.4：**第一次 H 量測後 ⛔ 新增補內容項目、⛔ 推翻「不補」**。
 - 產品沒有的事（判定時判「產品沒有」者）與 9.14 `verified_absent` 16 項，列入凍結清單的「I 架不支援」類，由補內容計畫寫成 I 架細目。
 
+### 3.1 S2 細部契約（2026-10-15；業主同日「開，比照站內幫手：直接做、不再多輪審契約 (Recommended)」——不再送就緒審查，以腳本檢查＋誘餌＋業主抽查 20 件把關）
+
+- **輸入**：`inputs/askable-list-9.33-20261015.json`（2,096 件；`presales=true` 693 件）、正本 `rag-orchestrator/canon/jgb/A.md`～`I.md`（細目 `{#jgb/<架>/<id>}`，含 `reviewed`、`target_user`）。工作區 `~/jgb-archive/p933-rebuild-20261014/work/p933/s2/`。
+- **分批**：依粗目書架 8 批——AB、C1、C2、D1、D2、E、FGH、I（C、D 依粗目切半，同粗目不跨批）；每批輸入＝該批全部事項（`thing_id`、`coarse_id`、`question`、`kind`、`presales`）＋誘餌 2 件，判定代理整檔讀該批所屬書架正本，跨架只准以 Grep 查其他書架。
+- **誘餌（主 session 構造，判者不知）**：每批 1 件「正本確定有」（取該架一個已審細目，改寫其問題）＋1 件「正本確定沒有」（JGB 範圍外、正本必無，例如訂票、外送），共 16 件；判錯 ≥ 3 件 ⇒ 該批重判一次。
+- **判定**：每件判 `pm`（全部事項）與 `prospect`（只判 `presales=true`）：`covered`（列細目 id）／`partial`（列細目 id＋缺什麼一句）／`none`；另標 `product_absent`（判者依正本與事項依據認為產品沒有此功能）。`partial` 與 `none` 都算未覆蓋。輸出 JSON 一件一列，⛔ 自由發揮新欄位。
+- **腳本檢查**（`s2/check.py`，大聲失敗）：判定集合＝清單集合（扣誘餌）；值域合法；`covered`／`partial` 的細目 id 存在、`reviewed` 非空、`target_user` 含該身分（pm＝`property_manager`、售前＝`prospect`）；誘餌正確率；正對照：腳本對一份故意造錯的判定檔必須報錯。
+- **覆蓋率**：業者＝`covered`／2,096；售前＝`covered`／693；對照門檻業者 ≥95%、售前 ≥90%（只量測，未達不算失敗）。
+- **業主抽查 20 件**（種子 `20261005`，分層 10／6／4，照原計畫 §3）；不同意 ≥3 件 ⇒ 判定重做一次。
+- **凍結補內容清單**：全部未覆蓋事項（含 `product_absent` 與 9.14 `verified_absent` 16 項列「I 架不支援」類）寫入 `inputs/gap-freeze-9.33-<日期>.json`，業主逐件或整批裁「補／不補」，sha256 記於 §8 與 HANDOFF。
+- **額度**：判定 8 批約 1.6M、主 session＋收尾約 0.4M，上限 2.5M；並行 ≤4。
+- **停止條件**：正本或 drafts 有改動；腳本檢查不過且重判一次後仍不過；額度超過。
+
 ## 4. 不做（後續計畫）
 
 - 補缺口（寫新細目、改既有細目）與 I 架「目前不支援」細目——下一份計畫，依凍結清單。
@@ -118,6 +131,9 @@ consent_zero: 「核可，同意本計畫 +0 (Recommended)」
 - **外部對照 64 格**（主 session 第三方逐格比對，關鍵字查清單後人工判定，逐格記於 scratch `p933/ext64-verdicts.json`）：**對到 43 格、漏列 20 格、不屬可問的事 1 格**（48 錨點中對到 31、漏列 16、不屬 1）；售前 2 格皆對到。**漏列 20 格 > 3 ⇒ 依 §2.3 停下交業主**（⛔ 把漏列事實交給任何代理補列）。漏列 16 條的共同點：多為跨頁的後端規則或流程（重複匯款處理、ATM 帳號效期、信用卡分期、提前解約後是否出帳、發票是否合併、車位物件不能建約、租賃範圍判定等），不落在單一頁面的畫面元素上——本計畫的列舉以頁面為入口，結構上容易漏掉這一類。
 - **S1 狀態：完整性驗證兩項皆未達（種入 4／10、外部漏列 20 格），清單完整性未經證實；S1 未收尾、未 commit，待業主裁定。** S1 代理實耗約 5.5M token（列舉 2.86M、完整性 2.59M）。
 
+- **S2 判定結果**（2026-10-15；`~/jgb-archive/p933-rebuild-20261014/work/p933/s2/`）：8 批（AB、C1、C2、D1、D2、E、FGH、I）由 8 個 fresh 判定代理（sonnet，整檔讀所屬書架、跨架只准 Grep）判完；`check.py` 結構錯誤 0、誘餌判錯 0／16（自我測試 12 項造錯全抓到；誘餌答案移出判定代理可讀資料夾）。覆蓋率：業者 covered 970／2,096＝**46.3%**（partial 536、none 590；門檻 ≥95% 未達，只量測）；售前 covered 160／693＝**23.1%**（partial 115、none 418；門檻 ≥90% 未達）；未覆蓋事項（任一身分）1,372 件（業者 1,126、售前 533），`product_absent` 標記 6 件，其中 5 件業者已 covered（正本已寫明產品沒有此功能：`A-account-profile#6`、`A-account-profile#new4`、`B-biglandlord-list#18`、`G-power-meter#52`、`G-power-meter#new10`）不屬未覆蓋、不進凍結檔，未覆蓋者 1 件；草稿 `s2/gap-draft.json`。
+- **業主抽查 20 件**（2026-10-15，種子 `20261005`，分層 業者 10／售前 6／售前不適用粗目 4〔A-account-recovery、A-notification-settings、C-community-force-binding〕；清單 `s2/owner-sample-20.json`）：業主回覆逐字「全同意」⇒ 不同意 0 件（< 3），判定不重做。
+- **凍結補內容清單**（2026-10-15，業主 AskUserQuestion 逐字：「全部列「補」，下一份計畫依粗目分批補 (Recommended)」）：`inputs/gap-freeze-9.33-20261015.json`，sha256 `6adc8d6e88241c56400b23666e7199bc048c0a3bf1a5bbaaf387bce83bd3a50e`；1,388 件全部裁「補」：S2 未覆蓋 1,372 件（業者 1,126、售前 533、`product_absent` 1 件列「I 架不支援」類）＋9.14 `verified_absent` 16 件（Plan 9.14 §10 終判 absent 16＝pm 15＋prospect 1，收尾 fresh verifier CONFIRMED；結果檔 `~/jgb-archive/ruler-9.13/skill-run-20260925/source-audit-<aud>.json`；`thing_id`＝`p914#<cell_id>`、列「I 架不支援」類；題目為客戶問句，只記結果檔位置、⛔ 進 repo）。收尾驗證第 1 次 REFUTED（P2：9.14 結果檔存在而凍結檔未收這 16 件）⇒ 已併入；凍結檔欄位未帶細目 id（P4，補內容時回查 `s2/` 判定檔）延後。依規格 §2.4，第一次真實題量測後 ⛔ 新增補內容項目、⛔ 推翻「不補」。
 ## 9. 修訂 S1b：後端規則列舉（2026-10-08 起草；就緒審查第 1 輪 REVISE 後改寫，待收尾審查與業主核可）
 
 **緣由**：S1 兩項完整性驗證皆未達（種入補回 4／10、外部對照漏列 20 格，見 §8）。業主 2026-10-08 選「加一輪『後端規則』列舉再驗 (Recommended)」，選項原文的範圍是「以後端為入口（金流回呼、排程、帳單與發票規則、各 controller 的驗證與拒絕條件）補列『跨頁規則』類的事，再用同一份外部對照驗（漏列事實不給代理，對照仍有效）。預估約 2～3M，需把 S1 停止線從 8M 調到約 11M」。
@@ -264,3 +280,5 @@ consent_zero: 「核可，同意本計畫 +0 (Recommended)」
 - **業主核可**（2026-10-15，AskUserQuestion 逐字）：「核可，同意 E5／E16 未達、清單完整性未經證實 (Recommended)」（問題原文：「核可大綱線 Plan 9.33 §9.13（停 S1b、S1 收尾、進 S2）嗎？核可＝明示同意「E5／E16 未達、清單完整性未經證實」。」）⇒ 執行 S1 收尾。
 - **S1 收尾盲判**（blind-judge，2026-10-15；輸入 `~/jgb-archive/p933-blind-20261015/`、24 個分檔皆整檔讀過、讀取稽核 `blind_audit.py` 0 命中〔自測 3／3〕）：64 格 對到 36／漏列 26／不屬 2；種入補回 4／10，與主 session 同 4 件（`B-advanced-settings#17`、`E-bill-create-edit#22`、`I-subscription-payment#11`、`I-control-panel#14`），**種入 0 分歧**。64 格與主 session（對到 44／漏列 19／不屬 1）分歧 12 格（10 條事實）：主對到→盲漏列 9、主對到→盲不屬 1、主漏列→盲對到 2；逐格表 scratch `divergence-64.json`。
 - **業主裁定**（2026-10-15，AskUserQuestion 逐字）：「照建議：9 條採盲判，第 5 條維持對到 (Recommended)」（第 5 條＝`p914-contract-invite-account-match` 3 格，維持對到 `D-contract-sign-view#36`；其餘 9 條事實採盲判）⇒ **64 格最終：對到 39／漏列 23／不屬可問的事 2**；23 格漏列事實全數列入 S2 凍結補內容清單（scratch `ext64-final-20261015.json`）。
+
+- **S2 收尾驗證裁示**（2026-10-15，AskUserQuestion 逐字）：S2 commit 被不變量 43 擋下（缺 `verification/<檔>.json CONFIRMED`）⇒ 業主「派一位收尾驗證再 commit (Recommended)」。
