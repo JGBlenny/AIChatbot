@@ -100,7 +100,8 @@ def _v3_payload(before: date, *, today: date = _TODAY, days: int = 3) -> dict:
 
 def _repair_create_payload(base: date) -> dict:
     """⛔ 不填 `category_name`：缺值放行（delta4），因此不會去打分類樹 API。"""
-    return {"action": "repair_create", "estate_name": "信義好宅", "description": ""}
+    # 2026-10-15 A9：問題描述空白改由程式追問（不出卡），本檔驗日期閘 ⇒ 給一句描述。
+    return {"action": "repair_create", "estate_name": "信義好宅", "description": "門鎖壞了"}
 
 
 def _estate_create_payload(base: date) -> dict:

@@ -27,6 +27,12 @@
 
 | P2 | A9 | 「能幫我新增一張修繕單嗎」第一句即轉人：模型 `kb.get` 失敗→查修繕→`confirm.request` 錯誤→預算用完 | 本機 cap4b 第 2 輪 | 互動建單入口不穩 | 待查 `confirm.request` 錯誤原因 |
 
+### A9／缺描述修正（2026-10-16，業主「修 A9、缺描述就出卡、「合約到期前通知」」）
+- 根因：`confirm.request` 工具說明要模型「先以 jgb2.query.repairs（face 修繕分類）取得名稱」，模型一聽報修就先查分類、讀對話記憶，工具上限 3 用完即轉人；修繕單「問題描述」非必填，缺時卡上「（未填寫）」。
+- 修法：`confirm.request` 對 `repair_create` 缺物件或問題描述 ⇒ 回缺欄清單（`REPAIR_MISSING_LABELS`），走既有程式追問出口、不出卡；追問後 `last_ask_target` 記 `estate`（缺物件）或 `description`（只缺描述），下一回合 A2 名稱比對接得上；工具說明改為「要建修繕單直接呼叫、缺的留空由系統追問；業務講了分類才查分類」。
+- 本機實測（正式機同設定：`grounding_observe`、工具上限 3、時間上限 20 秒）：「能幫我新增一張修繕單嗎」「幫我報修」「我要報修」三種開頭×3 輪＝9／9 第一句程式追問「還需要：物件、問題描述」；只給物件 ⇒ 追問描述（名稱完整）；補描述 ⇒ 出卡。全量單元 9 failed＝既有基準；更新 1 條拿空描述當最小 payload 的日期閘測試。
+- 「合約到期前通知」：正本無此主題（只有電錶服務到期 `jgb/G/power-meter-service-expiry`）。jgb2 有 `ContractNotifyExpiring`（Kernel 07:20，說明「30 日內將到期」）＋`ContractNotifyMoveout`（到期前 5 日點退）＋`ContractStatusUpdater` 內 `contract_notify_expiring`；`contract_expiring_by_days` 只發給房東／管理者（通知中心＋botbonnie），訊息「…將在 [到期日] 到期，請記得與租客 … 續約或點退押金」。發送時點的比對式與說明不一致，待逐支讀清再起草正本細目（知識線流程）。
+
 ## B. 等 JGB
 
 1. JGB 網頁 `HelpAssistantController` 改呼叫 `/mcp`（`https://chatai.jgbsmart.com/rag-api/mcp`，金鑰 `api_keys.id=101`）——沒有它就沒有使用者入口。

@@ -163,8 +163,10 @@ CONFIRM_SPEC: ToolSpec = {
         f"值只能是 {list(CONFIRM_ACTIONS)} 其中之一。"
         "使用者實際看到的確認卡由系統依 action 與 payload 產生，"
         "summary 只進紀錄、不會直接出示給使用者。"
+        "使用者要建修繕單時直接呼叫本工具：estate_name（物件）與 description（問題描述）"
+        "沒講就留空，本工具不出卡、會回報缺的欄位，請據以追問（⛔ 為此先查其他資料）。"
         "repair_create 的 category_name 選填：業務有講分類才填，且必須是系統分類樹裡的大類或項目名稱"
-        "（先以 jgb2.query.repairs（face 修繕分類）或既有分類資料取得名稱）；"
+        "（只有業務講了分類才需要以 jgb2.query.repairs（face 修繕分類）確認名稱）；"
         "業務沒講就不要填，系統會歸到「其他」，⛔ 不得為了分類反問；"
         "emergency_status 同樣選填，業務說緊急才填 2，否則不填。"
         "estate_create、contract_create、manual_bill_create 的 payload 欄位與必填項目"
@@ -650,9 +652,13 @@ MISSING_FIELDS_ASK_TEMPLATE: Final[str] = (
 )
 
 #: 追問句只收的標籤詞彙＝三個新動作封閉欄位表的中文標籤＋「至少給一個」組的標籤。
+#: 2026-10-15 A9：修繕單缺欄位也走程式追問（物件、問題描述）。
+REPAIR_MISSING_LABELS: Final[dict] = {"estate_name": "物件", "description": "問題描述"}
+
 _MISSING_LABEL_VOCAB: Final[frozenset] = frozenset(
     [f.label for fields in CLOSED_ACTION_FIELDS.values() for f in fields]
     + [label for groups in CLOSED_ACTION_ANY_OF.values() for _, label in groups]
+    + list(REPAIR_MISSING_LABELS.values())
 )
 
 
@@ -962,6 +968,14 @@ async def confirm_request(
     if (action in WRITE_NOT_SUPPORTED_ACTIONS
             and getattr(jgb2_tools._get_api(), "use_mock", True) is False):
         return _write_not_supported_result()
+    # 2026-10-15 A9／缺描述：修繕單缺物件或問題描述 ⇒ 回缺欄清單、由程式追問（⛔ 出卡）。
+    # 照片建議的描述已由 runtime 在呼叫前補進 payload，故有照片時不會被當成缺。
+    if action == "repair_create":
+        missing = [label for key, label in REPAIR_MISSING_LABELS.items()
+                   if not isinstance(payload.get(key), str) or not payload.get(key).strip()]
+        if missing:
+            return ToolResult(ok=False, error="INVALID_INPUT",
+                              data={"missing_fields": missing, "action": action})
     # 收案 6：`repair_create` 的 `category_name` 必須落在封閉的修繕分類樹內
     # （父節點或葉節點皆可）——⛔ 不模糊比對、不代選；render() 只驗形狀不驗值域，
     # 這道閘必須在呼叫它之前。

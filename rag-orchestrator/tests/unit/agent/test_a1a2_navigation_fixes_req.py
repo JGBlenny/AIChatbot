@@ -150,3 +150,26 @@ def test_a3_quote_of_another_sentence_does_not_back_the_word():
 
 def test_a3_no_handoff_word_is_not_flagged():
     assert _uncovered_handoff_mention(_out("系統會自動寄送催繳通知。"), {}) is False
+
+
+# ── A9／缺描述：修繕單缺物件或問題描述 ⇒ 程式追問（⛔ 出卡）─────────────────────
+from services.agent.tools import confirm as C  # noqa: E402
+
+
+@pytest.mark.parametrize("payload,missing", [
+    ({"action": "repair_create"}, ["物件", "問題描述"]),
+    ({"action": "repair_create", "estate_name": "學生獨立套房可租補"}, ["問題描述"]),
+    ({"action": "repair_create", "estate_name": "學生獨立套房可租補", "description": "  "}, ["問題描述"]),
+    ({"action": "repair_create", "description": "冷氣不冷"}, ["物件"]),
+])
+async def test_repair_missing_fields_return_ask_not_card(payload, missing):
+    import json
+    ident = Identity(vendor_id=4, target_user="property_manager", mode="b2b",
+                     role_id="20151", user_id="12291", api_key_id=1)
+    res = await C.confirm_request(ident, {"summary": "報修", "payload": json.dumps(payload, ensure_ascii=False)},
+                                  db_pool=None)
+    assert (res.ok, res.error) == (False, "INVALID_INPUT")
+    assert res.data["missing_fields"] == missing
+    assert "card" not in (res.data or {})
+    text = C.missing_fields_ask_text(res)
+    assert text is not None and all(lb in text for lb in missing)

@@ -1905,6 +1905,7 @@ class AgentRuntime:
         completed_action_receipt: Optional[dict] = None,
         completed_action_estate_name: Optional[str] = None,
         document_trace: Optional[dict] = None,
+        ask_target: Optional[str] = None,
     ) -> TurnResult:
         """確認段各出口共用的收尾：組 trace → 落 decision snapshot → 寫回 dialog。
 
@@ -1963,7 +1964,8 @@ class AgentRuntime:
         session.end_turn(
             user_message=user_message,
             dialog_text=answer if dialog_answer is None else dialog_answer,
-            ask_target=None,
+            # 2026-10-15 A9：缺欄追問出口傳入封閉值（物件⇒estate），下一回合 A2 才接得上。
+            ask_target=ask_target if ask_target in ASK_TARGETS else None,
             is_fixed=False,
         )
         # S2／H3：兌現成功 ⇒ 記進會話記憶（下一句「剛剛那張單號多少」答得出來）。
@@ -3599,7 +3601,10 @@ class AgentRuntime:
                         missing_ask = missing_fields_ask_text(tool_result)
                     if missing_ask is not None:
                         acc.violations.append("confirm_missing_fields_ask")
+                        _missing = (tool_result.data or {}).get("missing_fields") or []
                         return self._finish_confirm_turn(
+                            ask_target=("estate" if "物件" in _missing
+                                        else "description" if _missing == ["問題描述"] else None),
                             agent_state=agent_state,
                             user_message=user_message,
                             trace_id=acc.trace_id,
