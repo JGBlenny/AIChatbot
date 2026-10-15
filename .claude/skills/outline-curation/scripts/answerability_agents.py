@@ -8,7 +8,7 @@
             cell_id ∈ 該組）→ 找出 slot1／slot2 不一致的格 → 產第 3 slot 的 prompt（只含不一致格）；全部齊了就 Reconcile（與 JS／API 版逐條等價，
             門檻 AGREEMENT_THRESHOLD）→ 輸出與 Workflow Reconcile 同形的 result JSON（餵 finalize_answerability.py）
 分組的取捨：同組的格共用一份 prompt（rubric＋候選 ≈7k token 只送一次），判者可見同組其他格的問句——這是為了讓子代理數從 110–165 降到 22–33
-（8 GB 機器實測 ≥10 個並行子代理會整機重開）；格與格之間本來就不要求隔離，隔離的是同一格的判者之間。
+（主機為 8 GB 時實測 ≥10 個並行子代理會整機重開；2026-10-15 主機已升 24 GB，上限待實測再調）；格與格之間本來就不要求隔離，隔離的是同一格的判者之間。
 """
 from __future__ import annotations
 
