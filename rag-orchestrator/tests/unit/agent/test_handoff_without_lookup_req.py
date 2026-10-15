@@ -60,9 +60,13 @@ def _handoff_result(
 
 
 def _one_tool_call() -> ToolCallRecord:
+    """Plan 9.11 §2 D：`n_items=0` 這個形狀本來就代表「查了但沒東西」，補
+    `empty=True` 才是這一筆的真實分類——⛔ 不是「查到資料」，也不是零查詢的
+    `other`（否則 `zero_lookup` 會把它算成沒查過，`test_not_downgraded_
+    when_tool_calls_nonempty` 就會失去意義）。"""
     return ToolCallRecord(
         id="call-1", name="jgb2.query.bills", args_summary={},
-        ms=1, status="ok", n_items=0,
+        ms=1, status="ok", n_items=0, empty=True,
     )
 
 

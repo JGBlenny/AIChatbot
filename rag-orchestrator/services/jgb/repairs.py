@@ -42,31 +42,36 @@ def _urgency_zh(emergency_status: Any) -> str:
 def build_repair_status_facts(repair: dict, user_question: str = "") -> str:
     """修繕進度 facts：單號、物件名、分類、狀態中文、急迫、建單時間、
     指派／處理中時間——**決定性字串**，不推測未落欄位。
+
+    **每行都帶單號、可單獨引用**（站內幫手 S1 修正輪 r2，同 `contracts.build_basic_info_facts`）：
+    舊格式只有第一行帶單號，「修繕單 8915 目前是申請中」這種句子任一行單獨都蓋不到
+    半句，Verifier 判 `QUOTE_NOT_COVERING`（S1-live 6 次 5 次轉人）。
     """
     repair_id = repair.get("id", "?")
     estate_title = repair.get("estate_title") or "（未記錄物件名稱）"
     category_name = repair.get("category_name") or "（未分類）"
-    lines = [f"修繕單 #{repair_id}（物件：{estate_title}，分類：{category_name}）："]
+    head = f"修繕單 #{repair_id}"
+    lines = [f"{head}的物件是「{estate_title}」，分類是「{category_name}」。"]
 
-    lines.append(f"目前狀態：{_status_zh(repair.get('status'))}。")
-    lines.append(f"急迫程度：{_urgency_zh(repair.get('emergency_status'))}。")
+    lines.append(f"{head}目前狀態是{_status_zh(repair.get('status'))}。")
+    lines.append(f"{head}的急迫程度是{_urgency_zh(repair.get('emergency_status'))}。")
 
     apply_at = repair.get("apply_at")
     if apply_at:
-        lines.append(f"建單時間：{apply_at}（系統存值）。")
+        lines.append(f"{head}的建單時間是 {apply_at}（系統存值）。")
 
     assign_at = repair.get("assign_at")
     complete_at = repair.get("complete_at")
     if complete_at:
-        lines.append(f"完成修繕時間：{complete_at}（系統存值）。")
+        lines.append(f"{head}的完成修繕時間是 {complete_at}（系統存值）。")
     elif assign_at:
-        lines.append(f"已指派處理，指派時間：{assign_at}（尚未回報完成）。")
+        lines.append(f"{head}已指派處理，指派時間是 {assign_at}（尚未回報完成）。")
     else:
-        lines.append("尚未指派處理。")
+        lines.append(f"{head}尚未指派處理。")
 
     broken_reason = repair.get("broken_reason")
     if broken_reason:
-        lines.append(f"報修原因：{broken_reason}。")
+        lines.append(f"{head}的報修原因是{broken_reason}。")
 
     return "\n".join(lines)
 

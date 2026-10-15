@@ -60,10 +60,18 @@ from typing import Any, Final, List, Optional, Tuple
 
 from services.agent.bill_period import PeriodSpec, parse_period
 from services.agent.confirm_card import (
+    CLOSED_ACTION_ANY_OF,
+    CLOSED_ACTION_EXTRA_KEYS,
+    CLOSED_ACTION_FIELDS,
     CONFIRM_ACTIONS,
+    CONTRACT_CREATE_ACTION,
     DATE_BEFORE_TODAY_TEXT,
+    ESTATE_CREATE_ACTION,
+    MANUAL_BILL_CREATE_ACTION,
     ConfirmCardError,
+    check_closed_keys,
     fields_before_today,
+    missing_required_labels,
     render,
 )
 # ⚠️ `_parse_date` 是 `confirm_card` 的私有解析器，這裡刻意重用而**⛔ 不另寫一套**
@@ -72,8 +80,15 @@ from services.agent.confirm_card import (
 from services.agent.confirm_card import _parse_date as _parse_ymd
 from services.agent.identity import Identity
 from services.agent.tools import jgb2 as jgb2_tools
-from services.agent.tools.action import BILL_DUE_EXTEND_ACTION, _resolve_category
-from services.agent.tools.registry import ToolResult, ToolSpec
+from services.agent.tools.action import (
+    BILL_DUE_EXTEND_ACTION,
+    _identity_pair,
+    _resolve_category,
+    _resolve_estate,
+    _viewer_contract_rows,
+    _viewer_estate_rows,
+)
+from services.agent.tools.registry import Provenance, ToolResult, ToolSpec
 # ⚠️ **import 模組、⛔ 不 `from … import _today`**：時鐘要在呼叫點取值，
 # 綁死函式物件會讓測試（與 smoke 的凍結時鐘）monkeypatch 不到。
 from services.jgb import bills
@@ -152,6 +167,9 @@ CONFIRM_SPEC: ToolSpec = {
         "（先以 jgb2.query.repairs（face 修繕分類）或既有分類資料取得名稱）；"
         "業務沒講就不要填，系統會歸到「其他」，⛔ 不得為了分類反問；"
         "emergency_status 同樣選填，業務說緊急才填 2，否則不填。"
+        "estate_create、contract_create、manual_bill_create 的 payload 欄位與必填項目"
+        "見對應的 jgb2.action.<action> 工具說明；只能填列出的欄位，使用者沒講的選填欄位不要填；"
+        "缺必填欄位時本工具不出卡，會回報還需要向使用者確認的欄位名稱，請據以追問。"
     ),
     "input_schema": {
         "type": "object",
@@ -299,7 +317,7 @@ assert _UNPAID_STATUS_VALUES, (
 _PENDING_ID_RE: Final = re.compile(r"^[0-9a-f]{16}$")
 
 
-async def _is_valid_repair_category(category_name: Any) -> bool:
+async def _is_valid_repair_category(category_name: Any, identity: Any = None) -> bool:
     """category_name 是否落在封閉分類樹內（父節點或葉節點皆可，收案 6）。
 
     ⛔ 不另抄一份分類清單——與 `action.repair_create` 執行時的判定共用同一個
@@ -317,8 +335,22 @@ async def _is_valid_repair_category(category_name: Any) -> bool:
     if not category_name.strip():
         return True
     api = jgb2_tools._get_api()
-    tree = jgb2_tools._rows_of(await api.get_repair_categories())
+    # 站內幫手 S5（A3(a)、S5-9 無豁免）：分類樹查詢也帶 role＋viewer。
+    tree = jgb2_tools._rows_of(await api.get_repair_categories(
+        role_id=getattr(identity, "role_id", None),
+        viewer_user_id=getattr(identity, "user_id", None)))
     return _resolve_category(tree, category_name) is not None
+
+
+def _not_found_result() -> ToolResult:
+    """站內幫手 S5（§3i 第 2 點）：出卡端解析「零筆」＝**查無**——`NO_MATCH`＋可引用的
+    查無固定句（與 `jgb2.query.*` 同一句、同一個來源標記；無權與不存在 ⛔ 細分）。"""
+    return ToolResult(
+        ok=False, error="NO_MATCH",
+        provenance=[Provenance(source=jgb2_tools.NOT_FOUND_SOURCE,
+                               text=jgb2_tools.NOT_FOUND_TEXT, citable=True)],
+        text_for_model=jgb2_tools.NOT_FOUND_TEXT,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -527,10 +559,20 @@ async def _resolve_bill_by_period(
     return False, ToolResult(ok=False, error="NO_MATCH")
 
 
+#: 站內幫手 S5 修正輪（DSP-074）：`open_repairs` 注入回 `{OPEN_REPAIRS_NOT_FOUND_KEY: True}`
+#: ＝**上游查成功、以這位成員（viewer）的可見範圍查過、零命中**——確定是「查無」，
+#: `confirm.request` 回查無固定句、⛔ 出卡。只認布林 `True`（⛔ 真值判斷）；其餘形狀
+#: （`None`、例外、上游失敗）仍是既有 W8「解析不出照常出卡、兌現端再擋」。
+OPEN_REPAIRS_NOT_FOUND_KEY: Final[str] = "not_found"
+
+
 async def _open_repairs_hint(
     open_repairs, identity: Identity, action: Any, payload: dict
-) -> Tuple[str, Optional[str]]:
-    """`(hint, estate_id)`——查不到／不適用／注入缺席一律 `("", None)`。
+) -> Tuple[str, Optional[str], bool]:
+    """`(hint, estate_id, not_found)`——查不到／不適用／注入缺席一律 `("", None, False)`。
+
+    `not_found`（站內幫手 S5 修正輪）：只在注入回 `{"not_found": True}`（上游成功、帶
+    viewer 零命中）時為 `True`；呼叫端據此回查無固定句、⛔ 出卡。
 
     ⛔ **本函式不呼叫 `_resolve_estate`、不呼叫 `JGBSystemAPI`、不持有 registry**
     （plan-verifier W8 r2／r3）：那三件事全在 `mcp_facade` 的 `open_repairs`
@@ -538,26 +580,310 @@ async def _open_repairs_hint(
 
     ⚠️ **fail-soft**：注入的 callable 炸了 ⇒ 沒有提示行、**卡照出**。
     提示行是資訊性文字，⛔ 不該讓它擋掉一次使用者已經走到出卡這一步的動作。
+    （「炸了」是沒查成，⛔ 當查無——只有明確的 `not_found` 標記才擋卡。）
     """
     if open_repairs is None or action != "repair_create":
-        return "", None
+        return "", None, False
     try:
         info = await open_repairs(identity, payload.get("estate_name"))
     except Exception:  # noqa: BLE001 — 見 docstring：提示行 fail-soft
         logger.info("[agent] confirm.request 未結單查詢失敗 ⇒ 不加提示行、卡照出")
-        return "", None
+        return "", None, False
     if not isinstance(info, dict):
-        return "", None
+        return "", None, False
+    if info.get(OPEN_REPAIRS_NOT_FOUND_KEY) is True:
+        return "", None, True
     estate_id = info.get("estate_id")
     estate_id = estate_id if isinstance(estate_id, str) and estate_id else None
     count = info.get("count")
     if not isinstance(count, int) or isinstance(count, bool) or count <= 0:
-        return "", estate_id
+        return "", estate_id, False
     ids = [str(i) for i in (info.get("ids") or []) if i is not None]
     hint = OPEN_REPAIRS_HINT_TEMPLATE.format(
         count=count, ids=OPEN_REPAIRS_ID_SEP.join(ids)
     )
-    return hint, estate_id
+    return hint, estate_id, False
+
+
+# ---------------------------------------------------------------------------
+# 站內幫手 S2（§3f 1b／1d／2）：三個封閉欄位表動作的出卡前準備
+#
+# ⚠️ **卡上編號＝寫入編號**（1d）：`contract_create` 的物件、`manual_bill_create` 的
+#    合約，在這裡以帶 viewer 的查詢解析成**唯一一筆**，並在 `render()` **之前**把
+#    `estate_id`／`contract_id` 寫進 payload（⇒ 進 `payload_sha256`、印在卡上）。
+#    比照 `_resolve_bill_by_period`「⛔ 不在 render 之後補」。名稱指稱鍵同時改寫成
+#    系統解析出的名稱（同 `_fill_bill_fields`「由系統值導出，⛔ 不留模型填的版本」）。
+#    兌現端（`tools/action.py`）只用 payload 內的編號，⛔ 不依名稱重解。
+# ⚠️ 模型自己帶的 `estate_id`／`contract_id` 一律先丟掉，再由系統解析寫入
+#    （⛔ 讓模型指定要寫到哪一筆）。
+# ⚠️ 判不出唯一一筆 ⛔ 猜：零筆 ⇒ `NO_MATCH`；多筆（或上游還有下一頁、無法確定唯一）
+#    ⇒ `INVALID_INPUT`＋缺欄清單（請使用者講清楚）。
+# ---------------------------------------------------------------------------
+
+#: 缺欄清單回給模型的固定句（§3f 2）。`{labels}` 只會是 `confirm_card` 欄位表裡的
+#: **中文標籤**（固定詞彙），⛔ 不含任何使用者值。
+MISSING_FIELDS_TEXT_TEMPLATE: Final[str] = (
+    "以下欄位還需要向使用者確認（未提供，或對不到唯一一筆）：{labels}。"
+    "請先問清楚再重新提出確認；⛔ 不要自行填值或猜測。"
+)
+MISSING_FIELDS_SEP: Final[str] = "、"
+
+#: 缺欄清單裡「物件」「合約」的標籤（＝欄位表 `estate_name`／`contract_ref` 的 label）。
+_ESTATE_LABEL: Final[str] = "物件"
+_CONTRACT_LABEL: Final[str] = "合約"
+
+
+def _missing_fields_result(labels: List[str]) -> ToolResult:
+    return ToolResult(
+        ok=False, error="INVALID_INPUT",
+        data={"missing_fields": list(labels)},
+        text_for_model=MISSING_FIELDS_TEXT_TEMPLATE.format(labels=MISSING_FIELDS_SEP.join(labels)),
+    )
+
+
+
+#: 缺欄的**追問句**（S2-live）：`confirm.request` 回缺欄清單時，runtime 以這句直接結束
+#: 回合（同確認卡：程式產出、⛔ 交模型改寫）。理由：模型自己寫的追問常含「請提供／需要」，
+#: 命中 Verifier 的 `assertion_terms` 被降級成無引用斷言，重寫兩次後轉人（6／6）。
+MISSING_FIELDS_ASK_TEMPLATE: Final[str] = (
+    "要完成這筆建立，還需要：{labels}。請補上這些資料，我再幫您整理成確認卡。"
+)
+
+#: 追問句只收的標籤詞彙＝三個新動作封閉欄位表的中文標籤＋「至少給一個」組的標籤。
+_MISSING_LABEL_VOCAB: Final[frozenset] = frozenset(
+    [f.label for fields in CLOSED_ACTION_FIELDS.values() for f in fields]
+    + [label for groups in CLOSED_ACTION_ANY_OF.values() for _, label in groups]
+)
+
+
+def missing_fields_ask_text(result: ToolResult) -> Optional[str]:
+    """`confirm.request` 的缺欄結果 ⇒ 追問句；不是缺欄結果、或清單含詞彙外的值 ⇒ `None`
+    （呼叫端照原路把結果交給模型）。⛔ 不含任何使用者值——標籤全出自固定詞彙。"""
+    if result.ok or result.error != "INVALID_INPUT" or not isinstance(result.data, dict):
+        return None
+    labels = result.data.get("missing_fields")
+    if not isinstance(labels, list) or not labels:
+        return None
+    if not all(isinstance(lb, str) and lb in _MISSING_LABEL_VOCAB for lb in labels):
+        return None
+    return MISSING_FIELDS_ASK_TEMPLATE.format(labels=MISSING_FIELDS_SEP.join(labels))
+
+def _row_title(row: dict, fallback: str) -> str:
+    """系統解析出的名稱；列上沒有可用名稱 ⇒ 退回使用者原話（編號仍綁死那一筆）。"""
+    title = row.get("title")
+    return title.strip() if isinstance(title, str) and title.strip() else fallback
+
+
+def _row_id(row: dict) -> Any:
+    rid = row.get("id")
+    if isinstance(rid, str) and rid.strip().isdigit():
+        return int(rid.strip())
+    return rid
+
+
+async def _resolve_unique_estate(api, role_id: str, user_id: str,
+                                 ref: str) -> Tuple[str, Optional[dict]]:
+    """`("one"|"none"|"many"|"error", row)`——物件名稱或編號 → 這位成員看得到的唯一一筆。
+
+    S5：`"none"`＝查過、沒有（含 403／404）；`"error"`＝沒查成（⛔ 講成查不到）。
+    """
+    try:
+        rows = await _viewer_estate_rows(api, role_id, user_id, ref.strip())
+    except jgb2_tools.UpstreamFailure:
+        return "error", None
+    if not rows:
+        return "none", None
+    row = _resolve_estate(rows, ref)          # 與 `repair_create` 同一個唯一性判準
+    if row is None or row.get("id") is None:
+        return "many", None
+    return "one", row
+
+
+async def _resolve_unique_contract(api, role_id: str, user_id: str,
+                                   ref: str) -> Tuple[str, Optional[dict]]:
+    """`("one"|"none"|"many"|"error", row)`——合約名稱或編號 → 這位成員看得到的唯一一份。"""
+    ref = ref.strip()
+    try:
+        if ref.isdigit():
+            rows, _ = await _viewer_contract_rows(api, role_id, user_id, contract_ids=ref)
+            hits = [r for r in rows if str(r.get("id")).strip() == ref]
+            return ("one", hits[0]) if len(hits) == 1 else ("none", None)
+        rows, has_more = await _viewer_contract_rows(api, role_id, user_id, keyword=ref)
+    except jgb2_tools.UpstreamFailure:
+        return "error", None
+    if not rows:
+        return "none", None
+    exact = [r for r in rows if str(r.get("title") or "").strip() == ref]
+    if len(exact) == 1:
+        return "one", exact[0]
+    if len(rows) == 1 and not has_more:
+        return "one", rows[0]
+    return "many", None
+
+
+async def _only_valid_contract_of_estate(api, role_id: str, user_id: str,
+                                         estate_id: Any) -> Optional[dict]:
+    """該物件**唯一一份有效合約**（`/contracts/status-overview` 已限 `active=1`、
+    `is_newest=1`，這裡再排除 `is_history`）；零份、多份、或上游還有下一頁 ⇒ `None`。"""
+    try:
+        rows, has_more = await _viewer_contract_rows(api, role_id, user_id)
+    except jgb2_tools.UpstreamFailure:
+        return None
+    if has_more:
+        return None                           # 只看第一頁 ⛔ 下「唯一」的結論
+    valid = [r for r in rows
+             if str(r.get("estate_id")).strip() == str(estate_id).strip()
+             and not r.get("is_history")]
+    return valid[0] if len(valid) == 1 else None
+
+
+#: 封閉鍵錯誤回給模型的固定句（站內幫手 S3-live 修正 R4(1)）。S3-live：文件回合看不到
+#: `jgb2.action.*` 的欄位定義，模型猜鍵名被 `check_closed_keys` 擋下後只拿到一個沒有任何
+#: 提示的 `INVALID_INPUT`，只能盲試、兩次後轉人。`{keys}` 只取**封閉欄位表的鍵名**（固定
+#: 詞彙）：⛔ 列 `sys_id` 型（系統解析後寫入的編號，模型 ⛔ 自填）、⛔ 回顯模型給的鍵或值。
+CLOSED_KEYS_TEXT_TEMPLATE: Final[str] = (
+    "payload 含這個動作不收的欄位，已整份退回；這個動作的 payload 只能用這些欄位：{keys}。"
+    "請只用這些欄位重新提出確認，使用者沒講的欄位不要填。"
+)
+
+
+def closed_keys_text(action: str) -> str:
+    """`action` 的允許鍵（封閉表順序＋額外鍵排序；排除 `sys_id` 型）⇒ 固定句。"""
+    keys = [f.key for f in CLOSED_ACTION_FIELDS[action] if f.kind != "sys_id"]
+    keys += sorted(k for k in CLOSED_ACTION_EXTRA_KEYS[action] if k not in keys)
+    return CLOSED_KEYS_TEXT_TEMPLATE.format(keys="、".join(keys))
+
+
+#: 文件回合附在 `confirm.request` 說明後面的前導句（R4(2)）。純常數。
+DOCUMENT_CONFIRM_FIELDS_PREFIX: Final[str] = (
+    "本回合的文件只能用來建立以下這一種動作，"
+    "其 payload 欄位定義如下（只列欄位，該動作工具本身這一回合不可用）："
+)
+
+
+def document_confirm_description(action: str) -> Optional[str]:
+    """`action` 對應的 `jgb2.action.<action>` 說明裡「payload 欄位定義」起的那一段 ⇒
+    附在文件回合 `confirm.request` 說明後面的文字；找不到 ⇒ `None`（照原樣不附）。
+
+    站內幫手 S3-live 修正 R4(2)：文件回合 `_doc_write_face` 把 `jgb2.action.*` 移出工具
+    列表（W9-1），`CONFIRM_SPEC` 卻寫「欄位見對應的 jgb2.action.<action> 工具說明」——
+    模型看不到那份說明，只能猜鍵名。這裡**只搬文字**（來源即該工具的 description，
+    ⛔ 另抄一份欄位表），寫入工具仍不可見、三道擋不動。
+    """
+    from services.agent.tools import action as action_tools
+
+    name = f"jgb2.action.{action}"
+    for spec, _ in action_tools.ACTION_SPECS:
+        if spec.get("name") != name:
+            continue
+        desc = spec.get("description") or ""
+        at = desc.find("payload 欄位定義")
+        return DOCUMENT_CONFIRM_FIELDS_PREFIX + desc[at:] if at >= 0 else None
+    return None
+
+
+async def _prepare_closed_action(
+    identity: Identity, action: Any, payload: dict
+) -> Tuple[Optional[ToolResult], Optional[str], Optional[str]]:
+    """`(提早收尾的 ToolResult, 回給 Runtime 的 estate_id, 範圍比對用的 scope_estate_id)`；
+    不是封閉表動作 ⇒ `(None, None, None)`。
+
+    站內幫手 S5（§3i 第 4 點，S5-12／S5-13）：`manual_bill_create` 另回**出卡時以精確 id
+    比對到的那份合約列上的 `estate_id`**（`scope_estate_id`）給 Runtime 的釘住範圍閘——
+    ⛔ 重用 `estate_id`（那一格會寫物件記憶）。
+
+    會**就地改寫** `payload`（寫入系統解析的編號與名稱、丟掉不進卡也不進 body 的鍵）；
+    之後才 `render()` 與算雜湊。`estate_id`（字串）只在「物件確定是這一筆」時回傳，
+    Runtime 拿它寫物件記憶（`_begin_pending_confirm`）——⛔ 名稱與編號不一致時不回。
+    """
+    if action not in CLOSED_ACTION_FIELDS:
+        return None, None, None
+    # 這三支只給業者（`tools/action.PM_ONLY_STAGE`）：別的受眾 ⛔ 出一張永遠兌現不了的卡。
+    if identity.resolved_audience() != "property_manager":
+        return ToolResult(ok=False, error="NO_MATCH"), None, None
+    try:
+        check_closed_keys(action, payload)     # 身分／歸屬／未知鍵 ⇒ 先擋（⛔ 給缺欄清單）
+    except ConfirmCardError:
+        logger.info("[agent] confirm.request 封閉欄位表：含不允許的鍵（⛔ 不記鍵值）")
+        return ToolResult(
+            ok=False, error="INVALID_INPUT",
+            text_for_model=closed_keys_text(action),
+        ), None, None
+    missing = missing_required_labels(action, payload)
+    if missing:
+        return _missing_fields_result(missing), None, None
+
+    if action == ESTATE_CREATE_ACTION:
+        # §3f 1b：`estate_name`（可能由物件記憶補上）收下但 ⛔ 進卡、⛔ 進 body——新物件
+        # 名稱一律取 `title`。在這裡就拿掉，物件記憶也不會被一個無關的舊名稱改寫。
+        payload.pop("estate_name", None)
+        # 站內幫手 S3-live 修正 R2：縣市一律以 **JGB 資料的寫法**（「台」）上卡與送出——
+        # 謄本那一路 `documind_client` 已輸出「台」；這裡收使用者自己打的「臺北市」
+        # （掃描件追問後補的那一句），同一支 `jgb_city_name`，⛔ 另寫一套對照。
+        city = payload.get("city")
+        if isinstance(city, str):
+            from services.documind_client import jgb_city_name
+
+            payload["city"] = jgb_city_name(city)
+        return None, None, None
+
+    role_id, user_id = _identity_pair(identity)
+    if not role_id or not user_id:
+        return ToolResult(ok=False, error="NO_MATCH"), None, None
+    api = jgb2_tools._get_api()
+
+    if action == CONTRACT_CREATE_ACTION:
+        payload.pop("estate_id", None)
+        ref = str(payload["estate_name"])
+        status, row = await _resolve_unique_estate(api, role_id, user_id, ref)
+        if status == "none":
+            return _not_found_result(), None, None       # S5：查無固定句
+        if status == "error":
+            return ToolResult(ok=False, error="NO_MATCH"), None, None   # 沒查成
+        if status == "many":
+            return _missing_fields_result([_ESTATE_LABEL]), None, None
+        payload["estate_id"] = _row_id(row)
+        payload["estate_name"] = _row_title(row, ref.strip())
+        return None, str(row["id"]), None
+
+    # manual_bill_create
+    payload.pop("contract_id", None)
+    ref = payload.get("contract_ref")
+    estate_id_out: Optional[str] = None
+    if not _missing(ref) and (isinstance(ref, bool) or not isinstance(ref, (str, int))):
+        return ToolResult(ok=False, error="INVALID_INPUT"), None, None
+    if not _missing(ref):
+        status, row = await _resolve_unique_contract(api, role_id, user_id, str(ref))
+        if status == "none":
+            return _not_found_result(), None, None       # S5：查無固定句
+        if status == "error":
+            return ToolResult(ok=False, error="NO_MATCH"), None, None   # 沒查成
+        if status == "many":
+            return _missing_fields_result([_CONTRACT_LABEL]), None, None
+        # 有合約指稱時 `estate_name` 不參與解析 ⇒ 拿掉（⛔ 進卡／body、⛔ 讓記憶寫成
+        # 「名稱是 A、編號是合約所在的 B」）。
+        payload.pop("estate_name", None)
+        fallback = str(ref).strip()
+    else:
+        # §3f 1b：缺 `contract_ref` ⇒ 以 `estate_name` 解析「該物件唯一一份有效合約」；
+        # 物件判不出唯一、或該物件零份／多份有效合約 ⇒ 不出卡、回缺欄「合約」。
+        estate_ref = str(payload.get("estate_name") or "")
+        est_status, estate = await _resolve_unique_estate(api, role_id, user_id, estate_ref)
+        if est_status != "one":
+            return _missing_fields_result([_CONTRACT_LABEL]), None, None
+        row = await _only_valid_contract_of_estate(api, role_id, user_id, estate["id"])
+        if row is None:
+            return _missing_fields_result([_CONTRACT_LABEL]), None, None
+        payload["estate_name"] = _row_title(estate, estate_ref.strip())
+        estate_id_out = str(estate["id"])
+        fallback = f"{payload['estate_name']}的合約"
+    payload["contract_id"] = _row_id(row)
+    payload["contract_ref"] = _row_title(row, fallback)
+    # S5：範圍閘比對的是「出卡時以精確 id 比對到的這份合約列上的物件」；取不到 ⇒ None
+    # （釘住範圍時 Runtime 一律擋，fail-closed）。
+    row_estate = row.get("estate_id")
+    scope_estate_id = str(row_estate).strip() if row_estate not in (None, "") else None
+    return None, estate_id_out, scope_estate_id
 
 
 async def confirm_request(
@@ -580,6 +906,8 @@ async def confirm_request(
             `async (identity, estate_name) -> {"estate_id", "count", "ids"} | None`。
             `None`／回 `None` ⇒ **不加提示行、卡照出**，兌現時走既有的
             「找不到物件」錯誤路徑。實作在 `mcp_facade.build_registry`。
+            站內幫手 S5 修正輪：回 `{"not_found": True}`（上游成功、帶 viewer 零命中）
+            ⇒ 回查無固定句（`_not_found_result()`）、⛔ 出卡、⛔ 寫 token。
 
     Returns:
         `ToolResult(ok=True, data={"pending_id", "action", "payload", "card",
@@ -616,8 +944,16 @@ async def confirm_request(
     # 收案 6：`repair_create` 的 `category_name` 必須落在封閉的修繕分類樹內
     # （父節點或葉節點皆可）——⛔ 不模糊比對、不代選；render() 只驗形狀不驗值域，
     # 這道閘必須在呼叫它之前。
-    if action == "repair_create" and not await _is_valid_repair_category(payload.get("category_name")):
+    if action == "repair_create" and not await _is_valid_repair_category(
+            payload.get("category_name"), identity):
         return ToolResult(ok=False, error="INVALID_INPUT")
+
+    # S2（§3f 1b／1d／2）：封閉欄位表動作——鍵集合、缺欄清單、系統解析編號，全在
+    # `render()` **之前**（解析結果要進卡、進雜湊）。其他 action ⇒ `(None, None)`＝行為不變。
+    closed_early, closed_estate_id, scope_estate_id = await _prepare_closed_action(
+        identity, action, payload)
+    if closed_early is not None:
+        return closed_early
 
     # ⚠️ **一次取值、三處共用的時鐘**（V3 的三個呼叫點之一）：對帳單、render 的
     #    起算日、日期閘門必須是同一個「今天」，⛔ 不各自再呼叫一次
@@ -676,7 +1012,16 @@ async def confirm_request(
     # ⚠️ 提示行**刻意排在 `render`／`sha256_hex(card)` 之後**：這樣「卡與雜湊
     #    不受未結單影響」在程式順序上就看得出來，⛔ 不要為了少一次縮排而搬到
     #    render 之前。
-    hint, estate_id = await _open_repairs_hint(open_repairs, identity, action, payload)
+    hint, estate_id, estate_not_found = await _open_repairs_hint(
+        open_repairs, identity, action, payload)
+    if estate_not_found:
+        # 站內幫手 S5 修正輪（DSP-074）：這位成員看得到的範圍裡**查過、沒有**這個物件 ⇒
+        # 查無固定句、⛔ 出卡（排在 token 寫入之前 ⇒ 零 token）。上游失敗不走這裡。
+        logger.info("[agent] confirm.request repair_create 物件查無 ⇒ 不出卡（⛔ 不記名稱）")
+        return _not_found_result()
+    if closed_estate_id is not None:
+        # S2：系統解析出的物件（與卡上那一行同一筆）；兩者互斥於 action（未結單只認 repair_create）。
+        estate_id = closed_estate_id
     # 第六批 A：帳單由程式對到時，卡外多一行說明來源（與未結單提示行同一個機制、
     # 同一個欄位；兩者互斥於 action，故 ⛔ 不需要第二個欄位）。
     if matched_by_period and not hint:
@@ -700,6 +1045,10 @@ async def confirm_request(
             # `estate_id` 由 Runtime 存進 `pending_confirm[pid]["estate_id"]`。
             "hint": hint,
             "estate_id": estate_id,
+            # S5（§3i 第 4 點）：`manual_bill_create` 的範圍比對值——只在該動作出現
+            # （其餘動作的 data 鍵集合逐字不變）。
+            **({"scope_estate_id": scope_estate_id}
+               if action == MANUAL_BILL_CREATE_ACTION else {}),
         },
         provenance=[],
         text_for_model=CONFIRM_TEXT_FOR_MODEL,
@@ -830,9 +1179,17 @@ async def redeem_token(
 
 __all__ = [
     "BILL_MATCH_HINT",
+    "CLOSED_KEYS_TEXT_TEMPLATE",
+    "closed_keys_text",
+    "DOCUMENT_CONFIRM_FIELDS_PREFIX",
+    "document_confirm_description",
+    "MISSING_FIELDS_ASK_TEMPLATE",
+    "MISSING_FIELDS_TEXT_TEMPLATE",
+    "missing_fields_ask_text",
     "CONFIRM_SPEC",
     "OPEN_REPAIRS_HINT_TEMPLATE",
     "OPEN_REPAIRS_ID_SEP",
+    "OPEN_REPAIRS_NOT_FOUND_KEY",
     "CONFIRM_QUICK_REPLY_VALUES",
     "CONFIRM_VALUE_SEP",
     "PendingRedemption",

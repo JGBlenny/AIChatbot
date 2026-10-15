@@ -167,6 +167,17 @@ async def test_registry_call_receives_identity_and_stage():
     assert result.trace.pre_lookup == {"kind": "id", "hits": 1}
 
 
+def _NOT_FOUND() -> ToolResult:
+    """站內幫手 S5：查無＝帶查無標記的 `NO_MATCH`（工具層 `jgb2._not_found()` 的形狀）；
+    無標記的 `NO_MATCH` 是「沒查成」（判準本身不改，只換成查無的正確形狀）。"""
+    from services.agent.tools import jgb2 as _jgb2
+    from services.agent.tools.registry import Provenance
+    return ToolResult(ok=False, error="NO_MATCH",
+                      provenance=[Provenance(source=_jgb2.NOT_FOUND_SOURCE,
+                                             text=_jgb2.NOT_FOUND_TEXT, citable=True)],
+                      text_for_model=_jgb2.NOT_FOUND_TEXT)
+
+
 # ---------------------------------------------------------------------------
 # 4. trigger A：第一個查到就停（帳單→修繕單→合約）
 # ---------------------------------------------------------------------------
@@ -174,7 +185,7 @@ async def test_registry_call_receives_identity_and_stage():
 async def test_id_trigger_stops_at_first_found_tool():
     registry = FakeRegistry(
         call_results=[
-            ToolResult(ok=False, error="NO_MATCH"),                       # 帳單：查無
+            _NOT_FOUND(),                       # 帳單：查無
             ToolResult(ok=True, data={"facts": "修繕單狀態：處理中。"}),      # 修繕單：找到
         ]
     )
@@ -195,9 +206,9 @@ async def test_id_trigger_stops_at_first_found_tool():
 async def test_not_found_injects_the_fixed_line():
     registry = FakeRegistry(
         call_results=[
-            ToolResult(ok=False, error="NO_MATCH"),
-            ToolResult(ok=False, error="NO_MATCH"),
-            ToolResult(ok=False, error="NO_MATCH"),
+            _NOT_FOUND(),
+            _NOT_FOUND(),
+            _NOT_FOUND(),
         ]
     )
     provider = FakeProvider([_final_response(answer="好的。")])
@@ -218,9 +229,9 @@ async def test_not_visible_role_id_gets_the_same_not_found_line():
     走的正是同一句（L15-13：查無與看不到不細分）。"""
     registry = FakeRegistry(
         call_results=[
-            ToolResult(ok=False, error="NO_MATCH"),
-            ToolResult(ok=False, error="NO_MATCH"),
-            ToolResult(ok=False, error="NO_MATCH"),
+            _NOT_FOUND(),
+            _NOT_FOUND(),
+            _NOT_FOUND(),
         ]
     )
     provider = FakeProvider([_final_response(answer="好的。")])
@@ -285,7 +296,7 @@ async def test_reserved_pre_lookup_id_collision_is_rejected_even_without_trigger
 async def test_reserved_pre_lookup_id_collision_is_rejected_when_triggered():
     assembler = FakeAssembler()
     provider = _collision_provider(assembler, lambda nonce: f"pre-{nonce[:8]}")
-    registry = FakeRegistry(call_results=[ToolResult(ok=False, error="NO_MATCH")] * 3)
+    registry = FakeRegistry(call_results=[_NOT_FOUND()] * 3)
     result = await _runtime(provider=provider, assembler=assembler, registry=registry).run_turn(
         _identity(), "756248", {}
     )
@@ -330,7 +341,7 @@ async def test_trace_carries_only_kind_and_hits_never_raw_ref_or_keyword():
     )
     assert "756248" not in dumped
 
-    registry2 = FakeRegistry(call_results=[ToolResult(ok=False, error="NO_MATCH")])
+    registry2 = FakeRegistry(call_results=[_NOT_FOUND()])
     result2 = await _runtime(registry=registry2).run_turn(_identity(), "信仰", {})
     assert result2.trace.pre_lookup == {"kind": "keyword", "hits": 0}
     dumped2 = json.dumps(
@@ -417,7 +428,7 @@ async def test_keyword_not_found_injects_nothing():
     """短名詞查無**不注入**（主線 2026-09-09 收緊：「怎麼辦」「取消」這類 ≤6 字短句也會觸發
     keyword 查詢，印「查不到這個編號或名稱」會誤導模型）；trace 仍記 hits=0（正對照：
     純編號查無仍注入固定句，見 test_not_found_injects_the_fixed_line）。"""
-    registry = FakeRegistry(call_results=[ToolResult(ok=False, error="NO_MATCH")])
+    registry = FakeRegistry(call_results=[_NOT_FOUND()])
     provider = FakeProvider([_final_response(answer="好的。")])
     runtime = _runtime(provider=provider, registry=registry)
     result = await runtime.run_turn(_identity(), "怎麼辦", {})

@@ -97,6 +97,22 @@ class _FakeEngine:
         for row in self._collecting(session_id):
             row["state"] = "COMPLETED"
 
+    # 站內幫手 S5（F1）：替身補上新增的讀取／依列 id 寫入方法。列 id＝在 `rows` 中的位置。
+    async def get_state_row(self, session_id):
+        rows = self._collecting(session_id)
+        if not rows:
+            return None
+        row = rows[-1]
+        data = json.loads(json.dumps(row["collected_data"]))
+        return {"id": self.rows.index(row), "user_id": data.get("user_id"),
+                "collected_data": data}
+
+    async def save_by_id(self, row_id, state):
+        self.saved.append(self.rows[row_id]["session_id"])
+        row = self.rows[row_id]
+        assert row["state"] == "COLLECTING", "⛔ 依列 id 寫回時那一列必須仍在 COLLECTING"
+        row["collected_data"] = json.loads(json.dumps(state))
+
 
 def _turn_deps(engine):
     runtime = _runtime(FakeProvider([_final_response(answer="先確認您的身分。")]))

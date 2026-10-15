@@ -216,21 +216,33 @@ class JGBSystemAPI:
             ref = str(bill_ref).strip()
             try:
                 if ref.isdigit():
-                    detail = await self.get_bill_detail(role_id, int(ref))
+                    # DSP-074：帶 viewer，單筆直查也只回這位成員看得到的帳單（折疊成「查無」）。
+                    # 無 viewer（舊呼叫端，如租客路徑）時維持原呼叫形狀。
+                    detail = await self.get_bill_detail(
+                        role_id, int(ref),
+                        **({"viewer_user_id": viewer_user_id} if viewer_user_id else {}))
                     row = (detail or {}).get("data")
                     if (detail or {}).get("success") and isinstance(row, dict) and row:
                         return {"success": True,
                                 "mapping": (detail or {}).get("mapping", {}),
                                 "data": [row]}
-                    contracts = await self.get_contracts(role_id, contract_ids=ref)
+                    contracts = await self.get_contracts(
+                        role_id, contract_ids=ref, viewer_user_id=viewer_user_id)
                 else:
-                    contracts = await self.get_contracts(role_id, keyword=ref)
+                    contracts = await self.get_contracts(
+                        role_id, keyword=ref, viewer_user_id=viewer_user_id)
                 rows = (contracts or {}).get("data") or []
                 if not ((contracts or {}).get("success") and rows):
                     return {"success": True, "data": []}
                 contract_ids = rows[0].get("id")
             except Exception as e:
-                logger.warning(f"bill_ref 識別解析失敗（回空列降級）：{e}")
+                # 站內幫手 S5（F8／S5-17）：log 只印例外類別（⛔ `{e}`：訊息可能帶完整
+                # query 或識別碼）。
+                # ⚠️ 計畫 §3i 第 2 點另要求「例外改回 `success:false`」（沒查成 ⛔ 講成查無），
+                #    但既有測試 `tests/unit/conversational/test_bill_ref_adapter_req.py::
+                #    test_resolution_failure_returns_empty_not_raise` 釘住 `success:true`＋空列，
+                #    該檔不在 S5 限定改法內 ⇒ 回傳形狀暫不改、已列回報交主 session 裁。
+                logger.warning("bill_ref 識別解析失敗（回空列降級）：%s", type(e).__name__)
                 return {"success": True, "data": []}
 
         params: dict[str, Any] = {"role_id": role_id}
@@ -402,9 +414,13 @@ class JGBSystemAPI:
         category_id: Optional[str] = None,
         is_urgent: Optional[str] = None,
         keyword: Optional[str] = None,
+        viewer_user_id: Optional[str] = None,
         **kwargs,
     ) -> dict[str, Any]:
-        """查詢修繕進度"""
+        """查詢修繕進度
+
+        `viewer_user_id`（jgb2-req#24／DSP-074）：非空才放進 params，結果限於該成員可見範圍。
+        """
         if not self._validate_identity(role_id, user_id):
             return self._degraded_response()
 
@@ -422,6 +438,8 @@ class JGBSystemAPI:
             params["is_urgent"] = is_urgent
         if keyword:
             params["keyword"] = keyword
+        if viewer_user_id:
+            params["viewer_user_id"] = viewer_user_id
         return await self._request("/api/external/v1/repairs", params)
 
     async def get_tenant_summary(
@@ -471,14 +489,26 @@ class JGBSystemAPI:
 
     async def get_repair_categories(
         self,
+        role_id: Optional[str] = None,
+        viewer_user_id: Optional[str] = None,
         **kwargs,
     ) -> dict[str, Any]:
-        """取得修繕分類樹（不需要 role_id）"""
+        """取得修繕分類樹。
+
+        站內幫手 S5（A3(a)、S5-9：**無豁免**）：`role_id`／`viewer_user_id` 非空才放進
+        params——分類樹本身不分業者，但「每一筆 jgb2 呼叫都帶 role＋viewer」不為它開例外
+        （替身接受並忽略）。舊呼叫端不帶 ⇒ 參數照舊為空。
+        """
         # transport-extension-full-coverage（單一來源徹底）：已移除方法級
         # `_mock_get_repair_categories` 分支——mock 改由 `_send` 派發至
         # `JGBMockTransport`（`repair_categories` 已遷入 `MIGRATED_ENDPOINTS`）。
+        params: dict[str, Any] = {}
+        if role_id:
+            params["role_id"] = role_id
+        if viewer_user_id:
+            params["viewer_user_id"] = viewer_user_id
         return await self._request(
-            "/api/external/v1/repairs/categories", {}
+            "/api/external/v1/repairs/categories", params
         )
 
     async def create_repair(
@@ -493,9 +523,15 @@ class JGBSystemAPI:
         contract_id: Optional[int] = None,
         broken_photos: Optional[list] = None,
         idempotency_key: Optional[str] = None,
+        user_id: Optional[str] = None,
         **kwargs,
     ) -> dict[str, Any]:
         """建立修繕單
+
+        **jgb2-req#22／#23（contract: proposed）**：`user_id`（登入成員，選填）非空才放進 body——
+        提案契約要求寫入 body 帶 `role_id`＋`user_id`，由 JGB 驗能力與資源歸屬；`broken_photos`
+        的提案形狀為 `[{filename, content_type, size, sha256}]`（替身只驗中繼資料）。
+        ⚠️ 帶 `user_id` 不改變既有呼叫端的行為（舊呼叫端本來就沒有這個參數，原被 `**kwargs` 吞掉）。
 
         transport-extension-full-coverage：**已移除** `if self.use_mock:
         return self._mock_create_repair(...)` 短路——mock 改由 `_send` 依
@@ -520,6 +556,8 @@ class JGBSystemAPI:
             "broken_note": broken_note,
             "emergency_status": emergency_status,
         }
+        if user_id:
+            data["user_id"] = user_id
         if contract_id is not None:
             data["contract_id"] = contract_id
         if broken_photos:
@@ -534,6 +572,8 @@ class JGBSystemAPI:
         date_expire: str,
         *,
         idempotency_key: Optional[str] = None,
+        role_id: Optional[str] = None,
+        user_id: Optional[str] = None,
     ) -> dict[str, Any]:
         """`PATCH /agent/v1/bills/{id}`：**只改到期日**（agent-write-tools W4）。
 
@@ -549,9 +589,118 @@ class JGBSystemAPI:
         真 `agent/v1` 的簽章 client 與憑證不在本切片（Plan §2 非目標／S-3 DEFER）。
         """
         data: dict[str, Any] = {"due_date": date_expire}
+        # 站內幫手 S5（F5／S5-8，jgb2-req#23 擴及 PATCH）：寫入 body 帶登入身分
+        # （`role_id`＋`user_id`），由 JGB 驗能力與資源歸屬。非空才放（舊呼叫端不變）。
+        if role_id:
+            data["role_id"] = role_id
+        if user_id:
+            data["user_id"] = user_id
         if idempotency_key:
             data["idempotency_key"] = idempotency_key
         return await self._patch_request(f"/agent/v1/bills/{bill_id}", data)
+
+    # ------------------------------------------------------------------
+    # 站內幫手 S0（plan-assistant-11-items-20261014）——contract: proposed
+    #
+    # ⚠️ 以下 6 支對應 jgb2-api-requests.md #16～#21（#22 為上方 `create_repair` 的擴充）。
+    # JGB 尚未實作這些端點：mock 模式走 `JGBMockTransport` 的提案替身；**非 mock 模式一律
+    # 回降級結果、不發出任何請求**（不對一個還不存在的路徑打真網路）。
+    # 解除條件（JGB 開了端點）成立時，拆掉 `_proposed_not_available` 的守衛即可。
+    # `user_id` ＝ viewer：結果限於該成員在 JGB 畫面上看得到的範圍（DSP-074）。
+    # ------------------------------------------------------------------
+
+    def _proposed_not_available(self, req: str) -> dict[str, Any]:
+        logger.warning("%s（contract: proposed）尚無真 API，非 mock 模式不發出請求", req)
+        return self._fallback_response(f"{req} proposed contract has no real endpoint")
+
+    async def get_unpaid_bill_summary(
+        self, role_id: str, user_id: str, scope: str,
+        as_of: Optional[str] = None, page: Optional[int] = None,
+        per_page: Optional[int] = None,
+    ) -> dict[str, Any]:
+        """未收帳單統計（本月／逾期，加總＋明細）——jgb2-req#16，contract: proposed。
+
+        `scope`：`this_month`｜`overdue`。`as_of`（YYYY-MM-DD，選填）省略＝伺服器今日。
+        """
+        if not self._validate_identity(role_id, user_id):
+            return self._degraded_response()
+        if not self.use_mock:
+            return self._proposed_not_available("jgb2-req#16")
+        params: dict[str, Any] = {"role_id": role_id, "user_id": user_id, "scope": scope}
+        for key, val in (("as_of", as_of), ("page", page), ("per_page", per_page)):
+            if val not in (None, ""):
+                params[key] = val
+        return await self._request("/api/external/v1/bills/summary/unpaid", params)
+
+    async def get_in_progress_repairs(
+        self, role_id: str, user_id: str,
+        page: Optional[int] = None, per_page: Optional[int] = None,
+    ) -> dict[str, Any]:
+        """執行中（未結案）修繕單清單——jgb2-req#17，contract: proposed。"""
+        if not self._validate_identity(role_id, user_id):
+            return self._degraded_response()
+        if not self.use_mock:
+            return self._proposed_not_available("jgb2-req#17")
+        params: dict[str, Any] = {"role_id": role_id, "user_id": user_id}
+        for key, val in (("page", page), ("per_page", per_page)):
+            if val not in (None, ""):
+                params[key] = val
+        return await self._request("/api/external/v1/repairs/in-progress", params)
+
+    async def get_expiring_contracts(
+        self, role_id: str, user_id: str, months: int = 3,
+        as_of: Optional[str] = None, page: Optional[int] = None,
+        per_page: Optional[int] = None,
+    ) -> dict[str, Any]:
+        """N 個月內到期合約——jgb2-req#18，contract: proposed。"""
+        if not self._validate_identity(role_id, user_id):
+            return self._degraded_response()
+        if not self.use_mock:
+            return self._proposed_not_available("jgb2-req#18")
+        params: dict[str, Any] = {"role_id": role_id, "user_id": user_id, "months": months}
+        for key, val in (("as_of", as_of), ("page", page), ("per_page", per_page)):
+            if val not in (None, ""):
+                params[key] = val
+        return await self._request("/api/external/v1/contracts/expiring", params)
+
+    async def _assistant_write(
+        self, req: str, path: str, role_id: str, user_id: str,
+        fields: dict[str, Any], idempotency_key: Optional[str],
+    ) -> dict[str, Any]:
+        if not self._validate_identity(role_id, user_id):
+            return self._degraded_response()
+        if not self.use_mock:
+            return self._proposed_not_available(req)
+        # 身分鍵一律放最後覆寫：`fields` 裡夾帶的 role_id／user_id 不會蓋過登入身分；
+        # 其他歸屬欄位（team_id…）原樣送出，由 JGB（替身：422）拒絕。
+        data: dict[str, Any] = {**fields, "role_id": role_id, "user_id": user_id}
+        if idempotency_key:
+            data["idempotency_key"] = idempotency_key
+        return await self._post_request(path, data)
+
+    async def assistant_create_estate(
+        self, role_id: str, user_id: str, fields: dict[str, Any],
+        idempotency_key: Optional[str] = None,
+    ) -> dict[str, Any]:
+        """建立物件（照使用者給的值）——jgb2-req#19，contract: proposed。"""
+        return await self._assistant_write(
+            "jgb2-req#19", "/api/external/v1/estates", role_id, user_id, fields, idempotency_key)
+
+    async def assistant_create_contract(
+        self, role_id: str, user_id: str, fields: dict[str, Any],
+        idempotency_key: Optional[str] = None,
+    ) -> dict[str, Any]:
+        """建立合約（照使用者給的值）——jgb2-req#20，contract: proposed。"""
+        return await self._assistant_write(
+            "jgb2-req#20", "/api/external/v1/contracts", role_id, user_id, fields, idempotency_key)
+
+    async def assistant_create_bill(
+        self, role_id: str, user_id: str, fields: dict[str, Any],
+        idempotency_key: Optional[str] = None,
+    ) -> dict[str, Any]:
+        """建立手動帳單——jgb2-req#21，contract: proposed。"""
+        return await self._assistant_write(
+            "jgb2-req#21", "/api/external/v1/bills/manual", role_id, user_id, fields, idempotency_key)
 
     # ------------------------------------------------------------------
     # v1.1 診斷用端點
@@ -561,15 +710,22 @@ class JGBSystemAPI:
         self,
         role_id: str,
         bill_id: int,
+        viewer_user_id: Optional[str] = None,
         **kwargs,
     ) -> dict[str, Any]:
-        """查詢單一帳單詳情（含 pay_info + details）"""
+        """查詢單一帳單詳情（含 pay_info + details）。
+
+        `viewer_user_id`（DSP-074，選填）：非空才轉發；jgb2 端依成員可見範圍過濾，
+        看不到的帳單與不存在同一句「帳單不存在或無權存取」。
+        """
         if not role_id:
             return self._degraded_response()
 
         # ⚠️ 任務 4.6：**已移除** `if self.use_mock: return self._mock_get_bill_detail(...)`
         #   （理由同 get_bills；mock 改由 transport 層依契約回應）
         params: dict[str, Any] = {"role_id": role_id}
+        if viewer_user_id:
+            params["viewer_user_id"] = viewer_user_id
         return await self._request(
             f"/api/external/v1/bills/{bill_id}", params
         )
@@ -687,9 +843,12 @@ class JGBSystemAPI:
         self,
         role_id: str,
         keyword: Optional[str] = None,
+        viewer_user_id: Optional[str] = None,
         **kwargs,
     ) -> dict[str, Any]:
         """T1：以 email/名字查此團隊成員（團隊權限面向識別）。
+
+        `viewer_user_id`（jgb2-req#24／DSP-074）：非空才放進 params，結果限於該成員可見的帳號。
 
         授權：role_id 綁定＋只回該 role 成員（防枚舉，jgb2 已擋）。
         回應 data 為 list（成員候選：member_user_id/character_name/is_owner/match_field，無明文個資）。
@@ -700,19 +859,27 @@ class JGBSystemAPI:
         # transport-extension-full-coverage：已移除 `if self.use_mock: return
         # self._mock_team_members(...)` 短路——mock 改由 `_send` 派發至
         # `JGBMockTransport`（`team_members` 已遷入 `MIGRATED_ENDPOINTS`）。
+        params: dict[str, Any] = {"keyword": keyword}
+        if viewer_user_id:
+            params["viewer_user_id"] = viewer_user_id
         raw = await self._request(
-            f"/api/external/v1/roles/{role_id}/members", {"keyword": keyword})
+            f"/api/external/v1/roles/{role_id}/members", params)
         data = (raw or {}).get("data")
+        # S5（S5-1）：失敗時帶回上游的 `error`（狀態碼），上層才分得出「查無」與「沒查成」。
         return {"success": bool((raw or {}).get("success")),
-                "data": data if isinstance(data, list) else []}
+                "data": data if isinstance(data, list) else [],
+                **({"error": raw.get("error")} if isinstance((raw or {}).get("error"), dict) else {})}
 
     async def get_member_permissions(
         self,
         role_id: str,
         user_id: str,
+        viewer_user_id: Optional[str] = None,
         **kwargs,
     ) -> dict[str, Any]:
         """步驟 3：查成員角色能力旗標（G-A2；32 旗標含成對 show_owner_*）。
+
+        `viewer_user_id`（jgb2-req#24／DSP-074）：非空才放進 params；該成員看不到的帳號折疊成查無。
 
         回應正規化為單元素 list（供 secondary_call list_path='data'）：
         {character_name, abilities:{show_bill,show_owner_bill,...}}。
@@ -721,11 +888,15 @@ class JGBSystemAPI:
             return self._degraded_response()
         # transport-extension-full-coverage：已移除 `if self.use_mock: return
         # self._mock_member_permissions(...)` 短路——理由同 `get_team_members`。
+        params: dict[str, Any] = {}
+        if viewer_user_id:
+            params["viewer_user_id"] = viewer_user_id
         raw = await self._request(
-            f"/api/external/v1/roles/{role_id}/members/{user_id}/permissions", {})
+            f"/api/external/v1/roles/{role_id}/members/{user_id}/permissions", params)
         data = (raw or {}).get("data")
         return {"success": bool((raw or {}).get("success")),
-                "data": [data] if isinstance(data, dict) else []}
+                "data": [data] if isinstance(data, dict) else [],
+                **({"error": raw.get("error")} if isinstance((raw or {}).get("error"), dict) else {})}
 
     # ⚠️ `_ABILITY_WHITELIST`／`_TEAM_MEMBERS`／`_mock_team_members`／
     #    `_mock_member_permissions` 已移除（transport-extension-full-coverage）：
@@ -784,9 +955,12 @@ class JGBSystemAPI:
         role_id: str,
         keyword: Optional[str] = None,
         estate_id: Optional[str] = None,
+        viewer_user_id: Optional[str] = None,
         **kwargs,
     ) -> dict[str, Any]:
         """電表列表（IoT 電表排障識別 adapter）。
+
+        `viewer_user_id`（jgb2-req#24／DSP-074）：非空才放進 params，結果限於該成員可見的電表。
 
         ⚠️ **舊註解說「端點無 keyword 參數」是錯的**（2026-08-25 盤查）：
         `MeterApiController@index:41-56` 有 `keyword`，比對 `iots.name` **或**
@@ -807,9 +981,12 @@ class JGBSystemAPI:
         params: dict[str, Any] = {"role_id": role_id, "per_page": 200}
         if estate_id:
             params["estate_id"] = estate_id
+        if viewer_user_id:
+            params["viewer_user_id"] = viewer_user_id
         raw = await self._request("/api/external/v1/meters", params)
         if not (raw or {}).get("success"):
-            return {"success": False, "data": []}
+            # S5（S5-1）：帶回上游 `error`（狀態碼），上層分辨「查無」與「沒查成」。
+            return {"success": False, "data": [], "error": (raw or {}).get("error")}
         data = raw.get("data")
         rows = data if isinstance(data, list) else []
 
@@ -835,9 +1012,12 @@ class JGBSystemAPI:
         self,
         role_id: Optional[str] = None,
         keyword: Optional[str] = None,
+        viewer_user_id: Optional[str] = None,
         **kwargs,
     ) -> dict[str, Any]:
         """物件現況診斷識別 adapter（estate-conversational-facets 任務 1.1）。
+
+        `viewer_user_id`（jgb2-req#24／DSP-074）：非空才放進 params，結果限於該成員可見的物件。
 
         ⚠️ 與 get_estates（修繕報修表單現役）語義不同，勿混用：
         - 拉頁 per_page=200 後 client 端 token 化過濾 title｜display_address
@@ -857,9 +1037,12 @@ class JGBSystemAPI:
         params: dict[str, Any] = {"per_page": 200}
         if role_id:
             params["role_id"] = role_id
+        if viewer_user_id:
+            params["viewer_user_id"] = viewer_user_id
         raw = await self._request("/api/external/v1/estates", params)
         if not (raw or {}).get("success"):
-            return {"success": False, "data": []}
+            # S5（S5-1）：帶回上游 `error`（狀態碼），上層分辨「查無」與「沒查成」。
+            return {"success": False, "data": [], "error": (raw or {}).get("error")}
         data = raw.get("data")
         rows = data if isinstance(data, list) else []
 
@@ -884,6 +1067,8 @@ class JGBSystemAPI:
     async def get_estate_detail(
         self,
         estate_id: Any = None,
+        role_id: Optional[str] = None,
+        viewer_user_id: Optional[str] = None,
         **kwargs,
     ) -> dict[str, Any]:
         """物件單筆深查（GET /estates/{id}；含 contract_required_fields）。
@@ -891,18 +1076,26 @@ class JGBSystemAPI:
         sentinel 列無 id → secondary_call 會帶空值進來：優雅降級回 success:False
         （引擎 attach 失敗即略過，builder 不依賴 detail 存在）。
         單物件正規化為單元素 list（get_tenant_registration 先例）。
+
+        站內幫手 S5（S5-8，jgb2-req#24）：`role_id`／`viewer_user_id` 非空才放進 params
+        （原本連 `role_id` 都沒送）；不屬該團隊或這位成員看不到 ⇒ 上游與「不存在」同一句。
         """
         eid = str(estate_id).strip() if estate_id is not None else ""
         if not eid or eid == "None" or not eid.isdigit():
             return {"success": False, "data": []}
+        params: dict[str, Any] = {}
+        if role_id:
+            params["role_id"] = role_id
+        if viewer_user_id:
+            params["viewer_user_id"] = viewer_user_id
 
         # transport-extension-full-coverage：已移除 `if self.use_mock: ...` 分支——
         # mock 改由 `_send` 派發至 `JGBMockTransport`（`estate_detail` 已遷入
         # `MIGRATED_ENDPOINTS`，`show()` 語義（is_open=1 硬過濾、16 欄
         # contract_required_fields）現由 `JGBMockTransport._estates_show` 提供）。
-        raw = await self._request(f"/api/external/v1/estates/{eid}", {})
+        raw = await self._request(f"/api/external/v1/estates/{eid}", params)
         if not (raw or {}).get("success"):
-            return {"success": False, "data": []}
+            return {"success": False, "data": [], "error": (raw or {}).get("error")}
         data = raw.get("data")
         if isinstance(data, dict):
             data = [data]

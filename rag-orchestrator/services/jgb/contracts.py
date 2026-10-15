@@ -601,6 +601,30 @@ def build_renew_facts(contract: dict, user_question: str = "") -> str:
     return "\n".join(lines)
 
 
+def _basic_money(value: Any) -> str:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return "尚未記錄"
+    return f"NT$ {value:,.0f}"
+
+
+def build_basic_info_facts(contract: dict, user_question: str = "") -> str:
+    """合約基本資料（站內幫手 S1 修正④）：起始日、結束日、月租、押金、狀態，**每項一句、可單獨引用**。
+
+    「這份合約什麼時候到期／租多少／押金多少」是業者最常問的基本資料；其他面向的句子只在特定
+    條件下才帶到期日，模型找不到可引用句。欄位值全由程式照列取出（決定性），缺值寫「尚未記錄」，
+    ⛔ 不虛構。只輸出日期／金額／狀態，⛔ 不含承租人姓名、信箱、電話。
+    """
+    title = contract.get("title") or f"合約 {contract.get('id', '?')}"
+    head = f"合約「{title}」"
+    return "\n".join([
+        f"{head}的起始日是 {_format_date_int(contract.get('date_start'))}。",
+        f"{head}的結束日是 {_format_date_int(contract.get('date_end'))}。",
+        f"{head}的月租是 {_basic_money(contract.get('rent'))}。",
+        f"{head}的押金是 {_basic_money(contract.get('deposit_amount'))}。",
+        f"{head}目前狀態是{get_current_stage(contract)}。",
+    ])
+
+
 # ── 面向 fact-builder 註冊表（contract-conversational-facets 元件 2）────────
 #
 # face（當輪對話面向）命中 → 該面向的決定性 fact-builder 接手；未命中/None →
@@ -620,6 +644,7 @@ FACE_BUILDERS: dict[str, FaceBuilder] = {
     "退租收尾": build_closeout_facts,
     "簽署排障": build_sign_facts,
     "續約": build_renew_facts,
+    "合約基本資料": build_basic_info_facts,
 }
 
 

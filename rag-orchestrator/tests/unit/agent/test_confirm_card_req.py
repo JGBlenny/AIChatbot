@@ -183,9 +183,19 @@ def test_unknown_action_and_non_object_payload_raise():
 @pytest.mark.req(_REQ)
 def test_action_enum_and_renderer_table_stay_in_sync():
     """每個值域內的 action 都 render 得出東西（⛔ 不得有「有值域沒分支」的 action）。"""
-    assert set(CONFIRM_ACTIONS) == {"bill_due_extend", "repair_create"}
+    # S2（plan-assistant-11-items §3f 1）集合同步：三個封閉欄位表動作。
+    assert set(CONFIRM_ACTIONS) == {"bill_due_extend", "repair_create",
+                                    "estate_create", "contract_create", "manual_bill_create"}
     assert render("bill_due_extend", _BILL)
     assert render("repair_create", _REPAIR)
+    assert render("estate_create", {"action": "estate_create", "title": "t", "city": "台北市",
+                                    "district": "信義區", "address": "a", "use_for": "residential"})
+    assert render("contract_create", {"action": "contract_create", "estate_name": "e", "estate_id": 1,
+                                      "date_start": "20260101", "date_end": "20261231",
+                                      "rent": 1, "to_user_phone": "0912345678"})
+    assert render("manual_bill_create", {"action": "manual_bill_create", "contract_ref": "c",
+                                         "contract_id": 1, "title": "t", "total": 1,
+                                         "date_expire": "20991231"})
 
 
 # ---------------------------------------------------------------------------

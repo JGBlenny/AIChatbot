@@ -148,6 +148,27 @@ _MAX_OUTPUT_TOKENS = 500
 _GPT5_MAX_COMPLETION_TOKENS = 1500
 _GPT5_REASONING_EFFORT = "low"
 
+#: 站內幫手 S3-live 修正（主 session 2026-10-15）：推理力道**依模型系列**，先比對者先贏。
+#: gpt-6 系列 ⇒ `"none"`（同 `document_extract.REASONING_EFFORT_BY_PREFIX`：容器內實測
+#: none 比 low 快一倍、輸出欄位相同）；gpt-5 系列維持 `"low"`。兩份由單元測試釘成相等。
+REASONING_EFFORT_BY_PREFIX: tuple = (("gpt-6", "none"), ("gpt-5", _GPT5_REASONING_EFFORT))
+
+
+def _reasoning_effort(model: str) -> str:
+    for prefix, effort in REASONING_EFFORT_BY_PREFIX:
+        if str(model or "").startswith(prefix):
+            return effort
+    return _GPT5_REASONING_EFFORT
+
+
+#: 站內幫手 S3（S3-11）：走 `max_completion_tokens`／不傳 `temperature` 的模型系列前綴。
+#: gpt-6 系列（業主 2026-10-15 照片辨識與文件抽取用 `gpt-6-luna`）與 gpt-5 同參數規則。
+NEW_PARAM_MODEL_PREFIXES = ("gpt-5", "gpt-6")
+
+
+def _uses_new_param_branch(model: str) -> bool:
+    return str(model or "").startswith(NEW_PARAM_MODEL_PREFIXES)
+
 
 def _completion_params(model: str) -> dict:
     """依模型回 `chat.completions.create` 的輸出長度／取樣參數。
@@ -155,14 +176,80 @@ def _completion_params(model: str) -> dict:
     gpt-5 系列 ⇒ `max_completion_tokens`、**不傳 `temperature`**；
     其餘（gpt-4o／4o-mini…）⇒ `max_tokens` ＋ `temperature=0.2`（逐值同舊版）。
     """
-    if str(model or "").startswith("gpt-5"):
+    if _uses_new_param_branch(model):
         # ⚠️ gpt-5 系列的推理 token 計入 completion：500 會被推理吃光、可見輸出為空
         #    （真線路實測 2026-09-08：六張全回長度 0）。上限拉高並把推理力道釘低。
         # openai SDK 1.54（requirements）尚無 `reasoning_effort` 具名參數 ⇒ 走 `extra_body`
         # （同 runtime 的做法；具名傳會 TypeError——真線路實測 2026-09-08）。
         return {"max_completion_tokens": _GPT5_MAX_COMPLETION_TOKENS,
-                "extra_body": {"reasoning_effort": _GPT5_REASONING_EFFORT}}
+                "extra_body": {"reasoning_effort": _reasoning_effort(model)}}
     return {"max_tokens": _MAX_OUTPUT_TOKENS, "temperature": 0.2}
+
+
+# ============================================================
+# 封閉選項 schema（站內幫手 S3-live 修正）
+# ============================================================
+#: 損壞類型代碼的封閉值域（＝`_BASE_PROMPT` 列出的八類＋`none`）。
+DAMAGE_TYPES: tuple = (
+    "water_leak", "equipment_failure", "wall_damage", "electrical", "door_window",
+    "floor", "plumbing", "other", "none",
+)
+SEVERITIES: tuple = ("low", "medium", "high", "critical")
+
+
+def _tree_choices(category_names: Optional[List[str]], categories_tree: Optional[list]) -> tuple:
+    """`(大類名, 葉節點名)`——各自去重、保序；名稱一律取分類樹**逐字**（去頭尾空白）。"""
+    cats: list = []
+    leaves: list = []
+    for name in category_names or []:
+        name = str(name or "").strip()
+        if name and name not in cats:
+            cats.append(name)
+    for node in categories_tree or []:
+        if not isinstance(node, dict):
+            continue
+        name = str(node.get("name") or "").strip()
+        if name and name not in cats:
+            cats.append(name)
+        for item in node.get("items") or []:
+            leaf = str(item.get("name") or "").strip() if isinstance(item, dict) else ""
+            if leaf and leaf not in leaves:
+                leaves.append(leaf)
+    return cats, leaves
+
+
+def build_recognition_schema(
+    category_names: Optional[List[str]], categories_tree: Optional[list]
+) -> Optional[dict]:
+    """辨識回應的 **strict json_schema**：`suggested_category`／`suggested_item` 是**封閉
+    選項**（分類樹的大類名／葉節點名，各加一個空字串＝沒有或看不出）。
+
+    站內幫手 S3-live 修正：A7 沙發照的卡上仍是大類「家具」、`item_id` 空——推定 vision 回的
+    `suggested_item` 不是樹上逐字名稱。改由 schema 限制輸出值域（⛔ 事後子字串／詞表比對）。
+    「葉節點屬於哪個大類」strict schema 表達不了，仍由 `mcp_facade._same_parent_leaf` 判。
+    沒有任何大類名 ⇒ `None`（呼叫端退回 `json_object`）。
+    """
+    cats, leaves = _tree_choices(category_names, categories_tree)
+    if not cats:
+        return None
+    props = {
+        "is_damage": {"type": "boolean"},
+        "damage_type": {"type": "string", "enum": list(DAMAGE_TYPES)},
+        "severity": {"type": "string", "enum": list(SEVERITIES)},
+        "description": {"type": "string"},
+        "confidence": {"type": "number"},
+        "suggested_category": {"type": "string", "enum": cats + [""]},
+        "suggested_item": {"type": "string", "enum": leaves + [""]},
+        "suggested_reason": {"type": "string"},
+        "suggested_emergency": {"type": "integer", "enum": [1, 2]},
+        "secondary_damages": {"type": "array", "items": {"type": "string"}},
+    }
+    return {
+        "type": "object",
+        "additionalProperties": False,
+        "required": list(props),
+        "properties": props,
+    }
 
 
 # ============================================================
@@ -233,6 +320,7 @@ class ImageRecognitionService:
         *,
         max_images: Optional[int] = 3,
         detail: Optional[str] = None,
+        closed_schema: bool = False,
     ) -> RecognitionResult:
         """
         分析多張圖片（同一損壞情境），最多 3 張。
@@ -273,13 +361,22 @@ class ImageRecognitionService:
 
         messages = [{"role": "user", "content": content}]
 
+        # 站內幫手 S3-live 修正：`closed_schema=True`（`/mcp` 路徑）且有分類樹 ⇒ strict
+        # json_schema 封閉選項；其餘 ⇒ 舊的 `json_object`（REST 路徑行為 ⛔ 不變）。
+        schema = build_recognition_schema(category_names, categories_tree) if closed_schema else None
+        response_format = (
+            {"type": "json_schema",
+             "json_schema": {"name": "recognition", "strict": True, "schema": schema}}
+            if schema is not None else {"type": "json_object"}
+        )
+
         # 呼叫 Vision API，設 timeout
         try:
             response = await asyncio.wait_for(
                 self.client.chat.completions.create(
                     model=self.model,
                     messages=messages,
-                    response_format={"type": "json_object"},
+                    response_format=response_format,
                     **_completion_params(self.model),
                 ),
                 timeout=self.timeout,

@@ -173,6 +173,7 @@
         {
           "args_summary": {},
           "empty": false,
+          "grounded": false,
           "id": "call_1",
           "ms": 0,
           "n_items": 1,
@@ -299,6 +300,10 @@
         "34b58ef7b449d015": {
           "action": "bill_due_extend",
           "card_sha256": "752d809cf2b9a48c09f9060ab170e94a9c5a028c23246044cf04586e97fab2d5",
+          "creator": {
+            "role_id": null,
+            "user_id": 77
+          },
           "payload": {
             "action": "bill_due_extend",
             "bill_id": "900001",
@@ -387,6 +392,10 @@
         "34b58ef7b449d015": {
           "action": "bill_due_extend",
           "card_sha256": "752d809cf2b9a48c09f9060ab170e94a9c5a028c23246044cf04586e97fab2d5",
+          "creator": {
+            "role_id": null,
+            "user_id": 77
+          },
           "payload": {
             "action": "bill_due_extend",
             "bill_id": "900001",
@@ -457,6 +466,7 @@
         {
           "args_summary": {},
           "empty": false,
+          "grounded": false,
           "id": "call_1",
           "ms": 0,
           "n_items": 1,
@@ -489,6 +499,10 @@
         "34b58ef7b449d015": {
           "action": "bill_due_extend",
           "card_sha256": "752d809cf2b9a48c09f9060ab170e94a9c5a028c23246044cf04586e97fab2d5",
+          "creator": {
+            "role_id": null,
+            "user_id": 77
+          },
           "payload": {
             "action": "bill_due_extend",
             "bill_id": "900001",
@@ -554,6 +568,7 @@
         {
           "args_summary": {},
           "empty": false,
+          "grounded": false,
           "id": "confirm:34b58ef7b449d015",
           "ms": 0,
           "n_items": 1,
@@ -1118,6 +1133,7 @@
             "has_ref": true
           },
           "empty": true,
+          "grounded": false,
           "id": "call_1",
           "ms": 0,
           "n_items": 1,
@@ -1215,6 +1231,7 @@
         {
           "args_summary": {},
           "empty": false,
+          "grounded": true,
           "id": "call_1",
           "ms": 0,
           "n_items": 1,
@@ -1406,6 +1423,7 @@
             "has_ref": true
           },
           "empty": true,
+          "grounded": false,
           "id": "call_1",
           "ms": 0,
           "n_items": 1,
@@ -2131,6 +2149,7 @@
             "face": "帳單異常"
           },
           "empty": false,
+          "grounded": false,
           "id": "select:bill",
           "ms": 0,
           "n_items": 1,
@@ -2215,6 +2234,7 @@
             "face": "帳單異常"
           },
           "empty": false,
+          "grounded": false,
           "id": "select:bill",
           "ms": 0,
           "n_items": 0,
@@ -2297,6 +2317,7 @@
         {
           "args_summary": {},
           "empty": false,
+          "grounded": false,
           "id": "call_1",
           "ms": 0,
           "n_items": 1,

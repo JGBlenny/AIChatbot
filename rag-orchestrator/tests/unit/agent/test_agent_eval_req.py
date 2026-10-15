@@ -1824,3 +1824,44 @@ def test_run_scenario_agent_carries_same_state_dict_across_turns(monkeypatch, tm
     assert len(seen_state_ids) == 2
     assert seen_state_ids[0] == seen_state_ids[1], "同一個 state dict 物件必須貫穿全程"
     assert seen_marker_values == [None, 1], "第 2 輪應看到第 1 輪寫入的值——槽位真的貫穿"
+
+
+# ---------------------------------------------------------------------------
+# 2026-09-24：評估路徑不跑 lifespan ⇒ `outline_resolver` 必須由 `_wire_outline_resolver` 補上，
+# 否則 `kb.get("outline:*")` 恆回 NO_MATCH（S6 真回合 10 回合白跑的根因）。
+# ---------------------------------------------------------------------------
+
+def test_wire_outline_resolver_sets_missing_and_keeps_existing():
+    fake = SimpleNamespace(app=SimpleNamespace(state=SimpleNamespace()))
+    agent_eval._wire_outline_resolver(fake)
+    assert callable(fake.app.state.outline_resolver)
+
+    sentinel = object()
+    kept = SimpleNamespace(app=SimpleNamespace(state=SimpleNamespace(outline_resolver=sentinel)))
+    agent_eval._wire_outline_resolver(kept)
+    assert kept.app.state.outline_resolver is sentinel
+
+
+async def test_wired_resolver_makes_kb_get_outline_reachable(monkeypatch, tmp_path):
+    """正對照＋負對照同一份全審正本：沒接 resolver ⇒ NO_MATCH；接上 ⇒ 粗目清單與細目內容都拿得到。"""
+    from services.agent.canon import canon_assembler
+    from services.agent.identity import Identity
+    from services.agent.tools.kb import kb_get
+
+    monkeypatch.setenv("DB_ENV", "test")
+    monkeypatch.setenv("AGENT_CANON_DIR", str(_all_reviewed_canon_dir(tmp_path)))
+    doc = canon_assembler.load_canon_or_die(canon_assembler.resolve_canon_dir())
+    monkeypatch.setattr(canon_assembler, "_CANON_REGISTRY", {canon_assembler.CANON_NAME: doc})
+    fine = next(f for f in doc.fines() if "property_manager" in f.target_user)
+    ident = Identity(vendor_id=1, target_user="property_manager", mode="b2b", session_id="t")
+
+    missing = await kb_get(ident, {"kb_id": f"outline:{fine.coarse_id}"}, db_pool=None, outline_resolver=None)
+    assert missing.ok is False and missing.error == "NO_MATCH"
+
+    fake = SimpleNamespace(app=SimpleNamespace(state=SimpleNamespace()))
+    agent_eval._wire_outline_resolver(fake)
+    resolver = fake.app.state.outline_resolver
+    coarse = await kb_get(ident, {"kb_id": f"outline:{fine.coarse_id}"}, db_pool=None, outline_resolver=resolver)
+    section = await kb_get(ident, {"kb_id": f"outline:{fine.id}"}, db_pool=None, outline_resolver=resolver)
+    assert coarse.ok and not coarse.provenance[0].citable
+    assert section.ok and section.provenance[0].citable

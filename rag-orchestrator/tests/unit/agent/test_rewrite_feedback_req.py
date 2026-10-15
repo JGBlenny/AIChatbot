@@ -21,7 +21,7 @@ from services.agent.runtime import (
     REWRITE_FEEDBACK_SUFFIX,
     rewrite_feedback,
 )
-from services.agent.tools.registry import ToolResult
+from services.agent.tools.registry import Provenance, ToolResult
 
 from tests.unit.agent.test_handoff_data_exits_req import (
     _handoff_no_grounding_response as _handoff_response_with_data,
@@ -113,8 +113,13 @@ async def test_handoff_data_rewrite_is_wrapped():
             _final_response(answer="依系統資料，押金全額退還。"),
         ]
     )
+    # Plan 9.11 §2 D：這個替身語意是「查到資料」，補 `citable=True` provenance
+    # 才會被算成 `grounded`（⛔ 不然是零查詢的 `other`，T2 就不會觸發）。
     registry = FakeRegistry(
-        call_results=[ToolResult(ok=True, data={"facts": "押金全額退還政策"}, text_for_model="押金政策原文")]
+        call_results=[ToolResult(
+            ok=True, data={"facts": "押金全額退還政策"}, text_for_model="押金政策原文",
+            provenance=[Provenance(source="tool", text="押金全額退還政策", citable=True)],
+        )]
     )
     runtime = _runtime(provider=provider, registry=registry,
                        verifier=FakeVerifier([VerifierVerdict(ok=True)]), budget=Budget(max_rewrites=2))

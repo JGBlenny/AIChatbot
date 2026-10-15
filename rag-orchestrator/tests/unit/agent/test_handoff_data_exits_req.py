@@ -34,7 +34,7 @@ from services.agent.runtime import (
     _apply_handoff_data_exits,
     _tool_result_empty,
 )
-from services.agent.tools.registry import ToolResult
+from services.agent.tools.registry import Provenance, ToolResult
 from services.agent.verifier import OutputVerifier
 from services.presales_gate import FactClass
 
@@ -110,8 +110,13 @@ def test_tool_call_record_default_empty_is_false():
 # 2. `_apply_handoff_data_exits` 真值表
 # ---------------------------------------------------------------------------
 def _record(status="ok", empty=False, id_="call-1") -> ToolCallRecord:
+    """Plan 9.11 §2 D：這份真值表拿 `empty` 分兩組語意——`empty=True` 是
+    「查了、查無資料」，`empty=False` 是「查到資料」；後者補
+    `grounded=(status=="ok")`（`empty=True` 時 `grounded` 不重要，維持
+    `False` 預設），才不會被新的四類優先序誤判成零查詢的 `other`。"""
     return ToolCallRecord(id=id_, name="jgb2.query.bills", args_summary={}, ms=1,
-                           status=status, n_items=0, empty=empty)
+                           status=status, n_items=0, empty=empty,
+                           grounded=(status == "ok" and not empty))
 
 
 def _handoff_result(
@@ -285,6 +290,11 @@ def test_budget_exhausted_untouched():
 
 # ---------------------------------------------------------------------------
 # 3. 迴圈內改寫提示（整回合 `run_turn`）
+#
+# Plan 9.11 §2 D：下面四個情境的 `FakeRegistry` 替身語意都是「查到資料」
+# （`facts` 非空、模型改寫後應該依資料回答），但原本沒有 `provenance` ⇒
+# `grounded` 一律 `False`（不是「查到」也不是「查無」，是零查詢的 `other`）。
+# 補上 `citable=True` 的 provenance 才是這幾筆替身的真實分類，⛔ 不改期望值。
 # ---------------------------------------------------------------------------
 def _handoff_no_grounding_response(fact_class="feature"):
     payload = {
@@ -313,7 +323,8 @@ async def test_rewrite_consumes_one_and_original_handoff_attempt_skips_verifier(
         ]
     )
     registry = FakeRegistry(
-        call_results=[ToolResult(ok=True, data={"facts": "押金全額退還政策"}, text_for_model="押金政策原文")]
+        call_results=[ToolResult(ok=True, data={"facts": "押金全額退還政策"}, text_for_model="押金政策原文",
+                                     provenance=[Provenance(source="tool", text="押金全額退還政策", citable=True)])]
     )
     verifier = FakeVerifier([VerifierVerdict(ok=True)])
     budget = Budget(max_rewrites=1)
@@ -344,7 +355,8 @@ async def test_retried_output_answers_and_goes_through_verifier_normally():
         ]
     )
     registry = FakeRegistry(
-        call_results=[ToolResult(ok=True, data={"facts": "押金全額退還政策"}, text_for_model="押金政策原文")]
+        call_results=[ToolResult(ok=True, data={"facts": "押金全額退還政策"}, text_for_model="押金政策原文",
+                                     provenance=[Provenance(source="tool", text="押金全額退還政策", citable=True)])]
     )
     verifier = FakeVerifier([VerifierVerdict(ok=True)])
     budget = Budget(max_rewrites=2)
@@ -379,7 +391,8 @@ async def test_sensitive_pattern_retry_output_still_blocked_by_verifier():
         ]
     )
     registry = FakeRegistry(
-        call_results=[ToolResult(ok=True, data={"facts": "退租押金相關規則"}, text_for_model="押金政策原文")]
+        call_results=[ToolResult(ok=True, data={"facts": "退租押金相關規則"}, text_for_model="押金政策原文",
+                                     provenance=[Provenance(source="tool", text="退租押金相關規則", citable=True)])]
     )
     verifier = OutputVerifier(VerifierRules.load(_RULES_PATH))
     budget = Budget(max_rewrites=1)
@@ -408,7 +421,8 @@ async def test_budget_already_exhausted_skips_rewrite_and_falls_to_no_judgement(
         ]
     )
     registry = FakeRegistry(
-        call_results=[ToolResult(ok=True, data={"facts": "押金全額退還政策"}, text_for_model="押金政策原文")]
+        call_results=[ToolResult(ok=True, data={"facts": "押金全額退還政策"}, text_for_model="押金政策原文",
+                                     provenance=[Provenance(source="tool", text="押金全額退還政策", citable=True)])]
     )
     verifier = OutputVerifier(VerifierRules.load(_RULES_PATH))
     budget = Budget(max_rewrites=0)

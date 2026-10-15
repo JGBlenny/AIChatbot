@@ -930,7 +930,7 @@ async def test_w93e_attack_pdf_is_only_rasterized(monkeypatch):
 # ════════════════════════════════════════════════════════════════════
 @pytest.mark.req(_REQ)
 def test_field_specs_are_a_closed_table_and_schema_comes_from_it():
-    assert dx.DOCUMENT_KINDS == ("bill_receipt", "contract", "other")
+    assert dx.DOCUMENT_KINDS == ("bill_receipt", "contract", "building_deed", "other")
     schema = dx.build_json_schema()
     assert schema["additionalProperties"] is False
     assert schema["properties"]["kind"]["enum"] == list(dx.DOCUMENT_KINDS)
@@ -1272,7 +1272,10 @@ async def test_document_turn_hides_the_write_face_from_the_model():
     registry = _write_registry()
     provider = FakeProvider([_final_response()])
     runtime = _runtime(provider, registry=registry)
-    await runtime.run_turn(_identity(), "幫我看這張", {"agent": {}}, document=_doc_input())
+    # 站內幫手 S3：改用**不在放行對照**的 kind（`contract`）——`bill_receipt`／`building_deed`
+    # 的放行另見下方正對照 `test_writable_document_kinds_expose_only_confirm_request`。
+    await runtime.run_turn(_identity(), "幫我看這張", {"agent": {}},
+                           document=_doc_input(kind="contract"))
     names = {t["function"]["name"] for t in provider.calls[0]["tools"]}
     assert not any(n.startswith("jgb2__action__") for n in names)
     assert not any(n.startswith("confirm__") for n in names)
@@ -1313,7 +1316,7 @@ async def test_document_turn_blocks_a_write_tool_call_even_if_the_model_forges_i
     ])
     state: dict = {"agent": {}}
     result = await _runtime(provider, registry=registry).run_turn(
-        _identity(), "幫我看這張", state, document=_doc_input()
+        _identity(), "幫我看這張", state, document=_doc_input(kind="contract")
     )
     assert executed == [], "文件回合的寫入面工具⛔ 不得真的執行"
     assert any(v.startswith("DOCUMENT_TURN_WRITE_BLOCKED:") for v in result.trace.violations)
@@ -1331,6 +1334,21 @@ async def test_document_turn_blocks_a_write_tool_call_even_if_the_model_forges_i
         _identity(), "水管漏水", {"agent": {}}
     )
     assert executed == [{}], "正對照失敗：修繕回合也沒執行 ⇒ 擋它的不是文件回合這件事"
+
+
+@pytest.mark.req(_REQ)
+@pytest.mark.parametrize("kind", ["bill_receipt", "building_deed"])
+async def test_writable_document_kinds_expose_only_confirm_request(kind):
+    """站內幫手 S3 正對照：放行對照內的 kind ⇒ `confirm.request` 對模型可見，
+    其餘寫入工具（`jgb2.action.*`）照舊藏起來。"""
+    registry = _write_registry()
+    provider = FakeProvider([_final_response()])
+    await _runtime(provider, registry=registry).run_turn(
+        _identity(), "幫我看這張", {"agent": {}}, document=_doc_input(kind=kind)
+    )
+    names = {t["function"]["name"] for t in provider.calls[0]["tools"]}
+    assert "confirm__request" in names
+    assert not any(n.startswith("jgb2__action__") for n in names)
 
 
 @pytest.mark.req(_REQ)

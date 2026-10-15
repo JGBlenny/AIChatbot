@@ -111,7 +111,7 @@ flowchart LR
   IM --> VS[ImageRecognitionService\nOpenAI vision]
   RT["**AgentRuntime.run_turn**\n（核心）"] --> SEL[select 段]
   RT --> CF[confirm 段]
-  RT --> LLM[OpenAI chat\ngpt-5-mini]
+  RT --> LLM[OpenAI chat\ngpt-6-luna]
   RT --> REG[ToolRegistry\n可見性/速率/schema]
   REG --> Q[jgb2.query.*]
   REG --> A[jgb2.action.*]
@@ -834,7 +834,7 @@ compose 的註解自己寫的是「**demo 建議** 45」——那是建議，不
 | `AGENT_WRITE_TOOLS_ENABLED` | true | `jgb2.action.*` 可見（AND stage） |
 | `AGENT_VERIFIER_MODE` | grounding_observe | 正式參數（DSP-040／W6-b3）：`enforce`（預設）／`grounding_observe`（引用類觀察、極性與機敏類照擋）／`observe_only`（全部觀察，只在 mock 允許、否則啟動 raise）。`grounding_observe`×非 mock ⇒ 健檢 `premise.red_flags` 記紅但不阻起 |
 | `AGENT_VERIFIER_OBSERVE_ONLY` | **已除役（2026-09-10）** | 舊相容旗；`app.py`／`health.py` 讀到即印警告要求改用 `AGENT_VERIFIER_MODE`，⛔ 不再參與解析（查證：`grep -n AGENT_VERIFIER_OBSERVE_ONLY rag-orchestrator/services/agent/health.py`） |
-| `AGENT_MODEL`／`AGENT_REASONING_EFFORT` | 線上 gpt-5-mini／low | 對話模型；量測建議 `gpt-5.6-luna`＋`AGENT_REASONING_EFFORT=none`（帶工具僅接受 `none`，`low`／`minimal` 400；三輪 lb2 11/10/12、p50 3.4–3.7s／p95 6.9–8.8s，優於 mini 同日對照 7/13、9.8/16.2s——帳本 §1s，尚未切線上） |
+| `AGENT_MODEL`／`AGENT_REASONING_EFFORT` | **`gpt-6-luna`＋`AGENT_REASONING_EFFORT=none`**（DSP-075，業主 2026-10-15 統一；新功能開發與驗收一律用此設定。正式機 `.env` 是否已切，未查證） | 對話模型。luna 系列帶工具只接受 `reasoning_effort=none`（`low`／`minimal` 回 400）。舊設定 `gpt-5-mini`／low 的模型 `gpt-5-mini-2025-08-07` 於 2026-12-11 停用；`AGENT_MODEL` 空白時回退 `OPENAI_MODEL`（本機 `.env` 為 `gpt-4o-mini`），部署務必明設。歷次量測見帳本 §1s 與 DSP-072 細節 |
 | `IMAGE_RECOGNITION_MODEL` | `gpt-5.6-terra`（線上已切，2026-09-09；備份 `.env.bak-20260909`） | 照片辨識；帳本 §1q：terra 與舊 4o 分類逐張相同，信心 0.93–0.98 vs 0.0–0.9，延遲 2.4–5.8s |
 | `DOCUMENT_EXTRACTION_MODEL` | 預設 `gpt-5.6-luna` | 文件歸納（W9）；合成收據／合約實測全對、抗注入、模糊圖全 null；每千頁 $1.76 vs gpt-4o $17.3 |
 | `OPENAI_TIMEOUT_S` | 線上 25（compose 透傳，commit `10c34a70`） | agent 每次模型呼叫 SDK 逾時＋預設重試，讓掛住的呼叫在門面 60s 內自救 |
@@ -902,5 +902,6 @@ compose 的註解自己寫的是「**demo 建議** 45」——那是建議，不
 | strict `json_schema` | 對話模型與文件歸納模型皆走 `response_format=json_schema strict` 原生支援（非二次解析） | `plan-document-summary-demo-20260909.md`（容器內 openai 1.54.0 驗證） |
 | `reasoning_effort` 值域 | `gpt-5.6-luna` 帶工具呼叫時僅接受 `reasoning_effort=none`；傳 `low`／`minimal` 回 400 | 帳本 §1s |
 | tools＋reasoning 相容性 | 工具定義（MCP facade 轉譯後的 schema）與 reasoning 參數同時傳入時不衝突；已用於 luna／terra／mini 三種模型對照 | 帳本 §1q、§1s |
+| `gpt-6-luna`（DSP-075 現行） | 帶工具時只接受 `reasoning_effort=none`；2026-10-15 站內幫手 S1-live（`/mcp` 實跑 16 回合）可用，引用過短偶致 `QUOTE_NOT_COVERING` | 站內幫手計畫 `.kiro/specs/agentic-mcp-orchestration/plan-assistant-11-items-20261014.md` §3e |
 
 ⚠️ 上表全部繫於實測樣本數（三輪 lb2、四張照片等），非窮舉；模型供應方行為變動時無自動偵測，靠下一輪 smoke 對照才會發現。

@@ -21,7 +21,7 @@ DIALOG_MAX_MESSAGES`）。本檔若去 import 那些模組的常數，會在
 test_agent_session_req.py` 另有一條「與各檔既有常數逐一相等」的正對照守著
 不讓兩邊漂移，⛔ 不是「重複了就沒事」。
 
-## 10 個鍵與六種生命週期（KEY_SPECS，封閉表）
+## 11 個鍵與六種生命週期（KEY_SPECS，封閉表；站內幫手 S3 加 `document_carry`）
 `turn`（每回合覆寫或回合內暫存）／`once`（一次性，用掉即清）／
 `until_scope_exit`（黏到 `scope_exit()`）／`fifo(n)`（FIFO 上限 n）／
 `stamp`（時間戳）／`session`（整個 session 累加，不受回合或範圍影響）。
@@ -66,6 +66,9 @@ COMPLETED_ACTIONS_KEY = "completed_actions"
 IMAGE_SUGGESTION_KEY = "image_suggestion"
 ESTATE_CARRY_KEY = "estate_carry"
 LAST_TURN_AT_KEY = "last_turn_at"
+#: 站內幫手 S3（§3h 第 2 點；DSP-076）：一次性的文件暫存——**本鍵的權威定義就在本檔**
+#: （`runtime.py` 由此 import，⛔ 另抄字面值）。
+DOCUMENT_CARRY_KEY = "document_carry"
 
 #: DSP-022：`dialog` 保留的訊息數上限（user＋assistant 各一則算 2；10 輪對話）。
 DIALOG_MAX_MESSAGES = 20
@@ -75,6 +78,10 @@ HANDOFF_CACHE_MAX = 50
 PENDING_CONFIRM_MAX = 20
 #: S2｜Plan batch3 §3、H3：`completed_actions` 的 FIFO 上限。
 COMPLETED_ACTIONS_MAX = 5
+#: 站內幫手 S3：`document_carry` 建立後最多活幾個回合（`turns` 達此值即清）。
+DOCUMENT_CARRY_MAX_TURNS = 5
+#: `document_carry` 的**封閉欄位**（DSP-076：⛔ 任何其他鍵、⛔ 使用者訊息或文件自由文字）。
+DOCUMENT_CARRY_FIELDS: tuple = ("action", "typed_fields", "receipt_date", "turns")
 
 KEY_SPECS: dict[str, KeySpec] = {
     DIALOG_KEY: KeySpec(DIALOG_KEY, Lifetime.FIFO, DIALOG_MAX_MESSAGES),
@@ -87,9 +94,12 @@ KEY_SPECS: dict[str, KeySpec] = {
     IMAGE_SUGGESTION_KEY: KeySpec(IMAGE_SUGGESTION_KEY, Lifetime.ONCE),
     ESTATE_CARRY_KEY: KeySpec(ESTATE_CARRY_KEY, Lifetime.UNTIL_SCOPE_EXIT),
     LAST_TURN_AT_KEY: KeySpec(LAST_TURN_AT_KEY, Lifetime.STAMP),
+    # 一次性（出卡即清；另加回合上限 `DOCUMENT_CARRY_MAX_TURNS`——同 `image_suggestion`
+    # 的 ONCE 語義，⛔ 不另開第七種生命週期）。
+    DOCUMENT_CARRY_KEY: KeySpec(DOCUMENT_CARRY_KEY, Lifetime.ONCE),
 }
 
-assert len(KEY_SPECS) == 10, "KEY_SPECS 是封閉表——10 個鍵，多一個少一個都要回頭對帳"
+assert len(KEY_SPECS) == 11, "KEY_SPECS 是封閉表——11 個鍵，多一個少一個都要回頭對帳"
 
 
 class AgentSession:
@@ -194,7 +204,8 @@ class AgentSession:
         self._trim_fifo_list(items, COMPLETED_ACTIONS_MAX)
         self._state[COMPLETED_ACTIONS_KEY] = items
 
-    # ── image_suggestion（一次性：任何 confirm.request 呼叫即清，新照片覆寫）──
+    # ── image_suggestion（一次性：**出卡**即清（站內幫手 S3：缺欄追問等失敗的
+    #    `confirm.request` ⛔ 消耗，「先追問再出卡」才附得到照片），新照片覆寫）──
     def get_image_suggestion(self) -> Optional[dict]:
         return self._state.get(IMAGE_SUGGESTION_KEY)
 
@@ -203,6 +214,43 @@ class AgentSession:
 
     def consume_image_suggestion(self) -> None:
         self._state.pop(IMAGE_SUGGESTION_KEY, None)
+
+    # ── document_carry（站內幫手 S3／DSP-076：一次性文件暫存）─────────────────
+    #    封閉四欄：`action`（動作名）、`typed_fields`（`[[欄位, 有型別值], …]`）、
+    #    `receipt_date`（`YYYY-MM-DD` 或 None，卡外提示）、`turns`（建立後經過的回合數）。
+    #    出卡即清、按取消清、下一個非本動作的 `confirm.request` 清、`turns` 達上限清。
+    #    ⚠️ 形狀驗證（動作與欄位值域）在 runtime 讀點，本類別只管落地與回合計數。
+    def get_document_carry(self) -> Optional[dict]:
+        carry = self._state.get(DOCUMENT_CARRY_KEY)
+        return carry if isinstance(carry, dict) else None
+
+    def write_document_carry(
+        self, action: str, typed_fields: list, receipt_date: Optional[str]
+    ) -> None:
+        """建立（或以新文件覆寫）暫存——`turns` 從 0 起算，⛔ 收任何其他鍵。"""
+        self._state[DOCUMENT_CARRY_KEY] = {
+            "action": action,
+            "typed_fields": [[k, v] for k, v in typed_fields],
+            "receipt_date": receipt_date,
+            "turns": 0,
+        }
+
+    def clear_document_carry(self) -> None:
+        self._state.pop(DOCUMENT_CARRY_KEY, None)
+
+    def tick_document_carry(self) -> None:
+        """回合結束 +1；達 `DOCUMENT_CARRY_MAX_TURNS` 或形狀不對（非整數）⇒ 清掉。"""
+        carry = self._state.get(DOCUMENT_CARRY_KEY)
+        if carry is None:
+            return
+        turns = carry.get("turns") if isinstance(carry, dict) else None
+        if isinstance(turns, bool) or not isinstance(turns, int) or turns < 0:
+            self.clear_document_carry()
+            return
+        if turns + 1 >= DOCUMENT_CARRY_MAX_TURNS:
+            self.clear_document_carry()
+            return
+        carry["turns"] = turns + 1
 
     # ── estate_carry（黏到 `scope_exit()`；釘住範圍時不寫，寫點在呼叫端判斷）──
     def get_estate_carry(self) -> Optional[dict]:
@@ -282,6 +330,8 @@ class AgentSession:
           回合 dialog 只寫程式摘要或卡文字）——呼叫端已經算好要寫哪一份。
         """
         self.write_last_ask_target(ask_target)
+        # 站內幫手 S3：`document_carry` 的回合計數（三個回合出口都經這裡，⛔ 另開寫點）。
+        self.tick_document_carry()
         if cache is not None and cache_key is not None and cache_entry is not None:
             cache[cache_key] = cache_entry
             self._trim_fifo_dict(cache, HANDOFF_CACHE_MAX)
@@ -331,6 +381,9 @@ __all__ = [
     "IMAGE_SUGGESTION_KEY",
     "ESTATE_CARRY_KEY",
     "LAST_TURN_AT_KEY",
+    "DOCUMENT_CARRY_KEY",
+    "DOCUMENT_CARRY_FIELDS",
+    "DOCUMENT_CARRY_MAX_TURNS",
     "DIALOG_MAX_MESSAGES",
     "HANDOFF_CACHE_MAX",
     "PENDING_CONFIRM_MAX",

@@ -106,7 +106,7 @@ JSON（`VendorChatResponse`，重點欄位）：
 "handoff": {
   "reason": "sensitive_no_grounding",   // no_grounding | sensitive_no_grounding | llm_mentioned_handoff | partial_grounding
   "fact_class": "customer_reference",   // customer_reference | pricing | contract_sla | compliance | security | feature | other
-  "channel": "line_official",           // 真人入口識別（對齊 jgb2 切片 2 LINE 官方帳號；可由設定覆寫）
+  "channel": "line_official",           // 真人入口識別碼；取值序＝DB 供給 > env `PRESALES_HANDOFF_CHANNEL` > 預設 `line_official`
   "message": "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"   // 與 answer 同句（固定文案）
 }
 ```

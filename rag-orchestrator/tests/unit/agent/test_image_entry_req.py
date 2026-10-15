@@ -1169,3 +1169,48 @@ def test_compress_image_delegates_to_downscale_image_byte_for_byte(monkeypatch):
                                          DEFAULT_COMPRESS_QUALITY)
     assert (w, h) == Image.open(BytesIO(compressed)).size
     assert fmt == "jpeg" and max(w, h) <= 1024
+
+
+# ════════════════════════════════════════════════════════════════════
+# 站內幫手 S3-live 修正 R1：`suggested_item` 是同一大類底下的葉節點 ⇒ 分類取葉名稱
+# （S3-live A7：床／椅子／沙發都被判成父節點「家具」、寫入 `item_id` 為空）
+# ════════════════════════════════════════════════════════════════════
+@pytest.mark.req(_REQ)
+async def test_same_parent_leaf_item_becomes_the_category(monkeypatch):
+    from services.agent.tools import action as action_tools
+
+    monkeypatch.setattr(F, "_image_fetch_one", FakeFetcher())
+    monkeypatch.setattr(F, "_image_recognize_batch", FakeRecognizer(
+        results=[_recognition(suggested_category="水電類", suggested_item="漏水")]))
+    turn, _ = await F.prepare_image_turn([_OK_URL], category_tree=_TREE)
+    assert turn.suggested_category == "漏水"
+    assert "「漏水」" in turn.facts
+    # 寫入端：同一支 `_resolve_category` 解成（大類 id, 葉 id）⇒ `item_id` 非空
+    assert action_tools._resolve_category(_TREE, turn.suggested_category) == (1, 11)
+    # 正對照：沒有細項 ⇒ 仍是大類（`item_id` 為空）
+    monkeypatch.setattr(F, "_image_recognize_batch", FakeRecognizer(
+        results=[_recognition(suggested_category="水電類")]))
+    parent, _ = await F.prepare_image_turn([_OK_URL], category_tree=_TREE)
+    assert parent.suggested_category == "水電類"
+    assert action_tools._resolve_category(_TREE, parent.suggested_category) == (1, None)
+
+
+@pytest.mark.req(_REQ)
+async def test_leaf_under_another_parent_keeps_the_parent(monkeypatch):
+    """「門鎖」在門窗類底下 ⇒ 水電類的照片 ⛔ 換大類，維持「水電類」。"""
+    monkeypatch.setattr(F, "_image_fetch_one", FakeFetcher())
+    monkeypatch.setattr(F, "_image_recognize_batch", FakeRecognizer(
+        results=[_recognition(suggested_category="水電類", suggested_item="門鎖")]))
+    turn, _ = await F.prepare_image_turn([_OK_URL], category_tree=_TREE)
+    assert turn.suggested_category == "水電類"
+
+
+@pytest.mark.req(_REQ)
+async def test_off_tree_item_keeps_the_parent(monkeypatch):
+    """細項不在樹上（⛔ 模糊比對：「漏水管」≠「漏水」）⇒ 維持大類。"""
+    monkeypatch.setattr(F, "_image_fetch_one", FakeFetcher())
+    for item in ("天花板", "漏水管", ""):
+        monkeypatch.setattr(F, "_image_recognize_batch", FakeRecognizer(
+            results=[_recognition(suggested_category="水電類", suggested_item=item)]))
+        turn, _ = await F.prepare_image_turn([_OK_URL], category_tree=_TREE)
+        assert turn.suggested_category == "水電類", item

@@ -69,6 +69,28 @@ class ToolCallRecord:
     #: 登記處以程式算出。select／confirm 兩段建構點只用預設值 `False`
     #: （那兩段本來就不會走 T2 的兩出口分流）。
     empty: bool = False
+    #: Plan 9.11 §2 D：這一筆工具結果是不是「真的查到可引用資料」。⚠️ **唯一
+    #: 計算點**是主 `registry.call` 路徑建 `ToolCallRecord` 處，純由 `ToolResult`
+    #: 算（`status=="ok" and not 撞保留id and any(p.citable and p.text.strip()
+    #: for p in tool_result.provenance)`，且與 `empty` 互斥——`empty` 優先）：
+    #: ⛔ 不查 registry、⛔ 不讀工具名，幻覺工具名（`NO_MATCH`）與測試替身一律
+    #: 落 `False`。其餘三個建構點（select／confirm／文件回合擋寫入）維持預設
+    #: `False`——那些回合不經 T2/V2/A 的出口分流，判不出來時往「沒查到可引用
+    #: 資料」這個可回復方向錯。
+    grounded: bool = False
+
+
+#: Plan 9.11 §2 D：`zero_lookup(turn)` ≔ 本回合每一筆紀錄都屬「other」類
+#: （轉人工具、槽位、導航清單、`kb.search` 摘要、`help.read` 不可引用頁…），
+#: 含零筆。四類優先序（互斥、窮盡）＝`failed`（`status!="ok"` 或撞保留 id）
+#: ＞`empty`＞`grounded`＞`other`；`grounded`／`empty` 都已在各自欄位算好，
+#: 撞保留 id 的**回合**只留在 `violations`（單一記錄不會有這個旗標，故在這裡
+#: 以回合層級的 `violations` 判斷，⛔ 不在 `ToolCallRecord` 上另開一欄）。
+#: T2／V2／A／`_apply_handoff_without_lookup` 四處共用同一支，⛔ 不各自重算。
+def zero_lookup(tool_calls: list, violations: list) -> bool:
+    if "tool_call_id_collides_with_reserved" in violations:
+        return False
+    return all(r.status == "ok" and not r.empty and not r.grounded for r in tool_calls)
 
 
 @dataclass
@@ -186,8 +208,9 @@ OUTCOME_EXPECTS: tuple = ("text", "choice", "button", "image", "file", "none")
 #: ⛔ 不得在別處另開一個判 `ask_target` 的 if——那就會有第二份「要傳檔的對象」
 #: 清單，而兩份清單只會各自演化。
 _ASK_TARGET_EXPECTS: dict = {"photo": "image", "document": "file"}
-#: `ref.type` 封閉值域（與 `select:<type>` 同源）。
-OUTCOME_REF_TYPES: tuple = ("repair", "bill", "contract")
+#: `ref.type` 封閉值域（與 `select:<type>` 同源）。站內幫手 S5（S5-16）加 `estate`
+#: （建立物件成功的單號）。
+OUTCOME_REF_TYPES: tuple = ("repair", "bill", "contract", "estate")
 
 
 def make_outcome(state: str, *, expects: str, action: Optional[str] = None,
@@ -225,15 +248,34 @@ def default_outcome(result: "TurnResult") -> dict:
     return make_outcome("answered", expects=attachment or ("choice" if has_choice else "text"))
 
 
+#: 站內幫手 S5（S5-15／S5-16）：寫入動作 → `(ref.type, receipt 的識別碼欄位)` 的封閉表。
+_RECEIPT_REF_KEYS: dict = {
+    "repair_create": ("repair", "repair_id"),
+    "bill_due_extend": ("bill", "bill_id"),
+    "estate_create": ("estate", "estate_id"),
+    "contract_create": ("contract", "contract_id"),
+    "manual_bill_create": ("bill", "bill_id"),
+}
+
+
 def receipt_ref(action: Optional[str], receipt: Any) -> Optional[dict]:
-    """receipt → `outcome.ref`（決定性；只認識兩個寫入動作的識別碼欄位）。"""
+    """receipt → `outcome.ref`（決定性；只認 `_RECEIPT_REF_KEYS` 表內動作的識別碼欄位）。
+
+    站內幫手 S5（S5-16）：識別碼一律過 `confirm_card.receipt_id_of` 的**形狀檢查**
+    （`[A-Za-z0-9_.:-]{1,64}`）——下游回來的自由文字 ⛔ 進 `outcome.ref`。
+    """
+    from services.agent.confirm_card import receipt_id_of   # 延遲匯入：避免模組載入順序耦合
+
     if not isinstance(receipt, dict):
         return None
-    if action == "repair_create" and receipt.get("repair_id"):
-        return {"type": "repair", "id": str(receipt["repair_id"])}
-    if action == "bill_due_extend" and receipt.get("bill_id"):
-        return {"type": "bill", "id": str(receipt["bill_id"])}
-    return None
+    spec = _RECEIPT_REF_KEYS.get(action or "")
+    if spec is None:
+        return None
+    ref_type, key = spec
+    ref_id = receipt_id_of({"id": receipt.get(key)})
+    if not ref_id:
+        return None
+    return {"type": ref_type, "id": ref_id}
 
 
 # ---------------------------------------------------------------------------

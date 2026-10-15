@@ -1006,6 +1006,19 @@ def _require_openai_key() -> None:
         )
 
 
+def _wire_outline_resolver(appmod: Any) -> None:
+    """補上 `app.state.outline_resolver`（`app._init_agent_runtime` 在 lifespan 裡設的同一式）。
+
+    ⚠️ 本工具不跑 lifespan ⇒ 不補的話 `kb.get("outline:*")` 經 `_mcp_deps.get_outline_resolver`
+    拿到 `None`，一律回 `NO_MATCH`——模型翻目錄的路徑在評估裡整條是死的，量到的是工具缺陷
+    （2026-09-24 S6 真回合實證：10 回合全部白跑）。已有 resolver 時 ⛔ 不覆寫。
+    """
+    if getattr(appmod.app.state, "outline_resolver", None) is None:
+        from services.agent import outline as outline_mod
+
+        appmod.app.state.outline_resolver = outline_mod.make_outline_resolver()
+
+
 async def build_real_runtime(
     *, attempt_sink: Optional[Any] = None, candidate_selector: Optional[Any] = None,
 ) -> _RealRuntimeHandle:
@@ -1036,6 +1049,7 @@ async def build_real_runtime(
     _require_openai_key()
 
     import app as appmod  # noqa: F401 — import 期建好 _mcp_registry／_mcp_kb_pool
+    _wire_outline_resolver(appmod)
     from services import llm_provider as llm_provider_mod
     from services.agent import bootstrap as bootstrap_mod
 

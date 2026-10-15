@@ -46,7 +46,15 @@ MAX_COMPLETED_ACTIONS = 5
 _REF_TYPE_LABEL: dict[str, str] = {
     "repair": "修繕單",
     "bill": "帳單",
+    # 站內幫手 S5（S5-15）：新建物件（只印名稱，見 `_NAME_ONLY_REF_TYPES`）。
+    # ⚠️ `contract` **刻意不加**：既有測試 `test_unknown_ref_type_is_not_rendered` 以它當
+    #    「表外型別」的正對照（該檔不在 S5 限定改法內）；合約的單號照舊不進記憶行（已列回報）。
+    "estate": "物件",
 }
+
+#: 業主 2026-10-15「印物件名稱，不印 id」：這些 `ref_type` 的使用者面文字只印名稱
+#: （`estate_id` 是內部值）；沒有名稱 ⇒ 那一筆不渲染。
+_NAME_ONLY_REF_TYPES: frozenset = frozenset({"estate"})
 
 #: 只有列在這張表的 action，記錄時才會從 receipt 多拿一個封閉值（到期日）
 #: 進來（鍵＝`services.agent.tools.action` 那支動作的 receipt 欄位名，
@@ -194,6 +202,11 @@ def completed_actions_line(items: Any, scope_estate_id: Optional[str]) -> str:
             continue
         estate_id = item.get("estate_id")
         if scope_estate_id is not None and estate_id != scope_estate_id:
+            continue
+        if ref_type in _NAME_ONLY_REF_TYPES:
+            name = item.get("estate_name")
+            if isinstance(name, str) and name:
+                parts.append(_sanitize_piece(f"{label}「{name}」"))
             continue
         due_date = item.get("due_date")
         if isinstance(due_date, str) and due_date:

@@ -415,6 +415,7 @@ def _state_with_repair_pending() -> dict:
         "payload": dict(_REPAIR_PAYLOAD),
         "card_sha256": sha256_hex(_REPAIR_CARD),
         "estate_id": "88",   # `_begin_pending_confirm` 存的封閉欄位（`_open_repairs_hint`）
+        "creator": {"user_id": None, "role_id": None},  # 站內幫手 S5（F1）：建立者鍵
     }}}}
 
 
@@ -516,6 +517,7 @@ async def test_confirmed_bill_due_extend_records_due_date_from_receipt(monkeypat
     state = {"agent": {PENDING_CONFIRM_KEY: {pid: {
         "action": "bill_due_extend", "payload": dict(payload),
         "card_sha256": sha256_hex(card),
+        "creator": {"user_id": None, "role_id": None},  # 站內幫手 S5（F1）：建立者鍵
     }}}}
 
     await rt.run_turn(_identity(), f"confirm_submit:{pid}", state)

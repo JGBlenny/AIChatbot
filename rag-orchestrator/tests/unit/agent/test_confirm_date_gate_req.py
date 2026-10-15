@@ -103,11 +103,34 @@ def _repair_create_payload(base: date) -> dict:
     return {"action": "repair_create", "estate_name": "信義好宅", "description": ""}
 
 
+def _estate_create_payload(base: date) -> dict:
+    """S2：建立物件沒有日期欄位（`base` 不用）。"""
+    return {"action": "estate_create", "title": "信義好宅", "city": "台北市",
+            "district": "信義區", "address": "松仁路1號", "use_for": "residential"}
+
+
+def _contract_create_payload(base: date) -> dict:
+    """S2：起訖日以 `base` 為起點（§3f 1c：這兩欄 ⛔ 標「不得早於今天」）。"""
+    return {"action": "contract_create", "estate_name": "信義好宅", "estate_id": 456,
+            "date_start": _ymd(base), "date_end": _ymd(base + timedelta(days=365)),
+            "rent": 20000, "to_user_phone": "0912345678"}
+
+
+def _manual_bill_create_payload(base: date) -> dict:
+    """S2：`date_expire` ＝ `base`（§3f 1c：標了 `not_before_today`）。"""
+    return {"action": "manual_bill_create", "contract_ref": "信義好宅合約", "contract_id": 678,
+            "title": "清潔費", "total": 1500, "date_expire": _ymd(base)}
+
+
 #: 每個 action 一份「日期都合法」的 payload 工廠。新增 action 時本檔會先紅，
 #: ⛔ 不讓「新動作沒人驗它的日期欄位」靜悄悄地過。
 _PAYLOAD_FACTORIES = {
     "bill_due_extend": _bill_due_extend_payload,
     "repair_create": _repair_create_payload,
+    # S2（plan-assistant-11-items §3f 1c，就緒審查 r1 B2）集合同步：三個新動作。
+    "estate_create": _estate_create_payload,
+    "contract_create": _contract_create_payload,
+    "manual_bill_create": _manual_bill_create_payload,
 }
 
 

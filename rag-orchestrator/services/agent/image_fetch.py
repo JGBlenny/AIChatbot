@@ -324,6 +324,8 @@ def _exp_is_expired(query: str, now: float) -> bool:
 
     沒有 `exp` ⇒ 不擋（relay 端仍會驗 `sig`）；`exp` 不是整數 ⇒ 當**過期**處理
     （形狀不對的簽章網址不該被抓，fail-closed）。
+    ⚠️ 這條「沒有 `exp` 不擋」**只適用豁免集合** `EXP_OPTIONAL_HOSTS`（見下方
+    `_exp_gate`）；白名單內其餘主機一律走 `_exp_required_gate`（F9／S3-6）。
     """
     values = parse_qs(query or "").get("exp")
     if not values:
@@ -333,6 +335,48 @@ def _exp_is_expired(query: str, now: float) -> bool:
     except (TypeError, ValueError):
         return True
     return exp <= now
+
+
+#: 站內幫手 S3（F9／S3-6，DSP-073）：**程式寫死**的 `exp` 豁免主機——只有它維持
+#: 「沒有 `exp` 不擋」的既有行為（line-bot 的 relay）。白名單內**其餘每一個**主機
+#: 都必帶 `exp`。⛔ 不由 env 決定：放寬這張表是「停下交裁」的事，同白名單本身。
+EXP_OPTIONAL_HOSTS: frozenset = frozenset({"relay.jgbsmart.com"})
+
+#: 必帶 `exp` 的主機上，`exp` 距現在的最長有效期（秒）。超過 ⇒ 擋（短期網址才收）。
+EXP_MAX_AHEAD_S = 900
+
+
+def _exp_required_gate(query: str, now: float) -> None:
+    """必帶 `exp` 主機的時戳預檢（fail-closed）；不過 ⇒ `ImageFetchError`。
+
+    缺、空值、出現不只一個 `exp` ⇒ `IMAGE_URL_NOT_ALLOWED`；不是整數或已過期 ⇒
+    `IMAGE_URL_EXPIRED`；`exp − now` 超過 `EXP_MAX_AHEAD_S` ⇒ `IMAGE_URL_NOT_ALLOWED`。
+    ⚠️ `keep_blank_values=True`：`exp=` 要算成「有一個空值」而不是「沒有」，
+    `exp=1&exp=` 也才數得出是兩個。⚠️ 仍然**只判時戳、⛔ 不是驗簽**（S9-4）。
+    """
+    values = parse_qs(query or "", keep_blank_values=True).get("exp")
+    if not values or len(values) != 1:
+        raise ImageFetchError(IMAGE_URL_NOT_ALLOWED)
+    raw = str(values[0]).strip()
+    if not raw:
+        raise ImageFetchError(IMAGE_URL_NOT_ALLOWED)
+    try:
+        exp = int(raw)
+    except (TypeError, ValueError):
+        raise ImageFetchError(IMAGE_URL_EXPIRED) from None
+    if exp <= now:
+        raise ImageFetchError(IMAGE_URL_EXPIRED)
+    if exp - now > EXP_MAX_AHEAD_S:
+        raise ImageFetchError(IMAGE_URL_NOT_ALLOWED)
+
+
+def _exp_gate(host: str, query: str, now: float) -> None:
+    """第④道閘：豁免主機走既有 `_exp_is_expired`（行為不變），其餘走必帶 `exp`。"""
+    if host in EXP_OPTIONAL_HOSTS:
+        if _exp_is_expired(query, now):
+            raise ImageFetchError(IMAGE_URL_EXPIRED)
+        return
+    _exp_required_gate(query, now)
 
 
 def validate_image_url(url: str, *, now: Optional[float] = None) -> str:
@@ -360,8 +404,7 @@ def validate_image_url(url: str, *, now: Optional[float] = None) -> str:
         raise ImageFetchError(IMAGE_URL_NOT_ALLOWED)
     if port not in (None, 443):
         raise ImageFetchError(IMAGE_URL_NOT_ALLOWED)
-    if _exp_is_expired(parsed.query, now):
-        raise ImageFetchError(IMAGE_URL_EXPIRED)
+    _exp_gate(host, parsed.query, now)
     for ip in resolve_host(host):
         if _ip_is_forbidden(ip):
             raise ImageFetchError(IMAGE_URL_NOT_ALLOWED)
@@ -445,6 +488,8 @@ __all__ = [
     "DEFAULT_IMAGE_URL_ALLOWLIST",
     "DOC_MAX_PAGES",
     "DOC_TOTAL_PAGES_MAX",
+    "EXP_MAX_AHEAD_S",
+    "EXP_OPTIONAL_HOSTS",
     "FILE_FORMAT_INVALID",
     "FILE_MAX_BYTES",
     "FILE_MAX_COUNT",

@@ -188,6 +188,9 @@ class McpRequestError(Exception):
 ERR_IDENTITY_MALFORMED = "IDENTITY_MALFORMED"
 ERR_IDENTITY_NO_VENDOR = "IDENTITY_MISSING_VENDOR_ID"
 ERR_IDENTITY_NO_SESSION = "IDENTITY_MISSING_SESSION_ID"
+#: 站內幫手 S5（S5-10，業主 2026-10-15「站內幫手的金鑰必帶 user_id，缺就拒」）：
+#: `AGENT_ASSISTANT_KEY_IDS` 列入的金鑰，`X-JGB-Identity` 缺 `user_id` ⇒ 400 這個碼。
+ERR_IDENTITY_NO_USER = "IDENTITY_MISSING_USER_ID"
 # 401
 ERR_API_KEY = "API_KEY_REQUIRED"
 # 403
@@ -349,6 +352,36 @@ def _normalize_target_user(raw: Any) -> str:
     return VendorKnowledgeRetrieverV2._effective_target_user(raw)
 
 
+#: 站內幫手 S5（S5-10）：哪幾把金鑰是「站內幫手」——env 逗號分隔整數 `api_key_id`
+#: （讀法比照 `IMAGE_URL_ALLOWLIST`）。**未設定或空字串 ⇒ 不對任何金鑰啟用**（保持既有
+#: 行為：同一服務還有 line-bot 等其他用戶端，全面 fail-closed 會打斷它們）；這把金鑰在
+#: 正式機必須設定（接口 A 部署前置）。含非整數 ⇒ `RuntimeError`（大聲失敗）。
+_ASSISTANT_KEY_IDS_ENV = "AGENT_ASSISTANT_KEY_IDS"
+
+#: `form_sessions.user_id` 對「沒有 user_id」存的字面值（`_agent_turn` 的 `start`）。
+#: 呼叫端帶這個字串當 user_id ⇒ 拒（否則匿名列與這位「使用者」會被當成同一人續用）。
+ANONYMOUS_USER_ID = "anonymous"
+
+
+def assistant_key_ids() -> frozenset:
+    """`AGENT_ASSISTANT_KEY_IDS` ⇒ `frozenset[int]`；未設／空 ⇒ 空集合；含非整數 ⇒ `RuntimeError`。"""
+    raw = os.getenv(_ASSISTANT_KEY_IDS_ENV)
+    if raw is None or not raw.strip():
+        return frozenset()
+    ids = set()
+    for part in raw.split(","):
+        token = part.strip()
+        if not token:
+            continue
+        if not token.isdigit():
+            # ⛔ 不印值本身（那是部署設定，但不必進 log）；印位置與規則即可。
+            raise RuntimeError(
+                f"{_ASSISTANT_KEY_IDS_ENV} 只能是逗號分隔的整數 api_key_id（含非整數項，拒絕啟動）"
+            )
+        ids.add(int(token))
+    return frozenset(ids)
+
+
 def _coerce_vendor_id(raw: Any) -> Optional[int]:
     """`vendor_id` 允許整數或整數字串；其餘（含 bool、浮點、空）視為缺。"""
     if isinstance(raw, bool) or raw is None:
@@ -435,12 +468,20 @@ async def parse_identity(
     def _opt_str(value: Any) -> Optional[str]:
         return value if isinstance(value, str) and value.strip() else None
 
+    user_id = _opt_str(payload.get("user_id"))
+    # S5（F1／S5-6）：字面 `anonymous` 是本系統替「沒有 user_id」存的值，⛔ 准呼叫端冒用。
+    if user_id is not None and user_id.strip() == ANONYMOUS_USER_ID:
+        raise McpRequestError(400, ERR_IDENTITY_MALFORMED)
+    # S5（S5-10）：站內幫手金鑰缺 user_id ⇒ 拒（其他金鑰的 pm 單證行為不變）。
+    if user_id is None and (key or {}).get("id") in assistant_key_ids():
+        raise McpRequestError(400, ERR_IDENTITY_NO_USER)
+
     return Identity(
         vendor_id=vendor_id,
         target_user=target_user,
         mode=mode,
         role_id=_opt_str(payload.get("role_id")),
-        user_id=_opt_str(payload.get("user_id")),
+        user_id=user_id,
         session_id=session_id.strip(),
         api_key_id=(key or {}).get("id"),
         # DSP-038-1／W1b：**唯一**把 `entry` 設成 `"mcp"` 的真身分建構點。
@@ -664,7 +705,7 @@ JGB2_EXTRA_PROPERTIES: dict[str, dict] = {
 #: ⛔ 只寫定義、⛔ 不寫例子（`feedback_no_special_case_fixes`）；表裡沒有的域
 #: description 逐位元不變（回退面＝把該域從這張表拿掉）。
 JGB2_DOMAIN_HINTS: dict[str, str] = {
-    "contracts": "keyword 是物件名稱或承租人名；帳單編號查不到合約，同戶合約先用該帳單的物件名稱查。",
+    "contracts": "keyword 是物件名稱或承租人名；帳單編號查不到合約，同戶合約先用該帳單的物件名稱查。問起訖日、到期日、月租、押金、狀態用 face「合約基本資料」。",
     "bills": "keyword 是物件名稱。",
 }
 
@@ -726,6 +767,19 @@ def image_budget_s() -> float:
     return min(IMAGE_MAX_BUDGET_S, agent_turn_timeout_s() / 2)
 
 
+#: 文件線（`prepare_document_turn`）的**總**時間預算上限（秒）。實際預算見 `document_budget_s()`。
+#: 站內幫手 S3-live 修正 R5：文件線原本共用照片線的 `image_budget_s()`（上限 15 秒），
+#: `AGENT_TURN_TIMEOUT_S=120` 時擷取仍只有約 14 秒；gpt-6-luna 以 `detail=high` 讀一張
+#: 收據會超過（S3-live A14_receipt-2「文件擷取逾時（14s）」）。文件頁數已封頂，上限另立。
+DOCUMENT_MAX_BUDGET_S = 45.0
+
+
+def document_budget_s() -> float:
+    """`min(DOCUMENT_MAX_BUDGET_S, agent_turn_timeout_s() / 2)`——上界同照片線是回合逾時的一半
+    （⛔ 不讓文件把整個回合的預算吃光；謄本的 DocuMind 另扣模型迴圈保留段）。"""
+    return min(DOCUMENT_MAX_BUDGET_S, agent_turn_timeout_s() / 2)
+
+
 async def _image_fetch_one(url: str, *, timeout_s: float):
     """抓一張（六道閘全在 `image_fetch` 裡）。**測試的注入點就是這個模組屬性**。"""
     return await image_fetch.fetch_image(url, timeout_s=timeout_s)
@@ -752,6 +806,8 @@ async def _image_recognize_batch(
 
     - `detail` 程式釘 `low`、`max_retries=1` 顯式（S9-7／S9-8）；
     - `max_images=None` ⇒ ⛔ 不套 REST 的 `[:3]` 截斷（S9-6）；
+    - `closed_schema=True`（站內幫手 S3-live 修正）：有分類樹 ⇒ strict json_schema，
+      `suggested_category`／`suggested_item` 只能是樹上逐字名稱（REST 路徑不帶、行為不變）；
     - 模型名走 `IMAGE_RECOGNITION_MODEL`（gpt-5 系列的參數差異由
       `image_recognition_service._completion_params` 處理，S9-16）；
     - `db_pool` 有給 ⇒ 成本進 `openai_cost_tracking`（`operation='image_recognition'`，
@@ -764,7 +820,7 @@ async def _image_recognize_batch(
     )
     return await service.analyze_images(
         data_urls, None, category_names, categories_tree, db_pool, None,
-        max_images=None, detail=IMAGE_DETAIL,
+        max_images=None, detail=IMAGE_DETAIL, closed_schema=True,
     )
 
 
@@ -792,6 +848,33 @@ def _resolve_tree_name(tree: Optional[list], name: Any) -> Optional[str]:
         return None
     cleaned = name.strip()
     return cleaned if action_tools._resolve_category(tree or [], cleaned) is not None else None
+
+
+def _same_parent_leaf(tree: Optional[list], category: Optional[str], item: Any) -> Optional[str]:
+    """`item` 是 `category`（已解析的大類名）底下的葉節點 ⇒ 回葉名稱；否則 `None`。
+
+    `category` 先經 `action._resolve_category` 確認命中**大類**（`item_id is None`），再在
+    **該大類自己的 `items`** 裡找名稱**完全相同**的葉（⛔ 模糊比對，同 `_resolve_tree_name`）。
+    別的大類底下的同名葉 ⇒ ⛔ 換大類，維持原判。最後再以 `_resolve_category(葉名)` 覆核
+    兌現端解得出葉節點（同名先撞到某個大類名 ⇒ 兌現端會解成大類，⛔ 上卡）。
+    """
+    from services.agent.tools import action as action_tools
+
+    if category is None or not isinstance(item, str) or not item.strip():
+        return None
+    name = item.strip()
+    parent = action_tools._resolve_category(tree or [], category)
+    if parent is None or parent[1] is not None:
+        return None
+    node = next((n for n in tree or [] if isinstance(n, dict) and n.get("id") == parent[0]
+                 and str(n.get("name") or "").strip() == category), None)
+    if node is None or not any(
+        isinstance(i, dict) and str(i.get("name") or "").strip() == name
+        for i in node.get("items") or []
+    ):
+        return None
+    hit = action_tools._resolve_category(tree or [], name)
+    return name if hit is not None and hit[0] == parent[0] and hit[1] is not None else None
 
 
 def _clamp_confidence(value: Any) -> float:
@@ -844,6 +927,12 @@ def _normalize_recognition(raw: Any, tree: Optional[list]) -> dict:
     """
     data = raw if isinstance(raw, dict) else {}
     category = _resolve_tree_name(tree, data.get("suggested_category"))
+    # 站內幫手 S3-live 修正 R1：`suggested_item` 恰是**同一個大類底下**的葉節點 ⇒ 分類取
+    # 葉名稱（S3-live A7：床／椅子／沙發都被判成父節點「家具」、`item_id` 為空）。
+    leaf = _same_parent_leaf(tree, category, data.get("suggested_item"))
+    parent = None
+    if leaf is not None:
+        parent, category = category, leaf
     others = []
     for name in data.get("secondary_damages") or []:
         resolved = _resolve_tree_name(tree, name)
@@ -856,6 +945,8 @@ def _normalize_recognition(raw: Any, tree: Optional[list]) -> dict:
         "damage_visible": bool(data.get("is_damage")),
         "confidence": _clamp_confidence(data.get("confidence")),
         "category": category,
+        # 分類換成葉節點時記下原大類：模型在建單參數自填大類時，runtime 據此換成葉節點。
+        "parent": parent,
         "others": others,
         "emergency": emergency,
         "item": _short_label(data.get("suggested_item")),
@@ -882,6 +973,26 @@ def _image_facts(
     # ⛔ 照片的文字描述**不提供**（S9-11）：明講一句，模型才不會自己編一段。
     lines.append("照片的文字描述不提供，需要問題描述請向使用者確認。")
     return "\n".join(lines)
+
+
+#: 站內幫手 S3（F10）：照片中繼資料的副檔名（依 magic bytes 判出的格式）。
+_PHOTO_EXT: dict = {"jpeg": "jpg", "png": "png", "webp": "webp"}
+
+
+def _photo_meta(original: bytes, fmt: str, index: int) -> dict:
+    """一張照片的中繼資料 `{filename, content_type, size, sha256}`（jgb2-req#22 提案形狀）。
+
+    ⚠️ `sha256`／`size` 取**原檔位元組**（使用者上傳的那一份），⛔ 不是縮圖：JGB 端
+    以上傳識別碼對檔時對的是原檔。檔名由程式產生（⛔ 不用網址或對方給的名字）。
+    """
+    import hashlib
+
+    return {
+        "filename": f"photo-{index}.{_PHOTO_EXT.get(fmt, fmt)}",
+        "content_type": f"image/{fmt}",
+        "size": len(original),
+        "sha256": hashlib.sha256(original).hexdigest(),
+    }
 
 
 async def prepare_image_turn(
@@ -916,6 +1027,9 @@ async def prepare_image_turn(
         return clock() - started
 
     pending: list = []          # 已縮圖的 base64 data URL（⛔ 不留原檔 bytes）
+    # 站內幫手 S3（F10／S3-5）：與 `pending` 一一對齊的照片中繼資料（⛔ 不含 bytes）。
+    pending_meta: list = []
+    photos: list = []           # 已完成辨識那幾批的中繼資料（進 `ImageTurnInput.photos`）
     batches_done = 0
     processed = 0
     failed = False
@@ -923,8 +1037,9 @@ async def prepare_image_turn(
     exhausted = False
 
     async def _flush() -> None:
-        nonlocal batches_done, processed, failed, pending
+        nonlocal batches_done, processed, failed, pending, pending_meta
         batch, pending = pending, []
+        batch_meta, pending_meta = pending_meta, []
         if not batch:
             return
         try:
@@ -939,6 +1054,7 @@ async def prepare_image_turn(
             return
         batches_done += 1
         processed += len(batch)
+        photos.extend(batch_meta)
         merged.append(_normalize_recognition(raw, category_tree))
 
     for url in image_urls:
@@ -955,11 +1071,15 @@ async def prepare_image_turn(
         pending.append(
             "data:image/" + fmt + ";base64," + base64.b64encode(downscaled).decode("ascii")
         )
+        # S3（F10／S3-5）：sha256 在抓檔與縮圖都成功**之後**、以**原檔位元組**計算；
+        # `content_type` 取 magic bytes 判出的格式（`fmt`），檔名由程式產生。
+        pending_meta.append(_photo_meta(fetched.data, fmt, len(photos) + len(pending_meta) + 1))
         del downscaled
         if len(pending) >= image_fetch.IMAGE_BATCH_SIZE:
             if _elapsed() >= budget:
                 exhausted = True
                 pending = []            # ⛔ 不送半批
+                pending_meta = []
                 break
             await _flush()
             if failed:
@@ -968,6 +1088,7 @@ async def prepare_image_turn(
         if _elapsed() >= budget:
             exhausted = True
             pending = []
+            pending_meta = []
         else:
             await _flush()
 
@@ -1013,8 +1134,10 @@ async def prepare_image_turn(
             suggested_category=category,
             suggested_emergency=emergency,
             suggested_item=best.get("item"),
+            suggested_parent_category=best.get("parent"),
             suggested_reason=best.get("reason"),
             suggested_description=best.get("description"),
+            photos=tuple(photos),
         ),
         elapsed,
     )
@@ -1129,17 +1252,24 @@ async def prepare_document_turn(
     from services.agent.document_extract import (
         DocumentPageLimitExceeded,
         DocumentTurnInput,
+        build_deed_facts,
         build_document_facts,
+        free_text_values,
         rasterize_pdf,
+        receipt_typed_fields,
     )
 
     started = clock()
-    budget = image_budget_s() if budget_s is None else budget_s
+    budget = document_budget_s() if budget_s is None else budget_s
 
     def _elapsed() -> float:
         return clock() - started
 
     pages: list = []            # 已縮圖／已渲染的 base64 data URL（⛔ 不留原 bytes）
+    # 站內幫手 S3（D3）：本回合**恰好 1 份附件**時才保留那一份的位元組（謄本要送
+    # DocuMind）；其他組合一律不留、謄本不送。⛔ 不落地、⛔ 不進任何紀錄。
+    one_attachment = (len(image_urls or []) + len(file_urls or [])) == 1
+    single_source: Optional[tuple] = None   # (bytes, "photo"|"pdf", pdf 頁數或 None)
     photo_requested = len(image_urls or [])
     pdf_pages_total = 0
     pdf_pages_kept = 0
@@ -1162,6 +1292,8 @@ async def prepare_document_turn(
             "data:image/" + fmt + ";base64," + base64.b64encode(downscaled).decode("ascii")
         )
         del downscaled
+        if one_attachment:
+            single_source = (fetched.data, "photo", None)
 
     # ── ② PDF 頁：抓檔 → 雙檢 → rasterize ──
     for url in file_urls or []:
@@ -1185,6 +1317,8 @@ async def prepare_document_turn(
             )
         except Exception:       # `DocumentRasterizeError` 等 ⇒ 丟棄該份
             continue
+        if one_attachment:
+            single_source = (fetched.data, "pdf", rasterized.pages_total)
         del fetched
         pdf_pages_total += rasterized.pages_total
         pdf_timed_out = pdf_timed_out or rasterized.timed_out
@@ -1227,7 +1361,17 @@ async def prepare_document_turn(
         result, usage, model = await _document_extract_pages(
             pages, timeout_s=max(1.0, budget - _elapsed()),
         )
-    except Exception:
+    except Exception as exc:
+        # 站內幫手 S3-live 修正 R5：擷取**逾時**歸 `timeout`（⛔ 講成 `failed`——同上方
+        # 「頁級／總時限命中」的理由：把逾時講成失敗會讓人以為換一份檔就好）。
+        # 只認封閉內部碼（`DocumentExtractionError.code`），⛔ 讀例外訊息。
+        if getattr(exc, "code", None) == "DOCUMENT_EXTRACTION_TIMEOUT":
+            return (
+                DocumentTurnInput(
+                    status="timeout", pages_seen=0, pages_total=pages_total
+                ),
+                _elapsed(),
+            )
         # ⛔ 例外物件不外流（訊息可能含 base64）；失敗一律可見：健檢＋violation。
         image_fetch.record_image_failure()
         return (
@@ -1241,16 +1385,101 @@ async def prepare_document_turn(
     facts = build_document_facts(result)
     pages_seen = len(pages)
     status = "ok" if (pages_seen >= pages_total and not pdf_timed_out) else "partial"
+    kind = result.get("kind")
+    # 站內幫手 S3（§3h 第 2～5 點）：會上卡的有型別值、卡外收據日期、本回合自由文字。
+    typed: tuple = ()
+    receipt_date = None
+    notice = None
+    if kind == "bill_receipt":
+        typed, receipt_date = receipt_typed_fields(result)
+    elif kind == "building_deed":
+        notice, typed = await _deed_typed_fields(
+            single_source, one_attachment=one_attachment, status=status,
+            elapsed=_elapsed(),
+        )
+        # D4：謄本回合給模型的資料段一律由程式以 `typed_fields` 組句（⛔ 取我方模型的
+        # `fields` 或 DocuMind 其他鍵）；有終止句時不進模型，資料段留空。
+        facts = "" if notice is not None else build_deed_facts(typed)
+    single_source = None
     return (
         DocumentTurnInput(
             status=status,
-            kind=result.get("kind"),
+            kind=kind,
             facts=facts,
             pages_seen=pages_seen,
             pages_total=pages_total,
+            typed_fields=typed,
+            receipt_date=receipt_date,
+            free_text=free_text_values(result),
+            notice=notice,
         ),
         _elapsed(),
     )
+
+
+#: 謄本回合給模型迴圈保留的秒數（D2）：DocuMind 的逾時＝回合剩餘預算扣掉這一段，
+#: 否則 DocuMind 吃光預算後模型迴圈必然 `TOOL_TIMEOUT`（整回合不存檔）。
+DOCUMIND_MODEL_LOOP_RESERVE_S = 20.0
+
+#: DocuMind 逾時下限（秒）：剩餘預算不到它 ⇒ 不送、直接「沒查成」。
+DOCUMIND_MIN_TIMEOUT_S = 1.0
+
+#: DocuMind 結果狀態 ⇒ 程式終止句代碼（`document_extract.DOCUMENT_NOTICE_TEXTS`）。
+_DEED_STATUS_NOTICE: dict = {
+    "not_deed": "deed_not_recognized",
+    "multiple": "deed_one_at_a_time",
+    "failed": "deed_failed",
+    "timeout": "deed_failed",
+    "disabled": "deed_unavailable",
+}
+
+
+async def _documind_analyze(data: bytes, *, timeout_s: float, pdf_pages, config):
+    """送 DocuMind（**測試的注入點就是這個模組屬性**，同 `_document_extract_pages`）。"""
+    from services import documind_client
+
+    return await documind_client.analyze_deed(
+        data, timeout_s=timeout_s, pdf_pages=pdf_pages, config=config,
+    )
+
+
+async def _deed_typed_fields(
+    source: Optional[tuple], *, one_attachment: bool, status: str, elapsed: float,
+) -> tuple:
+    """建物謄本 ⇒ `(notice, typed_fields)`；成功時 `notice=None`（§3h 第 4 點＋D1～D3）。
+
+    只在「本回合恰好 1 份附件、分類 `building_deed`、`status=="ok"`、PDF 頁數不超過
+    `DOC_MAX_PAGES`」才送；照片送**重新編碼、去 EXIF** 的 JPEG（⛔ 原始位元組）。
+    DocuMind 未設定（含設定不合 D1）⇒ 功能關閉、`deed_unavailable`。
+    """
+    from services import documind_client
+
+    if not one_attachment or source is None:
+        return ("deed_one_at_a_time" if not one_attachment else "deed_failed"), ()
+    data, source_kind, pdf_pages = source
+    if source_kind == "pdf" and isinstance(pdf_pages, int) and pdf_pages > image_fetch.doc_max_pages():
+        return "deed_one_at_a_time", ()
+    if status != "ok":
+        return "deed_failed", ()
+    config = documind_client.documind_config()
+    if config is None:
+        return "deed_unavailable", ()
+    if source_kind == "photo":
+        try:
+            data = documind_client.reencode_photo_jpeg(data)
+        except Exception as exc:      # noqa: BLE001 — 解不開／像素炸彈 ⇒ 不送
+            logger.warning("謄本照片重新編碼失敗：%s", type(exc).__name__)
+            return "deed_failed", ()
+    timeout_s = agent_turn_timeout_s() - elapsed - DOCUMIND_MODEL_LOOP_RESERVE_S
+    if timeout_s < DOCUMIND_MIN_TIMEOUT_S:
+        return "deed_failed", ()
+    result = await _documind_analyze(
+        data, timeout_s=timeout_s,
+        pdf_pages=pdf_pages if source_kind == "pdf" else None, config=config,
+    )
+    if result.status != "ok":
+        return _DEED_STATUS_NOTICE.get(result.status, "deed_failed"), ()
+    return None, result.typed_fields
 
 
 # ════════════════════════════════════════════════════════════════════
@@ -1454,6 +1683,27 @@ def namespaced_identity(identity: Identity) -> Identity:
     return dataclass_replace(identity, session_id=store.key(identity.session_id))
 
 
+def _session_owner_matches(row: Any, identity: Identity) -> bool:
+    """這一列 `form_sessions` 是不是這位 (user_id, role_id) 開的（F1／S5-4）。
+
+    比對 `form_sessions.user_id` 欄**與** `collected_data` 內的 `user_id`、`role_id`；
+    **位元組完全相等、⛔ 正規化**。identity 的 `user_id=None` 等同存檔值 `"anonymous"`
+    （匿名續匿名可續）；匿名與具名互換一律不符。形狀不對 ⇒ 不符（fail-closed）。
+    """
+    if not isinstance(row, dict):
+        return False
+    state = row.get("collected_data")
+    if not isinstance(state, dict):
+        return False
+    expected_user = identity.user_id if identity.user_id is not None else ANONYMOUS_USER_ID
+    column_user = row.get("user_id")
+    if not isinstance(column_user, str) or column_user != expected_user:
+        return False
+    if state.get("user_id") != expected_user:
+        return False
+    return state.get("role_id") == identity.role_id
+
+
 def _make_agent_turn(
     deps: FacadeDeps, repair_category_tree: Optional[Callable] = None
 ) -> Callable:
@@ -1561,7 +1811,18 @@ def _make_agent_turn(
         #    必須是**裸** `session_id`——⛔ 別改成 `turn_identity.session_id`，
         #    那會變成 `mcp:k:v:mcp:k:v:sid`（雙前綴，且超長時直接 ValueError）。
         session_id = identity.session_id
-        state = await store.load(session_id)
+        # 站內幫手 S5（§3i 第 3 點，F1／S5-3～S5-7）：載入時連**列 id 與建立者**一起取。
+        # 這一列的 (user_id, role_id) 與本次身分不同 ⇒ 先關舊列、再以新身分開新列
+        # （舊 dialog、pending、文件暫存、範圍全不帶入）。保證邊界：同一
+        # (api_key, vendor, session_id) 下身分不同就不續用；⛔ 防呼叫端冒用身分
+        # （DSP-011 信任在上游，依賴 F2「代理只呼叫 agent.turn」）。
+        row = await store.load_row(session_id)
+        state = row.get("collected_data") if isinstance(row, dict) else None
+        row_id = row.get("id") if isinstance(row, dict) else None
+        if state is not None and not _session_owner_matches(row, identity):
+            await store.close(session_id)
+            state = None
+            row_id = None
         # W8 (5)／DSP-042：同一把鍵隔太久再進 ⇒ **先把舊列關掉再開新列**。
         # ⚠️ 順序不得顛倒（S8-7）：先 `_start` 再 `_close` 會把剛開的新列一起
         # 關掉（`_close` 的 WHERE 只認 `session_id`＋`state='COLLECTING'`，
@@ -1583,6 +1844,11 @@ def _make_agent_turn(
                 identity.vendor_id,
                 identity.role_id,
             )
+            # S5（F1／S5-5）：新列的 id 以讀取方法取回，存檔一律綁這一列。
+            new_row = await store.load_row(session_id)
+            row_id = new_row.get("id") if isinstance(new_row, dict) else None
+            if row_id is None or not _session_owner_matches(new_row, identity):
+                return ToolResult(ok=False, error="NO_MATCH")      # fail-closed：綁不到列
 
         agent_state = state.setdefault("agent", {})
         # `Runtime._select_outline` 每回合直接從已註冊的正本現組候選節，
@@ -1673,7 +1939,7 @@ def _make_agent_turn(
         # W8 (5)：過期戳**在存檔前才蓋**——逾時／取消的回合走不到這裡，
         # 那一列的戳因此停在上一個真正跑完的回合，⛔ 不會被一次失敗的呼叫續命。
         stamp_last_turn(agent_state)
-        await store.save(session_id, state)
+        await store.save_row(row_id, state)
 
         return ToolResult(
             ok=True,
@@ -1717,8 +1983,10 @@ def build_registry(deps: FacadeDeps, registry: Optional[ToolRegistry] = None) ->
     from services.agent.tools import action as action_tools
     from services.agent.tools import help as help_tool
     from services.agent.tools import jgb2 as jgb2_tools
+    from services.agent.tools import jgb2_stats
     from services.agent.tools.confirm import (
         CONFIRM_SPEC,
+        OPEN_REPAIRS_NOT_FOUND_KEY,
         assert_redeemed,
         confirm_request,
     )
@@ -1743,6 +2011,10 @@ def build_registry(deps: FacadeDeps, registry: Optional[ToolRegistry] = None) ->
     # 「這個行程啟動時的 env」與「現在的 env」在兩處各說各話。兩種來源都 fail-closed
     # （未設 ⇒ False），⛔ 不因此放寬任何一道閘。
     reg = registry if registry is not None else ToolRegistry()
+
+    # 站內幫手 S5（S5-10）：`AGENT_ASSISTANT_KEY_IDS` 含非整數 ⇒ **啟動即炸**（大聲失敗、
+    # 印原因）。`app.py` 在 import 期呼叫本函式，故這裡就是啟動期。
+    assistant_key_ids()
 
     # ── 寫入型工具的確認兌現查核（S-9）：set-once 綁在 registry 上 ──────────
     # ⚠️ pool 走 **getter**（同 `_kb_get`／`_help_read` 的理由：pool 要到 lifespan
@@ -1818,9 +2090,27 @@ def build_registry(deps: FacadeDeps, registry: Optional[ToolRegistry] = None) ->
         if not isinstance(estate_name, str) or not estate_name.strip():
             return None
         api = jgb2_tools._get_api()
-        rows = jgb2_tools._rows_of(
-            await api.get_estate_status(role_id=role_id, keyword=estate_name)
+        # 站內幫手 S5（A3(a)、S5-8）：物件以**這位成員看得到的**範圍解析（viewer）。
+        resp = await api.get_estate_status(
+            role_id=role_id, keyword=estate_name,
+            viewer_user_id=getattr(identity, "user_id", None),
         )
+        # 站內幫手 S5 修正輪（DSP-074；業主同日多語意實測：990002 對看不到的 22491 仍出卡，
+        # 3／3 重現）：三種結果分開——
+        #   沒查成（上游失敗，`upstream_failed`）⇒ 回 None：照既有 W8 (xv)「解析不出照常出卡、
+        #     兌現端再擋」（兌現端 `action.repair_create` 同樣帶 viewer 解析，必 `NO_MATCH`）；
+        #   查無（上游成功、**帶 viewer** 零命中——sentinel `found:false` 不算一列）⇒ 回
+        #     `{"not_found": True}`，`confirm.request` 回查無固定句、⛔ 出卡；
+        #   有列但判不出唯一一列（多筆）⇒ 回 None（那不是查無，照舊出卡）。
+        # ⚠️ 沒帶 viewer（`user_id` 缺）⇒ ⛔ 下查無結論（那是全團隊範圍，不是這位成員的範圍），
+        #    照舊回 None。
+        if jgb2_tools.upstream_failed(resp):
+            return None
+        rows = jgb2_tools._rows_of(resp)
+        if getattr(identity, "user_id", None) and not [
+            r for r in rows if isinstance(r, dict) and r.get("found") is not False
+        ]:
+            return {OPEN_REPAIRS_NOT_FOUND_KEY: True}
         # 與 `action.repair_create` **逐字同形**：判不出唯一一列就回 None，
         # ⛔ 不挑第一筆（挑錯物件的提示行比沒有提示行更糟）。
         estate = action_tools._resolve_estate(rows, estate_name)
@@ -1858,7 +2148,11 @@ def build_registry(deps: FacadeDeps, registry: Optional[ToolRegistry] = None) ->
     #    多一個 API 的呼叫點。取不到（例外／空）⇒ 回 `None` ⇒ 分類一律缺值、
     #    ⛔ 不回候選（卡上 `UNSPECIFIED_CATEGORY_ZH`）。
     async def _repair_category_tree(identity: Identity) -> Optional[list]:
-        rows = jgb2_tools._rows_of(await jgb2_tools._get_api().get_repair_categories())
+        # 站內幫手 S5（A3(a)、S5-9 無豁免）：分類樹查詢同樣帶 role＋viewer。
+        rows = jgb2_tools._rows_of(await jgb2_tools._get_api().get_repair_categories(
+            role_id=getattr(identity, "role_id", None),
+            viewer_user_id=getattr(identity, "user_id", None),
+        ))
         return rows or None
 
     async def _confirm_request(identity: Identity, args: dict) -> ToolResult:
@@ -1901,6 +2195,19 @@ def build_registry(deps: FacadeDeps, registry: Optional[ToolRegistry] = None) ->
             ),
             _make(),
         )
+
+    # ── 站內幫手 S1：`jgb2.stats.*` 三支唯讀統計／清單工具（DSP-074；jgb2-req#16～#18）──
+    # scope="read"、stage 同 `jgb2.query.*`（tenant 缺鍵＝不可見）。身分雙證與 F7 固定句在
+    # `tools/jgb2_stats.py`；這裡只做薄接線（同上面的 jgb2.query.* 迴圈）。
+    for stats_spec, stats_fn in jgb2_stats.STATS_SPECS:
+
+        def _make_stats(fn=stats_fn):
+            async def _stats(identity: Identity, args: dict) -> ToolResult:
+                return _as_tool_result(await fn(identity, args))
+
+            return _stats
+
+        reg.register(stats_spec, _make_stats())
 
     # ── W4：寫入型工具 `jgb2.action.*` ────────────────────────────────────
     # ⚠️ **一律註冊**，可見性交給 `specs_for` 的兩道閘（入口 `entry=="mcp"` ＋

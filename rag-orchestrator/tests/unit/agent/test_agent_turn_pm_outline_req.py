@@ -289,9 +289,23 @@ class _FakeEngine:
         return None
 
     async def start(self, *a, **k):
+        # 站內幫手 S5（F1）：記下這一列的建立者，供下方新增的讀取方法回列 id。
+        self._started = {"id": 1, "user_id": a[1] if len(a) > 1 else None,
+                         "collected_data": {"user_id": a[1] if len(a) > 1 else None,
+                                            "role_id": k.get("role_id")}}
         return {}
 
     async def save(self, *a, **k):
+        return None
+
+    # 站內幫手 S5（F1）：替身補上新增的讀取／依列 id 寫入方法（與 close）。
+    async def get_state_row(self, session_id):
+        return getattr(self, "_started", None)
+
+    async def save_by_id(self, *a, **k):
+        return None
+
+    async def close(self, *a, **k):
         return None
 
 

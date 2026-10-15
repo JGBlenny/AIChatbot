@@ -38,6 +38,7 @@ from services.agent.agent_session import (
     COMPLETED_ACTIONS_MAX,
     DIALOG_KEY,
     DIALOG_MAX_MESSAGES,
+    DOCUMENT_CARRY_KEY,
     ESTATE_CARRY_KEY,
     FIXED_STREAK_KEY,
     HANDOFF_CACHE_KEY,
@@ -64,12 +65,12 @@ _REQ = "knowledge-outline-and-intent-architecture:R3"
 # ---------------------------------------------------------------------------
 @pytest.mark.req(_REQ)
 def test_key_specs_covers_exactly_ten_keys():
-    assert len(KEY_SPECS) == 10
+    assert len(KEY_SPECS) == 11
     assert set(KEY_SPECS) == {
         DIALOG_KEY, HANDOFF_CACHE_KEY, FIXED_STREAK_KEY,
         PENDING_CONFIRM_KEY, SELECT_SCOPE_KEY, LAST_ASK_TARGET_KEY,
         COMPLETED_ACTIONS_KEY, IMAGE_SUGGESTION_KEY, ESTATE_CARRY_KEY,
-        LAST_TURN_AT_KEY,
+        LAST_TURN_AT_KEY, DOCUMENT_CARRY_KEY,
     }
 
 

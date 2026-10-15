@@ -328,10 +328,10 @@ MCP 工具結果是一次回完的，**首字＝整段完成**（決策 15 明�
 
 ### 每小時上限
 
-`AGENT_TURN_CAP`（預設 **120 次／小時**），計數 key 是 **`(api_key_id, vendor_id)`**
+`LIMITS.turns_per_hour`（DSP-045 封閉表，預設 **1200 次／小時**；⛔ 不再讀 `AGENT_TURN_CAP` env），計數 key 是 **`(api_key_id, vendor_id)`**
 ——⛔ 換 `session_id` 不會重置。超過回 `RATE_LIMITED`。
 ⚠️ 這個計數器是**行程內記憶體**，多 worker 部署時實際上限是
-`AGENT_TURN_CAP × worker 數`（與既有的 `RATE_PER_MIN`／`KB_GET_CAP` 同一個限制）。
+`turns_per_hour × worker 數`（與既有的 `RATE_PER_MIN`／`KB_GET_CAP` 同一個限制）。
 真正的花費控制在額度層（`usage_events`），這裡只是護欄。
 
 ### 回切開關 `AGENT_TURN_ENABLED`
@@ -396,7 +396,7 @@ DSP-011 成立的前提是「`/mcp` 只有上游／內部呼叫者」。以下�
 ## 10. env 一覽（部署參考；完整版含查證指令見 `docs/deployment-runbook.md` §19-5）
 
 本文件 §5–§7.1 已就地說明 `MCP_ALLOWED_ORIGINS`／`RATE_PER_MIN`／`KB_GET_CAP`／
-`AGENT_TURN_ENABLED`／`AGENT_TURN_TIMEOUT_S`／`AGENT_TURN_CAP` 各自的行為；
+`AGENT_TURN_ENABLED`／`AGENT_TURN_TIMEOUT_S` 與每小時上限（`LIMITS.turns_per_hour`）各自的行為；
 以下補齊與 `/mcp` 相關、但分散在其他模組（大綱組裝、影子、身分/追蹤）的其餘 env，
 彙整成一張表方便部署時查閱：
 

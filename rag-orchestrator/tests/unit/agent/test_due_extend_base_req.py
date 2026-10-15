@@ -146,6 +146,7 @@ def _pending_state(card: str, payload: dict) -> dict:
         "action": "bill_due_extend",
         "payload": dict(payload),
         "card_sha256": sha256_hex(card),
+        "creator": {"user_id": _USER, "role_id": _ROLE},  # 站內幫手 S5（F1）：建立者鍵
     }}}}
 
 

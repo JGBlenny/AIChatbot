@@ -16,7 +16,9 @@
 句子，覆蓋檢查照樣可能過）。故本檔只有一個切法函式，兩側都只准呼叫它
 （r13 F-B；`tests/unit/agent/test_prompt_assembler_req.py` 有兩側對齊測試）。
 
-切法本身 ⛔ 不在本檔重寫：直接用 `services.agent.verifier.split_sentences`
+切法 `split_sentences`／`_split_sentences` **定義在本檔**，`verifier.py` 從這裡 import
+（⚠️ 2026-09-12 更正：本段原寫「直接用 `services.agent.verifier.split_sentences`」，
+ **依賴方向寫反了**，架構文照抄了這個錯）
 ——Verifier 步②把模型的一筆拆成片段用的也是它，三處同一把尺。
 """
 from __future__ import annotations

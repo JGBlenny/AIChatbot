@@ -1,4 +1,8 @@
-"""`jgb2.query.<domain>` 五域工具（spec agentic-mcp-orchestration・任務 1.5）。
+"""`jgb2.query.<domain>` **六域**工具（spec agentic-mcp-orchestration・任務 1.5）。
+
+⚠️ 2026-09-12 更正：本檔頭原寫「五域」，實際是六支 `query_*`（bills／contracts／
+estates／meters／repairs／accounts）與六張 `*_FACE_BUILDERS`。
+查證：`grep -c "^async def query_" rag-orchestrator/services/agent/tools/jgb2.py`。
 
 契約基準：`.kiro/specs/agentic-mcp-orchestration/design.md` 元件 3
 （`jgb2.query.<domain>` 列、域映射表、`FACE_BUILDER_REGISTRIES` 表）。
@@ -92,7 +96,56 @@ def _get_api() -> JGBSystemAPI:
 
 # ── 回傳外殼 ────────────────────────────────────────────────────────────────
 def _no_match() -> dict[str, Any]:
+    """「沒查成」（上游失敗、缺身分…）與其他不給理由的 `NO_MATCH`——⛔ 不附任何句子。"""
     return {"ok": False, "error": "NO_MATCH"}
+
+
+# 站內幫手 S5（§3i 第 2 點，A1／A3(b)、S5-1／S5-2／S5-19）：**查無**與**沒查成**分開。
+#   查無＝上游真的查過：`success:true` 且空列，或 `success:false` 且狀態碼 403／404
+#   （兩者同一句——無權與不存在 ⛔ 細分，否則等於揭露「這筆存在但你看不到」）；
+#   回 `NO_MATCH`＋**可引用**的固定句（`NOT_FOUND_TEXT`，以 `NOT_FOUND_SOURCE` 標記）。
+#   沒查成＝其餘一切失敗 ⇒ `_no_match()`（⛔ 附句子：沒查過就 ⛔ 說查不到）。
+#: ⚠️ 文字與 `runtime.PRE_LOOKUP_NOT_FOUND_TEXT` **逐字相同**（同一件事同一句；單元測試互證）。
+NOT_FOUND_TEXT = "系統裡查不到這個編號或名稱。"
+#: 查無固定句的 provenance 來源——前置查詢只把**帶這個標記**的 `NO_MATCH` 判成查無。
+NOT_FOUND_SOURCE = "jgb2:not_found#1"
+#: 上游回 `success:false` 時，算「查無」的狀態碼（其餘一律「沒查成」）。
+NOT_FOUND_CODES: frozenset = frozenset({403, 404})
+
+
+def _not_found() -> dict[str, Any]:
+    return {
+        "ok": False,
+        "error": "NO_MATCH",
+        "provenance": [{"source": NOT_FOUND_SOURCE, "text": NOT_FOUND_TEXT, "citable": True}],
+        "text_for_model": NOT_FOUND_TEXT,
+    }
+
+
+class UpstreamFailure(Exception):
+    """上游「沒查成」（`success:false` 且狀態碼不是 403／404、或回應形狀不對）。
+
+    ⛔ 不帶任何訊息（呼叫端只需要知道「沒查成」這件事）。各查詢工具接住它回 `_no_match()`。
+    """
+
+
+def upstream_failed(resp: Any) -> bool:
+    """`resp` 是「沒查成」嗎（S5-1）。`success:true` ⇒ 否；`success:false` 且碼 403／404 ⇒ 否
+    （那是查無）；其餘（含沒有碼、500、形狀不對）⇒ 是。"""
+    if not isinstance(resp, dict):
+        return True
+    if resp.get("success"):
+        return False
+    error = resp.get("error")
+    code = error.get("code") if isinstance(error, dict) else None
+    return not (isinstance(code, int) and not isinstance(code, bool) and code in NOT_FOUND_CODES)
+
+
+def _rows_checked(resp: Any) -> list[dict[str, Any]]:
+    """`_rows_of` 的 S5 版：沒查成 ⇒ `UpstreamFailure`；查無（含 403／404）⇒ 空列。"""
+    if upstream_failed(resp):
+        raise UpstreamFailure()
+    return _rows_of(resp)
 
 
 def _invalid_input() -> dict[str, Any]:
@@ -287,7 +340,8 @@ def _finish_generic(domain: str, tag_hint: str, builder: Callable[[dict, str], s
                     status: str, rows: list[dict[str, Any]], cap: int,
                     query: Optional[str] = None) -> dict[str, Any]:
     if status == "empty":
-        return _no_match()
+        # S5：帶明確 ref／keyword 的查詢「查過、沒有」⇒ 查無固定句；無條件列表的空集合照舊。
+        return _not_found() if query else _no_match()
     if status == "single":
         row = rows[0]
         facts = builder(row, "")
@@ -319,18 +373,21 @@ async def query_bills(identity: Any, args: dict[str, Any]) -> dict[str, Any]:
     async def fetch(q: Optional[str]) -> list[dict[str, Any]]:
         resp = await api.get_bills(role_id=role_id, user_id=user_id,
                                     viewer_user_id=user_id, bill_ref=q)
-        return _rows_of(resp)
+        return _rows_checked(resp)
 
     async def fetch_keyword(k: str) -> list[dict[str, Any]]:
         # 口語指涉（「8 月租金」「信義區那戶」）走 keyword（jgb2 `title LIKE`），⛔ 不當 bill_ref 送
         resp = await api.get_bills(role_id=role_id, user_id=user_id,
                                     viewer_user_id=user_id, keyword=k)
-        return _rows_of(resp)
+        return _rows_checked(resp)
 
     cap = _candidate_cap()
     ref, keyword = args.get("ref"), args.get("keyword")
-    status, rows = await _resolve(ref, keyword, cap, fetch_ref=fetch,
-                                  fetch_keyword=fetch_keyword, fetch_default=fetch)
+    try:
+        status, rows = await _resolve(ref, keyword, cap, fetch_ref=fetch,
+                                      fetch_keyword=fetch_keyword, fetch_default=fetch)
+    except UpstreamFailure:
+        return _no_match()
     return _finish_generic("bills", face, builder, status, rows, cap, query=ref or keyword)
 
 
@@ -350,21 +407,24 @@ async def query_contracts(identity: Any, args: dict[str, Any]) -> dict[str, Any]
     async def fetch_ref(r: str) -> list[dict[str, Any]]:
         resp = await api.get_contracts(role_id=role_id, contract_ids=r,
                                         viewer_user_id=user_id)
-        return _rows_of(resp)
+        return _rows_checked(resp)
 
     async def fetch_keyword(k: str) -> list[dict[str, Any]]:
         resp = await api.get_contracts(role_id=role_id, keyword=k,
                                         viewer_user_id=user_id)
-        return _rows_of(resp)
+        return _rows_checked(resp)
 
     async def fetch_default(_: Optional[str]) -> list[dict[str, Any]]:
         resp = await api.get_contracts(role_id=role_id, viewer_user_id=user_id)
-        return _rows_of(resp)
+        return _rows_checked(resp)
 
     cap = _candidate_cap()
     ref, keyword = args.get("ref"), args.get("keyword")
-    status, rows = await _resolve(ref, keyword, cap, fetch_ref=fetch_ref,
-                                  fetch_keyword=fetch_keyword, fetch_default=fetch_default)
+    try:
+        status, rows = await _resolve(ref, keyword, cap, fetch_ref=fetch_ref,
+                                      fetch_keyword=fetch_keyword, fetch_default=fetch_default)
+    except UpstreamFailure:
+        return _no_match()
     return _finish_generic("contracts", face, builder, status, rows, cap, query=ref or keyword)
 
 
@@ -382,12 +442,15 @@ async def query_meters(identity: Any, args: dict[str, Any]) -> dict[str, Any]:
     api = _get_api()
 
     async def fetch(q: Optional[str]) -> list[dict[str, Any]]:
-        resp = await api.get_meters(role_id=role_id, keyword=q)
-        return _rows_of(resp)
+        resp = await api.get_meters(role_id=role_id, keyword=q, viewer_user_id=user_id)
+        return _rows_checked(resp)
 
     cap = _candidate_cap()
     ref, keyword = args.get("ref"), args.get("keyword")
-    status, rows = await _resolve(ref, keyword, cap, fetch_ref=fetch)
+    try:
+        status, rows = await _resolve(ref, keyword, cap, fetch_ref=fetch)
+    except UpstreamFailure:
+        return _no_match()
     return _finish_generic("meters", face, builder, status, rows, cap, query=ref or keyword)
 
 
@@ -413,11 +476,19 @@ async def query_accounts(identity: Any, args: dict[str, Any]) -> dict[str, Any]:
     ref = args.get("ref")
     keyword = args.get("keyword")
 
+    # DSP-074／jgb2-req#24：兩個帳號查詢都帶 viewer（user_id），結果限於該成員可見的帳號。
     if ref:
-        perm_resp = await api.get_member_permissions(role_id=role_id, user_id=str(ref))
+        # S5（S5-11）：`ref` 會被組進路徑段（`/roles/{role}/members/{ref}/permissions`）⇒
+        # 組路徑前只收純數字（⛔ 讓 `../`、`?`、`/` 之類的字串改寫請求路徑）。
+        if not str(ref).isdigit():
+            return _invalid_input()
+        perm_resp = await api.get_member_permissions(
+            role_id=role_id, user_id=str(ref), viewer_user_id=user_id)
+        if upstream_failed(perm_resp):
+            return _no_match()
         perm_rows = _rows_of(perm_resp)
         if not perm_rows:
-            return _no_match()
+            return _not_found()
         perm = perm_rows[0]
         member = dict(perm)
         member["permissions"] = perm_rows
@@ -425,10 +496,13 @@ async def query_accounts(identity: Any, args: dict[str, Any]) -> dict[str, Any]:
         return _ok_single("accounts", str(ref), facts, cap)
 
     if keyword:
-        members_resp = await api.get_team_members(role_id=role_id, keyword=keyword)
+        members_resp = await api.get_team_members(
+            role_id=role_id, keyword=keyword, viewer_user_id=user_id)
+        if upstream_failed(members_resp):
+            return _no_match()
         rows = _rows_of(members_resp)
         if not rows:
-            return _no_match()
+            return _not_found()
         if len(rows) <= cap:
             return _ok_candidates("accounts", face, rows, cap, True, query=keyword)
         return _ok_candidates("accounts", face, rows[:cap], cap, False, query=keyword)
@@ -458,10 +532,13 @@ async def query_estates(identity: Any, args: dict[str, Any]) -> dict[str, Any]:
         # estates 無預設列表（同 accounts／meters：ref／keyword 皆無 ⇒ NO_MATCH）
         return _no_match()
 
-    status_resp = await api.get_estate_status(role_id=role_id, keyword=q)
+    # DSP-074／jgb2-req#24：帶 viewer（user_id），物件限於該成員可見範圍。
+    status_resp = await api.get_estate_status(role_id=role_id, keyword=q, viewer_user_id=user_id)
+    if upstream_failed(status_resp):
+        return _no_match()
     rows = _rows_of(status_resp)
     if not rows:
-        return _no_match()
+        return _not_found()
 
     # sentinel（{"found": False,...}）＝ wrapper 查無，語意上零命中，但 builder
     # 對它有既定的「非刊登中」決定性措辭（estates.py:build_estate_status_facts）——
@@ -475,7 +552,9 @@ async def query_estates(identity: Any, args: dict[str, Any]) -> dict[str, Any]:
         estate_id = row.get("id")
         detail = None
         if not sentinel and estate_id is not None:
-            detail_resp = await api.get_estate_detail(estate_id=estate_id)
+            # S5（S5-8）：單筆深查同樣帶 role＋viewer（原本連 role_id 都沒送）。
+            detail_resp = await api.get_estate_detail(
+                estate_id=estate_id, role_id=role_id, viewer_user_id=user_id)
             detail_rows = _rows_of(detail_resp)
             detail = detail_rows[0] if detail_rows else None
         facts = builder(row, detail, "")
@@ -526,8 +605,10 @@ async def query_repairs(identity: Any, args: dict[str, Any]) -> dict[str, Any]:
         return _invalid_input()
 
     async def fetch_all() -> list[dict[str, Any]]:
-        resp = await api.get_repairs(role_id=role_id, user_id=user_id, estate_id=estate_id)
-        return _rows_of(resp)
+        # DSP-074／jgb2-req#24：另帶 viewer_user_id，修繕單限於該成員可見範圍。
+        resp = await api.get_repairs(role_id=role_id, user_id=user_id, estate_id=estate_id,
+                                     viewer_user_id=user_id)
+        return _rows_checked(resp)
 
     async def fetch_ref(r: str) -> list[dict[str, Any]]:
         rows = await fetch_all()
@@ -547,6 +628,9 @@ async def query_repairs(identity: Any, args: dict[str, Any]) -> dict[str, Any]:
 
     cap = _candidate_cap()
     ref, keyword = args.get("ref"), args.get("keyword")
-    status, rows = await _resolve(ref, keyword, cap, fetch_ref=fetch_ref,
-                                  fetch_keyword=fetch_keyword, fetch_default=fetch_default)
+    try:
+        status, rows = await _resolve(ref, keyword, cap, fetch_ref=fetch_ref,
+                                      fetch_keyword=fetch_keyword, fetch_default=fetch_default)
+    except UpstreamFailure:
+        return _no_match()
     return _finish_generic("repairs", face, builder, status, rows, cap, query=ref or keyword)

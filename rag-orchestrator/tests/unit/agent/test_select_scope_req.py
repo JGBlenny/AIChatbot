@@ -850,13 +850,14 @@ async def test_repair_create_for_another_estate_never_creates_a_pending(fake_api
 
 @pytest.mark.req(_REQ)
 async def test_repair_create_with_an_unresolvable_estate_still_shows_the_card(fake_api):
-    """(xv)：`estate_id` 為 `None`（解析不出物件）⇒ **放行**——執行時同一支
-    `_resolve_estate` 必 `NO_MATCH`，跨戶寫入不可能發生。"""
+    """(xv)（站內幫手 S5 §3i 第 4 點，S5-12 刻意的行為變更）：釘住範圍下 `estate_id` 為
+    `None`（解析不出物件）⇒ **擋**（fail-closed）——拿不到「這張卡是哪一戶」的證據時
+    ⛔ 放行，不再只靠兌現端 `NO_MATCH` 兜底。"""
     from services.agent.runtime import PENDING_CONFIRM_KEY
 
     result, state, _ = await _run_confirm(_repair_confirm_result(None), _BILL_E1["id"])
-    assert result.kind == "ask" and result.answer.startswith("【修繕單】")
-    assert list(state["agent"][PENDING_CONFIRM_KEY]) == ["a" * 16]
+    assert result.answer == SCOPE_EXIT_TEXT
+    assert PENDING_CONFIRM_KEY not in state["agent"]
 
 
 @pytest.mark.req(_REQ)

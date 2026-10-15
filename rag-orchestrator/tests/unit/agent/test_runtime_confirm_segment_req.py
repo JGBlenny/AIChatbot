@@ -110,7 +110,8 @@ def _identity(**overrides) -> Identity:
 
 def _state_with_pending(**pending_overrides) -> dict:
     pending = {"action": "bill_due_extend", "payload": dict(_PAYLOAD),
-               "card_sha256": sha256_hex(_CARD)}
+               "card_sha256": sha256_hex(_CARD),
+               "creator": {"user_id": None, "role_id": None}}  # 站內幫手 S5（F1）：建立者鍵
     pending.update(pending_overrides)
     return {"agent": {PENDING_CONFIRM_KEY: {_PID: pending}}}
 
@@ -239,7 +240,8 @@ async def test_confirm_request_ends_the_turn_with_the_card_verbatim():
     # 狀態存 `{action, payload, card_sha256}`，⛔ 不存卡原文、⛔ 不存 token
     pending = state["agent"][PENDING_CONFIRM_KEY][_PID]
     assert pending == {"action": "bill_due_extend", "payload": _PAYLOAD,
-                       "card_sha256": sha256_hex(_CARD)}
+                       "card_sha256": sha256_hex(_CARD),
+                       "creator": {"user_id": None, "role_id": None}}  # 站內幫手 S5（F1）：建立者鍵
     assert _CARD not in json.dumps(state, ensure_ascii=False)
 
 
@@ -507,7 +509,9 @@ def test_outcome_helpers_closed_domain_and_receipt_ref():
         with pytest.raises(ValueError):
             R.make_outcome(bad["state"], expects=bad["expects"])
     with pytest.raises(ValueError):
-        R.make_outcome("confirmed", expects="none", ref={"type": "estate", "id": "1"})
+        # 站內幫手 S5（S5-16）：`estate` 已進 `OUTCOME_REF_TYPES`（計畫 §3i 第 5 點）——值域外的
+        # 例子改用 `meter`（同樣不在值域內），斷言本身不變。
+        R.make_outcome("confirmed", expects="none", ref={"type": "meter", "id": "1"})
     # receipt → ref：兩個寫入動作各自的識別碼欄位；其餘 None（正對照）
     assert R.receipt_ref("repair_create", {"repair_id": 12346}) == {"type": "repair", "id": "12346"}
     assert R.receipt_ref("bill_due_extend", {"bill_id": "756248", "after": "2026-08-18"}) == {"type": "bill", "id": "756248"}

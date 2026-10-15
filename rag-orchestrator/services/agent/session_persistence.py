@@ -84,5 +84,34 @@ class AgentSessionStore:
                 session_id, CONVERSATIONAL_FORM_ID,
             )
 
+    # ------------------------------------------------------------------
+    # 站內幫手 S5（§3i 第 3 點，F1／S5-3～S5-7）：**只新增**、⛔ 動上面四句 SQL。
+    #   ① `get_state_row`：同 `get_state` 的列，另回列 `id` 與 `user_id` 欄——門面據此
+    #      比對「這一列是不是這位 (user_id, role_id) 的」；
+    #   ② `save_by_id`：依**載入時的列 id** 寫回（⛔ 再以 session_id 找「最新一列」——
+    #      併發時那可能是別人剛開的新列）；只更新仍在 `COLLECTING` 的那一列。
+    # ------------------------------------------------------------------
+    async def get_state_row(self, session_id: str) -> Optional[Dict[str, Any]]:
+        async with self.db_pool.acquire() as conn:
+            row = await conn.fetchrow(
+                "SELECT id, user_id, collected_data FROM form_sessions "
+                "WHERE session_id=$1 AND form_id=$2 AND state='COLLECTING' "
+                "ORDER BY id DESC LIMIT 1",
+                session_id, CONVERSATIONAL_FORM_ID,
+            )
+        if not row or row["collected_data"] is None:
+            return None
+        cd = row["collected_data"]
+        return {"id": row["id"], "user_id": row["user_id"],
+                "collected_data": cd if isinstance(cd, dict) else json.loads(cd)}
+
+    async def save_by_id(self, row_id: Any, state: Dict[str, Any]) -> None:
+        async with self.db_pool.acquire() as conn:
+            await conn.execute(
+                "UPDATE form_sessions SET collected_data=$2::jsonb, last_activity_at=now() "
+                "WHERE id=$1 AND form_id=$3 AND state='COLLECTING'",
+                row_id, json.dumps(state), CONVERSATIONAL_FORM_ID,
+            )
+
 
 __all__ = ["AgentSessionStore"]

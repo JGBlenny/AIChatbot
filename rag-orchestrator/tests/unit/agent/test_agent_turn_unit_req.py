@@ -166,6 +166,26 @@ class FakeEngine:
         self.saved.append(session_id)
         self.rows[session_id] = json.loads(json.dumps(state))
 
+    # 站內幫手 S5（F1）：替身補上新增的讀取／依列 id 寫入方法（與 close）。單列替身：
+    # 列 id＝鍵本身。真表的每一列都由 `start` 建立（INSERT 的 `user_id` 欄與
+    # `collected_data` 內的 `user_id`／`role_id` 一併寫入，匿名＝"anonymous"／None）；
+    # 本檔有幾支測試直接預塞**省略了這兩格**的列，讀取時依 `start` 的寫法補上預設值。
+    async def get_state_row(self, session_id):
+        row = self.rows.get(session_id)
+        if row is None:
+            return None
+        data = json.loads(json.dumps(row))
+        data.setdefault("user_id", "anonymous")
+        data.setdefault("role_id", None)
+        return {"id": session_id, "user_id": data["user_id"], "collected_data": data}
+
+    async def save_by_id(self, row_id, state):
+        self.saved.append(row_id)
+        self.rows[row_id] = json.loads(json.dumps(state))
+
+    async def close(self, session_id):
+        self.rows.pop(session_id, None)
+
 
 def _identity(*, vendor_id=VENDOR_A, session_id=SESSION, api_key_id=API_KEY_ID,
               target_user="prospect", mode="b2c", **extra) -> Identity:

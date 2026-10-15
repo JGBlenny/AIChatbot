@@ -49,9 +49,13 @@ _GATE_ORDER = ("scope_exit", "handoff_without_lookup", "ask_target_gate", "hando
 # 素材
 # ---------------------------------------------------------------------------
 def _tool_call(*, empty: bool = False, status: str = "ok") -> ToolCallRecord:
+    """Plan 9.11 §2 D：這支素材各處都拿 `empty=False` 代表「有資料」，補
+    `grounded=(status=="ok" and not empty)` 才是這一筆的真實分類（⛔ 不然
+    會被算成零查詢的 `other`，讓「有資料」的既有語意悄悄變成「沒查過」）。"""
     return ToolCallRecord(
         id="call-1", name="jgb2.query.bills", args_summary={},
         ms=1, status=status, n_items=0 if empty else 2, empty=empty,
+        grounded=(status == "ok" and not empty),
     )
 
 

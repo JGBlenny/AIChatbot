@@ -174,6 +174,14 @@ class NamespacedStateStore:
     async def save(self, session_id: str, state: dict) -> None:
         await self._engine.save(self.key(session_id), state)
 
+    async def load_row(self, session_id: str) -> Optional[dict]:
+        """站內幫手 S5（F1）：`{id, user_id, collected_data}`——載入時連列 id 與建立者一起取。"""
+        return await self._engine.get_state_row(self.key(session_id))
+
+    async def save_row(self, row_id: Any, state: dict) -> None:
+        """站內幫手 S5（F1／S5-5）：依**載入時的列 id** 寫回（防併發覆寫別人剛開的新列）。"""
+        await self._engine.save_by_id(row_id, state)
+
     async def close(self, session_id: str) -> None:
         """把這把鍵目前那列 `COLLECTING` 關掉（W8 (5) 過期換新）。
 

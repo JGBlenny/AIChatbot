@@ -34,11 +34,16 @@ from datetime import date, timedelta
 from typing import Any, Final, Optional
 
 from services.agent.confirm_card import (
+    CONTRACT_CREATE_ACTION,
     DEFAULT_CATEGORY_NAME,
+    ESTATE_CREATE_ACTION,
+    MANUAL_BILL_CREATE_ACTION,
     ConfirmCardError,
     category_name_of,
+    closed_body,
     emergency_status_of,
     render,
+    repair_photos_of,
 )
 from services.agent.identity import Identity
 from services.agent.tools import jgb2 as jgb2_tools
@@ -54,6 +59,9 @@ REPAIR_CREATE_ACTION: Final[str] = "repair_create"
 
 BILL_DUE_EXTEND_NAME: Final[str] = f"jgb2.action.{BILL_DUE_EXTEND_ACTION}"
 REPAIR_CREATE_NAME: Final[str] = f"jgb2.action.{REPAIR_CREATE_ACTION}"
+ESTATE_CREATE_NAME: Final[str] = f"jgb2.action.{ESTATE_CREATE_ACTION}"
+CONTRACT_CREATE_NAME: Final[str] = f"jgb2.action.{CONTRACT_CREATE_ACTION}"
+MANUAL_BILL_CREATE_NAME: Final[str] = f"jgb2.action.{MANUAL_BILL_CREATE_ACTION}"
 
 #: 兩支工具共用的 `input_schema`。
 #: ⚠️ `confirmation_token` **必須**在 `properties` 裡——`register()` 會補
@@ -69,10 +77,15 @@ _ACTION_INPUT_SCHEMA: Final[dict] = {
 }
 
 
-def _action_spec(name: str, description: str) -> ToolSpec:
-    """兩支工具的 spec 只差名字與說明；stage 表由 design 元件 2 定（pm M1／tenant M4，
-    prospect **缺鍵＝永不可見**）。`mcp_only=True` 是硬性要求（`register()` 會擋）。"""
-    return {
+#: S2 三個新動作只給業者（pm）：建物件／合約／手動帳單是業者後台操作，租客與
+#: prospect **缺鍵＝永不可見**（⛔ 沿用既有兩支的 tenant M4——那兩支本來就有租客情境）。
+PM_ONLY_STAGE: Final[dict] = {"property_manager": "M1"}
+
+
+def _action_spec(name: str, description: str, *, stage: Optional[dict] = None) -> ToolSpec:
+    """各支工具的 spec 只差名字、說明與 stage；既有兩支的 stage 表由 design 元件 2 定
+    （pm M1／tenant M4，prospect **缺鍵＝永不可見**）。`mcp_only=True` 是硬性要求（`register()` 會擋）。"""
+    spec: ToolSpec = {
         "name": name,
         "description": description,
         # 字面量（⛔ 不用 dict(常數)）：稽核不變量 27 的 AST 掃描只認 ast.Dict，寫成常數呼叫會被靜默略過
@@ -89,6 +102,9 @@ def _action_spec(name: str, description: str) -> ToolSpec:
         "mcp_only": True,
         "stage": {"property_manager": "M1", "tenant": "M4"},
     }
+    if stage is not None:
+        spec["stage"] = dict(stage)
+    return spec
 
 
 #: ⚠️ description 是**模型唯一看得到的 payload 契約**——模型要靠它組
@@ -137,6 +153,61 @@ REPAIR_CREATE_SPEC: ToolSpec = _action_spec(
     "⛔ 不講欄位名或數值：業務說緊急才填 2，其餘不填（系統以非緊急建單）；"
     "⛔ 不要為了問急迫程度延後出示確認或反問。"
     "estate_name 與 description 必填（description 可為空字串），其餘兩欄缺值由系統補。",
+)
+
+#: S2（§3f 1／2；jgb2-req#19～#21）。⚠️ 三支共用的紀律逐字寫進 description：
+#: payload 只能有列出的欄位（多一個鍵、或任何身分／團隊／歸屬欄位 ⇒ 不出卡）；
+#: 使用者沒講的選填欄位**不要填**（系統不補值、卡上也不會出現）。
+_CLOSED_COMMON: Final[str] = (
+    "本工具只能在使用者按下確認按鈕之後由系統執行；"
+    "要發動它，必須先用 confirm.request 出示確認。"
+    "payload 只能包含下列欄位，⛔ 不得加入其他欄位，"
+    "⛔ 不得填入 role_id、user_id 或任何團隊、擁有者、歸屬類欄位（一律由登入身分決定）；"
+    "使用者沒有講的選填欄位一律不要填，⛔ 不要自行補值或猜測；"
+    "缺必填欄位時 confirm.request 會回報缺少哪些欄位，請據以向使用者追問。"
+)
+
+ESTATE_CREATE_SPEC: ToolSpec = _action_spec(
+    ESTATE_CREATE_NAME,
+    "依使用者給的資料建立一筆新物件。" + _CLOSED_COMMON +
+    "payload 的 action 填 estate_create。payload 欄位定義："
+    "title＝物件名稱（必填，60 字內）；city＝縣市名稱（必填）；district＝行政區名稱（必填）；"
+    "address＝縣市行政區之後的地址（必填，100 字內）；"
+    "use_for＝用途，只能是 residential（住宅）、business（商用）、parking_space（車位）其中之一（必填）；"
+    "space_type＝空間類型（選填）；building＝建物類型（選填）；"
+    "room_count＝房間數，0 到 99 的整數（選填）；size＝面積，大於 0 的數字（選填）；"
+    "rent＝租金，整數元（選填）；floor＝樓層（選填）。"
+    "必填：title、city、district、address、use_for。",
+    stage=PM_ONLY_STAGE,
+)
+
+CONTRACT_CREATE_SPEC: ToolSpec = _action_spec(
+    CONTRACT_CREATE_NAME,
+    "為既有物件建立一份新合約。" + _CLOSED_COMMON +
+    "payload 的 action 填 contract_create。payload 欄位定義："
+    "estate_name＝使用者口述的物件名稱或物件編號，照原話填入，由系統比對成唯一一個物件並印在確認卡上（必填）；"
+    "⛔ 不要自己填物件編號欄位，系統會解析；"
+    "date_start＝起租日，八位數字的年月日（必填）；date_end＝到期日，八位數字的年月日，必須晚於起租日（必填）；"
+    "rent＝月租金，整數元（必填）；"
+    "to_user_email＝承租人 Email；to_user_phone＝承租人電話；兩者至少填一個；"
+    "deposit_amount＝押金，整數元（選填）；title＝合約名稱（選填）。"
+    "必填：estate_name、date_start、date_end、rent，以及 to_user_email 與 to_user_phone 至少一個。",
+    stage=PM_ONLY_STAGE,
+)
+
+MANUAL_BILL_CREATE_SPEC: ToolSpec = _action_spec(
+    MANUAL_BILL_CREATE_NAME,
+    "為既有合約建立一張手動帳單。" + _CLOSED_COMMON +
+    "payload 的 action 填 manual_bill_create。payload 欄位定義："
+    "contract_ref＝使用者口述的合約名稱或合約編號，照原話填入，由系統比對成唯一一份合約並印在確認卡上；"
+    "使用者只講物件時改填 estate_name＝物件名稱，系統以該物件唯一一份有效合約為準"
+    "（該物件有多份或沒有有效合約時會回報缺少合約，請向使用者問清楚是哪一份合約）；"
+    "⛔ 不要自己填合約編號欄位，系統會解析；"
+    "title＝帳單項目名稱（必填，60 字內）；total＝金額，大於 0 的整數元（必填）；"
+    "date_expire＝繳費期限，八位數字的年月日，不得早於今天（必填）；"
+    "sub_title＝帳單說明（選填，100 字內）。"
+    "必填：contract_ref 或 estate_name 其中之一、title、total、date_expire。",
+    stage=PM_ONLY_STAGE,
 )
 
 
@@ -273,8 +344,10 @@ async def bill_due_extend(identity: Identity, args: dict) -> ToolResult:
         # 「帳單不存在或無權存取」），⛔ 不細分成可探測的預言機。
         return _no_match()
 
+    # 站內幫手 S5（F5／S5-8，jgb2-req#23 擴及 PATCH）：寫入 body 帶登入身分（只取 identity）。
     resp = await api.agent_patch_bill_due_date(
-        bill_id, after_iso, idempotency_key=args.get("confirmation_token")
+        bill_id, after_iso, idempotency_key=args.get("confirmation_token"),
+        role_id=role_id, user_id=user_id,
     )
     if not (resp or {}).get("success"):
         # 誠實回錯：⛔ 不重試、⛔ 不把下游訊息轉給模型（Runtime 會用固定句回覆）。
@@ -353,6 +426,10 @@ async def repair_create(identity: Identity, args: dict) -> ToolResult:
     category_name = category_name_of(payload) or DEFAULT_CATEGORY_NAME
     description = str(payload["description"])
     emergency_status = emergency_status_of(payload)
+    # 站內幫手 S3（F10）：照片中繼資料只取 payload 內程式寫入、卡上印過張數、已綁進
+    # 雜湊的那一份（`render()` 已驗過形狀）；超過上限時 payload 只有張數，⛔ 不附。
+    # ⛔ 不送位元組——上傳方式依 jgb2-req#22（S6 定案）。
+    broken_photos = repair_photos_of(payload) or None
 
     role_id, user_id = _identity_pair(identity)
     if not role_id or not user_id:
@@ -360,9 +437,12 @@ async def repair_create(identity: Identity, args: dict) -> ToolResult:
 
     api = jgb2_tools._get_api()
 
+    # 站內幫手 S5（A3(a)、S5-8）：物件以**這位成員看得到的**範圍解析（`viewer_user_id`）
+    # ——看不到的物件與不存在同樣 `NO_MATCH`，⛔ 寫入別人看不到的物件。
     estate = _resolve_estate(
         jgb2_tools._rows_of(
-            await api.get_estate_status(role_id=role_id, keyword=estate_name)
+            await api.get_estate_status(role_id=role_id, keyword=estate_name,
+                                        viewer_user_id=user_id)
         ),
         estate_name,
     )
@@ -370,7 +450,9 @@ async def repair_create(identity: Identity, args: dict) -> ToolResult:
         return _no_match()
 
     resolved = _resolve_category(
-        jgb2_tools._rows_of(await api.get_repair_categories()), category_name
+        jgb2_tools._rows_of(await api.get_repair_categories(
+            role_id=role_id, viewer_user_id=user_id)),
+        category_name,
     )
     if resolved is None:
         # 分類名稱不在分類樹裡——這是 payload 的內容問題（形狀是對的），
@@ -391,6 +473,10 @@ async def repair_create(identity: Identity, args: dict) -> ToolResult:
         broken_note="",
         emergency_status=emergency_status,
         idempotency_key=args.get("confirmation_token"),
+        broken_photos=broken_photos,
+        # S2（P4-1；jgb2-req#22／#23）：寫入 body 一律帶登入成員——**只取 identity**
+        # （`_identity_pair`），⛔ 不從 payload 讀。缺它時提案替身回 400（S0 延後項）。
+        user_id=user_id,
     )
     if not (resp or {}).get("success"):
         logger.warning("[agent] repair_create 下游寫入未成功")
@@ -412,9 +498,180 @@ async def repair_create(identity: Identity, args: dict) -> ToolResult:
     )
 
 
+# ---------------------------------------------------------------------------
+# S2（§3f 1d／3）：帶 viewer 的物件／合約讀取——出卡端解析、兌現端確認共用
+#
+# ⚠️ 兩端用**同一條讀取路徑**（同一支 API、同一組身分參數），差別只在：
+#    出卡端（`tools/confirm.py`）依**名稱或編號**解析成唯一一筆，並把編號寫進 payload；
+#    兌現端（本檔）**只依 payload 內的編號**確認該筆仍屬本團隊且這位成員看得到，
+#    ⛔ 不依名稱重新解析（那會讓「卡上那一筆」與「被寫的那一筆」可以是兩筆）。
+# ⚠️ 身分：`role_id`＋`viewer_user_id=user_id`（DSP-074）；⛔ 不帶 `user_id` 參數
+#    （`/estates` 的 `user_id` 是另一個語義的過濾，`/contracts` 的是承租人）。
+# ---------------------------------------------------------------------------
+def _real_rows(rows: list) -> list:
+    """濾掉 `get_estate_status` 的查無哨兵（`found=False`），⛔ 不靠巧合。"""
+    return [r for r in rows if isinstance(r, dict) and r.get("found") is not False]
+
+
+async def _viewer_estate_rows(api, role_id: str, user_id: str, ref: str) -> list:
+    """物件名稱或編號 → 這位成員看得到的候選列（與 `repair_create` 同一支 API，另帶 viewer）。
+
+    站內幫手 S5（S5-1）：上游「沒查成」⇒ `jgb2.UpstreamFailure`（⛔ 折成空列——空列會被
+    出卡端講成「查不到」）；查無（含 403／404）⇒ 空列。
+    """
+    return _real_rows(jgb2_tools._rows_checked(
+        await api.get_estate_status(role_id=role_id, keyword=ref, viewer_user_id=user_id)
+    ))
+
+
+async def _visible_estate_by_id(api, role_id: str, user_id: str, estate_id: Any) -> Optional[dict]:
+    """兌現端：payload 內的物件編號是否仍屬本團隊且這位成員看得到；否 ⇒ `None`。"""
+    wanted = str(estate_id).strip()
+    try:
+        rows = await _viewer_estate_rows(api, role_id, user_id, wanted)
+    except jgb2_tools.UpstreamFailure:
+        return None
+    for row in rows:
+        if str(row.get("id")).strip() == wanted:
+            return row
+    return None
+
+
+async def _viewer_contract_rows(api, role_id: str, user_id: str, *,
+                                contract_ids: Optional[str] = None,
+                                keyword: Optional[str] = None) -> tuple:
+    """`(rows, has_more)`：這位成員看得到的合約列（`/contracts/status-overview`＋viewer）。
+
+    `has_more`＝上游還有下一頁——呼叫端據此判「無法確定唯一」（⛔ 只看第一頁就下結論）。
+    """
+    kwargs: dict = {"role_id": role_id, "viewer_user_id": user_id}
+    if contract_ids is not None:
+        kwargs["contract_ids"] = contract_ids
+    if keyword is not None:
+        kwargs["keyword"] = keyword
+    resp = await api.get_contracts(**kwargs)
+    # S5（S5-1）：沒查成 ⇒ `jgb2.UpstreamFailure`（同 `_viewer_estate_rows`）。
+    rows = [r for r in jgb2_tools._rows_checked(resp) if isinstance(r, dict)]
+    pagination = (resp or {}).get("pagination") if isinstance(resp, dict) else None
+    has_more = bool(isinstance(pagination, dict) and pagination.get("has_more"))
+    return rows, has_more
+
+
+async def _visible_contract_by_id(api, role_id: str, user_id: str, contract_id: Any) -> Optional[dict]:
+    """兌現端：payload 內的合約編號是否仍屬本團隊且這位成員看得到；否 ⇒ `None`。"""
+    wanted = str(contract_id).strip()
+    if not wanted.isdigit():
+        return None
+    try:
+        rows, _ = await _viewer_contract_rows(api, role_id, user_id, contract_ids=wanted)
+    except jgb2_tools.UpstreamFailure:
+        return None
+    for row in rows:
+        if str(row.get("id")).strip() == wanted:
+            return row
+    return None
+
+
+def _created_id(resp: Any) -> str:
+    """下游建立成功的回應 → 形狀安全的新編號；不成功或沒給編號 ⇒ `""`。"""
+    if not (resp or {}).get("success"):
+        return ""
+    data = resp.get("data") if isinstance(resp.get("data"), dict) else {}
+    return _scalar(data.get("id"))
+
+
+# ---------------------------------------------------------------------------
+# jgb2.action.estate_create（jgb2-req#19）
+# ---------------------------------------------------------------------------
+async def estate_create(identity: Identity, args: dict) -> ToolResult:
+    """依 payload 建立物件。順序：形狀（封閉欄位表）→ 寫。新物件沒有既有資源可讀。
+
+    body＝`closed_body`（只含使用者給了的欄位；⛔ 補值）；身分只取 identity。
+    """
+    payload = _validated_payload(ESTATE_CREATE_ACTION, args)
+    if payload is None:
+        return _invalid_input()
+    role_id, user_id = _identity_pair(identity)
+    if not role_id or not user_id:
+        return _no_match()
+    api = jgb2_tools._get_api()
+    resp = await api.assistant_create_estate(
+        role_id, user_id, closed_body(ESTATE_CREATE_ACTION, payload),
+        idempotency_key=args.get("confirmation_token"),
+    )
+    estate_id = _created_id(resp)
+    if not estate_id:
+        logger.warning("[agent] estate_create 下游寫入未成功或缺編號")
+        return _no_match()
+    return _receipt({"estate_id": estate_id}, "物件已建立。")
+
+
+# ---------------------------------------------------------------------------
+# jgb2.action.contract_create（jgb2-req#20）
+# ---------------------------------------------------------------------------
+async def contract_create(identity: Identity, args: dict) -> ToolResult:
+    """依 payload 建立合約。順序：形狀 → **寫前先讀**（payload 內的 `estate_id`）→ 寫。
+
+    ⚠️ 物件編號是出卡端解析後寫進 payload、納入雜湊的那一個（§3f 1d）——
+    這裡只確認它仍屬本團隊且這位成員看得到，否則 `NO_MATCH`；⛔ 不依名稱重新解析。
+    """
+    payload = _validated_payload(CONTRACT_CREATE_ACTION, args)
+    if payload is None:
+        return _invalid_input()
+    role_id, user_id = _identity_pair(identity)
+    if not role_id or not user_id:
+        return _no_match()
+    api = jgb2_tools._get_api()
+    body = closed_body(CONTRACT_CREATE_ACTION, payload)
+    if await _visible_estate_by_id(api, role_id, user_id, body["estate_id"]) is None:
+        return _no_match()
+    resp = await api.assistant_create_contract(
+        role_id, user_id, body, idempotency_key=args.get("confirmation_token"),
+    )
+    contract_id = _created_id(resp)
+    if not contract_id:
+        logger.warning("[agent] contract_create 下游寫入未成功或缺編號")
+        return _no_match()
+    return _receipt({"contract_id": contract_id, "estate_id": _scalar(body["estate_id"])},
+                    "合約已建立。")
+
+
+# ---------------------------------------------------------------------------
+# jgb2.action.manual_bill_create（jgb2-req#21）
+# ---------------------------------------------------------------------------
+async def manual_bill_create(identity: Identity, args: dict) -> ToolResult:
+    """依 payload 建立手動帳單。順序：形狀 → **寫前先讀**（payload 內的 `contract_id`）→ 寫。
+
+    ⚠️ 同 `contract_create`：只用 payload 內的合約編號，⛔ 不依名稱或物件重新解析。
+    日期「不得早於今天」由 Runtime 兌現閘（`fields_before_today`）在呼叫本工具前擋。
+    """
+    payload = _validated_payload(MANUAL_BILL_CREATE_ACTION, args)
+    if payload is None:
+        return _invalid_input()
+    role_id, user_id = _identity_pair(identity)
+    if not role_id or not user_id:
+        return _no_match()
+    api = jgb2_tools._get_api()
+    body = closed_body(MANUAL_BILL_CREATE_ACTION, payload)
+    if await _visible_contract_by_id(api, role_id, user_id, body["contract_id"]) is None:
+        return _no_match()
+    resp = await api.assistant_create_bill(
+        role_id, user_id, body, idempotency_key=args.get("confirmation_token"),
+    )
+    bill_id = _created_id(resp)
+    if not bill_id:
+        logger.warning("[agent] manual_bill_create 下游寫入未成功或缺編號")
+        return _no_match()
+    return _receipt({"bill_id": bill_id, "contract_id": _scalar(body["contract_id"])},
+                    "手動帳單已建立。")
+
+
 ACTION_SPECS: Final[tuple] = (
     (BILL_DUE_EXTEND_SPEC, bill_due_extend),
     (REPAIR_CREATE_SPEC, repair_create),
+    (ESTATE_CREATE_SPEC, estate_create),
+    (CONTRACT_CREATE_SPEC, contract_create),
+    (MANUAL_BILL_CREATE_SPEC, manual_bill_create),
 )
 
 __all__ = [
@@ -427,4 +684,14 @@ __all__ = [
     "REPAIR_CREATE_SPEC",
     "bill_due_extend",
     "repair_create",
+    "ESTATE_CREATE_NAME",
+    "ESTATE_CREATE_SPEC",
+    "CONTRACT_CREATE_NAME",
+    "CONTRACT_CREATE_SPEC",
+    "MANUAL_BILL_CREATE_NAME",
+    "MANUAL_BILL_CREATE_SPEC",
+    "PM_ONLY_STAGE",
+    "estate_create",
+    "contract_create",
+    "manual_bill_create",
 ]

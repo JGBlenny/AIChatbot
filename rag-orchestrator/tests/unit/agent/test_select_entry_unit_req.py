@@ -635,7 +635,8 @@ class _MixedRegistry:
 
 def _state_with_pending(**over) -> dict:
     pending = {"action": "bill_due_extend", "payload": dict(_ACTION_PAYLOAD),
-               "card_sha256": sha256_hex(_ACTION_CARD)}
+               "card_sha256": sha256_hex(_ACTION_CARD),
+               "creator": {"user_id": "88", "role_id": "20151"}}  # 站內幫手 S5（F1）：建立者鍵
     pending.update(over)
     return {"agent": {PENDING_CONFIRM_KEY: {_PID: pending}}}
 

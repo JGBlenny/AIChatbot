@@ -235,7 +235,9 @@ def _redeem_row():
 
 def _pending_state(**overrides) -> dict:
     pending = {"action": "bill_due_extend", "payload": dict(_PAYLOAD),
-               "card_sha256": sha256_hex(_CARD)}
+               "card_sha256": sha256_hex(_CARD),
+               # 站內幫手 S5（F1）：建立者鍵（＝本檔 `_identity()` 的 user_id／role_id）
+               "creator": {"user_id": 77, "role_id": None}}
     pending.update(overrides)
     return {"agent": {PENDING_CONFIRM_KEY: {_PID: pending}}}
 
@@ -393,7 +395,13 @@ def _s_gate_handoff_no_data():
 
 
 def _s_gate_handoff_no_judgement():
-    """有資料的 `no_grounding` ⇒ 迴圈內改寫用罄後仍轉人 ⇒ NO_JUDGEMENT 出口。"""
+    """有資料的 `no_grounding` ⇒ 迴圈內改寫用罄後仍轉人 ⇒ NO_JUDGEMENT 出口。
+
+    Plan 9.11 §2 D（§3 表逐項）：這個替身語意是「查到資料」，補
+    `citable=True` provenance 才會被算成 `grounded`（⛔ 不然是零查詢的
+    `other`，③ 會先把它換成 `ASK_TARGET_TEXT`，這個情境就量不到
+    NO_JUDGEMENT 出口了）。
+    """
     rt = _runtime(
         provider=FakeProvider([
             _tool_call("kb.get", {"kb_id": "1"}),
@@ -402,7 +410,8 @@ def _s_gate_handoff_no_judgement():
             _final(kind="handoff", text="", fact_class="feature", handoff_reason="no_grounding"),
         ]),
         registry=_registry(call_results=[
-            ToolResult(ok=True, data={"id": 1}, text_for_model="有內容的工具原文")]),
+            ToolResult(ok=True, data={"id": 1}, text_for_model="有內容的工具原文",
+                       provenance=_prov("有內容的工具原文"))]),
     )
     return rt, _identity(), "你覺得我該不該催他繳款", {}, {}
 

@@ -27,6 +27,7 @@ from services.agent.turn_context import (
     _emit_agent_decision,
     default_outcome,
     make_outcome,
+    zero_lookup,
 )
 from services.presales_gate import SENSITIVE, FactClass
 
@@ -127,7 +128,11 @@ def _apply_handoff_without_lookup(
     - `fact_class` 不在敏感五類（敏感類一律不動，仍轉人）；U2 那條路例外——
       自報敏感被程式推翻時 ⛔ 不享這道豁免，並多記一筆
       `sensitive_self_report_overridden`
-    - 本回合沒有任何工具呼叫（`trace.tool_calls` 為空）
+    - **`zero_lookup(trace.tool_calls, trace.violations)`**（Plan 9.11 §2 D：
+      本回合每一筆工具結果都屬「other」類，含零筆；⚠️ 換掉了原本「`tool_calls`
+      為空」——只呼叫 `handoff.request`／只開導航清單／只 `kb.search` 的回合
+      現在也算零查詢，這是本次改動刻意放寬的範圍，見 Plan §2 D「預期行為
+      變化」）
     - 沒有釘住的 select 範圍（`SELECT_SCOPE_KEY` 為 `None`）
 
     降級時**五欄一起改**（mirrors `_apply_scope_exit`）：`answer`／`kind`／
@@ -143,7 +148,7 @@ def _apply_handoff_without_lookup(
     # ——它走的是同一組固定句出口（`ASK_TARGET_TEXT`），⛔ 不會吐敏感內容。
     if _handoff_fact_class(result) in SENSITIVE and not overridden:
         return result
-    if len(result.trace.tool_calls) != 0:
+    if not zero_lookup(result.trace.tool_calls, result.trace.violations):
         return result
     if agent_state.get(SELECT_SCOPE_KEY) is not None:
         return result
@@ -225,14 +230,19 @@ def _apply_handoff_data_exits(
     維持既有出口（`sensitive_no_grounding`／`llm_mentioned_handoff`／
     `budget_exhausted` 也在這條路上，本函式對它們同樣不動）。
 
-    剩下的情況（全部工具結果 `status=="ok"`）依 `empty` 分流：
-    - 全部 `empty` ⇒ `kind=answer`、`answer=NO_DATA_TEXT`、
-      `outcome=answered`、`violations += ["handoff_no_data"]`。
-    - 至少一筆非 `empty` ⇒ `kind=answer`、`answer=NO_JUDGEMENT_TEXT`、
+    剩下的情況（全部工具結果 `status=="ok"`）依 Plan 9.11 §2 D 固定優先序
+    （`failed`＞`empty`＞`grounded`＞`other`，上面已經處理掉 `failed`）分流：
+    - 任一筆 `grounded` ⇒ `kind=answer`、`answer=NO_JUDGEMENT_TEXT`、
       `ask_target=confirm_intent`、`outcome=clarifying`、
       `violations += ["handoff_no_judgement"]`（此路只有在模型迴圈內的
       改寫提示——§3 的「迴圈內改寫」——已經重試過仍轉人，或改寫預算已耗盡
       時才會走到這裡；本函式本身 ⛔ 不呼叫模型）。
+    - 否則任一筆 `empty` ⇒ `kind=answer`、`answer=NO_DATA_TEXT`、
+      `outcome=answered`、`violations += ["handoff_no_data"]`。
+    - 否則（全部 `other`，即 `zero_lookup`）⇒ **整段不動**——這種情況已經
+      在 ③ `_apply_handoff_without_lookup`（排在本閘之前）被換成
+      `ASK_TARGET_TEXT`，`result.kind` 到這裡已經不是 `handoff`，故不會
+      真的落進本函式的分流（見下方 `if result.kind != "handoff": return`）。
 
     五欄一起改（mirrors `_apply_scope_exit`／`_apply_handoff_without_lookup`）：
     `answer`／`kind`／`handoff`／`trace.final_kind`／`trace.handoff_reason`，
@@ -259,7 +269,21 @@ def _apply_handoff_data_exits(
         return result
     if any(r.status != "ok" for r in tool_calls):
         return result
-    if all(r.empty for r in tool_calls):
+    # Plan 9.11 §2 D：`grounded` 贏過 `empty`——任一筆真的查到可引用資料，
+    # 就不該講「查不到」（那是假話）。
+    if any(r.grounded for r in tool_calls):
+        result.answer = NO_JUDGEMENT_TEXT
+        result.kind = "answer"
+        result.handoff = None
+        result.trace.final_kind = "answer"
+        result.trace.handoff_reason = None
+        result.ask_target = "confirm_intent"
+        result.outcome = make_outcome("clarifying", expects="text")
+        result.trace.violations.append("handoff_no_judgement")
+        if overridden:
+            result.trace.violations.append("sensitive_self_report_overridden")
+        return result
+    if any(r.empty for r in tool_calls):
         result.answer = NO_DATA_TEXT
         result.kind = "answer"
         result.handoff = None
@@ -270,16 +294,13 @@ def _apply_handoff_data_exits(
         if overridden:
             result.trace.violations.append("sensitive_self_report_overridden")
         return result
-    result.answer = NO_JUDGEMENT_TEXT
-    result.kind = "answer"
-    result.handoff = None
-    result.trace.final_kind = "answer"
-    result.trace.handoff_reason = None
-    result.ask_target = "confirm_intent"
-    result.outcome = make_outcome("clarifying", expects="text")
-    result.trace.violations.append("handoff_no_judgement")
-    if overridden:
-        result.trace.violations.append("sensitive_self_report_overridden")
+    # 全部 `other`（零查詢）：**不是永遠到不了**。多數情況下③已經先把它換成
+    # `ASK_TARGET_TEXT`（`result.kind` 已不是 `handoff`），這裡確實碰不到；
+    # 但③自己有一道「沒有釘住的 select 範圍」的條件——`SELECT_SCOPE_KEY` 非
+    # `None` 時③直接不動、`result.kind` 仍是 `handoff`，於是這裡會真的走到
+    # 這一分支：本回合零查詢＋釘住 select 範圍的轉人，維持原樣（仍是
+    # `handoff`），這是刻意的「不動」，⛔ 不是死碼。fail-closed 的寫法本身
+    # 也是刻意的，⛔ 不假設上一道閘一定跑過。
     return result
 
 

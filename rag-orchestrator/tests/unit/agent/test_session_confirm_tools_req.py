@@ -506,7 +506,9 @@ async def test_confirm_request_accepts_repair_create_without_category_or_urgency
 def test_confirm_action_enum_is_closed_and_documented_to_the_model():
     """值域封閉，且**逐字寫進工具 description**——`payload` 是 JSON 字串，
     schema 表達不了字串內部的 enum，模型只能從 description 得知值域。"""
-    assert CONFIRM_ACTIONS == ("bill_due_extend", "repair_create")
+    # S2（plan-assistant-11-items §3f 1）集合同步：三個封閉欄位表動作。
+    assert CONFIRM_ACTIONS == ("bill_due_extend", "repair_create",
+                               "estate_create", "contract_create", "manual_bill_create")
     for action in CONFIRM_ACTIONS:
         assert action in CONFIRM_SPEC["description"]
 
@@ -1261,13 +1263,20 @@ async def test_open_repairs_returns_the_estate_id_even_when_there_are_no_open_re
 
 @pytest.mark.req(_W8_REQ)
 async def test_open_repairs_returns_none_only_when_the_estate_cannot_be_resolved(w8_api):
-    """解析不出物件（`get_estate_status` 零命中）⇒ `estate_id` 為 `None`、
-    ⛔ 不發那一次未結單查詢；卡照出（Runtime 端據此放行，見 (xv)）。"""
+    """站內幫手 S5 修正輪（DSP-074，業主同日多語意實測 990002 對看不到的 22491 仍出卡、
+    3／3 重現）⇒ **反轉** W8 (xv) 的零命中出卡：上游成功、帶 viewer 的 `get_estate_status`
+    零命中（只有 sentinel `found:false`）＝**查無** ⇒ `confirm.request` 回查無固定句
+    （`NO_MATCH`＋`jgb2.NOT_FOUND_SOURCE`）、⛔ 出卡、⛔ 寫 token、⛔ 發未結單查詢。
+    上游失敗（沒查成）仍照 W8「解析不出照常出卡、兌現端再擋」——見
+    `test_not_found_exit_req.py` 的上游失敗正對照。"""
     pool = _confirm_pool()
     result = await _confirm_through_registry(
         pool, _w8_identity(), _repair_payload(estate_name="查無此物件XYZ")
     )
-    assert result.ok is True, result.error
-    assert result.data["estate_id"] is None and result.data["hint"] == ""
+    assert (result.ok, result.error) == (False, "NO_MATCH")
+    assert [p.source for p in result.provenance] == [jgb2_tools.NOT_FOUND_SOURCE]
+    assert result.text_for_model == jgb2_tools.NOT_FOUND_TEXT
+    pool.execute.assert_not_awaited()                                    # 零 token
     assert w8_api.estate_status_calls, "尺的自證：物件解析這一步真的跑過"
+    assert w8_api.estate_status_calls[-1]["viewer_user_id"] == "88"      # 帶 viewer 查的
     assert w8_api.repairs_calls == []

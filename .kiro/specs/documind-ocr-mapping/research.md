@@ -83,7 +83,7 @@ chatai 現有的路由／認證／計量／LLM 注入／型別慣例，以及 Do
 
 | 服務名稱 | 版本 | 用途 | 文件連結 | 注意事項 |
 |---------|------|------|---------|---------|
-| DocuMind `POST /api/v1/analyze` | 未版本化 | 本案**不呼叫**；只消費其回應 JSON | 業主提供的串接文件（`http://54.248.201.66:8085/docs` 為前端頁面，非 OpenAPI） | 無認證、公網、單 worker、36 s/頁、`needs_review` 幾乎恆 true；`/api/v1/review` 實測 404 |
+| DocuMind `POST /api/v1/analyze` | 未版本化 | 本案**不呼叫**；只消費其回應 JSON | 業主提供的串接文件（DocuMind 測試主機的 `/docs` 為前端頁面，非 OpenAPI；位址不進 repo） | 無認證、公網、單 worker、36 s/頁、`needs_review` 幾乎恆 true；`/api/v1/review` 實測 404 |
 | OpenAI gpt-4o-mini | 依 `OPENAI_MODEL` | R8 第二段抽取（旗標守門） | 既有 `llm_provider` | temperature ≤ 0.3、`json_object`、逾時 8 s |
 
 ### 函式庫與套件

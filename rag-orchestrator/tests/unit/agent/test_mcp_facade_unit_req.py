@@ -248,6 +248,8 @@ def test_build_registry_registers_expected_tools():
         "kb.get", "kb.search", "help.read",
         "jgb2.query.bills", "jgb2.query.contracts", "jgb2.query.accounts",
         "jgb2.query.meters", "jgb2.query.estates", "jgb2.query.repairs",
+        "jgb2.stats.unpaid_bills", "jgb2.stats.in_progress_repairs",
+        "jgb2.stats.expiring_contracts",
     }
 
 

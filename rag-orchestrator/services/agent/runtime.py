@@ -63,7 +63,7 @@ from typing import Any, Callable, Literal, Optional, Protocol
 from pydantic import ValidationError
 
 from services import usage_metering
-from services.agent.agent_session import AgentSession
+from services.agent.agent_session import DOCUMENT_CARRY_MAX_TURNS, AgentSession
 from services.agent.budget import Budget, BudgetCounters
 from services.agent.affirmative import is_affirmative
 from services.agent.completed_actions import (
@@ -75,8 +75,12 @@ from services.agent.completed_actions import (
 from services.agent.confirm_card import (
     ACTION_FAILED_TEXT,
     CANCELLED_TEXT,
+    CLOSED_ACTION_FIELDS,
     CONFIRMATION_REQUIRED_TEXT,
     CONFIRM_ACTIONS,
+    PHOTO_PAYLOAD_KEYS,
+    RECEIPT_DATE_HINT_TEMPLATE,
+    REPAIR_PHOTOS_MAX,
     fields_before_today,
     receipt_id_of,
     render_receipt,
@@ -88,7 +92,12 @@ from services.agent.canon.canon_assembler import (
     build_canon_toc,
     get_canon,
 )
-from services.agent.document_extract import DocumentTurnInput
+from services.agent.document_extract import (
+    DOCUMENT_NOTICE_TEXTS,
+    DOCUMENT_TURN_WRITABLE,
+    DocumentTurnInput,
+    document_writable_action,
+)
 from services.agent.identity import (
     DEFAULT_ENTRY_CHANNEL,
     Identity,
@@ -114,10 +123,13 @@ from services.agent.tools.confirm import (
     CONFIRM_QUICK_REPLY_VALUES,
     CONFIRM_SPEC,
     CONFIRM_VALUE_SEP,
+    document_confirm_description,
+    missing_fields_ask_text,
     payload_digest,
     redeem_pending,
     sha256_hex,
 )
+from services.agent.tools.jgb2 import NOT_FOUND_SOURCE as _JGB2_NOT_FOUND_SOURCE
 from services.agent.tools.jgb2 import _candidates_text as _jgb2_candidates_text
 from services.agent.tools.jgb2 import _bill_format_date as _jgb2_bill_format_date
 from services.agent.tools.registry import Provenance, ToolRegistry, ToolResult, tool_name_from_openai
@@ -176,6 +188,7 @@ from services.agent.turn_context import (  # noqa: F401  — re-export（見上�
     _emit_agent_decision,
     _replayed_from,
     _trim_handoff_cache,
+    zero_lookup,
     default_outcome,
     make_outcome,
     receipt_ref,
@@ -315,10 +328,10 @@ def _image_description_label(suggestion: dict) -> str:
 
 def _apply_image_suggestion_to_confirm_args(raw_args: Any, suggestion: Any) -> tuple:
     """`confirm.request`／`repair_create` 的 payload 缺 `category_name`／`description`
-    時由照片建議補上。回 `(new_args, applied)`；`applied` 是補了哪些欄位的清單
+    時由照片建議補上；`category_name` 恰是照片葉節點的父分類時換成葉節點。回 `(new_args, applied)`；`applied` 是補了哪些欄位的清單
     （空＝原樣）。任何形狀不對（非 dict、payload 非 JSON 物件、action 非
     repair_create、建議缺值）一律原樣回傳，⛔ 不在此 raise——形狀由 confirm 工具自己驗。
-    只補**缺值**（鍵不存在、None、去空白為空）；模型有給就不動。"""
+    只補**缺值**（鍵不存在、None、去空白為空）；模型有給就不動（唯一例外：父分類換葉節點）。"""
     if not isinstance(raw_args, dict) or not isinstance(suggestion, dict):
         return raw_args, []
     category = suggestion.get("category_name")
@@ -339,6 +352,16 @@ def _apply_image_suggestion_to_confirm_args(raw_args: Any, suggestion: Any) -> t
     if _blank(payload.get("category_name")):
         payload["category_name"] = category.strip()
         applied.append("category_name")
+    elif (
+        # 站內幫手 S3-live A7：模型自填的正是照片葉節點的**父分類**（例：家具 vs 椅子）⇒
+        # 換成葉節點（同一大類底下更細，不與模型矛盾）。其他值 ⛔ 不動。
+        isinstance(suggestion.get("parent_category_name"), str)
+        and isinstance(payload.get("category_name"), str)
+        and payload["category_name"].strip() == suggestion["parent_category_name"].strip()
+        and category.strip() != suggestion["parent_category_name"].strip()
+    ):
+        payload["category_name"] = category.strip()
+        applied.append("category_name_leaf")
     if _blank(payload.get("description")):
         payload["description"] = IMAGE_DESCRIPTION_TEMPLATE.format(label=_image_description_label(suggestion))
         applied.append("description")
@@ -491,6 +514,162 @@ def _apply_estate_carry_to_confirm_args(raw_args: Any, carry: Any) -> tuple:
     new_args = dict(raw_args)
     new_args["payload"] = json.dumps(payload, ensure_ascii=False)
     return new_args, ["estate_name"]
+
+
+# ════════════════════════════════════════════════════════════════════
+# 站內幫手 S3（§3h 第 1～3、6 點；DSP-073／DSP-076）：文件與照片進 `confirm.request`
+# ════════════════════════════════════════════════════════════════════
+#: 文件回合／文件暫存有效時，`total` 這類「文件對照表會填、但這次沒填」的數字欄位，
+#: 模型給的值必須出自使用者原話（⛔ 讓模型從文件資料段抄一個金額進卡）。
+_DOCUMENT_GUARDED_NUMBER_FIELDS: dict = {"manual_bill_create": ("total",)}
+
+
+def _payload_of(raw_args: Any) -> Optional[dict]:
+    """`confirm.request` 參數裡的 payload（JSON 物件字串）⇒ dict；形狀不對 ⇒ `None`。"""
+    if not isinstance(raw_args, dict) or not isinstance(raw_args.get("payload"), str):
+        return None
+    try:
+        payload = json.loads(raw_args["payload"])
+    except (TypeError, ValueError):
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
+def _with_payload(raw_args: dict, payload: dict) -> dict:
+    new_args = dict(raw_args)
+    new_args["payload"] = json.dumps(payload, ensure_ascii=False)
+    return new_args
+
+
+def _apply_photos_to_confirm_args(raw_args: Any, suggestion: Any) -> tuple:
+    """`repair_create`：**無條件**刪掉模型帶的照片相關鍵，再由本回合／照片建議裡的
+    伺服端中繼資料寫入（F10／S3-5）。回 `(new_args, 標記清單)`；非 repair_create ⇒ 原樣。
+
+    照片相關鍵＝`PHOTO_PAYLOAD_KEYS` ∪ 名稱含 photo／image 的任何鍵（不分大小寫）。
+    超過 `REPAIR_PHOTOS_MAX` 張 ⇒ **全部不附**，只寫張數讓卡上說明。
+    """
+    payload = _payload_of(raw_args)
+    if payload is None or payload.get("action") != "repair_create":
+        return raw_args, []
+    marks: list = []
+    for key in list(payload):
+        lowered = str(key).lower()
+        if key in PHOTO_PAYLOAD_KEYS or "photo" in lowered or "image" in lowered:
+            payload.pop(key, None)
+            marks.append("photo_keys_dropped")
+    photos = suggestion.get("photos") if isinstance(suggestion, dict) else None
+    if isinstance(photos, list) and photos:
+        if len(photos) > REPAIR_PHOTOS_MAX:
+            payload["broken_photos_omitted"] = len(photos)
+            marks.append("photos_omitted")
+        else:
+            payload["broken_photos"] = [dict(p) for p in photos if isinstance(p, dict)]
+            marks.append("photos_attached")
+    if not marks:
+        return raw_args, []
+    return _with_payload(raw_args, payload), sorted(set(marks))
+
+
+def _document_carry_of(agent_state: Any) -> Optional[dict]:
+    """讀出文件暫存並驗**封閉形狀**；不合 ⇒ `None`（呼叫端據此清掉）。
+
+    ⚠️ 狀態會序列化進 `form_sessions.collected_data` 再讀回來，⛔ 不假設形狀正確。
+    """
+    if not isinstance(agent_state, dict):
+        return None
+    carry = AgentSession(agent_state).get_document_carry()
+    if carry is None or set(carry) != {"action", "typed_fields", "receipt_date", "turns"}:
+        return None
+    action = carry.get("action")
+    if action not in DOCUMENT_TURN_WRITABLE.values():
+        return None
+    allowed_keys = {f.key for f in CLOSED_ACTION_FIELDS[action]}
+    typed = carry.get("typed_fields")
+    if not isinstance(typed, list) or not all(
+        isinstance(p, list) and len(p) == 2 and p[0] in allowed_keys
+        and isinstance(p[1], (str, int, float)) and not isinstance(p[1], bool)
+        for p in typed
+    ):
+        return None
+    turns = carry.get("turns")
+    if isinstance(turns, bool) or not isinstance(turns, int) or not 0 <= turns < DOCUMENT_CARRY_MAX_TURNS:
+        return None
+    receipt_date = carry.get("receipt_date")
+    if receipt_date is not None and not (
+        isinstance(receipt_date, str) and re.fullmatch(r"\d{4}-\d{2}-\d{2}", receipt_date)
+    ):
+        return None
+    return {"action": action, "typed_fields": [tuple(p) for p in typed],
+            "receipt_date": receipt_date, "turns": turns}
+
+
+def _document_user_texts(agent_state: dict, user_message: str, turns: int) -> list:
+    """「使用者原話」＝`dialog` 裡 user 項的最後 `turns` 則＋本回合訊息（§3h 第 3 點）。
+
+    ⛔ 不複製進暫存或任何新鍵；`dialog` FIFO 截斷後不足就以現存者為準。
+    """
+    texts = [user_message] if isinstance(user_message, str) else []
+    if turns > 0:
+        users = [m.get("content") for m in (agent_state.get("dialog") or [])
+                 if isinstance(m, dict) and m.get("role") == "user"]
+        texts = [t for t in users[-turns:] if isinstance(t, str)] + texts
+    return texts
+
+
+def _number_in_texts(value: Any, texts: list) -> bool:
+    """數字是否以**完整數字 token** 出現在使用者原話裡（千分位逗號視同不存在）。"""
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return False
+    if isinstance(value, float):
+        if not value.is_integer():
+            return False
+        value = int(value)
+    for text in texts:
+        normalized = re.sub(r"(?<=\d)[,，](?=\d{3}(?!\d))", "", text)
+        if str(value) in re.findall(r"\d+", normalized):
+            return True
+    return False
+
+
+def _apply_document_to_payload(
+    payload: dict, *, action: str, typed_fields: list, user_texts: list,
+    free_text: tuple,
+) -> Optional[str]:
+    """文件回合／暫存有效時對 payload 的**就地**處置；回 `None`＝可送，否則回拒因代碼。
+
+    依序（§3h 第 2、3 點）：
+      ① 不在 `typed_fields` 的 `text` 型欄位必須是使用者原話的逐字子字串，否則刪掉
+         （＝缺 ⇒ 缺欄追問）；`_DOCUMENT_GUARDED_NUMBER_FIELDS` 的數字欄同理；
+      ② `typed_fields` **覆寫**進 payload（模型給的同名值丟棄）；
+      ③ `estate_create.title` 缺值 ⇒ 程式取 `address`；
+      ④ 縱深：任何字串欄位含本回合擷取的自由文字值 ⇒ 拒（`document_free_text_in_payload`）。
+    """
+    typed_keys = {k for k, _ in typed_fields}
+    for f in CLOSED_ACTION_FIELDS.get(action, ()):
+        if f.kind != "text" or f.key in typed_keys or f.key not in payload:
+            continue
+        value = payload.get(f.key)
+        if not (isinstance(value, str) and value.strip()
+                and any(value.strip() in t for t in user_texts)):
+            payload.pop(f.key, None)
+    for key in _DOCUMENT_GUARDED_NUMBER_FIELDS.get(action, ()):
+        if key in typed_keys or key not in payload:
+            continue
+        if not _number_in_texts(payload.get(key), user_texts):
+            payload.pop(key, None)
+    for key, value in typed_fields:
+        payload[key] = value
+    if action == "estate_create":
+        title = payload.get("title")
+        address = payload.get("address")
+        if not (isinstance(title, str) and title.strip()) and isinstance(address, str) and address.strip():
+            payload["title"] = address
+    needles = [t for t in (free_text or ()) if isinstance(t, str) and t.strip()]
+    if needles:
+        for value in payload.values():
+            if isinstance(value, str) and any(n in value for n in needles):
+                return "document_free_text_in_payload"
+    return None
 
 
 #: 使用者按下按鈕送回來的機器值：`^confirm_(submit|edit|cancel):<16 位十六進位>$`。
@@ -663,7 +842,6 @@ RECENT_REFS_REWRITE_HINT = (
     "依資料段回答或先查詢，⛔ 不反問哪一戶。"
 )
 
-
 def _recent_ref_ids_from_text(text: Any) -> list[str]:
     """從一段自由文字裡切出整詞為 4–9 位數字的 token（重用 `_PRE_LOOKUP_ID_RE`，
     ⛔ 不另開一條 id 判定正則）。非字串／空字串 ⇒ 空列表。"""
@@ -696,10 +874,24 @@ def _recent_ref_ids(agent_state: dict, dialog: list) -> list[str]:
     for item in reversed(agent_state.get(COMPLETED_ACTIONS_KEY) or []):
         if not isinstance(item, dict):
             continue
+        if item.get("ref_type") == "estate":
+            # 站內幫手 S5（S5-15，業主「印物件名稱，不印 id」）：物件 id 是內部值，
+            # ⛔ 進「最近編號」資料段（那一段會被模型念出來）。
+            continue
         ref_id = item.get("ref_id")
         if isinstance(ref_id, str) and _PRE_LOOKUP_ID_RE.match(ref_id):
             _add(ref_id)
     return ordered[:_RECENT_REFS_MAX]
+
+
+def _is_marked_not_found(result: Any) -> bool:
+    """站內幫手 S5（§3i 第 2 點）：這個 `NO_MATCH` 是不是**真的查過、確定沒有**——
+    只認帶查無標記（`jgb2.NOT_FOUND_SOURCE` 來源的 provenance）的那一種；其餘
+    `NO_MATCH`（上游失敗、缺身分、registry 吞例外…）一律是「沒查成」。"""
+    if getattr(result, "ok", True) or getattr(result, "error", None) != _PRE_LOOKUP_NOT_FOUND_ERROR:
+        return False
+    return any(getattr(p, "source", None) == _JGB2_NOT_FOUND_SOURCE
+               for p in (getattr(result, "provenance", None) or []))
 
 
 def _pre_lookup_strip_ws_punct(text: str) -> str:
@@ -712,6 +904,12 @@ def _pre_lookup_strip_ws_punct(text: str) -> str:
         current = current.strip()
         current = current.strip(_PRE_LOOKUP_TRIM_CHARS)
     return current
+
+
+def _pending_creator(identity: Any) -> dict:
+    """待確認筆的建立者鍵（F1）：`{"user_id", "role_id"}`——**原值**、⛔ 正規化。"""
+    return {"user_id": getattr(identity, "user_id", None),
+            "role_id": getattr(identity, "role_id", None)}
 
 
 def _pre_lookup_trigger(message: str) -> Optional[tuple[str, str]]:
@@ -1094,6 +1292,13 @@ class ImageTurnInput:
     suggested_reason: Optional[str] = None
     #: 業主 2026-09-10 撤銷 S9-11：辨識描述（淨化、≤200 字）可進修繕單描述；⛔ 不進模型資料段。
     suggested_description: Optional[str] = None
+    #: 站內幫手 S3-live A7：`suggested_category` 是葉節點時，它所屬的大類名（否則 `None`）。
+    #: 只供 `_apply_image_suggestion_to_confirm_args` 判斷「模型填的是不是這個葉節點的父分類」。
+    suggested_parent_category: Optional[str] = None
+    #: 站內幫手 S3（F10／S3-5）：本回合**已過閘、已完成辨識**的照片中繼資料
+    #: `({filename, content_type, size, sha256}, …)`——⛔ 沒有 bytes、⛔ 沒有網址。
+    #: 只用來附進修繕單（經一次性的照片建議），⛔ 不進模型資料段。
+    photos: tuple = ()
 
     def __post_init__(self) -> None:
         # 值域**當場驗**（fail loud）：`status` 一旦漂出封閉四值，下方三條終止
@@ -1318,6 +1523,85 @@ def _tool_result_status(result: ToolResult) -> Literal["ok", "error", "timeout",
     if result.error in ("RATE_LIMITED", "CONFIRMATION_REQUIRED"):
         return "rejected"
     return "error"
+
+
+def _document_confirm_tool_specs(tool_specs: list, document: Any) -> list:
+    """放行的文件回合 ⇒ `confirm.request` 的說明後面附上該動作的 payload 欄位定義（R4(2)）。
+
+    站內幫手 S3-live 修正：S3-live A14 收據回合模型兩度以猜的鍵名呼叫 `confirm.request`，
+    被封閉鍵擋下後轉人——欄位定義寫在 `jgb2.action.<action>` 的說明裡，而那支工具在
+    文件回合不可見（W9-1）。**只改這一回合 `tool_specs` 的說明文字**（新 dict，⛔ 改
+    registry 那一份）；工具集合、可見性與 W9-1 三道擋一律不動。非文件回合／不放行 ⇒ 原樣。
+    """
+    action = document_writable_action(document)
+    if action is None:
+        return tool_specs
+    extra = document_confirm_description(action)
+    if not extra:
+        return tool_specs
+    out: list = []
+    for t in tool_specs:
+        fn = t.get("function") if isinstance(t, dict) else None
+        if isinstance(fn, dict) and tool_name_from_openai(fn.get("name", "")) == CONFIRM_TOOL_NAME:
+            t = {**t, "function": {**fn, "description": (fn.get("description") or "") + extra}}
+        out.append(t)
+    return out
+
+
+#: 站內幫手 S3-live 修正 R3：謄本回合**程式驅動**的那一次 `confirm.request` 的固定摘要
+#: （`summary` 只進紀錄、⛔ 不出示，見 `CONFIRM_SPEC`）。純常數。
+DOCUMENT_PROGRAM_CONFIRM_SUMMARY = "依使用者上傳的建物謄本建立物件。"
+
+#: 程式驅動只用在這些動作——卡值**全部**來自 `typed_fields`（D4）＋程式導出（`title`＝
+#: `address`），模型在這一步沒有可貢獻的值。收據（`manual_bill_create`）⛔ 列入：合約、
+#: 帳單項目、繳費期限都在使用者原話裡，只有模型讀得出來（程式驅動會把使用者已講過的
+#: 再問一次）。
+DOCUMENT_PROGRAM_CONFIRM_ACTIONS: frozenset = frozenset({"estate_create"})
+
+
+class _ProgramFunction:
+    __slots__ = ("name", "arguments")
+
+    def __init__(self, name: str, arguments: str) -> None:
+        self.name = name
+        self.arguments = arguments
+
+
+class _ProgramToolCall:
+    __slots__ = ("id", "function")
+
+    def __init__(self, call_id: str, name: str, arguments: str) -> None:
+        self.id = call_id
+        self.function = _ProgramFunction(name, arguments)
+
+
+class _ProgramMessage:
+    """形狀同 provider 回的 `message`（`content`＋`tool_calls`），讓程式驅動的那一次
+    `confirm.request` 走**同一條**工具迴圈（暫存、覆寫、出卡／缺欄追問、範圍閘）。"""
+
+    __slots__ = ("content", "tool_calls")
+
+    def __init__(self, tool_calls: list) -> None:
+        self.content = None
+        self.tool_calls = tool_calls
+
+
+def _document_program_message(document: Any, nonce: str) -> Optional["_ProgramMessage"]:
+    """謄本回合放行 ⇒ 程式自己的一次 `confirm.request`（payload 只有 `action`）；否則 `None`。
+
+    payload ⛔ 帶任何值：`typed_fields` 與 `title`＝`address` 由同一條迴圈的
+    `_apply_document_to_payload` 寫進去（與模型呼叫時逐位同一段程式）。
+    tool_call id 由 nonce 導出、前綴不在 `ReservedCallIds` 的九個之內。
+    """
+    action = document_writable_action(document)
+    if action not in DOCUMENT_PROGRAM_CONFIRM_ACTIONS:
+        return None
+    args = json.dumps(
+        {"summary": DOCUMENT_PROGRAM_CONFIRM_SUMMARY,
+         "payload": json.dumps({"action": action}, ensure_ascii=False)},
+        ensure_ascii=False,
+    )
+    return _ProgramMessage([_ProgramToolCall(f"docprog-{nonce[:8]}", CONFIRM_TOOL_NAME, args)])
 
 
 def _assistant_tool_call_message(message: Any, tool_calls: list) -> dict:
@@ -1721,7 +2005,8 @@ class AgentRuntime:
             except Exception:  # noqa: BLE001 — registry 不可用 ⇒ 沒查成，⛔ 不是查無
                 return "error", None
             if not tool_result.ok:
-                if tool_result.error == _PRE_LOOKUP_NOT_FOUND_ERROR:
+                # S5：只有帶查無標記的 NO_MATCH 才是查無（試下一域）；其餘是沒查成。
+                if _is_marked_not_found(tool_result):
                     continue
                 return "error", None
             data = tool_result.data if isinstance(tool_result.data, dict) else {}
@@ -1763,7 +2048,7 @@ class AgentRuntime:
         except Exception:  # noqa: BLE001 — 沒查成，⛔ 不是查無
             return "error", None, None
         if not tool_result.ok:
-            if tool_result.error == _PRE_LOOKUP_NOT_FOUND_ERROR:
+            if _is_marked_not_found(tool_result):            # S5：同上
                 return "not_found", None, None
             return "error", None, None
         data = tool_result.data if isinstance(tool_result.data, dict) else {}
@@ -1966,6 +2251,11 @@ class AgentRuntime:
         verb, pending_id = parsed
         pending_all = agent_state.get(PENDING_CONFIRM_KEY)
         pending = pending_all.get(pending_id) if isinstance(pending_all, dict) else None
+        # 站內幫手 S5（§3i 第 3 點，F1／S5-3）：**拿到 pending 立刻比對建立者**
+        # (user_id, role_id)——不符（含沒有建立者的舊 pending）走與「不認得的 pid」同一個
+        # 出口：⛔ 燒 token、⛔ 回 receipt、⛔ 改 pending。
+        if isinstance(pending, dict) and pending.get("creator") != _pending_creator(identity):
+            pending = None
         if not isinstance(pending, dict):
             # 錯 pid／狀態已清（含 W8 (5) 會話過期後按到舊卡按鈕）⇒ 回固定句
             # `CONFIRMATION_REQUIRED_TEXT`，⛔ 不交給模型：機器值不承載使用者意圖，
@@ -2008,6 +2298,9 @@ class AgentRuntime:
                 # "estate_name", ...)`）；`bill_due_extend` 的 payload 沒有這一欄，
                 # 這裡就維持 `None`，記憶行照舊只印帳單編號。
                 pending_payload = pending.get("payload")
+                if isinstance(pending_payload, dict) and pending.get("action") == "estate_create":
+                    # S5（S5-15）：新建物件的名稱＝卡上確認過的物件名稱（`title`）。
+                    pending_payload = {"estate_name": pending_payload.get("title")}
                 if isinstance(pending_payload, dict):
                     payload_estate_name = pending_payload.get("estate_name")
                     if isinstance(payload_estate_name, str) and payload_estate_name.strip():
@@ -2035,7 +2328,8 @@ class AgentRuntime:
         submit = verb == CONFIRM_QUICK_REPLY_VALUES[0]
         if not submit:
             # 修改／取消：**一律先燒 token**（⛔ 不留著讓「取消完再送出」還能通），
-            # 不呼叫任何寫入工具。
+            # 不呼叫任何寫入工具。站內幫手 S3：按取消也清文件暫存（DSP-076）。
+            AgentSession(agent_state).clear_document_carry()
             if self._db_pool is not None:
                 await redeem_pending(self._db_pool, identity.session_id, pending_id)
             # ⚠️ ⛔ 不覆蓋既有 receipt：這一筆若已經執行過（使用者先送出、再按取消），
@@ -2203,11 +2497,25 @@ class AgentRuntime:
         payload = data.get("payload")
 
         if action == "repair_create":
+            # 站內幫手 S5（S5-12）：釘住範圍時解析不出物件（`estate_id` 為 None）⇒ **擋**
+            # （fail-closed；原本放行，靠兌現端 `NO_MATCH` 兜底）。
             estate_id = data.get("estate_id")
-            if estate_id is None or not str(estate_id):
+            if estate_id is not None and str(estate_id) and str(estate_id) == scope_estate_id:
                 return None
-            if str(estate_id) == scope_estate_id:
+        elif action == "contract_create":
+            # S5（業主移入、S5-12）：比出卡端以帶 viewer 的查詢解析、寫進 payload 的物件編號。
+            card_estate = payload.get("estate_id") if isinstance(payload, dict) else None
+            if card_estate is not None and str(card_estate).strip() == scope_estate_id:
                 return None
+        elif action == "manual_bill_create":
+            # S5（S5-13）：比出卡時以精確 id 比對到的合約列上的物件（`scope_estate_id`；
+            # ⛔ 重用 `estate_id`、⛔ 動物件記憶）。取不到 ⇒ 擋。
+            row_estate = data.get("scope_estate_id")
+            if row_estate is not None and str(row_estate).strip() == scope_estate_id:
+                return None
+        elif action == "estate_create":
+            # S5：釘住範圍（正在談某一戶）時建立新物件一律擋。
+            pass
         elif action == "bill_due_extend":
             bill_id = payload.get("bill_id") if isinstance(payload, dict) else None
             row_estate: Optional[str] = None
@@ -2258,6 +2566,7 @@ class AgentRuntime:
         self, agent_state: dict, data: Any, *, trace_id: str, start: float,
         user_message: str, tool_calls: list, violations: list,
         llm_calls: int = 0, prompt_tokens: int = 0, completion_tokens: int = 0,
+        identity: Optional[Identity] = None,
     ) -> Optional[TurnResult]:
         """`confirm.request` 成功 ⇒ 把待確認動作存進 session 狀態並結束回合。
 
@@ -2334,6 +2643,16 @@ class AgentRuntime:
         session = AgentSession(agent_state)
         # 出卡成功 ⇒ 照片建議用掉了，清掉（⛔ 不讓它再補到下一張無關的單）。
         session.consume_image_suggestion()
+        # 站內幫手 S3（§3h 第 5 點；DSP-076）：收據日期**只作卡外提示**——由文件暫存
+        # 取出、接在卡文字之後（⛔ 不進卡、⛔ 不進雜湊、⛔ 不進 dialog）；出卡即清暫存。
+        carry = _document_carry_of(agent_state)
+        if (
+            carry is not None and carry["action"] == action and carry["receipt_date"]
+            and not (isinstance(hint, str) and hint.strip())
+        ):
+            ymd = carry["receipt_date"].replace("-", "/")
+            hint = RECEIPT_DATE_HINT_TEMPLATE.format(date=ymd)
+        session.clear_document_carry()
         # 第六批 #10 **寫點 (a)**：出卡成功 ⇒ 這張卡上的物件就是「本對話最近提到
         # 的物件」。兩個值都是**封閉來源**：`estate_name` 是使用者剛才會在卡上看到
         # 的那一行（`confirm_card._render_repair_create` 的「物件」），`estate_id`
@@ -2341,6 +2660,8 @@ class AgentRuntime:
         # ⛔ 不在這裡另外查一次；釘住範圍時 `_write_estate_carry` 自己不寫。
         _write_estate_carry(agent_state, payload.get("estate_name"), estate_id)
         pending_entry: dict = {
+            # 站內幫手 S5（F1）：建立者 (user_id, role_id)——兌現前比對，不符視同不認得的 pid。
+            "creator": _pending_creator(identity),
             "action": action,
             "payload": payload,
             # ＝ `agent_confirmation_tokens.summary_sha256`（DSP-038-2）。兌現時
@@ -2456,7 +2777,21 @@ class AgentRuntime:
         走既有的 `_finish_confirm_turn`（S9-14：⛔ 不在門面直接產 `TurnResult`，
         那會繞過寫入閘與 dialog 紀律）。
         """
-        if document is None or document.facts.strip():
+        if document is None:
+            return None
+        # 站內幫手 S3（§3h 第 4 點；D1～D3、D9）：謄本的程式終止句（DocuMind 未啟用／
+        # 沒查成／一次一份／不是謄本）——封閉代碼 ⇒ 固定句，⛔ 不進模型。
+        notice = getattr(document, "notice", None)
+        if notice is not None:
+            return self._finish_confirm_turn(
+                agent_state=agent_state, user_message=user_message,
+                trace_id=trace_id, start=start, kind="answer",
+                answer=DOCUMENT_NOTICE_TEXTS[notice], pending_id=None,
+                violations=[f"document_notice:{notice}"],
+                outcome=make_outcome("answered", expects="text"),
+                document_trace=self._document_trace(document),
+            )
+        if document.facts.strip():
             return None
         return self._finish_confirm_turn(
             agent_state=agent_state, user_message=user_message,
@@ -2655,6 +2990,7 @@ class AgentRuntime:
                 t for t in tool_specs
                 if tool_name_from_openai(t["function"]["name"]) not in doc_write_face
             ]
+        tool_specs = _document_confirm_tool_specs(tool_specs, document)
         visible_names = {tool_name_from_openai(t["function"]["name"]) for t in tool_specs}   # 解回 registry 名
 
         acc.messages = self.assembler.build_messages(
@@ -2773,16 +3109,26 @@ class AgentRuntime:
         if image is not None and image.status in ("ok", "partial"):
             # 照片建議（封閉值）進 session：給之後回合的 `confirm.request` 補分類用。
             # 新照片一律覆寫（沒辨識出分類就寫 None，⛔ 不讓上一張的分類殘留到這張）。
-            AgentSession(agent_state).write_image_suggestion(
-                {
-                    "category_name": image.suggested_category,
+            # 站內幫手 S3（F10）：照片中繼資料併進**同一個**一次性建議（⛔ 不新增鍵）；
+            # 有照片才多一個 `photos`，沒照片的建議逐字不變。
+            has_category = (
+                isinstance(image.suggested_category, str) and image.suggested_category.strip()
+            )
+            photos = [dict(p) for p in (image.photos or ()) if isinstance(p, dict)]
+            suggestion = None
+            if has_category or photos:
+                suggestion = {
+                    "category_name": image.suggested_category if has_category else None,
                     "item": image.suggested_item,
                     "reason": image.suggested_reason,
                     "description": image.suggested_description,
                 }
-                if isinstance(image.suggested_category, str) and image.suggested_category.strip()
-                else None
-            )
+                # 站內幫手 S3-live A7：分類是葉節點才多記父分類（沒有就不加鍵，建議逐字不變）。
+                if has_category and image.suggested_parent_category:
+                    suggestion["parent_category_name"] = image.suggested_parent_category
+                if photos:
+                    suggestion["photos"] = photos
+            AgentSession(agent_state).write_image_suggestion(suggestion)
         if image is not None and image.status in ("ok", "partial") and image.facts.strip():
             acc.inject(IMAGE_DATA_LABEL, ids.image, image.facts,
                        citable=True, source=IMAGE_PROVENANCE_SOURCE,
@@ -2852,14 +3198,53 @@ class AgentRuntime:
         """
         if document is None:
             return frozenset()
+        # 站內幫手 S3（§3h 第 1 點，S3-4）：**只在**放行對照內的文件回合把
+        # `confirm.request` 移出寫入面（其餘寫入工具與其他 kind 照舊）。放行條件的唯一
+        # 來源是 `document_extract.DOCUMENT_TURN_WRITABLE`（經 `document_writable_action`）。
+        keep_confirm = document_writable_action(document) is not None
         return frozenset(
             s["name"]
             for s in self.registry.specs_for(
                 identity, self._stage,
                 readonly_view=self.readonly_view, for_model=True,
             )
-            if s.get("scope") == "write" or s.get("mcp_only") or s.get("mutates_session")
+            if (s.get("scope") == "write" or s.get("mcp_only") or s.get("mutates_session"))
+            and not (keep_confirm and s["name"] == CONFIRM_TOOL_NAME)
         )
+
+    async def _next_model_message(self, acc: TurnAccumulator, tool_specs: list) -> Any:
+        """叫一次模型、計量，回 `message`（搬自 `_run_model_loop` 迴圈頂端，逐字未改；
+        站內幫手 S3-live 修正 R3 抽出，好讓程式驅動的那一輪不叫模型）。"""
+        acc.llm_calls += 1
+        create_kwargs = dict(
+            model=self._model,
+            messages=acc.messages,
+            tools=tool_specs,
+            parallel_tool_calls=False,
+            response_format=_agent_output_response_format(),
+        )
+        if self._reasoning_effort is not None:
+            # openai SDK 1.54（requirements）尚無 `reasoning_effort` 具名參數，走 `extra_body`
+            # 直接進 JSON body（各版本皆收）；⛔ 不升 SDK 換參數名（那是另一個變因）。
+            create_kwargs["extra_body"] = {"reasoning_effort": self._reasoning_effort}
+        response = await self.provider.async_client.chat.completions.create(**create_kwargs)
+        usage = getattr(response, "usage", None)
+        turn_pt = int(getattr(usage, "prompt_tokens", 0) or 0)
+        turn_ct = int(getattr(usage, "completion_tokens", 0) or 0)
+        acc.prompt_tokens += turn_pt
+        acc.completion_tokens += turn_ct
+        # 2.6 前置 security review P2：Runtime 直呼 `chat.completions.create`
+        # 繞過 `services/llm_provider.py` 的統一出口 ⇒ token／費用不進事件層，
+        # 而 `/mcp` 的內部 key 又免額度 ⇒ 這條路徑等於沒有量。這裡按
+        # `usage_metering.add_llm_usage(model, usage_dict)` 的簽名把每一次
+        # 模型呼叫灌回**當前請求的計量 context**（`/mcp` 由
+        # `mcp_facade._invoke` 的 `begin()` 建、REST 由 middleware 建）；
+        # 非計量路徑（ctx 為 None）它自己靜默略過，⛔ 這裡不另外判斷。
+        usage_metering.add_llm_usage(
+            self._model,
+            {"prompt_tokens": turn_pt, "completion_tokens": turn_ct},
+        )
+        return response.choices[0].message
 
     async def _run_model_loop(
         self, acc: TurnAccumulator, identity: Identity, user_message: str,
@@ -2878,40 +3263,19 @@ class AgentRuntime:
                 acc, result, is_fixed=is_fixed, verifier=self.verifier,
                 cache=cache, agent_state=agent_state, user_message=user_message,
             )
+        # 站內幫手 S3-live 修正 R3：放行的謄本回合，第一輪不叫模型——程式自己發一次
+        # `confirm.request`，走下面同一條工具迴圈（欄位齊 ⇒ 出卡；缺 ⇒ 程式追問句）。
+        program_message = _document_program_message(document, acc.nonce)
+        if program_message is not None:
+            acc.violations.append("document_program_confirm")
         while True:
             if (self._clock() - acc.start) >= self.budget.deadline_s:
                 return _finalize(acc.build_fixed("budget_exhausted", clock=self._clock), is_fixed=True)
 
-            acc.llm_calls += 1
-            create_kwargs = dict(
-                model=self._model,
-                messages=acc.messages,
-                tools=tool_specs,
-                parallel_tool_calls=False,
-                response_format=_agent_output_response_format(),
-            )
-            if self._reasoning_effort is not None:
-                # openai SDK 1.54（requirements）尚無 `reasoning_effort` 具名參數，走 `extra_body`
-                # 直接進 JSON body（各版本皆收）；⛔ 不升 SDK 換參數名（那是另一個變因）。
-                create_kwargs["extra_body"] = {"reasoning_effort": self._reasoning_effort}
-            response = await self.provider.async_client.chat.completions.create(**create_kwargs)
-            usage = getattr(response, "usage", None)
-            turn_pt = int(getattr(usage, "prompt_tokens", 0) or 0)
-            turn_ct = int(getattr(usage, "completion_tokens", 0) or 0)
-            acc.prompt_tokens += turn_pt
-            acc.completion_tokens += turn_ct
-            # 2.6 前置 security review P2：Runtime 直呼 `chat.completions.create`
-            # 繞過 `services/llm_provider.py` 的統一出口 ⇒ token／費用不進事件層，
-            # 而 `/mcp` 的內部 key 又免額度 ⇒ 這條路徑等於沒有量。這裡按
-            # `usage_metering.add_llm_usage(model, usage_dict)` 的簽名把每一次
-            # 模型呼叫灌回**當前請求的計量 context**（`/mcp` 由
-            # `mcp_facade._invoke` 的 `begin()` 建、REST 由 middleware 建）；
-            # 非計量路徑（ctx 為 None）它自己靜默略過，⛔ 這裡不另外判斷。
-            usage_metering.add_llm_usage(
-                self._model,
-                {"prompt_tokens": turn_pt, "completion_tokens": turn_ct},
-            )
-            message = response.choices[0].message
+            if program_message is not None:
+                message, program_message = program_message, None
+            else:
+                message = await self._next_model_message(acc, tool_specs)
             tool_calls = list(getattr(message, "tool_calls", None) or [])
 
             if tool_calls:
@@ -2965,6 +3329,79 @@ class AgentRuntime:
                         )
                         continue
 
+                    # 站內幫手 S3（§3h 第 1 點）：放行的文件回合裡 `confirm.request` 對模型
+                    # 可見，但**只准**該 kind 對應的那一個動作——在 `registry.call` **之前**
+                    # 解析 payload 的 `action`，不符 ⇒ 封閉錯誤、⛔ 不呼叫工具（token 表零新增）。
+                    doc_action = document_writable_action(document)
+                    if name == CONFIRM_TOOL_NAME and document is not None:
+                        _doc_payload = _payload_of(raw_args)
+                        _blocked = None
+                        if doc_action is None or (_doc_payload or {}).get("action") != doc_action:
+                            _blocked = "document_turn_action_blocked"
+                        else:
+                            # 建立一次性文件暫存（DSP-076；只在「放行對照內的文件回合、模型對
+                            # 該 kind 對應動作呼叫 confirm.request」這一刻建立）。
+                            AgentSession(agent_state).write_document_carry(
+                                doc_action, list(document.typed_fields), document.receipt_date,
+                            )
+                            _blocked = _apply_document_to_payload(
+                                _doc_payload, action=doc_action,
+                                typed_fields=list(document.typed_fields),
+                                user_texts=[user_message], free_text=document.free_text,
+                            )
+                            if _blocked is None:
+                                raw_args = _with_payload(raw_args, _doc_payload)
+                                acc.violations.append("document_typed_fields_applied")
+                        if _blocked is not None:
+                            acc.violations.append(_blocked)
+                            acc.counters.tool_calls += 1
+                            acc.tool_call_records.append(
+                                ToolCallRecord(
+                                    id=tc.id, name=name,
+                                    args_summary=_args_summary(raw_args),
+                                    ms=0, status="error", n_items=0, empty=False,
+                                )
+                            )
+                            acc.messages.append(
+                                {
+                                    "role": "tool",
+                                    "tool_call_id": tc.id,
+                                    "content": wrap_tool_data(
+                                        "tool",
+                                        json.dumps(
+                                            {"ok": False, "error": "INVALID_INPUT"
+                                             if _blocked == "document_free_text_in_payload"
+                                             else "NO_MATCH"},
+                                            ensure_ascii=False,
+                                        ),
+                                        acc.nonce,
+                                    ),
+                                }
+                            )
+                            continue
+                    elif name == CONFIRM_TOOL_NAME:
+                        # 文件暫存有效的後續回合：同一動作 ⇒ 同樣的覆寫與原話限制；
+                        # 下一個**非本動作**的 `confirm.request` ⇒ 清掉暫存。
+                        _carry = _document_carry_of(agent_state)
+                        if _carry is None:
+                            AgentSession(agent_state).clear_document_carry()
+                        else:
+                            _carry_payload = _payload_of(raw_args)
+                            if (_carry_payload or {}).get("action") == _carry["action"]:
+                                _apply_document_to_payload(
+                                    _carry_payload, action=_carry["action"],
+                                    typed_fields=_carry["typed_fields"],
+                                    user_texts=_document_user_texts(
+                                        agent_state, user_message, _carry["turns"]
+                                    ),
+                                    free_text=(),
+                                )
+                                raw_args = _with_payload(raw_args, _carry_payload)
+                                acc.violations.append("document_carry_applied")
+                            else:
+                                AgentSession(agent_state).clear_document_carry()
+                                acc.violations.append("document_carry_cleared")
+
                     acc.counters.tool_calls += 1
                     if name == CONFIRM_TOOL_NAME:
                         raw_args, _applied = _apply_image_suggestion_to_confirm_args(
@@ -2972,6 +3409,12 @@ class AgentRuntime:
                         )
                         for _field in _applied:
                             acc.violations.append(f"image_suggestion_applied:{_field}")
+                        # 站內幫手 S3（F10）：照片相關鍵**無條件**刪掉、再由程式寫入。
+                        raw_args, _photo_marks = _apply_photos_to_confirm_args(
+                            raw_args, agent_state.get(IMAGE_SUGGESTION_KEY)
+                        )
+                        for _mark in _photo_marks:
+                            acc.violations.append(_mark)
                         # 第六批 #10 **讀點**：payload 缺 `estate_name` ⇒ 由物件記憶補。
                         # ⚠️ 排在照片建議之後、`registry.call` 之前（同一個落點，
                         #    ⛔ 不另開一段）；模型有給就不動（`_apply_...` 自己判）。
@@ -2982,9 +3425,6 @@ class AgentRuntime:
                         )
                         for _field in _applied_carry:
                             acc.violations.append(f"estate_carry_applied:{_field}")
-                        # 一次性：任何 `confirm.request` 呼叫（不論成敗）都把照片建議用掉，
-                        # ⛔ 不讓上一張照片的分類補到之後另一張無關的單。
-                        AgentSession(agent_state).consume_image_suggestion()
                     call_start = self._clock()
                     try:
                         tool_result = await self.registry.call(
@@ -3022,6 +3462,13 @@ class AgentRuntime:
                             return _finalize(
                                 acc.build_fixed("tool_unavailable", clock=self._clock), is_fixed=True
                             )
+
+                    # 一次性照片建議：`confirm.request` 一回來就用掉（⛔ 不讓上一張照片補到
+                    # 之後另一張無關的單）——**唯一例外**是 `INVALID_INPUT`（缺欄／形狀不合 ⇒
+                    # 要先追問）：站內幫手 S3（§3h 第 6 點）「缺欄追問失敗不消耗」，使
+                    # 「先追問再出卡」仍附得到照片。出卡那一刻另在 `_begin_pending_confirm` 清。
+                    if name == CONFIRM_TOOL_NAME and tool_result.error != "INVALID_INPUT":
+                        AgentSession(agent_state).consume_image_suggestion()
 
                     # L15 (a)③：**範圍比對排在這裡**——`registry.call` 一回來、
                     # 進 trace／`tool_results_by_id`／`_wrap`／messages 之前。
@@ -3062,6 +3509,24 @@ class AgentRuntime:
                     # T2：撞名保留 id 的那筆沒有真的登記進 `tool_results_by_id`——
                     # 它不是「查了、查無資料」，`empty` 一律 `False`（§2）。
                     is_reserved_collision = tc.id in reserved_ids
+                    record_empty = (
+                        False if is_reserved_collision
+                        else _tool_result_empty(tool_result, status_value)
+                    )
+                    # Plan 9.11 §2 D：`grounded` 的**唯一計算點**——純由
+                    # `ToolResult` 算，⛔ 不查 registry、⛔ 不讀工具名。與
+                    # `empty` 互斥（`not record_empty`）；撞保留 id 的那筆
+                    # 一律 `False`（它不是「查了、查無資料」，也不是「查到
+                    # 資料」——這筆根本沒有真的登記進 `tool_results_by_id`）。
+                    record_grounded = (
+                        not is_reserved_collision
+                        and status_value == "ok"
+                        and not record_empty
+                        and any(
+                            p.citable and p.text.strip()
+                            for p in (tool_result.provenance or [])
+                        )
+                    )
                     acc.tool_call_records.append(
                         ToolCallRecord(
                             id=tc.id,
@@ -3070,10 +3535,8 @@ class AgentRuntime:
                             ms=ms,
                             status=status_value,
                             n_items=_tool_result_n_items(tool_result),
-                            empty=(
-                                False if is_reserved_collision
-                                else _tool_result_empty(tool_result, status_value)
-                            ),
+                            empty=record_empty,
+                            grounded=record_grounded,
                         )
                     )
                     # DSP-029 r13 #3／S2 §3（plan-verifier r2 #3、r3 #1）：**保留
@@ -3093,13 +3556,84 @@ class AgentRuntime:
                     # 模型當回合的輸出丟棄、Verifier 不跑（卡不是模型寫的，沒有可
                     # 驗的引用）。⛔ 不把卡交回模型讓它「潤飾一下」：那一潤，
                     # 使用者看到的字就不再等於 `summary_sha256` 綁住的那一份。
+                    # 站內幫手 S2（§3f 2，S2-live 修正）：`confirm.request` 回缺欄清單 ⇒
+                    # **程式直接追問、結束回合**（同確認卡：程式產出、⛔ 交模型改寫）。
+                    # 模型自己寫的追問常含「請提供／需要」，命中 Verifier `assertion_terms`
+                    # 被降級成無引用斷言、重寫兩次後轉人。文件回合不走這裡（照舊交模型、
+                    # 由文件寫入禁令處理）；清單含詞彙外的值 ⇒ `None` ⇒ 照原路交模型。
+                    missing_ask = (
+                        missing_fields_ask_text(tool_result)
+                        if name == CONFIRM_TOOL_NAME and document is None else None
+                    )
+                    # 站內幫手 S3（§3h 第 3 點）：程式追問出口擴大到「放行對照內的文件回合」
+                    # （文件暫存有效的回合本來就沒有 `document`，已在上一條路上）。
+                    if missing_ask is None and name == CONFIRM_TOOL_NAME and doc_action is not None:
+                        missing_ask = missing_fields_ask_text(tool_result)
+                    if missing_ask is not None:
+                        acc.violations.append("confirm_missing_fields_ask")
+                        return self._finish_confirm_turn(
+                            agent_state=agent_state,
+                            user_message=user_message,
+                            trace_id=acc.trace_id,
+                            start=acc.start,
+                            kind="ask",
+                            outcome=make_outcome("clarifying", expects="text"),
+                            answer=missing_ask,
+                            pending_id=None,
+                            tool_calls=acc.tool_call_records,
+                            violations=acc.violations,
+                            llm_calls=acc.llm_calls,
+                            prompt_tokens=acc.prompt_tokens,
+                            completion_tokens=acc.completion_tokens,
+                        )
+                    # 站內幫手 S5 修正輪（§3i 第 2 點停止條件、A1／A3(b)）：**查無 ⇒ 程式固定句
+                    # 結束回合**（同上方缺欄追問：程式產出、⛔ 交模型改寫）。S5-live 11 次只有 4 次
+                    # 引用查無句，其餘被模型改成反問或轉人。條件全為封閉值：
+                    #   ① `jgb2.query.*` 或 `confirm.request`（出卡端物件／合約解析零筆）；
+                    #   ② 帶查無標記（`_is_marked_not_found`：`jgb2.NOT_FOUND_SOURCE`）——
+                    #      無標記的 `NO_MATCH`＝沒查成，照舊交模型（⛔ 說查不到）；
+                    #   ③ 非文件回合（`document is None`）；
+                    #   ④ 本回合還沒有任何查到的資料（工具 `grounded` 紀錄或前置查詢命中）——
+                    #      已有資料時程式說「查不到」會與那份資料矛盾，照舊交模型（手上有可引用的
+                    #      查無句）。
+                    if (
+                        document is None
+                        and (name.startswith(_JGB2_QUERY_PREFIX) or name == CONFIRM_TOOL_NAME)
+                        and _is_marked_not_found(tool_result)
+                        and not any(r.grounded for r in acc.tool_call_records)
+                        and not (acc.snapshot.pre_lookup_trace or {}).get("hits")
+                    ):
+                        acc.violations.append("jgb2_not_found_exit")
+                        return self._finish_confirm_turn(
+                            agent_state=agent_state,
+                            user_message=user_message,
+                            trace_id=acc.trace_id,
+                            start=acc.start,
+                            kind="answer",
+                            outcome=make_outcome("answered", expects="text"),
+                            answer=PRE_LOOKUP_NOT_FOUND_TEXT,
+                            pending_id=None,
+                            tool_calls=acc.tool_call_records,
+                            violations=acc.violations,
+                            llm_calls=acc.llm_calls,
+                            prompt_tokens=acc.prompt_tokens,
+                            completion_tokens=acc.completion_tokens,
+                        )
                     if name == CONFIRM_TOOL_NAME and tool_result.ok:
                         # W9-1 第三道網：文件回合 ⛔ 不出確認卡。排在
                         # `_scope_gate_confirm_request` **之前**（形狀與落點比照
                         # 它）——`confirm.request` 已經在上面被擋掉執行，走到這裡
                         # 代表 `doc_write_face` 算漏了（例如某支寫入工具兩個旗標
                         # 都沒設），這一道是那種情況下的最後一擋。
-                        if document is not None:
+                        # 站內幫手 S3：條件改為「kind 不在放行對照、或出卡的動作不是該 kind
+                        # 對應的動作」（放行對照的唯一來源同上）。
+                        _card_action = (
+                            tool_result.data.get("action")
+                            if isinstance(tool_result.data, dict) else None
+                        )
+                        if document is not None and (
+                            doc_action is None or _card_action != doc_action
+                        ):
                             return self._document_turn_no_write(
                                 document, agent_state=agent_state,
                                 user_message=user_message, trace_id=acc.trace_id,
@@ -3131,6 +3665,7 @@ class AgentRuntime:
                         confirm_turn = self._begin_pending_confirm(
                             agent_state,
                             tool_result.data,
+                            identity=identity,
                             trace_id=acc.trace_id,
                             start=acc.start,
                             user_message=user_message,
@@ -3246,21 +3781,24 @@ class AgentRuntime:
                     "message": effective_handoff_message(None),
                 }
 
-            # T2（Plan `inputs/plan-walkthrough-fixes-batch2-20260909.md` §3）：
+            # T2（Plan `inputs/plan-walkthrough-fixes-batch2-20260909.md` §3；
+            # 條件改由 Plan 9.11 §2 D 重寫）：
             # 迴圈內改寫提示——與 `_reason_hint`／`_schema_reject_hint` 同形，
             # 介於模型輸出與 Verifier 之間。⛔ **不在出口閘另開一次模型呼叫**
             # （security r1 #1：那條路會跳過 Verifier 全部檢查且沒有 deadline
             # 檢查，正式站觀察模式不可用）。條件全為封閉欄位：`out.kind==
             # "handoff"` 且 `out.handoff_reason=="no_grounding"`（字面值，⛔ 不看
             # `handoff_dict` 那個已經套過 fallback 的版本）、`fact_class` 不在
-            # 敏感五類、本回合工具結果非空、且不是「每一筆都 `status=="ok"` 且
-            # `empty`」（那種情況本來就該轉走 T2 的 NO_DATA 出口，⛔ 不該被改寫
-            # 成瞎編）。命中且改寫預算未耗盡 ⇒ 消耗一次 `max_rewrites`、帶固定
-            # 修法句重回模型；**預算已耗盡 ⇒ 直接跳過改寫**（⛔ 不走
-            # `counters.rewrite_exhausted` ⇒ `build_fixed("budget_exhausted")`
-            # 那條，否則 `handoff_reason` 會變成 `budget_exhausted`，T2 出口閘
-            # 永遠到不了——plan-verifier r1 #6），讓輸出照常往下走進 Verifier，
-            # 最終落到 `_apply_handoff_data_exits` 換成 `NO_JUDGEMENT_TEXT`。
+            # 敏感五類、**本回合存在至少一筆 `grounded` 紀錄**（⚠️ 換掉了原本
+            # 「非空且非全 empty」——只呼叫 `handoff.request`／只開導航清單／
+            # 只 `kb.search` 不再算「查到資料」，那些回合現在走零查詢路徑
+            # ③／A，見 Plan 9.11 §2 D「預期行為變化」）。命中且改寫預算未耗盡
+            # ⇒ 消耗一次 `max_rewrites`、帶固定修法句重回模型；**預算已耗盡 ⇒
+            # 直接跳過改寫**（⛔ 不走 `counters.rewrite_exhausted` ⇒
+            # `build_fixed("budget_exhausted")` 那條，否則 `handoff_reason`
+            # 會變成 `budget_exhausted`，T2 出口閘永遠到不了——plan-verifier
+            # r1 #6），讓輸出照常往下走進 Verifier，最終落到
+            # `_apply_handoff_data_exits` 換成 `NO_JUDGEMENT_TEXT`。
             if out.kind == "handoff" and out.handoff_reason in NON_SENSITIVE_HANDOFF_REASONS:
                 try:
                     rewrite_fact_class = FactClass(out.fact_class)
@@ -3268,8 +3806,7 @@ class AgentRuntime:
                     rewrite_fact_class = None
                 if (
                     rewrite_fact_class not in SENSITIVE
-                    and acc.tool_call_records
-                    and not all(r.status == "ok" and r.empty for r in acc.tool_call_records)
+                    and any(r.grounded for r in acc.tool_call_records)
                     and not acc.counters.rewrite_exhausted(self.budget)
                 ):
                     acc.counters.rewrites += 1
@@ -3279,11 +3816,15 @@ class AgentRuntime:
                     )
                     continue
 
-            # V2（Plan batch4 §3）：**有前文的零查詢**——與上面那條 T2 改寫分支
-            # 互斥（上面要求 `tool_call_records` 非空，這裡要求為空），⛔ 不會
-            # 同回合觸發兩次改寫。條件全為封閉欄位：`out.kind=="handoff"`、
-            # `handoff_reason` 非敏感、`fact_class` 不在敏感五類、本回合完全沒
-            # 呼叫工具、且本回合真的注入過「最近編號」資料段。命中且改寫預算
+            # V2（Plan batch4 §3；條件改由 Plan 9.11 §2 D 重寫）：**有前文的
+            # 零查詢**——與上面那條 T2 改寫分支互斥（上面要求存在 `grounded`
+            # 紀錄，這裡要求 `zero_lookup`，兩者不可能同時成立），⛔ 不會同回合
+            # 觸發兩次改寫。條件全為封閉欄位：`out.kind=="handoff"`、
+            # `handoff_reason` 非敏感、`fact_class` 不在敏感五類、
+            # **`zero_lookup(acc.tool_call_records, acc.violations)`**
+            # （⚠️ 換掉了原本「`tool_call_records` 為空」——只呼叫
+            # `handoff.request`／只開導航清單的回合現在也算零查詢，同 T2 的
+            # 放寬）、且本回合真的注入過「最近編號」資料段。命中且改寫預算
             # 未耗盡 ⇒ 消耗一次 `max_rewrites`、帶固定定義句重回模型；
             # **預算已耗盡 ⇒ 直接跳過改寫**（同上一條分支的坑：⛔ 不走
             # `counters.rewrite_exhausted` ⇒ `build_fixed("budget_exhausted")`
@@ -3293,7 +3834,7 @@ class AgentRuntime:
             if (
                 out.kind == "handoff"
                 and out.handoff_reason in NON_SENSITIVE_HANDOFF_REASONS
-                and not acc.tool_call_records
+                and zero_lookup(acc.tool_call_records, acc.violations)
                 and acc.snapshot.has_recent_refs
             ):
                 try:

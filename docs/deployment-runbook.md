@@ -1067,12 +1067,14 @@ AGENT_WRITE_TOOLS_ENABLED=true
 AGENT_VERIFIER_MODE=grounding_observe
 AGENT_BUDGET_DEADLINE_S=45
 AGENT_TURN_TIMEOUT_S=60
-AGENT_MODEL=gpt-5-mini
-AGENT_REASONING_EFFORT=low
+AGENT_MODEL=gpt-6-luna
+AGENT_REASONING_EFFORT=none
 USE_SEMANTIC_RERANK=false
 RAG_API_AUTH_ENFORCE=true        # 應已是 true
 ```
 ⛔ 不設 `AGENT_BUDGET_REWRITES=0`、不設 `AGENT_ATTEMPT_LOG_PATH`（W6-b3 起 attempt log 會多記引文原文 `resolved_unit`，供極性誤殺量測用；**線上一律不設**）。`MCP_ALLOWED_ORIGINS` 照 §19-3（伺服器對伺服器不送 Origin 即可）。
+
+對話模型依 DSP-075（業主 2026-10-15）統一 `gpt-6-luna`；帶工具只接受 `AGENT_REASONING_EFFORT=none`（傳 `low` 回 400）。舊值 `gpt-5-mini` 於 2026-12-11 停用，⛔ 再設。
 
 文件回合相關環境變數（Plan W9 U12；皆有程式預設，不設即預設；U12 落地後生效）：
 - `DOC_MAX_PAGES`（預設 `5`）——單份 PDF 最多 rasterize 前幾頁。
@@ -1129,6 +1131,6 @@ make audit    # 預期 OVERALL: PASS
 | `AGENT_WRITE_TOOLS_ENABLED` | false | `jgb2.action.*` 可見（AND stage） | true |
 | `AGENT_VERIFIER_MODE` | enforce | Verifier 模式：`enforce`／`grounding_observe`（引用類只記錄、極性與機敏類照擋）／`observe_only`（全部只記錄，僅 mock 可開，否則啟動 raise） | grounding_observe |
 | `AGENT_BUDGET_DEADLINE_S`／`AGENT_TURN_TIMEOUT_S` | 20／30 | 回合預算／門面逾時 | 45／60 |
-| `AGENT_MODEL`／`AGENT_REASONING_EFFORT` | 空（退 `OPENAI_MODEL`）／空（不送） | 模型與推理等級 | gpt-5-mini／low |
+| `AGENT_MODEL`／`AGENT_REASONING_EFFORT` | 空（退 `OPENAI_MODEL`）／空（不送） | 模型與推理等級 | gpt-6-luna／none（DSP-075） |
 | `USE_SEMANTIC_RERANK` | true | 舊鏈 reranker | false（demo 不用） |
 | `AGENT_ATTEMPT_LOG_PATH` | 空 | 開發量測草稿落檔（W6-b3 起每句多記 `resolved_unit`＝引文原文與 `observed`＝被觀察而未擋的類別；⛔ 線上不設） | 不設 |

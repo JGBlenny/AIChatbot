@@ -175,7 +175,11 @@ async def test_bills_zero_hit_no_match(monkeypatch, fake_api):
 
     result = await jgb2.query_bills(
         _identity(role_id="1", user_id="9"), {"face": "__test_face__", "ref": "999"})
-    assert result == {"ok": False, "error": "NO_MATCH"}
+    # 站內幫手 S5：查過、沒有 ⇒ 查無形狀（NO_MATCH＋可引用的查無固定句）
+    assert result == {"ok": False, "error": "NO_MATCH",
+                      "provenance": [{"source": "jgb2:not_found#1",
+                                      "text": "系統裡查不到這個編號或名稱。", "citable": True}],
+                      "text_for_model": "系統裡查不到這個編號或名稱。"}
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -246,6 +250,7 @@ async def test_accounts_ref_permission_not_found_no_match(monkeypatch, fake_api)
     _set_canned(fake_api, "get_member_permissions", {"success": False, "data": []})
     result = await jgb2.query_accounts(
         _identity(role_id="1", user_id="9"), {"face": "__test_face__", "ref": "999"})
+    # 站內幫手 S5：`success:false` 且**沒有狀態碼** ⇒ 沒查成形狀（⛔ 附查無句）
     assert result == {"ok": False, "error": "NO_MATCH"}
 
 
@@ -443,7 +448,11 @@ async def test_repairs_zero_hit_no_match(monkeypatch, fake_api):
 
     result = await jgb2.query_repairs(
         _identity(role_id="1", user_id="9"), {"face": "__test_face__", "ref": "999"})
-    assert result == {"ok": False, "error": "NO_MATCH"}
+    # 站內幫手 S5：查過、沒有 ⇒ 查無形狀（NO_MATCH＋可引用的查無固定句）
+    assert result == {"ok": False, "error": "NO_MATCH",
+                      "provenance": [{"source": "jgb2:not_found#1",
+                                      "text": "系統裡查不到這個編號或名稱。", "citable": True}],
+                      "text_for_model": "系統裡查不到這個編號或名稱。"}
 
 
 # ══════════════════════════════════════════════════════════════════════

@@ -151,9 +151,13 @@ def _handoff_result(
 
 
 def _ok_call(*, empty: bool) -> ToolCallRecord:
+    """Plan 9.11 §2 D：`empty=False` 代表「查到資料」，補 `grounded=True`
+    才是這一筆的真實分類（⛔ 不然會被算成零查詢的 `other`）；`empty=True`
+    維持不 grounded（`empty` 優先於 `grounded`）。"""
     return ToolCallRecord(
         id="call-1", name="jgb2.query.bills", args_summary={},
         ms=1, status="ok", n_items=0 if empty else 2, empty=empty,
+        grounded=not empty,
     )
 
 
