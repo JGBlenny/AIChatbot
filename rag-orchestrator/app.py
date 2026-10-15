@@ -122,6 +122,21 @@ def _wrap_verifier_observe_only(runtime, attempt_sink):
           + ("" if mock_on else "　⚠️ 非 mock：健檢 premise.red_flags 會記紅"),
           file=sys.stderr)
 
+#: 開機那次 prepare 逾時後，背景重建的時限（秒）。正式機實測約需 3～4 分鐘。
+INDEX_BACKGROUND_PREPARE_TIMEOUT_S = 900.0
+
+
+async def _prepare_index_in_background(index, canon) -> None:
+    """開機 prepare 逾時後在背景重建細目索引；成功或失敗都印一行（fail-soft，⛔ raise）。"""
+    import asyncio
+
+    try:
+        await asyncio.wait_for(index.prepare(canon), INDEX_BACKGROUND_PREPARE_TIMEOUT_S)
+        print(f"✅ [agent] 細目索引背景重建完成（state={index.state}）")
+    except Exception as e:  # noqa: BLE001 — fail-soft，與開機那次同待遇
+        print(f"⚠️ [agent] 細目索引背景重建失敗（state={index.state}）：{type(e).__name__}: {e}")
+
+
 async def _init_agent_runtime(app: FastAPI) -> None:
     """建 `app.state.agent_runtime`／`agent_audiences`／`agent_indexes`／`outline_resolver`／`shadow_runner`。
 
@@ -188,6 +203,12 @@ async def _init_agent_runtime(app: FastAPI) -> None:
             await asyncio.wait_for(_index.prepare(_canon), _PREPARE_TOTAL_TIMEOUT_S)
         except Exception as e:  # noqa: BLE001 — 涵蓋 asyncio.TimeoutError 與其他失敗，皆 fail-soft
             print(f"⚠️ [agent] 細目索引 prepare 失敗（state={_index.state}）：{type(e).__name__}: {e}")
+            # 2026-10-15 正式機實測：embedding 約 9.5 次／秒，2,082 項要 3～4 分鐘，開機 60 秒
+            # 必逾時且原本不再重試 ⇒ 整段上線期間都只有目錄（toc-only）。改為開機後在背景重建，
+            # ⛔ 不延長開機阻塞；建好後同一個 index 物件轉 ready，selector 每回合讀 state 即生效。
+            app.state.agent_index_prepare_task = asyncio.create_task(
+                _prepare_index_in_background(_index, _canon)
+            )
 
         for _audience in _AGENT_OUTLINE_AUDIENCES:
             try:

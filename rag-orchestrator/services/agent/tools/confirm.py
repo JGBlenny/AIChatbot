@@ -886,6 +886,22 @@ async def _prepare_closed_action(
     return None, estate_id_out, scope_estate_id
 
 
+#: 2026-10-15 正式機：建物件／合約／手動帳單（jgb2-req#19～#21）JGB 尚未開放；接真 JGB
+#: （`use_mock=False`）時 ⛔ 出卡（否則使用者按確認後才在不存在的端點上失敗），由 runtime
+#: 以這一句程式固定句結束回合。⛔ 無插值。
+WRITE_NOT_SUPPORTED_ACTIONS = frozenset({"estate_create", "contract_create", "manual_bill_create"})
+WRITE_NOT_SUPPORTED_TEXT = "這個動作目前還不支援：JGB 系統尚未開放建立物件、合約或手動帳單，開放後就能直接建立。"
+
+
+def _write_not_supported_result() -> ToolResult:
+    return ToolResult(
+        ok=True,
+        data={"facts": WRITE_NOT_SUPPORTED_TEXT, "candidates": None, "skip_refine": True,
+              "not_supported": True},
+        text_for_model=WRITE_NOT_SUPPORTED_TEXT,
+    )
+
+
 async def confirm_request(
     identity: Identity,
     args: dict,
@@ -941,6 +957,11 @@ async def confirm_request(
     # DSP-038-2：`action` 必填、封閉值域；確認卡由程式依 action＋payload 決定性
     # 產出。⛔ 缺欄位／不認得的 action ⇒ `INVALID_INPUT`，不「盡力而為」印半張卡。
     action = payload.get("action")
+    # 2026-10-15 正式機：接真 JGB 時新動作端點尚未開放 ⇒ 出卡前就停（真 `JGBSystemAPI`
+    # 一定有 `use_mock`；沒有這個屬性的是測試替身 ⇒ 沿用原行為）。
+    if (action in WRITE_NOT_SUPPORTED_ACTIONS
+            and getattr(jgb2_tools._get_api(), "use_mock", True) is False):
+        return _write_not_supported_result()
     # 收案 6：`repair_create` 的 `category_name` 必須落在封閉的修繕分類樹內
     # （父節點或葉節點皆可）——⛔ 不模糊比對、不代選；render() 只驗形狀不驗值域，
     # 這道閘必須在呼叫它之前。

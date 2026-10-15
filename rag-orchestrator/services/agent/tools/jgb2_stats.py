@@ -47,6 +47,11 @@ ERROR_TEXT = (
     "這不是「沒有資料」：⛔ 不要回報為零筆、零元或空清單。"
 )
 
+#: 接真 JGB（`USE_MOCK_JGB_API=false`）時三支統計端點 JGB 尚未開放（jgb2-req#16～#18）⇒
+#: 不發請求，由 runtime 以這一句程式固定句結束回合（2026-10-15 正式機實測：打到不存在的
+#: 端點後被模型改成轉人或反問「想處理哪一件事？」）。⛔ 無插值。
+NOT_SUPPORTED_TEXT = "這項統計目前還不支援：JGB 系統尚未開放這個查詢，開放後就能直接查。"
+
 #: 缺身分（缺 role_id 或 user_id）⇒ 與其他 jgb2 查詢工具同形的 NO_MATCH。
 _UNPAID_SCOPES = {"this_month": "本月", "overdue": "逾期"}
 
@@ -92,6 +97,28 @@ def _error_result() -> dict[str, Any]:
         "provenance": [],
         "text_for_model": ERROR_TEXT,
     }
+
+
+def _not_supported_result() -> dict[str, Any]:
+    """接真 JGB 時的「尚未開放」結果：`data.not_supported=True` 是 runtime 固定句出口的標記。"""
+    return {
+        "ok": True,
+        "data": {"facts": NOT_SUPPORTED_TEXT, "candidates": None, "skip_refine": True,
+                 "not_supported": True},
+        "provenance": [],
+        "text_for_model": NOT_SUPPORTED_TEXT,
+    }
+
+
+def _mock_only(handler: Callable[[Any, dict], Awaitable[dict[str, Any]]]):
+    """統計端點只在替身可用；接真 JGB ⇒ 不發請求、回「尚未開放」。"""
+    async def guarded(identity: Any, args: dict[str, Any]) -> dict[str, Any]:
+        # 真 `JGBSystemAPI` 一定有 `use_mock`；沒有這個屬性的是測試替身 ⇒ 沿用原行為。
+        if getattr(_jgb2._get_api(), "use_mock", True) is False:
+            return _not_supported_result()
+        return await handler(identity, args)
+    guarded.__name__ = handler.__name__
+    return guarded
 
 
 def _ok_result(tag: str, rule: str, facts: str, extra: dict[str, Any]) -> dict[str, Any]:
@@ -325,7 +352,7 @@ EXPIRING_CONTRACTS_SPEC: ToolSpec = {
 
 #: `mcp_facade.build_registry` 逐一註冊（形狀同 `action.ACTION_SPECS`）。
 STATS_SPECS: list[tuple[ToolSpec, Callable[[Any, dict], Awaitable[dict[str, Any]]]]] = [
-    (UNPAID_BILLS_SPEC, unpaid_bills),
-    (IN_PROGRESS_REPAIRS_SPEC, in_progress_repairs),
-    (EXPIRING_CONTRACTS_SPEC, expiring_contracts),
+    (UNPAID_BILLS_SPEC, _mock_only(unpaid_bills)),
+    (IN_PROGRESS_REPAIRS_SPEC, _mock_only(in_progress_repairs)),
+    (EXPIRING_CONTRACTS_SPEC, _mock_only(expiring_contracts)),
 ]

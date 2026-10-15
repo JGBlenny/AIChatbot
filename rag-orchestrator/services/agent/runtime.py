@@ -884,6 +884,18 @@ def _recent_ref_ids(agent_state: dict, dialog: list) -> list[str]:
     return ordered[:_RECENT_REFS_MAX]
 
 
+def _is_stats_not_supported(name: str, result: Any) -> bool:
+    """2026-10-15 正式機：`jgb2.stats.*`／`confirm.request`（新寫入動作）接真 JGB 時回
+    「尚未開放」標記（`data.not_supported`）；固定句就是 `data.facts`（工具端的程式常數）。"""
+    data = getattr(result, "data", None)
+    return (
+        (name.startswith("jgb2.stats.") or name == CONFIRM_TOOL_NAME)
+        and bool(getattr(result, "ok", False))
+        and isinstance(data, dict)
+        and data.get("not_supported") is True
+    )
+
+
 def _is_marked_not_found(result: Any) -> bool:
     """站內幫手 S5（§3i 第 2 點）：這個 `NO_MATCH` 是不是**真的查過、確定沒有**——
     只認帶查無標記（`jgb2.NOT_FOUND_SOURCE` 來源的 provenance）的那一種；其餘
@@ -3579,6 +3591,26 @@ class AgentRuntime:
                             kind="ask",
                             outcome=make_outcome("clarifying", expects="text"),
                             answer=missing_ask,
+                            pending_id=None,
+                            tool_calls=acc.tool_call_records,
+                            violations=acc.violations,
+                            llm_calls=acc.llm_calls,
+                            prompt_tokens=acc.prompt_tokens,
+                            completion_tokens=acc.completion_tokens,
+                        )
+                    # 2026-10-15 正式機：統計端點（jgb2-req#16～#18）JGB 尚未開放 ⇒ **程式固定句
+                    # 結束回合**（同下方查無出口：程式產出、⛔ 交模型改寫——實測模型會改成轉人或
+                    # 反問「想處理哪一件事？」）。
+                    if document is None and _is_stats_not_supported(name, tool_result):
+                        acc.violations.append("jgb2_stats_not_supported_exit")
+                        return self._finish_confirm_turn(
+                            agent_state=agent_state,
+                            user_message=user_message,
+                            trace_id=acc.trace_id,
+                            start=acc.start,
+                            kind="answer",
+                            outcome=make_outcome("answered", expects="text"),
+                            answer=tool_result.data["facts"],
                             pending_id=None,
                             tool_calls=acc.tool_call_records,
                             violations=acc.violations,

@@ -23,16 +23,16 @@
 | 狀態 | 項目 | 依據（計畫 §7） |
 |---|---|---|
 | 已驗證（替身環境，fresh verifier CONFIRMED） | (1) 查詢、(2) 修改前先確認、(3) 依權限操作、(4) 未收帳單加總、(5) 執行中修繕清單、(8) N 個月內到期合約、(10) 建立合約 | S0、S1、S2、S5 各片驗證；S1＝4 項、S2 加 (2)(10)、S5 加 (3) |
-| 文字建立已驗證，照片／PDF 半邊修正中 | (6) 修繕單（文字 OK；照片分類到葉節點、沙發照仍只到父分類）、(9) 建立物件（文字 OK；謄本相關修正輪）、(11) 手動帳單（文字 OK；手寫收據擷取逾時 44 秒待修） | S3 首輪 8 劇本 1 PASS，修正輪重測 6／8 PASS，未過 2 項交修（見計畫 §7 最末條） |
+| 已驗證（替身環境，S3 fresh verifier CONFIRMED） | (6) 修繕單、(9) 建立物件、(11) 手動帳單——文字與照片／PDF 兩半（照片分類到葉節點、謄本走 DocuMind、收據民國日期換算） | 計畫 §7「S3 收尾」：全 8 劇本 8／8 PASS |
 | 撤除 | (7) 記憶 | 計畫 §3g |
 
-**「替身驗收 ≠ 接上真 JGB」**：上表全部是在我方模擬的 jgb2（替身，`USE_MOCK_JGB_API=true` 的 fixture）上驗的。接口 B 的 #16～#21 在 JGB 尚未實作，**非 mock 模式下這 6 支我方一律回降級、不發請求**（`services/jgb_system_api.py` `_proposed_not_available`；查證：`grep -n "_proposed_not_available" rag-orchestrator/services/jgb_system_api.py`）。所以「正式機 `USE_MOCK_JGB_API=false`」時，(4)(5)(8) 與建立物件／合約／手動帳單會走降級固定句，**不是壞掉，是 JGB 端點還不存在**。細節見第 5 章。
+**「替身驗收 ≠ 接上真 JGB」**：上表全部是在我方模擬的 jgb2（替身，`USE_MOCK_JGB_API=true` 的 fixture）上驗的。接口 B 的 #16～#21 在 JGB 尚未實作，**非 mock 模式下這 6 支我方一律回降級、不發請求**（`services/jgb_system_api.py` `_proposed_not_available`；查證：`grep -n "_proposed_not_available" rag-orchestrator/services/jgb_system_api.py`）。所以「正式機 `USE_MOCK_JGB_API=false`」時，(4)(5)(8) 由程式直接回固定句「這項統計目前還不支援：JGB 系統尚未開放這個查詢，開放後就能直接查。」（`jgb2_stats.NOT_SUPPORTED_TEXT`），建立物件／合約／手動帳單**不出確認卡**、程式直接回「這個動作目前還不支援：…」（`confirm.WRITE_NOT_SUPPORTED_TEXT`）——**不是壞掉，是 JGB 端點還不存在**（2026-10-15 首次上線實測：改前統計題被模型改成轉人或反問「想處理哪一件事？」，寫入類要按完確認才失敗）。細節見第 5 章。
 
-**上線前的三個阻擋項（先看，第 4 章 步驟 0 逐項處理）：**
+**上線前的三個阻擋項（2026-10-15 皆已解決）：**
 
-1. **程式還沒 commit/push。** 站內幫手的改動目前都在工作樹（未提交），其中新檔 `rag-orchestrator/services/agent/tools/jgb2_stats.py`、`rag-orchestrator/services/documind_client.py`、`rag-orchestrator/services/jgb/fixture_data/assistant_demo_vendor4.json` 是 untracked。正式機 `git pull` 拉不到未 push 的東西。計畫 §7 另記：commit 時要與業主確認「9.11 線」與「站內幫手線」怎麼拆。
-2. **`docker-compose.prod.yml` 沒有宣告站內幫手新增的 env 鍵。** compose 沒有 `env_file`，只有 `environment:` 裡宣告的鍵才會從 `.env` 傳進容器（compose 檔 L217 的註解就是這個教訓）。以下鍵在 `docker-compose.prod.yml` 與 `docker-compose.dev.yml` **目前 grep 為 0**：`AGENT_ASSISTANT_KEY_IDS`、`IMAGE_URL_ALLOWLIST`、`DOCUMIND_BASE_URL`、`DOCUMIND_TOKEN`、`DOCUMIND_ALLOW_INSECURE_TEST_HOST`、`DOCUMENT_EXTRACTION_MODEL`、`JGB_MOCK_WRITE_LOG`。只寫進 `.env` 而 compose 不宣告，容器看不到，**其中 `AGENT_ASSISTANT_KEY_IDS` 漏了會靜默失效**（缺 `user_id` 不會被拒，接口 A §2 明寫）。⛔ 本文件不改 compose；需另開一步在兩份 compose 宣告（`tests/unit/_meta/test_env_parity_req.py` 要求兩份一致）。查證：`grep -c "AGENT_ASSISTANT_KEY_IDS" docker-compose.prod.yml docker-compose.dev.yml`。
-3. **這台正式機同時跑 LINE OA demo。** runbook §20：line-bot 也經同一個 `/mcp` 的 `agent.turn`，demo 期間整站跑替身。把 `USE_MOCK_JGB_API`、`AGENT_MODEL`、`AGENT_TURN_ENABLED` 等改掉，LINE OA 那條線會一起變。【待決定】是否同機切換，或另外安排時段（見第 8 章）。
+1. 程式已 commit 並 push（`1bbab7a7`，含 `jgb2_stats.py`、`documind_client.py`、`assistant_demo_vendor4.json` 三個新檔）。
+2. `docker-compose.prod.yml` 已宣告站內幫手新增的 env 鍵（compose 沒有 `env_file`，只有 `environment:` 宣告的鍵才會從 `.env` 傳進容器）；正式容器實測 `AGENT_ASSISTANT_KEY_IDS`、`IMAGE_URL_ALLOWLIST`、`DOCUMENT_EXTRACTION_MODEL` 等鍵都讀得到。
+3. LINE OA demo 與站內幫手同機：業主裁「一起切，不另排時段」，2026-10-15 已一起切到接真 JGB（www）、`gpt-6-luna`、`enforce`。
 
 ---
 
@@ -45,7 +45,7 @@
 | `AGENT_MODEL` | `gpt-6-luna` | 對話模型。未設時退回 `OPENAI_MODEL`（compose 預設 `gpt-4o-mini`），驗收結果不可比 |
 | `AGENT_REASONING_EFFORT` | `none` | gpt-6-luna **帶工具呼叫時只能 `none`**；沿用 runbook §20-2 的 `low` 會回 400（runbook §20-2 自己的警語） |
 | `IMAGE_RECOGNITION_MODEL` | `gpt-6-luna` | 照片辨識（修繕照片）。compose 預設 `gpt-4o-mini`，runbook §20 demo 曾覆寫成 `gpt-4o` |
-| `DOCUMENT_EXTRACTION_MODEL` | `gpt-6-luna` | 文件擷取（收據）。程式預設 `gpt-5.6-luna`（`services/agent/document_extract.py` `DEFAULT_DOCUMENT_EXTRACTION_MODEL`）；**compose 未宣告此鍵，見第 1 章阻擋項 2** |
+| `DOCUMENT_EXTRACTION_MODEL` | `gpt-6-luna` | 文件擷取（收據）。程式預設 `gpt-5.6-luna`（`services/agent/document_extract.py` `DEFAULT_DOCUMENT_EXTRACTION_MODEL`）；compose 已宣告（2026-10-15） |
 
 **正式機 `.env` 目前是否已切換：未查證**（DSP-075 明寫「截至 2026-10-15 未查證已切」；runbook §20-2 記的 demo 值仍是 `AGENT_MODEL=gpt-5-mini`、`AGENT_REASONING_EFFORT=low`）。⇒ **部署時由業主在正式機自己確認並設定**，確認指令見第 4 章 步驟 5。
 
@@ -67,14 +67,14 @@
 | `USE_MOCK_JGB_API` | `false`（接真 JGB） | `true` 時走我方替身，不會打到 jgb2 | compose 預設 `true`＝**全假資料上線**（總帳 §0 明寫「忘了設就是全假資料上線」）。⚠️ 設 `false` 時 `JGB_API_KEY` 必須在，否則啟動直接 raise（runbook §20-7；`services/jgb_system_api.py` 建構時檢查） |
 | `JGB_API_BASE_URL`／`JGB_API_KEY` | URL：【待決定】接哪一個 JGB 環境（compose 預設 `https://preview.jgbsmart.com`）；KEY：由 JGB 提供，⛔ 不寫在任何文件 | 真 API 的位址與憑證 | 位址錯＝打到錯的環境；`JGB_API_KEY` 空＋非 mock＝啟動 raise |
 | `AGENT_MODEL`／`AGENT_REASONING_EFFORT` | **`gpt-6-luna`／`none`**（見第 2 章） | DSP-075 | 退回 `OPENAI_MODEL`；`low` 帶工具回 400 |
-| `IMAGE_RECOGNITION_MODEL`／`DOCUMENT_EXTRACTION_MODEL` | **`gpt-6-luna`**（見第 2 章） | 照片與收據功能 | 舊預設，且 `DOCUMENT_EXTRACTION_MODEL` 在 compose 未宣告（阻擋項 2） |
+| `IMAGE_RECOGNITION_MODEL`／`DOCUMENT_EXTRACTION_MODEL` | **`gpt-6-luna`**（見第 2 章） | 照片與收據功能 | 舊預設，（compose 已宣告） |
 | `AGENT_TURN_TIMEOUT_S` | **建議 `90`**（驗證用建議值，不是定案；runbook demo 為 `60`，程式預設 `30`） | 文件回合預算＝`min(DOCUMENT_MAX_BUDGET_S=45, AGENT_TURN_TIMEOUT_S / 2)`（`services/agent/mcp_facade.py`）；DocuMind 可用時間＝此值扣已耗時再扣 20 秒模型迴圈保留，不足 1 秒不送（接口 A §2）。照片 OCR 約 15～21 秒／頁。要讓文件預算拿滿 45 秒需 ≥ 90。**實測關係屬 S3 修正輪待確認項（接口 A §13）** | 預設 30 ⇒ 文件預算 15 秒，謄本／收據回合容易 `TOOL_TIMEOUT`。⚠️ JGB 代理的逾時必須大於此值【待告知 JGB】 |
 | `AGENT_BUDGET_DEADLINE_S` | runbook §20-2 demo 值 `45`（預設 `20`）；【待決定】是否沿用 | 回合預算。runbook 註：`rewrites=2` 路徑 >20 s | 預設 20 秒，較長的回合被預算截斷 |
 | `OPENAI_TIMEOUT_S` | `25`（runbook §20-2 建議） | agent 每次模型呼叫的 SDK 逾時 | 空＝SDK 預設 600 秒，一個掛住的請求只能等門面逾時 |
 | `AGENT_VERIFIER_MODE` | 驗收用 **`enforce`**（程式預設）。**【待決定】**：runbook §20 記正式為 `grounding_observe`（DSP-039／040），該值**未經查證**；接口 A §2 要求接測以 `enforce` 為準 | 驗證器模式：`enforce` 全部照擋；`grounding_observe` 引用與涵蓋類只記錄（極性與機敏類照擋）；`observe_only` 只准配 mock，否則啟動 raise | 未設＝`enforce`。⚠️ `grounding_observe` × `USE_MOCK_JGB_API=false` 會讓 `/api/v1/agent/health` 的 `status` 轉 `red`（`checks.premise.red_flags` 記 `verifier_grounding_observe_on_real_api`，runbook §20-7）；真 API 上等於關掉引用檢查 |
-| `AGENT_ASSISTANT_KEY_IDS` | 站內幫手那把金鑰的 `api_key_id`（整數，逗號分隔）；**金鑰建好才有 id**（第 4 章 步驟 4）。⚠️ compose 未宣告（阻擋項 2） | 列入的金鑰，`X-JGB-Identity` 缺 `user_id` 即 400 `IDENTITY_MISSING_USER_ID`（`services/agent/mcp_facade.py` `_ASSISTANT_KEY_IDS_ENV`） | **未設或空字串＝不對任何金鑰啟用，不報錯**（站內幫手缺 `user_id` 也不會被拒，靜默失效）；含非整數＝服務啟動失敗並印原因 |
-| `IMAGE_URL_ALLOWLIST` | JGB 專用上傳網域（逗號分隔 host）；**【待 JGB 回覆網域】，回覆前不設**。⚠️ compose 未宣告（阻擋項 2） | 抓圖白名單（照片與 PDF）。限定專用上傳網域，⛔ `www`／API 主機（DSP-073、F9）。白名單內除 `relay.jgbsmart.com` 外每個 host 都必帶單一整數 `exp` | 未設＝預設 `relay.jgbsmart.com`（`image_fetch.py` `DEFAULT_IMAGE_URL_ALLOWLIST`），JGB 上傳網域的檔案抓不到（照片／文件測試延後）。⚠️ **有設值時是取代預設、不是附加**；設成空字串＝任何網址都抓不到 |
-| `DOCUMIND_BASE_URL`／`DOCUMIND_TOKEN` | **正式機先不設＝謄本功能關閉**。日後只准 `https://…`＋Token（暫以 `Authorization: Bearer` 送出，待 DocuMind 確認格式）。⚠️ compose 未宣告（阻擋項 2） | 謄本解析由 DocuMind 負責（接口 A §7.3）。線上 DocuMind 目前明文 http、無認證，**不得用於正式** | 未設／任何不合規組合一律視同關閉：謄本回合不放行建立物件，使用者看到「未啟用」固定句（`services/documind_client.py`） |
+| `AGENT_ASSISTANT_KEY_IDS` | 站內幫手那把金鑰的 `api_key_id`（整數，逗號分隔）；**金鑰建好才有 id**（第 4 章 步驟 4）。compose 已宣告（2026-10-15） | 列入的金鑰，`X-JGB-Identity` 缺 `user_id` 即 400 `IDENTITY_MISSING_USER_ID`（`services/agent/mcp_facade.py` `_ASSISTANT_KEY_IDS_ENV`） | **未設或空字串＝不對任何金鑰啟用，不報錯**（站內幫手缺 `user_id` 也不會被拒，靜默失效）；含非整數＝服務啟動失敗並印原因 |
+| `IMAGE_URL_ALLOWLIST` | JGB 專用上傳網域（逗號分隔 host）；**【待 JGB 回覆網域】，回覆前不設**。compose 已宣告（2026-10-15） | 抓圖白名單（照片與 PDF）。限定專用上傳網域，⛔ `www`／API 主機（DSP-073、F9）。白名單內除 `relay.jgbsmart.com` 外每個 host 都必帶單一整數 `exp` | 未設＝預設 `relay.jgbsmart.com`（`image_fetch.py` `DEFAULT_IMAGE_URL_ALLOWLIST`），JGB 上傳網域的檔案抓不到（照片／文件測試延後）。⚠️ **有設值時是取代預設、不是附加**；設成空字串＝任何網址都抓不到 |
+| `DOCUMIND_BASE_URL`／`DOCUMIND_TOKEN` | **正式機先不設＝謄本功能關閉**。日後只准 `https://…`＋Token（暫以 `Authorization: Bearer` 送出，待 DocuMind 確認格式）。compose 已宣告（2026-10-15） | 謄本解析由 DocuMind 負責（接口 A §7.3）。線上 DocuMind 目前明文 http、無認證，**不得用於正式** | 未設／任何不合規組合一律視同關閉：謄本回合不放行建立物件，使用者看到「未啟用」固定句（`services/documind_client.py`） |
 | `DOCUMIND_ALLOW_INSECURE_TEST_HOST`／`DOCUMIND_INSECURE_TEST_HOST` | **正式機 ⛔ 設**（確認未設） | 只限測試的明文 http 後門（兩者同時設且主機逐字相符才放行） | 未設＝不允許明文 http（目標狀態） |
 | `JGB_MOCK_WRITE_LOG` | **正式機 ⛔ 設**（確認未設） | 替身寫入紀錄（把請求 body 落檔），只用於臨時測試容器（計畫 §3f） | 未設＝完全不寫（目標狀態） |
 | `RAG_API_AUTH_ENFORCE` | `true`（應已是） | `/mcp` 無金鑰須 401（runbook §0-3、§20-2） | 預設 `false`＝任何人可直打 |
@@ -93,7 +93,7 @@
 ### 步驟 0：部署前（本機，業主決定後執行）
 
 1. 【待決定】commit 範圍：站內幫手線與 9.11 線的拆法。⛔ 漏掉 untracked 新檔：`rag-orchestrator/services/agent/tools/jgb2_stats.py`、`rag-orchestrator/services/documind_client.py`、`rag-orchestrator/services/jgb/fixture_data/assistant_demo_vendor4.json`（`registry`／`mcp_facade` 會 import 前兩者，漏了容器起不來）。
-2. 在 `docker-compose.prod.yml`（及 `docker-compose.dev.yml`）宣告第 1 章阻擋項 2 列的 7 個鍵（格式比照既有 `KEY: ${KEY:-}`，空值＝程式預設行為）。本文件不改檔。
+2. `docker-compose.prod.yml` 已宣告站內幫手新增的 env 鍵（2026-10-15，commit `1bbab7a7`）；dev compose 有 `env_file`，免宣告。
 3. `git push origin main`（正式機部署以 main 為準，runbook §20-1）。
 
 ### 步驟 1：登入正式機、記下起點 commit
@@ -191,7 +191,7 @@ docker-compose -f docker-compose.prod.yml logs --since 2m rag-orchestrator | gre
 docker exec aichatbot-rag-orchestrator sh -c 'for k in AGENT_ASSISTANT_KEY_IDS IMAGE_URL_ALLOWLIST DOCUMIND_BASE_URL DOCUMIND_TOKEN DOCUMIND_ALLOW_INSECURE_TEST_HOST DOCUMIND_INSECURE_TEST_HOST JGB_MOCK_WRITE_LOG JGB_MOCK_FIXTURE JGB_API_KEY DOCUMENT_EXTRACTION_MODEL; do if [ -n "$(printenv $k)" ]; then echo "$k=已設"; else echo "$k=未設"; fi; done; for k in AGENT_MODEL AGENT_REASONING_EFFORT IMAGE_RECOGNITION_MODEL USE_MOCK_JGB_API AGENT_VERIFIER_MODE AGENT_TURN_TIMEOUT_S UVICORN_WORKERS AGENT_STAGE AGENT_WRITE_TOOLS_ENABLED AGENT_TURN_ENABLED; do echo "$k=$(printenv $k)"; done'
 ```
 預期：`AGENT_ASSISTANT_KEY_IDS=已設`、`JGB_API_KEY=已設`、`DOCUMENT_EXTRACTION_MODEL=已設`；`DOCUMIND_BASE_URL`／`DOCUMIND_TOKEN`／`DOCUMIND_ALLOW_INSECURE_TEST_HOST`／`DOCUMIND_INSECURE_TEST_HOST`／`JGB_MOCK_WRITE_LOG`／`JGB_MOCK_FIXTURE`＝**未設**；`IMAGE_URL_ALLOWLIST` 依是否已有 JGB 網域；第二段印出 `gpt-6-luna`、`none`、`gpt-6-luna`、`false`、`enforce`（或業主決定值）、`90`、`1`、`M1`、`true`、`true`。
-失敗時：`AGENT_ASSISTANT_KEY_IDS=未設` 但 `.env` 有 ⇒ 就是阻擋項 2（compose 沒宣告），回步驟 0 第 2 點；**這個鍵漏了不會有任何錯誤訊息**，所以這步不可省。
+失敗時：`AGENT_ASSISTANT_KEY_IDS=未設` 但 `.env` 有 ⇒ compose 沒宣告該鍵（檢查 `docker-compose.prod.yml`）；**這個鍵漏了不會有任何錯誤訊息**，所以這步不可省。
 
 ### 步驟 9：health
 
@@ -213,6 +213,7 @@ curl -sS -X POST http://localhost:8100/mcp -K /home/ec2-user/.curl-mcp-key -H "C
   -H 'X-JGB-Identity: {"vendor_id":<vendor_id>,"session_id":"smoke_'"$(date +%s)"'","mode":"b2b","target_user":"property_manager"}' \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | grep -o '"agent.turn"'
 ```
+⚠️ 2026-10-15 實測：第三條直接打 `tools/list` 回 400「Missing session ID」——要先 `initialize`（加 `-H 'Accept: application/json, text/event-stream'`，從回應標頭取 `Mcp-Session-Id`），再帶 `-H "Mcp-Session-Id: <id>"` 打 `tools/list`；`/api/v1/agent/health` 也必須帶完整 `X-JGB-Identity`（含 `vendor_id`），否則 400 `IDENTITY_MALFORMED`。
 預期：401、403，第三條印出 `"agent.turn"`。（若第三條回 4xx，對照 runbook §5 ② 的原指令。）`tools/list` 回 403 `VENDOR_*` ＝ 金鑰與 vendor 沒對上，檢查步驟 4 的 `vendor_ids`。
 
 ### 步驟 11：暖機（runbook §20-3b）
@@ -223,9 +224,9 @@ curl -sS -X POST http://localhost:8100/mcp -K /home/ec2-user/.curl-mcp-key -H "C
 ### 步驟 12：不變量稽核（runbook §19-6 ④、§10）
 
 ```bash
-docker exec aichatbot-rag-orchestrator make audit
+cd /home/ec2-user/AIChatbot && bash scripts/audit/check_invariants.sh 2>&1 | grep -E "❌|OVERALL"
 ```
-預期：`OVERALL: PASS`。不變量 3 會比對「容器內關鍵檔 digest 與 repo 一致」，所以容器必須是剛重建的、工作樹乾淨。若不變量 7（金額語義層）或 10 報紅，先停下回報（計畫 §3e 提過替身直接寫 `final_total` 的歷史）。
+⚠️ 容器內沒有 `make`（2026-10-15 實測 `exec: "make": executable file not found`），改在主機 repo 目錄跑腳本。預期：只剩不變量 44 失敗（題目原文檔只在開發機 `~/jgb-archive/ruler-9.13/questions.json`，正式機沒有，屬前置條件），其餘通過（2026-10-15：43 項 PASS）。不變量 3 會比對「容器內關鍵檔 digest 與 repo 一致」，所以容器必須是剛重建的、工作樹乾淨。若不變量 7（金額語義層）或 10 報紅，先停下回報（計畫 §3e 提過替身直接寫 `final_total` 的歷史）。
 
 ---
 
@@ -279,7 +280,7 @@ docker exec aichatbot-rag-orchestrator make audit
 | 同 session 換人 | 成員甲開一段對話並讓確認卡停在待確認；以**同一 `session_id`** 換成員乙發話，再按甲的 `confirm_submit` | 乙看不到甲的對話內容；按甲的鍵得到「這筆確認已失效，請重新確認一次。」；JGB 沒有寫入；另測同 user 換 role 也重置 | A3(d) |
 | 查詢三域 | 成員甲各問一句帳單、合約、修繕（用 JGB 測試資料的真實編號）；成員乙問甲看得到而乙看不到的三筆；成員甲問不存在的編號 | 甲：單號、金額、日期、狀態與 JGB 資料逐欄一致。乙：回答**不含該筆任何欄位值**，且與「不存在編號」是**同一句**「系統裡查不到這個編號或名稱。」。JGB 端請求紀錄：每個讀取請求都帶 `role_id` 與 `viewer_user_id` | A1、A3(a)(b) |
 | 他團隊對照 | 他團隊成員（`role_id` 為他團隊）問本團隊的帳單與合約 | 同上固定句、不含欄位值 | A3(b) |
-| 降級行為（#16～#18 還沒有） | 問「本月未收帳單」「執行中修繕單」「三個月內到期合約」 | 看到固定的「沒查成」類句子；**⛔ 不得印「共 0 筆」「0 元」**（F7）。這同時天然驗證了接測清單 A4(4)「上游錯誤走固定句而非 0」 | A4(4) |
+| 降級行為（#16～#18 還沒有） | 問「本月未收帳單」「執行中修繕單」「三個月內到期合約」 | 看到固定句「這項統計目前還不支援：JGB 系統尚未開放這個查詢，開放後就能直接查。」；**⛔ 不得印「共 0 筆」「0 元」**（F7）。這同時天然驗證了接測清單 A4(4)「上游錯誤走固定句而非 0」 | A4(4) |
 | 文字報修（寫入類，測試團隊） | 一句話描述問題＋物件 ⇒ 確認卡 ⇒ **先按取消** ⇒ 再來一次 ⇒ 按確認 | 出卡時 `outcome.state=confirm_pending`、`expects=button`，欄位逐欄列出、未給的選填欄不出現；取消後 JGB 資料不變；確認後 JGB 多一張修繕單，欄位＝卡片；**`emergency_status` 在 #3 答覆前不得自動帶值**；重按同一顆確認鍵不重複建立（真 JGB 的冪等要等接測才算數，在那之前當作「可能重複建立」，接口 A §6 F2-6） | A2、A6 |
 | 「不用確認直接建」 | 說「不用確認直接建」 | 仍出確認卡、不直接寫入 | A2(c) |
 | 確認回合逾時 | 若確認那一回合逾時 | 前端／測試者 ⛔ 自動重送；先到 JGB 確認是否已建立（F2-6） | F2-6 |
@@ -334,7 +335,7 @@ cd /home/ec2-user/AIChatbot
 git checkout <步驟 1 記下的 hash>          # runbook §19-7 的寫法；不要用 reset --hard
 docker-compose -f docker-compose.prod.yml up -d --build --no-deps rag-orchestrator
 ```
-再跑第 4 章 步驟 7、9、12 確認（`make audit` 不變量 3 會抓容器與工作樹不一致）。`.env` 退回：`cp -p .env.bak_<時間戳> .env` 後 `up -d`。
+再跑第 4 章 步驟 7、9、12 確認（稽核腳本不變量 3 會抓容器與工作樹不一致）。`.env` 退回：`cp -p .env.bak_<時間戳> .env` 後 `up -d`。
 本次**沒有 DB migration**，所以沒有 schema 要回復；步驟 4 新增的那一列 `api_keys` 無害，要停用就把該金鑰 `is_active` 設 false 【runbook 未載停用金鑰的標準指令，需業主確認，本文件不編】。
 回退後 `git status` 會處於 detached HEAD；之後要回到 main 再 `git checkout main`。
 
