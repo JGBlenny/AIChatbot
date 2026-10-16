@@ -173,3 +173,23 @@ async def test_repair_missing_fields_return_ask_not_card(payload, missing):
     assert "card" not in (res.data or {})
     text = C.missing_fields_ask_text(res)
     assert text is not None and all(lb in text for lb in missing)
+
+
+# ── 修繕單細項：jgb2 POST /repairs 規定 item_id 必填 ───────────────────────────
+from services.agent.tools import action as _action  # noqa: E402
+
+_TREE = [
+    {"id": 6, "name": "家電維修", "items": [{"id": 61, "name": "冷氣機"}, {"id": 62, "name": "電視"}]},
+    {"id": 11, "name": "其他", "items": [{"id": 111, "name": "自定義"}]},
+    {"id": 12, "name": "空大類", "items": []},
+]
+
+
+def test_single_leaf_parent_gets_its_only_item():
+    assert _action._single_leaf_item_id(_TREE, 11) == 111
+
+
+def test_multi_leaf_parent_is_not_guessed():
+    assert _action._single_leaf_item_id(_TREE, 6) is None      # 正對照：多個細項 ⛔ 代選
+    assert _action._single_leaf_item_id(_TREE, 12) is None     # 沒有細項
+    assert _action._single_leaf_item_id(_TREE, 999) is None    # 不存在的大類

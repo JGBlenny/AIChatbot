@@ -346,7 +346,11 @@ async def test_repair_create_fills_missing_category_and_urgency(api):
     from services.jgb.repair_fixtures import repair_categories
     other_ids = [c["id"] for c in repair_categories() if c.get("name") == "其他"]
     assert other_ids, "分類樹找不到「其他」大類（delta4 的落點不存在）"
-    assert row["category_id"] == other_ids[0] and row["item_id"] is None
+    # 2026-10-16：jgb2 `POST /repairs` 規定 item_id 必填 ⇒「其他」只有一個細項時補上它（`_single_leaf_item_id`）。
+    other = next(c for c in repair_categories() if c.get("name") == "其他")
+    leaves = [i["id"] for i in other.get("items") or []]
+    assert row["category_id"] == other_ids[0]
+    assert row["item_id"] == (leaves[0] if len(leaves) == 1 else None)
     assert row["emergency_status"] == 1
     assert _repair_count(api) == before + 1
     # 正對照：有給分類就照給的（父節點測試另有覆蓋），給 2 就是 2

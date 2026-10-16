@@ -409,6 +409,21 @@ def _resolve_category(tree: list, category_name: str) -> Optional[tuple]:
     return None
 
 
+def _single_leaf_item_id(tree: list, category_id: Any) -> Any:
+    """大類底下**恰好只有一個**細項 ⇒ 回該細項 id；否則 `None`。
+
+    2026-10-16 正式機：jgb2 `POST /api/external/v1/repairs` 規定 `item_id` 必填整數
+    （`RepairApiController` 驗證規則，master／preview 皆同），只送大類回 400。
+    只有一個細項時（例「其他」→「自定義」）沒有選擇空間，補上不會選錯；
+    多個細項時 ⛔ 代選（猜錯分類的代價是一張看起來正常、實際分類錯的工單）。
+    """
+    for node in tree or []:
+        if isinstance(node, dict) and node.get("id") == category_id:
+            items = [i for i in node.get("items") or [] if isinstance(i, dict) and i.get("id") is not None]
+            return items[0].get("id") if len(items) == 1 else None
+    return None
+
+
 async def repair_create(identity: Identity, args: dict) -> ToolResult:
     """依 `payload` 建立一張修繕單。
 
@@ -449,16 +464,17 @@ async def repair_create(identity: Identity, args: dict) -> ToolResult:
     if estate is None or estate.get("id") is None:
         return _no_match()
 
-    resolved = _resolve_category(
-        jgb2_tools._rows_of(await api.get_repair_categories(
-            role_id=role_id, viewer_user_id=user_id)),
-        category_name,
-    )
+    category_tree = jgb2_tools._rows_of(await api.get_repair_categories(
+        role_id=role_id, viewer_user_id=user_id))
+    resolved = _resolve_category(category_tree, category_name)
     if resolved is None:
         # 分類名稱不在分類樹裡——這是 payload 的內容問題（形狀是對的），
         # ⛔ 不退回「隨便挑一個大類」。
         return _invalid_input()
     category_id, item_id = resolved
+    if item_id is None:
+        # 只到大類、且該大類只有一個細項 ⇒ 用那個細項（jgb2 要求 item_id 必填）。
+        item_id = _single_leaf_item_id(category_tree, category_id)
 
     resp = await api.create_repair(
         role_id=role_id,
