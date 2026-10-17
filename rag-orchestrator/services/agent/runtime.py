@@ -1123,6 +1123,12 @@ def _parse_select_value(message: Any) -> Optional[tuple]:
 #: `minimal` 對它反而不支援。值域仍封閉，實際能用哪個由模型決定、由啟動實測守。
 REASONING_EFFORT_VALUES: frozenset = frozenset({"none", "minimal", "low", "medium", "high"})
 
+#: 每次模型呼叫的輸出上限預設值（env `AGENT_MAX_COMPLETION_TOKENS` 覆寫；依據見 `AgentRuntime.__init__`）。
+DEFAULT_MAX_COMPLETION_TOKENS = 2000
+
+#: 輸出被上限截斷（`finish_reason == "length"`）時記進 `violations` 的旗標（⛔ 不帶任何內容）。
+LLM_OUTPUT_TRUNCATED = "llm_output_truncated"
+
 _REASON_HINTS: dict[str, str] = {
     # DSP-028 後續（2026-09-05 回歸集重跑）：拒一次就改轉人的回合佔 no_grounding 的 11/127，
     # 且 116/127 是第一次就轉人——拒因回饋要明說「修那一筆」而不是「放棄」。
@@ -1487,7 +1493,13 @@ def _agent_output_response_format() -> dict:
             {"type": "string", "enum": list(ASK_TARGETS)},
             {"type": "null"},
         ],
-        "description": "kind=ask 時必填：這一句要問使用者的東西；其他 kind 填 null。",
+        # gpt-oss 第一片：值域寫進說明（由 `ASK_TARGETS` 產生，⛔ 不另抄字面量）——gpt-oss 不讀 enum
+        # （推理原文「The allowed ask_target values? Not given explicitly」），漏填即被 ask_target_invalid 擋。
+        "description": (
+            "kind=ask 時必填：這一句要問使用者的東西，只能是下列其中一個值："
+            + "、".join(ASK_TARGETS)
+            + "；其他 kind 填 null。"
+        ),
     }
     return {
         "type": "json_schema",
@@ -1669,6 +1681,7 @@ class AgentRuntime:
         clock: Callable[[], float] = time.monotonic,
         model: Optional[str] = None,
         reasoning_effort: Optional[str] = None,
+        max_completion_tokens: Optional[int] = None,
         tool_timeout_s: float = 3.0,
         status_interval_s: float = 5.0,
         attempt_sink: Optional[Callable[[dict], None]] = None,
@@ -1719,6 +1732,19 @@ class AgentRuntime:
                 f"AGENT_REASONING_EFFORT={effort!r} 不在允許值域 {sorted(REASONING_EFFORT_VALUES)}"
             )
         self._reasoning_effort: Optional[str] = effort or None
+        # gpt-oss 第一片（2026-10-17，plan-oss-slice1）：每次模型呼叫的輸出上限。Bedrock gpt-oss 實測
+        # 會在 strict JSON 裡灌空白換行到 8,192 tokens（38～79 秒）；正常輸出 p99 1,408、最大 1,871，
+        # gpt-6-luna 最大 333 ⇒ 預設 2000。非正整數在建構期就炸（同上方 effort 的 fail loud）。
+        cap = max_completion_tokens if max_completion_tokens is not None else (
+            os.environ.get("AGENT_MAX_COMPLETION_TOKENS", "").strip() or DEFAULT_MAX_COMPLETION_TOKENS
+        )
+        try:
+            cap = int(cap)
+        except (TypeError, ValueError):
+            cap = 0
+        if cap <= 0:
+            raise ValueError("AGENT_MAX_COMPLETION_TOKENS 必須是正整數")
+        self._max_completion_tokens: int = cap
         self._tool_timeout_s = tool_timeout_s
         self._status_interval_s = status_interval_s
         # DSP-038／W3：確認兌現段要下的那句 `redeem_pending` 是 Runtime 自己的
@@ -3252,6 +3278,7 @@ class AgentRuntime:
             tools=tool_specs,
             parallel_tool_calls=False,
             response_format=_agent_output_response_format(),
+            max_completion_tokens=self._max_completion_tokens,
         )
         if self._reasoning_effort is not None:
             # openai SDK 1.54（requirements）尚無 `reasoning_effort` 具名參數，走 `extra_body`
@@ -3274,7 +3301,11 @@ class AgentRuntime:
             self._model,
             {"prompt_tokens": turn_pt, "completion_tokens": turn_ct},
         )
-        return response.choices[0].message
+        choice = response.choices[0]
+        # 被上限截斷 ⇒ 只記旗標；截斷的輸出照既有 SCHEMA 重寫／預算邏輯走，⛔ 不另開出口。
+        if getattr(choice, "finish_reason", None) == "length":
+            acc.violations.append(LLM_OUTPUT_TRUNCATED)
+        return choice.message
 
     async def _run_model_loop(
         self, acc: TurnAccumulator, identity: Identity, user_message: str,
