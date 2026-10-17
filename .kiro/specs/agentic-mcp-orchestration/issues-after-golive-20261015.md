@@ -35,7 +35,7 @@
 
 ## B. 等 JGB
 
-1. JGB 網頁 `HelpAssistantController` 改呼叫 `/mcp`（`https://chatai.jgbsmart.com/rag-api/mcp`，金鑰 `api_keys.id=101`）——沒有它就沒有使用者入口。
+1. JGB 網頁已於 2026-10-15 17:38 起經 `/mcp`（`https://chatai.jgbsmart.com/rag-api/mcp`，金鑰 `api_keys.id=101`）接上，正式機紀錄可見。
 2. 照 `jgb-api-spec-for-jgb-20261015.md` 開／改 API（統計擴充既有端點、建物件／合約／手動帳單新端點、照片上傳、四支讀取補成員過濾、`GET /estates/{id}` 放寬）與回答 §6 的 11 題（7 題擋上線）。
 3. 修 `emergency_status` 對外 mapping（網頁 2＝緊急，API 標反）；給「改帳單到期日」正式路徑（`PATCH /agent/v1/bills/{id}` 在 master／preview 查無）。
 
