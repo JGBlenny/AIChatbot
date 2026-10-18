@@ -2,7 +2,7 @@
 
 > 由 spec **testing-traceability** 沉澱（R9.3）。本軌道評估「程式碼行為正確性與文件一致性」。
 > ⚠️ 答案品質回測那一軌（原 `testing.md`）連同 `knowledge_completion_loop` 的執行機制已於
-> 2026-09-11 整批刪除；新的回測走 skill，尚未落地。
+> 2026-09-11 整批刪除；答案品質評估現走 `~/jgb-archive/eval-harness/`，規範見 [answer-eval-and-probe.md](./answer-eval-and-probe.md)。
 
 ## 一、執行環境（canonical）
 
