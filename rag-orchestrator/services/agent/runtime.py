@@ -130,6 +130,7 @@ from services.agent.tools.confirm import (
     redeem_pending,
     sha256_hex,
 )
+from services.agent import llm_output as LO
 from services.agent import write_forms as WF
 from services.agent.write_forms import write_draft_enabled_from_env
 from services.agent.tools.jgb2 import NOT_FOUND_SOURCE as _JGB2_NOT_FOUND_SOURCE
@@ -1132,6 +1133,12 @@ DEFAULT_MAX_COMPLETION_TOKENS = 2000
 #: 輸出被上限截斷（`finish_reason == "length"`）時記進 `violations` 的旗標（⛔ 不帶任何內容）。
 LLM_OUTPUT_TRUNCATED = "llm_output_truncated"
 
+#: 正式接線（`plan-oss-wiring-step1-20261018.md` §3.2）：只在 `clean_llm_output=True` 時記。
+#: 回應 content 夾了推理標籤並已剝除（⛔ 不帶任何內容）。
+LLM_OUTPUT_REASONING_STRIPPED = "llm_output_reasoning_stripped"
+#: 最終輸出原文 `json.loads` 失敗、改以逐 `{` 解碼擷取到合法 `AgentOutput`。
+LLM_OUTPUT_JSON_EXTRACTED = "llm_output_json_extracted"
+
 _REASON_HINTS: dict[str, str] = {
     # DSP-028 後續（2026-09-05 回歸集重跑）：拒一次就改轉人的回合佔 no_grounding 的 11/127，
     # 且 116/127 是第一次就轉人——拒因回饋要明說「修那一筆」而不是「放棄」。
@@ -1883,8 +1890,12 @@ class AgentRuntime:
         candidate_selector: Optional[CandidateSelector] = None,
         candidate_selectors: Optional[dict] = None,
         db_pool: Any = None,
+        clean_llm_output: bool = False,
     ) -> None:
         self.provider = provider
+        # 正式接線 §3.2：對話端點開關（`app.py` 只在 `build_agent_provider_from_env()` 非 None 時傳 True）。
+        # False（正式機現況）⇒ 推理剝除與 JSON 擷取都不執行，路徑與改前逐位相同；⛔ 不依模型名分岔。
+        self._clean_llm_output = bool(clean_llm_output)
         self.registry = registry
         self.verifier = verifier
         self.assembler = assembler
@@ -4126,7 +4137,25 @@ class AgentRuntime:
         # 被上限截斷 ⇒ 只記旗標；截斷的輸出照既有 SCHEMA 重寫／預算邏輯走，⛔ 不另開出口。
         if getattr(choice, "finish_reason", None) == "length":
             acc.violations.append(LLM_OUTPUT_TRUNCATED)
-        return choice.message
+        message = choice.message
+        if self._clean_llm_output and LO.has_reasoning(getattr(message, "content", None)):
+            # 推理段在這裡就剝掉：之後 append 進 messages（工具呼叫訊息、四條改寫）與解析的都是
+            # 剝除後內容。Bedrock 不收 assistant 的推理欄位（第 0 步 Q3）⇒ 工具呼叫訊息也剝。
+            message.content = (LO.final_segment(message.content) or "").strip()
+            acc.violations.append(LLM_OUTPUT_REASONING_STRIPPED)
+        return message
+
+    def _extract_agent_output(self, content: str) -> Optional[tuple]:
+        """`json.loads` 失敗後的擷取（只在 `clean_llm_output=True` 時呼叫）：逐 `{` 解碼，回第一個
+        通過 `AgentOutput.model_validate` 的 `(payload, out)`；都不過 ⇒ `None`。"""
+        for obj in LO.iter_json_objects(content):
+            if not isinstance(obj, dict):
+                continue
+            try:
+                return obj, AgentOutput.model_validate(obj)
+            except (ValidationError, TypeError):
+                continue
+        return None
 
     async def _run_model_loop(
         self, acc: TurnAccumulator, identity: Identity, user_message: str,
@@ -4701,26 +4730,34 @@ class AgentRuntime:
                 payload = json.loads(content)
                 out = AgentOutput.model_validate(payload)
             except (json.JSONDecodeError, ValidationError, TypeError):
-                if self._attempt_sink is not None:
-                    self._emit_attempt(
+                # 正式接線 §3.2：開關關閉 ⇒ `extracted` 恆為 None，走下方與改前逐字相同的 SCHEMA 改寫。
+                extracted = self._extract_agent_output(content) if self._clean_llm_output else None
+                if extracted is not None:
+                    # 之後各改寫路徑 append 的 assistant 內容＝擷取出的那個物件（⛔ 帶前後雜字）。
+                    payload, out = extracted
+                    content = json.dumps(payload, ensure_ascii=False)
+                    acc.violations.append(LLM_OUTPUT_JSON_EXTRACTED)
+                else:
+                    if self._attempt_sink is not None:
+                        self._emit_attempt(
+                            {
+                                "attempt": acc.attempt_no,
+                                "kind": None,
+                                "raw_len": len(content),
+                                "verdict": {"reason": "SCHEMA_PARSE"},
+                            }
+                        )
+                    acc.counters.rewrites += 1
+                    if acc.counters.rewrite_exhausted(self.budget):
+                        return _finalize(acc.build_fixed("budget_exhausted", clock=self._clock), is_fixed=True)
+                    acc.messages.append({"role": "assistant", "content": content})
+                    acc.messages.append(
                         {
-                            "attempt": acc.attempt_no,
-                            "kind": None,
-                            "raw_len": len(content),
-                            "verdict": {"reason": "SCHEMA_PARSE"},
+                            "role": "user",
+                            "content": rewrite_feedback("SCHEMA", "輸出不符 AgentOutput schema。"),
                         }
                     )
-                acc.counters.rewrites += 1
-                if acc.counters.rewrite_exhausted(self.budget):
-                    return _finalize(acc.build_fixed("budget_exhausted", clock=self._clock), is_fixed=True)
-                acc.messages.append({"role": "assistant", "content": content})
-                acc.messages.append(
-                    {
-                        "role": "user",
-                        "content": rewrite_feedback("SCHEMA", "輸出不符 AgentOutput schema。"),
-                    }
-                )
-                continue
+                    continue
 
             # W1（§2.1(5)）插入點：`model_validate` 成功之後、`handoff_dict`／T2／V2／Verifier 之前——
             # 取用意圖判斷呼叫的結果（W1b：在這裡 await）並合併、整句填入，條件成立 ⇒ 程式自己發

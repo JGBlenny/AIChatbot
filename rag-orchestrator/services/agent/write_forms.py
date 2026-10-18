@@ -28,7 +28,6 @@
 """
 from __future__ import annotations
 
-import json
 import os
 import re
 import unicodedata
@@ -49,6 +48,7 @@ from services.agent.confirm_card import (
     _REF_ALTERNATIVES,
     _given,
 )
+from services.agent.llm_output import final_segment, iter_json_objects
 from services.agent.output_schema import ASK_TARGETS
 
 # ---------------------------------------------------------------------------
@@ -503,8 +503,6 @@ def write_intent_response_format() -> dict:
 PARSE_OK: Final[str] = "ok"
 PARSE_UNPARSED: Final[str] = "unparsed"
 PARSE_AMBIGUOUS: Final[str] = "ambiguous"
-_REASONING_CLOSE: Final[str] = "</reasoning>"
-_REASONING_OPEN: Final[str] = "<reasoning>"
 
 
 def parse_write_intent_content(content: Any) -> Tuple[Optional[dict], str]:
@@ -517,28 +515,16 @@ def parse_write_intent_content(content: Any) -> Tuple[Optional[dict], str]:
       巢狀的 `{key,value}` 不另算）中帶 `action` 鍵者為候選。
     - 候選 0 個 ⇒ `unparsed`；內容不同的候選多於 1 個 ⇒ `ambiguous`（視為 none）；
       其餘 ⇒ `ok`。⛔ 驗值域（那是呼叫端的事）。
+    最終段切法與逐 `{` 解碼與主迴圈共用 `services.agent.llm_output`（正式接線 §3.2 抽出，行為不變）。
     """
-    if not isinstance(content, str):
+    tail = final_segment(content)
+    if tail is None:
         return None, PARSE_UNPARSED
-    tail = content
-    close = content.rfind(_REASONING_CLOSE)
-    if close >= 0:
-        tail = content[close + len(_REASONING_CLOSE):]
-    elif _REASONING_OPEN in content:
-        return None, PARSE_UNPARSED
-    decoder = json.JSONDecoder()
     found: list = []
-    i = tail.find("{")
-    while i >= 0:
-        try:
-            obj, end = decoder.raw_decode(tail, i)
-        except ValueError:
-            i = tail.find("{", i + 1)
-            continue
+    for obj in iter_json_objects(tail):
         if isinstance(obj, dict) and "action" in obj:
             if obj not in found:
                 found.append(obj)
-        i = tail.find("{", max(end, i + 1))
     if not found:
         return None, PARSE_UNPARSED
     if len(found) > 1:

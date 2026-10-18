@@ -29,6 +29,17 @@
 OPENAI_API_KEY=sk-proj-your-api-key-here
 ```
 
+### 對話模型專用端點（選用，只供本機接 Bedrock）
+
+| 變數名 | 說明 | 預設值 | 必需 |
+|--------|------|--------|------|
+| `AGENT_LLM_BASE_URL` | 只給 `rag-orchestrator` 對話回合用的 OpenAI 相容端點（本機：`https://bedrock-runtime.ap-northeast-1.amazonaws.com/openai/v1`） | 未設 | ❌ |
+| `AGENT_LLM_API_KEY_FILE` | 該端點的金鑰**檔案路徑**（Compose secret：`/run/secrets/agent_llm_api_key`）；⛔ 把金鑰本身放環境變數 | 未設 | ❌ |
+
+- 兩者須成對設定；只設其一、或同時設了 `OPENAI_BASE_URL` ⇒ 啟動失敗。未設時一切照舊（正式機現況）。
+- 照片辨識、文件歸納、健康檢查、embedding 不受影響，仍用 `OPENAI_API_KEY`。
+- 本機啟動：`docker compose -f docker-compose.prod.yml -f docker-compose.bedrock-local.yml up -d --build rag-orchestrator`（覆寫檔寫死 `USE_MOCK_JGB_API=true`）。
+
 ## 🗄️ 資料庫變數
 
 ### PostgreSQL

@@ -179,6 +179,14 @@ def _final(*, kind="answer", text="答案內容", fact_class="feature",
     return _fake_response(_fake_message(content=json.dumps(payload, ensure_ascii=False)))
 
 
+def _final_noisy(**kwargs):
+    """gpt-oss／Bedrock 形狀（正式接線第 0 步 Q2／Q5）：推理段夾在 content 前、推理內含 JSON 樣字串、
+    最終段前綴「以下」——只有 `clean_llm_output=True` 的 runtime 解得開。"""
+    clean = _final(**kwargs).choices[0].message.content
+    noisy = '<reasoning>先想一下 {"kind": "handoff"} 不對</reasoning>以下' + clean + "\n"
+    return _fake_response(_fake_message(content=noisy))
+
+
 def _tool_call(name: str, args: dict, call_id: str = "call_1"):
     return _fake_response(_fake_message(tool_calls=[_fake_tool_call(name, args, call_id)]))
 
@@ -195,7 +203,7 @@ def _registry(**kwargs) -> GoldenRegistry:
 
 
 def _runtime(*, provider=None, registry=None, verifier=None, budget=None,
-             pool=None, readonly_view=False) -> AgentRuntime:
+             pool=None, readonly_view=False, clean_llm_output=False) -> AgentRuntime:
     return AgentRuntime(
         provider if provider is not None else _empty_provider(),
         registry if registry is not None else _registry(),
@@ -207,6 +215,7 @@ def _runtime(*, provider=None, registry=None, verifier=None, budget=None,
         db_pool=pool,
         readonly_view=readonly_view,
         model="golden-model",
+        clean_llm_output=clean_llm_output,
     )
 
 
@@ -513,6 +522,14 @@ def _s_verifier_reject_then_fixed():
     return rt, _identity(), "有什麼保證可以給我嗎", {}, {}
 
 
+def _s_oss_reasoning_cleaned():
+    """正式接線 §3.4：對話端點開關開啟（`clean_llm_output=True`）時，推理段＋前綴包住的最終輸出
+    一次解得開；其餘 28 情境維持預設 False（正式機現況）。"""
+    rt = _runtime(provider=FakeProvider([_final_noisy(text="清理後的回答")]),
+                  clean_llm_output=True)
+    return rt, _identity(), "請問這個系統怎麼用呢", {}, {}
+
+
 SCENARIOS: dict = {
     "plain_answer": _s_plain_answer,
     "tool_then_answer": _s_tool_then_answer,
@@ -542,6 +559,7 @@ SCENARIOS: dict = {
     "document_unreadable": _s_document_unreadable,
     "verifier_reject_then_fixed": _s_verifier_reject_then_fixed,
     "verifier_observe_counts": _s_verifier_observe_counts,
+    "oss_reasoning_cleaned": _s_oss_reasoning_cleaned,
 }
 
 

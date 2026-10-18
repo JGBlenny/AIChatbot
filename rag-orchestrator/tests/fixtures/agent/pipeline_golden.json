@@ -1721,6 +1721,92 @@
       "winning_key_kind": {}
     }
   },
+  "oss_reasoning_cleaned": {
+    "agent_state": {
+      "dialog": [
+        {
+          "content": "請問這個系統怎麼用呢",
+          "role": "user"
+        },
+        {
+          "content": "清理後的回答",
+          "role": "assistant"
+        }
+      ],
+      "fixed_streak": 0,
+      "handoff_cache": {},
+      "last_ask_target": null
+    },
+    "agent_state_keys": [
+      "dialog",
+      "fixed_streak",
+      "handoff_cache",
+      "last_ask_target"
+    ],
+    "answer": "清理後的回答",
+    "ask_target": null,
+    "covers": {
+      "flows": [],
+      "gates": [],
+      "reserved_ids": [
+        "ctx-"
+      ]
+    },
+    "handoff": null,
+    "kind": "answer",
+    "outcome": {
+      "action": null,
+      "expects": "text",
+      "ref": null,
+      "state": "answered"
+    },
+    "quick_replies": [],
+    "trace": {
+      "attachment_purpose_ignored": false,
+      "candidate_ids": [],
+      "completion_tokens": 5,
+      "document_kind": null,
+      "document_status": null,
+      "final_kind": "answer",
+      "handoff_reason": null,
+      "has_context": false,
+      "has_document": false,
+      "has_recent_refs": false,
+      "has_ref": null,
+      "latency_ms": 0,
+      "llm_calls": 1,
+      "miss_kind": null,
+      "outline_sha": "",
+      "pages_seen": null,
+      "pending_id": null,
+      "pre_lookup": null,
+      "prompt_tokens": 10,
+      "receipt_id": null,
+      "rules_sha": "fake-rules-sha",
+      "select_type": null,
+      "slot_written": null,
+      "tool_calls": [],
+      "trace_id": "ffffffffffffffffffffffffffffffff",
+      "verifier": [
+        {
+          "observed": [],
+          "ok": true,
+          "polarity_source": null,
+          "quote_len": null,
+          "reason": null,
+          "schema_cause": null,
+          "sent": null,
+          "term_id": null
+        }
+      ],
+      "verifier_observed_counts": {},
+      "violations": [
+        "llm_output_reasoning_stripped",
+        "llm_output_json_extracted"
+      ],
+      "winning_key_kind": {}
+    }
+  },
   "plain_answer": {
     "agent_state": {
       "dialog": [

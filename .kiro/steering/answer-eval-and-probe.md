@@ -35,6 +35,6 @@
 - dev 映像沒有 pytest ⇒ 程式測試一律 `scripts/run-tests.sh`。
 - 評估容器以 `--rm` 起，停掉即消失 ⇒ 只用 harness 起停。
 - **收尾稽核固定三步**（D3-2；業主 2026-10-18 選「維持每次由你手跑」）：本機 `aichatbot-rag-orchestrator` 由 `docker-compose.prod.yml` 起、程式包在映像裡，`make audit` 不變量 3 會比對容器檔與工作樹 ⇒ 改了 `rag-orchestrator/` 後：
-  1. 請業主在提示列跑 `! cd /Users/chenqinghuang/dev/work/AIChatbot && docker compose -f docker-compose.prod.yml up -d --build rag-orchestrator`（權限分類器判這行為「[Production Deploy]」，⛔ 代理自行重建或繞過）。
+  1. 請業主在提示列跑 `! cd /Users/chenqinghuang/dev/work/AIChatbot && docker compose -f docker-compose.prod.yml up -d --build rag-orchestrator`（權限分類器判這行為「[Production Deploy]」，⛔ 代理自行重建或繞過）。**本機接 Bedrock gpt-oss 時**改用 `! cd /Users/chenqinghuang/dev/work/AIChatbot && docker compose -f docker-compose.prod.yml -f docker-compose.bedrock-local.yml up -d --build rag-orchestrator`——不帶覆寫檔重建會回到 OpenAI，且 `USE_MOCK_JGB_API` 改依 `.env`（非 mock）；量測打常駐服務用 eval-harness `run.py turns B … --target resident`（開頭自動 mock 檢查）。
   2. 健康檢查：`curl -s -o /dev/null -w '%{http_code}' localhost:8100/api/v1/health` 回 200。
   3. `make audit`，以 `OVERALL: PASS` 為準；容器未重建前的 audit 結果不採用。

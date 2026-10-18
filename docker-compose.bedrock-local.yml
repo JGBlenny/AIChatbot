@@ -1,0 +1,54 @@
+# docker-compose.bedrock-local.yml — 本機常駐服務的對話改走 Amazon Bedrock gpt-oss（覆寫檔）
+#
+# 用途：只在**本機**把 rag-orchestrator 的對話模型接到 Bedrock（Chat Completions 相容端點），
+#       照片／文件／健康檢查的 OpenAI 呼叫不受影響（對話端點與金鑰成對、與 OPENAI_BASE_URL 互斥，
+#       見 rag-orchestrator/services/llm_provider.py `build_agent_provider_from_env`）。
+#       依據：.kiro/specs/agentic-mcp-orchestration/plan-oss-wiring-step1-20261018.md §3.5。
+#
+# ⚠️ 金鑰：AWS Bedrock **長期** API 金鑰只限本機探索用途（AWS 原文：「Long-term keys are for
+#    exploration only. For production, use short-term keys.」）。⛔ 用於正式機；正式機另案改
+#    短期金鑰＋自動更新。本檔**不含任何金鑰值**——金鑰以 Compose secret 掛成檔案
+#    （容器內 /run/secrets/agent_llm_api_key），程式讀 AGENT_LLM_API_KEY_FILE 指的路徑，
+#    ⛔ 放環境變數。金鑰檔 ⛔ 放進 repo 或 ./rag-orchestrator（build context 為 COPY . .）。
+#
+# 啟動（業主手跑）：
+#   docker compose -f docker-compose.prod.yml -f docker-compose.bedrock-local.yml up -d --build rag-orchestrator
+#
+# 撤銷／輪替（金鑰只在容器啟動時讀一次）：
+#   1. AWS console 對該金鑰 Deactivate
+#   2. 換掉 secrets.agent_llm_api_key.file 指向的金鑰檔（新金鑰，檔 600）
+#   3. docker compose -f docker-compose.prod.yml -f docker-compose.bedrock-local.yml up -d --force-recreate rag-orchestrator
+#
+# 回到預設（OpenAI 對話）：不帶本覆寫檔重建即可（docker-compose.prod.yml 不改）。
+
+services:
+  rag-orchestrator:
+    environment:
+      AGENT_MODEL: openai.gpt-oss-120b-1:0
+      AGENT_REASONING_EFFORT: low
+      AGENT_LLM_BASE_URL: https://bedrock-runtime.ap-northeast-1.amazonaws.com/openai/v1
+      AGENT_LLM_API_KEY_FILE: /run/secrets/agent_llm_api_key
+      # 本機接 Bedrock 時一律 mock JGB（寫死，⛔ 由 .env 覆寫成真 API）
+      USE_MOCK_JGB_API: "true"
+      # 站內幫手金鑰缺 user_id ⇒ 400 這道閘與正式機同樣可開；值由業主在 .env 填（plan §5 F16）
+      AGENT_ASSISTANT_KEY_IDS: ${AGENT_ASSISTANT_KEY_IDS:-}
+      # agent 開關與每回合預算：照正式機值（docs/architecture/AGENTIC_MCP_ARCHITECTURE.md §6「正式機」欄），
+      # 本機才是「線上換之前的鏡像」。docker-compose.prod.yml 預設 agent.turn 關，不帶這段
+      # agent.turn 不會註冊（2026-10-18 實打回「Unknown tool: agent.turn」；業主核可補上）。
+      AGENT_STAGE: M1
+      AGENT_TURN_ENABLED: "true"
+      AGENT_WRITE_TOOLS_ENABLED: "true"
+      AGENT_VERIFIER_MODE: grounding_observe
+      AGENT_BUDGET_TOOL_CALLS: "3"
+      AGENT_BUDGET_DEADLINE_S: "20"
+      AGENT_TURN_TIMEOUT_S: "90"
+      UVICORN_WORKERS: "1"
+      # mock 資料：與歷次量測同一份 vendor 4 示範資料（eval-harness 身分固定 vendor 4）
+      JGB_MOCK_FIXTURE: /app/services/jgb/fixture_data/assistant_demo_vendor4.json
+    secrets:
+      - agent_llm_api_key
+
+secrets:
+  agent_llm_api_key:
+    # 絕對路徑（`~` 是否展開未查證，⛔ 用）
+    file: /Users/chenqinghuang/.config/aichatbot/bedrock-api-key

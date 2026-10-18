@@ -3,7 +3,9 @@ LLM Provider 抽象層
 統一處理所有 LLM API 調用，支援多種 Provider（OpenAI, OpenRouter, Ollama）
 """
 import os
+import re
 import httpx
+from urllib.parse import urlsplit
 from abc import ABC, abstractmethod
 from typing import Optional, List, Dict, Any, Union
 from openai import OpenAI, AsyncOpenAI
@@ -80,25 +82,42 @@ class OpenAIProvider(LLMProvider):
     使用官方 OpenAI API
     """
 
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(self, api_key: Optional[str] = None, base_url: Optional[str] = None):
         """
         初始化 OpenAI Provider
 
         Args:
             api_key: OpenAI API Key（可選，默認使用環境變數）
+            base_url: 相容 OpenAI 的端點（可選）。⚠️ 給了 base_url 就**必須**明確給非空
+                api_key——⛔ 退回 `OPENAI_API_KEY`（否則 OpenAI 金鑰會被送到別家端點；
+                plan-oss-wiring-step1-20261018 §5 F6）。`None`＝現行行為逐字不變。
         """
-        self.api_key = api_key or os.getenv("OPENAI_API_KEY")
-        if not self.api_key:
-            raise ValueError("OPENAI_API_KEY 未設定")
+        if base_url is None:
+            self.api_key = api_key or os.getenv("OPENAI_API_KEY")
+            if not self.api_key:
+                raise ValueError("OPENAI_API_KEY 未設定")
 
-        self.client = OpenAI(api_key=self.api_key)
-        # 2026-09-07（探針 53）：SDK 預設 timeout 600 s，一個掛住的請求要等 10 分鐘才重試，
-        # 對 6 s 回合預算是災難。`OPENAI_TIMEOUT_S` 設了才覆寫；未設維持 SDK 預設（⛔ 不改線上行為）。
-        _timeout_env = os.environ.get("OPENAI_TIMEOUT_S", "").strip()
-        self.async_client = (
-            AsyncOpenAI(api_key=self.api_key, timeout=float(_timeout_env))
-            if _timeout_env else AsyncOpenAI(api_key=self.api_key)
-        )
+            self.client = OpenAI(api_key=self.api_key)
+            # 2026-09-07（探針 53）：SDK 預設 timeout 600 s，一個掛住的請求要等 10 分鐘才重試，
+            # 對 6 s 回合預算是災難。`OPENAI_TIMEOUT_S` 設了才覆寫；未設維持 SDK 預設（⛔ 不改線上行為）。
+            _timeout_env = os.environ.get("OPENAI_TIMEOUT_S", "").strip()
+            self.async_client = (
+                AsyncOpenAI(api_key=self.api_key, timeout=float(_timeout_env))
+                if _timeout_env else AsyncOpenAI(api_key=self.api_key)
+            )
+        else:
+            # ⛔ 錯誤訊息只放固定原因代碼——⛔ 含任何金鑰內容或長度。
+            if not isinstance(base_url, str) or not base_url.strip():
+                raise ValueError("agent_llm_base_url_empty")
+            if not isinstance(api_key, str) or not api_key.strip():
+                raise ValueError("agent_llm_api_key_required_with_base_url")
+            self.api_key = api_key
+            self.client = OpenAI(api_key=self.api_key, base_url=base_url)
+            _timeout_env = os.environ.get("OPENAI_TIMEOUT_S", "").strip()
+            self.async_client = (
+                AsyncOpenAI(api_key=self.api_key, base_url=base_url, timeout=float(_timeout_env))
+                if _timeout_env else AsyncOpenAI(api_key=self.api_key, base_url=base_url)
+            )
         self.provider_name = "OpenAI"
 
     def chat_completion(
@@ -484,6 +503,124 @@ def get_llm_provider(
         print(f"🔧 [LLM Provider] {service_name} 使用: {provider.provider_name}")
 
     return provider
+
+
+# ============================================================
+# 對話端點（agent 專用 provider；plan-oss-wiring-step1-20261018 §3.1）
+# ============================================================
+# 對話走相容 OpenAI 的別家端點（本機：Bedrock gpt-oss），照片／文件／健康檢查照舊走 OpenAI
+# ⇒ 端點與金鑰**成對**、金鑰以檔案提供（Compose secret，⛔ 環境變數）、與全域
+# `OPENAI_BASE_URL` 互斥（SDK 在 base_url 為 None 時讀它，會把 OpenAI 金鑰送去別處）。
+# ⛔ 本段所有錯誤訊息只含「固定原因代碼＋路徑／變數名」——⛔ 含金鑰檔內容、長度、片段
+#   （h11 驗標頭失敗訊息會帶完整 `Bearer <金鑰>`，故格式在源頭驗；§5 F1）。
+# ⛔ 回傳的 provider **不進** `_provider_cache`（其他呼叫者照舊拿到 OpenAI 那一個）。
+
+AGENT_LLM_BASE_URL_ENV = "AGENT_LLM_BASE_URL"
+AGENT_LLM_API_KEY_FILE_ENV = "AGENT_LLM_API_KEY_FILE"
+
+#: 金鑰檔允許字元（整串 fullmatch；空白、CR/LF、控制字元一律不合格）。
+_AGENT_KEY_CHARSET = re.compile(r"[A-Za-z0-9+/=._~-]+")
+#: 金鑰檔讀取上限（位元組）；超過即不合格，⛔ 整檔讀入未知大小的檔案。
+_AGENT_KEY_FILE_MAX_BYTES = 4096
+
+
+class AgentLLMConfigError(ValueError):
+    """對話端點組態錯誤。訊息＝`<固定原因代碼>: <變數名或路徑>`，⛔ 含金鑰任何資訊。
+
+    `code` 是固定原因代碼（封閉值域，供健康檢查等只放代碼的出口用，⛔ 回 `str(e)`）。
+    """
+
+    def __init__(self, code: str, detail: str = ""):
+        self.code = code
+        super().__init__(f"{code}: {detail}" if detail else code)
+
+
+def _agent_env_value(name: str) -> str:
+    """讀環境變數；空字串（含只有空白）視同未設。"""
+    return (os.environ.get(name) or "").strip()
+
+
+def agent_endpoint_configured() -> bool:
+    """`AGENT_LLM_BASE_URL` 是否有設（⛔ 不讀金鑰檔；供健康檢查決定是否列入）。"""
+    return bool(_agent_env_value(AGENT_LLM_BASE_URL_ENV))
+
+
+def agent_endpoint_host() -> Optional[str]:
+    """對話端點的主機名（只供日誌／健康檢查顯示；⛔ 帶路徑、帳密、查詢字串）。未設回 None。"""
+    base = _agent_env_value(AGENT_LLM_BASE_URL_ENV)
+    if not base:
+        return None
+    try:
+        return urlsplit(base).hostname
+    except ValueError:
+        return None
+
+
+def _read_agent_key_file(path: str) -> str:
+    """讀並驗證金鑰檔；不合格一律 raise `AgentLLMConfigError`（訊息只含代碼與路徑）。
+
+    ⚠️ raise 一律放在 except 區塊**之外**：避免 `__context__` 掛上帶內容片段的原例外
+    （例如 `UnicodeDecodeError` 的訊息含位元組值與位置）。
+    """
+    code = None
+    raw = b""
+    try:
+        with open(path, "rb") as fh:
+            raw = fh.read(_AGENT_KEY_FILE_MAX_BYTES + 1)
+    except FileNotFoundError:
+        code = "agent_llm_key_file_missing"
+    except Exception:  # noqa: BLE001 — PermissionError／IsADirectoryError／其他 OSError
+        code = "agent_llm_key_file_unreadable"
+    if code is not None:
+        raise AgentLLMConfigError(code, path)
+
+    if len(raw) > _AGENT_KEY_FILE_MAX_BYTES:
+        raise AgentLLMConfigError("agent_llm_key_file_too_large", path)
+
+    text = None
+    try:
+        text = raw.decode("ascii")
+    except Exception:  # noqa: BLE001 — UnicodeDecodeError 訊息含位元組片段，⛔ 外帶
+        text = None
+    if text is None:
+        raise AgentLLMConfigError("agent_llm_key_file_invalid_charset", path)
+
+    key = text.strip()
+    if not key:
+        raise AgentLLMConfigError("agent_llm_key_file_empty", path)
+    if "\n" in key or "\r" in key:
+        raise AgentLLMConfigError("agent_llm_key_file_multiline", path)
+    if not _AGENT_KEY_CHARSET.fullmatch(key):
+        raise AgentLLMConfigError("agent_llm_key_file_invalid_charset", path)
+    return key
+
+
+def build_agent_provider_from_env() -> Optional["OpenAIProvider"]:
+    """依 `AGENT_LLM_BASE_URL`＋`AGENT_LLM_API_KEY_FILE` 建對話專用 provider。
+
+    - 兩者皆未設（空字串視同未設）⇒ `None`（呼叫端照舊用 `get_llm_provider()`；正式機路徑不變）。
+    - 只設其一 ⇒ raise（⛔ 端點配 `OPENAI_API_KEY`、⛔ 金鑰檔配 OpenAI 預設端點）。
+    - 已設端點且環境有 `OPENAI_BASE_URL` ⇒ raise。
+    - 金鑰檔不存在／不可讀／過大／空／多行／含 `[A-Za-z0-9+/=._~-]` 以外字元 ⇒ raise。
+    - 成功 ⇒ **新的** `OpenAIProvider`（⛔ 進 `_provider_cache`）。
+
+    健康檢查重用本函式驗設定與金鑰檔（單一驗證來源，⛔ 另寫一套）。
+    """
+    base_url = _agent_env_value(AGENT_LLM_BASE_URL_ENV)
+    key_file = _agent_env_value(AGENT_LLM_API_KEY_FILE_ENV)
+    if not base_url and not key_file:
+        return None
+    if not key_file:
+        raise AgentLLMConfigError(
+            "agent_llm_config_incomplete", f"{AGENT_LLM_API_KEY_FILE_ENV} 未設（{AGENT_LLM_BASE_URL_ENV} 已設）")
+    if not base_url:
+        raise AgentLLMConfigError(
+            "agent_llm_config_incomplete", f"{AGENT_LLM_BASE_URL_ENV} 未設（{AGENT_LLM_API_KEY_FILE_ENV} 已設）")
+    if "OPENAI_BASE_URL" in os.environ:
+        raise AgentLLMConfigError(
+            "agent_llm_openai_base_url_conflict", f"OPENAI_BASE_URL 與 {AGENT_LLM_BASE_URL_ENV} 不可並存")
+    api_key = _read_agent_key_file(key_file)
+    return OpenAIProvider(api_key=api_key, base_url=base_url)
 
 
 # ============================================================

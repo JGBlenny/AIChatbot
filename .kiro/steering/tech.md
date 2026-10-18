@@ -153,7 +153,7 @@ Utils（無獨立 `utils/` 目錄，檔案在 `services/` 下）
 ### AI 呼叫慣例
 - **OpenAI Client**: 使用 `openai.OpenAI(api_key=...)` 初始化
 - **模型選擇**（預設值，可用環境變數覆蓋）:
-  - 對話回合：`AGENT_MODEL`→`OPENAI_MODEL`→`gpt-4o-mini`（`services/agent/runtime.py`）；採用哪個模型是決策，見 `.claude/DECISIONS.md` DSP-075／DSP-080
+  - 對話回合：`AGENT_MODEL`→`OPENAI_MODEL`→`gpt-4o-mini`（`services/agent/runtime.py`）；採用哪個模型是決策，見 `.claude/DECISIONS.md` DSP-075／DSP-080。端點：設了 `AGENT_LLM_BASE_URL`＋`AGENT_LLM_API_KEY_FILE` 時只有對話 provider 改連該端點（本機 Bedrock gpt-oss，`docker-compose.bedrock-local.yml`），其餘 AI 呼叫照舊走 OpenAI
   - 文件轉換（`services/document_converter_service.py`）：`DOCUMENT_CONVERTER_MODEL`→`KNOWLEDGE_GEN_MODEL`→`gpt-4o`；知識匯入（`services/knowledge_import_service.py`）同一鏈
   - 知識生成（`services/knowledge_generator.py`）：`KNOWLEDGE_GEN_MODEL`，程式預設 `gpt-4o-mini`
   - 查詢改寫: QUERY_REWRITE_MODEL（fallback: OPENAI_MODEL），temperature **0**

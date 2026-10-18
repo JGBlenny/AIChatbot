@@ -110,6 +110,14 @@ class PipelineHealthService:
             False,
         ]
 
+        # plan-oss-wiring-step1-20261018 §3.3：只在 `AGENT_LLM_BASE_URL` 有設時列入對話端點檢查；
+        # 未設 ⇒ 上面三份清單原樣（與改前逐位相同）。
+        from services.llm_provider import agent_endpoint_configured as _agent_endpoint_configured
+        if _agent_endpoint_configured():
+            checkers.append(self._check_agent_llm)
+            checker_names.append("Agent LLM Endpoint")
+            checker_is_core.append(True)
+
         tasks = [asyncio.wait_for(checker(), timeout=5.0) for checker in checkers]
         raw_results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -384,6 +392,58 @@ class PipelineHealthService:
                 "is_core": True,
                 "degradation_impact": None,
             }
+
+    async def _check_agent_llm(self) -> Dict[str, Any]:
+        """對話端點（`AGENT_LLM_BASE_URL`＋`AGENT_LLM_API_KEY_FILE`）健康檢查：**只驗設定**。
+
+        plan-oss-wiring-step1-20261018 §3.3／§8.5 Q4：Bedrock `GET /models` 回 404 ⇒
+        ⛔ 呼叫模型、⛔ 任何網路；設定判斷與金鑰檔驗證**重用** `build_agent_provider_from_env()`
+        （單一驗證來源，⛔ 另寫一套）。
+        ⚠️ `/pipeline-health` 在 `RAG_API_AUTH_ENFORCE` 預設關時不需認證 ⇒ `error` 欄只放
+        固定代碼＋例外類別名，⛔ `str(e)`；healthy 時 `version` 只放端點主機名。
+        函式內接住**所有**例外（否則 `check_all_components` 外層會 `str(raw)`）。
+        """
+        start = time.time()
+        error: Optional[str] = None
+        version: Optional[str] = None
+        try:
+            from services.llm_provider import (
+                AgentLLMConfigError,
+                agent_endpoint_host,
+                build_agent_provider_from_env,
+            )
+
+            try:
+                provider = build_agent_provider_from_env()
+            except AgentLLMConfigError as e:
+                provider = None
+                error = f"agent_llm_config_invalid:{type(e).__name__}:{e.code}"
+            if error is None:
+                if provider is None:
+                    error = "agent_llm_not_configured"
+                else:
+                    version = agent_endpoint_host()
+                    # 只驗設定：建出來的 client 立即關掉，⛔ 發任何請求。
+                    try:
+                        provider.client.close()
+                        await provider.async_client.close()
+                    except Exception:  # noqa: BLE001 — 關閉失敗不影響判定
+                        pass
+                    provider = None
+        except Exception as e:  # noqa: BLE001
+            error = f"agent_llm_check_failed:{type(e).__name__}"
+
+        latency = (time.time() - start) * 1000
+        healthy = error is None
+        return {
+            "name": "Agent LLM Endpoint",
+            "status": "healthy" if healthy else "unhealthy",
+            "latency_ms": round(latency, 2),
+            "version": version if healthy else None,
+            "error": error,
+            "is_core": True,
+            "degradation_impact": None,
+        }
 
     # ------------------------------------------------------------------
     # 非核心元件 Checkers (端到端子流程驗證)

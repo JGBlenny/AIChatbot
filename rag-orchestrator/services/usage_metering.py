@@ -66,6 +66,9 @@ DEFAULT_PRICING: Dict[str, tuple] = {
     "gpt-4.1": (2.00, 8.00),
     # 2026-09-07 依 OpenAI 官方價目（developers.openai.com/api/docs/pricing）補入，供 5.x 探針換模型量測
     "gpt-5-mini": (0.25, 2.00),
+    # 2026-10-18 正式接線第 0 步 Q6：AWS Price List offer `AmazonBedrock`（版本 20261016210806）
+    # ap-northeast-1 on-demand 標準層 0.00018／0.00073 USD per 1K tokens（SKU DFN5T4HYJPM5CGU9／FCYZ5PQ2VKGXJ3DH）
+    "openai.gpt-oss-120b-1:0": (0.18, 0.73),
 }
 
 

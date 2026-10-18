@@ -185,6 +185,8 @@ async def _init_agent_runtime(app: FastAPI) -> None:
         from services.agent.canon.fine_index import register_index as _register_index
         from services.agent.identity import Identity as _Identity
         from services.llm_provider import get_llm_provider as _get_llm_provider
+        from services.llm_provider import agent_endpoint_host as _agent_endpoint_host
+        from services.llm_provider import build_agent_provider_from_env as _build_agent_provider_from_env
 
         passed_audiences: set = set()
         indexes: dict = {}
@@ -252,7 +254,20 @@ async def _init_agent_runtime(app: FastAPI) -> None:
         #    `candidate_selectors=`（複數）是**依受眾取用**的權威對照表
         #    （`AgentRuntime._selector_for`：對照表非空時它說了算，⛔ 不跨受眾回退）。
         candidate_selector = selectors[_AGENT_BASELINE_AUDIENCE]
-        provider = _get_llm_provider()
+        # plan-oss-wiring-step1-20261018 §3.1／§3.2：設了對話端點（`AGENT_LLM_BASE_URL`＋
+        # `AGENT_LLM_API_KEY_FILE`）⇒ 對話專用 provider，並開推理清理；兩者皆未設 ⇒ `None`
+        # ⇒ 照舊 `get_llm_provider()`、清理關閉（正式機路徑逐位不變）。組態錯誤的 raise 訊息
+        # 只含原因代碼與路徑（下方外層 except 會印 `{e}`）。⛔ 印金鑰或其長度。
+        _agent_provider = _build_agent_provider_from_env()
+        provider = _agent_provider or _get_llm_provider()
+        clean = _agent_provider is not None
+        _agent_model = os.getenv("AGENT_MODEL") or "（未設）"
+        if clean:
+            _host = _agent_endpoint_host() or "?"
+            _label = "Bedrock" if ("bedrock" in _host and _host.endswith(".amazonaws.com")) else "自訂端點"
+            print(f"ℹ️ [agent] 對話端點：{_label}（{_host}） AGENT_MODEL={_agent_model} 推理清理=開")
+        else:
+            print(f"ℹ️ [agent] 對話端點：預設（get_llm_provider） AGENT_MODEL={_agent_model}")
 
         # 開發用：`AGENT_ATTEMPT_LOG_PATH` 設了就把每次嘗試（草稿句＋refs＋Verifier 判定＋解析錯誤）
         # 追加寫成 JSONL——W6 口語穩定度量測要看「什麼被拒」。預設不設＝關；⛔ 正式環境不設
@@ -261,7 +276,8 @@ async def _init_agent_runtime(app: FastAPI) -> None:
         runtime = _agent_bootstrap.build_runtime(app.state.db_pool, provider, _mcp_registry,
                                                  candidate_selector=candidate_selector,
                                                  candidate_selectors=selectors,
-                                                 attempt_sink=attempt_sink)
+                                                 attempt_sink=attempt_sink,
+                                                 clean_llm_output=clean)
         # W6-b3：把解析後的 `AGENT_VERIFIER_MODE` 交給 Verifier（模式感知在 `verify()` 內部）；
         # `observe_only` 只准配 `USE_MOCK_JGB_API=true`（否則 raise），`grounding_observe`
         # 配真 API 不阻起、由健檢 `premise.red_flags` 記紅。被觀察而未擋的類別記在
@@ -277,7 +293,7 @@ async def _init_agent_runtime(app: FastAPI) -> None:
                 lambda readonly_view: _agent_bootstrap.build_runtime(
                     app.state.db_pool, provider, _mcp_registry,
                     candidate_selector=candidate_selector, candidate_selectors=selectors,
-                    readonly_view=readonly_view),
+                    readonly_view=readonly_view, clean_llm_output=clean),
                 app.state.db_pool)
         except ImportError:
             print("ℹ️ [agent] ShadowRunner 尚未落地（4.1），影子模式停用")
