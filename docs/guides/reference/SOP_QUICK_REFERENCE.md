@@ -11,7 +11,7 @@
 ```bash
 # 1. 新增寵物飼養規定（解決回測缺口）
 psql -h localhost -U aichatbot -d aichatbot_admin \
-  -f scripts/add_pet_policy_sop.sql
+  -f database/seeds/add_pet_policy_sop.sql
 
 # 2. 驗證結果
 psql -h localhost -U aichatbot -d aichatbot_admin \
@@ -65,7 +65,9 @@ requires_cashflow_check = FALSE
 content = '社區規定：禁止在陽台晾曬衣物...'
 ```
 
-### 3. 意圖關聯（提升檢索精準度）
+### 3. 意圖關聯（已棄用）
+
+> 2026-10-18 對碼：`related_intent_id` 欄位仍在表內且 `knowledge-admin/frontend/src/views/PlatformSOPView.vue` 仍會送，但所有 `.py`（含 `rag-orchestrator`）0 處讀取，不再影響檢索；以下為早期用法，勿當作能提升檢索精準度。
 
 ```sql
 -- 步驟 1: 查詢可用意圖
@@ -122,7 +124,7 @@ INSERT INTO vendor_sop_items (
 ### 操作 3: 批次新增完整分類
 
 ```sql
--- 使用範本：複製 scripts/sop_templates.sql 中的「範本 3」
+-- 使用範本：複製 database/seeds/sop_templates.sql 中的「範本 3」
 -- 修改分類名稱、項目內容後執行
 ```
 
@@ -219,9 +221,9 @@ RETURNING id;
 
 ## 📚 延伸閱讀
 
-- **完整指南**: `docs/SOP_COMPLETE_GUIDE.md` (詳細說明、最佳實踐、系統架構)
-- **SQL 範本**: `scripts/sop_templates.sql` (8 種常用範本)
-- **實際範例**: `scripts/add_pet_policy_sop.sql` (寵物規定完整示範)
+- **完整指南**: `docs/SOP_COMPLETE_GUIDE.md`（已刪除，2026-10-18 對碼：檔案不在 repo；改讀 `docs/guides/features/SOP_GUIDE.md`）
+- **SQL 範本**: `database/seeds/sop_templates.sql` (8 種常用範本)
+- **實際範例**: `database/seeds/add_pet_policy_sop.sql` (寵物規定完整示範)
 
 ---
 
@@ -231,7 +233,7 @@ RETURNING id;
 - [ ] 金流版本：如果 `requires_cashflow_check = TRUE`，確認兩個版本都已填寫
 - [ ] 意圖關聯：確認關聯了正確的意圖 ID
 - [ ] 優先級設定：核心問題 priority >= 90，一般問題 60-80
-- [ ] 回測驗證：執行 `python3 scripts/knowledge_extraction/backtest_framework.py`
+- [ ] 回測驗證：執行回測（`backtest_framework.py` 已刪除，2026-10-18 對碼；現行回測見 `knowledge-admin/frontend/src/views/BacktestView.vue` 與 `GET /api/backtest/runs`）
 - [ ] 實際測試：使用 RAG API 測試相關問題是否返回正確答案
 
 ---
@@ -240,12 +242,12 @@ RETURNING id;
 
 1. **初學者** (5 分鐘)
    - 閱讀本文「快速開始」章節
-   - 執行 `add_pet_policy_sop.sql` 腳本
+   - 執行 `database/seeds/add_pet_policy_sop.sql` 腳本
    - 查詢驗證結果
 
 2. **進階使用** (30 分鐘)
-   - 閱讀 `SOP_COMPLETE_GUIDE.md`
-   - 使用 `sop_templates.sql` 範本
+   - 閱讀 `docs/guides/features/SOP_GUIDE.md`（原 `SOP_COMPLETE_GUIDE.md` 已刪除）
+   - 使用 `database/seeds/sop_templates.sql` 範本
    - 新增自己的 SOP 分類
 
 3. **專家級別** (1 小時+)

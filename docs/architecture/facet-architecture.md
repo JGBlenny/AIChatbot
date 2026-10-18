@@ -120,8 +120,8 @@ system_md = base ＋（沿領域鍵在 category_config 的父鏈，母共用在�
 
 > 🔴 **本節主角 `狀態判斷` 不是現行的 face。** 新線的 face 是一個封閉枚舉，值域由六張
 > `*_FACE_BUILDERS` 註冊表的鍵**現算**（`mcp_facade._jgb2_spec(domain, sorted(builders.keys()))`），
-> 共 **15 個**：帳單異常／條件診斷：帳單／滯納金／發票／繳費金流排障（bills 5）、
-> 合約異動／簽署排障／續約／退租收尾（contracts 4）、團隊成員權限／登入排障（accounts 2）、
+> 共 **16 個**：帳單異常／條件診斷：帳單／滯納金／發票／繳費金流排障（bills 5）、
+> 合約異動／簽署排障／續約／退租收尾／合約基本資料（contracts 5）、團隊成員權限／登入排障（accounts 2）、
 > 電表排障（meters 1）、物件現況診斷（estates 1）、修繕分類／修繕進度（repairs 2）。
 > **`狀態判斷` 不在其中**，且 `tests/unit/conversational/test_face_builders_registry_req.py`
 > 明文釘住「『狀態判斷』永不註冊 → 走 fallback」。本檔 §二／§三以它為例，

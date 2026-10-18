@@ -1043,7 +1043,7 @@ chmod +x test-api.sh
 #### v3.1 (2026-02-14) - 文檔修正與參數更新
 **重大修正：**
 - ❌ **移除不存在的端點**: 刪除 `/api/v1/chat/stream` 文檔（該端點不存在）
-- ✅ **串流模式正確說明**: 通過 `/api/v1/message` 端點的 `stream` 參數控制
+- ✅ **串流模式正確說明**: 通過 `/api/v1/message` 端點的 `stream` 參數控制（已刪除（2026-09-11），該端點已隨舊 REST 對話鏈退役，現行入口 `/mcp`）
 - 🆕 **參數遷移指引**: `user_role` → `target_user` + `mode`（user_role 將於 2026-03 移除）
 - 📝 **補充缺失參數**: 新增 `include_debug_info`, `disable_answer_synthesis`, `skip_sop` 文檔
 - ✅ **修正預設值**: `top_k` 預設值從 3 → 5，`mode` 預設值從 "tenant" → "b2c"

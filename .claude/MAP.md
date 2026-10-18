@@ -180,7 +180,6 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 - 規格 | `docs/architecture/COMPLETE_CONVERSATION_ARCHITECTURE.md` | 舊 REST 對話鏈的架構母圖,2026-09-12 刪至只剩四節:§0 三層責任分層(概念)、§3 檢索過濾與加成、§11 系統角色、§12 參數速查;⛔ 其餘章節(意圖分類／信心度／SOP 編排／表單／仲裁)的程式已於 2026-09-11 刪除,章節一併移除。現況架構走 `SYSTEM_ARCHITECTURE.md` 與 `AGENTIC_MCP_ARCHITECTURE.md`
 - 規格 | `docs/architecture/facet-architecture.md` | 面向化三層疊加的邏輯與資料佈局(取代 design.md 元件1/D2 的兩層版本)
 - 實測 | `scripts/audit/reports/regrade291-triage.md` | **69.7% 基準的唯一出處**(548 題乾淨重跑;舊寬鬆基準 60.2%)
-- 規格 | `docs/features/conversational-presales.md` | 對話式回答模式本身:單次直答 → 多輪自適應收斂(prospect 為第一個套用者)
 - 規格 | `docs/api/conversational-api.md` | 對話式回答的對外串接指南
 
 ## agentic-MCP（/mcp 對話線；LINE OA 為 demo 期場景之一）{#agentic-mcp}
@@ -201,7 +200,7 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 - 產線 | `rag-orchestrator/services/agent/mcp_facade.py` | `/mcp` 門面：驗 key／Origin／身分 header、命名空間、每呼叫記錄
 - 規格 | `docs/api/mcp-facade.md` | **`/mcp` 對外串接契約**：三道閘（401／403／400）、`X-JGB-Identity` 明文 JSON（⛔ 無 base64）、16 支工具與各自 `stage`、錯誤碼、額度
 - 正本 | `rag-orchestrator/canon/jgb/A.md` | **會進模型脈絡的知識正本（九架之一，A 帳號與身分；B…I 同形）**：一架可容**多個粗目**（`## 標題 {#A-slug}`，Plan 9.10 S1 起；裸字母 `{#A}` 已於 S5（2026-09-24）停用、目錄路徑大聲拒絕）、細目帶必填 `target_user`／`business_types`，id `jgb/<架>/<slug>`；agent 啟動時 `load_canon_or_die` 讀九架、依靜態身分（`_STATIC_TOC_IDENTITY`）只驗兩尺預算（`check_turn_budget`），不預組任何身分的整份篩選結果；每回合 `build_canon_sections` 現組 K=5 節（未審／不可見 id raise）；⛔ 改它等於改模型看到的內容，配套 `canon/jgb.json`＋`CATALOG.md` 由 `load_canon_or_die` 啟動時逐位元比對；跨架講法重複 parser 與 hook 都擋
-- 衍生物 | `rag-orchestrator/canon/jgb.json` | `export_json(parse_canon_dir("canon/jgb"))` 的導出，⛔ 不手改；CI `test_canon_export_sync_req` 與啟動期 `load_canon_or_die` 逐位元比對。⚠️ 售前／業者身分只涵蓋 prospect／property_manager（`outline.CANON_VIEW_AUDIENCES`）——`tenant` 無篩選結果，`make_outline_resolver` 對它一律 `NO_MATCH`；跨受眾隔離只在 `canon_assembler.canon_visible` 一道（`build_canon_sections` 對不可見 id raise ⇒ 降級只注入目錄）
+> 衍生物（**不列入盤查應讀**：業主 2026-10-18 選「拿掉，改用一行指令」，1.1 MB 每次需多代理分段讀；內容由上列正本 `canon/jgb/A.md`…`I.md` 產生；審核數改用 `python3 -c "import json;d=json.load(open('rag-orchestrator/canon/jgb.json'));f=[x for c in d['coarses'] for x in c['fines']];print(sum(1 for x in f if x.get('reviewed_by')),len(f))"`）`rag-orchestrator/canon/jgb.json`：`export_json(parse_canon_dir("canon/jgb"))` 的導出，⛔ 不手改；CI `test_canon_export_sync_req` 與啟動期 `load_canon_or_die` 逐位元比對。⚠️ 售前／業者身分只涵蓋 prospect／property_manager（`outline.CANON_VIEW_AUDIENCES`）——`tenant` 無篩選結果，`make_outline_resolver` 對它一律 `NO_MATCH`；跨受眾隔離只在 `canon_assembler.canon_visible` 一道（`build_canon_sections` 對不可見 id raise ⇒ 降級只注入目錄）
 - 判定 | `docs/architecture/agent-path-retired-symbols.md` | agent 路徑上已退役的符號帳本（查「這個還在不在」先看這裡）
 - 產線 | `rag-orchestrator/services/agent/limits.py` | DSP-045 額度封閉表（⛔ 不讀 env 覆寫）
 - 產線 | `rag-orchestrator/services/agent/session_persistence.py` | `AgentSessionStore`：會話狀態層（`get_state`／`start`／`save`／`close`）。⚠️ 2026-09-11 自舊引擎抽出，SQL 逐字照搬，同一張 `form_sessions`、同一個 `form_id='conversational'`
@@ -312,8 +311,6 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 ### API 與規範
 
 - 規格 | `docs/guides/api/api-path-conventions.md` | 對外 API 該用哪個路徑前綴、怎麼命名(自標「狀態: ✅ 生效中」)
-- 產線 | `docs/guides/api/how-to-add-api-endpoints.md` | 前端 API 端點下拉選單怎麼加(選項硬編碼在 Vue)
-- 產線 | `docs/guides/api/how-to-add-complete-api.md` | 端到端加一支 API 的流程 ⚠️ 自標「此文檔部分過時 (2026-01-20)」:90% 簡單 API 已改成資料庫配置
 
 ### 部署與環境
 
@@ -324,7 +321,6 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 ### 開發
 
 - 規格 | `docs/guides/development/FRONTEND_DEV_MODE.md` | 前端開發／生產雙模式各自怎麼跑、差在哪
-- 產線 | `docs/guides/development/FRONTEND_USAGE_GUIDE.md` | 管理頁面各功能怎麼操作
 - 產線 | `docs/guides/development/KNOWLEDGE_EXTRACTION_GUIDE.md` | 從 LINE 對話萃取知識到回測的工作流程
 - 產線 | `docs/guides/development/MARKDOWN_TO_PDF_GUIDE.md` | Markdown 轉 PDF 的可用工具與作法
 
@@ -335,14 +331,12 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 - 產線 | `docs/guides/features/LOOKUP_IMPORT_EXPORT_GUIDE.md` | Lookup 表批量匯入匯出與複合鍵
 - 產線 | `docs/guides/features/PERMISSION_SYSTEM_QUICK_GUIDE.md` | RBAC 角色與權限怎麼設定
 - 產線 | `docs/guides/features/SOP_EXCEL_IMPORT_GUIDE.md` | SOP Excel 匯入的金流欄位怎麼處理
-- 規格 | `docs/guides/features/SOP_OPTIMIZATION_README.md` | SOP Group Embedding 優化解決什麼問題、檔案在哪
 
 ### 入門與速查
 
 - 路由 | `docs/guides/README.md` | 指南目錄的任務導航:要做某件事該讀哪一份
 - 產線 | `docs/guides/getting-started/QUICKSTART.md` | Docker 起服務與驗證是否活著
 - 產線 | `docs/guides/getting-started/PERMISSION_QUICK_START.md` | 權限系統的資料庫建置與實作步驟
-- 規格 | `docs/guides/getting-started/USER_MANUAL_NON_TECHNICAL.md` | 非技術者看的對話流程與檢索決策說明
 - 規格 | `docs/guides/reference/LOOKUP_TABLE_QUICK_REFERENCE.md` | Lookup 表系統速查 ⚠️ 檔內狀態欄寫「📝 規劃中」(2026-02-04)**已過時**:`rag-orchestrator/routers/lookup.py` 實際存在
 - 規格 | `docs/guides/reference/PRIORITY_QUICK_REFERENCE.md` | 知識優先級加成怎麼算、什麼時候適用
 
@@ -384,9 +378,8 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 
 ## 功能文件 {#feature-docs}
 
-⚠️ 這 12 份於 2026-09-04 逐份判讀後列入。同目錄的 `DUAL_EMBEDDING_RETRIEVAL.md`、
-`KNOWLEDGE_FORM_TRIGGER_IMPLEMENTATION.md` 在 `canon.json` 的 `discover_exclude`,
-`conversational-presales.md` 已列於〈對話邏輯與路由執行〉。
+⚠️ 這 12 份於 2026-09-04 逐份判讀後列入。同目錄原有的 `DUAL_EMBEDDING_RETRIEVAL.md`、`KNOWLEDGE_FORM_TRIGGER_IMPLEMENTATION.md`、`conversational-presales.md`
+已於 2026-10-18 刪除（D5；歸檔副本在 `docs/archive/2026-09/`）。
 
 ### 檢索與知識
 
@@ -396,8 +389,7 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 ### 表單
 
 - 規格 | `docs/features/FORM_MANAGEMENT_SYSTEM.md` | 動態表單收集系統的 Schema、API 與前端整合
-- 規格 | `docs/features/knowledge-form-auto-option.md` | 表單自動選擇的改進設計方案(2026-02-05);⚠️ **與 `knowledge-form-auto-quick-ref.md` 同主題,兩份皆未宣告取代關係,誰是正本待裁**
-- 規格 | `docs/features/knowledge-form-auto-quick-ref.md` | 表單 Auto 選項的配置與速查(2026-07-22);⚠️ 同上,待裁
+- 規格 | `docs/features/knowledge-form-auto-option.md` | 表單自動選擇的改進設計方案(2026-02-05)；⚠️ 歷史設計案：`trigger_form_condition` 欄位已刪（同主題的 `knowledge-form-auto-quick-ref.md` 已於 2026-10-18 刪除）
 
 ### 系統管理
 
@@ -406,7 +398,6 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 
 ### SOP
 
-- 規格 | `docs/features/sop/implementation/SOP_NEXT_ACTION_IMPLEMENTATION.md` | SOP 四種觸發模式與三種後續動作的實作範圍與未竟項
 - 決策 | `docs/features/sop/implementation/SOP_FLOW_STRICT_VALIDATION_2026-01-26.md` | 為何限制觸發模式與後續動作的有效組合,以及前後端各擋哪一段
 - 規格 | `docs/features/sop/optimization/SOP_KEYWORDS_COMPARISON.md` | `keywords` 與 `trigger_keywords` 差在哪、各自何時生效
 - 判定 | `docs/features/sop/SOP_TRIGGER_MODE_UPDATE_INDEX.md` | 2026-02-03 的 SOP 觸發模式 UI 更新紀錄(歷史);⛔ 觸發模式在對話路徑上已不存在
@@ -487,7 +478,6 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 
 ### 測試
 
-- 判準 | `docs/testing/BATCH_TEST_STANDARDS.md` | 一個批次要滿足什麼才算通過(必要條件、品質標準、失敗處理)
 - 判準 | `docs/testing/api-integration-testing-guide.md` | Knowledge Admin API 的 `action_type`／`api_config` 支援怎麼驗收
 - 判準 | `docs/testing/LOOKUP_SYSTEM_TEST_GUIDE.md` | Lookup 查詢系統(電費寄送區間、模糊匹配、地址)的三種測法與驗收準則
 - 實測 | `docs/testing/multiturn-smoke-scripts.md` | 多輪 smoke 測試劇本與當時的測試身分(2026-07-12 整理;vendor 2、`mode=b2b`、`role_id=37305`)

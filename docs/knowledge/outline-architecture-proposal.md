@@ -1,4 +1,6 @@
-# 知識大綱架構定案（v2，2026-09-14；業主「照建議」裁 11 題＝DSP-047～057；⛔ 尚未實作，實作走 tasks §9）
+# 知識大綱架構定案（v2，2026-09-14；業主「照建議」裁 11 題＝DSP-047～057；2026-09-14 定案快照。2026-10-18 對碼：標題原稱「尚未實作」已不成立——九架正本 `rag-orchestrator/canon/jgb/A.md`…`I.md` 與 `CATALOG.md` 已存在，其餘各節實作進度以程式為準）
+
+> 🔴 **2026-10-18 對碼——本檔以下與現況不符處**：(a) `KNOWN_TARGET_USERS` 現為 **4 值** `{tenant, property_manager, system_admin, prospect}`（`rag-orchestrator/tools/contracts/visibility.py`、`rag-orchestrator/services/vendor_knowledge_retriever_v2.py`），無 `landlord`；(b)「pm 68 條講法全 `proposed`／翻成 approved」是 2026-09-14 快照——現況 `rag-orchestrator/canon/jgb/` 九份正本的講法**全數 `status: proposed`、0 條 approved**（共 1,753 條，查證：`grep -c "status: proposed" rag-orchestrator/canon/jgb/A.md`，其餘 B～I 同法逐檔計），「翻成 approved」的前提與數字都以現況為準，不以本檔 68 為準。
 
 > 配套 `jgb-domain-map.md` v2。本檔所有 [待裁] 已由 DSP-047～057 定案，下列每節標註對應 DSP。
 > 🔴 v0 三處 [已定] 被推翻：§4 失敗方向「只會少給」（假：未知身分在 b2b 分支會**多給**）；§5「過濾在算分前所以永不並存」（非因果：互斥來自 `target_user` 集合不交）；§2「改粗目 top-5 不變」（同分時拆序用 `fine_id`，粗目字母在其中）。
@@ -63,7 +65,7 @@ is_b2b   = (identity.target_user in B2B_TARGET_USERS) or (identity.mode == "b2b"
 | `all_users` | 只在 b2c 分支放行，b2b 看不到 ⇒ 半可見 | ⛔ 無 |
 | 任何離題問題 | K=5 無門檻 ⇒ 永遠 `hit` 滿 5 條（「今天天氣」對售前正本最高分 0.282 照回 5 條） | 分數在 trace |
 
-**值域現況**：`KNOWN_TARGET_USERS` 5 值 `{tenant, landlord, property_manager, system_admin, prospect}`。
+**值域現況**：`KNOWN_TARGET_USERS` 4 值 `{tenant, property_manager, system_admin, prospect}`（2026-10-18 對碼；2026-09-14 原稿寫 5 值含 `landlord`，已不成立，見檔頭）。
 - 缺：**大房東**、**社宅**、**團隊成員權限**（後者不是 `target_user` 能表達的——`canon_visible` 沒有權限維度，看不到財務的成員照樣拿到全部帳務細目）。
 - ⚠️ **`system_admin` 已在值域、被路由進 pm 受眾、但 pm 正本 0/39 可見**（front matter 繼承 `[property_manager]`）。
 - 大房東雙身分：`Identity.target_user` 純量、`canon_visible` 單值∈集合，**沒有第二維度**；且 `audience_of(mode='b2b', 'big_landlord')` 仍回 pm。擴值域單獨做不到，要連動 `Audience` Literal、`CANON_AUDIENCES`／`INDEX_AUDIENCES`、`_STATIC_TOC_IDENTITY`、`app._AGENT_OUTLINE_AUDIENCES`、各工具 `stage`。

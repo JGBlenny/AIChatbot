@@ -53,7 +53,7 @@ knowledge_base
 - **輸入文字**：只用標題（`question_summary`），不混入 keywords（避免語義稀釋）
 - **用途**：語義相似度檢索（pgvector 的 `<=>` 運算子）
 - **索引**：IVFFlat 向量索引（加速相似度搜尋）
-- **閾值**：預設相似度 >= 0.6 才視為匹配（KNOWLEDGE_MIN_THRESHOLD）
+- **閾值**：`kb.search` 現行閾值＝`KB_SIMILARITY_THRESHOLD`，程式預設 0.65（`services/decision_layer.py` 的 `DecisionConfig.kb_threshold`，讀值點 `services/agent/tools/kb.py`）。`DecisionConfig.knowledge_min=0.6` 無消費者；`KNOWLEDGE_MIN_THRESHOLD` 這個 env 名在程式中不存在
 - **生成一致性**：所有寫入 `knowledge_base.embedding` 的路徑都須使用 `get_embedding_client()`，輸入文字統一為 `question_summary`（避免與搜尋時的 query embedding 來源不一致）
 - **keywords 機制**：透過 `BaseRetriever._keyword_search` 獨立進行關鍵字匹配（向量備選），不混入 embedding
 
@@ -235,7 +235,7 @@ AI 生成 → pending_review（待審核）
 ```text
 categories 命中          ＝ 這列知識**可以提名**該面向
                         ≠ 該面向**應該**承擔這個 query（那是 persona scope contract 的事）
-                        ≠ 進場一定成立（仍須 similarity ≥ FORM_TRIGGER_THRESHOLD 0.75）
+                        ≠ 進場一定成立（`FORM_TRIGGER_THRESHOLD` 0.75 在活路徑無消費者，見檔頭；進場不再由這顆門檻決定）
 ```
 
 - **它是目前 responsibility 與 nomination 之間唯一的耦合，而且是人工維護的間接連結。**
@@ -266,7 +266,7 @@ categories 命中          ＝ 這列知識**可以提名**該面向
 ### 3. 向量 + 關鍵字雙重檢索
 - 向量：語義相似度檢索（主要）
 - 關鍵字：精準匹配（輔助）
-- 閾值：相似度 >= 0.6（KNOWLEDGE_MIN_THRESHOLD）
+- 閾值：`KB_SIMILARITY_THRESHOLD` 預設 0.65（見 §1 向量 Embedding）
 
 ### 4. 知識來源可追溯
 - 記錄來源：manual / auto_generated / loop

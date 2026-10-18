@@ -1,7 +1,7 @@
 # 知識庫表單自動選擇功能 - 改進方案
 
 > **本檔角色**：設計方案（背景與現況分析，撰於 2026-02-05）
-> **對應檔**：`docs/features/knowledge-form-auto-quick-ref.md`（速查表，日常操作請由該檔入口，2026-07-22）
+> ⚠️ **歷史設計案（2026-10-18 對碼）**：`knowledge_base.trigger_form_condition` 欄位已由 `rag-orchestrator/database/migrations/drop_knowledge_trigger_dead_columns.sql` 刪除，本案描述的 auto／never／conditional 選項未實作；配套速查檔已刪除（2026-10-18）。
 
 ## 📋 現況分析
 

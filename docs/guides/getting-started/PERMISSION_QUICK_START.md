@@ -281,7 +281,7 @@ async def get_user_permissions(admin_id: int) -> list:
     finally:
         conn.close()
 
-def require_permission(permission: str):
+def require_permission(permission: str):  # 未實作（2026-10-18 對碼）：程式中無此函數，設計示意
     """創建權限檢查依賴"""
     async def permission_checker(user: dict = Depends(get_current_user)):
         user_permissions = await get_user_permissions(user['id'])
@@ -688,7 +688,7 @@ VALUES (
 
 1. **開發角色管理 UI** - 參考 [PERMISSION_UI_DESIGN.md](../../design/PERMISSION_UI_DESIGN.md)
 2. **為現有頁面添加權限控制** - 更新路由 meta 和組件
-3. **為 API 添加權限驗證** - 使用 `require_permission` 裝飾器
+3. **為 API 添加權限驗證** - 使用 `require_permission` 裝飾器（未實作，2026-10-18 對碼：程式中無此函數）
 4. **撰寫單元測試** - 測試權限邏輯
 
 ---

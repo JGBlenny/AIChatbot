@@ -12,7 +12,7 @@
 `coordinator.execute_iteration` 每次迭代都會走 `backtest_client.execute_batch_backtest`，
 它打的是 `POST /api/v1/message`——那條端點隨舊 REST 對話鏈於 2026-09-11 刪除（DSP-046）。
 迴圈自那之後一次也跑不完，執行機制已於 2026-09 移除。
-`services/knowledge_completion_loop/` 現在只剩 `embedding_client.py`。
+`services/knowledge_completion_loop/` 的程式現在只剩 `embedding_client.py`（目錄另有 `__init__.py`、`create_missing_indexes.sql`）。
 
 查證：`head -20 rag-orchestrator/routers/loops.py`；
 `ls rag-orchestrator/services/knowledge_completion_loop/`。

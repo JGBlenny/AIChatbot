@@ -11,7 +11,7 @@
 
 查證：`grep -n "def _key_plan" -A 18 rag-orchestrator/services/agent/canon/fine_index.py`；`grep -n "def build_canon_toc" -A 20 rag-orchestrator/services/agent/canon/canon_assembler.py`。
 
-**🔴 P0-1：pm 正本 68 條講法全部 `proposed`，0 條 `approved`** ⇒ `INDEXED_PHRASING_STATUS = "approved"` ⇒ **一條都沒進索引**。pm 現在只靠 39 個標題＋57 句內文在檢索。（正對照：prospect 189 條全 approved。）
+**🔴 P0-1（2026-09-14 快照；2026-10-18 對碼：數字已過期——`rag-orchestrator/canon/jgb/` 九份正本講法現共 1,753 條，**全數 `status: proposed`、0 條 `approved`**，不分受眾；查證：`grep -c "status: proposed" rag-orchestrator/canon/jgb/A.md`（A 檔 189 條），B～I 檔同法逐檔計；`INDEXED_PHRASING_STATUS = "approved"` 見 `rag-orchestrator/services/agent/canon/fine_index.py`））：pm 正本 68 條講法全部 `proposed`，0 條 `approved`** ⇒ `INDEXED_PHRASING_STATUS = "approved"` ⇒ **一條都沒進索引**。pm 現在只靠 39 個標題＋57 句內文在檢索。（正對照：prospect 189 條全 approved——此為 2026-09-14 快照，現況已不成立，見上。）
 查證：`grep -oE "status: [a-z]+" docs/archive/2026-09/canon-pre-library/property_manager.md | sort | uniq -c`
 （⚠️ 2026-09-15 DSP-058 起兩份受眾正本已合併成 `rag-orchestrator/canon/jgb/` 並封存原檔；
 本節的數字是**合併前的快照**，故查證指令指向封存版，⛔ 不是現況正本）。

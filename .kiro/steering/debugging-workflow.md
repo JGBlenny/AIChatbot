@@ -24,7 +24,7 @@
 - [ ] **檢查 `src/config/api.js`** - 是否有統一的 API 配置？
 - [ ] **找出類似頁面** - 哪個頁面有相同功能且正常工作？
 - [ ] **檢查該頁面的實現** - 它怎麼調用 API？怎麼處理數據？
-- [ ] **檢查構建方式** - `docker-compose.yml` 中前端是如何構建和部署的？
+- [ ] **檢查構建方式** - `docker-compose.dev.yml`／`docker-compose.prod.yml` 中前端是如何構建和部署的？
 - [ ] **對比差異** - 問題代碼與正常代碼有什麼不同？
 
 ### 3. 後端問題的盤查清單
@@ -39,8 +39,11 @@
 
 ### 3b. 對話問題的盤查清單（「為什麼這樣回答／為什麼被轉人」）
 
-⛔ **不要從意圖分類、SOP 觸發、表單狀態機、答案優化、檢索門檻查起——那五個子系統
+⛔ **不要從意圖分類、SOP 觸發、表單狀態機、答案優化查起——這四個子系統
 2026-09-11 已整批刪除**（DSP-046）。現行唯一活線是 `/mcp` → `AgentRuntime.run_turn`。
+檢索門檻不是整個刪除：`services/decision_layer.py` 還在，其中 `DecisionConfig.kb_threshold`
+（env `KB_SIMILARITY_THRESHOLD`）仍被 `services/agent/tools/kb.py` 讀取，是 `kb.search` 的現行門檻；
+`form_trigger_threshold`／`knowledge_min` 等其餘欄位才是無消費者。
 
 按順序：
 

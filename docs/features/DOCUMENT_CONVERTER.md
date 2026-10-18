@@ -155,7 +155,7 @@ curl -X POST http://localhost:8100/api/v1/document-converter/conv-123e4567/parse
 
 | 參數 | 類型 | 必填 | 說明 |
 |------|------|------|------|
-| `model` | string | ❌ | GPT 模型 (預設: gpt-4o-mini) |
+| `model` | string | ❌ | GPT 模型 (預設: 環境變數 `DOCUMENT_CONVERTER_MODEL`，未設則 `KNOWLEDGE_GEN_MODEL`，再未設則 gpt-4o；見 `services/document_converter_service.py`) |
 | `max_qa_pairs` | integer | ❌ | 最大問答對數（預設: 50） |
 | `language` | string | ❌ | 語言（預設: zh-TW） |
 

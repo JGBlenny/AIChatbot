@@ -216,7 +216,7 @@ curl "http://localhost:8100/api/lookup/categories?vendor_id=1" | jq
 # 使用測試腳本
 bash tests/test_billing_chat_flow.sh
 
-# 或手動測試（已失效範例）
+# 或手動測試（已刪除（2026-09-11）：以下 /api/v1/message 範例已失效，端點不存在）
 curl -X POST http://localhost:8100/api/v1/message \
   -H "Content-Type: application/json" \
   -d '{

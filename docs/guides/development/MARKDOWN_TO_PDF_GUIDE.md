@@ -41,7 +41,7 @@ mermaid-filter --version
 
 ### 轉換命令：
 ```bash
-cd /Users/lenny/jgb/AIChatbot/docs/architecture
+cd docs/architecture   # 從 repo 根目錄起算
 
 # 基本轉換
 pandoc COMPLETE_CONVERSATION_ARCHITECTURE.md \
@@ -71,7 +71,7 @@ npm install -g mdpdf
 
 ### 使用：
 ```bash
-cd /Users/lenny/jgb/AIChatbot/docs/architecture
+cd docs/architecture   # 從 repo 根目錄起算
 mdpdf COMPLETE_CONVERSATION_ARCHITECTURE.md
 ```
 
@@ -242,7 +242,7 @@ pandoc COMPLETE_CONVERSATION_ARCHITECTURE.md \
 code --install-extension yzane.markdown-pdf
 
 # 2. 開啟檔案
-code /Users/lenny/jgb/AIChatbot/docs/architecture/COMPLETE_CONVERSATION_ARCHITECTURE.md
+code docs/architecture/COMPLETE_CONVERSATION_ARCHITECTURE.md
 
 # 3. 按 Cmd+Shift+P → 輸入 "export pdf" → Enter
 ```
@@ -255,7 +255,7 @@ brew install mactex
 npm install -g mermaid-filter
 
 # 2. 轉換
-cd /Users/lenny/jgb/AIChatbot/docs/architecture
+cd docs/architecture   # 從 repo 根目錄起算
 pandoc COMPLETE_CONVERSATION_ARCHITECTURE.md \
   -o COMPLETE_CONVERSATION_ARCHITECTURE.pdf \
   --pdf-engine=xelatex \

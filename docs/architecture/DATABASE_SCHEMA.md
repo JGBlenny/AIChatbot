@@ -2,7 +2,7 @@
 
 **版本**: 2026-05-18（驗證更新）
 **資料庫**: PostgreSQL 16 + pgvector
-**總表數**: ~39 個表（16 核心 + 配置/權限/表單/平台 SOP 等）
+**總表數**: 本檔先前寫 ~39 個表（16 核心 + 配置/權限/表單/平台 SOP 等）；2026-10-18 對碼：此數字是舊快照，`public` 實際表數見下方「新線實際在用」節（2026-09-12 實查 63 張），現值以 DB 為準（`\dt public.*`）
 
 ---
 
@@ -543,6 +543,9 @@ ALTER TABLE knowledge_base
     ADD CONSTRAINT chk_categories_no_reserved
     CHECK (NOT (categories && ARRAY['對話規則', '系統脈絡']::text[]));
 ```
+
+> **2026-10-18 對碼**：上列 DDL **不完整**。程式正在使用但上列未列的 `knowledge_base` 欄位至少有 `target_user`、`business_types`、`action_type`、`api_config`、`form_id`、`trigger_mode`（見 `knowledge-admin/backend/app.py` 的 `KnowledgeUpdate`、`rag-orchestrator/services/vendor_knowledge_retriever_v2.py`）。
+> `knowledge_base` 的 `CREATE TABLE` **不在 repo 的 `.sql` migrations 內**（同法正對照：`usage_events` 的 CREATE 在 `rag-orchestrator/database/migrations/add_usage_events.sql`，可找到），權威 schema 須查線上 DB：`docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c '\d knowledge_base'`。
 
 **主題分類 (categories) — 多值化**:
 - `categories TEXT[]` 為主題分類的**唯一真實來源**，檢索與接地（`_grounding_by_category`）皆以 `= ANY(categories)` 比對，並支援父層展開（選父層時涵蓋其子分類）
@@ -1337,7 +1340,7 @@ ORDER BY uq.frequency DESC;
 ## 資料庫統計
 
 ### 表數量
-- **核心表**: 16 個
+- **核心表**: 約 16 個為舊版分類，非總數；`public` 總表數 2026-09-12 實查為 63 張（見下節），現值以 DB 為準
 - **視圖**: 6 個以上
 - **函數**: 10+ 個
 - **觸發器**: 8+ 個

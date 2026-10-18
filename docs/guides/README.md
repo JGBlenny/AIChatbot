@@ -9,13 +9,13 @@
 ## 🗂️ 目錄結構
 
 ```
-guides/
-├── getting-started/    # 快速開始 (3 個文件)
-├── development/        # 開發相關 (7 個文件)
+guides/   # 文件數為 2026-10-18 對碼時 ls 結果（已歸檔者在 docs/archive/2026-09/）
+├── getting-started/    # 快速開始 (2 個文件)
+├── development/        # 開發相關 (5 個文件)
 ├── deployment/         # 部署相關 (4 個文件)
-├── api/               # API 相關 (3 個文件)
-├── features/          # 功能使用 (7 個文件)
-├── migration/         # 遷移指南 (2 個文件)
+├── api/               # API 相關 (1 個文件)
+├── features/          # 功能使用 (6 個文件)
+├── migration/         # 遷移指南 (1 個文件)
 └── reference/         # 快速參考 (3 個文件)
 ```
 
@@ -28,7 +28,7 @@ guides/
 | 文檔 | 說明 | 閱讀時間 |
 |------|------|---------|
 | [QUICKSTART.md](./getting-started/QUICKSTART.md) | 系統快速入門指南 | 10 分鐘 |
-| [USER_MANUAL_NON_TECHNICAL.md](./getting-started/USER_MANUAL_NON_TECHNICAL.md) | 非技術人員使用手冊 | 30 分鐘 |
+| [USER_MANUAL_NON_TECHNICAL.md](../archive/2026-09/USER_MANUAL_NON_TECHNICAL.md) | 非技術人員使用手冊 | 30 分鐘 |
 | [PERMISSION_QUICK_START.md](./getting-started/PERMISSION_QUICK_START.md) | 權限系統快速上手 | 15 分鐘 |
 
 ---
@@ -40,10 +40,10 @@ guides/
 | 文檔 | 說明 |
 |------|------|
 | [FRONTEND_DEV_MODE.md](./development/FRONTEND_DEV_MODE.md) | 前端開發模式設置 |
-| [FRONTEND_USAGE_GUIDE.md](./development/FRONTEND_USAGE_GUIDE.md) | 前端使用指南 |
 | [KNOWLEDGE_EXTRACTION_GUIDE.md](./development/KNOWLEDGE_EXTRACTION_GUIDE.md) | 知識庫提取指南 |
 | [MARKDOWN_TO_PDF_GUIDE.md](./development/MARKDOWN_TO_PDF_GUIDE.md) | Markdown 轉 PDF 指南 |
 | [SIMPLIFICATION_IMPLEMENTATION_GUIDE.md](./development/SIMPLIFICATION_IMPLEMENTATION_GUIDE.md) | 簡化實施指南 |
+| [how-to-add-a-query-capability.md](./development/how-to-add-a-query-capability.md) | 如何新增查詢能力 |
 
 ---
 
@@ -67,8 +67,8 @@ guides/
 | 文檔 | 說明 |
 |------|------|
 | [api-path-conventions.md](./api/api-path-conventions.md) | API 路徑命名規範 |
-| [how-to-add-api-endpoints.md](./api/how-to-add-api-endpoints.md) | 如何添加 API 端點 |
-| [how-to-add-complete-api.md](./api/how-to-add-complete-api.md) | 如何添加完整 API |
+| [how-to-add-api-endpoints.md](../archive/2026-09/how-to-add-api-endpoints.md) | 如何添加 API 端點 |
+| [how-to-add-complete-api.md](../archive/2026-09/how-to-add-complete-api.md) | 如何添加完整 API |
 
 ---
 
@@ -84,7 +84,7 @@ guides/
 | [PERMISSION_SYSTEM_QUICK_GUIDE.md](./features/PERMISSION_SYSTEM_QUICK_GUIDE.md) | 權限系統快速指南 |
 | [SOP_EXCEL_IMPORT_GUIDE.md](./features/SOP_EXCEL_IMPORT_GUIDE.md) | SOP Excel 匯入指南 |
 | [SOP_GUIDE.md](./features/SOP_GUIDE.md) | SOP 系統完整指南 ⭐ |
-| [SOP_OPTIMIZATION_README.md](./features/SOP_OPTIMIZATION_README.md) | SOP 優化說明 |
+| [SOP_OPTIMIZATION_README.md](../archive/2026-09/SOP_OPTIMIZATION_README.md) | SOP 優化說明 |
 
 ---
 
@@ -115,7 +115,7 @@ guides/
 
 ### 任務 1: 我是新手，想快速上手系統
 1. 閱讀 [QUICKSTART.md](./getting-started/QUICKSTART.md)
-2. 如果是非技術人員，閱讀 [USER_MANUAL_NON_TECHNICAL.md](./getting-started/USER_MANUAL_NON_TECHNICAL.md)
+2. 如果是非技術人員，閱讀 [USER_MANUAL_NON_TECHNICAL.md](../archive/2026-09/USER_MANUAL_NON_TECHNICAL.md)
 
 ### 任務 2: 我要配置 SOP 系統
 1. 閱讀 [SOP_GUIDE.md](./features/SOP_GUIDE.md)
@@ -129,12 +129,11 @@ guides/
 
 ### 任務 4: 我要開發 API
 1. 了解 [api-path-conventions.md](./api/api-path-conventions.md)
-2. 按照 [how-to-add-api-endpoints.md](./api/how-to-add-api-endpoints.md) 添加端點
-3. 或完整流程參考 [how-to-add-complete-api.md](./api/how-to-add-complete-api.md)
+2. 按照 [how-to-add-api-endpoints.md](../archive/2026-09/how-to-add-api-endpoints.md) 添加端點
+3. 或完整流程參考 [how-to-add-complete-api.md](../archive/2026-09/how-to-add-complete-api.md)
 
 ### 任務 5: 我要開發前端功能
 1. 設置 [FRONTEND_DEV_MODE.md](./development/FRONTEND_DEV_MODE.md)
-2. 參考 [FRONTEND_USAGE_GUIDE.md](./development/FRONTEND_USAGE_GUIDE.md)
 
 ### 任務 6: 我要匯入知識庫
 1. 閱讀 [KNOWLEDGE_IMPORT_EXPORT_GUIDE.md](./features/KNOWLEDGE_IMPORT_EXPORT_GUIDE.md)

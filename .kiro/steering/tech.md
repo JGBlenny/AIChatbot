@@ -15,7 +15,7 @@
 
 ### AI/ML
 - **OpenAI**:
-  - GPT-4o-mini: 對話回合（`AGENT_MODEL`）、查詢改寫、知識生成、文件轉換
+  - 對話回合（`AGENT_MODEL`）、查詢改寫、知識生成、文件轉換：各自的 env 與程式預設見「AI 呼叫慣例」
   - Embedding API: 向量嵌入生成
 - **sentence-transformers**: 本地語義重排序模型
 - **torch**: PyTorch，支援 sentence-transformers
@@ -52,7 +52,7 @@ AIChatbot (Multi-container Docker Compose)
 │   ├── services/ (業務邏輯層)
 │   ├── models/ (資料模型)
 │   ├── config/ (配置管理)
-│   └── utils/ (工具函數)
+│   └── tools/ (離線工具與評估腳本)
 ├── aichatbot-postgres (PostgreSQL with pgvector)
 ├── aichatbot-embedding-service (向量嵌入服務)
 ├── aichatbot-knowledge-admin (管理後台)
@@ -62,7 +62,7 @@ AIChatbot (Multi-container Docker Compose)
 ### 分層架構 (RAG Orchestrator)
 ```
 Routers (路由層)
-  ├── agent.py - /mcp 門面掛載（prefix 在 router 內）——唯一的對話入口
+  ├── agent.py - `/api/v1/agent/openapi.json`・`/health`・`/trace`（`APIRouter(prefix="/api/v1/agent")`）；對話入口 `/mcp` 不在這裡，由 `rag-orchestrator/app.py` 以 `Mount("/mcp", app=_mcp_facade.build_asgi_app(_mcp_server))` 掛上，應用本體在 `services/agent/mcp_facade.py`
   ├── agent_entry.py - ⚠️ strangler 遷移橋，上游已滅、無 APIRouter、⛔ 掛不起來
   ├── forms.py - 表單後台 CRUD（對話填單引擎已退役）
   ├── platform_sop.py - 平台管理員的 SOP 範本後台 CRUD（15 條路由）
@@ -77,21 +77,21 @@ Services (服務層)
   │   ├── turn_segments.py / turn_context.py / exit_gates.py - 一回合的四段
   │   ├── verifier.py - Output Verifier（逐句驗引用）
   │   ├── canon/ - 知識路 A：git canon 正本 → FineIndex → CandidateSelector
-  │   └── tools/ - registry.py（in-process 呼叫）／jgb2.py（六域 15 face）／kb.py（知識路 B）
+  │   └── tools/ - registry.py（in-process 呼叫）／jgb2.py（六域 16 face）／kb.py（知識路 B）
   ├── services/jgb/ - 六域 face builders ＋ jgb2 轉接
   ├── base_retriever.py / vendor_knowledge_retriever_v2.py / semantic_reranker.py - 檢索
   ├── decision_layer.py - 檢索門檻
-  ├── knowledge_completion_loop/ - ⚠️ 只剩 embedding_client.py，執行面已刪
+  ├── knowledge_completion_loop/ - ⚠️ 程式只剩 embedding_client.py（另有 `__init__.py`、`create_missing_indexes.sql`），執行面已刪
   └── ...
 
 Models (模型層)
   ├── Pydantic models for request/response validation
   └── Database schema definitions
 
-Utils (工具層)
-  ├── db_utils.py - 資料庫工具
-  ├── embedding_utils.py - 向量嵌入工具
-  └── sop_utils.py - SOP 工具
+Utils（無獨立 `utils/` 目錄，檔案在 `services/` 下）
+  ├── services/db_utils.py - 資料庫工具
+  ├── services/embedding_utils.py - 向量嵌入工具
+  └── services/sop_utils.py - SOP 工具
 ```
 
 ## 開發慣例
@@ -100,7 +100,7 @@ Utils (工具層)
 - **API 路由**: 使用 `async def` 定義所有端點
 - **資料庫操作**: 優先使用 `asyncpg` 進行非同步查詢
 - **HTTP 請求**: 使用 `aiohttp` 或 `httpx` 進行非同步請求
-- **同步場景**: 回測腳本、知識完善迴圈等批次處理可使用同步 API (psycopg2)
+- **同步場景**: 回測腳本等批次處理可使用同步 API (psycopg2)
 
 ### 資料庫連接管理
 - **連接池**: 使用 `asyncpg.create_pool()` 建立連接池
@@ -141,8 +141,8 @@ Utils (工具層)
   - 純 vector → `min(1.0, vector × boost)`
 - **SQL 不再過濾 threshold**：`_vector_search` 用 LIMIT（SOP 50、KB 100）控制回傳量，application 端用 `similarity >= threshold` 過濾
 - **閾值對應欄位**：
-  - `PERFECT_MATCH_THRESHOLD` 比對 `vector_similarity`（純向量）
-  - `SOP_SIMILARITY_THRESHOLD` / `KB_SIMILARITY_THRESHOLD` / `HIGH_QUALITY_THRESHOLD` / `SYNTHESIS_THRESHOLD` 比對 `similarity`（final）
+  - `KB_SIMILARITY_THRESHOLD`（預設 0.65，`services/decision_layer.py`）比對 `similarity`（final）
+  - ⛔ `PERFECT_MATCH_THRESHOLD`／`SOP_SIMILARITY_THRESHOLD`／`HIGH_QUALITY_THRESHOLD`／`SYNTHESIS_THRESHOLD` 無程式讀者（舊鏈已刪）
 - **優先級加成**: 支援對高品質答案 (>0.7) 進行固定加成 (+0.15)
 
 ### 快取策略
@@ -153,9 +153,9 @@ Utils (工具層)
 ### AI 呼叫慣例
 - **OpenAI Client**: 使用 `openai.OpenAI(api_key=...)` 初始化
 - **模型選擇**（預設值，可用環境變數覆蓋）:
-  - GPT-4o: 文件轉換（DOCUMENT_CONVERTER_MODEL）、知識匯入
-  - GPT-4o-mini: 對話回合（AGENT_MODEL）、OPENAI_MODEL（runtime／query_rewriter）、
-    知識生成（KNOWLEDGE_GEN_MODEL）、文件轉換（DOCUMENT_CONVERTER_MODEL）
+  - 對話回合：`AGENT_MODEL`→`OPENAI_MODEL`→`gpt-4o-mini`（`services/agent/runtime.py`）；採用哪個模型是決策，見 `.claude/DECISIONS.md` DSP-075／DSP-080
+  - 文件轉換（`services/document_converter_service.py`）：`DOCUMENT_CONVERTER_MODEL`→`KNOWLEDGE_GEN_MODEL`→`gpt-4o`；知識匯入（`services/knowledge_import_service.py`）同一鏈
+  - 知識生成（`services/knowledge_generator.py`）：`KNOWLEDGE_GEN_MODEL`，程式預設 `gpt-4o-mini`
   - 查詢改寫: QUERY_REWRITE_MODEL（fallback: OPENAI_MODEL），temperature **0**
   - ⛔ 意圖分類（INTENT_CLASSIFIER_MODEL）已無程式讀者——分類器 2026-09-11 刪除
 - **Temperature**:
@@ -185,7 +185,7 @@ Utils (工具層)
 - **路由**: `{resource}.py`（如 `forms.py`、`vendors.py`）
 - **測試**: `test_{module}_req.py`（`_req` 對應 `@pytest.mark.req(...)` 追溯標記，
   見 `.kiro/steering/testing-code.md`；如 `tests/unit/security/test_api_key_auth_req.py`）
-- **配置**: `{config_name}_config.py`（⚠️ 目前無存活範例；`config/` 只剩 `business_types.py`）
+- **配置**: `{config_name}_config.py`（⚠️ 目前無存活範例；`config/` 只有 `business_types.py` 與 `agent_verifier_rules.json`）
 
 ### 變數與函數
 - **snake_case**: 變數、函數、方法使用小寫加底線
@@ -201,7 +201,7 @@ Utils (工具層)
 
 ### API 路由
 - **RESTful**: 使用標準 REST 動詞 (GET, POST, PUT, PATCH, DELETE)
-- **路徑**: `/api/v1/{resource}` (如 `/api/v1/chat`, `/api/v1/knowledge`)
+- **路徑**: `/api/v1/{resource}` (如 `/api/v1/agent`, `/api/v1/knowledge`；⛔ `/api/v1/chat` 無對應 router)
 - **參數**: query parameters 使用 snake_case
 
 ## 部署
@@ -226,21 +226,19 @@ Utils (工具層)
 - **連接池**: 合理設定 min_size 和 max_size，避免連接耗盡
 
 ### API 成本控制
-- **批次限制**: 使用環境變數控制批次大小 (BACKTEST_BATCH_LIMIT)
 - **快取**: 對常用查詢結果進行快取
 - **限流**: 避免短時間內大量 API 呼叫（使用 sleep、tenacity）
 
 ### 向量搜尋優化
-- **檢索限制**: RAG_RETRIEVAL_LIMIT 預設為 5，降低檢索成本
 - **閾值過濾**: 只返回相似度 > threshold 的結果
 - **語義重排序**: 可選功能，預設關閉，避免額外成本
 
 ---
 
-## 2026-07 現況增補（本節為最新，與上文衝突時以本節與 docs/architecture-overview.md 為準）
+## 2026-07 現況增補（本節為最新，與上文衝突時以本節與 `docs/architecture/SYSTEM_ARCHITECTURE.md` 為準）
 
-- **對話面向體系（🔴 2026-09-12 逐項對碼更正）**：**15 個 face、六域**
-  （帳單 5／合約 4／帳號 2／電表 1／物件 1／修繕 2），在註冊時由
+- **對話面向體系（🔴 2026-09-12 逐項對碼更正）**：**16 個 face、六域**
+  （帳單 5／合約 5／帳號 2／電表 1／物件 1／修繕 2），在註冊時由
   `_jgb2_spec(domain, sorted(builders.keys()))` **現算**——⛔ 不是「資料驅動、一筆設定＝一個面向」，
   ⛔ 也不是 21＋、⛔ 不是五域。加一個 face 要改 `services/jgb/<域>.py` 的 `*_FACE_BUILDERS`（寫程式）。
   機械判定用 `*_FACE_BUILDERS` 決定性算 facts、LLM 只照 facts 組話（這條仍成立）。
@@ -253,4 +251,4 @@ Utils (工具層)
 - **資料體系分工（定案）**：`vendor_configs`＝通用單值參數（{{param}} 模板）；`lookup_tables`＝案場級（Excel 匯入＋錨點）；SOP＝b2c 專用（b2b 不走）；jgb API＝個資（role_id+user_id 雙證）。
 - **計量與額度**：usage_events 每請求計量（token/成本/內部流量標記）；vendor_quotas 月額度（達限攔截/警示寄信）。
 - **品質三層**：unit（make test-unit）／系統回測（迴圈＋多輪模擬＋v3 評審＋金標，按受眾分庫）／不變量稽核（make audit，修一類 bug＝加一條）。驗收鐵則：改引擎行為以系統路徑實跑收案。
-- **單一真相源**：`docs/architecture-overview.md`（含已知債總表）；部署走 `docs/deployment-runbook.md`。
+- **單一真相源**：`docs/architecture/SYSTEM_ARCHITECTURE.md`（全景）；`docs/architecture-overview.md` 現為指路檔；部署走 `docs/deployment-runbook.md`。

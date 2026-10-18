@@ -255,6 +255,8 @@ const { can, canAny, canAll, isAdmin } = usePermission()
 
 ### 1. 使用權限裝飾器
 
+> ⚠️ 未實作（2026-10-18 對碼）：`require_permission` 與下節的 `has_permission` 在 `knowledge-admin/backend/` 皆無定義（`auth_utils.py` 只有 `get_user_permissions`）。以下為設計示意，後端目前無權限強制。
+
 ```python
 from auth_utils import require_permission
 

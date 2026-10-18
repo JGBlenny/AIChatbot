@@ -4,7 +4,7 @@
 
 本系統實作了管理員登入認證功能：
 - ✅ 管理後台需要登入才能訪問
-- ✅ 展示頁（`:vendorCode/chat`）無需登入
+- ✅ 公開頁（現行只有 `/:vendorCode/form-submissions`）無需登入（2026-10-18 對碼：原稿的 `:vendorCode/chat` 展示頁與 `VendorChatDemo` 已不存在，`knowledge-admin/frontend/src/router.js` 無此路由）
 - ✅ JWT token 認證
 - ✅ bcrypt 密碼加密
 - ✅ 前端路由守衛
@@ -361,12 +361,12 @@ echo $VITE_API_BASE_URL
 - 路由 meta 設定錯誤
 
 **解決方法**：
-檢查 `router.js` 中展示頁路由：
+檢查 `router.js` 中公開頁路由（2026-10-18 對碼：現行為 `/:vendorCode/form-submissions`；原稿的 `/:vendorCode/chat`／`VendorChatDemo` 已不存在）：
 ```javascript
 {
-  path: '/:vendorCode/chat',
-  name: 'VendorChatDemo',
-  component: VendorChatDemo,
+  path: '/:vendorCode/form-submissions',
+  name: 'VendorFormSubmissions',
+  component: VendorFormSubmissionsView,
   meta: { requiresAuth: false }  // 確認此行存在
 }
 ```

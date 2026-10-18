@@ -2,6 +2,8 @@
 
 > 5 分鐘快速上手知識優先級系統
 
+> ⚠️ **2026-10-18 對碼——下文「固定 +0.15 相似度加成」與 `PRIORITY_BOOST` 設定不成立**：`PRIORITY_BOOST` 在程式內沒有任何讀者（`rag-orchestrator` 內 `PRIORITY_BOOST` 0 命中），改 `.env` 無效。`knowledge_base.priority` 目前只用於檢索 SQL 的 `ORDER BY kb.priority DESC`（`rag-orchestrator/services/vendor_knowledge_retriever_v2.py`），不會改變相似度分數；實際的分數加成是 `rag-orchestrator/services/base_retriever.py` 的 `_apply_keyword_boost`（關鍵字加成，非 priority）。以下各節的數字與範例為舊設計，僅供歷史參考。
+
 ## 什麼是知識優先級？
 
 知識優先級讓重要知識在 RAG 檢索時獲得 **固定 +0.15 相似度加成**，提升排名優先顯示給用戶。

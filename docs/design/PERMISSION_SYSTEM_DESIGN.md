@@ -1,5 +1,7 @@
 # 帳號權限系統設計文檔
 
+> ⚠️ **2026-10-18 對碼**：本檔是設計案，其中下列段落**未實作**：`require_permission` 依賴函數（「權限驗證依賴函數」節；`knowledge-admin/backend/` 全無此定義，`auth_utils.py` 只有 `get_user_permissions`，端點多半只掛 `Depends(get_current_user)`）。「預設角色權限配置」的 6 個預設角色在線上 DB 的 `roles` 表存在（2026-10-18 實查：super_admin、knowledge_manager、tester、vendor_manager、config_manager、viewer），但建立它們的 seed 不在 repo 的 `.sql`／`.py`（docs 以外只見 `create_admin.py` 的 super_admin 路徑）；各角色權限數與本檔分配不保證一致，以 DB 為準；現行 41 個權限名（`資源:操作`，如 `knowledge:edit`，不是 `update`）見 `docs/guides/features/PERMISSION_SYSTEM_QUICK_GUIDE.md`。現行實作以 `knowledge-admin/backend/routes_roles.py`、`knowledge-admin/backend/auth_utils.py` 為準。
+
 ## 📋 系統概述
 
 基於 **RBAC (Role-Based Access Control)** 設計，實現細粒度的權限控制系統。
@@ -207,6 +209,8 @@ CREATE INDEX idx_admin_roles_role ON admin_roles(role_id);
 ---
 
 ## 👥 預設角色權限配置
+
+> 2026-10-18 對碼：以下 6 個角色 DB 中存在，但 repo 內除 `super_admin` 外無 seed 程式；權限分配以 DB 為準。
 
 ### 1. Super Admin (超級管理員)
 
@@ -727,6 +731,8 @@ async def get_current_user_permissions(user: dict = Depends(get_current_user)):
 ```
 
 ### 2. 權限驗證依賴函數
+
+> 未實作（2026-10-18 對碼）：`require_permission` 在程式中無定義。
 
 **檔案位置**: `knowledge-admin/backend/auth_utils.py`
 

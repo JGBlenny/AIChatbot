@@ -1,5 +1,11 @@
 # 前端開發模式設定指南
 
+> ⚠️ **2026-10-18 對碼——本檔描述的雙模式（`knowledge-admin-web` 開發 Vite 容器／`knowledge-admin-web-prod` 加 `--profile production`）是 2025-10 的舊設計，與現況不符**：
+> - `docker-compose.dev.yml` 只有 `rag-orchestrator`、`knowledge-admin-api` 兩個服務，**沒有前端服務**；兩份 compose（dev／prod）都**沒有 `profiles`**。
+> - `docker-compose.prod.yml` 的 `knowledge-admin-web` 是 `nginx:alpine` 掛載 `./knowledge-admin/frontend/dist`（需先在本機 build 出 dist），設定檔掛載的是 `knowledge-admin/frontend/nginx.conf.template`（不是 `nginx.conf`），對外埠為 `${WEB_PORT:-80}`（本地 8087），不是 8080／8081。
+> - 前端本機開發用 Vite（`knowledge-admin/frontend/vite.config.js`，port 5173），其 proxy 只有 `/rag-api`（→ `rag-orchestrator:8100/api`）與 `/api`（→ `knowledge-admin-api:8000`）兩條。
+> - 下列各節的啟動指令、`docker-compose.yml` 範例與埠號，除上述三點外**不要照做**；僅供歷史參考。
+
 ## 概述
 
 本專案前端已配置雙模式架構：

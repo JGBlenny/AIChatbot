@@ -41,7 +41,7 @@ aws s3 cp s3://jgb2-production-upload/assistant-reports/<年>/<月>/<檔名> ./
 
 ## ③ 查證事實（鐵則：不憑印象、不信 AI 原答案）
 
-- **系統行為**一律對 jgb2 原始碼：`/Users/lenny/jgb/project/jgb_1/jgb2`（preview 分支）。狀態機看 model 常數與 `canXxx()` 方法；功能存在與否看 `routes/*.php` 是否為通用路由（客製後綴如 `-ziyu` 不寫入通用知識）。
+- **系統行為**一律對 jgb2 原始碼：jgb2 checkout 的 preview 分支（本機路徑依環境，不寫死；使用前先確認該 checkout 的分支與工作樹）。狀態機看 model 常數與 `canXxx()` 方法；功能存在與否看 `routes/*.php` 是否為通用路由（客製後綴如 `-ziyu` 不寫入通用知識）。
 - **API 能力**看 `app/Http/Controllers/External/`（AI 只接 `/api/external/v1/` 系列）。
 - 回報人的「正確期望」也要查證——他們對，就是通過標準；他們記錯，記入登錄簿說明。
 

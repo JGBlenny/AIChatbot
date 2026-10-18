@@ -280,8 +280,10 @@ docker exec aichatbot-postgres psql -U aichatbot -d aichatbot_admin -c \
 
 ### 預期結果
 
-- 系統應該觸發 API 調用
-- 回應包含 API 結果或超時訊息（test_timeout 會模擬超時）
+> **已退役（2026-10-18 對碼）**：「對話時依知識 `action_type='api_call'` 觸發 API 調用」由舊鏈的 `api_call_handler.py` 執行，該檔已隨舊 REST 對話鏈刪除（commit `7c905408`，DSP-046）；現行對話線（agentic-MCP）的 `rag-orchestrator/services/agent/` 內沒有讀 `api_config` 的程式（`vendor_knowledge_retriever_v2.py` 只把該欄位隨檢索結果帶出）。以下兩條預期結果不再成立，僅 `action_type`／`api_config` 欄位的儲存與讀出（上文後台 CRUD 測試）仍可驗證。
+
+- ~~系統應該觸發 API 調用~~（已退役）
+- ~~回應包含 API 結果或超時訊息（test_timeout 會模擬超時）~~（已退役）
 
 ---
 

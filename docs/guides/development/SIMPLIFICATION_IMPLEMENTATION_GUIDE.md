@@ -1,5 +1,11 @@
 # 测试情境简化实施指南
 
+> ⚠️ **2026-10-18 對碼**（本檔為早期實施計畫快照）：
+> - 後端已實作：`expected_answer`、`min_quality_score` 在 `knowledge-admin/backend/routes_test_scenarios.py` 的請求模型內；DB 的 `test_scenarios` 表有此兩欄（唯讀實查）。下方「進行中／需要完成」的後端部分已完成。
+> - 遷移檔 `database/migrations-legacy/40-simplify-test-scenarios-for-llm-eval.sql` 已不在 repo；且 DB 的 `test_scenarios` 表**仍同時保有** `expected_category`、`expected_keywords`、`expected_intent_id` 舊欄（下方「删除字段」未發生）。
+> - 前端「需要完成的改动」**未實作**：`knowledge-admin/frontend/src` 內 `expected_answer` 0 命中。
+> - `scripts/knowledge_extraction/backtest_framework.py` 已刪除，下方「修改测试框架」一節不可執行。
+
 ## ✅ 已完成的改动
 
 ### 1. 数据库迁移 ✅

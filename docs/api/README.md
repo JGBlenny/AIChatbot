@@ -57,11 +57,13 @@
 | 文檔 | 用途 | ⚠️ 注意 |
 |------|------|--------|
 | [API_REFERENCE_PHASE1.md](./API_REFERENCE_PHASE1.md) | 聊天／快取管理／業者管理核心 API | 「Phase 1」是功能集合命名，文件版本已到 3.1 |
-| [API_REFERENCE_KNOWLEDGE_ADMIN.md](./API_REFERENCE_KNOWLEDGE_ADMIN.md) | 知識後台九模塊、39 支端點 | ⛔ **不是** `KNOWLEDGE_ADMIN_API.md` 的超集，兩份只重疊 2 支 |
-| [KNOWLEDGE_ADMIN_API.md](./KNOWLEDGE_ADMIN_API.md) | 知識管理 6 支端點 | 對碼結果（2026-09-10，見檔頭）：`GET /api/vendors` 已併入上一份（`/api/v1/vendors`）；`DELETE`／`PUT /api/knowledge/{id}`、`POST /api/login` 全 repo 查無對應路由，端點已不存在 |
+| [API_REFERENCE_KNOWLEDGE_ADMIN.md](./API_REFERENCE_KNOWLEDGE_ADMIN.md) | 知識後台九模塊（端點數隨程式增減，不寫死，查證指令見表下註） | ⛔ **不是** `KNOWLEDGE_ADMIN_API.md` 的超集，兩份重疊至少 4 支（`GET`／`POST` `/api/knowledge`、`PUT`／`DELETE` `/api/knowledge/{id}`） |
+| [KNOWLEDGE_ADMIN_API.md](./KNOWLEDGE_ADMIN_API.md) | 知識管理精簡版（約 6 支端點） | 對碼結果（2026-10-18，見檔頭）：`PUT`／`DELETE /api/knowledge/{id}` 存在於 `knowledge-admin/backend/app.py`；登入為 `POST /api/auth/login`（`routes_auth.py`），非 `POST /api/login` |
 | [loops_api.md](./loops_api.md) | 知識完善迴圈生命週期 | 產線：`rag-orchestrator/routers/loops.py` |
 | [loop_knowledge_api.md](./loop_knowledge_api.md) | 迴圈生成知識的審核端點 | 產線：`rag-orchestrator/routers/loop_knowledge.py` |
 | [conversational-api.md](./conversational-api.md) | 對話式回答的對外串接指南 | 已列於 `.claude/MAP.md`〈對話邏輯與路由執行〉 |
+
+> 知識後台端點數查證（2026-10-18 為 66 個裝飾器，含 `routes_*.py`）：`grep -rhoE "@(app|router)[.](get|post|put|delete|patch)[(]" knowledge-admin/backend --include='*.py'`；取其行數即總數。
 
 ---
 
@@ -70,7 +72,7 @@
 ## 🔗 相關資源
 
 - **產線程式**：`services/agent/tools/registry.py`（工具註冊表，in-process 呼叫）、
-  `services/agent/tools/jgb2.py`（六域 15 face）、`services/agent/tools/kb.py`（知識）、
+  `services/agent/tools/jgb2.py`（六域 16 face）、`services/agent/tools/kb.py`（知識）、
   `services/jgb/transport.py`（jgb2 轉接：替身 15 端點／真 `external/v1`）
 - **資料表**：`api_endpoints`（端點配置）、`usage_events`（每呼叫一列）、`api_keys`
 - **測試**：`rag-orchestrator/tests/unit/agent/`、`tests/integration/agent/test_mcp_facade_req.py`

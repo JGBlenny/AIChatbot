@@ -52,7 +52,7 @@
     ↓
 ┌─────────────────────────────────────────┐
 │  Layer 1: 問題緩存 (Question Cache)     │  TTL: 1 小時
-│  Key: rag:question:{vendor_id}:{hash}   │  節省: 90% 成本
+│  Key: rag:question:{vendor_id}:{target_user}:{config_version}:{hash} │  節省: 90% 成本
 │  存儲: 完整的 RAG 回應                    │  用途: 完全相同問題
 └─────────────────────────────────────────┘
     ↓ 未命中
@@ -103,12 +103,12 @@ graph TD
 
 #### 鍵格式
 ```
-rag:question:{vendor_id}:{user_role}:{question_hash}
+rag:question:{vendor_id}:{target_user}:{config_version}:{question_hash}
 ```
 
 **範例**:
 ```
-rag:question:1:customer:a3f2b4c5d6e7f8a9
+rag:question:1:tenant:default:a3f2b4c5d6e7f8a9
 ```
 
 #### 存儲內容
@@ -152,7 +152,7 @@ cache.cache_answer(
         "confidence": 0.95,
         "sources": [...]
     },
-    user_role="customer"
+    target_user="tenant"
 )
 ```
 
@@ -162,7 +162,7 @@ cache.cache_answer(
 cached_answer = cache.get_cached_answer(
     vendor_id=1,
     question="每月繳費日期是什麼時候？",
-    user_role="customer"
+    target_user="tenant"
 )
 
 if cached_answer:
@@ -341,8 +341,8 @@ rag:relation:vendor:{vendor_id}       → Set of cache keys
 **範例**:
 ```
 rag:relation:knowledge:123 = {
-  "rag:question:1:customer:a3f2b4c5",
-  "rag:question:1:staff:b4c5d6e7",
+  "rag:question:1:tenant:default:a3f2b4c5",
+  "rag:question:1:property_manager:default:b4c5d6e7",
   "rag:result:1:5:c5d6e7f8"
 }
 ```
@@ -372,10 +372,10 @@ rag:relation:knowledge:123 = {
    }
    ↓
 3. 緩存服務查找關聯
-   rag:relation:knowledge:123 = {"rag:question:1:customer:a3f2", ...}
+   rag:relation:knowledge:123 = {"rag:question:1:tenant:default:a3f2", ...}
    ↓
 4. 刪除所有關聯緩存
-   DELETE rag:question:1:customer:a3f2
+   DELETE rag:question:1:tenant:default:a3f2
    DELETE rag:result:1:5:c5d6e7f8
    ↓
 5. 下次用戶提問重新生成緩存
@@ -641,22 +641,24 @@ def update_knowledge(knowledge_id, new_answer):
 
 **確保緩存隔離**:
 ```python
-# ✅ 正確：包含 user_role
+# ✅ 正確：包含 target_user（參數名為 target_user，不是 user_role）
 cache.get_cached_answer(
     vendor_id=1,
     question="租金何時繳？",
-    user_role="customer"  # B2C 場景
+    target_user="tenant"  # 目標用戶角色
 )
 
 # ❌ 錯誤：未區分角色（可能返回錯誤的業務範圍答案）
 cache.get_cached_answer(
     vendor_id=1,
     question="租金何時繳？"
-    # 缺少 user_role，使用預設 "customer"
+    # 缺少 target_user，使用預設 "tenant"
 )
 ```
 
-### 5. Debug 模式不使用緩存 🆕 2026-03-14
+### 5. Debug 模式不使用緩存 🆕 2026-03-14（已隨舊鏈刪除，2026-10-18 對碼）
+
+> ⚠️ **2026-10-18 對碼**：「`include_debug_info=true` 自動跳過緩存」已隨舊 REST 對話鏈刪除——`rag-orchestrator` 內 `include_debug_info`、`DEBUG MODE` 皆 0 命中，現行程式沒有此行為。以下為歷史設計說明。
 
 **行為說明**：
 當請求中設置 `include_debug_info=true` 時，系統會**自動跳過緩存**，確保返回最新的調試信息。
@@ -715,7 +717,7 @@ response = requests.get("http://localhost:8100/api/v1/cache/stats")
 - ✅ 開發測試階段（避免緩存干擾）
 - ✅ 大規模知識庫遷移（避免大量失效操作）
 - ✅ 調試問題（確保每次都是最新數據）
-- ⚠️ **注意**：使用 `include_debug_info=true` 會自動跳過緩存，無需手動禁用
+- ⚠️ **注意**：~~使用 `include_debug_info=true` 會自動跳過緩存~~（已隨舊鏈刪除，2026-10-18 對碼）
 
 ```bash
 # 測試環境
@@ -871,9 +873,9 @@ class CacheService:
     def __init__(self, key_prefix="rag"):
         self.key_prefix = key_prefix
 
-    def _make_question_key(self, vendor_id, question, user_role):
+    def _make_question_key(self, vendor_id, question, target_user="tenant", config_version="default"):
         question_hash = hashlib.md5(question.encode()).hexdigest()[:16]
-        return f"{self.key_prefix}:question:{vendor_id}:{user_role}:{question_hash}"
+        return f"{self.key_prefix}:question:{vendor_id}:{target_user}:{config_version}:{question_hash}"
 
 # 開發環境
 cache_dev = CacheService(key_prefix="rag:dev")
@@ -894,7 +896,7 @@ async def warm_up_cache(vendor_id, common_questions):
         result = await rag_orchestrator.query(
             vendor_id=vendor_id,
             question=question,
-            user_role="customer"
+            target_user="tenant"
         )
         print(f"✅ 預熱: {question}")
 ```

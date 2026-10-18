@@ -1,5 +1,7 @@
 # LINE 聊天記錄知識提取與回測完整指南
 
+> ⚠️ **2026-10-18 對碼——本檔為早期流程快照，下列部分已不可執行**：`scripts/knowledge_extraction/` 目錄（含 `extract_knowledge_and_tests.py`、`backtest_framework.py`）與 `scripts/import_knowledge_batch.py` 已不在 repo；文中 `http://localhost:8087` 在 repo 的 compose 內沒有埠映射（本地知識後台埠為 `.env` 的 `WEB_PORT`，慣用 8087）。仍存在的入口：知識匯入頁 `knowledge-admin/frontend/src/views/KnowledgeImportView.vue`、後端 `rag-orchestrator/routers/knowledge_import.py`。文中寫死的 `/Users/lenny/...` 為作者機器路徑，請改用自己的 repo 根目錄。
+
 ## 📋 概述
 
 本指南說明如何從 LINE 聊天記錄中提取知識庫、累積測試情境並進行回測驗證。
@@ -93,7 +95,7 @@ LINE 聊天記錄 (.txt)
 
 2. **訪問知識庫匯入頁面**
    ```
-   http://localhost:8200/knowledge-import
+   http://localhost:8087/knowledge-import
    ```
 
    或者點擊頂部導航欄的「知識匯入」連結
@@ -156,7 +158,7 @@ python scripts/knowledge_extraction/extract_knowledge_and_tests.py
 
 **選項 A：使用前端管理後台**
 
-1. 訪問知識庫管理頁面：`http://localhost:8200/knowledge`
+1. 訪問知識庫管理頁面：`http://localhost:8087/knowledge`
 2. 點擊「批次匯入」
 3. 上傳 `knowledge_base_extracted.xlsx`
 4. 確認導入

@@ -8,7 +8,7 @@
 >
 > **為什麼不只是加警語就好**：前一版檔頭已經寫了「本檔全篇已過時、⛔ 勿以本檔為
 > 現況入口」，但 2026-09-12 的對照實驗證明**沒有用**——一位只讀文件的工程師仍然
-> 從本檔讀走「21＋售前面向」，因而**完全答不出現行有幾個 face**（程式清楚是 15 個）。
+> 從本檔讀走「21＋售前面向」，因而**完全答不出現行有幾個 face**（程式清楚是 16 個）。
 > 讀者不會為了一句警語放棄一張看起來很完整的表。⇒ 依 D-001，**以 runtime 為準逐節改寫**。
 
 ---
@@ -59,7 +59,7 @@
 |---|---|
 | 一、系統做什麼（三類使用者、一個端點 `/api/v1/message`） | 端點已刪；且 `tenant` 在新線不存在，該表會讓人低估接回租客的成本 |
 | 二、請求的一生（①–⑧ 路由順位） | 整條鏈已刪（意圖分類、SOP 檢索、表單觸發、錨點防呆、相關性把關全數不存在） |
-| 三、對話面向 21＋售前（含領域對照表） | 🔴 **本版移除的主因**。現行是 15 個 face 的封閉枚舉，由六張 `*_FACE_BUILDERS` 現算，名單見 `SYSTEM_ARCHITECTURE.md` §3。舊表的「狀態判斷」等 face **已不在任何註冊表**，且有測試釘死「永不註冊」 |
+| 三、對話面向 21＋售前（含領域對照表） | 🔴 **本版移除的主因**。現行是 16 個 face 的封閉枚舉（bills 5、contracts 5、accounts 2、repairs 2、iot 1、estates 1；查證：`grep -n "FACE_BUILDERS: dict" rag-orchestrator/services/jgb/contracts.py rag-orchestrator/services/jgb/bills.py rag-orchestrator/services/jgb/accounts.py rag-orchestrator/services/jgb/repairs.py rag-orchestrator/services/jgb/iot.py rag-orchestrator/services/jgb/estates.py` 逐表數鍵），由六張 `*_FACE_BUILDERS` 現算，名單見 `SYSTEM_ARCHITECTURE.md` §3。舊表的「狀態判斷」等 face **已不在任何註冊表**，且有測試釘死「永不註冊」 |
 | 六、品質三層（unit 709／回測／稽核） | unit 現為 **3,629**；系統回測的執行器已刪（後台頁面與資料表仍在，零執行器） |
 | 七、已知債總表 | 多數項目與舊鏈綁定；仍成立的部分（業者資料就緒、vendor 4 缺 `service_hotline`）請以 `.claude/DECISIONS.md` 與各 spec 為準 |
 

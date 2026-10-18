@@ -3,6 +3,8 @@
 > **版本**: 1.0
 > **建立時間**: 2026-03-27
 > **對應任務**: Task 9.2
+>
+> **2026-10-18 對碼（本檔為 2026-03-27 的需求快照，非現況）**：已實作的批量審核見 `knowledge-admin/frontend/src/components/review/LoopKnowledgeReviewTab.vue`（勾選後批量批准／拒絕、`executeBatchReview`）與後端 `rag-orchestrator/routers/loop_knowledge.py` 的 `batch-review`。下列需求**未實作**（`knowledge-admin/frontend/src` 內 `duplication_warning`、`similar_knowledge`、`重複警告` 皆 0 命中）：「重複警告」篩選與統計（`duplication_warning`、`similar_knowledge`）、§1.2「全選所有頁」按鈕。
 
 ## 概述
 
@@ -66,7 +68,7 @@ const someSelected = computed(() =>
 </script>
 ```
 
-#### 1.2 所有頁全選（進階功能）
+#### 1.2 所有頁全選（進階功能）【未實作（2026-10-18 對碼）】
 
 **位置**: 批量操作工具列
 
@@ -96,7 +98,7 @@ const someSelected = computed(() =>
 |---------|------|------|------|
 | 迴圈 | 下拉選單 | 所有迴圈 / 特定迴圈 | 篩選特定迴圈的知識 |
 | 知識類型 | 下拉選單 | 所有類型 / SOP / 通用 | 篩選 knowledge_type |
-| 重複警告 | 下拉選單 | 全部 / 有警告 / 無警告 | 篩選 duplication_warning |
+| 重複警告 | 下拉選單 | 全部 / 有警告 / 無警告 | 篩選 duplication_warning（未實作，2026-10-18 對碼） |
 | 狀態 | 下拉選單 | pending / approved / rejected | 篩選 status |
 
 **篩選邏輯**:

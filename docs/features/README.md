@@ -1,7 +1,7 @@
 # 🎯 Features - 功能文檔索引
 
 **最後更新**: 2026-09-04（依實況重建）
-**文件總數**: 19 份（本目錄 12 ＋ `sop/` 子樹 7）
+**文件總數**: 2026-10-18 對碼：本目錄 7 份（不含本 README）＋ `sop/` 子樹 5 份（含 `sop/README.md`）；表中指向 `../archive/2026-09/` 的條目為已歸檔文件，不在本目錄（對帳：`ls docs/features`、`find docs/features/sop -name '*.md'`）
 
 > 🔴 **2026-09-04 重建說明**：此前本索引自稱「24 個功能文件」，實際提到 30 個檔名、
 > 其中 **19 個已不存在**（存活率 36%），同時漏列 8 份確實存在的檔案。
@@ -19,7 +19,7 @@
 
 | 文件 | 說明 |
 |------|------|
-| [DUAL_EMBEDDING_RETRIEVAL.md](./DUAL_EMBEDDING_RETRIEVAL.md) | 雙 Embedding 檢索：`GREATEST(primary, fallback)` |
+| [DUAL_EMBEDDING_RETRIEVAL.md](../archive/2026-09/DUAL_EMBEDDING_RETRIEVAL.md) | 雙 Embedding 檢索：`GREATEST(primary, fallback)` |
 | [RERANKER_FEATURE.md](./RERANKER_FEATURE.md) | Reranker 重排序機制 |
 | [KNOWLEDGE_SCOPE_SIMPLIFICATION.md](./KNOWLEDGE_SCOPE_SIMPLIFICATION.md) | 知識範圍從 `scope` 欄位簡化為 `vendor_id` 判定 |
 | [DOCUMENT_CONVERTER.md](./DOCUMENT_CONVERTER.md) | 文件轉換（Word/PDF → Q&A），含 API 端點與成本估算 |
@@ -29,12 +29,8 @@
 | 文件 | 說明 |
 |------|------|
 | [FORM_MANAGEMENT_SYSTEM.md](./FORM_MANAGEMENT_SYSTEM.md) | 動態表單收集系統：Schema、API、前端整合 |
-| [KNOWLEDGE_FORM_TRIGGER_IMPLEMENTATION.md](./KNOWLEDGE_FORM_TRIGGER_IMPLEMENTATION.md) | 知識觸發表單的實作 |
-| [knowledge-form-auto-option.md](./knowledge-form-auto-option.md) | 表單自動選擇功能的改進**設計方案**（2026-02-05） |
-| [knowledge-form-auto-quick-ref.md](./knowledge-form-auto-quick-ref.md) | 表單 Auto 選項**速查**（2026-07-22） |
-
-> ⚠️ 上兩份是同主題的設計版與速查版。**兩份都沒有任何一句宣告取代關係**，
-> 誰是正本待裁 —— ⛔ 不要自行認定其中一份已作廢。
+| [KNOWLEDGE_FORM_TRIGGER_IMPLEMENTATION.md](../archive/2026-09/KNOWLEDGE_FORM_TRIGGER_IMPLEMENTATION.md) | 知識觸發表單的實作 |
+| [knowledge-form-auto-option.md](./knowledge-form-auto-option.md) | 表單自動選擇功能的改進設計案（2026-02-05；歷史設計案，`trigger_form_condition` 欄位已刪，配套速查檔已於 2026-10-18 刪除） |
 
 ### 🔐 系統管理
 
@@ -47,7 +43,7 @@
 
 | 文件 | 說明 |
 |------|------|
-| [conversational-presales.md](./conversational-presales.md) | 對話式回答模式：單次直答 → 多輪自適應收斂 |
+| [conversational-presales.md](../archive/2026-09/conversational-presales.md) | 對話式回答模式：單次直答 → 多輪自適應收斂 |
 
 ---
 
@@ -57,8 +53,8 @@
 |------|------|
 | [sop/README.md](./sop/README.md) | SOP 系統文檔索引 |
 | [sop/SOP_TRIGGER_MODE_UPDATE_INDEX.md](./sop/SOP_TRIGGER_MODE_UPDATE_INDEX.md) | SOP 觸發模式 UI 更新（2026-02 歷史；⛔ 觸發模式對話路徑已不讀）（2026-02-03）的文檔導引 |
-| [sop/implementation/VENDOR_SOP_FLOW_CONFIGURATION.md](./sop/implementation/VENDOR_SOP_FLOW_CONFIGURATION.md) | Vendor SOP 流程配置：4 種觸發模式 × 4 種後續動作 |
-| [sop/implementation/SOP_NEXT_ACTION_IMPLEMENTATION.md](./sop/implementation/SOP_NEXT_ACTION_IMPLEMENTATION.md) | SOP 後續動作的實作說明與進度 |
+| [sop/implementation/VENDOR_SOP_FLOW_CONFIGURATION.md](../archive/2026-09/VENDOR_SOP_FLOW_CONFIGURATION.md) | Vendor SOP 流程配置：4 種觸發模式 × 4 種後續動作 |
+| [sop/implementation/SOP_NEXT_ACTION_IMPLEMENTATION.md](../archive/2026-09/SOP_NEXT_ACTION_IMPLEMENTATION.md) | SOP 後續動作的實作說明與進度 |
 | [sop/implementation/SOP_FLOW_STRICT_VALIDATION_2026-01-26.md](./sop/implementation/SOP_FLOW_STRICT_VALIDATION_2026-01-26.md) | 觸發模式與後續動作的有效組合嚴格限制 |
 | [sop/optimization/SOP_KEYWORDS_COMPARISON.md](./sop/optimization/SOP_KEYWORDS_COMPARISON.md) | `keywords` 與 `trigger_keywords` 的欄位差異 |
 | [sop/testing/SOP_TRIGGER_MODE_TEST_EXECUTION_GUIDE.md](./sop/testing/SOP_TRIGGER_MODE_TEST_EXECUTION_GUIDE.md) | ⚠️ **2026-02-03 的測試執行紀錄**（含測試資料、發現問題、簽核）——已判為快照，⛔ 不是現行指南 |
@@ -71,8 +67,8 @@
 ## 🌟 從哪份開始讀
 
 **管理員**：`FORM_MANAGEMENT_SYSTEM.md` → `DOCUMENT_CONVERTER.md` → `PERMISSION_SYSTEM_README.md`
-**開發者**：`AUTH_SYSTEM_README.md` → `DUAL_EMBEDDING_RETRIEVAL.md` → `RERANKER_FEATURE.md`
-**知識維護者**：`sop/implementation/VENDOR_SOP_FLOW_CONFIGURATION.md` → `KNOWLEDGE_SCOPE_SIMPLIFICATION.md`
+**開發者**：`AUTH_SYSTEM_README.md` → `DUAL_EMBEDDING_RETRIEVAL.md`（已歸檔於 docs/archive/2026-09/） → `RERANKER_FEATURE.md`
+**知識維護者**：`VENDOR_SOP_FLOW_CONFIGURATION.md`（已歸檔於 docs/archive/2026-09/） → `KNOWLEDGE_SCOPE_SIMPLIFICATION.md`
 
 ---
 

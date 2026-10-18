@@ -69,8 +69,10 @@ git diff HEAD~1 knowledge-admin/backend/Dockerfile
 | 前端文件（.vue, .js） | ✅ 是 | ❌ 否 |
 | Dockerfile | ✅ 是 | ❌ 否 |
 | requirements.txt | ✅ 是 | ❌ 否 |
-| 後端 Python 文件（開發環境掛載） | ❌ 否 | ✅ 是 |
+| 後端 Python 文件 | ✅ 是（`up -d --build`） | ❌ 否 |
 | 配置文件（docker-compose.yml） | ❌ 否 | ✅ 是 |
+
+> 2026-10-18 對碼：`docker-compose.prod.yml` 的 `rag-orchestrator` **沒有原始碼掛載**，`.py` 改動必須 `up -d --build` 才進容器；`knowledge-admin-api` 只掛載 `app.py`、`create_admin.py`、`scripts`，所以 `routes_*.py`、`auth_utils.py` 等其他後端檔改動也要 `up -d --build`（只改 `app.py` 時重啟即可生效）。
 
 **選擇執行：**
 
@@ -82,7 +84,7 @@ docker-compose -f docker-compose.prod.yml build --no-cache
 docker-compose -f docker-compose.prod.yml up -d
 ```
 
-#### 方案 B：重啟服務（只有代碼變更，開發環境）
+#### 方案 B：重啟服務（只有掛載檔變更：`app.py`、`scripts/`、前端 `dist`、nginx 設定；後端其他 `.py` 與 `rag-orchestrator` 不適用，須走方案 A 或 `up -d --build <服務>`）
 ```bash
 docker-compose -f docker-compose.prod.yml restart knowledge-admin-api
 docker-compose -f docker-compose.prod.yml restart knowledge-admin-web

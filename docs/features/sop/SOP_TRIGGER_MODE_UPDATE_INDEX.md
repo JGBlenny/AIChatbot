@@ -26,7 +26,7 @@
 
 ### 0. 知識庫表單觸發模式實現 ⭐⭐⭐ NEW
 
-**檔案**: `docs/features/KNOWLEDGE_FORM_TRIGGER_IMPLEMENTATION.md`
+**檔案**: `docs/archive/2026-09/KNOWLEDGE_FORM_TRIGGER_IMPLEMENTATION.md`
 
 **內容**:
 - 知識庫支援 manual/immediate/auto 三種觸發模式
@@ -39,7 +39,7 @@
 
 **快速訪問**:
 ```bash
-cat docs/features/KNOWLEDGE_FORM_TRIGGER_IMPLEMENTATION.md
+cat docs/archive/2026-09/KNOWLEDGE_FORM_TRIGGER_IMPLEMENTATION.md
 ```
 
 ---
@@ -209,7 +209,7 @@ docker-compose exec -T postgres psql -U aichatbot -d aichatbot_admin \
 
 | 需求 | 推薦文檔 |
 |-----|---------|
-| **知識庫表單觸發實現** | `docs/features/KNOWLEDGE_FORM_TRIGGER_IMPLEMENTATION.md` ⭐ NEW |
+| **知識庫表單觸發實現** | `docs/archive/2026-09/KNOWLEDGE_FORM_TRIGGER_IMPLEMENTATION.md` ⭐ NEW |
 | **本次更新的詳細內容** | `docs/archive/2026-06/sop/SOP_TRIGGER_MODE_UI_UPDATE_2026-02-03.md` |
 | **如何執行測試** | `docs/features/sop/testing/SOP_TRIGGER_MODE_TEST_EXECUTION_GUIDE.md` |
 | **變更的程式碼** | 查看上方「修改的程式碼檔案」表格 |

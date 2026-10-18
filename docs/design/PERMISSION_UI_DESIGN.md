@@ -1,5 +1,7 @@
 # 權限系統 UI 設計文檔
 
+> ⚠️ **2026-10-18 對碼**：本檔是設計案。`PermissionManagementView.vue`、`RoleBadge.vue`、`PermissionGuard.vue` 三個元件**未實作**（`knowledge-admin/frontend/src/` 無此檔）。現有對應實作：`views/RoleManagementView.vue`、`views/AdminManagementView.vue`、`components/RoleFormModal.vue`、`components/PermissionSelector.vue`、`directives/permission.js`、`composables/usePermission.js`。
+
 ## 📐 介面設計概覽
 
 本文檔詳細說明權限管理系統的前端介面設計，包括頁面布局、組件設計和交互流程。

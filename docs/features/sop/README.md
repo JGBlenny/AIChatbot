@@ -1,13 +1,13 @@
 # 📚 SOP 系統文檔索引
 
-**最後對碼**: 2026-09-12
+**最後對碼**: 2026-10-18（SOP 路由數與正對照檔數已更新；其餘 2026-09-12）
 
 🔴 **SOP 的「影響對話」那一半已經沒有了。**
 
 | 這裡的文檔教的 | 現況 |
 |---|---|
-| 建立／編輯／複製 SOP 範本與項目、批次匯入、embedding 重算 | ✅ 仍可用（`routers/platform_sop.py` 15 條路由、`routers/vendors.py` 10 支 `/sop/*`、`sop_embedding_generator.py`） |
-| 觸發模式（none／manual／immediate／auto）、後續動作（form_fill／api_call／form_then_api）、關鍵詞觸發、SOP↔知識仲裁 | ⛔ **對話路徑零讀取**。`sop_orchestrator.py`／`sop_trigger_handler.py`／`form_manager.py` 已於 2026-09-11 刪除（DSP-046）。查證：`grep -rli "sop" rag-orchestrator/services/agent/` 為 0（正對照：同目錄 `kb` 13 檔、`verifier` 20 檔） |
+| 建立／編輯／複製 SOP 範本與項目、批次匯入、embedding 重算 | ✅ 仍可用（`routers/platform_sop.py` 15 條路由、`routers/vendors.py` 13 支 `/sop/*`（2026-10-18 對碼，原寫 10）、`sop_embedding_generator.py`） |
+| 觸發模式（none／manual／immediate／auto）、後續動作（form_fill／api_call／form_then_api）、關鍵詞觸發、SOP↔知識仲裁 | ⛔ **對話路徑零讀取**。`sop_orchestrator.py`／`sop_trigger_handler.py`／`form_manager.py` 已於 2026-09-11 刪除（DSP-046）。查證：`grep -rli "sop" rag-orchestrator/services/agent/` 為 0（正對照：同目錄 `kb` 15 檔、`verifier` 20 檔，2026-10-18 重跑） |
 
 **結論：改 SOP 不會改變機器人的任何回答。** 以下各份文檔請套用上表閱讀——
 欄位存得進 DB，但沒有任何程式會在對話時查它們。
@@ -62,11 +62,11 @@ sop/
 
 | 文檔 | 說明 | 日期 |
 |------|------|------|
-| [SOP_NEXT_ACTION_IMPLEMENTATION.md](./implementation/SOP_NEXT_ACTION_IMPLEMENTATION.md) | SOP Next Action 實作 | - |
+| [SOP_NEXT_ACTION_IMPLEMENTATION.md](../../archive/2026-09/SOP_NEXT_ACTION_IMPLEMENTATION.md) | SOP Next Action 實作 | - |
 | [SOP_NEXT_ACTION_IMPLEMENTATION_SUMMARY.md](../../archive/2026-06/sop/SOP_NEXT_ACTION_IMPLEMENTATION_SUMMARY.md) | SOP Next Action 實作總結 | - |
 | [SOP_TRIGGER_MODE_UI_UPDATE_2026-02-03.md](../../archive/2026-06/sop/SOP_TRIGGER_MODE_UI_UPDATE_2026-02-03.md) | SOP 觸發模式 UI 更新 | 2026-02-03 |
 | [SOP_FLOW_STRICT_VALIDATION_2026-01-26.md](./implementation/SOP_FLOW_STRICT_VALIDATION_2026-01-26.md) | SOP Flow 嚴格驗證 | 2026-01-26 |
-| [VENDOR_SOP_FLOW_CONFIGURATION.md](./implementation/VENDOR_SOP_FLOW_CONFIGURATION.md) | 廠商 SOP 流程配置 | - |
+| [VENDOR_SOP_FLOW_CONFIGURATION.md](../../archive/2026-09/VENDOR_SOP_FLOW_CONFIGURATION.md) | 廠商 SOP 流程配置 | - |
 | VENDOR_SOP_RETRIEVAL_IMPROVEMENT.md | 廠商 SOP 檢索改進 | - |
 
 ---
@@ -120,7 +120,7 @@ sop/
 2. 參考 [SOP_FLOW_STRICT_VALIDATION](./implementation/SOP_FLOW_STRICT_VALIDATION_2026-01-26.md)
 
 ### 任務 6: 我要配置廠商專屬 SOP
-1. 閱讀 [VENDOR_SOP_FLOW_CONFIGURATION](./implementation/VENDOR_SOP_FLOW_CONFIGURATION.md)
+1. 閱讀 [VENDOR_SOP_FLOW_CONFIGURATION](../../archive/2026-09/VENDOR_SOP_FLOW_CONFIGURATION.md)
 2. 參考 VENDOR_SOP_RETRIEVAL_IMPROVEMENT
 
 ---

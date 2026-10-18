@@ -87,7 +87,7 @@ http://localhost:8087/role-management
 | 測試人員 | `tester` | 7 | 測試場景、回測功能 |
 | 業者管理員 | `vendor_manager` | 7 | 業者管理、聊天測試 |
 | 配置管理員 | `config_manager` | 8 | 系統配置、業務類型 |
-| 唯讀用戶 | `viewer` | 3 | 僅查看權限 |
+| 唯讀用戶 | `viewer` | 6 | 僅查看權限（2026-10-18 DB 實查為 6） |
 
 ---
 
@@ -95,17 +95,19 @@ http://localhost:8087/role-management
 
 系統包含 **9 個資源類別**，共 **41 個權限**：
 
-| 資源 | 圖標 | 權限數 | 包含操作 |
+| 資源 | 圖標 | 權限數 | 包含操作（權限名為 `資源:操作`） |
 |------|------|--------|----------|
-| 知識庫管理 | 📚 | 9 | view, create, update, delete, import, export, reclassify, review, approve |
-| 意圖管理 | 🎯 | 5 | view, create, update, delete, review |
-| 測試與回測 | 🧪 | 5 | view, create, execute, review, delete |
-| 業者管理 | 🏢 | 4 | view, create, update, delete |
-| 平台 SOP | 📄 | 4 | view, create, update, delete |
-| 配置管理 | ⚙️ | 3 | view, update, cache_clear |
+| 知識庫管理 | 📚 | 9 | view, create, edit, delete, import, export, reclassify, review, ai_review |
+| 意圖管理 | 🎯 | 5 | view, create, edit, delete, suggest |
+| 測試與回測 | 🧪 | 5 | backtest, chat, scenarios, scenarios_create, scenarios_edit |
+| 業者管理 | 🏢 | 5 | view, create, edit, delete, config |
+| 平台 SOP | 📄 | 4 | view, create, edit, delete |
+| 配置管理 | ⚙️ | 3 | business_types, cache, target_users |
 | 文檔處理 | 📝 | 1 | convert |
-| 管理員管理 | 👤 | 5 | view, create, update, delete, manage_password |
-| 角色管理 | 🔐 | 5 | view, create, update, delete, assign |
+| 管理員管理 | 👤 | 5 | view, create, edit, delete, reset_password |
+| 角色管理 | 🔐 | 4 | view, create, edit, delete |
+
+> 2026-10-18 對碼：上表取自線上 DB 的 `permissions` 表（`select name from permissions`，共 41 列；repo 的 `.sql` migrations 內沒有這份 seed，權威來源是 DB）。先前版本的 `update`、`approve`、`manage_password`、`assign`、`cache_clear`、`execute` 等權限名與 `intent:review` 在 DB 不存在。權限目前**只在前端**（`directives/permission.js`、`composables/usePermission.js`、路由 `meta.permissions`）用於顯示與導航；後端（`knowledge-admin/backend/`）端點未依權限擋，只驗登入。
 
 ---
 
@@ -157,10 +159,10 @@ http://localhost:8087/role-management
 建議權限:
 ✅ knowledge:view - 查看知識庫
 ✅ knowledge:create - 新增知識
-✅ knowledge:update - 更新知識
+✅ knowledge:edit - 編輯知識
 ✅ intent:view - 查看意圖
 ❌ knowledge:delete - 不給刪除權限
-❌ config:* - 不給配置權限
+❌ config:* - 不給配置權限（config:business_types／cache／target_users）
 ```
 
 #### 內容審核員角色
@@ -172,8 +174,8 @@ http://localhost:8087/role-management
 建議權限:
 ✅ knowledge:view - 查看知識庫
 ✅ knowledge:review - 審核知識
-✅ knowledge:approve - 批准知識
-✅ intent:review - 審核意圖
+✅ knowledge:ai_review - AI 審核知識
+✅ intent:suggest - 意圖建議
 ❌ knowledge:delete - 不給刪除權限
 ```
 

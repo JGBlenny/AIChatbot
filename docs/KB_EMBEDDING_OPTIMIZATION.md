@@ -1,5 +1,7 @@
 # 知識庫 Embedding 優化方案
 
+> ⚠️ **2026-10-18 對碼——本檔為早期實驗快照，不是現行規格**：現行「檢索用哪段文字算 embedding」的單一實作是 `rag-orchestrator/services/retrieval_representation.py` 的 `scoring_surface()`（`knowledge-admin/backend/app.py` 內另有鏡射副本，稽核不變量 12 檢查項 E 綁住兩邊一致）。本檔下列各節的腳本與「自動使用新策略」說法已不成立：`scripts/knowledge_extraction/import_excel_to_kb.py`、`scripts/knowledge_extraction/import_extracted_to_db.py` 兩支腳本已不在 repo（`scripts/knowledge_extraction/` 目錄已無）；`knowledge-admin/backend/app.py` 的 legacy 路徑仍附加關鍵字（`f"{base_text}. 關鍵字: {keywords_str}"`）且無 `question` 時退回 `answer[:200]`，與本檔「只用 question_summary」不同。
+
 ## 📊 背景
 
 根據實際測試（30 個查詢、1269 筆知識庫數據），發現在 embedding 中加入 answer 會**降低檢索匹配度**。
@@ -90,9 +92,9 @@ text = f"{knowledge['question_summary']} {knowledge['answer'][:200]}"
 text = knowledge['question_summary']
 ```
 
-### 3. Excel 匯入腳本
+### 3. Excel 匯入腳本（已刪除，2026-10-18 對碼：腳本已不在 repo）
 
-**檔案**: `scripts/knowledge_extraction/import_excel_to_kb.py`
+**檔案**: `scripts/knowledge_extraction/import_excel_to_kb.py`（已刪除）
 
 ```python
 # 修改前（還包含 keywords）
@@ -105,9 +107,9 @@ if keywords_str:
 text_for_embedding = question_summary
 ```
 
-### 4. 提取資料匯入腳本
+### 4. 提取資料匯入腳本（已刪除，2026-10-18 對碼：腳本已不在 repo）
 
-**檔案**: `scripts/knowledge_extraction/import_extracted_to_db.py`
+**檔案**: `scripts/knowledge_extraction/import_extracted_to_db.py`（已刪除）
 
 ```python
 # 修改前（還包含 title 和 keywords）
@@ -183,11 +185,11 @@ tail -n 100 /tmp/regenerate_embeddings.log
 
 ## 📝 未來新增/編輯知識庫
 
-所有知識庫的新增和編輯操作會自動使用新策略：
+所有知識庫的新增和編輯操作會自動使用新策略（⚠️ 2026-10-18 對碼：此句不成立，見檔頭；以下為當時清單，2、3 兩支腳本已刪除）：
 
 1. **Web UI 匯入** → 使用 `knowledge_import_service.py` ✅ 已更新
-2. **Excel 匯入** → 使用 `import_excel_to_kb.py` ✅ 已更新
-3. **提取數據匯入** → 使用 `import_extracted_to_db.py` ✅ 已更新
+2. **Excel 匯入** → 使用 `import_excel_to_kb.py`（已刪除）
+3. **提取數據匯入** → 使用 `import_extracted_to_db.py`（已刪除）
 4. **批次重新生成** → 使用 `regenerate_all_embeddings.py` ✅ 已更新
 
 ---

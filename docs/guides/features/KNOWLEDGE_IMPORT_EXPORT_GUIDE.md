@@ -156,7 +156,7 @@ graph LR
 - ✅ 答案長度（至少 10 字元）
 - ✅ 必填欄位完整性
 - ✅ ID 有效性（如果提供）
-- ✅ 質量評估（可選，分數 ≥ 6/10）
+- ✅ 質量評估（可選；2026-10-18 對碼：程式只看 LLM 回傳的布林 `is_acceptable`，門檻 `QUALITY_EVALUATION_THRESHOLD`（預設 6）只寫進給 LLM 的提示詞，沒有拿分數做程式比較，見 `rag-orchestrator/services/knowledge_import_service.py`）
 
 ---
 
@@ -182,7 +182,7 @@ graph LR
 
 ```bash
 # 匯出包含 id 欄位
-GET /api/v1/knowledge-export/export
+POST /api/v1/knowledge-export/export   # 2026-10-18 對碼：原稿寫 GET，實際為 POST（knowledge_export.py 的 @router.post("/export")）
 ```
 
 匯出的 Excel 範例：
@@ -353,7 +353,7 @@ id    | question_summary | answer                  | vendor_id | priority
    - 基於文字內容和語意相似度（0.85+）
 
 3. **質量評估**
-   - 預設啟用，分數低於 6/10 會被拒絕
+   - 預設啟用，LLM 判定 `is_acceptable=false` 的會被拒絕（2026-10-18 對碼：非程式比對 6/10 分數）
    - 可在匯入時設定 `enable_quality_evaluation=false` 關閉
 
 4. **大量資料**
@@ -448,7 +448,7 @@ curl http://your-domain/api/v1/knowledge-import/jobs/{job_id}
 
 **A:** 可能原因：
 
-1. **質量評估失敗**：分數 < 6/10
+1. **質量評估失敗**：LLM 判定 `is_acceptable=false`（2026-10-18 對碼：程式不比對分數）
    - 解決：改善答案內容，或關閉質量評估
 
 2. **重複內容**：與現有知識相似度 > 85%

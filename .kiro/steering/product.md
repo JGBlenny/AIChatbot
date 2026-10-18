@@ -13,7 +13,7 @@
 - **知識兩條路**：路 A＝git canon 正本每回合自動注入（⛔ 不碰 `knowledge_base`）；
   路 B＝模型自己呼叫 `kb.search`／`kb.get`
 - **向量語義搜尋**: 使用 pgvector；三軸過濾單一來源 `build_visibility_predicate`
-- 🔴 **信心度評估與 LLM 答案合成已刪**（2026-09-11 DSP-046），⛔ 別依它們設計新東西
+- 🔴 **信心度評估與 LLM 答案合成的執行路徑已刪**（2026-09-11 DSP-046），⛔ 別依它們設計新東西。⚠️ 但名為 `disable_answer_synthesis` 的**旗標名**仍殘留：`services/usage_metering.py` 的 `INTERNAL_RULES` 用它當「回測流量」判準之一，`services/agent/shadow.py` 影子請求會帶它——只是標記，不代表有合成功能在跑
 
 ### 2. 知識管理系統
 - **多元知識來源**:
@@ -31,7 +31,7 @@
 **自動化知識缺口發現與補救流程**:
 
 🔴 **執行面已於 2026-09-11 刪除**：協調器、缺口分析、AI 分類、聚類、知識生成器等
-整批不存在，`services/knowledge_completion_loop/` 只剩 `embedding_client.py`。
+整批不存在，`services/knowledge_completion_loop/` 程式只剩 `embedding_client.py`（另有 `__init__.py`、`create_missing_indexes.sql`）。
 **後台頁面與資料表仍在**（`routers/loops.py`、`routers/loop_knowledge.py`），
 可以看歷史迴圈、做人工審核，但**沒有任何程式會跑新一輪**。
 
@@ -58,7 +58,7 @@
 
 ## 價值主張
 
-1. **自動化知識發現**: 透過知識完善迴圈，自動發現知識缺口，減少人工維護成本
+1. **知識缺口發現**: 原由知識完善迴圈自動執行，**執行面已於 2026-09-11 刪除**（見上 §3）；現行改由 `retrieval-improvement-loop` skill 與回測人工驅動
 2. **持續改善**: 迭代式測試與知識補充，持續提升回答準確率
 3. **多業者擴展**: SaaS 架構支援快速增加新業者，知識互不干擾
 4. **角色隔離**: 確保不同角色（租客、房東、物業）看到適合的知識
@@ -87,9 +87,9 @@
 
 ---
 
-## 2026-07 現況增補（本節為最新，與上文衝突時以本節與 docs/architecture-overview.md 為準）
+## 2026-07 現況增補（本節為最新，與上文衝突時以本節與 `docs/architecture/SYSTEM_ARCHITECTURE.md` 為準（`docs/architecture-overview.md` 現為指路檔））
 
-- **對話面向體系（🔴 2026-09-12 更正）**：**15 個 face、六域**（帳單／合約／修繕／電表／帳號／物件），在註冊時由 `_jgb2_spec(domain, sorted(builders.keys()))` **現算**，⛔ 不是資料驅動、⛔ 不是 21＋。新增 face key **不等於**新增能力：face 只選 builder，資料來源硬編在 `query_<域>`。機械判定用 `services/jgb/*_FACE_BUILDERS`，LLM 只照 facts 組話。
+- **對話面向體系（🔴 2026-09-12 更正）**：**16 個 face、六域**（bills 5、contracts 5、accounts 2、repairs 2、iot 1、estates 1）（帳單／合約／修繕／電表／帳號／物件），在註冊時由 `_jgb2_spec(domain, sorted(builders.keys()))` **現算**，⛔ 不是資料驅動、⛔ 不是 21＋。新增 face key **不等於**新增能力：face 只選 builder，資料來源硬編在 `query_<域>`。機械判定用 `services/jgb/*_FACE_BUILDERS`，LLM 只照 facts 組話。
 - **資料體系分工（定案）**：`vendor_configs`＝通用單值參數（{{param}} 模板）；`lookup_tables`＝案場級（Excel 匯入＋錨點）；SOP＝b2c 專用（b2b 不走）；jgb API＝個資（role_id+user_id 雙證）。
 - **計量與額度**：usage_events 每請求計量（token/成本/內部流量標記）；vendor_quotas 月額度（達限攔截/警示寄信）。
 - **品質三層**：unit（make test-unit）／系統回測（迴圈＋多輪模擬＋v3 評審＋金標，按受眾分庫）／不變量稽核（make audit，修一類 bug＝加一條）。驗收鐵則：改引擎行為以系統路徑實跑收案。

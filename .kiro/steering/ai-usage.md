@@ -8,16 +8,10 @@
 
 | 任務類型 | 模型 | Temperature | 原因 |
 |---------|------|-------------|------|
-| **智能分類**（迴圈） | gpt-4o-mini | 0.3 | 確定性高、成本低 |
-| **聚類**（迴圈） | gpt-4o-mini | 0.3 | 確定性高、成本低 |
-| **SOP 生成**（迴圈） | gpt-4o-mini | 0.7 | 創造性、成本可控 |
-| **知識生成**（迴圈） | gpt-4o-mini | 0.7 | 創造性、成本可控 |
-| **分類選擇**（迴圈） | gpt-4o-mini | 0.1 | 極高確定性 |
-| **群組選擇**（迴圈） | gpt-4o-mini | 0.1 | 極高確定性 |
 | **複雜推理** | gpt-4o | 0.7 | 需更強推理能力 |
 | **測試題生成** | gpt-4o | 0.8 | 多樣性、創造性 |
 | **文件轉換**（Chat） | gpt-4o | 0.3 | 複雜文件需強推理、高確定性 |
-| **對話回合**（`AGENT_MODEL`） | gpt-4o-mini | — | `AgentRuntime` 的模型；另有 `AGENT_REASONING_EFFORT` |
+| **對話回合**（`AGENT_MODEL`） | 程式回退鏈 `AGENT_MODEL`→`OPENAI_MODEL`→`gpt-4o-mini`（`services/agent/runtime.py`） | — | `AgentRuntime` 的模型；另有 `AGENT_REASONING_EFFORT`。採用哪個模型是決策：見 `.claude/DECISIONS.md` DSP-075／DSP-080 |
 | **圖片辨識**（`IMAGE_RECOGNITION_MODEL`） | — | — | 報修照片前處理 |
 | **文件抽取**（`DOCUMENT_EXTRACTION_MODEL`） | — | — | 附件抽取 |
 | **查詢改寫**（`QUERY_REWRITE_MODEL`） | gpt-4o-mini | 0 | ⚠️ 程式預設與 prod compose 皆為 **0**，非 0.3 |
@@ -30,27 +24,18 @@
 
 **gpt-4o-mini**（預設首選）：
 - 成本：$0.15 / 1M prompt tokens，$0.60 / 1M completion tokens
-- 適用：90% 的任務（分類、聚類、生成）
+- 適用：一般低成本任務
 - 優勢：速度快、成本低、品質足夠
 
 **gpt-4o**（複雜任務）：
 - 成本：$2.50 / 1M prompt tokens，$10.00 / 1M completion tokens
 - 適用：需更強推理能力的任務
-- 使用時機：知識完善迴圈中較少使用
 
 ## 2. Temperature 設定指南
 
 ### Temperature 範圍
 
-```python
-# 確定性任務（Deterministic）
-temperature = 0.1  # 分類選擇、群組選擇
-temperature = 0.3  # 智能分類、聚類
-
-# 創造性任務（Creative）
-temperature = 0.7  # SOP 生成、知識生成
-temperature = 0.8  # 測試題生成（需更多多樣性）
-```
+🔴 **2026-10-18：** 原「知識完善迴圈」各任務（智能分類、聚類、SOP 生成、知識生成、分類選擇、群組選擇）的溫度表已刪——迴圈執行器已不在（`rag-orchestrator/services/knowledge_completion_loop/` 只剩 `__init__.py`、`embedding_client.py`、`create_missing_indexes.sql`）。現行各呼叫點的溫度以程式為準（例：`services/query_rewriter.py` 的 `QUERY_REWRITE_TEMPERATURE` 預設 0；`services/document_converter_service.py` 為 0.3）。
 
 ### 設定原則
 
@@ -63,70 +48,20 @@ temperature = 0.8  # 測試題生成（需更多多樣性）
 
 ## 3. 成本控制策略
 
-### OpenAICostTracker
+### 成本追蹤
 
-**核心功能**：
-```python
-class OpenAICostTracker:
-    PRICING = {
-        "gpt-4o-mini": {
-            "prompt": 0.150,      # $0.15 / 1M tokens
-            "completion": 0.600   # $0.60 / 1M tokens
-        },
-        "gpt-4o": {
-            "prompt": 2.50,       # $2.50 / 1M tokens
-            "completion": 10.00   # $10.00 / 1M tokens
-        }
-    }
-```
+🔴 **2026-10-18：** 原 `OpenAICostTracker`／`PRICING`／`BudgetExceededError` 範例已刪——這些符號在 repo 零程式碼（`grep -rn OpenAICostTracker rag-orchestrator` 無命中）。
 
-**成本追蹤**：
-1. 記錄每次 API 調用的 token 使用量
-2. 計算成本（基於最新定價表）
-3. 累計迴圈總成本
-4. 持久化到 `openai_cost_tracking` 表
+現行做法：
+- 對話回合用量由 `services/usage_metering.py` 計價（`DEFAULT_PRICING`，可用 env `LLM_PRICING_PATH` 覆蓋）並寫入 `usage_events`。
+- 圖片辨識與文件線的成本直接寫入資料表 `openai_cost_tracking`（`services/image_recognition_service.py`、`services/agent/mcp_facade.py` 內的 `INSERT INTO openai_cost_tracking`）。
 
-### 預算控制
-
-**預算限制**：
-```python
-tracker = OpenAICostTracker(
-    loop_id=1,
-    budget_limit_usd=10.0  # 設定預算上限 $10
-)
-
-# 超過預算時拋出異常
-if total_cost >= budget_limit:
-    raise BudgetExceededError(f"超過預算 ${budget_limit}")
-
-# 達到 80% 時發送警告
-if total_cost >= budget_limit * 0.8:
-    send_budget_warning()
-```
 
 **成本優化**：
 - 優先使用 gpt-4o-mini
 - 批次處理降低 API 調用次數
 - 設定合理的批次大小限制
 
-### 批次處理策略
-
-**知識生成批次大小**：
-```python
-# SOP 生成
-batch_size = 5  # 每批 5 個 SOP
-
-# 一般知識生成
-batch_size = 5  # 每批 5 個知識
-
-# 智能分類
-batch_size = 50  # 每批 50 個問題（知識完善迴圈預設）
-```
-
-**批次處理原則**：
-- 避免單次 API 調用處理過多資料
-- 平衡速度與成本
-- 支援中斷恢復（記錄已處理批次）
 
 ## 4. API 重試機制
 
@@ -162,112 +97,14 @@ print(f"   錯誤類型：{error_type}")
 print(f"   錯誤訊息：{error_message}")
 ```
 
-## 5. Prompt 工程最佳實踐
+## 5. Prompt 工程
 
-### 智能分類 Prompt
+🔴 **2026-10-18：** 原「智能分類／聚類／SOP 生成 Prompt」範例屬已刪的知識完善迴圈，程式碼中已無對應 prompt（`grep -rn "適度聚類\|applicable_questions" rag-orchestrator` 無命中），整段刪除。現行對話 prompt 見 `services/agent/` 與 [dialogue.md](./dialogue.md)。
 
-**目標**：將失敗案例分類為 4 種類型
+## 6. 成本估算
 
-**Prompt 結構**：
-```python
-system_prompt = """
-你是一個專業的知識分類助手。
+🔴 **2026-10-18：** 原「單次迭代成本估算／預算建議」表（以知識完善迴圈為前提）已刪。實際成本以 `openai_cost_tracking` 表與 `services/usage_metering.py` 為準。
 
-任務：將以下問題分類為 4 種類型之一：
-1. sop_knowledge - SOP 業務流程知識
-2. form_fill - 表單填寫流程
-3. system_config - 系統操作與配置
-4. api_query - API 動態查詢
-
-分類標準：
-- sop_knowledge：需多輪對話或固定流程（例如：退租流程、續約流程）
-- form_fill：需填寫表單收集資訊（例如：我想找房、申請維修）
-- system_config：可直接回答的單一問答（例如：如何切換團隊、忘記密碼）
-- api_query：需即時查詢動態資料（例如：租金多少、合約何時到期）
-
-請以 JSON 格式返回。
-"""
-```
-
-**最佳實踐**：
-- 提供清晰的分類定義與範例
-- 要求結構化輸出（JSON）
-- Temperature = 0.3（確保穩定性）
-
-### 聚類 Prompt
-
-**目標**：將相似問題聚類
-
-**聚類原則**：
-```python
-system_prompt = """
-聚類原則：
-1. 適度聚類：只有可用同一 SOP/知識完整回答的問題才聚類
-2. 每個聚類包含 2-5 個高度相關的問題
-3. 選出一個代表性問題作為主問題
-4. 生成簡潔的聚類名稱（如：「租金支付流程」）
-
-避免：
-- 過度聚類（將不同問題強行合併）
-- 過於細分（每個問題都獨立）
-"""
-```
-
-### SOP 生成 Prompt
-
-**目標**：生成結構化 SOP 文檔
-
-**Prompt 結構**：
-```python
-system_prompt = """
-生成 SOP 要求：
-1. 標題：簡潔明確（例如：「線上續約申請流程」）
-2. 步驟：清晰、可執行、有序
-3. 關鍵字：精準、避免過於籠統
-4. 適用問題：列出可回答的具體問題
-
-格式範例：
-{
-  "title": "線上續約申請流程",
-  "steps": [
-    {"step": 1, "description": "登入租客系統"},
-    {"step": 2, "description": "進入「合約管理」頁面"}
-  ],
-  "keywords": ["續約", "合約延長", "租期續簽"],
-  "applicable_questions": ["如何申請續約？", "續約需要什麼流程？"]
-}
-"""
-```
-
-**溫度設定**：
-- Temperature = 0.7（平衡創造性與穩定性）
-
-## 6. 成本估算與預算規劃
-
-### 單次迭代成本估算
-
-**假設場景**（50 題回測，40 題失敗）：
-
-| 操作 | 模型 | Token 估算 | 成本 |
-|------|------|-----------|------|
-| 智能分類（40 題） | gpt-4o-mini | 20K prompt + 5K completion | $0.006 |
-| 聚類（40 題 → 8 clusters） | gpt-4o-mini | 30K prompt + 8K completion | $0.010 |
-| SOP 生成（5 個） | gpt-4o-mini | 10K prompt + 15K completion | $0.011 |
-| 知識生成（3 個） | gpt-4o-mini | 5K prompt + 8K completion | $0.006 |
-| **單次迭代總成本** | - | - | **~$0.03** |
-
-**完整迴圈成本估算**（10 次迭代）：
-- 單次迭代：$0.03
-- 10 次迭代：$0.30
-- 加上回測成本：$0.35-$0.50
-
-### 預算建議
-
-| 批次大小 | 預算建議 | 備註 |
-|---------|---------|------|
-| 50 題 | $0.50-$1.00 | 首批驗證 |
-| 100 題 | $1.00-$2.00 | 中等批次 |
-| 200 題 | $2.00-$4.00 | 大批次 |
 
 ## 7. 環境變數配置
 
@@ -284,14 +121,8 @@ export DB_NAME="aichatbot_admin"
 export DB_USER="aichatbot"
 export DB_PASSWORD="aichatbot_password"
 
-# RAG API 基礎 URL（可選，預設 localhost:8100）
-export RAG_API_URL="http://localhost:8100"
-
-# 業者 ID（可選，預設 2）
-export VENDOR_ID="2"
-
-# 僅回測模式（可選，預設 false）
-export BACKTEST_ONLY="false"
+# RAG API 基礎 URL（可選；knowledge-admin/backend/app.py 預設與 docker-compose.prod.yml 皆為 http://rag-orchestrator:8100）
+export RAG_API_URL="http://rag-orchestrator:8100"
 ```
 
 ### API 金鑰安全
@@ -306,7 +137,6 @@ export BACKTEST_ONLY="false"
 
 ### 1. 成本優先，品質為本
 - 優先使用 gpt-4o-mini（90% 任務）
-- 預算控制與警告機制
 - 批次處理降低 API 調用次數
 
 ### 2. Temperature 分層策略
@@ -326,6 +156,4 @@ export BACKTEST_ONLY="false"
 - 避免模糊與歧義
 
 ### 5. 成本追蹤與透明
-- 記錄每次 API 調用成本
-- 迴圈級別成本彙總
-- 提供成本估算工具
+- 成本寫入 `openai_cost_tracking`、計價見 `services/usage_metering.py`

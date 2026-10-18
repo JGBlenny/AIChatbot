@@ -34,8 +34,8 @@
 
 ### Chat 相關
 ```javascript
-POST   /rag-api/v1/chat                    // AI 對話
-POST   /rag-api/v1/chat/stream             // AI 對話（串流）
+POST   /rag-api/v1/chat                    // 未實作（2026-10-18 對碼：rag-orchestrator 無此路由，對話走 /mcp）
+POST   /rag-api/v1/chat/stream             // 未實作（2026-10-18 對碼）
 ```
 
 ### Business Types 相關
@@ -66,10 +66,11 @@ DELETE /rag-api/v1/api-endpoints/:id       // 刪除端點
 
 ### Knowledge 相關
 ```javascript
-POST   /rag-api/v1/knowledge/classify      // 知識分類
-POST   /rag-api/v1/knowledge/classify/batch // 批次分類
-GET    /rag-api/v1/knowledge/stats         // 知識統計
-POST   /rag-api/v1/knowledge/reload        // 重載知識庫
+// 以下四支未實作（2026-10-18 對碼：rag-orchestrator 無 knowledge/classify、classify/batch、stats、reload 路由；對應的 routers/knowledge.py 已於 2026-09-11 刪除）
+POST   /rag-api/v1/knowledge/classify      // 未實作
+POST   /rag-api/v1/knowledge/classify/batch // 未實作
+GET    /rag-api/v1/knowledge/stats         // 未實作
+POST   /rag-api/v1/knowledge/reload        // 未實作
 ```
 
 ### Knowledge Import 相關
@@ -84,7 +85,7 @@ POST   /rag-api/v1/knowledge-import/preview        // 預覽導入
 
 ### Knowledge Export 相關
 ```javascript
-POST   /rag-api/v1/knowledge-export/excel          // 導出知識為 Excel
+POST   /rag-api/v1/knowledge-export/export         // 導出知識為 Excel（2026-10-18 對碼：原寫 /excel，實際為 POST /export）
 ```
 
 ### Videos 相關
@@ -107,8 +108,8 @@ DELETE /rag-api/v1/document-converter/:id          // 刪除任務
 
 ### Vendors 相關
 ```javascript
-POST   /rag-api/v1/vendors/:id/chat                // 業者專屬對話
-GET    /rag-api/v1/vendors/:id/sops                // 業者 SOP 列表
+POST   /rag-api/v1/vendors/:id/chat                // 未實作（2026-10-18 對碼：無此路由）
+GET    /api/v1/vendors/{vendor_id}/sop/items       // 業者 SOP 列表（2026-10-18 對碼：原寫 /rag-api/v1/vendors/:id/sops；rag-orchestrator 內實際路徑為 /api/v1/vendors/{vendor_id}/sop/items，前端經 /rag-api 前綴轉發）
 ```
 
 ### Unclear Questions 相關
@@ -150,37 +151,37 @@ PUT    /api/knowledge/:id                  // 更新知識
 DELETE /api/knowledge/:id                  // 刪除知識
 
 POST   /api/knowledge/regenerate-embeddings // 重新生成向量
-POST   /api/knowledge/:id/intents          // 關聯意圖
-DELETE /api/knowledge/:id/intents/:intent_id // 移除意圖關聯
+POST   /api/knowledge/:id/intents          // 未實作（2026-10-18 對碼：無路由）
+DELETE /api/knowledge/:id/intents/:intent_id // 未實作（2026-10-18 對碼：無路由）
 ```
 
 ### Vendors 相關
 ```javascript
 GET    /api/vendors                        // 業者列表
-GET    /api/vendors/:id                    // 單一業者
-POST   /api/vendors                        // 創建業者
-PUT    /api/vendors/:id                    // 更新業者
-DELETE /api/vendors/:id                    // 刪除業者
+// 2026-10-18 對碼：knowledge-admin/backend/app.py 只有上面這一支 /api/vendors；
+// 下列單筆與增刪改在 knowledge-admin 後端無路由，業者 CRUD 走 rag-orchestrator（前端 /rag-api/v1/vendors，見 knowledge-admin/frontend/src/config/api.js 的 ragVendors）
+GET    /api/vendors/:id                    // 未在 knowledge-admin 後端實作
+POST   /api/vendors                        // 未在 knowledge-admin 後端實作
+PUT    /api/vendors/:id                    // 未在 knowledge-admin 後端實作
+DELETE /api/vendors/:id                    // 未在 knowledge-admin 後端實作
 ```
 
 ### Test Scenarios 相關
 ```javascript
-GET    /api/test-scenarios                 // 測試情境列表
-GET    /api/test-scenarios/:id             // 單一情境
-POST   /api/test-scenarios                 // 創建情境
-PUT    /api/test-scenarios/:id             // 更新情境
-DELETE /api/test-scenarios/:id             // 刪除情境
+// 2026-10-18 對碼：實際前綴是 /api/test/scenarios（knowledge-admin/backend/routes_test_scenarios.py，router prefix /api/test）；原稿寫的 /api/test-scenarios 為舊寫法
+GET    /api/test/scenarios                 // 測試情境列表
+GET    /api/test/scenarios/:id             // 單一情境
+POST   /api/test/scenarios                 // 創建情境
+PUT    /api/test/scenarios/:id             // 更新情境
+DELETE /api/test/scenarios/:id             // 刪除情境
 ```
 
 ### Backtest 相關
 ```javascript
-GET    /api/backtest/results               // 回測結果
-GET    /api/backtest/summary               // 回測摘要
+// 2026-10-18 對碼：現行只有下列三支（knowledge-admin/backend/app.py），其餘（results、summary、run、cancel、status）未實作
 GET    /api/backtest/runs                  // 回測執行記錄
 GET    /api/backtest/runs/:id/results      // 特定執行的結果
-POST   /api/backtest/run                   // 執行回測
-POST   /api/backtest/cancel                // 取消回測
-GET    /api/backtest/status                // 回測狀態
+GET    /api/backtest/runs/:id/grade-distribution // 評級分佈
 ```
 
 ### Target Users 相關
@@ -359,7 +360,7 @@ export default defineConfig({
 ### 生產環境 (Nginx)
 
 ```nginx
-# knowledge-admin/frontend/nginx.conf
+# knowledge-admin/frontend/nginx.conf.template（2026-10-18 對碼：實際檔名為 .template，由 envsubst 展開；以下為簡化示意）
 server {
     listen 80;
 
@@ -425,7 +426,7 @@ server {
 ### 配置文件
 - `src/config/api.js` - API 端點定義
 - `vite.config.js` - 開發環境代理配置
-- `nginx.conf` - 生產環境路由配置
+- `nginx.conf.template` - 生產環境路由配置（2026-10-18 對碼：實際檔名）
 
 ### 後端路由
 - `rag-orchestrator/app.py` - RAG API 路由

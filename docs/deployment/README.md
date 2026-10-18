@@ -20,11 +20,11 @@ cat docs/deployment/DEPLOY_CHECKLIST.md
 deployment/
 ├── README.md                    ← 本文件（部署索引）
 ├── DEPLOY_GUIDE.md              ← 通用部署指南
-└── DEPLOY_CHECKLIST.md          ← 通用檢查清單
-
-# 歷史部署記錄已遷移至：
-../archive/deployment-logs/      ← 各版本部署文件（2026-01-10 ~ 2026-03-28）
+├── DEPLOY_CHECKLIST.md          ← 通用檢查清單
+└── records/                     ← 日期部署紀錄（現有 20260729_deploy.md、20260729_steps.md）
 ```
+
+> 2026-10-18 對碼：原稿的「歷史部署記錄已遷移至 `../archive/deployment-logs/`」不成立——`docs/archive/` 現只有 `2026-06/`、`2026-09/` 兩個子目錄，沒有 `deployment-logs/`；下方各版本所列「部署文件」（`DEPLOY_README_2026-01-10.md`、`DEPLOY_2026-01-21.md` 等）不在 `docs/` 內，視為已遺失，僅留版本紀錄。資料庫 migration／seed 現行唯一正統流程見 `docs/deployment-runbook.md`（runner `migrate.sh`）；`database/run_migrations.sh` 與 `migrations-legacy` 已於 2026-07-22 除役，下方版本紀錄中的用法僅為歷史。
 
 ## 🎯 使用說明
 
@@ -50,8 +50,7 @@ deployment/
 - ✅ 需要追溯歷史部署記錄
 
 **文件位置：**
-- 按日期（版本號）組織在子目錄下
-- 例如：`2026-01-10/`
+- 2026-10-18 對碼：現行為 `docs/deployment/records/` 下以日期開頭的檔案（例如 `20260729_deploy.md`）；原稿的 `2026-01-10/` 等版本子目錄不存在。
 
 ## 📋 版本列表
 
@@ -254,7 +253,7 @@ deployment/
 
 **技術文檔：**
 - PRIMARY_EMBEDDING_FIX.md - 技術詳細說明
-- [DUAL_EMBEDDING_RETRIEVAL.md](../features/DUAL_EMBEDDING_RETRIEVAL.md) - 雙 Embedding 檢索
+- [DUAL_EMBEDDING_RETRIEVAL.md](../archive/2026-09/DUAL_EMBEDDING_RETRIEVAL.md) - 雙 Embedding 檢索
 - threshold_evaluation_report.md - 閾值評估報告
 
 **代碼變更：**
@@ -414,10 +413,8 @@ deployment/
 
 當有新版本需要特殊部署步驟時，請按以下方式組織：
 
-1. 創建新目錄：`docs/deployment/YYYY-MM-DD/`
-2. 複製模板文件並修改內容
-3. 更新本 README，添加版本記錄
-4. 在 `docs/DEPLOYMENT_CLEANUP_YYYY-MM-DD.md` 記錄整理過程
+1. 在 `docs/deployment/records/` 新增 `YYYYMMDD_*.md`（2026-10-18 對碼：這是現行慣例）
+2. 更新本 README，添加版本記錄
 
 ---
 
@@ -426,8 +423,8 @@ deployment/
 ## 🔥 重點推薦
 
 ### 生產環境升級指南
-如果您的生產環境目前是 **fa4d9a6 版本**，請使用：
-- **DEPLOY_FROM_FA4D9A6_TO_LATEST.md** - 完整的從 fa4d9a6 到 e3a6ff9 的升級指南
+（2026-10-18 對碼：原稿推薦的 `DEPLOY_FROM_FA4D9A6_TO_LATEST.md` 不在 repo；現行升級流程見 `docs/deployment-runbook.md`。以下為該已遺失文件的歷史內容摘要。）
+- **DEPLOY_FROM_FA4D9A6_TO_LATEST.md**（已遺失）- 從 fa4d9a6 到 e3a6ff9 的升級指南
 
 這份文檔包含：
 - ✅ 5 個 commit 的完整變更說明

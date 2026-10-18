@@ -2,7 +2,12 @@
 
 **日期：** 2025-10-11
 **版本：** v1.0
-**狀態：** ✅ 100% 完成（Schema + 遷移 + API + 前端 + 回測整合）
+**狀態：** 2025-10-11 當時自評「100% 完成」；2026-10-18 對碼：該自評不成立，見下方更正。
+
+> ⚠️ **2026-10-18 對碼更正**（本檔為 2025-10-11 快照）：
+> - Schema 檔現位於 `database/init-legacy/09-create-test-scenarios.sql`（原稿寫 `database/init/`）。
+> - 遷移腳本 `database/migrations-legacy/migrate_excel_to_db.py` 已不在 repo；`docs/BACKTEST_OPTIMIZATION_GUIDE.md` 也已不存在。
+> - `/api/test/collections` 系列「測試集合」端點**未實作**：`knowledge-admin/backend/routes_test_scenarios.py` 只有 11 個路由且無 collections（後端與前端程式皆無 `test_collections` 引用；`test_collections`、`test_scenario_collections` 兩張表仍在 DB 內，但無程式讀寫）。下文「16 個端點」「集合管理 4+ 個端點」「100% 完成」皆不成立。
 
 ---
 
@@ -56,7 +61,7 @@ docker-compose logs postgres | grep "測試題庫"
 # ✅ 測試題庫與回測系統資料表建立完成
 ```
 
-**檔案位置：** `database/init/09-create-test-scenarios.sql`
+**檔案位置：** `database/init-legacy/09-create-test-scenarios.sql`
 
 ---
 
@@ -232,7 +237,7 @@ GET    /api/test/collections/:id/stats    # 集合統計 ✅
 GET    /api/test/backtest/runs            # 回測執行歷史 ✅
 ```
 
-**總計：16 個 API 端點全部完成** ✅
+**總計：16 個 API 端點全部完成** ✅（未實作，見檔頭更正：現行 `routes_test_scenarios.py` 為 11 個路由，無 collections）
 
 ---
 
@@ -305,7 +310,7 @@ GET    /api/test/backtest/runs            # 回測執行歷史 ✅
 
 ## 📈 進度追蹤
 
-### ✅ 已完成（100%）
+### 已完成（原稿自評 100%，不成立，見檔頭更正）
 
 - [x] 資料表 Schema 設計（5 個表、5 個視圖、2 個函數）
 - [x] 用戶問題審核流程設計（4 狀態流程）
@@ -326,7 +331,7 @@ GET    /api/test/backtest/runs            # 回測執行歷史 ✅
 | **資料表** | 5 個 | ✅ |
 | **視圖** | 5 個 | ✅ |
 | **SQL 函數** | 2 個 | ✅ |
-| **API 端點** | 16 個 | ✅ |
+| **API 端點** | 16 個 | ❌（現行 11 個路由，見檔頭更正） |
 | **前端頁面** | 2 個 | ✅ |
 | **遷移情境** | 10 個 | ✅ |
 | **回測通過率** | 100% | ✅ |
@@ -431,7 +436,7 @@ npm run dev
 pg_dump -U aichatbot aichatbot_admin > backup_$(date +%Y%m%d).sql
 
 # 2. 執行 Schema（如果是新環境）
-psql -U aichatbot -d aichatbot_admin -f database/init/09-create-test-scenarios.sql
+psql -U aichatbot -d aichatbot_admin -f database/init-legacy/09-create-test-scenarios.sql
 
 # 3. 執行遷移
 python3 database/migrations-legacy/migrate_excel_to_db.py --force
@@ -481,9 +486,9 @@ VALUES ('custom_set', '自定義集合', '我的自定義測試集合');
 
 | 文檔 | 說明 |
 |------|------|
-| `database/init/09-create-test-scenarios.sql` | Schema 定義 |
-| `database/migrations-legacy/migrate_excel_to_db.py` | 遷移腳本 |
-| `docs/BACKTEST_OPTIMIZATION_GUIDE.md` | 回測優化指南 |
+| `database/init-legacy/09-create-test-scenarios.sql` | Schema 定義 |
+| `database/migrations-legacy/migrate_excel_to_db.py` | 遷移腳本（已刪除，2026-10-18 對碼） |
+| `docs/BACKTEST_OPTIMIZATION_GUIDE.md` | 回測優化指南（已刪除，2026-10-18 對碼） |
 | `test_scenarios_smoke.xlsx` | Smoke 測試題庫（原始） |
 | `test_scenarios_full.xlsx` | Full 測試題庫（原始） |
 

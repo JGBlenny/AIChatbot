@@ -327,12 +327,11 @@ OPENAI_API_KEY=sk-proj-...
 ### Provider 緩存機制
 
 ```python
-# 系統會緩存 Provider 實例
-_provider_cache = {
-    'openai': OpenAIProvider(),
-    'openrouter': OpenRouterProvider(),
-    'ollama': OllamaProvider()
-}
+# 系統會緩存 Provider 實例——惰性建立（2026-10-18 對碼）：
+# `rag-orchestrator/services/llm_provider.py` 的 `_provider_cache` 初始為空 dict，
+# 第一次需要某個 provider_type 時才建立該一種實例，不會預先建三個。
+_provider_cache = {}
+# 例：第一次用到 openai 後 → {'openai': OpenAIProvider()}
 
 # 多次調用返回相同實例
 provider1 = get_llm_provider(service_name='intent_classifier')

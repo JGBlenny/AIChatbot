@@ -6,7 +6,7 @@
 > `app.py`，此路由不存在。外部串接請改走 `/mcp` 門面（server-to-server），
 > 契約見 `docs/api/mcp-facade.md`；⛔ **目前沒有給外部專案的公開 REST 替代
 > 端點**，這是既知缺口。功能說明本身（售前對話設計）見
-> [`docs/features/conversational-presales.md`](../features/conversational-presales.md)（該檔已歸檔標註）。
+> [`docs/archive/2026-09/conversational-presales.md`](../archive/2026-09/conversational-presales.md)（該檔已歸檔標註）。
 
 > 給外部專案串接 JGB 售前對話(conversational)——⛔ **以下內容已死，僅供理解歷史契約形狀**。
 
@@ -234,7 +234,7 @@ curl -N -X POST {BASE}/v1/message -H 'Content-Type: application/json' -d '{
 
 > 依據：`rag-orchestrator/routers/agent_entry.py`（spec `agentic-mcp-orchestration` 任務 2.2）。
 > `audience_of(request) ∈ AGENT_AUDIENCES`（環境變數，逗號分隔）且 app 已建
-> `agent_runtime` 時，`/api/v1/message` 改由 `AgentRuntime` 處理；否則回 `None`
+> `agent_runtime` 時，`/api/v1/message` 改由 `AgentRuntime` 處理（端點已於 2026-09-11 刪除；`routers/agent_entry.py` 檔案仍在但未掛載於 `app.py`；現行入口 `/mcp`，見 `docs/api/mcp-facade.md`）；否則回 `None`
 > 讓舊鏈（本文件其餘章節）照舊處理。**非串流回應欄位同形**（沿用
 > `_conversational_to_response` 轉換為 `VendorChatResponse`），**串流沿用**
 > start／intent／answer_chunk／metadata／done 事件序，工具呼叫期間以 SSE 註解行

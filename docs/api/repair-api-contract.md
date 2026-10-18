@@ -51,7 +51,7 @@ jgb2 內部行為一致以 **2=緊急、1=非緊急** 為真值：
 | `app/Repair.php:48-49` | `EMERGENCY_NON_STATUS = 1; // 緊急`、`EMERGENCY_STATUS = 2; // 非緊急` | 註解與常數名/全部行為用法相反 |
 | `External/RepairApiController.php:462-463` | 對外 `mapping` 標 1=緊急、2=非緊急 | 跟著錯誤註解走，**對外契約層與 DB 真值反轉** |
 
-影響：外部消費端（含 AIChatbot）依對外 mapping 實作，送單與顯示的緊急語義會與管理師後台相反——租客報「緊急」、後台顯示「非緊急」，優先序反轉。AIChatbot 端已同步排定修正（見下節）。建議 jgb2 修 :462-463 的 mapping 與 :48-49 註解（DB 值不動，純註記層，無資料遷移）。修正時請回個話，雙側對齊後才切真 API。
+影響：外部消費端（含 AIChatbot）依對外 mapping 實作，送單與顯示的緊急語義會與管理師後台相反——租客報「緊急」、後台顯示「非緊急」，優先序反轉。AIChatbot 端已修正（2026-10-18 對碼：`services/jgb/repairs.py`、`services/jgb/transport.py` 以 1＝非緊急、2＝緊急處理；jgb2 側註記層是否已修未查）。建議 jgb2 修 :462-463 的 mapping 與 :48-49 註解（DB 值不動，純註記層，無資料遷移）。修正時請回個話，雙側對齊後才切真 API。
 
 ## 回應信封形狀（消費端解析依據）
 
@@ -86,12 +86,12 @@ jgb2 內部行為一致以 **2=緊急、1=非緊急** 為真值：
 
 | 環節 | jgb2 端 | AIChatbot 端 |
 |---|---|---|
-| 租約清單（本文件） | R1 補 `room_number` | `get_tenant_contracts` real 分支待實作：呼叫 status-overview → 五欄映射＋狀態過濾（現為 `NotImplementedError` 占位，jgb_system_api.py:769-771） |
+| 租約清單（本文件） | R1 補 `room_number` | `get_tenant_contracts` real 分支（2026-10-18 對碼：已不是 `NotImplementedError` 占位——`rag-orchestrator/services/jgb_system_api.py` 的 `get_tenant_contracts` docstring 記載 2026-08-25 改走真端點 `GET /contracts/status-overview` 帶 `user_id`；`room_number` 仍無來源） |
 | 修繕分類/項目 | ✅ `GET /repairs/categories` 已上線 | ✅ 真分支已接 |
-| 修繕建單 | ✅ `POST /repairs` 已上線（RepairApiController@store:152，參數驗證與我方 `create_repair` 送出欄位逐一對齊，`contract_id` nullable 相容） | ✅ 真分支已接（jgb_system_api.py:399-412）；⚠️ `emergency_status` 語義沿用了 jgb2 對外 mapping 的反轉值（formatter/mock/預設值），切真 API 前需按 DB 真值（2=緊急）修正 |
+| 修繕建單 | ✅ `POST /repairs` 已上線（RepairApiController@store:152，參數驗證與我方 `create_repair` 送出欄位逐一對齊，`contract_id` nullable 相容） | ✅ 真分支已接（`jgb_system_api.py` 的 `create_repair`）；`emergency_status` 已按 DB 真值處理：1＝非緊急、2＝緊急（2026-10-18 對碼：`rag-orchestrator/services/jgb/repairs.py` 的 `_URGENCY_ZH`、`rag-orchestrator/services/jgb/transport.py` 的 mapping `{"1": "非緊急", "2": "緊急"}`） |
 | 切換機制 | — | `USE_MOCK_JGB_API=false`＋`JGB_API_KEY`（X-API-Key header） |
 
-R1 交付後：AIChatbot 補 real 分支＋修正 `emergency_status` 語義 → E1 gate 可關 → 修繕對話式流程與 LINE 端到端具備上線條件。
+R1 交付後（real 分支與 `emergency_status` 語義 AIChatbot 側已於 2026-10-18 對碼確認完成）： E1 gate 可關 → 修繕對話式流程與 LINE 端到端具備上線條件。
 
 ## 分支落差提醒（E1/prod 切換的前置確認）
 

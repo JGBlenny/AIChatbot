@@ -46,7 +46,7 @@ knowledge-admin/frontend/src/
 ├── components/
 │   ├── AdminFormModal.vue         # 管理員新增/編輯表單
 │   ├── ChangePasswordModal.vue    # 修改密碼彈窗
-│   └── ResetPasswordModal.vue     # 重設密碼彈窗
+│   └── ResetPasswordModal.vue     # 重設密碼彈窗（已刪除，2026-10-18 對碼：檔案不在 repo）
 ├── stores/
 │   └── auth.js                    # Pinia 認證狀態管理
 ├── utils/
@@ -79,7 +79,7 @@ database/migrations-legacy/
 
 ### 2. 管理員操作
 
-請參考：**ADMIN_MANAGEMENT_PLAN.md**
+請參考：**ADMIN_MANAGEMENT_PLAN.md**（已刪除（2026-10-18 對碼）：該文件不在 repo；管理員管理現行實作見 `knowledge-admin/backend/routes_admins.py` 與 `knowledge-admin/frontend/src/views/AdminManagementView.vue`）
 
 包含：
 - 新增管理員
@@ -89,7 +89,7 @@ database/migrations-legacy/
 
 ### 3. 實作細節
 
-請參考：**AUTH_IMPLEMENTATION_SUMMARY.md**
+請參考：**AUTH_IMPLEMENTATION_SUMMARY.md**（已刪除（2026-10-18 對碼）：該文件不在 repo；現行實作見 `knowledge-admin/backend/auth_utils.py`、`knowledge-admin/backend/routes_auth.py`）
 
 包含：
 - 完整的技術架構
@@ -130,8 +130,8 @@ database/migrations-legacy/
 
    # 設定環境變數或 docker-compose.yml
    JWT_SECRET_KEY=<生成的密鑰>
-   JWT_ALGORITHM=HS256
-   JWT_EXPIRATION_HOURS=24
+   # 演算法與有效期不是環境變數：程式內常數 ALGORITHM = "HS256"、ACCESS_TOKEN_EXPIRE_HOURS = 24
+   #（knowledge-admin/backend/auth_utils.py，2026-10-18 對碼；原稿的 JWT_ALGORITHM／JWT_EXPIRATION_HOURS 環境變數不被讀取）
    ```
 
 3. **啟用 HTTPS**
@@ -159,7 +159,7 @@ database/migrations-legacy/
 
 - `/api/auth/login` - 登入
 - `/api/health` - 健康檢查
-- `/:vendorCode/chat` - 展示頁（客戶訪問）
+- ~~`/:vendorCode/chat` - 展示頁（客戶訪問）~~（路由已刪除（2026-10-18 對碼）：`knowledge-admin/frontend/src/router.js` 無此路由；公開路由只有 `/:vendorCode/form-submissions`）
 
 ---
 
@@ -189,7 +189,7 @@ database/migrations-legacy/
 **修改有效期：**
 ```python
 # knowledge-admin/backend/auth_utils.py
-JWT_EXPIRATION_HOURS = 24  # 修改此值
+ACCESS_TOKEN_EXPIRE_HOURS = 24  # 修改此值（常數名，2026-10-18 對碼；原稿誤寫為 JWT_EXPIRATION_HOURS）
 ```
 
 ---

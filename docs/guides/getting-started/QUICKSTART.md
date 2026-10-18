@@ -136,8 +136,7 @@ open http://localhost:8087
 ```bash
 curl http://localhost:8100/api/v1/health
 
-# 應該看到 Phase 3 服務
-# "llm_answer_optimizer": "ready (Phase 3)"
+# （已刪除（2026-09-11）：llm_answer_optimizer 模組與此健康檢查欄位已不存在）
 ```
 
 **發送問題測試（現行入口是 `/mcp`；⛔ `POST /api/v1/message` 已於 2026-09-11 刪除，實測 404）：**

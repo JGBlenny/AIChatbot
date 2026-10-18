@@ -282,7 +282,7 @@ interface BatchReviewResponse {
 
 **請求**：
 ```http
-GET /api/v1/loop-knowledge/pending?vendor_id=2&status=pending&limit=50&offset=0
+GET /api/v1/loops/loop-knowledge/pending?vendor_id=2&status=pending&limit=50&offset=0
 ```
 
 **查詢參數**：
@@ -382,7 +382,7 @@ if (item.duplication_warning) {
 
 **請求**：
 ```http
-POST /api/v1/loop-knowledge/1/review
+POST /api/v1/loops/loop-knowledge/1/review
 Content-Type: application/json
 
 {
@@ -429,7 +429,7 @@ Content-Type: application/json
    - 更新 `loop_generated_knowledge.status = 'synced'`
    - 更新 `loop_generated_knowledge.synced_to` 和 `synced_id`
 
-3. **SOP 知識同步詳情**：
+3. **SOP 知識同步詳情**（2026-10-18 對碼：SOP 項目寫入時不帶 embedding，由 `asyncio.create_task(generate_sop_embeddings_async(...))` 非同步生成，見 `rag-orchestrator/routers/loop_knowledge.py` 與 `rag-orchestrator/services/sop_embedding_generator.py`；下列 SQL 的 `embedding` 欄位為示意）：
    ```sql
    -- 同步到 vendor_sop_items
    INSERT INTO vendor_sop_items (
@@ -488,7 +488,7 @@ Content-Type: application/json
 
 **請求**：
 ```http
-POST /api/v1/loop-knowledge/batch-review
+POST /api/v1/loops/loop-knowledge/batch-review
 Content-Type: application/json
 
 {
@@ -557,7 +557,6 @@ Content-Type: application/json
 3. **效能考量**：
    - **併發限制**：每次最多處理 100 個項目（Pydantic 驗證）
    - **並發處理**：可使用 `asyncio.gather()` 並發調用 embedding API
-   - **超時控制**：單一項目處理超時時間 30 秒（避免長時間阻塞）
    - **預期耗時**：
      - 10 個項目：< 5 秒
      - 50 個項目：< 20 秒
@@ -615,7 +614,7 @@ Content-Type: application/json
 
 ```bash
 # 1. 查詢待審核知識
-curl "http://localhost:8100/api/v1/loop-knowledge/pending?vendor_id=2&loop_id=123&status=pending&limit=50&offset=0"
+curl "http://localhost:8100/api/v1/loops/loop-knowledge/pending?vendor_id=2&loop_id=123&status=pending&limit=50&offset=0"
 
 # 2. 前端篩選：過濾出無重複警告的項目
 # （在前端 JavaScript 中處理）
@@ -632,7 +631,7 @@ console.log(`共 ${filteredItems.length} 個無重複警告的知識項目`);
 **目標**：審核知識 ID = 1，修改問題與答案後批准。
 
 ```bash
-curl -X POST http://localhost:8100/api/v1/loop-knowledge/1/review \
+curl -X POST http://localhost:8100/api/v1/loops/loop-knowledge/1/review \
   -H "Content-Type: application/json" \
   -d '{
     "action": "approve",
@@ -663,7 +662,7 @@ curl -X POST http://localhost:8100/api/v1/loop-knowledge/1/review \
 
 ```bash
 # 1. 查詢待審核知識
-RESPONSE=$(curl -s "http://localhost:8100/api/v1/loop-knowledge/pending?vendor_id=2&loop_id=123&status=pending&limit=200")
+RESPONSE=$(curl -s "http://localhost:8100/api/v1/loops/loop-knowledge/pending?vendor_id=2&loop_id=123&status=pending&limit=200")
 
 # 2. 前端篩選：提取無重複警告的知識 ID
 # （在前端 JavaScript 中處理）
@@ -674,7 +673,7 @@ const noWarningIds = response.items
 console.log(`已選取 ${noWarningIds.length} 個無重複警告的知識`);
 
 # 3. 批量批准
-curl -X POST http://localhost:8100/api/v1/loop-knowledge/batch-review \
+curl -X POST http://localhost:8100/api/v1/loops/loop-knowledge/batch-review \
   -H "Content-Type: application/json" \
   -d '{
     "knowledge_ids": [1, 2, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
@@ -696,7 +695,7 @@ curl -X POST http://localhost:8100/api/v1/loop-knowledge/batch-review \
 # }
 
 # 4. 處理失敗項目：重試 knowledge_id = 7
-curl -X POST http://localhost:8100/api/v1/loop-knowledge/7/review \
+curl -X POST http://localhost:8100/api/v1/loops/loop-knowledge/7/review \
   -H "Content-Type: application/json" \
   -d '{"action": "approve"}'
 ```
@@ -709,7 +708,7 @@ curl -X POST http://localhost:8100/api/v1/loop-knowledge/7/review \
 
 ```bash
 # 1. 查詢待審核知識
-curl "http://localhost:8100/api/v1/loop-knowledge/pending?vendor_id=2&status=pending&limit=50"
+curl "http://localhost:8100/api/v1/loops/loop-knowledge/pending?vendor_id=2&status=pending&limit=50"
 
 # 回應中包含重複警告：
 # {
@@ -741,7 +740,7 @@ curl "http://localhost:8100/api/v1/loop-knowledge/pending?vendor_id=2&status=pen
 # - 若有補充資訊 → 批准並修改
 
 # 3a. 判斷為重複 → 拒絕
-curl -X POST http://localhost:8100/api/v1/loop-knowledge/3/review \
+curl -X POST http://localhost:8100/api/v1/loops/loop-knowledge/3/review \
   -H "Content-Type: application/json" \
   -d '{
     "action": "reject",
@@ -749,7 +748,7 @@ curl -X POST http://localhost:8100/api/v1/loop-knowledge/3/review \
   }'
 
 # 3b. 判斷為補充資訊 → 批准並修改
-curl -X POST http://localhost:8100/api/v1/loop-knowledge/3/review \
+curl -X POST http://localhost:8100/api/v1/loops/loop-knowledge/3/review \
   -H "Content-Type: application/json" \
   -d '{
     "action": "approve",
@@ -883,7 +882,7 @@ async function fetchKnowledge() {
   if (filters.value.loop_id) params.append('loop_id', String(filters.value.loop_id));
   if (filters.value.knowledge_type) params.append('knowledge_type', filters.value.knowledge_type);
 
-  const response = await fetch(`/api/v1/loop-knowledge/pending?${params}`);
+  const response = await fetch(`/api/v1/loops/loop-knowledge/pending?${params}`);
   const data = await response.json();
 
   knowledgeItems.value = data.items;
@@ -891,7 +890,7 @@ async function fetchKnowledge() {
 }
 
 async function reviewKnowledge(knowledgeId: number, action: string) {
-  const response = await fetch(`/api/v1/loop-knowledge/${knowledgeId}/review`, {
+  const response = await fetch(`/api/v1/loops/loop-knowledge/${knowledgeId}/review`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ action })
@@ -907,7 +906,7 @@ async function reviewKnowledge(knowledgeId: number, action: string) {
 async function batchApprove() {
   if (selectedIds.value.length === 0) return;
 
-  const response = await fetch('/api/v1/loop-knowledge/batch-review', {
+  const response = await fetch('/api/v1/loops/loop-knowledge/batch-review', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

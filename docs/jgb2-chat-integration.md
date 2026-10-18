@@ -98,6 +98,8 @@
 
 ## 2. 端點與通則
 
+> ⛔ **已刪除（2026-09-11）**：本節及之後所述 `POST /rag-api/v1/message` 串接規格僅為歷史紀錄，端點已不存在（見檔頭說明），現行入口 `/mcp`。
+
 ```
 POST https://chatai.jgbsmart.com/rag-api/v1/message
 Content-Type: application/json

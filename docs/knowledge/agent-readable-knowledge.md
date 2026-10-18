@@ -69,9 +69,11 @@ Verifier 的引用比對是「一句答案 + 一段引文（quote）」對「某
   這句話，Verifier 會因為「上一題」三個字在任何工具回傳裡都逐字找不到而判
   `QUOTE_NOT_VERBATIM`——這不是機制沒補齊，是設計上就不追加載入鏈。每筆知識
   必須自身包含完整可引用的事實。
-  依據：`rag-orchestrator/services/agent/verifier.py:_verify_citation`
-  （`tool_result = tool_results.get(citation.tool_call_id)`，只在該工具結果的
-  `provenances` 內找 `matched`）。
+  依據（2026-10-18 對碼）：`rag-orchestrator/services/agent/provenance_units.py`
+  （`tool_result = tool_results.get(tool_call_id)`，只在該工具結果內解析來源片段；
+  拒因判定在 `rag-orchestrator/services/agent/verifier.py:_ref_failures`）。
+  ⚠️ 現行引用由系統自原文切出來源片段，`QUOTE_NOT_VERBATIM` 在模型端已不可達
+  （`verifier.py` 的 `_ref_failures` 註解），「上一題」找不到時的拒因以現行 `_ref_failures` 為準。
 
 ---
 
@@ -98,9 +100,9 @@ Verifier 的引用比對是「一句答案 + 一段引文（quote）」對「某
 
 依據：`rag-orchestrator/config/agent_verifier_rules.json`
 （`"negation_terms"` 陣列，10 詞）；
-`rag-orchestrator/services/agent/verifier.py:_verify_citation`
-（`sent_hits`/`quote_hits` 用 `self.rules.negation_terms` 命中判斷，
-`bool(sent_hits) != bool(quote_hits)` ⇒ `POLARITY_MISMATCH`）。
+`rag-orchestrator/services/agent/verifier.py:_ref_failures`（2026-10-18 對碼）
+（`sent_hits`／`unit_hits` 用 `negation` 規則表命中判斷，
+`bool(sent_hits) != bool(unit_hits)` ⇒ `POLARITY_MISMATCH`）。
 （DSP-021 補的「不支持」「不行」屬 Verifier 否定詞表；舊的
 `outline.py:_BOUNDARY_TERMS` 已於 3.2 退役，⛔ 不要再去對照它。）
 
@@ -156,8 +158,8 @@ Verifier 的引用比對是「一句答案 + 一段引文（quote）」對「某
    `。！!？?` 加換行，不是逗號或語意斷點。這代表你的知識 `answer` 裡如果
    該斷句的地方沒有用句號斷開（例如一路用頓號、逗號串到底不加句號），
    模型引用時抓出來的「一句」會過長或過短，容易讓引文與句子對不齊。
-   依據：`rag-orchestrator/services/agent/verifier.py:_split_sentences`
-   （逐字掃描，命中 `_SENTENCE_ENDS` 才切）。
+   依據（2026-10-18 對碼）：`rag-orchestrator/services/agent/provenance_units.py:_split_sentences`
+   （逐字掃描，命中同檔 `_SENTENCE_ENDS` 才切；`verifier.py` 自該檔 import）。
 
 2. **引文至少 6 個字**：模型引用的那段原文（`quote`）NFKC 正規化後長度要
    ≥ 6 字，太短（例如只引「租金」兩字）會被直接判 `QUOTE_TOO_SHORT`。這代表
@@ -165,15 +167,17 @@ Verifier 的引用比對是「一句答案 + 一段引文（quote）」對「某
    語意完整的子句供引用。
    依據：`rag-orchestrator/config/agent_verifier_rules.json`
    （`"min_quote_len": 6`）；
-   `rag-orchestrator/services/agent/verifier.py:_verify_citation`
-   （`len(quote_nfkc) < self.rules.min_quote_len`）。
+   `rag-orchestrator/services/agent/verifier.py:_ref_failures`（2026-10-18 對碼）
+   （`len(unit_nfkc) < self.rules.min_quote_len`，量的是系統切出的來源片段）。
 
 3. **引文必須是原文逐字子字串（NFKC 正規化後）**：模型不能改寫、摘要、
    合併你的原文再引用——引文字面要能在知識原文裡逐字找到（全形/半形、
    大小寫等 NFKC 差異會被抵銷，但用詞本身不能換）。這代表**你怎麼寫，模型
    就只能怎麼引**——用詞含糊或有錯字，模型答錯或引錯字的機率都會提高。
-   依據：`rag-orchestrator/services/agent/verifier.py:_verify_citation`
-   （`quote_nfkc in _nfkc(prov.text)`）。
+   依據（2026-10-18 對碼）：⚠️ 本條的「模型逐字抄引文」機制已改——現行引文由系統自原文切出
+   （`ResolvedRef`），`QUOTE_NOT_VERBATIM` 在模型端不可達，由
+   `rag-orchestrator/tests/unit/agent/test_verifier_req.py` 守住「解析結果必為原文子字串」；
+   判定入口見 `rag-orchestrator/services/agent/verifier.py:_ref_failures`。
 
 4. **覆蓋字元 ≥ 規則值（目前 4 字）**：答案句子與引文之間，扣掉常見虛詞
    （的、了、是、在……等停用字）後的字元交集要 ≥ 4 個。這代表**引文不能只
@@ -182,13 +186,14 @@ Verifier 的引用比對是「一句答案 + 一段引文（quote）」對「某
    依據：`rag-orchestrator/config/agent_verifier_rules.json`
    （`"min_coverage_chars": 4`）；
    `rag-orchestrator/services/agent/verifier.py:_meaningful_chars`
-   （停用字元集合）／`_verify_citation`（`overlap = _meaningful_chars(...) &
-   _meaningful_chars(...)`）。
+   （停用字元集合）／`_ref_failures`（2026-10-18 對碼）（`overlap = fragment_chars &
+   _meaningful_chars(source_unit)`；門檻為 `max(min_coverage_chars, ceil(min_coverage_ratio × 片段有意義字數))`，
+   `min_coverage_ratio` 目前 0.5，句子越長要求越高）。
 
 5. **否定詞一致（極性）**：見第三節，答案句子與引文「有沒有踩到
    `negation_terms` 表裡的詞」必須一致——都有否定詞，或都沒有，不能一邊
    肯定一邊否定。
-   依據：`rag-orchestrator/services/agent/verifier.py:_verify_citation`
+   依據（2026-10-18 對碼）：`rag-orchestrator/services/agent/verifier.py:_ref_failures`
    （`POLARITY_MISMATCH` 分支）。
 
 **好例子**：知識原文寫「合約目前不支援批次匯入，需要逐筆建立」——模型答

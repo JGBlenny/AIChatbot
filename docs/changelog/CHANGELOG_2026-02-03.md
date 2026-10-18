@@ -16,7 +16,7 @@
 
 ### 詳細文檔
 
-📖 [知識庫表單觸發模式實現文檔](../features/KNOWLEDGE_FORM_TRIGGER_IMPLEMENTATION.md)
+📖 [知識庫表單觸發模式實現文檔](../archive/2026-09/KNOWLEDGE_FORM_TRIGGER_IMPLEMENTATION.md)
 
 ---
 
@@ -251,8 +251,8 @@ trigger_mode: 'manual',  // 預設為排查型
 
 ### Documentation 檔案 (5 個)
 
-1. **KNOWLEDGE_FORM_TRIGGER_IMPLEMENTATION.md** (新增) ⭐
-   - 路徑: `docs/features/KNOWLEDGE_FORM_TRIGGER_IMPLEMENTATION.md`
+1. **KNOWLEDGE_FORM_TRIGGER_IMPLEMENTATION.md**（已於 2026-10-18 刪除，歸檔副本見 docs/archive/2026-09/）(新增) ⭐
+   - 路徑: `docs/archive/2026-09/KNOWLEDGE_FORM_TRIGGER_IMPLEMENTATION.md`
    - 內容: 完整記錄知識庫表單觸發模式實現
 
 2. **KNOWLEDGE_ACTION_SYSTEM_DESIGN.md** (更新)
@@ -369,7 +369,7 @@ dist/assets/index-BT4m8h7J.js   784.99 kB │ gzip: 254.56 kB
 ## 📝 相關文件
 
 ### 技術文檔
-- [KNOWLEDGE_FORM_TRIGGER_IMPLEMENTATION.md](../features/KNOWLEDGE_FORM_TRIGGER_IMPLEMENTATION.md) - **知識庫表單觸發模式實現** ⭐
+- [KNOWLEDGE_FORM_TRIGGER_IMPLEMENTATION.md](../archive/2026-09/KNOWLEDGE_FORM_TRIGGER_IMPLEMENTATION.md) - **知識庫表單觸發模式實現** ⭐
 - KNOWLEDGE_ACTION_SYSTEM_DESIGN.md（檔已不存在） - 知識庫動作系統設計
 - SOP_TRIGGER_MODE_UI_UPDATE_2026-02-03.md（檔已不存在） - 前端 UI 優化詳細說明
 - SOP_TYPES_ANALYSIS_2026-01-22.md（檔已不存在） - 觸發模式類型分析

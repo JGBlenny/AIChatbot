@@ -14,7 +14,7 @@
 - 日常維護部署
 
 **何時使用版本特定文件：**
-- 有資料庫遷移（查看 `docs/deployment/版本號/`）
+- 有資料庫遷移（走 `docs/deployment-runbook.md`；歷次部署紀錄見 `docs/deployment/records/`）
 - 有重大功能更新
 - 需要特殊部署步驟
 
@@ -91,7 +91,7 @@ git diff HEAD@{1} --name-only
 | 變更內容 | 需要做什麼 |
 |---------|----------|
 | 後端 Python — `rag-orchestrator` | **原始碼烤進 image → 必 `up -d --build --no-deps rag-orchestrator`**（`restart` 不吃新碼，無 source volume） |
-| 後端 Python — `knowledge-admin-api` | 有掛 `app.py` volume → `restart knowledge-admin-api` 即可 |
+| 後端 Python — `knowledge-admin-api` | 只掛 `app.py`（及 `create_admin.py`、`scripts`）→ 只改 `app.py` 時 `restart knowledge-admin-api` 即可；改 `routes_*.py` 等其他檔須 `up -d --build knowledge-admin-api` |
 | 前端文件（.vue, .js） | 需要重新 build 前端 + 重啟前端服務 |
 | Dockerfile 或 requirements.txt | 需要完整重新構建 |
 | docker-compose.yml | 需要重新啟動所有服務 |
@@ -104,9 +104,11 @@ git diff HEAD@{1} --name-only
 
 #### 方案 A：只改了後端代碼（最快）
 
+> 2026-10-18 對碼：`docker-compose.prod.yml` 的 `rag-orchestrator` 沒有原始碼掛載，只 `restart` 不會載入新 `.py`，須重建映像；`knowledge-admin-api` 只掛載 `app.py`、`create_admin.py`、`scripts`，改 `routes_*.py` 等其他檔同樣要重建。
+
 ```bash
-docker-compose -f docker-compose.prod.yml restart rag-orchestrator
-docker-compose -f docker-compose.prod.yml restart knowledge-admin-api
+docker-compose -f docker-compose.prod.yml up -d --build rag-orchestrator
+docker-compose -f docker-compose.prod.yml up -d --build knowledge-admin-api
 ```
 
 #### 方案 B：改了前端代碼
@@ -275,8 +277,8 @@ docker-compose -f docker-compose.prod.yml up -d
 ## 🔗 相關文檔
 
 - **標準檢查清單**：`DEPLOY_CHECKLIST.md`
-- **特定版本部署**：`docs/deployment/版本號/`
-- **最新版本**：`docs/deployment/2026-01-10/`
+- **歷次部署紀錄**：`docs/deployment/records/`
+- **資料庫遷移與正式機流程**：`docs/deployment-runbook.md`
 
 ---
 

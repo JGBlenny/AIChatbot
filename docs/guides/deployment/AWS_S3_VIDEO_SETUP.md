@@ -25,7 +25,7 @@
 
 ### 功能特性
 
-- ✅ **支援格式**：MP4、WebM、MOV
+- ✅ **支援格式**：MP4、WebM、MOV（另允許 AVI：`rag-orchestrator/routers/videos.py` 的 `allowed_types` 含 `video/x-msvideo`，2026-10-18 對碼）
 - ✅ **檔案大小限制**：500 MB
 - ✅ **儲存結構**：`videos/{vendor_id}/kb-{knowledge_id}_{timestamp}.{ext}`
 - ✅ **CDN 支援**：可選配 CloudFront 加速
@@ -254,7 +254,7 @@ curl http://localhost:8100/api/v1/videos/health
 
 **使用知識管理介面：**
 
-1. 登入 `http://localhost:3000`
+1. 登入知識後台（本地埠為 `.env` 的 `WEB_PORT`，本機慣用 `http://localhost:8087`；2026-10-18 對碼：repo 內無 3000 埠映射）
 2. 進入 **知識管理**
 3. 新增或編輯知識
 4. 上傳測試影片（< 500MB）

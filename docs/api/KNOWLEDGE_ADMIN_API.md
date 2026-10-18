@@ -1,10 +1,10 @@
 # 知識管理 API 參考
 
-> **對碼結果（2026-09-10，`rag-orchestrator/routers/*.py`）**：本檔 `GET /api/vendors` 已併入 `API_REFERENCE_KNOWLEDGE_ADMIN.md`
-> （對應實際路由 `routers/vendors.py` `list_vendors`，掛載路徑 `/api/v1/vendors`）。`POST /api/login`、
-> `PUT /api/knowledge/{id}`、`DELETE /api/knowledge/{id}` 三支端點已不存在——全 repo 查無對應路由
-> （`routers/knowledge.py` 僅有 `/classify`、`/classify/batch`、`/mark-reclassify`、`/stats`、`/reload`、`/health`；
-> app.py 與各 routers 無任何 `login` 路由，含 `API_REFERENCE_KNOWLEDGE_ADMIN.md` 描述的 `POST /api/auth/login` 亦查無實作）。
+> **對碼結果（2026-10-18，`knowledge-admin/backend/`）**：本檔 `GET /api/vendors` 對應 `knowledge-admin/backend/app.py` 的 `list_vendors`（`@app.get("/api/vendors")`）；
+> `rag-orchestrator` 另有同名概念的 `GET /api/v1/vendors`（`routers/vendors.py`），兩者不同服務。
+> `PUT /api/knowledge/{id}`、`DELETE /api/knowledge/{id}` **存在**於 `knowledge-admin/backend/app.py`（`update_knowledge`、`delete_knowledge`）；
+> 登入端點為 `POST /api/auth/login`（`knowledge-admin/backend/routes_auth.py` 的 `login`），**不是** `POST /api/login`。
+> （2026-09-10 版本曾誤稱上述三支「已不存在」，那次只查了 `rag-orchestrator/routers/`，沒查 `knowledge-admin/backend/`。）
 
 ## 概述
 知識管理 API 提供管理知識庫條目的端點，包括 CRUD 操作和業者特定的知識管理。
@@ -30,7 +30,7 @@
 
 ## 認證
 
-### POST /api/login
+### POST /api/auth/login
 
 使用者登入端點
 
@@ -68,11 +68,14 @@
 
 | 參數 | 類型 | 說明 | 預設值 |
 |-----------|------|-------------|---------|
-| `page` | integer | 頁碼 | 1 |
-| `page_size` | integer | 每頁項目數 | 20 |
-| `search` | string | 搜尋詞 | - |
-| `vendor_id` | integer | 按業者篩選 | - |
-| `intent_id` | integer | 按意圖篩選 | - |
+| `search` | string | 搜尋關鍵字 | - |
+| `category` | string | 類別過濾 | - |
+| `business_types` | string | 業態類型過濾（逗號分隔） | - |
+| `universal_only` | string | 只顯示通用知識（true/false） | - |
+| `limit` | integer | 每頁筆數（1-100） | 50 |
+| `offset` | integer | 分頁偏移量 | 0 |
+
+> 2026-10-18 對碼：參數取自 `app.py` 的 `list_knowledge`；回應為 `items`／`total`／`limit`／`offset`。下方回應範例的欄位為早期示意，實際欄位以該函式回傳為準。
 
 #### 回應
 
@@ -90,8 +93,8 @@
     }
   ],
   "total": 100,
-  "page": 1,
-  "page_size": 20
+  "limit": 50,
+  "offset": 0
 }
 ```
 
@@ -103,20 +106,20 @@
 
 | 欄位 | 類型 | 必填 | 說明 |
 |-------|------|----------|-------------|
-| `question` | string | ✅ | 問題文字 |
-| `answer` | string | ✅ | 答案文字 |
-| `vendor_id` | integer | ❌ | 業者 ID（null 為全域） |
-| `intent_id` | integer | ❌ | 關聯的意圖 ID |
-| `trigger_mode` | string | ❌ | 觸發模式（null 或特定模式） |
+| `question_summary` | string | ✅ | 問題摘要（模型 `KnowledgeUpdate`） |
+| `content` | string | ✅ | 答案內容 |
+| `vendor_ids` | integer[] | ❌ | 業者 ID 列表（null 為全域） |
+| `trigger_mode` | string | ❌ | 表單觸發模式（null 或 manual／immediate） |
+
+> 2026-10-18 對碼：完整欄位見 `knowledge-admin/backend/app.py` 的 `KnowledgeUpdate`（POST 與 PUT 共用）。`intent_id` 與 `question`／`answer` 欄位名為早期示意，現行模型無此欄位。
 
 #### 請求範例
 
 ```json
 {
-  "question": "如何申請續約？",
-  "answer": "請在合約到期前30天提出申請",
-  "vendor_id": null,  // 全域知識
-  "intent_id": 10,
+  "question_summary": "如何申請續約？",
+  "content": "請在合約到期前30天提出申請",
+  "vendor_ids": null,  // 全域知識
   "trigger_mode": null
 }
 ```
@@ -311,5 +314,4 @@ async loadVendors() {
 ## 相關文件
 
 - [知識範圍簡化](../features/KNOWLEDGE_SCOPE_SIMPLIFICATION.md)
-- [前端使用指南](../guides/development/FRONTEND_USAGE_GUIDE.md)
 - [API 參考第一階段](./API_REFERENCE_PHASE1.md)

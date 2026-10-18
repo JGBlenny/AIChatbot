@@ -460,7 +460,7 @@ kb.get    → build_visibility_predicate ＋ canon.review_state.content_reviewed
 ⇒ **⛔ 不得把財務／個資等級的資料掛進沒有 viewer 圈定的域**（尤其 `estates`，
 六個域的 `stage` 都含 `tenant`）。要承載那類資料，掛 `bills`／`contracts`。
 
-六個域、15 個合法 `face`（＝六張 `*_FACE_BUILDERS` 註冊表的鍵；查證：以 `ast` 解析工作樹逐表取鍵——⛔ 不要用 `docker exec`，長駐容器落後工作樹，見下方 §6）：
+六個域、16 個合法 `face`（＝六張 `*_FACE_BUILDERS` 註冊表的鍵；查證：以 `ast` 解析工作樹逐表取鍵——⛔ 不要用 `docker exec`，長駐容器落後工作樹，見下方 §6）：
 
 | 域 | face |
 |---|---|
@@ -579,7 +579,7 @@ kb.get    → build_visibility_predicate ＋ canon.review_state.content_reviewed
 | **意圖** | `intents` 表被匯入／匯出／platform_sop／vendors 共 6 支程式讀 | **零路徑**。分類器與它的端點已刪 |
 | **表單** | `form_schemas` CRUD、`routers/forms.py` | 只有 `form_sessions` 這張表被借用來存對話狀態（`form_id='conversational'`） |
 | **測試情境／回測** | `test_scenarios`、`backtest_runs`、`backtest_results` 與後台查詢頁 | **零執行器**。執行機制已刪 |
-| **知識完善迴圈** | `routers/loops.py`（5 條查詢）、`routers/loop_knowledge.py`（審核） | **零執行器**。`services/knowledge_completion_loop/` 只剩 `embedding_client.py` |
+| **知識完善迴圈** | `routers/loops.py`（5 條查詢）、`routers/loop_knowledge.py`（審核） | **零執行器**。`services/knowledge_completion_loop/` 的程式只剩 `embedding_client.py`（目錄另有 `__init__.py`、`create_missing_indexes.sql`） |
 | **未釐清問題** | `routers/unclear_questions.py`（7 條 CRUD） | **不再有新資料**——寫入點隨 `chat.py` 刪除 |
 
 ⚠️ **SOP 特別注意**：後台每次存 SOP 仍會呼叫 `generate_sop_embeddings_async` 真的去算向量

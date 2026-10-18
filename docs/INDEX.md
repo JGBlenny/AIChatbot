@@ -106,7 +106,6 @@
 
 | 文檔 | 用途 |
 |------|------|
-| [批次測試標準](./testing/BATCH_TEST_STANDARDS.md) | 測試規範 |
 | [Lookup 系統測試](./testing/LOOKUP_SYSTEM_TEST_GUIDE.md) | Lookup 測試方式 |
 | [API 整合測試](./testing/api-integration-testing-guide.md) | API 測試指南 |
 

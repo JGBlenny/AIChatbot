@@ -1,12 +1,10 @@
 # Knowledge Admin API 參考文件
 
-> **對碼 `KNOWLEDGE_ADMIN_API.md`（6 支精簡版）差集結果**（`rag-orchestrator/routers/*.py`，2026-09-10）：
-> `GET /api/vendors` 對應 `routers/vendors.py`（router `"" GET`，實際掛載路徑為 `/api/v1/vendors`）——**已併入本檔**（見「業者 API」相關節）；
-> `POST /api/login`、`PUT /api/knowledge/{id}`、`DELETE /api/knowledge/{id}` 全 repo 查無對應路由（`grep -rn "@router\." rag-orchestrator/routers/*.py` 及 `app.py`
-> 無 login 端點）——**端點已不存在**。
-> 🔴 **2026-09-12 補正**：原文說「`routers/knowledge.py` 僅有 `/classify`…」——
-> **該檔本身已於 2026-09-11 刪除**（正對照：同目錄 `vendors.py` 仍在），
-> `POST /api/v1/knowledge/classify` 實測 404，連這幾支也不存在了，`KNOWLEDGE_ADMIN_API.md` 該三節為過時描述。
+> **2026-10-18 對碼更正**（`knowledge-admin/backend/`）：
+> - `PUT`／`DELETE /api/knowledge/{id}` 存在（`app.py` 的 `update_knowledge`、`delete_knowledge`）；登入為 `POST /api/auth/login`（`routes_auth.py` 的 `login`，router prefix `/api/auth`），**有實作**。2026-09-10 版「查無實作」的結論只查了 `rag-orchestrator/routers/`，查錯服務。
+> - 知識後台自己的業者端點是 `GET /api/vendors`（`app.py` 的 `list_vendors`）；`GET /api/v1/vendors` 屬 `rag-orchestrator`（`routers/vendors.py`），本檔「業者管理 API」節描述的是後者。
+> - 本檔下列項目與程式不符，已於各節就地標示：`GET /api/knowledge` 的 `business_scope`／`vendor_ids`／`sort_by`／`order`／`page`／`page_size` 參數；`/api/knowledge/{id}/intents` 兩支；`/api/backtest/run`、`status`、`results` 三支（實際為 `/api/backtest/runs...`）。
+> - 2026-09-12 補正：`rag-orchestrator/routers/knowledge.py` 已於 2026-09-11 刪除（正對照：同目錄 `vendors.py` 仍在），`POST /api/v1/knowledge/classify` 實測 404。
 
 **Base URL:** `http://localhost:8000`
 **版本:** v1.0
@@ -58,13 +56,14 @@ Knowledge Admin API 使用 **JWT Token** 認證。
 
 | 參數 | 類型 | 必填 | 說明 |
 |------|------|------|------|
-| `search` | string | ❌ | 搜尋關鍵字（問題或答案） |
-| `business_scope` | string | ❌ | 業務範圍過濾 (external/internal/both) |
-| `vendor_ids` | string | ❌ | 業者 ID 過濾（多個 ID 用逗號分隔，例如：1,2,3） |
-| `page` | integer | ❌ | 頁碼（預設: 1） |
-| `page_size` | integer | ❌ | 每頁筆數（預設: 20） |
-| `sort_by` | string | ❌ | 排序欄位 (created_at/priority) |
-| `order` | string | ❌ | 排序方向 (asc/desc) |
+| `search` | string | ❌ | 搜尋關鍵字 |
+| `category` | string | ❌ | 類別過濾 |
+| `business_types` | string | ❌ | 業態類型過濾（逗號分隔） |
+| `universal_only` | string | ❌ | 只顯示通用知識（true/false） |
+| `limit` | integer | ❌ | 每頁筆數（預設 50，1-100） |
+| `offset` | integer | ❌ | 偏移量（預設 0） |
+
+> 2026-10-18 對碼：以上取自 `knowledge-admin/backend/app.py` 的 `list_knowledge`。早期版本列的 `business_scope`、`vendor_ids`、`page`、`page_size`、`sort_by`、`order` 查詢參數**不存在**（未實作）。
 
 **範例**:
 
@@ -165,17 +164,17 @@ curl http://localhost:8000/api/knowledge/123
 | 參數 | 類型 | 必填 | 說明 |
 |------|------|------|------|
 | `question_summary` | string | ✅ | 問題摘要 |
-| `answer` | string | ✅ | 答案內容（支援 Markdown） |
+| `answer` | string | ✅ | 答案內容（支援 Markdown）；2026-10-18 對碼：`app.py` 的 `KnowledgeUpdate` 欄位名為 `content`，以該模型為準 |
 | `keywords` | array[string] | ❌ | 關鍵字 |
 | `business_types` | array[string] | ❌ | 業態類型 |
 | `target_user` | array[string] | ❌ | 目標用戶 |
 | `priority` | integer | ❌ | 優先級 (0-10，預設 0) |
-| `business_scope` | string | ❌ | 業務範圍 (預設 both) |
+| `business_scope` | string | ❌ | 業務範圍 (預設 both)；未實作（2026-10-18 對碼：`KnowledgeUpdate` 無此欄位） |
 | `vendor_ids` | array[integer] | ❌ | 業者 ID 列表（支援多業者關聯，例如：[1, 2, 3]） |
 | `form_id` | string | ❌ | 關聯表單 ID |
 | `video_url` | string | ❌ | 影片連結 |
 | `categories` | array[string] | ❌ | 主題分類（多值；唯一真實來源。單數 `category` 已退役，僅承載文件角色保留值） |
-| `intent_ids` | array[integer] | ❌ | 意圖 ID 列表 |
+| `intent_ids` | array[integer] | ❌ | 意圖 ID 列表；未實作（2026-10-18 對碼：`KnowledgeUpdate` 無此欄位） |
 
 **範例**:
 
@@ -316,6 +315,8 @@ curl -X POST http://localhost:8000/api/knowledge/regenerate-embeddings \
 
 ### POST /api/knowledge/{knowledge_id}/intents
 
+> ⚠️ **未實作（2026-10-18 對碼）**：`knowledge-admin/backend` 無此路由。以下為早期設計描述。
+
 新增知識意圖關聯
 
 **權限**: `knowledge:update`
@@ -356,6 +357,8 @@ curl -X POST http://localhost:8000/api/knowledge/123/intents \
 ---
 
 ### DELETE /api/knowledge/{knowledge_id}/intents/{intent_id}
+
+> ⚠️ **未實作（2026-10-18 對碼）**：`knowledge-admin/backend` 無此路由。以下為早期設計描述。
 
 移除知識意圖關聯
 
@@ -595,6 +598,8 @@ curl -X POST http://localhost:8000/api/test/unclear-questions/100/convert \
 
 ## 回測 API
 
+> ⚠️ **2026-10-18 對碼**：現行回測端點只有三支，皆在 `knowledge-admin/backend/app.py`：`GET /api/backtest/runs`（`list_backtest_runs`）、`GET /api/backtest/runs/{run_id}/grade-distribution`、`GET /api/backtest/runs/{run_id}/results`。下方 `POST /api/backtest/run`、`GET /api/backtest/status`、`GET /api/backtest/results` 三節為早期設計，**未實作**。
+
 ### POST /api/backtest/run
 
 執行回測
@@ -636,6 +641,8 @@ curl -X POST http://localhost:8000/api/backtest/run \
 
 ### GET /api/backtest/status
 
+> 未實作（2026-10-18 對碼）
+
 檢查回測執行狀態
 
 **範例**:
@@ -663,6 +670,8 @@ curl http://localhost:8000/api/backtest/status
 ---
 
 ### GET /api/backtest/results
+
+> 未實作（2026-10-18 對碼），現行為 `GET /api/backtest/runs/{run_id}/results`
 
 取得回測結果
 
@@ -1494,7 +1503,7 @@ curl -X POST http://localhost:8000/api/category-config/7/remove-from-knowledge \
 
 ### GET /api/v1/vendors
 
-取得業者列表（`routers/vendors.py` `list_vendors`）
+取得業者列表（`rag-orchestrator/routers/vendors.py` 的 `list_vendors`；⚠️ 屬 rag-orchestrator 服務，知識後台自己的端點為 `GET /api/vendors`）
 
 **Query Parameters**:
 

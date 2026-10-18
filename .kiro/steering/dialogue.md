@@ -63,7 +63,7 @@ pm 缺 `role_id` 走同一條鏈。轉人的五個來源見 `AGENTIC_MCP_ARCHITE
 
 ## 面向（face）速查
 
-**六域 15 個 face**，註冊時由 `_jgb2_spec(domain, sorted(builders.keys()))` **現算**——
+**六域 16 個 face**（bills 5、contracts 5、accounts 2、repairs 2、iot 1、estates 1；各域 `*_FACE_BUILDERS`，合約域名為 `FACE_BUILDERS`，位於 `services/jgb/<域>.py`），註冊時由 `_jgb2_spec(domain, sorted(builders.keys()))` **現算**——
 ⛔ 不是資料驅動、加一個 key 不等於加一個能力（face 只選 builder，資料源硬編在 `query_<域>`）。
 builder 簽名是單列 ⇒ **跨列彙總表達不出來**。擴充判準見
 [`docs/architecture/facet-architecture.md`](../../docs/architecture/facet-architecture.md)。
@@ -87,7 +87,7 @@ API grounding 回 N 筆時：`N ≤ candidate_cap` → 直接列候選供選序�
 
 ## 受眾只有兩種
 
-`prospect` 與 `property_manager` 有 canon 正本（`ls rag-orchestrator/canon/*.md`）。
+對話層的受眾是 `prospect` 與 `property_manager`。知識正本只有一份「圖書館」：`rag-orchestrator/canon/jgb/A.md … I.md`（九架）＋衍生物 `CATALOG.md`（`ls rag-orchestrator/canon/jgb/`；說明見 `rag-orchestrator/canon/README.md`）；受眾不再各有一份正本，隔離改由 `canon_assembler.build_outline` 依細目的 `target_user`＋`business_types` 篩選。
 **`tenant` 在對話層不存在**：`AGENT_TURN_SPEC["stage"]` 無 tenant 鍵 ⇒ `agent.turn` 永不可見。
 ⚠️ 但 `kb.search`／`help.read`／六域 `jgb2.query.*` 的 `stage` **含 tenant**——
 資料存取層已開、缺的是對話層。⚠️ `audience_of` 把「其餘全部（含 `target_user=None`）」
