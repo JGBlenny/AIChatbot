@@ -224,9 +224,9 @@ M0 階段：
 ③**`agent.turn` 把 `property_manager` 標成「—」，與程式相反**
 （`AGENT_TURN_SPEC["stage"] = {'prospect': 'M1', 'property_manager': 'M1'}`，DSP-037）。
 
-**全部 16 支**（`stage` 鍵即可見受眾）。
+**全部 22 支**（`stage` 鍵即可見受眾）。
 查證：`grep -n "reg.register" rag-orchestrator/services/agent/mcp_facade.py`
-（7 支顯式 ＋ 六域 `jgb2.query.*` 迴圈 ＋ `ACTION_SPECS` 2 支 ＋ `agent.turn`）。
+（7 支顯式 ＋ 六域 `jgb2.query.*` 迴圈 ＋ `jgb2_stats.STATS_SPECS` 3 支 ＋ `ACTION_SPECS` 5 支 ＋ `agent.turn`）。
 ⛔ **不要用 `docker exec` 逐支讀**——長駐容器跑的是映像、可能落後工作樹（見 §6 兩容器陷阱）。
 
 | 工具 | prospect | property_manager | tenant |
@@ -238,8 +238,18 @@ M0 階段：
 | `session.slots.get`／`session.slots.set` | ✅ | ✅ | ✅ |
 | `confirm.request` | ✅ | ✅ | ✅ |
 | `jgb2.query.{bills,contracts,accounts,meters,estates,repairs}` | — | ✅ | ✅ |
-| `jgb2.action.{bill_due_extend,repair_create}` | — | ✅ | ✅ |
+| `jgb2.stats.{unpaid_bills,in_progress_repairs,expiring_contracts}` | — | ✅ | — |
+| `jgb2.action.{bill_due_extend,repair_create,estate_create,contract_create,manual_bill_create}` | — | ✅ | ✅ |
 | **`agent.turn`** | ✅ | ✅ | **—** |
+
+⚠️ **`kb.search` 的「可見」要分兩層看**：表中 ✅ 是**門面**（`tools/list`、外部 MCP client）。
+服務端內部那個模型看得到與否，**依資料狀態**決定：啟動時查舊知識庫 `knowledge_base` 的已審列數
+（`mcp_facade.gate_kb_search_on_reviewed_rows`），**零列已審 ⇒ `kb.search` 不給模型**
+（`ToolRegistry.hide_from_model` 把它改成 `facade_only`；模型看不到也叫不了，門面照列、
+外部 client 照常可呼叫）；已審列數 > 0 ⇒ 維持提供給模型。原因：`kb.get` 只放行已審列，
+而 `kb.search` 的檢索器只過濾可見性，零列已審時它列出的每一筆模型都開不了。
+判定只在啟動時做一次（重啟才重判）；查詢失敗 ⇒ 維持原狀（模型仍看得到）。
+查證：`grep -n "gate_kb_search_on_reviewed_rows\|def hide_from_model" rag-orchestrator/services/agent/mcp_facade.py rag-orchestrator/services/agent/tools/registry.py`。
 
 ⚠️ **`jgb2.action.*` 另有兩道閘**（`scope="write"` ＋ `mcp_only=True`）：
 `identity.entry == "mcp"` **且** `AGENT_WRITE_TOOLS_ENABLED=true` 才可見（DSP-038-1）。
@@ -275,10 +285,13 @@ M0 階段：
 
 ```jsonc
 // tools/call → name: "agent.turn"
-{ "message": "我有 600 戶，你們的合約怎麼建立？", "image_urls": [] }   // message 0–2000 字（可空）；image_urls 選填 ≤10；兩者不得皆空
+{ "message": "我有 600 戶，你們的合約怎麼建立？", "image_urls": [] }   // message 0–2000 字（可空）；image_urls 選填 ≤10；與 file_urls 三者不得皆空
 ```
 
-**只有 `message` 這一個參數**。⛔ 沒有 `dialog_ref`、⛔ 不能帶對話歷史、
+**參數只有五個**（`AGENT_TURN_SPEC`，`additionalProperties: false`）：`message`（必填，0–2000 字）、`image_urls`（選填）、
+`context`（選填，≤500 字，呼叫端提供的本回合背景資訊，⛔ 不當成使用者說的話）、`attachment_purpose`（選填，`repair`｜`document`，預設 `repair`）、
+`file_urls`（選填，只在 `attachment_purpose=document` 時可帶）；`message` 可空，但與 `image_urls`、`file_urls` 不得三者皆空。
+（2026-10-17 依程式更正：前一版寫「只有 `message` 這一個參數」。）⛔ 沒有 `dialog_ref`、⛔ 不能帶對話歷史、
 ⛔ 不能帶任何身分鍵（`vendor_id`／`role_id`／`user_id`／`target_user`／`mode`
 一律在服務端被剝掉並記進 trace）。身分與 session 全部來自 `X-JGB-Identity`。
 
@@ -323,8 +336,10 @@ MCP 工具結果是一次回完的，**首字＝整段完成**（決策 15 明�
 ### 逾時
 
 `AGENT_TURN_TIMEOUT_S`（預設 **30 秒**）——刻意大於回合預算 `Budget.deadline_s`
-（20 秒），⛔ 不是門面對其他工具那個 3 秒。逾時或呼叫被取消 ⇒ 回 `TOOL_TIMEOUT`，
-而且**這一回合的狀態不會被存下來**（⛔ 不落半寫），你可以直接重試。
+（20 秒），⛔ 不是門面對其他工具那個 3 秒。逾時 ⇒ 回 `TOOL_TIMEOUT`；呼叫被取消（連線中斷）則不回任何結果
+（`_agent_turn` 只接 `asyncio.TimeoutError`，2026-10-17 依程式更正）。兩種情況**這一回合的狀態都不會被存下來**
+（⛔ 不落半寫），你可以直接重試。
+正式機設 `AGENT_TURN_TIMEOUT_S=90`（為了容納文件回合）；呼叫端自己的逾時須大於實際生效值。
 
 ### 每小時上限
 
@@ -416,4 +431,4 @@ DSP-011 成立的前提是「`/mcp` 只有上游／內部呼叫者」。以下�
 | `AGENT_TRACE_WINDOW_DAYS` | `7` | `agent_trace` 查詢時間窗（`services/agent/trace_view.py`） |
 | `JGB2_CANDIDATE_CAP` | `5` | `jgb2.query.*` 候選列筆數上限（`services/agent/tools/jgb2.py`） |
 
-`AGENT_BUDGET_TOOL_CALLS`／`AGENT_BUDGET_REWRITES`／`AGENT_BUDGET_DEADLINE_S`（預設 4／2／20.0；DSP-040 起 `REWRITES` 只對**機敏類**拒因計數，引用類拒因只記錄不重寫——`AGENT_VERIFIER_MODE=grounding_observe`；demo 起法另設 `DEADLINE_S=45`）：由 `services/agent/bootstrap.py:budget_from_env` 讀取（2026-09-05 補上；5.3 查證時發現 design 列了但程式沒讀），壞值／≤0 退回預設。
+`AGENT_BUDGET_TOOL_CALLS`／`AGENT_BUDGET_REWRITES`／`AGENT_BUDGET_DEADLINE_S`（程式預設 4／2／20.0；DSP-040 起 `REWRITES` 只對**機敏類**拒因計數，引用類拒因只記錄不重寫——`AGENT_VERIFIER_MODE=grounding_observe`；正式機設 `AGENT_BUDGET_TOOL_CALLS=3`、`AGENT_BUDGET_DEADLINE_S=20`，`docker-compose.prod.yml` 已宣告 `AGENT_BUDGET_TOOL_CALLS`）：由 `services/agent/bootstrap.py:budget_from_env` 讀取（2026-09-05 補上；5.3 查證時發現 design 列了但程式沒讀），壞值／≤0 退回預設。

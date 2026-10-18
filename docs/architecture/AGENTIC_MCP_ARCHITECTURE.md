@@ -46,8 +46,9 @@
 ⚠️ `routers/agent_entry.py` **不在這張清單上**——它是**遷移橋**（任務 2.2／R9）：站在舊鏈 `chat.py` 的請求路徑上分流，⛔ 不是門面也不是端點；上游五樣相依全隨 `chat.py` 刪除，⛔ 掛路由救不活。
 `run_turn` 的簽名在 `mcp_facade` 裡被註解為「**REST／影子／回測共用的介面**」。
 
-⚠️ **本系統只有 MCP server，沒有對外的 MCP client**：`mcp.client`（`mcp.Client`／`mcp.client.streamable_http.streamable_http_client`；⛔ **不是 `ClientSession`，那個符號全 repo 0 命中**）全 repo
-只在兩支整合測試出現；`runtime.py` ⛔ 不 import `mcp`，模型呼叫工具走 `registry.call`，
+⚠️ **本系統只有 MCP server，沒有對外的 MCP client**：MCP client 全 repo 只出現在測試工具裡——兩支整合測試用 `mcp.client`
+（`mcp.Client`／`mcp.client.streamable_http.streamable_http_client`），煙霧測試腳本 `scripts/smoke/mcp_smoke.py` 用 `ClientSession`
+（2026-10-17 更正：前一版寫「`ClientSession` 全 repo 0 命中」，與該腳本不符）；三者都是拿 client 打本系統自己的 server；`runtime.py` ⛔ 不 import `mcp`，模型呼叫工具走 `registry.call`，
 **in-process**。
 
 🔴 **⛔ 「門面之一」⛔ 不等於「門面很薄」**（2026-09-12 兩次對抗性演練逼出：
@@ -58,7 +59,8 @@
 `async def _agent_turn(identity: Identity, args: dict) -> ToolResult`——**協定無關**，
 本身就是一支一般工具。那 13 個順序即契約的步驟（形狀檢查 → outline fail-closed
 **排在 `store.load` 之前** → 配額**最壞值預扣排在抓檔之前** → 命名空間 → 過期**先 close 再 start**
-→ 前處理 → `wait_for(run_turn)` → `pop("outline")` → `stamp_last_turn` → `store.save`）
+→ 前處理 → `wait_for(run_turn)` → `stamp_last_turn` → `store.save`；2026-10-17 更正：已無 `pop("outline")` 這一步——
+候選章節由 `runtime._select_outline` 每回合從正本現組，`agent_state` 沒有大綱鍵）
 **全在這個函式體內**，新門面的工作是**接上它**。
 ⛔ `_make_agent_turn` 的 docstring 逐字寫著「**⛔ 不另寫第二條回合邏輯**（R3.7）」
 ——重做一遍就是違反它。逐步見 §2b 階段 1。
@@ -67,7 +69,7 @@
 
 | 要自己做的 | 為什麼不能照抄 |
 |---|---|
-| 傳輸層：`McpServiceGate`（最外層 ASGI middleware）、`parse_identity`、`resolve_call`、`_make_invoke`（計量 begin／quota／finalize＋速率＋每小時上限）、`build_asgi_app`／`union_specs`／`_ToolListFilter`／`_MountPathNormalizer` | 全是 MCP 協定專屬。`mcp_facade.py` 共 2,486 行，這一層佔大半 |
+| 傳輸層：`McpServiceGate`（最外層 ASGI middleware）、`parse_identity`、`resolve_call`、`_make_invoke`（計量 begin／quota／finalize＋速率＋每小時上限）、`build_asgi_app`／`union_specs`／`_ToolListFilter`／`_MountPathNormalizer` | 全是 MCP 協定專屬。`mcp_facade.py` 共 2,812 行（2026-10-17 `wc -l`），這一層佔大半 |
 | 🔴 **命名空間身分（安全決策，⛔ 選錯＝重開一個已關掉的 P1）** | 見下方紅字 |
 | **額度計量**（`app.py::usage_metering_middleware` 只對 `/mcp` 動作、刻意不 begin/finalize——不變量 31「門面是唯一寫入者」） | 中介層綁死路徑前綴 |
 | **`GATED_PREFIXES` 要加前綴** | 否則新端點沒有無條件金鑰閘 |
@@ -133,7 +135,7 @@ flowchart LR
 | Runtime | `services/agent/runtime.py`（`AgentRuntime.run_turn`、`_run_confirm_segment`、`_run_select_segment`、`_enforce_tool_scope`、`_apply_scope_exit`、`_scope_gate_confirm_request`、`_begin_pending_confirm`、`_finalize`） | 機器值程式段、模型迴圈、工具結果包裝、範圍守門、固定句、trace | 不讓模型判「同一戶」「同意詞」 |
 | 工具註冊 | `services/agent/tools/registry.py`（`ToolRegistry.call`、`register`、`_validate_value`、`ToolError`） | 四步：可見性（stage×旗標）、速率、schema、執行；寫入工具強制 `mcp_only`＋已兌現 | `_validate_value` 實作的是 `type`／`enum`／`required`／`additionalProperties`／`maxLength`／`minLength`／`maximum`／`minimum`／`items`（遞迴）。⛔ **無 `maxItems`／`pattern`**（兩者 0 命中，正對照：`maxLength` 有命中）——⚠️ 前一版寫「只有四個」會讓人以為寫 `minimum` 不會被擋，實際會 |
 | 查詢工具 | `services/agent/tools/jgb2.py`（`query_bills/contracts/estates/meters/repairs/accounts`、`_ok_single` 帶 `scope.estate_id`） | face 封閉列舉、ref／keyword 縮小、facts 由 formatter 決定性組句 | 不讓模型算數字（逾期天數程式算） |
-| 寫入工具 | `services/agent/tools/action.py`（`bill_due_extend`、`repair_create`、`_resolve_estate`、`_resolve_category`） | 形狀→範圍讀→寫；冪等鍵＝確認 token；分類缺值歸「其他」、急迫缺值 1 | 不模糊比對物件／分類 |
+| 寫入工具 | `services/agent/tools/action.py`（`ACTION_SPECS` 五支：`bill_due_extend`、`repair_create`、`estate_create`、`contract_create`、`manual_bill_create`；另有 `_resolve_estate`、`_resolve_category`） | 形狀→範圍讀→寫；冪等鍵＝確認 token；分類缺值歸「其他」、急迫缺值 1 | 不模糊比對物件／分類 |
 | 確認卡 | `services/agent/tools/confirm.py`（`confirm_request`、`_is_valid_repair_category`、`open_repairs` 注入）、`services/agent/confirm_card.py`（`render`、`category_name_of`、`emergency_status_of`） | 卡文字由程式依 action＋payload 決定性產出；雜湊綁卡；卡外 `hint` | 模型 summary 不上卡 |
 | 照片 | `services/agent/image_fetch.py`、`services/image_recognition_service.py`、`services/s3_image_service.py`（`downscale_image`） | 抓 relay 簽章網址（硬邊界）、縮圖去 EXIF、分批辨識、決定性驗證輸出 | bytes 不落地、不進任何紀錄；描述硬留空 |
 | Verifier | `services/agent/verifier.py`（`OutputVerifier`、`_is_observed`、`_ref_failures`、`_verify_routes`）、`app.py`（`_wrap_verifier_observe_only` 只交模式的相容層） | **模式感知在 `verify()` 內部**：觀察類記進 `verdict.observed` 後**繼續跑後面的類**、照擋類立刻擋（DSP-040／W6-b3） | `observe_only` 只在 `USE_MOCK_JGB_API=true` 允許（否則啟動 raise）；`grounding_observe` 配真 API ⇒ 健檢紅旗 |
@@ -301,7 +303,7 @@ nginx auth_request
 | 1.6 | 配額**最壞值預扣**：`len(image_urls) + len(file_urls) × DOC_MAX_PAGES`；`LIMITS.images_per_hour`／`files_per_hour` | `RATE_LIMITED`（**排在抓檔之前**：一張都不抓） |
 | 1.7 | `namespaced_identity` ⇒ `mcp:{api_key_id}:{vendor_id}:{session_id}` | `INVALID_INPUT`（超長） |
 | 1.8 | `store.load` → `is_expired`（30 分鐘）⇒ **先 `close` 舊列再 `start` 新列**（⛔ 順序不得顛倒：先 start 再 close 會把新列一起關掉） | — |
-| 1.9 | `outline` 塞進 `agent_state`（**存檔前 `pop`**——⛔ 不得序列化進 `collected_data`） | — |
+| 1.9 | ~~`outline` 塞進 `agent_state`（存檔前 `pop`）~~ 已不適用（2026-10-17 更正）：候選章節由 `runtime._select_outline` 每回合現組，`agent_state` 沒有大綱鍵，⛔ 不得序列化進 `collected_data` 的紀律自然成立 | — |
 | 1.10 | 照片／文件前處理（`prepare_image_turn`／`prepare_document_turn`）——**bytes 只活在區域變數**，⛔ 不進 state／trace／log | — |
 | 1.11 | `asyncio.wait_for(run_turn, AGENT_TURN_TIMEOUT_S − image_elapsed)` | `TOOL_TIMEOUT`；**逾時 ⇒ `store.save` 不執行**，落不了半寫狀態 |
 | 1.12 | `stamp_last_turn` → `store.save` | — |
@@ -544,7 +546,7 @@ pid 不在本 session（含過期後舊鍵）⇒ 固定句「這筆確認已失�
 
 | 工具 | prospect | property_manager |
 |---|---|---|
-| `kb.search` | ❌ **stage 無 prospect 鍵 ⇒ 永不可見** | ✅ |
+| `kb.search` | ❌ **stage 無 prospect 鍵 ⇒ 永不可見** | ✅（門面照列；**給不給模型依資料狀態**：舊知識庫零列已審時不給，見 §8） |
 | `kb.get` | ✅（但見下） | ✅ |
 | `jgb2.query.*` | stage 有，但**沒有 `role_id`／`user_id`** ⇒ 身分閘一律 `NO_MATCH` | ✅ |
 
@@ -800,47 +802,49 @@ file_urls/image_urls
 |---|---|---|
 | 對話歷史、槽位、待確認表（含 receipt、estate_id）、`last_turn_at`、`select_scope` | `form_sessions.collected_data`（命名空間鍵） | 隨會話；過期關列（`state='COMPLETED'`） |
 | 確認 token | `agent_confirmation_tokens`（雜湊、`pending_id`、卡雜湊、TTL） | 兌現即燒 |
-| 用量 | `usage_events`、`openai_cost_tracking`（`operation='image_recognition'`） | 計量 |
+| 用量 | `usage_events`、`openai_cost_tracking`（`operation='image_recognition'`／`operation='document_extraction'`，後者由 `mcp_facade._record_document_cost` 自寫） | 計量 |
 | trace | 決策快照（`/api/v1/agent/trace/{trace_id}`） | 結構化欄位 |
 | 替身寫入 | 行程記憶體（`services/jgb/transport.py`） | 重啟歸零 |
 
 ## 6. 組態
 
-🔴 **⛔ 下表是「demo 期曾用值／建議值」，⛔ 不是現行部署值，⛔ 也不是程式預設**
-（2026-09-12 對抗性演練：一位工程師照本表診斷「哪裡太保守」，**整套診斷建立在錯的
-守門模式上**）。三者是**三組不同的數字**：
+🔴 **三組數字不是同一回事**：程式預設、`docker-compose.prod.yml` 插值預設、正式機 `.env` 實際值。
+診斷「哪裡太保守」前先確認守門模式（2026-09-12 對抗性演練：一位工程師照錯的守門模式做了整套診斷）。
 
-| 鍵 | 本表（demo 建議） | `docker-compose.prod.yml` **插值預設** | 真值 |
+| 鍵 | 正式機值（2026-10-16） | `docker-compose.prod.yml` 插值預設 | 程式預設 |
 |---|---|---|---|
-| `AGENT_VERIFIER_MODE` | `grounding_observe` | **`enforce`** ← 行為相反（引用類也擋） | `.env` |
-| `AGENT_BUDGET_DEADLINE_S` | 45 | **20** | `.env` |
-| `AGENT_TURN_TIMEOUT_S` | 60 | **30** | `.env` |
+| `AGENT_VERIFIER_MODE` | `grounding_observe` | `enforce` ← 行為相反（引用類也擋） | `enforce` |
+| `AGENT_BUDGET_DEADLINE_S` | 20 | 20 | 20.0（`bootstrap.py`） |
+| `AGENT_BUDGET_TOOL_CALLS` | 3 | 4 | 4（`bootstrap.py`） |
+| `AGENT_TURN_TIMEOUT_S` | 90 | 30 | 30.0（`mcp_facade._DEFAULT_AGENT_TURN_TIMEOUT_S`） |
+| `USE_MOCK_JGB_API` | `false` | `true` | — |
 
-compose 的註解自己寫的是「**demo 建議** 45」——那是建議，不是現況。
-⇒ **要知道線上現在跑什麼，只能讀 `.env` 或打健檢**（`/api/v1/agent/health` 的
-`checks.limits`／`verifier_mode`），⛔ 本檔不可能知道，⛔ 不要拿本表當基準算「所以調成 X」。
+正式機值以 `.env` 與健檢（`/api/v1/agent/health` 的 `checks.limits`／`verifier_mode`／`use_mock_jgb_api`）為準；本檔寫的是 2026-10-16 的現況，之後有改以健檢為準。
 
 ⚠️ **一個會靜默假成功的組合**：`AGENT_VERIFIER_MODE=observe_only` 只在
 `USE_MOCK_JGB_API=true` 時允許（否則啟動 raise）。為了讓它不 raise 而去開 mock
 ⇒ **整站替身、寫入只落行程記憶體**——測起來全過，實際什麼都沒寫。⛔ 不得為了
 放寬 Verifier 而開 mock。
 
-（以下為 demo 期的值與說明，正式站見 runbook §20）
+（各鍵的值與說明；部署步驟見 runbook §20）
 
-| 鍵 | demo | 說明 |
+| 鍵 | 正式機 | 說明 |
 |---|---|---|
-| `USE_MOCK_JGB_API` | true | 整站替身；`false` 需 `JGB_API_KEY`（S-5 刻意 raise） |
+| `USE_MOCK_JGB_API`／`JGB_API_BASE_URL` | false／`https://www.jgbsmart.com` | `true`＝整站替身；`false` 需 `JGB_API_KEY`（S-5 刻意 raise）。接真 JGB 時，統計三項與建物件／合約／手動帳單由程式回固定句、不發請求（見 §8） |
 | `AGENT_STAGE`／`AGENT_TURN_ENABLED` | M1／true | 工具面可見與 `agent.turn` 註冊 |
 | `AGENT_WRITE_TOOLS_ENABLED` | true | `jgb2.action.*` 可見（AND stage） |
-| `AGENT_VERIFIER_MODE` | grounding_observe | 正式參數（DSP-040／W6-b3）：`enforce`（預設）／`grounding_observe`（引用類觀察、極性與機敏類照擋）／`observe_only`（全部觀察，只在 mock 允許、否則啟動 raise）。`grounding_observe`×非 mock ⇒ 健檢 `premise.red_flags` 記紅但不阻起 |
+| `AGENT_VERIFIER_MODE` | grounding_observe（業主 2026-10-15 裁示；上線後同批 5 題知識題實測 `enforce` 答 1／5、`grounding_observe` 答 3／5） | 正式參數（DSP-040／W6-b3）：`enforce`（預設）／`grounding_observe`（引用類觀察、極性與機敏類照擋）／`observe_only`（全部觀察，只在 mock 允許、否則啟動 raise）。`grounding_observe`×非 mock ⇒ 健檢 `premise.red_flags` 記紅但不阻起 |
 | `AGENT_VERIFIER_OBSERVE_ONLY` | **已除役（2026-09-10）** | 舊相容旗；`app.py`／`health.py` 讀到即印警告要求改用 `AGENT_VERIFIER_MODE`，⛔ 不再參與解析（查證：`grep -n AGENT_VERIFIER_OBSERVE_ONLY rag-orchestrator/services/agent/health.py`） |
-| `AGENT_MODEL`／`AGENT_REASONING_EFFORT` | **`gpt-6-luna`＋`AGENT_REASONING_EFFORT=none`**（DSP-075，業主 2026-10-15 統一；新功能開發與驗收一律用此設定。正式機 `.env` 是否已切，未查證） | 對話模型。luna 系列帶工具只接受 `reasoning_effort=none`（`low`／`minimal` 回 400）。舊設定 `gpt-5-mini`／low 的模型 `gpt-5-mini-2025-08-07` 於 2026-12-11 停用；`AGENT_MODEL` 空白時回退 `OPENAI_MODEL`（本機 `.env` 為 `gpt-4o-mini`），部署務必明設。歷次量測見帳本 §1s 與 DSP-072 細節 |
-| `IMAGE_RECOGNITION_MODEL` | `gpt-5.6-terra`（線上已切，2026-09-09；備份 `.env.bak-20260909`） | 照片辨識；帳本 §1q：terra 與舊 4o 分類逐張相同，信心 0.93–0.98 vs 0.0–0.9，延遲 2.4–5.8s |
-| `DOCUMENT_EXTRACTION_MODEL` | 預設 `gpt-5.6-luna` | 文件歸納（W9）；合成收據／合約實測全對、抗注入、模糊圖全 null；每千頁 $1.76 vs gpt-4o $17.3 |
-| `OPENAI_TIMEOUT_S` | 線上 25（compose 透傳，commit `10c34a70`） | agent 每次模型呼叫 SDK 逾時＋預設重試，讓掛住的呼叫在門面 60s 內自救 |
-| `IMAGE_URL_ALLOWLIST`／`IMAGE_MAX_BYTES`／`IMAGE_COUNT_CAP_PER_HOUR` | relay.jgbsmart.com／5,000,000／200 | 照片硬邊界；白名單空＝關 |
+| `AGENT_MODEL`／`AGENT_REASONING_EFFORT` | **`gpt-6-luna`＋`none`**（DSP-075，業主 2026-10-15 統一；正式機已採用） | 對話模型。luna 系列帶工具只接受 `reasoning_effort=none`（`low`／`minimal` 回 400）。舊設定 `gpt-5-mini`／low 的模型 `gpt-5-mini-2025-08-07` 於 2026-12-11 停用；`AGENT_MODEL` 空白時回退 `OPENAI_MODEL`（本機 `.env` 為 `gpt-4o-mini`），部署務必明設。歷次量測見帳本 §1s 與 DSP-072 細節 |
+| `IMAGE_RECOGNITION_MODEL` | `gpt-6-luna` | 照片辨識；程式端對 gpt-6 系列送 `reasoning_effort=none`（站內幫手 S3 收尾） |
+| `DOCUMENT_EXTRACTION_MODEL` | `gpt-6-luna`（程式預設 `gpt-5.6-luna`） | 文件歸納（W9）；同上 `reasoning_effort=none` |
+| `OPENAI_TIMEOUT_S` | 25（runbook §20-2 值；正式機現值待查） | agent 每次模型呼叫 SDK 逾時＋預設重試，讓掛住的呼叫在門面逾時內自救 |
+| `IMAGE_URL_ALLOWLIST` | 未設（預設 `relay.jgbsmart.com`） | 抓圖白名單；有設值是**取代**、不是附加；設成空字串＝全擋；白名單內除 relay 外每個 host 都必帶 `exp`。JGB 專用上傳網域尚未加入 |
+| `IMAGE_MAX_BYTES`／`IMAGE_COUNT_CAP_PER_HOUR` | 5,000,000／200 | 照片硬邊界 |
+| `AGENT_ASSISTANT_KEY_IDS` | `101`（站內幫手金鑰，限定 vendor 4、非內部） | 列入者 `X-JGB-Identity` 缺 `user_id` ⇒ 400 `IDENTITY_MISSING_USER_ID`；未設或空字串＝不對任何金鑰啟用（靜默）；含非整數＝啟動失敗（`mcp_facade._ASSISTANT_KEY_IDS_ENV`） |
+| `DOCUMIND_BASE_URL`／`DOCUMIND_TOKEN` | 未設 | 謄本解析；未設或不合規組合（非 https、無 Token）＝謄本功能關閉，使用者看到「未啟用」固定句 |
 | 額度與速率**五道上限**（`AGENT_TURN_CAP`／`RATE_PER_MIN`／`KB_GET_CAP`／`IMAGE_COUNT_CAP_PER_HOUR`／`FILE_COUNT_CAP_PER_HOUR`）。🔴 **⛔ 每回合預算不在內**——前一版把它一起列進來是錯的，`limits.py` docstring 逐字寫「每回合預算（`Budget`）不在此，仍由 `bootstrap.py` 管（`AGENT_BUDGET_*` env，未變動）」 | 改由 `services/agent/limits.py` 程式內封閉表 | **DSP-045（2026-09-10）**：⛔ 不再讀 env 覆寫（業主：「env 沒人記得」）；預設寬鬆只擋惡意（回合 1200/h、工具 600/min、kb.get 3000/h、照片 600/h、PDF 100/h）；生效值由 `/api/v1/agent/health` 回報 |
-| `AGENT_BUDGET_DEADLINE_S`／`AGENT_TURN_TIMEOUT_S` | ⚠️ **實際部署值不可知**（真值在 `.env`，本文查不到）。可查到的是：compose 預設 `:-20`／`:-30`（`docker-compose.prod.yml`）、程式內建 `20.0`（`bootstrap.py`）／`30.0`（`mcp_facade._DEFAULT_AGENT_TURN_TIMEOUT_S`）。⛔ **前一版寫「部署 45／60」是把 compose 註解的建議值當成事實欄**，同節上表已標明「⛔ 不是現行部署值」卻與此列互斥 | 回合預算／門面逾時；⚠️ 程式內建預設是 `AGENT_BUDGET_DEADLINE_S=20.0`（`bootstrap.py`），三個延遲數字互不對齊，見 §8 |
+| `AGENT_BUDGET_TOOL_CALLS`／`AGENT_BUDGET_DEADLINE_S`／`AGENT_TURN_TIMEOUT_S` | 3／20／90 | 每回合工具呼叫上限／回合預算（秒）／門面逾時（秒）。工具上限與時間上限 2026-10-15 業主「照建議」（本機同批題目量測：上限 4＝答出 12／20，上限 3＝13／20，上限 2＝13／20 但報修首句皆轉人）；門面逾時 90 讓文件回合預算拿滿（`min(DOCUMENT_MAX_BUDGET_S=45, 逾時/2)`）。延遲三層見 §8 |
 | `UVICORN_WORKERS` | 1 | `/mcp` 與行程內計數需單 worker |
 | `MCP_ALLOWED_ORIGINS` | `-` | 伺服器對伺服器不送 Origin |
 
@@ -856,7 +860,7 @@ compose 的註解自己寫的是「**demo 建議** 45」——那是建議，不
 | 情境回測 | 帳本 §1h 劇本（三組共 63 案）；harness 在 scratchpad | 隔離實例 `smoke-rag`＋內部 key |
 | 稽核 | `scripts/audit/check_invariants.sh`（不變量 27–31 為本線） | `make audit` |
 
-## 8. 已知限制（demo 期）
+## 8. 已知限制
 
 - ✅ **`_parse_confirm_value` 的註解與行為不符（2026-09-12 獨立驗證抓到，**同日已修**）**：
   `runtime.py::_parse_confirm_value` 的註解寫「**等值**比對（`fullmatch`、無前後綴）——
@@ -887,10 +891,16 @@ compose 的註解自己寫的是「**demo 建議** 45」——那是建議，不
   ——真正讓功能答不出來的那張**動都不會動**。
   （2026-09-12 對抗性演練：一位工程師規劃「方案與額度」工具時正是被這句導向錯的表。）
   ⚠️ `grounding_observe` 下引用類只觀察、機敏類**照擋**，所以這道會真的擋掉答案。
-- **延遲命題三個數字未對齊**：需求文 `requirements.md` D2／§「延遲」寫 p95 ≤12 秒（業主待裁）；程式內建預設 `AGENT_BUDGET_DEADLINE_S=20.0`（`bootstrap.py`）；部署值 `AGENT_BUDGET_DEADLINE_S=45`／`AGENT_TURN_TIMEOUT_S=60`（compose 註解「demo 建議 45，rewrites=2 路徑 >20s」）。三者是同一命題（回合延遲上限）在 spec／程式預設／實際部署三層各自定的數字，⛔ 尚未有裁決把它們收斂成一個。
-- 照片線的五個案例尚未在 `/mcp` 端到端跑（卡在取得可下載的簽章網址，屬呼叫端側前置）；`scope_exit` 機器可讀鍵未加；confirm 卡回合不接指路句（A1）。
+- **延遲命題的數字不在同一層**：需求文 `requirements.md` D2／§「延遲」寫 p95 ≤12 秒（業主待裁）；回合預算 `AGENT_BUDGET_DEADLINE_S` 程式預設與正式機都是 20 秒；門面逾時 `AGENT_TURN_TIMEOUT_S` 程式預設 30 秒、正式機 90 秒（為了容納文件回合）。三者是同一命題（回合延遲上限）在 spec／回合預算／門面逾時各自定的數字，⛔ 尚未有裁決把它們收斂成一個。正式機量測（2026-10-15，工具上限 3）：知識題 20 題答出 11、中位 4.0 秒、p90 9.0 秒。
+- **接真 JGB 時，JGB 尚未開放的功能由程式回固定句、不發請求**：統計三項（未收帳單、執行中修繕、N 個月內到期合約；`jgb2_stats.NOT_SUPPORTED_TEXT`）與建立物件／合約／手動帳單（`confirm.WRITE_NOT_SUPPORTED_TEXT`，不出確認卡）；runtime 以固定句結束回合（`runtime._is_stats_not_supported`，violation `jgb2_stats_not_supported_exit`）。JGB 開放端點的設計見 `.kiro/specs/agentic-mcp-orchestration/jgb-api-spec-for-jgb-20261015.md`。
+- **「改帳單到期日」在真 JGB 上沒有可用路徑**：程式仍呼叫 `PATCH /agent/v1/bills/{id}`（`JGBSystemAPI` 的 `_patch_request`），該路由在 jgb2 master 與 preview 的 `routes/api.php` 查無（API 規格 §4 #23）；正式路徑待 JGB 回覆。
+- **修繕單照片**：我方有照片時送物件陣列 `broken_photos`，既有 `POST /repairs` 收網址陣列 ⇒ 400（API 規格 §4 #22）；JGB 定案前照片進不了修繕單。正式機 `IMAGE_URL_ALLOWLIST` 未設，JGB 專用上傳網域尚未加入，DocuMind 未設（謄本功能關閉）。
+- **細目索引開機逾時後背景重建**：開機 prepare 逾時（60 秒）後在背景重建（上限 900 秒；`app._prepare_index_in_background`），正式機約需 3～4 分鐘；重建完成前回答只用目錄。
+- **舊知識庫零列已審時 `kb.search` 不給模型**：正式機 `knowledge_base` 有效 926 列、已審 0 列（2026-10-15 量測），`kb.search` 列出的每筆 `kb.get` 都取不到；`mcp_facade.gate_kb_search_on_reviewed_rows` 依資料狀態判定（啟動時一次），門面照列。
+- 驗證關 ⑦（轉人字眼）：字眼出自該句可引用引文時放行（`verifier._uncovered_handoff_mention`）；引文沒有、引文不可引用、只在別句引文、無句子結構 ⇒ 照擋。
+- 工具參數塞身分鍵（`vendor_id`／`role_id`／`user_id`／`target_user`／`mode`／`viewer_user_id`）：現況由 `ToolRegistry.call` **剝除不採用**並記 trace，不回錯誤；其他未宣告鍵 ⇒ `INVALID_INPUT`。是否改為一律拒絕：待業主裁。
 - 速率與配額為行程內計數（單 worker 正確；多 worker 會乘倍）。
-- 替身寫入只在記憶體；正式 `agent/v1` 簽章 client 與 JGB 端 `PATCH bills`、冪等、更新權限為 demo 後切片（需求文 `inputs/jgb-api-needs-line-oa-demo-20260907.md`）。
+
 
 ## 9. 模型行為假設表
 

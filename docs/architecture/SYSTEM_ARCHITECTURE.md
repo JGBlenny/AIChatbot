@@ -49,7 +49,7 @@ AgentRuntime.__init__(provider, registry, verifier, assembler, budget,
 | 部件 | 是什麼 |
 |---|---|
 | `provider` | LLM 出口 |
-| `registry` | `ToolRegistry`，**`build_registry` 無條件註冊 15 支**（7 基礎＋6 `jgb2.query.*`＋2 `ACTION_SPECS`）＋`agent.turn` 第 16 支**僅在 `AGENT_TURN_ENABLED` 為真時註冊、預設 false**（`mcp_facade.agent_turn_enabled` docstring 逐字），且它是門面自己的工具、⛔ 模型叫不到。四步閘見 §2 |
+| `registry` | `ToolRegistry`，**`build_registry` 無條件註冊 21 支**（7 基礎＋6 `jgb2.query.*`＋3 `jgb2_stats.STATS_SPECS`＋5 `ACTION_SPECS`；2026-10-17 依程式更正，前一版寫 15 支）＋`agent.turn` 第 22 支**僅在 `AGENT_TURN_ENABLED` 為真時註冊、預設 false**（`mcp_facade.agent_turn_enabled` docstring 逐字），且它是門面自己的工具、⛔ 模型叫不到。四步閘見 §2 |
 | `assembler` | `PromptAssembler`（system 整回合只有一則） |
 | `candidate_selector(s)` | 大綱候選選取，K=5（見 §2 路 A） |
 | `verifier` | `OutputVerifier`，程式自述**七步**（本文他處拆成九步列，⛔ 不是矛盾——見 `AGENTIC_MCP_ARCHITECTURE.md` §2b 段三） |
@@ -82,7 +82,7 @@ AgentRuntime.__init__(provider, registry, verifier, assembler, budget,
 
 ⚠️ **`/mcp` 是插座，不是對話架構**：它只做驗 key／驗身分／記帳三件事，**零對話邏輯**。
 ⚠️ **本系統只有 MCP server，沒有對外的 MCP client**：`mcp.client`／`ClientSession`
-全 repo 只出現在兩支整合測試裡（拿 client 打自己的 server）；`runtime.py` **不 import `mcp`**，
+全 repo 只出現在測試工具裡——兩支整合測試與煙霧測試腳本 `scripts/smoke/mcp_smoke.py`（都是拿 client 打自己的 server）；`runtime.py` **不 import `mcp`**，
 模型呼叫工具走 `registry.call`，**in-process**，與 MCP 協定無關。
 
 ### MCP 門面收什麼（`mcp_facade.py` 常數）
