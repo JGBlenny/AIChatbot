@@ -1,0 +1,26 @@
+[
+ {
+  "id": "F1-verifier-vs-DSP032",
+  "source": "transcript 2026-10-17T11:08:46Z dispute.py 指令（Verifier 模式值域）vs DECISIONS DSP-032 出處欄",
+  "a": ".claude/DECISIONS.md DSP-040「AGENT_VERIFIER_MODE=grounding_observe（預設）／strict」 ／ 實作:grep -n 'observe_only\\|grounding_observe\\|enforce' rag-orchestrator/services/agent/health.py",
+  "b": ".claude/DECISIONS.md 第 69 行 DSP-033（開頭字串「提案 v6」）；commit b055e48 訊息 ／ 實作:git log --oneline -1 -- .claude/DECISIONS.md；grep -c '提案 v6' .claude/DECISIONS.md",
+  "expect_before": true,
+  "expect_after": false
+ },
+ {
+  "id": "F2-billextend-vs-DSP082",
+  "source": "transcript 2026-10-17T11:53:18Z dispute.py 指令（延期繳費期別）vs DECISIONS DSP-082 出處欄",
+  "a": "rag-orchestrator/services/agent/tools/action.py BILL_DUE_EXTEND_SPEC「缺帳單編號時 estate_name 與 period 兩欄代替它必填」 ／ 實作:grep -n 'async def _resolve_bill_by_period\\|def _filter_bills' rag-orchestrator/services/agent/tools/confirm.py（只檢查 estate_name；spec 為 None ⇒ 不篩）",
+  "b": "rag-orchestrator/services/agent/tools/action.py REPAIR_CREATE_SPEC「description…允許是空字串」 ／ 實作:grep -n 'if action == \"repair_create\":' -A4 rag-orchestrator/services/agent/tools/confirm.py（not payload.get(key).strip() ⇒ missing）；commit acc74326",
+  "expect_before": true,
+  "expect_after": false
+ },
+ {
+  "id": "F3-feerate-same",
+  "source": "重建（reconstructed）：依 dispute.py `_anchors` docstring 的 FEE_RATE 例（同一份 spec、同一符號、措辭不同），原始字串未保存",
+  "a": "docs/spec/billing.md §3 手續費費率應為 3% ／ 實作:services/billing.py FEE_RATE",
+  "b": "docs/spec/billing.md 費率章節 ／ 實作:FEE_RATE 應為 3% 還是 5%（services/billing.py）",
+  "expect_before": true,
+  "expect_after": true
+ }
+]

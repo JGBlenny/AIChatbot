@@ -155,3 +155,10 @@ rag-orchestrator/tmp_outline_judge/
 .agents/skills/outline-curation/raw/
 .agents/skills/outline-curation/journal/
 .codex/hooks/state/
+
+# Codex 用副本（業主 2026-10-18：不進版控；outline-curation 已在版控，不在此列）
+.agents/skills/answer-acceptance-verify/
+.agents/skills/config-governance-review/
+.agents/skills/holdout-validation/
+.agents/skills/retrieval-improvement-loop/
+/AGENTS.md
