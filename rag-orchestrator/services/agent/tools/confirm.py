@@ -60,7 +60,6 @@ from typing import Any, Final, List, Optional, Tuple
 
 from services.agent.bill_period import PeriodSpec, parse_period
 from services.agent.confirm_card import (
-    CLOSED_ACTION_ANY_OF,
     CLOSED_ACTION_EXTRA_KEYS,
     CLOSED_ACTION_FIELDS,
     CONFIRM_ACTIONS,
@@ -79,6 +78,7 @@ from services.agent.confirm_card import (
 #    遲早會分岔成「對得到帳單、印不出卡」。
 from services.agent.confirm_card import _parse_date as _parse_ymd
 from services.agent.identity import Identity
+from services.agent.write_forms import MISSING_LABEL_VOCAB, missing_labels
 from services.agent.tools import jgb2 as jgb2_tools
 from services.agent.tools.action import (
     BILL_DUE_EXTEND_ACTION,
@@ -651,15 +651,9 @@ MISSING_FIELDS_ASK_TEMPLATE: Final[str] = (
     "要完成這筆建立，還需要：{labels}。請補上這些資料，我再幫您整理成確認卡。"
 )
 
-#: 追問句只收的標籤詞彙＝三個新動作封閉欄位表的中文標籤＋「至少給一個」組的標籤。
-#: 2026-10-15 A9：修繕單缺欄位也走程式追問（物件、問題描述）。
-REPAIR_MISSING_LABELS: Final[dict] = {"estate_name": "物件", "description": "問題描述"}
-
-_MISSING_LABEL_VOCAB: Final[frozenset] = frozenset(
-    [f.label for fields in CLOSED_ACTION_FIELDS.values() for f in fields]
-    + [label for groups in CLOSED_ACTION_ANY_OF.values() for _, label in groups]
-    + list(REPAIR_MISSING_LABELS.values())
-)
+#: 追問句只收的標籤詞彙＝5 支寫入動作表單的中文標籤＋「至少給一個」組的標籤——
+#: **由表單導出**（W1 §2.1(1)：`write_forms.MISSING_LABEL_VOCAB`，⛔ 另抄字面表）。
+_MISSING_LABEL_VOCAB: Final[frozenset] = MISSING_LABEL_VOCAB
 
 
 def missing_fields_ask_text(result: ToolResult) -> Optional[str]:
@@ -968,11 +962,13 @@ async def confirm_request(
     if (action in WRITE_NOT_SUPPORTED_ACTIONS
             and getattr(jgb2_tools._get_api(), "use_mock", True) is False):
         return _write_not_supported_result()
-    # 2026-10-15 A9／缺描述：修繕單缺物件或問題描述 ⇒ 回缺欄清單、由程式追問（⛔ 出卡）。
-    # 照片建議的描述已由 runtime 在呼叫前補進 payload，故有照片時不會被當成缺。
-    if action == "repair_create":
-        missing = [label for key, label in REPAIR_MISSING_LABELS.items()
-                   if not isinstance(payload.get(key), str) or not payload.get(key).strip()]
+    # W1（§2.1(1)）：5 支寫入動作的缺欄計算一律走 `write_forms.missing_labels`、在 `render()`
+    # **之前**；缺 ⇒ 回缺欄清單、由程式追問（⛔ 出卡）。封閉三動作的呼叫點**不動**——仍在
+    # `_prepare_closed_action` 的受眾檢查與 `check_closed_keys` 之後（非業者照舊先得 `NO_MATCH`）。
+    # 修繕：照片建議的描述已由 runtime 在呼叫前補進 payload，故有照片時不會被當成缺（A9 不變）。
+    # 延期繳費（明列行為變更）：缺 `days`／缺帳單與物件 ⇒ 改回缺欄清單（原為不帶清單的 `INVALID_INPUT`）。
+    if action in CONFIRM_ACTIONS and action not in CLOSED_ACTION_FIELDS:
+        missing = missing_labels(action, payload)
         if missing:
             return ToolResult(ok=False, error="INVALID_INPUT",
                               data={"missing_fields": missing, "action": action})

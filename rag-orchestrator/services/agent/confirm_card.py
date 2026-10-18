@@ -587,18 +587,12 @@ def missing_required_labels(action: Any, payload: Any) -> list:
     """
     if action not in CLOSED_ACTION_FIELDS or not isinstance(payload, Mapping):
         return []
-    alternatives = _REF_ALTERNATIVES.get(action, {})
-    labels: list = []
-    for f in CLOSED_ACTION_FIELDS[action]:
-        if not f.required or f.kind == "sys_id" or _given(payload.get(f.key)):
-            continue
-        if any(_given(payload.get(alt)) for alt in alternatives.get(f.key, ())):
-            continue
-        labels.append(f.label)
-    for keys, label in CLOSED_ACTION_ANY_OF[action]:
-        if not any(_given(payload.get(k)) for k in keys):
-            labels.append(label)
-    return labels
+    # W1（plan-write-flow-program-owned-20261017 §2.1(1)）：5 支寫入動作的缺欄計算一律走
+    # `write_forms.missing_labels`（封閉三動作的表單由本檔欄位表導出，輸出逐字不變）。
+    # 延遲 import：`write_forms` 本身 import 本檔。
+    from services.agent.write_forms import missing_labels
+
+    return missing_labels(action, payload)
 
 
 def _closed_display(f: _ClosedField, value: Any) -> str:

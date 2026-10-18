@@ -80,6 +80,31 @@ class Sentence(BaseModel):
     )
 
 
+class WriteIntentField(BaseModel):
+    """意圖判斷呼叫回應 `fields` 的一筆（W1b §8.1-1；形狀同 W1 §2.1(2)）。
+
+    ⚠️ `key`／`value` **刻意是開放字串**（理由同 `AgentOutput.ask_target`）：值域外的鍵由
+    程式丟棄並記 violation，⛔ 在 pydantic 層擋。`coerce_numbers_to_str`：模型把 `7` 寫成
+    數字時照收成 `"7"`（值閘會再驗）。
+    """
+    model_config = ConfigDict(coerce_numbers_to_str=True)
+
+    key: str
+    value: str
+
+
+class WriteIntent(BaseModel):
+    """意圖判斷呼叫（`runtime` 另發的一次模型呼叫，W1b §8.1-1）的回應：
+    `{action, fields:[{key, value}]}`；`action="none"`＝不是寫入。
+
+    W1b：⛔ 不再是 `AgentOutput` 的欄位——主輸出的 schema 與改動前逐位相同（驗收 #6）。
+    `action` 同樣是開放字串（值域外 ⇒ 程式丟棄＋`write_intent_out_of_domain`）。
+    ⛔ 本模型只裝形狀；值閘、可見性閘、草稿合併全在 `runtime`／`write_forms`。
+    """
+    action: str
+    fields: list[WriteIntentField] = Field(default_factory=list)
+
+
 class AgentOutput(BaseModel):
     """模型一輪回覆的結構化輸出（`response_format` json_schema strict）。
 
@@ -424,7 +449,8 @@ class VerifierRules(BaseModel):
         return cls.model_validate(data)
 
 
-__all__ = ["Sentence", "AgentOutput", "ASK_TARGETS", "VerdictReason", "VerifierVerdict",
+__all__ = ["Sentence", "AgentOutput", "WriteIntent", "WriteIntentField",
+           "ASK_TARGETS", "VerdictReason", "VerifierVerdict",
            "VerifierRules", "TERM_ID_PATTERN",
            "RuleClass", "RULE_CLASSES", "TurnType", "TURN_TYPES",
            "RULE_NAMESPACES", "RULE_ID_PATTERN", "RuleSpec", "VerifyContext"]

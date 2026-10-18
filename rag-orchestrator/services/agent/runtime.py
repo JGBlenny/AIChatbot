@@ -110,7 +110,7 @@ from services.agent.outline import (
     CandidateOutlineDoc,
     resolve_vendor_business_types,
 )
-from services.agent.output_schema import ASK_TARGETS, AgentOutput, VerifierVerdict
+from services.agent.output_schema import ASK_TARGETS, AgentOutput, VerifierVerdict, WriteIntent
 from services.agent.prompt_assembler import new_nonce, wrap_provenance_data, wrap_tool_data
 from services.agent.question_sensitivity import question_sensitive
 from services.agent.provenance_units import (  # OUTLINE_TOOL_CALL_ID 下沉至葉模組（DSP-029 落地取捨④）
@@ -123,12 +123,15 @@ from services.agent.tools.confirm import (
     CONFIRM_QUICK_REPLY_VALUES,
     CONFIRM_SPEC,
     CONFIRM_VALUE_SEP,
+    _is_valid_repair_category,
     document_confirm_description,
     missing_fields_ask_text,
     payload_digest,
     redeem_pending,
     sha256_hex,
 )
+from services.agent import write_forms as WF
+from services.agent.write_forms import write_draft_enabled_from_env
 from services.agent.tools.jgb2 import NOT_FOUND_SOURCE as _JGB2_NOT_FOUND_SOURCE
 from services.agent.tools.jgb2 import _candidates_text as _jgb2_candidates_text
 from services.agent.tools.jgb2 import _bill_format_date as _jgb2_bill_format_date
@@ -1642,6 +1645,198 @@ def _document_program_message(document: Any, nonce: str) -> Optional["_ProgramMe
     return _ProgramMessage([_ProgramToolCall(f"docprog-{nonce[:8]}", CONFIRM_TOOL_NAME, args)])
 
 
+# ════════════════════════════════════════════════════════════════════
+# W1：寫入草稿由程式掌握（plan-write-flow-program-owned-20261017 §2.1(3)～(5)／DSP-085）
+# W1b：意圖改由專用的意圖判斷呼叫取得、續答由程式依上一句程式追問的欄位接收（同計畫 §8）
+# ════════════════════════════════════════════════════════════════════
+#
+# 程式掌握「要不要進寫入流程、還缺什麼、何時出卡」；模型只負責抽出使用者話裡的欄位值
+# （W1b：**另發一次**意圖判斷呼叫，與主模型並行；主輸出 `AgentOutput` 不再帶寫入意圖）與講話。
+# 卡、雜湊綁卡、兌現（DSP-038）一律不變：程式觸發的那一次 `confirm.request` 走**同一條**工具
+# 迴圈（範圍閘、`WRITE_NOT_SUPPORTED_ACTIONS`、照片覆寫、物件記憶補值、保留 id 檢查全部照舊）。
+# ⛔ 草稿值不進 trace／`decision_snapshot`（只記動作名與鍵名，見 `write_forms.draft_trace_marks`）。
+
+#: 程式觸發那一次 `confirm.request` 的固定摘要（`summary` 只進紀錄、⛔ 不出示，見 `CONFIRM_SPEC`）。
+WRITE_DRAFT_PROGRAM_CONFIRM_SUMMARY = "依對話中使用者提供的欄位建立。"
+#: 程式觸發的 tool_call id 前綴（＋nonce；⛔ 不在 `ReservedCallIds` 內——它是工具呼叫不是資料段）。
+WRITE_DRAFT_PROGRAM_ID_PREFIX = "wdprog-"
+#: 觸發門檻：剩餘期限至少這麼多秒（涵蓋非終結結果時多一次模型呼叫；否則不觸發、保留模型原輸出）。
+WRITE_DRAFT_PROGRAM_MIN_REMAINING_S = 6.0
+#: 草稿注入段的來源代碼與工具標籤（同其他程式資料段的注入紀律；`citable=False`）。
+WRITE_DRAFT_PROVENANCE_SOURCE = "session:write_draft#1"
+WRITE_DRAFT_LABEL = "session.write_draft"
+#: W1b §8.5-4：觸發判斷點等意圖判斷呼叫的上限＝`min(這個秒數, 剩餘期限 − 觸發門檻)`
+#: （probe2 有 4/63 筆 5.5～7.3 秒）。等待用 `asyncio.wait`（⛔ 自動取消）。
+WRITE_INTENT_WAIT_MAX_S = 8.0
+#: W1c §9.1-1／§9.7 F1：程式優先入口等意圖判斷呼叫的上限（秒）。`asyncio.wait` 只判「task 是否
+#: 完成」（⛔ 自動取消）；未完成 ⇒ 不走程式優先，task 原樣留給輸出後觸發點（W1b）與 trace 收尾。
+WRITE_DRAFT_PROGRAM_FIRST_WAIT_S = 3.0
+#: W1c §9.11-3：程式優先等待分級——上限 `WRITE_DRAFT_PROGRAM_FIRST_WAIT_S` 只用在**回合開始時已有草稿**
+#: 的回合；無草稿的回合（多數是知識題）只等這麼多秒（§9.10 根因 4：每個知識回合都先等意圖）。
+#: 未完成的處理不變（§9.7 F1：不消耗、留給輸出後觸發點）。
+WRITE_DRAFT_PROGRAM_FIRST_WAIT_NO_DRAFT_S = 1.0
+#: W1b §8.6-3b：意圖判斷呼叫在組 trace 時仍未完成 ⇒ `cancel()`，prompt token 以
+#: 「輸入字元數 ÷ 這個比值」估算計入（中文正本約 1.1 字元／token，`reference_canon_token_ratio`）。
+WRITE_INTENT_CANCEL_CHARS_PER_TOKEN = 1.1
+#: W1b §8.1-2／安全處置 5b：問句判準（結構規則，⛔ 語意詞表）。先 `sanitize_data_piece`＋NFKC，
+#: 再去尾端空白與句末字元，最後一字是問號或「嗎／呢」⇒ 問句。
+_QUESTION_TRAILING_CHARS = "。！!～~、.…"
+_QUESTION_MARKS = ("？", "?", "﹖")
+_QUESTION_PARTICLES = ("嗎", "呢")
+
+
+def _is_question(text: Any) -> bool:
+    """當句是不是問句（W1b §8.1-2：結構規則）。⚠️「冷氣不冷嗎」這類會被判成問句——業主
+    選項原文已知並接受（再追問一次）。"""
+    s = unicodedata.normalize("NFKC", sanitize_data_piece(text))
+    while True:
+        trimmed = s.rstrip().rstrip(_QUESTION_TRAILING_CHARS)
+        if trimmed == s:
+            break
+        s = trimmed
+    return s.endswith(_QUESTION_MARKS) or s.endswith(_QUESTION_PARTICLES)
+
+
+@dataclass
+class _WriteDraftTurn:
+    """本回合的草稿**回合內狀態**（掛在 `TurnAccumulator.write_draft`；⛔ 不落地）。
+
+    - `draft`：目前的草稿（已過 `write_forms.load_draft` 驗形狀）或 `None`；
+    - `owner`：建立者鍵（`_write_draft_owner`）；
+    - `user_texts`：本會話使用者訊息（`dialog` 的 user 端＋本句）——值閘的唯一比對來源；
+    - `asked`：**上一回合**程式缺欄追問所問欄位的表單鍵（回合開頭從草稿讀出，草稿裡的那一份
+      已立刻寫回 `[]`，W1b 安全處置 1c）；
+    - `had_draft`：回合開始時即有草稿（W1b 安全處置 2d：物件補值只對它生效）；
+    - `frozen`：`asked` 非空且當句是問句 ⇒ 本回合凍結（W1b §8.5-3）；
+    - `created`／`merged`／`caught`／`filled`：觸發條件（W1b §8.1-4：意圖呼叫建立或合併了
+      草稿，或程式接收了值）；
+    - `activity`：本回合有寫入相關動作——沒有就 `idle_turns+1`；
+    - `intent_consumed`：本回合的意圖判斷結果已取用過（只取一次）；
+    - `triggered`：本回合已程式觸發過（每回合上限 1 次）；
+    - `model_confirm_ok`：本回合模型自己呼叫 `confirm.request` 且成功；
+    - `caught_name`／`caught_segment`：本回合前置查詢唯一命中而寫進草稿的物件名稱（系統值）與
+      當句被判為物件名稱的那一段（查詢關鍵字）——W1c §9.11-2 的比對來源（⛔ 落地、⛔ 進 trace）。
+    """
+
+    draft: Optional[dict]
+    owner: str
+    user_texts: list
+    asked: list = field(default_factory=list)
+    had_draft: bool = False
+    frozen: bool = False
+    created: bool = False
+    merged: bool = False
+    caught: bool = False
+    filled: bool = False
+    activity: bool = False
+    intent_consumed: bool = False
+    triggered: bool = False
+    model_confirm_ok: bool = False
+    caught_name: Optional[str] = None
+    caught_segment: Optional[str] = None
+
+
+class _WriteIntentCall:
+    """本回合的一次**意圖判斷呼叫**（W1b §8.1-1、§8.5-4、§8.6-3a／3b）。
+
+    task 由 `AgentRuntime._start_write_intent_call` 建立（`run_program_segments` 未結束回合、
+    `_build_turn_context` 之後）；觸發判斷點以 `asyncio.wait` 等（⛔ 自動取消）。
+    **收尾只在組 trace 的兩處**——`TurnAccumulator.build_trace`（經 `settle_into`）與
+    `AgentRuntime._finish_confirm_turn` 組 `TurnTrace(` 之前（經 `settle`）：
+      - 已完成 ⇒ `usage_metering.add_llm_usage` 計量、token 計入本回合、記 `write_intent_call`；
+      - 已完成但失敗（例外）⇒ 無 token 可計、記 `write_intent_call_failed`；
+      - 未完成 ⇒ `cancel()`、記 `write_intent_call_cancelled`，prompt token 以輸入字元數估算計入。
+    `settle` 冪等（第二次回 `(0, 0, [])`）。
+    """
+
+    def __init__(self, task: "asyncio.Task", *, model: str, input_chars: int,
+                 registry: dict, trace_id: str) -> None:
+        self.task = task
+        self.model = model
+        self.input_chars = int(input_chars)
+        self._registry = registry
+        self._trace_id = trace_id
+        self.settled = False
+
+    def settle(self) -> tuple:
+        if self.settled:
+            return 0, 0, []
+        self.settled = True
+        if self._registry.get(self._trace_id) is self:
+            self._registry.pop(self._trace_id, None)
+        task = self.task
+        if not task.done():
+            task.cancel()
+            pt = int(self.input_chars / WRITE_INTENT_CANCEL_CHARS_PER_TOKEN)
+            usage_metering.add_llm_usage(self.model, {"prompt_tokens": pt, "completion_tokens": 0})
+            return pt, 0, [WF.V_CALL_CANCELLED]
+        if task.cancelled():
+            return 0, 0, [WF.V_CALL_CANCELLED]
+        if task.exception() is not None:
+            return 0, 0, [WF.V_CALL_FAILED]
+        usage = getattr(task.result(), "usage", None)
+        pt = int(getattr(usage, "prompt_tokens", 0) or 0)
+        ct = int(getattr(usage, "completion_tokens", 0) or 0)
+        usage_metering.add_llm_usage(self.model, {"prompt_tokens": pt, "completion_tokens": ct})
+        return pt, ct, [WF.V_CALL]
+
+    def settle_into(self, acc: Any) -> None:
+        """`TurnAccumulator.build_trace` 的收尾掛點：token 就地加進 `acc`、標記進 `acc.violations`。"""
+        pt, ct, marks = self.settle()
+        acc.prompt_tokens += pt
+        acc.completion_tokens += ct
+        for mark in marks:
+            if mark not in acc.violations:
+                acc.violations.append(mark)
+
+    def abort(self) -> None:
+        """回合以例外離開（沒有 trace 可組）⇒ 只撤掉 task 與登記，⛔ 計量（沒有出口可記）。"""
+        self.settled = True
+        if self._registry.get(self._trace_id) is self:
+            self._registry.pop(self._trace_id, None)
+        if not self.task.done():
+            self.task.cancel()
+
+
+def _write_draft_owner(identity: Any) -> str:
+    """草稿建立者鍵：受眾＋role＋user（原值、⛔ 正規化；比照 `_pending_creator`）。
+    下一回合身分與它不同 ⇒ 清掉草稿。"""
+    audience = identity.resolved_audience() if hasattr(identity, "resolved_audience") else None
+    return f"{audience}|{getattr(identity, 'role_id', None)}|{getattr(identity, 'user_id', None)}"
+
+
+def _write_draft_user_texts(agent_state: dict, user_message: str) -> list:
+    """值閘的比對來源＝本會話使用者訊息（`dialog` 的 user 端＋本句）。⛔ 不含助理回覆、資料段。"""
+    texts = [m.get("content") for m in (agent_state.get("dialog") or [])
+             if isinstance(m, dict) and m.get("role") == "user" and isinstance(m.get("content"), str)]
+    if isinstance(user_message, str):
+        texts.append(user_message)
+    return texts
+
+
+def _no_ws(text: str) -> str:
+    return "".join(text.split())
+
+
+def _name_overlap_key(text: str) -> str:
+    """W1c §9.11-2 子字串比對的正規化：NFKC＋去空白（值閘 `text` 比對同樣去空白）。"""
+    return _no_ws(unicodedata.normalize("NFKC", text))
+
+
+def _write_draft_program_message(draft: dict, nonce: str) -> "_ProgramMessage":
+    """程式自己的一次 `confirm.request`：payload＝`{action, **to_payload(草稿欄位)}`。"""
+    action = draft["action"]
+    payload = {"action": action, **WF.to_payload(action, draft.get("fields") or {})}
+    args = json.dumps(
+        {"summary": WRITE_DRAFT_PROGRAM_CONFIRM_SUMMARY,
+         "payload": json.dumps(payload, ensure_ascii=False)},
+        ensure_ascii=False,
+    )
+    return _ProgramMessage([
+        _ProgramToolCall(f"{WRITE_DRAFT_PROGRAM_ID_PREFIX}{nonce[:8]}", CONFIRM_TOOL_NAME, args)
+    ])
+
+
 def _assistant_tool_call_message(message: Any, tool_calls: list) -> dict:
     return {
         "role": "assistant",
@@ -1745,6 +1940,17 @@ class AgentRuntime:
         if cap <= 0:
             raise ValueError("AGENT_MAX_COMPLETION_TOKENS 必須是正整數")
         self._max_completion_tokens: int = cap
+        # W1（§2.1(6)）：`AGENT_WRITE_DRAFT`（on／off；未設或空字串＝on）。其他值 ⇒ 建構期就炸
+        # 並印原因（同上方 effort／cap 的 fail loud）。
+        try:
+            self._write_draft_on: bool = write_draft_enabled_from_env()
+        except ValueError as exc:
+            logger.error("agent_runtime_config_invalid %s", exc)
+            raise
+        # W1b（§8.6-3b）：進行中的意圖判斷呼叫，依 `trace_id` 登記——`_finish_confirm_turn` 組
+        # `TurnTrace(` 前據此收尾（那一支只拿得到 `trace_id`）；收尾即移除，回合以例外離開時
+        # 由 `_run_turn_body` 撤掉（`_WriteIntentCall.abort`）。
+        self._write_intent_calls: dict = {}
         self._tool_timeout_s = tool_timeout_s
         self._status_interval_s = status_interval_s
         # DSP-038／W3：確認兌現段要下的那句 `redeem_pending` 是 Runtime 自己的
@@ -1966,6 +2172,16 @@ class AgentRuntime:
         # `ask_target=None`／`is_fixed=False` 逐字＝原本這裡與下方兩行各自的值，
         # 這條路徑 ⛔ 不進 `handoff_cache`——不傳 `cache`）。
         session = AgentSession(agent_state)
+        # W1b（§8.6-3b／§8.7 #1）：意圖判斷呼叫的收尾掛點之一（另一處是
+        # `TurnAccumulator.build_trace`）——**組 `TurnTrace(` 之前**：已完成 ⇒ 計量並把 token
+        # 加進本回合；未完成 ⇒ `cancel()` 並以估算計入。本回合沒有發意圖呼叫 ⇒ 什麼都不做。
+        intent_call = getattr(self, "_write_intent_calls", {}).get(trace_id)
+        if intent_call is not None:
+            _pt, _ct, _marks = intent_call.settle()
+            prompt_tokens += _pt
+            completion_tokens += _ct
+            violations = list(violations or [])
+            violations += [m for m in _marks if m not in violations]
         trace = TurnTrace(
             trace_id=trace_id,
             tool_calls=list(tool_calls or []),
@@ -2265,6 +2481,8 @@ class AgentRuntime:
             AgentSession(agent_state).write_select_scope(
                 {"type": select_type, "estate_id": str(row_estate)}
             )
+            # W1（§2.1(3) 清除條件）：`select:` 釘住範圍 ⇒ 進行中的寫入草稿作廢。
+            AgentSession(agent_state).clear_write_draft()
 
         return _finish(
             facts,
@@ -2322,6 +2540,10 @@ class AgentRuntime:
                 violations=["confirm_unknown_pending_id"], receipt_id="",
                 outcome=make_outcome("failed", expects="none"),
             )
+
+        # W1（§2.1(3) 清除條件）：使用者兌現或取消確認卡 ⇒ 進行中的寫入草稿一律清掉
+        # （出卡那一刻其實已清；這裡是縱深）。
+        AgentSession(agent_state).clear_write_draft()
 
         def _finish(answer: str, *, receipt_id: str = "", tool_calls=None, violations=None,
                     outcome: Optional[dict] = None, receipt: Optional[dict] = None):
@@ -2697,6 +2919,8 @@ class AgentRuntime:
         session = AgentSession(agent_state)
         # 出卡成功 ⇒ 照片建議用掉了，清掉（⛔ 不讓它再補到下一張無關的單）。
         session.consume_image_suggestion()
+        # W1（§2.1(3) 清除條件）：出卡成功（`confirm_pending`）⇒ 寫入草稿清掉。
+        session.clear_write_draft()
         # 站內幫手 S3（§3h 第 5 點；DSP-076）：收據日期**只作卡外提示**——由文件暫存
         # 取出、接在卡文字之後（⛔ 不進卡、⛔ 不進雜湊、⛔ 不進 dialog）；出卡即清暫存。
         carry = _document_carry_of(agent_state)
@@ -2959,13 +3183,24 @@ class AgentRuntime:
             )
         )
 
+        # W1b（§8.6-3a）：意圖判斷呼叫 task 在這裡建立——程式段未結束回合、`_build_turn_context`
+        # 之後；與下面的主模型迴圈並行。收尾在組 trace 的兩處（見 `_WriteIntentCall`）。
+        self._start_write_intent_call(acc, identity, agent_state, user_message, document)
+
         # ── 第三段：模型迴圈（第四段的四道出口閘由 `exit_gates.finalize` 收尾）──
-        return await self._run_model_loop(
-            acc, identity, user_message, state, agent_state,
-            document=document, cache=cache, tool_specs=tool_specs,
-            visible_names=visible_names, doc_write_face=doc_write_face,
-            reserved_ids=reserved_ids, scope_estate_id=scope_estate_id,
-        )
+        try:
+            return await self._run_model_loop(
+                acc, identity, user_message, state, agent_state,
+                document=document, cache=cache, tool_specs=tool_specs,
+                visible_names=visible_names, doc_write_face=doc_write_face,
+                reserved_ids=reserved_ids, scope_estate_id=scope_estate_id,
+            )
+        except BaseException:
+            # 回合以例外離開（沒有 trace 可組、收尾掛點走不到）⇒ 撤掉意圖 task 與登記，
+            # ⛔ 留下孤兒呼叫。正常出口一律在組 trace 時收尾，這裡不計量。
+            if acc.write_intent_call is not None:
+                acc.write_intent_call.abort()
+            raise
 
     async def _build_turn_context(
         self, identity: Identity, user_message: str, state: dict, agent_state: dict,
@@ -3006,6 +3241,10 @@ class AgentRuntime:
         # `agent_state[LAST_ASK_TARGET_KEY]`，故這裡讀到的必是上一回合的值，
         # ⛔ 不會讀到更早以前殘留的舊訊號。
         last_ask_target = agent_state.get(LAST_ASK_TARGET_KEY)
+        # W1（§2.1(3)）：讀回並驗證寫入草稿、套用回合開頭的清除條件（開關 off／身分不同／
+        # 釘住範圍／看不到寫入工具），建立本回合的草稿狀態（影子回合 ⇒ 不跑，`acc.write_draft=None`）。
+        # W1b：同時讀出上一回合程式追問的欄位（`asked`，讀出即清）與本句是否凍結（問句）。
+        self._write_draft_begin(acc, identity, agent_state, user_message)
         # 2.9 路徑對齊：槽位在 **`collected_data` 頂層**（見 `_slots_for_prompt`）。
         slots = _slots_for_prompt(state)
         # 任務 4.2（Plan §4.1-2）：身分槽位一律由**入口身分**現算後覆寫。
@@ -3078,8 +3317,12 @@ class AgentRuntime:
         #「哪一種類型」。⛔ 不代模型作答、不改變 outcome；⛔ 原 ref／關鍵字不進
         # trace／決策快照（只記 `pre_lookup_trace`）。⚠️ 同 T3 兩段的排法：
         # 排在 DSP-022 那句**之前**——這是使用者這句之前的背景資料。
+        # W1b §8.1-3：草稿缺物件名稱（且符合安全處置 2b／2d／5a 的條件）⇒ 同一條既有前置查詢以
+        # `after_name_ask=True` 跑（⛔ 另開第二條查詢路徑；查無照舊不注入）。
         pre_trigger = _pre_lookup_trigger(
-            user_message, after_name_ask=last_ask_target in _PRE_LOOKUP_NAME_ASK_TARGETS
+            user_message,
+            after_name_ask=(last_ask_target in _PRE_LOOKUP_NAME_ASK_TARGETS
+                            or self._write_draft_name_catch_eligible(acc)),
         )
         if pre_trigger is not None:
             pre_kind, pre_candidate = pre_trigger
@@ -3097,6 +3340,10 @@ class AgentRuntime:
             # ⛔ violation 只留一個無名稱的標記（名稱不得進 trace／決策快照）。
             if pre_carry is not None and _write_estate_carry(agent_state, *pre_carry):
                 acc.violations.append("estate_carry_set")
+            # W1b §8.1-3：草稿缺物件、這句經前置查詢對到**唯一**物件 ⇒ 物件名稱（系統查得的值，
+            # ⛔ 用模型輸出）寫進草稿（條件與凍結判斷在 `_write_draft_catch_name` 內）。
+            if pre_carry is not None:
+                self._write_draft_catch_name(acc, agent_state, pre_carry[0], segment=pre_candidate)
             acc.snapshot.pre_lookup_trace = {
                 "kind": pre_kind, "hits": 1 if pre_outcome == "found" else 0,
             }
@@ -3155,6 +3402,18 @@ class AgentRuntime:
                        citable=True, source=DOCUMENT_PROVENANCE_SOURCE,
                        data={"pages_seen": document.pages_seen,
                              "pages_total": document.pages_total})
+
+        # W1（§2.1(3)）：**進行中的寫入草稿**——只放動作中文名與欄位標籤（⛔ 放使用者值：值
+        # 已在對話歷史裡）；`citable=False`（會話記憶類）、保留 id `wd-<head>`、過
+        # `sanitize_data_piece`；排在 DSP-022 那句**之前**（同 T3 兩段的紀律）。
+        # ⚠️ 問句凍結回合（§8.5-3）⛔ 注入：業主原文「交主模型正常回答」——實測注入這行會把
+        # 主模型推回追問寫入欄位（W1c verifier F1：T 第二句自寫「物件名稱和問題描述」追問）。
+        wd = acc.write_draft
+        if wd is not None and wd.draft is not None and not wd.frozen:
+            draft_text = sanitize_data_piece(WF.draft_injection_text(wd.draft))
+            if draft_text:
+                acc.inject(WRITE_DRAFT_LABEL, ids.write_draft, draft_text,
+                           citable=False, source=WRITE_DRAFT_PROVENANCE_SOURCE)
 
         # DSP-022：當前這句一定是最後一則 user 訊息（歷史由 assembler 從 `dialog` 放前面）。
         acc.messages.append({"role": "user", "content": user_message})
@@ -3268,6 +3527,568 @@ class AgentRuntime:
             and not (keep_confirm and s["name"] == CONFIRM_TOOL_NAME)
         )
 
+    # ------------------------------------------------------------------
+    # W1：寫入草稿（plan-write-flow-program-owned-20261017 §2.1(3)～(5)）＋ W1b（同計畫 §8）
+    # ------------------------------------------------------------------
+    def _write_draft_specs(self, identity: Identity) -> Optional[list]:
+        """`registry.specs_for(identity, stage, for_model=False)`；拿不到（替身沒有 `specs_for`／
+        例外）⇒ `None`（呼叫端一律當看不到，fail-closed）。"""
+        if self.readonly_view:
+            return None
+        specs_for = getattr(self.registry, "specs_for", None)
+        if not callable(specs_for):
+            return None
+        try:
+            return list(specs_for(identity, self._stage, readonly_view=False, for_model=False) or [])
+        except Exception:  # noqa: BLE001 — 拿不到可見性 ⇒ 當看不到
+            return None
+
+    def _write_draft_visible(self, identity: Identity, action: Any) -> bool:
+        """可見性閘：`registry.specs_for(identity, stage, for_model=False)` 看得到
+        `jgb2.action.<action>`、且非 `readonly_view`（比照 `_prepare_closed_action`「別的受眾
+        ⛔ 出一張永遠兌現不了的卡」）。查不到可見性（替身沒有 `specs_for`／例外）⇒ 看不到
+        （fail-closed）。"""
+        if not isinstance(action, str) or action not in WF.FORMS:
+            return False
+        name = f"jgb2.action.{action}"
+        return any(isinstance(s, dict) and s.get("name") == name
+                   for s in (self._write_draft_specs(identity) or []))
+
+    def _write_draft_any_visible(self, identity: Identity) -> bool:
+        """W1b §8.6-3a：看得到**任一** `jgb2.action.*`（意圖判斷呼叫的建立條件之一）。"""
+        names = {f"jgb2.action.{action}" for action in WF.FORMS}
+        return any(isinstance(s, dict) and s.get("name") in names
+                   for s in (self._write_draft_specs(identity) or []))
+
+    def _write_draft_persist(self, acc: TurnAccumulator, agent_state: dict) -> None:
+        """草稿落地（`AgentSession`）＋稽核兩字串（只有動作名與鍵名，⛔ 值）。"""
+        wd = acc.write_draft
+        if wd is None or wd.draft is None:
+            return
+        AgentSession(agent_state).write_write_draft(wd.draft)
+        for mark in WF.draft_trace_marks(wd.draft):
+            if mark.startswith(WF.TRACE_DRAFT_KEYS_PREFIX):
+                # 鍵名清單會隨本回合合併而變：只留最新一筆。
+                acc.violations[:] = [v for v in acc.violations
+                                     if not str(v).startswith(WF.TRACE_DRAFT_KEYS_PREFIX)]
+            if mark not in acc.violations:
+                acc.violations.append(mark)
+
+    def _write_draft_clear(self, acc: TurnAccumulator, agent_state: dict) -> None:
+        AgentSession(agent_state).clear_write_draft()
+        if acc.write_draft is not None:
+            acc.write_draft.draft = None
+
+    def _write_draft_begin(
+        self, acc: TurnAccumulator, identity: Identity, agent_state: dict, user_message: str,
+    ) -> None:
+        """回合開頭：讀回草稿（**一律視為不可信**，`write_forms.load_draft` 驗形狀）並套用
+        清除條件；建立 `acc.write_draft`。影子回合 ⇒ 完全不碰（⛔ 清、⛔ 寫、⛔ 注入）。
+
+        W1b：`asked`（上一回合程式缺欄追問的欄位鍵）讀進回合內狀態後，草稿裡的那一份**立刻
+        經 `AgentSession` 寫回 `[]`**（安全處置 1c：只對緊接的下一回合有效，⛔ 只清副本）；
+        `asked` 非空且當句是問句 ⇒ 本回合凍結（§8.5-3）。"""
+        acc.write_draft = None
+        if self.readonly_view:
+            return
+        session = AgentSession(agent_state)
+        if not getattr(self, "_write_draft_on", False):
+            # 開關 off ⇒ 撤回草稿機制：殘留的草稿清掉（清≠寫），本回合不建、不觸發。
+            session.clear_write_draft()
+            return
+        draft, invalid = WF.load_draft(session.get_write_draft())
+        if invalid:
+            acc.violations.append(WF.V_DRAFT_SHAPE_INVALID)
+            session.clear_write_draft()
+        if agent_state.get(SELECT_SCOPE_KEY) is not None:
+            # 釘住範圍（`select:`）⇒ 草稿清掉，本回合整個草稿機制不跑（不建、不注入、不觸發；
+            # 比照 `_estate_carry_of`）。
+            session.clear_write_draft()
+            return
+        owner = _write_draft_owner(identity)
+        if draft is not None and (
+            draft["created_by_role"] != owner
+            or not self._write_draft_visible(identity, draft["action"])
+        ):
+            session.clear_write_draft()
+            draft = None
+        asked: list = []
+        if draft is not None:
+            asked = list(draft.get("asked") or [])
+            if asked:
+                draft["asked"] = []
+                session.write_write_draft(draft)
+        frozen = bool(asked) and _is_question(user_message)
+        acc.write_draft = _WriteDraftTurn(
+            draft=draft, owner=owner,
+            user_texts=_write_draft_user_texts(agent_state, user_message),
+            asked=asked, had_draft=draft is not None, frozen=frozen,
+        )
+        if frozen:
+            acc.violations.append(WF.V_QUESTION_FROZEN)
+
+    def _write_draft_name_catch_eligible(self, acc: TurnAccumulator) -> bool:
+        """W1b §8.1-3 的執行條件（安全處置 2b／2d／5a 收窄後）：**回合開始即存在**的草稿、
+        其動作表單有物件名稱欄位且尚缺、`asked` 為空或含 `estate_name`、本回合未凍結。
+        （`asked` 恰為一個非名稱文字欄位時整句會填進那一欄 ⇒ 依 2b 已被第二個條件排除。）"""
+        wd = acc.write_draft
+        if wd is None or wd.draft is None or not wd.had_draft or wd.frozen:
+            return False
+        f = WF.FORMS[wd.draft["action"]].field("estate_name")
+        if f is None or f.source != WF.SOURCE_USER_WORDS or f.kind != "text":
+            return False
+        if wd.draft["fields"].get(f.key):
+            return False
+        return not wd.asked or f.key in wd.asked
+
+    def _write_draft_catch_name(
+        self, acc: TurnAccumulator, agent_state: dict, name: Any, *, segment: Any = None,
+    ) -> None:
+        """W1b §8.1-3 物件名稱補值：本句前置查詢對到**唯一**物件 ⇒ 名稱（系統查得：列上有
+        `title` 用 `title`，單筆命中只拿得到查詢關鍵字時用關鍵字，見 `_estate_carry_from_estates_data`；
+        ⛔ 用模型輸出）寫進草稿的 `estate_name`。⛔ 寫進 `contract_ref`（前置查詢只查物件）。
+        凍結判斷包住本呼叫（安全處置 5a：`_write_draft_name_catch_eligible` 對凍結回合回 False）。
+        W1c §9.11-2：寫入的名稱與 `segment`（當句被判為物件名稱的那一段＝前置查詢關鍵字）記進回合內
+        狀態，供意圖合併時「系統名稱優先、同一段原話不填兩欄」比對。"""
+        if not self._write_draft_name_catch_eligible(acc):
+            return
+        wd = acc.write_draft
+        target = WF.FORMS[wd.draft["action"]].field("estate_name")
+        if not isinstance(name, str):
+            return
+        clean = sanitize_data_piece(name).strip()
+        if not clean or len(clean) > WF.value_max_len(target):
+            return
+        wd.activity = True
+        wd.caught = True
+        wd.draft["idle_turns"] = 0
+        wd.draft["fields"][target.key] = clean
+        wd.caught_name = clean
+        seg = sanitize_data_piece(segment).strip() if isinstance(segment, str) else ""
+        wd.caught_segment = seg or None
+        acc.violations.append(WF.V_NAME_CAUGHT)
+        self._write_draft_persist(acc, agent_state)
+
+    # -- 意圖判斷呼叫（W1b §8.1-1、§8.5-4、§8.6-3a／3b／3c）------------------
+    def _start_write_intent_call(
+        self, acc: TurnAccumulator, identity: Identity, agent_state: dict,
+        user_message: str, document: Any,
+    ) -> None:
+        """建立本回合的意圖判斷呼叫 task（安全處置 3a：`run_program_segments` 未結束回合、
+        `_build_turn_context` 之後才會走到這裡）。條件：草稿機制可跑（`acc.write_draft` 非
+        `None`＝開關 on、非影子、非 `select:` 釘住範圍）、非文件回合、看得到任一 `jgb2.action.*`。
+
+        同一個模型、同一個 client（`self.provider.async_client`）、輸入＝系統句＋本會話對話
+        （`dialog`）＋當句（主呼叫輸入的子集，⛔ 資料段、⛔ 草稿注入行）；`max_completion_tokens`
+        800；與主模型迴圈**並行**（這裡只建立，⛔ await）。"""
+        if acc.write_draft is None or document is not None:
+            return
+        if not self._write_draft_any_visible(identity):
+            return
+        messages: list = [{"role": "system", "content": WF.WRITE_INTENT_SYSTEM_PROMPT}]
+        for m in agent_state.get("dialog") or []:
+            if (isinstance(m, dict) and m.get("role") in ("user", "assistant")
+                    and isinstance(m.get("content"), str)):
+                messages.append({"role": m["role"], "content": m["content"]})
+        messages.append({"role": "user", "content": user_message if isinstance(user_message, str) else ""})
+        kwargs: dict = dict(
+            model=self._model,
+            messages=messages,
+            response_format=WF.write_intent_response_format(),
+            max_completion_tokens=WF.WRITE_INTENT_MAX_COMPLETION_TOKENS,
+        )
+        if self._reasoning_effort is not None:
+            kwargs["extra_body"] = {"reasoning_effort": self._reasoning_effort}
+        create = self.provider.async_client.chat.completions.create
+
+        async def _call() -> Any:
+            return await create(**kwargs)
+
+        call = _WriteIntentCall(
+            asyncio.create_task(_call()), model=self._model,
+            input_chars=sum(len(m["content"]) for m in messages),
+            registry=self._write_intent_calls, trace_id=acc.trace_id,
+        )
+        self._write_intent_calls[acc.trace_id] = call
+        acc.write_intent_call = call
+
+    async def _await_write_intent(self, acc: TurnAccumulator) -> Optional[WriteIntent]:
+        """觸發判斷點取用意圖判斷結果：`asyncio.wait`（⛔ 自動取消）等
+        `min(WRITE_INTENT_WAIT_MAX_S, 剩餘期限 − 觸發門檻)` 秒。逾時／失敗 ⇒ `None`＋
+        `write_intent_call_failed`（⛔ 影響主回合；task 留給 trace 收尾處理）；無法解析 ⇒
+        `None`＋`write_intent_unparsed`；多個內容不同的 action 物件 ⇒ `None`＋
+        `write_intent_ambiguous`；`action="none"` ⇒ `None`。形狀不合 pydantic ⇒ 值域外。"""
+        call = acc.write_intent_call
+        if call is None or call.settled:
+            return None
+        remaining = self.budget.deadline_s - (self._clock() - acc.start)
+        timeout = max(0.0, min(WRITE_INTENT_WAIT_MAX_S, remaining - WRITE_DRAFT_PROGRAM_MIN_REMAINING_S))
+        done, _pending = await asyncio.wait({call.task}, timeout=timeout)
+        task = call.task
+        if not done or task.cancelled() or task.exception() is not None:
+            acc.violations.append(WF.V_CALL_FAILED)
+            return None
+        try:
+            content = task.result().choices[0].message.content
+        except Exception:  # noqa: BLE001 — 回應形狀不對 ⇒ 當無法解析
+            content = None
+        obj, status = WF.parse_write_intent_content(content)
+        if status == WF.PARSE_AMBIGUOUS:
+            acc.violations.append(WF.V_AMBIGUOUS)
+            return None
+        if status != WF.PARSE_OK:
+            acc.violations.append(WF.V_UNPARSED)
+            return None
+        try:
+            intent = WriteIntent.model_validate(obj)
+        except ValidationError:
+            acc.violations.append(WF.V_OUT_OF_DOMAIN)
+            return None
+        if intent.action == WF.INTENT_NONE:
+            return None
+        return intent
+
+    async def _write_draft_gate_value(
+        self, f: Any, raw: Any, identity: Identity, texts: list, violations: list,
+        *, from_intent: bool = False,
+    ) -> Optional[str]:
+        """值閘（§2.1(3) 型別×規則表）：過 ⇒ 要存進草稿的字串；不過 ⇒ `None`＋固定字串
+        violation（⛔ 帶值）。空值／沒給 ⇒ `None` 且不記 violation。
+        W1c §9.11-1：`from_intent`（值來自意圖判斷呼叫）時 `int`／`number` 取值改用
+        `parse_number_token`（恰好一個數字 token ⇒ 取它），仍須過 `_number_in_texts`。"""
+        if f is None or f.source != WF.SOURCE_USER_WORDS:
+            return None
+        if isinstance(raw, bool):
+            violations.append(WF.V_NOT_IN_USER_WORDS)
+            return None
+        if isinstance(raw, (int, float)):
+            raw = str(raw)
+        if not isinstance(raw, str):
+            violations.append(WF.V_NOT_IN_USER_WORDS)
+            return None
+        value = raw.strip()
+        if not value:
+            return None
+        if len(value) > WF.value_max_len(f):
+            violations.append(WF.V_VALUE_TOO_LONG)
+            return None
+        kind = f.kind
+        if kind == "text":
+            needle = _no_ws(value)
+            if (sanitize_data_piece(value) != value
+                    or not any(needle in _no_ws(t) for t in texts)):
+                violations.append(WF.V_NOT_IN_USER_WORDS)
+                return None
+            return value
+        if kind in ("int", "number"):
+            num = (WF.parse_number_token(value, kind) if from_intent
+                   else WF.parse_number(value, kind))
+            # 沿用既有 `_number_in_texts`（完整數字 token 出現在使用者原話；國字數字不收）。
+            if num is None or not _number_in_texts(num, texts):
+                violations.append(WF.V_NOT_IN_USER_WORDS)
+                return None
+            return str(num)
+        if kind == "date":
+            parsed = WF.parse_model_date(value)
+            if parsed is None or parsed not in WF.user_text_dates(texts, bills._today()):
+                violations.append(WF.V_NOT_IN_USER_WORDS)
+                return None
+            return WF.iso_date(parsed)
+        if kind == "email":
+            needle = _no_ws(value)                 # 兩邊都只去空白（⛔ 去連字號）
+            if not any(needle in _no_ws(t) for t in texts):
+                violations.append(WF.V_NOT_IN_USER_WORDS)
+                return None
+            return value                            # 草稿存模型給的原值
+        if kind == "phone":
+            needle = _no_ws(value).replace("-", "")
+            if not needle or not any(needle in _no_ws(t).replace("-", "") for t in texts):
+                violations.append(WF.V_NOT_IN_USER_WORDS)
+                return None
+            return value
+        if kind == "enum":
+            if value not in f.choices:              # ⛔ 語意詞表比對（只認封閉值域）
+                violations.append(WF.V_VALUE_OUT_OF_DOMAIN)
+                return None
+            return value
+        if kind == "category":
+            try:
+                ok = await _is_valid_repair_category(value, identity)
+            except Exception:  # noqa: BLE001 — 分類樹查不成 ⇒ 不收（fail-closed）
+                ok = False
+            if not ok:
+                violations.append(WF.V_CATEGORY_INVALID)
+                return None
+            return value
+        return None                                 # sys_id 等：一律不進草稿
+
+    def _write_draft_target(self, acc: TurnAccumulator, action: str, *, from_intent: bool) -> dict:
+        """取（或換新）本回合要合併的草稿：動作不同 ⇒ 換新草稿（W1b 安全處置 1b：一併清
+        `asked`——新草稿的 `asked` 本就是 `[]`，回合內那一份上回合追問欄位也清掉）。"""
+        wd = acc.write_draft
+        if wd.draft is None or wd.draft["action"] != action:
+            wd.draft = WF.new_draft(action, wd.owner)
+            wd.asked = []
+            if from_intent:
+                wd.created = True
+        wd.draft["idle_turns"] = 0
+        return wd.draft
+
+    async def _write_draft_merge_intent(
+        self, acc: TurnAccumulator, identity: Identity, agent_state: dict, intent: Any,
+    ) -> set:
+        """意圖判斷呼叫的結果合併進草稿（§2.1(2)(3)；W1b §8.1-1）。回本回合由意圖呼叫提供、
+        且**通過值閘**的鍵集合（整句填入的同欄優先序用，§8.5-2）。"""
+        wd = acc.write_draft
+        action = getattr(intent, "action", None)
+        form = WF.FORMS.get(action) if isinstance(action, str) else None
+        if form is None:
+            acc.violations.append(WF.V_OUT_OF_DOMAIN)
+            return set()
+        if not self._write_draft_visible(identity, action):
+            acc.violations.append(WF.V_NOT_VISIBLE)
+            return set()
+        items = list(getattr(intent, "fields", None) or [])
+        if any(not isinstance(getattr(item, "key", None), str)
+               or form.field(item.key) is None
+               or form.field(item.key).source != WF.SOURCE_USER_WORDS
+               for item in items):
+            # 鍵在該動作表單之外（含 `system` 來源鍵、身分鍵）⇒ **整份意圖丟棄**
+            # （偏保守：⛔ 從一份夾帶域外鍵的意圖裡挑幾個看起來對的值來用）。
+            acc.violations.append(WF.V_OUT_OF_DOMAIN)
+            return set()
+        wd.activity = True
+        draft = self._write_draft_target(acc, action, from_intent=True)
+        # W1c §9.11-2：本回合前置查詢唯一命中而寫進**這份**草稿的物件名稱（系統值）優先——意圖的
+        # `estate_name` 不覆寫它；意圖其他文字欄位值為該名稱或當句物件名稱那一段的子字串 ⇒ 丟棄。
+        # （動作不同而換新草稿時，名稱不在新草稿內 ⇒ 不套用。）
+        name_hit = (wd.caught_name is not None
+                    and draft["fields"].get("estate_name") == wd.caught_name)
+        name_spans = ([_name_overlap_key(s) for s in (wd.caught_name, wd.caught_segment) if s]
+                      if name_hit else [])
+        provided: set = set()
+        for item in items:
+            f = form.field(item.key)
+            raw_value = getattr(item, "value", None)
+            if name_hit and f.key == "estate_name":
+                continue
+            if (name_spans and f.kind == "text" and isinstance(raw_value, str)
+                    and raw_value.strip()
+                    and any(_name_overlap_key(raw_value) in span for span in name_spans)):
+                acc.violations.append(WF.V_VALUE_OVERLAPS_NAME)
+                continue
+            value = await self._write_draft_gate_value(
+                f, raw_value, identity, wd.user_texts, acc.violations, from_intent=True)
+            if value is None:
+                continue
+            provided.add(f.key)
+            wd.merged = True
+            draft["fields"][f.key] = value
+        self._write_draft_persist(acc, agent_state)
+        return provided
+
+    async def _write_draft_fill_answer(
+        self, acc: TurnAccumulator, agent_state: dict, user_message: str, provided: set,
+    ) -> None:
+        """W1b §8.5-2 整句填入：上一回合程式追問**恰好一個**欄位、且該欄位為 `user_words`
+        來源、`text` 型、非名稱欄位（`NAME_KEYS`）⇒ 以當句原文填入（過 `sanitize_data_piece`、
+        超過長度上限 ⇒ 拒收、⛔ 截斷，安全處置 Q-c）。同欄優先序：意圖呼叫值已通過值閘
+        （`provided`）⇒ 用它，不整句填。呼叫端已排除凍結回合與「意圖呼叫回傳另一支寫入動作」
+        （安全處置 1a）。"""
+        wd = acc.write_draft
+        if wd is None or wd.draft is None or len(wd.asked) != 1:
+            return
+        key = wd.asked[0]
+        f = WF.FORMS[wd.draft["action"]].field(key)
+        if (f is None or f.source != WF.SOURCE_USER_WORDS or f.kind != "text"
+                or key in WF.NAME_KEYS or key in provided):
+            return
+        value = sanitize_data_piece(user_message).strip()
+        if not value or len(value) > WF.value_max_len(f):
+            return
+        wd.activity = True
+        wd.filled = True
+        wd.draft["idle_turns"] = 0
+        wd.draft["fields"][key] = value
+        acc.violations.append(WF.V_ANSWER_FILLED)
+        self._write_draft_persist(acc, agent_state)
+
+    async def _write_draft_merge_model_confirm(
+        self, acc: TurnAccumulator, identity: Identity, agent_state: dict, raw_args: Any,
+    ) -> None:
+        """模型**自己**呼叫 `confirm.request` 的參數合併進草稿——只取模型原始參數
+        （任何 `_apply_*`／`_prepare_closed_action` 就地改寫之前），過同一道值閘；
+        `system` 來源鍵（系統解析的編號、原／新到期日）與表外鍵一律不進。
+        ⚠️ 這一次呼叫本身 ⛔ 改（非目標：gpt-6-luna 現行出卡路徑）；這裡的值只供之後的回合用，
+        故 ⛔ 計入本回合的觸發條件（那一次呼叫已經用這些值執行過了）。
+        W1b：凍結回合（§8.5-3「草稿除 `asked` 清空外原樣保留」）不合併。"""
+        wd = acc.write_draft
+        if wd is None or wd.frozen:
+            return
+        payload = _payload_of(raw_args)
+        action = payload.get("action") if payload is not None else None
+        form = WF.FORMS.get(action) if isinstance(action, str) else None
+        if form is None or not self._write_draft_visible(identity, action):
+            return
+        wd.activity = True
+        draft = self._write_draft_target(acc, action, from_intent=False)
+        for key, raw in payload.items():
+            f = form.field(key) if isinstance(key, str) else None
+            if f is None or f.source != WF.SOURCE_USER_WORDS or raw is None:
+                continue
+            value = await self._write_draft_gate_value(f, raw, identity, wd.user_texts, acc.violations)
+            if value is not None:
+                draft["fields"][f.key] = value
+        self._write_draft_persist(acc, agent_state)
+
+    def _write_draft_record_asked(
+        self, acc: TurnAccumulator, identity: Identity, agent_state: dict,
+        tool_result: Any, raw_args: Any, document: Any,
+    ) -> None:
+        """W1b §8.5-1：`asked` 的**唯一寫點**——`confirm_missing_fields_ask` 出口（程式觸發或模型
+        自呼 `confirm.request` 得缺欄；兩者的追問句都是程式產出）。草稿不存在（或動作不同）⇒
+        先建草稿再寫（安全處置 4a：一律經可見性閘）。文件回合、`doc_action`、文件暫存有效 ⇒
+        ⛔ 寫（安全處置 1d）。模型自寫的追問（`kind=ask` 經 Verifier）不經這裡 ⇒ ⛔ 寫。"""
+        wd = acc.write_draft
+        if wd is None or document is not None or document_writable_action(document) is not None:
+            return
+        if _document_carry_of(agent_state) is not None:
+            return
+        data = tool_result.data if isinstance(tool_result.data, dict) else {}
+        action = data.get("action")
+        if not isinstance(action, str):
+            payload = _payload_of(raw_args)
+            action = payload.get("action") if payload is not None else None
+        if not isinstance(action, str) or action not in WF.FORMS:
+            return
+        if not self._write_draft_visible(identity, action):
+            return
+        keys = WF.asked_keys_for_labels(action, data.get("missing_fields") or [])
+        if wd.draft is None or wd.draft["action"] != action:
+            wd.draft = WF.new_draft(action, wd.owner)
+        wd.draft["asked"] = keys
+        self._write_draft_persist(acc, agent_state)
+
+    async def _write_draft_decide(
+        self, acc: TurnAccumulator, identity: Identity, agent_state: dict,
+        user_message: str, document: Any, *, allow_trigger: bool = True,
+    ) -> Optional["_ProgramMessage"]:
+        """程式觸發的**唯一判斷函式**（W1c §9.1-1：程式優先入口 `_write_draft_program_first` 與
+        輸出後觸發點 `_write_draft_after_output` 共用這一支，⛔ 複製兩份）：
+
+        1. 取用意圖判斷呼叫的結果（每回合只取一次，`intent_consumed`）並合併、整句填入
+           （安全處置 1a：意圖回傳**另一支寫入動作** ⇒ 不整句填入）；
+        2. 觸發條件（§2.1(5)；W1b §8.1-4；W1c §9.7 F2 入口條件與輸出後觸發點**同一條件**）：
+           `created`／`merged`／`caught`／`filled` 任一成立，且本回合模型未自己成功出卡、
+           `allow_trigger`（呼叫端在取用之後的否決，例：模型輸出是敏感轉人）、非文件回合
+           （`document is not None or document_writable_action(document) is not None ⇒ None`，
+           §9.7 末段）、文件暫存的動作相同、看得到該動作、非 `select:`、剩餘期限 ≥ 觸發門檻。
+        凍結回合（§8.5-3）⇒ 不合併、不填、不觸發（意圖 task 交給 trace 收尾）。"""
+        wd = acc.write_draft
+        if wd is None or wd.triggered or wd.frozen:
+            return None
+        if not wd.intent_consumed:
+            wd.intent_consumed = True
+            start_action = wd.draft["action"] if wd.draft is not None else None
+            intent = await self._await_write_intent(acc)
+            provided: set = set()
+            other_action = False
+            if intent is not None:
+                # 安全處置 1a：意圖呼叫回傳**另一支寫入動作** ⇒ 不整句填入（岔題不被當成答覆）。
+                other_action = (start_action is not None and isinstance(intent.action, str)
+                                and intent.action in WF.FORMS and intent.action != start_action)
+                provided = await self._write_draft_merge_intent(acc, identity, agent_state, intent)
+            if not other_action:
+                await self._write_draft_fill_answer(acc, agent_state, user_message, provided)
+        draft = wd.draft
+        if draft is None or not (wd.created or wd.merged or wd.caught or wd.filled):
+            return None
+        if wd.model_confirm_ok:
+            return None
+        if not allow_trigger:
+            return None
+        # 文件回合維持既有路徑（`doc_action` 是工具迴圈內的區域變數，這裡另算）。
+        if document is not None or document_writable_action(document) is not None:
+            return None
+        carry = _document_carry_of(agent_state)
+        if carry is not None and carry["action"] != draft["action"]:
+            return None
+        if not self._write_draft_visible(identity, draft["action"]):
+            return None
+        if agent_state.get(SELECT_SCOPE_KEY) is not None:
+            return None
+        if self.budget.deadline_s - (self._clock() - acc.start) < WRITE_DRAFT_PROGRAM_MIN_REMAINING_S:
+            return None
+        wd.triggered = True
+        acc.violations.append(WF.V_PROGRAM_CONFIRM)
+        return _write_draft_program_message(draft, acc.nonce)
+
+    async def _write_draft_program_first(
+        self, acc: TurnAccumulator, identity: Identity, agent_state: dict,
+        user_message: str, document: Any,
+    ) -> Optional["_ProgramMessage"]:
+        """W1c 程式優先入口（§9.1-1，§9.7 F1／F2／F3 覆寫）：`_run_model_loop` 進 `while` 之前、
+        謄本程式訊息之後（僅當沒有謄本程式訊息）。條件成立 ⇒ 回程式自己的 `confirm.request`，
+        由呼叫端設為迴圈第一輪的程式訊息（主模型這一輪不被呼叫）；否則 `None` ⇒ 照現行。
+
+        - 敏感（§9.1-2／F3）：`verifier.rules` 缺 ⇒ 不走；當句命中問句側敏感判準
+          （`question_sensitive`，⛔ 新增詞表）⇒ 不走（輸出後觸發點仍可用）。
+        - 等意圖（F1）：`asyncio.wait({task}, timeout=…)` 只判是否完成（上限依 §9.11-3 分級：回合開始時
+          已有草稿 ⇒ `WRITE_DRAFT_PROGRAM_FIRST_WAIT_S`，無草稿 ⇒ `WRITE_DRAFT_PROGRAM_FIRST_WAIT_NO_DRAFT_S`）
+          （⛔ 自動取消）；**未完成** ⇒ 記 `write_draft_program_first_wait_timeout`，⛔ 設
+          `intent_consumed`、⛔ 記 `write_intent_call_failed`、⛔ 合併／整句填入／觸發——全部留給
+          輸出後觸發點。
+        - 其餘（取用、合併、整句填入、入口條件、排除條件、期限）一律走 `_write_draft_decide`。"""
+        wd = acc.write_draft
+        if wd is None or wd.triggered or wd.frozen:
+            return None
+        rules = getattr(self.verifier, "rules", None)
+        if rules is None or question_sensitive(user_message, rules):
+            return None
+        call = acc.write_intent_call
+        if not wd.intent_consumed and call is not None and not call.settled:
+            # W1c §9.11-3：回合開始時已有草稿 ⇒ 3 秒；無草稿 ⇒ 1 秒（未完成照 F1）。
+            wait_s = (WRITE_DRAFT_PROGRAM_FIRST_WAIT_S if wd.had_draft
+                      else WRITE_DRAFT_PROGRAM_FIRST_WAIT_NO_DRAFT_S)
+            done, _pending = await asyncio.wait({call.task}, timeout=wait_s)
+            if not done:
+                acc.violations.append(WF.V_PROGRAM_FIRST_WAIT_TIMEOUT)
+                return None
+        return await self._write_draft_decide(acc, identity, agent_state, user_message, document)
+
+    async def _write_draft_after_output(
+        self, acc: TurnAccumulator, out: AgentOutput, identity: Identity, agent_state: dict,
+        user_message: str, document: Any,
+    ) -> Optional["_ProgramMessage"]:
+        """模型最終輸出通過 `AgentOutput.model_validate` 之後、T2／V2／Verifier 之前（觸發判斷點，
+        W1c 起為程式優先的後備）：判斷交 `_write_draft_decide`（與程式優先共用）；這裡只多一道
+        「敏感轉人優先（⛔ 觸發）」的否決——在取用意圖之後套用（意圖照常合併進草稿）。"""
+        sensitive_handoff = False
+        if out.kind == "handoff":
+            try:
+                fact_class = FactClass(out.fact_class)
+            except ValueError:
+                fact_class = None
+            sensitive_handoff = (fact_class in SENSITIVE
+                                 or out.handoff_reason == HandoffReason.sensitive_no_grounding.value)
+        return await self._write_draft_decide(
+            acc, identity, agent_state, user_message, document, allow_trigger=not sensitive_handoff)
+
+    def _write_draft_end_turn(self, acc: TurnAccumulator, agent_state: dict) -> None:
+        """模型迴圈出口（`_finalize`）：本回合沒有任何寫入相關動作 ⇒ `idle_turns+1`；
+        連續 `DRAFT_IDLE_LIMIT` 回合 ⇒ 清掉（使用者改談別的）。凍結回合（程式追問後的問句）
+        ⛔ 加計數（W1b §8.1-2）。"""
+        wd = acc.write_draft
+        if wd is None or wd.draft is None or wd.activity or wd.frozen:
+            return
+        idle = int(wd.draft.get("idle_turns") or 0) + 1
+        if idle >= WF.DRAFT_IDLE_LIMIT:
+            self._write_draft_clear(acc, agent_state)
+            acc.violations.append(WF.V_DRAFT_CLEARED_IDLE)
+            return
+        wd.draft["idle_turns"] = idle
+        AgentSession(agent_state).write_write_draft(wd.draft)
+
     async def _next_model_message(self, acc: TurnAccumulator, tool_specs: list) -> Any:
         """叫一次模型、計量，回 `message`（搬自 `_run_model_loop` 迴圈頂端，逐字未改；
         站內幫手 S3-live 修正 R3 抽出，好讓程式驅動的那一輪不叫模型）。"""
@@ -3320,6 +4141,8 @@ class AgentRuntime:
         出口一律經 `exit_gates.finalize`（四道閘依序表＋三個狀態寫點）。
         """
         def _finalize(result: TurnResult, *, is_fixed: bool) -> TurnResult:
+            # W1（§2.1(3)）：模型迴圈出口——本回合沒有寫入相關動作 ⇒ 草稿閒置計數 +1。
+            self._write_draft_end_turn(acc, agent_state)
             return exit_gates.finalize(
                 acc, result, is_fixed=is_fixed, verifier=self.verifier,
                 cache=cache, agent_state=agent_state, user_message=user_message,
@@ -3327,14 +4150,30 @@ class AgentRuntime:
         # 站內幫手 S3-live 修正 R3：放行的謄本回合，第一輪不叫模型——程式自己發一次
         # `confirm.request`，走下面同一條工具迴圈（欄位齊 ⇒ 出卡；缺 ⇒ 程式追問句）。
         program_message = _document_program_message(document, acc.nonce)
+        # W1（§2.1(5)）：哪一種程式訊息（`"doc"`＝謄本回合；`"wd"`＝寫入草稿觸發）。
+        # ⚠️ 只有 `"wd"` 不計工具預算、不受 `tool_call_exhausted` 限制（每回合上限 1 次，故有界）；
+        #    判定只看**本迴圈自己設的這個變數**，⛔ 看 tool_call id（模型可以偽造同名 id）。
+        program_kind: Optional[str] = None
         if program_message is not None:
+            program_kind = "doc"
             acc.violations.append("document_program_confirm")
+        else:
+            # W1c（§9.1-1）：程式優先——寫入回合先由程式處理、不等主模型。條件成立 ⇒ 第一輪就是
+            # 程式自己的 `confirm.request`（同下方輸出後觸發點的 `"wd"`）：終結出口直接結束回合、
+            # 主模型本回合不被呼叫；非終結 ⇒ 工具結果回填、再叫主模型（每回合程式觸發上限 1 次）。
+            wd_first = await self._write_draft_program_first(
+                acc, identity, agent_state, user_message, document)
+            if wd_first is not None:
+                program_message, program_kind = wd_first, "wd"
         while True:
             if (self._clock() - acc.start) >= self.budget.deadline_s:
                 return _finalize(acc.build_fixed("budget_exhausted", clock=self._clock), is_fixed=True)
 
+            wd_program = False
             if program_message is not None:
                 message, program_message = program_message, None
+                wd_program = program_kind == "wd"
+                program_kind = None
             else:
                 message = await self._next_model_message(acc, tool_specs)
             tool_calls = list(getattr(message, "tool_calls", None) or [])
@@ -3343,7 +4182,7 @@ class AgentRuntime:
                 acc.messages.append(_assistant_tool_call_message(message, tool_calls))
                 budget_hit = False
                 for tc in tool_calls:
-                    if acc.counters.tool_call_exhausted(self.budget):
+                    if not wd_program and acc.counters.tool_call_exhausted(self.budget):
                         budget_hit = True
                         break
                     name = tool_name_from_openai(tc.function.name)   # kb__get → kb.get（OpenAI 名稱規則，registry.openai_tool_name）
@@ -3358,6 +4197,17 @@ class AgentRuntime:
                         acc.violations.append(f"IDENTITY_KEY:{key}")
                     if name not in visible_names:
                         acc.violations.append(f"FORBIDDEN:{name}")
+
+                    # W1（§2.1(3)）：模型**自己**呼叫 `confirm.request` ⇒ 原始參數（任何
+                    # `_apply_*` 與 `_prepare_closed_action` 就地改寫之前）過值閘後合併進草稿。
+                    # 文件回合與文件暫存有效時不合併；程式觸發的那一次（`wd_program`）不合併。
+                    if (
+                        name == CONFIRM_TOOL_NAME and not wd_program
+                        and acc.write_draft is not None and document is None
+                        and _document_carry_of(agent_state) is None
+                    ):
+                        await self._write_draft_merge_model_confirm(
+                            acc, identity, agent_state, raw_args)
 
                     # W9-1 第二道網：文件回合的寫入面**不得執行**。
                     # ⚠️ 只把它從 `tool_specs` 拿掉是不夠的——`registry.call` 的
@@ -3463,7 +4313,8 @@ class AgentRuntime:
                                 AgentSession(agent_state).clear_document_carry()
                                 acc.violations.append("document_carry_cleared")
 
-                    acc.counters.tool_calls += 1
+                    if not wd_program:
+                        acc.counters.tool_calls += 1
                     if name == CONFIRM_TOOL_NAME:
                         raw_args, _applied = _apply_image_suggestion_to_confirm_args(
                             raw_args, agent_state.get(IMAGE_SUGGESTION_KEY)
@@ -3502,10 +4353,12 @@ class AgentRuntime:
                         return _finalize(acc.build_fixed("tool_unavailable", clock=self._clock), is_fixed=True)
 
                     if tool_result.error == "TOOL_TIMEOUT":
-                        if acc.counters.tool_call_exhausted(self.budget):
+                        # W1：程式觸發的那一次跳過預算檢查點（迴圈前段與這裡兩處）且不計入。
+                        if not wd_program and acc.counters.tool_call_exhausted(self.budget):
                             budget_hit = True
                             break
-                        acc.counters.tool_calls += 1  # 重試也計（design 預算表）
+                        if not wd_program:
+                            acc.counters.tool_calls += 1  # 重試也計（design 預算表）
                         try:
                             tool_result = await self.registry.call(
                                 identity,
@@ -3530,6 +4383,10 @@ class AgentRuntime:
                     # 「先追問再出卡」仍附得到照片。出卡那一刻另在 `_begin_pending_confirm` 清。
                     if name == CONFIRM_TOOL_NAME and tool_result.error != "INVALID_INPUT":
                         AgentSession(agent_state).consume_image_suggestion()
+                    # W1（§2.1(5)）：本回合模型**自己**成功呼叫過 `confirm.request` ⇒ 不再程式觸發。
+                    if (name == CONFIRM_TOOL_NAME and not wd_program and tool_result.ok
+                            and acc.write_draft is not None):
+                        acc.write_draft.model_confirm_ok = True
 
                     # L15 (a)③：**範圍比對排在這裡**——`registry.call` 一回來、
                     # 進 trace／`tool_results_by_id`／`_wrap`／messages 之前。
@@ -3633,9 +4490,12 @@ class AgentRuntime:
                     if missing_ask is not None:
                         acc.violations.append("confirm_missing_fields_ask")
                         _missing = (tool_result.data or {}).get("missing_fields") or []
+                        # W1b §8.5-1：程式缺欄追問出口是 `asked` 的唯一寫點。
+                        self._write_draft_record_asked(
+                            acc, identity, agent_state, tool_result, raw_args, document)
                         return self._finish_confirm_turn(
-                            ask_target=("estate" if "物件" in _missing
-                                        else "description" if _missing == ["問題描述"] else None),
+                            # W1（§2.1(1)）：追問對象由表導出（與改動前逐位相同）。
+                            ask_target=WF.ask_target_for_missing(_missing),
                             agent_state=agent_state,
                             user_message=user_message,
                             trace_id=acc.trace_id,
@@ -3655,6 +4515,9 @@ class AgentRuntime:
                     # 反問「想處理哪一件事？」）。
                     if document is None and _is_stats_not_supported(name, tool_result):
                         acc.violations.append("jgb2_stats_not_supported_exit")
+                        if name == CONFIRM_TOOL_NAME:
+                            # W1（§2.1(5)）：`WRITE_NOT_SUPPORTED` ⇒ 草稿清掉（⛔ 留 Email／電話）。
+                            self._write_draft_clear(acc, agent_state)
                         return self._finish_confirm_turn(
                             agent_state=agent_state,
                             user_message=user_message,
@@ -3745,6 +4608,8 @@ class AgentRuntime:
                             completion_tokens=acc.completion_tokens,
                         )
                         if scope_turn is not None:
+                            # W1（§2.1(5)）：範圍閘不過 ⇒ 草稿清掉。
+                            self._write_draft_clear(acc, agent_state)
                             return scope_turn
                         confirm_turn = self._begin_pending_confirm(
                             agent_state,
@@ -3821,6 +4686,12 @@ class AgentRuntime:
 
                 if budget_hit:
                     return _finalize(acc.build_fixed("budget_exhausted", clock=self._clock), is_fixed=True)
+                if wd_program:
+                    # W1（§2.1(5)）：程式觸發的結果是**非終結**（無缺欄清單的 `INVALID_INPUT`、未帶
+                    # 查無標記的 `NO_MATCH`…）⇒ ⛔ 撤回任何東西：工具結果已照常回填，迴圈再叫一次
+                    # 模型，模型的下一個輸出走 T2／V2／Verifier／出口閘的正常路徑（同
+                    # `_document_program_message`）；本回合不再觸發（`triggered`）。
+                    acc.violations.append(WF.V_PROGRAM_NONTERMINAL)
                 continue  # 工具結果已回填，回到迴圈頂端再叫一次模型
 
             # 無 tool_calls ⇒ 這一回合模型嘗試給最終答案
@@ -3849,6 +4720,15 @@ class AgentRuntime:
                         "content": rewrite_feedback("SCHEMA", "輸出不符 AgentOutput schema。"),
                     }
                 )
+                continue
+
+            # W1（§2.1(5)）插入點：`model_validate` 成功之後、`handoff_dict`／T2／V2／Verifier 之前——
+            # 取用意圖判斷呼叫的結果（W1b：在這裡 await）並合併、整句填入，條件成立 ⇒ 程式自己發
+            # 一次 `confirm.request`（模型這一輪的原始文字丟棄：卡與追問句皆為程式產出）。
+            wd_message = await self._write_draft_after_output(
+                acc, out, identity, agent_state, user_message, document)
+            if wd_message is not None:
+                program_message, program_kind = wd_message, "wd"
                 continue
 
             handoff_dict: Optional[dict] = None

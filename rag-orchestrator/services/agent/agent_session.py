@@ -21,7 +21,7 @@ DIALOG_MAX_MESSAGES`）。本檔若去 import 那些模組的常數，會在
 test_agent_session_req.py` 另有一條「與各檔既有常數逐一相等」的正對照守著
 不讓兩邊漂移，⛔ 不是「重複了就沒事」。
 
-## 11 個鍵與六種生命週期（KEY_SPECS，封閉表；站內幫手 S3 加 `document_carry`）
+## 12 個鍵與六種生命週期（KEY_SPECS，封閉表；站內幫手 S3 加 `document_carry`、W1 加 `write_draft`）
 `turn`（每回合覆寫或回合內暫存）／`once`（一次性，用掉即清）／
 `until_scope_exit`（黏到 `scope_exit()`）／`fifo(n)`（FIFO 上限 n）／
 `stamp`（時間戳）／`session`（整個 session 累加，不受回合或範圍影響）。
@@ -69,6 +69,10 @@ LAST_TURN_AT_KEY = "last_turn_at"
 #: 站內幫手 S3（§3h 第 2 點；DSP-076）：一次性的文件暫存——**本鍵的權威定義就在本檔**
 #: （`runtime.py` 由此 import，⛔ 另抄字面值）。
 DOCUMENT_CARRY_KEY = "document_carry"
+#: W1（plan-write-flow-program-owned-20261017 §2.1(3)／DSP-085）：寫入流程的會話草稿——
+#: **本鍵的權威定義就在本檔**（`runtime.py` 由此 import，⛔ 另抄字面值）。
+#: 形狀與讀回驗證在 `write_forms.load_draft`（封閉五鍵，W1b 加 `asked`；⛔ token、⛔ 系統解析的編號類值）。
+WRITE_DRAFT_KEY = "write_draft"
 
 #: DSP-022：`dialog` 保留的訊息數上限（user＋assistant 各一則算 2；10 輪對話）。
 DIALOG_MAX_MESSAGES = 20
@@ -97,9 +101,13 @@ KEY_SPECS: dict[str, KeySpec] = {
     # 一次性（出卡即清；另加回合上限 `DOCUMENT_CARRY_MAX_TURNS`——同 `image_suggestion`
     # 的 ONCE 語義，⛔ 不另開第七種生命週期）。
     DOCUMENT_CARRY_KEY: KeySpec(DOCUMENT_CARRY_KEY, Lifetime.ONCE),
+    # W1：黏到 `scope_exit()`（沿用既有六種之一，⛔ 新增第七種）；其餘清除條件（出卡、
+    # 閒置、身分、兌現／取消、not_supported、釘住範圍、開關 off）由 runtime 各寫點明確呼叫
+    # `clear_write_draft()`。
+    WRITE_DRAFT_KEY: KeySpec(WRITE_DRAFT_KEY, Lifetime.UNTIL_SCOPE_EXIT),
 }
 
-assert len(KEY_SPECS) == 11, "KEY_SPECS 是封閉表——11 個鍵，多一個少一個都要回頭對帳"
+assert len(KEY_SPECS) == 12, "KEY_SPECS 是封閉表——12 個鍵，多一個少一個都要回頭對帳"
 
 
 class AgentSession:
@@ -259,9 +267,21 @@ class AgentSession:
     def write_estate_carry(self, value: dict) -> None:
         self._state[ESTATE_CARRY_KEY] = value
 
+    # ── write_draft（W1：黏到 `scope_exit()`；形狀驗證在 `write_forms.load_draft`，
+    #    本類別只管落地——⛔ 不做任何業務判定）──────────────────────────────
+    def get_write_draft(self) -> Any:
+        """原樣回傳（**未驗形狀**）；呼叫端一律先過 `write_forms.load_draft`。"""
+        return self._state.get(WRITE_DRAFT_KEY)
+
+    def write_write_draft(self, draft: dict) -> None:
+        self._state[WRITE_DRAFT_KEY] = draft
+
+    def clear_write_draft(self) -> None:
+        self._state.pop(WRITE_DRAFT_KEY, None)
+
     def scope_exit(self) -> None:
-        """範圍退出：清掉全部 `until_scope_exit` 鍵（目前只有 `estate_carry`
-        一個；多一個 `until_scope_exit` 鍵時這裡自動涵蓋，⛔ 不必回頭改這支
+        """範圍退出：清掉全部 `until_scope_exit` 鍵（`estate_carry`、W1 的
+        `write_draft`；多一個 `until_scope_exit` 鍵時這裡自動涵蓋，⛔ 不必回頭改這支
         方法）。"""
         for key, spec in KEY_SPECS.items():
             if spec.lifetime is Lifetime.UNTIL_SCOPE_EXIT:
@@ -382,6 +402,7 @@ __all__ = [
     "ESTATE_CARRY_KEY",
     "LAST_TURN_AT_KEY",
     "DOCUMENT_CARRY_KEY",
+    "WRITE_DRAFT_KEY",
     "DOCUMENT_CARRY_FIELDS",
     "DOCUMENT_CARRY_MAX_TURNS",
     "DIALOG_MAX_MESSAGES",

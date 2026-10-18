@@ -8,7 +8,7 @@ re-export 它們，既有 import 路徑（`from services.agent.runtime import Tu
 
 新增的只有三支：
 
-- `ReservedCallIds`——九個保留 `tool_call_id` **由 nonce 派生**（原本在
+- `ReservedCallIds`——十個保留 `tool_call_id` **由 nonce 派生**（W1 加 `wd-`）（原本在
   `_run_turn_body` 裡九行各算一次）。⚠️ 派生一律**無條件**：模型能不能偽造一個
   `img-…` ⛔ 不該取決於這一回合是否真的有影像（見 `runtime.py` 原註記）。
 - `TurnInputsSnapshot`——段落產生後寫入、之後唯讀的七個 trace 輸入
@@ -459,7 +459,7 @@ def _emit_agent_decision(trace: TurnTrace) -> None:
 class ReservedCallIds:
     """本回合**保留的 `tool_call_id` 集合**（S2 §3／DSP-029 r13 #3）。
 
-    ⚠️ 九個 id 一律在回合最開始由 nonce **無條件**派生，⛔ 不等到「這回合真的
+    ⚠️ 十個 id（W1 加草稿注入段 `wd-`）一律在回合最開始由 nonce **無條件**派生，⛔ 不等到「這回合真的
     有影像／完成動作／進場句／…」才算——模型能不能偽造一個同名 id 不該取決於
     這回合是否真的用到它（那會讓「沒有影像時 `img-…` 可以被模型自己造」這種
     邊界情況變成漏洞）。`OUTLINE_TOOL_CALL_ID` 是固定字串，一併收進 `all`；
@@ -475,6 +475,8 @@ class ReservedCallIds:
     recent_refs: str
     document: str
     estate_carry: str
+    #: W1（plan-write-flow-program-owned-20261017 §2.1(3)）：寫入草稿注入段「進行中的建立」。
+    write_draft: str
     all: frozenset
 
     @classmethod
@@ -490,6 +492,7 @@ class ReservedCallIds:
             "recent_refs": f"ref-{head}",
             "document": f"doc-{head}",
             "estate_carry": f"est-{head}",
+            "write_draft": f"wd-{head}",
         }
         return cls(**ids, all=frozenset({OUTLINE_TOOL_CALL_ID, *ids.values()}))
 
@@ -551,6 +554,14 @@ class TurnAccumulator:
     #: （⛔ 不重新綁定；同 §0c 的整數計數紀律）。只有一般出口的 trace 讀它。
     verifier_observed_counts: dict = field(default_factory=dict)
     snapshot: TurnInputsSnapshot = field(default_factory=TurnInputsSnapshot)
+    #: W1（§2.1(3)～(5)）：本回合的寫入草稿**回合內狀態**（`runtime._WriteDraftTurn`；
+    #: `None`＝本回合不跑草稿機制：開關 off／影子回合）。⛔ 不進 trace、⛔ 不進 `agent_state`
+    #: ——落地的只有 `agent_state["write_draft"]`（經 `AgentSession`）。
+    write_draft: Any = None
+    #: W1b（plan §8.6-3b／§8.7 #1）：本回合的意圖判斷呼叫（`runtime._WriteIntentCall`；`None`＝
+    #: 本回合沒有發）。`build_trace` 組 trace **之前**一律經它的 `settle_into` 收尾（計量或
+    #: 取消＋估算），token 因此進得了本回合的 trace。⛔ 本身不進 trace。
+    write_intent_call: Any = None
 
     @property
     def reserved(self) -> ReservedCallIds:
@@ -600,7 +611,12 @@ class TurnAccumulator:
         傳的是 `list(...)`／`dict(...)` 副本，模型迴圈的一般出口傳的是**同一個
         物件**（`_emit_agent_decision` 的形狀守門會就地改 `trace.candidate_ids`，
         而那個修正必須反映到呼叫端讀到的 `result.trace` 上）。⛔ 不得統一。
+
+        W1b（§8.6-3b）：意圖判斷呼叫的收尾掛在這裡（涵蓋一般出口與 `build_fixed`）——先收尾、
+        再讀 `prompt_tokens`／`completion_tokens`／`violations`，trace 才含得到它。
         """
+        if self.write_intent_call is not None:
+            self.write_intent_call.settle_into(self)
         snap = self.snapshot
         return TurnTrace(
             trace_id=self.trace_id,

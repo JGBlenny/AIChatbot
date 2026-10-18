@@ -100,6 +100,9 @@ REGEN = os.environ.get("AGENT_GOLDEN_REGEN", "") == "1"
 # ---------------------------------------------------------------------------
 @pytest.fixture(autouse=True)
 def _determinism(monkeypatch):
+    # W1（plan-write-flow-program-owned-20261017 驗收 #6）：golden 在 `AGENT_WRITE_DRAFT=off`
+    # 下逐位比對（off ＝撤回 write_intent schema、草稿、程式觸發；R1 golden 本身不變）。
+    monkeypatch.setenv("AGENT_WRITE_DRAFT", "off")
     monkeypatch.setattr(runtime_mod, "new_nonce", lambda: FIXED_NONCE)
     monkeypatch.setattr(_uuid_mod, "uuid4", lambda: _uuid_mod.UUID(hex=FIXED_TRACE_ID))
     monkeypatch.setattr(_bills, "_today", lambda: FROZEN_TODAY)
