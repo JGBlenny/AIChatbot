@@ -30,7 +30,7 @@
 | C-3 | 正本完全沒有相關章節時不說缺什麼 | 出口句引用使用者原話（需處理 R2 安全審查 F1、F2）／維持 | 另開片照設計方法先查業界 | `.kiro/specs/agentic-mcp-orchestration/acceptance-partial-answer-gap-r3-20261018.md` 收窄段（`grep -n "收窄" <該檔>`；業主「接受收窄，這片不處理」） |
 | C-4 | 只改政策文擋不住推論有無 | 程式強制（如 Verifier 對「只有／沒有 X」句型檢查）／維持 | 另開片先查業界防推論做法：R3 #1 gpt-oss 仍 1 回合「只支援…沒有 LINE Pay」，verifier 抽驗又見「包含日文等語系」 | `plan-partial-answer-gap-r3-20261018.md` §9 |
 | C-5 | W2 截斷處置、W3 查詢改由程式主導 | 依新設計方法補業界做法後送審／暫緩 | W2 先：gpt-oss 截斷 54 回合中 10 回合、8 回合最後轉人 | `plan-truncation-w2-20261017.md` §0 |
-| C-6 | 正本定期維護 | 另開新計畫（先查業界維護客服知識庫的做法）／暫緩 | 業主 2026-10-18 已「同意」另開；待定時程 | `outline-curation/SKILL.md`（新建／重切用重流程）；細目 `sources` 指向程式檔、有 `reviewed_at` |
+| C-6 | 大綱管理（原「正本定期維護」；業主 2026-10-18 再併入後台三個工具：知識匯入、文件轉換、測試情境生成，改產生大綱提案或退役） | 另開新計畫（先查業界維護客服知識庫的做法）／暫緩 | 業主 2026-10-18 已「同意」另開；待定時程 | `outline-curation/SKILL.md`（新建／重切用重流程）；細目 `sources` 指向程式檔、有 `reviewed_at` |
 | C-7 | 判分員驗證（人工標註集） | 另案／不做 | 有懷疑判分員判錯的具體事件時再開 | 計畫 §8.5 |
 | C-8 | 盲判探針批誘餌組成（R3 verifier P3） | — | 已由 D1 固定為 6 則（`eval-harness/decoys/probe.json`），僅記錄 | D1 verifier CONFIRMED |
 
