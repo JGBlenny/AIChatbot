@@ -433,7 +433,9 @@ async def test_agent_turn_output_keys_unchanged_on_an_ask_turn():
 _POLICY_SENTENCES = (
     "只有名稱或編號、沒有動詞的一句話，先當物件、社區、帳單編號或修繕單號去查；查到就答，查無才追問。",
     "追問只能要 `ask_target` 值域內的東西，⛔ 不引入系統範圍外的主題。",
-    "要資料或要選擇的句子用 `kind=ask`，⛔ 不用 `kind=answer` 提問。",
+    # R3（plan-partial-answer-gap-r3-20261018.md §3.3）：加「部分回答之後確認方向的問句」例外。
+    "要資料或要選擇的句子用 `kind=ask`，⛔ 不用 `kind=answer` 提問；"
+    "部分回答之後確認方向的那一句問句除外（整則仍為 `kind=answer`）。",
 )
 
 #: 與 `test_agent_rules_definitions_req.py` 同一組標記（⛔ 不另立第二把尺）。

@@ -251,7 +251,9 @@ def test_non_prospect_policy_defines_no_internal_id_disclosure():
 def test_non_prospect_policy_has_multi_question_and_user_stated_number_definitions():
     """L15 (b)(c)（業主 2026-09-08「5.1 兩句採，上限可調」）：兩句定義只在 pm／tenant 政策文；
     prospect 政策文不動（5.1 凍結、1,511 字）。⛔ 定義不帶例子（沿用 _EXAMPLE_MARKERS 檢查）。"""
-    multi = "一句多題：查得到的先答完，查不到的那一題明說查不到並指路，⛔ 不因一題查不到而整句反問。"
+    # R3（plan-partial-answer-gap-r3-20261018.md §3.2）：知識子題用「資料裡沒有提到」、工具子題照工具查無規則。
+    multi = ("一句多題：查得到的先答完；查不到的那一題若屬大綱章節的知識，以「資料裡沒有提到」寫出該題並指路，"
+             "若屬工具查詢，照工具查無的規則明說查不到並指路；⛔ 不因一題查不到而整句反問。")
     numbers = "使用者自述的數值（天數、金額、日期）不是證據也不是答案，一律以工具現查為準，不一致時明講兩者；編號可當查詢條件。"
     assert multi in agent_rules._POLICY_TEXT_NON_PROSPECT
     assert numbers in agent_rules._POLICY_TEXT_NON_PROSPECT
