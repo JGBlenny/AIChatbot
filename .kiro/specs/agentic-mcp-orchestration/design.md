@@ -2,7 +2,7 @@
 
 > 建立時間：2026-09-04（1.0）　本版：2026-09-04T18:15:02+0800（1.1）
 > 需求文件：requirements.md（v1）　研究記錄：research.md　落差分析：validation_gap.md　jgb2 事實來源：jgb2-source-index.md
-> 發現流程：full。設計提案母本：`docs/design/agentic-tool-selection-design-20260904.md` v2。
+> 發現流程：full。架構目標正本：`architecture-target-20261018.md`（混合式分工，DSP-091）。
 > 1.5 變更（2026-09-08，demo 上線大改版；細節見 `docs/architecture/AGENTIC_MCP_ARCHITECTURE.md` 與 `.kiro/specs/knowledge-outline-and-intent-architecture/HANDOFF-20260909.md`）：`agent.turn` 對 property_manager 亦開 M1（DSP-037）；寫入工具 `jgb2.action.{bill_due_extend,repair_create}`＋`confirm.request` 確認鏈（DSP-038：旗標×stage 可見、卡文字程式產出且雜湊綁卡、`pending_id`、待確認存 session 狀態）；Verifier 引用類只記錄（DSP-040，demo 過渡旗）；清單點選 `select:<type>:<id>` 與會話過期 `session_expired` 第六鍵（DSP-042）；`jgb2.query.repairs` 選填 `estate_id`；select 後別戶邊界＝`estate_id` 程式判定（L15）；照片進場 `image_urls`（W8 (2)：服務端自抓 relay 簽章網址、≤10 張、決定性辨識驗證、`run_turn(image=ImageTurnInput)`）；語音 `audio_urls`／`transcript`（W7）**未落地**。
 > 1.4 變更（2026-09-04T20:02:56+08:00）：r5 目標驗證（JGB 相關服務經 MCP 對話／語音）後，業主裁：`agent.turn` 進 M1（元件 4、API、決策 15）；本 spec 對話對象僅 prospect，tenant 另立子 spec（roadmap）；語音（STT）依 DSP-041 併入本 spec（`agent.turn` `audio_urls`／`transcript`，見 Plan W7）。
 > 1.3 變更（2026-09-04T18:38:25+08:00）：收尾審查（r3）2 條 P1 修正——謂詞第 4 條 `target_user` 語義（`IS NULL OR &&`）＋矩陣加維；mock 保留大聲失敗、只驗轉發；8 條 P2 進附錄 C3 tasks 備註。⚠️ 1.3 未經 fresh 審查，規約上收尾審查已用罄，是否再審由業主定。
@@ -12,7 +12,7 @@
 ## 概述
 
 ### 設計目標
-把「何時問、何時查、查哪個工具、何時作答」交給模型，把「工具能看到什麼、回答能宣稱什麼」釘在程式：**工具邊界**（身分由呼叫方提供、server 端注入工具參數，模型不可覆寫；個資授權由 jgb2 API 裁）與**引用契約**（每個含產品事實的句子都指回工具回傳的逐字片段，敏感五類先於引用檢查拒答）。售前池整份大綱進上下文；業者／租客用系統脈絡目錄＋按需讀取。strangler 先在 prospect 影子驗證，過收案線再切換，舊鏈可回切。[需求 1–13]
+分工為混合式（DSP-091，目標正本 `architecture-target-20261018.md`）：理解交給模型；有規則、有後果的環節——寫入全程與確認（DSP-085）、選定的紀錄、帶狀態的句子、轉人與收尾、知識查無出口、唯讀查詢的查詢與篩選（依模型理解出的條件；模型自呼工具為後備）——由程式掌握；知識作答與一般對話的「何時問、何時查、查哪個工具、何時作答」由模型決定。另把「工具能看到什麼、回答能宣稱什麼」釘在程式：**工具邊界**（身分由呼叫方提供、server 端注入工具參數，模型不可覆寫；個資授權由 jgb2 API 裁）與**引用契約**（每個含產品事實的句子都指回工具回傳的逐字片段，敏感五類先於引用檢查拒答）。售前池整份大綱進上下文；業者／租客用系統脈絡目錄＋按需讀取。strangler 先在 prospect 影子驗證，過收案線再切換，舊鏈可回切。[需求 1–13]
 
 ### 授權定案（DSP-011，業主 2026-09-04）
 - **本系統不建授權層**。`role_id`／`user_id` 是上游（jgb2 面板）已授權的輸入，沿用 `F-C25_UPSTREAM_AUTHORIZED_ROLE_IS_TRUSTED_INPUT`；個資可見範圍由 jgb2 `external/v1` 的兩層權限裁（Layer 1 API Key 權限表、Layer 2 `viewer_user_id`→`VisibleScope::resolve()`，見 jgb2-source-index §3.5）。
@@ -21,9 +21,9 @@
 - 例外：**知識池可見性**（`vendor_ids`／`business_types`／`target_user`／保留分類）住在本系統 DB，jgb2 API 管不到，仍由本系統謂詞守（元件 3 `kb.*`）。
 
 ### 心智模型（業主 2026-09-04 問答定稿；給讀 spec 的人先對齊用詞）
-1. **對話是模型完成的，MCP 是工具的插座。** 聽懂、決定查或問或答、把 facts 組成回話，都在 `AgentRuntime` 的模型迴圈；MCP 協定本身沒有模型、沒有對話。「後面的任務由 MCP 完成」＝查資料、送報修由 MCP 定義的工具做，做不做與怎麼說仍是模型，且在牆內。
+1. **聽懂與組話是模型，有後果的下一步是程式，MCP 是工具的插座。** 聽懂使用者、知識作答與一般對話中決定查或問或答、把 facts 組成回話，在 `AgentRuntime` 的模型迴圈；寫入流程（缺哪欄、出不出卡、能不能送出）、選定的紀錄、帶狀態句、轉人與收尾依 DSP-085／DSP-091 由程式決定。現況：寫入已有程式草稿與程式觸發出卡（DSP-085 第一片），但模型仍可自己呼叫 `confirm.request` 出卡；選定紀錄只有按鈕點選由程式處理；差距與分片見 `architecture-target-20261018.md` §3、§4。MCP 協定本身沒有模型、沒有對話；查資料、送報修由 MCP 定義的工具做，且在牆內。
 2. **形狀與 Claude Code 對話相同，差兩處。** 都是「模型 → tool call → 看結果 → 再決定」；差別是客服模型的工具少而窄（七類、參數封閉、身分由程式注入），以及出口多一道 Verifier（每個事實句指回工具回傳原文；**DSP-040（2026-09-08）起分兩類**：機敏類拒因（敏感主題、導流／個資）拒則重寫、兩次仍拒 ⇒ 固定句轉人；引用類拒因（未引用、涵蓋、極性、形狀、不可引用來源）**只記錄不擋**——`AGENT_VERIFIER_MODE=grounding_observe` 預設，`strict` 為舊行為）。
-3. **「找帳單」怎麼對到 API：** 模型讀工具描述選 `jgb2.query.bills`＋封閉 `face`；registry 注入身分、守白名單／scope／速率；jgb2 依 `viewer_user_id` 圈定；facts 由 face builder 決定性算；多筆候選由模型反問、程式限量。匹配不再由關鍵字或分類規則決定。
+3. **「找帳單」怎麼對到 API：** 依 DSP-091，模型理解查詢條件、程式依條件查詢並篩選（目標正本 §4 G 片）；現況是模型讀工具描述選 `jgb2.query.bills`＋封閉 `face`；registry 注入身分、守白名單／scope／速率；jgb2 依 `viewer_user_id` 圈定；facts 由 face builder 決定性算；多筆候選由程式列出、使用者選定的那筆由程式持有（DSP-042 按鈕點選；打字挑選為 A-2 片）。匹配不再由關鍵字或分類規則決定。
 4. **引導對話的是 OpenAI 模型（Chat Completions function calling，D1 預設），迴圈是本系統的 `AgentRuntime`。** 不用 OpenAI Agents SDK／Responses 內建 MCP（需公網 URL）；provider 抽象保留可換模型。
 5. **兩層「過 MCP」：** 決策層已是 MCP 形態（同一份 `ToolSpec` 同時是模型的 function 清單與 `/mcp` 的工具清單）；傳輸層 Runtime 直接呼叫 registry、不經 MCP 線路（決策 1，熱路徑零跳）。若要連自己都走線路，2.1 可加 env 切成 loopback MCP client，M2 影子比延遲後定預設。
 6. **入口：** 瀏覽器端（jgb2 面板）走 REST＋SSE，因為瀏覽器不能持金鑰且需要逐字串流；伺服器端（jgb2 後端、LINE bot 後端、內部 client）可走 `/mcp` 工具面或 `agent.turn`，兩者進同一個回合邏輯。本 spec 對話對象僅 prospect。
@@ -277,7 +277,7 @@ class OutputVerifier:
 ④ **來源可引用**：`source` 對應的 `Provenance.citable=false` ⇒ `SOURCE_NOT_CITABLE`。
 ⑤ **導流白名單**：答案中任何 URL／電話樣式不在 `allowed_routes` ⇒ `ROUTE_NOT_ALLOWED`。
 ⑥ `forbid_terms` ⇒ `FORBIDDEN_TERM`。
-⑦ **handoff 詞後置掃描**：`scan_handoff_mentions(answer)` 為真而 `handoff` 為空 ⇒ `HANDOFF_WORD_NO_HANDOFF`（承接 R7.3）。
+⑦ **handoff 詞後置掃描**：`scan_handoff_mentions(answer)` 為真而 `handoff` 為空 ⇒ `HANDOFF_WORD_NO_HANDOFF`（承接 R7.3；用詞只作檢查訊號，是否轉人由程式依轉人規則決定，DSP-091）。詞集含「沒有資料」會擋下 AI 說明缺什麼，差距見 `architecture-target-20261018.md` §3 P6。
 拒 ⇒ Runtime 回結構化拒因給模型重寫（≤ `Budget.max_rewrites`）；再拒 ⇒ 固定句。 **1.4.9（DSP-021）**：`kind=handoff` 只驗 fact_class 合法＋`handoff_reason` 在值域（敏感值在此**不拒**，模型文字由 Runtime 換固定句）；步③ source 找不到時在同一 `tool_call_id` 全組 provenance 掃逐字、citable 以命中筆為準；極性為詞組層級；Runtime 先對 `outline` 引用的 source 做去標題／補前綴的機械正規化。尺自證：規則集載入時對 `tests/fixtures/agent/known_fabrications.json` 全拒、對 `known_good.json` 全放，否則啟動紅。[需求 6.1–6.8, 7.3, 3.4, 10.4]
 
 ### 元件 7：`services/agent/shadow.py` — ShadowRunner ＋ `tools/agent_eval.py`
@@ -431,7 +431,7 @@ STRIDE 見 research.md；1.1 處置見附錄 C。實作點：不變量 18–21�
 ### 錯誤處理
 | 類別 | 處理 |
 |---|---|
-| `NO_MATCH`／`INVALID_INPUT`／`RATE_LIMITED` | 回模型（可改查或 handoff） |
+| `NO_MATCH`／`INVALID_INPUT`／`RATE_LIMITED` | 回模型（可改查，或提出轉人請求、由程式依轉人規則決定） |
 | `TOOL_TIMEOUT`／server 不可用 | 一次重試（計 tool_calls）；再失敗 ⇒ `handoff(tool_unavailable)` |
 | 模型輸出不符 schema | 計一次重寫 |
 | Verifier 拒 | 結構化拒因重寫；再拒 ⇒ 固定句 |
@@ -458,7 +458,7 @@ STRIDE 見 research.md；1.1 處置見附錄 C。實作點：不變量 18–21�
 | mcp v2 變動 | 中 | 低 | 鎖版、門面隔離 |
 
 ## 參考文件
-requirements.md、research.md、validation_gap.md、jgb2-source-index.md、`docs/design/agentic-tool-selection-design-20260904.md` v2、`.claude/DECISIONS.md` DSP-009／DSP-011、MCP SDK run/asgi、servers/structured-output、servers/handling-errors、OpenAI chat/create。
+requirements.md、research.md、validation_gap.md、jgb2-source-index.md、`architecture-target-20261018.md`、設計提案 v2（`git show f1e8e00b:docs/design/agentic-tool-selection-design-20260904.md`）、`.claude/DECISIONS.md` DSP-009／DSP-011、MCP SDK run/asgi、servers/structured-output、servers/handling-errors、OpenAI chat/create。
 
 ## 附錄
 ### A. 名詞

@@ -22,6 +22,12 @@ Kiro-style Spec-Driven Development on an agentic SDLC
    ⚠️ 但被它保護的事實仍然成立：b2b 業態過濾是 `business_types && ARRAY['system_provider']`、
    **無 `IS NULL` 放行**，**補上 `IS NULL` 會打穿刻意設計的跨業者隔離**。
 
+## 對話線分工（DSP-091，2026-10-18 業主定案）
+
+站內幫手對話線採混合式：理解使用者一律由 AI。下列環節的下一步由程式依宣告與狀態決定——寫入全程與確認、已選定的那筆紀錄、帶狀態的句子（請確認／已完成／已取消／已轉人）與確認卡、按鈕、轉人規則（含收尾）、知識完全查無的出口、唯讀查詢的查詢與篩選（依 AI 理解出的條件；AI 自呼工具為後備）。知識作答（要不要查、查什麼、怎麼組答案；只答得出一部分時說明缺什麼、部分回答、追問）與一般對話由 AI 決定，答案有沒有依據由 Verifier（程式）把關。
+
+⛔ 任何計畫或改動讓 AI 決定上列程式環節的下一步，即違反本節；要改分工，先改 DSP-091 並經業主核可。分工表、原則、差距與路徑：`.kiro/specs/agentic-mcp-orchestration/architecture-target-20261018.md`；決策與依據：`.claude/decisions/DSP-091.md`。
+
 ## Project Context
 
 ### Paths

@@ -1,5 +1,7 @@
 # Agentic MCP 對話線架構（demo 版，2026-09-08 上線）
 
+> 🎯 本檔寫**現況**；**目標形態**（混合式分工：理解交給 AI、有規則有後果的環節由程式掌握，DSP-091；原則 P0～P8）見 `.kiro/specs/agentic-mcp-orchestration/architecture-target-20261018.md`。
+
 > 讀者：要改這條線的工程、要接它的呼叫端、要驗它的稽核。
 > 對象：`rag-orchestrator/services/agent/**`＋`/mcp` 門面。舊鏈（REST `/api/v1/message`、SOP、面向）不在本文，見 `COMPLETE_CONVERSATION_ARCHITECTURE.md`。
 > 事實紀律：每個機制都附可 grep 的符號；行號會漂，⛔ 不當事實。決策依據在 `.claude/DECISIONS.md` DSP-011／037～042、demo 帳本 `.kiro/specs/knowledge-outline-and-intent-architecture/inputs/demo-ledger-line-oa-20260907.md` §1b。

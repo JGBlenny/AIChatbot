@@ -191,6 +191,8 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 - 正本 | `rag-orchestrator/canon/jgb/CATALOG.md` | **知識正本目錄（衍生物，⛔ 不手改）**：架層兩行（`## <架> <標題>`＋`scope:`），粗目若帶 slug 則多一行 `### <粗目 id> <粗目標題>`，每細目一行 id｜標題｜target_user｜approved 講法（⚠️ 新正本講法全為 `proposed` ⇒ 第四欄目前全空）；由 `export_catalog` 重產，`load_canon_or_die` 啟動時與九架逐位元比對。DSP-058（2026-09-15）圖書館形態：一目錄＋九架，受眾＝細目必填屬性；舊兩份受眾檔封存：DSP-067 換正本前 `docs/archive/2026-09/canon-pre-dsp067/`（2026-09-23 已移出工作樹，內容在 git `c06575a9`）（舊 210 條，S1／S2 的正對照組）、9.6 圖書館化前 `canon-pre-library/`、9.5 重切前 `canon-pre-recut/`；舊版封存 `docs/archive/2026-09/canon-pre-recut/`；格式規則與審核流程見 `canon/README.md`；2026-10-04 實查 **57 粗目／539 細目、已審 525**（只有已審細目的內容可被模型引用、未審細目只出標題（`canon_assembler.py` 的 `citable`）；現值以 `jgb.json` 與 `endpoint_progress.py` 為準，⛔ 照抄本行）
 - 判準 | `docs/architecture/BOUNDARY.md` | **系統邊界唯一正本**：三個桶（本系統／呼叫端／外部相依）＋易混詞歸屬表＋一句話測試「把呼叫端整個換掉這句話還成立嗎」。⚠️ `quick_replies`／`line_official`／`confirm_qr_labels` 名字有外部血統但**是本系統自己的契約**，⛔ 不得當外部名詞清掉；由不變量 40 機械強制
 - 產線 | `docs/guides/development/how-to-add-a-query-capability.md` | **怎麼加一個查詢能力**：先分「新 face／新域／跨列彙總」三類；加 face 的三個陷阱（face 只選 builder 不選資料源、builder 簽名是單列、參數列被 strict 測試凍死）；⛔ 跨列彙總在現行形狀下表達不出來
+- 決策 | `.kiro/specs/agentic-mcp-orchestration/architecture-target-20261018.md` | **對話架構目標正本**（DSP-091 混合式）：誰決定哪個環節的分工表、原則 P0～P8、目標與 M0 基線、每片驗收方式、業界原文、差距、分片路徑；每份計畫必須引用原則編號
+- 進度 | `.kiro/specs/agentic-mcp-orchestration/HANDOFF-20261018.md` | **工作線交接正本**：各片狀態、待業主裁事項、安全規則、環境暫態；新視窗從這裡開工
 - 規格 | `docs/architecture/AGENTIC_MCP_ARCHITECTURE.md` | 總覽：`/mcp` `agent.turn` 門面→四段管線（Plan R R1 後：`turn_segments`／`turn_context`／模型迴圈／`exit_gates`）→工具註冊→替身；組態、已知限制、模型行為假設表
 - 規格 | `.kiro/specs/agentic-mcp-orchestration/requirements.md` | 需求正本，含 D2 延遲／答到率驗收線
 - 產線 | `rag-orchestrator/services/agent/runtime.py` | `AgentRuntime.run_turn`／`_run_turn_body`（四段管線接線）
@@ -208,7 +210,7 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 - 判準 | `rag-orchestrator/tests/unit/agent/test_pipeline_golden_req.py` | Plan R 回放等價 golden（`TurnTrace` 全欄位逐位比對）
 - 判準 | `rag-orchestrator/tests/unit/agent/test_pipeline_order_req.py` | 四道出口閘順序表測試
 - 判準 | `scripts/smoke/` | 真模型 smoke 對照計分尺（`mcp_smoke.py`／`b4_score.py`／`liff_score.py`）
-- 決策 | `.claude/DECISIONS.md` | DSP-037～045（pm 受眾開放、寫入工具正本、Verifier 兩類拒因、DSP-040 引用類絆線、W7 語音、W8 LIFF、outcome 七鍵、DSP-044 照片文字撤銷、DSP-045 額度封閉表）
+- 決策 | `.claude/DECISIONS.md` | DSP-091 混合式分工、DSP-085 寫入由程式掌握；DSP-037～045（pm 受眾開放、寫入工具正本、Verifier 兩類拒因、DSP-040 引用類絆線、W7 語音、W8 LIFF、outcome 七鍵、DSP-044 照片文字撤銷、DSP-045 額度封閉表）
 - 實測 | `.kiro/specs/knowledge-outline-and-intent-architecture/inputs/demo-ledger-line-oa-20260907.md` | demo 帳本：模型換測（luna／terra）、延遲量測、病灶審查
 
 ## 大綱三層重建（DSP-067；現行九架正本的來源）{#outline-drafting}
@@ -412,8 +414,7 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 ## 設計文件 {#design-docs}
 
 ⚠️ 這 9 份於 2026-09-04 逐份判讀後列入,且**逐一驗證過對應實作是否存在**(見各條)。
-⛔ `docs/design/agentic-tool-selection-design-20260904.md` 不在此列——它是
-`agentic-mcp-orchestration` 的設計正本,由該 spec 管轄;`LOOKUP_TABLE_SYSTEM_DESIGN.md`
+`agentic-mcp-orchestration` 的架構目標見 `#agentic-mcp`;`LOOKUP_TABLE_SYSTEM_DESIGN.md`
 在 `canon.json` 的 `discover_exclude`。
 
 ### API 架構

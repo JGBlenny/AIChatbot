@@ -1,4 +1,4 @@
-# 實作任務：agentic-mcp-orchestration（決策搬進模型、工具邊界＋引用契約）
+# 實作任務：agentic-mcp-orchestration（agent 對話線：工具邊界＋引用契約；分工見 architecture-target-20261018.md）
 
 > 建立時間：2026-09-04
 > 需求：requirements.md v1＋DSP-012 修訂＋R3.7（R1–R13，64 子項；R3.7、R11.5、R11.6 新增）｜設計：design.md 1.4.1（8 元件、15 決策、不變量 27–31（原 18–22，DSP-013）；r4 READY、r6 增量審查處置）｜研究：research.md｜路線圖：roadmap.md（本檔只涵蓋母 spec M0–M3；M4／M5 與個人化為子 spec）

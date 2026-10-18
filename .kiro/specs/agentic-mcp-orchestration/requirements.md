@@ -1,13 +1,14 @@
-# 需求規格：agentic-mcp-orchestration（決策搬進模型：agent 自選工具、MCP 工具邊界、引用契約）
+# 需求規格：agentic-mcp-orchestration（agent 對話線：混合式分工、MCP 工具邊界、引用契約）
 
 > 建立時間：2026-09-04　階段：requirements-generated（v1）　語言：zh-TW　分支：`feat/agentic-mcp`
-> 設計正本：`docs/design/agentic-tool-selection-design-20260904.md`（v2，含 fresh-context 反證 6 條處置）。量化依據：`.kiro/specs/presales-grounding-gate/coverage-map/topic-contract-pilot-20260904.md`（六欄：現行閘門＋brain 分類在「建立合約」主題答到 41%／rubric 24% 到頂）。
+> 架構目標正本：`architecture-target-20261018.md`（混合式分工，DSP-091）；技術設計：`design.md`。下文「設計 v2」「反證 #n」指 2026-09-04 設計提案 v2，原文以 `git show f1e8e00b:docs/design/agentic-tool-selection-design-20260904.md` 取得。量化依據：`.kiro/specs/presales-grounding-gate/coverage-map/topic-contract-pilot-20260904.md`（六欄：現行閘門＋brain 分類在「建立合約」主題答到 41%／rubric 24% 到頂）。
 > ⚠️ 模板缺席：`.kiro/settings/rules/ears-format.md` 與 `templates/specs/requirements.md` 不存在，沿用 `presales-grounding-gate/requirements.md` 格式。
 
 ## 目標形態（拍板基準）
 
 ```
-使用者訊息 → Agent Runtime（模型迴圈：思考 → 呼叫工具 → 讀結果 → 再呼叫或作答）
+使用者訊息 → Agent Runtime：理解交給模型；有規則、有後果的環節（寫入與確認、選定的紀錄、帶狀態句、轉人與收尾、查無出口、唯讀查詢的查詢與篩選）由程式掌握（DSP-085、DSP-091）
+             知識作答與一般對話在模型迴圈（思考 → 呼叫工具 → 讀結果 → 再呼叫或作答）
              工具全部經 MCP server；server 依 session 身分注入範圍，模型不得自選身分
              最終回答走引用契約 {answer, citations[{source, quote}], kind}
              Output Verifier（程式）：敏感五類主題拒答 → 逐句引用逐字驗 → 禁止詞 → **機敏類**拒則重寫一次或固定句轉人；**引用類**拒因只記錄不擋（DSP-040；正式參數 `AGENT_VERIFIER_MODE=grounding_observe` 待 W6-b3 落地，demo 現行以過渡旗 `AGENT_VERIFIER_OBSERVE_ONLY=1` 實現、且連機敏類也不擋）
@@ -31,7 +32,7 @@
 
 | # | 決策 | 依據 |
 |---|---|---|
-| 1 | 主線改為「決策搬進模型、agent 自選工具」，開分支 `feat/agentic-mcp` | 業主「我要這樣做」「現在主線是 MCP 架構」 |
+| 1 | 主線改為 agent 架構，開分支 `feat/agentic-mcp`；分工為混合式——理解交給模型，有規則、有後果的環節由程式掌握，知識作答與一般對話由模型決定 | 業主「我要這樣做」「現在主線是 MCP 架構」（2026-09-04）；分工依 DSP-085（2026-10-17）、DSP-091（2026-10-18） |
 | 2 | 兩道牆留在程式：工具邊界（身分由 server 注入）、輸出引用契約 | 設計 v2 §0；五輪 e2e 證明 prompt 服從是機率性 |
 | 3 | 售前池整份大綱進上下文，不用向量檢索；業者／租客大綱＋按需讀取 | 反證 #1、池大小實查 |
 | 4 | 退休清單收窄為 `_top1_relevance_gate`、六 case 仲裁、`categories` 提名；敏感五類拒答、斷言引用檢查、確認 token、三池隔離留下；重問重播改快取 | 反證 #6 |
@@ -50,7 +51,7 @@
 
 ## 名詞定義
 
-- **Agent Runtime**：模型迴圈框架（程式）：送 prompt、收工具呼叫、執行、回填、預算控制、串流、計量。決策（叫哪個工具、何時作答）由模型做。
+- **Agent Runtime**：模型迴圈框架（程式）：送 prompt、收工具呼叫、執行、回填、預算控制、串流、計量。分工依 DSP-091：知識作答與一般對話中叫哪個工具、何時作答由模型做；有規則、有後果的環節（寫入與確認、選定的紀錄、帶狀態句、轉人與收尾、查無出口、唯讀查詢的查詢與篩選）由程式決定。
 - **工具邊界**：MCP server 對每個工具強制的範圍——身分、可見池、可回欄位、寫入前置條件；模型不可覆寫。
 - **引用契約**：模型最終輸出的結構 `{sentences[{text, kind, cite[]}], citations[{tool_call_id, source, quote}], kind, fact_class, handoff_reason}`（DSP-028；`answer` 由系統拼接）；`quote` 必須是所引工具回傳文字的逐字子串。
 - **Output Verifier**：程式層對引用契約的決定性檢查器；只做子串比對與封閉集合規則，⛔ 不用 LLM 當判官。
@@ -75,10 +76,10 @@
 
 ### Requirement 1：Agent Runtime（模型迴圈與預算）
 
-**使用者故事**：作為業主，我要模型自己決定要問、要查、查哪個工具、何時作答，而不是程式替它決定。
+**使用者故事**：作為業主，我要模型聽懂使用者，並在知識作答與一般對話中自己決定要問、要查、查哪個工具、何時作答；有規則、有後果的環節由程式決定（DSP-091）。
 
 #### 驗收標準（EARS）
-1. THE SYSTEM SHALL 以工具呼叫迴圈驅動每一回合：模型輸出 tool call ⇒ Runtime 執行對應 MCP 工具並回填結果 ⇒ 模型續呼，直到模型輸出符合引用契約的最終回答或呼叫 `handoff.request`。
+1. THE SYSTEM SHALL 以工具呼叫迴圈驅動每一回合：模型輸出 tool call ⇒ Runtime 執行對應 MCP 工具並回填結果 ⇒ 模型續呼，直到模型輸出符合引用契約的最終回答，或以 `handoff.request` 提出轉人請求；是否轉人、先問還是直接轉由程式依轉人規則決定（DSP-091）。
 2. THE SYSTEM SHALL 對每回合套用預算（D4 預設：工具呼叫 ≤ 4、重寫 ≤ 2、總時長 ≤ 20 秒）；WHEN 任一預算耗盡，THE SYSTEM SHALL 以固定句＋`handoff` 結束該回合，⛔ 不得回傳未驗證的中間文字。
 3. THE SYSTEM SHALL 把 session 身分（`mode`、`target_user`、`vendor_id`、`role_id`、`user_id`）綁在 Runtime 端並傳給每個工具呼叫；模型的 tool call 參數中若含身分欄位，THE SYSTEM SHALL 忽略並記錄。
 4. THE SYSTEM SHALL 支援串流：最終回答以 `answer_chunk` 逐字送出，`handoff`／`quick_replies` 在 `metadata` 事件；工具呼叫期間 SHALL 送心跳或狀態事件，⛔ 不得讓連線靜默超過 10 秒。
@@ -87,7 +88,7 @@
 
 ### Requirement 2：工具邊界（MCP server 的身分注入與隔離）
 
-**使用者故事**：作為平台方，我要跨業者、跨身分的隔離跟今天一樣硬，不因決策搬進模型而變成 prompt 約束。
+**使用者故事**：作為平台方，我要跨業者、跨身分的隔離跟今天一樣硬，不因對話交給模型而變成 prompt 約束。
 
 #### 驗收標準（EARS）
 1. THE SYSTEM SHALL 在 MCP server 端依 session 身分決定每個工具的可見池：知識類工具套 `business_types`／`target_user`／`vendor_ids` 過濾（沿用現行 SQL 謂詞）；jgb2 類工具以 `role_id＋user_id` 雙證呼叫。
@@ -116,9 +117,9 @@
 
 #### 驗收標準（EARS）
 1. THE SYSTEM SHALL 把每個寫入型動作做成 `jgb2.action.<x>(payload, confirmation_token)`；WHEN `confirmation_token` 缺或無效，THE SYSTEM SHALL 拒絕並回 `CONFIRMATION_REQUIRED`。
-2. THE SYSTEM SHALL 提供 `confirm.request(summary, payload)`（`payload.action` 必填、封閉 enum）：確認卡文字由程式依 action＋payload 決定性產出並逐字成為該回合 `TurnResult.answer`（⛔ 不經模型／Verifier 改寫）；回三顆機器值 quick reply（值＝`confirm_submit:<pending_id>`／`confirm_edit:<pending_id>`／`confirm_cancel:<pending_id>`）與 `pending_id`；`summary_sha256` 為卡文字雜湊、`payload_sha256` 為 payload 雜湊，兌現時皆比對（DSP-038-2）；token SHALL 只在使用者回傳 `confirm_submit` 機器值時由 Runtime 兌現，⛔ 不由模型判讀同意詞。
+2. 出不出確認卡 SHALL 由程式依動作宣告與草稿狀態決定（DSP-085、DSP-091）；現行模型仍可自己呼叫 `confirm.request` 出卡，差距見 `architecture-target-20261018.md` §3 P1。THE SYSTEM SHALL 提供 `confirm.request(summary, payload)`（`payload.action` 必填、封閉 enum）：確認卡文字由程式依 action＋payload 決定性產出並逐字成為該回合 `TurnResult.answer`（⛔ 不經模型／Verifier 改寫）；回三顆機器值 quick reply（值＝`confirm_submit:<pending_id>`／`confirm_edit:<pending_id>`／`confirm_cancel:<pending_id>`）與 `pending_id`；`summary_sha256` 為卡文字雜湊、`payload_sha256` 為 payload 雜湊，兌現時皆比對（DSP-038-2）；token SHALL 只在使用者回傳 `confirm_submit` 機器值時由 Runtime 兌現，⛔ 不由模型判讀同意詞。
 3. `jgb2.action.<x>` SHALL 冪等：同一 token 重送 SHALL 回同一結果、⛔ 不重複建單；失敗 SHALL 誠實回錯並允許重試、不留殘單。
-4. THE SYSTEM SHALL 在 `AGENT_WRITE_TOOLS_ENABLED` 未開時不暴露任何寫入型工具給 agent（旗標預設 false、進健檢；只在替身或 JGB 憑證就緒時開）；可見性＝旗標 AND `ToolSpec.stage`（DSP-038-1，2026-09-08；原文「M4 之前不暴露」由旗標取代）。
+4. THE SYSTEM SHALL 在 `AGENT_WRITE_TOOLS_ENABLED` 未開時不暴露任何寫入型工具給 agent（旗標預設 false、進健檢；只在替身或 JGB 憑證就緒時開）；可見性＝旗標 AND `ToolSpec.stage`（DSP-038-1）。
 
 ### Requirement 5：知識供給（大綱與按需讀取）
 
@@ -129,19 +130,19 @@
 2. THE SYSTEM SHALL 對 prospect 回合預設不呼叫 `kb.search`；模型仍可呼叫 `kb.get` 取大綱引用的列全文作引用來源。
 3. THE SYSTEM SHALL 對 pm／tenant 身分把系統脈絡（`category='系統脈絡'`，現 27 列）組成目錄放入 system prompt；細節 SHALL 由模型以 `kb.get`／`help.read` 按章節讀取。
 4. THE SYSTEM SHALL 把大綱與目錄的組裝規則寫成可重跑的程式（含版本戳與 sha256），⛔ 不得由 LLM 自動摘要生成大綱（沿用 D3：自動摘要不得成 truth）。
-5. THE SYSTEM SHALL 對大綱做 token 預算檢查：prospect 大綱 ≤ 10K token、pm／tenant 目錄 ≤ 8K token；超過 SHALL 大聲失敗（啟動時），⛔ 不得靜默截斷。（design 1.12 起 prospect 改為 12,000；env 只能調小，不能調大）
+5. THE SYSTEM SHALL 在啟動時對每個受眾做 token 預算檢查：任 5 個可引用章節的 token 和 ≤ 12,000、目錄 ≤ 8,000（`outline.OUTLINE_K_TOKEN_LIMIT`／`OUTLINE_TOC_TOKEN_LIMIT`，DSP-059；env 只能調小，不能調大）；超過 SHALL 大聲失敗，⛔ 不得靜默截斷。
 
 ### Requirement 6：輸出契約與 Output Verifier（零捏造的結構性保證）
 
 **使用者故事**：作為業主，我要「模型說的每個產品事實都指得回一段逐字來源」是程式驗的，不是 prompt 求的。
 
 #### 驗收標準（EARS）
-1. THE SYSTEM SHALL 要求模型的最終輸出符合 `{sentences[{text, kind, cite[]}], citations[{tool_call_id, source, quote}], kind∈{answer, ask, recommend, handoff}, fact_class, handoff_reason}`（DSP-028：`answer` 由系統拼接 `sentences[].text`，⛔ 不再由模型輸出 `answer`＋`sentence_map`）；不符 schema SHALL 視為一次重寫。
+1. THE SYSTEM SHALL 要求模型的最終輸出符合 `{sentences[{text, kind, cite[]}], citations[{tool_call_id, source, quote}], kind∈{answer, ask, recommend, handoff}, fact_class, handoff_reason}`（DSP-028：`answer` 由系統拼接 `sentences[].text`）；不符 schema SHALL 視為一次重寫。`kind=handoff`／`handoff_reason` 是模型提出的轉人請求，是否轉人由程式依轉人規則決定（DSP-091）。
 2. THE SYSTEM SHALL 逐句檢查：任何含產品事實斷言的句子（含「可以／支援／不支援／需要／會／不會／無法」等封閉詞集）**不分 kind** 必須至少一個 cite；無 cite 的句子只允許純提問、問候、導流三型（封閉判定，⛔ 不用 LLM 判）。
 3. THE SYSTEM SHALL 驗 `quote` 為所引工具回傳文字的逐字子串（正規化空白與全半形後比對）；不是 ⇒ 拒。
 4. THE SYSTEM SHALL 在引用檢查之前套用敏感五類主題拒答：WHEN 使用者問句或模型回答落入客戶案例／價格數字／SLA／法遵／資安五類，THE SYSTEM SHALL 以固定句＋`handoff` 回覆，⛔ 即使知識池內有可引用文字也不答（承接 DSP-009）；五類判定 SHALL 為模型輸出的封閉 enum 欄位（沿用 `fact_class`）加程式端數字／機構名檢查雙保險。
 5. THE SYSTEM SHALL 套用禁止詞集（張冠李戴清單、競品貶抑、絕對化推廣詞）；命中 ⇒ 拒。
-6. WHEN 拒，THE SYSTEM SHALL 把拒因回給模型要求重寫或改呼叫 `handoff.request`（≤ R1.2 預算）；再拒 ⇒ 程式直接發固定句＋`handoff`，⛔ 不得回傳被拒文字。
+6. WHEN 拒，THE SYSTEM SHALL 把拒因回給模型要求重寫（≤ R1.2 預算），模型也可改提出轉人請求、由程式依轉人規則決定；再拒 ⇒ 程式直接發固定句＋`handoff`，⛔ 不得回傳被拒文字。
 7. THE SYSTEM SHALL 對 `kind=ask` 的反問句套用同一斷言檢查（承接 R2.11 實質）；對陳述句形的事實詢問，模型有知識時 SHALL 作答而非反問（承接 R2.13 實質，由大綱在上下文而自然達成，並以影子評估驗證）。
 8. THE SYSTEM SHALL 記錄每回合 Verifier 的判定（通過／拒因／重寫次數）到計量。
 
@@ -150,9 +151,9 @@
 **使用者故事**：作為客戶，我聽到「沒資料、幫你轉人」時要有入口；同一題連問要得到同一句。
 
 #### 驗收標準（EARS）
-1. THE SYSTEM SHALL 提供 `handoff.request(reason, fact_class)`：回固定句（沿用 `PRESALES_HANDOFF_MESSAGE`／DB 供給）與結構化 `handoff{reason, fact_class, channel, message}`；`reason` 值域 SHALL 沿用現行 `{no_grounding, sensitive_no_grounding, llm_mentioned_handoff, partial_grounding}` 並新增 `tool_unavailable`、`budget_exhausted`。
+1. THE SYSTEM SHALL 提供 `handoff.request(reason, fact_class)` 讓模型提出轉人請求；是否轉、先問還是直接轉由程式依轉人規則決定（DSP-091），知識完全查無的出口由程式依檢索結果判定。轉人時回固定句（沿用 `PRESALES_HANDOFF_MESSAGE`／DB 供給）與結構化 `handoff{reason, fact_class, channel, message}`；`reason` 是轉人原因的標籤，值域 SHALL 沿用現行 `{no_grounding, sensitive_no_grounding, llm_mentioned_handoff, partial_grounding}` 並新增 `tool_unavailable`、`budget_exhausted`。
 2. THE SYSTEM SHALL 對同一 session 逐字重問已轉人的問題做 runtime 快取重播，⛔ 不再進模型迴圈（承接 R2.8）。
-3. THE SYSTEM SHALL 對含「專人／真人／客服／沒有資料」的回答附 `handoff`（沿用 R4.2 封閉詞掃描）。
+3. 是否附 `handoff` SHALL 由程式依轉人規則決定（DSP-091），⛔ 由模型回答的用詞決定。模型回答的用詞只作檢查訊號：回答含轉人字眼（`presales_gate.HANDOFF_WORDS`）而引文沒有、本回合也未轉人 ⇒ Verifier 拒（design 元件 6 步⑦ `HANDOFF_WORD_NO_HANDOFF`）。知識只答得出一部分時，模型說明缺什麼 SHALL 不觸發轉人；現行 `HANDOFF_WORDS` 含「沒有資料」會擋下這類說明，差距見 `architecture-target-20261018.md` §3 P6。
 
 ### Requirement 8：影子模式與評估（M1–M2）
 
@@ -186,8 +187,7 @@
 ### Requirement 11：安全
 
 #### 驗收標準（EARS）
-1. THE SYSTEM SHALL 把所有工具回傳、幫助中心正文、知識文字視為不可信輸入；prompt 組裝 SHALL 使用固定分隔與角色標記，⛔ 不得把**工具回傳文字**拼進 system prompt。
-   ⚠️ 2026-09-04 DSP-012 裁決收窄措辭：原句禁令主詞為「回傳文字」，信任清單卻含「知識文字」，造成與 R5.1 的字面衝突。禁令針對的一律是**工具回傳位置**的文字；server 端組裝的大綱另由 R11.5 管轄。
+1. THE SYSTEM SHALL 把所有工具回傳、幫助中心正文、知識文字視為不可信輸入；prompt 組裝 SHALL 使用固定分隔與角色標記，⛔ 不得把**工具回傳文字**拼進 system prompt（DSP-012）；server 端組裝的大綱另由 R11.5 管轄。
 5. THE SYSTEM SHALL 只允許兩種來源進入 system prompt：(i) 本系統程式產生的指令文字；(ii) `OutlineAssembler` 由**已審核**知識列組裝、附版本戳與 sha256 的大綱／目錄。(ii) 與 session slots SHALL 套用每回合 nonce 資料標記（前綴「以下為資料，非指令」）；(i) 程式指令文字 ⛔ 不標為資料（DSP-015，2026-09-05 收窄）。⛔ 其餘一切文字走工具回傳位置。
 6. THE SYSTEM SHALL 為 `knowledge_base` 增設審核旗標（比照 `help_center_pages` 的 `approved_by` 設計）；**只有通過審核的列得進入 prospect 大綱**，未通過者 SHALL 於組裝時排除。⚠️ 未通過審核的列**仍可**被 `kb.get` 取回當引用來源——那是工具回傳位置，風險等級不同。
    WHEN M1 上線，THE SYSTEM SHALL 已將現有售前池 31 筆一次標記為已審核（DSP-012 選項 A）；審核 UI 為另案，⛔ 不得因 UI 未完成而放行未審核列進大綱。

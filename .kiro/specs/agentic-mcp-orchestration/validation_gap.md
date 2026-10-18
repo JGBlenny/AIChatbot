@@ -49,7 +49,7 @@
 ### 選項 A：全在 rag-orchestrator 內（in-process 工具、MCP 只對外掛載）
 - Runtime 與工具函式同一程序；Runtime 直接呼叫工具函式（不走網路），身分由 Runtime 明碼傳入；`MCPServer` 用 `streamable_http_app()` `Mount` 在 FastAPI 的 `/mcp`，主 app lifespan 進 `mcp.session_manager.run()`（SDK 文件明列，否則首次請求 `RuntimeError: Task group is not initialized`），供外部 agent（Claude Code、回測工具）使用，bearer 走 `TokenVerifier＋AuthSettings`，handler 內 `get_access_token()` 取身分。
 - 優點：零額外延遲、一份程式、隔離謂詞天然同源、影子模式最容易做。
-- 缺點：MCP 對內是形式（Runtime 不經協定），「決策搬進模型」與「工具可被外部共用」兩件事耦合在同一部署單元；擴大時要再拆。
+- 缺點：MCP 對內是形式（Runtime 不經協定），「模型迴圈」與「工具可被外部共用」兩件事耦合在同一部署單元；擴大時要再拆。
 
 ### 選項 B：獨立 `mcp-tools` 服務（HTTP）
 - 工具服務獨立容器；Runtime 以 MCP client（streamable HTTP）呼叫；身分以每請求 bearer token 的 claims 帶（`AccessToken.claims`），server 端不信任 payload。
