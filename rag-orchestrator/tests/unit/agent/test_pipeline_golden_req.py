@@ -103,6 +103,10 @@ def _determinism(monkeypatch):
     # W1（plan-write-flow-program-owned-20261017 驗收 #6）：golden 在 `AGENT_WRITE_DRAFT=off`
     # 下逐位比對（off ＝撤回 write_intent schema、草稿、程式觸發；R1 golden 本身不變）。
     monkeypatch.setenv("AGENT_WRITE_DRAFT", "off")
+    # B 片（plan-b-write-replies-program-20261020 §4.1）：寫入回話程式化與帶狀態句判讀閘兩開關 off ＝
+    # 改前行為；golden 在 off 下逐位比對（同上 W1 慣例；off 逐位不變即本片「off＝改前」的證據之一）。
+    monkeypatch.setenv("AGENT_WRITE_REPLY_PROGRAM", "off")
+    monkeypatch.setenv("AGENT_STATE_CLAIM_GATE", "off")
     monkeypatch.setattr(runtime_mod, "new_nonce", lambda: FIXED_NONCE)
     monkeypatch.setattr(_uuid_mod, "uuid4", lambda: _uuid_mod.UUID(hex=FIXED_TRACE_ID))
     monkeypatch.setattr(_bills, "_today", lambda: FROZEN_TODAY)

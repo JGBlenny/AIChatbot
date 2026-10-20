@@ -129,9 +129,11 @@ from services.agent.tools.confirm import (
     PENDING_STATE_EXPIRED,
     PENDING_STATE_LIVE,
     _is_valid_repair_category,
+    closed_action_missing_labels,
     confirm_quick_replies,
     document_confirm_description,
     missing_fields_ask_text,
+    missing_labels_ask_text,
     payload_digest,
     pending_token_state,
     redeem_pending,
@@ -139,6 +141,7 @@ from services.agent.tools.confirm import (
 )
 from services.agent import llm_output as LO
 from services.agent import write_forms as WF
+from services.agent import state_claim as SC
 from services.agent.bill_period import UNPAID_TERMS as _UNPAID_TERMS
 from services.agent.bill_period import parse_period as _parse_period
 from services.agent.bill_period import parse_periods as _parse_periods
@@ -147,6 +150,7 @@ from services.agent.write_forms import write_lifecycle_enabled_from_env
 from services.agent.write_forms import write_proposal_enabled_from_env
 from services.agent.tools.jgb2 import NOT_FOUND_SOURCE as _JGB2_NOT_FOUND_SOURCE
 from services.agent.tools.jgb2 import _candidates_text as _jgb2_candidates_text
+from services.agent.tools.jgb2 import candidates_text_for_user as _jgb2_candidates_text_for_user
 from services.agent.tools.jgb2 import _bill_format_date as _jgb2_bill_format_date
 from services.agent.tools.registry import Provenance, ToolRegistry, ToolResult, tool_name_from_openai
 from services.agent.tools.session import write_slot
@@ -305,6 +309,8 @@ CONFIRM_TOOL_NAME = CONFIRM_SPEC["name"]
 #: 固定句＋候選清單文字（`jgb2._candidates_text` 同一份投影）＋ `select:bill:<id>` 按鈕
 #: （與 LIFF 清單點選同一條入向機器值，⛔ 不另開形狀）；⛔ 不建 pending、不出卡。
 CONFIRM_CANDIDATES_TEXT = "這戶對到不只一張帳單，請點選要處理的那一張。"
+#: B 片 B4：候選清單回合進 dialog 的**程式摘要**（⛔ 清單文字、⛔ 查詢字串；比照 `SELECT_DIALOG_SUMMARY`）。
+CONFIRM_CANDIDATES_DIALOG_SUMMARY = "已列出 {n} 筆候選帳單，請使用者點選要處理的那一張"
 CONFIRM_CANDIDATES_MAX = 5
 #: action ⇒ (候選清單 domain, select 型別)。封閉表，只有會走期別解析的動作才有列。
 _CONFIRM_CANDIDATE_DOMAIN: dict = {"bill_due_extend": ("bills", "bill")}
@@ -2117,6 +2123,14 @@ class AgentRuntime:
         except ValueError as exc:
             logger.error("agent_runtime_config_invalid %s", exc)
             raise
+        # B 片 B6：`AGENT_WRITE_REPLY_PROGRAM`（B1、B2、B5）與 `AGENT_STATE_CLAIM_GATE`（B3）；
+        # on／off、未設或空字串＝on；off ⇒ 與改前逐字相同。
+        try:
+            self._write_reply_program_on: bool = WF.write_reply_program_enabled_from_env()
+            self._state_claim_gate_on: bool = SC.state_claim_gate_enabled_from_env()
+        except ValueError as exc:
+            logger.error("agent_runtime_config_invalid %s", exc)
+            raise
         # W1b（§8.6-3b）：進行中的意圖判斷呼叫，依 `trace_id` 登記——`_finish_confirm_turn` 組
         # `TurnTrace(` 前據此收尾（那一支只拿得到 `trace_id`）；收尾即移除，回合以例外離開時
         # 由 `_run_turn_body` 撤掉（`_WriteIntentCall.abort`）。
@@ -2308,8 +2322,13 @@ class AgentRuntime:
         completed_action_estate_name: Optional[str] = None,
         document_trace: Optional[dict] = None,
         ask_target: Optional[str] = None,
+        trace: Optional[TurnTrace] = None,
     ) -> TurnResult:
         """確認段各出口共用的收尾：組 trace → 落 decision snapshot → 寫回 dialog。
+
+        `trace`（B 片）：模型迴圈一般出口已由 `acc.build_trace` 組好的 trace（含 Verifier 結果、候選、
+        觀察計數）——B 片的換句與乙′ 出口經本函式收尾時傳入，沿用它並覆寫本出口的欄位（`final_kind`、
+        `pending_id`、`receipt_id`、`latency_ms`、token、`violations`）；`None` ⇒ 現行（新組一份）。
 
         ⚠️ 這條路徑**不進 `handoff_cache`**：確認與兌現是一次性的狀態轉移，
         重播它等於「同一句話再送出一次」。⛔ 不要為了「統一」而套 `_finalize`。
@@ -2352,27 +2371,37 @@ class AgentRuntime:
             completion_tokens += _ct
             violations = list(violations or [])
             violations += [m for m in _marks if m not in violations]
-        trace = TurnTrace(
-            trace_id=trace_id,
-            tool_calls=list(tool_calls or []),
-            # 兌現回合 `llm_calls=0`（⛔ 模型不在迴圈裡，design 元件 3 `jgb2.action` 列）；
-            # 確認回合則是模型呼叫 `confirm.request` 之後才走到這裡，⇒ 由呼叫端把
-            # 實際次數帶進來。⛔ 不在此硬填 0——計量會少算。
-            llm_calls=llm_calls,
-            prompt_tokens=prompt_tokens,
-            completion_tokens=completion_tokens,
-            final_kind=kind,
-            latency_ms=int((self._clock() - start) * 1000),
-            violations=list(violations or []),
-            rules_sha=str(getattr(self.verifier, "rules_sha", "") or ""),
-            pending_id=pending_id,
-            receipt_id=receipt_id or None,
-            select_type=select_type,
-            has_ref=has_ref,
-            slot_written=slot_written,
-            # W9 U2：文件回合的四鍵（⛔ 無任何欄位值，見 `TurnTrace` 的說明）。
-            **(document_trace or {}),
-        )
+        if trace is not None:
+            trace.llm_calls = llm_calls
+            trace.prompt_tokens = prompt_tokens
+            trace.completion_tokens = completion_tokens
+            trace.final_kind = kind
+            trace.latency_ms = int((self._clock() - start) * 1000)
+            trace.violations = list(violations or [])
+            trace.pending_id = pending_id
+            trace.receipt_id = receipt_id or None
+        else:
+            trace = TurnTrace(
+                trace_id=trace_id,
+                tool_calls=list(tool_calls or []),
+                # 兌現回合 `llm_calls=0`（⛔ 模型不在迴圈裡，design 元件 3 `jgb2.action` 列）；
+                # 確認回合則是模型呼叫 `confirm.request` 之後才走到這裡，⇒ 由呼叫端把
+                # 實際次數帶進來。⛔ 不在此硬填 0——計量會少算。
+                llm_calls=llm_calls,
+                prompt_tokens=prompt_tokens,
+                completion_tokens=completion_tokens,
+                final_kind=kind,
+                latency_ms=int((self._clock() - start) * 1000),
+                violations=list(violations or []),
+                rules_sha=str(getattr(self.verifier, "rules_sha", "") or ""),
+                pending_id=pending_id,
+                receipt_id=receipt_id or None,
+                select_type=select_type,
+                has_ref=has_ref,
+                slot_written=slot_written,
+                # W9 U2：文件回合的四鍵（⛔ 無任何欄位值，見 `TurnTrace` 的說明）。
+                **(document_trace or {}),
+            )
         session.end_turn(
             user_message=user_message,
             dialog_text=answer if dialog_answer is None else dialog_answer,
@@ -3109,11 +3138,9 @@ class AgentRuntime:
             ][:CONFIRM_CANDIDATES_MAX]
             if rows:
                 violations.append("confirm_request_candidates")
-                cand_payload = data.get("payload") if isinstance(data.get("payload"), dict) else {}
-                query = " ".join(
-                    str(cand_payload.get(k) or "") for k in ("estate_name", "period")
-                ).strip() or None
-                text = CONFIRM_CANDIDATES_TEXT + "\n" + _jgb2_candidates_text(domain, query, rows)
+                # B 片 B4（B-R7）：給人看的格式器——同一列投影、⛔ 給模型的兩句提示、⛔ 回顯模型
+                # payload 的查詢字串（安全審查 S11）；dialog 只寫程式摘要（比照 `SELECT_DIALOG_SUMMARY`）。
+                text = CONFIRM_CANDIDATES_TEXT + "\n" + _jgb2_candidates_text_for_user(domain, rows)
                 quick = [
                     {"label": _candidate_button_label(c), "value": f"select:{select_type}:{c['id']}"}
                     for c in rows
@@ -3126,7 +3153,7 @@ class AgentRuntime:
                     kind="ask",
                     outcome=make_outcome("clarifying", expects="choice"),
                     answer=text,
-                    dialog_answer=text,
+                    dialog_answer=CONFIRM_CANDIDATES_DIALOG_SUMMARY.format(n=len(rows)),
                     pending_id=None,
                     quick_replies=quick,
                     tool_calls=tool_calls,
@@ -4796,6 +4823,12 @@ class AgentRuntime:
         pid = wd.card_still_valid["pid"]
         card = wd.card_still_valid["card"]
         lead = WF.CARD_UNCHANGED_TEXT if wd.user_value_dropped else WF.CARD_STILL_VALID_TEXT
+        if lead == WF.CARD_STILL_VALID_TEXT and self._write_reply_active():
+            # B 片 B5（W-R3，業主裁 Q4）：本回合使用者句子帶出的值都與卡相同 ⇒ 列出讀到的值（卡上顯示值）。
+            read_line = self._write_reply_read_values_line(
+                wd.card_still_valid["action"], wd.touched, card)
+            if read_line is not None:
+                lead = f"{lead}\n{read_line}"
         return self._finish_confirm_turn(
             agent_state=agent_state, user_message=user_message, trace_id=acc.trace_id,
             start=acc.start, kind="ask",
@@ -4822,6 +4855,329 @@ class AgentRuntime:
             llm_calls=acc.llm_calls, prompt_tokens=acc.prompt_tokens,
             completion_tokens=acc.completion_tokens,
             outcome=make_outcome("failed", expects="none"),
+        )
+
+    # -- B 片：寫入進行中回話由程式產生（B1、B2、B5）＋帶狀態句判讀閘（B3）------------
+    # 分工（DSP-091）：理解由 AI（判讀呼叫只回「回覆宣稱了哪類狀態」）；送不送、送什麼一律由程式
+    # 依狀態決定。本節的出口 ⛔ 出新卡、⛔ 建 token（⛔ 呼叫 `_begin_pending_confirm`／`confirm.request`）：
+    # 只以唯讀判定（`_write_proposal_card_unchanged`、`pending_token_state`）重出同一張卡（同 pid）。
+    def _write_reply_active(self) -> bool:
+        """B1／B2／B5 生效：`AGENT_WRITE_REPLY_PROGRAM` on，且 A+ 提議路徑生效（B2 依卡 `draft_payload`）。"""
+        return bool(getattr(self, "_write_reply_program_on", False) and self._write_proposal_active())
+
+    def _state_claim_active(self) -> bool:
+        """B3 生效：`AGENT_STATE_CLAIM_GATE` on。"""
+        return bool(getattr(self, "_state_claim_gate_on", False))
+
+    async def _session_live_card(
+        self, identity: Identity, agent_state: dict, *, action: Any = None,
+    ) -> Optional[tuple]:
+        """本 session、本建立者最後一筆**仍可兌現**的待確認筆 ⇒ `(pid, entry, token_state)`；否則 `None`（**唯讀**）。
+
+        條件：同建立者（`_pending_creator`）、未作廢、無收據、`pending_token_state` 為 `live` 且卡與
+        payload 雜湊皆相符（DB `now()` 判；查不到 ⇒ `missing`＝不成立，fail-closed）。`action` 給定 ⇒
+        只看同動作（＝草稿的綁定卡，`_write_draft_bound_card` 同一規則）。"""
+        pending_all = agent_state.get(PENDING_CONFIRM_KEY) if isinstance(agent_state, dict) else None
+        if not isinstance(pending_all, dict):
+            return None
+        creator = _pending_creator(identity)
+        for pid in reversed(list(pending_all)):
+            entry = pending_all.get(pid)
+            if not isinstance(entry, dict) or entry.get("creator") != creator:
+                continue
+            if action is not None and entry.get("action") != action:
+                continue
+            if action is not None:
+                # 綁定卡＝最後一筆同動作、同建立者（⛔ 往前找更舊的同動作筆）。
+                return await self._live_entry(identity, pid, entry)
+            hit = await self._live_entry(identity, pid, entry)
+            if hit is not None:
+                return hit
+        return None
+
+    async def _live_entry(self, identity: Identity, pid: str, entry: dict) -> Optional[tuple]:
+        if entry.get("invalidated") is True or entry.get("receipt") is not None:
+            return None
+        payload = entry.get("payload")
+        try:
+            p_sha = payload_digest(payload) if isinstance(payload, dict) else None
+        except (TypeError, ValueError):
+            p_sha = None
+        state = await pending_token_state(
+            self._db_pool, identity.session_id, pid,
+            card_sha256=entry.get("card_sha256"), payload_sha256=p_sha or "",
+        )
+        if (state.state != PENDING_STATE_LIVE or state.summary_match is not True
+                or state.payload_match is not True):
+            return None
+        return pid, entry, state
+
+    def _write_draft_survives_turn(self, acc: TurnAccumulator) -> bool:
+        """回合結束時草稿還在（`_write_draft_end_turn` 的閒置清除規則先行預測；⛔ 改任何狀態）。"""
+        wd = acc.write_draft
+        if wd is None or wd.draft is None:
+            return False
+        if wd.activity or wd.frozen:
+            return True
+        return int(wd.draft.get("idle_turns") or 0) + 1 < WF.DRAFT_IDLE_LIMIT
+
+    async def _write_context_turn(
+        self, acc: TurnAccumulator, identity: Identity, agent_state: dict, *, entry: dict,
+    ) -> bool:
+        """驗收檔第二節「寫入情境回合」：非文件回合、非文件暫存有效回合、非點選範圍回合、非影子回合
+        （`entry`＝進模型迴圈當下記下的三旗標），且任一成立：回合結束時草稿存在；本 session 有 live
+        綁定卡；本回合有 `write_proposal` 或程式觸發。⛔ 改任何狀態。"""
+        if entry.get("document") or entry.get("doc_carry") or entry.get("select_scope"):
+            return False
+        if self.readonly_view:
+            return False
+        wd = acc.write_draft
+        if self._write_draft_survives_turn(acc):
+            return True
+        if WF.V_WRITE_PROPOSAL in acc.violations or (wd is not None and wd.triggered):
+            return True
+        return await self._session_live_card(identity, agent_state) is not None
+
+    def _write_reply_read_values_line(self, action: Any, touched: Any, card: Any) -> Optional[str]:
+        """B5：`touched`（本回合寫進草稿的鍵）對應的卡上 `(標籤, 顯示值)` ⇒ 一行；無 ⇒ `None`。
+        值取卡文字（同一 formatter 的顯示值，`card_display_rows`），⛔ 使用者原句。"""
+        form = WF.FORMS.get(action) if isinstance(action, str) else None
+        if form is None or not touched:
+            return None
+        rows: dict = {}
+        for label, value in _confirm_card.card_display_rows(card):
+            rows.setdefault(label, value)
+        pairs: list = []
+        for f in form.fields:
+            if f.key in touched and f.label in rows and (f.label, rows[f.label]) not in pairs:
+                pairs.append((f.label, rows[f.label]))
+        return WF.card_read_values_text(pairs)
+
+    async def _write_reply_state(
+        self, acc: TurnAccumulator, identity: Identity, agent_state: dict,
+    ) -> dict:
+        """B2：依狀態挑程式回話（**只讀**；⛔ 出新卡、⛔ 建 token；⛔ 以動作名分支）。順序見計畫 §4.1 B2：
+        (1) 綁定卡有效且草稿＝卡 ⇒ 同卡；(2) 綁定卡 live、草稿≠卡 ⇒ 同卡＋`CARD_DIFFERS_TEXT`；
+        (3) 缺欄 ⇒ 追問句（`WF.missing_labels` 判不缺時，封閉三動作改用出卡路徑同一支
+        `closed_action_missing_labels`：名稱對到多筆／物件無唯一有效合約 ⇒ 同出卡路徑的缺欄「合約」／「物件」）；
+        (4) `WRITE_NOT_ISSUED_TEXT`；(5) 無草稿、無 live 卡 ⇒ `NO_PENDING_WRITE_TEXT`。"""
+        wd = acc.write_draft
+        draft = wd.draft if wd is not None else None
+        if draft is not None:
+            action = draft.get("action")
+            values = WF.to_payload(action, draft.get("fields") or {})
+            unchanged = await self._write_proposal_card_unchanged(identity, agent_state, action, values)
+            if unchanged is not None:
+                pid, card, card_action = unchanged
+                if wd.user_value_dropped:
+                    lead, branch = WF.CARD_UNCHANGED_TEXT, WF.WRITE_REPLY_STATE_CARD_UNCHANGED
+                else:
+                    lead, branch = WF.CARD_STILL_VALID_TEXT, WF.WRITE_REPLY_STATE_CARD_STILL_VALID
+                    read_line = self._write_reply_read_values_line(action, wd.touched, card)
+                    if read_line is not None:
+                        lead = f"{lead}\n{read_line}"
+                return {"branch": branch, "lead": lead, "pid": pid, "card": card,
+                        "action": card_action}
+            bound = await self._session_live_card(identity, agent_state, action=action)
+            if bound is not None:
+                pid, entry, token_state = bound
+                card = (self._write_draft_bound_card_text(entry, token_state)
+                        if _pending_draft_payload(entry) is not None else None)
+                if card is not None:
+                    return {"branch": WF.WRITE_REPLY_STATE_CARD_DIFFERS, "lead": WF.CARD_DIFFERS_TEXT,
+                            "pid": pid, "card": card, "action": entry.get("action")}
+            labels = WF.missing_labels(action, values)
+            if not labels:
+                labels = await closed_action_missing_labels(identity, action, values)
+            ask = missing_labels_ask_text(labels)
+            if ask is not None:
+                return {"branch": WF.WRITE_REPLY_STATE_MISSING, "text": ask,
+                        "ask_target": WF.ask_target_for_missing(labels), "action": action}
+            return {"branch": WF.WRITE_REPLY_STATE_NOT_ISSUED, "text": WF.WRITE_NOT_ISSUED_TEXT}
+        if await self._session_live_card(identity, agent_state) is not None:
+            return {"branch": WF.WRITE_REPLY_STATE_NOT_ISSUED, "text": WF.WRITE_NOT_ISSUED_TEXT}
+        return {"branch": WF.WRITE_REPLY_STATE_NO_PENDING, "text": WF.NO_PENDING_WRITE_TEXT}
+
+    def _write_reply_state_exit(
+        self, acc: TurnAccumulator, agent_state: dict, user_message: str, state: dict, *,
+        source: str, prefix: Optional[str] = None, trace: Optional[TurnTrace] = None,
+    ) -> TurnResult:
+        """B2 結束回合（一律經 `_finish_confirm_turn`，⛔ 經 `_finalize`／T1，S7）。`prefix`＝乙′ 已過
+        B3 與出口閘的模型文字（`model_plus_status`）；`None`＝整則程式回話（`program`）。
+        送出的 `ask_target` 只會是程式缺欄追問的封閉值或 `None`（⛔ `confirm_intent`，S8）。"""
+        branch = state["branch"]
+        acc.violations.append(f"{WF.TRACE_WRITE_REPLY_STATE_PREFIX}{branch}")
+        acc.violations.append(f"{WF.TRACE_WRITE_REPLY_SOURCE_PREFIX}{source}")
+        head = f"{prefix}\n\n" if prefix else ""
+        common = dict(
+            agent_state=agent_state, user_message=user_message, trace_id=acc.trace_id,
+            start=acc.start, tool_calls=acc.tool_call_records, violations=acc.violations,
+            llm_calls=acc.llm_calls, prompt_tokens=acc.prompt_tokens,
+            completion_tokens=acc.completion_tokens, trace=trace,
+        )
+        if "card" in state:
+            pid = state["pid"]
+            card = state["card"]
+            if branch in (WF.WRITE_REPLY_STATE_CARD_STILL_VALID, WF.WRITE_REPLY_STATE_CARD_UNCHANGED):
+                acc.violations.append(WF.V_CARD_STILL_VALID)
+            # DSP-038：卡文字逐字接在最後、不經模型與 Verifier；dialog 只寫卡（卡外前導句 ⛔ 進歷史）。
+            return self._finish_confirm_turn(
+                kind="ask",
+                outcome=make_outcome("confirm_pending", expects="button", action=state["action"]),
+                answer=f"{head}{state['lead']}\n{card}", dialog_answer=f"{head}{card}",
+                pending_id=pid, quick_replies=confirm_quick_replies(pid), **common,
+            )
+        if branch == WF.WRITE_REPLY_STATE_MISSING:
+            return self._finish_confirm_turn(
+                kind="ask",
+                outcome=make_outcome("clarifying", expects="text", action=state["action"]),
+                answer=f"{head}{state['text']}", pending_id=None,
+                # 乙′（有 `prefix`）送出的 `ask_target` 強制 `None`（計畫 B2 S8、驗收 V4 (5)）；整則程式回話
+                # 才帶程式缺欄追問的封閉值。
+                ask_target=None if prefix else state.get("ask_target"), **common,
+            )
+        outcome = (make_outcome("answered", expects="text")
+                   if branch == WF.WRITE_REPLY_STATE_NO_PENDING
+                   else make_outcome("failed", expects="text"))
+        return self._finish_confirm_turn(
+            kind="answer", outcome=outcome, answer=f"{head}{state['text']}", pending_id=None, **common,
+        )
+
+    async def _write_reply_program_exit(
+        self, acc: TurnAccumulator, identity: Identity, agent_state: dict, user_message: str, *,
+        trace: Optional[TurnTrace] = None,
+    ) -> TurnResult:
+        """B1／B2：整則程式狀態回話結束回合（模型文字 ⛔ 送出、⛔ 進 dialog）。先跑模型迴圈出口的
+        草稿閒置計數（取代 `_finalize` 那一次），再依狀態挑句。"""
+        self._write_draft_end_turn(acc, agent_state)
+        state = await self._write_reply_state(acc, identity, agent_state)
+        return self._write_reply_state_exit(
+            acc, agent_state, user_message, state, source=WF.WRITE_REPLY_SOURCE_PROGRAM, trace=trace)
+
+    async def _write_reply_kd3_exit(
+        self, acc: TurnAccumulator, identity: Identity, agent_state: dict, user_message: str, *,
+        write_entry: dict,
+    ) -> Optional[TurnResult]:
+        """B1：提議未發／程式呼叫非終結 ⇒ 開關 on、寫入情境的**非問句**回合由程式結束回合
+        （⛔ 再叫主模型）；先過現行 #9b 出口。問句回合（Q1 乙′）與其他回合 ⇒ `None`（照現行回填結果、
+        交回模型——模型只寫知識作答（DSP-091 歸 AI），之後經 B3 與乙′ 狀態行）。"""
+        if not self._write_reply_active() or _is_question(user_message):
+            return None
+        if not await self._write_context_turn(acc, identity, agent_state, entry=write_entry):
+            return None
+        not_issued = self._write_draft_reissue_not_issued_exit(acc, agent_state, user_message)
+        if not_issued is not None:
+            return not_issued
+        acc.violations.append(WF.V_WRITE_REPLY_KD3_EXIT)
+        return await self._write_reply_program_exit(acc, identity, agent_state, user_message)
+
+    async def _state_claim_events(self, identity: Identity, agent_state: dict) -> set:
+        """驗收檔第二節「程式狀態事件」（一般出口用；本回合的卡、收據、取消、轉人出口都不經這裡）：
+        等待確認＝session 有 live 卡；完成＝`completed_actions` 非空或 `pending_confirm` 有成功收據；
+        取消＝`pending_confirm` 有 `{"cancelled": true}` 收據；轉人＝本回合 `final_kind=handoff`
+        （一般出口的 handoff 不經判讀閘，故這裡恆不成立）。**唯讀**。"""
+        events: set = set()
+        if await self._session_live_card(identity, agent_state) is not None:
+            events.add(SC.CLAIM_AWAITING)
+        if agent_state.get(COMPLETED_ACTIONS_KEY):
+            events.add(SC.CLAIM_COMPLETED)
+        pending_all = agent_state.get(PENDING_CONFIRM_KEY)
+        if isinstance(pending_all, dict):
+            for entry in pending_all.values():
+                receipt = entry.get("receipt") if isinstance(entry, dict) else None
+                if not isinstance(receipt, dict):
+                    continue
+                if receipt.get("cancelled") is True:
+                    events.add(SC.CLAIM_CANCELLED)
+                elif "cancelled" not in receipt and "error" not in receipt:
+                    events.add(SC.CLAIM_COMPLETED)
+        return events
+
+    async def _state_claim_gate(
+        self, acc: TurnAccumulator, identity: Identity, agent_state: dict, out: AgentOutput,
+        *, card_capable: bool,
+    ) -> Optional[tuple]:
+        """B3：將送出的模型文字（`kind` ∈ answer／ask／recommend）⇒ 放行回 `None`；擋下回
+        `(未對到的類別 tuple,)`（判讀失敗且 fail-closed ⇒ 空 tuple）。
+
+        - 現行 `prose_confirm_suspect` 三條件成立 ⇒ 不呼叫判讀，直接當「等待確認」未對到；
+        - 判讀失敗：可出卡的回合 fail-closed；其他回合照送並記 `state_claim_check_failed`；
+        - 只記類別與耗時（⛔ 任何原文進 trace／log）。"""
+        if not self._state_claim_active() or out.kind == "handoff":
+            return None
+        if (out.kind == "ask" and out.ask_target == "confirm_intent"
+                and not any(tc.name == CONFIRM_TOOL_NAME for tc in acc.tool_call_records)):
+            acc.violations.append(f"{SC.TRACE_STATE_CLAIM_UNBACKED_PREFIX}{SC.CLAIM_AWAITING}")
+            return (SC.CLAIM_AWAITING,)
+        remaining = self.budget.deadline_s - (self._clock() - acc.start)
+        judged = await SC.judge_state_claims(
+            self.provider.async_client.chat.completions.create,
+            model=self._model, reasoning_effort=self._reasoning_effort,
+            reply_text=out.answer, timeout_s=min(SC.STATE_CLAIM_TIMEOUT_S, remaining),
+            clock=self._clock,
+        )
+        acc.prompt_tokens += judged.prompt_tokens
+        acc.completion_tokens += judged.completion_tokens
+        acc.violations.append(SC.V_STATE_CLAIM_CHECK)
+        acc.violations.append(f"{SC.TRACE_STATE_CLAIM_MS_PREFIX}{judged.elapsed_ms}")
+        if judged.claims is None:
+            acc.violations.append(SC.V_STATE_CLAIM_CHECK_FAILED)
+            return () if card_capable else None
+        if not judged.claims:
+            return None
+        events = await self._state_claim_events(identity, agent_state)
+        unbacked = tuple(c for c in judged.claims if c not in events)
+        for c in unbacked:
+            acc.violations.append(f"{SC.TRACE_STATE_CLAIM_UNBACKED_PREFIX}{c}")
+        return unbacked or None
+
+    async def _state_claim_replace_exit(
+        self, acc: TurnAccumulator, identity: Identity, agent_state: dict, user_message: str,
+        unbacked: tuple, *, write_ctx: bool, trace: TurnTrace,
+    ) -> TurnResult:
+        """B3 換句（模型文字 ⛔ 送出、⛔ 進 dialog；一律經 `_finish_confirm_turn`，S7）：未對到「已轉人」
+        ⇒ `HANDOFF_OFFER_TEXT`；寫入情境回合（B2 生效）⇒ B2 狀態回話；其他 ⇒ `NO_PENDING_WRITE_TEXT`。
+        換回句只說本回合或不宣稱狀態（S4）。"""
+        if SC.CLAIM_HANDED_OFF not in unbacked and write_ctx and self._write_reply_active():
+            return await self._write_reply_program_exit(
+                acc, identity, agent_state, user_message, trace=trace)
+        self._write_draft_end_turn(acc, agent_state)
+        text = (WF.HANDOFF_OFFER_TEXT if SC.CLAIM_HANDED_OFF in unbacked
+                else WF.NO_PENDING_WRITE_TEXT)
+        return self._finish_confirm_turn(
+            agent_state=agent_state, user_message=user_message, trace_id=acc.trace_id,
+            start=acc.start, kind="answer", answer=text, pending_id=None,
+            tool_calls=acc.tool_call_records, violations=acc.violations,
+            llm_calls=acc.llm_calls, prompt_tokens=acc.prompt_tokens,
+            completion_tokens=acc.completion_tokens,
+            outcome=make_outcome("answered", expects="text"), trace=trace,
+        )
+
+    async def _write_reply_model_plus_status(
+        self, acc: TurnAccumulator, identity: Identity, agent_state: dict, user_message: str,
+        result: TurnResult, *, cache: dict,
+    ) -> TurnResult:
+        """乙′（Q1）：寫入情境問句回合、模型 `answer`（已過 Verifier 與 B3）⇒ 模型文字＋程式狀態行。
+        `ask_target` 強制 `None`（S8）。(1)(2) ⇒ 模型文字經出口閘後＋空行＋前導句＋整張卡、同 pid
+        三顆鍵，經 `_finish_confirm_turn`（卡文字在判讀閘與 Verifier 之後接上，DSP-038／S1）；
+        (3) ⇒ 接缺欄追問句；(4)(5) ⇒ 不接，照一般出口收尾。"""
+        result.ask_target = None
+        self._write_draft_end_turn(acc, agent_state)
+        state = await self._write_reply_state(acc, identity, agent_state)
+        if state["branch"] in (WF.WRITE_REPLY_STATE_NOT_ISSUED, WF.WRITE_REPLY_STATE_NO_PENDING):
+            acc.violations.append(f"{WF.TRACE_WRITE_REPLY_STATE_PREFIX}{state['branch']}")
+            acc.violations.append(
+                f"{WF.TRACE_WRITE_REPLY_SOURCE_PREFIX}{WF.WRITE_REPLY_SOURCE_MODEL_PLUS_STATUS}")
+            # 草稿閒置計數已在上面跑過 ⇒ 直接 `exit_gates.finalize`（⛔ 經 `_finalize` 再算一次）。
+            return exit_gates.finalize(
+                acc, result, is_fixed=False, verifier=self.verifier, cache=cache,
+                agent_state=agent_state, user_message=user_message,
+            )
+        gated = exit_gates.apply_exit_gates(
+            acc, result, verifier=self.verifier, agent_state=agent_state, user_message=user_message)
+        return self._write_reply_state_exit(
+            acc, agent_state, user_message, state, source=WF.WRITE_REPLY_SOURCE_MODEL_PLUS_STATUS,
+            prefix=gated.answer, trace=gated.trace,
         )
 
     async def _write_draft_program_first(
@@ -4979,6 +5335,13 @@ class AgentRuntime:
                 acc, result, is_fixed=is_fixed, verifier=self.verifier,
                 cache=cache, agent_state=agent_state, user_message=user_message,
             )
+        # B 片：「寫入情境回合」的三個排除條件以進模型迴圈當下為準（下面的分支可能清掉文件暫存，
+        # 同 DG-1 的判定時點）。只讀、⛔ 改任何狀態；開關 off 時沒有讀者。
+        write_entry = {
+            "document": document is not None,
+            "doc_carry": _document_carry_of(agent_state) is not None,
+            "select_scope": agent_state.get(SELECT_SCOPE_KEY) is not None,
+        }
         # 站內幫手 S3-live 修正 R3：放行的謄本回合，第一輪不叫模型——程式自己發一次
         # `confirm.request`，走下面同一條工具迴圈（欄位齊 ⇒ 出卡；缺 ⇒ 程式追問句）。
         program_message = _document_program_message(document, acc.nonce)
@@ -5020,6 +5383,10 @@ class AgentRuntime:
             if tool_calls:
                 acc.messages.append(_assistant_tool_call_message(message, tool_calls))
                 budget_hit = False
+                # B 片 B1：本則 message 有提議未發或提議轉成的程式呼叫非終結 ⇒ 整則 tool call 照現行
+                # 逐一處理、回填完之後（下面 `for` 迴圈結束、再叫主模型之前）才判程式狀態回話出口——
+                # 同則其餘提議照樣計入預算與標記（V1 (f)），出口位置與 `wd_program` 區塊一致。
+                kd3_hand_back = False
                 for tc in tool_calls:
                     if not wd_program and acc.counters.tool_call_exhausted(self.budget):
                         budget_hit = True
@@ -5102,12 +5469,16 @@ class AgentRuntime:
                                 p_value = "HANDLED_BY_PROGRAM"
                             # AP-1 (4) 封閉結果：常數、⛔ 含草稿值（比照 `doc_write_face` 分支直接組
                             # tool message；⛔ 建 `ToolResult(error=...)`，`ToolError` 是封閉 Literal）。
-                            # 過渡修正（KD-3）、不新增 AI 決定權；寫入進行中回話由 B 片接手——封閉結果之後由
-                            # 模型寫回覆（模型主導路徑），本片只拿掉它以自身參數出卡／算缺欄的出口。
                             # r3 AP-7 之後仍走到這裡的：動作不合（`NO_MATCH`，含巢狀內層動作不合）、
                             # 凍結回合（回答提問屬 AI，DSP-091）、本回合已觸發後的第二次提議、期限不足等
                             # （AP-R10 收窄；計畫 §9.2 (2) 末項）。
                             acc.violations.append(WF.V_WRITE_PROPOSAL_NOT_ISSUED)
+                            # B 片 B1：寫入情境的非問句回合 ⇒ 本則 tool call 回填完後（`kd3_hand_back`）先過
+                            # #9b，再由程式狀態回話結束回合（⛔ 再叫主模型）。問句回合（Q1 乙′）與非寫入情境
+                            # 回合照下方回填封閉結果、交回模型：模型只能寫知識作答（DSP-091 歸 AI）——寫入
+                            # 情境裡 `ask`／`recommend` 在一般出口換成程式狀態回話，`answer` 經 B3 判讀閘後
+                            # 由程式接狀態行（寫入回話仍由程式）。
+                            kd3_hand_back = True
                             acc.messages.append(
                                 {
                                     "role": "tool",
@@ -5580,13 +5951,15 @@ class AgentRuntime:
                         # A+ 片 AP-1 (3)：提議轉成的程式呼叫是**非終結**結果（無缺欄清單的
                         # `INVALID_INPUT`、無查無標記的 `NO_MATCH`、`DATE_BEFORE_TODAY`…）⇒ 比照
                         # `wd_program` 區塊：記 `V_PROGRAM_NONTERMINAL`，先過 #9b 出口（綁定卡已燒、這次
-                        # 沒出成新卡 ⇒ 固定句結束回合；安全審查 1-1），不成立才回填結果、交回模型。
-                        # 過渡修正（KD-3）、不新增 AI 決定權；交回模型後的寫入進行中回話由 B 片接手。
+                        # 沒出成新卡 ⇒ 固定句結束回合；安全審查 1-1）。B 片 B1：寫入情境的非問句回合 ⇒
+                        # 程式狀態回話結束回合（⛔ 再叫主模型）；問句回合（Q1 乙′）才回填結果、交回模型
+                        # ——模型只寫知識作答（DSP-091 歸 AI），寫入回話仍由程式（一般出口的 B2／乙′）。
                         acc.violations.append(WF.V_PROGRAM_NONTERMINAL)
                         not_issued = self._write_draft_reissue_not_issued_exit(
                             acc, agent_state, user_message)
                         if not_issued is not None:
                             return not_issued
+                        kd3_hand_back = True
                     # ⚠️ **槽位寫回 state（2.9，⛔ 勿刪）**：`session.slots.set` 是
                     #    以 `jsonb_set` 直接改 `form_sessions.collected_data.slots`
                     #    的，但回合結束時呼叫端（`mcp_facade._agent_turn`）
@@ -5658,6 +6031,14 @@ class AgentRuntime:
                         acc, agent_state, user_message)
                     if not_issued is not None:
                         return not_issued
+                    # B 片 B1：寫入情境的非問句回合 ⇒ 程式狀態回話結束回合（⛔ 再叫主模型）；問句回合
+                    # （Q1 乙′）照上面註解回填、交回模型——模型只寫知識作答（DSP-091 歸 AI；同提議分支）。
+                    kd3_hand_back = True
+                if kd3_hand_back:
+                    kd3_exit = await self._write_reply_kd3_exit(
+                        acc, identity, agent_state, user_message, write_entry=write_entry)
+                    if kd3_exit is not None:
+                        return kd3_exit
                 continue  # 工具結果已回填，回到迴圈頂端再叫一次模型
 
             # 無 tool_calls ⇒ 這一回合模型嘗試給最終答案
@@ -5709,6 +6090,22 @@ class AgentRuntime:
                             or self._write_draft_submitted_exit(acc, agent_state, user_message))
             if reissue_exit is not None:
                 return reissue_exit
+
+            # B 片 B2（計畫 §4.1 逐格表；只看封閉欄位 `kind` 與結構規則 `_is_question`）：寫入情境回合中，
+            # 非問句回合的任何非 handoff 回覆、問句回合的 `ask`／`recommend`（不論 `ask_target`）⇒ 模型文字
+            # 丟棄、程式狀態回話結束回合；問句回合的 `answer` ⇒ 乙′（往下過 Verifier 與 B3，最後由程式
+            # 接狀態行）。`handoff` 維持現行（DSP-021 固定句，轉人屬 E 片）。開關 off ⇒ 這段不跑。
+            write_ctx: Optional[bool] = None
+            write_reply_yi_prime = False
+            if self._write_reply_active() and out.kind != "handoff":
+                write_ctx = await self._write_context_turn(
+                    acc, identity, agent_state, entry=write_entry)
+                if write_ctx:
+                    if _is_question(user_message) and out.kind == "answer":
+                        write_reply_yi_prime = True
+                    else:
+                        return await self._write_reply_program_exit(
+                            acc, identity, agent_state, user_message)
 
             handoff_dict: Optional[dict] = None
             if out.kind == "handoff":
@@ -5898,16 +6295,30 @@ class AgentRuntime:
                 )
                 continue
 
-            # T3（Plan §4）：**文字假確認**——只做統計，⛔ 不改寫、⛔ 不改文字。
-            # 三個封閉條件都成立（`kind=ask` ∧ `ask_target=confirm_intent` ∧ 本回合
-            # 沒有 `confirm.request` 呼叫）才記一個旗標；第四個條件（模型散文是否
-            # 真的在問「要不要送出」）是開放語義，Plan 明講⛔ 不做，故不判。
+            # T3（Plan §4）：**文字假確認**的旗標——三個封閉條件都成立（`kind=ask` ∧
+            # `ask_target=confirm_intent` ∧ 本回合沒有 `confirm.request` 呼叫）才記；第四個條件
+            # （模型散文是否真的在問「要不要送出」）是開放語義，⛔ 不判。這裡只記旗標；處置在下方
+            # B 片 B3 判讀閘（開關 on：同三條件直接當「等待確認」未對到事件、換程式句；off：只記旗標）。
             if (
                 out.kind == "ask"
                 and out.ask_target == "confirm_intent"
                 and not any(tc.name == CONFIRM_TOOL_NAME for tc in acc.tool_call_records)
             ):
                 acc.violations.append("prose_confirm_suspect")
+
+            # B 片 B3：帶狀態句判讀閘——一般出口唯一組裝點（下方 `normalize_terminal_punctuation`）之前、
+            # Verifier 之後；`handoff` 不經。判讀只回類別（AI 理解），送不送、改送什麼由程式依狀態事件決定。
+            claim_block: Optional[tuple] = None
+            if self._state_claim_active() and out.kind != "handoff":
+                card_capable = bool(write_entry["document"] or write_entry["doc_carry"]
+                                    or write_entry["select_scope"])
+                if not card_capable:
+                    if write_ctx is None:
+                        write_ctx = await self._write_context_turn(
+                            acc, identity, agent_state, entry=write_entry)
+                    card_capable = bool(write_ctx)
+                claim_block = await self._state_claim_gate(
+                    acc, identity, agent_state, out, card_capable=card_capable)
 
             trace = acc.build_trace(
                 final_kind=out.kind,
@@ -5922,6 +6333,11 @@ class AgentRuntime:
                 # 上（⛔ 不得改成副本；固定句出口才是副本，見 `build_fixed`）。
                 copy_lists=False,
             )
+            if claim_block is not None:
+                # B3：未對到事件（或可出卡回合判讀失敗）⇒ 模型文字 ⛔ 送出、⛔ 進 dialog，程式換句。
+                return await self._state_claim_replace_exit(
+                    acc, identity, agent_state, user_message, claim_block,
+                    write_ctx=bool(write_ctx), trace=trace)
             result = TurnResult(
                 kind=out.kind,
                 # DSP-021：模型自判轉人 ⇒ 使用者看到的是固定句（design 元件 7
@@ -5943,6 +6359,10 @@ class AgentRuntime:
                 # 寫進 `agent_state` 都由 `_finalize` 一手包辦，⛔ 不在這裡分兩處判。
                 ask_target=out.ask_target,
             )
+            if write_reply_yi_prime:
+                # B 片乙′：模型文字（已過 Verifier、B3）＋程式狀態行；`ask_target` 強制 `None`。
+                return await self._write_reply_model_plus_status(
+                    acc, identity, agent_state, user_message, result, cache=cache)
             return _finalize(result, is_fixed=False)
 
     # ------------------------------------------------------------------

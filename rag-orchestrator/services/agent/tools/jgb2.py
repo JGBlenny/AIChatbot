@@ -238,14 +238,28 @@ _ROW_PROJECTORS: dict[str, Callable[[dict], str]] = {
 }
 
 
+#: B 片 B4（B-R7）：**給模型**的兩句提示（只進 `text_for_model`／provenance，⛔ 出現在使用者回覆）。
+#: 具名常數供單元測試比對；`_candidates_text` 輸出與改前逐字相同。
+CANDIDATES_MODEL_HINT_HEADER: str = "（以下為可見清單，⛔ 不是使用者指定編號的資料）"
+CANDIDATES_MODEL_HINT_FOOTER: str = "要取得某一筆的完整事實，請以 ref 指定該編號再查一次。"
+
+
 def _candidates_text(domain: str, query: Optional[str], rows: list) -> str:
+    """**給模型**的候選清單（含查詢條件與兩句提示）。給人看的版本見 `candidates_text_for_user`。"""
     q = query if query else "無"
     lines = [f"查詢條件：{q}；符合 {len(rows)} 筆"
-             "（以下為可見清單，⛔ 不是使用者指定編號的資料）"]
+             f"{CANDIDATES_MODEL_HINT_HEADER}"]
     projector = _ROW_PROJECTORS.get(domain, _project_generic_row)
     lines.extend(projector(row) for row in rows)
-    lines.append("要取得某一筆的完整事實，請以 ref 指定該編號再查一次。")
+    lines.append(CANDIDATES_MODEL_HINT_FOOTER)
     return "\n".join(lines)
+
+
+def candidates_text_for_user(domain: str, rows: list) -> str:
+    """B 片 B4：**給人看**的候選清單——同一列投影（`_ROW_PROJECTORS`），只列程式解析出的列值；
+    ⛔ 給模型的兩句提示、⛔ 回顯模型 payload 的查詢字串（安全審查 S11）。"""
+    projector = _ROW_PROJECTORS.get(domain, _project_generic_row)
+    return "\n".join(projector(row) for row in rows)
 
 
 def _ok_candidates(domain: str, tag: str, rows: list, cap: int,

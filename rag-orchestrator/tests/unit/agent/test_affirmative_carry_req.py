@@ -123,6 +123,7 @@ def test_is_affirmative_non_string_is_false(value):
 # 2. 承接時序：只在緊鄰上一回合 confirm_intent 時觸發
 # ---------------------------------------------------------------------------
 @pytest.mark.req(_REQ)
+@pytest.mark.usefixtures("_state_claim_gate_off")
 async def test_ask_confirm_intent_then_affirmative_fires_positive_control():
     """正對照：ask(confirm_intent) → 「對」⇒ 觸發承接、進資料段。"""
     state: dict = {}
@@ -160,6 +161,7 @@ async def test_ask_non_confirm_intent_then_affirmative_does_not_fire():
 
 
 @pytest.mark.req(_REQ)
+@pytest.mark.usefixtures("_state_claim_gate_off")
 async def test_ask_then_select_turn_then_affirmative_does_not_fire():
     """ask → select 回合（寫 `None`）→「對」不觸發。"""
     state: dict = {}
@@ -181,6 +183,7 @@ async def test_ask_then_select_turn_then_affirmative_does_not_fire():
 
 
 @pytest.mark.req(_REQ)
+@pytest.mark.usefixtures("_state_claim_gate_off")
 async def test_ask_then_handoff_cache_replay_then_affirmative_does_not_fire():
     """ask(confirm_intent) → 快取重播出口（寫 `None`）→「對」不觸發。"""
     state: dict = {}
@@ -212,6 +215,7 @@ async def test_ask_then_handoff_cache_replay_then_affirmative_does_not_fire():
 
 
 @pytest.mark.req(_REQ)
+@pytest.mark.usefixtures("_state_claim_gate_off")
 async def test_confirm_redeem_turn_then_affirmative_does_not_fire():
     """ask(confirm_intent) → confirm 兌現段早退（寫 `None`）→「對」不觸發。"""
     from services.agent.tools.confirm import pending_id_for
@@ -255,6 +259,7 @@ async def test_confirm_and_replay_turns_leave_last_ask_target_none():
 # 3. 不可引用；不進 dialog；不寫 PENDING_CONFIRM_KEY／不呼叫工具
 # ---------------------------------------------------------------------------
 @pytest.mark.req(_REQ)
+@pytest.mark.usefixtures("_state_claim_gate_off")
 async def test_affirmative_segment_not_in_dialog():
     state: dict = {}
     await _runtime(provider=FakeProvider([_model_ask("confirm_intent")])).run_turn(
@@ -268,6 +273,7 @@ async def test_affirmative_segment_not_in_dialog():
 
 
 @pytest.mark.req(_REQ)
+@pytest.mark.usefixtures("_state_claim_gate_off")
 async def test_affirmative_carry_never_writes_pending_confirm_or_calls_tools():
     state: dict = {}
     await _runtime(provider=FakeProvider([_model_ask("confirm_intent")])).run_turn(
@@ -283,6 +289,7 @@ async def test_affirmative_carry_never_writes_pending_confirm_or_calls_tools():
 
 
 @pytest.mark.req(_REQ)
+@pytest.mark.usefixtures("_state_claim_gate_off")
 async def test_model_citing_the_affirmative_segment_gets_source_not_citable():
     """尺自證：先跑一輪拿真標記，再用真 Verifier 驗一個引用它的輸出。"""
     state: dict = {}
@@ -397,7 +404,31 @@ async def test_empty_session_segment_absent_on_later_turns():
 @pytest.mark.req(_REQ)
 async def test_prose_confirm_suspect_recorded_when_conditions_hold():
     """`kind=ask` ∧ `ask_target=confirm_intent` ∧ 本回合沒有 `confirm.request`
-    呼叫 ⇒ 記 `prose_confirm_suspect`；答句逐字不變（⛔ 不改寫）。"""
+    呼叫 ⇒ 記 `prose_confirm_suspect`。B 片 B3（判讀閘開關 on）：同三條件直接當「等待確認」未對到
+    程式事件 ⇒ 模型文字 ⛔ 送出、換成程式句（本回合無草稿、非寫入情境 ⇒ `NO_PENDING_WRITE_TEXT`），
+    記 `state_claim_unbacked:awaiting_confirmation`，不呼叫判讀；送出的 `ask_target` ⛔ 為 `confirm_intent`。"""
+    from services.agent import state_claim as SC
+    from services.agent import write_forms as WF
+
+    answer_text = "要送出這張修繕單嗎？請確認是否送出。"
+    provider = FakeProvider([_model_ask("confirm_intent", answer=answer_text)])
+    state: dict = {}
+    result = await _runtime(provider=provider).run_turn(
+        _target_identity(), "我要報修", state
+    )
+    assert "prose_confirm_suspect" in result.trace.violations
+    assert f"{SC.TRACE_STATE_CLAIM_UNBACKED_PREFIX}{SC.CLAIM_AWAITING}" in result.trace.violations
+    assert result.answer == WF.NO_PENDING_WRITE_TEXT
+    assert answer_text not in json.dumps(state["agent"].get("dialog", []), ensure_ascii=False)
+    assert result.ask_target != "confirm_intent"
+    assert state["agent"][LAST_ASK_TARGET_KEY] != "confirm_intent"
+    assert provider.judge_calls == []                     # 結構條件 ⇒ 不呼叫判讀
+
+
+@pytest.mark.req(_REQ)
+@pytest.mark.usefixtures("_state_claim_gate_off")
+async def test_prose_confirm_suspect_recorded_when_conditions_hold_gate_off():
+    """正對照（判讀閘開關 off＝改前行為）：同三條件 ⇒ 只記 `prose_confirm_suspect`，答句逐字不變。"""
     answer_text = "要送出這張修繕單嗎？請確認是否送出。"
     provider = FakeProvider([_model_ask("confirm_intent", answer=answer_text)])
     result = await _runtime(provider=provider).run_turn(
@@ -481,3 +512,12 @@ def _aplus_proposal_off(monkeypatch):
     `test_aplus_card_program_only_req.py` 驗出卡、缺欄追問、查無固定句、帳單候選點選、照片與物件記憶前處理；
     本檔其餘行為在開關 on 時沒有另寫程式路徑版本。"""
     monkeypatch.setenv("AGENT_WRITE_PROPOSAL", "off")
+
+
+@pytest.fixture()
+def _state_claim_gate_off(monkeypatch):
+    """B 片（`AGENT_STATE_CLAIM_GATE`）：T3 承接時序與承接段性質的測試以「模型 `ask(confirm_intent)`、
+    本回合無 `confirm.request`」當上一回合載具；開關 on 時該輸出被 B3 結構條件換成程式句（⛔ 寫
+    `confirm_intent`），T3 這段程式仍在、只是此載具到不了——本檔以開關 off 驗 T3 本身。開關 on 的換句由
+    `test_prose_confirm_suspect_recorded_when_conditions_hold` 與 `test_b_write_replies_program_req.py` 驗。"""
+    monkeypatch.setenv("AGENT_STATE_CLAIM_GATE", "off")

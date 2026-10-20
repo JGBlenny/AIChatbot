@@ -36,6 +36,7 @@ from services.agent.output_schema import (
     VerifierVerdict,
 )
 from services.agent.runtime import HANDOFF_CACHE_MAX, AgentRuntime, ToolCallRecord
+from services.agent.state_claim import STATE_CLAIM_SCHEMA_NAME
 from services.agent.state_store import NamespacedStateStore
 from services.agent.tools.registry import ToolRegistry, ToolResult
 from services.agent.verifier import OutputVerifier
@@ -100,6 +101,13 @@ class FakeProvider:
 
         class _Completions:
             async def create(self, **kwargs):
+                # B 片 B3：帶狀態句判讀呼叫依 response_format 名稱分流（⛔ 吃主腳本、⛔ 計入 calls）；
+                # 一律回空 claims（usage 0／0）。
+                rf = kwargs.get("response_format") or {}
+                if (isinstance(rf, dict)
+                        and (rf.get("json_schema") or {}).get("name") == STATE_CLAIM_SCHEMA_NAME):
+                    return _fake_response(_fake_message(content='{"claims": []}'),
+                                          prompt_tokens=0, completion_tokens=0)
                 outer.calls.append(kwargs)
                 assert outer.script, "假 provider 腳本已耗盡——測試少寫了一步"
                 step = outer.script.pop(0)

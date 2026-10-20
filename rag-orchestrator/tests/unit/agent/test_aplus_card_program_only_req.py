@@ -115,6 +115,13 @@ def _still_valid(res, pid, lead=WF.CARD_STILL_VALID_TEXT):
     assert len(res.quick_replies) == 3 and all(pid in r["value"] for r in res.quick_replies)
 
 
+@pytest.fixture()
+def _b_reply_off(monkeypatch):
+    """B 片（`AGENT_WRITE_REPLY_PROGRAM`）開關 off＝改前行為：本檔以「提議未發／程式呼叫非終結後交回模型」
+    為載具的測試在 off 下照舊驗（正對照）；開關 on 的程式狀態回話由 `test_b_write_replies_program_req.py` 驗。"""
+    monkeypatch.setenv(WF.WRITE_REPLY_PROGRAM_ENV, "off")
+
+
 # ════════════════════════════════════════════════════════════════════
 # V1（AP-R1、AP-R2）：模型自呼 `confirm.request` 只當提議
 # ════════════════════════════════════════════════════════════════════
@@ -239,9 +246,12 @@ async def test_v1_good_values_issue_the_program_card(api, action):
     assert set(entry[PENDING_DRAFT_PAYLOAD_KEY]) == set(good)
 
 
+@pytest.mark.usefixtures("_b_reply_off")
 async def test_v1d_second_proposal_in_the_same_turn_gets_a_closed_result_and_no_token(api, monkeypatch):
     """V1 (d)：第一次提議轉成的程式呼叫是非終結結果（render 失敗 ⇒ 無缺欄清單的 `INVALID_INPUT`）⇒
-    交回模型；同回合第二次提議 ⇒ 封閉工具結果 `HANDLED_BY_PROGRAM`、`registry.call` 只 1 次、token 表 0 列。"""
+    交回模型；同回合第二次提議 ⇒ 封閉工具結果 `HANDLED_BY_PROGRAM`、`registry.call` 只 1 次、token 表 0 列。
+    B 片開關 off（改前行為）：on 時非問句回合在第一次非終結後即由程式狀態回話結束、不再交回模型（KD-3 已移除），
+    見 `test_b_write_replies_program_req.py` V3 (b)。"""
     monkeypatch.setattr(C, "render", _render_fails)
     w = _World()
     payload = {"action": "repair_create", **REPAIR_FIELDS}
@@ -448,12 +458,25 @@ async def test_v4_positive_control_restating_same_values_gets_card_still_valid(a
     card = r1.answer
     res = await _restate(w)
     _still_valid(res, pid1)
-    assert res.answer == WF.CARD_STILL_VALID_TEXT + "\n" + card
+    # B 片 B5（業主裁 Q4，`AGENT_WRITE_REPLY_PROGRAM` 未設＝on）：前導句後列出本回合讀到的值（卡上顯示值）。
+    read_line = WF.card_read_values_text([("物件", STUDENT_ESTATE), ("問題描述", "冷氣不冷")])
+    assert res.answer == WF.CARD_STILL_VALID_TEXT + "\n" + read_line + "\n" + card
     assert res.trace.llm_calls == 0                                # 主模型未被呼叫
     assert w.db.pids(w.session_id) == [pid1]
     ok = await w.turn(f"confirm_submit:{pid1}")
     assert ok.outcome["state"] == "confirmed", ok.answer
     assert w.writes() == ["jgb2.action.repair_create"]
+
+
+@pytest.mark.usefixtures("_b_reply_off")
+async def test_v4_positive_control_restating_same_values_b_off_is_unchanged(api):
+    """正對照（B 片開關 off＝改前行為）：同上情境 ⇒ 固定句＋換行＋整張卡（無讀到的值一行）。"""
+    w = _World()
+    r1, pid1 = await w.repair_card()
+    card = r1.answer
+    res = await _restate(w)
+    _still_valid(res, pid1)
+    assert res.answer == WF.CARD_STILL_VALID_TEXT + "\n" + card
 
 
 async def test_v4_positive_control_on_the_proposal_path(api):
@@ -1070,12 +1093,18 @@ def _spy_target(monkeypatch) -> list:
 @pytest.mark.parametrize("inner_action", ["other_visible", None, "", 123, ["x"]],
                          ids=["other_visible", "none", "empty", "int", "list"])
 @pytest.mark.parametrize("action", ACTIONS)
+@pytest.mark.parametrize("b_reply", ["on", "off"])
 async def test_v13c_inner_action_mismatch_is_no_match_and_changes_nothing(api, monkeypatch, action,
-                                                                         inner_action, prior):
+                                                                         inner_action, prior, b_reply):
     """V13 (c)（安全審查 r3 F1）：內層 `action` 與外層不同（另一支看得到的合法動作、`None`、`""`、非字串）
     ⇒ 封閉 `NO_MATCH`；草稿前後完全相同、`created` 從未成立、`_write_draft_target` 0 次；整個回合（含模型輸出
     之後）無 `write_draft_program_confirm`、registry 無 `confirm.request`、token 表 0 列。內層帶的是好值
-    （若被誤合併會進草稿）。"""
+    （若被誤合併會進草稿）。
+
+    B 片：`b_reply=on`（`AGENT_WRITE_REPLY_PROGRAM` 未設）⇒ 非問句回合提議未發即由程式狀態回話結束（B1）、
+    不再交回模型 ⇒ 模型輸出之後的 `_write_draft_decide` 0 次；其餘不變量照驗。`off`＝改前行為（正對照）。"""
+    if b_reply == "off":
+        monkeypatch.setenv(WF.WRITE_REPLY_PROGRAM_ENV, "off")
     text, good = GOOD[action]
     inner_act = _other_action(action) if inner_action == "other_visible" else inner_action
     w = _World()
@@ -1092,7 +1121,12 @@ async def test_v13c_inner_action_mismatch_is_no_match_and_changes_nothing(api, m
     assert WF.V_WRITE_PROPOSAL_UNWRAPPED not in res.trace.violations
     assert any('"NO_MATCH"' in c for c in _tool_contents(provider))
     assert targets == []
-    assert decides and all(d is None or d[0] is False for d in decides), decides
+    if b_reply == "on":
+        assert decides == [], decides                                 # 程式已結束回合、模型未再被叫
+        assert WF.V_WRITE_REPLY_KD3_EXIT in res.trace.violations
+        assert len(provider.calls) == 1
+    else:
+        assert decides and all(d is None or d[0] is False for d in decides), decides
     assert WF.V_PROGRAM_CONFIRM not in res.trace.violations
     assert w.reg.confirm_calls() == [] and w.db.rows == []
     after = w.draft()
@@ -1437,8 +1471,11 @@ async def test_v13j_frozen_turn_no_value_proposal_is_closed(api, action):
 
 
 @pytest.mark.parametrize("action", ACTIONS)
+@pytest.mark.usefixtures("_b_reply_off")
 async def test_v13j_second_proposal_after_trigger_is_closed(api, monkeypatch, action):
-    """V13 (j)：本回合程式已觸發（第一個提議轉成程式呼叫、非終結）後的第二次提議（無值）⇒ 封閉結果。"""
+    """V13 (j)：本回合程式已觸發（第一個提議轉成程式呼叫、非終結）後的第二次提議（無值）⇒ 封閉結果。
+    B 片開關 off（改前行為；on 時非問句回合在第一次非終結後即由程式狀態回話結束，見
+    `test_b_write_replies_program_req.py` V3）。"""
     monkeypatch.setattr(C, "render", _render_fails)
     text, good = GOOD[action]
     w = _World()
@@ -1452,8 +1489,10 @@ async def test_v13j_second_proposal_after_trigger_is_closed(api, monkeypatch, ac
 
 
 @pytest.mark.parametrize("action", ACTIONS)
+@pytest.mark.usefixtures("_b_reply_off")
 async def test_v13j_write_draft_none_is_closed(api, monkeypatch, action):
-    """V13 (j)：`write_draft` 為 None ⇒ 封閉結果（V1 (g) 的無值提議版）。"""
+    """V13 (j)：`write_draft` 為 None ⇒ 封閉結果（V1 (g) 的無值提議版）。B 片開關 off（改前行為；
+    on 時提議未發即由程式狀態回話結束，見 `test_b_write_replies_program_req.py` V3）。"""
     original = AgentRuntime._write_draft_begin
 
     def _begin_then_none(self, acc, *a, **kw):

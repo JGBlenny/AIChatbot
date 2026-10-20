@@ -87,12 +87,23 @@ async def test_single_card_result_still_builds_pending_positive_control():
     assert "confirm_request_candidates" not in r.trace.violations
 
 
-async def test_candidates_without_known_action_fall_through_unchanged():
+@pytest.mark.parametrize("b_reply", ["on", "off"])
+async def test_candidates_without_known_action_fall_through_unchanged(monkeypatch, b_reply):
+    """B 片：`AGENT_WRITE_REPLY_PROGRAM` on（未設）⇒ 提議轉成的程式呼叫非終結、非問句寫入情境回合由程式
+    狀態回話結束（B1，⛔ 再回模型）；off＝改前行為（照舊回模型，正對照）。"""
+    from services.agent import write_forms as WF
+
+    if b_reply == "off":
+        monkeypatch.setenv(WF.WRITE_REPLY_PROGRAM_ENV, "off")
     bad = ToolResult(ok=True, data={"candidates": _rows(2), "action": "repair_create", "payload": {}}, text_for_model="x")
     r, state, provider = await _turn(bad)
     assert r.kind != "ask" or "confirm_request_candidates" not in r.trace.violations
     assert PENDING_CONFIRM_KEY not in state["agent"]
-    assert len(provider.calls) == 2  # 照舊回模型
+    if b_reply == "on":
+        assert len(provider.calls) == 1 and WF.V_WRITE_REPLY_KD3_EXIT in r.trace.violations
+        assert "不該走到這" not in r.answer
+    else:
+        assert len(provider.calls) == 2  # 照舊回模型
 
 
 @pytest.fixture()

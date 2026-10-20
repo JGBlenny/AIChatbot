@@ -53,6 +53,8 @@ def _env(monkeypatch):
     monkeypatch.setattr(_bills, "_today", lambda: TODAY)
     monkeypatch.delenv("AGENT_WRITE_DRAFT", raising=False)
     monkeypatch.delenv(WF.WRITE_LIFECYCLE_ENV, raising=False)       # 未設＝on
+    monkeypatch.delenv(WF.WRITE_REPLY_PROGRAM_ENV, raising=False)   # B 片：未設＝on
+    monkeypatch.delenv("AGENT_STATE_CLAIM_GATE", raising=False)     # B 片：未設＝on
     monkeypatch.setenv("AGENT_WRITE_TOOLS_ENABLED", "true")
     assert WF.write_lifecycle_enabled_from_env() is True             # 前提：本檔全部在 on 下跑
 
@@ -376,7 +378,10 @@ def _render_boom(monkeypatch):
 
 async def test_nonterminal_program_result_goes_back_to_model_once_on(api, monkeypatch):
     """on：「帳單 709744 延 7 天」在 on 時預檢補齊日期、本來會出卡——以注入讓 render 失敗，製造同一種
-    非終結結果（無缺欄清單的 INVALID_INPUT；本回合沒有 A2 燒卡）⇒ 工具結果回填、再叫一次模型。"""
+    非終結結果（無缺欄清單的 INVALID_INPUT；本回合沒有 A2 燒卡）⇒ 工具結果回填、再叫一次模型。
+    B 片開關 off（改前行為）：on 時非問句寫入情境回合改由程式狀態回話結束（B1），見
+    `test_b_write_replies_program_req.py` V3。"""
+    monkeypatch.setenv(WF.WRITE_REPLY_PROGRAM_ENV, "off")
     _render_boom(monkeypatch)
     res, reg, provider, _ = await _turn(_pm(), "帳單 709744 延 7 天", {}, [
         _out(),
@@ -394,6 +399,9 @@ async def test_nonterminal_program_result_goes_back_to_model_once_on(api, monkey
 
 async def test_w1c_program_first_nonterminal_result_calls_main_model_once_with_the_result_on(
         api, monkeypatch):
+    # B 片開關 off（改前行為）：on 時程式先發非終結即由程式狀態回話結束（B1），見
+    # `test_b_write_replies_program_req.py` V3。
+    monkeypatch.setenv(WF.WRITE_REPLY_PROGRAM_ENV, "off")
     _render_boom(monkeypatch)
     events: list = []
     res, reg, provider, _ = await _turn(_pm(), "帳單 709744 延 7 天", {}, [

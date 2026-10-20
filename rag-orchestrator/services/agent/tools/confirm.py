@@ -48,6 +48,7 @@
 """
 from __future__ import annotations
 
+import copy
 import hashlib
 import hmac
 import json
@@ -698,13 +699,19 @@ def missing_fields_ask_text(result: ToolResult) -> Optional[str]:
     （呼叫端照原路把結果交給模型）。⛔ 不含任何使用者值——標籤全出自固定詞彙。"""
     if result.ok or result.error != "INVALID_INPUT" or not isinstance(result.data, dict):
         return None
-    labels = result.data.get("missing_fields")
+    return missing_labels_ask_text(result.data.get("missing_fields"))
+
+
+def missing_labels_ask_text(labels: Any) -> Optional[str]:
+    """缺欄標籤清單 ⇒ 追問句（`MISSING_FIELDS_ASK_TEMPLATE`）；空、不是 list、或含詞彙外的值 ⇒ `None`。
+    `missing_fields_ask_text` 與 B 片 B2 (3)（依草稿算出的 `WF.missing_labels`）共用（行為與抽出前相同）。"""
     if not isinstance(labels, list) or not labels:
         return None
     vocab = _write_forms.missing_label_vocab()   # 第 3 步 #2：呼叫當下由表單導出
     if not all(isinstance(lb, str) and lb in vocab for lb in labels):
         return None
     return MISSING_FIELDS_ASK_TEMPLATE.format(labels=MISSING_FIELDS_SEP.join(labels))
+
 
 def _row_title(row: dict, fallback: str) -> str:
     """系統解析出的名稱；列上沒有可用名稱 ⇒ 退回使用者原話（編號仍綁死那一筆）。"""
@@ -922,6 +929,44 @@ async def _prepare_closed_action(
     row_estate = row.get("estate_id")
     scope_estate_id = str(row_estate).strip() if row_estate not in (None, "") else None
     return None, estate_id_out, scope_estate_id
+
+
+async def closed_action_missing_labels(identity: Identity, action: Any, payload: Any) -> List[str]:
+    """封閉三動作（`CLOSED_ACTION_FIELDS`）草稿的缺欄標籤：B 片 B2 (3)（`runtime._write_reply_state`）
+    在 `write_forms.missing_labels` 判不缺時用。
+
+    走出卡路徑**同一支** `_prepare_closed_action`（⛔ 另寫一套判斷）：欄位齊、但名稱對到多筆或
+    物件無唯一有效合約 ⇒ 出卡路徑回缺欄清單「合約」／「物件」，這裡回同一份清單，B2 的追問句就與
+    出卡路徑對同一份草稿的判斷一致。
+
+    - 非封閉表動作 ⇒ `[]`（⛔ 呼叫 `_prepare_closed_action`）；
+    - 接真 JGB 且屬 `WRITE_NOT_SUPPORTED_ACTIONS` ⇒ `[]`（出卡路徑在缺欄判斷之前就以「尚未開放」收尾，
+      這裡同樣 ⛔ 往下查）；
+    - 在 payload 的**深複本**上呼叫（`_prepare_closed_action` 會就地改寫，⛔ 動到呼叫端的值）；
+    - 提早收尾結果是 `ok=False` 且 `data["missing_fields"]` 是 list ⇒ 回那份清單；其他（可出卡、
+      查無固定句、`NO_MATCH`、無清單的 `INVALID_INPUT`）⇒ `[]`（維持呼叫端原分支）；
+    - 例外 ⇒ 記一行不含值的訊息、回 `[]`（fail-soft 到原行為）。
+
+    唯讀：只做出卡路徑本來就做的帶 viewer 查詢；⛔ 建 token、⛔ 寫 DB、⛔ 呼叫任何 LLM。
+    """
+    if not isinstance(action, str) or action not in CLOSED_ACTION_FIELDS:
+        return []
+    if not isinstance(payload, dict):
+        return []
+    try:
+        if (action in WRITE_NOT_SUPPORTED_ACTIONS
+                and getattr(jgb2_tools._get_api(), "use_mock", True) is False):
+            return []
+        early, _estate_id, _scope = await _prepare_closed_action(
+            identity, action, copy.deepcopy(dict(payload)))
+    except Exception as exc:  # noqa: BLE001 — fail-soft：回原分支，⛔ 記任何值
+        logger.warning("[agent] B2 封閉動作缺欄判斷失敗（%s），沿用原分支（⛔ 記值）",
+                       type(exc).__name__)
+        return []
+    if early is None or early.ok or not isinstance(early.data, dict):
+        return []
+    labels = early.data.get("missing_fields")
+    return list(labels) if isinstance(labels, list) else []
 
 
 #: 2026-10-15 正式機：建物件／合約／手動帳單（jgb2-req#19～#21）JGB 尚未開放；接真 JGB
@@ -1386,12 +1431,14 @@ async def redeem_token(
 __all__ = [
     "BILL_MATCH_HINT",
     "CLOSED_KEYS_TEXT_TEMPLATE",
+    "closed_action_missing_labels",
     "closed_keys_text",
     "DOCUMENT_CONFIRM_FIELDS_PREFIX",
     "document_confirm_description",
     "MISSING_FIELDS_ASK_TEMPLATE",
     "MISSING_FIELDS_TEXT_TEMPLATE",
     "missing_fields_ask_text",
+    "missing_labels_ask_text",
     "CONFIRM_SPEC",
     "OPEN_REPAIRS_HINT_TEMPLATE",
     "OPEN_REPAIRS_ID_SEP",

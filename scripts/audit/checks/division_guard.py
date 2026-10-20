@@ -13,7 +13,8 @@ DSP-091 規定「寫入全程、已選定的那筆紀錄、帶狀態的句子與
 > ② 線上（近 7 天 `usage_events.decision_snapshot->'agent'->'violations'`，jsonb 陣列）：
 >    有 `confirm_source:program_*` 樣本（正對照）時，`confirm_source:model:unregistered` 次數 > 0 ⇒ FAIL，
 >    並列出 `trace_id`。無程式來源樣本 ⇒ 「未判」（非 0 退出碼 3，⛔ 當 PASS）。
-> ③ 各來源計數與 `prose_confirm_suspect` 次數只印數字，不 WARN、不 FAIL、不設門檻（DSP-087）。
+> ③ 各來源計數、`prose_confirm_suspect`、`state_claim_unbacked:<類別>`、`state_claim_check_failed`
+>    次數只印數字，不 WARN、不 FAIL、不設門檻（DSP-087）。
 
 退出碼：0 通過；1 FAIL；2 前置條件失敗（讀不到正本／登記／DB，⛔ 靜默跳過）；3 未判。
 用法：python3 scripts/audit/checks/division_guard.py [--self-test]
@@ -32,6 +33,10 @@ REGISTRY = os.path.join(REPO, "rag-orchestrator", "tests", "unit", "agent",
 PSQL = ["docker", "exec", "aichatbot-postgres", "psql", "-U", "aichatbot", "-d", "aichatbot_admin",
         "-t", "-A", "-F", "\t"]
 SRC_PREFIX = "confirm_source:"
+#: B 片 B3 標記（`rag-orchestrator/services/agent/state_claim.py` 的
+#: `TRACE_STATE_CLAIM_UNBACKED_PREFIX`、`V_STATE_CLAIM_CHECK_FAILED`）。
+CLAIM_UNBACKED_PREFIX = "state_claim_unbacked:"
+CLAIM_CHECK_FAILED = "state_claim_check_failed"
 WINDOW = "7 days"
 
 OK, FAIL, PRECONDITION, UNJUDGED = 0, 1, 2, 3
@@ -98,6 +103,7 @@ SELECT s, count(*) FROM (
     AND jsonb_typeof(decision_snapshot->'agent'->'violations') = 'array'
 ) t
 WHERE s LIKE 'confirm_source:%' OR s = 'prose_confirm_suspect'
+   OR s LIKE 'state_claim_unbacked:%' OR s = 'state_claim_check_failed'
 GROUP BY s ORDER BY s"""
 
 SQL_UNREGISTERED = f"""
@@ -132,6 +138,13 @@ def run_checks(doc_text, reg_rows, query=psql_query):
         if s.startswith(SRC_PREFIX):
             lines.append(f"ℹ️  近 7 天 {s} = {counts[s]}")
     lines.append(f"ℹ️  近 7 天 prose_confirm_suspect = {counts.get('prose_confirm_suspect', 0)}")
+    # B 片 B3 帶狀態句判讀閘：各類未對到事件與判讀失敗次數，只印數（DSP-087）。
+    unbacked = sorted(s for s in counts if s.startswith(CLAIM_UNBACKED_PREFIX))
+    for s in unbacked:
+        lines.append(f"ℹ️  近 7 天 {s} = {counts[s]}")
+    if not unbacked:
+        lines.append(f"ℹ️  近 7 天 {CLAIM_UNBACKED_PREFIX}* = 0（四類皆無列）")
+    lines.append(f"ℹ️  近 7 天 {CLAIM_CHECK_FAILED} = {counts.get(CLAIM_CHECK_FAILED, 0)}")
     if program == 0:
         lines.append(f"⚠️ 未判：近 7 天 無程式出卡樣本（confirm_source:program_* = 0；正對照未中，不能當 PASS）")
         return (code if code != OK else UNJUDGED), lines
@@ -162,7 +175,7 @@ def _self_test():
         return f
 
     good = {"confirm_source:program_draft": 3, "confirm_source:model:select_scope": 1,
-            "prose_confirm_suspect": 2}
+            "prose_confirm_suspect": 2, "state_claim_unbacked:completed": 5}
     failures = []
 
     def expect(name, got, want, must_have=()):
@@ -171,7 +184,8 @@ def _self_test():
         if code != want or any(m not in text for m in must_have):
             failures.append(f"{name}：退出碼 {code}（要 {want}）／輸出缺 {[m for m in must_have if m not in text]}\n{text}")
 
-    expect("有樣本且 unregistered=0 ⇒ PASS", run_checks(doc, reg, q(good)), OK, ("unregistered = 0", "= 3"))
+    expect("有樣本且 unregistered=0 ⇒ PASS", run_checks(doc, reg, q(good)), OK,
+           ("unregistered = 0", "= 3", "state_claim_unbacked:completed = 5", "state_claim_check_failed = 0"))
     bad_counts = dict(good, **{"confirm_source:model:unregistered": 2})
     expect("unregistered>0 ⇒ FAIL 列 trace_id",
            run_checks(doc, reg, q(bad_counts, ["tr-aaa", "tr-bbb"])), FAIL, ("tr-aaa", "tr-bbb"))

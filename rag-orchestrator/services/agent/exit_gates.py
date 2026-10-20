@@ -357,6 +357,25 @@ EXIT_GATES: tuple = (
 )
 
 
+def apply_exit_gates(
+    acc: TurnAccumulator, result: TurnResult, *, verifier: Any, agent_state: dict,
+    user_message: str,
+) -> TurnResult:
+    """四道閘依 `EXIT_GATES` 依序跑＋補 `outcome`（與 `finalize` 前半同一段程式、同一順序；
+    `finalize` 自己保留一份原樣，靜態接線測試 `test_question_sensitivity_req` 讀的是它）。
+
+    B 片乙′：寫入情境問句回合的模型 `answer` 先經這裡（與 `finalize` 同一組閘、同一順序），再由
+    程式接狀態行、經 `_finish_confirm_turn` 收尾（確認卡與按鈕不經 `finalize`，S7）。
+    """
+    # U2：兩道閘要拿得到規則集（⛔ 拿不到 ⇒ `None` ⇒ 一律當敏感、維持轉人）。
+    _qs_rules = getattr(verifier, "rules", None)
+    for _name, _gate in EXIT_GATES:
+        result = _gate(result, agent_state, user_message, _qs_rules, acc.scope_counts)
+    if result.outcome is None:
+        result.outcome = default_outcome(result)
+    return result
+
+
 def finalize(
     acc: TurnAccumulator, result: TurnResult, *, is_fixed: bool,
     verifier: Any, cache: dict, agent_state: dict, user_message: str,

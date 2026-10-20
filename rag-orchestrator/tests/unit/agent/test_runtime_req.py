@@ -44,6 +44,7 @@ from services.agent import runtime as runtime_mod
 from services.agent.budget import Budget
 from services.agent.identity import Identity
 from services.agent.runtime import AgentRuntime, VerifierVerdict
+from services.agent.state_claim import STATE_CLAIM_SCHEMA_NAME as _STATE_CLAIM_SCHEMA
 from services.agent.tools.registry import ToolResult
 
 pytestmark = pytest.mark.unit
@@ -98,11 +99,29 @@ class FakeCompletions:
     `callable(kwargs) -> response`（後者用來在「模型回應」的同時做副作用，
     例如推進假時鐘，模擬這一輪呼叫花了很久）。"""
 
-    def __init__(self, script):
+    def __init__(self, script, judge=None):
         self.script = list(script)
         self.calls: list[dict] = []
+        # B 片 B3：帶狀態句判讀呼叫（同一個 client，依 response_format 名稱分流；⛔ 計入 `calls`）。
+        # `judge=None` ⇒ 一律回 `{"claims": []}`（usage 0／0）——既有測試的主模型腳本與 token 數不受影響。
+        self.judge_script = None if judge is None else list(judge)
+        self.judge_calls: list[dict] = []
 
     async def create(self, **kwargs):
+        rf = kwargs.get("response_format") or {}
+        if isinstance(rf, dict) and (rf.get("json_schema") or {}).get("name") == _STATE_CLAIM_SCHEMA:
+            self.judge_calls.append(kwargs)
+            if not self.judge_script:
+                return _fake_response(_fake_message(content='{"claims": []}'),
+                                      prompt_tokens=0, completion_tokens=0)
+            step = self.judge_script.pop(0)
+            if callable(step):
+                step = step(kwargs)
+                if inspect.isawaitable(step):
+                    step = await step
+            if isinstance(step, str):
+                step = _fake_response(_fake_message(content=step), prompt_tokens=0, completion_tokens=0)
+            return step
         self.calls.append(kwargs)
         assert self.script, "假 provider 腳本已耗盡——測試少寫了一步"
         step = self.script.pop(0)
@@ -110,8 +129,8 @@ class FakeCompletions:
 
 
 class FakeProvider:
-    def __init__(self, script):
-        completions = FakeCompletions(script)
+    def __init__(self, script, judge=None):
+        completions = FakeCompletions(script, judge=judge)
         self.async_client = SimpleNamespace(
             chat=SimpleNamespace(completions=completions)
         )
@@ -120,6 +139,10 @@ class FakeProvider:
     @property
     def calls(self):
         return self._completions.calls
+
+    @property
+    def judge_calls(self):
+        return self._completions.judge_calls
 
 
 def _empty_provider() -> FakeProvider:

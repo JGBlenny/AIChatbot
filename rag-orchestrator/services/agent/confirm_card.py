@@ -209,6 +209,24 @@ def _lines_to_card(title: str, rows: list[tuple[str, str]]) -> str:
     return f"{title}\n{body}\n{CARD_FOOTER}"
 
 
+CARD_ROW_PREFIX = "・"
+CARD_ROW_SEP = "："
+
+
+def card_display_rows(card_text: Any) -> list[tuple[str, str]]:
+    """B 片 B5：由 `render` 產出的卡文字取回 `(標籤, 顯示值)`（`_lines_to_card` 的逆向；只讀
+    `・標籤：值` 形狀的行，其他行略過）。值即卡上**同一個 formatter** 的顯示值（⛔ 使用者原句）。"""
+    if not isinstance(card_text, str):
+        return []
+    rows: list[tuple[str, str]] = []
+    for line in card_text.split("\n"):
+        if not line.startswith(CARD_ROW_PREFIX) or CARD_ROW_SEP not in line:
+            continue
+        label, value = line[len(CARD_ROW_PREFIX):].split(CARD_ROW_SEP, 1)
+        rows.append((label, value))
+    return rows
+
+
 def _render_bill_due_extend(payload: Mapping[str, Any], today: Optional[date]) -> str:
     action = "bill_due_extend"
     bill_id = _require_ref(payload, "bill_id", action)
@@ -874,6 +892,9 @@ __all__ = [
     "date_not_before_today",
     "fields_before_today",
     "CARD_FOOTER",
+    "CARD_ROW_PREFIX",
+    "CARD_ROW_SEP",
+    "card_display_rows",
     "EMPTY_DESCRIPTION_ZH",
     "ACTION_FAILED_TEXT",
     "CONFIRMATION_REQUIRED_TEXT",

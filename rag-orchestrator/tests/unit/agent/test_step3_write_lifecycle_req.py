@@ -60,6 +60,8 @@ def _env(monkeypatch):
     monkeypatch.delenv("AGENT_WRITE_DRAFT", raising=False)
     monkeypatch.delenv(LIFECYCLE_ENV, raising=False)          # 未設＝on（開關的預設）
     monkeypatch.delenv(WF.WRITE_PROPOSAL_ENV, raising=False)  # A+ 片：未設＝on
+    monkeypatch.delenv(WF.WRITE_REPLY_PROGRAM_ENV, raising=False)  # B 片：未設＝on
+    monkeypatch.delenv("AGENT_STATE_CLAIM_GATE", raising=False)    # B 片：未設＝on
     monkeypatch.setenv("AGENT_WRITE_TOOLS_ENABLED", "true")
 
 
@@ -884,8 +886,11 @@ async def test_9b_a2_burn_then_insert_exception(api):
     assert again.outcome["state"] == "confirm_pending", again.answer
 
 
-async def test_9b_q5_no_burn_nonterminal_still_goes_back_to_model(api):
-    """正對照：沒有 A2 燒卡（新的程式觸發）時非終結結果照現行回模型（Q5 只在燒過綁定卡後生效）。"""
+async def test_9b_q5_no_burn_nonterminal_still_goes_back_to_model(api, monkeypatch):
+    """正對照：沒有 A2 燒卡（新的程式觸發）時非終結結果照現行回模型（Q5 只在燒過綁定卡後生效）。
+    B 片開關 off（改前行為）：on 時非問句寫入情境回合改由程式狀態回話結束（B1），見
+    `test_b_write_replies_program_req.py` V3。"""
+    monkeypatch.setenv(WF.WRITE_REPLY_PROGRAM_ENV, "off")
     w = _World()
     _r1, pid1 = await w.repair_card()
     w.state["agent"].pop(WRITE_DRAFT_KEY, None)

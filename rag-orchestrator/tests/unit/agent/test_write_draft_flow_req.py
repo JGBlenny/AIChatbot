@@ -107,6 +107,8 @@ def _env(monkeypatch):
     monkeypatch.setattr(_bills, "_today", lambda: TODAY)
     monkeypatch.delenv("AGENT_WRITE_DRAFT", raising=False)
     monkeypatch.delenv(WF.WRITE_PROPOSAL_ENV, raising=False)      # A+ 片：未設＝on
+    monkeypatch.delenv(WF.WRITE_REPLY_PROGRAM_ENV, raising=False)  # B 片：未設＝on
+    monkeypatch.delenv("AGENT_STATE_CLAIM_GATE", raising=False)    # B 片：未設＝on
     monkeypatch.setenv("AGENT_WRITE_TOOLS_ENABLED", "true")
 
 
@@ -1028,7 +1030,10 @@ async def test_question_after_program_ask_freezes_the_draft_and_main_model_answe
     before = json.loads(json.dumps(_draft(state)))
     res, reg, provider, _ = await _turn(ident, "冷氣不冷嗎", state, [_out("冷氣不冷可能是濾網髒了。")],
                                         intents=[_intent("repair_create", description="冷氣不冷")])
-    assert res.answer == "冷氣不冷可能是濾網髒了。"
+    # B 片乙′（業主裁 Q1；`AGENT_WRITE_REPLY_PROGRAM` 未設＝on）：問句回合模型 `answer` 照送，程式接缺欄追問行。
+    assert res.answer == "冷氣不冷可能是濾網髒了。\n\n" + ASK_TEXT.format(labels="問題描述")
+    assert f"{WF.TRACE_WRITE_REPLY_SOURCE_PREFIX}{WF.WRITE_REPLY_SOURCE_MODEL_PLUS_STATUS}" \
+        in res.trace.violations
     assert reg.confirm_calls() == [] and not _program_records(res)
     assert "write_draft_question_frozen" in res.trace.violations
     after = _draft(state)
@@ -1558,7 +1563,7 @@ async def test_nonterminal_program_result_goes_back_to_model_once(monkeypatch, a
     assert res.answer == "請問原本的到期日是哪一天？"
 
 
-async def test_no_trigger_when_remaining_deadline_below_six_seconds(api):
+async def test_no_trigger_when_remaining_deadline_below_six_seconds(api, monkeypatch):
     """剩餘期限 < 6 秒 ⇒ 不觸發、保留模型原輸出（正對照：期限 6 秒時同一續答會觸發）。
     以整句填入驅動（不依賴意圖呼叫是否來得及）。"""
     ident = _pm()
@@ -1569,7 +1574,16 @@ async def test_no_trigger_when_remaining_deadline_below_six_seconds(api):
 
     res, reg, *_ = await _turn(ident, "冷氣不冷", _state(), [_out()], budget=Budget(deadline_s=5.9))
     assert "write_draft_answer_filled" in res.trace.violations          # 前提：真的接收了值
-    assert reg.confirm_calls() == [] and res.answer == MODEL_TEXT
+    # B 片（`AGENT_WRITE_REPLY_PROGRAM` 未設＝on；驗收 V11 (2) 期限不足）：草稿完整、未出卡 ⇒ 模型文字
+    # ⛔ 送出、回 `WRITE_NOT_ISSUED_TEXT`、⛔ 出卡。
+    assert reg.confirm_calls() == [] and res.answer == WF.WRITE_NOT_ISSUED_TEXT
+    assert res.outcome["state"] != "confirm_pending" and res.quick_replies == []
+    # 正對照（B 片開關 off＝改前行為）：保留模型原輸出。
+    monkeypatch.setenv(WF.WRITE_REPLY_PROGRAM_ENV, "off")
+    res_off, reg_off, *_ = await _turn(ident, "冷氣不冷", _state(), [_out()],
+                                       budget=Budget(deadline_s=5.9))
+    monkeypatch.delenv(WF.WRITE_REPLY_PROGRAM_ENV)
+    assert reg_off.confirm_calls() == [] and res_off.answer == MODEL_TEXT
     res_ok, reg_ok, *_ = await _turn(ident, "冷氣不冷", _state(), [_out()],
                                      budget=Budget(deadline_s=6.0))
     assert len(reg_ok.confirm_calls()) == 1 and res_ok.outcome["state"] == "confirm_pending"
@@ -1631,7 +1645,8 @@ async def test_script_t_detour_does_not_pollute_the_draft(api):
     await _turn(ident, "能幫我新增一張修繕單嗎", state, [_out()], intents=[_intent("repair_create")])
     t2, reg2, *_ = await _turn(ident, "租金可以設定自動扣款嗎", state, [_out("可以，在合約的收款設定裡開啟。")],
                                intents=[_intent("none")])
-    assert t2.answer == "可以，在合約的收款設定裡開啟。"
+    # B 片乙′：問句回合模型 `answer` 照送＋程式缺欄追問行（依草稿算，⛔ 出卡）。
+    assert t2.answer == "可以，在合約的收款設定裡開啟。\n\n" + ASK_TEXT.format(labels="物件、問題描述")
     assert reg2.confirm_calls() == [] and "confirm_missing_fields_ask" not in t2.trace.violations
     t3, reg3, *_ = await _turn(ident, STUDENT_ESTATE, state, [_out()], intents=[_intent("none")])
     assert t3.answer == ASK_TEXT.format(labels="問題描述")
@@ -1868,7 +1883,9 @@ async def test_w1c_question_frozen_turn_does_not_go_program_first(api):
     res, reg, provider, _ = await _turn(ident, "冷氣不冷嗎", state, [_out("可能是濾網髒了。")],
                                         intents=[_intent("repair_create", description="冷氣不冷")],
                                         program_first=True)
-    assert res.answer == "可能是濾網髒了。" and len(provider.calls) == 1
+    # B 片乙′：問句回合模型 `answer` 照送＋程式缺欄追問行。
+    assert res.answer == "可能是濾網髒了。\n\n" + ASK_TEXT.format(labels="問題描述")
+    assert len(provider.calls) == 1
     assert reg.confirm_calls() == [] and _draft(state)["fields"] == {"estate_name": STUDENT_ESTATE}
 
 
@@ -1913,7 +1930,9 @@ async def test_w1c_scripts_r_d_t_run_program_first_without_the_main_model(api):
     t2, reg2, p2, _ = await _turn(ident, "租金可以設定自動扣款嗎", state_t,
                                   [_out("可以，在合約的收款設定裡開啟。")], intents=[_intent("none")],
                                   program_first=True)
-    assert t2.answer == "可以，在合約的收款設定裡開啟。" and len(p2.calls) == 1
+    # B 片乙′：問句回合模型 `answer` 照送＋程式缺欄追問行。
+    assert t2.answer == "可以，在合約的收款設定裡開啟。\n\n" + ASK_TEXT.format(labels="物件、問題描述")
+    assert len(p2.calls) == 1
     assert reg2.confirm_calls() == []
     t3, *_ = await _turn(ident, STUDENT_ESTATE, state_t, [], intents=[_intent("none")], program_first=True)
     assert t3.answer == ASK_TEXT.format(labels="問題描述")

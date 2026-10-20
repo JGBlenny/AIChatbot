@@ -33,7 +33,7 @@ import re
 import unicodedata
 from dataclasses import dataclass
 from datetime import date
-from typing import Any, Callable, Final, Mapping, Optional, Tuple
+from typing import Any, Callable, Final, Mapping, Optional, Sequence, Tuple
 
 # A8（單一動作登錄）：動作值域在呼叫當下以模組參照讀，⛔ import 期複製。
 from services.agent import confirm_card as _confirm_card
@@ -568,6 +568,58 @@ PROPOSAL_NO_VALUE_FALLBACK_TEXT: Final[str] = (
     "這句我沒有讀到要填寫或修改的內容，目前沒有更新。"
     "請直接說哪一項、內容是什麼，我再幫您整理成確認卡。"
 )
+
+
+#: B 片 B6：寫入進行中回話由程式產生（B1 提議未發／程式呼叫非終結的出口、B2 狀態回話、B5 讀到的值）。值域 `on`／`off`；
+#: **未設或空字串＝on**、`off`＝改前行為（逐字相同）。⚠️ 只在 A+ 提議路徑生效時（`AGENT_WRITE_DRAFT`、
+#: `AGENT_WRITE_LIFECYCLE`、`AGENT_WRITE_PROPOSAL` 皆 on）才有作用：B2 依 A+ 的卡 `draft_payload` 判斷。
+WRITE_REPLY_PROGRAM_ENV: Final[str] = "AGENT_WRITE_REPLY_PROGRAM"
+
+
+def write_reply_program_enabled_from_env(environ: Optional[Mapping[str, str]] = None) -> bool:
+    """`on`／`off`；**未設或空字串＝on**。其他非空值 ⇒ `ValueError`（啟動失敗並說明原因）。"""
+    env = os.environ if environ is None else environ
+    raw = env.get(WRITE_REPLY_PROGRAM_ENV, "")
+    value = (raw or "").strip() or "on"
+    if value == "on":
+        return True
+    if value == "off":
+        return False
+    raise ValueError(
+        f"{WRITE_REPLY_PROGRAM_ENV}={raw!r} 不在允許值域（on／off；未設或空字串＝on）"
+    )
+
+
+#: B 片 B2 (2)：綁定卡仍有效、但草稿與卡上的值不同（本回合沒有重出卡）⇒ 程式固定句＋整張卡文字
+#: （同 pid、原三顆鍵；⛔ 新 token）。
+CARD_DIFFERS_TEXT: Final[str] = (
+    "確認卡上的內容和你剛才說的不一樣，卡片沒有更新，這筆還沒有送出。"
+    "要照卡上內容送出請按確認，要改請按「我要修改」。"
+)
+#: B 片 B2 (4)：有草稿、但這次沒有可送出的卡（出卡判斷沒出、缺欄標籤不在詞彙內）⇒ 程式固定句。
+WRITE_NOT_ISSUED_TEXT: Final[str] = (
+    "這筆還沒有送出，這次沒辦法產生確認卡。請再說一次要辦的內容，或稍後再試。"
+)
+#: B 片 B2 (5)：無草稿、本 session 無有效綁定卡 ⇒ 程式固定句（只說本回合，⛔ 宣稱整段對話沒送出過）。
+NO_PENDING_WRITE_TEXT: Final[str] = (
+    "這次沒有替你送出或變更任何資料；要辦理的話，請直接告訴我要辦什麼。"
+)
+#: B 片 B3：模型宣稱已轉真人、對不到轉人事件 ⇒ 程式固定句（⛔ 宣稱轉過或沒轉過）。
+HANDOFF_OFFER_TEXT: Final[str] = "需要真人客服的話，請直接說「找真人客服」。"
+#: B 片 B5（業主 2026-10-20 裁 Q4：列出讀到的值）：W-R3 形狀（綁定卡有效、本回合使用者句子帶出的值都
+#: 與卡相同）⇒ 「卡片還在」句後加一行。值取**卡 formatter 的顯示值**（⛔ 放使用者原句）。
+CARD_READ_VALUES_TEMPLATE: Final[str] = "這次讀到的是：{pairs}，和卡上相同；要改請按「我要修改」。"
+CARD_READ_VALUE_PAIR_TEMPLATE: Final[str] = "{label}「{value}」"
+CARD_READ_VALUES_SEP: Final[str] = "、"
+
+
+def card_read_values_text(pairs: Sequence[Tuple[str, str]]) -> Optional[str]:
+    """B5 一行：`pairs`＝(卡上標籤, 卡上顯示值)；空 ⇒ `None`（不加這一行）。"""
+    items = [CARD_READ_VALUE_PAIR_TEMPLATE.format(label=label, value=value)
+             for label, value in pairs if isinstance(label, str) and isinstance(value, str)]
+    if not items:
+        return None
+    return CARD_READ_VALUES_TEMPLATE.format(pairs=CARD_READ_VALUES_SEP.join(items))
 
 
 def _user_word_labels(action: Any, payload: Any) -> Tuple[str, ...]:
@@ -1139,6 +1191,26 @@ V_WRITE_PROPOSAL_UNWRAPPED: Final[str] = "write_proposal_unwrapped"
 V_WRITE_PROPOSAL_NO_VALUE: Final[str] = "write_proposal_no_value"
 #: A+ 片 r3 AP-7 (2)(a)：同上、綁定卡有效且草稿＝卡 ⇒ 程式中性句＋同一張卡（同記 `V_CARD_STILL_VALID`）。
 V_WRITE_PROPOSAL_NO_VALUE_CARD: Final[str] = "write_proposal_no_value_card"
+#: B 片 B2：本回合的寫入回話由程式狀態回話產生（後綴＝分支，封閉詞彙 `WRITE_REPLY_STATES`）。
+TRACE_WRITE_REPLY_STATE_PREFIX: Final[str] = "write_reply_state:"
+WRITE_REPLY_STATE_CARD_STILL_VALID: Final[str] = "card_still_valid"
+WRITE_REPLY_STATE_CARD_UNCHANGED: Final[str] = "card_unchanged"
+WRITE_REPLY_STATE_CARD_DIFFERS: Final[str] = "card_differs"
+WRITE_REPLY_STATE_MISSING: Final[str] = "missing_fields"
+WRITE_REPLY_STATE_NOT_ISSUED: Final[str] = "not_issued"
+WRITE_REPLY_STATE_NO_PENDING: Final[str] = "no_pending"
+WRITE_REPLY_STATES: Final[Tuple[str, ...]] = (
+    WRITE_REPLY_STATE_CARD_STILL_VALID, WRITE_REPLY_STATE_CARD_UNCHANGED,
+    WRITE_REPLY_STATE_CARD_DIFFERS, WRITE_REPLY_STATE_MISSING, WRITE_REPLY_STATE_NOT_ISSUED,
+    WRITE_REPLY_STATE_NO_PENDING,
+)
+#: B 片 B2（V12 (f)）：寫入情境回合的回話來源。`program`＝整則為程式常數或樣板；
+#: `model_plus_status`＝問句回合（乙′）模型 `answer` 文字＋程式狀態行。`handoff` 回合不記。
+TRACE_WRITE_REPLY_SOURCE_PREFIX: Final[str] = "write_reply_source:"
+WRITE_REPLY_SOURCE_PROGRAM: Final[str] = "program"
+WRITE_REPLY_SOURCE_MODEL_PLUS_STATUS: Final[str] = "model_plus_status"
+#: B 片 B1：提議未發／程式呼叫非終結的出口，開關 on 時由程式結束回合（⛔ 再叫主模型）。
+V_WRITE_REPLY_KD3_EXIT: Final[str] = "write_reply_kd3_exit"
 #: 「本回合草稿長什麼樣」的稽核：只有動作名與**鍵名**（封閉詞彙）。
 TRACE_DRAFT_ACTION_PREFIX: Final[str] = "write_draft_action:"
 TRACE_DRAFT_KEYS_PREFIX: Final[str] = "write_draft_keys:"
@@ -1169,6 +1241,14 @@ __all__ = [
     "PROPOSAL_NO_VALUE_CARD_TEXT", "PROPOSAL_NO_VALUE_TEXT", "PROPOSAL_NO_VALUE_FALLBACK_TEXT",
     "proposal_no_value_text", "V_WRITE_PROPOSAL_UNWRAPPED", "V_WRITE_PROPOSAL_NO_VALUE",
     "V_WRITE_PROPOSAL_NO_VALUE_CARD",
+    "WRITE_REPLY_PROGRAM_ENV", "write_reply_program_enabled_from_env", "CARD_DIFFERS_TEXT",
+    "WRITE_NOT_ISSUED_TEXT", "NO_PENDING_WRITE_TEXT", "HANDOFF_OFFER_TEXT",
+    "CARD_READ_VALUES_TEMPLATE", "CARD_READ_VALUE_PAIR_TEMPLATE", "CARD_READ_VALUES_SEP",
+    "card_read_values_text", "TRACE_WRITE_REPLY_STATE_PREFIX", "WRITE_REPLY_STATES",
+    "WRITE_REPLY_STATE_CARD_STILL_VALID", "WRITE_REPLY_STATE_CARD_UNCHANGED",
+    "WRITE_REPLY_STATE_CARD_DIFFERS", "WRITE_REPLY_STATE_MISSING", "WRITE_REPLY_STATE_NOT_ISSUED",
+    "WRITE_REPLY_STATE_NO_PENDING", "TRACE_WRITE_REPLY_SOURCE_PREFIX", "WRITE_REPLY_SOURCE_PROGRAM",
+    "WRITE_REPLY_SOURCE_MODEL_PLUS_STATUS", "V_WRITE_REPLY_KD3_EXIT",
     "WRITE_INTENT_KEY_DOMAIN", "INTENT_NONE", "INTENT_ACTION_DOMAIN", "WRITE_INTENT_SCHEMA_NAME",
     "WRITE_INTENT_MAX_COMPLETION_TOKENS", "write_intent_description", "WRITE_INTENT_SYSTEM_PROMPT",
     "write_intent_system_prompt", "enum_code_for_label", "intent_action_domain",

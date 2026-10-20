@@ -272,30 +272,76 @@ async def test_kd2_probe_document_turn_model_confirm_is_executed(api):
     assert "confirm_source:model:document_carry" in res2.trace.violations
 
 
-async def test_kd3_probe_unissued_proposal_leaves_the_reply_to_the_model(api):
-    """KD-3：提議沒轉成程式呼叫（內層動作不合）⇒ 記 `write_proposal_not_issued`，模型被叫第二次寫回話。"""
-    _anchor_present("KD-3")
+@pytest.mark.parametrize("b_reply", ["on", "off"])
+async def test_c7_unissued_proposal_reply_is_the_program_state_reply(api, monkeypatch, b_reply):
+    """必過契約（B 片 B1，原 KD-3 探針改寫）：寫入情境非問句回合，提議沒轉成程式呼叫（內層動作不合）⇒
+    記 `write_proposal_not_issued`，主模型 ⛔ 被叫第二次；回覆＝程式狀態回話（本案無草稿、無 live 卡 ⇒
+    `NO_PENDING_WRITE_TEXT`），模型文字 ⛔ 出現。正對照：`AGENT_WRITE_REPLY_PROGRAM=off` ⇒ 改前行為（模型被叫第二次寫回話）。"""
+    if b_reply == "off":
+        monkeypatch.setenv(WF.WRITE_REPLY_PROGRAM_ENV, "off")
     action = "repair_create"
     text, good = GOOD[action]
     other = next(a for a in ACTIONS if a != action)
     w = _World()
     res, provider = await _turn_p(w, text, [_proposal(_nested(action, {"action": other, **good})),
                                             _out("模型寫的回話。")])
-    assert WF.V_WRITE_PROPOSAL_NOT_ISSUED in res.trace.violations, KD_HINT.format(kd="KD-3")
-    assert len(provider.calls) == 2 and "模型寫的回話" in res.answer, KD_HINT.format(kd="KD-3")
+    assert WF.V_WRITE_PROPOSAL_NOT_ISSUED in res.trace.violations
     assert w.reg.confirm_calls() == []
+    if b_reply == "on":
+        assert len(provider.calls) == 1 and "模型寫的回話" not in res.answer
+        assert res.answer == WF.NO_PENDING_WRITE_TEXT
+        assert WF.V_WRITE_REPLY_KD3_EXIT in res.trace.violations
+        assert f"{WF.TRACE_WRITE_REPLY_SOURCE_PREFIX}{WF.WRITE_REPLY_SOURCE_PROGRAM}" in res.trace.violations
+    else:
+        assert len(provider.calls) == 2 and "模型寫的回話" in res.answer
 
 
-async def test_kd4_probe_model_confirm_prose_is_only_counted(api):
-    """KD-4：模型自寫「請確認」類句子只記 `prose_confirm_suspect`、不改寫（既有 A+ 前測試同款裝置）。"""
-    _anchor_present("KD-4")
-    assert '"prose_confirm_suspect"' in RUNTIME_PATH.read_text(encoding="utf-8"), KD_HINT.format(kd="KD-4")
-    funcs = _runtime_functions()
-    srcs = [s for name, ss in funcs.items() for s in ss if '"prose_confirm_suspect"' in s]
-    assert srcs and all("append" in s for s in srcs), KD_HINT.format(kd="KD-4")
-    # 這一處只 append 標記、不改寫 answer（同函式沒有以標記為條件的 answer 指派）
-    for s in srcs:
-        assert not re.search(r"prose_confirm_suspect[^\n]*\n[^\n]*answer\s*=", s), KD_HINT.format(kd="KD-4")
+KD4_CONFIRM_PROSE = "請確認以上內容"
+KD4_FIELD_ASK = "請問物件地址是？"
+
+
+@pytest.mark.parametrize("b_reply", ["on", "off"])
+async def test_c8_model_confirm_prose_is_replaced_by_the_program_reply(api, monkeypatch, b_reply):
+    """必過契約（B 片 B2／B3，原 KD-4 (i) 改前行為探針改寫）：寫入情境非問句回合（草稿存在），假模型輸出
+    `kind=ask`、`ask_target=confirm_intent`「請確認以上內容」、本回合未呼叫 `confirm.request` ⇒ 回覆 ⛔ 含該句，
+    改為程式狀態回話（草稿缺「問題描述」⇒ 缺欄追問樣板）；送出的 `ask_target` ⛔ 為 `confirm_intent`。
+    正對照：兩開關 off ⇒ 改前行為（回覆含該句原文）。"""
+    if b_reply == "off":
+        monkeypatch.setenv(WF.WRITE_REPLY_PROGRAM_ENV, "off")
+        monkeypatch.setenv("AGENT_STATE_CLAIM_GATE", "off")
+    w = _World()
+    _seed_draft(w, "repair_create", {"estate_name": STUDENT_ESTATE})
+    res, _p = await _turn_p(w, "我等一下再補",
+                            [_out(KD4_CONFIRM_PROSE, kind="ask", ask_target="confirm_intent")])
+    assert w.draft() is not None and w.reg.confirm_calls() == []          # 前提：寫入情境、未出卡
+    if b_reply == "on":
+        assert KD4_CONFIRM_PROSE not in res.answer
+        assert res.answer == C.MISSING_FIELDS_ASK_TEMPLATE.format(labels="問題描述")
+        assert res.ask_target != "confirm_intent"
+        assert f"{WF.TRACE_WRITE_REPLY_SOURCE_PREFIX}{WF.WRITE_REPLY_SOURCE_PROGRAM}" in res.trace.violations
+    else:
+        assert KD4_CONFIRM_PROSE in res.answer
+
+
+@pytest.mark.parametrize("b_reply", ["on", "off"])
+async def test_c9_model_field_ask_is_replaced_by_the_program_reply(api, monkeypatch, b_reply):
+    """必過契約（B 片 B2，原 KD-4 (ii) 改前行為探針改寫）：寫入情境非問句回合、草稿缺欄，假模型輸出
+    `kind=ask`、`ask_target=address`「請問物件地址是？」⇒ 回覆 ⛔ 含該句，改為程式缺欄追問（依草稿算、
+    套 `MISSING_FIELDS_ASK_TEMPLATE`）。正對照：`AGENT_WRITE_REPLY_PROGRAM=off` ⇒ 改前行為（回覆含該句原文）。"""
+    if b_reply == "off":
+        monkeypatch.setenv(WF.WRITE_REPLY_PROGRAM_ENV, "off")
+    w = _World()
+    _seed_draft(w, "estate_create", {"title": "測試新物件甲", "city": "台北市"})
+    res, _p = await _turn_p(w, "先這樣",
+                            [_out(KD4_FIELD_ASK, kind="ask", ask_target="address")])
+    assert w.draft() is not None and w.reg.confirm_calls() == []          # 前提：寫入情境、草稿缺欄
+    if b_reply == "on":
+        assert KD4_FIELD_ASK not in res.answer
+        labels = WF.missing_labels("estate_create", WF.to_payload("estate_create", w.draft()["fields"]))
+        assert labels                                                      # 前提：真的缺欄
+        assert res.answer == C.MISSING_FIELDS_ASK_TEMPLATE.format(labels=C.MISSING_FIELDS_SEP.join(labels))
+    else:
+        assert KD4_FIELD_ASK in res.answer
 
 
 def test_kd5_probe_handoff_gate_only_acts_after_the_model_chose_handoff():
@@ -374,8 +420,12 @@ def _this_file_test_names() -> set:
             if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and n.name.startswith("test_")}
 
 
+#: 登記中的 KD 編號（B 片接手 KD-3、KD-4 後移出；計畫 plan-b-write-replies-program-20261020 §4.1 B6）。
+REGISTERED_KD_NUMBERS = (1, 2, 5, 6, 7, 8)
+
+
 def test_registry_has_kd1_to_kd8_and_each_has_takeover_and_anchor():
-    assert [kd["id"] for kd in REG.KNOWN_DEVIATIONS] == [f"KD-{i}" for i in range(1, 9)]
+    assert [kd["id"] for kd in REG.KNOWN_DEVIATIONS] == [f"KD-{i}" for i in REGISTERED_KD_NUMBERS]
     for kd in REG.KNOWN_DEVIATIONS:
         assert kd["takeover"] and kd["comment_token"] and kd["anchors"] and kd["row"], kd["id"]
 
@@ -394,8 +444,11 @@ def test_registry_listed_test_names_exist():
         for t in row["tests"]:
             assert t in names, (rid, t)
     # 正對照：每個 KD 都有一支探針
-    for i in range(1, 9):
+    for i in REGISTERED_KD_NUMBERS:
         assert any(n.startswith(f"test_kd{i}_probe") for n in names), f"KD-{i} 缺探針"
+    # 已移出登記的 KD（B 片接手）⇒ 探針已刪、改成必過契約（⛔ 留著會失敗的探針）
+    for i in (3, 4):
+        assert not any(n.startswith(f"test_kd{i}_probe") for n in names), f"KD-{i} 已移出登記，探針應已刪"
 
 
 # ════════════════════════════════════════════════════════════════════
@@ -487,7 +540,9 @@ def _transition_comment_blocks() -> list:
 
 def test_static_every_transition_comment_names_a_registered_takeover():
     blocks = _transition_comment_blocks()
-    assert len(blocks) >= 4, "正對照：全 runtime.py 至少 4 處『過渡修正』註解"
+    # 正對照：全 runtime.py 至少 2 處『過渡修正』註解（KD-1／KD-2 的 AP-5 與 `elif` 兩處；原 KD-3 的兩處
+    # 隨 B 片接手改寫成現況註解、不再是過渡修正）。
+    assert len(blocks) >= 2, "正對照：全 runtime.py 至少 2 處『過渡修正』註解"
     tokens = {kd["comment_token"] for kd in REG.KNOWN_DEVIATIONS if kd["has_comment"]}
     for b in blocks:
         assert any(t in b for t in tokens), f"『過渡修正』註解沒寫登記中的接手片：\n{b}"
