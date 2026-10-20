@@ -160,7 +160,7 @@ repo 內另有約 250 份非資料文件尚未指派角色,⛔ 未列於此**不
 已不存在，`conversational-routing-execution` 這條主線是否整體轉列封存，
 本輪文件整理不代為裁決，交人判斷。現行唯一活線見下方 `#agentic-mcp` 一節。
 
-- 架構 | `docs/architecture/AGENTIC_MCP_ARCHITECTURE.md` | **agentic MCP 對話線總覽（2026-09-08 demo 上線）**：`/mcp` `agent.turn` 的門面（13 步進場）→Runtime 四段管線（段一**六條**程式終止路徑／九段注入／模型迴圈＋Verifier／四道出口閘）→工具註冊→替身；寫入鏈、別戶邊界、照片硬邊界、組態、已知限制。改這條線先讀它，再讀 `HANDOFF-20260909.md` 與 demo 帳本
+- 架構 | `docs/architecture/AGENTIC_MCP_ARCHITECTURE.md` | **agentic MCP 對話線總覽（2026-09-08 demo 上線）**：`/mcp` `agent.turn` 的門面（13 步進場）→Runtime 四段管線（段一**六條**程式終止路徑／九段注入／模型迴圈＋Verifier／四道出口閘）→工具註冊→替身；寫入鏈、別戶邊界、照片硬邊界、組態、已知限制。改這條線先讀它，再讀現行交接 `HANDOFF-20261018.md` 與目標正本 `architecture-target-20261018.md`
 
 ⚠️ 🔴 **測現行對話邏輯請用 `/canon-audit agentic-mcp`，⛔ 不是本節。** 本節保留供翻舊設計理由；若真要讀本節來源，用 `/canon-audit dialogue-logic` 起盤查——下列每一份**整檔讀完**才算數,
 Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必讀清單時,測試會反覆漏掉已裁決的前提。
@@ -193,6 +193,12 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 - 產線 | `docs/guides/development/how-to-add-a-query-capability.md` | **怎麼加一個查詢能力**：先分「新 face／新域／跨列彙總」三類；加 face 的三個陷阱（face 只選 builder 不選資料源、builder 簽名是單列、參數列被 strict 測試凍死）；⛔ 跨列彙總在現行形狀下表達不出來
 - 決策 | `.kiro/specs/agentic-mcp-orchestration/architecture-target-20261018.md` | **對話架構目標正本**（DSP-091 混合式）：誰決定哪個環節的分工表、原則 P0～P8、目標與 M0 基線、每片驗收方式、業界原文、差距、分片路徑；每份計畫必須引用原則編號
 - 進度 | `.kiro/specs/agentic-mcp-orchestration/HANDOFF-20261018.md` | **工作線交接正本**：各片狀態、待業主裁事項、安全規則、環境暫態；新視窗從這裡開工
+- 計畫 | `.kiro/specs/agentic-mcp-orchestration/plan-division-guard-20261020.md` | DG 分工防偏離片計畫（業主 2026-10-20 核可）：兩道檢查的業界依據、差距、DG-1～DG-6、回復與停點
+- 驗收 | `.kiro/specs/agentic-mcp-orchestration/acceptance-division-guard-20261020.md` | DG 片凍結驗收：業主原話、規則 DG-R1～R7、清單 V0～V9
+- 判準 | `rag-orchestrator/tests/unit/agent/test_dsp091_division_contract_req.py` | DSP-091 分工契約測試：程式列 R1～R6 必過契約、已知偏離現況探針（偏離消失即失敗，清單只減不增）、靜態檢查
+- 判準 | `rag-orchestrator/tests/unit/agent/dsp091_known_deviations.py` | 已知偏離登記 `KNOWN_DEVIATIONS`（須與目標正本 §3.1 同一組 KD 與接手片）、`DIVISION_ROWS`
+- 判準 | `scripts/audit/checks/division_guard.py` | 不變量 45：§3.1 與登記一致（靜態）＋近 7 天 `confirm_source:` 標記無 `model:unregistered`（線上；無程式樣本判「未判」）
+- 規格 | `.kiro/specs/agentic-mcp-orchestration/jgb-spec-structured-card-draft-20261019.md` | **給 JGB 的需求稿（草稿、未寄出）**：面板改接 `agent.turn` 與確認卡已在 jgb2 preview（未進 master）、上線前 JGB 端事項（合入、正式環境設定）、preview 面板與回應欄位對照；上線後的 C 片結構化 `card` 提案
 - 規格 | `docs/architecture/AGENTIC_MCP_ARCHITECTURE.md` | 總覽：`/mcp` `agent.turn` 門面→四段管線（Plan R R1 後：`turn_segments`／`turn_context`／模型迴圈／`exit_gates`）→工具註冊→替身；組態、已知限制、模型行為假設表
 - 規格 | `.kiro/specs/agentic-mcp-orchestration/requirements.md` | 需求正本，含 D2 延遲／答到率驗收線
 - 產線 | `rag-orchestrator/services/agent/runtime.py` | `AgentRuntime.run_turn`／`_run_turn_body`（四段管線接線）
@@ -210,7 +216,7 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 - 判準 | `rag-orchestrator/tests/unit/agent/test_pipeline_golden_req.py` | Plan R 回放等價 golden（`TurnTrace` 全欄位逐位比對）
 - 判準 | `rag-orchestrator/tests/unit/agent/test_pipeline_order_req.py` | 四道出口閘順序表測試
 - 判準 | `scripts/smoke/` | 真模型 smoke 對照計分尺（`mcp_smoke.py`／`b4_score.py`／`liff_score.py`）
-- 決策 | `.claude/DECISIONS.md` | DSP-091 混合式分工、DSP-085 寫入由程式掌握；DSP-037～045（pm 受眾開放、寫入工具正本、Verifier 兩類拒因、DSP-040 引用類絆線、W7 語音、W8 LIFF、outcome 七鍵、DSP-044 照片文字撤銷、DSP-045 額度封閉表）
+- 決策 | `.claude/DECISIONS.md` | DSP-091 混合式分工、DSP-092 同 session 唯一可兌現確認卡、DSP-094 上線範圍 A＋期別＋A+＋B＋E＋W2（取代 DSP-093）、DSP-095 W2 處置方式（明示 JSON、串流早停後走現行重寫、誤殺看使用者結果、卡住呼叫查根因）、DSP-098 第 3 步執行順序（取代 DSP-096）、DSP-085 寫入由程式掌握；DSP-037～045（pm 受眾開放、寫入工具正本、Verifier 兩類拒因、DSP-040 引用類絆線、W7 語音、W8 LIFF、outcome 七鍵、DSP-044 照片文字撤銷、DSP-045 額度封閉表）
 - 實測 | `.kiro/specs/knowledge-outline-and-intent-architecture/inputs/demo-ledger-line-oa-20260907.md` | demo 帳本：模型換測（luna／terra）、延遲量測、病灶審查
 
 ## 大綱三層重建（DSP-067；現行九架正本的來源）{#outline-drafting}

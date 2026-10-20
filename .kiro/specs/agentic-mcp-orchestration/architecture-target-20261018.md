@@ -168,7 +168,7 @@
 | 原則 | 現況 | 查證 | M0 量到的後果（`~/jgb-archive/arch-step3-20261018/m/report-m0.md`） |
 |---|---|---|---|
 | P4 | **沒有指令層**：模型在 `_run_model_loop` 自由選工具、自由寫句子、自填 `kind`／`ask_target`／`handoff_reason`；寫入另有一支意圖呼叫 `_start_write_intent_call`（輸出 `write_intent`，DSP-085）——是寫入專用的指令雛形，知識、查詢、轉人沒有 | `grep -n "def _run_model_loop\|def _start_write_intent_call" rag-orchestrator/services/agent/runtime.py` | 同句首已給物件仍被追問（W-R4 k2，根因待 A0） |
-| P1 | 草稿出卡即清（G1）；「修改」與取消同一路（G2）；無卡後更正（G3）；enum 由模型填代碼（G4）；送出前預檢缺（G6）；同 session 可並存多張可兌現卡（`PENDING_CONFIRM_MAX = 20`）；**模型仍可自己呼叫 `confirm.request` 出卡**——程式觸發出卡只在模型本回合沒自呼成功時才跑（`_WriteDraftTurn.model_confirm_ok`），第 3 步 A 片保留此路徑 | 第 3 步計畫 §3 G1～G6；`grep -n "PENDING_CONFIRM_MAX =" rag-orchestrator/services/agent/runtime.py rag-orchestrator/services/agent/agent_session.py`；`grep -n "model_confirm_ok" rag-orchestrator/services/agent/runtime.py` | 延期 0/10；只列 5 張帳單 13 場；急迫程度相反 6 場；反覆「還需要」11 場 |
+| P1 | 草稿出卡即清（G1）；「修改」與取消同一路（G2）；無卡後更正（G3）；enum 由模型填代碼（G4）；送出前預檢缺（G6）；同 session 可並存多張可兌現卡（`PENDING_CONFIRM_MAX = 20`）；一般寫入回合的模型自呼 `confirm.request` 只當提議、出卡由程式依草稿觸發（A+，`AGENT_WRITE_PROPOSAL` 等三開關皆 on），**文件回合、文件暫存回合、點選範圍回合仍以模型參數出卡**（點選範圍由 A-2、文件回合由「文件回合」片接手；§3.1 KD-1、KD-2） | 第 3 步計畫 §3 G1～G6；`grep -n "PENDING_CONFIRM_MAX =" rag-orchestrator/services/agent/runtime.py rag-orchestrator/services/agent/agent_session.py`；`grep -n "def _write_proposal_handle\|SELECT_SCOPE_KEY) is None" rag-orchestrator/services/agent/runtime.py` | 延期 0/10；只列 5 張帳單 13 場；急迫程度相反 6 場；反覆「還需要」11 場 |
 | P5 | 更正：只有草稿內同欄覆寫（`_write_draft_merge_intent`）。取消：有（`CANCELLED_TEXT`）。**中斷回原流程：無**——單一草稿，換動作由 `_write_draft_target` 新建、舊的丟棄，無流程堆疊。澄清：有固定句 `ASK_TARGET_TEXT`。候選：只有按鈕 `select:` fullmatch（G5），打字挑選無程式路徑（純 4～9 位數字走 `_pre_lookup_trigger`） | `grep -n "def _write_draft_target\|def _pre_lookup_trigger\|_SELECT_VALUE_RE = re.compile" rag-orchestrator/services/agent/runtime.py` | 換錯帳單 2 場（W-D4 k2 已寫入 760897）；I-1 插問未答 |
 | P2 | 出口閘與 Verifier 不比對「說請確認／說完成」與實際狀態（G7）；runtime 只有 `prose_confirm_suspect` **統計**（不改寫）；確認卡與收據本身是程式文字（DSP-038） | `grep -n "prose_confirm_suspect" rag-orchestrator/services/agent/runtime.py`；verifier `verify` 簽名無寫入／出卡狀態參數 | 文字說請確認卻未出卡 ≥4；按確認但無按鈕 7；假收據 1（C-C k1） |
 | P3 | 候選清單把給模型的提示接進使用者回答（G8）；資料段注入 10 處（`TurnAccumulator.inject`，註解仍寫「九段」） | 第 3 步計畫 §3 G8；`grep -n "acc.inject(" rag-orchestrator/services/agent/runtime.py` | 給人的回覆夾內部提示（第 2 步報告） |
@@ -178,6 +178,21 @@
 
 M0 缺陷 → 原則對照（AR1）：延期列 5 張→P1（A0 根因）；換錯帳單→P5；急迫程度相反→P1；反覆還需要→P1／P4；無按鈕、文字請確認、假收據→P2；物件名截短→P4（A0 根因）；道謝轉人→P7；知識缺事實→P6；無結構卡→P8。九類全有對應。
 
+### 3.1 仍由模型主導（已知偏離）
+
+檔首分工表「程式」列中，下列環節目前仍可能由模型決定下一步。每筆登記在 `rag-orchestrator/tests/unit/agent/dsp091_known_deviations.py`，各有一支現況探針（`test_dsp091_division_contract_req.py`）；偏離被修掉時探針失敗，接手片須把該筆移出本表與登記、改成必過契約。本表與登記不一致時 `make audit` 不變量 45 判 FAIL。
+
+| ID | 偏離 | 分工表列 | 接手片 |
+|---|---|---|---|
+| KD-1 | 點選範圍、唯讀檢視回合：模型自呼 `confirm.request` 的參數照舊執行出卡 | 寫入全程、已選定的那筆紀錄 | A-2 |
+| KD-2 | 文件回合、文件暫存有效回合：模型參數出卡；文件程式發卡的非終結結果交回模型 | 寫入全程 | 文件回合 |
+| KD-3 | 提議未轉成程式呼叫、程式呼叫結果非終結時，由模型寫寫入中的回話 | 寫入全程、帶狀態的句子 | B |
+| KD-4 | 模型自寫「請確認」類句子只統計不改寫；寫入欄位追問可由模型自寫 | 帶狀態的句子 | B |
+| KD-5 | 轉人由模型輸出決定，出口閘只在模型選了轉人後介入；無收尾規則 | 轉人規則（含收尾） | E |
+| KD-6 | 知識完全查無沒有程式先發的出口 | 知識完全查無的出口 | D |
+| KD-7 | 唯讀查詢的參數由模型自呼工具決定 | 唯讀查詢的查詢與篩選 | G |
+| KD-8 | 打字挑選候選無程式路徑 | 已選定的那筆紀錄 | A-2 |
+
 ## 4. 路徑（分片；每片寫出服務的原則）
 
 **方向**：目標形態是 §2 的完整分層；路徑採漸進——每片把一條原則推到位，每片前後用同一量尺量，⛔ 一次重寫成流程引擎（DSP-091）。理由：現有寫入鏈的安全性質（雙雜湊、token 單次、範圍閘，DSP-038／042）已驗證，整換要全部重驗；一次換無法把解決率變化歸因到單一改動。指令層（P4）排後面，是因為 P1／P2 的缺陷造成 M0 最大損失（延期 0/10），P4 的效果要等流程層就位才量得到——依使用者效果排序。
@@ -185,19 +200,23 @@ M0 缺陷 → 原則對照（AR1）：延期列 5 張→P1（A0 根因）；換�
 | 片 | 做什麼 | 原則 | 鎖定的 M0 缺陷 | 狀態（詳 HANDOFF） |
 |---|---|---|---|---|
 | M | 量尺修正＋M0 基線 | （量尺） | — | 完成 |
-| A | 寫入全程由程式持有：A0 根因、A1 草稿生命週期、A2 卡後更正、A3 修改鍵、A4 enum 由程式轉碼、A6 宣告式預檢、A7 唯一有效卡、A8 單一動作登錄 | P1、P5（更正） | 延期列 5 張、急迫程度相反、反覆還需要、卡後改欄位、按修改 | 計畫與驗收清單已核可（`plan-conversation-architecture-step3-20261018.md`、`acceptance-conversation-architecture-step3-20261018.md`），未實作 |
-| A+ | 出卡只由程式依草稿觸發：收掉模型自己呼叫 `confirm.request` 出卡的路徑，模型改為提出寫入意圖 | P1、P4 | 文字說請確認卻未出卡 | 待 A 後出片 |
+| A | 寫入全程由程式持有：A0 根因、A1 草稿生命週期、A2 卡後更正、A3 修改鍵、A4 enum 由程式轉碼、A6 宣告式預檢、A7 唯一有效卡、A8 單一動作登錄 | P1、P5（更正） | 延期列 5 張、急迫程度相反、反覆還需要、卡後改欄位、按修改 | 已收案：計畫 `plan-conversation-architecture-step3-20261018.md`、驗收 `acceptance-conversation-architecture-step3-20261018.md`；報告 `~/jgb-archive/arch-step3-20261018/ra/report-ra.md` |
+| A+ | 出卡只由程式依草稿觸發：收掉模型自己呼叫 `confirm.request` 出卡的路徑，模型改為提出寫入意圖 | P1、P4 | 反覆還需要（模型自呼路徑） | 計畫 `plan-card-program-only-aplus-20261019.md`、凍結驗收 `acceptance-card-program-only-aplus-20261019.md`（2026-10-19 業主核可；2026-10-20 已收案，fresh verifier CONFIRMED）；報告 `~/jgb-archive/arch-step3-20261018/aplus/report-aplus.md` |
+| DG | 分工防偏離：DSP-091 分工契約測試＋已知偏離登記（§3.1）＋`make audit` 不變量 45（確認卡與缺欄追問的來源） | P0 | —（防止已接手環節退回模型） | 計畫 `plan-division-guard-20261020.md`、凍結驗收 `acceptance-division-guard-20261020.md`（2026-10-20 業主核可） |
 | A-2 | 候選選擇（打字挑選、挑完回原流程） | P5 | 換錯帳單 | 待 A 後出片，先送 security-reviewer |
+| 文件回合 | 文件回合、文件暫存有效回合的出卡改由程式依草稿觸發；文件程式發卡的非終結結果不交回模型（§3.1 KD-2；須相容 DSP-076 文件值暫存規則） | P1 | —（KD-2） | 待出片 |
 | B | 寫入進行中回話全由程式樣板；工具結果分給模型／給人兩份 | P2、P3 | 文字請確認、無按鈕、假收據、回覆夾內部提示 | 待 A 後出片 |
 | E | 收尾與轉人規則：道謝即收尾、卡住先詢問且不連發、明確要求直接轉 | P7 | 道謝轉人 | 待 B 後出片 |
 | D | 知識不捏造／完整：不足時由 AI 說明缺什麼、部分回答、追問（Verifier 把關依據；步⑦ 不再把「說明缺什麼」當轉人字眼擋）；完全查無走程式的「處理不了」出口 | P6 | 知識缺事實、捏造 | 另起計畫 |
 | C | `agent.turn` 加結構化 `card`，`answer` 留文字備援；JGB 端需求稿 | P8 | 無結構卡 | 待出片（跨元件） |
 | G | 唯讀查詢由程式執行：AI 理解出查詢條件，程式查詢並篩選（依期別篩帳單等日期計算），AI 自呼工具只在程式接不住時用（進入條件寫進計畫）；起點為 W3 草稿 `plan-query-program-led-w3-20261017.md` | P0、P4 | 換錯帳單 | 待出片 |
 | F | 程式掌握環節的指令化：把 `write_intent` 推廣為更正、取消、選擇、要真人、已解決等指令；含中斷回原流程（流程堆疊） | P4、P5 | 插問未答、物件名截短 | A／B 驗收後評估 |
+| W2 | 主模型輸出失控（灌空白至輸出上限）處置：system 明示只輸出 JSON＋串流早停後走現行重寫；整回合逾時切斷進行中的呼叫；備援模型後議 | （執行層韌性，不屬分層原則） | A 後 20 場失敗中 6 場主因 | 計畫 `plan-truncation-w2-20261017.md`、驗收 `acceptance-truncation-w2-20261017.md`（DSP-094、DSP-095） |
+| 期別 | 期別年份解析：「YYYY年M月」年份被丟、推成最近的過去月份 | P1 | A 後 20 場失敗中 8 場主因 | 計畫 `plan-period-parse-20261019.md`、驗收 `acceptance-period-parse-20261019.md`；含期別值閘改比對解析值（DSP-094） |
 
-順序：A → A+ → B → E → D → C → G → A-2 → F（依 M0 損失大小；DSP-091）。
+順序：A → 期別 → A+ → DG → B → W2 → E → D → C → G → A-2 → 文件回合 → F（DSP-098）。上線最低範圍：A、期別、A+、B、E、W2（DSP-094）。
 
-不在範圍：截斷（W2，另案）；業者端敏感題程式防線（另案）。
+不在範圍：業者端敏感題程式防線（另案）。
 
 ## 5. 防歪機制（AR3）
 
@@ -208,6 +227,7 @@ M0 缺陷 → 原則對照（AR1）：延期列 5 張→P1（A0 根因）；換�
 5. **改正文、不留錯誤原文**（AR8）：決策或事實改變時直接改正文；過時且無用的文件刪除；⛔ 以附註、刪除線或「已失效」標記保留錯誤內容。
 6. **既有決策優先**：與 §6 決策衝突的做法，先列待裁，⛔ 自行繞過。
 7. **過渡修正**：程式接手某環節之前，只修現有模型主導路徑上的錯、不新增 AI 決定權，不算違反分工；計畫須寫明「過渡修正、不新增 AI 決定權」並指向將接手的那一片（如 A+、G）（DSP-091）。
+8. **自動檢查**：檔首分工表「程式」列由 `rag-orchestrator/tests/unit/agent/test_dsp091_division_contract_req.py` 檢查——已接手的列是必過契約，尚未接手的列登記在 `dsp091_known_deviations.py`（＝§3.1）並各有現況探針；`make audit` 不變量 45 核對 §3.1 與登記一致，並在一般寫入回合出現來源不明的模型出卡（`confirm_source:model:unregistered`）時 FAIL。每片收尾時，把它接手的 KD 移出 §3.1 與登記、改成必過契約、改程式註解。
 
 ## 6. 與既有決策的相容（`.claude/DECISIONS.md`）
 

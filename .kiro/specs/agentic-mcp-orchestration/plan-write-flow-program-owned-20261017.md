@@ -8,7 +8,7 @@
 
 | 事實 | 查證 |
 |---|---|
-| 架構文件自承「**寫入面出卡與否綁模型**：無程式面下限保證出卡一定成功」 | `grep -n "寫入面出卡與否綁模型" docs/architecture/AGENTIC_MCP_ARCHITECTURE.md` |
+| 架構文件自承「**寫入面出卡與否綁模型**：無程式面下限保證出卡一定成功」 | `grep -n "寫入面出卡與否綁模型" docs/architecture/AGENTIC_MCP_ARCHITECTURE.md`（本計畫當時命中；該句已由 DG 片改正，現預期 0 命中） |
 | 程式追問、物件記憶、補缺值都通用，但全部掛在「模型已呼叫 `confirm.request`」之後 | `grep -n "missing_fields_ask_text(tool_result)" rag-orchestrator/services/agent/runtime.py`（條件 `name == CONFIRM_TOOL_NAME`） |
 | 5 支寫入動作只有 3 支有共用欄位表；修繕另一套；延期繳費缺欄時走 `render()` 失敗、回不帶 `missing_fields` 的 `INVALID_INPUT`，程式不追問 | `grep -n "^CLOSED_ACTION_FIELDS" rag-orchestrator/services/agent/confirm_card.py`；`grep -n "REPAIR_MISSING_LABELS\|async def _resolve_bill_by_period" rag-orchestrator/services/agent/tools/confirm.py` |
 | runtime 寫死修繕欄位字面 | `grep -n '"物件" in _missing' rag-orchestrator/services/agent/runtime.py` |

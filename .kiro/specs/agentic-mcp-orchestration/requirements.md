@@ -117,7 +117,7 @@
 
 #### 驗收標準（EARS）
 1. THE SYSTEM SHALL 把每個寫入型動作做成 `jgb2.action.<x>(payload, confirmation_token)`；WHEN `confirmation_token` 缺或無效，THE SYSTEM SHALL 拒絕並回 `CONFIRMATION_REQUIRED`。
-2. 出不出確認卡 SHALL 由程式依動作宣告與草稿狀態決定（DSP-085、DSP-091）；現行模型仍可自己呼叫 `confirm.request` 出卡，差距見 `architecture-target-20261018.md` §3 P1。THE SYSTEM SHALL 提供 `confirm.request(summary, payload)`（`payload.action` 必填、封閉 enum）：確認卡文字由程式依 action＋payload 決定性產出並逐字成為該回合 `TurnResult.answer`（⛔ 不經模型／Verifier 改寫）；回三顆機器值 quick reply（值＝`confirm_submit:<pending_id>`／`confirm_edit:<pending_id>`／`confirm_cancel:<pending_id>`）與 `pending_id`；`summary_sha256` 為卡文字雜湊、`payload_sha256` 為 payload 雜湊，兌現時皆比對（DSP-038-2）；token SHALL 只在使用者回傳 `confirm_submit` 機器值時由 Runtime 兌現，⛔ 不由模型判讀同意詞。
+2. 出不出確認卡 SHALL 由程式依動作宣告與草稿狀態決定（DSP-085、DSP-091）；一般寫入回合的模型自呼 `confirm.request` 只當提議、併入草稿後由程式決定（A+）；文件回合、文件暫存回合、點選範圍回合仍以模型參數出卡，差距見 `architecture-target-20261018.md` §3 P1。THE SYSTEM SHALL 提供 `confirm.request(summary, payload)`（`payload.action` 必填、封閉 enum）：確認卡文字由程式依 action＋payload 決定性產出並逐字成為該回合 `TurnResult.answer`（⛔ 不經模型／Verifier 改寫）；回三顆機器值 quick reply（值＝`confirm_submit:<pending_id>`／`confirm_edit:<pending_id>`／`confirm_cancel:<pending_id>`）與 `pending_id`；`summary_sha256` 為卡文字雜湊、`payload_sha256` 為 payload 雜湊，兌現時皆比對（DSP-038-2）；token SHALL 只在使用者回傳 `confirm_submit` 機器值時由 Runtime 兌現，⛔ 不由模型判讀同意詞。
 3. `jgb2.action.<x>` SHALL 冪等：同一 token 重送 SHALL 回同一結果、⛔ 不重複建單；失敗 SHALL 誠實回錯並允許重試、不留殘單。
 4. THE SYSTEM SHALL 在 `AGENT_WRITE_TOOLS_ENABLED` 未開時不暴露任何寫入型工具給 agent（旗標預設 false、進健檢；只在替身或 JGB 憑證就緒時開）；可見性＝旗標 AND `ToolSpec.stage`（DSP-038-1）。
 

@@ -240,7 +240,7 @@ A 不做（附理由）：
 |---|---|---|
 | A7-1 驗收 9b 與 9n 互斥（同交易回滾後舊卡仍有效） | P2 | FIX：A7 分路徑寫；9b 改為 9b′ |
 | A7-2 A2 燒綁定卡 SQL 未綁 session | P3 | FIX：重用 `redeem_pending()` |
-| A7-3 同交易保證不了 DB 只剩一列未兌現 | P3 | FIX：宣稱改「可兌現 pid ≤ 1」，驗收 9p；不加 advisory lock（最壞為兩張皆燒、fail-closed） |
+| A7-3 同交易保證不了 DB 只剩一列未兌現 | P3 | FIX：宣稱改「可兌現 pid ≤ 1」，驗收 9p；不加 advisory lock（最壞為兩張皆燒、fail-closed）——被 DSP-092 取代 |
 | A7-4 `redeemed=true` 兼作燒卡 | P4 | DEFER：沿用既有取消／修改／作廢慣例；`assert_redeemed` 無外流路徑（複核已查） |
 | A7-5 誤傷情形（範圍閘擋下、模型自發呼叫、文件第三道網、外部直呼）屬可用性損失 | P4 | FIX：寫進 §6 待記 DECISION；外部直呼可見性列實作前置待查 |
 | A7-6 清單點選作廢仍只改旗標 | P3 | FIX：A7 (3) |

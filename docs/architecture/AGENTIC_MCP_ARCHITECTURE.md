@@ -372,6 +372,9 @@ while True:
   │     L15 範圍比對（有 select_scope 時）：別戶就地換空殼——**三份全換**
   │       （text_for_model / provenance / data），只換一份＝fail-open
   │     estates keyword 查到唯一物件 ⇒ 寫 estate_carry
+  │     模型自呼 confirm.request ⇒ A+ 三開關（AGENT_WRITE_DRAFT／LIFECYCLE／PROPOSAL）皆 on 時
+  │       只當提議（_write_proposal_handle：參數經值閘併入草稿，下一步由程式決定），
+  │       ⛔ 以模型參數出卡；文件回合、文件暫存回合、點選範圍回合、影子回合例外（見階段 3）
   │     confirm.request 成功 ⇒ **這一回合立刻結束**（見階段 3）
   │     session.slots.set 成功 ⇒ 槽位寫回 state（⛔ 勿刪：_save 是整包覆蓋不是 merge）
   │     包成資料段：有 provenance 走 wrap_provenance_data（行首標記
@@ -409,7 +412,15 @@ while True:
 ### 階段 3｜寫入鏈（唯一能改 JGB 資料的路）
 
 ```
-模型 confirm.request(summary, payload)
+confirm.request(summary, payload)
+  呼叫者：程式依寫入草稿觸發（_write_draft_decide；DSP-085、DSP-091）。
+  模型自呼：A+ 三開關皆 on ⇒ 只當提議——_write_proposal_merge 把參數（巢狀 {action, payload}
+    只解一層）經值閘併入草稿，程式決定出卡、追問，或回固定句（提議沒有值時：
+    卡仍有效且草稿＝卡 ⇒ PROPOSAL_NO_VALUE_CARD_TEXT＋同一張卡，否則 PROPOSAL_NO_VALUE_TEXT）；
+    回合沒有因此結束時（凍結回合、同回合已觸發、動作不合等），模型拿到封閉結果
+    HANDLED_BY_PROGRAM／NO_MATCH，⛔ 退回以模型參數執行。
+    例外（仍以模型參數呼叫）：文件回合、文件暫存有效回合、點選範圍回合（A-2 接手）、影子回合；
+    開關 off 時亦同。
   → ⚠️ **成功有兩種形狀**：
      (a) 對到單筆 ⇒ 產卡（下行）
      (b) 以 estate_name＋period 對到**多筆** ⇒ `_bill_candidates_result` 回候選形狀
@@ -631,7 +642,7 @@ TurnResult.answer = 卡文字（逐字）      ← 使用者看到的就是這�
 | 機敏 | **W6-b3（2026-09-09）落地後**：demo 線上值改 `AGENT_VERIFIER_MODE=grounding_observe` ⇒ `SENSITIVE_TOPIC`／`ROUTE_NOT_ALLOWED`／`FORBIDDEN_TERM`／`POLARITY_MISMATCH`／`SCHEMA` 的安全子成因（`marker_in_answer`／`handoff_reason_*`／`ask_target_invalid`／`empty_*`）**照擋**；只有引用解析與涵蓋類（`UNCITED_ASSERTION`／`QUOTE_TOO_SHORT`／`QUOTE_NOT_COVERING`／`SOURCE_NOT_CITABLE`＋`SCHEMA` 的 `ref_*`／`unit_out_of_range`）記進 `verdict.observed` 不擋。模式感知在 `verify()` **內部**、觀察類記錄後繼續跑（`grep -n "def _is_observed" rag-orchestrator/services/agent/verifier.py`）——⛔ 外層不再翻判定，那個作法會讓先命中的引用類把機敏類整段跳過。`observe_only`（＝舊旗語義）仍是全部放行、且只准配替身。清單點選 facts 出口另外直呼 `_verify_routes`（`grep -n "verify_routes = getattr" rag-orchestrator/services/agent/runtime.py`），那條一直都擋。 | `verifier.OutputVerifier.verify`／`_is_observed`、`health.verifier_mode`、`config/agent_verifier_rules.json` |
 | 照片 | 白名單等值主機、https、不跟轉址、私網 IP 拒、5 MB 串流硬閘、型別驗證、去 EXIF、bytes 不落地、描述硬留空 | `image_fetch.validate_image_url`／`fetch_image`、`downscale_image` |
 | 額度 | 每呼叫一列 `usage_events`（內部 key 不計額度）；上限值一律取自 `services/agent/limits.py::AgentLimits` 封閉表（DSP-045）：`turns_per_hour=1200`／`tool_calls_per_minute=600`／`kb_get_per_hour=3000`／`images_per_hour=600`／`files_per_hour=100`。⛔ **`AGENT_TURN_CAP`／`RATE_PER_MIN`／`KB_GET_CAP`／`IMAGE_COUNT_CAP_PER_HOUR`／`FILE_COUNT_CAP_PER_HOUR` 五個 env 都已除役、程式明文不再讀**（`grep -rn "不再讀" rag-orchestrator/services/agent/`）——設了不會報錯、也不會生效 | `_check_and_record_rate`、`check_and_record_agent_turn`、`check_and_record_image_count` |
-| 紀錄 | trace／決策快照只有結構化欄位（白名單守測 21 鍵）；dialog 只寫程式摘要或卡文字；token、照片、ref 原值不進 trace | `_emit_agent_decision`、`DECISION_BANNED_KEYS`、不變量 27–31 |
+| 紀錄 | trace／決策快照只有結構化欄位（封閉白名單由 `test_agent_decision_snapshot_keys_match_closed_whitelist_exactly` 逐鍵守測）；dialog 只寫程式摘要或卡文字；token、照片、ref 原值不進 trace | `_emit_agent_decision`、`DECISION_BANNED_KEYS`、不變量 27–31 |
 
 ## 4b. 回合出口與「為什麼轉人」——對碼事實表（2026-09-09）
 
@@ -880,7 +891,7 @@ file_urls/image_urls
 
 - 線⑤ 模型偶爾在有工具結果時自判「無依據」轉人（三輪 2/21 情境不穩）；屬答案層定義文（5.1）範圍。
 - `AGENT_VERIFIER_MODE=grounding_observe`（線上值）下引用類不擋——模型講的事實**沒有被要求對得上引文**，只有極性、機敏、標記外洩、schema 契約這幾類在守；重開引用類的依據是觀察紀錄（`verdict.observed`）中「真該擋」的計數（DSP-040 絆線）。相容旗 `AGENT_VERIFIER_OBSERVE_ONLY` 已於 2026-09-10 除役（見 §6）。
-- **寫入面出卡與否綁模型**：無程式面下限保證出卡一定成功——實證見帳本 `demo-ledger-line-oa-20260907.md` §1s（mini 對照 7/13 出卡，luna none 三輪 11/10/12），出卡率隨模型換動、非固定契約。
+- **部分寫入回合仍以模型參數出卡**：三開關（`AGENT_WRITE_DRAFT`／`AGENT_WRITE_LIFECYCLE`／`AGENT_WRITE_PROPOSAL`）皆 on 時，一般寫入回合的確認卡與缺欄追問只由程式依草稿發出（`_write_proposal_handle`、`_write_draft_decide`）；點選範圍、唯讀檢視、文件回合、文件暫存有效回合仍照模型自呼 `confirm.request` 的參數執行，這些回合有沒有卡仍看模型。清單與接手片見目標正本 `architecture-target-20261018.md` §3.1（KD-1、KD-2）；每次執行的來源記在 violation `confirm_source:<來源>`，`make audit` 不變量 45 檢查。
 - 🔴 **2026-09-12 更正：前一版把兩張敏感表講反了。** 前一版寫「`sensitive_patterns` **不分受眾**，
   pm 引資料段的金額會被當敏感字樣處理」——**與程式相反**。逐條對碼：
 
@@ -911,7 +922,7 @@ file_urls/image_urls
 
 | 假設 | 內容 | 量測出處 |
 |---|---|---|
-| 主動呼叫 `confirm.request` | 模型在需要使用者二次確認的寫入前，會主動選用 `confirm.request` 工具而非直接呼叫寫入工具 | 帳本 §1s（lb2 劇本各輪出卡計數） |
+| 主動呼叫 `confirm.request` | 模型在需要使用者二次確認的寫入前，會主動選用 `confirm.request` 工具而非直接呼叫寫入工具。一般寫入回合在 A+ 三開關皆 on 時，出卡由程式依草稿觸發，模型的呼叫只當提議、出不出卡不依賴本假設；文件回合、文件暫存回合、點選範圍回合仍依賴 | 帳本 §1s（lb2 劇本各輪出卡計數）；A+ 驗收 `acceptance-card-program-only-aplus-20261019.md` |
 | strict `json_schema` | 對話模型與文件歸納模型皆走 `response_format=json_schema strict` 原生支援（非二次解析） | `plan-document-summary-demo-20260909.md`（容器內 openai 1.54.0 驗證） |
 | `reasoning_effort` 值域 | `gpt-5.6-luna` 帶工具呼叫時僅接受 `reasoning_effort=none`；傳 `low`／`minimal` 回 400 | 帳本 §1s |
 | tools＋reasoning 相容性 | 工具定義（MCP facade 轉譯後的 schema）與 reasoning 參數同時傳入時不衝突；已用於 luna／terra／mini 三種模型對照 | 帳本 §1q、§1s |

@@ -23,6 +23,14 @@
 
 業主裁定（2026-10-18 核可時）：R3 讀法「對，照這樣」；R4 讀法「對，要做且留文字備援」；R8「納入」；R1 讀法見 R1 註記。以上規則自此凍結，後續驗收、verifier、挑戰者一律依本節判定。
 
+## 業主 2026-10-19 變更裁定（「照建議」；下列三條取代清單同號原文，規則 R1～R8 不變）
+
+起因：A 片實作後真 PG 實測 #9p 失敗（交錯出卡兩張皆可兌現）、#9g 不成立（送出後的更正句出了新卡）、#9i 原文含既有的 dialog 附加。決策 DSP-092。
+
+- **9p**（取代原宣稱）：出卡交易開頭取 `pg_advisory_xact_lock(hashtext(session_id))`。同 session 兩回合同時出卡 ⇒ 第二個交易被擋到第一個 commit 之後才燒卡；最終可兌現 pid ≤ 1；逐一送出所有 pid，寫入 ≤ 1。真 PG 測試以「第一個交易燒卡後、commit 前啟動第二個交易」排程（加鎖後兩邊都在對方 commit 前燒卡的排程不可能發生）；另附正對照：拿掉鎖的同一排程重現可兌現 2 張。
+- **9g**（宣稱不變，補機制）：送出成功後，使用者下一句若由 AI 判定為「修改剛送出的那一筆」⇒ 程式回固定句（已送出不能修改、要另開一筆請直接說），無新卡、寫入 1 次。「修改已送出那筆」與「另開一筆」由意圖判斷（AI）分辨，下一步由程式決定（DSP-091）。另附正對照：送出後明確要另開一筆同動作 ⇒ 照常收欄位出卡。開關 off 時維持現行行為。
+- **9i**（收窄）：`readonly_view=True` 同句 ⇒ token 表不變，`agent_state` 除 `dialog` 以外全部不變（含 `pending_confirm`、`write_draft`）。理由：`dialog` 附加是既有共用行為（`runtime._append_dialog`），影子回合由 `services/agent/shadow.py` 對 `deepcopy` 執行且從不 `save()`。
+
 ## 清單
 
 觀察點：本機常駐 `aichatbot-rag-orchestrator`（8100，A 片 commit 版本、業主重建容器後），mock JGB（每批實打前 mock 檢查 `True`），eval-harness 打真實 `/mcp` `agent.turn`；原文 repo 外 `~/jgb-archive/`。
