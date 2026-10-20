@@ -432,9 +432,13 @@ async def test_aplus_unseen_estate_proposal_ends_with_the_not_found_sentence(api
     assert w.db.rows == [] and len(provider.calls) == 1
 
 
-async def test_aplus_bill_candidates_proposal_ends_with_select_buttons(api):
+async def test_aplus_bill_candidates_proposal_ends_with_select_buttons(api, monkeypatch):
     """原 `test_multiple_candidates_become_an_ask_turn_with_select_buttons` 的 A+ 版：提議的期別對到多張
-    帳單 ⇒ 程式呼叫得候選 ⇒ 程式點選句＋點選鍵結束回合、無 token、主模型只被叫一次。"""
+    帳單 ⇒ 程式呼叫得候選 ⇒ 程式點選句＋點選鍵結束回合、無 token、主模型只被叫一次。
+
+    A-2a（DSP-103 Q1 含帳單）：開關 on 時帳單候選按鈕改 `pick:bill:<id>`（見
+    test_a2a_write_candidates_req.py）；本題釘 off 驗 `select:` 現行行為逐字不變（A2-R12）。"""
+    monkeypatch.setenv(WF.WRITE_CANDIDATES_ENV, "off")
     w = _World()
     res, provider = await _turn_p(w, f"{KEELUNG_ESTATE} 7月那期 延後 3 天", [_proposal(
         {"action": "bill_due_extend", "estate_name": KEELUNG_ESTATE, "period": "7月那期", "days": 3}),

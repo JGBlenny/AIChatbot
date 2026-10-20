@@ -18,6 +18,7 @@ import pytest
 from tests.unit.agent.confirm_pool_double import attach_token_tx  # 第 3 步 A7：token 寫入交易替身
 
 from services.agent.identity import Identity
+from services.agent.write_forms import WRITE_CANDIDATES_ENV
 from services.agent.confirm_card import CONFIRM_ACTIONS
 from services.agent.confirm_card import render as render_card
 from services.agent.tools.confirm import (
@@ -1122,9 +1123,14 @@ async def test_injected_open_repairs_is_called_exactly_once_and_yields_a_hint(w8
 
 
 @pytest.mark.req(_W8_REQ)
-async def test_open_repairs_none_still_renders_the_card_and_never_queries_repairs(w8_api):
+async def test_open_repairs_none_still_renders_the_card_and_never_queries_repairs(w8_api, monkeypatch):
     """正對照組：`open_repairs=None` ⇒ 沒有提示行、**卡照出**、假 API 的
-    `get_repairs` **0 次**（⛔ confirm.py 不得自己繞過注入去查）。"""
+    `get_repairs` **0 次**（⛔ confirm.py 不得自己繞過注入去查）。
+
+    A-2a（plan-a2a-write-candidates-20261020 §4.1「`repair_create` 物件多筆：出卡前先判」）：開關 on 時
+    出卡前會以帶 viewer 的物件查詢判唯一（`get_estate_status` 1 次；`get_repairs` 仍 0 次，見
+    test_a2a_write_candidates_req.py）；本題釘 off 驗現行行為逐字不變（A2-R12）。"""
+    monkeypatch.setenv(WRITE_CANDIDATES_ENV, "off")
     pool = _confirm_pool()
     result = await confirm_request(
         _w8_identity(), {"summary": "要建修繕單嗎？", "payload": json.dumps(_repair_payload())},

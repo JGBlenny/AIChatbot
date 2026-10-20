@@ -76,6 +76,10 @@ _IDENTITY_KEYS = frozenset(
     {"vendor_id", "role_id", "user_id", "target_user", "mode", "viewer_user_id"}
 )
 
+#: A-2a 片 §4.5：`call(program_pick=...)` 只轉給這一支工具（`tools/confirm.py` 以 assert 對齊
+#: `CONFIRM_SPEC["name"]`；registry ⛔ import confirm，那會成環）。
+PROGRAM_PICK_TOOL: str = "confirm.request"
+
 #: 寫入型工具的總開關（DSP-038-1／R4.4）。**預設 false**——旗標沒開，
 #: `mcp_only=True` 的工具在任何入口、任何 stage 都不可見、也呼叫不到。
 #: 解析方式與 `services/presales_gate.extractive_enabled()` 同款（`{1,true,on,yes}`
@@ -651,7 +655,12 @@ class ToolRegistry:
         stage: Stage,
         readonly_view: bool = False,
         for_model: bool = False,
+        program_pick: Optional[dict] = None,
     ) -> ToolResult:
+        """`program_pick`（A-2a 片 §4.5「程式專用選定通道」）：只由 runtime 在**程式依草稿發出**的
+        `confirm.request`（`wd_program`）且候選集判定成立時傳；其他呼叫一律 `None`。只轉給
+        `PROGRAM_PICK_TOOL`（具名參數，比照 `open_repairs` 的具名注入），⛔ 經 `args`／`args.payload`
+        ——模型 tool call、MCP client 直呼、提議路徑都只碰得到 `args`，碰不到這個參數。"""
         # ⓪ 身分鍵剝除（1.10 P2）：呼叫端（模型／MCP client）夾帶的 vendor_id 之類
         #    一律丟掉，⛔ 不讓它有機會覆寫 `identity`。靜默剝除＋記 trace，
         #    ⛔ 不回錯誤碼（見模組 docstring）。
@@ -693,6 +702,9 @@ class ToolRegistry:
 
         fn = self._fns[name]
         try:
+            if program_pick is not None and name == PROGRAM_PICK_TOOL:
+                return await asyncio.wait_for(
+                    fn(identity, args, program_pick=program_pick), timeout=timeout_s)
             return await asyncio.wait_for(fn(identity, args), timeout=timeout_s)
         except asyncio.TimeoutError:
             return ToolResult(ok=False, error="TOOL_TIMEOUT")

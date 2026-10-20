@@ -935,9 +935,13 @@ async def test_v8a_candidates_reply_has_no_model_hints_no_query_and_summary_dial
                           "content": runtime_mod.CONFIRM_CANDIDATES_DIALOG_SUMMARY.format(n=2)}
 
 
-async def test_v8a_real_registry_candidates_text_for_model_keeps_hints(api):
+async def test_v8a_real_registry_candidates_text_for_model_keeps_hints(api, monkeypatch):
     """V8 (a)：真 registry（`bill_due_extend` 物件有多筆帳單 ⇒ 候選）——回覆 ⛔ 含兩句提示；同一次工具結果的
-    `text_for_model` 含兩句提示（正對照）；dialog 只寫程式摘要。"""
+    `text_for_model` 含兩句提示（正對照）；dialog 只寫程式摘要。
+
+    A-2a（DSP-103 Q1 含帳單）：開關 on 時提議轉成的程式呼叫改出 A-2a 帳單候選清單（`pick:bill:`）；本題釘 off
+    驗 B 的帳單候選出口逐字不變（A2-R12）。"""
+    monkeypatch.setenv(WF.WRITE_CANDIDATES_ENV, "off")
     from tests.unit.agent.test_write_draft_flow_req import KEELUNG_ESTATE, _call, _confirm_args
     w = _World()
     payload = {"action": "bill_due_extend", "estate_name": KEELUNG_ESTATE, "days": 7}
@@ -980,6 +984,10 @@ async def test_v9_restating_mansion_lists_what_was_read(api, monkeypatch, b_repl
     「物件「豪宅」」、同卡同 pid、無新 token。正對照（off）：只有「卡片還在」句＋卡（不列讀到的值）。"""
     if b_reply == "off":
         _b_off(monkeypatch)
+    # A-2a（§4.1「`repair_create` 物件多筆：出卡前先判」）：實測 mock 物件名稱查詢（`_viewer_estate_rows`
+    # 「豪宅」）回 3 筆（68700、39931、35214），不含本題加的 990067338 ⇒ 開關 on 時出卡前判不出唯一、改出
+    # 候選清單。本題驗 B 的重述句，與候選無關 ⇒ 釘 off（A2-R12）。
+    monkeypatch.setenv(WF.WRITE_CANDIDATES_ENV, "off")
     _add_mansion_estate()
     w = _World()
     r1, pid = await w.repair_card(f"{MANSION} 冷氣不冷", estate_name=MANSION)
@@ -1228,9 +1236,10 @@ def _spy_prepare(monkeypatch) -> list:
     calls: list = []
     real = C._prepare_closed_action
 
-    async def _spy(identity, action, payload):
+    async def _spy(identity, action, payload, **kw):
+        # A-2a：`confirm_request`／`write_name_candidates` 另帶具名參數 `program_pick`／`candidates`，照轉。
         calls.append(action)
-        return await real(identity, action, payload)
+        return await real(identity, action, payload, **kw)
 
     monkeypatch.setattr(C, "_prepare_closed_action", _spy)
     return calls
@@ -1251,6 +1260,9 @@ async def test_b2_3_closed_action_ambiguous_contract_asks_for_contract(api, monk
     正對照（off）：模型文字照送。"""
     if b_reply == "off":
         _b_off(monkeypatch)
+    # A-2a（A2-R8）：開關 on 時名稱多筆改回候選清單（test_a2a_write_candidates_req.py 的 V2）；本題釘 off
+    # 驗 B 的缺欄追問逐字不變（A2-R12）。
+    monkeypatch.setenv(WF.WRITE_CANDIDATES_ENV, "off")
     w = _World()
     await _assert_contract_resolves(w, MANY_CONTRACT_REF, "many")
     fields = _manual_bill_fields(MANY_CONTRACT_REF)
@@ -1277,6 +1289,9 @@ async def test_b2_3_closed_action_ambiguous_contract_asks_for_contract(api, monk
 async def test_b2_3_closed_action_unique_contract_stays_not_issued(api, monkeypatch):
     """(b) 正對照：同草稿但名稱解析到唯一一筆（`_prepare_closed_action` 回 `None`）且無有效卡 ⇒
     維持 `WRITE_NOT_ISSUED_TEXT`。"""
+    # A-2a：開關 on 時 B2 (3) 先以 `write_name_candidates` 多呼叫一次 `_prepare_closed_action`；本題驗 B 的
+    # 呼叫次數（恰 1 次）⇒ 釘 off（A2-R12）。
+    monkeypatch.setenv(WF.WRITE_CANDIDATES_ENV, "off")
     w = _World()
     await _assert_contract_resolves(w, ONE_CONTRACT_REF, "one")
     fields = _manual_bill_fields(ONE_CONTRACT_REF)

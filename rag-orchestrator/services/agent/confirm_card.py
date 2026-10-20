@@ -330,8 +330,18 @@ def _render_repair_create(payload: Mapping[str, Any], today: Optional[date]) -> 
     if not isinstance(description, str):
         raise ConfirmCardError(f"{action}: 欄位 'description' 必須是字串（可為空字串）")
     emergency = emergency_status_of(payload)   # 缺值 ⇒ 非緊急（delta4）
-    rows = [
-        ("物件", estate),
+    rows = [("物件", estate)]
+    # A-2a（計畫 §4.5、§11 P1-1）：`estate_id` 只會是 `confirm.request` 依程式選定（`program_pick`）
+    # 以帶 viewer 的編號查詢寫入的系統編號（模型自帶的在出卡前一律丟掉）——有才印一行，
+    # 卡上編號＝寫入編號（同封閉表 `sys_id`：正整數，數字字串視同整數）。沒有 ⇒ 卡逐字不變。
+    if "estate_id" in payload:
+        estate_id = payload.get("estate_id")
+        if isinstance(estate_id, str) and estate_id.strip().isdigit():
+            estate_id = int(estate_id.strip())
+        if isinstance(estate_id, bool) or not isinstance(estate_id, int) or estate_id < 1:
+            raise ConfirmCardError(f"{action}: 欄位 'estate_id' 必須是正整數")
+        rows.append(("物件編號", str(estate_id)))
+    rows += [
         ("修繕分類", category),
         ("急迫程度", _EMERGENCY_ZH[emergency]),
         ("問題描述", description.strip() or EMPTY_DESCRIPTION_ZH),

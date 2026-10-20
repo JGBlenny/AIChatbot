@@ -138,6 +138,7 @@ from services.agent.state_store import (
     stamp_last_turn,
 )
 from services.agent.tools.registry import (
+    PROGRAM_PICK_TOOL,
     Provenance,
     ToolResult,
     ToolSpec,
@@ -2181,12 +2182,16 @@ def build_registry(deps: FacadeDeps, registry: Optional[ToolRegistry] = None) ->
         ))
         return rows or None
 
-    async def _confirm_request(identity: Identity, args: dict) -> ToolResult:
+    async def _confirm_request(identity: Identity, args: dict, *,
+                               program_pick: Optional[dict] = None) -> ToolResult:
+        # A-2a 片 §4.5：`program_pick` 只由 `ToolRegistry.call` 的具名參數轉來（runtime 程式依草稿
+        # 發出的呼叫才會設）；MCP client 直呼只碰得到 `args` ⇒ 永遠是 `None`。
         pool = deps.get_db_pool()
         if pool is None:
             return ToolResult(ok=False, error="NO_MATCH")
         return await confirm_request(
-            identity, args, db_pool=pool, open_repairs=_open_repairs
+            identity, args, db_pool=pool, open_repairs=_open_repairs,
+            program_pick=program_pick,
         )
 
     reg.register(KB_GET_SPEC, _kb_get)
@@ -2464,6 +2469,11 @@ def _make_invoke(registry: ToolRegistry, deps: FacadeDeps) -> Callable:
         except Exception:
             um.finalize("error", 500, db_pool=pool)
             raise
+        if name == PROGRAM_PICK_TOOL:
+            # A-2a（計畫 §4.1）：候選形狀只給 runtime「程式依草稿發出」那條路寫候選集；MCP client
+            # 直呼 `confirm.request` ⇒ 換回現行出口（缺欄 `INVALID_INPUT`／B 的帳單候選），對外契約同 B。
+            from services.agent.tools.confirm import candidate_fallback_result
+            result = candidate_fallback_result(result)
         um.finalize("success" if result.ok else "error", 200, db_pool=pool)
 
         if not result.ok:

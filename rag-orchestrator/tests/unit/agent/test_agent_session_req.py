@@ -52,6 +52,7 @@ from services.agent.agent_session import (
     SELECT_SCOPE_KEY,
     WRITE_DRAFT_KEY,
     LAST_SUBMITTED_KEY,
+    WRITE_CANDIDATES_KEY,
     AgentSession,
     Lifetime,
 )
@@ -68,17 +69,20 @@ _REQ = "knowledge-outline-and-intent-architecture:R3"
 @pytest.mark.req(_REQ)
 def test_key_specs_covers_exactly_ten_keys():
     # W1（plan-write-flow-program-owned-20261017 §2.1(3)）：加 `write_draft` ⇒ 12 鍵；
-    # 第 3 步 #9g（業主 2026-10-19 裁定）：加 `last_submitted` ⇒ 13 鍵。
-    assert len(KEY_SPECS) == 13
+    # 第 3 步 #9g（業主 2026-10-19 裁定）：加 `last_submitted` ⇒ 13 鍵；
+    # A-2a（plan-a2a-write-candidates-20261020 §4.2）：加 `write_candidates` ⇒ 14 鍵。
+    assert len(KEY_SPECS) == 14
     assert set(KEY_SPECS) == {
         DIALOG_KEY, HANDOFF_CACHE_KEY, FIXED_STREAK_KEY,
         PENDING_CONFIRM_KEY, SELECT_SCOPE_KEY, LAST_ASK_TARGET_KEY,
         COMPLETED_ACTIONS_KEY, IMAGE_SUGGESTION_KEY, ESTATE_CARRY_KEY,
         LAST_TURN_AT_KEY, DOCUMENT_CARRY_KEY, WRITE_DRAFT_KEY, LAST_SUBMITTED_KEY,
+        WRITE_CANDIDATES_KEY,
     }
     # 沿用既有六種之一（⛔ 新增第七種）：黏到 `scope_exit()`。
     assert KEY_SPECS[WRITE_DRAFT_KEY].lifetime is Lifetime.UNTIL_SCOPE_EXIT
     assert KEY_SPECS[LAST_SUBMITTED_KEY].lifetime is Lifetime.UNTIL_SCOPE_EXIT
+    assert KEY_SPECS[WRITE_CANDIDATES_KEY].lifetime is Lifetime.UNTIL_SCOPE_EXIT
 
 
 @pytest.mark.req(_REQ)

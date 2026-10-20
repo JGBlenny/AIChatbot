@@ -36,6 +36,7 @@ from services.agent.confirm_card import (
     render,
 )
 from services.agent.identity import Identity
+from services.agent.write_forms import WRITE_CANDIDATES_ENV
 from services.agent.tools import action as action_tools
 from services.agent.tools import jgb2 as jgb2_tools
 from services.agent.tools.confirm import (
@@ -493,7 +494,10 @@ async def test_model_supplied_system_id_is_overwritten_by_resolution(api):
     (_bill_payload(contract_ref=None, estate_name=ESTATE_MULTI_CONTRACT), ("INVALID_INPUT", ["合約"])),
     (_bill_payload(contract_ref=None, estate_name="不存在的物件名稱zz"), ("INVALID_INPUT", ["合約"])),
 ])
-async def test_ambiguous_or_unknown_reference_never_guesses(api, payload, expected):
+async def test_ambiguous_or_unknown_reference_never_guesses(api, monkeypatch, payload, expected):
+    # A-2a（plan-a2a-write-candidates-20261020 §4.1）：開關 on 時名稱多筆改回候選形狀（⛔ 出卡、⛔ 建
+    # token 同樣成立，見 test_a2a_write_candidates_req.py）；本題釘 off 驗現行缺欄出口逐字不變（A2-R12）。
+    monkeypatch.setenv(WRITE_CANDIDATES_ENV, "off")
     pool = _pool()
     res = await _card(_pm(), payload, pool)
     assert res.ok is False and res.error == expected[0]

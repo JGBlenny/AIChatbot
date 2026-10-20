@@ -21,8 +21,8 @@ DIALOG_MAX_MESSAGES`）。本檔若去 import 那些模組的常數，會在
 test_agent_session_req.py` 另有一條「與各檔既有常數逐一相等」的正對照守著
 不讓兩邊漂移，⛔ 不是「重複了就沒事」。
 
-## 13 個鍵與六種生命週期（KEY_SPECS，封閉表；站內幫手 S3 加 `document_carry`、W1 加 `write_draft`、
-第 3 步 #9g 加 `last_submitted`）
+## 14 個鍵與六種生命週期（KEY_SPECS，封閉表；站內幫手 S3 加 `document_carry`、W1 加 `write_draft`、
+第 3 步 #9g 加 `last_submitted`、A-2a 加 `write_candidates`）
 `turn`（每回合覆寫或回合內暫存）／`once`（一次性，用掉即清）／
 `until_scope_exit`（黏到 `scope_exit()`）／`fifo(n)`（FIFO 上限 n）／
 `stamp`（時間戳）／`session`（整個 session 累加，不受回合或範圍影響）。
@@ -78,6 +78,10 @@ WRITE_DRAFT_KEY = "write_draft"
 #: `{action, pending_id, idle_turns}`，供「修改剛送出的那一筆」判斷。**本鍵的權威定義就在本檔**。
 #: 形狀與讀回驗證在 `write_forms.load_last_submitted`（封閉三鍵；⛔ token、⛔ payload、⛔ 使用者值）。
 LAST_SUBMITTED_KEY = "last_submitted"
+#: A-2a 片（DSP-103；計畫 plan-a2a-write-candidates-20261020 §4.2）：寫入名稱多筆時程式列出的候選集
+#: `{action, field, type, ids, has_more, name_fp, creator, picked}`。**本鍵的權威定義就在本檔**。
+#: 形狀與讀回驗證在 `write_candidates.load_write_candidates`（封閉八鍵；⛔ 名稱、⛔ 列內容、⛔ token）。
+WRITE_CANDIDATES_KEY = "write_candidates"
 
 #: DSP-022：`dialog` 保留的訊息數上限（user＋assistant 各一則算 2；10 輪對話）。
 DIALOG_MAX_MESSAGES = 20
@@ -113,9 +117,13 @@ KEY_SPECS: dict[str, KeySpec] = {
     # 第 3 步 #9g：黏到 `scope_exit()`（沿用既有六種之一，⛔ 新增第七種）；其餘清除條件（出卡、
     # 取消、`DRAFT_IDLE_LIMIT` 個無關回合、開關 off）由 runtime 各寫點明確呼叫 `clear_last_submitted()`。
     LAST_SUBMITTED_KEY: KeySpec(LAST_SUBMITTED_KEY, Lifetime.UNTIL_SCOPE_EXIT),
+    # A-2a（§11 P3-2）：黏到 `scope_exit()`（沿用既有六種之一，⛔ 新增第七種）；其餘清除條件的
+    # **單一清除點**是 `clear_write_draft()`（取消、送出、換動作、閒置、換身分、`select:` 釘住範圍），
+    # 另加出確認卡時由 runtime 呼叫 `clear_write_candidates()`；新清單覆蓋舊的。
+    WRITE_CANDIDATES_KEY: KeySpec(WRITE_CANDIDATES_KEY, Lifetime.UNTIL_SCOPE_EXIT),
 }
 
-assert len(KEY_SPECS) == 13, "KEY_SPECS 是封閉表——13 個鍵，多一個少一個都要回頭對帳"
+assert len(KEY_SPECS) == 14, "KEY_SPECS 是封閉表——14 個鍵，多一個少一個都要回頭對帳"
 
 
 class AgentSession:
@@ -286,6 +294,20 @@ class AgentSession:
 
     def clear_write_draft(self) -> None:
         self._state.pop(WRITE_DRAFT_KEY, None)
+        # A-2a（§11 P3-2）：候選集綁一份草稿——草稿被清的每一條路都經這裡，一併清（單一清除點）。
+        self._state.pop(WRITE_CANDIDATES_KEY, None)
+
+    # ── write_candidates（A-2a：黏到 `scope_exit()`；形狀驗證在
+    #    `write_candidates.load_write_candidates`，本類別只管落地——⛔ 不做任何業務判定）──────
+    def get_write_candidates(self) -> Any:
+        """原樣回傳（**未驗形狀**）；呼叫端一律先過 `write_candidates.load_write_candidates`。"""
+        return self._state.get(WRITE_CANDIDATES_KEY)
+
+    def write_write_candidates(self, value: dict) -> None:
+        self._state[WRITE_CANDIDATES_KEY] = value
+
+    def clear_write_candidates(self) -> None:
+        self._state.pop(WRITE_CANDIDATES_KEY, None)
 
     # ── last_submitted（第 3 步 #9g：黏到 `scope_exit()`；形狀驗證在
     #    `write_forms.load_last_submitted`，本類別只管落地——⛔ 不做任何業務判定）──────
@@ -424,6 +446,7 @@ __all__ = [
     "DOCUMENT_CARRY_KEY",
     "WRITE_DRAFT_KEY",
     "LAST_SUBMITTED_KEY",
+    "WRITE_CANDIDATES_KEY",
     "DOCUMENT_CARRY_FIELDS",
     "DOCUMENT_CARRY_MAX_TURNS",
     "DIALOG_MAX_MESSAGES",

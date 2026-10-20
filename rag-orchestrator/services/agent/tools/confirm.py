@@ -94,7 +94,10 @@ from services.agent.tools.action import (
     _resolve_estate,
     _viewer_contract_rows,
     _viewer_estate_rows,
+    viewer_bill_row,
 )
+from services.agent import write_candidates as _wc
+from services.agent.tools import registry as _registry
 from services.agent.tools.registry import Provenance, ToolResult, ToolSpec
 # ⚠️ **import 模組、⛔ 不 `from … import _today`**：時鐘要在呼叫點取值，
 # 綁死函式物件會讓測試（與 smoke 的凍結時鐘）monkeypatch 不到。
@@ -201,6 +204,10 @@ CONFIRM_SPEC: ToolSpec = {
     "mutates_session": True,  # DSP-016：寫 token 表（綁 session），影子 readonly_view 不可見
     "stage": {"prospect": "M1", "property_manager": "M1", "tenant": "M1"},
 }
+
+# A-2a（計畫 §4.5）：`ToolRegistry.call` 只把程式專用選定通道 `program_pick` 轉給這一支工具；
+# 兩邊的工具名必須是同一個值（⛔ 改名時默默讓通道失效）。
+assert CONFIRM_SPEC["name"] == _registry.PROGRAM_PICK_TOOL
 
 
 def canonical_json(payload: Any) -> str:
@@ -537,11 +544,15 @@ def _ymd_text(value: date) -> str:
 
 
 def _bill_candidates_result(action: Any, payload: dict, rows: List[dict],
-                            query: str) -> ToolResult:
+                            query: str, *, candidates: bool = False) -> ToolResult:
     """多筆 ⇒ **既有候選形狀**（`jgb2._ok_candidates`），外加 `action`／`payload`。
 
     ⛔ 候選清單文字與投影一律由 `jgb2` 產（`_candidates_text`／`_project_bill_row`），
     本檔不另寫一份——那張投影表同時是最小揭露面的界線。
+
+    A-2a（`candidates=True`，開關 `AGENT_WRITE_CANDIDATES` 生效時）：`data["candidates"]` 改放同一次
+    查詢的全部列（≤20，候選集要存全部），另加 `CANDIDATE_TYPE_KEY` 等四鍵；給模型的文字與
+    provenance 仍只取前 `cap` 筆（與 off 逐字相同）。off ⇒ 逐字不變。
     """
     cap = jgb2_tools._candidate_cap()
     kept = rows[:cap]
@@ -552,20 +563,107 @@ def _bill_candidates_result(action: Any, payload: dict, rows: List[dict],
     # 見本節註解：這兩個鍵是 `_scope_gate_confirm_request` 的 fail-closed 依據。
     data["action"] = action
     data["payload"] = payload
+    if candidates:
+        data["candidates"] = list(rows[:_wc.WRITE_CANDIDATES_MAX])
+        data[CANDIDATE_TYPE_KEY] = _wc.TYPE_BILL
+        data["field"] = "estate_name"
+        data["has_more"] = len(rows) > _wc.WRITE_CANDIDATES_MAX
+        data["missing_label"] = _BILL_LABEL
     return ToolResult(
         ok=True, data=data, provenance=raw["provenance"],
         text_for_model=raw["text_for_model"],
     )
 
 
+# ---------------------------------------------------------------------------
+# A-2a 片（DSP-103；計畫 §4.1、§4.5）：寫入名稱多筆 ⇒ **候選形狀**（只在開關生效時）
+#
+# ⚠️ 形狀沿用帳單的 `_bill_candidates_result`（`data["candidates"]`＋`action`／`payload`），
+#    外加 `candidate_type`／`field`／`has_more`／`missing_label`：Runtime 只在「程式依草稿發出」的
+#    呼叫寫候選集；其他路徑以 `missing_label` 回現行缺欄出口（「還需要：…」）。
+# ⚠️ 列只來自出卡前解析**同一支**帶 viewer 的查詢（⛔ 另開揭露面更大的查法），且只在身分雙證齊全時
+#    產生（§11 P2-3；封閉三動作缺任一證現行即 `NO_MATCH`，到不了這裡）。列經 `minimize_row`
+#    只留投影與按鈕要用的鍵（合約列另有承租人聯絡資料，⛔ 帶出）。
+# ⚠️ 開關 off ⇒ 這一節的函式都不會被呼叫（`candidates=False`），出口逐字同 B。
+# ---------------------------------------------------------------------------
+
+#: 候選形狀 `data` 的辨識鍵（值 ∈ `write_candidates.CANDIDATE_TYPE_DOMAIN`）。
+CANDIDATE_TYPE_KEY: Final[str] = "candidate_type"
+#: 帳單候選回缺欄出口時的標籤（延期繳費表單的「物件」欄；與 `_ESTATE_LABEL` 同字）。
+_BILL_LABEL: Final[str] = "物件"
+
+
+def is_candidate_shape(result: Any) -> bool:
+    """`confirm.request` 的結果是不是 A-2a 候選形狀（`ok=True` 且 `data` 帶 `CANDIDATE_TYPE_KEY`）。"""
+    data = getattr(result, "data", None)
+    return (bool(getattr(result, "ok", False)) and isinstance(data, dict)
+            and data.get(CANDIDATE_TYPE_KEY) in _wc.CANDIDATE_TYPE_DOMAIN
+            and isinstance(data.get("candidates"), list))
+
+
+#: 候選形狀比 B 多出的鍵（`candidate_fallback_result` 去掉它們即回到 B 的形狀）。
+_A2A_CANDIDATE_KEYS: Final[frozenset] = frozenset(
+    {CANDIDATE_TYPE_KEY, "field", "has_more", "missing_label"})
+
+
+def candidate_fallback_result(result: ToolResult) -> ToolResult:
+    """A-2a（計畫 §4.1；§11 P3-4）：候選形狀落在**不寫候選集**的路徑（文件回合、文件暫存回合、點選範圍
+    回合、模型自呼、影子回合）⇒ 換回現行出口：
+    - 帳單 ⇒ B 的帳單候選形狀（去掉 A-2a 四鍵、`candidates` 截回前 `cap` 筆；Runtime 照現行 `select:bill`）；
+    - 其餘 ⇒ 現行缺欄清單（`missing_label`：「合約」／「物件」；Runtime 照現行缺欄追問）。
+    非候選形狀 ⇒ 原樣回傳。"""
+    if not is_candidate_shape(result):
+        return result
+    data = result.data
+    if data.get(CANDIDATE_TYPE_KEY) == _wc.TYPE_BILL:
+        old = {k: v for k, v in data.items() if k not in _A2A_CANDIDATE_KEYS}
+        old["candidates"] = list(data.get("candidates") or [])[:jgb2_tools._candidate_cap()]
+        return ToolResult(ok=True, data=old, provenance=result.provenance,
+                          text_for_model=result.text_for_model)
+    label = data.get("missing_label")
+    return _missing_fields_result([label if isinstance(label, str) else _ESTATE_LABEL])
+
+
+def _name_candidates_result(action: str, payload: dict, *, field: str, cand_type: str,
+                            rows: List[dict], has_more: bool, query: str,
+                            missing_label: str) -> Optional[ToolResult]:
+    """名稱多筆 ⇒ 候選形狀。給模型的文字／provenance 由 `jgb2._ok_candidates` 產（前 `cap` 筆，
+    同 `jgb2.query.*` 命中多筆時的那一份）；`data["candidates"]` 放同一次查詢的全部列（≤20）。
+    可用列（編號形狀合法）不足 2 筆 ⇒ `None`（呼叫端維持現行缺欄出口，⛔ 列一筆的「候選」）。"""
+    cap = jgb2_tools._candidate_cap()
+    usable = [_wc.minimize_row(cand_type, r) for r in rows
+              if isinstance(r, dict) and _wc.candidate_id(r.get("id")) is not None]
+    if len(usable) < 2:
+        return None
+    kept = usable[:_wc.WRITE_CANDIDATES_MAX]
+    more = bool(has_more) or len(usable) > _wc.WRITE_CANDIDATES_MAX
+    raw = jgb2_tools._ok_candidates(
+        _wc.DOMAIN_OF_TYPE[cand_type], str(action), kept[:cap], cap,
+        len(kept) <= cap and not more, query=query,
+    )
+    data = dict(raw["data"])
+    data["candidates"] = kept
+    data["action"] = action
+    data["payload"] = payload
+    data[CANDIDATE_TYPE_KEY] = cand_type
+    data["field"] = field
+    data["has_more"] = more
+    data["missing_label"] = missing_label
+    return ToolResult(ok=True, data=data, provenance=raw["provenance"],
+                      text_for_model=raw["text_for_model"])
+
+
 async def _resolve_bill_by_period(
-    identity: Identity, action: Any, payload: dict, *, today: date
+    identity: Identity, action: Any, payload: dict, *, today: date,
+    candidates: bool = False,
 ) -> Tuple[bool, Optional[ToolResult]]:
     """`(已填好可以出卡, 提早收尾的 ToolResult)`。
 
     只在 `action == "bill_due_extend"`、`bill_id` 缺值、且 `estate_name` 有值時
     動作；其餘一律 `(False, None)`＝**行為逐字不變**（⛔ 不是某支 action 的特例
     分支，是「這個 action 的 payload 契約有替代必填」這件事的實作）。
+
+    `candidates`（A-2a，開關生效時）只改多筆出口的 `data`（見 `_bill_candidates_result`）。
     """
     if action != BILL_DUE_EXTEND_ACTION:
         return False, None
@@ -593,7 +691,8 @@ async def _resolve_bill_by_period(
         query = estate_name.strip()
         if isinstance(period_text, str) and period_text.strip():
             query = f"{query} {period_text.strip()}"
-        return False, _bill_candidates_result(action, payload, kept, query)
+        return False, _bill_candidates_result(action, payload, kept, query,
+                                              candidates=candidates)
     # 零筆 ⇒ 既有 `NO_MATCH`（Runtime 走既有的查無路徑）。
     logger.info("[agent] bill_due_extend 依物件與期別對不到唯一帳單（⛔ 不記名稱與期別）")
     return False, ToolResult(ok=False, error="NO_MATCH")
@@ -726,59 +825,138 @@ def _row_id(row: dict) -> Any:
     return rid
 
 
+def _many_rows(rows: List[dict], ref: str) -> List[dict]:
+    """A-2a：判不出唯一時列給使用者選的列——名稱完全相同的列有 2 筆以上 ⇒ 只列那些；
+    否則列同一次查詢的全部列（⛔ 再查一次）。"""
+    exact = [r for r in rows
+             if isinstance(r, dict) and str(r.get("title") or "").strip() == ref.strip()]
+    return exact if len(exact) >= 2 else [r for r in rows if isinstance(r, dict)]
+
+
+async def _resolve_estate_rows(api, role_id: str, user_id: str,
+                               ref: str) -> Tuple[str, Optional[dict], List[dict]]:
+    """`(status, row, rows)`——`_resolve_unique_estate` 的本體；`rows`＝同一次查詢的列（A-2a 候選用）。"""
+    try:
+        rows = await _viewer_estate_rows(api, role_id, user_id, ref.strip())
+    except jgb2_tools.UpstreamFailure:
+        return "error", None, []
+    if not rows:
+        return "none", None, []
+    row = _resolve_estate(rows, ref)          # 與 `repair_create` 同一個唯一性判準
+    if row is None or row.get("id") is None:
+        return "many", None, rows
+    return "one", row, rows
+
+
 async def _resolve_unique_estate(api, role_id: str, user_id: str,
                                  ref: str) -> Tuple[str, Optional[dict]]:
     """`("one"|"none"|"many"|"error", row)`——物件名稱或編號 → 這位成員看得到的唯一一筆。
 
     S5：`"none"`＝查過、沒有（含 403／404）；`"error"`＝沒查成（⛔ 講成查不到）。
     """
+    status, row, _rows = await _resolve_estate_rows(api, role_id, user_id, ref)
+    return status, row
+
+
+async def _estate_by_id(api, role_id: str, user_id: str,
+                        estate_id: str) -> Tuple[str, Optional[dict]]:
+    """A-2a 程式選定的物件編號 ⇒ `("one"|"none"|"error", row)`：與兌現端 `_visible_estate_by_id`
+    **同一支查詢**（`_viewer_estate_rows(ref=編號)`＋逐筆比對編號），差別只在保留「沒查成」
+    （S5：⛔ 把沒查成講成查無）。"""
+    wanted = str(estate_id).strip()
     try:
-        rows = await _viewer_estate_rows(api, role_id, user_id, ref.strip())
+        rows = await _viewer_estate_rows(api, role_id, user_id, wanted)
     except jgb2_tools.UpstreamFailure:
         return "error", None
-    if not rows:
-        return "none", None
-    row = _resolve_estate(rows, ref)          # 與 `repair_create` 同一個唯一性判準
-    if row is None or row.get("id") is None:
-        return "many", None
-    return "one", row
+    hits = [r for r in rows if str(r.get("id")).strip() == wanted]
+    return ("one", hits[0]) if len(hits) == 1 else ("none", None)
 
 
-async def _resolve_unique_contract(api, role_id: str, user_id: str,
-                                   ref: str) -> Tuple[str, Optional[dict]]:
-    """`("one"|"none"|"many"|"error", row)`——合約名稱或編號 → 這位成員看得到的唯一一份。"""
+async def _resolve_contract_rows(api, role_id: str, user_id: str,
+                                 ref: str) -> Tuple[str, Optional[dict], List[dict], bool]:
+    """`(status, row, rows, has_more)`——`_resolve_unique_contract` 的本體；`rows`／`has_more`＝
+    同一次查詢的列與分頁旗標（A-2a 候選用）。"""
     ref = ref.strip()
     try:
         if ref.isdigit():
             rows, _ = await _viewer_contract_rows(api, role_id, user_id, contract_ids=ref)
             hits = [r for r in rows if str(r.get("id")).strip() == ref]
-            return ("one", hits[0]) if len(hits) == 1 else ("none", None)
+            return (("one", hits[0], [], False) if len(hits) == 1
+                    else ("none", None, [], False))
         rows, has_more = await _viewer_contract_rows(api, role_id, user_id, keyword=ref)
     except jgb2_tools.UpstreamFailure:
-        return "error", None
+        return "error", None, [], False
     if not rows:
-        return "none", None
+        return "none", None, [], False
     exact = [r for r in rows if str(r.get("title") or "").strip() == ref]
     if len(exact) == 1:
-        return "one", exact[0]
+        return "one", exact[0], rows, has_more
     if len(rows) == 1 and not has_more:
-        return "one", rows[0]
-    return "many", None
+        return "one", rows[0], rows, has_more
+    return "many", None, rows, has_more
+
+
+async def _resolve_unique_contract(api, role_id: str, user_id: str,
+                                   ref: str) -> Tuple[str, Optional[dict]]:
+    """`("one"|"none"|"many"|"error", row)`——合約名稱或編號 → 這位成員看得到的唯一一份。"""
+    status, row, _rows, _more = await _resolve_contract_rows(api, role_id, user_id, ref)
+    return status, row
+
+
+async def _contract_by_id(api, role_id: str, user_id: str,
+                          contract_id: str) -> Tuple[str, Optional[dict]]:
+    """A-2a 程式選定的合約編號 ⇒ `("one"|"none"|"error", row)`：與 `_resolve_unique_contract` 的
+    `ref.isdigit()` 分支**同一支查詢**（`contract_ids` 精確查＋逐筆比對）；非純數字 ⇒ `"none"`。"""
+    wanted = str(contract_id).strip()
+    if not wanted.isdigit():
+        return "none", None
+    return await _resolve_unique_contract(api, role_id, user_id, wanted)
+
+
+async def _valid_contracts_of_estate(api, role_id: str, user_id: str,
+                                     estate_id: Any) -> Tuple[str, List[dict], bool]:
+    """`("ok"|"error", 該物件的有效合約列, has_more)`——`_only_valid_contract_of_estate` 的本體
+    （`/contracts/status-overview` 已限 `active=1`、`is_newest=1`，這裡再排除 `is_history`）。"""
+    try:
+        rows, has_more = await _viewer_contract_rows(api, role_id, user_id)
+    except jgb2_tools.UpstreamFailure:
+        return "error", [], False
+    valid = [r for r in rows
+             if str(r.get("estate_id")).strip() == str(estate_id).strip()
+             and not r.get("is_history")]
+    return "ok", valid, has_more
+
+
+async def _estate_of_contract(api, role_id: str, user_id: str, contract_row: dict,
+                              estate_ref: str) -> Tuple[str, Optional[dict]]:
+    """A-2a：程式選定的合約所在的物件 ⇒ `("one"|"none"|"error", 物件列)`。物件以精確編號查（帶 viewer），
+    且須就是 `estate_ref` 指的那一個：名稱完全相同，或 `estate_ref` 以名稱唯一解析出的正是這一筆
+    （同名物件多筆時名稱相同即成立——那一組本來就是候選；⛔ 只憑合約編號就收下別的物件）。"""
+    est_id = str(contract_row.get("estate_id") or "").strip()
+    if not est_id:
+        return "none", None
+    status, estate = await _estate_by_id(api, role_id, user_id, est_id)
+    if status != "one" or estate is None:
+        return status, None
+    if not estate_ref.strip():
+        return "none", None
+    if _row_title(estate, "") == estate_ref.strip():
+        return "one", estate
+    n_status, n_estate = await _resolve_unique_estate(api, role_id, user_id, estate_ref)
+    if n_status == "error":
+        return "error", None
+    if n_status == "one" and n_estate is not None and str(n_estate.get("id")).strip() == est_id:
+        return "one", estate
+    return "none", None
 
 
 async def _only_valid_contract_of_estate(api, role_id: str, user_id: str,
                                          estate_id: Any) -> Optional[dict]:
     """該物件**唯一一份有效合約**（`/contracts/status-overview` 已限 `active=1`、
     `is_newest=1`，這裡再排除 `is_history`）；零份、多份、或上游還有下一頁 ⇒ `None`。"""
-    try:
-        rows, has_more = await _viewer_contract_rows(api, role_id, user_id)
-    except jgb2_tools.UpstreamFailure:
-        return None
-    if has_more:
+    status, valid, has_more = await _valid_contracts_of_estate(api, role_id, user_id, estate_id)
+    if status != "ok" or has_more:
         return None                           # 只看第一頁 ⛔ 下「唯一」的結論
-    valid = [r for r in rows
-             if str(r.get("estate_id")).strip() == str(estate_id).strip()
-             and not r.get("is_history")]
     return valid[0] if len(valid) == 1 else None
 
 
@@ -828,7 +1006,8 @@ def document_confirm_description(action: str) -> Optional[str]:
 
 
 async def _prepare_closed_action(
-    identity: Identity, action: Any, payload: dict
+    identity: Identity, action: Any, payload: dict, *,
+    program_pick: Optional[dict] = None, candidates: bool = False,
 ) -> Tuple[Optional[ToolResult], Optional[str], Optional[str]]:
     """`(提早收尾的 ToolResult, 回給 Runtime 的 estate_id, 範圍比對用的 scope_estate_id)`；
     不是封閉表動作 ⇒ `(None, None, None)`。
@@ -840,6 +1019,14 @@ async def _prepare_closed_action(
     會**就地改寫** `payload`（寫入系統解析的編號與名稱、丟掉不進卡也不進 body 的鍵）；
     之後才 `render()` 與算雜湊。`estate_id`（字串）只在「物件確定是這一筆」時回傳，
     Runtime 拿它寫物件記憶（`_begin_pending_confirm`）——⛔ 名稱與編號不一致時不回。
+
+    A-2a（計畫 §4.1、§4.5）：
+    - 模型自帶的 `estate_id`／`contract_id` **一律先丟**（無條件、排在最前面，同改動前）；
+    - `program_pick`（只由 `ToolRegistry.call` 的具名參數轉來，⛔ 來自 `args`）且
+      `(action, field, type)` 相符 ⇒ 依編號以帶 viewer 的精確查詢解析（看不到 ⇒ 查無固定句；
+      沒查成 ⇒ `NO_MATCH`）；不相符 ⇒ 照名稱解析（⛔ 半信）；
+    - `candidates=True`（開關生效）且名稱判不出唯一 ⇒ 候選形狀（`_name_candidates_result`）；
+      `False` ⇒ 缺欄清單（與改動前逐字相同）。
     """
     if action not in CLOSED_ACTION_FIELDS:
         return None, None, None
@@ -880,12 +1067,24 @@ async def _prepare_closed_action(
     if action == CONTRACT_CREATE_ACTION:
         payload.pop("estate_id", None)
         ref = str(payload["estate_name"])
-        status, row = await _resolve_unique_estate(api, role_id, user_id, ref)
+        pick = _wc.valid_program_pick(program_pick, action)
+        if pick is not None:
+            # A-2a：程式選定的物件 ⇒ 精確編號查（看不到＝查無；⛔ 依名稱重解）。
+            status, row = await _estate_by_id(api, role_id, user_id, pick[2])
+            est_rows: List[dict] = []
+        else:
+            status, row, est_rows = await _resolve_estate_rows(api, role_id, user_id, ref)
         if status == "none":
             return _not_found_result(), None, None       # S5：查無固定句
         if status == "error":
             return ToolResult(ok=False, error="NO_MATCH"), None, None   # 沒查成
         if status == "many":
+            cand = _name_candidates_result(
+                action, payload, field="estate_name", cand_type=_wc.TYPE_ESTATE,
+                rows=_many_rows(est_rows, ref), has_more=False, query=ref.strip(),
+                missing_label=_ESTATE_LABEL) if candidates else None
+            if cand is not None:
+                return cand, None, None
             return _missing_fields_result([_ESTATE_LABEL]), None, None
         payload["estate_id"] = _row_id(row)
         payload["estate_name"] = _row_title(row, ref.strip())
@@ -895,15 +1094,28 @@ async def _prepare_closed_action(
     payload.pop("contract_id", None)
     ref = payload.get("contract_ref")
     estate_id_out: Optional[str] = None
+    pick = _wc.valid_program_pick(program_pick, action)
     if not _missing(ref) and (isinstance(ref, bool) or not isinstance(ref, (str, int))):
         return ToolResult(ok=False, error="INVALID_INPUT"), None, None
     if not _missing(ref):
-        status, row = await _resolve_unique_contract(api, role_id, user_id, str(ref))
+        if pick is not None and pick[0] == "contract_ref":
+            # A-2a：程式選定的合約 ⇒ `contract_ids` 精確查（與 `ref.isdigit()` 分支同一支）。
+            status, row = await _contract_by_id(api, role_id, user_id, pick[2])
+            c_rows, c_more = [], False
+        else:
+            status, row, c_rows, c_more = await _resolve_contract_rows(
+                api, role_id, user_id, str(ref))
         if status == "none":
             return _not_found_result(), None, None       # S5：查無固定句
         if status == "error":
             return ToolResult(ok=False, error="NO_MATCH"), None, None   # 沒查成
         if status == "many":
+            cand = _name_candidates_result(
+                action, payload, field="contract_ref", cand_type=_wc.TYPE_CONTRACT,
+                rows=_many_rows(c_rows, str(ref)), has_more=c_more, query=str(ref).strip(),
+                missing_label=_CONTRACT_LABEL) if candidates else None
+            if cand is not None:
+                return cand, None, None
             return _missing_fields_result([_CONTRACT_LABEL]), None, None
         # 有合約指稱時 `estate_name` 不參與解析 ⇒ 拿掉（⛔ 進卡／body、⛔ 讓記憶寫成
         # 「名稱是 A、編號是合約所在的 B」）。
@@ -913,10 +1125,53 @@ async def _prepare_closed_action(
         # §3f 1b：缺 `contract_ref` ⇒ 以 `estate_name` 解析「該物件唯一一份有效合約」；
         # 物件判不出唯一、或該物件零份／多份有效合約 ⇒ 不出卡、回缺欄「合約」。
         estate_ref = str(payload.get("estate_name") or "")
-        est_status, estate = await _resolve_unique_estate(api, role_id, user_id, estate_ref)
-        if est_status != "one":
-            return _missing_fields_result([_CONTRACT_LABEL]), None, None
-        row = await _only_valid_contract_of_estate(api, role_id, user_id, estate["id"])
+        pick_estate = pick if (pick is not None and pick[0] == "estate_name") else None
+        if pick_estate is not None and pick_estate[1] == _wc.TYPE_CONTRACT:
+            # A-2a：程式選定「該物件多份有效合約」中的一份 ⇒ 合約以精確編號查（看得到、非歷史），
+            # 物件取**這份合約所在的物件**並確認它就是 `estate_name` 指的那一個（同名物件多筆時，
+            # 使用者可能先選過物件；⛔ 只憑編號就收下別戶或已失效的合約）；不符 ⇒ 查無固定句。
+            c_status, row = await _contract_by_id(api, role_id, user_id, pick_estate[2])
+            if c_status == "error":
+                return ToolResult(ok=False, error="NO_MATCH"), None, None
+            if c_status != "one" or row is None or row.get("is_history"):
+                return _not_found_result(), None, None
+            est_status, estate = await _estate_of_contract(api, role_id, user_id, row, estate_ref)
+            if est_status == "error":
+                return ToolResult(ok=False, error="NO_MATCH"), None, None
+            if est_status != "one" or estate is None:
+                return _not_found_result(), None, None
+        else:
+            if pick_estate is not None and pick_estate[1] == _wc.TYPE_ESTATE:
+                # A-2a：程式選定的物件 ⇒ 精確編號查；看不到 ⇒ 查無固定句。
+                est_status, estate = await _estate_by_id(api, role_id, user_id, pick_estate[2])
+                if est_status == "none":
+                    return _not_found_result(), None, None
+                if est_status == "error":
+                    return ToolResult(ok=False, error="NO_MATCH"), None, None
+                est_rows = []
+            else:
+                est_status, estate, est_rows = await _resolve_estate_rows(
+                    api, role_id, user_id, estate_ref)
+            if est_status != "one":
+                cand = _name_candidates_result(
+                    action, payload, field="estate_name", cand_type=_wc.TYPE_ESTATE,
+                    rows=_many_rows(est_rows, estate_ref), has_more=False,
+                    query=estate_ref.strip(), missing_label=_CONTRACT_LABEL,
+                ) if (candidates and est_status == "many") else None
+                if cand is not None:
+                    return cand, None, None
+                return _missing_fields_result([_CONTRACT_LABEL]), None, None
+            v_status, valid, v_more = await _valid_contracts_of_estate(
+                api, role_id, user_id, estate["id"])
+            if candidates and v_status == "ok" and len(valid) >= 2:
+                cand = _name_candidates_result(
+                    action, payload, field="estate_name", cand_type=_wc.TYPE_CONTRACT,
+                    rows=valid, has_more=v_more, query=estate_ref.strip(),
+                    missing_label=_CONTRACT_LABEL)
+                if cand is not None:
+                    return cand, None, None
+            # 與 `_only_valid_contract_of_estate` 同一判準（零份／多份／還有下一頁／沒查成 ⇒ 缺欄）。
+            row = valid[0] if (v_status == "ok" and not v_more and len(valid) == 1) else None
         if row is None:
             return _missing_fields_result([_CONTRACT_LABEL]), None, None
         payload["estate_name"] = _row_title(estate, estate_ref.strip())
@@ -947,7 +1202,10 @@ async def closed_action_missing_labels(identity: Identity, action: Any, payload:
       查無固定句、`NO_MATCH`、無清單的 `INVALID_INPUT`）⇒ `[]`（維持呼叫端原分支）；
     - 例外 ⇒ 記一行不含值的訊息、回 `[]`（fail-soft 到原行為）。
 
-    唯讀：只做出卡路徑本來就做的帶 viewer 查詢；⛔ 建 token、⛔ 寫 DB、⛔ 呼叫任何 LLM。
+    只做出卡路徑本來就做的帶 viewer 查詢；⛔ 出卡、⛔ 建 token、⛔ 寫 DB、⛔ 呼叫任何 LLM。
+    A-2a（開關生效）：B2 (3) 先以 `write_name_candidates`（同一支 `_prepare_closed_action`，
+    `candidates=True`）判「名稱多筆」——命中時呼叫端只寫候選集（session 狀態）並列清單，
+    ⛔ 出卡、⛔ 建 token；本函式本身維持 `candidates=False`（回缺欄清單，與改動前相同）。
     """
     if not isinstance(action, str) or action not in CLOSED_ACTION_FIELDS:
         return []
@@ -1014,6 +1272,147 @@ async def _run_form_precheck(identity: Identity, action: Any, payload: dict, *,
     return None
 
 
+_REPAIR_CREATE_ACTION: Final[str] = "repair_create"
+
+
+async def _prepare_repair_estate(
+    identity: Identity, action: Any, payload: dict, *,
+    program_pick: Optional[dict] = None, candidates: bool = False,
+) -> Tuple[Optional[ToolResult], Optional[str]]:
+    """A-2a（計畫 §4.5 (ii)、§4.1；§11 P1-1）：`repair_create` 的物件出卡前解析 ⇒
+    `(提早收尾的 ToolResult, 程式選定寫入的 estate_id 字串)`；其餘一律 `(None, None)`（現行路徑）。
+
+    呼叫端**已先無條件丟掉**模型自帶的 `estate_id`。
+    - `program_pick` 相符 ⇒ 精確編號查（`_estate_by_id`，與兌現端 `_visible_estate_by_id` 同一支查詢）：
+      看不到 ⇒ 查無固定句；沒查成 ⇒ `NO_MATCH`；查到 ⇒ 寫入 `estate_id`（進卡、進雜湊、兌現端只依編號）
+      與系統名稱；
+    - `candidates=True` 且雙證齊全、名稱以兌現端同一判準（`_resolve_estate`）判不出唯一 ⇒ 候選形狀；
+    - 其餘（開關 off、缺證、查無、沒查成、唯一）⇒ 現行（`open_repairs` 提示行與兌現端名稱解析）。
+    """
+    if action != _REPAIR_CREATE_ACTION:
+        return None, None
+    role_id, user_id = _identity_pair(identity)
+    pick = _wc.valid_program_pick(program_pick, action)
+    name = payload.get("estate_name")
+    if pick is not None:
+        if not role_id or not user_id:
+            return ToolResult(ok=False, error="NO_MATCH"), None
+        status, row = await _estate_by_id(jgb2_tools._get_api(), role_id, user_id, pick[2])
+        if status == "error":
+            return ToolResult(ok=False, error="NO_MATCH"), None
+        if status != "one" or row is None:
+            return _not_found_result(), None
+        payload["estate_id"] = _row_id(row)
+        payload["estate_name"] = _row_title(row, str(name or "").strip())
+        return None, str(row["id"])
+    if not candidates or not role_id or not user_id:
+        return None, None
+    if not isinstance(name, str) or not name.strip():
+        return None, None
+    try:
+        rows = await _viewer_estate_rows(jgb2_tools._get_api(), role_id, user_id, name.strip())
+    except jgb2_tools.UpstreamFailure:
+        return None, None
+    if not rows or _resolve_estate(rows, name) is not None:
+        return None, None
+    cand = _name_candidates_result(
+        action, payload, field="estate_name", cand_type=_wc.TYPE_ESTATE,
+        rows=_many_rows(rows, name), has_more=False, query=name.strip(),
+        missing_label=_ESTATE_LABEL)
+    return cand, None
+
+
+async def _apply_bill_pick(identity: Identity, payload: dict, bill_id: str, *,
+                           today: date) -> Optional[ToolResult]:
+    """A-2a（計畫 §4.5；§11 P3-5）：程式選定的帳單 ⇒ **覆蓋** payload 的 `bill_id`，以 `viewer_bill_row`
+    重驗可見、`_fill_bill_fields` 由系統值導出三欄（⛔ 依賴 `AGENT_WRITE_LIFECYCLE` 的預檢）。
+    看不到 ⇒ 查無固定句；沒查成 ⇒ `NO_MATCH`；算不出 ⇒ `INVALID_INPUT`；成功 ⇒ `None`。"""
+    role_id, user_id = _identity_pair(identity)
+    payload["bill_id"] = str(bill_id)
+    status, row = await viewer_bill_row(jgb2_tools._get_api(), role_id, user_id, bill_id)
+    if status == "error":
+        return ToolResult(ok=False, error="NO_MATCH")
+    if status != "one" or not isinstance(row, dict):
+        return _not_found_result()
+    if not _fill_bill_fields(payload, row, today=today):
+        return ToolResult(ok=False, error="INVALID_INPUT")
+    return None
+
+
+async def write_name_candidates(identity: Identity, action: Any, payload: Any) -> Optional[ToolResult]:
+    """A-2a（計畫 §4.1；§11 P3-6）：草稿 payload 在出卡前解析是不是「名稱多筆」——是 ⇒ 候選形狀
+    （`is_candidate_shape`）；其餘 ⇒ `None`。
+
+    走 `confirm_request` **同一組函式**（`_prepare_closed_action`／`_prepare_repair_estate`／
+    `_resolve_bill_by_period`，皆 `candidates=True`）、在 payload 的**深複本**上跑：B2 (3) 的清單與
+    寫進候選集的編號出自同一次查詢；打字選定回合給意圖呼叫的資料段也由這裡取列。
+    ⛔ 出卡、⛔ 建 token、⛔ 寫 DB、⛔ 呼叫任何 LLM；呼叫端只寫候選集。例外 ⇒ 記不含值的一行、回 `None`。
+    """
+    if not isinstance(action, str) or action not in _wc.CANDIDATE_ACTIONS or not isinstance(payload, dict):
+        return None
+    work = copy.deepcopy(dict(payload))
+    work["action"] = action
+    try:
+        if action in CLOSED_ACTION_FIELDS:
+            if (action in WRITE_NOT_SUPPORTED_ACTIONS
+                    and getattr(jgb2_tools._get_api(), "use_mock", True) is False):
+                return None
+            early, _eid, _scope = await _prepare_closed_action(identity, action, work, candidates=True)
+        elif action == _REPAIR_CREATE_ACTION:
+            work.pop("estate_id", None)
+            early, _eid = await _prepare_repair_estate(identity, action, work, candidates=True)
+        else:
+            if missing_labels(action, work):
+                return None
+            _matched, early = await _resolve_bill_by_period(
+                identity, action, work, today=bills._today(), candidates=True)
+    except Exception as exc:  # noqa: BLE001 — fail-soft：回原分支，⛔ 記任何值
+        logger.warning("[agent] A-2a 名稱多筆判斷失敗（%s），沿用原分支（⛔ 記值）",
+                       type(exc).__name__)
+        return None
+    return early if is_candidate_shape(early) else None
+
+
+async def pick_matches_name(identity: Identity, *, action: str, field: str, cand_type: str,
+                            pick_id: str, field_value: Any) -> bool:
+    """A-2a（A2-R7 (c)；計畫 §4.4）：使用者講的編號**不在候選集**時，以帶 viewer 的編號精確查，
+    查到且名稱與候選集欄位的名稱相同才成立（⛔ 只憑編號就收）。
+
+    - 合約（欄位 `contract_ref`）：`contract_ids` 精確查，合約名稱＝欄位值；
+    - 物件：精確編號查，物件名稱＝欄位值；
+    - 合約（欄位 `estate_name`，該物件多份有效合約）：合約可見、非歷史、且所在物件就是欄位名稱指的那一個
+      （`_estate_of_contract`，與出卡前解析同一判準）；
+    - 帳單：⛔ 不收（計畫 §4.4 只列合約與物件的編號精確查）。
+    沒查成、缺證、形狀不合 ⇒ `False`。"""
+    if not _wc.allowed(action, field, cand_type) or cand_type == _wc.TYPE_BILL:
+        return False
+    if not isinstance(field_value, str) or not field_value.strip():
+        return False
+    if _wc.candidate_id(pick_id) != pick_id:
+        return False
+    role_id, user_id = _identity_pair(identity)
+    if not role_id or not user_id:
+        return False
+    api = jgb2_tools._get_api()
+    name = field_value.strip()
+    try:
+        if cand_type == _wc.TYPE_ESTATE:
+            status, row = await _estate_by_id(api, role_id, user_id, pick_id)
+            return status == "one" and _row_title(row, "") == name
+        status, row = await _contract_by_id(api, role_id, user_id, pick_id)
+        if status != "one" or row is None:
+            return False
+        if field == "contract_ref":
+            return _row_title(row, "") == name
+        if row.get("is_history"):
+            return False
+        est_status, _estate = await _estate_of_contract(api, role_id, user_id, row, name)
+        return est_status == "one"
+    except Exception as exc:  # noqa: BLE001 — 沒查成 ⇒ 不成立（⛔ 記值）
+        logger.warning("[agent] A-2a 候選集外編號精確查失敗（%s）", type(exc).__name__)
+        return False
+
+
 async def confirm_request(
     identity: Identity,
     args: dict,
@@ -1021,8 +1420,15 @@ async def confirm_request(
     db_pool,
     ttl_s: int = CONFIRM_TOKEN_TTL_S,
     open_repairs=None,
+    program_pick: Optional[dict] = None,
 ) -> ToolResult:
     """`confirm.request` 入口。
+
+    A-2a（計畫 §4.5）：`program_pick`＝**程式專用選定通道**（`{action, field, type, id}`），只由
+    `ToolRegistry.call` 的同名具名參數轉來——runtime 只在「程式依草稿發出、且候選集選定成立」的那一個
+    呼叫點設它；模型 tool call、MCP client 直呼只碰得到 `args`，碰不到它（`args.payload` 裡同名的鍵
+    沒有任何作用：封閉三動作被 `check_closed_keys` 擋、其餘動作只是 payload 的一個鍵）。
+    開關 `AGENT_WRITE_CANDIDATES` 未生效 ⇒ 一律當 `None`，名稱多筆的出口與 B 逐字相同。
 
     Args:
         args: `{"summary": str, "payload": str}`——`payload` 是 **JSON 物件序列化
@@ -1091,10 +1497,25 @@ async def confirm_request(
             payload.get("category_name"), identity):
         return ToolResult(ok=False, error="INVALID_INPUT")
 
+    # A-2a：開關在呼叫當下讀（off ⇒ 程式選定通道一律無作用、名稱多筆出口逐字同 B）。
+    cand_on = _write_forms.write_candidates_effective_from_env()
+    if not cand_on:
+        program_pick = None
+    # A-2a（§11 P1-1）：`repair_create` 的模型自帶 `estate_id` **無條件丟掉**（同封閉三動作的
+    # `estate_id`／`contract_id`）——兌現端在卡 payload 有 `estate_id` 時只依編號寫入，那一格只能
+    # 是程式選定寫入的值。之後才依程式選定／名稱解析（`_prepare_repair_estate`）。
+    repair_estate_id: Optional[str] = None
+    if action == _REPAIR_CREATE_ACTION:
+        payload.pop("estate_id", None)
+        repair_early, repair_estate_id = await _prepare_repair_estate(
+            identity, action, payload, program_pick=program_pick, candidates=cand_on)
+        if repair_early is not None:
+            return repair_early
+
     # S2（§3f 1b／1d／2）：封閉欄位表動作——鍵集合、缺欄清單、系統解析編號，全在
     # `render()` **之前**（解析結果要進卡、進雜湊）。其他 action ⇒ `(None, None)`＝行為不變。
     closed_early, closed_estate_id, scope_estate_id = await _prepare_closed_action(
-        identity, action, payload)
+        identity, action, payload, program_pick=program_pick, candidates=cand_on)
     if closed_early is not None:
         return closed_early
 
@@ -1105,9 +1526,17 @@ async def confirm_request(
     # 第六批 A（line-bot #2）：缺帳單編號 ⇒ 以物件名稱＋期別對帳單（見上方分節註解）。
     # 排在 `render()` **之前**：render 是「這份 payload 印不印得出卡」的判準，
     # 而這一段正是在補齊它要的欄位。⛔ 不在 render 之後補（那等於印完卡再改內容）。
-    matched_by_period, early = await _resolve_bill_by_period(
-        identity, action, payload, today=today
-    )
+    # A-2a（計畫 §4.5；N2）：模型自帶 `bill_id` 的現行路徑不改；只有程式選定（`program_pick` 型別
+    # bill）時以選定編號**覆蓋** `bill_id` 並以 `viewer_bill_row` 重驗（`_apply_bill_pick`）。
+    bill_pick = (_wc.valid_program_pick(program_pick, action)
+                 if action == BILL_DUE_EXTEND_ACTION else None)
+    if bill_pick is not None:
+        early = await _apply_bill_pick(identity, payload, bill_pick[2], today=today)
+        matched_by_period = early is None
+    else:
+        matched_by_period, early = await _resolve_bill_by_period(
+            identity, action, payload, today=today, candidates=cand_on
+        )
     if early is not None:
         return early
     # 第 3 步 A6（開關 `AGENT_WRITE_LIFECYCLE`，呼叫當下讀；off ⇒ 現行）：表單宣告的出卡前預檢，
@@ -1171,6 +1600,10 @@ async def confirm_request(
     if closed_estate_id is not None:
         # S2：系統解析出的物件（與卡上那一行同一筆）；兩者互斥於 action（未結單只認 repair_create）。
         estate_id = closed_estate_id
+    if repair_estate_id is not None:
+        # A-2a：程式選定的物件（卡上「物件編號」那一行）＝物件記憶與範圍閘比對用的那一筆
+        # （⛔ 用 `open_repairs` 依名稱解析的結果——同名多筆時它解析不出）。
+        estate_id = repair_estate_id
     # 第六批 A：帳單由程式對到時，卡外多一行說明來源（與未結單提示行同一個機制、
     # 同一個欄位；兩者互斥於 action，故 ⛔ 不需要第二個欄位）。
     if matched_by_period and not hint:
@@ -1430,6 +1863,11 @@ async def redeem_token(
 
 __all__ = [
     "BILL_MATCH_HINT",
+    "CANDIDATE_TYPE_KEY",
+    "is_candidate_shape",
+    "candidate_fallback_result",
+    "write_name_candidates",
+    "pick_matches_name",
     "CLOSED_KEYS_TEXT_TEMPLATE",
     "closed_action_missing_labels",
     "closed_keys_text",

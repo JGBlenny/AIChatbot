@@ -478,13 +478,19 @@ async def repair_create(identity: Identity, args: dict) -> ToolResult:
 
     # 站內幫手 S5（A3(a)、S5-8）：物件以**這位成員看得到的**範圍解析（`viewer_user_id`）
     # ——看不到的物件與不存在同樣 `NO_MATCH`，⛔ 寫入別人看不到的物件。
-    estate = _resolve_estate(
-        jgb2_tools._rows_of(
-            await api.get_estate_status(role_id=role_id, keyword=estate_name,
-                                        viewer_user_id=user_id)
-        ),
-        estate_name,
-    )
+    # A-2a（計畫 §4.5 (iv)、§11 P1-1）：卡 payload 有 `estate_id`（只會是出卡前程式依選定寫入、
+    # 已綁進雜湊並印在卡上的那一筆；模型自帶的出卡前即丟）⇒ 只依編號確認仍看得到
+    # （`_visible_estate_by_id`，看不到 ⇒ `NO_MATCH`），⛔ 依名稱重解；沒有 ⇒ 現行名稱解析。
+    if "estate_id" in payload:
+        estate = await _visible_estate_by_id(api, role_id, user_id, payload["estate_id"])
+    else:
+        estate = _resolve_estate(
+            jgb2_tools._rows_of(
+                await api.get_estate_status(role_id=role_id, keyword=estate_name,
+                                            viewer_user_id=user_id)
+            ),
+            estate_name,
+        )
     if estate is None or estate.get("id") is None:
         return _no_match()
 

@@ -37,7 +37,7 @@ KNOWN_DEVIATIONS = (
      "anchors": (("runtime.py", "_pre_lookup_trigger"), ("runtime.py", "_enforce_tool_scope")),
      "has_comment": False},
     {"id": "KD-8", "row": "已選定的那筆紀錄", "takeover": "A-2", "comment_token": "A-2",
-     "desc": "打字挑選候選無程式路徑",
+     "desc": "唯讀查詢候選的打字挑選無程式路徑（寫入名稱多筆的挑選已由 A-2a 程式路徑接手）",
      "anchors": (("runtime.py", "_SELECT_VALUE_RE"),),
      "has_comment": False},
 )

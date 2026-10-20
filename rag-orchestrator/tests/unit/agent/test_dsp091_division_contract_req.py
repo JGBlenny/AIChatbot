@@ -25,7 +25,7 @@ import pytest
 
 from services.agent import runtime as runtime_mod
 from services.agent import write_forms as WF
-from services.agent.agent_session import SELECT_SCOPE_KEY
+from services.agent.agent_session import SELECT_SCOPE_KEY, WRITE_CANDIDATES_KEY
 from services.agent.budget import Budget
 from services.agent.output_schema import AgentOutput
 from services.agent.runtime import (
@@ -354,7 +354,10 @@ def test_kd5_probe_handoff_gate_only_acts_after_the_model_chose_handoff():
     body = [b for b in fn.body if not (isinstance(b, ast.Expr) and isinstance(b.value, ast.Constant))]
     first = ast.unparse(body[0])
     assert "result.kind != 'handoff'" in first and "return result" in first, KD_HINT.format(kd="KD-5")
-    pattern = "還有什麼|還有其他|還需要其他"
+    # A-2a（A2-R7）候選清單固定句「還有其他筆，不在其中請講編號」是候選清單的續列提示、
+    # 不是收尾規則 ⇒ 只排除「還有其他筆」這一個寫法（負向前瞻），其餘收尾詞照舊掃。
+    pattern = "還有什麼|還有其他(?!筆)|還需要其他"
+    assert re.search(pattern, "還有其他需要幫忙的嗎") and not re.search(pattern, "還有其他筆，不在其中請講編號。")
 
     def string_constants(path: Path) -> list:
         tree = ast.parse(path.read_text(encoding="utf-8"))
@@ -395,20 +398,25 @@ async def test_kd7_probe_read_query_args_are_the_models(api):
 
 
 async def test_kd8_probe_typed_candidate_pick_has_no_program_path(api):
-    """KD-8：只有 `select:` 按鈕能挑候選；打字說出候選名稱不會釘住範圍。"""
+    """KD-8（A-2a 後範圍收窄，A2-R10）：唯讀查詢的候選只有 `select:` 按鈕能釘住範圍；打字說出候選名稱
+    不會釘住範圍、也不會建寫入候選集。寫入名稱多筆的打字選定已由 A-2a 程式路徑接手（`pick:` ／
+    `pick_id`，見 `test_a2a_write_candidates_req.py`），不在本探針範圍。"""
     _anchor_present("KD-8")
     assert runtime_mod._SELECT_VALUE_RE.pattern.startswith("select:") or "select:" in \
         runtime_mod._SELECT_VALUE_RE.pattern, KD_HINT.format(kd="KD-8")
     assert runtime_mod._SELECT_VALUE_RE.fullmatch("基隆溫馨一人宅套房") is None
+    title = "台北文山-離塵一房(國泰)"                       # mock 兩筆同名物件（40303、26007）
     w = _World()
-    res, _p = await _turn_p(
-        w, f"{KEELUNG_ESTATE} 7月那期 延後 3 天",
-        [_proposal({"action": "bill_due_extend", "estate_name": KEELUNG_ESTATE, "period": "7月那期",
-                    "days": 3}), _out()])
-    assert res.quick_replies and res.quick_replies[0]["value"].startswith("select:")
-    label = res.quick_replies[0]["label"]
-    res2, _p2 = await _turn_p(w, label, [_out()], intents=[_intent("none")])
-    assert (w.state.get("agent") or {}).get(SELECT_SCOPE_KEY) is None, KD_HINT.format(kd="KD-8")
+    res, provider = await _turn_p(
+        w, f"{title} 現況如何",
+        [_call("jgb2.query.estates", {"face": "物件現況診斷", "keyword": title}), _out()],
+        intents=[_intent("none")])
+    sent = [r for n, _a, r in w.reg.results if n == "jgb2.query.estates"]
+    assert sent and len((sent[0].data or {}).get("candidates") or []) >= 2   # 前提：唯讀查詢回多筆候選
+    res2, _p2 = await _turn_p(w, title, [_out()], intents=[_intent("none")])
+    agent = w.state.get("agent") or {}
+    assert agent.get(SELECT_SCOPE_KEY) is None, KD_HINT.format(kd="KD-8")
+    assert agent.get(WRITE_CANDIDATES_KEY) is None, KD_HINT.format(kd="KD-8")
 
 
 # ════════════════════════════════════════════════════════════════════
