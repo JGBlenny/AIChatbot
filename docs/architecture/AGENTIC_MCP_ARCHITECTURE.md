@@ -480,9 +480,36 @@ pid 不在本 session（含過期後舊鍵）⇒ 固定句「這筆確認已失�
 `state_claim_check_failed`。`prose_confirm_suspect`（`kind=ask` ∧ `ask_target=confirm_intent` ∧
 本回合無 `confirm.request`）直接當「等待確認」未對到，不呼叫判讀。判讀原文 ⛔ 進 trace、snapshot、log。
 
-### 回合的全部終止點（一張表，16 列）
+**寫入時名稱對到多筆的候選清單**（A-2a，DSP-103；`AGENT_WRITE_CANDIDATES` on 且 A+ 三開關 on，`_write_candidates_active`）：
+程式依草稿出卡時，`manual_bill_create`（合約、物件）、`contract_create`（物件）、`repair_create`（物件）、
+`bill_due_extend`（帳單）的名稱對到多筆 ⇒ `_write_candidates_exit` 由程式列清單結束回合：
+候選列出自出卡前同一次帶 viewer 的查詢（只在 `role_id` 與 `user_id` 皆有值時列），候選集
+`agent_state["write_candidates"]`（`{action, field, type, ids≤20, has_more, name_fp, creator, picked}`，
+`write_candidates.load_write_candidates` 驗形狀）存全部 ≤20 個編號，畫面列前 5 筆＋每筆一顆
+`pick:<contract|estate|bill>:<id>` 按鈕，多於 5 筆或上游還有下一頁接 `CANDIDATES_MORE_TEXT`
+（「還有其他筆，不在其中請講編號。」）。選定兩條路，成立與否都由程式判：
+(a) 按鈕：`pick:` `fullmatch` 後由 `_write_candidate_pick_begin` 判（候選集、建立者、型別、欄位、
+編號、草稿動作皆吻合，且非點選範圍、文件、影子回合）；不成立回 `CANDIDATE_PICK_INVALID_TEXT`、
+⛔ 任何 JGB 查詢與模型呼叫；(b) 打字：意圖判斷呼叫附上候選集內各列（nonce 資料段）與 `pick_id` 動態 enum，
+`_write_candidates_typed` 只收候選集內編號；整句是候選集外的編號 ⇒ 帶 viewer 精確查、名稱相同才成立
+（`pick_matches_name`）；其餘非問句重列同一份候選。選定成立後程式依草稿觸發 `confirm.request`，
+選定編號只經程式專用通道 `program_pick`（`ToolRegistry.call` 具名參數，唯一設定點在程式依草稿觸發處）
+傳到 `_prepare_closed_action`；模型參數裡的 `estate_id`／`contract_id` 一律丟棄（模型給的 `bill_id`
+維持現行路徑）。候選集在 `clear_write_draft` 與出卡時清除；由 `program_pick` 出的卡，選定改存在該待確認筆
+（`write_candidates.CARD_PICK_KEY`，讀回以 `load_card_pick` 驗形狀、建立者、名稱指紋），卡後更正其他欄位時
+程式依草稿重出卡。可帶回的回合，意圖判斷呼叫多一個必填封閉欄位 `record_rechoice`（`same`／`other`，
+`write_forms.RECORD_RECHOICE_KEY`；AI 只回答使用者這句有沒有要換另一筆紀錄，⛔ 回編號），其餘回合系統句與
+schema 不變。只有 AI 恰好回 `same`、那張卡在本回合燒卡前仍有效、草稿是同一份、名稱欄未改，才由
+`_write_candidates_card_pick` 帶回同一筆（仍經 `program_pick`、出卡端照樣帶 viewer 精確查）；回 `other`、
+沒回、值不合或意圖呼叫失敗 ⇒ 不帶回，照草稿名稱重新解析，名稱多筆即重列候選（同一句改的其他欄位保留）；
+名稱欄改成別的名稱則照新名稱重新解析。trace 只記型別與筆數：
+`write_candidates_shown:<型別>:<n>`、`write_candidate_pick:button|typed`、`write_candidate_pick_invalid`、
+`write_candidate_reask`、`write_candidate_carry:same|declined`、`write_candidate_rechoice`。
+開關 off ⇒ 名稱多筆的出口與 B 逐字相同。
 
-⚠️ **引用時指明顆粒度**：表是 **16 列**，但**列數 ≠ 終止點數**——第 4 列「文件禁寫／文件不可讀／照片三條」一列就含 5 個終止點。⛔ 不要報「共 N 個終止點」這種彙總數字，它從表裡導不出來；要數就照段一六條＋段四四道各自數。
+### 回合的全部終止點（一張表，18 列）
+
+⚠️ **引用時指明顆粒度**：表是 **18 列**，但**列數 ≠ 終止點數**——第 4 列「文件禁寫／文件不可讀／照片三條」一列就含 5 個終止點。⛔ 不要報「共 N 個終止點」這種彙總數字，它從表裡導不出來；要數就照段一六條＋段四四道各自數。
 
 | 出口 | 從哪來 | `kind` |
 |---|---|---|
@@ -498,6 +525,8 @@ pid 不在本 session（含過期後舊鍵）⇒ 固定句「這筆確認已失�
 | 確認卡 | 段三 `confirm.request` 成功**對到單筆** | `ask` |
 | **確認候選清單** | 段三 `confirm.request` 對到**多筆**（`_bill_candidates_result` ⇒ `_begin_pending_confirm` 候選分支）；⛔ 不建 pending、⛔ 不發 token | `ask` |
 | **範圍外不出卡** | 段三 `_scope_gate_confirm_request`（⛔ 不經 `exit_gates.finalize`，是段三獨立的 return） | `answer` |
+| **寫入候選清單** | 段三：程式依草稿出卡時名稱對到多筆（`_write_candidates_exit`，`AGENT_WRITE_CANDIDATES` 生效）；程式列清單＋`pick:` 按鈕、寫候選集；⛔ 出卡、⛔ 建 token、⛔ 寫草稿 | `ask` |
+| **候選選定失效** | 段三前：`pick:` 機器值不成立（`_write_candidate_pick_begin`）⇒ `CANDIDATE_PICK_INVALID_TEXT`；⛔ JGB 查詢、⛔ 動草稿與 token、⛔ 呼叫模型 | `ask` |
 | **寫入情境程式狀態回話** | 段三：寫入情境回合模型輸出被丟棄（`_write_reply_program_exit`）、提議未發或程式呼叫非終結（`_write_reply_kd3_exit`）；⛔ 不經段四 | `ask`／`answer` |
 | **帶狀態句換句** | 段三判讀閘（`_state_claim_replace_exit`）；⛔ 不經段四 | `answer`／`ask` |
 | 模型正常作答（過 Verifier、判讀閘） | 段三 → 段四（乙′ 回合由 `_write_reply_model_plus_status` 接狀態行） | `answer`／`ask`／`recommend`／`handoff` |
@@ -890,6 +919,7 @@ file_urls/image_urls
 | 額度與速率**五道上限**（`AGENT_TURN_CAP`／`RATE_PER_MIN`／`KB_GET_CAP`／`IMAGE_COUNT_CAP_PER_HOUR`／`FILE_COUNT_CAP_PER_HOUR`）。🔴 **⛔ 每回合預算不在內**——前一版把它一起列進來是錯的，`limits.py` docstring 逐字寫「每回合預算（`Budget`）不在此，仍由 `bootstrap.py` 管（`AGENT_BUDGET_*` env，未變動）」 | 改由 `services/agent/limits.py` 程式內封閉表 | **DSP-045（2026-09-10）**：⛔ 不再讀 env 覆寫（業主：「env 沒人記得」）；預設寬鬆只擋惡意（回合 1200/h、工具 600/min、kb.get 3000/h、照片 600/h、PDF 100/h）；生效值由 `/api/v1/agent/health` 回報 |
 | `AGENT_BUDGET_TOOL_CALLS`／`AGENT_BUDGET_DEADLINE_S`／`AGENT_TURN_TIMEOUT_S` | 3／20／90 | 每回合工具呼叫上限／回合預算（秒）／門面逾時（秒）。工具上限與時間上限 2026-10-15 業主「照建議」（本機同批題目量測：上限 4＝答出 12／20，上限 3＝13／20，上限 2＝13／20 但報修首句皆轉人）；門面逾時 90 讓文件回合預算拿滿（`min(DOCUMENT_MAX_BUDGET_S=45, 逾時/2)`）。延遲三層見 §8 |
 | `AGENT_WRITE_REPLY_PROGRAM`／`AGENT_STATE_CLAIM_GATE` | 未設（＝on） | B 片開關，值域 on／off、未設或空字串＝on、其他值啟動失敗；off ⇒ 寫入情境回話與帶狀態句判讀閘回到 B 片前行為（`write_forms.write_reply_program_enabled_from_env`、`state_claim.state_claim_gate_enabled_from_env`）。判讀呼叫用對話模型與 `AGENT_REASONING_EFFORT` |
+| `AGENT_WRITE_CANDIDATES` | 未設（＝on） | A-2a 片開關（DSP-103），值域 on／off、未設或空字串＝on、其他值啟動失敗；只在 A+ 三開關皆 on 時生效；off ⇒ 寫入時名稱對到多筆回到 B 行為（不列候選、無 `pick:` 按鈕）（`write_forms.write_candidates_enabled_from_env`） |
 | `UVICORN_WORKERS` | 1 | `/mcp` 與行程內計數需單 worker |
 | `MCP_ALLOWED_ORIGINS` | `-` | 伺服器對伺服器不送 Origin |
 

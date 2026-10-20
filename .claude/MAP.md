@@ -197,6 +197,8 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 - 驗收 | `.kiro/specs/agentic-mcp-orchestration/acceptance-division-guard-20261020.md` | DG 片凍結驗收：業主原話、規則 DG-R1～R7、清單 V0～V9
 - 計畫 | `.kiro/specs/agentic-mcp-orchestration/plan-b-write-replies-program-20261020.md` | B 片計畫（業主 2026-10-20 核可，DSP-099）：寫入情境回話由程式、帶狀態句判讀閘、候選清單分給模型／給人兩份；業界依據、差距、B1～B7、回復與停點
 - 驗收 | `.kiro/specs/agentic-mcp-orchestration/acceptance-b-write-replies-program-20261020.md` | B 片凍結驗收：業主原話 1～9、規則 B-R0～B-R15、清單 V0～V16
+- 計畫 | `.kiro/specs/agentic-mcp-orchestration/plan-a2a-write-candidates-20261020.md` | A-2a 片計畫（業主 2026-10-20 核可，DSP-103）：寫入時名稱對到多筆由程式列候選、`pick:` 按鈕與打字選定、程式專用選定通道；業界依據、差距、偏離、停點與審查處置
+- 驗收 | `.kiro/specs/agentic-mcp-orchestration/acceptance-a2a-write-candidates-20261020.md` | A-2a 片凍結驗收：業主原話 1～5、規則 A2-R0～A2-R13、非目標 N1～N2、清單 V0～V17（含 V2b）
 - 判準 | `rag-orchestrator/tests/unit/agent/test_b_write_replies_program_req.py` | B 片單元驗收：KD-3／KD-4 接手、寫入情境程式回話、乙′、判讀閘（含失敗 fail-closed、nonce 資料段、原文不落紀錄）、讀到的值、候選清單不外漏提示
 - 判準 | `rag-orchestrator/tests/unit/agent/test_dsp091_division_contract_req.py` | DSP-091 分工契約測試：程式列 R1～R6 必過契約、已知偏離現況探針（偏離消失即失敗，清單只減不增）、靜態檢查
 - 判準 | `rag-orchestrator/tests/unit/agent/dsp091_known_deviations.py` | 已知偏離登記 `KNOWN_DEVIATIONS`（須與目標正本 §3.1 同一組 KD 與接手片）、`DIVISION_ROWS`

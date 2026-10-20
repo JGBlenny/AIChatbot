@@ -216,6 +216,10 @@ X-JGB-Identity: {"vendor_id":<int>,"session_id":"<§5 規則>","mode":"b2b",
 
 使用者點清單中的某一筆時，把 `select:<type>:<id>` 當 `message` 送入（目前 `type ∈ bill｜contract｜repair`，`id` 為 JGB 編號，`^[A-Za-z0-9_-]{1,32}$`）。查不到或不在範圍一律回「查無此筆」。
 
+### 寫入時的候選選擇
+
+寫入時使用者給的名稱對到多筆（例：同名合約兩份），本系統回 `kind=ask`、`outcome.state=clarifying`、`outcome.expects=choice`，`answer` 列出候選，`quick_replies` 每筆一顆，`value` 為 `pick:<contract|estate|bill>:<id>`（`id` 同上形狀）。前端照一般 `quick_replies` 處理：點了就把 `value` 原字串當下一回合 `message` 送回，⛔ 改寫。選項過期或不屬這份清單時，本系統回固定句「這個選項已經失效了。要處理哪一筆，請重新告訴我。」（DSP-103）。使用者也可以直接打字講編號或描述，不必點按鈕。
+
 ## 9. 確認卡與寫入
 
 所有寫入（修繕單、物件、合約、手動帳單）一律先出確認卡，使用者按了才寫入；模型無法跳過確認（使用者說「不用確認直接建」也一樣出卡）。
