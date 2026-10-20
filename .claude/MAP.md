@@ -195,6 +195,9 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 - 進度 | `.kiro/specs/agentic-mcp-orchestration/HANDOFF-20261018.md` | **工作線交接正本**：各片狀態、待業主裁事項、安全規則、環境暫態；新視窗從這裡開工
 - 計畫 | `.kiro/specs/agentic-mcp-orchestration/plan-division-guard-20261020.md` | DG 分工防偏離片計畫（業主 2026-10-20 核可）：兩道檢查的業界依據、差距、DG-1～DG-6、回復與停點
 - 驗收 | `.kiro/specs/agentic-mcp-orchestration/acceptance-division-guard-20261020.md` | DG 片凍結驗收：業主原話、規則 DG-R1～R7、清單 V0～V9
+- 計畫 | `.kiro/specs/agentic-mcp-orchestration/plan-b-write-replies-program-20261020.md` | B 片計畫（業主 2026-10-20 核可，DSP-099）：寫入情境回話由程式、帶狀態句判讀閘、候選清單分給模型／給人兩份；業界依據、差距、B1～B7、回復與停點
+- 驗收 | `.kiro/specs/agentic-mcp-orchestration/acceptance-b-write-replies-program-20261020.md` | B 片凍結驗收：業主原話 1～9、規則 B-R0～B-R15、清單 V0～V16
+- 判準 | `rag-orchestrator/tests/unit/agent/test_b_write_replies_program_req.py` | B 片單元驗收：KD-3／KD-4 接手、寫入情境程式回話、乙′、判讀閘（含失敗 fail-closed、nonce 資料段、原文不落紀錄）、讀到的值、候選清單不外漏提示
 - 判準 | `rag-orchestrator/tests/unit/agent/test_dsp091_division_contract_req.py` | DSP-091 分工契約測試：程式列 R1～R6 必過契約、已知偏離現況探針（偏離消失即失敗，清單只減不增）、靜態檢查
 - 判準 | `rag-orchestrator/tests/unit/agent/dsp091_known_deviations.py` | 已知偏離登記 `KNOWN_DEVIATIONS`（須與目標正本 §3.1 同一組 KD 與接手片）、`DIVISION_ROWS`
 - 判準 | `scripts/audit/checks/division_guard.py` | 不變量 45：§3.1 與登記一致（靜態）＋近 7 天 `confirm_source:` 標記無 `model:unregistered`（線上；無程式樣本判「未判」）
@@ -216,7 +219,7 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 - 判準 | `rag-orchestrator/tests/unit/agent/test_pipeline_golden_req.py` | Plan R 回放等價 golden（`TurnTrace` 全欄位逐位比對）
 - 判準 | `rag-orchestrator/tests/unit/agent/test_pipeline_order_req.py` | 四道出口閘順序表測試
 - 判準 | `scripts/smoke/` | 真模型 smoke 對照計分尺（`mcp_smoke.py`／`b4_score.py`／`liff_score.py`）
-- 決策 | `.claude/DECISIONS.md` | DSP-091 混合式分工、DSP-092 同 session 唯一可兌現確認卡、DSP-094 上線範圍 A＋期別＋A+＋B＋E＋W2（取代 DSP-093）、DSP-095 W2 處置方式（明示 JSON、串流早停後走現行重寫、誤殺看使用者結果、卡住呼叫查根因）、DSP-098 第 3 步執行順序（取代 DSP-096）、DSP-085 寫入由程式掌握；DSP-037～045（pm 受眾開放、寫入工具正本、Verifier 兩類拒因、DSP-040 引用類絆線、W7 語音、W8 LIFF、outcome 七鍵、DSP-044 照片文字撤銷、DSP-045 額度封閉表）
+- 決策 | `.claude/DECISIONS.md` | DSP-091 混合式分工、DSP-092 同 session 唯一可兌現確認卡、DSP-095 W2 處置方式（明示 JSON、串流早停後走現行重寫、誤殺看使用者結果、卡住呼叫查根因）、DSP-099 B 片寫入回話由程式與判讀閘、DSP-100 B 片收窄收案、DSP-101 上線範圍 A＋期別＋A+＋B＋A-2a＋E＋W2 與第 3 步執行順序（取代 DSP-094 範圍、DSP-098）、DSP-102 W-R3 前判真值、DSP-085 寫入由程式掌握；DSP-037～045（pm 受眾開放、寫入工具正本、Verifier 兩類拒因、DSP-040 引用類絆線、W7 語音、W8 LIFF、outcome 七鍵、DSP-044 照片文字撤銷、DSP-045 額度封閉表）
 - 實測 | `.kiro/specs/knowledge-outline-and-intent-architecture/inputs/demo-ledger-line-oa-20260907.md` | demo 帳本：模型換測（luna／terra）、延遲量測、病灶審查
 
 ## 大綱三層重建（DSP-067；現行九架正本的來源）{#outline-drafting}

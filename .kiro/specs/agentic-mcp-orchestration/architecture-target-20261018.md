@@ -170,8 +170,8 @@
 | P4 | **沒有指令層**：模型在 `_run_model_loop` 自由選工具、自由寫句子、自填 `kind`／`ask_target`／`handoff_reason`；寫入另有一支意圖呼叫 `_start_write_intent_call`（輸出 `write_intent`，DSP-085）——是寫入專用的指令雛形，知識、查詢、轉人沒有 | `grep -n "def _run_model_loop\|def _start_write_intent_call" rag-orchestrator/services/agent/runtime.py` | 同句首已給物件仍被追問（W-R4 k2，根因待 A0） |
 | P1 | 草稿出卡即清（G1）；「修改」與取消同一路（G2）；無卡後更正（G3）；enum 由模型填代碼（G4）；送出前預檢缺（G6）；同 session 可並存多張可兌現卡（`PENDING_CONFIRM_MAX = 20`）；一般寫入回合的模型自呼 `confirm.request` 只當提議、出卡由程式依草稿觸發（A+，`AGENT_WRITE_PROPOSAL` 等三開關皆 on），**文件回合、文件暫存回合、點選範圍回合仍以模型參數出卡**（點選範圍由 A-2、文件回合由「文件回合」片接手；§3.1 KD-1、KD-2） | 第 3 步計畫 §3 G1～G6；`grep -n "PENDING_CONFIRM_MAX =" rag-orchestrator/services/agent/runtime.py rag-orchestrator/services/agent/agent_session.py`；`grep -n "def _write_proposal_handle\|SELECT_SCOPE_KEY) is None" rag-orchestrator/services/agent/runtime.py` | 延期 0/10；只列 5 張帳單 13 場；急迫程度相反 6 場；反覆「還需要」11 場 |
 | P5 | 更正：只有草稿內同欄覆寫（`_write_draft_merge_intent`）。取消：有（`CANCELLED_TEXT`）。**中斷回原流程：無**——單一草稿，換動作由 `_write_draft_target` 新建、舊的丟棄，無流程堆疊。澄清：有固定句 `ASK_TARGET_TEXT`。候選：只有按鈕 `select:` fullmatch（G5），打字挑選無程式路徑（純 4～9 位數字走 `_pre_lookup_trigger`） | `grep -n "def _write_draft_target\|def _pre_lookup_trigger\|_SELECT_VALUE_RE = re.compile" rag-orchestrator/services/agent/runtime.py` | 換錯帳單 2 場（W-D4 k2 已寫入 760897）；I-1 插問未答 |
-| P2 | 出口閘與 Verifier 不比對「說請確認／說完成」與實際狀態（G7）；runtime 只有 `prose_confirm_suspect` **統計**（不改寫）；確認卡與收據本身是程式文字（DSP-038） | `grep -n "prose_confirm_suspect" rag-orchestrator/services/agent/runtime.py`；verifier `verify` 簽名無寫入／出卡狀態參數 | 文字說請確認卻未出卡 ≥4；按確認但無按鈕 7；假收據 1（C-C k1） |
-| P3 | 候選清單把給模型的提示接進使用者回答（G8）；資料段注入 10 處（`TurnAccumulator.inject`，註解仍寫「九段」） | 第 3 步計畫 §3 G8；`grep -n "acc.inject(" rag-orchestrator/services/agent/runtime.py` | 給人的回覆夾內部提示（第 2 步報告） |
+| P2 | 寫入情境回合（草稿存活或 session 有綁定卡）的回話由程式依狀態產生（`_write_reply_state`：卡仍有效、卡未變、卡不同、缺欄追問、未送出、無待確認），只重出既有卡、⛔ 出新卡；提議未發、程式呼叫非終結由程式結束回合（`_write_reply_kd3_exit`）；問句回合模型的 `answer` 可送、程式接狀態行（`_write_reply_model_plus_status`），`ask`／`recommend` 一律換成程式回話；以上依賴 A+ 出卡開關。每則模型撰寫的回覆在一般出口前經帶狀態句判讀閘（`_state_claim_gate`：LLM 判讀等待確認／已完成／已取消／已轉人四類，對不到程式狀態事件即換程式句；判讀失敗時可出卡的回合 fail-closed）；`prose_confirm_suspect` 結構條件直接視為未對到。開關 `AGENT_WRITE_REPLY_PROGRAM`、`AGENT_STATE_CLAIM_GATE`（未設＝on）。Verifier 本身仍不比對狀態（G7）；確認卡與收據是程式文字（DSP-038） | `grep -n "def _write_reply_state\|def _write_reply_kd3_exit\|def _write_reply_model_plus_status\|def _state_claim_gate" rag-orchestrator/services/agent/runtime.py`；`grep -n "def judge_state_claims" rag-orchestrator/services/agent/state_claim.py` | 文字說請確認卻未出卡 ≥4；按確認但無按鈕 7；假收據 1（C-C k1） |
+| P3 | 候選清單分給模型與給人兩份：給模型的 `_candidates_text` 含提示句（`CANDIDATES_MODEL_HINT_HEADER`／`FOOTER`），給人的 `candidates_text_for_user` 只列程式解析出的列值；資料段注入 10 處（`TurnAccumulator.inject`，註解仍寫「九段」） | `grep -n "def _candidates_text\|def candidates_text_for_user" rag-orchestrator/services/agent/tools/jgb2.py`；`grep -n "acc.inject(" rag-orchestrator/services/agent/runtime.py` | 給人的回覆夾內部提示（第 2 步報告） |
 | P6 | 知識只來自正本目錄＋細目，`reviewed` 為唯一門（DSP-066）；Verifier 引用類只觀察不擋（DSP-040，`grounding_observe`）；部分回答＋說缺什麼已做政策文（`a6df614c`）；查無多走轉人固定句；**Verifier 步⑦ 的轉人字眼 `HANDOFF_WORDS` 含「沒有資料」且屬安全類（照擋）**——AI 說明缺什麼而本回合未轉人會被拒 | `grep -n "_OBSERVED_CLASSES_BY_MODE" rag-orchestrator/services/agent/verifier.py`；`grep -n "^HANDOFF_WORDS" rag-orchestrator/services/presales_gate.py`；`grep -n '"HANDOFF_WORD_NO_HANDOFF": "safety"' rag-orchestrator/services/agent/verifier.py`；AGENTIC_MCP §4b | 知識嚴格解決 11/20；缺必要事實 5 場；第 2 步捏造 10/36 |
 | P7 | 轉人有五個來源（模型自報、預算耗盡、範圍退出、程式降級、工具查無）；**無「先詢問再轉」、無收尾模式**——查 `還有什麼\|還有其他\|還需要其他` 於本目錄只命中 `runtime.py` 一行註解（正對照：查法有效），程式無收尾句；有連續固定句計數 `fixed_streak`（用途未查） | `grep -rn "還有什麼\|還有其他\|還需要其他" rag-orchestrator/services/agent/`；AGENTIC_MCP §4b | 道謝後轉真人 3 場 |
 | P8 | `/mcp` 回七鍵 `AgentTurnOutput`（`structured_output=True`），卡只以文字放 `answer`，門面不轉發 `card`；按鈕為 `quick_replies {label, value}` | `grep -n "class AgentTurnOutput\|structured_output=True" rag-orchestrator/services/agent/mcp_facade.py` | 接入方只能顯示文字卡（第 3 步計畫 G9） |
@@ -186,8 +186,6 @@ M0 缺陷 → 原則對照（AR1）：延期列 5 張→P1（A0 根因）；換�
 |---|---|---|---|
 | KD-1 | 點選範圍、唯讀檢視回合：模型自呼 `confirm.request` 的參數照舊執行出卡 | 寫入全程、已選定的那筆紀錄 | A-2 |
 | KD-2 | 文件回合、文件暫存有效回合：模型參數出卡；文件程式發卡的非終結結果交回模型 | 寫入全程 | 文件回合 |
-| KD-3 | 提議未轉成程式呼叫、程式呼叫結果非終結時，由模型寫寫入中的回話 | 寫入全程、帶狀態的句子 | B |
-| KD-4 | 模型自寫「請確認」類句子只統計不改寫；寫入欄位追問可由模型自寫 | 帶狀態的句子 | B |
 | KD-5 | 轉人由模型輸出決定，出口閘只在模型選了轉人後介入；無收尾規則 | 轉人規則（含收尾） | E |
 | KD-6 | 知識完全查無沒有程式先發的出口 | 知識完全查無的出口 | D |
 | KD-7 | 唯讀查詢的參數由模型自呼工具決定 | 唯讀查詢的查詢與篩選 | G |
@@ -203,9 +201,10 @@ M0 缺陷 → 原則對照（AR1）：延期列 5 張→P1（A0 根因）；換�
 | A | 寫入全程由程式持有：A0 根因、A1 草稿生命週期、A2 卡後更正、A3 修改鍵、A4 enum 由程式轉碼、A6 宣告式預檢、A7 唯一有效卡、A8 單一動作登錄 | P1、P5（更正） | 延期列 5 張、急迫程度相反、反覆還需要、卡後改欄位、按修改 | 已收案：計畫 `plan-conversation-architecture-step3-20261018.md`、驗收 `acceptance-conversation-architecture-step3-20261018.md`；報告 `~/jgb-archive/arch-step3-20261018/ra/report-ra.md` |
 | A+ | 出卡只由程式依草稿觸發：收掉模型自己呼叫 `confirm.request` 出卡的路徑，模型改為提出寫入意圖 | P1、P4 | 反覆還需要（模型自呼路徑） | 計畫 `plan-card-program-only-aplus-20261019.md`、凍結驗收 `acceptance-card-program-only-aplus-20261019.md`（2026-10-19 業主核可；2026-10-20 已收案，fresh verifier CONFIRMED）；報告 `~/jgb-archive/arch-step3-20261018/aplus/report-aplus.md` |
 | DG | 分工防偏離：DSP-091 分工契約測試＋已知偏離登記（§3.1）＋`make audit` 不變量 45（確認卡與缺欄追問的來源） | P0 | —（防止已接手環節退回模型） | 計畫 `plan-division-guard-20261020.md`、凍結驗收 `acceptance-division-guard-20261020.md`（2026-10-20 業主核可） |
-| A-2 | 候選選擇（打字挑選、挑完回原流程） | P5 | 換錯帳單 | 待 A 後出片，先送 security-reviewer |
+| A-2a | 寫入時名稱對到多筆紀錄（例：合約同名兩筆）由程式列出候選，使用者選定後回原流程；範圍與選定方式由該片計畫定（DSP-101） | P5、P1 | 反覆還需要（合約同名）；B 後合約同名候選清單可見 20/20 → 13/20 | 待出片（B 之後、W2 之前） |
+| A-2 | 候選選擇的其餘部分（A-2a 以外的打字挑選、挑完回原流程） | P5 | 換錯帳單 | 待 A 後出片，先送 security-reviewer |
 | 文件回合 | 文件回合、文件暫存有效回合的出卡改由程式依草稿觸發；文件程式發卡的非終結結果不交回模型（§3.1 KD-2；須相容 DSP-076 文件值暫存規則） | P1 | —（KD-2） | 待出片 |
-| B | 寫入進行中回話全由程式樣板；工具結果分給模型／給人兩份 | P2、P3 | 文字請確認、無按鈕、假收據、回覆夾內部提示 | 待 A 後出片 |
+| B | 寫入進行中回話全由程式樣板；工具結果分給模型／給人兩份 | P2、P3 | 文字請確認、無按鈕、假收據、回覆夾內部提示 | 計畫 `plan-b-write-replies-program-20261020.md`、凍結驗收 `acceptance-b-write-replies-program-20261020.md`（2026-10-20 業主核可；同日收窄宣稱收案，fresh verifier CONFIRMED，DSP-100）；報告 `~/jgb-archive/arch-step3-20261018/b/report-b.md` |
 | E | 收尾與轉人規則：道謝即收尾、卡住先詢問且不連發、明確要求直接轉 | P7 | 道謝轉人 | 待 B 後出片 |
 | D | 知識不捏造／完整：不足時由 AI 說明缺什麼、部分回答、追問（Verifier 把關依據；步⑦ 不再把「說明缺什麼」當轉人字眼擋）；完全查無走程式的「處理不了」出口 | P6 | 知識缺事實、捏造 | 另起計畫 |
 | C | `agent.turn` 加結構化 `card`，`answer` 留文字備援；JGB 端需求稿 | P8 | 無結構卡 | 待出片（跨元件） |
@@ -214,7 +213,7 @@ M0 缺陷 → 原則對照（AR1）：延期列 5 張→P1（A0 根因）；換�
 | W2 | 主模型輸出失控（灌空白至輸出上限）處置：system 明示只輸出 JSON＋串流早停後走現行重寫；整回合逾時切斷進行中的呼叫；備援模型後議 | （執行層韌性，不屬分層原則） | A 後 20 場失敗中 6 場主因 | 計畫 `plan-truncation-w2-20261017.md`、驗收 `acceptance-truncation-w2-20261017.md`（DSP-094、DSP-095） |
 | 期別 | 期別年份解析：「YYYY年M月」年份被丟、推成最近的過去月份 | P1 | A 後 20 場失敗中 8 場主因 | 計畫 `plan-period-parse-20261019.md`、驗收 `acceptance-period-parse-20261019.md`；含期別值閘改比對解析值（DSP-094） |
 
-順序：A → 期別 → A+ → DG → B → W2 → E → D → C → G → A-2 → 文件回合 → F（DSP-098）。上線最低範圍：A、期別、A+、B、E、W2（DSP-094）。
+順序：A → 期別 → A+ → DG → B → A-2a → W2 → E → D → C → G → A-2 → 文件回合 → F（DSP-101）。上線最低範圍：A、期別、A+、B、A-2a、E、W2（DSP-101）。
 
 不在範圍：業者端敏感題程式防線（另案）。
 

@@ -390,10 +390,18 @@ while True:
          ⛔ 不等於「非敏感」——budget_exhausted 非敏感卻不在集合內，T2 出口正是靠這個差別成立
       ⚠️ 兩條在**預算已耗盡時直接跳過**，⛔ 不走 rewrite_exhausted——否則
          handoff_reason 會變成 budget_exhausted，T2 出口閘永遠到不了
+      寫入情境回合（草稿存活或 session 有綁定卡；`_write_context_turn`）且 kind≠handoff：
+        非問句回合的任何 kind、問句回合的 ask／recommend ⇒ 模型文字丟棄，
+          程式狀態回話結束回合（`_write_reply_program_exit`，見階段 3 末）
+        問句回合的 answer ⇒ 往下走，最後由程式接狀態行（乙′）
       resolve_refs(out, tool_results_by_id, nonce)  ← nonce 是「出自本回合」的唯一憑據
       verifier.verify(...)  九步（見下）
       verdict.ok=False ⇒ 記一次 rewrite、回結構化拒因＋修法句、continue
-      verdict.ok=True  ⇒ 組 TurnResult → finalize
+      verdict.ok=True  ⇒ 帶狀態句判讀閘（`_state_claim_gate`，kind≠handoff）：
+        LLM 判讀回覆是否宣稱等待確認／已完成／已取消／已轉人，任一類對不到程式狀態事件
+        ⇒ 模型文字 ⛔ 送出、⛔ 進 dialog，換程式句（`_state_claim_replace_exit`）
+        ⇒ 組 TurnResult（句末標點正規化只套模型文字）
+        ⇒ 乙′ 回合：`_write_reply_model_plus_status` 接狀態行；其餘 finalize
 ```
 
 **Verifier：程式自述「七步」、本文列「九步」——⛔ 不是矛盾，是顆粒度不同。**
@@ -417,8 +425,11 @@ confirm.request(summary, payload)
   模型自呼：A+ 三開關皆 on ⇒ 只當提議——_write_proposal_merge 把參數（巢狀 {action, payload}
     只解一層）經值閘併入草稿，程式決定出卡、追問，或回固定句（提議沒有值時：
     卡仍有效且草稿＝卡 ⇒ PROPOSAL_NO_VALUE_CARD_TEXT＋同一張卡，否則 PROPOSAL_NO_VALUE_TEXT）；
-    回合沒有因此結束時（凍結回合、同回合已觸發、動作不合等），模型拿到封閉結果
-    HANDLED_BY_PROGRAM／NO_MATCH，⛔ 退回以模型參數執行。
+    回合沒有因此結束時（凍結回合、同回合已觸發、動作不合等），⛔ 退回以模型參數執行；
+    `AGENT_WRITE_REPLY_PROGRAM` on 時，寫入情境的非問句回合由程式結束回合
+    （`_write_reply_kd3_exit` ⇒ 程式狀態回話，不再叫模型寫回覆）；問句回合模型拿到封閉結果
+    HANDLED_BY_PROGRAM／NO_MATCH 後回答提問，回覆經判讀閘，程式再接狀態行。程式呼叫結果
+    非終結時同此處置。
     例外（仍以模型參數呼叫）：文件回合、文件暫存有效回合、點選範圍回合（A-2 接手）、影子回合；
     開關 off 時亦同。
   → ⚠️ **成功有兩種形狀**：
@@ -452,9 +463,26 @@ confirm.request(summary, payload)
 失敗誠實回 `ACTION_FAILED_TEXT`；取消燒 token 但 ⛔ 不覆蓋既有 receipt；
 pid 不在本 session（含過期後舊鍵）⇒ 固定句「這筆確認已失效」。
 
-### 回合的全部終止點（一張表，14 列）
+**寫入情境的程式狀態回話**（`_write_reply_state`，`AGENT_WRITE_REPLY_PROGRAM` on 且 A+ 出卡開關 on；
+唯讀判定，⛔ 出新卡、⛔ 建 token）：依序 (1) 綁定卡仍有效且草稿＝卡 ⇒ `CARD_STILL_VALID_TEXT`＋這次讀到的值
+（`card_read_values_text`；使用者給的值被丟棄時改 `CARD_UNCHANGED_TEXT`、不列值）＋同一張卡與同 pid 三顆鍵；
+(2) 綁定卡有效、與草稿不同 ⇒ `CARD_DIFFERS_TEXT`＋卡；(3) 草稿缺欄 ⇒ `MISSING_FIELDS_ASK_TEMPLATE`
+（`WF.missing_labels` 依草稿算；欄位齊但封閉三動作的名稱對到多筆或物件無唯一有效合約 ⇒ 依出卡路徑
+同一支 `_prepare_closed_action` 的缺欄清單，`closed_action_missing_labels`）；(4) 有草稿未出卡，或無草稿但 session 有綁定卡 ⇒ `WRITE_NOT_ISSUED_TEXT`；
+(5) 無草稿、無綁定卡 ⇒ `NO_PENDING_WRITE_TEXT`。trace 記
+`write_reply_state:<分支>`、`write_reply_source:program`／`model_plus_status`。
+帶狀態句判讀閘（`state_claim.judge_state_claims`，`AGENT_STATE_CLAIM_GATE` on）：輸入只有回覆文字、
+以 nonce 資料段包住，輸出上限 200 token、逾時 4 秒；「等待確認」只指內容已整理好、只等使用者
+確認或送出的回覆，請使用者選哪一筆紀錄、提供或補充資料、核對名稱編號或條件的回覆不算
+（`STATE_CLAIM_SYSTEM_PROMPT`）；對不到事件記 `state_claim_unbacked:<類別>`，
+寫入情境回合換成上列狀態回話、其他回合換 `NO_PENDING_WRITE_TEXT`、已轉人換 `HANDOFF_OFFER_TEXT`；
+判讀失敗時可出卡回合（寫入情境、點選範圍、文件、文件暫存）同樣換句，其他回合照送並記
+`state_claim_check_failed`。`prose_confirm_suspect`（`kind=ask` ∧ `ask_target=confirm_intent` ∧
+本回合無 `confirm.request`）直接當「等待確認」未對到，不呼叫判讀。判讀原文 ⛔ 進 trace、snapshot、log。
 
-⚠️ **引用時指明顆粒度**：表是 **14 列**，但**列數 ≠ 終止點數**——第 4 列「文件禁寫／文件不可讀／照片三條」一列就含 5 個終止點。⛔ 不要報「共 N 個終止點」這種彙總數字，它從表裡導不出來；要數就照段一六條＋段四四道各自數。
+### 回合的全部終止點（一張表，16 列）
+
+⚠️ **引用時指明顆粒度**：表是 **16 列**，但**列數 ≠ 終止點數**——第 4 列「文件禁寫／文件不可讀／照片三條」一列就含 5 個終止點。⛔ 不要報「共 N 個終止點」這種彙總數字，它從表裡導不出來；要數就照段一六條＋段四四道各自數。
 
 | 出口 | 從哪來 | `kind` |
 |---|---|---|
@@ -470,7 +498,9 @@ pid 不在本 session（含過期後舊鍵）⇒ 固定句「這筆確認已失�
 | 確認卡 | 段三 `confirm.request` 成功**對到單筆** | `ask` |
 | **確認候選清單** | 段三 `confirm.request` 對到**多筆**（`_bill_candidates_result` ⇒ `_begin_pending_confirm` 候選分支）；⛔ 不建 pending、⛔ 不發 token | `ask` |
 | **範圍外不出卡** | 段三 `_scope_gate_confirm_request`（⛔ 不經 `exit_gates.finalize`，是段三獨立的 return） | `answer` |
-| 模型正常作答（過 Verifier） | 段三 → 段四 | `answer`／`ask`／`recommend`／`handoff` |
+| **寫入情境程式狀態回話** | 段三：寫入情境回合模型輸出被丟棄（`_write_reply_program_exit`）、提議未發或程式呼叫非終結（`_write_reply_kd3_exit`）；⛔ 不經段四 | `ask`／`answer` |
+| **帶狀態句換句** | 段三判讀閘（`_state_claim_replace_exit`）；⛔ 不經段四 | `answer`／`ask` |
+| 模型正常作答（過 Verifier、判讀閘） | 段三 → 段四（乙′ 回合由 `_write_reply_model_plus_status` 接狀態行） | `answer`／`ask`／`recommend`／`handoff` |
 | 四道閘改寫後的固定句 | 段四 | `answer`／`ask` |
 
 
@@ -859,6 +889,7 @@ file_urls/image_urls
 | `DOCUMIND_BASE_URL`／`DOCUMIND_TOKEN` | 未設 | 謄本解析；未設或不合規組合（非 https、無 Token）＝謄本功能關閉，使用者看到「未啟用」固定句 |
 | 額度與速率**五道上限**（`AGENT_TURN_CAP`／`RATE_PER_MIN`／`KB_GET_CAP`／`IMAGE_COUNT_CAP_PER_HOUR`／`FILE_COUNT_CAP_PER_HOUR`）。🔴 **⛔ 每回合預算不在內**——前一版把它一起列進來是錯的，`limits.py` docstring 逐字寫「每回合預算（`Budget`）不在此，仍由 `bootstrap.py` 管（`AGENT_BUDGET_*` env，未變動）」 | 改由 `services/agent/limits.py` 程式內封閉表 | **DSP-045（2026-09-10）**：⛔ 不再讀 env 覆寫（業主：「env 沒人記得」）；預設寬鬆只擋惡意（回合 1200/h、工具 600/min、kb.get 3000/h、照片 600/h、PDF 100/h）；生效值由 `/api/v1/agent/health` 回報 |
 | `AGENT_BUDGET_TOOL_CALLS`／`AGENT_BUDGET_DEADLINE_S`／`AGENT_TURN_TIMEOUT_S` | 3／20／90 | 每回合工具呼叫上限／回合預算（秒）／門面逾時（秒）。工具上限與時間上限 2026-10-15 業主「照建議」（本機同批題目量測：上限 4＝答出 12／20，上限 3＝13／20，上限 2＝13／20 但報修首句皆轉人）；門面逾時 90 讓文件回合預算拿滿（`min(DOCUMENT_MAX_BUDGET_S=45, 逾時/2)`）。延遲三層見 §8 |
+| `AGENT_WRITE_REPLY_PROGRAM`／`AGENT_STATE_CLAIM_GATE` | 未設（＝on） | B 片開關，值域 on／off、未設或空字串＝on、其他值啟動失敗；off ⇒ 寫入情境回話與帶狀態句判讀閘回到 B 片前行為（`write_forms.write_reply_program_enabled_from_env`、`state_claim.state_claim_gate_enabled_from_env`）。判讀呼叫用對話模型與 `AGENT_REASONING_EFFORT` |
 | `UVICORN_WORKERS` | 1 | `/mcp` 與行程內計數需單 worker |
 | `MCP_ALLOWED_ORIGINS` | `-` | 伺服器對伺服器不送 Origin |
 
@@ -892,6 +923,7 @@ file_urls/image_urls
 - 線⑤ 模型偶爾在有工具結果時自判「無依據」轉人（三輪 2/21 情境不穩）；屬答案層定義文（5.1）範圍。
 - `AGENT_VERIFIER_MODE=grounding_observe`（線上值）下引用類不擋——模型講的事實**沒有被要求對得上引文**，只有極性、機敏、標記外洩、schema 契約這幾類在守；重開引用類的依據是觀察紀錄（`verdict.observed`）中「真該擋」的計數（DSP-040 絆線）。相容旗 `AGENT_VERIFIER_OBSERVE_ONLY` 已於 2026-09-10 除役（見 §6）。
 - **部分寫入回合仍以模型參數出卡**：三開關（`AGENT_WRITE_DRAFT`／`AGENT_WRITE_LIFECYCLE`／`AGENT_WRITE_PROPOSAL`）皆 on 時，一般寫入回合的確認卡與缺欄追問只由程式依草稿發出（`_write_proposal_handle`、`_write_draft_decide`）；點選範圍、唯讀檢視、文件回合、文件暫存有效回合仍照模型自呼 `confirm.request` 的參數執行，這些回合有沒有卡仍看模型。清單與接手片見目標正本 `architecture-target-20261018.md` §3.1（KD-1、KD-2）；每次執行的來源記在 violation `confirm_source:<來源>`，`make audit` 不變量 45 檢查。
+- **帶狀態句判讀是 LLM，會漏判**：寫入情境問句回合的模型 `answer` 若在文字裡追問寫入欄位，結構規則（只看 `kind`）抓不到、判讀閘也不判追問；「已完成」只對到 session 內有收據，不對到是哪一筆；回覆夾帶誘導判讀的字串時，知識回合可能送出未對到事件的帶狀態句（寫入情境非問句回合不受影響：整則換成程式回話）。`make audit` 不變量 45 印 `state_claim_unbacked:*`、`state_claim_check_failed` 數。
 - 🔴 **2026-09-12 更正：前一版把兩張敏感表講反了。** 前一版寫「`sensitive_patterns` **不分受眾**，
   pm 引資料段的金額會被當敏感字樣處理」——**與程式相反**。逐條對碼：
 

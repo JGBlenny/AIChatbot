@@ -299,7 +299,7 @@ M0 階段：
 
 ```jsonc
 {
-  "answer": "…",              // 要顯示給使用者的那段話（已經過 Verifier）
+  "answer": "…",              // 要顯示給使用者的那段話：模型撰寫的部分已過 Verifier 與帶狀態句判讀閘；確認卡、固定句、收據、寫入進行中的狀態回話由程式產生，不經模型與 Verifier
   "kind": "answer",           // answer | ask | recommend | handoff
   "handoff": null,            // 轉人時是 {reason, fact_class, channel, message}
   "quick_replies": [],        // 機器值清單，直接當按鈕用
