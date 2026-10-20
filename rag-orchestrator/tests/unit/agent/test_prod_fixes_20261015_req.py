@@ -137,6 +137,7 @@ def _confirm(payload):
 
 
 @pytest.mark.parametrize("action", sorted(_WRITE_PAYLOADS))
+@pytest.mark.usefixtures("_aplus_proposal_off")
 async def test_new_write_actions_on_real_api_answer_not_supported_without_card(real_api, action):
     res, reg, provider = await _run(_pm(), [_confirm(_WRITE_PAYLOADS[action])])
     name, result = reg.results[-1]
@@ -151,3 +152,12 @@ def test_write_guard_only_covers_the_three_new_actions():
     assert C.WRITE_NOT_SUPPORTED_ACTIONS == {"estate_create", "contract_create", "manual_bill_create"}
     assert "repair_create" not in C.WRITE_NOT_SUPPORTED_ACTIONS
     assert "bill_due_extend" not in C.WRITE_NOT_SUPPORTED_ACTIONS
+
+
+@pytest.fixture()
+def _aplus_proposal_off(monkeypatch):
+    """A+ 片（`AGENT_WRITE_PROPOSAL`）：本檔以「模型自呼 `confirm.request`、以模型參數執行」為載具的
+    測試＝開關 off 的正對照（開關 on 時該路徑已收掉）。開關 on 的程式路徑由
+    `test_aplus_card_program_only_req.py` 驗出卡、缺欄追問、查無固定句、帳單候選點選、照片與物件記憶前處理；
+    本檔其餘行為在開關 on 時沒有另寫程式路徑版本。"""
+    monkeypatch.setenv("AGENT_WRITE_PROPOSAL", "off")

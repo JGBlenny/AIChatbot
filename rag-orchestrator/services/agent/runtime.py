@@ -45,6 +45,7 @@
 from __future__ import annotations
 
 import asyncio
+import copy
 import hashlib
 import hmac
 import json
@@ -57,7 +58,7 @@ import unicodedata
 import uuid
 from collections import Counter
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import Any, Callable, Literal, Optional, Protocol
 
 from pydantic import ValidationError
@@ -77,7 +78,6 @@ from services.agent.confirm_card import (
     CANCELLED_TEXT,
     CLOSED_ACTION_FIELDS,
     CONFIRMATION_REQUIRED_TEXT,
-    CONFIRM_ACTIONS,
     PHOTO_PAYLOAD_KEYS,
     RECEIPT_DATE_HINT_TEMPLATE,
     REPAIR_PHOTOS_MAX,
@@ -85,6 +85,9 @@ from services.agent.confirm_card import (
     receipt_id_of,
     render_receipt,
 )
+# A8（單一動作登錄）：動作值域一律在呼叫當下以模組參照讀 `confirm_card.CONFIRM_ACTIONS`，
+# ⛔ 在 import 期複製一份——否則在登錄表加一個動作，這裡看到的仍是舊集合。
+from services.agent import confirm_card as _confirm_card
 from services.agent.canon.candidate_selector import CandidateSelector
 from services.agent.canon.candidate_selector import K as _CANDIDATE_K
 from services.agent.canon.canon_assembler import (
@@ -123,16 +126,25 @@ from services.agent.tools.confirm import (
     CONFIRM_QUICK_REPLY_VALUES,
     CONFIRM_SPEC,
     CONFIRM_VALUE_SEP,
+    PENDING_STATE_EXPIRED,
+    PENDING_STATE_LIVE,
     _is_valid_repair_category,
+    confirm_quick_replies,
     document_confirm_description,
     missing_fields_ask_text,
     payload_digest,
+    pending_token_state,
     redeem_pending,
     sha256_hex,
 )
 from services.agent import llm_output as LO
 from services.agent import write_forms as WF
+from services.agent.bill_period import UNPAID_TERMS as _UNPAID_TERMS
+from services.agent.bill_period import parse_period as _parse_period
+from services.agent.bill_period import parse_periods as _parse_periods
 from services.agent.write_forms import write_draft_enabled_from_env
+from services.agent.write_forms import write_lifecycle_enabled_from_env
+from services.agent.write_forms import write_proposal_enabled_from_env
 from services.agent.tools.jgb2 import NOT_FOUND_SOURCE as _JGB2_NOT_FOUND_SOURCE
 from services.agent.tools.jgb2 import _candidates_text as _jgb2_candidates_text
 from services.agent.tools.jgb2 import _bill_format_date as _jgb2_bill_format_date
@@ -509,7 +521,7 @@ def _apply_estate_carry_to_confirm_args(raw_args: Any, carry: Any) -> tuple:
         payload = json.loads(payload_raw)
     except (TypeError, ValueError):
         return raw_args, []
-    if not isinstance(payload, dict) or payload.get("action") not in CONFIRM_ACTIONS:
+    if not isinstance(payload, dict) or payload.get("action") not in _confirm_card.CONFIRM_ACTIONS:
         return raw_args, []
     existing = payload.get("estate_name")
     if existing is not None and not (isinstance(existing, str) and not existing.strip()):
@@ -605,6 +617,32 @@ def _document_carry_of(agent_state: Any) -> Optional[dict]:
         return None
     return {"action": action, "typed_fields": [tuple(p) for p in typed],
             "receipt_date": receipt_date, "turns": turns}
+
+
+#: DSP-091 分工防偏離片 DG-1：`confirm.request` 出卡來源標記的前綴（寫進 `acc.violations`，只加字串）。
+CONFIRM_SOURCE_PREFIX = "confirm_source:"
+
+
+def _confirm_model_reason(*, proposal_active: bool, document: Any, agent_state: Any,
+                          readonly_view: bool) -> str:
+    """DG-1：模型自呼 `confirm.request` 且照舊執行時，依狀態判定「為什麼是模型來源」。
+
+    純函式、⛔ 引用 A+ 提議分支的同一個布林運算式（要獨立判定，才抓得到該條件被改壞）。
+    值域：`flag_off`（三開關任一 off＝回復組態）、`document`（文件回合）、`document_carry`（文件暫存
+    有效）、`select_scope`（點選範圍）、`readonly_view`（影子回合）；都不成立 ⇒ `unregistered`
+    （一般寫入回合卻由模型參數出卡＝分工被打穿，不變量 45 判 FAIL）。
+    """
+    if not proposal_active:
+        return "flag_off"
+    if document is not None:
+        return "document"
+    if _document_carry_of(agent_state) is not None:
+        return "document_carry"
+    if isinstance(agent_state, dict) and agent_state.get(SELECT_SCOPE_KEY) is not None:
+        return "select_scope"
+    if readonly_view:
+        return "readonly_view"
+    return "unregistered"
 
 
 def _document_user_texts(agent_state: dict, user_message: str, turns: int) -> list:
@@ -1741,6 +1779,29 @@ class _WriteDraftTurn:
     model_confirm_ok: bool = False
     caught_name: Optional[str] = None
     caught_segment: Optional[str] = None
+    #: 第 3 步 A2：本回合**由使用者句子**寫進草稿的鍵（意圖合併過值閘的鍵、整句填入的鍵、
+    #: 前置查詢補的物件名稱）——卡後改欄位只比對這些鍵與綁定卡的值（⛔ 比整份草稿）。
+    touched: set = field(default_factory=set)
+    #: 第 3 步 A2／A7(2)：要重出卡、但綁定那張卡燒不到（已兌現／過期／不是本 session）⇒
+    #: 不重出卡，回合由程式固定句結束（`_write_draft_reissue_exit`）。
+    reissue_blocked: bool = False
+    #: A2 這一關本回合已判「不重出卡」⇒ 輸出後觸發點 ⛔ 再判一次（同一回合只判一次）。
+    reissue_held: bool = False
+    #: 第 3 步 #9b（Q5）：本回合 A2 已成功燒掉綁定卡 ⇒ 之後程式觸發的 `confirm.request` 若沒出成卡
+    #: （非終結結果），回合由程式固定句結束（⛔ 交模型）。
+    reissue_burned: bool = False
+    #: 第 3 步 #9g：回合開始時讀回、已驗形狀的「最近送出」標記（`WF.load_last_submitted`）或 `None`。
+    last_submitted: Optional[dict] = None
+    #: 第 3 步 #9g：意圖判斷呼叫的布林欄位（`WF.MODIFIES_SUBMITTED_KEY`）恰為 `true`。
+    modifies_submitted: bool = False
+    #: 第 3 步 #9g：本回合判為「修改剛送出的那一筆」⇒ 不建草稿、不出卡，程式固定句結束回合。
+    submitted_edit: bool = False
+    #: A+ 片 AP-2：綁定卡有效、值相同 ⇒ `{"pid", "card", "action"}`（卡文字＝以存下的 payload
+    #: 帶當日重排版、雜湊已核對）；回合由 `_write_draft_card_still_valid_exit` 結束。
+    card_still_valid: Optional[dict] = None
+    #: A+ 片 AP-2（業主裁 Q2）：本回合**使用者句子**帶出的值（意圖合併、整句填入）有被值閘丟掉。
+    #: 模型提議被丟的值 ⛔ 算（模型參數常夾帶原話沒有的值）。
+    user_value_dropped: bool = False
 
 
 class _WriteIntentCall:
@@ -1825,6 +1886,42 @@ def _no_ws(text: str) -> str:
     return "".join(text.split())
 
 
+#: 期別片 P-2：期別草稿值的**唯一**合法形狀（程式正規化；⛔ 模型原值）。
+_PERIOD_DRAFT_VALUE_RE = re.compile(r"^\d{4}/\d{2}( 未繳)?$|^未繳$")
+#: 期別草稿值的「未繳」後綴／單獨值（與 `_PERIOD_DRAFT_VALUE_RE` 同一個字面）。
+_PERIOD_UNPAID_MARK = "未繳"
+
+
+def _period_gate_value(value: str, texts: list, today: date) -> Optional[str]:
+    """期別值閘（期別片 P-2／R4；純函式，`today` 由呼叫端傳 `bills._today()`）：
+    模型值 `parse_period` 解析 → 與使用者原話集合 U（每則 `parse_periods` 的聯集）比**年月**；
+    過 ⇒ 回**程式正規化**的存值，不過 ⇒ `None`（呼叫端記 `V_NOT_IN_USER_WORDS`）。
+
+    - 模型值解析不到 ⇒ `None`。
+    - 模型值有年月 ⇒ U 須含同年月（⛔ 比字面：「去年九月」的 U 是 2025/09，模型給「九月」⇒
+      2026/09 ⇒ 不收）；存 `YYYY/MM`，模型值**與**使用者原話都含未繳詞才加「 未繳」。
+    - 模型值只有「未繳」⇒ 使用者原話有未繳詞才收、存「未繳」。
+    - 存值一律再過 `_PERIOD_DRAFT_VALUE_RE`（縱深；⛔ 存模型原值）。
+    """
+    spec = _parse_period(value, today)
+    if spec is None:
+        return None
+    user_texts = [t for t in texts if isinstance(t, str)]
+    user_unpaid = any(term in t for t in user_texts for term in _UNPAID_TERMS)
+    if spec.has_month:
+        said = {(p.year, p.month) for t in user_texts for p in _parse_periods(t, today)}
+        if (spec.year, spec.month) not in said:
+            return None
+        stored = f"{spec.year:04d}/{spec.month:02d}"
+        if spec.unpaid_only and user_unpaid:
+            stored = f"{stored} {_PERIOD_UNPAID_MARK}"
+    elif spec.unpaid_only and user_unpaid:
+        stored = _PERIOD_UNPAID_MARK
+    else:
+        return None
+    return stored if _PERIOD_DRAFT_VALUE_RE.fullmatch(stored) else None
+
+
 def _name_overlap_key(text: str) -> str:
     """W1c §9.11-2 子字串比對的正規化：NFKC＋去空白（值閘 `text` 比對同樣去空白）。"""
     return _no_ws(unicodedata.normalize("NFKC", text))
@@ -1842,6 +1939,53 @@ def _write_draft_program_message(draft: dict, nonce: str) -> "_ProgramMessage":
     return _ProgramMessage([
         _ProgramToolCall(f"{WRITE_DRAFT_PROGRAM_ID_PREFIX}{nonce[:8]}", CONFIRM_TOOL_NAME, args)
     ])
+
+
+#: A+ 片 AP-4：待確認筆存「出卡當時程式送出的草稿正規化值」的鍵名。⚠️ **只拿來比對**
+#: （`_pending_draft_payload`）：reissue gate，與 r3 AP-7 (2)(a) 的 `_write_proposal_card_unchanged`
+#: （草稿＝卡才重出同卡）；⛔ 進草稿、卡或 `confirm.request`（安全審查 4-1 (iii)）。
+PENDING_DRAFT_PAYLOAD_KEY = "draft_payload"
+
+
+def _draft_payload_shape_ok(value: Any) -> bool:
+    """`draft_payload` 的合法形狀：dict、鍵為字串、值為 `str`／`int`／`float`／`None`（⛔ bool）。"""
+    if not isinstance(value, dict):
+        return False
+    for k, v in value.items():
+        if not isinstance(k, str) or isinstance(v, bool):
+            return False
+        if v is not None and not isinstance(v, (str, int, float)):
+            return False
+    return True
+
+
+def _pending_draft_payload(entry: Any) -> Optional[dict]:
+    """A+ 片 AP-4：讀待確認筆的 `draft_payload`（**一律視為不可信**，比照 `WF.load_draft`）：
+    舊筆沒有、或形狀不合 ⇒ `None`（呼叫端沿用現行比對；安全審查 4-1 (i)）。"""
+    if not isinstance(entry, dict):
+        return None
+    value = entry.get(PENDING_DRAFT_PAYLOAD_KEY)
+    return value if _draft_payload_shape_ok(value) else None
+
+
+def _program_payload_keys(raw_args: Any) -> Optional[frozenset]:
+    """程式依草稿發出的 `confirm.request`（payload＝`{action, **to_payload(草稿)}`）中，屬於
+    `to_payload(草稿)` 的鍵（＝除 `action` 外的鍵）。在任何 `_apply_*` 前處理**之前**取。"""
+    payload = _payload_of(raw_args)
+    if payload is None:
+        return None
+    return frozenset(k for k in payload if isinstance(k, str) and k != "action")
+
+
+def _sent_draft_payload(raw_args: Any, keys: Optional[frozenset]) -> Optional[dict]:
+    """A+ 片 AP-4：**這次呼叫送出的 payload**（前處理之後、交給 `registry.call` 的那一份）中屬於
+    `keys` 的鍵與值。拿不到 ⇒ `None`（不存 `draft_payload`，reissue gate 沿用現行比對）。"""
+    if keys is None:
+        return None
+    payload = _payload_of(raw_args)
+    if payload is None:
+        return None
+    return {k: payload[k] for k in sorted(keys) if k in payload}
 
 
 def _assistant_tool_call_message(message: Any, tool_calls: list) -> dict:
@@ -1955,6 +2099,21 @@ class AgentRuntime:
         # 並印原因（同上方 effort／cap 的 fail loud）。
         try:
             self._write_draft_on: bool = write_draft_enabled_from_env()
+        except ValueError as exc:
+            logger.error("agent_runtime_config_invalid %s", exc)
+            raise
+        # 主線第 3 步 A 片：`AGENT_WRITE_LIFECYCLE`（on／off；未設或空字串＝on）——A1 草稿生命週期、
+        # A2 卡後改欄位、A3「修改」按鈕、A4 enum 由程式轉碼共用（A6 預檢在 `confirm.request` 內
+        # 於呼叫當下讀同一個開關）。off ⇒ 現行行為。⚠️ A7 唯一有效卡 ⛔ 隨本開關關閉。
+        try:
+            self._write_lifecycle_on: bool = write_lifecycle_enabled_from_env()
+        except ValueError as exc:
+            logger.error("agent_runtime_config_invalid %s", exc)
+            raise
+        # A+ 片 AP-0：`AGENT_WRITE_PROPOSAL`（on／off；未設或空字串＝on）。本片行為只在三個開關
+        # 皆 on 時生效（`_write_proposal_active`）；off ⇒ 現行行為。
+        try:
+            self._write_proposal_on: bool = write_proposal_enabled_from_env()
         except ValueError as exc:
             logger.error("agent_runtime_config_invalid %s", exc)
             raise
@@ -2476,11 +2635,23 @@ class AgentRuntime:
         #    receipt」與「不覆蓋既有 receipt」的紀律不變，刪掉會讓已經送出的
         #    動作被謊報成沒送出。
         # ⛔ 也不刪 dict 本身、只標記——標記可回復（Plan §6 W8 回退欄）。
+        # A7(3)（唯一有效卡，⛔ 隨開關關閉）：狀態標記之外，**同步在 DB 燒掉**那張 token
+        #    （重用 `redeem_pending`，綁 pid＋session；回傳的 token 直接丟棄）。
+        #    只標狀態不燒 DB 的話，舊 pid 仍是一張「表裡活著」的卡。
+        #    燒卡失敗 ⇒ 只記違規、不中斷回答：狀態已標 `invalidated`，確認段看到標記
+        #    會再燒一次並回固定句（fail-closed 仍成立）。
         pending_all = agent_state.get(PENDING_CONFIRM_KEY)
         if isinstance(pending_all, dict):
-            for entry in pending_all.values():
+            for burn_pid, entry in pending_all.items():
                 if isinstance(entry, dict) and not isinstance(entry.get("receipt"), dict):
                     entry["invalidated"] = True
+                    if self._db_pool is not None:
+                        try:
+                            await redeem_pending(
+                                self._db_pool, identity.session_id, burn_pid
+                            )
+                        except Exception as exc:  # noqa: BLE001 — 見上：標記仍在、確認段會再燒
+                            violations.append(f"SELECT_BURN_EXC:{type(exc).__name__}")
 
         # L15 (a)②：命中 ⇒ 這一段對話的範圍＝該列的物件（`_ok_single(scoped=True)`
         # 放進 `data["scope"]`）。⛔ 列上算不出 `estate_id` 就維持 `None`——沒有
@@ -2554,7 +2725,16 @@ class AgentRuntime:
 
         # W1（§2.1(3) 清除條件）：使用者兌現或取消確認卡 ⇒ 進行中的寫入草稿一律清掉
         # （出卡那一刻其實已清；這裡是縱深）。
-        AgentSession(agent_state).clear_write_draft()
+        # 第 3 步 A1（開關 on）：⛔ 在分岔前清——草稿只在「取消」與「任何 receipt 寫入」時清
+        # （見下方各分支的 `_clear_draft_on_close()`）；「修改」保留草稿（A3）。
+        lifecycle_on = getattr(self, "_write_lifecycle_on", False)
+        if not lifecycle_on:
+            AgentSession(agent_state).clear_write_draft()
+
+        def _clear_draft_on_close() -> None:
+            # A1：任何 receipt 寫入、或按取消 ⇒ 清草稿（草稿含個資，⛔ 留到 session 關閉）。
+            # 開關 off 時草稿已在上面清掉，這裡是同一個動作的冪等重複。
+            AgentSession(agent_state).clear_write_draft()
 
         def _finish(answer: str, *, receipt_id: str = "", tool_calls=None, violations=None,
                     outcome: Optional[dict] = None, receipt: Optional[dict] = None):
@@ -2610,9 +2790,40 @@ class AgentRuntime:
         if pending.get("invalidated") is True and not isinstance(pending.get("receipt"), dict):
             if self._db_pool is not None:
                 await redeem_pending(self._db_pool, identity.session_id, pending_id)
+            if verb == CONFIRM_QUICK_REPLY_VALUES[2]:
+                # A1：對已作廢的卡按「取消」＝使用者不要了 ⇒ 草稿一併清（回應句不變）。
+                _clear_draft_on_close()
+                AgentSession(agent_state).clear_last_submitted()     # #9g：取消 ⇒ 清標記
             return _finish(CONFIRMATION_REQUIRED_TEXT)
 
         submit = verb == CONFIRM_QUICK_REPLY_VALUES[0]
+        if lifecycle_on and verb == CONFIRM_QUICK_REPLY_VALUES[1]:
+            # A3「修改」：token 照現行**立即燒掉**（⛔ 留著讓「修改完再按送出」還能通）、
+            # ⛔ 寫 receipt（新增標記會落入 `_answer_for_receipt` 的預設成功收據）、草稿保留且
+            # `idle_turns` 歸 0、程式固定句問要改哪一項（標籤取自表單宣告）。
+            # 卡以既有 `invalidated` 標記作廢：之後同一個 pid 的三顆按鈕都走上方作廢分支
+            # （燒不到、回固定句），A2 也不再把它當「綁定的卡」。
+            if self._db_pool is not None:
+                await redeem_pending(self._db_pool, identity.session_id, pending_id)
+            existing_receipt = pending.get("receipt")
+            if isinstance(existing_receipt, dict):
+                # 已經有結果的那一筆（先送出、再按修改）⇒ R4.3 回同一個結果，⛔ 改寫。
+                return self._answer_for_receipt(pending, existing_receipt, _finish)
+            pending["invalidated"] = True
+            session = AgentSession(agent_state)
+            draft = session.get_write_draft()
+            if isinstance(draft, dict):
+                draft["idle_turns"] = 0
+                session.write_write_draft(draft)
+            return self._finish_confirm_turn(
+                agent_state=agent_state, user_message=user_message, trace_id=trace_id,
+                start=start, kind="ask",
+                answer=WF.edit_ask_text(pending.get("action"), pending.get("payload")),
+                pending_id=pending_id, tool_calls=None,
+                violations=["confirm_edit_ask"], receipt_id="",
+                outcome=make_outcome("clarifying", expects="text",
+                                     action=pending.get("action")),
+            )
         if not submit:
             # 修改／取消：**一律先燒 token**（⛔ 不留著讓「取消完再送出」還能通），
             # 不呼叫任何寫入工具。站內幫手 S3：按取消也清文件暫存（DSP-076）。
@@ -2624,6 +2835,8 @@ class AgentRuntime:
             #    變成謊報「沒有送出」。
             if not isinstance(pending.get("receipt"), dict):
                 pending["receipt"] = {"cancelled": True}
+            _clear_draft_on_close()
+            AgentSession(agent_state).clear_last_submitted()         # #9g：取消 ⇒ 清標記
             return _finish(CANCELLED_TEXT,
                            outcome=make_outcome("cancelled", expects="none",
                                                 action=pending.get("action")))
@@ -2646,7 +2859,7 @@ class AgentRuntime:
         card_sha = pending.get("card_sha256")
         # ⚠️ `action` 先過封閉值域再拿去組工具名：`agent_state` 是會被序列化進 DB 的
         #    資料，⛔ 不讓其中的字串直接決定要呼叫哪一支工具。
-        if action not in CONFIRM_ACTIONS or not isinstance(payload, dict):
+        if action not in _confirm_card.CONFIRM_ACTIONS or not isinstance(payload, dict):
             return _finish(CONFIRMATION_REQUIRED_TEXT)
         try:
             payload_sha = payload_digest(payload)
@@ -2678,6 +2891,7 @@ class AgentRuntime:
         if fields_before_today(action, payload, bills._today()):
             logger.info("[agent] 兌現閘：日期早於今天 ⇒ ⛔ 不呼叫寫入工具（⛔ 不記日期值）")
             pending["receipt"] = {"error": "INVALID_INPUT"}
+            _clear_draft_on_close()
             return _finish(
                 ACTION_FAILED_TEXT,
                 violations=["date_before_today_at_redeem"],
@@ -2717,6 +2931,7 @@ class AgentRuntime:
         if not tool_result.ok:
             # 誠實回錯（S-12：token 已燒是刻意的——要再做一次就要重新確認）。
             pending["receipt"] = {"error": tool_result.error or "TOOL_FAILED"}
+            _clear_draft_on_close()
             return _finish(ACTION_FAILED_TEXT, tool_calls=records, violations=violations,
                            outcome=make_outcome("failed", expects="none",
                                                 action=pending.get("action")))
@@ -2726,6 +2941,13 @@ class AgentRuntime:
         if not isinstance(receipt, dict):
             receipt = data
         pending["receipt"] = receipt
+        _clear_draft_on_close()
+        if lifecycle_on and getattr(self, "_write_draft_on", False) and action in WF.FORMS:
+            # 第 3 步 #9g：送出成功 ⇒ 記「最近送出」標記（動作名＋pid；⛔ token、⛔ payload）。
+            # 只在草稿機制開著時寫：標記唯一的讀者是草稿的兩個程式判斷點（意圖判斷的布林），
+            # `AGENT_WRITE_DRAFT=off` 時下一回合開頭就會被清掉——寫了只是多一個無人讀的鍵。
+            AgentSession(agent_state).write_last_submitted(
+                WF.new_last_submitted(action, pending_id))
         return self._answer_for_receipt(
             pending, receipt, _finish, tool_calls=records, violations=violations
         )
@@ -2853,9 +3075,13 @@ class AgentRuntime:
         self, agent_state: dict, data: Any, *, trace_id: str, start: float,
         user_message: str, tool_calls: list, violations: list,
         llm_calls: int = 0, prompt_tokens: int = 0, completion_tokens: int = 0,
-        identity: Optional[Identity] = None,
+        identity: Optional[Identity] = None, draft_payload: Optional[dict] = None,
     ) -> Optional[TurnResult]:
         """`confirm.request` 成功 ⇒ 把待確認動作存進 session 狀態並結束回合。
+
+        A+ 片 AP-4：`draft_payload` 只由呼叫端在「這次呼叫是程式依草稿發出（`wd_program` 或 AP-1 的
+        區域旗標）」時傳入＝**這次呼叫送出的 payload** 中屬於 `to_payload(草稿)` 的鍵；三個開關皆 on
+        且形狀合法才存進待確認筆（⛔ 在這裡讀「當下草稿」：文件暫存或模型自呼出的卡會帶上不對應的值）。
 
         `data` 形狀不符（缺 `card`／`action` 不在值域／`payload` 不是物件）⇒ 回
         `None` 讓回合照常走下去：⛔ 不在這裡硬印一張半成品的卡。
@@ -2922,7 +3148,7 @@ class AgentRuntime:
             or not pending_id
             or not isinstance(card, str)
             or not card
-            or action not in CONFIRM_ACTIONS
+            or action not in _confirm_card.CONFIRM_ACTIONS
             or not isinstance(payload, dict)
         ):
             violations.append("confirm_request_data_shape_invalid")
@@ -2930,8 +3156,17 @@ class AgentRuntime:
         session = AgentSession(agent_state)
         # 出卡成功 ⇒ 照片建議用掉了，清掉（⛔ 不讓它再補到下一張無關的單）。
         session.consume_image_suggestion()
+        # 第 3 步 #9g：新的一張卡出了 ⇒「最近送出」標記清掉（之後的更正對象是這張新卡）。
+        session.clear_last_submitted()
         # W1（§2.1(3) 清除條件）：出卡成功（`confirm_pending`）⇒ 寫入草稿清掉。
-        session.clear_write_draft()
+        # 第 3 步 A1（開關 on）：出卡 ⇒ 草稿**保留**（送出／取消／逾時才清），且草稿與 pending
+        # 綁同一個動作——草稿是別的動作（模型自呼出了另一支的卡）⇒ 那份草稿與這張卡無關，清掉。
+        if not getattr(self, "_write_lifecycle_on", False):
+            session.clear_write_draft()
+        else:
+            kept = session.get_write_draft()
+            if isinstance(kept, dict) and kept.get("action") != action:
+                session.clear_write_draft()
         # 站內幫手 S3（§3h 第 5 點；DSP-076）：收據日期**只作卡外提示**——由文件暫存
         # 取出、接在卡文字之後（⛔ 不進卡、⛔ 不進雜湊、⛔ 不進 dialog）；出卡即清暫存。
         carry = _document_carry_of(agent_state)
@@ -2962,6 +3197,10 @@ class AgentRuntime:
         # W8 (3)：物件 id 存進待確認筆（兌現時用；⛔ 不進卡、不進雜湊）。
         if isinstance(estate_id, str) and estate_id:
             pending_entry["estate_id"] = estate_id
+        # A+ 片 AP-4：出卡當時程式送出的草稿正規化值（只供 reissue gate 比對；⛔ 進卡、⛔ 進雜湊）。
+        if (draft_payload is not None and self._write_proposal_active()
+                and _draft_payload_shape_ok(draft_payload)):
+            pending_entry[PENDING_DRAFT_PAYLOAD_KEY] = dict(draft_payload)
         # FIFO 上限（dict 保序）；⛔ 不是 LRU——重送命中時不重排，那會讓一筆被
         # 反覆重送的確認永遠擠不掉別人的。R3：落地與修剪收進
         # `AgentSession.write_pending_confirm`（⛔ 上限值不變，同一個
@@ -3603,10 +3842,21 @@ class AgentRuntime:
         if self.readonly_view:
             return
         session = AgentSession(agent_state)
+        lifecycle_on = bool(getattr(self, "_write_lifecycle_on", False))
         if not getattr(self, "_write_draft_on", False):
             # 開關 off ⇒ 撤回草稿機制：殘留的草稿清掉（清≠寫），本回合不建、不觸發。
             session.clear_write_draft()
+            session.clear_last_submitted()
             return
+        # 第 3 步 #9g：「最近送出」標記只在 `AGENT_WRITE_LIFECYCLE` on 時有效；off ⇒ 殘留清掉。
+        last_submitted: Optional[dict] = None
+        if not lifecycle_on:
+            session.clear_last_submitted()
+        else:
+            last_submitted, mark_invalid = WF.load_last_submitted(session.get_last_submitted())
+            if mark_invalid:
+                acc.violations.append(WF.V_LAST_SUBMITTED_SHAPE_INVALID)
+                session.clear_last_submitted()
         draft, invalid = WF.load_draft(session.get_write_draft())
         if invalid:
             acc.violations.append(WF.V_DRAFT_SHAPE_INVALID)
@@ -3634,6 +3884,7 @@ class AgentRuntime:
             draft=draft, owner=owner,
             user_texts=_write_draft_user_texts(agent_state, user_message),
             asked=asked, had_draft=draft is not None, frozen=frozen,
+            last_submitted=last_submitted,
         )
         if frozen:
             acc.violations.append(WF.V_QUESTION_FROZEN)
@@ -3674,6 +3925,7 @@ class AgentRuntime:
         wd.caught = True
         wd.draft["idle_turns"] = 0
         wd.draft["fields"][target.key] = clean
+        wd.touched.add(target.key)
         wd.caught_name = clean
         seg = sanitize_data_piece(segment).strip() if isinstance(segment, str) else ""
         wd.caught_segment = seg or None
@@ -3696,7 +3948,10 @@ class AgentRuntime:
             return
         if not self._write_draft_any_visible(identity):
             return
-        messages: list = [{"role": "system", "content": WF.WRITE_INTENT_SYSTEM_PROMPT}]
+        # 第 3 步 A4：開關 on ⇒ enum 欄位只列標籤（程式轉代碼）；off ⇒ 現行列代碼。
+        enum_labels = bool(getattr(self, "_write_lifecycle_on", False))
+        messages: list = [{"role": "system",
+                           "content": WF.write_intent_system_prompt(enum_labels=enum_labels)}]
         for m in agent_state.get("dialog") or []:
             if (isinstance(m, dict) and m.get("role") in ("user", "assistant")
                     and isinstance(m.get("content"), str)):
@@ -3705,7 +3960,7 @@ class AgentRuntime:
         kwargs: dict = dict(
             model=self._model,
             messages=messages,
-            response_format=WF.write_intent_response_format(),
+            response_format=WF.write_intent_response_format(enum_labels=enum_labels),
             max_completion_tokens=WF.WRITE_INTENT_MAX_COMPLETION_TOKENS,
         )
         if self._reasoning_effort is not None:
@@ -3755,6 +4010,9 @@ class AgentRuntime:
         except ValidationError:
             acc.violations.append(WF.V_OUT_OF_DOMAIN)
             return None
+        if acc.write_draft is not None and getattr(self, "_write_lifecycle_on", False):
+            # 第 3 步 #9g：`WriteIntent` 忽略多餘鍵 ⇒ 布林欄位由原始物件讀（恰為 `true` 才算）。
+            acc.write_draft.modifies_submitted = WF.intent_modifies_submitted(obj)
         if intent.action == WF.INTENT_NONE:
             return None
         return intent
@@ -3818,6 +4076,14 @@ class AgentRuntime:
                 return None
             return value
         if kind == "enum":
+            if from_intent and getattr(self, "_write_lifecycle_on", False):
+                # 第 3 步 A4：意圖判斷呼叫只收**標籤**（表單 `choice_labels`），程式依表單轉代碼；
+                # 不是標籤（含直接填代碼）⇒ 值域外＝缺值（照表單追問）。⛔ 欄位名分支。
+                code = WF.enum_code_for_label(f, value)
+                if code is None:
+                    violations.append(WF.V_VALUE_OUT_OF_DOMAIN)
+                    return None
+                return code
             if value not in f.choices:              # ⛔ 語意詞表比對（只認封閉值域）
                 violations.append(WF.V_VALUE_OUT_OF_DOMAIN)
                 return None
@@ -3831,6 +4097,14 @@ class AgentRuntime:
                 violations.append(WF.V_CATEGORY_INVALID)
                 return None
             return value
+        if kind == "period":
+            # 期別片 P-2：比**解析後的年月**（同 `date` 分支：同一個時鐘 `bills._today()`）；
+            # 存程式從原話解析出的正規化值，⛔ 存模型原值。
+            stored = _period_gate_value(value, texts, bills._today())
+            if stored is None:
+                violations.append(WF.V_NOT_IN_USER_WORDS)
+                return None
+            return stored
         return None                                 # sys_id 等：一律不進草稿
 
     def _write_draft_target(self, acc: TurnAccumulator, action: str, *, from_intent: bool) -> dict:
@@ -3883,16 +4157,22 @@ class AgentRuntime:
             raw_value = getattr(item, "value", None)
             if name_hit and f.key == "estate_name":
                 continue
-            if (name_spans and f.kind == "text" and isinstance(raw_value, str)
+            # 期別片 P-3：`period` 型同樣套用（安全審查 C1：改型別後 ⛔ 讓這項檢查失效）。
+            if (name_spans and f.kind in ("text", "period") and isinstance(raw_value, str)
                     and raw_value.strip()
                     and any(_name_overlap_key(raw_value) in span for span in name_spans)):
                 acc.violations.append(WF.V_VALUE_OVERLAPS_NAME)
                 continue
+            marks_before = len(acc.violations)
             value = await self._write_draft_gate_value(
                 f, raw_value, identity, wd.user_texts, acc.violations, from_intent=True)
             if value is None:
+                # A+ 片 AP-2（Q2）：值閘拒收（有記 violation；空值不算）⇒ 使用者句子的值被丟。
+                if len(acc.violations) > marks_before:
+                    wd.user_value_dropped = True
                 continue
             provided.add(f.key)
+            wd.touched.add(f.key)
             wd.merged = True
             draft["fields"][f.key] = value
         self._write_draft_persist(acc, agent_state)
@@ -3915,10 +4195,15 @@ class AgentRuntime:
                 or key in WF.NAME_KEYS or key in provided):
             return
         value = sanitize_data_piece(user_message).strip()
-        if not value or len(value) > WF.value_max_len(f):
+        if not value:
+            return
+        if len(value) > WF.value_max_len(f):
+            # A+ 片 AP-2（Q2）：整句填入因超過長度上限被拒收 ⇒ 使用者句子的值被丟。
+            wd.user_value_dropped = True
             return
         wd.activity = True
         wd.filled = True
+        wd.touched.add(key)
         wd.draft["idle_turns"] = 0
         wd.draft["fields"][key] = value
         acc.violations.append(WF.V_ANSWER_FILLED)
@@ -3951,6 +4236,237 @@ class AgentRuntime:
             if value is not None:
                 draft["fields"][f.key] = value
         self._write_draft_persist(acc, agent_state)
+
+    def _write_proposal_active(self) -> bool:
+        """A+ 片 AP-0：`AGENT_WRITE_DRAFT`、`AGENT_WRITE_LIFECYCLE`、`AGENT_WRITE_PROPOSAL` 三者皆 on。"""
+        return bool(getattr(self, "_write_draft_on", False)
+                    and getattr(self, "_write_lifecycle_on", False)
+                    and getattr(self, "_write_proposal_on", False))
+
+    async def _write_proposal_merge(
+        self, acc: TurnAccumulator, identity: Identity, agent_state: dict, raw_args: Any,
+    ) -> bool:
+        """A+ 片 AP-1 (1)：模型自己呼叫 `confirm.request` 的參數**只當提議**合併進草稿，觸發語義與
+        意圖合併相同（安全審查 1-8）：值閘不變（`from_intent=False`）；新建草稿算 `created`；通過
+        值閘的鍵加入 `touched` 並設 `merged`；本回合前置查詢命中的物件名稱優先、與物件名重疊的
+        文字值丟棄（比照 `_write_draft_merge_intent` 的 W1c 規則）。之後 `_write_draft_decide` 取用的
+        意圖結果後合併，同欄以意圖為準。被值閘丟掉的值 ⛔ 設 `user_value_dropped`（Q2：模型提議
+        不算）。
+
+        回 `False` ⇒ 提議的動作不在 `FORMS` 或看不到（呼叫端回封閉結果 `NO_MATCH`、不觸發）。
+        凍結回合（§8.5-3）⇒ 不合併（回 `True`：動作合法，觸發與否交 `_write_draft_decide`）。
+
+        r3 AP-7 (1)（計畫 §9.2 (1)）：巢狀提議 `{action, payload:{…}}` **解一層**——外層除 `action` 外
+        沒有任何 `form.keys` 鍵（含系統來源鍵；外層帶任何表單鍵就不解），且 `payload` 是 dict 或能解析
+        成 dict 的 JSON 字串 ⇒ 以內層 dict 的表單鍵合併（值閘、W1c 名稱規則、`touched`／`merged` 照上）。
+        內層**有 `action` 鍵**（不論值）且值 ≠ 外層 ⇒ 回 `False`（`NO_MATCH`、不觸發）。只解一層（內層的
+        `payload` 不是表單鍵，自然略過）。解開與內層動作比對都在 `wd.activity`／`_write_draft_target`
+        **之前**（安全審查 r3 F1：動作不合 ⇒ 草稿、`created` 都不變）；內層字串解析接 `TypeError`、
+        `ValueError`、`RecursionError`（r3 F3），失敗 ⇒ 視同不解開。解開邏輯只在這裡（⛔ 改 `_payload_of`，
+        它是文件回合判動作、照片處理、`_write_draft_record_asked` 共用的）。"""
+        wd = acc.write_draft
+        payload = _payload_of(raw_args)
+        action = payload.get("action") if payload is not None else None
+        form = WF.FORMS.get(action) if isinstance(action, str) else None
+        if form is None or not self._write_draft_visible(identity, action):
+            return False
+        source = payload
+        unwrapped = False
+        if not any(k in form.keys for k in payload if k != "action"):
+            inner = payload.get("payload")
+            if isinstance(inner, str):
+                try:
+                    inner = json.loads(inner)
+                except (TypeError, ValueError, RecursionError):
+                    inner = None
+            if isinstance(inner, dict):
+                if "action" in inner and inner.get("action") != action:
+                    return False
+                source = inner
+                unwrapped = True
+        if unwrapped:
+            acc.violations.append(WF.V_WRITE_PROPOSAL_UNWRAPPED)
+        if wd.frozen or wd.submitted_edit:
+            return True
+        wd.activity = True
+        draft = self._write_draft_target(acc, action, from_intent=True)
+        name_hit = (wd.caught_name is not None
+                    and draft["fields"].get("estate_name") == wd.caught_name)
+        name_spans = ([_name_overlap_key(s) for s in (wd.caught_name, wd.caught_segment) if s]
+                      if name_hit else [])
+        for key, raw in source.items():
+            f = form.field(key) if isinstance(key, str) else None
+            if f is None or f.source != WF.SOURCE_USER_WORDS or raw is None:
+                continue
+            if name_hit and f.key == "estate_name":
+                continue
+            if (name_spans and f.kind in ("text", "period") and isinstance(raw, str)
+                    and raw.strip()
+                    and any(_name_overlap_key(raw) in span for span in name_spans)):
+                acc.violations.append(WF.V_VALUE_OVERLAPS_NAME)
+                continue
+            value = await self._write_draft_gate_value(f, raw, identity, wd.user_texts, acc.violations)
+            if value is None:
+                continue
+            wd.touched.add(f.key)
+            wd.merged = True
+            draft["fields"][f.key] = value
+        self._write_draft_persist(acc, agent_state)
+        return True
+
+    async def _write_proposal_handle(
+        self, acc: TurnAccumulator, identity: Identity, agent_state: dict,
+        user_message: str, document: Any, raw_args: Any,
+    ) -> tuple:
+        """A+ 片 AP-1 (1)～(4)：模型提議的處置（下一步一律由程式決定）。回 `(kind, value)`：
+
+        - `("program", args)`：程式依草稿發出的 `confirm.request` 參數（`_write_draft_decide` 產出，
+          payload＝`{action, **to_payload(草稿)}`、`summary`＝常數）——呼叫端以模型這次的 tool call id 執行；
+        - `("exit", None)`：程式固定句出口成立（綁定卡燒不到、卡片還在、修改已送出）——呼叫端記完
+          這次 tool call 後以 `_write_proposal_exit` 結束回合；
+        - `("no_value", 處置)`：r3 AP-7 (2)——提議沒有任何值進草稿（`_write_proposal_no_value`）——呼叫端
+          記完這次 tool call 後以 `_write_proposal_no_value_exit` 結束回合（⛔ 交模型寫回覆）；
+        - `("closed", 錯誤碼)`：回模型封閉工具結果（`NO_MATCH`：動作不在 `FORMS` 或看不到，或巢狀提議
+          內層動作不合；`HANDLED_BY_PROGRAM`：其餘，含 `write_draft` 為 `None`——⛔ 退回以模型參數執行，
+          1-7；凍結回合、本回合已觸發後的同回合第二次提議——AP-R10 收窄）。"""
+        wd = acc.write_draft
+        if wd is None:
+            return "closed", "HANDLED_BY_PROGRAM"
+        pre_draft = copy.deepcopy(wd.draft)
+        if not await self._write_proposal_merge(acc, identity, agent_state, raw_args):
+            return "closed", "NO_MATCH"
+        message = await self._write_draft_decide(acc, identity, agent_state, user_message, document)
+        if message is not None:
+            try:
+                args = json.loads(message.tool_calls[0].function.arguments)
+            except (AttributeError, IndexError, TypeError, ValueError):
+                args = None
+            if isinstance(args, dict):
+                return "program", args
+            return "closed", "HANDLED_BY_PROGRAM"
+        if wd.submitted_edit:
+            # #9g：「修改剛送出的那一筆」⛔ 建草稿、⛔ 合併——提議剛才寫進的草稿撤回到提議之前。
+            wd.draft = pre_draft
+            session = AgentSession(agent_state)
+            if pre_draft is None:
+                session.clear_write_draft()
+            else:
+                session.write_write_draft(pre_draft)
+        if wd.reissue_blocked or isinstance(wd.card_still_valid, dict) or wd.submitted_edit:
+            return "exit", None
+        no_value = await self._write_proposal_no_value(acc, identity, agent_state, raw_args)
+        if no_value is not None:
+            return "no_value", no_value
+        return "closed", "HANDLED_BY_PROGRAM"
+
+    async def _write_proposal_no_value(
+        self, acc: TurnAccumulator, identity: Identity, agent_state: dict, raw_args: Any,
+    ) -> Optional[dict]:
+        """r3 AP-7 (2)（計畫 §9.2 (2)）：`_write_draft_decide` 回 `None`、既有三個出口都不成立之後，
+        提議**沒有任何值進草稿**時改由程式結束回合。條件全成立才回處置，否則 `None`（照 AP-1 (4) 回模型
+        封閉結果）：草稿存在且動作＝提議動作；本回合 `created`／`merged`／`caught`／`filled` 皆不成立；
+        非凍結（`frozen`）；本回合程式未觸發（`triggered`）。
+
+        - (a) `{"kind": "card", "pid", "card", "action"}`：`_write_proposal_card_unchanged` 成立；
+        - (b) `{"kind": "text", "action", "answer"}`：其他（`WF.proposal_no_value_text`，只有表單宣告的標籤）。
+
+        **唯讀**（安全審查 r3 F2）：⛔ 呼叫 `_write_draft_same_values`、`redeem_pending`；⛔ 改待確認筆
+        （含 `invalidated`）；⛔ 設 `reissue_blocked`、`reissue_burned`、`card_still_valid`。"""
+        wd = acc.write_draft
+        if wd is None:
+            return None
+        payload = _payload_of(raw_args)
+        action = payload.get("action") if payload is not None else None
+        draft = wd.draft
+        if (draft is None or not isinstance(action, str) or draft.get("action") != action
+                or wd.created or wd.merged or wd.caught or wd.filled
+                or wd.frozen or wd.triggered):
+            return None
+        draft_values = WF.to_payload(action, draft.get("fields") or {})
+        unchanged = await self._write_proposal_card_unchanged(identity, agent_state, action, draft_values)
+        if unchanged is not None:
+            pid, card, card_action = unchanged
+            return {"kind": "card", "pid": pid, "card": card, "action": card_action}
+        return {"kind": "text", "action": action,
+                "answer": WF.proposal_no_value_text(action, draft_values)}
+
+    async def _write_proposal_card_unchanged(
+        self, identity: Identity, agent_state: dict, action: str, draft_values: dict,
+    ) -> Optional[tuple]:
+        """r3 AP-7 (2)(a) 的判定（**唯讀**）：同動作綁定卡、未作廢、無收據；`draft_values`
+        （＝`to_payload(草稿)`）與該卡 `draft_payload` **全部鍵相等**（安全審查 r3 F7；舊筆或形狀不合 ⇒
+        不成立）；AP-2 有效四項——`pending_token_state`（帶 `card_sha256`、`payload_sha256`，以 DB `now()`
+        判）`live`＋`_write_draft_bound_card_text`（重排版雜湊相符、卡上日期未早於今天、排版不拋例外）。
+        成立 ⇒ `(pid, 卡文字, 動作)`；否則 `None`。`draft_payload` 在這裡只拿來比對（⛔ 進草稿、卡或
+        `confirm.request`）。"""
+        bound = self._write_draft_bound_card(identity, agent_state, action)
+        if bound is None:
+            return None
+        pid, entry = bound
+        if entry.get("invalidated") is True or entry.get("receipt") is not None:
+            return None
+        card_draft = _pending_draft_payload(entry)
+        if card_draft is None or card_draft != draft_values:
+            return None
+        payload = entry.get("payload")
+        try:
+            p_sha = payload_digest(payload) if isinstance(payload, dict) else None
+        except (TypeError, ValueError):
+            p_sha = None
+        state = await pending_token_state(
+            self._db_pool, identity.session_id, pid,
+            card_sha256=entry.get("card_sha256"), payload_sha256=p_sha or "",
+        )
+        if state.state != PENDING_STATE_LIVE:
+            return None
+        card = self._write_draft_bound_card_text(entry, state)
+        if card is None:
+            return None
+        return pid, card, entry.get("action")
+
+    def _write_proposal_no_value_exit(
+        self, acc: TurnAccumulator, agent_state: dict, user_message: str, handling: dict,
+    ) -> TurnResult:
+        """r3 AP-7 (2)：程式結束回合（⛔ 交模型寫回覆；⛔ 建、燒 token）。出口另寫——⛔ 重用
+        `_write_draft_card_still_valid_exit` 的開頭句判斷（安全審查 r3 F2；業主 2026-10-19 裁示 §9.6）。
+
+        - (a)：`PROPOSAL_NO_VALUE_CARD_TEXT`＋換行＋同一張卡、同 pid 三顆鍵、`confirm_pending`；記
+          `write_proposal_no_value_card` 並同記 `write_draft_card_still_valid`（V2 以它計入程式重出同卡；
+          r3 F4）。卡外提示行不重出（同 AP-2，計畫 §4.3）。
+        - (b)：`proposal_no_value_text`、`clarifying`、expects text、action＝草稿動作；記 `write_proposal_no_value`。"""
+        if handling.get("kind") == "card":
+            pid = handling["pid"]
+            card = handling["card"]
+            acc.violations.append(WF.V_WRITE_PROPOSAL_NO_VALUE_CARD)
+            acc.violations.append(WF.V_CARD_STILL_VALID)
+            return self._finish_confirm_turn(
+                agent_state=agent_state, user_message=user_message, trace_id=acc.trace_id,
+                start=acc.start, kind="ask",
+                outcome=make_outcome("confirm_pending", expects="button", action=handling["action"]),
+                answer=f"{WF.PROPOSAL_NO_VALUE_CARD_TEXT}\n{card}", dialog_answer=card, pending_id=pid,
+                quick_replies=confirm_quick_replies(pid),
+                tool_calls=acc.tool_call_records, violations=acc.violations,
+                llm_calls=acc.llm_calls, prompt_tokens=acc.prompt_tokens,
+                completion_tokens=acc.completion_tokens,
+            )
+        acc.violations.append(WF.V_WRITE_PROPOSAL_NO_VALUE)
+        return self._finish_confirm_turn(
+            agent_state=agent_state, user_message=user_message, trace_id=acc.trace_id,
+            start=acc.start, kind="ask",
+            outcome=make_outcome("clarifying", expects="text", action=handling["action"]),
+            answer=handling["answer"], pending_id=None,
+            tool_calls=acc.tool_call_records, violations=acc.violations,
+            llm_calls=acc.llm_calls, prompt_tokens=acc.prompt_tokens,
+            completion_tokens=acc.completion_tokens,
+        )
+
+    def _write_proposal_exit(
+        self, acc: TurnAccumulator, agent_state: dict, user_message: str,
+    ) -> Optional[TurnResult]:
+        """AP-1 (4)：提議沒轉成程式呼叫時的既有程式出口（與另兩個檢查點同一組、同一順序）。"""
+        return (self._write_draft_reissue_exit(acc, agent_state, user_message)
+                or self._write_draft_card_still_valid_exit(acc, agent_state, user_message)
+                or self._write_draft_submitted_exit(acc, agent_state, user_message))
 
     def _write_draft_record_asked(
         self, acc: TurnAccumulator, identity: Identity, agent_state: dict,
@@ -3996,12 +4512,18 @@ class AgentRuntime:
            §9.7 末段）、文件暫存的動作相同、看得到該動作、非 `select:`、剩餘期限 ≥ 觸發門檻。
         凍結回合（§8.5-3）⇒ 不合併、不填、不觸發（意圖 task 交給 trace 收尾）。"""
         wd = acc.write_draft
-        if wd is None or wd.triggered or wd.frozen:
+        if wd is None or wd.triggered or wd.frozen or wd.submitted_edit:
             return None
         if not wd.intent_consumed:
             wd.intent_consumed = True
             start_action = wd.draft["action"] if wd.draft is not None else None
             intent = await self._await_write_intent(acc)
+            if intent is not None and self._write_draft_is_submitted_edit(wd, intent):
+                # 第 3 步 #9g：修改剛送出的那一筆 ⇒ ⛔ 合併、⛔ 整句填入、⛔ 觸發；回合由程式固定句
+                # 結束（`_write_draft_submitted_exit`）。
+                wd.submitted_edit = True
+                acc.violations.append(WF.V_SUBMITTED_EDIT_BLOCKED)
+                return None
             provided: set = set()
             other_action = False
             if intent is not None:
@@ -4030,9 +4552,277 @@ class AgentRuntime:
             return None
         if self.budget.deadline_s - (self._clock() - acc.start) < WRITE_DRAFT_PROGRAM_MIN_REMAINING_S:
             return None
+        if getattr(self, "_write_lifecycle_on", False):
+            if wd.reissue_held:
+                return None
+            if not await self._write_draft_reissue_gate(acc, identity, agent_state, draft):
+                wd.reissue_held = True
+                return None
         wd.triggered = True
         acc.violations.append(WF.V_PROGRAM_CONFIRM)
         return _write_draft_program_message(draft, acc.nonce)
+
+    def _write_draft_is_submitted_edit(self, wd: "_WriteDraftTurn", intent: Any) -> bool:
+        """第 3 步 #9g（業主 2026-10-19 裁定）：開關 on、回合開始時有「最近送出」標記、意圖的動作
+        等於標記的動作、且意圖判斷的布林欄位恰為 `true` ⇒ 是「修改剛送出的那一筆」。
+        比較用變數（⛔ 動作名字面，R1）。"""
+        if not getattr(self, "_write_lifecycle_on", False):
+            return False
+        mark = wd.last_submitted
+        action = getattr(intent, "action", None)
+        return (isinstance(mark, dict) and isinstance(action, str)
+                and action == mark.get("action") and wd.modifies_submitted is True)
+
+    def _write_draft_submitted_exit(
+        self, acc: TurnAccumulator, agent_state: dict, user_message: str,
+    ) -> Optional[TurnResult]:
+        """#9g：程式固定句結束回合（⛔ 交模型改寫；⛔ 建草稿；⛔ 出卡）。標記保留（同一句再說一次
+        ⇒ 同一句回覆），由出卡／取消／閒置回合清。"""
+        wd = acc.write_draft
+        if wd is None or not wd.submitted_edit:
+            return None
+        return self._finish_confirm_turn(
+            agent_state=agent_state, user_message=user_message, trace_id=acc.trace_id,
+            start=acc.start, kind="answer", answer=WF.SUBMITTED_EDIT_TEXT, pending_id=None,
+            tool_calls=acc.tool_call_records, violations=acc.violations,
+            llm_calls=acc.llm_calls, prompt_tokens=acc.prompt_tokens,
+            completion_tokens=acc.completion_tokens,
+            outcome=make_outcome("answered", expects="text"),
+        )
+
+    def _write_draft_reissue_not_issued_exit(
+        self, acc: TurnAccumulator, agent_state: dict, user_message: str,
+    ) -> Optional[TurnResult]:
+        """#9b（Q5）：本回合 A2 已燒掉綁定卡，程式觸發的 `confirm.request` 卻是非終結結果（沒出卡）
+        ⇒ 程式固定句結束回合（⛔ 交模型：模型可能自由寫「請確認」而手上沒有任何可送出的卡）。"""
+        wd = acc.write_draft
+        if wd is None or not wd.reissue_burned:
+            return None
+        acc.violations.append(WF.V_REISSUE_NOT_ISSUED)
+        return self._finish_confirm_turn(
+            agent_state=agent_state, user_message=user_message, trace_id=acc.trace_id,
+            start=acc.start, kind="answer", answer=WF.REISSUE_NOT_ISSUED_TEXT, pending_id=None,
+            tool_calls=acc.tool_call_records, violations=acc.violations,
+            llm_calls=acc.llm_calls, prompt_tokens=acc.prompt_tokens,
+            completion_tokens=acc.completion_tokens,
+            outcome=make_outcome("failed", expects="text"),
+        )
+
+    def _write_draft_bound_card(
+        self, identity: Identity, agent_state: dict, action: Any,
+    ) -> Optional[tuple[str, dict]]:
+        """第 3 步 A2：與草稿綁定的那張卡＝`pending_confirm` 裡**最後一筆**同動作、同建立者的
+        待確認筆（`_begin_pending_confirm` 是 pending 的唯一寫點、依出卡順序插入）。沒有 ⇒ `None`。"""
+        pending_all = agent_state.get(PENDING_CONFIRM_KEY)
+        if not isinstance(pending_all, dict):
+            return None
+        creator = _pending_creator(identity)
+        for pid in reversed(list(pending_all)):
+            entry = pending_all.get(pid)
+            if (isinstance(entry, dict) and entry.get("action") == action
+                    and entry.get("creator") == creator):
+                return pid, entry
+        return None
+
+    async def _write_draft_reissue_gate(
+        self, acc: TurnAccumulator, identity: Identity, agent_state: dict, draft: dict,
+    ) -> bool:
+        """第 3 步 A2（卡後改欄位）＋A7(2)：程式觸發前的最後一道。回 `True` ⇒ 照常觸發。
+
+        只在「回合開始就有、且本回合沒換動作」的草稿（`had_draft and not created`）與一張**還活著**
+        的綁定卡同時存在時動作（其餘 ⇒ `True`＝現行觸發）：
+          - 綁定卡已有 receipt ⇒ ⛔ 重出卡（回 `False`）；
+          - 本回合使用者句子寫進草稿的鍵（`touched`），經 `to_payload` 後的值與綁定卡 payload
+            同鍵的值**全相同** ⇒ ⛔ 重出卡（原 pid 仍可送出，§7 F4）；
+          - 有不同 ⇒ 先以既有 `redeem_pending()`（綁 pid＋session＋未兌現＋未過期）**燒綁定卡**、
+            丟掉回傳的 token，再照常觸發程式 `confirm.request`（新卡由 `to_payload(草稿)` 產生，
+            ⛔ 讀 `pending["payload"]` 進草稿、⛔ 改 pending 的 payload）；燒不到（`None`）⇒
+            ⛔ 重出卡，回合以程式固定句結束（`reissue_blocked`）。
+        燒過（或燒不到）的綁定卡一律標既有的 `invalidated`（只是旗標，payload 不動）：之後同一個
+        pid 的按鈕走作廢分支、下一次更正也不會再把它當綁定卡。
+
+        A+ 片（三個開關皆 on，`_write_proposal_active`）：
+          - **Q3**：進入條件放寬為「草稿動作與綁定卡相同」——本回合新建的草稿（`created` 或回合開始
+            無草稿）**只走值相同那一支**：本回合寫進的鍵全相同 ⇒ `_write_draft_same_values`；有不同、
+            沒有可比的鍵、綁定卡有收據或已作廢 ⇒ 照現行觸發（⛔ 燒、交 A7）。⛔ 從卡回填草稿。
+          - **AP-4**：比對改用綁定卡的 `draft_payload`（出卡當時程式送出的草稿正規化值，逐鍵 `==`，
+            ⛔ `str()`）；舊筆或形狀不合 ⇒ 沿用上列字串比對。
+          - **AP-2／AP-3**：值相同 ⇒ `_write_draft_same_values`（卡片還在／燒舊卡出新卡／S3）。"""
+        wd = acc.write_draft
+        if wd is None:
+            return True
+        proposal_on = self._write_proposal_active()
+        new_draft = wd.created or not wd.had_draft
+        if new_draft and not proposal_on:
+            return True
+        bound = self._write_draft_bound_card(identity, agent_state, draft.get("action"))
+        if bound is None:
+            return True
+        pid, entry = bound
+        if isinstance(entry.get("receipt"), dict):
+            if new_draft:
+                return True
+            acc.violations.append("write_draft_reissue_skipped_has_receipt")
+            return False
+        if entry.get("invalidated") is True:
+            return True
+        old_payload = entry.get("payload") if isinstance(entry.get("payload"), dict) else {}
+        new_payload = WF.to_payload(draft.get("action"), draft.get("fields") or {})
+        compared = [k for k in sorted(wd.touched) if k in new_payload]
+        draft_payload = _pending_draft_payload(entry) if proposal_on else None
+        if draft_payload is not None:
+            # AP-4：正規化值逐鍵相等（⛔ `str()`；⛔ 比 `confirm.request` 改寫後的 payload）。
+            changed = [k for k in compared if new_payload[k] != draft_payload.get(k)]
+        else:
+            changed = [k for k in compared if str(new_payload[k]) != str(old_payload.get(k))]
+        if new_draft:
+            # Q3：本回合新建的草稿只走值相同那一支；有不同或沒有可比的鍵 ⇒ 照現行觸發（不燒）。
+            if changed or not compared:
+                return True
+            return await self._write_draft_same_values(acc, identity, pid, entry)
+        if not changed:
+            if proposal_on:
+                return await self._write_draft_same_values(acc, identity, pid, entry)
+            acc.violations.append("write_draft_reissue_skipped_same_values")
+            return False
+        redemption = None
+        if self._db_pool is not None:
+            redemption = await redeem_pending(self._db_pool, identity.session_id, pid)
+        entry["invalidated"] = True
+        if redemption is None:
+            # A7(2)／§7 Q1（S3）：燒不到＝舊卡已被兌現／過期／不是本 session ⇒ ⛔ 重出卡。
+            wd.reissue_blocked = True
+            acc.violations.append("write_draft_reissue_burn_failed")
+            return False
+        # 回傳的 token ⛔ 留用（燒卡只為作廢）。
+        del redemption
+        wd.reissue_burned = True
+        acc.violations.append("write_draft_card_reissue")
+        return True
+
+    def _write_draft_bound_card_text(self, entry: dict, token_state: Any) -> Optional[str]:
+        """A+ 片 AP-2 (ii)～(iv)：綁定卡（DB 已判 `live`）的卡文字仍有效 ⇒ 回重排版的卡文字；否則 `None`。
+
+        (ii) 以存下的 payload **帶當日**（`bills._today()`，與出卡同一個時鐘；安全審查 2-1）重排版，
+             雜湊＝待確認筆 `card_sha256`，且 DB 該列 `summary_sha256`／`payload_sha256` 都對得上；
+        (iii) `fields_before_today` 為空（卡上日期未早於今天，否則兌現閘二必擋；2-3）；
+        (iv) 排版拋例外（逾期帳單延期卡跨日的 `ConfirmCardError` 等）⇒ 不成立，⛔ 讓例外離開回合。"""
+        action = entry.get("action")
+        payload = entry.get("payload")
+        stored = entry.get("card_sha256")
+        if not isinstance(payload, dict) or not isinstance(stored, str):
+            return None
+        if token_state.summary_match is not True or token_state.payload_match is not True:
+            return None
+        today = bills._today()
+        try:
+            card = _confirm_card.render(action, payload, today=today)
+        except Exception:  # noqa: BLE001 — (iv) 排版失敗 ⇒ 不成立（⛔ 讓例外離開回合）
+            return None
+        if not isinstance(card, str) or not hmac.compare_digest(sha256_hex(card), stored):
+            return None
+        try:
+            if fields_before_today(action, payload, today):
+                return None
+        except Exception:  # noqa: BLE001 — 判不出 ⇒ 不成立（fail-closed）
+            return None
+        return card
+
+    async def _write_draft_same_values(
+        self, acc: TurnAccumulator, identity: Identity, pid: str, entry: dict,
+    ) -> bool:
+        """A+ 片 AP-2／AP-3：本回合寫進草稿的值與綁定卡相同。回 `True` ⇒ 照常觸發（出新卡）。
+
+        - DB 唯讀查詢 `pending_token_state` 判 `live` 且 `_write_draft_bound_card_text` 成立 ⇒
+          `card_still_valid`（回合由 `_write_draft_card_still_valid_exit` 結束；⛔ 新 token）；
+        - `expired`，或 (ii)～(iv) 不成立（d）⇒ 比照 A2：先 `redeem_pending` 燒掉綁定卡，燒成功 ⇒
+          `invalidated`、`reissue_burned`、照常觸發（A7 在同一交易燒掉本 session 其他 token；新卡沒
+          出成 ⇒ #9b 固定句）。燒不到 ⇒ 再查一次：仍是**已真的過期**（`redeemed=false`）⇒ 同燒成功；
+          其他（含期間被兌現）⇒ `reissue_blocked`（安全審查 3-1：已兌現優先）；
+        - `redeemed`／`missing` ⇒ 沿用 S3「燒不到 ⇒ ⛔ 重出卡」：`invalidated`＋`reissue_blocked`。"""
+        wd = acc.write_draft
+        db_pool = self._db_pool
+        session_id = identity.session_id
+        payload = entry.get("payload")
+        try:
+            p_sha = payload_digest(payload) if isinstance(payload, dict) else None
+        except (TypeError, ValueError):
+            p_sha = None
+        state = await pending_token_state(
+            db_pool, session_id, pid,
+            card_sha256=entry.get("card_sha256"), payload_sha256=p_sha or "",
+        )
+        if state.state == PENDING_STATE_LIVE:
+            card = self._write_draft_bound_card_text(entry, state)
+            if card is not None:
+                wd.card_still_valid = {"pid": pid, "card": card, "action": entry.get("action")}
+                acc.violations.append(WF.V_CARD_STILL_VALID)
+                return False
+            acc.violations.append("write_draft_bound_card_stale")
+        elif state.state == PENDING_STATE_EXPIRED:
+            acc.violations.append("write_draft_bound_card_expired")
+        else:
+            # (b) redeemed／missing ⇒ S3：⛔ 重出卡。
+            entry["invalidated"] = True
+            wd.reissue_blocked = True
+            acc.violations.append(f"write_draft_bound_card_{state.state}")
+            return False
+        redemption = None
+        if db_pool is not None:
+            redemption = await redeem_pending(db_pool, session_id, pid)
+        entry["invalidated"] = True
+        if redemption is None:
+            again = await pending_token_state(db_pool, session_id, pid)
+            if not (again.state == PENDING_STATE_EXPIRED and again.lapsed):
+                wd.reissue_blocked = True
+                acc.violations.append("write_draft_reissue_burn_failed")
+                return False
+        # 回傳的 token ⛔ 留用（燒卡只為作廢）。
+        del redemption
+        wd.reissue_burned = True
+        acc.violations.append("write_draft_card_reissue")
+        return True
+
+    def _write_draft_card_still_valid_exit(
+        self, acc: TurnAccumulator, agent_state: dict, user_message: str,
+    ) -> Optional[TurnResult]:
+        """A+ 片 AP-2：綁定卡有效、值相同 ⇒ 程式結束回合：固定句＋換行＋同一張卡文字、
+        `confirm_pending`、原 pid 的三顆鍵；⛔ 建 token；⛔ 交模型。出卡當時的卡外提示行（未結單、
+        `BILL_MATCH_HINT`）不重出（計畫 §4.3；安全審查 2-4）。本回合使用者句子的值被值閘丟掉 ⇒
+        `CARD_UNCHANGED_TEXT`（業主裁 Q2）。"""
+        wd = acc.write_draft
+        if wd is None or not isinstance(wd.card_still_valid, dict):
+            return None
+        pid = wd.card_still_valid["pid"]
+        card = wd.card_still_valid["card"]
+        lead = WF.CARD_UNCHANGED_TEXT if wd.user_value_dropped else WF.CARD_STILL_VALID_TEXT
+        return self._finish_confirm_turn(
+            agent_state=agent_state, user_message=user_message, trace_id=acc.trace_id,
+            start=acc.start, kind="ask",
+            outcome=make_outcome("confirm_pending", expects="button",
+                                 action=wd.card_still_valid["action"]),
+            answer=f"{lead}\n{card}", dialog_answer=card, pending_id=pid,
+            quick_replies=confirm_quick_replies(pid),
+            tool_calls=acc.tool_call_records, violations=acc.violations,
+            llm_calls=acc.llm_calls, prompt_tokens=acc.prompt_tokens,
+            completion_tokens=acc.completion_tokens,
+        )
+
+    def _write_draft_reissue_exit(
+        self, acc: TurnAccumulator, agent_state: dict, user_message: str,
+    ) -> Optional[TurnResult]:
+        """A2 燒不到綁定卡 ⇒ 程式固定句結束回合（⛔ 交模型改寫；⛔ 重出卡）。"""
+        wd = acc.write_draft
+        if wd is None or not wd.reissue_blocked:
+            return None
+        return self._finish_confirm_turn(
+            agent_state=agent_state, user_message=user_message, trace_id=acc.trace_id,
+            start=acc.start, kind="answer", answer=CONFIRMATION_REQUIRED_TEXT, pending_id=None,
+            tool_calls=acc.tool_call_records, violations=acc.violations,
+            llm_calls=acc.llm_calls, prompt_tokens=acc.prompt_tokens,
+            completion_tokens=acc.completion_tokens,
+            outcome=make_outcome("failed", expects="none"),
+        )
 
     async def _write_draft_program_first(
         self, acc: TurnAccumulator, identity: Identity, agent_state: dict,
@@ -4090,6 +4880,19 @@ class AgentRuntime:
         連續 `DRAFT_IDLE_LIMIT` 回合 ⇒ 清掉（使用者改談別的）。凍結回合（程式追問後的問句）
         ⛔ 加計數（W1b §8.1-2）。"""
         wd = acc.write_draft
+        if wd is not None and not wd.activity and not wd.frozen and wd.last_submitted is not None:
+            # 第 3 步 #9g：「最近送出」標記同一條閒置規則（`DRAFT_IDLE_LIMIT` 個無關回合 ⇒ 清）。
+            # 以落地那一份重讀（本回合其他寫點可能已清掉它；⛔ 用回合開頭的副本覆寫回去）。
+            session = AgentSession(agent_state)
+            mark, _invalid = WF.load_last_submitted(session.get_last_submitted())
+            if mark is not None:
+                mark_idle = mark["idle_turns"] + 1
+                if mark_idle >= WF.DRAFT_IDLE_LIMIT:
+                    session.clear_last_submitted()
+                    acc.violations.append(WF.V_LAST_SUBMITTED_CLEARED_IDLE)
+                else:
+                    mark["idle_turns"] = mark_idle
+                    session.write_last_submitted(mark)
         if wd is None or wd.draft is None or wd.activity or wd.frozen:
             return
         idle = int(wd.draft.get("idle_turns") or 0) + 1
@@ -4194,14 +4997,21 @@ class AgentRuntime:
                 acc, identity, agent_state, user_message, document)
             if wd_first is not None:
                 program_message, program_kind = wd_first, "wd"
+            reissue_exit = (self._write_draft_reissue_exit(acc, agent_state, user_message)
+                            or self._write_draft_card_still_valid_exit(acc, agent_state, user_message)
+                            or self._write_draft_submitted_exit(acc, agent_state, user_message))
+            if reissue_exit is not None:
+                return reissue_exit
         while True:
             if (self._clock() - acc.start) >= self.budget.deadline_s:
                 return _finalize(acc.build_fixed("budget_exhausted", clock=self._clock), is_fixed=True)
 
             wd_program = False
+            doc_program = False
             if program_message is not None:
                 message, program_message = program_message, None
                 wd_program = program_kind == "wd"
+                doc_program = program_kind == "doc"
                 program_kind = None
             else:
                 message = await self._next_model_message(acc, tool_specs)
@@ -4227,10 +5037,100 @@ class AgentRuntime:
                     if name not in visible_names:
                         acc.violations.append(f"FORBIDDEN:{name}")
 
+                    # A+ 片 AP-1／AP-4：本次 tool call **專屬**的區域旗標（⛔ 設或重用 `wd_program`——
+                    # 它是整則 message 共用變數；⛔ 以 `tc.id` 或其前綴判斷來源，模型造得出同名 id）。
+                    #   - `proposal_program`：模型的提議已轉成程式依草稿發出的 `confirm.request`；
+                    #   - `program_payload_keys`：程式依草稿發出時，payload 中屬於 `to_payload(草稿)` 的鍵
+                    #     （出卡時存 `draft_payload` 用）。
+                    proposal_program = False
+                    program_payload_keys: Optional[frozenset] = (
+                        _program_payload_keys(raw_args)
+                        if wd_program and name == CONFIRM_TOOL_NAME else None
+                    )
+                    # DSP-091 DG-1：模型來源的理由要在下面任何分支改動 `agent_state`（例如清文件暫存）
+                    # **之前**判定，標記才反映進場當下的狀態。
+                    confirm_model_reason: Optional[str] = (
+                        _confirm_model_reason(
+                            proposal_active=self._write_proposal_active(), document=document,
+                            agent_state=agent_state, readonly_view=self.readonly_view)
+                        if name == CONFIRM_TOOL_NAME and not wd_program else None
+                    )
+                    # A+ 片 AP-1：模型**自己**呼叫 `confirm.request` ⇒ 參數只當提議（合併進草稿、下一步
+                    # 由程式決定）；⛔ 以模型參數呼叫 `registry.call`。
+                    # AP-5：文件回合、文件暫存有效回合、點選範圍回合維持模型自呼路徑——
+                    # 過渡修正、不新增 AI 決定權：A+ 非目標；點選範圍由 A-2 接手（KD-1）；文件回合、
+                    # 文件暫存由「文件回合」片接手（KD-2；文件回合各有程式先發與 DSP-076 覆寫規則）。
+                    # 影子回合（`readonly_view`）維持現行（9i：不動 token 表與 `agent_state`）。
+                    if (
+                        name == CONFIRM_TOOL_NAME and not wd_program
+                        and self._write_proposal_active()
+                        and document is None
+                        and _document_carry_of(agent_state) is None
+                        and agent_state.get(SELECT_SCOPE_KEY) is None
+                        and not self.readonly_view
+                    ):
+                        acc.violations.append(WF.V_WRITE_PROPOSAL)
+                        p_kind, p_value = await self._write_proposal_handle(
+                            acc, identity, agent_state, user_message, document, raw_args)
+                        if p_kind == "program":
+                            # 程式的 `confirm.request`（args 整份取代 `raw_args`，含 `summary` 常數），
+                            # 以模型這次 tool call 的 id 走下方同一條路（照片、物件記憶前處理照舊；
+                            # 出卡、缺欄追問、查無、範圍閘照現行出口）。計入 `tool_calls` 預算照現行。
+                            raw_args = p_value
+                            proposal_program = True
+                            program_payload_keys = _program_payload_keys(raw_args)
+                        else:
+                            # 這次不轉成程式呼叫：模型的呼叫照現行計入預算、照跑保留 id 撞名檢查。
+                            acc.counters.tool_calls += 1
+                            acc.tool_call_records.append(
+                                ToolCallRecord(
+                                    id=tc.id, name=name,
+                                    args_summary=_args_summary(raw_args),
+                                    ms=0, status="error", n_items=0, empty=False,
+                                )
+                            )
+                            if tc.id in reserved_ids:
+                                acc.violations.append("tool_call_id_collides_with_reserved")
+                            if p_kind == "no_value":
+                                # r3 AP-7 (2)：提議沒有任何值進草稿 ⇒ 程式結束回合（⛔ 交模型寫回覆）。
+                                return self._write_proposal_no_value_exit(
+                                    acc, agent_state, user_message, p_value)
+                            if p_kind == "exit":
+                                exit_turn = self._write_proposal_exit(acc, agent_state, user_message)
+                                if exit_turn is not None:
+                                    return exit_turn
+                                p_value = "HANDLED_BY_PROGRAM"
+                            # AP-1 (4) 封閉結果：常數、⛔ 含草稿值（比照 `doc_write_face` 分支直接組
+                            # tool message；⛔ 建 `ToolResult(error=...)`，`ToolError` 是封閉 Literal）。
+                            # 過渡修正（KD-3）、不新增 AI 決定權；寫入進行中回話由 B 片接手——封閉結果之後由
+                            # 模型寫回覆（模型主導路徑），本片只拿掉它以自身參數出卡／算缺欄的出口。
+                            # r3 AP-7 之後仍走到這裡的：動作不合（`NO_MATCH`，含巢狀內層動作不合）、
+                            # 凍結回合（回答提問屬 AI，DSP-091）、本回合已觸發後的第二次提議、期限不足等
+                            # （AP-R10 收窄；計畫 §9.2 (2) 末項）。
+                            acc.violations.append(WF.V_WRITE_PROPOSAL_NOT_ISSUED)
+                            acc.messages.append(
+                                {
+                                    "role": "tool",
+                                    "tool_call_id": tc.id,
+                                    "content": wrap_tool_data(
+                                        "tool",
+                                        json.dumps(
+                                            {"ok": False, "error": p_value},
+                                            ensure_ascii=False,
+                                        ),
+                                        acc.nonce,
+                                    ),
+                                }
+                            )
+                            continue
                     # W1（§2.1(3)）：模型**自己**呼叫 `confirm.request` ⇒ 原始參數（任何
                     # `_apply_*` 與 `_prepare_closed_action` 就地改寫之前）過值閘後合併進草稿。
                     # 文件回合與文件暫存有效時不合併；程式觸發的那一次（`wd_program`）不合併。
-                    if (
+                    # 走到這個 `elif` 有兩種情形：(i) 三開關任一 off——回復開關（AP-R7＝改前行為），
+                    # 非目標組態；(ii) 三開關 on 的點選範圍、唯讀檢視回合（上一支 `if` 不接）——KD-1
+                    # 過渡修正、不新增 AI 決定權，由 A-2 接手。文件回合、文件暫存兩種情形此處不合併。
+                    # ⛔ 新增分支（A+ 只把 `if` 改成 `elif`）。
+                    elif (
                         name == CONFIRM_TOOL_NAME and not wd_program
                         and acc.write_draft is not None and document is None
                         and _document_carry_of(agent_state) is None
@@ -4406,6 +5306,19 @@ class AgentRuntime:
                                 acc.build_fixed("tool_unavailable", clock=self._clock), is_fixed=True
                             )
 
+                    # DSP-091 DG-1：每次 `confirm.request` 經 registry 執行（出卡或回缺欄）⇒ 本回合加且只加
+                    # 一筆來源標記（只加字串，⛔ 改任何分支、出卡、執行或回傳）。
+                    if name == CONFIRM_TOOL_NAME:
+                        if wd_program:
+                            _csrc = "program_draft"
+                        elif proposal_program:
+                            _csrc = "program_proposal"
+                        elif doc_program:
+                            _csrc = "program_document"
+                        else:
+                            _csrc = f"model:{confirm_model_reason}"
+                        acc.violations.append(CONFIRM_SOURCE_PREFIX + _csrc)
+
                     # 一次性照片建議：`confirm.request` 一回來就用掉（⛔ 不讓上一張照片補到
                     # 之後另一張無關的單）——**唯一例外**是 `INVALID_INPUT`（缺欄／形狀不合 ⇒
                     # 要先追問）：站內幫手 S3（§3h 第 6 點）「缺欄追問失敗不消耗」，使
@@ -4413,8 +5326,10 @@ class AgentRuntime:
                     if name == CONFIRM_TOOL_NAME and tool_result.error != "INVALID_INPUT":
                         AgentSession(agent_state).consume_image_suggestion()
                     # W1（§2.1(5)）：本回合模型**自己**成功呼叫過 `confirm.request` ⇒ 不再程式觸發。
-                    if (name == CONFIRM_TOOL_NAME and not wd_program and tool_result.ok
-                            and acc.write_draft is not None):
+                    # A+ 片 AP-1：三個開關皆 on ⇒ 不再設（模型自呼只是提議）。
+                    if (name == CONFIRM_TOOL_NAME and not wd_program and not proposal_program
+                            and tool_result.ok and acc.write_draft is not None
+                            and not self._write_proposal_active()):
                         acc.write_draft.model_confirm_ok = True
 
                     # L15 (a)③：**範圍比對排在這裡**——`registry.call` 一回來、
@@ -4652,9 +5567,26 @@ class AgentRuntime:
                             llm_calls=acc.llm_calls,
                             prompt_tokens=acc.prompt_tokens,
                             completion_tokens=acc.completion_tokens,
+                            # A+ 片 AP-4：只有程式依草稿發出的呼叫（`wd_program` 或 AP-1 區域旗標）
+                            # 才帶「這次送出的 payload 中屬於 to_payload(草稿) 的鍵」。
+                            draft_payload=(
+                                _sent_draft_payload(raw_args, program_payload_keys)
+                                if wd_program or proposal_program else None
+                            ),
                         )
                         if confirm_turn is not None:
                             return confirm_turn
+                    if proposal_program:
+                        # A+ 片 AP-1 (3)：提議轉成的程式呼叫是**非終結**結果（無缺欄清單的
+                        # `INVALID_INPUT`、無查無標記的 `NO_MATCH`、`DATE_BEFORE_TODAY`…）⇒ 比照
+                        # `wd_program` 區塊：記 `V_PROGRAM_NONTERMINAL`，先過 #9b 出口（綁定卡已燒、這次
+                        # 沒出成新卡 ⇒ 固定句結束回合；安全審查 1-1），不成立才回填結果、交回模型。
+                        # 過渡修正（KD-3）、不新增 AI 決定權；交回模型後的寫入進行中回話由 B 片接手。
+                        acc.violations.append(WF.V_PROGRAM_NONTERMINAL)
+                        not_issued = self._write_draft_reissue_not_issued_exit(
+                            acc, agent_state, user_message)
+                        if not_issued is not None:
+                            return not_issued
                     # ⚠️ **槽位寫回 state（2.9，⛔ 勿刪）**：`session.slots.set` 是
                     #    以 `jsonb_set` 直接改 `form_sessions.collected_data.slots`
                     #    的，但回合結束時呼叫端（`mcp_facade._agent_turn`）
@@ -4721,6 +5653,11 @@ class AgentRuntime:
                     # 模型，模型的下一個輸出走 T2／V2／Verifier／出口閘的正常路徑（同
                     # `_document_program_message`）；本回合不再觸發（`triggered`）。
                     acc.violations.append(WF.V_PROGRAM_NONTERMINAL)
+                    # 第 3 步 #9b（Q5）：A2 已燒掉綁定卡、這次又沒出成新卡 ⇒ 程式固定句結束回合。
+                    not_issued = self._write_draft_reissue_not_issued_exit(
+                        acc, agent_state, user_message)
+                    if not_issued is not None:
+                        return not_issued
                 continue  # 工具結果已回填，回到迴圈頂端再叫一次模型
 
             # 無 tool_calls ⇒ 這一回合模型嘗試給最終答案
@@ -4767,6 +5704,11 @@ class AgentRuntime:
             if wd_message is not None:
                 program_message, program_kind = wd_message, "wd"
                 continue
+            reissue_exit = (self._write_draft_reissue_exit(acc, agent_state, user_message)
+                            or self._write_draft_card_still_valid_exit(acc, agent_state, user_message)
+                            or self._write_draft_submitted_exit(acc, agent_state, user_message))
+            if reissue_exit is not None:
+                return reissue_exit
 
             handoff_dict: Optional[dict] = None
             if out.kind == "handoff":

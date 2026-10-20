@@ -21,7 +21,8 @@ DIALOG_MAX_MESSAGES`）。本檔若去 import 那些模組的常數，會在
 test_agent_session_req.py` 另有一條「與各檔既有常數逐一相等」的正對照守著
 不讓兩邊漂移，⛔ 不是「重複了就沒事」。
 
-## 12 個鍵與六種生命週期（KEY_SPECS，封閉表；站內幫手 S3 加 `document_carry`、W1 加 `write_draft`）
+## 13 個鍵與六種生命週期（KEY_SPECS，封閉表；站內幫手 S3 加 `document_carry`、W1 加 `write_draft`、
+第 3 步 #9g 加 `last_submitted`）
 `turn`（每回合覆寫或回合內暫存）／`once`（一次性，用掉即清）／
 `until_scope_exit`（黏到 `scope_exit()`）／`fifo(n)`（FIFO 上限 n）／
 `stamp`（時間戳）／`session`（整個 session 累加，不受回合或範圍影響）。
@@ -73,6 +74,10 @@ DOCUMENT_CARRY_KEY = "document_carry"
 #: **本鍵的權威定義就在本檔**（`runtime.py` 由此 import，⛔ 另抄字面值）。
 #: 形狀與讀回驗證在 `write_forms.load_draft`（封閉五鍵，W1b 加 `asked`；⛔ token、⛔ 系統解析的編號類值）。
 WRITE_DRAFT_KEY = "write_draft"
+#: 第 3 步 #9g（業主 2026-10-19 裁定）：「最近送出」標記——送出成功寫 receipt 時記
+#: `{action, pending_id, idle_turns}`，供「修改剛送出的那一筆」判斷。**本鍵的權威定義就在本檔**。
+#: 形狀與讀回驗證在 `write_forms.load_last_submitted`（封閉三鍵；⛔ token、⛔ payload、⛔ 使用者值）。
+LAST_SUBMITTED_KEY = "last_submitted"
 
 #: DSP-022：`dialog` 保留的訊息數上限（user＋assistant 各一則算 2；10 輪對話）。
 DIALOG_MAX_MESSAGES = 20
@@ -105,9 +110,12 @@ KEY_SPECS: dict[str, KeySpec] = {
     # 閒置、身分、兌現／取消、not_supported、釘住範圍、開關 off）由 runtime 各寫點明確呼叫
     # `clear_write_draft()`。
     WRITE_DRAFT_KEY: KeySpec(WRITE_DRAFT_KEY, Lifetime.UNTIL_SCOPE_EXIT),
+    # 第 3 步 #9g：黏到 `scope_exit()`（沿用既有六種之一，⛔ 新增第七種）；其餘清除條件（出卡、
+    # 取消、`DRAFT_IDLE_LIMIT` 個無關回合、開關 off）由 runtime 各寫點明確呼叫 `clear_last_submitted()`。
+    LAST_SUBMITTED_KEY: KeySpec(LAST_SUBMITTED_KEY, Lifetime.UNTIL_SCOPE_EXIT),
 }
 
-assert len(KEY_SPECS) == 12, "KEY_SPECS 是封閉表——12 個鍵，多一個少一個都要回頭對帳"
+assert len(KEY_SPECS) == 13, "KEY_SPECS 是封閉表——13 個鍵，多一個少一個都要回頭對帳"
 
 
 class AgentSession:
@@ -279,6 +287,18 @@ class AgentSession:
     def clear_write_draft(self) -> None:
         self._state.pop(WRITE_DRAFT_KEY, None)
 
+    # ── last_submitted（第 3 步 #9g：黏到 `scope_exit()`；形狀驗證在
+    #    `write_forms.load_last_submitted`，本類別只管落地——⛔ 不做任何業務判定）──────
+    def get_last_submitted(self) -> Any:
+        """原樣回傳（**未驗形狀**）；呼叫端一律先過 `write_forms.load_last_submitted`。"""
+        return self._state.get(LAST_SUBMITTED_KEY)
+
+    def write_last_submitted(self, mark: dict) -> None:
+        self._state[LAST_SUBMITTED_KEY] = mark
+
+    def clear_last_submitted(self) -> None:
+        self._state.pop(LAST_SUBMITTED_KEY, None)
+
     def scope_exit(self) -> None:
         """範圍退出：清掉全部 `until_scope_exit` 鍵（`estate_carry`、W1 的
         `write_draft`；多一個 `until_scope_exit` 鍵時這裡自動涵蓋，⛔ 不必回頭改這支
@@ -403,6 +423,7 @@ __all__ = [
     "LAST_TURN_AT_KEY",
     "DOCUMENT_CARRY_KEY",
     "WRITE_DRAFT_KEY",
+    "LAST_SUBMITTED_KEY",
     "DOCUMENT_CARRY_FIELDS",
     "DOCUMENT_CARRY_MAX_TURNS",
     "DIALOG_MAX_MESSAGES",

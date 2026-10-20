@@ -30,6 +30,7 @@ from datetime import date, timedelta
 from unittest.mock import AsyncMock
 
 import pytest
+from tests.unit.agent.confirm_pool_double import attach_token_tx  # 第 3 步 A7：token 寫入交易替身
 
 from services.agent.confirm_card import (
     ACTION_FAILED_TEXT,
@@ -143,10 +144,10 @@ def _identity():
 
 
 def _confirm_pool():
-    """`confirm.request` 只用 `execute`（INSERT token 列）。"""
+    """`confirm.request` 寫 token 走 `acquire()`＋交易（A7）；INSERT 斷言看 `pool.insert`。"""
     pool = AsyncMock()
     pool.execute = AsyncMock(return_value="INSERT 0 1")
-    return pool
+    return attach_token_tx(pool)
 
 
 # ---------------------------------------------------------------------------
@@ -260,6 +261,8 @@ async def test_confirm_request_rejects_a_past_new_due_date_and_writes_no_pending
     閘一本身沒有被刪（縱深，表裡未來的 action 仍走它），它仍在兌現端開火——
     見 `test_redeem_with_a_past_date_never_calls_the_write_tool`。
     """
+    # 第 3 步 A6：有帳單編號的延期卡在開關 on 時會先以 viewer 單筆讀帳單並重算到期日（表單宣告預檢）；本條原斷言驗的是現行路徑 ⇒ 照舊在 `AGENT_WRITE_LIFECYCLE=off` 下驗。
+    monkeypatch.setenv("AGENT_WRITE_LIFECYCLE", "off")
     monkeypatch.setattr(bills, "_today", lambda: _TODAY)
     payload = _bill_due_extend_payload(_TODAY - timedelta(days=10))   # 舊算法：after ＝ 今天−7
     pool = _confirm_pool()
@@ -272,7 +275,8 @@ async def test_confirm_request_rejects_a_past_new_due_date_and_writes_no_pending
     assert result.error == "INVALID_INPUT"          # ⛔ 沿用封閉值域，不新增錯誤碼
     assert result.text_for_model == ""              # 驗算不過（⛔ 不是閘一那一支）
     assert result.data is None
-    assert pool.execute.await_count == 0, "⛔ 不落 pending 列（沒有 token 可兌現）"
+    pool.execute.assert_not_awaited()   # 原斷言保留（A7 前 INSERT 走這裡）
+    assert pool.insert.await_count == 0 and pool.burn.await_count == 0, "⛔ 不落 pending 列（沒有 token 可兌現）"
 
     # 正對照組①：同一張逾期帳單，改用 V3 的起算日算 ⇒ 出得了卡（證明擋的是算式不是帳單）
     ok_pool = _confirm_pool()
@@ -282,7 +286,7 @@ async def test_confirm_request_rejects_a_past_new_due_date_and_writes_no_pending
          "payload": json.dumps(_v3_payload(_TODAY - timedelta(days=10)))},
         db_pool=ok_pool,
     )
-    assert ok.ok is True and ok_pool.execute.await_count == 1
+    assert ok.ok is True and ok_pool.insert.await_count == 1
 
     # 正對照組②：閘一的判定本身還活著（純函式層），⛔ 不是被 V3 拿掉了
     assert fields_before_today(
@@ -296,6 +300,8 @@ async def test_confirm_request_rejects_a_past_new_due_date_and_writes_no_pending
 @pytest.mark.parametrize("delta", [0, 1, 30])
 async def test_today_or_later_still_issues_the_card(monkeypatch, delta):
     """正對照組：今天／明天／一個月後照常出卡，且卡逐字等於 `render`。"""
+    # 第 3 步 A6：有帳單編號的延期卡在開關 on 時會先以 viewer 單筆讀帳單並重算到期日（表單宣告預檢）；本條原斷言驗的是現行路徑 ⇒ 照舊在 `AGENT_WRITE_LIFECYCLE=off` 下驗。
+    monkeypatch.setenv("AGENT_WRITE_LIFECYCLE", "off")
     monkeypatch.setattr(bills, "_today", lambda: _TODAY)
     payload = _bill_due_extend_payload(_TODAY + timedelta(days=delta))
     pool = _confirm_pool()
@@ -306,7 +312,7 @@ async def test_today_or_later_still_issues_the_card(monkeypatch, delta):
 
     assert result.ok is True
     assert result.data["card"] == render("bill_due_extend", payload)
-    assert pool.execute.await_count == 1
+    assert pool.insert.await_count == 1
 
 
 @pytest.mark.req(_REQ)
@@ -316,6 +322,8 @@ async def test_an_overdue_original_due_date_is_not_a_reason_to_refuse(monkeypatc
     走查病灶：原到期日已逾期時，舊算法算出的新到期日仍在過去，使用者只看到
     「不能延」。V3 起 `days` 從「原到期日與今天較晚者」起算 ⇒ 延三天就是今天＋3。
     """
+    # 第 3 步 A6：有帳單編號的延期卡在開關 on 時會先以 viewer 單筆讀帳單並重算到期日（表單宣告預檢）；本條原斷言驗的是現行路徑 ⇒ 照舊在 `AGENT_WRITE_LIFECYCLE=off` 下驗。
+    monkeypatch.setenv("AGENT_WRITE_LIFECYCLE", "off")
     monkeypatch.setattr(bills, "_today", lambda: _TODAY)
     payload = _v3_payload(_TODAY - timedelta(days=3), days=3)   # after ＝ 今天＋3
     pool = _confirm_pool()
@@ -324,7 +332,7 @@ async def test_an_overdue_original_due_date_is_not_a_reason_to_refuse(monkeypatc
         _identity(), {"summary": "延三天", "payload": json.dumps(payload)}, db_pool=pool
     )
 
-    assert result.ok is True and pool.execute.await_count == 1
+    assert result.ok is True and pool.insert.await_count == 1
     assert payload["date_expire_after"] == _ymd(_TODAY + timedelta(days=3))
     assert f"・起算日：{_TODAY.year:04d}/{_TODAY.month:02d}/{_TODAY.day:02d}" in result.data["card"]
 
@@ -339,6 +347,8 @@ async def test_render_failure_is_distinguishable_from_the_date_gate(monkeypatch)
     改直接對閘一的注入點（`confirm_request` 呼叫的 `fields_before_today`）下手，
     證明那一支確實帶著固定句，⛔ 兩支不得混為一談。
     """
+    # 第 3 步 A6：有帳單編號的延期卡在開關 on 時會先以 viewer 單筆讀帳單並重算到期日（表單宣告預檢）；本條原斷言驗的是現行路徑 ⇒ 照舊在 `AGENT_WRITE_LIFECYCLE=off` 下驗。
+    monkeypatch.setenv("AGENT_WRITE_LIFECYCLE", "off")
     monkeypatch.setattr(bills, "_today", lambda: _TODAY)
     broken = {k: v for k, v in _bill_due_extend_payload(_TODAY).items() if k != "bill_id"}
     pool = _confirm_pool()
@@ -349,7 +359,8 @@ async def test_render_failure_is_distinguishable_from_the_date_gate(monkeypatch)
 
     assert result.ok is False and result.error == "INVALID_INPUT"
     assert result.text_for_model == ""
-    assert pool.execute.await_count == 0
+    pool.execute.assert_not_awaited()   # 原斷言保留（A7 前 INSERT 走這裡）
+    assert pool.insert.await_count == 0 and pool.burn.await_count == 0
 
     # 正對照組：把閘一的判定換成「一律擋」⇒ 同一組**驗算過得了**的 payload 走到
     # 閘一那一支，帶著固定句、且 ⛔ 不落 pending 列。
@@ -364,12 +375,15 @@ async def test_render_failure_is_distinguishable_from_the_date_gate(monkeypatch)
     )
     assert gated.ok is False and gated.error == "INVALID_INPUT"
     assert gated.text_for_model == DATE_BEFORE_TODAY_TEXT
-    assert gate_pool.execute.await_count == 0
+    gate_pool.execute.assert_not_awaited()   # 原斷言保留（A7 前 INSERT 走這裡）
+    assert gate_pool.insert.await_count == 0 and gate_pool.burn.await_count == 0
 
 
 @pytest.mark.req(_REQ)
 async def test_unmarked_action_is_completely_unaffected(monkeypatch):
     """正對照組：表裡沒有 `repair_create` ⇒ 時鐘怎麼設都不影響它。"""
+    # 第 3 步 A6：有帳單編號的延期卡在開關 on 時會先以 viewer 單筆讀帳單並重算到期日（表單宣告預檢）；本條原斷言驗的是現行路徑 ⇒ 照舊在 `AGENT_WRITE_LIFECYCLE=off` 下驗。
+    monkeypatch.setenv("AGENT_WRITE_LIFECYCLE", "off")
     far_future = date(2099, 1, 1)
     monkeypatch.setattr(bills, "_today", lambda: far_future)
     payload = _repair_create_payload(_TODAY)
@@ -381,7 +395,7 @@ async def test_unmarked_action_is_completely_unaffected(monkeypatch):
 
     assert result.ok is True
     assert result.data["card"] == render("repair_create", payload)
-    assert pool.execute.await_count == 1
+    assert pool.insert.await_count == 1
     assert fields_before_today("repair_create", payload, far_future) == []
     # 同一個時鐘下，`bill_due_extend` 會被擋（證明時鐘真的被換掉了）：以 `_TODAY`
     # 為起算日算出來的 payload，在 2099 的時鐘下起算日變成 2099 ⇒ 驗算不一致。
@@ -399,7 +413,7 @@ async def test_unmarked_action_is_completely_unaffected(monkeypatch):
         {"summary": "延三天", "payload": json.dumps(_v3_payload(_TODAY))},
         db_pool=ok_pool,
     )
-    assert unblocked.ok is True and ok_pool.execute.await_count == 1
+    assert unblocked.ok is True and ok_pool.insert.await_count == 1
 
 
 # ---------------------------------------------------------------------------

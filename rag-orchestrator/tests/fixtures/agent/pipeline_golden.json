@@ -477,7 +477,9 @@
       "trace_id": "ffffffffffffffffffffffffffffffff",
       "verifier": [],
       "verifier_observed_counts": {},
-      "violations": [],
+      "violations": [
+        "confirm_source:model:flag_off"
+      ],
       "winning_key_kind": {}
     }
   },

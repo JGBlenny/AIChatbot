@@ -19,6 +19,7 @@ from datetime import date
 from unittest.mock import AsyncMock
 
 import pytest
+from tests.unit.agent.confirm_pool_double import attach_token_tx  # 第 3 步 A7：token 寫入交易替身
 
 from services.agent import bill_period
 from services.agent.bill_period import PeriodSpec, parse_period
@@ -78,7 +79,7 @@ def _identity(**over) -> Identity:
 def _pool():
     pool = AsyncMock()
     pool.execute = AsyncMock(return_value="INSERT 0 1")
-    return pool
+    return attach_token_tx(pool)
 
 
 def _args(**payload_over) -> dict:
@@ -331,7 +332,12 @@ async def test_unknown_estate_name_returns_no_match(api):
 
 @pytest.mark.asyncio
 async def test_bill_id_present_never_touches_resolver(api, monkeypatch):
-    """有帳單編號 ⇒ 一步都不查（既有路徑逐字不變）。"""
+    """有帳單編號 ⇒ 一步都不查（既有路徑逐字不變）。
+
+    第 3 步 A6：開關 on 時有編號的延期卡會先以 viewer 單筆讀帳單（表單宣告的預檢；本檔 fixture
+    的 900001 對這個身分查無 ⇒ 不出卡）——「出卡、hint 空」這組原斷言照舊在
+    `AGENT_WRITE_LIFECYCLE=off`（現行）下驗；on 時的預檢由 `test_step3_write_lifecycle_req.py` #9k 驗。"""
+    monkeypatch.setenv("AGENT_WRITE_LIFECYCLE", "off")
     called = []
 
     async def _boom(*a, **kw):

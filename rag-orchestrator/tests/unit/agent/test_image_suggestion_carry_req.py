@@ -133,6 +133,7 @@ def _confirm_ok_result():
     }, text_for_model="")
 
 
+@pytest.mark.usefixtures("_aplus_proposal_off")
 async def test_next_turn_confirm_request_gets_category_and_description_then_clears():
     state = {"agent": {IMAGE_SUGGESTION_KEY: {"category_name": "房屋結構", "item": "天花板", "reason": "漏水"}}}
     registry = FakeRegistry(call_results=[_confirm_ok_result()])
@@ -153,6 +154,7 @@ async def test_next_turn_confirm_request_gets_category_and_description_then_clea
     assert IMAGE_SUGGESTION_KEY not in state["agent"], "出卡成功後建議應清掉"
 
 
+@pytest.mark.usefixtures("_aplus_proposal_off")
 async def test_without_suggestion_payload_goes_through_verbatim():
     state = {"agent": {}}
     registry = FakeRegistry(call_results=[_confirm_ok_result()])
@@ -165,3 +167,12 @@ async def test_without_suggestion_payload_goes_through_verbatim():
     sent = [c for c in registry.call_args if c["name"] == "confirm.request"]
     assert sent and json.loads(sent[0]["args"]["payload"]) == json.loads(original["payload"])
     assert not any(v.startswith("image_suggestion_applied") for v in result.trace.violations)
+
+
+@pytest.fixture()
+def _aplus_proposal_off(monkeypatch):
+    """A+ 片（`AGENT_WRITE_PROPOSAL`）：本檔以「模型自呼 `confirm.request`、以模型參數執行」為載具的
+    測試＝開關 off 的正對照（開關 on 時該路徑已收掉）。開關 on 的程式路徑由
+    `test_aplus_card_program_only_req.py` 驗出卡、缺欄追問、查無固定句、帳單候選點選、照片與物件記憶前處理；
+    本檔其餘行為在開關 on 時沒有另寫程式路徑版本。"""
+    monkeypatch.setenv("AGENT_WRITE_PROPOSAL", "off")

@@ -1291,6 +1291,7 @@ async def test_document_turn_hides_the_write_face_from_the_model():
 
 
 @pytest.mark.req(_REQ)
+@pytest.mark.usefixtures("_aplus_proposal_off")
 async def test_document_turn_blocks_a_write_tool_call_even_if_the_model_forges_it():
     """模型硬打寫入面工具名 ⇒ **不執行**、記 violation、⛔ 不出卡。
 
@@ -1536,3 +1537,12 @@ async def test_repair_turn_never_builds_a_document_input(monkeypatch):
     await _call_turn(registry, _identity(), "水管漏水", image_urls=[_OK_IMG_URL])
     assert "document" not in seen
     assert "image" in seen                    # 正對照：照片線本身還是有接上
+
+
+@pytest.fixture()
+def _aplus_proposal_off(monkeypatch):
+    """A+ 片（`AGENT_WRITE_PROPOSAL`）：本檔以「模型自呼 `confirm.request`、以模型參數執行」為載具的
+    測試＝開關 off 的正對照（開關 on 時該路徑已收掉）。開關 on 的程式路徑由
+    `test_aplus_card_program_only_req.py` 驗出卡、缺欄追問、查無固定句、帳單候選點選、照片與物件記憶前處理；
+    本檔其餘行為在開關 on 時沒有另寫程式路徑版本。"""
+    monkeypatch.setenv("AGENT_WRITE_PROPOSAL", "off")

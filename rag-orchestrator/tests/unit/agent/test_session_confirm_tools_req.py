@@ -15,6 +15,7 @@ import json
 from unittest.mock import AsyncMock
 
 import pytest
+from tests.unit.agent.confirm_pool_double import attach_token_tx  # 第 3 步 A7：token 寫入交易替身
 
 from services.agent.identity import Identity
 from services.agent.confirm_card import CONFIRM_ACTIONS
@@ -342,13 +343,15 @@ OVERSIZED_PAYLOAD = "x" * 8001
 def _confirm_pool():
     pool = AsyncMock()
     pool.execute = AsyncMock(return_value="INSERT 0 1")
-    return pool
+    return attach_token_tx(pool)
 
 
 @pytest.mark.req(_REQ)
-async def test_confirm_request_returns_three_machine_values_reusing_engine_constants():
+async def test_confirm_request_returns_three_machine_values_reusing_engine_constants(monkeypatch):
     """DSP-038：`value` 改成 `<前綴>:<pending_id>`，label 沿用 `form_contract` 常數
     （舊鏈隔離 S3 從 `conversational_engine` 抽出，值不變）。"""
+    # 第 3 步 A6：有帳單編號的延期卡在開關 on 時會先以 viewer 單筆讀帳單並重算到期日（表單宣告預檢）；本條原斷言驗的是現行路徑 ⇒ 照舊在 `AGENT_WRITE_LIFECYCLE=off` 下驗。
+    monkeypatch.setenv("AGENT_WRITE_LIFECYCLE", "off")
     from services.form_contract import (
         DEFAULT_QR_LABELS as _DEFAULT_QR_LABELS,
         QR_CANCEL as _QR_CANCEL,
@@ -378,9 +381,11 @@ async def test_confirm_request_returns_three_machine_values_reusing_engine_const
 
 
 @pytest.mark.req(_REQ)
-async def test_confirm_request_data_carries_card_action_payload_but_never_token():
+async def test_confirm_request_data_carries_card_action_payload_but_never_token(monkeypatch):
     """DSP-038-2：`data` ＝ `{pending_id, action, payload, card, quick_replies}`；
     `card` 逐字等於 `confirm_card.render(action, payload)`，`summary_sha256` 是它的雜湊。"""
+    # 第 3 步 A6：有帳單編號的延期卡在開關 on 時會先以 viewer 單筆讀帳單並重算到期日（表單宣告預檢）；本條原斷言驗的是現行路徑 ⇒ 照舊在 `AGENT_WRITE_LIFECYCLE=off` 下驗。
+    monkeypatch.setenv("AGENT_WRITE_LIFECYCLE", "off")
     pool = _confirm_pool()
     result = await confirm_request(
         _identity(), {"summary": "模型自己寫的摘要（⛔ 不會成為卡）",
@@ -398,7 +403,7 @@ async def test_confirm_request_data_carries_card_action_payload_but_never_token(
     assert result.data["payload"] == _VALID_PAYLOAD
     assert result.data["card"] == render_card("bill_due_extend", _VALID_PAYLOAD)
     # 表裡的 summary_sha256 ＝ 卡文字的雜湊，⛔ 不是模型 summary 的雜湊
-    insert_args = pool.execute.await_args.args
+    insert_args = pool.insert.await_args.args
     assert insert_args[4] == sha256_hex(result.data["card"])
     assert insert_args[4] != sha256_hex("模型自己寫的摘要（⛔ 不會成為卡）")
     # pending_id 落表（$6）
@@ -406,8 +411,10 @@ async def test_confirm_request_data_carries_card_action_payload_but_never_token(
 
 
 @pytest.mark.req(_REQ)
-async def test_confirm_request_rejects_payload_without_valid_action():
+async def test_confirm_request_rejects_payload_without_valid_action(monkeypatch):
     """`payload.action` 必填且在封閉值域內；缺欄位／不認得的 action ⇒ INVALID_INPUT。"""
+    # 第 3 步 A6：有帳單編號的延期卡在開關 on 時會先以 viewer 單筆讀帳單並重算到期日（表單宣告預檢）；本條原斷言驗的是現行路徑 ⇒ 照舊在 `AGENT_WRITE_LIFECYCLE=off` 下驗。
+    monkeypatch.setenv("AGENT_WRITE_LIFECYCLE", "off")
     pool = _confirm_pool()
     bad_payloads = [
         {k: v for k, v in _VALID_PAYLOAD.items() if k != "action"},   # 沒有 action
@@ -420,7 +427,8 @@ async def test_confirm_request_rejects_payload_without_valid_action():
             _identity(), {"summary": "s", "payload": json.dumps(payload)}, db_pool=pool
         )
         assert result.ok is False and result.error == "INVALID_INPUT", payload
-    pool.execute.assert_not_awaited()   # ⛔ 一列都不得寫進表
+    pool.execute.assert_not_awaited()   # 原斷言保留（A7 前 INSERT 走這裡）
+    assert pool.insert.await_count == 0 and pool.burn.await_count == 0   # ⛔ 一列都不得寫進表
     # 正對照組：同一支 pool、形狀正確就會過
     ok = await confirm_request(
         _identity(), {"summary": "s", "payload": json.dumps(_VALID_PAYLOAD)}, db_pool=pool
@@ -452,7 +460,8 @@ async def test_confirm_request_rejects_repair_create_with_category_outside_tree(
         db_pool=pool,
     )
     assert result.ok is False and result.error == "INVALID_INPUT"
-    pool.execute.assert_not_awaited()
+    pool.execute.assert_not_awaited()   # 原斷言保留（A7 前 INSERT 走這裡）
+    assert pool.insert.await_count == 0 and pool.burn.await_count == 0
 
 
 @pytest.mark.req(_REQ)
@@ -514,15 +523,17 @@ def test_confirm_action_enum_is_closed_and_documented_to_the_model():
 
 
 @pytest.mark.req(_REQ)
-async def test_confirm_request_never_returns_the_token():
+async def test_confirm_request_never_returns_the_token(monkeypatch):
     """token ⛔ 不進 `ToolResult` 的任何欄位；`pending_id` 是它的單向短摘要。"""
+    # 第 3 步 A6：有帳單編號的延期卡在開關 on 時會先以 viewer 單筆讀帳單並重算到期日（表單宣告預檢）；本條原斷言驗的是現行路徑 ⇒ 照舊在 `AGENT_WRITE_LIFECYCLE=off` 下驗。
+    monkeypatch.setenv("AGENT_WRITE_LIFECYCLE", "off")
     pool = _confirm_pool()
     payload = dict(_VALID_PAYLOAD)
     result = await confirm_request(
         _identity(), {"summary": "確認送出", "payload": json.dumps(payload)}, db_pool=pool
     )
 
-    insert_args = pool.execute.await_args.args
+    insert_args = pool.insert.await_args.args
     token = insert_args[1]
     # 正對照組：token 真的被寫進 DB 了（否則下面的「找不到 token」只是因為根本沒 token）
     assert isinstance(token, str) and len(token) >= 40
@@ -541,9 +552,11 @@ async def test_confirm_request_never_returns_the_token():
 
 
 @pytest.mark.req(_REQ)
-async def test_confirm_request_rejects_malformed_input():
+async def test_confirm_request_rejects_malformed_input(monkeypatch):
     """2.6 處置⑧：`payload` 已改成 **JSON 字串**（strict function calling 不吃
     開放 object）——非字串、非法 JSON、以及「合法 JSON 但不是物件」三型都要拒。"""
+    # 第 3 步 A6：有帳單編號的延期卡在開關 on 時會先以 viewer 單筆讀帳單並重算到期日（表單宣告預檢）；本條原斷言驗的是現行路徑 ⇒ 照舊在 `AGENT_WRITE_LIFECYCLE=off` 下驗。
+    monkeypatch.setenv("AGENT_WRITE_LIFECYCLE", "off")
     pool = _confirm_pool()
     valid = json.dumps(_VALID_PAYLOAD)
     for args in (
@@ -580,23 +593,27 @@ def test_confirm_spec_payload_is_a_json_string_not_an_object():
 
 
 @pytest.mark.req(_REQ)
-async def test_confirm_request_digest_matches_redeem_side_object_digest():
+async def test_confirm_request_digest_matches_redeem_side_object_digest(monkeypatch):
     """字串進、dict 出：存進 DB 的雜湊必須等於**兌現端對 dict 算的雜湊**。
 
     兌現端（`redeem_token`）收到的是動作工具的 `payload` **物件**；若這裡改成
     對原始字串取雜湊，鍵順序或空白差一點就永遠兌現不了。
     """
+    # 第 3 步 A6：有帳單編號的延期卡在開關 on 時會先以 viewer 單筆讀帳單並重算到期日（表單宣告預檢）；本條原斷言驗的是現行路徑 ⇒ 照舊在 `AGENT_WRITE_LIFECYCLE=off` 下驗。
+    monkeypatch.setenv("AGENT_WRITE_LIFECYCLE", "off")
     pool = _confirm_pool()
     payload = dict(reversed(list(_VALID_PAYLOAD.items())))   # 鍵順序相反、同一份內容
     # 故意用「鍵順序相反、帶空白」的序列化字串
     await confirm_request(
         _identity(), {"summary": "s", "payload": json.dumps(payload, indent=1)}, db_pool=pool
     )
-    assert pool.execute.await_args.args[3] == payload_digest(_VALID_PAYLOAD)
+    assert pool.insert.await_args.args[3] == payload_digest(_VALID_PAYLOAD)
 
 
 @pytest.mark.req(_REQ)
-async def test_confirm_request_requires_session_id():
+async def test_confirm_request_requires_session_id(monkeypatch):
+    # 第 3 步 A6：有帳單編號的延期卡在開關 on 時會先以 viewer 單筆讀帳單並重算到期日（表單宣告預檢）；本條原斷言驗的是現行路徑 ⇒ 照舊在 `AGENT_WRITE_LIFECYCLE=off` 下驗。
+    monkeypatch.setenv("AGENT_WRITE_LIFECYCLE", "off")
     pool = _confirm_pool()
     result = await confirm_request(
         _identity(session_id=""),
@@ -604,7 +621,8 @@ async def test_confirm_request_requires_session_id():
         db_pool=pool,
     )
     assert result.ok is False and result.error == "INVALID_INPUT"
-    pool.execute.assert_not_awaited()
+    pool.execute.assert_not_awaited()   # 原斷言保留（A7 前 INSERT 走這裡）
+    assert pool.insert.await_count == 0 and pool.burn.await_count == 0
 
 
 # ════════════════════════════════════════════════════════════════════
@@ -1213,7 +1231,7 @@ async def test_card_and_card_sha256_are_byte_identical_with_or_without_open_repa
         )
         assert result.ok is True
         cards[label] = result.data["card"]
-        hashes[label] = pool.execute.await_args.args[4]     # summary_sha256 ＝ 卡雜湊
+        hashes[label] = pool.insert.await_args.args[4]     # summary_sha256 ＝ 卡雜湊
         # 提示行 ⛔ 不在卡裡
         assert "未結單" not in result.data["card"]
 
@@ -1276,7 +1294,8 @@ async def test_open_repairs_returns_none_only_when_the_estate_cannot_be_resolved
     assert (result.ok, result.error) == (False, "NO_MATCH")
     assert [p.source for p in result.provenance] == [jgb2_tools.NOT_FOUND_SOURCE]
     assert result.text_for_model == jgb2_tools.NOT_FOUND_TEXT
-    pool.execute.assert_not_awaited()                                    # 零 token
+    pool.execute.assert_not_awaited()   # 原斷言保留（A7 前 INSERT 走這裡）
+    assert pool.insert.await_count == 0 and pool.burn.await_count == 0                                    # 零 token
     assert w8_api.estate_status_calls, "尺的自證：物件解析這一步真的跑過"
     assert w8_api.estate_status_calls[-1]["viewer_user_id"] == "88"      # 帶 viewer 查的
     assert w8_api.repairs_calls == []

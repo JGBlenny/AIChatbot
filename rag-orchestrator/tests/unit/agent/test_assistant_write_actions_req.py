@@ -25,6 +25,7 @@ from pathlib import Path
 from unittest.mock import AsyncMock
 
 import pytest
+from tests.unit.agent.confirm_pool_double import attach_token_tx  # 第 3 步 A7：token 寫入交易替身
 
 from services import jgb_system_api as api_mod
 from services.agent.confirm_card import (
@@ -103,7 +104,7 @@ def _pm(user: str = OWNER, role: str = ROLE, **over) -> Identity:
 def _pool():
     pool = AsyncMock()
     pool.execute = AsyncMock(return_value="INSERT 0 1")
-    return pool
+    return attach_token_tx(pool)
 
 
 async def _card(identity: Identity, payload: dict, pool=None) -> ToolResult:
@@ -226,7 +227,8 @@ async def test_confirm_request_rejects_extra_key_without_writing_a_token(api, ac
     bad = await _card(_pm(), {**payload, key: "20151"}, pool)
     assert (bad.ok, bad.error) == (False, "INVALID_INPUT")
     assert not (bad.data or {}).get("missing_fields")
-    pool.execute.assert_not_awaited()
+    pool.execute.assert_not_awaited()   # 原斷言保留（A7 前 INSERT 走這裡）
+    assert pool.insert.await_count == 0 and pool.burn.await_count == 0
 
 
 @pytest.mark.parametrize("action", sorted(CLOSED_ACTION_FIELDS))
@@ -408,7 +410,8 @@ async def test_missing_required_returns_fixed_vocabulary_list(api, payload, labe
     for key, value in payload.items():                   # ⛔ 帶任何使用者值
         if key != "action":
             assert str(value) not in res.text_for_model
-    pool.execute.assert_not_awaited()                    # ⛔ 出卡
+    pool.execute.assert_not_awaited()   # 原斷言保留（A7 前 INSERT 走這裡）
+    assert pool.insert.await_count == 0 and pool.burn.await_count == 0                    # ⛔ 出卡
     assert not _posts(api)
 
 
@@ -495,7 +498,8 @@ async def test_ambiguous_or_unknown_reference_never_guesses(api, payload, expect
     res = await _card(_pm(), payload, pool)
     assert res.ok is False and res.error == expected[0]
     assert (res.data or {}).get("missing_fields") == expected[1]
-    pool.execute.assert_not_awaited()
+    pool.execute.assert_not_awaited()   # 原斷言保留（A7 前 INSERT 走這裡）
+    assert pool.insert.await_count == 0 and pool.burn.await_count == 0
 
 
 async def test_manual_bill_resolves_the_only_valid_contract_of_an_estate(api):
@@ -511,7 +515,8 @@ async def test_manual_bill_due_before_today_issues_no_card(api):
     pool = _pool()
     res = await _card(_pm(), _bill_payload(date_expire="20261014"), pool)
     assert (res.ok, res.error) == (False, "INVALID_INPUT")
-    pool.execute.assert_not_awaited()
+    pool.execute.assert_not_awaited()   # 原斷言保留（A7 前 INSERT 走這裡）
+    assert pool.insert.await_count == 0 and pool.burn.await_count == 0
     ok = await _card(_pm(), _bill_payload(date_expire="20261015"))      # 正對照：今天可以
     assert ok.ok, ok
 
@@ -542,7 +547,8 @@ async def test_part_member_cannot_create_contract_on_invisible_estate(api):
     pool = _pool()
     res = await _card(_pm(user=PART), _contract_payload(estate_name=ESTATE_OWNER_ONLY), pool)
     assert (res.ok, res.error) == (False, "NO_MATCH")
-    pool.execute.assert_not_awaited()
+    pool.execute.assert_not_awaited()   # 原斷言保留（A7 前 INSERT 走這裡）
+    assert pool.insert.await_count == 0 and pool.burn.await_count == 0
     forged = _contract_payload(estate_name=ESTATE_OWNER_ONLY, estate_id=53973)
     before = _state(api)
     out = await _execute(_registry(), forged, identity=_pm(user=PART))
@@ -654,6 +660,7 @@ async def _run_with_carry(carry: dict, payload: dict):
     return result, registry, state
 
 
+@pytest.mark.usefixtures("_aplus_proposal_off")
 async def test_carry_contract_create_card_lists_resolved_estate(api):
     carry = {"name": ESTATE_A_TITLE, "id": str(ESTATE_A)}
     payload = {k: v for k, v in _contract_payload().items() if k != "estate_name"}
@@ -665,6 +672,7 @@ async def test_carry_contract_create_card_lists_resolved_estate(api):
     assert registry.results[0].data["payload"]["estate_id"] == ESTATE_A
 
 
+@pytest.mark.usefixtures("_aplus_proposal_off")
 async def test_carry_manual_bill_uses_the_estates_only_valid_contract(api):
     carry = {"name": ESTATE_D_TITLE, "id": str(ESTATE_D)}
     payload = {k: v for k, v in _bill_payload().items() if k != "contract_ref"}
@@ -674,6 +682,7 @@ async def test_carry_manual_bill_uses_the_estates_only_valid_contract(api):
     assert registry.results[0].data["payload"]["contract_id"] == ESTATE_D_CONTRACT
 
 
+@pytest.mark.usefixtures("_aplus_proposal_off")
 async def test_carry_manual_bill_with_many_contracts_issues_no_card(api):
     carry = {"name": ESTATE_MULTI_CONTRACT, "id": "67603"}
     payload = {k: v for k, v in _bill_payload().items() if k != "contract_ref"}
@@ -681,9 +690,11 @@ async def test_carry_manual_bill_with_many_contracts_issues_no_card(api):
     assert result.outcome["state"] != "confirm_pending"
     first = registry.results[0]
     assert (first.ok, first.error, first.data) == (False, "INVALID_INPUT", {"missing_fields": ["合約"]})
-    registry.pool.execute.assert_not_awaited()
+    registry.pool.execute.assert_not_awaited()   # 原斷言保留（A7 前 INSERT 走這裡）
+    assert registry.pool.insert.await_count == 0 and registry.pool.burn.await_count == 0
 
 
+@pytest.mark.usefixtures("_aplus_proposal_off")
 async def test_carry_estate_create_ignores_estate_name(api):
     carry = {"name": ESTATE_A_TITLE, "id": str(ESTATE_A)}
     result, registry, state = await _run_with_carry(carry, _estate_payload())
@@ -714,6 +725,7 @@ async def _run_missing(payload: dict):
     return result, registry, provider
 
 
+@pytest.mark.usefixtures("_aplus_proposal_off")
 async def test_missing_fields_end_the_turn_with_the_program_ask(api):
     payload = {k: v for k, v in _estate_payload().items() if k not in ("address", "use_for")}
     result, registry, provider = await _run_missing(payload)
@@ -728,9 +740,11 @@ async def test_missing_fields_end_the_turn_with_the_program_ask(api):
     for value in payload.values():                                          # ⛔ 帶任何使用者值
         if value != "estate_create":
             assert str(value) not in result.answer
-    registry.pool.execute.assert_not_awaited()                              # ⛔ 出卡
+    registry.pool.execute.assert_not_awaited()   # 原斷言保留（A7 前 INSERT 走這裡）
+    assert registry.pool.insert.await_count == 0 and registry.pool.burn.await_count == 0                              # ⛔ 出卡
 
 
+@pytest.mark.usefixtures("_aplus_proposal_off")
 async def test_complete_payload_still_issues_a_card(api):
     """正對照：同一組裝置給齊欄位 ⇒ 照常出卡（不是追問出口吃掉一切）。"""
     result, registry, _ = await _run_missing(_estate_payload())
@@ -743,3 +757,12 @@ def test_ask_text_refuses_labels_outside_the_vocabulary():
     ok = ToolResult(ok=False, error="INVALID_INPUT", data={"missing_fields": ["地址"]})
     assert missing_fields_ask_text(ok) is not None                          # 正對照
     assert missing_fields_ask_text(ToolResult(ok=False, error="NO_MATCH")) is None
+
+
+@pytest.fixture()
+def _aplus_proposal_off(monkeypatch):
+    """A+ 片（`AGENT_WRITE_PROPOSAL`）：本檔以「模型自呼 `confirm.request`、以模型參數執行」為載具的
+    測試＝開關 off 的正對照（開關 on 時該路徑已收掉）。開關 on 的程式路徑由
+    `test_aplus_card_program_only_req.py` 驗出卡、缺欄追問、查無固定句、帳單候選點選、照片與物件記憶前處理；
+    本檔其餘行為在開關 on 時沒有另寫程式路徑版本。"""
+    monkeypatch.setenv("AGENT_WRITE_PROPOSAL", "off")

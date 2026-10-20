@@ -52,6 +52,7 @@ async def _turn(result):
     return r, state, provider
 
 
+@pytest.mark.usefixtures("_aplus_proposal_off")
 async def test_multiple_candidates_become_an_ask_turn_with_select_buttons():
     r, state, provider = await _turn(_candidates_result(2))
     assert r.kind == "ask"
@@ -68,11 +69,13 @@ async def test_multiple_candidates_become_an_ask_turn_with_select_buttons():
     assert len(provider.calls) == 1, "候選回合直接收尾，⛔ 不再回模型"
 
 
+@pytest.mark.usefixtures("_aplus_proposal_off")
 async def test_candidates_are_capped():
     r, _, _ = await _turn(_candidates_result(CONFIRM_CANDIDATES_MAX + 3))
     assert len(r.quick_replies) == CONFIRM_CANDIDATES_MAX
 
 
+@pytest.mark.usefixtures("_aplus_proposal_off")
 async def test_single_card_result_still_builds_pending_positive_control():
     card = ToolResult(ok=True, data={
         "pending_id": "0123456789abcdef", "card": "即將調整帳單到期日", "action": "bill_due_extend",
@@ -90,3 +93,12 @@ async def test_candidates_without_known_action_fall_through_unchanged():
     assert r.kind != "ask" or "confirm_request_candidates" not in r.trace.violations
     assert PENDING_CONFIRM_KEY not in state["agent"]
     assert len(provider.calls) == 2  # 照舊回模型
+
+
+@pytest.fixture()
+def _aplus_proposal_off(monkeypatch):
+    """A+ 片（`AGENT_WRITE_PROPOSAL`）：本檔以「模型自呼 `confirm.request`、以模型參數執行」為載具的
+    測試＝開關 off 的正對照（開關 on 時該路徑已收掉）。開關 on 的程式路徑由
+    `test_aplus_card_program_only_req.py` 驗出卡、缺欄追問、查無固定句、帳單候選點選、照片與物件記憶前處理；
+    本檔其餘行為在開關 on 時沒有另寫程式路徑版本。"""
+    monkeypatch.setenv("AGENT_WRITE_PROPOSAL", "off")

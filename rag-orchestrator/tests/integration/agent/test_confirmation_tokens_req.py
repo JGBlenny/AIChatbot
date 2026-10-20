@@ -46,6 +46,16 @@ from services.jgb import bills as _bills  # noqa: E402  — 時鐘凍結的唯�
 def _freeze_today(monkeypatch):
     monkeypatch.setattr(_bills, "_today", lambda: _date(2026, 8, 15))
 
+
+#: 主線第 3 步 A 片（增補合約 2026-10-19 §4／Q3）：本檔原有斷言驗的是**開關 off 的現行路徑**——
+#: 開關 on 時，有帳單編號的延期卡出卡前會以 viewer 單筆讀那張帳單（A6 宣告預檢），
+#: 而原測試的身分（vendor 1／user 1）看不到合成帳單 900001 ⇒ 預檢查無、⛔ 出卡；
+#: 「修改」（A3）改成程式問改哪一項。故原斷言一律在 `AGENT_WRITE_LIFECYCLE=off` 下跑（⛔ 刪改斷言），
+#: 受 A6／A3 影響的各案例在檔尾「開關 on 版本」節各有一個 `_on` 版本。
+@pytest.fixture(autouse=True)
+def _lifecycle_off_for_original_assertions(monkeypatch):
+    monkeypatch.setenv("AGENT_WRITE_LIFECYCLE", "off")
+
 _MIGRATIONS_DIR = os.path.join(
     os.path.dirname(__file__), "..", "..", "..", "database", "migrations",
 )
@@ -1023,3 +1033,285 @@ async def test_real_action_blocks_bill_outside_viewer_scope(pool, mock_api):
     )
     assert submit.answer == ACTION_FAILED_TEXT
     assert mock_api._mock_transport.fixtures.by_id(900001)["date_expire"] == 20260815
+
+
+# ═══════════════════════════════════════════════════════════════════
+# 主線第 3 步 A 片：開關 on 版本（增補合約 2026-10-19 §4／Q3）
+#
+# 上面各案例的原斷言固定在 `AGENT_WRITE_LIFECYCLE=off` 跑（見 `_lifecycle_off_for_original_assertions`）。
+# 本節各案例＝同一條原測試在開關 **on** 下再跑一次，只換掉兩件事：
+#   ・身分換成看得到合成帳單 900001 的 viewer（`_mcp_identity_with_viewer`，user 9001，
+#     `regression_vendor4.json` 的 `bill_visibility` 宣告可見）——A6 預檢會真的去讀那張帳單；
+#     900001 的列上 `date_expire`＝20260815＝凍結的今天 ⇒ 預檢重算後 payload 與 `_payload()` 逐字相同，
+#     所以原斷言（卡文字、雜湊、receipt 句）在 on 下一個字都不用改；
+#   ・`_StubVerifier` 換成收任意關鍵字參數的版本——原替身少收 `audience`，HEAD 上
+#     `reverse_3[好，送出／confirm_submit]`、兩條 isolation 就已因此失敗（既有、與本片無關，off 版照舊失敗）；
+#     on 版若沿用同一個壞替身，這四條根本到不了要驗的地方。
+# A3 改變語義的 `reverse_1[confirm_edit]`、A6 改變語義的「範圍外帳單」與「900042（不存在）」各寫獨立的 on 版本。
+# ═══════════════════════════════════════════════════════════════════
+import sys as _sys
+
+from services.agent import write_forms as _WF
+from services.jgb.transport import RecordingTransport as _RecordingTransport
+
+_THIS = _sys.modules[__name__]
+
+
+class _StubVerifierAnyKw(_StubVerifier):
+    def verify(self, out, tool_results, user_message, handoff, **_kw):
+        from services.agent.output_schema import VerifierVerdict
+
+        self.calls.append(out)
+        return VerifierVerdict(ok=True)
+
+
+@pytest.fixture()
+def lifecycle_on(monkeypatch, mock_api):
+    """開關 on（未設＝on，正式預設）＋viewer 身分＋錄下出向讀取（證明 A6 預檢真的跑了）。"""
+    monkeypatch.delenv(_WF.WRITE_LIFECYCLE_ENV, raising=False)
+    assert _WF.write_lifecycle_enabled_from_env() is True
+    monkeypatch.setattr(_THIS, "_identity", _mcp_identity_with_viewer)
+    monkeypatch.setattr(_THIS, "_mcp_identity", _mcp_identity_with_viewer)
+    monkeypatch.setattr(_THIS, "_StubVerifier", _StubVerifierAnyKw)
+    rec = _RecordingTransport(mock_api._mock_transport)
+    mock_api._mock_transport = rec
+    return rec
+
+
+def _precheck_reads(rec) -> list:
+    return [(params or {}).get("bill_id") for _m, path, params in rec.calls
+            if path.endswith("/bills") and (params or {}).get("bill_id") is not None]
+
+
+def _assert_precheck_ran(rec, bill_id: str = "900001") -> None:
+    reads = _precheck_reads(rec)
+    assert reads and all(str(b) == bill_id for b in reads), reads
+
+
+@pytest.mark.req("agentic-mcp-orchestration:2.4")
+async def test_confirm_request_writes_hashes_only_and_hides_token_on(pool, lifecycle_on):
+    """原案例用 900042（替身裡不存在）——on 時預檢查無 ⇒ ⛔ 出卡（見下一條）；改用 viewer 看得到的 900002
+    （列上 `date_expire` 20260915）驗同一組斷言。"""
+    session_id = _session_id()
+    payload = _payload(bill_id="900002", date_expire_before="20260915", date_expire_after="20260918")
+    result, row = await _issue_token(pool, session_id, payload)
+
+    assert row["payload_sha256"] == payload_digest(payload)
+    assert row["summary_sha256"] == sha256_hex(_card(payload))
+    assert row["summary_sha256"] != sha256_hex("確認送出這筆")
+    assert row["redeemed"] is False
+    assert row["alive"] is True
+    assert "900002" not in canonical_json(dict(row))
+    assert row["token"] not in result.model_dump_json()
+    assert result.data["pending_id"] == pending_id_for(row["token"])
+    assert row["pending_id"] == result.data["pending_id"]
+    assert result.data["card"] == _card(payload)
+    assert result.data["quick_replies"] == confirm_quick_replies(row["pending_id"])
+    _assert_precheck_ran(lifecycle_on, "900002")
+
+
+@pytest.mark.req("agentic-mcp-orchestration:2.4")
+async def test_confirm_request_unknown_bill_writes_no_row_on(pool, lifecycle_on):
+    """原案例的 900042 在 on 下：預檢查無 ⇒ 查無固定句（NO_MATCH）、表裡 0 列。"""
+    session_id = _session_id()
+    result = await confirm_request(
+        _mcp_identity_with_viewer(session_id),
+        {"summary": "確認送出這筆", "payload": json.dumps(_payload(bill_id="900042"))},
+        db_pool=pool,
+    )
+    assert result.ok is False and result.error == "NO_MATCH"
+    count = await pool.fetchval(
+        "SELECT count(*) FROM agent_confirmation_tokens WHERE session_id = $1", session_id)
+    assert count == 0
+    _assert_precheck_ran(lifecycle_on, "900042")
+
+
+@pytest.mark.req("agentic-mcp-orchestration:2.4")
+async def test_redeem_succeeds_once_then_is_idempotently_refused_on(pool, lifecycle_on):
+    await test_redeem_succeeds_once_then_is_idempotently_refused(pool)
+    _assert_precheck_ran(lifecycle_on)
+
+
+@pytest.mark.req("agentic-mcp-orchestration:2.4")
+async def test_expired_token_is_refused_on(pool, lifecycle_on):
+    await test_expired_token_is_refused(pool)
+    _assert_precheck_ran(lifecycle_on)
+
+
+@pytest.mark.req("agentic-mcp-orchestration:2.4")
+async def test_cross_session_redeem_is_refused_on(pool, lifecycle_on):
+    await test_cross_session_redeem_is_refused(pool)
+    _assert_precheck_ran(lifecycle_on)
+
+
+@pytest.mark.req("agentic-mcp-orchestration:2.4")
+async def test_payload_tampered_by_one_key_is_refused_on(pool, lifecycle_on):
+    await test_payload_tampered_by_one_key_is_refused(pool)
+    _assert_precheck_ran(lifecycle_on)
+
+
+@pytest.mark.req("agentic-mcp-orchestration:2.4")
+async def test_reordered_payload_still_redeems_on(pool, lifecycle_on):
+    await test_reordered_payload_still_redeems(pool)
+    _assert_precheck_ran(lifecycle_on)
+
+
+@pytest.mark.req("agentic-mcp-orchestration:R4.2")
+async def test_redeem_pending_three_states_on(pool, lifecycle_on):
+    await test_redeem_pending_three_states(pool)
+    _assert_precheck_ran(lifecycle_on)
+
+
+@pytest.mark.req("agentic-mcp-orchestration:R4.2")
+async def test_redeem_pending_rejects_expired_and_bad_shapes_on(pool, lifecycle_on):
+    await test_redeem_pending_rejects_expired_and_bad_shapes(pool)
+    _assert_precheck_ran(lifecycle_on)
+
+
+@pytest.mark.req("agentic-mcp-orchestration:R4.2")
+async def test_assert_redeemed_only_true_after_redemption_on(pool, lifecycle_on):
+    await test_assert_redeemed_only_true_after_redemption(pool)
+    _assert_precheck_ran(lifecycle_on)
+
+
+@pytest.mark.req("agentic-mcp-orchestration:R4.2")
+async def test_confirm_turn_answer_is_the_card_and_matches_summary_sha256_on(pool, lifecycle_on):
+    await test_confirm_turn_answer_is_the_card_and_matches_summary_sha256(pool)
+    _assert_precheck_ran(lifecycle_on)
+
+
+@pytest.mark.req("agentic-mcp-orchestration:R4.2")
+async def test_submit_redeems_and_returns_receipt_on(pool, lifecycle_on):
+    await test_submit_redeems_and_returns_receipt(pool)
+    _assert_precheck_ran(lifecycle_on)
+
+
+@pytest.mark.req("agentic-mcp-orchestration:R4.2")
+async def test_reverse_1_cancel_burns_without_writing_on(pool, lifecycle_on):
+    await test_reverse_1_cancel_and_edit_burn_without_writing(pool, "confirm_cancel")
+    _assert_precheck_ran(lifecycle_on)
+
+
+@pytest.mark.req("agentic-mcp-orchestration:R4.2")
+async def test_reverse_1_edit_burns_without_writing_and_asks_what_to_change_on(pool, lifecycle_on):
+    """A3：on 時「修改」＝燒 token、⛔ 呼叫寫入工具、⛔ 寫 receipt、程式問要修改哪一項（⛔ CANCELLED_TEXT）。"""
+    session_id = _session_id()
+    calls: list = []
+    runtime, state, _, row, _ = await _confirm_turn(pool, session_id, calls=calls)
+    pid = row["pending_id"]
+    entry = state["agent"][PENDING_CONFIRM_KEY][pid]
+
+    result = await runtime.run_turn(_mcp_identity(session_id), f"confirm_edit:{pid}", state)
+
+    assert result.answer == _WF.edit_ask_text(entry["action"], entry["payload"])
+    assert result.answer != CANCELLED_TEXT
+    assert result.trace.llm_calls == 0, "修改的問句是程式固定句，⛔ 進模型"
+    assert calls == [], "修改 ⛔ 不得呼叫寫入工具"
+    after = await pool.fetchrow(
+        "SELECT redeemed FROM agent_confirmation_tokens WHERE pending_id=$1", pid
+    )
+    assert after["redeemed"] is True, "修改也要把 token 燒掉"
+    assert "receipt" not in entry and entry.get("invalidated") is True
+    # 燒掉的卡之後按「送出」也兌現不了（⛔ 寫入）
+    again = await runtime.run_turn(_mcp_identity(session_id), f"confirm_submit:{pid}", state)
+    assert calls == [] and again.answer != result.answer
+    _assert_precheck_ran(lifecycle_on)
+
+
+@pytest.mark.req("agentic-mcp-orchestration:R4.2")
+async def test_reverse_2_resend_returns_the_same_receipt_once_on(pool, lifecycle_on):
+    await test_reverse_2_resend_returns_the_same_receipt_once(pool)
+    _assert_precheck_ran(lifecycle_on)
+
+
+@pytest.mark.req("agentic-mcp-orchestration:R4.2")
+@pytest.mark.parametrize("message", ["好，送出", "confirm_submit", "confirm_submit:{other}"])
+async def test_reverse_3_free_text_and_wrong_pid_do_not_redeem_on(pool, lifecycle_on, message):
+    await test_reverse_3_free_text_and_wrong_pid_do_not_redeem(pool, message)
+    _assert_precheck_ran(lifecycle_on)
+
+
+@pytest.mark.req("agentic-mcp-orchestration:R4.2")
+async def test_reverse_4_expired_token_requires_reconfirmation_on(pool, lifecycle_on):
+    await test_reverse_4_expired_token_requires_reconfirmation(pool)
+    _assert_precheck_ran(lifecycle_on)
+
+
+@pytest.mark.req("agentic-mcp-orchestration:R4.2")
+async def test_reverse_5_tool_failure_is_honest_and_token_is_already_burned_on(pool, lifecycle_on):
+    await test_reverse_5_tool_failure_is_honest_and_token_is_already_burned(pool)
+    _assert_precheck_ran(lifecycle_on)
+
+
+@pytest.mark.req("agentic-mcp-orchestration:R4.2")
+async def test_isolation_shadow_runtime_never_updates_the_row_on(pool, lifecycle_on):
+    await test_isolation_shadow_runtime_never_updates_the_row(pool)
+    _assert_precheck_ran(lifecycle_on)
+
+
+@pytest.mark.req("agentic-mcp-orchestration:R4.4")
+async def test_isolation_rest_entry_cannot_redeem_the_same_session_string_on(pool, lifecycle_on):
+    await test_isolation_rest_entry_cannot_redeem_the_same_session_string(pool)
+    _assert_precheck_ran(lifecycle_on)
+
+
+@pytest.mark.req("agentic-mcp-orchestration:R4.2")
+async def test_token_never_leaves_the_process_on(pool, lifecycle_on, caplog):
+    await test_token_never_leaves_the_process(pool, caplog)
+    _assert_precheck_ran(lifecycle_on)
+
+
+@pytest.mark.req("agentic-mcp-orchestration:R4.2")
+async def test_real_action_blocks_bill_outside_viewer_scope_on(pool, mock_api, monkeypatch):
+    """A6：on 時範圍外帳單在**出卡前**就擋下——⛔ 卡、表裡 0 列、替身無變更；使用者看到查無固定句（程式出口）。
+
+    正對照組＝`test_real_bill_due_extend_writes_through_to_the_mock_backend`（on 下同樣通過：
+    同一份 payload、同一條路，只差 `user_id` 9001／9002）。
+
+    A+ 片：本案以「模型自呼 `confirm.request` 直接以模型參數執行」為載具（使用者原話不含帳單），
+    故在 `AGENT_WRITE_PROPOSAL=off` 下跑；開關 on 時模型參數只是提議、不經值閘就不會執行，
+    程式路徑上的查無固定句由 `tests/unit/agent/test_aplus_card_program_only_req.py` 驗。
+    """
+    monkeypatch.delenv(_WF.WRITE_LIFECYCLE_ENV, raising=False)
+    monkeypatch.setenv(_WF.WRITE_PROPOSAL_ENV, "off")
+    assert _WF.write_lifecycle_enabled_from_env() is True
+    session_id = _session_id()
+    payload = _payload()
+    registry = _real_action_registry(pool, mock_api)
+    inner = mock_api._mock_transport
+    rec = _RecordingTransport(inner)
+    mock_api._mock_transport = rec
+    final_answer = SimpleNamespace(
+        choices=[SimpleNamespace(message=SimpleNamespace(
+            content=json.dumps({"kind": "answer",
+                                "sentences": [{"text": "查無。", "kind": "greeting", "refs": []}],
+                                "fact_class": "feature", "handoff_reason": None}),
+            tool_calls=None))],
+        usage=SimpleNamespace(prompt_tokens=1, completion_tokens=1),
+    )
+    provider = _ScriptedProvider([
+        _confirm_call_response(payload), final_answer, final_answer,
+    ])
+    runtime = _build_runtime(pool, registry, provider=provider, verifier=_StubVerifierAnyKw())
+    identity = Identity(
+        vendor_id=4, target_user="property_manager", mode="b2b",
+        role_id="20151", user_id="9002", session_id=session_id, api_key_id=1,
+        entry="mcp",
+    )
+    state: dict = {}
+    card_turn = await runtime.run_turn(identity, "幫我處理這一筆", state)
+
+    count = await pool.fetchval(
+        "SELECT count(*) FROM agent_confirmation_tokens WHERE session_id = $1", session_id)
+    assert count == 0, "範圍外帳單 ⛔ 出卡（⛔ 落 token 列）"
+    assert card_turn.quick_replies in (None, [])
+    assert not (state.get("agent") or {}).get(PENDING_CONFIRM_KEY)
+    # 查無走既有的程式出口（站內幫手 S5：`confirm.request` 帶查無標記的 NO_MATCH ⇒ 程式固定句結束回合）
+    from services.agent.runtime import PRE_LOOKUP_NOT_FOUND_TEXT
+    assert card_turn.answer == PRE_LOOKUP_NOT_FOUND_TEXT
+    assert "jgb2_not_found_exit" in card_turn.trace.violations
+    # 非空轉證據：A6 預檢真的以 viewer 9002 讀了 900001（讀到 0 筆 ⇒ 查無）
+    viewer_reads = [params for _m, path, params in rec.calls
+                    if path.endswith("/bills") and (params or {}).get("bill_id") is not None]
+    assert viewer_reads and all(str(p["bill_id"]) == "900001" for p in viewer_reads), rec.calls
+    assert inner.fixtures.by_id(900001)["date_expire"] == 20260815

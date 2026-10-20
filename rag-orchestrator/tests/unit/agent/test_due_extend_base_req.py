@@ -31,6 +31,7 @@ import json
 from datetime import date, timedelta
 
 import pytest
+from tests.unit.agent.confirm_pool_double import attach_token_tx  # 第 3 步 A7：token 寫入交易替身
 
 from services.agent.confirm_card import (
     ACTION_FAILED_TEXT,
@@ -120,7 +121,7 @@ def _confirm_pool():
 
     pool = AsyncMock()
     pool.execute = AsyncMock(return_value="INSERT 0 1")
-    return pool
+    return attach_token_tx(pool)
 
 
 def _write_registry() -> ToolRegistry:
@@ -265,14 +266,15 @@ async def test_confirm_request_turns_a_today_key_into_invalid_input(monkeypatch)
         db_pool=pool,
     )
     assert result.ok is False and result.error == "INVALID_INPUT"
-    assert pool.execute.await_count == 0
+    pool.execute.assert_not_awaited()   # 原斷言保留（A7 前 INSERT 走這裡）
+    assert pool.insert.await_count == 0 and pool.burn.await_count == 0
     # 正對照組：同一份 payload 去掉 `today` 鍵就出得了卡
     ok_pool = _confirm_pool()
     ok = await confirm_request(
         _identity(), {"summary": "延三天", "payload": json.dumps(_payload())},
         db_pool=ok_pool,
     )
-    assert ok.ok is True and ok_pool.execute.await_count == 1
+    assert ok.ok is True and ok_pool.insert.await_count == 1
 
 
 # ---------------------------------------------------------------------------
@@ -283,6 +285,8 @@ async def test_confirm_request_turns_a_today_key_into_invalid_input(monkeypatch)
 @pytest.mark.req(_REQ)
 async def test_confirm_request_issues_the_card_for_an_overdue_bill(monkeypatch):
     """走查那一題：到期 9/01、今天 9/09、延三天 ⇒ 出卡、新到期日 9/12、起算日 9/09。"""
+    # 第 3 步 A6：有帳單編號的延期卡在開關 on 時會先以 viewer 單筆讀帳單並重算到期日（表單宣告預檢）；本條原斷言驗的是現行路徑 ⇒ 照舊在 `AGENT_WRITE_LIFECYCLE=off` 下驗。
+    monkeypatch.setenv("AGENT_WRITE_LIFECYCLE", "off")
     monkeypatch.setattr(bills, "_today", lambda: _TODAY)
     pool = _confirm_pool()
 
@@ -292,7 +296,7 @@ async def test_confirm_request_issues_the_card_for_an_overdue_bill(monkeypatch):
     )
 
     assert result.ok is True
-    assert pool.execute.await_count == 1
+    assert pool.insert.await_count == 1
     card = result.data["card"]
     assert f"・起算日：{_fmt(_TODAY)}" in card
     assert f"・新到期日：{_fmt(_AFTER)}" in card

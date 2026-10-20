@@ -182,6 +182,7 @@ class JGBSystemAPI:
         bill_ref: Optional[str] = None,
         viewer_user_id: Optional[str] = None,
         keyword: Optional[str] = None,
+        bill_id: Optional[Any] = None,
         **kwargs,
     ) -> dict[str, Any]:
         """查詢帳單列表。
@@ -195,6 +196,11 @@ class JGBSystemAPI:
         圈定顯式轉發（原被 `**kwargs` 吞掉、從未送達 API）；非空才放進 params，
         照 `get_bill_visibility` 先例。⚠️ mock 對本參數保留 `UnsupportedMockParameterError`
         大聲失敗（`services/jgb/transport.py:_bills_index`）——這是刻意設計，不得放寬。
+
+        `bill_id`（站內幫手第 3 步 A0 RC1）：jgb2 `/bills` 的單筆過濾（`BillApiController`
+        `filled('bill_id')`）顯式轉發（原被 `**kwargs` 吞掉）；非空才放進 params，照
+        `viewer_user_id` 先例。與 `viewer_user_id` 併用＝「這位成員看得到的這一張」單筆探測，
+        ⛔ 依賴列表第一頁（預設 50 筆）。
 
         `bill_ref` 識別語意參數（adapter，billing-conversational-facets R2.1）：
           純數字 → 先 get_bill_detail 直查（單筆包成列）；查無 → 當合約 id 解析；
@@ -258,6 +264,8 @@ class JGBSystemAPI:
             params["status"] = status
         if viewer_user_id:
             params["viewer_user_id"] = viewer_user_id
+        if bill_id not in (None, ""):
+            params["bill_id"] = bill_id
         if keyword not in (None, ""):
             params["keyword"] = str(keyword)
         resp = await self._request("/api/external/v1/bills", params)

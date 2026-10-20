@@ -418,6 +418,7 @@ async def test_prose_confirm_suspect_not_recorded_for_other_ask_targets():
 
 
 @pytest.mark.req(_REQ)
+@pytest.mark.usefixtures("_aplus_proposal_off")
 async def test_prose_confirm_suspect_not_recorded_when_confirm_request_was_called():
     """反對照：`confirm.request` **成功**會立刻結束回合（走
     `_begin_pending_confirm`），根本到不了 `kind=ask` 這條判定；但**失敗**的
@@ -471,3 +472,12 @@ def test_policy_sentences_present_only_in_non_prospect_and_no_example_markers():
         assert sentence not in agent_rules._POLICY_TEXT
         for marker in _EXAMPLE_MARKERS:
             assert marker not in sentence
+
+
+@pytest.fixture()
+def _aplus_proposal_off(monkeypatch):
+    """A+ 片（`AGENT_WRITE_PROPOSAL`）：本檔以「模型自呼 `confirm.request`、以模型參數執行」為載具的
+    測試＝開關 off 的正對照（開關 on 時該路徑已收掉）。開關 on 的程式路徑由
+    `test_aplus_card_program_only_req.py` 驗出卡、缺欄追問、查無固定句、帳單候選點選、照片與物件記憶前處理；
+    本檔其餘行為在開關 on 時沒有另寫程式路徑版本。"""
+    monkeypatch.setenv("AGENT_WRITE_PROPOSAL", "off")

@@ -23,6 +23,7 @@ from pathlib import Path
 from unittest.mock import AsyncMock
 
 import pytest
+from tests.unit.agent.confirm_pool_double import attach_token_tx  # 第 3 步 A7：token 寫入交易替身
 
 from services import jgb_system_api as api_mod
 from services.agent import mcp_facade as F
@@ -86,7 +87,7 @@ def _pool():
     pool = AsyncMock()
     pool.execute = AsyncMock(return_value="INSERT 0 1")
     pool.fetchrow = AsyncMock(return_value=None)
-    return pool
+    return attach_token_tx(pool)
 
 
 class _Reg:
@@ -225,25 +226,29 @@ def _confirm(payload: dict):
 _REPAIR = {"action": "repair_create", "estate_name": OWNER_ONLY_ESTATE_TITLE, "description": "冷氣不冷"}
 
 
+@pytest.mark.usefixtures("_aplus_proposal_off")
 async def test_repair_card_for_an_unseen_estate_is_the_fixed_sentence(api):
     """990002 對看不到的 22491 建修繕單（業主多語意實測 3／3 重現出卡）⇒ 出卡端固定句、零 token。"""
     res, reg, provider = await _run(_pm(user=PART), [_confirm(_REPAIR)])
     _assert_program_not_found(res, reg, provider, leaked=(str(OWNER_ONLY_ESTATE),))
-    reg.pool.execute.assert_not_awaited()                                  # 零 token
+    reg.pool.execute.assert_not_awaited()   # 原斷言保留（A7 前 INSERT 走這裡）
+    assert reg.pool.insert.await_count == 0 and reg.pool.burn.await_count == 0                                  # 零 token
     assert res.outcome["state"] != "confirm_pending"
     estate_call = [c for c in api._mock_transport.calls if c[1] == "/api/external/v1/estates"][-1]
     assert estate_call[2]["viewer_user_id"] == PART                        # 以 viewer 查的
 
 
+@pytest.mark.usefixtures("_aplus_proposal_off")
 async def test_repair_card_for_a_visible_estate_is_still_issued(api):
     """正對照：12291 同一句 ⇒ 照常出卡（token 寫一次）、出口 ⛔ 介入。"""
     res, reg, provider = await _run(_pm(), [_confirm(_REPAIR)])
     assert res.outcome["state"] == "confirm_pending"
     assert reg.results[0][1].data["estate_id"] == str(OWNER_ONLY_ESTATE)
-    assert reg.pool.execute.await_count == 1
+    assert reg.pool.insert.await_count == 1
     assert EXIT_MARK not in res.trace.violations
 
 
+@pytest.mark.usefixtures("_aplus_proposal_off")
 async def test_repair_card_when_the_estate_lookup_failed_is_still_issued(api, monkeypatch):
     """上游失敗（沒查成）⇒ 仍維持現行「解析不出照常出卡、兌現端再擋」（⛔ 說查不到）。"""
     async def _fail(**kw):
@@ -252,16 +257,18 @@ async def test_repair_card_when_the_estate_lookup_failed_is_still_issued(api, mo
     res, reg, provider = await _run(_pm(user=PART), [_confirm(_REPAIR)])
     assert res.outcome["state"] == "confirm_pending"
     assert reg.results[0][1].data["estate_id"] is None
-    assert reg.pool.execute.await_count == 1
+    assert reg.pool.insert.await_count == 1
     assert EXIT_MARK not in res.trace.violations
 
 
+@pytest.mark.usefixtures("_aplus_proposal_off")
 async def test_contract_card_for_an_unseen_estate_is_the_fixed_sentence(api):
     """`confirm.request` 物件解析零筆（`_not_found_result`）同樣走出口。"""
     payload = _contract_payload(estate_name=OWNER_ONLY_ESTATE_TITLE)
     res, reg, provider = await _run(_pm(user=PART), [_confirm(payload)])
     _assert_program_not_found(res, reg, provider, leaked=(str(OWNER_ONLY_ESTATE),))
-    reg.pool.execute.assert_not_awaited()
+    reg.pool.execute.assert_not_awaited()   # 原斷言保留（A7 前 INSERT 走這裡）
+    assert reg.pool.insert.await_count == 0 and reg.pool.burn.await_count == 0
     # 正對照：12291 同一份 payload ⇒ 出卡
     ok, _, _ = await _run(_pm(), [_confirm(payload)])
     assert ok.outcome["state"] == "confirm_pending"
@@ -296,3 +303,12 @@ async def test_open_repairs_injection_shapes(api, monkeypatch):
         return {"success": False, "data": [], "error": {"code": 500, "message": "x"}}
     monkeypatch.setattr(api, "get_estate_status", _fail)
     assert await fn(_pm(user=PART), OWNER_ONLY_ESTATE_TITLE) is None
+
+
+@pytest.fixture()
+def _aplus_proposal_off(monkeypatch):
+    """A+ 片（`AGENT_WRITE_PROPOSAL`）：本檔以「模型自呼 `confirm.request`、以模型參數執行」為載具的
+    測試＝開關 off 的正對照（開關 on 時該路徑已收掉）。開關 on 的程式路徑由
+    `test_aplus_card_program_only_req.py` 驗出卡、缺欄追問、查無固定句、帳單候選點選、照片與物件記憶前處理；
+    本檔其餘行為在開關 on 時沒有另寫程式路徑版本。"""
+    monkeypatch.setenv("AGENT_WRITE_PROPOSAL", "off")

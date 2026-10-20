@@ -208,6 +208,7 @@ def test_empty_string_estate_name_counts_as_missing():
 # ════════════════════════════════════════════════════════════════════
 # C. 寫點 (a)：`confirm.request` 出卡成功
 # ════════════════════════════════════════════════════════════════════
+@pytest.mark.usefixtures("_aplus_proposal_off")
 async def test_write_point_a_card_issued_records_the_estate():
     state = {"agent": {}}
     payload = {"action": "repair_create", "estate_name": _NAME}
@@ -289,6 +290,7 @@ async def test_write_point_c_ignores_multi_candidate_results():
 # F. 讀點：跨回合補進 `confirm.request`
 # ════════════════════════════════════════════════════════════════════
 @pytest.mark.parametrize("action", ["repair_create", "bill_due_extend"])
+@pytest.mark.usefixtures("_aplus_proposal_off")
 async def test_read_point_fills_estate_name_on_a_later_turn(action):
     state = {"agent": {ESTATE_CARRY_KEY: {"name": _NAME, "id": "77"}}}
     registry = FakeRegistry(call_results=[_confirm_ok_result({"action": action, "estate_name": _NAME})])
@@ -306,6 +308,7 @@ async def test_read_point_fills_estate_name_on_a_later_turn(action):
     assert _NAME not in json.dumps(result.trace.violations, ensure_ascii=False)
 
 
+@pytest.mark.usefixtures("_aplus_proposal_off")
 async def test_read_point_leaves_a_model_supplied_name_alone():
     """正對照：模型自己填了別的物件 ⇒ 逐字不動。"""
     state = {"agent": {ESTATE_CARRY_KEY: {"name": _NAME, "id": "77"}}}
@@ -437,3 +440,12 @@ def test_read_point_returns_none_when_scope_pinned():
     assert _estate_carry_of(state) is None
     state.pop(SELECT_SCOPE_KEY)
     assert _estate_carry_of(state) == {"name": "某物件", "id": "1"}
+
+
+@pytest.fixture()
+def _aplus_proposal_off(monkeypatch):
+    """A+ 片（`AGENT_WRITE_PROPOSAL`）：本檔以「模型自呼 `confirm.request`、以模型參數執行」為載具的
+    測試＝開關 off 的正對照（開關 on 時該路徑已收掉）。開關 on 的程式路徑由
+    `test_aplus_card_program_only_req.py` 驗出卡、缺欄追問、查無固定句、帳單候選點選、照片與物件記憶前處理；
+    本檔其餘行為在開關 on 時沒有另寫程式路徑版本。"""
+    monkeypatch.setenv("AGENT_WRITE_PROPOSAL", "off")

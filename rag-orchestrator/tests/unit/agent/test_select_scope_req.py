@@ -890,6 +890,7 @@ async def test_bill_due_extend_is_bounded_by_the_estate_not_the_bill(fake_api):
 
 
 @pytest.mark.req(_REQ)
+@pytest.mark.usefixtures("_aplus_proposal_off")
 async def test_write_path_is_untouched_without_a_select_scope(fake_api):
     """(vii) 正對照：沒有 select 範圍 ⇒ 兩個 action 都照常出卡、⛔ 不發現查那一次。"""
     from services.agent.runtime import PENDING_CONFIRM_KEY
@@ -974,3 +975,12 @@ def test_non_jgb2_tools_are_never_compared():
     result = ToolResult(ok=True, data={"facts": "知識庫內容"}, text_for_model="知識庫內容")
     assert _enforce_tool_scope("kb.get", result, "111", None, violations) is None
     assert result.text_for_model == "知識庫內容" and violations == []
+
+
+@pytest.fixture()
+def _aplus_proposal_off(monkeypatch):
+    """A+ 片（`AGENT_WRITE_PROPOSAL`）：本檔以「模型自呼 `confirm.request`、以模型參數執行」為載具的
+    測試＝開關 off 的正對照（開關 on 時該路徑已收掉）。開關 on 的程式路徑由
+    `test_aplus_card_program_only_req.py` 驗出卡、缺欄追問、查無固定句、帳單候選點選、照片與物件記憶前處理；
+    本檔其餘行為在開關 on 時沒有另寫程式路徑版本。"""
+    monkeypatch.setenv("AGENT_WRITE_PROPOSAL", "off")

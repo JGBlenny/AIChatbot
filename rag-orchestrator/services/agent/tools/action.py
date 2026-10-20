@@ -300,6 +300,29 @@ def _identity_pair(identity: Identity) -> tuple:
     return getattr(identity, "role_id", None), getattr(identity, "user_id", None)
 
 
+async def viewer_bill_row(api: Any, role_id: Any, user_id: Any,
+                          bill_id: Any) -> tuple:
+    """`("one"|"none"|"error", row)`——**這位成員看得到的這一張帳單**（第 3 步 A0 RC1）。
+
+    以 `get_bills(bill_id=…, viewer_user_id=…)` 單筆探測（jgb2 `/bills` 的 `bill_id` 過濾＋viewer
+    圈定），⛔ 依賴列表第一頁（舊寫法讀第一頁 50 筆，排在後面的帳單一律被當成看不到）。
+    回傳列仍逐筆比對 id（上游若無視 `bill_id` 參數，也只認同一個編號）。
+    `"none"`＝查過、沒有（不存在與看不到**同一個結果**，⛔ 細分）；`"error"`＝沒查成。
+    兌現端（`bill_due_extend`）與出卡前預檢（`write_forms` 表單宣告）共用本函式。"""
+    if isinstance(bill_id, bool) or not isinstance(bill_id, (str, int)):
+        return "none", None
+    ref = str(bill_id).strip()
+    if not ref or not role_id or not user_id:
+        return "none", None
+    try:
+        rows = jgb2_tools._rows_checked(await api.get_bills(
+            role_id=role_id, user_id=user_id, viewer_user_id=user_id, bill_id=ref))
+    except jgb2_tools.UpstreamFailure:
+        return "error", None
+    hits = [r for r in rows if isinstance(r, dict) and str(r.get("id")).strip() == ref]
+    return ("one", hits[0]) if len(hits) == 1 else ("none", None)
+
+
 # ---------------------------------------------------------------------------
 # jgb2.action.bill_due_extend
 # ---------------------------------------------------------------------------
@@ -336,10 +359,11 @@ async def bill_due_extend(identity: Identity, args: dict) -> ToolResult:
         return _no_match()
 
     api = jgb2_tools._get_api()
-    visible = jgb2_tools._rows_of(
-        await api.get_bills(role_id=role_id, user_id=user_id, viewer_user_id=user_id)
-    )
-    if not any(str(row.get("id")) == bill_id for row in visible):
+    # 第 3 步 A0 RC1（⛔ 掛開關：語義不變的錯誤修正）：可見性改以 `bill_id`＋`viewer_user_id`
+    # 單筆探測（`viewer_bill_row`），⛔ 再讀列表第一頁。沒查成也回同一個 `_no_match()`（同改動前：
+    # 改動前 `_rows_of` 對沒查成回空列 ⇒ 同樣落到這裡）。
+    status, _row = await viewer_bill_row(api, role_id, user_id, bill_id)
+    if status != "one":
         # 不存在／不在可見範圍——**兩者共用同一個回答**（同 jgb2 的 404 資訊折疊：
         # 「帳單不存在或無權存取」），⛔ 不細分成可探測的預言機。
         return _no_match()
@@ -699,6 +723,7 @@ __all__ = [
     "REPAIR_CREATE_NAME",
     "REPAIR_CREATE_SPEC",
     "bill_due_extend",
+    "viewer_bill_row",
     "repair_create",
     "ESTATE_CREATE_NAME",
     "ESTATE_CREATE_SPEC",

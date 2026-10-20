@@ -214,6 +214,7 @@ def _confirm_tool_response():
 
 
 @pytest.mark.req(_REQ)
+@pytest.mark.usefixtures("_aplus_proposal_off")
 async def test_confirm_request_ends_the_turn_with_the_card_verbatim():
     confirm_result = ToolResult(ok=True, data={
         "pending_id": _PID, "action": "bill_due_extend", "payload": dict(_PAYLOAD),
@@ -246,6 +247,7 @@ async def test_confirm_request_ends_the_turn_with_the_card_verbatim():
 
 
 @pytest.mark.req(_REQ)
+@pytest.mark.usefixtures("_aplus_proposal_off")
 async def test_malformed_confirm_data_does_not_end_the_turn():
     """`data` 形狀不符 ⇒ ⛔ 不印半成品的卡，回合照常走完。"""
     registry = FakeRegistry(call_results=[ToolResult(ok=True, data={"pending_id": _PID})])
@@ -401,7 +403,10 @@ async def test_tool_failure_is_reported_honestly_and_recorded():
 
 @pytest.mark.req(_REQ)
 @pytest.mark.parametrize("verb", ["confirm_cancel", "confirm_edit"])
-async def test_cancel_and_edit_burn_the_token_without_calling_the_tool(verb):
+async def test_cancel_and_edit_burn_the_token_without_calling_the_tool(verb, monkeypatch):
+    # 第 3 步 A3：「修改」在 `AGENT_WRITE_LIFECYCLE=on` 時改為保留草稿＋問改哪一項（新行為由
+    # `test_step3_write_lifecycle_req.py` 驗）；本條原斷言改在開關 off（＝現行行為）下照舊成立。
+    monkeypatch.setenv("AGENT_WRITE_LIFECYCLE", "off")
     pool = FakePool([_redeem_row()])
     registry = _receipt_registry()
     rt = _runtime(registry=registry, pool=pool)
@@ -481,7 +486,9 @@ async def test_outcome_confirmed_on_submit_with_action():
 
 @pytest.mark.req(_REQ)
 @pytest.mark.parametrize("verb", ["confirm_cancel", "confirm_edit"])
-async def test_outcome_cancelled_on_cancel_or_edit(verb):
+async def test_outcome_cancelled_on_cancel_or_edit(verb, monkeypatch):
+    # 第 3 步 A3：同上——原斷言在開關 off（現行行為）下照舊成立。
+    monkeypatch.setenv("AGENT_WRITE_LIFECYCLE", "off")
     pool = FakePool([_redeem_row()])
     rt = _runtime(registry=_receipt_registry(), pool=pool)
     result = await rt.run_turn(_identity(), f"{verb}:{_PID}", _state_with_pending())
@@ -577,3 +584,12 @@ def test_parse_confirm_value_uses_fullmatch_not_match():
     # `.match` 會放行結尾換行——這正是本次要擋掉的差別
     assert _CONFIRM_VALUE_RE.match(value + "\n") is not None
     assert _CONFIRM_VALUE_RE.fullmatch(value + "\n") is None
+
+
+@pytest.fixture()
+def _aplus_proposal_off(monkeypatch):
+    """A+ 片（`AGENT_WRITE_PROPOSAL`）：本檔以「模型自呼 `confirm.request`、以模型參數執行」為載具的
+    測試＝開關 off 的正對照（開關 on 時該路徑已收掉）。開關 on 的程式路徑由
+    `test_aplus_card_program_only_req.py` 驗出卡、缺欄追問、查無固定句、帳單候選點選、照片與物件記憶前處理；
+    本檔其餘行為在開關 on 時沒有另寫程式路徑版本。"""
+    monkeypatch.setenv("AGENT_WRITE_PROPOSAL", "off")

@@ -19,6 +19,7 @@ from unittest.mock import AsyncMock
 
 import httpx
 import pytest
+from tests.unit.agent.confirm_pool_double import attach_token_tx  # 第 3 步 A7：token 寫入交易替身
 from PIL import Image
 
 from services import documind_client as dm
@@ -287,6 +288,7 @@ def _confirm_call(payload: dict, call_id="c1"):
 _REPAIR = {"action": "repair_create", "estate_name": "測試物件", "description": "椅面破了"}
 
 
+@pytest.mark.usefixtures("_aplus_proposal_off")
 async def test_server_photos_replace_model_photo_keys_and_show_on_card():
     state = {"agent": {IMAGE_SUGGESTION_KEY: {"category_name": None, "photos": [_meta(1)]}}}
     forged = dict(_REPAIR, broken_photos=[_meta(9)], image_ref="x", Photo_count=3)
@@ -315,6 +317,7 @@ async def test_no_photo_turn_still_drops_model_photo_keys():
     assert "附照片" in render("repair_create", dict(_REPAIR, broken_photos=[_meta(1)]))
 
 
+@pytest.mark.usefixtures("_aplus_proposal_off")
 async def test_more_than_five_photos_attach_none_and_card_says_so():
     state = {"agent": {IMAGE_SUGGESTION_KEY: {"category_name": None,
                                               "photos": [_meta(i) for i in range(1, 7)]}}}
@@ -326,6 +329,7 @@ async def test_more_than_five_photos_attach_none_and_card_says_so():
     assert "・附照片：未附（本次 6 張，超過 5 張上限）" in res.answer
 
 
+@pytest.mark.usefixtures("_aplus_proposal_off")
 async def test_invalid_input_does_not_consume_the_photo_suggestion():
     suggestion = {"category_name": None, "photos": [_meta(1)]}
     state = {"agent": {IMAGE_SUGGESTION_KEY: dict(suggestion)}}
@@ -554,6 +558,7 @@ class _RealConfirmRegistry(_CaptureRegistry):
         super().__init__()
         self.pool = AsyncMock()
         self.pool.execute = AsyncMock(return_value="INSERT 0 1")
+        attach_token_tx(self.pool)
         self.results: list = []
 
     async def call(self, identity, name, args, timeout_s, *, stage, readonly_view=False,
@@ -609,7 +614,8 @@ async def test_other_action_in_a_writable_document_turn_is_not_called(api):
     # 仍由模型驅動的收據回合驗。
     res = await _rt(FakeProvider([_confirm_call(dict(_REPAIR)), _final_response()]), reg).run_turn(
         _pm(), "幫我用這張收據開帳單", {"agent": {}}, document=_receipt_doc())
-    assert reg.call_args == [] and reg.pool.execute.await_count == 0      # token 表零新增
+    reg.pool.execute.assert_not_awaited()   # 原斷言保留（A7 前 INSERT 走這裡）
+    assert reg.call_args == [] and reg.pool.insert.await_count == 0 and reg.pool.burn.await_count == 0      # token 表零新增
     assert "document_turn_action_blocked" in res.trace.violations
     assert res.outcome["state"] != "confirm_pending"
 
@@ -817,3 +823,12 @@ async def test_owner_data_never_reaches_model_state_card_or_log(monkeypatch, doc
     for name, text in surfaces.items():
         for secret in MUST_NOT_APPEAR:
             assert secret not in text, f"{secret} 出現在 {name}"
+
+
+@pytest.fixture()
+def _aplus_proposal_off(monkeypatch):
+    """A+ 片（`AGENT_WRITE_PROPOSAL`）：本檔以「模型自呼 `confirm.request`、以模型參數執行」為載具的
+    測試＝開關 off 的正對照（開關 on 時該路徑已收掉）。開關 on 的程式路徑由
+    `test_aplus_card_program_only_req.py` 驗出卡、缺欄追問、查無固定句、帳單候選點選、照片與物件記憶前處理；
+    本檔其餘行為在開關 on 時沒有另寫程式路徑版本。"""
+    monkeypatch.setenv("AGENT_WRITE_PROPOSAL", "off")

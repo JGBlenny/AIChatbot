@@ -21,6 +21,7 @@ from unittest.mock import AsyncMock
 
 import httpx
 import pytest
+from tests.unit.agent.confirm_pool_double import attach_token_tx  # 第 3 步 A7：token 寫入交易替身
 
 from services import jgb_system_api as api_mod
 from services.agent import mcp_facade as F
@@ -99,7 +100,7 @@ def _pool():
     pool = AsyncMock()
     pool.execute = AsyncMock(return_value="INSERT 0 1")
     pool.fetchrow = AsyncMock(return_value={"x": 1})          # assert_redeemed ⇒ True
-    return pool
+    return attach_token_tx(pool)
 
 
 # ════════════════════════════════════════════════════════════════════
@@ -723,6 +724,7 @@ async def test_other_user_cannot_press_the_card_and_old_pending_without_creator_
         assert "receipt" not in state["agent"][PENDING_CONFIRM_KEY][pid]
 
 
+@pytest.mark.usefixtures("_aplus_proposal_off")
 async def test_card_turn_stores_the_creator():
     data = {"pending_id": "0123456789abcdef", "card": "卡", "action": "estate_create",
             "payload": {"action": "estate_create"}, "quick_replies": [], "hint": "", "estate_id": None}
@@ -810,3 +812,12 @@ def test_estate_is_shown_by_name_never_by_id():
         {"completed_actions": [{"ref_type": "bill", "ref_id": "1234567"}]}, [])   # 正對照
     text = render_receipt("estate_create", _estate_payload(), {"estate_id": "70001"})
     assert "幸福小窩" in text and "70001" not in text
+
+
+@pytest.fixture()
+def _aplus_proposal_off(monkeypatch):
+    """A+ 片（`AGENT_WRITE_PROPOSAL`）：本檔以「模型自呼 `confirm.request`、以模型參數執行」為載具的
+    測試＝開關 off 的正對照（開關 on 時該路徑已收掉）。開關 on 的程式路徑由
+    `test_aplus_card_program_only_req.py` 驗出卡、缺欄追問、查無固定句、帳單候選點選、照片與物件記憶前處理；
+    本檔其餘行為在開關 on 時沒有另寫程式路徑版本。"""
+    monkeypatch.setenv("AGENT_WRITE_PROPOSAL", "off")

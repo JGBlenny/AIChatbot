@@ -62,7 +62,6 @@ from services.agent.bill_period import PeriodSpec, parse_period
 from services.agent.confirm_card import (
     CLOSED_ACTION_EXTRA_KEYS,
     CLOSED_ACTION_FIELDS,
-    CONFIRM_ACTIONS,
     CONTRACT_CREATE_ACTION,
     DATE_BEFORE_TODAY_TEXT,
     ESTATE_CREATE_ACTION,
@@ -77,8 +76,15 @@ from services.agent.confirm_card import (
 #    `YYYYMMDD` 解析：卡上印的日期與這裡對到的日期必須出自同一條規則，兩套規則
 #    遲早會分岔成「對得到帳單、印不出卡」。
 from services.agent.confirm_card import _parse_date as _parse_ymd
+# A8（單一動作登錄）：動作值域在呼叫當下以模組參照讀，⛔ import 期複製。
+from services.agent import confirm_card as _confirm_card
 from services.agent.identity import Identity
-from services.agent.write_forms import MISSING_LABEL_VOCAB, missing_labels
+from services.agent import write_forms as _write_forms
+from services.agent.write_forms import (
+    MISSING_LABEL_VOCAB,
+    missing_labels,
+    write_lifecycle_enabled_from_env,
+)
 from services.agent.tools import jgb2 as jgb2_tools
 from services.agent.tools.action import (
     BILL_DUE_EXTEND_ACTION,
@@ -160,7 +166,7 @@ CONFIRM_SPEC: ToolSpec = {
         "在執行任何會改變資料的動作之前，先向使用者出示摘要並請他確認。"
         "summary 是給人看的摘要；payload 是待執行動作的完整參數，"
         "以 JSON 物件序列化成的字串傳入，其中必須有 action 欄位，"
-        f"值只能是 {list(CONFIRM_ACTIONS)} 其中之一。"
+        f"值只能是 {list(_confirm_card.CONFIRM_ACTIONS)} 其中之一。"
         "使用者實際看到的確認卡由系統依 action 與 payload 產生，"
         "summary 只進紀錄、不會直接出示給使用者。"
         "使用者要建修繕單時直接呼叫本工具：estate_name（物件）與 description（問題描述）"
@@ -248,6 +254,20 @@ INSERT INTO agent_confirmation_tokens
 VALUES ($1, $2, $3, $4, now() + ($5::int * interval '1 second'), false, now(), $6)
 """
 
+#: A7／DSP-092：出卡交易的**第一句**——以 session_id 取交易級 advisory lock（commit／rollback 自動釋放）。
+#: ⚠️ READ COMMITTED 下「同交易燒＋INSERT」擋不住同 session 兩回合交錯（各自燒不到對方未 commit 的
+#:    列 ⇒ 兩張都可兌現；驗收 #9p 真 PG 實測重現）。持鎖後第二個交易要等第一個 commit 才開始燒，
+#:    燒得到第一個剛寫入的列 ⇒ 任何時刻至多一張可兌現。⛔ 拿掉、⛔ 移到燒卡句之後。
+#: `hashtext` 為 int4；不同 session 雜湊碰撞只會讓兩邊排隊（可用性），不會互燒（燒卡句只認 session_id）。
+_LOCK_SESSION_SQL: Final[str] = "SELECT pg_advisory_xact_lock(hashtext($1))"
+
+#: A7：出新卡前燒掉本 session 所有未兌現的 token（與 `_INSERT_TOKEN_SQL` 同一筆交易）。
+#: ⚠️ 不看 `expires_at`：過期的列本來就兌現不了，一併標掉無害；只認 `session_id`。
+_BURN_SESSION_TOKENS_SQL: Final[str] = (
+    "UPDATE agent_confirmation_tokens SET redeemed = true "
+    "WHERE session_id = $1 AND redeemed = false"
+)
+
 #: 單述句兌現（見模組 docstring「兌現是單述句」）。⛔ 不拆成 SELECT + UPDATE。
 _REDEEM_SQL: Final[str] = """
 UPDATE agent_confirmation_tokens
@@ -272,6 +292,23 @@ UPDATE agent_confirmation_tokens
    AND expires_at > now()
 RETURNING token, payload_sha256, summary_sha256
 """
+
+#: A+ 片 AP-3：綁定卡狀態的**唯讀**查詢（⛔ 改任何列）。以 `pending_id` **且** `session_id`
+#: 過濾；選取欄位只有 `redeemed`、剩餘秒數（**以 DB `now()` 算**）、兩把雜湊——⛔ 選 token 欄
+#: （token 不離開 DB；本查詢只回答「這張卡還能不能按」）。
+_PENDING_TOKEN_STATE_SQL: Final[str] = """
+SELECT redeemed,
+       EXTRACT(EPOCH FROM (expires_at - now()))::float8 AS remaining_s,
+       summary_sha256,
+       payload_sha256
+  FROM agent_confirmation_tokens
+ WHERE pending_id = $1
+   AND session_id = $2
+"""
+
+#: A+ 片 AP-2／AP-3：剩餘秒數低於此值 ⇒ 視同過期（判 live 到使用者按下之間可能過期；
+#: 第一原理取值，約一次讀卡加點擊的時間，查無業界對應；安全審查 2-3）。
+PENDING_TOKEN_MIN_REMAINING_S: Final[float] = 60.0
 
 #: W4 的寫入工具 wrapper 用：這張 token 真的被兌現過嗎。
 #: ⚠️ 這是**第二道**閘（第一道是 Runtime 的 `redeem_pending` 單述句競爭）——
@@ -664,7 +701,8 @@ def missing_fields_ask_text(result: ToolResult) -> Optional[str]:
     labels = result.data.get("missing_fields")
     if not isinstance(labels, list) or not labels:
         return None
-    if not all(isinstance(lb, str) and lb in _MISSING_LABEL_VOCAB for lb in labels):
+    vocab = _write_forms.missing_label_vocab()   # 第 3 步 #2：呼叫當下由表單導出
+    if not all(isinstance(lb, str) and lb in vocab for lb in labels):
         return None
     return MISSING_FIELDS_ASK_TEMPLATE.format(labels=MISSING_FIELDS_SEP.join(labels))
 
@@ -902,6 +940,35 @@ def _write_not_supported_result() -> ToolResult:
     )
 
 
+async def _run_form_precheck(identity: Identity, action: Any, payload: dict, *,
+                             today: date) -> Optional[ToolResult]:
+    """第 3 步 A6：出卡前預檢——**依表單宣告**（`write_forms.FORMS[action].precheck`）執行，
+    ⛔ 動作名分支。表單沒宣告、或宣告的編號欄沒有值 ⇒ `None`（照常往下）。
+
+    - 只用宣告的**帶 viewer 唯讀**查詢（⛔ 寫入端點、⛔ token）；
+    - 看不到與不存在 ⇒ **同一句**（`_not_found_result()`，S5 查無固定句）；沒查成 ⇒ `NO_MATCH`
+      （⛔ 講成查無）；
+    - 可見性確認之後才判可行性：宣告的 `derive` 由讀到的列重算系統欄位並寫回 payload，算不出 ⇒
+      封閉的 `INVALID_INPUT`（⛔ 帶原因文字）；
+    - 呼叫點在 `render()` 與雜湊**之前**（只在那之前改 payload）；兌現端既有檢查全保留。"""
+    form = _write_forms.FORMS.get(action) if isinstance(action, str) else None
+    spec = getattr(form, "precheck", None)
+    if spec is None:
+        return None
+    ref = payload.get(spec.id_key)
+    if _missing(ref):
+        return None
+    role_id, user_id = _identity_pair(identity)
+    status, row = await spec.lookup(jgb2_tools._get_api(), role_id, user_id, ref)
+    if status == "error":
+        return ToolResult(ok=False, error="NO_MATCH")             # 沒查成（⛔ 講成查無）
+    if status != "one" or not isinstance(row, dict):
+        return _not_found_result()                                # 看不到＝不存在，同一句
+    if not spec.derive(payload, row, today=today):
+        return ToolResult(ok=False, error="INVALID_INPUT")         # 封閉樣板（可見性已確認）
+    return None
+
+
 async def confirm_request(
     identity: Identity,
     args: dict,
@@ -967,7 +1034,7 @@ async def confirm_request(
     # `_prepare_closed_action` 的受眾檢查與 `check_closed_keys` 之後（非業者照舊先得 `NO_MATCH`）。
     # 修繕：照片建議的描述已由 runtime 在呼叫前補進 payload，故有照片時不會被當成缺（A9 不變）。
     # 延期繳費（明列行為變更）：缺 `days`／缺帳單與物件 ⇒ 改回缺欄清單（原為不帶清單的 `INVALID_INPUT`）。
-    if action in CONFIRM_ACTIONS and action not in CLOSED_ACTION_FIELDS:
+    if action in _confirm_card.CONFIRM_ACTIONS and action not in CLOSED_ACTION_FIELDS:
         missing = missing_labels(action, payload)
         if missing:
             return ToolResult(ok=False, error="INVALID_INPUT",
@@ -998,6 +1065,12 @@ async def confirm_request(
     )
     if early is not None:
         return early
+    # 第 3 步 A6（開關 `AGENT_WRITE_LIFECYCLE`，呼叫當下讀；off ⇒ 現行）：表單宣告的出卡前預檢，
+    # 排在 `render()` 與兩把雜湊之前（預檢只在這之前改 payload）。
+    if write_lifecycle_enabled_from_env():
+        pre_early = await _run_form_precheck(identity, action, payload, today=today)
+        if pre_early is not None:
+            return pre_early
     try:
         # ⚠️ **出卡端的時鐘**（V3）：`days` 的起算日＝原到期日與今天較晚者，
         #    所以 render 的驗算要拿到今天。時鐘在**呼叫點**取（同下方閘一、同
@@ -1060,9 +1133,21 @@ async def confirm_request(
 
     token = secrets.token_urlsafe(CONFIRM_TOKEN_BYTES)
     pending_id = pending_id_for(token)
-    await db_pool.execute(
-        _INSERT_TOKEN_SQL, token, session_id, p_sha, s_sha, int(ttl_s), pending_id
-    )
+    # A7（唯一有效卡，⛔ 隨開關關閉）：同一個 session 任何時刻只有一張可兌現的卡。
+    # 「燒本 session 所有未兌現 token」與「寫新 token」在**同一筆交易**內：
+    #   - 兩句都在 INSERT 之前的早退路徑之後 ⇒ 缺欄／候選／render 失敗／NO_MATCH／
+    #     日期早於今天都不會燒到舊卡；
+    #   - 任何一句拋例外 ⇒ 整筆回滾（舊卡不會被燒掉卻沒有新卡）。
+    # ⚠️ 燒卡沿用 `redeemed = true`（計畫 §7 A7-4 DEFER）：被燒的舊卡之後送出，
+    #    走 `redeem_pending` 的「沒中」⇒ 與已兌現／過期同一句。
+    #   - DSP-092：交易第一句先取 session 級 advisory xact lock，序列化同 session 並行出卡。
+    async with db_pool.acquire() as conn:
+        async with conn.transaction():
+            await conn.execute(_LOCK_SESSION_SQL, session_id)
+            await conn.execute(_BURN_SESSION_TOKENS_SQL, session_id)
+            await conn.execute(
+                _INSERT_TOKEN_SQL, token, session_id, p_sha, s_sha, int(ttl_s), pending_id
+            )
 
     return ToolResult(
         ok=True,
@@ -1152,6 +1237,96 @@ async def redeem_pending(
     )
 
 
+#: `pending_token_state` 的四個狀態（封閉值域）。
+PENDING_STATE_LIVE: Final[str] = "live"
+PENDING_STATE_EXPIRED: Final[str] = "expired"
+PENDING_STATE_REDEEMED: Final[str] = "redeemed"
+PENDING_STATE_MISSING: Final[str] = "missing"
+
+
+@dataclass(frozen=True)
+class PendingTokenState:
+    """`pending_token_state` 的回傳：只有狀態與比對結果（⛔ token、⛔ 雜湊原值、⛔ 時間值）。
+
+    - `state`：`live`／`expired`／`redeemed`／`missing`；
+    - `lapsed`：`expires_at <= now()`（已真的過期，不可能再兌現；`expired` 也涵蓋「剩不到
+      `PENDING_TOKEN_MIN_REMAINING_S` 秒但仍可兌現」，兩者靠這個欄位分開）；
+    - `summary_match`／`payload_match`：呼叫端給了預期雜湊時，與該列兩把雜湊的比對結果
+      （`hmac.compare_digest`）；沒給或查無列 ⇒ `None`。
+    """
+
+    state: str
+    lapsed: bool = False
+    summary_match: Optional[bool] = None
+    payload_match: Optional[bool] = None
+
+
+_PENDING_STATE_MISSING_RESULT: Final = PendingTokenState(state=PENDING_STATE_MISSING)
+
+
+def _digest_match(stored: Any, expected: Any) -> Optional[bool]:
+    if expected is None:
+        return None
+    if not isinstance(stored, str) or not isinstance(expected, str):
+        return False
+    return hmac.compare_digest(stored, expected)
+
+
+async def pending_token_state(
+    db_pool,
+    session_id: Any,
+    pending_id: Any,
+    *,
+    card_sha256: Any = None,
+    payload_sha256: Any = None,
+) -> PendingTokenState:
+    """A+ 片 AP-3：綁定卡的 token 現在的狀態（**純 SELECT**，⛔ 改任何列）。
+
+    判定順序（安全審查 3-1：**已兌現優先於過期**，過期以 DB `now()` 判）：
+      1. `redeemed=true` ⇒ `redeemed`；
+      2. 剩餘秒數 < `PENDING_TOKEN_MIN_REMAINING_S`（含已過期）⇒ `expired`；
+      3. 否則 ⇒ `live`。
+    **fail-closed**（⛔ 判 `live`）：`pending_id` 不合 `_PENDING_ID_RE`、`session_id` 不是非空字串、
+    `db_pool is None`、查無列、多於一列、欄位形狀不對、42703 與其他任何 DB 例外 ⇒ `missing`。
+    """
+    if db_pool is None:
+        return _PENDING_STATE_MISSING_RESULT
+    if not isinstance(pending_id, str) or not _PENDING_ID_RE.match(pending_id):
+        return _PENDING_STATE_MISSING_RESULT
+    if not isinstance(session_id, str) or not session_id:
+        return _PENDING_STATE_MISSING_RESULT
+    try:
+        rows = await db_pool.fetch(_PENDING_TOKEN_STATE_SQL, pending_id, session_id)
+    except Exception:  # noqa: BLE001 — 查不成（含 42703）⇒ 一律 missing（fail-closed）
+        logger.warning("[agent] 綁定卡狀態查詢失敗 ⇒ 判 missing（fail-closed）")
+        return _PENDING_STATE_MISSING_RESULT
+    if not isinstance(rows, (list, tuple)) or len(rows) != 1:
+        return _PENDING_STATE_MISSING_RESULT
+    row = rows[0]
+    try:
+        redeemed = row["redeemed"]
+        remaining = row["remaining_s"]
+        stored_summary = row["summary_sha256"]
+        stored_payload = row["payload_sha256"]
+    except (KeyError, TypeError, IndexError):
+        return _PENDING_STATE_MISSING_RESULT
+    if not isinstance(redeemed, bool):
+        return _PENDING_STATE_MISSING_RESULT
+    if redeemed:
+        return PendingTokenState(state=PENDING_STATE_REDEEMED)
+    if isinstance(remaining, bool) or not isinstance(remaining, (int, float)):
+        return _PENDING_STATE_MISSING_RESULT
+    if remaining != remaining:          # NaN ⇒ 形狀不對
+        return _PENDING_STATE_MISSING_RESULT
+    if remaining < PENDING_TOKEN_MIN_REMAINING_S:
+        return PendingTokenState(state=PENDING_STATE_EXPIRED, lapsed=remaining <= 0)
+    return PendingTokenState(
+        state=PENDING_STATE_LIVE,
+        summary_match=_digest_match(stored_summary, card_sha256),
+        payload_match=_digest_match(stored_payload, payload_sha256),
+    )
+
+
 async def assert_redeemed(db_pool, token: Any, session_id: Any) -> bool:
     """這張 token 是不是**這個 session 的、且已被兌現**（W4 的 wrapper 用）。
 
@@ -1226,6 +1401,13 @@ __all__ = [
     "PendingRedemption",
     "confirm_quick_replies",
     "redeem_pending",
+    "PendingTokenState",
+    "pending_token_state",
+    "PENDING_TOKEN_MIN_REMAINING_S",
+    "PENDING_STATE_LIVE",
+    "PENDING_STATE_EXPIRED",
+    "PENDING_STATE_REDEEMED",
+    "PENDING_STATE_MISSING",
     "assert_redeemed",
     "CONFIRM_TOKEN_TTL_S",
     "CONFIRM_TOKEN_BYTES",

@@ -38,6 +38,7 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
+from tests.unit.agent.confirm_pool_double import attach_token_tx  # 第 3 步 A7：token 寫入交易替身
 
 from services import jgb_system_api as api_mod
 from services import usage_metering
@@ -105,6 +106,7 @@ PRE_CHANGE_RESPONSE_FORMAT = r'''{"type": "json_schema", "json_schema": {"name":
 def _env(monkeypatch):
     monkeypatch.setattr(_bills, "_today", lambda: TODAY)
     monkeypatch.delenv("AGENT_WRITE_DRAFT", raising=False)
+    monkeypatch.delenv(WF.WRITE_PROPOSAL_ENV, raising=False)      # A+ 片：未設＝on
     monkeypatch.setenv("AGENT_WRITE_TOOLS_ENABLED", "true")
 
 
@@ -137,7 +139,7 @@ def _pool():
     pool = AsyncMock()
     pool.execute = AsyncMock(return_value="INSERT 0 1")
     pool.fetchrow = AsyncMock(return_value=None)
-    return pool
+    return attach_token_tx(pool)
 
 
 class _Reg:
@@ -424,16 +426,43 @@ _ONE_MISSING = [
 ]
 
 
+#: A+ 片：使用者這句話含 `_ONE_MISSING` 各 payload 的值（模型提議經值閘合併進草稿後，程式依草稿
+#: 發出的 `confirm.request` 缺的仍只有那一欄）。日期用使用者常見寫法（模型參數仍是 `YYYYMMDD`）。
+_ONE_MISSING_USER_TEXT = {
+    "repair_create": f"{STUDENT_ESTATE} 要報修",
+    "bill_due_extend": f"{KEELUNG_ESTATE} 11月那期 帳單延期",
+    "estate_create": "新增物件 台北市 大安區 某路 1 號",
+    "contract_create": "開合約 2026-11-01 到 2027-10-31 租金 12000 w1-test@example.com",
+    "manual_bill_create": "某合約 開帳單 清潔費 期限 2026-12-01",
+}
+
+
+@pytest.mark.parametrize("proposal", ["on", "off"])
 @pytest.mark.parametrize("payload,labels,ask_target,asked", _ONE_MISSING,
                          ids=[p["action"] for p, _, _, _ in _ONE_MISSING])
-async def test_each_write_action_missing_one_field_gets_program_ask(api, payload, labels, ask_target,
-                                                                    asked):
+async def test_each_write_action_missing_one_field_gets_program_ask(api, monkeypatch, payload, labels,
+                                                                    ask_target, asked, proposal):
     """#3：5 支動作各缺一個必填欄 ⇒ 回 `missing_fields`、程式追問句（⛔ 再叫模型）、
-    ask_target 由表導出並寫進 `LAST_ASK_TARGET_KEY`；W1b：程式追問出口寫 `asked`（表單鍵）。"""
+    ask_target 由表導出並寫進 `LAST_ASK_TARGET_KEY`；W1b：程式追問出口寫 `asked`（表單鍵）。
+
+    A+ 片（改寫，原意圖不變）：`proposal=off`＝改前行為的正對照（模型參數直接執行，使用者句子不必
+    含值）；`proposal=on`＝模型呼叫只當提議，值須出現在使用者原話才進草稿，程式依草稿發出的
+    `confirm.request`（`summary` 為程式常數）得到同一個缺欄清單。"""
+    from services.agent.runtime import WRITE_DRAFT_PROGRAM_CONFIRM_SUMMARY
+    if proposal == "off":
+        monkeypatch.setenv(WF.WRITE_PROPOSAL_ENV, "off")
+        message = "幫我處理一下"
+    else:
+        message = _ONE_MISSING_USER_TEXT[payload["action"]]
     state: dict = {}
-    res, reg, provider, pool = await _turn(_pm(), "幫我處理一下", state,
+    res, reg, provider, pool = await _turn(_pm(), message, state,
                                            [_call("confirm.request", _confirm_args(payload))])
     (_args, first), = reg.confirm_calls()
+    if proposal == "on":
+        assert _args["summary"] == WRITE_DRAFT_PROGRAM_CONFIRM_SUMMARY
+        assert "write_proposal" in res.trace.violations
+    else:
+        assert _args["summary"] == "確認" and "write_proposal" not in res.trace.violations
     assert (first.ok, first.error) == (False, "INVALID_INPUT")
     assert first.data["missing_fields"] == labels
     assert res.answer == ASK_TEXT.format(labels="、".join(labels))
@@ -441,7 +470,8 @@ async def test_each_write_action_missing_one_field_gets_program_ask(api, payload
     assert "confirm_missing_fields_ask" in res.trace.violations
     assert state["agent"][LAST_ASK_TARGET_KEY] == ask_target == WF.ask_target_for_missing(labels)
     assert len(provider.calls) == 1                     # 程式追問：模型只被叫了第一次
-    pool.execute.assert_not_called()                    # ⛔ 寫 token
+    pool.execute.assert_not_called()   # 原斷言保留（A7 前 INSERT 走這裡）
+    assert pool.insert.call_count == 0 and pool.burn.call_count == 0                    # ⛔ 寫 token
     assert _draft(state)["action"] == payload["action"] and _draft(state)["asked"] == asked
 
 
@@ -500,9 +530,13 @@ async def test_bill_due_extend_model_call_without_period_unchanged(api):
     assert res.data["hint"] == C.BILL_MATCH_HINT
 
 
-async def test_bill_draft_program_trigger_reaches_confirm_pending(api):
+async def test_bill_draft_program_trigger_reaches_confirm_pending(api, monkeypatch):
     """#3：草稿 `{"days":"7","estate_name":"基隆溫馨一人宅套房","period":"11月那期"}` 經程式觸發
-    得 `confirm_pending`（`to_payload` 把 "7" 轉成 int）；卡上帳單＝709744、延後 7 天。"""
+    得 `confirm_pending`（`to_payload` 把 "7" 轉成 int）；卡上帳單＝709744、延後 7 天。
+
+    第 3 步 A1：「出卡即清」只在 `AGENT_WRITE_LIFECYCLE=off`（現行行為）成立——本條原斷言照舊
+    在 off 下驗；on 時出卡保留草稿由 `test_step3_write_lifecycle_req.py` 驗。"""
+    monkeypatch.setenv("AGENT_WRITE_LIFECYCLE", "off")
     ident = _pm()
     state = _seed(ident, "bill_due_extend", {"estate_name": KEELUNG_ESTATE, "period": "11月那期"},
                   users=["我想把一張帳單延後繳", SCRIPT_D2], asked=["days"])
@@ -516,7 +550,7 @@ async def test_bill_draft_program_trigger_reaches_confirm_pending(api):
     assert "write_draft_program_confirm" in res.trace.violations
     assert len(_program_records(res)) == 1 and len(provider.calls) == 1
     assert _draft(state) is None                        # 出卡即清
-    pool.execute.assert_called_once()                   # 一張 token
+    pool.insert.assert_called_once()                   # 一張 token
 
 
 async def test_contract_draft_script_c_values_reach_card(api):
@@ -608,9 +642,13 @@ async def test_contract_name_caught_from_real_program_ask_and_contract_ref_untou
     assert res2.answer == ASK_TEXT.format(labels="起租日、到期日、租金、承租人 Email 或電話")
 
 
-async def test_repair_draft_with_emergency_two_reaches_card_marked_urgent(api):
+async def test_repair_draft_with_emergency_two_reaches_card_marked_urgent(api, monkeypatch):
     """#3：草稿 `{"estate_name":…,"description":"冷氣不冷","emergency_status":"2"}` 經程式觸發得
-    `confirm_pending`、卡上急迫程度為「緊急」（`to_payload` 轉 int 2）。"""
+    `confirm_pending`、卡上急迫程度為「緊急」（`to_payload` 轉 int 2）。
+
+    第 3 步 A4：意圖呼叫直接填代碼 "2" 只在 `AGENT_WRITE_LIFECYCLE=off`（現行）成立——本條原斷言
+    照舊在 off 下驗；on 時只收標籤「緊急」由 `test_step3_write_lifecycle_req.py` 的 #6 驗。"""
+    monkeypatch.setenv("AGENT_WRITE_LIFECYCLE", "off")
     assert WF.to_payload("repair_create", {"emergency_status": "2"}) == {"emergency_status": 2}
     state: dict = {}
     res, reg, provider, _pool_ = await _turn(
@@ -655,7 +693,8 @@ async def test_off_sends_no_intent_call_and_never_writes_draft(api, monkeypatch)
     assert reg.confirm_calls() == [] and not _program_records(res)
     assert res.answer == MODEL_TEXT                                # 模型原輸出照常出
     assert not any(str(v).startswith("write_intent") for v in res.trace.violations)
-    pool.execute.assert_not_called()
+    pool.execute.assert_not_called()   # 原斷言保留（A7 前 INSERT 走這裡）
+    assert pool.insert.call_count == 0 and pool.burn.call_count == 0
     # 正對照：同一句在 on 下真的會發意圖呼叫、建草稿＋程式觸發。
     monkeypatch.delenv("AGENT_WRITE_DRAFT")
     state_on: dict = {}
@@ -848,7 +887,8 @@ async def test_f1_prospect_gets_no_intent_call_no_token_and_no_draft(api):
     assert provider.intent_calls == []
     assert WRITE_DRAFT_KEY not in state["agent"]
     assert reg.confirm_calls() == []
-    pool.execute.assert_not_called()
+    pool.execute.assert_not_called()   # 原斷言保留（A7 前 INSERT 走這裡）
+    assert pool.insert.call_count == 0 and pool.burn.call_count == 0
     # 可見性閘：草稿合併時對看不到的動作記 violation（registry 只露出修繕單）。
     class _OnlyRepair(_Reg):
         def specs_for(self, *a, **kw):
@@ -1083,7 +1123,9 @@ async def test_bill_days_program_ask_keeps_asked_readable_and_receives_days(api)
 
 @pytest.mark.parametrize("intent_fields,expect_period", [
     ({}, None),                                           # 意圖呼叫沒抽到 ⇒ 期別仍缺
-    ({"estate_name": KEELUNG_ESTATE, "period": "11月那期"}, "11月那期"),
+    # 期別片 P-2：期別改 `period` 型 ⇒ 草稿存值閘正規化的年月（TODAY=2026-10-17、11 月 ⇒ 2026/11），
+    # ⛔ 模型原字；本測試的意圖（期別只來自意圖呼叫、⛔ 整句原文）不變。
+    ({"estate_name": KEELUNG_ESTATE, "period": "11月那期"}, "2026/11"),
 ])
 async def test_script_d_second_sentence_never_whole_fills_period(api, intent_fields, expect_period):
     """#8 W1b r2：缺 [物件, 期別, 延後天數] 後輸入腳本 D 第二句 ⇒ `period` 不是整句原文
@@ -1497,9 +1539,11 @@ def test_forms_cover_exactly_the_confirm_actions_and_hold_no_identity_keys():
 # ════════════════════════════════════════════════════════════════════
 # 程式觸發的條件與結果收尾（§2.1(5)）
 # ════════════════════════════════════════════════════════════════════
-async def test_nonterminal_program_result_goes_back_to_model_once(api):
+async def test_nonterminal_program_result_goes_back_to_model_once(monkeypatch, api):
     """非終結結果（無缺欄清單的 `INVALID_INPUT`）⇒ ⛔ 撤回：工具結果回填、再叫一次模型，模型的
     下一個輸出走正常路徑；本回合不再觸發（violation `write_draft_program_confirm_nonterminal`）。"""
+    # 第 3 步 A6：有帳單編號的延期卡在開關 on 時會先以 viewer 單筆讀帳單並重算到期日（表單宣告預檢）；本條原斷言驗的是現行路徑 ⇒ 照舊在 `AGENT_WRITE_LIFECYCLE=off` 下驗。
+    monkeypatch.setenv("AGENT_WRITE_LIFECYCLE", "off")
     state: dict = {}
     res, reg, provider, _ = await _turn(_pm(), "帳單 709744 延 7 天", state, [
         _out(),
@@ -1647,7 +1691,7 @@ async def test_w1c_program_first_card_exit_never_calls_the_main_model(api):
     assert res.outcome["state"] == "confirm_pending", res.answer
     assert provider.calls == [] and res.trace.llm_calls == 0
     assert len(_program_records(res)) == 1
-    pool.execute.assert_called_once()
+    pool.insert.assert_called_once()
 
 
 async def test_w1c_f2_statement_answer_with_intent_none_goes_program_first(api):
@@ -1732,9 +1776,11 @@ async def test_w1c_f1_late_intent_with_asked_description_leaves_fill_to_after_ou
         assert res.answer == ASK_TEXT.format(labels="物件、期別、延後天數")
 
 
-async def test_w1c_program_first_nonterminal_result_calls_main_model_once_with_the_result(api):
+async def test_w1c_program_first_nonterminal_result_calls_main_model_once_with_the_result(monkeypatch, api):
     """W1c：程式優先遇非終結結果（無缺欄清單的 `INVALID_INPUT`）⇒ 主模型被呼叫一次、送出的
     messages 帶程式那一次 `confirm.request` 的回填結果；本回合不再觸發（上限 1 次）。"""
+    # 第 3 步 A6：有帳單編號的延期卡在開關 on 時會先以 viewer 單筆讀帳單並重算到期日（表單宣告預檢）；本條原斷言驗的是現行路徑 ⇒ 照舊在 `AGENT_WRITE_LIFECYCLE=off` 下驗。
+    monkeypatch.setenv("AGENT_WRITE_LIFECYCLE", "off")
     events: list = []
     res, reg, provider, _ = await _turn(_pm(), "帳單 709744 延 7 天", {}, [
         _main_spy(events, _out("請問原本的到期日是哪一天？", kind="ask", ask_target="date"))],

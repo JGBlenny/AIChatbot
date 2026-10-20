@@ -964,6 +964,33 @@ else
   echo "$G44_OUT"
 fi
 # <<< 不變量 44
+# >>> 不變量 45
+echo "═══ 不變量 45：DSP-091 分工防偏離（已知偏離登記 ＋ 出卡來源）═══"
+# 源起（2026-10-20，分工防偏離片 DG-4，計畫 plan-division-guard-20261020.md）：
+# ① 靜態：目標正本 §3.1「仍由模型主導」清單 ＝ rag-orchestrator/tests/unit/agent/dsp091_known_deviations.py；
+# ② 線上：近 7 天 usage_events 出卡來源標記（confirm_source:*）——有程式來源樣本時，
+#    confirm_source:model:unregistered（一般寫入回合卻由模型出卡）> 0 ⇒ FAIL 並列 trace_id；
+#    無程式來源樣本 ⇒ 「未判」（WARN、⛔ PASS；立案紀錄＝該計畫）；
+# ③ 各來源計數與 prose_confirm_suspect 只印數字（不設門檻，DSP-087）。
+# 檢查器退出碼：0 通過／1 FAIL／2 前置條件失敗（⛔ 靜默跳過）／3 未判。
+G45_CHECK="$REPO/scripts/audit/checks/division_guard.py"
+if ! python3 "$G45_CHECK" --self-test >/dev/null 2>&1; then
+  echo "❌ FAIL：不變量 45 檢查器的自我測試未過（檢查器本身失效，其 PASS 不可信）"
+  python3 "$G45_CHECK" --self-test
+  FAIL=1
+  CODE_REGRESSIONS+=("不變量 45：division_guard.py 自我測試未過")
+else
+  G45_OUT=$(python3 "$G45_CHECK" 2>&1); G45_RC=$?
+  echo "$G45_OUT"
+  case "$G45_RC" in
+    0) echo "✅ PASS" ;;
+    3) echo "⚠️ 未判：近 7 天無程式出卡樣本（WARN，不擋部署；樣本出現後本條自動轉為有效判定）" ;;
+    *) FAIL=1
+       CODE_REGRESSIONS+=("不變量 45：分工防偏離檢查失敗（退出碼 $G45_RC；見上方 ❌ 行與 trace_id）") ;;
+  esac
+fi
+echo
+# <<< 不變量 45
 echo ""
 echo "──────────────── 稽核記帳（兩類紅燈分開）────────────────"
 echo "CODE_CONTRACT_REGRESSIONS: ${#CODE_REGRESSIONS[@]}"

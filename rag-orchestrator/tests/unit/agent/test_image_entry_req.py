@@ -561,6 +561,7 @@ def _confirm_call_response():
 
 
 @pytest.mark.req(_REQ)
+@pytest.mark.usefixtures("_aplus_proposal_off")
 async def test_partial_text_is_outside_the_card_and_hash(monkeypatch):
     """截斷告知只進 `TurnResult.answer`：`card`／`card_sha256`／dialog 逐位元不變。"""
     payload = _repair_payload()
@@ -852,6 +853,7 @@ async def test_no_visible_damage_is_said_in_the_facts(monkeypatch):
 
 
 @pytest.mark.req(_REQ)
+@pytest.mark.usefixtures("_aplus_proposal_off")
 async def test_low_confidence_asks_for_the_category_first(monkeypatch):
     """低信心（0.4）＋樹內候選 2 ⇒ ask 回合：無 pending、無確認鍵、label==value。"""
     monkeypatch.setattr(F, "_image_fetch_one", FakeFetcher())
@@ -891,6 +893,7 @@ async def test_low_confidence_asks_for_the_category_first(monkeypatch):
 
 
 @pytest.mark.req(_REQ)
+@pytest.mark.usefixtures("_aplus_proposal_off")
 async def test_user_picking_a_category_next_turn_gets_the_card(monkeypatch):
     """使用者下一回合只回節點名（無 `image_urls`）⇒ 出卡、三顆確認鍵逐字。"""
     from services.agent.tools.confirm import confirm_quick_replies
@@ -994,6 +997,7 @@ async def test_recognition_exception_message_is_not_logged(monkeypatch, caplog):
 # (ix) 會話範圍：帶圖回合對別戶 ⇒ 不出卡
 # ════════════════════════════════════════════════════════════════════
 @pytest.mark.req(_REQ)
+@pytest.mark.usefixtures("_aplus_proposal_off")
 async def test_image_turn_still_obeys_the_select_scope_gate():
     payload = _repair_payload()
     registry = CardRegistry(_confirm_result(payload, estate_id="B"))
@@ -1214,3 +1218,12 @@ async def test_off_tree_item_keeps_the_parent(monkeypatch):
             results=[_recognition(suggested_category="水電類", suggested_item=item)]))
         turn, _ = await F.prepare_image_turn([_OK_URL], category_tree=_TREE)
         assert turn.suggested_category == "水電類", item
+
+
+@pytest.fixture()
+def _aplus_proposal_off(monkeypatch):
+    """A+ 片（`AGENT_WRITE_PROPOSAL`）：本檔以「模型自呼 `confirm.request`、以模型參數執行」為載具的
+    測試＝開關 off 的正對照（開關 on 時該路徑已收掉）。開關 on 的程式路徑由
+    `test_aplus_card_program_only_req.py` 驗出卡、缺欄追問、查無固定句、帳單候選點選、照片與物件記憶前處理；
+    本檔其餘行為在開關 on 時沒有另寫程式路徑版本。"""
+    monkeypatch.setenv("AGENT_WRITE_PROPOSAL", "off")
