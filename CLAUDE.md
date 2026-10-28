@@ -28,6 +28,17 @@ Kiro-style Spec-Driven Development on an agentic SDLC
 
 ⛔ 任何計畫或改動讓 AI 決定上列程式環節的下一步，即違反本節；要改分工，先改 DSP-091 並經業主核可。分工表、原則、差距與路徑：`.kiro/specs/agentic-mcp-orchestration/architecture-target-20261018.md`；決策與依據：`.claude/decisions/DSP-091.md`。
 
+## 站內幫手線：推進上線優先（DSP-115，2026-10-25 業主定案）
+
+業主：「可以把整條線 主要推進上線 而不是打路上所有小事都修完」。
+
+1. 順序：… F12 → **W2 → E → 填欄只填答覆（DSP-117） → 第 4 步切換正式機** →（上線後）雙胞胎與手開帳單合約 → D → …；排片先看是否在上線最低範圍、是否擋上線，不在的往後排。
+2. 每條審查／驗證發現先答「不修，下一步會變嗎」：不變 ⇒ 記該片「後補清單」，收案時一起處理；⛔ 為它重寫計畫、重送審查。plan-verifier 回這類 REVISE ⇒ 主會話處置 DEFER、寫進後補清單、連同理由交業主核可。
+3. 不得後補、照修：寫錯資料（錯筆卡、錯筆寫入）、資安與個資外露、會讓上線出錯的事實錯誤。
+4. 與全域 `~/.claude/CLAUDE.md` 的 P2 處置、「READY 才交核可」衝突時，本線依本節。
+
+現況與下一步看 `.kiro/specs/agentic-mcp-orchestration/HANDOFF-20261018.md`；決策與依據 `.claude/decisions/DSP-115.md`。
+
 ## Project Context
 
 ### Paths

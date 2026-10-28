@@ -34,7 +34,7 @@ agent 路徑（`services/agent/**` 的 `AgentRuntime` 迴圈；🔴 2026-09-12 �
 
 - **`instance_applicability`**：消費者已退休（舊鏈面向提名/仲裁不再是 agent 路徑的消費者，
   且舊鏈本身已於 2026-09-11 整批砍除），待除役——除役工作另案
-  `retrieval-metadata-retire`（見 `.kiro/specs/agentic-mcp-orchestration/roadmap.md`
+  `retrieval-metadata-retire`（見 `git show 720f0bf7:.kiro/specs/agentic-mcp-orchestration/roadmap.md`
   「後」列）。agent 路徑本身**不讀**這個欄位，因此本任務不動它，也不代替另案宣告除役已完成。
 - **`retrieval_representation`**：agent 路徑透過 `kb.search` 間接吃到 `retrieve()`
   既有輸出（含 `scoring_surface` 排序），但 agent 自身不讀這個欄位——只留 D3

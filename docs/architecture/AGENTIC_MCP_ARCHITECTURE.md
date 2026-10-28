@@ -30,9 +30,7 @@
 
 ## 0. 一句話
 
-🔴 **2026-09-12 方向更正（前一版的框架是反的）**：前一版由外往內寫「LINE 業務的一句話
-進 `/mcp`」，於是讀者（含我）把 `/mcp` 當成脊椎、把 Runtime 當成它裡面的東西。
-**核心是 `AgentRuntime`，`/mcp` 只是接在它外面的門面之一。**
+**核心是 `AgentRuntime`，`/mcp` 只是接在它外面的門面之一**（⛔ 把 `/mcp` 當脊椎、Runtime 當它裡面的東西）。
 
 > 📐 **邊界規則見 `docs/architecture/BOUNDARY.md`（唯一正本）。** 三個桶：本系統／呼叫端／外部相依；
 > 一句話測試＝「把呼叫端整個換掉，這句話還成立嗎」。⛔ 不要在本檔另寫一份宣告。
@@ -49,8 +47,7 @@
 `run_turn` 的簽名在 `mcp_facade` 裡被註解為「**REST／影子／回測共用的介面**」。
 
 ⚠️ **本系統只有 MCP server，沒有對外的 MCP client**：MCP client 全 repo 只出現在測試工具裡——兩支整合測試用 `mcp.client`
-（`mcp.Client`／`mcp.client.streamable_http.streamable_http_client`），煙霧測試腳本 `scripts/smoke/mcp_smoke.py` 用 `ClientSession`
-（2026-10-17 更正：前一版寫「`ClientSession` 全 repo 0 命中」，與該腳本不符）；三者都是拿 client 打本系統自己的 server；`runtime.py` ⛔ 不 import `mcp`，模型呼叫工具走 `registry.call`，
+（`mcp.Client`／`mcp.client.streamable_http.streamable_http_client`），煙霧測試腳本 `scripts/smoke/mcp_smoke.py` 用 `ClientSession`；三者都是拿 client 打本系統自己的 server；`runtime.py` ⛔ 不 import `mcp`，模型呼叫工具走 `registry.call`，
 **in-process**。
 
 🔴 **⛔ 「門面之一」⛔ 不等於「門面很薄」**（2026-09-12 兩次對抗性演練逼出：
@@ -61,8 +58,7 @@
 `async def _agent_turn(identity: Identity, args: dict) -> ToolResult`——**協定無關**，
 本身就是一支一般工具。那 13 個順序即契約的步驟（形狀檢查 → outline fail-closed
 **排在 `store.load` 之前** → 配額**最壞值預扣排在抓檔之前** → 命名空間 → 過期**先 close 再 start**
-→ 前處理 → `wait_for(run_turn)` → `stamp_last_turn` → `store.save`；2026-10-17 更正：已無 `pop("outline")` 這一步——
-候選章節由 `runtime._select_outline` 每回合從正本現組，`agent_state` 沒有大綱鍵）
+→ 前處理 → `wait_for(run_turn)` → `stamp_last_turn` → `store.save`；候選章節由 `runtime._select_outline` 每回合從正本現組，`agent_state` 沒有大綱鍵）
 **全在這個函式體內**，新門面的工作是**接上它**。
 ⛔ `_make_agent_turn` 的 docstring 逐字寫著「**⛔ 不另寫第二條回合邏輯**（R3.7）」
 ——重做一遍就是違反它。逐步見 §2b 階段 1。
@@ -77,8 +73,7 @@
 | **`GATED_PREFIXES` 要加前綴** | 否則新端點沒有無條件金鑰閘 |
 | **`Identity.entry` 要決定** | `"rest"` ⇒ 寫入型工具看不到也叫不到 |
 
-🔴 **命名空間身分擋的是什麼**（`namespaced_identity` docstring 逐字，⛔ 這一段前一版完全沒寫，
-只寫了「命名空間 `mcp:{api_key_id}:{vendor_id}:{session_id}`」這個形狀）：
+🔴 **命名空間身分擋的是什麼**（`namespaced_identity` docstring 逐字；形狀是 `mcp:{api_key_id}:{vendor_id}:{session_id}`）：
 
 - `session.slots.get/set` 打的是 `form_sessions.session_id = $1`；
   `confirm.request`／`redeem_token` 打的是 `agent_confirmation_tokens.session_id`。
@@ -135,7 +130,7 @@ flowchart LR
 | 門面（其一） | `services/agent/mcp_facade.py`（`build_asgi_app`、`AGENT_TURN_SPEC`、`_agent_turn`、`AgentTurnOutput`、`check_and_record_agent_turn`） | 驗 key／Origin／身分 header、命名空間 `mcp:{api_key_id}:{vendor_id}:{session_id}`、每呼叫一列 `usage_events`、每小時上限、照片前處理、會話過期、呼叫 Runtime | 不判授權（DSP-011：授權由 JGB API 依 role 收口） |
 | 狀態 | `services/agent/state_store.py`（`NamespacedStateStore`、`stamp_last_turn`、`is_expired`、`SESSION_IDLE_TTL_S`） | 對話歷史、槽位、待確認表、過期戳，落 `form_sessions.collected_data` | 不存 token、不存照片 |
 | Runtime | `services/agent/runtime.py`（`AgentRuntime.run_turn`、`_run_confirm_segment`、`_run_select_segment`、`_enforce_tool_scope`、`_apply_scope_exit`、`_scope_gate_confirm_request`、`_begin_pending_confirm`、`_finalize`） | 機器值程式段、模型迴圈、工具結果包裝、範圍守門、固定句、trace | 不讓模型判「同一戶」「同意詞」 |
-| 工具註冊 | `services/agent/tools/registry.py`（`ToolRegistry.call`、`register`、`_validate_value`、`ToolError`） | 四步：可見性（stage×旗標）、速率、schema、執行；寫入工具強制 `mcp_only`＋已兌現 | `_validate_value` 實作的是 `type`／`enum`／`required`／`additionalProperties`／`maxLength`／`minLength`／`maximum`／`minimum`／`items`（遞迴）。⛔ **無 `maxItems`／`pattern`**（兩者 0 命中，正對照：`maxLength` 有命中）——⚠️ 前一版寫「只有四個」會讓人以為寫 `minimum` 不會被擋，實際會 |
+| 工具註冊 | `services/agent/tools/registry.py`（`ToolRegistry.call`、`register`、`_validate_value`、`ToolError`） | 四步：可見性（stage×旗標）、速率、schema、執行；寫入工具強制 `mcp_only`＋已兌現 | `_validate_value` 實作的是 `type`／`enum`／`required`／`additionalProperties`／`maxLength`／`minLength`／`maximum`／`minimum`／`items`（遞迴）。⛔ **無 `maxItems`／`pattern`**（兩者 0 命中，正對照：`maxLength` 有命中）；`minimum`／`maximum` 會擋 |
 | 查詢工具 | `services/agent/tools/jgb2.py`（`query_bills/contracts/estates/meters/repairs/accounts`、`_ok_single` 帶 `scope.estate_id`） | face 封閉列舉、ref／keyword 縮小、facts 由 formatter 決定性組句 | 不讓模型算數字（逾期天數程式算） |
 | 寫入工具 | `services/agent/tools/action.py`（`ACTION_SPECS` 五支：`bill_due_extend`、`repair_create`、`estate_create`、`contract_create`、`manual_bill_create`；另有 `_resolve_estate`、`_resolve_category`） | 形狀→範圍讀→寫；冪等鍵＝確認 token；分類缺值歸「其他」、急迫缺值 1 | 不模糊比對物件／分類 |
 | 確認卡 | `services/agent/tools/confirm.py`（`confirm_request`、`_is_valid_repair_category`、`open_repairs` 注入）、`services/agent/confirm_card.py`（`render`、`category_name_of`、`emergency_status_of`） | 卡文字由程式依 action＋payload 決定性產出；雜湊綁卡；卡外 `hint` | 模型 summary 不上卡 |
@@ -163,9 +158,8 @@ flowchart LR
 - `exit_gates.py`：四道出口閘依序表 `EXIT_GATES`（`scope_exit` → `handoff_without_lookup` → `ask_target_gate` → `handoff_data_exits`，
   順序本身是契約，見該檔 docstring）與 `finalize`。
 - `limits.py`：DSP-045 額度封閉表（見 §6），與回合管線並行、非管線的一段。
-- `agent_session.py`（🔴 **2026-09-12 更正：已落地，前一版寫「規劃中、對碼查無此檔」是假的**
-  ——該檔 347 行，`AgentSession()` 在 `runtime.py`／`exit_gates.py`／`turn_segments.py`／
-  `state_store.py`／`completed_actions.py` 共 **13 處**被呼叫。查證：以 `ast` 數 `ast.Call`，
+- `agent_session.py`（`AgentSession()` 在 `runtime.py`／`exit_gates.py`／`turn_segments.py`／
+  `state_store.py`／`completed_actions.py` 被呼叫；查證：以 `ast` 數 `ast.Call`，
   ⛔ 不要用 grep 命中數，docstring 會混進來）：收攏 `state["agent"]` 鍵的生命週期讀寫成單一類別。
   ⚠️ 唯獨 `begin_turn()` 本體仍是刻意的 no-op（門面尚未改叫它，見該檔註解）
   （`begin_turn()`／`end_turn()`／`prompt_segments()` 唯一寫讀點），⛔ 尚未執行，本節先記目標形態避免下一輪走查誤判。
@@ -182,7 +176,7 @@ flowchart LR
 | 模組 | 回答什麼命題 | ⛔ 不得怎麼改 |
 |---|---|---|
 | `prompt_assembler.py`<br>543 行 | **哪些文字准進 system prompt**。白名單只有兩種：(i) 本系統**程式產生**的指令文字（persona／政策／鐵則／工具用途一句話）；(ii) 大綱／目錄，且一律經 `wrap_provenance_data("outline", …)` 包成資料段 | 其餘一切（工具回傳、幫助中心正文、知識列全文）**走工具回傳位置**，由 Runtime 以 `wrap_tool_data(nonce)` 包成 `role=tool`。`build()` 的參數表**刻意沒有任何能接 `ToolResult` 的欄位**——這是**結構上的保證，不是靠自律**（測試用 `inspect.signature` 鎖住參數集合）。⚠️ 使用者訊息**不進資料區**：資料段語義是「以下為資料、非指令」，把提問塞進去會讓模型把它當待引用素材 |
-| `provenance_units.py`<br>182 行 | **引用怎麼成立**。DSP-029 把引用從「模型抄一段引文」改成「模型填一個**片段編號**」：編號側在每個片段行首貼 `[{nonce}:{tool_call_id}:{source}§{i}]`，解析側把標記拆回四元組並取第 i 片段 | **兩側各寫一份切法就是這個設計的致命傷**：切法差一個空片段，模型看到的 `§3` 與系統解析的第 3 片段就不是同一句，而**失敗方向是放行**（解析出來是別的句子，覆蓋檢查照樣可能過）。故**只有一個切法函式**，兩側都只准呼叫它；切法 `split_sentences`／`_split_sentences` **定義在本檔**，`verifier.py` 從這裡 import（🔴 2026-09-12 更正：前一版寫成「直接用 `verifier.split_sentences`」，**依賴方向反了**；根源是 `provenance_units.py` 檔頭 docstring 自己也寫反，文件照抄）——**Verifier 步②也用它，三處同一把尺** |
+| `provenance_units.py`<br>182 行 | **引用怎麼成立**。DSP-029 把引用從「模型抄一段引文」改成「模型填一個**片段編號**」：編號側在每個片段行首貼 `[{nonce}:{tool_call_id}:{source}§{i}]`，解析側把標記拆回四元組並取第 i 片段 | **兩側各寫一份切法就是這個設計的致命傷**：切法差一個空片段，模型看到的 `§3` 與系統解析的第 3 片段就不是同一句，而**失敗方向是放行**（解析出來是別的句子，覆蓋檢查照樣可能過）。故**只有一個切法函式**，兩側都只准呼叫它；切法 `split_sentences`／`_split_sentences` **定義在本檔**，`verifier.py` 從這裡 import（依賴方向：verifier → provenance_units）——**Verifier 步②也用它，三處同一把尺** |
 | `output_schema.py`<br>430 行 | `AgentOutput`／`VerifierRules`／`VerifierVerdict` 的資料模型（pydantic v2）。⛔ 只放模型，判斷在 `verifier.py` | **`fact_class` 刻意是 `Optional[str]` 不是列舉**：若用列舉，pydantic 會在**建構那一步**就對非法值 raise，Verifier 永遠看不到「非法值」這個狀態，fail-closed 分支也就測不到。⚠️ 生產路徑上 OpenAI `response_format` 的 strict json_schema 仍送封閉 enum——放寬只在型別層 |
 
 #### 判定面
@@ -251,7 +245,7 @@ sequenceDiagram
 
 **`outcome`（DSP-043）**：第七鍵 `{state, expects, action, ref}`，`state` 八態（answered／clarifying／confirm_pending／confirmed／cancelled／failed／handoff／out_of_scope）由各出口程式設、一般出口依 `kind`／`quick_replies` 導出（`runtime.make_outcome`／`default_outcome`／`receipt_ref`）；呼叫端只看它決定畫面。
 
-**六條程式終止路徑永遠先於模型**（🔴 2026-09-12 更正：前一版寫「三個程式段」，與本檔 §1a／§2b 及 `turn_segments.py` docstring 自述的**六條**矛盾——同一份文件內部不一致）。順序即契約：①文件回合禁寫 ②文件不可讀 ③照片失敗/逾時/低信心 ④確認機器值 ⑤清單點選 ⑥同題重問重播。這是「機器值不承載意圖」的實作：按鈕與點選不需要模型理解，也不讓模型看到 pid／id 原值。逐條見 §2b 段一。
+**六條程式終止路徑永遠先於模型**（與 §1a／§2b 及 `turn_segments.py` docstring 一致）。順序即契約：①文件回合禁寫 ②文件不可讀 ③照片失敗/逾時/低信心 ④確認機器值 ⑤清單點選 ⑥同題重問重播。這是「機器值不承載意圖」的實作：按鈕與點選不需要模型理解，也不讓模型看到 pid／id 原值。逐條見 §2b 段一。
 
 ## 2b. 完整流程（逐步，含每一個分岔與終止點）
 
@@ -305,7 +299,7 @@ nginx auth_request
 | 1.6 | 配額**最壞值預扣**：`len(image_urls) + len(file_urls) × DOC_MAX_PAGES`；`LIMITS.images_per_hour`／`files_per_hour` | `RATE_LIMITED`（**排在抓檔之前**：一張都不抓） |
 | 1.7 | `namespaced_identity` ⇒ `mcp:{api_key_id}:{vendor_id}:{session_id}` | `INVALID_INPUT`（超長） |
 | 1.8 | `store.load` → `is_expired`（30 分鐘）⇒ **先 `close` 舊列再 `start` 新列**（⛔ 順序不得顛倒：先 start 再 close 會把新列一起關掉） | — |
-| 1.9 | ~~`outline` 塞進 `agent_state`（存檔前 `pop`）~~ 已不適用（2026-10-17 更正）：候選章節由 `runtime._select_outline` 每回合現組，`agent_state` 沒有大綱鍵，⛔ 不得序列化進 `collected_data` 的紀律自然成立 | — |
+| 1.9 | 大綱不進 `agent_state`：候選章節由 `runtime._select_outline` 每回合現組，`agent_state` 沒有大綱鍵，⛔ 不得序列化進 `collected_data` 的紀律自然成立 | — |
 | 1.10 | 照片／文件前處理（`prepare_image_turn`／`prepare_document_turn`）——**bytes 只活在區域變數**，⛔ 不進 state／trace／log | — |
 | 1.11 | `asyncio.wait_for(run_turn, AGENT_TURN_TIMEOUT_S − image_elapsed)` | `TOOL_TIMEOUT`；**逾時 ⇒ `store.save` 不執行**，落不了半寫狀態 |
 | 1.12 | `stamp_last_turn` → `store.save` | — |
@@ -438,6 +432,8 @@ confirm.request(summary, payload)
          （⛔ 無 card／pending_id）⇒ `_begin_pending_confirm` 收成一個 **ask 回合**：
          `CONFIRM_CANDIDATES_TEXT` ＋候選清單＋最多 `CONFIRM_CANDIDATES_MAX` 顆
          `select:bill:<id>` 按鈕；⛔ 不建 pending、⛔ 不發 token
+         （A-2a 生效時改由 `_write_candidates_exit` 列 `pick:` 候選；`AGENT_PICK_RIGHT` 生效時延期
+         先解析物件、再列該物件的帳單，見下方「寫入時選對紀錄」）
   → (a) 程式依 action＋payload 決定性產卡（confirm_card.render）；
         handler 同時驗 payload 形狀與**分類是否在樹內（⚠️ 缺值放行，不擋）**
   → 發 token（DB 只存雜湊與 pending_id）
@@ -485,8 +481,9 @@ pid 不在本 session（含過期後舊鍵）⇒ 固定句「這筆確認已失�
 `bill_due_extend`（帳單）的名稱對到多筆 ⇒ `_write_candidates_exit` 由程式列清單結束回合：
 候選列出自出卡前同一次帶 viewer 的查詢（只在 `role_id` 與 `user_id` 皆有值時列），候選集
 `agent_state["write_candidates"]`（`{action, field, type, ids≤20, has_more, name_fp, creator, picked}`，
-`write_candidates.load_write_candidates` 驗形狀）存全部 ≤20 個編號，畫面列前 5 筆＋每筆一顆
-`pick:<contract|estate|bill>:<id>` 按鈕，多於 5 筆或上游還有下一頁接 `CANDIDATES_MORE_TEXT`
+`write_candidates.load_write_candidates` 驗形狀）存全部 ≤20 個編號，畫面列前 10 筆（`AGENT_PICK_RIGHT`
+off 時 5 筆，`write_candidates.candidates_shown_max`）＋每筆一顆
+`pick:<contract|estate|bill>:<id>` 按鈕，多於畫面筆數或上游還有下一頁接 `CANDIDATES_MORE_TEXT`
 （「還有其他筆，不在其中請講編號。」）。選定兩條路，成立與否都由程式判：
 (a) 按鈕：`pick:` `fullmatch` 後由 `_write_candidate_pick_begin` 判（候選集、建立者、型別、欄位、
 編號、草稿動作皆吻合，且非點選範圍、文件、影子回合）；不成立回 `CANDIDATE_PICK_INVALID_TEXT`、
@@ -506,6 +503,58 @@ schema 不變。只有 AI 恰好回 `same`、那張卡在本回合燒卡前仍�
 `write_candidates_shown:<型別>:<n>`、`write_candidate_pick:button|typed`、`write_candidate_pick_invalid`、
 `write_candidate_reask`、`write_candidate_carry:same|declined`、`write_candidate_rechoice`。
 開關 off ⇒ 名稱多筆的出口與 B 逐字相同。
+
+**寫入時選對紀錄**（`AGENT_PICK_RIGHT` on 且 A-2a 生效，`write_forms.pick_right_effective_from_env`；
+計畫 `plan-pick-right-record-20261021.md`）：
+(1) 延期繳費先解析物件（`tools/confirm._pr_resolve_bill`）：身分前置——`role_id` 與 `user_id` 皆有值且過
+`jgb2._identity_gate_ok`，缺一 ⇒ 0 次出向；物件名稱同名多筆 ⇒ 先列**物件**候選（`pick:estate:<id>`，
+`write_candidates.candidate_types_of`；trace `pick_right:estate_first`），程式選定的物件以 `_estate_by_id`
+帶 viewer 重驗。該物件的帳單＝`_viewer_contract_rows` 中該物件的合約逐份 `get_bills(contract_ids=<單一>,
+page=…)`（每合約 ≤`PR_PAGES_PER_CONTRACT`＝3 頁、總計 ≤`WRITE_CANDIDATES_MAX` 張，迴圈以次數計）聯集現行
+keyword 查詢，每列斷言 `contract_id`／`estate_id` 相符；合約或帳單清單達上限仍有下一頁 ⇒ 不做「唯一一張」判定。
+帳單候選集另帶 `scope_estate_id`（`write_candidates.SCOPE_ESTATE_KEY`），之後改講金額或期間只在同一個物件重查
+（`scope_pick_of`）。
+(2) 比對客人講的值：表單多兩欄 `said_amount`（int，過數字值閘）、`said_range`（`bill_period.parse_said_range`
+封閉語法「M/D 到 M/D」「M月D日到M月D日」，程式從原話解析），不上卡、⛔ 進 body；物件或期別變動即清掉
+（`runtime._pick_right_said_reset`）。期別篩後再依 `bill_amount_matches`／`bill_range_matches` 篩；0 張相符但該期
+有帳單 ⇒ 前言 `PR_*_MISMATCH_TEXT` 說明對不上並列該期（無期別則全部）帳單（trace
+`pick_right:amount_mismatch`／`range_mismatch`）；打字選定與講的值不符 ⇒ 重列（`PR_REASK_TEXT`，⛔ 回顯原話）；
+按鈕選定不符 ⇒ 照按的出卡、卡上加「提醒」行。
+(3) 候選列一律經 `write_candidates.minimize_row` 白名單（`PICK_RIGHT_ROW_KEYS`；⛔ 承租人資料、地址、經緯度、
+`user_id`、`sub_title`、`payment_id`、`invoice_number`），給人看的清單與給意圖呼叫的資料段共用寫入候選專用
+投影（`_PR_PROJECTORS`；唯讀查詢的 `_ROW_PROJECTORS` 不動），逐列 `sanitize_data_piece`、nonce 包住。
+(4) 卡上可分辨欄位（`AGENT_PICK_RIGHT` on 即生效，含寫入生命週期 off 與模型自帶 `bill_id`）：延期卡加
+物件名稱＋編號、帳單標題、帳單金額、計費期間；修繕卡、建合約卡加物件位置（縣市區＋樓層）；補開帳單卡加
+合約期間。值只由程式從帶 viewer 查得的系統列寫進 `confirm_card.PICK_DISPLAY_KEY`（模型帶的同名鍵在入口一律丟掉），
+進 `payload_sha256`；JGB 自由文字含 `sanitize_data_piece` 會改動的字元或超長 ⇒ 印「—」。延期卡的物件由帳單列
+`estate_id` 反查，與草稿物件名不一致 ⇒ 查無固定句、⛔ 出卡。
+trace 標記只記碼（⛔ 金額、名稱、期間）。開關 off ⇒ 與 A-2a 逐字相同（模型自帶的 `sys_pick_display` 仍在入口丟掉）。
+
+**寫入時名稱講不準**（F12，DSP-112；`AGENT_NAME_LENIENT` on 且 A-2a 生效，`name_match.name_lenient_effective_from_env`；
+計畫 `plan-name-lenient-f12-20261022.md`）：
+(1) 寬鬆比對（`name_match.py`）：`prefilter` 以讀音單位最長共同子序列對名稱核心（正名去【…】［…］與括號內文字）
+打分，分數 ≥`NAME_LENIENT_MIN_SCORE`＝2、取前 `NAME_LENIENT_PRE_K`＝50（清單第一頁 ≤`NAME_LENIENT_LIST_MAX`＝200 筆）；
+`ai_pick` 一次模型呼叫，送模型每列只有 `id`、`title`、nonce 包住，輸出只收恰好一個 `{ids}` 物件、每項須精確等於
+送出清單內編號，解析失敗、逾時（`NAME_LENIENT_TIMEOUT_S`＝6）、例外 ⇒ 空（⛔ 重試、⛔ fail-open）；`augment` 補齊
+同名與前篩分數不低於 AI 所挑最低分者，上限 `NAME_LENIENT_CAP`＝5，候選 ⊆ 送模型清單。結果一律走 A-2a 候選出口
+（⛔ 寫 payload 的編號、⛔ 回唯一），每回合寬鬆 ≤1 次（`NameLenientTurn` 的 `run_once`）；AI 回空 ⇒
+`NAME_NOT_FOUND_TEXT`。
+(2) 觸發點（`tools/confirm.py`）：(甲) 名稱解析查過零筆（`_name_lenient_result`）；(乙) 合併後名稱欄仍空、即將追問且
+本回合打字（`missing_name_lenient`）；(丙) 名稱先查（`name_early_lookup`）——修繕、建合約、手開帳單、延期繳費，名稱
+本回合講、其他欄位仍缺 ⇒ 當回合依名稱查，多筆即列候選、查無接 (甲)、唯一照現行追問。身分閘在任何出向之前
+（`_name_lenient_identity_ok`），清單查詢帶 `role_id` 與 `viewer_user_id`；⚠️ 真 JGB `GET /estates` 不吃 viewer，
+物件清單在真機是團隊範圍。
+(3) 選定後回合（`runtime._write_candidates_cmd_turn`；計畫 `plan-post-pick-commands-20261024.md`）：回合開始已選定、
+仍綁定本草稿時，意圖呼叫改送指令版 schema——`target` 為依序指令 `{op, value}`，`op` ∈ `pick`／`nth`／`name`／`clear`
+（`write_forms.PICK_TARGET_OP_DOMAIN`；規則句 `PICK_TARGET_RULE_TEMPLATE`，⛔ 改字面），未選定、已撤回、無候選集的
+回合 schema 與系統句不變。程式逐項驗（`_write_candidates_cmd_effect`）、最後一個生效：`pick` 須在本回合列出且屬
+候選集；`nth` 對畫面清單；`name` 對到的列含現選定或屬原講法 ⇒ 維持，清單裡唯一一筆、且名稱是本句原字 ⇒ 改選那筆，
+對到多筆 ⇒ 撤回重列，清單外名稱且是本句原字 ⇒ 解綁前先用解綁後同一組查找查一次（`_write_candidates_name_precheck`、
+`tools/confirm.name_precheck_ids`），查到含現選定 ⇒ 維持，否則解綁依新名稱重查；`clear` 或無效 ⇒ 撤回並重列同一份候選。
+選定後回合的名稱值一律不由意圖 `fields` 寫入（記 `write_candidate_name_kept`）。trace 只記封閉碼
+（`write_candidate_cmds:<碼依序，逗號連>`、`write_candidate_cmd_last:<碼>`、`write_candidate_name_precheck:keep|miss`）。
+⚠️ 已知未處理（DSP-112；「雙胞胎與手開帳單合約」片暫停至上線後，DSP-115）：除編號外完全相同的同名物件照樣列兩顆按鈕；手開帳單講物件只取該物件的有效合約
+（`_valid_contracts_of_estate`），已結束合約不在候選內。
 
 ### 回合的全部終止點（一張表，18 列）
 
@@ -634,8 +683,7 @@ schema 不變。只有 AI 恰好回 `same`、那張卡在本回合燒卡前仍�
 
 #### 共同骨架：八種裡有四種模型根本不會被叫醒
 
-⚠️ **「模型講的話」與「程式產的文字」是兩種輸出，規則完全不同**——前一版把它們混成
-一欄，會讓人以為情境 1 的答案沒有引用來源。拆開如下：
+⚠️ **「模型講的話」與「程式產的文字」是兩種輸出，規則完全不同**——混成一欄會讓人以為情境 1 的答案沒有引用來源。拆開如下：
 
 | 情境 | 模型 | Verifier | 模型那句話引用什麼 | 另外由程式產出的文字 |
 |---|---|---|---|---|
@@ -707,23 +755,28 @@ TurnResult.answer = 卡文字（逐字）      ← 使用者看到的就是這�
 
 > 動機：2026-09-09 我把「答案被 Verifier 打回所以轉人」講成線上原因，業主指出線上是觀察模式。這一節把「誰決定轉人」寫死，每句附查證指令；⛔ 引用時先跑指令再說。
 
-**A. 轉人是誰決定的（五個來源）**
+**A. 轉人是誰決定的（六個來源）**
 
 | 來源 | 觸發 | 使用者看到 | 查證 |
 |---|---|---|---|
+| 程式轉人（E 片，客人要真人） | 標籤呼叫（每個使用者文字回合另發、只判 `dialog_act`，與主模型及寫入意圖呼叫並行）的 `dialog_act=wants_human`（AI 理解、程式決定下一步）⇒ `kind=handoff`、`handoff.reason=user_request`；`user_request` 只由程式設定（`PROGRAM_ONLY_HANDOFF_REASONS`），主模型自報此值 ⇒ 改成 `no_grounding` 並記 `handoff_reason_not_model_visible`；開關 `AGENT_CLOSING_HANDOFF`（未設＝on） | `USER_REQUEST_HANDOFF_TEXT`（「好的，幫您轉真人客服，請點下方的『找真人』。」） | `grep -n "def _dialog_act_exit" rag-orchestrator/services/agent/runtime.py`；`grep -n "USER_REQUEST_HANDOFF_TEXT\|def closing_handoff_enabled_from_env" rag-orchestrator/services/agent/write_forms.py`；`grep -n "PROGRAM_ONLY_HANDOFF_REASONS" rag-orchestrator/services/presales_gate.py` |
 | 模型自報 | 模型輸出 `kind=handoff`＋`handoff_reason=no_grounding`／`sensitive_no_grounding`（值域見 `HandoffReason`） | `PRESALES_HANDOFF_MESSAGE`（「這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。」，`effective_handoff_message(None)`） | `grep -n "class HandoffReason" rag-orchestrator/services/presales_gate.py`；`grep -n "PRESALES_HANDOFF_MESSAGE" rag-orchestrator/services/conversational_config.py rag-orchestrator/services/agent/tools/handoff.py` |
 | 預算耗盡 | Verifier **擋**（非觀察模式）兩次改寫仍不過 ⇒ `handoff_reason=budget_exhausted` | 同上固定句 | log 行 `agent_turn trace_id=… kind=handoff handoff_reason=budget_exhausted … verifier_rejects=2` |
 | 範圍退出 | 清單點選會話問別戶（L15） | `SCOPE_EXIT_TEXT` | `grep -n "def _apply_scope_exit" rag-orchestrator/services/agent/exit_gates.py`（⛔ 不在 runtime.py，那裡只是 import） |
 | 程式降級（S4，2026-09-09） | 模型自報 `no_grounding` 但零工具呼叫、無範圍、非敏感類 ⇒ **不轉人**，改追問 `ASK_TARGET_TEXT` | 「想處理哪一戶或哪一筆？…」 | `grep -n "def _apply_handoff_without_lookup" rag-orchestrator/services/agent/exit_gates.py` |
 | **工具查無／身分不足**（實務上最常見） | `jgb2.query.*` 回 `NO_MATCH`（ref／keyword 對不到列，或 pm 缺 `role_id`）⇒ 該筆 `status="error"` ⇒ **閘 2（要求零工具呼叫）與閘 4（要求全 `ok`）都不接管** ⇒ 模型的 `no_grounding` 原樣送出 | 同轉人固定句 | `grep -n "def _no_match" rag-orchestrator/services/agent/tools/jgb2.py`；log 行 `tool_calls=1 … handoff_reason=no_grounding` |
 
+**A2. 程式收尾（E 片，不是轉人）**：`dialog_act=resolved` 且沒有未決的確認卡、草稿或候選清單（`_closing_pending_state`）⇒ 程式回 `CLOSING_TEXT`（「不客氣，有需要再找我。」，`kind=answer`）；有未決狀態或同句帶新請求 ⇒ 不收尾、照原流程。追問欄位中（`_dialog_act_not_field_answer`）：標籤 `wants_human` ⇒ 不填、轉人；標籤 `resolved` ⇒ 同輸入再發一次標籤確認（`_dialog_act_field_confirm`，至多等 `DIALOG_ACT_FIELD_CONFIRM_WAIT_S` 秒），確認為 `none` ⇒ 照現行填入，否則不填、程式重問缺欄；標籤未完成 ⇒ 不填、程式重問缺欄；標籤 `none` ⇒ 交填欄。不填的那句記 `dialog_act_fill_skipped`，草稿保留。
+
+**A3. 填欄只填答覆（DSP-117，開關 `AGENT_FILL_DATA_TEXT`，未設＝on）**：只在**單欄追問回合**生效（回合開始即有草稿、上一回合程式只追問一欄、非凍結；`_fill_begin_intent_call`）。該回合寫入意圖呼叫另回 `data_texts`（最新一句裡屬於資料的段落，逐字照抄；道謝、寒暄、應答詞不算）與 `answer_text`（只回答追問那一欄的部分）——理解歸 AI；程式驗每段是最新一句的子字串、起訖不切斷數字或英數，追問欄只填程式從原句切出的答覆段（⛔ 整句），①～⑥ 值閘多比一次資料段（只縮不擴），已填的非追問欄不覆寫（候選綁定的名稱欄照 F12 名稱規則）。資料段讀不到或不成立 ⇒ 本回合不併新值、追問欄不填、程式重問（`fill_data_text_unknown`、`fill_data_text_reask`）。其餘寫入回合（第一句、確認卡出現後打字、一次追問多欄）與開關 off 相同。確認卡出現後打字、草稿與卡相同時（與本片開關無關；B 片 `AGENT_WRITE_REPLY_PROGRAM` 與 A+ 提議路徑生效時，`_write_reply_active`）：沒讀到任何值 ⇒ `CARD_NO_CHANGE_TEXT`；讀到的值與卡相同 ⇒ `CARD_READ_SAME_LEAD`＋「這次讀到的是」行；⛔ 再回「卡片還在，請按確認。」。查證：`grep -n "def _fill_begin_intent_call\|def _fill_read_data\|def _write_draft_fill_answer" rag-orchestrator/services/agent/runtime.py`；`grep -n "^DATA_TEXTS_RULE\|^DATA_TEXTS_NAME_NOTE\|^CARD_NO_CHANGE_TEXT\|^CARD_READ_SAME_LEAD\|^V_FILL_" rag-orchestrator/services/agent/write_forms.py`。查證：`grep -n "def _closing_pending_state\|def _dialog_act_exit\|def _dialog_act_not_field_answer\|def _dialog_act_field_confirm" rag-orchestrator/services/agent/runtime.py`；`grep -n "CLOSING_TEXT\|V_DIALOG_ACT_FILL_SKIPPED" rag-orchestrator/services/agent/write_forms.py`。
+
 **B. 線上（demo）到底擋不擋：`AGENT_VERIFIER_MODE=grounding_observe`（runbook §20-2；W6-b3 於 2026-09-09 落地）**
 
-- 讀值點唯一：`health.verifier_mode()`（含相容舊旗 `AGENT_VERIFIER_OBSERVE_ONLY` ⇒ `observe_only`，一版後移除）。查證：`grep -n "def verifier_mode" rag-orchestrator/services/agent/health.py`。
+- 讀值點唯一：`health.verifier_mode()`（舊旗 `AGENT_VERIFIER_OBSERVE_ONLY` 不參與解析）。查證：`grep -n "def verifier_mode" rag-orchestrator/services/agent/health.py`。
 - 效果：**引用解析與涵蓋類只記錄**（記進 `VerifierVerdict.observed`，評估繼續往下跑），**主題錨定極性（`polarity_source=pair`，「尚未逾期」對「已逾期 8 天」）與機敏類照擋**；**裸否定詞表極性（`polarity_source=term`）只記錄**——2026-09-09 誤殺量測：裸詞表對稱整段比對在 98 句裡命中 12、幾乎全假陽性（引文側含否定詞、多 ref 一側缺否定詞），曾造成 7 回合預算耗盡轉人。查證：`grep -n "polarity_source" rag-orchestrator/services/agent/verifier.py`。查證：`grep -n "_GROUNDING_OBSERVE_REASONS\|_GROUNDING_OBSERVE_SCHEMA_CAUSES" rag-orchestrator/services/agent/verifier.py`。
 - `app._wrap_verifier_observe_only` 只剩**相容層**：交模式、守 `observe_only` 只准配替身，⛔ 不再包 `verify()`、不再翻判定。查證：`grep -n "def _wrap_verifier_observe_only" rag-orchestrator/app.py`。
 - 因此線上**可能**出現 `budget_exhausted` 轉人了（極性／機敏類擋兩次）——這是刻意的：那正是「尺在守什麼」看得見的地方。B 段 2026-09-09 之前的實證（24 回合 `agent_verifier_reject` 0 次）是**舊組態**的數字，⛔ 不得再引用為現況。
-- 前一版的「衝突待裁」（帳本 R8 說機敏類照擋、程式卻全放行）**已由本次落地消解**：現在程式與帳本一致。
+- 程式與帳本 R8 一致：機敏類照擋。
 
 **C. 模型為什麼傾向轉人（提示詞層，觀察模式改變不了）**
 
@@ -908,7 +961,7 @@ file_urls/image_urls
 | `AGENT_VERIFIER_MODE` | grounding_observe（業主 2026-10-15 裁示；上線後同批 5 題知識題實測 `enforce` 答 1／5、`grounding_observe` 答 3／5） | 正式參數（DSP-040／W6-b3）：`enforce`（預設）／`grounding_observe`（引用類觀察、極性與機敏類照擋）／`observe_only`（全部觀察，只在 mock 允許、否則啟動 raise）。`grounding_observe`×非 mock ⇒ 健檢 `premise.red_flags` 記紅但不阻起 |
 | `AGENT_VERIFIER_OBSERVE_ONLY` | **已除役（2026-09-10）** | 舊相容旗；`app.py`／`health.py` 讀到即印警告要求改用 `AGENT_VERIFIER_MODE`，⛔ 不再參與解析（查證：`grep -n AGENT_VERIFIER_OBSERVE_ONLY rag-orchestrator/services/agent/health.py`） |
 | `AGENT_MODEL`／`AGENT_REASONING_EFFORT` | **`gpt-6-luna`＋`none`**（DSP-075，業主 2026-10-15 統一；正式機已採用） | 對話模型。luna 系列帶工具只接受 `reasoning_effort=none`（`low`／`minimal` 回 400）。舊設定 `gpt-5-mini`／low 的模型 `gpt-5-mini-2025-08-07` 於 2026-12-11 停用；`AGENT_MODEL` 空白時回退 `OPENAI_MODEL`（本機 `.env` 為 `gpt-4o-mini`），部署務必明設。歷次量測見帳本 §1s 與 DSP-072 細節 |
-| `AGENT_LLM_BASE_URL`／`AGENT_LLM_API_KEY_FILE` | 未設 | 對話模型專用端點與金鑰檔（主線第 1 步正式接線，2026-10-18）。兩者皆未設＝對話照舊用 `OPENAI_API_KEY` 連 OpenAI（正式機現況，路徑逐位不變）；兩者皆設＝只有對話 provider 改連該端點（`llm_provider.build_agent_provider_from_env`，不進 `_provider_cache`），照片、文件、健康檢查仍走 OpenAI，且 runtime 開啟推理段剝除與 JSON 擷取（`AgentRuntime(clean_llm_output=True)`，trace 旗標 `llm_output_reasoning_stripped`／`llm_output_json_extracted`）；只設其一、與 `OPENAI_BASE_URL` 並存、金鑰檔格式不合＝啟動紅。本機接 Bedrock gpt-oss 用 `docker-compose.bedrock-local.yml`（Compose secret 掛 `/run/secrets/agent_llm_api_key`）；⛔ 用於正式機（長期金鑰只限本機，見 DECISIONS） |
+| `AGENT_LLM_BASE_URL`／`AGENT_LLM_API_KEY_FILE` | 未設 | 對話模型專用端點與金鑰檔（主線第 1 步正式接線，2026-10-18）。兩者皆未設＝對話照舊用 `OPENAI_API_KEY` 連 OpenAI（正式機現況，路徑逐位不變）；兩者皆設＝只有對話 provider 改連該端點（`llm_provider.build_agent_provider_from_env`，不進 `_provider_cache`），照片、文件、健康檢查仍走 OpenAI，且 runtime 開啟推理段剝除與 JSON 擷取（`AgentRuntime(clean_llm_output=True)`，trace 旗標 `llm_output_reasoning_stripped`／`llm_output_json_extracted`）；只設其一、與 `OPENAI_BASE_URL` 並存、金鑰檔格式不合＝啟動紅。本機接 Bedrock gpt-oss 用 `docker-compose.bedrock-local.yml`（Compose secret 掛 `/run/secrets/agent_llm_api_key`；寫死 mock JGB，⛔ 用於正式機）；正式機接 gpt-oss 用 `docker-compose.bedrock-prod.yml`（DSP-121；只覆寫對話模型四鍵與金鑰 secret，金鑰由業主處理） |
 | `IMAGE_RECOGNITION_MODEL` | `gpt-6-luna` | 照片辨識；程式端對 gpt-6 系列送 `reasoning_effort=none`（站內幫手 S3 收尾） |
 | `DOCUMENT_EXTRACTION_MODEL` | `gpt-6-luna`（程式預設 `gpt-5.6-luna`） | 文件歸納（W9）；同上 `reasoning_effort=none` |
 | `OPENAI_TIMEOUT_S` | 25（runbook §20-2 值；正式機現值待查） | agent 每次模型呼叫 SDK 逾時＋預設重試，讓掛住的呼叫在門面逾時內自救 |
@@ -916,10 +969,12 @@ file_urls/image_urls
 | `IMAGE_MAX_BYTES`／`IMAGE_COUNT_CAP_PER_HOUR` | 5,000,000／200 | 照片硬邊界 |
 | `AGENT_ASSISTANT_KEY_IDS` | `101`（站內幫手金鑰，限定 vendor 4、非內部） | 列入者 `X-JGB-Identity` 缺 `user_id` ⇒ 400 `IDENTITY_MISSING_USER_ID`；未設或空字串＝不對任何金鑰啟用（靜默）；含非整數＝啟動失敗（`mcp_facade._ASSISTANT_KEY_IDS_ENV`） |
 | `DOCUMIND_BASE_URL`／`DOCUMIND_TOKEN` | 未設 | 謄本解析；未設或不合規組合（非 https、無 Token）＝謄本功能關閉，使用者看到「未啟用」固定句 |
-| 額度與速率**五道上限**（`AGENT_TURN_CAP`／`RATE_PER_MIN`／`KB_GET_CAP`／`IMAGE_COUNT_CAP_PER_HOUR`／`FILE_COUNT_CAP_PER_HOUR`）。🔴 **⛔ 每回合預算不在內**——前一版把它一起列進來是錯的，`limits.py` docstring 逐字寫「每回合預算（`Budget`）不在此，仍由 `bootstrap.py` 管（`AGENT_BUDGET_*` env，未變動）」 | 改由 `services/agent/limits.py` 程式內封閉表 | **DSP-045（2026-09-10）**：⛔ 不再讀 env 覆寫（業主：「env 沒人記得」）；預設寬鬆只擋惡意（回合 1200/h、工具 600/min、kb.get 3000/h、照片 600/h、PDF 100/h）；生效值由 `/api/v1/agent/health` 回報 |
+| 額度與速率**五道上限**（`AGENT_TURN_CAP`／`RATE_PER_MIN`／`KB_GET_CAP`／`IMAGE_COUNT_CAP_PER_HOUR`／`FILE_COUNT_CAP_PER_HOUR`）。🔴 **⛔ 每回合預算不在內**——`limits.py` docstring 逐字寫「每回合預算（`Budget`）不在此，仍由 `bootstrap.py` 管（`AGENT_BUDGET_*` env，未變動）」 | 改由 `services/agent/limits.py` 程式內封閉表 | **DSP-045（2026-09-10）**：⛔ 不再讀 env 覆寫（業主：「env 沒人記得」）；預設寬鬆只擋惡意（回合 1200/h、工具 600/min、kb.get 3000/h、照片 600/h、PDF 100/h）；生效值由 `/api/v1/agent/health` 回報 |
 | `AGENT_BUDGET_TOOL_CALLS`／`AGENT_BUDGET_DEADLINE_S`／`AGENT_TURN_TIMEOUT_S` | 3／20／90 | 每回合工具呼叫上限／回合預算（秒）／門面逾時（秒）。工具上限與時間上限 2026-10-15 業主「照建議」（本機同批題目量測：上限 4＝答出 12／20，上限 3＝13／20，上限 2＝13／20 但報修首句皆轉人）；門面逾時 90 讓文件回合預算拿滿（`min(DOCUMENT_MAX_BUDGET_S=45, 逾時/2)`）。延遲三層見 §8 |
 | `AGENT_WRITE_REPLY_PROGRAM`／`AGENT_STATE_CLAIM_GATE` | 未設（＝on） | B 片開關，值域 on／off、未設或空字串＝on、其他值啟動失敗；off ⇒ 寫入情境回話與帶狀態句判讀閘回到 B 片前行為（`write_forms.write_reply_program_enabled_from_env`、`state_claim.state_claim_gate_enabled_from_env`）。判讀呼叫用對話模型與 `AGENT_REASONING_EFFORT` |
 | `AGENT_WRITE_CANDIDATES` | 未設（＝on） | A-2a 片開關（DSP-103），值域 on／off、未設或空字串＝on、其他值啟動失敗；只在 A+ 三開關皆 on 時生效；off ⇒ 寫入時名稱對到多筆回到 B 行為（不列候選、無 `pick:` 按鈕）（`write_forms.write_candidates_enabled_from_env`） |
+| `AGENT_PICK_RIGHT` | 未設（＝on） | 「選對紀錄」片開關，值域 on／off、未設或空字串＝on、其他值啟動失敗；候選相關（先物件、比對講的值、畫面 10 筆、候選白名單）只在 A-2a 生效時生效，卡上可分辨欄位在開關 on 即生效；off ⇒ 與 A-2a 逐字相同（`write_forms.pick_right_enabled_from_env`、`pick_right_effective_from_env`） |
+| `AGENT_NAME_LENIENT` | 未設（＝on） | F12 名稱寬鬆比對開關（DSP-112），值域 on／off、未設或空字串＝on、其他值 `ValueError`；只在 A-2a 生效時生效；off ⇒ 名稱查無、缺名稱、名稱先查三觸發點皆不跑（`name_match.name_lenient_enabled_from_env`、`name_lenient_effective_from_env`）。選定後回合的指令版 schema 不看此開關（送出條件只看候選集與現選定，`runtime` 送意圖呼叫處 `cmd_offered`）；解綁前查找的寬鬆那一步才看 |
 | `UVICORN_WORKERS` | 1 | `/mcp` 與行程內計數需單 worker |
 | `MCP_ALLOWED_ORIGINS` | `-` | 伺服器對伺服器不送 Origin |
 
@@ -937,25 +992,14 @@ file_urls/image_urls
 
 ## 8. 已知限制
 
-- ✅ **`_parse_confirm_value` 的註解與行為不符（2026-09-12 獨立驗證抓到，**同日已修**）**：
-  `runtime.py::_parse_confirm_value` 的註解寫「**等值**比對（`fullmatch`、無前後綴）——
-  ⛔ 不做子字串比對：那會讓自由文字誤觸發一次真實寫入」，但實作是
-  `_CONFIRM_VALUE_RE.match` 配 `^…$`。**Python 的 `$` 允許結尾換行**，
-  故 `"confirm_submit:<pid>\n"` **會命中並兌現一次真實寫入**
-  （實測 `match=True`／`fullmatch=False`）。對照 `_parse_select_value` 用的**才是** `fullmatch`。
-  機器值由呼叫端原樣送回、正常不帶換行，但**這正是該註解宣稱要防的形狀**
-  ——⛔ 本系統不得假設呼叫端一定送乾淨的值。
-  **處置（業主裁示後）**：`.match` → `.fullmatch`。行為變嚴格——帶換行／空白／前後綴的
-  訊息不再兌現，改當一般訊息進模型。釘住的測試：`test_runtime_confirm_segment_req.py`
-  的 `test_parse_confirm_value_*`（11 條），含突變驗證：退回 `.match` 時換行那條會紅。
-  ⛔ 不得改回 `.match`——失敗方向是「多執行一次寫入」，不可回復。
+- **單欄追問以外的寫入回合，道謝字仍可能上卡（DSP-117 已知偏離）**：「填欄只填答覆」（§A3）只在單欄追問回合生效（業主 2026-10-27 裁「縮小到追問回合」）。第一句開口、確認卡出現後打字、一次追問多欄的回合只過原有值閘（值須是原話子字串、數字 token 出現在原話），句中的道謝字或從道謝衍生的值（例：「3q」的 3）仍可能填進欄位。單欄追問回合也有漏網：系統句沒點名的英數道謝緊貼在答覆後（例：「車位費ty」「民生東路溫馨居tks」），或名稱與道謝縮寫緊貼（例：「大安溫馨套房3Q」）時，AI 仍可能把縮寫當成答覆的一部分；程式端不列詞表（DSP-091），業主 2026-10-28 裁列已知偏離。兩種都印在確認卡上，客人可按「我要修改」更正。量測與場數見收案報告 `~/jgb-archive/arch-step3-20261018/fill/report-fill-close.md`。查證：`grep -n "def _fill_begin_intent_call" rag-orchestrator/services/agent/runtime.py`；`grep -n "^DATA_TEXTS_NAME_NOTE" rag-orchestrator/services/agent/write_forms.py`。
+- **確認鍵機器值只認整串相符**：`runtime._parse_confirm_value` 用 `_CONFIRM_VALUE_RE.fullmatch`；帶換行、空白或前後綴的訊息不兌現，當一般訊息進模型。⛔ 不得改回 `.match`：Python 的 `$` 允許結尾換行，`"confirm_submit:<pid>\n"` 會命中並多執行一次真實寫入，不可回復。釘住的測試：`test_runtime_confirm_segment_req.py` 的 `test_parse_confirm_value_*`。
 
 - 線⑤ 模型偶爾在有工具結果時自判「無依據」轉人（三輪 2/21 情境不穩）；屬答案層定義文（5.1）範圍。
 - `AGENT_VERIFIER_MODE=grounding_observe`（線上值）下引用類不擋——模型講的事實**沒有被要求對得上引文**，只有極性、機敏、標記外洩、schema 契約這幾類在守；重開引用類的依據是觀察紀錄（`verdict.observed`）中「真該擋」的計數（DSP-040 絆線）。相容旗 `AGENT_VERIFIER_OBSERVE_ONLY` 已於 2026-09-10 除役（見 §6）。
 - **部分寫入回合仍以模型參數出卡**：三開關（`AGENT_WRITE_DRAFT`／`AGENT_WRITE_LIFECYCLE`／`AGENT_WRITE_PROPOSAL`）皆 on 時，一般寫入回合的確認卡與缺欄追問只由程式依草稿發出（`_write_proposal_handle`、`_write_draft_decide`）；點選範圍、唯讀檢視、文件回合、文件暫存有效回合仍照模型自呼 `confirm.request` 的參數執行，這些回合有沒有卡仍看模型。清單與接手片見目標正本 `architecture-target-20261018.md` §3.1（KD-1、KD-2）；每次執行的來源記在 violation `confirm_source:<來源>`，`make audit` 不變量 45 檢查。
 - **帶狀態句判讀是 LLM，會漏判**：寫入情境問句回合的模型 `answer` 若在文字裡追問寫入欄位，結構規則（只看 `kind`）抓不到、判讀閘也不判追問；「已完成」只對到 session 內有收據，不對到是哪一筆；回覆夾帶誘導判讀的字串時，知識回合可能送出未對到事件的帶狀態句（寫入情境非問句回合不受影響：整則換成程式回話）。`make audit` 不變量 45 印 `state_claim_unbacked:*`、`state_claim_check_failed` 數。
-- 🔴 **2026-09-12 更正：前一版把兩張敏感表講反了。** 前一版寫「`sensitive_patterns` **不分受眾**，
-  pm 引資料段的金額會被當敏感字樣處理」——**與程式相反**。逐條對碼：
+- **兩張敏感表的受眾範圍不同**（調錯表會動到無關的那張）：
 
   | 表 | 受眾範圍 | 會擋 pm 嗎 |
   |---|---|---|
@@ -963,9 +1007,7 @@ file_urls/image_urls
   | **`question_sensitive_patterns`**（問句側：客戶案例／價格／SLA…） | `_TABLE_DEFAULTS["qsensitive"]` 的 audiences 參數是 **`None` ＝ 全受眾** | ✅ **會** |
 
   ⇒ **pm 問「我這方案一個月多少錢」被判機敏而轉人，是 `question_sensitive_patterns` 幹的，
-  ⛔ 不是 `sensitive_patterns`。** 照前一版去調 `sensitive_patterns` 會調在完全無關的那張表上
-  ——真正讓功能答不出來的那張**動都不會動**。
-  （2026-09-12 對抗性演練：一位工程師規劃「方案與額度」工具時正是被這句導向錯的表。）
+  ⛔ 不是 `sensitive_patterns`。** 調 `sensitive_patterns` 不會改變這個結果。
   ⚠️ `grounding_observe` 下引用類只觀察、機敏類**照擋**，所以這道會真的擋掉答案。
 - **延遲命題的數字不在同一層**：需求文 `requirements.md` D2／§「延遲」寫 p95 ≤12 秒（業主待裁）；回合預算 `AGENT_BUDGET_DEADLINE_S` 程式預設與正式機都是 20 秒；門面逾時 `AGENT_TURN_TIMEOUT_S` 程式預設 30 秒、正式機 90 秒（為了容納文件回合）。三者是同一命題（回合延遲上限）在 spec／回合預算／門面逾時各自定的數字，⛔ 尚未有裁決把它們收斂成一個。正式機量測（2026-10-15，工具上限 3）：知識題 20 題答出 11、中位 4.0 秒、p90 9.0 秒。
 - **接真 JGB 時，JGB 尚未開放的功能由程式回固定句、不發請求**：統計三項（未收帳單、執行中修繕、N 個月內到期合約；`jgb2_stats.NOT_SUPPORTED_TEXT`）與建立物件／合約／手動帳單（`confirm.WRITE_NOT_SUPPORTED_TEXT`，不出確認卡）；runtime 以固定句結束回合（`runtime._is_stats_not_supported`，violation `jgb2_stats_not_supported_exit`）。JGB 開放端點的設計見 `.kiro/specs/agentic-mcp-orchestration/jgb-api-spec-for-jgb-20261015.md`。

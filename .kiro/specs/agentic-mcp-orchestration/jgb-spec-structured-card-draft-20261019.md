@@ -1,7 +1,7 @@
 # 站內幫手：JGB 面板上線前事項與確認卡結構化——需求稿草稿（2026-10-19）
 
-> 狀態：**草稿，尚未寄出**；寄出與否由業主決定。上線範圍依 DSP-094（A＋期別＋A+＋B＋E＋W2）；第 4、5.2 節的結構化 `card` 對應目標正本 `architecture-target-20261018.md` §4 C 片（原則 P8），不擋上線，C 片計畫核可前只是提案。
-> JGB 端現況依據（2026-10-19 `git fetch` 後）：jgb2 `origin/preview` `a468d7754a`、`origin/master` `6bc61c736b`；本機 checkout `~/dev/work/jgb2/dev1`。
+> 狀態：**草稿，尚未寄出**；寄出與否由業主決定。上線範圍依 DSP-107、DSP-112、DSP-117、DSP-120（A＋期別＋A+＋B＋A-2a＋選對紀錄＋F12＋W2＋E＋填欄只填答覆＋照片與文件上傳）；第 4、5.2 節的結構化 `card` 對應目標正本 `architecture-target-20261018.md` §4 C 片（原則 P8），不擋上線，C 片計畫核可前只是提案。
+> JGB 端現況依據（本機 checkout `~/dev/work/jgb2/dev1` 的遠端追蹤分支，最後一次 fetch 2026-10-27 18:28）：`origin/preview` `fe4daec748`（2026-10-23）、`origin/master` `3515960cd7`（2026-10-27）；兩張 ticket 的 commit（`1f151705f4`、`c0e33721c2`、`daf09380a6`）都是 `origin/preview` 的祖先、都不是 `origin/master` 的祖先。
 
 ## 0. 一句話
 
@@ -17,7 +17,7 @@
 | 送出的工具參數 | 只送 `message`；⛔ 採用瀏覽器送來的身分欄位與 `image_urls` | `AgentTurnClient.php` `'arguments' => ['message' => $message]` |
 | 設定 | `config/services.php` `assistant_agent`：`ASSISTANT_AGENT_URL`、`ASSISTANT_AGENT_API_KEY`、`ASSISTANT_AGENT_VENDOR_MAP`（`role_id:vendor_id,…`）、`ASSISTANT_AGENT_ENABLED`（預設 false）、`ASSISTANT_AGENT_TIMEOUT_SECONDS`（預設 60） | `config/services.php` `"assistant_agent"` |
 
-未查：JGB 正式環境上述環境變數的實際值（環境設定，未讀）。
+正式環境（2026-10-28 唯讀查詢，只看有無值、不看值）：`ASSISTANT_AGENT_URL`、`ASSISTANT_AGENT_API_KEY`、`ASSISTANT_AGENT_VENDOR_MAP`、`ASSISTANT_AGENT_ENABLED` 四個鍵都是空或不存在（同次查詢的正對照 `APP_KEY` 有值）；正式機 www 部署版 `bb217ebc6a`，兩張 ticket 都不在內。
 
 ## 2. 上線前 JGB 端要做的事（DSP-093）
 
@@ -26,6 +26,7 @@
 | L1 | ticket_13290303502、ticket_13290307734 合入 master 並部署正式版 | `origin/master` 含 `1f151705f4` 與 ticket_13290307734 的最後一個 commit |
 | L2 | 正式環境設定：`ASSISTANT_AGENT_URL=https://chatai.jgbsmart.com/rag-api/mcp`（完整路徑，不跟隨轉址）、`ASSISTANT_AGENT_API_KEY`（AIChatbot 發給站內幫手的金鑰，只放伺服端）、`ASSISTANT_AGENT_VENDOR_MAP`、`ASSISTANT_AGENT_ENABLED=true` | 正式站登入一個已對到 vendor 的團隊，送一句話收到 `agent.turn` 回覆；未對到的團隊照舊走原本對話 |
 | L3 | 正式環境的 Origin：AIChatbot 端 `MCP_ALLOWED_ORIGINS` 只管瀏覽器直連；JGB 由伺服端呼叫不送 Origin，⛔ 需要加白名單 | L2 的實打通過即可 |
+| L4 | 面板支援照片與文件上傳（DSP-120）：照接口 A（`docs/api/jgb2-web-assistant-integration.md`）§7 上傳到 JGB 專用上傳網域，`agent.turn` 帶 `image_urls`（照片，≤10）、`file_urls`（PDF，≤1）、`attachment_purpose`（報修照片 `repair`；謄本、收據、發票 `document`）；回覆 `quick_replies` 的 `image` 鍵要開拍照／相簿。現況 `AgentTurnClient.php` 只送 `message`。另請回覆接口 B #22（照片交付方式、專用上傳網域名稱） | 正式站上傳一張報修照片收到確認卡且卡上「附照片：1 張」；上傳一份謄本 PDF 收到物件確認卡 |
 
 金鑰交付走雙方既有的安全管道，⛔ 寫進本稿、ticket 或 Monday。
 
@@ -45,7 +46,7 @@
 | `session_expired=true` | 顯示「對話已重新開始，先前的待確認項目已失效」 | `AgentMessage.vue` `agent-expired` |
 | 確認送出逾時 | 不給重試鈕，提示先到清單確認是否已建立 | `useChat.ts` `CONFIRM_TIMEOUT_TEXT` |
 
-AIChatbot 端待辦（不是請 JGB 改）：第 3 步 A 片改了「我要修改」鍵與卡後改欄位的回法，A+ 改了出卡的觸發方式（出卡只由程式依草稿觸發），B 會改帶狀態的句子；上線前（B 收尾後）要在 preview 面板實點一輪，確認上表各列仍成立。本線不碰 preview，由誰點、何時點待業主裁（`HANDOFF-20261018.md` §2.3）。E 片定稿轉人規則後，再核對「找真人」入口是否符合。
+AIChatbot 端第 3 步改了：A 片改「我要修改」鍵與卡後改欄位的回法；A+ 改出卡的觸發方式（出卡只由程式依草稿觸發）；B 改帶狀態的句子；E 片的程式轉人回 `kind=handoff`、`state=handoff`，文字請客人點「找真人」，對應上表 handoff 列。上表各列是否仍成立，要在 preview 面板實點確認（交接待辦表）。
 
 ## 4. 目標形態（業界原文，C 片依據）
 
@@ -98,5 +99,4 @@ preview 面板已做到後兩列（按鈕機器值、外觀由面板決定）；
 
 ## 6. 待決
 
-1. L1、L2 由誰排、何時合入——業主與 JGB。
-2. `card` 放 `agent.turn` 結果頂層，還是照 MCP 放進 `structuredContent`——C 片計畫決定；JGB 的 `AgentTurnClient` 目前讀哪一層，C 片計畫時再對碼。
+1. `card` 放 `agent.turn` 結果頂層，還是照 MCP 放進 `structuredContent`——C 片計畫決定；JGB 的 `AgentTurnClient` 目前讀哪一層，C 片計畫時再對碼。

@@ -1,7 +1,7 @@
 # 實作任務：agentic-mcp-orchestration（agent 對話線：工具邊界＋引用契約；分工見 architecture-target-20261018.md）
 
 > 建立時間：2026-09-04
-> 需求：requirements.md v1＋DSP-012 修訂＋R3.7（R1–R13，64 子項；R3.7、R11.5、R11.6 新增）｜設計：design.md 1.4.1（8 元件、15 決策、不變量 27–31（原 18–22，DSP-013）；r4 READY、r6 增量審查處置）｜研究：research.md｜路線圖：roadmap.md（本檔只涵蓋母 spec M0–M3；M4／M5 與個人化為子 spec）
+> 需求：requirements.md v1＋DSP-012 修訂＋R3.7（R1–R13，64 子項；R3.7、R11.5、R11.6 新增）｜設計：design.md 1.4.1（8 元件、15 決策、不變量 27–31（原 18–22，DSP-013）；r4 READY、r6 增量審查處置）｜研究：research.md｜路線圖：`git show 720f0bf7:.kiro/specs/agentic-mcp-orchestration/roadmap.md`（本檔只涵蓋母 spec M0–M3；M4／M5 與個人化為子 spec）
 > 標記：`(P)` = 可與同層其他 `(P)` 平行；`- [ ]*` = 可延後的補充測試
 > ⚠️ 規則／模板缺席：`.kiro/settings/rules/tasks-*.md` 與 `templates/specs/tasks.md` 不存在，格式沿用 `presales-grounding-gate/tasks.md`。
 > 鐵律：**DSP-011 權限由 jgb2 API 裁、本系統只管額度，⛔ 不建授權層／bearer**；**隔離謂詞單一來源 `build_visibility_predicate`，b2b ⛔ 不加 `IS NULL`（D-002）**；**模型工具參數 ⛔ 不含身分鍵**；**`fact` 句一律需 cite、敏感五類先於引用**；**計量 ⛔ 落原文**；TDD 先紅後綠、容器內跑（`make test`）；`backtest_session_` 前綴；⛔ 不 dump env、金鑰不進 argv；DB 寫入與 migration 執行由業主授權；`*.sql` 需 `git add -f`；一次性腳本不 commit；改引擎行為以系統路徑實跑收案、派獨立 verifier、情境 e2e 為收案必要條件。
@@ -51,7 +51,7 @@
 - [x] 1.9 M0 security review（1.1–1.8 後；`security-reviewer` 唯讀）：範圍＝隔離同源（謂詞四消費點）、身分 header fail-closed、注入面（工具回傳封閉欄位）、`/mcp` 兩道閘與額度落點；READY 為 M0 done 條件之一。
   - 需求：2.6, 11.3
   - 執行：security-reviewer／effort 高——唯讀；READY 是 M0 done 條件
-  - **收案（2026-09-05）**：security-reviewer REVISE 的唯一 P1 已由 1.10 修正並經 fresh verifier 定向 recheck **CONFIRMED**（`reviews/m0-security-review.md`）；P2／P3 依處置表：4 條已修（1.10）、其餘 DEFER 進 M1 備註（不變量 29 抽取繞法、候選列投影、blocked 事件列、`facade_only` 在 `/mcp` 語義、`help.read` audience、不變量 30 空跑、bills ref adapter 前兩通無 viewer 圈定）。**M0 程式面收案**（HEAD `1f27bcf`，本機 image 已重建、audit PASS）；**資料面待業主**：`m0-owner-steps.md` 三件（migration ×2、內部 MCP key、jgb2 讀權）＋之後 1.5 真 API smoke。
+  - **收案（2026-09-05）**：security-reviewer REVISE 的唯一 P1 已由 1.10 修正並經 fresh verifier 定向 recheck **CONFIRMED**（`reviews/m0-security-review.md`）；P2／P3 依處置表：4 條已修（1.10）、其餘 DEFER 進 M1 備註（不變量 29 抽取繞法、候選列投影、blocked 事件列、`facade_only` 在 `/mcp` 語義、`help.read` audience、不變量 30 空跑、bills ref adapter 前兩通無 viewer 圈定）。**M0 程式面收案**（HEAD `1f27bcf`，本機 image 已重建、audit PASS）；**資料面待業主**：`git show 720f0bf7:.kiro/specs/agentic-mcp-orchestration/m0-owner-steps.md` 三件（migration ×2、內部 MCP key、jgb2 讀權）＋之後 1.5 真 API smoke。
   - **進度（2026-09-04）**：security-reviewer REVISE（1 P1：tenant 缺 user_id 的 bills／contracts 洩整 role；5 P2；6 P3，正本 `reviews/m0-security-review.md`）→ 1.10 處置中；fresh verifier 對 M0 邊界 CONFIRMED（1.10 前，同檔）。1.10 收回後對 P1 做一次定向 recheck 再收 M0。
 - [x] 1.10 處置 1.9 審查（security-executor，worktree）：P1 雙證強制（非 pm）＋文件；不變量 27 掃 `services/agent/**`＋0 spec 即紅；`registry.call` 剝身分鍵＋`additionalProperties` 預設 false；`verify_api_key` 偵測 TTL＋health 紅旗 `api_keys_agent_scope_ready`；文件 SDK 狀態同步。M1 備註：不變量 29 抽取繞法、候選列投影、blocked 事件列、`facade_only` 在 `/mcp` 語義、`help.read` audience。
   - 需求：2.1, 2.2, 10.4, 11.3
@@ -110,7 +110,7 @@
   - 需求：11.6, 5.1
   - 執行：mech-executor／effort 低——兩欄一 UPDATE，規格已在 DSP-012；UPDATE 由業主執行
   - **執行（2026-09-05，業主「幫我加」授權）**：五支 migration 已套進本機 admin DB 並記帳；標記 SQL v1（b2c 謂詞）預覽 81≠31 ⇒ 停；查明售前池是 **b2b 池**（jgb2 送 prospect 時 mode=b2b；gapmap `POOL_PRED` 同）⇒ 改 v2 b2b 謂詞預覽 31 → UPDATE 31 → 驗證 31；同步修 `outline.py` 身分 `mode=b2b`、`agent_entry` prospect 缺 mode 預設 b2b、outline 整合 fixture 帶 `system_provider`。
-  - **收案註記（2026-09-05）**：mech-executor（worktree）→ 收檔；integration 3 綠（測試庫）。migration `20260905_knowledge_base_outline_approval.sql`；一次性 UPDATE `.kiro/specs/agentic-mcp-orchestration/sql/mark-prospect-pool-approved-20260905.sql`（`git add -f`；WHERE 逐條翻自 `build_visibility_predicate` 的 b2c 分支，business_types 用 `vendors.id=1` 子查詢；含預覽 count、rollback）。`m0-owner-steps.md` 加第 5 節。⛔ 31 這個數字未在 admin DB 驗，預覽不是 31 就停。
+  - **收案註記（2026-09-05）**：mech-executor（worktree）→ 收檔；integration 3 綠（測試庫）。migration `20260905_knowledge_base_outline_approval.sql`；一次性 UPDATE `.kiro/specs/agentic-mcp-orchestration/sql/mark-prospect-pool-approved-20260905.sql`（`git add -f`；WHERE 逐條翻自 `build_visibility_predicate` 的 b2c 分支，business_types 用 `vendors.id=1` 子查詢；含預覽 count、rollback）。`git show 720f0bf7:.kiro/specs/agentic-mcp-orchestration/m0-owner-steps.md` 加第 5 節。⛔ 31 這個數字未在 admin DB 驗，預覽不是 31 就停。
 - [x] 3.5 (P) 大綱人審 dump 與「主題頁／講法列」旗標規則（2026-09-05 收案：dump 已 commit；人審＝業主「同意」→ DSP-026 收窄為 2 列；回饋落 `eval/outline-review-20260905.md`）（業主 2026-09-05 問「架構要不要調成 agent 好讀」）：新建 `rag-orchestrator/tools/agent_outline_dump.py`——以 `build_prospect_outline` 產 markdown（每節：標題、`source_ids`、每筆 `question_summary`、answer 全文、token 數；檔頭 sha／version／總 token）到 `.kiro/specs/agentic-mcp-orchestration/eval/outline-<date>.md` 供業主 20 分鐘人審；同檔尾附「疑似講法列」清單：31 筆中屬「一種講法一筆」錨點（如 5375–5380 批次、`generation_metadata.entry_alias`／`retrieval_representation_proposal` 標記者）——**規則：大綱只收主題頁，講法列 ⛔ 不標 `outline_approved_by`**（留給舊鏈與 `kb.search` 召回）；業主人審後由主 session 以 SQL 取消標記（需授權）。驗收：dump 可重跑同 sha；人審回饋落 `eval/outline-review-<date>.md`。
   - 需求：5.1, 5.4
   - 執行：mech-executor／effort 低——純渲染＋一條查詢

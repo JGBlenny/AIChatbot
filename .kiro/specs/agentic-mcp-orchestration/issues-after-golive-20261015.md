@@ -1,48 +1,26 @@
-# 站內幫手上線後待處理問題（2026-10-15 收斂）
+# 站內幫手上線後待處理問題（2026-10-15 起）
 
-> 來源：正式機 2026-10-15 上線後實測＋`usage_events.decision_snapshot` 回合紀錄＋本機重現（抓模型實際收到的提示與每次工具呼叫）。每列附證據；狀態改變時直接改寫本檔。
+> 來源：正式機 2026-10-15 上線後實測＋`usage_events.decision_snapshot` 回合紀錄＋本機重現。本檔只列未處理的問題；已修好的（目錄完整 id、追問接回原流程、「客服」字眼、修繕入口缺欄追問、零列已審時不給 `kb.search`）與當時的量測紀錄見 `git show 720f0bf7:.kiro/specs/agentic-mcp-orchestration/issues-after-golive-20261015.md`。排序與擋不擋上線看 `HANDOFF-20261018.md` 待辦表。
 
-## A. 我方（AIChatbot）要修
+## A. 我方（AIChatbot）
 
 | 優先 | # | 問題 | 證據 | 影響 | 建議修法 |
 |---|---|---|---|---|---|
-| P1 | A1 | **目錄／細目 id 格式誤導模型**：目錄行首標記 `[…:outline:outline:toc§32] D-renew｜續約｜8`，模型把 `§32` 當 id 呼叫 `kb.get("outline:32")`；粗目回傳的細目清單寫 `jgb/D/…` 無 `outline:` 前綴，模型照抄又失敗 | 本機重現 `可以續約嗎`、`帳單為什麼發不出去` 的模型呼叫序列；正式機 3 小時 `kb.get` 錯 31／成功 2；工具 4 次的 16 回合 15 回合轉人 | 知識題轉人主因（約 15／25 次轉人）；這類回合中位 11.4 秒（正常查資料 5.6 秒） | 目錄與細目清單印出可直接使用的完整 id（`outline:D-renew`、`outline:jgb/D/…`），目錄不加 `§` 編號；`kb.get` 另接受正本內確實存在的無前綴 id |
-| P1 | A2 | **追問後的回答沒接回原流程**：「能幫我新增嗎」→ 追問物件 →「學生獨立套房可租補」（真實物件名）被當成新的知識題 ⇒ `kb.search`→`kb.get` 失敗 ⇒ 轉人 | 正式機 session `…3c44ee3b6e`（18:03～18:04）三回合紀錄；物件名存在於 `demo_vendor4.json` | 互動建單在第二句斷掉，展示最常走的路 | 追問時程式記下「待補欄位的動作」（如 `repair_create` 缺物件），下一回合的回答優先當成該欄位值解析（物件名稱以 viewer 可見物件比對）；同類：分兩句報修時分類變「其他（未指定）」，一句講完才判「家電維修」 |
-| P2 | A3 | **驗證關誤擋含「客服」的正確答案**（`HANDOFF_WORD_NO_HANDOFF`）：正本 `jgb/E/bill-remind-resend-by-support` 本身就說「需由 JGB 客服協助」 | 本機 attempt log 兩次退回、草稿與引用皆正確；正式機 3 次 | 這類知識題必轉人 | 句子的「客服」字眼若出自其引用片段原文，不視為轉人字眼 |
-| P2 | A4 | **列清單題被誤判成統計**：「列出我的合約」3 輪 1～2 次走 `jgb2.stats.*` ⇒「目前還不支援」；「幫我查一張修繕單的進度」第一句 1／3 同樣 | 正式機 3 輪卡片實測 | 能答的題回不支援 | 統計工具說明限定「統計／加總／N 個月內」語意；一般列清單走 `jgb2.query.*` |
+| P2 | A4 | **列清單題被誤判成統計**：「列出我的合約」3 輪 1～2 次走 `jgb2.stats.*` ⇒「目前還不支援」；「幫我查一張修繕單的進度」第一句 1／3 同樣 | 正式機 2026-10-15 三輪卡片實測；之後未重測 | 能答的題回不支援 | 統計工具說明限定「統計／加總／N 個月內」語意；一般列清單走 `jgb2.query.*` |
 | P3 | A5 | 驗證關 `POLARITY_MISMATCH` 退回後轉人 | 正式機 3 次 | 少量知識題 | 待查（未重現） |
-| P3 | A6 | 接真 JGB 時修繕照片欄位格式不符：我方送物件陣列，既有 `POST /repairs` 收網址陣列 ⇒ 400 | jgb2 `RepairApiController@store` 驗證規則 | 目前 JGB 未接照片網域，不會觸發 | 接真 JGB 時不送 `broken_photos`，待 JGB #22 定案 |
-| P3 | A7 | 速度：每次模型呼叫約 2.3 秒、送約 13,500 token；`kb.search`（舊知識庫）中位 1.3 秒、p90 4.6 秒 | 正式機 142 回合統計 | 正常查資料 5.6 秒 | 先做 A1（省掉重試往返）；之後再量 `kb.search` 去留與輸入縮減 |
-| — | A8 | 文件：接口 A、接測清單仍是舊說法（統計新路徑、急迫程度問法），與 `jgb-api-spec-for-jgb-20261015.md` 不一致 | 本日對碼 | 交給 JGB 會混淆 | 改寫兩份與新規格一致 |
-
-### A1／A2 修正紀錄（2026-10-15，未部署）
-- **A1 已改**：`canon_assembler.build_canon_toc` 目錄行與 `resolve_canon_section` 粗目細目清單改印完整 id（`outline:<id>｜…`）。`kb.get` 自動補前綴的版本撤回——`test_agent_policy_kb_outline_req` 明定「⛔ 不改 `kb_get` 路由／錯誤碼」。更新 4 條釘舊格式的測試（`test_canon_assembler_req` 3 條、`test_library_view_req` 1 條）。
-- **A2 已改**：`runtime._pre_lookup_trigger(..., after_name_ask=)`——上一回合 `last_ask_target` ∈ {estate, community, address} 時，7～30 字、無句讀的整句也拿去比對物件（查無不注入）。初版用「上一則回覆以問號結尾」判斷，實測模型追問句以句號結尾、未觸發，改用封閉值 `last_ask_target`。
-- **本機實測**（`grounding_observe`、時間上限 45 秒、工具上限 4、索引就緒；本機 `kb.search` 一律失敗，與正式機不同）：知識題 10 題×2 輪——修後答出 12／20、耗時中位 3.6 秒（索引未就緒時 8.4 秒）、模型往返平均 2.3、工具平均 1.2；`kb.get` 成功 6／失敗 3（修前正式機成功 2／失敗 31）。A2 兩句報修：第 1 輪正確辨識整串物件名並追問描述；第 2 輪第一句「能幫我新增一張修繕單嗎」本身即轉人（另一問題，見 A9）。
-- 剩餘轉人：A3「客服」誤擋 2 次；模型先打 `kb.search` 浪費一次往返（本機必失敗、正式機中位 1.3 秒）；診斷單筆資料卻無編號（「帳單為什麼發不出去」）。
-- **A3 已改**：`verifier` 規則 ⑦ 改用 `_uncovered_handoff_mention`——轉人字眼出自該句可引用引文 ⇒ 放行；引文沒有、引文不可引用、只在別句引文、無句子結構 ⇒ 照擋。
-- **往返上限量測**（本機，同批 10 題×2 輪＋兩句報修×2）：上限 4＝答出 12／20、中位 3.6 秒、最慢 16.1 秒、報修 1／2 輪辨識正確；上限 3＝13／20、2.9 秒、15.1 秒、報修 1／2 輪走到確認卡（物件全名正確）；上限 2＝13／20、2.6 秒、6.1 秒，但**報修兩輪第一句皆轉人**（互動建單被切斷）。業主 2026-10-15「照建議」：正式機 `AGENT_BUDGET_TOOL_CALLS=3`、`AGENT_BUDGET_DEADLINE_S=20`；compose 補宣告 `AGENT_BUDGET_TOOL_CALLS`。
-- **正式機重測（A1～A3 部署後，`cb2954f8`）**：知識題 11／20、中位 4.0 秒、p90 9.0 秒、最慢 9.8 秒；「客服代發」2／2 答出（A3 生效）；A2 第 1 輪正確追問描述。但 `kb.get` 成功 1／失敗 16——根因：模型先 `kb.search`，其檢索器只過濾可見性、不過濾已審，正式機 `knowledge_base` 有效 926 列、**已審 0 列** ⇒ 列出的每筆 `kb.get` 都取不到。
-- **業主選 A（2026-10-15「A」）**：舊知識庫零列已審時 `kb.search` 不給模型（`ToolRegistry.hide_from_model`＋`mcp_facade.gate_kb_search_on_reviewed_rows`，啟動時依資料狀態判定，查詢失敗維持原狀，門面照列）。新測試 4 條、變異 3 條全紅；全量單元 9 failed＝既有基準。
-
-| P2 | A9 | 「能幫我新增一張修繕單嗎」第一句即轉人：模型 `kb.get` 失敗→查修繕→`confirm.request` 錯誤→預算用完 | 本機 cap4b 第 2 輪 | 互動建單入口不穩 | 待查 `confirm.request` 錯誤原因 |
-
-### A9／缺描述修正（2026-10-16，業主「修 A9、缺描述就出卡、「合約到期前通知」」）
-- 根因：`confirm.request` 工具說明要模型「先以 jgb2.query.repairs（face 修繕分類）取得名稱」，模型一聽報修就先查分類、讀對話記憶，工具上限 3 用完即轉人；修繕單「問題描述」非必填，缺時卡上「（未填寫）」。
-- 修法：`confirm.request` 對 `repair_create` 缺物件或問題描述 ⇒ 回缺欄清單（`REPAIR_MISSING_LABELS`），走既有程式追問出口、不出卡；追問後 `last_ask_target` 記 `estate`（缺物件）或 `description`（只缺描述），下一回合 A2 名稱比對接得上；工具說明改為「要建修繕單直接呼叫、缺的留空由系統追問；業務講了分類才查分類」。
-- 本機實測（正式機同設定：`grounding_observe`、工具上限 3、時間上限 20 秒）：「能幫我新增一張修繕單嗎」「幫我報修」「我要報修」三種開頭×3 輪＝9／9 第一句程式追問「還需要：物件、問題描述」；只給物件 ⇒ 追問描述（名稱完整）；補描述 ⇒ 出卡。全量單元 9 failed＝既有基準；更新 1 條拿空描述當最小 payload 的日期閘測試。
-- 「合約到期前通知」：正本無此主題（只有電錶服務到期 `jgb/G/power-meter-service-expiry`）。jgb2 有 `ContractNotifyExpiring`（Kernel 07:20，說明「30 日內將到期」）＋`ContractNotifyMoveout`（到期前 5 日點退）＋`ContractStatusUpdater` 內 `contract_notify_expiring`；`contract_expiring_by_days` 只發給房東／管理者（通知中心＋botbonnie），訊息「…將在 [到期日] 到期，請記得與租客 … 續約或點退押金」。發送時點的比對式與說明不一致，待逐支讀清再起草正本細目（知識線流程）。
+| P3 | A6 | 接真 JGB 時修繕照片欄位格式不符：我方送物件陣列 `broken_photos`（`grep -n "broken_photos" rag-orchestrator/services/jgb_system_api.py`），既有 `POST /repairs` 收網址陣列 ⇒ 400 | jgb2 `RepairApiController@store` 驗證規則 | 正式機 `IMAGE_URL_ALLOWLIST` 未設、JGB 未接照片網域，目前不會觸發 | 待 JGB #22 定案；定案前接真 JGB 不送 `broken_photos` |
+| P3 | A7 | 速度：每次模型呼叫約 2.3 秒、送約 13,500 token；`kb.search`（舊知識庫）中位 1.3 秒、p90 4.6 秒 | 正式機 2026-10-15 142 回合統計 | 正常查資料 5.6 秒 | 量 `kb.search` 去留與輸入縮減 |
+| — | A8 | 文件：接口 A、接測清單仍是舊說法（統計新路徑、急迫程度問法），與 `jgb-api-spec-for-jgb-20261015.md` 不一致 | 2026-10-15 對碼 | 交給 JGB 會混淆 | 由維運指南那一窗改寫 |
+| P3 | A10 | 知識缺「合約到期前通知」：正本無此主題（只有電錶服務到期 `jgb/G/power-meter-service-expiry`）。jgb2 有 `ContractNotifyExpiring`（Kernel 07:20，說明「30 日內將到期」）＋`ContractNotifyMoveout`（到期前 5 日點退）＋`ContractStatusUpdater` 內 `contract_notify_expiring`；`contract_expiring_by_days` 只發給房東／管理者（通知中心＋botbonnie） | jgb2 原始碼 | 問到期通知答不出 | 發送時點的比對式與說明不一致，逐支讀清後照知識線流程起草正本細目 |
 
 ## B. 等 JGB
 
-1. JGB 網頁已於 2026-10-15 17:38 起經 `/mcp`（`https://chatai.jgbsmart.com/rag-api/mcp`，金鑰 `api_keys.id=101`）接上，正式機紀錄可見。
-2. 照 `jgb-api-spec-for-jgb-20261015.md` 開／改 API（統計擴充既有端點、建物件／合約／手動帳單新端點、照片上傳、四支讀取補成員過濾、`GET /estates/{id}` 放寬）與回答 §6 的 11 題（7 題擋上線）。
-3. 修 `emergency_status` 對外 mapping（網頁 2＝緊急，API 標反）；給「改帳單到期日」正式路徑（`PATCH /agent/v1/bills/{id}` 在 master／preview 查無）。
+1. 照 `jgb-api-spec-for-jgb-20261015.md` 開／改 API（統計擴充既有端點、建物件／合約／手動帳單新端點、照片上傳、四支讀取補成員過濾、`GET /estates/{id}` 放寬）與回答 §6 的 11 題（7 題擋上線）。
+2. 修 `emergency_status` 對外 mapping（網頁 2＝緊急，API 標反）；給「改帳單到期日」正式路徑（`PATCH /agent/v1/bills/{id}` 在 master／preview 查無）。
 
 ## C. 業主決定／動作
 
-1. 同意修 A1、A2（會改模型看到的內容與流程，影響 LINE OA 與站內幫手）。
-2. jgb2 開場卡片改成互動句（實測 3 輪：帳單狀態 3／3、合約到期 3／3、修繕進度、報修）——在工單分支 `ticket_13290307734` 改，push 前給業主看。
-3. 工具參數塞身分鍵：以程式現況「剝除」為準改接測清單，或改程式成「拒絕」。
-4. 是否允許在 www 測試團隊真建一張修繕單（(2)(6-1) 實測）。
-5. 規格、指南、計畫、本檔等文件 commit。
+1. jgb2 開場卡片改成互動句（實測 3 輪：帳單狀態 3／3、合約到期 3／3、修繕進度、報修）——在工單分支 `ticket_13290307734` 改，push 前給業主看。
+2. 工具參數塞身分鍵：以程式現況「剝除」為準改接測清單，或改程式成「拒絕」。
+3. 是否允許在 www 測試團隊真建一張修繕單。
+4. 規格、指南、計畫、本檔等文件 commit。

@@ -199,13 +199,38 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 - 驗收 | `.kiro/specs/agentic-mcp-orchestration/acceptance-b-write-replies-program-20261020.md` | B 片凍結驗收：業主原話 1～9、規則 B-R0～B-R15、清單 V0～V16
 - 計畫 | `.kiro/specs/agentic-mcp-orchestration/plan-a2a-write-candidates-20261020.md` | A-2a 片計畫（業主 2026-10-20 核可，DSP-103）：寫入時名稱對到多筆由程式列候選、`pick:` 按鈕與打字選定、程式專用選定通道；業界依據、差距、偏離、停點與審查處置
 - 驗收 | `.kiro/specs/agentic-mcp-orchestration/acceptance-a2a-write-candidates-20261020.md` | A-2a 片凍結驗收：業主原話 1～5、規則 A2-R0～A2-R13、非目標 N1～N2、清單 V0～V17（含 V2b）
+- 計畫 | `.kiro/specs/agentic-mcp-orchestration/plan-overall-acceptance-step3-20261021.md` | 第 3 步整體驗收 OV 計畫（業主 2026-10-21 核可）：`de7f4653` 與現在同題對照、獨立代理產的廣度題組、M0 題組照目標正本重測；業界依據、差距、P0～P8、停點；結果交裁後落 DSP-106～108
+- 驗收 | `.kiro/specs/agentic-mcp-orchestration/acceptance-overall-step3-20261021.md` | OV 凍結規則與清單：業主原話、規則 OV-R1～R5、Q3＝(a) 判定式、Q4＝(a)、廣度表、清單 V0～V10
+- 計畫 | `.kiro/specs/agentic-mcp-orchestration/plan-pick-right-record-20261021.md` | 「選對紀錄」片計畫 r5（業主 2026-10-21 核可，DSP-107）：同名物件／合約帶可分辨欄位的候選由 AI 回編號（Q1 甲′）、帳單先定物件再依合約取帳單、金額與計費期間比對、確認卡加欄位；業界依據、差距、偏離、業主裁示 Q1～Q4、資安與審查處置 §11～§14
+- 計畫 | `.kiro/specs/agentic-mcp-orchestration/plan-name-lenient-f12-20261022.md` | F12 名稱寬鬆查找計畫（DSP-110）：查無時程式讀音前篩＋AI 回清單內編號＋程式驗證補齊、一律列候選；(甲) 查無／(乙) 缺名稱／(丙) 名稱先查三觸發點；業界依據、實打診斷、差距 G-0～G-6、資安處置 §4.8、待裁 §6、審查處置 §10
+- 驗收 | `.kiro/specs/agentic-mcp-orchestration/acceptance-name-lenient-f12-r6-20261024.md` | F12 規則與清單 r6（2026-10-24 業主核可凍結）：選定後改口 FR-12～FR-16、復原第 4、5 輪追加、業主原話 13～29
+- 計畫 | `.kiro/specs/agentic-mcp-orchestration/plan-post-pick-commands-20261024.md` | 選定後回合改指令式計畫（業主核可，2026-10-25 收案，DSP-112）：AI 回依序指令 pick／nth／name／clear、程式執行且最後一個生效；業界原文、差距、改動點、審查紀錄 §7、修復輪 1 §8（含終點指標與斷路器）
+- 驗收 | `.kiro/specs/agentic-mcp-orchestration/acceptance-post-pick-commands-20261024.md` | 指令式規則與清單（核可凍結，sha256 記於 repo 外 `f12/cmd/ACCEPTANCE_FROZEN_cmd.txt`）：業主原話、規則 C-1～C-13、廣度表、清單 F0～F11、F8、F9
+- 計畫 | `.kiro/specs/agentic-mcp-orchestration/plan-twins-manual-bill-20261025.md` | 雙胞胎與手開帳單合約計畫 r5（未核可，暫停至上線後，DSP-115）：目標與終點表、業界原文、差距、路徑、§7.1 每次執行、資安處置 §11、三輪審查處置 §12～§14
+- 驗收 | `.kiro/specs/agentic-mcp-orchestration/acceptance-twins-manual-bill-20261025.md` | 雙胞胎與手開帳單合約規則與清單 r5（未核可、未凍結）：業主原話 1～6（含 2026-10-25 四題裁定）、規則 TM-0～TM-12、廣度表、清單 V0～V12
+- 計畫 | `.kiro/specs/agentic-mcp-orchestration/plan-truncation-w2-20261017.md` | W2 截斷與串流計畫 r4（業主核可，2026-10-26 收案，DSP-116）：明示 JSON 句、串流讀到結束、只有真截斷才重寫、回合期限
+- 驗收 | `.kiro/specs/agentic-mcp-orchestration/acceptance-truncation-w2-20261017.md` | W2 凍結規則與清單；收案報告在 repo 外 `w2/report-w2-close.md`
+- 計畫 | `.kiro/specs/agentic-mcp-orchestration/plan-closing-handoff-e-20261026.md` | E 片計畫（2026-10-26 業主核可，2026-10-27 收案，宣稱收窄為標籤與出口，DSP-117）：道謝收尾與明確要真人由程式決定——每個使用者文字回合另發一次標籤呼叫（wants_human／resolved／none）、程式轉人／收尾樣板、追問欄位中的標籤確認、開關 `AGENT_CLOSING_HANDOFF`；業界原文、差距、終點表、§7 每次執行、§6 r4～r9 業主裁示、§10 審查處置
+- 驗收 | `.kiro/specs/agentic-mcp-orchestration/acceptance-closing-handoff-e-20261026.md` | E 片規則與清單（業主核可、凍結，r4～r9 增補皆經核可，sha256 記於 `~/jgb-archive/arch-step3-20261018/e/ACCEPTANCE_FROZEN.txt`）：業主原話 O1～O6、規則 E-R1～E-R13、清單 E1～E14、非目標、廣度表
+- 計畫 | `.kiro/specs/agentic-mcp-orchestration/plan-fill-answer-only-20261027.md` | 「填欄只填答覆」片計畫 r4（2026-10-27 業主核可，2026-10-28 收案，宣稱收窄為單欄追問回合，DSP-117／DSP-118）：寫入意圖呼叫回資料段與答覆段、程式只填答覆段並以資料段加閘、不覆寫已填欄、開關 `AGENT_FILL_DATA_TEXT`；業界原文、差距、終點表、§6 第 1～13 點業主裁示、§7 每次執行、§9 後補清單；收案報告在 repo 外 `fill/report-fill-close.md`
+- 驗收 | `.kiro/specs/agentic-mcp-orchestration/acceptance-fill-answer-only-20261027.md` | 「填欄只填答覆」規則與清單 r4（業主核可、凍結，sha256 記於 `~/jgb-archive/arch-step3-20261018/fill/acceptance-frozen.sha256`）：業主原話、規則 FA-R1～FA-R12、清單 FA0～FA11、廣度表、非目標
+- 計畫 | `.kiro/specs/agentic-mcp-orchestration/plan-fill-wide-20261028.md` | 「填欄擴及首句、卡後、多欄回合」片計畫（DSP-119，r2，業主 2026-10-28 核可）：第一句、確認卡後打字、多欄追問回合也只填資料段、逐值加閘；業界原文、差距 G1～G8、路徑、終點表、§7 每次執行、§8 待裁
+- 驗收 | `.kiro/specs/agentic-mcp-orchestration/acceptance-fill-wide-20261028.md` | 「填欄擴及首句、卡後、多欄回合」規則與清單（r2，業主 2026-10-28 核可、凍結）：業主原話、規則 FW-R1～FW-R14、清單 FW0～FW13、廣度表、非目標
+- 驗收 | `.kiro/specs/agentic-mcp-orchestration/acceptance-docs-handoff-cleanup-20261027.md` | 本線文件整理與過時清理的規則 D-R1～D-R4 與清單 C1～C11（2026-10-27 業主核可、凍結；併 E 收案執行；D-R4 為程式註解清理）
+- 驗收 | `.kiro/specs/agentic-mcp-orchestration/acceptance-name-lenient-f12-r5-20261022.md` | F12 規則與清單 r5（2026-10-22 業主核可凍結；F12 收案的終點量法依此，DSP-112）：業主原話 1～11、規則 FR-1～FR-11、廣度表、清單 F0～F9（宣稱依據 F3″）
+- 驗收 | `.kiro/specs/agentic-mcp-orchestration/acceptance-name-lenient-f12-20261022.md` | F12 規則與清單 r4（2026-10-22 業主核可凍結，紀錄）：r4 量測依此判（F3′ 27/50 未達）
+- 驗收 | `.kiro/specs/agentic-mcp-orchestration/acceptance-pick-right-record-20261021.md` | 選對紀錄規則與清單 r5（2026-10-21 業主核可、凍結）：業主原話 1～7、規則 PR-0～PR-11、非目標 N1～N4、廣度表、清單 V0～V12
 - 判準 | `rag-orchestrator/tests/unit/agent/test_b_write_replies_program_req.py` | B 片單元驗收：KD-3／KD-4 接手、寫入情境程式回話、乙′、判讀閘（含失敗 fail-closed、nonce 資料段、原文不落紀錄）、讀到的值、候選清單不外漏提示
 - 判準 | `rag-orchestrator/tests/unit/agent/test_dsp091_division_contract_req.py` | DSP-091 分工契約測試：程式列 R1～R6 必過契約、已知偏離現況探針（偏離消失即失敗，清單只減不增）、靜態檢查
 - 判準 | `rag-orchestrator/tests/unit/agent/dsp091_known_deviations.py` | 已知偏離登記 `KNOWN_DEVIATIONS`（須與目標正本 §3.1 同一組 KD 與接手片）、`DIVISION_ROWS`
 - 判準 | `scripts/audit/checks/division_guard.py` | 不變量 45：§3.1 與登記一致（靜態）＋近 7 天 `confirm_source:` 標記無 `model:unregistered`（線上；無程式樣本判「未判」）
+- 判準 | `scripts/audit/checks/acceptance_breadth.py` | 不變量 46：驗收廣度表結構（全域「驗收廣度」第 1 條）——GOV-4 核可後首次加入或未追蹤的 `.kiro/specs/**/acceptance*.md` 須有七欄 `## 廣度` 表、使用者層不同輸入數 ≥5、「上位驗收方式：」行；`--self-test`；尚未接入 `check_invariants.sh`
+- 產線 | `.kiro/specs/agentic-mcp-orchestration/deploy-and-online-test-guide-20261015.md` | 站內幫手正式機維運指南：現況、正式機 env、§3 部署 11 步（業主執行）、§4 線上測試（真 JGB）、§5 回退；gpt-oss 切換上線走這份（目標正本 §4.1 第 4 步）
+- 紀錄 | `.kiro/specs/agentic-mcp-orchestration/audit-oss-replacement-20261018.md` | gpt-oss 替換盤查（2026-10-18）：§E 四步任務安排＝目標正本 §4.1 上線路徑的出處
 - 規格 | `.kiro/specs/agentic-mcp-orchestration/jgb-spec-structured-card-draft-20261019.md` | **給 JGB 的需求稿（草稿、未寄出）**：面板改接 `agent.turn` 與確認卡已在 jgb2 preview（未進 master）、上線前 JGB 端事項（合入、正式環境設定）、preview 面板與回應欄位對照；上線後的 C 片結構化 `card` 提案
 - 規格 | `docs/architecture/AGENTIC_MCP_ARCHITECTURE.md` | 總覽：`/mcp` `agent.turn` 門面→四段管線（Plan R R1 後：`turn_segments`／`turn_context`／模型迴圈／`exit_gates`）→工具註冊→替身；組態、已知限制、模型行為假設表
-- 規格 | `.kiro/specs/agentic-mcp-orchestration/requirements.md` | 需求正本，含 D2 延遲／答到率驗收線
+- 紀錄 | `.kiro/specs/agentic-mcp-orchestration/requirements.md` | 母 spec 需求（2026-09 M0～M3 時期，含 D2 延遲／答到率驗收線）；現行目標與分工以目標正本 `architecture-target-20261018.md` 為準
+- 紀錄 | `.kiro/specs/agentic-mcp-orchestration/design.md`、`tasks.md`、`research.md`、`validation_gap.md` | 母 spec 設計、任務、研究、差距（2026-09 M0～M3 時期）；現行狀態看 HANDOFF
 - 產線 | `rag-orchestrator/services/agent/runtime.py` | `AgentRuntime.run_turn`／`_run_turn_body`（四段管線接線）
 - 產線 | `rag-orchestrator/services/agent/exit_gates.py` | 四道出口閘依序表 `EXIT_GATES`
 - 產線 | `rag-orchestrator/services/agent/turn_context.py` | `TurnAccumulator`／`ReservedCallIds`／九段資料注入
@@ -221,7 +246,7 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 - 判準 | `rag-orchestrator/tests/unit/agent/test_pipeline_golden_req.py` | Plan R 回放等價 golden（`TurnTrace` 全欄位逐位比對）
 - 判準 | `rag-orchestrator/tests/unit/agent/test_pipeline_order_req.py` | 四道出口閘順序表測試
 - 判準 | `scripts/smoke/` | 真模型 smoke 對照計分尺（`mcp_smoke.py`／`b4_score.py`／`liff_score.py`）
-- 決策 | `.claude/DECISIONS.md` | DSP-091 混合式分工、DSP-092 同 session 唯一可兌現確認卡、DSP-095 W2 處置方式（明示 JSON、串流早停後走現行重寫、誤殺看使用者結果、卡住呼叫查根因）、DSP-099 B 片寫入回話由程式與判讀閘、DSP-100 B 片收窄收案、DSP-101 上線範圍 A＋期別＋A+＋B＋A-2a＋E＋W2 與第 3 步執行順序（取代 DSP-094 範圍、DSP-098）、DSP-102 W-R3 前判真值、DSP-085 寫入由程式掌握；DSP-037～045（pm 受眾開放、寫入工具正本、Verifier 兩類拒因、DSP-040 引用類絆線、W7 語音、W8 LIFF、outcome 七鍵、DSP-044 照片文字撤銷、DSP-045 額度封閉表）
+- 決策 | `.claude/DECISIONS.md` | DSP-091 混合式分工、DSP-092 同 session 唯一可兌現確認卡、DSP-095 W2 處置方式（明示 JSON、截斷走現行重寫、卡住呼叫查根因）、DSP-116 W2 撤串流空白早停（期限切斷、接受 C3／T 殘餘）、DSP-117 E 片收窄收案與「填欄只填答覆」片列上線前必修、DSP-118「填欄只填答覆」片收窄收案（沒點名的英數道謝緊貼答覆列已知偏離）、DSP-119 另開「填欄擴及首句、卡後、多欄回合」片（與第 4 步同時進行）、DSP-099 B 片寫入回話由程式與判讀閘、DSP-100 B 片收窄收案、DSP-102 W-R3 前判真值、DSP-103～104 A-2a 片、DSP-106 A-2a 宣稱收窄、DSP-107 新增選對紀錄片與上線範圍 A＋期別＋A+＋B＋A-2a＋選對紀錄＋E＋W2 及第 3 步執行順序（取代 DSP-101 順序與範圍）、DSP-108 模擬客人回合上限只計打字句、DSP-085 寫入由程式掌握；DSP-037～045（pm 受眾開放、寫入工具正本、Verifier 兩類拒因、DSP-040 引用類絆線、W7 語音、W8 LIFF、outcome 七鍵、DSP-044 照片文字撤銷、DSP-045 額度封閉表）
 - 實測 | `.kiro/specs/knowledge-outline-and-intent-architecture/inputs/demo-ledger-line-oa-20260907.md` | demo 帳本：模型換測（luna／terra）、延遲量測、病灶審查
 
 ## 大綱三層重建（DSP-067；現行九架正本的來源）{#outline-drafting}

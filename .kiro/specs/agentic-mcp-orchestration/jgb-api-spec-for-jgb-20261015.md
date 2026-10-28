@@ -49,7 +49,8 @@
 
 | 端點 | 現況 | 請改 |
 |---|---|---|
-| `GET /bills`、`GET /contracts/status-overview` | 已吃 `viewer_user_id` | 不用改 |
+| `GET /bills` | 已吃 `viewer_user_id` | 不用改 |
+| `GET /contracts/status-overview` | 已吃 `viewer_user_id`，但團隊擁有者身分不限團隊 | 見 §5「團隊擁有者帶 `viewer_user_id` 查合約不限團隊」 |
 | `GET /repairs`、`GET /estates`、`GET /meters`、`GET /recharge-accounts` | 不吃 `viewer_user_id`（只看 `role_id` 或 key 白名單） | 帶 `viewer_user_id` 時依成員可見範圍圈定（可重用 `VisibleScope`） |
 | `GET /estates/{id}`（已存在） | 只回刊登中（`active=1`、`is_open=1`）；不吃 `viewer_user_id`、不驗 `role_id`；越權 403／不存在 404；結果快取 300 秒 | (a) 帶 `role_id`＋`viewer_user_id` 時回該成員看得到的物件，**含已出租、下架**；(b) 越權與不存在同一句 404；(c) 這條路徑不快取（建合約前要即時狀態） |
 
@@ -88,10 +89,15 @@
 
 ## 5. 請 JGB 修正的既有問題
 
-### 修繕 `emergency_status` 的對外 mapping 標反了
-- 網頁與服務層：**2＝緊急、1＝非緊急**（`RepairService` 的對照表；`RepairController` 的 `is_urgent` 判斷 `=== Repair::EMERGENCY_STATUS`，也就是 2；表單 `is_urgent=true` 寫入 2）。
-- 對外 API：`RepairApiController::getMapping` 寫成 1→緊急、2→非緊急，與網頁相反；`app/Repair.php` 常數註解也寫反（`EMERGENCY_NON_STATUS = 1; // 緊急`）。
-- 我方以網頁行為為準（2＝緊急）。**請 JGB 修正 `getMapping` 與常數註解**，或回覆以哪個為準。
+### 團隊擁有者帶 `viewer_user_id` 查合約不限團隊（資安，擋上線）
+- `GET /contracts/status-overview`（`External\ContractController@index`）：有 `user_data`（帶 `viewer_user_id`）時走 `Contract::queryThisUser($query, $userData)`，**不再加** `where('role_id', $roleId)`；沒帶時才 `where('role_id', $roleId)`。
+- `app/Models/Contract.php` `queryThisUser` 的 `roleType === 'owner'` 分支沒有任何範圍條件（`where('user_id'…)` 是註解）；`tenant` 分支只限 `to_user_id`（與狀態下限），也沒有 role 條件；`biglandlord`、`agent` 分支都有。`UserData::getRoleTypeByRoleUser` 在 `$role->user_id == $user->id` 時判為 `owner`。
+- 網頁端不受影響：各呼叫點先自加 role 條件再呼叫（`ContractController` 中 `->where($searchRoleIndex,$roleId)` 後接 `Contract::queryThisUser`）。
+- 結果：團隊擁有者透過對外 API 查合約，會拿到其他團隊的合約（含承租人個資）；租客身分會拿到這位租客與其他房東的合約。
+- `app/Support/VisibleScope.php` `contractIdsQuery` 同樣只呼叫 `Contract::queryThisUser`、不加 role 條件；目前 `External/*` 沒有呼叫點，建議一併修。
+- `External\BillController`（及經 `VisibleScope::billIdsQuery` 圈定的 `PaymentController`、`InvoiceController`）：`Bill::queryThisUser` 的 `owner`、`agent`、`biglandlord` 分支都加 `owner_role_id`，不受影響；`tenant` 分支改以 `issue_target_role_id` 圈定，是否跨團隊未查。
+- 依據：讀碼，jgb2 `origin/master` `bb217ebc6a`（2026-10-28）；正式機 www 部署版即 `bb217ebc6a`（2026-10-28 唯讀查詢），這段程式在線上。未實跑重現。JGB 已開單 #13404266981。
+- **請 JGB 修正**：`index` 不論有無 `user_data`，一律先 `where('role_id', $roleId)`，再交 `queryThisUser` 圈成員範圍。
 
 ## 6. 請 JGB 回答（彙整）
 
@@ -107,7 +113,6 @@
 | #22 | 照片上傳方式 (a)／(b)；專用上傳網域 | 是（照片） |
 | #23 | 改到期日的正式路徑 | 是（延長到期日功能） |
 | §0 | 寫入成員身分參數名（`viewer_user_id` 或 `user_id`）；越權統一 404；冪等 | 是 |
-| §5 | `emergency_status` 以網頁（2＝緊急）為準並修 API mapping | 是 |
 
 ## 7. 我方要配合改的（AIChatbot 內部，JGB 不必做）
 
