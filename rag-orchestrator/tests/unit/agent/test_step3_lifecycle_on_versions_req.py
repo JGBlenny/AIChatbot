@@ -42,6 +42,14 @@ from services.agent import runtime as runtime_mod
 pytestmark = [pytest.mark.unit,
               pytest.mark.req("agentic-mcp-orchestration:plan-conversation-architecture-step3-A")]
 
+
+@pytest.fixture(autouse=True)
+def _fill_data_text_off(monkeypatch):
+    """填欄只填答覆片（plan-fill-answer-only-20261027）：本檔的假寫入意圖不帶 `data_texts`，驗的是改前行為 ⇒ 釘住
+    `AGENT_FILL_DATA_TEXT=off`（off 與改前逐字相同，FA8 (2)；on 的行為見 test_fill_data_text_req.py）。"""
+    monkeypatch.setenv("AGENT_FILL_DATA_TEXT", "off")
+
+
 TODAY = date(2026, 10, 17)
 BILL = "709744"
 BILL_DUE = date(2026, 11, 1)
@@ -186,8 +194,11 @@ async def test_confirm_request_rejects_malformed_input_on(api):
     assert ok.ok is True
 
 
-async def test_confirm_request_digest_matches_redeem_side_object_digest_on(api):
+async def test_confirm_request_digest_matches_redeem_side_object_digest_on(api, monkeypatch):
     """字串進、dict 出：存進 DB 的雜湊＝兌現端對（預檢重算後）dict 算的雜湊；鍵序／空白不影響。"""
+    # 第二句斷言寫死的是改前 payload（「選對紀錄」片 on 時預檢另寫系統顯示鍵 `sys_pick_display`；
+    # on 的雜湊往返由 test_pick_right_record_req 驗）。
+    monkeypatch.setenv(WF.PICK_RIGHT_ENV, "off")
     pool = token_pool()
     payload = dict(reversed(list(_payload().items())))
     result = await confirm_request(_pm(), {"summary": "s", "payload": json.dumps(payload, indent=1)},

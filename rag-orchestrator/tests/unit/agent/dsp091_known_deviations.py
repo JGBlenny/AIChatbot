@@ -24,9 +24,11 @@ KNOWN_DEVIATIONS = (
      "desc": "文件回合、文件暫存有效回合：模型參數出卡；文件程式發卡的非終結結果交回模型",
      "anchors": (("runtime.py", "_document_carry_of"), ("runtime.py", "_document_program_message")),
      "has_comment": True},
-    {"id": "KD-5", "row": "轉人規則（含收尾）", "takeover": "E", "comment_token": "E 片",
-     "desc": "轉人由模型輸出決定，出口閘只在模型選了轉人後介入；無收尾規則",
-     "anchors": (("exit_gates.py", "_apply_handoff_data_exits"),),
+    {"id": "KD-5", "row": "轉人規則（含收尾）", "takeover": "E 續（上線後）", "comment_token": "E 續",
+     "desc": "E 片後剩三項：(1) 卡住先詢問、不連發未實作；(2) 知識查無的轉人仍由模型自報（歸 D、KD-6）；"
+             "(3) 標籤呼叫逾時或未完成的回合，要真人與收尾照現行由主模型輸出決定（後備，記 dialog_act_fallback）；"
+             "追問欄位中的回合例外：由程式重問缺欄（r6）",
+     "anchors": (("runtime.py", "_dialog_act_after_output"), ("exit_gates.py", "_apply_handoff_data_exits")),
      "has_comment": False},
     {"id": "KD-6", "row": "知識完全查無的出口", "takeover": "D", "comment_token": "D 片",
      "desc": "知識完全查無沒有程式先發的出口",
@@ -59,7 +61,10 @@ DIVISION_ROWS = {
                      "test_c8_model_confirm_prose_is_replaced_by_the_program_reply",
                      "test_c9_model_field_ask_is_replaced_by_the_program_reply"),
            "kds": ()},
-    "R4": {"name": "轉人規則（含收尾）", "tests": (), "kds": ("KD-5",)},
+    "R4": {"name": "轉人規則（含收尾）",
+           "tests": ("test_c10_wants_human_label_is_a_program_handoff",
+                     "test_c11_resolved_label_without_pending_is_a_program_closing"),
+           "kds": ("KD-5",)},
     "R5": {"name": "知識完全查無的出口", "tests": (), "kds": ("KD-6",)},
     "R6": {"name": "唯讀查詢的查詢與篩選", "tests": (), "kds": ("KD-7",)},
 }

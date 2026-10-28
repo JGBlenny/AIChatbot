@@ -1,6 +1,6 @@
-"""DocuMind 建物謄本解析的呼叫端（站內幫手 S3，計畫 §3h 第 4 點＋DocuMind 安全審查 D1～D10）。
+"""DocuMind 建物謄本解析的呼叫端（站內幫手 S3）。
 
-業主 2026-10-15：謄本欄位 ⛔ 由我方模型抽，改送 DocuMind（對接規格 2.4.0，
+謄本欄位 ⛔ 由我方模型抽，改送 DocuMind（對接規格 2.4.0，
 `POST {base}/analyze`、`document_type=transcript`）。本模組是那一條**對外送檔**路徑的
 唯一出口，紀律如下（⛔ 不得為了某一次實測而放寬）：
 
@@ -43,7 +43,7 @@ DOCUMIND_BASE_URL_ENV = "DOCUMIND_BASE_URL"
 DOCUMIND_TOKEN_ENV = "DOCUMIND_TOKEN"
 #: 明文 http 的**開關**（逐字 `"1"` 才算開；⛔ 收 `true`／`yes`／前後空白）。
 DOCUMIND_INSECURE_TEST_HOST_ENV = "DOCUMIND_ALLOW_INSECURE_TEST_HOST"
-#: 明文 http 唯一允許的測試主機 `host:port`（業主 2026-10-15：位址移出程式——repo 公開，
+#: 明文 http 唯一允許的測試主機 `host:port`（位址不放程式——repo 公開，
 #: 該主機明文、無認證，⛔ 寫死在程式或測試裡）。未設／空／格式不合 ⇒ ⛔ 不准 http。
 DOCUMIND_INSECURE_HOST_ENV = "DOCUMIND_INSECURE_TEST_HOST"
 

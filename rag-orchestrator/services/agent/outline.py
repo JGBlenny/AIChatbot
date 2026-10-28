@@ -19,7 +19,7 @@ Union[ToolResult, Awaitable[ToolResult]]]`——`kb_get()` 對 `outline:*` 直�
 裸 dict——這是已合併程式碼定的實際契約（CANON：程式如何跑，程式說了算），
 本檔對齊它。
 
-## 受眾視圖＝一份正本切出來的（任務 3.2；DSP-058／計畫 9.6 S3）
+## 受眾視圖＝一份正本切出來的（DSP-058）
 `build_audience_outline(audience)` **不讀 DB**：它讀 git 正本（`rag-orchestrator/canon/jgb/`
 九架＋同源 `jgb.json`／`CATALOG.md`），對該受眾切出**視圖**（只含 `target_user`／
 `business_types` 兩軸可見的細目），並附一節 `outline:toc`。組裝規則、可見性與啟動失敗語義
@@ -142,7 +142,7 @@ class OutlineDoc(BaseModel):
 
 
 class CandidateOutlineDoc(BaseModel):
-    """一回合的候選子集大綱（任務 4.1｜Plan §2.1-1）。
+    """一回合的候選子集大綱。
 
     與 `OutlineDoc` 同型別家族、滿足同一個 `OutlineDocLike` Protocol——`PromptAssembler`
     只看結構型別，不在乎具體類別。兩個建構子（`from_selection`／`from_visible`）都
@@ -304,9 +304,7 @@ _TOC_AUDIENCE_TARGET_USER: dict[str, str] = {
 def _fetch_toc_rows(db_pool, audience: str, vendor_id: Optional[int]) -> list[tuple]:
     """`系統脈絡` 列（`(id, question_summary, answer, updated_at)`），加 vendor／target_user 過濾。
 
-    ⛔ **不照抄舊鏈「系統脈絡」查詢的取法**（design 元件 5 明文禁止；原實作在
-    `services/system_context.py:_fetch_base`／`_fetch_appends`，⛔ 該實作已隨
-    舊鏈於 2026-09-10 退役）——那兩支只切 `category`／`target_user`，完全
+    ⛔ **不照抄舊鏈「系統脈絡」查詢的取法**（design 元件 5 明文禁止）——舊鏈那兩支只切 `category`／`target_user`，完全
     沒有 `vendor_ids` 過濾（舊鏈把「系統脈絡」當「跨業者共用底座」，這是它的
     既有假設；agentic 大綱要對到 MCP 門面解析出的單一 `vendor_id`，不能照搬）。
     這裡只借它們「`target_user` 分層＋`IS NULL` 放行通用列」的語義，自寫成
@@ -371,7 +369,7 @@ def _build_doc(
 ) -> OutlineDoc:
     # DSP-020：章節標題帶 section id——它是資料段行首標記裡的 `source` 那一段
     # （DSP-029a：模型照抄整串標記，⛔ 不再自己填 source 欄位）
-    # （`outline:contract`），只給標題模型無從得知 id（影子 2026-09-05 實測）。
+    # （`outline:contract`），只給標題模型無從得知 id。
     text = _SECTION_SEP.join(f"【{s.id}】{s.title}\n{s.text}" for s in sections)
     # sha 涵蓋 version（＝池列 max(updated_at)），⛔ 不只涵蓋 text——
     # 這樣「內容沒變、只有某列 updated_at 被 touch 過」也會讓快取判斷為「已變」，
@@ -398,7 +396,7 @@ def _build_doc(
 #: 見下方 `build_audience_outline`）。
 _STATIC_TOC_IDENTITY: dict[str, dict] = {
     "prospect": {"vendor_id": 0, "target_user": "prospect", "mode": "b2b"},
-    # DSP-037（業主 2026-09-07）：業者身分開放。業者走 b2b 分支（正本 front matter
+    # DSP-037：業者身分開放。業者走 b2b 分支（正本 front matter
     # `business_types: [system_provider]`／`target_user: [property_manager]`），
     # 故 `mode="b2b"`＋`target_user="property_manager"` ⇒ `canon_visible` 兩條件都成立。
     "property_manager": {
@@ -596,8 +594,7 @@ def check_turn_budget(
 #: 「目錄 token」，⛔ 不再量整份受眾視圖（圖書館形態下未審標題節會把視圖撐爆，
 #: 與每回合真正注入模型的內容無關——見 `check_turn_budget` docstring）。
 #: env 對應表在呼叫端讀（本檔只提供預設值常數表，⛔ 自己讀 env）。
-#: K 上界 = 5 × 2,400（每節上限）＝ 12,000，DSP-059a：涵蓋補審後最壞加總實測
-#: （售前 8,862／業者 10,023，單條最長細目 2,345 tokens，`jgb/D/contract-esign-flow`）。
+#: K 上界 = 5 × 2,400（每節上限）＝ 12,000，DSP-059a：涵蓋最壞加總。
 #: ⛔ 不做每節截斷；單條細目過長改用 `tools/canon_fine_size_lint.py` 標記後拆。
 OUTLINE_K_TOKEN_LIMIT: dict[str, int] = {
     "prospect": 12_000,

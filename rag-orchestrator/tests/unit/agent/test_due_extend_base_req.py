@@ -287,6 +287,8 @@ async def test_confirm_request_issues_the_card_for_an_overdue_bill(monkeypatch):
     """走查那一題：到期 9/01、今天 9/09、延三天 ⇒ 出卡、新到期日 9/12、起算日 9/09。"""
     # 第 3 步 A6：有帳單編號的延期卡在開關 on 時會先以 viewer 單筆讀帳單並重算到期日（表單宣告預檢）；本條原斷言驗的是現行路徑 ⇒ 照舊在 `AGENT_WRITE_LIFECYCLE=off` 下驗。
     monkeypatch.setenv("AGENT_WRITE_LIFECYCLE", "off")
+    # 「選對紀錄」片 on 時卡上另有系統核對資料（viewer 單筆讀帳單）；本條鎖改前卡文字 ⇒ 該片 off 下驗。
+    monkeypatch.setenv("AGENT_PICK_RIGHT", "off")
     monkeypatch.setattr(bills, "_today", lambda: _TODAY)
     pool = _confirm_pool()
 

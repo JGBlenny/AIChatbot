@@ -29,8 +29,7 @@
 `canon_sha256` 涵蓋整份 `.md`（講法狀態翻轉必變 sha），`phrasing_set_sha256` 在快取鍵中是冗餘但無害
 （design 明列，保留）。
 
-⚠️ **快取只記成功的那一次**（本片解讀，交 verifier／業主覆核）：Plan §1.2「同 key 重複 `prepare`
-不重打 embedding」的目的是省 embedding 呼叫；把**失敗**也快取起來會讓一次瞬時的 embedding 失敗
+⚠️ **快取只記成功的那一次**：「同 key 重複 `prepare` 不重打 embedding」的目的是省 embedding 呼叫；把**失敗**也快取起來會讓一次瞬時的 embedding 失敗
 永久釘死成 `not_ready`、無法靠再跑一次 `prepare` 復原。`not_ready` 期間索引本來就不服務
 （3.3b `select` 對非 `ready` 一律回 `None`），允許重試 ⛔ 不放寬任何可見性或分數。
 """
@@ -49,12 +48,12 @@ from services.embedding_utils import get_embedding_client
 
 logger = logging.getLogger(__name__)
 
-#: 每批 embedding 的**硬上限**（Plan §1.1／tasks 3.3「每批 ≤8」）。⛔ 不因建構參數而放寬——
+#: 每批 embedding 的**硬上限**（每批 ≤8）。⛔ 不因建構參數而放寬——
 #: 這是對 embedding API 的保護，不是可調參數。
 MAX_BATCH: int = 8
-#: `EmbeddingUtilsBackend` 每批的逾時（Plan §1.1）。
+#: `EmbeddingUtilsBackend` 每批的逾時。
 PREPARE_EMBED_TIMEOUT_S: float = 30.0
-#: 整份 `prepare(doc)` 的**硬上限**（任務 4.1／Plan §2.1-6，業主 2026-09-07 §5-5 裁 60.0）。
+#: 整份 `prepare(doc)` 的**硬上限**。
 #: 呼叫端（`app.py::_init_agent_runtime`）用 `asyncio.wait_for(index.prepare(canon),
 #: PREPARE_TOTAL_TIMEOUT_S)` 包住整次啟動索引；逾時取消協程、索引狀態停在 `absent`
 #: （`prepare` 只在完成或 `_discard` 時改狀態，取消不留半份）。⛔ 不因建構參數而放寬。
@@ -267,7 +266,7 @@ class FineIndex:
     def visible_subset(
         self, identity, doc: CanonDoc, *, vendor_business_types: frozenset[str]
     ) -> frozenset[str]:
-        """這個身分看得到的細目 id 集合（任務 3.3b；Plan §1.5）。
+        """這個身分看得到的細目 id 集合。
 
         **薄集合包裝**：規則⛔ 一條都不在這裡——逐細目一律問 3.2 的
         `canon_assembler.canon_visible`（與 `build_visibility_predicate` 零分歧，唯一例外：
@@ -275,13 +274,13 @@ class FineIndex:
         在這裡再寫一套判準，就會出現第二份可見性真相，⚠️ 兩份遲早走岔。
 
         ⚠️ **與索引本身無關**：不看 `self._entries`、不看 `state`、⛔ 不查 DB、⛔ 不打 embedding。
-        掛在 `FineIndex` 上只是因為 `CandidateSelector` 的唯一相依是索引（Plan §1.5／1.6）；
+        掛在 `FineIndex` 上只是因為 `CandidateSelector` 的唯一相依是索引；
         未 `prepare` 的索引照樣算得出正確的可見子集。
 
         ⚠️ `canon_assembler` 走**函式內 import**：它在模組層 import
         `VendorKnowledgeRetrieverV2`（psycopg2 ／ DB 棧）。本檔是啟動期索引，
-        ⛔ 不在 import 時把 DB 棧拉進來（同 Plan §6「`register_index` 不 import
-        `canon_assembler`」的理由；`canon_assembler` ↔ `outline` 也用同一招）。
+        ⛔ 不在 import 時把 DB 棧拉進來（`register_index` 同樣不 import
+        `canon_assembler`；`canon_assembler` ↔ `outline` 也用同一招）。
         """
         from services.agent.canon.canon_assembler import canon_visible  # 見 docstring
 
@@ -412,7 +411,7 @@ def reset_index_registry() -> None:
 def index_registry_states() -> dict:
     """health 用的觀測值：`{audience: {state, prepared_sha, entries, dim, content_keys}}`。
 
-    三個受眾一律列出，未註冊 ⇒ `{"state": "absent", …}`（Plan §1.3「取不到 ⇒ absent」）。
+    三個受眾一律列出，未註冊 ⇒ `{"state": "absent", …}`。
     ⛔ 不重建索引、⛔ 不觸發任何 embedding；取值失敗只降級成 `absent`＋型別名。
     ⚠️ **4.1 接線後**：本函式的回傳值本身仍只是觀測值、⛔ 不重建——但
     `health.compute_agent_health` 在 `mcp_facade.agent_configured()` 為真時，

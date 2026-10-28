@@ -268,6 +268,8 @@ services:
       AGENT_REASONING_EFFORT: ${AGENT_REASONING_EFFORT:-}          # 空＝不送；gpt-6-luna 帶工具須 none
       AGENT_MAX_COMPLETION_TOKENS: ${AGENT_MAX_COMPLETION_TOKENS:-} # 空＝程式預設 2000；每次模型呼叫輸出上限（plan-oss-slice1：擋 gpt-oss 灌空白失控）
       AGENT_WRITE_DRAFT: ${AGENT_WRITE_DRAFT:-}                    # 空＝on；寫入草稿由程式掌握（plan-write-flow W1／DSP-085）；off＝撤回 write_intent schema、草稿、程式觸發；其他值啟動失敗
+      AGENT_FILL_DATA_TEXT: ${AGENT_FILL_DATA_TEXT:-}              # 空＝on；單欄追問回合只填答覆（plan-fill-answer-only-20261027）；off＝寫入意圖系統句、schema、值閘與改前相同；其他值啟動失敗
+      AGENT_FILL_DATA_TEXT_WIDE: ${AGENT_FILL_DATA_TEXT_WIDE:-}    # 空＝on；首句、卡後、多欄回合也由資料段驗值（plan-fill-wide-20261028）；只在 AGENT_FILL_DATA_TEXT on 時生效；off＝三種回合與改前相同；其他值啟動失敗
       AGENT_ATTEMPT_LOG_PATH: ${AGENT_ATTEMPT_LOG_PATH:-}          # 開發量測用；正式⛔不設
       OPENAI_TIMEOUT_S: ${OPENAI_TIMEOUT_S:-}                      # agent 每次模型呼叫 SDK 逾時秒數；空＝SDK 預設 600（第六批 #11 建議 25）
       # 站內幫手（plan-assistant-11-items §3h／§3i；2026-10-15）——空字串＝程式視同未設，唯 IMAGE_URL_ALLOWLIST 空＝全擋，故預設寫程式預設值

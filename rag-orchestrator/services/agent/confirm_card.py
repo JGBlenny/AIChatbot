@@ -28,11 +28,8 @@
 ## `emergency_status` 是已知地雷（⛔ 不可望文生義）
 `1＝非緊急、2＝緊急`（jgb2 DB 真值）。jgb2 對外 `mapping` 曾把它標反，
 本 repo 的既有處置是「一律用自家真值對照，⛔ 不信任回應附的 mapping」。
-⚠️ 舊鏈曾有第二份同義對照表（`services/jgb_response_formatter.py` 的
-`_EMERGENCY_STATUS_LABELS`），本檔的 `_EMERGENCY_ZH` 曾與它逐鍵對帳防漂移；
-該模組已隨舊鏈於 2026-09-10 退役，對帳測試一併移除——**這裡的真值本身不變**，
-只是失去了跨模組的重複校驗，⛔ 改這兩個鍵前務必重查 jgb2 DB 真值，不能只憑
-「原本兩邊都這樣寫」當依據。
+⚠️ `_EMERGENCY_ZH` 沒有跨模組的重複校驗，⛔ 改這兩個鍵前務必重查 jgb2 DB 真值，
+不能只憑「本檔就是這樣寫」當依據。
 """
 from __future__ import annotations
 
@@ -44,7 +41,7 @@ from typing import Any, Final, Mapping, Tuple, Optional
 # 自由文字欄位的正規化判準（T1 共用落點，⛔ 不另寫一份）。見 `_closed_text`。
 from services.agent.completed_actions import sanitize_data_piece
 
-#: 站內幫手 S2（plan-assistant-11-items-20261014 §3f；jgb2-req#19～#21）三個**封閉欄位表**動作。
+#: 站內幫手 S2（jgb2-req#19～#21）三個**封閉欄位表**動作。
 ESTATE_CREATE_ACTION: Final[str] = "estate_create"
 CONTRACT_CREATE_ACTION: Final[str] = "contract_create"
 MANUAL_BILL_CREATE_ACTION: Final[str] = "manual_bill_create"
@@ -74,7 +71,7 @@ NOT_BEFORE_TODAY: Final[str] = "not_before_today"
 #: 給合法日期 render 成功」逐欄證明，⛔ 不靠人工對照。
 CONFIRM_FIELD_ATTRS: Final[dict[str, dict[str, frozenset]]] = {
     "bill_due_extend": {"date_expire_after": frozenset({NOT_BEFORE_TODAY})},
-    # S2 §3f 1c：手動帳單的繳費期限 ⛔ 早於今天（防誤打成立即逾期的帳單）。
+    # S2：手動帳單的繳費期限 ⛔ 早於今天（防誤打成立即逾期的帳單）。
     # ⚠️ `contract_create.date_start`／`date_end` **刻意不標**：登錄既有租約時起始日
     #    早於今天是常態；那兩欄只驗格式與「結束晚於起始」（見 `_closed_cross_check`）。
     MANUAL_BILL_CREATE_ACTION: {"date_expire": frozenset({NOT_BEFORE_TODAY})},
@@ -93,7 +90,7 @@ _EMERGENCY_ZH: Final[dict[int, str]] = {1: "非緊急", 2: "緊急"}
 #: 描述留空時卡上顯示的字（⛔ 不是推測出來的內容，是「這一欄使用者沒填」的明示）。
 EMPTY_DESCRIPTION_ZH: Final[str] = "（未填寫）"
 
-#: delta4（業主 2026-09-08「delta4 採」）：分類與急迫**缺值由程式補、模型不反問**。
+#: delta4：分類與急迫**缺值由程式補、模型不反問**。
 #: 分類缺值 ⇒ 歸到分類樹的「其他」大類（`DEFAULT_CATEGORY_NAME`，`repair_create` 依名稱在
 #: 分類樹裡解出 id，⛔ 不寫死 id）；卡上明示「（未指定，歸其他）」，⛔ 不假裝是使用者選的。
 #: 急迫缺值 ⇒ `DEFAULT_EMERGENCY_STATUS`＝1（非緊急；正本 A/repair-ticket-urgency-judgment）。
@@ -173,9 +170,7 @@ def _require_ref(payload: Mapping[str, Any], key: str, action: str) -> str:
 def _parse_date(value: Any, key: str, action: str) -> date:
     """`YYYYMMDD`（int 或 str）⇒ `date`。
 
-    形狀取自 jgb2 的日期整數欄位慣例（舊鏈 `jgb_response_formatter.DATE_INT_KEYS`
-    曾是這個慣例的同源引用，該模組已隨舊鏈於 2026-09-10 退役；`YYYYMMDD` 本身
-    是 jgb2 API 的欄位慣例，不隨舊鏈存廢而變）。
+    形狀取自 jgb2 的日期整數欄位慣例（`YYYYMMDD` 是 jgb2 API 的欄位慣例）。
     ⛔ 不接受其他寫法——多接受一種寫法就多一種「同一天算出兩張不同卡」的可能。
     """
     if isinstance(value, bool) or not isinstance(value, (str, int)):
@@ -227,6 +222,134 @@ def card_display_rows(card_text: Any) -> list[tuple[str, str]]:
     return rows
 
 
+# ---------------------------------------------------------------------------
+# 「選對紀錄」片：卡上的**可分辨欄位**
+#
+# ⚠️ 值只由 `tools/confirm.py` 從帶 viewer 查得的**系統列**寫進 `PICK_DISPLAY_KEY`（模型帶的同名鍵在
+#    出卡前一律丟掉），與其他欄位一樣進 `payload_sha256`、由本檔決定性印出 ⇒ 使用者核對的就是系統值。
+#    沒有這個鍵 ⇒ 卡逐字不變（開關 off 的路徑永遠不寫它）。
+# ⚠️ 形狀（鍵集合）不合 ⇒ `ConfirmCardError`；單一值不合（JGB 自由文字含 `sanitize_data_piece` 會改動的
+#    字元、超長、日期不是 `YYYYMMDD`、金額不是數字）⇒ 印 `PICK_DISPLAY_NONE`（⛔ 改寫後印出、⛔ 讓整張卡失敗）。
+# ---------------------------------------------------------------------------
+PICK_DISPLAY_KEY: Final[str] = "sys_pick_display"
+PICK_DISPLAY_NONE: Final[str] = "—"
+#: 卡上 JGB 自由文字（物件名、帳單標題、縣市區、樓層）的長度上限。
+PICK_DISPLAY_TEXT_MAX: Final[int] = 60
+#: 各動作的核對資料鍵：`(必有鍵, 選有鍵)`。延期卡的 `said_*`＝客人先前講的比對值（只用來印「提醒」行）。
+_PICK_DISPLAY_KEYS: Final[dict] = {
+    "bill_due_extend": (
+        frozenset({"estate_id", "estate_title", "bill_title", "amount", "date_start", "date_end"}),
+        frozenset({"said_amount", "said_range"}),
+    ),
+    "repair_create": (frozenset({"city", "district", "floor"}), frozenset()),
+    CONTRACT_CREATE_ACTION: (frozenset({"city", "district", "floor"}), frozenset()),
+    MANUAL_BILL_CREATE_ACTION: (frozenset({"date_start", "date_end"}), frozenset()),
+}
+
+
+def pick_display_of(action: str, payload: Mapping[str, Any]) -> Optional[dict]:
+    """payload 的核對資料（驗鍵集合）；沒有 ⇒ `None`。形狀不合 ⇒ `ConfirmCardError`。"""
+    if PICK_DISPLAY_KEY not in payload:
+        return None
+    value = payload[PICK_DISPLAY_KEY]
+    spec = _PICK_DISPLAY_KEYS.get(action)
+    if spec is None or not isinstance(value, Mapping):
+        raise ConfirmCardError(f"{action}: 欄位 {PICK_DISPLAY_KEY!r} 形狀不合")
+    required, optional = spec
+    keys = set(value)
+    if not all(isinstance(k, str) for k in keys) or not (required <= keys <= required | optional):
+        raise ConfirmCardError(f"{action}: 欄位 {PICK_DISPLAY_KEY!r} 鍵不合")
+    return dict(value)
+
+
+def _display_text(value: Any) -> str:
+    """JGB 自由文字 ⇒ 卡上顯示值（比照 `_closed_value` 的 text 規則；不合 ⇒ `PICK_DISPLAY_NONE`）。"""
+    if not isinstance(value, str) or sanitize_data_piece(value) != value:
+        return PICK_DISPLAY_NONE
+    text = value.strip()
+    if not text or len(text) > PICK_DISPLAY_TEXT_MAX:
+        return PICK_DISPLAY_NONE
+    return text
+
+
+def _display_int(value: Any) -> Optional[int]:
+    if isinstance(value, str) and value.strip().isdigit():
+        value = int(value.strip())
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        return None
+    return value
+
+
+def _display_amount(value: Any) -> Optional[int]:
+    if isinstance(value, float) and value.is_integer():
+        value = int(value)
+    if isinstance(value, bool) or not isinstance(value, int):
+        return None
+    return value
+
+
+def _display_date(value: Any) -> Optional[date]:
+    try:
+        return _parse_date(value, "date", "pick_display")
+    except ConfirmCardError:
+        return None
+
+
+def _display_period(start: Any, end: Any) -> str:
+    s, e = _display_date(start), _display_date(end)
+    if s is None and e is None:
+        return PICK_DISPLAY_NONE
+    return (f"{_fmt_date(s) if s else PICK_DISPLAY_NONE}"
+            f"～{_fmt_date(e) if e else PICK_DISPLAY_NONE}")
+
+
+def _display_location(d: Mapping[str, Any]) -> str:
+    """縣市區＋樓層（「<縣市><區> <N>樓」）；各段不合即略過，全不合 ⇒ `PICK_DISPLAY_NONE`。"""
+    area = "".join(t for t in (_display_text(d.get("city")), _display_text(d.get("district")))
+                   if t != PICK_DISPLAY_NONE)
+    floor_raw = d.get("floor")
+    floor_int = _display_int(floor_raw) if not isinstance(floor_raw, str) else None
+    floor = f"{floor_int}樓" if floor_int is not None else _display_text(floor_raw)
+    parts = [p for p in (area, floor) if p and p != PICK_DISPLAY_NONE]
+    return " ".join(parts) if parts else PICK_DISPLAY_NONE
+
+
+#: 延期卡「提醒」行（照客人按的出卡、明說不符）。只插程式從帳單列與已過值閘的比對值算出的數字。
+PICK_AMOUNT_REMINDER_TEMPLATE: Final[str] = "您先前說 {said} 元，這張是 {amount} 元"
+PICK_RANGE_REMINDER_TEMPLATE: Final[str] = "您先前說 {said}，這張是 {actual}"
+PICK_REMINDER_SEP: Final[str] = "；"
+
+
+def _bill_pick_rows(d: Mapping[str, Any]) -> Tuple[list, Optional[tuple]]:
+    """延期卡的四行（物件名稱＋編號、帳單標題、金額、計費期間）與選有的「提醒」行。"""
+    from services.agent.bill_period import said_range_parts
+
+    title = _display_text(d.get("estate_title"))
+    eid = _display_int(d.get("estate_id"))
+    estate = f"{title}（編號 {eid}）" if eid is not None and eid > 0 else title
+    amount = _display_amount(d.get("amount"))
+    rows = [
+        ("物件", estate),
+        ("帳單", _display_text(d.get("bill_title"))),
+        ("帳單金額", f"{amount:,} 元" if amount is not None else PICK_DISPLAY_NONE),
+        ("計費期間", _display_period(d.get("date_start"), d.get("date_end"))),
+    ]
+    notes: list = []
+    said_amount = _display_amount(d.get("said_amount"))
+    if said_amount is not None and amount is not None and said_amount != amount:
+        notes.append(PICK_AMOUNT_REMINDER_TEMPLATE.format(said=f"{said_amount:,}", amount=f"{amount:,}"))
+    said_parts = said_range_parts(d.get("said_range"))
+    s, e = _display_date(d.get("date_start")), _display_date(d.get("date_end"))
+    if said_parts is not None and s is not None and e is not None:
+        actual = ((s.month, s.day), (e.month, e.day))
+        if said_parts != actual:
+            (m1, d1), (m2, d2) = said_parts
+            notes.append(PICK_RANGE_REMINDER_TEMPLATE.format(
+                said=f"{m1:02d}/{d1:02d}～{m2:02d}/{d2:02d}",
+                actual=f"{s.month:02d}/{s.day:02d}～{e.month:02d}/{e.day:02d}"))
+    return rows, (("提醒", PICK_REMINDER_SEP.join(notes)) if notes else None)
+
+
 def _render_bill_due_extend(payload: Mapping[str, Any], today: Optional[date]) -> str:
     action = "bill_due_extend"
     bill_id = _require_ref(payload, "bill_id", action)
@@ -250,18 +373,20 @@ def _render_bill_due_extend(payload: Mapping[str, Any], today: Optional[date]) -
         raise ConfirmCardError(
             f"{action}: 起算日 + days 與 date_expire_after 不一致"
         )
-    return _lines_to_card(
-        "即將調整帳單到期日，請確認：",
-        [
-            ("帳單編號", bill_id),
-            ("原到期日", _fmt_date(before)),
-            # 起算日**印在卡上**：「原到期日 8/15、延 3 天、新到期日 9/12」單看
-            # 三個數字對不起來，使用者會遲疑。⛔ 不靠模型在 summary 裡解釋。
-            ("起算日", _fmt_date(base)),
-            ("延後天數", f"{days} 天"),
-            ("新到期日", _fmt_date(after)),
-        ],
-    )
+    # 有系統寫入的核對資料才多印四行（＋選有的提醒行）；沒有 ⇒ 卡逐字不變。
+    display = pick_display_of(action, payload)
+    pick_rows, reminder = _bill_pick_rows(display) if display is not None else ([], None)
+    rows = [("帳單編號", bill_id)] + pick_rows + [
+        ("原到期日", _fmt_date(before)),
+        # 起算日**印在卡上**：「原到期日 8/15、延 3 天、新到期日 9/12」單看
+        # 三個數字對不起來，使用者會遲疑。⛔ 不靠模型在 summary 裡解釋。
+        ("起算日", _fmt_date(base)),
+        ("延後天數", f"{days} 天"),
+        ("新到期日", _fmt_date(after)),
+    ]
+    if reminder is not None:
+        rows.append(reminder)
+    return _lines_to_card("即將調整帳單到期日，請確認：", rows)
 
 
 # ---------------------------------------------------------------------------
@@ -331,7 +456,7 @@ def _render_repair_create(payload: Mapping[str, Any], today: Optional[date]) -> 
         raise ConfirmCardError(f"{action}: 欄位 'description' 必須是字串（可為空字串）")
     emergency = emergency_status_of(payload)   # 缺值 ⇒ 非緊急（delta4）
     rows = [("物件", estate)]
-    # A-2a（計畫 §4.5、§11 P1-1）：`estate_id` 只會是 `confirm.request` 依程式選定（`program_pick`）
+    # A-2a：`estate_id` 只會是 `confirm.request` 依程式選定（`program_pick`）
     # 以帶 viewer 的編號查詢寫入的系統編號（模型自帶的在出卡前一律丟掉）——有才印一行，
     # 卡上編號＝寫入編號（同封閉表 `sys_id`：正整數，數字字串視同整數）。沒有 ⇒ 卡逐字不變。
     if "estate_id" in payload:
@@ -341,6 +466,10 @@ def _render_repair_create(payload: Mapping[str, Any], today: Optional[date]) -> 
         if isinstance(estate_id, bool) or not isinstance(estate_id, int) or estate_id < 1:
             raise ConfirmCardError(f"{action}: 欄位 'estate_id' 必須是正整數")
         rows.append(("物件編號", str(estate_id)))
+    # 系統寫入的核對資料 ⇒ 多印「物件位置」一行（沒有 ⇒ 逐字不變）。
+    display = pick_display_of(action, payload)
+    if display is not None:
+        rows.append(("物件位置", _display_location(display)))
     rows += [
         ("修繕分類", category),
         ("急迫程度", _EMERGENCY_ZH[emergency]),
@@ -354,7 +483,7 @@ def _render_repair_create(payload: Mapping[str, Any], today: Optional[date]) -> 
 
 
 # ---------------------------------------------------------------------------
-# 站內幫手 S2（§3f 1／F3）：三個**封閉欄位表**動作
+# 站內幫手 S2：三個**封閉欄位表**動作
 #
 # ⚠️ **一張表、三個用途**：同一份 `_ClosedField` 表同時決定
 #      ① 卡上印哪幾行（`_render_closed`）、
@@ -367,11 +496,11 @@ def _render_repair_create(payload: Mapping[str, Any], today: Optional[date]) -> 
 #    （呼叫端翻 `INVALID_INPUT`）。⛔ 不靜默丟掉——丟掉會讓一份夾帶 `role_id` 的
 #    payload 看起來被接受了。歸屬一律只取自 identity（`tools/action._identity_pair`）。
 # ⚠️ **系統填的編號**（`contract_create.estate_id`、`manual_bill_create.contract_id`）
-#    由 `confirm.request` 在出卡**之前**以帶 viewer 的查詢解析後寫入（§3f 1d），
+#    由 `confirm.request` 在出卡**之前**以帶 viewer 的查詢解析後寫入，
 #    卡上與名稱印在同一行；兌現時直接用、⛔ 不依名稱重解。
 # ---------------------------------------------------------------------------
 
-#: 身分鍵＋歸屬鍵（F3／jgb2-req#23）。payload 出現任一個 ⇒ `ConfirmCardError`。
+#: 身分鍵＋歸屬鍵（jgb2-req#23）。payload 出現任一個 ⇒ `ConfirmCardError`。
 #: ⚠️ 歸屬鍵與替身 `JGBMockTransport._OWNERSHIP_KEYS` 同一份清單（測試以集合包含互證，
 #:    ⛔ 不在此 import 替身——agent 層不依賴 mock transport）。
 IDENTITY_OWNERSHIP_KEYS: Final[frozenset] = frozenset({
@@ -428,7 +557,7 @@ ESTATE_CREATE_FIELDS: Final[Tuple[_ClosedField, ...]] = (
 )
 
 #: jgb2-req#20 建立合約。`estate_name` 是物件指稱鍵（使用者口述／物件記憶補上，出卡時
-#: 改寫成解析後的物件名稱），`estate_id` 是系統解析後寫入的編號（§3f 1b／1d）。
+#: 改寫成解析後的物件名稱），`estate_id` 是系統解析後寫入的編號。
 CONTRACT_CREATE_FIELDS: Final[Tuple[_ClosedField, ...]] = (
     _ClosedField("estate_name", "物件", "text", required=True, max_len=60, in_body=False),
     _ClosedField("estate_id", "物件編號", "sys_id", required=True),
@@ -442,7 +571,7 @@ CONTRACT_CREATE_FIELDS: Final[Tuple[_ClosedField, ...]] = (
 )
 
 #: jgb2-req#21 建立手動帳單。`contract_ref` 是合約指稱鍵（出卡時改寫成解析後的合約名稱），
-#: `contract_id` 是系統解析後寫入的編號（§3f 1b／1d）。
+#: `contract_id` 是系統解析後寫入的編號。
 MANUAL_BILL_CREATE_FIELDS: Final[Tuple[_ClosedField, ...]] = (
     _ClosedField("contract_ref", "合約", "text", required=True, max_len=60, in_body=False),
     _ClosedField("contract_id", "合約編號", "sys_id", required=True),
@@ -458,7 +587,7 @@ CLOSED_ACTION_FIELDS: Final[dict[str, Tuple[_ClosedField, ...]]] = {
     MANUAL_BILL_CREATE_ACTION: MANUAL_BILL_CREATE_FIELDS,
 }
 
-#: 「收下但 ⛔ 上卡、⛔ 進 body」的鍵（§3f 1b）：`runtime._apply_estate_carry_to_confirm_args`
+#: 「收下但 ⛔ 上卡、⛔ 進 body」的鍵：`runtime._apply_estate_carry_to_confirm_args`
 #: 對 `CONFIRM_ACTIONS` 內任何 action 都可能補上 `estate_name`（⛔ 改 runtime），
 #: 所以這三個動作都得收這個鍵；`contract_create` 的 `estate_name` 本來就在表內。
 #: `manual_bill_create` 缺 `contract_ref` 時由 `confirm.request` 以它解析合約。
@@ -586,6 +715,9 @@ def closed_values(action: Any, payload: Any) -> list:
         raise ConfirmCardError(f"未知的封閉欄位表動作：{action!r}")
     if not isinstance(payload, Mapping):
         raise ConfirmCardError(f"{action}: payload 必須是物件")
+    # 系統寫入的核對資料只上卡（`_render_closed` 另讀），⛔ 進 body、⛔ 算封閉鍵；
+    # 模型自帶的同名鍵在 `confirm.request` 入口就已丟掉（開關 off 時仍由該處的 `check_closed_keys` 擋下）。
+    payload = {k: v for k, v in payload.items() if k != PICK_DISPLAY_KEY}
     check_closed_keys(action, payload)
     out: list = []
     for f in CLOSED_ACTION_FIELDS[action]:
@@ -600,7 +732,7 @@ def closed_values(action: Any, payload: Any) -> list:
         if not present & set(keys):
             raise ConfirmCardError(f"{action}: payload 須至少給 {list(keys)} 其中之一")
     values = dict(out)
-    # 跨欄規則（jgb2-req#20）：結束日必須晚於起始日。⛔ 不比今天（§3f 1c）。
+    # 跨欄規則（jgb2-req#20）：結束日必須晚於起始日。⛔ 不比今天。
     if action == CONTRACT_CREATE_ACTION and values["date_end"] <= values["date_start"]:
         raise ConfirmCardError(f"{action}: date_end 必須晚於 date_start")
     return out
@@ -609,13 +741,13 @@ def closed_values(action: Any, payload: Any) -> list:
 def missing_required_labels(action: Any, payload: Any) -> list:
     """缺必填欄位的**中文標籤**清單（固定詞彙，⛔ 不含任何使用者值）；不是封閉表動作 ⇒ `[]`。
 
-    §3f 2：`confirm.request` 缺必填時仍回 `INVALID_INPUT`、⛔ 出卡，但把這份清單
+    `confirm.request` 缺必填時仍回 `INVALID_INPUT`、⛔ 出卡，但把這份清單
     交給模型追問。⚠️ 系統填的編號（`sys_id`）不算缺——它在出卡前由系統解析；
     名稱指稱鍵若有替代來源（`_REF_ALTERNATIVES`）有給也不算缺。
     """
     if action not in CLOSED_ACTION_FIELDS or not isinstance(payload, Mapping):
         return []
-    # W1（plan-write-flow-program-owned-20261017 §2.1(1)）：5 支寫入動作的缺欄計算一律走
+    # W1：5 支寫入動作的缺欄計算一律走
     # `write_forms.missing_labels`（封閉三動作的表單由本檔欄位表導出，輸出逐字不變）。
     # 延遲 import：`write_forms` 本身 import 本檔。
     from services.agent.write_forms import missing_labels
@@ -643,8 +775,15 @@ def _render_closed(payload: Mapping[str, Any], today: Optional[date], *, action:
     ref_line = _CLOSED_REF_LINES.get(action)
     if ref_line is not None:
         name_key, id_key = ref_line
-        # 卡上編號＝寫入編號（§3f 1d）：名稱與編號合印一行，使用者確認的就是這一筆。
+        # 卡上編號＝寫入編號：名稱與編號合印一行，使用者確認的就是這一筆。
         rows.append((fields[name_key].label, f"{by_key[name_key]}（編號 {by_key[id_key]}）"))
+    # 系統寫入的核對資料 ⇒ 名稱行之後多一行（沒有 ⇒ 卡逐字不變）。
+    display = pick_display_of(action, payload)
+    if display is not None:
+        if action == MANUAL_BILL_CREATE_ACTION:
+            rows.append(("合約期間", _display_period(display.get("date_start"), display.get("date_end"))))
+        else:
+            rows.append(("物件位置", _display_location(display)))
     for key, value in values:
         if ref_line is not None and key in ref_line:
             continue
@@ -730,7 +869,7 @@ def render(action: Any, payload: Any, *, today: Optional[date] = None) -> str:
 # 時鐘——那會讓本檔變成不決定性的，也會讓測試的 monkeypatch 失效。
 #
 # 為什麼判定在這一層：`render()` 只驗形狀與那條等式，三個數字彼此自洽的一組
-# **過去**日期照樣出得了卡、兌現得了（H1 走查實測）。「不得早於今天」是這一欄的
+# **過去**日期照樣出得了卡、兌現得了。「不得早於今天」是這一欄的
 # **語義**，語義屬於契約層，⛔ 不是某支工具的 if。
 #
 # ⚠️ 三個呼叫點的時鐘語義不完全相同，這是刻意的：出卡端是嚴格等式（只有一個
@@ -740,7 +879,7 @@ def render(action: Any, payload: Any, *, today: Optional[date] = None) -> str:
 # 新時鐘嚴格檢查（縱深）。
 # ---------------------------------------------------------------------------
 
-#: 站內幫手 S3（§3h 第 5 點；DSP-076）：收據日期的**卡外提示**——⛔ 不進卡文字、
+#: 站內幫手 S3（DSP-076）：收據日期的**卡外提示**——⛔ 不進卡文字、
 #: ⛔ 不進 payload／雜湊；繳費期限一律由使用者另給。
 RECEIPT_DATE_HINT_TEMPLATE: Final[str] = "收據日期：{date}（僅供參考，不會寫入帳單）"
 
@@ -790,7 +929,7 @@ def fields_before_today(action: Any, payload: Any, today: date) -> list:
 # 執行後的回覆句（W3 用；同樣決定性、同樣不經模型）
 # ---------------------------------------------------------------------------
 
-#: 工具回 `ok=False` 時的**誠實固定句**（Plan W3 逐字）。⛔ 不加「請稍後再試」
+#: 工具回 `ok=False` 時的**誠實固定句**。⛔ 不加「請稍後再試」
 #: 之類的補語：我們並不知道重試會不會成功，多一句就是多一個沒有根據的承諾。
 ACTION_FAILED_TEXT: Final[str] = "這筆操作目前無法執行"
 
@@ -868,7 +1007,7 @@ def render_receipt(action: Any, payload: Any, receipt: Any) -> str:
         except ConfirmCardError:
             values = {}
         if action == ESTATE_CREATE_ACTION:
-            # 站內幫手 S5（S5-15，業主「印物件名稱，不印 id」）：物件只印名稱，⛔ 印單號。
+            # 物件只印名稱，⛔ 印單號。
             name = values.get("title")
             return f"已建立物件「{name}」。" if name else "已建立物件。"
         if action == CONTRACT_CREATE_ACTION:
@@ -905,6 +1044,10 @@ __all__ = [
     "CARD_ROW_PREFIX",
     "CARD_ROW_SEP",
     "card_display_rows",
+    "PICK_DISPLAY_KEY",
+    "PICK_DISPLAY_NONE",
+    "PICK_DISPLAY_TEXT_MAX",
+    "pick_display_of",
     "EMPTY_DESCRIPTION_ZH",
     "ACTION_FAILED_TEXT",
     "CONFIRMATION_REQUIRED_TEXT",

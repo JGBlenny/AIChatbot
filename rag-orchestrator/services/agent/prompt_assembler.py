@@ -126,6 +126,14 @@ _ALLOWED_SLOT_VALUE_TYPES = (str, int, float, bool, type(None))
 
 _TOOL_LIST_HEADER = "【可用工具】（用途一句話；實際參數形狀由 function calling 的 schema 給定）"
 
+#: W2 1-1（W-R7，DSP-095）：system 提示末尾的明示 JSON 句。OpenAI 結構化輸出指南：沒有明示要輸出 JSON，
+#: 模型可能一路灌空白到上限。⛔ 改措辭——這是第 0 步實測過的原句（`w2/shim/replay.py` `SYSJSON`），
+#: 換句（含換成中文）須重量。
+OUTPUT_JSON_INSTRUCTION = (
+    "Always respond with a single valid JSON object that matches the schema; "
+    "do not output any text before or after the JSON."
+)
+
 
 def _agent_rules_text(nonce: str) -> str:
     """本系統程式產生的鐵則指令文字（R11.5 (i)）。
@@ -516,6 +524,7 @@ class PromptAssembler:
             outline_tokens = int(getattr(outline, "token_count", 0) or 0)
 
         parts.extend(self._slot_blocks(slots, nonce))
+        parts.append(OUTPUT_JSON_INSTRUCTION)
 
         system_content = "\n\n".join(parts)
         messages: list[dict] = [{"role": "system", "content": system_content}]

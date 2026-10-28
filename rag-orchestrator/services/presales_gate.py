@@ -3,14 +3,14 @@
 **只有純函式**：門檻讀值（唯一讀值點）、`fact_class` 正規化、handoff 建構、封閉三詞掃描。
 ⛔ 無 I/O、無 LLM、無 DB。引擎（`conversational_engine`）與路由（`routers/chat.py`）只呼叫這裡，⛔ 不各自實作。
 
-為什麼要有這一層（2026-09-04 盤查根因，`docs/presales-assistant-rootcause-20260904.md`）：
-售前對話在知識庫無佐證時仍由 LLM 生成事實——「不杜撰」寫在 prompt 裡擋不住（同題五次三種立場）。
+為什麼要有這一層（根因見 `docs/presales-assistant-rootcause-20260904.md`）：
+售前對話在知識庫無佐證時仍由 LLM 生成事實——「不杜撰」寫在 prompt 裡擋不住（同一題會給出不同立場）。
 閘門必須是程式，不是叮嚀。
 
 ⚠️ 三個刻意的「不」：
 - `parse_fact_class` ⛔ 不做大小寫／同義正規化——容忍變體等於讓 brain 的資料品質問題靜默通過（比照 `instance_applicability.knowledge_instance_applicability`）。
 - `HANDOFF_WORDS` 是**封閉集合**——它治的是「三個詞出現就補訊號」，⛔ 不擴成「這句是不是在轉人」的開放語義判斷（`feedback_rule_vs_layer`）。
-- `presales_threshold` 壞值回決策層預設、⛔ 不回 0——0 就是 2026-09-04 之前的病灶（`_converge_grounding` 的 `similarity_threshold=0.0`）。
+- `presales_threshold` 壞值回決策層預設、⛔ 不回 0——門檻 0 會讓無佐證的事實題照樣放行（`_converge_grounding` 的 `similarity_threshold=0.0`）。
 """
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ from services.decision_layer import DecisionConfig
 
 #: 售前專用門檻覆寫鍵；未設或壞值 ⇒ 沿用決策層唯一讀值點 `DecisionConfig.kb_threshold`（需求 1.2／1.3）
 THRESHOLD_ENV: Final[str] = "PRESALES_GROUNDING_THRESHOLD"
-#: D6 抽取式作答的開關。業主 2026-09-04 二次裁決：**預設關**——先補知識（DSP-008、3600／3610／3584 講法）再考慮開。
+#: D6 抽取式作答的開關。**預設關**（DSP-008）——知識講法補齊前不開。
 #: 關＝事實題有知識時交 LLM 依知識合成（temp 0.2、逐項對照）；開＝貼 top-1 知識原文。三條路（converge／inline／ask 反問句）同一開關。
 EXTRACTIVE_ENV: Final[str] = "PRESALES_EXTRACTIVE"
 _TRUTHY: Final[FrozenSet[str]] = frozenset({"1", "true", "on", "yes"})
@@ -71,9 +71,21 @@ class HandoffReason(str, Enum):
     #    以及由 AgentRuntime（任務 2.1）在降級時直接指定。
     tool_unavailable = "tool_unavailable"                # 工具逾時／server 不可用，重試一次仍失敗（design 錯誤處理表）
     budget_exhausted = "budget_exhausted"                # 工具呼叫數／重寫次數／deadline 任一耗盡（design 預算計數表）
+    # ── E 片 ──
+    # ⚠️ **只由程式轉人出口設定**（使用者明確要求真人，`AgentRuntime._dialog_act_exit`），⛔ 讓主模型看見：
+    #    主輸出 schema 與 `handoff.request` 工具 enum 一律用 `MODEL_VISIBLE_HANDOFF_REASONS`（排除本值）。
+    user_request = "user_request"                        # 使用者明確要求真人（AI 理解標籤 wants_human，程式轉人）
 
 
-#: D6 多項目問句的封閉分隔詞（業主 2026-09-04）：命中任一 ⇒ 視為「一次問多個項目」。⛔ 不含逗號（幾乎每句都有）、不做語義判斷。
+#: E 片：只由程式出口設定、⛔ 主模型可見的轉人原因（主輸出 schema、`handoff.request` enum、Verifier 值域檢查都排除它）。
+PROGRAM_ONLY_HANDOFF_REASONS: Final[Tuple[str, ...]] = ("user_request",)
+#: 主模型可見的轉人原因值域＝`HandoffReason` 去掉程式專用值（順序同列舉）。
+MODEL_VISIBLE_HANDOFF_REASONS: Final[Tuple[str, ...]] = tuple(
+    r.value for r in HandoffReason if r.value not in PROGRAM_ONLY_HANDOFF_REASONS
+)
+
+
+#: D6 多項目問句的封閉分隔詞：命中任一 ⇒ 視為「一次問多個項目」。⛔ 不含逗號（幾乎每句都有）、不做語義判斷。
 MULTI_ITEM_SEPARATORS: Final[Tuple[str, ...]] = ("、", "和", "跟", "與", "及", "含", "包含")
 
 
@@ -245,14 +257,12 @@ def scan_handoff_mentions(text: Optional[str]) -> bool:
 
 
 # ---------------------------------------------------------------------------
-# 身分反問句型表（Plan `.kiro/specs/knowledge-outline-and-intent-architecture/inputs/
-# plan-m-d-runtime-wiring-20260907.md` §4.1-7／-8；業主 2026-09-07 核：30 句全收、
-# 第 4 節三條誤殺風險走 (b)「先留著量」、主張縮為「**agent 路徑內**不重問」）
+# 身分反問句型表（只約束「**agent 路徑內**不重問」）
 # ---------------------------------------------------------------------------
 
 #: 售前五欄位（identity／scale／team／pain／interested，來源
 #: `inputs/kb3645-presales-dialogue-rules-20260906.md`）的「模型正在向對方**索取**這個
-#: 欄位」句型片段。內容＝業主核可的
+#: 欄位」句型片段。內容＝
 #: `inputs/identity-reask-patterns-draft-20260907.md` 三十列**逐字**（測試對該檔逐列對帳）。
 #:
 #: ⛔ **只給測試與掃描用**（`tests/unit/agent/test_identity_no_reask_req.py`；4.4b 對真
@@ -270,7 +280,7 @@ def scan_handoff_mentions(text: Optional[str]) -> bool:
 #: 非空守門與「清空必紅」的正對照都在同名測試的第一節。
 #:
 #: ⚠️ 它 ⛔ 不是「這句有沒有禮貌／該不該收斂」的尺；它只回答一件事：這句在問對方
-#: **是誰／多大／幾人／痛在哪／想看什麼**嗎。已知誤殺（業主裁定先留著量、⛔ 不加個案
+#: **是誰／多大／幾人／痛在哪／想看什麼**嗎。已知誤殺（先留著、⛔ 不加個案
 #: 例外分支；要改就以「一類」為單位收窄或整條拿掉）：`interested` 的「有興趣的功能」
 #: 也可能出現在陳述句、`pain` 的「有什麼困擾」也可能出現在同理句、`scale` 的
 #: 「大概幾間」／「多少間房」可能被 CTA 文案掃到。
@@ -348,7 +358,7 @@ def reask_hits(text: Optional[str], fields: Iterable[str]) -> Dict[str, Tuple[st
 
 
 __all__ = [
-    "THRESHOLD_ENV", "EXTRACTIVE_ENV", "extractive_enabled", "FactClass", "SENSITIVE", "HANDOFF_WORDS", "MULTI_ITEM_SEPARATORS", "HandoffReason", "Handoff",
+    "THRESHOLD_ENV", "EXTRACTIVE_ENV", "extractive_enabled", "FactClass", "SENSITIVE", "HANDOFF_WORDS", "MULTI_ITEM_SEPARATORS", "HandoffReason", "PROGRAM_ONLY_HANDOFF_REASONS", "MODEL_VISIBLE_HANDOFF_REASONS", "Handoff",
     "presales_threshold", "parse_fact_class", "build_handoff", "build_llm_mention_handoff", "build_partial_handoff",
     "scan_handoff_mentions", "is_multi_item_question",
     "QUESTION_MARKERS", "ASK_DECLARATIVE_MIN_CHARS", "looks_like_question", "split_declaratives", "ask_is_answering",

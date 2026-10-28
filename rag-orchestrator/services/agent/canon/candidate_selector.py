@@ -6,7 +6,7 @@
 `CandidateOutlineDoc.from_canon(canon, identity, [], toc, …)`，⛔ 不是未過濾整份大綱），
 ⛔ 本模組不回半成品。
 
-## 三條硬規則（⛔ 這三條是本檔存在的理由，改動前先看 Plan §1.6／§4.7）
+## 三條硬規則（⛔ 這三條是本檔存在的理由）
 
 1. **失敗只會回 `None`，⛔ 不會變寬**：`state != "ready"`、`canon_sha256` 不符、
    查詢向量拿不到（例外／逾時／`None`／形狀不合）——四種情況一律 `None`。
@@ -16,7 +16,7 @@
    就切掉（`FineIndex.visible_subset` → `canon_assembler.canon_visible`，3.2 已與
    `build_visibility_predicate` 零分歧，唯一例外＝`system_admin` 正本側折成 `property_manager`，DSP-053a），⛔ 不在排序後再過濾（那種寫法一旦
    有人動排序就會漏）。
-3. **⛔ 不記講法 id、⛔ 不 log 查詢**（F18／業主 2026-09-07 §8.1；任務 3.7 擴及內文句）：
+3. **⛔ 不記講法 id、⛔ 不 log 查詢**（含內文句）：
    `Selection` 只帶 `winning_key_kind ∈ {"title","phrasing","content"}`。講法對照表就在
    repo，記 `ph:<sha8>` 等於一次查表就還原出使用者問句；內文句是正本答案本文，
    ⛔ 不記 `ct:*`，同待遇。本模組 ⛔ 不得有 `print`；`logging` 只准帶數量／狀態／例外型別名。
@@ -65,8 +65,7 @@ MissKind = Literal[
 class Selection(TypedDict):
     """一回合的選取結果。
 
-    ⛔ **無 `winning_key`／無 `ph:*`／無 `ct:*`**（業主 2026-09-07 §8.1 裁：trace 不記講法 id；
-    任務 3.7 擴及內文句鍵）。
+    ⛔ **無 `winning_key`／無 `ph:*`／無 `ct:*`**（trace 不記講法 id，也不記內文句鍵）。
     `winning_key_kind` 與 `scores` 只涵蓋 `candidate_ids` 內的細目——沒進候選的細目
     連分數都不外流。
     """
@@ -180,7 +179,7 @@ class CandidateSelector:
     def _best_entry(self, fine_id: str, query_vector) -> Optional[tuple[float, KeyKind]]:
         """該細目分數最高的索引項 `(score, kind)`；無索引項 ⇒ `None`。
 
-        同分序 `title > phrasing > content`（Plan §1.6／§1.2-7、業主 2026-09-07 §8.1 裁）——
+        同分序 `title > phrasing > content`——
         ⚠️ 用明示的比較鍵，⛔ 不依賴 `entries_for` 的回傳順序碰巧把標題排在前面
         （那是另一個檔的實作細節，改了這裡會靜默跟著變）。
         """

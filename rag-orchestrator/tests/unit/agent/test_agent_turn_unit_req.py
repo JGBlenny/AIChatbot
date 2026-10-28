@@ -108,10 +108,15 @@ class FakeProvider:
                         and (rf.get("json_schema") or {}).get("name") == STATE_CLAIM_SCHEMA_NAME):
                     return _fake_response(_fake_message(content='{"claims": []}'),
                                           prompt_tokens=0, completion_tokens=0)
+                if isinstance(rf, dict) and (rf.get("json_schema") or {}).get("name") == "DialogAct":
+                    # E 片：只判斷 dialog_act 的獨立呼叫（⛔ 吃主腳本、⛔ 計入 calls）
+                    return _fake_response(_fake_message(content='{"dialog_act": "none"}'),
+                                          prompt_tokens=0, completion_tokens=0)
                 outer.calls.append(kwargs)
                 assert outer.script, "假 provider 腳本已耗盡——測試少寫了一步"
                 step = outer.script.pop(0)
-                return step(kwargs) if callable(step) else step
+                from tests.unit.agent.test_runtime_req import maybe_stream
+                return maybe_stream(step(kwargs) if callable(step) else step, kwargs)
 
         self.async_client = SimpleNamespace(
             chat=SimpleNamespace(completions=_Completions())

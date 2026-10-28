@@ -335,7 +335,9 @@ async def test_estate_create_success_body_and_row_equal_payload(api):
     assert row["role_id"] == int(ROLE) and row["user_id"] == int(OWNER)
 
 
-async def test_contract_create_card_body_and_row(api):
+async def test_contract_create_card_body_and_row(api, monkeypatch):
+    # 卡文字寫死的是改前版本（「選對紀錄」片 on 多「物件位置」行，由 test_pick_right_record_req 驗）。
+    monkeypatch.setenv("AGENT_PICK_RIGHT", "off")
     card = await _card(_pm(), _contract_payload())
     assert card.ok, card
     assert card.data["card"] == ("即將建立合約，請確認：\n"
@@ -367,7 +369,9 @@ async def test_contract_create_given_optionals_are_equal(api):
     assert (row["deposit_amount"], row["title"], row["to_user_email"]) == (36000, "三樓租約", "a@b.co")
 
 
-async def test_manual_bill_card_body_and_row(api):
+async def test_manual_bill_card_body_and_row(api, monkeypatch):
+    # 卡文字寫死的是改前版本（「選對紀錄」片 on 多「合約期間」行，由 test_pick_right_record_req 驗）。
+    monkeypatch.setenv("AGENT_PICK_RIGHT", "off")
     card = await _card(_pm(), _bill_payload())
     assert card.ok, card
     assert card.data["card"] == ("即將建立手動帳單，請確認：\n"

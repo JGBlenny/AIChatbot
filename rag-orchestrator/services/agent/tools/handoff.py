@@ -45,10 +45,14 @@ from services.conversational_config import (
     effective_handoff_channel,
     effective_handoff_message,
 )
-from services.presales_gate import FactClass, Handoff, HandoffReason, parse_fact_class
+from services.presales_gate import (
+    MODEL_VISIBLE_HANDOFF_REASONS, FactClass, Handoff, HandoffReason, parse_fact_class,
+)
 
-#: 模型可傳的 reason 值域＝`HandoffReason` 全值域（現行四值＋2.4 的兩個新值）。
-HANDOFF_REASONS: Final[Tuple[str, ...]] = tuple(r.value for r in HandoffReason)
+#: 模型可傳的 reason 值域＝`HandoffReason` 去掉程式專用值（現行四值＋2.4 的兩個新值）。
+#: E 片：`user_request` 只由程式轉人出口設定（`AgentRuntime._dialog_act_exit`），⛔ 讓模型經本工具送；
+#: 值域與 E 片前逐位元組相同（`MODEL_VISIBLE_HANDOFF_REASONS` 為唯一來源，不受開關影響）。
+HANDOFF_REASONS: Final[Tuple[str, ...]] = MODEL_VISIBLE_HANDOFF_REASONS
 #: `fact_class` 值域＝`FactClass` 封閉七值（presales_gate 需求 3.1）。
 HANDOFF_FACT_CLASSES: Final[Tuple[str, ...]] = tuple(f.value for f in FactClass)
 

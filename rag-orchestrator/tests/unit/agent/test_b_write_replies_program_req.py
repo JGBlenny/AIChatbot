@@ -53,6 +53,14 @@ from tests.unit.agent.test_write_draft_flow_req import (
 pytestmark = [pytest.mark.unit,
               pytest.mark.req("agentic-mcp-orchestration:plan-b-write-replies-program")]
 
+
+@pytest.fixture(autouse=True)
+def _fill_data_text_off(monkeypatch):
+    """填欄只填答覆片（plan-fill-answer-only-20261027）：本檔的假寫入意圖不帶 `data_texts`，驗的是改前行為 ⇒ 釘住
+    `AGENT_FILL_DATA_TEXT=off`（off 與改前逐字相同，FA8 (2)；on 的行為見 test_fill_data_text_req.py）。"""
+    monkeypatch.setenv("AGENT_FILL_DATA_TEXT", "off")
+
+
 AGENT_DIR = Path(runtime_mod.__file__).resolve().parent
 MODEL_SAID = "ZQ模型自己寫的回話ZQ"
 REPAIR_FIELDS = {"estate_name": STUDENT_ESTATE, "description": "冷氣不冷"}
@@ -249,7 +257,8 @@ def _assert_same_card(res, provider, w: _World, pid: str, card: str, lead: str, 
 
 @pytest.mark.parametrize("b_reply", ["on", "off"])
 async def test_v3_state_card_still_valid_reissues_the_same_card(api, monkeypatch, b_reply):
-    """V3 狀態 (1)：綁定卡 live 且草稿＝卡 ⇒ `CARD_STILL_VALID_TEXT`＋整張卡、同 pid、無新 token。"""
+    """V3 狀態 (1)：綁定卡 live 且草稿＝卡 ⇒ 前導句＋整張卡、同 pid、無新 token。填欄只填答覆修復輪 3：本回合沒讀到
+    任何值（意圖 `none`）⇒ 前導句是 `CARD_NO_CHANGE_TEXT`（原為 `CARD_STILL_VALID_TEXT`）；分支名不變。"""
     if b_reply == "off":
         _b_off(monkeypatch)
     w = _World()
@@ -258,8 +267,9 @@ async def test_v3_state_card_still_valid_reissues_the_same_card(api, monkeypatch
     res, provider = await _bt(w, LATER, [_out(MODEL_SAID)], intents=[_intent("none")])
     if b_reply == "on":
         assert _branch(res) == WF.WRITE_REPLY_STATE_CARD_STILL_VALID
-        _assert_same_card(res, provider, w, pid, r1.answer, WF.CARD_STILL_VALID_TEXT,
+        _assert_same_card(res, provider, w, pid, r1.answer, WF.CARD_NO_CHANGE_TEXT,
                           rows_before=rows_before)
+        assert WF.V_CARD_NO_VALUE_READ in res.trace.violations
     else:
         assert MODEL_SAID in res.answer and res.trace.pending_id is None
 
@@ -397,7 +407,8 @@ async def test_v4_non_question_turn_ask_and_recommend_become_program_reply(api, 
     if setup == "missing":
         _assert_missing_ask(res)
     else:
-        assert res.answer == f"{WF.CARD_STILL_VALID_TEXT}\n{card}" and res.trace.pending_id == pid
+        # 填欄只填答覆修復輪 3：本回合沒讀到值 ⇒ 前導句 `CARD_NO_CHANGE_TEXT`（原 `CARD_STILL_VALID_TEXT`）
+        assert res.answer == f"{WF.CARD_NO_CHANGE_TEXT}\n{card}" and res.trace.pending_id == pid
 
 
 @pytest.mark.parametrize("b_reply", ["on", "off"])
@@ -469,7 +480,8 @@ async def test_v4_3_question_turn_unissued_proposal_confirm_intent_never_carries
     if b_reply == "on":
         assert len(provider.calls) == 2                                    # 問句回合照現行交回模型
         assert MODEL_SAID not in res.answer and SOURCE_PROGRAM in res.trace.violations
-        assert res.answer == f"{WF.CARD_STILL_VALID_TEXT}\n{r1.answer}" and res.trace.pending_id == pid
+        # 填欄只填答覆修復輪 3：本回合沒讀到值 ⇒ 前導句 `CARD_NO_CHANGE_TEXT`（原 `CARD_STILL_VALID_TEXT`）
+        assert res.answer == f"{WF.CARD_NO_CHANGE_TEXT}\n{r1.answer}" and res.trace.pending_id == pid
         assert res.ask_target != "confirm_intent"
         await _next_turn_ok_is_not_carried_or_redeemed(w, pid)
     else:
@@ -509,7 +521,8 @@ async def test_v4_5_question_turn_answer_is_model_text_plus_card(api, monkeypatc
         assert res.answer == KNOWLEDGE_ANSWER and res.trace.pending_id is None
         return
     assert len(provider.calls) == 1
-    assert res.answer == f"{KNOWLEDGE_ANSWER}\n\n{WF.CARD_STILL_VALID_TEXT}\n{card}", res.answer
+    # 填欄只填答覆修復輪 3：本回合沒讀到值 ⇒ 前導句 `CARD_NO_CHANGE_TEXT`（原 `CARD_STILL_VALID_TEXT`）
+    assert res.answer == f"{KNOWLEDGE_ANSWER}\n\n{WF.CARD_NO_CHANGE_TEXT}\n{card}", res.answer
     assert res.answer.endswith(card)
     assert C.sha256_hex(card) == w.db.row(pid)["summary_sha256"]
     assert res.quick_replies == C.confirm_quick_replies(pid) and res.trace.pending_id == pid
@@ -614,7 +627,8 @@ async def test_v5a_i_awaiting_with_live_card_is_sent(api):
     res, provider = await _bt(w, "要按哪裡？", [_out(MODEL_SAID)], intents=[_intent("none")],
                               judge=[_claims(SC.CLAIM_AWAITING)])
     assert len(provider.main.judge_calls) == 1 and _unbacked(res) == []
-    assert res.answer == f"{MODEL_SAID}\n\n{WF.CARD_STILL_VALID_TEXT}\n{r1.answer}"
+    # 填欄只填答覆修復輪 3：本回合沒讀到值 ⇒ 前導句 `CARD_NO_CHANGE_TEXT`（原 `CARD_STILL_VALID_TEXT`）
+    assert res.answer == f"{MODEL_SAID}\n\n{WF.CARD_NO_CHANGE_TEXT}\n{r1.answer}"
     assert res.trace.pending_id == pid
 
 
@@ -703,7 +717,7 @@ async def test_v5c_answer_ask_recommend_are_all_judged(api, out_kind):
 async def test_v5c_handoff_is_never_judged(api):
     """V5 (c) 正對照：`kind=handoff` ⇒ ⛔ 呼叫判讀（DSP-021 固定句照舊）。"""
     w = _World()
-    res, provider = await _bt(w, "我要找真人", [_out("", kind="handoff", handoff_reason="user_request",
+    res, provider = await _bt(w, "我要找真人", [_out("", kind="handoff", handoff_reason="tool_unavailable",
                                                 fact_class="other")],
                               intents=[_intent("none")], judge=[_claims(SC.CLAIM_HANDED_OFF)])
     assert res.kind == "handoff"
@@ -875,7 +889,7 @@ async def test_v5j_replacement_texts_stay_true_after_receipt_and_handoff(api):
     res2, _p = await _bt(w, THANKS, [_out(MODEL_SAID)], intents=[_intent("none")],
                          judge=[_claims(SC.CLAIM_HANDED_OFF)])
     assert res2.answer == WF.HANDOFF_OFFER_TEXT
-    ho, _p = await _bt(w, "我要找真人", [_out("", kind="handoff", handoff_reason="user_request",
+    ho, _p = await _bt(w, "我要找真人", [_out("", kind="handoff", handoff_reason="tool_unavailable",
                                               fact_class="other")], intents=[_intent("none")])
     assert ho.kind == "handoff"
     res3, _p = await _bt(w, THANKS, [_out(MODEL_SAID)], intents=[_intent("none")],
@@ -981,7 +995,8 @@ def _add_mansion_estate() -> None:
 @pytest.mark.parametrize("b_reply", ["on", "off"])
 async def test_v9_restating_mansion_lists_what_was_read(api, monkeypatch, b_reply):
     """V9：卡物件「豪宅」；使用者「物件不對，是就是豪宅啦」、意圖抽成「豪宅」⇒ 回覆含「卡片還在」句、列出
-    「物件「豪宅」」、同卡同 pid、無新 token。正對照（off）：只有「卡片還在」句＋卡（不列讀到的值）。"""
+    「物件「豪宅」」、同卡同 pid、無新 token。正對照（off）：只有「卡片還在」句＋卡（不列讀到的值）。
+    填欄只填答覆修復輪 4（brief-fix5）：on 的前導句由 `CARD_STILL_VALID_TEXT` 改為 `CARD_READ_SAME_LEAD`；off 照舊。"""
     if b_reply == "off":
         _b_off(monkeypatch)
     # A-2a（§4.1「`repair_create` 物件多筆：出卡前先判」）：實測 mock 物件名稱查詢（`_viewer_estate_rows`
@@ -999,7 +1014,8 @@ async def test_v9_restating_mansion_lists_what_was_read(api, monkeypatch, b_repl
     assert w.db.rows == rows_before and w.db.pids(w.session_id) == [pid]
     if b_reply == "on":
         line = WF.card_read_values_text([("物件", MANSION)])
-        assert res.answer == f"{WF.CARD_STILL_VALID_TEXT}\n{line}\n{r1.answer}", res.answer
+        assert res.answer == f"{WF.CARD_READ_SAME_LEAD}\n{line}\n{r1.answer}", res.answer
+        assert WF.CARD_STILL_VALID_TEXT not in res.answer
         assert "物件「豪宅」" in res.answer
     else:
         assert res.answer == f"{WF.CARD_STILL_VALID_TEXT}\n{r1.answer}"
@@ -1199,13 +1215,22 @@ def test_v16a_program_reply_functions_never_call_an_llm():
 
 def test_v16b_program_texts_are_fixed_constants():
     """V16 (b)：每個 B2 分支與換回句的回覆來源是常數或樣板（Q2 不潤飾）；各分支回覆逐字相等由 V3／V4／V5
-    的單元斷言驗（`==` 常數或 `.format()`）。這裡驗常數本身非空、彼此不同、⛔ 含格式欄位以外的變數。"""
+    的單元斷言驗（`==` 常數或 `.format()`）。這裡驗常數本身非空、彼此不同、⛔ 含格式欄位以外的變數。
+    F12 r6-3 (a)：固定句清單加「已改成：{title}（編號 {id}）。」（名稱只取系統列，見 r6 測試檔 (j)）。"""
     texts = [WF.CARD_STILL_VALID_TEXT, WF.CARD_UNCHANGED_TEXT, WF.CARD_DIFFERS_TEXT,
-             WF.WRITE_NOT_ISSUED_TEXT, WF.NO_PENDING_WRITE_TEXT, WF.HANDOFF_OFFER_TEXT]
+             WF.WRITE_NOT_ISSUED_TEXT, WF.NO_PENDING_WRITE_TEXT, WF.HANDOFF_OFFER_TEXT,
+             WF.CARD_NO_CHANGE_TEXT]
     assert all(isinstance(t, str) and t and "{" not in t for t in texts)
     assert len(set(texts)) == len(texts)
     assert set(re.findall(r"{(\w+)}", C.MISSING_FIELDS_ASK_TEMPLATE)) == {"labels"}
     assert set(re.findall(r"{(\w+)}", WF.CARD_READ_VALUES_TEMPLATE)) == {"pairs"}
+    # F12 r6-3 (a)（計畫 §11.6、§11.8 R6-S2）：改選回合未出卡的告知句——樣板欄位只含 `{title}`、`{id}`；
+    # 寫進 dialog 的程式摘要是常數、⛔ 含任何格式欄位（不含名稱）。
+    from services.agent import write_candidates as WC
+    assert re.findall(r"{(\w+)}", WC.CANDIDATE_REPICK_TEXT) == ["title", "id"]
+    assert set(re.findall(r"{[^}]*}", WC.CANDIDATE_REPICK_TEXT)) == {"{title}", "{id}"}
+    assert WC.CANDIDATE_REPICK_DIALOG_SUMMARY and "{" not in WC.CANDIDATE_REPICK_DIALOG_SUMMARY
+    assert WC.CANDIDATE_REPICK_TEXT not in texts and WC.CANDIDATE_REPICK_DIALOG_SUMMARY not in texts
 
 
 def test_state_claim_prompt_excludes_pick_record_and_supply_data_from_awaiting():

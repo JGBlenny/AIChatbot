@@ -28,7 +28,7 @@
 由資料庫的列鎖保證只有一個 caller 拿得到 RETURNING 的列，第二個回空 ⇒
 `CONFIRMATION_REQUIRED`。這同時就是「兌現一次」與「冪等」。
 
-**DSP-038（2026-09-08）三處變更**：
+**DSP-038 三處變更**：
   1. `payload` **必含 `action`**，值域封閉為 `confirm_card.CONFIRM_ACTIONS`
      （⛔ 簽名不變，仍是 `{summary, payload}`——R4.2 的文字不動）。
      ⚠️ 這條 enum **驗在程式裡、不在 JSON Schema 裡**：`payload` 是
@@ -39,7 +39,7 @@
      ⛔ 不再是模型 `summary` 的雜湊——理由見 `confirm_card` 模組 docstring。
   3. 表多一欄 `pending_id`（＝`sha256(token)[:16]`，本來就算得出來、現在存下來
      當兌現的查詢鍵），於是 Runtime 能只憑 `(session_id, pending_id)` 兌現，
-     **token 完全不必離開 DB 與 `run_turn` 這一格行程**（r1 B2 的 P1 處置）。
+     **token 完全不必離開 DB 與 `run_turn` 這一格行程**。
 
 **⚠️ 雜湊不符時 token 已經被燒掉**：`UPDATE` 先把 `redeemed` 設成 true，之後才
 比對重算的 `payload_sha256`。這是**刻意的**——若比對失敗還把 token 留著可用，
@@ -48,6 +48,7 @@
 """
 from __future__ import annotations
 
+import asyncio
 import copy
 import hashlib
 import hmac
@@ -55,9 +56,10 @@ import json
 import logging
 import re
 import secrets
-from dataclasses import dataclass
+import unicodedata
+from dataclasses import dataclass, field as _dc_field
 from datetime import date, timedelta
-from typing import Any, Final, List, Optional, Tuple
+from typing import Any, Callable, Final, List, Optional, Sequence, Tuple
 
 from services.agent.bill_period import PeriodSpec, parse_period
 from services.agent.confirm_card import (
@@ -90,6 +92,7 @@ from services.agent.tools import jgb2 as jgb2_tools
 from services.agent.tools.action import (
     BILL_DUE_EXTEND_ACTION,
     _identity_pair,
+    _real_rows,
     _resolve_category,
     _resolve_estate,
     _viewer_contract_rows,
@@ -97,6 +100,7 @@ from services.agent.tools.action import (
     viewer_bill_row,
 )
 from services.agent import write_candidates as _wc
+from services.agent import name_match as _nm
 from services.agent.tools import registry as _registry
 from services.agent.tools.registry import Provenance, ToolResult, ToolSpec
 # ⚠️ **import 模組、⛔ 不 `from … import _today`**：時鐘要在呼叫點取值，
@@ -205,7 +209,7 @@ CONFIRM_SPEC: ToolSpec = {
     "stage": {"prospect": "M1", "property_manager": "M1", "tenant": "M1"},
 }
 
-# A-2a（計畫 §4.5）：`ToolRegistry.call` 只把程式專用選定通道 `program_pick` 轉給這一支工具；
+# `ToolRegistry.call` 只把程式專用選定通道 `program_pick` 轉給這一支工具；
 # 兩邊的工具名必須是同一個值（⛔ 改名時默默讓通道失效）。
 assert CONFIRM_SPEC["name"] == _registry.PROGRAM_PICK_TOOL
 
@@ -264,7 +268,7 @@ VALUES ($1, $2, $3, $4, now() + ($5::int * interval '1 second'), false, now(), $
 
 #: A7／DSP-092：出卡交易的**第一句**——以 session_id 取交易級 advisory lock（commit／rollback 自動釋放）。
 #: ⚠️ READ COMMITTED 下「同交易燒＋INSERT」擋不住同 session 兩回合交錯（各自燒不到對方未 commit 的
-#:    列 ⇒ 兩張都可兌現；驗收 #9p 真 PG 實測重現）。持鎖後第二個交易要等第一個 commit 才開始燒，
+#:    列 ⇒ 兩張都可兌現）。持鎖後第二個交易要等第一個 commit 才開始燒，
 #:    燒得到第一個剛寫入的列 ⇒ 任何時刻至多一張可兌現。⛔ 拿掉、⛔ 移到燒卡句之後。
 #: `hashtext` 為 int4；不同 session 雜湊碰撞只會讓兩邊排隊（可用性），不會互燒（燒卡句只認 session_id）。
 _LOCK_SESSION_SQL: Final[str] = "SELECT pg_advisory_xact_lock(hashtext($1))"
@@ -318,7 +322,7 @@ SELECT redeemed,
 #: 第一原理取值，約一次讀卡加點擊的時間，查無業界對應；安全審查 2-3）。
 PENDING_TOKEN_MIN_REMAINING_S: Final[float] = 60.0
 
-#: W4 的寫入工具 wrapper 用：這張 token 真的被兌現過嗎。
+#: 寫入工具 wrapper 用：這張 token 真的被兌現過嗎。
 #: ⚠️ 這是**第二道**閘（第一道是 Runtime 的 `redeem_pending` 單述句競爭）——
 #: 它防的是「有人拿到 token 直呼工具」，不是 TOCTOU。
 _ASSERT_REDEEMED_SQL: Final[str] = """
@@ -329,8 +333,8 @@ SELECT 1
    AND redeemed = true
 """
 
-#: W8 (3)：出卡前未結單提示行的**唯一**文字來源。⛔ 不在別處另抄字面量。
-#: ⚠️ 這一行**在卡外**（plan-verifier W8 r2 裁定 (b)）：`render()` 與
+#: 出卡前未結單提示行的**唯一**文字來源。⛔ 不在別處另抄字面量。
+#: ⚠️ 這一行**在卡外**：`render()` 與
 #: `card_sha256` 逐位元不變（DSP-038-2「同 payload 同卡」不動），提示行由
 #: `ToolResult.data["hint"]` 帶出，Runtime 只把它接在 `TurnResult.answer`
 #: 的卡文字之後——⛔ 不進 `card`、⛔ 不進雜湊、⛔ 不進 dialog。
@@ -372,7 +376,7 @@ async def _is_valid_repair_category(category_name: Any, identity: Any = None) ->
     （`jgb2.action`/`get_repair_categories`），差別只在**時機**：這裡在出確認卡
     「之前」擋，執行時那道閘仍在（雙保險，資料源同一份不會分岔）。
     """
-    # delta4（業主 2026-09-08 採）：**缺值放行**——無鍵／None／空白＝交給系統歸「其他」
+    # **缺值放行**——無鍵／None／空白＝交給系統歸「其他」
     # （`confirm_card.category_name_of` 同一判定；`action.repair_create` 執行時補值）。
     # 有給才驗樹：給了不在樹內仍擋（⛔ 不模糊比對、不代選）。非字串 ⇒ 擋。
     if category_name is None:
@@ -390,7 +394,7 @@ async def _is_valid_repair_category(category_name: Any, identity: Any = None) ->
 
 
 def _not_found_result() -> ToolResult:
-    """站內幫手 S5（§3i 第 2 點）：出卡端解析「零筆」＝**查無**——`NO_MATCH`＋可引用的
+    """出卡端解析「零筆」＝**查無**——`NO_MATCH`＋可引用的
     查無固定句（與 `jgb2.query.*` 同一句、同一個來源標記；無權與不存在 ⛔ 細分）。"""
     return ToolResult(
         ok=False, error="NO_MATCH",
@@ -490,7 +494,7 @@ async def _bills_of_estate(identity: Identity, estate_name: str) -> List[dict]:
     user_id, viewer_user_id=user_id, keyword=…)`，`title LIKE`）：同一條可見性
     路徑、同一組身分參數，⛔ 不另開一條揭露面更大的查法。
     ⚠️ **雙證**：`role_id` 與 `user_id` 缺一即空列——這是寫入面的既有要求
-    （`action._identity_pair`／S-8），對到帳單是寫入的前一步，⛔ 不比它寬。
+    （`action._identity_pair`），對到帳單是寫入的前一步，⛔ 不比它寬。
     身分閘另外過一次 `jgb2._identity_gate_ok`（受眾決定要幾張證），⛔ 不重寫判定。
     """
     role_id = getattr(identity, "role_id", None)
@@ -576,13 +580,13 @@ def _bill_candidates_result(action: Any, payload: dict, rows: List[dict],
 
 
 # ---------------------------------------------------------------------------
-# A-2a 片（DSP-103；計畫 §4.1、§4.5）：寫入名稱多筆 ⇒ **候選形狀**（只在開關生效時）
+# DSP-103：寫入名稱多筆 ⇒ **候選形狀**（只在開關生效時）
 #
 # ⚠️ 形狀沿用帳單的 `_bill_candidates_result`（`data["candidates"]`＋`action`／`payload`），
 #    外加 `candidate_type`／`field`／`has_more`／`missing_label`：Runtime 只在「程式依草稿發出」的
 #    呼叫寫候選集；其他路徑以 `missing_label` 回現行缺欄出口（「還需要：…」）。
 # ⚠️ 列只來自出卡前解析**同一支**帶 viewer 的查詢（⛔ 另開揭露面更大的查法），且只在身分雙證齊全時
-#    產生（§11 P2-3；封閉三動作缺任一證現行即 `NO_MATCH`，到不了這裡）。列經 `minimize_row`
+#    產生（封閉三動作缺任一證即 `NO_MATCH`，到不了這裡）。列經 `minimize_row`
 #    只留投影與按鈕要用的鍵（合約列另有承租人聯絡資料，⛔ 帶出）。
 # ⚠️ 開關 off ⇒ 這一節的函式都不會被呼叫（`candidates=False`），出口逐字同 B。
 # ---------------------------------------------------------------------------
@@ -601,15 +605,46 @@ def is_candidate_shape(result: Any) -> bool:
             and isinstance(data.get("candidates"), list))
 
 
+#: 「選對紀錄」片：帳單候選形狀另帶的三鍵（只在 `AGENT_PICK_RIGHT` 生效時出現）——
+#: `pick_estate_id`＝帳單候選所屬的已選物件（runtime 寫進候選集 `scope_estate_id`）；
+#: `pick_note`／`pick_note_text`＝0 張相符時「對不上」的碼與程式固定前言（業主裁 Q3）。
+PICK_ESTATE_ID_KEY: Final[str] = "pick_estate_id"
+PICK_NOTE_KEY: Final[str] = "pick_note"
+PICK_NOTE_TEXT_KEY: Final[str] = "pick_note_text"
+
+#: F12 名稱寬鬆比對：候選形狀另帶的兩鍵——`name_lenient`（True＝寬鬆路徑產生，runtime 換固定前言）、
+#: `name_lenient_truncated`（清單可能超過第一頁 200 筆，前言接「只比對了前 200 筆」）。
+NAME_LENIENT_KEY: Final[str] = "name_lenient"
+NAME_LENIENT_TRUNCATED_KEY: Final[str] = "name_lenient_truncated"
+#: F12：寬鬆也落空的結果 `data` 鍵（值＝欄位鍵；runtime 據此回 `name_match.NAME_NOT_FOUND_TEXT`）。
+NAME_NOT_FOUND_KEY: Final[str] = "name_not_found"
+#: 候選形狀另帶的鍵——True＝(乙) 缺名稱觸發產生（runtime 換 (乙) 專用前言）。
+NAME_LENIENT_MISSING_KEY: Final[str] = "name_lenient_missing"
+#: (乙) 命中前言（程式固定句；使用者沒講過名稱 ⇒ ⛔「找不到完全相同的名稱」；⛔ 回顯原話）。
+NAME_LENIENT_MISSING_LEAD_TEXT: Final[str] = "你要處理的是下面哪一筆？"
+#: 觸發型別標記（只記型別，⛔ 句子、名稱、編號）。
+V_NAME_LENIENT_TRIGGER_NOTFOUND: Final[str] = "name_lenient:trigger:notfound"
+V_NAME_LENIENT_TRIGGER_MISSING: Final[str] = "name_lenient:trigger:missing"
+#: (丙) 名稱先查的結果型別標記（只記結果型別，⛔ 句子、名稱、編號）。
+V_NAME_EARLY_PREFIX: Final[str] = "name_early:"
+V_NAME_EARLY_ONE: Final[str] = "name_early:one"
+V_NAME_EARLY_MANY: Final[str] = "name_early:many"
+V_NAME_EARLY_NONE: Final[str] = "name_early:none"
+V_NAME_EARLY_ERROR: Final[str] = "name_early:error"
+_V_NAME_EARLY_OF_STATUS: Final = {"one": V_NAME_EARLY_ONE, "many": V_NAME_EARLY_MANY,
+                                  "none": V_NAME_EARLY_NONE, "error": V_NAME_EARLY_ERROR}
+
 #: 候選形狀比 B 多出的鍵（`candidate_fallback_result` 去掉它們即回到 B 的形狀）。
 _A2A_CANDIDATE_KEYS: Final[frozenset] = frozenset(
-    {CANDIDATE_TYPE_KEY, "field", "has_more", "missing_label"})
+    {CANDIDATE_TYPE_KEY, "field", "has_more", "missing_label",
+     PICK_ESTATE_ID_KEY, PICK_NOTE_KEY, PICK_NOTE_TEXT_KEY,
+     NAME_LENIENT_KEY, NAME_LENIENT_TRUNCATED_KEY, NAME_LENIENT_MISSING_KEY})
 
 
 def candidate_fallback_result(result: ToolResult) -> ToolResult:
-    """A-2a（計畫 §4.1；§11 P3-4）：候選形狀落在**不寫候選集**的路徑（文件回合、文件暫存回合、點選範圍
+    """候選形狀落在**不寫候選集**的路徑（文件回合、文件暫存回合、點選範圍
     回合、模型自呼、影子回合）⇒ 換回現行出口：
-    - 帳單 ⇒ B 的帳單候選形狀（去掉 A-2a 四鍵、`candidates` 截回前 `cap` 筆；Runtime 照現行 `select:bill`）；
+    - 帳單 ⇒ B 的帳單候選形狀（去掉候選四鍵、`candidates` 截回前 `cap` 筆；Runtime 照現行 `select:bill`）；
     - 其餘 ⇒ 現行缺欄清單（`missing_label`：「合約」／「物件」；Runtime 照現行缺欄追問）。
     非候選形狀 ⇒ 原樣回傳。"""
     if not is_candidate_shape(result):
@@ -626,14 +661,16 @@ def candidate_fallback_result(result: ToolResult) -> ToolResult:
 
 def _name_candidates_result(action: str, payload: dict, *, field: str, cand_type: str,
                             rows: List[dict], has_more: bool, query: str,
-                            missing_label: str) -> Optional[ToolResult]:
+                            missing_label: str, min_rows: int = 2) -> Optional[ToolResult]:
     """名稱多筆 ⇒ 候選形狀。給模型的文字／provenance 由 `jgb2._ok_candidates` 產（前 `cap` 筆，
     同 `jgb2.query.*` 命中多筆時的那一份）；`data["candidates"]` 放同一次查詢的全部列（≤20）。
-    可用列（編號形狀合法）不足 2 筆 ⇒ `None`（呼叫端維持現行缺欄出口，⛔ 列一筆的「候選」）。"""
+    可用列（編號形狀合法）不足 `min_rows` 筆 ⇒ `None`（呼叫端維持現行缺欄出口）。
+    `min_rows` 預設 2（⛔ 列一筆的「候選」）；只有名稱寬鬆比對傳 1（寬鬆命中一律列候選、
+    含只有 1 筆，⛔ 直接選定）。"""
     cap = jgb2_tools._candidate_cap()
     usable = [_wc.minimize_row(cand_type, r) for r in rows
               if isinstance(r, dict) and _wc.candidate_id(r.get("id")) is not None]
-    if len(usable) < 2:
+    if len(usable) < max(1, int(min_rows)):
         return None
     kept = usable[:_wc.WRITE_CANDIDATES_MAX]
     more = bool(has_more) or len(usable) > _wc.WRITE_CANDIDATES_MAX
@@ -651,6 +688,389 @@ def _name_candidates_result(action: str, payload: dict, *, field: str, cand_type
     data["missing_label"] = missing_label
     return ToolResult(ok=True, data=data, provenance=raw["provenance"],
                       text_for_model=raw["text_for_model"])
+
+
+# ---------------------------------------------------------------------------
+# 名稱寬鬆比對
+#
+# ⚠️ 只在呼叫端傳入 `name_lenient`（runtime 每回合一份的 `name_match.NameLenientTurn`，經
+#    `ToolRegistry.call` 的具名參數轉來，⛔ 來自 `args`）時才可能發生——模型自呼、MCP client 直呼、
+#    `closed_action_missing_labels`（`candidates=False`）都沒有它 ⇒ 永遠不觸發。
+# ⚠️ 寬鬆比對的觸發點只有兩種（(丙) 名稱先查見 `name_early_lookup`，查無時接 (甲)）：
+#    (甲) 現行名稱解析 **status＝none**（查過、零筆）之後（`_name_lenient_result`）；沒查成（error）、
+#         多筆、唯一、程式選定（`program_pick`）路徑 ⇒ 逐字不變；
+#    (乙) 寫入流程缺名稱（`missing_name_lenient`）：合併後名稱欄仍空、程式即將追問且追問含該名稱欄、
+#         本回合使用者是打字（脈絡 `NameLenientTurnCtx.typed`，runtime 判）⇒ 以本回合原話比對。
+#    兩者共用同一組閘門（生效條件、`_wc.allowed`、身分閘）與同一份 `run_once`（每回合 ≤1 次寬鬆、
+#    ≤1 次模型呼叫）。
+# ⚠️ (甲) 結果只有兩種：候選形狀（`min_rows=1`，含只有 1 筆）或「找不到這個名稱」結果；(乙) 只有候選
+#    形狀或 `None`（回空 ⇒ 呼叫端照現行追問、逐字不變）。⛔ 寫 payload 的
+#    `estate_id`／`contract_id`、⛔ 回 `status="one"`。
+# ⚠️ 整句（送模型挑選的那一句）只活在 `_compute` 的區域變數與 `ai_pick` 的 messages；
+#    ⛔ 寫進候選結果（`query` 傳名稱值，(乙) 傳空字串）、payload、provenance、log、trace。
+# ⚠️ 身分閘在任何出向呼叫之前：`role_id`、`user_id` 皆非空、受眾＝業者、過 `jgb2._identity_gate_ok`；
+#    清單查詢一律帶 `role_id` 與 `viewer_user_id=user_id`。真 JGB `GET /estates` 不吃
+#    viewer（jgb2-req#24 未做）⇒ 物件清單在真機是團隊範圍（同精確查找）。
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class NameLenientTurnCtx(_nm.NameLenientTurn):
+    """runtime 每回合一份的寬鬆比對脈絡（`name_match.NameLenientTurn` 凍結 ⇒ 以子類別加欄位）。
+
+    - `user_texts()`：本會話使用者訊息（`_write_draft_user_texts`：`dialog` 的 user 端＋本句；值閘本來就用
+      的來源），R4 整句來源（`name_lenient_sentence`）讀它；⛔ 另存任何一句；
+    - `typed`：本回合使用者是打字（非按鈕回合、非 `pick:`／`select:`、非確認／修改／取消機器值）——
+      (乙) 只在 `True` 時觸發；
+    - `reask_key`：上一回合 (甲)「找不到這個名稱」追問的名稱欄（`asked` 恰為單一名稱鍵），(乙) 選欄位時
+      優先（與 runtime `_name_lenient_reask_labels` 同一判準）。
+    呼叫端給的是父類別（未帶這三欄）⇒ (甲) 照 `sentence_for`、(乙) 一律不觸發（fail-closed）。
+
+    (丙) 名稱先查：
+    - `program_selected()`：本回合已有程式選定（候選集已選定、本回合選定成立、「選對紀錄」已選物件、綁定卡
+      帶著的選定）⇒ `True`。runtime 給的純讀判斷；沒給、回非 `False` 或丟例外 ⇒ (丙) 一律不觸發（fail-closed）；
+    - `early_lookups`：(丙) 每回合的解析暫存——鍵＝解析函式（`"estate"`＝`_resolve_estate_rows`、
+      `"contract"`＝`_resolve_contract_rows`），值＝第一次的 `{key, status, rows, has_more}`；同回合第二次起
+      同一鍵沿用、不同鍵不再查（每支解析函式每回合 ≤1 次）；只活在本回合（⛔ 落地）；
+    - `early_resolver_calls`：兩支解析函式本回合實際呼叫次數（有效合約與 annotate 另計、不在此）。"""
+
+    user_texts: Optional[Callable[[], Sequence[Any]]] = None
+    typed: bool = False
+    reask_key: Optional[str] = None
+    program_selected: Optional[Callable[[], Any]] = None
+    early_lookups: dict = _dc_field(default_factory=dict)
+    early_resolver_calls: dict = _dc_field(default_factory=dict)
+    early_lock: Optional[asyncio.Lock] = None
+
+
+def name_said_key(text: Any) -> str:
+    """F12 整句來源判準的正規化：NFKC、去空白、casefold、去標點（Unicode P 類）。非字串 ⇒ `""`。
+    （runtime `_name_said_key` 同一支。）"""
+    if not isinstance(text, str):
+        return ""
+    base = "".join(unicodedata.normalize("NFKC", text).split()).casefold()
+    return "".join(ch for ch in base if not unicodedata.category(ch).startswith("P"))
+
+
+def name_lenient_sentence(name_value: Any, user_message: Any, user_texts: Any) -> str:
+    """(甲) 整句來源：草稿名稱欄值（`name_said_key` 正規化）出現在本回合原話 ⇒ 本回合
+    原話；否則 ⇒ `user_texts` 中**最近一則**含該值者（名稱在前一回合講）；都沒有 ⇒ 名稱欄值。
+    純函式；回傳值只給呼叫端當該次比對的句子（⛔ 存）。"""
+    value = name_value if isinstance(name_value, str) else ""
+    key = name_said_key(value)
+    if not key:
+        return value
+    if isinstance(user_message, str) and key in name_said_key(user_message):
+        return user_message
+    texts = list(user_texts) if isinstance(user_texts, (list, tuple)) else []
+    for text in reversed(texts):
+        if isinstance(text, str) and key in name_said_key(text):
+            return text
+    return value
+
+
+def _lenient_sentence_for(name_lenient: Any, field: str, ref: str) -> str:
+    """(甲) 該次比對的句子：`NameLenientTurnCtx` 脈絡 ⇒ `name_lenient_sentence`；父類別脈絡 ⇒ `sentence_for`。"""
+    source = getattr(name_lenient, "user_texts", None)
+    if isinstance(name_lenient, NameLenientTurnCtx) and callable(source):
+        try:
+            texts = source()
+        except Exception:  # noqa: BLE001 — 取不到 ⇒ 只用本回合原話與名稱值
+            texts = []
+        return name_lenient_sentence(ref, name_lenient.user_message, texts)
+    return name_lenient.sentence_for(field, ref)
+
+
+def _lenient_mark(name_lenient: Any, mark: str) -> None:
+    """觸發型別標記：寫進本回合 trace（`marks`）並記一行 log（同 `NameLenientTurn` 其他標記；只記型別）。"""
+    marker = getattr(name_lenient, "_mark", None)
+    if callable(marker):
+        marker(mark)
+    else:
+        name_lenient.marks.append(mark)
+
+
+def _name_not_found_result(action: Any, field: str) -> ToolResult:
+    """寬鬆也落空 ⇒ `NO_MATCH`＋`name_not_found`（欄位鍵）＋固定句（⛔ 回顯原話）。
+    ⛔ 帶查無來源標記（runtime 依 `NAME_NOT_FOUND_KEY` 走名稱找不到的出口，不走 `jgb2_not_found_exit`）。"""
+    return ToolResult(
+        ok=False, error="NO_MATCH",
+        data={NAME_NOT_FOUND_KEY: field, "action": action},
+        text_for_model=_nm.NAME_NOT_FOUND_TEXT,
+    )
+
+
+def is_name_not_found(result: Any) -> Optional[str]:
+    """`confirm.request` 的結果是不是 F12「找不到這個名稱」——是 ⇒ 欄位鍵；否 ⇒ `None`。"""
+    data = getattr(result, "data", None)
+    if getattr(result, "ok", True) or getattr(result, "error", None) != "NO_MATCH":
+        return None
+    if not isinstance(data, dict):
+        return None
+    field = data.get(NAME_NOT_FOUND_KEY)
+    return field if isinstance(field, str) and field in _write_forms.NAME_KEYS else None
+
+
+async def _name_lenient_rows(api, role_id: str, user_id: str,
+                             cand_type: str) -> Tuple[List[dict], bool]:
+    """寬鬆比對的清單（第一頁 ≤`NAME_LENIENT_LIST_MAX` 筆）與「可能還有」旗標。沒查成 ⇒
+    `jgb2.UpstreamFailure`。
+
+    - 物件：**專用**的 `get_estate_status(keyword=None)`（帶 role 與 viewer）——共用 adapter 的回傳形狀
+      不變；它丟掉分頁資訊且固定 `per_page=200` ⇒ 取到 200 筆即視為可能還有；
+    - 合約：`get_contracts(per_page=200)`（帶 role 與 viewer、不帶 keyword），`pagination.has_more` 為準。"""
+    cap = _nm.NAME_LENIENT_LIST_MAX
+    if cand_type == _wc.TYPE_ESTATE:
+        resp = await api.get_estate_status(role_id=role_id, keyword=None, viewer_user_id=user_id)
+        rows = _real_rows(jgb2_tools._rows_checked(resp))
+        return rows[:cap], len(rows) >= cap
+    resp = await api.get_contracts(role_id=role_id, viewer_user_id=user_id, per_page=cap)
+    rows = [r for r in jgb2_tools._rows_checked(resp) if isinstance(r, dict)]
+    pagination = resp.get("pagination") if isinstance(resp, dict) else None
+    more = bool(isinstance(pagination, dict) and pagination.get("has_more"))
+    return rows[:cap], more or len(rows) > cap
+
+
+def _name_lenient_identity_ok(identity: Identity) -> Tuple[bool, Any, Any]:
+    role_id = getattr(identity, "role_id", None)
+    user_id = getattr(identity, "user_id", None)
+    resolved = getattr(identity, "resolved_audience", None)
+    try:
+        audience = resolved() if callable(resolved) else None
+    except Exception:  # noqa: BLE001 — 判不出受眾 ⇒ 不過閘
+        audience = None
+    ok = (isinstance(role_id, str) and bool(role_id.strip())
+          and isinstance(user_id, str) and bool(user_id.strip())
+          and audience == "property_manager"
+          and jgb2_tools._identity_gate_ok(identity, role_id, user_id))
+    return ok, role_id, user_id
+
+
+async def _name_lenient_result(
+    identity: Identity, action: Any, payload: dict, *, field: str, cand_type: str,
+    name: Any, missing_label: str, name_lenient: Optional["_nm.NameLenientTurn"],
+    annotate: bool = False,
+) -> Optional[ToolResult]:
+    """(甲)：現行名稱解析查無之後的寬鬆比對。`None` ⇒ 呼叫端維持現行出口（不生效、身分不全、本回合已用過、
+    清單沒查成）。否則回候選形狀（`NAME_LENIENT_KEY`）或 `_name_not_found_result`。
+    整句依整句來源（`_lenient_sentence_for`）只在 `_compute` 內算、只交給 `pick`；候選結果
+    `query`＝名稱值（⛔ 整句）。真的要跑時記觸發型別 `V_NAME_LENIENT_TRIGGER_NOTFOUND`。"""
+    if name_lenient is None:
+        return None
+    try:
+        if not _nm.name_lenient_effective_from_env():
+            return None
+    except ValueError:
+        return None                                   # 開關值不合法（啟動時已拒）⇒ 不觸發
+    if not _wc.allowed(action, field, cand_type):
+        return None
+    if not isinstance(name, str) or not name.strip() or name.strip().isdigit():
+        return None                                   # 編號查無 ⇒ 現行（寬鬆只比名稱）
+    ok, role_id, user_id = _name_lenient_identity_ok(identity)
+    if not ok:
+        return None                                   # 0 次出向、0 次模型呼叫
+    api = jgb2_tools._get_api()
+    ref = name.strip()
+    key = (str(action), field, cand_type, _wc.name_fp(ref))
+
+    async def _compute() -> "_nm.LenientOutcome":
+        _lenient_mark(name_lenient, V_NAME_LENIENT_TRIGGER_NOTFOUND)
+        try:
+            rows, truncated = await _name_lenient_rows(api, role_id, user_id, cand_type)
+        except jgb2_tools.UpstreamFailure:
+            return name_lenient.list_failed()
+        return await name_lenient.pick(sentence=_lenient_sentence_for(name_lenient, field, ref),
+                                       rows=rows, cand_type=cand_type, truncated=truncated)
+
+    outcome = await name_lenient.run_once(key, _compute)
+    if outcome is None or outcome.status != "ok":
+        return None
+    if not outcome.ids:
+        return _name_not_found_result(action, field)
+    rows = [dict(outcome.rows_by_id[i]) for i in outcome.ids if i in outcome.rows_by_id]
+    if annotate:
+        rows = await _annotate_valid_contract(api, role_id, user_id, rows)
+    cand = _name_candidates_result(
+        action, payload, field=field, cand_type=cand_type, rows=rows, has_more=False,
+        query=ref, missing_label=missing_label, min_rows=1)
+    if cand is None:
+        return None
+    cand.data[NAME_LENIENT_KEY] = True
+    cand.data[NAME_LENIENT_TRUNCATED_KEY] = bool(outcome.truncated)
+    return cand
+
+
+#: (乙) 名稱欄 ⇒ 寬鬆比對的清單型別（物件名稱比物件清單、合約名稱比合約清單）。
+_MISSING_NAME_CAND_TYPE: Final = {"estate_name": _wc.TYPE_ESTATE, "contract_ref": _wc.TYPE_CONTRACT}
+
+
+def _missing_name_target(action: Any, payload: Any, labels: Any,
+                         reask_key: Any) -> Optional[Tuple[str, str, str]]:
+    """(乙) 要比對的名稱欄 ⇒ `(欄位鍵, 清單型別, 欄位標籤)`；沒有 ⇒ `None`。
+
+    名稱欄（`write_forms.NAME_KEYS`）須：值是空的（`_missing`）、出現在某條**未滿足**要求的單鍵替代組
+    （該要求每一組都有缺值）、且程式這次追問的標籤含它——該欄自己的標籤在 `labels` 內，或它是
+    `reask_key`（上一回合「找不到這個名稱」追問的那一欄，runtime 會把該組標籤改印成它的標籤）且該要求的
+    追問標籤在 `labels` 內。`reask_key` 合格 ⇒ 取它；否則依要求順序、追問組內的鍵優先。"""
+    form = _write_forms.FORMS.get(action) if isinstance(action, str) else None
+    if form is None or not isinstance(payload, dict) or not isinstance(labels, list):
+        return None
+    asked = [lb for lb in labels if isinstance(lb, str)]
+    picks: List[str] = []
+    for req in form.requirements:
+        if any(all(not _missing(payload.get(k)) for k in group) for group in req.required_any_of):
+            continue
+        group_labels = ([req.group_label] if req.group_label is not None else
+                        [form.field(k).label for k in req.ask_group if form.field(k) is not None])
+        singles = [g[0] for g in req.required_any_of if len(g) == 1]
+        ordered = [k for k in req.ask_group if k in singles] + [k for k in singles
+                                                                if k not in req.ask_group]
+        for key in ordered:
+            f = form.field(key)
+            if key not in _write_forms.NAME_KEYS or f is None or not _missing(payload.get(key)):
+                continue
+            if f.label in asked or (key == reask_key and any(lb in asked for lb in group_labels)):
+                if key not in picks:
+                    picks.append(key)
+    if not picks:
+        return None
+    key = reask_key if reask_key in picks else picks[0]
+    return key, _MISSING_NAME_CAND_TYPE[key], form.field(key).label
+
+
+async def missing_name_lenient(
+    identity: Identity, action: Any, payload: Any, *, labels: Any,
+    name_lenient: Optional["_nm.NameLenientTurn"],
+) -> Optional[ToolResult]:
+    """(乙) 缺名稱觸發：程式即將以 `labels` 追問、追問含名稱欄
+    且草稿名稱欄仍空 ⇒ 以**本回合使用者原話**做一次寬鬆比對。
+
+    與 (甲) `_name_lenient_result` 同一組閘門與同一份 `run_once`：脈絡須是 runtime 的 `NameLenientTurnCtx`
+    且 `typed`（本回合打字；按鈕／`pick:`／確認記號回合 ⇒ 不觸發）、`name_lenient_effective_from_env`、
+    接真 JGB 時 `WRITE_NOT_SUPPORTED_ACTIONS` 不觸發、`_wc.allowed`、`_name_lenient_identity_ok`（任何出向
+    之前）；回合累積器鍵的名稱指紋固定 `name_fp("")`。
+
+    有候選 ⇒ 候選形狀（`NAME_LENIENT_KEY`＋`NAME_LENIENT_MISSING_KEY`，`query=""`、`min_rows=1`）；
+    其餘（不合閘、本回合已跑過別的鍵、清單沒查成、回空）⇒ `None`——呼叫端照現行追問、逐字不變
+    （⛔ 查不到固定句、⛔ 標已追問、⛔ 清欄位）。⛔ 寫 payload。"""
+    if not isinstance(name_lenient, NameLenientTurnCtx) or name_lenient.typed is not True:
+        return None
+    try:
+        if not _nm.name_lenient_effective_from_env():
+            return None
+    except ValueError:
+        return None                                   # 開關值不合法（啟動時已拒）⇒ 不觸發
+    if not isinstance(action, str) or not isinstance(payload, dict):
+        return None
+    if (action in WRITE_NOT_SUPPORTED_ACTIONS
+            and getattr(jgb2_tools._get_api(), "use_mock", True) is False):
+        return None                                   # 同 `write_name_candidates`
+    target = _missing_name_target(action, payload, labels, name_lenient.reask_key)
+    if target is None:
+        return None
+    field, cand_type, label = target
+    if not _wc.allowed(action, field, cand_type):
+        return None
+    if not isinstance(name_lenient.user_message, str) or not name_lenient.user_message.strip():
+        return None
+    ok, role_id, user_id = _name_lenient_identity_ok(identity)
+    if not ok:
+        return None                                   # 0 次出向、0 次模型呼叫
+    api = jgb2_tools._get_api()
+    key = (action, field, cand_type, _wc.name_fp(""))
+
+    async def _compute() -> "_nm.LenientOutcome":
+        _lenient_mark(name_lenient, V_NAME_LENIENT_TRIGGER_MISSING)
+        try:
+            rows, truncated = await _name_lenient_rows(api, role_id, user_id, cand_type)
+        except jgb2_tools.UpstreamFailure:
+            return name_lenient.list_failed()
+        return await name_lenient.pick(sentence=name_lenient.user_message, rows=rows,
+                                       cand_type=cand_type, truncated=truncated)
+
+    outcome = await name_lenient.run_once(key, _compute)
+    if outcome is None or outcome.status != "ok" or not outcome.ids:
+        return None
+    rows = [dict(outcome.rows_by_id[i]) for i in outcome.ids if i in outcome.rows_by_id]
+    if action == BILL_DUE_EXTEND_ACTION and cand_type == _wc.TYPE_ESTATE:
+        rows = await _annotate_valid_contract(api, role_id, user_id, rows)
+    cand = _name_candidates_result(
+        action, payload, field=field, cand_type=cand_type, rows=rows, has_more=False,
+        query="", missing_label=label, min_rows=1)
+    if cand is None:
+        return None
+    cand.data[NAME_LENIENT_KEY] = True
+    cand.data[NAME_LENIENT_TRUNCATED_KEY] = bool(outcome.truncated)
+    cand.data[NAME_LENIENT_MISSING_KEY] = True
+    return cand
+
+
+async def name_lenient_rows_for_ids(
+    identity: Identity, *, action: Any, field: str, cand_type: str, ids: Any,
+) -> List[dict]:
+    """F12：打字選定回合（DSP-110 甲′）給意圖呼叫的候選列——候選集出自寬鬆路徑時，名稱重查本來就查無，
+    改以同一支專用清單查詢取列、只留候選集 `ids` 內的列（經 `minimize_row`）。**0 次模型呼叫**。
+    生效條件、身分閘同 `_name_lenient_result`；任何不合或沒查成 ⇒ `[]`。"""
+    try:
+        if not _nm.name_lenient_effective_from_env():
+            return []
+    except ValueError:
+        return []
+    if not _wc.allowed(action, field, cand_type) or cand_type == _wc.TYPE_BILL:
+        return []
+    wanted = [i for i in (ids or []) if isinstance(i, str) and _wc.candidate_id(i) == i]
+    if not wanted:
+        return []
+    ok, role_id, user_id = _name_lenient_identity_ok(identity)
+    if not ok:
+        return []
+    api = jgb2_tools._get_api()
+    try:
+        rows, _more = await _name_lenient_rows(api, role_id, user_id, cand_type)
+    except jgb2_tools.UpstreamFailure:
+        return []
+    by_id = {}
+    for r in rows:
+        rid = _wc.candidate_id(r.get("id")) if isinstance(r, dict) else None
+        if rid is not None and rid not in by_id:
+            by_id[rid] = r
+    out = [by_id[i] for i in wanted if i in by_id]
+    if out and _write_forms.pick_right_effective_from_env() and cand_type == _wc.TYPE_ESTATE \
+            and action == BILL_DUE_EXTEND_ACTION:
+        out = await _annotate_valid_contract(api, role_id, user_id, out)
+    return [_wc.minimize_row(cand_type, r) for r in out]
+
+
+async def name_lenient_picked_title(
+    identity: Identity, *, action: Any, field: str, cand_type: str, pick_id: Any,
+) -> Optional[str]:
+    """寬鬆來源的候選集選定成立後，該筆在**本身分清單**上的系統名稱
+    （`_row_title`）——runtime 拿它改寫草稿的名稱欄，讓兩段式流程第二段的名稱比對（⛔ 改動）
+    以系統名稱進行。**0 次模型呼叫**；名稱只來自 `_name_lenient_rows`（帶 role 與 viewer 的同一支清單查詢）
+    上編號＝`pick_id` 的那一列，⛔ 來自模型或使用者。生效條件、身分閘同 `_name_lenient_result`；
+    任何不合、沒查成、清單上沒有這一筆、沒有可用名稱 ⇒ `None`（呼叫端不改寫）。"""
+    try:
+        if not _nm.name_lenient_effective_from_env():
+            return None
+    except ValueError:
+        return None
+    if not _wc.allowed(action, field, cand_type) or cand_type == _wc.TYPE_BILL:
+        return None
+    pid = _wc.candidate_id(pick_id)
+    if pid is None or pid != pick_id:
+        return None
+    ok, role_id, user_id = _name_lenient_identity_ok(identity)
+    if not ok:
+        return None
+    try:
+        rows, _more = await _name_lenient_rows(jgb2_tools._get_api(), role_id, user_id, cand_type)
+    except jgb2_tools.UpstreamFailure:
+        return None
+    for r in rows:
+        if isinstance(r, dict) and _wc.candidate_id(r.get("id")) == pid:
+            title = _row_title(r, "")
+            return title or None
+    return None
 
 
 async def _resolve_bill_by_period(
@@ -698,10 +1118,325 @@ async def _resolve_bill_by_period(
     return False, ToolResult(ok=False, error="NO_MATCH")
 
 
+# ---------------------------------------------------------------------------
+# 選對紀錄（開關 `AGENT_PICK_RIGHT`）
+#
+# ⚠️ 帳單解析（`_pr_resolve_bill`）**只在 `write_forms.pick_right_effective_from_env()` 為真時被呼叫**
+#    （off ⇒ 上面的 `_resolve_bill_by_period` 與候選出口不變）；卡上核對資料（`_pr_fill_bill_display`）
+#    在開關 on 時即寫（所有路徑，含寫入生命週期 off）。
+# ⚠️ 帳單**先解析物件**：`estate_name` 以帶 viewer 的 `_resolve_estate_rows` 解成物件；
+#    同名多筆 ⇒ 物件候選（客人先選物件）；程式選定的物件（`program_pick` 型別 estate）⇒
+#    `_estate_by_id` 帶 viewer 重驗。帳單一律來自**已選物件**。
+# ⚠️ 該物件的帳單＝（a）`_viewer_contract_rows` 中 `estate_id` 相符的合約，逐合約
+#    `get_bills(contract_ids=<單一>)` 逐頁取（每合約 ≤`PR_PAGES_PER_CONTRACT` 頁、總計
+#    ≤`WRITE_CANDIDATES_MAX` 張，迴圈以次數計，⛔ 只看 `has_more`）；（b）現行 keyword 查詢中
+#    `estate_id` 相符者。以帳單編號聯集；每列斷言 `contract_id`（a）與 `estate_id`，不符一律丟掉
+#    （防別物件混入）。⚠️ 真 JGB `/bills` 無 keyword（DSP-109）⇒ 真機主路徑是（a）。
+# ⚠️ 身分前置：`role_id` 與 `user_id` 皆非空且過 `jgb2._identity_gate_ok`，缺任一 ⇒ 0 次出向；
+#    每支出向呼叫一律帶 `viewer_user_id=user_id`；`get_bills` 的 `user_id` 與 `viewer_bill_row` 同形。
+# ⚠️ 合約或帳單清單還有下一頁卻達上限 ⇒ 不做「唯一一張」判定。
+# ⚠️ 客人講的 `said_amount`／`said_range`（已過 runtime 值閘、鍵名刻意與卡上顯示值不同）只拿來
+#    **篩**與**印提醒**；卡上金額與期間一律是帳單本身的值。
+# ⚠️ log 只記型別或碼，⛔ 金額、名稱、期間。
+# ---------------------------------------------------------------------------
+#: 每份合約最多取幾頁帳單。
+PR_PAGES_PER_CONTRACT: Final[int] = 3
+#: 客人講的比對值（`BILL_DUE_EXTEND_FORM_PR` 的兩欄；`confirm.request` 入口就從 payload 取出、⛔ 進卡或 body）。
+SAID_AMOUNT_KEY: Final[str] = "said_amount"
+SAID_RANGE_KEY: Final[str] = "said_range"
+
+
+def _pop_said(payload: dict) -> dict:
+    """從 payload 取出（並刪除）客人講的比對值；形狀不合的值一律當沒講（⛔ 猜）。
+    `said_amount`：正整數（⛔ bool）；`said_range`：`MM/DD~MM/DD` 且月日合法（`said_range_parts`）。"""
+    from services.agent.bill_period import said_range_parts
+
+    amount = payload.pop(SAID_AMOUNT_KEY, None)
+    rng = payload.pop(SAID_RANGE_KEY, None)
+    if isinstance(amount, bool) or not isinstance(amount, int) or amount <= 0:
+        amount = None
+    if said_range_parts(rng) is None:
+        rng = None
+    return {"amount": amount, "range": rng}
+
+
+def pick_display_of_bill(row: dict) -> dict:
+    """帳單列 ⇒ 卡上核對資料的帳單部分（`confirm_card.PICK_DISPLAY_KEY`；物件部分由
+    `_pr_fill_bill_display` 以本列 `estate_id` 帶 viewer 反查後補上）。值一律取**系統列**。"""
+    return {
+        "estate_id": row.get("estate_id"),
+        "estate_title": None,
+        "bill_title": row.get("title"),
+        "amount": jgb2_tools._bill_amount(row),
+        "date_start": row.get("date_start"),
+        "date_end": row.get("date_end"),
+    }
+
+
+def _location_display(row: dict) -> dict:
+    """物件列 ⇒ 修繕卡／建合約卡的核對資料（縣市區＋樓層；系統列值）。"""
+    return {"city": row.get("city"), "district": row.get("district"), "floor": row.get("floor")}
+
+
+def _same_id(a: Any, b: Any) -> bool:
+    return a is not None and b is not None and str(a).strip() == str(b).strip()
+
+
+def _filter_said(rows: List[dict], said: dict) -> List[dict]:
+    """期別篩完之後再依客人講的金額與計費期間篩（比法 `write_candidates.bill_*_matches`）。"""
+    kept = list(rows)
+    if said.get("amount") is not None:
+        kept = [r for r in kept if _wc.bill_amount_matches(r, said["amount"])]
+    if said.get("range") is not None:
+        kept = [r for r in kept if _wc.bill_range_matches(r, said["range"])]
+    return kept
+
+
+async def _annotate_valid_contract(api, role_id: str, user_id: str, rows: List[dict]) -> List[dict]:
+    """物件候選列加上「有無有效合約」：由**同一次** `_viewer_contract_rows` 推得——
+    合約清單沒有下一頁時：有相符且非歷史的合約 ⇒ `True`、沒有 ⇒ `False`；還有下一頁或沒查成 ⇒ `None`
+    （投影印「—」，⛔ 印「無」）。回新列（⛔ 改呼叫端的列）。"""
+    try:
+        contracts, c_more = await _viewer_contract_rows(api, role_id, user_id)
+    except jgb2_tools.UpstreamFailure:
+        contracts, c_more = None, True
+    out: List[dict] = []
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        flag: Optional[bool] = None
+        if contracts is not None and not c_more:
+            # 合約清單還有下一頁 ⇒ 一律「—」（⛔ 以已取到的部分下結論）。
+            has = any(_same_id(c.get("estate_id"), row.get("id")) and not c.get("is_history")
+                      for c in contracts)
+            flag = bool(has)
+        out.append({**row, _wc.HAS_VALID_CONTRACT_KEY: flag})
+    return out
+
+
+async def _pr_bills_of_estate(identity: Identity, api, role_id: str, user_id: str,
+                              estate: dict, estate_name: str) -> Tuple[List[dict], bool]:
+    """已選物件的帳單列與「可能還有」旗標。沒查成 ⇒ `jgb2.UpstreamFailure`。"""
+    estate_id = estate.get("id")
+    contracts, c_more = await _viewer_contract_rows(api, role_id, user_id)
+    cids: List[str] = []
+    for c in contracts:
+        cid = c.get("id")
+        if _same_id(c.get("estate_id"), estate_id) and cid is not None and str(cid).strip() not in cids:
+            cids.append(str(cid).strip())
+    more = bool(c_more)
+    by_id: dict = {}
+    for cid in cids:
+        if len(by_id) >= _wc.WRITE_CANDIDATES_MAX:
+            more = True                              # 還有合約沒查 ⇒ 可能還有
+            break
+        for page in range(1, PR_PAGES_PER_CONTRACT + 1):
+            resp = await api.get_bills(role_id=role_id, user_id=user_id, viewer_user_id=user_id,
+                                       contract_ids=cid, page=page)
+            for r in jgb2_tools._rows_checked(resp):
+                # （a）每列斷言：合約＝這次查的那一份、物件＝已選物件（⛔ 半信上游篩選）。
+                if (isinstance(r, dict) and _same_id(r.get("contract_id"), cid)
+                        and _same_id(r.get("estate_id"), estate_id) and r.get("id") is not None):
+                    by_id.setdefault(str(r.get("id")).strip(), r)
+            pagination = resp.get("pagination") if isinstance(resp, dict) else None
+            page_more = bool(isinstance(pagination, dict) and pagination.get("has_more"))
+            if not page_more:
+                break
+            if page == PR_PAGES_PER_CONTRACT or len(by_id) >= _wc.WRITE_CANDIDATES_MAX:
+                more = True                          # 達上限仍有下一頁 ⇒ 可能還有
+                break
+    # （b）現行 keyword 查詢（同一條可見性路徑、同一組身分參數）中 `estate_id` 相符者——補漏。
+    keyword_rows = await _bills_of_estate(identity, estate_name)
+    for r in keyword_rows:
+        if (isinstance(r, dict) and _same_id(r.get("estate_id"), estate_id)
+                and r.get("id") is not None):
+            by_id.setdefault(str(r.get("id")).strip(), r)
+    # `more` 只表示「可能還有沒取到的帳單」（合約清單或某合約的帳單達上限仍有下一頁）；取到的列超過
+    # 候選上限是另一回事，由候選形狀的 `has_more` 處理（期別與比對值篩完之後才算）。
+    return list(by_id.values()), more
+
+
+def _pr_bill_candidates(action: Any, payload: dict, rows: List[dict], query: str, *,
+                        has_more: bool, estate_id: Any, note: Optional[str] = None,
+                        note_text: Optional[str] = None) -> ToolResult:
+    """帳單候選形狀（A-2a 同形）＋本片三鍵；`data["candidates"]` 一律經白名單縮減。"""
+    result = _bill_candidates_result(action, payload, rows, query, candidates=True)
+    data = dict(result.data)
+    data["candidates"] = [_wc.minimize_row(_wc.TYPE_BILL, r)
+                          for r in rows[:_wc.WRITE_CANDIDATES_MAX]]
+    data["has_more"] = bool(has_more) or len(rows) > _wc.WRITE_CANDIDATES_MAX
+    data[PICK_ESTATE_ID_KEY] = str(estate_id).strip() if estate_id is not None else None
+    if note in _wc.PICK_NOTE_DOMAIN and isinstance(note_text, str):
+        data[PICK_NOTE_KEY] = note
+        data[PICK_NOTE_TEXT_KEY] = note_text
+    return ToolResult(ok=True, data=data, provenance=result.provenance,
+                      text_for_model=result.text_for_model)
+
+
+def _pick_note_code(said: dict) -> Optional[str]:
+    amount, rng = said.get("amount") is not None, said.get("range") is not None
+    if amount and rng:
+        return _wc.PICK_NOTE_BOTH
+    if amount:
+        return _wc.PICK_NOTE_AMOUNT
+    if rng:
+        return _wc.PICK_NOTE_RANGE
+    return None
+
+
+async def _pr_resolve_bill(
+    identity: Identity, action: Any, payload: dict, *, today: date,
+    program_pick: Optional[dict], said: dict,
+    name_lenient: Optional["_nm.NameLenientTurn"] = None,
+) -> Tuple[bool, Optional[ToolResult], Optional[dict], Optional[dict]]:
+    """`(已填好可以出卡, 提早收尾的 ToolResult, 對到的帳單列, 已選物件列)`。
+
+    只在延期繳費、`bill_id` 缺值時動作（同 `_resolve_bill_by_period` 的進入條件）；其餘 ⇒
+    `(False, None, None, None)`。出口：剩 1 張且沒有「可能還有」⇒ 填三欄出卡；≥2 張或可能還有 ⇒ 帳單候選；
+    0 張但客人講了金額或期間、期別篩後仍有帳單 ⇒ 說明對不上並列期別篩後的帳單（業主裁 Q3）；其餘 0 張 ⇒
+    `NO_MATCH`（同現行）。"""
+    if action != BILL_DUE_EXTEND_ACTION or not _missing(payload.get("bill_id")):
+        return False, None, None, None
+    estate_name = payload.get("estate_name")
+    if not isinstance(estate_name, str) or not estate_name.strip():
+        return False, None, None, None
+    name = estate_name.strip()
+    role_id = getattr(identity, "role_id", None)
+    user_id = getattr(identity, "user_id", None)
+    # 身分前置——缺任一證或過不了身分閘 ⇒ 0 次出向（同 `_bills_of_estate` 的空列 ⇒ 現行零筆出口）。
+    if not role_id or not user_id or not jgb2_tools._identity_gate_ok(identity, role_id, user_id):
+        return False, ToolResult(ok=False, error="NO_MATCH"), None, None
+    api = jgb2_tools._get_api()
+    pick = _wc.valid_program_pick(program_pick, action)
+    estate_pick = pick[2] if (pick is not None and pick[0] == "estate_name"
+                              and pick[1] == _wc.TYPE_ESTATE) else None
+    if estate_pick is not None:
+        status, estate = await _estate_by_id(api, role_id, user_id, estate_pick)
+        if status == "none":
+            return False, _not_found_result(), None, None
+        if status == "error" or estate is None:
+            return False, ToolResult(ok=False, error="NO_MATCH"), None, None
+    else:
+        status, estate, est_rows = await _resolve_estate_rows(api, role_id, user_id, name)
+        if status == "error":
+            return False, ToolResult(ok=False, error="NO_MATCH"), None, None
+        if status == "none":
+            logger.info("[agent] bill_due_extend 物件解析零筆（⛔ 不記名稱）")
+            # 物件名稱查無 ⇒ 寬鬆比對（只出物件候選）。
+            lenient = await _name_lenient_result(
+                identity, action, payload, field="estate_name", cand_type=_wc.TYPE_ESTATE,
+                name=name, missing_label=_BILL_LABEL, name_lenient=name_lenient, annotate=True)
+            if lenient is not None:
+                return False, lenient, None, None
+            return False, ToolResult(ok=False, error="NO_MATCH"), None, None
+        if status == "many":
+            rows = await _annotate_valid_contract(api, role_id, user_id, _many_rows(est_rows, name))
+            cand = _name_candidates_result(
+                action, payload, field="estate_name", cand_type=_wc.TYPE_ESTATE,
+                rows=rows, has_more=False, query=name, missing_label=_BILL_LABEL)
+            if cand is not None:
+                return False, cand, None, None
+            return False, _missing_fields_result([_BILL_LABEL]), None, None
+    try:
+        rows, more = await _pr_bills_of_estate(identity, api, role_id, user_id, estate, name)
+    except jgb2_tools.UpstreamFailure:
+        return False, ToolResult(ok=False, error="NO_MATCH"), None, None
+    spec = parse_period(payload.get("period"), today)
+    period_kept = _filter_bills(rows, spec)
+    kept = _filter_said(period_kept, said)
+    period_text = payload.get("period")
+    query = name if not (isinstance(period_text, str) and period_text.strip()) else (
+        f"{name} {period_text.strip()}")
+    estate_id = estate.get("id")
+    if len(kept) == 1 and not more:
+        if _fill_bill_fields(payload, kept[0], today=today):
+            return True, None, kept[0], estate
+        return False, None, kept[0], estate       # 算不出卡 ⇒ 交回 render（同現行）
+    if kept:
+        return False, _pr_bill_candidates(action, payload, kept, query, has_more=more,
+                                          estate_id=estate_id), None, estate
+    code = _pick_note_code(said)
+    if code is not None and period_kept:
+        text = _wc.pick_note_text(code, said_amount=said.get("amount"),
+                                  said_range=said.get("range"),
+                                  has_period=spec is not None and spec.has_month)
+        logger.info("[agent] bill_due_extend 客人講的值對不上（%s）⇒ 列該物件帳單", code)
+        return False, _pr_bill_candidates(action, payload, period_kept, query, has_more=more,
+                                          estate_id=estate_id, note=code, note_text=text), None, estate
+    logger.info("[agent] bill_due_extend 依物件與期別對不到唯一帳單（⛔ 不記名稱與期別）")
+    return False, ToolResult(ok=False, error="NO_MATCH"), None, None
+
+
+async def _pr_fill_bill_display(
+    identity: Identity, payload: dict, *, said: dict, bill_row: Optional[dict] = None,
+    estate_row: Optional[dict] = None,
+) -> Optional[ToolResult]:
+    """延期卡的核對資料：**所有路徑**（自動對到、程式選定、模型自帶 `bill_id`、寫入生命週期
+    開關 off）都在 render 之前由系統列寫進 `PICK_DISPLAY_KEY`（入口已丟掉模型帶的同名鍵）。
+
+    - 帳單列：呼叫端已有（自動對到／程式選定／預檢）就用，否則以 `viewer_bill_row` 單筆探測
+      （看不到 ⇒ 查無固定句；沒查成 ⇒ `NO_MATCH`）；帳單編號須＝payload 的 `bill_id`。
+    - 物件：由帳單列的 `estate_id` 經 viewer 反查（`_estate_by_id`）；草稿有物件名稱時，反查出的物件須就是它
+      （名稱相同，或該名稱帶 viewer 解析出的列含此編號）——不一致 ⇒ 查無固定句（⛔ 出卡）。
+    - 客人講的比對值放進核對資料，只供卡上「提醒」行（業主裁 Q4）。
+    成功 ⇒ `None`。"""
+    bill_id = payload.get("bill_id")
+    if _missing(bill_id):
+        return None                                   # 交回 render（缺欄 ⇒ INVALID_INPUT，同現行）
+    role_id, user_id = _identity_pair(identity)
+    if not role_id or not user_id:
+        return ToolResult(ok=False, error="NO_MATCH")
+    api = jgb2_tools._get_api()
+    existing = payload.get(_confirm_card.PICK_DISPLAY_KEY)
+    if bill_row is not None and _same_id(bill_row.get("id"), bill_id):
+        display = pick_display_of_bill(bill_row)
+    elif isinstance(existing, dict):
+        # 寫入生命週期預檢（`write_forms._bill_precheck_derive_pr`）剛以 `viewer_bill_row` 查過同一張帳單、
+        # 由系統列寫了帳單部分（模型帶的同名鍵已在入口丟掉）⇒ 沿用，⛔ 再查一次。
+        display = {k: existing.get(k) for k in pick_display_of_bill({})}
+    else:
+        status, bill_row = await viewer_bill_row(api, role_id, user_id, bill_id)
+        if status == "error":
+            return ToolResult(ok=False, error="NO_MATCH")
+        if status != "one" or not isinstance(bill_row, dict):
+            return _not_found_result()
+        display = pick_display_of_bill(bill_row)
+    estate_id = display.get("estate_id")
+    estate_name = payload.get("estate_name")
+    named = isinstance(estate_name, str) and bool(estate_name.strip())
+    estate = estate_row if (estate_row is not None and _same_id(estate_row.get("id"), estate_id)) else None
+    if estate is None and estate_id not in (None, ""):
+        status, estate = await _estate_by_id(api, role_id, user_id, str(estate_id))
+        if status == "error":
+            return ToolResult(ok=False, error="NO_MATCH")
+        if status != "one":
+            estate = None
+    if named:
+        if estate is None:
+            return _not_found_result()                # 物件行對不回草稿的物件 ⇒ ⛔ 出卡
+        if estate_row is None or not _same_id(estate_row.get("id"), estate.get("id")):
+            if _row_title(estate, "") != estate_name.strip():
+                n_status, _row, n_rows = await _resolve_estate_rows(api, role_id, user_id, estate_name)
+                if n_status == "error":
+                    return ToolResult(ok=False, error="NO_MATCH")
+                if not any(_same_id(r.get("id"), estate.get("id")) for r in n_rows if isinstance(r, dict)):
+                    logger.info("[agent] bill_due_extend 帳單所屬物件與草稿物件不一致 ⇒ 不出卡（⛔ 不記名稱）")
+                    return _not_found_result()
+    if estate is not None:
+        display["estate_id"] = _row_id(estate)
+        display["estate_title"] = estate.get("title")
+    if said.get("amount") is not None:
+        display["said_amount"] = said["amount"]
+    if said.get("range") is not None:
+        display["said_range"] = said["range"]
+    payload[_confirm_card.PICK_DISPLAY_KEY] = display
+    return None
+
+
 #: 站內幫手 S5 修正輪（DSP-074）：`open_repairs` 注入回 `{OPEN_REPAIRS_NOT_FOUND_KEY: True}`
 #: ＝**上游查成功、以這位成員（viewer）的可見範圍查過、零命中**——確定是「查無」，
 #: `confirm.request` 回查無固定句、⛔ 出卡。只認布林 `True`（⛔ 真值判斷）；其餘形狀
-#: （`None`、例外、上游失敗）仍是既有 W8「解析不出照常出卡、兌現端再擋」。
+#: （`None`、例外、上游失敗）仍是「解析不出照常出卡、兌現端再擋」。
 OPEN_REPAIRS_NOT_FOUND_KEY: Final[str] = "not_found"
 
 
@@ -714,7 +1449,7 @@ async def _open_repairs_hint(
     viewer 零命中）時為 `True`；呼叫端據此回查無固定句、⛔ 出卡。
 
     ⛔ **本函式不呼叫 `_resolve_estate`、不呼叫 `JGBSystemAPI`、不持有 registry**
-    （plan-verifier W8 r2／r3）：那三件事全在 `mcp_facade` 的 `open_repairs`
+    ：那三件事全在 `mcp_facade` 的 `open_repairs`
     閉包裡，這裡只認一個 callable。理由見該閉包的註解。
 
     ⚠️ **fail-soft**：注入的 callable 炸了 ⇒ 沒有提示行、**卡照出**。
@@ -745,9 +1480,9 @@ async def _open_repairs_hint(
 
 
 # ---------------------------------------------------------------------------
-# 站內幫手 S2（§3f 1b／1d／2）：三個封閉欄位表動作的出卡前準備
+# 三個封閉欄位表動作的出卡前準備
 #
-# ⚠️ **卡上編號＝寫入編號**（1d）：`contract_create` 的物件、`manual_bill_create` 的
+# ⚠️ **卡上編號＝寫入編號**：`contract_create` 的物件、`manual_bill_create` 的
 #    合約，在這裡以帶 viewer 的查詢解析成**唯一一筆**，並在 `render()` **之前**把
 #    `estate_id`／`contract_id` 寫進 payload（⇒ 進 `payload_sha256`、印在卡上）。
 #    比照 `_resolve_bill_by_period`「⛔ 不在 render 之後補」。名稱指稱鍵同時改寫成
@@ -759,7 +1494,7 @@ async def _open_repairs_hint(
 #    ⇒ `INVALID_INPUT`＋缺欄清單（請使用者講清楚）。
 # ---------------------------------------------------------------------------
 
-#: 缺欄清單回給模型的固定句（§3f 2）。`{labels}` 只會是 `confirm_card` 欄位表裡的
+#: 缺欄清單回給模型的固定句。`{labels}` 只會是 `confirm_card` 欄位表裡的
 #: **中文標籤**（固定詞彙），⛔ 不含任何使用者值。
 MISSING_FIELDS_TEXT_TEMPLATE: Final[str] = (
     "以下欄位還需要向使用者確認（未提供，或對不到唯一一筆）：{labels}。"
@@ -789,7 +1524,7 @@ MISSING_FIELDS_ASK_TEMPLATE: Final[str] = (
 )
 
 #: 追問句只收的標籤詞彙＝5 支寫入動作表單的中文標籤＋「至少給一個」組的標籤——
-#: **由表單導出**（W1 §2.1(1)：`write_forms.MISSING_LABEL_VOCAB`，⛔ 另抄字面表）。
+#: **由表單導出**（`write_forms.MISSING_LABEL_VOCAB`，⛔ 另抄字面表）。
 _MISSING_LABEL_VOCAB: Final[frozenset] = MISSING_LABEL_VOCAB
 
 
@@ -988,8 +1723,8 @@ def document_confirm_description(action: str) -> Optional[str]:
     """`action` 對應的 `jgb2.action.<action>` 說明裡「payload 欄位定義」起的那一段 ⇒
     附在文件回合 `confirm.request` 說明後面的文字；找不到 ⇒ `None`（照原樣不附）。
 
-    站內幫手 S3-live 修正 R4(2)：文件回合 `_doc_write_face` 把 `jgb2.action.*` 移出工具
-    列表（W9-1），`CONFIRM_SPEC` 卻寫「欄位見對應的 jgb2.action.<action> 工具說明」——
+    文件回合 `_doc_write_face` 把 `jgb2.action.*` 移出工具
+    列表，`CONFIRM_SPEC` 卻寫「欄位見對應的 jgb2.action.<action> 工具說明」——
     模型看不到那份說明，只能猜鍵名。這裡**只搬文字**（來源即該工具的 description，
     ⛔ 另抄一份欄位表），寫入工具仍不可見、三道擋不動。
     """
@@ -1007,12 +1742,13 @@ def document_confirm_description(action: str) -> Optional[str]:
 
 async def _prepare_closed_action(
     identity: Identity, action: Any, payload: dict, *,
-    program_pick: Optional[dict] = None, candidates: bool = False,
+    program_pick: Optional[dict] = None, candidates: bool = False, pick_right: bool = False,
+    name_lenient: Optional["_nm.NameLenientTurn"] = None,
 ) -> Tuple[Optional[ToolResult], Optional[str], Optional[str]]:
     """`(提早收尾的 ToolResult, 回給 Runtime 的 estate_id, 範圍比對用的 scope_estate_id)`；
     不是封閉表動作 ⇒ `(None, None, None)`。
 
-    站內幫手 S5（§3i 第 4 點，S5-12／S5-13）：`manual_bill_create` 另回**出卡時以精確 id
+    `manual_bill_create` 另回**出卡時以精確 id
     比對到的那份合約列上的 `estate_id`**（`scope_estate_id`）給 Runtime 的釘住範圍閘——
     ⛔ 重用 `estate_id`（那一格會寫物件記憶）。
 
@@ -1020,13 +1756,20 @@ async def _prepare_closed_action(
     之後才 `render()` 與算雜湊。`estate_id`（字串）只在「物件確定是這一筆」時回傳，
     Runtime 拿它寫物件記憶（`_begin_pending_confirm`）——⛔ 名稱與編號不一致時不回。
 
-    A-2a（計畫 §4.1、§4.5）：
-    - 模型自帶的 `estate_id`／`contract_id` **一律先丟**（無條件、排在最前面，同改動前）；
+    候選與程式選定：
+    - 模型自帶的 `estate_id`／`contract_id` **一律先丟**（無條件、排在最前面）；
     - `program_pick`（只由 `ToolRegistry.call` 的具名參數轉來，⛔ 來自 `args`）且
       `(action, field, type)` 相符 ⇒ 依編號以帶 viewer 的精確查詢解析（看不到 ⇒ 查無固定句；
       沒查成 ⇒ `NO_MATCH`）；不相符 ⇒ 照名稱解析（⛔ 半信）；
     - `candidates=True`（開關生效）且名稱判不出唯一 ⇒ 候選形狀（`_name_candidates_result`）；
-      `False` ⇒ 缺欄清單（與改動前逐字相同）。
+      `False` ⇒ 缺欄清單。
+
+    名稱寬鬆比對：`candidates=True` 且呼叫端給了 `name_lenient` ⇒ 名稱解析**零筆**時改走
+    `_name_lenient_result`（(甲)：候選形狀或找不到這個名稱）；`candidates=False` 一律不觸發。
+    缺欄清單（`missing_required_labels`）本函式照舊回；(乙) 缺名稱觸發由 `confirm_request` 在拿到這份
+    清單後另呼 `missing_name_lenient`（本函式 ⛔ 自己觸發 (乙)）。
+    (丙)：缺欄非空、`candidates=True` 且帶 `name_lenient` ⇒ 回缺欄之前先試 `name_early_lookup`
+    （受眾檢查與 `check_closed_keys` 之後）；多筆／查無的結果直接回，其餘照舊回缺欄清單。
     """
     if action not in CLOSED_ACTION_FIELDS:
         return None, None, None
@@ -1043,10 +1786,17 @@ async def _prepare_closed_action(
         ), None, None
     missing = missing_required_labels(action, payload)
     if missing:
+        if candidates and name_lenient is not None:
+            # (丙)：本回合講的名稱先查——唯一／沒查成 ⇒ `None`（下一行照舊缺欄）；
+            # 多筆 ⇒ 同出卡時的候選形狀；查無 ⇒ (甲)。建物件不適用（`name_early_lookup` 內排除）。
+            early = await name_early_lookup(identity, action, payload, labels=missing,
+                                            name_lenient=name_lenient, program_pick=program_pick)
+            if early is not None:
+                return early, None, None
         return _missing_fields_result(missing), None, None
 
     if action == ESTATE_CREATE_ACTION:
-        # §3f 1b：`estate_name`（可能由物件記憶補上）收下但 ⛔ 進卡、⛔ 進 body——新物件
+        # `estate_name`（可能由物件記憶補上）收下但 ⛔ 進卡、⛔ 進 body——新物件
         # 名稱一律取 `title`。在這裡就拿掉，物件記憶也不會被一個無關的舊名稱改寫。
         payload.pop("estate_name", None)
         # 站內幫手 S3-live 修正 R2：縣市一律以 **JGB 資料的寫法**（「台」）上卡與送出——
@@ -1075,6 +1825,12 @@ async def _prepare_closed_action(
         else:
             status, row, est_rows = await _resolve_estate_rows(api, role_id, user_id, ref)
         if status == "none":
+            lenient = await _name_lenient_result(
+                identity, action, payload, field="estate_name", cand_type=_wc.TYPE_ESTATE,
+                name=ref, missing_label=_ESTATE_LABEL,
+                name_lenient=name_lenient) if (candidates and pick is None) else None
+            if lenient is not None:
+                return lenient, None, None
             return _not_found_result(), None, None       # S5：查無固定句
         if status == "error":
             return ToolResult(ok=False, error="NO_MATCH"), None, None   # 沒查成
@@ -1088,6 +1844,9 @@ async def _prepare_closed_action(
             return _missing_fields_result([_ESTATE_LABEL]), None, None
         payload["estate_id"] = _row_id(row)
         payload["estate_name"] = _row_title(row, ref.strip())
+        if pick_right:
+            # 建合約卡的物件行加縣市區＋樓層（同一筆系統列）。
+            payload[_confirm_card.PICK_DISPLAY_KEY] = _location_display(row)
         return None, str(row["id"]), None
 
     # manual_bill_create
@@ -1106,6 +1865,13 @@ async def _prepare_closed_action(
             status, row, c_rows, c_more = await _resolve_contract_rows(
                 api, role_id, user_id, str(ref))
         if status == "none":
+            lenient = await _name_lenient_result(
+                identity, action, payload, field="contract_ref", cand_type=_wc.TYPE_CONTRACT,
+                name=ref, missing_label=_CONTRACT_LABEL,
+                name_lenient=name_lenient) if (
+                    candidates and not (pick is not None and pick[0] == "contract_ref")) else None
+            if lenient is not None:
+                return lenient, None, None
             return _not_found_result(), None, None       # S5：查無固定句
         if status == "error":
             return ToolResult(ok=False, error="NO_MATCH"), None, None   # 沒查成
@@ -1122,7 +1888,7 @@ async def _prepare_closed_action(
         payload.pop("estate_name", None)
         fallback = str(ref).strip()
     else:
-        # §3f 1b：缺 `contract_ref` ⇒ 以 `estate_name` 解析「該物件唯一一份有效合約」；
+        # 缺 `contract_ref` ⇒ 以 `estate_name` 解析「該物件唯一一份有效合約」；
         # 物件判不出唯一、或該物件零份／多份有效合約 ⇒ 不出卡、回缺欄「合約」。
         estate_ref = str(payload.get("estate_name") or "")
         pick_estate = pick if (pick is not None and pick[0] == "estate_name") else None
@@ -1152,6 +1918,13 @@ async def _prepare_closed_action(
             else:
                 est_status, estate, est_rows = await _resolve_estate_rows(
                     api, role_id, user_id, estate_ref)
+            if est_status == "none" and pick_estate is None and candidates:
+                # F12：物件名稱查無 ⇒ 寬鬆比對（物件候選）；不生效／落回 ⇒ 下面現行缺欄「合約」。
+                lenient = await _name_lenient_result(
+                    identity, action, payload, field="estate_name", cand_type=_wc.TYPE_ESTATE,
+                    name=estate_ref, missing_label=_CONTRACT_LABEL, name_lenient=name_lenient)
+                if lenient is not None:
+                    return lenient, None, None
             if est_status != "one":
                 cand = _name_candidates_result(
                     action, payload, field="estate_name", cand_type=_wc.TYPE_ESTATE,
@@ -1179,6 +1952,10 @@ async def _prepare_closed_action(
         fallback = f"{payload['estate_name']}的合約"
     payload["contract_id"] = _row_id(row)
     payload["contract_ref"] = _row_title(row, fallback)
+    if pick_right:
+        # 補開帳單卡的合約行加起訖日（同一份系統合約列）。
+        payload[_confirm_card.PICK_DISPLAY_KEY] = {
+            "date_start": row.get("date_start"), "date_end": row.get("date_end")}
     # S5：範圍閘比對的是「出卡時以精確 id 比對到的這份合約列上的物件」；取不到 ⇒ None
     # （釘住範圍時 Runtime 一律擋，fail-closed）。
     row_estate = row.get("estate_id")
@@ -1202,8 +1979,14 @@ async def closed_action_missing_labels(identity: Identity, action: Any, payload:
       查無固定句、`NO_MATCH`、無清單的 `INVALID_INPUT`）⇒ `[]`（維持呼叫端原分支）；
     - 例外 ⇒ 記一行不含值的訊息、回 `[]`（fail-soft 到原行為）。
 
-    只做出卡路徑本來就做的帶 viewer 查詢；⛔ 出卡、⛔ 建 token、⛔ 寫 DB、⛔ 呼叫任何 LLM。
-    A-2a（開關生效）：B2 (3) 先以 `write_name_candidates`（同一支 `_prepare_closed_action`，
+    呼叫時機：B2 (3) 在 `WF.missing_labels` 判**不缺**之後（欄位齊、要判名稱多筆或物件無唯一有效合約）。
+    只做出卡路徑本來就做的帶 viewer 查詢；⛔ 出卡、⛔ 建 token、⛔ 寫 DB、⛔ 呼叫任何 LLM——
+    F12 名稱解析的三個觸發點：(甲) 寬鬆比對只接在 `candidates=True` 且帶 `name_lenient` 的路徑；
+    (乙) 缺名稱只由 `confirm_request`／runtime 缺欄分支帶 `name_lenient` 另呼 `missing_name_lenient`；
+    (丙) 名稱先查只在 `_prepare_closed_action` 的 `candidates=True` 且帶 `name_lenient` 時、或
+    `confirm_request`／runtime 缺欄分支另呼 `name_early_lookup`。本函式固定 `candidates=False`、不傳
+    `name_lenient`、不呼 `missing_name_lenient`／`name_early_lookup` ⇒ 三者都永遠不觸發（0 次 LLM 呼叫）。
+    候選開關生效：runtime 先以 `write_name_candidates`（同一支 `_prepare_closed_action`，
     `candidates=True`）判「名稱多筆」——命中時呼叫端只寫候選集（session 狀態）並列清單，
     ⛔ 出卡、⛔ 建 token；本函式本身維持 `candidates=False`（回缺欄清單，與改動前相同）。
     """
@@ -1227,7 +2010,7 @@ async def closed_action_missing_labels(identity: Identity, action: Any, payload:
     return list(labels) if isinstance(labels, list) else []
 
 
-#: 2026-10-15 正式機：建物件／合約／手動帳單（jgb2-req#19～#21）JGB 尚未開放；接真 JGB
+#: 建物件／合約／手動帳單（jgb2-req#19～#21）JGB 尚未開放；接真 JGB
 #: （`use_mock=False`）時 ⛔ 出卡（否則使用者按確認後才在不存在的端點上失敗），由 runtime
 #: 以這一句程式固定句結束回合。⛔ 無插值。
 WRITE_NOT_SUPPORTED_ACTIONS = frozenset({"estate_create", "contract_create", "manual_bill_create"})
@@ -1277,9 +2060,10 @@ _REPAIR_CREATE_ACTION: Final[str] = "repair_create"
 
 async def _prepare_repair_estate(
     identity: Identity, action: Any, payload: dict, *,
-    program_pick: Optional[dict] = None, candidates: bool = False,
+    program_pick: Optional[dict] = None, candidates: bool = False, pick_right: bool = False,
+    name_lenient: Optional["_nm.NameLenientTurn"] = None,
 ) -> Tuple[Optional[ToolResult], Optional[str]]:
-    """A-2a（計畫 §4.5 (ii)、§4.1；§11 P1-1）：`repair_create` 的物件出卡前解析 ⇒
+    """`repair_create` 的物件出卡前解析 ⇒
     `(提早收尾的 ToolResult, 程式選定寫入的 estate_id 字串)`；其餘一律 `(None, None)`（現行路徑）。
 
     呼叫端**已先無條件丟掉**模型自帶的 `estate_id`。
@@ -1304,6 +2088,9 @@ async def _prepare_repair_estate(
             return _not_found_result(), None
         payload["estate_id"] = _row_id(row)
         payload["estate_name"] = _row_title(row, str(name or "").strip())
+        if pick_right:
+            # 卡上物件行加縣市區＋樓層（同一筆系統列）。
+            payload[_confirm_card.PICK_DISPLAY_KEY] = _location_display(row)
         return None, str(row["id"])
     if not candidates or not role_id or not user_id:
         return None, None
@@ -1313,7 +2100,18 @@ async def _prepare_repair_estate(
         rows = await _viewer_estate_rows(jgb2_tools._get_api(), role_id, user_id, name.strip())
     except jgb2_tools.UpstreamFailure:
         return None, None
-    if not rows or _resolve_estate(rows, name) is not None:
+    if not rows:
+        # F12：名稱查無（上游成功、零筆；現行在出卡前由 `open_repairs` 回查無固定句）⇒ 寬鬆比對。
+        lenient = await _name_lenient_result(
+            identity, action, payload, field="estate_name", cand_type=_wc.TYPE_ESTATE,
+            name=name, missing_label=_ESTATE_LABEL, name_lenient=name_lenient)
+        return lenient, None
+    unique = _resolve_estate(rows, name)
+    if unique is not None:
+        if pick_right:
+            # 名稱唯一（與兌現端 `_resolve_estate` 同一判準、同一次查詢）⇒ 卡上加該筆的縣市區＋樓層；
+            # 兌現端仍依名稱解析（現行），⛔ 寫入 `estate_id`。
+            payload[_confirm_card.PICK_DISPLAY_KEY] = _location_display(unique)
         return None, None
     cand = _name_candidates_result(
         action, payload, field="estate_name", cand_type=_wc.TYPE_ESTATE,
@@ -1322,11 +2120,202 @@ async def _prepare_repair_estate(
     return cand, None
 
 
+# ---------------------------------------------------------------------------
+# (丙) 名稱先查
+#
+# ⚠️ 入口只有 `name_early_lookup`，呼叫點三個：`_prepare_closed_action`（封閉三動作，受眾檢查與
+#    `check_closed_keys` 之後、回缺欄之前，且 `candidates=True`）、`confirm_request`（修繕、延期繳費，
+#    回缺欄之前、(乙) 之前）、runtime B2 `_write_reply_state` 缺欄分支（第二接入點；runtime ⛔ 另寫出向）。
+#    `closed_action_missing_labels`（`candidates=False`、無 `name_lenient`）永遠不觸發。
+# ⚠️ 唯一 ⇒ 回 `None`（呼叫端照現行缺欄，逐字不變）：⛔ 寫 payload（編號或系統正名）、⛔ 存解析結果到
+#    session；出卡時照現行再解析一次。解析暫存只活在本回合脈絡。
+# ⚠️ 身分閘（`_name_lenient_identity_ok`）在任何出向之前；解析函式與出卡時同一組（帶 role 與 viewer）。
+# ---------------------------------------------------------------------------
+_NAME_EARLY_ACTIONS: Final[frozenset] = frozenset(
+    {_REPAIR_CREATE_ACTION, CONTRACT_CREATE_ACTION, MANUAL_BILL_CREATE_ACTION, BILL_DUE_EXTEND_ACTION})
+#: 候選形狀裡 `payload` 的副本去掉的鍵——出卡時這幾個動作在解析前就丟掉的系統編號（⛔ 讓模型帶的值進結果）。
+_NAME_EARLY_DROP_KEYS: Final[frozenset] = frozenset({"estate_id", "contract_id"})
+
+
+def _name_early_target(action: str, payload: dict) -> Optional[Tuple[str, str, str]]:
+    """(丙) 要先查的名稱欄 ⇒ `(欄位鍵, 候選型別, 缺欄標籤)`；不適用 ⇒ `None`。只取**出卡時會用到的那一欄**
+    延期繳費只在 `bill_id` 缺值時先定物件；手開帳單有 `contract_ref` 只查它、沒有才查 `estate_name`
+    （標籤同出卡時：物件型「物件」、手開帳單兩欄皆「合約」、延期「物件」）。"""
+    if action in (_REPAIR_CREATE_ACTION, CONTRACT_CREATE_ACTION):
+        return "estate_name", _wc.TYPE_ESTATE, _ESTATE_LABEL
+    if action == MANUAL_BILL_CREATE_ACTION:
+        if not _missing(payload.get("contract_ref")):
+            return "contract_ref", _wc.TYPE_CONTRACT, _CONTRACT_LABEL
+        return "estate_name", _wc.TYPE_ESTATE, _CONTRACT_LABEL
+    if action == BILL_DUE_EXTEND_ACTION and _missing(payload.get("bill_id")):
+        return "estate_name", _wc.TYPE_ESTATE, _BILL_LABEL
+    return None
+
+
+def _name_early_program_selected(name_lenient: Any) -> bool:
+    """本回合是否已有程式選定；判斷不了（沒給、丟例外、回非 `False`）⇒ 當作有（fail-closed：不觸發）。"""
+    probe = getattr(name_lenient, "program_selected", None)
+    if not callable(probe):
+        return True
+    try:
+        return probe() is not False
+    except Exception:  # noqa: BLE001 — 判不出 ⇒ 不觸發
+        return True
+
+
+async def _name_early_resolve(name_lenient: "NameLenientTurnCtx", api, role_id: str, user_id: str,
+                              resolver: str, key: Tuple[Any, ...], ref: str) -> Optional[dict]:
+    """(丙) 每回合的解析：`resolver` 每回合最多呼叫一次；同鍵 ⇒ 沿用第一次的結果，不同鍵 ⇒ `None`
+    （不查，呼叫端照現行）。第一次解析時記結果型別標記（`name_early:<status>`）。"""
+    if name_lenient.early_lock is None:
+        name_lenient.early_lock = asyncio.Lock()
+    async with name_lenient.early_lock:
+        entry = name_lenient.early_lookups.get(resolver)
+        if entry is not None:
+            return entry if entry.get("key") == key else None
+        calls = name_lenient.early_resolver_calls
+        calls[resolver] = int(calls.get(resolver, 0)) + 1
+        if resolver == "contract":
+            status, _row, rows, more = await _resolve_contract_rows(api, role_id, user_id, ref)
+        else:
+            status, _row, rows = await _resolve_estate_rows(api, role_id, user_id, ref)
+            more = False
+        entry = {"key": key, "status": status, "rows": list(rows), "has_more": bool(more)}
+        name_lenient.early_lookups[resolver] = entry
+        mark = _V_NAME_EARLY_OF_STATUS.get(status)
+        if mark is not None:
+            _lenient_mark(name_lenient, mark)
+        return entry
+
+
+async def name_early_lookup(
+    identity: Identity, action: Any, payload: Any, *, labels: Any,
+    name_lenient: Optional["_nm.NameLenientTurn"], program_pick: Optional[dict] = None,
+) -> Optional[ToolResult]:
+    """(丙) 名稱先查：寫入流程中名稱本回合講、其他欄位仍缺 ⇒ 當回合依名稱查。
+
+    觸發條件全成立才查（任一不合 ⇒ `None`，0 次出向、0 次模型呼叫）：
+    脈絡是 runtime 的 `NameLenientTurnCtx` 且 `typed`；`name_lenient_effective_from_env`（含 A-2a 生效）；
+    動作是修繕／建合約／手開帳單／延期繳費（建物件不適用）；接真 JGB 時 `WRITE_NOT_SUPPORTED_ACTIONS` 不查；
+    缺欄清單 `labels` 非空；`valid_program_pick` 為空且脈絡 `program_selected()` 恰為 `False`；
+    出卡時會用到的那一欄（`_name_early_target`）有值、非純數字、且正規化後出現在本回合使用者原話（R1）；
+    `_wc.allowed`；最後 `_name_lenient_identity_ok`（受眾、身分閘）。
+
+    結果：唯一（含手開帳單物件唯一——有效合約不論幾份都照現行缺欄，故不另查）、沒查成 ⇒ `None`（呼叫端照
+    現行缺欄，逐字不變；⛔ 寫 payload、⛔ 存結果）；多筆 ⇒ 與出卡時同一支 `_name_candidates_result`、同一份
+    `_many_rows`（延期另經 `_annotate_valid_contract`）；查無 ⇒ (甲) `_name_lenient_result`（共用 `run_once`；
+    回空 ⇒ `None`）。候選形狀的 `payload` 是去掉系統編號鍵的副本（⛔ 改呼叫端的 dict）。
+    ⛔ 呼叫 LLM——唯一例外是查無時經 (甲) 的那一次（每回合 ≤1，與 (甲)(乙) 共用）。"""
+    if not isinstance(name_lenient, NameLenientTurnCtx) or name_lenient.typed is not True:
+        return None
+    try:
+        if not _nm.name_lenient_effective_from_env():
+            return None
+    except ValueError:
+        return None                                   # 開關值不合法（啟動時已拒）⇒ 不觸發
+    if not isinstance(action, str) or action not in _NAME_EARLY_ACTIONS or not isinstance(payload, dict):
+        return None
+    if (action in WRITE_NOT_SUPPORTED_ACTIONS
+            and getattr(jgb2_tools._get_api(), "use_mock", True) is False):
+        return None                                   # 同 (乙)：接真 JGB 不支援的動作 ⇒ 0 次查詢
+    if not isinstance(labels, list) or not labels:
+        return None                                   # 缺欄為空 ⇒ 現行出卡路徑本來就會解析名稱
+    if _wc.valid_program_pick(program_pick, action) is not None:
+        return None
+    if _name_early_program_selected(name_lenient):
+        return None
+    target = _name_early_target(action, payload)
+    if target is None:
+        return None
+    field, cand_type, label = target
+    value = payload.get(field)
+    if not isinstance(value, str) or not value.strip() or value.strip().isdigit():
+        return None                                   # 編號（純數字）⇒ 照現行（只先查名稱）
+    said = name_said_key(value)
+    if not said or said not in name_said_key(name_lenient.user_message):
+        return None                                   # 名稱非本回合講（R1）⇒ 不觸發
+    if not _wc.allowed(action, field, cand_type):
+        return None
+    ok, role_id, user_id = _name_lenient_identity_ok(identity)
+    if not ok:
+        return None                                   # 0 次出向、0 次模型呼叫
+    api = jgb2_tools._get_api()
+    ref = value.strip()
+    resolver = "contract" if cand_type == _wc.TYPE_CONTRACT else "estate"
+    entry = await _name_early_resolve(name_lenient, api, role_id, user_id, resolver,
+                                      (action, field, _wc.name_fp(ref)), ref)
+    if entry is None or entry["status"] not in ("many", "none"):
+        return None                                   # 唯一／沒查成／本回合已查過別的名稱 ⇒ 現行缺欄
+    cand_payload = {k: v for k, v in payload.items() if k not in _NAME_EARLY_DROP_KEYS}
+    annotate = action == BILL_DUE_EXTEND_ACTION
+    if entry["status"] == "many":
+        rows = entry.get("annotated")
+        if rows is None:
+            rows = _many_rows(entry["rows"], ref)
+            if annotate:
+                rows = await _annotate_valid_contract(api, role_id, user_id, rows)
+                entry["annotated"] = rows
+        return _name_candidates_result(
+            action, cand_payload, field=field, cand_type=cand_type, rows=list(rows),
+            has_more=entry["has_more"], query=ref, missing_label=label)
+    return await _name_lenient_result(
+        identity, action, cand_payload, field=field, cand_type=cand_type, name=ref,
+        missing_label=label, name_lenient=name_lenient, annotate=annotate)
+
+
+async def name_precheck_ids(
+    identity: Identity, action: Any, payload: dict, *, field: str, cand_type: str, name: Any,
+    missing_label: str, name_lenient: Optional["_nm.NameLenientTurn"],
+) -> Optional[set]:
+    """`name` 指令將解綁時，解綁前先用
+    「解綁後重查會走的同一組查找」查一次，回查到的列編號集合——runtime 拿它比對現選定（含 ⇒ 維持）。唯讀。
+
+    身分閘 `_name_lenient_identity_ok` 在任何出向之前（不過 ⇒ `None`，0 次出向、0 次模型呼叫）；先精確查找
+    （`_resolve_estate_rows`／`_resolve_contract_rows`，帶 role 與 viewer，同出卡前解析）——`one`／`many` ⇒ 取列編號
+    （`many` 取 `_many_rows`，同出卡時列給使用者的那份）；`none` ⇒ `_name_lenient_result`（與解綁後重查同一把
+    `run_once` 鍵 `(action, field, cand_type, name_fp(name))`：重查取同一份結果，本回合寬鬆模型呼叫仍 ≤1）取候選形狀的編號；
+    `error`、例外、寬鬆回 `None`／查無 ⇒ `None`（不比對）。⛔ 寫狀態、⛔ 記值。"""
+    if cand_type not in (_wc.TYPE_ESTATE, _wc.TYPE_CONTRACT):
+        return None
+    if not isinstance(name, str) or not name.strip():
+        return None
+    ok, role_id, user_id = _name_lenient_identity_ok(identity)
+    if not ok:
+        return None                                   # 0 次出向、0 次模型呼叫
+    api = jgb2_tools._get_api()
+    ref = name.strip()
+    try:
+        if cand_type == _wc.TYPE_CONTRACT:
+            status, row, rows, _more = await _resolve_contract_rows(api, role_id, user_id, ref)
+        else:
+            status, row, rows = await _resolve_estate_rows(api, role_id, user_id, ref)
+        if status == "one" and isinstance(row, dict):
+            rid = _wc.candidate_id(row.get("id"))
+            return {rid} if rid is not None else None
+        if status == "many":
+            rows = _many_rows(rows, ref)
+        elif status == "none":
+            result = await _name_lenient_result(
+                identity, action, payload, field=field, cand_type=cand_type, name=ref,
+                missing_label=missing_label, name_lenient=name_lenient)
+            if result is None or not is_candidate_shape(result):
+                return None
+            rows = result.data.get("candidates") or []
+        else:
+            return None                               # error ⇒ 不比對
+    except Exception:  # noqa: BLE001 — 查找失敗 ⇒ 不比對（照現行解綁重查）
+        return None
+    ids = {_wc.candidate_id(r.get("id")) for r in rows if isinstance(r, dict)}
+    ids.discard(None)
+    return ids or None
+
+
 async def _apply_bill_pick(identity: Identity, payload: dict, bill_id: str, *,
-                           today: date) -> Optional[ToolResult]:
-    """A-2a（計畫 §4.5；§11 P3-5）：程式選定的帳單 ⇒ **覆蓋** payload 的 `bill_id`，以 `viewer_bill_row`
+                           today: date, seen: Optional[dict] = None) -> Optional[ToolResult]:
+    """程式選定的帳單 ⇒ **覆蓋** payload 的 `bill_id`，以 `viewer_bill_row`
     重驗可見、`_fill_bill_fields` 由系統值導出三欄（⛔ 依賴 `AGENT_WRITE_LIFECYCLE` 的預檢）。
-    看不到 ⇒ 查無固定句；沒查成 ⇒ `NO_MATCH`；算不出 ⇒ `INVALID_INPUT`；成功 ⇒ `None`。"""
+    看不到 ⇒ 查無固定句；沒查成 ⇒ `NO_MATCH`；算不出 ⇒ `INVALID_INPUT`；成功 ⇒ `None`。
+    `seen`（「選對紀錄」片）：給了就把重驗到的帳單列放進 `seen["bill"]`（卡上核對資料沿用，⛔ 再查一次）。"""
     role_id, user_id = _identity_pair(identity)
     payload["bill_id"] = str(bill_id)
     status, row = await viewer_bill_row(jgb2_tools._get_api(), role_id, user_id, bill_id)
@@ -1334,33 +2323,61 @@ async def _apply_bill_pick(identity: Identity, payload: dict, bill_id: str, *,
         return ToolResult(ok=False, error="NO_MATCH")
     if status != "one" or not isinstance(row, dict):
         return _not_found_result()
+    if seen is not None:
+        seen["bill"] = row
     if not _fill_bill_fields(payload, row, today=today):
         return ToolResult(ok=False, error="INVALID_INPUT")
     return None
 
 
-async def write_name_candidates(identity: Identity, action: Any, payload: Any) -> Optional[ToolResult]:
-    """A-2a（計畫 §4.1；§11 P3-6）：草稿 payload 在出卡前解析是不是「名稱多筆」——是 ⇒ 候選形狀
+async def write_name_candidates(identity: Identity, action: Any, payload: Any, *,
+                                scope_pick: Optional[dict] = None,
+                                name_lenient: Optional["_nm.NameLenientTurn"] = None,
+                                ) -> Optional[ToolResult]:
+    """草稿 payload 在出卡前解析是不是「名稱多筆」——是 ⇒ 候選形狀
     （`is_candidate_shape`）；其餘 ⇒ `None`。
 
     走 `confirm_request` **同一組函式**（`_prepare_closed_action`／`_prepare_repair_estate`／
-    `_resolve_bill_by_period`，皆 `candidates=True`）、在 payload 的**深複本**上跑：B2 (3) 的清單與
+    `_resolve_bill_by_period`，皆 `candidates=True`）、在 payload 的**深複本**上跑：runtime 缺欄分支的清單與
     寫進候選集的編號出自同一次查詢；打字選定回合給意圖呼叫的資料段也由這裡取列。
-    ⛔ 出卡、⛔ 建 token、⛔ 寫 DB、⛔ 呼叫任何 LLM；呼叫端只寫候選集。例外 ⇒ 記不含值的一行、回 `None`。
+    ⛔ 出卡、⛔ 建 token、⛔ 寫 DB；呼叫端只寫候選集。例外 ⇒ 記不含值的一行、回 `None`。
+    ⛔ 呼叫任何 LLM——**唯一例外**是名稱寬鬆比對 (甲)：呼叫端傳了 `name_lenient`
+    （runtime 每回合一份）且名稱解析零筆時，經 `name_lenient` 做至多 1 次模型呼叫（與 (乙) 共用每回合
+    ≤1 次；同回合重問回同一份結果）；此時「找不到這個名稱」結果（`is_name_not_found`）也原樣回傳。
+    (乙) 缺名稱觸發不在本函式（見 `missing_name_lenient`）。未傳 ⇒ 不做寬鬆比對。
+    呼叫時機：runtime 只在 `WF.missing_labels` 判**不缺**時呼叫（打字選定回合取列另呼、不帶
+    `name_lenient`）——缺欄時 `_prepare_closed_action` 雖帶 `name_lenient`、(丙) 名稱先查理論上可達，但
+    runtime 不在缺欄時呼叫本函式；缺欄回合的 (丙) 由 runtime 另呼 `name_early_lookup`。
+
+    「選對紀錄」片（`AGENT_PICK_RIGHT` 生效時）：延期繳費改走 `_pr_resolve_bill`（先物件、後帳單；
+    比對客人講的值）；`scope_pick` 只收 runtime 由候選集算出的「已選物件」（`write_candidates.scope_pick_of`，
+    型別 estate），讓帳單候選只列該物件的帳單。開關 off ⇒ `scope_pick` 不用（與改動前逐字相同）。
     """
     if not isinstance(action, str) or action not in _wc.CANDIDATE_ACTIONS or not isinstance(payload, dict):
         return None
     work = copy.deepcopy(dict(payload))
     work["action"] = action
+    pr_on = _write_forms.pick_right_effective_from_env()
     try:
+        if pr_on and action == BILL_DUE_EXTEND_ACTION:
+            work.pop(_confirm_card.PICK_DISPLAY_KEY, None)
+            said = _pop_said(work)
+            if missing_labels(action, work):
+                return None
+            _matched, early, _bill, _estate = await _pr_resolve_bill(
+                identity, action, work, today=bills._today(), program_pick=scope_pick, said=said,
+                name_lenient=name_lenient)
+            return _name_resolution_early(early, name_lenient)
         if action in CLOSED_ACTION_FIELDS:
             if (action in WRITE_NOT_SUPPORTED_ACTIONS
                     and getattr(jgb2_tools._get_api(), "use_mock", True) is False):
                 return None
-            early, _eid, _scope = await _prepare_closed_action(identity, action, work, candidates=True)
+            early, _eid, _scope = await _prepare_closed_action(
+                identity, action, work, candidates=True, name_lenient=name_lenient)
         elif action == _REPAIR_CREATE_ACTION:
             work.pop("estate_id", None)
-            early, _eid = await _prepare_repair_estate(identity, action, work, candidates=True)
+            early, _eid = await _prepare_repair_estate(
+                identity, action, work, candidates=True, name_lenient=name_lenient)
         else:
             if missing_labels(action, work):
                 return None
@@ -1370,19 +2387,29 @@ async def write_name_candidates(identity: Identity, action: Any, payload: Any) -
         logger.warning("[agent] A-2a 名稱多筆判斷失敗（%s），沿用原分支（⛔ 記值）",
                        type(exc).__name__)
         return None
-    return early if is_candidate_shape(early) else None
+    return _name_resolution_early(early, name_lenient)
+
+
+def _name_resolution_early(early: Any, name_lenient: Any) -> Optional[ToolResult]:
+    """`write_name_candidates` 的回傳：候選形狀 ⇒ 原樣；帶 `name_lenient` 時「找不到這個名稱」⇒ 原樣；
+    其餘 ⇒ `None`。"""
+    if is_candidate_shape(early):
+        return early
+    if name_lenient is not None and is_name_not_found(early) is not None:
+        return early
+    return None
 
 
 async def pick_matches_name(identity: Identity, *, action: str, field: str, cand_type: str,
                             pick_id: str, field_value: Any) -> bool:
-    """A-2a（A2-R7 (c)；計畫 §4.4）：使用者講的編號**不在候選集**時，以帶 viewer 的編號精確查，
+    """使用者講的編號**不在候選集**時，以帶 viewer 的編號精確查，
     查到且名稱與候選集欄位的名稱相同才成立（⛔ 只憑編號就收）。
 
     - 合約（欄位 `contract_ref`）：`contract_ids` 精確查，合約名稱＝欄位值；
     - 物件：精確編號查，物件名稱＝欄位值；
     - 合約（欄位 `estate_name`，該物件多份有效合約）：合約可見、非歷史、且所在物件就是欄位名稱指的那一個
       （`_estate_of_contract`，與出卡前解析同一判準）；
-    - 帳單：⛔ 不收（計畫 §4.4 只列合約與物件的編號精確查）。
+    - 帳單：⛔ 不收（只有合約與物件做編號精確查）。
     沒查成、缺證、形狀不合 ⇒ `False`。"""
     if not _wc.allowed(action, field, cand_type) or cand_type == _wc.TYPE_BILL:
         return False
@@ -1421,14 +2448,22 @@ async def confirm_request(
     ttl_s: int = CONFIRM_TOKEN_TTL_S,
     open_repairs=None,
     program_pick: Optional[dict] = None,
+    name_lenient: Optional["_nm.NameLenientTurn"] = None,
 ) -> ToolResult:
     """`confirm.request` 入口。
 
-    A-2a（計畫 §4.5）：`program_pick`＝**程式專用選定通道**（`{action, field, type, id}`），只由
+    `name_lenient`＝runtime 每回合一份的名稱寬鬆比對脈絡，與 `program_pick` 同一條
+    程式專用通道（只由 `ToolRegistry.call` 的具名參數轉來；模型 tool call、MCP 直呼碰不到）。候選開關未生效
+    ⇒ 一律當 `None`；三個觸發點：名稱解析零筆（(甲)，見 `_name_lenient_result`）、缺欄清單含空的名稱欄
+    （(乙)，見 `missing_name_lenient`；只在 runtime 的 `NameLenientTurnCtx.typed` 為真時）、名稱本回合講
+    而其他欄位仍缺（(丙)，見 `name_early_lookup`；修繕／延期在本函式回缺欄前呼、封閉三動作在
+    `_prepare_closed_action` 內呼）。
+
+    `program_pick`＝**程式專用選定通道**（`{action, field, type, id}`），只由
     `ToolRegistry.call` 的同名具名參數轉來——runtime 只在「程式依草稿發出、且候選集選定成立」的那一個
     呼叫點設它；模型 tool call、MCP client 直呼只碰得到 `args`，碰不到它（`args.payload` 裡同名的鍵
     沒有任何作用：封閉三動作被 `check_closed_keys` 擋、其餘動作只是 payload 的一個鍵）。
-    開關 `AGENT_WRITE_CANDIDATES` 未生效 ⇒ 一律當 `None`，名稱多筆的出口與 B 逐字相同。
+    開關 `AGENT_WRITE_CANDIDATES` 未生效 ⇒ 一律當 `None`，名稱多筆的出口與未加候選集時逐字相同。
 
     Args:
         args: `{"summary": str, "payload": str}`——`payload` 是 **JSON 物件序列化
@@ -1436,7 +2471,7 @@ async def confirm_request(
             開放 object）。本函式 `json.loads` 後必須是 dict，否則 `INVALID_INPUT`。
         db_pool: asyncpg pool（寫 `agent_confirmation_tokens`）。
         ttl_s: token 存活秒數，預設 600（10 分鐘）。
-        open_repairs: W8 (3) 的具名注入（形狀同 `db_pool`），
+        open_repairs: 具名注入（形狀同 `db_pool`），
             `async (identity, estate_name) -> {"estate_id", "count", "ids"} | None`。
             `None`／回 `None` ⇒ **不加提示行、卡照出**，兌現時走既有的
             「找不到物件」錯誤路徑。實作在 `mcp_facade.build_registry`。
@@ -1475,19 +2510,52 @@ async def confirm_request(
     # DSP-038-2：`action` 必填、封閉值域；確認卡由程式依 action＋payload 決定性
     # 產出。⛔ 缺欄位／不認得的 action ⇒ `INVALID_INPUT`，不「盡力而為」印半張卡。
     action = payload.get("action")
-    # 2026-10-15 正式機：接真 JGB 時新動作端點尚未開放 ⇒ 出卡前就停（真 `JGBSystemAPI`
+    # 選對紀錄（開關 `AGENT_PICK_RIGHT`，呼叫當下讀）。
+    # - `pr_on`（開關 on 且候選生效）：先物件後帳單、比對客人講的值、候選相關。
+    # - `display_on`（開關 on 即可）：四種卡的可分辨欄位（所有路徑——含模型自帶 `bill_id`、
+    #   寫入生命週期開關 off、自呼路徑）。
+    # ⚠️ 卡上核對資料（`PICK_DISPLAY_KEY`）只能由程式從系統列寫入：模型帶的同名鍵**一律先丟**——
+    #    延期繳費與修繕**無條件**（render 會印這個鍵，⛔ 讓開關 off 時模型自帶的值上卡）；封閉三動作在
+    #    開關 on 時丟（off 時照舊由 `check_closed_keys` 整份退回）。
+    # ⚠️ 客人講的比對值（`said_amount`／`said_range`）：`pr_on` 時取出（已過 runtime 值閘，之後只用來篩與
+    #    印提醒行）；開關 on 但 A-2a 未生效（無草稿值閘，值可能是模型自填）⇒ 取出丟掉（⛔ 上提醒行）；
+    #    off ⇒ 不碰（與改動前相同：render 不讀它們）。
+    pr_on = _write_forms.pick_right_effective_from_env()
+    display_on = _write_forms.pick_right_enabled_from_env()
+    said: dict = {"amount": None, "range": None}
+    if action in (BILL_DUE_EXTEND_ACTION, _REPAIR_CREATE_ACTION):
+        payload.pop(_confirm_card.PICK_DISPLAY_KEY, None)
+    elif display_on and action in CLOSED_ACTION_FIELDS:
+        payload.pop(_confirm_card.PICK_DISPLAY_KEY, None)
+    if display_on and action == BILL_DUE_EXTEND_ACTION:
+        said = _pop_said(payload)
+        if not pr_on:
+            said = {"amount": None, "range": None}
+    # 接真 JGB 時新動作端點尚未開放 ⇒ 出卡前就停（真 `JGBSystemAPI`
     # 一定有 `use_mock`；沒有這個屬性的是測試替身 ⇒ 沿用原行為）。
     if (action in WRITE_NOT_SUPPORTED_ACTIONS
             and getattr(jgb2_tools._get_api(), "use_mock", True) is False):
         return _write_not_supported_result()
-    # W1（§2.1(1)）：5 支寫入動作的缺欄計算一律走 `write_forms.missing_labels`、在 `render()`
+    # 5 支寫入動作的缺欄計算一律走 `write_forms.missing_labels`、在 `render()`
     # **之前**；缺 ⇒ 回缺欄清單、由程式追問（⛔ 出卡）。封閉三動作的呼叫點**不動**——仍在
     # `_prepare_closed_action` 的受眾檢查與 `check_closed_keys` 之後（非業者照舊先得 `NO_MATCH`）。
     # 修繕：照片建議的描述已由 runtime 在呼叫前補進 payload，故有照片時不會被當成缺（A9 不變）。
-    # 延期繳費（明列行為變更）：缺 `days`／缺帳單與物件 ⇒ 改回缺欄清單（原為不帶清單的 `INVALID_INPUT`）。
+    # 延期繳費：缺 `days`／缺帳單與物件 ⇒ 回缺欄清單（⛔ 不帶清單的 `INVALID_INPUT`）。
     if action in _confirm_card.CONFIRM_ACTIONS and action not in CLOSED_ACTION_FIELDS:
         missing = missing_labels(action, payload)
         if missing:
+            # (丙)：名稱本回合講、其他欄位仍缺 ⇒ 先查名稱（身分閘在任何查詢之前，見 `name_early_lookup`）；
+            # 唯一／沒查成 ⇒ `None`（往下照現行）。名稱欄有值時 (乙) 本來就不觸發，兩者不重疊。
+            # (乙)：追問含名稱欄且名稱欄空 ⇒ 本回合原話寬鬆比對；有候選 ⇒ 候選形狀，其餘 ⇒ 現行缺欄。
+            if name_lenient is not None:
+                early = await name_early_lookup(identity, action, payload, labels=missing,
+                                                name_lenient=name_lenient, program_pick=program_pick)
+                if early is not None:
+                    return early
+                lenient = await missing_name_lenient(
+                    identity, action, payload, labels=missing, name_lenient=name_lenient)
+                if lenient is not None:
+                    return lenient
             return ToolResult(ok=False, error="INVALID_INPUT",
                               data={"missing_fields": missing, "action": action})
     # 收案 6：`repair_create` 的 `category_name` 必須落在封閉的修繕分類樹內
@@ -1501,22 +2569,34 @@ async def confirm_request(
     cand_on = _write_forms.write_candidates_effective_from_env()
     if not cand_on:
         program_pick = None
-    # A-2a（§11 P1-1）：`repair_create` 的模型自帶 `estate_id` **無條件丟掉**（同封閉三動作的
+        name_lenient = None
+    # `repair_create` 的模型自帶 `estate_id` **無條件丟掉**（同封閉三動作的
     # `estate_id`／`contract_id`）——兌現端在卡 payload 有 `estate_id` 時只依編號寫入，那一格只能
     # 是程式選定寫入的值。之後才依程式選定／名稱解析（`_prepare_repair_estate`）。
     repair_estate_id: Optional[str] = None
     if action == _REPAIR_CREATE_ACTION:
         payload.pop("estate_id", None)
         repair_early, repair_estate_id = await _prepare_repair_estate(
-            identity, action, payload, program_pick=program_pick, candidates=cand_on)
+            identity, action, payload, program_pick=program_pick, candidates=cand_on,
+            pick_right=display_on, name_lenient=name_lenient)
         if repair_early is not None:
             return repair_early
 
-    # S2（§3f 1b／1d／2）：封閉欄位表動作——鍵集合、缺欄清單、系統解析編號，全在
-    # `render()` **之前**（解析結果要進卡、進雜湊）。其他 action ⇒ `(None, None)`＝行為不變。
+    # 封閉欄位表動作——鍵集合、缺欄清單、系統解析編號，全在
+    # `render()` **之前**（解析結果要進卡、進雜湊）。其他 action ⇒ `(None, None)`。
     closed_early, closed_estate_id, scope_estate_id = await _prepare_closed_action(
-        identity, action, payload, program_pick=program_pick, candidates=cand_on)
+        identity, action, payload, program_pick=program_pick, candidates=cand_on,
+        pick_right=display_on, name_lenient=name_lenient)
     if closed_early is not None:
+        # (乙)：封閉三動作的缺欄清單（`missing_required_labels`）同上；名稱欄有值時
+        # （名稱多筆／物件無唯一有效合約的缺欄）`missing_name_lenient` 不觸發。
+        closed_missing = (closed_early.data.get("missing_fields")
+                          if not closed_early.ok and isinstance(closed_early.data, dict) else None)
+        if name_lenient is not None and isinstance(closed_missing, list):
+            lenient = await missing_name_lenient(
+                identity, action, payload, labels=closed_missing, name_lenient=name_lenient)
+            if lenient is not None:
+                return lenient
         return closed_early
 
     # ⚠️ **一次取值、三處共用的時鐘**（V3 的三個呼叫點之一）：對帳單、render 的
@@ -1526,13 +2606,27 @@ async def confirm_request(
     # 第六批 A（line-bot #2）：缺帳單編號 ⇒ 以物件名稱＋期別對帳單（見上方分節註解）。
     # 排在 `render()` **之前**：render 是「這份 payload 印不印得出卡」的判準，
     # 而這一段正是在補齊它要的欄位。⛔ 不在 render 之後補（那等於印完卡再改內容）。
-    # A-2a（計畫 §4.5；N2）：模型自帶 `bill_id` 的現行路徑不改；只有程式選定（`program_pick` 型別
+    # 模型自帶 `bill_id` 的路徑不改；只有程式選定（`program_pick` 型別
     # bill）時以選定編號**覆蓋** `bill_id` 並以 `viewer_bill_row` 重驗（`_apply_bill_pick`）。
     bill_pick = (_wc.valid_program_pick(program_pick, action)
                  if action == BILL_DUE_EXTEND_ACTION else None)
+    if bill_pick is not None and bill_pick[1] != _wc.TYPE_BILL:
+        # 「選對紀錄」片：開關生效時延期繳費另收**物件**選定（先選物件，`_pr_resolve_bill` 處理）；
+        # ⛔ 把物件編號當帳單編號（off 時封閉表只有帳單型別，這一行不會成立）。
+        bill_pick = None
+    seen: dict = {}
+    pr_estate: Optional[dict] = None
     if bill_pick is not None:
-        early = await _apply_bill_pick(identity, payload, bill_pick[2], today=today)
+        early = await _apply_bill_pick(identity, payload, bill_pick[2], today=today,
+                                       seen=seen if pr_on else None)
         matched_by_period = early is None
+    elif pr_on:
+        # 先物件、後帳單；比對客人講的值。
+        matched_by_period, early, pr_bill, pr_estate = await _pr_resolve_bill(
+            identity, action, payload, today=today, program_pick=program_pick, said=said,
+            name_lenient=name_lenient)
+        if pr_bill is not None:
+            seen["bill"] = pr_bill
     else:
         matched_by_period, early = await _resolve_bill_by_period(
             identity, action, payload, today=today, candidates=cand_on
@@ -1545,6 +2639,13 @@ async def confirm_request(
         pre_early = await _run_form_precheck(identity, action, payload, today=today)
         if pre_early is not None:
             return pre_early
+    if display_on and action == BILL_DUE_EXTEND_ACTION:
+        # 延期卡的核對資料——所有路徑（自動對到、程式選定、模型自帶 `bill_id`、寫入生命週期
+        # off）都在 render 與雜湊之前由系統列寫入；物件行由帳單列的 `estate_id` 反查，與草稿不一致 ⇒ 不出卡。
+        disp_early = await _pr_fill_bill_display(
+            identity, payload, said=said, bill_row=seen.get("bill"), estate_row=pr_estate)
+        if disp_early is not None:
+            return disp_early
     try:
         # ⚠️ **出卡端的時鐘**（V3）：`days` 的起算日＝原到期日與今天較晚者，
         #    所以 render 的驗算要拿到今天。時鐘在**呼叫點**取（同下方閘一、同
@@ -1616,7 +2717,7 @@ async def confirm_request(
     #   - 兩句都在 INSERT 之前的早退路徑之後 ⇒ 缺欄／候選／render 失敗／NO_MATCH／
     #     日期早於今天都不會燒到舊卡；
     #   - 任何一句拋例外 ⇒ 整筆回滾（舊卡不會被燒掉卻沒有新卡）。
-    # ⚠️ 燒卡沿用 `redeemed = true`（計畫 §7 A7-4 DEFER）：被燒的舊卡之後送出，
+    # ⚠️ 燒卡沿用 `redeemed = true`：被燒的舊卡之後送出，
     #    走 `redeem_pending` 的「沒中」⇒ 與已兌現／過期同一句。
     #   - DSP-092：交易第一句先取 session 級 advisory xact lock，序列化同 session 並行出卡。
     async with db_pool.acquire() as conn:
@@ -1635,12 +2736,12 @@ async def confirm_request(
             "payload": payload,
             "card": card,
             "quick_replies": confirm_quick_replies(pending_id),
-            # W8 (3)：卡外提示行與物件 id。`hint` 空字串＝沒有未結單／查不到；
+            # 卡外提示行與物件 id。`hint` 空字串＝沒有未結單／查不到；
             # `estate_id` 由 Runtime 存進 `pending_confirm[pid]["estate_id"]`。
             "hint": hint,
             "estate_id": estate_id,
-            # S5（§3i 第 4 點）：`manual_bill_create` 的範圍比對值——只在該動作出現
-            # （其餘動作的 data 鍵集合逐字不變）。
+            # `manual_bill_create` 的範圍比對值——只在該動作出現
+            # （其餘動作的 data 鍵集合不含它）。
             **({"scope_estate_id": scope_estate_id}
                if action == MANUAL_BILL_CREATE_ACTION else {}),
         },
@@ -1691,7 +2792,7 @@ async def redeem_pending(
     try:
         row = await db_pool.fetchrow(_REDEEM_PENDING_SQL, pending_id, session_id)
     except Exception as exc:  # noqa: BLE001 — 只吞「欄位不存在」，見下
-        # ⚠️ **migration 回退後的實況**（W1b A2）：`pending_id` 欄被 DROP 掉時，
+        # ⚠️ **migration 回退後的實況**：`pending_id` 欄被 DROP 掉時，
         # 這句 SQL 會拋 `UndefinedColumnError`（SQLSTATE 42703），而它會一路往上
         # 冒到 `registry.call` 被吞成 `NO_MATCH`——使用者看到的是「這條路走不通」，
         # 而 migration 檔頭寫的是「回 CONFIRMATION_REQUIRED」。兩者都不會誤放行，
@@ -1806,7 +2907,7 @@ async def pending_token_state(
 
 
 async def assert_redeemed(db_pool, token: Any, session_id: Any) -> bool:
-    """這張 token 是不是**這個 session 的、且已被兌現**（W4 的 wrapper 用）。
+    """這張 token 是不是**這個 session 的、且已被兌現**（寫入工具 wrapper 用）。
 
     ⛔ 不改任何列（純 SELECT）；⛔ 不看過期——兌現當下已經檢查過 `expires_at`，
     這裡要回答的是「Runtime 剛剛真的燒過它」，不是「它現在還新鮮嗎」。

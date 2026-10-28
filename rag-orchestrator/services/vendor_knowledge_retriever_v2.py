@@ -361,8 +361,7 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
             'retrieval_representation_source': row.get('retrieval_representation_source'),
             'intent_id': row.get('intent_id'),
             # ─── 觸發配置（spec trigger-vocabulary-debt 元件 1：修檢索斷鏈）───
-            # 🔴 2026-09-12：原消費層 `chat.py` 已於 2026-09-11 刪除 ⇒ 這三欄現在
-            #    **帶出來但無人消費**（`services/agent/**` 對 trigger_mode 零引用）。
+            # 🔴 這三欄**帶出來但無人消費**（`services/agent/**` 對 trigger_mode 零引用）。
             #    ⛔ 不要以為修好斷鏈就會生效——消費端要重建才有意義。
             # trigger_mode=varchar／immediate_prompt=text → str|None；trigger_keywords=text[] → list|None（比照 keywords）
             'trigger_mode': row.get('trigger_mode'),
@@ -417,12 +416,8 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
         )
 
         # 如果不需要 debug info，移除內部欄位
-        # ⚠️ **2026-09-11 舊鏈退役：這份剝欄清單失去了對帳夥伴。**
-        # 原本 `routers/chat.py:_retrieve_knowledge` 恆以 `return_debug_info=True` 取值後
-        # 自行剝同一組欄位，`tests/unit/retrieval/test_kb_candidate_telemetry_contract_req.py`
-        # 逐項比對兩份清單，任一邊漂移即紅（P0-1 回測輸出契約 §B②）。
-        # `chat.py` 已刪 ⇒ 該測試整檔失去受測對象、一併移除。
-        # ⛔ **失去的保護**：清單漂移不再有機器把關；改動下面五個 pop 之前，
+        # ⚠️ **這份剝欄清單沒有對帳測試把關。**
+        # ⛔ 改動下面五個 pop 之前，
         #    要自己確認沒有呼叫端依賴被剝掉的欄位（新線走 `services/agent/tools/kb.py`）。
         if not return_debug_info:
             for result in results:
@@ -439,14 +434,12 @@ class VendorKnowledgeRetrieverV2(BaseRetriever):
 # 知識池可見性謂詞 —— **單一來源**（spec agentic-mcp-orchestration・任務 1.1）
 # ══════════════════════════════════════════════════════════════════════════
 #
-# 為什麼要抽出來：security-reviewer 2026-09-04 實查，這組隔離條件在 repo 內
-# **手抄了 4 份且各不相同**（`_grounding_by_ids` 只有 is_active、
-# `_grounding_by_category`／`system_context._fetch_base` 無 vendor_ids）。
-# 手抄會漏掉的 9 條：①保留分類 ②`vendor_ids IS NULL OR &&` ③`is_active`
+# 為什麼要抽出來：這組隔離條件若各處手抄，各份會不一致（例如只有 is_active、
+# 或漏掉 vendor_ids）。手抄會漏掉的 9 條：①保留分類 ②`vendor_ids IS NULL OR &&` ③`is_active`
 # ④`_effective_target_user` fail-safe ⑤`is_b2b` 兩條件 OR ⑥**b2b 業態無 IS NULL
 # 放行**（D-002）⑦b2c 追加 `all_users` ⑧查無業者 `[]` fail-closed
 # ⑨`embedding`／`keywords` NOT NULL 的路徑差異
-# ⑩**b2b 角色也無 IS NULL 放行**（空＝不可見，DSP-052 (c)／2026-09-14）——
+# ⑩**b2b 角色也無 IS NULL 放行**（空＝不可見，DSP-052 (c)）——
 #    這條與 ⑦ 是同一個 `target_user` 條件的兩個分支，⛔ 不得抽成共用一行。
 #
 # ⛔ **新增可見性條件一律加在這裡**，不得在任何消費點內嵌第二份字面 SQL
@@ -483,16 +476,15 @@ def build_visibility_predicate(identity, param_resolver=None):
     target_user_param = [VendorKnowledgeRetrieverV2._effective_target_user(target_user)]
     if is_b2b_mode:
         # 條件 6a／7：b2b 業態嚴格 system_provider。
-        # ⛔ **無 `IS NULL` 放行**——這是刻意的跨業者隔離（D-002，業主 2026-09-01 逐行對碼）。
-        #    `COMPLETE_CONVERSATION_ARCHITECTURE.md` §3 曾漏掉這條分支，照它補 IS NULL 會打穿隔離。
+        # ⛔ **無 `IS NULL` 放行**——這是刻意的跨業者隔離（D-002）。補 IS NULL 會打穿隔離。
         vendor_business_types = ['system_provider']
         business_type_filter_sql = "kb.business_types && %s::text[]"
         # 條件 4a：b2b 角色同樣**無 `IS NULL` 放行**——空＝不可見
-        #   （DSP-052 補救 (c)，業主 2026-09-14 裁；與記憶體側 `canon_visible` 同步）。
+        #   （DSP-052 補救 (c)；與記憶體側 `canon_visible` 同步）。
         # ⛔ 不得改回 `IS NULL OR ...`：`tenant` 是合法值，帶 `mode=b2b` 時 `audience_of`
         #   會路由到 pm 受眾，放行「未標角色」的列即跨受眾可見且靜默。
-        # ⚠️ 已知代價（業主 2026-09-14 明示接受）：線上 b2b 池 `target_user IS NULL`
-        #   的列因此暫時撈不到，另以資料面 UPDATE 補標角色，⛔ 不在程式側放寬。
+        # ⚠️ 已知代價：b2b 池 `target_user IS NULL` 的列撈不到，
+        #   要以資料面 UPDATE 補標角色，⛔ 不在程式側放寬。
         target_user_filter_sql = "kb.target_user && %s::text[]"
     else:
         resolver = param_resolver if param_resolver is not None else _shared_param_resolver()

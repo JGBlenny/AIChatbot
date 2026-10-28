@@ -48,6 +48,7 @@ import asyncio
 import copy
 import hashlib
 import hmac
+import inspect
 import json
 import logging
 import os
@@ -59,8 +60,12 @@ import uuid
 from collections import Counter
 from dataclasses import dataclass, field
 from datetime import date, datetime, timezone
+from types import SimpleNamespace
 from typing import Any, Callable, Literal, Optional, Protocol
 
+from openai import APITimeoutError
+from openai.types.chat import ChatCompletionMessage, ChatCompletionMessageToolCall
+from openai.types.chat.chat_completion_message_tool_call import Function as _ToolCallFunction
 from pydantic import ValidationError
 
 from services import usage_metering
@@ -124,6 +129,23 @@ from services.agent.provenance_units import (  # OUTLINE_TOOL_CALL_ID 下沉至�
 from services.agent.text_norm import normalize_terminal_punctuation
 from services.agent.tools.confirm import (
     CANDIDATE_TYPE_KEY,
+    NAME_LENIENT_KEY,
+    NAME_LENIENT_MISSING_KEY,
+    NAME_LENIENT_MISSING_LEAD_TEXT,
+    NAME_LENIENT_TRUNCATED_KEY,
+    NameLenientTurnCtx,
+    is_name_not_found,
+    missing_name_lenient,
+    name_early_lookup,
+    name_lenient_picked_title,
+    name_lenient_rows_for_ids,
+    name_precheck_ids,
+    name_said_key as _confirm_name_said_key,
+    PICK_ESTATE_ID_KEY,
+    PICK_NOTE_KEY,
+    PICK_NOTE_TEXT_KEY,
+    SAID_AMOUNT_KEY as _PR_SAID_AMOUNT,
+    SAID_RANGE_KEY as _PR_SAID_RANGE,
     CONFIRM_QUICK_REPLY_VALUES,
     CONFIRM_SPEC,
     candidate_fallback_result,
@@ -147,10 +169,12 @@ from services.agent.tools.confirm import (
 from services.agent import llm_output as LO
 from services.agent import write_forms as WF
 from services.agent import write_candidates as _wc
+from services.agent import name_match as NM
 from services.agent import state_claim as SC
 from services.agent.bill_period import UNPAID_TERMS as _UNPAID_TERMS
 from services.agent.bill_period import parse_period as _parse_period
 from services.agent.bill_period import parse_periods as _parse_periods
+from services.agent.bill_period import parse_said_range as _parse_said_range
 from services.agent.write_forms import write_draft_enabled_from_env
 from services.agent.write_forms import write_lifecycle_enabled_from_env
 from services.agent.write_forms import write_proposal_enabled_from_env
@@ -164,7 +188,9 @@ from services.conversational_config import (
     effective_handoff_channel,
     effective_handoff_message,
 )
-from services.presales_gate import SENSITIVE, FactClass, HandoffReason
+from services.presales_gate import (
+    MODEL_VISIBLE_HANDOFF_REASONS, SENSITIVE, FactClass, HandoffReason,
+)
 # ⚠️ **import 模組、⛔ 不 `from … import _today`**：兌現閘要在呼叫點取時鐘，
 # 與 `tools/confirm` 的閘一同一支函式、同一個時鐘（S1）。
 from services.jgb import bills
@@ -318,7 +344,7 @@ CONFIRM_CANDIDATES_TEXT = "這戶對到不只一張帳單，請點選要處理�
 #: B 片 B4：候選清單回合進 dialog 的**程式摘要**（⛔ 清單文字、⛔ 查詢字串；比照 `SELECT_DIALOG_SUMMARY`）。
 CONFIRM_CANDIDATES_DIALOG_SUMMARY = "已列出 {n} 筆候選帳單，請使用者點選要處理的那一張"
 CONFIRM_CANDIDATES_MAX = 5
-#: A-2a（計畫 §4.3）：打字選定回合給意圖判斷呼叫的候選清單資料段標籤（nonce 包住，`wrap_tool_data`）。
+#: 打字選定回合給意圖判斷呼叫的候選清單資料段標籤（nonce 包住，`wrap_tool_data`）。
 WRITE_CANDIDATES_DATA_LABEL = "write_candidates"
 #: action ⇒ (候選清單 domain, select 型別)。封閉表，只有會走期別解析的動作才有列。
 _CONFIRM_CANDIDATE_DOMAIN: dict = {"bill_due_extend": ("bills", "bill")}
@@ -338,7 +364,7 @@ def _candidate_button_label(row: dict) -> str:
 #: 修法在程式層、⛔ 不改提示詞：照片回合把**封閉值**（分類樹名稱）存進 `agent_state[
 #: IMAGE_SUGGESTION_KEY]`（照片與出卡常常不同回合：照片→問急不急→答「不急」→出卡），
 #: `confirm.request`（`repair_create`）執行前由程式補進 payload 缺的 `category_name`；
-#: 描述沒人講時填 `IMAGE_DESCRIPTION_TEMPLATE`（業主 2026-09-10 撤銷 S9-11：辨識描述（淨化、
+#: 描述沒人講時填 `IMAGE_DESCRIPTION_TEMPLATE`（辨識描述（淨化、
 #: 截長）優先，缺則部位＋原因短標籤，再缺退分類名；⛔ 這些文字只進修繕單描述，不進模型資料段）。
 #: 一次性：任何 `confirm.request` 呼叫即清；新照片覆寫。
 IMAGE_SUGGESTION_KEY = "image_suggestion"
@@ -346,7 +372,7 @@ IMAGE_DESCRIPTION_TEMPLATE = "照片辨識：{label}"
 
 
 def _image_description_label(suggestion: dict) -> str:
-    """描述用的文字：辨識描述優先（業主 2026-09-10）；缺 ⇒ 部位＋原因；都缺 ⇒ 分類名。"""
+    """描述用的文字：辨識描述優先；缺 ⇒ 部位＋原因；都缺 ⇒ 分類名。"""
     desc = suggestion.get("description")
     if isinstance(desc, str) and desc.strip():
         return desc.strip()
@@ -1029,7 +1055,7 @@ def _pre_lookup_trigger(message: str, *, after_name_ask: bool = False) -> Option
 
 
 # ════════════════════════════════════════════════════════════════════
-# L15 (a)：清單進場後的**會話範圍**（戶＝物件 `estate_id`；業主 2026-09-08 裁）
+# L15 (a)：清單進場後的**會話範圍**（戶＝物件 `estate_id`）
 # ════════════════════════════════════════════════════════════════════
 #
 # ⚠️ **程式判定、⛔ 不交模型**（`feedback_no_llm_mechanical_decode`）：「是不是
@@ -1190,6 +1216,34 @@ LLM_OUTPUT_TRUNCATED = "llm_output_truncated"
 LLM_OUTPUT_REASONING_STRIPPED = "llm_output_reasoning_stripped"
 #: 最終輸出原文 `json.loads` 失敗、改以逐 `{` 解碼擷取到合法 `AgentOutput`。
 LLM_OUTPUT_JSON_EXTRACTED = "llm_output_json_extracted"
+
+#: W2（`plan-truncation-w2-20261017.md`）：逾時的呼叫拿不到 usage ⇒ 以已收到的字元數估算（1 字元 ＝ 1 token，寧可高估）。
+LLM_USAGE_ESTIMATED = "llm_usage_estimated"
+#: ⛔ 不在串流中因連續空白提早中止：灌空白的呼叫約七成最後仍 `finish=stop` 且輸出可用，中止會把它們變成
+#: 失敗、重寫又常再灌空白 ⇒ 轉人（W2 C2～C5 與對照重放，DSP-116）。卡太久由回合期限切斷。
+#: 截斷之後要走 SCHEMA 重寫時，剩餘期限低於此值就不重寫、直接 `budget_exhausted` 固定句。
+#: 來源：W2 第 0 步 run2 正常主呼叫（`finish=stop`，126 筆）p95 2.63 秒（STEP0「補充量測」）。
+SCHEMA_REWRITE_MIN_REMAINING_S = 2.6
+
+
+class _DialogActPreempt(Exception):
+    """對話動作標籤先於主模型完成、且結果是程式出口（轉人／無未決收尾）⇒ 取消進行中的
+    主模型呼叫。⚠️ 與 `_ModelCallDeadline` **分流**：`_run_model_loop` 接住後走 `_dialog_act_exit`，
+    ⛔ 落入 `budget_exhausted`（W2 期限中斷是 `asyncio.timeout` 丟 `_ModelCallDeadline`）。"""
+
+
+class _ModelCallDeadline(Exception):
+    """主模型呼叫碰到回合期限（`Budget.deadline_s`）被中斷；`_run_model_loop` 接住走 `budget_exhausted` 固定句。"""
+
+
+async def _close_stream(stream: Any) -> None:
+    """關閉串流（SDK `AsyncStream.close()` 為 coroutine；假串流可為同步）。"""
+    close = getattr(stream, "close", None)
+    if close is None:
+        return
+    res = close()
+    if inspect.isawaitable(res):
+        await res
 
 _REASON_HINTS: dict[str, str] = {
     # DSP-028 後續（2026-09-05 回歸集重跑）：拒一次就改轉人的回合佔 no_grounding 的 11/127，
@@ -1361,7 +1415,7 @@ class ImageTurnInput:
 
     ⛔ **沒有 bytes、沒有網址**：照片的原始 bytes 只在 `mcp_facade` 的記憶體裡活過
     抓檔→縮圖→辨識那一段。vision 自由文字（`suggested_description`／部位／原因）
-    **只走修繕單描述**（業主 2026-09-10 撤銷 S9-11「照片內文字不進修繕單」），
+    **只走修繕單描述**，
     ⛔ 不進模型資料段——模型看到的 `facts` 仍是程式組句。
 
     - `status`：`ok`／`partial`（預算用罄但已完成 ≥1 批辨識）／`failed`／`timeout`。
@@ -1380,13 +1434,13 @@ class ImageTurnInput:
     candidates: tuple = ()
     suggested_category: Optional[str] = None
     suggested_emergency: Optional[int] = None
-    #: 業主 2026-09-10 裁：辨識的部位／原因**短標籤**（門面 `_short_label` 過濾：只留中英字母、
+    #: 辨識的部位／原因**短標籤**（門面 `_short_label` 過濾：只留中英字母、
     #: ≤12 字）；只用來組修繕單描述「照片辨識：{部位}{原因}」，⛔ 不進模型資料段。
     suggested_item: Optional[str] = None
     suggested_reason: Optional[str] = None
-    #: 業主 2026-09-10 撤銷 S9-11：辨識描述（淨化、≤200 字）可進修繕單描述；⛔ 不進模型資料段。
+    #: 辨識描述（淨化、≤200 字）可進修繕單描述；⛔ 不進模型資料段。
     suggested_description: Optional[str] = None
-    #: 站內幫手 S3-live A7：`suggested_category` 是葉節點時，它所屬的大類名（否則 `None`）。
+    #: `suggested_category` 是葉節點時，它所屬的大類名（否則 `None`）。
     #: 只供 `_apply_image_suggestion_to_confirm_args` 判斷「模型填的是不是這個葉節點的父分類」。
     suggested_parent_category: Optional[str] = None
     #: 站內幫手 S3（F10／S3-5）：本回合**已過閘、已完成辨識**的照片中繼資料
@@ -1541,7 +1595,7 @@ def _agent_output_response_format() -> dict:
     }
     props["handoff_reason"] = {
         "anyOf": [
-            {"type": "string", "enum": [r.value for r in HandoffReason]},
+            {"type": "string", "enum": list(MODEL_VISIBLE_HANDOFF_REASONS)},
             {"type": "null"},
         ],
         "description": "kind=handoff 時必填：敏感五類 sensitive_no_grounding、查無資料 no_grounding；其他 kind 填 null。",
@@ -1705,8 +1759,8 @@ def _document_program_message(document: Any, nonce: str) -> Optional["_ProgramMe
 
 
 # ════════════════════════════════════════════════════════════════════
-# W1：寫入草稿由程式掌握（plan-write-flow-program-owned-20261017 §2.1(3)～(5)／DSP-085）
-# W1b：意圖改由專用的意圖判斷呼叫取得、續答由程式依上一句程式追問的欄位接收（同計畫 §8）
+# 寫入草稿由程式掌握（DSP-085）
+# 意圖改由專用的意圖判斷呼叫取得、續答由程式依上一句程式追問的欄位接收
 # ════════════════════════════════════════════════════════════════════
 #
 # 程式掌握「要不要進寫入流程、還缺什麼、何時出卡」；模型只負責抽出使用者話裡的欄位值
@@ -1734,6 +1788,12 @@ WRITE_DRAFT_PROGRAM_FIRST_WAIT_S = 3.0
 #: 的回合；無草稿的回合（多數是知識題）只等這麼多秒（§9.10 根因 4：每個知識回合都先等意圖）。
 #: 未完成的處理不變（§9.7 F1：不消耗、留給輸出後觸發點）。
 WRITE_DRAFT_PROGRAM_FIRST_WAIT_NO_DRAFT_S = 1.0
+#: E 片 §4.1-3 (c)：主模型最終輸出要進 `_write_draft_after_output` 與出口閘之前，對話動作標籤未完成時至多再等的秒數
+#: （仍未完成 ⇒ 用主模型輸出、記 `dialog_act_fallback`）。
+DIALOG_ACT_AFTER_OUTPUT_WAIT_S = 1.0
+#: E 片：追問欄位中第一次標籤為 `resolved` ⇒ 另發一次同輸入的標籤確認呼叫，至多等這麼多秒（以回合剩餘期限
+#: 為界）；未完成 ⇒ 重問缺欄。
+DIALOG_ACT_FIELD_CONFIRM_WAIT_S = 3.0
 #: W1b §8.6-3b：意圖判斷呼叫在組 trace 時仍未完成 ⇒ `cancel()`，prompt token 以
 #: 「輸入字元數 ÷ 這個比值」估算計入（中文正本約 1.1 字元／token，`reference_canon_token_ratio`）。
 WRITE_INTENT_CANCEL_CHARS_PER_TOKEN = 1.1
@@ -1820,15 +1880,23 @@ class _WriteDraftTurn:
     #: A+ 片 AP-2（業主裁 Q2）：本回合**使用者句子**帶出的值（意圖合併、整句填入）有被值閘丟掉。
     #: 模型提議被丟的值 ⛔ 算（模型參數常夾帶原話沒有的值）。
     user_value_dropped: bool = False
-    #: A-2a（計畫 §4.2）：回合開頭讀回、已驗形狀且綁定本草稿／本建立者／本欄位名稱的候選集，或 `None`。
+    #: 回合開頭讀回、已驗形狀且綁定本草稿／本建立者／本欄位名稱的候選集，或 `None`。
     candidates: Optional[dict] = None
+    #: 本回合使用者原話——名稱寬鬆比對的整句來源（只活在本回合；⛔ 落地、⛔ 進 trace）。
+    user_message: str = ""
+    #: F12：本回合的名稱寬鬆比對脈絡（`name_match.NameLenientTurn`，首次需要時建立；每回合寬鬆最多 1 次、
+    #: 畫面清單與候選集同一份結果）。
+    name_lenient: Any = None
     #: A-2a：本回合候選集選定成立（按鈕或打字）⇒ 程式依草稿觸發 `confirm.request`（`program_pick`）。
     picked: bool = False
     #: A-2a：本回合是 `pick:` 按鈕選定（⛔ 呼叫主模型與意圖判斷呼叫）。
     pick_button: bool = False
     #: A-2a（A2-R4、A2-R7 (d)）：本回合打字選定不成立 ⇒ 程式依草稿重發、重列同一份候選。
     reask: bool = False
-    #: A-2a（計畫 §4.3）：意圖判斷呼叫回的 `pick_id`（動態 enum 值）；未附候選段 ⇒ `None`。
+    #: E 片 §4.1-7（E-R13）：追問欄位中、AI 把當句標成 `resolved`（確認呼叫也不是 `none`）或標籤未完成 ⇒ 程式依草稿重發
+    #: （回缺欄追問，⛔ 交主模型；`_dialog_act_not_field_answer`）。
+    fill_reask: bool = False
+    #: 意圖判斷呼叫回的 `pick_id`（動態 enum 值）；未附候選段 ⇒ `None`。
     intent_pick_id: Optional[str] = None
     #: A-2a：本回合實際附給意圖判斷呼叫的候選編號（＝動態 enum 去掉 `none`）。
     pick_offered: tuple = ()
@@ -1839,6 +1907,121 @@ class _WriteDraftTurn:
     record_rechoice: Optional[str] = None
     #: 修正 2：AI 恰回 `other` ⇒ 程式作廢綁定卡、依草稿名稱重新解析（即使本句沒有改到任何欄位值）。
     rechoice: bool = False
+    #: 「選對紀錄」片 §4.2-1：回合開始時草稿的 `(estate_name, period)`（延期繳費）；本回合變動了 ⇒ 客人
+    #: 先前講的比對值（`said_amount`／`said_range`）清掉（本回合又講了新的值則保留新的）。
+    pr_anchor: Optional[tuple] = None
+    #: 「選對紀錄」片 §4.2-3：本回合附給意圖判斷呼叫的候選列（編號 ⇒ 列）；打字選定時比對客人講的值用。
+    pick_rows: dict = field(default_factory=dict)
+    #: F12 r6（§11.4 第 1、4 點；R6-S9）：本回合帶身分取得、候選集 `ids` 內的列（編號 ⇒ 列；不分開關一律保留）——
+    #: 「候選集內講法」比對系統正名、已撤回重列、r6-3 告知句的唯一來源。⛔ 落地、⛔ 進 trace。
+    offered_rows: dict = field(default_factory=dict)
+    #: 選定後回合改指令式（計畫 `plan-post-pick-commands-20261024.md` §4.3「讀不讀 `target`」）：本回合意圖判斷呼叫
+    #: **真的送出**指令版 schema（候選集已選定、`_write_candidates_intent_kwargs` 附得出候選段；系統句帶現選定編號）。
+    #: 沒設（候選段附不出、未選定、已撤回、無候選集）⇒ ⛔ 讀 `target`（假模型照回也不讀）。
+    cmd_offered: bool = False
+    #: 同上 §4.3「名稱值一律規則」：**回合開始時**候選集已選定、仍綁定本草稿（`_write_draft_begin` 取快照）。⛔ 沿用
+    #: `post_pick_start`（後者已撤回時也為 `True`；已撤回回合照第 5 輪，Q1 (a)）。換動作時不清（原話 38 修 W1）。
+    cmd_scope_start: bool = False
+    #: 意圖判斷呼叫回的原始 `target`（`WF.intent_pick_target`：**未驗證**，缺鍵 ⇒ `None`）；只在 `cmd_offered` 且
+    #: 解析成功的回合讀（`_write_candidates_cmd_effect` 逐項驗）。
+    intent_target: Any = None
+    #: F12 r6（§11.4 第 2 點「判定順序」）：本回合程式驗證過的改選目標（`pick_id` 或整句只打的編號，∈ `ids` 且
+    #: ≠ 現選定），名稱欄合併之前算出；名稱合併依它丟棄名稱值（⛔ 名稱合併先解綁、使改選失效）。
+    repick_target: Optional[str] = None
+    #: F12 r6：本回合打字改選成立的編號（r6-3 告知句用）；`None` ⇒ 本回合沒有改選。
+    repick_id: Optional[str] = None
+    #: F12 r6：本回合寬鬆改寫寫進草稿的系統正名（`name_lenient_picked_title`，已過 `sanitize_data_piece`）與其編號。
+    rewrite_title: Optional[tuple] = None
+    #: F12 r6（第 2、7a 點）：候選集已撤回、本回合要由程式重列同一份 `ids`（觸發條件之一；出卡入口的關口重列）。
+    relist: bool = False
+    #: F12 r6（§11.4 第 2 點「判定順序」）：模型提議合併（早於意圖呼叫）暫存不併的名稱欄值 `(表單鍵, 原值)`，
+    #: 留到 `_write_draft_decide` 拿到 `pick_id` 後依名稱合併規則處理。
+    deferred_names: list = field(default_factory=list)
+    #: **回合開始時**候選集已選定或已撤回、且仍綁定本草稿
+    #: （`_write_draft_begin` 讀回綁定檢查後取快照）⇒ 本回合 ⛔ 整句填入（`_write_draft_fill_answer`，所有文字欄）。
+    post_pick_start: bool = False
+    #: 第 5 輪 §11.15.3 第 6 點：本回合意圖判斷呼叫解析成功且過 `WriteIntent` 驗證（含 `action=none`）。
+    #: 解析失敗（含第 5 點重送後仍失敗）⇒ `False`，名稱合併照現行。
+    intent_parsed: bool = False
+    #: 第 5 輪 §11.15.3 第 6 點：本回合名稱值先收集、不合併（`_write_candidates_name_rule` 回 `"collect"`），等算出
+    #: 驗過且未被退回的改選目標 X 之後再決定去向（⛔ 名稱合併先解綁、使改選或矛盾判定失效）。
+    name_collect: bool = False
+    #: 第 5 輪：收集到的名稱值 `(來源, 原值)`；來源＝`"intent"`（同一支動作的意圖結果）／`"blocked"`（被擋下的另一
+    #: 動作，§11.15.3 第 4 點）／`"deferred"`（主模型提議暫存）。⛔ 落地、⛔ 進 trace。
+    collected_names: list = field(default_factory=list)
+    #: 第 5 輪 §11.15.3 第 6 點決定 2：本回合判為矛盾 ⇒ 之後同一回合的名稱值（含主模型再提議的）一律丟棄、不解綁。
+    name_conflict: bool = False
+    # ── 填欄只填答覆（plan-fill-answer-only-20261027 §4.1）。以下全部只活在本回合（B7：⛔ 落地、⛔ 進 agent_state、
+    #    草稿、trace、決策快照、日誌；violation 只記 `WF.V_FILL_*` 固定字串）。──
+    #: 本回合送出的寫入意圖呼叫帶了資料段規則與 schema（開關 on 的寫入回合）。`False` ⇒ 本節全部不生效（改前行為）。
+    fill_active: bool = False
+    #: 追問回合：送出意圖呼叫之前依已知狀態判一次——回合開始即有草稿、`asked` 非空、非凍結。
+    fill_followup: bool = False
+    #: 回合開始那份草稿（物件本身）。B4、B5、`answer_text` 只在目前草稿**就是它**時生效；任何路徑換成新草稿 ⇒ 不生效。
+    fill_start_draft: Optional[dict] = None
+    #: 回合開始那份草稿當時已填的欄位值（複本；B5「已填的非追問欄」依它判）。
+    fill_start_fields: dict = field(default_factory=dict)
+    #: 追問回合附給意圖呼叫的追問欄位標籤（表單標籤；有附才讀 `answer_text`）。
+    fill_asked_labels: tuple = ()
+    #: 驗過的資料段：最新一句**原句**裡對應各段的原字（依序；空段已略過）。`None` ⇒ 資料段未知。
+    fill_data: Optional[list] = None
+    #: 驗過的答覆段：原句原字（`""` ⇒ 沒有答覆）；`None` ⇒ 未附、未知或資料段未知。
+    fill_answer: Optional[str] = None
+    #: 模型提議（③／②）在意圖結果取用前就到 ⇒ 本回合資料段未知（之後讀到的資料段一律不用）。
+    fill_proposal_first: bool = False
+    #: 本回合至少一個與草稿現值不同的新值沒套用（資料段未知、資料段外拒收、追問回合不覆寫已填欄）。
+    fill_not_applied: bool = False
+    # ── 填欄擴及首句、卡後、多欄回合（plan-fill-wide-20261028 §4.1～4.3）。與上一節（單欄追問回合）互斥；全部只活在本回合
+    #    （§4.3 第 10 點：⛔ 落地、⛔ 進 agent_state、草稿、trace、決策快照、日誌；`repr` 也不帶）。──
+    #: 本回合是寬回合：送出的寫入意圖呼叫帶資料段規則與 schema（`_fill_begin_intent_call` 唯一設定點）。
+    fill_wide: bool = field(default=False, repr=False)
+    #: 寬回合種類：`FILL_WIDE_FIRST`（首句）／`FILL_WIDE_CARD`（卡後）／`FILL_WIDE_MULTI`（多欄）；非寬回合 ⇒ `None`。
+    fill_wide_kind: Optional[str] = field(default=None, repr=False)
+    #: 寬回合驗過的資料段（最新一句原句原字，依序）；`None` ⇒ 未知（含沒讀到、逾時、例外、值域外、切斷）。
+    fill_wide_data: Optional[list] = field(default=None, repr=False)
+    #: 寬回合「提議先到」的等待本回合已做過（每回合只等一次，結果鎖住；⛔ 沿用 `fill_proposal_first`）。
+    fill_wide_waited: bool = field(default=False, repr=False)
+    #: 寬回合卡後：被資料段拒收、本回合最後仍沒套用的欄位（表單鍵 ⇒ 表單標籤；依拒收順序）。
+    fill_wide_rejected: dict = field(default_factory=dict, repr=False)
+    #: §4.1 (b)（§11 r1c）：**回合開始時**草稿綁定的那張卡還活著——`_write_draft_bound_card` 找得到、`receipt` 不是 dict、
+    #: `invalidated` 非 `True`（與 `_write_draft_reissue_gate` 判綁定卡同一組條件）。`_write_draft_begin` 設一次；無草稿 ⇒ `False`。
+    bound_card_live: bool = field(default=False, repr=False)
+    #: §4.1 (b)（§11 r1c）：本回合是候選回合——寫入候選清單還在等使用者選：`_write_candidates_pick_open` 有回、候選集
+    #: `picked` 為 `None`（意圖呼叫走 `pick_rule=True`、接 `DATA_TEXTS_PICK_NOTE` 的同一組狀態）。`_fill_begin_intent_call`
+    #: 在送出意圖呼叫之前設一次。
+    pick_list_open: bool = field(default=False, repr=False)
+
+
+def _write_intent_needs_retry(resp: Any) -> bool:
+    """附候選段的意圖判斷回應要不要以同一份輸入重送——
+    `finish_reason=length`（截斷）或內容解析不出（`WF.PARSE_UNPARSED`；回應形狀不對也算）⇒ `True`。
+    多個內容不同的 action 物件（`PARSE_AMBIGUOUS`）、值域外（pydantic）⇒ `False`（照現行處理，⛔ 重送）。"""
+    try:
+        choice = resp.choices[0]
+        content = choice.message.content
+    except Exception:  # noqa: BLE001 — 回應形狀不對 ⇒ 當解析不出
+        return True
+    if getattr(choice, "finish_reason", None) == "length":
+        return True
+    _obj, status = WF.parse_write_intent_content(content)
+    return status == WF.PARSE_UNPARSED
+
+
+class _RetriedIntentResponse:
+    """第 5 輪 §11.15.3 第 5 點：重送過一次的意圖判斷結果。`choices`＝重送那次的回應（重送仍截斷或解析不出、或重送
+    丟例外 ⇒ `failed=True`，`_await_write_intent` 照現行回 `None`）；`usage`＝兩次實際用量相加（計量照實）。"""
+
+    __slots__ = ("choices", "usage", "failed")
+
+    def __init__(self, first: Any, second: Any, *, failed: bool) -> None:
+        self.choices = getattr(second, "choices", None) if second is not None else getattr(first, "choices", None)
+        self.failed = failed
+        pt = ct = 0
+        for resp in (first, second):
+            usage = getattr(resp, "usage", None) if resp is not None else None
+            pt += int(getattr(usage, "prompt_tokens", 0) or 0)
+            ct += int(getattr(usage, "completion_tokens", 0) or 0)
+        self.usage = SimpleNamespace(prompt_tokens=pt, completion_tokens=ct)
 
 
 class _WriteIntentCall:
@@ -1854,14 +2037,21 @@ class _WriteIntentCall:
     `settle` 冪等（第二次回 `(0, 0, [])`）。
     """
 
+    #: E 片：只含 `dialog_act` 的標籤呼叫（`_DialogActCall`）為 `True`——不是寫入意圖，⛔ 進 `_await_write_intent`
+    #: 與程式優先入口的等待。
+    label_only: bool = False
+
     def __init__(self, task: "asyncio.Task", *, model: str, input_chars: int,
-                 registry: dict, trace_id: str) -> None:
+                 registry: dict, trace_id: str, partial: Optional[list] = None) -> None:
         self.task = task
         self.model = model
         self.input_chars = int(input_chars)
         self._registry = registry
         self._trace_id = trace_id
         self.settled = False
+        #: 第 5 輪 §11.15.3 第 5 點：重送前已完成的那一次回應（task 內 append）；task 在重送途中被取消時，
+        #: 已完成那次的實際 usage 照計（⛔ 只剩估算）。
+        self._partial = partial if partial is not None else []
 
     def settle(self) -> tuple:
         if self.settled:
@@ -1873,16 +2063,27 @@ class _WriteIntentCall:
         if not task.done():
             task.cancel()
             pt = int(self.input_chars / WRITE_INTENT_CANCEL_CHARS_PER_TOKEN)
-            usage_metering.add_llm_usage(self.model, {"prompt_tokens": pt, "completion_tokens": 0})
-            return pt, 0, [WF.V_CALL_CANCELLED]
+            ct = 0
+            marks = [WF.V_CALL_CANCELLED]
+            for resp in self._partial:
+                usage = getattr(resp, "usage", None)
+                pt += int(getattr(usage, "prompt_tokens", 0) or 0)
+                ct += int(getattr(usage, "completion_tokens", 0) or 0)
+                if _wc.V_CANDIDATE_INTENT_RETRY not in marks:
+                    marks.append(_wc.V_CANDIDATE_INTENT_RETRY)
+            usage_metering.add_llm_usage(self.model, {"prompt_tokens": pt, "completion_tokens": ct})
+            return pt, ct, marks
         if task.cancelled():
             return 0, 0, [WF.V_CALL_CANCELLED]
         if task.exception() is not None:
             return 0, 0, [WF.V_CALL_FAILED]
-        usage = getattr(task.result(), "usage", None)
+        result = task.result()
+        usage = getattr(result, "usage", None)
         pt = int(getattr(usage, "prompt_tokens", 0) or 0)
         ct = int(getattr(usage, "completion_tokens", 0) or 0)
         usage_metering.add_llm_usage(self.model, {"prompt_tokens": pt, "completion_tokens": ct})
+        if isinstance(result, _RetriedIntentResponse):
+            return pt, ct, [WF.V_CALL, _wc.V_CANDIDATE_INTENT_RETRY]
         return pt, ct, [WF.V_CALL]
 
     def settle_into(self, acc: Any) -> None:
@@ -1903,6 +2104,22 @@ class _WriteIntentCall:
             self.task.cancel()
 
 
+class _DialogActCall(_WriteIntentCall):
+    """每個使用者文字回合另建的**只含 `dialog_act`** 的標籤呼叫（存 `acc.dialog_act_call`）。
+    收尾、計量、取消估算與寫入意圖呼叫共用同一套（`settle_into`），差別只有 trace 標記名稱。"""
+
+    label_only = True
+    _MARKS = {
+        WF.V_CALL: WF.V_DIALOG_ACT_CALL,
+        WF.V_CALL_FAILED: WF.V_DIALOG_ACT_CALL_FAILED,
+        WF.V_CALL_CANCELLED: WF.V_DIALOG_ACT_CALL_CANCELLED,
+    }
+
+    def settle(self) -> tuple:
+        pt, ct, marks = super().settle()
+        return pt, ct, [self._MARKS.get(m, m) for m in marks]
+
+
 def _write_draft_owner(identity: Any) -> str:
     """草稿建立者鍵：受眾＋role＋user（原值、⛔ 正規化；比照 `_pending_creator`）。
     下一回合身分與它不同 ⇒ 清掉草稿。"""
@@ -1921,6 +2138,105 @@ def _write_draft_user_texts(agent_state: dict, user_message: str) -> list:
 
 def _no_ws(text: str) -> str:
     return "".join(text.split())
+
+
+def _fill_cuts(left: str, right: str) -> bool:
+    """填欄只填答覆 B1 的邊界：相鄰兩字同為數字、或同為 ASCII 英數 ⇒ 切斷（空白、標點、中文都算邊界）。"""
+    if left.isdigit() and right.isdigit():
+        return True
+    return left.isascii() and left.isalnum() and right.isascii() and right.isalnum()
+
+
+def _fill_locate(message: str, segment: str, lo: int = 0, hi: Optional[int] = None) -> Optional[tuple]:
+    """填欄只填答覆 B1：`segment` 去空白後是 `message[lo:hi]` 去空白後的子字串，且它在**原句**（未去空白）對應那一段的
+    起訖不切斷數字或 ASCII 英數連續字串（起點前一字與第一字、終點最後一字與後一字；邊界判斷看整句 `message`）。原句
+    出現多次時任一處成立即可。成立 ⇒ 原句上的 `(起, 迄)`；否則（含去空白後為空）⇒ `None`。純計算（⛔ 記錄任何字串）。
+    邊界檢查只把「AI 切錯」導向 fail-closed，不是安全邊界（數字由值閘的整數 token 比對另擋）。"""
+    if not isinstance(message, str) or not isinstance(segment, str):
+        return None
+    needle = _no_ws(segment)
+    if not needle:
+        return None
+    end = len(message) if hi is None else hi
+    pos = [i for i in range(lo, end) if not message[i].isspace()]
+    compact = "".join(message[i] for i in pos)
+    start = compact.find(needle)
+    while start != -1:
+        s = pos[start]
+        e = pos[start + len(needle) - 1] + 1
+        if not ((s > 0 and _fill_cuts(message[s - 1], message[s]))
+                or (e < len(message) and _fill_cuts(message[e - 1], message[e]))):
+            return s, e
+        start = compact.find(needle, start + 1)
+    return None
+
+
+def _fill_data_spans(message: str, texts: list, marks: Optional[list] = None) -> Optional[list]:
+    """B1 資料段逐段驗（單欄追問回合 `_fill_read_data` 與寬回合 `_fill_wide_read_data` 共用）：空段、全空白段略過；完全不
+    出現在最新一句的段略過並記 `fill_segment_not_in_message`（`marks` 為 `None` ⇒ 不記）；出現在最新一句、但每一處起訖
+    都切斷數字或英數 ⇒ `None`（整回合未知）。其餘 ⇒ 原句上的 `(起, 迄)` 清單（依序）。純計算（⛔ 記錄任何字串）。"""
+    compact_message = _no_ws(message)
+    spans: list = []
+    for seg in texts:
+        needle = _no_ws(seg)
+        if not needle:
+            continue
+        if needle not in compact_message:
+            if marks is not None and WF.V_FILL_SEGMENT_NOT_IN_MESSAGE not in marks:
+                marks.append(WF.V_FILL_SEGMENT_NOT_IN_MESSAGE)
+            continue
+        span = _fill_locate(message, seg)
+        if span is None:
+            return None
+        spans.append(span)
+    return spans
+
+
+#: 寬回合種類（plan-fill-wide-20261028 §4.1）：首句（回合開始無草稿）、卡後（有草稿、上回合沒追問）、多欄（追問 ≥2 欄）。
+FILL_WIDE_FIRST = "first"
+FILL_WIDE_CARD = "card"
+FILL_WIDE_MULTI = "multi"
+
+#: 意圖判斷結果的判讀狀態（`_peek_write_intent`；`_await_write_intent` 依它記標記，寬回合等意圖只讀不記）。
+_PEEK_PENDING = "pending"
+_PEEK_FAILED = "failed"
+_PEEK_RETRY_FAILED = "retry_failed"
+_PEEK_AMBIGUOUS = "ambiguous"
+_PEEK_UNPARSED = "unparsed"
+_PEEK_OUT_OF_DOMAIN = "out_of_domain"
+_PEEK_OK = "ok"
+
+
+def _peek_write_intent(call: Any) -> tuple:
+    """判讀本回合意圖判斷呼叫的結果，**無副作用**（⛔ 記 violation、⛔ 寫回合狀態、⛔ 取用）——`_await_write_intent` 與寬回合
+    「提議先到、等意圖」（plan-fill-wide-20261028 §4.3 第 4 點）共用同一檢查順序：`call.settled`／`label_only` → 未完成 →
+    `task.cancelled()` → `task.exception()` → `_RetriedIntentResponse.failed` → `parse_write_intent_content` →
+    `WriteIntent.model_validate`（接 `ValidationError`）。回 `(狀態, 原始物件, WriteIntent)`；值域檢查（`_fill_intent_in_domain`）
+    由呼叫端接著做。"""
+    if call is None or call.settled or call.label_only:
+        return _PEEK_PENDING, None, None
+    task = call.task
+    if not task.done():
+        return _PEEK_PENDING, None, None
+    if task.cancelled() or task.exception() is not None:
+        return _PEEK_FAILED, None, None
+    result = task.result()
+    if isinstance(result, _RetriedIntentResponse) and result.failed:
+        return _PEEK_RETRY_FAILED, None, None
+    try:
+        content = result.choices[0].message.content
+    except Exception:  # noqa: BLE001 — 回應形狀不對 ⇒ 當無法解析
+        content = None
+    obj, status = WF.parse_write_intent_content(content)
+    if status == WF.PARSE_AMBIGUOUS:
+        return _PEEK_AMBIGUOUS, None, None
+    if status != WF.PARSE_OK:
+        return _PEEK_UNPARSED, None, None
+    try:
+        intent = WriteIntent.model_validate(obj)
+    except ValidationError:
+        return _PEEK_OUT_OF_DOMAIN, obj, None
+    return _PEEK_OK, obj, intent
 
 
 #: 期別片 P-2：期別草稿值的**唯一**合法形狀（程式正規化；⛔ 模型原值）。
@@ -1962,6 +2278,106 @@ def _period_gate_value(value: str, texts: list, today: date) -> Optional[str]:
 def _name_overlap_key(text: str) -> str:
     """W1c §9.11-2 子字串比對的正規化：NFKC＋去空白（值閘 `text` 比對同樣去空白）。"""
     return _no_ws(unicodedata.normalize("NFKC", text))
+
+
+def _name_said_key(text: str) -> str:
+    """F12 整句來源判準的正規化：`_name_overlap_key`（NFKC＋去空白）再 casefold、去標點（Unicode P 類）。
+    與 `confirm.name_said_key`（r4 整句來源 `name_lenient_sentence` 用）同一支，⛔ 兩套各寫。"""
+    return _confirm_name_said_key(text)
+
+
+def _name_said_in_message(name: Any, message: Any) -> bool:
+    """草稿名稱欄值 `name` 是否出現在本回合使用者原話 `message` 裡（`_name_said_key`
+    正規化後的子字串）。任一邊不是字串或正規化後為空 ⇒ `False`。"""
+    if not isinstance(name, str) or not isinstance(message, str):
+        return False
+    key = _name_said_key(name)
+    return bool(key) and key in _name_said_key(message)
+
+
+#: F12 r6 §11.14 第 1 點：使用者原話（NFKC 後）的數字段＝以非數字為界的最長連續數字（含非 ASCII 數字，
+#: 讓「٣26007」這類混寫整段不算 ASCII 編號）；只有整段皆 ASCII 數字者才可能等於候選編號。
+_SAID_DIGIT_RUN_RE = re.compile(r"\d+")
+
+
+def _said_id_is_pick_id(user_message: Any, ids: Any, pick_id: Any) -> bool:
+    """F12 r6 §11.14 第 1 點（根因 (i)）：使用者這句（NFKC）以非數字為界的數字段中，**恰有一段**（依出現次數計）
+    屬於候選集 `ids`，且該段等於 AI 回的 `pick_id` ⇒ `True`（該 `pick_id` 視為客人講出，選對紀錄「分不出」退回
+    不套用）。數字段只作佐證：本函式 ⛔ 選定或改選任何一筆（金額、電話可能撞號）；金額期間不符照舊套用。"""
+    if not isinstance(user_message, str) or not isinstance(pick_id, str) or not isinstance(ids, list):
+        return False
+    said = unicodedata.normalize("NFKC", user_message)
+    allowed = {i for i in ids if isinstance(i, str)}
+    hits = [run for run in _SAID_DIGIT_RUN_RE.findall(said) if run.isascii() and run in allowed]
+    return len(hits) == 1 and hits[0] == pick_id
+
+
+#: 選定後回合改指令式：客人原話（NFKC 後）結構上含序數＝「第」接阿拉伯或國字數字、或含「最後」。
+_SAID_ORDINAL_RE = re.compile(r"第\s*[0-9一二三四五六七八九十兩零〇百]|最後")
+#: `nth` 指令的值：NFKC 後恰為 1～99 的阿拉伯數字（⛔ `int()`：`1_0`、`+2`、前後空白都不收）。
+_NTH_VALUE_RE = re.compile(r"[1-9][0-9]?")
+
+
+def _said_has_ordinal(user_message: Any) -> bool:
+    """選定後回合改指令式：客人原話結構上含序數（NFKC 後「第」接阿拉伯或國字數字、或含「最後」）⇒
+    `True`。只作 `nth` 指令「分不出」退回的佐證（免除這一條）：本函式 ⛔ 選定或改選任何一筆；「大的那間」之類依描述
+    猜的包成序數 ⇒ `False`（照 `pick` 退回）。"""
+    if not isinstance(user_message, str):
+        return False
+    return _SAID_ORDINAL_RE.search(unicodedata.normalize("NFKC", user_message)) is not None
+
+
+def _intent_has_value(intent: Any) -> bool:
+    """F12 r6 §11.14 第 3 點：意圖的 `fields` 是否至少有一筆值為去頭尾空白後非空的字串（非字串不算）。
+    第 5 輪 §11.15.3 第 4 點（R20-2）：名稱欄（`WF.NAME_KEYS`）不算新動作的值——只有名稱 ⇒ `False`（不換動作）。"""
+    for item in getattr(intent, "fields", None) or []:
+        if getattr(item, "key", None) in WF.NAME_KEYS:
+            continue
+        value = getattr(item, "value", None)
+        if isinstance(value, str) and value.strip():
+            return True
+    return False
+
+
+class _NameSaidThisTurn:
+    """名稱在前一回合講、這回合只補欄位 ⇒ 用草稿裡既有的名稱欄值當整句：交給
+    `NameLenientTurn.touched` 的唯讀視圖。非名稱鍵＝`wd.touched` 原樣；名稱鍵（`WF.NAME_KEYS`）另要求
+    草稿裡該欄的值**出現在本回合原話**（`_name_said_in_message`）——意圖呼叫或模型提議依對話歷史把前一
+    回合的名稱再吐一次，值閘比對整段會話原話而放行、鍵進了 `touched`，但這回合使用者沒講名稱 ⇒ 不算
+    （整句改用草稿名稱值）。每次查詢時才讀 `wd`（與原本傳 `wd.touched` 參照同樣是即時值）；⛔ 另存原句。"""
+
+    __slots__ = ("_wd",)
+
+    def __init__(self, wd: Any) -> None:
+        self._wd = wd
+
+    def __contains__(self, key: object) -> bool:
+        wd = self._wd
+        if key not in wd.touched:
+            return False
+        if key not in WF.NAME_KEYS:
+            return True
+        fields = wd.draft.get("fields") if isinstance(wd.draft, dict) else None
+        value = fields.get(key) if isinstance(fields, dict) else None
+        return _name_said_in_message(value, wd.user_message)
+
+
+def _name_lenient_typed_turn(wd: Any) -> bool:
+    """(乙)：本回合使用者是**打字**——非候選按鈕回合（`wd.pick_button`）、本句不是
+    `pick:`／`select:` 機器值、不是確認／修改／取消機器值（`_parse_confirm_value`），且非空白。
+    只有 `True` 時 (乙) 缺名稱觸發才可能發生。"""
+    msg = getattr(wd, "user_message", None)
+    if getattr(wd, "pick_button", False) or not isinstance(msg, str) or not msg.strip():
+        return False
+    return (_parse_confirm_value(msg) is None and _wc.parse_pick_value(msg) is None
+            and _parse_select_value(msg) is None)
+
+
+def _name_lenient_reask_key(wd: Any) -> Optional[str]:
+    """上一回合 (甲)「找不到這個名稱」追問的名稱欄：`asked` 恰為單一名稱鍵 ⇒ 該鍵；否則 `None`
+    （與 `_name_lenient_reask_labels` 同一判準）。"""
+    asked = list(getattr(wd, "asked", None) or [])
+    return asked[0] if len(asked) == 1 and asked[0] in WF.NAME_KEYS else None
 
 
 def _write_draft_program_message(draft: dict, nonce: str) -> "_ProgramMessage":
@@ -2162,10 +2578,47 @@ class AgentRuntime:
         except ValueError as exc:
             logger.error("agent_runtime_config_invalid %s", exc)
             raise
-        # A-2a 片（計畫 §4.6）：`AGENT_WRITE_CANDIDATES`（on／off；未設或空字串＝on）；只在 A+ 三開關
-        # 皆 on 時生效（`_write_candidates_active`）；off ⇒ 與 B 片逐字相同。
+        # `AGENT_WRITE_CANDIDATES`（on／off；未設或空字串＝on）；只在 A+ 三開關
+        # 皆 on 時生效（`_write_candidates_active`）；off ⇒ 不啟用候選。
         try:
             self._write_candidates_on: bool = WF.write_candidates_enabled_from_env()
+        except ValueError as exc:
+            logger.error("agent_runtime_config_invalid %s", exc)
+            raise
+        # 「選對紀錄」片（plan-pick-right-record-20261021 §4）：`AGENT_PICK_RIGHT`（on／off；未設或空字串＝on）；
+        # 只在 A-2a 生效時有作用（`_pick_right_active`）；off ⇒ 與 A-2a 逐字相同。
+        try:
+            self._pick_right_on: bool = WF.pick_right_enabled_from_env()
+        except ValueError as exc:
+            logger.error("agent_runtime_config_invalid %s", exc)
+            raise
+        # F12（plan-name-lenient-f12-20261022 §4.5、資安 S-10）：`AGENT_NAME_LENIENT`（on／off；未設或空字串＝on；
+        # 其他值 ⇒ 啟動即 `ValueError`）；只在 A-2a 生效時有作用（`_name_lenient_active`）；off ⇒ 與現行逐字相同。
+        try:
+            self._name_lenient_on: bool = NM.name_lenient_enabled_from_env()
+        except ValueError as exc:
+            logger.error("agent_runtime_config_invalid %s", exc)
+            raise
+        # E 片（plan-closing-handoff-e-20261026 §4.1-5）：`AGENT_CLOSING_HANDOFF`（on／off；未設或空字串＝on；
+        # 其他值 ⇒ 啟動即 `ValueError`）。off ⇒ 不加欄、不建標籤呼叫、不走程式轉人／收尾，行為與改前逐位元組相同。
+        try:
+            self._closing_handoff_on: bool = WF.closing_handoff_enabled_from_env()
+        except ValueError as exc:
+            logger.error("agent_runtime_config_invalid %s", exc)
+            raise
+        # 填欄只填答覆（plan-fill-answer-only-20261027 §4.1「開關」）：`AGENT_FILL_DATA_TEXT`（on／off；未設或空字串＝on；
+        # 其他值 ⇒ 啟動即 `ValueError`）。off ⇒ 寫入意圖呼叫的系統句與 schema、六個值閘呼叫點、整句填入與改前逐字相同。
+        # 讀取一律走 `_fill_data_text_on` 屬性本身（⛔ 預設 off 的 getattr：漏設時大聲失敗，不默默退回改前行為）。
+        try:
+            self._fill_data_text_on: bool = WF.fill_data_text_enabled_from_env()
+        except ValueError as exc:
+            logger.error("agent_runtime_config_invalid %s", exc)
+            raise
+        # 填欄擴及首句、卡後、多欄回合（plan-fill-wide-20261028 §4.4）：`AGENT_FILL_DATA_TEXT_WIDE`（on／off；未設或空字串＝on；
+        # 其他值 ⇒ 啟動即 `ValueError`）。只在 `_fill_data_text_on` 也 on 時生效；off ⇒ 三種寫入回合與改前逐字相同。
+        # 讀取一律走屬性本身（⛔ 預設 off 的 getattr）。
+        try:
+            self._fill_data_text_wide_on: bool = WF.fill_data_text_wide_enabled_from_env()
         except ValueError as exc:
             logger.error("agent_runtime_config_invalid %s", exc)
             raise
@@ -2173,6 +2626,8 @@ class AgentRuntime:
         # `TurnTrace(` 前據此收尾（那一支只拿得到 `trace_id`）；收尾即移除，回合以例外離開時
         # 由 `_run_turn_body` 撤掉（`_WriteIntentCall.abort`）。
         self._write_intent_calls: dict = {}
+        #: E 片（計畫 r5 附錄）：對話動作標籤呼叫的登記（同上，另一個表、各自收尾）。
+        self._dialog_act_calls: dict = {}
         self._tool_timeout_s = tool_timeout_s
         self._status_interval_s = status_interval_s
         # DSP-038／W3：確認兌現段要下的那句 `redeem_pending` 是 Runtime 自己的
@@ -2402,8 +2857,10 @@ class AgentRuntime:
         # W1b（§8.6-3b／§8.7 #1）：意圖判斷呼叫的收尾掛點之一（另一處是
         # `TurnAccumulator.build_trace`）——**組 `TurnTrace(` 之前**：已完成 ⇒ 計量並把 token
         # 加進本回合；未完成 ⇒ `cancel()` 並以估算計入。本回合沒有發意圖呼叫 ⇒ 什麼都不做。
-        intent_call = getattr(self, "_write_intent_calls", {}).get(trace_id)
-        if intent_call is not None:
+        for intent_call in (getattr(self, "_write_intent_calls", {}).get(trace_id),
+                            getattr(self, "_dialog_act_calls", {}).get(trace_id)):
+            if intent_call is None:
+                continue
             _pt, _ct, _marks = intent_call.settle()
             prompt_tokens += _pt
             completion_tokens += _ct
@@ -3144,15 +3601,20 @@ class AgentRuntime:
         llm_calls: int = 0, prompt_tokens: int = 0, completion_tokens: int = 0,
         identity: Optional[Identity] = None, draft_payload: Optional[dict] = None,
         write_candidates: bool = False, candidate_field_value: Any = None,
-        card_pick: Optional[dict] = None,
+        card_pick: Optional[dict] = None, candidate_reask: bool = False,
+        lead: Optional[str] = None,
     ) -> Optional[TurnResult]:
         """`confirm.request` 成功 ⇒ 把待確認動作存進 session 狀態並結束回合。
+
+        填欄擴及首句、卡後、多欄回合（plan-fill-wide-20261028 §4.3 第 8 點）：`lead`＝程式固定句（寬回合卡後部分套用時
+        點名沒套用的欄位標籤）⇒ 接在卡文字之前（只進 `TurnResult.answer`；⛔ 進 `card`／`card_sha256`／dialog）。`None` ⇒
+        與改前逐字相同。
 
         A-2a 修正 1：`card_pick` 只由 `wd_program` 呼叫點在「這次呼叫帶了 `program_pick`」時傳入
         （`_write_candidates_card_pick_record`）；形狀合法且動作＝這張卡的動作 ⇒ 存進待確認筆
         `_wc.CARD_PICK_KEY`（⛔ 進卡、⛔ 進雜湊、⛔ 進草稿）。候選集照清（A2-R6 (a)）。
 
-        A-2a（計畫 §4.1）：`write_candidates` 只由呼叫端在「A-2a 候選形狀、且這次呼叫是程式依草稿發出
+        `write_candidates` 只由呼叫端在「候選形狀、且這次呼叫是程式依草稿發出
         （`wd_program`／提議轉成的程式呼叫）、非文件／文件暫存／點選範圍／影子回合」時設 `True`
         （`_write_candidates_eligible`）⇒ 程式列候選清單、寫候選集、結束回合（⛔ 出卡、⛔ 建 token）。
         `candidate_field_value`＝草稿該欄位的名稱值（候選集 `name_fp` 的來源）。
@@ -3175,7 +3637,7 @@ class AgentRuntime:
                 agent_state, data, identity=identity, field_value=candidate_field_value,
                 trace_id=trace_id, start=start, user_message=user_message, tool_calls=tool_calls,
                 violations=violations, llm_calls=llm_calls, prompt_tokens=prompt_tokens,
-                completion_tokens=completion_tokens,
+                completion_tokens=completion_tokens, reask=candidate_reask,
             )
         # 第六批 #2：多筆候選 ⇒ ask 回合＋按鈕（見 `CONFIRM_CANDIDATES_TEXT`）。
         # 排在形狀檢查之前：候選形狀本來就沒有 `card`／`pending_id`，⛔ 不該被記成
@@ -3236,6 +3698,18 @@ class AgentRuntime:
         ):
             violations.append("confirm_request_data_shape_invalid")
             return None
+        if self._pick_right_active() and action == WF.BILL_DUE_EXTEND_FORM.action:
+            # 「選對紀錄」片 §4.6：卡上帳單（系統值）與客人先前講的值不符（按鈕照按出卡＋提醒行，業主裁 Q4）
+            # ⇒ 記不符的碼（⛔ 金額、期間）。
+            display = payload.get(_confirm_card.PICK_DISPLAY_KEY)
+            if isinstance(display, dict):
+                bill_like = {"total": display.get("amount"), "date_start": display.get("date_start"),
+                             "date_end": display.get("date_end")}
+                for mark in _wc.said_mismatch_marks(
+                        bill_like, said_amount=display.get("said_amount"),
+                        said_range=display.get("said_range")):
+                    if mark not in violations:
+                        violations.append(mark)
         session = AgentSession(agent_state)
         # 出卡成功 ⇒ 照片建議用掉了，清掉（⛔ 不讓它再補到下一張無關的單）。
         session.consume_image_suggestion()
@@ -3308,7 +3782,8 @@ class AgentRuntime:
             # 逐字＝卡文字，⛔ 不經模型、不經 Verifier。W8 (3)：卡外提示行只接
             # 在**這裡**（`TurnResult.answer`），⛔ 不進 `card`／`card_sha256`／
             # dialog（下方 `dialog_answer=card`）。
-            answer=card if not (isinstance(hint, str) and hint.strip()) else f"{card}\n{hint}",
+            answer=(f"{lead}\n" if isinstance(lead, str) and lead else "") + (
+                card if not (isinstance(hint, str) and hint.strip()) else f"{card}\n{hint}"),
             dialog_answer=card,
             pending_id=pending_id,
             quick_replies=list(quick_replies or []),
@@ -3323,9 +3798,30 @@ class AgentRuntime:
         self, agent_state: dict, data: dict, *, identity: Optional[Identity], field_value: Any,
         trace_id: str, start: float, user_message: str, tool_calls: list, violations: list,
         llm_calls: int = 0, prompt_tokens: int = 0, completion_tokens: int = 0,
-        prefix: Optional[str] = None, trace: Optional[TurnTrace] = None,
+        prefix: Optional[str] = None, trace: Optional[TurnTrace] = None, reask: bool = False,
     ) -> TurnResult:
-        """A-2a（計畫 §4.1、§4.4；A2-R1、A2-R2、A2-R7 (a)、A2-R8）：候選形狀 ⇒ **程式**列候選清單並結束回合。
+        """候選形狀 ⇒ **程式**列候選清單並結束回合。
+
+        「選對紀錄」片（開關生效時）：畫面列 `candidates_shown_max()`（10）筆；帳單候選來自已選物件 ⇒ 候選集
+        帶物件範圍；0 張相符 ⇒ 前導句換成「對不上」固定句（程式由碼與已過值閘的值組，`tools.confirm`）＋標記；
+        `reask`（打字選定不成立的重列）⇒ 前導句換成「依您目前說的，仍對到 N 筆」；延期繳費的物件候選記
+        `pick_right:estate_first`。標記只記碼（S-F11）。"""
+        pr_on = self._pick_right_active()
+        return self._write_candidates_exit_body(
+            agent_state, data, identity=identity, field_value=field_value, trace_id=trace_id,
+            start=start, user_message=user_message, tool_calls=tool_calls, violations=violations,
+            llm_calls=llm_calls, prompt_tokens=prompt_tokens, completion_tokens=completion_tokens,
+            prefix=prefix, trace=trace, reask=reask and pr_on, pr_on=pr_on)
+
+    def _write_candidates_exit_body(
+        self, agent_state: dict, data: dict, *, identity: Optional[Identity], field_value: Any,
+        trace_id: str, start: float, user_message: str, tool_calls: list, violations: list,
+        llm_calls: int, prompt_tokens: int, completion_tokens: int,
+        prefix: Optional[str], trace: Optional[TurnTrace], reask: bool, pr_on: bool,
+    ) -> TurnResult:
+        """`_write_candidates_exit` 的本體（A-2a 原文說明如下）。
+
+        候選形狀 ⇒ **程式**列候選清單並結束回合。
 
         - 候選集與畫面清單出自**同一份** `data["candidates"]`（＝出卡前解析同一次帶 viewer 查詢的列，
           §11 P3-6）；候選集存全部 ≤20 個編號，畫面列前 `CANDIDATES_SHOWN_MAX` 筆＋每筆一顆
@@ -3342,10 +3838,17 @@ class AgentRuntime:
             cid = _wc.candidate_id(row.get("id")) if isinstance(row, dict) else None
             if cid is not None and cid not in rows_by_id:
                 rows_by_id[cid] = row
+        scope_kw: dict = {}
+        if pr_on and cand_type == _wc.TYPE_BILL:
+            scope = data.get(PICK_ESTATE_ID_KEY)
+            if isinstance(scope, str) and _wc.candidate_id(scope) == scope:
+                scope_kw["scope_estate_id"] = scope
         cands = _wc.new_candidate_set(
             action=action, field=data.get("field"), cand_type=cand_type, ids=list(rows_by_id),
             has_more=data.get("has_more") is True, field_value=field_value,
-            creator=_pending_creator(identity),
+            creator=_pending_creator(identity), **scope_kw,
+            # F12（§5.1 (A)）：寬鬆路徑的候選集帶標記（選定後程式改寫草稿名稱用）；A-2a 精確名稱 ⇒ 同改動前。
+            **({"lenient": True} if data.get(NAME_LENIENT_KEY) is True else {}),
         )
         head = f"{prefix}\n\n" if prefix else ""
         common = dict(
@@ -3363,11 +3866,34 @@ class AgentRuntime:
                 answer=f"{head}{ask or WF.WRITE_NOT_ISSUED_TEXT}", pending_id=None, **common,
             )
         session.write_write_candidates(cands)
-        shown_ids = cands["ids"][:_wc.CANDIDATES_SHOWN_MAX]
+        shown_ids = cands["ids"][:self._write_candidates_shown_limit(pr_on)]
         shown = [rows_by_id[cid] for cid in shown_ids]
         total = len(cands["ids"])
-        text = (_wc.candidates_lead_text(cand_type, total, cands["has_more"]) + "\n"
-                + _wc.user_list_text(cand_type, shown))
+        lead = _wc.candidates_lead_text(cand_type, total, cands["has_more"])
+        if pr_on:
+            note = data.get(PICK_NOTE_KEY)
+            note_text = data.get(PICK_NOTE_TEXT_KEY)
+            if note in _wc.PICK_NOTE_DOMAIN and isinstance(note_text, str) and note_text:
+                lead = note_text
+                for mark in _wc.pick_note_marks(note):
+                    if mark not in violations:
+                        violations.append(mark)
+            elif reask:
+                lead = _wc.pr_reask_text(cand_type, total, cands["has_more"])
+            if action == WF.BILL_DUE_EXTEND_FORM.action and cand_type == _wc.TYPE_ESTATE:
+                violations.append(_wc.V_PICK_RIGHT_ESTATE_FIRST)
+        if data.get(NAME_LENIENT_KEY) is True:
+            # 寬鬆路徑的候選 ⇒ 程式固定前言（⛔ 回顯原話；清單可能超過第一頁 ⇒ 接
+            # 「只比對了前 200 筆」）。清單、按鈕、候選集與精確名稱的候選相同。
+            # r4 (乙)（缺名稱觸發；使用者沒講過名稱）⇒ (乙) 專用固定句（⛔「找不到完全相同的名稱」）。
+            truncated = data.get(NAME_LENIENT_TRUNCATED_KEY) is True
+            if data.get(NAME_LENIENT_MISSING_KEY) is True:
+                lead = NAME_LENIENT_MISSING_LEAD_TEXT + (NM.NAME_LENIENT_TRUNCATED_NOTE if truncated else "")
+            else:
+                lead = NM.lead_text(truncated)
+        text = lead + "\n" + _wc.user_list_text(cand_type, shown)
+        if pr_on and _wc.pr_indistinct_ids(cand_type, shown):
+            text += "\n" + _wc.PR_INDISTINCT_TEXT
         if cands["has_more"] or total > len(shown):
             text += "\n" + _wc.CANDIDATES_MORE_TEXT
         quick = [
@@ -3588,7 +4114,7 @@ class AgentRuntime:
             )
         )
 
-        # A-2a（計畫 §4.2；A2-R3）：`pick:` 機器值（`fullmatch`、⛔ NFKC、⛔ strip）在草稿讀回與建立者比對
+        # `pick:` 機器值（`fullmatch`、⛔ NFKC、⛔ strip）在草稿讀回與建立者比對
         # （`_build_turn_context` → `_write_draft_begin`）之後判定：不成立 ⇒ 失效固定句結束回合；成立 ⇒
         # 不建意圖判斷呼叫，模型迴圈由程式依草稿出卡（⛔ 呼叫主模型），dialog 的使用者端只寫程式摘要。
         # 格式不合（前後空白、全形冒號…）⇒ `None` ⇒ 照一般文字進模型。開關未生效 ⇒ 一律不認。
@@ -3600,6 +4126,8 @@ class AgentRuntime:
                 acc, identity, agent_state, pick_value, document)
             if pick_exit is not None:
                 return pick_exit
+            # F12（§5.1 (A)）：寬鬆來源的選定 ⇒ 程式依本身分清單改寫草稿名稱（程式出卡之前）。
+            await self._name_lenient_pick_rewrite(acc, identity, agent_state)
             loop_message = _wc.CANDIDATE_PICK_DIALOG_USER
         else:
             # W1b（§8.6-3a）：意圖判斷呼叫 task 在這裡建立——程式段未結束回合、`_build_turn_context`
@@ -3619,6 +4147,8 @@ class AgentRuntime:
             # ⛔ 留下孤兒呼叫。正常出口一律在組 trace 時收尾，這裡不計量。
             if acc.write_intent_call is not None:
                 acc.write_intent_call.abort()
+            if acc.dialog_act_call is not None:
+                acc.dialog_act_call.abort()
             raise
 
     async def _build_turn_context(
@@ -3951,7 +4481,7 @@ class AgentRuntime:
         )
 
     # ------------------------------------------------------------------
-    # W1：寫入草稿（plan-write-flow-program-owned-20261017 §2.1(3)～(5)）＋ W1b（同計畫 §8）
+    # 寫入草稿與意圖判斷呼叫
     # ------------------------------------------------------------------
     def _write_draft_specs(self, identity: Identity) -> Optional[list]:
         """`registry.specs_for(identity, stage, for_model=False)`；拿不到（替身沒有 `specs_for`／
@@ -3988,6 +4518,8 @@ class AgentRuntime:
         wd = acc.write_draft
         if wd is None or wd.draft is None:
             return
+        # 「選對紀錄」片 §4.2-1：落地前一律再判一次（其他合併路徑也可能改了物件或期別；判過即同步錨點，⛔ 遞迴）。
+        self._pick_right_said_reset(acc, agent_state)
         AgentSession(agent_state).write_write_draft(wd.draft)
         for mark in WF.draft_trace_marks(wd.draft):
             if mark.startswith(WF.TRACE_DRAFT_KEYS_PREFIX):
@@ -4053,21 +4585,38 @@ class AgentRuntime:
                 draft["asked"] = []
                 session.write_write_draft(draft)
         frozen = bool(asked) and _is_question(user_message)
+        # plan-fill-wide-20261028 §4.1 (b)、§11 r1c：綁定卡活不活，判準同 `_write_draft_reissue_gate`。
+        bound = (self._write_draft_bound_card(identity, agent_state, draft["action"])
+                 if draft is not None else None)
+        bound_card_live = (bound is not None and not isinstance(bound[1].get("receipt"), dict)
+                           and bound[1].get("invalidated") is not True)
         acc.write_draft = _WriteDraftTurn(
             draft=draft, owner=owner,
             user_texts=_write_draft_user_texts(agent_state, user_message),
             asked=asked, had_draft=draft is not None, frozen=frozen,
             last_submitted=last_submitted,
+            user_message=user_message if isinstance(user_message, str) else "",
+            bound_card_live=bound_card_live,
         )
         if frozen:
             acc.violations.append(WF.V_QUESTION_FROZEN)
         if self._write_candidates_active():
             acc.write_draft.candidates = self._write_candidates_load(acc, identity, session, draft)
+            # F12 r6 復原第 5 輪 §11.15.3 第 1 點：回合開始的快照（`_write_candidates_load` 已做綁定檢查）。
+            loaded = acc.write_draft.candidates
+            acc.write_draft.post_pick_start = loaded is not None and (
+                loaded.get("picked") is not None or _wc.is_withdrawn(loaded))
+            # 選定後回合改指令式（名稱值一律規則）：只有回合開始已選定（已撤回不算）。
+            acc.write_draft.cmd_scope_start = loaded is not None and loaded.get("picked") is not None
+        if (self._pick_right_active() and isinstance(draft, dict)
+                and draft.get("action") == WF.BILL_DUE_EXTEND_FORM.action):
+            fields = draft.get("fields") or {}
+            acc.write_draft.pr_anchor = (fields.get("estate_name"), fields.get("period"))
 
     def _write_candidates_load(
         self, acc: TurnAccumulator, identity: Identity, session: AgentSession, draft: Optional[dict],
     ) -> Optional[dict]:
-        """A-2a（計畫 §4.2；A2-R6）：讀回候選集（**一律視為不可信**，`load_write_candidates` 驗形狀；
+        """讀回候選集（**一律視為不可信**，`load_write_candidates` 驗形狀；
         不合 ⇒ 丟棄並記標記，比照 `load_draft`），再綁定檢查——建立者＝本回合身分、草稿存在且動作相同、
         該欄位的名稱指紋與列出候選時相同；任一不符 ⇒ 清掉（⛔ 半信）。呼叫點在草稿讀回、建立者比對、
         `SELECT_SCOPE_KEY` 清草稿之後（那幾處清草稿時已一併清掉候選集）。"""
@@ -4108,7 +4657,7 @@ class AgentRuntime:
         self, acc: TurnAccumulator, agent_state: dict, data: Any, *, document: Any,
         program_call: bool,
     ) -> bool:
-        """A-2a（計畫 §4.1；§11 P3-4；A2-R6 (e)）：這次 `confirm.request` 的候選形狀可不可以寫候選集。
+        """這次 `confirm.request` 的候選形狀可不可以寫候選集。
         只在：開關生效、程式依草稿發出（`wd_program`／提議轉成的程式呼叫）、非文件回合、非文件暫存回合、
         非點選範圍回合、非影子回合、且草稿動作＝候選形狀的動作。其餘 ⇒ `False`（呼叫端換回現行出口）。"""
         if not program_call or not self._write_candidates_active():
@@ -4127,7 +4676,7 @@ class AgentRuntime:
     def _write_candidates_program_pick(
         self, acc: TurnAccumulator, identity: Identity, agent_state: dict,
     ) -> Optional[dict]:
-        """A-2a（計畫 §4.5）：程式專用選定通道的值——候選集已選定（`picked`）、仍綁定本草稿（建立者、
+        """程式專用選定通道的值——候選集已選定（`picked`）、仍綁定本草稿（建立者、
         動作、該欄位名稱指紋）⇒ `{action, field, type, id}`；其餘 ⇒ `None`。只由 `wd_program` 呼叫點使用。
 
         修正 1（A2-R5「回原流程」）：沒有候選集（出卡時已清，A2-R6 (a)）⇒ 退回讀本草稿綁定卡帶著的選定
@@ -4141,8 +4690,19 @@ class AgentRuntime:
         if cands is None:
             return self._write_candidates_card_pick(acc, identity, agent_state)
         if cands.get("picked") is None:
-            return None
+            # 「選對紀錄」片 §4.1-1：已選物件的帳單候選未選定（客人改講金額／期間）⇒ 重查只在該物件；
+            # 開關 off 或不是這種候選集 ⇒ `None`（同改動前）。
+            return self._pick_right_scope_pick(acc, identity)
         if not self._write_candidates_bound(cands, identity, wd.draft):
+            return None
+        return _wc.program_pick_of(cands, cands["picked"])
+
+    def _write_candidates_proposal_pick(self, acc: TurnAccumulator, identity: Identity) -> Optional[dict]:
+        """F12 r6（§11.4 第 2 點「出卡入口的關口」；V7-2）：提議轉成的程式呼叫（`proposal_program`）的程式專用選定——
+        候選集已選定、仍綁定本草稿 ⇒ `{action, field, type, id}`；其餘 ⇒ `None`（與改動前相同：不帶）。
+        ⛔ 帶綁定卡的選定、⛔ 帶「選對紀錄」物件範圍（那兩條只在 `wd_program`，維持現行）。"""
+        cands = self._write_candidates_post_pick(acc, identity)
+        if cands is None or cands.get("picked") is None:
             return None
         return _wc.program_pick_of(cands, cands["picked"])
 
@@ -4247,7 +4807,7 @@ class AgentRuntime:
         self, acc: TurnAccumulator, identity: Identity, agent_state: dict,
         pick_value: tuple, document: Any,
     ) -> Optional[TurnResult]:
-        """A-2a（計畫 §4.2；A2-R3、A2-R6 (d)）：`pick:<型別>:<編號>` 機器值（已 `fullmatch`）的判定，
+        """`pick:<型別>:<編號>` 機器值（已 `fullmatch`）的判定，
         呼叫點在 `_write_draft_begin`（草稿讀回、建立者比對、點選範圍清草稿、候選集讀回與綁定檢查）之後。
 
         成立條件（全部）：候選集存在且形狀合法、建立者＝本回合身分、`(型別, 欄位, 編號)` 與候選集吻合
@@ -4286,7 +4846,11 @@ class AgentRuntime:
                 completion_tokens=acc.completion_tokens,
                 outcome=make_outcome("clarifying", expects="text"),
             )
-        cands = dict(cands, picked=str(pick_id).strip())
+        if _wc.is_withdrawn(cands):
+            # F12 r6（§11.4 第 2 點）：已撤回的候選集按舊按鈕 ⇒ 重新選定（拿掉已撤回標記）。
+            cands = _wc.repick(cands, str(pick_id).strip()) or cands
+        else:
+            cands = dict(cands, picked=str(pick_id).strip())
         AgentSession(agent_state).write_write_candidates(cands)
         wd.candidates = cands
         wd.picked = True
@@ -4296,66 +4860,468 @@ class AgentRuntime:
         acc.violations.append(_wc.V_CANDIDATE_PICK_BUTTON)
         return None
 
+    async def _name_lenient_pick_rewrite(
+        self, acc: TurnAccumulator, identity: Identity, agent_state: dict,
+    ) -> None:
+        """F12（主會話裁 §5.1 (A)）：**寬鬆來源**的候選集（`_wc.is_lenient`）本回合選定成立（按鈕或打字甲′，
+        選定編號在候選集 `ids` 內）、仍綁定本草稿 ⇒ 由程式把草稿該名稱欄改寫成那一列在本身分清單上的系統
+        名稱（`name_lenient_picked_title`；⛔ 模型或使用者給的值），並把候選集的名稱指紋同步成新值。兩段式流程的
+        第二段（S-F2 `_pr_fill_bill_display`、`_estate_of_contract`，檢查邏輯 ⛔ 改動）因此以系統名稱比對。
+
+        F12 r6（§11.4 第 3 點）：寬鬆標記保留到出卡（改選另一筆時名稱跟著改寫成新那筆的正名）；第一次改寫時另記
+        已改寫鍵與原講法（改寫前草稿該欄值的正規化字串＝列候選時的值，綁定保證指紋相同；(乙) ⇒ 空字串）。
+
+        - 程式改寫 ⛔ 算使用者講的：不進 `touched`；「選對紀錄」比對錨點同步成新值（客人講過的金額／期間不因此被清）；
+        - 任一條件不合、清單沒查成、沒有這一筆、名稱過不了值閘（清洗後不等於原值或超長）⇒ 不改寫（照現行，
+          第二段名稱對不上 ⇒ 查無固定句，⛔ 出錯卡）；
+        - trace 只記碼 `V_NAME_LENIENT_REWRITE`（⛔ 名稱、編號）。"""
+        wd = acc.write_draft
+        cands = wd.candidates if wd is not None else None
+        draft = wd.draft if wd is not None else None
+        if not _wc.is_lenient(cands) or not isinstance(draft, dict):
+            return
+        picked = cands.get("picked")
+        if not isinstance(picked, str) or picked not in cands.get("ids", []):
+            return
+        if not self._write_candidates_bound(cands, identity, draft):
+            return
+        form = WF.FORMS.get(draft.get("action"))
+        f = form.field(cands.get("field")) if form is not None else None
+        if f is None or f.source != WF.SOURCE_USER_WORDS or f.kind != "text":
+            return
+        title = await name_lenient_picked_title(
+            identity, action=cands["action"], field=cands["field"], cand_type=cands["type"],
+            pick_id=picked)
+        if not isinstance(title, str):
+            return
+        clean = sanitize_data_piece(title).strip()
+        if not clean or clean != title or len(clean) > WF.value_max_len(f):
+            return
+        new_fields = dict(draft.get("fields") or {})
+        new_fields[f.key] = clean
+        new_value = WF.to_payload(draft["action"], new_fields).get(cands["field"])
+        if new_value != clean:
+            return
+        rewritten = dict(cands)
+        rewritten["name_fp"] = _wc.name_fp(new_value)
+        if not _wc.is_rewritten(cands):
+            before = WF.to_payload(draft["action"], draft.get("fields") or {}).get(cands["field"])
+            origin = _name_said_key(before) if isinstance(before, str) else ""
+            if len(origin) > WF.value_max_len(f):
+                origin = ""                  # 正規化後超長（NFKC 展開）⇒ 只套正名那一條（§11.4 第 4 點）
+            rewritten[_wc.REWRITTEN_KEY] = True
+            rewritten[_wc.ORIGIN_KEY] = origin
+            rewritten[_wc.ORIGIN_FP_KEY] = _wc.name_fp(origin)
+        loaded, _invalid = _wc.load_write_candidates(rewritten)
+        if loaded is None:
+            return
+        wd.rewrite_title = (picked, clean)
+        draft["fields"][f.key] = clean
+        if wd.pr_anchor is not None:
+            fields = draft["fields"]
+            wd.pr_anchor = (fields.get("estate_name"), fields.get("period"))
+        session = AgentSession(agent_state)
+        session.write_write_candidates(loaded)
+        wd.candidates = loaded
+        self._write_draft_persist(acc, agent_state)
+        acc.violations.append(_wc.V_NAME_LENIENT_REWRITE)
+
+    def _write_candidates_post_pick(self, acc: TurnAccumulator, identity: Identity) -> Optional[dict]:
+        """F12 r6：本回合的候選集已選定或已撤回、仍綁定本草稿（建立者、動作、名稱指紋）⇒ 該候選集；其餘
+        （開關未生效、沒有候選集、未選定且未撤回、解綁）⇒ `None`。純讀（⛔ 查 DB、⛔ 寫狀態）。"""
+        if not self._write_candidates_active():
+            return None
+        wd = acc.write_draft
+        cands = wd.candidates if wd is not None else None
+        if cands is None or (cands.get("picked") is None and not _wc.is_withdrawn(cands)):
+            return None
+        if not self._write_candidates_bound(cands, identity, wd.draft):
+            return None
+        return cands
+
+    @staticmethod
+    def _write_candidates_origin(cands: dict, draft: dict) -> str:
+        """F12 r6（§11.4 第 4 點）：候選集的原講法（正規化字串）。寬鬆且已改寫 ⇒ 候選集存的那一份；其餘（名稱未被
+        程式改寫）⇒ 草稿該欄現值的正規化（呼叫端已確認綁定 ⇒ 指紋＝列候選時的值）。"""
+        if _wc.is_rewritten(cands):
+            return cands.get(_wc.ORIGIN_KEY) or ""
+        value = WF.to_payload(draft["action"], draft.get("fields") or {}).get(cands.get("field"))
+        return _name_said_key(value) if isinstance(value, str) else ""
+
+    def _write_candidates_name_rule(
+        self, acc: TurnAccumulator, identity: Identity, f: Any, raw: Any, *, defer: bool,
+    ) -> Optional[str]:
+        """F12 r6（§11.4 第 2 點「判定順序」、第 4 點；r6-2 (a)）：候選集已選定或已撤回、仍綁定時，合併（意圖呼叫、
+        模型提議）要寫進候選集那一欄 `f` 的名稱值 `raw` 怎麼處理。回：
+
+        - `None`：規則不適用（不是候選集那一欄、值不是非空字串、未選定且未撤回、解綁、開關未生效）⇒ 照現行合併；
+        - `"defer"`：（只在 `defer=True`、意圖結果還沒取用時）模型提議的名稱值暫存不併，留到拿到 `pick_id` 之後；
+        - `"drop"`：丟棄（記 `write_candidate_name_kept`）——本回合已改選；回合開始已選定、仍綁定（`wd.cmd_scope_start`，
+          選定後回合改指令式 §4.3「名稱值一律規則」：所有來源的名稱值一律丟棄，只有指令路徑驗過的 `name` 指令例外）；
+          `pick_id` 等於現選定；值是**候選集內
+          講法**（`_name_said_key` 正規化後等於或被包含於原講法，或被包含於本回合帶身分取得的任一列系統正名；
+          ⛔ 把「包含原講法」的較長名稱算進來）；其餘且值不出自本回合原話（模型從上下文填回的舊講法）；
+        - `"same"`：同 `"drop"` 的判定、但值與草稿現值相同 ⇒ 照現行合併（值不變、仍綁定）並記 `write_candidate_name_kept`；
+        - `"new"`：候選集外、出自本回合原話（`_name_said_in_message`）⇒ 照現行合併（解綁 ⇒ 依新名稱重查），
+          合併成功後記 `write_candidate_name_new`；
+        - `"collect"`（第 5 輪 §11.15.3 第 6 點；`wd.name_collect` 期間）：收集、⛔ 合併，由
+          `_write_candidates_post_pick_names` 算出改選目標 X 之後決定去向；本回合已判矛盾（`wd.name_conflict`）⇒ `"drop"`。
+        `wd.repick_target`（第 5 輪起＝驗過且**未被退回**的改選目標 X）有值 ⇒ 丟棄（同值 ⇒ `"same"`）。
+        ⛔ 讀任何原話位置標記（FR-15）。"""
+        cands = self._write_candidates_post_pick(acc, identity)
+        if cands is None:
+            return None
+        wd = acc.write_draft
+        draft = wd.draft
+        form = WF.FORMS.get(draft.get("action"))
+        cf = form.field(cands.get("field")) if form is not None else None
+        if cf is None or getattr(f, "key", None) != cf.key:
+            return None
+        if not isinstance(raw, str) or not raw.strip():
+            return None
+        if defer and not wd.intent_consumed:
+            return "defer"
+        if wd.cmd_scope_start:
+            # 選定後回合改指令式（名稱值一律規則）：回合開始已選定、本草稿仍綁定（上方 `_write_candidates_post_pick`
+            # 已確認）⇒ 意圖結果的名稱欄、主模型提議（取用前暫存的與取用後的）、被擋下動作的名稱一律丟棄（與草稿現值相同
+            # 者回 `"same"`，照現行合併、值不變）。不看 `rechoice`／`pick_id`／改選目標（fail-closed：意圖解析失敗、
+            # 沒設 `cmd_offered`、換動作合併被拒的回合同樣適用）；只有 `_write_candidates_cmd_turn` 驗過的 `name` 指令
+            # 經 `_write_candidates_apply_name` 寫進候選集那一欄。
+            return "same" if raw.strip() == (draft.get("fields") or {}).get(cf.key) else "drop"
+        if wd.name_conflict:
+            # 第 5 輪 §11.15.3 第 6 點決定 2：本回合已判矛盾 ⇒ 名稱值一律丟棄（含同值；⛔ 解綁）。
+            return "drop"
+        if wd.name_collect:
+            # 第 5 輪 §11.15.3 第 6 點：先收集、等算出驗過且未被退回的改選目標再決定去向。
+            return "collect"
+        same = raw.strip() == (draft.get("fields") or {}).get(cf.key)
+        kept = "same" if same else "drop"
+        if wd.repick_target is not None:
+            return kept
+        return "new" if self._write_candidates_name_is_new(wd, cands, raw) else kept
+
+    def _write_candidates_name_is_new(self, wd: Any, cands: dict, raw: Any) -> bool:
+        """F12 r6（§11.4 第 4 點）：名稱欄值 `raw`（意圖結果或主模型提議）算不算「改講新名稱」——
+        `pick_id` 等於現選定 ⇒ 否；候選集內講法 ⇒ 否；其餘出自本回合原話（`_name_said_in_message`）⇒ 是。
+        ⛔ 看改選目標（呼叫端另判）。回合開始已選定的回合（`wd.cmd_scope_start`）不會到這裡——名稱值一律規則
+        （`_write_candidates_name_rule`）已先丟棄；這裡的第二支留給「回合開始未選定、回合中依 `pick_id` 選定、同回合再走
+        提議合併」（C-2 未選定回合不變）與已撤回回合。"""
+        picked = cands.get("picked")
+        if picked is not None and wd.intent_pick_id == picked and picked in wd.pick_offered:
+            return False
+        if self._write_candidates_in_set(wd, cands, raw):
+            return False
+        return _name_said_in_message(raw, wd.user_message)
+
+    def _write_candidates_name_hits(self, wd: Any, cands: dict, raw: Any) -> tuple:
+        """名稱值 `raw` 對到哪裡（`_name_said_key` 正規化）：回 `(原講法命中, 對到的列編號)`——原講法命中＝正規化後等於或被包含於
+        原講法（`_write_candidates_origin`）；對到的列編號＝本回合帶身分取得的列（`offered_rows`）裡系統正名包含它的那幾列
+        （候選編號，依 `offered_rows` 順序）。正規化後為空 ⇒ `(True, [])`（算候選集內講法）。⛔ 把「包含原講法」的較長名稱算進來。
+        `_write_candidates_in_set`（名稱合併）與 `_write_candidates_cmd_effect`（`name` 指令）共用這一支（⛔ 兩套各寫）。"""
+        key = _name_said_key(raw) if isinstance(raw, str) else ""
+        if not key:
+            return True, []
+        origin = self._write_candidates_origin(cands, wd.draft)
+        origin_hit = bool(origin and (key == origin or key in origin))
+        matched = []
+        for cid, row in wd.offered_rows.items():
+            title = row.get("title") if isinstance(row, dict) else None
+            title_key = _name_said_key(title) if isinstance(title, str) else ""
+            if title_key and key in title_key:
+                matched.append(cid)
+        return origin_hit, matched
+
+    def _write_candidates_in_set(self, wd: Any, cands: dict, raw: Any) -> bool:
+        """F12 r6（§11.4 第 4 點）：名稱值 `raw` 是不是**候選集內講法**——`_name_said_key` 正規化後為空、等於或被包含
+        於原講法，或被包含於本回合帶身分取得的任一列系統正名（⛔ 把「包含原講法」的較長名稱算進來；判法見
+        `_write_candidates_name_hits`）。第 5 輪 §11.15.3 第 2 點的 `new_name` 與名稱合併共用這一支（⛔ 兩套各寫）。"""
+        origin_hit, matched = self._write_candidates_name_hits(wd, cands, raw)
+        return origin_hit or bool(matched)
+
+    @staticmethod
+    def _write_candidates_name_mark(acc: TurnAccumulator, rule: Optional[str]) -> None:
+        """名稱合併規則的 trace 標記（只記碼；同一回合同一碼只記一次）。"""
+        mark = (_wc.V_CANDIDATE_NAME_NEW if rule == "new"
+                else _wc.V_CANDIDATE_NAME_KEPT if rule in ("drop", "same") else None)
+        if mark is not None and mark not in acc.violations:
+            acc.violations.append(mark)
+
+    def _write_candidates_repick_target(self, acc: TurnAccumulator, identity: Identity,
+                                        user_message: Any) -> None:
+        """F12 r6（§11.4 第 2 點「判定順序」；N-1）：意圖結果取用之後、名稱欄合併之前，算出本回合程式驗證過的改選
+        目標——`pick_id` ∈ 本回合附上的編號 ∩ `ids`，或整句只打 `ids` 內的編號；等於現選定 ⇒ 沒有目標。只供名稱
+        合併規則判「本回合已改選」；改選成立與否仍由 `_write_candidates_typed` 決定。"""
+        wd = acc.write_draft
+        wd.repick_target = None
+        cands = self._write_candidates_post_pick(acc, identity)
+        if cands is None:
+            return
+        target = self._write_candidates_typed_target(wd, cands, user_message, changed=False)
+        if target is not None and target != cands.get("picked"):
+            wd.repick_target = target
+
+    @staticmethod
+    def _write_candidates_typed_target(wd: Any, cands: dict, user_message: Any, *,
+                                       changed: bool) -> Optional[str]:
+        """選定後（或已撤回）打字回合的程式驗證目標：`pick_id` ∈ 本回合附上的編號 ∩ `ids` ⇒ 它；否則草稿值沒變、
+        整句只打編號（NFKC 後純 ASCII 數字）且在 `ids` 內 ⇒ 它；其餘 ⇒ `None`。⛔ `pick_matches_name`（R6-S1：
+        選定後整句打候選集外編號 ⇒ 不動）。
+        選定後回合改指令式（計畫 `plan-post-pick-commands-20261024.md` §4.3）：已選定的回合 ⛔ 讀 `pick_id`（該回合的 schema
+        沒有它，`pick_id` 只在 `picked is None` 時算）；只剩整句只打編號的分支（`changed=False` 且在 `ids` 內）。
+        已撤回（`picked` 為 None）照舊。"""
+        pid = wd.intent_pick_id
+        picked = cands.get("picked")
+        if picked is None and isinstance(pid, str) and pid in wd.pick_offered and pid in cands["ids"]:
+            return pid
+        if changed:
+            return None
+        said = unicodedata.normalize("NFKC", user_message if isinstance(user_message, str) else "").strip()
+        if said.isascii() and said.isdigit() and _wc.candidate_id(said) == said and said in cands["ids"]:
+            return said
+        return None
+
     def _write_candidates_pick_open(self, acc: TurnAccumulator) -> Optional[tuple]:
-        """打字選定要附候選段的回合：開關生效、候選集有效且尚未選定、草稿動作相同、非按鈕回合 ⇒
-        `(候選集, 回合開始時的草稿 payload)`（同步取快照，⛔ 在並行的 task 內讀會變動的草稿）；其餘 ⇒ `None`。"""
+        """打字選定要附候選段的回合：開關生效、候選集有效、草稿動作相同、非按鈕回合 ⇒
+        `(候選集, 回合開始時的草稿 payload)`（同步取快照，⛔ 在並行的 task 內讀會變動的草稿）；其餘 ⇒ `None`。
+        F12 r6（§11.4 第 1 點）：選定後與已撤回（出卡前；出卡即清候選集）同樣附——客人改口才有理解管道。"""
         if not self._write_candidates_active():
             return None
         wd = acc.write_draft
         if wd is None or wd.candidates is None or wd.draft is None or wd.pick_button:
             return None
         cands = wd.candidates
-        if cands.get("picked") is not None or wd.draft.get("action") != cands.get("action"):
+        if wd.draft.get("action") != cands.get("action"):
             return None
         return cands, WF.to_payload(wd.draft["action"], wd.draft.get("fields") or {})
 
-    async def _write_candidates_intent_kwargs(
-        self, acc: TurnAccumulator, identity: Identity, pick_open: tuple, kwargs: dict, *,
-        enum_labels: bool,
-    ) -> Optional[dict]:
-        """A-2a（計畫 §4.3、§4.4；§11 P3-1）：意圖判斷呼叫的候選段與動態 enum。列以出卡前解析同一組函式、
-        帶 viewer 重查（`write_name_candidates`），只留候選集內的編號（⛔ 讓重查多出來的列進 enum）；
-        型別或欄位對不上、取不到 ⇒ `None`（照現行呼叫）。資料段排在使用者這句之前（使用者這句仍是最後
-        一則）；系統句接 `PICK_ID_RULE`。"""
-        cands, payload = pick_open
-        result = await write_name_candidates(identity, cands["action"], payload)
-        if result is None:
+    def _pick_right_rows_scope(self, acc: TurnAccumulator, identity: Identity) -> Optional[dict]:
+        """F12 r6：取候選列用的物件範圍——「選對紀錄」片生效、候選集仍綁定 ⇒ `write_candidates.scope_rows_pick_of`
+        （不看選定狀態；未選定時與 `_pick_right_scope_pick` 相同）；其餘 ⇒ `None`。"""
+        if not self._pick_right_active():
             return None
-        data = result.data
+        wd = acc.write_draft
+        cands = wd.candidates if wd is not None else None
+        if cands is None or not self._write_candidates_bound(cands, identity, wd.draft):
+            return None
+        return _wc.scope_rows_pick_of(cands)
+
+    async def _write_candidates_fetch_rows(
+        self, acc: TurnAccumulator, identity: Identity, cands: dict, payload: dict,
+    ) -> Optional[list]:
+        """候選集的列（帶 role 與 viewer 的查詢；呼叫端只留 `ids` 內的編號）——`pick_id` 資料段與已撤回重列同一套
+        （§11.4 第 1 點、V7-3）：
+
+        - 寬鬆且已改寫（`_wc.is_rewritten`）⇒ 一律以 `name_lenient_rows_for_ids` 依 `ids` 取列（草稿名稱已是選定
+          那筆的正名，依名稱重查可能只剩同正名者）；
+        - 其餘 ⇒ 出卡前解析同一組函式 `write_name_candidates`（帳單候選帶物件範圍）；回 `None`（例：寬鬆路徑的
+          候選、其他欄位仍缺時列出的精確同名候選）⇒ `name_lenient_rows_for_ids` 依 `ids` 取列；
+        - 型別或欄位對不上、取不到 ⇒ `None`。F12 off ⇒ `name_lenient_rows_for_ids` 不查（與改動前相同）。"""
+        result = None
+        if not _wc.is_rewritten(cands):
+            scope = self._pick_right_rows_scope(acc, identity)
+            result = (await write_name_candidates(identity, cands["action"], payload, scope_pick=scope)
+                      if scope is not None else
+                      await write_name_candidates(identity, cands["action"], payload))
+        if result is None:
+            # AI 打字選定照 DSP-110 甲′：寬鬆路徑列出的候選，名稱重查本來就查無 ⇒
+            # 以同一支專用清單查詢取列、只留候選集內的編號（0 次模型呼叫；開關 off ⇒ 照現行 `None`）。
+            if not self._name_lenient_active():
+                return None
+            nl_rows = await name_lenient_rows_for_ids(
+                identity, action=cands["action"], field=cands["field"], cand_type=cands["type"],
+                ids=cands["ids"])
+            if not nl_rows:
+                return None
+            data = {CANDIDATE_TYPE_KEY: cands["type"], "field": cands["field"], "candidates": nl_rows}
+        else:
+            data = result.data
         if data.get(CANDIDATE_TYPE_KEY) != cands["type"] or data.get("field") != cands["field"]:
             return None
-        allowed_ids = set(cands["ids"])
-        rows: list = []
-        offered: list = []
-        for row in data.get("candidates") or []:
-            cid = _wc.candidate_id(row.get("id")) if isinstance(row, dict) else None
-            if cid is not None and cid in allowed_ids and cid not in offered:
-                offered.append(cid)
-                rows.append(row)
+        return list(data.get("candidates") or [])
+
+    @staticmethod
+    def _write_candidates_shown_limit(pr_on: bool) -> int:
+        """畫面列幾筆的上限 K（列候選與重列兩個出口、`nth` 指令換編號共用同一個式子；只算 K）。"""
+        return _wc.candidates_shown_max() if pr_on else _wc.CANDIDATES_SHOWN_MAX
+
+    async def _write_candidates_relist_rows(self, acc: TurnAccumulator, identity: Identity) -> list:
+        """F12 r6（§11.4 第 2 點；V7-3）：已撤回重列的列——本回合 `pick_id` 資料段已取過 ⇒ 用同一份
+        （`offered_rows`）；沒取過或沒取到 ⇒ 同一套 `_write_candidates_fetch_rows` 再取一次。只留 `ids` 內、
+        本人查得到的列，依 `ids` 順序。"""
+        wd = acc.write_draft
+        cands = wd.candidates
+        if wd.offered_rows:
+            source = list(wd.offered_rows.values())
+        else:
+            payload = WF.to_payload(wd.draft["action"], wd.draft.get("fields") or {})
+            source = await self._write_candidates_fetch_rows(acc, identity, cands, payload) or []
+            rows, _ids = self._write_candidates_rows_in_ids(cands, source)
+            wd.offered_rows = {_wc.candidate_id(r.get("id")): r for r in rows}
+            if self._pick_right_active():
+                wd.pick_rows = dict(wd.offered_rows)
+        by_id = {cid: row for cid, row in wd.offered_rows.items() if cid in cands["ids"]}
+        return [by_id[cid] for cid in cands["ids"] if cid in by_id]
+
+    def _write_candidates_relist_exit(
+        self, acc: TurnAccumulator, identity: Identity, agent_state: dict, user_message: str,
+        rows: list, *, prefix: Optional[str] = None, trace: Optional[TurnTrace] = None,
+    ) -> TurnResult:
+        """F12 r6（§11.4 第 2、7a 點；r6-7 (a)）：已撤回 ⇒ 程式重列**同一份** `ids` 結束回合（列候選回合的按鈕與
+        固定句；⛔ 出卡、⛔ 建 token、⛔ `confirm.request`、⛔ 重新解析名稱）。候選集逐位不動（仍已撤回，客人按
+        按鈕或打字重新選定）。`rows` 為空（全都看不到了）⇒ 清掉候選集與草稿名稱欄、照現行追問名稱。
+        前導句：寬鬆來源 ⇒ `NAME_LENIENT_MISSING_LEAD_TEXT`（⛔ 回顯原話、⛔「找不到完全相同」）；其餘 ⇒ 列候選
+        同一句（只插筆數）。dialog 只寫程式摘要；trace 記 `write_candidates_shown:<型別>:<n>`。"""
+        wd = acc.write_draft
+        cands = wd.candidates
+        cand_type = cands["type"]
+        action = cands["action"]
+        head = f"{prefix}\n\n" if prefix else ""
+        common = dict(
+            agent_state=agent_state, user_message=user_message, trace_id=acc.trace_id,
+            start=acc.start, tool_calls=acc.tool_call_records, violations=acc.violations,
+            llm_calls=acc.llm_calls, prompt_tokens=acc.prompt_tokens,
+            completion_tokens=acc.completion_tokens, trace=trace,
+        )
+        if not rows:
+            AgentSession(agent_state).clear_write_candidates()
+            wd.candidates = None
+            form = WF.FORMS.get(action)
+            f = form.field(cands["field"]) if form is not None else None
+            label = (self._name_lenient_mark_not_found(acc, identity, agent_state, action, f.key, None)
+                     if f is not None else None)
+            ask = missing_labels_ask_text([label]) if isinstance(label, str) else None
+            return self._finish_confirm_turn(
+                kind="ask", outcome=make_outcome("clarifying", expects="text", action=action),
+                answer=f"{head}{ask or WF.WRITE_NOT_ISSUED_TEXT}", pending_id=None,
+                ask_target=(None if prefix else
+                            (WF.ask_target_for_missing([label]) if isinstance(label, str) else None)),
+                **common,
+            )
+        pr_on = self._pick_right_active()
+        shown = rows[:self._write_candidates_shown_limit(pr_on)]
+        total = len(rows)
+        if _wc.is_lenient(cands):
+            lead = NAME_LENIENT_MISSING_LEAD_TEXT
+        else:
+            lead = _wc.candidates_lead_text(cand_type, total, cands["has_more"])
+        text = lead + "\n" + _wc.user_list_text(cand_type, shown)
+        if pr_on and _wc.pr_indistinct_ids(cand_type, shown):
+            text += "\n" + _wc.PR_INDISTINCT_TEXT
+        if cands["has_more"] or total > len(shown):
+            text += "\n" + _wc.CANDIDATES_MORE_TEXT
+        quick = [
+            {"label": _wc.button_label(cand_type, row),
+             "value": f"{_wc.PICK_VALUE_PREFIX}{cand_type}:{_wc.candidate_id(row.get('id'))}"}
+            for row in shown
+        ]
+        acc.violations.append(_wc.shown_marker(cand_type, total))
+        return self._finish_confirm_turn(
+            kind="ask", outcome=make_outcome("clarifying", expects="choice", action=action),
+            answer=f"{head}{text}", dialog_answer=f"{head}{_wc.dialog_summary(cand_type, len(shown))}",
+            pending_id=None, quick_replies=quick, ask_target=None, **common,
+        )
+
+    def _write_candidates_repick_notice(self, acc: TurnAccumulator) -> Optional[str]:
+        """F12 r6-3 (a)（§11.8 R6-S2）：本回合打字改選成立、還沒出卡 ⇒ 告知固定句「已改成：{title}（編號 {id}）。」。
+        名稱只取本身分清單上新那筆的系統列（本回合帶身分取得的列 `offered_rows`，或寬鬆改寫取得的
+        `name_lenient_picked_title`），過 `sanitize_data_piece` 且等值、不超過名稱欄上限；⛔ 取草稿、使用者或
+        模型值。取不到 ⇒ `None`（不加句）。"""
+        wd = acc.write_draft
+        rid = wd.repick_id if wd is not None else None
+        if not isinstance(rid, str) or _wc.candidate_id(rid) != rid:
+            return None
+        title = None
+        row = wd.offered_rows.get(rid)
+        if isinstance(row, dict) and isinstance(row.get("title"), str):
+            title = row["title"]
+        elif isinstance(wd.rewrite_title, tuple) and wd.rewrite_title[0] == rid:
+            title = wd.rewrite_title[1]
+        cands = wd.candidates
+        form = WF.FORMS.get(cands.get("action")) if isinstance(cands, dict) else None
+        f = form.field(cands.get("field")) if form is not None else None
+        if not isinstance(title, str) or f is None:
+            return None
+        clean = sanitize_data_piece(title).strip()
+        if not clean or clean != title or len(clean) > WF.value_max_len(f):
+            return None
+        return _wc.CANDIDATE_REPICK_TEXT.format(title=clean, id=rid)
+
+    async def _write_candidates_intent_kwargs(
+        self, acc: TurnAccumulator, identity: Identity, pick_open: tuple, kwargs: dict, *,
+        enum_labels: bool, fill_kw: Optional[dict] = None,
+    ) -> Optional[dict]:
+        """意圖判斷呼叫的候選段與動態 enum。列以出卡前解析同一組函式、
+        帶 viewer 重查（`write_name_candidates`），只留候選集內的編號（⛔ 讓重查多出來的列進 enum）；
+        型別或欄位對不上、取不到 ⇒ `None`（照現行呼叫）。資料段排在使用者這句之前（使用者這句仍是最後
+        一則）；系統句接 `PICK_ID_RULE`。
+
+        F12 r6（§11.4 第 1 點）：已選定或已撤回時同樣附（取列見 `_write_candidates_fetch_rows`）。
+        選定後回合改指令式（計畫 `plan-post-pick-commands-20261024.md` §4.2）：**已選定**的回合系統句＝
+        `write_intent_system_prompt(enum_labels)`（不帶 `pick_rule`）＋「\\n」＋指令規則句（`{picked}`＝`_wc.candidate_id`
+        驗過形狀的 `cands["picked"]`，程式值）、schema＝`write_intent_call_schema` 加必填 `target`（不帶 `pick_id`、
+        `rechoice`、`new_name`），並設 `wd.cmd_offered`；現選定編號形狀不合（讀回已驗，理應不發生）⇒ `None`（不附候選段，
+        fail-closed：⛔ 讀 `target`）。未選定、已撤回 ⇒ 系統句與 schema 與改動前逐字相同（C-2、Q1 (a)）。
+        填欄只填答覆（§4.1 A.3）：兩支系統句與 schema 一律接 `fill_kw`（`_fill_begin_intent_call` 的同一份；off ⇒ 空）。"""
+        fill_kw = fill_kw or {}
+        cands, payload = pick_open
+        picked = cands.get("picked")
+        picked_id: Optional[str] = None
+        if picked is not None:
+            picked_id = _wc.candidate_id(picked)
+            if picked_id is None or picked_id != picked or WF.pick_target_rule(picked_id) is None:
+                return None
+        source = await self._write_candidates_fetch_rows(acc, identity, cands, payload)
+        if source is None:
+            return None
+        rows, offered = self._write_candidates_rows_in_ids(cands, source)
         if not offered:
             return None
         messages = list(kwargs["messages"])
-        messages[0] = {"role": "system",
-                       "content": WF.write_intent_system_prompt(enum_labels=enum_labels, pick_rule=True)}
+        if picked_id is not None:
+            system = WF.write_intent_system_prompt(enum_labels=enum_labels, target_picked=picked_id, **fill_kw)
+            response_format = WF.write_intent_response_format(
+                enum_labels=enum_labels, target_picked=picked_id, **fill_kw)
+        else:
+            system = WF.write_intent_system_prompt(enum_labels=enum_labels, pick_rule=True, **fill_kw)
+            response_format = WF.write_intent_response_format(
+                enum_labels=enum_labels, pick_ids=offered, **fill_kw)
+        messages[0] = {"role": "system", "content": system}
         messages.insert(len(messages) - 1, {
             "role": "user",
             "content": wrap_tool_data(WRITE_CANDIDATES_DATA_LABEL,
                                       _wc.data_piece_text(cands["type"], rows), acc.nonce),
         })
         acc.write_draft.pick_offered = tuple(offered)
-        return dict(kwargs, messages=messages,
-                    response_format=WF.write_intent_response_format(
-                        enum_labels=enum_labels, pick_ids=offered))
+        acc.write_draft.cmd_offered = picked_id is not None
+        acc.write_draft.offered_rows = {
+            _wc.candidate_id(r.get("id")): r for r in rows if isinstance(r, dict)}
+        if self._pick_right_active():
+            acc.write_draft.pick_rows = {
+                _wc.candidate_id(r.get("id")): r for r in rows if isinstance(r, dict)}
+        return dict(kwargs, messages=messages, response_format=response_format)
+
+    @staticmethod
+    def _write_candidates_rows_in_ids(cands: dict, source: list) -> tuple:
+        """只留候選集 `ids` 內、不重複的列（依 `source` 順序）⇒ `(列, 編號)`。⛔ 讓重查多出來的列進來。"""
+        allowed_ids = set(cands["ids"])
+        rows: list = []
+        offered: list = []
+        for row in source:
+            cid = _wc.candidate_id(row.get("id")) if isinstance(row, dict) else None
+            if cid is not None and cid in allowed_ids and cid not in offered:
+                offered.append(cid)
+                rows.append(row)
+        return rows, offered
 
     async def _write_candidates_typed(
         self, acc: TurnAccumulator, identity: Identity, agent_state: dict, user_message: str, *,
         fields_before: Optional[dict],
     ) -> None:
-        """A-2a（計畫 §4.3、§4.4；A2-R4、A2-R7 (b)～(d)）：打字選定的判定（意圖判斷結果合併之後、觸發條件
+        """打字選定的判定（意圖判斷結果合併之後、觸發條件
         之前；每回合一次）。AI 只回「指哪一筆」（`pick_id`），成立與否由程式決定：
 
         - 候選集不再綁定本草稿（換動作、草稿被清、該欄位改成別的名稱）⇒ 作廢（新名稱由程式依草稿照常
-          重新解析）；已選定 ⇒ 不動（其他欄位的更正照常觸發、選定照帶）；
+          重新解析）；已選定或已撤回 ⇒ 見 `_write_candidates_typed_post_pick`（F12 r6）；
         - `pick_id` 屬於本回合實際附上的候選編號 ⇒ 選定成立；
         - 使用者這句整句是編號（NFKC 後純 ASCII 數字）、且本回合草稿值沒變：在候選集內 ⇒ 成立；不在 ⇒
           帶 viewer 的編號精確查、名稱相同才成立（`pick_matches_name`）；
@@ -4368,9 +5334,11 @@ class AgentRuntime:
             session.clear_write_candidates()
             wd.candidates = None
             return
-        if cands.get("picked") is not None:
-            return
         changed = (wd.draft.get("fields") or {}) != (fields_before or {})
+        if cands.get("picked") is not None or _wc.is_withdrawn(cands):
+            self._write_candidates_typed_post_pick(
+                acc, agent_state, cands, user_message, changed=changed)
+            return
         chosen: Optional[str] = None
         pid = wd.intent_pick_id
         if (isinstance(pid, str) and pid != WF.PICK_ID_NONE
@@ -4388,6 +5356,30 @@ class AgentRuntime:
                         field_value=self._write_candidates_field_value(
                             acc, {"field": cands["field"]})):
                     chosen = said
+        if (chosen is not None and chosen == pid and self._pick_right_active()
+                and chosen in _wc.pr_indistinct_ids(cands["type"], wd.pick_rows.values())
+                and not _said_id_is_pick_id(user_message, cands["ids"], pid)):
+            # PR-2／PR-7：AI 依客人描述回的那筆，畫面上與另一筆除編號外全同 ⇒ 客人的話分不出是哪筆，
+            # ⛔ 收 AI 的猜測；重列（清單後印分不出句）。客人整句打編號或按按鈕照常成立。
+            # F12 r6 §11.14 第 1 點：客人句中講出的編號（恰一段屬於 `ids` 且等於 `pick_id`）⇒ 不算 AI 猜測、不退回
+            # （只免除本條；金額期間不符照舊套用）。
+            acc.violations.append(_wc.V_PICK_RIGHT_INDISTINCT)
+            wd.reask = True
+            wd.activity = True
+            acc.violations.append(_wc.V_CANDIDATE_REASK)
+            return
+        mismatch = (self._pick_right_typed_mismatch(acc, cands, chosen)
+                    if chosen is not None else None)
+        if mismatch is not None:
+            # 「選對紀錄」片 §4.2-3（業主裁 Q4）：打字選定的帳單與客人先前講的金額／計費期間不符 ⇒ 不收，
+            # 重列候選（按鈕選定才照按的出卡並在卡上提醒）。標記只記碼（S-F11）。
+            for mark in mismatch:
+                if mark not in acc.violations:
+                    acc.violations.append(mark)
+            wd.reask = True
+            wd.activity = True
+            acc.violations.append(_wc.V_CANDIDATE_REASK)
+            return
         if chosen is not None:
             cands = dict(cands, picked=chosen)
             session.write_write_candidates(cands)
@@ -4400,6 +5392,120 @@ class AgentRuntime:
             wd.reask = True
             wd.activity = True
             acc.violations.append(_wc.V_CANDIDATE_REASK)
+
+    def _write_candidates_typed_post_pick(
+        self, acc: TurnAccumulator, agent_state: dict, cands: dict, user_message: Any, *,
+        changed: bool,
+    ) -> None:
+        """F12 r6（§11.4 第 2、7a 點；r6-1 (a) 套用所有寫入候選集；r6-7 (a)）：候選集已選定或已撤回、仍綁定時的
+        打字回合，由 `_write_candidates_typed` 進入。已撤回回合（AI 只回 `pick_id`）與已選定回合的**沒走指令路徑**
+        的情形（意圖解析失敗、換動作合併被拒；計畫 `plan-post-pick-commands-20261024.md` §4.3 第 7 點）走這裡；已選定且
+        `cmd_offered`、意圖解析成功、沒換動作的回合由 `_write_candidates_cmd_turn` 接手（⛔ 進本函式）。改不改選由程式
+        決定（DSP-091）：
+
+        - 程式驗證過的目標（`_write_candidates_typed_target`：已撤回 ⇒ `pick_id` ∈ 本回合附上的編號 ∩ `ids`；已選定 ⇒
+          只剩整句只打 `ids` 內編號且草稿值沒變；⛔ `pick_matches_name`）且 ≠ 現選定 ⇒ 改選（已撤回 ⇒ 重新選定），記
+          `write_candidate_repick:typed`；選對紀錄的分不出、金額期間不符照未選定時同一套規則套在目標上（分不出另免除
+          客人句中講出的編號，§11.14 第 1 點），被退回 ⇒ 清掉選定、進入已撤回（⛔ 留著舊選定），重列同一份 `ids`
+          （`_write_candidates_repick_apply`）；
+        - 沒有目標，或目標等於現選定 ⇒ 不動（已選定：其他欄位的更正照常觸發、選定照帶；已撤回：非問句且草稿值沒變 ⇒
+          重列，其餘交出卡入口的關口重列、問句由 B2 列候選）。
+        撤回 ⛔ 動草稿名稱、⛔ 重新解析名稱（`_wc.withdraw` 保留 `ids`、寬鬆鍵、已改寫鍵）。"""
+        wd = acc.write_draft
+        picked = cands.get("picked")
+        target = self._write_candidates_typed_target(wd, cands, user_message, changed=changed)
+        if target is not None and target == picked:
+            target = None
+        if target is None:
+            if picked is None and not changed and not _is_question(user_message):
+                wd.relist = True
+                wd.activity = True
+            return
+        self._write_candidates_repick_apply(acc, agent_state, cands, target, user_message)
+
+    def _write_candidates_repick_apply(
+        self, acc: TurnAccumulator, agent_state: dict, cands: dict, target: str, user_message: Any, *,
+        via: Optional[str] = None,
+    ) -> None:
+        """改選目標 `target`（程式驗證過、≠ 現選定）的執行：先過「選對紀錄」退回（`_write_candidates_refusal`，`via` 見
+        該函式）——被退回 ⇒ 清掉選定、進入已撤回、重列同一份 `ids`（已撤回 ⇒ 只重列），記退回標記與
+        `write_candidate_reask`；否則改選（`_wc.repick`），記 `write_candidate_repick:typed`。
+        `_write_candidates_typed_post_pick`（已撤回、整句編號）與 `_write_candidates_cmd_turn`（`pick`／`nth`／整句編號）
+        共用這一支（⛔ 兩套各寫）。"""
+        wd = acc.write_draft
+        session = AgentSession(agent_state)
+        picked = cands.get("picked")
+        refused = self._write_candidates_refusal(acc, cands, target, user_message, via=via)
+        if refused is not None:
+            # §11.8 N-2：改選目標被退回 ⇒ 清掉選定（⛔ 留著舊選定讓程式出舊那筆的卡），重列同一份 `ids`。
+            for mark in refused:
+                if mark not in acc.violations:
+                    acc.violations.append(mark)
+            acc.violations.append(_wc.V_CANDIDATE_REASK)
+            if picked is not None:
+                self._write_candidates_withdraw(acc, agent_state, cands)
+            else:
+                wd.relist = True
+                wd.activity = True
+            return
+        repicked = _wc.repick(cands, target)
+        if repicked is None:
+            return
+        session.write_write_candidates(repicked)
+        wd.candidates = repicked
+        wd.picked = True
+        wd.activity = True
+        wd.repick_id = target
+        acc.violations.append(_wc.V_CANDIDATE_REPICK_TYPED)
+
+    def _write_candidates_refusal(self, acc: TurnAccumulator, cands: dict, target: str,
+                                  user_message: Any, *, via: Optional[str] = None) -> Optional[tuple]:
+        """F12 r6（§11.8 N-2）：選定後（或已撤回）改選目標 `target` 是否被「選對紀錄」退回——分不出（AI 依描述回的
+        那筆與另一筆除編號外全同；客人句中講出的編號免除，§11.14 第 1 點）或金額期間不符 ⇒ 退回標記（tuple）；
+        不退回 ⇒ `None`。純判定（⛔ 寫狀態、⛔ 記標記）。第 5 輪 §11.15.3 第 6 點在決定名稱去向**之前**呼叫（讀的是
+        本回合非名稱欄合併後的比對值），`_write_candidates_typed_post_pick` 共用同一支（⛔ 兩套各寫）。
+
+        `via`（選定後回合改指令式）：指令路徑傳指令種類——`"pick"`：分不出判定的「AI 的猜測」＝該
+        `pick` 指令，客人句中講出該編號（`_said_id_is_pick_id`）才免除；`"nth"`：只在客人原話結構上含序數
+        （`_said_has_ordinal`；NFKC 後「第」接數字或含「最後」，由程式判，只作佐證）時免除，否則同 `pick` 退回（擋 AI
+        把依描述猜的包成序數）；`"name"`（修復輪 1 R1-1，名稱唯一對到一筆）：分不出判定不套；金額期間不符一律套用。不傳（`None`）⇒ 照現行讀 `wd.intent_pick_id`（已撤回回合；整句
+        編號的目標 ≠ `pick_id` 不套分不出）。"""
+        wd = acc.write_draft
+        if via is None:
+            pid = wd.intent_pick_id
+            guessed = target == pid
+            excused = guessed and _said_id_is_pick_id(user_message, cands["ids"], pid)
+        elif via == WF.PICK_TARGET_OP_NAME:
+            # 修復輪 1 R1-1：程式依客人原字的名稱唯一對到（不是 AI 依描述猜）⇒ 分不出判定不套；金額期間不符照套。
+            guessed = False
+            excused = False
+        else:
+            guessed = True
+            excused = (_said_id_is_pick_id(user_message, cands["ids"], target) if via == WF.PICK_TARGET_OP_PICK
+                       else _said_has_ordinal(user_message))
+        if (guessed and self._pick_right_active()
+                and target in _wc.pr_indistinct_ids(cands["type"], wd.pick_rows.values())
+                and not excused):
+            # §11.14 第 1 點：客人句中講出的編號（恰一段屬於 `ids` 且等於 `pick_id`）⇒ 不算 AI 猜測、不退回。
+            return (_wc.V_PICK_RIGHT_INDISTINCT,)
+        mismatch = self._pick_right_typed_mismatch(acc, cands, target)
+        return tuple(mismatch) if mismatch is not None else None
+
+    @staticmethod
+    def _write_candidates_withdraw(acc: TurnAccumulator, agent_state: dict, cands: dict) -> None:
+        """F12 r6：清掉選定、進入已撤回（`_wc.withdraw`：`ids`、名稱指紋、寬鬆鍵、已改寫鍵逐位保留；⛔ 動草稿），
+        本回合由程式重列同一份 `ids`。組不出合法形狀 ⇒ 清掉候選集（fail-closed：⛔ 留著舊選定）。"""
+        wd = acc.write_draft
+        session = AgentSession(agent_state)
+        withdrawn = _wc.withdraw(cands)
+        if withdrawn is None:
+            session.clear_write_candidates()
+            wd.candidates = None
+            return
+        session.write_write_candidates(withdrawn)
+        wd.candidates = withdrawn
+        wd.relist = True
+        wd.activity = True
 
     def _write_draft_name_catch_eligible(self, acc: TurnAccumulator) -> bool:
         """W1b §8.1-3 的執行條件（安全處置 2b／2d／5a 收窄後）：**回合開始即存在**的草稿、
@@ -4456,9 +5562,13 @@ class AgentRuntime:
         同一個模型、同一個 client（`self.provider.async_client`）、輸入＝系統句＋本會話對話
         （`dialog`）＋當句（主呼叫輸入的子集，⛔ 資料段、⛔ 草稿注入行）；`max_completion_tokens`
         800；與主模型迴圈**並行**（這裡只建立，⛔ await）。"""
-        if acc.write_draft is None or document is not None:
+        if document is not None:
             return
-        if not self._write_draft_any_visible(identity):
+        if self._closing_active():
+            # E 片：每個使用者文字回合都另建只含 `dialog_act` 的標籤呼叫（同模型、同輸出上限、同 dialog 輸入、
+            # 同建立時點、與主模型及寫入意圖呼叫並行）；寫入意圖呼叫 ⛔ 帶 `dialog_act`——合併在同一個呼叫裡誤判明顯較多。
+            self._start_dialog_act_call(acc, agent_state, user_message)
+        if acc.write_draft is None or not self._write_draft_any_visible(identity):
             return
         # 第 3 步 A4：開關 on ⇒ enum 欄位只列標籤（程式轉代碼）；off ⇒ 現行列代碼。
         enum_labels = bool(getattr(self, "_write_lifecycle_on", False))
@@ -4467,9 +5577,13 @@ class AgentRuntime:
         rechoice_type = self._write_candidates_carry_open(acc, identity, agent_state)
         if rechoice_type is not None:
             acc.write_draft.rechoice_offered = True
+        # 填欄只填答覆（§4.1 A）：開關 on 的寫入回合 ⇒ 三個建構點（這裡＋`_write_candidates_intent_kwargs` 兩支）一律
+        # 接同一段資料段規則與 schema（`fill_kw`）；追問回合另附追問欄位標籤與 `answer_text`。off ⇒ `fill_kw` 為空、
+        # 系統句與 schema 與改前逐字相同。
+        fill_kw = self._fill_begin_intent_call(acc)
         messages: list = [{"role": "system",
                            "content": WF.write_intent_system_prompt(
-                               enum_labels=enum_labels, rechoice_type=rechoice_type)}]
+                               enum_labels=enum_labels, rechoice_type=rechoice_type, **fill_kw)}]
         for m in agent_state.get("dialog") or []:
             if (isinstance(m, dict) and m.get("role") in ("user", "assistant")
                     and isinstance(m.get("content"), str)):
@@ -4479,33 +5593,504 @@ class AgentRuntime:
             model=self._model,
             messages=messages,
             response_format=WF.write_intent_response_format(
-                enum_labels=enum_labels, rechoice_type=rechoice_type),
+                enum_labels=enum_labels, rechoice_type=rechoice_type, **fill_kw),
             max_completion_tokens=WF.WRITE_INTENT_MAX_COMPLETION_TOKENS,
         )
         if self._reasoning_effort is not None:
             kwargs["extra_body"] = {"reasoning_effort": self._reasoning_effort}
         create = self.provider.async_client.chat.completions.create
-        # A-2a（計畫 §4.3、§4.4；DSP-103 Q2 甲）：候選集有效且尚未選定的回合，意圖判斷呼叫多帶一段候選清單
+        # DSP-103：候選集有效且尚未選定的回合，意圖判斷呼叫多帶一段候選清單
         # 資料段（候選集全部 ≤20 列、每列只放投影欄、逐列過 `sanitize_data_piece`、nonce 包住，排在使用者
         # 這句之前）與 `pick_id` 欄位（動態 enum＝實際附上的編號＋`none`）。列由出卡前解析同一組函式、帶
         # viewer 重查（`write_name_candidates`），只留候選集內的編號；取不到 ⇒ 照現行呼叫（⛔ 附段）。
         pick_open = self._write_candidates_pick_open(acc)
+        partial: list = []
 
         async def _call() -> Any:
             if pick_open is not None:
                 picked_kwargs = await self._write_candidates_intent_kwargs(
-                    acc, identity, pick_open, kwargs, enum_labels=enum_labels)
+                    acc, identity, pick_open, kwargs, enum_labels=enum_labels, fill_kw=fill_kw)
                 if picked_kwargs is not None:
-                    return await create(**picked_kwargs)
+                    first = await create(**picked_kwargs)
+                    if not _write_intent_needs_retry(first):
+                        return first
+                    # F12 r6 復原第 5 輪 §11.15.3 第 5 點（根因 S22）：附候選段的呼叫截斷或解析不出 ⇒ 同一份輸入重送
+                    # 一次（同一個 task，等待上限仍是 `_await_write_intent` 那一個；逾時照現行）。仍失敗或重送丟例外
+                    # ⇒ `failed`（照現行回 `None`）。未附候選段的呼叫 ⛔ 重送（與現行逐字相同）。
+                    partial.append(first)
+                    try:
+                        second = await create(**picked_kwargs)
+                    except Exception:  # noqa: BLE001 — 重送失敗 ⇒ 照第一次的失敗處理（`None`）
+                        return _RetriedIntentResponse(first, None, failed=True)
+                    return _RetriedIntentResponse(
+                        first, second, failed=_write_intent_needs_retry(second))
             return await create(**kwargs)
 
         call = _WriteIntentCall(
             asyncio.create_task(_call()), model=self._model,
             input_chars=sum(len(m["content"]) for m in messages),
-            registry=self._write_intent_calls, trace_id=acc.trace_id,
+            registry=self._write_intent_calls, trace_id=acc.trace_id, partial=partial,
         )
         self._write_intent_calls[acc.trace_id] = call
         acc.write_intent_call = call
+
+    # -- 填欄只填答覆（plan-fill-answer-only-20261027 §4.1）------------------------------------------
+    # 分工（DSP-091）：哪部分是資料、哪部分回答追問欄位由 AI 在寫入意圖呼叫標出（`data_texts`／`answer_text`）；
+    # 填不填、併不併、要不要重問由程式決定。⛔ 本節任何地方以道謝或寒暄的詞表判斷。
+    def _fill_begin_intent_call(self, acc: TurnAccumulator) -> dict:
+        """寫入意圖呼叫建立當下（§4.1 適用範圍）：開關 on 且本回合是**單欄追問回合** ⇒ 啟用本片（`fill_active`），
+        記下回合開始那份草稿，回三個建構點共用的系統句／schema 參數 `{"data_text": True, "asked_labels": (標籤,)}`
+        （表單欄位標籤，⛔ 使用者原話）。
+        修復輪 3（業主 10-27 §6 第 10 點「縮小到追問回合」）：單欄追問回合＝送出之前依已知狀態判一次——回合開始即有
+        草稿、`asked` 非空、非凍結、草稿非 `None`（現行 `fill_followup` 條件），**且** `asked` 恰好 1 個鍵、對得到表單
+        欄位標籤。其餘寫入回合（第一句無草稿、確認卡出現後打字 `asked` 空、多欄追問 `asked` ≥2、其他非追問寫入回合）
+        與開關 off ⇒ `{}`、⛔ 設 `fill_active`：系統句、schema、①～⑥ 值閘、整句填入、B5、B6 與 off 逐字相同。
+        填欄擴及首句、卡後、多欄回合（plan-fill-wide-20261028 §4.1、§4.2）：首句、卡後、多欄三種回合另由
+        `_fill_wide_begin` 判（`AGENT_FILL_DATA_TEXT_WIDE` on）⇒ 回 `{"data_text": True}`（⛔ `asked_labels`）、設 `fill_wide`；
+        與單欄追問回合互斥。"""
+        wd = acc.write_draft
+        if not self._fill_data_text_on or wd is None:
+            return {}
+        if not (wd.had_draft and wd.asked and not wd.frozen and wd.draft is not None) or len(wd.asked) != 1:
+            # §4.1 (b)、§11 r1c：候選回合＝`_start_write_intent_call` 走 `pick_rule=True` 那一支的同一組狀態。
+            pick_open = self._write_candidates_pick_open(acc)
+            wd.pick_list_open = pick_open is not None and pick_open[0].get("picked") is None
+            return self._fill_wide_begin(wd)
+        form = WF.FORMS.get(wd.draft.get("action"))
+        key = wd.asked[0]
+        f = form.field(key) if form is not None and isinstance(key, str) else None
+        if f is None or not isinstance(f.label, str) or not f.label:
+            return {}
+        wd.fill_active = True
+        wd.fill_start_draft = wd.draft
+        wd.fill_start_fields = (dict(wd.draft.get("fields") or {}) if isinstance(wd.draft, dict) else {})
+        wd.fill_followup = True
+        wd.fill_asked_labels = (f.label,)
+        return {"data_text": True, "asked_labels": (f.label,)}
+
+    @staticmethod
+    def _fill_followup_now(wd: Any) -> bool:
+        """追問回合，且目前草稿就是回合開始那一份（B4、B5、`answer_text` 只在這時生效；§4.1 適用範圍）。"""
+        return bool(wd is not None and wd.fill_active and wd.fill_followup
+                    and wd.draft is not None and wd.draft is wd.fill_start_draft)
+
+    @staticmethod
+    def _fill_data_unknown(wd: Any) -> bool:
+        """本回合資料段未知（B1）：沒讀到驗過的資料段，或模型提議比意圖結果先到。"""
+        return wd.fill_data is None or wd.fill_proposal_first
+
+    def _fill_value_not_applied(self, wd: Any) -> bool:
+        """B2「本回合有值沒套用」：至少一個與草稿現值不同的新值沒套用——資料段未知而帶新值、資料段外拒收（含空陣列）、
+        追問回合不覆寫已填欄。資料段未知但值全是同值重述 ⇒ `False`（狀態句與改前相同；主會話 10-27 裁待查 3）。
+        off ⇒ `False`。
+        填欄擴及首句、卡後、多欄回合（plan-fill-wide-20261028 §4.3 第 8 點）：寬回合卡後有值被資料段拒收、本回合最後仍
+        沒套用 ⇒ 同樣 `True`（資料段未知時值照現行收，不設）。"""
+        if wd is not None and wd.fill_active and wd.fill_not_applied:
+            return True
+        return bool(self._fill_wide_not_applied_labels(wd))
+
+    @staticmethod
+    def _fill_mark(acc: TurnAccumulator, mark: str) -> None:
+        if mark not in acc.violations:
+            acc.violations.append(mark)
+
+    def _fill_reask_if_missing(self, acc: TurnAccumulator) -> None:
+        """B6：追問回合、草稿仍是回合開始那份，追問的欄位（任一）本回合仍是空的 ⇒ 設 `fill_reask`（觸發條件；程式依
+        草稿回缺欄追問，與 E 片「逾時就重問缺欄」同一出口）。非追問回合、開關 off ⇒ 不動（與改前相同）。"""
+        wd = acc.write_draft
+        if not self._fill_followup_now(wd):
+            return
+        fields = wd.draft.get("fields") or {}
+        if any(fields.get(key) in (None, "") for key in wd.asked):
+            wd.fill_reask = True
+            wd.activity = True
+            self._fill_mark(acc, WF.V_FILL_REASK)
+
+    @staticmethod
+    def _fill_intent_in_domain(intent: Any) -> bool:
+        """B1：意圖是否在值域內（與 `_write_draft_merge_intent` 的值域外丟棄條件同一組：動作在 `FORMS`、每個鍵都在該
+        表單且為 `user_words` 來源；`action=none` 算值域內）。值域外 ⇒ 資料段未知。"""
+        action = getattr(intent, "action", None)
+        if action == WF.INTENT_NONE:
+            return True
+        form = WF.FORMS.get(action) if isinstance(action, str) else None
+        if form is None:
+            return False
+        for item in list(getattr(intent, "fields", None) or []):
+            key = getattr(item, "key", None)
+            f = form.field(key) if isinstance(key, str) else None
+            if f is None or f.source != WF.SOURCE_USER_WORDS:
+                return False
+        return True
+
+    @staticmethod
+    def _fill_read_data(wd: Any, obj: Any, marks: Optional[list] = None) -> None:
+        """B1：由 `_await_write_intent` 驗過（`WriteIntent` 驗證通過，含 `action=none`）的**原始物件**讀兩鍵並驗：
+        每一段（空段、全空白段略過）都要在最新一句原句裡、起訖不切斷數字或英數（`_fill_locate`）；`answer_text`（只在
+        追問回合附了才讀）要落在某一段**留下來的**資料段之內、同樣兩條。全部成立 ⇒ 存原句原字（`fill_data`、
+        `fill_answer`）；任一不成立、鍵缺、`null`、型別不對 ⇒ 不存（資料段未知）。⛔ 存模型回的字串本身。
+        修復輪 1（RC2）：完全不出現在最新一句的段（去空白後不是最新一句去空白後的子字串；AI 把前面回合的話抄進來）⇒
+        略過該段（不算資料、也不讓整回合未知），記 `fill_segment_not_in_message`（固定字串，進 `marks`）；全部段都被
+        略過 ⇒ `fill_data=[]`（B3 空陣列：不併任何新值）。出現在最新一句、但每一處起訖都切斷數字或英數 ⇒ 仍是整回合
+        未知（AI 切錯 ⇒ fail-closed）。只縮不擴：留下的段仍全是最新一句的原字，前面回合的值照舊擋在 (iii)。
+        修復輪 1 追加 2（RC4 形狀 A）：`answer_text` 不成立能讓整回合未知，只限**恰好追問一欄**（`len(wd.asked) == 1`，
+        與 `_write_draft_fill_answer` 用答覆段的條件同一個）；追問兩欄以上 ⇒ 只當沒有答覆段（`fill_answer=None`）。"""
+        if not wd.fill_active or wd.fill_proposal_first:
+            return
+        texts = WF.intent_data_texts(obj)
+        if texts is None:
+            return
+        message = wd.user_message if isinstance(wd.user_message, str) else ""
+        spans = _fill_data_spans(message, texts, marks)
+        if spans is None:
+            return
+        answer: Optional[str] = None
+        if wd.fill_asked_labels:
+            # 修復輪 1 追加 2（RC4 形狀 A）：`answer_text` 只在**恰好追問一欄**時有用途（`_write_draft_fill_answer` 的
+            # `len(wd.asked) != 1` ⇒ 不填），也只在那時能讓整回合未知（fail-closed 照舊）。追問兩欄以上 ⇒ `answer_text`
+            # 鍵缺、型別不對、或不落在留下的資料段內，一律只當沒有答覆段（`fill_answer=None`），`fill_data` 照留下的段存。
+            single = len(wd.asked) == 1
+            raw_answer = WF.intent_answer_text(obj)
+            if raw_answer is None:
+                if single:
+                    return
+            else:
+                answer = ""
+                if _no_ws(raw_answer):
+                    found = None
+                    for s, e in spans:
+                        found = _fill_locate(message, raw_answer, s, e)
+                        if found is not None:
+                            break
+                    if found is None:
+                        if single:
+                            return
+                        answer = None
+                    else:
+                        answer = message[found[0]:found[1]]
+        wd.fill_data = [message[s:e] for s, e in spans]
+        wd.fill_answer = answer
+
+    # -- 填欄擴及首句、卡後、多欄回合（plan-fill-wide-20261028 §4.1～4.3）-----------------------------------
+    # 分工（DSP-091）：資料段由 AI 在寫入意圖呼叫標出（`data_texts`）；收不收、要不要說沒套用由程式決定。
+    # ⛔ 本節任何地方以道謝或寒暄的詞表判斷。資料段只活在本回合（§4.3 第 10 點）。
+    def _fill_wide_begin(self, wd: Any) -> dict:
+        """§4.1 寬回合判定（只由 `_fill_begin_intent_call` 呼叫＝送出意圖呼叫之前判一次）：`AGENT_FILL_DATA_TEXT_WIDE` on、
+        非凍結、非 `pick:` 按鈕回合，且 (a) 首句（`had_draft` 為 `False`）、(b) 卡後（`had_draft`、`asked` 空，且下列之一：
+        回合開始時草稿綁定的那張卡還活著＝`bound_card_live`〔`_write_draft_bound_card` 找得到、無 `receipt`、`invalidated`
+        非 `True`〕；寫入候選清單還在等使用者選＝`pick_list_open`〔候選回合，意圖呼叫走 `pick_rule=True`〕）、
+        (c) 多欄（`had_draft`、`len(asked) >= 2`）之一 ⇒ 設 `fill_wide`／`fill_wide_kind`，回三個建構點共用的
+        `{"data_text": True}`（⛔ `asked_labels`：§4.2）。`had_draft`、`asked` 空，但既沒有活卡、也沒有等選的候選清單（例：
+        插問知識題後 `asked` 已清空、還沒出過卡也沒列候選）⇒ 不是寬回合。其餘（含單欄追問回合）⇒ `{}`：系統句、schema、
+        值閘照現行（plan-fill-wide-20261028 §4.1 (b)、§11 r1c）。"""
+        if not self._fill_data_text_wide_on or wd.frozen or wd.pick_button:
+            return {}
+        if not wd.had_draft:
+            kind = FILL_WIDE_FIRST
+        elif not wd.asked:
+            if not (wd.bound_card_live or wd.pick_list_open):
+                return {}
+            kind = FILL_WIDE_CARD
+        elif len(wd.asked) >= 2:
+            kind = FILL_WIDE_MULTI
+        else:
+            return {}
+        wd.fill_wide = True
+        wd.fill_wide_kind = kind
+        return {"data_text": True}
+
+    @staticmethod
+    def _fill_wide_read_data(wd: Any, obj: Any, marks: Optional[list] = None) -> None:
+        """§4.2：寬回合由驗過（`WriteIntent` 驗證通過、值域內，含 `action=none`）的**原始物件**讀 `data_texts`，逐段驗
+        （`_fill_data_spans`，與單欄追問回合同一支）；成立 ⇒ `fill_wide_data`＝最新一句原句原字；鍵缺、`null`、型別不對、
+        切斷數字或英數 ⇒ 不存（資料段未知）。⛔ 讀 `answer_text`、⛔ 存模型回的字串本身。"""
+        if wd is None or not wd.fill_wide:
+            return
+        texts = WF.intent_data_texts(obj)
+        if texts is None:
+            return
+        message = wd.user_message if isinstance(wd.user_message, str) else ""
+        spans = _fill_data_spans(message, texts, marks)
+        if spans is None:
+            return
+        wd.fill_wide_data = [message[s:e] for s, e in spans]
+
+    async def _fill_wide_await_data(self, acc: TurnAccumulator) -> None:
+        """§4.3 第 4 點「主模型提議比意圖先到」：寬回合、意圖尚未取用 ⇒ 以 `asyncio.wait`（⛔ 取消）等本回合
+        `acc.write_intent_call`（⛔ 讀 `self._write_intent_calls`），上限與 `_await_write_intent` 同式
+        `max(0.0, min(WRITE_INTENT_WAIT_MAX_S, 剩餘期限 − WRITE_DRAFT_PROGRAM_MIN_REMAINING_S))`。每回合只等一次
+        （`fill_wide_waited` 鎖住；⛔ 逐值重等、⛔ 沿用 `fill_proposal_first`）。完成 ⇒ 由同一個結果物件無副作用判讀
+        （`_peek_write_intent`）讀資料段；未完成、失敗、無法解析、值域外、任何例外 ⇒ 資料段未知（照現行收值）。
+        ⛔ 在此記 violation、寫意圖相關欄位、設 `intent_consumed`（意圖的合併照現行時點：`_write_draft_decide`）。"""
+        wd = acc.write_draft
+        if wd is None or not wd.fill_wide or wd.fill_wide_waited or wd.intent_consumed:
+            return
+        wd.fill_wide_waited = True
+        call = acc.write_intent_call
+        if call is None or call.settled or call.label_only:
+            return
+        try:
+            remaining = self.budget.deadline_s - (self._clock() - acc.start)
+            timeout = max(0.0, min(WRITE_INTENT_WAIT_MAX_S, remaining - WRITE_DRAFT_PROGRAM_MIN_REMAINING_S))
+            done, _pending = await asyncio.wait({call.task}, timeout=timeout)
+            if not done:
+                return
+            status, obj, intent = _peek_write_intent(call)
+            if status != _PEEK_OK or not self._fill_intent_in_domain(intent):
+                return
+            self._fill_wide_read_data(wd, obj, None)
+        except asyncio.CancelledError:
+            raise
+        except Exception:  # noqa: BLE001 — 判讀失敗 ⇒ 資料段未知（⛔ 記例外字串：§4.3 第 10 點）
+            wd.fill_wide_data = None
+
+    @staticmethod
+    def _fill_wide_not_applied_labels(wd: Any) -> list:
+        """§4.3 第 8 點：寬回合卡後、本回合被資料段拒收且最後仍沒套用的欄位標籤（依序）；非寬回合卡後 ⇒ `[]`。"""
+        if wd is None or not wd.fill_wide or wd.fill_wide_kind != FILL_WIDE_CARD:
+            return []
+        action = wd.draft.get("action") if isinstance(wd.draft, dict) else None
+        return [label for (act, _key), label in wd.fill_wide_rejected.items() if act == action]
+
+    def _fill_wide_notice(self, wd: Any) -> Optional[str]:
+        """§4.3 第 8 點「部分套用、卡重出」：點名沒套用的欄位標籤的程式固定句（⛔ 帶值）；沒有 ⇒ `None`。"""
+        return WF.fill_wide_not_applied_text(self._fill_wide_not_applied_labels(wd))
+
+    @staticmethod
+    def _fill_wide_slot(wd: Any, f: Any) -> tuple:
+        """寬回合拒收紀錄的鍵：`(目前草稿動作, 表單鍵)`（回合中換動作時只點名目前草稿的欄位）。"""
+        return (wd.draft.get("action") if isinstance(wd.draft, dict) else None, f.key)
+
+    def _fill_wide_precheck(self, acc: TurnAccumulator, f: Any, value: str) -> Optional[tuple]:
+        """§4.3 B 寬回合、(iii) 之前（`value`＝(i) 現行值閘的輸出）：(ii) 等於草稿現值 ⇒ 照併；資料段未知或空陣列
+        （第 3、5 點）⇒ 照現行收值、記 `fill_wide_data_unknown`。回 `(值, False)` ⇒ 到此為止；`None` ⇒ 接著做 (iii)。"""
+        wd = acc.write_draft
+        fields = (wd.draft.get("fields") or {}) if isinstance(wd.draft, dict) else {}
+        current = fields.get(f.key)
+        if current is not None and value == current:
+            return value, False
+        if not wd.fill_wide_data:
+            self._fill_mark(acc, WF.V_FILL_WIDE_DATA_UNKNOWN)
+            wd.fill_wide_rejected.pop(self._fill_wide_slot(wd, f), None)
+            return value, False
+        return None
+
+    def _fill_wide_verdict(
+        self, acc: TurnAccumulator, identity: Identity, f: Any, value: str, inside: bool,
+    ) -> tuple:
+        """§4.3 B 寬回合 (iii) 的結果：值在某一段資料段內（enum／category 不比，恆為內）⇒ 收；不在 ⇒ 只拒收這一個值
+        （`fill_value_outside_data`；候選集綁定欄 `_fill_bound_field_exempt` 只過 (i)，第 9 點）；卡後拒收記進
+        `fill_wide_rejected`（第 8 點）。⛔ B4、B5、B6、fail-closed。存進草稿的一律是 (i) 的輸出；新拒收 ⛔ 計入
+        `user_value_dropped`（第二格 `False`）。"""
+        wd = acc.write_draft
+        slot = self._fill_wide_slot(wd, f)
+        if not inside:
+            if self._fill_bound_field_exempt(identity, wd, f):
+                self._fill_mark(acc, WF.V_FILL_BOUND_FIELD_EXEMPT)
+                return value, False
+            if wd.fill_wide_kind == FILL_WIDE_CARD and isinstance(f.label, str) and f.label:
+                wd.fill_wide_rejected[slot] = f.label
+            self._fill_mark(acc, WF.V_FILL_VALUE_OUTSIDE_DATA)
+            return None, False
+        wd.fill_wide_rejected.pop(slot, None)
+        return value, False
+
+    # -- E 片：對話動作標籤與程式出口（plan-closing-handoff-e-20261026 §4.1）------------
+    # 分工（DSP-091、P7）：理解由 AI（`dialog_act` 標籤）；轉不轉人、收不收尾、回什麼由程式依標籤與程式持有的
+    # 狀態決定。⛔ 本節任何地方以關鍵字或詞表判斷使用者要什麼（E-R5）。
+    def _closing_active(self) -> bool:
+        """E 片生效：`AGENT_CLOSING_HANDOFF` on。off ⇒ 不加欄、不建標籤呼叫、不走程式轉人／收尾。"""
+        return bool(getattr(self, "_closing_handoff_on", False))
+
+    def _start_dialog_act_call(self, acc: TurnAccumulator, agent_state: dict, user_message: str) -> None:
+        """每個使用者文字回合的標籤呼叫（計畫 r5 附錄）：同模型、同 client、`max_completion_tokens` 800、輸入＝系統句＋
+        本會話對話（`dialog`）＋當句；與主模型迴圈、寫入意圖呼叫**並行**（只建立、⛔ await）。影子回合不建。
+        存 `acc.dialog_act_call`、登記 `self._dialog_act_calls`（⛔ 佔寫入意圖呼叫的欄位與登記）。
+        取 client 與呼叫都在 task 內：取不到或呼叫失敗 ⇒ task 例外 ⇒ 標籤未提供（後備＝主模型輸出）。"""
+        if self.readonly_view:
+            return
+        # ⚠️ 系統句勿附「正在追問哪一欄」：附了之後追問物件名稱時，AI 會把「OK 3q」讀成名稱而出錯筆卡。
+        # 代價是「好 名稱叫 X 謝謝」這類答覆＋道謝會被標成 resolved，由程式重問一次（已知偏離，見 E 片收案報告）。
+        messages: list = [{"role": "system", "content": WF.dialog_act_only_system_prompt()}]
+        for m in agent_state.get("dialog") or []:
+            if (isinstance(m, dict) and m.get("role") in ("user", "assistant")
+                    and isinstance(m.get("content"), str)):
+                messages.append({"role": m["role"], "content": m["content"]})
+        messages.append({"role": "user", "content": user_message if isinstance(user_message, str) else ""})
+        kwargs: dict = dict(
+            model=self._model,
+            messages=messages,
+            response_format=WF.dialog_act_only_response_format(),
+            max_completion_tokens=WF.WRITE_INTENT_MAX_COMPLETION_TOKENS,
+        )
+        if self._reasoning_effort is not None:
+            kwargs["extra_body"] = {"reasoning_effort": self._reasoning_effort}
+
+        async def _call() -> Any:
+            return await self.provider.async_client.chat.completions.create(**kwargs)
+
+        call = _DialogActCall(
+            asyncio.create_task(_call()), model=self._model,
+            input_chars=sum(len(m["content"]) for m in messages),
+            registry=self._dialog_act_calls, trace_id=acc.trace_id,
+        )
+        #: 追問欄位中的標籤確認呼叫用同一份輸入（`_dialog_act_field_confirm`）。
+        call.kwargs = kwargs
+        self._dialog_act_calls[acc.trace_id] = call
+        acc.dialog_act_call = call
+
+    @staticmethod
+    def _dialog_act_label(acc: TurnAccumulator) -> Optional[str]:
+        """本回合標籤呼叫（`acc.dialog_act_call`）**已完成**時的 `dialog_act` 值；
+        未完成、失敗、被取消、解析不出、值域外 ⇒ `None`（唯讀、⛔ await）。"""
+        call = acc.dialog_act_call
+        if call is None:
+            return None
+        task = call.task
+        if not task.done() or task.cancelled() or task.exception() is not None:
+            return None
+        result = task.result()
+        if isinstance(result, _RetriedIntentResponse) and result.failed:
+            return None
+        try:
+            content = result.choices[0].message.content
+        except Exception:  # noqa: BLE001 — 回應形狀不對 ⇒ 標籤未提供
+            return None
+        return WF.parse_dialog_act_content(content)
+
+    def _closing_pending_state(self, acc: TurnAccumulator, identity: Identity, agent_state: dict) -> bool:
+        """E-R3 的「未決狀態」（程式持有的狀態，唯讀）：`pending_confirm` 有本建立者未兌現且未作廢的卡、
+        寫入草稿存在（進行中欄位）、候選集未開（有效候選集存在）。任一成立 ⇒ `True`。"""
+        wd = acc.write_draft
+        if wd is not None and (wd.draft is not None or wd.candidates is not None):
+            return True
+        pending_all = agent_state.get(PENDING_CONFIRM_KEY) if isinstance(agent_state, dict) else None
+        if isinstance(pending_all, dict):
+            creator = _pending_creator(identity)
+            for entry in pending_all.values():
+                if (isinstance(entry, dict) and entry.get("creator") == creator
+                        and entry.get("invalidated") is not True and entry.get("receipt") is None):
+                    return True
+        return False
+
+    def _dialog_act_decision(
+        self, acc: TurnAccumulator, identity: Identity, agent_state: dict, user_message: str,
+        act: Optional[str] = None,
+    ) -> Optional[str]:
+        """標籤 ＋ 程式持有的狀態 ⇒ 程式出口：`WF.DIALOG_ACT_WANTS_HUMAN`（程式轉人）、`WF.DIALOG_ACT_RESOLVED`
+        （程式收尾）或 `None`（照現行）。純函式（唯讀）。當句命中 `question_sensitive`（或規則集拿不到，fail-closed）
+        ⇒ `None`（照現行敏感路徑，E-R6）；`resolved` 有未決狀態 ⇒ `None`（E-R3）。"""
+        if not self._closing_active():
+            return None
+        label = act if act is not None else self._dialog_act_label(acc)
+        if label not in (WF.DIALOG_ACT_WANTS_HUMAN, WF.DIALOG_ACT_RESOLVED):
+            return None
+        rules = getattr(self.verifier, "rules", None)
+        if rules is None or question_sensitive(user_message, rules):
+            return None
+        if label == WF.DIALOG_ACT_RESOLVED and self._closing_pending_state(acc, identity, agent_state):
+            return None
+        return label
+
+    def _dialog_act_exit(
+        self, acc: TurnAccumulator, identity: Identity, agent_state: dict, user_message: str, *,
+        cache: dict, act: Optional[str] = None,
+    ) -> Optional[TurnResult]:
+        """E 片程式出口（E-R1～E-R4、E-R6）：
+        - `wants_human` ⇒ 程式轉人：`kind=handoff`、`handoff.reason=user_request`、回覆 `USER_REQUEST_HANDOFF_TEXT`；
+          ⛔ 經 `_apply_handoff_without_lookup`（該閘只認 `NON_SENSITIVE_HANDOFF_REASONS`，`user_request` 不在其內）；
+          程式來源以 `acc._program_handoff` 標記辨識（⛔ 以 reason 字串辨識）。
+        - `resolved` 且無未決狀態 ⇒ 程式收尾：`kind=answer`、`outcome=answered/text`、回覆 `CLOSING_TEXT`。
+        - 其他 ⇒ `None`（照現行）。回合經 `exit_gates.finalize` 收尾（dialog、handoff cache、決策快照照常）。"""
+        decision = self._dialog_act_decision(acc, identity, agent_state, user_message, act)
+        if decision is None:
+            return None
+        acc.violations.append(WF.V_DIALOG_ACT_EXIT)
+        self._write_draft_end_turn(acc, agent_state)
+        if decision == WF.DIALOG_ACT_WANTS_HUMAN:
+            acc._program_handoff = True
+            handoff_dict = {
+                "reason": HandoffReason.user_request.value,
+                "fact_class": FactClass.other.value,
+                "channel": effective_handoff_channel(None),
+                "message": WF.USER_REQUEST_HANDOFF_TEXT,
+            }
+            result = TurnResult(
+                kind="handoff", answer=WF.USER_REQUEST_HANDOFF_TEXT, handoff=handoff_dict,
+                quick_replies=[],
+                trace=acc.build_trace(
+                    final_kind="handoff", handoff_reason=HandoffReason.user_request.value,
+                    clock=self._clock, copy_lists=True),
+            )
+            return exit_gates.finalize(
+                acc, result, is_fixed=True, verifier=self.verifier,
+                cache=cache, agent_state=agent_state, user_message=user_message)
+        result = TurnResult(
+            kind="answer", answer=WF.CLOSING_TEXT, handoff=None, quick_replies=[],
+            trace=acc.build_trace(
+                final_kind="answer", handoff_reason=None, clock=self._clock, copy_lists=True),
+            outcome=make_outcome("answered", expects="text"),
+        )
+        return exit_gates.finalize(
+            acc, result, is_fixed=False, verifier=self.verifier,
+            cache=cache, agent_state=agent_state, user_message=user_message)
+
+    @staticmethod
+    def _pre_loop_program_exit_pending(acc: TurnAccumulator) -> bool:
+        """迴圈前的三個程式出口（重送、卡仍有效、剛送出）會不會回（只看旗標，⛔ 呼叫出口函式——它們有收尾副作用）。"""
+        wd = acc.write_draft
+        return bool(wd is not None and (
+            wd.reissue_blocked or isinstance(wd.card_still_valid, dict) or wd.submitted_edit))
+
+    async def _dialog_act_pre_loop(
+        self, acc: TurnAccumulator, identity: Identity, agent_state: dict, user_message: str, *,
+        cache: dict, program_first: bool = False,
+    ) -> Optional[TurnResult]:
+        """決定點 (a)：主模型迴圈之前。標籤已完成 ⇒ 依 `_dialog_act_exit` 決定。迴圈前程式出口
+        （重送、卡仍有效、剛送出）或程式優先入口的程式訊息（`program_first`：這一輪不叫主模型，程式回話可能直接
+        結束回合）要回之前標籤未完成 ⇒ 至多等 1 秒（回合開始時已有草稿 3 秒，同 W1c 分級；程式優先入口已等滿
+        逾時 ⇒ 不再多等），仍未完成 ⇒ 記 `dialog_act_fallback`（後備，KD-5 (3)）。
+        其他回合不新增迴圈前等待（由 (b) 競速）。候選按鈕回合沒有使用者文字，呼叫端不進本函式。"""
+        call = acc.dialog_act_call
+        if call is None:
+            return None
+        program_pending = program_first or self._pre_loop_program_exit_pending(acc)
+        if (not call.task.done() and program_pending
+                and WF.V_PROGRAM_FIRST_WAIT_TIMEOUT not in acc.violations):
+            wd = acc.write_draft
+            wait_s = (WRITE_DRAFT_PROGRAM_FIRST_WAIT_S if wd is not None and wd.had_draft
+                      else WRITE_DRAFT_PROGRAM_FIRST_WAIT_NO_DRAFT_S)
+            await asyncio.wait({call.task}, timeout=wait_s)
+        if not call.task.done():
+            if program_pending:
+                acc.violations.append(WF.V_DIALOG_ACT_FALLBACK)
+            return None
+        return self._dialog_act_exit(acc, identity, agent_state, user_message, cache=cache)
+
+    async def _dialog_act_settle_wait(self, acc: TurnAccumulator) -> None:
+        """標籤呼叫未完成 ⇒ 至多等 `DIALOG_ACT_AFTER_OUTPUT_WAIT_S`（以回合剩餘期限為界；⛔ 取消）。"""
+        call = acc.dialog_act_call
+        if call is None or call.settled or call.task.done():
+            return
+        remaining = self.budget.deadline_s - (self._clock() - acc.start)
+        await asyncio.wait({call.task}, timeout=max(0.0, min(DIALOG_ACT_AFTER_OUTPUT_WAIT_S, remaining)))
+
+    async def _dialog_act_after_output(
+        self, acc: TurnAccumulator, identity: Identity, agent_state: dict, user_message: str, *,
+        cache: dict,
+    ) -> Optional[TurnResult]:
+        """決定點 (c)：主模型最終輸出要進 `_write_draft_after_output` 與出口閘之前。標籤未完成 ⇒
+        至多再等 1 秒；仍未完成 ⇒ 用主模型輸出、記 `dialog_act_fallback`。已完成 ⇒ 依 `_dialog_act_exit` 決定。"""
+        call = acc.dialog_act_call
+        if call is None or not self._closing_active():
+            return None
+        if not call.task.done():
+            remaining = self.budget.deadline_s - (self._clock() - acc.start)
+            await asyncio.wait({call.task}, timeout=max(0.0, min(DIALOG_ACT_AFTER_OUTPUT_WAIT_S, remaining)))
+            if not call.task.done():
+                acc.violations.append(WF.V_DIALOG_ACT_FALLBACK)
+                return None
+        return self._dialog_act_exit(acc, identity, agent_state, user_message, cache=cache)
 
     async def _await_write_intent(self, acc: TurnAccumulator) -> Optional[WriteIntent]:
         """觸發判斷點取用意圖判斷結果：`asyncio.wait`（⛔ 自動取消）等
@@ -4514,40 +6099,57 @@ class AgentRuntime:
         `None`＋`write_intent_unparsed`；多個內容不同的 action 物件 ⇒ `None`＋
         `write_intent_ambiguous`；`action="none"` ⇒ `None`。形狀不合 pydantic ⇒ 值域外。"""
         call = acc.write_intent_call
-        if call is None or call.settled:
+        if call is None or call.settled or call.label_only:
             return None
         remaining = self.budget.deadline_s - (self._clock() - acc.start)
         timeout = max(0.0, min(WRITE_INTENT_WAIT_MAX_S, remaining - WRITE_DRAFT_PROGRAM_MIN_REMAINING_S))
         done, _pending = await asyncio.wait({call.task}, timeout=timeout)
-        task = call.task
-        if not done or task.cancelled() or task.exception() is not None:
+        # 判讀與寬回合「提議先到、等意圖」共用同一支無副作用函式（plan-fill-wide-20261028 §4.3 第 4 點）；標記只在這裡記。
+        status, obj, intent = _peek_write_intent(call) if done else (_PEEK_FAILED, None, None)
+        if status in (_PEEK_FAILED, _PEEK_PENDING):
             acc.violations.append(WF.V_CALL_FAILED)
             return None
-        try:
-            content = task.result().choices[0].message.content
-        except Exception:  # noqa: BLE001 — 回應形狀不對 ⇒ 當無法解析
-            content = None
-        obj, status = WF.parse_write_intent_content(content)
-        if status == WF.PARSE_AMBIGUOUS:
-            acc.violations.append(WF.V_AMBIGUOUS)
-            return None
-        if status != WF.PARSE_OK:
+        if status == _PEEK_RETRY_FAILED:
+            # F12 r6 復原第 5 輪 §11.15.3 第 5 點：重送後仍截斷或解析不出 ⇒ 照現行（`None`＋無法解析）。
             acc.violations.append(WF.V_UNPARSED)
             return None
-        try:
-            intent = WriteIntent.model_validate(obj)
-        except ValidationError:
+        if status == _PEEK_AMBIGUOUS:
+            acc.violations.append(WF.V_AMBIGUOUS)
+            return None
+        if status == _PEEK_UNPARSED:
+            acc.violations.append(WF.V_UNPARSED)
+            return None
+        if status == _PEEK_OUT_OF_DOMAIN:
             acc.violations.append(WF.V_OUT_OF_DOMAIN)
             return None
         if acc.write_draft is not None and getattr(self, "_write_lifecycle_on", False):
             # 第 3 步 #9g：`WriteIntent` 忽略多餘鍵 ⇒ 布林欄位由原始物件讀（恰為 `true` 才算）。
             acc.write_draft.modifies_submitted = WF.intent_modifies_submitted(obj)
-        if acc.write_draft is not None and acc.write_draft.pick_offered:
+        if (acc.write_draft is not None and acc.write_draft.pick_offered
+                and not acc.write_draft.cmd_offered):
             # A-2a：`pick_id` 由原始物件讀（**未驗證**；`_write_candidates_typed` 再比對候選集）。
+            # 選定後回合改指令式：`cmd_offered` 的回合 schema 沒有 `pick_id` ⇒ ⛔ 讀（假模型照回也不讀）。
             acc.write_draft.intent_pick_id = WF.intent_pick_id(obj)
+        if acc.write_draft is not None:
+            # F12 r6 復原第 5 輪 §11.15.3 第 6 點：解析成功且過驗證（含 `action=none`）⇒ 選定後的名稱去向走單次決定。
+            acc.write_draft.intent_parsed = True
+        if acc.write_draft is not None and acc.write_draft.cmd_offered:
+            # 選定後回合改指令式：只有本回合真的送出指令版 schema 才讀 `target`（**未驗證**；
+            # `_write_candidates_cmd_effect` 逐項驗）。沒設 `cmd_offered` ⇒ ⛔ 讀。
+            acc.write_draft.intent_target = WF.intent_pick_target(obj)
         if acc.write_draft is not None and acc.write_draft.rechoice_offered:
             # A-2a 修正 2：`record_rechoice` 由原始物件讀（值域內字串才算；帶不帶回只認 `same`）。
             acc.write_draft.record_rechoice = WF.intent_record_rechoice(obj)
+        if (acc.write_draft is not None and acc.write_draft.fill_active
+                and self._fill_intent_in_domain(intent)):
+            # 填欄只填答覆 B1：資料段的唯一來源＝這個驗過的物件（`action=none` 同樣由原始物件讀，比照 `pick_id`）。
+            # 值域外（動作不在表單、或夾帶表單外／非 user_words 鍵，`_write_draft_merge_intent` 會整份丟棄）⇒ ⛔ 讀，
+            # 本回合資料段未知（§4.1 B1「意圖回 None（…值域外）」）。
+            self._fill_read_data(acc.write_draft, obj, acc.violations)
+        if (acc.write_draft is not None and acc.write_draft.fill_wide
+                and self._fill_intent_in_domain(intent)):
+            # 填欄擴及首句、卡後、多欄回合（plan-fill-wide-20261028 §4.2）：資料段同樣只由這個驗過、值域內的物件讀。
+            self._fill_wide_read_data(acc.write_draft, obj, acc.violations)
         if intent.action == WF.INTENT_NONE:
             return None
         return intent
@@ -4640,7 +6242,124 @@ class AgentRuntime:
                 violations.append(WF.V_NOT_IN_USER_WORDS)
                 return None
             return stored
+        if kind == "range":
+            # 「選對紀錄」片 §4.2-1：客人講的計費起訖——由**程式**從原話解析（`bill_period.parse_said_range`
+            # 封閉語法；解析不到＝沒講）；模型值解析後須等於某一則原話解析出的值，存程式正規化值（⛔ 模型原值）。
+            stored = _parse_said_range(value)
+            if stored is None or stored not in {
+                    _parse_said_range(t) for t in texts if isinstance(t, str)}:
+                violations.append(WF.V_NOT_IN_USER_WORDS)
+                return None
+            return stored
         return None                                 # sys_id 等：一律不進草稿
+
+    def _fill_bound_field_exempt(self, identity: Identity, wd: Any, f: Any) -> bool:
+        """修復輪 2（P3-2，業主 10-27 §6 第 9 點）：`f` 是候選集綁定的那一欄，且候選集**未選定或已撤回**
+        （`picked` 為 `None`）、回合開始時不是已選定（`cmd_scope_start` 為 `False`：已選定的指令式回合名稱值照舊由
+        `_write_candidates_name_rule`／指令路徑處理，含回合中才撤回的情形）、此刻仍綁定本草稿（建立者、動作、名稱指紋，
+        `_write_candidates_bound`）⇒ `True`（呼叫端只過 (i)：值仍須在客人原話裡）。候選集只在回合開始讀回
+        （`_write_candidates_load`），回合中新列的候選集在值閘之後才建立 ⇒ 此刻存在者即回合開始就有的那一份（或其
+        撤回／改選後的同一份）。⛔ 由本例外選定候選；名稱解析與選定照現行規則。"""
+        cands = wd.candidates
+        if not isinstance(cands, dict) or wd.cmd_scope_start or cands.get("picked") is not None:
+            return False
+        if getattr(f, "key", None) != cands.get("field"):
+            return False
+        return self._write_candidates_bound(cands, identity, wd.draft)
+
+    async def _write_draft_turn_gate(
+        self, acc: TurnAccumulator, identity: Identity, f: Any, raw: Any, *, from_intent: bool = False,
+    ) -> tuple:
+        """**本回合閘門原話**（填欄只填答覆 §4.1 B；§3 G6 六個值閘呼叫點 ①～⑥ 一律經這一支，⛔ 各點各寫）。
+        回 `(要存進草稿的值或 None, 現行值閘是否丟掉使用者的值)`——第二格＝改前「值閘拒收且有記 violation」，呼叫端照
+        改前規則決定記不記 `user_value_dropped`（本節新增的拒收一律 `False`：B2 ⛔ 計入值被丟）。
+
+        (i) 現行值閘照舊比 `wd.user_texts`（⛔ 改）；不過 ⇒ 照現行拒收。非寫入回合（`fill_active` 為 `False`：開關 off、
+        文件回合、`pick:` 回合）到此為止 ⇒ 與改前逐字相同。寫入回合另依序：
+        (ii) (i) 的正規化結果等於草稿該欄現值 ⇒ 照現行同值重併（資料段未知時也一樣）；
+        B2 資料段未知 ⇒ 拒收（`fill_data_text_unknown`）；B3 資料段空陣列 ⇒ 拒收（任何型別，含 enum／category，業主裁
+        C1 (a)）；(iii) 非空 ⇒ 同一值閘只拿資料段**逐段**比（⛔ 串接；enum／category 的值閘不比原話，不再跑），
+        都不過 ⇒ 拒收（`fill_value_outside_data`）；
+        B5 追問回合（草稿仍是回合開始那份）已填的非追問欄、且不是候選集綁定那一欄 ⇒ 不覆寫（`fill_filled_field_kept`）。
+        修復輪 2（P3-2）：候選集綁定那一欄（`_fill_bound_field_exempt`）⇒ 不套 B2／B3／(iii)，只過 (i)（比全部
+        `user_texts`）；例外實際放行時記 `fill_bound_field_exempt`。
+        存進草稿的一律是 (i) 的輸出。"""
+        wd = acc.write_draft
+        marks_before = len(acc.violations)
+        value = await self._write_draft_gate_value(
+            f, raw, identity, wd.user_texts, acc.violations, from_intent=from_intent)
+        if value is None:
+            return None, len(acc.violations) > marks_before
+        if wd.fill_wide:
+            # 填欄擴及首句、卡後、多欄回合（plan-fill-wide-20261028 §4.3）：與單欄追問回合互斥（⛔ 設 `fill_proposal_first`）。
+            early = self._fill_wide_precheck(acc, f, value)
+            if early is not None:
+                return early
+            inside = f.kind in ("enum", "category")
+            draft_fields = (wd.draft.get("fields") or {}) if isinstance(wd.draft, dict) else {}
+            if (not inside and draft_fields.get(f.key) in (None, "")
+                    and not self._fill_bound_field_exempt(identity, wd, f)):
+                # 修復輪 1 RC-W1（計畫 §11 改動第 1 點）：(i) 已過、值卻不在最新一句（只出現在前面回合的使用者訊息：前一句講過、
+                # AI 這一句才補上）⇒ 照 (i) 的輸出收、記 `fill_wide_carry_over`、清該欄拒收紀錄；最新一句裡有 ⇒ 照第 6 點 (iii)。
+                # 放行的一律是 (i) 的輸出（＝改前行為，⛔ 比改前寬）；候選綁定欄照現行例外（不經本段）。
+                # 修復輪 1 追加（R1-W1b，X4 FA1c-rep-06）：只限草稿該欄目前為空（「補上」）；已有值 ⇒ ⛔ 走本段、照 (iii)
+                # （前句值的改寫版不得覆寫已填欄）。
+                latest = wd.user_message if isinstance(wd.user_message, str) else ""
+                scratch_latest: list = []
+                if await self._write_draft_gate_value(
+                        f, raw, identity, [latest], scratch_latest, from_intent=from_intent) is None:
+                    self._fill_mark(acc, WF.V_FILL_WIDE_CARRY_OVER)
+                    wd.fill_wide_rejected.pop(self._fill_wide_slot(wd, f), None)
+                    return value, False
+            if not inside:
+                scratch_wide: list = []
+                for seg in wd.fill_wide_data:
+                    if await self._write_draft_gate_value(
+                            f, raw, identity, [seg], scratch_wide, from_intent=from_intent) is not None:
+                        inside = True
+                        break
+            return self._fill_wide_verdict(acc, identity, f, value, inside)
+        if not wd.fill_active:
+            return value, False
+        if not wd.intent_consumed:
+            # B1：模型提議比意圖結果先到 ⇒ 本回合資料段未知（⛔ 直接解析 task 原始回應）。
+            wd.fill_proposal_first = True
+        fields = (wd.draft.get("fields") or {}) if isinstance(wd.draft, dict) else {}
+        current = fields.get(f.key)
+        if current is not None and value == current:
+            return value, False
+        if self._fill_data_unknown(wd):
+            if self._fill_bound_field_exempt(identity, wd, f):
+                self._fill_mark(acc, WF.V_FILL_BOUND_FIELD_EXEMPT)
+                return value, False
+            # 到這裡的值必與草稿現值不同（同值已由 (ii) 照併）⇒ 本回合有新值沒套用（主會話 10-27 裁待查 3）。
+            wd.fill_not_applied = True
+            self._fill_mark(acc, WF.V_FILL_DATA_TEXT_UNKNOWN)
+            return None, False
+        inside = False
+        if wd.fill_data and f.kind in ("enum", "category"):
+            inside = True
+        elif wd.fill_data:
+            scratch: list = []
+            for seg in wd.fill_data:
+                if await self._write_draft_gate_value(
+                        f, raw, identity, [seg], scratch, from_intent=from_intent) is not None:
+                    inside = True
+                    break
+        if not inside:
+            if self._fill_bound_field_exempt(identity, wd, f):
+                self._fill_mark(acc, WF.V_FILL_BOUND_FIELD_EXEMPT)
+                return value, False
+            wd.fill_not_applied = True
+            self._fill_mark(acc, WF.V_FILL_VALUE_OUTSIDE_DATA)
+            return None, False
+        bound = wd.candidates.get("field") if isinstance(wd.candidates, dict) else None
+        if (self._fill_followup_now(wd) and wd.fill_start_fields.get(f.key) not in (None, "")
+                and f.key not in wd.asked and f.key != bound):
+            wd.fill_not_applied = True
+            self._fill_mark(acc, WF.V_FILL_FILLED_FIELD_KEPT)
+            return None, False
+        return value, False
 
     def _write_draft_target(self, acc: TurnAccumulator, action: str, *, from_intent: bool) -> dict:
         """取（或換新）本回合要合併的草稿：動作不同 ⇒ 換新草稿（W1b 安全處置 1b：一併清
@@ -4660,6 +6379,10 @@ class AgentRuntime:
         """意圖判斷呼叫的結果合併進草稿（§2.1(2)(3)；W1b §8.1-1）。回本回合由意圖呼叫提供、
         且**通過值閘**的鍵集合（整句填入的同欄優先序用，§8.5-2）。"""
         wd = acc.write_draft
+        if await self._dialog_act_not_field_answer(acc, agent_state):
+            # E 片 §4.1-7（E-R13）：當句不是欄位答覆 ⇒ 意圖抽出的值也 ⛔ 合併（獨立意圖呼叫曾把「OK 3q」的「3q」
+            # 抽成物件名稱而出卡，`e/x7-verifier/x7/fill1`）。
+            return set()
         action = getattr(intent, "action", None)
         form = WF.FORMS.get(action) if isinstance(action, str) else None
         if form is None:
@@ -4692,26 +6415,125 @@ class AgentRuntime:
             raw_value = getattr(item, "value", None)
             if name_hit and f.key == "estate_name":
                 continue
+            # F12 r6（§11.4 第 4 點）：候選集已選定或已撤回、仍綁定 ⇒ 名稱欄值依規則丟棄或改用新名稱。
+            name_rule = self._write_candidates_name_rule(acc, identity, f, raw_value, defer=False)
+            if name_rule == "collect":
+                # 第 5 輪 §11.15.3 第 6 點：名稱值先收集，算出改選目標 X 之後再決定（`_write_candidates_post_pick_names`）。
+                wd.collected_names.append(("intent", raw_value))
+                continue
+            if name_rule in ("drop", "same"):
+                self._write_candidates_name_mark(acc, name_rule)
+            if name_rule == "drop":
+                continue
             # 期別片 P-3：`period` 型同樣套用（安全審查 C1：改型別後 ⛔ 讓這項檢查失效）。
             if (name_spans and f.kind in ("text", "period") and isinstance(raw_value, str)
                     and raw_value.strip()
                     and any(_name_overlap_key(raw_value) in span for span in name_spans)):
                 acc.violations.append(WF.V_VALUE_OVERLAPS_NAME)
                 continue
-            marks_before = len(acc.violations)
-            value = await self._write_draft_gate_value(
-                f, raw_value, identity, wd.user_texts, acc.violations, from_intent=True)
+            range_f = form.field(_PR_SAID_RANGE)
+            if (f.kind == "period" and range_f is not None and range_f.kind == "range"
+                    and isinstance(raw_value, str) and _parse_said_range(raw_value) is not None
+                    and _parse_period(raw_value, bills._today()) is None):
+                # 「選對紀錄」片：AI 把客人講的計費起訖（「6/29到6/30那期」）放進期別欄——期別值閘只認月份會
+                # 丟掉它（2026-10-21 意圖探針同句 3 次有 2 次這樣填）。值是封閉語法的起訖 ⇒ 改走起訖欄的值閘
+                # （仍須在客人原話裡）；⛔ 由程式判斷客人在講哪一期。
+                acc.violations.append(_wc.V_PICK_RIGHT_PERIOD_AS_RANGE)
+                f = range_f
+            value, dropped = await self._write_draft_turn_gate(acc, identity, f, raw_value, from_intent=True)
             if value is None:
                 # A+ 片 AP-2（Q2）：值閘拒收（有記 violation；空值不算）⇒ 使用者句子的值被丟。
-                if len(acc.violations) > marks_before:
+                if dropped:
                     wd.user_value_dropped = True
                 continue
             provided.add(f.key)
             wd.touched.add(f.key)
             wd.merged = True
             draft["fields"][f.key] = value
+            if name_rule == "new":
+                self._write_candidates_name_mark(acc, name_rule)
         self._write_draft_persist(acc, agent_state)
         return provided
+
+    async def _dialog_act_not_field_answer(self, acc: TurnAccumulator, agent_state: dict) -> bool:
+        """E 片（E-R13）：追問欄位中（回合開始已有草稿、上一回合程式追問了欄位），當句不是欄位答覆 ⇒
+        ⛔ 意圖抽值合併、⛔ 整句填入，草稿原樣保留（含追問中的欄位）。判斷只看 AI 標籤（⛔ 詞表）：
+        - `wants_human` ⇒ 不是答覆（程式轉人出口另行處理）；
+        - `resolved` ⇒ 另發一次同輸入的標籤確認呼叫：確認也是 `resolved`／`wants_human` 或確認未完成 ⇒ 不是答覆、
+          程式依草稿重問缺欄（`fill_reask`）；確認為 `none` ⇒ 是答覆；
+        - 標籤未完成、失敗或解析不出 ⇒ 不是答覆、程式重問缺欄（⚠️ 勿改回整句填入：會把「ok thx」「我想找真人客」
+          填進欄位出卡）；
+        - `none` ⇒ 是答覆（照現行）。
+        標籤呼叫與寫入意圖呼叫分開 ⇒ 第一次標籤未完成時至多再等 1 秒（同決定點 (c) 的上限，以回合剩餘期限為界）。
+        同回合第二次呼叫回第一次的判定。開關 off、沒有標籤呼叫（影子回合）⇒ 照現行。"""
+        wd = acc.write_draft
+        if (wd is None or wd.draft is None or not wd.had_draft or not wd.asked
+                or not self._closing_active() or acc.dialog_act_call is None):
+            return False
+        cached = getattr(acc, "_dialog_act_field_decision", None)
+        if cached is not None:
+            return cached
+        await self._dialog_act_settle_wait(acc)
+        label = self._dialog_act_label(acc)
+        acc.violations.append(f"{WF.V_DIALOG_ACT_FIELD_LABEL_PREFIX}{label}")
+        reask = False
+        if label is None:
+            acc.violations.append(WF.V_DIALOG_ACT_FIELD_UNSETTLED_REASK)
+            reask = True
+        elif label == WF.DIALOG_ACT_RESOLVED:
+            confirm = await self._dialog_act_field_confirm(acc)
+            acc.violations.append(f"{WF.V_DIALOG_ACT_FIELD_CONFIRM_PREFIX}{confirm}")
+            if confirm == WF.DIALOG_ACT_NONE:
+                acc._dialog_act_field_decision = False
+                return False
+            reask = True
+        elif label != WF.DIALOG_ACT_WANTS_HUMAN:
+            acc._dialog_act_field_decision = False
+            return False
+        acc._dialog_act_field_decision = True
+        acc.violations.append(WF.V_DIALOG_ACT_FILL_SKIPPED)
+        # `_write_draft_begin` 回合開始已取走 `asked`，這裡放回，下一句照現行整句填入（缺欄追問問的就是這一欄）。
+        wd.draft["asked"] = list(wd.asked)
+        AgentSession(agent_state).write_write_draft(wd.draft)
+        if reask:
+            wd.fill_reask = True
+            wd.activity = True
+        return True
+
+    async def _dialog_act_field_confirm(self, acc: TurnAccumulator) -> Optional[str]:
+        """同輸入（`acc.dialog_act_call.kwargs`）再發一次標籤呼叫，至多等 `DIALOG_ACT_FIELD_CONFIRM_WAIT_S`
+        （以回合剩餘期限為界）；回標籤值，未完成／失敗／解析不出 ⇒ `None`。當場收尾：token 計入本回合、記
+        `dialog_act_confirm_call`（未完成 ⇒ 取消並以輸入字元估算計入、另記 `dialog_act_confirm_call_cancelled`）。"""
+        first = acc.dialog_act_call
+        kwargs = getattr(first, "kwargs", None)
+        if kwargs is None:
+            return None
+
+        async def _call() -> Any:
+            return await self.provider.async_client.chat.completions.create(**kwargs)
+
+        call = _DialogActCall(
+            asyncio.create_task(_call()), model=self._model,
+            input_chars=sum(len(m["content"]) for m in kwargs["messages"]),
+            registry={}, trace_id=acc.trace_id,
+        )
+        remaining = self.budget.deadline_s - (self._clock() - acc.start)
+        await asyncio.wait({call.task}, timeout=max(0.0, min(DIALOG_ACT_FIELD_CONFIRM_WAIT_S, remaining)))
+        label: Optional[str] = None
+        task = call.task
+        if task.done() and not task.cancelled() and task.exception() is None:
+            result = task.result()
+            try:
+                label = WF.parse_dialog_act_content(result.choices[0].message.content)
+            except Exception:  # noqa: BLE001 — 回應形狀不對 ⇒ 標籤未提供
+                label = None
+        pt, ct, marks = call.settle()
+        acc.prompt_tokens += pt
+        acc.completion_tokens += ct
+        acc.violations.append(WF.V_DIALOG_ACT_CONFIRM_CALL)
+        if WF.V_DIALOG_ACT_CALL_CANCELLED in marks:   # `_DialogActCall.settle` 已換成標籤呼叫的標記名
+            acc.violations.append(WF.V_DIALOG_ACT_CONFIRM_CALL_CANCELLED)
+        return label
 
     async def _write_draft_fill_answer(
         self, acc: TurnAccumulator, agent_state: dict, user_message: str, provided: set,
@@ -4720,16 +6542,34 @@ class AgentRuntime:
         來源、`text` 型、非名稱欄位（`NAME_KEYS`）⇒ 以當句原文填入（過 `sanitize_data_piece`、
         超過長度上限 ⇒ 拒收、⛔ 截斷，安全處置 Q-c）。同欄優先序：意圖呼叫值已通過值閘
         （`provided`）⇒ 用它，不整句填。呼叫端已排除凍結回合與「意圖呼叫回傳另一支寫入動作」
-        （安全處置 1a）。"""
+        （安全處置 1a）。
+        F12 r6 復原第 5 輪 §11.15.3 第 1 點（R19-2；Q15-1、Q15-2）：回合開始時候選集已選定或已撤回、仍綁定本草稿
+        （`post_pick_start`）⇒ ⛔ 整句填入（所有文字欄）；追問欄位只收意圖抽出、過值閘的值，沒抽到 ⇒ 程式照現行追問。"""
         wd = acc.write_draft
         if wd is None or wd.draft is None or len(wd.asked) != 1:
+            return
+        if wd.post_pick_start:
+            return
+        if await self._dialog_act_not_field_answer(acc, agent_state):
             return
         key = wd.asked[0]
         f = WF.FORMS[wd.draft["action"]].field(key)
         if (f is None or f.source != WF.SOURCE_USER_WORDS or f.kind != "text"
                 or key in WF.NAME_KEYS or key in provided):
             return
-        value = sanitize_data_piece(user_message).strip()
+        if wd.fill_active:
+            # 填欄只填答覆 B4（§4.1）：寫入回合 ⛔ 整句填入，改填程式從原句切出的答覆段原字（⛔ 用模型回的字串）；
+            # 只在追問回合、草稿仍是回合開始那份時；資料段未知 ⇒ 不填（B6 由程式重問）；答覆段為空 ⇒ 不填。
+            if not self._fill_followup_now(wd):
+                return
+            if self._fill_data_unknown(wd):
+                self._fill_mark(acc, WF.V_FILL_DATA_TEXT_UNKNOWN)
+                return
+            if wd.fill_answer is None:
+                return
+            value = sanitize_data_piece(wd.fill_answer).strip()
+        else:
+            value = sanitize_data_piece(user_message).strip()
         if not value:
             return
         if len(value) > WF.value_max_len(f):
@@ -4742,6 +6582,8 @@ class AgentRuntime:
         wd.draft["idle_turns"] = 0
         wd.draft["fields"][key] = value
         acc.violations.append(WF.V_ANSWER_FILLED)
+        if wd.fill_active:
+            acc.violations.append(WF.V_FILL_ANSWER_SEGMENT)
         self._write_draft_persist(acc, agent_state)
 
     async def _write_draft_merge_model_confirm(
@@ -4767,7 +6609,7 @@ class AgentRuntime:
             f = form.field(key) if isinstance(key, str) else None
             if f is None or f.source != WF.SOURCE_USER_WORDS or raw is None:
                 continue
-            value = await self._write_draft_gate_value(f, raw, identity, wd.user_texts, acc.violations)
+            value, _dropped = await self._write_draft_turn_gate(acc, identity, f, raw)
             if value is not None:
                 draft["fields"][f.key] = value
         self._write_draft_persist(acc, agent_state)
@@ -4779,9 +6621,232 @@ class AgentRuntime:
                     and getattr(self, "_write_proposal_on", False))
 
     def _write_candidates_active(self) -> bool:
-        """A-2a 片（計畫 §4.6）：`AGENT_WRITE_CANDIDATES` on，且 A+ 三開關皆 on（候選集只由程式依草稿
-        出卡的路徑寫）。off ⇒ 本片所有分支都不進、`write_candidates` 鍵不讀不寫（與 B 逐字相同）。"""
+        """`AGENT_WRITE_CANDIDATES` on，且 A+ 三開關皆 on（候選集只由程式依草稿
+        出卡的路徑寫）。off ⇒ 候選所有分支都不進、`write_candidates` 鍵不讀不寫。"""
         return bool(getattr(self, "_write_candidates_on", False) and self._write_proposal_active())
+
+    def _pick_right_active(self) -> bool:
+        """「選對紀錄」片：`AGENT_PICK_RIGHT` on 且 A-2a 生效。off ⇒ 本片所有分支都不進（與 A-2a 逐字相同）。"""
+        return bool(getattr(self, "_pick_right_on", False) and self._write_candidates_active())
+
+    def _name_lenient_active(self) -> bool:
+        """F12：`AGENT_NAME_LENIENT` on 且 A-2a 生效。off ⇒ 不建脈絡、`confirm.request` 不收到 `name_lenient`
+        （0 次模型呼叫、0 次額外查詢，與現行逐字相同）。"""
+        return bool(getattr(self, "_name_lenient_on", False) and self._write_candidates_active())
+
+    def _name_lenient_ctx(
+        self, acc: TurnAccumulator, agent_state: dict, document: Any, action: Any,
+        *, identity: Optional[Identity] = None,
+    ) -> Optional["NM.NameLenientTurn"]:
+        """本回合的名稱寬鬆比對脈絡——條件同 `_write_candidates_eligible`（候選集可寫的那幾種
+        回合：非文件回合、非文件暫存回合、非點選範圍回合、非影子回合、草稿存在且動作相同）；呼叫端另限
+        「程式依草稿發出的 `confirm.request`」或 B2 (3)。不合 ⇒ `None`（不觸發寬鬆比對）。
+        模型呼叫走服務既有 provider（同意圖判斷呼叫、判讀閘；⛔ 自讀金鑰），token 計入本回合。
+
+        r4：脈絡是 `confirm.NameLenientTurnCtx`——`user_texts` 即時讀 `wd.user_texts`（(甲) R4 整句來源；
+        ⛔ 另存原句）、`typed`（本回合打字 ⇒ (乙) 缺名稱觸發才可能發生）、`reask_key`（上一回合「找不到
+        這個名稱」追問的名稱欄）。(甲)(乙) 共用這一份的 `run_once`（每回合 ≤1 次寬鬆、≤1 次模型呼叫）。
+
+        r5 (丙)：`program_selected` 是純讀判斷（⛔ 查 DB、⛔ 寫狀態、⛔ 記 trace）——本回合選定成立（`wd.picked`）、
+        候選集已選定或已撤回（F12 r6）、「選對紀錄」已選物件（`_pick_right_scope_pick`）、綁定卡帶著的選定
+        （`_write_candidates_bound_card_pick`）任一成立 ⇒ `True`。脈絡每回合建一次，`identity` 取第一次建立時
+        呼叫端給的；沒給 ⇒ 恆 `True`（(丙) 不觸發，fail-closed）。"""
+        if not self._name_lenient_active():
+            return None
+        if document is not None or document_writable_action(document) is not None:
+            return None
+        if _document_carry_of(agent_state) is not None:
+            return None
+        if agent_state.get(SELECT_SCOPE_KEY) is not None or self.readonly_view:
+            return None
+        wd = acc.write_draft
+        if wd is None or not isinstance(wd.draft, dict) or wd.draft.get("action") != action:
+            return None
+        if wd.name_lenient is None:
+            def _usage(pt: int, ct: int) -> None:
+                acc.prompt_tokens += pt
+                acc.completion_tokens += ct
+
+            def _model_call() -> None:
+                acc.llm_calls += 1
+
+            def _program_selected(_ident=identity) -> bool:
+                if _ident is None or wd.picked:
+                    return True
+                cands = wd.candidates
+                if isinstance(cands, dict) and (cands.get("picked") is not None
+                                                or _wc.is_withdrawn(cands)):
+                    # F12 r6：已撤回同已選定（⛔ 依名稱重新解析；重列由出卡入口的關口做）。
+                    return True
+                if self._pick_right_scope_pick(acc, _ident) is not None:
+                    return True
+                draft = wd.draft
+                return (isinstance(draft, dict)
+                        and self._write_candidates_bound_card_pick(_ident, agent_state, draft) is not None)
+
+            wd.name_lenient = NameLenientTurnCtx(
+                create_factory=lambda: self.provider.async_client.chat.completions.create,
+                model=self._model, reasoning_effort=self._reasoning_effort,
+                user_message=wd.user_message, touched=_NameSaidThisTurn(wd),
+                remaining_s=lambda: self.budget.deadline_s - (self._clock() - acc.start),
+                marks=acc.violations, on_usage=_usage, on_model_call=_model_call,
+                user_texts=lambda: wd.user_texts,
+                typed=_name_lenient_typed_turn(wd),
+                reask_key=_name_lenient_reask_key(wd),
+                program_selected=_program_selected,
+            )
+        return wd.name_lenient
+
+    def _name_lenient_mark_not_found(
+        self, acc: TurnAccumulator, identity: Identity, agent_state: dict, action: Any,
+        field_key: str, document: Any,
+    ) -> Optional[str]:
+        """寬鬆也落空 ⇒ 該欄標為已追問（經 `asked` 唯一寫點 `_write_draft_record_asked`，
+        以該欄位的表單標籤）、清掉草稿裡查不到的名稱（⛔ 另存原句或原名稱）。回該欄位標籤（追問對象用）。"""
+        form = WF.FORMS.get(action) if isinstance(action, str) else None
+        f = form.field(field_key) if form is not None else None
+        label = f.label if f is not None else None
+        if not isinstance(label, str):
+            return None
+        self._write_draft_record_asked(
+            acc, identity, agent_state,
+            ToolResult(ok=False, error="INVALID_INPUT",
+                       data={"action": action, "missing_fields": [label]}),
+            None, document)
+        wd = acc.write_draft
+        if (wd is not None and isinstance(wd.draft, dict) and wd.draft.get("action") == action
+                and isinstance(wd.draft.get("fields"), dict)
+                and wd.draft["fields"].pop(field_key, None) is not None):
+            self._write_draft_persist(acc, agent_state)
+        return label
+
+    def _name_lenient_reask_labels(self, acc: TurnAccumulator, action: Any, labels: Any) -> Any:
+        """下一句只補其他欄位 ⇒ 只重問名稱：上一回合「找不到這個名稱」
+        出口把名稱欄 K 標為已追問（`asked == [K]`），而 K 所屬的「擇一必填」要求在追問時印的是**另一個欄位**
+        的標籤（手動帳單：物件 `estate_name` 與合約 `contract_ref` 擇一、追問印「合約」）⇒ 本回合缺欄追問改印
+        K 的標籤（重問同一個名稱欄）。其餘（開關未生效、`asked` 不是單一名稱鍵、K 本來就在追問組裡、
+        標籤裡沒有該組的標籤）⇒ 原樣回傳（與改動前逐字相同）。"""
+        if not isinstance(labels, list) or not self._name_lenient_active():
+            return labels
+        wd = acc.write_draft
+        asked = list(wd.asked) if wd is not None else []
+        form = WF.FORMS.get(action) if isinstance(action, str) else None
+        if form is None or len(asked) != 1 or asked[0] not in WF.NAME_KEYS:
+            return labels
+        key = asked[0]
+        f = form.field(key)
+        if f is None:
+            return labels
+        out = list(labels)
+        for req in form.requirements:
+            if (key,) not in req.required_any_of or key in req.ask_group:
+                continue
+            group_labels = ([req.group_label] if req.group_label is not None else
+                            [form.field(k).label for k in req.ask_group if form.field(k) is not None])
+            if not any(lb in out for lb in group_labels):
+                continue
+            replaced: list = []
+            for lb in out:
+                target = f.label if lb in group_labels else lb
+                if target not in replaced:
+                    replaced.append(target)
+            out = replaced
+        return out
+
+    def _name_lenient_not_found_exit(
+        self, acc: TurnAccumulator, identity: Identity, agent_state: dict, user_message: str,
+        tool_result: Any, document: Any,
+    ) -> Optional[TurnResult]:
+        """程式依草稿發出的 `confirm.request` 回「找不到這個名稱」⇒ 固定句
+        `NAME_NOT_FOUND_TEXT` 結束回合（⛔ 回顯原話、⛔ 交模型改寫），該欄標為已追問、清掉查不到的名稱。"""
+        field_key = is_name_not_found(tool_result)
+        if field_key is None:
+            return None
+        data = tool_result.data if isinstance(tool_result.data, dict) else {}
+        label = self._name_lenient_mark_not_found(
+            acc, identity, agent_state, data.get("action"), field_key, document)
+        acc.violations.append(NM.V_NAME_LENIENT_NOT_FOUND_EXIT)
+        return self._finish_confirm_turn(
+            ask_target=WF.ask_target_for_missing([label]) if label else None,
+            agent_state=agent_state,
+            user_message=user_message,
+            trace_id=acc.trace_id,
+            start=acc.start,
+            kind="ask",
+            outcome=make_outcome("clarifying", expects="text"),
+            answer=NM.NAME_NOT_FOUND_TEXT,
+            pending_id=None,
+            tool_calls=acc.tool_call_records,
+            violations=acc.violations,
+            llm_calls=acc.llm_calls,
+            prompt_tokens=acc.prompt_tokens,
+            completion_tokens=acc.completion_tokens,
+        )
+
+    def _pick_right_scope_pick(self, acc: TurnAccumulator, identity: Identity) -> Optional[dict]:
+        """「選對紀錄」片 §4.1-1：本回合的候選集是「已選物件的帳單候選」、仍綁定本草稿、未選定 ⇒ 該物件的
+        程式專用選定（`write_candidates.scope_pick_of`；改講金額／期間時只在同一個物件重查）；其餘 ⇒ `None`。"""
+        if not self._pick_right_active():
+            return None
+        wd = acc.write_draft
+        cands = wd.candidates if wd is not None else None
+        if cands is None or not self._write_candidates_bound(cands, identity, wd.draft):
+            return None
+        return _wc.scope_pick_of(cands)
+
+    def _pick_right_said(self, draft: Any) -> tuple:
+        """延期繳費草稿裡客人講的比對值 `(said_amount, said_range)`（`to_payload` 後；沒講 ⇒ `None`）。"""
+        if not isinstance(draft, dict) or draft.get("action") != WF.BILL_DUE_EXTEND_FORM.action:
+            return None, None
+        values = WF.to_payload(draft["action"], draft.get("fields") or {})
+        amount = values.get(_PR_SAID_AMOUNT)
+        if isinstance(amount, bool) or not isinstance(amount, int):
+            amount = None
+        rng = values.get(_PR_SAID_RANGE)
+        return amount, (rng if isinstance(rng, str) and rng else None)
+
+    def _pick_right_said_reset(self, acc: TurnAccumulator, agent_state: dict) -> None:
+        """「選對紀錄」片 §4.2-1：延期繳費草稿的物件或期別在本回合變了 ⇒ 客人先前講的比對值清掉
+        （本回合使用者又講了新的值——在 `touched` 裡——則保留新的）。"""
+        wd = acc.write_draft
+        if wd is None or wd.pr_anchor is None or not self._pick_right_active():
+            return
+        draft = wd.draft
+        if not isinstance(draft, dict) or draft.get("action") != WF.BILL_DUE_EXTEND_FORM.action:
+            return
+        fields = draft.get("fields")
+        if not isinstance(fields, dict):
+            return
+        anchor = (fields.get("estate_name"), fields.get("period"))
+        if anchor == wd.pr_anchor:
+            return
+        wd.pr_anchor = anchor
+        dropped = False
+        for key in (_PR_SAID_AMOUNT, _PR_SAID_RANGE):
+            if key in fields and key not in wd.touched:
+                fields.pop(key, None)
+                dropped = True
+        if dropped:
+            self._write_draft_persist(acc, agent_state)
+
+    def _pick_right_typed_mismatch(self, acc: TurnAccumulator, cands: dict,
+                                   chosen: str) -> Optional[tuple]:
+        """「選對紀錄」片 §4.2-3（業主裁 Q4 的打字那一半）：打字選定的帳單與客人先前講的金額／計費期間
+        不符 ⇒ 不符的標記（可能為空：列不在本回合附上的候選列裡，無從比對 ⇒ 一律視為不符，fail-closed）；
+        相符、沒講、不是延期帳單候選 ⇒ `None`。"""
+        if not self._pick_right_active():
+            return None
+        if cands.get("type") != _wc.TYPE_BILL or cands.get("action") != WF.BILL_DUE_EXTEND_FORM.action:
+            return None
+        wd = acc.write_draft
+        said_amount, said_range = self._pick_right_said(wd.draft if wd is not None else None)
+        if said_amount is None and said_range is None:
+            return None
+        row = wd.pick_rows.get(chosen) if wd is not None else None
+        if not isinstance(row, dict):
+            return ()
+        marks = _wc.said_mismatch_marks(row, said_amount=said_amount, said_range=said_range)
+        return marks if marks else None
 
     async def _write_proposal_merge(
         self, acc: TurnAccumulator, identity: Identity, agent_state: dict, raw_args: Any,
@@ -4796,7 +6861,7 @@ class AgentRuntime:
         回 `False` ⇒ 提議的動作不在 `FORMS` 或看不到（呼叫端回封閉結果 `NO_MATCH`、不觸發）。
         凍結回合（§8.5-3）⇒ 不合併（回 `True`：動作合法，觸發與否交 `_write_draft_decide`）。
 
-        r3 AP-7 (1)（計畫 §9.2 (1)）：巢狀提議 `{action, payload:{…}}` **解一層**——外層除 `action` 外
+        巢狀提議 `{action, payload:{…}}` **解一層**——外層除 `action` 外
         沒有任何 `form.keys` 鍵（含系統來源鍵；外層帶任何表單鍵就不解），且 `payload` 是 dict 或能解析
         成 dict 的 JSON 字串 ⇒ 以內層 dict 的表單鍵合併（值閘、W1c 名稱規則、`touched`／`merged` 照上）。
         內層**有 `action` 鍵**（不論值）且值 ≠ 外層 ⇒ 回 `False`（`NO_MATCH`、不觸發）。只解一層（內層的
@@ -4834,25 +6899,439 @@ class AgentRuntime:
                     and draft["fields"].get("estate_name") == wd.caught_name)
         name_spans = ([_name_overlap_key(s) for s in (wd.caught_name, wd.caught_segment) if s]
                       if name_hit else [])
+        # 填欄擴及首句、卡後、多欄回合（plan-fill-wide-20261028 §4.3 第 4 點）：寬回合、意圖尚未取用 ⇒ 進逐值迴圈之前
+        # 等意圖一次讀資料段（每回合只等一次；⛔ 取用意圖、⛔ 記標記）。非寬回合不動。
+        await self._fill_wide_await_data(acc)
         for key, raw in source.items():
             f = form.field(key) if isinstance(key, str) else None
             if f is None or f.source != WF.SOURCE_USER_WORDS or raw is None:
                 continue
             if name_hit and f.key == "estate_name":
                 continue
+            # F12 r6（§11.4 第 2 點「判定順序」）：已選定或已撤回 ⇒ 名稱欄值暫存不併，留到拿到 `pick_id` 之後。
+            name_rule = self._write_candidates_name_rule(acc, identity, f, raw, defer=True)
+            if name_rule == "defer":
+                wd.deferred_names.append((f.key, raw))
+                continue
+            if name_rule == "collect":
+                # 第 5 輪：收集期間（只在 `_write_draft_decide` 單次決定內）的提議名稱同暫存處理。
+                wd.collected_names.append(("deferred", raw))
+                continue
+            if name_rule in ("drop", "same"):
+                self._write_candidates_name_mark(acc, name_rule)
+            if name_rule == "drop":
+                continue
             if (name_spans and f.kind in ("text", "period") and isinstance(raw, str)
                     and raw.strip()
                     and any(_name_overlap_key(raw) in span for span in name_spans)):
                 acc.violations.append(WF.V_VALUE_OVERLAPS_NAME)
                 continue
-            value = await self._write_draft_gate_value(f, raw, identity, wd.user_texts, acc.violations)
+            value, _dropped = await self._write_draft_turn_gate(acc, identity, f, raw)
             if value is None:
                 continue
             wd.touched.add(f.key)
             wd.merged = True
             draft["fields"][f.key] = value
+            if name_rule == "new":
+                self._write_candidates_name_mark(acc, name_rule)
         self._write_draft_persist(acc, agent_state)
         return True
+
+    async def _write_candidates_deferred_names(
+        self, acc: TurnAccumulator, identity: Identity, agent_state: dict,
+    ) -> None:
+        """F12 r6（§11.4 第 2 點「判定順序」）：`_write_proposal_merge` 暫存不併的名稱欄值，在拿到 `pick_id`（意圖
+        結果取用、改選目標算出）之後依名稱合併規則處理——丟棄者記 `write_candidate_name_kept`；其餘照模型提議的
+        合併（值閘 `from_intent=False`、W1c 名稱規則、`touched`／`merged`）。只處理一次（處理完即清空）。"""
+        wd = acc.write_draft
+        pending, wd.deferred_names = list(wd.deferred_names), []
+        if not pending or wd.draft is None:
+            return
+        draft = wd.draft
+        form = WF.FORMS.get(draft.get("action"))
+        if form is None:
+            return
+        name_hit = (wd.caught_name is not None
+                    and draft["fields"].get("estate_name") == wd.caught_name)
+        name_spans = ([_name_overlap_key(s) for s in (wd.caught_name, wd.caught_segment) if s]
+                      if name_hit else [])
+        merged_any = False
+        for key, raw in pending:
+            f = form.field(key)
+            if f is None or f.source != WF.SOURCE_USER_WORDS:
+                continue
+            if name_hit and f.key == "estate_name":
+                continue
+            name_rule = self._write_candidates_name_rule(acc, identity, f, raw, defer=False)
+            if name_rule == "collect":
+                # 第 5 輪 §11.15.3 第 6 點：暫存名稱同樣先收集，與意圖結果的名稱一起決定去向。
+                wd.collected_names.append(("deferred", raw))
+                continue
+            if name_rule in ("drop", "same"):
+                self._write_candidates_name_mark(acc, name_rule)
+            if name_rule == "drop":
+                continue
+            if (name_spans and f.kind in ("text", "period") and isinstance(raw, str)
+                    and raw.strip()
+                    and any(_name_overlap_key(raw) in span for span in name_spans)):
+                acc.violations.append(WF.V_VALUE_OVERLAPS_NAME)
+                continue
+            value, _dropped = await self._write_draft_turn_gate(acc, identity, f, raw)
+            if value is None:
+                continue
+            wd.touched.add(f.key)
+            wd.merged = True
+            draft["fields"][f.key] = value
+            merged_any = True
+            if name_rule == "new":
+                self._write_candidates_name_mark(acc, name_rule)
+        if merged_any:
+            self._write_draft_persist(acc, agent_state)
+
+    async def _write_candidates_apply_name(
+        self, acc: TurnAccumulator, identity: Identity, agent_state: dict, cf: Any,
+        source: str, raw: Any,
+    ) -> bool:
+        """第 5 輪 §11.15.3 第 6 點決定 3：「改講新名稱」的名稱 N 寫進候選集那一欄（過既有值閘；W1c 名稱規則同意圖
+        合併）。寫進且因此解綁 ⇒ `True`（呼叫端清候選集、記 `write_candidate_name_new`；觸發條件 `merged` ⇒ 程式
+        依草稿重查新名稱）；值閘不過、或寫進後仍綁定 ⇒ `False`（呼叫端當作沒有 N）。使用者句子的值（意圖結果、
+        `new_name`、被擋下動作）被值閘丟掉 ⇒ `user_value_dropped`（主模型提議不算，比照 A+ AP-2 Q2）。"""
+        wd = acc.write_draft
+        draft = wd.draft
+        name_hit = (wd.caught_name is not None
+                    and draft["fields"].get("estate_name") == wd.caught_name)
+        if name_hit and cf.key == "estate_name":
+            return False
+        name_spans = ([_name_overlap_key(s) for s in (wd.caught_name, wd.caught_segment) if s]
+                      if name_hit else [])
+        if (name_spans and isinstance(raw, str) and raw.strip()
+                and any(_name_overlap_key(raw) in span for span in name_spans)):
+            acc.violations.append(WF.V_VALUE_OVERLAPS_NAME)
+            return False
+        from_user = source != "deferred"
+        value, dropped = await self._write_draft_turn_gate(acc, identity, cf, raw, from_intent=from_user)
+        if value is None:
+            if from_user and dropped:
+                wd.user_value_dropped = True
+            return False
+        wd.activity = True
+        draft["idle_turns"] = 0
+        draft["fields"][cf.key] = value
+        wd.touched.add(cf.key)
+        wd.merged = True
+        self._write_draft_persist(acc, agent_state)
+        return not self._write_candidates_bound(wd.candidates, identity, draft)
+
+    async def _write_candidates_replay_names(
+        self, acc: TurnAccumulator, identity: Identity, agent_state: dict, cf: Any,
+    ) -> None:
+        """第 5 輪 §11.15.3 第 6 點決定 4、5：沒有成立的新名稱 ⇒ 收集到的名稱值照現行名稱合併規則處理（`repick_target`
+        已設成 X）：丟棄者記 `write_candidate_name_kept`；與草稿現值相同者照現行合併（值不變、仍綁定）；被擋下動作的
+        名稱一律丟棄（§11.15.3 第 4 點：候選集內講法或不是本回合講的）；規則判「新名稱」者已在決定 3 試過（值閘不過）
+        ⇒ ⛔ 再併。"""
+        wd = acc.write_draft
+        pending, wd.collected_names = list(wd.collected_names), []
+        draft = wd.draft
+        merged_any = False
+        for source, raw in pending:
+            if source == "blocked":
+                self._write_candidates_name_mark(acc, "drop")
+                continue
+            rule = self._write_candidates_name_rule(acc, identity, cf, raw, defer=False)
+            if rule in ("drop", "same"):
+                self._write_candidates_name_mark(acc, rule)
+            if rule != "same":
+                continue
+            value, _dropped = await self._write_draft_turn_gate(
+                acc, identity, cf, raw, from_intent=source == "intent")
+            if value is None:
+                continue
+            wd.touched.add(cf.key)
+            wd.merged = True
+            draft["fields"][cf.key] = value
+            merged_any = True
+        if merged_any:
+            self._write_draft_persist(acc, agent_state)
+
+    async def _write_candidates_post_pick_names(
+        self, acc: TurnAccumulator, identity: Identity, agent_state: dict, user_message: str,
+        intent: Any, *, blocked: bool, fields_before: Optional[dict],
+    ) -> set:
+        """回合開始時候選集已選定或已撤回、仍綁定本草稿，
+        且意圖判斷結果解析成功（含 `action=none`）的回合——**單次**意圖呼叫的結果，由程式依序決定（DSP-091：AI 只回理解
+        結果）。呼叫端已排除「另一動作帶非名稱值」（決定 1：照 §11.14 第 3 點換動作，走現行）。
+
+        1. 名稱值先收集、⛔ 合併（主模型提議暫存的、意圖結果的名稱欄、被擋下動作 `blocked` 的同一欄名稱）；非名稱欄照
+           現行合併（被擋下動作的欄位 ⛔ 合併，記 `write_candidate_action_kept`）；整句填入照 `_write_draft_fill_answer`
+           （第 1 點：選定後不跑）；「選對紀錄」比對值依物件／期別重設。
+        2. 驗過且未被退回的改選目標 X：`_write_candidates_typed_target`（已撤回：`pick_id` ∈ `ids`；整句只打 `ids` 內
+           編號；已選定只剩整句編號）≠ 現選定，且 `_write_candidates_refusal` 不退回（分不出、金額期間不符——讀的是本回合
+           非名稱欄合併後的比對值）。
+        3. 改講新名稱：意圖結果或暫存的名稱欄值算新名稱（`_write_candidates_name_is_new`）；被擋下動作的名稱候選集外、
+           本回合講 ⇒ 算。**回合開始已選定**（`wd.cmd_scope_start`）⇒ 這一步不收任何名稱（計畫 `plan-post-pick-commands-
+           20261024.md` §4.3 第 7 點：沒設 `cmd_offered` 的已選定回合）。
+        4. 決定：有 X 且有新名稱 ⇒ 矛盾（已選定 ⇒ 撤回並重列同一份 `ids`；已撤回 ⇒ 重列；所有名稱值
+           丟棄、⛔ 解綁；記 `write_candidate_name_conflict`；已選定回合因 `cmd_scope_start` 不會到這條）；有新名稱 ⇒
+           寫進候選集那一欄、解綁（清候選集）、依新名稱重查（記 `write_candidate_name_new`；X 被退回的標記照記）；其餘 ⇒
+           `repick_target`＝X、名稱照現行規則處理後交 `_write_candidates_typed`（有 X ⇒ 改選；X 被退回 ⇒ 重列）。
+        回本回合意圖合併過值閘的鍵（同 `_write_draft_merge_intent`）。"""
+        wd = acc.write_draft
+        cands = wd.candidates
+        form = WF.FORMS.get(wd.draft.get("action"))
+        cf = form.field(cands.get("field")) if form is not None else None
+        provided: set = set()
+        wd.collected_names = []
+        wd.name_collect = True
+        try:
+            await self._write_candidates_deferred_names(acc, identity, agent_state)
+            if blocked:
+                acc.violations.append(_wc.V_CANDIDATE_ACTION_KEPT)
+                for item in getattr(intent, "fields", None) or []:
+                    value = getattr(item, "value", None)
+                    if (cf is not None and getattr(item, "key", None) == cf.key
+                            and isinstance(value, str) and value.strip()):
+                        wd.collected_names.append(("blocked", value))
+            elif intent is not None:
+                provided = await self._write_draft_merge_intent(acc, identity, agent_state, intent)
+        finally:
+            wd.name_collect = False
+        if not blocked:
+            await self._write_draft_fill_answer(acc, agent_state, user_message, provided)
+        self._pick_right_said_reset(acc, agent_state)
+        session = AgentSession(agent_state)
+        if cf is None or not self._write_candidates_bound(cands, identity, wd.draft):
+            # 理應不發生（名稱未併、動作未換）；fail-closed：同 `_write_candidates_typed` 的解綁處置。
+            wd.collected_names = []
+            session.clear_write_candidates()
+            wd.candidates = None
+            return provided
+        changed = (wd.draft.get("fields") or {}) != (fields_before or {})
+        picked = cands.get("picked")
+        target = self._write_candidates_typed_target(wd, cands, user_message, changed=changed)
+        if target is not None and target == picked:
+            target = None
+        refused = (self._write_candidates_refusal(acc, cands, target, user_message)
+                   if target is not None else None)
+        x = target if refused is None else None
+        names: list = []
+        for source, raw in wd.collected_names:
+            if wd.cmd_scope_start:
+                # 選定後回合改指令式：回合開始已選定 ⇒ 這個函式不收任何新名稱（名稱值一律規則；
+                # 被擋下動作的 `ok` 判定與 `_write_candidates_name_is_new` 都不跑），故不會到矛盾、新名稱兩條決定。
+                continue
+            if source == "blocked":
+                ok = (not self._write_candidates_in_set(wd, cands, raw)
+                      and _name_said_in_message(raw, wd.user_message))
+            else:
+                ok = self._write_candidates_name_is_new(wd, cands, raw)
+            if ok:
+                names.append((source, raw))
+        if x is not None and names:
+            # 決定 2：矛盾 ⇒ 視同 retract；本回合所有名稱值丟棄、⛔ 解綁（之後同回合的提議名稱也丟，`name_conflict`）。
+            wd.name_conflict = True
+            wd.collected_names = []
+            acc.violations.append(_wc.V_CANDIDATE_NAME_CONFLICT)
+            if picked is not None:
+                self._write_candidates_withdraw(acc, agent_state, cands)
+            else:
+                wd.relist = True
+                wd.activity = True
+            return provided
+        for source, raw in names:
+            if await self._write_candidates_apply_name(acc, identity, agent_state, cf, source, raw):
+                # 決定 3：改講新名稱（含 X 被退回）⇒ 解綁、依新名稱重查（觸發條件 `merged`）。
+                wd.collected_names = []
+                session.clear_write_candidates()
+                wd.candidates = None
+                for mark in refused or ():
+                    if mark not in acc.violations:
+                        acc.violations.append(mark)
+                self._write_candidates_name_mark(acc, "new")
+                self._pick_right_said_reset(acc, agent_state)
+                return provided
+        # 決定 4、5：名稱照現行規則（X 有值 ⇒ 丟棄），改選／撤回／重列交現行打字判定。
+        wd.repick_target = x
+        await self._write_candidates_replay_names(acc, identity, agent_state, cf)
+        self._pick_right_said_reset(acc, agent_state)
+        await self._write_candidates_typed(
+            acc, identity, agent_state, user_message, fields_before=fields_before)
+        return provided
+
+    @staticmethod
+    def _write_candidates_cmd_code(item: Any) -> str:
+        """指令清單一項的 trace 封閉碼：非物件、`op` 非字串或值域外 ⇒ `invalid`（⛔ 記模型原字串）。"""
+        op = item.get("op") if isinstance(item, dict) else None
+        return op if isinstance(op, str) and op in WF.PICK_TARGET_OP_DOMAIN else "invalid"
+
+    def _write_candidates_cmd_effect(
+        self, wd: Any, cands: dict, user_message: Any, item: Any,
+    ) -> tuple:
+        """選定後回合改指令式（計畫 `plan-post-pick-commands-20261024.md` §4.3 第 3 點）：一個指令解成效果，程式驗證、⛔ 猜。
+        回 `("keep",)`、`("target", X, via)`（`via` 為 `"pick"`／`"nth"`／`"name"`）、`("name", N)`、`("withdraw",)`、`("invalid",)`。
+        純判定（⛔ 查 DB、⛔ 寫狀態）。"""
+        if not isinstance(item, dict):
+            return ("invalid",)
+        op, value = item.get("op"), item.get("value")
+        if not isinstance(op, str) or op not in WF.PICK_TARGET_OP_DOMAIN or not isinstance(value, str):
+            return ("invalid",)
+        ids = cands["ids"]
+        picked = cands.get("picked")
+        if op == WF.PICK_TARGET_OP_CLEAR:
+            return ("withdraw",)
+        if op == WF.PICK_TARGET_OP_PICK:
+            x = value
+            if x and x in wd.pick_offered and x in ids:
+                return ("keep",) if x == picked else ("target", x, WF.PICK_TARGET_OP_PICK)
+            return ("invalid",)
+        if op == WF.PICK_TARGET_OP_NTH:
+            # NFKC 後整串 `[1-9][0-9]?`（⛔ 去頭尾空白：` 2 `、`+2`、`1_0` 皆無效）；畫面清單＝列候選出口同一個上限 K。
+            n_text = unicodedata.normalize("NFKC", value)
+            if not _NTH_VALUE_RE.fullmatch(n_text):
+                return ("invalid",)
+            shown = ids[:self._write_candidates_shown_limit(self._pick_right_active())]
+            n = int(n_text)
+            if n > len(shown) or any(s not in wd.pick_offered for s in shown):
+                return ("invalid",)
+            x = shown[n - 1]
+            return ("keep",) if x == picked else ("target", x, WF.PICK_TARGET_OP_NTH)
+        # name
+        name = value.strip()
+        key = _name_said_key(name)
+        if not name or sanitize_data_piece(name) != name or not key:
+            return ("invalid",)
+        origin_hit, matched = self._write_candidates_name_hits(wd, cands, name)
+        if picked in matched or origin_hit:
+            return ("keep",)
+        said = _name_said_in_message(name, wd.user_message)
+        if len(matched) == 1 and said and matched[0] in ids:
+            # 清單裡只有一筆（≠現選定）的系統正名包含這個名稱、且名稱是本句講的
+            # （客人原字；擋 AI 依描述猜出正名）⇒ 改選那筆，過「選對紀錄」退回（`via="name"`：分不出不套、金額期間照套）。
+            return ("target", matched[0], WF.PICK_TARGET_OP_NAME)
+        if matched:
+            return ("withdraw",)
+        if said:
+            return ("name", name)
+        return ("invalid",)
+
+    async def _write_candidates_name_precheck(
+        self, acc: TurnAccumulator, identity: Identity, agent_state: dict, cands: dict,
+    ) -> bool:
+        """`name` 指令已把名稱寫進草稿、將解綁，解綁**之前**用解綁後重查會走的同一組
+        查找（`name_precheck_ids`：身分閘 → 精確查找 → 查無才寬鬆，同一把 `run_once` 鍵 ⇒ 重查取同一份、本回合寬鬆模型呼叫
+        ≤1）查一次；查到的列編號含現選定 ⇒ `True`（呼叫端還原草稿、候選集與選定不動）。比對編號：estate／contract+
+        `contract_ref` ⇒ `picked`；bill ⇒ 物件範圍（`_wc.scope_rows_pick_of`）；contract+`estate_name`（手開帳單一物件多合約）
+        ⇒ 選定合約列的 `estate_id`（`wd.offered_rows`）；取不到 ⇒ 不比對（⛔ 出向查找，回 `False`）。其餘（身分閘不過、查找
+        失敗、沒比中）⇒ `False`（照現行解綁重查）。唯讀；⛔ 記名稱、編號。"""
+        wd = acc.write_draft
+        draft = wd.draft
+        action, field, cand_type = cands["action"], cands["field"], cands["type"]
+        picked = cands.get("picked")
+        if cand_type == _wc.TYPE_ESTATE or (cand_type == _wc.TYPE_CONTRACT and field == "contract_ref"):
+            lookup_type, compare_id = cand_type, picked
+        elif cand_type == _wc.TYPE_BILL:
+            scope = _wc.scope_rows_pick_of(cands)
+            lookup_type, compare_id = _wc.TYPE_ESTATE, scope["id"] if scope is not None else None
+        elif cand_type == _wc.TYPE_CONTRACT and field == "estate_name":
+            row = wd.offered_rows.get(picked) if picked is not None else None
+            lookup_type = _wc.TYPE_ESTATE
+            compare_id = _wc.candidate_id(row.get("estate_id")) if isinstance(row, dict) else None
+        else:
+            return False
+        form = WF.FORMS.get(action)
+        cf = form.field(field) if form is not None else None
+        name = (draft.get("fields") or {}).get(field)
+        if compare_id is None or cf is None or not isinstance(name, str):
+            return False
+        payload = {"action": action, **WF.to_payload(action, draft.get("fields") or {})}
+        ids = await name_precheck_ids(
+            identity, action, payload, field=field, cand_type=lookup_type, name=name, missing_label=cf.label,
+            name_lenient=self._name_lenient_ctx(acc, agent_state, None, action, identity=identity))
+        return bool(ids) and compare_id in ids
+
+    async def _write_candidates_cmd_turn(
+        self, acc: TurnAccumulator, identity: Identity, agent_state: dict, user_message: str,
+        intent: Any, *, blocked: bool, fields_before: Optional[dict],
+    ) -> set:
+        """選定後回合改指令式（計畫 `plan-post-pick-commands-20261024.md` §4.3；DSP-091：AI 只回理解結果，下一步由程式決定）：
+        回合開始已選定、仍綁定本草稿、本回合送出指令版 schema（`wd.cmd_offered`）、意圖解析成功、沒換動作。
+        ⛔ 呼叫 `_write_candidates_post_pick_names`、`_write_candidates_typed_post_pick`（F1 (k) spy）。
+
+        1. 名稱值一律規則：暫存提議、意圖 `fields` 的名稱欄、被擋下動作的名稱一律丟棄（記 `write_candidate_name_kept`）；
+           非名稱欄照現行合併（被擋下動作的欄位 ⛔ 合併，記 `write_candidate_action_kept`）；不整句填入。
+        2. 指令逐項解成效果（`_write_candidates_cmd_effect`），取最後一項（空陣列 ⇒ 維持；`target` 缺鍵或不是陣列 ⇒ 無效）；
+           整句只打 `ids` 內編號且草稿值沒變 ⇒ 該編號（程式路徑優先於指令）。
+        3. 執行：維持 ⇒ 不動；目標 ⇒ `_write_candidates_repick_apply`（選對紀錄退回）；新名稱 ⇒ `_write_candidates_apply_name`
+           寫進候選集那一欄、解綁、依新名稱重查（值閘不過 ⇒ 撤回）；撤回或無效 ⇒ 撤回並重列同一份 `ids`。
+        回本回合意圖合併過值閘的鍵。trace 只記封閉碼。"""
+        wd = acc.write_draft
+        cands = wd.candidates
+        form = WF.FORMS.get(wd.draft.get("action"))
+        cf = form.field(cands.get("field")) if form is not None else None
+        provided: set = set()
+        await self._write_candidates_deferred_names(acc, identity, agent_state)
+        if blocked:
+            acc.violations.append(_wc.V_CANDIDATE_ACTION_KEPT)
+            for item in getattr(intent, "fields", None) or []:
+                value = getattr(item, "value", None)
+                if (cf is not None and getattr(item, "key", None) == cf.key
+                        and isinstance(value, str) and value.strip()):
+                    self._write_candidates_name_mark(acc, "drop")
+        elif intent is not None:
+            provided = await self._write_draft_merge_intent(acc, identity, agent_state, intent)
+            await self._write_draft_fill_answer(acc, agent_state, user_message, provided)
+        self._pick_right_said_reset(acc, agent_state)
+        session = AgentSession(agent_state)
+        if cf is None or not self._write_candidates_bound(cands, identity, wd.draft):
+            # 理應不發生（名稱未併、動作未換）；fail-closed：同 `_write_candidates_typed` 的解綁處置。
+            session.clear_write_candidates()
+            wd.candidates = None
+            return provided
+        raw = wd.intent_target
+        items = raw if isinstance(raw, list) else []
+        codes = [self._write_candidates_cmd_code(i) for i in items][:8]
+        if not isinstance(raw, list):
+            codes, last_code = ["invalid"], "invalid"
+        else:
+            last_code = self._write_candidates_cmd_code(items[-1]) if items else "none"
+        acc.violations.append(_wc.V_CANDIDATE_CMDS_PREFIX + ",".join(codes))
+        acc.violations.append(_wc.V_CANDIDATE_CMD_LAST_PREFIX + last_code)
+        effect = (self._write_candidates_cmd_effect(wd, cands, user_message, items[-1])
+                  if items else (("keep",) if isinstance(raw, list) else ("invalid",)))
+        changed = (wd.draft.get("fields") or {}) != (fields_before or {})
+        said_target = (self._write_candidates_typed_target(wd, cands, user_message, changed=changed)
+                       if not changed else None)
+        if said_target is not None:
+            effect = ("keep",) if said_target == cands.get("picked") else ("target", said_target, None)
+        kind = effect[0]
+        if kind == "keep":
+            return provided
+        if kind == "target":
+            self._write_candidates_repick_apply(
+                acc, agent_state, cands, effect[1], user_message, via=effect[2])
+            return provided
+        if kind == "name":
+            # 寫名稱前記下草稿狀態；將解綁時先做解綁前查找，含現選定 ⇒ 還原、維持。
+            draft = wd.draft
+            snapshot = (copy.deepcopy(draft.get("fields") or {}), set(wd.touched), wd.merged, wd.activity,
+                        draft.get("idle_turns"))
+            if await self._write_candidates_apply_name(acc, identity, agent_state, cf, "intent", effect[1]):
+                if await self._write_candidates_name_precheck(acc, identity, agent_state, cands):
+                    draft["fields"], wd.touched, wd.merged, wd.activity, draft["idle_turns"] = snapshot
+                    self._write_draft_persist(acc, agent_state)
+                    acc.violations.append(_wc.V_CANDIDATE_NAME_PRECHECK_KEEP)
+                    return provided
+                acc.violations.append(_wc.V_CANDIDATE_NAME_PRECHECK_MISS)
+                session.clear_write_candidates()
+                wd.candidates = None
+                self._write_candidates_name_mark(acc, "new")
+                self._pick_right_said_reset(acc, agent_state)
+                return provided
+        if kind == "invalid":
+            acc.violations.append(_wc.V_CANDIDATE_CMD_INVALID)
+        # 撤回（`clear`、`name` 對到清單內另一筆、新名稱值閘不過）或無效 ⇒ 撤回並重列同一份 `ids`。
+        acc.violations.append(_wc.V_CANDIDATE_RETRACT_TYPED)
+        self._write_candidates_withdraw(acc, agent_state, wd.candidates if wd.candidates is not None else cands)
+        return provided
 
     async def _write_proposal_handle(
         self, acc: TurnAccumulator, identity: Identity, agent_state: dict,
@@ -4873,6 +7352,12 @@ class AgentRuntime:
         if wd is None:
             return "closed", "HANDLED_BY_PROGRAM"
         pre_draft = copy.deepcopy(wd.draft)
+        if await self._dialog_act_not_field_answer(acc, agent_state):
+            # E 片（E-R13）：AI 把當句標成「不是欄位答覆」（道謝／要真人）⇒ 模型自呼的提議也 ⛔ 合併（⚠️ 勿拿掉：模型會把
+            # 「3Q」提議成帳單項目而出卡），由程式回缺欄追問或同卡。在這裡判斷、⛔ 只看
+            # 標記：程式優先入口沒成立（意圖等待逾時）時，提議比意圖合併先到。
+            no_value = await self._write_proposal_no_value(acc, identity, agent_state, raw_args)
+            return ("no_value", no_value) if no_value is not None else ("closed", "HANDLED_BY_PROGRAM")
         if not await self._write_proposal_merge(acc, identity, agent_state, raw_args):
             return "closed", "NO_MATCH"
         message = await self._write_draft_decide(acc, identity, agent_state, user_message, document)
@@ -4902,7 +7387,7 @@ class AgentRuntime:
     async def _write_proposal_no_value(
         self, acc: TurnAccumulator, identity: Identity, agent_state: dict, raw_args: Any,
     ) -> Optional[dict]:
-        """r3 AP-7 (2)（計畫 §9.2 (2)）：`_write_draft_decide` 回 `None`、既有三個出口都不成立之後，
+        """`_write_draft_decide` 回 `None`、既有三個出口都不成立之後，
         提議**沒有任何值進草稿**時改由程式結束回合。條件全成立才回處置，否則 `None`（照 AP-1 (4) 回模型
         封閉結果）：草稿存在且動作＝提議動作；本回合 `created`／`merged`／`caught`／`filled` 皆不成立；
         非凍結（`frozen`）；本回合程式未觸發（`triggered`）。
@@ -4968,11 +7453,11 @@ class AgentRuntime:
         self, acc: TurnAccumulator, agent_state: dict, user_message: str, handling: dict,
     ) -> TurnResult:
         """r3 AP-7 (2)：程式結束回合（⛔ 交模型寫回覆；⛔ 建、燒 token）。出口另寫——⛔ 重用
-        `_write_draft_card_still_valid_exit` 的開頭句判斷（安全審查 r3 F2；業主 2026-10-19 裁示 §9.6）。
+        `_write_draft_card_still_valid_exit` 的開頭句判斷。
 
         - (a)：`PROPOSAL_NO_VALUE_CARD_TEXT`＋換行＋同一張卡、同 pid 三顆鍵、`confirm_pending`；記
           `write_proposal_no_value_card` 並同記 `write_draft_card_still_valid`（V2 以它計入程式重出同卡；
-          r3 F4）。卡外提示行不重出（同 AP-2，計畫 §4.3）。
+          ）。卡外提示行不重出。
         - (b)：`proposal_no_value_text`、`clarifying`、expects text、action＝草稿動作；記 `write_proposal_no_value`。"""
         if handling.get("kind") == "card":
             pid = handling["pid"]
@@ -5015,7 +7500,9 @@ class AgentRuntime:
         """W1b §8.5-1：`asked` 的**唯一寫點**——`confirm_missing_fields_ask` 出口（程式觸發或模型
         自呼 `confirm.request` 得缺欄；兩者的追問句都是程式產出）。草稿不存在（或動作不同）⇒
         先建草稿再寫（安全處置 4a：一律經可見性閘）。文件回合、`doc_action`、文件暫存有效 ⇒
-        ⛔ 寫（安全處置 1d）。模型自寫的追問（`kind=ask` 經 Verifier）不經這裡 ⇒ ⛔ 寫。"""
+        ⛔ 寫（安全處置 1d）。模型自寫的追問（`kind=ask` 經 Verifier）不經這裡 ⇒ ⛔ 寫。
+        「找不到這個名稱」出口（`_name_lenient_mark_not_found`）也經這裡寫該欄位
+        （同為程式產出的追問句；傳入以該欄位標籤組的缺欄結果）。"""
         wd = acc.write_draft
         if wd is None or document is not None or document_writable_action(document) is not None:
             return
@@ -5068,17 +7555,48 @@ class AgentRuntime:
                 acc.violations.append(WF.V_SUBMITTED_EDIT_BLOCKED)
                 return None
             provided: set = set()
-            other_action = False
-            if intent is not None:
-                # 安全處置 1a：意圖呼叫回傳**另一支寫入動作** ⇒ 不整句填入（岔題不被當成答覆）。
-                other_action = (start_action is not None and isinstance(intent.action, str)
-                                and intent.action in WF.FORMS and intent.action != start_action)
-                provided = await self._write_draft_merge_intent(acc, identity, agent_state, intent)
-            if not other_action:
-                await self._write_draft_fill_answer(acc, agent_state, user_message, provided)
-            if wd.candidates is not None and self._write_candidates_active():
-                await self._write_candidates_typed(
-                    acc, identity, agent_state, user_message, fields_before=fields_before)
+            # 安全處置 1a：意圖呼叫回傳**另一支寫入動作** ⇒ 不整句填入（岔題不被當成答覆）。
+            other_action = (intent is not None and start_action is not None
+                            and isinstance(intent.action, str) and intent.action in WF.FORMS
+                            and intent.action != start_action)
+            if (wd.intent_parsed and self._write_candidates_post_pick(acc, identity) is not None
+                    and not (other_action and _intent_has_value(intent))):
+                # 候選集已選定或已撤回、仍綁定本草稿（名稱合併之前
+                # 取）且意圖解析成功 ⇒ 單次決定。§11.14 第 3 點（第 5 輪第 4 點改寫）：另一支寫入動作只帶名稱（名稱不算
+                # 新動作的值）⇒ 不換草稿、不合併、不整句填入，名稱另依規則分類。
+                if wd.cmd_offered and wd.cmd_scope_start:
+                    # 選定後回合改指令式（計畫 `plan-post-pick-commands-20261024.md` §4.3）：本回合送出指令版 schema、
+                    # 回合開始已選定 ⇒ 指令路徑（⛔ 進 `_write_candidates_post_pick_names`）。
+                    provided = await self._write_candidates_cmd_turn(
+                        acc, identity, agent_state, user_message, intent,
+                        blocked=other_action, fields_before=fields_before)
+                else:
+                    provided = await self._write_candidates_post_pick_names(
+                        acc, identity, agent_state, user_message, intent,
+                        blocked=other_action, fields_before=fields_before)
+            else:
+                if (wd.cmd_offered and wd.cmd_scope_start and wd.intent_parsed
+                        and other_action and _intent_has_value(intent)):
+                    # 換動作回合（另一動作帶非名稱值）：⛔ 讀 `target`。
+                    acc.violations.append(_wc.V_CANDIDATE_CMD_SKIPPED)
+                # 現行：無候選集、未選定、解綁、意圖解析失敗（含第 5 點重送後仍失敗），或另一動作帶非名稱值（§11.15.3
+                # 第 6 點決定 1：照 §11.14 第 3 點換動作）。
+                # F12 r6（§11.4 第 2 點「判定順序」；N-1）：先算程式驗證過的改選目標，再做名稱欄合併（模型提議暫存
+                # 的名稱值、意圖的名稱值），⛔ 名稱合併先解綁、使改選失效。
+                self._write_candidates_repick_target(acc, identity, user_message)
+                await self._write_candidates_deferred_names(acc, identity, agent_state)
+                if intent is not None:
+                    provided = await self._write_draft_merge_intent(acc, identity, agent_state, intent)
+                if not other_action:
+                    await self._write_draft_fill_answer(acc, agent_state, user_message, provided)
+                # 「選對紀錄」片 §4.2-1：物件或期別變了 ⇒ 先前講的比對值清掉（打字選定比對之前）。
+                self._pick_right_said_reset(acc, agent_state)
+                if wd.candidates is not None and self._write_candidates_active():
+                    await self._write_candidates_typed(
+                        acc, identity, agent_state, user_message, fields_before=fields_before)
+            # F12（§5.1 (A)）：打字選定（甲′，程式驗證過、在候選集內）成立且候選集出自寬鬆路徑 ⇒ 同按鈕。
+            if wd.candidates is not None and wd.picked and self._write_candidates_active():
+                await self._name_lenient_pick_rewrite(acc, identity, agent_state)
             # A-2a 修正 2（verifier F1）：AI 恰回 `record_rechoice=other`（使用者要改用另一筆）、草稿是回合開始那份
             # 且動作沒換 ⇒ 程式作廢綁定卡、依草稿名稱重新解析（名稱多筆 ⇒ 重列候選）；本句沒改到任何欄位值也
             # 一樣。AI 只回理解結果；下一步由程式決定（DSP-091）。
@@ -5089,9 +7607,12 @@ class AgentRuntime:
                 wd.rechoice = True
                 wd.activity = True
                 acc.violations.append(_wc.V_CANDIDATE_RECHOICE)
+            # 填欄只填答覆 B6（§4.1）：追問回合（草稿仍是回合開始那份）追問的欄位本回合仍缺 ⇒ 程式依草稿照現行缺欄
+            # 追問句重問（⛔ 交主模型、⛔ 整句填入）。資料段未知、答覆段為空、值被拒收都走這裡。
+            self._fill_reask_if_missing(acc)
         draft = wd.draft
         if draft is None or not (wd.created or wd.merged or wd.caught or wd.filled
-                                 or wd.picked or wd.reask or wd.rechoice):
+                                 or wd.picked or wd.reask or wd.rechoice or wd.relist or wd.fill_reask):
             return None
         if wd.model_confirm_ok:
             return None
@@ -5120,7 +7641,7 @@ class AgentRuntime:
         return _write_draft_program_message(draft, acc.nonce)
 
     def _write_draft_is_submitted_edit(self, wd: "_WriteDraftTurn", intent: Any) -> bool:
-        """第 3 步 #9g（業主 2026-10-19 裁定）：開關 on、回合開始時有「最近送出」標記、意圖的動作
+        """開關 on、回合開始時有「最近送出」標記、意圖的動作
         等於標記的動作、且意圖判斷的布林欄位恰為 `true` ⇒ 是「修改剛送出的那一筆」。
         比較用變數（⛔ 動作名字面，R1）。"""
         if not getattr(self, "_write_lifecycle_on", False):
@@ -5360,20 +7881,31 @@ class AgentRuntime:
     ) -> Optional[TurnResult]:
         """A+ 片 AP-2：綁定卡有效、值相同 ⇒ 程式結束回合：固定句＋換行＋同一張卡文字、
         `confirm_pending`、原 pid 的三顆鍵；⛔ 建 token；⛔ 交模型。出卡當時的卡外提示行（未結單、
-        `BILL_MATCH_HINT`）不重出（計畫 §4.3；安全審查 2-4）。本回合使用者句子的值被值閘丟掉 ⇒
-        `CARD_UNCHANGED_TEXT`（業主裁 Q2）。"""
+        `BILL_MATCH_HINT`）不重出。本回合使用者句子的值被值閘丟掉 ⇒
+        `CARD_UNCHANGED_TEXT`（業主裁 Q2）。
+        填欄只填答覆修復輪 3（業主 10-27 §6 第 10 點；開關 on／off 皆生效）：B 片生效時，本回合沒讀到任何值
+        （`_write_reply_read_values_line` 回 `None`）⇒ `CARD_NO_CHANGE_TEXT`（⛔ 說「卡片還在，請按確認。」）。
+        修復輪 4（同第 10 點）：B 片生效、讀到值且與卡相同 ⇒ 前導句改 `CARD_READ_SAME_LEAD`＋讀到行（程式分不出
+        「沒要改」與「AI 漏讀要改的欄」，⛔ 依詞分；DSP-091）；B 片關的舊路徑照舊 `CARD_STILL_VALID_TEXT`。"""
         wd = acc.write_draft
         if wd is None or not isinstance(wd.card_still_valid, dict):
             return None
         pid = wd.card_still_valid["pid"]
         card = wd.card_still_valid["card"]
-        lead = WF.CARD_UNCHANGED_TEXT if wd.user_value_dropped else WF.CARD_STILL_VALID_TEXT
+        # 填欄只填答覆 B2：本回合有值沒套用（資料段未知、資料段外拒收、追問回合不覆寫）同樣說沒套用（⛔ 叫客人按確認送出舊值）。
+        lead = (WF.CARD_UNCHANGED_TEXT
+                if wd.user_value_dropped or self._fill_value_not_applied(wd) else WF.CARD_STILL_VALID_TEXT)
         if lead == WF.CARD_STILL_VALID_TEXT and self._write_reply_active():
             # B 片 B5（W-R3，業主裁 Q4）：本回合使用者句子帶出的值都與卡相同 ⇒ 列出讀到的值（卡上顯示值）。
             read_line = self._write_reply_read_values_line(
                 wd.card_still_valid["action"], wd.touched, card)
             if read_line is not None:
-                lead = f"{lead}\n{read_line}"
+                # 修復輪 4：讀到的值都與卡相同 ⇒ 中性前導句（⛔「卡片還在，請按確認。」；AI 可能漏讀要改的欄）。
+                lead = f"{WF.CARD_READ_SAME_LEAD}\n{read_line}"
+            else:
+                # 修復輪 3：沒讀到任何值（依狀態，⛔ 依詞；DSP-091）⇒ 中性句，⛔ 叫客人按確認。
+                lead = WF.CARD_NO_CHANGE_TEXT
+                self._fill_mark(acc, WF.V_CARD_NO_VALUE_READ)
         return self._finish_confirm_turn(
             agent_state=agent_state, user_message=user_message, trace_id=acc.trace_id,
             start=acc.start, kind="ask",
@@ -5503,13 +8035,17 @@ class AgentRuntime:
         self, acc: TurnAccumulator, identity: Identity, agent_state: dict,
     ) -> dict:
         """B2：依狀態挑程式回話（⛔ 出新卡、⛔ 建 token；⛔ 以動作名分支；A-2a 起唯一的寫入是候選集，見 (3)）。
-        順序見計畫 §4.1 B2：
+        順序：
         (1) 綁定卡有效且草稿＝卡 ⇒ 同卡；(2) 綁定卡 live、草稿≠卡 ⇒ 同卡＋`CARD_DIFFERS_TEXT`；
         (3) 缺欄 ⇒ 追問句（`WF.missing_labels` 判不缺時，封閉三動作改用出卡路徑同一支
         `closed_action_missing_labels`：名稱對到多筆／物件無唯一有效合約 ⇒ 同出卡路徑的缺欄「合約」／「物件」）；
         A-2a（A2-R8，開關生效）：`WF.missing_labels` 判不缺、且出卡前解析是「名稱多筆」
         （`write_name_candidates`，出卡路徑同一組函式、同一次查詢）⇒ 候選清單分支——由
         `_write_reply_state_exit` 列清單並**只寫候選集**（⛔ 出卡、⛔ 建 token）；
+        F12 r4 (乙)：(3) 要追問、追問含空的名稱欄且本回合打字 ⇒ 先試 `missing_name_lenient`，有候選 ⇒ 同上
+        候選清單分支，回空 ⇒ 照現行追問；
+        F12 r5 (丙)（第二接入點）：(3) 表單缺欄、名稱本回合講 ⇒ 在 (乙) 之前先試 `name_early_lookup`——多筆 ⇒
+        候選清單分支、查無且寬鬆落空 ⇒ 找不到固定句分支、其餘 ⇒ 照現行；
         (4) `WRITE_NOT_ISSUED_TEXT`；(5) 無草稿、無 live 卡 ⇒ `NO_PENDING_WRITE_TEXT`。"""
         wd = acc.write_draft
         draft = wd.draft if wd is not None else None
@@ -5519,13 +8055,22 @@ class AgentRuntime:
             unchanged = await self._write_proposal_card_unchanged(identity, agent_state, action, values)
             if unchanged is not None:
                 pid, card, card_action = unchanged
-                if wd.user_value_dropped:
+                if wd.user_value_dropped or self._fill_value_not_applied(wd):
                     lead, branch = WF.CARD_UNCHANGED_TEXT, WF.WRITE_REPLY_STATE_CARD_UNCHANGED
                 else:
                     lead, branch = WF.CARD_STILL_VALID_TEXT, WF.WRITE_REPLY_STATE_CARD_STILL_VALID
                     read_line = self._write_reply_read_values_line(action, wd.touched, card)
                     if read_line is not None:
+                        # 填欄只填答覆修復輪 4（開關 on／off 皆生效）：讀到的值都與卡相同 ⇒ 中性前導句
+                        # `CARD_READ_SAME_LEAD`（⛔「卡片還在，請按確認。」）；B 片關照舊；分支名照舊。
+                        if self._write_reply_active():
+                            lead = WF.CARD_READ_SAME_LEAD
                         lead = f"{lead}\n{read_line}"
+                    else:
+                        # 填欄只填答覆修復輪 3（開關 on／off 皆生效）：本回合沒讀到任何值 ⇒ 中性句（⛔ 說「卡片還在，
+                        # 請按確認。」）；分支名照舊（`card_still_valid`），另記固定字串標記。
+                        lead = WF.CARD_NO_CHANGE_TEXT
+                        self._fill_mark(acc, WF.V_CARD_NO_VALUE_READ)
                 return {"branch": branch, "lead": lead, "pid": pid, "card": card,
                         "action": card_action}
             bound = await self._session_live_card(identity, agent_state, action=action)
@@ -5534,20 +8079,76 @@ class AgentRuntime:
                 card = (self._write_draft_bound_card_text(entry, token_state)
                         if _pending_draft_payload(entry) is not None else None)
                 if card is not None:
-                    return {"branch": WF.WRITE_REPLY_STATE_CARD_DIFFERS, "lead": WF.CARD_DIFFERS_TEXT,
+                    # 填欄擴及首句、卡後、多欄回合（plan-fill-wide-20261028 §4.3 第 8 點）：同句部分套用、另有欄位被資料段
+                    # 拒收 ⇒ 前導句後加點名欄位標籤的固定句（⛔ 帶值）；非寬回合、沒有拒收 ⇒ 與改前逐字相同。
+                    notice = self._fill_wide_notice(wd)
+                    lead = WF.CARD_DIFFERS_TEXT if notice is None else f"{WF.CARD_DIFFERS_TEXT}\n{notice}"
+                    return {"branch": WF.WRITE_REPLY_STATE_CARD_DIFFERS, "lead": lead,
                             "pid": pid, "card": card, "action": entry.get("action")}
+            # F12 r6（§11.4 第 2 點；§11.13 P3）：候選集已撤回且仍綁定 ⇒ 重列同一份 `ids`（⛔ 重新解析名稱、⛔ 追問
+            # 其他欄位——客人重新選定之前不出卡）；狀態行與整則程式回話同一支出口。
+            post = self._write_candidates_post_pick(acc, identity)
+            if post is not None and _wc.is_withdrawn(post):
+                acc.violations.append(_wc.V_CANDIDATE_RELIST_WITHDRAWN)
+                return {"branch": WF.WRITE_REPLY_STATE_CANDIDATES, "action": action,
+                        "identity": identity,
+                        "relist": await self._write_candidates_relist_rows(acc, identity)}
             labels = WF.missing_labels(action, values)
+            # r5 (丙)：只在表單缺欄（`WF.missing_labels` 非空）時試；`closed_action_missing_labels` 補出的
+            # 「名稱多筆／無唯一有效合約」缺欄 ⛔ 觸發（那是欄位齊的出卡前解析，見上面 A-2a 分支）。
+            form_missing = bool(labels)
             picked = wd.candidates is not None and wd.candidates.get("picked") is not None
             if not labels and self._write_candidates_active() and not picked:
-                cand = await write_name_candidates(identity, action, values)
+                scope = self._pick_right_scope_pick(acc, identity)
+                # 名稱解析零筆 ⇒ 寬鬆比對（本回合同一份脈絡；每回合最多 1 次）。
+                nl_kw: dict = {}
+                nl = self._name_lenient_ctx(acc, agent_state, None, action, identity=identity)
+                if nl is not None:
+                    nl_kw["name_lenient"] = nl
+                cand = (await write_name_candidates(identity, action, values, scope_pick=scope, **nl_kw)
+                        if scope is not None else
+                        await write_name_candidates(identity, action, values, **nl_kw))
+                nf_field = is_name_not_found(cand) if nl is not None else None
+                if nf_field is not None:
+                    return {"branch": WF.WRITE_REPLY_STATE_NAME_NOT_FOUND,
+                            "text": NM.NAME_NOT_FOUND_TEXT, "action": action,
+                            "field": nf_field, "identity": identity}
                 if cand is not None:
                     return {"branch": WF.WRITE_REPLY_STATE_CANDIDATES, "data": cand.data,
                             "action": action, "identity": identity,
                             "field_value": values.get(cand.data.get("field"))}
             if not labels:
                 labels = await closed_action_missing_labels(identity, action, values)
+            labels = self._name_lenient_reask_labels(acc, action, labels)
             ask = missing_labels_ask_text(labels)
             if ask is not None:
+                # (乙) 程式即將追問、追問含空的名稱欄、本回合打字 ⇒ 本回合原話寬鬆比對
+                # （`confirm.missing_name_lenient`，與 (甲) 同一份脈絡與 `run_once`）；有候選 ⇒ 候選清單分支，
+                # 其餘 ⇒ 照現行追問、逐字不變。
+                nl = self._name_lenient_ctx(acc, agent_state, None, action, identity=identity)
+                if nl is not None:
+                    if form_missing:
+                        # (丙) 第二接入點：程式先行沒發確認請求的缺欄回合——
+                        # 名稱本回合講 ⇒ 先查（入口與閘門、每回合計數器全在 `confirm.name_early_lookup`；
+                        # runtime ⛔ 另發出向）。多筆 ⇒ 候選清單分支；查無且寬鬆落空 ⇒ 找不到固定句分支；
+                        # 唯一／沒查成／不合閘 ⇒ `None`，往下照現行（(乙) 與追問句逐字不變）。
+                        early = await name_early_lookup(identity, action, values, labels=labels,
+                                                        name_lenient=nl)
+                        nf_field = is_name_not_found(early) if early is not None else None
+                        if nf_field is not None:
+                            return {"branch": WF.WRITE_REPLY_STATE_NAME_NOT_FOUND,
+                                    "text": NM.NAME_NOT_FOUND_TEXT, "action": action,
+                                    "field": nf_field, "identity": identity}
+                        if early is not None and is_candidate_shape(early):
+                            return {"branch": WF.WRITE_REPLY_STATE_CANDIDATES, "data": early.data,
+                                    "action": action, "identity": identity,
+                                    "field_value": values.get(early.data.get("field"))}
+                    miss = await missing_name_lenient(identity, action, values, labels=labels,
+                                                      name_lenient=nl)
+                    if miss is not None:
+                        return {"branch": WF.WRITE_REPLY_STATE_CANDIDATES, "data": miss.data,
+                                "action": action, "identity": identity,
+                                "field_value": values.get(miss.data.get("field"))}
                 return {"branch": WF.WRITE_REPLY_STATE_MISSING, "text": ask,
                         "ask_target": WF.ask_target_for_missing(labels), "action": action}
             return {"branch": WF.WRITE_REPLY_STATE_NOT_ISSUED, "text": WF.WRITE_NOT_ISSUED_TEXT}
@@ -5585,6 +8186,11 @@ class AgentRuntime:
                 pending_id=pid, quick_replies=confirm_quick_replies(pid), **common,
             )
         if branch == WF.WRITE_REPLY_STATE_CANDIDATES:
+            if "relist" in state:
+                # F12 r6：已撤回 ⇒ 重列同一份 `ids`（候選集逐位不動）。
+                return self._write_candidates_relist_exit(
+                    acc, state["identity"], agent_state, user_message, state["relist"],
+                    prefix=prefix, trace=trace)
             # A-2a（A2-R8）：清單與候選集出自同一份 `data`（同一次查詢）；乙′ 的模型文字接在前面。
             return self._write_candidates_exit(
                 agent_state, state["data"], identity=state["identity"],
@@ -5593,6 +8199,19 @@ class AgentRuntime:
                 violations=acc.violations, llm_calls=acc.llm_calls,
                 prompt_tokens=acc.prompt_tokens, completion_tokens=acc.completion_tokens,
                 prefix=prefix, trace=trace,
+            )
+        if branch == WF.WRITE_REPLY_STATE_NAME_NOT_FOUND:
+            # 寬鬆也落空 ⇒ 固定句（⛔ 回顯原話），該欄標為已追問、清掉查不到的名稱。
+            label = self._name_lenient_mark_not_found(
+                acc, state["identity"], agent_state, state["action"], state["field"], None)
+            acc.violations.append(NM.V_NAME_LENIENT_NOT_FOUND_EXIT)
+            return self._finish_confirm_turn(
+                kind="ask",
+                outcome=make_outcome("clarifying", expects="text", action=state["action"]),
+                answer=f"{head}{state['text']}", pending_id=None,
+                ask_target=(None if prefix else
+                            (WF.ask_target_for_missing([label]) if label else None)),
+                **common,
             )
         if branch == WF.WRITE_REPLY_STATE_MISSING:
             return self._finish_confirm_turn(
@@ -5772,7 +8391,7 @@ class AgentRuntime:
         if not wd.pick_button and (rules is None or question_sensitive(user_message, rules)):
             return None
         call = acc.write_intent_call
-        if not wd.intent_consumed and call is not None and not call.settled:
+        if not wd.intent_consumed and call is not None and not call.settled and not call.label_only:
             # W1c §9.11-3：回合開始時已有草稿 ⇒ 3 秒；無草稿 ⇒ 1 秒（未完成照 F1）。
             wait_s = (WRITE_DRAFT_PROGRAM_FIRST_WAIT_S if wd.had_draft
                       else WRITE_DRAFT_PROGRAM_FIRST_WAIT_NO_DRAFT_S)
@@ -5828,26 +8447,51 @@ class AgentRuntime:
         wd.draft["idle_turns"] = idle
         AgentSession(agent_state).write_write_draft(wd.draft)
 
-    async def _next_model_message(self, acc: TurnAccumulator, tool_specs: list) -> Any:
-        """叫一次模型、計量，回 `message`（搬自 `_run_model_loop` 迴圈頂端，逐字未改；
-        站內幫手 S3-live 修正 R3 抽出，好讓程式驅動的那一輪不叫模型）。"""
-        acc.llm_calls += 1
-        create_kwargs = dict(
-            model=self._model,
-            messages=acc.messages,
-            tools=tool_specs,
-            parallel_tool_calls=False,
-            response_format=_agent_output_response_format(),
-            max_completion_tokens=self._max_completion_tokens,
-        )
-        if self._reasoning_effort is not None:
-            # openai SDK 1.54（requirements）尚無 `reasoning_effort` 具名參數，走 `extra_body`
-            # 直接進 JSON body（各版本皆收）；⛔ 不升 SDK 換參數名（那是另一個變因）。
-            create_kwargs["extra_body"] = {"reasoning_effort": self._reasoning_effort}
-        response = await self.provider.async_client.chat.completions.create(**create_kwargs)
-        usage = getattr(response, "usage", None)
-        turn_pt = int(getattr(usage, "prompt_tokens", 0) or 0)
-        turn_ct = int(getattr(usage, "completion_tokens", 0) or 0)
+    async def _consume_model_stream(self, create_kwargs: dict, state: dict) -> None:
+        """建立串流並消費到結束；進度寫進 `state`（逾時取消時 `_next_model_message` 還讀得到）。"""
+        stream = await self.provider.async_client.chat.completions.create(**create_kwargs)
+        state["stream"] = stream
+        async for chunk in stream:
+            usage = getattr(chunk, "usage", None)
+            if usage is not None:
+                state["usage"] = usage
+            choices = getattr(chunk, "choices", None) or []
+            if not choices:
+                continue
+            choice = choices[0]
+            finish = getattr(choice, "finish_reason", None)
+            if finish:
+                state["finish_reason"] = finish
+            delta = getattr(choice, "delta", None)
+            if delta is None:
+                continue
+            for tcd in getattr(delta, "tool_calls", None) or []:
+                slot = state["tool_calls"].setdefault(
+                    int(getattr(tcd, "index", 0) or 0), {"id": None, "name": "", "arguments": ""})
+                if getattr(tcd, "id", None):
+                    slot["id"] = tcd.id
+                fn = getattr(tcd, "function", None)
+                if fn is not None:
+                    slot["name"] += getattr(fn, "name", None) or ""
+                    slot["arguments"] += getattr(fn, "arguments", None) or ""
+            piece = getattr(delta, "content", None)
+            if piece:
+                state["text"] += piece
+
+    def _meter_main_call(self, acc: TurnAccumulator, state: dict, *, estimate: bool) -> None:
+        """主模型呼叫計量：有 usage 用 usage；沒有且 `estimate`（逾時）⇒ 估算並記 `llm_usage_estimated`。"""
+        usage = state.get("usage")
+        if usage is not None:
+            turn_pt = int(getattr(usage, "prompt_tokens", 0) or 0)
+            turn_ct = int(getattr(usage, "completion_tokens", 0) or 0)
+            acc._w2_last_main_prompt_tokens = turn_pt
+        elif estimate:
+            # 1 字元 ＝ 1 token，上限 `max_completion_tokens`（寧可高估）；prompt 取本回合上一次主呼叫的值，沒有就 0。
+            turn_ct = min(len(state["text"]), self._max_completion_tokens)
+            turn_pt = int(getattr(acc, "_w2_last_main_prompt_tokens", 0) or 0)
+            acc.violations.append(LLM_USAGE_ESTIMATED)
+        else:
+            turn_pt = turn_ct = 0
         acc.prompt_tokens += turn_pt
         acc.completion_tokens += turn_ct
         # 2.6 前置 security review P2：Runtime 直呼 `chat.completions.create`
@@ -5861,17 +8505,104 @@ class AgentRuntime:
             self._model,
             {"prompt_tokens": turn_pt, "completion_tokens": turn_ct},
         )
-        choice = response.choices[0]
+
+    async def _next_model_message(self, acc: TurnAccumulator, tool_specs: list) -> tuple:
+        """叫一次模型（串流）、計量，回 `(message, cut_short)`（搬自 `_run_model_loop` 迴圈頂端；
+        站內幫手 S3-live 修正 R3 抽出，好讓程式驅動的那一輪不叫模型）。
+
+        W2：串流拼回與非串流同形的 `ChatCompletionMessage`；`cut_short`＝這次輸出被截斷
+        （`finish_reason == "length"`）。呼叫以回合剩餘期限為上限（`asyncio.timeout` ＋ SDK 單次請求 `timeout`），
+        逾時 ⇒ 關閉串流並丟 `_ModelCallDeadline`（`_run_model_loop` 接住走 `budget_exhausted`）。"""
+        # E 片 §4.1-3 (b)：標籤已先完成且是程式出口 ⇒ 不叫主模型（`_run_model_loop` 接 `_DialogActPreempt`）。
+        decide = getattr(acc, "_dialog_act_decide", None)
+        if decide is not None and decide() is not None:
+            acc.violations.append(WF.V_DIALOG_ACT_LATE)
+            raise _DialogActPreempt()
+        acc.llm_calls += 1
+        create_kwargs = dict(
+            model=self._model,
+            messages=acc.messages,
+            tools=tool_specs,
+            parallel_tool_calls=False,
+            response_format=_agent_output_response_format(),
+            max_completion_tokens=self._max_completion_tokens,
+        )
+        if self._reasoning_effort is not None:
+            # openai SDK 1.54（requirements）尚無 `reasoning_effort` 具名參數，走 `extra_body`
+            # 直接進 JSON body（各版本皆收）；⛔ 不升 SDK 換參數名（那是另一個變因）。
+            create_kwargs["extra_body"] = {"reasoning_effort": self._reasoning_effort}
+        # 期限在真正呼叫模型前這一刻算（迴圈頂端的檢查之後還有程式分支會花時間）。
+        remaining = self.budget.deadline_s - (self._clock() - acc.start)
+        if remaining <= 0:
+            raise _ModelCallDeadline()
+        create_kwargs["stream"] = True
+        create_kwargs["stream_options"] = {"include_usage": True}
+        create_kwargs["timeout"] = remaining
+        state: dict = {"stream": None, "text": "", "tool_calls": {}, "finish_reason": None,
+                       "usage": None}
+        # E 片 §4.1-3 (b)：主模型串流與標籤呼叫競速。標籤呼叫完成的回呼（事件迴圈回呼，⛔ 另開 task）在「標籤是
+        # 程式出口」時取消**本 task** 的串流；取消以旗標分流（`acc._dialog_act_preempted`），⛔ 落入
+        # `budget_exhausted`（W2 期限中斷是下面 `asyncio.timeout` 丟 `_ModelCallDeadline`）。
+        label_call = acc.dialog_act_call if decide is not None else None
+        label_cb = None
+        if label_call is not None and not label_call.task.done():
+            main_task = asyncio.current_task()
+
+            def label_cb(_t: "asyncio.Task") -> None:
+                if state.get("finished") or main_task is None or main_task.done():
+                    return
+                if decide() is not None:
+                    acc._dialog_act_preempted = True
+                    main_task.cancel()
+
+            label_call.task.add_done_callback(label_cb)
+        try:
+            # `asyncio.timeout`（3.11，容器 `python:3.11-slim`）而非 `asyncio.wait_for`：後者另開一個 task，
+            # 會讓同回合並行的寫入意圖呼叫（`_WriteIntentCall`）搶在主呼叫之前執行，改變既有的呼叫順序。
+            async with asyncio.timeout(remaining):
+                await self._consume_model_stream(create_kwargs, state)
+        except (TimeoutError, APITimeoutError):
+            if state["stream"] is not None:
+                await _close_stream(state["stream"])
+            self._meter_main_call(acc, state, estimate=True)
+            raise _ModelCallDeadline()
+        except asyncio.CancelledError:
+            if state["stream"] is not None:
+                await _close_stream(state["stream"])
+            if getattr(acc, "_dialog_act_preempted", False):
+                # E 片：標籤搶先 ⇒ 沿用 W2 估算計量（`llm_usage_estimated`），改回程式結果（不是回合被取消）。
+                acc._dialog_act_preempted = False
+                asyncio.current_task().uncancel()
+                self._meter_main_call(acc, state, estimate=True)
+                acc.violations.append(WF.V_DIALOG_ACT_LATE)
+                raise _DialogActPreempt()
+            raise
+        finally:
+            state["finished"] = True
+            if label_cb is not None:
+                label_call.task.remove_done_callback(label_cb)
+        self._meter_main_call(acc, state, estimate=False)
+        truncated = state["finish_reason"] == "length"
         # 被上限截斷 ⇒ 只記旗標；截斷的輸出照既有 SCHEMA 重寫／預算邏輯走，⛔ 不另開出口。
-        if getattr(choice, "finish_reason", None) == "length":
+        if truncated:
             acc.violations.append(LLM_OUTPUT_TRUNCATED)
-        message = choice.message
+        tool_calls = None
+        if state["tool_calls"]:
+            tool_calls = [
+                ChatCompletionMessageToolCall(
+                    id=slot["id"] or "", type="function",
+                    function=_ToolCallFunction(name=slot["name"], arguments=slot["arguments"]),
+                )
+                for _, slot in sorted(state["tool_calls"].items())
+            ]
+        message = ChatCompletionMessage(
+            role="assistant", content=state["text"] or None, tool_calls=tool_calls)
         if self._clean_llm_output and LO.has_reasoning(getattr(message, "content", None)):
             # 推理段在這裡就剝掉：之後 append 進 messages（工具呼叫訊息、四條改寫）與解析的都是
             # 剝除後內容。Bedrock 不收 assistant 的推理欄位（第 0 步 Q3）⇒ 工具呼叫訊息也剝。
             message.content = (LO.final_segment(message.content) or "").strip()
             acc.violations.append(LLM_OUTPUT_REASONING_STRIPPED)
-        return message
+        return message, truncated
 
     def _extract_agent_output(self, content: str) -> Optional[tuple]:
         """`json.loads` 失敗後的擷取（只在 `clean_llm_output=True` 時呼叫）：逐 `{` 解碼，回第一個
@@ -5929,13 +8660,24 @@ class AgentRuntime:
                 acc, identity, agent_state, user_message, document)
             if wd_first is not None:
                 program_message, program_kind = wd_first, "wd"
+            if self._closing_active() and acc.dialog_act_call is not None:
+                # E 片 §4.1-3：標籤的程式決定（(b) 競速用；唯讀）與決定點 (a)。候選按鈕回合沒有使用者文字
+                # （也沒有標籤呼叫）⇒ 不進。
+                acc._dialog_act_decide = lambda: self._dialog_act_decision(
+                    acc, identity, agent_state, user_message)
+                if not self._write_candidate_button_turn(acc):
+                    act_exit = await self._dialog_act_pre_loop(
+                        acc, identity, agent_state, user_message, cache=cache,
+                        program_first=wd_first is not None)
+                    if act_exit is not None:
+                        return act_exit
             reissue_exit = (self._write_draft_reissue_exit(acc, agent_state, user_message)
                             or self._write_draft_card_still_valid_exit(acc, agent_state, user_message)
                             or self._write_draft_submitted_exit(acc, agent_state, user_message))
             if reissue_exit is not None:
                 return reissue_exit
             if program_message is None and self._write_candidate_button_turn(acc):
-                # A-2a（計畫 §4.5）：按鈕選定成立、程式卻沒觸發（期限不足等）⇒ 程式狀態回話結束回合
+                # 按鈕選定成立、程式卻沒觸發（期限不足等）⇒ 程式狀態回話結束回合
                 # （⛔ 呼叫主模型）。
                 return await self._write_reply_program_exit(acc, identity, agent_state, user_message)
         while True:
@@ -5944,13 +8686,24 @@ class AgentRuntime:
 
             wd_program = False
             doc_program = False
+            cut_short = False
             if program_message is not None:
                 message, program_message = program_message, None
                 wd_program = program_kind == "wd"
                 doc_program = program_kind == "doc"
                 program_kind = None
             else:
-                message = await self._next_model_message(acc, tool_specs)
+                try:
+                    message, cut_short = await self._next_model_message(acc, tool_specs)
+                except _ModelCallDeadline:
+                    return _finalize(acc.build_fixed("budget_exhausted", clock=self._clock), is_fixed=True)
+                except _DialogActPreempt:
+                    # E 片 §4.1-3 (b)：標籤搶先 ⇒ 程式出口（⛔ `budget_exhausted`）。
+                    act_exit = self._dialog_act_exit(
+                        acc, identity, agent_state, user_message, cache=cache)
+                    if act_exit is not None:
+                        return act_exit
+                    continue
             tool_calls = list(getattr(message, "tool_calls", None) or [])
 
             if tool_calls:
@@ -6044,7 +8797,7 @@ class AgentRuntime:
                             # tool message；⛔ 建 `ToolResult(error=...)`，`ToolError` 是封閉 Literal）。
                             # r3 AP-7 之後仍走到這裡的：動作不合（`NO_MATCH`，含巢狀內層動作不合）、
                             # 凍結回合（回答提問屬 AI，DSP-091）、本回合已觸發後的第二次提議、期限不足等
-                            # （AP-R10 收窄；計畫 §9.2 (2) 末項）。
+                            # （收窄範圍）。
                             acc.violations.append(WF.V_WRITE_PROPOSAL_NOT_ISSUED)
                             # B 片 B1：寫入情境的非問句回合 ⇒ 本則 tool call 回填完後（`kd3_hand_back`）先過
                             # #9b，再由程式狀態回話結束回合（⛔ 再叫主模型）。問句回合（Q1 乙′）與非寫入情境
@@ -6210,21 +8963,50 @@ class AgentRuntime:
                         )
                         for _field in _applied_carry:
                             acc.violations.append(f"estate_carry_applied:{_field}")
-                    # A-2a（計畫 §4.5）：程式專用選定通道 `program_pick` 的**唯一設定點**——程式依草稿
-                    # 發出（`wd_program`）的 `confirm.request`、且本回合候選集已選定；其餘呼叫一律不帶
-                    # （`ToolRegistry.call` 預設 `None`）。⛔ 讀 `raw_args`／`args.payload`。
+                    # 程式專用選定通道 `program_pick` 的**唯一設定點**——程式依草稿
+                    # 發出（`wd_program`；F12 r6 起含提議轉成的程式呼叫 `proposal_program`）的 `confirm.request`、
+                    # 且本回合候選集已選定；其餘呼叫一律不帶（`ToolRegistry.call` 預設 `None`）。
+                    # ⛔ 讀 `raw_args`／`args.payload`。
                     call_kwargs: dict = {}
-                    if wd_program and name == CONFIRM_TOOL_NAME:
-                        _program_pick = self._write_candidates_program_pick(acc, identity, agent_state)
+                    if (wd_program or proposal_program) and name == CONFIRM_TOOL_NAME:
+                        # F12 r6（§11.4 第 2 點「出卡入口的關口」；V7-2）：程式依草稿發出的兩個入口同一個關口——
+                        # 候選集已撤回且仍綁定 ⇒ 整次改成重列同一份 `ids`（`confirm.request` ⛔ 執行、選對紀錄
+                        # `scope_pick` 帳單解析 ⛔ 做）。
+                        _post = self._write_candidates_post_pick(acc, identity)
+                        if _post is not None and _wc.is_withdrawn(_post):
+                            acc.violations.append(_wc.V_CANDIDATE_RELIST_WITHDRAWN)
+                            _relist_rows = await self._write_candidates_relist_rows(acc, identity)
+                            return self._write_candidates_relist_exit(
+                                acc, identity, agent_state, user_message, _relist_rows)
+                        # F12 r6（V7-2）：提議轉成的程式呼叫在候選集已選定且仍綁定時也帶 `program_pick`（⛔ 重列蓋掉
+                        # 選定）；其餘（未選定、沒有候選集、解綁）⇒ 與改動前相同（不帶）。
+                        _program_pick = (
+                            self._write_candidates_program_pick(acc, identity, agent_state)
+                            if wd_program else self._write_candidates_proposal_pick(acc, identity))
                         if _program_pick is not None:
                             call_kwargs["program_pick"] = _program_pick
+                    # 名稱寬鬆比對脈絡 `name_lenient` 的**唯一設定點**（B2 (3) 另經
+                    # `write_name_candidates`／r4 `missing_name_lenient` 傳）——`confirm.request` 內 (甲) 查無與
+                    # (乙) 缺名稱兩個觸發點共用它。程式依草稿發出（`wd_program`／提議轉成的程式呼叫）的
+                    # `confirm.request`、本回合未帶程式選定、候選集可寫的回合。帶它的呼叫 registry 逾時加長
+                    # `NAME_LENIENT_EXTRA_TOOL_TIMEOUT_S`（內含一次模型呼叫＋一次清單查詢）。
+                    call_timeout_s = self._tool_timeout_s
+                    if ((wd_program or proposal_program) and name == CONFIRM_TOOL_NAME
+                            and "program_pick" not in call_kwargs):
+                        _cp = _payload_of(raw_args)
+                        _nl = self._name_lenient_ctx(
+                            acc, agent_state, document, _cp.get("action") if _cp is not None else None,
+                            identity=identity)
+                        if _nl is not None:
+                            call_kwargs["name_lenient"] = _nl
+                            call_timeout_s = self._tool_timeout_s + NM.NAME_LENIENT_EXTRA_TOOL_TIMEOUT_S
                     call_start = self._clock()
                     try:
                         tool_result = await self.registry.call(
                             identity,
                             name,
                             raw_args,
-                            self._tool_timeout_s,
+                            call_timeout_s,
                             stage=self._stage,
                             readonly_view=self.readonly_view,
                             for_model=True,
@@ -6246,7 +9028,7 @@ class AgentRuntime:
                                 identity,
                                 name,
                                 raw_args,
-                                self._tool_timeout_s,
+                                call_timeout_s,
                                 stage=self._stage,
                                 readonly_view=self.readonly_view,
                                 for_model=True,
@@ -6273,7 +9055,7 @@ class AgentRuntime:
                             _csrc = f"model:{confirm_model_reason}"
                         acc.violations.append(CONFIRM_SOURCE_PREFIX + _csrc)
 
-                    # A-2a（計畫 §4.1；§11 P3-4）：候選形狀只在**程式依草稿發出**的呼叫（`wd_program`／
+                    # 候選形狀只在**程式依草稿發出**的呼叫（`wd_program`／
                     # 提議轉成的程式呼叫）寫候選集、列清單；文件回合、文件暫存回合、點選範圍回合、影子回合、
                     # 模型自呼 ⇒ 換回現行出口（帳單 `select:bill`、其餘缺欄追問）。開關未生效時
                     # `confirm.request` 不回候選形狀，這段不動任何東西。
@@ -6290,8 +9072,11 @@ class AgentRuntime:
                     # 要先追問）：站內幫手 S3（§3h 第 6 點）「缺欄追問失敗不消耗」，使
                     # 「先追問再出卡」仍附得到照片。出卡那一刻另在 `_begin_pending_confirm` 清。
                     # A-2a：列寫入候選（還沒出卡、選定後回原流程出卡）同「先追問」，不消耗。
+                    # F12：「找不到這個名稱」同「先追問」（請使用者重講名稱），不消耗。
+                    name_not_found = (name == CONFIRM_TOOL_NAME and "name_lenient" in call_kwargs
+                                      and is_name_not_found(tool_result) is not None)
                     if (name == CONFIRM_TOOL_NAME and tool_result.error != "INVALID_INPUT"
-                            and not cand_write):
+                            and not cand_write and not name_not_found):
                         AgentSession(agent_state).consume_image_suggestion()
                     # W1（§2.1(5)）：本回合模型**自己**成功呼叫過 `confirm.request` ⇒ 不再程式觸發。
                     # A+ 片 AP-1：三個開關皆 on ⇒ 不再設（模型自呼只是提議）。
@@ -6391,6 +9176,22 @@ class AgentRuntime:
                     # 模型自己寫的追問常含「請提供／需要」，命中 Verifier `assertion_terms`
                     # 被降級成無引用斷言、重寫兩次後轉人。文件回合不走這裡（照舊交模型、
                     # 由文件寫入禁令處理）；清單含詞彙外的值 ⇒ `None` ⇒ 照原路交模型。
+                    # 寬鬆也落空 ⇒ 程式固定句結束回合（只會出現在帶 `name_lenient` 的
+                    # 程式呼叫；排在缺欄追問與查無出口之前——它不帶查無標記、也不是缺欄結果）。
+                    if name_not_found:
+                        nf_turn = self._name_lenient_not_found_exit(
+                            acc, identity, agent_state, user_message, tool_result, document)
+                        if nf_turn is not None:
+                            return nf_turn
+                    if name == CONFIRM_TOOL_NAME and isinstance(tool_result.data, dict) \
+                            and isinstance(tool_result.data.get("missing_fields"), list):
+                        # F12（§4.4；主會話裁第 3 項）：上回合「找不到這個名稱」追問的名稱欄，本回合重問同一欄。
+                        _relabeled = self._name_lenient_reask_labels(
+                            acc, tool_result.data.get("action") or (_payload_of(raw_args) or {}).get("action"),
+                            tool_result.data["missing_fields"])
+                        if _relabeled != tool_result.data["missing_fields"]:
+                            tool_result = tool_result.model_copy(
+                                update={"data": dict(tool_result.data, missing_fields=_relabeled)})
                     missing_ask = (
                         missing_fields_ask_text(tool_result)
                         if name == CONFIRM_TOOL_NAME and document is None else None
@@ -6405,6 +9206,23 @@ class AgentRuntime:
                         # W1b §8.5-1：程式缺欄追問出口是 `asked` 的唯一寫點。
                         self._write_draft_record_asked(
                             acc, identity, agent_state, tool_result, raw_args, document)
+                        # F12 r6-3 (a)：本回合打字改選成立、還沒出卡 ⇒ 追問前加告知固定句（系統正名與編號）；
+                        # dialog 寫不含名稱的程式摘要。其餘回合 `_repick_notice is None` ⇒ 與改動前逐字相同。
+                        _repick_notice = (self._write_candidates_repick_notice(acc)
+                                          if (wd_program or proposal_program) else None)
+                        if _repick_notice is not None:
+                            return self._finish_confirm_turn(
+                                ask_target=WF.ask_target_for_missing(_missing),
+                                agent_state=agent_state, user_message=user_message,
+                                trace_id=acc.trace_id, start=acc.start, kind="ask",
+                                outcome=make_outcome("clarifying", expects="text"),
+                                answer=f"{_repick_notice}\n{missing_ask}",
+                                dialog_answer=f"{_wc.CANDIDATE_REPICK_DIALOG_SUMMARY}\n{missing_ask}",
+                                pending_id=None, tool_calls=acc.tool_call_records,
+                                violations=acc.violations, llm_calls=acc.llm_calls,
+                                prompt_tokens=acc.prompt_tokens,
+                                completion_tokens=acc.completion_tokens,
+                            )
                         return self._finish_confirm_turn(
                             # W1（§2.1(1)）：追問對象由表導出（與改動前逐位相同）。
                             ask_target=WF.ask_target_for_missing(_missing),
@@ -6551,6 +9369,17 @@ class AgentRuntime:
                             # 在待確認筆帶著選定（卡後更正重出卡時帶回）。
                             card_pick=self._write_candidates_card_pick_record(
                                 acc, identity, call_kwargs.get("program_pick")),
+                            # 「選對紀錄」片 §4.3：打字選定不成立的重列、或回合開始就有未選定的候選集而重查後
+                            # 仍多筆 ⇒ 前導句說「依您目前說的仍對到 N 筆」（開關 off 時 exit 不用這個值）。
+                            candidate_reask=bool(
+                                cand_write and acc.write_draft is not None
+                                and (acc.write_draft.reask
+                                     or (acc.write_draft.candidates is not None
+                                         and not acc.write_draft.picked))),
+                            # 填欄擴及首句、卡後、多欄回合（plan-fill-wide-20261028 §4.3 第 8 點）：程式依草稿出卡（卡＝草稿值）
+                            # 且寬回合卡後有欄位被資料段拒收 ⇒ 卡前加點名欄位標籤的固定句（⛔ 帶值）。其餘 ⇒ `None`。
+                            lead=(self._fill_wide_notice(acc.write_draft)
+                                  if wd_program or proposal_program else None),
                         )
                         if confirm_turn is not None:
                             return confirm_turn
@@ -6647,7 +9476,7 @@ class AgentRuntime:
                     if kd3_exit is not None:
                         return kd3_exit
                 if wd_program and self._write_candidate_button_turn(acc):
-                    # A-2a（計畫 §4.5）：按鈕選定回合 ⛔ 呼叫主模型——程式觸發的結果非終結 ⇒ 由程式狀態
+                    # 按鈕選定回合 ⛔ 呼叫主模型——程式觸發的結果非終結 ⇒ 由程式狀態
                     # 回話結束回合（B 片開關 off 時亦同）。
                     return await self._write_reply_program_exit(acc, identity, agent_state, user_message)
                 continue  # 工具結果已回填，回到迴圈頂端再叫一次模型
@@ -6676,6 +9505,12 @@ class AgentRuntime:
                                 "verdict": {"reason": "SCHEMA_PARSE"},
                             }
                         )
+                    if cut_short:
+                        # W2（W-R2／W-R9）：截斷 ⇒ 剩餘期限不足一次正常主呼叫就不重寫；
+                        # 附回的內容一律剝推理段（若有）並去頭尾空白（不論 `clean_llm_output`、有無推理段）。
+                        if (self.budget.deadline_s - (self._clock() - acc.start)) < SCHEMA_REWRITE_MIN_REMAINING_S:
+                            return _finalize(acc.build_fixed("budget_exhausted", clock=self._clock), is_fixed=True)
+                        content = (LO.final_segment(content) or "").strip()
                     acc.counters.rewrites += 1
                     if acc.counters.rewrite_exhausted(self.budget):
                         return _finalize(acc.build_fixed("budget_exhausted", clock=self._clock), is_fixed=True)
@@ -6687,6 +9522,20 @@ class AgentRuntime:
                         }
                     )
                     continue
+
+            # E 片 §4.1-2（E-R4）：開關 on 時，主模型輸出的 `handoff_reason` 不在模型可見值域（含程式專用的
+            # `user_request`）⇒ 視同自報 `no_grounding`，走現行降級閘（決定性，與 Verifier 觀察模式無關）。
+            # off ⇒ 不加這道（與改前相同）。轉人由程式出口決定，主模型自報不是觸發來源。
+            if (self._closing_active() and out.kind == "handoff"
+                    and out.handoff_reason is not None
+                    and out.handoff_reason not in MODEL_VISIBLE_HANDOFF_REASONS):
+                acc.violations.append(WF.V_DIALOG_ACT_REASON_OUT_OF_DOMAIN)
+                out = out.model_copy(update={"handoff_reason": HandoffReason.no_grounding.value})
+            # E 片 §4.1-3 (c)：標籤未完成 ⇒ 至多再等 1 秒；已完成且是程式出口 ⇒ 改回程式結果。
+            act_exit = await self._dialog_act_after_output(
+                acc, identity, agent_state, user_message, cache=cache)
+            if act_exit is not None:
+                return act_exit
 
             # W1（§2.1(5)）插入點：`model_validate` 成功之後、`handoff_dict`／T2／V2／Verifier 之前——
             # 取用意圖判斷呼叫的結果（W1b：在這裡 await）並合併、整句填入，條件成立 ⇒ 程式自己發
@@ -6702,7 +9551,7 @@ class AgentRuntime:
             if reissue_exit is not None:
                 return reissue_exit
 
-            # B 片 B2（計畫 §4.1 逐格表；只看封閉欄位 `kind` 與結構規則 `_is_question`）：寫入情境回合中，
+            # B2：只看封閉欄位 `kind` 與結構規則 `_is_question`）：寫入情境回合中，
             # 非問句回合的任何非 handoff 回覆、問句回合的 `ask`／`recommend`（不論 `ask_target`）⇒ 模型文字
             # 丟棄、程式狀態回話結束回合；問句回合的 `answer` ⇒ 乙′（往下過 Verifier 與 B3，最後由程式
             # 接狀態行）。`handoff` 維持現行（DSP-021 固定句，轉人屬 E 片）。開關 off ⇒ 這段不跑。

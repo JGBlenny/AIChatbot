@@ -562,6 +562,9 @@ class TurnAccumulator:
     #: 本回合沒有發）。`build_trace` 組 trace **之前**一律經它的 `settle_into` 收尾（計量或
     #: 取消＋估算），token 因此進得了本回合的 trace。⛔ 本身不進 trace。
     write_intent_call: Any = None
+    #: E 片（計畫 r5 附錄）：本回合的對話動作標籤呼叫（`runtime._DialogActCall`；`None`＝本回合沒有發）。
+    #: 與 `write_intent_call` 分開、各自收尾（同一條 `settle_into`）。⛔ 本身不進 trace。
+    dialog_act_call: Any = None
 
     @property
     def reserved(self) -> ReservedCallIds:
@@ -617,6 +620,8 @@ class TurnAccumulator:
         """
         if self.write_intent_call is not None:
             self.write_intent_call.settle_into(self)
+        if self.dialog_act_call is not None:
+            self.dialog_act_call.settle_into(self)
         snap = self.snapshot
         return TurnTrace(
             trace_id=self.trace_id,

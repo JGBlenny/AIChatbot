@@ -338,6 +338,9 @@ async def test_bill_id_present_never_touches_resolver(api, monkeypatch):
     的 900001 對這個身分查無 ⇒ 不出卡）——「出卡、hint 空」這組原斷言照舊在
     `AGENT_WRITE_LIFECYCLE=off`（現行）下驗；on 時的預檢由 `test_step3_write_lifecycle_req.py` #9k 驗。"""
     monkeypatch.setenv("AGENT_WRITE_LIFECYCLE", "off")
+    # 「選對紀錄」片 on 時延期卡的核對資料在所有路徑都由 viewer 單筆讀帳單寫入（900001 對這個身分查無 ⇒
+    # 不出卡）；本條鎖改前行為 ⇒ 該片 off 下驗。
+    monkeypatch.setenv("AGENT_PICK_RIGHT", "off")
     called = []
 
     async def _boom(*a, **kw):

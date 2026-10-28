@@ -48,12 +48,21 @@ from tests.unit.agent.test_runtime_req import (
 from tests.unit.agent.test_step3_write_lifecycle_req import (  # noqa: F401 — autouse／fixture 匯入
     REPAIR_TEXT, _env, _RouteVerifier, _World, api,
 )
+from tests.unit.agent.test_closing_handoff_e_req import _turn as _e_turn
 from tests.unit.agent.test_write_draft_flow_req import (
     KEELUNG_ESTATE, STUDENT_ESTATE, _call, _intent, _out, _Provider,
 )
 
 pytestmark = [pytest.mark.unit,
               pytest.mark.req("agentic-mcp-orchestration:plan-division-guard")]
+
+
+@pytest.fixture(autouse=True)
+def _fill_data_text_off(monkeypatch):
+    """填欄只填答覆片（plan-fill-answer-only-20261027）：本檔的假寫入意圖不帶 `data_texts`，驗的是改前行為 ⇒ 釘住
+    `AGENT_FILL_DATA_TEXT=off`（off 與改前逐字相同，FA8 (2)；on 的行為見 test_fill_data_text_req.py）。"""
+    monkeypatch.setenv("AGENT_FILL_DATA_TEXT", "off")
+
 
 RUNTIME_PATH = Path(runtime_mod.__file__)
 AGENT_DIR = RUNTIME_PATH.parent
@@ -344,9 +353,10 @@ async def test_c9_model_field_ask_is_replaced_by_the_program_reply(api, monkeypa
         assert KD4_FIELD_ASK in res.answer
 
 
-def test_kd5_probe_handoff_gate_only_acts_after_the_model_chose_handoff():
-    """KD-5：出口閘 `_apply_handoff_data_exits` 首行 `if result.kind != "handoff": return result`
-    （只在模型選了轉人後介入）；沒有收尾規則（`還有什麼／還有其他／還需要其他` 不在 agent 目錄的程式碼字串）。"""
+async def test_kd5_probe_unfinished_label_leaves_handoff_and_closing_to_the_main_model(api):
+    """KD-5：E 片後剩的偏離——(3) 標籤呼叫未完成的回合，要真人由主模型輸出決定（後備，記 `dialog_act_fallback`）；
+    (2) 知識查無的轉人仍由模型自報，出口閘 `_apply_handoff_data_exits` 只在模型選了轉人後介入。
+    (1) 卡住先詢問、不連發未實作（無程式碼可探）。偏離被修掉 ⇒ 本探針失敗 ⇒ 移出登記並改寫成必過契約。"""
     _anchor_present("KD-5")
     tree = ast.parse((AGENT_DIR / "exit_gates.py").read_text(encoding="utf-8"))
     (fn,) = [n for n in ast.walk(tree)
@@ -354,24 +364,39 @@ def test_kd5_probe_handoff_gate_only_acts_after_the_model_chose_handoff():
     body = [b for b in fn.body if not (isinstance(b, ast.Expr) and isinstance(b.value, ast.Constant))]
     first = ast.unparse(body[0])
     assert "result.kind != 'handoff'" in first and "return result" in first, KD_HINT.format(kd="KD-5")
-    # A-2a（A2-R7）候選清單固定句「還有其他筆，不在其中請講編號」是候選清單的續列提示、
-    # 不是收尾規則 ⇒ 只排除「還有其他筆」這一個寫法（負向前瞻），其餘收尾詞照舊掃。
-    pattern = "還有什麼|還有其他(?!筆)|還需要其他"
-    assert re.search(pattern, "還有其他需要幫忙的嗎") and not re.search(pattern, "還有其他筆，不在其中請講編號。")
+    w = _World()
+    res, _prov, _rt = await _e_turn(w, "我要找真人客服", act="wants_human", label_delay=30.0,
+                                    script=[_out("主模型的回答")])
+    assert WF.V_DIALOG_ACT_FALLBACK in res.trace.violations, KD_HINT.format(kd="KD-5")
+    assert WF.V_DIALOG_ACT_EXIT not in res.trace.violations and res.answer == "主模型的回答"
 
-    def string_constants(path: Path) -> list:
-        tree = ast.parse(path.read_text(encoding="utf-8"))
-        docs = set()
-        for n in ast.walk(tree):
-            if isinstance(n, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
-                if n.body and isinstance(n.body[0], ast.Expr) and isinstance(n.body[0].value, ast.Constant):
-                    docs.add(id(n.body[0].value))
-        return [n.value for n in ast.walk(tree)
-                if isinstance(n, ast.Constant) and isinstance(n.value, str) and id(n) not in docs]
 
-    all_consts = [c for path in AGENT_DIR.glob("*.py") for c in string_constants(path)]
-    assert any("確認" in c for c in all_consts), "掃描法壞了（正對照：已知必然存在的字串沒中）"
-    assert not [c for c in all_consts if re.search(pattern, c)], KD_HINT.format(kd="KD-5")
+async def test_c10_wants_human_label_is_a_program_handoff(api):
+    """E-R1（必過契約）：AI 標「要真人」⇒ `kind=handoff`、`outcome.state=handoff`、`handoff.reason=user_request`、
+    回覆為程式樣板 `USER_REQUEST_HANDOFF_TEXT`（不經先詢問、不降成追問）；主模型輸出不是來源。"""
+    w = _World()
+    res, _prov, _rt = await _e_turn(w, "我要找真人客服", act="wants_human", script=[_out("主模型的回答")])
+    assert res.kind == "handoff" and res.outcome["state"] == "handoff"
+    assert res.answer == WF.USER_REQUEST_HANDOFF_TEXT and res.handoff["reason"] == "user_request"
+    assert "主模型的回答" not in res.answer
+    # 正對照：同一句換標籤 `none` ⇒ 不是程式轉人（證明上面的結果來自標籤）
+    w2 = _World()
+    res2, _prov, _rt = await _e_turn(w2, "我要找真人客服", act="none", script=[_out("主模型的回答")])
+    assert WF.V_DIALOG_ACT_EXIT not in res2.trace.violations and "主模型的回答" in res2.answer
+
+
+async def test_c11_resolved_label_without_pending_is_a_program_closing(api):
+    """E-R2（必過契約）：AI 標「已解決」且無未決狀態 ⇒ `kind=answer`、`outcome.state=answered`、回覆為
+    `CLOSING_TEXT`；⛔ 轉人。正對照：有未決確認卡 ⇒ 不收尾（E-R3），卡仍在。"""
+    w = _World()
+    res, _prov, _rt = await _e_turn(w, "好的，謝謝", act="resolved", script=[_out("主模型的回答")])
+    assert res.kind == "answer" and res.handoff is None and res.outcome["state"] == "answered"
+    assert res.answer == WF.CLOSING_TEXT
+    w2 = _World()
+    _r, pid = await w2.repair_card()
+    res2, _prov, _rt = await _e_turn(w2, "好的，謝謝", act="resolved", script=[_out("主模型的回答")])
+    assert res2.answer != WF.CLOSING_TEXT and WF.V_DIALOG_ACT_EXIT not in res2.trace.violations
+    assert w2.pending()[pid].get("receipt") is None
 
 
 def test_kd6_probe_no_program_exit_for_empty_knowledge():

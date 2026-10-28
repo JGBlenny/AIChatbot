@@ -53,7 +53,9 @@ from services.agent.provenance_units import (  # 葉模組：切句與 refs 解�
     split_sentences,
 )
 from services.agent.tools.registry import ToolResult
-from services.presales_gate import FactClass, HANDOFF_WORDS, HandoffReason, SENSITIVE, scan_handoff_mentions
+from services.presales_gate import (
+    FactClass, HANDOFF_WORDS, MODEL_VISIBLE_HANDOFF_REASONS, SENSITIVE, scan_handoff_mentions,
+)
 
 #: U3／W9-11：`verify(audience=)` 的**封閉值域**——直接讀 `identity.Audience`
 #: 那份 `Literal`，⛔ 不在本檔另抄一份字串集合。值域外的字串一律視同缺值
@@ -571,15 +573,15 @@ class OutputVerifier:
             return _pass()
         fact_class = FactClass(out.fact_class)
         # DSP-021：`kind=handoff` 是敏感五類**應走**的出口——fact_class ∈ SENSITIVE 在
-        # 這裡是正確標記，⛔ 不拒；`handoff_reason` 必須在 `HandoffReason` 值域內
-        # （模型曾回自由文字「敏感主題」）。模型的 `answer` 文字不會到使用者手上
+        # 這裡是正確標記，⛔ 不拒；`handoff_reason` 必須在**模型可見**的 `HandoffReason` 值域內
+        # （`MODEL_VISIBLE_HANDOFF_REASONS`；E 片的程式專用值 `user_request` 排除；模型曾回自由文字「敏感主題」）。模型的 `answer` 文字不會到使用者手上
         # （Runtime 換成 `effective_handoff_message` 固定句），故 ②～⑦ 不對它跑。
         # 影子 2026-09-05：模型正確改轉人卻因逐句標籤留空被 ② 判 SCHEMA、
         # 兩拒耗盡 ⇒ 每個敏感題都多花兩次模型呼叫、reason 誤記 budget_exhausted。
         # DSP-028：handoff 時 `sentences` **允許留空**（也允許是模型自己寫的捏造文字）
         # ——那段文字不會到使用者手上，②(a) 的空陣列 SCHEMA 因此只對非 handoff 生效。
         if out.kind == "handoff":
-            if out.handoff_reason not in {r.value for r in HandoffReason}:
+            if out.handoff_reason not in MODEL_VISIBLE_HANDOFF_REASONS:
                 hit = _hit(VerifierVerdict(
                     ok=False, reason="SCHEMA", schema_cause="handoff_reason_invalid"))
                 if hit is not None:

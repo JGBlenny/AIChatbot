@@ -63,6 +63,14 @@ from tests.unit.agent.test_runtime_confirm_segment_req import (
 
 pytestmark = pytest.mark.unit
 
+
+@pytest.fixture(autouse=True)
+def _pick_right_off(monkeypatch):
+    """「選對紀錄」片 on 時延期卡在 render 之前以 viewer 單筆讀帳單寫系統核對資料（本檔替身無 JGB 帳單 ⇒
+    查無）；本檔驗的是日期閘，在該片 off 下驗（on 的卡由 test_pick_right_record_req 驗）。"""
+    monkeypatch.setenv("AGENT_PICK_RIGHT", "off")
+
+
 _REQ = "agentic-mcp-orchestration:R4.2"
 
 #: 本檔的固定「今天」。⛔ 不用 `date.today()`——測試自己讀時鐘，就沒有東西在驗時鐘。

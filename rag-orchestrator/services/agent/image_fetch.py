@@ -43,7 +43,7 @@ from services.agent.limits import LIMITS
 # 常數與旋鈕
 # ════════════════════════════════════════════════════════════════════
 #: 允許抓檔的主機（**等值**比對）。unit 釘住這個預設值——放寬白名單是
-#: 「停下交裁」的事（Plan §6 W8 (2) 停止條件），⛔ 不由改碼的人自己決定。
+#: 「停下交裁」的事，⛔ 不由改碼的人自己決定。
 DEFAULT_IMAGE_URL_ALLOWLIST: tuple = ("relay.jgbsmart.com",)
 
 _IMAGE_URL_ALLOWLIST_ENV = "IMAGE_URL_ALLOWLIST"
@@ -51,19 +51,19 @@ _IMAGE_URL_ALLOWLIST_ENV = "IMAGE_URL_ALLOWLIST"
 #: 單張照片的 bytes 硬上限（5,000,000）。⚠️ 不是 5 MiB——契約寫的是十進位。
 IMAGE_MAX_BYTES = 5_000_000
 
-#: 一回合最多幾張（第 11 張起整回合 `INVALID_INPUT`，業主 2026-09-08 裁）。
+#: 一回合最多幾張（第 11 張起整回合 `INVALID_INPUT`）。
 IMAGE_MAX_COUNT = 10
 
-# ── W9 U1：文件線（`file_urls`）的量級常數 ──────────────────────────
+# ── 文件線（`file_urls`）的量級常數 ──────────────────────────
 # ⚠️ **同一條抓檔路徑、不同的量級旋鈕**：文件走的是 `fetch_image(max_bytes=…)`
-#    這一支（W9-5：⛔ 不得新增第二支抓檔函式——第二支就是第二套閘門，而第二套
+#    這一支（⛔ 不得新增第二支抓檔函式——第二支就是第二套閘門，而第二套
 #    永遠會少一道）。下面四個常數是「文件比照片多出來的那幾個上限」。
-#: 單份 PDF 的 bytes 硬上限（與照片同值 5,000,000，W9-7）。
+#: 單份 PDF 的 bytes 硬上限（與照片同值 5,000,000）。
 FILE_MAX_BYTES = 5_000_000
 
 #: 一回合最多幾份檔（demo ≤1；第 2 份起整回合 `INVALID_INPUT`）。
 #: ⛔ 不寫進 `AGENT_TURN_SPEC` 的 `maxItems`——`registry._validate_value` 不認它
-#:    （S9-5／W9-18：寫了等於掛一張看起來有守、實際靜默無效的牌）。
+#:    （寫了等於掛一張看起來有守、實際靜默無效的牌）。
 FILE_MAX_COUNT = 1
 
 #: 每小時每 `(api_key_id, vendor_id)` 的份數上限——DSP-045 封閉表

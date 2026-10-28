@@ -19,7 +19,7 @@
 
 ## ⛔ 憑證面
 demo 只走替身 transport（`USE_MOCK_JGB_API=true`）。真 `agent/v1` 的簽章 client
-與憑證儲存／輪替 **不在本契約**（Plan §2 非目標，S-3 DEFER）。
+與憑證儲存／輪替 **不在本契約**。
 
 ## `emergency_status` 是已知地雷
 `1＝非緊急、2＝緊急`（jgb2 DB 真值，⛔ 不可望文生義）。本檔不自己對照，
@@ -155,7 +155,7 @@ REPAIR_CREATE_SPEC: ToolSpec = _action_spec(
     "estate_name 與 description 必填（description 可為空字串），其餘兩欄缺值由系統補。",
 )
 
-#: S2（§3f 1／2；jgb2-req#19～#21）。⚠️ 三支共用的紀律逐字寫進 description：
+#: S2（jgb2-req#19～#21）。⚠️ 三支共用的紀律逐字寫進 description：
 #: payload 只能有列出的欄位（多一個鍵、或任何身分／團隊／歸屬欄位 ⇒ 不出卡）；
 #: 使用者沒講的選填欄位**不要填**（系統不補值、卡上也不會出現）。
 _CLOSED_COMMON: Final[str] = (
@@ -368,7 +368,7 @@ async def bill_due_extend(identity: Identity, args: dict) -> ToolResult:
         # 「帳單不存在或無權存取」），⛔ 不細分成可探測的預言機。
         return _no_match()
 
-    # 站內幫手 S5（F5／S5-8，jgb2-req#23 擴及 PATCH）：寫入 body 帶登入身分（只取 identity）。
+    # 站內幫手 S5（jgb2-req#23 擴及 PATCH）：寫入 body 帶登入身分（只取 identity）。
     resp = await api.agent_patch_bill_due_date(
         bill_id, after_iso, idempotency_key=args.get("confirmation_token"),
         role_id=role_id, user_id=user_id,
@@ -454,7 +454,7 @@ async def repair_create(identity: Identity, args: dict) -> ToolResult:
     順序固定：形狀 → **範圍讀**（物件名稱查得到、分類名稱在分類樹裡）→ 寫。
     兩個名稱任一解不出唯一結果 ⇒ `NO_MATCH`／`INVALID_INPUT`，⛔ 不挑一個最像的。
 
-    **允許父節點分類＋空描述**（Plan W4 驗收、line-bot 線③ Q）：分類樹涵蓋不到時
+    **允許父節點分類＋空描述**：分類樹涵蓋不到時
     退回大類、描述留空，照樣開得成單。
     """
     payload = _validated_payload(REPAIR_CREATE_ACTION, args)
@@ -476,9 +476,9 @@ async def repair_create(identity: Identity, args: dict) -> ToolResult:
 
     api = jgb2_tools._get_api()
 
-    # 站內幫手 S5（A3(a)、S5-8）：物件以**這位成員看得到的**範圍解析（`viewer_user_id`）
+    # 站內幫手 S5：物件以**這位成員看得到的**範圍解析（`viewer_user_id`）
     # ——看不到的物件與不存在同樣 `NO_MATCH`，⛔ 寫入別人看不到的物件。
-    # A-2a（計畫 §4.5 (iv)、§11 P1-1）：卡 payload 有 `estate_id`（只會是出卡前程式依選定寫入、
+    # A-2a：卡 payload 有 `estate_id`（只會是出卡前程式依選定寫入、
     # 已綁進雜湊並印在卡上的那一筆；模型自帶的出卡前即丟）⇒ 只依編號確認仍看得到
     # （`_visible_estate_by_id`，看不到 ⇒ `NO_MATCH`），⛔ 依名稱重解；沒有 ⇒ 現行名稱解析。
     if "estate_id" in payload:
@@ -545,7 +545,7 @@ async def repair_create(identity: Identity, args: dict) -> ToolResult:
 
 
 # ---------------------------------------------------------------------------
-# S2（§3f 1d／3）：帶 viewer 的物件／合約讀取——出卡端解析、兌現端確認共用
+# S2：帶 viewer 的物件／合約讀取——出卡端解析、兌現端確認共用
 #
 # ⚠️ 兩端用**同一條讀取路徑**（同一支 API、同一組身分參數），差別只在：
 #    出卡端（`tools/confirm.py`）依**名稱或編號**解析成唯一一筆，並把編號寫進 payload；
@@ -562,7 +562,7 @@ def _real_rows(rows: list) -> list:
 async def _viewer_estate_rows(api, role_id: str, user_id: str, ref: str) -> list:
     """物件名稱或編號 → 這位成員看得到的候選列（與 `repair_create` 同一支 API，另帶 viewer）。
 
-    站內幫手 S5（S5-1）：上游「沒查成」⇒ `jgb2.UpstreamFailure`（⛔ 折成空列——空列會被
+    站內幫手 S5：上游「沒查成」⇒ `jgb2.UpstreamFailure`（⛔ 折成空列——空列會被
     出卡端講成「查不到」）；查無（含 403／404）⇒ 空列。
     """
     return _real_rows(jgb2_tools._rows_checked(
@@ -596,7 +596,7 @@ async def _viewer_contract_rows(api, role_id: str, user_id: str, *,
     if keyword is not None:
         kwargs["keyword"] = keyword
     resp = await api.get_contracts(**kwargs)
-    # S5（S5-1）：沒查成 ⇒ `jgb2.UpstreamFailure`（同 `_viewer_estate_rows`）。
+    # S5：沒查成 ⇒ `jgb2.UpstreamFailure`（同 `_viewer_estate_rows`）。
     rows = [r for r in jgb2_tools._rows_checked(resp) if isinstance(r, dict)]
     pagination = (resp or {}).get("pagination") if isinstance(resp, dict) else None
     has_more = bool(isinstance(pagination, dict) and pagination.get("has_more"))
@@ -658,7 +658,7 @@ async def estate_create(identity: Identity, args: dict) -> ToolResult:
 async def contract_create(identity: Identity, args: dict) -> ToolResult:
     """依 payload 建立合約。順序：形狀 → **寫前先讀**（payload 內的 `estate_id`）→ 寫。
 
-    ⚠️ 物件編號是出卡端解析後寫進 payload、納入雜湊的那一個（§3f 1d）——
+    ⚠️ 物件編號是出卡端解析後寫進 payload、納入雜湊的那一個——
     這裡只確認它仍屬本團隊且這位成員看得到，否則 `NO_MATCH`；⛔ 不依名稱重新解析。
     """
     payload = _validated_payload(CONTRACT_CREATE_ACTION, args)

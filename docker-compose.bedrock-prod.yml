@@ -1,0 +1,37 @@
+# docker-compose.bedrock-prod.yml — 正式機 rag-orchestrator 的對話改走 Amazon Bedrock gpt-oss（覆寫檔）
+#
+# 用途：DSP-121——正式機 chatai.jgbsmart.com 給測試人員在展示團隊驗證，對話模型用 gpt-oss。
+#       只換對話模型；照片辨識、文件抽取、健康檢查的 OpenAI 呼叫不受影響（對話端點與金鑰成對、
+#       與 OPENAI_BASE_URL 互斥，見 rag-orchestrator/services/llm_provider.py `build_agent_provider_from_env`）。
+#       LINE OA 與站內幫手同一個容器，一起換（DSP-121，業主接受）。
+#       與 docker-compose.bedrock-local.yml 的差別：⛔ 寫死 mock JGB、⛔ 覆寫 agent 開關與預算
+#       （這些照正式機 .env），金鑰檔路徑改正式機主機路徑。
+#
+# ⚠️ 金鑰：DSP-090 定 AWS Bedrock 長期金鑰 ⛔ 用於正式機；DSP-121 業主決定正式機金鑰自行處理。
+#    本檔**不含任何金鑰值**——金鑰以 Compose secret 掛成檔案（容器內 /run/secrets/agent_llm_api_key），
+#    程式讀 AGENT_LLM_API_KEY_FILE 指的路徑，⛔ 放環境變數。金鑰檔單行、權限 600，
+#    ⛔ 放進 repo 目錄（/home/ec2-user/AIChatbot）。檔不存在 ⇒ compose 啟動即報錯。
+#
+# 啟動（業主手跑，伺服器只有 docker-compose 二進位）：
+#   docker-compose -f docker-compose.prod.yml -f docker-compose.bedrock-prod.yml up -d --build --no-deps rag-orchestrator
+#   ⚠️ 之後每次重建都要帶本覆寫檔；不帶 ⇒ 對話退回 .env 的 AGENT_MODEL（gpt-6-luna）。
+#
+# 撤銷／輪替（金鑰只在容器啟動時讀一次）：換掉 secrets.agent_llm_api_key.file 指向的檔，再
+#   docker-compose -f docker-compose.prod.yml -f docker-compose.bedrock-prod.yml up -d --force-recreate --no-deps rag-orchestrator
+#
+# 回到 gpt-6-luna：不帶本覆寫檔重建即可（docker-compose.prod.yml 與 .env 不改）。
+
+services:
+  rag-orchestrator:
+    environment:
+      AGENT_MODEL: openai.gpt-oss-120b-1:0
+      # gpt-oss 最低 low；none 回 400
+      AGENT_REASONING_EFFORT: low
+      AGENT_LLM_BASE_URL: https://bedrock-runtime.ap-northeast-1.amazonaws.com/openai/v1
+      AGENT_LLM_API_KEY_FILE: /run/secrets/agent_llm_api_key
+    secrets:
+      - agent_llm_api_key
+
+secrets:
+  agent_llm_api_key:
+    file: /home/ec2-user/.config/aichatbot/bedrock-api-key

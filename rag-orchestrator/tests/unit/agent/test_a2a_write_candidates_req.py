@@ -50,6 +50,29 @@ from tests.unit.agent.token_db_double import FakeTokenDB
 pytestmark = [pytest.mark.unit,
               pytest.mark.req("agentic-mcp-orchestration:plan-a2a-write-candidates-20261020")]
 
+
+@pytest.fixture(autouse=True)
+def _fill_data_text_off(monkeypatch):
+    """填欄只填答覆片（plan-fill-answer-only-20261027）：本檔的假寫入意圖不帶 `data_texts`，驗的是改前行為 ⇒ 釘住
+    `AGENT_FILL_DATA_TEXT=off`（off 與改前逐字相同，FA8 (2)；on 的行為見 test_fill_data_text_req.py）。"""
+    monkeypatch.setenv("AGENT_FILL_DATA_TEXT", "off")
+
+
+@pytest.fixture
+def closing_handoff_off(monkeypatch):
+    """E 片：這類「送出內容與改前逐字相同」的測試釘住 `AGENT_CLOSING_HANDOFF=off`（E 片 on 的行為見 test_closing_handoff_e_req.py）。"""
+    monkeypatch.setenv("AGENT_CLOSING_HANDOFF", "off")
+
+
+
+@pytest.fixture(autouse=True)
+def _pick_right_off(monkeypatch):
+    """「選對紀錄」片（plan-pick-right-record-20261021，`AGENT_PICK_RIGHT` 預設 on）：本檔鎖 A-2a 現行行為，
+    一律在 off 下跑——同時就是「off ⇒ 與 A-2a 逐位相同」的等價測試（on 的行為由
+    `test_pick_right_record_req.py` 驗）。"""
+    monkeypatch.setenv(WF.PICK_RIGHT_ENV, "off")
+
+
 RUNTIME_PATH = Path(runtime_mod.__file__)
 
 MANY_CONTRACT = "合成展示合约".replace("约", "約")          # 990101／990102
@@ -681,8 +704,11 @@ async def test_v5_program_pick_is_only_set_at_the_wd_program_call_site(api):
     text = RUNTIME_PATH.read_text(encoding="utf-8")
     sites = [m.start() for m in re.finditer(r'call_kwargs\["program_pick"\]', text)]
     assert len(sites) == 1
-    guard = text.rfind("if wd_program and name == CONFIRM_TOOL_NAME:", 0, sites[0])
-    assert guard != -1 and sites[0] - guard < 300
+    # F12 r6（計畫 §11.4 第 2 點、§11.13 V7-2）：設定點仍唯一，守門改為程式依草稿發出的兩個入口
+    # （`wd_program`／`proposal_program`）——已選定時提議轉成的程式呼叫也帶（`_write_candidates_proposal_pick`）。
+    guard = text.rfind("if (wd_program or proposal_program) and name == CONFIRM_TOOL_NAME:", 0, sites[0])
+    assert guard != -1 and sites[0] - guard < 1600
+    assert text.rfind("if wd_program and name == CONFIRM_TOOL_NAME:", guard, sites[0]) == -1
     assert len(re.findall(r"program_pick=", text)) == 0                     # 只經 `**call_kwargs`
 
 
@@ -1347,6 +1373,7 @@ async def test_fix2_intent_call_unusable_never_carries(api, case):
     assert res.trace.pending_id in (None, pid1)                                # ⛔ 新卡
 
 
+@pytest.mark.usefixtures("closing_handoff_off")
 async def test_fix2_schema_and_prompt_carry_the_field_only_on_carry_possible_turns(api):
     """fix2 (e)：`record_rechoice` 只在「卡後可帶回」的回合出現且必填（封閉值 same／other、⛔ 任何編號）；
     列候選回合、打字選定回合（附 `pick_id`）、無選定的卡後更正回合 ⇒ 系統句與 schema 與修正前**逐字相同**。"""
@@ -1419,6 +1446,7 @@ def test_fix2_builders_are_byte_identical_without_a_rechoice_type():
     assert WF.intent_record_rechoice({}) is None and WF.intent_record_rechoice("same") is None
 
 
+@pytest.mark.usefixtures("closing_handoff_off")
 async def test_fix2_switch_off_never_adds_the_field(api, monkeypatch):
     """fix2 (f)（A2-R12）：開關 on 時選定出卡，之後 `AGENT_WRITE_CANDIDATES=off` ⇒ 更正回合的意圖判斷呼叫
     系統句與 schema 與修正前逐字相同（⛔ `record_rechoice`）、無帶回判定標記。"""

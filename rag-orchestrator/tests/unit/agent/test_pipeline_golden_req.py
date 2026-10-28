@@ -70,6 +70,12 @@ from tests.unit.agent.test_runtime_req import (
 
 pytestmark = pytest.mark.unit
 
+@pytest.fixture
+def closing_handoff_off(monkeypatch):
+    """E 片：這類「送出內容與改前逐字相同」的測試釘住 `AGENT_CLOSING_HANDOFF=off`（E 片 on 的行為見 test_closing_handoff_e_req.py）。"""
+    monkeypatch.setenv("AGENT_CLOSING_HANDOFF", "off")
+
+
 from datetime import date as _date  # noqa: E402  — 見 `_determinism`
 
 from services.agent import confirm_card as _confirm_card  # noqa: E402
@@ -107,6 +113,8 @@ def _determinism(monkeypatch):
     # 改前行為；golden 在 off 下逐位比對（同上 W1 慣例；off 逐位不變即本片「off＝改前」的證據之一）。
     monkeypatch.setenv("AGENT_WRITE_REPLY_PROGRAM", "off")
     monkeypatch.setenv("AGENT_STATE_CLAIM_GATE", "off")
+    # 「選對紀錄」片（plan-pick-right-record-20261021）：golden 情境開關固定 off（off ＝ A-2a 現行，逐位比對）。
+    monkeypatch.setenv("AGENT_PICK_RIGHT", "off")
     monkeypatch.setattr(runtime_mod, "new_nonce", lambda: FIXED_NONCE)
     monkeypatch.setattr(_uuid_mod, "uuid4", lambda: _uuid_mod.UUID(hex=FIXED_TRACE_ID))
     monkeypatch.setattr(_bills, "_today", lambda: FROZEN_TODAY)
@@ -718,6 +726,7 @@ async def test_regen_golden(capsys):
 
 @pytest.mark.req(_REQ)
 @pytest.mark.skipif(REGEN, reason="[gate] regen 模式不比對")
+@pytest.mark.usefixtures("closing_handoff_off")
 async def test_golden_matches_fixture():
     """整理前後逐位相同——本檔的**唯一收案條件**。"""
     assert GOLDEN_PATH.exists(), (

@@ -183,22 +183,26 @@ class JGBSystemAPI:
         viewer_user_id: Optional[str] = None,
         keyword: Optional[str] = None,
         bill_id: Optional[Any] = None,
+        page: Optional[Any] = None,
         **kwargs,
     ) -> dict[str, Any]:
         """查詢帳單列表。
+
+        `page`：jgb2 `/bills` 的分頁參數顯式轉發（不轉發會被 `**kwargs`
+        吞掉）；非空才放進 params（未帶 ⇒ 不影響 params）。
 
         授權形態：
           - 租客情境（既有）：role_id + user_id（身分保護，缺一降級）；
           - b2b per-contract / per-bill：role_id + contract_ids 或 bill_ref——
             與 get_contracts 相同以 role_id 為授權主體，不需 user_id。
 
-        `viewer_user_id`（agentic-mcp-orchestration 任務 1.5）：jgb2 端 `viewer_user_id`
-        圈定顯式轉發（原被 `**kwargs` 吞掉、從未送達 API）；非空才放進 params，
+        `viewer_user_id`：jgb2 端 `viewer_user_id`
+        圈定顯式轉發（不轉發會被 `**kwargs` 吞掉、送不到 API）；非空才放進 params，
         照 `get_bill_visibility` 先例。⚠️ mock 對本參數保留 `UnsupportedMockParameterError`
         大聲失敗（`services/jgb/transport.py:_bills_index`）——這是刻意設計，不得放寬。
 
-        `bill_id`（站內幫手第 3 步 A0 RC1）：jgb2 `/bills` 的單筆過濾（`BillApiController`
-        `filled('bill_id')`）顯式轉發（原被 `**kwargs` 吞掉）；非空才放進 params，照
+        `bill_id`：jgb2 `/bills` 的單筆過濾（`BillApiController`
+        `filled('bill_id')`）顯式轉發（不轉發會被 `**kwargs` 吞掉）；非空才放進 params，照
         `viewer_user_id` 先例。與 `viewer_user_id` 併用＝「這位成員看得到的這一張」單筆探測，
         ⛔ 依賴列表第一頁（預設 50 筆）。
 
@@ -242,12 +246,11 @@ class JGBSystemAPI:
                     return {"success": True, "data": []}
                 contract_ids = rows[0].get("id")
             except Exception as e:
-                # 站內幫手 S5（F8／S5-17）：log 只印例外類別（⛔ `{e}`：訊息可能帶完整
+                # log 只印例外類別（⛔ `{e}`：訊息可能帶完整
                 # query 或識別碼）。
-                # ⚠️ 計畫 §3i 第 2 點另要求「例外改回 `success:false`」（沒查成 ⛔ 講成查無），
-                #    但既有測試 `tests/unit/conversational/test_bill_ref_adapter_req.py::
-                #    test_resolution_failure_returns_empty_not_raise` 釘住 `success:true`＋空列，
-                #    該檔不在 S5 限定改法內 ⇒ 回傳形狀暫不改、已列回報交主 session 裁。
+                # ⚠️ 例外回 `success:true`＋空列（`tests/unit/conversational/test_bill_ref_adapter_req.py::
+                #    test_resolution_failure_returns_empty_not_raise` 釘住這個形狀），上層分不出「沒查成」
+                #    與「查無」；改回 `success:false` 要連同該測試一起改。
                 logger.warning("bill_ref 識別解析失敗（回空列降級）：%s", type(e).__name__)
                 return {"success": True, "data": []}
 
@@ -256,7 +259,7 @@ class JGBSystemAPI:
             params["user_id"] = user_id
         if contract_ids:
             # ⚠️ /bills 的合約過濾參數是 contract_id（單數）——複數會被上游無視、
-            #    整個 role 帳單全回（帳單診斷 e2e 實測 50 筆電錶儲值蓋台）。
+            #    整個 role 帳單全回。
             params["contract_id"] = contract_ids
         if month:
             params["month"] = month
@@ -268,6 +271,8 @@ class JGBSystemAPI:
             params["bill_id"] = bill_id
         if keyword not in (None, ""):
             params["keyword"] = str(keyword)
+        if page not in (None, ""):
+            params["page"] = page
         resp = await self._request("/api/external/v1/bills", params)
         # client 端防衛過濾（上游再無視參數也擋得住；沿 get_contracts 過濾先例）：
         # 只在列上帶 contract_id 時啟動，舊形狀列不受影響。
@@ -314,6 +319,7 @@ class JGBSystemAPI:
         keyword: str = None,
         status: Optional[str] = None,
         viewer_user_id: Optional[str] = None,
+        per_page: Optional[int] = None,
         **kwargs,
     ) -> dict[str, Any]:
         """查詢合約狀態總覽
@@ -322,6 +328,9 @@ class JGBSystemAPI:
         顯式轉發（原被 `**kwargs` 吞掉）；非空才放進 params。目前 mock
         `_contracts_index` 未對此參數設防（不 raise、單純忽略）——圈定語義
         本機不可驗，只驗轉發，真圈定效果留 M3 後線上 e2e（domain 映射表）。
+
+        `per_page`：選用；**不帶＝不影響 params**（JGB 預設 50，
+        `ContractApiController::DEFAULT_PER_PAGE`）。只有名稱寬鬆比對的清單查詢傳 200。
         """
         if not role_id:
             return self._degraded_response()
@@ -336,11 +345,13 @@ class JGBSystemAPI:
             params["keyword"] = keyword
         if viewer_user_id:
             params["viewer_user_id"] = viewer_user_id
+        if per_page is not None:
+            params["per_page"] = per_page
         result = await self._request(
             "/api/external/v1/contracts/status-overview", params
         )
 
-        # 查無 fallback（多輪回測 run295/296 逼出）：合約 title 格式不一致——
+        # 查無 fallback：合約 title 格式不一致——
         # 「重慶北137-503」（無前綴）與「台北大同-重慶北5-304」（帶前綴）並存，
         # 業者用物件全名查 → server LIKE 恆查無。沿 get_meters 先例：
         # 以最長 token 重查放寬命中面，client 端全 token 去分隔符 AND 過濾。
@@ -503,7 +514,7 @@ class JGBSystemAPI:
     ) -> dict[str, Any]:
         """取得修繕分類樹。
 
-        站內幫手 S5（A3(a)、S5-9：**無豁免**）：`role_id`／`viewer_user_id` 非空才放進
+        站內幫手 S5（**無豁免**）：`role_id`／`viewer_user_id` 非空才放進
         params——分類樹本身不分業者，但「每一筆 jgb2 呼叫都帶 role＋viewer」不為它開例外
         （替身接受並忽略）。舊呼叫端不帶 ⇒ 參數照舊為空。
         """
@@ -594,10 +605,10 @@ class JGBSystemAPI:
         日期，位移在下游重算一次就多一個「算出不同結果」的機會。
 
         ⚠️ **demo 期只有替身 transport 走得通**（`USE_MOCK_JGB_API=true`）；
-        真 `agent/v1` 的簽章 client 與憑證不在本切片（Plan §2 非目標／S-3 DEFER）。
+        真 `agent/v1` 的簽章 client 與憑證不在本切片。
         """
         data: dict[str, Any] = {"due_date": date_expire}
-        # 站內幫手 S5（F5／S5-8，jgb2-req#23 擴及 PATCH）：寫入 body 帶登入身分
+        # 站內幫手 S5（jgb2-req#23 擴及 PATCH）：寫入 body 帶登入身分
         # （`role_id`＋`user_id`），由 JGB 驗能力與資源歸屬。非空才放（舊呼叫端不變）。
         if role_id:
             data["role_id"] = role_id
@@ -608,7 +619,7 @@ class JGBSystemAPI:
         return await self._patch_request(f"/agent/v1/bills/{bill_id}", data)
 
     # ------------------------------------------------------------------
-    # 站內幫手 S0（plan-assistant-11-items-20261014）——contract: proposed
+    # 站內幫手 S0——contract: proposed
     #
     # ⚠️ 以下 6 支對應 jgb2-api-requests.md #16～#21（#22 為上方 `create_repair` 的擴充）。
     # JGB 尚未實作這些端點：mock 模式走 `JGBMockTransport` 的提案替身；**非 mock 模式一律
@@ -748,10 +759,7 @@ class JGBSystemAPI:
     ) -> dict[str, Any]:
         """查詢某張帳單的付款紀錄與金流日誌（`GET /payment-logs`）。
 
-        **2026-08-25 盤查修正**：
-
-        * production **要求 `role_id` 與 `bill_id` 皆必填**（缺任一即 400）。舊版允許
-          只帶 role_id／payment_id ⇒ 線上必然 400，mock 卻回得漂亮。改為缺 bill_id
+        * production **要求 `role_id` 與 `bill_id` 皆必填**（缺任一即 400）。缺 bill_id
           即降級，不發那個注定失敗的請求。
         * `payment_id`／`transaction_id` **production 完全不讀**（controller 只取
           role_id 與 bill_id）。保留簽名以相容既有呼叫端，但**不再送出**。
@@ -873,7 +881,7 @@ class JGBSystemAPI:
         raw = await self._request(
             f"/api/external/v1/roles/{role_id}/members", params)
         data = (raw or {}).get("data")
-        # S5（S5-1）：失敗時帶回上游的 `error`（狀態碼），上層才分得出「查無」與「沒查成」。
+        # S5：失敗時帶回上游的 `error`（狀態碼），上層才分得出「查無」與「沒查成」。
         return {"success": bool((raw or {}).get("success")),
                 "data": data if isinstance(data, list) else [],
                 **({"error": raw.get("error")} if isinstance((raw or {}).get("error"), dict) else {})}
@@ -927,13 +935,13 @@ class JGBSystemAPI:
         if not (role_id and viewer_user_id and bill_id):
             return self._degraded_response()
         if self.use_mock:
-            # ⚠️ mock **不回答可見性**（2026-08-25 盤查改判）。
+            # ⚠️ mock **不回答可見性**。
             # production 的圈定來自 viewer_user_id → ExternalViewerScope → VisibleScope::resolve
             # → Bill::queryThisUser，依 roleType 與 show_* 權限旗標過濾 owner_role_id／
             # issue_target_role_id 等**非投影欄位**，替身射程外（見 transport 的 GAP 說明）。
-            # 舊版在此回 {"success": True, "data": []} ＝ **捏造一個「看不到」**，
+            # 在此回 {"success": True, "data": []} ＝ **捏造一個「看不到」**，
             # 而 accounts.build_team_permission_facts 會把它當事實講給使用者。
-            # 改回降級：secondary attach 只在 success 時掛，故面向自然走「未確認具體資源」措辭。
+            # 所以回降級：secondary attach 只在 success 時掛，故面向自然走「未確認具體資源」措辭。
             return self._degraded_response()
         raw = await self._request("/api/external/v1/bills",
                                   {"role_id": role_id, "viewer_user_id": viewer_user_id,
@@ -970,11 +978,11 @@ class JGBSystemAPI:
 
         `viewer_user_id`（jgb2-req#24／DSP-074）：非空才放進 params，結果限於該成員可見的電表。
 
-        ⚠️ **舊註解說「端點無 keyword 參數」是錯的**（2026-08-25 盤查）：
+        ⚠️ 端點**有** `keyword` 參數：
         `MeterApiController@index:41-56` 有 `keyword`，比對 `iots.name` **或**
         綁定物件的 `estates.title`（皆 LIKE，且 estates 需 active=1）。
         本 adapter 仍**刻意**改走 client 端過濾——理由不是端點沒有，而是端點的
-        整串 LIKE 對口語多詞配不中（真資料 e2e 逼出），需要 token 化比對。
+        整串 LIKE 對口語多詞配不中，需要 token 化比對。
         故維持拉全頁（per_page=200，正好是 MAX_PER_PAGE）後自行過濾；estate_id 原生透傳。
         欄位：is_online/is_poweron/balance/available_meter/current_reading/synced_at 等
         （消費端注意：離線時皆為最後同步快照；is_poweron 三態失真見 J-I1，builder 端防護）。
@@ -993,7 +1001,7 @@ class JGBSystemAPI:
             params["viewer_user_id"] = viewer_user_id
         raw = await self._request("/api/external/v1/meters", params)
         if not (raw or {}).get("success"):
-            # S5（S5-1）：帶回上游 `error`（狀態碼），上層分辨「查無」與「沒查成」。
+            # S5：帶回上游 `error`（狀態碼），上層分辨「查無」與「沒查成」。
             return {"success": False, "data": [], "error": (raw or {}).get("error")}
         data = raw.get("data")
         rows = data if isinstance(data, list) else []
@@ -1049,7 +1057,7 @@ class JGBSystemAPI:
             params["viewer_user_id"] = viewer_user_id
         raw = await self._request("/api/external/v1/estates", params)
         if not (raw or {}).get("success"):
-            # S5（S5-1）：帶回上游 `error`（狀態碼），上層分辨「查無」與「沒查成」。
+            # S5：帶回上游 `error`（狀態碼），上層分辨「查無」與「沒查成」。
             return {"success": False, "data": [], "error": (raw or {}).get("error")}
         data = raw.get("data")
         rows = data if isinstance(data, list) else []
@@ -1085,7 +1093,7 @@ class JGBSystemAPI:
         （引擎 attach 失敗即略過，builder 不依賴 detail 存在）。
         單物件正規化為單元素 list（get_tenant_registration 先例）。
 
-        站內幫手 S5（S5-8，jgb2-req#24）：`role_id`／`viewer_user_id` 非空才放進 params
+        站內幫手 S5（jgb2-req#24）：`role_id`／`viewer_user_id` 非空才放進 params
         （原本連 `role_id` 都沒送）；不屬該團隊或這位成員看不到 ⇒ 上游與「不存在」同一句。
         """
         eid = str(estate_id).strip() if estate_id is not None else ""
@@ -1123,13 +1131,12 @@ class JGBSystemAPI:
           data: [{contract_id, estate_id, estate_title, display_address}]
           （`room` 無來源——見下方投影對映）
 
-        **真端點（2026-08-25 盤查改判）**：走 `GET /contracts/status-overview` 帶 `user_id`。
+        **真端點**：走 `GET /contracts/status-overview` 帶 `user_id`。
         production `ContractApiController@index:63-65` 對該參數施加
         `where('to_user_id', (int) user_id)`，語義即「這位租客名下的合約」。
-        ⚠️ 原判定「jgb2 尚未提供租客視角端點」（J 清單 G1）**已作廢**——
-        該缺口不存在，先前的 `NotImplementedError` 使本方法在真實模式必然拋例外，
+        ⚠️ jgb2 **有**租客視角端點，⛔ 不得改成 `NotImplementedError`：真實模式會必然拋例外，
         而呼叫端 `repair_prefill._fetch_contracts` 會吞掉例外 → production 的物件預填
-        **靜默失效**，且所有 mock 測試皆綠。本次改為真的接上該端點。
+        **靜默失效**，且所有 mock 測試皆綠。
 
         投影對映（`formatContract` 逐鍵 → 預填契約鍵）：
           contract_id ← `id`｜estate_id ← `estate_id`｜estate_title ← `title`
@@ -1192,7 +1199,7 @@ class JGBSystemAPI:
     # Mock implementations — 對齊 jgb2 External API 真實回應結構
     # ------------------------------------------------------------------
 
-    #: 發票 fixture（`formatInvoice` 逐鍵，26 欄）——**已對照 jgb2 原始碼**（2026-08-25）。
+    #: 發票 fixture（`formatInvoice` 逐鍵，26 欄）——**已對照 jgb2 原始碼**。
     #: `App\Invoice` **無 $casts、無 accessor**，故所有欄位都是原始欄位值；
     #: 唯一由控制器加工的是 `tax_rate`：`$invoice->tax_rate ? (float) : null`
     #: ⇒ **0 會變成 null**（InvoiceApiController:125）。

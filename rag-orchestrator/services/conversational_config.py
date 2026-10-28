@@ -5,9 +5,8 @@
 conversational（多輪自適應問答→收斂）；未設定的面向一律 direct（單次直答）。
 
 **設定來源（資料驅動）**：knowledge_base 中 `category='對話規則'` 的每一列同時承載：
-  - `answer`        → 該角色的對話規則（persona）。⚠️ 2026-09-11：載入端
-                      `services/conversational_rules.py` 已刪（無活呼叫者），
-                      **這些列目前沒有任何消費者**；新線的 persona 走 `services/agent/agent_rules.py`。
+  - `answer`        → 該角色的對話規則（persona）。⚠️ **這些列目前沒有任何
+                      消費者**（舊載入端已不存在）；新線的 persona 走 `services/agent/agent_rules.py`。
   - `target_user[]` → 角色（persona_role）
   - `generation_metadata.conversational_config`（jsonb）→ 設定本體：
         { key, answer_mode, persona_role?, enabled?,
@@ -45,7 +44,7 @@ class ConversationalConfig:
     answer_rules: Optional[str] = None
     # responsibility：**責任契約**（face-exit-before-grounding slice 2）。
     #   與 grounding_scope 分開，因為它不是執行組態而是「這個面向該不該接」的宣告。
-    #   第一版只用 `delegates`：宣告本面向可把 query 轉交的**白名單**面向鍵。
+    #   只用 `delegates`：宣告本面向可把 query 轉交的**白名單**面向鍵。
     #     {"delegates": [{"target": "billing_anomaly"}, {"target": "contract_closeout"}]}
     #   ⚠️ 模型只能從此白名單中選 delegate，**不得自行創造 Face key**。
     responsibility: Dict[str, Any] = field(default_factory=dict)
@@ -59,15 +58,15 @@ class ConversationalConfig:
     handoff_channel: Optional[str] = None
 
 
-# 售前 handoff 固定句（presales-grounding-gate D1；業主 2026-09-04 採預設）。
+# 售前 handoff 固定句（presales-grounding-gate D1）。
 #   ⛔ 常數、無格式化佔位——不得回顯使用者輸入；「轉專人」字樣為既有測試釘字，⛔ 不得移除。
 PRESALES_HANDOFF_MESSAGE = "這題我這邊沒有可靠資料，幫您轉專人——點下方的『找真人』。"
 #: 轉人入口識別（對齊 jgb2 切片 2 LINE 官方帳號）；env PRESALES_HANDOFF_CHANNEL 可覆寫，DB metadata 優先於 env
 PRESALES_HANDOFF_CHANNEL_DEFAULT = "line_official"
 #: LLM 路徑後置掃描補訊號時的 `handoff.message`（R4.2）：answer 已是 LLM 自己的話，⛔ 不得再塞「沒有可靠資料」固定句
-#:   （2026-09-04 實打：「可以免費試用…如需協助洽客服」被配上「沒有可靠資料」訊息，語義自相矛盾）
+#:   （否則「可以免費試用…如需協助洽客服」會被配上「沒有可靠資料」訊息，語義自相矛盾）
 PRESALES_HANDOFF_ENTRY_HINT = "需要真人協助可點下方的『找真人』。"
-#: D6（業主 2026-09-04）：事實題抽取式作答時，問句列了多個項目而 top-1 知識只涵蓋部分 ⇒ 固定尾句（⛔ 常數、無佔位）
+#: D6：事實題抽取式作答時，問句列了多個項目而 top-1 知識只涵蓋部分 ⇒ 固定尾句（⛔ 常數、無佔位）
 PRESALES_PARTIAL_TAIL = "以上是我有資料的部分；沒提到的項目我這邊沒有資料，可點下方『找真人』。"
 
 

@@ -1,10 +1,10 @@
 """B 片 B3：帶狀態句判讀閘的**判讀呼叫**（AI 理解：這則回覆宣稱了哪類狀態）。
 
-分工（DSP-091；計畫 `plan-b-write-replies-program-20261020.md` §4.1 B3、§4.3）：
+分工（DSP-091）：
 - 本模組只回「模型將送出的回覆文字宣稱了哪幾類狀態」（封閉值域四類）；
 - 送不送、改送什麼由 `runtime` 依程式狀態事件決定（⛔ 由判讀結果決定程式環節的下一步）。
 
-安全（計畫 §5、安全審查 S5／S9／S10）：
+安全：
 - 輸入**只有回覆文字**，以每次隨機 nonce 標記的資料段包住（`prompt_assembler.wrap_tool_data`，
   段內標記字元先經 `sanitize_for_data_block`）；判讀指示寫明段內文字只是被判讀的資料。
   ⛔ 放資料段、草稿值、卡文字。
@@ -53,8 +53,8 @@ STATE_CLAIM_CATEGORIES: Final[Tuple[str, ...]] = (
     CLAIM_AWAITING, CLAIM_COMPLETED, CLAIM_CANCELLED, CLAIM_HANDED_OFF,
 )
 
-#: 判讀呼叫的輸出上限與逾時（計畫 §4.1 B3；逾時與回合 deadline 取較早者由呼叫端算）。
-#: ⚠️ 與主呼叫 `DEFAULT_MAX_COMPLETION_TOKENS` 無關（B-R11：主呼叫上限不變）。
+#: 判讀呼叫的輸出上限與逾時（逾時與回合 deadline 取較早者由呼叫端算）。
+#: ⚠️ 與主呼叫 `DEFAULT_MAX_COMPLETION_TOKENS` 無關（主呼叫上限不變）。
 STATE_CLAIM_MAX_COMPLETION_TOKENS: Final[int] = 200
 STATE_CLAIM_TIMEOUT_S: Final[float] = 4.0
 #: 逾時被取消 ⇒ prompt token 以輸入字元數估算（比照意圖呼叫 `WRITE_INTENT_CANCEL_CHARS_PER_TOKEN`）。

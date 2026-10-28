@@ -22,6 +22,7 @@ from datetime import date
 
 import pytest
 
+from services.agent import name_match as NM
 from services.agent import runtime as runtime_mod
 from services.agent import write_forms as WF
 from services.agent.agent_session import (
@@ -31,7 +32,7 @@ from services.agent.agent_session import (
 from services.agent.budget import Budget
 from services.agent.confirm_card import CONFIRMATION_REQUIRED_TEXT, ConfirmCardError
 from services.agent.runtime import (
-    PENDING_DRAFT_PAYLOAD_KEY, PRE_LOOKUP_NOT_FOUND_TEXT, WRITE_DRAFT_PROGRAM_CONFIRM_SUMMARY,
+    PENDING_DRAFT_PAYLOAD_KEY, WRITE_DRAFT_PROGRAM_CONFIRM_SUMMARY,
     AgentRuntime,
 )
 from services.agent.tools import confirm as C
@@ -53,6 +54,14 @@ from tests.unit.agent.token_db_double import FakeTokenDB
 
 pytestmark = [pytest.mark.unit,
               pytest.mark.req("agentic-mcp-orchestration:plan-card-program-only-aplus")]
+
+
+@pytest.fixture(autouse=True)
+def _fill_data_text_off(monkeypatch):
+    """填欄只填答覆片（plan-fill-answer-only-20261027）：本檔的假寫入意圖不帶 `data_texts`，驗的是改前行為 ⇒ 釘住
+    `AGENT_FILL_DATA_TEXT=off`（off 與改前逐字相同，FA8 (2)；on 的行為見 test_fill_data_text_req.py）。"""
+    monkeypatch.setenv("AGENT_FILL_DATA_TEXT", "off")
+
 
 PROPOSAL_ENV = WF.WRITE_PROPOSAL_ENV
 REPAIR_FIELDS = {"estate_name": STUDENT_ESTATE, "description": "冷氣不冷"}
@@ -160,6 +169,8 @@ BAD = {
     "period": ("2030年3月", ("2030", )),
     "enum": ("Z9", ("Z9",)),
     "category": ("外星維修", ("外星維修",)),
+    # 「選對紀錄」片（AGENT_PICK_RIGHT 預設 on）：延期繳費的「您說的計費期間」（客人講的起訖，程式解析）。
+    "range": ("3/3到4/4", ("3/3到4/4", "03/03~04/04")),
 }
 
 
@@ -421,14 +432,18 @@ async def test_aplus_estate_carry_fills_the_program_call(api):
 
 async def test_aplus_unseen_estate_proposal_ends_with_the_not_found_sentence(api):
     """原 `test_repair_card_for_an_unseen_estate_is_the_fixed_sentence` 的 A+ 版：提議的物件在原話裡、
-    但查無 ⇒ 程式呼叫得查無標記 ⇒ 程式固定句結束回合、無 token。"""
+    但查無 ⇒ 程式呼叫得查無標記 ⇒ 程式固定句結束回合、無 token。
+
+    F12（plan-name-lenient-f12-20261022 §4.4）：名稱寬鬆比對預設 on，名稱查無（寬鬆也落空）的固定句改為
+    `name_match.NAME_NOT_FOUND_TEXT`；寬鬆模型每回合至多 1 次、不算主模型呼叫。"""
     w = _World()
     res, provider = await _turn_p(w, "不存在的物件甲 冷氣不冷", [_proposal(
         {"action": "repair_create", "estate_name": "不存在的物件甲", "description": "冷氣不冷"}),
         _out()])
     (args, _r), = w.reg.confirm_calls()
     assert args["summary"] == WRITE_DRAFT_PROGRAM_CONFIRM_SUMMARY
-    assert res.answer == PRE_LOOKUP_NOT_FOUND_TEXT
+    assert res.answer == NM.NAME_NOT_FOUND_TEXT
+    assert len(provider.lenient_calls) <= 1
     assert w.db.rows == [] and len(provider.calls) == 1
 
 
@@ -461,10 +476,11 @@ async def test_v4_positive_control_restating_same_values_gets_card_still_valid(a
     r1, pid1 = await w.repair_card()
     card = r1.answer
     res = await _restate(w)
-    _still_valid(res, pid1)
+    # 填欄只填答覆修復輪 4（brief-fix5）：B 片生效、讀到值與卡相同 ⇒ 前導句 `CARD_READ_SAME_LEAD`（原 `CARD_STILL_VALID_TEXT`）。
+    _still_valid(res, pid1, lead=WF.CARD_READ_SAME_LEAD)
     # B 片 B5（業主裁 Q4，`AGENT_WRITE_REPLY_PROGRAM` 未設＝on）：前導句後列出本回合讀到的值（卡上顯示值）。
     read_line = WF.card_read_values_text([("物件", STUDENT_ESTATE), ("問題描述", "冷氣不冷")])
-    assert res.answer == WF.CARD_STILL_VALID_TEXT + "\n" + read_line + "\n" + card
+    assert res.answer == WF.CARD_READ_SAME_LEAD + "\n" + read_line + "\n" + card
     assert res.trace.llm_calls == 0                                # 主模型未被呼叫
     assert w.db.pids(w.session_id) == [pid1]
     ok = await w.turn(f"confirm_submit:{pid1}")
@@ -490,7 +506,7 @@ async def test_v4_positive_control_on_the_proposal_path(api):
     n_before = len(w.reg.confirm_calls())
     res = await w.turn(REPAIR_TEXT, script=[_proposal({"action": "repair_create", **REPAIR_FIELDS}),
                                             _out()], program_first=False)
-    _still_valid(res, pid1)
+    _still_valid(res, pid1, lead=WF.CARD_READ_SAME_LEAD)            # 修復輪 4：原 `CARD_STILL_VALID_TEXT`
     assert WF.V_WRITE_PROPOSAL in res.trace.violations
     assert len(w.reg.confirm_calls()) == n_before
     assert w.db.pids(w.session_id) == [pid1]
@@ -604,7 +620,7 @@ async def test_v4g_overdue_bill_extend_card_same_day_is_still_valid(api, monkeyp
     r1, pid1 = await _overdue_bill_card(w, monkeypatch, date(2026, 11, 5))
     assert "・起算日：2026/11/05" in r1.answer                      # 前提：真的是逾期卡
     res = await _bill_restate(w)
-    _still_valid(res, pid1)
+    _still_valid(res, pid1, lead=WF.CARD_READ_SAME_LEAD)            # 修復輪 4：原 `CARD_STILL_VALID_TEXT`
     assert w.db.pids(w.session_id) == [pid1]
 
 
@@ -738,7 +754,7 @@ async def test_v4l_q3_draft_cleared_by_idle_then_partial_same_values(api):
     assert w.draft() is None and w.db.redeemed(pid1) is False      # 前提
     res = await w.turn("冷氣不冷", script=[_out()],
                        intents=[_intent("repair_create", description="冷氣不冷")])
-    _still_valid(res, pid1)
+    _still_valid(res, pid1, lead=WF.CARD_READ_SAME_LEAD)            # 修復輪 4：原 `CARD_STILL_VALID_TEXT`
     assert "還需要" not in res.answer
     assert w.db.pids(w.session_id) == [pid1]
     assert w.draft()["fields"] == {"description": "冷氣不冷"}
@@ -780,7 +796,7 @@ async def test_v4m_q2_control_only_the_model_proposal_value_dropped(api):
     res = await w.turn(REPAIR_TEXT, script=[_proposal(
         {"action": "repair_create", **REPAIR_FIELDS, "category_name": "外星維修"}), _out()],
         program_first=False)
-    _still_valid(res, pid1)
+    _still_valid(res, pid1, lead=WF.CARD_READ_SAME_LEAD)            # 修復輪 4：原 `CARD_STILL_VALID_TEXT`
     assert "write_intent_category_invalid" in res.trace.violations
     assert w.db.pids(w.session_id) == [pid1]
 
@@ -805,7 +821,7 @@ async def test_v5_same_period_said_differently_is_the_same_value(api, said):
     _r1, pid1 = await _period_bill_card(w)
     res = await w.turn(f"{said} 延後 7 天", script=[_out()], intents=[_intent(
         "bill_due_extend", period=said, days="7")])
-    _still_valid(res, pid1)
+    _still_valid(res, pid1, lead=WF.CARD_READ_SAME_LEAD)            # 修復輪 4：原 `CARD_STILL_VALID_TEXT`
     assert w.db.pids(w.session_id) == [pid1]
 
 
@@ -1224,7 +1240,8 @@ def test_v13f_labels_rule_and_no_label_fallback():
         "這句我沒有讀到要填寫或修改的內容，目前沒有更新。請直接說哪一項、內容是什麼，我再幫您整理成確認卡。")
     assert WF.proposal_no_value_text("no_such_action", {"x": SPECIAL}) == WF.PROPOSAL_NO_VALUE_FALLBACK_TEXT
     for action, form in WF.FORMS.items():
-        user = [f for f in form.fields if f.source == WF.SOURCE_USER_WORDS]
+        # 「選對紀錄」片：只列上卡的欄位（`on_card`；客人講的比對值不上卡、⛔ 列）。
+        user = [f for f in form.fields if f.source == WF.SOURCE_USER_WORDS and f.on_card]
         assert WF.proposal_no_value_text(action, {}) == WF.PROPOSAL_NO_VALUE_TEXT.format(
             labels="、".join(f.label for f in user))
         one = user[0]
@@ -1250,7 +1267,8 @@ def _old_edit_ask_text(action, payload):
     if form is None:
         return WF.EDIT_ASK_FALLBACK_TEXT
     values = payload if isinstance(payload, dict) else {}
-    user_fields = [f for f in form.fields if f.source == WF.SOURCE_USER_WORDS]
+    # 「選對紀錄」片：表單多了不上卡的比對值欄位（`on_card=False`），可修改清單只列上卡的欄位。
+    user_fields = [f for f in form.fields if f.source == WF.SOURCE_USER_WORDS and f.on_card]
     labels = [f.label for f in user_fields if WF._given(values.get(f.key))]
     if not labels:
         labels = [f.label for f in user_fields]

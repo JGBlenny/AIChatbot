@@ -148,9 +148,9 @@ _MAX_OUTPUT_TOKENS = 500
 _GPT5_MAX_COMPLETION_TOKENS = 1500
 _GPT5_REASONING_EFFORT = "low"
 
-#: 站內幫手 S3-live 修正（主 session 2026-10-15）：推理力道**依模型系列**，先比對者先贏。
-#: gpt-6 系列 ⇒ `"none"`（同 `document_extract.REASONING_EFFORT_BY_PREFIX`：容器內實測
-#: none 比 low 快一倍、輸出欄位相同）；gpt-5 系列維持 `"low"`。兩份由單元測試釘成相等。
+#: 推理力道**依模型系列**，先比對者先贏。
+#: gpt-6 系列 ⇒ `"none"`（同 `document_extract.REASONING_EFFORT_BY_PREFIX`：none 比 low 快、
+#: 輸出欄位相同）；gpt-5 系列維持 `"low"`。兩份由單元測試釘成相等。
 REASONING_EFFORT_BY_PREFIX: tuple = (("gpt-6", "none"), ("gpt-5", _GPT5_REASONING_EFFORT))
 
 
@@ -161,8 +161,8 @@ def _reasoning_effort(model: str) -> str:
     return _GPT5_REASONING_EFFORT
 
 
-#: 站內幫手 S3（S3-11）：走 `max_completion_tokens`／不傳 `temperature` 的模型系列前綴。
-#: gpt-6 系列（業主 2026-10-15 照片辨識與文件抽取用 `gpt-6-luna`）與 gpt-5 同參數規則。
+#: 走 `max_completion_tokens`／不傳 `temperature` 的模型系列前綴。
+#: gpt-6 系列（照片辨識與文件抽取用 `gpt-6-luna`）與 gpt-5 同參數規則。
 NEW_PARAM_MODEL_PREFIXES = ("gpt-5", "gpt-6")
 
 
@@ -178,9 +178,9 @@ def _completion_params(model: str) -> dict:
     """
     if _uses_new_param_branch(model):
         # ⚠️ gpt-5 系列的推理 token 計入 completion：500 會被推理吃光、可見輸出為空
-        #    （真線路實測 2026-09-08：六張全回長度 0）。上限拉高並把推理力道釘低。
+        #    （會回長度 0）。上限拉高並把推理力道釘低。
         # openai SDK 1.54（requirements）尚無 `reasoning_effort` 具名參數 ⇒ 走 `extra_body`
-        # （同 runtime 的做法；具名傳會 TypeError——真線路實測 2026-09-08）。
+        # （同 runtime 的做法；具名傳會 TypeError）。
         return {"max_completion_tokens": _GPT5_MAX_COMPLETION_TOKENS,
                 "extra_body": {"reasoning_effort": _reasoning_effort(model)}}
     return {"max_tokens": _MAX_OUTPUT_TOKENS, "temperature": 0.2}
@@ -441,10 +441,9 @@ class ImageRecognitionService:
         return recognition
 
     def _estimate_cost(self, prompt_tokens: int, completion_tokens: int) -> float:
-        """依**模型價目表**估成本（USD）；表裡沒有這個模型 ⇒ 回退舊的平頭費率。
+        """依**模型價目表**估成本（USD）；表裡沒有這個模型 ⇒ 回退平頭費率。
 
-        S9-9：舊版對每個模型都用 `$5/1M` 的混合費率，換模型（gpt-5-mini 便宜一個
-        數量級）後那個數字就只是個好看的假值。價目表的唯一來源是
+        各模型單價差異大，用單一混合費率（`$5/1M`）會是個好看的假值，所以查價目表。價目表的唯一來源是
         `services.usage_metering.DEFAULT_PRICING`（USD／1M tokens，`(prompt, completion)`），
         ⛔ 不在本檔另抄一份費率。
         """

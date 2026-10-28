@@ -7,7 +7,7 @@
 （`tests/unit/retrieval/test_visibility_predicate_req.py`）皆用位置／關鍵字
 建構既有三欄，不得因擴充而破。
 
-信任邊界（DSP-011，業主 2026-09-04 裁）：這些欄位是**上游信任輸入**——
+信任邊界（DSP-011）：這些欄位是**上游信任輸入**——
 個資可見範圍由 jgb2 `external/v1` 的兩層權限裁，本系統 ⛔ 不自建授權層。
 **例外**：知識池可見性（vendor_ids／business_types／target_user／保留分類）
 住本系統 DB，仍由本系統的 `build_visibility_predicate` 謂詞守。
@@ -71,7 +71,7 @@ def audience_of(
 
 
 def normalize_entry_mode(target_user: Any, mode: Any) -> str:
-    """入口 `mode` 正規化（任務 4.2／Plan §4.1-1，業主 2026-09-07 裁 (a)）。
+    """入口 `mode` 正規化。
 
     `target_user == 'prospect'` ⇒ **一律 `'b2b'`**——含缺漏、非法值、以及
     **明送 `'b2c'`**。理由：售前池是 b2b 池（`build_visibility_predicate` 的
@@ -94,7 +94,7 @@ def normalize_entry_mode(target_user: Any, mode: Any) -> str:
 
 
 def derive_identity_source(identity: "Identity") -> IdentitySource:
-    """對話控制用的身分來源（任務 4.2／Plan §4.1-2）。
+    """對話控制用的身分來源。
 
     規則＝`entry` ⇔ `role_id` 或 `user_id` 任一非 None；否則 `anonymous`
     （契約見 `docs/jgb2-chat-integration.md` §3／§4／§8）。

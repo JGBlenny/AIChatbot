@@ -257,7 +257,9 @@ class _CaptureRegistry:
         return [dict(CONFIRM_SPEC)] + [dict(s) for s, _ in action_tools.ACTION_SPECS]
 
     async def call(self, identity, name, args, timeout_s, *, stage, readonly_view=False,
-                   for_model=False):
+                   for_model=False, program_pick=None, name_lenient=None):
+        # 簽名比照真 `ToolRegistry.call`：F12（plan-name-lenient-f12-20261022 §4.2）起 runtime 對程式發出的
+        # `confirm.request` 帶 `name_lenient` 程式通道；本替身不解析名稱，故不使用它。
         self.call_args.append({"name": name, "args": dict(args)})
         if name != "confirm.request":
             return ToolResult(ok=False, error="NO_MATCH")

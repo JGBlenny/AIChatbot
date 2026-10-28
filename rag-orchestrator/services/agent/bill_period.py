@@ -1,8 +1,8 @@
-"""期別口語 → `PeriodSpec` 的**純函式**解析（Plan 第六批單元 A｜line-bot #2）。
+"""期別口語 → `PeriodSpec` 的**純函式**解析。
 
 ## 為什麼要有這一層
-走查病灶（line-bot 2026-09-10 #2）：業務說「基隆獨立共生公寓雅房九月的房租，
-房客說想晚三天繳」，模型連問三輪帳單編號——**房東不會講編號**。編號是系統的
+業務說「基隆獨立共生公寓雅房九月的房租，房客說想晚三天繳」時，
+若交給模型就會一直反問帳單編號——**房東不會講編號**。編號是系統的
 識別碼，業務講的是「哪一戶、哪一期」。把「口述期別 → 可比對的年月／未繳」
 這一步交給**程式**，模型就不必為了一個它問不到的欄位反問。
 
@@ -19,16 +19,16 @@
   ⛔ 不因為「今年還沒到的月份」就一律當今年——那會把「十二月」在九月解成三個月
   後的未來，而帳單早就存在於去年十二月。
 
-- **有寫西元年就用所寫的年份**（期別片 P-1／R1、R2）：`YYYY-MM`、`YYYY/MM`、
+- **有寫西元年就用所寫的年份**：`YYYY-MM`、`YYYY/MM`、
   `YYYY年M月`、`YYYY年`＋中文數字月（年、月之間可有空白或夾「的」）都算「有年份」；
   有年份時 ⛔ 呼叫 `_year_for_bare_month`、⛔ 被 `YEAR_MODIFIER_TERMS` 覆寫。
   四位數年份前不得再接數字（「12027/01」⛔ 讀成 2027）。⛔ 設年份值域上限（設了反而會
-  退成「不篩選」，安全審查 D3）。
-- **寫了年份但認不得 ⇒ 解析不到**（P-1c）：只限「四個中文數字（〇、零、一～九）＋年＋
+  退成「不篩選」）。
+- **寫了年份但認不得 ⇒ 解析不到**：只限「四個中文數字（〇、零、一～九）＋年＋
   月份」（「二〇二七年一月」）——⛔ 只吃月份往回推（那會對到別年的帳單）。一到三位數的
-  年份（民國年「115年9月」）依業主 Q-ROC 裁示**維持現行**：只吃月份、往回推。「年」後面
+  年份（民國年「115年9月」）**維持現行**：只吃月份、往回推。「年」後面
   沒有緊接月份（年資、租期「我租了2年」）不觸發。
-- **一則原話可有多個期別**（P-1b）：`parse_period` 只回**一個**（固定判定順序的第一個）；
+- **一則原話可有多個期別**：`parse_period` 只回**一個**（固定判定順序的第一個）；
   值閘要的是「使用者講過的全部期別」，由 `parse_periods` 回傳。兩支同一套封閉語法、
   同樣不讀時鐘。
 
@@ -80,7 +80,7 @@ MAX_MONTHS_AHEAD: Final[int] = 1
 YEAR_MODIFIER_TERMS: Final[dict] = {"去年": -1, "今年": 0, "明年": None, "前年": None, "後年": None}
 
 #: `YYYY-MM`／`YYYY/MM`。年份四位、月份一或兩位（值域另驗）。
-#: 期別片 D3：開頭 `(?<!\d)`——「12027/01」⛔ 讀成 2027。
+#: 開頭 `(?<!\d)`——「12027/01」⛔ 讀成 2027。
 _YEAR_MONTH_RE: Final = re.compile(r"(?<!\d)(\d{4})[-/](\d{1,2})(?!\d)")
 
 #: 中文數字月份的字面（長字面在前，否則「十一月」會先被「十」吃掉）。
@@ -155,11 +155,11 @@ def parse_period(text: Any, today: date) -> Optional[PeriodSpec]:
     if not isinstance(text, str) or not text.strip():
         return None
 
-    # 期別片 P-1c：寫了西元年但認不得（中文數字年）⇒ 解析不到（⛔ 只吃月份往回推）。
+    # 寫了西元年但認不得（中文數字年）⇒ 解析不到（⛔ 只吃月份往回推）。
     if _CN_YEAR_MONTH_RE.search(text) is not None:
         return None
 
-    # verifier 2026-09-10 P2-1：年份修飾詞是封閉表——「去年」⇒ 上一年、「今年」⇒ 當年；
+    # 年份修飾詞是封閉表——「去年」⇒ 上一年、「今年」⇒ 當年；
     # 「明年」「前年」等表內但不支援的修飾詞 ⇒ 整句 None（⛔ 不忽略修飾詞只吃月份：那會把
     # 「去年九月」對到今年九月，卡看起來完全正常）。
     year_shift: Optional[int] = None
@@ -282,10 +282,10 @@ def parse_periods(text: Any, today: date) -> Tuple[PeriodSpec, ...]:
     每一項都有年月（`has_month`）；`unpaid_only` 是整則原話的狀態（同 `parse_period`）。
     「未繳」單獨出現不成項（呼叫端以 `UNPAID_TERMS` 判）。非字串／空白／沒有任何期別 ⇒ `()`。
 
-    收項規則（安全審查 B1、D2；計畫 §5.1）：
+    收項規則：
     1. 有年份寫法（`YYYY-MM`／`YYYY/MM`、`YYYY年M月`／`YYYY年`＋中文數字月）的**每一處**
        都成項，年份＝所寫年份；命中段先吃掉。
-    2. 中文數字西元年＋月份（P-1c）**只丟這一項**、命中段同樣吃掉——⚠️ 安全關鍵：被吃掉
+    2. 中文數字西元年＋月份**只丟這一項**、命中段同樣吃掉——⚠️ 安全關鍵：被吃掉
        的月份字 ⛔ 再當裸月份算一次（「2027年1月」的 U ⛔ 含 2026/01）。
     3. 其餘：阿拉伯數字月、中文數字月、這期類、上期類，各自取同 `parse_period` 的推定。
        緊鄰在前（可夾空白與一個「的」）的「去年／今年」只改**這一項**的年份；緊鄰的
@@ -329,14 +329,79 @@ def parse_periods(text: Any, today: date) -> Tuple[PeriodSpec, ...]:
     return tuple(found)
 
 
+# ---------------------------------------------------------------------------
+# 客人講的**計費起訖**（`said_range`）——封閉語法
+#
+# 只認兩種寫法（兩邊同一種）：
+#   ① 「M/D 到 M/D」：月／日為 1～2 位數字，以 `/` 分隔；
+#   ② 「M月D日到M月D日」：日可寫「日」「號」「号」。
+# 起訖之間的連接詞只認 `SAID_RANGE_JOINERS`（前後可有空白）。數字前後不得緊接數字或 `/`
+# （「2026/10/1 到 2026/10/31」帶年份 ⇒ 不在語法內 ⇒ 解析不到；⛔ 拆一半來猜）。
+# 一則原話恰好一組才算；零組或兩組以上 ⇒ `None`（⛔ 挑一組）。月日須是合法日期（2/29 以閏年驗）。
+# 輸出正規化為 `MM/DD~MM/DD`（草稿存這個值；比對帳單只比月日）。
+# ---------------------------------------------------------------------------
+#: 起訖連接詞（封閉）。
+SAID_RANGE_JOINERS: Final[Tuple[str, ...]] = ("到", "至", "~", "～", "-", "－")
+_JOIN_ALT: Final[str] = "|".join(re.escape(j) for j in SAID_RANGE_JOINERS)
+_SLASH_MD: Final[str] = r"(?<![\d/])(\d{1,2})/(\d{1,2})(?![\d/])"
+_ZH_MD: Final[str] = r"(?<!\d)(\d{1,2})月(\d{1,2})[日號号]"
+_SAID_RANGE_RES: Final = (
+    re.compile(_SLASH_MD + r"\s*(?:" + _JOIN_ALT + r")\s*" + _SLASH_MD),
+    re.compile(_ZH_MD + r"\s*(?:" + _JOIN_ALT + r")\s*" + _ZH_MD),
+)
+#: 正規化後的形狀（`said_range` 草稿值；`said_range_parts` 讀回）。
+SAID_RANGE_VALUE_RE: Final = re.compile(r"(\d{2})/(\d{2})~(\d{2})/(\d{2})")
+
+
+def _valid_md(month: int, day: int) -> bool:
+    try:
+        date(2000, month, day)          # 閏年：2/29 合法
+    except ValueError:
+        return False
+    return True
+
+
+def parse_said_range(text: Any) -> Optional[str]:
+    """原話（或模型照抄的值）裡恰好一組封閉語法的計費起訖 ⇒ `MM/DD~MM/DD`；其餘 ⇒ `None`。"""
+    if not isinstance(text, str) or not text:
+        return None
+    found: list = []
+    for rx in _SAID_RANGE_RES:
+        for m in rx.finditer(text):
+            m1, d1, m2, d2 = (int(g) for g in m.groups())
+            if not (_valid_md(m1, d1) and _valid_md(m2, d2)):
+                return None                 # 寫了卻不是合法日期 ⇒ 整句解析不到（⛔ 猜）
+            value = f"{m1:02d}/{d1:02d}~{m2:02d}/{d2:02d}"
+            if value not in found:
+                found.append(value)
+    return found[0] if len(found) == 1 else None
+
+
+def said_range_parts(value: Any) -> Optional[Tuple[Tuple[int, int], Tuple[int, int]]]:
+    """正規化值 `MM/DD~MM/DD` ⇒ `((起月, 起日), (迄月, 迄日))`；形狀不合 ⇒ `None`。"""
+    if not isinstance(value, str):
+        return None
+    m = SAID_RANGE_VALUE_RE.fullmatch(value)
+    if m is None:
+        return None
+    m1, d1, m2, d2 = (int(g) for g in m.groups())
+    if not (_valid_md(m1, d1) and _valid_md(m2, d2)):
+        return None
+    return (m1, d1), (m2, d2)
+
+
 __all__ = [
     "CN_MONTH_VALUES",
     "LAST_PERIOD_TERMS",
     "MAX_MONTHS_AHEAD",
+    "SAID_RANGE_JOINERS",
+    "SAID_RANGE_VALUE_RE",
     "YEAR_MODIFIER_TERMS",
     "PeriodSpec",
     "THIS_PERIOD_TERMS",
     "UNPAID_TERMS",
     "parse_period",
     "parse_periods",
+    "parse_said_range",
+    "said_range_parts",
 ]

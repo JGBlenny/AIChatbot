@@ -80,6 +80,20 @@ from tests.unit.agent.test_runtime_req import (
 
 pytestmark = [pytest.mark.unit, pytest.mark.req("agentic-mcp-orchestration:plan-write-flow-W1")]
 
+
+@pytest.fixture(autouse=True)
+def _fill_data_text_off(monkeypatch):
+    """填欄只填答覆片（plan-fill-answer-only-20261027）：本檔的假寫入意圖不帶 `data_texts`，驗的是改前行為 ⇒ 釘住
+    `AGENT_FILL_DATA_TEXT=off`（off 與改前逐字相同，FA8 (2)；on 的行為見 test_fill_data_text_req.py）。"""
+    monkeypatch.setenv("AGENT_FILL_DATA_TEXT", "off")
+
+
+@pytest.fixture
+def closing_handoff_off(monkeypatch):
+    """E 片：這類「送出內容與改前逐字相同」的測試釘住 `AGENT_CLOSING_HANDOFF=off`（E 片 on 的行為見 test_closing_handoff_e_req.py）。"""
+    monkeypatch.setenv("AGENT_CLOSING_HANDOFF", "off")
+
+
 FIXTURE = (Path(__file__).resolve().parents[3]
            / "services" / "jgb" / "fixture_data" / "assistant_demo_vendor4.json")
 RULES_PATH = Path(__file__).resolve().parents[3] / "config" / "agent_verifier_rules.json"
@@ -188,10 +202,13 @@ def _unique_estate_hit(title: str = STUDENT_ESTATE, estate_id: str = "67338") ->
 class _Provider:
     """主模型＋意圖判斷呼叫的替身（同一個 `async_client`，依 response_format 名稱分流）。"""
 
-    def __init__(self, script, intents=None):
+    def __init__(self, script, intents=None, lenient=None):
         self.main = FakeCompletions(script)
         self.intent_script = None if intents is None else list(intents)
         self.intent_calls: list = []
+        # F12：名稱寬鬆比對的模型呼叫另走一條（⛔ 吃掉主模型腳本）；未給腳本時一律回 none。
+        self.lenient_script = None if lenient is None else list(lenient)
+        self.lenient_calls: list = []
         self.async_client = SimpleNamespace(chat=SimpleNamespace(completions=self))
 
     @property
@@ -200,10 +217,24 @@ class _Provider:
 
     async def create(self, **kwargs):
         rf = kwargs.get("response_format") or {}
+        if (rf.get("json_schema") or {}).get("name") == "name_lenient_pick":
+            self.lenient_calls.append(kwargs)
+            if self.lenient_script is None:
+                return _fake_response(_fake_message(content='{"ids": ["none"]}'),
+                                      prompt_tokens=5, completion_tokens=2)
+            assert self.lenient_script, "寬鬆比對呼叫腳本已耗盡——測試少寫了一步"
+            step = self.lenient_script.pop(0)
+            if callable(step):
+                step = step(kwargs)
+                if inspect.isawaitable(step):
+                    step = await step
+            if isinstance(step, str):
+                step = _fake_response(_fake_message(content=step), prompt_tokens=5, completion_tokens=2)
+            return step
         if (rf.get("json_schema") or {}).get("name") == WF.WRITE_INTENT_SCHEMA_NAME:
             self.intent_calls.append(kwargs)
             if self.intent_script is None:
-                return _intent("none")
+                return _adapt_intent_target(_intent("none"), kwargs)
             assert self.intent_script, "意圖呼叫腳本已耗盡——測試少寫了一步"
             step = self.intent_script.pop(0)
             if callable(step):
@@ -212,8 +243,42 @@ class _Provider:
                     step = await step
             if isinstance(step, str):
                 step = _fake_response(_fake_message(content=step), prompt_tokens=7, completion_tokens=3)
-            return step
+            return _adapt_intent_target(step, kwargs)
         return await self.main.create(**kwargs)
+
+
+#: 測試替身專用（選定後回合改指令式，計畫 `plan-post-pick-commands-20261024.md`）：舊式假意圖回應（帶 `rechoice`／
+#: `pick_id`／`new_name`，或什麼都不帶）送進「選定後回合」（schema 有 `target`）時，替身依語意換成指令清單——
+#: `switch`＋`pick_id` ⇒ `[pick]`、`retract` ⇒ `[clear]`、`keep`／不帶 ⇒ `[]`、`new_name` 非空 ⇒ `[name]`；舊鍵一律拿掉。
+#: 回應已自帶 `target` 鍵 ⇒ 原樣送（新測試用）；帶 `__raw__` 鍵 ⇒ 只拿掉該鍵、其餘原樣（測 `target` 缺鍵）。
+#: 未選定、已撤回回合（schema 沒有 `target`）⇒ 一律原樣（C-2）。
+def _adapt_intent_target(step, kwargs):
+    props = (((kwargs.get("response_format") or {}).get("json_schema") or {}).get("schema") or {}).get("properties") or {}
+    if WF.PICK_TARGET_KEY not in props:
+        return step
+    try:
+        message = step.choices[0].message
+        obj = json.loads(message.content)
+    except (AttributeError, IndexError, TypeError, ValueError):
+        return step
+    if not isinstance(obj, dict):
+        return step
+    if "__raw__" in obj:
+        obj.pop("__raw__")
+    elif WF.PICK_TARGET_KEY not in obj:
+        rechoice, pid, new_name = obj.pop("rechoice", None), obj.pop("pick_id", None), obj.pop("new_name", None)
+        target: list = []
+        if rechoice == "switch" and isinstance(pid, str) and pid != WF.PICK_ID_NONE:
+            target.append({"op": "pick", "value": pid})
+        if rechoice == "retract":
+            target.append({"op": "clear", "value": ""})
+        if isinstance(new_name, str) and new_name.strip():
+            target.append({"op": "name", "value": new_name})
+        obj[WF.PICK_TARGET_KEY] = target
+    else:
+        return step
+    message.content = json.dumps(obj, ensure_ascii=False)
+    return step
 
 
 def _intent(action: str = "none", *, raw=None, pt: int = 7, ct: int = 3, **fields):
@@ -423,7 +488,9 @@ _ONE_MISSING = [
       "use_for": "residential"}, ["物件名稱"], None, ["title"]),
     ({"action": "contract_create", "date_start": "20261101", "date_end": "20271031",
       "rent": 12000, "to_user_email": "w1-test@example.com"}, ["物件"], "estate", ["estate_name"]),
-    ({"action": "manual_bill_create", "contract_ref": "某合約", "title": "清潔費",
+    # F12 r5 (丙)：名稱本回合講、其他欄位仍缺 ⇒ 當回合先查名稱——fixture 沒有的「某合約」會走查無出口；
+    # 改用本身分看得到、名稱唯一的合約（85516），(丙) 唯一 ⇒ 缺欄追問與改前逐字相同（本測試原意不變）。
+    ({"action": "manual_bill_create", "contract_ref": "捷仕堂大一廳一房", "title": "清潔費",
       "date_expire": "20261201"}, ["金額"], None, ["total"]),
 ]
 
@@ -435,7 +502,7 @@ _ONE_MISSING_USER_TEXT = {
     "bill_due_extend": f"{KEELUNG_ESTATE} 11月那期 帳單延期",
     "estate_create": "新增物件 台北市 大安區 某路 1 號",
     "contract_create": "開合約 2026-11-01 到 2027-10-31 租金 12000 w1-test@example.com",
-    "manual_bill_create": "某合約 開帳單 清潔費 期限 2026-12-01",
+    "manual_bill_create": "捷仕堂大一廳一房 開帳單 清潔費 期限 2026-12-01",
 }
 
 
@@ -513,9 +580,11 @@ async def test_repair_model_call_with_empty_description_asks_for_description(api
     assert state["agent"][LAST_ASK_TARGET_KEY] == "description"
 
 
-async def test_bill_due_extend_model_call_without_period_unchanged(api):
+async def test_bill_due_extend_model_call_without_period_unchanged(api, monkeypatch):
     """#3：模型自己呼叫 `{bill_due_extend, days:7, estate_name:<只有一張帳單的物件>}`（不帶期別）
     ⇒ 與改動前逐位相同：缺欄檢查不觸發，照舊以物件對到唯一帳單出卡（期望值寫死自 fixture）。"""
+    # 期望值是改前版本（「選對紀錄」片 on 時卡上多可分辨欄位，由 test_pick_right_record_req 驗）。
+    monkeypatch.setenv(WF.PICK_RIGHT_ENV, "off")
     payload = {"action": "bill_due_extend", "days": 7, "estate_name": SINGLE_BILL_ESTATE}
     assert WF.missing_labels("bill_due_extend", payload) == []        # 新閘對它是惰性的
     res = await C.confirm_request(_pm(), _confirm_args(payload), db_pool=_pool())
@@ -756,6 +825,7 @@ def test_switch_invalid_value_fails_at_startup_with_reason(monkeypatch, caplog):
     assert "AGENT_WRITE_DRAFT" in caplog.text
 
 
+@pytest.mark.usefixtures("closing_handoff_off")
 async def test_intent_call_schema_lists_form_actions_and_keys_and_is_strict(api):
     """#6（W1b）：意圖判斷呼叫的 schema description 含表單導出的動作名與鍵名；每一層 object 都封閉
     （OpenAI strict）；同一個模型、`max_completion_tokens` 800；輸入＝系統句＋dialog＋當句。"""
@@ -1676,19 +1746,26 @@ def test_w1c_intent_system_prompt_ends_with_the_approved_none_sentence():
 
 
 async def test_w1c_program_first_terminal_exit_never_calls_the_main_model(api):
-    """W1c：程式優先且程式路徑終結（缺欄程式追問）⇒ 主模型未被呼叫（假模型 script 未消耗）、
-    `llm_calls=0`；意圖呼叫照常收尾計量。正對照：同一句在 rules 缺（後備路徑）時主模型被呼叫一次。"""
+    """W1c：程式優先且程式路徑終結（缺欄程式追問）⇒ 主模型未被呼叫（假模型 script 未消耗）；
+    意圖呼叫照常收尾計量。正對照：同一句在 rules 缺（後備路徑）時主模型被呼叫一次。
+    F12 r4 (乙)（plan-name-lenient-f12-20261022 §4.2、§4.5）：本句缺物件名稱、程式追問含「物件」、本回合
+    打字 ⇒ 寬鬆比對以本句跑一次（假寬鬆模型回 none ⇒ 回空 ⇒ 追問逐字不變）；`llm_calls` 與 token 只多出
+    那一次寬鬆呼叫（每回合 ≤1），主模型仍 0 次。"""
     state: dict = {}
     res, reg, provider, _ = await _turn(_pm(), "能幫我新增一張修繕單嗎", state, [_out()],
                                         intents=[_intent("repair_create", pt=11, ct=4)],
                                         program_first=True)
     assert res.answer == ASK_TEXT.format(labels="物件、問題描述")
     assert provider.calls == [] and len(provider.main.script) == 1          # script 未消耗
-    assert res.trace.llm_calls == 0
+    n_lenient = len(provider.lenient_calls)
+    assert n_lenient <= 1 and res.trace.llm_calls == n_lenient
+    assert "name_lenient:trigger:missing" in res.trace.violations
     assert "write_draft_program_confirm" in res.trace.violations
     assert "confirm_missing_fields_ask" in res.trace.violations
     assert "write_intent_call" in res.trace.violations
-    assert (res.trace.prompt_tokens, res.trace.completion_tokens) == (11, 4)
+    # 意圖呼叫 11／4 ＋ 寬鬆替身每次 5／2（`_Provider` 未給寬鬆腳本時的固定回應）
+    assert (res.trace.prompt_tokens, res.trace.completion_tokens) == (11 + 5 * n_lenient,
+                                                                      4 + 2 * n_lenient)
     assert _draft(state)["asked"] == ["estate_name", "description"]
     # 正對照（後備）：rules 缺 ⇒ 主模型先被呼叫，輸出後觸發點才觸發。
     res0, _r0, p0, _ = await _turn(_pm(), "能幫我新增一張修繕單嗎", {}, [_out()],

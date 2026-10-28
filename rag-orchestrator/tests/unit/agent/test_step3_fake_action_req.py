@@ -37,6 +37,14 @@ from tests.unit.agent.token_db_double import FakeTokenDB
 pytestmark = [pytest.mark.unit,
               pytest.mark.req("agentic-mcp-orchestration:plan-conversation-architecture-step3-A")]
 
+
+@pytest.fixture(autouse=True)
+def _fill_data_text_off(monkeypatch):
+    """填欄只填答覆片（plan-fill-answer-only-20261027）：本檔的假寫入意圖不帶 `data_texts`，驗的是改前行為 ⇒ 釘住
+    `AGENT_FILL_DATA_TEXT=off`（off 與改前逐字相同，FA8 (2)；on 的行為見 test_fill_data_text_req.py）。"""
+    monkeypatch.setenv("AGENT_FILL_DATA_TEXT", "off")
+
+
 TODAY = date(2026, 10, 17)
 FAKE = "fake_note"
 FAKE_TOOL = f"jgb2.action.{FAKE}"

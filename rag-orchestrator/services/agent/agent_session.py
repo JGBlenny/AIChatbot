@@ -1,12 +1,10 @@
-"""`AgentSession`——`state["agent"]` 的生命週期封裝（Plan R R3｜
-`inputs/plan-structural-refactor-20260910.md` §0 R3 列）。
+"""`AgentSession`——`state["agent"]` 的生命週期封裝。
 
 **本檔是純封裝，⛔ 不改任何鍵的生命週期數值**（FIFO 5／20／50、一次性、
 釘住不寫）：`AgentSession` 包住同一個 `state["agent"]` dict（`AgentSession(state
 ["agent"])`，⛔ 不複製、不改鍵名），提供 `begin_turn`／`end_turn` 兩個回合邊界
-方法當**唯一寫點**（取代原本散在 `exit_gates.finalize`／
-`runtime._finish_confirm_turn`／`turn_segments` 的 `handoff_cache` 重播三處各自
-的欄位寫入），`prompt_segments()` 當範圍釘住判斷的**唯一讀點**（收斂
+方法當**唯一寫點**（`exit_gates.finalize`／
+`runtime._finish_confirm_turn`／`turn_segments` 的 `handoff_cache` 重播三處都經這裡寫欄位），`prompt_segments()` 當範圍釘住判斷的**唯一讀點**（收斂
 `recent_refs`／`estate_carry` 兩段各自的 `if scope_estate_id is None`），
 `scope_exit()` 清掉全部 `until_scope_exit` 鍵。
 
@@ -21,8 +19,7 @@ DIALOG_MAX_MESSAGES`）。本檔若去 import 那些模組的常數，會在
 test_agent_session_req.py` 另有一條「與各檔既有常數逐一相等」的正對照守著
 不讓兩邊漂移，⛔ 不是「重複了就沒事」。
 
-## 14 個鍵與六種生命週期（KEY_SPECS，封閉表；站內幫手 S3 加 `document_carry`、W1 加 `write_draft`、
-第 3 步 #9g 加 `last_submitted`、A-2a 加 `write_candidates`）
+## 14 個鍵與六種生命週期（KEY_SPECS，封閉表）
 `turn`（每回合覆寫或回合內暫存）／`once`（一次性，用掉即清）／
 `until_scope_exit`（黏到 `scope_exit()`）／`fifo(n)`（FIFO 上限 n）／
 `stamp`（時間戳）／`session`（整個 session 累加，不受回合或範圍影響）。
@@ -67,18 +64,18 @@ COMPLETED_ACTIONS_KEY = "completed_actions"
 IMAGE_SUGGESTION_KEY = "image_suggestion"
 ESTATE_CARRY_KEY = "estate_carry"
 LAST_TURN_AT_KEY = "last_turn_at"
-#: 站內幫手 S3（§3h 第 2 點；DSP-076）：一次性的文件暫存——**本鍵的權威定義就在本檔**
+#: 站內幫手 S3（DSP-076）：一次性的文件暫存——**本鍵的權威定義就在本檔**
 #: （`runtime.py` 由此 import，⛔ 另抄字面值）。
 DOCUMENT_CARRY_KEY = "document_carry"
-#: W1（plan-write-flow-program-owned-20261017 §2.1(3)／DSP-085）：寫入流程的會話草稿——
+#: W1（DSP-085）：寫入流程的會話草稿——
 #: **本鍵的權威定義就在本檔**（`runtime.py` 由此 import，⛔ 另抄字面值）。
 #: 形狀與讀回驗證在 `write_forms.load_draft`（封閉五鍵，W1b 加 `asked`；⛔ token、⛔ 系統解析的編號類值）。
 WRITE_DRAFT_KEY = "write_draft"
-#: 第 3 步 #9g（業主 2026-10-19 裁定）：「最近送出」標記——送出成功寫 receipt 時記
+#: 「最近送出」標記——送出成功寫 receipt 時記
 #: `{action, pending_id, idle_turns}`，供「修改剛送出的那一筆」判斷。**本鍵的權威定義就在本檔**。
 #: 形狀與讀回驗證在 `write_forms.load_last_submitted`（封閉三鍵；⛔ token、⛔ payload、⛔ 使用者值）。
 LAST_SUBMITTED_KEY = "last_submitted"
-#: A-2a 片（DSP-103；計畫 plan-a2a-write-candidates-20261020 §4.2）：寫入名稱多筆時程式列出的候選集
+#: A-2a 片（DSP-103）：寫入名稱多筆時程式列出的候選集
 #: `{action, field, type, ids, has_more, name_fp, creator, picked}`。**本鍵的權威定義就在本檔**。
 #: 形狀與讀回驗證在 `write_candidates.load_write_candidates`（封閉八鍵；⛔ 名稱、⛔ 列內容、⛔ token）。
 WRITE_CANDIDATES_KEY = "write_candidates"
@@ -89,7 +86,7 @@ DIALOG_MAX_MESSAGES = 20
 HANDOFF_CACHE_MAX = 50
 #: DSP-038／W3：`pending_confirm` 每 session 保留的待確認筆數上限。
 PENDING_CONFIRM_MAX = 20
-#: S2｜Plan batch3 §3、H3：`completed_actions` 的 FIFO 上限。
+#: `completed_actions` 的 FIFO 上限。
 COMPLETED_ACTIONS_MAX = 5
 #: 站內幫手 S3：`document_carry` 建立後最多活幾個回合（`turns` 達此值即清）。
 DOCUMENT_CARRY_MAX_TURNS = 5
@@ -117,7 +114,7 @@ KEY_SPECS: dict[str, KeySpec] = {
     # 第 3 步 #9g：黏到 `scope_exit()`（沿用既有六種之一，⛔ 新增第七種）；其餘清除條件（出卡、
     # 取消、`DRAFT_IDLE_LIMIT` 個無關回合、開關 off）由 runtime 各寫點明確呼叫 `clear_last_submitted()`。
     LAST_SUBMITTED_KEY: KeySpec(LAST_SUBMITTED_KEY, Lifetime.UNTIL_SCOPE_EXIT),
-    # A-2a（§11 P3-2）：黏到 `scope_exit()`（沿用既有六種之一，⛔ 新增第七種）；其餘清除條件的
+    # A-2a：黏到 `scope_exit()`（沿用既有六種之一，⛔ 新增第七種）；其餘清除條件的
     # **單一清除點**是 `clear_write_draft()`（取消、送出、換動作、閒置、換身分、`select:` 釘住範圍），
     # 另加出確認卡時由 runtime 呼叫 `clear_write_candidates()`；新清單覆蓋舊的。
     WRITE_CANDIDATES_KEY: KeySpec(WRITE_CANDIDATES_KEY, Lifetime.UNTIL_SCOPE_EXIT),
@@ -294,7 +291,7 @@ class AgentSession:
 
     def clear_write_draft(self) -> None:
         self._state.pop(WRITE_DRAFT_KEY, None)
-        # A-2a（§11 P3-2）：候選集綁一份草稿——草稿被清的每一條路都經這裡，一併清（單一清除點）。
+        # A-2a：候選集綁一份草稿——草稿被清的每一條路都經這裡，一併清（單一清除點）。
         self._state.pop(WRITE_CANDIDATES_KEY, None)
 
     # ── write_candidates（A-2a：黏到 `scope_exit()`；形狀驗證在

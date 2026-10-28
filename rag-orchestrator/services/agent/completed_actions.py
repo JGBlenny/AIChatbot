@@ -1,9 +1,9 @@
 """`agent_state["completed_actions"]`——會話記憶：已完成動作的可引用摘要
-（S2｜Plan `inputs/plan-walkthrough-fixes-20260909.md` §3、H3）。
+。
 
 ## 為什麼這是程式寫、不是模型寫
-H3 走查實測：建單成功之後下一句問「剛剛那張單號多少」答不出來——`receipt`
-只進了 `trace`／`outcome.ref`，沒有進任何模型看得到的地方。這裡把它變成
+建單成功之後下一句問「剛剛那張單號多少」，若 `receipt`
+只進 `trace`／`outcome.ref`，模型看不到就答不出來。這裡把它變成
 程式產出的**封閉值**記憶行，模型只能引用、不能改寫（同影像事實資料段的
 紀律：可引用資料段一律 `ToolResult(provenance=[...])`，⛔ 不進 dialog 歷史、
 ⛔ 讓模型自己填一個 `estate_name` 之類的自由字串）。
@@ -48,11 +48,11 @@ _REF_TYPE_LABEL: dict[str, str] = {
     "bill": "帳單",
     # 站內幫手 S5（S5-15）：新建物件（只印名稱，見 `_NAME_ONLY_REF_TYPES`）。
     # ⚠️ `contract` **刻意不加**：既有測試 `test_unknown_ref_type_is_not_rendered` 以它當
-    #    「表外型別」的正對照（該檔不在 S5 限定改法內）；合約的單號照舊不進記憶行（已列回報）。
+    #    「表外型別」的正對照；合約的單號不進記憶行。
     "estate": "物件",
 }
 
-#: 業主 2026-10-15「印物件名稱，不印 id」：這些 `ref_type` 的使用者面文字只印名稱
+#: 這些 `ref_type` 的使用者面文字只印名稱、不印 id
 #: （`estate_id` 是內部值）；沒有名稱 ⇒ 那一筆不渲染。
 _NAME_ONLY_REF_TYPES: frozenset = frozenset({"estate"})
 
@@ -82,7 +82,7 @@ def record_completed_action(
     只管記憶行本身的形狀：去重＋上限＋封閉值。`ref_type`／`ref_id` 缺一 ⇒
     不寫（沒有可引用的識別碼，寫進去也組不出一行）。
 
-    `estate_name`（T4｜Plan `plan-walkthrough-fixes-batch2-20260909.md` §5）：
+    `estate_name`：
     呼叫端只能從封閉來源帶進來（待確認 payload 的物件名稱欄位、或釘住範圍時
     的清單標題）——⛔ 不得是模型自由文字。這裡用既有的 `_sanitize_piece`
     剝一次（同記憶行其餘欄位的紀律），剝完是空字串就當沒有這個值。
@@ -131,7 +131,6 @@ def _slash_date(value: str) -> str:
     return str(value).strip()
 
 
-#: T1（Plan `inputs/plan-walkthrough-fixes-batch2-20260909.md` §2）：
 #: **一律剝除**的不可見字元，逐類列舉（⛔ 不用「非可列印就砍」那種開放判定——
 #: 那會連中文標點與表情符號一起吃掉）：
 #:   - C0 控制字元 `U+0000–U+001F`（換行三種在下方先換成空白，故此處不含）
@@ -154,7 +153,7 @@ _INVISIBLE_CHARS_RE = re.compile(
 def sanitize_data_piece(text: Any) -> str:
     """把一段**程式產的**可引用文字正規化成單行、無不可見字元、無假標記的字串。
 
-    T1 起這是「程式資料段」的共用正規化落點（記憶行與呼叫端進場句 `context`
+    這是「程式資料段」的共用正規化落點（記憶行與呼叫端進場句 `context`
     都走它），⛔ 不各寫一份：兩處各寫一份的失敗方向是「其中一處忘了剝某一類」，
     而那一處剛好是新開的外部輸入面。
 
@@ -176,13 +175,13 @@ def sanitize_data_piece(text: Any) -> str:
     return _UNIT_MARKER_RE.sub("", cleaned)
 
 
-#: F7c 時期的舊名。⛔ 不刪：`completed_actions` 既有測試與呼叫點都用它，
-#: 而 T1 只是把同一支函式擴充成共用版本，不是換一支新語義。
+#: 舊名別名。⛔ 不刪：`completed_actions` 既有測試與呼叫點都用它，
+#: 它與 `sanitize_data_piece` 是同一支函式、同一個語義。
 _sanitize_piece = sanitize_data_piece
 
 
 def completed_actions_line(items: Any, scope_estate_id: Optional[str]) -> str:
-    """決定性、單行、⛔ 不含換行——完成動作記憶行（Plan §3 文字格式）。
+    """決定性、單行、⛔ 不含換行——完成動作記憶行。
 
     有釘住範圍（`scope_estate_id` 非 `None`）時**只放同戶的項目**（F8）：
     `estate_id` 對不上就跳過、`estate_id` 是 `None`（算不出物件）也跳過——
@@ -213,7 +212,7 @@ def completed_actions_line(items: Any, scope_estate_id: Optional[str]) -> str:
             piece = f"{label} {ref_id} 到期日已延至 {_slash_date(due_date)}"
         else:
             # 只講使用者看得到的編號；`estate_id` 是內部值，只用於範圍過濾，
-            # ⛔ 不進使用者面文字（2026-09-09 verifier P3：「物件 67652」外洩）。
+            # ⛔ 不進使用者面文字（否則會印出「物件 67652」這類內部編號）。
             piece = f"{label} {ref_id}"
         estate_name = item.get("estate_name")
         if isinstance(estate_name, str) and estate_name:

@@ -1,12 +1,9 @@
 """Agent 路徑的上限封閉表（DSP-045）。
 
-業主 2026-09-10 裁：「之後架構是每個團隊自己上 OpenAI key 自己用額度，只要避免
+設計取向：「之後架構是每個團隊自己上 OpenAI key 自己用額度，只要避免
 惡意攻擊，目前不用設這麼細，而且不設在 env 根本沒人記得」＋「額度不擋」。
 
-在此之前，`agent.turn`／一般 MCP 工具／`kb.get`／照片／PDF 五道上限各自散在
-`mcp_facade.py`／`tools/registry.py`／`image_fetch.py`，各自讀一個同名 env
-（`AGENT_TURN_CAP`／`RATE_PER_MIN`／`KB_GET_CAP`／`IMAGE_COUNT_CAP_PER_HOUR`／
-`FILE_COUNT_CAP_PER_HOUR`）覆寫。收成這一張表之後：
+`agent.turn`／一般 MCP 工具／`kb.get`／照片／PDF 五道上限收成這一張表：
 
 - 數值**收成一張封閉表**，預設寬鬆到只擋惡意（不是逐團隊、逐業者細分的額度——
   那是「額度不擋」的既有裁決，見 DSP-045 前半、`services/usage_metering.py`）。

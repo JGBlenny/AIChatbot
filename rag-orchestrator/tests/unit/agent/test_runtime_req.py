@@ -94,6 +94,52 @@ def _final_response(
     return _fake_response(_fake_message(content=json.dumps(payload, ensure_ascii=False)))
 
 
+
+class FakeStream:
+    """W2 機械調整：主模型呼叫改串流後，假 `create` 在 `kwargs.get("stream")` 時把原本的回應物件包成等價的假串流
+    （一個內容／tool_calls chunk、一個 finish_reason chunk、一個只有 usage 的 chunk）。`close()` 記次數。"""
+
+    def __init__(self, chunks):
+        self._chunks = list(chunks)
+        self.closed = 0
+
+    def __aiter__(self):
+        return self._iter()
+
+    async def _iter(self):
+        for c in self._chunks:
+            yield c
+
+    async def close(self):
+        self.closed += 1
+
+
+def as_fake_stream(response):
+    choice = response.choices[0]
+    message = choice.message
+    chunks = []
+    delta_tcs = None
+    if getattr(message, "tool_calls", None):
+        delta_tcs = [
+            SimpleNamespace(index=i, id=tc.id, type="function",
+                            function=SimpleNamespace(name=tc.function.name, arguments=tc.function.arguments))
+            for i, tc in enumerate(message.tool_calls)
+        ]
+    chunks.append(SimpleNamespace(
+        choices=[SimpleNamespace(delta=SimpleNamespace(content=getattr(message, "content", None),
+                                                       tool_calls=delta_tcs),
+                                 finish_reason=getattr(choice, "finish_reason", None) or "stop")],
+        usage=None))
+    usage = getattr(response, "usage", None)
+    if usage is not None:
+        chunks.append(SimpleNamespace(choices=[], usage=usage))
+    return FakeStream(chunks)
+
+
+def maybe_stream(response, kwargs):
+    return as_fake_stream(response) if kwargs.get("stream") else response
+
+
 class FakeCompletions:
     """腳本化：`script` 內每一項依序消耗；項目可以是回應物件，或
     `callable(kwargs) -> response`（後者用來在「模型回應」的同時做副作用，
@@ -122,10 +168,14 @@ class FakeCompletions:
             if isinstance(step, str):
                 step = _fake_response(_fake_message(content=step), prompt_tokens=0, completion_tokens=0)
             return step
+        # E 片：只判斷 dialog_act 的獨立呼叫（schema 名 DialogAct）一律回 none，⛔ 計入 `calls`、⛔ 吃主模型腳本。
+        if isinstance(rf, dict) and (rf.get("json_schema") or {}).get("name") == "DialogAct":
+            return _fake_response(_fake_message(content='{"dialog_act": "none"}'),
+                                  prompt_tokens=0, completion_tokens=0)
         self.calls.append(kwargs)
         assert self.script, "假 provider 腳本已耗盡——測試少寫了一步"
         step = self.script.pop(0)
-        return step(kwargs) if callable(step) else step
+        return maybe_stream(step(kwargs) if callable(step) else step, kwargs)
 
 
 class FakeProvider:

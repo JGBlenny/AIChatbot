@@ -39,6 +39,14 @@ KEELUNG_ESTATE = WDF.KEELUNG_ESTATE
 
 pytestmark = [pytest.mark.unit, pytest.mark.req("agentic-mcp-orchestration:period-parse")]
 
+
+@pytest.fixture(autouse=True)
+def _fill_data_text_off(monkeypatch):
+    """填欄只填答覆片（plan-fill-answer-only-20261027）：本檔的假寫入意圖不帶 `data_texts`，驗的是改前行為 ⇒ 釘住
+    `AGENT_FILL_DATA_TEXT=off`（off 與改前逐字相同，FA8 (2)；on 的行為見 test_fill_data_text_req.py）。"""
+    monkeypatch.setenv("AGENT_FILL_DATA_TEXT", "off")
+
+
 TODAY = date(2026, 10, 19)
 #: 草稿期別值的唯一合法形狀（驗收 C2(i)）。
 STORED_RE = re.compile(r"^\d{4}/\d{2}( 未繳)?$|^未繳$")

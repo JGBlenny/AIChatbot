@@ -260,7 +260,7 @@ def test_outline_text_shows_section_id_in_heading():
 # ---------------------------------------------------------------------------
 
 from services.agent.runtime import _agent_output_response_format
-from services.presales_gate import FactClass, HandoffReason
+from services.presales_gate import FactClass, HandoffReason, MODEL_VISIBLE_HANDOFF_REASONS
 
 
 def test_response_format_constrains_fact_class_and_handoff_reason_to_closed_sets():
@@ -269,7 +269,7 @@ def test_response_format_constrains_fact_class_and_handoff_reason_to_closed_sets
     assert props["fact_class"]["enum"] == [fc.value for fc in FactClass]
     assert "null" not in json.dumps(props["fact_class"])            # 模型不能再回 null
     reasons = [b for b in props["handoff_reason"]["anyOf"] if b.get("type") == "string"][0]["enum"]
-    assert reasons == [r.value for r in HandoffReason]
+    assert reasons == list(MODEL_VISIBLE_HANDOFF_REASONS)   # 模型可見值域（E 片：不含程式專用 user_request）
     assert set(schema["required"]) >= {"fact_class", "handoff_reason"}
 
 

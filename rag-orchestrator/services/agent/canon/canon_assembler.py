@@ -2,19 +2,19 @@
 
 `CanonDoc`（git 正本）→ `OutlineDoc`／`outline:toc`／`kb.get("outline:*")` 的解析結果。
 **組裝來源＝正本 Markdown，⛔ 不讀 DB**——DB 的售前池是正本的衍生物（匯入產物），
-大綱不得反過來以衍生物為來源（R2.6／R5.4；Plan `inputs/plan-3.2-canon-assembler-20260907.md` §1）。
+大綱不得反過來以衍生物為來源（R2.6／R5.4）。
 
-## 圖書館形態（DSP-058／計畫 9.6 S3）
+## 圖書館形態（DSP-058）
 正本只有**一份**（`canon/jgb/` 九架），受眾隔離改由**受眾視圖**承擔：
 `build_outline(doc, audience, identity, …)` 依細目的 `target_user`／`business_types`
 兩軸切出該受眾看得到的那一份。⛔ 沒有「載入哪一份正本」這個隔離機制了——
-S2 之前那條註記（「受眾隔離靠載入哪一份正本」）**已失效**，⛔ 不得據它放寬視圖過濾。
+⛔ 不得以「受眾隔離靠載入哪一份正本」為由放寬視圖過濾。
 
 ## 啟動契約（`load_canon_or_die`）
 1. 內容**只**來自 `canon/jgb/[A-I].md` 的解析結果（`canon_parser.parse_canon_dir`）。
 2. `canon/jgb.json` 逐位元組比對 `export_json(doc, <tmp>)` 的重導出結果——
    ⚠️ **⛔ 不是只比 `canon_sha256` 欄**：`canon_sha256` 只涵蓋九架 `.md` 的位元組，
-   `.json` 內容改一位元 sha 仍相等（security-reviewer 2026-09-07 P1-1）。
+   `.json` 內容改一位元 sha 仍相等。
 3. `canon/jgb/CATALOG.md` 同樣逐位元組比對 `export_catalog` 的重導出結果——
    目錄是衍生物，手改它＝正本與衍生物分裂，⛔ 不放行。
 4. 缺檔／缺架／不同源／格式錯 ⇒ `CanonLoadError`（訊息含 resolved path）。
@@ -39,19 +39,19 @@ S2 之前那條註記（「受眾隔離靠載入哪一份正本」）**已失效
 ⚠️ ⛔ 不是只看 mode——`Identity(target_user=property_manager, mode=b2c)` 必須走嚴格分支），
 角色正規化重用 `VendorKnowledgeRetrieverV2._effective_target_user`（⛔ 不另寫一套）。
 
-**b2b 分支「`target_user` 空＝不可見」**（DSP-052 補救 (c)，業主 2026-09-14 裁；
+**b2b 分支「`target_user` 空＝不可見」**（DSP-052 補救 (c)；
 與 SQL 謂詞同式，兩側同步）：b2b 分支的 `target_user` 是**必填鑰匙**，⛔ 沒有
 「空＝不設限」的放行。理由：`tenant` 是合法值、`audience_of` 靠 `or mode == "b2b"`
 把它路由到業者受眾，放行空細目即跨受眾可見且靜默。**b2c 分支⛔不動**（空放行
 ＋`all_users`），這條不對稱本身就是隔離機制。
 
-**`system_admin` 的正本可見性＝`property_manager`**（DSP-053a，業主 2026-09-17 裁）：
+**`system_admin` 的正本可見性＝`property_manager`**（DSP-053a）：
 `_axes_visible` 的 b2b 分支拿 `CANON_TARGET_USER_FOLD` 把鑰匙折成 `property_manager`。
 ⚠️ 這是**兩側刻意的一處不對稱**：`kb.search` 的 `build_visibility_predicate` ⛔ 不折，
 SQL 側 `kb.target_user && ARRAY['system_admin']` 對 `system_admin` 回 0 列。
 ⛔ 不得以「收斂兩側」為由把折疊補進 SQL 謂詞，也 ⛔ 不得拿它當理由放寬 b2b 業態或角色條件。
 
-**刻意不套的 SQL 條件**（對照 `build_visibility_predicate`，業主 2026-09-07 §8.1 核）：
+**刻意不套的 SQL 條件**（對照 `build_visibility_predicate`）：
 - 業者軸（謂詞條件 1）：正本細目無 vendor 欄，匯入寫 NULL ⇒ 該條件恆真。
 - 上架旗標（謂詞條件 2）：正本無此旗標，「未審＝不可引用」由 `reviewed_by` 承擔。
 - 保留分類（謂詞條件 3）：正本無「系統脈絡／對話規則」類細目。
@@ -321,13 +321,13 @@ def _axes_visible(
     規則見模組 docstring：分支判準與 SQL `is_b2b_mode` 同式；角色正規化由呼叫端先做
     （`canon_visible` 走 `_effective_target_user`，⛔ 不在此另寫一套）。
 
-    ⚠️ **b2b 分支的 `target_user` 空集合＝不可見**（DSP-052 補救 (c)，業主 2026-09-14 裁）——
+    ⚠️ **b2b 分支的 `target_user` 空集合＝不可見**（DSP-052 補救 (c)）——
     ⛔ 不得改回 `(not fine_target_user) or ...`：合法值 `target_user="tenant"`＋`mode="b2b"`
     會被 `audience_of` 的 `or mode == "b2b"` 路由到 pm 受眾，b2b 分支又拿 tenant 當鑰匙
     ⇒ 放行「空＝不設限」的細目就是跨受眾可見，且 `_no_match()` 刻意不分不可見與不存在
     ⇒ **靜默**。b2c 分支照舊（空放行＋`all_users`）。
 
-    ⚠️ **b2b 分支的比對鑰匙把 `system_admin` 折成 `property_manager`**（DSP-053a，業主 2026-09-17 裁）：
+    ⚠️ **b2b 分支的比對鑰匙把 `system_admin` 折成 `property_manager`**（DSP-053a）：
     `system_admin` 在正本上看到的＝`property_manager` 看到的那一份。這是**刻意的單向不對稱**——
     `kb.search` 的 `build_visibility_predicate` ⛔ 不折（SQL 側 `target_user && ARRAY['system_admin']`
     ⇒ 0 列），釘在 `test_visible_subset_sql_equiv_req.py` 的 `b2b-system_admin` 格。
@@ -381,11 +381,11 @@ def canon_visible(identity: Identity, fine: FineItem, *, vendor_business_types: 
 
 
 def build_canon_toc(doc: CanonDoc, identity: Identity, *, vendor_business_types: frozenset):
-    """`outline:toc` 節（計畫 9.10 S2：目錄改列**粗目**，⛔ 不列細目）。
+    """`outline:toc` 節（目錄列**粗目**，⛔ 不列細目）。
 
     每個**含 ≥1 條可見已審細目**的粗目一行 `<粗目 id>｜<粗目標題>｜<可見細目數>`；
-    零可見已審細目的粗目不出現（連粗目 id 都不列——量測見計畫 §1：515 細目平鋪超過
-    `OUTLINE_TOC_TOKEN_LIMIT` 4.7 倍，改列 57 粗目才落在預算內）。粗目導航
+    零可見已審細目的粗目不出現（連粗目 id 都不列；細目平鋪會超出
+    `OUTLINE_TOC_TOKEN_LIMIT`，列粗目才落在預算內）。粗目導航
     （`resolve_canon_section` 的 `outline:<粗目 id>`）才回傳該粗目底下的細目清單。
 
     ⛔ 另名，不與 pm／tenant 現役的 `outline.build_toc(db_pool, audience, vendor_id)` 同名
@@ -401,7 +401,7 @@ def build_canon_toc(doc: CanonDoc, identity: Identity, *, vendor_business_types:
             if canon_visible(identity, fine, vendor_business_types=vendor_business_types)
         )
         if count:
-            # 2026-10-15 正式機：行首直接印 `kb.get` 可用的完整 id（`outline:<粗目 id>`）。
+            # 行首直接印 `kb.get` 可用的完整 id（`outline:<粗目 id>`）。
             # 只印裸 id 時，模型把資料段標記尾端的 `§<n>` 當成 id 呼叫 `kb.get("outline:32")`。
             lines.append(
                 f"{OUTLINE_ID_PREFIX}{coarse.id}{TOC_LINE_SEP}{coarse.title}{TOC_LINE_SEP}{count}"
@@ -468,7 +468,7 @@ def resolve_canon_section(
 
     - `outline:toc` ⇒ 該身分的目錄（`citable=False`）。
     - `outline:<fine.id>` ⇒ 可見且已審才回內容（`citable=True`）；否則 `NO_MATCH`。
-    - `outline:<粗目 id>`（計畫 9.10 S2，粗目導航）⇒ 該粗目下可見已審細目的
+    - `outline:<粗目 id>`（粗目導航）⇒ 該粗目下可見已審細目的
       `<細目 id>｜<標題>` 清單（`citable=False`）；粗目**存在但零可見已審細目**
       與粗目**不存在**逐欄位回傳相同的 `NO_MATCH`（⛔ 不對模型區分，`_no_match` 設計）。
       過渡期裸字母粗目（`outline:A`）與 `<架字母>-<slug>` 走同一條路徑。
@@ -507,7 +507,7 @@ def resolve_canon_section(
     if coarse is None:
         return _no_match()
     lines = [
-        # 同目錄：印完整 id（`outline:<細目 id>`），模型照抄即可開（正式機實測照抄裸 id 失敗）。
+        # 同目錄：印完整 id（`outline:<細目 id>`），模型照抄即可開（裸 id 開不起來）。
         f"{OUTLINE_ID_PREFIX}{fine.id}{TOC_LINE_SEP}{fine.title}"
         for fine in coarse.fines
         if canon_visible(identity, fine, vendor_business_types=vendor_business_types)

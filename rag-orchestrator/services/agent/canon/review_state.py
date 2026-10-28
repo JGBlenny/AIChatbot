@@ -1,6 +1,6 @@
 """內容已審狀態的**單一來源**（spec knowledge-outline-and-intent-architecture・任務 3.1）。
 
-design 元件 5／決策 8／不變量 32；Plan `inputs/plan-3.1-review-state-20260907.md` §1／§3。
+design 元件 5／決策 8／不變量 32。
 
 ## 這個檔回答什麼命題
 `knowledge_base.outline_approved_by` 這一欄的**值域**（哪些值合法）與
@@ -9,18 +9,17 @@ design 元件 5／決策 8／不變量 32；Plan `inputs/plan-3.1-review-state-2
 migration SQL）一律引用本檔常數，⛔ 不得自行寫出 `outline_approved_by` 字面
 （不變量 32：`scripts/audit/checks/agent_boundary.py:check_32_review_state_single_source`）。
 
-## 值域（業主 2026-09-07 裁 (a)：收嚴，並回寫 design）
+## 值域（收嚴）
 | 值 | CHECK 允許 | 謂詞可見 |
 |---|---|---|
 | `reviewed:<who>`（who 非空、不含空白） | 是 | **是** |
 | `pool-marked-<YYYYMMDD>` | 是 | **否** |
 | `NULL` | 是 | 否 |
-| 其餘（含現況 29 列的 `owner-20260905`、大小寫變體、前導空白） | 否 | 否 |
+| 其餘（含 `owner-20260905`、大小寫變體、前導空白） | 否 | 否 |
 
 **可見 ⊂ CHECK 允許**：池標記（`pool-marked-*`）是「這一列屬於某次盤點的池」，
-⛔ **不是**「內容已審」——D1 把 29 列 `owner-20260905` 改寫成 `pool-marked-<date>`
-之後它們**仍然不可見**，要到正本細目匯入寫進 `reviewed:<who>` 才會進場。
-（D1 前整池對 agent 路徑視為未審，是**預期**行為，不是回歸。）
+⛔ **不是**「內容已審」——標了池標記的列**仍然不可見**，要到正本細目匯入寫進
+`reviewed:<who>` 才會進場。（整池對 agent 路徑視為未審，是**預期**行為。）
 
 ## ⛔ 為什麼是 regex 不是 `LIKE`
 `LIKE 'reviewed:_%'` 的 `_` 是「任一字元」——**空白也算**，於是
@@ -34,8 +33,8 @@ PostgreSQL 的 POSIX regex 支援字元類 `[[:space:]]`，Python `re` **不支�
 （會被當成字元集合 `[:aces]`，語義完全不同）。故 SQL 側用
 `REVIEWED_REGEX`／`DOMAIN_REGEX`（`[[:space:]]`），Python 側用
 `REVIEWED_REGEX_PY`／`DOMAIN_REGEX_PY`（`\\S`）——兩組**並列、⛔ 不共用字串**，
-由測試對 Plan §3 全表逐值比對兩邊結果相同（實查 2026-09-07：15 個值全部一致，
-含 U+3000 全形空白——PG 的 `[[:space:]]` 與 Python 的 `\\S` 對它判定相同）。
+由測試逐值比對兩邊結果相同（含 U+3000 全形空白——PG 的 `[[:space:]]` 與
+Python 的 `\\S` 對它判定相同）。
 drift 由 `tests/unit/agent/test_review_state_req.py` 與 migration 檔的逐字比對擋。
 
 ⛔ 本檔無 DB、無 I/O、無 import 副作用——它只是一組常數與兩個純函式。
@@ -51,7 +50,7 @@ COLUMN = "outline_approved_by"
 #: 內容已審值的前綴：`reviewed:<who>`。
 REVIEWED_PREFIX = "reviewed:"
 
-#: 池標記值的前綴：`pool-marked-<YYYYMMDD>`（D1 由 `owner-20260905` 改寫而來）。
+#: 池標記值的前綴：`pool-marked-<YYYYMMDD>`。
 #: ⚠️ 池標記**不是**內容已審，見檔頭值域表。
 POOL_MARK_PREFIX = "pool-marked-"
 
@@ -73,7 +72,7 @@ def content_reviewed_predicate() -> Tuple[str, List[str]]:
     """回 `(" AND kb.outline_approved_by ~ %s", [REVIEWED_REGEX])`。
 
     **正向白名單**：只有 `reviewed:<who>` 進場，值域外任何值（含 `NULL`、
-    現況 29 列的 `owner-20260905`、大小寫變體、前導空白、空 reviewer）
+    `owner-20260905`、大小寫變體、前導空白、空 reviewer）
     一律視為未審 ⇒ 取不到。
 
     psycopg2 `%s` 佔位符（與 `build_visibility_predicate` 同款，⛔ 不混用

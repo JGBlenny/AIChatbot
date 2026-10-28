@@ -1,7 +1,6 @@
 """MCP 門面（spec agentic-mcp-orchestration・任務 1.7）。
 
-契約基準：`.kiro/specs/agentic-mcp-orchestration/design.md` **元件 4**、附錄 B
-不變量 27／28／31、附錄 C2／C3 相關列。
+契約基準：`.kiro/specs/agentic-mcp-orchestration/design.md` **元件 4**。
 
 ## `agent.turn`（任務 2.6，本檔下半段）
 一支**門面專屬**（`facade_only=True`）的整回合工具：呼叫端給一句 `message`，
@@ -61,7 +60,7 @@
 - `_invoke`（每個工具薄包裝的入口）——身分**只從 SDK 的請求 context 取**，
   見下方〈SDK 用法〉。門面即使日後被改成別的掛法，工具層仍 fail-closed。
 
-## SDK 用法（mcp 2.1.1 實查，2026-09-04）
+## SDK 用法（mcp 2.1.1）
 - `from mcp.server.mcpserver import MCPServer, Context`；`MCPServer("jgb-tools")`，
   ⛔ 不傳 `token_verifier`／`auth`。
 - **取 headers**：工具函式加一個標註為 `Context` 的參數，SDK 會注入；
@@ -76,13 +75,13 @@
   `_build_wrapper()` 依 `ToolSpec.input_schema` **生成對應簽名**（enum 轉
   `Literal[...]`，選填參數給 `None` 預設並在轉發前剔除）。回傳標註
   `dict[str, Any]` ⇒ `structured_output` 自動判為結構化輸出。
-- **錯誤**：`from mcp.server.mcpserver.exceptions import ToolError`。實測（2.1.1）
+- **錯誤**：`from mcp.server.mcpserver.exceptions import ToolError`。SDK 行為（2.1.1）
   模型端收到的是 `Error executing tool <name>: <我們的訊息>`（`tools/base.py`
   對**刻意**的 `ToolError` 會補上工具名；真正的 crash 走 `UnexpectedToolError`，
   只給 `Error executing tool <name>`、⛔ 不帶原文）⇒ 本檔的訊息**只含業務代碼**
   （`_tool_error_message`），⛔ 不含 SQL、例外文字、身分或原文；補上的工具名
   是呼叫端本來就知道的資訊。
-- **掛載**：`Mount("/mcp", app=build_asgi_app(mcp))`。三個實測坑都在
+- **掛載**：`Mount("/mcp", app=build_asgi_app(mcp))`。三個坑都在
   `build_asgi_app()` 與 `McpServiceGate` 的註解裡：子 app 路徑要設 `"/"`
   （否則 `/mcp/mcp`）、要顯式關掉 SDK 的 localhost-only DNS rebinding 檢查
   （否則經 nginx 一律 421）、`POST /mcp` 無尾斜線會被外層 router 307
@@ -189,7 +188,7 @@ class McpRequestError(Exception):
 ERR_IDENTITY_MALFORMED = "IDENTITY_MALFORMED"
 ERR_IDENTITY_NO_VENDOR = "IDENTITY_MISSING_VENDOR_ID"
 ERR_IDENTITY_NO_SESSION = "IDENTITY_MISSING_SESSION_ID"
-#: 站內幫手 S5（S5-10，業主 2026-10-15「站內幫手的金鑰必帶 user_id，缺就拒」）：
+#: 站內幫手金鑰必帶 user_id，缺就拒：
 #: `AGENT_ASSISTANT_KEY_IDS` 列入的金鑰，`X-JGB-Identity` 缺 `user_id` ⇒ 400 這個碼。
 ERR_IDENTITY_NO_USER = "IDENTITY_MISSING_USER_ID"
 # 401
@@ -221,7 +220,7 @@ class _PremiseStats:
     origin_not_allowed: int = 0
     enforce_off_with_mcp_traffic: bool = False
     metering_unavailable: int = 0
-    #: 任務 4.2（Plan §4.1-1）：入口 `mode` 被正規化改寫的次數——**觀測值**，
+    #: 入口 `mode` 被正規化改寫的次數——**觀測值**，
     #: ⛔ 不進 `premise.red_flags`、⛔ 不致紅（正規化是刻意行為，不是前提破裂）。
     identity_mode_normalized: int = 0
 
@@ -353,7 +352,7 @@ def _normalize_target_user(raw: Any) -> str:
     return VendorKnowledgeRetrieverV2._effective_target_user(raw)
 
 
-#: 站內幫手 S5（S5-10）：哪幾把金鑰是「站內幫手」——env 逗號分隔整數 `api_key_id`
+#: 哪幾把金鑰是「站內幫手」——env 逗號分隔整數 `api_key_id`
 #: （讀法比照 `IMAGE_URL_ALLOWLIST`）。**未設定或空字串 ⇒ 不對任何金鑰啟用**（保持既有
 #: 行為：同一服務還有 line-bot 等其他用戶端，全面 fail-closed 會打斷它們）；這把金鑰在
 #: 正式機必須設定（接口 A 部署前置）。含非整數 ⇒ `RuntimeError`（大聲失敗）。
@@ -434,7 +433,7 @@ async def parse_identity(
     if not isinstance(session_id, str) or not session_id.strip():
         raise McpRequestError(400, ERR_IDENTITY_NO_SESSION)
 
-    # 任務 4.2（Plan §4.1-1 收尾審查 P2）：**先**正規化 `target_user` 再決 mode。
+    # **先**正規化 `target_user` 再決 mode。
     # payload 的合法形狀含 list（`["prospect"]`）——拿原值餵
     # `normalize_entry_mode` 會比不到 prospect，留下「受眾說 prospect、可見性
     # 謂詞說 b2c」的分裂身分（正是本次要消滅的東西）。⛔ 不得對調順序。
@@ -470,10 +469,10 @@ async def parse_identity(
         return value if isinstance(value, str) and value.strip() else None
 
     user_id = _opt_str(payload.get("user_id"))
-    # S5（F1／S5-6）：字面 `anonymous` 是本系統替「沒有 user_id」存的值，⛔ 准呼叫端冒用。
+    # 字面 `anonymous` 是本系統替「沒有 user_id」存的值，⛔ 准呼叫端冒用。
     if user_id is not None and user_id.strip() == ANONYMOUS_USER_ID:
         raise McpRequestError(400, ERR_IDENTITY_MALFORMED)
-    # S5（S5-10）：站內幫手金鑰缺 user_id ⇒ 拒（其他金鑰的 pm 單證行為不變）。
+    # 站內幫手金鑰缺 user_id ⇒ 拒（其他金鑰的 pm 單證行為不變）。
     if user_id is None and (key or {}).get("id") in assistant_key_ids():
         raise McpRequestError(400, ERR_IDENTITY_NO_USER)
 
@@ -618,8 +617,8 @@ def check_and_record_agent_turn(key: tuple, now: Optional[float] = None) -> bool
     return True
 
 
-#: `agent_configured()` 判準逐位元搬自 `app.py::_agent_configured`（任務 4.1／
-#: Plan §2.1-7）——`app.py` 之後改呼叫這裡的薄別名，名稱保留給既有測試。
+#: `agent_configured()` 判準逐位元搬自 `app.py::_agent_configured`
+#: ——`app.py` 之後改呼叫這裡的薄別名，名稱保留給既有測試。
 _AGENT_CONFIGURED_ENV_KEYS: tuple = (
     "AGENT_AUDIENCES", "AGENT_SHADOW_AUDIENCES", "AGENT_TURN_ENABLED",
 )
@@ -754,13 +753,13 @@ IMAGE_MAX_BUDGET_S = 15.0
 #: 縮圖後的長邊上限（去 EXIF 是同一個 `downscale_image` 的副作用）。
 IMAGE_MAX_PX = 1024
 
-#: `/mcp` 路徑的 vision `detail`——**程式釘死**（S9-8：⛔ 不由 env，
+#: `/mcp` 路徑的 vision `detail`——**程式釘死**（⛔ 不由 env，
 #: 那會讓「一張照片要花多少錢」變成部署者可調的東西）。
 IMAGE_DETAIL = "low"
 
 
 def image_budget_s() -> float:
-    """`min(IMAGE_MAX_BUDGET_S, agent_turn_timeout_s() / 2)`（S9-7）。
+    """`min(IMAGE_MAX_BUDGET_S, agent_turn_timeout_s() / 2)`。
 
     上界是回合逾時的一半——照片吃掉的每一秒都是模型迴圈少掉的一秒，
     ⛔ 不讓照片把整個回合的預算吃光。
@@ -769,9 +768,8 @@ def image_budget_s() -> float:
 
 
 #: 文件線（`prepare_document_turn`）的**總**時間預算上限（秒）。實際預算見 `document_budget_s()`。
-#: 站內幫手 S3-live 修正 R5：文件線原本共用照片線的 `image_budget_s()`（上限 15 秒），
-#: `AGENT_TURN_TIMEOUT_S=120` 時擷取仍只有約 14 秒；gpt-6-luna 以 `detail=high` 讀一張
-#: 收據會超過（S3-live A14_receipt-2「文件擷取逾時（14s）」）。文件頁數已封頂，上限另立。
+#: 文件線不共用照片線的 `image_budget_s()`（上限 15 秒）：否則 `AGENT_TURN_TIMEOUT_S=120` 時
+#: 擷取仍只有約 14 秒，以 `detail=high` 讀一張收據會逾時。文件頁數已封頂，上限另立。
 DOCUMENT_MAX_BUDGET_S = 45.0
 
 
@@ -805,14 +803,14 @@ async def _image_recognize_batch(
 ) -> dict:
     """一批（≤5 張）送 vision。**測試的注入點就是這個模組屬性**。
 
-    - `detail` 程式釘 `low`、`max_retries=1` 顯式（S9-7／S9-8）；
-    - `max_images=None` ⇒ ⛔ 不套 REST 的 `[:3]` 截斷（S9-6）；
-    - `closed_schema=True`（站內幫手 S3-live 修正）：有分類樹 ⇒ strict json_schema，
+    - `detail` 程式釘 `low`、`max_retries=1` 顯式；
+    - `max_images=None` ⇒ ⛔ 不套 REST 的 `[:3]` 截斷；
+    - `closed_schema=True`：有分類樹 ⇒ strict json_schema，
       `suggested_category`／`suggested_item` 只能是樹上逐字名稱（REST 路徑不帶、行為不變）；
     - 模型名走 `IMAGE_RECOGNITION_MODEL`（gpt-5 系列的參數差異由
-      `image_recognition_service._completion_params` 處理，S9-16）；
+      `image_recognition_service._completion_params` 處理）；
     - `db_pool` 有給 ⇒ 成本進 `openai_cost_tracking`（`operation='image_recognition'`，
-      ⛔ 不進 `model_breakdown`＝額度看不到 vision 成本，S9-9 明列取捨）。
+      ⛔ 不進 `model_breakdown`＝額度看不到 vision 成本，此為明列取捨）。
     """
     from services.image_recognition_service import ImageRecognitionService
 
@@ -839,7 +837,7 @@ def _tree_names(tree: Optional[list]) -> list:
 def _resolve_tree_name(tree: Optional[list], name: Any) -> Optional[str]:
     """名稱在分類樹裡（大類或細項，**完全相同**）⇒ 回該名稱；否則 `None`。
 
-    ⚠️ 判定沿用 `action._resolve_category` 的**同一支**（S9-12：卡上分類必須是
+    ⚠️ 判定沿用 `action._resolve_category` 的**同一支**（卡上分類必須是
     封閉值域裡的名字）——⛔ 不在此另寫一套模糊比對：猜錯分類的代價是一張
     看起來完全正常、實際上分類錯誤的工單。
     """
@@ -888,7 +886,7 @@ def _clamp_confidence(value: Any) -> float:
     return max(0.0, min(1.0, conf))
 
 
-#: 業主 2026-09-10 裁：**「照片裡的文字一律不進修繕單」（S9-11）撤銷**——辨識出的描述
+#: 照片辨識出的描述
 #: （`description`）直接當修繕單問題描述（前綴「照片辨識：」由 runtime 加）；部位／原因短標籤
 #: 為退路。描述經 `sanitize_data_piece`（單行、去不可見字元、去假標記）＋長度上限；
 #: 短標籤只留中英字母、≤ `IMAGE_LABEL_MAX_CHARS` 字。修繕單描述是給師傅看的人讀文字，
@@ -918,18 +916,18 @@ def _short_label(value: Any) -> Optional[str]:
 
 
 def _normalize_recognition(raw: Any, tree: Optional[list]) -> dict:
-    """vision 回傳 ⇒ **決定性驗證後的封閉值**（S9-11／12／13）。
+    """vision 回傳 ⇒ **決定性驗證後的封閉值**。
 
     `description` 經 `_short_description`（淨化＋≤200 字）收進 `ImageTurnInput.suggested_description`
-    ——業主 2026-09-10 撤銷 S9-11「照片內文字不進修繕單」；它只用來組修繕單描述，
+    ——它只用來組修繕單描述，
     ⛔ 不進模型資料段。`suggested_item`／`suggested_reason` 經 `_short_label` 才收。
     `suggested_emergency` 不在 `{1,2}` ⇒ 缺值（卡值由
     `confirm_card.emergency_status_of` 決定，缺值＝1，vision 的預設 2 ⛔ 不傳播）。
     """
     data = raw if isinstance(raw, dict) else {}
     category = _resolve_tree_name(tree, data.get("suggested_category"))
-    # 站內幫手 S3-live 修正 R1：`suggested_item` 恰是**同一個大類底下**的葉節點 ⇒ 分類取
-    # 葉名稱（S3-live A7：床／椅子／沙發都被判成父節點「家具」、`item_id` 為空）。
+    # `suggested_item` 恰是**同一個大類底下**的葉節點 ⇒ 分類取
+    # 葉名稱（否則會停在父節點、`item_id` 為空）。
     leaf = _same_parent_leaf(tree, category, data.get("suggested_item"))
     parent = None
     if leaf is not None:
@@ -971,7 +969,7 @@ def _image_facts(
         lines.append(f"照片辨識到的修繕分類是「{category}」。")
     else:
         lines.append("照片辨識不出對應的修繕分類。")
-    # ⛔ 照片的文字描述**不提供**（S9-11）：明講一句，模型才不會自己編一段。
+    # ⛔ 照片的文字描述**不提供**：明講一句，模型才不會自己編一段。
     lines.append("照片的文字描述不提供，需要問題描述請向使用者確認。")
     return "\n".join(lines)
 
@@ -1006,13 +1004,13 @@ async def prepare_image_turn(
 ) -> tuple:
     """抓檔 → 縮圖 → 分批辨識 ⇒ `(ImageTurnInput, 已耗秒數)`。
 
-    **順序與預算（Plan W8 (2)／S9-7／S9-21）**：
+    **順序與預算**：
       逐張抓檔→縮圖→**丟原 bytes**（任一時刻記憶體只有一張原檔＋已縮圖集）；
       滿 5 張送一批辨識；抓完後把不足 5 張的尾批送出。
       每次抓檔前、每次送辨識前各檢查一次預算——**預算一到就停**，
       ⛔ 不送半批（那會讓「0 批完成 ⇒ timeout」這條唯一映射失效）。
 
-    **預算用罄的唯一映射（r3）**：已完成辨識批次 ≥1 ⇒ `partial`；0 批 ⇒ `timeout`。
+    **預算用罄的唯一映射**：已完成辨識批次 ≥1 ⇒ `partial`；0 批 ⇒ `timeout`。
     一張都沒處理成功、且預算沒用完（全被閘門擋掉／全部辨識失敗）⇒ `failed`。
 
     ⛔ bytes 不落地、不進任何紀錄；本函式只回封閉值。
@@ -1028,7 +1026,7 @@ async def prepare_image_turn(
         return clock() - started
 
     pending: list = []          # 已縮圖的 base64 data URL（⛔ 不留原檔 bytes）
-    # 站內幫手 S3（F10／S3-5）：與 `pending` 一一對齊的照片中繼資料（⛔ 不含 bytes）。
+    # 與 `pending` 一一對齊的照片中繼資料（⛔ 不含 bytes）。
     pending_meta: list = []
     photos: list = []           # 已完成辨識那幾批的中繼資料（進 `ImageTurnInput.photos`）
     batches_done = 0
@@ -1072,7 +1070,7 @@ async def prepare_image_turn(
         pending.append(
             "data:image/" + fmt + ";base64," + base64.b64encode(downscaled).decode("ascii")
         )
-        # S3（F10／S3-5）：sha256 在抓檔與縮圖都成功**之後**、以**原檔位元組**計算；
+        # sha256 在抓檔與縮圖都成功**之後**、以**原檔位元組**計算；
         # `content_type` 取 magic bytes 判出的格式（`fmt`），檔名由程式產生。
         pending_meta.append(_photo_meta(fetched.data, fmt, len(photos) + len(pending_meta) + 1))
         del downscaled
@@ -1159,7 +1157,7 @@ DOCUMENT_PAGE_TIMEOUT_S = 8.0
 
 
 async def _document_fetch_one(url: str, *, timeout_s: float):
-    """抓一份文件——**同一支 `fetch_image`、只換 bytes 上限**（W9-5）。
+    """抓一份文件——**同一支 `fetch_image`、只換 bytes 上限**。
 
     ⛔ 不得改成另一支抓檔函式：六道閘（https／等值白名單／userinfo／IP／`exp`／
     不跟轉址／串流 bytes）全在那一支裡，第二支必定漏掉其中一道。
@@ -1175,7 +1173,7 @@ async def _document_extract_pages(data_urls: list, *, timeout_s: float) -> tuple
 
     **測試的注入點就是這個模組屬性**（同 `_image_recognize_batch`）。
     ⛔ **不收 `db_pool`**：成本由 `prepare_document_turn` 依回傳的 usage 自寫
-    （W9-9：⛔ 不呼叫 `ImageRecognitionService._record_cost`，那支在 `image_id`
+    （⛔ 不呼叫 `ImageRecognitionService._record_cost`，那支在 `image_id`
     非空時會把整包 JSON 寫進 `image_uploads.recognition_result`）。收一個用不到
     的 `db_pool` 會讓下一個讀這段的人以為成本已經在這裡記過了。
     """
@@ -1187,7 +1185,7 @@ async def _document_extract_pages(data_urls: list, *, timeout_s: float) -> tuple
 
 
 async def _record_document_cost(db_pool, model: str, usage: Optional[dict]) -> None:
-    """文件線**自寫**一列 `openai_cost_tracking`（W9-9）。
+    """文件線**自寫**一列 `openai_cost_tracking`。
 
     ⛔⛔ **不碰 `image_uploads`**：`ImageRecognitionService._record_cost` 在
     `image_id` 非空時會 `UPDATE image_uploads SET recognition_result = <整包 JSON>`
@@ -1236,14 +1234,14 @@ async def prepare_document_turn(
 ) -> tuple:
     """抓檔 →（PDF ⇒ 頁圖）→ 擷取 ⇒ `(DocumentTurnInput, 已耗秒數)`。
 
-    **形狀比照 `prepare_image_turn`**（Plan §3b 介面凍結），差別只有三處：
+    **形狀比照 `prepare_image_turn`**，差別只有三處：
       ① PDF 多一段 `rasterize_pdf`（頁級／總時限、逐頁像素上限、只 render）；
       ② 照片頁＋PDF 頁**合計** > `DOC_TOTAL_PAGES_MAX` ⇒ `DocumentPageLimitExceeded`
-         ⇒ 門面轉成整回合 `INVALID_INPUT`（W9-15；⛔ 不截斷後照跑）。
+         ⇒ 門面轉成整回合 `INVALID_INPUT`（⛔ 不截斷後照跑）。
          ⚠️ 判斷點在**抓完 PDF、知道頁數之後**——2 頁的 PDF 配 8 張照片是合法的，
          早退用 `len(file_urls) × DOC_MAX_PAGES` 預估會誤殺它（那個最壞值只用在
          配額預扣，不用在拒絕）。
-      ③ 成本自寫 `operation='document_extraction'`（W9-9）。
+      ③ 成本自寫 `operation='document_extraction'`。
 
     **預算用罄的映射與照片線同一條**（⛔ 不另立第二套語義）：已完成擷取 ≥1 批
     ⇒ `partial`／`ok`；0 批 ⇒ 預算用完＝`timeout`、否則＝`failed`。
@@ -1323,7 +1321,7 @@ async def prepare_document_turn(
         del fetched
         pdf_pages_total += rasterized.pages_total
         pdf_timed_out = pdf_timed_out or rasterized.timed_out
-        # W9-15：合計判在**知道頁數之後**。用「請求的照片張數」而不是「成功縮圖的
+        # 合計判在**知道頁數之後**。用「請求的照片張數」而不是「成功縮圖的
         # 張數」——被閘門擋掉的那幾張仍然是使用者這回合送進來的頁，用實際成功數
         # 會讓「多送幾張壞圖」變成繞過總頁數上限的方法（fail-closed 方向）。
         kept = min(rasterized.pages_total, image_fetch.doc_max_pages())
@@ -1363,7 +1361,7 @@ async def prepare_document_turn(
             pages, timeout_s=max(1.0, budget - _elapsed()),
         )
     except Exception as exc:
-        # 站內幫手 S3-live 修正 R5：擷取**逾時**歸 `timeout`（⛔ 講成 `failed`——同上方
+        # 擷取**逾時**歸 `timeout`（⛔ 講成 `failed`——同上方
         # 「頁級／總時限命中」的理由：把逾時講成失敗會讓人以為換一份檔就好）。
         # 只認封閉內部碼（`DocumentExtractionError.code`），⛔ 讀例外訊息。
         if getattr(exc, "code", None) == "DOCUMENT_EXTRACTION_TIMEOUT":
@@ -1530,7 +1528,7 @@ class AgentTurnOutput(BaseModel):
     #: ⛔ 不是錯誤、⛔ 不改變 `answer`／`kind` 的語義。
     #: 鍵序＝落地順序（§0b）：W7 的 `transcript` 之後才會排到第七鍵。
     session_expired: bool = False
-    #: DSP-043（2026-09-08）：**第七鍵** `outcome`（永遠有值；見 `TurnOutcome`）。
+    #: DSP-043：**第七鍵** `outcome`（永遠有值；見 `TurnOutcome`）。
     outcome: TurnOutcome = TurnOutcome(state="answered", expects="text")
 
 
@@ -1550,11 +1548,10 @@ AGENT_TURN_SPEC: ToolSpec = {
         # （只傳照片、不打字）是 LIFF 線的常態；早退改判「`message.strip()` 空
         # **且** `image_urls` 空 ⇒ `INVALID_INPUT`」，見 `_agent_turn`。
         # ⛔ `image_urls` **不寫 `maxItems`／`pattern`**：`registry._validate_value`
-        #    兩者都不認（S9-5：寫了等於掛一張看起來有守、實際靜默無效的牌）。
+        #    兩者都不認（寫了等於掛一張看起來有守、實際靜默無效的牌）。
         #    張數在 `_agent_turn` 程式層檢查；白名單在 `image_fetch`。
-        # T1（Plan `inputs/…/plan-walkthrough-fixes-batch2-20260909.md` §2）：
-        # `context` ＝呼叫端提供的**本回合背景資訊**（進場提示、頁面、已選項目、上一步結果；選填、每回合可帶）。2026-09-09 業主：欄位要通用的「背景資訊」，不是「進場句」。
-        # ⛔ **不叫 `entry`**（security r1 #4）：`Identity.entry` 是確認兌現與工具
+        # `context` ＝呼叫端提供的**本回合背景資訊**（進場提示、頁面、已選項目、上一步結果；選填、每回合可帶）。欄位是通用的「背景資訊」，不是「進場句」。
+        # ⛔ **不叫 `entry`**：`Identity.entry` 是確認兌現與工具
         #    可見性的安全欄位，同名招致日後誤併。
         # ⚠️ `maxLength` 由 `registry._validate_value` **真的**強制（不同於
         #    `image_urls` 的 `maxItems`／`pattern`，那兩個 registry 不認）。
@@ -1569,11 +1566,10 @@ AGENT_TURN_SPEC: ToolSpec = {
                 "maxLength": 500,
                 "description": "呼叫端提供的本回合背景資訊（進場提示、所在頁面、已選項目、上一步結果等）；視為脈絡，⛔ 不是使用者說的話，每回合可帶。",
             },
-            # W9 U1（Plan `inputs/…/plan-document-summary-demo-20260909.md` §3）：
             # `attachment_purpose` ＝這一回合的附件是**做什麼用的**（封閉列舉）。
             # ⚠️ 缺鍵／顯式 `null` 一律等同 `repair`＝**現行行為逐位不變**
             #    （`_drop_null_optionals` 會把非 required 的 null 還原成「省略」）
-            #    ——這個預設值本身就是本功能的開關（Plan §3b rollback 欄）。
+            #    ——這個預設值本身就是本功能的開關。
             # ⚠️ `enum` 由 `registry._validate_value` **真的**強制（不同於
             #    `image_urls`／`file_urls` 的 `maxItems`，那個 registry 不認）。
             "attachment_purpose": {
@@ -1581,7 +1577,7 @@ AGENT_TURN_SPEC: ToolSpec = {
                 "enum": list(ATTACHMENT_PURPOSES),
                 "description": "本回合附件的用途：repair＝報修照片（預設）；document＝上傳文件請 AI 歸納。缺值等同 repair。",
             },
-            # ⛔ **不寫 `maxItems`**（S9-5／W9-18）：`registry._validate_value` 不認它
+            # ⛔ **不寫 `maxItems`**：`registry._validate_value` 不認它
             #    ——寫了等於掛一張看起來有守、實際靜默無效的牌。份數（≤1）在
             #    `_agent_turn` 程式層檢查；白名單／bytes／`exp` 在 `image_fetch`。
             "file_urls": {
@@ -1604,7 +1600,7 @@ AGENT_TURN_SPEC: ToolSpec = {
     "facade_only": True,
     # 本 spec 的對話對象＝有 git 正本的兩個受眾（範圍聲明）；**tenant 缺鍵＝永不可見**
     # （它沒有正本，⛔ 不得順手補鍵）。
-    # DSP-037（業主 2026-09-07 裁）：`property_manager` 於 M1 開放——
+    # DSP-037：`property_manager` 於 M1 開放——
     # 業者身分走同一份九架正本（`canon/jgb/`，可見細目由 `canon_visible` 篩），門面依受眾查
     # `app.state.agent_audiences`（9.8 DSP-059 D′ S2），不在其中一律 `AGENT_UNAVAILABLE`，
     # ⛔ 不塞 prospect 大綱（見 `_make_agent_turn`／`_agent_turn_preflight`）。
@@ -1685,7 +1681,7 @@ def namespaced_identity(identity: Identity) -> Identity:
 
 
 def _session_owner_matches(row: Any, identity: Identity) -> bool:
-    """這一列 `form_sessions` 是不是這位 (user_id, role_id) 開的（F1／S5-4）。
+    """這一列 `form_sessions` 是不是這位 (user_id, role_id) 開的。
 
     比對 `form_sessions.user_id` 欄**與** `collected_data` 內的 `user_id`、`role_id`；
     **位元組完全相等、⛔ 正規化**。identity 的 `user_id=None` 等同存檔值 `"anonymous"`
@@ -1728,7 +1724,7 @@ def _make_agent_turn(
             isinstance(u, str) for u in image_urls
         ):
             return ToolResult(ok=False, error="INVALID_INPUT")
-        # ① 張數上限 10（第 11 張起整回合拒；registry 不認 `maxItems`，S9-5）。
+        # ① 張數上限 10（第 11 張起整回合拒；registry 不認 `maxItems`）。
         #    ⛔ 不截斷後照跑——那是靜默降級。
         if len(image_urls) > image_fetch.IMAGE_MAX_COUNT:
             return ToolResult(ok=False, error="INVALID_INPUT")
@@ -1752,7 +1748,7 @@ def _make_agent_turn(
         #    靜默忽略等於讓使用者以為文件送出去了。
         if purpose != "document" and file_urls:
             return ToolResult(ok=False, error="INVALID_INPUT")
-        # ⓑ 份數上限（demo ≤1；registry 不認 `maxItems`，S9-5／W9-18）。
+        # ⓑ 份數上限（demo ≤1；registry 不認 `maxItems`）。
         #    ⛔ 不截斷後照跑——那是靜默降級。
         if len(file_urls) > image_fetch.FILE_MAX_COUNT:
             return ToolResult(ok=False, error="INVALID_INPUT")
@@ -1782,7 +1778,7 @@ def _make_agent_turn(
         # ③ 張數配額（`LIMITS.images_per_hour`／`LIMITS.files_per_hour`——DSP-045
         #    封閉表，⛔ 不再是 `IMAGE_COUNT_CAP_PER_HOUR` env——／`(api_key_id, vendor_id)`／
         #    行程內滑動窗）——**排在抓檔之前**：超過 ⇒ `RATE_LIMITED`、一張都不抓。
-        #    W9-6：文件回合以**最壞值預扣**——一份 PDF 最多會變成 `DOC_MAX_PAGES`
+        #    文件回合以**最壞值預扣**——一份 PDF 最多會變成 `DOC_MAX_PAGES`
         #    張頁圖，配額必須按那個最壞值先扣，⛔ 不能等抓完才知道扣多少
         #    （那時候檔已經下載完了，配額擋不到下載這件事本身）。
         quota_key = (identity.api_key_id, identity.vendor_id)
@@ -1812,7 +1808,7 @@ def _make_agent_turn(
         #    必須是**裸** `session_id`——⛔ 別改成 `turn_identity.session_id`，
         #    那會變成 `mcp:k:v:mcp:k:v:sid`（雙前綴，且超長時直接 ValueError）。
         session_id = identity.session_id
-        # 站內幫手 S5（§3i 第 3 點，F1／S5-3～S5-7）：載入時連**列 id 與建立者**一起取。
+        # 載入時連**列 id 與建立者**一起取。
         # 這一列的 (user_id, role_id) 與本次身分不同 ⇒ 先關舊列、再以新身分開新列
         # （舊 dialog、pending、文件暫存、範圍全不帶入）。保證邊界：同一
         # (api_key, vendor, session_id) 下身分不同就不續用；⛔ 防呼叫端冒用身分
@@ -1824,8 +1820,8 @@ def _make_agent_turn(
             await store.close(session_id)
             state = None
             row_id = None
-        # W8 (5)／DSP-042：同一把鍵隔太久再進 ⇒ **先把舊列關掉再開新列**。
-        # ⚠️ 順序不得顛倒（S8-7）：先 `_start` 再 `_close` 會把剛開的新列一起
+        # DSP-042：同一把鍵隔太久再進 ⇒ **先把舊列關掉再開新列**。
+        # ⚠️ 順序不得顛倒：先 `_start` 再 `_close` 會把剛開的新列一起
         # 關掉（`_close` 的 WHERE 只認 `session_id`＋`state='COLLECTING'`，
         # 認不得是哪一列）；不 `_close` 就 `_start` 則會留下兩列 COLLECTING，
         # 而 `get_state` 取 `ORDER BY id DESC LIMIT 1`＝舊列變成永遠讀不到卻
@@ -1845,7 +1841,7 @@ def _make_agent_turn(
                 identity.vendor_id,
                 identity.role_id,
             )
-            # S5（F1／S5-5）：新列的 id 以讀取方法取回，存檔一律綁這一列。
+            # 新列的 id 以讀取方法取回，存檔一律綁這一列。
             new_row = await store.load_row(session_id)
             row_id = new_row.get("id") if isinstance(new_row, dict) else None
             if row_id is None or not _session_owner_matches(new_row, identity):
@@ -1861,7 +1857,7 @@ def _make_agent_turn(
         image_input = None
         document_input = None
         image_elapsed = 0.0
-        # 第六批 #8（line-bot 2026-09-10 回報）：`attachment_purpose="document"`
+        # `attachment_purpose="document"`
         # 但**一張照片、一份檔案都沒帶** ⇒ **視同一般回合**——⛔ 不走
         # `prepare_document_turn`、⛔ 不設 `document=`、⛔ 不套文件回合閘
         # （寫入面工具照樣可見）、⛔ 不 `INVALID_INPUT`。
@@ -1882,7 +1878,7 @@ def _make_agent_turn(
                     image_urls, file_urls, db_pool=deps.get_db_pool(),
                 )
             except DocumentPageLimitExceeded:
-                # W9-15：照片頁＋PDF 頁合計超過上限 ⇒ **整回合拒**，
+                # 照片頁＋PDF 頁合計超過上限 ⇒ **整回合拒**，
                 # ⛔ 不截斷後照跑（那是靜默降級，使用者不會知道少看了幾頁）。
                 return ToolResult(ok=False, error="INVALID_INPUT")
         elif image_urls:
@@ -1976,11 +1972,11 @@ def _as_tool_result(raw: Any) -> ToolResult:
 
 
 async def gate_kb_search_on_reviewed_rows(registry: ToolRegistry, pool) -> Optional[int]:
-    """2026-10-15 業主選 A：舊知識庫**零列已審** ⇒ `kb.search` 不給模型（門面照列）。
+    """舊知識庫**零列已審** ⇒ `kb.search` 不給模型（門面照列）。
 
     `kb.get` 只放行已審列（`review_state.content_reviewed_predicate`），而 `kb.search` 的檢索器
-    只過濾可見性 ⇒ 零列已審時它列出的每一筆模型都開不了（正式機 926 列有效、0 列已審；
-    實測 `kb.search` 成功後 `kb.get` 連續失敗直到預算用完）。依資料狀態判定、⛔ 寫死：
+    只過濾可見性 ⇒ 零列已審時它列出的每一筆模型都開不了（`kb.search` 成功後
+    `kb.get` 連續失敗直到預算用完）。依資料狀態判定、⛔ 寫死：
     將來有已審列，重啟即恢復。查詢失敗 ⇒ 維持原狀（模型仍看得到），回 `None`。
     """
     from services.agent.canon.review_state import COLUMN, REVIEWED_REGEX
@@ -2039,11 +2035,11 @@ def build_registry(deps: FacadeDeps, registry: Optional[ToolRegistry] = None) ->
     # （未設 ⇒ False），⛔ 不因此放寬任何一道閘。
     reg = registry if registry is not None else ToolRegistry()
 
-    # 站內幫手 S5（S5-10）：`AGENT_ASSISTANT_KEY_IDS` 含非整數 ⇒ **啟動即炸**（大聲失敗、
+    # `AGENT_ASSISTANT_KEY_IDS` 含非整數 ⇒ **啟動即炸**（大聲失敗、
     # 印原因）。`app.py` 在 import 期呼叫本函式，故這裡就是啟動期。
     assistant_key_ids()
 
-    # ── 寫入型工具的確認兌現查核（S-9）：set-once 綁在 registry 上 ──────────
+    # ── 寫入型工具的確認兌現查核：set-once 綁在 registry 上 ──────────
     # ⚠️ pool 走 **getter**（同 `_kb_get`／`_help_read` 的理由：pool 要到 lifespan
     #    才存在）。**pool 缺席 ⇒ 回 False ⇒ `CONFIRMATION_REQUIRED`**（fail-closed）：
     #    ⛔ 不得在拿不到 DB 時「當作已確認」放行一次寫入。
@@ -2098,17 +2094,17 @@ def build_registry(deps: FacadeDeps, registry: Optional[ToolRegistry] = None) ->
             return ToolResult(ok=False, error="NO_MATCH")
         return await slots_set(identity, args, db_pool=pool)
 
-    # ── W8 (3)：出卡前的「這個物件還有幾張未結單」查詢 ─────────────────
+    # ── 出卡前的「這個物件還有幾張未結單」查詢 ─────────────────
     #
-    # ⚠️ **為什麼住在這個閉包、而不是 `confirm.py` 裡**（plan-verifier W8 r2／r3）：
+    # ⚠️ **為什麼住在這個閉包、而不是 `confirm.py` 裡**：
     #    `confirm.py` 是工具函式，它手上沒有 registry、沒有 `stage`、沒有工具逾時，
-    #    照 S8-11 的字面「走 registry」在那裡根本接不出來；而讓它自己 `import`
+    #    「走 registry」在那裡根本接不出來；而讓它自己 `import`
     #    `JGBSystemAPI` 就等於繞過 registry 的四步閘（可見性／速率／schema／
     #    身分鍵剝除）。故：**`_resolve_estate` 的唯一呼叫點在這裡**，
     #    `confirm.py` 只收一個具名注入的 callable（形狀同 `db_pool`）。
     #
     # ⛔ 取不到 `role_id` ⇒ 直接回 `None`（**不加提示行**，卡照出）：
-    #    少了 `role_id` 的 `get_estate_status` 會跨 role 撈物件（r3 那一條），
+    #    少了 `role_id` 的 `get_estate_status` 會跨 role 撈物件，
     #    寧可沒有提示行，也不要一行算錯物件的提示。
     async def _open_repairs(identity: Identity, estate_name: Any) -> Optional[dict]:
         role_id = getattr(identity, "role_id", None)
@@ -2117,14 +2113,13 @@ def build_registry(deps: FacadeDeps, registry: Optional[ToolRegistry] = None) ->
         if not isinstance(estate_name, str) or not estate_name.strip():
             return None
         api = jgb2_tools._get_api()
-        # 站內幫手 S5（A3(a)、S5-8）：物件以**這位成員看得到的**範圍解析（viewer）。
+        # 物件以**這位成員看得到的**範圍解析（viewer）。
         resp = await api.get_estate_status(
             role_id=role_id, keyword=estate_name,
             viewer_user_id=getattr(identity, "user_id", None),
         )
-        # 站內幫手 S5 修正輪（DSP-074；業主同日多語意實測：990002 對看不到的 22491 仍出卡，
-        # 3／3 重現）：三種結果分開——
-        #   沒查成（上游失敗，`upstream_failed`）⇒ 回 None：照既有 W8 (xv)「解析不出照常出卡、
+        # DSP-074：三種結果分開（混在一起時，成員看不到的物件仍會出卡）——
+        #   沒查成（上游失敗，`upstream_failed`）⇒ 回 None：照「解析不出照常出卡、
         #     兌現端再擋」（兌現端 `action.repair_create` 同樣帶 viewer 解析，必 `NO_MATCH`）；
         #   查無（上游成功、**帶 viewer** 零命中——sentinel `found:false` 不算一列）⇒ 回
         #     `{"not_found": True}`，`confirm.request` 回查無固定句、⛔ 出卡；
@@ -2175,7 +2170,7 @@ def build_registry(deps: FacadeDeps, registry: Optional[ToolRegistry] = None) ->
     #    多一個 API 的呼叫點。取不到（例外／空）⇒ 回 `None` ⇒ 分類一律缺值、
     #    ⛔ 不回候選（卡上 `UNSPECIFIED_CATEGORY_ZH`）。
     async def _repair_category_tree(identity: Identity) -> Optional[list]:
-        # 站內幫手 S5（A3(a)、S5-9 無豁免）：分類樹查詢同樣帶 role＋viewer。
+        # 分類樹查詢同樣帶 role＋viewer。
         rows = jgb2_tools._rows_of(await jgb2_tools._get_api().get_repair_categories(
             role_id=getattr(identity, "role_id", None),
             viewer_user_id=getattr(identity, "user_id", None),
@@ -2183,15 +2178,17 @@ def build_registry(deps: FacadeDeps, registry: Optional[ToolRegistry] = None) ->
         return rows or None
 
     async def _confirm_request(identity: Identity, args: dict, *,
-                               program_pick: Optional[dict] = None) -> ToolResult:
-        # A-2a 片 §4.5：`program_pick` 只由 `ToolRegistry.call` 的具名參數轉來（runtime 程式依草稿
+                               program_pick: Optional[dict] = None,
+                               name_lenient: Any = None) -> ToolResult:
+        # `program_pick` 只由 `ToolRegistry.call` 的具名參數轉來（runtime 程式依草稿
         # 發出的呼叫才會設）；MCP client 直呼只碰得到 `args` ⇒ 永遠是 `None`。
+        # `name_lenient` 同一條通道；MCP client 直呼 ⇒ 永遠是 `None`（不觸發寬鬆比對）。
         pool = deps.get_db_pool()
         if pool is None:
             return ToolResult(ok=False, error="NO_MATCH")
         return await confirm_request(
             identity, args, db_pool=pool, open_repairs=_open_repairs,
-            program_pick=program_pick,
+            program_pick=program_pick, name_lenient=name_lenient,
         )
 
     reg.register(KB_GET_SPEC, _kb_get)
@@ -2311,7 +2308,7 @@ def _build_wrapper(spec: ToolSpec, invoke: Callable, context_cls: Any) -> Callab
         "_name": spec["name"],
         "typing": typing,
         "_Context": context_cls,
-        # ⚠️ 回傳標註必須是 `dict[str, Any]`，⛔ 不能是裸 `dict`——SDK 實測會擋：
+        # ⚠️ 回傳標註必須是 `dict[str, Any]`，⛔ 不能是裸 `dict`——SDK 會擋：
         #    `InvalidSignature: return type <class 'dict'> is not serializable for
         #     structured output`（mcp 2.1.1，utilities/func_metadata.py）。
         "_RetT": typing.Dict[str, Any],
@@ -2470,7 +2467,7 @@ def _make_invoke(registry: ToolRegistry, deps: FacadeDeps) -> Callable:
             um.finalize("error", 500, db_pool=pool)
             raise
         if name == PROGRAM_PICK_TOOL:
-            # A-2a（計畫 §4.1）：候選形狀只給 runtime「程式依草稿發出」那條路寫候選集；MCP client
+            # 候選形狀只給 runtime「程式依草稿發出」那條路寫候選集；MCP client
             # 直呼 `confirm.request` ⇒ 換回現行出口（缺欄 `INVALID_INPUT`／B 的帳單候選），對外契約同 B。
             from services.agent.tools.confirm import candidate_fallback_result
             result = candidate_fallback_result(result)

@@ -76,7 +76,7 @@ _IDENTITY_KEYS = frozenset(
     {"vendor_id", "role_id", "user_id", "target_user", "mode", "viewer_user_id"}
 )
 
-#: A-2a 片 §4.5：`call(program_pick=...)` 只轉給這一支工具（`tools/confirm.py` 以 assert 對齊
+#: A-2a 片：`call(program_pick=...)` 只轉給這一支工具（`tools/confirm.py` 以 assert 對齊
 #: `CONFIRM_SPEC["name"]`；registry ⛔ import confirm，那會成環）。
 PROGRAM_PICK_TOOL: str = "confirm.request"
 
@@ -309,8 +309,8 @@ def _drop_null_optionals(schema: dict, args: Any) -> Any:
     保留（仍 INVALID_INPUT）；**未宣告鍵**的 null 也原樣保留（交 `additionalProperties:false`
     擋，⛔ 不得成為繞過口）。每層 object、陣列元素、union 分支同樣處理（與 `_walk_strict`
     對稱）；回新物件、不改入參。
-    真線路 2026-09-08 pm 煙霧抓到：模型送 `{"face": …, "ref": "900001", "keyword": null}`
-    ⇒ INVALID_INPUT ×4 ⇒ 工具預算耗盡 ⇒ `budget_exhausted` 轉人（demo 帳本 D-BLOCK-2）。
+    不處理的話，模型送 `{"face": …, "ref": "900001", "keyword": null}`
+    會 ⇒ INVALID_INPUT 連續出現 ⇒ 工具預算耗盡 ⇒ `budget_exhausted` 轉人。
     """
     if not isinstance(schema, dict):
         return args
@@ -342,7 +342,7 @@ def _drop_null_optionals(schema: dict, args: Any) -> Any:
 
 
 
-_OPENAI_NAME_SEP = "__"   # OpenAI function name 只准 ^[a-zA-Z0-9_-]+$（真線路 2026-09-05 400 抓到）；MCP 工具名有 "."
+_OPENAI_NAME_SEP = "__"   # OpenAI function name 只准 ^[a-zA-Z0-9_-]+$（含 "." 會被 API 回 400）；MCP 工具名有 "."
 
 
 def openai_tool_name(name: str) -> str:
@@ -395,7 +395,7 @@ class ToolRegistry:
     def hide_from_model(self, name: str) -> bool:
         """把已註冊工具改為 `facade_only`（門面照列、模型看不到也叫不了）。回是否有改。
 
-        2026-10-15 選項 A：舊知識庫零列已審 ⇒ `kb.search` 找到的每一筆 `kb.get` 都取不到，
+        舊知識庫零列已審 ⇒ `kb.search` 找到的每一筆 `kb.get` 都取不到，
         只會浪費模型往返；由啟動流程依資料狀態呼叫（`mcp_facade.gate_kb_search_on_reviewed_rows`）。
         """
         spec = self._specs.get(name)
@@ -422,7 +422,7 @@ class ToolRegistry:
         # （`KB_GET_SPEC` 之類）。
         # ⚠️ 連帶約束：`scope="write"` 的 spec **必須**把 `confirmation_token` 寫進
         #    `properties`，否則守門②放行後會在④被這條 additionalProperties 擋成
-        #    `INVALID_INPUT`（任務 2.4 落 write 工具時注意）。
+        #    `INVALID_INPUT`。
         if _OPENAI_NAME_SEP in name:
             raise ValueError(f"工具名 {name!r} 不得含 {_OPENAI_NAME_SEP!r}（OpenAI 名稱編碼保留字，見 openai_tool_name）")
         input_schema = dict(input_schema)
@@ -525,20 +525,20 @@ class ToolRegistry:
             and (not (mcp_only or scope == "write")
                  or (identity.entry == "mcp" and 旗標開))`
 
-        DSP-016（2026-09-05）：`session.slots.set`／`confirm.request` 是 scope=read 但會寫
+        DSP-016：`session.slots.set`／`confirm.request` 是 scope=read 但會寫
         `form_sessions`／token 表；影子回合與正式回合共用 session_id，只看 scope 會讓影子
         污染正式狀態 ⇒ `mutates_session=True` 的工具在 `readonly_view` 一律不可見。
 
-        DSP-038-1（2026-09-08）：**寫入面**（`mcp_only=True` **或** `scope=="write"`）
+        DSP-038-1：**寫入面**（`mcp_only=True` **或** `scope=="write"`）
         另外要過**兩道**閘，兩道都與 `for_model`／`readonly_view` 正交：
           ① **入口**——`identity.entry != "mcp"` ⇒ 不可見。REST 入口的身分一律
              落預設 `"rest"`（`identity.DEFAULT_ENTRY_CHANNEL`），因此看不到、
              也呼叫不到（`call()` 走同一個 `_is_visible` ⇒ `NO_MATCH`）。
           ② **旗標**——`AGENT_WRITE_TOOLS_ENABLED` 未開 ⇒ 不可見（R4.4）。
 
-        ⚠️ **W1b F2（2026-09-08）：閘綁在「`mcp_only` 或 `scope=="write"`」兩者的
-        聯集，⛔ 不再只綁 `mcp_only`。** 舊寫法只看 `mcp_only`，於是一支忘了寫
-        `mcp_only=True` 的 write 工具會同時逃過入口閘與旗標閘。現在有兩道互為
+        ⚠️ **閘綁在「`mcp_only` 或 `scope=="write"`」兩者的
+        聯集，⛔ 不得只綁 `mcp_only`。** 只看 `mcp_only` 的話，一支忘了寫
+        `mcp_only=True` 的 write 工具會同時逃過入口閘與旗標閘。因此有兩道互為
         備援的防線：`register()` 對 `scope=="write"` 缺 `mcp_only` **直接 raise**
         （那種 spec 註冊不進來），而這裡的聯集判斷保證**即使繞過 `register()`
         把 spec 塞進 `_specs`**，寫入面仍然關著。⛔ 兩道都不得單獨拿掉。
@@ -656,11 +656,15 @@ class ToolRegistry:
         readonly_view: bool = False,
         for_model: bool = False,
         program_pick: Optional[dict] = None,
+        name_lenient: Any = None,
     ) -> ToolResult:
-        """`program_pick`（A-2a 片 §4.5「程式專用選定通道」）：只由 runtime 在**程式依草稿發出**的
+        """`program_pick`（A-2a 片「程式專用選定通道」）：只由 runtime 在**程式依草稿發出**的
         `confirm.request`（`wd_program`）且候選集判定成立時傳；其他呼叫一律 `None`。只轉給
         `PROGRAM_PICK_TOOL`（具名參數，比照 `open_repairs` 的具名注入），⛔ 經 `args`／`args.payload`
-        ——模型 tool call、MCP client 直呼、提議路徑都只碰得到 `args`，碰不到這個參數。"""
+        ——模型 tool call、MCP client 直呼、提議路徑都只碰得到 `args`，碰不到這個參數。
+
+        `name_lenient`（F12）：同一條程式專用通道——runtime 每回合一份的名稱寬鬆比對脈絡
+        （`name_match.NameLenientTurn`），只轉給 `PROGRAM_PICK_TOOL`；`None` ⇒ 呼叫形狀不變。"""
         # ⓪ 身分鍵剝除（1.10 P2）：呼叫端（模型／MCP client）夾帶的 vendor_id 之類
         #    一律丟掉，⛔ 不讓它有機會覆寫 `identity`。靜默剝除＋記 trace，
         #    ⛔ 不回錯誤碼（見模組 docstring）。
@@ -702,9 +706,13 @@ class ToolRegistry:
 
         fn = self._fns[name]
         try:
-            if program_pick is not None and name == PROGRAM_PICK_TOOL:
-                return await asyncio.wait_for(
-                    fn(identity, args, program_pick=program_pick), timeout=timeout_s)
+            if name == PROGRAM_PICK_TOOL and (program_pick is not None or name_lenient is not None):
+                extra: dict = {}
+                if program_pick is not None:
+                    extra["program_pick"] = program_pick
+                if name_lenient is not None:
+                    extra["name_lenient"] = name_lenient
+                return await asyncio.wait_for(fn(identity, args, **extra), timeout=timeout_s)
             return await asyncio.wait_for(fn(identity, args), timeout=timeout_s)
         except asyncio.TimeoutError:
             return ToolResult(ok=False, error="TOOL_TIMEOUT")

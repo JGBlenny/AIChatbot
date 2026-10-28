@@ -49,6 +49,14 @@ from tests.unit.agent.token_db_double import FakeTokenDB
 pytestmark = [pytest.mark.unit,
               pytest.mark.req("agentic-mcp-orchestration:plan-conversation-architecture-step3-A")]
 
+
+@pytest.fixture(autouse=True)
+def _fill_data_text_off(monkeypatch):
+    """填欄只填答覆片（plan-fill-answer-only-20261027）：本檔的假寫入意圖不帶 `data_texts`，驗的是改前行為 ⇒ 釘住
+    `AGENT_FILL_DATA_TEXT=off`（off 與改前逐字相同，FA8 (2)；on 的行為見 test_fill_data_text_req.py）。"""
+    monkeypatch.setenv("AGENT_FILL_DATA_TEXT", "off")
+
+
 TODAY = date(2026, 10, 17)
 REPAIR_TEXT = f"{STUDENT_ESTATE} 冷氣不冷"
 LIFECYCLE_ENV = WF.WRITE_LIFECYCLE_ENV
@@ -405,7 +413,8 @@ async def test_9d_repeating_the_same_value_never_reissues(api, monkeypatch, prop
         assert "write_draft_reissue_skipped_same_values" in res.trace.violations
     else:
         assert res.outcome["state"] == "confirm_pending", res.answer
-        assert res.answer.startswith(WF.CARD_STILL_VALID_TEXT + "\n"), res.answer
+        # 填欄只填答覆修復輪 4（brief-fix5）：B 片生效、讀到值與卡相同 ⇒ `CARD_READ_SAME_LEAD`（原 `CARD_STILL_VALID_TEXT`）。
+        assert res.answer.startswith(WF.CARD_READ_SAME_LEAD + "\n"), res.answer
         assert res.trace.pending_id == pid1
         assert WF.V_CARD_STILL_VALID in res.trace.violations
     assert list(w.pending()) == [pid1] and w.db.pids(w.session_id) == [pid1]
@@ -801,7 +810,9 @@ def _program_text_for(early: str, res) -> str:
     if early == "missing":
         return C.MISSING_FIELDS_ASK_TEMPLATE.format(labels="問題描述")
     if early == "not_found":
-        return runtime_mod.PRE_LOOKUP_NOT_FOUND_TEXT
+        # F12（plan-name-lenient-f12-20261022 §4.4）：預設 on 時名稱查無改由寬鬆比對出口給固定句。
+        from services.agent import name_match as _nm
+        return _nm.NAME_NOT_FOUND_TEXT
     return WF.REISSUE_NOT_ISSUED_TEXT
 
 
@@ -856,7 +867,9 @@ async def test_9b_a2_burn_then_confirm_request_early_exit(api, monkeypatch, earl
     # Q5：使用者看到程式固定句（⛔ 空白、⛔ 模型自由文字）；主模型本回合未被呼叫。
     assert res.answer and res.answer.strip()
     assert res.answer == _program_text_for(early, res), res.answer
-    assert res.trace.llm_calls == 0
+    # F12（主會話裁決第 2 項）：not_found 情境本身分查無 ⇒ 寬鬆比對的那一次模型呼叫計入
+    # llm_calls（+1）；主模型仍未被呼叫（上方 answer 等於程式固定句）。其餘情境不觸發寬鬆 ⇒ 0。
+    assert res.trace.llm_calls == (1 if early == "not_found" else 0)
     assert w.db.redeemed(pid1) is True
     assert w.db.pids(w.session_id) == [pid1] and list(w.pending()) == [pid1]
     old = await w.turn(f"confirm_submit:{pid1}")
@@ -1144,6 +1157,9 @@ async def test_9k_numbered_card_original_due_date_is_the_viewer_read_value(api):
 async def test_9k_off_switch_numbered_card_skips_the_precheck(api, monkeypatch):
     """開關 off ⇒ 現行：有編號、無日期的 payload 不預檢（render 缺欄 ⇒ INVALID_INPUT）。"""
     monkeypatch.setenv(LIFECYCLE_ENV, "off")
+    # 「選對紀錄」片 on 時延期卡的核對資料在所有路徑（含本開關 off）都由 viewer 單筆讀帳單寫入 ⇒ 會多一次
+    # 帳單讀取；本條鎖的是改前的「off 不讀」，在該片 off 下驗（on 由 test_pick_right_record_req 驗）。
+    monkeypatch.setenv(WF.PICK_RIGHT_ENV, "off")
     w = _World()
     await _model_bill_turn(w, _bill_payload("709744"))
     c = [r for n, _a, r in w.reg.results if n == "confirm.request"][-1]

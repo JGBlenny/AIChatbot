@@ -1,4 +1,4 @@
-"""站內幫手 S1：三支唯讀統計／清單工具（plan-assistant-11-items-20261014 §3d、§3e；DSP-074）。
+"""站內幫手 S1：三支唯讀統計／清單工具（DSP-074）。
 
 - `jgb2.stats.unpaid_bills`：未收帳單統計（本月／逾期，總額＋逐筆明細）→ `get_unpaid_bill_summary`（jgb2-req#16）
 - `jgb2.stats.in_progress_repairs`：執行中修繕清單 → `get_in_progress_repairs`（jgb2-req#17）
@@ -6,12 +6,12 @@
 
 ⚠️ 三個端點都是 `contract: proposed`（JGB 尚未實作，替身照期望契約回應），⛔ 不可讀成 JGB 已存在的行為。
 
-身分（DSP-074，業主 2026-10-14「這位成員在 JGB 畫面上看得到的」）：
+身分（DSP-074，「這位成員在 JGB 畫面上看得到的」）：
 一律要 `role_id`＋`user_id`（viewer）雙證，缺一 ⇒ `NO_MATCH`。⛔ 不沿用 `jgb2._identity_gate_ok`
 的 pm 單證（那條路缺 `user_id` 會退回整個 role；這三支的語義是「這位成員看得到的」）。
 `input_schema` ⛔ 含身分鍵（不變量 18／27）；呼叫端夾帶的身分鍵由 `ToolRegistry.call()` 剝除。
 
-F7（安全審查）：`success:false`（越權、逾時、回應形狀不對…）與真空資料（`success:true`、`count:0`）分開——
+`success:false`（越權、逾時、回應形狀不對…）與真空資料（`success:true`、`count:0`）分開——
 前者回**固定句**（`ERROR_TEXT`，⛔ 無插值、⛔ 不印 0、⛔ 不印空清單），後者才是「0 筆」的事實。
 
 分頁（S1 修正②③，A5 一次全列會讓模型生成逾時）：明細每頁 `_PAGE_SIZE`（20）筆，選填 `page`（從 1 起）；
@@ -41,15 +41,15 @@ from services.jgb.repairs import _status_zh as _repair_status_zh, _urgency_zh
 #: 每頁明細筆數（也是送上游的 `per_page`）。A5：77 筆一次全列會讓模型生成逾時 ⇒ 分頁。
 _PAGE_SIZE = 20
 
-#: F7：上游失敗（`success:false`、形狀不對）一律這一句。⛔ 無插值：不把上游訊息、數字帶進去。
+#: 上游失敗（`success:false`、形狀不對）一律這一句。⛔ 無插值：不把上游訊息、數字帶進去。
 ERROR_TEXT = (
     "目前無法取得這份資料，請使用者稍後再試或洽客服。"
     "這不是「沒有資料」：⛔ 不要回報為零筆、零元或空清單。"
 )
 
 #: 接真 JGB（`USE_MOCK_JGB_API=false`）時三支統計端點 JGB 尚未開放（jgb2-req#16～#18）⇒
-#: 不發請求，由 runtime 以這一句程式固定句結束回合（2026-10-15 正式機實測：打到不存在的
-#: 端點後被模型改成轉人或反問「想處理哪一件事？」）。⛔ 無插值。
+#: 不發請求，由 runtime 以這一句程式固定句結束回合（否則打到不存在的
+#: 端點後，模型會改成轉人或反問「想處理哪一件事？」）。⛔ 無插值。
 NOT_SUPPORTED_TEXT = "這項統計目前還不支援：JGB 系統尚未開放這個查詢，開放後就能直接查。"
 
 #: 缺身分（缺 role_id 或 user_id）⇒ 與其他 jgb2 查詢工具同形的 NO_MATCH。
@@ -88,7 +88,7 @@ def _one_line(value: Any) -> str:
 
 
 def _error_result() -> dict[str, Any]:
-    """F7 固定句。`ok=True` 是為了讓模型看得到這一句（`ok=False` 只會讓模型看到錯誤碼）；
+    """上游失敗固定句。`ok=True` 是為了讓模型看得到這一句（`ok=False` 只會讓模型看到錯誤碼）；
     沒有 provenance ⇒ 沒有可引用的『資料』，`facts` 也不是空字串（⛔ 不被當成『查無資料』）。"""
     return {
         "ok": True,
@@ -164,7 +164,7 @@ async def _paged(
     row_line: Callable[[dict[str, Any]], str],
     more_data: Callable[[dict[str, Any]], dict[str, Any]],
 ) -> dict[str, Any]:
-    """打上游一次（第 `page` 頁）→ 「共 N 筆」＋該頁明細。任何形狀不對 ⇒ F7 固定句。"""
+    """打上游一次（第 `page` 頁）→ 「共 N 筆」＋該頁明細。任何形狀不對 ⇒ 上游失敗固定句。"""
     data = _good_payload(await fetch(page))
     if data is None:
         return _error_result()

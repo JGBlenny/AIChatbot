@@ -267,6 +267,7 @@ async def test_every_jgb2_call_from_every_agent_path_carries_role_and_viewer(api
     monkeypatch.setenv("AGENT_WRITE_TOOLS_ENABLED", "true")
     monkeypatch.setenv("AGENT_TURN_ENABLED", "true")
     monkeypatch.delenv("AGENT_ASSISTANT_KEY_IDS", raising=False)
+    monkeypatch.delenv("AGENT_NAME_LENIENT", raising=False)  # F12 未設＝on：寬鬆比對的呼叫點要被跑到
 
     # 記下每一次 API 呼叫的**呼叫端**（檔名＋qualname），對 AST 呼叫點做覆蓋比對
     methods = _api_method_names()
@@ -333,6 +334,25 @@ async def test_every_jgb2_call_from_every_agent_path_carries_role_and_viewer(api
     await call("confirm.request", {**s, "payload": json.dumps(
         {k: v for k, v in _bill_payload(estate_name=ESTATE_A_TITLE).items() if k != "contract_ref"},
         ensure_ascii=False)})
+    # F12 名稱寬鬆比對（計畫 plan-name-lenient-f12-20261022 §4.2）：程式專用通道帶本回合脈絡、名稱查無
+    # ⇒ `confirm._name_lenient_rows` 取物件／合約清單（這兩個呼叫點也要帶 role＋viewer，由 ① 檢查）。
+    from services.agent import name_match as _nm
+
+    async def _lenient_model(**kwargs):
+        return _fake_response(_fake_message(content=json.dumps({"ids": ["none"]})),
+                              prompt_tokens=1, completion_tokens=1)
+
+    for lenient_payload in (
+            {"action": "repair_create", "estate_name": "完全不存在的名稱甲乙", "description": "壞了",
+             "category_name": category},
+            _bill_payload(contract_ref="完全不存在的合約甲乙")):
+        ctx = _nm.NameLenientTurn(
+            create_factory=lambda: _lenient_model, model="fake-model", reasoning_effort=None,
+            user_message="", touched=(), remaining_s=lambda: 20.0, marks=[])
+        r = await reg.call(who, "confirm.request",
+                           {**s, "payload": json.dumps(lenient_payload, ensure_ascii=False)},
+                           timeout_s=10, stage="M1", for_model=True, name_lenient=ctx)
+        assert ctx.calls == 1, (lenient_payload["action"], r.ok, r.error, ctx.marks)
     await call("jgb2.action.bill_due_extend", {"payload": due_payload, "confirmation_token": "t1"})
     await call("jgb2.action.repair_create", {"payload": {
         "action": "repair_create", "estate_name": ESTATE_A_TITLE, "description": "壞了"},

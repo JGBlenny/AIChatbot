@@ -601,7 +601,36 @@ class ScriptedFakeCompletions:
         else:
             turn = self._turns[self._i]
             self._i += 1
-        return _FakeResponse(_fixed_agent_output_for(turn))
+        response = _FakeResponse(_fixed_agent_output_for(turn))
+        # W2：主模型呼叫改串流後，`stream=True` 時把同一份回應包成等價的假串流（內容一塊、usage 一塊）。
+        if kwargs.get("stream"):
+            return _FakeStream(response)
+        return response
+
+
+class _FakeStream:
+    """把一份 `_FakeResponse` 包成 `async for chunk in stream` 的假串流（`close()` 為 no-op）。"""
+
+    def __init__(self, response):
+        from types import SimpleNamespace
+
+        message = response.choices[0].message
+        self._chunks = [
+            SimpleNamespace(choices=[SimpleNamespace(
+                delta=SimpleNamespace(content=message.content, tool_calls=None),
+                finish_reason="stop")], usage=None),
+            SimpleNamespace(choices=[], usage=response.usage),
+        ]
+
+    def __aiter__(self):
+        return self._iter()
+
+    async def _iter(self):
+        for c in self._chunks:
+            yield c
+
+    async def close(self):
+        return None
 
 
 class ScriptedFakeProvider:

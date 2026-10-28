@@ -53,7 +53,7 @@ from services.conversational_config import (
     PRESALES_HANDOFF_CHANNEL_DEFAULT,
     PRESALES_HANDOFF_MESSAGE,
 )
-from services.presales_gate import FactClass, HandoffReason, build_handoff
+from services.presales_gate import FactClass, HandoffReason, MODEL_VISIBLE_HANDOFF_REASONS, build_handoff
 
 pytestmark = pytest.mark.unit
 
@@ -71,6 +71,13 @@ from services.jgb import bills as _bills  # noqa: E402  — 時鐘凍結的唯�
 @pytest.fixture(autouse=True)
 def _freeze_today(monkeypatch):
     monkeypatch.setattr(_bills, "_today", lambda: _date(2026, 8, 15))
+
+
+@pytest.fixture(autouse=True)
+def _pick_right_off(monkeypatch):
+    """「選對紀錄」片（`AGENT_PICK_RIGHT` 預設 on）：本檔鎖的是改前的卡文字與兌現／雜湊語義（替身無 JGB
+    帳單列，on 時延期卡的 viewer 讀取查無）⇒ 一律在 off 下跑；on 的卡由 test_pick_right_record_req 驗。"""
+    monkeypatch.setenv("AGENT_PICK_RIGHT", "off")
 
 _REQ = "agentic-mcp-orchestration:2.4"
 
@@ -115,10 +122,10 @@ def _identity(**over):
 
 @pytest.mark.req(_REQ)
 def test_handoff_reason_enum_covers_existing_four_and_two_new():
-    """schema 的 enum ＝ `HandoffReason` 全值域；新兩值在、舊四值也還在（正對照組）。"""
+    """schema 的 enum ＝ `HandoffReason` 的模型可見值域（不含程式專用 user_request）；新兩值在、舊四值也還在（正對照組）。"""
     schema_enum = HANDOFF_SPEC["input_schema"]["properties"]["reason"]["enum"]
     assert schema_enum == list(HANDOFF_REASONS)
-    assert schema_enum == [r.value for r in HandoffReason]
+    assert schema_enum == list(MODEL_VISIBLE_HANDOFF_REASONS)
     for value in _NEW_REASONS:
         assert value in schema_enum
     for value in _EXISTING_REASONS:   # 正對照組：擴值沒有把既有值弄丟

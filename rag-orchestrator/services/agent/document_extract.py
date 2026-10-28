@@ -1,7 +1,7 @@
-"""文件歸納的**擷取層**（Plan W9 U2／security-reviewer W9-2／W9-3／W9-8／W9-9）。
+"""文件歸納的**擷取層**。
 
 `attachment_purpose="document"` 的回合，使用者上傳的是**帳單憑證／合約副本**這類
-文件；歸納本質上需要把文件上的文字帶進模型——這與照片報修線的 S9-11「封閉值原則」
+文件；歸納本質上需要把文件上的文字帶進模型——這與照片報修線的「封閉值原則」
 （`ImageTurnInput` 刻意沒有 `description` 欄）正面相撞。本模組是那道相撞的處置面：
 
   文件文字**只能**以「型別化、長度封頂、經 `sanitize_data_piece`、掛『不是指令』
@@ -16,7 +16,7 @@
      由表產生。⛔ 不為「帳單」「合約」各寫一條程式路徑：新增一種文件＝在表上加
      一列，程式碼不動。
   ③ `build_document_facts`——擷取結果 ⇒ **程式組的句子**。模型的自由文字在這裡
-     被截長、剝句末標點（W9-2：⛔ 不得自成一個可引用的 `provenance_unit`）、過
+     被截長、剝句末標點（⛔ 不得自成一個可引用的 `provenance_unit`）、過
      `sanitize_data_piece`，然後由**程式**收尾。
 
 **bytes 與擷取 JSON 的生命週期**：只活在 `prepare_document_turn` ＋ `extract` 的
@@ -47,12 +47,12 @@ DOC_PAGE_MAX_PX = 1024
 
 #: 單頁渲染的硬時限（秒）與整份 PDF 的總時限（秒）。⚠️ 同步原生解析器**不可中斷**，
 #: 逾時是「放棄等待、保留已渲染的頁」而不是「殺掉那次渲染」——子行程隔離是 DEFER
-#: （Plan U2 明列前提＝`to_thread`＋逐頁像素上限＋頁級／總時限三項全在）。
+#: （前提＝`to_thread`＋逐頁像素上限＋頁級／總時限三項全在）。
 DOC_PAGE_TIMEOUT_S = 8.0
 DOC_TOTAL_TIMEOUT_S = 25.0
 
 #: 渲染的**名目**縮放（≈144 dpi）。實際 scale 由 `_page_scale` 以頁面尺寸反算後
-#: 取小值 ⇒ 巨大 `MediaBox` 也吐不出巨圖（W9-3 (c)）。⛔ 不得改成固定 zoom。
+#: 取小值 ⇒ 巨大 `MediaBox` 也吐不出巨圖。⛔ 不得改成固定 zoom。
 _NOMINAL_SCALE = 2.0
 
 #: 擷取模型（env `DOCUMENT_EXTRACTION_MODEL`）。⛔ 與照片報修線的
@@ -67,9 +67,8 @@ DOCUMENT_DETAIL = "high"
 #: gpt-5 系列的推理力道（同 `image_recognition_service._GPT5_REASONING_EFFORT`）。
 _GPT5_REASONING_EFFORT = "low"
 
-#: 站內幫手 S3-live 修正（主 session 2026-10-15）：推理力道**依模型系列**，先比對者先贏。
-#: gpt-6 系列 ⇒ `"none"`：主 session 容器內以 receipt-2.jpg 實測 `extract`，low 11.7 秒、
-#: none 5.2 秒，兩者輸出欄位完全相同；S3-live 該劇本曾逾時。gpt-5 系列維持 `"low"`。
+#: 推理力道**依模型系列**，先比對者先贏。
+#: gpt-6 系列 ⇒ `"none"`（比 low 快，兩者輸出欄位相同）。gpt-5 系列維持 `"low"`。
 #: ⚠️ 與 `image_recognition_service.REASONING_EFFORT_BY_PREFIX` **值相同、各持一份**
 #:    （本檔 ⛔ 不 import 那一支，理由同 `NEW_PARAM_MODEL_PREFIXES`）；由單元測試釘成相等。
 REASONING_EFFORT_BY_PREFIX: tuple = (("gpt-6", "none"), ("gpt-5", _GPT5_REASONING_EFFORT))
@@ -98,7 +97,7 @@ DOCUMENT_STATUSES: frozenset = frozenset({"ok", "partial", "failed", "timeout"})
 
 #: 證據片段（`evidence`）的長度上限（字元）——line-bot #5 病灶：模型在猜日期，
 #: 逼它每欄附一段「文件上逐字可見」的原文片段，程式再覆核片段裡有沒有值的關鍵
-#: 字元（Plan 第六批單元 C）。⚠️ **不塞進 `DOCUMENT_FIELD_SPECS`**：那張表的鍵數
+#: 字元。⚠️ **不塞進 `DOCUMENT_FIELD_SPECS`**：那張表的鍵數
 #: 被既有測試（`test_free_text_does_not_form_its_own_provenance_unit` 等）直接
 #: 拿來對「組句行數」「schema 值欄鍵集」計數，塞進去會把那些正對照組全部帶歪。
 #: 證據改走 schema 的**同層姊妹物件** `evidence`（見 `build_json_schema`），
@@ -124,7 +123,7 @@ class DocumentExtractionError(Exception):
 
 
 class DocumentPageLimitExceeded(Exception):
-    """照片頁＋PDF 頁**合計**超過總頁數上限（W9-15）。
+    """照片頁＋PDF 頁**合計**超過總頁數上限。
 
     ⚠️ 這是**整回合 `INVALID_INPUT`**，⛔ 不是「截斷後照跑」——後者是靜默降級，
     使用者不會知道有幾頁沒被看過。門面把本例外轉成封閉錯誤值域的 `INVALID_INPUT`。
@@ -152,12 +151,12 @@ class RasterizedPdf:
 def _page_scale(width: float, height: float, max_px: int) -> float:
     """由頁面尺寸（PDF point）**反算**縮放，使輸出長邊 ≤ `max_px`。
 
-    ⛔ **不得改成固定 zoom**（W9-3 (c)）：`MediaBox` 是檔案裡寫的、攻擊者可控，
+    ⛔ **不得改成固定 zoom**：`MediaBox` 是檔案裡寫的、攻擊者可控，
     20000×20000 pt 的頁面配上固定 zoom＝一次渲染吐出十億級像素。取
     `min(名目縮放, max_px / 長邊)` ⇒ 上限由**我方**決定，檔案只能讓它更小。
 
     ⚠️ 抽成模組級具名函式**就是為了讓負向對照測得動**——把它換成固定 zoom 時，
-    W9-3 (c) 的斷言必須轉紅（`tests/unit/agent/test_document_turn_req.py`）。
+    像素上限的斷言必須轉紅（`tests/unit/agent/test_document_turn_req.py`）。
     """
     longest = max(float(width or 0.0), float(height or 0.0))
     if longest <= 0:
@@ -166,13 +165,13 @@ def _page_scale(width: float, height: float, max_px: int) -> float:
 
 
 async def _to_thread(fn: Callable, *args: Any) -> Any:
-    """一律經執行緒池跑同步原生解析器（W9-3 (a)）。
+    """一律經執行緒池跑同步原生解析器。
 
     ⚠️ 抽成模組級具名協程有兩個理由，⛔ 不要內聯回去：
       1. `rasterize_pdf` 的每一次原生呼叫（開檔、頁數、渲染、關檔）都必須經這裡，
          漏一個就等於那一個會卡住事件迴圈；
       2. 負向對照測試 monkeypatch 這一支成「同步直接呼叫」，藉此證明「拿掉
-         `to_thread` 時 W9-3 (a) 的斷言真的會紅」（⛔ 不留假綠）。
+         `to_thread` 時執行緒池的斷言真的會紅」（⛔ 不留假綠）。
     """
     return await asyncio.to_thread(fn, *args)
 
@@ -182,7 +181,7 @@ def _open_pdf(data: bytes):
 
     ⛔ **只 import 與建構 `PdfDocument`**：本函式與 `_render_page` 是本檔唯二碰
     pypdfium2 的地方，且兩者都 ⛔ 不觸 `get_attachment`／`count_attachments`／
-    `new_attachment`／`init_forms`／`formenv`（W9-3 (e)）。
+    `new_attachment`／`init_forms`／`formenv`。
     """
     import pypdfium2
 
@@ -226,9 +225,9 @@ async def rasterize_pdf(
     total_timeout_s: float = DOC_TOTAL_TIMEOUT_S,
     clock: Callable[[], float] = time.monotonic,
 ) -> RasterizedPdf:
-    """PDF bytes ⇒ 前 `max_pages` 頁的 PNG（W9-3）。
+    """PDF bytes ⇒ 前 `max_pages` 頁的 PNG。
 
-    **四道防線（缺一即回到 W9-3 擋掉的那個狀態，⛔ 不得單獨拿掉）**：
+    **四道防線（缺一即回到未防護狀態，⛔ 不得單獨拿掉）**：
       (a) 每一次原生呼叫都經 `_to_thread`——同步解析器不得卡住事件迴圈；
       (b) 頁級硬時限 `page_timeout_s` ＋整份總時限 `total_timeout_s`；命中 ⇒
           **已渲染的頁保留** ＋ `timed_out=True`（呼叫端據此判 `partial`／`timeout`）；
@@ -236,7 +235,7 @@ async def rasterize_pdf(
       (d) 只 `render`，⛔ 不碰附件／嵌入檔／表單／JS 任何 API。
 
     ⚠️ 逾時只是「不再等」——原生渲染在執行緒裡跑完為止（⛔ 不可中斷）。子行程
-    隔離是 DEFER（Plan U2 明列前提）。
+    隔離不做。
 
     解析例外（壞檔／加密／非 PDF）⇒ `DocumentRasterizeError`。
     """
@@ -318,7 +317,7 @@ _PAYMENT_METHOD = ("轉帳", "現金", "信用卡", "其他", "未載明")
 _RENT_CYCLE = ("月", "季", "半年", "年", "其他")
 _SIGNED = ("雙方已簽", "單方", "未簽", "看不出")
 
-#: **文件種類 × 欄位**的封閉表（Plan U2 逐欄）。
+#: **文件種類 × 欄位**的封閉表。
 #:
 #: ⛔⛔ **這張表是唯一的擴充點**：新增一種文件＝加一個鍵；新增一個欄位＝加一列。
 #:     程式碼（schema 產生、驗證、組句、輸出上限反算）⛔ 不得為某一種文件另開
@@ -360,7 +359,7 @@ DOCUMENT_FIELD_SPECS: dict = {
         ),
         "signed": FieldSpec("enum", "簽署狀態", choices=_SIGNED),
     },
-    # 站內幫手 S3（§3h 第 4 點，業主 2026-10-15）：**只用來分類**的建物謄本。
+    # 站內幫手 S3：**只用來分類**的建物謄本。
     # ⚠️ 欄位表刻意是空的——謄本欄位 ⛔ 由我方模型抽，改由 DocuMind 解析
     #    （`services/documind_client.py`），取值只進 `DocumentTurnInput.typed_fields`。
     "building_deed": {},
@@ -459,7 +458,7 @@ def _evidence_field_schema(spec: FieldSpec) -> dict:
 
     - 一般欄（string／date／number／integer／enum）：一段 ≤40 字的片段；
     - `string_list`：與值陣列**同長度索引對齊**的片段陣列（每個元素配自己的
-      證據，Plan 第六批單元 C 點 1）；
+      證據）；
     - `object_list`：與值陣列同長度索引對齊的「每列一個證據物件」陣列，物件
       的鍵＝該列每個子欄位名（`item` 表逐欄產生，⛔ 不手寫）。
     """
@@ -494,7 +493,7 @@ def build_json_schema() -> dict:
 
     `evidence` 是 `fields` 的**同層姊妹物件**（⛔ 不塞進 `fields` 內部）：鍵集與
     `fields.properties` 一一對應、由同一份 `_MERGED_FIELDS` 產生，每欄一段
-    「文件上逐字可見」的原文片段（Plan 第六批單元 C）。放同層而不混進 `fields`
+    「文件上逐字可見」的原文片段。放同層而不混進 `fields`
     是刻意的——`fields` 的鍵集／行數被既有測試直接拿來對照組句結果與 schema
     形狀，混進去會讓那些正對照組全部跟著漂。
     """
@@ -530,7 +529,7 @@ def build_json_schema() -> dict:
 
 
 def _spec_char_budget(spec: FieldSpec) -> int:
-    """一個欄位**最壞情況**的字元預算（輸出 token 上限反算用，W9-8）。"""
+    """一個欄位**最壞情況**的字元預算（輸出 token 上限反算用）。"""
     if spec.kind == "string":
         return int(spec.max_len or 0)
     if spec.kind == "date":
@@ -559,8 +558,8 @@ def _evidence_char_budget(spec: FieldSpec) -> int:
 
 
 def output_token_limit() -> int:
-    """輸出 token 上限＝`sum(欄位字元預算 + 證據字元預算) × 2 + 256`（W9-8／
-    Plan 第六批單元 C 點 4：`evidence` 是同層姊妹物件、不在 `_MERGED_FIELDS`
+    """輸出 token 上限＝`sum(欄位字元預算 + 證據字元預算) × 2 + 256`（
+    `evidence` 是同層姊妹物件、不在 `_MERGED_FIELDS`
     裡，上限反算必須**另外**把它加回來，否則多出的 `evidence` 物件會把輸出
     截斷成解不出來的 JSON）。
 
@@ -580,7 +579,7 @@ def _check_leaf(spec: FieldSpec, value: Any) -> bool:
     """型別／enum 是否合規（`None` 一律合規＝擷取不到）。
 
     ⚠️ **字串長度不在這裡判**：超長是模型的常態漂移，由 `build_document_facts`
-    依表**截長**處理（Plan U2 §B3 明訂「每個字串欄先截長」）。這裡擋的是
+    依表**截長**處理（每個字串欄先截長）。這裡擋的是
     「型別／enum／筆數上限」——那三類不符代表這一份輸出的**形狀**壞了，
     ⛔ 不能只砍一欄當沒事。
     """
@@ -606,7 +605,7 @@ def _check_leaf(spec: FieldSpec, value: Any) -> bool:
 def validate_extraction(raw: Any) -> dict:
     """模型輸出 ⇒ **經封閉表驗過的 dict**；不符 ⇒ `DocumentExtractionError`。
 
-    驗的三件事（Plan U2「型別／enum／上限」）：
+    驗的三件事（型別／enum／上限）：
       1. 頂層形狀：`kind` 在封閉集合、`unreadable` 是 bool、`fields` 是 dict；
       2. 每一欄的**型別**與 **enum 值域**（`None` 恆合規）；
       3. 陣列欄的**筆數上限**（`max_items`）。
@@ -691,8 +690,7 @@ def validate_extraction(raw: Any) -> dict:
 
 
 # ════════════════════════════════════════════════════════════════════
-# 證據閘（line-bot #5：同一張帳單擷取五次、日期五種答案——模型在猜。
-# Plan 第六批單元 C）
+# 證據閘（同一張帳單擷取多次會得到不同日期——模型在猜，所以要附證據片段）
 # ════════════════════════════════════════════════════════════════════
 def _digits(text: str) -> str:
     """去掉逗號／貨幣符號等非數字字元，只留數字（比對數值型欄位用）。"""
@@ -705,7 +703,7 @@ def _string_evidence_ok(value: Any, evidence: str) -> bool:
     return text in evidence or text.strip() in evidence
 
 
-#: 站內幫手 S3-live 修正（民國日期）：**只認完整形狀**「（中華）民國NNN年M月D日」。
+#: 民國日期：**只認完整形狀**「（中華）民國NNN年M月D日」。
 #: ⛔ 不收「NNN年M月D日」「NNN/M/D」等缺「民國」二字的寫法（那些可能是西元或別的編號）。
 _ROC_FULL_DATE_RE = re.compile(
     r"(?:中華)?民國\s*(\d{2,3})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日"
@@ -751,7 +749,7 @@ def _number_evidence_ok(value: Any, evidence: str) -> bool:
     value_digits = _digits(str(value))
     if not value_digits:
         return False
-    # verifier 2026-09-10 P3：⛔ 不做子字串（`800` 會被 `18,000` 放行）。先把千分位逗號併回，
+    # ⛔ 不做子字串（`800` 會被 `18,000` 放行）。先把千分位逗號併回，
     # 再以「整個數字 token 等值」比對；`19,520`／`19520` 都成 token `19520`。
     normalized = re.sub(r"(?<=\d)[,，](?=\d{3}(?!\d))", "", evidence or "")
     return value_digits in re.findall(r"\d+", normalized)
@@ -779,7 +777,7 @@ def _evidence_ok(kind: str, value: Any, evidence: Any) -> bool:
 
 def apply_evidence_gate(result: dict) -> dict:
     """`validate_extraction` 之後的**覆核層**：片段空、或片段比對不上值 ⇒ 該欄
-    （或該陣列元素）變 `None`、記進 `uncertain`（Plan 第六批單元 C 點 2）。
+    （或該陣列元素）變 `None`、記進 `uncertain`。
 
     **啟用條件**：`result["evidence"]` 是非空 dict 才啟用——`validate_extraction`
     對沒有 `evidence` 鍵的舊形狀輸出（沒升級的擷取器、既有測試的假擷取器結果）
@@ -789,7 +787,7 @@ def apply_evidence_gate(result: dict) -> dict:
     evidence_req.py::test_gate_is_a_noop_without_any_evidence_key` 釘住這條判定。
 
     逐欄／逐元素比對規則見 `EVIDENCE_RULES`；`object_list` 逐列各自比對每個子
-    欄位（Plan 點 2「items 逐元素」），`string_list` 依索引對齊值陣列與證據陣列。
+    欄位（items 逐元素），`string_list` 依索引對齊值陣列與證據陣列。
     """
     if not isinstance(result, dict):
         return result
@@ -814,10 +812,10 @@ def apply_evidence_gate(result: dict) -> dict:
             new_fields[name] = None
             uncertain.add(name)
             value = None
-        # 站內幫手 S3-live 修正（民國日期）：日期欄沒有值（模型回 null，或上一步因民國片段
+        # 民國日期：日期欄沒有值（模型回 null，或上一步因民國片段
         # 裡沒有西元年而被證據閘拿掉）、而片段恰是一個**完整**民國日期 ⇒ 由程式決定性換算
-        # 填回（依型別，⛔ 逐欄特例）。S3-live：「民國115年10月8日」被回成 null 列入
-        # uncertain，A14 卡外「收據日期」因此缺。
+        # 填回（依型別，⛔ 逐欄特例）。少了這段，完整民國日期會留 null、列入 uncertain，
+        # 卡外的日期欄（例：收據日期）因此缺。
         if value is None and spec.kind == "date":
             roc = roc_full_date(evidence.get(name))
             if roc is not None:
@@ -876,8 +874,8 @@ def apply_evidence_gate(result: dict) -> dict:
 # ════════════════════════════════════════════════════════════════════
 # ③ 擷取服務
 # ════════════════════════════════════════════════════════════════════
-#: 系統提示詞——**只有定義，⛔ 無任何例子**（Plan 紀律）。倒數第二句是文件線的
-#: 注入處置在提示詞側的那一半（另一半在邊界層：W9-1 關寫入面、W9-2 不可自成 unit）；
+#: 系統提示詞——**只有定義，⛔ 無任何例子**。倒數第二句是文件線的
+#: 注入處置在提示詞側的那一半（另一半在邊界層：關寫入面、不可自成 unit）；
 #: 最後一句是證據閘在提示詞側的那一半（另一半在程式端 `apply_evidence_gate`——
 #: 提示詞只講定義「附片段、片段找不到就留 null」，覆核與「找不到就 null」的
 #: 執行不能只靠提示詞這句話，program 端再驗一次）。
@@ -909,12 +907,12 @@ def _completion_params(model: str, max_output_tokens: int) -> dict:
     """依模型回輸出長度／取樣參數（規則同
     `image_recognition_service._completion_params`，⛔ 但**數值另算**）。
 
-    gpt-5／gpt-6 系列 ⇒ `max_completion_tokens`、**不傳 `temperature`**（真線路實測：
+    gpt-5／gpt-6 系列 ⇒ `max_completion_tokens`、**不傳 `temperature`**（
     gpt-5 系列的推理 token 計入 completion，且具名傳 `reasoning_effort` 會
     TypeError ⇒ 走 `extra_body`）；其餘 ⇒ `max_tokens`＋`temperature=0`。
 
     ⛔ **不 import 那一支**：它把上限釘死在照片線的 500／1500，而文件線的上限
-    由 `output_token_limit()` 從欄位表反算（W9-8）。共用函式等於共用那兩個常數。
+    由 `output_token_limit()` 從欄位表反算。共用函式等於共用那兩個常數。
     """
     if str(model or "").startswith(NEW_PARAM_MODEL_PREFIXES):
         return {
@@ -929,7 +927,7 @@ class DocumentExtractionService:
 
     ⛔ **不繼承、不呼叫 `ImageRecognitionService`**：那支的 `_record_cost` 在
     `image_id` 非空時會把整包辨識 JSON 寫進 `image_uploads.recognition_result`
-    （W9-9）——文件線的擷取 JSON ⛔ 不得落地。成本由呼叫端依 `last_usage` 自寫
+    ——文件線的擷取 JSON ⛔ 不得落地。成本由呼叫端依 `last_usage` 自寫
     一列 `operation='document_extraction'`。
     """
 
@@ -961,7 +959,7 @@ class DocumentExtractionService:
 
         - `response_format` 走 **strict json_schema**（schema 由封閉表產）；
         - `detail` 程式釘 `high`（`DOCUMENT_DETAIL`）；
-        - 輸出上限由 `output_token_limit()` 反算（W9-8）。
+        - 輸出上限由 `output_token_limit()` 反算。
 
         ⛔ 例外一律不外流原物件（訊息可能含 base64＝文件本身）；`logger` 只印
         例外類別名。
@@ -1025,7 +1023,7 @@ class DocumentExtractionService:
 # ════════════════════════════════════════════════════════════════════
 @dataclass(frozen=True)
 class DocumentTurnInput:
-    """門面交給 Runtime 的**文件回合輸入**——**全封閉值**（Plan W9 U2）。
+    """門面交給 Runtime 的**文件回合輸入**——**全封閉值**。
 
     ⛔⛔ **沒有 bytes、沒有網址、沒有擷取 JSON**：`facts` 是**程式組的句子**
     （每個欄位值都已截長、剝句末標點、過 `sanitize_data_piece`），除此之外只有
@@ -1041,11 +1039,11 @@ class DocumentTurnInput:
     facts: str = ""
     pages_seen: int = 0
     pages_total: int = 0
-    #: 站內幫手 S3（§3h 第 2 點，DSP-073／DSP-076）：**會上確認卡的有型別值**
+    #: 站內幫手 S3（DSP-073／DSP-076）：**會上確認卡的有型別值**
     #: `((動作欄位, 值), …)`——只含對照表映射到動作欄位、已逐欄驗過形狀的值。
     #: Runtime 在 `confirm.request` 前把它們**覆寫**進 payload（模型的同名值丟棄）。
     typed_fields: tuple = ()
-    #: 收據日期（`YYYY-MM-DD`）——**只作卡外提示**，⛔ 不進 payload／雜湊（§3h 第 5 點）。
+    #: 收據日期（`YYYY-MM-DD`）——**只作卡外提示**，⛔ 不進 payload／雜湊。
     receipt_date: Optional[str] = None
     #: 本回合擷取到的**自由文字值**（開立單位、付款人、品名、序號…）——**只活在本回合
     #: 記憶體**，給 Runtime 做縱深比對（任何 payload 欄位含其中之一 ⇒ 不出卡）。
@@ -1090,7 +1088,7 @@ class DocumentTurnInput:
 
 
 # ════════════════════════════════════════════════════════════════════
-# 站內幫手 S3（§3h 第 1～5 點；DSP-073／DSP-076）：文件回合的寫入放行與有型別值
+# 站內幫手 S3（DSP-073／DSP-076）：文件回合的寫入放行與有型別值
 # ════════════════════════════════════════════════════════════════════
 #: **文件寫入放行的唯一常數**（S3-4）：`kind → 該文件回合唯一允許出卡的動作`。
 #: ⛔ 不在別處另列放行條件——`runtime` 的三道擋（寫入面可見性、執行前比對、出卡前
@@ -1189,7 +1187,7 @@ RECEIPT_CURRENCIES: frozenset = frozenset({"TWD", None})
 
 
 def receipt_typed_fields(result: Any) -> tuple:
-    """`bill_receipt` 擷取結果 ⇒ `(typed_fields, receipt_date)`（§3h 第 5 點）。
+    """`bill_receipt` 擷取結果 ⇒ `(typed_fields, receipt_date)`。
 
     - `amount → total`：只在 `currency ∈ {TWD, null}`、`amount` 是整數（或小數點後為 0）、
       且 `amount` 不在 `uncertain` 時填；否則不填（⇒ 卡前缺欄追問）。
@@ -1247,7 +1245,7 @@ def build_deed_facts(typed_fields: tuple) -> str:
     return DOCUMENT_CONTENT_PREFIX + "\n" + "\n".join(lines)
 
 
-#: W9-2：自由文字**不得自成一個可引用的 `provenance_unit`**。切片是依句末標點切
+#: 自由文字**不得自成一個可引用的 `provenance_unit`**。切片是依句末標點切
 #: 的（`provenance_units._SENTENCE_ENDS`），所以欄位值裡的句末標點與換行一律剝
 #: 掉——留一個「。」在值的中間，那一段就會被切成獨立的一片、拿到自己的引用編號，
 #: 而模型可以只引那一片、把前面的欄名（＝這句話的限定條件）丟掉。
@@ -1264,7 +1262,7 @@ def _scrub(value: str) -> str:
     """截長之後的**共用尾段**：剝句末標點與換行 → `sanitize_data_piece`。
 
     ⛔ 順序不得顛倒：`sanitize_data_piece` 會把換行換成空白，先跑它的話 `\\n`
-    就不再是可剝除的字元，W9-2 那條就漏掉了換行這一類。
+    就不再是可剝除的字元，「自由文字不得自成 unit」那條就漏掉了換行這一類。
     """
     from services.agent.completed_actions import sanitize_data_piece
 
@@ -1307,7 +1305,7 @@ def _render_value(spec: FieldSpec, value: Any) -> Optional[str]:
 
 
 def build_document_facts(result: Any) -> str:
-    """擷取結果 ⇒ **程式組的資料段文字**（W9-2；⛔ 無任何模型自由文字直通）。
+    """擷取結果 ⇒ **程式組的資料段文字**（⛔ 無任何模型自由文字直通）。
 
     每一欄一句「欄名：值」，由**程式**收尾（句號）：
       - 擷取不到（`None`／剝完為空）⇒ 值寫「未載明」；
