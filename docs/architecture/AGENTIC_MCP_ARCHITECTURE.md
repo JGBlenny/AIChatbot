@@ -1012,7 +1012,7 @@ file_urls/image_urls
 - **延遲命題的數字不在同一層**：需求文 `requirements.md` D2／§「延遲」寫 p95 ≤12 秒（業主待裁）；回合預算 `AGENT_BUDGET_DEADLINE_S` 程式預設與正式機都是 20 秒；門面逾時 `AGENT_TURN_TIMEOUT_S` 程式預設 30 秒、正式機 90 秒（為了容納文件回合）。三者是同一命題（回合延遲上限）在 spec／回合預算／門面逾時各自定的數字，⛔ 尚未有裁決把它們收斂成一個。正式機量測（2026-10-15，工具上限 3）：知識題 20 題答出 11、中位 4.0 秒、p90 9.0 秒。
 - **接真 JGB 時，JGB 尚未開放的功能由程式回固定句、不發請求**：統計三項（未收帳單、執行中修繕、N 個月內到期合約；`jgb2_stats.NOT_SUPPORTED_TEXT`）與建立物件／合約／手動帳單（`confirm.WRITE_NOT_SUPPORTED_TEXT`，不出確認卡）；runtime 以固定句結束回合（`runtime._is_stats_not_supported`，violation `jgb2_stats_not_supported_exit`）。JGB 開放端點的設計見 `.kiro/specs/agentic-mcp-orchestration/jgb-api-spec-for-jgb-20261015.md`。
 - **「改帳單到期日」在真 JGB 上沒有可用路徑**：程式仍呼叫 `PATCH /agent/v1/bills/{id}`（`JGBSystemAPI` 的 `_patch_request`），該路由在 jgb2 master 與 preview 的 `routes/api.php` 查無（API 規格 §4 #23）；正式路徑待 JGB 回覆。
-- **修繕單照片**：我方有照片時送物件陣列 `broken_photos`，既有 `POST /repairs` 收網址陣列 ⇒ 400（API 規格 §4 #22）；JGB 定案前照片進不了修繕單。正式機 `IMAGE_URL_ALLOWLIST` 未設，JGB 專用上傳網域尚未加入，DocuMind 未設（謄本功能關閉）。
+- **修繕單照片**：我方有照片時送物件陣列 `broken_photos`，既有 `POST /repairs` 收網址陣列 ⇒ 400（API 規格 §4 #22）；JGB 定案前照片進不了修繕單。正式機 `IMAGE_URL_ALLOWLIST` 未設，JGB 專用上傳網域尚未加入。DocuMind 已接測試機（DSP-124、DSP-125；明文 http、無認證，合成檔防護開著，只送樣本檔）。
 - **細目索引開機逾時後背景重建**：開機 prepare 逾時（60 秒）後在背景重建（上限 900 秒；`app._prepare_index_in_background`），正式機約需 3～4 分鐘；重建完成前回答只用目錄。
 - **舊知識庫零列已審時 `kb.search` 不給模型**：正式機 `knowledge_base` 有效 926 列、已審 0 列（2026-10-15 量測），`kb.search` 列出的每筆 `kb.get` 都取不到；`mcp_facade.gate_kb_search_on_reviewed_rows` 依資料狀態判定（啟動時一次），門面照列。
 - 驗證關 ⑦（轉人字眼）：字眼出自該句可引用引文時放行（`verifier._uncovered_handoff_mention`）；引文沒有、引文不可引用、只在別句引文、無句子結構 ⇒ 照擋。

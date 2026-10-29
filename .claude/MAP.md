@@ -216,6 +216,8 @@ Stop 閘門會擋到讀完為止。⛔ 這一份清單存在的理由:沒有必�
 - 驗收 | `.kiro/specs/agentic-mcp-orchestration/acceptance-fill-answer-only-20261027.md` | 「填欄只填答覆」規則與清單 r4（業主核可、凍結，sha256 記於 `~/jgb-archive/arch-step3-20261018/fill/acceptance-frozen.sha256`）：業主原話、規則 FA-R1～FA-R12、清單 FA0～FA11、廣度表、非目標
 - 計畫 | `.kiro/specs/agentic-mcp-orchestration/plan-fill-wide-20261028.md` | 「填欄擴及首句、卡後、多欄回合」片計畫（DSP-119，r2，業主 2026-10-28 核可）：第一句、確認卡後打字、多欄追問回合也只填資料段、逐值加閘；業界原文、差距 G1～G8、路徑、終點表、§7 每次執行、§8 待裁
 - 驗收 | `.kiro/specs/agentic-mcp-orchestration/acceptance-fill-wide-20261028.md` | 「填欄擴及首句、卡後、多欄回合」規則與清單（r2，業主 2026-10-28 核可、凍結）：業主原話、規則 FW-R1～FW-R14、清單 FW0～FW13、廣度表、非目標
+- 計畫 | `.kiro/specs/agentic-mcp-orchestration/plan-upload-documind-20261028.md` | UD 片計畫（業主 2026-10-28 核可）：附件改瀏覽器直傳 AIChatbot（上傳票＋`upload_ids`）、謄本／收據／修繕照片皆由 DocuMind 辨識；業界依據、差距、UD-0～UD-4、資安兩階段（測試環境前／上正式機前）、推翻卡、業主裁示 OQ1～OQ13
+- 驗收 | `.kiro/specs/agentic-mcp-orchestration/acceptance-upload-documind-20261028.md` | UD 片凍結規則 R1～R5、清單 A1～A13、廣度表
 - 驗收 | `.kiro/specs/agentic-mcp-orchestration/acceptance-docs-handoff-cleanup-20261027.md` | 本線文件整理與過時清理的規則 D-R1～D-R4 與清單 C1～C11（2026-10-27 業主核可、凍結；併 E 收案執行；D-R4 為程式註解清理）
 - 驗收 | `.kiro/specs/agentic-mcp-orchestration/acceptance-name-lenient-f12-r5-20261022.md` | F12 規則與清單 r5（2026-10-22 業主核可凍結；F12 收案的終點量法依此，DSP-112）：業主原話 1～11、規則 FR-1～FR-11、廣度表、清單 F0～F9（宣稱依據 F3″）
 - 驗收 | `.kiro/specs/agentic-mcp-orchestration/acceptance-name-lenient-f12-20261022.md` | F12 規則與清單 r4（2026-10-22 業主核可凍結，紀錄）：r4 量測依此判（F3′ 27/50 未達）

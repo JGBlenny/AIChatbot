@@ -80,9 +80,13 @@
 
 ### #22 修繕單附照片 → 改 `POST /api/external/v1/repairs`
 - 現況：`broken_photos` 是**網址字串陣列**（每筆 `url` 規則、最多 10），程式只存 `basename`、不抓檔不上傳；`user_id`、`idempotency_key` 未宣告 ⇒ 被忽略；驗證失敗回 400。
-- ⚠️ **我方目前有照片時送的是物件陣列** `[{filename, content_type, size, sha256}]` ⇒ 對現行端點會 400。**我方待改**：JGB 定案前，接真 JGB 時不送 `broken_photos`（目前程式仍會送；JGB 尚未接上照片網域，所以目前不會有照片進來，文字報修不受影響）。
-- 請 JGB 定照片怎麼交：(a) `multipart/form-data`；(b) **預簽上傳＋JGB 自己的識別碼（我方建議）**——照片本來就在 JGB 的專用上傳網域，我方只回傳識別碼。另請提供**專用上傳網域名稱**（我方抓圖白名單用，不可是 www 或 API 主機）。
-- 請加：成員身分驗證（§0-3）、冪等（§0-2）。
+- 照片由使用者的瀏覽器直接傳到 AIChatbot（接口文件 §7），位元組在我們這邊，所以採 **(a) `multipart/form-data`**：請 `POST /api/external/v1/repairs` 也接受 `multipart/form-data`。
+  - 原有的文字欄位照舊，放在同名的表單欄位。
+  - 照片放在 `broken_photos[]`，multipart 時每筆是一個檔案。JSON 送網址字串的舊用法可以保留。
+  - 我們送出前，照片一律重新編碼成 `image/jpeg`，並去掉 EXIF 和 GPS。每張修繕單最多 10 張，每張 ≤ 5,000,000 bytes。檔名由我們產生，格式是 `photo-N.jpg`。若 jgb2 有張數上限，請告知。
+  - 請 jgb2 收下照片、掛到這張修繕單，回應格式照舊。jgb2 也請自己驗一次型別；提供照片時加上 `X-Content-Type-Options: nosniff`。
+- 請加：成員身分驗證（§0-3）、冪等（§0-2）。同一個冪等鍵重送時，照片不能重複掛。
+- JGB 不用提供專用上傳網域、簽章網址，也不用回頭抓我們的任何網址。
 
 ### #23 改帳單到期日 → 請給正式路徑
 - 我方目前的 `PATCH /agent/v1/bills/{id}` **在 jgb2 master 與 preview 的 `routes/api.php` 都查不到**。請確認它在哪個環境／分支，或改給正式路徑（建議 `PATCH /api/external/v1/bills/{id}`，只准改 `date_expire`，套用 §0 的成員身分與冪等）。
@@ -110,7 +114,7 @@
 | #19 | `title` 上限、`use_for`／`space_type`／`building` 值域、「台」「臺」、初始狀態 | 否 |
 | #20 | 押金欄位（金額或月數）、初始狀態 | 是 |
 | #21 | 開手動帳單是否要求合約已簽署；初始狀態；是否需另外發送 | 是 |
-| #22 | 照片上傳方式 (a)／(b)；專用上傳網域 | 是（照片） |
+| #22 | `POST /api/external/v1/repairs` 接受 multipart（`broken_photos[]`）的上線日期；張數上限 | 是（照片） |
 | #23 | 改到期日的正式路徑 | 是（延長到期日功能） |
 | §0 | 寫入成員身分參數名（`viewer_user_id` 或 `user_id`）；越權統一 404；冪等 | 是 |
 
@@ -118,4 +122,4 @@
 
 - #16～#18 改呼叫擴充後的既有端點（目前程式呼叫的是 `bills/summary/unpaid`、`repairs/in-progress`、`contracts/expiring` 三條新路徑與 `data` 物件形狀），JGB 定案後改呼叫端與解析。
 - 寫入成員身分參數名照 JGB 定案調整。
-- 接真 JGB 時暫不送 `broken_photos`（**尚未實作**；目前 JGB 尚未接上照片網域，實際不會觸發），待 #22 定案。
+- 照片改以 multipart 送 jgb2（接口文件 §7.1）；JGB 的 multipart 上線前，接真 JGB 時不送 `broken_photos`。
