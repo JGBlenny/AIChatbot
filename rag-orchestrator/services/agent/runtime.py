@@ -84,6 +84,8 @@ from services.agent.confirm_card import (
     CLOSED_ACTION_FIELDS,
     CONFIRMATION_REQUIRED_TEXT,
     PHOTO_PAYLOAD_KEYS,
+    PHOTO_REUPLOAD_TEXT,
+    PHOTOS_UNAVAILABLE_KEY,
     RECEIPT_DATE_HINT_TEMPLATE,
     REPAIR_PHOTOS_MAX,
     fields_before_today,
@@ -93,6 +95,7 @@ from services.agent.confirm_card import (
 # A8（單一動作登錄）：動作值域一律在呼叫當下以模組參照讀 `confirm_card.CONFIRM_ACTIONS`，
 # ⛔ 在 import 期複製一份——否則在登錄表加一個動作，這裡看到的仍是舊集合。
 from services.agent import confirm_card as _confirm_card
+from services.agent import upload_store as _upload_store
 from services.agent.canon.candidate_selector import CandidateSelector
 from services.agent.canon.candidate_selector import K as _CANDIDATE_K
 from services.agent.canon.canon_assembler import (
@@ -382,12 +385,16 @@ def _image_description_label(suggestion: dict) -> str:
     return label or str(suggestion.get("category_name") or "").strip()
 
 
-def _apply_image_suggestion_to_confirm_args(raw_args: Any, suggestion: Any) -> tuple:
+def _apply_image_suggestion_to_confirm_args(raw_args: Any, suggestion: Any, *,
+                                            leaf_swap: bool = True) -> tuple:
     """`confirm.request`／`repair_create` 的 payload 缺 `category_name`／`description`
     時由照片建議補上；`category_name` 恰是照片葉節點的父分類時換成葉節點。回 `(new_args, applied)`；`applied` 是補了哪些欄位的清單
     （空＝原樣）。任何形狀不對（非 dict、payload 非 JSON 物件、action 非
     repair_create、建議缺值）一律原樣回傳，⛔ 不在此 raise——形狀由 confirm 工具自己驗。
-    只補**缺值**（鍵不存在、None、去空白為空）；模型有給就不動（唯一例外：父分類換葉節點）。"""
+    只補**缺值**（鍵不存在、None、去空白為空）；模型有給就不動（唯一例外：父分類換葉節點）。
+
+    UD-3：`leaf_swap=False`（照片分類由被取代的待確認卡帶到更正後的新卡）⇒ 只補缺值、⛔ 換葉節點
+    ——卡後更正時 payload 已有的分類是客人（經草稿）講的，客人的話為準。"""
     if not isinstance(raw_args, dict) or not isinstance(suggestion, dict):
         return raw_args, []
     category = suggestion.get("category_name")
@@ -411,7 +418,8 @@ def _apply_image_suggestion_to_confirm_args(raw_args: Any, suggestion: Any) -> t
     elif (
         # 站內幫手 S3-live A7：模型自填的正是照片葉節點的**父分類**（例：家具 vs 椅子）⇒
         # 換成葉節點（同一大類底下更細，不與模型矛盾）。其他值 ⛔ 不動。
-        isinstance(suggestion.get("parent_category_name"), str)
+        leaf_swap
+        and isinstance(suggestion.get("parent_category_name"), str)
         and isinstance(payload.get("category_name"), str)
         and payload["category_name"].strip() == suggestion["parent_category_name"].strip()
         and category.strip() != suggestion["parent_category_name"].strip()
@@ -614,6 +622,7 @@ def _apply_photos_to_confirm_args(raw_args: Any, suggestion: Any) -> tuple:
             payload.pop(key, None)
             marks.append("photo_keys_dropped")
     photos = suggestion.get("photos") if isinstance(suggestion, dict) else None
+    omitted = suggestion.get("photos_omitted") if isinstance(suggestion, dict) else None
     if isinstance(photos, list) and photos:
         if len(photos) > REPAIR_PHOTOS_MAX:
             payload["broken_photos_omitted"] = len(photos)
@@ -621,9 +630,91 @@ def _apply_photos_to_confirm_args(raw_args: Any, suggestion: Any) -> tuple:
         else:
             payload["broken_photos"] = [dict(p) for p in photos if isinstance(p, dict)]
             marks.append("photos_attached")
+    elif (isinstance(omitted, int) and not isinstance(omitted, bool)
+          and omitted > REPAIR_PHOTOS_MAX):
+        # UD-3：被取代的舊卡是「超過上限、全部不附」⇒ 新卡照樣說明（張數由程式帶，⛔ 模型）。
+        payload["broken_photos_omitted"] = omitted
+        marks.append("photos_omitted")
     if not marks:
         return raw_args, []
     return _with_payload(raw_args, payload), sorted(set(marks))
+
+
+# ════════════════════════════════════════════════════════════════════
+# UD-3：照片隨卡（出卡時重新編碼、卡後更正帶到新卡、兌現／作廢釋放暫存）
+# ════════════════════════════════════════════════════════════════════
+#: 待確認筆存「這張卡用到的照片建議（⛔ 照片中繼資料）」的鍵：卡後更正重出卡時，照片
+#: 判出的分類／描述由這裡帶到新卡（照片本身在 payload 的 `broken_photos`）。⛔ 進卡、⛔ 進雜湊。
+PENDING_PHOTO_SUGGESTION_KEY = "photo_suggestion"
+#: 待確認筆的照片已釋放（兌現或作廢）⇒ 之後 ⛔ 再帶到別張卡。
+PENDING_PHOTOS_RELEASED_KEY = "photos_released"
+#: 照片建議裡可以跟著卡走的欄位（全是封閉來源：分類樹名稱、辨識結果的短字串）。
+_PHOTO_SUGGESTION_FIELDS = ("category_name", "item", "reason", "description", "parent_category_name")
+#: 兌現時照片不可用的收據錯誤碼（只在 `pending["receipt"]`，⛔ 進 `ToolError` 值域）。
+PHOTOS_UNAVAILABLE_RECEIPT_ERROR = "PHOTOS_UNAVAILABLE"
+V_PHOTOS_CARRIED = "card_photos_carried"
+V_PHOTOS_UNAVAILABLE_AT_REDEEM = "photos_unavailable_at_redeem"
+
+
+def _photo_suggestion_fields(suggestion: Any) -> Optional[dict]:
+    """照片建議 ⇒ 只留可跟卡走的欄位（值是字串或 `None`）；沒有分類 ⇒ `None`（不存）。
+
+    ⚠️ 讀回的待確認筆會落 DB 再讀回，⛔ 假設形狀正確：非 dict、值型別不對一律丟。"""
+    if not isinstance(suggestion, dict):
+        return None
+    out = {k: suggestion.get(k) for k in _PHOTO_SUGGESTION_FIELDS
+           if isinstance(suggestion.get(k), str) and suggestion.get(k).strip()}
+    if not isinstance(out.get("category_name"), str):
+        return None
+    return out
+
+
+def _payload_photo_shas(payload: Any) -> list:
+    photos = payload.get("broken_photos") if isinstance(payload, dict) else None
+    if not isinstance(photos, list):
+        return []
+    return [p["sha256"] for p in photos
+            if isinstance(p, dict) and isinstance(p.get("sha256"), str)]
+
+
+async def _encode_card_photos(identity: Any, photos: list) -> list:
+    """S11：照片建議（原檔 sha256）⇒ 卡上的照片中繼資料（**重新編碼後**那一份）。
+
+    每張：以本回合身分重算綁定、在暫存找到那一筆（`photo_source`）⇒ 用 Pillow 重新編碼成 JPEG
+    （`documind_client.reencode_photo_jpeg`：`exif_transpose`、轉 RGB、長邊 ≤ 2400、⛔ EXIF／GPS、
+    解碼再編碼所以檔尾夾帶的內容也不會留下）⇒ 存回暫存（原檔丟掉）⇒ `{photo-N.jpg, image/jpeg,
+    size, sha256}`。已編過的同一筆 ⇒ 沿用（同一筆只有一份「卡上那一份」）。
+
+    找不到（網址回滾模式、服務重啟、到期）、編碼失敗、編完超過上限 ⇒ 該張**保留原中繼資料**：
+    卡照樣印張數，兌現時 `repair_create` 對不到 ⇒ ⛔ 寫入、回固定句（S5，fail-closed）。"""
+    from services.documind_client import reencode_photo_jpeg
+
+    out = [dict(p) for p in photos if isinstance(p, dict)]
+    try:
+        binding = _upload_store.binding_from_identity(identity, "repair")
+    except ValueError:
+        return out
+    used: list = []
+    for i, meta in enumerate(out):
+        found = _upload_store.STORE.photo_source(meta.get("sha256"), binding, exclude_refs=used)
+        if found is None:
+            continue
+        ref, data, done_sha = found
+        used.append(ref)
+        if done_sha is None:
+            try:
+                jpeg = await asyncio.to_thread(reencode_photo_jpeg, data)
+            except Exception:  # noqa: BLE001 — 解不出／炸彈閘 ⇒ 保留原中繼資料（兌現時 fail-closed）
+                continue
+            done_sha = _upload_store.STORE.set_photo(ref, binding, jpeg)
+            if done_sha is None:
+                continue
+            size = len(jpeg)
+        else:
+            size = len(data)
+        out[i] = {"filename": f"photo-{i + 1}.jpg", "content_type": "image/jpeg",
+                  "size": size, "sha256": done_sha}
+    return out
 
 
 def _document_carry_of(agent_state: Any) -> Optional[dict]:
@@ -3166,9 +3257,11 @@ class AgentRuntime:
         #    會再燒一次並回固定句（fail-closed 仍成立）。
         pending_all = agent_state.get(PENDING_CONFIRM_KEY)
         if isinstance(pending_all, dict):
+            voided: list = []
             for burn_pid, entry in pending_all.items():
                 if isinstance(entry, dict) and not isinstance(entry.get("receipt"), dict):
                     entry["invalidated"] = True
+                    voided.append(burn_pid)
                     if self._db_pool is not None:
                         try:
                             await redeem_pending(
@@ -3176,6 +3269,9 @@ class AgentRuntime:
                             )
                         except Exception as exc:  # noqa: BLE001 — 見上：標記仍在、確認段會再燒
                             violations.append(f"SELECT_BURN_EXC:{type(exc).__name__}")
+            # UD-3（縮減 ①）：作廢的卡 ⇒ 照片暫存釋放（全部標完作廢之後才判「仍被活卡引用」）。
+            for burn_pid in voided:
+                self._release_card_photos(identity, agent_state, burn_pid)
 
         # L15 (a)②：命中 ⇒ 這一段對話的範圍＝該列的物件（`_ok_single(scoped=True)`
         # 放進 `data["scope"]`）。⛔ 列上算不出 `estate_id` 就維持 `None`——沒有
@@ -3318,6 +3414,8 @@ class AgentRuntime:
                 # A1：對已作廢的卡按「取消」＝使用者不要了 ⇒ 草稿一併清（回應句不變）。
                 _clear_draft_on_close()
                 AgentSession(agent_state).clear_last_submitted()     # #9g：取消 ⇒ 清標記
+                # UD-3：作廢的卡再按取消 ⇒ 照片釋放（仍被活卡引用的照片不動）。
+                self._release_card_photos(identity, agent_state, pending_id)
             return _finish(CONFIRMATION_REQUIRED_TEXT)
 
         submit = verb == CONFIRM_QUICK_REPLY_VALUES[0]
@@ -3361,6 +3459,7 @@ class AgentRuntime:
                 pending["receipt"] = {"cancelled": True}
             _clear_draft_on_close()
             AgentSession(agent_state).clear_last_submitted()         # #9g：取消 ⇒ 清標記
+            self._release_card_photos(identity, agent_state, pending_id)   # UD-3：作廢 ⇒ 釋放
             return _finish(CANCELLED_TEXT,
                            outcome=make_outcome("cancelled", expects="none",
                                                 action=pending.get("action")))
@@ -3392,10 +3491,12 @@ class AgentRuntime:
         # 兩把雜湊都要對：payload 對的是「將被執行的參數」，卡對的是「使用者
         # 看到的字」。⛔ 只對其中一把等於留下另一半可以被換掉。
         if not hmac.compare_digest(payload_sha, redemption.payload_sha256):
+            self._release_card_photos(identity, agent_state, pending_id)   # UD-3：token 已燒＝卡死了
             return _finish(CONFIRMATION_REQUIRED_TEXT)
         if not isinstance(card_sha, str) or not hmac.compare_digest(
             card_sha, redemption.summary_sha256
         ):
+            self._release_card_photos(identity, agent_state, pending_id)
             return _finish(CONFIRMATION_REQUIRED_TEXT)
 
         # S1／H1 **閘二：兌現前的日期有效性**。與閘一（`confirm.request`）是
@@ -3416,6 +3517,7 @@ class AgentRuntime:
             logger.info("[agent] 兌現閘：日期早於今天 ⇒ ⛔ 不呼叫寫入工具（⛔ 不記日期值）")
             pending["receipt"] = {"error": "INVALID_INPUT"}
             _clear_draft_on_close()
+            self._release_card_photos(identity, agent_state, pending_id)   # UD-3：兌現失敗也釋放
             return _finish(
                 ACTION_FAILED_TEXT,
                 violations=["date_before_today_at_redeem"],
@@ -3452,7 +3554,19 @@ class AgentRuntime:
             )
         ]
 
+        # UD-3（縮減 ①）：兌現了（寫入成功或失敗）⇒ 這張卡的照片暫存釋放。
+        self._release_card_photos(identity, agent_state, pending_id)
         if not tool_result.ok:
+            if (action == "repair_create" and isinstance(tool_result.data, dict)
+                    and tool_result.data.get(PHOTOS_UNAVAILABLE_KEY) is True):
+                # S5／A13：卡上照片的暫存不在或 sha256 不符 ⇒ 寫入工具 ⛔ 寫入；回固定句請使用者
+                # 重新上傳（⛔ 改成不附照片照送）。同一個 pid 重按回同一句（R4.3，`_answer_for_receipt`）。
+                pending["receipt"] = {"error": PHOTOS_UNAVAILABLE_RECEIPT_ERROR}
+                _clear_draft_on_close()
+                return _finish(PHOTO_REUPLOAD_TEXT, tool_calls=records,
+                               violations=violations + [V_PHOTOS_UNAVAILABLE_AT_REDEEM],
+                               outcome=make_outcome("failed", expects="none",
+                                                    action=pending.get("action")))
             # 誠實回錯（S-12：token 已燒是刻意的——要再做一次就要重新確認）。
             pending["receipt"] = {"error": tool_result.error or "TOOL_FAILED"}
             _clear_draft_on_close()
@@ -3487,6 +3601,11 @@ class AgentRuntime:
         if receipt.get("cancelled"):
             return finish(CANCELLED_TEXT,
                           outcome=make_outcome("cancelled", expects="none", action=action),
+                          **kwargs)
+        if receipt.get("error") == PHOTOS_UNAVAILABLE_RECEIPT_ERROR:
+            # UD-3：照片失效那一筆重按 ⇒ 同一句（R4.3）。
+            return finish(PHOTO_REUPLOAD_TEXT,
+                          outcome=make_outcome("failed", expects="none", action=action),
                           **kwargs)
         if receipt.get("error"):
             return finish(ACTION_FAILED_TEXT,
@@ -3602,9 +3721,13 @@ class AgentRuntime:
         identity: Optional[Identity] = None, draft_payload: Optional[dict] = None,
         write_candidates: bool = False, candidate_field_value: Any = None,
         card_pick: Optional[dict] = None, candidate_reask: bool = False,
-        lead: Optional[str] = None,
+        lead: Optional[str] = None, photo_suggestion: Optional[dict] = None,
     ) -> Optional[TurnResult]:
         """`confirm.request` 成功 ⇒ 把待確認動作存進 session 狀態並結束回合。
+
+        UD-3：`photo_suggestion`＝這張卡用到的照片建議欄位（分類／部位／原因／描述，⛔ 照片中繼資料）；
+        修繕卡才存進待確認筆 `PENDING_PHOTO_SUGGESTION_KEY`（⛔ 進卡、⛔ 進雜湊），卡後更正重出卡時
+        `_card_photo_inputs` 由這裡帶回。
 
         填欄擴及首句、卡後、多欄回合（plan-fill-wide-20261028 §4.3 第 8 點）：`lead`＝程式固定句（寬回合卡後部分套用時
         點名沒套用的欄位標籤）⇒ 接在卡文字之前（只進 `TurnResult.answer`；⛔ 進 `card`／`card_sha256`／dialog）。`None` ⇒
@@ -3767,6 +3890,11 @@ class AgentRuntime:
             rec = _wc.load_card_pick(card_pick, action=action)
             if rec is not None and rec["creator"] == pending_entry["creator"]:
                 pending_entry[_wc.CARD_PICK_KEY] = rec
+        # UD-3：照片分類跟著卡走（照片本身在 payload，已綁雜湊）。
+        if action == "repair_create":
+            kept = _photo_suggestion_fields(photo_suggestion)
+            if kept is not None:
+                pending_entry[PENDING_PHOTO_SUGGESTION_KEY] = kept
         # FIFO 上限（dict 保序）；⛔ 不是 LRU——重送命中時不重排，那會讓一筆被
         # 反覆重送的確認永遠擠不掉別人的。R3：落地與修剪收進
         # `AgentSession.write_pending_confirm`（⛔ 上限值不變，同一個
@@ -7686,6 +7814,102 @@ class AgentRuntime:
             outcome=make_outcome("failed", expects="text"),
         )
 
+    # ── UD-3：照片隨卡 ────────────────────────────────────────────────
+    async def _card_photo_inputs(
+        self, acc: TurnAccumulator, identity: Identity, agent_state: dict, raw_args: Any,
+    ) -> tuple:
+        """這次 `confirm.request` 的照片來源 ⇒ `(欄位用的建議, 照片用的建議, 是否由舊卡帶來)`。
+
+        - 不是 `repair_create` ⇒ 原樣（兩個 `_apply_*` 對非修繕本來就不動）。
+        - 有一次性照片建議（新照片）⇒ 用它；照片先重新編碼（S11，`_encode_card_photos`），卡上
+          sha256 綁重新編碼後那一份。超過 `REPAIR_PHOTOS_MAX` 張 ⇒ 不編（`_apply_photos_to_confirm_args`
+          照舊全部不附、只寫張數）。
+        - 沒有新照片 ⇒ `_card_photo_carry`：被這次更正取代的待確認卡上的照片（payload 原樣，⛔ 重新
+          編碼 ⇒ sha256 與舊卡相同）與照片分類。⛔ 改成「建議不消耗」（會補到之後另一張無關的單）。"""
+        fresh = agent_state.get(IMAGE_SUGGESTION_KEY)
+        payload = _payload_of(raw_args)
+        if payload is None or payload.get("action") != "repair_create":
+            return fresh, fresh, False
+        if isinstance(fresh, dict):
+            photos = fresh.get("photos")
+            if isinstance(photos, list) and 1 <= len(photos) <= REPAIR_PHOTOS_MAX:
+                return fresh, dict(fresh, photos=await _encode_card_photos(identity, photos)), False
+            return fresh, fresh, False
+        carry = self._card_photo_carry(acc, identity, agent_state)
+        if carry is None:
+            return None, None, False
+        return carry[0], carry[1], True
+
+    def _card_photo_carry(
+        self, acc: TurnAccumulator, identity: Identity, agent_state: dict,
+    ) -> Optional[tuple]:
+        """被更正取代的那張修繕卡 ⇒ `(照片分類建議或 None, {"photos": …} 或 {"photos_omitted": n})`；
+        沒有 ⇒ `None`。全部成立才帶：
+
+        - 寫入草稿是**回合開始就有、本回合沒換**的修繕草稿（`had_draft and not created`）——程式本來
+          就把這一句當成同一張卡的更正（A2）；新草稿＝舊草稿已清（送出／取消／逾時／換動作），⛔ 帶；
+        - 綁定卡（`_write_draft_bound_card`：最後一筆同動作、同建立者）無收據、照片未釋放；作廢與否
+          不論（A2 燒卡、按「修改」都會先標 `invalidated`，那正是被取代的那一張）；
+        - 照片取自它的 payload（出卡時程式寫入、已綁雜湊），讀回時重驗形狀（`repair_photos_of`）。"""
+        wd = acc.write_draft
+        draft = wd.draft if wd is not None else None
+        if (not isinstance(draft, dict) or not wd.had_draft or wd.created
+                or draft.get("action") != "repair_create"):
+            return None
+        bound = self._write_draft_bound_card(identity, agent_state, "repair_create")
+        if bound is None:
+            return None
+        entry = bound[1]
+        if isinstance(entry.get("receipt"), dict) or entry.get(PENDING_PHOTOS_RELEASED_KEY) is True:
+            return None
+        old_payload = entry.get("payload")
+        if not isinstance(old_payload, dict):
+            return None
+        try:
+            photos = _confirm_card.repair_photos_of(old_payload)
+        except _confirm_card.ConfirmCardError:
+            return None
+        omitted = old_payload.get("broken_photos_omitted")
+        if photos:
+            photo_part: dict = {"photos": photos}
+        elif (isinstance(omitted, int) and not isinstance(omitted, bool)
+              and omitted > REPAIR_PHOTOS_MAX):
+            photo_part = {"photos_omitted": omitted}
+        else:
+            photo_part = {}
+        field_part = _photo_suggestion_fields(entry.get(PENDING_PHOTO_SUGGESTION_KEY))
+        if not photo_part and field_part is None:
+            return None
+        return field_part, photo_part
+
+    def _release_card_photos(self, identity: Identity, agent_state: dict, pending_id: Any) -> None:
+        """縮減 ①：這張卡兌現（寫入成功或失敗）或作廢 ⇒ 刪掉它引用的照片暫存（`STORE.release_photos`，
+        綁定以本回合身分重算、六欄逐一等值）。
+
+        ⛔ 刪仍被另一張**活著**的卡（無收據、未作廢、未釋放）引用的照片——被更正取代的舊卡把照片
+        交給新卡，⛔ 因為舊卡作廢就刪掉新卡的照片。⛔ 拋例外（釋放失敗只會留到 30 分鐘到期）。"""
+        pending_all = agent_state.get(PENDING_CONFIRM_KEY)
+        entry = pending_all.get(pending_id) if isinstance(pending_all, dict) else None
+        if (not isinstance(entry, dict) or entry.get("action") != "repair_create"
+                or entry.get(PENDING_PHOTOS_RELEASED_KEY) is True):
+            return
+        entry[PENDING_PHOTOS_RELEASED_KEY] = True
+        shas = _payload_photo_shas(entry.get("payload"))
+        if not shas:
+            return
+        live: set = set()
+        for pid, other in pending_all.items():
+            if (pid == pending_id or not isinstance(other, dict)
+                    or isinstance(other.get("receipt"), dict) or other.get("invalidated") is True
+                    or other.get(PENDING_PHOTOS_RELEASED_KEY) is True):
+                continue
+            live.update(_payload_photo_shas(other.get("payload")))
+        try:
+            binding = _upload_store.binding_from_identity(identity, "repair")
+            _upload_store.STORE.release_photos([s for s in shas if s not in live], binding)
+        except Exception:  # noqa: BLE001 — 釋放失敗 ⇒ 留到到期（⛔ 讓例外吃掉這次回答）
+            logger.warning("[agent] 確認卡照片暫存釋放失敗（留到到期）")
+
     def _write_draft_bound_card(
         self, identity: Identity, agent_state: dict, action: Any,
     ) -> Optional[tuple[str, dict]]:
@@ -8941,16 +9165,25 @@ class AgentRuntime:
 
                     if not wd_program:
                         acc.counters.tool_calls += 1
+                    # UD-3：這次 `confirm.request` 用到的照片建議欄位（出卡時存進待確認筆，卡後更正帶到新卡）。
+                    _card_photo_suggestion: Optional[dict] = None
                     if name == CONFIRM_TOOL_NAME:
+                        # UD-3：照片來源二選一——本回合／照片建議（出卡前重新編碼，S11），或沒有新照片時
+                        # 由被取代的待確認卡帶過來（照片＋照片分類；客人講的分類為準）。
+                        _field_sugg, _photos_sugg, _carried = await self._card_photo_inputs(
+                            acc, identity, agent_state, raw_args)
+                        _card_photo_suggestion = _photo_suggestion_fields(_field_sugg)
                         raw_args, _applied = _apply_image_suggestion_to_confirm_args(
-                            raw_args, agent_state.get(IMAGE_SUGGESTION_KEY)
+                            raw_args, _field_sugg, leaf_swap=not _carried
                         )
                         for _field in _applied:
                             acc.violations.append(f"image_suggestion_applied:{_field}")
                         # 站內幫手 S3（F10）：照片相關鍵**無條件**刪掉、再由程式寫入。
                         raw_args, _photo_marks = _apply_photos_to_confirm_args(
-                            raw_args, agent_state.get(IMAGE_SUGGESTION_KEY)
+                            raw_args, _photos_sugg
                         )
+                        if _carried:
+                            acc.violations.append(V_PHOTOS_CARRIED)
                         for _mark in _photo_marks:
                             acc.violations.append(_mark)
                         # 第六批 #10 **讀點**：payload 缺 `estate_name` ⇒ 由物件記憶補。
@@ -9369,6 +9602,8 @@ class AgentRuntime:
                             # 在待確認筆帶著選定（卡後更正重出卡時帶回）。
                             card_pick=self._write_candidates_card_pick_record(
                                 acc, identity, call_kwargs.get("program_pick")),
+                            # UD-3：照片分類跟著卡走（卡後更正重出卡時帶回）。
+                            photo_suggestion=_card_photo_suggestion,
                             # 「選對紀錄」片 §4.3：打字選定不成立的重列、或回合開始就有未選定的候選集而重查後
                             # 仍多筆 ⇒ 前導句說「依您目前說的仍對到 N 筆」（開關 off 時 exit 不用這個值）。
                             candidate_reask=bool(

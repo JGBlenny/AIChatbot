@@ -56,6 +56,32 @@ server {
         proxy_set_header Authorization $http_authorization;
     }
 
+    # 瀏覽器直傳附件（UD-1／S9，2026-10-28）：/rag-api/v1/agent/uploads -> 後端 /api/v1/agent/uploads
+    # ⚠️ **完全比對**（`location =`）：只有這一條路徑走這裡，同前綴的其他路徑照舊走下面的 /rag-api/。
+    # ⛔ 不過 auth_request：瀏覽器沒有後台 JWT，也拿不到 API 金鑰；上傳端點自己驗 Origin 與上傳票。
+    # ⛔ 不注入金鑰：明寫清空 X-API-Key（上面的 map 會在沒帶時注入 admin 金鑰，這條路不得沿用）
+    #    與 X-JGB-Identity（身分只來自上傳票的綁定，⛔ 讓瀏覽器自帶）。
+    # 不緩衝請求體（⛔ nginx 暫存檔落地）；單檔上限 5,000,000 bytes＋multipart 外框，取 6m。
+    location = /rag-api/v1/agent/uploads {
+        set $rag_api_upload http://rag-orchestrator:8100;
+        rewrite ^ /api/v1/agent/uploads break;
+        proxy_pass $rag_api_upload;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-API-Key "";
+        proxy_set_header X-JGB-Identity "";
+
+        proxy_request_buffering off;
+        client_max_body_size 6m;
+        proxy_connect_timeout 30s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+    }
+
     # MCP 門面（2026-09-08，LINE bot 串接）：/rag-api/mcp -> 後端 /mcp
     # ⚠️ 不能走下面 /rag-api/ 的 rewrite（它把 /rag-api/(.*) 改成 /api/$1，/mcp 掛在根、不在 /api 下 ⇒ 404）。
     #   最長前綴優先：此 location 先於 /rag-api/ 命中。呼叫端一律自帶 X-API-Key（map 原樣沿用），

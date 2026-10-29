@@ -396,8 +396,9 @@ def _render_bill_due_extend(payload: Mapping[str, Any], today: Optional[date]) -
 #    照片相關鍵，再由本回合已過閘的伺服端照片中繼資料寫入），與其他欄位一樣進
 #    `payload_sha256`、由本函式驗形狀並印在卡上 ⇒ 使用者確認的張數＝送出的張數。
 # ---------------------------------------------------------------------------
-#: 修繕單一次最多附幾張（jgb2-req#22 提案 `photo_policy.max_count`）。
-REPAIR_PHOTOS_MAX: Final[int] = 5
+#: 修繕單一次最多附幾張（jgb2-req#22 提案 `photo_policy.max_count`；UD-3：與 UD-1 上傳票
+#: repair `max_files`＝10、計畫與給 JGB 的規格「每張修繕單最多 10 張」一致）。
+REPAIR_PHOTOS_MAX: Final[int] = 10
 #: payload 的照片鍵：`broken_photos`＝中繼資料清單；`broken_photos_omitted`＝超過上限
 #: 時「全部不附」的張數（只上卡說明，⛔ 不送）。
 PHOTO_PAYLOAD_KEYS: Final[Tuple[str, str]] = ("broken_photos", "broken_photos_omitted")
@@ -941,6 +942,14 @@ CONFIRMATION_REQUIRED_TEXT: Final[str] = "這筆確認已失效，請重新確�
 #: 取消／改內容的短句。
 CANCELLED_TEXT: Final[str] = "好的，這筆操作沒有送出。"
 
+#: UD-3（S5／A13）：兌現時卡上照片的暫存位元組不在（服務重啟、30 分鐘到期）或 sha256
+#: 與卡上不符 ⇒ ⛔ 寫入、⛔ 改成不附照片照送，回這一句（同一個 pid 重按回同一句，R4.3）。
+PHOTO_REUPLOAD_TEXT: Final[str] = "這筆修繕單的照片已失效，沒有送出。請重新上傳照片後再送一次。"
+
+#: UD-3：寫入工具（`repair_create`）判照片不可用時放在 `ToolResult.data` 的旗標鍵
+#: （錯誤碼仍是封閉值域的 `INVALID_INPUT`；runtime 據此回 `PHOTO_REUPLOAD_TEXT`）。
+PHOTOS_UNAVAILABLE_KEY: Final[str] = "photos_unavailable"
+
 #: receipt 裡可以進 trace／回覆句的識別碼形狀（⛔ 只收這個形狀）。
 #: receipt 是**下游系統**回來的資料，其中任何一個自由文字欄位都可能是原文；
 #: 只放行這種形狀的短識別碼，才不會讓「把單號印給使用者」順手變成把下游訊息
@@ -1024,6 +1033,8 @@ __all__ = [
     "RECEIPT_DATE_HINT_TEMPLATE",
     "REPAIR_PHOTOS_MAX",
     "repair_photos_of",
+    "PHOTO_REUPLOAD_TEXT",
+    "PHOTOS_UNAVAILABLE_KEY",
     "ESTATE_CREATE_ACTION",
     "CONTRACT_CREATE_ACTION",
     "MANUAL_BILL_CREATE_ACTION",

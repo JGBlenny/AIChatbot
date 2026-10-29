@@ -1,34 +1,53 @@
-"""DocuMind 建物謄本解析的呼叫端（站內幫手 S3）。
+"""DocuMind 文件解析的呼叫端：建物謄本（站內幫手 S3）、收據、修繕照片（UD-2a）。
 
-謄本欄位 ⛔ 由我方模型抽，改送 DocuMind（對接規格 2.4.0，
-`POST {base}/analyze`、`document_type=transcript`）。本模組是那一條**對外送檔**路徑的
-唯一出口，紀律如下（⛔ 不得為了某一次實測而放寬）：
+三種檔案的辨識都送 DocuMind（對接規格 2.4.0，`POST {base}/analyze`，
+`document_type` 只收 `transcript`／`receipt`／`repair_photo`，見 `DOCUMENT_TYPES`）。
+本模組是那一條**對外送檔**路徑的唯一出口（`analyze`；`analyze_deed` 是它的謄本相容
+入口），紀律如下（⛔ 不得為了某一次實測而放寬）：
 
   ① **設定 fail-closed（D1）**：`DOCUMIND_BASE_URL` 必須 `https`、⛔ userinfo／query／
      fragment，且另需 `DOCUMIND_TOKEN`（以 `Authorization` header 帶）才啟用。明文
      `http` 只准 env `DOCUMIND_INSECURE_TEST_HOST`（`host:port`）指定的那一台測試主機，
-     且須另一個顯式開關 `DOCUMIND_ALLOW_INSECURE_TEST_HOST` 逐字為 `1`。其餘任何組合
+     且須另一個顯式開關 `DOCUMIND_ALLOW_INSECURE_TEST_HOST` 逐字為 `1`；http 一律
+     ⛔ 帶 token（`token=None`，⛔ 用明文送 `Authorization`）。其餘任何組合
      一律**視同未設＝功能關閉**。⚠️ 測試主機位址 ⛔ 寫進 repo（repo 公開，該主機明文、
      無認證）——只放部署環境的 env。
-  ② **送出最少（D3／D6）**：只送呼叫端交來的那一份位元組（PDF 原檔或已重新編碼、
-     去 EXIF 的 JPEG），multipart 檔名由程式產生、副檔名依 magic bytes；
-     `enable_llm=false`。
+  ② **送出最少（D3／D6／S11）**：呼叫端交**上傳原檔**；本模組先過合成檔防護（⑥），
+     再自己把 jpg／png／webp 重新編碼成去 EXIF 的 JPEG（PDF 謄本送原檔、不重新編碼）。
+     multipart 檔名由程式產生、副檔名依 magic bytes；表單只有 `document_type` 與
+     `enable_llm=false`（⛔ `question`）。
   ③ **讀回最少（D5）**：`follow_redirects=False`、`trust_env=False`；串流讀回應、
      上限 `RESPONSE_MAX_BYTES`；非 JSON／缺鍵／型別不符＝錯誤（⛔ 改走掃描路徑）；
      ⛔ 不對整包回應建模型，只以 `dict.get` 走固定路徑取**有型別值**。
-  ④ **其餘一律丟**：所有權部（所有權人、統編、住址）、他項權利、原文 `pages`／
-     `transcripts`——本模組 ⛔ 讀那些鍵、⛔ 進回傳值、⛔ 進 log。
-  ⑤ **log 只印例外類別名與 HTTP 狀態碼**（⛔ 網址、⛔ 回應內容、⛔ 欄位值）。
+  ④ **其餘一律丟**：謄本的所有權部（所有權人、統編、住址）、他項權利、`transcripts`；
+     `pages` 底下**只准讀** `pages[0].llm_calls[*].{stage,ok,error}` 與
+     `pages[0].structured_data.{damaged_items,defect_labels,description,confidence,
+     amount,date,needs_confirmation,field_confidences}`，外加 `total_pages` 與
+     `len(pages)`（收據與修繕照片用；謄本不讀 `pages`）。`ocr_raw`、`file_url` 與其他
+     鍵——本模組 ⛔ 讀、⛔ 進回傳值、⛔ 進 log。收據與修繕照片 ⛔ 讀 `document_fields`
+     （實測它會丟掉空 list 的鍵，「看不出損壞」會變成缺鍵）。
+  ⑤ **log 只印例外類別名與 HTTP 狀態碼**（⛔ 網址、⛔ 回應內容、⛔ 欄位值）；合成檔
+     防護拒送時只多印 sha256 前 12 碼。
+  ⑥ **合成檔防護（S4／A9）**：預設**開**——上傳原檔的 sha256 不在
+     `documind_synthetic_sha256.json` 的凍結清單 ⇒ 拒送（`blocked`）。只有 env
+     `DOCUMIND_SYNTHETIC_GUARD` 逐字為 `off` 能關；其他值（含空字串、`OFF`、`0`）一律
+     當作開。清單檔讀不到或格式不合 ⇒ 清單視為空（開著時一律拒送）。
 """
 from __future__ import annotations
 
 import asyncio
+import functools
+import hashlib
 import io
 import json
 import logging
+import math
 import os
 import re
+import unicodedata
 from dataclasses import dataclass
+from datetime import date as _date
+from pathlib import Path
 from typing import Any, Callable, Optional
 from urllib.parse import urlsplit
 
@@ -110,7 +129,8 @@ def documind_config() -> Optional[DocuMindConfig]:
         allow = os.getenv(DOCUMIND_INSECURE_TEST_HOST_ENV) == "1"
         allowed_host = insecure_test_host() if allow else None
         if allowed_host is not None and port is not None and (host, port) == allowed_host:
-            return DocuMindConfig(analyze_url=f"http://{netloc}{path}/analyze", token=token)
+            # 明文 http ⛔ 帶 token：token 一經明文送出即視同外洩（UD-2a 規格 2）。
+            return DocuMindConfig(analyze_url=f"http://{netloc}{path}/analyze", token=None)
     return None
 
 
@@ -123,10 +143,82 @@ RESPONSE_MAX_BYTES = 4_000_000
 #: 照片送 DocuMind 前重新編碼的長邊上限（OCR 要看得清楚字；仍去 EXIF）。
 PHOTO_MAX_PX = 2400
 
-#: 結果狀態的封閉值域。
+#: 送 DocuMind 的文件類型封閉集（UD-2a 規格 1）；其他值 ⇒ `analyze` 直接 raise、⛔ 送出。
+DOCUMENT_TYPES: frozenset = frozenset({"transcript", "receipt", "repair_photo"})
+
+#: 各文件類型接受的原檔種類（magic bytes）。PDF 只收謄本（現行作法）；收據與修繕照片
+#: 收 jpg／png／webp（PDF 收據未列入 UD-2a 規格，⛔ 預設放行）。webp（UD-2b：UD-1 直傳
+#: 修繕照片本來就收）與 jpg／png 一樣，過合成檔防護比對原檔之後才重新編碼成 JPEG 送出。
+_ALLOWED_KINDS: dict = {
+    "transcript": frozenset({"pdf", "jpg", "png"}),
+    "receipt": frozenset({"jpg", "png", "webp"}),
+    "repair_photo": frozenset({"jpg", "png", "webp"}),
+}
+
+#: multipart 檔名主幹（程式產生；⛔ 用瀏覽器檔名）。謄本沿用 `deed`（`upload_name`）。
+_UPLOAD_STEM: dict = {"transcript": "deed", "receipt": "receipt", "repair_photo": "photo"}
+
+#: 結果狀態的封閉值域。`blocked`＝合成檔防護拒送（⑥）。
 DEED_STATUSES: frozenset = frozenset(
-    {"ok", "not_deed", "multiple", "failed", "timeout", "disabled"}
+    {"ok", "not_deed", "multiple", "failed", "timeout", "disabled", "blocked"}
 )
+
+# ════════════════════════════════════════════════════════════════════
+# ⑥ 合成檔防護（S4／A9）
+# ════════════════════════════════════════════════════════════════════
+#: 關閉防護的**唯一** env；值逐字為 `SYNTHETIC_GUARD_OFF_VALUE` 才算關。
+DOCUMIND_SYNTHETIC_GUARD_ENV = "DOCUMIND_SYNTHETIC_GUARD"
+SYNTHETIC_GUARD_OFF_VALUE = "off"
+
+#: 凍結清單（上傳原檔的 sha256；12 張樣本）。
+SYNTHETIC_SHA256_FILE = Path(__file__).with_name("documind_synthetic_sha256.json")
+
+_SHA256_HEX_RE = re.compile(r"[0-9a-f]{64}")
+
+
+def synthetic_guard_on() -> bool:
+    """防護開著嗎？只有 env 逐字為 `off` 才回 `False`；未設、空字串、`OFF`、` off` 都算開。"""
+    return os.getenv(DOCUMIND_SYNTHETIC_GUARD_ENV) != SYNTHETIC_GUARD_OFF_VALUE
+
+
+@functools.lru_cache(maxsize=1)
+def synthetic_sha256_allowlist() -> frozenset:
+    """讀凍結清單 ⇒ sha256 集合。讀不到、不是 JSON、任何一筆形狀不合 ⇒ **空集合**
+    （防護開著時一律拒送；⛔ 跳過壞的那筆、⛔ 放行）。"""
+    try:
+        raw = json.loads(SYNTHETIC_SHA256_FILE.read_text(encoding="utf-8"))
+        samples = raw.get("samples") if isinstance(raw, dict) else None
+        if not isinstance(samples, list) or not samples:
+            raise ValueError("samples")
+        out = set()
+        for item in samples:
+            digest = item.get("sha256") if isinstance(item, dict) else None
+            if not isinstance(digest, str) or not _SHA256_HEX_RE.fullmatch(digest):
+                raise ValueError("sha256")
+            out.add(digest)
+        return frozenset(out)
+    except Exception as exc:  # noqa: BLE001 — 清單壞了 ⇒ 空集合（fail-closed）
+        logger.error("DocuMind 合成檔清單讀取失敗，防護開著時一律拒送：%s", type(exc).__name__)
+        return frozenset()
+
+
+def _magic_kind(data: Any) -> Optional[str]:
+    """依 **magic bytes** 判 `pdf`／`jpg`／`png`／`webp`；認不得 ⇒ `None`。
+
+    webp＝`RIFF????WEBP`（同 `upload_store` 與 `S3ImageService.validate_format` 的判法）。
+    """
+    if not isinstance(data, (bytes, bytearray)):
+        return None
+    head = bytes(data[:12])
+    if head.startswith(b"%PDF-"):
+        return "pdf"
+    if head.startswith(b"\xff\xd8\xff"):
+        return "jpg"
+    if head.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "png"
+    if head.startswith(b"RIFF") and head[8:12] == b"WEBP":
+        return "webp"
+    return None
 
 
 @dataclass(frozen=True)
@@ -143,16 +235,11 @@ class DeedResult:
 
 def upload_name(data: bytes) -> Optional[tuple]:
     """依 **magic bytes** 決定 `(multipart 檔名, content-type)`；認不得 ⇒ `None`（⛔ 不送）。"""
-    if not isinstance(data, (bytes, bytearray)):
-        return None
-    head = bytes(data[:8])
-    if head.startswith(b"%PDF-"):
-        return "deed.pdf", "application/pdf"
-    if head.startswith(b"\xff\xd8\xff"):
-        return "deed.jpg", "image/jpeg"
-    if head.startswith(b"\x89PNG\r\n\x1a\n"):
-        return "deed.png", "image/png"
-    return None
+    return {
+        "pdf": ("deed.pdf", "application/pdf"),
+        "jpg": ("deed.jpg", "image/jpeg"),
+        "png": ("deed.png", "image/png"),
+    }.get(_magic_kind(data))
 
 
 def reencode_photo_jpeg(data: bytes, *, max_px: int = PHOTO_MAX_PX) -> bytes:
@@ -179,30 +266,51 @@ def _new_client(timeout_s: float) -> httpx.AsyncClient:
     )
 
 
-async def analyze_deed(
-    data: bytes,
+async def _post(
+    data: Any,
     *,
+    document_type: str,
     timeout_s: float,
-    pdf_pages: Optional[int] = None,
-    config: Optional[DocuMindConfig] = None,
-    client_factory: Optional[Callable[[float], httpx.AsyncClient]] = None,
-) -> DeedResult:
-    """送一份謄本給 DocuMind，回**封閉**結果。任何例外 ⇒ `failed`／`timeout`。
+    config: Optional[DocuMindConfig],
+    client_factory: Optional[Callable[[float], httpx.AsyncClient]],
+) -> tuple:
+    """唯一送出口：`(狀態, 回應 JSON)`；狀態 ∈ `ok`／`failed`／`timeout`／`disabled`／`blocked`。
 
-    `config` 缺省 ⇒ 當場讀 env（`documind_config()`）；`None` ⇒ `disabled`、⛔ 不連線。
-    `pdf_pages`：送的是 PDF 時它的頁數（掃描路徑多頁不填，D7）；照片傳 `None`。
+    順序（⛔ 調換）：設定閘 → 逾時值 → magic bytes 與類型 → **合成檔防護比對原檔**
+    → jpg／png／webp 重新編碼 → 送出。`document_type` 已由 `analyze` 驗過封閉集。
     """
     cfg = config if config is not None else documind_config()
     if cfg is None:
-        return DeedResult("disabled")
+        return "disabled", None
     if not isinstance(timeout_s, (int, float)) or timeout_s <= 0:
-        return DeedResult("timeout")
-    named = upload_name(data)
-    if named is None:
-        return DeedResult("failed")
-    filename, content_type = named
+        return "timeout", None
+    kind = _magic_kind(data)
+    if kind is None or kind not in _ALLOWED_KINDS[document_type]:
+        return "failed", None
+    original = bytes(data)
+    if synthetic_guard_on():
+        digest = hashlib.sha256(original).hexdigest()
+        if digest not in synthetic_sha256_allowlist():
+            # 大聲失敗（A9）：一行、只帶 sha256 前 12 碼（⛔ 位元組、⛔ 檔名、⛔ 網址）。
+            logger.error(
+                "DocuMind 合成檔防護：檔案不在合成樣本清單，拒送（sha256 前 12 碼 %s）",
+                digest[:12],
+            )
+            return "blocked", None
+    stem = _UPLOAD_STEM[document_type]
+    if kind == "pdf":
+        body, filename, content_type = original, f"{stem}.pdf", "application/pdf"
+    else:
+        try:
+            body = reencode_photo_jpeg(original)
+        except Exception as exc:      # noqa: BLE001 — 解不開／像素炸彈 ⇒ 不送
+            logger.warning("送 DocuMind 前重新編碼失敗：%s", type(exc).__name__)
+            return "failed", None
+        filename, content_type = f"{stem}.jpg", "image/jpeg"
+    del original
     headers = {"Accept": "application/json"}
-    if cfg.token:
+    # 只在 https 帶 token（設定閘已讓 http 的 token 為 None；這裡再擋一次，⛔ 明文送憑證）。
+    if cfg.token and cfg.analyze_url.startswith("https://"):
         headers["Authorization"] = f"Bearer {cfg.token}"
     factory = client_factory or _new_client
 
@@ -212,8 +320,8 @@ async def analyze_deed(
                 "POST",
                 cfg.analyze_url,
                 headers=headers,
-                files={"file": (filename, bytes(data), content_type)},
-                data={"document_type": "transcript", "enable_llm": "false"},
+                files={"file": (filename, body, content_type)},
+                data={"document_type": document_type, "enable_llm": "false"},
             ) as response:
                 if response.status_code != 200:
                     logger.warning("DocuMind 回應非 200：%d", int(response.status_code))
@@ -236,17 +344,72 @@ async def analyze_deed(
         payload = await asyncio.wait_for(_call(), timeout=float(timeout_s))
     except (asyncio.TimeoutError, httpx.TimeoutException) as exc:
         logger.warning("DocuMind 逾時：%s", type(exc).__name__)
-        return DeedResult("timeout")
+        return "timeout", None
     except Exception as exc:  # noqa: BLE001 — 對外只回封閉狀態（D5）
         logger.warning("DocuMind 呼叫失敗：%s", type(exc).__name__)
-        return DeedResult("failed")
+        return "failed", None
     if payload is None:
-        return DeedResult("failed")
+        return "failed", None
+    return "ok", payload
+
+
+async def analyze(
+    data: bytes,
+    *,
+    document_type: str,
+    timeout_s: float,
+    pdf_pages: Optional[int] = None,
+    config: Optional[DocuMindConfig] = None,
+    client_factory: Optional[Callable[[float], httpx.AsyncClient]] = None,
+) -> Any:
+    """送一份**上傳原檔**給 DocuMind，回該類型的**封閉**結果（任何例外 ⇒ 封閉狀態）。
+
+    - `transcript` ⇒ `DeedResult`；`receipt` ⇒ `ReceiptResult`；`repair_photo` ⇒
+      `RepairPhotoResult`。其他 `document_type` ⇒ `ValueError`（在讀設定與連線之前，⛔ 送出）。
+    - `data` 必須是**原檔**：合成檔防護比對的是它的 sha256（⑥），jpg／png 由本函式自己
+      重新編碼（呼叫端 ⛔ 先重新編碼，否則防護開著時必然 `blocked`）。
+    - `config` 缺省 ⇒ 當場讀 env（`documind_config()`）；`None` ⇒ `disabled`、⛔ 不連線。
+    - `pdf_pages`：謄本是 PDF 時它的頁數（掃描路徑多頁不填，D7）；其他傳 `None`。
+    """
+    if not isinstance(document_type, str) or document_type not in DOCUMENT_TYPES:
+        raise ValueError("document_type 不在 DOCUMENT_TYPES 封閉集")
+    status, payload = await _post(
+        data, document_type=document_type, timeout_s=timeout_s,
+        config=config, client_factory=client_factory,
+    )
+    result_type = {
+        "transcript": DeedResult, "receipt": ReceiptResult, "repair_photo": RepairPhotoResult,
+    }[document_type]
+    if status != "ok":
+        return result_type(status)
     try:
-        return extract_deed_fields(payload, pdf_pages=pdf_pages)
+        if document_type == "transcript":
+            return extract_deed_fields(payload, pdf_pages=pdf_pages)
+        if document_type == "receipt":
+            return parse_receipt_response(payload)
+        return parse_repair_photo_response(payload)
     except Exception as exc:  # noqa: BLE001
         logger.warning("DocuMind 回應取值失敗：%s", type(exc).__name__)
-        return DeedResult("failed")
+        return result_type("failed")
+
+
+async def analyze_deed(
+    data: bytes,
+    *,
+    timeout_s: float,
+    pdf_pages: Optional[int] = None,
+    config: Optional[DocuMindConfig] = None,
+    client_factory: Optional[Callable[[float], httpx.AsyncClient]] = None,
+) -> DeedResult:
+    """謄本相容入口＝`analyze(document_type="transcript")`。簽名不變。
+
+    ⚠️ 自 UD-2a 起 `data` 必須是**上傳原檔**（合成檔防護比對原檔；照片由本模組重新
+    編碼）。呼叫端若仍先重新編碼才送，防護開著時一律 `blocked`（＝不送，fail-closed）。
+    """
+    return await analyze(
+        data, document_type="transcript", timeout_s=timeout_s, pdf_pages=pdf_pages,
+        config=config, client_factory=client_factory,
+    )
 
 
 # ════════════════════════════════════════════════════════════════════
@@ -573,9 +736,256 @@ def _scanned(fields: dict, pdf_pages: Optional[int]) -> DeedResult:
     ))
 
 
+# ════════════════════════════════════════════════════════════════════
+# ⑦ 收據與修繕照片（UD-2a 規格 4～7）——只讀固定路徑，一律 fail-closed
+# ════════════════════════════════════════════════════════════════════
+#: 各類型「這次辨識真的有跑成」的 `llm_calls[*].stage`。
+STAGE_BY_DOCUMENT_TYPE: dict = {"receipt": "direct_read", "repair_photo": "photo_understanding"}
+
+RECEIPT_STATUSES: frozenset = frozenset({"ok", "failed", "timeout", "disabled", "blocked"})
+REPAIR_PHOTO_STATUSES: frozenset = frozenset(
+    {"damaged", "no_damage", "failed", "timeout", "disabled", "blocked"}
+)
+
+#: 收據欄位的信心門檻（同謄本掃描路徑）。
+RECEIPT_MIN_CONFIDENCE = SCAN_MIN_CONFIDENCE
+
+#: 收據金額的合理範圍（台幣整數）。
+RECEIPT_AMOUNT_MIN, RECEIPT_AMOUNT_MAX = 1, 9_999_999
+
+#: 照片標籤：只留中英文字母、上限 12 字（與 `mcp_facade._short_label` 等價；⛔ import 它）。
+PHOTO_LABEL_MAX_CHARS = 12
+_PHOTO_LABEL_DROP_RE = re.compile(r"[^A-Za-z一-鿿]")
+
+#: 照片描述上限（與 `mcp_facade.IMAGE_DESCRIPTION_MAX_CHARS` 同值）。
+PHOTO_DESCRIPTION_MAX_CHARS = 200
+
+#: 收據金額（NFKC 後、去頭尾半形空白，整串 fullmatch）：可選台幣標記 ＋ 純數字或
+#: 標準千分位 ＋ 可選 `.0`／`.00` ＋ 可選「元」或「整」。位數封頂（⛔ 超長數字串進 `int`）。
+_RECEIPT_AMOUNT_RE = re.compile(
+    r"(?:NT\$|NTD|TWD|新臺幣|新台幣)? *"
+    r"([0-9]{1,3}(?:,[0-9]{3}){1,3}|[0-9]{1,12})"
+    r"(?:\.00?)? *(?:元|整)?"
+)
+
+#: 收據日期：`YYYY-MM-DD` 或 `YYYY-MM-DD HH:MM:SS`（整串 fullmatch，取前 10 字）。
+_RECEIPT_ISO_DATE_RE = re.compile(r"([0-9]{4})-([0-9]{2})-([0-9]{2})(?: [0-9]{2}:[0-9]{2}:[0-9]{2})?")
+#: 民國日期：「中華民國N年M月D日」或「民國N年M月D日」（阿拉伯數字，整串 fullmatch）。
+_RECEIPT_ROC_DATE_RE = re.compile(r"(?:中華)?民國([0-9]{1,3})年([0-9]{1,2})月([0-9]{1,2})日")
+_ISO_OUT_RE = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}")
+
+
+def _valid_iso(y: int, m: int, d: int) -> Optional[str]:
+    try:
+        _date(y, m, d)
+    except ValueError:
+        return None
+    return f"{y:04d}-{m:02d}-{d:02d}"
+
+
+def parse_receipt_amount(value: Any) -> Optional[int]:
+    """收據 `amount`（DocuMind 原始字串）⇒ 台幣整數；任何不合 ⇒ `None`（⇒ 卡前追問）。
+
+    只收 `str`；多個數字、負號、其他幣別（US$…）、中文大寫、小數非零 ⇒ `None`。
+    """
+    if not isinstance(value, str):
+        return None
+    text = unicodedata.normalize("NFKC", value).strip(" ")
+    m = _RECEIPT_AMOUNT_RE.fullmatch(text)
+    if m is None:
+        return None
+    number = int(m.group(1).replace(",", ""))
+    if not (RECEIPT_AMOUNT_MIN <= number <= RECEIPT_AMOUNT_MAX):
+        return None
+    return number
+
+
+def parse_receipt_date(value: Any) -> Optional[str]:
+    """收據 `date` ⇒ `YYYY-MM-DD`；民國年轉西元（N+1911）；不合法日期或其他格式 ⇒ `None`。"""
+    if not isinstance(value, str):
+        return None
+    m = _RECEIPT_ISO_DATE_RE.fullmatch(value)
+    if m is not None:
+        return _valid_iso(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+    m = _RECEIPT_ROC_DATE_RE.fullmatch(value)
+    if m is not None:
+        roc_year = int(m.group(1))
+        if roc_year < 1:
+            return None
+        return _valid_iso(roc_year + 1911, int(m.group(2)), int(m.group(3)))
+    return None
+
+
+@dataclass(frozen=True)
+class ReceiptResult:
+    """收據解析的**封閉**結果：只有狀態、台幣整數金額、`YYYY-MM-DD` 日期。⛔ 沒有任何原文。"""
+
+    status: str
+    amount: Optional[int] = None
+    date: Optional[str] = None
+
+    def __post_init__(self) -> None:
+        if self.status not in RECEIPT_STATUSES:
+            raise ValueError(f"ReceiptResult.status 只允許 {sorted(RECEIPT_STATUSES)}")
+        if self.amount is not None and (
+            isinstance(self.amount, bool) or not isinstance(self.amount, int)
+            or not (RECEIPT_AMOUNT_MIN <= self.amount <= RECEIPT_AMOUNT_MAX)
+        ):
+            raise ValueError("ReceiptResult.amount 必須是範圍內的整數或 None")
+        if self.date is not None and (
+            not isinstance(self.date, str) or not _ISO_OUT_RE.fullmatch(self.date)
+        ):
+            raise ValueError("ReceiptResult.date 必須是 YYYY-MM-DD 或 None")
+        if self.status != "ok" and (self.amount is not None or self.date is not None):
+            raise ValueError("非 ok 的 ReceiptResult 不得帶欄位")
+
+
+@dataclass(frozen=True)
+class RepairPhotoResult:
+    """修繕照片解析的**封閉**結果。
+
+    `damaged_items`／`defect_labels`：過濾後的短標籤（只留中英文字母、≤12 字）；
+    `description`：清理後 ≤200 字，**只**給 UD-2b 組修繕單描述用（⛔ 拿它判斷任何事）。
+    `damaged` 依 DocuMind 回的兩個 list 是否非空判定（過濾前）：過濾把標籤全濾掉時
+    仍是 `damaged`、標籤為空 ⇒ 呼叫端追問損壞物件，⛔ 降級成看不出損壞。
+    """
+
+    status: str
+    damaged_items: tuple = ()
+    defect_labels: tuple = ()
+    description: Optional[str] = None
+
+    def __post_init__(self) -> None:
+        if self.status not in REPAIR_PHOTO_STATUSES:
+            raise ValueError(f"RepairPhotoResult.status 只允許 {sorted(REPAIR_PHOTO_STATUSES)}")
+        for name in ("damaged_items", "defect_labels"):
+            value = getattr(self, name)
+            if not isinstance(value, tuple) or not all(isinstance(v, str) for v in value):
+                raise ValueError(f"RepairPhotoResult.{name} 必須是 str 的 tuple")
+        if self.description is not None and not isinstance(self.description, str):
+            raise ValueError("RepairPhotoResult.description 必須是 str 或 None")
+        if self.status not in ("damaged", "no_damage") and (
+            self.damaged_items or self.defect_labels or self.description is not None
+        ):
+            raise ValueError("失敗類的 RepairPhotoResult 不得帶欄位")
+
+
+def _structured_data(payload: Any, stage: str) -> Optional[dict]:
+    """成功判定（規格 5，依序）：通過 ⇒ `pages[0].structured_data`；任一不合 ⇒ `None`。
+
+    只碰 `total_pages`、`pages`（長度）、`pages[0].structured_data`、
+    `pages[0].llm_calls[*].{stage,ok,error}`。
+    """
+    if not isinstance(payload, dict):
+        return None
+    total = payload.get("total_pages")
+    if isinstance(total, bool) or not isinstance(total, int) or total != 1:
+        return None
+    pages = payload.get("pages")
+    if not isinstance(pages, list) or len(pages) != 1:
+        return None
+    page = pages[0]
+    if not isinstance(page, dict):
+        return None
+    data = page.get("structured_data")
+    if not isinstance(data, dict):
+        return None
+    calls = page.get("llm_calls")
+    if not isinstance(calls, list):
+        return None
+    matched = [c for c in calls if isinstance(c, dict) and c.get("stage") == stage]
+    if not matched:
+        return None
+    last = matched[-1]                        # 依清單順序取最後一筆（重試後的那一次）
+    if last.get("ok") is not True or last.get("error") is not None:
+        return None
+    return data
+
+
+def _photo_label(value: str) -> Optional[str]:
+    cleaned = _PHOTO_LABEL_DROP_RE.sub("", value)
+    if not cleaned or len(cleaned) > PHOTO_LABEL_MAX_CHARS:
+        return None
+    return cleaned
+
+
+def _photo_labels(values: list) -> tuple:
+    return tuple(dict.fromkeys(v for v in (_photo_label(x) for x in values) if v is not None))
+
+
+def _photo_description(value: Any) -> Optional[str]:
+    from services.agent.completed_actions import sanitize_data_piece
+
+    cleaned = sanitize_data_piece(value).strip()
+    return cleaned[:PHOTO_DESCRIPTION_MAX_CHARS] if cleaned else None
+
+
+def _is_str_list(value: Any) -> bool:
+    return isinstance(value, list) and all(isinstance(v, str) for v in value)
+
+
+def parse_repair_photo_response(payload: Any) -> RepairPhotoResult:
+    """DocuMind `repair_photo` 回應 ⇒ 封閉結果。**純函式**（⛔ I/O、⛔ log 欄位值）。"""
+    data = _structured_data(payload, STAGE_BY_DOCUMENT_TYPE["repair_photo"])
+    if data is None:
+        return RepairPhotoResult("failed")
+    items = data.get("damaged_items")
+    labels = data.get("defect_labels")
+    if not _is_str_list(items) or not _is_str_list(labels):
+        return RepairPhotoResult("failed")     # 缺鍵／型別不對 ⇒ 失敗，⛔ 當成看不出損壞
+    status = "damaged" if (items or labels) else "no_damage"
+    return RepairPhotoResult(
+        status,
+        damaged_items=_photo_labels(items),
+        defect_labels=_photo_labels(labels),
+        description=_photo_description(data.get("description")),
+    )
+
+
+def _confident_receipt_field(data: dict, key: str) -> bool:
+    """欄位可採用：`needs_confirmation`（list）不含它，且 `field_confidences`（dict）裡它的
+    值是非 bool、有限的數值且 ≥ 門檻。任一容器型別不對 ⇒ `False`。"""
+    needs = data.get("needs_confirmation")
+    confidences = data.get("field_confidences")
+    if not isinstance(needs, list) or not isinstance(confidences, dict):
+        return False
+    if key in needs:
+        return False
+    conf = confidences.get(key)
+    return (
+        isinstance(conf, (int, float)) and not isinstance(conf, bool)
+        and math.isfinite(conf) and conf >= RECEIPT_MIN_CONFIDENCE
+    )
+
+
+def parse_receipt_response(payload: Any) -> ReceiptResult:
+    """DocuMind `receipt` 回應 ⇒ 封閉結果。**純函式**（⛔ I/O、⛔ log 欄位值）。"""
+    data = _structured_data(payload, STAGE_BY_DOCUMENT_TYPE["receipt"])
+    if data is None:
+        return ReceiptResult("failed")
+    amount = parse_receipt_amount(data.get("amount")) if _confident_receipt_field(data, "amount") else None
+    when = parse_receipt_date(data.get("date")) if _confident_receipt_field(data, "date") else None
+    return ReceiptResult("ok", amount=amount, date=when)
+
+
 __all__ = [
     "CITY_DISTRICTS",
     "DEED_STATUSES",
+    "DOCUMENT_TYPES",
+    "DOCUMIND_SYNTHETIC_GUARD_ENV",
+    "RECEIPT_STATUSES",
+    "REPAIR_PHOTO_STATUSES",
+    "ReceiptResult",
+    "RepairPhotoResult",
+    "STAGE_BY_DOCUMENT_TYPE",
+    "SYNTHETIC_GUARD_OFF_VALUE",
+    "analyze",
+    "parse_receipt_amount",
+    "parse_receipt_date",
+    "parse_receipt_response",
+    "parse_repair_photo_response",
+    "synthetic_guard_on",
+    "synthetic_sha256_allowlist",
     "DOCUMIND_BASE_URL_ENV",
     "DOCUMIND_INSECURE_TEST_HOST_ENV",
     "DOCUMIND_TOKEN_ENV",

@@ -278,6 +278,14 @@ services:
       DOCUMENT_EXTRACTION_MODEL: ${DOCUMENT_EXTRACTION_MODEL:-}     # 空＝程式預設；站內幫手驗收 gpt-6-luna
       DOCUMIND_BASE_URL: ${DOCUMIND_BASE_URL:-}                     # 空＝謄本功能關閉；正式只准 https 且須 DOCUMIND_TOKEN
       DOCUMIND_TOKEN: ${DOCUMIND_TOKEN:-}
+      DOCUMIND_INSECURE_TEST_HOST: ${DOCUMIND_INSECURE_TEST_HOST:-}         # host:port；只有這一台准走 http（DocuMind 測試機無驗證、非 https）；正式⛔設
+      DOCUMIND_ALLOW_INSECURE_TEST_HOST: ${DOCUMIND_ALLOW_INSECURE_TEST_HOST:-} # 逐字 1 才開上一列；正式⛔設
+      DOCUMIND_SYNTHETIC_GUARD: ${DOCUMIND_SYNTHETIC_GUARD:-}       # 空＝開：只送 12 張合成樣本（S4）；JGB 測試環境設 off（OQ13）
+      # 附件瀏覽器直傳（DSP-122）——三項缺一 ⇒ 直傳關閉（fail-closed）；另須 UVICORN_WORKERS=1
+      AGENT_ATTACHMENT_INPUT: ${AGENT_ATTACHMENT_INPUT:-}           # 空＝upload_ids；urls＝回滾到舊網址模式（才用得到 IMAGE_URL_ALLOWLIST）
+      AGENT_UPLOAD_ENDPOINT: ${AGENT_UPLOAD_ENDPOINT:-}             # 空＝開；off＝關直傳
+      AGENT_UPLOAD_ALLOWED_ORIGINS: ${AGENT_UPLOAD_ALLOWED_ORIGINS:-} # 逗號分隔；空＝全拒；與 MCP_ALLOWED_ORIGINS 分開
+      AGENT_UPLOAD_PUBLIC_URL: ${AGENT_UPLOAD_PUBLIC_URL:-}         # https 絕對網址、結尾 /rag-api/v1/agent/uploads；空或不合格 ⇒ 直傳關閉
       # agentic-mcp-orchestration 其餘新 env（runbook §19-5 逐一 grep 核對名稱／預設值）——
       # 全部維持不宣告＝吃程式內建預設；里程碑推進時才在 .env 加對應鍵覆寫，⛔ 不在此處預先宣告：
       #   AGENT_STAGE（預設 M0；部署里程碑，M0-M5）

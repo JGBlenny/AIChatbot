@@ -29,6 +29,8 @@ demo 只走替身 transport（`USE_MOCK_JGB_API=true`）。真 `agent/v1` 的簽
 """
 from __future__ import annotations
 
+import hashlib
+import hmac
 import logging
 from datetime import date, timedelta
 from typing import Any, Final, Optional
@@ -38,6 +40,7 @@ from services.agent.confirm_card import (
     DEFAULT_CATEGORY_NAME,
     ESTATE_CREATE_ACTION,
     MANUAL_BILL_CREATE_ACTION,
+    PHOTOS_UNAVAILABLE_KEY,
     ConfirmCardError,
     category_name_of,
     closed_body,
@@ -45,6 +48,7 @@ from services.agent.confirm_card import (
     render,
     repair_photos_of,
 )
+from services.agent import upload_store
 from services.agent.identity import Identity
 from services.agent.tools import jgb2 as jgb2_tools
 from services.agent.tools.registry import ToolResult, ToolSpec
@@ -448,6 +452,40 @@ def _single_leaf_item_id(tree: list, category_id: Any) -> Any:
     return None
 
 
+def _card_photo_files(identity: Identity, photos: list) -> Optional[list]:
+    """UD-3（S5／A13）：卡上每張照片的位元組 ⇒ `[(檔名, 位元組, "image/jpeg"), ...]`（順序同卡）；
+    任一張取不到或對不上 ⇒ `None`（呼叫端 ⛔ 寫入、⛔ 改成不附照片照送）。
+
+    每張都要：卡上是出卡時重新編碼的 JPEG（`content_type`＝image/jpeg、檔名 `.jpg`）；暫存裡
+    以**本回合身分**重算的綁定（六欄逐一等值，同 UD-1 S6）找得到那一筆；位元組**重算** sha256
+    以定時比較等於卡上值、長度等於卡上 `size`、magic bytes 是 JPEG。⛔ 只信查表。"""
+    try:
+        binding = upload_store.binding_from_identity(identity, "repair")
+    except ValueError:
+        return None
+    out: list = []
+    used: list = []
+    for p in photos:
+        if p.get("content_type") != "image/jpeg" or not str(p.get("filename", "")).endswith(".jpg"):
+            return None
+        found = upload_store.STORE.photo_bytes(p["sha256"], binding, exclude_refs=used)
+        if found is None:
+            return None
+        ref, content = found
+        if (not hmac.compare_digest(hashlib.sha256(content).hexdigest(), p["sha256"])
+                or len(content) != p["size"]
+                or upload_store.sniff_content_type(content) != "image/jpeg"):
+            return None
+        used.append(ref)
+        out.append((p["filename"], content, "image/jpeg"))
+    return out
+
+
+def _photos_unavailable() -> ToolResult:
+    """錯誤碼留在封閉值域（`INVALID_INPUT`）；`data` 的旗標讓 runtime 回 `PHOTO_REUPLOAD_TEXT`。"""
+    return ToolResult(ok=False, error="INVALID_INPUT", data={PHOTOS_UNAVAILABLE_KEY: True})
+
+
 async def repair_create(identity: Identity, args: dict) -> ToolResult:
     """依 `payload` 建立一張修繕單。
 
@@ -467,8 +505,16 @@ async def repair_create(identity: Identity, args: dict) -> ToolResult:
     emergency_status = emergency_status_of(payload)
     # 站內幫手 S3（F10）：照片中繼資料只取 payload 內程式寫入、卡上印過張數、已綁進
     # 雜湊的那一份（`render()` 已驗過形狀）；超過上限時 payload 只有張數，⛔ 不附。
-    # ⛔ 不送位元組——上傳方式依 jgb2-req#22（S6 定案）。
-    broken_photos = repair_photos_of(payload) or None
+    # UD-3：照片本體以 multipart 交 jgb2——位元組取自暫存、**重算** sha256 對卡上值（S5／A13）；
+    # 任一張缺或不符 ⇒ ⛔ 寫入（回固定句請使用者重新上傳），⛔ 改成不附照片照送。
+    # 排在任何讀寫之前：照片不可用時不必先查物件與分類。
+    photo_files = None
+    broken_photos = repair_photos_of(payload)
+    if broken_photos:
+        photo_files = _card_photo_files(identity, broken_photos)
+        if photo_files is None:
+            logger.warning("[agent] repair_create 卡上照片不可用（暫存缺或 sha256 不符）⇒ 不寫入")
+            return _photos_unavailable()
 
     role_id, user_id = _identity_pair(identity)
     if not role_id or not user_id:
@@ -519,7 +565,7 @@ async def repair_create(identity: Identity, args: dict) -> ToolResult:
         broken_note="",
         emergency_status=emergency_status,
         idempotency_key=args.get("confirmation_token"),
-        broken_photos=broken_photos,
+        photo_files=photo_files,
         # S2（P4-1；jgb2-req#22／#23）：寫入 body 一律帶登入成員——**只取 identity**
         # （`_identity_pair`），⛔ 不從 payload 讀。缺它時提案替身回 400（S0 延後項）。
         user_id=user_id,

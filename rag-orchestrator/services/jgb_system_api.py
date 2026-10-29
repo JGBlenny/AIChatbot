@@ -125,20 +125,25 @@ class JGBSystemAPI:
         self, method: str, path: str, *,
         params: Optional[dict[str, Any]] = None,
         data: Optional[dict[str, Any]] = None,
+        files: Optional[list] = None,
     ) -> TransportResponse:
         """依 `use_mock` 派發至 transport 實作（任務 4.1）。
 
         ⚠️ mock 模式下若未裝配 mock transport，**fail loudly**——
         絕不 fallback 至真實 HTTP（靜默 fallback 的失效模式是
         integration 測試對 jgb2 發出真請求）。
+
+        UD-3：`files` 有值才往下帶（multipart）；沒有 ⇒ 呼叫形狀與改前逐字相同
+        （既有測試替身的 `send` 不必認得 `files`）。
         """
+        extra: dict[str, Any] = {"files": files} if files is not None else {}
         if self.use_mock:
             if self._mock_transport is None:
                 raise UnexpectedRealNetworkError(
                     f"use_mock=True 但未裝配 mock transport：{method} {path}"
                 )
             return await self._mock_transport.send(
-                method, path, params=params, data=data
+                method, path, params=params, data=data, **extra
             )
         if self._real_transport is None:
             # 只有「建構時是 mock、事後被改成 real」才會走到這裡（測試替身）。
@@ -147,7 +152,7 @@ class JGBSystemAPI:
                 f"use_mock=False 但未裝配 real transport：{method} {path}"
             )
         return await self._real_transport.send(
-            method, path, params=params, data=data
+            method, path, params=params, data=data, **extra
         )
 
     async def _request(
@@ -543,9 +548,15 @@ class JGBSystemAPI:
         broken_photos: Optional[list] = None,
         idempotency_key: Optional[str] = None,
         user_id: Optional[str] = None,
+        photo_files: Optional[list] = None,
         **kwargs,
     ) -> dict[str, Any]:
         """建立修繕單
+
+        **UD-3（multipart）**：`photo_files`＝`[(檔名, 位元組, content_type), ...]`（呼叫端已重新編碼、
+        已對過卡上 sha256）非空 ⇒ 改送 `multipart/form-data`：其餘欄位照同名表單欄位（值轉字串、
+        `None` 不送），每張照片一個 `broken_photos[]` 檔；冪等鍵照舊在表單欄位。此時 ⛔ 同時送
+        `broken_photos` 中繼資料（JGB 由檔案本身算）。沒有照片 ⇒ 與改前相同的 JSON body。
 
         **jgb2-req#22／#23（contract: proposed）**：`user_id`（登入成員，選填）非空才放進 body——
         提案契約要求寫入 body 帶 `role_id`＋`user_id`，由 JGB 驗能力與資源歸屬；`broken_photos`
@@ -579,10 +590,15 @@ class JGBSystemAPI:
             data["user_id"] = user_id
         if contract_id is not None:
             data["contract_id"] = contract_id
-        if broken_photos:
-            data["broken_photos"] = broken_photos
         if idempotency_key:
             data["idempotency_key"] = idempotency_key
+        if photo_files:
+            form = {k: str(v) for k, v in data.items() if v is not None}
+            files = [("broken_photos[]", (name, content, ctype))
+                     for name, content, ctype in photo_files]
+            return await self._send("POST", "/api/external/v1/repairs", data=form, files=files)
+        if broken_photos:
+            data["broken_photos"] = broken_photos
         return await self._post_request("/api/external/v1/repairs", data)
 
     async def agent_patch_bill_due_date(

@@ -15,6 +15,7 @@
 import calendar
 import copy
 import datetime
+import hashlib
 import json
 import logging
 import os
@@ -83,7 +84,11 @@ class Transport(Protocol):
         self, method: HttpMethod, path: str, *,
         params: Optional[dict[str, Any]] = None,
         data: Optional[dict[str, Any]] = None,
+        files: Optional[list] = None,
     ) -> TransportResponse:
+        """`files`（UD-3）：有值 ⇒ `multipart/form-data`——`data` 是同名表單欄位（值一律字串）、
+        `files`＝`[(欄位名, (檔名, 位元組, content_type)), ...]`；`None` ⇒ 現行 JSON body。
+        ⚠️ 只有 `JGBSystemAPI._send` 在 `files` 有值時才帶這個參數（既有替身不必實作）。"""
         ...
 
 
@@ -159,15 +164,23 @@ class RecordingTransport:
         #: ⛔ `calls` 三元組的形狀不變（既有測試解包 `(method, path, params)`），
         #: body 因此另開屬性，不塞進三元組。存的是深拷貝，事後改動原 dict 不影響紀錄。
         self.bodies: "list[Optional[dict[str, Any]]]" = []
+        #: UD-3：與 `calls` 逐筆平行的 multipart 檔案紀錄（`files[i]` 對應 `calls[i]`；JSON 呼叫為 `None`）。
+        #: 存 `(欄位名, 檔名, content_type, 位元組)`——只供單元測試斷言送出的檔（⛔ 進任何 log）。
+        self.files: "list[Optional[list]]" = []
 
     async def send(
         self, method: HttpMethod, path: str, *,
         params: Optional[dict[str, Any]] = None,
         data: Optional[dict[str, Any]] = None,
+        files: Optional[list] = None,
     ) -> TransportResponse:
         self.calls.append((method, path, params))
         self.bodies.append(copy.deepcopy(data))
-        return await self.inner.send(method, path, params=params, data=data)
+        if files is None:
+            self.files.append(None)
+            return await self.inner.send(method, path, params=params, data=data)
+        self.files.append([(f, spec[0], spec[2], bytes(spec[1])) for f, spec in files])
+        return await self.inner.send(method, path, params=params, data=data, files=files)
 
 
 class MissingCredentialError(TransportError):
@@ -212,8 +225,12 @@ class RealHttpTransport:
         self, method: HttpMethod, path: str, *,
         params: Optional[dict[str, Any]] = None,
         data: Optional[dict[str, Any]] = None,
+        files: Optional[list] = None,
     ) -> TransportResponse:
         url = f"{self.base_url}{path}"
+        # UD-3：有檔 ⇒ multipart（`data`＝表單欄位、`files`＝`broken_photos[]`）；否則現行 JSON。
+        body_kwargs: "dict[str, Any]" = (
+            {"data": data, "files": files} if files is not None else {"json": data})
         # 站內幫手 S5（F8／S5-17）：log 只記方法、**端點樣板**（路徑參數以佔位符取代）、
         # 例外類別、狀態碼——⛔ 不記完整網址（路徑段含 role_id／user_id／編號）、
         # ⛔ 不記例外訊息（httpx 的 `HTTPStatusError` 訊息含完整 query）。
@@ -222,7 +239,7 @@ class RealHttpTransport:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 response = await client.request(
                     method, url,
-                    params=params, json=data,
+                    params=params, **body_kwargs,
                     headers=self._headers(),
                 )
                 response.raise_for_status()
@@ -452,21 +469,100 @@ class JGBMockTransport:
         self, method: HttpMethod, path: str, *,
         params: Optional[dict[str, Any]] = None,
         data: Optional[dict[str, Any]] = None,
+        files: Optional[list] = None,
     ) -> TransportResponse:
         """派發（`_dispatch`）＋替身寫入紀錄（`JGB_MOCK_WRITE_LOG`，見 `_append_write_log`）。
 
-        ⚠️ 紀錄只在**本類**（mock）裡：`RealHttpTransport` 一字未動，真 HTTP 路徑不寫任何紀錄。
+        ⚠️ 紀錄只在**本類**（mock）裡：`RealHttpTransport` 只多了 multipart 分支，真 HTTP 路徑不寫任何紀錄。
+
+        UD-3：`files` 有值 ⇒ 依 multipart 收（只開給 `POST /repairs`，見 `_multipart_repair_body`）：
+        表單欄位轉回型別、每個 `broken_photos[]` 檔驗型別（magic bytes）／大小／張數，算出
+        `{filename, content_type, size, sha256}` 放進 body 的 `broken_photos`（列上記中繼資料）。
+        ⛔ 照片位元組進紀錄：紀錄的 body 只有中繼資料。
         """
+        rejected: Optional[TransportResponse] = None
+        if files is not None:
+            body, rejected = self._multipart_repair_body(method, path, data, files)
+            if rejected is None:
+                data = body
         received = copy.deepcopy(data) if isinstance(data, dict) else data
-        resp = await self._dispatch(method, path, params=params, data=data)
+        if rejected is not None:
+            resp = rejected               # 紀錄照寫（body 只有表單欄位字串，⛔ 位元組）
+        else:
+            resp = await self._dispatch(method, path, params=params, data=data)
         log_path = os.getenv(MOCK_WRITE_LOG_ENV)
         if log_path:
             endpoint_key = resolve_endpoint(method, path)
             if endpoint_key in WRITE_ENDPOINTS:
-                self._append_write_log(log_path, endpoint_key, path, received, resp)
+                self._append_write_log(log_path, endpoint_key, path, received, resp,
+                                       multipart=files is not None)
             else:
                 self._append_read_log(log_path, endpoint_key, method, path, params or {})
         return resp
+
+    # ── UD-3：`POST /repairs` 的 multipart（照片本體＋同名表單欄位） ─────────────
+    #: multipart 只收這個檔案欄位名（每筆一個檔；JGB 規格 §5 `broken_photos[]`）。
+    MULTIPART_PHOTO_FIELD: str = "broken_photos[]"
+    #: 修繕單一次最多附幾張（＝`confirm_card.REPAIR_PHOTOS_MAX`、UD-1 上傳票 repair `max_files`）。
+    #: ⚠️ JSON 中繼資料與 multipart 兩條路共用這一個值；fixture `photo_policy.max_count` 不再讀。
+    REPAIR_PHOTO_MAX_COUNT: int = 10
+    #: 表單欄位一律是字串，轉回 JSON 路徑的整數型別（其餘欄位維持字串）。
+    _MULTIPART_INT_FIELDS: "frozenset[str]" = frozenset({
+        "estate_id", "category_id", "item_id", "emergency_status", "contract_id",
+    })
+    _PHOTO_MAGIC: "dict[str, Any]" = {
+        "image/jpeg": lambda b: b.startswith(b"\xff\xd8\xff"),
+        "image/png": lambda b: b.startswith(b"\x89PNG"),
+        "image/webp": lambda b: b.startswith(b"RIFF") and b[8:12] == b"WEBP",
+    }
+
+    def _photo_policy(self) -> "dict[str, Any]":
+        cfg = self._assistant_cfg or {}
+        policy = (((cfg.get("endpoints") or {}).get("jgb2-req#22") or {}).get("photo_policy") or {})
+        return {
+            "content_types": tuple(policy.get("content_types") or ("image/jpeg", "image/png", "image/webp")),
+            "max_bytes": int(policy.get("max_bytes") or 5 * 1024 * 1024),
+        }
+
+    def _multipart_repair_body(
+        self, method: str, path: str, form: Any, files: Any,
+    ) -> "tuple[Optional[dict[str, Any]], Optional[TransportResponse]]":
+        """multipart ⇒ `(body, None)`；不收 ⇒ `(None, 錯誤回應)`。⛔ 回傳或記錄任何位元組。"""
+        if method != "POST" or resolve_endpoint(method, path) != "create_repair":
+            return None, self._error(415, "只有建立修繕單收 multipart/form-data")
+        if not isinstance(form, dict) or not all(
+                isinstance(k, str) and isinstance(v, str) for k, v in form.items()):
+            return None, self._error(422, "multipart 表單欄位必須是字串")
+        if "broken_photos" in form:
+            return None, self._error(422, "multipart 的照片只能放在 broken_photos[] 檔案欄位")
+        body: "dict[str, Any]" = {}
+        for k, v in form.items():
+            if k in self._MULTIPART_INT_FIELDS:
+                if not re.fullmatch(r"-?[0-9]{1,18}", v):
+                    return None, self._error(422, f"{k} 必須是整數")
+                body[k] = int(v)
+            else:
+                body[k] = v
+        policy = self._photo_policy()
+        if not isinstance(files, list) or not 1 <= len(files) <= self.REPAIR_PHOTO_MAX_COUNT:
+            return None, self._error(422, f"broken_photos 最多 {self.REPAIR_PHOTO_MAX_COUNT} 張")
+        photos: list = []
+        for item in files:
+            ok = (isinstance(item, tuple) and len(item) == 2 and item[0] == self.MULTIPART_PHOTO_FIELD
+                  and isinstance(item[1], tuple) and len(item[1]) == 3)
+            if ok:
+                filename, content, ctype = item[1]
+                ok = (isinstance(filename, str) and 0 < len(filename) <= 100
+                      and isinstance(content, (bytes, bytearray))
+                      and ctype in policy["content_types"]
+                      and 0 < len(content) <= policy["max_bytes"]
+                      and self._PHOTO_MAGIC.get(ctype, lambda b: False)(bytes(content[:12])))
+            if not ok:
+                return None, self._error(422, "broken_photos[] 每個檔須為 jpeg／png／webp（內容與型別相符）且 ≤ 5 MB")
+            photos.append({"filename": filename, "content_type": ctype, "size": len(content),
+                           "sha256": hashlib.sha256(bytes(content)).hexdigest()})
+        body["broken_photos"] = photos
+        return body, None
 
     # ── 站內幫手 S5（§3i 第 1 點，A3(a)）：替身**讀取**呼叫紀錄 ────────────────
     #: 讀取紀錄的檔名＝寫入紀錄路徑加這個後綴（同一個 env 開關、另一個檔：既有的
@@ -514,7 +610,7 @@ class JGBMockTransport:
                 "estates": self.estate_fixtures, "repairs": self.repair_fixtures}[domain]
 
     def _append_write_log(self, log_path: str, endpoint_key: str, path: str,
-                          body: Any, resp: TransportResponse) -> None:
+                          body: Any, resp: TransportResponse, *, multipart: bool = False) -> None:
         """env `JGB_MOCK_WRITE_LOG` 有值時，每次寫入端點呼叫後追加一行 JSON。
 
         欄位：`endpoint_key`、`body`（替身收到的 request body——即 `JGBSystemAPI` 守門與
@@ -547,6 +643,9 @@ class JGBMockTransport:
             counts[name] = len(t.rows()) if t is not None else None
         line = {"endpoint_key": endpoint_key, "path": path, "body": body,
                 "status": status, "row": row, "counts": counts}
+        if multipart:
+            # UD-3：照片以 multipart 檔案收到（body／row 的 `broken_photos` 是替身算出的中繼資料）。
+            line["multipart"] = True
         try:
             with open(log_path, "a", encoding="utf-8") as fh:
                 fh.write(json.dumps(line, ensure_ascii=False, sort_keys=True, default=str) + "\n")
@@ -1797,8 +1896,8 @@ class JGBMockTransport:
         if photos in (None, []):
             return None
         policy = cfg["endpoints"]["jgb2-req#22"]["photo_policy"]
-        if not isinstance(photos, list) or len(photos) > policy["max_count"]:
-            return self._error(422, f"broken_photos 最多 {policy['max_count']} 張")
+        if not isinstance(photos, list) or len(photos) > self.REPAIR_PHOTO_MAX_COUNT:
+            return self._error(422, f"broken_photos 最多 {self.REPAIR_PHOTO_MAX_COUNT} 張")
         for p in photos:
             if (not isinstance(p, dict) or set(p) != {"filename", "content_type", "size", "sha256"}
                     or not isinstance(p["filename"], str) or not p["filename"]

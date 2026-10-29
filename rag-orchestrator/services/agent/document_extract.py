@@ -1115,6 +1115,10 @@ DOCUMENT_NOTICE_TEXTS: dict = {
     "deed_not_recognized": (
         "這份文件讀不出建物謄本的內容；請確認上傳的是建物謄本，或直接把物件資料打字給我。"
     ),
+    # UD-2b：DocuMind 合成檔防護拒送（`blocked`，S4）——測試期間只送指定樣本檔。
+    "deed_blocked": (
+        "這份文件目前無法辨識（測試期間只接受指定的樣本檔），請改用手動輸入。"
+    ),
 }
 DOCUMENT_NOTICES: frozenset = frozenset(DOCUMENT_NOTICE_TEXTS)
 
@@ -1122,8 +1126,12 @@ _ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
 def _is_iso_date(value: Any) -> bool:
-    """`YYYY-MM-DD` 且是合法日期。"""
-    if not isinstance(value, str) or not _ISO_DATE_RE.match(value):
+    """`YYYY-MM-DD` 且是合法日期。
+
+    ⚠️ 用 `fullmatch`：`match` 加 `$` 時，`$` 會在**結尾換行前**成立，`"2026-10-12\\n"`
+    會被當成合法日期（UD-2a 規格 8）。
+    """
+    if not isinstance(value, str) or not _ISO_DATE_RE.fullmatch(value):
         return False
     from datetime import date as _date
 
@@ -1245,6 +1253,40 @@ def build_deed_facts(typed_fields: tuple) -> str:
     return DOCUMENT_CONTENT_PREFIX + "\n" + "\n".join(lines)
 
 
+#: 收據回合（DocuMind 路徑）資料段的種類句與缺金額句（UD-2b：程式組句，比照謄本 D4，
+#: ⛔ 取我方模型的 `fields` 或 DocuMind 回應的其他鍵）。
+RECEIPT_KIND_SENTENCE = "文件種類：收據。"
+RECEIPT_NO_AMOUNT_SENTENCE = "這張收據沒有讀到可以直接採用的金額，金額請向使用者確認。"
+RECEIPT_DATE_LABEL = "收據日期"
+
+
+def build_receipt_facts(typed_fields: tuple, receipt_date: Optional[str]) -> str:
+    """收據回合（DocuMind 路徑）給模型的資料段——**只由有型別值組封閉句**（UD-2b）。
+
+    `typed_fields` 每欄一句「卡上標籤：值 單位。」（標籤與單位取 `confirm_card` 的
+    `manual_bill_create` 欄位表）；`receipt_date` 是驗過的 `YYYY-MM-DD` 才多一句。
+    沒有金額 ⇒ 固定的缺金額句（⇒ 模型照現行缺欄追問）。⚠️ 永遠非空：⛔ 走
+    `DOC_UNREADABLE_TEXT` 那條路（那會讓「讀到收據、只是沒金額」變成「讀不出文件」）。
+    """
+    from services.agent.confirm_card import MANUAL_BILL_CREATE_FIELDS
+
+    fields = {f.key: f for f in MANUAL_BILL_CREATE_FIELDS}
+    lines = [RECEIPT_KIND_SENTENCE]
+    has_total = False
+    for key, value in typed_fields or ():
+        spec = fields.get(key)
+        if spec is None or isinstance(value, bool) or not isinstance(value, int):
+            continue
+        unit = f" {spec.unit}" if getattr(spec, "unit", None) else ""
+        lines.append(f"{spec.label}：{value}{unit}。")
+        has_total = has_total or key == "total"
+    if not has_total:
+        lines.append(RECEIPT_NO_AMOUNT_SENTENCE)
+    if _is_iso_date(receipt_date):
+        lines.append(f"{RECEIPT_DATE_LABEL}：{receipt_date}。")
+    return DOCUMENT_CONTENT_PREFIX + "\n" + "\n".join(lines)
+
+
 #: 自由文字**不得自成一個可引用的 `provenance_unit`**。切片是依句末標點切
 #: 的（`provenance_units._SENTENCE_ENDS`），所以欄位值裡的句末標點與換行一律剝
 #: 掉——留一個「。」在值的中間，那一段就會被切成獨立的一片、拿到自己的引用編號，
@@ -1355,6 +1397,7 @@ __all__ = [
     "DOCUMENT_TURN_WRITABLE",
     "DOCUMENT_WRITABLE_STATUSES",
     "build_deed_facts",
+    "build_receipt_facts",
     "document_writable_action",
     "free_text_values",
     "receipt_typed_fields",

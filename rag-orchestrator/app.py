@@ -2,6 +2,7 @@
 RAG Orchestrator 主服務
 整合意圖分類、RAG 檢索、信心度評估和未釐清問題管理
 """
+import asyncio
 import os
 import sys
 from contextlib import AsyncExitStack, asynccontextmanager
@@ -31,6 +32,17 @@ from routers import platform_sop  # ⚠️ 平台管理員的 SOP 範本後台 C
 #    `/vendors/{id}/sop/copy-category/{platform_category_id}` 也要平台分類存在才有得複製。
 from routers import ocr_mapping  # documind-ocr-mapping：DocuMind OCR → JGB 欄位草稿（同步端點）
 from routers import agent as agent_router  # agentic-mcp-orchestration 1.8：/api/v1/agent/openapi.json・/health
+from routers import agent_uploads as agent_uploads_router  # UD-1：瀏覽器直傳 POST /api/v1/agent/uploads
+from services.agent import upload_store as _upload_store
+
+# UD-1：直傳是否啟用——**只算這一次**，上傳路由、上傳票工具、服務層閘豁免、
+# api_key_guard 豁免、CORS 旁路全部依同一個值（S12 workers≠1 ⇒ 關、S13 開關）。
+_UPLOAD_ENABLED, _UPLOAD_DISABLED_REASON = _upload_store.upload_endpoint_status()
+if _UPLOAD_ENABLED:
+    print("✅ [upload] 瀏覽器直傳已啟用：POST /api/v1/agent/uploads（"
+          f"{agent_uploads_router.origin_policy_label()}）")
+else:
+    print(f"⚠️ [upload] 瀏覽器直傳關閉：{_UPLOAD_DISABLED_REASON}")
 
 # 全局變數
 db_pool: Pool = None
@@ -352,6 +364,18 @@ async def lifespan(app: FastAPI):
     # 2026-10-15 選項 A：舊知識庫零列已審 ⇒ kb.search 不給模型（依資料狀態，重啟重判）。
     await _mcp_facade.gate_kb_search_on_reviewed_rows(_mcp_registry, db_pool)
 
+    # UD-1：直傳暫存的背景回收（到期判斷每次操作也會跑；這裡讓沒人碰的暫存也準時刪）。
+    _upload_sweeper = None
+    if _UPLOAD_ENABLED:
+        async def _sweep_uploads():
+            while True:
+                await asyncio.sleep(_upload_store.SWEEP_INTERVAL_S)
+                try:
+                    _upload_store.STORE.sweep()
+                except Exception as _e:      # 回收失敗不擋服務；只印類別名
+                    print(f"⚠️ [upload] 暫存回收失敗：{type(_e).__name__}")
+        _upload_sweeper = asyncio.create_task(_sweep_uploads())
+
     print("🎉 RAG Orchestrator 啟動完成！（含 Phase B 意圖建議 + agent 會話狀態層）")
     print(f"📝 API 文件: http://localhost:8100/docs")
 
@@ -367,6 +391,9 @@ async def lifespan(app: FastAPI):
 
     # 關閉時清理
     print("🔄 關閉 RAG Orchestrator...")
+    if _upload_sweeper is not None:
+        _upload_sweeper.cancel()
+    _upload_store.STORE.reset()       # 暫存只在記憶體；關機即清
     # kb.get 走同步 psycopg2，另有一個延遲建立的連線池（agentic-mcp-orchestration 1.7）
     _kb_pool = globals().get("_mcp_kb_pool")
     if _kb_pool is not None:
@@ -386,9 +413,26 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+class _CorsExceptUpload(CORSMiddleware):
+    """全域 CORS，但**瀏覽器直傳路徑除外**（UD-1／S8）。
+
+    上傳路徑（`is_upload_request`：路徑完全等於 `/api/v1/agent/uploads`、POST／OPTIONS）
+    直接交給內層，由 `routers/agent_uploads.py` 自己回應預檢與 ACAO：白名單未設＝開放模式
+    （ACAO `*`），有設＝照白名單；兩種都 ⛔ credentials。直傳關閉時不旁路（路由不存在，照舊）。
+    """
+
+    async def __call__(self, scope, receive, send):
+        if _UPLOAD_ENABLED and _mcp_facade_for_cors.is_upload_request(scope):
+            await self.app(scope, receive, send)
+            return
+        await super().__call__(scope, receive, send)
+
+
+from services.agent import mcp_facade as _mcp_facade_for_cors  # noqa: E402
+
 # CORS 中間件
 app.add_middleware(
-    CORSMiddleware,
+    _CorsExceptUpload,
     allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
@@ -438,6 +482,10 @@ async def usage_metering_middleware(request: Request, call_next):
 
 @app.middleware("http")
 async def api_key_guard(request: Request, call_next):
+    # UD-1／S1：瀏覽器直傳只在「路徑完全等於、方法 POST／OPTIONS」時不驗 API 金鑰
+    # （上傳路由自己驗上傳票，有設白名單時另驗 Origin）；`is_exempt` 與 `_EXEMPT_PREFIX` 不動。
+    if _UPLOAD_ENABLED and _mcp_facade_for_cors.is_upload_request(request.scope):
+        return await call_next(request)
     if auth_enforced() and request.method != "OPTIONS" and not is_exempt(request.url.path):
         pool = getattr(request.app.state, "db_pool", None)
         if not await verify_api_key(pool, request.headers.get("x-api-key")):
@@ -470,7 +518,8 @@ from services.agent import mcp_facade as _mcp_facade
 _mcp_facade.load_allowed_origins()
 
 app.add_middleware(_mcp_facade.McpServiceGate,
-                   get_pool=lambda: getattr(app.state, "db_pool", None))
+                   get_pool=lambda: getattr(app.state, "db_pool", None),
+                   exempt_upload=_UPLOAD_ENABLED)
 
 _mcp_retriever = None
 
@@ -496,7 +545,7 @@ _mcp_deps = _mcp_facade.FacadeDeps(
     get_app=lambda: app,                                                       # 2.6 agent.turn
     get_outline_resolver=lambda: getattr(app.state, "outline_resolver", None),  # 3.2／kb.get("outline:*")
 )
-_mcp_registry = _mcp_facade.build_registry(_mcp_deps)
+_mcp_registry = _mcp_facade.build_registry(_mcp_deps, upload_enabled=_UPLOAD_ENABLED)
 app.state.tool_registry = _mcp_registry
 if _mcp_sdk_ok:
     _mcp_server = _mcp_facade.build_mcp_server(_mcp_registry, _mcp_deps)
@@ -532,6 +581,8 @@ app.include_router(system_health.router, tags=["system_health"])  # Pipeline Hea
 app.include_router(platform_sop.router, tags=["platform_sop"])  # Platform SOP Template Management（2026-09-11 還原）
 app.include_router(ocr_mapping.router, tags=["ocr-mapping"])  # documind-ocr-mapping（prefix 在 router 內）
 app.include_router(agent_router.router, tags=["agent"])  # agentic-mcp-orchestration 1.8（prefix 在 router 內）
+if _UPLOAD_ENABLED:
+    app.include_router(agent_uploads_router.router, tags=["agent"])  # UD-1：瀏覽器直傳（路徑在 router 內）
 
 
 @app.get("/")
@@ -620,11 +671,12 @@ if __name__ == "__main__":
     import uvicorn
     # 只在開發環境啟用 reload，生產環境應禁用以避免 DNS 解析問題
     reload_enabled = os.getenv("UVICORN_RELOAD", "false").lower() == "true"
-    workers = int(os.getenv("UVICORN_WORKERS", "4"))
+    # UD-1／S12：worker 數與直傳啟動檢查用**同一條規則**（`configured_uvicorn_workers`）。
+    workers = _upload_store.configured_uvicorn_workers()
     uvicorn.run(
         "app:app",
         host="0.0.0.0",
         port=8100,
         reload=reload_enabled,
-        workers=1 if reload_enabled else workers
+        workers=workers
     )

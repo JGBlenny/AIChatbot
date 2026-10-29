@@ -1,0 +1,17 @@
+{
+  "說明": "DocuMind 合成檔防護（計畫 plan-upload-documind-20261028 §4.1 S4、驗收 A9）的凍結清單：串通期間只准送這 12 張樣本（合成收據 3 張＋網路公開取得的修繕照片 9 張，§6 OQ5、OQ11）。sha256 是「上傳原檔」的值（⛔ 重新編碼後的值）。改清單＝改凍結範圍，須經業主核可。",
+  "samples": [
+    {"file": "receipt-1.jpg", "sha256": "1f44f1446b8a6ac4ba7e5f7834120efcf35d7120d973ae22c859328fb74dc53d"},
+    {"file": "receipt-2.jpg", "sha256": "f248059c07c16bca400c40833748d13001fc4099419af21be0d66a3646b13e76"},
+    {"file": "receipt-inject.jpg", "sha256": "8c3bd3fd5d0c9290b5d2223851624e11c72319d6f1c57cc05e4a66d9e0a1a04d"},
+    {"file": "repair-1.jpg", "sha256": "211ffcb92a22393a6eee1c1f124ee8c72a02096ed8a793139a85a1cb0ada7c7b"},
+    {"file": "repair-2.jpg", "sha256": "a1c0d23a82ac2652929f6fe3a460b2fde97f9bb9031a7ada88287c6ef3c47277"},
+    {"file": "repair-3.jpg", "sha256": "3ad25bcb0ea8a81b519b5e09399bafa2bd431e50a56fb84fb3a94ba5398918d8"},
+    {"file": "leak.jpg", "sha256": "2e301c609c947d12a1fc878426a31bd57e20e8e36038956933a97d2ec4e97829"},
+    {"file": "lock.jpg", "sha256": "b21e703a61a4a2a7267dd702f9fd4dc88629a151f3ac4bc4f9f98791c58723f3"},
+    {"file": "mold.jpg", "sha256": "d13517faf2ce90ecf55b9800debdb61aee0b47e8ba9ef8f4d77a8db54dcfe389"},
+    {"file": "two_damages.jpg", "sha256": "9fdea271f4a7b00b6b902779efa28e5d20962047fa574093201fac0bcbb2ec9d"},
+    {"file": "breaker.jpg", "sha256": "389515aae71ef312f63a0d589b2c8e28296efba2670f4a2bdfe29f33243bc290"},
+    {"file": "plain.jpg", "sha256": "c52c510551516461b405c651f6feda9b6ec955fdbff9cb25a5590a7eb0ad763e"}
+  ]
+}

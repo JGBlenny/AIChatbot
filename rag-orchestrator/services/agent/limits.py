@@ -31,7 +31,7 @@ from typing import Any
 
 @dataclass(frozen=True)
 class AgentLimits:
-    """封閉欄位——五道上限的預設值（DSP-045）。每回合預算（`Budget`）不在此，
+    """封閉欄位——五道上限＋直傳附件上限的預設值（DSP-045；直傳見 UD-1）。每回合預算（`Budget`）不在此，
     仍由既有 `services/agent/bootstrap.py` 管（`AGENT_BUDGET_*` env，未變動）。"""
 
     turns_per_hour: int = 1200
@@ -39,6 +39,17 @@ class AgentLimits:
     kb_get_per_hour: int = 3000
     images_per_hour: int = 600
     files_per_hour: int = 100
+    # ── 瀏覽器直傳附件（UD-1，plan-upload-documind-20261028 §4 UD-1）──
+    #: `agent.upload_ticket` 發出的上傳票有效秒數（10 分鐘）。
+    upload_ticket_ttl_s: int = 600
+    #: 已上傳但未被 `agent.turn` 引用的暫存檔最長保留秒數；修繕照片
+    #: `retain` 後同樣以此為上限（30 分鐘）。
+    upload_ttl_s: int = 1800
+    #: 單檔上限（bytes）——與 `image_fetch.IMAGE_MAX_BYTES` 同值。
+    upload_max_bytes: int = 5_000_000
+    #: 一張票可上傳的檔數：修繕照片 10、文件 1。
+    upload_max_files_repair: int = 10
+    upload_max_files_document: int = 1
 
 
 _DEFAULT_LIMITS = AgentLimits()

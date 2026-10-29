@@ -123,6 +123,7 @@ from typing import Any, Callable, Mapping, Optional
 from pydantic import BaseModel
 
 from services.agent import image_fetch
+from services.agent import upload_store
 from services.agent.identity import (
     DEFAULT_ENTRY_MODE,
     ENTRY_MODES,
@@ -784,6 +785,19 @@ async def _image_fetch_one(url: str, *, timeout_s: float):
     return await image_fetch.fetch_image(url, timeout_s=timeout_s)
 
 
+async def _fetch_image_source(src: Any, *, timeout_s: float):
+    """取一張照片的位元組（UD-1：「取位元組」抽成可替換的來源）。
+
+    - `upload_store.ClaimedUpload`（直傳）⇒ 直接用暫存裡的位元組，⛔ 不連網；
+    - 其他（網址字串，`AGENT_ATTACHMENT_INPUT=urls` 回滾模式）⇒ 照舊走
+      `_image_fetch_one`（六道閘、測試注入點不變）。
+    之後的格式檢查、縮圖、辨識一律照舊——兩種來源走同一條。
+    """
+    if isinstance(src, upload_store.ClaimedUpload):
+        return image_fetch.FetchedImage(data=src.data, content_type=src.content_type)
+    return await _image_fetch_one(src, timeout_s=timeout_s)
+
+
 def _image_validate_and_downscale(data: bytes, content_type: str) -> tuple:
     """`validate_format`（MIME＋magic bytes）→ `downscale_image`（≤1024px、去 EXIF）。
 
@@ -1015,10 +1029,18 @@ async def prepare_image_turn(
 
     ⛔ bytes 不落地、不進任何紀錄；本函式只回封閉值。
     """
+    from services import documind_client
     from services.agent.runtime import IMAGE_CANDIDATE_MAX, IMAGE_CONFIDENCE_MIN, ImageTurnInput
 
     started = clock()
     budget = image_budget_s() if budget_s is None else budget_s
+    documind = documind_client.documind_config()
+    if documind is not None:
+        # UD-2b：設了 DocuMind ⇒ 修繕照片改由 DocuMind 辨識（沒設 ⇒ 下方現行路徑逐位元不變）。
+        return await _prepare_image_turn_documind(
+            image_urls, category_tree=category_tree, budget=budget, clock=clock,
+            started=started, config=documind,
+        )
     total = len(image_urls)
     names = _tree_names(category_tree)
 
@@ -1061,7 +1083,7 @@ async def prepare_image_turn(
             exhausted = True
             break
         try:
-            fetched = await _image_fetch_one(url, timeout_s=max(1.0, budget - _elapsed()))
+            fetched = await _fetch_image_source(url, timeout_s=max(1.0, budget - _elapsed()))
             downscaled, fmt = _image_validate_and_downscale(fetched.data, fetched.content_type)
         except image_fetch.ImageFetchError:
             continue            # 閘門擋下／抓不到 ⇒ **丟棄該張**，回合照跑
@@ -1142,6 +1164,170 @@ async def prepare_image_turn(
     )
 
 
+def _documind_leaf_hits(tree: Optional[list], items: Any) -> list:
+    """DocuMind `damaged_items` ⇒ 分類樹**葉節點**的程式比對（UD-2b／S10）⇒ `[(葉名, 大類名), …]`。
+
+    規則（⛔ 模糊比對、⛔ 交給模型選）：
+      - 只比葉節點名稱（`items[*].name`，去頭尾空白後**完全相同**）；大類名稱不算命中。
+      - 同一個名稱在整棵樹（大類名＋葉名）出現超過一次 ⇒ 不填（兌現端會解成別的節點）。
+      - 再以 `action._resolve_category` 覆核兌現端解得出**葉節點**（`item_id` 非空）。
+    回傳依 `items` 順序去重。
+    """
+    from services.agent.tools import action as action_tools
+
+    counts: dict = {}
+    parents: dict = {}
+    for node in tree or []:
+        if not isinstance(node, dict):
+            continue
+        parent_name = str(node.get("name") or "").strip()
+        if parent_name:
+            counts[parent_name] = counts.get(parent_name, 0) + 1
+        for leaf in node.get("items") or []:
+            if not isinstance(leaf, dict):
+                continue
+            leaf_name = str(leaf.get("name") or "").strip()
+            if leaf_name:
+                counts[leaf_name] = counts.get(leaf_name, 0) + 1
+                parents.setdefault(leaf_name, parent_name)
+    hits: list = []
+    for item in items or ():
+        if not isinstance(item, str):
+            continue
+        name = item.strip()
+        if not name or name not in parents or counts.get(name) != 1:
+            continue
+        resolved = action_tools._resolve_category(tree or [], name)
+        if resolved is None or resolved[1] is None:
+            continue
+        if all(name != hit for hit, _ in hits):
+            hits.append((name, parents[name] or None))
+    return hits
+
+
+async def _prepare_image_turn_documind(
+    image_urls: list, *, category_tree: Optional[list], budget: float,
+    clock: Callable[[], float], started: float, config: Any,
+) -> tuple:
+    """修繕照片走 DocuMind（UD-2b）⇒ `(ImageTurnInput, 已耗秒數)`。
+
+    逐張：取位元組 → 同一道格式／像素閘（`_image_validate_and_downscale`，縮圖丟掉）→
+    中繼資料（原檔 sha256）→ 送 DocuMind（**上傳原檔**；重新編碼由 client 在合成檔比對後做）。
+    每張的 `status`：
+      - `damaged`：`damaged_items` 程式比對葉節點（`_documind_leaf_hits`）；恰 1 個命中 ⇒
+        `suggested_category`（＋大類名）；≥2 個 ⇒ `candidates`（上限 `IMAGE_CANDIDATE_MAX`）；
+        0 個 ⇒ 分類 `None`（「辨識不出對應的修繕分類」）。`defect_labels` 只組描述短標籤，
+        `description` 只進 `suggested_description`（⛔ 進模型資料段）。
+      - `no_damage`：「看不出損壞」（⛔ 擋報修）。
+      - `failed`／`timeout`／`disabled`／`blocked`：該張辨識失敗（⛔ 當成看不出損壞），
+        照片中繼資料照樣保留。
+    合併：任一張 `damaged` ⇒ 看得出損壞、命中結果合併；全部失敗才算辨識失敗（`failed`）；
+    一張都沒送出且預算用罄 ⇒ `timeout`（同現行唯一映射）。照片中繼資料一律帶上
+    （含辨識失敗那幾張）；卡上照片仍由 runtime 出卡時重新編碼並綁 sha（UD-3，本函式不碰）。
+    """
+    from services.agent.runtime import IMAGE_CANDIDATE_MAX, ImageTurnInput
+
+    total = len(image_urls)
+
+    def _elapsed() -> float:
+        return clock() - started
+
+    photos: list = []
+    damaged: list = []
+    processed = 0
+    attempted = 0
+    exhausted = False
+    for src in image_urls:
+        if _elapsed() >= budget:
+            exhausted = True
+            break
+        try:
+            fetched = await _fetch_image_source(src, timeout_s=max(1.0, budget - _elapsed()))
+            downscaled, fmt = _image_validate_and_downscale(fetched.data, fetched.content_type)
+        except image_fetch.ImageFetchError:
+            continue            # 閘門擋下／抓不到 ⇒ **丟棄該張**（同現行）
+        except Exception:
+            continue            # 格式不符／像素炸彈等（同現行）
+        del downscaled
+        photos.append(_photo_meta(fetched.data, fmt, len(photos) + 1))
+        timeout_s = budget - _elapsed()
+        if timeout_s < DOCUMIND_MIN_TIMEOUT_S:
+            exhausted = True
+            break
+        attempted += 1
+        try:
+            result = await _documind_analyze_file(
+                fetched.data, document_type="repair_photo", timeout_s=timeout_s, config=config,
+            )
+        except Exception as exc:  # noqa: BLE001 — ⛔ 例外物件外流；只印類別名
+            logger.warning("修繕照片送 DocuMind 失敗：%s", type(exc).__name__)
+            result = None
+        del fetched
+        status = getattr(result, "status", None)
+        if status == "damaged":
+            processed += 1
+            damaged.append(result)
+        elif status == "no_damage":
+            processed += 1
+
+    elapsed = _elapsed()
+    if processed == 0:
+        status = "timeout" if (attempted == 0 and (exhausted or elapsed >= budget)) else "failed"
+        if status == "failed":
+            image_fetch.record_image_failure()
+        return (
+            ImageTurnInput(status=status, processed=0, total=total, photos=tuple(photos)),
+            elapsed,
+        )
+
+    hits: list = []
+    primary = None
+    primary_item = None
+    for res in damaged:
+        for name, parent in _documind_leaf_hits(category_tree, res.damaged_items):
+            if all(name != hit for hit, _ in hits):
+                hits.append((name, parent))
+                if primary is None:
+                    primary, primary_item = res, name
+    if primary is None and damaged:
+        primary = damaged[0]
+        primary_item = primary.damaged_items[0] if primary.damaged_items else None
+    category = parent_category = None
+    candidates: tuple = ()
+    if len(hits) == 1:
+        category, parent_category = hits[0]
+    elif len(hits) >= 2:
+        candidates = tuple(name for name, _ in hits[:IMAGE_CANDIDATE_MAX])
+    damage_visible = bool(damaged)
+    status = "ok" if processed >= total else "partial"
+    return (
+        ImageTurnInput(
+            status=status,
+            facts=_image_facts(
+                processed=processed, total=total,
+                damage_visible=damage_visible, category=category,
+            ),
+            processed=processed,
+            total=total,
+            candidates=candidates,
+            suggested_category=category,
+            suggested_emergency=None,
+            suggested_item=_short_label(primary_item) if primary is not None else None,
+            suggested_parent_category=parent_category,
+            suggested_reason=(
+                _short_label(primary.defect_labels[0])
+                if primary is not None and primary.defect_labels else None
+            ),
+            suggested_description=(
+                _short_description(primary.description)
+                if primary is not None and primary.description else None
+            ),
+            photos=tuple(photos),
+        ),
+        elapsed,
+    )
+
+
 # ════════════════════════════════════════════════════════════════════
 # W9 U1：文件進場（`attachment_purpose="document"` ＋ `file_urls`）
 # ════════════════════════════════════════════════════════════════════
@@ -1166,6 +1352,14 @@ async def _document_fetch_one(url: str, *, timeout_s: float):
     return await image_fetch.fetch_image(
         url, timeout_s=timeout_s, max_bytes=image_fetch.file_max_bytes()
     )
+
+
+async def _fetch_document_source(src: Any, *, timeout_s: float):
+    """取一份 PDF 的位元組（UD-1；同 `_fetch_image_source`）。直傳 ⇒ 暫存位元組；
+    網址 ⇒ 照舊 `_document_fetch_one`。之後的 `validate_pdf_bytes`／`rasterize_pdf` 不變。"""
+    if isinstance(src, upload_store.ClaimedUpload):
+        return image_fetch.FetchedImage(data=src.data, content_type=src.content_type)
+    return await _document_fetch_one(src, timeout_s=timeout_s)
 
 
 async def _document_extract_pages(data_urls: list, *, timeout_s: float) -> tuple:
@@ -1253,6 +1447,7 @@ async def prepare_document_turn(
         DocumentTurnInput,
         build_deed_facts,
         build_document_facts,
+        build_receipt_facts,
         free_text_values,
         rasterize_pdf,
         receipt_typed_fields,
@@ -1265,8 +1460,8 @@ async def prepare_document_turn(
         return clock() - started
 
     pages: list = []            # 已縮圖／已渲染的 base64 data URL（⛔ 不留原 bytes）
-    # 站內幫手 S3（D3）：本回合**恰好 1 份附件**時才保留那一份的位元組（謄本要送
-    # DocuMind）；其他組合一律不留、謄本不送。⛔ 不落地、⛔ 不進任何紀錄。
+    # 站內幫手 S3（D3）：本回合**恰好 1 份附件**時才保留那一份的位元組（謄本、收據〔UD-2b〕
+    # 要送 DocuMind）；其他組合一律不留、不送。⛔ 不落地、⛔ 不進任何紀錄。
     one_attachment = (len(image_urls or []) + len(file_urls or [])) == 1
     single_source: Optional[tuple] = None   # (bytes, "photo"|"pdf", pdf 頁數或 None)
     photo_requested = len(image_urls or [])
@@ -1281,7 +1476,7 @@ async def prepare_document_turn(
             exhausted = True
             break
         try:
-            fetched = await _image_fetch_one(url, timeout_s=max(1.0, budget - _elapsed()))
+            fetched = await _fetch_image_source(url, timeout_s=max(1.0, budget - _elapsed()))
             downscaled, fmt = _image_validate_and_downscale(fetched.data, fetched.content_type)
         except image_fetch.ImageFetchError:
             continue            # 閘門擋下／抓不到 ⇒ **丟棄該張**，回合照跑
@@ -1300,7 +1495,7 @@ async def prepare_document_turn(
             exhausted = True
             break
         try:
-            fetched = await _document_fetch_one(url, timeout_s=max(1.0, budget - _elapsed()))
+            fetched = await _fetch_document_source(url, timeout_s=max(1.0, budget - _elapsed()))
             image_fetch.validate_pdf_bytes(fetched.data, fetched.content_type)
         except image_fetch.ImageFetchError:
             continue            # 閘門擋下／非 PDF ⇒ **丟棄該份**
@@ -1390,7 +1585,20 @@ async def prepare_document_turn(
     receipt_date = None
     notice = None
     if kind == "bill_receipt":
-        typed, receipt_date = receipt_typed_fields(result)
+        from services import documind_client
+
+        documind = documind_client.documind_config()
+        if documind is None:
+            # 沒設 DocuMind ⇒ 現行我方模型路徑（逐位元不變，回滾用）。
+            typed, receipt_date = receipt_typed_fields(result)
+        else:
+            # UD-2b：設了 DocuMind ⇒ 收據由 DocuMind 辨識；資料段只由有型別值組封閉句
+            # （⛔ 我方模型的 `fields`、⛔ DocuMind 回應的其他鍵）。沒讀到金額 ⇒ 缺欄追問。
+            typed, receipt_date = await _receipt_documind_fields(
+                single_source, one_attachment=one_attachment, elapsed=_elapsed(),
+                config=documind,
+            )
+            facts = build_receipt_facts(typed, receipt_date)
     elif kind == "building_deed":
         notice, typed = await _deed_typed_fields(
             single_source, one_attachment=one_attachment, status=status,
@@ -1430,6 +1638,8 @@ _DEED_STATUS_NOTICE: dict = {
     "failed": "deed_failed",
     "timeout": "deed_failed",
     "disabled": "deed_unavailable",
+    # UD-2b：合成檔防護拒送（S4）⇒ 固定句（測試期間只接受指定樣本檔），⛔ 講成「沒讀成功」。
+    "blocked": "deed_blocked",
 }
 
 
@@ -1442,14 +1652,76 @@ async def _documind_analyze(data: bytes, *, timeout_s: float, pdf_pages, config)
     )
 
 
+async def _documind_analyze_file(data: bytes, *, document_type: str, timeout_s: float, config):
+    """收據／修繕照片送 DocuMind（UD-2b）。**測試的注入點就是這個模組屬性**（同 `_documind_analyze`）。
+
+    `data` 必須是**上傳原檔**：合成檔防護比對原檔 sha256、重新編碼由 client 在比對之後自己做。
+    回 `ReceiptResult`／`RepairPhotoResult`（封閉值）；任何例外 ⇒ 由呼叫端當作失敗。
+    """
+    from services import documind_client
+
+    return await documind_client.analyze(
+        data, document_type=document_type, timeout_s=timeout_s, config=config,
+    )
+
+
+def _documind_timeout_s(elapsed: float) -> float:
+    """謄本／收據送 DocuMind 的逾時＝回合逾時扣掉已耗與模型迴圈保留段（D2）。"""
+    return agent_turn_timeout_s() - elapsed - DOCUMIND_MODEL_LOOP_RESERVE_S
+
+
+def _documind_accepts(document_type: str, data: Any) -> bool:
+    """client 收不收這份原檔（依 magic bytes 對 client 的接受表；⛔ 另抄一份）。"""
+    from services import documind_client
+
+    kind = documind_client._magic_kind(data)
+    return kind is not None and kind in documind_client._ALLOWED_KINDS.get(document_type, ())
+
+
+async def _receipt_documind_fields(
+    source: Optional[tuple], *, one_attachment: bool, elapsed: float, config,
+) -> tuple:
+    """收據（設了 DocuMind）⇒ `(typed_fields, receipt_date)`（UD-2b）。
+
+    只在「本回合恰好 1 份附件、client 收這種檔（PDF 收據不收）、剩餘預算夠」才送**原檔**；
+    `ReceiptResult.amount` ⇒ `("total", 金額)`，`.date` ⇒ 卡外提示。狀態非 `ok`、
+    `amount=None`、沒送 ⇒ `()`（卡前缺欄追問）。⛔ 取 DocuMind 回應的其他任何值。
+    """
+    if not one_attachment or source is None:
+        return (), None
+    data = source[0]
+    if not _documind_accepts("receipt", data):
+        return (), None
+    timeout_s = _documind_timeout_s(elapsed)
+    if timeout_s < DOCUMIND_MIN_TIMEOUT_S:
+        return (), None
+    try:
+        result = await _documind_analyze_file(
+            data, document_type="receipt", timeout_s=timeout_s, config=config,
+        )
+    except Exception as exc:      # noqa: BLE001 — ⛔ 只印例外類別名
+        logger.warning("收據送 DocuMind 失敗：%s", type(exc).__name__)
+        return (), None
+    if getattr(result, "status", None) != "ok":
+        return (), None
+    amount = getattr(result, "amount", None)
+    typed = (("total", amount),) if (
+        isinstance(amount, int) and not isinstance(amount, bool) and amount > 0
+    ) else ()
+    when = getattr(result, "date", None)
+    return typed, (when if isinstance(when, str) else None)
+
+
 async def _deed_typed_fields(
     source: Optional[tuple], *, one_attachment: bool, status: str, elapsed: float,
 ) -> tuple:
     """建物謄本 ⇒ `(notice, typed_fields)`；成功時 `notice=None`（§3h 第 4 點＋D1～D3）。
 
     只在「本回合恰好 1 份附件、分類 `building_deed`、`status=="ok"`、PDF 頁數不超過
-    `DOC_MAX_PAGES`」才送；照片送**重新編碼、去 EXIF** 的 JPEG（⛔ 原始位元組）。
-    DocuMind 未設定（含設定不合 D1）⇒ 功能關閉、`deed_unavailable`。
+    `DOC_MAX_PAGES`」才送。UD-2b：一律送**上傳原檔**——合成檔防護（S4）比對的是原檔
+    sha256，照片的重新編碼（去 EXIF）由 client 在比對之後自己做（呼叫端先編 ⇒ 比對必錯）。
+    DocuMind 未設定（含設定不合 D1）⇒ 功能關閉、`deed_unavailable`；拒送（`blocked`）⇒
+    `deed_blocked` 固定句。
     """
     from services import documind_client
 
@@ -1463,13 +1735,7 @@ async def _deed_typed_fields(
     config = documind_client.documind_config()
     if config is None:
         return "deed_unavailable", ()
-    if source_kind == "photo":
-        try:
-            data = documind_client.reencode_photo_jpeg(data)
-        except Exception as exc:      # noqa: BLE001 — 解不開／像素炸彈 ⇒ 不送
-            logger.warning("謄本照片重新編碼失敗：%s", type(exc).__name__)
-            return "deed_failed", ()
-    timeout_s = agent_turn_timeout_s() - elapsed - DOCUMIND_MODEL_LOOP_RESERVE_S
+    timeout_s = _documind_timeout_s(elapsed)
     if timeout_s < DOCUMIND_MIN_TIMEOUT_S:
         return "deed_failed", ()
     result = await _documind_analyze(
@@ -1532,6 +1798,30 @@ class AgentTurnOutput(BaseModel):
     outcome: TurnOutcome = TurnOutcome(state="answered", expects="text")
 
 
+#: `ToolResult.data` 上的鍵：`INVALID_INPUT` 的**程式產生**說明（UD-1）。`_invoke`
+#: 只在 `INVALID_INPUT` 時把它接在代碼後面送給呼叫端；值一律出自本檔常數或
+#: `UploadRefError.describe()`（只含索引與 upload_id 的非秘密段），⛔ 不含使用者輸入。
+INPUT_DETAIL_KEY = "_input_detail"
+URL_INPUT_DISABLED_DETAIL = "image_urls／file_urls 已停用，請改用 upload_ids"
+UPLOAD_INPUT_DISABLED_DETAIL = "upload_ids 目前停用（AGENT_ATTACHMENT_INPUT=urls）"
+USER_ID_REQUIRED_DETAIL = "X-JGB-Identity 必須帶 user_id"
+_INPUT_DETAIL_RE = re.compile(
+    r"\A(?:upload_ids\[\d{1,2}\](?:（upl_[0-9a-f]{16}…）)? 無效：不符、已用過或已過期"
+    r"|" + re.escape(URL_INPUT_DISABLED_DETAIL) + r"|" + re.escape(UPLOAD_INPUT_DISABLED_DETAIL)
+    + r"|" + re.escape(USER_ID_REQUIRED_DETAIL) + r")\Z"
+)
+
+
+def _input_detail(result: ToolResult) -> Optional[str]:
+    """`INVALID_INPUT` 附帶的說明；不是本檔產生的固定形狀 ⇒ `None`（⛔ 透傳）。"""
+    if result.error != "INVALID_INPUT" or not isinstance(result.data, dict):
+        return None
+    detail = result.data.get(INPUT_DETAIL_KEY)
+    if isinstance(detail, str) and _INPUT_DETAIL_RE.match(detail):
+        return detail
+    return None
+
+
 AGENT_TURN_SPEC: ToolSpec = {
     "name": AGENT_TURN_NAME,
     "description": (
@@ -1585,6 +1875,15 @@ AGENT_TURN_SPEC: ToolSpec = {
                 "items": {"type": "string", "maxLength": 2048},
                 "description": "本回合上傳的文件網址（relay 網域、application/pdf、必帶 exp）；只在 attachment_purpose=document 時可帶。",
             },
+            # UD-1：瀏覽器直傳後拿到的 `upload_id`（`agent.upload_ticket` → 上傳端點）。
+            # 預設模式（`AGENT_ATTACHMENT_INPUT=upload_ids`）下這是**唯一**的附件欄位，
+            # `image_urls`／`file_urls` 一律 `INVALID_INPUT`。份數（repair ≤10、
+            # document ≤1）在 `_agent_turn` 程式層檢查（registry 不認 `maxItems`）。
+            "upload_ids": {
+                "type": "array",
+                "items": {"type": "string", "maxLength": upload_store.TOKEN_MAX_LEN},
+                "description": "本回合附件的 upload_id（由 agent.upload_ticket 取票、瀏覽器直傳後取得）；repair ≤10、document =1，用途須與取票時相同。",
+            },
         },
         "required": ["message"],
         "additionalProperties": False,
@@ -1606,6 +1905,91 @@ AGENT_TURN_SPEC: ToolSpec = {
     # ⛔ 不塞 prospect 大綱（見 `_make_agent_turn`／`_agent_turn_preflight`）。
     "stage": {"prospect": "M1", "property_manager": "M1"},
 }
+
+
+# ════════════════════════════════════════════════════════════════════
+# UD-1：`agent.upload_ticket`（瀏覽器直傳的上傳票）
+# ════════════════════════════════════════════════════════════════════
+UPLOAD_TICKET_NAME = "agent.upload_ticket"
+
+
+class UploadTicketOutput(BaseModel):
+    """JGB 規格草稿 §2 的回應形狀。`upload_token` 只出現在這一次回應裡（伺服端只存雜湊）。"""
+
+    upload_url: str
+    upload_token: str
+    expires_at: int
+    max_files: int
+    max_bytes: int
+    accept: list
+
+
+UPLOAD_TICKET_SPEC: ToolSpec = {
+    "name": UPLOAD_TICKET_NAME,
+    "description": (
+        "取一張瀏覽器直傳附件用的上傳票（10 分鐘內有效，綁定本次身分與 session）。"
+        "瀏覽器以 Authorization: Bearer <upload_token> 把檔案 POST 到 upload_url，"
+        "拿到的 upload_id 放進 agent.turn 的 upload_ids。"
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "attachment_purpose": {
+                "type": "string",
+                "enum": list(ATTACHMENT_PURPOSES),
+                "description": "repair＝報修照片（最多 10 張）；document＝文件（1 份）。須與之後 agent.turn 的 attachment_purpose 相同。",
+            },
+        },
+        "required": ["attachment_purpose"],
+        "additionalProperties": False,
+    },
+    "output_model": UploadTicketOutput,
+    "scope": "read",
+    # 會改行程內狀態（暫存表）⇒ 影子視圖一律不可見；⛔ 不進模型工具清單。
+    "mutates_session": True,
+    "facade_only": True,
+    # 與 `agent.turn` 同一組受眾與階段（票只對拿得到 `agent.turn` 的身分有用）。
+    "stage": {"prospect": "M1", "property_manager": "M1"},
+}
+
+
+def _make_upload_ticket() -> Callable:
+    """`agent.upload_ticket` 的 `ToolFn`。
+
+    收到的身分＝`_invoke` 換過的**命名空間身分**（`agent.turn` 用同一個
+    `namespaced_identity` 重算綁定，兩邊才對得上）。S7：缺 `user_id` 一律拒。
+    """
+
+    async def _upload_ticket(identity: Identity, args: dict) -> ToolResult:
+        purpose = args.get("attachment_purpose")
+        if purpose not in ATTACHMENT_PURPOSES:
+            return ToolResult(ok=False, error="INVALID_INPUT")
+        try:
+            binding = upload_store.binding_from_identity(identity, purpose)
+        except ValueError:
+            detail = (
+                USER_ID_REQUIRED_DETAIL
+                if getattr(identity, "user_id", None) in (None, "")
+                else None
+            )
+            return ToolResult(ok=False, error="INVALID_INPUT",
+                              data={INPUT_DETAIL_KEY: detail} if detail else None)
+        issued = upload_store.STORE.issue_ticket(binding)
+        return ToolResult(
+            ok=True,
+            data=UploadTicketOutput(
+                upload_url=upload_store.public_upload_url(),
+                upload_token=issued.upload_token,
+                expires_at=issued.expires_at,
+                max_files=issued.max_files,
+                max_bytes=issued.max_bytes,
+                accept=list(issued.accept),
+            ).model_dump(),
+            provenance=[],
+            text_for_model="",
+        )
+
+    return _upload_ticket
 
 
 def _app_state(deps: FacadeDeps, name: str) -> Any:
@@ -1715,6 +2099,16 @@ def _make_agent_turn(
     """
 
     async def _agent_turn(identity: Identity, args: dict) -> ToolResult:
+        # UD-1：被本回合引用的直傳附件，**不論回合成敗**（含逾時取消、例外）都在
+        # 這裡收尾——文件類即刪、修繕照片轉保留（`upload_store.end_turn`）。
+        claimed: list = []
+        try:
+            return await _agent_turn_body(identity, args, claimed)
+        finally:
+            if claimed:
+                upload_store.STORE.end_turn([c.ref for c in claimed])
+
+    async def _agent_turn_body(identity: Identity, args: dict, claimed: list) -> ToolResult:
         message = args.get("message")
         # ── W8 (2)：照片進場的三道程式層檢查（schema 管不到的那三件事）──
         image_urls = args.get("image_urls")
@@ -1752,9 +2146,29 @@ def _make_agent_turn(
         #    ⛔ 不截斷後照跑——那是靜默降級。
         if len(file_urls) > image_fetch.FILE_MAX_COUNT:
             return ToolResult(ok=False, error="INVALID_INPUT")
-        # ② 早退：三者皆空才 `INVALID_INPUT`（純照片／純文件回合都合法）。
+        # ── UD-1：直傳附件 `upload_ids` 與模式開關（S13）──
+        #    預設 `upload_ids`：`image_urls`／`file_urls` 一律拒（⛔ 抓網址）；
+        #    `AGENT_ATTACHMENT_INPUT=urls`（回滾）：舊行為逐位不變、`upload_ids` 拒。
+        upload_ids = args.get("upload_ids")
+        if upload_ids is None:
+            upload_ids = []
+        if not isinstance(upload_ids, list) or not all(
+            isinstance(u, str) for u in upload_ids
+        ):
+            return ToolResult(ok=False, error="INVALID_INPUT")
+        if upload_store.attachment_input_mode() == upload_store.INPUT_MODE_UPLOAD_IDS:
+            if image_urls or file_urls:
+                return ToolResult(ok=False, error="INVALID_INPUT",
+                                  data={INPUT_DETAIL_KEY: URL_INPUT_DISABLED_DETAIL})
+        elif upload_ids:
+            return ToolResult(ok=False, error="INVALID_INPUT",
+                              data={INPUT_DETAIL_KEY: UPLOAD_INPUT_DISABLED_DETAIL})
+        # 份數：repair ≤10、document ≤1（`LIMITS` 封閉表）；⛔ 截斷後照跑。
+        if len(upload_ids) > upload_store.max_files_for(purpose):
+            return ToolResult(ok=False, error="INVALID_INPUT")
+        # ② 早退：皆空才 `INVALID_INPUT`（純照片／純文件回合都合法）。
         if not isinstance(message, str) or (
-            not message.strip() and not image_urls and not file_urls
+            not message.strip() and not image_urls and not file_urls and not upload_ids
         ):
             return ToolResult(ok=False, error="INVALID_INPUT")
 
@@ -1781,19 +2195,56 @@ def _make_agent_turn(
         #    文件回合以**最壞值預扣**——一份 PDF 最多會變成 `DOC_MAX_PAGES`
         #    張頁圖，配額必須按那個最壞值先扣，⛔ 不能等抓完才知道扣多少
         #    （那時候檔已經下載完了，配額擋不到下載這件事本身）。
+        # UD-1：`upload_ids` 先**只驗不取**（綁定、單次、30 分鐘，S6），配額依暫存裡
+        #    判出的型別計（PDF 按最壞頁數預扣，同網址線）；配額過了才 `claim`。
+        #    `check`→配額→`claim` 之間沒有 await ⇒ 同一事件迴圈內是原子的。
+        upload_binding = None
+        if upload_ids:
+            try:
+                upload_binding = upload_store.binding_from_identity(
+                    namespaced_identity(identity), purpose
+                )
+                upload_types = upload_store.STORE.check(upload_ids, upload_binding)
+            except upload_store.UploadRefError as e:
+                return ToolResult(ok=False, error="INVALID_INPUT",
+                                  data={INPUT_DETAIL_KEY: e.describe()})
+            except ValueError:          # 缺 user_id（S7）／身分組不出命名空間鍵
+                detail = (
+                    USER_ID_REQUIRED_DETAIL
+                    if getattr(identity, "user_id", None) in (None, "")
+                    else None
+                )
+                return ToolResult(ok=False, error="INVALID_INPUT",
+                                  data={INPUT_DETAIL_KEY: detail} if detail else None)
+            n_pdf = sum(1 for t in upload_types if t == upload_store.PDF_CONTENT_TYPE)
+            n_photo = len(upload_types) - n_pdf
+        else:
+            n_photo, n_pdf = len(image_urls), len(file_urls)
+
         quota_key = (identity.api_key_id, identity.vendor_id)
-        page_charge = len(image_urls) + (
-            len(file_urls) * image_fetch.doc_max_pages()
+        page_charge = n_photo + (
+            n_pdf * image_fetch.doc_max_pages()
             if purpose == "document" else 0
         )
         if page_charge and not image_fetch.check_and_record_image_count(
             quota_key, page_charge
         ):
             return ToolResult(ok=False, error="RATE_LIMITED")
-        if file_urls and not image_fetch.check_and_record_file_count(
-            quota_key, len(file_urls)
+        if n_pdf and not image_fetch.check_and_record_file_count(
+            quota_key, n_pdf
         ):
             return ToolResult(ok=False, error="RATE_LIMITED")
+
+        if upload_ids:
+            try:
+                taken = upload_store.STORE.claim(upload_ids, upload_binding)
+            except upload_store.UploadRefError as e:
+                return ToolResult(ok=False, error="INVALID_INPUT",
+                                  data={INPUT_DETAIL_KEY: e.describe()})
+            claimed.extend(taken)
+            # 交給既有的 `prepare_*_turn`：來源換成暫存位元組，其餘逐位不變。
+            image_urls = [c for c in taken if c.content_type != upload_store.PDF_CONTENT_TYPE]
+            file_urls = [c for c in taken if c.content_type == upload_store.PDF_CONTENT_TYPE]
 
         try:
             store = _open_state_store(deps, identity)
@@ -1997,11 +2448,16 @@ async def gate_kb_search_on_reviewed_rows(registry: ToolRegistry, pool) -> Optio
     return reviewed
 
 
-def build_registry(deps: FacadeDeps, registry: Optional[ToolRegistry] = None) -> ToolRegistry:
+def build_registry(deps: FacadeDeps, registry: Optional[ToolRegistry] = None, *,
+                   upload_enabled: Optional[bool] = None) -> ToolRegistry:
     """把 1.4／1.5／1.6 的工具函式接上 `ToolRegistry`（薄接線，⛔ 不改其行為）。
 
     每個 spec 都過 `registry.register()`，因此不變量 27（input_schema 無身分鍵）
     在註冊當下就會擋下違規 spec。
+
+    `upload_enabled`（UD-1）：直傳是否啟用；`None` ⇒ 現算
+    `upload_store.upload_endpoint_status()`。`app.py` 傳入它自己算的那一個值，
+    讓工具與上傳路由同開同關。
     """
     from services.agent.tools import action as action_tools
     from services.agent.tools import help as help_tool
@@ -2253,6 +2709,11 @@ def build_registry(deps: FacadeDeps, registry: Optional[ToolRegistry] = None) ->
         reg.register(
             AGENT_TURN_SPEC, _make_agent_turn(deps, repair_category_tree=_repair_category_tree)
         )
+        # UD-1：上傳票與上傳路由同開同關（S12／S13）；直傳關閉 ⇒ 不註冊（整條路徑消失）。
+        if upload_enabled is None:
+            upload_enabled = upload_store.upload_endpoint_status()[0]
+        if upload_enabled:
+            reg.register(UPLOAD_TICKET_SPEC, _make_upload_ticket())
 
     return reg
 
@@ -2474,7 +2935,9 @@ def _make_invoke(registry: ToolRegistry, deps: FacadeDeps) -> Callable:
         um.finalize("success" if result.ok else "error", 200, db_pool=pool)
 
         if not result.ok:
-            raise tool_error(_tool_error_message(result.error))
+            detail = _input_detail(result)
+            message = _tool_error_message(result.error)
+            raise tool_error(f"{message}: {detail}" if detail else message)
         return result.data or {}
 
     return _invoke
@@ -2734,6 +3197,20 @@ def _filter_tools(result: Any, visible: set) -> Any:
 #: 受無條件服務層閘管轄的路徑前綴（不變量 28：⛔ 不得列入 `_EXEMPT_PREFIX`）。
 GATED_PREFIXES = ("/mcp", "/api/v1/agent")
 
+#: UD-1 上傳端點（瀏覽器直傳）可豁免的方法。
+UPLOAD_EXEMPT_METHODS = ("POST", "OPTIONS")
+
+
+def is_upload_request(scope: Mapping) -> bool:
+    """這個請求是不是瀏覽器直傳（S1）：HTTP、路徑**完全等於** `UPLOAD_PATH`、
+    方法 POST 或 OPTIONS。⛔ 前綴比對、⛔ 尾斜線、⛔ 其他方法。
+    `McpServiceGate`、`app.py` 的 `api_key_guard` 與 CORS 旁路共用這一個判斷。"""
+    return (
+        scope.get("type") == "http"
+        and scope.get("path") == upload_store.UPLOAD_PATH
+        and str(scope.get("method", "")).upper() in UPLOAD_EXEMPT_METHODS
+    )
+
 
 class McpServiceGate:
     """純 ASGI middleware：`/mcp`／`/api/v1/agent/*` 的三道請求層檢查。
@@ -2744,18 +3221,26 @@ class McpServiceGate:
     `usage_metering_middleware` 做 `/mcp` 的額度短路（⛔ 它不 begin／finalize）。
 
     ⚠️ OPTIONS **不豁免**：`/mcp` 僅 server-to-server，CORS 預檢本來就不該出現。
+    唯一例外（UD-1／S1）：`exempt_upload=True` 時，`is_upload_request` 為真的請求
+    （路徑完全等於 `/api/v1/agent/uploads`、POST／OPTIONS）直接放行給上傳路由，
+    由它自己驗 Origin 與上傳票。`GATED_PREFIXES` 不變，同前綴的其他路徑照舊過閘。
     """
 
     def __init__(self, app, *, get_pool: Callable[[], Any],
-                 prefixes: tuple = GATED_PREFIXES) -> None:
+                 prefixes: tuple = GATED_PREFIXES,
+                 exempt_upload: bool = False) -> None:
         self.app = app
         self._get_pool = get_pool
         self._prefixes = prefixes
+        self._exempt_upload = bool(exempt_upload)
         # 啟動即讀——未設定 ⇒ raise（啟動紅）。
         self._allowed_origins = load_allowed_origins()
 
     async def __call__(self, scope, receive, send) -> None:
         if scope.get("type") != "http" or not str(scope.get("path", "")).startswith(self._prefixes):
+            await self.app(scope, receive, send)
+            return
+        if self._exempt_upload and is_upload_request(scope):
             await self.app(scope, receive, send)
             return
 
