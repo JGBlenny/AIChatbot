@@ -19,7 +19,7 @@ DIALOG_MAX_MESSAGES`）。本檔若去 import 那些模組的常數，會在
 test_agent_session_req.py` 另有一條「與各檔既有常數逐一相等」的正對照守著
 不讓兩邊漂移，⛔ 不是「重複了就沒事」。
 
-## 14 個鍵與六種生命週期（KEY_SPECS，封閉表）
+## 15 個鍵與六種生命週期（KEY_SPECS，封閉表）
 `turn`（每回合覆寫或回合內暫存）／`once`（一次性，用掉即清）／
 `until_scope_exit`（黏到 `scope_exit()`）／`fifo(n)`（FIFO 上限 n）／
 `stamp`（時間戳）／`session`（整個 session 累加，不受回合或範圍影響）。
@@ -79,6 +79,11 @@ LAST_SUBMITTED_KEY = "last_submitted"
 #: `{action, field, type, ids, has_more, name_fp, creator, picked}`。**本鍵的權威定義就在本檔**。
 #: 形狀與讀回驗證在 `write_candidates.load_write_candidates`（封閉八鍵；⛔ 名稱、⛔ 列內容、⛔ token）。
 WRITE_CANDIDATES_KEY = "write_candidates"
+#: UD 修復 r1（`plan-ud-fix-r1-20261029.md` 改動 2）：照片候選分類回合存下的照片中繼資料＋候選
+#: `{photos, candidates, suggested_*, processed, total, expires_at}`。**本鍵的權威定義就在本檔**
+#: （`runtime.py` 由此 import）。寫點與讀清點、讀回的封閉形狀驗證都在 runtime
+#: （`_image_program_turn` 寫；`run_turn` 在程式段之前讀並清；⛔ 位元組、⛔ 使用者訊息）。
+IMAGE_PICK_PENDING_KEY = "image_pick_pending"
 
 #: DSP-022：`dialog` 保留的訊息數上限（user＋assistant 各一則算 2；10 輪對話）。
 DIALOG_MAX_MESSAGES = 20
@@ -118,9 +123,12 @@ KEY_SPECS: dict[str, KeySpec] = {
     # **單一清除點**是 `clear_write_draft()`（取消、送出、換動作、閒置、換身分、`select:` 釘住範圍），
     # 另加出確認卡時由 runtime 呼叫 `clear_write_candidates()`；新清單覆蓋舊的。
     WRITE_CANDIDATES_KEY: KeySpec(WRITE_CANDIDATES_KEY, Lifetime.UNTIL_SCOPE_EXIT),
+    # UD 修復 r1（SR-8）：一次性（沿用既有六種之一，⛔ 新增第七種）——下一回合在程式段之前
+    # 讀出即清；另以 `expires_at`（`time.time()`＋1800 秒）作廢。
+    IMAGE_PICK_PENDING_KEY: KeySpec(IMAGE_PICK_PENDING_KEY, Lifetime.ONCE),
 }
 
-assert len(KEY_SPECS) == 14, "KEY_SPECS 是封閉表——14 個鍵，多一個少一個都要回頭對帳"
+assert len(KEY_SPECS) == 15, "KEY_SPECS 是封閉表——15 個鍵，多一個少一個都要回頭對帳"
 
 
 class AgentSession:
@@ -235,6 +243,15 @@ class AgentSession:
 
     def consume_image_suggestion(self) -> None:
         self._state.pop(IMAGE_SUGGESTION_KEY, None)
+
+    # ── image_pick_pending（UD 修復 r1 改動 2：候選回合的照片中繼資料＋成對候選，一次性）──
+    #    下一回合程式段之前讀出即清（`runtime.run_turn`）；⚠️ 形狀驗證與到期判斷在 runtime 讀點
+    #    （`_load_image_pick_pending`），本類別只管落地與清除。
+    def write_image_pick_pending(self, entry: dict) -> None:
+        self._state[IMAGE_PICK_PENDING_KEY] = entry
+
+    def take_image_pick_pending(self) -> Any:
+        return self._state.pop(IMAGE_PICK_PENDING_KEY, None)
 
     # ── document_carry（站內幫手 S3／DSP-076：一次性文件暫存）─────────────────
     #    封閉四欄：`action`（動作名）、`typed_fields`（`[[欄位, 有型別值], …]`）、
@@ -444,6 +461,7 @@ __all__ = [
     "WRITE_DRAFT_KEY",
     "LAST_SUBMITTED_KEY",
     "WRITE_CANDIDATES_KEY",
+    "IMAGE_PICK_PENDING_KEY",
     "DOCUMENT_CARRY_FIELDS",
     "DOCUMENT_CARRY_MAX_TURNS",
     "DIALOG_MAX_MESSAGES",

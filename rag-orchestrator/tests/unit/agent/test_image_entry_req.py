@@ -238,6 +238,14 @@ def _clean_process_state():
     image_fetch.reset_image_failures()
 
 
+@pytest.fixture(autouse=True)
+def _attachment_input_urls(monkeypatch):
+    """UD-1：預設模式改為 `upload_ids`（`image_urls`／`file_urls` 一律 `INVALID_INPUT`）。
+    本檔驗的是網址線（回滾模式）的既有行為 ⇒ 切 `AGENT_ATTACHMENT_INPUT=urls`。
+    預設模式本身的拒絕見 `test_upload_direct_req.py`（A3）。"""
+    monkeypatch.setenv("AGENT_ATTACHMENT_INPUT", "urls")
+
+
 @pytest.fixture
 def tree_fn():
     calls = []
@@ -875,6 +883,7 @@ async def test_low_confidence_asks_for_the_category_first(monkeypatch):
     assert PENDING_CONFIRM_KEY not in state["agent"]
     assert result.quick_replies == [
         {"label": "水電類", "value": "水電類"}, {"label": "門窗類", "value": "門窗類"},
+        {"label": "都不是", "value": "都不是"},   # r1：候選鈕最後一顆是「都不是」出口
     ]
     assert all(q["label"] == q["value"] for q in result.quick_replies)
     assert all("confirm_" not in q["value"] for q in result.quick_replies)

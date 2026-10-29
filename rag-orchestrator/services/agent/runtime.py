@@ -69,7 +69,11 @@ from openai.types.chat.chat_completion_message_tool_call import Function as _Too
 from pydantic import ValidationError
 
 from services import usage_metering
-from services.agent.agent_session import DOCUMENT_CARRY_MAX_TURNS, AgentSession
+from services.agent.agent_session import (
+    DOCUMENT_CARRY_MAX_TURNS,
+    HANDOFF_CACHE_KEY,
+    AgentSession,
+)
 from services.agent.budget import Budget, BudgetCounters
 from services.agent.affirmative import is_affirmative
 from services.agent.completed_actions import (
@@ -1420,6 +1424,9 @@ IMAGE_PARTIAL_TEXT = "只看了前 {n} 張照片（共 {m} 張）。"
 IMAGE_FAILED_TEXT = "照片處理失敗，請改用文字描述，或稍後再試。"
 IMAGE_TIMEOUT_TEXT = "照片處理逾時，請少傳幾張或改用文字描述。"
 IMAGE_PICK_CATEGORY_TEXT = "照片看起來可能是下列分類，請選一個："
+#: 候選鈕的最後一顆：使用者表明「不是這些分類」的出口（值＝標籤逐字，同候選鈕的紀律）。
+#: 按它 ⇒ 照片照帶、分類交回合照常處理；打字對不上候選 ⇒ 再出一次候選鈕（`_image_pick_resume`）。
+IMAGE_PICK_NONE_TEXT = "都不是"
 
 #: 低信心門檻：`confidence <` 此值且樹內候選 ≥2 ⇒ 出卡前先問一個分類（不建 pending）。
 IMAGE_CONFIDENCE_MIN = 0.6
@@ -1538,6 +1545,10 @@ class ImageTurnInput:
     #: `({filename, content_type, size, sha256}, …)`——⛔ 沒有 bytes、⛔ 沒有網址。
     #: 只用來附進修繕單（經一次性的照片建議），⛔ 不進模型資料段。
     photos: tuple = ()
+    #: UD 修復 r1（SR-10）：與 `candidates` 逐一對齊的大類名（葉節點才有；對不到 ⇒ `None`）。
+    #: 空 tuple＝沒有對齊資料（我方視覺模型路徑）。只供候選回合存 `image_pick_pending` 的
+    #: `[(葉名, 大類名)]` 成對資料，⛔ 不進模型資料段。
+    candidate_parents: tuple = ()
 
     def __post_init__(self) -> None:
         # 值域**當場驗**（fail loud）：`status` 一旦漂出封閉四值，下方三條終止
@@ -1547,6 +1558,166 @@ class ImageTurnInput:
                 f"ImageTurnInput.status 只允許 {sorted(IMAGE_STATUSES)}，得到 {self.status!r}"
             )
 
+
+# ════════════════════════════════════════════════════════════════════
+# UD 修復 r1 改動 2（`plan-ud-fix-r1-20261029.md` §4；SR-7、SR-8、SR-10）：候選回合保留照片
+# ════════════════════════════════════════════════════════════════════
+#: `image_pick_pending` 的存活秒數（`expires_at`＝`time.time()`＋此值；⛔ runtime `_clock`：
+#: monotonic 跨重啟無意義）。
+IMAGE_PICK_PENDING_TTL_S = 1800
+#: `image_pick_pending` 的**封閉**鍵集合（讀回時多一個少一個都丟棄）。
+IMAGE_PICK_PENDING_FIELDS: frozenset = frozenset({
+    "photos", "candidates", "suggested_category", "suggested_item", "suggested_reason",
+    "suggested_description", "processed", "total", "expires_at",
+})
+_IMAGE_PICK_PHOTO_KEYS: frozenset = frozenset({"filename", "content_type", "size", "sha256"})
+_IMAGE_PICK_PHOTO_TYPES: frozenset = frozenset({"image/jpeg", "image/png", "image/webp"})
+_IMAGE_PICK_SHA_RE = re.compile(r"^[0-9a-f]{64}$")
+
+
+def _is_int(value: Any) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool)
+
+
+def _image_pick_photo_ok(photo: Any) -> bool:
+    return (
+        isinstance(photo, dict)
+        and set(photo.keys()) == _IMAGE_PICK_PHOTO_KEYS
+        and isinstance(photo["filename"], str)
+        and photo["content_type"] in _IMAGE_PICK_PHOTO_TYPES
+        and _is_int(photo["size"]) and photo["size"] >= 0
+        and isinstance(photo["sha256"], str)
+        and _IMAGE_PICK_SHA_RE.match(photo["sha256"]) is not None
+    )
+
+
+def _image_pick_pending_entry(image: "ImageTurnInput", picks: list, *, now: float) -> Optional[dict]:
+    """候選回合要存的 `image_pick_pending`——照片**只有中繼資料**（⛔ 位元組）、候選存成
+    `[(葉名, 大類名)]`（大類名取 `candidate_parents` 對齊值；對不到 ⇒ `None`）。
+    照片數不在 1～`REPAIR_PHOTOS_MAX` ⇒ `None`（沒有可保留的照片，⛔ 存）。"""
+    photos = [dict(p) for p in (image.photos or ()) if isinstance(p, dict)]
+    if not 1 <= len(photos) <= REPAIR_PHOTOS_MAX or not all(_image_pick_photo_ok(p) for p in photos):
+        return None
+    by_name = dict(zip(image.candidates or (), image.candidate_parents or ()))
+    pairs = []
+    for name in picks:
+        parent = by_name.get(name)
+        if not (isinstance(parent, str) and parent.strip()):
+            parent = (image.suggested_parent_category
+                      if name == image.suggested_category else None)
+        pairs.append([name, parent if isinstance(parent, str) and parent.strip() else None])
+    return {
+        "photos": photos,
+        "candidates": pairs,
+        "suggested_category": image.suggested_category,
+        "suggested_item": image.suggested_item,
+        "suggested_reason": image.suggested_reason,
+        "suggested_description": image.suggested_description,
+        "processed": image.processed,
+        "total": image.total,
+        "expires_at": now + IMAGE_PICK_PENDING_TTL_S,
+    }
+
+
+def _load_image_pick_pending(raw: Any, *, now: float) -> Optional[dict]:
+    """讀回驗封閉形狀（SR-8）；不合或已過期 ⇒ `None`（丟棄）。"""
+    if not isinstance(raw, dict) or set(raw.keys()) != IMAGE_PICK_PENDING_FIELDS:
+        return None
+    photos = raw["photos"]
+    if (not isinstance(photos, list) or not 1 <= len(photos) <= REPAIR_PHOTOS_MAX
+            or not all(_image_pick_photo_ok(p) for p in photos)):
+        return None
+    cands = raw["candidates"]
+    if not isinstance(cands, list) or not 2 <= len(cands) <= IMAGE_CANDIDATE_MAX:
+        return None
+    for pair in cands:
+        if (not isinstance(pair, (list, tuple)) or len(pair) != 2
+                or not isinstance(pair[0], str) or not pair[0].strip()
+                or not (pair[1] is None or isinstance(pair[1], str))):
+            return None
+    for key in ("suggested_category", "suggested_item", "suggested_reason", "suggested_description"):
+        if not (raw[key] is None or isinstance(raw[key], str)):
+            return None
+    processed, total = raw["processed"], raw["total"]
+    if not (_is_int(processed) and _is_int(total) and 0 <= processed <= total
+            and 1 <= total <= REPAIR_PHOTOS_MAX):
+        return None
+    expires_at = raw["expires_at"]
+    if (isinstance(expires_at, bool) or not isinstance(expires_at, (int, float))
+            or expires_at != expires_at or expires_at <= now):
+        return None
+    return raw
+
+
+def _image_pick_resume(pending: dict, user_message: Any, *, reask: bool = True) -> "ImageTurnInput":
+    """下一回合沒有新照片、pending 有效 ⇒ 程式重組 `ImageTurnInput`（SR-10）。
+
+    - 使用者訊息**逐字等於**某個候選葉名（按鈕送回原字串）⇒ 分類＝該葉、大類＝成對大類；
+      `suggested_item`／`suggested_reason`／`suggested_description` 只在被選候選就是原建議分類或
+      原部位標籤時才帶，否則 `None`。
+    - 不等於、但訊息裡**恰好只出現一個**候選葉名（例：「是天花板漏水那個」）⇒ 同上選它
+      （與填欄只填答覆 B1 同一條紀律：值必須是使用者原話裡的字）。
+    - 逐字等於 `IMAGE_PICK_NONE_TEXT`（「都不是」鈕）⇒ 只帶照片（分類欄 `None`），分類交給回合照常處理。
+    - 其餘（零個或兩個以上候選出現在訊息裡，例：「牆的那個」）且 `reask` ⇒ 回帶原候選的 `ImageTurnInput`，
+      `_image_program_turn` 再出一次候選鈕並重存 pending。⚠️ ⛔ 改成只帶照片、交回合處理：
+      那條路的填欄只收原話裡的字，「牆的那個」填不出「牆面」，卡上就落到預設「其他（未指定）」
+      （r1 verifier V09／V14；改後容器重跑 X01、X05 同樣重現）。
+    - `reask=False`（呼叫端判定這句是機器值或同題重播，該走程式段早退）⇒ 只帶照片（同「都不是」）。
+    `facts` 一律以 `_image_facts` 重組（⛔ 存字句）、`status="ok"`（⛔ `partial`）。
+    ⛔ 從使用者訊息解析任何照片欄位：訊息只拿來和已存的候選比對。
+    """
+    from services.agent.mcp_facade import _image_facts
+
+    pairs = pending["candidates"]
+    message = user_message if isinstance(user_message, str) else ""
+    chosen = next((pair for pair in pairs if message == pair[0]), None)
+    if chosen is None and message != IMAGE_PICK_NONE_TEXT:
+        mentioned = [pair for pair in pairs if pair[0] in message]
+        if len(mentioned) == 1:
+            chosen = mentioned[0]
+        elif reask:
+            return _image_pick_reask(pending)
+    category = parent = item = reason = description = None
+    if chosen is not None:
+        category, parent = chosen[0], chosen[1]
+        if category in (pending["suggested_category"], pending["suggested_item"]):
+            item = pending["suggested_item"]
+            reason = pending["suggested_reason"]
+            description = pending["suggested_description"]
+    processed, total = pending["processed"], pending["total"]
+    return ImageTurnInput(
+        status="ok",
+        facts=_image_facts(processed=processed, total=total, damage_visible=True, category=category),
+        processed=processed,
+        total=total,
+        candidates=(),
+        suggested_category=category,
+        suggested_parent_category=parent,
+        suggested_item=item,
+        suggested_reason=reason,
+        suggested_description=description,
+        photos=tuple(dict(p) for p in pending["photos"]),
+    )
+
+
+def _image_pick_reask(pending: dict) -> "ImageTurnInput":
+    """打字對不上候選 ⇒ 原候選、原照片、原建議欄位照帶回去，讓 `_image_program_turn` 再出候選鈕、重存 pending。"""
+    from services.agent.mcp_facade import _image_facts
+
+    processed, total = pending["processed"], pending["total"]
+    return ImageTurnInput(
+        status="ok",
+        facts=_image_facts(processed=processed, total=total, damage_visible=True, category=None),
+        processed=processed,
+        total=total,
+        candidates=tuple(pair[0] for pair in pending["candidates"]),
+        candidate_parents=tuple(pair[1] for pair in pending["candidates"]),
+        suggested_category=pending["suggested_category"],
+        suggested_item=pending["suggested_item"],
+        suggested_reason=pending["suggested_reason"],
+        suggested_description=pending["suggested_description"],
+        photos=tuple(dict(p) for p in pending["photos"]),
+    )
 
 SSEEvent = dict
 
@@ -4071,6 +4242,13 @@ class AgentRuntime:
         if not candidates:
             return None
         picks = candidates[:IMAGE_CANDIDATE_MAX]
+        # UD 修復 r1 改動 2（SR-9）：候選回合走不到 `_build_turn_context` 的建議寫點 ⇒ 這裡先把舊照片
+        # 建議清掉（⛔ 上一批照片跨批殘留到之後的卡）；再把本批照片中繼資料＋成對候選存進
+        # `image_pick_pending`（SR-8、SR-10），下一回合由 `run_turn` 讀清、重組。
+        AgentSession(agent_state).write_image_suggestion(None)
+        pending_entry = _image_pick_pending_entry(image, picks, now=time.time())
+        if pending_entry is not None:
+            AgentSession(agent_state).write_image_pick_pending(pending_entry)
         # `label` 與 `value` **皆為分類樹節點名逐字**——⛔ 不另立機器值文法：
         # line-bot 把原字串送回來，下一回合它就是使用者打的分類名。
         # ⛔ 不含三顆確認鍵（那是出卡回合的事），⛔ 不建 pending。
@@ -4078,7 +4256,8 @@ class AgentRuntime:
             agent_state=agent_state, user_message=user_message,
             trace_id=trace_id, start=start, kind="ask",
             answer=IMAGE_PICK_CATEGORY_TEXT, pending_id=None,
-            quick_replies=[{"label": name, "value": name} for name in picks],
+            quick_replies=[{"label": name, "value": name} for name in picks]
+            + [{"label": IMAGE_PICK_NONE_TEXT, "value": IMAGE_PICK_NONE_TEXT}],
             # dialog 末則要帶候選名，下一回合模型才看得懂使用者回的那個詞是什麼。
             dialog_answer=IMAGE_PICK_CATEGORY_TEXT + "、".join(picks),
         )
@@ -4184,9 +4363,29 @@ class AgentRuntime:
         ⚠️ 本層只做一件本體外的事：`status=="partial"` 時把「只看了前 N 張」接在
         `TurnResult.answer` **最後**——時機在 `_append_dialog`／`card_sha256`／trace
         都定案之後，故那三者逐位元不受影響（同 W8 (3) `hint` 的紀律）。
+
+        UD 修復 r1 改動 2（SR-7、SR-8）：程式段（`run_program_segments`）之前**讀出即清**
+        `image_pick_pending`——確認段、清單點選、快取重播等早退路徑也一併清掉。新照片回合
+        （以新照片為準）、文件回合（⛔ 與文件合併）、已過期、形狀不合 ⇒ 作廢不帶；否則以
+        `_image_pick_resume` 重組本回合的 `image`。`readonly_view`（影子回合）不消耗、不清除。
         """
+        turn_image = image
+        if not self.readonly_view:
+            agent_state = state.setdefault("agent", {})
+            raw_pending = AgentSession(agent_state).take_image_pick_pending()
+            if raw_pending is not None and image is None and document is None:
+                pending = _load_image_pick_pending(raw_pending, now=time.time())
+                if pending is not None:
+                    # 照片出口排在程式段最前：確認／清單點選／`pick:` 機器值與同題重播 ⛔ 被「再出候選鈕」搶走。
+                    # 快取只讀（⛔ `AgentSession.handoff_cache()`：它會 setdefault，副作用留給程式段）。
+                    replay = _cache_key(user_message) in (agent_state.get(HANDOFF_CACHE_KEY) or {})
+                    machine = (_parse_confirm_value(user_message) is not None
+                               or _parse_select_value(user_message) is not None
+                               or _wc.parse_pick_value(user_message) is not None)
+                    turn_image = _image_pick_resume(pending, user_message,
+                                                    reask=not (machine or replay))
         result = await self._run_turn_body(
-            identity, user_message, state, image=image, context=context,
+            identity, user_message, state, image=turn_image, context=context,
             document=document,
         )
         if (
