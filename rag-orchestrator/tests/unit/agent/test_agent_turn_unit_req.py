@@ -388,6 +388,8 @@ def test_agent_turn_input_schema_only_takes_message():
     # `test_document_turn_req.py`）。屬性集合是**封閉的**，⛔ 不得只加不對帳。
     assert set(schema["properties"]) == {
         "message", "image_urls", "context", "attachment_purpose", "file_urls",
+        # UD-1：瀏覽器直傳的 `upload_ids`（專用測試見 `test_upload_direct_req.py`）。
+        "upload_ids",
     }
     assert schema["required"] == ["message"]
     assert schema["properties"]["message"]["maxLength"] == 2000

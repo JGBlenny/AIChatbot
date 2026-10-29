@@ -264,6 +264,7 @@ class _RowEngine:
 
 
 async def test_every_jgb2_call_from_every_agent_path_carries_role_and_viewer(api, monkeypatch):
+    monkeypatch.setenv("AGENT_ATTACHMENT_INPUT", "urls")   # UD-1：本條用網址線照片回合
     monkeypatch.setenv("AGENT_WRITE_TOOLS_ENABLED", "true")
     monkeypatch.setenv("AGENT_TURN_ENABLED", "true")
     monkeypatch.delenv("AGENT_ASSISTANT_KEY_IDS", raising=False)

@@ -207,6 +207,7 @@ async def test_document_purpose_without_any_attachment_runs_as_a_normal_turn():
 async def test_document_purpose_with_a_real_file_still_takes_the_document_path(monkeypatch):
     """正對照組：真的帶了檔案 ⇒ `document=` 有傳、旗標不亮。
     （少了這一條，一個「永遠不走文件線」的壞改動也能讓上面那條過。）"""
+    monkeypatch.setenv("AGENT_ATTACHMENT_INPUT", "urls")   # UD-1：網址線＝回滾模式
     spy = _SpyRuntime()
     prepared = DocumentTurnInput(status="ok", kind="contract", facts="租約重點：…",
                                  pages_seen=1, pages_total=1)

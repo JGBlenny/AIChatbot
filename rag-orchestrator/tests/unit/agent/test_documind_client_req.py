@@ -7,6 +7,7 @@ DocuMind 對接規格 2.4.0 實測回應的**形狀**，以**合成值**在本�
 from __future__ import annotations
 
 import copy
+import hashlib
 import io
 import json
 import logging
@@ -212,6 +213,17 @@ async def test_disabled_config_never_opens_a_connection(clean_env):
 # D3／D5／D6：送出與讀回
 # ════════════════════════════════════════════════════════════════════
 _CFG = dm.DocuMindConfig("https://documind.example.test/api/v1/analyze", "tok123")
+
+#: UD-2a S4：本節測送出與讀回的形狀、不測合成檔防護；本節送的合成位元組登進清單
+#: （防護仍開著＝「清單內的檔照送」的正對照）。防護本身見 `test_documind_ud2a_req.py`。
+_LISTED_BYTES = (b"%PDF-1.4 body", b"%PDF-1.4")
+
+
+@pytest.fixture(autouse=True)
+def _listed_synthetic_bytes(monkeypatch):
+    monkeypatch.delenv(dm.DOCUMIND_SYNTHETIC_GUARD_ENV, raising=False)
+    allowed = frozenset(hashlib.sha256(b).hexdigest() for b in _LISTED_BYTES)
+    monkeypatch.setattr(dm, "synthetic_sha256_allowlist", lambda: allowed)
 
 
 def _factory(handler, seen=None):

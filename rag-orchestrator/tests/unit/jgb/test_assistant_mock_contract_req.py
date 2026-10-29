@@ -374,9 +374,12 @@ def test_repair_with_photos_stores_metadata_and_validates_it(api):
     for viewer in (PART, OWNER):
         assert row["id"] in _ids(_run(api.get_in_progress_repairs("20151", str(viewer), per_page=200)))
     for bad in ([{**photo, "content_type": "application/pdf"}], [{**photo, "size": 5 * 1024 * 1024 + 1}],
-                [{**photo, "sha256": "zz"}], [{**photo, "extra": 1}], [photo] * 6, ["http://x/a.jpg"]):
+                [{**photo, "sha256": "zz"}], [{**photo, "extra": 1}], [photo] * 11, ["http://x/a.jpg"]):
         r = _run(api.create_repair("20151", user_id=str(OWNER), broken_photos=bad, **base))
         assert r["error"]["code"] == 422, bad
+    # UD-3：上限 5→10——10 張可收（正對照：11 張在上面被擋）
+    ten = _run(api.create_repair("20151", user_id=str(OWNER), broken_photos=[photo] * 10, **base))
+    assert ten["success"] is True and len(ten["data"]["broken_photos"]) == 10
     miss = _run(api.create_repair("20151", **base))                              # 缺 viewer
     assert miss["error"]["code"] == 400
 

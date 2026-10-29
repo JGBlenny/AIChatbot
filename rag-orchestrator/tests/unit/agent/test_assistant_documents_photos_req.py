@@ -109,6 +109,10 @@ def no_documind(monkeypatch):
 def documind_on(no_documind):
     no_documind.setenv(dm.DOCUMIND_BASE_URL_ENV, "https://documind.example.test/api/v1")
     no_documind.setenv(dm.DOCUMIND_TOKEN_ENV, "tok123")
+    # UD-2a S4：本檔的合成謄本登進合成檔清單（防護仍開著；防護本身見 test_documind_ud2a_req.py）。
+    no_documind.delenv(dm.DOCUMIND_SYNTHETIC_GUARD_ENV, raising=False)
+    allowed = frozenset({hashlib.sha256(_synth_pdf()).hexdigest()})
+    no_documind.setattr(dm, "synthetic_sha256_allowlist", lambda: allowed)
     return no_documind
 
 
@@ -320,15 +324,16 @@ async def test_no_photo_turn_still_drops_model_photo_keys():
 
 
 @pytest.mark.usefixtures("_aplus_proposal_off")
-async def test_more_than_five_photos_attach_none_and_card_says_so():
+async def test_more_than_ten_photos_attach_none_and_card_says_so():
+    """UD-3：上限 5→10（＝上傳票 repair `max_files`）；11 張 ⇒ 一張都不附、卡上講明。"""
     state = {"agent": {IMAGE_SUGGESTION_KEY: {"category_name": None,
-                                              "photos": [_meta(i) for i in range(1, 7)]}}}
+                                              "photos": [_meta(i) for i in range(1, 12)]}}}
     reg = _CaptureRegistry()
     res = await _rt(FakeProvider([_confirm_call(dict(_REPAIR)), _final_response()]), reg).run_turn(
         _pm(), _LONG, state)
     sent = json.loads(reg.call_args[0]["args"]["payload"])
-    assert "broken_photos" not in sent and sent["broken_photos_omitted"] == 6
-    assert "・附照片：未附（本次 6 張，超過 5 張上限）" in res.answer
+    assert "broken_photos" not in sent and sent["broken_photos_omitted"] == 11
+    assert "・附照片：未附（本次 11 張，超過 10 張上限）" in res.answer
 
 
 @pytest.mark.usefixtures("_aplus_proposal_off")
@@ -359,33 +364,58 @@ def test_card_rejects_bad_photo_shapes():
     from services.agent.confirm_card import ConfirmCardError
 
     for bad in ([dict(_meta(1), extra=1)], [dict(_meta(1), sha256="x")],
-                [_meta(i) for i in range(6)], [dict(_meta(1), content_type="image/gif")]):
+                [_meta(i) for i in range(1, 12)], [dict(_meta(1), content_type="image/gif")]):
         with pytest.raises(ConfirmCardError):
             render("repair_create", dict(_REPAIR, broken_photos=bad))
+    # 正對照：10 張（上限）照常出卡
+    assert "・附照片：10 張" in render(
+        "repair_create", dict(_REPAIR, broken_photos=[_meta(i) for i in range(1, 11)]))
     with pytest.raises(ConfirmCardError):
         render("repair_create", dict(_REPAIR, broken_photos_omitted=3))
 
 
-async def test_repair_execution_sends_photo_metadata(api):
+async def test_repair_execution_sends_photo_files_multipart(api):
+    """UD-3：兌現時從暫存取重新編碼的 JPEG、重算 sha256 比對卡上值，以 multipart `broken_photos[]` 送出；
+    沒照片 ⇒ 現行 JSON（正對照）。"""
+    from services.agent import upload_store as U
+    from services.agent.runtime import _encode_card_photos
+
+    U.STORE.reset()
+    ident = _pm()
+    binding = U.binding_from_identity(ident, "repair")
+    handle = U.STORE.verify_ticket(U.STORE.issue_ticket(binding).upload_token)
+    blob = _jpeg(exif=True)
+    up = U.STORE.add_upload(handle, content_type="image/jpeg", data=blob)
+    U.STORE.end_turn([c.ref for c in U.STORE.claim([up.upload_id], binding)])
+    photos = await _encode_card_photos(ident, [F._photo_meta(blob, "jpeg", 1)])
+    assert photos[0]["filename"] == "photo-1.jpg"
+
     reg = ToolRegistry(write_tools_enabled=True,
                        redeem_checker=AsyncMock(return_value=True))
     for spec, fn in action_tools.ACTION_SPECS:
         reg.register(spec, fn)
     payload = {"action": "repair_create", "estate_name": "測試物件", "description": "椅面破了",
-               "broken_photos": [_meta(1)]}
-    res = await reg.call(_pm(), "jgb2.action.repair_create",
-                         {"payload": payload, "confirmation_token": "tok-s3"},
-                         timeout_s=5, stage="M1", for_model=True)
-    assert res.ok, res
-    body = api._mock_transport.bodies[-1]
-    assert body["broken_photos"] == [_meta(1)]
-    # 正對照：沒照片 ⇒ body 不帶這個鍵
-    payload2 = dict(payload)
-    payload2.pop("broken_photos")
-    await reg.call(_pm(), "jgb2.action.repair_create",
-                   {"payload": payload2, "confirmation_token": "tok-s3b"},
-                   timeout_s=5, stage="M1", for_model=True)
-    assert "broken_photos" not in api._mock_transport.bodies[-1]
+               "broken_photos": photos}
+    try:
+        res = await reg.call(ident, "jgb2.action.repair_create",
+                             {"payload": payload, "confirmation_token": "tok-s3"},
+                             timeout_s=5, stage="M1", for_model=True)
+        assert res.ok, res
+        files = api._mock_transport.files[-1]
+        assert [(f[0], f[1], f[2]) for f in files] == [("broken_photos[]", "photo-1.jpg", "image/jpeg")]
+        assert hashlib.sha256(files[0][3]).hexdigest() == photos[0]["sha256"]
+        assert b"Exif" not in files[0][3] and b"Exif" in blob
+        assert "broken_photos" not in api._mock_transport.bodies[-1]
+        # 正對照：沒照片 ⇒ JSON、body 不帶這個鍵
+        payload2 = dict(payload)
+        payload2.pop("broken_photos")
+        await reg.call(ident, "jgb2.action.repair_create",
+                       {"payload": payload2, "confirmation_token": "tok-s3b"},
+                       timeout_s=5, stage="M1", for_model=True)
+        assert api._mock_transport.files[-1] is None
+        assert "broken_photos" not in api._mock_transport.bodies[-1]
+    finally:
+        U.STORE.reset()
 
 
 # ════════════════════════════════════════════════════════════════════
@@ -461,15 +491,17 @@ async def test_deed_pdf_sends_original_bytes_and_builds_facts_from_typed_only(mo
     assert dx.document_writable_action(turn) == "estate_create"
 
 
-async def test_deed_photo_is_reencoded_without_exif(monkeypatch, documind_on):
+async def test_deed_photo_hands_original_bytes_to_client(monkeypatch, documind_on):
+    """UD-2b：呼叫端交**上傳原檔**（合成檔防護比對原檔 sha256）；去 EXIF 的重新編碼改由
+    client 在比對之後自己做（送出位元組的驗證見 `test_documind_ud2b_req.py`
+    `test_deed_photo_through_real_client_passes_guard_and_is_reencoded`）。"""
     original = _jpeg(exif=True)
     spy = _DocuMindSpy()
     monkeypatch.setattr(F, "_documind_analyze", spy)
     monkeypatch.setattr(F, "_image_fetch_one", _PhotoFetcher([original]))
     monkeypatch.setattr(F, "_document_extract_pages", _Extractor(_deed_result()))
     await F.prepare_document_turn(["https://relay.jgbsmart.com/a.jpg"], [])
-    sent = spy.calls[0]["data"]
-    assert sent != original and sent.startswith(b"\xff\xd8\xff") and b"Exif" not in sent
+    assert spy.calls[0]["data"] == original
     assert spy.calls[0]["pdf_pages"] is None
     assert b"Exif" in original                                          # 正對照
 

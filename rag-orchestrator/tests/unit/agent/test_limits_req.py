@@ -31,6 +31,12 @@ def test_agent_limits_fields_closed():
         "kb_get_per_hour",
         "images_per_hour",
         "files_per_hour",
+        # UD-1 瀏覽器直傳附件
+        "upload_ticket_ttl_s",
+        "upload_ttl_s",
+        "upload_max_bytes",
+        "upload_max_files_repair",
+        "upload_max_files_document",
     }
 
 
@@ -41,6 +47,12 @@ def test_agent_limits_defaults():
     assert defaults.kb_get_per_hour == 3000
     assert defaults.images_per_hour == 600
     assert defaults.files_per_hour == 100
+    # UD-1：票 10 分鐘、暫存 30 分鐘、單檔 5,000,000 bytes、修繕 10 張、文件 1 份
+    assert defaults.upload_ticket_ttl_s == 600
+    assert defaults.upload_ttl_s == 1800
+    assert defaults.upload_max_bytes == 5_000_000
+    assert defaults.upload_max_files_repair == 10
+    assert defaults.upload_max_files_document == 1
 
 
 def test_agent_limits_frozen():
@@ -57,6 +69,11 @@ def test_effective_matches_default_when_no_override(monkeypatch):
         "kb_get_per_hour": 3000,
         "images_per_hour": 600,
         "files_per_hour": 100,
+        "upload_ticket_ttl_s": 600,
+        "upload_ttl_s": 1800,
+        "upload_max_bytes": 5_000_000,
+        "upload_max_files_repair": 10,
+        "upload_max_files_document": 1,
     }
 
 
