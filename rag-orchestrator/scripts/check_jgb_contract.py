@@ -81,16 +81,18 @@ def load_jgb_routes(checkout: Path, ref: str) -> set[tuple[str, str]]:
     if proc.returncode != 0:
         raise ToolBroken(f"git show {ref}:{ROUTES_FILE} 失敗（{proc.stderr.strip()[:200]}）")
     lines = proc.stdout.splitlines()
-    start = next((i for i, ln in enumerate(lines) if GROUP_OPEN in ln), None)
-    if start is None:
+    # 2026-10-30：JGB 把寫入路由（#19～#23）另開一個 `external/v1` 群組（中介層不同），只讀第一個群組會誤報「沒有」⇒ 每個群組都讀。
+    starts = [i for i, ln in enumerate(lines) if GROUP_OPEN in ln]
+    if not starts:
         raise ToolBroken(f"{ROUTES_FILE} 找不到 {GROUP_OPEN}（路由檔結構變了，工具要跟著改）")
     routes: set[tuple[str, str]] = set()
-    for ln in lines[start + 1:]:
-        if ln.rstrip() == "});":                         # 群組結尾（縮排 0）
-            break
-        m = re.search(r"Route::(get|post|put|patch|delete)\(\s*'([^']+)'", ln)
-        if m:
-            routes.add((m.group(1).upper(), canon(EXTERNAL_PREFIX + m.group(2))))
+    for start in starts:
+        for ln in lines[start + 1:]:
+            if ln.rstrip() == "});":                     # 群組結尾（縮排 0）
+                break
+            m = re.search(r"Route::(get|post|put|patch|delete)\(\s*'([^']+)'", ln)
+            if m:
+                routes.add((m.group(1).upper(), canon(EXTERNAL_PREFIX + m.group(2))))
     if not routes:
         raise ToolBroken("external/v1 群組內解析不到任何路由")
     return routes
