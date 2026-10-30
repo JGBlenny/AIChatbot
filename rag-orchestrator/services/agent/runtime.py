@@ -1062,11 +1062,12 @@ def _recent_ref_ids(agent_state: dict, dialog: list) -> list[str]:
 
 
 def _is_stats_not_supported(name: str, result: Any) -> bool:
-    """2026-10-15 正式機：`jgb2.stats.*`／`confirm.request`（新寫入動作）接真 JGB 時回
-    「尚未開放」標記（`data.not_supported`）；固定句就是 `data.facts`（工具端的程式常數）。"""
+    """2026-10-15 正式機：`confirm.request`（JGB 沒有端點的寫入動作）接真 JGB 時回
+    「尚未開放」標記（`data.not_supported`）；固定句就是 `data.facts`（工具端的程式常數）。
+    （`jgb2.stats.*` 已改用 JGB 既有的列表端點，不再回這個標記。）"""
     data = getattr(result, "data", None)
     return (
-        (name.startswith("jgb2.stats.") or name == CONFIRM_TOOL_NAME)
+        name == CONFIRM_TOOL_NAME
         and bool(getattr(result, "ok", False))
         and isinstance(data, dict)
         and data.get("not_supported") is True
@@ -9672,7 +9673,7 @@ class AgentRuntime:
                             prompt_tokens=acc.prompt_tokens,
                             completion_tokens=acc.completion_tokens,
                         )
-                    # 2026-10-15 正式機：統計端點（jgb2-req#16～#18）JGB 尚未開放 ⇒ **程式固定句
+                    # 2026-10-15 正式機：JGB 沒有端點的寫入動作（建物件／合約／手動帳單、延期繳費）⇒ **程式固定句
                     # 結束回合**（同下方查無出口：程式產出、⛔ 交模型改寫——實測模型會改成轉人或
                     # 反問「想處理哪一件事？」）。
                     if document is None and _is_stats_not_supported(name, tool_result):

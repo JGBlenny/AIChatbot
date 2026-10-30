@@ -505,7 +505,7 @@ def _render_repair_create(payload: Mapping[str, Any], today: Optional[date]) -> 
 #: ⚠️ 歸屬鍵與替身 `JGBMockTransport._OWNERSHIP_KEYS` 同一份清單（測試以集合包含互證，
 #:    ⛔ 不在此 import 替身——agent 層不依賴 mock transport）。
 IDENTITY_OWNERSHIP_KEYS: Final[frozenset] = frozenset({
-    "role_id", "user_id",
+    "role_id", "user_id", "viewer_user_id",
     "team_id", "owner_user_id", "owner_role_id", "vendor_id", "to_user_id",
     "agent_user_id", "created_by", "issue_target_role_id",
 })

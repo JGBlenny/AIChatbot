@@ -62,7 +62,7 @@ WF_PATH = Path(WF.__file__)
 GOLDEN_MESSAGE = "請問怎麼設定繳費日"
 GOLDEN = {
     "response_format": ("0f19cd057c2f61d626b2c4ce18dd5003abd3acdf971d47acb5033c5166263119", 2900),
-    "tools": ("104a5a12db698e67ccb0a3e8eb2c5dd345db6f7f0bfda6a6390066b7a9002fd0", 7495),
+    "tools": ("2cc1c2ddf1d645204a9553b136d2b061793b51f0242d1ef2eb12cb5186ac9a37", 7504),   # 2026-10-29 列表查詢對齊真 JGB：統計工具 description 改了執行中狀態名（未收＝待繳費或待對帳不變）
     "handoff_spec": ("bf2bf0eda4e09ee6026bb7f4891df5255cf06d671df86d7a54853317875d1da9", 630),
 }
 

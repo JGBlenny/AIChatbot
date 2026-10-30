@@ -95,7 +95,7 @@ def test_successful_create_logs_body_status_row_and_counts(api, tmp_path, monkey
     assert line["endpoint_key"] == "assistant_create_estate"
     assert line["path"] == "/api/external/v1/estates"
     assert line["status"] == 200
-    assert line["body"] == {**ESTATE_BODY, "role_id": ROLE, "user_id": OWNER,
+    assert line["body"] == {**ESTATE_BODY, "role_id": ROLE, "viewer_user_id": OWNER,
                             "idempotency_key": "<redacted>"}
     assert "secret-token-value" not in log.read_text(encoding="utf-8")
     assert line["row"]["id"] == resp["data"]["id"]
@@ -142,7 +142,7 @@ def test_repair_write_is_logged_and_reads_are_not(api, tmp_path, monkeypatch):
     assert resp["success"], resp
     (line,) = _lines(log)
     assert line["endpoint_key"] == "create_repair" and line["status"] == 200
-    assert line["body"]["user_id"] == OWNER and line["row"]["id"] == resp["data"]["id"]
+    assert line["body"]["viewer_user_id"] == OWNER and line["row"]["id"] == resp["data"]["id"]
 
 
 def test_real_http_transport_has_no_write_log():

@@ -115,7 +115,7 @@ async def test_in_progress_repairs_two_members_get_different_results_and_paginat
     ids = {}
     for viewer in (OWNER, PART):
         want = sorted(x["id"] for x in raw["repairs"]
-                      if x["status"] in (1, 2, 16) and viewer in raw["repair_visibility"][str(x["id"])])
+                      if x["status"] in (1, 2, 4, 8, 16) and viewer in raw["repair_visibility"][str(x["id"])])
         got, rs = await _all_pages(S.in_progress_repairs, _ident(user_id=str(viewer)), {}, "單號")
         assert sorted(got) == want and f"共 {len(want)} 筆" in rs[0]["text_for_model"]
         ids[viewer] = set(got)
@@ -158,13 +158,17 @@ async def test_expiring_contracts_default_3_months_and_two_members_differ(real_a
     def ids(r):
         return _listed_ids(r["text_for_model"], "合約編號")
 
+    # JGB `/contracts/status-overview` 帶 `date_end_*` 時只回已簽名完成（bit_status & 8）的非歷史合約：
+    # 85516（bit_status=1，未簽）在 2026-10-31 到期但不在列（真 JGB 同樣不會列），990101／990102 是已簽名合約。
     owner3 = await S.expiring_contracts(_ident(user_id=str(OWNER)), {})
-    assert ids(owner3) == [85516, 990101]                                    # 預設 3 個月（到 2027-01-14）
+    assert ids(owner3) == [990101]                                           # 預設 3 個月（到 2027-01-14）
     owner6 = await S.expiring_contracts(_ident(user_id=str(OWNER)), {"months": 6})
     part6 = await S.expiring_contracts(_ident(user_id=str(PART)), {"months": 6})
-    assert ids(owner6) == [85516, 990101, 990102]
-    assert ids(part6) == [85516, 990101]                                     # 990102 在 990002 看不到的物件上
-    assert "6 個月內到期" in owner6["text_for_model"] and "共 3 筆，以下全部列出" in owner6["text_for_model"]
+    assert sorted(ids(owner6)) == [990101, 990102]                           # 順序＝JGB 預設（id 新到舊），不在此釘
+    assert ids(part6) == [990101]                                            # 990102 在 990002 看不到的物件上
+    assert 85516 not in ids(owner6)                                          # 未簽名合約不列（對齊 JGB）
+    assert "剩 " in owner6["text_for_model"] and "天）" in owner6["text_for_model"]   # days_left 由 date_end 算出
+    assert "6 個月內到期" in owner6["text_for_model"] and "共 2 筆，以下全部列出" in owner6["text_for_model"]
     assert owner6["data"]["months"] == 6
 
 
@@ -351,7 +355,7 @@ async def test_provenance_units_for_repairs_and_contracts_and_across_pages(real_
     r4 = await S.in_progress_repairs(_ident(user_id=str(OWNER)), {"page": 4})
     assert len(_units(r4)) == 17 + 1
     c = await S.expiring_contracts(_ident(user_id=str(OWNER)), {"months": 6})
-    assert len(_units(c)) == 3 + 1
+    assert len(_units(c)) == 2 + 1
 
 
 async def test_invalid_args_are_rejected(fake):

@@ -2010,19 +2010,31 @@ async def closed_action_missing_labels(identity: Identity, action: Any, payload:
     return list(labels) if isinstance(labels, list) else []
 
 
-#: 建物件／合約／手動帳單（jgb2-req#19～#21）JGB 尚未開放；接真 JGB
-#: （`use_mock=False`）時 ⛔ 出卡（否則使用者按確認後才在不存在的端點上失敗），由 runtime
-#: 以這一句程式固定句結束回合。⛔ 無插值。
-WRITE_NOT_SUPPORTED_ACTIONS = frozenset({"estate_create", "contract_create", "manual_bill_create"})
+#: 建物件／合約／手動帳單（jgb2-req#19～#21）與延期繳費（`PATCH /agent/v1/bills/{id}`）：JGB
+#: 沒有對應的端點；接真 JGB（`use_mock=False`）時 ⛔ 出卡（否則使用者按確認後才在不存在的端點上
+#: 失敗），由 runtime 以對應的程式固定句結束回合。⛔ 無插值。
+WRITE_NOT_SUPPORTED_ACTIONS = frozenset({
+    "estate_create", "contract_create", "manual_bill_create", BILL_DUE_EXTEND_ACTION,
+})
 WRITE_NOT_SUPPORTED_TEXT = "這個動作目前還不支援：JGB 系統尚未開放建立物件、合約或手動帳單，開放後就能直接建立。"
+#: 延期繳費單獨一句：只說「這個動作」，⛔ 外推成 JGB 沒開放別的功能。
+BILL_DUE_EXTEND_NOT_SUPPORTED_TEXT = "這個動作目前還不支援：JGB 系統尚未開放延期繳費（調整帳單到期日），開放後就能直接辦理。"
+_WRITE_NOT_SUPPORTED_TEXTS: Final[dict] = {BILL_DUE_EXTEND_ACTION: BILL_DUE_EXTEND_NOT_SUPPORTED_TEXT}
+
+#: 接真 JGB 時修繕單暫時無法附照片（JGB `POST /repairs` 的 `broken_photos` 只收 URL）：
+#: 出卡時接在卡外（`hint`，⛔ 進卡、⛔ 進雜湊），使用者按確認之前就看得到。⛔ 無插值。
+REPAIR_PHOTOS_NOT_ATTACHABLE_HINT = (
+    "提醒：目前連到 JGB 正式系統，修繕單還不能附上照片。按確認後只會建立文字內容的修繕單，這次的照片不會送出。"
+)
 
 
-def _write_not_supported_result() -> ToolResult:
+def _write_not_supported_result(action: Any = None) -> ToolResult:
+    text = _WRITE_NOT_SUPPORTED_TEXTS.get(action, WRITE_NOT_SUPPORTED_TEXT)
     return ToolResult(
         ok=True,
-        data={"facts": WRITE_NOT_SUPPORTED_TEXT, "candidates": None, "skip_refine": True,
+        data={"facts": text, "candidates": None, "skip_refine": True,
               "not_supported": True},
-        text_for_model=WRITE_NOT_SUPPORTED_TEXT,
+        text_for_model=text,
     )
 
 
@@ -2355,6 +2367,9 @@ async def write_name_candidates(identity: Identity, action: Any, payload: Any, *
     """
     if not isinstance(action, str) or action not in _wc.CANDIDATE_ACTIONS or not isinstance(payload, dict):
         return None
+    if (action in WRITE_NOT_SUPPORTED_ACTIONS
+            and getattr(jgb2_tools._get_api(), "use_mock", True) is False):
+        return None                                   # 接真 JGB 不支援的動作 ⇒ 0 次查詢（出卡端固定句收尾）
     work = copy.deepcopy(dict(payload))
     work["action"] = action
     pr_on = _write_forms.pick_right_effective_from_env()
@@ -2535,7 +2550,7 @@ async def confirm_request(
     # 一定有 `use_mock`；沒有這個屬性的是測試替身 ⇒ 沿用原行為）。
     if (action in WRITE_NOT_SUPPORTED_ACTIONS
             and getattr(jgb2_tools._get_api(), "use_mock", True) is False):
-        return _write_not_supported_result()
+        return _write_not_supported_result(action)
     # 5 支寫入動作的缺欄計算一律走 `write_forms.missing_labels`、在 `render()`
     # **之前**；缺 ⇒ 回缺欄清單、由程式追問（⛔ 出卡）。封閉三動作的呼叫點**不動**——仍在
     # `_prepare_closed_action` 的受眾檢查與 `check_closed_keys` 之後（非業者照舊先得 `NO_MATCH`）。
@@ -2709,6 +2724,11 @@ async def confirm_request(
     # 同一個欄位；兩者互斥於 action，故 ⛔ 不需要第二個欄位）。
     if matched_by_period and not hint:
         hint = BILL_MATCH_HINT
+    # 接真 JGB 的修繕單附了照片 ⇒ 卡外提醒「照片這次不會送出」（卡與兩把雜湊不動；`hint` 本來就在卡外）。
+    if (action == _REPAIR_CREATE_ACTION
+            and getattr(jgb2_tools._get_api(), "use_mock", True) is False
+            and (_confirm_card.repair_photos_of(payload) or payload.get("broken_photos_omitted"))):
+        hint = f"{hint}\n{REPAIR_PHOTOS_NOT_ATTACHABLE_HINT}" if hint else REPAIR_PHOTOS_NOT_ATTACHABLE_HINT
 
     token = secrets.token_urlsafe(CONFIRM_TOKEN_BYTES)
     pending_id = pending_id_for(token)
@@ -2964,6 +2984,7 @@ async def redeem_token(
 
 __all__ = [
     "BILL_MATCH_HINT",
+    "REPAIR_PHOTOS_NOT_ATTACHABLE_HINT",
     "CANDIDATE_TYPE_KEY",
     "is_candidate_shape",
     "candidate_fallback_result",

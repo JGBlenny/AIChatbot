@@ -216,7 +216,7 @@ def test_extra_identity_or_ownership_key_is_rejected(action, key):
 
 
 @pytest.mark.parametrize("action", sorted(CLOSED_ACTION_FIELDS))
-@pytest.mark.parametrize("key", ["role_id", "user_id", "team_id", "vendor_id", "foo"])
+@pytest.mark.parametrize("key", ["role_id", "user_id", "viewer_user_id", "team_id", "vendor_id", "foo"])
 async def test_confirm_request_rejects_extra_key_without_writing_a_token(api, action, key):
     payload = _full_payloads()[action]
     payload.pop("estate_id", None)
@@ -326,7 +326,7 @@ async def test_estate_create_success_body_and_row_equal_payload(api):
     body = api._mock_transport.bodies[-1]
     assert body == {"title": "幸福小窩", "city": "台北市", "district": "信義區",
                     "address": "松仁路100號5樓", "use_for": "residential", "rent": 18000,
-                    "role_id": ROLE, "user_id": OWNER, "idempotency_key": "tok-s2"}
+                    "role_id": ROLE, "viewer_user_id": OWNER, "idempotency_key": "tok-s2"}
     rows = _mock(api).estate_fixtures.rows()
     assert len(rows) == before_count + 1
     row = _mock(api).estate_fixtures.by_id(int(res.data["receipt"]["estate_id"]))
@@ -351,7 +351,7 @@ async def test_contract_create_card_body_and_row(api, monkeypatch):
     body = api._mock_transport.bodies[-1]
     assert body == {"estate_id": ESTATE_A, "date_start": "2026-11-01", "date_end": "2027-10-31",
                     "rent": 18000, "to_user_phone": "0912345678",
-                    "role_id": ROLE, "user_id": OWNER, "idempotency_key": "tok-s2"}
+                    "role_id": ROLE, "viewer_user_id": OWNER, "idempotency_key": "tok-s2"}
     row = _mock(api).contract_fixtures.by_id(int(res.data["receipt"]["contract_id"]))
     # 未給的選填：deposit_amount ⇒ 替身預設 0、title ⇒ 物件標題（接口 B #20）；email 為空
     assert row["deposit_amount"] == 0 and row["title"] == ESTATE_A_TITLE
@@ -383,7 +383,7 @@ async def test_manual_bill_card_body_and_row(api, monkeypatch):
     body = api._mock_transport.bodies[-1]
     assert body == {"contract_id": CONTRACT_A, "title": "清潔費", "total": 1500,
                     "date_expire": "2026-10-31",
-                    "role_id": ROLE, "user_id": OWNER, "idempotency_key": "tok-s2"}
+                    "role_id": ROLE, "viewer_user_id": OWNER, "idempotency_key": "tok-s2"}
     row = _mock(api).fixtures.by_id(int(res.data["receipt"]["bill_id"]))
     assert (row["contract_id"], row["title"], row["total"], row["date_expire"], row["sub_title"]) \
         == (CONTRACT_A, "清潔費", 1500, 20261031, "")
@@ -617,7 +617,7 @@ async def test_repair_create_sends_user_id_from_identity_and_succeeds(api):
     res = await _execute(_registry(), payload)
     assert res.ok, res
     body = api._mock_transport.bodies[-1]
-    assert body["user_id"] == OWNER and body["role_id"] == ROLE and body["estate_id"] == ESTATE_A
+    assert body["viewer_user_id"] == OWNER and body["role_id"] == ROLE and body["estate_id"] == ESTATE_A
     assert len(_mock(api).repair_fixtures.rows()) == before + 1
     row = _mock(api).repair_fixtures.by_id(int(res.data["receipt"]["repair_id"]))
     assert row["user_id"] == int(OWNER)

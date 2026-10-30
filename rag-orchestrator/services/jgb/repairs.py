@@ -16,9 +16,9 @@ from services.jgb.repair_fixtures import repair_categories
 
 RepairFaceBuilder = Callable[[dict, str], str]   # (repair_row, user_question) -> facts 文字
 
-#: `RepairApiController@index` mapping.status（`transport.py:_repairs_index` 同表）。
+#: jgb2 `Repair::statusLabels()`（`transport.py:_REPAIR_STATUS_LABELS` 同表）。
 _STATUS_ZH: dict[int, str] = {
-    1: "申請中", 2: "安排修繕", 16: "完成修繕", 32: "結單", 64: "封存",
+    1: "申請中", 8: "預約安排", 2: "安排修繕", 4: "修繕中", 16: "完成修繕", 32: "結單", 64: "封存",
 }
 
 #: `emergency_status`：1＝非緊急、2＝緊急。

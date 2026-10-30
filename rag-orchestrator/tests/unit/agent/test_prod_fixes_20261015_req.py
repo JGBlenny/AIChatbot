@@ -1,8 +1,8 @@
 """unit：2026-10-15 正式機部署後的兩個修正。
 
-1. 統計三支（`jgb2.stats.*`，jgb2-req#16～#18）接真 JGB（`use_mock=False`）時 JGB 尚未開放：
-   ⛔ 發請求，回「尚未開放」標記；runtime 以程式固定句 `NOT_SUPPORTED_TEXT` 結束回合
-   （正式機實測：打到不存在的端點後被模型改成轉人或反問「想處理哪一件事？」）。
+1. 統計三支（`jgb2.stats.*`）：2026-10-29 起改用 JGB 既有的列表端點（`/bills`、`/repairs`、
+   `/contracts/status-overview`），接真 JGB（`use_mock=False`）也照樣查，不再回「尚未開放」標記
+   （2026-10-15 的固定句出口只剩 `confirm.request` 的寫入動作在用，見第 3 段）。
 2. 細目索引開機 prepare 逾時後，改在背景重建（正式機 embedding 約 9.5 次／秒，2,082 項要
    3～4 分鐘，開機 60 秒必逾時且原本不再重試）。
 """
@@ -29,7 +29,7 @@ _ARGS = {
 
 
 class _RealApi:
-    """接真 JGB 的替身：`use_mock=False`，三支統計方法被呼叫就記錄（應為 0 次）。"""
+    """接真 JGB 的替身：`use_mock=False`，三支統計方法被呼叫就記錄（各查一次）。"""
 
     use_mock = False
 
@@ -50,18 +50,18 @@ def real_api(monkeypatch):
     return api
 
 
-# ── 1a：工具層——不發請求、回尚未開放標記 ───────────────────────────────────
+# ── 1a：工具層——接真 JGB 也照樣打列表端點（上游失敗 ⇒ F7 固定句，不是「尚未開放」）─────
 @pytest.mark.parametrize("spec_handler", S.STATS_SPECS, ids=lambda sh: sh[0]["name"])
-async def test_stats_on_real_api_do_not_call_upstream(real_api, spec_handler):
+async def test_stats_on_real_api_reach_the_upstream(real_api, spec_handler):
     spec, handler = spec_handler
     out = await handler(_pm(), _ARGS[spec["name"]])
-    assert out["data"]["not_supported"] is True
-    assert out["text_for_model"] == S.NOT_SUPPORTED_TEXT
-    assert real_api.calls() == 0
+    assert real_api.calls() == 1
+    assert "not_supported" not in out["data"] and out["data"]["upstream_error"] is True
+    assert out["text_for_model"] == S.ERROR_TEXT
 
 
 async def test_stats_on_mock_still_reach_the_handler(monkeypatch):
-    """正對照：`use_mock=True` ⇒ 照舊打上游（這裡上游回失敗 ⇒ F7 固定句，不是尚未開放）。"""
+    """正對照：`use_mock=True` ⇒ 一樣打上游（這裡上游回失敗 ⇒ F7 固定句）。"""
     api = _RealApi()
     api.use_mock = True
     monkeypatch.setattr(jgb2_tools, "_api_singleton", api)
@@ -71,16 +71,17 @@ async def test_stats_on_mock_still_reach_the_handler(monkeypatch):
     assert "not_supported" not in out["data"]
 
 
-# ── 1b：runtime——程式固定句結束回合，⛔ 交模型 ──────────────────────────────
+def test_stats_module_no_longer_has_the_not_supported_exit():
+    assert not hasattr(S, "NOT_SUPPORTED_TEXT") and not hasattr(S, "_mock_only")
+
+
+# ── 1b：runtime——統計工具不再走固定句出口（回合由模型接著回答）──────────────────────
 @pytest.mark.parametrize("name", sorted(_ARGS))
-async def test_runtime_answers_not_supported_text_without_the_model(real_api, name):
+async def test_runtime_does_not_take_the_not_supported_exit_for_stats(real_api, name):
     res, reg, provider = await _run(_pm(), [(name, _ARGS[name])])
     assert reg.results[-1][0] == name
-    assert res.kind == "answer"
-    assert res.answer == S.NOT_SUPPORTED_TEXT
-    assert "jgb2_stats_not_supported_exit" in res.trace.violations
-    assert len(provider.calls) == 1   # 只有第一步（叫工具）；模型反問沒被叫到
-    assert real_api.calls() == 0
+    assert "jgb2_stats_not_supported_exit" not in res.trace.violations
+    assert real_api.calls() == 1
 
 
 # ── 2：細目索引背景重建 ─────────────────────────────────────────────────────
@@ -129,6 +130,8 @@ _WRITE_PAYLOADS = {
                         "to_user_email": "x@example.com"},
     "manual_bill_create": {"action": "manual_bill_create", "contract_id": 79994, "title": "清潔費",
                            "total": 1200, "date_expire": "2026-12-20"},
+    # JGB 沒有 `PATCH /agent/v1/bills/{id}`：延期繳費接真 JGB 也停在出卡之前（2026-10-29）
+    "bill_due_extend": {"action": "bill_due_extend", "bill_id": "79994", "days": 7},
 }
 
 
@@ -143,15 +146,24 @@ async def test_new_write_actions_on_real_api_answer_not_supported_without_card(r
     name, result = reg.results[-1]
     assert name == "confirm.request" and result.data.get("not_supported") is True
     assert "card" not in result.data and "pending_id" not in result.data
-    assert res.kind == "answer" and res.answer == C.WRITE_NOT_SUPPORTED_TEXT
+    want = C._WRITE_NOT_SUPPORTED_TEXTS.get(action, C.WRITE_NOT_SUPPORTED_TEXT)
+    assert res.kind == "answer" and res.answer == want
     assert "jgb2_stats_not_supported_exit" in res.trace.violations
     assert len(provider.calls) == 1
 
 
-def test_write_guard_only_covers_the_three_new_actions():
-    assert C.WRITE_NOT_SUPPORTED_ACTIONS == {"estate_create", "contract_create", "manual_bill_create"}
-    assert "repair_create" not in C.WRITE_NOT_SUPPORTED_ACTIONS
-    assert "bill_due_extend" not in C.WRITE_NOT_SUPPORTED_ACTIONS
+def test_write_guard_covers_exactly_the_actions_jgb_has_no_endpoint_for():
+    assert C.WRITE_NOT_SUPPORTED_ACTIONS == {"estate_create", "contract_create", "manual_bill_create",
+                                             "bill_due_extend"}
+    assert "repair_create" not in C.WRITE_NOT_SUPPORTED_ACTIONS     # 正對照：JGB 有 POST /repairs
+
+
+def test_due_extend_not_supported_text_names_only_this_action():
+    """延期繳費的固定句只說這個動作，⛔ 外推成 JGB 沒開放別的功能；與建立類那句分開。"""
+    text = C.BILL_DUE_EXTEND_NOT_SUPPORTED_TEXT
+    assert "延期繳費" in text and text != C.WRITE_NOT_SUPPORTED_TEXT
+    assert C._WRITE_NOT_SUPPORTED_TEXTS["bill_due_extend"] == text
+    assert "物件" not in text and "合約" not in text and "手動帳單" not in text
 
 
 @pytest.fixture()

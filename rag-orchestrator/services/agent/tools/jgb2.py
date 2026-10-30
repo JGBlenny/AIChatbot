@@ -148,6 +148,15 @@ def _rows_checked(resp: Any) -> list[dict[str, Any]]:
     return _rows_of(resp)
 
 
+def _pagination_total(resp: Any) -> Optional[int]:
+    """上游 `pagination.total`（非負整數）；沒有或形狀不對 ⇒ `None`（⛔ 不用列數代替，列數只是這一頁）。"""
+    pagination = resp.get("pagination") if isinstance(resp, dict) else None
+    total = pagination.get("total") if isinstance(pagination, dict) else None
+    if isinstance(total, bool) or not isinstance(total, int) or total < 0:
+        return None
+    return total
+
+
 def _invalid_input() -> dict[str, Any]:
     return {"ok": False, "error": "INVALID_INPUT"}
 
@@ -244,10 +253,17 @@ CANDIDATES_MODEL_HINT_HEADER: str = "（以下為可見清單，⛔ 不是使用
 CANDIDATES_MODEL_HINT_FOOTER: str = "要取得某一筆的完整事實，請以 ref 指定該編號再查一次。"
 
 
-def _candidates_text(domain: str, query: Optional[str], rows: list) -> str:
-    """**給模型**的候選清單（含查詢條件與兩句提示）。給人看的版本見 `candidates_text_for_user`。"""
+def _candidates_text(domain: str, query: Optional[str], rows: list,
+                     total: Optional[int] = None, note: str = "") -> str:
+    """**給模型**的候選清單（含查詢條件與兩句提示）。給人看的版本見 `candidates_text_for_user`。
+
+    `total`（無條件列表才帶）＝上游 `pagination.total`；比列數大 ⇒ 「共 N 筆，列出前 M 筆」，
+    ⛔ 讓模型把前 M 筆講成全部。`note`＝範圍註記（例：物件列表只含刊登中），接在筆數之後。
+    兩者都沒帶 ⇒ 與改前逐字相同。"""
     q = query if query else "無"
-    lines = [f"查詢條件：{q}；符合 {len(rows)} 筆"
+    count = (f"共 {total} 筆" if total is not None and total > len(rows) else f"符合 {len(rows)} 筆")
+    shown = f"，列出前 {len(rows)} 筆" if total is not None and total > len(rows) else ""
+    lines = [f"查詢條件：{q}；{count}{note}{shown}"
              f"{CANDIDATES_MODEL_HINT_HEADER}"]
     projector = _ROW_PROJECTORS.get(domain, _project_generic_row)
     lines.extend(projector(row) for row in rows)
@@ -263,8 +279,9 @@ def candidates_text_for_user(domain: str, rows: list) -> str:
 
 
 def _ok_candidates(domain: str, tag: str, rows: list, cap: int,
-                    skip_refine: bool, query: Optional[str] = None) -> dict[str, Any]:
-    text = _candidates_text(domain, query, rows)
+                    skip_refine: bool, query: Optional[str] = None,
+                    total: Optional[int] = None, note: str = "") -> dict[str, Any]:
+    text = _candidates_text(domain, query, rows, total=total, note=note)
     return {
         "ok": True,
         "data": {"facts": "", "candidates": rows,
@@ -352,7 +369,8 @@ async def _resolve(
 
 def _finish_generic(domain: str, tag_hint: str, builder: Callable[[dict, str], str],
                     status: str, rows: list[dict[str, Any]], cap: int,
-                    query: Optional[str] = None) -> dict[str, Any]:
+                    query: Optional[str] = None,
+                    total: Optional[int] = None) -> dict[str, Any]:
     if status == "empty":
         # S5：帶明確 ref／keyword 的查詢「查過、沒有」⇒ 查無固定句；無條件列表的空集合照舊。
         return _not_found() if query else _no_match()
@@ -367,8 +385,8 @@ def _finish_generic(domain: str, tag_hint: str, builder: Callable[[dict, str], s
         estate_id = row.get("estate_id")
         return _ok_single(domain, tag, facts, cap, scoped=True,
                           estate_id=None if estate_id is None else str(estate_id))
-    skip_refine = status == "candidates_all"
-    return _ok_candidates(domain, tag_hint, rows, cap, skip_refine, query=query)
+    skip_refine = status == "candidates_all" and (total is None or total <= len(rows))
+    return _ok_candidates(domain, tag_hint, rows, cap, skip_refine, query=query, total=total)
 
 
 # ── bills ───────────────────────────────────────────────────────────────────
@@ -396,13 +414,25 @@ async def query_bills(identity: Any, args: dict[str, Any]) -> dict[str, Any]:
         return _rows_checked(resp)
 
     cap = _candidate_cap()
+    default_total: list[Optional[int]] = [None]
+
+    async def fetch_default(_: Optional[str]) -> list[dict[str, Any]]:
+        # 無條件 ⇒ 「共 N 筆＋最近一頁」：到期日新的在前，一頁取候選上限那麼多筆，總數取上游 `pagination.total`。
+        # 只送 `viewer_user_id`（⛔ `user_id`：jgb2 `/bills` 的 `user_id` 是租客，對業者會濾成空）。
+        resp = await api.list_bills_page(role_id, user_id, sort_by="date_expire",
+                                         sort_direction="desc", page=1, per_page=cap)
+        rows = _rows_checked(resp)
+        default_total[0] = _pagination_total(resp)
+        return rows
+
     ref, keyword = args.get("ref"), args.get("keyword")
     try:
         status, rows = await _resolve(ref, keyword, cap, fetch_ref=fetch,
-                                      fetch_keyword=fetch_keyword, fetch_default=fetch)
+                                      fetch_keyword=fetch_keyword, fetch_default=fetch_default)
     except UpstreamFailure:
         return _no_match()
-    return _finish_generic("bills", face, builder, status, rows, cap, query=ref or keyword)
+    return _finish_generic("bills", face, builder, status, rows, cap, query=ref or keyword,
+                           total=None if (ref or keyword) else default_total[0])
 
 
 # ── contracts ────────────────────────────────────────────────────────────────
@@ -543,8 +573,21 @@ async def query_estates(identity: Any, args: dict[str, Any]) -> dict[str, Any]:
     keyword = args.get("keyword")
     q = ref or keyword
     if not q:
-        # estates 無預設列表（同 accounts／meters：ref／keyword 皆無 ⇒ NO_MATCH）
-        return _no_match()
+        # 沒給名稱 ⇒ 「共 N 筆＋第一頁」（同 contracts 的 `fetch_default` 形狀）：`GET /estates` 不帶 keyword，
+        # 總數取上游 `pagination.total`。⚠️ JGB 這支只回刊登中（`is_open=1`）的物件，所以筆數的註記是
+        # 「只含刊登中」，⛔ 講成「全部物件」。
+        listing = await api.get_estate_status(role_id=role_id, viewer_user_id=user_id)
+        if upstream_failed(listing):
+            return _no_match()
+        rows = [r for r in _rows_of(listing) if isinstance(r, dict) and r.get("found") is not False]
+        if not rows:
+            return _no_match()
+        total = _pagination_total(listing)
+        if total is None:
+            total = len(rows)
+        shown = rows[:cap]
+        return _ok_candidates("estates", face, shown, cap, total <= len(shown),
+                              total=total, note="（只含刊登中的物件）")
 
     # DSP-074／jgb2-req#24：帶 viewer（user_id），物件限於該成員可見範圍。
     status_resp = await api.get_estate_status(role_id=role_id, keyword=q, viewer_user_id=user_id)
@@ -621,7 +664,7 @@ async def query_repairs(identity: Any, args: dict[str, Any]) -> dict[str, Any]:
     async def fetch_all() -> list[dict[str, Any]]:
         # DSP-074／jgb2-req#24：另帶 viewer_user_id，修繕單限於該成員可見範圍。
         resp = await api.get_repairs(role_id=role_id, user_id=user_id, estate_id=estate_id,
-                                     viewer_user_id=user_id)
+                                     viewer_user_id=user_id, per_page=200)
         return _rows_checked(resp)
 
     async def fetch_ref(r: str) -> list[dict[str, Any]]:

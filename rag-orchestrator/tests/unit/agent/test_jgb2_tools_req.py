@@ -35,6 +35,9 @@ class _FakeApi:
     async def get_bills(self, **kwargs):
         return self._resp("get_bills", **kwargs)
 
+    async def list_bills_page(self, role_id, viewer_user_id, **kwargs):
+        return self._resp("list_bills_page", role_id=role_id, viewer_user_id=viewer_user_id, **kwargs)
+
     async def get_contracts(self, **kwargs):
         return self._resp("get_contracts", **kwargs)
 
@@ -159,7 +162,8 @@ async def test_bills_keyword_candidates_over_cap(monkeypatch, fake_api):
 async def test_bills_no_ref_no_keyword_recent_listing(monkeypatch, fake_api):
     monkeypatch.setitem(jgb2.BILL_FACE_BUILDERS, "__test_face__", lambda r, q: "x")
     rows = [{"id": i} for i in range(3)]
-    _set_canned(fake_api, "get_bills", {"success": True, "data": rows})
+    _set_canned(fake_api, "list_bills_page", {"success": True, "data": rows,
+                                              "pagination": {"total": 3}})
 
     result = await jgb2.query_bills(
         _identity(role_id="1", user_id="9"), {"face": "__test_face__"})
@@ -167,6 +171,55 @@ async def test_bills_no_ref_no_keyword_recent_listing(monkeypatch, fake_api):
     assert result["ok"] is True
     assert result["data"]["candidates"] == rows
     assert result["data"]["skip_refine"] is True
+    assert "符合 3 筆" in result["text_for_model"]
+    # 無條件列表：到期日新的在前，一頁取候選上限那麼多筆；只送 viewer（⛔ 不送租客用的 user_id）
+    name, kwargs = fake_api.calls[-1]
+    assert name == "list_bills_page" and kwargs["viewer_user_id"] == "9"
+    assert kwargs["sort_by"] == "date_expire" and kwargs["sort_direction"] == "desc"
+    assert kwargs["per_page"] == jgb2._candidate_cap() and "user_id" not in kwargs
+
+
+async def test_bills_no_condition_reports_total_and_first_page(monkeypatch, fake_api):
+    """總數 > 一頁 ⇒ 「共 N 筆，列出前 M 筆」；筆數取上游 `pagination.total`，不是列數。"""
+    monkeypatch.setitem(jgb2.BILL_FACE_BUILDERS, "__test_face__", lambda r, q: "x")
+    cap = jgb2._candidate_cap()
+    rows = [{"id": i} for i in range(cap)]
+    _set_canned(fake_api, "list_bills_page", {"success": True, "data": rows,
+                                              "pagination": {"total": 83}})
+    result = await jgb2.query_bills(_identity(role_id="1", user_id="9"), {"face": "__test_face__"})
+    assert result["ok"] is True and result["data"]["skip_refine"] is False
+    assert f"共 83 筆" in result["text_for_model"] and f"列出前 {cap} 筆" in result["text_for_model"]
+
+
+async def test_bills_no_condition_upstream_failure_is_no_match(monkeypatch, fake_api):
+    monkeypatch.setitem(jgb2.BILL_FACE_BUILDERS, "__test_face__", lambda r, q: "x")
+    _set_canned(fake_api, "list_bills_page", {"success": False, "error": {"code": 500, "message": "x"}})
+    result = await jgb2.query_bills(_identity(role_id="1", user_id="9"), {"face": "__test_face__"})
+    assert result == {"ok": False, "error": "NO_MATCH"}
+
+
+async def test_estates_no_name_lists_total_and_first_page(monkeypatch, fake_api):
+    """沒給 ref／keyword ⇒ `GET /estates`（不帶 keyword）：共 N 筆＋第一頁；註明只含刊登中，⛔ 講成全部物件。"""
+    cap = jgb2._candidate_cap()
+    rows = [{"id": i, "title": f"物件{i}", "display_address": "台北市", "status": 1} for i in range(cap)]
+    _set_canned(fake_api, "get_estate_status", {"success": True, "data": rows,
+                                                "pagination": {"total": 12}})
+    result = await jgb2.query_estates(_identity(role_id="1", user_id="9"), {"face": next(iter(jgb2.ESTATE_FACE_BUILDERS))})
+    assert result["ok"] is True
+    assert result["data"]["candidates"] == rows and result["data"]["skip_refine"] is False
+    text = result["text_for_model"]
+    assert "共 12 筆" in text and "只含刊登中的物件" in text and f"列出前 {cap} 筆" in text
+    name, kwargs = fake_api.calls[-1]
+    assert name == "get_estate_status" and kwargs.get("keyword") is None and kwargs["viewer_user_id"] == "9"
+
+
+async def test_estates_no_name_empty_or_failed_is_no_match(fake_api):
+    face = next(iter(jgb2.ESTATE_FACE_BUILDERS))
+    ident = _identity(role_id="1", user_id="9")
+    _set_canned(fake_api, "get_estate_status", {"success": True, "data": [{"found": False, "keyword": ""}]})
+    assert await jgb2.query_estates(ident, {"face": face}) == {"ok": False, "error": "NO_MATCH"}
+    _set_canned(fake_api, "get_estate_status", {"success": False, "error": {"code": 500}})
+    assert await jgb2.query_estates(ident, {"face": face}) == {"ok": False, "error": "NO_MATCH"}
 
 
 async def test_bills_zero_hit_no_match(monkeypatch, fake_api):
@@ -502,7 +555,7 @@ def _real_identity(*, target_user="tenant", mode="b2c", role_id=None, user_id=No
 
 
 _LEAK_CASES = [
-    ("bills-無ref", jgb2.query_bills, "get_bills", {}),
+    ("bills-無ref", jgb2.query_bills, "list_bills_page", {}),
     ("bills-帶ref", jgb2.query_bills, "get_bills", {"ref": "501"}),
     ("bills-帶keyword", jgb2.query_bills, "get_bills", {"keyword": "重慶北"}),
     ("contracts-無ref", jgb2.query_contracts, "get_contracts", {}),

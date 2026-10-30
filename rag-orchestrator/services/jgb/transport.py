@@ -12,7 +12,6 @@
 外殼對齊 jgb2 `External\\BillApiController@index/@show`。
 """
 
-import calendar
 import copy
 import datetime
 import hashlib
@@ -316,11 +315,10 @@ ROUTES: "tuple[tuple[HttpMethod, str, str], ...]" = (
     ("POST", "/agent/v1/estates", "create_estate"),
     ("PATCH", "/agent/v1/bills/{bill_id}", "patch_bill"),
     # ── 站內幫手 S0（plan-assistant-11-items-20261014 §3b）——contract: proposed ──
-    # JGB 尚未實作；形狀以 jgb2-api-requests.md #16～#22 為準。⚠️ 路徑刻意避開
-    # `/bills/{bill_id}`（會被它吃掉成歧義），統計掛在三段式 `/bills/summary/unpaid`。
-    ("GET", "/api/external/v1/bills/summary/unpaid", "assistant_unpaid_bills"),            # jgb2-req#16
-    ("GET", "/api/external/v1/repairs/in-progress", "assistant_in_progress_repairs"),      # jgb2-req#17
-    ("GET", "/api/external/v1/contracts/expiring", "assistant_expiring_contracts"),        # jgb2-req#18
+    # JGB 尚未實作的建立類寫入（#19～#21）；形狀以 jgb2-api-requests.md 為準。
+    # ⚠️ #16～#18（未繳帳單／執行中修繕／即將到期合約）的自訂讀取路由已刪：JGB 用既有列表端點的
+    # 篩選參數（`/bills` status＋date_expire_*、`/repairs` status、`/contracts/status-overview`
+    # date_end_*，jgb2 commit 535b380873）完成，替身照同一組參數實作，⛔ 再補自訂路徑。
     ("POST", "/api/external/v1/estates", "assistant_create_estate"),                       # jgb2-req#19
     ("POST", "/api/external/v1/contracts", "assistant_create_contract"),                   # jgb2-req#20
     ("POST", "/api/external/v1/bills/manual", "assistant_create_bill"),                    # jgb2-req#21
@@ -358,6 +356,52 @@ def resolve_endpoint(method: HttpMethod, path: str) -> Optional[str]:
     return hits[0] if hits else None
 
 
+def _status_list(raw: Any, allowed: "frozenset[int]") -> "Optional[list[int]]":
+    """照抄 jgb2 `ExternalApiParams::statusList`：單一整數或逗號清單（例 "2,8"）。
+
+    每段 trim 後須全為數字且在允許值域內；任一段不合法 ⇒ `None`（呼叫端回 400）。
+    去重並保留出現順序。"""
+    if isinstance(raw, bool) or not isinstance(raw, (str, int)):
+        return None
+    out: "list[int]" = []
+    for seg in str(raw).split(","):
+        seg = seg.strip()
+        if not seg or not seg.isascii() or not seg.isdigit():
+            return None
+        v = int(seg)
+        if v not in allowed:
+            return None
+        if v not in out:
+            out.append(v)
+    return out
+
+
+def _ymd_int(raw: Any) -> "Optional[int]":
+    """照抄 jgb2 `ExternalApiParams::ymd`：嚴格 `YYYY-MM-DD` 且日期存在 ⇒ `YYYYMMDD` 整數；否則 `None`。"""
+    if not isinstance(raw, str) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", raw):
+        return None
+    try:
+        datetime.date.fromisoformat(raw)
+    except ValueError:
+        return None
+    return int(raw.replace("-", ""))
+
+
+def _truthy(raw: Any) -> bool:
+    """Laravel `$request->boolean()`：1／"1"／true／"true"／"on"／"yes" 為真。"""
+    return str(raw).strip().lower() in ("1", "true", "on", "yes")
+
+
+#: jgb2 `External\BillController::FILTERABLE_STATUSES`（1 待發送、2 待繳費、8 待對帳、16 已繳費、32 排定發送、64 已失效）。
+_BILL_FILTER_STATUSES: "frozenset[int]" = frozenset({1, 2, 8, 16, 32, 64})
+#: jgb2 `Repair::statusLabels()` 的鍵（1 申請中、8 預約安排、2 安排修繕、4 修繕中、16 完成修繕、32 結單、64 封存）。
+_REPAIR_STATUS_LABELS: "dict[int, str]" = {
+    1: "申請中", 8: "預約安排", 2: "安排修繕", 4: "修繕中", 16: "完成修繕", 32: "結單", 64: "封存",
+}
+#: jgb2 `Contract::CONTRACT_SIGNED`（雙方簽名完成＝執行中合約）。
+_CONTRACT_SIGNED_BIT = 8
+
+
 def _php_intval(token: str) -> int:
     """PHP `intval()` 的取前綴數字語義（照抄 production 的 contract_ids 解析）。"""
     import re as _re
@@ -377,12 +421,11 @@ MIGRATED_ENDPOINTS: "frozenset[str]" = frozenset({
     "create_bill", "create_contract", "create_estate", "patch_bill",
 })
 
-#: 站內幫手 S0 新增、**尚未由 JGB 實作**的端點（`contract: proposed`，jgb2-req#16～#21）。
+#: 站內幫手 S0 新增、**尚未由 JGB 實作**的端點（`contract: proposed`，jgb2-req#19～#21）。
 #: ⚠️ 刻意**不放進** `MIGRATED_ENDPOINTS`：那份是「已遷移的既有 jgb2 端點」帳本
 #: （`test_transport_migration_gate_req` 釘死其內容）；提案中的端點是另一類事實，
 #: 分開列才不會把「JGB 還沒有的契約」讀成「已遷移的真端點」。
 PROPOSED_ENDPOINTS: "frozenset[str]" = frozenset({
-    "assistant_unpaid_bills", "assistant_in_progress_repairs", "assistant_expiring_contracts",
     "assistant_create_estate", "assistant_create_contract", "assistant_create_bill",
 })
 
@@ -572,12 +615,10 @@ class JGBMockTransport:
     @staticmethod
     def _identity_flags(path: str, source: "dict[str, Any]") -> "tuple[bool, bool]":
         """`(has_role_id, has_viewer)`：role 可在參數或 `/roles/{role_id}/` 路徑段；viewer＝
-        `viewer_user_id`（提案統計端點 #16～#18 的 viewer 欄名是 `user_id`）。"""
+        `viewer_user_id`（JGB 中介層 `ExternalViewerScope` 只認這個名字）。"""
         has_role = source.get("role_id") not in (None, "") or bool(
             re.search(r"/roles/[^/]+", path))
-        has_viewer = source.get("viewer_user_id") not in (None, "") or (
-            resolve_endpoint("GET", path) in PROPOSED_ENDPOINTS
-            and source.get("user_id") not in (None, ""))
+        has_viewer = source.get("viewer_user_id") not in (None, "")
         return has_role, has_viewer
 
     def _append_read_log(self, log_path: str, endpoint_key: Optional[str], method: str,
@@ -805,6 +846,17 @@ class JGBMockTransport:
         if not params.get("role_id"):
             return self._error(400, "role_id 為必填參數")
 
+        # 到期區間參數先驗證（jgb2 #13290303502 A-S2 #18）：YYYY-MM-DD，不合法 400
+        end_from = end_to = None
+        if params.get("date_end_from") not in (None, ""):
+            end_from = _ymd_int(params["date_end_from"])
+            if end_from is None:
+                return self._error(400, "date_end_from 格式須為 YYYY-MM-DD")
+        if params.get("date_end_to") not in (None, ""):
+            end_to = _ymd_int(params["date_end_to"])
+            if end_to is None:
+                return self._error(400, "date_end_to 格式須為 YYYY-MM-DD")
+
         rows = [r for r in self.contract_fixtures.rows()
                 if r.get("active") == 1 and r.get("is_newest") == 1]
         if self._foreign_team(params):             # S5 6b：他團隊 ⇒ 與查無同形（空列表）
@@ -823,6 +875,16 @@ class JGBMockTransport:
         if keyword not in (None, ""):
             kw = str(keyword)
             rows = [r for r in rows if kw in str(r.get("title") or "")]
+
+        # 到期區間（`date_end` 為 Ymd 整數，含端點）；帶任一參數時對齊網頁「即將到期」：
+        # 排除歷史合約（`is_history=1`），且只取已簽名完成（`bit_status` 含 CONTRACT_SIGNED）。
+        if end_from is not None or end_to is not None:
+            if end_from is not None:
+                rows = [r for r in rows if r["date_end"] >= end_from]
+            if end_to is not None:
+                rows = [r for r in rows if r["date_end"] <= end_to]
+            rows = [r for r in rows if r.get("is_history") == 0
+                    and (r.get("bit_status") or 0) & _CONTRACT_SIGNED_BIT]
 
         # S1（DSP-074，contract: proposed）：assistant fixture 下依 `contract_visibility` 過濾 viewer。
         rows = self._viewer_scoped(params, "contract", rows)
@@ -869,20 +931,47 @@ class JGBMockTransport:
           ⚠️ **跨域連貫修正（2026-09-08）後現況更新**：帳單已改指向既有 contract
           fixture 的真實 id（678／600），三個 fixture 宇宙不再互不連通——但這
           只解了**資料連貫**，本函式仍未實作 `to_user_id` 過濾邏輯。
-          ⚠️ 登記為 **GAP-B1（邏輯缺口，非資料缺口）**：目前**照舊忽略**，
+          ⚠️ 登記為 **GAP-B1（邏輯缺口，非資料缺口）**：只帶 user_id（租客路徑）時**照舊忽略**，
           故「帶了 user_id 仍拿到全部帳單」是替身的缺口、**不是** production
-          行為。實作過濾邏輯屬另一個需要授權的 slice（見 transport-migration-inventory.md）。
+          行為；與 `viewer_user_id` 同帶（成員查詢）一律 raise——那個組合在 production 會濾成空。實作過濾邏輯屬另一個需要授權的 slice（見 transport-migration-inventory.md）。
         """
         if not params.get("role_id"):
             return self._error(400, "role_id 為必填參數")
+        # 成員查詢（帶 viewer）又帶承租方 user_id：production 會濾成「這位成員當承租方的合約」，
+        # 幾乎必空；fixture 合約沒有 to_user_id，替身算不出 ⇒ 照誠實紀律 raise，⛔ 假裝回全部。
+        if params.get("user_id") not in (None, "") and params.get("viewer_user_id") not in (None, ""):
+            raise UnsupportedMockParameterError(
+                "/bills 同時帶 user_id（承租方篩選）與 viewer_user_id：替身無 to_user_id 資料，無法模擬")
+
+        # 篩選參數先驗證（jgb2 #13290303502 A-S2 #16）：不合法一律 400，不靜默忽略
+        statuses: "Optional[list[int]]" = None
+        if params.get("status") not in (None, ""):
+            statuses = _status_list(params["status"], _BILL_FILTER_STATUSES)
+            if statuses is None:
+                return self._error(400, "status 值不合法")
+        expire_from = expire_to = None
+        if params.get("date_expire_from") not in (None, ""):
+            expire_from = _ymd_int(params["date_expire_from"])
+            if expire_from is None:
+                return self._error(400, "date_expire_from 格式須為 YYYY-MM-DD")
+        if params.get("date_expire_to") not in (None, ""):
+            expire_to = _ymd_int(params["date_expire_to"])
+            if expire_to is None:
+                return self._error(400, "date_expire_to 格式須為 YYYY-MM-DD")
 
         rows = list(self.fixtures.rows())
         if self._foreign_team(params):             # S5 6b：他團隊 ⇒ 與查無同形（空列表）
             rows = []
 
-        for key in ("contract_id", "status", "type"):
+        for key in ("contract_id", "type"):
             if params.get(key) not in (None, ""):
                 rows = [r for r in rows if r[key] == int(params[key])]
+        if statuses is not None:
+            rows = [r for r in rows if r["status"] in statuses]
+        if expire_from is not None:                  # 到期日區間（含端點；與 month 並用取交集）
+            rows = [r for r in rows if r["date_expire"] >= expire_from]
+        if expire_to is not None:
+            rows = [r for r in rows if r["date_expire"] <= expire_to]
         if params.get("bill_id") not in (None, ""):
             rows = [r for r in rows if r["id"] == int(params["bill_id"])]
 
@@ -944,7 +1033,7 @@ class JGBMockTransport:
         total_pages = -(-total // per_page) if total else 0
         offset = (page - 1) * per_page
 
-        return {
+        resp: TransportResponse = {
             "success": True,
             "mapping": self.MAPPING,
             "data": rows[offset:offset + per_page],
@@ -953,6 +1042,11 @@ class JGBMockTransport:
                 "total_pages": total_pages, "has_more": page < total_pages,
             },
         }
+        if _truthy(params.get("with_summary")):
+            # 彙總：與列表同一組篩選、算在分頁之前（jgb2 `with_summary`）；只在帶參數時才有這個鍵。
+            resp["summary"] = {"count": total,
+                               "total_amount": float(sum(r["total"] for r in rows))}
+        return resp
 
     def _bills_show(self, bill_id: str, params: "dict[str, Any]") -> TransportResponse:
         """`GET /bills/{bill_id}`（`BillApiController@show:203-231`）。
@@ -1151,17 +1245,28 @@ class JGBMockTransport:
         }}
 
     def _repairs_index(self, params: "dict[str, Any]") -> TransportResponse:
-        """`GET /repairs`（`RepairApiController@index`）——`role_id` 必填、恆定 `active=1`；
+        """`GET /repairs`（`External\\RepairController@index`）——`role_id` 必填、恆定 `active=1`；
         `is_urgent` 對映 `emergency_status`（語義曾反轉過，不可望文生義）。
+
+        參數照 jgb2 staging：`status` 單值或逗號清單（值須在 `Repair::statusLabels()` 內，否則 400）、
+        `estate_id`、`category_id`、`is_urgent`、`keyword`（`estate_title` 或 `estate_full_address`）、
+        `apply_after`／`apply_before`／`updated_after`（日期）、`sort_by`（id／apply_at／updated_at／status，
+        預設 id）＋`sort_direction`（預設 desc）、`page`／`per_page`（預設 50、上限 200）。
+        回 `data`（列）＋`pagination`（`total` 為篩選後全量）。
         """
         if not params.get("role_id"):
             return self._error(400, "role_id 為必填參數")
-        rows = self.repair_fixtures.rows()
+        statuses: "Optional[list[int]]" = None
+        if params.get("status") not in (None, ""):
+            statuses = _status_list(params["status"], frozenset(_REPAIR_STATUS_LABELS))
+            if statuses is None:
+                return self._error(400, "status 值不合法")
+        rows = list(self.repair_fixtures.rows())
         if self._foreign_team(params):             # S5 6b：他團隊 ⇒ 與查無同形（空列表）
             rows = []
 
-        if params.get("status") not in (None, ""):
-            rows = [r for r in rows if r["status"] == int(params["status"])]
+        if statuses is not None:
+            rows = [r for r in rows if r["status"] in statuses]
         if params.get("estate_id") not in (None, ""):
             rows = [r for r in rows if r["estate_id"] == int(params["estate_id"])]
         if params.get("category_id") not in (None, ""):
@@ -1170,21 +1275,40 @@ class JGBMockTransport:
             rows = [r for r in rows if r["emergency_status"] == int(params["is_urgent"])]
         keyword = params.get("keyword")
         if keyword:
-            rows = [r for r in rows if str(keyword) in str(r.get("estate_title") or "")]
+            rows = [r for r in rows if str(keyword) in str(r.get("estate_title") or "")
+                    or str(keyword) in str(r.get("estate_full_address") or "")]
+
+        def _day(value: Any) -> str:
+            """時間欄位（`YmdHis` 或 `YYYY-MM-DD hh:mm:ss`）⇒ 前 8 碼數字 `YYYYMMDD`。"""
+            return re.sub(r"\D", "", str(value or ""))[:8]
+
+        if params.get("apply_after") not in (None, ""):
+            rows = [r for r in rows if _day(r.get("apply_at")) >= _day(params["apply_after"])]
+        if params.get("apply_before") not in (None, ""):
+            rows = [r for r in rows if _day(r.get("apply_at")) <= _day(params["apply_before"])]
+        if params.get("updated_after") not in (None, ""):
+            rows = [r for r in rows if _day(r.get("updated_at")) >= _day(params["updated_after"])]
         rows = self._viewer_scoped(params, "repair", rows)       # S1：DSP-074，assistant fixture 才啟用
 
-        total = len(rows)
+        sort_by = params.get("sort_by")
+        if sort_by not in ("id", "apply_at", "updated_at", "status"):
+            sort_by = "id"
+        descending = str(params.get("sort_direction", "desc")).lower() != "asc"
+        if sort_by in ("apply_at", "updated_at"):
+            rows.sort(key=lambda r: (re.sub(r"\D", "", str(r.get(sort_by) or "")), r["id"]),
+                      reverse=descending)
+        else:
+            rows.sort(key=lambda r: r[sort_by], reverse=descending)
+
+        page_rows, pagination = self._paginate(rows, params)
         return {
             "success": True,
             "mapping": {
-                "status": {"1": "申請中", "2": "安排修繕", "16": "完成修繕",
-                          "32": "結單", "64": "封存"},
+                "status": {str(k): v for k, v in _REPAIR_STATUS_LABELS.items()},
                 "emergency_status": {"1": "非緊急", "2": "緊急"},
             },
-            "data": rows,
-            "pagination": {"current_page": 1, "per_page": 50, "total": total,
-                           "total_pages": -(-total // 50) if total else 0,
-                           "has_more": False},
+            "data": page_rows,
+            "pagination": pagination,
         }
 
     def _repair_categories(self) -> TransportResponse:
@@ -1221,7 +1345,8 @@ class JGBMockTransport:
             estate = next(e for e in self.estate_fixtures.rows() if e["id"] == int(data["estate_id"]))
             overrides.update(estate_title=estate.get("title"),
                              estate_full_address=estate.get("full_address"),
-                             user_id=int(data["user_id"]), agent_user_id=int(data["user_id"]))
+                             user_id=int(data["viewer_user_id"]),
+                             agent_user_id=int(data["viewer_user_id"]))
             for cat in repair_categories():
                 if cat["id"] == data.get("category_id"):
                     overrides["category_name"] = cat["name"]
@@ -1230,7 +1355,7 @@ class JGBMockTransport:
                             overrides["item_name"] = item["name"]
         row = self.repair_fixtures.create(overrides)
         if assistant:
-            self._declare_created("repair", row["id"], int(data["user_id"]))
+            self._declare_created("repair", row["id"], int(data["viewer_user_id"]))
         return {"success": True, "data": row}
 
     def _create_bill(self, data: "dict[str, Any]") -> TransportResponse:
@@ -1282,7 +1407,7 @@ class JGBMockTransport:
     _PATCH_BILL_ALLOWED_KEYS: "frozenset[str]" = frozenset({
         "due_date", "due_date_shift_days", "idempotency_key", "confirmation_token",
         # 站內幫手 S5（F5／jgb2-req#23 擴及 PATCH）：寫入 body 帶登入身分。
-        "role_id", "user_id",
+        "role_id", "viewer_user_id",
     })
 
     def _patch_bill(self, bill_id: str, data: "dict[str, Any]") -> TransportResponse:
@@ -1346,11 +1471,6 @@ class JGBMockTransport:
     # 時這些端點一律 `MissingFixtureError`（大聲失敗，不退回猜測）。
     # ══════════════════════════════════════════════════════════════════════
 
-    #: 帳單 status（`MAPPING["status"]`）：2 待繳費、8 待對帳 視為「未收」；1 待發送／32 排定發送
-    #: 尚未寄出、16 已繳費、64 已失效 都不是未收。（提案語義，待 JGB 確認 8 是否算未收）
-    _UNPAID_BILL_STATUSES: "frozenset[int]" = frozenset({2, 8})
-    #: 修繕 status：1 申請中、2 安排修繕、16 完成修繕 視為「執行中（未結案）」；32 結單、64 封存不算。
-    _IN_PROGRESS_REPAIR_STATUSES: "frozenset[int]" = frozenset({1, 2, 16})
     #: 寫入 body 中「歸屬欄位」：由登入身分決定，呼叫端 ⛔ 指定（F4）。
     _OWNERSHIP_KEYS: "frozenset[str]" = frozenset({
         "team_id", "owner_user_id", "owner_role_id", "vendor_id", "to_user_id",
@@ -1362,19 +1482,19 @@ class JGBMockTransport:
     _PROPOSED_NOW: str = "2026-09-08 19:00:00"
 
     _ESTATE_BODY_KEYS: "frozenset[str]" = frozenset({
-        "role_id", "user_id", "title", "city", "district", "address", "use_for",
+        "role_id", "viewer_user_id", "title", "city", "district", "address", "use_for",
         "space_type", "building", "room_count", "size", "rent", "floor",
     }) | _IDEMPOTENCY_KEYS
     _CONTRACT_BODY_KEYS: "frozenset[str]" = frozenset({
-        "role_id", "user_id", "estate_id", "title", "to_user_email", "to_user_phone",
+        "role_id", "viewer_user_id", "estate_id", "title", "to_user_email", "to_user_phone",
         "date_start", "date_end", "rent", "deposit_amount",
     }) | _IDEMPOTENCY_KEYS
     _BILL_BODY_KEYS: "frozenset[str]" = frozenset({
-        "role_id", "user_id", "contract_id", "title", "sub_title", "total", "date_expire",
+        "role_id", "viewer_user_id", "contract_id", "title", "sub_title", "total", "date_expire",
     }) | _IDEMPOTENCY_KEYS
-    #: `POST /repairs` 在提案契約下的 body 鍵（既有鍵＋`user_id`）。
+    #: `POST /repairs` 在提案契約下的 body 鍵（既有鍵＋`viewer_user_id`，JGB 中介層認的成員身分鍵名）。
     _REPAIR_BODY_KEYS: "frozenset[str]" = frozenset({
-        "role_id", "user_id", "estate_id", "category_id", "item_id", "broken_reason",
+        "role_id", "viewer_user_id", "estate_id", "category_id", "item_id", "broken_reason",
         "broken_note", "emergency_status", "contract_id", "broken_photos",
     }) | _IDEMPOTENCY_KEYS
 
@@ -1395,15 +1515,18 @@ class JGBMockTransport:
     def _assistant_identity(
         self, source: "dict[str, Any]",
     ) -> "tuple[Optional[tuple[int, int]], Optional[TransportResponse]]":
-        """驗 `role_id`＋`user_id`（缺→400、非整數→422、角色非本團隊或非成員→折疊 404）。"""
+        """驗 `role_id`＋`viewer_user_id`（缺→400、非整數→422、角色非本團隊或非成員→折疊 404）。
+
+        成員身分的鍵名是 `viewer_user_id`（JGB `ExternalViewerScope` 只認這個名字；舊提案的 `user_id`
+        在 JGB 不會被當成成員身分，替身 ⛔ 再收）。"""
         cfg = self._need_assistant_cfg()
-        for key in ("role_id", "user_id"):
+        for key in ("role_id", "viewer_user_id"):
             if source.get(key) in (None, ""):
                 return None, self._error(400, f"{key} 為必填參數")
         try:
-            role_id, user_id = int(source["role_id"]), int(source["user_id"])
+            role_id, user_id = int(source["role_id"]), int(source["viewer_user_id"])
         except (TypeError, ValueError):
-            return None, self._error(422, "role_id、user_id 必須為整數")
+            return None, self._error(422, "role_id、viewer_user_id 必須為整數")
         if role_id != int(cfg["role_id"]):
             return None, self._fold()
         self._require(self.team_fixtures, "assistant_identity")
@@ -1512,7 +1635,7 @@ class JGBMockTransport:
                      ) -> "tuple[Optional[tuple[int, int]], Optional[TransportResponse]]":
         """F4 守門：歸屬欄位／未知欄位 → 422（比照 `_PATCH_BILL_ALLOWED_KEYS`）；再驗身分。
 
-        ⚠️ `role_id`＋`user_id` 是**身分欄位**（#23：寫入 body 一律帶，由 JGB 驗），不是歸屬欄位；
+        ⚠️ `role_id`＋`viewer_user_id` 是**身分欄位**（寫入 body 一律帶，由 JGB 驗），不是歸屬欄位；
         歸屬欄位（`team_id`／`owner_user_id`／`vendor_id`／`to_user_id`…）只能由登入身分決定。
         """
         ownership = sorted(set(data) & self._OWNERSHIP_KEYS)
@@ -1532,12 +1655,6 @@ class JGBMockTransport:
         except ValueError:
             return None
 
-    @staticmethod
-    def _add_months(d: "datetime.date", months: int) -> "datetime.date":
-        y, m = divmod(d.month - 1 + months, 12)
-        year, month = d.year + y, m + 1
-        return datetime.date(year, month, min(d.day, calendar.monthrange(year, month)[1]))
-
     def _paginate(self, items: "list[Any]", params: "dict[str, Any]"
                   ) -> "tuple[list[Any], dict[str, Any]]":
         page = max(1, int(params.get("page", 1) or 1))
@@ -1553,12 +1670,6 @@ class JGBMockTransport:
 
     def _send_proposed(self, endpoint_key: str, params: "dict[str, Any]",
                        data: "dict[str, Any]") -> TransportResponse:
-        if endpoint_key == "assistant_unpaid_bills":
-            return self._assistant_unpaid_bills(params)
-        if endpoint_key == "assistant_in_progress_repairs":
-            return self._assistant_in_progress_repairs(params)
-        if endpoint_key == "assistant_expiring_contracts":
-            return self._assistant_expiring_contracts(params)
         self._require(self.estate_fixtures, endpoint_key)
         self._require(self.contract_fixtures, endpoint_key)
         builders = {
@@ -1567,137 +1678,6 @@ class JGBMockTransport:
             "assistant_create_bill": self._assistant_create_bill,
         }
         return self._with_idempotency(endpoint_key, data, lambda: builders[endpoint_key](data))
-
-    def _read_guard(self, params: "dict[str, Any]", allowed: "frozenset[str]"
-                    ) -> "tuple[Optional[tuple[int, int]], Optional[datetime.date], Optional[TransportResponse]]":
-        foreign = sorted(set(params) - allowed)
-        if foreign:
-            return None, None, self._error(422, f"不支援的參數：{foreign}")
-        ident, err = self._assistant_identity(params)
-        if err:
-            return None, None, err
-        as_of = datetime.date.today()
-        if params.get("as_of") not in (None, ""):
-            as_of = self._parse_ymd(params["as_of"])
-            if as_of is None:
-                return None, None, self._error(422, "as_of 必須為 YYYY-MM-DD")
-        return ident, as_of, None
-
-    # ── jgb2-req#16（contract: proposed）──────────────────────────────────
-
-    def _assistant_unpaid_bills(self, params: "dict[str, Any]") -> TransportResponse:
-        """`GET /bills/summary/unpaid`——jgb2-req#16，contract: proposed。
-
-        未收帳單的加總＋逐筆明細，**依 `user_id`（viewer）的可見範圍過濾**（DSP-074；
-        ⛔ 不是 mcp-facade §4.2 的「圈定成空」）。`scope=this_month`＝`date_expire` 落在
-        `as_of` 當月；`scope=overdue`＝`date_expire < as_of`。`count`／`total_amount` 涵蓋
-        **全部符合者**，`items` 才分頁（A4：總額必須等於明細逐筆相加，不因分頁而少）。
-        """
-        self._require(self.fixtures, "assistant_unpaid_bills")
-        ident, as_of, err = self._read_guard(
-            params, frozenset({"role_id", "user_id", "scope", "as_of", "page", "per_page"}))
-        if err:
-            return err
-        scope = params.get("scope")
-        if scope not in ("this_month", "overdue"):
-            return self._error(422, "scope 必須為 this_month 或 overdue")
-        _, viewer = ident
-        as_of_int = as_of.year * 10000 + as_of.month * 100 + as_of.day
-        rows = [b for b in self.fixtures.rows() if b["status"] in self._UNPAID_BILL_STATUSES]
-        if scope == "overdue":
-            rows = [b for b in rows if b["date_expire"] < as_of_int]
-        else:
-            lo = as_of.year * 10000 + as_of.month * 100
-            rows = [b for b in rows if lo + 1 <= b["date_expire"] <= lo + 31]
-        rows = [b for b in rows if self._is_visible("bill", b["id"], viewer)]
-        rows.sort(key=lambda b: (b["date_expire"], b["id"]))
-        total_amount = sum(b["total"] for b in rows)
-        items = [{k: b.get(k) for k in ("id", "contract_id", "estate_id", "title", "sub_title",
-                                       "total", "currency", "date_expire", "status")}
-                 for b in rows]
-        page_items, pagination = self._paginate(items, params)
-        return {
-            "success": True,
-            "data": {"scope": scope, "as_of": as_of.isoformat(), "currency": "TWD",
-                     "count": len(rows), "total_amount": total_amount, "items": page_items},
-            "pagination": pagination,
-        }
-
-    # ── jgb2-req#17（contract: proposed）──────────────────────────────────
-
-    def _assistant_in_progress_repairs(self, params: "dict[str, Any]") -> TransportResponse:
-        """`GET /repairs/in-progress`——jgb2-req#17，contract: proposed。
-
-        未結案（status 1／2／16）修繕單的全量清單，依 viewer 可見範圍過濾，分頁；
-        排序 `apply_at` 新到舊。回應只投影必要欄位（不含報修人電話／email）。
-        """
-        self._require(self.repair_fixtures, "assistant_in_progress_repairs")
-        ident, _, err = self._read_guard(
-            params, frozenset({"role_id", "user_id", "page", "per_page"}))
-        if err:
-            return err
-        _, viewer = ident
-        rows = [r for r in self.repair_fixtures.rows()
-                if r["status"] in self._IN_PROGRESS_REPAIR_STATUSES]
-        rows = [r for r in rows if self._is_visible("repair", r["id"], viewer)]
-        rows.sort(key=lambda r: (str(r.get("apply_at") or ""), r["id"]), reverse=True)
-        keys = ("id", "status", "emergency_status", "estate_id", "estate_title",
-                "estate_full_address", "category_id", "category_name", "item_id", "item_name",
-                "broken_reason", "broken_note", "apply_at", "assign_at", "complete_at", "updated_at")
-        items = [{k: r.get(k) for k in keys} for r in rows]
-        page_items, pagination = self._paginate(items, params)
-        return {
-            "success": True,
-            "mapping": {"status": {"1": "申請中", "2": "安排修繕", "16": "完成修繕"},
-                        "emergency_status": {"1": "非緊急", "2": "緊急"}},
-            "data": {"count": len(rows), "items": page_items},
-            "pagination": pagination,
-        }
-
-    # ── jgb2-req#18（contract: proposed）──────────────────────────────────
-
-    def _assistant_expiring_contracts(self, params: "dict[str, Any]") -> TransportResponse:
-        """`GET /contracts/expiring`——jgb2-req#18，contract: proposed。
-
-        `months`（預設 3，1～24）個月內到期的合約：`active=1`、`is_newest=1`、`is_history=0`，
-        且 `as_of <= date_end <= as_of + months 個月`（兩端含；月底以當月最後一天為界）。
-        依 viewer 可見範圍過濾；`days_left` 由伺服端算好（決定性程式算事實）。
-        """
-        self._require(self.contract_fixtures, "assistant_expiring_contracts")
-        ident, as_of, err = self._read_guard(
-            params, frozenset({"role_id", "user_id", "months", "as_of", "page", "per_page"}))
-        if err:
-            return err
-        months = params.get("months", 3)
-        try:
-            months = int(months)
-        except (TypeError, ValueError):
-            return self._error(422, "months 必須為 1～24 的整數")
-        if not 1 <= months <= 24:
-            return self._error(422, "months 必須為 1～24 的整數")
-        _, viewer = ident
-        end = self._add_months(as_of, months)
-        lo = as_of.year * 10000 + as_of.month * 100 + as_of.day
-        hi = end.year * 10000 + end.month * 100 + end.day
-        rows = [c for c in self.contract_fixtures.rows()
-                if c.get("active") == 1 and c.get("is_newest") == 1 and c.get("is_history") == 0
-                and lo <= c["date_end"] <= hi]
-        rows = [c for c in rows if self._is_visible("contract", c["id"], viewer)]
-        rows.sort(key=lambda c: (c["date_end"], c["id"]))
-        keys = ("id", "title", "estate_id", "city", "district", "address", "rent",
-                "deposit_amount", "date_start", "date_end", "status", "bit_status")
-        items = []
-        for c in rows:
-            s = str(c["date_end"])
-            days_left = (datetime.date(int(s[:4]), int(s[4:6]), int(s[6:])) - as_of).days
-            items.append({**{k: c.get(k) for k in keys}, "days_left": days_left})
-        page_items, pagination = self._paginate(items, params)
-        return {
-            "success": True,
-            "data": {"months": months, "as_of": as_of.isoformat(), "window_end": end.isoformat(),
-                     "count": len(rows), "items": page_items},
-            "pagination": pagination,
-        }
 
     # ── jgb2-req#19（contract: proposed）──────────────────────────────────
 

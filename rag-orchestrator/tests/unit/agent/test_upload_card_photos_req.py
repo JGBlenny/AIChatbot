@@ -385,8 +385,8 @@ async def test_multipart_fields_and_broken_photos_files(api, tmp_path, monkeypat
     form = api._mock_transport.bodies[i]
     files = api._mock_transport.files[i]
     assert all(isinstance(v, str) for v in form.values())
-    assert {"role_id", "user_id", "estate_id", "category_id", "broken_reason", "emergency_status",
-            "idempotency_key"} <= set(form)
+    assert {"role_id", "viewer_user_id", "estate_id", "category_id", "broken_reason", "emergency_status",
+            "idempotency_key"} <= set(form) and "user_id" not in form
     assert form["estate_id"] == "67338" and "broken_photos" not in form
     assert [f[0] for f in files] == ["broken_photos[]", "broken_photos[]"]
     line = json.loads(log.read_text(encoding="utf-8").splitlines()[-1])
@@ -411,7 +411,7 @@ async def test_multipart_fields_and_broken_photos_files(api, tmp_path, monkeypat
 
 async def test_mock_multipart_validation(api):
     """mock 收 multipart：型別（magic bytes）、張數、欄位名都驗；⛔ 別的端點收 multipart。"""
-    base = {"role_id": "20151", "user_id": "12291", "estate_id": "67338", "category_id": "1",
+    base = {"role_id": "20151", "viewer_user_id": "12291", "estate_id": "67338", "category_id": "1",
             "item_id": "1", "broken_reason": "斷裂", "broken_note": "", "emergency_status": "1"}
     jpg = _jpeg()
 

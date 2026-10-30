@@ -383,7 +383,7 @@ async def test_every_jgb2_call_from_every_agent_path_carries_role_and_viewer(api
                           timeout_s=30, stage="M1")
     assert turn.ok, turn.error
 
-    # ① 每一筆實際送出的 params／body 都帶 role 與 viewer（寫入 body：role_id＋user_id）
+    # ① 每一筆實際送出的 params／body 都帶 role 與 viewer（寫入 body：role_id＋viewer_user_id，⛔ user_id）
     calls = api._mock_transport.calls
     bodies = api._mock_transport.bodies
     assert len(calls) >= 28
@@ -391,7 +391,8 @@ async def test_every_jgb2_call_from_every_agent_path_carries_role_and_viewer(api
     for (method, path, params), body in zip(calls, bodies):
         source = body if method in ("POST", "PATCH") else (params or {})
         if method in ("POST", "PATCH"):
-            ok = source.get("role_id") not in (None, "") and source.get("user_id") not in (None, "")
+            ok = (source.get("role_id") not in (None, "") and source.get("viewer_user_id") not in (None, "")
+                  and "user_id" not in source)
         else:
             has_role, has_viewer = tr.JGBMockTransport._identity_flags(path, source)
             ok = has_role and has_viewer
@@ -541,7 +542,7 @@ async def test_estate_detail_sends_role_and_viewer(api):
 async def test_patch_due_date_body_carries_identity_and_folds_unseen_bill(api):
     ok = await api.agent_patch_bill_due_date(OWNER_ONLY_BILL, "2027-07-01", role_id=ROLE, user_id=OWNER)
     assert ok["success"] is True
-    assert api._mock_transport.bodies[-1] == {"due_date": "2027-07-01", "role_id": ROLE, "user_id": OWNER}
+    assert api._mock_transport.bodies[-1] == {"due_date": "2027-07-01", "role_id": ROLE, "viewer_user_id": OWNER}
     no = await api.agent_patch_bill_due_date(OWNER_ONLY_BILL, "2027-07-02", role_id=ROLE, user_id=PART)
     assert no["success"] is False and no["error"]["code"] == 404
 

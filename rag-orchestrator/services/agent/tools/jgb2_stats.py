@@ -1,10 +1,15 @@
 """站內幫手 S1：三支唯讀統計／清單工具（DSP-074）。
 
-- `jgb2.stats.unpaid_bills`：未收帳單統計（本月／逾期，總額＋逐筆明細）→ `get_unpaid_bill_summary`（jgb2-req#16）
-- `jgb2.stats.in_progress_repairs`：執行中修繕清單 → `get_in_progress_repairs`（jgb2-req#17）
-- `jgb2.stats.expiring_contracts`：N 個月內到期合約（預設 3）→ `get_expiring_contracts`（jgb2-req#18）
+- `jgb2.stats.unpaid_bills`：未收（待繳費或待對帳）帳單統計（本月／逾期，總額＋逐筆明細）→ `get_unpaid_bill_summary`
+  ＝ `GET /bills` status=2＋`date_expire_from/to`＋`with_summary`
+- `jgb2.stats.in_progress_repairs`：執行中修繕清單 → `get_in_progress_repairs`
+  ＝ `GET /repairs` status＝`IN_PROGRESS_REPAIR_STATUSES`（申請中、預約安排、安排修繕、修繕中、完成修繕）
+- `jgb2.stats.expiring_contracts`：N 個月內到期合約（預設 3）→ `get_expiring_contracts`
+  ＝ `GET /contracts/status-overview` `date_end_from`＝今天、`date_end_to`＝今天＋N 個月
 
-⚠️ 三個端點都是 `contract: proposed`（JGB 尚未實作，替身照期望契約回應），⛔ 不可讀成 JGB 已存在的行為。
+三支都用 JGB 既有的列表端點（jgb2 commit 535b380873），不是自訂路徑；接真 JGB 與替身走同一組參數。
+`JGBSystemAPI` 把 JGB 的 `data`＋`pagination`〔＋`summary`〕整理成本檔吃的 `data{count, items,…}`；
+形狀不對、`success:false` 一律走 `ERROR_TEXT`，⛔ 不補數字。
 
 身分（DSP-074，「這位成員在 JGB 畫面上看得到的」）：
 一律要 `role_id`＋`user_id`（viewer）雙證，缺一 ⇒ `NO_MATCH`。⛔ 不沿用 `jgb2._identity_gate_ok`
@@ -25,6 +30,7 @@ provenance 單位：一句「共 N 筆（＋總額）…」＋每筆明細一行
 """
 from __future__ import annotations
 
+import re
 from typing import Any, Awaitable, Callable, Optional
 
 from services.agent.tools import jgb2 as _jgb2
@@ -46,11 +52,6 @@ ERROR_TEXT = (
     "目前無法取得這份資料，請使用者稍後再試或洽客服。"
     "這不是「沒有資料」：⛔ 不要回報為零筆、零元或空清單。"
 )
-
-#: 接真 JGB（`USE_MOCK_JGB_API=false`）時三支統計端點 JGB 尚未開放（jgb2-req#16～#18）⇒
-#: 不發請求，由 runtime 以這一句程式固定句結束回合（否則打到不存在的
-#: 端點後，模型會改成轉人或反問「想處理哪一件事？」）。⛔ 無插值。
-NOT_SUPPORTED_TEXT = "這項統計目前還不支援：JGB 系統尚未開放這個查詢，開放後就能直接查。"
 
 #: 缺身分（缺 role_id 或 user_id）⇒ 與其他 jgb2 查詢工具同形的 NO_MATCH。
 _UNPAID_SCOPES = {"this_month": "本月", "overdue": "逾期"}
@@ -97,28 +98,6 @@ def _error_result() -> dict[str, Any]:
         "provenance": [],
         "text_for_model": ERROR_TEXT,
     }
-
-
-def _not_supported_result() -> dict[str, Any]:
-    """接真 JGB 時的「尚未開放」結果：`data.not_supported=True` 是 runtime 固定句出口的標記。"""
-    return {
-        "ok": True,
-        "data": {"facts": NOT_SUPPORTED_TEXT, "candidates": None, "skip_refine": True,
-                 "not_supported": True},
-        "provenance": [],
-        "text_for_model": NOT_SUPPORTED_TEXT,
-    }
-
-
-def _mock_only(handler: Callable[[Any, dict], Awaitable[dict[str, Any]]]):
-    """統計端點只在替身可用；接真 JGB ⇒ 不發請求、回「尚未開放」。"""
-    async def guarded(identity: Any, args: dict[str, Any]) -> dict[str, Any]:
-        # 真 `JGBSystemAPI` 一定有 `use_mock`；沒有這個屬性的是測試替身 ⇒ 沿用原行為。
-        if getattr(_jgb2._get_api(), "use_mock", True) is False:
-            return _not_supported_result()
-        return await handler(identity, args)
-    guarded.__name__ = handler.__name__
-    return guarded
 
 
 def _ok_result(tag: str, rule: str, facts: str, extra: dict[str, Any]) -> dict[str, Any]:
@@ -188,11 +167,12 @@ async def _paged(
 
 
 def _ymd_compact(value: Any) -> str:
-    """`apply_at`（`YYYYMMDDhhmmss` 字串）→ `YYYY/MM/DD`；形狀不符原樣回。"""
-    s = str(value or "")
-    if len(s) >= 8 and s[:8].isdigit():
-        return f"{s[:4]}/{s[4:6]}/{s[6:8]}"
-    return s or "未記錄"
+    """`apply_at`（`YYYYMMDDhhmmss`、`YYYY-MM-DD hh:mm:ss` 或 `YYYY-MM-DD`）→ `YYYY/MM/DD`；形狀不符原樣回。"""
+    text = str(value or "")
+    m = re.match(r"^(\d{4})-?(\d{2})-?(\d{2})", text)
+    if m:
+        return f"{m.group(1)}/{m.group(2)}/{m.group(3)}"
+    return text or "未記錄"
 
 
 def _is_num(v: Any) -> bool:
@@ -257,7 +237,7 @@ async def in_progress_repairs(identity: Any, args: dict[str, Any]) -> dict[str, 
 
     return await _paged(
         "in_progress_repairs", _LIST_RULE.format(what="共幾筆"), page, fetch,
-        prefix=lambda d: "執行中（未結案：申請中、安排修繕、完成修繕）修繕單（只含這位成員在 JGB 畫面上看得到的修繕單，結單與封存不在內）",
+        prefix=lambda d: "執行中（未結案：申請中、預約安排、安排修繕、修繕中、完成修繕）修繕單（只含這位成員在 JGB 畫面上看得到的修繕單，結單與封存不在內）",
         extra=lambda d: "",
         row_line=row_line,
         more_data=lambda d: {},
@@ -322,7 +302,7 @@ UNPAID_BILLS_SPEC: ToolSpec = {
 IN_PROGRESS_REPAIRS_SPEC: ToolSpec = {
     "name": "jgb2.stats.in_progress_repairs",
     "description": (
-        "執行中修繕清單：回這位成員看得到的未結案（申請中、安排修繕、完成修繕）修繕單，"
+        "執行中修繕清單：回這位成員看得到的未結案（申請中、預約安排、安排修繕、修繕中、完成修繕）修繕單，"
         "先回共幾筆與第一頁（每頁 20 筆），不受候選上限，結單與封存不在內。"
         "回答須列出共幾筆與本頁每一筆明細（逐筆），逐字照工具結果；"
         "結果說還有下一頁時，明說還有幾筆並問使用者要不要看下一頁，要看再以 page 取下一頁。"
@@ -352,7 +332,7 @@ EXPIRING_CONTRACTS_SPEC: ToolSpec = {
 
 #: `mcp_facade.build_registry` 逐一註冊（形狀同 `action.ACTION_SPECS`）。
 STATS_SPECS: list[tuple[ToolSpec, Callable[[Any, dict], Awaitable[dict[str, Any]]]]] = [
-    (UNPAID_BILLS_SPEC, _mock_only(unpaid_bills)),
-    (IN_PROGRESS_REPAIRS_SPEC, _mock_only(in_progress_repairs)),
-    (EXPIRING_CONTRACTS_SPEC, _mock_only(expiring_contracts)),
+    (UNPAID_BILLS_SPEC, unpaid_bills),
+    (IN_PROGRESS_REPAIRS_SPEC, in_progress_repairs),
+    (EXPIRING_CONTRACTS_SPEC, expiring_contracts),
 ]

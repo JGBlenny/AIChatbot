@@ -27826,30 +27826,6 @@
    67652
   ],
   "endpoints": {
-   "jgb2-req#16": {
-    "contract": "proposed",
-    "method": "GET",
-    "path": "/api/external/v1/bills/summary/unpaid",
-    "synthetic_bill_ids": [
-     990001,
-     990002,
-     990003
-    ]
-   },
-   "jgb2-req#17": {
-    "contract": "proposed",
-    "method": "GET",
-    "path": "/api/external/v1/repairs/in-progress"
-   },
-   "jgb2-req#18": {
-    "contract": "proposed",
-    "method": "GET",
-    "path": "/api/external/v1/contracts/expiring",
-    "synthetic_contract_ids": [
-     990101,
-     990102
-    ]
-   },
    "jgb2-req#19": {
     "contract": "proposed",
     "method": "POST",

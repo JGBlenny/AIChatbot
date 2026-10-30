@@ -510,7 +510,9 @@ async def repair_create(identity: Identity, args: dict) -> ToolResult:
     # 排在任何讀寫之前：照片不可用時不必先查物件與分類。
     photo_files = None
     broken_photos = repair_photos_of(payload)
-    if broken_photos:
+    # 接真 JGB：照片本體與中繼資料都不送（JGB 的 `broken_photos` 只收 URL；卡外提醒已在出卡時告知），
+    # 所以也不必驗暫存裡的照片位元組——否則暫存過期會對一張本來就不附照片的單回「請重新上傳」。
+    if broken_photos and getattr(jgb2_tools._get_api(), "use_mock", True) is not False:
         photo_files = _card_photo_files(identity, broken_photos)
         if photo_files is None:
             logger.warning("[agent] repair_create 卡上照片不可用（暫存缺或 sha256 不符）⇒ 不寫入")

@@ -10,10 +10,13 @@ JGB 好租寶外部 API 的 client 封裝，支援 mock/real 模式切換。
 - USE_MOCK_JGB_API: mock/real 切換（預設 true）
 """
 
+import calendar
+import datetime
 import os
 import re
 import logging
 from typing import Any, Optional
+from zoneinfo import ZoneInfo
 
 from services.jgb.contract_fixtures import ContractFixtureTable
 from services.jgb.estate_fixtures import (
@@ -41,6 +44,49 @@ logger = logging.getLogger(__name__)
 
 # 降級回答訊息（FALLBACK_MESSAGE 已隨 _send 下移至 services/jgb/transport.py）
 DEGRADED_MESSAGE = "請先登入以查詢您的個人資料。"
+
+#: 「今天」的時區（JGB 帳單到期日、合約到期日都是台灣日曆日）。
+_TZ = ZoneInfo("Asia/Taipei")
+
+#: 「未收」＝ jgb2 `Bill` status 2 待繳費＋8 待對帳；`/bills` 的 `FILTERABLE_STATUSES` 內（1 待發送、2 待繳費、8 待對帳、
+#: 16 已繳費、32 排定發送、64 已失效）。未收＝待繳費或待對帳（2、8），以逗號清單送。
+UNPAID_BILL_STATUSES = "2,8"
+
+#: 「執行中」修繕單＝ `Repair::statusLabels()` 全部狀態扣掉 32 結單、64 封存：
+#: 1 申請中、8 預約安排、2 安排修繕、4 修繕中、16 完成修繕。
+IN_PROGRESS_REPAIR_STATUSES = "1,8,2,4,16"
+
+#: 合約列表一頁上限（jgb2 `per_page` 預設 50、上限 200）。
+_STATS_MAX_PER_PAGE = 200
+
+
+def _today() -> datetime.date:
+    return datetime.datetime.now(_TZ).date()
+
+
+def _parse_ymd(value: Any) -> Optional[datetime.date]:
+    """`YYYY-MM-DD`（嚴格）⇒ date；否則 `None`。"""
+    if not isinstance(value, str) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", value):
+        return None
+    try:
+        return datetime.date.fromisoformat(value)
+    except ValueError:
+        return None
+
+
+def _ymd_dash(value: Any) -> Optional[str]:
+    """合約 `date_end`（Ymd 整數或 `YYYYMMDD` 字串）⇒ `YYYY-MM-DD`；不是 8 碼數字 ⇒ `None`。"""
+    text = str(value) if value is not None else ""
+    if len(text) == 8 and text.isdigit():
+        return f"{text[:4]}-{text[4:6]}-{text[6:]}"
+    return None
+
+
+def _add_months(day: datetime.date, months: int) -> datetime.date:
+    """日期加 N 個月；目標月沒有該日就取當月最後一天（1/31 + 1 月 ＝ 2/28 或 2/29）。"""
+    index = day.month - 1 + months
+    year, month = day.year + index // 12, index % 12 + 1
+    return datetime.date(year, month, min(day.day, calendar.monthrange(year, month)[1]))
 
 
 class JGBSystemAPI:
@@ -260,7 +306,10 @@ class JGBSystemAPI:
                 return {"success": True, "data": []}
 
         params: dict[str, Any] = {"role_id": role_id}
-        if user_id:
+        # jgb2 `/bills` 的 `user_id` 是承租方篩選（`belongContract.to_user_id`），不是身分。
+        # 帶 viewer 的是成員（業者）查詢，送 user_id 會把結果濾成「這位成員當承租方的合約」＝空；
+        # user_id 在本函式只作身分驗證。替身沒實作 to_user_id 過濾（transport `_bills_index`），測不到。
+        if user_id and not viewer_user_id:
             params["user_id"] = user_id
         if contract_ids:
             # ⚠️ /bills 的合約過濾參數是 contract_id（單數）——複數會被上游無視、
@@ -439,9 +488,13 @@ class JGBSystemAPI:
         is_urgent: Optional[str] = None,
         keyword: Optional[str] = None,
         viewer_user_id: Optional[str] = None,
+        page: Optional[int] = None,
+        per_page: Optional[int] = None,
         **kwargs,
     ) -> dict[str, Any]:
         """查詢修繕進度
+
+        `page`／`per_page`：非空才轉發（jgb2 `/repairs` 預設一頁 50 筆、上限 200；不轉發只看得到第一頁）。
 
         `viewer_user_id`（jgb2-req#24／DSP-074）：非空才放進 params，結果限於該成員可見範圍。
         """
@@ -464,6 +517,9 @@ class JGBSystemAPI:
             params["keyword"] = keyword
         if viewer_user_id:
             params["viewer_user_id"] = viewer_user_id
+        for key, val in (("page", page), ("per_page", per_page)):
+            if val not in (None, ""):
+                params[key] = val
         return await self._request("/api/external/v1/repairs", params)
 
     async def get_tenant_summary(
@@ -558,8 +614,8 @@ class JGBSystemAPI:
         `None` 不送），每張照片一個 `broken_photos[]` 檔；冪等鍵照舊在表單欄位。此時 ⛔ 同時送
         `broken_photos` 中繼資料（JGB 由檔案本身算）。沒有照片 ⇒ 與改前相同的 JSON body。
 
-        **jgb2-req#22／#23（contract: proposed）**：`user_id`（登入成員，選填）非空才放進 body——
-        提案契約要求寫入 body 帶 `role_id`＋`user_id`，由 JGB 驗能力與資源歸屬；`broken_photos`
+        **jgb2-req#22／#23**：`user_id`（登入成員，選填）非空才以 `viewer_user_id` 放進 body——
+        寫入 body 帶 `role_id`＋`viewer_user_id`，由 JGB 驗能力與資源歸屬；`broken_photos`
         的提案形狀為 `[{filename, content_type, size, sha256}]`（替身只驗中繼資料）。
         ⚠️ 帶 `user_id` 不改變既有呼叫端的行為（舊呼叫端本來就沒有這個參數，原被 `**kwargs` 吞掉）。
 
@@ -587,11 +643,15 @@ class JGBSystemAPI:
             "emergency_status": emergency_status,
         }
         if user_id:
-            data["user_id"] = user_id
+            data["viewer_user_id"] = user_id      # JGB `ExternalViewerScope` 認的成員身分鍵名
         if contract_id is not None:
             data["contract_id"] = contract_id
         if idempotency_key:
             data["idempotency_key"] = idempotency_key
+        if not self.use_mock:
+            # 真 JGB `POST /repairs` 的 `broken_photos.*` 只收 URL（上傳檔案會 422），目前沒有可送的照片通道：
+            # ⛔ 不送檔、⛔ 不送中繼資料；使用者在確認前已被告知照片暫時無法附上（見 confirm.py 的卡片提示）。
+            return await self._post_request("/api/external/v1/repairs", data)
         if photo_files:
             form = {k: str(v) for k, v in data.items() if v is not None}
             files = [("broken_photos[]", (name, content, ctype))
@@ -620,16 +680,20 @@ class JGBSystemAPI:
         `date_expire`：`YYYY-MM-DD`。⛔ 不接受位移天數：使用者確認的是一個確定的
         日期，位移在下游重算一次就多一個「算出不同結果」的機會。
 
-        ⚠️ **demo 期只有替身 transport 走得通**（`USE_MOCK_JGB_API=true`）；
-        真 `agent/v1` 的簽章 client 與憑證不在本切片。
+        ⚠️ **只有替身 transport 走得通**（`USE_MOCK_JGB_API=true`）：接真 JGB 一律不發請求（JGB 無此路由）。
         """
+        if not self.use_mock:
+            # JGB 沒有 `PATCH /agent/v1/bills/{id}` 這條路由（external/v1 只有讀取與 POST /repairs 等），
+            # 接真 JGB ⇒ 不發請求。正常情況下 `confirm.py` 在出確認卡前就已攔下（`WRITE_NOT_SUPPORTED_ACTIONS`），
+            # 這裡是第二道。
+            return self._proposed_not_available("PATCH /agent/v1/bills/{id}")
         data: dict[str, Any] = {"due_date": date_expire}
         # 站內幫手 S5（jgb2-req#23 擴及 PATCH）：寫入 body 帶登入身分
-        # （`role_id`＋`user_id`），由 JGB 驗能力與資源歸屬。非空才放（舊呼叫端不變）。
+        # （`role_id`＋`viewer_user_id`），由 JGB 驗能力與資源歸屬。非空才放（舊呼叫端不變）。
         if role_id:
             data["role_id"] = role_id
         if user_id:
-            data["user_id"] = user_id
+            data["viewer_user_id"] = user_id
         if idempotency_key:
             data["idempotency_key"] = idempotency_key
         return await self._patch_request(f"/agent/v1/bills/{bill_id}", data)
@@ -648,55 +712,142 @@ class JGBSystemAPI:
         logger.warning("%s（contract: proposed）尚無真 API，非 mock 模式不發出請求", req)
         return self._fallback_response(f"{req} proposed contract has no real endpoint")
 
+    @staticmethod
+    def _stats_payload(resp: Any, extra: "dict[str, Any]", *,
+                       require_summary: bool = False) -> dict[str, Any]:
+        """把 JGB 列表端點的真實回應（`data` 列＋`pagination`〔＋`summary`〕）整理成統計工具吃的形狀：
+        `data{count, items, ...extra}`＋`pagination`。⛔ 不補數字——`success` 不是 true、`data` 不是列表、
+        缺 `pagination.total`（或要求 `summary` 卻沒有）都回 `success:false` 的固定降級回應，
+        由工具走 `ERROR_TEXT`，不是 0 筆。上游自己的失敗（`success:false`）原樣往上帶 `error`。"""
+        if not isinstance(resp, dict) or resp.get("success") is not True:
+            error = (resp or {}).get("error") if isinstance(resp, dict) else None
+            return {"success": False, "error": error or {"code": 500, "message": FALLBACK_MESSAGE}}
+        rows = resp.get("data")
+        pagination = resp.get("pagination")
+        total = pagination.get("total") if isinstance(pagination, dict) else None
+        if (not isinstance(rows, list) or isinstance(total, bool) or not isinstance(total, int)
+                or total < 0):
+            return JGBSystemAPI._fallback_response("list endpoint returned an unexpected shape")
+        data: dict[str, Any] = {"count": total, "items": rows, **extra}
+        if require_summary:
+            summary = resp.get("summary")
+            amount = summary.get("total_amount") if isinstance(summary, dict) else None
+            if (isinstance(amount, bool) or not isinstance(amount, (int, float))
+                    or summary.get("count") != total):
+                return JGBSystemAPI._fallback_response("bills summary missing or inconsistent")
+            data["total_amount"] = amount
+        return {"success": True, "data": data, "pagination": pagination}
+
+    async def list_bills_page(
+        self, role_id: str, viewer_user_id: str, *,
+        status: Optional[str] = None,
+        date_expire_from: Optional[str] = None, date_expire_to: Optional[str] = None,
+        sort_by: Optional[str] = None, sort_direction: Optional[str] = None,
+        page: Optional[int] = None, per_page: Optional[int] = None,
+        with_summary: bool = False,
+    ) -> dict[str, Any]:
+        """成員可見的帳單列表一頁：`GET /api/external/v1/bills`，回 JGB 原樣的 `data`＋`pagination`〔＋`summary`〕。
+
+        身分只送 `role_id`＋`viewer_user_id`（`ExternalViewerScope` 認的成員身分）。
+        ⛔ 不送 `user_id`：jgb2 `/bills` 的 `user_id` 是 `belongContract.to_user_id`（租客），對業者會濾成空。
+        `status` 可為單值或逗號清單（jgb2 `ExternalApiParams::statusList`）。
+        """
+        if not self._validate_identity(role_id, viewer_user_id):
+            return self._degraded_response()
+        params: dict[str, Any] = {"role_id": role_id, "viewer_user_id": viewer_user_id}
+        for key, val in (("status", status), ("date_expire_from", date_expire_from),
+                         ("date_expire_to", date_expire_to), ("sort_by", sort_by),
+                         ("sort_direction", sort_direction), ("page", page),
+                         ("per_page", per_page)):
+            if val not in (None, ""):
+                params[key] = val
+        if with_summary:
+            params["with_summary"] = 1
+        return await self._request("/api/external/v1/bills", params)
+
     async def get_unpaid_bill_summary(
         self, role_id: str, user_id: str, scope: str,
         as_of: Optional[str] = None, page: Optional[int] = None,
         per_page: Optional[int] = None,
     ) -> dict[str, Any]:
-        """未收帳單統計（本月／逾期，加總＋明細）——jgb2-req#16，contract: proposed。
+        """未收（待繳費或待對帳）帳單統計——`GET /bills` status=2,8＋`date_expire_from/to`＋`with_summary`。
 
-        `scope`：`this_month`｜`overdue`。`as_of`（YYYY-MM-DD，選填）省略＝伺服器今日。
+        `user_id` ＝ 登入成員，以 `viewer_user_id` 送出。`scope`：`this_month`（到期日在 `as_of` 當月）｜
+        `overdue`（到期日早於 `as_of`）。`as_of`（YYYY-MM-DD）省略＝今天（台北）。
+        回 `data{scope, as_of, currency, count, total_amount, items}`＋`pagination`；
+        `count`／`total_amount` 取 JGB 的 `pagination.total`／`summary.total_amount`（同一組篩選、分頁前）。
         """
         if not self._validate_identity(role_id, user_id):
             return self._degraded_response()
-        if not self.use_mock:
-            return self._proposed_not_available("jgb2-req#16")
-        params: dict[str, Any] = {"role_id": role_id, "user_id": user_id, "scope": scope}
-        for key, val in (("as_of", as_of), ("page", page), ("per_page", per_page)):
-            if val not in (None, ""):
-                params[key] = val
-        return await self._request("/api/external/v1/bills/summary/unpaid", params)
+        today = _parse_ymd(as_of) if as_of else _today()
+        if scope not in ("this_month", "overdue") or today is None:
+            return self._fallback_response("unpaid bills: invalid scope or as_of")
+        if scope == "this_month":
+            window: dict[str, str] = {
+                "date_expire_from": today.replace(day=1).isoformat(),
+                "date_expire_to": today.replace(
+                    day=calendar.monthrange(today.year, today.month)[1]).isoformat(),
+            }
+        else:
+            window = {"date_expire_to": (today - datetime.timedelta(days=1)).isoformat()}
+        resp = await self.list_bills_page(
+            role_id, user_id, status=UNPAID_BILL_STATUSES, sort_by="date_expire",
+            sort_direction="asc", page=page, per_page=per_page, with_summary=True, **window)
+        return self._stats_payload(
+            resp, {"scope": scope, "as_of": today.isoformat(), "currency": "TWD"},
+            require_summary=True)
 
     async def get_in_progress_repairs(
         self, role_id: str, user_id: str,
         page: Optional[int] = None, per_page: Optional[int] = None,
     ) -> dict[str, Any]:
-        """執行中（未結案）修繕單清單——jgb2-req#17，contract: proposed。"""
+        """執行中修繕單清單——`GET /repairs` status=`IN_PROGRESS_REPAIR_STATUSES`（扣掉結單、封存）。
+
+        `user_id` ＝ 登入成員，以 `viewer_user_id` 送出（⛔ 不送 `user_id`）。
+        回 `data{count, items}`＋`pagination`，`count` 取 JGB 的 `pagination.total`。"""
         if not self._validate_identity(role_id, user_id):
             return self._degraded_response()
-        if not self.use_mock:
-            return self._proposed_not_available("jgb2-req#17")
-        params: dict[str, Any] = {"role_id": role_id, "user_id": user_id}
+        params: dict[str, Any] = {
+            "role_id": role_id, "viewer_user_id": user_id,
+            "status": IN_PROGRESS_REPAIR_STATUSES,
+        }
         for key, val in (("page", page), ("per_page", per_page)):
             if val not in (None, ""):
                 params[key] = val
-        return await self._request("/api/external/v1/repairs/in-progress", params)
+        return self._stats_payload(await self._request("/api/external/v1/repairs", params), {})
 
     async def get_expiring_contracts(
         self, role_id: str, user_id: str, months: int = 3,
         as_of: Optional[str] = None, page: Optional[int] = None,
         per_page: Optional[int] = None,
     ) -> dict[str, Any]:
-        """N 個月內到期合約——jgb2-req#18，contract: proposed。"""
+        """N 個月內到期合約——`GET /contracts/status-overview` `date_end_from`＝今天、`date_end_to`＝今天＋N 個月。
+
+        JGB 帶任一 `date_end_*` 時自動只回執行中（非歷史、已簽名）合約。`user_id` ＝ 登入成員，
+        以 `viewer_user_id` 送出。回 `data{as_of, window_end, count, items(+days_left)}`＋`pagination`。"""
         if not self._validate_identity(role_id, user_id):
             return self._degraded_response()
-        if not self.use_mock:
-            return self._proposed_not_available("jgb2-req#18")
-        params: dict[str, Any] = {"role_id": role_id, "user_id": user_id, "months": months}
-        for key, val in (("as_of", as_of), ("page", page), ("per_page", per_page)):
+        today = _parse_ymd(as_of) if as_of else _today()
+        if today is None or isinstance(months, bool) or not isinstance(months, int) or months < 1:
+            return self._fallback_response("expiring contracts: invalid months or as_of")
+        window_end = _add_months(today, months)
+        params: dict[str, Any] = {
+            "role_id": role_id, "viewer_user_id": user_id,
+            "date_end_from": today.isoformat(), "date_end_to": window_end.isoformat(),
+        }
+        for key, val in (("page", page), ("per_page", per_page)):
             if val not in (None, ""):
                 params[key] = val
-        return await self._request("/api/external/v1/contracts/expiring", params)
+        out = self._stats_payload(
+            await self._request("/api/external/v1/contracts/status-overview", params),
+            {"as_of": today.isoformat(), "window_end": window_end.isoformat()})
+        if out.get("success"):
+            for row in out["data"]["items"]:
+                if isinstance(row, dict):
+                    end = _parse_ymd(_ymd_dash(row.get("date_end")))
+                    if end is not None:
+                        row["days_left"] = (end - today).days
+        return out
 
     async def _assistant_write(
         self, req: str, path: str, role_id: str, user_id: str,
@@ -706,9 +857,11 @@ class JGBSystemAPI:
             return self._degraded_response()
         if not self.use_mock:
             return self._proposed_not_available(req)
-        # 身分鍵一律放最後覆寫：`fields` 裡夾帶的 role_id／user_id 不會蓋過登入身分；
+        # 身分鍵一律放最後覆寫：`fields` 裡夾帶的 role_id／viewer_user_id／user_id 不會蓋過登入身分；
+        # 成員身分的鍵名是 `viewer_user_id`（JGB `ExternalViewerScope` 只認這個）。
         # 其他歸屬欄位（team_id…）原樣送出，由 JGB（替身：422）拒絕。
-        data: dict[str, Any] = {**fields, "role_id": role_id, "user_id": user_id}
+        fields = {k: v for k, v in fields.items() if k not in ("user_id", "viewer_user_id")}
+        data: dict[str, Any] = {**fields, "role_id": role_id, "viewer_user_id": user_id}
         if idempotency_key:
             data["idempotency_key"] = idempotency_key
         return await self._post_request(path, data)
@@ -1094,7 +1247,11 @@ class JGBSystemAPI:
             return {"success": True, "data": [{"found": False, "keyword": kw}]}
         for e in rows:
             e["status_zh"] = estate_status_zh(e.get("status"))
-        return {"success": True, "data": rows}
+        out: dict[str, Any] = {"success": True, "data": rows}
+        pagination = raw.get("pagination")
+        if not kw and isinstance(pagination, dict):
+            out["pagination"] = pagination         # 無條件列表：呼叫端要報「共 N 筆」
+        return out
 
     async def get_estate_detail(
         self,

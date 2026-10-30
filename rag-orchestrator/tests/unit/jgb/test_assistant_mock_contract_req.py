@@ -1,14 +1,16 @@
 """站內幫手 S0 替身契約（plan-assistant-11-items-20261014 §3b「S0 驗收」2）。
 
-被測物：`JGBMockTransport`／`JGBSystemAPI` 在 `assistant_demo_vendor4.json` 上的 7 支提案替身
-（jgb2-req#16～#22；contract: proposed）與 `RecordingTransport` 的 body 紀錄。
+被測物：`JGBMockTransport`／`JGBSystemAPI` 在 `assistant_demo_vendor4.json` 上的 4 支提案替身
+（jgb2-req#19～#22；contract: proposed）與 `RecordingTransport` 的 body 紀錄。
+（#16～#18 的自訂讀取路由 2026-10-29 已刪：JGB 用既有列表端點的篩選參數完成，替身照同一組參數實作，
+ 對應測試在 `test_list_query_real_jgb_req.py`。）
 命題（每條都附「改壞會紅」的變異，見回報）：
   1. 他團隊資源 ⇒ 折疊錯誤（與「不存在」同一句，且替身狀態不變）；
   2. body 含歸屬欄位或未知欄位 ⇒ 422；
   3. `RecordingTransport` 記到 body，且 `calls` 仍是 3 元組；
-  4. 統計／清單依成員可見範圍回正確筆數（兩位成員結果不同），帶 `user_id` 不拋
-     `UnsupportedMockParameterError`；
-  5. 每支替身在程式與 fixture 皆標 `jgb2-req#n` 與 `contract: proposed`。
+  4. 統計／清單（`JGBSystemAPI` 的三支統計方法，底層是 `/bills`、`/repairs`、`/contracts/status-overview`）
+     依成員可見範圍回正確筆數（兩位成員結果不同），帶 `viewer_user_id` 不拋 `UnsupportedMockParameterError`；
+  5. 每支提案替身在程式與 fixture 皆標 `jgb2-req#n` 與 `contract: proposed`。
 期望值一律由測試自己讀 fixture 原始 JSON 獨立算出（再與寫死的數字互證），不引用被測物的輸出。
 """
 import asyncio
@@ -75,7 +77,7 @@ def _oracle_unpaid(raw, viewer, scope):
     asof = 20261014
     out = []
     for b in raw["bills"]:
-        if b["status"] not in (2, 8) or not _visible(raw, "bill", b["id"], viewer):
+        if b["status"] not in (2, 8) or not _visible(raw, "bill", b["id"], viewer):     # 未收＝待繳費或待對帳（2、8）
             continue
         if scope == "overdue" and b["date_expire"] < asof:
             out.append(b)
@@ -85,26 +87,29 @@ def _oracle_unpaid(raw, viewer, scope):
 
 
 # ═══ 5. 標記 ═══════════════════════════════════════════════════════════════
-def test_seven_endpoints_marked_in_fixture_and_code(raw):
+def test_four_endpoints_marked_in_fixture_and_code(raw):
     eps = raw["assistant_demo"]["endpoints"]
-    assert sorted(eps) == [f"jgb2-req#{n}" for n in range(16, 23)]       # 7 支，#23／#24 無替身
+    assert sorted(eps) == [f"jgb2-req#{n}" for n in range(19, 23)]       # 4 支，#16～#18 已刪、#23／#24 無替身
     assert all(v["contract"] == "proposed" for v in eps.values())
     handlers = {
-        16: JGBMockTransport._assistant_unpaid_bills, 17: JGBMockTransport._assistant_in_progress_repairs,
-        18: JGBMockTransport._assistant_expiring_contracts, 19: JGBMockTransport._assistant_create_estate,
+        19: JGBMockTransport._assistant_create_estate,
         20: JGBMockTransport._assistant_create_contract, 21: JGBMockTransport._assistant_create_bill,
         22: JGBMockTransport._assistant_repair_checks,
     }
     public = {
-        16: api_mod.JGBSystemAPI.get_unpaid_bill_summary, 17: api_mod.JGBSystemAPI.get_in_progress_repairs,
-        18: api_mod.JGBSystemAPI.get_expiring_contracts, 19: api_mod.JGBSystemAPI.assistant_create_estate,
+        19: api_mod.JGBSystemAPI.assistant_create_estate,
         20: api_mod.JGBSystemAPI.assistant_create_contract, 21: api_mod.JGBSystemAPI.assistant_create_bill,
         22: api_mod.JGBSystemAPI.create_repair,
     }
-    for n in range(16, 23):
+    for n in range(19, 23):
         for fn in (handlers[n], public[n]):
             doc = inspect.getdoc(fn)
-            assert f"jgb2-req#{n}" in doc and "contract: proposed" in doc, (n, fn.__qualname__)
+            assert f"jgb2-req#{n}" in doc, (n, fn.__qualname__)
+            if fn is not public[22]:          # create_repair 是 JGB 既有端點（#22 只是加碼檢查），docstring 不標 proposed
+                assert "contract: proposed" in doc, (n, fn.__qualname__)
+    # 刪掉的三條不再有替身（正對照：其餘提案替身仍在）
+    for gone in ("_assistant_unpaid_bills", "_assistant_in_progress_repairs", "_assistant_expiring_contracts"):
+        assert not hasattr(JGBMockTransport, gone), gone
 
 
 def test_new_endpoints_need_the_assistant_fixture(monkeypatch):
@@ -112,7 +117,7 @@ def test_new_endpoints_need_the_assistant_fixture(monkeypatch):
     monkeypatch.setenv("USE_MOCK_JGB_API", "true")
     a = api_mod.JGBSystemAPI()                        # conftest 預設的 regression fixture
     with pytest.raises(MissingFixtureError):
-        _run(a.get_unpaid_bill_summary("20151", "12291", "overdue"))
+        _run(a.assistant_create_bill("20151", "12291", {"title": "x"}))
 
 
 def test_real_mode_sends_nothing_for_proposed_endpoints(monkeypatch):
@@ -125,12 +130,10 @@ def test_real_mode_sends_nothing_for_proposed_endpoints(monkeypatch):
             raise AssertionError("提案中的端點不得對真網路發出請求")
 
     a._real_transport = Boom()
-    for call in (a.get_unpaid_bill_summary("20151", "12291", "overdue"),
-                 a.get_in_progress_repairs("20151", "12291"),
-                 a.get_expiring_contracts("20151", "12291"),
-                 a.assistant_create_estate("20151", "12291", {"title": "x"}),
+    for call in (a.assistant_create_estate("20151", "12291", {"title": "x"}),
                  a.assistant_create_contract("20151", "12291", {}),
-                 a.assistant_create_bill("20151", "12291", {})):
+                 a.assistant_create_bill("20151", "12291", {}),
+                 a.agent_patch_bill_due_date(1, "2027-01-01", role_id="20151", user_id="12291")):
         assert _run(call)["success"] is False
 
 
@@ -169,7 +172,7 @@ def test_unpaid_pagination_does_not_shrink_count_or_total(api):
 
 
 def test_in_progress_repairs_exclude_closed_and_follow_visibility(api, raw):
-    open_status = (1, 2, 16)
+    open_status = (1, 2, 4, 8, 16)            # 扣掉 32 結單、64 封存（`Repair::statusLabels()`）
     for viewer in (OWNER, PART):
         resp = _run(api.get_in_progress_repairs("20151", str(viewer), per_page=200))
         want = sorted(r["id"] for r in raw["repairs"]
@@ -183,12 +186,14 @@ def test_expiring_contracts_window_and_visibility(api):
     def ids(viewer, months):
         return _ids(_run(api.get_expiring_contracts("20151", str(viewer), months=months, as_of=AS_OF)))
 
-    assert ids(OWNER, 3) == [85516, 990101]                  # 到 2027-01-14
-    assert ids(OWNER, 6) == [85516, 990101, 990102]          # 到 2027-04-14；80304（0430）不在
-    assert ids(PART, 6) == [85516, 990101]                   # 990102 在 B 看不到的物件上
-    assert ids(OWNER, 1) == [85516]                          # 到 2026-11-14
+    # JGB 帶 date_end_* 只回已簽名完成（bit_status & 8）、非歷史的合約：85516（bit_status=1，未簽，
+    # 2026-10-31 到期）不在列。
+    assert sorted(ids(OWNER, 3)) == [990101]                 # 到 2027-01-14
+    assert sorted(ids(OWNER, 6)) == [990101, 990102]         # 到 2027-04-14；80304（0430）不在
+    assert sorted(ids(PART, 6)) == [990101]                  # 990102 在 B 看不到的物件上
+    assert ids(OWNER, 1) == []                               # 到 2026-11-14：沒有已簽名合約到期
     first = _items(_run(api.get_expiring_contracts("20151", str(OWNER), as_of=AS_OF)))[0]
-    assert first["days_left"] == 17 and first["date_end"] == 20261031
+    assert first["date_end"] == 20261220 and first["days_left"] == 67
 
 
 def test_viewer_user_id_never_raises_unsupported(api):
@@ -207,19 +212,18 @@ def test_viewer_user_id_never_raises_unsupported(api):
                     params={"role_id": "20151", "viewer_user_id": str(OWNER)}))
 
 
-def test_stats_reject_bad_identity_and_params(api):
-    t = api._mock_transport
-    path = "/api/external/v1/bills/summary/unpaid"
-
-    def get(**p):
-        return _run(t.send("GET", path, params={"scope": "overdue", "as_of": AS_OF, **p}))
-
-    assert get(role_id="20151")["error"]["code"] == 400                         # 缺 user_id
-    assert get(role_id="20151", user_id="555555")["error"] == {"code": 404, "message": FOLD}   # 非成員
-    assert get(role_id=str(FOREIGN_ROLE), user_id=str(OWNER))["error"] == {"code": 404, "message": FOLD}
-    assert get(role_id="20151", user_id=str(OWNER), viewer_user_id="1")["error"]["code"] == 422
-    assert get(role_id="20151", user_id=str(OWNER), scope="weird")["error"]["code"] == 422
-    assert get(role_id="20151", user_id=str(OWNER), as_of="2026/10/14")["error"]["code"] == 422
+def test_stats_methods_degrade_on_missing_identity_and_send_nothing(api):
+    """缺 role_id 或 user_id ⇒ 降級回應、⛔ 發出任何請求（正對照：補齊就會發）。"""
+    before = len(api._mock_transport.calls)
+    for call in (api.get_unpaid_bill_summary("", "12291", "overdue"),
+                 api.get_unpaid_bill_summary("20151", "", "overdue"),
+                 api.get_in_progress_repairs("20151", ""),
+                 api.get_expiring_contracts("", "12291")):
+        r = _run(call)
+        assert r["success"] is False and r["error"]["code"] == 401
+    assert len(api._mock_transport.calls) == before
+    assert _run(api.get_in_progress_repairs("20151", str(OWNER)))["success"] is True
+    assert len(api._mock_transport.calls) == before + 1
 
 
 # ═══ 1. 他團隊資源折疊 ═════════════════════════════════════════════════════
@@ -295,7 +299,7 @@ def test_body_with_ownership_or_unknown_field_is_422(api, extra):
     ]
     t = api._mock_transport                                          # 繞過 API 層直接送 repair body
     results.append(_run(t.send("POST", "/api/external/v1/repairs",
-                               data={"role_id": "20151", "user_id": str(OWNER), **rep, **extra})))
+                               data={"role_id": "20151", "viewer_user_id": str(OWNER), **rep, **extra})))
     marker = "不支援的欄位" if "not_a_field" in extra else "歸屬欄位"      # 兩種原因要分得出來
     for r in results:
         assert r["success"] is False and r["error"]["code"] == 422, (extra, r)
@@ -304,12 +308,14 @@ def test_body_with_ownership_or_unknown_field_is_422(api, extra):
 
 
 def test_identity_keys_in_fields_cannot_override_the_login_identity(api):
-    """fields 夾帶 role_id／user_id 不會蓋掉登入身分（API 層覆寫）；送到 JGB 的 body 只有登入身分。"""
+    """fields 夾帶 role_id／viewer_user_id／user_id 不會蓋掉登入身分（API 層覆寫）；
+    送到 JGB 的 body 只有登入身分，成員身分的鍵名是 `viewer_user_id`。"""
     _run(api.assistant_create_bill("20151", str(OWNER), {
-        "role_id": "30999", "user_id": "1", "contract_id": 89481, "title": "x", "total": 10,
-        "date_expire": "2026-11-30"}))
+        "role_id": "30999", "viewer_user_id": "1", "user_id": "1", "contract_id": 89481, "title": "x",
+        "total": 10, "date_expire": "2026-11-30"}))
     body = api._mock_transport.bodies[-1]
-    assert (body["role_id"], body["user_id"]) == ("20151", str(OWNER))
+    assert (body["role_id"], body["viewer_user_id"]) == ("20151", str(OWNER))
+    assert "user_id" not in body
 
 
 # ═══ 寫入成功路徑：照使用者給的值 ═════════════════════════════════════════
@@ -342,9 +348,10 @@ def test_created_contract_and_bill_are_stored_and_visible_to_creator(api):
     assert (d["rent"], d["deposit_amount"], d["date_start"], d["date_end"], d["to_user_email"]) == (
         15500, 31000, 20261101, 20261231, "tenant@example.com")
     assert "to_user_id" not in d                                                # 內部欄位不外洩
-    # 建立者與擁有者在到期查詢裡看得到新合約（沒有拋 Unsupported）
+    # 新合約已存進替身、查得到（未簽名 bit_status=1，所以不在「到期」清單——JGB 的 date_end_* 只回已簽名合約）
+    assert [r["id"] for r in _run(api.get_contracts("20151", str(PART), contract_ids=str(d["id"])))["data"]] == [d["id"]]
     for viewer in (PART, OWNER):
-        assert d["id"] in _ids(_run(api.get_expiring_contracts("20151", str(viewer), months=3, as_of=AS_OF)))
+        assert d["id"] not in _ids(_run(api.get_expiring_contracts("20151", str(viewer), months=3, as_of=AS_OF)))
     b = _run(api.assistant_create_bill("20151", str(PART), {
         "contract_id": 85516, "title": "清潔費", "total": 1200, "date_expire": "2026-11-30"}))
     assert b["success"] is True and (b["data"]["total"], b["data"]["date_expire"], b["data"]["type"]) == (
@@ -392,9 +399,10 @@ def test_recording_transport_records_bodies_and_keeps_calls_shape(api):
     rec = api._mock_transport
     assert all(isinstance(c, tuple) and len(c) == 3 for c in rec.calls)          # 既有三元組形狀
     assert len(rec.bodies) == len(rec.calls)
-    assert rec.calls[0][:2] == ("GET", "/api/external/v1/repairs/in-progress") and rec.bodies[0] is None
+    assert rec.calls[0][:2] == ("GET", "/api/external/v1/repairs") and rec.bodies[0] is None
     assert rec.calls[1][:2] == ("POST", "/api/external/v1/bills/manual")
-    assert rec.bodies[1] == {**fields, "role_id": "20151", "user_id": str(OWNER), "idempotency_key": "rec-1"}
+    assert rec.bodies[1] == {**fields, "role_id": "20151", "viewer_user_id": str(OWNER),
+                             "idempotency_key": "rec-1"}
     rec.bodies[1]["total"] = 999999                                              # 改紀錄不影響已送出的
     assert rec.inner.fixtures.rows()[-1]["total"] == 10
     sent = {"a": {"b": 1}}
@@ -445,12 +453,13 @@ def test_contracts_viewer_filter_is_off_for_non_assistant_fixture(monkeypatch):
 
 def test_repairs_filter_by_viewer_user_id(api, raw):
     def ids(viewer):
-        return sorted(r["id"] for r in _run(api.get_repairs("20151", str(OWNER), viewer_user_id=str(viewer)))["data"])
+        return sorted(r["id"] for r in _run(api.get_repairs(
+            "20151", str(OWNER), viewer_user_id=str(viewer), per_page=200))["data"])
 
     want = lambda v: sorted(r["id"] for r in raw["repairs"] if _visible(raw, "repair", r["id"], v))
     assert ids(OWNER) == want(OWNER) and ids(PART) == want(PART)
     assert set(ids(PART)) < set(ids(OWNER))
-    assert len(_run(api.get_repairs("20151", str(OWNER)))["data"]) == len(raw["repairs"])    # 沒帶 viewer ⇒ 全部
+    assert len(_run(api.get_repairs("20151", str(OWNER), per_page=200))["data"]) == len(raw["repairs"])    # 沒帶 viewer ⇒ 全部
 
 
 def test_estates_filter_by_viewer_user_id(api, raw):
