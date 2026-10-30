@@ -991,6 +991,26 @@ else
 fi
 echo
 # <<< 不變量 45
+# >>> 不變量 47
+echo "═══ 不變量 47：現行文件不得讓人偏離目標架構（DSP-130、DSP-131）═══"
+# 源起（2026-10-30，業主）：「我不要有誤導資訊讓你不去對其」「你這種改法 只要有 AI 讀錯部分 就又歪了」。
+# 檢查器退出碼：0 通過／1 FAIL／2 前置條件失敗（⛔ 靜默跳過）。
+G47_CHECK="$REPO/scripts/audit/checks/target_alignment.py"
+if ! python3 "$G47_CHECK" --self-test >/dev/null 2>&1; then
+  echo "❌ FAIL：不變量 47 檢查器的自我測試未過（檢查器本身失效，其 PASS 不可信）"
+  python3 "$G47_CHECK" --self-test
+  FAIL=1
+  CODE_REGRESSIONS+=("不變量 47：target_alignment.py 自我測試未過")
+else
+  python3 "$G47_CHECK"
+  G47_RC=$?
+  if [ "$G47_RC" -ne 0 ]; then
+    FAIL=1
+    CODE_REGRESSIONS+=("不變量 47：目標架構對齊檢查失敗（退出碼 $G47_RC；見上方 ❌ 行）")
+  fi
+fi
+echo
+# <<< 不變量 47
 echo ""
 echo "──────────────── 稽核記帳（兩類紅燈分開）────────────────"
 echo "CODE_CONTRACT_REGRESSIONS: ${#CODE_REGRESSIONS[@]}"

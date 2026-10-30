@@ -1,11 +1,12 @@
 # 對話式回答 API 串接指南（售前顧問）
 
+> 🎯 **本檔寫現況，不是設計依據。目標：本系統是對話服務，不是 MCP 系統；呼叫端走專用對話 API，`/mcp` 不是最終入口；JGB 工具要搬出本系統，由 JGB 維護。** 分工與完整架構見 `docs/architecture/TARGET_ARCHITECTURE.md`。
+
 > ⚠️ **2026-09-11 舊鏈退役（本輪文件盤查連帶發現，非原七條指定範圍）**：本檔全篇
 > 描述的 `POST /api/v1/message`（含下方 `AGENT_AUDIENCES` 分支）**已於
 > 2026-09-11 隨舊 REST 對話鏈刪除**——`routers/agent_entry.router` 未掛載於
-> `app.py`，此路由不存在。外部串接請改走 `/mcp` 門面（server-to-server），
-> 契約見 `docs/api/mcp-facade.md`；⛔ **目前沒有給外部專案的公開 REST 替代
-> 端點**，這是既知缺口。功能說明本身（售前對話設計）見
+> `app.py`，此路由不存在。專用對話 API 上線前，外部串接只能走 `/mcp` 門面（server-to-server），
+> 契約見 `docs/api/mcp-facade.md`；目前沒有給外部專案的公開 REST 端點，補上它就是目標架構的對話 API。功能說明本身（售前對話設計）見
 > [`docs/archive/2026-09/conversational-presales.md`](../archive/2026-09/conversational-presales.md)（該檔已歸檔標註）。
 
 > 給外部專案串接 JGB 售前對話(conversational)——⛔ **以下內容已死，僅供理解歷史契約形狀**。
@@ -73,8 +74,8 @@
 前端若照本契約做等值比對 `confirm_submit` 會全部失效。
 
 ⚠️ **`trigger_facet_key` 請求參數在新線會被硬拒**：`AGENT_TURN_SPEC.input_schema`
-只收 `message`／`image_urls`／`context`／`attachment_purpose`／`file_urls`，
-且 `additionalProperties: False`。
+只收 `message`／`upload_ids`／`context`／`attachment_purpose`（回滾模式 `AGENT_ATTACHMENT_INPUT=urls`
+才收 `image_urls`／`file_urls`），且 `additionalProperties: False`。
 
 以下為**歷史契約形狀**：
 

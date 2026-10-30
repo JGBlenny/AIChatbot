@@ -1,5 +1,7 @@
 # AIChatbot - 多業者 RAG AI 客服知識庫系統
 
+> 🎯 **本檔寫現況，不是設計依據。目標：本系統是對話服務，不是 MCP 系統；呼叫端走專用對話 API，`/mcp` 不是最終入口；JGB 工具要搬出本系統，由 JGB 維護。** 分工與完整架構見 `docs/architecture/TARGET_ARCHITECTURE.md`。
+
 多業者 SaaS AI 客服系統，專注於租屋管理領域。
 
 **對話核心是 `AgentRuntime`**（`rag-orchestrator/services/agent/runtime.py`）——模型持有回合、

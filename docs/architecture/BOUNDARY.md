@@ -21,7 +21,7 @@
 | 桶 | 定義 | 進不進架構敘述 |
 |---|---|---|
 | **① 本系統** | `AgentRuntime` 與它的門面**自己定義、自己算、自己回出去**的東西 | ✅ 進，而且要寫完整 |
-| **② 呼叫端（inbound）** | 誰呼叫 `/mcp`、使用者在什麼畫面上打字、回出去的東西被畫成什麼 | ⛔ **不進**——換一個呼叫端，本系統一行都不用改 |
+| **② 呼叫端（inbound）** | 誰呼叫對話入口、使用者在什麼畫面上打字、回出去的東西被畫成什麼 | ⛔ **不進**——換一個呼叫端，本系統一行都不用改 |
 | **③ 外部相依（outbound）** | **本系統自己的程式**決定要去打的外部位址 | ✅ 進，但寫成**能力與限制**，⛔ 不寫成某個合作方的故事 |
 
 ### 一句話測試
@@ -53,7 +53,7 @@
 | `outcome.expects` 封閉六值 | ① | 同上；`image`／`file` 兩值是本系統告知「等的是檔案不是文字」 | `grep -n "OUTCOME_EXPECTS" rag-orchestrator/services/agent/turn_context.py` |
 | `confirm_qr_labels` | ① | 面向配置鍵，落在本系統的 seed；只覆寫顯示文字、機器值不變 | `grep -n "confirm_qr_labels" rag-orchestrator/database/migrations/seed_repair_facet_config.sql` |
 | `line_official` | ① | `PRESALES_HANDOFF_CHANNEL_DEFAULT` 的**值**，本系統寫進 `handoff.channel` | `grep -n "PRESALES_HANDOFF_CHANNEL_DEFAULT" rag-orchestrator/services/conversational_config.py` |
-| `IMAGE_URL_ALLOWLIST`／`relay.jgbsmart.com` | ③ | **本系統自己下載照片**，白名單是本系統的安全邊界 | `grep -n "DEFAULT_IMAGE_URL_ALLOWLIST" rag-orchestrator/services/agent/image_fetch.py` |
+| `IMAGE_URL_ALLOWLIST`／`relay.jgbsmart.com` | ③ | 回滾模式 `AGENT_ATTACHMENT_INPUT=urls` 時**本系統自己下載照片**，白名單是本系統的安全邊界；預設模式收直傳，不抓網址 | `grep -n "DEFAULT_IMAGE_URL_ALLOWLIST" rag-orchestrator/services/agent/image_fetch.py` |
 | `jgb2.query.*`／`jgb2.action.*` | ① | **工具名**，登記在本系統的 registry；名字指向資料來源，工具本身是本系統的 | `grep -rn "jgb2.query" rag-orchestrator/services/agent/tools/` |
 | jgb2 Web、LINE OA demo、LIFF 畫面、回測工具、內部操作者的 Claude Code | ② | 都是**部署時接上來的消費者** | — |
 | 誰持 key、哪些停用、實際流量 | ② | **部署事實**，查 `api_keys` 與 `usage_events`，⛔ 不寫進架構文（寫進來就會過期） | — |

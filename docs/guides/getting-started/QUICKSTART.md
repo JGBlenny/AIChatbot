@@ -1,5 +1,7 @@
 # 🚀 快速開始指南
 
+> 🎯 **本檔寫現況，不是設計依據。目標：本系統是對話服務，不是 MCP 系統；呼叫端走專用對話 API，`/mcp` 不是最終入口；JGB 工具要搬出本系統，由 JGB 維護。** 分工與完整架構見 `docs/architecture/TARGET_ARCHITECTURE.md`。
+
 > ⚠️ **2026-09-11 舊鏈退役（本輪文件盤查連帶發現，非原七條指定範圍）**：下方
 > 「發送問題測試」一段的 `POST /api/v1/message` 已刪除（2026-09-11 砍除舊 REST
 > 對話鏈），`llm_answer_optimizer`／Phase 3 相關描述也已隨之退役。對話能力

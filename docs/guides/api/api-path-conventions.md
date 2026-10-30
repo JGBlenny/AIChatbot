@@ -34,7 +34,7 @@
 
 ### Chat 相關
 ```javascript
-POST   /rag-api/v1/chat                    // 未實作（2026-10-18 對碼：rag-orchestrator 無此路由，對話走 /mcp）
+POST   /rag-api/v1/chat                    // 未實作（2026-10-18 對碼：rag-orchestrator 無此路由，現況對話走 /mcp，目標是專用對話 API）
 POST   /rag-api/v1/chat/stream             // 未實作（2026-10-18 對碼）
 ```
 

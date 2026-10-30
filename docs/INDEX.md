@@ -11,6 +11,7 @@
 | 想知道 | 讀哪份 |
 |---|---|
 | **系統現在怎麼跑**（核心／門面／15 個 face／知識兩條路／六域隔離不對稱） | [`architecture/SYSTEM_ARCHITECTURE.md`](./architecture/SYSTEM_ARCHITECTURE.md) — v4.0，2026-09-12 |
+| **系統應該長什麼樣**（目標架構、分工、原則、差距；下面幾份都寫現況，設計以這份為準） | [`architecture/TARGET_ARCHITECTURE.md`](./architecture/TARGET_ARCHITECTURE.md) |
 | **這句話算本系統還是算呼叫端**（寫架構文前先看） | [`architecture/BOUNDARY.md`](./architecture/BOUNDARY.md) — 三個桶＋歸屬表，不變量 40 強制 |
 | **一回合的完整流程**、**為什麼被轉人**、每個分岔與終止點 | [`architecture/AGENTIC_MCP_ARCHITECTURE.md`](./architecture/AGENTIC_MCP_ARCHITECTURE.md) — §2b 是一回合四段的逐步流程，§4b 是轉人的五個來源 |
 | **`/mcp` 串接契約**（header、工具、錯誤碼、額度） | [`api/mcp-facade.md`](./api/mcp-facade.md) |
@@ -41,6 +42,7 @@
 
 | 文檔 | 用途 |
 |------|------|
+| [目標架構](./architecture/TARGET_ARCHITECTURE.md) ⭐ | **架構唯一正本**：系統定位、分工、原則、目標架構圖、與現況的差距 |
 | [系統架構](./architecture/SYSTEM_ARCHITECTURE.md) ⭐ | **現況全景正本** |
 | [Agentic-MCP 對話架構](./architecture/AGENTIC_MCP_ARCHITECTURE.md) ⭐ | **對話線內部正本**（§2b 流程、§4b 轉人來源） |
 | [Facet 架構](./architecture/facet-architecture.md) | 六域 15 face 的責任分層與擴充判準 |
@@ -147,8 +149,8 @@ docs/
 └── archive/                    # 歷史歸檔（依日期分批，如 2026-06/）
 ```
 
-## Agentic MCP（2026-09-08 demo 上線）
-- [Agentic MCP 對話線架構（demo 版）](architecture/AGENTIC_MCP_ARCHITECTURE.md) — `/mcp` `agent.turn`：門面（13 步）→Runtime 四段管線（段一**六條**程式終止路徑）→工具註冊→替身；寫入鏈、別戶邊界、照片線、組態、已知限制（2026-09-08 上線）
+## 對話線（2026-09-08 上線；目標見 [TARGET_ARCHITECTURE](./architecture/TARGET_ARCHITECTURE.md)）
+- [對話線架構（現況）](architecture/AGENTIC_MCP_ARCHITECTURE.md) — `/mcp` `agent.turn`：門面（13 步）→Runtime 四段管線（段一**六條**程式終止路徑）→工具註冊→替身；寫入鏈、別戶邊界、照片線、組態、已知限制（2026-09-08 上線）
 - [LINE bot 串接資訊單](../.kiro/specs/knowledge-outline-and-intent-architecture/inputs/line-bot-integration-sheet-20260908.md) — 端點 `/rag-api/mcp`、header、機器值、select、照片、限制、自測
 - [HANDOFF 2026-09-09（agentic-mcp 大改版收案）](../.kiro/specs/knowledge-outline-and-intent-architecture/HANDOFF-20260909.md)
 

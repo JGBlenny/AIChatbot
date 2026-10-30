@@ -1,5 +1,7 @@
 # 面向化系統脈絡架構（domain-conversational-facets · 後續演進定案）
 
+> 🎯 **本檔寫現況，不是設計依據。目標：本系統是對話服務，不是 MCP 系統；呼叫端走專用對話 API，`/mcp` 不是最終入口；JGB 工具要搬出本系統，由 JGB 維護。** 分工與完整架構見 `docs/architecture/TARGET_ARCHITECTURE.md`。
+
 > 建立：2026-07-01。本檔記錄「per-領域系統脈絡」在實作審視後演進到「**面向化（facet）三層疊加**」的完整邏輯與資料佈局，取代 design.md 元件1/D2 的兩層版本（design.md 變更歷史已標注）。
 
 > 🔴 **2026-09-12 對碼更正（前一版檔頭的核心斷言是錯的）**：前一版寫「`category_config`、

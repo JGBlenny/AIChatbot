@@ -1,5 +1,7 @@
 # agent 路徑不使用清單
 
+> 🎯 **本檔寫現況，不是設計依據。目標：本系統是對話服務，不是 MCP 系統；呼叫端走專用對話 API，`/mcp` 不是最終入口；JGB 工具要搬出本系統，由 JGB 維護。** 分工與完整架構見 `docs/architecture/TARGET_ARCHITECTURE.md`。
+
 > 依據 spec `agentic-mcp-orchestration` 任務 5.2（退休標記與相容文件）。對照
 > `.kiro/specs/agentic-mcp-orchestration/design.md` 的「退休／保留」段（R12.1）。
 > 稽核測試：`rag-orchestrator/tests/unit/agent/test_retired_symbols_req.py`

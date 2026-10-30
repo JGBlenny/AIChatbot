@@ -28,7 +28,7 @@
 
 🔴 `POST /api/v1/message`（Chat）與 `POST /api/v1/reload` **實測 404**——隨舊 REST
 對話鏈於 2026-09-11 刪除（DSP-046）。本檔對應的兩節已移除，⛔ 不留退役標記。
-現行對話入口是 `/mcp`，契約見 [`mcp-facade.md`](./mcp-facade.md)。
+現行對話入口是 `/mcp`，契約見 [`mcp-facade.md`](./mcp-facade.md)。`/mcp` 不是最終入口：目標是呼叫端走專用對話 API（`docs/architecture/TARGET_ARCHITECTURE.md`）。
 
 **本檔其餘各節（Vendors／Cache）2026-09-12 逐一實測仍在**：
 `GET /api/v1/vendors` 200、`GET /api/v1/cache/stats` 200、`GET /api/v1/cache/health` 200、

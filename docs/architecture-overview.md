@@ -1,5 +1,7 @@
 # AIChatbot 系統架構總覽（指路檔）
 
+> 🎯 **本檔寫現況，不是設計依據。目標：本系統是對話服務，不是 MCP 系統；呼叫端走專用對話 API，`/mcp` 不是最終入口；JGB 工具要搬出本系統，由 JGB 維護。** 分工與完整架構見 `docs/architecture/TARGET_ARCHITECTURE.md`。
+
 > **最後對碼：2026-09-12**
 >
 > 🔴 **本檔已於 2026-09-12 整份改寫成指路檔。** 前一版（更新於 2026-07-11）把舊 REST
@@ -13,10 +15,11 @@
 
 ---
 
-## 現況看哪裡
+## 目標與現況看哪裡
 
 | 想知道 | 去哪裡 |
 |---|---|
+| **應該長什麼樣**（目標架構、分工、原則、差距；設計以這份為準） | [`docs/architecture/TARGET_ARCHITECTURE.md`](architecture/TARGET_ARCHITECTURE.md) |
 | **系統全景**（核心／門面／知識兩條路／後台維護面／已知缺陷） | [`docs/architecture/SYSTEM_ARCHITECTURE.md`](architecture/SYSTEM_ARCHITECTURE.md) |
 | **對話線內部**（元件責任、一回合的完整流程、每個分岔與終止點） | [`docs/architecture/AGENTIC_MCP_ARCHITECTURE.md`](architecture/AGENTIC_MCP_ARCHITECTURE.md)（§2b 是逐步流程） |
 | **`/mcp` 串接契約**（header、工具、錯誤碼、額度） | [`docs/api/mcp-facade.md`](api/mcp-facade.md) |
@@ -25,10 +28,10 @@
 | **部署** | [`docs/deployment-runbook.md`](deployment-runbook.md) |
 | **任務導向索引** | [`docs/INDEX.md`](INDEX.md) |
 
-**三句話現況**（逐項可對碼，詳見上表第一列）：
+**三句話現況**（逐項可對碼，詳見上表第二列）：
 
 1. **核心是 `AgentRuntime`**（`services/agent/runtime.py`），它的建構依賴裡**沒有任何協定或門面**。
-2. **`/mcp` 是門面之一**，且是目前唯一掛著的；另有 `agent_entry`（遷移橋，上游已滅）、
+2. **`/mcp` 是門面之一**，且是目前唯一掛著的（目標是對話改走專用對話 API）；另有 `agent_entry`（遷移橋，上游已滅）、
    `agent_eval`（回測）、`shadow`（影子）。⚠️ 「門面之一」⛔ 不等於「門面很薄」。
 3. **受眾只有兩種**：`prospect` 與 `property_manager` 有 canon 正本；
    **`tenant` 在新線完全不存在**（無 `canon/tenant.md`、`AGENT_TURN_SPEC` 無該鍵）。

@@ -42,7 +42,7 @@ JGB 已照規格（`jgb-api-spec-for-jgb-20261015.md` §1「擴充既有讀取�
 
 | 類 | AIChatbot 現在打的 | JGB staging 現有（`origin/staging` `32b91847fa`） |
 |---|---|---|
-| 未繳／逾期帳單 | `GET /bills/summary/unpaid`（#16，JGB 沒有；`grep -n "summary/unpaid" rag-orchestrator/services/jgb_system_api.py`） | `GET /api/external/v1/bills`：`status`（2＝應到帳／待繳費、16＝已到帳…，`BillController::FILTERABLE_STATUSES`）、`date_expire_from`／`date_expire_to`；回 `count`、`total_amount` |
+| 未繳／逾期帳單 | `GET /bills/summary/unpaid`（#16，JGB 沒有；`git show 0596af4d~1:rag-orchestrator/services/jgb_system_api.py | grep -n "summary/unpaid"`） | `GET /api/external/v1/bills`：`status`（2＝應到帳／待繳費、16＝已到帳…，`BillController::FILTERABLE_STATUSES`）、`date_expire_from`／`date_expire_to`；回 `count`、`total_amount` |
 | 物件數與清單 | 沒名稱 ⇒ 查無（`grep -n "estates 無預設列表" rag-orchestrator/services/agent/tools/jgb2.py`） | `GET /estates` 不帶 keyword 回 `total`、分頁 |
 | 執行中修繕 | `GET /repairs/in-progress`（#17，JGB 沒有） | `GET /repairs`：`status`（`Repair::statusLabels()`）、`estate_id`、`is_urgent` |
 | 即將到期合約 | `GET /contracts/expiring`（#18，JGB 沒有） | `GET /contracts/status-overview`：`date_end_from`／`date_end_to` |
@@ -50,7 +50,7 @@ JGB 已照規格（`jgb-api-spec-for-jgb-20261015.md` §1「擴充既有讀取�
 | 改到期日（#23） | `PATCH /agent/v1/bills/{id}`，接真 JGB 沒有守衛（`grep -n "agent_patch_bill_due_date" rag-orchestrator/services/jgb_system_api.py`） | 沒有這條；`agent/v1` 另需 `internal_api_ip`＋`agent_auth`。按確認後必失敗（推論，未實跑） |
 | 寫入成員身分（#24、規格 §0） | 寫入 body 送 `user_id`（`grep -n "data\[\"user_id\"\]" rag-orchestrator/services/jgb_system_api.py`） | 中介層 `ExternalViewerScope` 只認 `viewer_user_id`，未帶則不套成員範圍 |
 | 修繕細項 | 父分類時 `item_id=None`（`grep -n "item_id=item_id" rag-orchestrator/services/agent/tools/action.py`） | store 驗 `'item_id' => 'required|integer'`；預設「其他」在 staging 有幾個細項：未查 |
-| mock | 三支 proposed 端點都有替身（`grep -n "jgb2-req#16" rag-orchestrator/services/jgb/transport.py`） | — |
+| mock | 三支 proposed 端點都有替身（`git show 0596af4d~1:rag-orchestrator/services/jgb/transport.py | grep -n "jgb2-req#16"`） | — |
 
 ## 4. 路徑（本片範圍，每項對回規則）
 

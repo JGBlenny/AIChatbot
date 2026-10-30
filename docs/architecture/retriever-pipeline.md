@@ -1,5 +1,7 @@
 # Retriever Pipeline 架構
 
+> 🎯 **本檔寫現況，不是設計依據。目標：本系統是對話服務，不是 MCP 系統；呼叫端走專用對話 API，`/mcp` 不是最終入口；JGB 工具要搬出本系統，由 JGB 維護。** 分工與完整架構見 `docs/architecture/TARGET_ARCHITECTURE.md`。
+
 > 建立時間：2026-04-16
 > 相關 spec：`.kiro/specs/retriever-similarity-refactor/`
 

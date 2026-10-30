@@ -24,7 +24,7 @@
   已於 2026-09-11 一併刪除——它們全數恆紅，留著只會讓 `make test-e2e` 無法當閘用。
   ⇒ **新線 `/mcp` 目前完全沒有 e2e 層覆蓋**（只有 `tests/integration/agent/test_mcp_facade_req.py`
   等 integration 層驗收）；`tests/e2e/` 現在只剩 `api/test_real_api_contract_smoke_req.py`。
-  ⛔ 這是真的覆蓋缺口，不是已知債的記帳——重建時改打 `/mcp agent.turn`。
+  ⛔ 這是真的覆蓋缺口，不是已知債的記帳——重建時打當時的對話入口（現行 `/mcp agent.turn`；目標是專用對話 API，見 `docs/architecture/TARGET_ARCHITECTURE.md`）。
 - 既有測試的分層**集中於 `tests/conftest.py`** 以 `pytest_collection_modifyitems` 指派（不逐檔改、零行為變動）；
   分層依據＝離線實跑結果。**新測試一律用顯式 marker**：`@pytest.mark.unit/integration/e2e`。
 - 真實相依層在無相依時**標示略過（skipped）而非失敗**，避免假綠燈（R4.5）。

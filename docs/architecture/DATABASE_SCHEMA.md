@@ -1,5 +1,7 @@
 # AIChatbot Database Schema & ERD
 
+> 🎯 **本檔寫現況，不是設計依據。目標：本系統是對話服務，不是 MCP 系統；呼叫端走專用對話 API，`/mcp` 不是最終入口；JGB 工具要搬出本系統，由 JGB 維護。** 分工與完整架構見 `docs/architecture/TARGET_ARCHITECTURE.md`。
+
 **版本**: 2026-05-18（驗證更新）
 **資料庫**: PostgreSQL 16 + pgvector
 **總表數**: 本檔先前寫 ~39 個表（16 核心 + 配置/權限/表單/平台 SOP 等）；2026-10-18 對碼：此數字是舊快照，`public` 實際表數見下方「新線實際在用」節（2026-09-12 實查 63 張），現值以 DB 為準（`\dt public.*`）

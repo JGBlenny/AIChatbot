@@ -1,5 +1,7 @@
 # 系統架構（現況）
 
+> 🎯 **本檔寫現況，不是設計依據。目標：本系統是對話服務，不是 MCP 系統；呼叫端走專用對話 API，`/mcp` 不是最終入口；JGB 工具要搬出本系統，由 JGB 維護。** 分工與完整架構見 `docs/architecture/TARGET_ARCHITECTURE.md`。
+
 **最後對碼：2026-09-12**　**版本：4.0**
 
 > 本檔回答一個問題：**這個系統現在是什麼。**
@@ -80,10 +82,11 @@ AgentRuntime.__init__(provider, registry, verifier, assembler, budget,
 **`Identity.entry` 要決定**（`"rest"` ⇒ 寫入型工具看不到也叫不到）。
 
 
-⚠️ **`/mcp` 是插座，不是對話架構**：它只做驗 key／驗身分／記帳三件事，**零對話邏輯**。
+⚠️ **現況：`/mcp` 同時是對話入口與工具入口，不是對話核心**：它驗金鑰、身分、額度，讀寫會話狀態，做照片與文件前處理（含 `_documind_pick_leaves` 的模型呼叫）；對話判斷在 AgentRuntime。**目標：對話走專用對話 API，`/mcp` 不再是對話入口**（DSP-130，尚未實作）。
 ⚠️ **本系統只有 MCP server，沒有對外的 MCP client**：`mcp.client`／`ClientSession`
-全 repo 只出現在測試工具裡——兩支整合測試與煙霧測試腳本 `scripts/smoke/mcp_smoke.py`（都是拿 client 打自己的 server）；`runtime.py` **不 import `mcp`**，
+全 repo 只出現在測試工具裡——三支整合測試與煙霧測試腳本 `scripts/smoke/mcp_smoke.py`（都是拿 client 打自己的 server）；`runtime.py` **不 import `mcp`**，
 模型呼叫工具走 `registry.call`，**in-process**，與 MCP 協定無關。
+**誰呼叫誰（MCP、AI、工具、JGB API 的關係）見 `AGENTIC_MCP_ARCHITECTURE.md` §0a。**
 
 ### MCP 門面收什麼（`mcp_facade.py` 常數）
 
@@ -104,7 +107,7 @@ AgentRuntime.__init__(provider, registry, verifier, assembler, budget,
 | `routers/agent_entry.py` | ⛔ **它從來不是門面**——是遷移橋（見上）。唯一還有價值的是 `_agent_sse` 的事件序（`start`／`intent`／`: keepalive`／`answer_chunk`／`metadata`／`done`），**全 repo 唯一的 SSE 契約實作** |
 
 ⚠️ **這是門面的缺口，不是核心的缺口**：核心完好，缺的是一個 HTTP 面。
-spec R3.6／R9.3 仍要求它。
+目標是補上專用對話 API，排在第 4 步切換正式機之前（DSP-130、DSP-131）。
 
 ### ⛔ 新增一個 `jgb2.query.<域>` 之前必讀（2026-09-12 對抗性演練逼出）
 
@@ -193,7 +196,7 @@ jgb2 訂閱的 `estate_usage`（物件／合約數上限，由 jgb2 依 role 收
 
 **在 git，⛔ 不在資料庫**：`rag-orchestrator/canon/`
 
-⚠️ **2026-09-15 起正本只有一份、圖書館形態**（DSP-058／計畫 9.6）：`canon/jgb/` 一目錄＋九架（2026-09-23 起：架→粗目→細目→講法，共 57 粗目／515 細目，DSP-067／069）
+⚠️ **2026-09-15 起正本只有一份、圖書館形態**（DSP-058／計畫 9.6）：`canon/jgb/` 一目錄＋九架（2026-09-23 起：架→粗目→細目→講法，共 57 粗目／543 細目，DSP-067／069）
 （`A.md…I.md`，一架可多個粗目（現行 57 個）），⛔ 不是 `prospect.md`／`property_manager.md` 兩份單檔——舊的
 按受眾各一份已於 9.6 S1 併成這一份，`canon_parser.parse_canon_dir` 是唯一解析器。
 `canon/jgb/CATALOG.md`（衍生目錄）與 `canon/jgb.json`（衍生 JSON）皆逐位元組回讀比對，⛔ 不手改。
@@ -228,7 +231,7 @@ language: zh-TW
 內容句（一行一句；⛔ 無 reviewed ⇒ 未審 ⇒ 模型看不到）
 ```
 
-⚠️ 逐字取自 2026-09-23 生成的 `canon/jgb/B.md`。現行 515 條細目**全部未審**（無 `reviewed:`）、講法全為 `proposed` ⇒ 索引與目錄皆為空，模型看不到任何一條。
+⚠️ 逐字取自 2026-09-23 生成的 `canon/jgb/B.md`，只示範格式。現行正本 543 條細目全部已審，1,753 條講法全部 `approved`（DSP-129）。
 
 **「講法」⛔ 不是同義詞表**：每一條都標了 `source`（`question_summary:3602` ＝來自哪一筆
 真實流量問句／`gapmap:C46` ＝來自缺口地圖）與 `status`。**只有 `approved` 的進索引。**
@@ -299,7 +302,7 @@ language: zh-TW
 使用者問「**你們這系統我適合用嗎**」：
 
 1. 查詢向量 ← 這句話（＋上一則 user 訊息）
-2. 細目 `jgb/I/product-overview` 有 approved 講法「**合不合用**」「**適不適合我用**」（DSP-058 圖書館正本後 id 前綴恆為 `jgb`，⛔ 不是受眾名）。⚠️ **此例取自封存的舊 210 條**（2026-09-23 已移出工作樹；取回：`git show c06575a9:docs/archive/2026-09/canon-pre-dsp067/jgb/I.md`）——該細目不在 2026-09-23 換上的現行正本裡，且現行 515 條的講法**全為 `proposed`、approved 數＝0** ⇒ 這條路徑今天走不到，補審後才會生效。
+2. 細目 `jgb/I/product-overview` 有 approved 講法「**合不合用**」「**適不適合我用**」（DSP-058 圖書館正本後 id 前綴恆為 `jgb`，⛔ 不是受眾名）。⚠️ **此例取自封存的舊 210 條**（2026-09-23 已移出工作樹；取回：`git show c06575a9:docs/archive/2026-09/canon-pre-dsp067/jgb/I.md`）——該細目不在 2026-09-23 換上的現行正本裡。現行 543 條細目的 1,753 條講法全部 `approved`（DSP-129）。
 3. 該細目的 `phrasing` 鍵分數最高 ⇒ 以該分數代表這個細目
 4. 排進前 5 ⇒ 內容進 prompt，且 **`citable=True`**（因為它有 `reviewed`）⇒ 模型可以引用它
 

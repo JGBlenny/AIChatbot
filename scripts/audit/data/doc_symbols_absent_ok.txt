@@ -23,3 +23,4 @@ auto_generated	DATABASE_SCHEMA.md test_scenarios.source_type 的文件敘述值�
 contact_config_key	COMPLETE_CONVERSATION_ARCHITECTURE.md §12 舊配置鍵→現行機制對照表列（DSP-038-1），對照表本身就是要列已不存在的鍵
 is_nomination_admissible	agent-path-retired-symbols.md 本身即退役符號帳本的定義成員——0 命中正是該帳本要記的事
 select_nominated	agent-path-retired-symbols.md 本身即退役符號帳本的定義成員——同 is_nomination_admissible
+file_id	TARGET_ARCHITECTURE.md §6：目標架構裡 JGB 上傳回傳的識別碼，程式尚未實作（DSP-130，待業主重裁）

@@ -1,5 +1,7 @@
 # 接口 A：jgb2 站內幫手 → AIChatbot `/mcp`（`agent.turn`、`agent.upload_ticket`）
 
+> 🎯 **本檔寫現況，不是設計依據。目標：本系統是對話服務，不是 MCP 系統；呼叫端走專用對話 API，`/mcp` 不是最終入口；JGB 工具要搬出本系統，由 JGB 維護。** 分工與完整架構見 `docs/architecture/TARGET_ARCHITECTURE.md`。
+
 > **狀態：現況版（2026-10-29）。** 站內幫手已在正式機上線；JGB 已於 2026-10-15 17:38 起經 `/mcp` 呼叫。計畫：`.kiro/specs/agentic-mcp-orchestration/plan-assistant-11-items-20261014.md`（以下簡稱「計畫」）。
 > 讀者：JGB（jgb2 後端）工程。本文件說「jgb2 代理怎麼呼叫我們」；反方向（我們呼叫 jgb2 的端點，以下稱**接口 B**）的現行正本是 `.kiro/specs/agentic-mcp-orchestration/jgb-api-spec-for-jgb-20261015.md`（已對碼 jgb2 master；列號 #16～#24 沿用），總帳 `jgb2-api-requests.md` 只指向該檔。接測清單見 `.kiro/specs/agentic-mcp-orchestration/jgb-acceptance-checklist-20261015.md`。
 > 底層契約不重寫，**以 `docs/api/mcp-facade.md` 與 `.kiro/specs/knowledge-outline-and-intent-architecture/inputs/line-bot-integration-sheet-20260908.md` 為準**；本文件只寫站內幫手這條線的**取值、義務與對應**。
@@ -7,8 +9,8 @@
 
 ## 1. 分工與範圍
 
-- 入口：JGB 站內幫手後端呼叫本文件的 `/mcp`，網址 `https://chatai.jgbsmart.com/rag-api/mcp`（本系統唯一的對外入口，各呼叫端共用同一網址）。舊 REST 鏈（`/rag-api/v1/message`）已於 2026-09-11 退役（DSP-046）。
-- 我們（AIChatbot）：在 `agent.turn` 上完成站內幫手的 10 項對話能力；需要 jgb2 的資料與寫入，一律透過接口 B 的端點取得。接真 JGB 時，JGB 尚未開放的功能（統計三項、建立物件／合約／手動帳單）我方**不發請求**，由程式回固定句（§10）。
+- 入口：JGB 站內幫手後端呼叫本文件的 `/mcp`，網址 `https://chatai.jgbsmart.com/rag-api/mcp`（現況：對話回合唯一的入口，各呼叫端共用同一網址；瀏覽器上傳另走 §7）。目標入口是專用對話 API，定案後本文件同步改。舊 REST 鏈（`/rag-api/v1/message`）已於 2026-09-11 退役（DSP-046）。
+- 我們（AIChatbot）：在 `agent.turn` 上完成站內幫手的 10 項對話能力；需要 jgb2 的資料與寫入，一律透過接口 B 的端點取得。接真 JGB 時，本系統還沒接上的寫入（延期繳費、建立物件／合約／手動帳單）我方**不發請求**，由程式回固定句（§10）；這些端點 JGB staging 已開放（DSP-132）。
 - 你們（JGB）：持有金鑰與登入身分、組 header、轉送使用者訊息、向我們取上傳票並交給瀏覽器（§7）、把回應畫成前端。檔案由瀏覽器直接傳到我們的上傳端點，不經你們的伺服器。站內幫手入口的功能開關與白名單是 JGB 端設定（§14）。
 - ⛔ 瀏覽器不直連 `/mcp`，也不持有金鑰；瀏覽器只打上傳端點（§7），而且只帶上傳票（§6 F2-4）。
 
@@ -219,7 +221,7 @@ const res = await fetch(ticket.upload_url, {
 - 照片位元組由我們以 `multipart/form-data` 送給 jgb2 的 `POST /api/external/v1/repairs`（API 規格 §4 #22 方案 (a)）：原有文字欄位照舊放在同名表單欄位，照片放在 `broken_photos[]`，每筆是一個檔案。
 - 送出前，照片一律重新編碼成 `image/jpeg`，並去掉 EXIF 和 GPS。每張修繕單最多 10 張，每張 ≤ 5,000,000 bytes；檔名由我方程式產生，格式 `photo-N.jpg`（⛔ 使用者檔名）。確認卡顯示「附照片：N 張」，N 與照片的 `sha256`（重新編碼後那份）納入確認卡雜湊；送出前重算比對，不符就不寫入。
 - jgb2 收下照片、掛到這張修繕單，回應格式照舊；jgb2 也請自己驗一次型別，提供照片時加上 `X-Content-Type-Options: nosniff`。成員身分驗證與冪等同樣適用，同一個冪等鍵重送時照片不能重複掛（API 規格 §0）。
-- jgb2 端 multipart 的上線時程待 JGB 回覆（API 規格 #22）；在那之前，真 jgb2 不會有照片附進修繕單，文字報修不受影響。⛔ JGB 不得回頭抓我方提供的任何網址。
+- jgb2 staging 已收 multipart（API 規格 #22；≤10 張、每張 ≤5,000,000 bytes、JPEG／PNG）。本系統還沒改接，接真 jgb2 時照片仍進不了修繕單，文字報修不受影響。⛔ JGB 不得回頭抓我方提供的任何網址。
 - 缺必填欄位導致先追問再出卡時，照片仍會附進最終那張卡（只有「出卡」才消耗該回合的照片）。
 
 ### 7.2 文件：一次一份
@@ -348,7 +350,7 @@ const res = await fetch(ticket.upload_url, {
   - 這些動作只對業者身分開放。
 - **卡上編號＝寫入編號**：建立合約的物件、建立手動帳單的合約，在**出卡時**就以帶 viewer 的查詢解析成唯一一筆，卡上印出名稱與編號；使用者確認後寫入的就是卡上那一筆，寫入前再以帶 viewer 的單筆讀確認該筆仍屬本團隊且看得到，否則回「查不到」固定句，⛔ 不會依名稱改寫到別筆。名稱對到多筆或零筆 ⇒ 不出卡（零筆走「查不到」固定句；多筆請使用者指定）。
 - **對話釘住物件時**：已在某物件的範圍內操作時（清單點選 `select:bill｜contract｜repair:<id>` 後），對**別戶**的寫入（含建立合約、手動帳單、物件、修繕單）一律以固定句擋下（`SCOPE_EXIT_TEXT`）、不出卡、不寫入。實測（2026-10-15）：釘住 `select:bill:<id>` 後對別戶的四種寫入 4／4 被擋，對該物件本身的三種寫入皆出卡。
-- **JGB 尚未開放的寫入動作**：接真 JGB（`USE_MOCK_JGB_API=false`）時，`estate_create`、`contract_create`、`manual_bill_create` **不出確認卡**，程式直接回固定句（§10）。`bill_due_extend`（改帳單到期日）目前仍呼叫 `PATCH /agent/v1/bills/{id}`，該路由在 jgb2 master 與 preview 查無（API 規格 §4 #23），正式路徑待 JGB 回覆。
+- **本系統還沒接上的寫入動作**：接真 JGB（`USE_MOCK_JGB_API=false`）時，`estate_create`、`contract_create`、`manual_bill_create`、`bill_due_extend` **不出確認卡、不發請求**，程式直接回固定句（§10）；文件回合回的是文件回合專用固定句。JGB staging 已開 `POST /api/external/v1/estates`、`/contracts`、`/bills/manual` 與 `PATCH /api/external/v1/bills/{id}`（只改 `date_expire`），本系統的呼叫還沒改接（DSP-132）。
 
 ## 10. 缺欄追問與固定句
 
@@ -356,11 +358,11 @@ const res = await fetch(ticket.upload_url, {
 - **追問後的回答接回原流程**：上一回合追問的是物件／社區／地址時，使用者下一句若是 7～30 字、不含句讀的一串名稱，程式拿去與該成員可見的物件比對（`_PRE_LOOKUP_NAME_ASK_TARGETS`）；比對不到不注入，照一般對話處理。
 - **查不到**：查詢帶明確編號或名稱時，jgb2 回 403、404，或成功但結果為空，一律同一句固定句「系統裡查不到這個編號或名稱。」；無權（他團隊、該成員看不到）與不存在**不區分**，避免探測資料是否存在。行為：程式以固定句回覆（⛔ 不靠模型自行措辭）。**請 JGB 越權與不存在統一回 404「不存在或無權存取」並附 `error.code`**（API 規格 §0-1）；我方對 403 與 404 同樣當作「查不到」。
 - **沒查成**（上游其他失敗、逾時）：不是「查無」，**不說「查不到」**；使用者會看到「這筆操作目前無法執行」（寫入）或轉人。
-- **JGB 尚未開放的功能**：統計三項（未收帳單、執行中修繕、N 個月內到期合約）與建立物件／合約／手動帳單，接真 JGB 時我方**不發請求**，程式以固定句結束回合（`kind=answer`、`outcome.state=answered`、`outcome.expects=text`，不經模型）：
-  - 統計：「這項統計目前還不支援：JGB 系統尚未開放這個查詢，開放後就能直接查。」（`jgb2_stats.NOT_SUPPORTED_TEXT`）
+- **本系統還沒接上的功能**：延期繳費與建立物件／合約／手動帳單，接真 JGB 時我方**不發請求**，程式以固定句結束回合（`kind=answer`、`outcome.state=answered`、`outcome.expects=text`，不經模型）。這兩句現在寫「JGB 系統尚未開放」，與 DSP-132 不符，改接時一起拿掉：
+  - 延期繳費：「這個動作目前還不支援：JGB 系統尚未開放延期繳費（調整帳單到期日），開放後就能直接辦理。」（`confirm.BILL_DUE_EXTEND_NOT_SUPPORTED_TEXT`）
   - 建立物件／合約／手動帳單：「這個動作目前還不支援：JGB 系統尚未開放建立物件、合約或手動帳單，開放後就能直接建立。」（`confirm.WRITE_NOT_SUPPORTED_TEXT`）
-  JGB 依 API 規格開放對應端點、我方改呼叫後，這兩句不再出現。
-- 統計類（JGB 開放後）的「共 0 筆」是事實，直接回 0 筆；上游錯誤時走固定句，⛔ 不印 0。
+  我方改呼叫 JGB 端點後，這兩句不再出現。
+- 統計三項（未收帳單、執行中修繕、N 個月內到期合約）打 JGB 既有列表端點（`jgb2_stats`，DSP-126）；「共 0 筆」是事實，直接回 0 筆；上游錯誤時走固定句，⛔ 不印 0。
 - 明細多筆時一律「共 N 筆」＋逐筆列出；超過一頁（修繕清單每頁 ≤20 筆）會問「要不要看下一頁」，使用者要看就繼續問，我方帶 `page` 再查。
 - **建立失敗原因目前不回傳**，見 §12。
 
@@ -394,13 +396,13 @@ jgb2 端點（接口 B）的越權一律折疊成「不存在或無權存取」4
 ## 12. 已知限制
 
 - **建立失敗原因只回固定句**：寫入失敗（例如縣市行政區 jgb2 無法解析、欄位值被 jgb2 拒絕）時，使用者只看到「這筆操作目前無法執行」，我們目前不回傳失敗原因（P3 延後）。確認卡不預檢縣市行政區，真 jgb2 由接口 B #19 解析，所以非預期區域要到按下確認後才失敗。
-- **接真 JGB 時，統計三項與建立物件／合約／手動帳單回固定句、改帳單到期日無可用路徑**：見 §9、§10。
+- **接真 JGB 時，延期繳費（改帳單到期日）與建立物件／合約／手動帳單回固定句**：見 §9、§10。
 - **知識題與驗證**：正式機 `AGENT_VERIFIER_MODE=grounding_observe`（§2）；知識題中位約 4 秒（2026-10-15 正式機 20 題：答出 11、p90 約 9 秒）。舊知識庫零列已審時 `kb.search` 不給對話模型（門面照列，`docs/api/mcp-facade.md`）；細目索引在開機逾時後背景重建（正式機約 3～4 分鐘），重建完成前只有目錄。
 - **偶發轉人**：可見帳單的查詢偶發 `QUOTE_NOT_COVERING` 轉人；成員看不到的物件建修繕單時，不出卡、不寫入，但回覆為轉人或反問、不一定是 §10 的固定句；照片建單首回合偶發轉人（12 次中 1 次，追問後出卡）。以上皆為 P3，持續量測中。
 - **`form_sessions` 無清除排程**：對話狀態表目前沒有定期清除機制；保存期限與清除由後續另案處理（不在本計畫範圍）。
 - **記憶功能（項 7「記住一件事」）已撤除**：不做；使用者說「記住…」時沒有任何跨對話記憶。
 - **文件回合的模型回答留在對話歷史**：見 §7.2 末段。
-- **照片交給 jgb2 的 multipart 時程待 JGB 回覆**：見 §7.1、API 規格 #22；在那之前真 jgb2 不附照片。
+- **照片交給 jgb2 的 multipart 本系統還沒改接**：見 §7.1、API 規格 #22；改接前真 jgb2 不附照片。
 - **謄本功能的上線前提未解**：正式機目前接 DocuMind 測試機、只收樣本檔（§2）；見 §2 末段（DocuMind 端三件）；DocuMind 認證格式（暫用 `Authorization: Bearer`）待 DocuMind 確認。
 - **對話歷史依 `session_id` 保存、不由呼叫端回傳**；30 分鐘後再進入視為過期（`session_expired`）。
 
@@ -409,10 +411,10 @@ jgb2 端點（接口 B）的越權一律折疊成「不存在或無權存取」4
 | 項目 | 內容 | 誰回答 |
 |---|---|---|
 | 工具參數塞身分鍵 | 現況為剝除不採用（§6 F2-3）；是否改為一律拒絕（`INVALID_INPUT`） | 業主 |
-| 修繕單照片 multipart 時程 | API 規格 §4 #22：jgb2 `POST /api/external/v1/repairs` 接受 `multipart/form-data`（`broken_photos[]`）的上線日期與張數上限；定案前照片進不了修繕單 | JGB |
-| 改帳單到期日的正式路徑 | API 規格 §4 #23 | JGB |
+| 修繕單照片改接 multipart | API 規格 §4 #22：staging 已開，本系統改接 `POST /api/external/v1/repairs` 的 `broken_photos[]` 後照片才進得了修繕單 | AIChatbot |
+| 改帳單到期日改接 | API 規格 §4 #23：staging 已開 `PATCH /api/external/v1/bills/{id}` | AIChatbot |
 | 越權統一 404、寫入的成員身分驗證、冪等、歸屬欄位拒絕 | API 規格 §0 | JGB |
-| 統計三項、建立物件／合約／手動帳單的端點 | API 規格 §1、§3；開放後我方改呼叫端（API 規格 §7） | JGB |
+| 建立物件／合約／手動帳單的端點 | API 規格 §1、§3；開放後我方改呼叫端（API 規格 §7） | JGB |
 | DocuMind 認證格式與上線前提 | §2 末段 | DocuMind 端 |
 
 ## 14. JGB 端設定
@@ -441,7 +443,7 @@ jgb2 端點（接口 B）的越權一律折疊成「不存在或無權存取」4
 | `AGENT_ASSISTANT_KEY_IDS` | 站內幫手金鑰必帶 `user_id`；缺 ⇒ 400 `IDENTITY_MISSING_USER_ID`；`anonymous` ⇒ 400 `IDENTITY_MALFORMED` | §2；§4；§11（計畫 §3i 第 1 點） |
 | `AGENT_TURN_TIMEOUT_S` | 正式機 90 秒；文件回合預算 `min(45, 逾時/2)` | §2；§3 |
 | 查無與無權同一句 | jgb2 回 403、404 或成功但空 ⇒「系統裡查不到這個編號或名稱。」，程式固定句；其他失敗不說查不到 | §10（計畫 §3i 第 2 點） |
-| JGB 未開放功能的固定句 | 統計三項、建立物件／合約／手動帳單：接真 JGB 時不發請求、程式固定句 | §10；§9 |
+| 還沒接上的寫入的固定句 | 延期繳費、建立物件／合約／手動帳單：接真 JGB 時不發請求、程式固定句 | §10；§9 |
 | 缺欄程式追問 | `outcome=clarifying`、固定詞彙 | §10（計畫 §3f，S2 修正輪） |
 | 確認卡封閉欄位、卡上編號＝寫入編號 | 各動作欄位表、出卡時綁定編號 | §9（計畫 §3f 第 1、1d 點，§5b F3） |
 | `outcome.action`／`ref.type` 值域 | 含 `estate` | §8（計畫 §3i 第 5 點） |

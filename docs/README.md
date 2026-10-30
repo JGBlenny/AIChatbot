@@ -10,7 +10,7 @@
 
 | 目錄 | 內容 |
 |------|------|
-| [architecture/](./architecture/) | **現況正本**：系統全景、Agentic-MCP 對話架構、Facet、Retriever Pipeline、資料庫 Schema |
+| [architecture/](./architecture/) | **目標架構**（`TARGET_ARCHITECTURE.md`，架構唯一正本）與**現況正本**：系統全景、對話線架構、Facet、Retriever Pipeline、資料庫 Schema |
 | [api/](./api/) | API 規格與外部系統對接（JGB、conversational API 等） |
 | [guides/](./guides/) | 操作指南（快速開始、功能使用、知識匯入匯出等） |
 | [user-guides/](./user-guides/) | 非技術人員操作指南 |
@@ -27,11 +27,15 @@
 
 ## 常用入口
 
-⛔ **先讀這三份**（現況唯一正本，2026-09-12 對碼）：
+⛔ **先讀這份**（系統應該長什麼樣，設計以它為準）：
 
-1. [`architecture/SYSTEM_ARCHITECTURE.md`](./architecture/SYSTEM_ARCHITECTURE.md) ⭐ —— 系統現在怎麼跑
-2. [`architecture/AGENTIC_MCP_ARCHITECTURE.md`](./architecture/AGENTIC_MCP_ARCHITECTURE.md) ⭐ —— 一回合的完整流程（§2b）、為什麼被轉人（§4b）
-3. [`api/mcp-facade.md`](./api/mcp-facade.md) —— `/mcp` 串接契約
+1. [`architecture/TARGET_ARCHITECTURE.md`](./architecture/TARGET_ARCHITECTURE.md) ⭐ —— 目標架構、分工、原則、與現況的差距
+
+**現況看這三份**（2026-09-12 對碼）：
+
+2. [`architecture/SYSTEM_ARCHITECTURE.md`](./architecture/SYSTEM_ARCHITECTURE.md) ⭐ —— 系統現在怎麼跑
+3. [`architecture/AGENTIC_MCP_ARCHITECTURE.md`](./architecture/AGENTIC_MCP_ARCHITECTURE.md) ⭐ —— 一回合的完整流程（§2b）、為什麼被轉人（§4b）
+4. [`api/mcp-facade.md`](./api/mcp-facade.md) —— 現行 `/mcp` 串接契約
 
 其他：
 

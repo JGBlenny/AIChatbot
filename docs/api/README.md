@@ -16,6 +16,8 @@
 該機制隨舊 REST 對話鏈於 2026-09-11 刪除，**agentic-MCP 新線沒有對應物**——
 工具呼叫改走 `services/agent/tools/registry.py` 的 in-process 註冊表。
 
+設計或新串接先讀 [`docs/architecture/TARGET_ARCHITECTURE.md`](../architecture/TARGET_ARCHITECTURE.md)：目標是呼叫端走專用對話 API，`/mcp` 不是最終入口。
+
 想了解現況，讀這三份：
 
 1. [`docs/architecture/SYSTEM_ARCHITECTURE.md`](../architecture/SYSTEM_ARCHITECTURE.md) — 全景（核心／門面／知識兩條路）

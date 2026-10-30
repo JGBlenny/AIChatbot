@@ -1,6 +1,6 @@
-# Agentic MCP 對話線架構（demo 版，2026-09-08 上線）
+# 對話線架構（現況，2026-09-08 上線）
 
-> 🎯 本檔寫**現況**；**目標形態**（混合式分工：理解交給 AI、有規則有後果的環節由程式掌握，DSP-091；原則 P0～P8）見 `.kiro/specs/agentic-mcp-orchestration/architecture-target-20261018.md`。
+> 🎯 **本檔寫現況，不是設計依據。目標：本系統是對話服務，不是 MCP 系統；呼叫端走專用對話 API，`/mcp` 不是最終入口；JGB 工具要搬出本系統，由 JGB 維護。** 分工與完整架構見 `docs/architecture/TARGET_ARCHITECTURE.md`。
 
 > 讀者：要改這條線的工程、要接它的呼叫端、要驗它的稽核。
 > 對象：`rag-orchestrator/services/agent/**`＋`/mcp` 門面。舊鏈（REST `/api/v1/message`、SOP、面向）不在本文，見 `COMPLETE_CONVERSATION_ARCHITECTURE.md`。
@@ -13,6 +13,7 @@
 | 你要問的 | 去哪一節 |
 |---|---|
 | 誰是核心、誰只是門面 | §0 一句話 |
+| **誰呼叫誰**（MCP、AI、工具、JGB API 的關係），一回合有哪些 AI 呼叫 | **§0a 誰呼叫誰** |
 | 每個元件負責什麼、⛔ 不做什麼 | §1 元件與責任（§1a 模組圖、§1b 其餘核心模組逐支） |
 | 一回合長什麼樣（概覽） | §2 一回合的路徑 |
 | **一句話進來到回出去，每一步與每一個終止點** | **§2b 完整流程**（階段 0 請求層→階段 1 門面→階段 2 四段管線→階段 3 寫入鏈→終止點表） |
@@ -32,12 +33,15 @@
 
 **核心是 `AgentRuntime`，`/mcp` 只是接在它外面的門面之一**（⛔ 把 `/mcp` 當脊椎、Runtime 當它裡面的東西）。
 
+**系統定位（DSP-130）**：本系統是對話服務，不是 MCP 系統。本檔寫現況：對話服務區（MCP 門面、`AgentRuntime`、AI 呼叫、大綱、草稿、確認卡、出口檢查、轉人）與工具區（`ToolRegistry` 與工具）跑在同一個程式，`jgb2.*` 與 `JGBSystemAPI` 這批 JGB 工具暫放在內。目標架構與差距見 `TARGET_ARCHITECTURE.md` §4、§8；現況的破口見 §0a「第 3、4 段以外的兩條路」。
+
 > 📐 **邊界規則見 `docs/architecture/BOUNDARY.md`（唯一正本）。** 三個桶：本系統／呼叫端／外部相依；
 > 一句話測試＝「把呼叫端整個換掉，這句話還成立嗎」。⛔ 不要在本檔另寫一份宣告。
 
 **核心**：`AgentRuntime` 收到一句話與一份會話狀態，先用**程式**處理機器值終止路徑
-（確認按鈕、清單點選、照片／文件），其餘交模型在封閉工具清單裡查資料；要寫入一律先出
-確認卡、按了才兌現；答案過 `OutputVerifier` 再過四道出口閘。它的建構依賴是
+（確認按鈕、清單點選、照片／文件），其餘叫 AI 理解：主模型在封閉工具清單裡查資料、組話，
+寫入意圖呼叫讀出動作與欄位值；寫入由程式依草稿出確認卡、按了才兌現；答案過 `OutputVerifier`
+再過四道出口閘。它的建構依賴是
 `provider`／`registry`／`verifier`／`assembler`／`budget`／`candidate_selector`／`db_pool`
 ——**⛔ 沒有任何協定或門面**。
 
@@ -46,7 +50,7 @@
 ⚠️ `routers/agent_entry.py` **不在這張清單上**——它是**遷移橋**（任務 2.2／R9）：站在舊鏈 `chat.py` 的請求路徑上分流，⛔ 不是門面也不是端點；上游五樣相依全隨 `chat.py` 刪除，⛔ 掛路由救不活。
 `run_turn` 的簽名在 `mcp_facade` 裡被註解為「**REST／影子／回測共用的介面**」。
 
-⚠️ **本系統只有 MCP server，沒有對外的 MCP client**：MCP client 全 repo 只出現在測試工具裡——兩支整合測試用 `mcp.client`
+⚠️ **本系統只有 MCP server，沒有對外的 MCP client**：MCP client 全 repo 只出現在測試工具裡——三支整合測試用 `mcp.client`
 （`mcp.Client`／`mcp.client.streamable_http.streamable_http_client`），煙霧測試腳本 `scripts/smoke/mcp_smoke.py` 用 `ClientSession`；三者都是拿 client 打本系統自己的 server；`runtime.py` ⛔ 不 import `mcp`，模型呼叫工具走 `registry.call`，
 **in-process**。
 
@@ -67,7 +71,7 @@
 
 | 要自己做的 | 為什麼不能照抄 |
 |---|---|
-| 傳輸層：`McpServiceGate`（最外層 ASGI middleware）、`parse_identity`、`resolve_call`、`_make_invoke`（計量 begin／quota／finalize＋速率＋每小時上限）、`build_asgi_app`／`union_specs`／`_ToolListFilter`／`_MountPathNormalizer` | 全是 MCP 協定專屬。`mcp_facade.py` 共 2,812 行（2026-10-17 `wc -l`），這一層佔大半 |
+| 傳輸層：`McpServiceGate`（最外層 ASGI middleware）、`parse_identity`、`resolve_call`、`_make_invoke`（計量 begin／quota／finalize＋速率＋每小時上限）、`build_asgi_app`／`union_specs`／`_ToolListFilter`／`_MountPathNormalizer` | 全是 MCP 協定專屬。`mcp_facade.py` 共 3,573 行（2026-10-30 `wc -l`），這一層佔大半 |
 | 🔴 **命名空間身分（安全決策，⛔ 選錯＝重開一個已關掉的 P1）** | 見下方紅字 |
 | **額度計量**（`app.py::usage_metering_middleware` 只對 `/mcp` 動作、刻意不 begin/finalize——不變量 31「門面是唯一寫入者」） | 中介層綁死路徑前綴 |
 | **`GATED_PREFIXES` 要加前綴** | 否則新端點沒有無條件金鑰閘 |
@@ -89,6 +93,80 @@
 
 查證：`grep -n "def namespaced_identity" -A 26 rag-orchestrator/services/agent/mcp_facade.py`；
 `grep -n "不另寫第二條回合邏輯" rag-orchestrator/services/agent/mcp_facade.py`。
+
+## 0a. 誰呼叫誰
+
+由外到內四段，只有第一段走 MCP 協定。第 1、2 段在對話服務區，第 3 段是兩區的接點，第 4 段在工具區（DSP-130）。
+
+**現況架構**（對話服務區與工具區跑在同一個程式）：
+
+```
+呼叫端
+  │ MCP 協定：POST /mcp，tools/call agent.turn
+━━ 對話服務區（本系統主體）━━
+MCP 門面（mcp_facade.py）
+  │ 驗金鑰、身分、額度；讀寫會話狀態；照片與文件前處理
+  │ 函式呼叫 run_turn（這段不走 MCP 協定）
+AgentRuntime（對話核心，runtime.py）
+  │ 程式：機器值、草稿、閘門、確認卡、轉人、回話
+  │ AI：理解使用者、知識作答、一般對話的措辭
+  │ 函式呼叫 registry.call；寫入用的查詢直呼 confirm.py 函式（都不走 MCP 協定）
+━━ 工具區（JGB 工具暫放本系統）━━
+工具層（ToolRegistry，registry.py）
+  │ 查帳單、查合約、建修繕單等；MCP 門面與 AgentRuntime 共用同一份
+  │ JGBSystemAPI → Transport → HTTP
+━━ 外部系統 ━━
+JGB API（/api/external/v1 等）
+```
+
+各段的呼叫方式：
+
+| 段 | 誰呼叫誰 | 怎麼呼叫 | 符號 |
+|---|---|---|---|
+| 1 | 呼叫端 → MCP 門面 | MCP 協定，`POST /mcp`，`tools/call agent.turn` | `mcp_facade.build_mcp_server`、`build_asgi_app` |
+| 2 | MCP 門面 → AgentRuntime | 函式呼叫 | `_agent_turn` 呼叫 `runtime.run_turn` |
+| 3 | AgentRuntime → 工具層 | 函式呼叫 | `self.registry.call(...)` |
+| 4 | 工具層 → JGB API | HTTP | `JGBSystemAPI`（`services/jgb_system_api.py`）→ `Transport`（`services/jgb/transport.py`）；`USE_MOCK_JGB_API=true` 時走替身 |
+
+**MCP 門面目前兼兩份工作**：對話入口（`agent.turn`）與工具入口（`build_mcp_server` 依 `union_specs` 逐支 `add_tool`）。對話回合只能從 `/mcp` 進來；本系統另有檔案直傳（`agent_uploads_router`）與後台管理等 HTTP 路由，那些不跑對話回合。目標是對話入口搬到專用對話 API，排在第 4 步切換正式機之前（DSP-130、DSP-131）；新入口要自己做的事見 §0「不可複用的」表。
+
+**第 3、4 段以外的兩條路**（都不走 MCP 協定）：
+
+- AgentRuntime 直呼 `tools/confirm.py` 的函式查 JGB，不經 `registry.call`：寫入名稱查詢（`write_name_candidates`、`missing_name_lenient`、`name_early_lookup`、`name_lenient_picked_title`、`name_lenient_rows_for_ids`、`name_precheck_ids`、`pick_matches_name`）、報修分類驗值（`_is_valid_repair_category`）、封閉動作缺欄判定（`closed_action_missing_labels`）。
+- MCP 門面在 `build_registry` 內有兩個閉包：`_repair_category_tree` 在 `run_turn` 之前直接查 JGB；`_open_repairs` 注入 `confirm.request`，直接查 JGB。
+
+**執行工具的工具層只有一份**：`app.py` 用 `build_registry` 建一份 `ToolRegistry`，同時交給 `build_mcp_server` 與 `build_runtime`；`routers/agent.py` 另建一份，只用於 `/openapi.json`、`/health`，不執行工具。支數依條件變動：`AGENT_STAGE` 預設 M0 時 12 支；M2 以上、pm＋`entry=mcp`、`AGENT_TURN_ENABLED` 開啟時註冊 22 支，模型清單少門面專用的 `agent.turn`（`facade_only`），成 21 支；舊知識庫零列已審時 `gate_kb_search_on_reviewed_rows` 再藏 `kb.search`，成 20 支。直傳啟用時多一支門面專用的 `agent.upload_ticket`。其他身分與入口的支數不同，以 `specs_for` 為準。
+
+**MCP、AI、工具的關係**：
+
+- 主模型走 Chat Completions 的 `tools`（`registry.to_openai_tools`），只提出要呼叫哪支工具與參數；執行的是 `_run_model_loop` 裡的 `registry.call`。
+- 打 JGB API 的程式：`tools/jgb2.py`、`jgb2_stats.py`、`action.py`、`confirm.py`，加上面兩個門面閉包；AI 不打。`kb.*`、`help.read`、`session.slots.*` 用本系統自己的資料。
+- 寫入工具 `jgb2.action.*` 在模型的工具清單裡，但 `_wrap_write_tool` 要已兌現的確認 token 才放行，token 不進模型上下文。
+- 其他工具也能經 `/mcp` 直呼：先過門面的金鑰、身分、額度，再經 `_invoke` 到 `registry.call`，不經 AgentRuntime，沒有 AI 與草稿。直呼 `confirm.request` 拿得到卡片資料，但沒有待確認筆，無法兌現；直呼 `jgb2.action.*` 在工具可見時回 `CONFIRMATION_REQUIRED`，`AGENT_WRITE_TOOLS_ENABLED` 關閉或 `entry=rest` 時回 `NO_MATCH`。
+
+**一回合的 AI 呼叫**（只有主模型帶工具，其餘只回 JSON 或文字）：
+
+| 呼叫 | 何時 | 回什麼 | 符號 |
+|---|---|---|---|
+| 主模型 | 進段三後，可多輪。程式依意圖出卡、標籤判定由程式收尾（要真人、已解決）、重送、卡仍有效、剛送出、候選按鈕回合，由程式結束回合，主模型不呼叫或被中斷 | 工具呼叫或最終答案 | `_run_model_loop`、`_dialog_act_pre_loop`、`_DialogActPreempt`、`_write_draft_reissue_exit`、`_write_draft_card_still_valid_exit`、`_write_draft_submitted_exit` |
+| 寫入意圖 | 使用者文字回合，主模型之前先發，回合開始還沒有草稿也照發（等待時間見 §3 情境 1）；文件回合、`pick:` 機器值、影子回合、`AGENT_WRITE_DRAFT` 關閉、`select:` 釘住範圍或看不到寫入工具時不發 | 動作、欄位值 | `_start_write_intent_call` |
+| 標籤 | 使用者文字回合，與寫入意圖同時發；文件回合、`pick:` 機器值、影子回合、`AGENT_CLOSING_HANDOFF` 關閉時不發。確認用的 `_dialog_act_field_confirm` 是之後再發一次 | `dialog_act`（要真人、已解決等）；程式依它決定要不要結束回合 | `_start_dialog_act_call`、`_dialog_act_field_confirm` |
+| 帶狀態句判讀 | 模型答案過 Verifier 後；`AGENT_STATE_CLAIM_GATE` 開啟時才跑，轉人回合與程式回話結束的回合不跑 | 回覆有沒有宣稱狀態 | `state_claim.judge_state_claims` |
+| 名稱寬鬆比對 | 寫入時名稱講不準 | 候選編號 | `name_match.ai_pick` |
+| 門面前處理 | 有照片、文件或謄本時，在 `run_turn` 之前 | 辨識或擷取結果 | `image_recognition_service`、`document_extract`、`mcp_facade._documind_pick_leaves` |
+
+**工具由誰發起**：
+
+| 工具 | 發起者 | 符號 |
+|---|---|---|
+| `jgb2.query.*`、`jgb2.stats.*`、`kb.*`、`help.read`、`handoff.request`、`session.slots.*` | 主模型提出 | `_run_model_loop` |
+| `jgb2.query.*`（清單點選、整句編號或短名稱的前置查詢） | 程式 | `_run_select_segment`、`_PRE_LOOKUP_*` |
+| `jgb2.query.*`（兌現範圍閘） | 程式 | `_scope_gate_confirm_request`。未結修繕提示由 `_open_repairs` 閉包直接查 JGB，不經工具呼叫 |
+| `confirm.request`（一般寫入回合） | 程式依草稿；主模型自呼只當提議 | `_write_draft_program_message`、`_write_proposal_handle` |
+| `confirm.request`（謄本回合放行 `estate_create` 的第一輪） | 程式 | `_document_program_message`、`DOCUMENT_PROGRAM_CONFIRM_ACTIONS` |
+| `confirm.request`（文件暫存回合） | 草稿動作與暫存動作相同時，程式也可依草稿發起；其餘由主模型 | `_write_draft_decide`（`carry["action"] != draft["action"]` 才不發）；見 §8「部分寫入回合仍以模型參數出卡」 |
+| `confirm.request`（其他文件回合、點選範圍回合） | 主模型 | 見 §8「部分寫入回合仍以模型參數出卡」 |
+| `jgb2.action.*` | 程式，客人按確認後 | `_run_confirm_segment` |
 
 
 ## 1. 元件與責任
@@ -134,7 +212,7 @@ flowchart LR
 | 查詢工具 | `services/agent/tools/jgb2.py`（`query_bills/contracts/estates/meters/repairs/accounts`、`_ok_single` 帶 `scope.estate_id`） | face 封閉列舉、ref／keyword 縮小、facts 由 formatter 決定性組句 | 不讓模型算數字（逾期天數程式算） |
 | 寫入工具 | `services/agent/tools/action.py`（`ACTION_SPECS` 五支：`bill_due_extend`、`repair_create`、`estate_create`、`contract_create`、`manual_bill_create`；另有 `_resolve_estate`、`_resolve_category`） | 形狀→範圍讀→寫；冪等鍵＝確認 token；分類缺值歸「其他」、急迫缺值 1 | 不模糊比對物件／分類 |
 | 確認卡 | `services/agent/tools/confirm.py`（`confirm_request`、`_is_valid_repair_category`、`open_repairs` 注入）、`services/agent/confirm_card.py`（`render`、`category_name_of`、`emergency_status_of`） | 卡文字由程式依 action＋payload 決定性產出；雜湊綁卡；卡外 `hint` | 模型 summary 不上卡 |
-| 照片 | `services/agent/image_fetch.py`、`services/image_recognition_service.py`、`services/s3_image_service.py`（`downscale_image`） | 抓 relay 簽章網址（硬邊界）、縮圖去 EXIF、分批辨識、決定性驗證輸出 | bytes 不落地、不進任何紀錄；描述硬留空 |
+| 照片 | `services/agent/upload_store.py`、`services/agent/image_fetch.py`、`services/image_recognition_service.py`、`services/s3_image_service.py`（`downscale_image`） | 收瀏覽器直傳的暫存檔（回滾模式 `urls` 才抓 relay 簽章網址，硬邊界）、縮圖去 EXIF、分批辨識、決定性驗證輸出 | bytes 不落地、不進任何紀錄；描述硬留空 |
 | Verifier | `services/agent/verifier.py`（`OutputVerifier`、`_is_observed`、`_ref_failures`、`_verify_routes`）、`app.py`（`_wrap_verifier_observe_only` 只交模式的相容層） | **模式感知在 `verify()` 內部**：觀察類記進 `verdict.observed` 後**繼續跑後面的類**、照擋類立刻擋（DSP-040／W6-b3） | `observe_only` 只在 `USE_MOCK_JGB_API=true` 允許（否則啟動 raise）；`grounding_observe` 配真 API ⇒ 健檢紅旗 |
 | 規則與正本 | `services/agent/agent_rules.py`（`_POLICY_TEXT_NON_PROSPECT`）、`canon/jgb/`（九架正本，2026-09-21.0）＋`.json` | 模型每回合看到的定義句與九架正本（受眾＝細目屬性 `target_user`） | 只寫定義不寫例子 |
 | 健檢 | `services/agent/health.py`（`verifier_mode`） | `write_tools_enabled`、`use_mock_jgb_api`、`verifier_mode`、`verifier_observe_only`（保留鍵）、`image_recognition{…}` | `grounding_observe`×非 mock ⇒ `premise.red_flags` |
@@ -224,21 +302,31 @@ sequenceDiagram
   participant R as AgentRuntime
   participant M as 模型
   participant T as 工具/替身
-  L->>F: tools/call agent.turn {message, image_urls?}
+  L->>F: tools/call agent.turn {message, upload_ids?}
   F->>F: 401/403/400 閘、usage_events、每小時上限
   F->>F: 過期？(last_turn_at > 1800s) → 關舊列、開新列、session_expired=true
-  F->>F: 照片？→ 抓檔/縮圖/分批辨識 → ImageTurnInput
+  F->>F: 照片？→ 取暫存檔/縮圖/分批辨識 → ImageTurnInput
   F->>R: run_turn(identity, message, state, image=?)
-  R->>R: ① confirm_*:<pid> 整句？→ 兌現/取消/固定句（不進模型）
-  R->>R: ② select:<type>:<id> 整句？→ 查該筆→facts 直答、寫槽位、記 select_scope（不進模型）
-  R->>R: ③ 照片失敗/逾時/低信心？→ 固定句或選分類 ask（不進模型）
-  R->>M: 系統規則＋正本＋dialog＋(照片 facts)
-  M->>T: jgb2.query.* / confirm.request（registry 四步）
-  T-->>R: ToolResult（facts, provenance, scope）
-  R->>R: 有 select_scope 且別戶？→ 替換為固定工具訊息（原 facts 不進模型）
-  M-->>R: sentences / confirm 卡
-  R->>R: Verifier（觀察）、_apply_scope_exit、partial 照片附加句
-  R-->>F: TurnResult{answer, kind, quick_replies, trace}
+  R->>R: 六條程式終止路徑（文件、照片、確認、清單點選、重播），命中即回（不進模型）
+  R->>M: 寫入意圖呼叫、標籤呼叫先發（不帶工具）
+  R->>R: 程式等意圖結果（_write_draft_program_first）
+  alt 欄位齊且非敏感
+    R->>T: 程式呼叫 confirm.request（registry.call）
+    T-->>R: 確認卡
+    R-->>F: TurnResult（卡文字＝回答；主模型沒被呼叫，Verifier 不跑）
+  else 程式收尾（要真人、已解決、重送、卡仍有效、剛送出、候選按鈕）
+    R-->>F: TurnResult（程式回話；主模型不呼叫或被中斷）
+  else 其他回合
+    R->>M: 主模型：系統規則＋正本＋dialog＋(照片 facts)＋工具清單
+    M-->>R: 主模型提出工具呼叫（jgb2.query.* / kb.* 等）
+    R->>T: registry.call 四步
+    T-->>R: ToolResult（facts, provenance, scope）
+    R->>R: 有 select_scope 且別戶？→ 替換為固定工具訊息（原 facts 不進模型）
+    M-->>R: sentences
+    R->>R: _write_draft_after_output（意圖晚到可在此出卡，主模型文字丟棄）
+    R->>R: Verifier、_state_claim_gate、exit_gates 四道出口閘
+    R-->>F: TurnResult{answer, kind, quick_replies, trace}
+  end
   F->>F: 存 state、stamp_last_turn、trace 快照
   F-->>L: {answer, kind, handoff, quick_replies, trace_id, session_expired, outcome}
 ```
@@ -291,12 +379,12 @@ nginx auth_request
 
 | 步 | 動作 | 失敗出口 |
 |---|---|---|
-| 1.1 | `image_urls` 形狀／張數 ≤ `IMAGE_MAX_COUNT`(10) | `INVALID_INPUT`（⛔ 不截斷後照跑） |
-| 1.2 | `attachment_purpose ∈ ATTACHMENT_PURPOSES`；非 document 帶 `file_urls` ⇒ 拒；份數 ≤ `FILE_MAX_COUNT` | `INVALID_INPUT` |
-| 1.3 | `message`／`image_urls`／`file_urls` **三者皆空** | `INVALID_INPUT` |
+| 1.1 | 預設模式 `AGENT_ATTACHMENT_INPUT=upload_ids`：帶 `image_urls`／`file_urls` ⇒ 拒；回滾模式 `urls`：帶 `upload_ids` ⇒ 拒，`image_urls` 形狀／張數 ≤ `IMAGE_MAX_COUNT`(10) | `INVALID_INPUT`（⛔ 不截斷後照跑） |
+| 1.2 | `attachment_purpose ∈ ATTACHMENT_PURPOSES`；`upload_ids` 份數 `repair` ≤10、`document` ≤1；回滾模式非 document 帶 `file_urls` ⇒ 拒，份數 ≤ `FILE_MAX_COUNT` | `INVALID_INPUT` |
+| 1.3 | `message` 與附件**皆空** | `INVALID_INPUT` |
 | 1.4 | `app.state.agent_runtime` 缺席 | `NO_MATCH`（門面 preflight 已先回 `AGENT_UNAVAILABLE`） |
 | 1.5 | `_outline_for_audience(受眾)` 取不到 ⇒ **fail-closed** | `NO_MATCH`（⛔ 不塞別的受眾的大綱）。**刻意排在 `store.load` 之前**——判不過的回合不該先在 `form_sessions` 留半開的列 |
-| 1.6 | 配額**最壞值預扣**：`len(image_urls) + len(file_urls) × DOC_MAX_PAGES`；`LIMITS.images_per_hour`／`files_per_hour` | `RATE_LIMITED`（**排在抓檔之前**：一張都不抓） |
+| 1.6 | 配額**最壞值預扣**：`upload_ids` 先只驗不取（`upload_store.STORE.check`），依判出的型別計「照片張數 ＋ PDF 份數 × `DOC_MAX_PAGES`」，過了才 `claim`；`LIMITS.images_per_hour`／`files_per_hour` | `RATE_LIMITED`（**排在取檔之前**：一張都不取） |
 | 1.7 | `namespaced_identity` ⇒ `mcp:{api_key_id}:{vendor_id}:{session_id}` | `INVALID_INPUT`（超長） |
 | 1.8 | `store.load` → `is_expired`（30 分鐘）⇒ **先 `close` 舊列再 `start` 新列**（⛔ 順序不得顛倒：先 start 再 close 會把新列一起關掉） | — |
 | 1.9 | 大綱不進 `agent_state`：候選章節由 `runtime._select_outline` 每回合現組，`agent_state` 沒有大綱鍵，⛔ 不得序列化進 `collected_data` 的紀律自然成立 | — |
@@ -601,15 +689,15 @@ trace 標記只記碼（⛔ 金額、名稱、期間）。開關 off ⇒ 與 A-2
 3. **段一**：六條全不符 ⇒ 叫模型
 4. **段二**：九段只有 ②空會話註記 與 ⑥`user_message` 成立；
    同時選好大綱 5 條候選，以 `tool_call_id="outline"` 預載
-5. **段三**：模型讀 `bill_due_extend` 的工具說明，關鍵一句是
-   **「缺帳單編號時 `estate_name` 與 `period` 兩欄代替它必填……⛔ 不為了取得帳單編號反問使用者」**
-   ——**這句是為這個場景寫的：房東不會講帳單編號**。於是模型：
-   ① 呼叫 `jgb2.query.bills`（pm ⇒ `role_id` 單證即可，帶 `user_id` 反而被 jgb2 圈定濾成空）
-   ② 期別交給 `bill_period` **純函式**解析（⛔ 不讀時鐘、不查 DB、不叫模型；表外講法一律 `None`，⛔ 不猜）
-   ③ 呼叫 `confirm.request`，payload **不含** `date_expire_*`——工具說明寫明那兩欄只在已有 `bill_id` 時才填，
-      **⛔ 不得向使用者索取、不得憑印象填**
-6. **Verifier 七步**過（「延後繳款」不在機敏五類——那五類錨在**我們自己的產品服務**）
-7. **段四**：四道都不接手
+5. **段三**：寫入意圖呼叫、標籤呼叫先發，程式等意圖結果（有草稿等 3 秒、無草稿等 1 秒）。寫入意圖呼叫回動作
+   `bill_due_extend` 與欄位值（物件名、期別、天數），程式過值閘後併入寫入草稿（`_write_draft_decide`）。
+6. **程式出卡**：欄位齊且非敏感 ⇒ 程式自己產生一次 `confirm.request`（`_write_draft_program_message`），走 `registry.call`，
+   主模型本回合不被呼叫。⚠️ `bill_due_extend` 只有 `USE_MOCK_JGB_API=true` 走得到出卡；接真 JGB 回固定句（見 §8）。
+   工具內帶 viewer 查物件與帳單，期別交給 `bill_period` **純函式**解析（⛔ 不讀時鐘、不查 DB、不叫模型；
+   表外講法一律 `None`，⛔ 不猜）。**房東不會講帳單編號**，所以 `estate_name` 與 `period` 兩欄可代替它。
+   意圖等不到才叫主模型：主模型若也呼叫 `confirm.request`，只當提議（見 §2b 階段 3）；輸出後由
+   `_write_draft_after_output` 接手，這時才有主模型文字要丟棄。
+7. **回合結束**：卡文字逐字＝回答，Verifier 與段四都不跑
 
 **本系統回出去的**：確認卡文字 ＋ 三個機器值 `confirm_submit`／`confirm_edit`／`confirm_cancel`
 （**寫死在 `form_contract.py`，值一個都不准改**——它們是**對外契約**，⛔ 呼叫端怎麼把它們畫成按鈕不屬於本系統）
@@ -673,7 +761,7 @@ trace 標記只記碼（⛔ 金額、名稱、期間）。開關 off ⇒ 與 A-2
 
 ⇒ **售前的答案幾乎全部來自路 A 的 canon 大綱**。
 ⚠️ `kb.get` 目前對每一列都回 `NO_MATCH`（`^reviewed:\S+$` 形狀本機 0 筆，D1 前的預期行為）。
-⇒ **售前答不出來時，根因幾乎一定在「講法沒收錄」或「細目沒 approved」，⛔ 不是檢索壞了。**
+⇒ **售前答不出來時，先看回合紀錄的候選 5 條有沒有對題細目，再看細目內容有沒有寫到。** 正本 543 條細目全部已審，1,753 條講法全部 `approved`（DSP-129）。
 
 #### 情境 8：同題重問
 
@@ -687,7 +775,7 @@ trace 標記只記碼（⛔ 金額、名稱、期間）。開關 off ⇒ 與 A-2
 
 | 情境 | 模型 | Verifier | 模型那句話引用什麼 | 另外由程式產出的文字 |
 |---|---|---|---|---|
-| 1 寫入 | ✅ | ✅ | 工具回傳的 facts（查帳單那一筆） | **確認卡**（`render(action,payload)`）＋**回執**（`render_receipt`） |
+| 1 寫入 | 一般路徑 ❌（意圖先到就出卡）；意圖逾時才 ✅，文字丟棄。欄位值來自寫入意圖呼叫 | ❌（出卡回合不跑） | — | **確認卡**（`render(action,payload)`）＋**回執**（`render_receipt`） |
 | 2 純查詢 | ✅ | ✅ | 工具回傳的 facts（builder 決定性算） | — |
 | 3 清單點選 | ❌ | ❌（但過 `_verify_routes`） | — | **整段 answer ＝ builder 產出** |
 | 4 範圍退出 | ✅ | ✅ | （模型原本那句被換掉） | 閘 1 的 `SCOPE_EXIT_TEXT` |
@@ -805,8 +893,8 @@ TurnResult.answer = 卡文字（逐字）      ← 使用者看到的就是這�
 **資料流**：
 
 ```
-file_urls/image_urls
-  → 抓檔六道閘（`image_fetch.fetch_image`，等值白名單、https、不跟轉址、私網 IP 擋、`exp` 預檢、串流 bytes 硬閘，file 線加具名參數複用、⛔ 不另立第二支抓檔函式）
+upload_ids（預設：取暫存檔，`upload_store.STORE.claim`）／file_urls、image_urls（回滾模式 `urls`）
+  → 回滾模式才過抓檔六道閘（`image_fetch.fetch_image`，等值白名單、https、不跟轉址、私網 IP 擋、`exp` 預檢、串流 bytes 硬閘，file 線加具名參數複用、⛔ 不另立第二支抓檔函式）
   → PDF 轉頁圖（`pypdfium2`，逐頁 `asyncio.to_thread`，由頁面尺寸反算 scale 釘每頁輸出像素上限，頁級與總時限，只 rasterize、不觸附件／JS API；`DOC_MAX_PAGES` 5，超過只看前 5 頁並明講）
   → 擷取（`DocumentExtractionService.extract`，vision 模型、strict JSON schema、封閉種類 `kind` ∈ {bill_receipt, contract, other}、`DOCUMENT_FIELD_SPECS` 定義的型別化欄位、`DOCUMENT_EXTRACTION_MODEL`）
   → `DocumentTurnInput`（封閉值：`status`／`kind`／`facts`／`pages_seen`／`pages_total`；`facts` 由程式逐欄組句、未擷取欄位寫「未載明」）
@@ -955,7 +1043,7 @@ file_urls/image_urls
 
 | 鍵 | 正式機 | 說明 |
 |---|---|---|
-| `USE_MOCK_JGB_API`／`JGB_API_BASE_URL` | false／`https://www.jgbsmart.com` | `true`＝整站替身；`false` 需 `JGB_API_KEY`（S-5 刻意 raise）。接真 JGB 時，統計三項與建物件／合約／手動帳單由程式回固定句、不發請求（見 §8） |
+| `USE_MOCK_JGB_API`／`JGB_API_BASE_URL` | false／`https://www.jgbsmart.com` | `true`＝整站替身；`false` 需 `JGB_API_KEY`（S-5 刻意 raise）。接真 JGB 時，延期繳費與建物件／合約／手動帳單由程式回固定句、不發請求（見 §8） |
 | `AGENT_STAGE`／`AGENT_TURN_ENABLED` | M1／true | 工具面可見與 `agent.turn` 註冊 |
 | `AGENT_WRITE_TOOLS_ENABLED` | true | `jgb2.action.*` 可見（AND stage） |
 | `AGENT_VERIFIER_MODE` | grounding_observe（業主 2026-10-15 裁示；上線後同批 5 題知識題實測 `enforce` 答 1／5、`grounding_observe` 答 3／5） | 正式參數（DSP-040／W6-b3）：`enforce`（預設）／`grounding_observe`（引用類觀察、極性與機敏類照擋）／`observe_only`（全部觀察，只在 mock 允許、否則啟動 raise）。`grounding_observe`×非 mock ⇒ 健檢 `premise.red_flags` 記紅但不阻起 |
@@ -965,7 +1053,7 @@ file_urls/image_urls
 | `IMAGE_RECOGNITION_MODEL` | `gpt-6-luna` | 照片辨識；程式端對 gpt-6 系列送 `reasoning_effort=none`（站內幫手 S3 收尾） |
 | `DOCUMENT_EXTRACTION_MODEL` | `gpt-6-luna`（程式預設 `gpt-5.6-luna`） | 文件歸納（W9）；同上 `reasoning_effort=none` |
 | `OPENAI_TIMEOUT_S` | 25（runbook §20-2 值；正式機現值待查） | agent 每次模型呼叫 SDK 逾時＋預設重試，讓掛住的呼叫在門面逾時內自救 |
-| `IMAGE_URL_ALLOWLIST` | 未設（預設 `relay.jgbsmart.com`） | 抓圖白名單；有設值是**取代**、不是附加；設成空字串＝全擋；白名單內除 relay 外每個 host 都必帶 `exp`。JGB 專用上傳網域尚未加入 |
+| `IMAGE_URL_ALLOWLIST` | 未設（預設 `relay.jgbsmart.com`） | 抓圖白名單；有設值是**取代**、不是附加；設成空字串＝全擋；白名單內除 relay 外每個 host 都必帶 `exp`。只在回滾模式 `AGENT_ATTACHMENT_INPUT=urls` 用得到（DSP-122） |
 | `IMAGE_MAX_BYTES`／`IMAGE_COUNT_CAP_PER_HOUR` | 5,000,000／200 | 照片硬邊界 |
 | `AGENT_ASSISTANT_KEY_IDS` | `101`（站內幫手金鑰，限定 vendor 4、非內部） | 列入者 `X-JGB-Identity` 缺 `user_id` ⇒ 400 `IDENTITY_MISSING_USER_ID`；未設或空字串＝不對任何金鑰啟用（靜默）；含非整數＝啟動失敗（`mcp_facade._ASSISTANT_KEY_IDS_ENV`） |
 | `DOCUMIND_BASE_URL`／`DOCUMIND_TOKEN` | 未設 | 謄本解析；未設或不合規組合（非 https、無 Token）＝謄本功能關閉，使用者看到「未啟用」固定句 |
@@ -997,7 +1085,7 @@ file_urls/image_urls
 
 - 線⑤ 模型偶爾在有工具結果時自判「無依據」轉人（三輪 2/21 情境不穩）；屬答案層定義文（5.1）範圍。
 - `AGENT_VERIFIER_MODE=grounding_observe`（線上值）下引用類不擋——模型講的事實**沒有被要求對得上引文**，只有極性、機敏、標記外洩、schema 契約這幾類在守；重開引用類的依據是觀察紀錄（`verdict.observed`）中「真該擋」的計數（DSP-040 絆線）。相容旗 `AGENT_VERIFIER_OBSERVE_ONLY` 已於 2026-09-10 除役（見 §6）。
-- **部分寫入回合仍以模型參數出卡**：三開關（`AGENT_WRITE_DRAFT`／`AGENT_WRITE_LIFECYCLE`／`AGENT_WRITE_PROPOSAL`）皆 on 時，一般寫入回合的確認卡與缺欄追問只由程式依草稿發出（`_write_proposal_handle`、`_write_draft_decide`）；點選範圍、唯讀檢視、文件回合、文件暫存有效回合仍照模型自呼 `confirm.request` 的參數執行，這些回合有沒有卡仍看模型。清單與接手片見目標正本 `architecture-target-20261018.md` §3.1（KD-1、KD-2）；每次執行的來源記在 violation `confirm_source:<來源>`，`make audit` 不變量 45 檢查。
+- **部分寫入回合仍以模型參數出卡**：三開關（`AGENT_WRITE_DRAFT`／`AGENT_WRITE_LIFECYCLE`／`AGENT_WRITE_PROPOSAL`）皆 on 時，一般寫入回合的確認卡與缺欄追問只由程式依草稿發出（`_write_proposal_handle`、`_write_draft_decide`）；點選範圍、唯讀檢視、文件回合、文件暫存有效回合的模型自呼 `confirm.request` 仍照模型參數執行。點選範圍、唯讀檢視與文件回合有沒有卡看模型（謄本回合放行 `estate_create` 的第一輪例外，由程式發起，見 §0a）；文件暫存有效回合若草稿動作與暫存動作相同，程式也會依草稿發起（`_write_draft_decide`），動作不同才只看模型。清單與接手片見目標正本 `architecture-target-20261018.md` §3.1（KD-1、KD-2）；每次執行的來源記在 violation `confirm_source:<來源>`，`make audit` 不變量 45 檢查。
 - **帶狀態句判讀是 LLM，會漏判**：寫入情境問句回合的模型 `answer` 若在文字裡追問寫入欄位，結構規則（只看 `kind`）抓不到、判讀閘也不判追問；「已完成」只對到 session 內有收據，不對到是哪一筆；回覆夾帶誘導判讀的字串時，知識回合可能送出未對到事件的帶狀態句（寫入情境非問句回合不受影響：整則換成程式回話）。`make audit` 不變量 45 印 `state_claim_unbacked:*`、`state_claim_check_failed` 數。
 - **兩張敏感表的受眾範圍不同**（調錯表會動到無關的那張）：
 
@@ -1010,10 +1098,10 @@ file_urls/image_urls
   ⛔ 不是 `sensitive_patterns`。** 調 `sensitive_patterns` 不會改變這個結果。
   ⚠️ `grounding_observe` 下引用類只觀察、機敏類**照擋**，所以這道會真的擋掉答案。
 - **延遲命題的數字不在同一層**：需求文 `requirements.md` D2／§「延遲」寫 p95 ≤12 秒（業主待裁）；回合預算 `AGENT_BUDGET_DEADLINE_S` 程式預設與正式機都是 20 秒；門面逾時 `AGENT_TURN_TIMEOUT_S` 程式預設 30 秒、正式機 90 秒（為了容納文件回合）。三者是同一命題（回合延遲上限）在 spec／回合預算／門面逾時各自定的數字，⛔ 尚未有裁決把它們收斂成一個。正式機量測（2026-10-15，工具上限 3）：知識題 20 題答出 11、中位 4.0 秒、p90 9.0 秒。
-- **接真 JGB 時，JGB 尚未開放的功能由程式回固定句、不發請求**：統計三項（未收帳單、執行中修繕、N 個月內到期合約；`jgb2_stats.NOT_SUPPORTED_TEXT`）與建立物件／合約／手動帳單（`confirm.WRITE_NOT_SUPPORTED_TEXT`，不出確認卡）；runtime 以固定句結束回合（`runtime._is_stats_not_supported`，violation `jgb2_stats_not_supported_exit`）。JGB 開放端點的設計見 `.kiro/specs/agentic-mcp-orchestration/jgb-api-spec-for-jgb-20261015.md`。
-- **「改帳單到期日」在真 JGB 上沒有可用路徑**：程式仍呼叫 `PATCH /agent/v1/bills/{id}`（`JGBSystemAPI` 的 `_patch_request`），該路由在 jgb2 master 與 preview 的 `routes/api.php` 查無（API 規格 §4 #23）；正式路徑待 JGB 回覆。
-- **修繕單照片**：我方有照片時送物件陣列 `broken_photos`，既有 `POST /repairs` 收網址陣列 ⇒ 400（API 規格 §4 #22）；JGB 定案前照片進不了修繕單。正式機 `IMAGE_URL_ALLOWLIST` 未設，JGB 專用上傳網域尚未加入。DocuMind 已接測試機（DSP-124、DSP-125；明文 http、無認證，合成檔防護開著，只送樣本檔）。
-- **細目索引開機逾時後背景重建**：開機 prepare 逾時（60 秒）後在背景重建（上限 900 秒；`app._prepare_index_in_background`），正式機約需 3～4 分鐘；重建完成前回答只用目錄。
+- **接真 JGB 時，本系統還沒接上的寫入由程式回固定句、不發請求**（JGB staging 已開這些端點，DSP-132）：延期繳費（`confirm.BILL_DUE_EXTEND_NOT_SUPPORTED_TEXT`）與建立物件／合約／手動帳單（`confirm.WRITE_NOT_SUPPORTED_TEXT`），都不出確認卡；非文件回合由 runtime 以固定句結束回合（`runtime._is_stats_not_supported`，violation `jgb2_stats_not_supported_exit`）。統計三項已改打 JGB 既有列表端點（`jgb2_stats`，DSP-126）。JGB 開放端點的設計見 `.kiro/specs/agentic-mcp-orchestration/jgb-api-spec-for-jgb-20261015.md`。
+- **「改帳單到期日」在真 JGB 上沒有可用路徑**：`confirm_request` 在出卡前就回 `not_supported`，`JGBSystemAPI.agent_patch_bill_due_date` 接真 JGB 時也回 `_proposed_not_available`，不發請求；`PATCH /agent/v1/bills/{id}`（`_patch_request`）只有替身走得到。JGB staging 的路徑是 `PATCH /api/external/v1/bills/{id}`（API 規格 §4 #23），本系統還沒改接。
+- **修繕單照片**：接真 JGB 時不送檔、也不送中繼資料（`JGBSystemAPI` `not self.use_mock` 分支），確認卡提示照片暫時無法附上（`REPAIR_PHOTOS_NOT_ATTACHABLE_HINT`）；JGB staging 的 `POST /repairs` 已收 multipart（API 規格 §4 #22），本系統還沒改接，multipart 只有替身走得到。DocuMind 已接測試機（DSP-124、DSP-125；明文 http、無認證，合成檔防護開著，只送樣本檔）。
+- **細目索引開機逾時後背景重建**：開機 prepare 逾時（60 秒）後在背景重建（上限 900 秒；`app._prepare_index_in_background`），現行 3,835 項換算約 7 分鐘（未實測，算法見 `docs/deployment-runbook.md` 20-3b）；重建完成前回答只用目錄。
 - **舊知識庫零列已審時 `kb.search` 不給模型**：正式機 `knowledge_base` 有效 926 列、已審 0 列（2026-10-15 量測），`kb.search` 列出的每筆 `kb.get` 都取不到；`mcp_facade.gate_kb_search_on_reviewed_rows` 依資料狀態判定（啟動時一次），門面照列。
 - 驗證關 ⑦（轉人字眼）：字眼出自該句可引用引文時放行（`verifier._uncovered_handoff_mention`）；引文沒有、引文不可引用、只在別句引文、無句子結構 ⇒ 照擋。
 - 工具參數塞身分鍵（`vendor_id`／`role_id`／`user_id`／`target_user`／`mode`／`viewer_user_id`）：現況由 `ToolRegistry.call` **剝除不採用**並記 trace，不回錯誤；其他未宣告鍵 ⇒ `INVALID_INPUT`。是否改為一律拒絕：待業主裁。

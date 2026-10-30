@@ -1,11 +1,13 @@
 # MCP 門面（`/mcp`）串接契約
 
+> 🎯 **本檔寫現況，不是設計依據。目標：本系統是對話服務，不是 MCP 系統；呼叫端走專用對話 API，`/mcp` 不是最終入口；JGB 工具要搬出本系統，由 JGB 維護。** 分工與完整架構見 `docs/architecture/TARGET_ARCHITECTURE.md`。新串接先確認對話 API 是否已上線，上線前才接本檔。
+
 > spec `agentic-mcp-orchestration` 任務 1.7 交付物（design.md 元件 4 指定）
 > 建立：2026-09-04　適用：rag-orchestrator
 > 讀者：要從**伺服器端**接上 JGB 工具面的工程（jgb2 後端、LINE bot 後端、回測工具、
 > 內部操作者的 Claude Code）。
 
-> ⚠️ **2026-09-08 demo 上線後對碼修正**（本檔其餘段落寫於 2026-09-04）：`agent.turn` 對 `prospect` 與 `property_manager` 都是 M1；輸入 `message` `minLength 0`（可空）＋選填 `image_urls`（≤10 張 relay 簽章網址；兩者皆空才 `INVALID_INPUT`）；輸出**七鍵**＝五鍵＋`session_expired: bool`（DSP-042）＋`outcome{state, expects, action, ref}`（DSP-043：回合結果的封閉描述，呼叫端只看它決定畫面、⛔ 不解析 `answer` 字串；`transcript` 第八鍵屬 W7 語音，**尚未落地**）；機器值 `confirm_*:<pending_id>`、`select:<type>:<id>` 與 `pick:<contract|estate|bill>:<id>`（寫入時名稱對到多筆的候選按鈕，DSP-103；`fullmatch`，編號 `[A-Za-z0-9_-]{1,32}`；不成立回固定句「這個選項已經失效了。要處理哪一筆，請重新告訴我。」）由 Runtime 在模型前處理。串接方請以 `.kiro/specs/knowledge-outline-and-intent-architecture/inputs/line-bot-integration-sheet-20260908.md` 為準；架構見 `docs/architecture/AGENTIC_MCP_ARCHITECTURE.md`。
+> ⚠️ **2026-09-08 demo 上線後對碼修正**（本檔其餘段落寫於 2026-09-04）：`agent.turn` 對 `prospect` 與 `property_manager` 都是 M1；輸入 `message` `minLength 0`（可空）＋選填 `upload_ids`（瀏覽器直傳後取得；兩者皆空才 `INVALID_INPUT`，參數見 §7.1）；輸出**七鍵**＝五鍵＋`session_expired: bool`（DSP-042）＋`outcome{state, expects, action, ref}`（DSP-043：回合結果的封閉描述，呼叫端只看它決定畫面、⛔ 不解析 `answer` 字串；`transcript` 第八鍵屬 W7 語音，**尚未落地**）；機器值 `confirm_*:<pending_id>`、`select:<type>:<id>` 與 `pick:<contract|estate|bill>:<id>`（寫入時名稱對到多筆的候選按鈕，DSP-103；`fullmatch`，編號 `[A-Za-z0-9_-]{1,32}`；不成立回固定句「這個選項已經失效了。要處理哪一筆，請重新告訴我。」）由 Runtime 在模型前處理。串接方請以 `.kiro/specs/knowledge-outline-and-intent-architecture/inputs/line-bot-integration-sheet-20260908.md` 為準；架構見 `docs/architecture/AGENTIC_MCP_ARCHITECTURE.md`。
 
 ## 0. 一句話
 
@@ -285,13 +287,13 @@ M0 階段：
 
 ```jsonc
 // tools/call → name: "agent.turn"
-{ "message": "我有 600 戶，你們的合約怎麼建立？", "image_urls": [] }   // message 0–2000 字（可空）；image_urls 選填 ≤10；與 file_urls 三者不得皆空
+{ "message": "我有 600 戶，你們的合約怎麼建立？", "upload_ids": [] }   // message 0–2000 字（可空）；upload_ids 選填；兩者不得皆空
 ```
 
-**參數只有五個**（`AGENT_TURN_SPEC`，`additionalProperties: false`）：`message`（必填，0–2000 字）、`image_urls`（選填）、
-`context`（選填，≤500 字，呼叫端提供的本回合背景資訊，⛔ 不當成使用者說的話）、`attachment_purpose`（選填，`repair`｜`document`，預設 `repair`）、
-`file_urls`（選填，只在 `attachment_purpose=document` 時可帶）；`message` 可空，但與 `image_urls`、`file_urls` 不得三者皆空。
-（2026-10-17 依程式更正：前一版寫「只有 `message` 這一個參數」。）⛔ 沒有 `dialog_ref`、⛔ 不能帶對話歷史、
+**參數有六個**（`AGENT_TURN_SPEC`，`additionalProperties: false`）：`message`（必填，0–2000 字）、`upload_ids`（選填，`repair` ≤10、`document` 1 個）、
+`context`（選填，≤500 字，呼叫端提供的本回合背景資訊，⛔ 不當成使用者說的話）、`attachment_purpose`（選填，`repair`｜`document`，預設 `repair`），
+以及 `image_urls`、`file_urls`（只在回滾模式 `AGENT_ATTACHMENT_INPUT=urls` 有效）。預設模式 `upload_ids`：帶 `image_urls`、`file_urls` 回 `INVALID_INPUT`；
+`message` 可空，但不得與 `upload_ids` 皆空。`upload_ids` 由 `agent.upload_ticket` 取上傳票、瀏覽器直傳後取得，流程見 `docs/api/jgb2-web-assistant-integration.md` §7。⛔ 沒有 `dialog_ref`、⛔ 不能帶對話歷史、
 ⛔ 不能帶任何身分鍵（`vendor_id`／`role_id`／`user_id`／`target_user`／`mode`
 一律在服務端被剝掉並記進 trace）。身分與 session 全部來自 `X-JGB-Identity`。
 

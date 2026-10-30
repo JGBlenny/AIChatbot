@@ -1,28 +1,18 @@
-# 站內幫手對話架構——目標正本（業主 2026-10-18 定方向：混合式，DSP-091）
+# 站內幫手工作線——目標正本（業主 2026-10-18 定方向：混合式，DSP-091）
 
-> **本檔回答「對話線應該長什麼樣」**：架構、目標、驗收方式、路徑。「現在怎麼跑」看 `docs/architecture/AGENTIC_MCP_ARCHITECTURE.md`；工作進度與下一步看 `HANDOFF-20261018.md`。
+> **本檔回答「這條工作線怎樣算完成、怎麼走到」**：任務目標、驗收方式、差距細項、路徑。架構與分工只看 `docs/architecture/TARGET_ARCHITECTURE.md`；「現在怎麼跑」看 `docs/architecture/AGENTIC_MCP_ARCHITECTURE.md`；工作進度與下一步看 `HANDOFF-20261018.md`。
 > 業界原文皆以 web-drive 渲染存檔於 `~/jgb-archive/devflow-20261018/`（`sources-repair/`、`sources-card/`、`sources-arch/`，每檔首行為網址與擷取時間）；下文引文皆可在該檔 grep 到原字串。
 > 現況事實（§3）附可 grep 的符號，⛔ 不寫行號當事實。
 
-## 核心架構：混合式——理解交給 AI，有規則、有後果的環節由程式掌握
+## 架構看 docs，本檔只寫工作線
 
-**AI 負責聽懂使用者，並在知識作答與一般對話中自己決定怎麼查、怎麼答；凡是有業務規則、說錯或做錯會造成後果的環節，下一步由程式依宣告與狀態決定。**
-
-| 環節 | 誰決定下一步 | 說明 |
-|---|---|---|
-| 理解使用者這句話要什麼（意圖、欄位值、要更正、要取消、要真人、已解決） | AI | 以標籤輸出，⛔ 讓 AI 填代碼 |
-| 寫入全程：缺哪欄、出不出卡、能不能送出、送出後回什麼 | 程式 | DSP-085 已實作第一片 |
-| 已選定的那筆紀錄（候選列出、使用者選了哪一筆、後續都用這筆） | 程式 | 換錯帳單的根因層 |
-| 帶狀態的句子（請確認、已完成、已取消、已轉人）與確認卡、按鈕 | 程式 | AI 只組不帶狀態的話 |
-| 轉人規則（含收尾）：何時轉、先問還是直接轉、道謝即收尾 | 程式（規則） | 收尾屬轉人規則（DSP-091）；AI 只提供「使用者要真人／已解決」的理解 |
-| 知識完全查無時的出口（「處理不了」） | 程式 | AI 組話 |
-| 知識作答：要不要查、查哪段、怎麼組答案；只答得出一部分時說明缺什麼、部分回答、追問 | AI | 只依核可知識（DSP-066）；答案有沒有依據由 Verifier（程式）把關（DSP-091） |
-| 一般對話、追問的措辭 | AI | |
-| 唯讀查詢（帳單、合約等）：依 AI 理解出的查詢條件，由程式查詢並篩選（如依期別篩帳單） | 程式 | AI 理解使用者要查什麼；AI 自呼工具只在程式接不住時用——該類查詢程式尚未宣告，或程式讀不出查詢條件；程式已宣告的查詢類型 AI ⛔ 繞過（DSP-091） |
+**架構本身只寫在 `docs/architecture/TARGET_ARCHITECTURE.md`**：系統定位（§0）、使用者成功的樣子（§1）、誰決定哪個環節的分工表（§2）、原則 P0～P8（§3）、目標架構圖與邊界（§4、§5）、修繕單附照片（§6）、四條路（§7）、現況與目標的差距（§8）。本檔寫這條工作線的驗收、業界依據、差距細項與路徑。
 
 **業界依據**：Rasa、Google 原文明說由 LLM 理解使用者，Intercom 原文寫由其 AI 代理 Fin 依客人說的話判斷（Salesforce、Zendesk 存檔中查無逐字對應的句子，查到的是 LLM 處理對話、AI 執行程序；原文見 §2.1）。有規則、有後果的步驟交給誰，各家不同：Rasa CALM 全交程式；Salesforce、Intercom 提供並建議把這類步驟交給程式決定性執行，其餘由 AI；Google 可任選全生成、部分生成或決定性流程；Zendesk 生成式程序由 AI 依程序執行條件判斷與外部動作（原文見 §2.1）。本線選 Salesforce／Intercom 型的混合式，理由是 M0 三類主缺陷（說「請確認」卻沒出卡、道謝後轉真人、換錯帳單）都出在模型決定有後果的步驟；不採全系統流程化，因為知識題與閒聊做成流程會變僵（Intercom 原文見 §2.4 末條）。
 
-**依據的決策**：DSP-091（決策沿革見 `.claude/decisions/DSP-091.md`）、DSP-085。§2.8 原則 P1～P8 是本節在各層的展開；任何計畫若讓 AI 決定上表「程式」列的下一步，即違反本節。
+**依據的決策**：DSP-091（決策沿革見 `.claude/decisions/DSP-091.md`）、DSP-085、DSP-127、DSP-128、DSP-130、DSP-131。
+
+**差距對到本檔的已知偏離**：唯讀查詢由主模型自呼工具（§3.1 KD-7，接手片 G）；知識完全查無沒有程式先發的出口（KD-6，接手片 D）；寫入的例外回合見 KD-1、KD-2；程式仍重讀欄位值原話（§3.2 RD-1～RD-5）。
 
 ## 0. 業主原話與規則（判定一律依規則）
 
@@ -41,10 +31,10 @@
 | AR4 可交接執行 | 本檔與 HANDOFF 都在 repo；HANDOFF 指向本檔；新視窗只靠兩檔即可開工 | 「我要重開後執行」 |
 | AR5 通用不特規 | 原則不以動作名、欄位名、題目用字分支；動作差異只放在動作宣告（資料） | 「需通用方式修改 而非 特規補丁」 |
 | AR6 卡由本系統出結構 | P8＝本系統出結構化內容、接入方呈現、附文字備援 | 「確認卡 應該是此系統出格式」 |
-| AR7 方向與驗收明確 | 檔首寫明誰決定哪個環節；§1 寫明目標、基線數字與每片的驗收方式；§4 每片寫明服務的原則與狀態 | 「確保 架構 任務目標 驗收成果 方向等 明確」 |
+| AR7 方向與驗收明確 | `TARGET_ARCHITECTURE.md` §2 寫明誰決定哪個環節；§1 寫明目標、基線數字與每片的驗收方式；§4 每片寫明服務的原則與狀態 | 「確保 架構 任務目標 驗收成果 方向等 明確」 |
 | AR8 不留錯誤資訊 | 相關文件與本檔不留與 DSP-091 相反的現行陳述；錯的直接改正文、過時無用的刪除，⛔ 以附註或刪除線保留錯誤原文。讀法：「不需要的封存」＝已封存且無紀錄價值的檔，git 有追蹤者刪除、引用改 `git show` 指標 | 「清除錯誤 過時文件 不需要的封存…避免備注」 |
 | AR9 索引 | `.claude/MAP.md` `#agentic-mcp` 登記本檔與 HANDOFF、DECISIONS 指標行含 DSP-091；刪除或改名的檔在 MAP 與本線文件中無失效引用 | 「相關的目錄 索引 也要做好」 |
-| AR10 分工照 A | 檔首分工表的「程式」列與 DSP-091 選項 A 原文及業主追加裁示（收尾屬轉人規則；知識「不足」歸 AI、程式只管完全查無）逐項相同；A 未涵蓋且未裁的環節列待裁，⛔ 寫成已定 | 「A」；業主 2026-10-18 追加裁示（記於 DSP-091） |
+| AR10 分工照 A | `TARGET_ARCHITECTURE.md` §2 分工表的「程式」列與 DSP-091 選項 A 原文及業主追加裁示（收尾屬轉人規則；知識「不足」歸 AI、程式只管完全查無）逐項相同；A 未涵蓋且未裁的環節列待裁，⛔ 寫成已定 | 「A」；業主 2026-10-18 追加裁示（記於 DSP-091） |
 
 ## 1. 目標與驗收
 
@@ -68,7 +58,7 @@
 | 全部 | 24/52（46.2%） | 19/52（36.5%） |
 
 **每片怎樣算完成**：
-- 該片在計畫裡凍結驗收清單（規則→觀察點→證據→通過條件），通過條件寫在使用者入口層（`/mcp` 實打、模擬客人對話），單元測試只是中間證據。
+- 該片在計畫裡凍結驗收清單（規則→觀察點→證據→通過條件），通過條件寫在使用者入口層（呼叫端實際走的對話入口實打、模擬客人對話；現況是 `/mcp`，對話入口對齊後改打專用對話 API），單元測試只是中間證據。
 - 該片鎖定的 M0 缺陷類別，在同一題組、同一量尺重測中逐場轉成解決或附根因。
 - 其他類別不退步：既有回歸題組不低於前一基線、測試全過、`make audit` PASS。
 - 全線門檻（解決率要到多少才切正式機）尚未設定：DSP-087 定為「先跑出數字再定」，由業主依各片數字決定。
@@ -147,19 +137,21 @@
 - Adaptive Cards（`sources-card/ms-adaptive-cards-overview.txt`）：「Card Authors own the content, Host App owns the look and feel」；fallbackText（`sources-card/adaptive-cards-schema-AdaptiveCard.txt`）「The text that should be displayed if the client is not able to render the card.」
 - Rasa（`sources-card/rasa-responses.txt`）：「it is up to the implementation of the output channel how to display the defined buttons」。
 
-### 2.8 原則總表（每份計畫引用這裡的編號）
+### 2.8 原則對應的層與業界依據
 
-| 原則 | 內容 | 層 | 業界依據 |
-|---|---|---|---|
-| **P0** | **混合式：理解交給 AI；有規則、有後果的環節由程式掌握**（環節分工見檔首表）；P1～P8 為其展開 | 全部 | 2.1 |
-| P1 | 寫入全程（建立→確認→更正→送出／取消→收據）由程式持有；動作差異只在動作宣告 | L2 | 2.1、2.3 |
-| P2 | 說出口的狀態（請確認、已完成、已取消、已轉人）只由程式依實際狀態產生 | L6 | 2.6 第一原理 |
-| P3 | 給模型的資料與給人看的呈現分開 | L6 | 2.6 第一原理、2.7 |
-| P4 | 在程式掌握的環節，理解層輸出結構化指令（寫入意圖、更正、取消、選擇、要真人、已解決），下一步由程式決定；知識作答與一般對話不經指令層 | L1 | 2.1 |
-| P5 | 對話修補（更正、取消、中斷回原流程、澄清、候選選擇、處理不了）是共用模式，所有程式掌握的流程共享 | L3 | 2.2 |
-| P6 | 知識題只依核可知識作答；不足時說明＋部分回答＋追問；查無走「處理不了」 | L4 | 2.4 |
-| P7 | 轉人與收尾由規則決定：明確要求直接轉、卡住先詢問且不連發、道謝即收尾 | L5 | 2.5 |
-| P8 | 本系統出結構化內容（卡、按鈕、狀態）＋文字備援；外觀由接入方決定 | L7 | 2.7 |
+原則全文只寫在 `docs/architecture/TARGET_ARCHITECTURE.md` §3，計畫引用該處的編號。本表只寫每條原則落在哪一層、依據本章哪一節。
+
+| 原則 | 層 | 業界依據 |
+|---|---|---|
+| **P0** | 全部 | 2.1 |
+| P1 | L2 | 2.1、2.3 |
+| P2 | L6 | 2.6 第一原理 |
+| P3 | L6 | 2.6 第一原理、2.7 |
+| P4 | L1 | 2.1 |
+| P5 | L3 | 2.2 |
+| P6 | L4 | 2.4 |
+| P7 | L5 | 2.5 |
+| P8 | L7 | 2.7 |
 
 ## 3. 差距（現況，2026-10-18 對碼；可重跑）
 
@@ -168,7 +160,7 @@
 | 原則 | 現況 | 查證 | M0 量到的後果（`~/jgb-archive/arch-step3-20261018/m/report-m0.md`） |
 |---|---|---|---|
 | P4 | **沒有指令層**：模型在 `_run_model_loop` 自由選工具、自由寫句子、自填 `kind`／`ask_target`／`handoff_reason`；寫入另有一支意圖呼叫 `_start_write_intent_call`（輸出 `write_intent`，DSP-085）——是寫入專用的指令雛形，知識、查詢、轉人沒有 | `grep -n "def _run_model_loop\|def _start_write_intent_call" rag-orchestrator/services/agent/runtime.py` | 同句首已給物件仍被追問（W-R4 k2，根因待 A0） |
-| P1 | 草稿出卡即清（G1）；「修改」與取消同一路（G2）；無卡後更正（G3）；enum 由模型填代碼（G4）；送出前預檢缺（G6）；同 session 可並存多張可兌現卡（`PENDING_CONFIRM_MAX = 20`）；一般寫入回合的模型自呼 `confirm.request` 只當提議、出卡由程式依草稿觸發（A+，`AGENT_WRITE_PROPOSAL` 等三開關皆 on），**文件回合、文件暫存回合、點選範圍回合仍以模型參數出卡**（點選範圍由 A-2、文件回合由「文件回合」片接手；§3.1 KD-1、KD-2）；**單欄追問回合**由寫入意圖呼叫回資料段與答覆段，程式只把答覆段填進追問那一欄、其他欄的值須對得到資料段、不覆寫已填的非追問欄（開關 `AGENT_FILL_DATA_TEXT`，未設＝on；DSP-118）；沒點名的英數道謝緊貼答覆（「車位費ty」）、名稱緊貼 3Q 仍會上卡（已知偏離，DSP-118）。**第一句、確認卡後打字、一次追問多欄的回合不走這條**，寫入意圖抽出的值照合併，仍可能出現道謝字或衍生值上卡（由「填欄擴及首句、卡後、多欄回合」片接手，§4，DSP-119） | 第 3 步計畫 §3 G1～G6；`grep -n "PENDING_CONFIRM_MAX =" rag-orchestrator/services/agent/runtime.py rag-orchestrator/services/agent/agent_session.py`；`grep -n "def _write_proposal_handle\|SELECT_SCOPE_KEY) is None" rag-orchestrator/services/agent/runtime.py`；`grep -n "def _fill_begin_intent_call\|def _dialog_act_not_field_answer" rag-orchestrator/services/agent/runtime.py`；`grep -n "FILL_DATA_TEXT_ENV: Final\|DATA_TEXTS_NAME_NOTE: Final" rag-orchestrator/services/agent/write_forms.py` | 延期 0/10；只列 5 張帳單 13 場；急迫程度相反 6 場；反覆「還需要」11 場 |
+| P1 | 草稿出卡即清（G1）；「修改」與取消同一路（G2）；無卡後更正（G3）；enum 由模型填代碼（G4）；送出前預檢缺（G6）；同 session 可並存多張可兌現卡（`PENDING_CONFIRM_MAX = 20`）；一般寫入回合的模型自呼 `confirm.request` 只當提議、出卡由程式依草稿觸發（A+，`AGENT_WRITE_PROPOSAL` 等三開關皆 on），**文件回合、文件暫存回合、點選範圍回合仍以模型參數出卡**（點選範圍由 A-2、文件回合由「文件回合」片接手；§3.1 KD-1、KD-2）；**單欄追問回合**由寫入意圖呼叫回資料段與答覆段，程式只把答覆段填進追問那一欄、其他欄的值須對得到資料段、不覆寫已填的非追問欄（開關 `AGENT_FILL_DATA_TEXT`，未設＝on；DSP-118）；沒點名的英數道謝緊貼答覆（「車位費ty」）、名稱緊貼 3Q 仍會上卡（已知偏離，DSP-118）。**第一句、確認卡後打字、一次追問多欄的回合不走這條**，寫入意圖抽出的值照合併，仍可能出現道謝字或衍生值上卡（由「填欄結構化」片接手，§4） | 第 3 步計畫 §3 G1～G6；`grep -n "PENDING_CONFIRM_MAX =" rag-orchestrator/services/agent/runtime.py rag-orchestrator/services/agent/agent_session.py`；`grep -n "def _write_proposal_handle\|SELECT_SCOPE_KEY) is None" rag-orchestrator/services/agent/runtime.py`；`grep -n "def _fill_begin_intent_call\|def _dialog_act_not_field_answer" rag-orchestrator/services/agent/runtime.py`；`grep -n "FILL_DATA_TEXT_ENV: Final\|DATA_TEXTS_NAME_NOTE: Final" rag-orchestrator/services/agent/write_forms.py` | 延期 0/10；只列 5 張帳單 13 場；急迫程度相反 6 場；反覆「還需要」11 場 |
 | P5 | 更正：只有草稿內同欄覆寫（`_write_draft_merge_intent`）。取消：有（`CANCELLED_TEXT`）。**中斷回原流程：無**——單一草稿，換動作由 `_write_draft_target` 新建、舊的丟棄，無流程堆疊。澄清：有固定句 `ASK_TARGET_TEXT`。候選：唯讀查詢只有按鈕 `select:` fullmatch（G5），打字挑選無程式路徑（純 4～9 位數字走 `_pre_lookup_trigger`）；寫入時名稱對到多筆由程式列候選與 `pick:` 按鈕（A-2a），清單印可分辨欄位，打字選定由意圖呼叫回候選集內編號、程式只收候選集內編號（DSP-110）；名稱用簡稱、錯字、口語講時，程式讀音前篩、AI 回清單內編號、程式驗證補齊後列候選，名稱一講就先查（F12，DSP-112）；選定後回合由 AI 回 `pick`／`nth`／`name`／`clear` 指令、程式驗證並執行最後一個（DSP-112）。**仍缺**：除編號外完全相同的同名物件照樣列兩顆按鈕、客人無從分辨；手開帳單講物件只取該物件的有效合約，已結束的合約不在候選內（「雙胞胎與手開帳單合約」片，暫停至上線後，DSP-115） | `grep -n "def _write_draft_target\|def _pre_lookup_trigger\|_SELECT_VALUE_RE = re.compile\|def _write_candidates_cmd_turn" rag-orchestrator/services/agent/runtime.py`；`grep -n "def parse_pick_value\|def program_pick_of\|PICK_RIGHT_ROW_KEYS:" rag-orchestrator/services/agent/write_candidates.py`；`grep -n "^def prefilter\|^async def ai_pick\|^def augment" rag-orchestrator/services/agent/name_match.py`；`grep -n "def _valid_contracts_of_estate\|def _only_valid_contract_of_estate" rag-orchestrator/services/agent/tools/confirm.py` | 換錯帳單 2 場（W-D4 k2 已寫入 760897）；I-1 插問未答 |
 | P2 | 寫入情境回合（草稿存活或 session 有綁定卡）的回話由程式依狀態產生（`_write_reply_state`：卡仍有效、卡未變、卡不同、缺欄追問、未送出、無待確認），只重出既有卡、⛔ 出新卡；提議未發、程式呼叫非終結由程式結束回合（`_write_reply_kd3_exit`）；問句回合模型的 `answer` 可送、程式接狀態行（`_write_reply_model_plus_status`），`ask`／`recommend` 一律換成程式回話；以上依賴 A+ 出卡開關。每則模型撰寫的回覆在一般出口前經帶狀態句判讀閘（`_state_claim_gate`：LLM 判讀等待確認／已完成／已取消／已轉人四類，對不到程式狀態事件即換程式句；判讀失敗時可出卡的回合 fail-closed）；`prose_confirm_suspect` 結構條件直接視為未對到。開關 `AGENT_WRITE_REPLY_PROGRAM`、`AGENT_STATE_CLAIM_GATE`（未設＝on）。Verifier 本身仍不比對狀態（G7）；確認卡與收據是程式文字（DSP-038） | `grep -n "def _write_reply_state\|def _write_reply_kd3_exit\|def _write_reply_model_plus_status\|def _state_claim_gate" rag-orchestrator/services/agent/runtime.py`；`grep -n "def judge_state_claims" rag-orchestrator/services/agent/state_claim.py` | 文字說請確認卻未出卡 ≥4；按確認但無按鈕 7；假收據 1（C-C k1） |
 | P3 | 候選清單分給模型與給人兩份：給模型的 `_candidates_text` 含提示句（`CANDIDATES_MODEL_HINT_HEADER`／`FOOTER`），給人的 `candidates_text_for_user` 只列程式解析出的列值；資料段注入 10 處（`TurnAccumulator.inject`，註解仍寫「九段」） | `grep -n "def _candidates_text\|def candidates_text_for_user" rag-orchestrator/services/agent/tools/jgb2.py`；`grep -n "acc.inject(" rag-orchestrator/services/agent/runtime.py` | 給人的回覆夾內部提示（第 2 步報告） |
@@ -180,7 +172,7 @@ M0 缺陷 → 原則對照（AR1）：延期列 5 張→P1（A0 根因）；換�
 
 ### 3.1 仍由模型主導（已知偏離）
 
-檔首分工表「程式」列中，下列環節目前仍可能由模型決定下一步。每筆登記在 `rag-orchestrator/tests/unit/agent/dsp091_known_deviations.py`，各有一支現況探針（`test_dsp091_division_contract_req.py`）；偏離被修掉時探針失敗，接手片須把該筆移出本表與登記、改成必過契約。本表與登記不一致時 `make audit` 不變量 45 判 FAIL。
+`TARGET_ARCHITECTURE.md` §2 分工表「程式」列中，下列環節目前仍可能由模型決定下一步。每筆登記在 `rag-orchestrator/tests/unit/agent/dsp091_known_deviations.py`，各有一支現況探針（`test_dsp091_division_contract_req.py`）；偏離被修掉時探針失敗，接手片須把該筆移出本表與登記、改成必過契約。本表與登記不一致時 `make audit` 不變量 45 判 FAIL。
 
 | ID | 偏離 | 分工表列 | 接手片 |
 |---|---|---|---|
@@ -190,6 +182,18 @@ M0 缺陷 → 原則對照（AR1）：延期列 5 張→P1（A0 根因）；換�
 | KD-6 | 知識完全查無沒有程式先發的出口 | 知識完全查無的出口 | D |
 | KD-7 | 唯讀查詢要不要查、查哪支工具、帶什麼參數都由模型自呼工具決定；程式只把工具參數換成 JGB 端點參數（DSP-126：統計三支與無名稱列表改打 JGB 既有端點）。L3 清單與數量題 13/31 模型沒查就反問（`~/jgb-archive/listquery-20261029/l3/score.md`） | 唯讀查詢的查詢與篩選 | G |
 | KD-8 | 唯讀查詢候選的打字挑選無程式路徑 | 已選定的那筆紀錄 | A-2 |
+
+### 3.2 程式越界理解（已知偏離，DSP-127）
+
+`TARGET_ARCHITECTURE.md` §2 分工表「AI」列的理解，下列環節目前由程式重讀原話。本表不屬 §3.1 的登記與不變量 45。依 DSP-115，造成錯筆的不得後補，其餘不擋上線。
+
+| ID | 偏離 | 分工表列 | 接手片 |
+|---|---|---|---|
+| RD-1 | 意圖呼叫的數字值由程式重讀：`parse_number_token` 把「2萬」讀成 2，`_number_in_texts` 擋掉 AI 給的 20000（`runtime.py` `_write_draft_gate_value`） | 理解使用者（欄位值） | 填欄結構化 |
+| RD-2 | 意圖呼叫的日期值由程式重讀：`user_text_dates` 不認的講法，AI 給對了也不收（同上） | 理解使用者（欄位值） | 填欄結構化 |
+| RD-3 | 期別與計費起訖由程式解析原話再比對（`_period_gate_value`，DSP-094；`_parse_said_range`） | 理解使用者（欄位值） | 填欄結構化片收案時裁 |
+| RD-4 | email、phone 欄值由程式逐字比對原話 | 理解使用者（欄位值） | 無：DSP-128 明訂留下 |
+| RD-5 | 選定紀錄路徑由程式比對原話：`_name_said_in_message`（候選外名稱算不算客人改講新名稱）、`_said_id_is_pick_id`、`_said_has_ordinal`（AI 的選擇算不算猜的）；`_pre_lookup_trigger` 從原話切出關鍵字查物件，`_write_draft_catch_name` 把查到的唯一物件名稱寫進草稿 | 理解使用者；已選定的那筆紀錄 | 待業主裁（填欄結構化計畫 §9 Q10） |
 
 ## 4. 路徑（分片；每片寫出服務的原則）
 
@@ -210,7 +214,10 @@ M0 缺陷 → 原則對照（AR1）：延期列 5 張→P1（A0 根因）；換�
 | B | 寫入進行中回話全由程式樣板；工具結果分給模型／給人兩份 | P2、P3 | 文字請確認、無按鈕、假收據、回覆夾內部提示 | 計畫 `plan-b-write-replies-program-20261020.md`、凍結驗收 `acceptance-b-write-replies-program-20261020.md`（2026-10-20 業主核可；同日收窄宣稱收案，fresh verifier CONFIRMED，DSP-100）；報告 `~/jgb-archive/arch-step3-20261018/b/report-b.md` |
 | E | 收尾與轉人規則：道謝即收尾、明確要求直接轉、追問欄位中的道謝不填欄（「卡住先詢問且不連發」延至 E 續） | P7 | 道謝轉人 | 2026-10-27 收案，宣稱收窄為標籤與出口（DSP-117）；計畫 `plan-closing-handoff-e-20261026.md`、凍結驗收 `acceptance-closing-handoff-e-20261026.md`；報告 `~/jgb-archive/arch-step3-20261018/e/report-e-close.md` |
 | 填欄只填答覆 | 追問欄位時只把答覆的部分填進該欄：道謝字不進欄位、不從道謝或答覆以外的字抽出別欄的值、不蓋掉已填的欄（DSP-117） | P1 | E 片收案 verifier「答覆＋道謝」錯筆卡 11/17 | 已收案（宣稱收窄，收案 verifier REFUTED、未取得 CONFIRMED；DSP-118）；範圍為單欄追問回合（計畫 `plan-fill-answer-only-20261027.md` §6 第 10 點），沒點名的英數道謝緊貼答覆仍會上卡、列已知偏離（§6 第 13 點）；報告 `~/jgb-archive/arch-step3-20261018/fill/report-fill-close.md` |
-| 填欄擴及首句、卡後、多欄回合 | 第一句（尚無草稿）、確認卡後打字、一次追問多欄的回合也只把資料段的值填進欄位，逐值對資料段加閘：道謝字不進欄位、不從道謝衍生別欄值（DSP-117 判準） | P1 | 填欄只填答覆收案後 X4 錯筆卡 7 筆（改前 22）、X8 1 筆，全落在這三種回合 | 計畫 r2 業主 2026-10-28 核可、執行中（DSP-119）：`plan-fill-wide-20261028.md`、`acceptance-fill-wide-20261028.md`（凍結）；與 §4.1 第 4 步同時進行 |
+| 填欄結構化（取代 DSP-119 片） | 第一句、確認卡後打字、一次追問多欄與單欄追問的回合：AI 讀出值，程式只把關並決定換單、覆寫、重問，客人的講法都填得對（RD-1～RD-3） | P0、P1、P4 | 定題 40 場錯筆卡 11、已講過的欄被重問 23 次；新講法 82 場卡住 15、錯筆卡 2 | 計畫 `plan-fill-structured-20261030.md`：第三層依 DSP-128 改成信 AI，修訂後重新審查與核可；與 §4.1 第 4 步同時進行 |
+| 照片與文件上傳 | 瀏覽器直傳 AIChatbot、對話帶 `upload_ids`；修繕照片以 multipart 送 JGB（DSP-120、DSP-122） | — | 上線最低範圍（DSP-120） | 修復輪 r1 已部署，未收案；進度見 HANDOFF |
+| 對話入口對齊 | 新增專用對話 API，重用 `_agent_turn`；取上傳票一起搬；`/mcp` 留到呼叫端改完才關（DSP-130、DSP-131） | 系統定位（DSP-130） | —（架構對齊，非 M0 缺陷） | 待出片；碰身分與計量，先送 security-reviewer |
+| JGB 工具移交 | JGB 維護工具，本機留 JGB 工具代理（DSP-130） | 系統定位（DSP-130） | —（架構對齊，非 M0 缺陷） | 待出片；要 JGB 建 MCP server，排序看 JGB 能否配合（DSP-131） |
 | E 續 | 卡住先詢問且不連發；意圖判斷逾時回合的要真人與收尾改由程式決定（§3.1 KD-5 (1)(3)） | P7 | — | 上線後（DSP-115） |
 | D | 知識不捏造／完整：不足時由 AI 說明缺什麼、部分回答、追問（Verifier 把關依據；步⑦ 不再把「說明缺什麼」當轉人字眼擋）；完全查無走程式的「處理不了」出口 | P6 | 知識缺事實、捏造 | 另起計畫 |
 | C | `agent.turn` 加結構化 `card`，`answer` 留文字備援；JGB 端需求稿 | P8 | 無結構卡 | 待出片（跨元件） |
@@ -219,7 +226,7 @@ M0 缺陷 → 原則對照（AR1）：延期列 5 張→P1（A0 根因）；換�
 | W2 | 主模型輸出失控（灌空白至輸出上限）處置：system 明示只輸出 JSON；截斷才走現行重寫（不以空白長度早停，DSP-116）；整回合逾時切斷進行中的呼叫；備援模型後議 | （執行層韌性，不屬分層原則） | A 後 20 場失敗中 6 場主因 | 計畫 `plan-truncation-w2-20261017.md`、驗收 `acceptance-truncation-w2-20261017.md`（DSP-094、DSP-095）；2026-10-26 收案（DSP-116，fresh verifier CONFIRMED）；報告 `~/jgb-archive/arch-step3-20261018/w2/report-w2-close.md` |
 | 期別 | 期別年份解析：「YYYY年M月」年份被丟、推成最近的過去月份 | P1 | A 後 20 場失敗中 8 場主因 | 計畫 `plan-period-parse-20261019.md`、驗收 `acceptance-period-parse-20261019.md`；含期別值閘改比對解析值（DSP-094） |
 
-順序：A → 期別 → A+ → DG → B → A-2a → 選對紀錄 → F12 → W2 → E → 填欄只填答覆 → 填欄擴及首句、卡後、多欄回合 ∥ §4.1 第 4 步切換正式機（兩者同時進行）→（上線後）雙胞胎與手開帳單合約 → D → C → G → A-2 → 文件回合 → F（DSP-107、DSP-110、DSP-112、DSP-115、DSP-117、DSP-119）。上線最低範圍：A、期別、A+、B、A-2a、選對紀錄、F12、E、W2、填欄只填答覆、填欄擴及首句、卡後、多欄回合（DSP-107、DSP-112、DSP-117、DSP-119）；「雙胞胎與手開帳單合約」不列入（DSP-115）。
+順序：A → 期別 → A+ → DG → B → A-2a → 選對紀錄 → F12 → W2 → E → 填欄只填答覆 → 填欄結構化 ∥ 對話入口對齊（兩片同時進行，都完成才切；對話入口對齊要趕在 JGB 面板合入 master 之前）→ §4.1 第 4 步切換正式機（業主與 JGB 端事項可同時進行，DSP-115）→（上線後）雙胞胎與手開帳單合約 → D → C → G → A-2 → 文件回合 → F（DSP-107、DSP-110、DSP-112、DSP-115、DSP-117、DSP-119）。上線最低範圍：A、期別、A+、B、A-2a、選對紀錄、F12、E、W2、填欄只填答覆、填欄結構化、照片與文件上傳（DSP-107、DSP-112、DSP-117、DSP-119、DSP-120、DSP-122）；「雙胞胎與手開帳單合約」不列入（DSP-115）。對話入口對齊不是使用者成效項，不動 §1 的解決率與錯筆卡；它是架構對齊，排在第 4 步之前（DSP-131）。
 
 本線以推進上線為主（DSP-115）：排片先看是否在上線最低範圍、是否擋上線；每條審查／驗證發現先答「不修，下一步會變嗎」，不變 ⇒ 記該片後補清單、收案時一起處理，⛔ 為它重寫計畫、重送審查；寫錯資料、資安與個資外露、會讓上線出錯的事實錯誤照修。
 
@@ -232,7 +239,7 @@ M0 缺陷 → 原則對照（AR1）：延期列 5 張→P1（A0 根因）；換�
 | 1 | 正式接線：本機對話改走 Bedrock gpt-oss | DSP-080、DSP-090 |
 | 2 | 寫驗收清單，在常駐服務上跑全量基準（M0，§1） | DSP-087 |
 | 3 | 只修沒過的項目：上表分片，至「上線最低範圍」全部收案 | DSP-107；每片完成條件見 §1 |
-| 4 | 切換正式機：(a) 業主依各片數字定全線門檻（DSP-087「先跑出數字再定」）；(b) 上線前置——JGB 面板改接 `agent.turn` 與確認卡元件合入 master、正式環境端點／金鑰／vendor_map（`jgb-spec-structured-card-draft-20261019.md` §2 L1～L3），正式機 Bedrock 金鑰另議（DSP-090）；(c) 業主改定 DSP-080 切換條件；(d) 業主照 `deploy-and-online-test-guide-20261015.md` §3 部署、§4 線上測試（JGB 測試團隊、真 JGB），回退見同檔 §5 | DSP-080、DSP-086、DSP-087、DSP-093 |
+| 4 | 切換正式機：(a) 業主依各片數字定全線門檻（DSP-087「先跑出數字再定」）；(b) 上線前置——JGB 面板改接專用對話 API（DSP-131）與確認卡元件合入 master、正式環境端點／金鑰／vendor_map（`jgb-spec-structured-card-draft-20261019.md` §2 L1～L4），正式機 Bedrock 金鑰另議（DSP-090）；(c) 業主改定 DSP-080 切換條件；(d) 業主照 `deploy-and-online-test-guide-20261015.md` §3 部署、§4 線上測試（JGB 測試團隊、真 JGB），回退見同檔 §5 | DSP-080、DSP-086、DSP-087、DSP-093 |
 
 各步做到哪只寫 HANDOFF。
 
@@ -240,20 +247,25 @@ M0 缺陷 → 原則對照（AR1）：延期列 5 張→P1（A0 根因）；換�
 
 ## 5. 防歪機制（AR3）
 
-1. **本檔是目標唯一正本**：登在 `.claude/MAP.md` `#agentic-mcp`；`AGENTIC_MCP_ARCHITECTURE.md` 開頭一行指向本檔。
-2. **每份計畫必引原則**：計畫 §1 寫「服務原則：P?」與本檔章節；路徑每項標原則；plan-verifier brief 固定加必查項「每個範圍項目對得到本檔一條原則，對不到即缺項」。
-3. **改原則先改本檔**：新增、刪除或改寫原則，先改 §2.8 與檔首分工表交業主核可，並記一條 DECISION；⛔ 在單片計畫裡另立原則。
+1. **架構只有一份，在 `docs/architecture/TARGET_ARCHITECTURE.md`；本檔是工作線目標正本**：兩份都登在 `.claude/MAP.md` `#agentic-mcp`；現況文件開頭寫明目標並指向架構正本。
+2. **每份計畫必引原則**：計畫 §1 寫「服務原則：P?」與本檔章節；路徑每項標原則；plan-verifier brief 固定加必查項「每個範圍項目對得到本檔一條原則，對不到即缺項」與「每個範圍項目有沒有讓 AI 決定程式列的下一步、有沒有讓程式重新理解使用者的話，兩個方向都要答（DSP-127）」。修程式行為之前，先看 AI 原始輸出，確認錯在 AI 還是程式。
+3. **改原則先改架構正本**：新增、刪除或改寫原則，先改 `docs/architecture/TARGET_ARCHITECTURE.md` §2、§3 交業主核可，並記一條 DECISION；⛔ 在單片計畫裡另立原則。
 4. **差距表隨片更新**：每片收尾時改 §3 該原則那一列的「現況」（附新查證）；進度只寫 HANDOFF。
 5. **改正文、不留錯誤原文**（AR8）：決策或事實改變時直接改正文；過時且無用的文件刪除；⛔ 以附註、刪除線或「已失效」標記保留錯誤內容。
 6. **既有決策優先**：與 §6 決策衝突的做法，先列待裁，⛔ 自行繞過。
 7. **過渡修正**：程式接手某環節之前，只修現有模型主導路徑上的錯、不新增 AI 決定權，不算違反分工；計畫須寫明「過渡修正、不新增 AI 決定權」並指向將接手的那一片（如 A+、G）（DSP-091）。
-8. **自動檢查**：檔首分工表「程式」列由 `rag-orchestrator/tests/unit/agent/test_dsp091_division_contract_req.py` 檢查——已接手的列是必過契約，尚未接手的列登記在 `dsp091_known_deviations.py`（＝§3.1）並各有現況探針；`make audit` 不變量 45 核對 §3.1 與登記一致，並在一般寫入回合出現來源不明的模型出卡（`confirm_source:model:unregistered`）時 FAIL。每片收尾時，把它接手的 KD 移出 §3.1 與登記、改成必過契約、改程式註解。
+8. **自動檢查**：`TARGET_ARCHITECTURE.md` §2 分工表「程式」列由 `rag-orchestrator/tests/unit/agent/test_dsp091_division_contract_req.py` 檢查——已接手的列是必過契約，尚未接手的列登記在 `dsp091_known_deviations.py`（＝§3.1）並各有現況探針；`make audit` 不變量 45 核對 §3.1 與登記一致，並在一般寫入回合出現來源不明的模型出卡（`confirm_source:model:unregistered`）時 FAIL。每片收尾時，把它接手的 KD 移出 §3.1 與登記、改成必過契約、改程式註解。
+
+9. **講清楚是哪一層**：計畫與回報提到呼叫工具時，寫明由 AI 提出或由程式發起，以及是哪一層（MCP 門面、AgentRuntime、工具層）；⛔ 用「MCP」泛指工具層。層次以 `docs/architecture/AGENTIC_MCP_ARCHITECTURE.md` §0a（現況）與 `TARGET_ARCHITECTURE.md` §4（目標）為準。
 
 ## 6. 與既有決策的相容（`.claude/DECISIONS.md`）
 
 | 決策 | 對本檔的約束 | 本檔處置 |
 |---|---|---|
-| DSP-091 | 混合式分工 | 檔首分工表、P0 |
+| DSP-091 | 混合式分工 | `TARGET_ARCHITECTURE.md` §2 分工表、P0 |
+| DSP-127 | 程式 ⛔ 重新理解使用者的話 | `TARGET_ARCHITECTURE.md` §2、P0；本檔 §3.2、§5 第 2 點 |
+| DSP-128 | 填欄新路徑的值由 AI 換算，程式只驗格式、範圍、值域 | §3.2、§4「填欄結構化」列 |
+| DSP-130、DSP-131 | 本系統是對話服務；現行工作要對齊目標架構，不改 DSP-091 分工 | `TARGET_ARCHITECTURE.md` §0、§4、§5；本檔 §4「對話入口對齊」「JGB 工具移交」列、§4.1 第 4 步 |
 | DSP-085 | 寫入程式掌握流程；⛔ 只加提示詞 | P1；F 片把 `write_intent` 推廣時須記新 DECISION |
 | DSP-038 | 確認卡由程式 formatter 逐字成為 `answer`，⛔ 經模型／Verifier；雜湊綁卡 | P1、P2 保留；P8 的結構化卡由同一 formatter 另出資料形狀，文字照舊 |
 | DSP-042 | `select:` 在模型前攔截；⛔ 讓模型抽 id | P5 按鈕機器值（`select:`、`pick:`）由程式在模型前攔截，⛔ 經模型；寫入候選的打字選定由意圖呼叫回候選集內編號、程式驗證（DSP-110） |
@@ -267,7 +279,7 @@ M0 缺陷 → 原則對照（AR1）：延期列 5 張→P1（A0 根因）；換�
 
 ## 7. 待業主裁
 
-目前無。
+照片上傳路徑：B、E、API 規格 #22 三選一，JGB 工具移交片開片時裁（DSP-130）。其他待裁事項看 `HANDOFF-20261018.md` §3。
 
 ## 8. 本檔驗收清單
 
@@ -277,11 +289,11 @@ M0 缺陷 → 原則對照（AR1）：延期列 5 張→P1（A0 根因）；換�
 | 2 | AR2 | 四步順序；業界宣稱附原文 | 本檔 §1～§4 | 對每句引文在所列檔 `grep -F` | 全部命中；查無業界者標「第一原理」 |
 | 3 | AR3 | MAP 登記、現況文件指向本檔、計畫必引原則 | `.claude/MAP.md`、`docs/architecture/AGENTIC_MCP_ARCHITECTURE.md`、§5 | grep 本檔檔名 | 兩處各命中；§5 有必查項 |
 | 4 | AR4 | HANDOFF 指向本檔 | `HANDOFF-20261018.md` | grep 本檔檔名 | 命中 |
-| 5 | AR5 | 原則無動作名分支 | §2.8 | 讀表 | 無動作名、欄位名條件 |
-| 6 | AR6 | P8 寫明結構化＋文字備援＋接入方呈現 | §2.7、§2.8 | 讀表 | 三要素皆在 |
-| 7 | AR7 | 分工、目標、基線、每片驗收、每片原則與狀態都寫明 | 檔首、§1、§4 | 讀檔 | 五項皆在 |
+| 5 | AR5 | 原則無動作名分支 | `TARGET_ARCHITECTURE.md` §3 | 讀表 | 無動作名、欄位名條件 |
+| 6 | AR6 | P8 寫明結構化＋文字備援＋接入方呈現 | 本檔 §2.7、`TARGET_ARCHITECTURE.md` §3 | 讀表 | 三要素皆在 |
+| 7 | AR7 | 分工、目標、基線、每片驗收、每片原則與狀態都寫明 | `TARGET_ARCHITECTURE.md` §2；本檔 §1、§4 | 讀檔 | 五項皆在 |
 | 8 | AR8 | 相關文件無與 DSP-091 相反的現行陳述；設計提案 v2、HANDOFF-20261017 已刪且無失效引用 | `grep -rnE "決策搬進模型|自選工具|決策在模型|由模型做|模型自己決定|程式替它決定|agentic-tool-selection-design|HANDOFF-20261017" .kiro/specs/agentic-mcp-orchestration/*.md .kiro/specs/agentic-mcp-orchestration/spec.json .claude/MAP.md docs/architecture/AGENTIC_MCP_ARCHITECTURE.md`（正對照：同目錄 grep `DSP-091` 應命中本檔） | 輸出逐條判讀 | 剩下的命中只出現在敘述歷史、已凍結紀錄或 `git show` 指標 |
 | 9 | AR9 | MAP 登記與指標 | `.claude/MAP.md` | grep 本檔、`HANDOFF-20261018.md`、`DSP-091` | 三者皆命中 |
-| 10 | AR10 | 分工表照 A | 檔首表、`.claude/decisions/DSP-091.md` 業主原話與追加裁示 | 逐項對照 | 相同（含追加裁示） |
+| 10 | AR10 | 分工表照 A | `TARGET_ARCHITECTURE.md` §2、`.claude/decisions/DSP-091.md` 業主原話與追加裁示 | 逐項對照 | 相同（含追加裁示） |
 | 10b | AR8 | 轉人、查無出口與出卡的現行規範不交給模型決定 | requirements.md、design.md 全檔逐句讀（grep 只當補充：`grep -n "handoff\|轉人\|confirm.request\|出卡" .kiro/specs/agentic-mcp-orchestration/requirements.md .kiro/specs/agentic-mcp-orchestration/design.md`，正對照：requirements.md 必命中 R7.1） | 逐句判讀 | 每處是工具定義、已完成任務紀錄、處置紀錄，或寫明「模型提出、程式依規則決定」；現況與目標不同處指向 §3 |
 | 11 | AR1～AR10 | 獨立審查 | fresh plan-verifier（設計方法必查項） | 報告 | READY，或依規則處置後交業主 |

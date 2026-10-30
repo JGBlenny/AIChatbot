@@ -1,5 +1,7 @@
 # jgb2 AI 客服串接規格（正式版：業者 b2b／租客 b2c／售前 prospect）
 
+> 🎯 **本檔寫現況，不是設計依據。目標：本系統是對話服務，不是 MCP 系統；呼叫端走專用對話 API，`/mcp` 不是最終入口；JGB 工具要搬出本系統，由 JGB 維護。** 分工與完整架構見 `docs/architecture/TARGET_ARCHITECTURE.md`。
+
 > 版本：v3（2026-07-07）　對象：jgb2 工程團隊
 > v1 僅涵蓋租客端（b2c）；v2 整合三種身分形狀；v3 定案 **vendor_id 由 AI 側經 role_id 關聯解出，JGB 端一律不送**（見 §4、§8）。🔴 **該定案已被新線反轉為「呼叫端必填、缺即 400」——見檔頭 2026-09-12 補正。**
 > 業者端（b2b）為現役已上線串接（HelpSystem `useChat.ts`），本文件同時列出前端與 AI 側**待補齊項**（§8）。
@@ -25,10 +27,9 @@
 >
 > **後果**：若 jgb2 Web（b2b `useChat.ts`／b2c widget／售前 widget）目前仍照本文件
 > 打 `/rag-api/v1/message`，該串接在這個 commit 之後會**全面失敗**（HTTP 404 或
-> 反向代理層錯誤，視 nginx 設定而定，本輪未實測反代行為）。是否要（a）讓 jgb2 Web
-> 改走 `/mcp`、（b）新開一個 REST 相容端點——🔴 **2026-09-12 更正：⛔ 不是「在 `routers/agent_entry.py` 基礎上」**，那支是遷移橋不是端點，它上游的 `VendorChatRequest`／`VendorChatResponse`／`sse_event`／`metered` 五樣全滅；能重用的只有 `_agent_sse` 的事件序、或
-> （c）本次砍除本就包含「jgb2 Web 整合另案處理、目前先斷線」的既定安排——這是
-> **產品／部署時序決策**，不屬本輪文件整理範圍，本文件只據實記錄現況、不代為選邊。
+> 反向代理層錯誤，視 nginx 設定而定，本輪未實測反代行為）。
+>
+> **入口方向已定（DSP-130、DSP-131）**：新增專用對話 API，呼叫端改走它，`/mcp` 留到呼叫端改完才關。⛔ 不是在 `routers/agent_entry.py` 基礎上做：那支是遷移橋不是端點，它上游的 `VendorChatRequest`／`VendorChatResponse`／`sse_event`／`metered` 五樣全滅；能重用的只有 `_agent_sse` 的事件序。
 >
 > ⚠️ 下文 §1–§10 是**該端點存在時的正式規格**，其中的欄位語義、安全紅線（雙證、
 > 跨業者隔離、vendor_id 解析設計理由）在新端點若要重建同等能力時仍是有效參考，

@@ -2,7 +2,7 @@
 
 > 給 JGB 工程團隊。依據：jgb2 `master`（`a0e0020ac7`，本機 `dev1`）的 `routes/api.php` `external/v1` 群組與 `app/Http/Controllers/External/*`、`Internal/EstateWriteController`、`Internal/ContractWriteController`、`app/Support/VisibleScope.php`、`app/Http/Middleware/ExternalApiAuth.php`／`ExternalViewerScope.php`、`app/Repair.php`、`app/Services/RepairService.php`。
 > 原則：**能擴充既有端點就不另開新路徑**；格式一律照抄既有 `external/v1`。
-> 現況：AIChatbot 已上線並接 www。下列功能在 JGB 開放前，我方**不發請求**、回使用者「目前還不支援」。
+> 現況：AIChatbot 已上線並接 www。JGB staging（`8ff2f7b8e7`，2026-10-30 查）已開 #19～#23，以 staging 為準算開放（DSP-132）；master 還沒有這些端點。我方還沒改接，接真 JGB 時這些功能**不發請求**、回使用者「目前還不支援」。
 
 ## 0. 沿用既有 `external/v1` 的格式（新增或擴充都照這個）
 
@@ -79,17 +79,17 @@
 ## 4. 修改既有寫入端點
 
 ### #22 修繕單附照片 → 改 `POST /api/external/v1/repairs`
-- 現況：`broken_photos` 是**網址字串陣列**（每筆 `url` 規則、最多 10），程式只存 `basename`、不抓檔不上傳；`user_id`、`idempotency_key` 未宣告 ⇒ 被忽略；驗證失敗回 400。
+- master 現況：`broken_photos` 是**網址字串陣列**（每筆 `url` 規則、最多 10），程式只存 `basename`、不抓檔不上傳；`user_id`、`idempotency_key` 未宣告 ⇒ 被忽略；驗證失敗回 400。
 - 照片由使用者的瀏覽器直接傳到 AIChatbot（接口文件 §7），位元組在我們這邊，所以採 **(a) `multipart/form-data`**：請 `POST /api/external/v1/repairs` 也接受 `multipart/form-data`。
   - 原有的文字欄位照舊，放在同名的表單欄位。
   - 照片放在 `broken_photos[]`，multipart 時每筆是一個檔案。JSON 送網址字串的舊用法可以保留。
-  - 我們送出前，照片一律重新編碼成 `image/jpeg`，並去掉 EXIF 和 GPS。每張修繕單最多 10 張，每張 ≤ 5,000,000 bytes。檔名由我們產生，格式是 `photo-N.jpg`。若 jgb2 有張數上限，請告知。
+  - 我們送出前，照片一律重新編碼成 `image/jpeg`，並去掉 EXIF 和 GPS。每張修繕單最多 10 張，每張 ≤ 5,000,000 bytes。檔名由我們產生，格式是 `photo-N.jpg`。staging 的上限相同：≤10 張、每張 ≤5,000,000 bytes、內容須為 JPEG／PNG。
   - 請 jgb2 收下照片、掛到這張修繕單，回應格式照舊。jgb2 也請自己驗一次型別；提供照片時加上 `X-Content-Type-Options: nosniff`。
 - 請加：成員身分驗證（§0-3）、冪等（§0-2）。同一個冪等鍵重送時，照片不能重複掛。
 - JGB 不用提供專用上傳網域、簽章網址，也不用回頭抓我們的任何網址。
 
-### #23 改帳單到期日 → 請給正式路徑
-- 我方目前的 `PATCH /agent/v1/bills/{id}` **在 jgb2 master 與 preview 的 `routes/api.php` 都查不到**。請確認它在哪個環境／分支，或改給正式路徑（建議 `PATCH /api/external/v1/bills/{id}`，只准改 `date_expire`，套用 §0 的成員身分與冪等）。
+### #23 改帳單到期日 → `PATCH /api/external/v1/bills/{id}`
+- staging 已開（`External\BillController@updateDueDate`），只改 `date_expire`。我方目前呼叫的 `PATCH /agent/v1/bills/{id}` 要改接這條路徑。
 
 ## 5. 請 JGB 修正的既有問題
 
@@ -114,12 +114,10 @@
 | #19 | `title` 上限、`use_for`／`space_type`／`building` 值域、「台」「臺」、初始狀態 | 否 |
 | #20 | 押金欄位（金額或月數）、初始狀態 | 是 |
 | #21 | 開手動帳單是否要求合約已簽署；初始狀態；是否需另外發送 | 是 |
-| #22 | `POST /api/external/v1/repairs` 接受 multipart（`broken_photos[]`）的上線日期；張數上限 | 是（照片） |
-| #23 | 改到期日的正式路徑 | 是（延長到期日功能） |
 | §0 | 寫入成員身分參數名（`viewer_user_id` 或 `user_id`）；越權統一 404；冪等 | 是 |
 
 ## 7. 我方要配合改的（AIChatbot 內部，JGB 不必做）
 
 - #16～#18 改呼叫擴充後的既有端點（目前程式呼叫的是 `bills/summary/unpaid`、`repairs/in-progress`、`contracts/expiring` 三條新路徑與 `data` 物件形狀），JGB 定案後改呼叫端與解析。
 - 寫入成員身分參數名照 JGB 定案調整。
-- 照片改以 multipart 送 jgb2（接口文件 §7.1）；JGB 的 multipart 上線前，接真 JGB 時不送 `broken_photos`。
+- 照片改以 multipart 送 jgb2（接口文件 §7.1）；我方改接前，接真 JGB 時不送 `broken_photos`。

@@ -1,20 +1,20 @@
 # 站內幫手：JGB 面板上線前事項與確認卡結構化——需求稿草稿（2026-10-19）
 
-> 狀態：**草稿，尚未寄出**；寄出與否由業主決定。上線範圍依 DSP-107、DSP-112、DSP-117、DSP-120（A＋期別＋A+＋B＋A-2a＋選對紀錄＋F12＋W2＋E＋填欄只填答覆＋照片與文件上傳）；第 4、5.2 節的結構化 `card` 對應目標正本 `architecture-target-20261018.md` §4 C 片（原則 P8），不擋上線，C 片計畫核可前只是提案。
-> JGB 端現況依據（本機 checkout `~/dev/work/jgb2/dev1` 的遠端追蹤分支，最後一次 fetch 2026-10-27 18:28）：`origin/preview` `fe4daec748`（2026-10-23）、`origin/master` `3515960cd7`（2026-10-27）；兩張 ticket 的 commit（`1f151705f4`、`c0e33721c2`、`daf09380a6`）都是 `origin/preview` 的祖先、都不是 `origin/master` 的祖先。
+> 狀態：**草稿，尚未寄出**；寄出與否由業主決定。上線範圍依 DSP-107、DSP-112、DSP-117、DSP-119、DSP-120、DSP-122（A＋期別＋A+＋B＋A-2a＋選對紀錄＋F12＋W2＋E＋填欄只填答覆＋填欄結構化＋照片與文件上傳）；第 4、5.2 節的結構化 `card` 對應目標正本 `architecture-target-20261018.md` §4 C 片（原則 P8），不擋上線，C 片計畫核可前只是提案。
+> JGB 端現況依據（本機 checkout `~/dev/work/jgb2/dev1`，2026-10-30 查）：staging `8ff2f7b8e7`、master `eeccdfd8eb`；兩張 ticket 的 commit（`1f151705f4`、`c0e33721c2`、`daf09380a6`）都是 staging 的祖先、都不是 master 的祖先。
 
 ## 0. 一句話
 
-面板改接 `agent.turn` 與確認卡畫面，JGB 已在 preview 做完（2026-10-15）；上線前 JGB 端剩下的是**合入正式版並填正式環境設定**。確認卡改用結構化資料（C 片）是上線後的改善，不擋上線。
+**上線前 JGB 面板要改接 AIChatbot 的專用對話 API，不是把現行走 `/mcp` 的 `AgentTurnClient` 合入 master 就上線**（DSP-130、DSP-131；排在第 4 步切換正式機之前是主會話讀法，等級 C）。專用對話 API 由 AIChatbot 定案；定案前本稿寫到的 `agent.turn`、`/mcp` 只描述現行介面，端點與欄位定案後改寫。面板現行版與確認卡畫面已完成（2026-10-15），JGB 目前接 staging 分支。確認卡改用結構化資料（C 片）是上線後的改善，不擋上線。
 
-## 1. 改接現況：preview 已完成，master 未合入
+## 1. 面板現況：staging 走現行介面，master 未合入
 
 | 項目 | 現況 | 依據（可 grep） |
 |---|---|---|
 | 改接 `agent.turn` | jgb2 ticket_13290303502：`AgentTurnClient` 走 MCP streamable HTTP（initialize → initialized → tools/call `agent.turn`，帶 `Mcp-Session-Id`，結束送 DELETE）；身分由伺服端組 `X-JGB-Identity`，團隊 role_id 經 `vendor_map` 對到 vendor_id，不在表內一律不走 agent（fail-closed） | `app/Services/Assistant/AgentTurnClient.php` `TOOL_NAME`；`app/Http/Controllers/HelpAssistantController.php`；commit `c0e33721c2` |
 | 確認卡等畫面 | jgb2 ticket_13290307734：`AgentMessage`、`ConfirmCard`、`ResultCard`、`AgentChoices`、`NextSteps`、格式守門 `guards.ts` | `src/components/HelpSystem/agent/`；commit `daf09380a6` |
-| 合入狀態 | 兩張 ticket 都已在 `origin/preview`，**都不在 `origin/master`** | `git merge-base --is-ancestor 1f151705f4 origin/master` ⇒ 非祖先 |
-| 送出的工具參數 | 只送 `message`；⛔ 採用瀏覽器送來的身分欄位與 `image_urls` | `AgentTurnClient.php` `'arguments' => ['message' => $message]` |
+| 合入狀態 | 兩張 ticket 都已在 staging，**都不在 master** | `git merge-base --is-ancestor 1f151705f4 eeccdfd8eb` ⇒ 非祖先；`git merge-base --is-ancestor 1f151705f4 8ff2f7b8e7` ⇒ 祖先 |
+| 送出的工具參數 | `message`（非空才帶），有附件時加 `upload_ids`、`attachment_purpose`；取上傳票走 `agent.upload_ticket`，只帶 `attachment_purpose`；⛔ 採用瀏覽器送來的身分欄位 | staging `AgentTurnClient.php` `TICKET_TOOL_NAME`；commit `446b84c8a4` |
 | 設定 | `config/services.php` `assistant_agent`：`ASSISTANT_AGENT_URL`、`ASSISTANT_AGENT_API_KEY`、`ASSISTANT_AGENT_VENDOR_MAP`（`role_id:vendor_id,…`）、`ASSISTANT_AGENT_ENABLED`（預設 false）、`ASSISTANT_AGENT_TIMEOUT_SECONDS`（預設 60） | `config/services.php` `"assistant_agent"` |
 
 正式環境（2026-10-28 唯讀查詢，只看有無值、不看值）：`ASSISTANT_AGENT_URL`、`ASSISTANT_AGENT_API_KEY`、`ASSISTANT_AGENT_VENDOR_MAP`、`ASSISTANT_AGENT_ENABLED` 四個鍵都是空或不存在（同次查詢的正對照 `APP_KEY` 有值）；正式機 www 部署版 `bb217ebc6a`，兩張 ticket 都不在內。
@@ -23,10 +23,10 @@
 
 | # | 事項 | 怎樣算完成 |
 |---|---|---|
-| L1 | ticket_13290303502、ticket_13290307734 合入 master 並部署正式版 | `origin/master` 含 `1f151705f4` 與 ticket_13290307734 的最後一個 commit |
-| L2 | 正式環境設定：`ASSISTANT_AGENT_URL=https://chatai.jgbsmart.com/rag-api/mcp`（完整路徑，不跟隨轉址）、`ASSISTANT_AGENT_API_KEY`（AIChatbot 發給站內幫手的金鑰，只放伺服端）、`ASSISTANT_AGENT_VENDOR_MAP`、`ASSISTANT_AGENT_ENABLED=true` | 正式站登入一個已對到 vendor 的團隊，送一句話收到 `agent.turn` 回覆；未對到的團隊照舊走原本對話 |
+| L1 | 面板改接專用對話 API（端點與欄位待 AIChatbot 定案）後，連同確認卡畫面合入 master 並部署正式版 | `origin/master` 含改接後的面板；正式版對話不再走 `/mcp` |
+| L2 | 正式環境設定：`ASSISTANT_AGENT_URL=<專用對話 API 網址，待定案>`（完整路徑，不跟隨轉址）、`ASSISTANT_AGENT_API_KEY`（AIChatbot 發給站內幫手的金鑰，只放伺服端）、`ASSISTANT_AGENT_VENDOR_MAP`、`ASSISTANT_AGENT_ENABLED=true` | 正式站登入一個已對到 vendor 的團隊，送一句話收到專用對話 API 的回覆；未對到的團隊照舊走原本對話 |
 | L3 | 正式環境的 Origin：AIChatbot 端 `MCP_ALLOWED_ORIGINS` 只管瀏覽器直連；JGB 由伺服端呼叫不送 Origin，⛔ 需要加白名單 | L2 的實打通過即可 |
-| L4 | 面板支援照片與文件上傳（DSP-120）：照接口 A（`docs/api/jgb2-web-assistant-integration.md`）§7 上傳到 JGB 專用上傳網域，`agent.turn` 帶 `image_urls`（照片，≤10）、`file_urls`（PDF，≤1）、`attachment_purpose`（報修照片 `repair`；謄本、收據、發票 `document`）；回覆 `quick_replies` 的 `image` 鍵要開拍照／相簿。現況 `AgentTurnClient.php` 只送 `message`。另請回覆接口 B #22（照片交付方式、專用上傳網域名稱） | 正式站上傳一張報修照片收到確認卡且卡上「附照片：1 張」；上傳一份謄本 PDF 收到物件確認卡 |
+| L4 | 面板支援照片與文件上傳（DSP-120、DSP-122）：照接口 A（`docs/api/jgb2-web-assistant-integration.md`）§7，JGB 後端取上傳票，瀏覽器把檔案直傳 AIChatbot 拿 `upload_id`，對話帶 `upload_ids`（照片 ≤10、文件 1 份）與 `attachment_purpose`（報修照片 `repair`；謄本、收據、發票 `document`）；回覆 `outcome.expects=image`／`file` 時要開傳照片／傳檔鍵（⛔ 不要只開輸入框）；staging 現在顯示「此功能即將開放」（§3），要改掉。JGB 不需要專用上傳網域。上傳與引用流程 staging 已用現行介面做完（`agent.upload_ticket`、`agent.turn`）；改接專用對話 API 時取上傳票一起改接（端點與欄位待定案），再隨 L1 合入 master。接口 B #22 的 multipart staging 已開，同樣隨 L1 合入 master | 正式站上傳一張報修照片收到確認卡且卡上「附照片：1 張」；上傳一份謄本 PDF 收到物件確認卡 |
 
 金鑰交付走雙方既有的安全管道，⛔ 寫進本稿、ticket 或 Monday。
 
