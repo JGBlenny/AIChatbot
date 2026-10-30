@@ -9,10 +9,10 @@ language: zh-TW
 ## 幫助中心（分類、文章、搜尋） {#H-help-center}
 ### 幫助中心首頁長什麼樣？（分類卡片顯示圖示、篇數、更新日期） {#jgb/H/help-center-home-groups}
 - phrasings:
-  - {text: "幫助中心首頁有什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "幫助中心分類怎麼看", source: "draft:outline-20260920", status: proposed}
-  - {text: "幫助中心怎麼進去", source: "draft:outline-20260920", status: proposed}
-  - {text: "幫助中心有哪些分類", source: "draft:outline-20260920", status: proposed}
+  - {text: "幫助中心首頁有什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "幫助中心分類怎麼看", source: "draft:outline-20260920", status: approved}
+  - {text: "幫助中心怎麼進去", source: "draft:outline-20260920", status: approved}
+  - {text: "幫助中心有哪些分類", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/help-center/Index.vue, code:src/pages/help-center/template-parts/Top.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
@@ -23,9 +23,9 @@ language: zh-TW
 頁面最上方可以切換語系，也有一個連結可以直接返回 JGB Smart Property 首頁。
 ### 幫助中心分類頁怎麼排文章？（分類底下先分次分類，各次分類再列出文章卡片） {#jgb/H/help-center-group-structure}
 - phrasings:
-  - {text: "幫助中心分類頁長怎樣", source: "draft:outline-20260920", status: proposed}
-  - {text: "幫助中心文章怎麼分組", source: "draft:outline-20260920", status: proposed}
-  - {text: "幫助中心次分類是什麼", source: "draft:outline-20260920", status: proposed}
+  - {text: "幫助中心分類頁長怎樣", source: "draft:outline-20260920", status: approved}
+  - {text: "幫助中心文章怎麼分組", source: "draft:outline-20260920", status: approved}
+  - {text: "幫助中心次分類是什麼", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/help-center/Group.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
@@ -37,10 +37,10 @@ language: zh-TW
 每張文章卡片顯示標題、摘要與更新日期，點了會進入該篇文章內頁。
 ### 幫助中心文章內頁有什麼？（麵包屑、分享到 Facebook／LINE、上下篇導覽、相關文章） {#jgb/H/help-center-post-detail}
 - phrasings:
-  - {text: "幫助中心文章怎麼分享", source: "draft:outline-20260920", status: proposed}
-  - {text: "文章頁有上一篇下一篇嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "文章內頁長什麼樣", source: "draft:outline-20260920", status: proposed}
-  - {text: "怎麼回到分類列表", source: "draft:outline-20260920", status: proposed}
+  - {text: "幫助中心文章怎麼分享", source: "draft:outline-20260920", status: approved}
+  - {text: "文章頁有上一篇下一篇嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "文章內頁長什麼樣", source: "draft:outline-20260920", status: approved}
+  - {text: "怎麼回到分類列表", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/help-center/Post.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
@@ -52,10 +52,10 @@ language: zh-TW
 文章最下面會列出相關文章主題，點了會換頁到另一篇文章。
 ### 幫助中心搜尋怎麼運作？（比對標題與內文、多個關鍵字要同時出現、可加選分類） {#jgb/H/help-center-search}
 - phrasings:
-  - {text: "幫助中心搜尋規則", source: "draft:outline-20260920", status: proposed}
-  - {text: "幫助中心搜不到文章怎麼辦", source: "draft:outline-20260920", status: proposed}
-  - {text: "幫助中心可以打多個關鍵字嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "幫助中心搜尋能限定分類嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "幫助中心搜尋規則", source: "draft:outline-20260920", status: approved}
+  - {text: "幫助中心搜不到文章怎麼辦", source: "draft:outline-20260920", status: approved}
+  - {text: "幫助中心可以打多個關鍵字嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "幫助中心搜尋能限定分類嗎", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/help-center/template-parts/Top.vue, code:src/pages/help-center/Search.vue, code:app/Http/Controllers/IndexController.php]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
@@ -67,10 +67,10 @@ language: zh-TW
 搜尋不到結果時會顯示找不到任何關於此項目的文章，並附上返回幫助中心首頁的連結。
 ### 幫助中心的「立即免費試用」視窗是什麼時候跳出來的？（首頁停留 60 秒自動彈出，四個欄位都要填） {#jgb/H/help-center-trial-form}
 - phrasings:
-  - {text: "幫助中心會跳出試用視窗嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "免費試用視窗要填什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "怎麼關掉試用彈窗", source: "draft:outline-20260920", status: proposed}
-  - {text: "免費試用天數", source: "draft:outline-20260920", status: proposed}
+  - {text: "幫助中心會跳出試用視窗嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "免費試用視窗要填什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "怎麼關掉試用彈窗", source: "draft:outline-20260920", status: approved}
+  - {text: "免費試用天數", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/entry/listings.js, code:src/pages/help-center/Index.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]

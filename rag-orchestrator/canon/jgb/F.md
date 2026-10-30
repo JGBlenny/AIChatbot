@@ -9,10 +9,10 @@ language: zh-TW
 ## 修繕單列表與狀態（申請修繕、安排修繕、完成修繕、結單、封存） {#F-repair-list}
 ### 修繕單總表有哪些狀態分頁？（申請修繕、安排修繕、完成修繕、結單、封存） {#jgb/F/repair-status-tabs}
 - phrasings:
-  - {text: "修繕單有幾個狀態", source: "draft:outline-20260920", status: proposed}
-  - {text: "修繕單分頁有哪些", source: "draft:outline-20260920", status: proposed}
-  - {text: "修繕進度分幾個階段", source: "draft:outline-20260920", status: proposed}
-  - {text: "修繕總表怎麼分類", source: "draft:outline-20260920", status: proposed}
+  - {text: "修繕單有幾個狀態", source: "draft:outline-20260920", status: approved}
+  - {text: "修繕單分頁有哪些", source: "draft:outline-20260920", status: approved}
+  - {text: "修繕進度分幾個階段", source: "draft:outline-20260920", status: approved}
+  - {text: "修繕總表怎麼分類", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/routes/repairs.js, code:src/pages/repair/Index.vue, code:app/Repair.php, code:routes/web.php, help:repair_zh-Hant.html]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
@@ -24,11 +24,11 @@ language: zh-TW
 修繕單總表這個頁面本身要先登入 JGB 帳號才能打開；但同樣屬於修繕功能的分享頁，並不受這條規則限制（另見「看修繕單分享頁需要先登入嗎」）。
 ### 修繕單總表可以怎麼搜尋或篩選？（案名／地址／經理人／租客關鍵字，加上單一組「修繕單時間段」下拉：報修時間起訖／最後更新時間起訖／7 日內申請報修三選一，還有分類／項目／是否緊急） {#jgb/F/repair-list-search-filter}
 - phrasings:
-  - {text: "修繕單怎麼搜尋", source: "draft:outline-20260920", status: proposed}
-  - {text: "修繕單列表篩選條件", source: "draft:outline-20260920", status: proposed}
-  - {text: "怎麼找特定物件的修繕單", source: "draft:outline-20260920", status: proposed}
-  - {text: "修繕單可以用日期篩選嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "修繕單篩選條件怎麼重設", source: "draft:outline-20260920", status: proposed}
+  - {text: "修繕單怎麼搜尋", source: "draft:outline-20260920", status: approved}
+  - {text: "修繕單列表篩選條件", source: "draft:outline-20260920", status: approved}
+  - {text: "怎麼找特定物件的修繕單", source: "draft:outline-20260920", status: approved}
+  - {text: "修繕單可以用日期篩選嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "修繕單篩選條件怎麼重設", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/repair/list/Index.vue, code:src/components/Lightbox/RepairAdvSearch.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -40,9 +40,9 @@ language: zh-TW
 進階搜尋視窗最下面有「重設條件」，點下去會把整個搜尋表單（關鍵字、時間段、分類、項目、是否緊急）都清回預設值。
 ### 修繕單總表的表格欄位顯示什麼？（物件地址、分類＆項目、報修日期、最後更新、結算金額、房東/管理者、租客） {#jgb/F/repair-list-columns}
 - phrasings:
-  - {text: "修繕單列表欄位說明", source: "draft:outline-20260920", status: proposed}
-  - {text: "修繕單表格看得到什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "修繕單總表欄位", source: "draft:outline-20260920", status: proposed}
+  - {text: "修繕單列表欄位說明", source: "draft:outline-20260920", status: approved}
+  - {text: "修繕單表格看得到什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "修繕單總表欄位", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/repair/list/Index.vue, code:app/Http/Controllers/RepairController.php, code:app/Repair.php, code:src/components/SurelyVue/Common/SingleUserCell.vue]
 - reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
@@ -53,9 +53,9 @@ language: zh-TW
 如果這個分類目前尚未累積任何修繕單，表格會顯示「此分類目前尚未有修繕單」的提示文字，而不是報錯畫面。
 ### 修繕單總表怎麼排序、一頁看幾筆？（每頁 30／60／90 筆可選；排序選項裡的「結算金額」只有房東方帳號才看得到） {#jgb/F/repair-list-sort-and-pagination}
 - phrasings:
-  - {text: "修繕單一頁顯示幾筆", source: "draft:outline-20260920", status: proposed}
-  - {text: "修繕單可以怎麼排序", source: "draft:outline-20260920", status: proposed}
-  - {text: "租客可以用金額排序修繕單嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "修繕單一頁顯示幾筆", source: "draft:outline-20260920", status: approved}
+  - {text: "修繕單可以怎麼排序", source: "draft:outline-20260920", status: approved}
+  - {text: "租客可以用金額排序修繕單嗎", source: "draft:outline-20260920", status: approved}
 - sources: [code:app/Http/Controllers/RepairController.php]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -66,9 +66,9 @@ language: zh-TW
 身分不是房東的帳號，排序選單裡不會出現「結算金額由大到小」跟「結算金額由小到大」這兩個選項。
 ### 「新增修繕單」按鈕誰看得到？（租客一定有；房東方要有「新增&編輯&刪除所屬」或「新增&編輯&刪除所有」修繕資料其中一項權限） {#jgb/F/repair-create-button-visibility}
 - phrasings:
-  - {text: "新增修繕單按鈕在哪", source: "draft:outline-20260920", status: proposed}
-  - {text: "誰可以新增修繕單", source: "draft:outline-20260920", status: proposed}
-  - {text: "為什麼看不到新增修繕單按鈕", source: "draft:outline-20260920", status: proposed}
+  - {text: "新增修繕單按鈕在哪", source: "draft:outline-20260920", status: approved}
+  - {text: "誰可以新增修繕單", source: "draft:outline-20260920", status: approved}
+  - {text: "為什麼看不到新增修繕單按鈕", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/repair/list/Index.vue, code:app/Http/Controllers/UserController.php, code:src/pages/estates/pick/_parts/pick.jsx]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -79,9 +79,9 @@ language: zh-TW
 點下去之後會先進入選擇物件的畫面，選好物件才能繼續填報修細節。
 ### 「結算總金額」是什麼？（只有房東方帳號登入時才會顯示；這個數字只加總目前這一頁看得到的修繕單，換頁或換每頁筆數就會不一樣） {#jgb/F/repair-total-visibility}
 - phrasings:
-  - {text: "修繕單結算總金額", source: "draft:outline-20260920", status: proposed}
-  - {text: "誰看得到修繕總金額", source: "draft:outline-20260920", status: proposed}
-  - {text: "結算總金額是全部加起來的嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "修繕單結算總金額", source: "draft:outline-20260920", status: approved}
+  - {text: "誰看得到修繕總金額", source: "draft:outline-20260920", status: approved}
+  - {text: "結算總金額是全部加起來的嗎", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/repair/list/Index.vue, code:app/Http/Controllers/RepairController.php]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -91,9 +91,9 @@ language: zh-TW
 這裡顯示的結算總金額，只是目前這一頁看得到的修繕單金額加總，不是這個分類篩選條件下全部修繕單的總和；換到下一頁或改每頁顯示筆數，這個數字就會跟著變。
 ### 誰能匯出修繕單？（要另外有匯出修繕資料的權限；而且這顆按鈕只有在「新增修繕單」按鈕會出現的身分底下才會一起出現，單獨有匯出權限而沒有編輯權限的房東方帳號看不到它） {#jgb/F/repair-export-visibility}
 - phrasings:
-  - {text: "怎麼匯出修繕單", source: "draft:outline-20260920", status: proposed}
-  - {text: "修繕單可以匯出嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "有匯出權限但看不到匯出按鈕", source: "draft:outline-20260920", status: proposed}
+  - {text: "怎麼匯出修繕單", source: "draft:outline-20260920", status: approved}
+  - {text: "修繕單可以匯出嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "有匯出權限但看不到匯出按鈕", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/repair/list/Index.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -104,10 +104,10 @@ language: zh-TW
 如果目前這個分類篩選條件下完全沒有修繕單，這顆「匯出修繕單」按鈕會變成無法點擊的灰階狀態。
 ### 修繕單總表怎麼切換狀態？（每列右邊的齒輪選單有「移至」各個狀態的選項，封存後仍然可以再移回其他狀態） {#jgb/F/repair-move-status-from-list}
 - phrasings:
-  - {text: "修繕單怎麼換分頁", source: "draft:outline-20260920", status: proposed}
-  - {text: "怎麼把修繕單移到結單", source: "draft:outline-20260920", status: proposed}
-  - {text: "修繕單狀態怎麼改", source: "draft:outline-20260920", status: proposed}
-  - {text: "封存的修繕單可以移回來嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "修繕單怎麼換分頁", source: "draft:outline-20260920", status: approved}
+  - {text: "怎麼把修繕單移到結單", source: "draft:outline-20260920", status: approved}
+  - {text: "修繕單狀態怎麼改", source: "draft:outline-20260920", status: approved}
+  - {text: "封存的修繕單可以移回來嗎", source: "draft:outline-20260920", status: approved}
 - sources: [code:app/Http/Controllers/RepairController.php]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -119,10 +119,10 @@ language: zh-TW
 移動狀態成功之後，畫面上會跳出成功提示，並且直接把使用者帶到剛剛選擇的目標狀態分頁。
 ### 哪些身分會看到「查看」而不是「編輯＆查看」的齒輪按鈕文字？（大房東角色，以及對這張單只有「顯示所屬」、沒有「顯示所有」修繕資料權限的團隊成員；但這張單的經理人本人看到的仍是「編輯＆查看」） {#jgb/F/repair-view-only-roles}
 - phrasings:
-  - {text: "大房東可以改修繕單嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "誰只能看修繕單", source: "draft:outline-20260920", status: proposed}
-  - {text: "查看跟編輯有什麼差別", source: "draft:outline-20260920", status: proposed}
-  - {text: "為什麼列表裡少了幾張修繕單", source: "draft:outline-20260920", status: proposed}
+  - {text: "大房東可以改修繕單嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "誰只能看修繕單", source: "draft:outline-20260920", status: approved}
+  - {text: "查看跟編輯有什麼差別", source: "draft:outline-20260920", status: approved}
+  - {text: "為什麼列表裡少了幾張修繕單", source: "draft:outline-20260920", status: approved}
 - sources: [code:app/Http/Controllers/RepairController.php, code:src/pages/repair/edit/Index.vue, code:app/Repair.php]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -135,10 +135,10 @@ language: zh-TW
 大房東因為在細節頁的編輯判斷裡被直接排除，所以看到「查看」文字時也確實不能編輯或移動；但只有「顯示所屬」權限的團隊成員如果同時具備編輯所屬修繕的權限，齒輪按鈕文字一樣會變成「查看」，卻仍然可以移動狀態、在細節頁編輯。
 ### 修繕單總表可以用分類、項目、是否緊急篩選嗎？（可以；先選分類才能選項目，換分類會把已選的項目清空；「是否緊急」是一個勾選框，勾了才會加上這個條件） {#jgb/F/repair-list-filter-category-item-urgent}
 - phrasings:
-  - {text: "修繕單怎麼用分類篩選", source: "draft:outline-20260920", status: proposed}
-  - {text: "修繕單搜尋可以選項目嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "怎麼只看緊急修繕單", source: "draft:outline-20260920", status: proposed}
-  - {text: "分類項目篩選怎麼用", source: "draft:outline-20260920", status: proposed}
+  - {text: "修繕單怎麼用分類篩選", source: "draft:outline-20260920", status: approved}
+  - {text: "修繕單搜尋可以選項目嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "怎麼只看緊急修繕單", source: "draft:outline-20260920", status: approved}
+  - {text: "分類項目篩選怎麼用", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/components/Lightbox/RepairAdvSearch.vue, code:src/pages/repair/list/Index.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -149,9 +149,9 @@ language: zh-TW
 「是否為緊急項目」是一個勾選框，不勾就不會加上這個篩選條件；勾了之後，總表只會顯示被標記為緊急的修繕單。
 ### 修繕單總表點「房東/管理者」或「租客」欄位會怎樣？（會彈出這個人的聯絡資訊卡） {#jgb/F/repair-list-contact-card}
 - phrasings:
-  - {text: "點房東管理者欄位會怎樣", source: "draft:outline-20260920", status: proposed}
-  - {text: "修繕單列表點租客會出現什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "怎麼看修繕單相關人的聯絡方式", source: "draft:outline-20260920", status: proposed}
+  - {text: "點房東管理者欄位會怎樣", source: "draft:outline-20260920", status: approved}
+  - {text: "修繕單列表點租客會出現什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "怎麼看修繕單相關人的聯絡方式", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/repair/list/Index.vue, code:src/components/SurelyVue/Common/SingleUserCell.vue]
 - reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
@@ -161,10 +161,10 @@ language: zh-TW
 ## 報修申請流程 {#F-repair-apply}
 ### 怎麼申請修繕單？（房東方從【修繕管理】>【修繕單總表】、租客從【我的報修】>【修繕單總表】右上角「新增修繕單」進入，選物件→選分類項目→填報修細節→送出，按「上一步」「下一步」在步驟間切換） {#jgb/F/repair-apply-flow-and-entry}
 - phrasings:
-  - {text: "怎麼新增修繕單", source: "draft:outline-20260920", status: proposed}
-  - {text: "怎麼報修", source: "draft:outline-20260920", status: proposed}
-  - {text: "申請修繕流程", source: "draft:outline-20260920", status: proposed}
-  - {text: "修繕單申請入口在哪", source: "draft:outline-20260920", status: proposed}
+  - {text: "怎麼新增修繕單", source: "draft:outline-20260920", status: approved}
+  - {text: "怎麼報修", source: "draft:outline-20260920", status: approved}
+  - {text: "申請修繕流程", source: "draft:outline-20260920", status: approved}
+  - {text: "修繕單申請入口在哪", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/repair/list/Index.vue, code:src/pages/repair/applyProcess/Index.vue, code:src/utils/constants/repair.constant.ts, code:routes/web.php, help:repair_zh-Hant.html, code:app/Role.php, code:src/pages/repair/applyProcess/_parts/Detail.vue, code:app/Notification.php, code:app/Http/Controllers/UserController.php]
 - reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
@@ -177,9 +177,9 @@ language: zh-TW
 LINE 在修繕流程裡用於通知（修繕單建立等階段會透過 LINE 推播），以及修繕單細節頁的分享按鈕；JGB 網頁介面沒有透過 LINE 發起報修的入口。
 ### 沒有租約在跑的物件也能申請修繕嗎？（可以，房東方只要建好物件就能申請，不用先有合約） {#jgb/F/repair-apply-without-contract}
 - phrasings:
-  - {text: "空屋可以報修嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "沒租客的房子能修繕嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "申請修繕要先有合約嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "空屋可以報修嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "沒租客的房子能修繕嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "申請修繕要先有合約嗎", source: "draft:outline-20260920", status: approved}
 - sources: [help:repair_zh-Hant.html, code:src/pages/repair/applyProcess/Index.vue, code:app/Http/Controllers/RepairController.php]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
@@ -189,9 +189,9 @@ LINE 在修繕流程裡用於通知（修繕單建立等階段會透過 LINE 推
 就算物件目前是空屋、尚無租客入住，房東方一樣可以幫這個物件申請修繕。
 ### 報修分類項目怎麼選？（分類與項目都是系統設定的清單，選好之後在報修細節可以按「編輯」回上一步重選；有一個特定分類會多出讓使用者自己輸入名稱的欄位） {#jgb/F/repair-apply-category-item-other}
 - phrasings:
-  - {text: "修繕項目沒有我要的怎麼辦", source: "draft:outline-20260920", status: proposed}
-  - {text: "報修分類怎麼選", source: "draft:outline-20260920", status: proposed}
-  - {text: "自訂修繕項目名稱", source: "draft:outline-20260920", status: proposed}
+  - {text: "修繕項目沒有我要的怎麼辦", source: "draft:outline-20260920", status: approved}
+  - {text: "報修分類怎麼選", source: "draft:outline-20260920", status: approved}
+  - {text: "自訂修繕項目名稱", source: "draft:outline-20260920", status: approved}
 - sources: [code:app/Repair.php, code:src/utils/enums/repair.enum.ts, code:src/pages/repair/applyProcess/_parts/Detail.vue]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -202,9 +202,9 @@ LINE 在修繕流程裡用於通知（修繕單建立等階段會透過 LINE 推
 選好分類和項目之後，在「報修細節」畫面上還可以點「編輯」，回到上一步重新挑選分類與項目。
 ### 報修細節要填什麼？（項目分類、問題必填；預約時段依身分決定是否必填；緊急修繕、佐證照片、備註選填；「通知及同步租客」是房東代租客申請時會看到的一個開關，但目前沒有實際作用） {#jgb/F/repair-apply-detail-fields}
 - phrasings:
-  - {text: "修繕單要填哪些資料", source: "draft:outline-20260920", status: proposed}
-  - {text: "報修細節必填欄位", source: "draft:outline-20260920", status: proposed}
-  - {text: "申請修繕表單欄位", source: "draft:outline-20260920", status: proposed}
+  - {text: "修繕單要填哪些資料", source: "draft:outline-20260920", status: approved}
+  - {text: "報修細節必填欄位", source: "draft:outline-20260920", status: approved}
+  - {text: "申請修繕表單欄位", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/repair/applyProcess/_parts/Detail.vue, code:src/pages/repair/applyProcess/Index.vue, code:src/components/SwitchButton.vue]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -217,9 +217,9 @@ LINE 在修繕流程裡用於通知（修繕單建立等階段會透過 LINE 推
 備註欄位是用來寫其他想讓維修師傅知道的注意事項。
 ### 預約時段規則是什麼？（畫面上標示為必填，但實際上只有租客身分申請時系統才會擋下沒填的情況；房東申請時就算不填也能送出） {#jgb/F/repair-apply-reservation-slots}
 - phrasings:
-  - {text: "修繕預約時段怎麼填", source: "draft:outline-20260920", status: proposed}
-  - {text: "租客要選維修時間嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "可以約幾個修繕時段", source: "draft:outline-20260920", status: proposed}
+  - {text: "修繕預約時段怎麼填", source: "draft:outline-20260920", status: approved}
+  - {text: "租客要選維修時間嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "可以約幾個修繕時段", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/repair/applyProcess/Index.vue, code:src/pages/repair/applyProcess/_parts/Detail.vue]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -230,10 +230,10 @@ LINE 在修繕流程裡用於通知（修繕單建立等階段會透過 LINE 推
 頁面上會提醒這個物件所在的時區，方便使用者知道填的時間是以哪個時區為準。
 ### 報修可以附照片或影片嗎？（照片最多 10 張；影片最長 30 秒或 100MB；支援 jpeg／jpg／png 圖片與 mov／mp4／webm 影片） {#jgb/F/repair-apply-photo-limit}
 - phrasings:
-  - {text: "報修可以傳照片嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "修繕單附件限制", source: "draft:outline-20260920", status: proposed}
-  - {text: "報修影片大小限制", source: "draft:outline-20260920", status: proposed}
-  - {text: "修繕照片幾張", source: "draft:outline-20260920", status: proposed}
+  - {text: "報修可以傳照片嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "修繕單附件限制", source: "draft:outline-20260920", status: approved}
+  - {text: "報修影片大小限制", source: "draft:outline-20260920", status: approved}
+  - {text: "修繕照片幾張", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/repair/applyProcess/_parts/Detail.vue]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
@@ -244,9 +244,9 @@ LINE 在修繕流程裡用於通知（修繕單建立等階段會透過 LINE 推
 如果選擇的照片已經到 10 張的上限，上傳入口就會收起來，要先刪掉幾張才能繼續加。
 ### 新增修繕單後誰會收到通知？（租客送出時通知房東方；房東方在網頁上建立時只寄 Email 給房東方，租客不會收到通知） {#jgb/F/repair-apply-notifications}
 - phrasings:
-  - {text: "申請修繕會通知誰", source: "draft:outline-20260920", status: proposed}
-  - {text: "報修後誰會知道", source: "draft:outline-20260920", status: proposed}
-  - {text: "修繕單送出通知", source: "draft:outline-20260920", status: proposed}
+  - {text: "申請修繕會通知誰", source: "draft:outline-20260920", status: approved}
+  - {text: "報修後誰會知道", source: "draft:outline-20260920", status: approved}
+  - {text: "修繕單送出通知", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/repair/applyProcess/Index.vue, code:app/Notification.php, code:app/Role.php]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
@@ -258,9 +258,9 @@ LINE 在修繕流程裡用於通知（修繕單建立等階段會透過 LINE 推
 送出後系統會直接把畫面帶回修繕單總表的「申請修繕」分頁，不需要額外操作確認。
 ### 安排廠商、完成修繕、結單時還會發哪些通知？（租客只有在這張修繕單會通知租客時才收得到；結單只寄 Email） {#jgb/F/repair-notifications-by-stage}
 - phrasings:
-  - {text: "安排修繕會通知租客嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "完成修繕後誰會知道", source: "draft:outline-20260920", status: proposed}
-  - {text: "修繕單結單會通知誰", source: "draft:outline-20260920", status: proposed}
+  - {text: "安排修繕會通知租客嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "完成修繕後誰會知道", source: "draft:outline-20260920", status: approved}
+  - {text: "修繕單結單會通知誰", source: "draft:outline-20260920", status: approved}
 - sources: [code:app/Notification.php, code:app/Http/Controllers/RepairController.php]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -273,9 +273,9 @@ LINE 在修繕流程裡用於通知（修繕單建立等階段會透過 LINE 推
 ## 修繕單編輯 {#F-repair-edit}
 ### 修繕單細節頁的進度時間軸顯示什麼？（申請修繕、安排修繕、完成修繕、結單、封存五個階段，以及各階段對應的日期） {#jgb/F/repair-edit-progress-timeline}
 - phrasings:
-  - {text: "修繕單進度怎麼看", source: "draft:outline-20260920", status: proposed}
-  - {text: "修繕單細節頁面", source: "draft:outline-20260920", status: proposed}
-  - {text: "修繕單時間軸", source: "draft:outline-20260920", status: proposed}
+  - {text: "修繕單進度怎麼看", source: "draft:outline-20260920", status: approved}
+  - {text: "修繕單細節頁面", source: "draft:outline-20260920", status: approved}
+  - {text: "修繕單時間軸", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/repair/edit/Index.vue, code:app/Http/Controllers/RepairController.php]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -287,8 +287,8 @@ LINE 在修繕流程裡用於通知（修繕單建立等階段會透過 LINE 推
 如果直接打開修繕單細節頁的網址、但網址裡沒有帶修繕單編號，系統會直接把使用者導回修繕單總表的「申請修繕」分頁。
 ### 修繕單細節頁怎麼列印？（右上角有「列印」按鈕，會叫出瀏覽器內建的列印視窗，可以印出來或存成 PDF） {#jgb/F/repair-edit-print}
 - phrasings:
-  - {text: "修繕單怎麼列印", source: "draft:outline-20260920", status: proposed}
-  - {text: "修繕單可以存成 PDF 嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "修繕單怎麼列印", source: "draft:outline-20260920", status: approved}
+  - {text: "修繕單可以存成 PDF 嗎", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/repair/edit/Index.vue]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -298,10 +298,10 @@ LINE 在修繕流程裡用於通知（修繕單建立等階段會透過 LINE 推
 點「列印」的時候，系統會叫出瀏覽器本身的列印視窗，讓使用者選擇要印出來還是存成 PDF。
 ### 修繕單細節頁怎麼切換狀態？（下拉選單直接選要換到哪個階段，按「變更」儲存） {#jgb/F/repair-edit-switch-status}
 - phrasings:
-  - {text: "修繕單細節頁怎麼改狀態", source: "draft:outline-20260920", status: proposed}
-  - {text: "怎麼在修繕單裡面切換階段", source: "draft:outline-20260920", status: proposed}
-  - {text: "細節頁的狀態下拉選單怎麼用", source: "draft:outline-20260920", status: proposed}
-  - {text: "選了狀態沒按變更會生效嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "修繕單細節頁怎麼改狀態", source: "draft:outline-20260920", status: approved}
+  - {text: "怎麼在修繕單裡面切換階段", source: "draft:outline-20260920", status: approved}
+  - {text: "細節頁的狀態下拉選單怎麼用", source: "draft:outline-20260920", status: approved}
+  - {text: "選了狀態沒按變更會生效嗎", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/repair/edit/Index.vue]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -312,9 +312,9 @@ LINE 在修繕流程裡用於通知（修繕單建立等階段會透過 LINE 推
 選好想要的階段之後要按「變更」這顆按鈕，系統才會真的儲存，不是選了就自動生效。
 ### 誰不能編輯修繕單細節頁？（租客帳號、大房東角色不能切換狀態、不能改廠商資訊、不能寫房東備註；租客只能編輯自己的房客備註） {#jgb/F/repair-edit-cannot-edit-roles}
 - phrasings:
-  - {text: "租客可以改修繕單嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "大房東可以編輯修繕單嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "誰能改修繕單內容", source: "draft:outline-20260920", status: proposed}
+  - {text: "租客可以改修繕單嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "大房東可以編輯修繕單嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "誰能改修繕單內容", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/repair/edit/Index.vue, code:src/pages/repair/edit/_parts/VendorContactSection.vue, code:app/Http/Controllers/UserController.php]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -325,10 +325,10 @@ LINE 在修繕流程裡用於通知（修繕單建立等階段會透過 LINE 推
 在「安排修繕」廠商資訊那一塊，就算已經有安排紀錄，租客跟大房東角色一樣看不到可以重新編輯的圖示。
 ### 修繕單細節頁顯示哪些報修時填的資料？（「細節補充」區塊底下：申請日期、是否緊急、照片、聯絡電話或 Email、物件區域與時區、分類項目、問題、備註、預約時段；房東方才看得到「細節補充」這個標題與說明文字） {#jgb/F/repair-edit-application-detail-readonly}
 - phrasings:
-  - {text: "修繕單細節頁看得到什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "修繕單申請內容在哪看", source: "draft:outline-20260920", status: proposed}
-  - {text: "細節補充是什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "報修資料能不能在細節頁改", source: "draft:outline-20260920", status: proposed}
+  - {text: "修繕單細節頁看得到什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "修繕單申請內容在哪看", source: "draft:outline-20260920", status: approved}
+  - {text: "細節補充是什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "報修資料能不能在細節頁改", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/repair/edit/Index.vue, code:src/pages/repair/edit/_parts/ApplicationDetail.vue]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -340,9 +340,9 @@ LINE 在修繕流程裡用於通知（修繕單建立等階段會透過 LINE 推
 只有這張修繕單被標記為緊急，這裡才會在申請日期旁邊多顯示一個「緊急」的標籤；但目前透過網頁申請修繕的流程，「緊急修繕」勾選框並沒有接上實際邏輯，勾了也不會讓這張單被標記為緊急（另見「報修細節要填哪些欄位，哪些是必填的」）。
 ### 怎麼安排修繕廠商？（填寫修繕時間、廠商名稱、維修人員、聯絡電話，儲存後會留下歷史紀錄可以展開查看） {#jgb/F/repair-edit-vendor-assign}
 - phrasings:
-  - {text: "怎麼填廠商資訊", source: "draft:outline-20260920", status: proposed}
-  - {text: "修繕單怎麼指派維修人員", source: "draft:outline-20260920", status: proposed}
-  - {text: "廠商聯絡資料怎麼填", source: "draft:outline-20260920", status: proposed}
+  - {text: "怎麼填廠商資訊", source: "draft:outline-20260920", status: approved}
+  - {text: "修繕單怎麼指派維修人員", source: "draft:outline-20260920", status: approved}
+  - {text: "廠商聯絡資料怎麼填", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/repair/edit/_parts/VendorContactSection.vue]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -353,9 +353,9 @@ LINE 在修繕流程裡用於通知（修繕單建立等階段會透過 LINE 推
 如果同一張修繕單改派過不只一次廠商，可以點「展開歷史紀錄」看到之前每一次安排的紀錄。
 ### 「房東備註」要填什麼？（完成時間、備註文字最多 300 字、可以附照片，最多 10 張、單檔最大 10MB、支援 JPG／PNG／PDF；只有有編輯權限的房東方帳號能編輯） {#jgb/F/repair-edit-landlord-complete-memo}
 - phrasings:
-  - {text: "房東備註在哪填", source: "draft:outline-20260920", status: proposed}
-  - {text: "房東備註可以放照片嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "備註字數限制多少", source: "draft:outline-20260920", status: proposed}
+  - {text: "房東備註在哪填", source: "draft:outline-20260920", status: approved}
+  - {text: "房東備註可以放照片嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "備註字數限制多少", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/repair/edit/Index.vue, code:src/pages/repair/_parts/MemoArea.vue]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -366,10 +366,10 @@ LINE 在修繕流程裡用於通知（修繕單建立等階段會透過 LINE 推
 照片最多可以放 10 張，支援 JPG、PNG、PDF 檔，單一檔案大小最大 10MB。
 ### 修繕結算金額在哪裡填、誰看得到？（在「完成修繕」的「房東備註」編輯模式填；「結算金額」欄位只有身分是房東的帳號才會顯示，租客看不到；填了金額不會自動產生帳單） {#jgb/F/repair-edit-amount-visibility}
 - phrasings:
-  - {text: "修繕結算金額怎麼填", source: "draft:outline-20260920", status: proposed}
-  - {text: "完成修繕怎麼登記費用", source: "draft:outline-20260920", status: proposed}
-  - {text: "修繕金額會變成帳單嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "修繕結算金額誰看得到", source: "draft:outline-20260920", status: proposed}
+  - {text: "修繕結算金額怎麼填", source: "draft:outline-20260920", status: approved}
+  - {text: "完成修繕怎麼登記費用", source: "draft:outline-20260920", status: approved}
+  - {text: "修繕金額會變成帳單嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "修繕結算金額誰看得到", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/repair/edit/Index.vue, code:app/Http/Controllers/RepairController.php, code:src/pages/repair/_parts/MemoArea.vue]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -381,9 +381,9 @@ LINE 在修繕流程裡用於通知（修繕單建立等階段會透過 LINE 推
 能編輯「房東備註」的只有房東方帳號，且要有「新增&編輯&刪除所屬修繕資料」或「新增&編輯&刪除所有修繕資料」權限；大房東角色與租客不能編輯。
 ### 「房客備註」是什麼？（右邊那一欄，放租客的備註文字與照片，只有租客自己能編輯；從網頁建立的修繕單都會顯示這一欄） {#jgb/F/repair-edit-tenant-memo}
 - phrasings:
-  - {text: "房客備註在哪", source: "draft:outline-20260920", status: proposed}
-  - {text: "修繕單為什麼沒有房客備註", source: "draft:outline-20260920", status: proposed}
-  - {text: "租客可以留言嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "房客備註在哪", source: "draft:outline-20260920", status: approved}
+  - {text: "修繕單為什麼沒有房客備註", source: "draft:outline-20260920", status: approved}
+  - {text: "租客可以留言嗎", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/repair/edit/Index.vue, code:src/pages/repair/_parts/MemoArea.vue, code:src/pages/repair/applyProcess/Index.vue, code:app/Http/Controllers/RepairController.php]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -394,9 +394,9 @@ LINE 在修繕流程裡用於通知（修繕單建立等階段會透過 LINE 推
 房客備註只有租客自己的帳號能編輯，房東方帳號打開這一區只能查看，看不到編輯圖示。
 ### 怎麼把修繕單分享出去給廠商？（在修繕單細節頁點「分享」，電腦上可以複製連結或用 LINE 分享，手機上會直接叫出手機的分享選單；廠商點開連結不需要登入 JGB 帳號） {#jgb/F/repair-edit-share-to-vendor}
 - phrasings:
-  - {text: "修繕單怎麼分享給廠商", source: "draft:outline-20260920", status: proposed}
-  - {text: "怎麼把修繕單傳給水電行", source: "draft:outline-20260920", status: proposed}
-  - {text: "修繕單連結怎麼複製", source: "draft:outline-20260920", status: proposed}
+  - {text: "修繕單怎麼分享給廠商", source: "draft:outline-20260920", status: approved}
+  - {text: "怎麼把修繕單傳給水電行", source: "draft:outline-20260920", status: approved}
+  - {text: "修繕單連結怎麼複製", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/repair/edit/_parts/ApplicationDetail.vue, code:app/Http/Middleware/LoginCheck.php]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -408,10 +408,10 @@ LINE 在修繕流程裡用於通知（修繕單建立等階段會透過 LINE 推
 ## 修繕單分享頁 {#F-repair-share}
 ### 修繕單分享頁需要先登入嗎？（不需要，這個連結是公開的，系統特別把它排除在登入檢查之外，任何拿到網址的人都可以直接打開） {#jgb/F/repair-share-public-link}
 - phrasings:
-  - {text: "修繕分享連結要登入嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "修繕單連結廠商打得開嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "分享頁需要帳號嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "修繕分享連結是公開的嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "修繕分享連結要登入嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "修繕單連結廠商打得開嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "分享頁需要帳號嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "修繕分享連結是公開的嗎", source: "draft:outline-20260920", status: approved}
 - sources: [code:app/Http/Middleware/LoginCheck.php, code:routes/web.php, code:src/pages/repair/share/Index.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
@@ -422,9 +422,9 @@ LINE 在修繕流程裡用於通知（修繕單建立等階段會透過 LINE 推
 如果連結裡的修繕單編號查無資料，系統會把使用者導去官網首頁，而不是顯示分享內容。
 ### 分享連結誰看得到？（金額只有在瀏覽者本人目前登入身分是房東時才會顯示，且不會核對是不是這張修繕單相關的房東或租客） {#jgb/F/repair-share-visibility-summary}
 - phrasings:
-  - {text: "分享連結誰都能看嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "修繕分享頁會外流個資嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "分享頁看得到金額嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "分享連結誰都能看嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "修繕分享頁會外流個資嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "分享頁看得到金額嗎", source: "draft:outline-20260920", status: approved}
 - sources: [code:app/Http/Controllers/RepairController.php, code:src/pages/repair/share/Index.vue]
 - reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager, prospect]
@@ -434,9 +434,9 @@ LINE 在修繕流程裡用於通知（修繕單建立等階段會透過 LINE 推
 系統產生分享頁資料時，不會核對這個瀏覽者是不是這張修繕單相關的房東或租客；「結算金額」是否顯示，只看瀏覽者目前登入的身分是不是房東，和是否與這張修繕單有關無關。
 ### 分享連結會過期嗎？（目前不會，沒有天數限制） {#jgb/F/repair-share-no-expiry}
 - phrasings:
-  - {text: "修繕分享連結會過期嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "修繕單連結多久失效", source: "draft:outline-20260920", status: proposed}
-  - {text: "分享連結有效期限", source: "draft:outline-20260920", status: proposed}
+  - {text: "修繕分享連結會過期嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "修繕單連結多久失效", source: "draft:outline-20260920", status: approved}
+  - {text: "分享連結有效期限", source: "draft:outline-20260920", status: approved}
 - sources: [code:app/Http/Controllers/RepairController.php]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -446,9 +446,9 @@ LINE 在修繕流程裡用於通知（修繕單建立等階段會透過 LINE 推
 分享頁抓資料時只靠修繕單的編號去找，不受天數期限或物件目前狀態影響。
 ### 修繕單分享頁看得到什麼？（修繕申請單標題與是否緊急、照片、報修細節、安排的廠商資訊、房東備註與房客備註，全部都是唯讀；不會顯示物件廣告連結、縮圖，也沒有房東／承租方資訊側欄） {#jgb/F/repair-share-content}
 - phrasings:
-  - {text: "分享頁看得到什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "修繕單連結打開會看到什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "廠商點連結能看到哪些資訊", source: "draft:outline-20260920", status: proposed}
+  - {text: "分享頁看得到什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "修繕單連結打開會看到什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "廠商點連結能看到哪些資訊", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/repair/share/Index.vue, code:app/Http/Controllers/RepairController.php]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]

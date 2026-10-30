@@ -1,0 +1,11 @@
+{
+ "verdict": "CONFIRMED",
+ "kind": "change",
+ "base": "de8e803d246019ffab8ffcffb06348c4ce389b7d",
+ "claim": "jgb.json 相對 HEAD 僅 1,753 條講法 status 由 proposed 改 approved，加兩個衍生 sha 欄位（重算相符）；細目 543、content_units、標題、id 無變動，無增刪講法，全部 approved 共 1,753（舊值 approved 0）；九架 md 只動狀態字樣，CATALOG.md 與 jgb.json 由九架重導出逐位元組相等；carry_phrasing_approved 實測保住 1,753 條且不擴及新句；citable_change_ids 為空；HANDOFF-20260923 該行屬實。",
+ "findings": [
+  "P4 非阻擋：CATALOG.md 差異是重導出填入講法欄，不是狀態字樣",
+  "P4 非阻擋：.agents 副本未帶 carry_phrasing_approved"
+ ],
+ "source_transcript": "a24b4ddb24f5c7b6c.output"
+}

@@ -9,10 +9,10 @@ language: zh-TW
 ## 電表列表與單一電表 {#G-power-meter}
 ### 電錶清單怎麼切換分類？（所有電錶、一般型、儲值型三個分類，切換後會換一批列表） {#jgb/G/power-meter-list-category-tabs}
 - phrasings:
-  - {text: "電錶清單怎麼切換分類", source: "draft:outline-20260920", status: proposed}
-  - {text: "一般型跟儲值型電錶差在哪裡看", source: "draft:outline-20260920", status: proposed}
-  - {text: "怎麼只看儲值型電錶", source: "draft:outline-20260920", status: proposed}
-  - {text: "電錶分類標籤有哪些", source: "draft:outline-20260920", status: proposed}
+  - {text: "電錶清單怎麼切換分類", source: "draft:outline-20260920", status: approved}
+  - {text: "一般型跟儲值型電錶差在哪裡看", source: "draft:outline-20260920", status: approved}
+  - {text: "怎麼只看儲值型電錶", source: "draft:outline-20260920", status: approved}
+  - {text: "電錶分類標籤有哪些", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/iots/list/Index.jsx]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -21,10 +21,10 @@ language: zh-TW
 電錶清單最上方有三個分類：所有電錶、一般型、儲值型，點選其中一個會換成該分類底下的電錶列表。
 ### 電錶清單的狀態標籤是什麼意思？（全部／供電中／斷電中／未連線，夾在分類跟清單之間；未連線含未啟用） {#jgb/G/power-meter-list-status-tags}
 - phrasings:
-  - {text: "電錶未連線標籤是什麼意思", source: "draft:outline-20260920", status: proposed}
-  - {text: "未啟用跟未連線一樣嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "供電中斷電中是什麼標籤", source: "draft:outline-20260920", status: proposed}
-  - {text: "狀態標籤在畫面哪個位置", source: "draft:outline-20260920", status: proposed}
+  - {text: "電錶未連線標籤是什麼意思", source: "draft:outline-20260920", status: approved}
+  - {text: "未啟用跟未連線一樣嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "供電中斷電中是什麼標籤", source: "draft:outline-20260920", status: approved}
+  - {text: "狀態標籤在畫面哪個位置", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/iots/list/Index.jsx, code:app/Http/Controllers/IotController.php, code:src/pages/iots/_parts/PowerTag.jsx]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -34,9 +34,9 @@ language: zh-TW
 未連線標籤旁邊的數字，把未連線跟未啟用兩種狀態都算進去；電錶本身顯示的文字如果是未啟用，篩選時同樣算在未連線這個標籤底下，不是另外分開算。
 ### 電錶清單怎麼用關鍵字搜尋？（可選描述、序號、設備名稱、所屬物件名稱其中一種） {#jgb/G/power-meter-list-search}
 - phrasings:
-  - {text: "電錶清單怎麼搜尋", source: "draft:outline-20260920", status: proposed}
-  - {text: "怎麼找特定的電錶", source: "draft:outline-20260920", status: proposed}
-  - {text: "電錶搜尋範圍有哪些", source: "draft:outline-20260920", status: proposed}
+  - {text: "電錶清單怎麼搜尋", source: "draft:outline-20260920", status: approved}
+  - {text: "怎麼找特定的電錶", source: "draft:outline-20260920", status: approved}
+  - {text: "電錶搜尋範圍有哪些", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/iots/list/Index.jsx]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -45,9 +45,9 @@ language: zh-TW
 可以用關鍵字搜尋，搜尋範圍可選描述、序號、設備名稱或所屬物件名稱其中一種。
 ### 電錶清單怎麼排序？（可依設備描述、目前電度、預計可用電度排序） {#jgb/G/power-meter-list-sort}
 - phrasings:
-  - {text: "電錶清單可以排序嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "電錶列表的排序選單", source: "draft:outline-20260920", status: proposed}
-  - {text: "門鎖清單能排序嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "電錶清單可以排序嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "電錶列表的排序選單", source: "draft:outline-20260920", status: approved}
+  - {text: "門鎖清單能排序嗎", source: "draft:outline-20260920", status: approved}
 - sources: [code:app/Iot.php, code:src/entry/iot.js, code:src/components/ListSearchBar.vue, code:resources/views/iot/index.blade.php]
 - reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
@@ -57,10 +57,10 @@ language: zh-TW
 門鎖、攝影機、小白盒清單的排序選單只有「設備描述(大)」與「設備描述(小)」兩個選項，沒有依目前電度、預計可用電度排序的選項。
 ### 電錶清單出現「原廠系統維護中」是什麼意思？（維護期間度數不更新、無法儲值） {#jgb/G/power-meter-manufacturer-maintenance}
 - phrasings:
-  - {text: "電錶維護中是什麼意思", source: "draft:outline-20260920", status: proposed}
-  - {text: "電錶顯示原廠系統維護中怎麼辦", source: "draft:outline-20260920", status: proposed}
-  - {text: "維護期間可以儲值嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "電錶度數為什麼不會動", source: "draft:outline-20260920", status: proposed}
+  - {text: "電錶維護中是什麼意思", source: "draft:outline-20260920", status: approved}
+  - {text: "電錶顯示原廠系統維護中怎麼辦", source: "draft:outline-20260920", status: approved}
+  - {text: "維護期間可以儲值嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "電錶度數為什麼不會動", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/iots/_parts/MaintenanceNotice.jsx, code:src/pages/iots/_parts/IotItem.jsx]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -71,10 +71,10 @@ language: zh-TW
 這則提示目前只會出現在其中一家電錶廠商的電錶上，其他廠商的電錶不會顯示這則提示、仍可正常操作。
 ### 電錶顯示目前連不上廠商怎麼辦？（度數不會更新、儲值送不出去；全站共用連線的廠商業者跟租客都看得到，以團隊帳號連線的廠商只有業者在清單頁看得到） {#jgb/G/power-meter-vendor-unreachable}
 - phrasings:
-  - {text: "電錶連不上廠商是什麼意思", source: "draft:outline-20260920", status: proposed}
-  - {text: "為什麼電錶儲值不了", source: "draft:outline-20260920", status: proposed}
-  - {text: "租客看得到連不上廠商的提示嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "電錶度數為什麼不會更新", source: "draft:outline-20260920", status: proposed}
+  - {text: "電錶連不上廠商是什麼意思", source: "draft:outline-20260920", status: approved}
+  - {text: "為什麼電錶儲值不了", source: "draft:outline-20260920", status: approved}
+  - {text: "租客看得到連不上廠商的提示嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "電錶度數為什麼不會更新", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/iots/_parts/ManufacturerServiceNotice.jsx, code:app/Http/Controllers/IotController.php]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, tenant]
@@ -86,10 +86,10 @@ language: zh-TW
 只有這個身分底下真的掛著會連不上的那家廠商的電錶時才會出現這則提示。
 ### 電錶顯示「服務到期」怎麼辦？（30 天內到期會提醒續訂；只有業者看得到，只出現在清單頁） {#jgb/G/power-meter-service-expiry}
 - phrasings:
-  - {text: "電錶服務快到期怎麼辦", source: "draft:outline-20260920", status: proposed}
-  - {text: "電錶帳號到期會怎樣", source: "draft:outline-20260920", status: proposed}
-  - {text: "為什麼有些電錶帳號沒有顯示到期提示", source: "draft:outline-20260920", status: proposed}
-  - {text: "電錶到期提示租客看得到嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "電錶服務快到期怎麼辦", source: "draft:outline-20260920", status: approved}
+  - {text: "電錶帳號到期會怎樣", source: "draft:outline-20260920", status: approved}
+  - {text: "為什麼有些電錶帳號沒有顯示到期提示", source: "draft:outline-20260920", status: approved}
+  - {text: "電錶到期提示租客看得到嗎", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/iots/_parts/ManufacturerServiceNotice.jsx, code:app/Http/Controllers/IotController.php, code:src/pages/iots/_parts/Single.vue, code:app/Iot.php]
 - reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
@@ -101,10 +101,10 @@ language: zh-TW
 這組提示只有業者身分看得到，租客一律看不到；也只出現在電錶清單頁，單一電錶頁不會顯示。
 ### 電錶清單每一列顯示什麼？（型號序號、目前電度、狀態、所屬物件；儲值型才有預計可用電度與低電度警報） {#jgb/G/power-meter-list-row-fields}
 - phrasings:
-  - {text: "電錶清單有哪些欄位", source: "draft:outline-20260920", status: proposed}
-  - {text: "電錶列表顯示什麼資訊", source: "draft:outline-20260920", status: proposed}
-  - {text: "儲值型電錶跟一般型差在哪", source: "draft:outline-20260920", status: proposed}
-  - {text: "最後連線成功時間是什麼", source: "draft:outline-20260920", status: proposed}
+  - {text: "電錶清單有哪些欄位", source: "draft:outline-20260920", status: approved}
+  - {text: "電錶列表顯示什麼資訊", source: "draft:outline-20260920", status: approved}
+  - {text: "儲值型電錶跟一般型差在哪", source: "draft:outline-20260920", status: approved}
+  - {text: "最後連線成功時間是什麼", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/iots/_parts/IotItem.jsx, code:src/pages/iots/_parts/PowerTag.jsx, code:app/Http/Controllers/Admin/CustomerServiceController.php, code:app/Jobs/DaeJob.php, code:app/Iot.php]
 - reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
@@ -116,10 +116,10 @@ language: zh-TW
 儲值型電錶如果可用電度偏低，會在預計可用電度旁多顯示一個低電度警報標籤；這個警報的門檻值，台科電那邊有回傳設定值就用它的，沒有回傳就用 JGB 系統預設的門檻值；JGB 介面本身沒有讓房東調整這個門檻的地方，儲值型分頁的清單最下面有一行提示，寫著若要修改低電度警報，要到台科電雲端儲值系統修改。
 ### 電錶清單列展開後能看什麼？（用電量走勢圖可選 1/7/30/90 天；CSV 只能下載前 90 天） {#jgb/G/power-meter-usage-chart-export}
 - phrasings:
-  - {text: "電錶用電量走勢圖去哪看", source: "draft:outline-20260920", status: proposed}
-  - {text: "電錶清單怎麼匯出CSV", source: "draft:outline-20260920", status: proposed}
-  - {text: "用電量圖表可以選幾天", source: "draft:outline-20260920", status: proposed}
-  - {text: "CSV可以下載多久的資料", source: "draft:outline-20260920", status: proposed}
+  - {text: "電錶用電量走勢圖去哪看", source: "draft:outline-20260920", status: approved}
+  - {text: "電錶清單怎麼匯出CSV", source: "draft:outline-20260920", status: approved}
+  - {text: "用電量圖表可以選幾天", source: "draft:outline-20260920", status: approved}
+  - {text: "CSV可以下載多久的資料", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/iots/_parts/IotItem.jsx]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -129,11 +129,11 @@ language: zh-TW
 也可以匯出成 CSV，CSV 只能下載前 90 天的資料。
 ### 電錶編輯頁能改什麼？（描述、綁定物件、供電狀態；儲值型另有電錶資料頁籤，帳號開通自動開立發票時還有開立發票頁籤；租客只能看不能改） {#jgb/G/power-meter-single-edit-tabs}
 - phrasings:
-  - {text: "電錶編輯頁可以改什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "電錶設定有哪些頁籤", source: "draft:outline-20260920", status: proposed}
-  - {text: "電錶怎麼改描述", source: "draft:outline-20260920", status: proposed}
-  - {text: "電錶發票設定在哪", source: "draft:outline-20260920", status: proposed}
-  - {text: "一般型電錶編輯頁有電錶資料頁籤嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "電錶編輯頁可以改什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "電錶設定有哪些頁籤", source: "draft:outline-20260920", status: approved}
+  - {text: "電錶怎麼改描述", source: "draft:outline-20260920", status: approved}
+  - {text: "電錶發票設定在哪", source: "draft:outline-20260920", status: approved}
+  - {text: "一般型電錶編輯頁有電錶資料頁籤嗎", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/iots/_parts/Single.vue, code:src/pages/iots/edit/Basic.jsx, code:src/utils/constants/iots.ts, code:src/helpers/iots.ts, code:src/pages/iots/_parts/PowerMeterInfo.jsx, code:src/pages/iots/edit/Log.jsx, code:src/styles/tailwind.sass]
 - reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
@@ -147,10 +147,10 @@ language: zh-TW
 電錶連線中、非租客登入時，頁面上方還會有切換供電狀態的按鈕。
 ### 一支電錶只能綁一個物件？（選擇物件的挑選頁是單選，選了一個之後其他物件會被鎖住不能再選） {#jgb/G/power-meter-single-estate-single-bind}
 - phrasings:
-  - {text: "電錶可以綁幾個物件", source: "draft:outline-20260920", status: proposed}
-  - {text: "電錶能不能綁多個物件", source: "draft:outline-20260920", status: proposed}
-  - {text: "電錶綁定物件的規則", source: "draft:outline-20260920", status: proposed}
-  - {text: "選擇物件是單選還是可以多選", source: "draft:outline-20260920", status: proposed}
+  - {text: "電錶可以綁幾個物件", source: "draft:outline-20260920", status: approved}
+  - {text: "電錶能不能綁多個物件", source: "draft:outline-20260920", status: approved}
+  - {text: "電錶綁定物件的規則", source: "draft:outline-20260920", status: approved}
+  - {text: "選擇物件是單選還是可以多選", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/iots/edit/Basic.jsx]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -160,10 +160,10 @@ language: zh-TW
 租客登入時看不到「選擇物件」按鈕與刪除物件的叉叉，無法自行變更電錶的綁定物件。
 ### 怎麼切換電錶的供電狀態？（一般型：供電／斷電；儲值型：儲值／強開／斷電，切換中鎖按鈕只有儲值型有） {#jgb/G/power-meter-mode-switch}
 - phrasings:
-  - {text: "電錶怎麼斷電", source: "draft:outline-20260920", status: proposed}
-  - {text: "怎麼切換電錶模式", source: "draft:outline-20260920", status: proposed}
-  - {text: "強開模式是什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "電錶切換中不能點是為什麼", source: "draft:outline-20260920", status: proposed}
+  - {text: "電錶怎麼斷電", source: "draft:outline-20260920", status: approved}
+  - {text: "怎麼切換電錶模式", source: "draft:outline-20260920", status: approved}
+  - {text: "強開模式是什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "電錶切換中不能點是為什麼", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/iots/_parts/TopUpSwitch.vue, code:src/pages/iots/_parts/PowerSwitch.vue, code:src/pages/iots/_parts/Single.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -175,10 +175,10 @@ language: zh-TW
 儲值型電錶的切換按鈕在處理中時會變成灰色、暫時無法再點；一般型電錶的供電／斷電按鈕沒有這個切換中鎖住的效果。
 ### 電錶資料頁的餘額、費率、預計可用電度怎麼看？（只有儲值型電錶才有這個頁籤；費率由雲端儲值系統設定，可用電度＝餘額÷費率） {#jgb/G/power-meter-basic-info-fields}
 - phrasings:
-  - {text: "電錶餘額怎麼看", source: "draft:outline-20260920", status: proposed}
-  - {text: "電錶費率是誰設定的", source: "draft:outline-20260920", status: proposed}
-  - {text: "預計可用電度怎麼算", source: "draft:outline-20260920", status: proposed}
-  - {text: "電號在哪裡查", source: "draft:outline-20260920", status: proposed}
+  - {text: "電錶餘額怎麼看", source: "draft:outline-20260920", status: approved}
+  - {text: "電錶費率是誰設定的", source: "draft:outline-20260920", status: approved}
+  - {text: "預計可用電度怎麼算", source: "draft:outline-20260920", status: approved}
+  - {text: "電號在哪裡查", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/iots/_parts/PowerMeterInfo.jsx, code:src/utils/constants/iots.ts]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -190,10 +190,10 @@ language: zh-TW
 預計可用電度的算法是目前餘額除以費率。
 ### 電錶怎麼儲值？（「儲值」按鈕就在清單列上，不用展開；金額固定四個選項，維護中或連不上廠商時按鈕會變灰） {#jgb/G/power-meter-topup-flow}
 - phrasings:
-  - {text: "電錶怎麼儲值", source: "draft:outline-20260920", status: proposed}
-  - {text: "儲值金額可以自己輸入嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "儲值後帳單在哪裡看", source: "draft:outline-20260920", status: proposed}
-  - {text: "儲值歷程在哪裡查", source: "draft:outline-20260920", status: proposed}
+  - {text: "電錶怎麼儲值", source: "draft:outline-20260920", status: approved}
+  - {text: "儲值金額可以自己輸入嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "儲值後帳單在哪裡看", source: "draft:outline-20260920", status: approved}
+  - {text: "儲值歷程在哪裡查", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/iots/_parts/IotItem.jsx, code:src/components/Lightbox/PowerMeterTopUp.vue, code:src/pages/iots/edit/Log.jsx, code:app/Iot.php, code:app/Http/Controllers/IotController.php]
 - reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
@@ -206,10 +206,10 @@ language: zh-TW
 儲值送出後，要等這次儲值確實入到電錶、完成之後，這一筆才會出現在電錶編輯頁的電錶資料頁籤、「電錶儲值歷程」清單裡，內容有儲值時間、金額、儲值前後金額與操作者；剛送出、還沒完成的儲值，在這份清單裡查不到。
 ### 電錶／門鎖／攝影機／小白盒頁面需要什麼條件才能進入？（房東方要有生效中的訂閱，而且方案有開放智能裝置功能；租客不受限制） {#jgb/G/iot-entry-requirements}
 - phrasings:
-  - {text: "電錶頁面打不開", source: "draft:outline-20260920", status: proposed}
-  - {text: "門鎖頁面顯示需要訂閱", source: "draft:outline-20260920", status: proposed}
-  - {text: "IoT 功能需要訂閱方案嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "方案沒有智能裝置功能會怎樣", source: "draft:outline-20260920", status: proposed}
+  - {text: "電錶頁面打不開", source: "draft:outline-20260920", status: approved}
+  - {text: "門鎖頁面顯示需要訂閱", source: "draft:outline-20260920", status: approved}
+  - {text: "IoT 功能需要訂閱方案嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "方案沒有智能裝置功能會怎樣", source: "draft:outline-20260920", status: approved}
 - sources: [code:routes/web.php, code:app/Http/Middleware/SubscriptionCheck.php, code:app/Http/Middleware/PremisesLimitCheck.php]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
@@ -219,9 +219,9 @@ language: zh-TW
 租客帳號進入這些頁面不受這兩項檢查限制。
 ### 開立發票頁籤裡面能填什麼？（目前只有帳單是否開立發票一個選項） {#jgb/G/power-meter-invoice-tab-fields}
 - phrasings:
-  - {text: "開立發票頁籤能填什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "電錶發票要怎麼設定統編", source: "draft:outline-20260920", status: proposed}
-  - {text: "帳單開立發票是哪個選項", source: "draft:outline-20260920", status: proposed}
+  - {text: "開立發票頁籤能填什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "電錶發票要怎麼設定統編", source: "draft:outline-20260920", status: approved}
+  - {text: "帳單開立發票是哪個選項", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/iots/_parts/Invoice.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -231,9 +231,9 @@ language: zh-TW
 出租方統一編號、稅別、承租方是否要打統一編號、買受人統一編號與買受人名稱這幾個欄位，目前在畫面上都看不到，也沒有地方可以填寫。
 ### 電錶清單沒有資料時畫面顯示什麼？（分類內沒有設備寫「此分類尚無設備」；完全沒綁定寫「目前尚無綁定設備」，租客看不到綁定引導連結） {#jgb/G/power-meter-list-empty-state}
 - phrasings:
-  - {text: "電錶清單沒有資料會顯示什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "此分類尚無設備是什麼意思", source: "draft:outline-20260920", status: proposed}
-  - {text: "目前尚無綁定設備怎麼處理", source: "draft:outline-20260920", status: proposed}
+  - {text: "電錶清單沒有資料會顯示什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "此分類尚無設備是什麼意思", source: "draft:outline-20260920", status: approved}
+  - {text: "目前尚無綁定設備怎麼處理", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/iots/list/Index.jsx]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -244,10 +244,10 @@ language: zh-TW
 ## 裝置頁（門鎖、攝影機、小白盒） {#G-device-page}
 ### 門鎖／攝影機／小白盒清單長什麼樣？（型號序號、描述、狀態、所屬物件四欄，可依關鍵字搜尋） {#jgb/G/device-page-shared-list}
 - phrasings:
-  - {text: "門鎖清單長怎樣", source: "draft:outline-20260920", status: proposed}
-  - {text: "攝影機列表有哪些欄位", source: "draft:outline-20260920", status: proposed}
-  - {text: "小白盒怎麼看清單", source: "draft:outline-20260920", status: proposed}
-  - {text: "裝置清單怎麼搜尋", source: "draft:outline-20260920", status: proposed}
+  - {text: "門鎖清單長怎樣", source: "draft:outline-20260920", status: approved}
+  - {text: "攝影機列表有哪些欄位", source: "draft:outline-20260920", status: approved}
+  - {text: "小白盒怎麼看清單", source: "draft:outline-20260920", status: approved}
+  - {text: "裝置清單怎麼搜尋", source: "draft:outline-20260920", status: approved}
 - sources: [code:resources/views/iot/index.blade.php, code:app/Iot.php, code:src/entry/iot.js, code:src/components/ListSearchBar.vue]
 - reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager, prospect]
@@ -258,10 +258,10 @@ language: zh-TW
 清單裡完全沒有綁定設備時，會提示尚無綁定設備，並附上前往進階設定綁定廠商的連結。
 ### 門鎖清單怎麼直接開門／鎖門？（開門一定有、鎖門只有特定廠商支援；離線時按鈕不會顯示） {#jgb/G/device-page-lock-open-close}
 - phrasings:
-  - {text: "門鎖怎麼直接開門", source: "draft:outline-20260920", status: proposed}
-  - {text: "怎麼在清單上鎖門", source: "draft:outline-20260920", status: proposed}
-  - {text: "為什麼我的門鎖沒有鎖門按鈕", source: "draft:outline-20260920", status: proposed}
-  - {text: "門鎖離線還能操作嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "門鎖怎麼直接開門", source: "draft:outline-20260920", status: approved}
+  - {text: "怎麼在清單上鎖門", source: "draft:outline-20260920", status: approved}
+  - {text: "為什麼我的門鎖沒有鎖門按鈕", source: "draft:outline-20260920", status: approved}
+  - {text: "門鎖離線還能操作嗎", source: "draft:outline-20260920", status: approved}
 - sources: [code:resources/views/iot/index.blade.php, code:app/Http/Controllers/IotController.php]
 - reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
@@ -274,10 +274,10 @@ SkyWatch 門鎖在連線且回報得到開關狀態時，狀態欄位會直接�
 門鎖顯示未連線時，畫面上沒有提供排查步驟或重新連線的操作說明，只能看到未連線這個狀態字樣本身。
 ### 裝置編輯頁的頁籤，門鎖跟攝影機／小白盒不一樣？（門鎖多出密碼設定、開門記錄兩個頁籤） {#jgb/G/device-edit-tabs-by-type}
 - phrasings:
-  - {text: "攝影機編輯頁有哪些頁籤", source: "draft:outline-20260920", status: proposed}
-  - {text: "門鎖設定頁籤有哪些", source: "draft:outline-20260920", status: proposed}
-  - {text: "小白盒可以改密碼嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "裝置編輯頁功能", source: "draft:outline-20260920", status: proposed}
+  - {text: "攝影機編輯頁有哪些頁籤", source: "draft:outline-20260920", status: approved}
+  - {text: "門鎖設定頁籤有哪些", source: "draft:outline-20260920", status: approved}
+  - {text: "小白盒可以改密碼嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "裝置編輯頁功能", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/entry/iot.js, code:resources/views/iot/index.blade.php, code:resources/views/iot/doorlock/basic.blade.php]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -288,10 +288,10 @@ SkyWatch 門鎖在連線且回報得到開關狀態時，狀態欄位會直接�
 基本設定頁籤都可以選擇或移除這台裝置綁定的物件。
 ### 私人門鎖跟共用門鎖差在哪？（私人只能綁一個物件，共用可以綁多個） {#jgb/G/device-lock-type-and-binding-limit}
 - phrasings:
-  - {text: "私人門鎖跟共用門鎖差別", source: "draft:outline-20260920", status: proposed}
-  - {text: "門鎖可以綁幾間房", source: "draft:outline-20260920", status: proposed}
-  - {text: "共用門鎖是什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "門鎖類型怎麼選", source: "draft:outline-20260920", status: proposed}
+  - {text: "私人門鎖跟共用門鎖差別", source: "draft:outline-20260920", status: approved}
+  - {text: "門鎖可以綁幾間房", source: "draft:outline-20260920", status: approved}
+  - {text: "共用門鎖是什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "門鎖類型怎麼選", source: "draft:outline-20260920", status: approved}
 - sources: [code:resources/views/iot/doorlock/basic.blade.php]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
@@ -301,10 +301,10 @@ SkyWatch 門鎖在連線且回報得到開關狀態時，狀態欄位會直接�
 一旦這把鎖已經綁了超過一個物件，門鎖類型的選項就會鎖住私人門鎖這個選項，無法再切回私人門鎖。
 ### 門鎖密碼有哪三種？（房東個人密碼、租客個人密碼、租客共用密碼，權限各不同） {#jgb/G/device-lock-passwords-three-types}
 - phrasings:
-  - {text: "門鎖密碼有幾種", source: "draft:outline-20260920", status: proposed}
-  - {text: "租客密碼房東能改嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "共用密碼是什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "門鎖密碼設定規則", source: "draft:outline-20260920", status: proposed}
+  - {text: "門鎖密碼有幾種", source: "draft:outline-20260920", status: approved}
+  - {text: "租客密碼房東能改嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "共用密碼是什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "門鎖密碼設定規則", source: "draft:outline-20260920", status: approved}
 - sources: [code:resources/views/iot/doorlock/password.blade.php]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -316,9 +316,9 @@ SkyWatch 門鎖在連線且回報得到開關狀態時，狀態欄位會直接�
 私人門鎖不會顯示租客共用密碼這個區塊。
 ### 門鎖的開門記錄怎麼看？（可依日期查詢操作時間與動作，沒有記錄時會顯示尚無記錄） {#jgb/G/device-lock-open-log}
 - phrasings:
-  - {text: "門鎖開門記錄在哪裡看", source: "draft:outline-20260920", status: proposed}
-  - {text: "怎麼查門鎖歷史紀錄", source: "draft:outline-20260920", status: proposed}
-  - {text: "開門記錄有哪些欄位", source: "draft:outline-20260920", status: proposed}
+  - {text: "門鎖開門記錄在哪裡看", source: "draft:outline-20260920", status: approved}
+  - {text: "怎麼查門鎖歷史紀錄", source: "draft:outline-20260920", status: approved}
+  - {text: "開門記錄有哪些欄位", source: "draft:outline-20260920", status: approved}
 - sources: [code:resources/views/iot/doorlock/log.blade.php]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -328,10 +328,10 @@ SkyWatch 門鎖在連線且回報得到開關狀態時，狀態欄位會直接�
 每一筆記錄顯示操作時間與動作兩個欄位；當天沒有任何記錄時會顯示尚無記錄。
 ### 小白盒綁定物件跟門鎖不同在哪？（小白盒不會讓物件被標記為「IoT裝置」，也不會擋刪除） {#jgb/G/device-gateway-not-counted}
 - phrasings:
-  - {text: "小白盒是什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "小白盒綁物件有差嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件為什麼沒顯示IoT裝置標籤", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件刪不掉是不是因為有綁裝置", source: "draft:outline-20260920", status: proposed}
+  - {text: "小白盒是什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "小白盒綁物件有差嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "物件為什麼沒顯示IoT裝置標籤", source: "draft:outline-20260920", status: approved}
+  - {text: "物件刪不掉是不是因為有綁裝置", source: "draft:outline-20260920", status: approved}
 - sources: [code:app/Http/Controllers/IotController.php, code:app/Estate.php, code:app/Http/Controllers/EstateController.php, code:resources/views/iot/index.blade.php]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -342,11 +342,11 @@ SkyWatch 門鎖在連線且回報得到開關狀態時，狀態欄位會直接�
 ## 遠端解鎖（輸入解鎖密碼開門） {#G-remote-unlock}
 ### 遠端解鎖連結怎麼用？（輸入共用密碼按開門，密碼錯誤或連結失效會提示原因） {#jgb/G/remote-unlock-page}
 - phrasings:
-  - {text: "遠端解鎖連結怎麼用", source: "draft:outline-20260920", status: proposed}
-  - {text: "收到開門連結要怎麼開門", source: "draft:outline-20260920", status: proposed}
-  - {text: "解鎖密碼輸入錯誤會怎樣", source: "draft:outline-20260920", status: proposed}
-  - {text: "這個開門連結為什麼失效", source: "draft:outline-20260920", status: proposed}
-  - {text: "遠端解鎖連結怎麼產生", source: "draft:outline-20260920", status: proposed}
+  - {text: "遠端解鎖連結怎麼用", source: "draft:outline-20260920", status: approved}
+  - {text: "收到開門連結要怎麼開門", source: "draft:outline-20260920", status: approved}
+  - {text: "解鎖密碼輸入錯誤會怎樣", source: "draft:outline-20260920", status: approved}
+  - {text: "這個開門連結為什麼失效", source: "draft:outline-20260920", status: approved}
+  - {text: "遠端解鎖連結怎麼產生", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/tools/unlock/Index.vue, code:app/Http/Controllers/ToolController.php, code:routes/web.php]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -359,9 +359,9 @@ SkyWatch 門鎖在連線且回報得到開關狀態時，狀態欄位會直接�
 門鎖的編輯頁與密碼設定頁籤裡沒有可以產生或顯示這個遠端解鎖連結的按鈕；每一台門鎖的連結是固定的，不會每次點擊都重新產生。
 ### 遠端解鎖連結需要登入嗎？（不用登入，只要有連結跟密碼就能開） {#jgb/G/remote-unlock-no-login}
 - phrasings:
-  - {text: "遠端解鎖要登入嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "開門連結免登入嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "沒有帳號可以開門嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "遠端解鎖要登入嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "開門連結免登入嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "沒有帳號可以開門嗎", source: "draft:outline-20260920", status: approved}
 - sources: [code:routes/web.php, code:src/pages/tools/unlock/Index.vue]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]

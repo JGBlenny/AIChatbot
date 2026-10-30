@@ -9,11 +9,11 @@ language: zh-TW
 ## 方案、價格與免費試用 {#I-pricing}
 ### JGB 有哪些方案？（免費試用、體驗方案、入門／熱門／專業四級距、企業方案） {#jgb/I/pricing-plan-tiers-overview}
 - phrasings:
-  - {text: "有哪些方案", source: "draft:outline-20260920", status: proposed}
-  - {text: "方案分幾種", source: "draft:outline-20260920", status: proposed}
-  - {text: "方案怎麼選", source: "draft:outline-20260920", status: proposed}
-  - {text: "價格方案介紹", source: "draft:outline-20260920", status: proposed}
-  - {text: "哪個方案適合我", source: "draft:outline-20260920", status: proposed}
+  - {text: "有哪些方案", source: "draft:outline-20260920", status: approved}
+  - {text: "方案分幾種", source: "draft:outline-20260920", status: approved}
+  - {text: "方案怎麼選", source: "draft:outline-20260920", status: approved}
+  - {text: "價格方案介紹", source: "draft:outline-20260920", status: approved}
+  - {text: "哪個方案適合我", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/listings/pricing/Home.vue, code:src/pages/listings/pricing/parts/PlanForm.vue, code:app/Http/Controllers/ApiController.php, code:src/pages/listings/pricing/parts/PlanAndDevice.vue]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
@@ -25,10 +25,10 @@ language: zh-TW
 企業方案主打客製化專屬 LOGO 頁與客製化專屬網址頁，是提供給大型企業的解決方案，需點選「深入了解企業方案」導向預約 demo 頁面洽談，頁面上不會顯示企業方案的價格。
 ### 免費試用怎麼開始、能用多久？（一個週期後不自動續訂） {#jgb/I/pricing-free-trial-eligibility}
 - phrasings:
-  - {text: "免費試用能用多久", source: "draft:outline-20260920", status: proposed}
-  - {text: "怎麼取得免費試用", source: "draft:outline-20260920", status: proposed}
-  - {text: "免費方案會自動續訂嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "試用期多長", source: "draft:outline-20260920", status: proposed}
+  - {text: "免費試用能用多久", source: "draft:outline-20260920", status: approved}
+  - {text: "怎麼取得免費試用", source: "draft:outline-20260920", status: approved}
+  - {text: "免費方案會自動續訂嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "試用期多長", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/listings/pricing/parts/PlanAndDevice.vue, code:app/User.php, code:config/defaultplan.php]
 - reviewed: {by: owner, at: 2026-10-04}
 - target_user: [property_manager, prospect]
@@ -38,10 +38,10 @@ language: zh-TW
 免費方案的效期是系統設定的一個週期（目前為一個月），到期後不會自動續訂。
 ### 免費試用不能用哪些功能？（最多 5 個物件，不支援團隊與門鎖電錶等進階功能） {#jgb/I/pricing-free-trial-feature-scope}
 - phrasings:
-  - {text: "免費方案有什麼限制", source: "draft:outline-20260920", status: proposed}
-  - {text: "免費試用不能用什麼功能", source: "draft:outline-20260920", status: proposed}
-  - {text: "免費方案物件上限", source: "draft:outline-20260920", status: proposed}
-  - {text: "免費試用支援哪些功能", source: "draft:outline-20260920", status: proposed}
+  - {text: "免費方案有什麼限制", source: "draft:outline-20260920", status: approved}
+  - {text: "免費試用不能用什麼功能", source: "draft:outline-20260920", status: approved}
+  - {text: "免費方案物件上限", source: "draft:outline-20260920", status: approved}
+  - {text: "免費試用支援哪些功能", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/listings/template-parts/LightboxFreePlan.vue]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
@@ -52,10 +52,10 @@ language: zh-TW
 免費試用彈窗裡把自動對帳列在不支援的功能，並註記「無法申請國泰、永豐可申請藍新、中信」；不過能不能開通某家金流還要看身分，例如個人房東連藍新也不能開通（另見「哪些身分或方案不能開通某些金流商」）。
 ### 個人房東與企業團隊方案差在哪？（團隊成員管理等四項功能、自動對帳與分店管理起始級距不同） {#jgb/I/pricing-individual-vs-corporate-team}
 - phrasings:
-  - {text: "個人房東跟團隊方案差別", source: "draft:outline-20260920", status: proposed}
-  - {text: "團隊方案多什麼功能", source: "draft:outline-20260920", status: proposed}
-  - {text: "企業團隊方案內容", source: "draft:outline-20260920", status: proposed}
-  - {text: "個人跟公司方案不一樣嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "個人房東跟團隊方案差別", source: "draft:outline-20260920", status: approved}
+  - {text: "團隊方案多什麼功能", source: "draft:outline-20260920", status: approved}
+  - {text: "企業團隊方案內容", source: "draft:outline-20260920", status: approved}
+  - {text: "個人跟公司方案不一樣嗎", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/listings/pricing/Home.vue, code:app/Http/Controllers/ApiController.php]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
@@ -68,10 +68,10 @@ language: zh-TW
 大房東管理在兩份比較表裡的支援情形完全相同：體驗方案不支援，入門、熱門、專業方案都支援。
 ### 免費方案與體驗方案差在哪？（前者系統贈送，後者付費訂閱、可選月繳或年繳，可建 10 個物件並自行續訂） {#jgb/I/pricing-free-vs-experience-plan}
 - phrasings:
-  - {text: "免費方案跟體驗方案差在哪", source: "draft:outline-20260920", status: proposed}
-  - {text: "免費方案跟體驗方案哪裡不同", source: "draft:outline-20260920", status: proposed}
-  - {text: "體驗方案是免費的嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "免費方案可以續訂嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "免費方案跟體驗方案差在哪", source: "draft:outline-20260920", status: approved}
+  - {text: "免費方案跟體驗方案哪裡不同", source: "draft:outline-20260920", status: approved}
+  - {text: "體驗方案是免費的嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "免費方案可以續訂嗎", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/listings/pricing/parts/FAQ.vue, code:src/pages/listings/pricing/parts/PlanForm.vue, code:app/User.php, code:config/defaultplan.php, code:src/pages/listings/template-parts/LightboxFreePlan.vue, code:src/pages/users/subscription/Chose.vue, code:src/pages/listings/pricing/parts/PlanAndDevice.vue]
 - reviewed: {by: owner, at: 2026-10-04}
 - target_user: [property_manager, prospect]
@@ -83,10 +83,10 @@ language: zh-TW
 免費方案是贈送的，系統不會替它自動續訂。
 ### 怎麼用物件數量試算方案價格？（50～500 物件拉桿試算，超過 500 個要洽企業方案） {#jgb/I/pricing-calc-by-estate-count}
 - phrasings:
-  - {text: "怎麼算方案價格", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件數量怎麼換算價格", source: "draft:outline-20260920", status: proposed}
-  - {text: "我有幾間房適合哪個方案", source: "draft:outline-20260920", status: proposed}
-  - {text: "價格試算工具", source: "draft:outline-20260920", status: proposed}
+  - {text: "怎麼算方案價格", source: "draft:outline-20260920", status: approved}
+  - {text: "物件數量怎麼換算價格", source: "draft:outline-20260920", status: approved}
+  - {text: "我有幾間房適合哪個方案", source: "draft:outline-20260920", status: approved}
+  - {text: "價格試算工具", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/listings/pricing/parts/CalculatePrice.vue]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
@@ -99,10 +99,10 @@ language: zh-TW
 選定物件數量後按「選擇方案」，會直接帶著方案、計費週期（月費／年費）與物件數量一起跳轉到訂閱頁面。
 ### 物件額度快滿了會怎樣？（剩 5 個以下觸發提醒，剛好剩 5 個另寄 Email） {#jgb/I/pricing-quota-near-full-notice}
 - phrasings:
-  - {text: "物件額度快滿了會通知嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件數量快到上限怎麼辦", source: "draft:outline-20260920", status: proposed}
-  - {text: "方案物件用完前有提醒嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "額度不夠怎麼知道", source: "draft:outline-20260920", status: proposed}
+  - {text: "物件額度快滿了會通知嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "物件數量快到上限怎麼辦", source: "draft:outline-20260920", status: approved}
+  - {text: "方案物件用完前有提醒嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "額度不夠怎麼知道", source: "draft:outline-20260920", status: approved}
 - sources: [code:app/Estate.php, code:app/Notification.php]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -113,10 +113,10 @@ language: zh-TW
 這個提醒只在身分目前有生效中的訂閱時才會觸發，沒有生效中的訂閱不會收到這個提醒。
 ### 企業方案提供什麼？（客製化 LOGO 頁與網址頁，需另外聯繫洽談） {#jgb/I/pricing-enterprise-plan-offer}
 - phrasings:
-  - {text: "企業方案內容", source: "draft:outline-20260920", status: proposed}
-  - {text: "企業方案怎麼申請", source: "draft:outline-20260920", status: proposed}
-  - {text: "大型企業方案", source: "draft:outline-20260920", status: proposed}
-  - {text: "客製化方案怎麼談", source: "draft:outline-20260920", status: proposed}
+  - {text: "企業方案內容", source: "draft:outline-20260920", status: approved}
+  - {text: "企業方案怎麼申請", source: "draft:outline-20260920", status: approved}
+  - {text: "大型企業方案", source: "draft:outline-20260920", status: approved}
+  - {text: "客製化方案怎麼談", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/listings/pricing/parts/PlanAndDevice.vue, code:src/pages/listings/pricing/parts/CalculatePrice.vue]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
@@ -127,10 +127,10 @@ language: zh-TW
 物件數量超過 500 個（試算拉桿上限）時，系統會提示改為聯繫企業方案。
 ### 體驗方案介紹頁講什麼？（每月費用試算、體驗方案資格需求、客戶見證、免費試用／免費諮詢按鈕） {#jgb/I/pricing-trial-plan-landing-page}
 - phrasings:
-  - {text: "體驗方案介紹頁", source: "draft:outline-20260920", status: proposed}
-  - {text: "體驗方案要多少錢", source: "draft:outline-20260920", status: proposed}
-  - {text: "體驗方案資格需求", source: "draft:outline-20260920", status: proposed}
-  - {text: "查看體驗方案會看到什麼", source: "draft:outline-20260920", status: proposed}
+  - {text: "體驗方案介紹頁", source: "draft:outline-20260920", status: approved}
+  - {text: "體驗方案要多少錢", source: "draft:outline-20260920", status: approved}
+  - {text: "體驗方案資格需求", source: "draft:outline-20260920", status: approved}
+  - {text: "查看體驗方案會看到什麼", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/listings/pricing/TrialPlan.vue]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
@@ -143,9 +143,9 @@ language: zh-TW
 頁面上下各有一組「免費試用」與「免費諮詢」按鈕，「免費試用」會開啟免費方案彈窗，「免費諮詢」會另開分頁導向預約 demo 表單。
 ### 方案價格怎麼算？（各方案單價從系統價格表讀取） {#jgb/I/pricing-plan-price-basis}
 - phrasings:
-  - {text: "方案價格數字", source: "draft:outline-20260920", status: proposed}
-  - {text: "體驗方案價格怎麼算", source: "draft:outline-20260920", status: proposed}
-  - {text: "方案價格從哪裡算出來", source: "draft:outline-20260920", status: proposed}
+  - {text: "方案價格數字", source: "draft:outline-20260920", status: approved}
+  - {text: "體驗方案價格怎麼算", source: "draft:outline-20260920", status: approved}
+  - {text: "方案價格從哪裡算出來", source: "draft:outline-20260920", status: approved}
 - sources: [code:app/Http/Controllers/UserController.php, code:app/Helper.php]
 - reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager, prospect]
@@ -154,10 +154,10 @@ language: zh-TW
 包含體驗方案在內，各方案的實際單價與級距價格都是從系統的方案物件價格表讀出來的，不是固定寫死的數字，因此這裡無法列出各級距的金額。
 ### 物件額度用滿了會怎樣？（新增物件、匯入等入口會被擋下並提示升級方案） {#jgb/I/pricing-quota-full-block}
 - phrasings:
-  - {text: "物件額度用滿了", source: "draft:outline-20260920", status: proposed}
-  - {text: "額度滿了不能新增物件", source: "draft:outline-20260920", status: proposed}
-  - {text: "訂閱失效還能新增物件嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "方案額度用完提示", source: "draft:outline-20260920", status: proposed}
+  - {text: "物件額度用滿了", source: "draft:outline-20260920", status: approved}
+  - {text: "額度滿了不能新增物件", source: "draft:outline-20260920", status: approved}
+  - {text: "訂閱失效還能新增物件嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "方案額度用完提示", source: "draft:outline-20260920", status: approved}
 - sources: [code:app/Http/Controllers/EstateController.php, code:app/Http/Middleware/SubscriptionCheck.php, code:app/Http/Middleware/PremisesLimitCheck.php, code:resources/views/layouts/lightbox/general.blade.php]
 - reviewed: {by: owner, at: 2026-10-04}
 - target_user: [property_manager]
@@ -171,9 +171,9 @@ language: zh-TW
 訂閱已失效時，複製物件、編輯物件、刊登招租廣告這些入口，也會出現同一個彈窗。
 ### 建立房東身分時會拿到什麼方案？（企業團隊與社宅房東自動取得免費方案；個人房東一般也是，透過特定優惠或行銷活動連結註冊時則取得活動指定的方案） {#jgb/I/pricing-landlord-initial-plan}
 - phrasings:
-  - {text: "註冊後會拿到什麼方案", source: "draft:outline-20260920", status: proposed}
-  - {text: "新帳號有送方案嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "用優惠連結註冊會拿到什麼方案", source: "draft:outline-20260920", status: proposed}
+  - {text: "註冊後會拿到什麼方案", source: "draft:outline-20260920", status: approved}
+  - {text: "新帳號有送方案嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "用優惠連結註冊會拿到什麼方案", source: "draft:outline-20260920", status: approved}
 - sources: [code:app/User.php, code:app/Http/Controllers/Admin/PromotionController.php, code:app/Http/Controllers/MarketingInviteController.php]
 - reviewed: {by: owner, at: 2026-10-04}
 - target_user: [property_manager, prospect]
@@ -185,10 +185,10 @@ language: zh-TW
 ## 訂閱、付款與訂單 {#I-subscription-payment}
 ### 訂閱頁怎麼選方案？（體驗方案、依物件數量拉桿的基本方案、企業方案洽談三選一） {#jgb/I/subscription-choose-plan-flow}
 - phrasings:
-  - {text: "訂閱頁怎麼選方案", source: "draft:outline-20260920", status: proposed}
-  - {text: "怎麼變更訂閱方案", source: "draft:outline-20260920", status: proposed}
-  - {text: "選方案時可以選幾種", source: "draft:outline-20260920", status: proposed}
-  - {text: "方案物件數量怎麼拉", source: "draft:outline-20260920", status: proposed}
+  - {text: "訂閱頁怎麼選方案", source: "draft:outline-20260920", status: approved}
+  - {text: "怎麼變更訂閱方案", source: "draft:outline-20260920", status: approved}
+  - {text: "選方案時可以選幾種", source: "draft:outline-20260920", status: approved}
+  - {text: "方案物件數量怎麼拉", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/subscription/Chose.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -200,10 +200,10 @@ language: zh-TW
 只有目前方案為空、體驗方案或免費方案時，體驗方案選項才能點選；已經是基本方案或更高方案的使用者，體驗方案選項會顯示為灰階樣式且無法點擊。
 ### 訂閱怎麼扣款？（先試刷 TWD 1 驗證信用卡、藍新金流走 SSL／PCI-DSS） {#jgb/I/subscription-payment-authorization-flow}
 - phrasings:
-  - {text: "訂閱怎麼付款", source: "draft:outline-20260920", status: proposed}
-  - {text: "訂閱扣款安全嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "信用卡驗證怎麼跑", source: "draft:outline-20260920", status: proposed}
-  - {text: "確認扣款會怎樣", source: "draft:outline-20260920", status: proposed}
+  - {text: "訂閱怎麼付款", source: "draft:outline-20260920", status: approved}
+  - {text: "訂閱扣款安全嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "信用卡驗證怎麼跑", source: "draft:outline-20260920", status: approved}
+  - {text: "確認扣款會怎樣", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/subscription/Chose.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
@@ -215,10 +215,10 @@ language: zh-TW
 按下「確認扣款」後會直接更新訂閱方案並執行扣款，頁面會提醒使用者在送出前再次確認方案與金額細節。
 ### 訂閱時發票資訊要填什麼？（二聯式／三聯式、統一編號僅三聯式必填；地址欄目前沒有掛必填檢查） {#jgb/I/subscription-invoice-fields}
 - phrasings:
-  - {text: "訂閱發票怎麼填", source: "draft:outline-20260920", status: proposed}
-  - {text: "二聯式三聯式差在哪", source: "draft:outline-20260920", status: proposed}
-  - {text: "統一編號要填嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "訂閱要留Email跟電話嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "訂閱發票怎麼填", source: "draft:outline-20260920", status: approved}
+  - {text: "二聯式三聯式差在哪", source: "draft:outline-20260920", status: approved}
+  - {text: "統一編號要填嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "訂閱要留Email跟電話嗎", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/subscription/Chose.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -230,10 +230,10 @@ language: zh-TW
 Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電話則兩種類型都不是必填欄位。
 ### 訂閱優惠碼怎麼用？（輸入後即時驗證，續訂優惠次數沒有設定上限時顯示「終生」） {#jgb/I/subscription-coupon-and-renewal-discount}
 - phrasings:
-  - {text: "訂閱優惠碼怎麼輸入", source: "draft:outline-20260920", status: proposed}
-  - {text: "優惠碼兌換", source: "draft:outline-20260920", status: proposed}
-  - {text: "續訂優惠次數", source: "draft:outline-20260920", status: proposed}
-  - {text: "續訂優惠可以用多久", source: "draft:outline-20260920", status: proposed}
+  - {text: "訂閱優惠碼怎麼輸入", source: "draft:outline-20260920", status: approved}
+  - {text: "優惠碼兌換", source: "draft:outline-20260920", status: approved}
+  - {text: "續訂優惠次數", source: "draft:outline-20260920", status: approved}
+  - {text: "續訂優惠可以用多久", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/subscription/Chose.vue, code:src/pages/users/subscription/MyPlan.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -244,10 +244,10 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 剩餘續訂優惠次數如果沒有設定，畫面會顯示為「終生」，代表這個優惠沒有次數上限；有設定次數時才會顯示實際剩餘次數。
 ### 我的方案頁看什麼？（方案卡片、付款方式綁定狀態、溢繳費用） {#jgb/I/subscription-my-plan-page}
 - phrasings:
-  - {text: "我的方案頁面內容", source: "draft:outline-20260920", status: proposed}
-  - {text: "怎麼看目前訂閱方案", source: "draft:outline-20260920", status: proposed}
-  - {text: "溢繳費用是什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "付款方式在哪裡看", source: "draft:outline-20260920", status: proposed}
+  - {text: "我的方案頁面內容", source: "draft:outline-20260920", status: approved}
+  - {text: "怎麼看目前訂閱方案", source: "draft:outline-20260920", status: approved}
+  - {text: "溢繳費用是什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "付款方式在哪裡看", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/subscription/MyPlan.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -257,10 +257,10 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 若已綁定信用卡會顯示卡別圖示、卡號與到期日；未綁定時顯示「尚未綁定」。
 ### 怎麼換綁信用卡？（更新要重新授權並試刷 1 元，變更方案按鈕需要對應權限） {#jgb/I/subscription-change-card-flow}
 - phrasings:
-  - {text: "怎麼換綁信用卡", source: "draft:outline-20260920", status: proposed}
-  - {text: "更換信用卡要重新授權嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "沒有權限可以變更方案嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "變更按鈕按不下去", source: "draft:outline-20260920", status: proposed}
+  - {text: "怎麼換綁信用卡", source: "draft:outline-20260920", status: approved}
+  - {text: "更換信用卡要重新授權嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "沒有權限可以變更方案嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "變更按鈕按不下去", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/subscription/MyPlan.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -270,10 +270,10 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 頁面上的「變更」按鈕只有在使用者具備變更訂閱方案的權限時才可以點擊，沒有這個權限的人看到的是無法點擊的灰階樣式。
 ### 換方案時舊方案沒用完的錢會退嗎？（按剩餘天數比例換算成溢繳金，直接折抵新方案費用） {#jgb/I/subscription-plan-change-billing}
 - phrasings:
-  - {text: "升級方案舊方案的錢退嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "降級方案會退費嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "溢繳金怎麼算", source: "draft:outline-20260920", status: proposed}
-  - {text: "換方案生效時間", source: "draft:outline-20260920", status: proposed}
+  - {text: "升級方案舊方案的錢退嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "降級方案會退費嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "溢繳金怎麼算", source: "draft:outline-20260920", status: approved}
+  - {text: "換方案生效時間", source: "draft:outline-20260920", status: approved}
 - sources: [code:app/Http/Controllers/UserController.php]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -283,10 +283,10 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 系統會依照目前方案「剩餘天數 ÷ 方案總天數」的比例，把原方案未使用完的費用換算成溢繳金，直接折抵這次要繳的金額，折抵不完的部分才會列為應付金額。
 ### 取消訂閱會怎樣？（立即停止自動續訂與已授權信用卡，但用到目前效期結束才失效） {#jgb/I/subscription-cancel-effect}
 - phrasings:
-  - {text: "取消訂閱馬上失效嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "取消訂閱要選原因嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "取消訂閱後還能用多久", source: "draft:outline-20260920", status: proposed}
-  - {text: "怎麼取消訂閱", source: "draft:outline-20260920", status: proposed}
+  - {text: "取消訂閱馬上失效嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "取消訂閱要選原因嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "取消訂閱後還能用多久", source: "draft:outline-20260920", status: approved}
+  - {text: "怎麼取消訂閱", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/subscription/Unsubscribe.vue, code:app/Http/Controllers/UserController.php]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -298,10 +298,10 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 取消動作能不能送出，看的是目前身分是否已經沒有「自動續約資料」——即使目前仍是有效訂閱中的免費方案（沒有自動續約資料），一樣會被這個檢查擋下、直接跳出系統忙碌的錯誤訊息，不會進入原因選擇畫面；這跟目前方案是否還在生效中無關。
 ### 自動續訂扣款失敗會怎樣？（方案資料整個清空、限額歸零、所有物件立即下架，沒有寬限期） {#jgb/I/subscription-renewal-charge-failure}
 - phrasings:
-  - {text: "續訂扣款失敗怎麼辦", source: "draft:outline-20260920", status: proposed}
-  - {text: "自動續約失敗會下架物件嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "沒有信用卡授權會怎樣", source: "draft:outline-20260920", status: proposed}
-  - {text: "續訂失敗有寬限期嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "續訂扣款失敗怎麼辦", source: "draft:outline-20260920", status: approved}
+  - {text: "自動續約失敗會下架物件嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "沒有信用卡授權會怎樣", source: "draft:outline-20260920", status: approved}
+  - {text: "續訂失敗有寬限期嗎", source: "draft:outline-20260920", status: approved}
 - sources: [code:app/Console/Commands/AutoRenewSubscription.php, code:app/Role.php]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -313,10 +313,10 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 這整個流程沒有任何寬限期或重試機制——系統沒有多留幾天再檢查一次或延後下架的邏輯，扣款失敗或條件不符當次排程就會立即清空並下架。
 ### 付款紀錄頁看什麼？（扣款日、訂單編號、付款內容、金額、收據） {#jgb/I/orders-payment-history}
 - phrasings:
-  - {text: "付款紀錄在哪裡看", source: "draft:outline-20260920", status: proposed}
-  - {text: "訂單紀錄怎麼查", source: "draft:outline-20260920", status: proposed}
-  - {text: "收據在哪裡下載", source: "draft:outline-20260920", status: proposed}
-  - {text: "扣款紀錄列表", source: "draft:outline-20260920", status: proposed}
+  - {text: "付款紀錄在哪裡看", source: "draft:outline-20260920", status: approved}
+  - {text: "訂單紀錄怎麼查", source: "draft:outline-20260920", status: approved}
+  - {text: "收據在哪裡下載", source: "draft:outline-20260920", status: approved}
+  - {text: "扣款紀錄列表", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/orders/Index.vue, code:app/Http/Controllers/UserController.php, code:routes/web.php]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -327,10 +327,10 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 頁面提示「如果紀錄有疑慮，請聯繫JGB客服」。
 ### 收款設置支援哪些金流商？（藍新／國泰世華／永豐／中信／icash Pay／現金收款帳戶，各家設定費與手續費不同） {#jgb/I/payment-vendor-options-overview}
 - phrasings:
-  - {text: "收款設置支援哪些金流", source: "draft:outline-20260920", status: proposed}
-  - {text: "線上收款要收多少費用", source: "draft:outline-20260920", status: proposed}
-  - {text: "金流申請要錢嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "手續費可以轉嫁給租客嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "收款設置支援哪些金流", source: "draft:outline-20260920", status: approved}
+  - {text: "線上收款要收多少費用", source: "draft:outline-20260920", status: approved}
+  - {text: "金流申請要錢嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "手續費可以轉嫁給租客嗎", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/payment/routerView/Add.vue, code:src/pages/users/payment/_parts/CashBanks.vue, doc:/Users/chenqinghuang/dev/work/docs/幫助中心/JGB幫助中心_HTML_交付_20260818/qa27_zh-Hant.html]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -344,10 +344,10 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 以上金流商不是每個身分或方案都能開通：個人房東不能開通藍新、國泰世華、永豐；免費方案與體驗方案不能開通國泰世華、永豐。
 ### 哪些身分或方案不能開通某些金流商？（個人房東不能開藍新／國泰世華／永豐，免費方案／體驗方案不能開國泰世華／永豐） {#jgb/I/payment-vendor-eligibility-by-role-and-plan}
 - phrasings:
-  - {text: "個人房東能開藍新嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "免費方案能開國泰世華嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "金流商為什麼不能選", source: "draft:outline-20260920", status: proposed}
-  - {text: "收款方式被鎖住怎麼辦", source: "draft:outline-20260920", status: proposed}
+  - {text: "個人房東能開藍新嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "免費方案能開國泰世華嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "金流商為什麼不能選", source: "draft:outline-20260920", status: approved}
+  - {text: "收款方式被鎖住怎麼辦", source: "draft:outline-20260920", status: approved}
 - sources: [code:app/Http/Controllers/UserController.php, code:src/pages/users/payment/routerView/Add.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -357,10 +357,10 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 被標成不可開通的金流商在選單上仍以正常顏色顯示，點選後畫面不會出現該金流商的申請表單，改以紅字顯示「您無法開通此收款方式，若有問題請洽詢JGB客服」；選單上金流商變成灰階是另一件事，代表這家金流已經開通滿三組帳號。
 ### 藍新金流申請要注意什麼？（個人房東無法申請；手機與 Email 送出後不能改，每個金流最多開三組帳號，需審核） {#jgb/I/payment-newebpay-setup-details}
 - phrasings:
-  - {text: "藍新金流怎麼申請", source: "draft:outline-20260920", status: proposed}
-  - {text: "藍新申請資料能改嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "金流最多能開幾組帳號", source: "draft:outline-20260920", status: proposed}
-  - {text: "藍新審核要多久", source: "draft:outline-20260920", status: proposed}
+  - {text: "藍新金流怎麼申請", source: "draft:outline-20260920", status: approved}
+  - {text: "藍新申請資料能改嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "金流最多能開幾組帳號", source: "draft:outline-20260920", status: approved}
+  - {text: "藍新審核要多久", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/payment/_parts/Newebpay.vue, code:src/pages/users/payment/routerView/Add.vue, doc:/Users/chenqinghuang/dev/work/docs/幫助中心/JGB幫助中心_HTML_交付_20260818/qa27_zh-Hant.html]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -373,10 +373,10 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 只要有勾選開通信用卡（含國外信用卡）付款方式，藍新就需要三個工作天以上的審核時間，實際天數依藍新官方審核進度調整。
 ### 金流綁定後還能改嗎？（綁定資料都是唯讀；國泰世華只能補填還沒填齊的超商條碼欄位） {#jgb/I/payment-vendor-edit-after-binding}
 - phrasings:
-  - {text: "收款方式可以改嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "金流明細可以編輯嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "綁定後想改資料怎麼辦", source: "draft:outline-20260920", status: proposed}
-  - {text: "哪個金流可以重新送審", source: "draft:outline-20260920", status: proposed}
+  - {text: "收款方式可以改嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "金流明細可以編輯嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "綁定後想改資料怎麼辦", source: "draft:outline-20260920", status: approved}
+  - {text: "哪個金流可以重新送審", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/payment/routerView/Detail.vue, code:src/pages/users/payment/_parts/Cathaybk.vue]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -385,10 +385,10 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 綁定成功後點進明細頁查看，各家金流商的資料都是唯讀、不能再編輯重送；唯一的例外是國泰世華：如果當初超商條碼相關欄位還沒填齊，明細頁可以補填這一段再送出，其他已綁定的欄位仍然不能改。
 ### 藍新／中信收款帳戶申請要多久？（藍新：智付通至少 2-5 個工作天；中信 ACH 驗證約 5 個工作天） {#jgb/I/payment-icash-ctbc-setup}
 - phrasings:
-  - {text: "藍新申請要多久", source: "draft:outline-20260920", status: proposed}
-  - {text: "中信收款帳戶審核多久", source: "draft:outline-20260920", status: proposed}
-  - {text: "智付通開通要多久", source: "draft:outline-20260920", status: proposed}
-  - {text: "ACH驗證是什麼", source: "draft:outline-20260920", status: proposed}
+  - {text: "藍新申請要多久", source: "draft:outline-20260920", status: approved}
+  - {text: "中信收款帳戶審核多久", source: "draft:outline-20260920", status: approved}
+  - {text: "智付通開通要多久", source: "draft:outline-20260920", status: approved}
+  - {text: "ACH驗證是什麼", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/payment/routerView/Add.vue, code:src/pages/users/payment/_parts/Ctbc.vue]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -398,10 +398,10 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 選擇中國信託時，頁面說明送審後會由 JGB 進行 ACH 驗證並撥款 1 元到收款帳號，審核時間需要 5 個工作天（不含例假日）。
 ### 收據範本有哪些？（財政部包租業租金收據範本只有法人／社宅團隊才看得到） {#jgb/I/payment-receipt-template-options}
 - phrasings:
-  - {text: "收據範本有哪些", source: "draft:outline-20260920", status: proposed}
-  - {text: "財政部範本怎麼設定", source: "draft:outline-20260920", status: proposed}
-  - {text: "一般收據怎麼選", source: "draft:outline-20260920", status: proposed}
-  - {text: "收據要不要開通", source: "draft:outline-20260920", status: proposed}
+  - {text: "收據範本有哪些", source: "draft:outline-20260920", status: approved}
+  - {text: "財政部範本怎麼設定", source: "draft:outline-20260920", status: approved}
+  - {text: "一般收據怎麼選", source: "draft:outline-20260920", status: approved}
+  - {text: "收據要不要開通", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/payment/_parts/Receipt.vue, code:src/utils/constants/paymentSetting.ts]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -412,10 +412,10 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 收據可以上傳一張用印圖片作為正式收款依據，限定 JPG、PNG 檔，最多 1 張，檔案大小上限 10MB；這個上傳欄位不受收據類型限制、一律顯示，只有沒有「編輯收款設置」權限時才會整區塊變灰無法操作，跟收據類型選了哪一種、目前身分是不是團隊都無關。
 ### 押金收據能自訂摘要跟蓋章嗎？（摘要與三顆收款章都只有特定合作團隊才看得到） {#jgb/I/payment-receipt-deposit-team-extras}
 - phrasings:
-  - {text: "押金收據摘要怎麼改", source: "draft:outline-20260920", status: proposed}
-  - {text: "收據可以蓋章嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "押金收據印章設定", source: "draft:outline-20260920", status: proposed}
-  - {text: "押金收據字數上限", source: "draft:outline-20260920", status: proposed}
+  - {text: "押金收據摘要怎麼改", source: "draft:outline-20260920", status: approved}
+  - {text: "收據可以蓋章嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "押金收據印章設定", source: "draft:outline-20260920", status: approved}
+  - {text: "押金收據字數上限", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/payment/_parts/Receipt.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -424,10 +424,10 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 押金收據的「摘要」欄開頭文字可以自訂、最多 20 個字（留空沿用團隊名稱），以及設定三顆收款章（主辦出納、主辦會計、機構首長）蓋印於押金收據對應的用印格——這一整塊設定只有特定的合作團隊身分才會顯示，一般房東完全看不到這個區塊。
 ### 帳單怎麼開電子發票？（要先聯繫 JGB 業務開通加值服務，開通後才會出現稅與發票分頁） {#jgb/I/payment-bill-e-invoice-setup}
 - phrasings:
-  - {text: "帳單怎麼開發票", source: "draft:outline-20260920", status: proposed}
-  - {text: "電子發票怎麼啟用", source: "draft:outline-20260920", status: proposed}
-  - {text: "合約怎麼設定要不要開發票", source: "draft:outline-20260920", status: proposed}
-  - {text: "發票功能怎麼申請", source: "draft:outline-20260920", status: proposed}
+  - {text: "帳單怎麼開發票", source: "draft:outline-20260920", status: approved}
+  - {text: "電子發票怎麼啟用", source: "draft:outline-20260920", status: approved}
+  - {text: "合約怎麼設定要不要開發票", source: "draft:outline-20260920", status: approved}
+  - {text: "發票功能怎麼申請", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/payment/_parts/Invoice.vue]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
@@ -438,10 +438,10 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 發票的開立模式一般只有「帳單已到帳後開立」；部分特定合作團隊另外可以選「預先開立發票」，再設定「預先開立發票時機」為「發送帳單」「繳費期限前」或「繳費期限後」，選後兩者時還要指定天數。
 ### 沒有查看權限會怎樣？（收款設置與訂閱方案選單整個不會出現） {#jgb/I/payment-permission-menu-visibility}
 - phrasings:
-  - {text: "沒有權限看不到收款設置", source: "draft:outline-20260920", status: proposed}
-  - {text: "訂閱方案選單不見了", source: "draft:outline-20260920", status: proposed}
-  - {text: "為什麼找不到訂閱方案", source: "draft:outline-20260920", status: proposed}
-  - {text: "查看訂閱方案權限的作用", source: "draft:outline-20260920", status: proposed}
+  - {text: "沒有權限看不到收款設置", source: "draft:outline-20260920", status: approved}
+  - {text: "訂閱方案選單不見了", source: "draft:outline-20260920", status: approved}
+  - {text: "為什麼找不到訂閱方案", source: "draft:outline-20260920", status: approved}
+  - {text: "查看訂閱方案權限的作用", source: "draft:outline-20260920", status: approved}
 - sources: [code:app/Role.php, code:app/Http/Controllers/UserController.php]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -450,10 +450,10 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 側邊選單的【收款設置】與【訂閱方案】分別看團隊成員有沒有「查看收款設置」「查看訂閱方案」權限；沒有對應的權限時，該選單會整個不出現，而不是變成灰色不能點。
 ### 帳單可以自動排程發送、指定收款人嗎？（提前 0～20 天自動發送，收款人可選原簽約者／主要經理人／自訂） {#jgb/I/payment-bill-autosend-and-recipient}
 - phrasings:
-  - {text: "帳單自動發送設定", source: "draft:outline-20260920", status: proposed}
-  - {text: "帳單提前幾天發送", source: "draft:outline-20260920", status: proposed}
-  - {text: "帳單收款人怎麼設定", source: "draft:outline-20260920", status: proposed}
-  - {text: "收款人可以改成別人嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "帳單自動發送設定", source: "draft:outline-20260920", status: approved}
+  - {text: "帳單提前幾天發送", source: "draft:outline-20260920", status: approved}
+  - {text: "帳單收款人怎麼設定", source: "draft:outline-20260920", status: approved}
+  - {text: "收款人可以改成別人嗎", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/payment/_parts/OtherSetting.vue, code:src/pages/users/payment/_parts/Receipt.vue, code:src/utils/constants/paymentSetting.ts]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -465,10 +465,10 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 ## 預約 demo {#I-demo-booking}
 ### 預約 demo 表單要填什麼？（公司名稱、職稱、姓名、電話、Email、物件所在地、物件數量、團隊人數、最有興趣的功能、諮詢內容，並勾選同意隱私權政策） {#jgb/I/demo-form-fields}
 - phrasings:
-  - {text: "預約demo要填什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "怎麼申請demo", source: "draft:outline-20260920", status: proposed}
-  - {text: "聯繫我們表單欄位", source: "draft:outline-20260920", status: proposed}
-  - {text: "demo表單怎麼填", source: "draft:outline-20260920", status: proposed}
+  - {text: "預約demo要填什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "怎麼申請demo", source: "draft:outline-20260920", status: approved}
+  - {text: "聯繫我們表單欄位", source: "draft:outline-20260920", status: approved}
+  - {text: "demo表單怎麼填", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/listings/DemoForm.vue]
 - reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager, prospect]
@@ -480,10 +480,10 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 「送出」按鈕要等公司名稱、職稱、姓名、電話、Email、物件所在地、最有興趣的功能、物件數量、團隊人數、諮詢內容這 10 項都填妥並勾選隱私權政策，才會從灰色變成主色。
 ### demo 表單的下拉選項有哪些？（物件數量 7 級距、團隊人數 6 級距、感興趣功能 6 項） {#jgb/I/demo-form-option-lists}
 - phrasings:
-  - {text: "物件數量選項有哪些", source: "draft:outline-20260920", status: proposed}
-  - {text: "團隊人數怎麼選", source: "draft:outline-20260920", status: proposed}
-  - {text: "感興趣功能有哪些選項", source: "draft:outline-20260920", status: proposed}
-  - {text: "demo表單職稱選單", source: "draft:outline-20260920", status: proposed}
+  - {text: "物件數量選項有哪些", source: "draft:outline-20260920", status: approved}
+  - {text: "團隊人數怎麼選", source: "draft:outline-20260920", status: approved}
+  - {text: "感興趣功能有哪些選項", source: "draft:outline-20260920", status: approved}
+  - {text: "demo表單職稱選單", source: "draft:outline-20260920", status: approved}
 - sources: [code:config/demoform.php]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
@@ -495,10 +495,10 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 「職稱」下拉選單提供公司負責人、公司主要管理者、行銷主管、業務主管、營運主管、財務主管、技術主管、行銷窗口、業務窗口、營運窗口、財務窗口、技術窗口、其他共 13 個選項。
 ### demo 表單送出後多久有人聯繫？（顯示感謝頁，2-3 個工作天內專人聯繫） {#jgb/I/demo-form-submit-result}
 - phrasings:
-  - {text: "demo表單送出後多久聯繫", source: "draft:outline-20260920", status: proposed}
-  - {text: "預約demo後會怎樣", source: "draft:outline-20260920", status: proposed}
-  - {text: "填完表單多久有人回覆", source: "draft:outline-20260920", status: proposed}
-  - {text: "demo表單送出成功畫面", source: "draft:outline-20260920", status: proposed}
+  - {text: "demo表單送出後多久聯繫", source: "draft:outline-20260920", status: approved}
+  - {text: "預約demo後會怎樣", source: "draft:outline-20260920", status: approved}
+  - {text: "填完表單多久有人回覆", source: "draft:outline-20260920", status: approved}
+  - {text: "demo表單送出成功畫面", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/listings/DemoForm.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
@@ -507,10 +507,10 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 表單送出成功後會切換成感謝畫面，寫著「謝謝您完成預約表單」，並提示「感謝您完成填寫表單，將會有專人於 2-3 天工作天聯繫您」，畫面上有按鈕可以回到官網首頁。
 ### demo 表單漏填欄位時，系統端會擋下哪些？（送出後系統端只檢查公司名稱、姓名、電話、Email 四項，其餘欄位空白不會被系統端退回） {#jgb/I/demo-form-actual-validation-scope}
 - phrasings:
-  - {text: "demo表單哪些欄位真的必填", source: "draft:outline-20260920", status: proposed}
-  - {text: "實際驗證跟畫面要求一樣嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "demo表單漏填會怎樣", source: "draft:outline-20260920", status: proposed}
-  - {text: "demo表單驗證規則", source: "draft:outline-20260920", status: proposed}
+  - {text: "demo表單哪些欄位真的必填", source: "draft:outline-20260920", status: approved}
+  - {text: "實際驗證跟畫面要求一樣嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "demo表單漏填會怎樣", source: "draft:outline-20260920", status: approved}
+  - {text: "demo表單驗證規則", source: "draft:outline-20260920", status: approved}
 - sources: [code:app/Http/Controllers/IndexController.php, code:src/pages/listings/DemoForm.vue]
 - reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
@@ -523,9 +523,9 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 ## 控制台（設定、通知信範本、自動化任務） {#I-control-panel}
 ### 控制台首頁目前能用什麼？（目前只有「任務管理器」一個項目可以點擊進入，而且只開放給特定合作團隊） {#jgb/I/control-panel-entry-scope}
 - phrasings:
-  - {text: "控制台有什麼功能", source: "draft:outline-20260920", status: proposed}
-  - {text: "控制台首頁能做什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "控制台目前可以用哪些設定", source: "draft:outline-20260920", status: proposed}
+  - {text: "控制台有什麼功能", source: "draft:outline-20260920", status: approved}
+  - {text: "控制台首頁能做什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "控制台目前可以用哪些設定", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/control-panel/Index.vue, code:src/routes/controlPanel.js]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -535,10 +535,10 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 任務管理器的卡片說明是「設定您的排程機器人，在滿足設定的條件後，可以觸發自動操作」；點擊後，只有開放控制台的特定合作團隊會進入任務管理器頁面，其他帳號會被導回會員中心首頁。
 ### 進入控制台設定後看到什麼？（上方三層麵包屑與左側「控制台」側邊欄，內容是任務管理器、新增／編輯任務或通知信設定頁） {#jgb/I/control-panel-setting-shell}
 - phrasings:
-  - {text: "控制台設定頁內容", source: "draft:outline-20260920", status: proposed}
-  - {text: "任務管理器上一層是什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "控制台麵包屑", source: "draft:outline-20260920", status: proposed}
-  - {text: "控制台側邊欄", source: "draft:outline-20260920", status: proposed}
+  - {text: "控制台設定頁內容", source: "draft:outline-20260920", status: approved}
+  - {text: "任務管理器上一層是什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "控制台麵包屑", source: "draft:outline-20260920", status: approved}
+  - {text: "控制台側邊欄", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/control-panel/setting/Index.jsx, code:src/routes/controlPanel.js, code:src/pages/control-panel/_parts/OrderAside.vue]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -549,10 +549,10 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 手機版沒有左側欄，改成頁面上方一條顯示目前項目名稱的選單列，點開可以選項目。
 ### 任務管理器是做什麼用的？（設定週期性任務或預定通知的排程功能） {#jgb/I/task-manager-purpose}
 - phrasings:
-  - {text: "任務管理器是什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "自動化任務怎麼運作", source: "draft:outline-20260920", status: proposed}
-  - {text: "排程機器人是什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "任務管理器用途", source: "draft:outline-20260920", status: proposed}
+  - {text: "任務管理器是什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "自動化任務怎麼運作", source: "draft:outline-20260920", status: approved}
+  - {text: "排程機器人是什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "任務管理器用途", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/control-panel/taskManagement/Index.vue]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -562,10 +562,10 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 任務列表可以用「社區」「任務類型」篩選，也可以用任務名稱關鍵字搜尋；沒有符合篩選條件時顯示「沒有符合的結果」，完全沒有建立過任務時顯示「目前尚無任務資料」。
 ### 新增任務能選哪些類型？（目前只開放「通知」類型，行為是信件通知或站內通知） {#jgb/I/task-manager-type-behavior-scope}
 - phrasings:
-  - {text: "任務類型有哪些", source: "draft:outline-20260920", status: proposed}
-  - {text: "任務行為可以選什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "可以設定修繕單自動開單嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "通知任務怎麼設定", source: "draft:outline-20260920", status: proposed}
+  - {text: "任務類型有哪些", source: "draft:outline-20260920", status: approved}
+  - {text: "任務行為可以選什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "可以設定修繕單自動開單嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "通知任務怎麼設定", source: "draft:outline-20260920", status: approved}
 - sources: [code:app/Services/TaskService.php, code:src/pages/control-panel/taskManagement/Index.vue]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -575,10 +575,10 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 任務管理器列表頁的說明文字雖然舉例提到「週期修繕單」，但目前新增任務時可以選的任務類型只有「通知」，「修繕管理」目前沒有這個選項。
 ### 任務週期怎麼設定？（單位分年／月，方式可選僅一次、持續不停、特定日期結束、重複特定次數） {#jgb/I/task-manager-cycle-options}
 - phrasings:
-  - {text: "任務週期怎麼設定", source: "draft:outline-20260920", status: proposed}
-  - {text: "任務可以只跑一次嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "任務可以設定結束日期嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "任務重複次數怎麼設定", source: "draft:outline-20260920", status: proposed}
+  - {text: "任務週期怎麼設定", source: "draft:outline-20260920", status: approved}
+  - {text: "任務可以只跑一次嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "任務可以設定結束日期嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "任務重複次數怎麼設定", source: "draft:outline-20260920", status: approved}
 - sources: [code:app/Services/TaskService.php]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -588,10 +588,10 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 任務的重複方式有四種：「僅一次」、「持續不停」、「特定日期結束」、「重複特定次數」。
 ### 新增任務表單有哪些欄位？（任務名稱、任務類型、關聯物件、任務行為、任務時間、重複間隔、結束時間、通知對象、通知內容） {#jgb/I/task-manager-form-fields}
 - phrasings:
-  - {text: "新增任務要填哪些欄位", source: "draft:outline-20260920", status: proposed}
-  - {text: "任務表單內容", source: "draft:outline-20260920", status: proposed}
-  - {text: "關聯物件怎麼選", source: "draft:outline-20260920", status: proposed}
-  - {text: "通知對象怎麼設定", source: "draft:outline-20260920", status: proposed}
+  - {text: "新增任務要填哪些欄位", source: "draft:outline-20260920", status: approved}
+  - {text: "任務表單內容", source: "draft:outline-20260920", status: approved}
+  - {text: "關聯物件怎麼選", source: "draft:outline-20260920", status: approved}
+  - {text: "通知對象怎麼設定", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/control-panel/taskManagement/edit/Index.jsx]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -601,10 +601,10 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 編輯已存在的週期性任務時，會多一個「編輯範圍」欄位，用來選擇這次修改只套用在這一項任務、還是套用在這項任務和後續任務。
 ### 已建立的任務怎麼編輯／刪除？（每筆任務可編輯、複製、刪除，編輯週期任務可選只改這次或連後續一起改） {#jgb/I/task-manager-edit-delete-copy}
 - phrasings:
-  - {text: "任務可以刪除嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "任務可以複製嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "編輯週期任務會影響後續任務嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "任務列表可以做什麼操作", source: "draft:outline-20260920", status: proposed}
+  - {text: "任務可以刪除嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "任務可以複製嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "編輯週期任務會影響後續任務嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "任務列表可以做什麼操作", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/use/config/useTaskManagementTypes.js, code:app/Services/TaskService.php]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -614,11 +614,11 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 編輯週期性任務時，可以選擇修改範圍是「這項任務」（只改這一次）或「這項任務和後續任務」（連同之後每次排程一起改）。
 ### 通知信副本信箱可以設定嗎？（可以：會員側欄「通知收件信箱」頁每個通知類別最多再加 3 組；控制台裡的「通知信設定」頁只有說明、沒有新增欄位，也沒有入口） {#jgb/I/notification-mail-settings}
 - phrasings:
-  - {text: "通知信副本信箱怎麼加", source: "draft:outline-20260920", status: proposed}
-  - {text: "通知信可以加幾個收件人", source: "draft:outline-20260920", status: proposed}
-  - {text: "通知信預設寄給誰", source: "draft:outline-20260920", status: proposed}
-  - {text: "通知信設定在哪裡", source: "draft:outline-20260920", status: proposed}
-  - {text: "通知收件信箱在哪裡", source: "draft:outline-20260920", status: proposed}
+  - {text: "通知信副本信箱怎麼加", source: "draft:outline-20260920", status: approved}
+  - {text: "通知信可以加幾個收件人", source: "draft:outline-20260920", status: approved}
+  - {text: "通知信預設寄給誰", source: "draft:outline-20260920", status: approved}
+  - {text: "通知信設定在哪裡", source: "draft:outline-20260920", status: approved}
+  - {text: "通知收件信箱在哪裡", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/control-panel/notificationMail/Index.jsx, code:src/pages/control-panel/Index.vue, code:src/pages/users/notification/Index.vue, code:src/use/config/useForwardNotificationEmails.ts, code:app/Role.php, code:app/Http/Controllers/UserController.php]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -630,10 +630,10 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 「通知收件信箱」頁只有企業團隊與社宅房東身分的側欄看得到，而且要有「查看所有通知」權限；有「編輯團隊通知」權限才能新增、刪除信箱並儲存，沒有的話只能看。
 ### 誰能用控制台的任務管理與通知信設定？（僅限特定合作團隊角色；控制台首頁本身沒有這層檢查，只有進到「設定」子路徑才會擋） {#jgb/I/control-panel-access-restriction}
 - phrasings:
-  - {text: "誰可以用控制台", source: "draft:outline-20260920", status: proposed}
-  - {text: "租客可以設定任務管理嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "控制台權限限制", source: "draft:outline-20260920", status: proposed}
-  - {text: "為什麼進不去控制台", source: "draft:outline-20260920", status: proposed}
+  - {text: "誰可以用控制台", source: "draft:outline-20260920", status: approved}
+  - {text: "租客可以設定任務管理嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "控制台權限限制", source: "draft:outline-20260920", status: approved}
+  - {text: "為什麼進不去控制台", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/routes/controlPanel.js]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -645,9 +645,9 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 ## 官網首頁 {#I-marketing-home}
 ### 官網首頁有哪些區塊？（橫幅、熱門物件、優質租管業者推薦、特色介紹、企業夥伴、最新消息） {#jgb/I/homepage-sections-overview}
 - phrasings:
-  - {text: "首頁有什麼內容", source: "draft:outline-20260920", status: proposed}
-  - {text: "官網首頁架構", source: "draft:outline-20260920", status: proposed}
-  - {text: "JGB官網首頁介紹", source: "draft:outline-20260920", status: proposed}
+  - {text: "首頁有什麼內容", source: "draft:outline-20260920", status: approved}
+  - {text: "官網首頁架構", source: "draft:outline-20260920", status: approved}
+  - {text: "JGB官網首頁介紹", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/listings/Home.vue, code:src/pages/listings/template-parts/HomeTop.vue]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [prospect]
@@ -659,9 +659,9 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 「誠心推薦·優質租管業者」區塊用輪播呈現使用 JGB 的租管業者推薦內容。
 ### 首頁「JGB平台十大特色」實際列出幾項？（標題寫十大，目前輪播只設定 3 項：管理儀表板、線上合約管理、即時帳務報表） {#jgb/I/homepage-ten-features-actual-count}
 - phrasings:
-  - {text: "JGB平台十大特色有哪些", source: "draft:outline-20260920", status: proposed}
-  - {text: "首頁特色介紹內容", source: "draft:outline-20260920", status: proposed}
-  - {text: "十大特色是哪些功能", source: "draft:outline-20260920", status: proposed}
+  - {text: "JGB平台十大特色有哪些", source: "draft:outline-20260920", status: approved}
+  - {text: "首頁特色介紹內容", source: "draft:outline-20260920", status: approved}
+  - {text: "十大特色是哪些功能", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/listings/Home.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [prospect]
@@ -671,10 +671,10 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 這個區塊底下有「查看所有功能」與「了解價格方案」兩個按鈕，分別連到產品特色頁與價格方案頁。
 ### 首頁說 JGB 在東南亞幾個城市使用？（超過 8 個城市，旁邊有免費試用／免費諮詢按鈕） {#jgb/I/homepage-city-count-cta}
 - phrasings:
-  - {text: "JGB服務幾個城市", source: "draft:outline-20260920", status: proposed}
-  - {text: "首頁城市數字", source: "draft:outline-20260920", status: proposed}
-  - {text: "JGB東南亞據點", source: "draft:outline-20260920", status: proposed}
-  - {text: "首頁免費試用按鈕在哪", source: "draft:outline-20260920", status: proposed}
+  - {text: "JGB服務幾個城市", source: "draft:outline-20260920", status: approved}
+  - {text: "首頁城市數字", source: "draft:outline-20260920", status: approved}
+  - {text: "JGB東南亞據點", source: "draft:outline-20260920", status: approved}
+  - {text: "首頁免費試用按鈕在哪", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/listings/Home.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [prospect]
@@ -683,9 +683,9 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 首頁有一個區塊寫著「東南亞超過 8 個城市都在使用 JGB Smart Property」，旁邊並排「免費試用」與「免費諮詢」兩個按鈕。
 ### 首頁的線上諮詢小幫手正式站看得到嗎？（目前設定為正式環境不顯示，只在非正式環境出現） {#jgb/I/homepage-presales-assistant-visibility}
 - phrasings:
-  - {text: "首頁有線上客服小幫手嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "官網有聊天機器人嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "為什麼官網看不到諮詢小幫手", source: "draft:outline-20260920", status: proposed}
+  - {text: "首頁有線上客服小幫手嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "官網有聊天機器人嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "為什麼官網看不到諮詢小幫手", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/listings/Home.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -694,9 +694,9 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 首頁雖然掛載了售前諮詢小幫手，但目前的顯示條件只在「非正式環境」才會出現，正式環境（也就是一般訪客看到的正式官網）目前不會顯示這個小幫手。
 ### 首頁「JGB平台擁有三大優勢」是哪三項？（提高出租效率、自動化管房流程、提升租客服務品質） {#jgb/I/homepage-three-advantages}
 - phrasings:
-  - {text: "JGB三大優勢是什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "首頁三大優勢介紹", source: "draft:outline-20260920", status: proposed}
-  - {text: "JGB平台優勢", source: "draft:outline-20260920", status: proposed}
+  - {text: "JGB三大優勢是什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "首頁三大優勢介紹", source: "draft:outline-20260920", status: approved}
+  - {text: "JGB平台優勢", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/listings/Home.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [prospect]
@@ -705,9 +705,9 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 首頁「JGB平台擁有三大優勢」區塊依序是：「快速提高房源出租管理效率」（提供房東專屬物件刊登頁並轉發社群媒體）、「自動化管房流程」（支援手機介面 24 小時檢視數據報告）、「提升租客服務品質」（即時簽約及帳單通知，支援線上報修）。
 ### 首頁「最新消息」顯示什麼？（用輪播呈現消息，點擊會開啟幫助中心文章） {#jgb/I/homepage-latest-news-section}
 - phrasings:
-  - {text: "首頁最新消息在哪", source: "draft:outline-20260920", status: proposed}
-  - {text: "最新消息點進去是什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "首頁消息輪播", source: "draft:outline-20260920", status: proposed}
+  - {text: "首頁最新消息在哪", source: "draft:outline-20260920", status: approved}
+  - {text: "最新消息點進去是什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "首頁消息輪播", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/listings/Home.vue]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [prospect]
@@ -717,9 +717,9 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 點擊消息縮圖或標題，會另開分頁導向幫助中心的對應文章頁面。
 ### 首頁「企業夥伴」放了什麼？（10 個合作夥伴 logo 排成靜態方格，不是輪播） {#jgb/I/homepage-enterprise-partners-section}
 - phrasings:
-  - {text: "企業夥伴是誰", source: "draft:outline-20260920", status: proposed}
-  - {text: "首頁合作夥伴logo", source: "draft:outline-20260920", status: proposed}
-  - {text: "企業夥伴區塊內容", source: "draft:outline-20260920", status: proposed}
+  - {text: "企業夥伴是誰", source: "draft:outline-20260920", status: approved}
+  - {text: "首頁合作夥伴logo", source: "draft:outline-20260920", status: approved}
+  - {text: "企業夥伴區塊內容", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/listings/Home.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [prospect]
@@ -729,10 +729,10 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 ## 中華電信雲市集訂單頁 {#I-hicloud-order}
 ### 雲市集訂單頁顯示什麼？（訂單編號、時間、採購方案、價格、點數折抵、付款狀態） {#jgb/I/tcloud-order-info-fields}
 - phrasings:
-  - {text: "雲市集訂單頁面內容", source: "draft:outline-20260920", status: proposed}
-  - {text: "台灣雲市集訂單資訊", source: "draft:outline-20260920", status: proposed}
-  - {text: "雲市集訂單狀態怎麼看", source: "draft:outline-20260920", status: proposed}
-  - {text: "雲市集訂單點數", source: "draft:outline-20260920", status: proposed}
+  - {text: "雲市集訂單頁面內容", source: "draft:outline-20260920", status: approved}
+  - {text: "台灣雲市集訂單資訊", source: "draft:outline-20260920", status: approved}
+  - {text: "雲市集訂單狀態怎麼看", source: "draft:outline-20260920", status: approved}
+  - {text: "雲市集訂單點數", source: "draft:outline-20260920", status: approved}
 - sources: [code:resources/views/customer/tcloud.blade.php]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
@@ -743,10 +743,10 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 頁面下方另外列出客戶資訊（公司統編、公司名稱）與付款資訊（匯款銀行、匯款帳號、匯款金額／自付額）。
 ### 雲市集訂單怎麼付款？（國泰世華一次性虛擬帳號，注意事項請用 WebATM 轉帳；收到匯款資訊後 2 個工作天內付款，款項確認後 2 個工作天內開發票、7 個工作天內開通） {#jgb/I/tcloud-payment-instructions}
 - phrasings:
-  - {text: "雲市集訂單怎麼繳費", source: "draft:outline-20260920", status: proposed}
-  - {text: "雲市集付款期限", source: "draft:outline-20260920", status: proposed}
-  - {text: "雲市集開通要多久", source: "draft:outline-20260920", status: proposed}
-  - {text: "雲市集虛擬帳號怎麼轉帳", source: "draft:outline-20260920", status: proposed}
+  - {text: "雲市集訂單怎麼繳費", source: "draft:outline-20260920", status: approved}
+  - {text: "雲市集付款期限", source: "draft:outline-20260920", status: approved}
+  - {text: "雲市集開通要多久", source: "draft:outline-20260920", status: approved}
+  - {text: "雲市集虛擬帳號怎麼轉帳", source: "draft:outline-20260920", status: approved}
 - sources: [code:resources/views/customer/tcloud.blade.php]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
@@ -757,10 +757,10 @@ Email 在二聯式發票時標示為必填，三聯式則非必填；聯絡電�
 款項確認後，會在 2 個工作天內開立電子發票，7 個工作天內開通服務。
 ### 雲市集訂單連結為什麼會失效？（連結簽章驗證不過，或訂單編號查無資料，都會導回官網首頁） {#jgb/I/tcloud-link-invalid-cases}
 - phrasings:
-  - {text: "雲市集連結失效", source: "draft:outline-20260920", status: proposed}
-  - {text: "雲市集訂單頁打不開", source: "draft:outline-20260920", status: proposed}
-  - {text: "雲市集付款連結驗證失敗", source: "draft:outline-20260920", status: proposed}
-  - {text: "雲市集訂單查無資料", source: "draft:outline-20260920", status: proposed}
+  - {text: "雲市集連結失效", source: "draft:outline-20260920", status: approved}
+  - {text: "雲市集訂單頁打不開", source: "draft:outline-20260920", status: approved}
+  - {text: "雲市集付款連結驗證失敗", source: "draft:outline-20260920", status: approved}
+  - {text: "雲市集訂單查無資料", source: "draft:outline-20260920", status: approved}
 - sources: [code:app/Http/Controllers/CustomerController.php]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]

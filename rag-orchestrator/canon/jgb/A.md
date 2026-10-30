@@ -9,11 +9,11 @@ language: zh-TW
 ## 註冊帳號（Email／SSO、驗證碼、手機綁定） {#A-registration}
 ### 如何註冊 JGB 帳號？（Email、驗證碼、帳號設定三步驟） {#jgb/A/register-email-steps}
 - phrasings:
-  - {text: "怎麼註冊帳號", source: "draft:outline-20260920", status: proposed}
-  - {text: "註冊流程是什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "第一次用要怎麼開帳號", source: "draft:outline-20260920", status: proposed}
-  - {text: "註冊要填什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "怎麼申請 JGB 帳號", source: "draft:outline-20260920", status: proposed}
+  - {text: "怎麼註冊帳號", source: "draft:outline-20260920", status: approved}
+  - {text: "註冊流程是什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "第一次用要怎麼開帳號", source: "draft:outline-20260920", status: approved}
+  - {text: "註冊要填什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "怎麼申請 JGB 帳號", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/auth/Create.vue, code:src/pages/users/auth/parts/CreateWelcome.vue, code:src/pages/users/auth/parts/EmailVerify.vue, code:src/pages/users/auth/parts/AccountSetting.vue, help:onboarding1_zh-Hant.html]
 - reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager, prospect]
@@ -26,10 +26,10 @@ language: zh-TW
 註冊時需先閱讀並同意服務條款和隱私權聲明才能繼續下一步。
 ### 租客從電子合約邀請怎麼註冊？（房東建約發邀請，租客點「查看合約」再點「立即註冊」接續完成） {#jgb/A/register-tenant-contract-invitation}
 - phrasings:
-  - {text: "租客電子合約邀請註冊", source: "draft:outline-20260920", status: proposed}
-  - {text: "房東邀請租客簽約怎麼註冊", source: "draft:outline-20260920", status: proposed}
-  - {text: "收到合約邀請信怎麼辦", source: "draft:outline-20260920", status: proposed}
-  - {text: "租客可以不註冊嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "租客電子合約邀請註冊", source: "draft:outline-20260920", status: approved}
+  - {text: "房東邀請租客簽約怎麼註冊", source: "draft:outline-20260920", status: approved}
+  - {text: "收到合約邀請信怎麼辦", source: "draft:outline-20260920", status: approved}
+  - {text: "租客可以不註冊嗎", source: "draft:outline-20260920", status: approved}
 - sources: [help:onboarding1_zh-Hant.html, code:app/Http/Controllers/AuthController.php, code:src/pages/contracts/edit/tenantInfo/Index.jsx, code:app/Notification.php, code:resources/views/emails/zh-TW/contracts/invite.blade.php, code:resources/views/estate/show.blade.php, code:src/pages/users/auth/parts/LoginForm.vue, code:src/components/SurelyVue/Contract/CategoryCell.jsx, code:app/Http/Controllers/EstateController.php, code:app/Http/Middleware/LoginCheck.php]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
@@ -44,11 +44,11 @@ language: zh-TW
 房東建立合約時若選「租客免註冊」，租客不需要註冊 JGB 會員，改由房東／管理者協助填寫租客資訊。
 ### 可以用 Facebook、Google、LINE 註冊嗎？（SSO 仍需完成 Email 綁定） {#jgb/A/register-sso}
 - phrasings:
-  - {text: "可以用臉書登入註冊嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "可以用 Google 帳號註冊嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "LINE 可以註冊嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "第三方帳號註冊", source: "draft:outline-20260920", status: proposed}
-  - {text: "SSO 註冊", source: "draft:outline-20260920", status: proposed}
+  - {text: "可以用臉書登入註冊嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "可以用 Google 帳號註冊嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "LINE 可以註冊嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "第三方帳號註冊", source: "draft:outline-20260920", status: approved}
+  - {text: "SSO 註冊", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/auth/parts/SSOBar.vue, code:src/pages/users/auth/parts/CreateWelcome.vue, help:onboarding1_zh-Hant.html]
 - reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager, prospect]
@@ -59,9 +59,9 @@ language: zh-TW
 用第三方帳號註冊後，仍會進入 Email 驗證流程，需要自行輸入要綁定的 Email 並完成驗證。
 ### 註冊卡在機器人驗證過期怎麼辦？（重新勾選「我不是機器人」；寄驗證信時沒通過會退回第一步） {#jgb/A/register-captcha-expired}
 - phrasings:
-  - {text: "機器人驗證過期", source: "draft:outline-20260920", status: proposed}
-  - {text: "我不是機器人卡住", source: "draft:outline-20260920", status: proposed}
-  - {text: "註冊一直失敗", source: "draft:outline-20260920", status: proposed}
+  - {text: "機器人驗證過期", source: "draft:outline-20260920", status: approved}
+  - {text: "我不是機器人卡住", source: "draft:outline-20260920", status: approved}
+  - {text: "註冊一直失敗", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/auth/parts/EmailVerify.vue, code:src/pages/users/auth/parts/CreateWelcome.vue, code:app/Http/Controllers/AuthController.php, code:app/Services/AuthService.php]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -73,10 +73,10 @@ language: zh-TW
 機器人驗證通過後，系統只在 30 分鐘內承認同一個 Email 的驗證紀錄；超過之後再寄驗證信，就會要求重新驗證。
 ### 沒收到 Email 驗證碼怎麼辦？（可重發，發送次數過多會出現等待秒數） {#jgb/A/register-email-verify-resend}
 - phrasings:
-  - {text: "沒收到驗證信", source: "draft:outline-20260920", status: proposed}
-  - {text: "驗證碼重發", source: "draft:outline-20260920", status: proposed}
-  - {text: "驗證信在等待", source: "draft:outline-20260920", status: proposed}
-  - {text: "Email 驗證碼過期", source: "draft:outline-20260920", status: proposed}
+  - {text: "沒收到驗證信", source: "draft:outline-20260920", status: approved}
+  - {text: "驗證碼重發", source: "draft:outline-20260920", status: approved}
+  - {text: "驗證信在等待", source: "draft:outline-20260920", status: approved}
+  - {text: "Email 驗證碼過期", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/auth/parts/EmailVerify.vue]
 - reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
@@ -88,10 +88,10 @@ language: zh-TW
 如果 Email 打錯，可以點「點此重新輸入」返回第一步修改。
 ### 註冊密碼格式要求是什麼？（至少 6 碼、須同時包含英文與數字） {#jgb/A/register-password-rule}
 - phrasings:
-  - {text: "密碼規則", source: "draft:outline-20260920", status: proposed}
-  - {text: "密碼要幾碼", source: "draft:outline-20260920", status: proposed}
-  - {text: "密碼格式", source: "draft:outline-20260920", status: proposed}
-  - {text: "設定密碼限制", source: "draft:outline-20260920", status: proposed}
+  - {text: "密碼規則", source: "draft:outline-20260920", status: approved}
+  - {text: "密碼要幾碼", source: "draft:outline-20260920", status: approved}
+  - {text: "密碼格式", source: "draft:outline-20260920", status: approved}
+  - {text: "設定密碼限制", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/auth/parts/AccountSetting.vue]
 - reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager, prospect]
@@ -102,10 +102,10 @@ language: zh-TW
 確認密碼欄位必須與密碼欄位輸入一致才能完成註冊。
 ### 註冊時 Email 已被註冊過怎麼辦？（已完成註冊的 Email 會直接被擋下；只有還沒完成 Email 註冊的舊帳號才會進行帳號合併） {#jgb/A/register-email-already-registered}
 - phrasings:
-  - {text: "Email 已經註冊過", source: "draft:outline-20260920", status: proposed}
-  - {text: "帳號合併", source: "draft:outline-20260920", status: proposed}
-  - {text: "重複註冊", source: "draft:outline-20260920", status: proposed}
-  - {text: "曾經用 SSO 註冊過還能再用 Email 註冊嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "Email 已經註冊過", source: "draft:outline-20260920", status: approved}
+  - {text: "帳號合併", source: "draft:outline-20260920", status: approved}
+  - {text: "重複註冊", source: "draft:outline-20260920", status: approved}
+  - {text: "曾經用 SSO 註冊過還能再用 Email 註冊嗎", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/auth/parts/AccountSetting.vue, code:app/Http/Controllers/AuthController.php]
 - reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
@@ -116,10 +116,10 @@ language: zh-TW
 此情境按「繼續」時會直接完成帳號設定，不會再檢查姓名、密碼等欄位是否填寫完整。
 ### 註冊要綁定手機號碼嗎？（可選填、簡訊驗證、可「下次再驗證」略過） {#jgb/A/register-phone-bind}
 - phrasings:
-  - {text: "註冊要綁手機嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "手機驗證怎麼做", source: "draft:outline-20260920", status: proposed}
-  - {text: "可以跳過手機驗證嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "手機驗證碼收不到", source: "draft:outline-20260920", status: proposed}
+  - {text: "註冊要綁手機嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "手機驗證怎麼做", source: "draft:outline-20260920", status: approved}
+  - {text: "可以跳過手機驗證嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "手機驗證碼收不到", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/auth/parts/PhoneVerify.vue]
 - reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager, prospect]
@@ -132,8 +132,8 @@ language: zh-TW
 綁定手機後，未來登入、忘記密碼、忘記帳號都可以使用該手機號碼進行驗證或作為替代登入方式。
 ### 註冊時發現手機已綁定過怎麼辦？（直接顯示已綁定、按繼續完成流程） {#jgb/A/register-phone-already-bound}
 - phrasings:
-  - {text: "手機已經綁定過", source: "draft:outline-20260920", status: proposed}
-  - {text: "重複綁定手機", source: "draft:outline-20260920", status: proposed}
+  - {text: "手機已經綁定過", source: "draft:outline-20260920", status: approved}
+  - {text: "重複綁定手機", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/auth/parts/PhoneVerify.vue]
 - reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
@@ -144,10 +144,10 @@ language: zh-TW
 若是在註冊流程中出現此畫面，按「繼續」會前進到選擇身分步驟；若是註冊完成後在其他情境觸發手機驗證，則會依原本要前往的頁面返回，不會進入選擇身分畫面。
 ### 註冊完之後要選身分嗎？（一般會在房東/管理者、租客中二選一，可同時擁有兩種身分） {#jgb/A/register-role-select}
 - phrasings:
-  - {text: "註冊完要選身分嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "房東身分和租客身分", source: "draft:outline-20260920", status: proposed}
-  - {text: "怎麼切換房東和租客", source: "draft:outline-20260920", status: proposed}
-  - {text: "我是房東還是租客", source: "draft:outline-20260920", status: proposed}
+  - {text: "註冊完要選身分嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "房東身分和租客身分", source: "draft:outline-20260920", status: approved}
+  - {text: "怎麼切換房東和租客", source: "draft:outline-20260920", status: approved}
+  - {text: "我是房東還是租客", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/auth/parts/RoleSelect.vue, help:onboarding1_zh-Hant.html]
 - reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager, prospect]
@@ -157,9 +157,9 @@ language: zh-TW
 同一組帳號可同時擁有房東與租客兩種身分，選擇的身分只決定這次要進入哪一種介面。
 ### 驗證碼輸入畫面長什麼樣子？（識別碼加 4 碼數字；輸入錯誤太多次驗證碼會失效，需重新發送） {#jgb/A/register-verify-code-shape}
 - phrasings:
-  - {text: "驗證碼長什麼樣子", source: "draft:outline-20260920", status: proposed}
-  - {text: "驗證碼輸入錯誤被鎖", source: "draft:outline-20260920", status: proposed}
-  - {text: "驗證碼幾碼", source: "draft:outline-20260920", status: proposed}
+  - {text: "驗證碼長什麼樣子", source: "draft:outline-20260920", status: approved}
+  - {text: "驗證碼輸入錯誤被鎖", source: "draft:outline-20260920", status: approved}
+  - {text: "驗證碼幾碼", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/auth/parts/VerifyPanel.vue, code:src/pages/users/auth/parts/EmailVerify.vue, code:src/pages/users/auth/parts/PhoneVerify.vue, code:src/pages/users/auth/parts/forget/Account.vue, code:src/pages/users/auth/parts/forget/Password.vue]
 - reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
@@ -169,9 +169,9 @@ language: zh-TW
 如果驗證碼輸入錯誤太多次，畫面會提示驗證次數過多、驗證碼已失效，需要稍候重新發送驗證碼；輸入框本身不會被鎖住。
 ### 從信箱 App 點註冊連結、去收驗證碼再回來，會從頭開始註冊嗎？（同一瀏覽器會記住 Email 回到驗證碼步驟；機器人驗證失效時退回第一步） {#jgb/A/register-email-link-resume}
 - phrasings:
-  - {text: "註冊到一半去收信再回來會重來嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "收信後點回註冊頁", source: "draft:outline-20260920", status: proposed}
-  - {text: "從信箱 App 開註冊連結會重來嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "註冊到一半去收信再回來會重來嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "收信後點回註冊頁", source: "draft:outline-20260920", status: approved}
+  - {text: "從信箱 App 開註冊連結會重來嗎", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/auth/Create.vue, code:src/pages/users/auth/parts/CreateWelcome.vue, code:src/pages/users/auth/parts/EmailVerify.vue, code:app/Services/AuthService.php]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -184,10 +184,10 @@ language: zh-TW
 ## 登入 {#A-login}
 ### JGB 有哪些登入方式？（Email、手機號碼、Facebook／Google／LINE） {#jgb/A/login-methods}
 - phrasings:
-  - {text: "怎麼登入", source: "draft:outline-20260920", status: proposed}
-  - {text: "登入方式有哪些", source: "draft:outline-20260920", status: proposed}
-  - {text: "可以用手機登入嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "SSO 登入", source: "draft:outline-20260920", status: proposed}
+  - {text: "怎麼登入", source: "draft:outline-20260920", status: approved}
+  - {text: "登入方式有哪些", source: "draft:outline-20260920", status: approved}
+  - {text: "可以用手機登入嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "SSO 登入", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/auth/parts/LoginForm.vue, code:src/pages/users/auth/parts/SSOBar.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
@@ -197,8 +197,8 @@ language: zh-TW
 登入頁另外提供 Facebook、Google、LINE 第三方帳號登入。
 ### 登入前要先選擇身分？ {#jgb/A/login-role-select-before}
 - phrasings:
-  - {text: "登入頁面在哪", source: "draft:outline-20260920", status: proposed}
-  - {text: "為什麼要選身分才能登入", source: "draft:outline-20260920", status: proposed}
+  - {text: "登入頁面在哪", source: "draft:outline-20260920", status: approved}
+  - {text: "為什麼要選身分才能登入", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/auth/parts/RoleSelect.vue]
 - reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager, prospect]
@@ -207,9 +207,9 @@ language: zh-TW
 登入前需先選擇身分：房東/管理者或租客。
 ### 用手機號碼登入時，國碼與號碼格式有什麼規則？（號碼長度上限與格式依所選國家而定） {#jgb/A/login-phone-country-code}
 - phrasings:
-  - {text: "手機登入國碼", source: "draft:outline-20260920", status: proposed}
-  - {text: "手機號碼格式限制", source: "draft:outline-20260920", status: proposed}
-  - {text: "手機登入長度限制", source: "draft:outline-20260920", status: proposed}
+  - {text: "手機登入國碼", source: "draft:outline-20260920", status: approved}
+  - {text: "手機號碼格式限制", source: "draft:outline-20260920", status: approved}
+  - {text: "手機登入長度限制", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/auth/parts/LoginForm.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
@@ -218,7 +218,7 @@ language: zh-TW
 選擇手機號碼登入時需先選擇國碼，號碼長度上限依所選國家而定，且手機格式會依所選國家的規則做檢查。
 ### 「記住我」是做什麼？（只延長登入效期，跟記住登入方式無關） {#jgb/A/login-remember-me}
 - phrasings:
-  - {text: "記住我是什麼", source: "draft:outline-20260920", status: proposed}
+  - {text: "記住我是什麼", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/auth/parts/LoginForm.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
@@ -227,9 +227,9 @@ language: zh-TW
 「記住我」勾選只影響下次登入送出時是否要延長登入效期，跟登入方式無關；不論是否勾選「記住我」，上次選擇用 Email 還是手機號碼登入，下次開啟登入頁都會沿用同一種方式。
 ### 登入時身分選錯了怎麼辦？（會依選擇的身分決定進入哪個角色的登入表單） {#jgb/A/login-role-redirect}
 - phrasings:
-  - {text: "登入身分選錯", source: "draft:outline-20260920", status: proposed}
-  - {text: "怎麼切換登入身分", source: "draft:outline-20260920", status: proposed}
-  - {text: "房東登入還是租客登入", source: "draft:outline-20260920", status: proposed}
+  - {text: "登入身分選錯", source: "draft:outline-20260920", status: approved}
+  - {text: "怎麼切換登入身分", source: "draft:outline-20260920", status: approved}
+  - {text: "房東登入還是租客登入", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/auth/Login.vue, code:src/pages/users/auth/parts/LoginForm.vue]
 - reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
@@ -240,9 +240,9 @@ language: zh-TW
 登入表單上沒有返回身分選擇的按鈕；選錯身分時，重新開啟不帶身分參數的登入頁，就會回到身分選擇畫面重新選擇。
 ### 登入帳號或密碼錯誤時會顯示什麼？ {#jgb/A/login-error}
 - phrasings:
-  - {text: "登入失敗", source: "draft:outline-20260920", status: proposed}
-  - {text: "帳號密碼錯誤", source: "draft:outline-20260920", status: proposed}
-  - {text: "登不進去", source: "draft:outline-20260920", status: proposed}
+  - {text: "登入失敗", source: "draft:outline-20260920", status: approved}
+  - {text: "帳號密碼錯誤", source: "draft:outline-20260920", status: approved}
+  - {text: "登不進去", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/auth/parts/LoginForm.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -253,8 +253,8 @@ language: zh-TW
 切換登入方式（Email／手機號碼）時，原本輸入的帳號欄位與密碼會一併被清空，需要重新輸入。
 ### 登入頁的「忘記密碼？」連結在哪裡？（在登入表單下方，點擊前往忘記密碼流程） {#jgb/A/login-forget-password-link}
 - phrasings:
-  - {text: "忘記密碼在哪", source: "draft:outline-20260920", status: proposed}
-  - {text: "忘記密碼連結", source: "draft:outline-20260920", status: proposed}
+  - {text: "忘記密碼在哪", source: "draft:outline-20260920", status: approved}
+  - {text: "忘記密碼連結", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/auth/parts/LoginForm.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -263,8 +263,8 @@ language: zh-TW
 登入表單下方提供「忘記密碼」連結，點擊後會前往忘記密碼流程頁面。
 ### 登入頁的「忘記帳號？」連結在哪裡？（在登入表單下方，點擊前往忘記帳號流程） {#jgb/A/login-forget-account-link}
 - phrasings:
-  - {text: "忘記帳號在哪", source: "draft:outline-20260920", status: proposed}
-  - {text: "忘記帳號連結", source: "draft:outline-20260920", status: proposed}
+  - {text: "忘記帳號在哪", source: "draft:outline-20260920", status: approved}
+  - {text: "忘記帳號連結", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/auth/parts/LoginForm.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -273,8 +273,8 @@ language: zh-TW
 登入表單下方提供「忘記帳號」連結，點擊後會前往忘記帳號流程頁面。
 ### 登入頁有連到註冊頁的連結嗎？（登入表單上方的「還沒有帳號嗎？立即註冊」） {#jgb/A/login-no-account-register-link}
 - phrasings:
-  - {text: "登入頁怎麼去註冊", source: "draft:outline-20260920", status: proposed}
-  - {text: "還沒帳號怎麼註冊", source: "draft:outline-20260920", status: proposed}
+  - {text: "登入頁怎麼去註冊", source: "draft:outline-20260920", status: approved}
+  - {text: "還沒帳號怎麼註冊", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/auth/parts/LoginForm.vue]
 - reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager, prospect]
@@ -283,9 +283,9 @@ language: zh-TW
 尚未註冊的使用者可以從登入表單上方「還沒有帳號嗎」旁的「立即註冊」連結前往註冊頁。
 ### 同一帳號同時有房東與租客身分時怎麼切換？（登入時重新選擇身分，或在帳號資訊設定預設身分） {#jgb/A/login-identity-switch}
 - phrasings:
-  - {text: "房東租客身分切換", source: "draft:outline-20260920", status: proposed}
-  - {text: "怎麼換身分登入", source: "draft:outline-20260920", status: proposed}
-  - {text: "登入預設身分", source: "draft:outline-20260920", status: proposed}
+  - {text: "房東租客身分切換", source: "draft:outline-20260920", status: approved}
+  - {text: "怎麼換身分登入", source: "draft:outline-20260920", status: approved}
+  - {text: "登入預設身分", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/auth/Login.vue, code:app/Http/Controllers/UserController.php#account]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -296,9 +296,9 @@ language: zh-TW
 ## 忘記帳號、忘記密碼 {#A-account-recovery}
 ### 忘記帳號怎麼辦？（用已綁定的手機號碼簡訊驗證找回 Email 提示） {#jgb/A/forget-account-flow}
 - phrasings:
-  - {text: "忘記帳號怎麼辦", source: "draft:outline-20260920", status: proposed}
-  - {text: "忘記 email 帳號", source: "draft:outline-20260920", status: proposed}
-  - {text: "找回帳號", source: "draft:outline-20260920", status: proposed}
+  - {text: "忘記帳號怎麼辦", source: "draft:outline-20260920", status: approved}
+  - {text: "忘記 email 帳號", source: "draft:outline-20260920", status: approved}
+  - {text: "找回帳號", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/auth/parts/forget/Account.vue, code:app/Http/Controllers/AuthController.php, code:app/User.php]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -311,8 +311,8 @@ language: zh-TW
 驗證成功畫面的最下方寫著「如有其他問題，請聯繫 JGB 客服」
 ### 沒綁手機號碼還能用「忘記帳號」找回嗎？（不行，只能靠手機簡訊驗證） {#jgb/A/forget-account-no-phone}
 - phrasings:
-  - {text: "沒綁手機忘記帳號", source: "draft:outline-20260920", status: proposed}
-  - {text: "沒有手機號碼怎麼找回帳號", source: "draft:outline-20260920", status: proposed}
+  - {text: "沒綁手機忘記帳號", source: "draft:outline-20260920", status: approved}
+  - {text: "沒有手機號碼怎麼找回帳號", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/auth/parts/forget/Account.vue]
 - reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
@@ -323,10 +323,10 @@ language: zh-TW
 手機號碼欄位在輸入過程中會即時顯示驗證結果（成功或錯誤提示），並依所選國碼提示號碼長度上限。
 ### 忘記密碼怎麼重設？（Email 或手機號碼擇一驗證帳號、輸入驗證碼後設定新密碼，設定完成一般會直接登入） {#jgb/A/forget-password-flow}
 - phrasings:
-  - {text: "忘記密碼怎麼辦", source: "draft:outline-20260920", status: proposed}
-  - {text: "重設密碼", source: "draft:outline-20260920", status: proposed}
-  - {text: "密碼忘記了", source: "draft:outline-20260920", status: proposed}
-  - {text: "重設密碼後要重新登入嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "忘記密碼怎麼辦", source: "draft:outline-20260920", status: approved}
+  - {text: "重設密碼", source: "draft:outline-20260920", status: approved}
+  - {text: "密碼忘記了", source: "draft:outline-20260920", status: approved}
+  - {text: "重設密碼後要重新登入嗎", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/auth/parts/LoginForm.vue, code:src/pages/users/auth/parts/forget/Password.vue, code:app/Http/Controllers/AuthController.php, code:src/pages/users/auth/parts/VerifyPanel.vue, code:app/Model.php, code:routes/web.php, code:app/Http/Middleware/IfLoginCheck.php]
 - reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
@@ -340,9 +340,9 @@ language: zh-TW
 設定成功後，系統一般會直接以這個帳號登入並前往會員中心，不需要再用新密碼登入一次；不過重設密碼頁面上的說明文字仍寫著設定完成後請使用新密碼登入。
 ### 「請設定密碼」畫面是什麼情境？（受邀請帳號的初次設定密碼流程） {#jgb/A/forget-password-setpwd-invite}
 - phrasings:
-  - {text: "請設定密碼是什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "被邀請要設密碼", source: "draft:outline-20260920", status: proposed}
-  - {text: "被邀請設定密碼的頁面", source: "draft:outline-20260920", status: proposed}
+  - {text: "請設定密碼是什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "被邀請要設密碼", source: "draft:outline-20260920", status: approved}
+  - {text: "被邀請設定密碼的頁面", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/auth/parts/forget/Password.vue]
 - reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
@@ -354,10 +354,10 @@ language: zh-TW
 ## 會員中心首頁 {#A-member-home}
 ### 會員中心首頁有哪些統計區塊？（即時物件出租率、即將到期合約、即將到來應到帳帳單、7日內修繕單） {#jgb/A/dashboard-overview-blocks}
 - phrasings:
-  - {text: "首頁看得到什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "會員中心首頁", source: "draft:outline-20260920", status: proposed}
-  - {text: "會員中心首頁有什麼統計資料", source: "draft:outline-20260920", status: proposed}
-  - {text: "登入後的首頁", source: "draft:outline-20260920", status: proposed}
+  - {text: "首頁看得到什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "會員中心首頁", source: "draft:outline-20260920", status: approved}
+  - {text: "會員中心首頁有什麼統計資料", source: "draft:outline-20260920", status: approved}
+  - {text: "登入後的首頁", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/dashboard/Landlord.vue, code:src/pages/users/dashboard/parts/Block_Vacancy.vue, code:src/pages/users/dashboard/parts/Block_ExpiringContract.vue, code:src/pages/users/dashboard/parts/Block_AccountsReceivable.vue, code:src/pages/users/dashboard/parts/Block_Repair.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -366,9 +366,9 @@ language: zh-TW
 一般房東/管理者登入後的首頁上方會並排四個統計區塊：即時物件出租率、即將到期合約、即將到來應到帳帳單、7日內修繕單。
 ### 首頁的圖表看得到什麼？（招租／買賣廣告刊登率圓環圖、收支情況圖） {#jgb/A/dashboard-overview-charts}
 - phrasings:
-  - {text: "首頁圖表", source: "draft:outline-20260920", status: proposed}
-  - {text: "刊登率圓環圖", source: "draft:outline-20260920", status: proposed}
-  - {text: "收支情況圖表", source: "draft:outline-20260920", status: proposed}
+  - {text: "首頁圖表", source: "draft:outline-20260920", status: approved}
+  - {text: "刊登率圓環圖", source: "draft:outline-20260920", status: approved}
+  - {text: "收支情況圖表", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/dashboard/parts/RatioDoughnutChart.vue, code:src/pages/users/dashboard/parts/BalanceChart.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -378,9 +378,9 @@ language: zh-TW
 首頁另外提供「收支情況」圖，顯示收入、支出、當日結餘、累計結餘。
 ### 房東首頁下方還有哪些列表？（帳單與合約整合列表，具查看所有通知權限者另有系統代發送 E-mail 區塊；大房東首頁沒有） {#jgb/A/dashboard-overview-lists}
 - phrasings:
-  - {text: "首頁下方列表", source: "draft:outline-20260920", status: proposed}
-  - {text: "首頁帳單合約列表", source: "draft:outline-20260920", status: proposed}
-  - {text: "首頁系統代發送E-mail區塊", source: "draft:outline-20260920", status: proposed}
+  - {text: "首頁下方列表", source: "draft:outline-20260920", status: approved}
+  - {text: "首頁帳單合約列表", source: "draft:outline-20260920", status: approved}
+  - {text: "首頁系統代發送E-mail區塊", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/dashboard/Landlord.vue, code:src/pages/users/dashboard/parts/BillContractRepair.vue, code:src/pages/users/dashboard/parts/EmailRecords.vue, code:app/Http/Controllers/UserController.php]
 - reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
@@ -393,9 +393,9 @@ language: zh-TW
 大房東登入時，首頁沒有這個整合列表，也沒有「系統代發送E-mail」區塊；切到「滿租率(beta)」頁簽時，這兩個區塊同樣不會顯示。
 ### 大房東的首頁畫面和一般房東不一樣嗎？（沒有捷徑與四個統計方塊） {#jgb/A/dashboard-big-landlord-view}
 - phrasings:
-  - {text: "大房東首頁", source: "draft:outline-20260920", status: proposed}
-  - {text: "大房東看到的畫面", source: "draft:outline-20260920", status: proposed}
-  - {text: "大房東首頁跟一般房東有什麼不同", source: "draft:outline-20260920", status: proposed}
+  - {text: "大房東首頁", source: "draft:outline-20260920", status: approved}
+  - {text: "大房東看到的畫面", source: "draft:outline-20260920", status: approved}
+  - {text: "大房東首頁跟一般房東有什麼不同", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/dashboard/Landlord.vue, help:Landlordonboarding00_zh-Hant.html, code:src/pages/users/dashboard/parts/EstateDetails.vue, code:src/pages/users/dashboard/parts/Block_Vacancy.vue]
 - reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
@@ -405,9 +405,9 @@ language: zh-TW
 大房東首頁改為顯示可自訂區間（7天／30天／90天／6個月）的收支圖表。
 ### 怎麼在會員中心首頁切換團隊？（左上角下拉選單選擇被加入的團隊） {#jgb/A/dashboard-team-switch}
 - phrasings:
-  - {text: "怎麼切換團隊", source: "draft:outline-20260920", status: proposed}
-  - {text: "被加入多個團隊", source: "draft:outline-20260920", status: proposed}
-  - {text: "團隊下拉選單在哪", source: "draft:outline-20260920", status: proposed}
+  - {text: "怎麼切換團隊", source: "draft:outline-20260920", status: approved}
+  - {text: "被加入多個團隊", source: "draft:outline-20260920", status: approved}
+  - {text: "團隊下拉選單在哪", source: "draft:outline-20260920", status: approved}
 - sources: [help:Landlordonboarding00_zh-Hant.html, help:Landlordonboarding00phone_zh-Hant.html]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -418,9 +418,9 @@ language: zh-TW
 手機版與電腦版是同一套系統、同一組功能，畫面只依螢幕寬度調整排列方式，功能不會因裝置而減少。
 ### 首頁的「滿租率(beta)」頁簽是什麼？（限定開放的社區收入統計，非所有團隊都看得到） {#jgb/A/dashboard-occupancy-tab}
 - phrasings:
-  - {text: "滿租率 beta", source: "draft:outline-20260920", status: proposed}
-  - {text: "首頁頁簽", source: "draft:outline-20260920", status: proposed}
-  - {text: "社區收入統計", source: "draft:outline-20260920", status: proposed}
+  - {text: "滿租率 beta", source: "draft:outline-20260920", status: approved}
+  - {text: "首頁頁簽", source: "draft:outline-20260920", status: approved}
+  - {text: "社區收入統計", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/dashboard/Landlord.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -431,8 +431,8 @@ language: zh-TW
 切換頁簽時，網址會記錄目前所在的頁簽，之後可以用該網址直接分享或加入書籤停留在該頁簽。
 ### 首頁「捷徑」區塊有哪些功能？（新增物件、新增合約、新增帳單、新增修繕、查看統計報表、查看大房東列表） {#jgb/A/dashboard-shortcuts-list}
 - phrasings:
-  - {text: "捷徑區塊有哪些功能", source: "draft:outline-20260920", status: proposed}
-  - {text: "首頁捷徑按鈕", source: "draft:outline-20260920", status: proposed}
+  - {text: "捷徑區塊有哪些功能", source: "draft:outline-20260920", status: approved}
+  - {text: "首頁捷徑按鈕", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/dashboard/parts/ShortCuts.vue, code:src/pages/users/dashboard/Landlord.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -443,10 +443,10 @@ language: zh-TW
 ## 帳號資訊 {#A-account-profile}
 ### 帳號資訊頁能改哪些基本資料？（大頭照、姓氏、名稱、稱謂） {#jgb/A/account-basic-info}
 - phrasings:
-  - {text: "帳號基本資訊怎麼改", source: "draft:outline-20260920", status: proposed}
-  - {text: "改姓名", source: "draft:outline-20260920", status: proposed}
-  - {text: "改大頭照", source: "draft:outline-20260920", status: proposed}
-  - {text: "帳號資訊頁面", source: "draft:outline-20260920", status: proposed}
+  - {text: "帳號基本資訊怎麼改", source: "draft:outline-20260920", status: approved}
+  - {text: "改姓名", source: "draft:outline-20260920", status: approved}
+  - {text: "改大頭照", source: "draft:outline-20260920", status: approved}
+  - {text: "帳號資訊頁面", source: "draft:outline-20260920", status: approved}
 - sources: [code:resources/views/users/account.blade.php, code:app/Http/Controllers/UserController.php#account, code:app/Contract.php, code:app/Http/Controllers/ContractController.php]
 - reviewed: {by: owner, at: 2026-10-04}
 - target_user: [property_manager]
@@ -457,9 +457,9 @@ language: zh-TW
 部分特定合作團隊的合約完成簽署後，系統會依簽署方式鎖定租客的基本資訊，兩種方式都要求已有租客的身分證字號，沒有身分證字號就不會鎖定；鎖定後，姓氏、名稱、稱謂三個欄位在畫面上不能再編輯，即使表單有送出新值也不會被更新。
 ### 帳號資訊頁怎麼看手機的綁定狀態？（已綁定／未綁定，未綁定才有「前往綁定」按鈕） {#jgb/A/account-phone-bind-status}
 - phrasings:
-  - {text: "手機有沒有綁定", source: "draft:outline-20260920", status: proposed}
-  - {text: "手機綁定狀態", source: "draft:outline-20260920", status: proposed}
-  - {text: "前往綁定按鈕", source: "draft:outline-20260920", status: proposed}
+  - {text: "手機有沒有綁定", source: "draft:outline-20260920", status: approved}
+  - {text: "手機綁定狀態", source: "draft:outline-20260920", status: approved}
+  - {text: "前往綁定按鈕", source: "draft:outline-20260920", status: approved}
 - sources: [code:resources/views/users/account.blade.php]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -468,9 +468,9 @@ language: zh-TW
 帳號資訊頁的「帳號資訊」區塊會顯示手機號碼目前是「已綁定」或「未綁定」，未綁定時提供「前往綁定」按鈕導向手機驗證頁。
 ### 帳號資訊頁的 Email 驗證狀態怎麼看？（Email 無法自行更改，需聯繫客服） {#jgb/A/account-email-verify-status}
 - phrasings:
-  - {text: "email 驗證狀態", source: "draft:outline-20260920", status: proposed}
-  - {text: "怎麼換 email", source: "draft:outline-20260920", status: proposed}
-  - {text: "更換綁定信箱", source: "draft:outline-20260920", status: proposed}
+  - {text: "email 驗證狀態", source: "draft:outline-20260920", status: approved}
+  - {text: "怎麼換 email", source: "draft:outline-20260920", status: approved}
+  - {text: "更換綁定信箱", source: "draft:outline-20260920", status: approved}
 - sources: [code:resources/views/users/account.blade.php]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -480,9 +480,9 @@ language: zh-TW
 一般帳號的 Email 欄位是鎖定唯讀的，頁面提示如需更換 Email 帳號，需要聯繫 JGB 客服處理，不能在此頁直接自行修改。
 ### 手機已經綁定後可以自己更換嗎？（沒有更換入口，只顯示已綁定狀態） {#jgb/A/account-phone-no-change-entry}
 - phrasings:
-  - {text: "換手機號碼", source: "draft:outline-20260920", status: proposed}
-  - {text: "更換綁定手機", source: "draft:outline-20260920", status: proposed}
-  - {text: "手機已綁定還能改嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "換手機號碼", source: "draft:outline-20260920", status: approved}
+  - {text: "更換綁定手機", source: "draft:outline-20260920", status: approved}
+  - {text: "手機已綁定還能改嗎", source: "draft:outline-20260920", status: approved}
 - sources: [code:resources/views/users/account.blade.php, code:src/pages/users/auth/parts/PhoneVerify.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -492,9 +492,9 @@ language: zh-TW
 手機驗證流程如果偵測到目前帳號已經綁定過手機，會直接顯示「手機已綁定」畫面，並提示未來可以用這支電話號碼登入，接下來只有「繼續」按鈕，沒有換一支手機重新綁定的選項。
 ### 帳號資訊頁怎麼看 SSO 綁定狀態？（Facebook／Google／LINE 各自顯示已綁定或未綁定） {#jgb/A/account-sso-status}
 - phrasings:
-  - {text: "sso 綁定狀態", source: "draft:outline-20260920", status: proposed}
-  - {text: "有沒有連 facebook", source: "draft:outline-20260920", status: proposed}
-  - {text: "帳號有沒有連 google", source: "draft:outline-20260920", status: proposed}
+  - {text: "sso 綁定狀態", source: "draft:outline-20260920", status: approved}
+  - {text: "有沒有連 facebook", source: "draft:outline-20260920", status: approved}
+  - {text: "帳號有沒有連 google", source: "draft:outline-20260920", status: approved}
 - sources: [code:resources/views/users/account.blade.php, code:app/Http/Controllers/UserController.php#account]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -505,9 +505,9 @@ language: zh-TW
 「修改密碼」區塊只有在該帳號已經設有密碼時才會顯示；如果帳號是純粹用第三方帳號註冊、從未設定過密碼，此區塊會被隱藏。
 ### 登入後怎麼在帳號資訊頁修改密碼？（需輸入目前密碼、新密碼與確認新密碼） {#jgb/A/account-change-password}
 - phrasings:
-  - {text: "登入後怎麼改密碼", source: "draft:outline-20260920", status: proposed}
-  - {text: "帳號資訊改密碼", source: "draft:outline-20260920", status: proposed}
-  - {text: "修改密碼要輸入原密碼嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "登入後怎麼改密碼", source: "draft:outline-20260920", status: approved}
+  - {text: "帳號資訊改密碼", source: "draft:outline-20260920", status: approved}
+  - {text: "修改密碼要輸入原密碼嗎", source: "draft:outline-20260920", status: approved}
 - sources: [code:resources/views/users/account.blade.php, code:app/Http/Controllers/UserController.php#account, code:src/components/PasswordForm.vue]
 - reviewed: {by: owner, at: 2026-10-04}
 - target_user: [property_manager]
@@ -519,10 +519,10 @@ language: zh-TW
 「密碼」區塊下方會顯示「上次更新：」的日期時間；如果從來沒有改過密碼，則顯示帳號建立的時間。
 ### 帳號資訊頁的聯絡資訊要填什麼？（LINE ID、Facebook 個人首頁、WhatsApp、第二組電話） {#jgb/A/account-contact-info}
 - phrasings:
-  - {text: "聯絡資訊怎麼填", source: "draft:outline-20260920", status: proposed}
-  - {text: "WhatsApp 要填什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "line id 要填嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "第二組電話欄位有什麼限制", source: "draft:outline-20260920", status: proposed}
+  - {text: "聯絡資訊怎麼填", source: "draft:outline-20260920", status: approved}
+  - {text: "WhatsApp 要填什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "line id 要填嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "第二組電話欄位有什麼限制", source: "draft:outline-20260920", status: approved}
 - sources: [code:resources/views/users/account.blade.php]
 - reviewed: {by: owner, at: 2026-10-04}
 - target_user: [property_manager]
@@ -536,9 +536,9 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
 畫面上目前沒有「以此電話作為廣告頁聯絡電話」這個核取方塊可以勾選。
 ### 帳號資訊頁的偏好設定能設定什麼？（登入預設房東身份、時區、Email 通知語系） {#jgb/A/account-preference}
 - phrasings:
-  - {text: "登入預設身份怎麼設", source: "draft:outline-20260920", status: proposed}
-  - {text: "時區設定在哪", source: "draft:outline-20260920", status: proposed}
-  - {text: "Email 通知語言", source: "draft:outline-20260920", status: proposed}
+  - {text: "登入預設身份怎麼設", source: "draft:outline-20260920", status: approved}
+  - {text: "時區設定在哪", source: "draft:outline-20260920", status: approved}
+  - {text: "Email 通知語言", source: "draft:outline-20260920", status: approved}
 - sources: [code:resources/views/users/account.blade.php]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -549,9 +549,9 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
 可設定「Email 通知語系」，決定收到系統通知信時使用哪種語言。
 ### 帳號資訊頁有「資訊完整度」進度條嗎？（目前頁面上不會顯示這個區塊） {#jgb/A/account-progress-unlock}
 - phrasings:
-  - {text: "資訊完整度是什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "為什麼不能刊登廣告", source: "draft:outline-20260920", status: proposed}
-  - {text: "為什麼不能簽約", source: "draft:outline-20260920", status: proposed}
+  - {text: "資訊完整度是什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "為什麼不能刊登廣告", source: "draft:outline-20260920", status: approved}
+  - {text: "為什麼不能簽約", source: "draft:outline-20260920", status: approved}
 - sources: [code:app/Http/Controllers/UserController.php#account, code:resources/views/users/account.blade.php]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
@@ -561,8 +561,8 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
 「簽約資訊」是一個獨立於帳號資訊頁的頁面，用來填寫簽約所需的身份資料（如身分證字號、戶籍地址等），不是本頁「帳號基本資訊」的欄位。
 ### 帳號資訊頁儲存失敗會提示什麼？（頁面沒有完整載入時會提醒重新整理再儲存） {#jgb/A/account-save-integrity-check}
 - phrasings:
-  - {text: "儲存失敗提示", source: "draft:outline-20260920", status: proposed}
-  - {text: "帳號資訊存不進去", source: "draft:outline-20260920", status: proposed}
+  - {text: "儲存失敗提示", source: "draft:outline-20260920", status: approved}
+  - {text: "帳號資訊存不進去", source: "draft:outline-20260920", status: approved}
 - sources: [code:app/Http/Controllers/UserController.php#account]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -571,9 +571,9 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
 如果送出儲存時，系統偵測到頁面沒有完整載入（缺少應該要有的欄位），會擋下這次儲存，並提示「頁面沒有完整載入，這次的資料沒有儲存，請重新整理頁面後再儲存一次」。
 ### 在帳號資訊頁改密碼，新密碼有什麼規則？（至少 6 個字元、需與確認新密碼一致；英數混合在這裡只是提示） {#jgb/A/account-change-password-rules}
 - phrasings:
-  - {text: "改密碼有什麼限制", source: "draft:outline-20260920", status: proposed}
-  - {text: "改密碼一定要英文加數字嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "帳號資訊頁新密碼規則", source: "draft:outline-20260920", status: proposed}
+  - {text: "改密碼有什麼限制", source: "draft:outline-20260920", status: approved}
+  - {text: "改密碼一定要英文加數字嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "帳號資訊頁新密碼規則", source: "draft:outline-20260920", status: approved}
 - sources: [code:app/Http/Controllers/UserController.php, code:src/components/PasswordForm.vue, code:resources/views/users/account.blade.php, code:app/Http/Controllers/AuthController.php]
 - reviewed: {by: owner, at: 2026-10-04}
 - target_user: [property_manager]
@@ -585,9 +585,9 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
 ## 簽約資訊（證件、身分證號、戶籍地址；公司統編與大小章） {#A-signer-info}
 ### 個人房東的簽約資訊要填哪些欄位？（姓氏、名稱、身分證字號、Email、手機號碼、戶籍地址、通訊地址標示必填，身分證正反面照片與其他附件為選填） {#jgb/A/signer-individual-fields}
 - phrasings:
-  - {text: "個人房東簽約資訊", source: "draft:outline-20260920", status: proposed}
-  - {text: "簽約要填身分證嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "簽約資訊個人欄位", source: "draft:outline-20260920", status: proposed}
+  - {text: "個人房東簽約資訊", source: "draft:outline-20260920", status: approved}
+  - {text: "簽約要填身分證嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "簽約資訊個人欄位", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/team/_parts/SignerDetails.vue, code:src/pages/users/team/_parts/SignerFormInputField.vue, code:src/styles/tailwind.sass, code:app/Role.php, code:src/components/AddressComponent.vue, code:src/components/AddressFieldTitle.jsx]
 - reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager, prospect]
@@ -599,9 +599,9 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
 「其他附件(選填)」可以上傳「工作名片/學生證」「良民證」「小章」三項，都是選填。
 ### 公司身分的簽約資訊要填什麼？（公司名稱、統編、負責人、公司電話/Email、登記證資料） {#jgb/A/signer-corp-fields}
 - phrasings:
-  - {text: "公司簽約資訊", source: "draft:outline-20260920", status: proposed}
-  - {text: "統編怎麼填", source: "draft:outline-20260920", status: proposed}
-  - {text: "公司負責人要填嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "公司簽約資訊", source: "draft:outline-20260920", status: approved}
+  - {text: "統編怎麼填", source: "draft:outline-20260920", status: approved}
+  - {text: "公司負責人要填嗎", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/team/_parts/SignerDetails.vue]
 - reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager, prospect]
@@ -613,9 +613,9 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
 「公司負責人」是公司團隊都會顯示的欄位，社宅團隊為必填、其他公司團隊為選填；「社宅業者編號」只有社宅團隊才會顯示並填寫，一般公司團隊看不到這個欄位。
 ### 公司身分可以上傳哪些印章與證件附件？（公司大章、小章、經紀人章、經紀業章、租賃管理員章，皆為選填） {#jgb/A/signer-corp-seals}
 - phrasings:
-  - {text: "公司大小章上傳", source: "draft:outline-20260920", status: proposed}
-  - {text: "經紀人章要傳嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "簽約印章附件", source: "draft:outline-20260920", status: proposed}
+  - {text: "公司大小章上傳", source: "draft:outline-20260920", status: approved}
+  - {text: "經紀人章要傳嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "簽約印章附件", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/team/_parts/SignerDetails.vue]
 - reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager, prospect]
@@ -625,9 +625,9 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
 除了這五種印章之外，還有一個獨立的「電子簽約圖章」欄位（畫面上顯示為「圖章」），用來啟用「預設使用圖章取代親手簽名」的簽約方式，走另一組上傳流程。
 ### 有不動產經紀人／租賃管理人員資格要多填什麼？（經紀人證號、租賃管理人員證號等） {#jgb/A/signer-broker-manager-fields}
 - phrasings:
-  - {text: "經紀人證號要填嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "租賃管理人員資訊", source: "draft:outline-20260920", status: proposed}
-  - {text: "經紀業名稱", source: "draft:outline-20260920", status: proposed}
+  - {text: "經紀人證號要填嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "租賃管理人員資訊", source: "draft:outline-20260920", status: approved}
+  - {text: "經紀業名稱", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/team/_parts/SignerDetails.vue]
 - reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager, prospect]
@@ -638,9 +638,9 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
 若身分為社宅團隊，經紀人名稱、經紀人證號、租賃管理人員名稱、租賃管理人員證號皆會變為必填欄位，並且會多顯示經紀人的聯絡電話與 Email、以及租賃管理人員的聯絡電話；一般公司團隊這些欄位皆為選填或不顯示。
 ### 簽約資訊誰能編輯？（沒有編輯權限的欄位會顯示為停用樣式） {#jgb/A/signer-edit-permission}
 - phrasings:
-  - {text: "誰能改簽約資訊", source: "draft:outline-20260920", status: proposed}
-  - {text: "沒有編輯權限會怎樣", source: "draft:outline-20260920", status: proposed}
-  - {text: "簽約資訊唯讀", source: "draft:outline-20260920", status: proposed}
+  - {text: "誰能改簽約資訊", source: "draft:outline-20260920", status: approved}
+  - {text: "沒有編輯權限會怎樣", source: "draft:outline-20260920", status: approved}
+  - {text: "簽約資訊唯讀", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/signerInfo/Index.vue, code:src/pages/users/team/_parts/SignerDetails.vue]
 - reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
@@ -651,9 +651,9 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
 個人身分的欄位元件目前沒有這種可設為不可編輯的樣式切換，固定顯示為一般可編輯樣式；只有公司身分的欄位會依此顯示停用樣式。
 ### 簽約資訊的地址欄位怎麼填？（戶籍/通訊地址、公司登記/通訊地址皆為必填，可一鍵「同戶籍地址」「同公司登記地址」） {#jgb/A/signer-address-fields}
 - phrasings:
-  - {text: "戶籍地址要填嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "通訊地址可以跟戶籍一樣嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "公司登記地址", source: "draft:outline-20260920", status: proposed}
+  - {text: "戶籍地址要填嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "通訊地址可以跟戶籍一樣嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "公司登記地址", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/team/_parts/SignerDetails.vue]
 - reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager, prospect]
@@ -665,8 +665,8 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
 只有社宅團隊，才會額外顯示經紀人通訊地址與租賃管理人員通訊地址兩個獨立欄位；非社宅團隊即使有經紀人或租賃管理人員資格，也不會顯示這兩個地址欄位。
 ### 公司名下有多筆簽約對象時要怎麼切換？（表單上方出現切換列，超過 5 筆再加「所有團隊」下拉選單） {#jgb/A/signer-multi-entry-switch}
 - phrasings:
-  - {text: "公司多筆簽約對象切換", source: "draft:outline-20260920", status: proposed}
-  - {text: "多個公司要怎麼切換", source: "draft:outline-20260920", status: proposed}
+  - {text: "公司多筆簽約對象切換", source: "draft:outline-20260920", status: approved}
+  - {text: "多個公司要怎麼切換", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/team/_parts/SignerDetails.vue]
 - reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
@@ -676,8 +676,8 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
 超過 5 筆公司簽約對象時，會多一個「所有團隊」的下拉選單，方便直接選擇要編輯的對象，而不是逐一點選切換列。
 ### 簽約資訊頁的「管理」「儲存」按鈕做什麼？（管理開啟簽約對象視窗可新增或刪除，儲存只在個人身分頁面出現） {#jgb/A/signer-manage-save-buttons}
 - phrasings:
-  - {text: "簽約資訊管理按鈕", source: "draft:outline-20260920", status: proposed}
-  - {text: "簽約資訊儲存按鈕", source: "draft:outline-20260920", status: proposed}
+  - {text: "簽約資訊管理按鈕", source: "draft:outline-20260920", status: approved}
+  - {text: "簽約資訊儲存按鈕", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/team/_parts/SignerDetails.vue]
 - reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
@@ -688,9 +688,9 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
 ## 通知中心 {#A-notification-center}
 ### 通知中心怎麼依類型篩選通知？（依合約/帳務/修繕/裝置/其他分類） {#jgb/A/notification-center-type-filter}
 - phrasings:
-  - {text: "通知中心怎麼篩選", source: "draft:outline-20260920", status: proposed}
-  - {text: "通知中心的通知類型有哪些", source: "draft:outline-20260920", status: proposed}
-  - {text: "怎麼看合約類通知", source: "draft:outline-20260920", status: proposed}
+  - {text: "通知中心怎麼篩選", source: "draft:outline-20260920", status: approved}
+  - {text: "通知中心的通知類型有哪些", source: "draft:outline-20260920", status: approved}
+  - {text: "怎麼看合約類通知", source: "draft:outline-20260920", status: approved}
 - sources: [code:app/Http/Controllers/NotificationController.php#index]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -699,8 +699,8 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
 通知中心提供依類型篩選的下拉選單，選項為全部、合約、帳務、修繕、裝置、其他。
 ### 通知中心的通知怎麼標示未讀？（列表項目左側的紅點，沒有「只顯示未讀」的篩選功能） {#jgb/A/notification-center-unread-dot}
 - phrasings:
-  - {text: "只看未讀通知", source: "draft:outline-20260920", status: proposed}
-  - {text: "通知未讀紅點", source: "draft:outline-20260920", status: proposed}
+  - {text: "只看未讀通知", source: "draft:outline-20260920", status: approved}
+  - {text: "通知未讀紅點", source: "draft:outline-20260920", status: approved}
 - sources: [code:resources/views/notifications/index.blade.php]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -710,8 +710,8 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
 頁面目前沒有「只顯示未讀」這種篩選核取方塊，無法只篩選未讀通知。
 ### 通知中心每頁顯示筆數可以怎麼調整？（30/60/90 筆，預設 30 筆） {#jgb/A/notification-center-per-page}
 - phrasings:
-  - {text: "通知每頁幾筆", source: "draft:outline-20260920", status: proposed}
-  - {text: "通知中心分頁", source: "draft:outline-20260920", status: proposed}
+  - {text: "通知每頁幾筆", source: "draft:outline-20260920", status: approved}
+  - {text: "通知中心分頁", source: "draft:outline-20260920", status: approved}
 - sources: [code:app/Http/Controllers/NotificationController.php#index]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -720,9 +720,9 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
 每頁顯示筆數可切換 30 項、60 項或 90 項，預設為 30 項。
 ### 為什麼通知中心是空的？（房東側需要查看通知的權限才看得到通知內容） {#jgb/A/notification-center-permission}
 - phrasings:
-  - {text: "通知中心是空的", source: "draft:outline-20260920", status: proposed}
-  - {text: "為什麼看不到通知", source: "draft:outline-20260920", status: proposed}
-  - {text: "通知權限", source: "draft:outline-20260920", status: proposed}
+  - {text: "通知中心是空的", source: "draft:outline-20260920", status: approved}
+  - {text: "為什麼看不到通知", source: "draft:outline-20260920", status: approved}
+  - {text: "通知權限", source: "draft:outline-20260920", status: approved}
 - sources: [code:app/Http/Controllers/NotificationController.php#index, code:resources/views/notifications/index.blade.php]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -733,9 +733,9 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
 沒有這項權限時，類型篩選下拉選單仍會顯示，但會變成停用樣式；每頁筆數選單則完全不會出現；畫面主要區塊會顯示「您還沒有收到任何通知，再等等吧 📭」，而不是錯誤訊息。
 ### 點擊通知列表項目會發生什麼？（前往原連結；訊息類通知不換頁） {#jgb/A/notification-mark-read-navigate}
 - phrasings:
-  - {text: "點通知會怎樣", source: "draft:outline-20260920", status: proposed}
-  - {text: "通知會標記已讀嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "通知連結", source: "draft:outline-20260920", status: proposed}
+  - {text: "點通知會怎樣", source: "draft:outline-20260920", status: approved}
+  - {text: "通知會標記已讀嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "通知連結", source: "draft:outline-20260920", status: approved}
 - sources: [code:app/Http/Controllers/NotificationController.php#index, code:resources/views/notifications/index.blade.php, code:app/Http/Controllers/Controller.php, code:app/Notification.php]
 - reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
@@ -746,8 +746,8 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
 訊息類通知則是在原頁面開啟訊息視窗，不會換頁。
 ### 篩選後頁碼超出範圍會自動跳回第一頁嗎？（不會，只會顯示空的通知清單） {#jgb/A/notification-mark-read-out-of-range}
 - phrasings:
-  - {text: "通知頁碼超出範圍", source: "draft:outline-20260920", status: proposed}
-  - {text: "篩選後跳到空白頁", source: "draft:outline-20260920", status: proposed}
+  - {text: "通知頁碼超出範圍", source: "draft:outline-20260920", status: approved}
+  - {text: "篩選後跳到空白頁", source: "draft:outline-20260920", status: approved}
 - sources: [code:app/Http/Controllers/NotificationController.php#index]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -756,9 +756,9 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
 篩選通知後如果頁碼超出範圍，畫面不會自動跳回第一頁，只會顯示空的通知清單。
 ### 導覽列的通知鈴鐺會顯示什麼？（最近 5 筆通知與未點擊數量，大房東不會顯示） {#jgb/A/notification-navbar-bell}
 - phrasings:
-  - {text: "導覽列通知鈴鐺", source: "draft:outline-20260920", status: proposed}
-  - {text: "鈴鐺數字是什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "紅點跟鈴鐺數字差別", source: "draft:outline-20260920", status: proposed}
+  - {text: "導覽列通知鈴鐺", source: "draft:outline-20260920", status: approved}
+  - {text: "鈴鐺數字是什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "紅點跟鈴鐺數字差別", source: "draft:outline-20260920", status: approved}
 - sources: [code:app/Http/Controllers/NotificationController.php#navbar]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -770,9 +770,9 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
 ## 通知收件設定與發送報表（通知收件信箱最多再加 3 組） {#A-notification-settings}
 ### 通知收件信箱最多能加幾組？（每個通知分類最多再加 3 組電子信箱） {#jgb/A/notification-settings-extra-emails}
 - phrasings:
-  - {text: "通知收件信箱最多幾組", source: "draft:outline-20260920", status: proposed}
-  - {text: "怎麼加通知信箱", source: "draft:outline-20260920", status: proposed}
-  - {text: "額外通知信箱", source: "draft:outline-20260920", status: proposed}
+  - {text: "通知收件信箱最多幾組", source: "draft:outline-20260920", status: approved}
+  - {text: "怎麼加通知信箱", source: "draft:outline-20260920", status: approved}
+  - {text: "額外通知信箱", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/notification/Index.vue]
 - reviewed: {by: owner, at: 2026-10-06}
 - target_user: [property_manager]
@@ -784,9 +784,9 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
 需要具備通知設定的編輯權限，才能新增信箱、儲存表單；沒有這個權限時，「新增信箱」與「儲存」按鈕會直接消失，但每組信箱旁的移除（×）按鈕仍會顯示，只是變成無法點擊的停用樣式。
 ### 通知收件設定有哪些分類？（合約、帳務、修繕、訂閱、房東管理，另有限定開放的加盟分潤報表） {#jgb/A/notification-settings-categories}
 - phrasings:
-  - {text: "通知收件設定的分類有哪些", source: "draft:outline-20260920", status: proposed}
-  - {text: "帳務通知包含什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "訂閱通知是什麼", source: "draft:outline-20260920", status: proposed}
+  - {text: "通知收件設定的分類有哪些", source: "draft:outline-20260920", status: approved}
+  - {text: "帳務通知包含什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "訂閱通知是什麼", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/use/config/useForwardNotificationEmails.ts]
 - reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
@@ -800,9 +800,9 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
 「加盟分潤報表」類別只有被列入特定開放名單的團隊才會顯示，若想讓新團隊加入分潤報表需另外聯繫 JGB。
 ### 「發送報表」「多團隊合併報表」按鈕是做什麼的？（選起始日與終止日，把加盟分潤報表寄到自訂通知信箱；僅限加盟分潤報表分類，多團隊合併僅限特定團隊） {#jgb/A/notification-settings-report-buttons}
 - phrasings:
-  - {text: "發送報表按鈕", source: "draft:outline-20260920", status: proposed}
-  - {text: "多團隊合併報表", source: "draft:outline-20260920", status: proposed}
-  - {text: "分潤報表怎麼看", source: "draft:outline-20260920", status: proposed}
+  - {text: "發送報表按鈕", source: "draft:outline-20260920", status: approved}
+  - {text: "多團隊合併報表", source: "draft:outline-20260920", status: approved}
+  - {text: "分潤報表怎麼看", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/use/config/useForwardNotificationEmails.ts, code:src/pages/users/notification/Index.vue, code:src/components/Lightbox/NotificationMailReport.vue, code:app/Services/FranchiseProfitShareService.php]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -816,9 +816,9 @@ WhatsApp 欄位旁有提示：請填寫國碼與電話號碼、國碼前面不�
 點擊「發送報表」或「多團隊合併報表」按鈕時，會依目前所在的通知分類，開啟對應的報表視窗。
 ### 通知收件設定改完怎麼儲存？ {#jgb/A/notification-settings-save}
 - phrasings:
-  - {text: "通知設定怎麼存", source: "draft:outline-20260920", status: proposed}
-  - {text: "儲存按鈕按不下去", source: "draft:outline-20260920", status: proposed}
-  - {text: "沒填信箱能存嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "通知設定怎麼存", source: "draft:outline-20260920", status: approved}
+  - {text: "儲存按鈕按不下去", source: "draft:outline-20260920", status: approved}
+  - {text: "沒填信箱能存嗎", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/notification/Index.vue]
 - reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]

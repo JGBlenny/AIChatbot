@@ -9,10 +9,10 @@ language: zh-TW
 ## 社區列表與建立 {#C-community-list}
 ### 社區總表顯示什麼資訊？（物件總數、招租／買賣廣告數、空置數量、本月應收與已收） {#jgb/C/community-list-overview-stats}
 - phrasings:
-  - {text: "社區總表看得到什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "社區列表顯示哪些數字", source: "draft:outline-20260920", status: proposed}
-  - {text: "空置數量怎麼算", source: "draft:outline-20260920", status: proposed}
-  - {text: "每個社區的招租買賣數量在哪看", source: "draft:outline-20260920", status: proposed}
+  - {text: "社區總表看得到什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "社區列表顯示哪些數字", source: "draft:outline-20260920", status: approved}
+  - {text: "空置數量怎麼算", source: "draft:outline-20260920", status: approved}
+  - {text: "每個社區的招租買賣數量在哪看", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/communities/_parts/CommunityItem.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -23,9 +23,9 @@ language: zh-TW
 當社區已啟用差額發票時，該社區列會額外顯示「開設差額發票」標籤與底租金額。
 ### 如何新增社區？（訂閱方案有可建立社區數量上限） {#jgb/C/community-add-single-and-limit}
 - phrasings:
-  - {text: "怎麼新增社區", source: "draft:outline-20260920", status: proposed}
-  - {text: "社區數量有上限嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "新增社區按鈕在哪", source: "draft:outline-20260920", status: proposed}
+  - {text: "怎麼新增社區", source: "draft:outline-20260920", status: approved}
+  - {text: "社區數量有上限嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "新增社區按鈕在哪", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/communities/list/Index.vue, code:src/type/commit.ts, code:resources/views/layouts/lightbox/general.blade.php]
 - reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
@@ -35,10 +35,10 @@ language: zh-TW
 訂閱方案對可建立的社區數量有上限；達到上限時，按「新增社區」會跳出「已達到數量上限」的提示，而不會建立新社區。
 ### 怎麼批次新增社區、或複製現有社區建立新社區？ {#jgb/C/community-batch-add-and-copy}
 - phrasings:
-  - {text: "批次新增社區怎麼做", source: "draft:outline-20260920", status: proposed}
-  - {text: "社區可以用 Excel 匯入嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "複製現有社區", source: "draft:outline-20260920", status: proposed}
-  - {text: "有沒有現成社區範本可以複製", source: "draft:outline-20260920", status: proposed}
+  - {text: "批次新增社區怎麼做", source: "draft:outline-20260920", status: approved}
+  - {text: "社區可以用 Excel 匯入嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "複製現有社區", source: "draft:outline-20260920", status: approved}
+  - {text: "有沒有現成社區範本可以複製", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/components/Lightbox/CommunitiesBatchAdd.vue, code:src/pages/communities/list/Index.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -49,10 +49,10 @@ language: zh-TW
 選單中的「複製現有社區」會先進入社區選擇畫面，挑選一個已存在的社區做為範本再建立新社區；此選項只在目前篩選結果的社區列表不是空的時才會出現。
 ### 社區總表怎麼搜尋與排序？（案名／地址關鍵字、縣市行政區、建物類型、捷運站） {#jgb/C/community-list-filter-sort}
 - phrasings:
-  - {text: "社區怎麼搜尋", source: "draft:outline-20260920", status: proposed}
-  - {text: "社區列表篩選條件有哪些", source: "draft:outline-20260920", status: proposed}
-  - {text: "怎麼依地區找社區", source: "draft:outline-20260920", status: proposed}
-  - {text: "社區排序方式", source: "draft:outline-20260920", status: proposed}
+  - {text: "社區怎麼搜尋", source: "draft:outline-20260920", status: approved}
+  - {text: "社區列表篩選條件有哪些", source: "draft:outline-20260920", status: approved}
+  - {text: "怎麼依地區找社區", source: "draft:outline-20260920", status: approved}
+  - {text: "社區排序方式", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/communities/list/Index.vue, code:src/pages/communities/list/_parts/CommunitiesAdvanceSearchBlock.jsx]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -63,10 +63,10 @@ language: zh-TW
 列表也可以切換排序方式，選定的排序會被記住供下次進入沿用。
 ### 社區可以刪除嗎？（社區底下不能有任何物件才能刪除，且刪除後無法復原） {#jgb/C/community-delete-requires-empty}
 - phrasings:
-  - {text: "社區怎麼刪除", source: "draft:outline-20260920", status: proposed}
-  - {text: "社區可以刪除嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "刪不掉社區怎麼辦", source: "draft:outline-20260920", status: proposed}
-  - {text: "刪除社區的限制", source: "draft:outline-20260920", status: proposed}
+  - {text: "社區怎麼刪除", source: "draft:outline-20260920", status: approved}
+  - {text: "社區可以刪除嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "刪不掉社區怎麼辦", source: "draft:outline-20260920", status: approved}
+  - {text: "刪除社區的限制", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/communities/_parts/CommunityItem.vue, code:src/components/Lightbox/CommunityDelete.vue, code:app/Http/Controllers/CommunityController.php]
 - reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
@@ -77,9 +77,9 @@ language: zh-TW
 確認刪除的視窗會提醒「社區刪除後，將無法復原」，需再次確認才會真的刪除。
 ### 社區總表可以匯出嗎？（需要匯出物件權限，會依目前篩選條件匯出） {#jgb/C/community-export-list}
 - phrasings:
-  - {text: "社區怎麼匯出", source: "draft:outline-20260920", status: proposed}
-  - {text: "社區清單匯出功能", source: "draft:outline-20260920", status: proposed}
-  - {text: "匯出社區要什麼權限", source: "draft:outline-20260920", status: proposed}
+  - {text: "社區怎麼匯出", source: "draft:outline-20260920", status: approved}
+  - {text: "社區清單匯出功能", source: "draft:outline-20260920", status: approved}
+  - {text: "匯出社區要什麼權限", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/communities/list/Index.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -89,9 +89,9 @@ language: zh-TW
 沒有匯出物件權限時，「匯出社區」按鈕不會顯示；有匯出物件權限、但目前篩選結果為 0 筆時，按鈕會顯示但無法點擊。
 ### 社區總表每頁筆數可以調整嗎？（30／60／90項） {#jgb/C/community-list-pagination}
 - phrasings:
-  - {text: "社區總表每頁顯示幾筆", source: "draft:outline-20260920", status: proposed}
-  - {text: "社區列表分頁筆數", source: "draft:outline-20260920", status: proposed}
-  - {text: "怎麼調整每頁顯示社區數", source: "draft:outline-20260920", status: proposed}
+  - {text: "社區總表每頁顯示幾筆", source: "draft:outline-20260920", status: approved}
+  - {text: "社區列表分頁筆數", source: "draft:outline-20260920", status: approved}
+  - {text: "怎麼調整每頁顯示社區數", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/communities/list/Index.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -100,9 +100,9 @@ language: zh-TW
 社區總表下方可以選擇每頁顯示30項、60項或90項。
 ### 誰看得到新增社區的入口？（總表右上角需要編輯物件權限；空狀態的批次新增／新增社區入口需要新增物件權限） {#jgb/C/community-list-add-permission}
 - phrasings:
-  - {text: "新增社區按鈕不見了", source: "draft:outline-20260920", status: proposed}
-  - {text: "誰可以新增社區", source: "draft:outline-20260920", status: proposed}
-  - {text: "沒有編輯物件的權限看不到新增社區", source: "draft:outline-20260920", status: proposed}
+  - {text: "新增社區按鈕不見了", source: "draft:outline-20260920", status: approved}
+  - {text: "誰可以新增社區", source: "draft:outline-20260920", status: approved}
+  - {text: "沒有編輯物件的權限看不到新增社區", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/communities/list/Index.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -112,9 +112,9 @@ language: zh-TW
 當該分類目前沒有任何社區時，畫面會改顯示空狀態；此時「此分類尚未有社區，您可以選擇😎：」文字與底下的「批次新增」「新增社區」按鈕，只有在使用者具備新增物件權限時才會出現，沒有新增物件權限的使用者只會看到「此分類尚未有社區」的提示文字。
 ### 社區選擇畫面選好社區之後會發生什麼？（複製社區直接建立副本並進入編輯；新增物件直接建立物件並進入編輯；複製物件接著挑選物件） {#jgb/C/community-pick-next-step}
 - phrasings:
-  - {text: "選完社區之後會怎樣", source: "draft:outline-20260920", status: proposed}
-  - {text: "複製社區之後會跳到哪裡", source: "draft:outline-20260920", status: proposed}
-  - {text: "社區選擇畫面怎麼用", source: "draft:outline-20260920", status: proposed}
+  - {text: "選完社區之後會怎樣", source: "draft:outline-20260920", status: approved}
+  - {text: "複製社區之後會跳到哪裡", source: "draft:outline-20260920", status: approved}
+  - {text: "社區選擇畫面怎麼用", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/communities/pick/Index.vue, code:src/components/BottomNav.vue, code:app/Http/Controllers/EstateController.php, code:src/pages/estates/edit/Index.vue]
 - reviewed: {by: owner, at: 2026-10-04}
 - target_user: [property_manager]
@@ -127,9 +127,9 @@ language: zh-TW
 ## 社區資料編輯（基本資料、照片與描述、介紹與交通） {#C-community-edit}
 ### 社區編輯有哪些分頁？（基本資料、介紹與交通、照片與描述） {#jgb/C/community-edit-tabs}
 - phrasings:
-  - {text: "社區編輯有哪些分頁", source: "draft:outline-20260920", status: proposed}
-  - {text: "社區資料要編輯哪些項目", source: "draft:outline-20260920", status: proposed}
-  - {text: "編輯社區從哪裡進去", source: "draft:outline-20260920", status: proposed}
+  - {text: "社區編輯有哪些分頁", source: "draft:outline-20260920", status: approved}
+  - {text: "社區資料要編輯哪些項目", source: "draft:outline-20260920", status: approved}
+  - {text: "編輯社區從哪裡進去", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/routes/communities.js]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -139,9 +139,9 @@ language: zh-TW
 直接從社區總表點進「編輯社區」時，會先進入「基本資料」分頁。
 ### 社區基本資料要填什麼？（社區名稱、詳細地址與對外顯示地址、建築類型、總樓層、屋齡） {#jgb/C/community-edit-basic-fields}
 - phrasings:
-  - {text: "社區基本資料要填什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "社區名稱字數限制", source: "draft:outline-20260920", status: proposed}
-  - {text: "對外顯示地址跟詳細地址差在哪", source: "draft:outline-20260920", status: proposed}
+  - {text: "社區基本資料要填什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "社區名稱字數限制", source: "draft:outline-20260920", status: approved}
+  - {text: "對外顯示地址跟詳細地址差在哪", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/communities/edit/Basic.vue]
 - reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
@@ -152,9 +152,9 @@ language: zh-TW
 其他欄位還包含建築類型、總樓層（限純數字）與屋齡（限純數字）；另外還有一個「社區細節」欄位區塊，只有團隊被歸類為特定合作團隊時才會顯示，一般團隊看不到。
 ### 社區照片與描述可以上傳幾張圖片？（限1張，JPG/PNG，檔案大小最大10MB） {#jgb/C/community-edit-gallery-photo-limit}
 - phrasings:
-  - {text: "社區照片上限幾張", source: "draft:outline-20260920", status: proposed}
-  - {text: "社區封面圖怎麼傳", source: "draft:outline-20260920", status: proposed}
-  - {text: "社區圖片格式限制", source: "draft:outline-20260920", status: proposed}
+  - {text: "社區照片上限幾張", source: "draft:outline-20260920", status: approved}
+  - {text: "社區封面圖怎麼傳", source: "draft:outline-20260920", status: approved}
+  - {text: "社區圖片格式限制", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/communities/edit/Gallery.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -163,9 +163,9 @@ language: zh-TW
 「照片與描述」分頁的社區相片，最多只能上傳1張，格式支援 JPG、PNG，檔案大小最大 10MB。
 ### 社區照片與描述什麼時候會跳出「已更新」提示？（存檔成功後才出現，不是上傳當下） {#jgb/C/community-edit-gallery-save-notice}
 - phrasings:
-  - {text: "社區照片上傳成功提示在哪", source: "draft:outline-20260920", status: proposed}
-  - {text: "社區資料存檔提示", source: "draft:outline-20260920", status: proposed}
-  - {text: "上傳照片後畫面沒反應正常嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "社區照片上傳成功提示在哪", source: "draft:outline-20260920", status: approved}
+  - {text: "社區資料存檔提示", source: "draft:outline-20260920", status: approved}
+  - {text: "上傳照片後畫面沒反應正常嗎", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/communities/edit/Gallery.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -175,9 +175,9 @@ language: zh-TW
 單純把照片上傳完成，不會立刻跳出這個提示，要等整個分頁儲存成功才會顯示。
 ### 社區介紹與交通怎麼填？（社區簡介、鄰近交通說明、可加多個鄰近捷運站） {#jgb/C/community-edit-intros-and-transit}
 - phrasings:
-  - {text: "社區介紹要寫什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "怎麼加捷運站", source: "draft:outline-20260920", status: proposed}
-  - {text: "社區交通資訊在哪填", source: "draft:outline-20260920", status: proposed}
+  - {text: "社區介紹要寫什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "怎麼加捷運站", source: "draft:outline-20260920", status: approved}
+  - {text: "社區交通資訊在哪填", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/communities/edit/Intros.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -187,9 +187,9 @@ language: zh-TW
 鄰近捷運站可以點選「新增鄰近捷運站」加入多筆，每筆需要選擇捷運線與停靠站。
 ### 社區基本資料哪個欄位是必填？（只有社區名稱是必填） {#jgb/C/community-edit-basic-required-field}
 - phrasings:
-  - {text: "社區哪些欄位一定要填", source: "draft:outline-20260920", status: proposed}
-  - {text: "社區名稱一定要填嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "社區地址是必填嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "社區哪些欄位一定要填", source: "draft:outline-20260920", status: approved}
+  - {text: "社區名稱一定要填嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "社區地址是必填嗎", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/communities/edit/Basic.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -199,9 +199,9 @@ language: zh-TW
 ## 社區底下的物件（管理端清單：總覽／招租／買賣切換、編輯社區、預覽廣告頁） {#C-community-estates}
 ### 社區底下物件頁最上方顯示什麼？（招租廣告、買賣廣告、目前空置數量、類型、屋齡、本月應收與已收金額） {#jgb/C/community-estates-overview-card}
 - phrasings:
-  - {text: "社區物件頁上面的卡片是什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "社區概要顯示哪些數字", source: "draft:outline-20260920", status: proposed}
-  - {text: "社區物件總覽在哪看", source: "draft:outline-20260920", status: proposed}
+  - {text: "社區物件頁上面的卡片是什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "社區概要顯示哪些數字", source: "draft:outline-20260920", status: approved}
+  - {text: "社區物件總覽在哪看", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/communities/estates/_parts/CommunityOverview.vue, code:app/Services/CommunityService.php, code:src/pages/communities/estates/Index.vue, code:app/Http/Controllers/UserController.php]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -214,9 +214,9 @@ language: zh-TW
 手機等窄螢幕（寬度 991 以下）沒有這個選單，改在卡片下方顯示「編輯社區」「預覽廣告頁」「刪除社區」，其中「編輯社區」「刪除社區」同樣只有具備編輯物件權限的使用者看得到。
 ### 社區底下的物件清單怎麼切換總覽／招租／買賣？（欄位標題會跟著切換內容改變） {#jgb/C/community-estates-category-switch}
 - phrasings:
-  - {text: "社區物件怎麼切換招租買賣", source: "draft:outline-20260920", status: proposed}
-  - {text: "總覽招租買賣分類在哪", source: "draft:outline-20260920", status: proposed}
-  - {text: "社區物件清單分類切換", source: "draft:outline-20260920", status: proposed}
+  - {text: "社區物件怎麼切換招租買賣", source: "draft:outline-20260920", status: approved}
+  - {text: "總覽招租買賣分類在哪", source: "draft:outline-20260920", status: approved}
+  - {text: "社區物件清單分類切換", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/utils/constants/estate.js, code:src/pages/communities/estates/_parts/ListTable.vue]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -226,10 +226,10 @@ language: zh-TW
 切到「招租」時清單欄位會顯示招租廣告與租金，切到「買賣」時則顯示買賣廣告與售價，欄位標題會依所選分類自動變化。
 ### 怎麼在社區底下新增物件？（新增／批次新增／複製現有物件，受物件數量上限限制） {#jgb/C/community-estates-add-batch-copy}
 - phrasings:
-  - {text: "社區物件怎麼新增", source: "draft:outline-20260920", status: proposed}
-  - {text: "社區物件批次新增", source: "draft:outline-20260920", status: proposed}
-  - {text: "複製現有物件", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件數量上限", source: "draft:outline-20260920", status: proposed}
+  - {text: "社區物件怎麼新增", source: "draft:outline-20260920", status: approved}
+  - {text: "社區物件批次新增", source: "draft:outline-20260920", status: approved}
+  - {text: "複製現有物件", source: "draft:outline-20260920", status: approved}
+  - {text: "物件數量上限", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/communities/estates/Index.vue]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -240,9 +240,9 @@ language: zh-TW
 當社區內只剩公共區域物件、沒有其他物件時，不會提供「複製現有物件」選項。
 ### 社區底下有差額發票、投報率頁籤嗎？（差額發票看該社區是否開通；投入成本與投報率由團隊的投報率功能開關一起控制，租客、大房東與沒有「查看所有帳單」權限的成員看不到） {#jgb/C/community-estates-extra-tabs}
 - phrasings:
-  - {text: "社區差額發票頁籤", source: "draft:outline-20260920", status: proposed}
-  - {text: "社區投報率在哪看", source: "draft:outline-20260920", status: proposed}
-  - {text: "社區物件頁籤有哪些", source: "draft:outline-20260920", status: proposed}
+  - {text: "社區差額發票頁籤", source: "draft:outline-20260920", status: approved}
+  - {text: "社區投報率在哪看", source: "draft:outline-20260920", status: approved}
+  - {text: "社區物件頁籤有哪些", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/utils/constants/community.js, code:src/pages/communities/estates/Index.vue, code:app/Http/Controllers/CommunityController.php, code:app/Http/Controllers/Api/CommunityRoiController.php, code:app/Services/InvoiceService.php, code:app/Http/Controllers/UserController.php]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -253,9 +253,9 @@ language: zh-TW
 沒有任何額外頁籤開通時，畫面不會顯示頁籤切換器，直接呈現物件清單。
 ### 社區物件清單每頁筆數可以調整嗎？（30／60／90項） {#jgb/C/community-estates-pagination}
 - phrasings:
-  - {text: "社區物件每頁顯示幾筆", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件清單分頁筆數", source: "draft:outline-20260920", status: proposed}
-  - {text: "怎麼調整每頁項目數", source: "draft:outline-20260920", status: proposed}
+  - {text: "社區物件每頁顯示幾筆", source: "draft:outline-20260920", status: approved}
+  - {text: "物件清單分頁筆數", source: "draft:outline-20260920", status: approved}
+  - {text: "怎麼調整每頁項目數", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/communities/estates/Index.vue]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -265,9 +265,9 @@ language: zh-TW
 ## 社區公開頁（社區詳情、社區總表） {#C-community-public-page}
 ### 社區公開頁（社區廣告）顯示什麼？（基本資訊、鄰近捷運、社區介紹、刊登中物件） {#jgb/C/community-show-content}
 - phrasings:
-  - {text: "社區詳情頁有什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "社區公開頁看得到什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "社區廣告頁內容", source: "draft:outline-20260920", status: proposed}
+  - {text: "社區詳情頁有什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "社區公開頁看得到什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "社區廣告頁內容", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/communities/show/Index.vue]
 - reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager, prospect]
@@ -278,8 +278,8 @@ language: zh-TW
 頁尾會顯示本社區的 JGB 編號，並附上房屋現況與法定用途的提醒文字。
 ### 社區公開頁最上方顯示什麼價格區間？（租賃金額區間、售價金額區間） {#jgb/C/community-show-price-range}
 - phrasings:
-  - {text: "社區價格區間在哪看", source: "draft:outline-20260920", status: proposed}
-  - {text: "社區租金區間", source: "draft:outline-20260920", status: proposed}
+  - {text: "社區價格區間在哪看", source: "draft:outline-20260920", status: approved}
+  - {text: "社區租金區間", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/communities/show/_parts/PageTop.vue, code:app/Community.php, code:app/Services/CommunityService.php]
 - reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager, prospect]
@@ -288,9 +288,9 @@ language: zh-TW
 社區公開頁最上方會顯示該社區刊登中物件的「租賃金額區間」與「售價金額區間」（從最低到最高金額），有對應的刊登物件時才會顯示。
 ### 社區公開頁怎麼分享？（分享燈箱或手機分享選單、查看所有物件連結） {#jgb/C/community-show-share}
 - phrasings:
-  - {text: "社區頁面怎麼分享", source: "draft:outline-20260920", status: proposed}
-  - {text: "社區查看所有物件連結", source: "draft:outline-20260920", status: proposed}
-  - {text: "社區分享燈箱", source: "draft:outline-20260920", status: proposed}
+  - {text: "社區頁面怎麼分享", source: "draft:outline-20260920", status: approved}
+  - {text: "社區查看所有物件連結", source: "draft:outline-20260920", status: approved}
+  - {text: "社區分享燈箱", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/communities/show/_parts/PageTop.vue, code:src/pages/communities/show/_parts/AsideContact.vue]
 - reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
@@ -300,9 +300,9 @@ language: zh-TW
 側邊欄也提供「查看所有物件」連結，會前往這個團隊的招租店舖頁。
 ### 在社區廣告頁可以直接跳到編輯社區、社區詳情或社區總表嗎？（只有具備編輯物件權限的使用者看得到這個選單） {#jgb/C/community-show-editor-nav}
 - phrasings:
-  - {text: "社區詳情頁怎麼編輯社區", source: "draft:outline-20260920", status: proposed}
-  - {text: "社區公開頁回總表", source: "draft:outline-20260920", status: proposed}
-  - {text: "社區詳情頁返回Dashboard", source: "draft:outline-20260920", status: proposed}
+  - {text: "社區詳情頁怎麼編輯社區", source: "draft:outline-20260920", status: approved}
+  - {text: "社區公開頁回總表", source: "draft:outline-20260920", status: approved}
+  - {text: "社區詳情頁返回Dashboard", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/communities/show/Index.vue, code:app/Services/CommunityService.php]
 - reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
@@ -312,9 +312,9 @@ language: zh-TW
 ## 物件綁定社區的導引（2022/05 社區功能上線時的強制綁定流程，限團隊擁有者） {#C-community-force-binding}
 ### 為什麼「物件需綁定社區」的導引？（2022/05/12 社區功能上線，只有團隊擁有者能操作） {#jgb/C/forcebinding-why-and-who}
 - phrasings:
-  - {text: "為什麼要綁定社區", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件為什麼要綁社區", source: "draft:outline-20260920", status: proposed}
-  - {text: "誰可以做物件綁定社區", source: "draft:outline-20260920", status: proposed}
+  - {text: "為什麼要綁定社區", source: "draft:outline-20260920", status: approved}
+  - {text: "物件為什麼要綁社區", source: "draft:outline-20260920", status: approved}
+  - {text: "誰可以做物件綁定社區", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/communities/forceBinding/Welcome.vue, code:src/components/MustDo/EstateCommunity.vue, code:app/Http/Controllers/ApiController.php, code:src/components/MustDo/Index.vue, code:src/store/modules/must_do.js, code:app/Http/Controllers/CommunityController.php]
 - reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
@@ -324,9 +324,9 @@ language: zh-TW
 舊版導引的設計是只有團隊擁有者能執行物件綁定社區，畫面上若判定為非擁有者會顯示「權限不足」；但判定所需的資料由舊版流程載入，現行不會載入，所以現行畫面不會顯示「權限不足」，也不會出現「繼續」按鈕。
 ### 物件綁定社區的導引起始畫面顯示什麼？（需同意服務條款） {#jgb/C/forcebinding-welcome-progress}
 - phrasings:
-  - {text: "綁定社區進度在哪看", source: "draft:outline-20260920", status: proposed}
-  - {text: "還有幾個物件沒綁社區", source: "draft:outline-20260920", status: proposed}
-  - {text: "綁定物件前要同意什麼", source: "draft:outline-20260920", status: proposed}
+  - {text: "綁定社區進度在哪看", source: "draft:outline-20260920", status: approved}
+  - {text: "還有幾個物件沒綁社區", source: "draft:outline-20260920", status: approved}
+  - {text: "綁定物件前要同意什麼", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/communities/forceBinding/Welcome.vue, code:src/components/MustDo/EstateCommunity.vue, code:app/Http/Controllers/ApiController.php, code:src/components/MustDo/Index.vue, code:src/store/modules/must_do.js]
 - reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
@@ -336,9 +336,9 @@ language: zh-TW
 舊版導引的起始畫面下方註明點擊「繼續」即表示已閱讀並同意服務條款與隱私權聲明；但現行畫面不會出現「繼續」按鈕，無法往下一步。
 ### 物件綁定社區導引有哪兩個步驟？（填寫社區資料、選擇欲綁定社區內的物件） {#jgb/C/forcebinding-two-steps}
 - phrasings:
-  - {text: "綁定社區流程有幾步", source: "draft:outline-20260920", status: proposed}
-  - {text: "先建社區還是先綁物件", source: "draft:outline-20260920", status: proposed}
-  - {text: "沒綁完社區會怎樣", source: "draft:outline-20260920", status: proposed}
+  - {text: "綁定社區流程有幾步", source: "draft:outline-20260920", status: approved}
+  - {text: "先建社區還是先綁物件", source: "draft:outline-20260920", status: approved}
+  - {text: "沒綁完社區會怎樣", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/communities/forceBinding/edit/Index.vue, code:src/components/MustDo/EstateCommunity.vue, code:app/Http/Controllers/ApiController.php, code:src/components/MustDo/Index.vue, code:src/pages/communities/forceBinding/Index.vue]
 - reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
@@ -348,9 +348,9 @@ language: zh-TW
 導引畫面上寫著「因系統功能更新後，各功能皆採最新的社區物件來進行動作，故未綁定完成前，系統功能將會無法正常使用」，這是舊版遷移時的提示；現行登入流程已不會再因為物件未綁定社區而被導向導引。
 ### 怎麼挑選要綁定的物件？（可關鍵字搜尋、每頁30/60/90項，確認綁定後無法修改） {#jgb/C/forcebinding-select-estates-irreversible}
 - phrasings:
-  - {text: "怎麼選要綁定的物件", source: "draft:outline-20260920", status: proposed}
-  - {text: "綁定物件可以改嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "綁定物件怎麼搜尋", source: "draft:outline-20260920", status: proposed}
+  - {text: "怎麼選要綁定的物件", source: "draft:outline-20260920", status: approved}
+  - {text: "綁定物件可以改嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "綁定物件怎麼搜尋", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/communities/forceBinding/edit/Binding.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -360,9 +360,9 @@ language: zh-TW
 畫面上明確提示「確認綁定物件後，即不能修改」，確認綁定的視窗也會再次提醒「請確認欲綁定的物件，綁定後即不能修改」。
 ### 綁定完成後會看到什麼？（全部綁完顯示恭喜，還有剩則提示繼續綁定） {#jgb/C/forcebinding-completion-states}
 - phrasings:
-  - {text: "綁定完成畫面", source: "draft:outline-20260920", status: proposed}
-  - {text: "還有物件沒綁完怎麼辦", source: "draft:outline-20260920", status: proposed}
-  - {text: "綁定物件成功提示", source: "draft:outline-20260920", status: proposed}
+  - {text: "綁定完成畫面", source: "draft:outline-20260920", status: approved}
+  - {text: "還有物件沒綁完怎麼辦", source: "draft:outline-20260920", status: approved}
+  - {text: "綁定物件成功提示", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/communities/forceBinding/edit/Binding.vue, code:src/components/MustDo/EstateCommunity.vue, code:app/Http/Controllers/ApiController.php, code:src/components/MustDo/Index.vue, code:src/store/modules/must_do.js]
 - reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
@@ -373,10 +373,10 @@ language: zh-TW
 ## 物件列表與篩選 {#C-estate-list}
 ### 物件總表怎麼新增物件？（新增與複製現有物件都要先經過社區選擇畫面，目前沒有批次新增入口） {#jgb/C/estate-list-add-must-pick-community}
 - phrasings:
-  - {text: "物件總表怎麼新增物件", source: "draft:outline-20260920", status: proposed}
-  - {text: "新增物件要選社區嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件總表可以批次新增嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "複製現有物件在物件總表", source: "draft:outline-20260920", status: proposed}
+  - {text: "物件總表怎麼新增物件", source: "draft:outline-20260920", status: approved}
+  - {text: "新增物件要選社區嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "物件總表可以批次新增嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "複製現有物件在物件總表", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/estates/list/_parts/PageTop.vue, code:resources/views/layouts/lightbox/general.blade.php]
 - reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
@@ -386,9 +386,9 @@ language: zh-TW
 目前物件總表沒有「批次新增」入口可以使用，這個選項目前是隱藏、不會顯示出來的。
 ### 物件總表標題下方顯示什麼？（目前物件總數、尚可新增數量） {#jgb/C/estate-list-counter-and-limit}
 - phrasings:
-  - {text: "物件總表顯示物件總數", source: "draft:outline-20260920", status: proposed}
-  - {text: "還可以新增幾個物件", source: "draft:outline-20260920", status: proposed}
-  - {text: "尚可新增物件數量在哪看", source: "draft:outline-20260920", status: proposed}
+  - {text: "物件總表顯示物件總數", source: "draft:outline-20260920", status: approved}
+  - {text: "還可以新增幾個物件", source: "draft:outline-20260920", status: approved}
+  - {text: "尚可新增物件數量在哪看", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/estates/list/_parts/PageTop.vue]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -397,11 +397,11 @@ language: zh-TW
 只有具備新增物件權限的使用者，才會在物件總表標題下方看到「目前物件總數」與「尚可新增」的數字，尚可新增的數量會依訂閱方案剩餘額度變動。
 ### 物件總表有哪些進階篩選條件？（縣市行政區、經理人、大房東、社區、捷運、格局、建築類型、即時合約狀態、合約到期日、招租廣告狀態、租金與面積(坪)範圍、標籤） {#jgb/C/estate-list-filters}
 - phrasings:
-  - {text: "物件總表篩選條件有哪些", source: "draft:outline-20260920", status: proposed}
-  - {text: "怎麼依經理人篩選物件", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件怎麼依社區篩選", source: "draft:outline-20260920", status: proposed}
-  - {text: "租金範圍怎麼篩", source: "draft:outline-20260920", status: proposed}
-  - {text: "格局怎麼篩選物件", source: "draft:outline-20260920", status: proposed}
+  - {text: "物件總表篩選條件有哪些", source: "draft:outline-20260920", status: approved}
+  - {text: "怎麼依經理人篩選物件", source: "draft:outline-20260920", status: approved}
+  - {text: "物件怎麼依社區篩選", source: "draft:outline-20260920", status: approved}
+  - {text: "租金範圍怎麼篩", source: "draft:outline-20260920", status: approved}
+  - {text: "格局怎麼篩選物件", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/estates/list/_parts/EstatesAdvanceSearchBlock.jsx, code:src/pages/estates/list/_parts/EstatesAdvanceSearchBlockM.jsx, code:src/pages/estates/list/Index.vue, code:tailwind.config.js, code:app/Helper.php, code:app/Http/Controllers/EstateController.php]
 - reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
@@ -413,9 +413,9 @@ language: zh-TW
 寬度 992px 以上的螢幕，搜尋條件下方會顯示「篩選結果」，格式為「本頁起訖序號 / 總筆數」；較窄的螢幕（含手機）沒有這一行。
 ### 物件總表關鍵字搜尋可以查什麼？（案名、地址、租客、物件ID、手機、信箱） {#jgb/C/estate-list-keyword-search}
 - phrasings:
-  - {text: "物件怎麼用租客手機搜尋", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件關鍵字搜尋範圍", source: "draft:outline-20260920", status: proposed}
-  - {text: "用物件ID找物件", source: "draft:outline-20260920", status: proposed}
+  - {text: "物件怎麼用租客手機搜尋", source: "draft:outline-20260920", status: approved}
+  - {text: "物件關鍵字搜尋範圍", source: "draft:outline-20260920", status: approved}
+  - {text: "用物件ID找物件", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/estates/list/_parts/EstatesAdvanceSearchBlock.jsx]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -424,9 +424,9 @@ language: zh-TW
 物件總表的關鍵字搜尋可以切換搜尋範圍為案名、地址、租客、ID、手機或信箱。
 ### 物件總表可以批次操作嗎？（個人房東、大房東、租客身分不能；法人房東與社宅團隊成員可：匯出物件、新增批次帳單、批次刊登／取消刊登招租廣告、刪除；批次取消刊登失敗時不會顯示任何提示） {#jgb/C/estate-list-batch-actions}
 - phrasings:
-  - {text: "物件怎麼批次下架", source: "draft:outline-20260920", status: proposed}
-  - {text: "怎麼一次刊登多筆物件", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件總表可以匯出嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "物件怎麼批次下架", source: "draft:outline-20260920", status: approved}
+  - {text: "怎麼一次刊登多筆物件", source: "draft:outline-20260920", status: approved}
+  - {text: "物件總表可以匯出嗎", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/use/config/useEstateTypes.js, code:src/pages/estates/list/_parts/ListTable.vue, code:src/components/Lightbox/EstatePublishResult.jsx]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -438,10 +438,10 @@ language: zh-TW
 批次取消刊登招租廣告時，只有在完全沒有失敗物件時才會跳出下架成功件數的提示；若有物件失敗，畫面不會出現任何視窗或錯誤訊息。
 ### 物件狀態會影響哪些功能？（招租廣告狀態未刊登／刊登中，與合約狀態洽談中／租約中，是各自獨立的；刪除物件要求未刊登、沒有合約、沒有 IoT 綁定） {#jgb/C/estate-status-affects-actions}
 - phrasings:
-  - {text: "物件狀態影響什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "洽談中是什麼意思", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件狀態怎麼判斷", source: "draft:outline-20260920", status: proposed}
-  - {text: "刊登中的物件可以刪除嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "物件狀態影響什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "洽談中是什麼意思", source: "draft:outline-20260920", status: approved}
+  - {text: "物件狀態怎麼判斷", source: "draft:outline-20260920", status: approved}
+  - {text: "刊登中的物件可以刪除嗎", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/use/search/modules/contractStatus.js, code:app/Estate.php, code:app/Http/Controllers/EstateController.php, code:src/use/search/modules/is_open.js, code:app/Contract.php, code:src/use/useEstateListStore.js]
 - reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager, prospect]
@@ -454,9 +454,9 @@ language: zh-TW
 刪除單一物件時，物件必須是未刊登（不能是刊登中）、沒有尚未歸入歷史的合約，也沒有綁定 IoT 裝置，否則會被擋下並顯示原因。
 ### 物件總表每頁筆數可以調整嗎？（30／60／90項） {#jgb/C/estate-list-pagination}
 - phrasings:
-  - {text: "物件總表每頁顯示幾筆", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件列表分頁筆數", source: "draft:outline-20260920", status: proposed}
-  - {text: "調整每頁顯示物件數", source: "draft:outline-20260920", status: proposed}
+  - {text: "物件總表每頁顯示幾筆", source: "draft:outline-20260920", status: approved}
+  - {text: "物件列表分頁筆數", source: "draft:outline-20260920", status: approved}
+  - {text: "調整每頁顯示物件數", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/estates/list/Index.vue]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -465,9 +465,9 @@ language: zh-TW
 物件總表下方可以選擇每頁顯示30項、60項或90項。
 ### 物件總表篩選還有哪些條件？（空間類型多選、「更多」：VR、有電梯、可開伙、可養寵物） {#jgb/C/estate-list-filters-space-type-and-others}
 - phrasings:
-  - {text: "物件怎麼篩VR", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件篩選可養寵物", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件篩選有電梯", source: "draft:outline-20260920", status: proposed}
+  - {text: "物件怎麼篩VR", source: "draft:outline-20260920", status: approved}
+  - {text: "物件篩選可養寵物", source: "draft:outline-20260920", status: approved}
+  - {text: "物件篩選有電梯", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/estates/list/_parts/EstatesAdvanceSearchBlock.jsx, code:src/components/AdvGroupSelect.jsx, code:src/components/AdvGroupSelectMobile.jsx]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -477,9 +477,9 @@ language: zh-TW
 另外還有一個「更多」按鈕，可以複選是否有VR、有電梯、可開伙、可養寵物。
 ### 物件總表怎麼切換總覽／招租／買賣？（三種分類切換） {#jgb/C/estate-list-category-switch}
 - phrasings:
-  - {text: "物件總表怎麼切換招租買賣", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件總覽招租買賣分類", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件列表分類切換", source: "draft:outline-20260920", status: proposed}
+  - {text: "物件總表怎麼切換招租買賣", source: "draft:outline-20260920", status: approved}
+  - {text: "物件總覽招租買賣分類", source: "draft:outline-20260920", status: approved}
+  - {text: "物件列表分類切換", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/routes/estates.js, code:src/utils/constants/estate.js, code:src/pages/estates/list/_parts/ListTable.vue]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -488,9 +488,9 @@ language: zh-TW
 物件總表提供「總覽」「招租」「買賣」三種分類切換，切換後畫面上的物件清單會依分類重新載入。
 ### 物件總表怎麼排序？（排序選項由系統提供，寬度 576px 以上切換的排序會被記住） {#jgb/C/estate-list-sort-remembers-last}
 - phrasings:
-  - {text: "物件總表怎麼排序", source: "draft:outline-20260920", status: proposed}
-  - {text: "上次選的排序方式還在嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件排序選項有哪些", source: "draft:outline-20260920", status: proposed}
+  - {text: "物件總表怎麼排序", source: "draft:outline-20260920", status: approved}
+  - {text: "上次選的排序方式還在嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "物件排序選項有哪些", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/estates/list/Index.vue, code:src/components/ListSearchBar.vue, code:src/utils/constants/common.ts, code:src/pages/estates/list/_parts/EstatesAdvanceSearchBlock.jsx]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -503,9 +503,9 @@ language: zh-TW
 ## 物件資料編輯（基本資料、建物謄本、附設傢俱、標題與照片、物件介紹、720 VR） {#C-estate-edit}
 ### 物件基本資料的空間類型、用途、格局要怎麼填？ {#jgb/C/estate-edit-basic-space-type}
 - phrasings:
-  - {text: "物件用途怎麼選", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件格局怎麼填", source: "draft:outline-20260920", status: proposed}
-  - {text: "虛擬辦公室是什麼意思", source: "draft:outline-20260920", status: proposed}
+  - {text: "物件用途怎麼選", source: "draft:outline-20260920", status: approved}
+  - {text: "物件格局怎麼填", source: "draft:outline-20260920", status: approved}
+  - {text: "虛擬辦公室是什麼意思", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/estates/edit/basic/Index.vue]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -516,9 +516,9 @@ language: zh-TW
 「虛擬辦公室」格局說明為出租業者提供「商業地址」給企業「借址登記」使用、不做實際上班用途的辦公室；「會員」則是共享辦公室業者提供的會員方案。
 ### 物件的詳細地址與對外顯示地址有什麼差別？ {#jgb/C/estate-edit-basic-address}
 - phrasings:
-  - {text: "物件地址怎麼填", source: "draft:outline-20260920", status: proposed}
-  - {text: "對外顯示地址是什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件廣告地址跟實際地址不同", source: "draft:outline-20260920", status: proposed}
+  - {text: "物件地址怎麼填", source: "draft:outline-20260920", status: approved}
+  - {text: "對外顯示地址是什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "物件廣告地址跟實際地址不同", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/estates/edit/basic/Index.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -527,9 +527,9 @@ language: zh-TW
 物件基本資料分別要填「詳細地址」與「對外顯示地址」，對外顯示地址可以點「同詳細地址」直接帶入詳細地址內容。
 ### 物件的樓層與房號要怎麼填？（頂加輸入+1、地下室輸入-1） {#jgb/C/estate-edit-basic-floor-room-number}
 - phrasings:
-  - {text: "頂加怎麼填樓層", source: "draft:outline-20260920", status: proposed}
-  - {text: "地下室樓層怎麼寫", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件之幾房之幾床是什麼", source: "draft:outline-20260920", status: proposed}
+  - {text: "頂加怎麼填樓層", source: "draft:outline-20260920", status: approved}
+  - {text: "地下室樓層怎麼寫", source: "draft:outline-20260920", status: approved}
+  - {text: "物件之幾房之幾床是什麼", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/estates/edit/basic/Index.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -539,9 +539,9 @@ language: zh-TW
 所在樓層輸入 +1 代表頂加，輸入 -1 代表地下室。
 ### 物件廣告頁可以隱藏群組/大樓名稱嗎？ {#jgb/C/estate-edit-basic-community-name-hide}
 - phrasings:
-  - {text: "物件可以不顯示社區名稱嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "廣告頁隱藏大樓名稱", source: "draft:outline-20260920", status: proposed}
-  - {text: "群組名稱怎麼隱藏", source: "draft:outline-20260920", status: proposed}
+  - {text: "物件可以不顯示社區名稱嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "廣告頁隱藏大樓名稱", source: "draft:outline-20260920", status: approved}
+  - {text: "群組名稱怎麼隱藏", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/estates/edit/basic/Index.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -550,9 +550,9 @@ language: zh-TW
 物件基本資料的「群組/大樓名稱」欄位會帶入所屬社區名稱（唯讀），旁邊有「在物件廣告頁隱藏群組名稱」的勾選框，勾選後廣告頁就不會顯示社區/大樓名稱。
 ### 社宅物件建物謄本要填什麼？（申請謄本日期、段小段、謄本面積公式，不會顯示在廣告頁） {#jgb/C/estate-edit-building-transcript-social}
 - phrasings:
-  - {text: "社宅建物謄本要填什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "社宅謄本面積怎麼算", source: "draft:outline-20260920", status: proposed}
-  - {text: "社宅建物謄本會公開嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "社宅建物謄本要填什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "社宅謄本面積怎麼算", source: "draft:outline-20260920", status: approved}
+  - {text: "社宅建物謄本會公開嗎", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/estates/edit/building_transcript/Index.vue, code:src/routes/estates.js]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -562,9 +562,9 @@ language: zh-TW
 謄本面積要以建物謄本所載面積為準，公式為主建物面積加附屬建物面積加持分公設面積減車位面積。
 ### 一般物件建物謄本可以填什麼？（土地標的清冊、坐落基地、稅籍編號、專有部分、主建物、附屬建物，皆非必填） {#jgb/C/estate-edit-building-transcript-general}
 - phrasings:
-  - {text: "一般物件建物謄本要填什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "土地標的清冊怎麼填", source: "draft:outline-20260920", status: proposed}
-  - {text: "稅籍編號在哪填", source: "draft:outline-20260920", status: proposed}
+  - {text: "一般物件建物謄本要填什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "土地標的清冊怎麼填", source: "draft:outline-20260920", status: approved}
+  - {text: "稅籍編號在哪填", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/estates/edit/buildingTranscriptGeneral/Index.vue, code:src/pages/contracts/edit/buildingTranscript/General.vue, code:src/routes/estates.js]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -574,9 +574,9 @@ language: zh-TW
 同一分頁也可以填「專有部分」「主建物」「附屬建物」的相關資料。
 ### 物件附設傢俱怎麼設定？（依用途與格局分區加入家電、傢俱、自訂項目，數量0不顯示在廣告頁） {#jgb/C/estate-edit-facilities}
 - phrasings:
-  - {text: "附設傢俱怎麼填", source: "draft:outline-20260920", status: proposed}
-  - {text: "家電傢俱怎麼加", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件設備要怎麼設定", source: "draft:outline-20260920", status: proposed}
+  - {text: "附設傢俱怎麼填", source: "draft:outline-20260920", status: approved}
+  - {text: "家電傢俱怎麼加", source: "draft:outline-20260920", status: approved}
+  - {text: "物件設備要怎麼設定", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/estates/edit/facilities/_parts/General.vue, code:src/pages/estates/edit/facilities/_parts/SocialHousing.vue, code:src/pages/estates/edit/facilities/Index.vue]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -593,10 +593,10 @@ language: zh-TW
 需要先設定好用途、型態或格局，才能開始添加傢俱項目。
 ### 物件標題與照片有什麼限制？（標題最長60字、照片最多15張15MB、平面圖最多5張含PDF） {#jgb/C/estate-edit-gallery-title-photos}
 - phrasings:
-  - {text: "物件標題字數限制", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件照片可以傳幾張", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件平面圖怎麼上傳", source: "draft:outline-20260920", status: proposed}
-  - {text: "第一張照片是封面嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "物件標題字數限制", source: "draft:outline-20260920", status: approved}
+  - {text: "物件照片可以傳幾張", source: "draft:outline-20260920", status: approved}
+  - {text: "物件平面圖怎麼上傳", source: "draft:outline-20260920", status: approved}
+  - {text: "第一張照片是封面嗎", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/estates/edit/gallery/Index.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -607,9 +607,9 @@ language: zh-TW
 物件平面圖最多可上傳5張、每張檔案大小上限15MB，格式支援JPG、PNG、PDF，上傳後會出現在廣告中。
 ### 物件介紹要填什麼？（房源簡介、鄰近交通，可加多筆鄰近捷運站） {#jgb/C/estate-edit-intro-transit}
 - phrasings:
-  - {text: "物件介紹要寫什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "房源簡介怎麼寫", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件怎麼加捷運站", source: "draft:outline-20260920", status: proposed}
+  - {text: "物件介紹要寫什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "房源簡介怎麼寫", source: "draft:outline-20260920", status: approved}
+  - {text: "物件怎麼加捷運站", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/estates/edit/intro/Index.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -619,9 +619,9 @@ language: zh-TW
 鄰近捷運站可以點「新增鄰近捷運站」加入多筆，每筆需選擇捷運線與停靠站。
 ### 物件的720 VR全景照怎麼拍？（需先安裝 VR Maker App 掃 QR Code 拍攝，可設定是否用於廣告） {#jgb/C/estate-edit-vr-720}
 - phrasings:
-  - {text: "720VR怎麼拍", source: "draft:outline-20260920", status: proposed}
-  - {text: "VR全景照要用什麼app", source: "draft:outline-20260920", status: proposed}
-  - {text: "VR全景照可以用電腦編輯嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "720VR怎麼拍", source: "draft:outline-20260920", status: approved}
+  - {text: "VR全景照要用什麼app", source: "draft:outline-20260920", status: approved}
+  - {text: "VR全景照可以用電腦編輯嗎", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/estates/edit/vr/Index.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -632,9 +632,9 @@ language: zh-TW
 分頁下方有「啟用設定」，可以決定是否在招租廣告、買賣廣告中使用這組720 VR全景照。
 ### 物件可以換綁到別的社區嗎？（畫面上目前沒有這個操作入口） {#jgb/C/estate-edit-cannot-change-community}
 - phrasings:
-  - {text: "物件換社區", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件重新綁定社區", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件搬到別的社區", source: "draft:outline-20260920", status: proposed}
+  - {text: "物件換社區", source: "draft:outline-20260920", status: approved}
+  - {text: "物件重新綁定社區", source: "draft:outline-20260920", status: approved}
+  - {text: "物件搬到別的社區", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/estates/edit/basic/Index.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -643,8 +643,8 @@ language: zh-TW
 物件基本資料的「群組/大樓名稱」欄位只是唯讀顯示目前所屬社區，畫面上目前找不到任何按鈕或連結可以把已建立的物件改綁到另一個社區。
 ### 物件基本資料可以填朝向嗎？ {#jgb/C/estate-edit-basic-orientation}
 - phrasings:
-  - {text: "物件朝向怎麼填", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件座向欄位", source: "draft:outline-20260920", status: proposed}
+  - {text: "物件朝向怎麼填", source: "draft:outline-20260920", status: approved}
+  - {text: "物件座向欄位", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/estates/edit/basic/Index.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -653,9 +653,9 @@ language: zh-TW
 物件基本資料分頁有「朝向」欄位可以填寫。
 ### 物件編輯有哪些分頁？（「物件資訊」與「廣告資訊」兩個群組；社宅與一般物件的建物謄本分頁互斥） {#jgb/C/estate-edit-tabs-overview}
 - phrasings:
-  - {text: "物件編輯有哪些分頁", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件資訊跟廣告資訊差在哪", source: "draft:outline-20260920", status: proposed}
-  - {text: "社宅物件編輯分頁跟一般物件不一樣", source: "draft:outline-20260920", status: proposed}
+  - {text: "物件編輯有哪些分頁", source: "draft:outline-20260920", status: approved}
+  - {text: "物件資訊跟廣告資訊差在哪", source: "draft:outline-20260920", status: approved}
+  - {text: "社宅物件編輯分頁跟一般物件不一樣", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/routes/estates.js]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -666,9 +666,9 @@ language: zh-TW
 ## 招租刊登（招租詳情、刊登主資訊、核實訊息＝租賃住宅條例的產權與違建核實） {#C-rent-listing}
 ### 招租押金有法定上限嗎？（一般租賃契約押金最高不得超過兩個月租金） {#jgb/C/estate-rent-detail-deposit-cap}
 - phrasings:
-  - {text: "押金上限幾個月", source: "draft:outline-20260920", status: proposed}
-  - {text: "押金可以收多少", source: "draft:outline-20260920", status: proposed}
-  - {text: "押金計算方式", source: "draft:outline-20260920", status: proposed}
+  - {text: "押金上限幾個月", source: "draft:outline-20260920", status: approved}
+  - {text: "押金可以收多少", source: "draft:outline-20260920", status: approved}
+  - {text: "押金計算方式", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/estates/edit/rent_detail/Index.jsx]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
@@ -678,9 +678,9 @@ language: zh-TW
 系統提示：根據中華民國內政部（租賃住宅市場發展及管理條例）規定，一般租賃契約押金額度最高不得超過兩個月租金。
 ### 招租詳情的最短租期、最快入住日、最快點交日怎麼填？ {#jgb/C/estate-rent-detail-move-in-lease-terms}
 - phrasings:
-  - {text: "最短租期選項有哪些", source: "draft:outline-20260920", status: proposed}
-  - {text: "最快入住日怎麼填", source: "draft:outline-20260920", status: proposed}
-  - {text: "最快點交日設定", source: "draft:outline-20260920", status: proposed}
+  - {text: "最短租期選項有哪些", source: "draft:outline-20260920", status: approved}
+  - {text: "最快入住日怎麼填", source: "draft:outline-20260920", status: approved}
+  - {text: "最快點交日設定", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/estates/edit/rent_detail/Index.jsx]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -690,9 +690,9 @@ language: zh-TW
 最快入住日可以選「簽約後隨時入住」、「指定日期」或「其他」，最快點交日則可選「簽約後點交」、「指定日期」或「其他」。
 ### 招租條件要求可以設定什麼？（身份限制複選、養寵物可否、開伙可否、生活公約） {#jgb/C/estate-rent-detail-tenant-conditions}
 - phrasings:
-  - {text: "招租可以限制什麼身份", source: "draft:outline-20260920", status: proposed}
-  - {text: "可以養寵物嗎怎麼設定", source: "draft:outline-20260920", status: proposed}
-  - {text: "招租能不能開伙", source: "draft:outline-20260920", status: proposed}
+  - {text: "招租可以限制什麼身份", source: "draft:outline-20260920", status: approved}
+  - {text: "可以養寵物嗎怎麼設定", source: "draft:outline-20260920", status: approved}
+  - {text: "招租能不能開伙", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/estates/edit/rent_detail/Index.jsx]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -702,9 +702,9 @@ language: zh-TW
 也可以個別設定「養寵物」與「開伙」是否可以，並在「補充」欄位填寫生活公約等額外說明。
 ### 刊登主資訊的團隊資訊要在哪裡修改？（法人／社宅房東顯示公司資訊、到團隊資訊修改；個人房東顯示經理人資訊、到帳號資訊修改） {#jgb/C/estate-rent-contact-agency-info}
 - phrasings:
-  - {text: "經紀人證號在哪改", source: "draft:outline-20260920", status: proposed}
-  - {text: "登記證號怎麼設定", source: "draft:outline-20260920", status: proposed}
-  - {text: "刊登主資訊看不到經紀人資料", source: "draft:outline-20260920", status: proposed}
+  - {text: "經紀人證號在哪改", source: "draft:outline-20260920", status: approved}
+  - {text: "登記證號怎麼設定", source: "draft:outline-20260920", status: approved}
+  - {text: "刊登主資訊看不到經紀人資料", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/estates/edit/rent_contact/Index.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -714,9 +714,9 @@ language: zh-TW
 當登入身分是個人房東時（非法人、非社宅），「刊登主資訊」顯示的是經理人的姓名、電話、Email，並提示需要修改要前往「帳號資訊」頁面，不是團隊資訊。
 ### 招租廣告可以隱藏經理人／房東的名稱、電話、Email嗎？（勾選框在「經理人資訊」或「刊登主資訊」的經理人卡片上，每種身分只有一組） {#jgb/C/estate-rent-contact-manager-and-hide}
 - phrasings:
-  - {text: "招租廣告可以不顯示電話嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "怎麼隱藏經理人名稱", source: "draft:outline-20260920", status: proposed}
-  - {text: "廣告上隱藏Email", source: "draft:outline-20260920", status: proposed}
+  - {text: "招租廣告可以不顯示電話嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "怎麼隱藏經理人名稱", source: "draft:outline-20260920", status: approved}
+  - {text: "廣告上隱藏Email", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/estates/edit/rent_contact/Index.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
@@ -727,9 +727,9 @@ language: zh-TW
 填完刊登主資訊後，下一步會進入「預覽招租廣告」。
 ### 招租的核實訊息是什麼？（依租賃住宅市場發展條例核實產權登記與違建面積） {#jgb/C/estate-rent-verify-legal}
 - phrasings:
-  - {text: "核實訊息要填什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "產權登記已辦理未辦理是什麼意思", source: "draft:outline-20260920", status: proposed}
-  - {text: "違建面積要填嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "核實訊息要填什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "產權登記已辦理未辦理是什麼意思", source: "draft:outline-20260920", status: approved}
+  - {text: "違建面積要填嗎", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/estates/edit/rent_verify/Index.vue]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
@@ -739,10 +739,10 @@ language: zh-TW
 內政部依照《住宅租賃市場發展條例》要求廣告內容應與事實相符，因此還要填寫租賃標的法定用途，以及未登記之改建、增建、加建、違建部分（分壹樓、所在樓層、頂樓、其他處所各自的面積）。
 ### 為什麼物件的招租廣告刊登不出去？（沒有刊登權限、團隊沒有生效中的訂閱方案、或物件資料檢查沒通過） {#jgb/C/estate-rent-open-permission-and-validation}
 - phrasings:
-  - {text: "物件刊登不出去", source: "draft:outline-20260920", status: proposed}
-  - {text: "刊登物件失敗原因", source: "draft:outline-20260920", status: proposed}
-  - {text: "刊登物件需要什麼權限", source: "draft:outline-20260920", status: proposed}
-  - {text: "招租廣告刊登失敗", source: "draft:outline-20260920", status: proposed}
+  - {text: "物件刊登不出去", source: "draft:outline-20260920", status: approved}
+  - {text: "刊登物件失敗原因", source: "draft:outline-20260920", status: approved}
+  - {text: "刊登物件需要什麼權限", source: "draft:outline-20260920", status: approved}
+  - {text: "招租廣告刊登失敗", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/estates/edit/rent_contact/Index.vue, code:app/Http/Controllers/EstateController.php, code:src/pages/estates/list/Index.vue, code:resources/views/estate/show/navbar.blade.php, code:app/Estate.php, code:app/Http/Controllers/UserController.php, code:routes/web.php, code:app/Http/Middleware/SubscriptionCheck.php, code:resources/views/layouts/lightbox/general.blade.php, code:config/country.php, code:src/use/config/useEstateTypes.js, code:src/components/Lightbox/EstateBatchAdvertise.vue]
 - reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
@@ -756,9 +756,9 @@ language: zh-TW
 在物件總表勾選多個物件用「批次刊登招租廣告」時，每個物件各自做同樣的資料檢查，資料不齊全的物件會被跳過、不會刊登，其他物件照常刊登；這個批次選項需要「新增&編輯&刪除所有物件」權限才看得到。
 ### 招租詳情要填哪些金額相關欄位？（面積、幣別、每月租金；特定合作團隊另有營業稅：應稅／零稅率／免稅） {#jgb/C/estate-rent-detail-price-and-tax}
 - phrasings:
-  - {text: "招租租金要填幣別嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "營業稅怎麼選", source: "draft:outline-20260920", status: proposed}
-  - {text: "招租面積怎麼填", source: "draft:outline-20260920", status: proposed}
+  - {text: "招租租金要填幣別嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "營業稅怎麼選", source: "draft:outline-20260920", status: approved}
+  - {text: "招租面積怎麼填", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/estates/edit/rent_detail/Index.jsx]
 - reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
@@ -769,9 +769,9 @@ language: zh-TW
 ## 物件儀表板（招租表現、合約歷程、帳務收支、修繕紀錄、附件清單、房東流水帳、合約附件、物件記事本、每月報表、每月對帳單；入口直接轉到招租表現） {#C-estate-dashboard}
 ### 物件儀表板進去預設是哪個分頁？（一般預設招租表現，大房東直接進合約歷程；大房東看不到「限管理者查看」分頁群組） {#jgb/C/estate-dashboard-entry-and-groups}
 - phrasings:
-  - {text: "物件儀表板預設看哪頁", source: "draft:outline-20260920", status: proposed}
-  - {text: "大房東能看物件儀表板哪些分頁", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件Dashboard入口", source: "draft:outline-20260920", status: proposed}
+  - {text: "物件儀表板預設看哪頁", source: "draft:outline-20260920", status: approved}
+  - {text: "大房東能看物件儀表板哪些分頁", source: "draft:outline-20260920", status: approved}
+  - {text: "物件Dashboard入口", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/routes/estates.js, code:src/pages/estates/dashboard/_parts/TabNav.vue, code:app/Http/Controllers/EstateController.php]
 - reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
@@ -783,9 +783,9 @@ language: zh-TW
 社宅房東看不到「合約附件」這個分頁，其餘身分都看得到。
 ### 招租表現分頁顯示什麼？（空置天數、廣告瀏覽次數、帳務表現、合約歷程與修繕紀錄摘要） {#jgb/C/estate-dashboard-rent-performance}
 - phrasings:
-  - {text: "招租表現看什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件空置天數在哪看", source: "draft:outline-20260920", status: proposed}
-  - {text: "廣告瀏覽次數在哪查", source: "draft:outline-20260920", status: proposed}
+  - {text: "招租表現看什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "物件空置天數在哪看", source: "draft:outline-20260920", status: approved}
+  - {text: "廣告瀏覽次數在哪查", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/estates/dashboard/rent/Index.vue]
 - reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
@@ -795,9 +795,9 @@ language: zh-TW
 同一頁還會摘要顯示帳務表現（總收入、總支出、總結餘）、合約歷程摘要（只會顯示執行中與歷史合約）與修繕紀錄摘要，都可以點「更多」看完整內容。
 ### 物件儀表板的合約歷程顯示哪些欄位？（一般房東：狀態／簽約類型／物件／承租人／租期／是否通知；社宅房東：合約名稱／承租人／租期） {#jgb/C/estate-dashboard-contracts-history}
 - phrasings:
-  - {text: "合約歷程有哪些欄位", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件歷史合約在哪看", source: "draft:outline-20260920", status: proposed}
-  - {text: "合約歷程每頁筆數", source: "draft:outline-20260920", status: proposed}
+  - {text: "合約歷程有哪些欄位", source: "draft:outline-20260920", status: approved}
+  - {text: "物件歷史合約在哪看", source: "draft:outline-20260920", status: approved}
+  - {text: "合約歷程每頁筆數", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/estates/dashboard/contracts/Index.vue, code:app/Role.php]
 - reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
@@ -807,9 +807,9 @@ language: zh-TW
 列表每頁可切換顯示30、60或90項。
 ### 物件儀表板的帳務收支有哪些子頁籤？（總收支、統計報表） {#jgb/C/estate-dashboard-bills-tabs}
 - phrasings:
-  - {text: "帳務收支子頁籤", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件統計報表在哪看", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件總收支怎麼看", source: "draft:outline-20260920", status: proposed}
+  - {text: "帳務收支子頁籤", source: "draft:outline-20260920", status: approved}
+  - {text: "物件統計報表在哪看", source: "draft:outline-20260920", status: approved}
+  - {text: "物件總收支怎麼看", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/routes/estates.js]
 - reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
@@ -818,9 +818,9 @@ language: zh-TW
 物件儀表板的「帳務收支」分頁下方分成「總收支」與「統計報表」兩個子頁籤。
 ### 物件儀表板修繕紀錄怎麼呈現？（申請修繕→安排修繕→完成修繕→結單四狀態） {#jgb/C/estate-dashboard-repair-status-flow}
 - phrasings:
-  - {text: "修繕紀錄狀態有哪些", source: "draft:outline-20260920", status: proposed}
-  - {text: "修繕紀錄欄位", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件修繕在哪看結算金額", source: "draft:outline-20260920", status: proposed}
+  - {text: "修繕紀錄狀態有哪些", source: "draft:outline-20260920", status: approved}
+  - {text: "修繕紀錄欄位", source: "draft:outline-20260920", status: approved}
+  - {text: "物件修繕在哪看結算金額", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/estates/dashboard/repair/Index.vue]
 - reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
@@ -830,9 +830,9 @@ language: zh-TW
 列表欄位包含報修日期、最後更新、分類＆項目、物件地址、結算金額、房東/管理者、租客。
 ### 「附件清單」跟「合約附件」差在哪？（附件清單可上傳 JPG／PNG／PDF、每個物件最多 5 個檔案、單檔 10MB，上傳與下載需要物件編輯權限，刪除操作只有代理人且有新增物件權限才看得到；合約附件是固定的附件項目清單，可上傳附件補充以避免日後爭議） {#jgb/C/estate-dashboard-attachments-vs-contract-attachments}
 - phrasings:
-  - {text: "合約附件要傳什麼文件", source: "draft:outline-20260920", status: proposed}
-  - {text: "附件清單空間不夠怎麼辦", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件附件跟合約附件差別", source: "draft:outline-20260920", status: proposed}
+  - {text: "合約附件要傳什麼文件", source: "draft:outline-20260920", status: approved}
+  - {text: "附件清單空間不夠怎麼辦", source: "draft:outline-20260920", status: approved}
+  - {text: "物件附件跟合約附件差別", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/estates/dashboard/attachments/Index.vue, code:src/pages/estates/dashboard/contractAttachments/index.vue, code:app/Http/Controllers/EstateController.php, code:src/pages/estates/dashboard/Index.vue, code:src/components/AjaxUploader.vue]
 - reviewed: {by: owner, at: 2026-10-04}
 - target_user: [property_manager]
@@ -851,9 +851,9 @@ language: zh-TW
 合約附件的上傳、儲存與刪除，系統同樣會檢查物件編輯權限，沒有權限會回覆「權限不足」。
 ### 「房東流水帳」跟「物件記事本」差在哪？（流水帳要記收入或支出與金額，記事本沒有金額欄位；兩者都能附檔） {#jgb/C/estate-dashboard-runnings-vs-memos}
 - phrasings:
-  - {text: "流水帳怎麼記", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件記事本可以記什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "流水帳跟記事本差別", source: "draft:outline-20260920", status: proposed}
+  - {text: "流水帳怎麼記", source: "draft:outline-20260920", status: approved}
+  - {text: "物件記事本可以記什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "流水帳跟記事本差別", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/estates/dashboard/runnings/Index.vue, code:src/pages/estates/dashboard/memos/Index.vue, code:src/pages/estates/dashboard/runnings/_parts/LedgerContainer.vue, code:src/pages/estates/dashboard/memos/_parts/MemoContainer.vue, code:app/Http/Controllers/EstateController.php]
 - reviewed: {by: owner, at: 2026-10-04}
 - target_user: [property_manager]
@@ -865,10 +865,10 @@ language: zh-TW
 「物件記事本」新增一筆時，只要填時間；說明與對象可以留空，同樣可以附加最多 3 個附件（每個不超過 10MB），沒有收入支出的金額欄位。
 ### 每月報表／每月對帳單怎麼上傳？（PDF、10MB上限，可批次指定多個物件，同月重傳會覆蓋舊檔） {#jgb/C/estate-dashboard-monthly-report-upload}
 - phrasings:
-  - {text: "每月報表怎麼上傳", source: "draft:outline-20260920", status: proposed}
-  - {text: "每月對帳單格式限制", source: "draft:outline-20260920", status: proposed}
-  - {text: "同一個月上傳兩次報表會怎樣", source: "draft:outline-20260920", status: proposed}
-  - {text: "怎麼批次上傳報表", source: "draft:outline-20260920", status: proposed}
+  - {text: "每月報表怎麼上傳", source: "draft:outline-20260920", status: approved}
+  - {text: "每月對帳單格式限制", source: "draft:outline-20260920", status: approved}
+  - {text: "同一個月上傳兩次報表會怎樣", source: "draft:outline-20260920", status: approved}
+  - {text: "怎麼批次上傳報表", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/estates/dashboard/_parts/MonthlyUpload.jsx]
 - reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
@@ -879,9 +879,9 @@ language: zh-TW
 每月報表／每月對帳單這兩個分頁只在團隊被歸類為特定合作團隊時才會出現在「與大房東共享」分頁群組裡，上傳完成後其他團隊成員與大房東就能在這裡下載。
 ### 物件儀表板最上方顯示哪三張卡？（物件資訊、招租廣告、買賣廣告；編輯捷徑需要新增物件權限） {#jgb/C/estate-dashboard-top-cards}
 - phrasings:
-  - {text: "物件儀表板上面卡片是什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "儀表板編輯捷徑不見了", source: "draft:outline-20260920", status: proposed}
-  - {text: "儀表板可以直接編輯招租廣告嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "物件儀表板上面卡片是什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "儀表板編輯捷徑不見了", source: "draft:outline-20260920", status: approved}
+  - {text: "儀表板可以直接編輯招租廣告嗎", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/estates/dashboard/_parts/TabNav.vue]
 - reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager]
@@ -892,9 +892,9 @@ language: zh-TW
 ## 單一物件廣告頁（招租） {#C-estate-public-page}
 ### 物件還沒刊登（未開放）時，廣告頁會怎麼顯示？（屋主看到的是預覽頁提示） {#jgb/C/estate-house-preview-unpublished}
 - phrasings:
-  - {text: "物件沒刊登廣告頁還看得到嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件廣告預覽頁", source: "draft:outline-20260920", status: proposed}
-  - {text: "還沒刊登的物件連結有效嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "物件沒刊登廣告頁還看得到嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "物件廣告預覽頁", source: "draft:outline-20260920", status: approved}
+  - {text: "還沒刊登的物件連結有效嗎", source: "draft:outline-20260920", status: approved}
 - sources: [code:resources/views/estate/show.blade.php, code:app/Http/Controllers/EstateController.php]
 - reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager, prospect]
@@ -903,9 +903,9 @@ language: zh-TW
 當物件尚未刊登（未開放）時，物件的擁有者若打開廣告頁連結，畫面上方會顯示提示：「這是您的物件廣告預覽頁，此物件尚未完成刊登」
 ### 簽約邀請連結會失效嗎？（連結會顯示倒數，過期後失效） {#jgb/C/estate-house-invite-countdown}
 - phrasings:
-  - {text: "簽約邀請連結會過期嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "合約邀請連結有時效嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "邀請連結多久失效", source: "draft:outline-20260920", status: proposed}
+  - {text: "簽約邀請連結會過期嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "合約邀請連結有時效嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "邀請連結多久失效", source: "draft:outline-20260920", status: approved}
 - sources: [code:resources/views/estate/show.blade.php]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
@@ -914,9 +914,9 @@ language: zh-TW
 租客透過邀請連結打開物件廣告頁時，頁面上方會顯示「以下是來自［房東］的簽約邀請，本連結會於［剩餘時間］後失效，請把握時間完成簽約」的提示。
 ### 物件廣告頁顯示哪些內容？（照片／VR全景切換、設備與設施、交通與環境設施、溫馨提醒） {#jgb/C/estate-house-content-blocks}
 - phrasings:
-  - {text: "物件廣告頁有哪些內容", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件廣告頁看不看得到VR", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件廣告頁會顯示鄰近捷運站嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "物件廣告頁有哪些內容", source: "draft:outline-20260920", status: approved}
+  - {text: "物件廣告頁看不看得到VR", source: "draft:outline-20260920", status: approved}
+  - {text: "物件廣告頁會顯示鄰近捷運站嗎", source: "draft:outline-20260920", status: approved}
 - sources: [code:resources/views/estate/show.blade.php]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
@@ -927,9 +927,9 @@ language: zh-TW
 廣告頁也會顯示「交通與環境設施」（地址、鄰近捷運站等）以及「溫馨提醒」區塊，內含本物件的 JGB 編號與房屋現況、法定用途的提醒文字。
 ### 物件廣告頁「聯絡房東」區塊顯示什麼？（房東電話／Email依隱藏設定決定是否顯示；公司廣告電話／Email不受隱藏設定影響） {#jgb/C/estate-house-contact-landlord}
 - phrasings:
-  - {text: "物件廣告頁聯絡房東怎麼看", source: "draft:outline-20260920", status: proposed}
-  - {text: "隱藏電話設定有效嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "廣告頁可以加房東Line嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "物件廣告頁聯絡房東怎麼看", source: "draft:outline-20260920", status: approved}
+  - {text: "隱藏電話設定有效嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "廣告頁可以加房東Line嗎", source: "draft:outline-20260920", status: approved}
 - sources: [code:resources/views/estate/show.blade.php]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
@@ -941,9 +941,9 @@ Line 聯絡方式（含一鍵複製 Line ID）只有在房東有填寫 Line 時�
 Facebook 也只有在房東有填寫連結時才會顯示「立即聯繫」按鈕，沒有填寫時這三種聯絡方式都不會出現。
 ### 物件廣告頁的網址會自動轉換嗎？（刊登中時，內部編號網址會自動轉址到 JGB 編號公開網址） {#jgb/C/estate-house-vs-show-url}
 - phrasings:
-  - {text: "物件廣告頁網址是什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件連結會自動跳轉嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件廣告頁網址為什麼變了", source: "draft:outline-20260920", status: proposed}
+  - {text: "物件廣告頁網址是什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "物件連結會自動跳轉嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "物件廣告頁網址為什麼變了", source: "draft:outline-20260920", status: approved}
 - sources: [code:app/Http/Controllers/EstateController.php]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager]
@@ -953,9 +953,9 @@ Facebook 也只有在房東有填寫連結時才會顯示「立即聯繫」按�
 如果網址帶的合約是續約合約，系統會直接導向該合約的合約檢視頁，不會顯示物件廣告頁。
 ### 物件廣告頁有費用明細表嗎？（車位物件不顯示，其餘物件顯示生活費用表） {#jgb/C/estate-house-fees-table}
 - phrasings:
-  - {text: "物件廣告頁費用怎麼看", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件廣告頁有清潔費水電費嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "車位物件有費用表嗎", source: "draft:outline-20260920", status: proposed}
+  - {text: "物件廣告頁費用怎麼看", source: "draft:outline-20260920", status: approved}
+  - {text: "物件廣告頁有清潔費水電費嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "車位物件有費用表嗎", source: "draft:outline-20260920", status: approved}
 - sources: [code:resources/views/estate/show.blade.php]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
@@ -964,9 +964,9 @@ Facebook 也只有在房東有填寫連結時才會顯示「立即聯繫」按�
 物件廣告頁在物件不是車位用途時，會顯示一個生活費用表，列出各項費用與金額；車位用途的物件不會顯示這個費用表。
 ### 物件廣告頁有預約入住的按鈕嗎？（一般訪客看到「立即預約入住」，受邀簽約者看到「查看合約」） {#jgb/C/estate-house-appointment-cta}
 - phrasings:
-  - {text: "物件廣告頁怎麼預約看房", source: "draft:outline-20260920", status: proposed}
-  - {text: "立即預約入住按鈕在哪", source: "draft:outline-20260920", status: proposed}
-  - {text: "受邀簽約的人看到什麼按鈕", source: "draft:outline-20260920", status: proposed}
+  - {text: "物件廣告頁怎麼預約看房", source: "draft:outline-20260920", status: approved}
+  - {text: "立即預約入住按鈕在哪", source: "draft:outline-20260920", status: approved}
+  - {text: "受邀簽約的人看到什麼按鈕", source: "draft:outline-20260920", status: approved}
 - sources: [code:resources/views/estate/show.blade.php]
 - reviewed: {by: owner, at: 2026-09-28}
 - target_user: [property_manager, prospect]
@@ -976,9 +976,9 @@ Facebook 也只有在房東有填寫連結時才會顯示「立即聯繫」按�
 如果目前造訪者是被邀請簽約的對象，同一個位置的按鈕會改成「查看合約」，點擊直接前往該合約的簽署頁面，不會顯示預約入住的燈箱。
 ### 物件廣告頁的資料卡片顯示什麼？（地址／社區名稱、租金元/月與含哪些費用、建築類型與樓層或格局、商用類的空間類型與座位數、面積、物件平面圖） {#jgb/C/estate-house-info-card}
 - phrasings:
-  - {text: "物件廣告頁資料卡片有什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件廣告頁看不看得到含哪些費用", source: "draft:outline-20260920", status: proposed}
-  - {text: "物件廣告頁格局在哪看", source: "draft:outline-20260920", status: proposed}
+  - {text: "物件廣告頁資料卡片有什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "物件廣告頁看不看得到含哪些費用", source: "draft:outline-20260920", status: approved}
+  - {text: "物件廣告頁格局在哪看", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/estates/show/_parts/EstateBasicInfo.vue, code:resources/views/estate/show.blade.php, code:app/Estate.php]
 - reviewed: {by: owner, at: 2026-09-29}
 - target_user: [property_manager, prospect]
@@ -992,9 +992,9 @@ Facebook 也只有在房東有填寫連結時才會顯示「立即聯繫」按�
 ## 團隊招租店鋪（對外首頁、多團隊招募頁、banner 與篩選） {#C-team-storefront}
 ### 房東對外首頁（招租店舖）是什麼？（公開展示聯絡資訊、簡介與所有刊登中物件，供分享給潛在租客） {#jgb/C/team-public-page-purpose}
 - phrasings:
-  - {text: "招租店舖是什麼", source: "draft:outline-20260920", status: proposed}
-  - {text: "房東對外首頁怎麼用", source: "draft:outline-20260920", status: proposed}
-  - {text: "怎麼進去我的招租店舖", source: "draft:outline-20260920", status: proposed}
+  - {text: "招租店舖是什麼", source: "draft:outline-20260920", status: approved}
+  - {text: "房東對外首頁怎麼用", source: "draft:outline-20260920", status: approved}
+  - {text: "怎麼進去我的招租店舖", source: "draft:outline-20260920", status: approved}
 - sources: [help:slug90_zh-Hant.html]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
@@ -1004,9 +1004,9 @@ Facebook 也只有在房東有填寫連結時才會顯示「立即聯繫」按�
 登入 JGB 後，點選側邊選單左上角大頭照上的藍色房子 Icon，就能連結到專屬的「房東對外首頁」。
 ### 招租店舖上可以直接編輯哪些內容？（橫幅照片、頭像、自我介紹；團隊身分另可改團隊名稱等欄位，需要「編輯團隊權限」） {#jgb/C/team-public-page-edit-and-banner}
 - phrasings:
-  - {text: "招租店舖封面照片怎麼換", source: "draft:outline-20260920", status: proposed}
-  - {text: "改自我介紹會同步嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "招租店舖大頭照怎麼設", source: "draft:outline-20260920", status: proposed}
+  - {text: "招租店舖封面照片怎麼換", source: "draft:outline-20260920", status: approved}
+  - {text: "改自我介紹會同步嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "招租店舖大頭照怎麼設", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/public/Index.vue, code:src/pages/users/public/_parts/AsideInfo.vue, code:app/Http/Controllers/UserController.php]
 - reviewed: {by: owner, at: 2026-10-05}
 - target_user: [property_manager]
@@ -1020,9 +1020,9 @@ Facebook 也只有在房東有填寫連結時才會顯示「立即聯繫」按�
 更換橫幅照片時，畫面會建議尺寸為 1920 x 576。
 ### 招租店舖怎麼篩選物件？（篩選條件加關鍵字搜尋，手機版多數條件收在「更多」；可切換小圖示／大圖示／條列式；每頁筆數 30／60／90，預設 30） {#jgb/C/team-public-page-filter-and-view}
 - phrasings:
-  - {text: "招租店舖怎麼篩選物件", source: "draft:outline-20260920", status: proposed}
-  - {text: "招租店舖顯示模式", source: "draft:outline-20260920", status: proposed}
-  - {text: "招租店舖每頁顯示幾筆", source: "draft:outline-20260920", status: proposed}
+  - {text: "招租店舖怎麼篩選物件", source: "draft:outline-20260920", status: approved}
+  - {text: "招租店舖顯示模式", source: "draft:outline-20260920", status: approved}
+  - {text: "招租店舖每頁顯示幾筆", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/public/Index.vue, code:src/pages/users/public/_parts/PublicSearchBlock.jsx, code:src/pages/users/public/_parts/TopFilter.vue, code:src/pages/users/public/_parts/PublicSearchBlockM.jsx]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager]
@@ -1037,8 +1037,8 @@ Facebook 也只有在房東有填寫連結時才會顯示「立即聯繫」按�
 沒有符合篩選條件的結果時，會顯示「沒有符合的結果」並建議調整篩選條件。
 ### 招租店舖怎麼分享？（電腦上開分享視窗可複製連結或分享到 FB、Line、LinkedIn；手機上會叫出系統分享選單；分享的是目前頁面的網址） {#jgb/C/team-public-page-share}
 - phrasings:
-  - {text: "招租店舖怎麼分享", source: "draft:outline-20260920", status: proposed}
-  - {text: "怎麼分享招租店舖到Line", source: "draft:outline-20260920", status: proposed}
+  - {text: "招租店舖怎麼分享", source: "draft:outline-20260920", status: approved}
+  - {text: "怎麼分享招租店舖到Line", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/pages/users/public/_parts/AsideInfo.vue, code:src/mixin/methods.js]
 - reviewed: {by: owner, at: 2026-10-03}
 - target_user: [property_manager, prospect]
@@ -1049,9 +1049,9 @@ Facebook 也只有在房東有填寫連結時才會顯示「立即聯繫」按�
 分享出去的網址就是目前這個招租店舖頁面的網址，已套用的篩選條件也會一併帶在網址上。
 ### 多團隊招募頁和一般招租店舖有什麼不同？（網址格式不同、物件列表只有招租、沒有社區篩選、每頁預設 10 筆） {#jgb/C/team-public-page-recruitment}
 - phrasings:
-  - {text: "招募頁每頁顯示幾筆", source: "draft:outline-20260920", status: proposed}
-  - {text: "招募頁跟一般店舖的網址不一樣嗎", source: "draft:outline-20260920", status: proposed}
-  - {text: "招募頁跟招租店舖差在哪", source: "draft:outline-20260920", status: proposed}
+  - {text: "招募頁每頁顯示幾筆", source: "draft:outline-20260920", status: approved}
+  - {text: "招募頁跟一般店舖的網址不一樣嗎", source: "draft:outline-20260920", status: approved}
+  - {text: "招募頁跟招租店舖差在哪", source: "draft:outline-20260920", status: approved}
 - sources: [code:src/routes/users.js, code:src/pages/users/public/Index.vue, code:src/pages/users/public/_parts/TopFilter.vue, code:app/Http/Controllers/UserController.php]
 - reviewed: {by: owner, at: 2026-10-04}
 - target_user: [property_manager, prospect]

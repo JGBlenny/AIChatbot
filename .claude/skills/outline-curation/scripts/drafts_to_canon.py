@@ -381,6 +381,48 @@ def carry_reviewed(old_texts: dict, new_texts: dict) -> tuple[dict, list[str], l
     return out_texts, written, dropped
 
 
+_PHRASING_LINE_RE = re.compile(r'^  - \{text: "(.*)", source: ".*", status: (\w+)\}$')
+
+
+def carry_phrasing_approved(old_texts: dict, new_texts: dict) -> tuple[dict, int]:
+    """把舊正本已 `approved` 的講法狀態寫回新全文（同細目、同句）。
+    草稿沒有講法狀態，`format_phrasing_line` 一律產 `proposed`；不寫回的話，重新生成會把
+    已核可講法（DSP-129）靜默打回 `proposed`、踢出索引。回 (寫回後的新全文, 寫回條數)。"""
+    approved: set = set()
+    for text in old_texts.values():
+        fid: Optional[str] = None
+        for line in text.split("\n"):
+            m = _FINE_HEAD_RE.match(line)
+            if m:
+                fid = m.group(1)
+            elif line.startswith("## "):
+                fid = None
+            else:
+                p = _PHRASING_LINE_RE.match(line)
+                if p and fid is not None and p.group(2) == "approved":
+                    approved.add((fid, p.group(1)))
+
+    out_texts: dict = {}
+    n = 0
+    for shelf, text in new_texts.items():
+        result: list[str] = []
+        fid = None
+        for line in text.split("\n"):
+            m = _FINE_HEAD_RE.match(line)
+            if m:
+                fid = m.group(1)
+            elif line.startswith("## "):
+                fid = None
+            else:
+                p = _PHRASING_LINE_RE.match(line)
+                if p and p.group(2) == "proposed" and (fid, p.group(1)) in approved:
+                    line = line[: -len("status: proposed}")] + "status: approved}"
+                    n += 1
+            result.append(line)
+        out_texts[shelf] = "\n".join(result)
+    return out_texts, n
+
+
 # ---------------------------------------------------------------------------
 # 跨架前置檢查（在寫任何檔案之前）
 # ---------------------------------------------------------------------------
@@ -480,6 +522,8 @@ def generate(
         raise GenerationError(
             f"已審保留 {len(kept)} 條，與預期 {expect_reviewed_kept} 條不符（丟棄 {len(dropped)} 條）；未寫任何檔"
         )
+    shelf_texts, n_phrasing = carry_phrasing_approved(old_texts, shelf_texts)
+    print(f"[drafts_to_canon] 講法 approved 保留：{n_phrasing} 條")
 
     os.makedirs(runs_out, exist_ok=True)
     dropped_path = os.path.join(runs_out, f"reviewed-dropped-{date_str}.json")
@@ -583,6 +627,17 @@ def self_test() -> int:
     line = format_phrasing_line("正常講法", "jgb/X/probe")
     if line != '  - {text: "正常講法", source: "draft:outline-20260920", status: proposed}':
         fails.append(f"P4 phrasing 格式化失準：{line!r}")
+
+    # P4b：同細目同句的 approved 寫回；別細目同句、新講法維持 proposed（負對照）
+    old_phr = {"X": '### t {#jgb/X/a}\n  - {text: "甲", source: "s", status: approved}\n'
+                    '### t {#jgb/X/b}\n  - {text: "乙", source: "s", status: proposed}\n'}
+    new_phr = {"X": '### t {#jgb/X/a}\n  - {text: "甲", source: "s", status: proposed}\n'
+                    '  - {text: "新句", source: "s", status: proposed}\n'
+                    '### t {#jgb/X/b}\n  - {text: "甲", source: "s", status: proposed}\n'}
+    carried, n_carried = carry_phrasing_approved(old_phr, new_phr)
+    if n_carried != 1 or carried["X"].count("status: approved}") != 1 or \
+            '  - {text: "甲", source: "s", status: approved}\n  - {text: "新句"' not in carried["X"]:
+        fails.append(f"P4b 講法 approved 寫回失準：n={n_carried}")
 
     # P5：跨架前置檢查在乾淨輸入下回 (0, 0) 且印出兩個計數（正對照，證明檢查有跑）
     clean_drafts = {
