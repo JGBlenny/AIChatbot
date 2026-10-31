@@ -17,11 +17,12 @@
 > 為 **135** 條（2026-09-12 複驗；工具本身有效，不是全部路由都消失）；`routers/chat.py` 本體
 > `ls rag-orchestrator/routers/chat.py` 直接回「No such file or directory」。
 >
-> **repo 現在唯一活的對話入口是 `/mcp`**（MCP 協定，`services/agent/mcp_facade.py`
-> 掛載，見 `docs/architecture/AGENTIC_MCP_ARCHITECTURE.md`），目前的使用場景是
-> LINE OA 房東管家（`.kiro/specs/agentic-mcp-orchestration/`），⚠️ **不是**為
-> jgb2 Web 這種瀏覽器端 fetch 串接設計的協定，也**沒有**現成的 `POST JSON → 純文字
-> answer` 相容端點。`routers/agent_entry.py`（`handle_agent_entry` 等函式）雖仍在
+> **repo 現在有兩個活的對話入口**：專用對話 API（`POST /v1/agent/turn`、`POST /v1/agent/upload-ticket`，
+> `routers/agent_dialogue.py`，DSP-131、DSP-134，一回合一次 JSON POST、回 JSON，呼叫端是 JGB 後端而不是瀏覽器；
+> 契約見 `docs/api/jgb2-web-assistant-integration.md` §3.1）與過渡入口 `/mcp`（MCP 協定，`services/agent/mcp_facade.py`
+> 掛載，見 `docs/architecture/AGENTIC_MCP_ARCHITECTURE.md`；呼叫端改完就關）。
+> 兩者都⚠️ **不是**為瀏覽器端 fetch 直連設計（瀏覽器不持有金鑰），也**沒有**現成的
+> `POST JSON → 純文字 answer` 相容端點。`routers/agent_entry.py`（`handle_agent_entry` 等函式）雖仍在
 > repo 內，但**未掛任何路由**、目前沒有呼叫者（commit message原話：「保留、未發明
 > 新掛載點……維持原樣交業主另外裁決」）。
 >

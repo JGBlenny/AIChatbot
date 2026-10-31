@@ -5,8 +5,9 @@
 > ⚠️ **2026-09-11 舊鏈退役（本輪文件盤查連帶發現，非原七條指定範圍）**：本檔全篇
 > 描述的 `POST /api/v1/message`（含下方 `AGENT_AUDIENCES` 分支）**已於
 > 2026-09-11 隨舊 REST 對話鏈刪除**——`routers/agent_entry.router` 未掛載於
-> `app.py`，此路由不存在。專用對話 API 上線前，外部串接只能走 `/mcp` 門面（server-to-server），
-> 契約見 `docs/api/mcp-facade.md`；目前沒有給外部專案的公開 REST 端點，補上它就是目標架構的對話 API。功能說明本身（售前對話設計）見
+> `app.py`，此路由不存在。外部串接（server-to-server）請走專用對話 API
+> `POST {AICHATBOT_BASE}/v1/agent/turn`（契約見 `docs/api/jgb2-web-assistant-integration.md` §3.1，取捨見 DSP-134；
+> 正式機尚未部署前回 404）；`/mcp` 門面（`docs/api/mcp-facade.md`）是過渡入口，呼叫端改完就關。功能說明本身（售前對話設計）見
 > [`docs/archive/2026-09/conversational-presales.md`](../archive/2026-09/conversational-presales.md)（該檔已歸檔標註）。
 
 > 給外部專案串接 JGB 售前對話(conversational)——⛔ **以下內容已死，僅供理解歷史契約形狀**。

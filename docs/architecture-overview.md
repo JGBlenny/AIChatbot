@@ -31,7 +31,7 @@
 **三句話現況**（逐項可對碼，詳見上表第二列）：
 
 1. **核心是 `AgentRuntime`**（`services/agent/runtime.py`），它的建構依賴裡**沒有任何協定或門面**。
-2. **`/mcp` 是門面之一**，且是目前唯一掛著的（目標是對話改走專用對話 API）；另有 `agent_entry`（遷移橋，上游已滅）、
+2. **`mcp_facade._agent_turn` 是門面之一**，掛在兩個入口上：專用對話 API `POST /api/v1/agent/turn`（`routers/agent_dialogue.py`，DSP-134）與過渡入口 `/mcp`，兩者共用同一份 registry 與 `_invoke`（目標是呼叫端只走對話 API、`/mcp` 關閉）；另有 `agent_entry`（遷移橋，上游已滅）、
    `agent_eval`（回測）、`shadow`（影子）。⚠️ 「門面之一」⛔ 不等於「門面很薄」。
 3. **受眾只有兩種**：`prospect` 與 `property_manager` 有 canon 正本；
    **`tenant` 在新線完全不存在**（無 `canon/tenant.md`、`AGENT_TURN_SPEC` 無該鍵）。

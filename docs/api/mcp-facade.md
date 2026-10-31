@@ -134,7 +134,7 @@ X-JGB-Identity: {"vendor_id":1,"session_id":"jgb2-web-8f3c…","mode":"b2c",
 ### 4.1 `session_id` 由呼叫端產生，且**跨回合穩定**
 
 - 同一段對話的每一次呼叫**必須帶同一個 `session_id`**——服務端以它為鍵存
-  對話歷史與 slots（`form_sessions.collected_data`；⚠️ 2026-09-11 舊鏈退役前，該表曾與 REST 路徑〔已刪除〕共用，現在 `/mcp` 是唯一寫入者）。
+  對話歷史與 slots（`form_sessions.collected_data`；寫入者是 `/mcp` 與專用對話 API 兩個入口，共用同一個 `_invoke`，同一把金鑰＋`vendor_id`＋`session_id` 在兩入口是同一段對話）。
   換 `session_id` ＝ 換一段新對話，先前的上下文不會被看到。
 - ⚠️ `/mcp` 的實際鍵是 **`mcp:{api_key_id}:{vendor_id}:{session_id}`**（命名空間，
   見 §7.1）：同一個 `session_id` 換 key／換 vendor 就是另一段對話（歷史上與已刪除的
@@ -208,7 +208,7 @@ X-JGB-Identity: {"vendor_id":1,"session_id":"jgb2-web-8f3c…","mode":"b2c",
 
 - **一次工具呼叫 ＝ 一列 `usage_events`**（不變量 31）。門面是唯一寫入者；
   HTTP middleware 對 `/mcp` 只做「達限短路」（429），⛔ 不重複落事件。
-- 事件列的辨識欄位：`channel='mcp'`、`processing_path='mcp:<工具名>'`。
+- 事件列的辨識欄位：`/mcp` 為 `channel='mcp'`、`processing_path='mcp:<工具名>'`；專用對話 API（DSP-134）為 `channel='dialogue_api'`、`processing_path='api:<工具名>'`、`answer_source='dialogue_api'`。
   ⛔ 不落問題原文與回答全文。
 - 額度達限（`vendor_quotas.block_on_exceed`）⇒ HTTP 層 429；
   工具層則以 `QUOTA_EXCEEDED` 代碼回錯。
@@ -321,10 +321,9 @@ M0 階段：
   **`mcp:{api_key_id}:{vendor_id}:{session_id}`**（命名空間）。這代表：
   - 換一把 key、或換一個 `vendor_id`，即使 `session_id` 一模一樣，**讀到的是另
     一段對話**，也改不到原本那一列。這是刻意的隔離，⛔ 不是 bug；
-  - ⚠️ **2026-09-11 舊鏈退役**：過去的 `/api/v1/message`（REST，已刪除）走裸
-    `session_id`，與 `/mcp` 的命名空間鍵**天然分池**——歷史上同一個 `session_id`
-    在兩條入口是兩段對話，⛔ 不曾互通，此事實不因舊鏈刪除而改變（`form_sessions`
-    表仍是同一張，`/mcp` 現在是唯一寫入者）；
+  - 舊 REST 鏈 `/api/v1/message`（已刪除）走裸 `session_id`，與 `/mcp` 的命名空間鍵**天然分池**，
+    ⛔ 不曾互通（DSP-046）；現在 `form_sessions` 表由 `/mcp` 與專用對話 API 兩個入口寫入，
+    兩者用同一種命名空間鍵，所以互通；
   - 整把鍵受 `form_sessions.session_id` 的 `VARCHAR(100)` 限制 ⇒ 你的
     `session_id` 太長時會拿到 `INVALID_INPUT`。實務上留 80 字以內即可。
 

@@ -2,7 +2,7 @@
 
 > 給 JGB 工程團隊。依據：jgb2 `master`（`a0e0020ac7`，本機 `dev1`）的 `routes/api.php` `external/v1` 群組與 `app/Http/Controllers/External/*`、`Internal/EstateWriteController`、`Internal/ContractWriteController`、`app/Support/VisibleScope.php`、`app/Http/Middleware/ExternalApiAuth.php`／`ExternalViewerScope.php`、`app/Repair.php`、`app/Services/RepairService.php`。
 > 原則：**能擴充既有端點就不另開新路徑**；格式一律照抄既有 `external/v1`。
-> 現況：AIChatbot 已上線並接 www。JGB staging（`8ff2f7b8e7`，2026-10-30 查）已開 #19～#23，以 staging 為準算開放（DSP-132）；master 還沒有這些端點。我方還沒改接，接真 JGB 時這些功能**不發請求**、回使用者「目前還不支援」。
+> 現況：AIChatbot 已上線並接 www。JGB staging（`8ff2f7b8e7`，2026-10-30 查）已開 #19～#23，以 staging 為準算開放（DSP-132）；master 還沒有這些端點。我方的呼叫端已寫好並在 staging 實測（2026-10-31，團隊 20151，五項寫入各成功一次）：開關 `JGB_WRITE_WIRING` 為 `on` 且 `JGB_API_BASE_URL` 主機是 `staging.jgbsmart.com` 時才送；連 www 時開關不生效，這些功能**不發請求**、回使用者「目前還不支援」（master 沒有這些端點）。
 
 ## 0. 沿用既有 `external/v1` 的格式（新增或擴充都照這個）
 
@@ -61,19 +61,19 @@
 ### #19 建立物件（站內幫手 (9)）→ 新增 `POST /api/external/v1/estates`
 - 內部可沿用 `Estate::createEstate`；**不要**用 `buildMockAttributes`。
 - 我方送：`role_id`、成員身分（見 §0-3）、`idempotency_key`；必填 `title`、`city`、`district`（**名稱**，請以既有 `Address::getCityId`／`getDistrictId` 解析，對不到回 400）、`address`、`use_for`（`residential`｜`business`｜`parking_space`）；選填 `space_type`、`building`、`room_count`、`size`、`rent`、`floor`。沒給的欄位不要補值。
-- 請回答：`title` 上限（內部端點 100，我方目前限 60，可放寬照 JGB）；`use_for`、`space_type`、`building` 的值域（`building` 內部用英文代碼 condo／apartment／townhouse）；「台」「臺」是否視同；新物件初始 `status`（內部為 `ESTATE_READY`、`is_open=0`）。
+- staging 程式的答案（`8ff2f7b8e7`，`External\EstateController@store`；DSP-132）：`title` 1～60 字；`use_for` 只收三值，另依團隊設定擋「此團隊不支援這個用途」；`space_type`、`building` 的值域取 JGB 設定檔 `config/estate.php`；新物件 `status=1`（未刊登）、`is_open=0`。另有關卡：訂閱無效 403、物件數達方案上限 422。仍待 JGB 回答：「台」「臺」是否視同（由 `Address::getCityId` 解析，未讀到）。
 - 回應：201 `{success:true, data:{id, …}}`。
 
 ### #20 建立合約（站內幫手 (10)）→ 新增 `POST /api/external/v1/contracts`
 - 內部可沿用 `Contract::createContract`；承租人用使用者給的真實資料，**不要**隨機快照、**不要** `GenerateMockBills`。
 - 我方送：`role_id`、成員身分、`idempotency_key`；必填 `estate_id`、`date_start`、`date_end`（`YYYY-MM-DD`）、`rent`，`to_user_email`／`to_user_phone` 至少一個；選填 `deposit_amount`、`title`。
-- 請回答：押金欄位——我方的 `deposit_amount` 是**金額**，內部端點的 `deposit` 是**月數**（預設 2），正式欄位用哪個；新合約初始 `status`／`bit_status`；物件屬他團隊時請回 404（內部端點回 422「此物件不屬於該團隊」，可被用來區分）。
+- staging 程式的答案（`External\ContractController@store`）：`deposit_amount` 是金額（寫入 `deposit_type=1` 固定金額）；物件不存在、屬他團隊或看不到一律 404；建立時不設承租方（`to_user_id`、`to_role_id`）、不寄邀請、不產帳單。另有關卡（皆 422，訂閱無效 403）：合約數達方案上限、企業房東未填公司電話、操作成員未綁手機、車位物件、物件必填欄位不完整、物件擁有者不存在、物件有效合約達 10 份。仍待 JGB 回答：新合約初始 `status`／`bit_status`（程式內看不到明文賦值）。
 - 回應：201 `{success:true, data:{id, …}}`。
 
 ### #21 建立手動帳單（站內幫手 (11)）→ 新增 `POST /api/external/v1/bills/manual`
 - 照網頁 `BillController` 的「新增帳單」流程（`Bill::BILL_TYPE_CREATE`＝3），同步建立、回帳單 `id`。
 - 我方送：`role_id`、成員身分、`idempotency_key`；必填 `contract_id`、`title`、`total`、`date_expire`（`YYYY-MM-DD`）；選填 `sub_title`。
-- 請回答：網頁路徑要求合約已簽署（`bit_status & CONTRACT_SIGNED`）——外部端點是否同樣要求？（若是，#20 剛建好的草稿合約不能立刻開帳單，使用者會被擋，我方要先知道）；初始 `status`；是否需另外「發送」。
+- staging 程式的答案（`External\BillController@storeManual`）：不看簽署狀態，但合約要已有承租方（`to_role_id`），沒有回 422「此合約尚未綁定承租方，無法建立帳單」。承租方通常在承租人接受邀請或簽約後才有，所以 #20 剛建、未邀請的合約開不了手動帳單。新帳單 `status=1`（待發送），不發送、不通知，要發送得在 JGB 網頁操作。`title` 不得是保留品項名。
 - 回應：201 `{success:true, data:{id, …}}`。
 
 ## 4. 修改既有寫入端點
@@ -85,11 +85,17 @@
   - 照片放在 `broken_photos[]`，multipart 時每筆是一個檔案。JSON 送網址字串的舊用法可以保留。
   - 我們送出前，照片一律重新編碼成 `image/jpeg`，並去掉 EXIF 和 GPS。每張修繕單最多 10 張，每張 ≤ 5,000,000 bytes。檔名由我們產生，格式是 `photo-N.jpg`。staging 的上限相同：≤10 張、每張 ≤5,000,000 bytes、內容須為 JPEG／PNG。
   - 請 jgb2 收下照片、掛到這張修繕單，回應格式照舊。jgb2 也請自己驗一次型別；提供照片時加上 `X-Content-Type-Options: nosniff`。
+- 本系統現況：呼叫端已改接（開關生效時以 multipart 送 `broken_photos[]`，照片位元組取自確認卡綁定的暫存檔、送出前重算 `sha256` 對卡上值），2026-10-31 在 staging 實測一次成功；開關不生效時不送照片，文字修繕單照常送。
 - 請加：成員身分驗證（§0-3）、冪等（§0-2）。同一個冪等鍵重送時，照片不能重複掛。
 - JGB 不用提供專用上傳網域、簽章網址，也不用回頭抓我們的任何網址。
 
 ### #23 改帳單到期日 → `PATCH /api/external/v1/bills/{id}`
-- staging 已開（`External\BillController@updateDueDate`），只改 `date_expire`。我方目前呼叫的 `PATCH /agent/v1/bills/{id}` 要改接這條路徑。
+- staging 已開（`External\BillController@updateDueDate`），只改 `date_expire`。本系統現況：呼叫端已改接這條路徑（開關生效時），body 只送 `date_expire`、`role_id`、`viewer_user_id`、`idempotency_key`，`bill_id` 須純數字；2026-10-31 在 staging 實測：待發送帳單改到期日成功一次，非待發送帳單回 422「只有待發送的帳單可以修改到期日」，我方換成固定句回客人、沒有寫入。
+
+### 本系統收到拒絕與逾時時怎麼處理（#19～#23 共用）
+- 拒絕：只有 `(端點樣板, HTTP 狀態碼, 訊息全文)` 逐字等於我方白名單時，才換成固定句回客人（全文取自 staging `544e8592eb` 各 controller 的 `MSG_*` 常數與 `RepairController::store` 的兩句 400）；請 JGB 改這些訊息文字前先通知我方，否則會落到「這筆操作目前無法執行」。白名單外 4xx、金鑰層錯誤、404 一律同一句，JGB 原文不轉給客人。
+- 結果未確認：逾時、5xx、送出後連線錯誤、2xx 非 JSON 或缺 `data.id`，我方回「結果未確認，請到 JGB 畫面確認是否已建立，再決定要不要重送」，不自動重送。寫入逾時 JSON 30 秒、multipart 60 秒。
+- 冪等：我方送的 `idempotency_key` 是確認碼；同一張卡重按由我方回同一份結果、不再發請求（staging 實測五項重按皆 0 次新請求）。JGB 端同鍵重送是否不重複建立**未實測**（我方不會重送同鍵），見 §6 §0 列。
 
 ## 5. 請 JGB 修正的既有問題
 
@@ -103,6 +109,12 @@
 - 依據：讀碼，jgb2 `origin/master` `bb217ebc6a`（2026-10-28）；正式機 www 部署版即 `bb217ebc6a`（2026-10-28 唯讀查詢），這段程式在線上。未實跑重現。JGB 已開單 #13404266981。
 - **請 JGB 修正**：`index` 不論有無 `user_data`，一律先 `where('role_id', $roleId)`，再交 `queryThisUser` 圈成員範圍。
 
+### 經 `POST /estates` 新建的物件，列表查不到
+- `GET /api/external/v1/estates`（`External\EstateController@index`）只列 `active=1 AND is_open=1` 的物件（staging `544e8592eb`）。`POST /estates` 新建的物件 `is_open=0`（§3 #19），所以不在列表裡。站內幫手依名稱或編號找物件時走列表，客人「剛建物件，接著建合約或報修」會被回找不到。
+- 依編號的單筆明細，帶 `role_id`＋`viewer_user_id` 時（JGB 端 showForViewer 方法）已不限 `is_open`；不帶身分的單筆與列表仍限刊登中。
+- **請 JGB 決定**：列表納入未開放物件（至少對建立者團隊），或確認「依編號查明細」可作為寫入前解析物件的正式路徑。
+- 查證：`git -C ~/dev/work/jgb2/dev1 show 544e8592eb:app/Http/Controllers/External/EstateController.php | grep -n "is_open"`（第 77～79 行列表條件，第 191 行起 showForViewer 的註解）。
+
 ## 6. 請 JGB 回答（彙整）
 
 | # | 問題 | 會不會擋上線 |
@@ -111,13 +123,15 @@
 | #16～#18 | 同意以「擴充既有端點」方式做嗎？參數命名可照 JGB 慣例調整 | 是 |
 | #17 | 執行中＝1／2／16 是否正確 | 否 |
 | #18 | 到期篩選是否與畫面「即將到期」一致 | 否 |
-| #19 | `title` 上限、`use_for`／`space_type`／`building` 值域、「台」「臺」、初始狀態 | 否 |
-| #20 | 押金欄位（金額或月數）、初始狀態 | 是 |
-| #21 | 開手動帳單是否要求合約已簽署；初始狀態；是否需另外發送 | 是 |
-| §0 | 寫入成員身分參數名（`viewer_user_id` 或 `user_id`）；越權統一 404；冪等 | 是 |
+| #19 | 「台」「臺」是否視同 | 否 |
+| #20 | 新合約初始 `status`／`bit_status` | 否 |
+| §0 | 冪等：同一個 `idempotency_key` 重送時回什麼、內容不同時回什麼（HTTP 碼與訊息） | 是 |
+| §5 | 經 `POST /estates` 新建的物件，列表（只列 `active=1 AND is_open=1`）查不到；列表要不要納入未開放物件，或改走依編號查明細 | 否（影響剛建物件的後續建合約、報修） |
+
+staging 程式已答、不再問（`8ff2f7b8e7`，DSP-132；答案寫在 §3 各節）：#19 `title` 上限與初始狀態、#20 押金是金額、#21 簽署與發送、§0 寫入成員身分參數名是 `viewer_user_id`、寫入越權統一回 404。讀取端點的越權是否也統一 404，未查。
 
 ## 7. 我方要配合改的（AIChatbot 內部，JGB 不必做）
 
 - #16～#18 改呼叫擴充後的既有端點（目前程式呼叫的是 `bills/summary/unpaid`、`repairs/in-progress`、`contracts/expiring` 三條新路徑與 `data` 物件形狀），JGB 定案後改呼叫端與解析。
 - 寫入成員身分參數名照 JGB 定案調整。
-- 照片改以 multipart 送 jgb2（接口文件 §7.1）；我方改接前，接真 JGB 時不送 `broken_photos`。
+- 寫入呼叫端（#19～#23）與照片 multipart（接口文件 §7.1）已寫好，開關 `JGB_WRITE_WIRING` 生效（連 staging）時送出；開關不生效時，接真 JGB 不發寫入請求、不送 `broken_photos`。

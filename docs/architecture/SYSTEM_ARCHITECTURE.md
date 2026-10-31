@@ -63,7 +63,7 @@ AgentRuntime.__init__(provider, registry, verifier, assembler, budget,
 
 | 門面 | 檔案 | 現況 |
 |---|---|---|
-| **MCP** | `services/agent/mcp_facade.py::_agent_turn`（`AGENT_TURN_SPEC`，`facade_only`） | ✅ **唯一掛著的** |
+| **MCP／對話 API** | `services/agent/mcp_facade.py::_agent_turn`（`AGENT_TURN_SPEC`，`facade_only`） | ✅ **掛著**：兩個入口——專用對話 API `routers/agent_dialogue.py`（`POST /api/v1/agent/turn`，DSP-134）與過渡入口 `/mcp`，共用同一份 registry 與 `_invoke` |
 | **遷移橋**（⛔ 不是門面） | `routers/agent_entry.py::handle_agent_entry`／`_agent_sse` | **遷移橋（任務 2.2／R9）**，⛔ 不是端點：它站在舊鏈 `chat.py` 的請求路徑上分流（受眾在 `AGENT_AUDIENCES` ⇒ 走 runtime，否則回 `None` 讓舊鏈續跑）。⛔ **掛路由救不活**：上游的 `VendorChatRequest`／`VendorChatResponse`／`_conversational_to_response`／`sse_event`／`metered` 五樣全隨 `chat.py` 刪除，回退目標（舊鏈）也不在 |
 | 回測 | `tools/agent_eval.py` | 離線 |
 | 影子 | `services/agent/shadow.py`（`readonly_view=True`） | 隨 `app.py` 建 |

@@ -16,9 +16,8 @@ commit `7c905408`／`10116570` 整批砍除（見 `.claude/DECISIONS.md` DSP-046
 `services/decision_layer.py:decide_arbitration` 未被刪除，仍存在，仍是 agent
 路徑刻意不呼叫的對象，該列不受影響。查證指令改用 `git show <ref>:path`。
 
-agent 路徑（`services/agent/**` 的 `AgentRuntime` 迴圈；🔴 2026-09-12 更正：前一版寫
-「由 `routers/agent_entry.py` 進入」——**它不是入口**，是遷移用的分流橋，現行唯一掛著的
-門面是 `/mcp`）不共用以下舊鏈（`routers/chat.py` 為主的既有對話管線，⚠️ 已於
+agent 路徑（`services/agent/**` 的 `AgentRuntime` 迴圈；`routers/agent_entry.py` 不是入口，是遷移用的分流橋；
+現行掛著的門面是 `mcp_facade._agent_turn`，經專用對話 API `routers/agent_dialogue.py` 與 `/mcp` 兩個入口進來）不共用以下舊鏈（`routers/chat.py` 為主的既有對話管線，⚠️ 已於
 2026-09-11 隨舊鏈整批砍除，見上）符號：
 
 | 舊鏈符號 | 舊鏈用途 | 定義位置（可 grep，⚠️ 已隨舊鏈刪除，改用 `git show`） | agent 路徑以什麼取代 |

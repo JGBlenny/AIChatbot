@@ -1,6 +1,6 @@
 # 對話服務架構（目標）
 
-**最後更新：2026-10-30**
+**最後更新：2026-10-31**
 
 > 本檔回答一個問題：**這個系統應該長什麼樣。** 架構的目標只寫在本檔。
 > 現況看 [`SYSTEM_ARCHITECTURE.md`](./SYSTEM_ARCHITECTURE.md)（全景）與 [`AGENTIC_MCP_ARCHITECTURE.md`](./AGENTIC_MCP_ARCHITECTURE.md)（一回合的流程）；現況文件寫的是目前跑的樣子，不是設計依據。
@@ -101,7 +101,7 @@ JGB API
 ## 5. 目標架構的邊界
 
 - 呼叫端只走對話 API，不碰 MCP；取上傳票也走對話 API。
-- 模型呼叫、embedding 與辨識都不走 MCP；只有呼叫 JGB 工具走 MCP。
+- 模型呼叫、embedding 與辨識都不走 MCP；只有呼叫 JGB 工具走 MCP。修繕單照片的位元組以 HTTP multipart 送 JGB（§6），也不走 MCP。
 - 只有外部 AI 要把本系統當工具呼叫時，才另開 MCP 入口。這是選配，不是對話入口。
 - AI 提出工具呼叫，AgentRuntime 執行；唯讀查詢與寫入的下一步由本系統程式決定；寫入要已兌現的確認 token 才能發出，JGB 不必知道已確認。
 - **工具清單由本機決定**：給模型的工具來自本機白名單，⛔ 用 `tools/list` 動態餵模型。寫入工具只由本機代理註冊，一律過確認檢查。JGB 工具定義和本機登記不一致就封鎖該工具。
@@ -113,24 +113,20 @@ JGB API
 
 ---
 
-## 6. 修繕單附照片（待業主重裁）
+## 6. 修繕單附照片（API 規格 #22，DSP-136）
 
-業主選 B（出自主會話建議，等級 C）。B 的前提是工具走 MCP；開片時和 multipart 上傳換 `file_id`（E 案）、API 規格 #22 三選一（DSP-130）。下圖是 B 案，尚未定案。
-
-照片本體不走 MCP。客人按確認後，全程由程式發起。
+照片走 API 規格 #22：客人按確認後，由程式把欄位與照片一次以 `multipart/form-data` 送到 JGB 的 `POST /api/external/v1/repairs`（照片在 `broken_photos[]`）。照片本體不走 MCP，也不進模型。
 
 ```
-對話服務                                     JGB
-  │ ① MCP：申請上傳（張數、型別、大小）───▶ JGB MCP server
-  │ ◀─ 上傳網址與 file_id
-  │ ② HTTP PUT：照片位元組 ───────────────▶ 上傳網址
-  │ ③ MCP：建立修繕單（欄位、file_id、冪等鍵）▶ JGB MCP server → JGB API
+對話服務                                          JGB
+  │ HTTP multipart：修繕單欄位＋照片位元組＋冪等鍵 ──▶ POST /api/external/v1/repairs
+  │ ◀─ 建立結果（data.id）
 ```
 
-- 上傳前重算 sha256，對不上確認卡就不送。
-- 確認前 JGB 不收任何檔案；照片位元組與 `file_id` 不進模型。
-- JGB 要提供：申請上傳工具與上傳網址、建單收 `file_id`（同一冪等鍵不重複掛）、沒掛單的檔案到期清除。
-- 開片前要定：10 張的網址語意、部分上傳與重試、步驟的時間預算（現行工具呼叫 3 秒）、`file_id` 綁團隊與會話、JGB 驗檔案內容、上傳主機白名單與禁轉址。
+- 照片位元組只取自確認卡綁定的暫存；送出前重算 sha256，對不上確認卡就不送，⛔ 退回成不附照片照送。
+- 確認前 JGB 不收任何檔案。
+- JGB 端規則（staging `544e8592eb`）：≤10 張、每張 ≤5,000,000 bytes、JPEG／PNG，檔案與網址不得同時給；同一冪等鍵重送不重複掛。
+- JGB 工具移交片若要改走 B（JGB MCP server 申請上傳、HTTP 傳檔、MCP 建單）或 E（multipart 上傳換 `file_id`、建單帶檔案編號），要附推翻卡由業主裁（DSP-136）。
 
 ---
 
@@ -149,15 +145,15 @@ JGB API
 
 | 項目 | 現況 | 目標 |
 |---|---|---|
-| 對話入口 | 呼叫端走 `POST /mcp`、`tools/call agent.turn`；沒有逐字串流 | 專用對話 API |
-| MCP 門面 | 同時是對話入口與工具入口，本系統是 MCP server | 對話入口搬出去；本系統不必當 MCP server |
-| 上傳票 | `agent.upload_ticket` 只在 MCP 門面 | 由對話 API 發 |
+| 對話入口 | 專用對話 API `POST /api/v1/agent/turn`（對外 `{AICHATBOT_BASE}/v1/agent/turn`，DSP-134）與 `POST /mcp` 並存，正式機尚未部署新入口；現有呼叫端仍走 `/mcp`；沒有逐字串流 | 呼叫端只走對話 API，`/mcp` 關閉 |
+| MCP 門面 | 仍是工具入口兼過渡對話入口，本系統是 MCP server；兩入口共用的入口核心 `_make_invoke` 在 `mcp_facade.py` | 對話入口搬出去；本系統不必當 MCP server |
+| 上傳票 | 對話 API `POST /api/v1/agent/upload-ticket` 與 MCP 門面的 `agent.upload_ticket` 都發 | 只由對話 API 發 |
 | JGB 工具 | `jgb2.*` 與 `JGBSystemAPI` 在本系統內，函式呼叫 | JGB 維護，本系統當 MCP client 呼叫；語意層留本機 |
 | 寫入確認檢查 | `_wrap_write_tool` 在工具層 | 拆到本機 JGB 工具代理 |
 | 唯讀查詢 | 由主模型自呼工具 | 程式依 AI 理解的條件查詢、篩選 |
 | 知識完全查無 | 沒有程式先發的出口 | 程式出口 |
 | 程式重讀原話 | 部分環節由程式重讀欄位值原話 | 程式只驗 AI 結果的格式、範圍、值域 |
-| 修繕單照片 | 接真 JGB 時不附照片；JGB staging 已收 multipart（API 規格 #22），本系統還沒改接 | 待業主重裁（§6） |
+| 修繕單照片 | 正式機接真 JGB 時不附照片；本系統的 #22 改接（開關 `JGB_WRITE_WIRING`，只在連 staging 時生效）已寫好、正式機尚未部署 | 照片以 multipart 送 JGB（§6，DSP-136） |
 | 繞過工具層的呼叫 | AgentRuntime 直呼 `confirm.py`、`write_candidates.py`、`write_forms.py` 與 `services.jgb` 的函式，並直接 import `tools/jgb2.py` 的語意函式；`confirm.request` 本體與它的下游查 JGB；MCP 門面的 `_open_repairs`、`_repair_category_tree` 閉包與 `action_tools._resolve_category` 未經 `registry.call` | 全部經 JGB 工具代理 |
 | 測試底座 | 模擬客人與回測走 `agent.turn`；`JGBMockTransport` 替代 JGB | 改前改後走同一入口；工具搬走要有 MCP 替身 |
 
@@ -165,7 +161,7 @@ JGB API
 
 ## 9. 怎麼走到目標
 
-- **對話入口**：排在切換正式機之前（主會話讀法）。用加法：新增專用對話 API，重用 `_agent_turn`；`/mcp` 留到呼叫端改完才關（主會話提議，等級 C，未驗證）。碰身分、金鑰與計量，計畫要過資安審查與業主核可。
+- **對話入口**：排在切換正式機之前（主會話讀法）。已用加法新增專用對話 API（契約與取捨見 DSP-134），與 `/mcp` 共用同一個 `_invoke`；`/mcp` 留到呼叫端改完才關，入口核心搬出 `mcp_facade.py` 也等那時一起做。
 - **JGB 工具**：JGB 要先建 MCP server，本系統不能單獨完成；排序看 JGB 能否配合。
 - 分片、順序、驗收方式與進度不寫在本檔：見 `.kiro/specs/agentic-mcp-orchestration/architecture-target-20261018.md` §4 與 `HANDOFF-20261018.md`。
 

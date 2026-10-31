@@ -5,7 +5,7 @@
 
 ## 0. 一句話
 
-**上線前 JGB 面板要改接 AIChatbot 的專用對話 API，不是把現行走 `/mcp` 的 `AgentTurnClient` 合入 master 就上線**（DSP-130、DSP-131；排在第 4 步切換正式機之前是主會話讀法，等級 C）。專用對話 API 由 AIChatbot 定案；定案前本稿寫到的 `agent.turn`、`/mcp` 只描述現行介面，端點與欄位定案後改寫。面板現行版與確認卡畫面已完成（2026-10-15），JGB 目前接 staging 分支。確認卡改用結構化資料（C 片）是上線後的改善，不擋上線。
+**上線前 JGB 面板要改接 AIChatbot 的專用對話 API，不是把現行走 `/mcp` 的 `AgentTurnClient` 合入 master 就上線**（DSP-130、DSP-131；排在第 4 步切換正式機之前是主會話讀法，等級 C）。專用對話 API 已定案（業主 2026-10-31 核可，接口 A §3.1）：`POST https://chatai.jgbsmart.com/rag-api/v1/agent/turn` 與 `.../v1/agent/upload-ticket`，一回合一次 POST，金鑰、`X-JGB-Identity`、參數與回應內容同現行；AIChatbot 正式機部署後通知 JGB。本稿 §1 寫到的 `agent.turn`、`/mcp` 描述 JGB 現行介面。面板現行版與確認卡畫面已完成（2026-10-15），JGB 目前接 staging 分支。確認卡改用結構化資料（C 片）是上線後的改善，不擋上線。
 
 ## 1. 面板現況：staging 走現行介面，master 未合入
 
@@ -23,10 +23,11 @@
 
 | # | 事項 | 怎樣算完成 |
 |---|---|---|
-| L1 | 面板改接專用對話 API（端點與欄位待 AIChatbot 定案）後，連同確認卡畫面合入 master 並部署正式版 | `origin/master` 含改接後的面板；正式版對話不再走 `/mcp` |
-| L2 | 正式環境設定：`ASSISTANT_AGENT_URL=<專用對話 API 網址，待定案>`（完整路徑，不跟隨轉址）、`ASSISTANT_AGENT_API_KEY`（AIChatbot 發給站內幫手的金鑰，只放伺服端）、`ASSISTANT_AGENT_VENDOR_MAP`、`ASSISTANT_AGENT_ENABLED=true` | 正式站登入一個已對到 vendor 的團隊，送一句話收到專用對話 API 的回覆；未對到的團隊照舊走原本對話 |
+| L1 | 面板改接專用對話 API（接口 A §3.1）：`AgentTurnClient` 不再走 MCP（拿掉 initialize／initialized／`Mcp-Session-Id`／DELETE），每回合直接 `POST .../v1/agent/turn`，body 就是現行送的工具參數（`message`、`upload_ids`、`attachment_purpose`），header 照舊 `X-API-Key`、`X-JGB-Identity`，加 `Content-Type: application/json`；200 body 就是現行 `agent.turn` 結果 JSON，非 200 依 body 的 `code` 處理（對照接口 A §11）；取上傳票改 `POST .../v1/agent/upload-ticket`（body `{"attachment_purpose": …}`）。改完連同確認卡畫面合入 master 並部署正式版 | `origin/master` 含改接後的面板；正式版對話不再走 `/mcp` |
+| L2 | 正式環境設定：`ASSISTANT_AGENT_URL=https://chatai.jgbsmart.com/rag-api/v1/agent/turn`（完整路徑，不跟隨轉址；上傳票網址同前綴 `/v1/agent/upload-ticket`）、`ASSISTANT_AGENT_API_KEY`（AIChatbot 發給站內幫手的金鑰，只放伺服端）、`ASSISTANT_AGENT_VENDOR_MAP`、`ASSISTANT_AGENT_ENABLED=true` | 正式站登入一個已對到 vendor 的團隊，送一句話收到專用對話 API 的回覆；未對到的團隊照舊走原本對話 |
 | L3 | 正式環境的 Origin：AIChatbot 端 `MCP_ALLOWED_ORIGINS` 只管瀏覽器直連；JGB 由伺服端呼叫不送 Origin，⛔ 需要加白名單 | L2 的實打通過即可 |
-| L4 | 面板支援照片與文件上傳（DSP-120、DSP-122）：照接口 A（`docs/api/jgb2-web-assistant-integration.md`）§7，JGB 後端取上傳票，瀏覽器把檔案直傳 AIChatbot 拿 `upload_id`，對話帶 `upload_ids`（照片 ≤10、文件 1 份）與 `attachment_purpose`（報修照片 `repair`；謄本、收據、發票 `document`）；回覆 `outcome.expects=image`／`file` 時要開傳照片／傳檔鍵（⛔ 不要只開輸入框）；staging 現在顯示「此功能即將開放」（§3），要改掉。JGB 不需要專用上傳網域。上傳與引用流程 staging 已用現行介面做完（`agent.upload_ticket`、`agent.turn`）；改接專用對話 API 時取上傳票一起改接（端點與欄位待定案），再隨 L1 合入 master。接口 B #22 的 multipart staging 已開，同樣隨 L1 合入 master | 正式站上傳一張報修照片收到確認卡且卡上「附照片：1 張」；上傳一份謄本 PDF 收到物件確認卡 |
+| L4 | 面板支援照片與文件上傳（DSP-120、DSP-122）：照接口 A（`docs/api/jgb2-web-assistant-integration.md`）§7，JGB 後端取上傳票，瀏覽器把檔案直傳 AIChatbot 拿 `upload_id`，對話帶 `upload_ids`（照片 ≤10、文件 1 份）與 `attachment_purpose`（報修照片 `repair`；謄本、收據、發票 `document`）；回覆 `outcome.expects=image`／`file` 時要開傳照片／傳檔鍵（⛔ 不要只開輸入框）；staging 現在顯示「此功能即將開放」（§3），要改掉。JGB 不需要專用上傳網域。上傳與引用流程 staging 已用現行介面做完（`agent.upload_ticket`、`agent.turn`）；改接專用對話 API 時取上傳票一起改接（`POST .../v1/agent/upload-ticket`，見 L1），再隨 L1 合入 master。接口 B #22 的 multipart staging 已開，同樣隨 L1 合入 master | **JGB 端完成**（JGB 自己驗得了）：正式站上傳一張報修照片，送出的對話請求帶 `upload_ids` 與 `attachment_purpose=repair`；回覆 `outcome.expects=image`／`file` 時出現傳照片／傳檔鍵。<br>**整體完成**（擋切換；要 AIChatbot 端也上線才驗得過）：正式站上傳一張報修照片，收到確認卡且卡上「附照片：1 張」，按確認後 JGB 修繕單上看得到這張照片；上傳一份謄本 PDF 收到物件確認卡。AIChatbot 端前置：修繕單照片送 JGB（#22 改接）、建物件改接（#19），見接口 A §9、§10 |
+| L5 | AIChatbot 正式機要能打 staging 外部 API：AIChatbot 正式機（chatai，對外 IP `3.114.12.10`）帶金鑰打 `https://staging.jgbsmart.com/api/external/v1/repairs/categories` 回 403 純文字 `Forbidden`（非 JSON）；同一把金鑰打 www 回 200；辦公室 IP 不帶金鑰打 staging 回 Laravel JSON 401（2026-10-31 實測）。staging `routes/api.php` 的 external/v1 群組沒有 IP 白名單 middleware，純文字 `Forbidden` 不是 Laravel 回的，是 staging 入口（DNS 指向 `13.193.163.182`、`13.231.19.127`，www 走 CloudFront）在 Laravel 之前擋下。正式機主機不帶金鑰打 staging 同樣回純文字 `Forbidden`、打 www 回 JSON 401 ⇒ 擋的是來源 IP，與金鑰無關。請 JGB 在 staging 入口的防火牆、WAF 或負載平衡規則放行 `3.114.12.10`。AIChatbot 正式機要改連 staging 測完整寫入與照片（業主 2026-10-31 裁定） | chatai 正式機打 staging `GET /api/external/v1/repairs/categories` 回 JSON（200），不是純文字 `Forbidden` |
 
 金鑰交付走雙方既有的安全管道，⛔ 寫進本稿、ticket 或 Monday。
 
